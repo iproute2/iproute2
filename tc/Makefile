@@ -34,13 +34,20 @@ ifeq ($(TC_CONFIG_ATM),y)
   TCSO += q_atm.so
 endif
 
+NETEM_DIST := normal.dist pareto.dist paretonormal.dist
+
 LDLIBS += -L. -ltc -lm -ldl
 LDFLAGS += -Wl,-export-dynamic
 
 %.so: %.c
 	$(CC) $(CFLAGS) -shared -fpic $< -o $@
 
-all: libtc.a tc $(TCSO)
+%.dist: %.c
+	$(CC) $(CFLAGS) -o $* $< -lm
+	./$* >$@
+	rm $*
+
+all: libtc.a tc $(TCSO) $(NETEM_DIST)
 
 tc: $(TCOBJ) $(LIBNETLINK) $(LIBUTIL) $(TCLIB)
 
@@ -50,10 +57,12 @@ libtc.a: $(TCLIB)
 install: all
 	mkdir -p $(DESTDIR)/usr/lib/tc
 	install -m 0755 -s tc $(DESTDIR)$(SBINDIR)
-	for i in $(TCSO); do install -m 755 -s $$i $(DESTDIR)/usr/lib/tc; done
+	for i in $(TCSO) $(NETEM_DIST; \
+	do install -m 755 -s $$i $(DESTDIR)/usr/lib/tc; \
+	done
 
 clean:
-	rm -f $(TCOBJ) $(TCLIB) libtc.a tc
+	rm -f $(TCOBJ) $(TCLIB) $(NETEM_DIST) libtc.a tc
 
 q_atm.so: q_atm.c
 	$(CC) $(CFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
