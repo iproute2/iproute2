@@ -1,3 +1,7 @@
+2004-10-19  Harald Welte <laforge@gnumonks.org>
+
+	* Replace rtstat (and ctstat) with new lnstat
+
 2004-10-19  Mads Martin Joergensen <mmj@suse.de>
 
 	* Ip is using the wrong structure in ipaddress.c when showing stats
