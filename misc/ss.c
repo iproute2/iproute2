@@ -1339,12 +1339,14 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 		if (info->tcpi_snd_ssthresh < 0xFFFF)
 			printf(" ssthresh:%d", info->tcpi_snd_ssthresh);
 		
-#if LINUX_VERSION_CODE >= 0x20607
+#ifdef HAVE_TCP_DRS
 		if (info->tcpi_rcv_rtt)
 			printf(" rcv_rtt:%g", (double) info->tcpi_rcv_rtt/1000);
 		if (info->tcpi_rcv_space)
 			printf(" rcv_space:%d", info->tcpi_rcv_space);
+#endif
 
+#ifdef HAVE_TCP_VEGAS
 		if (tb[TCPDIAG_VEGASINFO]) {
 			const struct tcpvegas_info *vinfo
 				= RTA_DATA(tb[TCPDIAG_VEGASINFO]);

@@ -8,6 +8,17 @@ RTSTATOBJ=rtstat.o
 ALLOBJ=$(SSOBJ) $(NSTATOBJ) $(IFSTATOBJ) $(RTACCTOBJ) $(ARPDOBJ) $(RTSTATOBJ)
 TARGETS=ss nstat ifstat rtacct arpd rtstat
 
+include ../Config
+
+ifeq ($(SS_CONFIG_VEGAS),y)
+	DEFINES += -DHAVE_TCP_VEGAS
+endif
+ifeq ($(SS_CONFIG_DRS),y)
+	DEFINES += -DHAVE_TCP_DRS
+endif
+
+
+
 all: $(TARGETS)
 
 ss: $(SSOBJ) $(LIBUTIL)
@@ -22,7 +33,7 @@ rtacct: $(RTACCTOBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtacct $(RTACCTOBJ) $(LIBNETLINK) -lm
 
 arpd: $(ARPDOBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o arpd $(ARPDOBJ) $(LIBNETLINK) -ldb-4.1
+	$(CC) $(CFLAGS) -I$(DBM_INCLUDE) $(LDFLAGS) -o arpd $(ARPDOBJ) $(LIBNETLINK) -ldb
 
 rtstat: $(RTSTATOBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtstat $(RTSTATOBJ)

@@ -1,5 +1,7 @@
 TCOBJ=tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o m_police.o m_estimator.o
 
+include ../Config
+
 TCMODULES :=
 TCMODULES += q_fifo.o
 TCMODULES += q_sfq.o
@@ -15,11 +17,13 @@ TCMODULES += q_dsmark.o
 TCMODULES += q_gred.o
 TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
-TCMODULES += q_atm.o
-LDLIBS += -latm
 
-TCMODULES += q_delay.o
+ifeq ($(TC_CONFIG_ATM),y)
+  TCMODULES += q_atm.o
+  LDLIBS += -latm
+endif
 
+TCMODULES += q_netsim.o
 TCMODULES += q_csz.o
 TCMODULES += q_htb.o
 TCMODULES += q_hpfq.o
