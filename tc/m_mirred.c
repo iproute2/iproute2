@@ -201,11 +201,10 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 	if (mirred_d)
 		fprintf(stdout, "Action %d device %s ifindex %d\n",p.action, d,p.ifindex);
 
-	tail = (struct rtattr *) (((void *) n) + NLMSG_ALIGN(n->nlmsg_len));
+	tail = NLMSG_TAIL(n);
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
 	addattr_l(n, MAX_MSG, TCA_MIRRED_PARMS, &p, sizeof (p));
-	tail->rta_len =
-	    (((void *) n) + NLMSG_ALIGN(n->nlmsg_len)) - (void *) tail;
+	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 
 	*argc_p = argc;
 	*argv_p = argv;
