@@ -271,6 +271,7 @@ static void rtnl_rttable_initialize(void)
 	rtnl_rttable_init = 1;
 	rtnl_rttable_tab[255] = "local";
 	rtnl_rttable_tab[254] = "main";
+	rtnl_rttable_tab[253] = "default";
 	rtnl_tab_initialize("/etc/iproute2/rt_tables",
 			    rtnl_rttable_tab, 256);
 }
