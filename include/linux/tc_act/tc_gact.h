@@ -10,7 +10,6 @@ struct tc_gact
 
 };
 
-#ifdef CONFIG_GACT_PROB
 struct tc_gact_p
 {
 #define PGACT_NONE              0
@@ -21,7 +20,6 @@ struct tc_gact_p
 	__u16                 pval;
 	int                   paction;
 };
-#endif
  
 enum
 {
