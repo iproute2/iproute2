@@ -22,7 +22,7 @@ rtacct: $(RTACCTOBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtacct $(RTACCTOBJ) $(LIBNETLINK) -lm
 
 arpd: $(ARPDOBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o arpd $(ARPDOBJ) $(LIBNETLINK) -ldb
+	$(CC) $(CFLAGS) $(LDFLAGS) -o arpd $(ARPDOBJ) $(LIBNETLINK) -ldb-4.1
 
 rtstat: $(RTSTATOBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtstat $(RTSTATOBJ)
