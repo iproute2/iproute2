@@ -1,4 +1,16 @@
-2005-02-07 	Mads Martin Joergensen <mmj@suse.de>
+2005-02-09  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+
+	* netem distribution data reorganization
+
+2005-02-09  Roland Dreier <roland@topspin.com>
+
+	* ip over infiniband address display
+
+2005-02-09  Jim Gifford <lfs@jg555.com>
+
+	* make install fix for ip/
+
+2005-02-07 Mads Martin Joergensen <mmj@suse.de>
 	
 	* Don't mix address families when flushing	
 	
