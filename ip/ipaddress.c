@@ -77,6 +77,8 @@ static void usage(void)
 void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
 {
 	fprintf(fp, "<");
+	if (flags & IFF_UP && !(flags & IFF_RUNNING))
+		fprintf(fp, "NO-CARRIER%s", flags ? "," : "");
 	flags &= ~IFF_RUNNING;
 #define _PF(f) if (flags&IFF_##f) { \
                   flags &= ~IFF_##f ; \
