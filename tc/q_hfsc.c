@@ -278,13 +278,12 @@ hfsc_print_class_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 }
  
 struct qdisc_util hfsc_util = {
-	NULL,
-	"hfsc",
-	hfsc_parse_opt,
-	hfsc_print_opt,
-	hfsc_print_xstats,
-	hfsc_parse_class_opt,
-	hfsc_print_class_opt,
+	.id		= "hfsc",
+	.parse_qopt	= hfsc_parse_opt,
+	.print_qopt	= hfsc_print_opt,
+	.print_xstats	= hfsc_print_xstats,
+	.parse_copt	= hfsc_parse_class_opt,
+	.print_copt	= hfsc_print_class_opt,
 };
 
 static int

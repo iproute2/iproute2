@@ -30,7 +30,6 @@ struct action_util police_util = {
 	.id = "police",
 	.parse_aopt = act_parse_police,
 	.print_aopt = print_police,
-	.print_xstats = police_print_xstats,
 };
 
 static void explain(void)
@@ -309,7 +308,7 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 }
 
 int 
-print_police(struct action_util *a,FILE *f, struct rtattr *arg)
+print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 {
 	SPRINT_BUF(b1);
 	struct tc_police *p;
@@ -359,10 +358,3 @@ int
 tc_print_police(FILE *f, struct rtattr *arg) {
 	return print_police(&police_util,f,arg);
 }
-
-int
-police_print_xstats(struct action_util *au, FILE *f, struct rtattr *xstats)
-{
-	return 0;
-}
-

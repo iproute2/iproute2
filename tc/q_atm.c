@@ -250,19 +250,10 @@ static int atm_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 }
 
 
-static int atm_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
-{
-	return 0;
-}
-
-
 struct qdisc_util atm_util = {
-	NULL,
-	"atm",
-	atm_parse_opt,
-	atm_print_opt,
-	atm_print_xstats,
-
-	atm_parse_class_opt,
-	atm_print_opt
+	.id 		= "atm",
+	.parse_qopt	= atm_parse_opt,
+	.print_qopt	= atm_print_opt,
+	.parse_copt	= atm_parse_class_opt,
+	.print_copt	= atm_print_opt,
 };

@@ -214,9 +214,8 @@ static int red_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 
 
 struct qdisc_util red_util = {
-	NULL,
-	"red",
-	red_parse_opt,
-	red_print_opt,
-	red_print_xstats,
+	.id		= "red",
+	.parse_qopt	= red_parse_opt,
+	.print_qopt	= red_print_opt,
+	.print_xstats	= red_print_xstats,
 };

@@ -312,22 +312,20 @@ static int htb_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 }
 
 struct qdisc_util htb_util = {
-	NULL,
-	"htb",
-	htb_parse_opt,
-	htb_print_opt,
-	htb_print_xstats,
-	htb_parse_class_opt,
-	htb_print_opt,
+	.id 		= "htb",
+	.parse_qopt	= htb_parse_opt,
+	.print_qopt	= htb_print_opt,
+	.print_xstats 	= htb_print_xstats,
+	.parse_copt	= htb_parse_class_opt,
+	.print_copt	= htb_print_opt,
 };
 
 /* for testing of old one */
 struct qdisc_util htb2_util = {
-	NULL,
-	"htb2",
-	htb_parse_opt,
-	htb_print_opt,
-	htb_print_xstats,
-	htb_parse_class_opt,
-	htb_print_opt,
+	.id		=  "htb2",
+	.parse_qopt	= htb_parse_opt,
+	.print_qopt	= htb_print_opt,
+	.print_xstats 	= htb_print_xstats,
+	.parse_copt	= htb_parse_class_opt,
+	.print_copt	= htb_print_opt,
 };

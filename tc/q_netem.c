@@ -285,15 +285,9 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int netem_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
-{
-	return 0;
-}
-
 struct qdisc_util netem_util = {
 	.id	   	= "netem",
 	.parse_qopt	= netem_parse_opt,
 	.print_qopt	= netem_print_opt,
-	.print_xstats	= netem_print_xstats,
 };
 

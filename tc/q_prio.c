@@ -111,17 +111,9 @@ int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int prio_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
-{
-	return 0;
-}
-
-
 struct qdisc_util prio_util = {
-	NULL,
-	"prio",
-	prio_parse_opt,
-	prio_print_opt,
-	prio_print_xstats,
+	.id	 	= "prio",
+	.parse_qopt	= prio_parse_opt,
+	.print_qopt	= prio_print_opt,
 };
 

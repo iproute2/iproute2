@@ -100,16 +100,8 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int sfq_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
-{
-	return 0;
-}
-
-
 struct qdisc_util sfq_util = {
-	NULL,
-	"sfq",
-	sfq_parse_opt,
-	sfq_print_opt,
-	sfq_print_xstats,
+	.id		= "sfq",
+	.parse_qopt	= sfq_parse_opt,
+	.print_qopt	= sfq_print_opt,
 };

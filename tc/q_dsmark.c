@@ -168,19 +168,10 @@ static int dsmark_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 }
 
 
-static int dsmark_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
-{
-	return 0;
-}
-
-
 struct qdisc_util dsmark_util = {
-	NULL,
-	"dsmark",
-	dsmark_parse_opt,
-	dsmark_print_opt,
-	dsmark_print_xstats,
-
-	dsmark_parse_class_opt,
-	dsmark_print_opt
+	.id		= "dsmark",
+	.parse_qopt	= dsmark_parse_opt,
+	.print_qopt	= dsmark_print_opt,
+	.parse_copt	= dsmark_parse_class_opt,
+	.print_copt	= dsmark_print_opt,
 };

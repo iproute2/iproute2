@@ -239,15 +239,8 @@ print_gact(struct action_util *au,FILE * f, struct rtattr *arg)
 	return 0;
 }
 
-int 
-gact_print_xstats(struct action_util *au, FILE *f, struct rtattr *xstats)
-{
-	return 0;
-}
-
 struct action_util gact_util = {
 	.id = "gact",
 	.parse_aopt = parse_gact,
 	.print_aopt = print_gact,
-	.print_xstats = gact_print_xstats,
 };
