@@ -16,6 +16,12 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/socket.h>
+
+#include <asm/types.h>
+#include <linux/rtnetlink.h>
+
+#include "rt_names.h"
 
 static void rtnl_tab_initialize(char *file, char **tab, int size)
 {
@@ -53,19 +59,19 @@ static void rtnl_tab_initialize(char *file, char **tab, int size)
 
 
 static char * rtnl_rtprot_tab[256] = {
-	"none",
-	"redirect",
-	"kernel",
-	"boot",
-	"static",
-	NULL,
-	NULL,
-	NULL,
-	"gated",
-	"ra",
-	"mrt",
-	"zebra",
-	"bird",
+	[RTPROT_UNSPEC] = "none",
+	[RTPROT_REDIRECT] ="redirect",
+	[RTPROT_KERNEL] = "kernel",
+	[RTPROT_BOOT] = "boot",
+	[RTPROT_STATIC] = "static",
+
+	[RTPROT_GATED] = "gated",
+	[RTPROT_RA] = "ra",
+	[RTPROT_MRT] =	"mrt",
+	[RTPROT_ZEBRA] ="zebra",
+	[RTPROT_BIRD] = "bird",
+	[RTPROT_DNROUTED] = "dnrouted",
+	[RTPROT_XORP] = "xorp",
 };
 
 
