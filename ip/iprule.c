@@ -35,7 +35,7 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip rule [ list | add | del | flush ] SELECTOR ACTION\n");
 	fprintf(stderr, "SELECTOR := [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK ]\n");
 	fprintf(stderr, "            [ dev STRING ] [ pref NUMBER ]\n");
-	fprintf(stderr, "ACTION := [ table TABLE_ID ] [ nat ADDRESS ]\n");
+	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
 	fprintf(stderr, "          [ prohibit | reject | unreachable ]\n");
 	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | NUMBER ]\n");
@@ -270,6 +270,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		} else if (strcmp(*argv, "nat") == 0 ||
 			   matches(*argv, "map-to") == 0) {
 			NEXT_ARG();
+			fprintf(stderr, "Warning: route NAT is deprecated\n");
 			addattr32(&req.n, sizeof(req), RTA_GATEWAY, get_addr32(*argv));
 			req.r.rtm_type = RTN_NAT;
 		} else {

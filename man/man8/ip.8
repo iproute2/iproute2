@@ -907,8 +907,11 @@ error.
 are considered to be dummy (or external) addresses which require translation
 to real (or internal) ones before forwarding.  The addresses to translate to
 are selected with the attribute
-.BR "via" .
+.B Warning:
+Route NAT is no longer supported in Linux 2.6.
 
+
+.BR "via" .
 .sp
 .B anycast
 .RI "- " "not implemented"
@@ -1794,7 +1797,6 @@ It prepends the history with the state snapshot dumped at the moment
 of starting.
 
 .SH HISTORY
-
 .B ip
 was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .SH SEE ALSO
@@ -1805,5 +1807,4 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .RB "IP tunnels " ip-cref.ps
 
 .SH AUTHOR
-
-Manpage maintained by Michail Litvak <mci@owl.openwall.com>
+Original Manpage  by Michail Litvak <mci@owl.openwall.com>

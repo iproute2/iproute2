@@ -1,3 +1,7 @@
+2005-01-12  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+
+	* Add warning about "ip route nat" no longer supported
+
 2005-01-12  Thomas Graf <tgraf@suug.ch>
 
 	* Tc testsuite
