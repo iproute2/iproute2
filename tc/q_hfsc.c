@@ -41,7 +41,7 @@ static void
 explain_class(void)
 {
 	fprintf(stderr,
-		"Usage: ... hfsc [ rt SC ] [ ls SC ] [ ul SC ]\n"
+		"Usage: ... hfsc [ [ rt SC ] [ ls SC ] | [ sc SC ] ] [ ul SC ]\n"
 		"\n"
 		"SC := [ [ m1 BPS ] [ d SEC ] m2 BPS\n"
 		"\n"
@@ -166,6 +166,15 @@ hfsc_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 			fsc_ok = 1;
+		} else if (matches(*argv, "sc") == 0) {
+			NEXT_ARG();
+			if (hfsc_get_sc(&argc, &argv, &rsc) < 0) {
+				explain1("sc");
+				return -1;
+			}
+			memcpy(&fsc, &rsc, sizeof(fsc));
+			rsc_ok = 1;
+			fsc_ok = 1;
 		} else if (matches(*argv, "ul") == 0) {
 			NEXT_ARG();
 			if (hfsc_get_sc(&argc, &argv, &usc) < 0) {
@@ -252,10 +261,16 @@ hfsc_print_class_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			usc = RTA_DATA(tb[TCA_HFSC_USC]);
 	}
 
-	if (rsc != NULL)
-		hfsc_print_sc(f, "rt", rsc);
-	if (fsc != NULL)
-		hfsc_print_sc(f, "ls", fsc);
+	
+	if (rsc != NULL && fsc != NULL &&
+	    memcmp(rsc, fsc, sizeof(*rsc)) == 0)
+		hfsc_print_sc(f, "sc", rsc);
+	else {
+		if (rsc != NULL)
+			hfsc_print_sc(f, "rt", rsc);
+		if (fsc != NULL)
+			hfsc_print_sc(f, "ls", fsc);
+	}
 	if (usc != NULL)
 		hfsc_print_sc(f, "ul", usc);
 
