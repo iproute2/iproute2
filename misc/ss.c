@@ -1,4 +1,4 @@
-/*
+//*
  * ss.c		"sockstat", socket statistics
  *
  *		This program is free software; you can redistribute it and/or
@@ -2443,7 +2443,7 @@ static const struct option long_opts[] = {
 	{ "packet", 0, 0, '0' },
 	{ "family", 1, 0, 'f' },
 	{ "socket", 1, 0, 'A' },
-	{ "summaary", 0, 0, 's' },
+	{ "summary", 0, 0, 's' },
 	{ "diag", 0, 0, 'D' },
 	{ "filter", 1, 0, 'F' },
 	{ "version", 0, 0, 'V' },
