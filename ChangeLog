@@ -1,6 +1,7 @@
 2004-10-19  Mads Martin Joergensen <mmj@suse.de>
 
-	* Ip is using the wrong structure in ipaddress.c when showing stats.
+	* Ip is using the wrong structure in ipaddress.c when showing stats
+	* Make sure no buffer overflow in nstat
 
 2004-10-19  Michal <md@lnet.pl>
 
