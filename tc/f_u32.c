@@ -7,6 +7,7 @@
  *		2 of the License, or (at your option) any later version.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+ *		Match mark added by Catalin(ux aka Dino) BOIE <catab at umbrella.ro> [5 nov 2004]
  *
  */
 
@@ -33,7 +34,7 @@ static void explain(void)
 	fprintf(stderr, "or         u32 divisor DIVISOR\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: SELECTOR := SAMPLE SAMPLE ...\n");
-	fprintf(stderr, "       SAMPLE := { ip | ip6 | udp | tcp | icmp | u{32|16|8} } SAMPLE_ARGS\n");
+	fprintf(stderr, "       SAMPLE := { ip | ip6 | udp | tcp | icmp | u{32|16|8} | mark } SAMPLE_ARGS\n");
 	fprintf(stderr, "       FILTERID := X:Y:Z\n");
 }
 
@@ -590,9 +591,42 @@ done:
 	return res;
 }
 
+static int parse_mark(int *argc_p, char ***argv_p, struct nlmsghdr *n)
+{
+	int res = -1;
+	int argc = *argc_p;
+	char **argv = *argv_p;
+	struct tc_u32_mark mark;
 
+	if (argc <= 1)
+		return -1;
 
-static int parse_selector(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
+	if (get_u32(&mark.val, *argv, 0)) {
+		fprintf(stderr, "Illegal \"mark\" value\n");
+		return -1;
+	}
+	NEXT_ARG();
+
+	if (get_u32(&mark.mask, *argv, 0)) {
+		fprintf(stderr, "Illegal \"mark\" mask\n");
+		return -1;
+	}
+	NEXT_ARG();
+
+	if ((mark.val & mark.mask) != mark.val) {
+		fprintf(stderr, "Illegal \"mark\" (impossible combination)\n");
+		return -1;
+	}
+
+	addattr_l(n, MAX_MSG, TCA_U32_MARK, &mark, sizeof(mark));
+	res = 0;
+
+	*argc_p = argc;
+	*argv_p = argv;
+	return res;
+}
+
+static int parse_selector(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -641,6 +675,12 @@ static int parse_selector(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 		res = parse_icmp(&argc, &argv, sel);
 		goto done;
 	}
+	if (matches(*argv, "mark") == 0) {
+		NEXT_ARG();
+		res = parse_mark(&argc, &argv, n);
+		goto done;
+	}
+
 	return -1;
 
 done:
@@ -760,7 +800,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 	while (argc > 0) {
 		if (matches(*argv, "match") == 0) {
 			NEXT_ARG();
-			if (parse_selector(&argc, &argv, &sel.sel)) {
+			if (parse_selector(&argc, &argv, &sel.sel, n)) {
 				fprintf(stderr, "Illegal \"match\"\n");
 				return -1;
 			}
@@ -839,7 +879,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				struct tc_u32_key keys[4];
 			} sel2;
 			NEXT_ARG();
-			if (parse_selector(&argc, &argv, &sel2.sel)) {
+			if (parse_selector(&argc, &argv, &sel2.sel, n)) {
 				fprintf(stderr, "Illegal \"sample\"\n");
 				return -1;
 			}
@@ -964,11 +1004,22 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 		pf = RTA_DATA(tb[TCA_U32_PCNT]);
 	}
 
+	if (sel && show_stats && NULL != pf)
+		fprintf(f, " (rule hit %llu success %llu)",pf->rcnt,pf->rhit);
+
+	if (tb[TCA_U32_MARK]) {
+		struct tc_u32_mark *mark = RTA_DATA(tb[TCA_U32_MARK]);
+		if (RTA_PAYLOAD(tb[TCA_U32_MARK]) < sizeof(*mark)) {
+			fprintf(f, "\n  Invalid mark (kernel&iproute2 mismatch)\n");
+		} else {
+			fprintf(f, "\n  mark 0x%04x 0x%04x (success %d)",
+				mark->val, mark->mask, mark->success);
+		}
+	}
+
 	if (sel) {
 		int i;
 		struct tc_u32_key *key = sel->keys;
-		if (show_stats && NULL != pf)
-			fprintf(f, " (rule hit %llu success %llu)",pf->rcnt,pf->rhit);
 		if (sel->nkeys) {
 			for (i=0; i<sel->nkeys; i++, key++) {
 				fprintf(f, "\n  match %08x/%08x at %s%d",

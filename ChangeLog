@@ -1,3 +1,7 @@
+2005-01-12  "Catalin(ux aka Dino) BOIE" <util@deuroconsult.ro>
+
+	* Add the possibility to use fwmark in u32 filters
+	
 2005-01-12  Andi Kleen <ak@suse.de>
 
 	* Add netlink manual page

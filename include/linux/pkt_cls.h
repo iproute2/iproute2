@@ -190,6 +190,7 @@ enum
 	TCA_U32_ACT,   
 	TCA_U32_INDEV,
 	TCA_U32_PCNT,
+	TCA_U32_MARK,
 	__TCA_U32_MAX
 };
 
@@ -224,6 +225,14 @@ struct tc_u32_pcnt
 	__u64 rhit;
 	__u64 kcnts[0];
 };
+
+struct tc_u32_mark
+{
+	__u32	val;
+	__u32	mask;
+	__u32	success;
+};
+
 /* Flags */
 
 #define TC_U32_TERMINAL		1
