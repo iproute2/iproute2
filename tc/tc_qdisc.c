@@ -25,9 +25,9 @@
 #include "tc_util.h"
 #include "tc_common.h"
 
-static void usage(void) __attribute__((noreturn));
+static int usage(void);
 
-static void usage(void)
+static int usage(void)
 {
 	fprintf(stderr, "Usage: tc qdisc [ add | del | replace | change | get ] dev STRING\n");
 	fprintf(stderr, "       [ handle QHANDLE ] [ root | ingress | parent CLASSID ]\n");
@@ -38,7 +38,7 @@ static void usage(void)
 	fprintf(stderr, "Where:\n");
 	fprintf(stderr, "QDISC_KIND := { [p|b]fifo | tbf | prio | cbq | red | etc. }\n");
 	fprintf(stderr, "OPTIONS := ... try tc qdisc add <desired QDISC_KIND> help\n");
-	exit(-1);
+	return -1;
 }
 
 int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
@@ -81,14 +81,14 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
-				exit(-1);
+				return -1;
 			}
 			req.t.tcm_parent = TC_H_ROOT;
 #ifdef TC_H_INGRESS
 		} else if (strcmp(*argv, "ingress") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"ingress\" is a duplicate parent ID\n");
-				exit(-1);
+				return -1;
 			}
 			req.t.tcm_parent = TC_H_INGRESS;
 			strncpy(k, "ingress", sizeof(k)-1);
@@ -128,42 +128,45 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 
 	if (q) {
 		if (q->parse_qopt(q, argc, argv, &req.n))
-			exit(1);
+			return 1;
 	} else {
 		if (argc) {
 			if (matches(*argv, "help") == 0)
 				usage();
 
 			fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"tc qdisc help\".\n", *argv);
-			exit(-1);
+			return -1;
 		}
 	}
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		rtnl_close(&rth);
-		exit(1);
-	}
+ 	if (!is_batch_mode)
+ 		if (rtnl_open(&rth, 0) < 0) {
+ 			fprintf(stderr, "Cannot open rtnetlink\n");
+			rtnl_close(&rth);
+ 			return 1;
+ 		}
 
 	if (d[0])  {
 		int idx;
 
-		ll_init_map(&rth);
+ 		ll_init_map(&(is_batch_mode?g_rth:rth));
 
 		if ((idx = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			rtnl_close(&rth);
-			exit(1);
+			return 1;
 		}
 		req.t.tcm_ifindex = idx;
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
-		rtnl_close(&rth);
-		exit(2);
+ 	if (rtnl_talk(&(is_batch_mode?g_rth:rth), &req.n, 0, 0, NULL, NULL, NULL) < 0) {
+	 	if (!is_batch_mode)
+			rtnl_close(&rth);
+		return 2;
 	}
 
-	rtnl_close(&rth);
+ 	if (!is_batch_mode)
+		rtnl_close(&rth);
 	return 0;
 }
 
@@ -280,35 +283,39 @@ int tc_qdisc_list(int argc, char **argv)
 		argc--; argv++;
 	}
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		exit(1);
-	}
-
-	ll_init_map(&rth);
+ 	if (!is_batch_mode)
+ 		if (rtnl_open(&rth, 0) < 0) {
+ 			fprintf(stderr, "Cannot open rtnetlink\n");
+ 			return 1;
+ 		}
+ 
+ 	ll_init_map(&(is_batch_mode?g_rth:rth));
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			rtnl_close(&rth);
-			exit(1);
+			return 1;
 		}
 		filter_ifindex = t.tcm_ifindex;
 	}
 
-	if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
+ 	if (rtnl_dump_request(&(is_batch_mode?g_rth:rth), RTM_GETQDISC, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
-		rtnl_close(&rth);
-		exit(1);
+	 	if (!is_batch_mode)
+			rtnl_close(&rth);
+		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, print_qdisc, stdout, NULL, NULL) < 0) {
+ 	if (rtnl_dump_filter(&(is_batch_mode?g_rth:rth), print_qdisc, stdout, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
-		rtnl_close(&rth);
-		exit(1);
+	 	if (!is_batch_mode)
+			rtnl_close(&rth);
+		return 1;
 	}
 
-	rtnl_close(&rth);
+	if (!is_batch_mode)
+		rtnl_close(&rth);
 	return 0;
 }
 
