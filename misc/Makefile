@@ -25,7 +25,7 @@ rtacct: rtacct.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtacct rtacct.c $(LIBNETLINK) -lm
 
 arpd: arpd.c
-	$(CC) $(CFLAGS) -I$(DBM_INCLUDE) $(LDFLAGS) -o arpd arpd.c $(LIBNETLINK) -ldb
+	$(CC) $(CFLAGS) -I$(DBM_INCLUDE) $(LDFLAGS) -o arpd arpd.c $(LIBNETLINK) -ldb -lpthread
 
 rtstat: rtstat.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtstat rtstat.c
