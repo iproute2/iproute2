@@ -596,8 +596,8 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 
 	if (NULL == opts)
 		return -1;
-	memset(tb, 0, sizeof (tb));
-	parse_rtattr(tb, TCA_IPT_MAX, RTA_DATA(arg), RTA_PAYLOAD(arg));
+
+	parse_rtattr_nested(tb, TCA_IPT_MAX, arg);
 
 	if (tb[TCA_IPT_TABLE] == NULL) {
 		fprintf(f, "[NULL ipt table name ] assuming mangle ");

@@ -554,8 +554,7 @@ print_pedit(struct action_util *au,FILE * f, struct rtattr *arg)
 	if (arg == NULL)
 		return -1;
 
-	memset(tb, 0, sizeof (tb));
-	parse_rtattr(tb, TCA_PEDIT_MAX, RTA_DATA(arg), RTA_PAYLOAD(arg));
+	parse_rtattr_nested(tb, TCA_PEDIT_MAX, arg);
 
 	if (tb[TCA_PEDIT_PARMS] == NULL) {
 		fprintf(f, "[NULL pedit parameters]");
