@@ -30,10 +30,11 @@
 #include "rt_names.h"
 #include "ll_map.h"
 #include "libnetlink.h"
-#include "tcp_diag.h"
 #include "SNAPSHOT.h"
 
+#include <asm/byteorder.h>
 #include <linux/tcp.h>
+#include <linux/tcp_diag.h>
 
 int resolve_hosts = 0;
 int resolve_services = 1;
@@ -74,19 +75,19 @@ enum
 #define ALL_DB ((1<<MAX_DB)-1)
 
 enum {
-  SS_UNKNOWN,
-  SS_ESTABLISHED,
-  SS_SYN_SENT,
-  SS_SYN_RECV,
-  SS_FIN_WAIT1,
-  SS_FIN_WAIT2,
-  SS_TIME_WAIT,
-  SS_CLOSE,
-  SS_CLOSE_WAIT,
-  SS_LAST_ACK,
-  SS_LISTEN,
-  SS_CLOSING,
-  SS_MAX
+	SS_UNKNOWN,
+	SS_ESTABLISHED,
+	SS_SYN_SENT,
+	SS_SYN_RECV,
+	SS_FIN_WAIT1,
+	SS_FIN_WAIT2,
+	SS_TIME_WAIT,
+	SS_CLOSE,
+	SS_CLOSE_WAIT,
+	SS_LAST_ACK,
+	SS_LISTEN,
+	SS_CLOSING,
+	SS_MAX
 };
 
 #define SS_ALL ((1<<SS_MAX)-1)
@@ -333,37 +334,34 @@ int get_slabstat(struct slabstat *s)
 	return 0;
 }
 
-
-
-
-char *sstate_name[] = {
-  "UNKNOWN",
-  "ESTAB",
-  "SYN-SENT",
-  "SYN-RECV",
-  "FIN-WAIT-1",
-  "FIN-WAIT-2",
-  "TIME-WAIT",
-  "UNCONN",
-  "CLOSE-WAIT",
-  "LAST-ACK",
-  "LISTEN",
-  "CLOSING",
+static const char *sstate_name[] = {
+	"UNKNOWN",
+	[TCP_ESTABLISHED] = "ESTAB",
+	[TCP_SYN_SENT] = "SYN-SENT",
+	[TCP_SYN_RECV] = "SYN-RECV",
+	[TCP_FIN_WAIT1] = "FIN-WAIT-1",
+	[TCP_FIN_WAIT2] = "FIN-WAIT-2",
+	[TCP_TIME_WAIT] = "TIME-WAIT",
+	[TCP_CLOSE] = "UNCONN",
+	[TCP_CLOSE_WAIT] = "CLOSE-WAIT",
+	[TCP_LAST_ACK] = "LAST-ACK",
+	[TCP_LISTEN] = 	"LISTEN",
+	[TCP_CLOSING] = "CLOSING",
 };
 
-char *sstate_namel[] = {
-  "UNKNOWN",
-  "established",
-  "syn-sent",
-  "syn-recv",
-  "fin-wait-1",
-  "fin-wait-2",
-  "time-wait",
-  "unconnected",
-  "close-wait",
-  "last-ack",
-  "listening",
-  "closing",
+static const char *sstate_namel[] = {
+	"UNKNOWN",
+	[TCP_ESTABLISHED] = "established",
+	[TCP_SYN_SENT] = "syn-sent",
+	[TCP_SYN_RECV] = "syn-recv",
+	[TCP_FIN_WAIT1] = "fin-wait-1",
+	[TCP_FIN_WAIT2] = "fin-wait-2",
+	[TCP_TIME_WAIT] = "time-wait",
+	[TCP_CLOSE] = "unconnected",
+	[TCP_CLOSE_WAIT] = "close-wait",
+	[TCP_LAST_ACK] = "last-ack",
+	[TCP_LISTEN] = 	"listening",
+	[TCP_CLOSING] = "closing",
 };
 
 struct tcpstat
@@ -385,7 +383,7 @@ struct tcpstat
 	int		rto, ato, qack, cwnd, ssthresh;
 };
 
-char *tmr_name[] = {
+static const char *tmr_name[] = {
 	"off",
 	"on",
 	"keepalive",
@@ -552,7 +550,7 @@ const char *resolve_service(int port)
 	return buf;
 }
 
-void formatted_print(inet_prefix *a, int port)
+void formatted_print(const inet_prefix *a, int port)
 {
 	char buf[1024];
 	const char *ap = buf;
@@ -585,10 +583,11 @@ struct aafilter
 	struct aafilter *next;
 };
 
-int inet2_addr_match(inet_prefix *a, inet_prefix *p, int plen)
+int inet2_addr_match(const inet_prefix *a, const inet_prefix *p, int plen)
 {
 	if (!inet_addr_match(a, p, plen))
 		return 0;
+
 	/* Cursed "v4 mapped" addresses: v4 mapped socket matches
 	 * pure IPv4 rule, but v4-mapped rule selects only v4-mapped
 	 * sockets. Fair? */
@@ -603,7 +602,7 @@ int inet2_addr_match(inet_prefix *a, inet_prefix *p, int plen)
 	return 1;
 }
 
-int unix_match(inet_prefix *a, inet_prefix *p)
+int unix_match(const inet_prefix *a, const inet_prefix *p)
 {
 	char *addr, *pattern;
 	memcpy(&addr, a->data, sizeof(addr));
@@ -1268,6 +1267,71 @@ outerr:
 	return -1;
 }
 
+void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
+{
+	struct rtattr * tb[TCPDIAG_MAX+1];
+	const struct tcpdiag_meminfo *minfo = NULL;
+	const struct tcp_info *info = NULL;
+	const struct tcpvegas_info *vinfo = NULL;
+
+	memset(tb, 0, sizeof(tb));
+	parse_rtattr(tb, TCPDIAG_MAX, (struct rtattr*)(r+1),
+		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
+
+	if (tb[TCPDIAG_MEMINFO])
+		minfo = RTA_DATA(tb[TCPDIAG_MEMINFO]);
+	if (tb[TCPDIAG_INFO])
+		info = RTA_DATA(tb[TCPDIAG_INFO]);
+
+#ifdef TCPDIAG_VEGASINFO
+	if (tb[TCPDIAG_VEGASINFO]) 
+		vinfo = RTA_DATA(tb[TCPDIAG_VEGASINFO]);
+#endif
+
+	if (minfo) {
+		printf(" mem:(r%u,w%u,f%u,t%u)",
+		       minfo->tcpdiag_rmem,
+		       minfo->tcpdiag_wmem,
+		       minfo->tcpdiag_fmem,
+		       minfo->tcpdiag_tmem);
+	}
+
+	if (info) {
+#ifdef TCP_INFO
+		if (info->tcpi_rto && info->tcpi_rto != 3000000)
+			printf(" rto:%g", (double)info->tcpi_rto/1000);
+		if (info->tcpi_rtt)
+			printf(" rtt:%g/%g", (double)info->tcpi_rtt/1000,
+			       (double)info->tcpi_rttvar/1000);
+		if (info->tcpi_ato)
+			printf(" ato:%g", (double)info->tcpi_ato/1000);
+		if (info->tcpi_snd_cwnd != 2)
+			printf(" cwnd:%d", info->tcpi_snd_cwnd);
+		if (info->tcpi_snd_ssthresh < 0xFFFF)
+			printf(" ssthresh:%d", info->tcpi_snd_ssthresh);
+
+
+#ifdef TCPDIAG_VEGASINFO
+		if (vinfo) {
+			if (vinfo->tcpv_enabled)
+				printf(" vegas");
+			if (vinfo->tcpv_rtt && 
+			    vinfo->tcpv_rtt != 0x7fffffff &&
+			    info->tcpi_snd_mss && 
+			    info->tcpi_snd_cwnd) {
+				printf(" bw:%g", 
+				       (double) info->tcpi_snd_cwnd *
+				       (double) info->tcpi_snd_mss *
+				       8000000. / (double) vinfo->tcpv_rtt);
+			}
+		}
+#endif
+	}
+#else
+#warning No TCP_INFO. Please, do not repeat this experiment, use right kernel.
+	printf(" MORE_INFO_PROVIDED_YOU_COMPILED_SS_RIGHT");
+#endif
+}
 
 int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 {
@@ -1323,43 +1387,10 @@ int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 			printf("%08x", r->id.tcpdiag_cookie[1]);
 	}
 	if (show_mem || show_tcpinfo) {
-		struct rtattr * tb[TCPDIAG_MAX+1];
-		struct tcpdiag_meminfo *minfo = NULL;
-		struct tcp_info *info = NULL;
-
-		memset(tb, 0, sizeof(tb));
-		parse_rtattr(tb, TCPDIAG_MAX, (struct rtattr*)(r+1),
-			     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
-		if (tb[TCPDIAG_MEMINFO])
-			minfo = RTA_DATA(tb[TCPDIAG_MEMINFO]);
-		if (tb[TCPDIAG_INFO])
-			info = RTA_DATA(tb[TCPDIAG_INFO]);
-		if (minfo) {
-			printf(" mem:(r%u,w%u,f%u,t%u)",
-			       minfo->tcpdiag_rmem,
-			       minfo->tcpdiag_wmem,
-			       minfo->tcpdiag_fmem,
-			       minfo->tcpdiag_tmem);
-		}
-		if (info) {
-#ifdef TCP_INFO
-			if (info->tcpi_rto && info->tcpi_rto != 3000000)
-				printf(" rto:%g", (double)info->tcpi_rto/1000);
-			if (info->tcpi_rtt)
-				printf(" rtt:%g/%g", (double)info->tcpi_rtt/1000,
-				       (double)info->tcpi_rttvar/1000);
-			if (info->tcpi_ato)
-				printf(" ato:%g", (double)info->tcpi_ato/1000);
-			if (info->tcpi_snd_cwnd != 2)
-				printf(" cwnd:%d", info->tcpi_snd_cwnd);
-			if (info->tcpi_snd_ssthresh < 0xFFFF)
-				printf(" ssthresh:%d", info->tcpi_snd_ssthresh);
-#else
-#warning No TCP_INFO. Please, do not repeat this experiment, use right kernel.
-			printf(" MORE_INFO_PROVIDED_YOU_COMPILED_SS_RIGHT");
-#endif
-		}
+		printf("\n\t");
+		tcp_show_info(nlh, r);
 	}
+
 	printf("\n");
 
 	return 0;
@@ -1397,8 +1428,12 @@ int tcp_show_netlink(struct filter *f, FILE *dump_fp)
 	req.r.tcpdiag_states = f->states;
 	if (show_mem)
 		req.r.tcpdiag_ext |= (1<<(TCPDIAG_MEMINFO-1)); 
-	if (show_tcpinfo)
+	if (show_tcpinfo) {
 		req.r.tcpdiag_ext |= (1<<(TCPDIAG_INFO-1));
+#ifdef TCPDIAG_VEGASINFO
+		req.r.tcpdiag_ext |= (1<<(TCPDIAG_VEGASINFO-1));
+#endif
+	}
 
 	iov[0] = (struct iovec){ &req, sizeof(req) };
 	if (f->f) {
@@ -2285,7 +2320,7 @@ static void usage(void)
 "       ss [ OPTIONS ] [ FILTER ]\n"
 "where  OPTIONS := { -h[elp] | -V[ersion] | -n[umeric] | -r[esolve] |\n"
 "                    -a[ll] -l[istening] -o[ptions] -e[xtended] -p[rocesses]\n"
-"                    -A QUERY } -s[ummary]\n"
+"                    -A QUERY -i[nfo] } -s[ummary]\n"
 "                    -f[amily] { inet | inet6 | link | unix } }\n"
 "       QUERY := {all|inet|tcp|udp|raw|unix|packet|netlink}[,QUERY]\n"
 "       FILTER := [ state TCP-STATE ] [ EXPRESSION ]\n"
@@ -2294,7 +2329,7 @@ static void usage(void)
 }
 
 
-int scan_state(char *state)
+int scan_state(const char *state)
 {
 	int i;
 	if (strcasecmp(state, "close") == 0 ||
@@ -2321,14 +2356,13 @@ int scan_state(char *state)
 	return 0;
 }
 
-
 int main(int argc, char *argv[])
 {
 	int do_default = 1;
 	int saw_states = 0;
 	int saw_query = 0;
 	int do_summary = 0;
-	char *dump_tcpdiag = NULL;
+	const char *dump_tcpdiag = NULL;
 	FILE *filter_fp = NULL;
 	int ch;
 
@@ -2336,7 +2370,7 @@ int main(int argc, char *argv[])
 
 	current_filter.states = default_filter.states;
 
-	while ((ch = getopt(argc, argv, "h?aletuwxnro460spfmiA:D:F:vV")) != EOF) {
+	while ((ch = getopt(argc, argv, "h?aletuwxnro460spf:miA:D:F:vV")) != EOF) {
 		switch(ch) {
 		case 'n':
 			resolve_services = 0;
