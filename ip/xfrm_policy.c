@@ -62,7 +62,8 @@ static void usage(void)
 
 	fprintf(stderr, "SELECTOR := src ADDR[/PLEN] dst ADDR[/PLEN] [ UPSPEC ] [ dev DEV ]\n");
 
-	fprintf(stderr, "UPSPEC := proto PROTO [ sport PORT ] [ dport PORT ]\n");
+	fprintf(stderr, "UPSPEC := proto PROTO [ [ sport PORT ] [ dport PORT ] |\n");
+	fprintf(stderr, "                        [ type NUMBER ] [ code NUMBER ] ]\n");
 
 	//fprintf(stderr, "DEV - device name(default=none)\n");
 

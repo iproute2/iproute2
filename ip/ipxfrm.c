@@ -389,10 +389,25 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 
 	if (sel->proto)
 		fprintf(fp, "proto %s ", strxf_proto(sel->proto));
-	if (sel->sport)
-		fprintf(fp, "sport %u ", ntohs(sel->sport));
-	if (sel->dport)
-		fprintf(fp, "dport %u ", ntohs(sel->dport));
+	switch (sel->proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+	case IPPROTO_SCTP:
+	default: /* XXX */
+		if (sel->sport_mask)
+			fprintf(fp, "sport %u ", ntohs(sel->sport));
+		if (sel->dport_mask)
+			fprintf(fp, "dport %u ", ntohs(sel->dport));
+		break;
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+		/* type/code is stored at sport/dport in selector */
+		if (sel->sport_mask)
+			fprintf(fp, "type %u ", ntohs(sel->sport));
+		if (sel->dport_mask)
+			fprintf(fp, "code %u ", ntohs(sel->dport));
+		break;
+	}
 
 	if (sel->ifindex > 0) {
 		char buf[IF_NAMESIZE];
@@ -677,6 +692,10 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 {
 	int argc = *argcp;
 	char **argv = *argvp;
+	char *sportp = NULL;
+	char *dportp = NULL;
+	char *typep = NULL;
+	char *codep = NULL;
 
 	while (1) {
 		if (strcmp(*argv, "proto") == 0) {
@@ -701,6 +720,8 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 			filter.upspec_proto_mask = XFRM_FILTER_MASK_FULL;
 
 		} else if (strcmp(*argv, "sport") == 0) {
+			sportp = *argv;
+
 			NEXT_ARG();
 
 			if (get_u16(&sel->sport, *argv, 0))
@@ -712,6 +733,8 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 			filter.upspec_sport_mask = XFRM_FILTER_MASK_FULL;
 
 		} else if (strcmp(*argv, "dport") == 0) {
+			dportp = *argv;
+
 			NEXT_ARG();
 
 			if (get_u16(&sel->dport, *argv, 0))
@@ -719,6 +742,33 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 			sel->dport = htons(sel->dport);
 			if (sel->dport)
 				sel->dport_mask = ~((__u16)0);
+
+			filter.upspec_dport_mask = XFRM_FILTER_MASK_FULL;
+
+		} else if (strcmp(*argv, "type") == 0) {
+			typep = *argv;
+
+			NEXT_ARG();
+
+			if (get_u16(&sel->sport, *argv, 0) ||
+			    (sel->sport & ~((__u16)0xff)))
+				invarg("\"type\" value is invalid", *argv);
+			sel->sport = htons(sel->sport);
+			sel->sport_mask = ~((__u16)0);
+
+			filter.upspec_sport_mask = XFRM_FILTER_MASK_FULL;
+
+
+		} else if (strcmp(*argv, "code") == 0) {
+			codep = *argv;
+
+			NEXT_ARG();
+
+			if (get_u16(&sel->dport, *argv, 0) ||
+			    (sel->dport & ~((__u16)0xff)))
+				invarg("\"code\" value is invalid", *argv);
+			sel->dport = htons(sel->dport);
+			sel->dport_mask = ~((__u16)0);
 
 			filter.upspec_dport_mask = XFRM_FILTER_MASK_FULL;
 
@@ -733,6 +783,27 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 	}
 	if (argc == *argcp)
 		missarg("UPSPEC");
+	if (sportp || dportp) {
+		switch (sel->proto) {
+		case IPPROTO_TCP:
+		case IPPROTO_UDP:
+		case IPPROTO_SCTP:
+			break;
+		default:
+			fprintf(stderr, "\"sport\" and \"dport\" are invalid with proto=%s\n", strxf_proto(sel->proto));
+			exit(1);
+		}
+	}
+	if (typep || codep) {
+		switch (sel->proto) {
+		case IPPROTO_ICMP:
+		case IPPROTO_ICMPV6:
+			break;
+		default:
+			fprintf(stderr, "\"type\" and \"code\" are invalid with proto=%s\n", strxf_proto(sel->proto));
+			exit(1);
+		}
+	}
 
 	*argcp = argc;
 	*argvp = argv;
