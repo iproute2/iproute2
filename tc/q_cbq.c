@@ -452,7 +452,8 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_CBQ_OVL_STRATEGY]) {
 		if (RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]) < sizeof(*ovl))
 			fprintf(stderr, "CBQ: too short overlimit strategy %u/%u\n",
-				RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]), sizeof(*ovl));
+				(unsigned) RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]), 
+				(unsigned) sizeof(*ovl));
 		else
 			ovl = RTA_DATA(tb[TCA_CBQ_OVL_STRATEGY]);
 	}

@@ -240,8 +240,8 @@ void dump_raw_db(FILE *fp, int to_hist)
 
 /* use communication definitions of meg/kilo etc */
 static const unsigned long long giga = 1000000000ull;
-static const unsigned long mega = 1000000;
-static const unsigned long kilo = 1000;
+static const unsigned long long mega = 1000000;
+static const unsigned long long kilo = 1000;
 
 void format_rate(FILE *fp, unsigned long long *vals, double *rates, int i)
 {

@@ -45,7 +45,8 @@ void act_usage(void)
 static int print_noaopt(struct action_util *au, FILE *f, struct rtattr *opt)
 {
 	if (opt && RTA_PAYLOAD(opt))
-		fprintf(f, "[Unknown action, optlen=%u] ", RTA_PAYLOAD(opt));
+		fprintf(f, "[Unknown action, optlen=%u] ", 
+			(unsigned) RTA_PAYLOAD(opt));
 	return 0;
 }
 

@@ -44,7 +44,8 @@ static int print_noqopt(struct qdisc_util *qu, FILE *f,
 			struct rtattr *opt)
 {
 	if (opt && RTA_PAYLOAD(opt))
-		fprintf(f, "[Unknown qdisc, optlen=%u] ", RTA_PAYLOAD(opt));
+		fprintf(f, "[Unknown qdisc, optlen=%u] ", 
+			(unsigned) RTA_PAYLOAD(opt));
 	return 0;
 }
 
@@ -60,7 +61,8 @@ static int parse_noqopt(struct qdisc_util *qu, int argc, char **argv, struct nlm
 static int print_nofopt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u32 fhandle)
 {
 	if (opt && RTA_PAYLOAD(opt))
-		fprintf(f, "fh %08x [Unknown filter, optlen=%u] ", fhandle, RTA_PAYLOAD(opt));
+		fprintf(f, "fh %08x [Unknown filter, optlen=%u] ", 
+			fhandle, (unsigned) RTA_PAYLOAD(opt));
 	else if (fhandle)
 		fprintf(f, "fh %08x ", fhandle);
 	return 0;
@@ -226,14 +228,16 @@ int main(int argc, char **argv)
 			if (line[strlen(line)-1]=='\n') {
 				line[strlen(line)-1] = '\0';
 			} else {
-				fprintf(stderr, "No newline at the end of line, looks like to long (%d chars or more)\n", strlen(line));
+				fprintf(stderr, "No newline at the end of line, looks like to long (%d chars or more)\n", 
+					(int) strlen(line));
 				exit(-1);
 			}
 			largc = 0;
 			largv[largc]=strtok(line, " ");
 			while ((largv[++largc]=strtok(NULL, " ")) != NULL) {
 				if (largc > BMAXARG) {
-					fprintf(stderr, "Over %d arguments in batch mode, enough!\n", BMAXARG);
+					fprintf(stderr, "Over %d arguments in batch mode, enough!\n", 
+						(int) BMAXARG);
 					exit(-1);
 				}
 			}
