@@ -27,9 +27,6 @@
 #include "utils.h"
 #include "tc_util.h"
 
-void *aBODY;
-
-
 static struct action_util * action_list;
 #ifdef CONFIG_GACT
 int gact_ld = 0 ; //fuckin backward compatibility
@@ -65,6 +62,7 @@ static int parse_noaopt(struct action_util *au, int *argc_p, char ***argv_p, int
 
 struct action_util *get_action_kind(char *str)
 {
+	static void *aBODY;
 	void *dlh;
 	char buf[256];
 	struct action_util *a;
