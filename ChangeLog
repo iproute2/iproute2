@@ -1,3 +1,9 @@
+2005-03-14  Boian Bonev <boian@bonev.com>
+	
+	* enhancement to batch mode.
+	 it does not exit on error, just report it
+         tc reuses the already open netlink socket for subsequent command(s)
+
 2005-03-14  Thomas Graf <tgraf@suug.ch>
 	
 	* ip link command
