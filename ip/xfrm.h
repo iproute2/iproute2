@@ -39,6 +39,10 @@
 #define XFRMP_RTA(x)  ((struct rtattr*)(((char*)(x)) + NLMSG_ALIGN(sizeof(struct xfrm_userpolicy_info))))
 #define XFRMP_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct xfrm_userpoilcy_info))
 
+#define XFRMACQ_RTA(x)	((struct rtattr*)(((char*)(x)) + NLMSG_ALIGN(sizeof(struct xfrm_user_acquire))))
+#define XFRMEXP_RTA(x)	((struct rtattr*)(((char*)(x)) + NLMSG_ALIGN(sizeof(struct xfrm_user_expire))))
+#define XFRMPEXP_RTA(x)	((struct rtattr*)(((char*)(x)) + NLMSG_ALIGN(sizeof(struct xfrm_user_polexpire))))
+
 #define XFRM_FLAG_PRINT(fp, flags, f, s) \
 	do { \
 		if (flags & f) { \
@@ -84,8 +88,13 @@ struct xfrm_filter {
 
 extern struct xfrm_filter filter;
 
+int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
+		     void *arg);
+int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
+		      void *arg);
 int do_xfrm_state(int argc, char **argv);
 int do_xfrm_policy(int argc, char **argv);
+int do_xfrm_monitor(int argc, char **argv);
 
 int xfrm_addr_match(xfrm_address_t *x1, xfrm_address_t *x2, int bits);
 int xfrm_xfrmproto_getbyname(char *name);
@@ -98,7 +107,7 @@ const char *strxf_share(__u8 share);
 const char *strxf_proto(__u8 proto);
 void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 			__u8 mode, __u32 reqid, __u16 family, int force_spi,
-			FILE *fp, const char *prefix);
+			FILE *fp, const char *prefix, const char *title);
 void xfrm_stats_print(struct xfrm_stats *s, FILE *fp, const char *prefix);
 void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 			 struct xfrm_lifetime_cur *cur,
@@ -107,6 +116,12 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 			 FILE *fp, const char *prefix);
 void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		      FILE *fp, const char *prefix);
+void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
+			    struct rtattr *tb[], FILE *fp, const char *prefix,
+			   const char *title);
+void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
+			    struct rtattr *tb[], FILE *fp, const char *prefix,
+			    const char *title);
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 		  int loose, int *argcp, char ***argvp);
 int xfrm_mode_parse(__u8 *mode, int *argcp, char ***argvp);
