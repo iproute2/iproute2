@@ -29,7 +29,7 @@
 
 #include "utils.h"
 
-int get_integer(int *val, char *arg, int base)
+int get_integer(int *val, const char *arg, int base)
 {
 	long res;
 	char *ptr;
@@ -43,7 +43,7 @@ int get_integer(int *val, char *arg, int base)
 	return 0;
 }
 
-int get_unsigned(unsigned *val, char *arg, int base)
+int get_unsigned(unsigned *val, const char *arg, int base)
 {
 	unsigned long res;
 	char *ptr;
@@ -57,7 +57,7 @@ int get_unsigned(unsigned *val, char *arg, int base)
 	return 0;
 }
 
-int get_u32(__u32 *val, char *arg, int base)
+int get_u32(__u32 *val, const char *arg, int base)
 {
 	unsigned long res;
 	char *ptr;
@@ -71,7 +71,7 @@ int get_u32(__u32 *val, char *arg, int base)
 	return 0;
 }
 
-int get_u16(__u16 *val, char *arg, int base)
+int get_u16(__u16 *val, const char *arg, int base)
 {
 	unsigned long res;
 	char *ptr;
@@ -85,7 +85,7 @@ int get_u16(__u16 *val, char *arg, int base)
 	return 0;
 }
 
-int get_u8(__u8 *val, char *arg, int base)
+int get_u8(__u8 *val, const char *arg, int base)
 {
 	unsigned long res;
 	char *ptr;
@@ -99,7 +99,7 @@ int get_u8(__u8 *val, char *arg, int base)
 	return 0;
 }
 
-int get_s16(__s16 *val, char *arg, int base)
+int get_s16(__s16 *val, const char *arg, int base)
 {
 	long res;
 	char *ptr;
@@ -113,7 +113,7 @@ int get_s16(__s16 *val, char *arg, int base)
 	return 0;
 }
 
-int get_s8(__s8 *val, char *arg, int base)
+int get_s8(__s8 *val, const char *arg, int base)
 {
 	long res;
 	char *ptr;
@@ -127,9 +127,9 @@ int get_s8(__s8 *val, char *arg, int base)
 	return 0;
 }
 
-int get_addr_1(inet_prefix *addr, char *name, int family)
+int get_addr_1(inet_prefix *addr, const char *name, int family)
 {
-	char *cp;
+	const char *cp;
 	unsigned char *ap = (unsigned char*)addr->data;
 	int i;
 
@@ -270,31 +270,31 @@ __u32 get_addr32(char *name)
 	return addr.data[0];
 }
 
-void incomplete_command()
+void incomplete_command(void)
 {
 	fprintf(stderr, "Command line is not complete. Try option \"help\"\n");
 	exit(-1);
 }
 
-void invarg(char *msg, char *arg)
+void invarg(const char *msg, const char *arg)
 {
 	fprintf(stderr, "Error: argument \"%s\" is wrong: %s\n", arg, msg);
 	exit(-1);
 }
 
-void duparg(char *key, char *arg)
+void duparg(const char *key, const char *arg)
 {
 	fprintf(stderr, "Error: duplicate \"%s\": \"%s\" is the second value.\n", key, arg);
 	exit(-1);
 }
 
-void duparg2(char *key, char *arg)
+void duparg2(const char *key, const char *arg)
 {
 	fprintf(stderr, "Error: either \"%s\" is duplicate, or \"%s\" is a garbage.\n", key, arg);
 	exit(-1);
 }
 
-int matches(char *cmd, char *pattern)
+int matches(const char *cmd, const char *pattern)
 {
 	int len = strlen(cmd);
 	if (len > strlen(pattern))
@@ -302,7 +302,7 @@ int matches(char *cmd, char *pattern)
 	return memcmp(pattern, cmd, len);
 }
 
-int inet_addr_match(inet_prefix *a, inet_prefix *b, int bits)
+int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits)
 {
 	__u32 *a1 = a->data;
 	__u32 *a2 = b->data;
@@ -362,7 +362,7 @@ int __get_hz(void)
 	return HZ;
 }
 
-const char *rt_addr_n2a(int af, int len, void *addr, char *buf, int buflen)
+const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen)
 {
 	switch (af) {
 	case AF_INET:
@@ -391,7 +391,7 @@ struct namerec
 
 static struct namerec *nht[256];
 
-char *resolve_address(char *addr, int len, int af)
+char *resolve_address(const char *addr, int len, int af)
 {
 	struct namerec *n;
 	struct hostent *h_ent;
@@ -426,7 +426,7 @@ char *resolve_address(char *addr, int len, int af)
 		sethostent(1);
 	fflush(stdout);
 
-	if ((h_ent = gethostbyaddr(addr, len, af)) != NULL)
+	if ((h_ent = gethostbyaddr(addr, len, af)) != NULL) 
 		n->name = strdup(h_ent->h_name);
 
 	/* Even if we fail, "negative" entry is remembered. */
@@ -435,7 +435,8 @@ char *resolve_address(char *addr, int len, int af)
 #endif
 
 
-const char *format_host(int af, int len, void *addr, char *buf, int buflen)
+const char *format_host(int af, int len, const void *addr, 
+			char *buf, int buflen)
 {
 #ifdef RESOLVE_HOSTNAMES
 	if (resolve_hosts) {

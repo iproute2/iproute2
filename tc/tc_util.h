@@ -26,14 +26,14 @@ struct filter_util
 };
 
 
-extern struct qdisc_util *get_qdisc_kind(char *str);
-extern struct filter_util *get_filter_kind(char *str);
+extern struct qdisc_util *get_qdisc_kind(const char *str);
+extern struct filter_util *get_filter_kind(const char *str);
 
-extern int get_qdisc_handle(__u32 *h, char *str);
-extern int get_rate(unsigned *rate, char *str);
-extern int get_size(unsigned *size, char *str);
+extern int get_qdisc_handle(__u32 *h, const char *str);
+extern int get_rate(unsigned *rate, const char *str);
+extern int get_size(unsigned *size, const char *str);
 extern int get_size_and_cell(unsigned *size, int *cell_log, char *str);
-extern int get_usecs(unsigned *usecs, char *str);
+extern int get_usecs(unsigned *usecs, const char *str);
 extern int print_rate(char *buf, int len, __u32 rate);
 extern int print_size(char *buf, int len, __u32 size);
 extern int print_qdisc_handle(char *buf, int len, __u32 h);
@@ -46,7 +46,7 @@ extern char * sprint_usecs(__u32 usecs, char *buf);
 
 extern void print_tcstats(FILE *fp, struct tc_stats *st);
 
-extern int get_tc_classid(__u32 *h, char *str);
+extern int get_tc_classid(__u32 *h, const char *str);
 extern int print_tc_classid(char *buf, int len, __u32 h);
 extern char * sprint_tc_classid(__u32 h, char *buf);
 

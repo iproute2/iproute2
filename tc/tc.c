@@ -96,7 +96,7 @@ static int f_parse_noopt(struct filter_util *qu, char *fhandle, int argc, char *
 }
 #endif
 
-struct qdisc_util *get_qdisc_kind(char *str)
+struct qdisc_util *get_qdisc_kind(const char *str)
 {
 	void *dlh;
 	char buf[256];
@@ -140,7 +140,7 @@ noexist:
 }
 
 
-struct filter_util *get_filter_kind(char *str)
+struct filter_util *get_filter_kind(const char *str)
 {
 	void *dlh;
 	char buf[256];
