@@ -639,7 +639,7 @@ int main(int argc, char *argv[])
 	if (getenv("IFSTAT_HISTORY"))
 		snprintf(hist_name, sizeof(hist_name), getenv("IFSTAT_HISTORY"));
 	else
-		sprintf(hist_name, "/tmp/.ifstat.u%d", getuid());
+		sprintf(hist_name, "%s/.ifstat.u%d", P_tmpdir, getuid());
 
 	if (reset_history)
 		unlink(hist_name);
