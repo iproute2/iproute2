@@ -39,14 +39,14 @@ TCLIB += tc_estimator.o
 
 CFLAGS += -DCONFIG_GACT -DCONFIG_GACT_PROB
 
-
 TCSO :=
 TCSO += q_netem.so
 ifeq ($(TC_CONFIG_ATM),y)
   TCSO += q_atm.so
 endif
 
-NETEM_DIST := normal.dist pareto.dist paretonormal.dist
+DIST_GEN = maketable normal pareto paretonormal
+NETEM_DIST = normal.dist pareto.dist paretonormal.dist experimental.dist
 
 LDLIBS += -L. -ltc -lm -ldl
 
@@ -56,14 +56,19 @@ LDFLAGS += -Wl,-export-dynamic
 	$(CC) $(CFLAGS) -shared -fpic $< -o $@
 
 %.dist: %.c
-	$(CC) $(CFLAGS) -o $* $< -lm
+	$(HOSTCC) $(CFLAGS) -o $* $< -lm
 	./$* >$@
 	rm $*
 
 all: libtc.a tc $(TCSO) $(NETEM_DIST)
 
-tc: $(TCOBJ) $(LIBNETLINK) $(LIBUTIL) $(TCLIB)
+maketable: maketable.c
+	$(HOSTCC) $(CFLAGS) -o $@ $< -lm
 
+experimental.dist: maketable ping.trace
+	./maketable <ping.trace >expermental.dist
+
+tc: $(TCOBJ) $(LIBNETLINK) $(LIBUTIL) $(TCLIB)
 
 libtc.a: $(TCLIB)
 	$(AR) rcs $@ $(TCLIB)
@@ -79,7 +84,7 @@ install: all
 	done
 
 clean:
-	rm -f $(TCOBJ) $(TCLIB) $(NETEM_DIST) libtc.a tc *.so
+	rm -f $(DISTGEN) $(TCOBJ) $(TCLIB) $(NETEM_DIST) libtc.a tc *.so
 
 q_atm.so: q_atm.c
 	$(CC) $(CFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
