@@ -1,3 +1,9 @@
+2005-03-18  Stephen Hemminger  <shemminger@osdl.org>
+
+	* add -force option to batch mode
+	* handle midline comments in batch mode
+	* sum per cpu fields in lnstat correctly
+
 2005-03-14  Stephen Hemminger  <shemminger@osdl.org>
 
 	* cleanup batch mode, allow continuation, comments etc.

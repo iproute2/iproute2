@@ -35,6 +35,7 @@ int show_details = 0;
 int show_raw = 0;
 int resolve_hosts = 0;
 int use_iec = 0;
+int force = 0;
 struct rtnl_handle rth;
 
 static void *BODY;	/* cached handle dlopen(NULL) */
@@ -207,6 +208,7 @@ static int do_cmd(int argc, char **argv)
 	return -1;
 }
 
+/* split command line into argument vector */
 static int makeargs(char *line, char *argv[], int maxargs)
 {
 	static const char ws[] = " \t\r\n";
@@ -225,14 +227,55 @@ static int makeargs(char *line, char *argv[], int maxargs)
 	return argc;
 }
 
+static int lineno;
+/* Like glibc getline but handle continuation lines and comments */
+static size_t getcmdline(char **linep, size_t *lenp, FILE *in)
+{
+	size_t cc;
+	char *cp;
+		
+	if ( (cc = getline(linep, lenp, in)) < 0)
+		return cc;	/* eof or error */
+	++lineno;
+
+	cp = strchr(*linep, '#');
+	if (cp) 
+		*cp = '\0';
+	
+	while ((cp = strstr(*linep, "\\\n")) != NULL) {
+		char *line1 = NULL;
+		ssize_t len1 = 0;
+		size_t cc1;
+
+		if ((cc1 = getline(&line1, &len1, in)) < 0) {
+			fprintf(stderr, "Missing continuation line\n");
+			return cc1;
+		}
+
+		++lineno;
+		*cp = 0;
+
+		cp = strchr(line1, '#');
+		if (cp) 
+			*cp = '\0';
+
+		*linep = realloc(*linep, strlen(*linep) + strlen(line1) + 1);
+		if (!*linep) {
+			fprintf(stderr, "Out of memory\n");
+			return -1;
+		}
+		cc += cc1 - 2;
+		strcat(*linep, line1);
+		free(line1);
+	}
+	return cc;
+}
+
 static int batch(const char *name)
 {
 	char *line = NULL;
 	size_t len = 0;
-	ssize_t cc;
-	int lineno = 0;
-	char *largv[100];
-	int largc, ret = 0;
+	int ret = 0;
 
 	if (strcmp(name, "-") != 0) {
 		if (freopen(name, "r", stdin) == NULL) {
@@ -249,42 +292,20 @@ static int batch(const char *name)
 		return -1;
 	}
 
-	while ((cc = getline(&line, &len, stdin)) != -1) {
-		++lineno;
-
-		/* ignore blank lines and comments */
-		if (*line == '\n' || *line == '#')
-			continue;
-
-		/* handle continuation lines */
-		while (cc >= 2 && strcmp(line+cc-2, "\\\n") == 0) {
-			char *line1 = NULL;
-			ssize_t len1 = 0;
-			int cc1;
-			cc1 = getline(&line1, &len1, stdin);
-
-			if (cc1 < 0) {
-				fprintf(stderr, "Missing continuation line\n");
-				return -1;
-			}
-			++lineno;
-			line = realloc(line, cc + cc1);
-			if (!line) {
-				fprintf(stderr, "Out of memory\n");
-				return -1;
-			}
-
-			strcpy(line+cc-2, line1);
-			cc += cc1 - 2;
-			free(line1);
-		}
+	lineno = 0;
+	while (getcmdline(&line, &len, stdin) != -1) {
+		char *largv[100];
+		int largc;
 
 		largc = makeargs(line, largv, 100);
+		if (largc == 0)
+			continue;	/* blank line */
 
-		ret = do_cmd(largc, largv);
-		if (ret) {
+		if (do_cmd(largc, largv)) {
 			fprintf(stderr, "Command failed %s:%d\n", name, lineno);
-			break;
+			ret = 1;
+			if (!force)
+				break;
 		}
 	}
 
@@ -296,6 +317,7 @@ static int batch(const char *name)
 int main(int argc, char **argv)
 {
 	int ret;
+	char *batchfile = NULL;
 
 	while (argc > 1) {
 		if (argv[1][0] != '-')
@@ -315,19 +337,24 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-help") == 0) {
 			usage();
 			return 0;
+		} else if (matches(argv[1], "-force") == 0) {
+			++force;
 		} else 	if (matches(argv[1], "-batch") == 0) {
 			if (argc < 3) {
 				fprintf(stderr, "Wrong number of arguments in batch mode\n");
 				return -1;
 			}
-
-			return batch(argv[2]);
+			batchfile = argv[2];
+			argc--;	argv++;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;
 		}
 		argc--;	argv++;
 	}
+
+	if (batchfile)
+		return batch(batchfile);
 
 	if (argc <= 1) {
 		usage();
