@@ -33,8 +33,6 @@
 # define IPPROTO_SCTP	132
 #endif
 
-#define XFRM_MAX_DEPTH 6
-
 #define XFRMS_RTA(x)  ((struct rtattr*)(((char*)(x)) + NLMSG_ALIGN(sizeof(struct xfrm_usersa_info))))
 #define XFRMS_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct xfrm_usersa_info))
 
@@ -107,7 +105,7 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 			 FILE *fp, const char *prefix);
 void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 			 FILE *fp, const char *prefix);
-void xfrm_xfrma_print(struct rtattr *tb[], int ntb, __u16 family,
+void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		      FILE *fp, const char *prefix);
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 		  int loose, int *argcp, char ***argvp);
