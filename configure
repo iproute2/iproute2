@@ -5,7 +5,17 @@ INCLUDE=${1:-"/usr/include"}
 
 echo "# Generated config based on" $INCLUDE >Config
 
-echo "TC"
+echo -n "TC xfrm	"
+XFRM=$INCLUDE/linux/xfrm.h
+if [ ! -r $XFRM ];
+then
+    echo no
+else
+    echo "IP_CONFIG_XFRM:=y" >>Config
+    echo yes
+fi
+
+echo "TC schedulers"
 PKT_SCHED=$INCLUDE/linux/pkt_sched.h
 if [ ! -r $PKT_SCHED ];
 then
@@ -13,7 +23,7 @@ then
     exit 1
 fi
 
-echo -n " netem scheduler... "
+echo -n " netem  "
 cat >/tmp/netemtest.c <<EOF
 #include <asm/types.h>
 #include <linux/pkt_sched.h>
@@ -26,13 +36,13 @@ gcc -I$INCLUDE -c /tmp/netemtest.c  >/dev/null 2>&1
 if [ $? -eq 0 ]
 then 
     echo "TC_CONFIG_NETEM:=y" >>Config
-    echo y
+    echo yes
 else
-    echo n
+    echo no
 fi
 rm -f /tmp/netemtest.c /tmp/netemtest.o
 
-echo -n " ATM...              "
+echo -n " ATM	"
 cat >/tmp/atmtest.c <<EOF
 #include <atm.h>
 int main(int argc, char **argv) {
@@ -45,13 +55,13 @@ gcc -I$INCLUDE -o /tmp/atmtest /tmp/atmtest.c -latm >/dev/null 2>&1
 if [ $? -eq 0 ]
 then
     echo "TC_CONFIG_ATM:=y" >>Config
-    echo y
+    echo yes
 else
-    echo n
+    echo no
 fi
 rm -f /tmp/atmtest.c /tmp/atmtest
 
-echo -n " HTB...              "
+echo -n " HTB	"
 DEF_HTB=`grep '^#define HTB_TC_VER' tc/q_htb.c`
 cat >/tmp/htbtest.c <<EOF
 #include <stdio.h>
@@ -66,34 +76,56 @@ int main(int argc, char **argv) {
 	return 0;
 }
 EOF
-gcc -I$INCLUDE -o /tmp/htbtest /tmp/htbtest.c
+gcc -I$INCLUDE -o /tmp/htbtest /tmp/htbtest.c >/dev/null 2>&1
 if [ $? -eq 0 -a /tmp/htbtest ]
 then
 	echo "TC_CONFIG_HTB:=y" >>Config
-	echo y
+	echo yes
 else
-    echo n
+    echo no
 fi
 rm -f /tmp/htbtest /tmp/htbtest.c
 
+echo -n " HFSC	"
+cat >/tmp/hfsctest.c <<EOF
+#include <asm/types.h>
+#include <linux/pkt_sched.h>
+int main(int argc, char **argv) {
+	static struct tc_hfsc_qopt qopt;
+
+	exit(qopt.defcls);
+}
+EOF
+gcc -I$INCLUDE -c /tmp/hfsctest.c  >/dev/null 2>&1
+if [ $? -eq 0 ]
+then 
+    echo "TC_CONFIG_HFSC:=y" >>Config
+    echo yes
+else
+    echo no
+fi
+rm -f /tmp/hfsctest.c /tmp/hfsctest.o
+
+
+
 # See if we know about TCP Vegas
 echo "SS"
-echo -n " TCP Vegas...        "
+echo -n " TCP Vegas        "
 if grep -q TCPDIAG_VEGASINFO $INCLUDE/linux/tcp_diag.h  >/dev/null 2>&1
 then
     echo "SS_CONFIG_VEGAS:=y" >>Config
-    echo y
+    echo yes
 else
-    echo n
+    echo no
 fi
 
-echo -n " TCP DRS...          "
+echo -n " TCP DRS          "
 if grep -q tcpi_rcv_space $INCLUDE/linux/tcp.h
 then
     echo "SS_CONFIG_DRS:=y" >>Config
-    echo y
+    echo yes
 else
-    echo n
+    echo no
 fi
 
 
