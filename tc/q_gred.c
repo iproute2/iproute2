@@ -76,9 +76,6 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv, struct nlmsgh
 				    "defined after DPs\n");
 				return -1;
 			}
-#if 0
-			if (opt.def_DP>opt.DPs-1) {
-#endif
 			if (opt.def_DP>opt.DPs) {
 /*
 				fprintf(stderr, "\"default DP\" must be less than %d\nNote: DP runs from 0 to %d for %d DPs\n",opt.DPs,opt.DPs-1,opt.DPs);
