@@ -147,7 +147,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (filter.up && !(ifi->ifi_flags&IFF_UP))
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 	if (tb[IFLA_IFNAME] == NULL) {
 		fprintf(stderr, "BUG: nil ifname\n");
@@ -297,7 +296,6 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (filter.flushb && n->nlmsg_type != RTM_NEWADDR)
 		return 0;
 
-	memset(rta_tb, 0, sizeof(rta_tb));
 	parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(ifa), n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
 
 	if (!rta_tb[IFA_LOCAL])
@@ -663,7 +661,6 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 					continue;
 				if (filter.pfx.family || filter.label) {
 					struct rtattr *tb[IFA_MAX+1];
-					memset(tb, 0, sizeof(tb));
 					parse_rtattr(tb, IFA_MAX, IFA_RTA(ifa), IFA_PAYLOAD(n));
 					if (!tb[IFA_LOCAL])
 						tb[IFA_LOCAL] = tb[IFA_ADDRESS];
