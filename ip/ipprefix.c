@@ -67,7 +67,6 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 	}
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(prefix), len);
 
 	fprintf(fp, "prefix ");
