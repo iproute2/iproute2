@@ -1,3 +1,10 @@
+2004-08-30  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Patch from jamal to support gact
+
+	* Add support for loading distributions to netem
+	
+
 2004-08-23  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Update from jamal for all the parts that got broken in the
