@@ -97,44 +97,55 @@ char * sprint_tc_classid(__u32 h, char *buf)
 	return buf;
 }
 
-/*
- * NB: rates are scaled differently depending on bits or bytes.
- *     if bits are requested then k == 1000 
- *     for bytes k = 1024
- */
+/* See http://physics.nist.gov/cuu/Units/binary.html */
+static const struct rate_suffix {
+	const char *name;
+	double scale;
+} suffixes[] = {
+	{ "bit",	1. },
+	{ "Kibit",	1024. },
+	{ "kbit",	1000. },
+	{ "mibit",	1024.*1024. },
+	{ "mbit",	1000000. },
+	{ "gibit",	1024.*1024.*1024. },
+	{ "gbit",	1000000000. },
+	{ "tibit",	1024.*1024.*1024.*1024. },
+	{ "tbit",	1000000000000. },
+	{ "Bps",	8. },
+	{ "KiBps",	8.*1024. },
+	{ "KBps",	8000. },
+	{ "MiBps",	8.*1024*1024. },
+	{ "MBps",	8000000. },
+	{ "GiBps",	8.*1024.*1024.*1024. },
+	{ "GBps",	8000000000. },
+	{ "TiBps",	8.*1024.*1024.*1024.*1024. },
+	{ "TBps",	8000000000000. },
+	{ NULL }
+};
+
+
 int get_rate(unsigned *rate, const char *str)
 {
 	char *p;
 	double bps = strtod(str, &p);
+	const struct rate_suffix *s;
 
 	if (p == str)
 		return -1;
 
-	if (*p == 0 || strcasecmp(p, "bit") == 0)
-		bps /= 8;
-	else if (strcasecmp(p, "kbit") == 0)
-		bps = (bps * 1000.) / 8;
-	else if (strcasecmp(p, "mbit") == 0)
-		bps = (bps * 1000000.)/8;
-	else if (strcasecmp(p, "gbit") == 0)
-		bps = (bps * 1000000000.)/8;
-	else if (strcasecmp(p, "kibit") == 0)
-		bps *= 1024 / 8;
-	else if (strcasecmp(p, "mibit") == 0)
-		bps *= 1024*1024/8;
-	else if (strcasecmp(p, "gibit") == 0)
-		bps *= 1024*1024*1024/8;
-	else if (strcasecmp(p, "kbps") == 0)
-		bps *= 1024;
-	else if (strcasecmp(p, "mbps") == 0)
-		bps *= 1024*1024;
-	else if (strcasecmp(p, "gbps") == 0)
-		bps *= 1024*1024*1024;
-	else if (strcasecmp(p, "bps") != 0)
-		return -1;
+	if (*p == '\0') {
+		*rate = bps / 8.;	/* assume bytes/sec */
+		return 0;
+	}
 
-	*rate = bps;
-	return 0;
+	for (s = suffixes; s->name; ++s) {
+		if (strcasecmp(s->name, p) == 0) {
+			*rate = (bps * s->scale) / 8.;
+			return 0;
+		}
+	}
+
+	return -1;
 }
 
 int get_rate_and_cell(unsigned *rate, int *cell_log, char *str)
@@ -174,11 +185,11 @@ void print_rate(char *buf, int len, __u32 rate)
 	if (use_iec) {
 		if (tmp >= 1024*1023 && 
 		    fabs(1024*1024*rint(tmp/(1024*1024)) - tmp) < 1024)
-			snprintf(buf, len, "%gMibps", rint(tmp/(1024*1024)));
+			snprintf(buf, len, "%gMibit", rint(tmp/(1024*1024)));
 		else if (tmp >= 1024-16 && fabs(1024*rint(tmp/1024) - tmp) < 16)
-			snprintf(buf, len, "%gKibps", rint(tmp/1024));
+			snprintf(buf, len, "%gKibit", rint(tmp/1024));
 		else
-			snprintf(buf, len, "%ubps", rate);
+			snprintf(buf, len, "%ubit", rate);
 
 	} else { 
 		if (tmp >= 999999 && 
