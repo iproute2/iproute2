@@ -214,8 +214,8 @@ int print_linkinfo(const struct sockaddr_nl *who, const struct nlmsghdr *n, void
 		}
 	}
 	if (do_link && tb[IFLA_STATS] && show_stats) {
-		struct net_device_stats slocal;
-		struct net_device_stats *s = RTA_DATA(tb[IFLA_STATS]);
+		struct rtnl_link_stats slocal;
+		struct rtnl_link_stats *s = RTA_DATA(tb[IFLA_STATS]);
 		if (((unsigned long)s) & (sizeof(unsigned long)-1)) {
 			memcpy(&slocal, s, sizeof(slocal));
 			s = &slocal;
@@ -223,17 +223,17 @@ int print_linkinfo(const struct sockaddr_nl *who, const struct nlmsghdr *n, void
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
 			s->rx_compressed ? "compressed" : "", _SL_);
-		fprintf(fp, "    %-10lu %-8lu %-7lu %-7lu %-7lu %-7lu",
+		fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
 			s->rx_bytes, s->rx_packets, s->rx_errors,
 			s->rx_dropped, s->rx_over_errors,
 			s->multicast
 			);
 		if (s->rx_compressed)
-			fprintf(fp, " %-7lu", s->rx_compressed);
+			fprintf(fp, " %-7u", s->rx_compressed);
 		if (show_stats > 1) {
 			fprintf(fp, "%s", _SL_);
 			fprintf(fp, "    RX errors: length  crc     frame   fifo    missed%s", _SL_);
-			fprintf(fp, "               %-7lu  %-7lu %-7lu %-7lu %-7lu",
+			fprintf(fp, "               %-7u  %-7u %-7u %-7u %-7u",
 				s->rx_length_errors,
 				s->rx_crc_errors,
 				s->rx_frame_errors,
@@ -244,15 +244,15 @@ int print_linkinfo(const struct sockaddr_nl *who, const struct nlmsghdr *n, void
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
 			s->tx_compressed ? "compressed" : "", _SL_);
-		fprintf(fp, "    %-10lu %-8lu %-7lu %-7lu %-7lu %-7lu",
+		fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
 			s->tx_bytes, s->tx_packets, s->tx_errors,
 			s->tx_dropped, s->tx_carrier_errors, s->collisions);
 		if (s->tx_compressed)
-			fprintf(fp, " %-7lu", s->tx_compressed);
+			fprintf(fp, " %-7u", s->tx_compressed);
 		if (show_stats > 1) {
 			fprintf(fp, "%s", _SL_);
 			fprintf(fp, "    TX errors: aborted fifo    window  heartbeat%s", _SL_);
-			fprintf(fp, "               %-7lu  %-7lu %-7lu %-7lu",
+			fprintf(fp, "               %-7u  %-7u %-7u %-7u",
 				s->tx_aborted_errors,
 				s->tx_fifo_errors,
 				s->tx_window_errors,
