@@ -303,7 +303,7 @@ print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
 	return 0;
 }
 
-struct action_util mirred_util = {
+struct action_util mirred_util_util = {
 	.id = "mirred",
 	.parse_aopt = parse_mirred,
 	.print_aopt = print_mirred,

@@ -23,6 +23,12 @@ TCMODULES += q_htb.o
 TCMODULES += m_gact.o
 TCMODULES += m_mirred.o
 TCMODULES += m_ipt.o
+TCMODULES += m_pedit.o
+TCMODULES += p_ip.o
+TCMODULES += p_icmp.o
+TCMODULES += p_tcp.o
+TCMODULES += p_udp.o
+
 
 TCOBJ += $(TCMODULES)
 
@@ -77,5 +83,4 @@ clean:
 
 q_atm.so: q_atm.c
 	$(CC) $(CFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
-
 

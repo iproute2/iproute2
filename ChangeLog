@@ -1,3 +1,13 @@
+2005-01-17  Jamal Hadi Salim <hadi@znyx.com>
+
+	* typo in m_mirred
+	* add support for pedit
+
+2005-01-13  Jim Gifford <lfs@jg555.com>
+	
+	* Fix allocation size error in nomal and paretonormal generation
+	  programs.
+
 2005-01-12  Masahide Nakamura <nakam@linux-ipv6.org>
 	
 	* ipmonitor shows IPv6 prefix list notification
