@@ -6,7 +6,7 @@ IPOBJ=ip.o ipaddress.o iproute.o iprule.o \
 RTMONOBJ=rtmon.o
 
 ALLOBJ=$(IPOBJ) $(RTMONOBJ)
-TARGETS=ip rtmon
+TARGETS=ip rtmon ifcfg rtpr
 
 all: $(TARGETS)
 

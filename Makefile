@@ -47,6 +47,7 @@ install: all
 		$(DESTDIR)$(DOCDIR)/examples/diffserv
 	@for i in $(SUBDIRS) doc; do $(MAKE) -C $$i install; done
 	install -m 0644 $(shell find etc/iproute2 -type f -maxdepth 1) $(DESTDIR)$(CONFDIR)
+	install -m 0755 -d $(DESTDIR)$(MANDIR)/man8
 	install -m 0644 $(shell find man/man8 -type f -maxdepth 1) $(DESTDIR)$(MANDIR)/man8
 	ln -sf $(MANDIR)/man8/tc-pbfifo.8  $(DESTDIR)$(MANDIR)/man8/tc-bfifo.8
 	ln -sf $(MANDIR)/man8/tc-pbfifo.8  $(DESTDIR)$(MANDIR)/man8/tc-pfifo.8
