@@ -57,8 +57,11 @@ libtc.a: $(TCLIB)
 install: all
 	mkdir -p $(DESTDIR)/usr/lib/tc
 	install -m 0755 -s tc $(DESTDIR)$(SBINDIR)
-	for i in $(TCSO) $(NETEM_DIST; \
+	for i in $(TCSO); \
 	do install -m 755 -s $$i $(DESTDIR)/usr/lib/tc; \
+	done
+	for i in $(NETEM_DIST); \
+	do install -m 755 $$i $(DESTDIR)/usr/lib/tc; \
 	done
 
 clean:
