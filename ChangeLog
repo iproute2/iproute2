@@ -1,20 +1,8 @@
-2004-12-07  Jim Gifford (patches at jg555 dot com)
+2004-10-20  Stephen Hemminger  <shemminger@osdl.org>
 
-	* Fix build issues with other versions of find
-
-2004-12-07  Thomas Graf <tgraf@suug.ch>
-	
-	* Generic TC stats.
-	* NDM states are flags
-	
-2004-12-07  Stephen Hemminger  <shemminger@osdl.org>
-
-	* Cleanup warning generated because ip_rule_flush needs to modify
-	  the netlink message
-
-2004-12-07  Sven Anders <anders@anduras.de>
-
-	* Add ip rule flush
+	* Don't include <asm/byteorder.h> since then we get dependant on
+	  kernel headers on host machine
+	* Minor fix for building on old machine without IPPROTO_SCTP
 
 2004-10-19  Harald Welte <laforge@gnumonks.org>
 
