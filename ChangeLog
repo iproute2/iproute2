@@ -1,5 +1,9 @@
 2004-07-30  Stephen Hemminger  <shemminger@osdl.org>
 
+	* Make ip xfrm stuff config option since it doesn't exist on 2.4
+
+	* HFSC doesn't exist on older 2.4 kernels so make it configurable
+
 	* HTB API changed and won't build with mismatched version.
 	  Rather than sticking user with a build error, just don't
 	  build it in on mismatch.
