@@ -393,16 +393,14 @@ static int rsvp_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, _
 	return 0;
 }
 
-struct filter_util rsvp_util = {
-	NULL,
-	"rsvp",
-	rsvp_parse_opt,
-	rsvp_print_opt,
+struct filter_util rsvp_filter_util = {
+	.id = "rsvp",
+	.parse_fopt = rsvp_parse_opt,
+	.print_fopt = rsvp_print_opt,
 };
 
-struct filter_util rsvp6_util = {
-	NULL,
-	"rsvp6",
-	rsvp_parse_opt,
-	rsvp_print_opt,
+struct filter_util rsvp6_filter_util = {
+	.id = "rsvp6",
+	.parse_fopt = rsvp_parse_opt,
+	.print_fopt = rsvp_print_opt,
 };

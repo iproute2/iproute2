@@ -135,9 +135,8 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 	return 0;
 }
 
-struct filter_util fw_util = {
-	NULL,
-	"fw",
-	fw_parse_opt,
-	fw_print_opt,
+struct filter_util fw_filter_util = {
+	.id = "fw",
+	.parse_fopt = fw_parse_opt,
+	.print_fopt = fw_print_opt,
 };

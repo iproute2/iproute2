@@ -167,9 +167,8 @@ static int route_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, 
 	return 0;
 }
 
-struct filter_util route_util = {
-	NULL,
-	"route",
-	route_parse_opt,
-	route_print_opt,
+struct filter_util route_filter_util = {
+	.id = "route",
+	.parse_fopt = route_parse_opt,
+	.print_fopt = route_print_opt,
 };

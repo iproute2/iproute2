@@ -1012,9 +1012,8 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 	return 0;
 }
 
-struct filter_util u32_util = {
-	NULL,
-	"u32",
-	u32_parse_opt,
-	u32_print_opt,
+struct filter_util u32_filter_util = {
+	.id = "u32",
+	.parse_fopt = u32_parse_opt,
+	.print_fopt = u32_print_opt,
 };

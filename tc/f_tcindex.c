@@ -178,9 +178,8 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 	return 0;
 }
 
-struct filter_util tcindex_util = {
-	NULL,
-	"tcindex",
-	tcindex_parse_opt,
-	tcindex_print_opt,
+struct filter_util tcindex_filter_util = {
+	.id = "tcindex",
+	.parse_fopt = tcindex_parse_opt,
+	.print_fopt = tcindex_print_opt,
 };
