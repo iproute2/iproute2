@@ -29,7 +29,6 @@
 #include "tc_util.h"
 #include "m_pedit.h"
 
-void *pBODY;
 static struct m_pedit_util *pedit_list;
 int pedit_debug = 1;
 
@@ -72,6 +71,7 @@ pedit_parse_nopopt (int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct 
 struct m_pedit_util 
 *get_pedit_kind(char *str)
 {
+	static void *pBODY;
 	void *dlh;
 	char buf[256];
 	struct  m_pedit_util *p;
