@@ -553,6 +553,7 @@ int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 
 int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 {
+	memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
 	while (RTA_OK(rta, len)) {
 		if (rta->rta_type <= max)
 			tb[rta->rta_type] = rta;
@@ -566,8 +567,10 @@ int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 int parse_rtattr_byindex(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 {
 	int i = 0;
+
+	memset(tb, 0, sizeof(struct rtattr *) * max);
 	while (RTA_OK(rta, len)) {
-		if (rta->rta_type <= max)
+		if (rta->rta_type <= max && i < max)
 			tb[i++] = rta;
 		rta = RTA_NEXT(rta,len);
 	}
