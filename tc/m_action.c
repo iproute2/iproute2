@@ -229,8 +229,7 @@ tc_print_one_action(FILE * f, struct rtattr *arg)
 	if (arg == NULL)
 		return -1;
 
-	memset(tb, 0, sizeof (tb));
-	parse_rtattr(tb, TCA_ACT_MAX, RTA_DATA(arg), RTA_PAYLOAD(arg));
+	parse_rtattr_nested(tb, TCA_ACT_MAX, arg);
 	if (tb[TCA_ACT_KIND] == NULL) {
 		fprintf(stderr, "NULL Action!\n");
 		return -1;
@@ -272,8 +271,7 @@ tc_print_action(FILE * f, const struct rtattr *arg)
 	if (arg == NULL)
 		return 0;
 
-	memset(tb, 0, sizeof (tb));
-	parse_rtattr(tb, TCA_ACT_MAX_PRIO, RTA_DATA(arg), RTA_PAYLOAD(arg));
+	parse_rtattr_nested(tb, TCA_ACT_MAX_PRIO, arg);
 
 	if (tab_flush && NULL != tb[0]  && NULL == tb[1]) {
 		int ret = tc_print_one_action(f, tb[0]);
@@ -310,7 +308,6 @@ static int do_print_action(const struct sockaddr_nl *who,
 		return -1;
 	}
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, TCAA_MAX, TA_RTA(t), len);
 
 	if (NULL == tb[TCA_ACT_TAB]) {

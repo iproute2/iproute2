@@ -239,8 +239,7 @@ hfsc_print_class_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (opt == NULL)
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
-	parse_rtattr(tb, TCA_HFSC_MAX, RTA_DATA(opt), RTA_PAYLOAD(opt));
+	parse_rtattr_nested(tb, TCA_HFSC_MAX, opt);
 
 	if (tb[TCA_HFSC_RSC]) {
 		if (RTA_PAYLOAD(tb[TCA_HFSC_RSC]) < sizeof(*rsc))
