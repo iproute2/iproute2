@@ -330,6 +330,9 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		}
 	}
 
+	if (filter.family && filter.family != ifa->ifa_family)
+		return 0;
+
 	if (filter.flushb) {
 		struct nlmsghdr *fn;
 		if (NLMSG_ALIGN(filter.flushp) + n->nlmsg_len > filter.flushe) {
