@@ -55,6 +55,9 @@ __PF(METRICOM,metricom)
 #ifdef ARPHRD_IEEE1394
 __PF(IEEE1394,ieee1394)
 #endif
+#ifdef ARPHRD_INFINIBAND
+__PF(INFINIBAND,infiniband)
+#endif
 
 __PF(SLIP,slip)
 __PF(CSLIP,cslip)
