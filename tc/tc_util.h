@@ -4,6 +4,7 @@
 #define MAX_MSG 16384
 #include <linux/pkt_sched.h>
 #include <linux/pkt_cls.h>
+#include <linux/gen_stats.h>
 #include "tc_core.h"
 
 struct qdisc_util
@@ -58,7 +59,8 @@ extern char * sprint_tc_classid(__u32 h, char *buf);
 extern char * sprint_usecs(__u32 usecs, char *buf);
 extern char * sprint_percent(__u32 percent, char *buf);
 
-extern void print_tcstats_attr(FILE *fp, const struct rtattr *ts);
+extern void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix, struct rtattr **xstats);
+extern void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats);
 
 extern int get_tc_classid(__u32 *h, const char *str);
 extern int print_tc_classid(char *buf, int len, __u32 h);

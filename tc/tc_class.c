@@ -216,12 +216,14 @@ static int print_class(const struct sockaddr_nl *who,
 	}
 	fprintf(fp, "\n");
 	if (show_stats) {
-		if (tb[TCA_STATS]) {
-			print_tcstats_attr(fp, tb[TCA_STATS]);
+		struct rtattr *xstats = NULL;
+		
+		if (tb[TCA_STATS] || tb[TCA_STATS2]) {
+			print_tcstats_attr(fp, tb, " ", &xstats);
 			fprintf(fp, "\n");
 		}
-		if (q && tb[TCA_XSTATS] && q->print_xstats) {
-			q->print_xstats(q, fp, tb[TCA_XSTATS]);
+		if (q && (xstats || tb[TCA_XSTATS]) && q->print_xstats) {
+			q->print_xstats(q, fp, xstats ? : tb[TCA_XSTATS]);
 			fprintf(fp, "\n");
 		}
 	}

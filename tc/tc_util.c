@@ -425,3 +425,91 @@ void print_tm(FILE * f, const struct tcf_t *tm)
 	if (tm->expires != 0)
 		fprintf(f, " expires %d sec", tm->expires/hz);
 }
+
+void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats)
+{
+	SPRINT_BUF(b1);
+	struct rtattr *tbs[TCA_STATS_MAX + 1] = {0};
+
+	parse_rtattr(tbs, TCA_STATS_MAX, RTA_DATA(rta), RTA_PAYLOAD(rta));
+
+	if (tbs[TCA_STATS_BASIC]) {
+		struct gnet_stats_basic bs = {0};
+		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]), sizeof(bs)));
+		fprintf(fp, "%sSent %llu bytes %u pkt",
+			prefix, bs.bytes, bs.packets);
+	}
+
+	if (tbs[TCA_STATS_QUEUE]) {
+		struct gnet_stats_queue q = {0};
+		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
+		fprintf(fp, " (dropped %u, overlimits %u requeues %u) ",
+			q.drops, q.overlimits, q.requeues);
+	}
+			
+	if (tbs[TCA_STATS_RATE_EST]) {
+		struct gnet_stats_rate_est re = {0};
+		memcpy(&re, RTA_DATA(tbs[TCA_STATS_RATE_EST]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_RATE_EST]), sizeof(re)));
+		fprintf(fp, "\n%srate %s %upps ",
+			prefix, sprint_rate(re.bps, b1), re.pps);
+	}
+
+	if (tbs[TCA_STATS_QUEUE]) {
+		struct gnet_stats_queue q = {0};
+		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
+		if (!tbs[TCA_STATS_RATE_EST])
+			fprintf(fp, "\n%s", prefix);
+		fprintf(fp, "backlog %s %up requeues %u ",
+			sprint_size(q.backlog, b1), q.qlen, q.requeues);
+	}
+
+	if (xstats)
+		*xstats = tbs[TCA_STATS_APP] ? : NULL;
+}
+
+void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix, struct rtattr **xstats)
+{
+	SPRINT_BUF(b1);
+
+	if (tb[TCA_STATS2]) {
+		print_tcstats2_attr(fp, tb[TCA_STATS2], prefix, xstats);
+		if (xstats && NULL == *xstats)
+			goto compat_xstats;
+		return;
+	}
+	/* backward compatibility */
+	if (tb[TCA_STATS]) {
+		struct tc_stats st;
+
+		/* handle case where kernel returns more/less than we know about */
+		memset(&st, 0, sizeof(st));
+		memcpy(&st, RTA_DATA(tb[TCA_STATS]), MIN(RTA_PAYLOAD(tb[TCA_STATS]), sizeof(st)));
+
+		fprintf(fp, "%sSent %llu bytes %u pkts (dropped %u, overlimits %u) ",
+			prefix, (unsigned long long)st.bytes, st.packets, st.drops, 
+			st.overlimits);
+
+		if (st.bps || st.pps || st.qlen || st.backlog) {
+			fprintf(fp, "\n%s", prefix);
+			if (st.bps || st.pps) {
+				fprintf(fp, "rate ");
+				if (st.bps)
+					fprintf(fp, "%s ", sprint_rate(st.bps, b1));
+				if (st.pps)
+					fprintf(fp, "%upps ", st.pps);
+			}
+			if (st.qlen || st.backlog) {
+				fprintf(fp, "backlog ");
+				if (st.backlog)
+					fprintf(fp, "%s ", sprint_size(st.backlog, b1));
+				if (st.qlen)
+					fprintf(fp, "%up ", st.qlen);
+			}
+		}
+	}
+
+compat_xstats:
+	if (tb[TCA_XSTATS] && xstats)
+		*xstats = tb[TCA_XSTATS];
+}
+

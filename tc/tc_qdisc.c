@@ -167,39 +167,6 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 	return 0;
 }
 
-
-void print_tcstats_attr(FILE *fp, const struct rtattr *rta)
-{
-	struct tc_stats st;
-	SPRINT_BUF(b1);
-
-	/* handle case where kernel returns more/less than we know about */
-	memset(&st, 0, sizeof(st));
-	memcpy(&st, RTA_DATA(rta), MIN(RTA_PAYLOAD(rta), sizeof(st)));
-
-	fprintf(fp, " Sent %llu bytes %u pkts (dropped %u, overlimits %u) ",
-		(unsigned long long)st.bytes, st.packets, st.drops, 
-		st.overlimits);
-
-	if (st.bps || st.pps || st.qlen || st.backlog) {
-		fprintf(fp, "\n ");
-		if (st.bps || st.pps) {
-			fprintf(fp, "rate ");
-			if (st.bps)
-				fprintf(fp, "%s ", sprint_rate(st.bps, b1));
-			if (st.pps)
-				fprintf(fp, "%upps ", st.pps);
-		}
-		if (st.qlen || st.backlog) {
-			fprintf(fp, "backlog ");
-			if (st.backlog)
-				fprintf(fp, "%s ", sprint_size(st.backlog, b1));
-			if (st.qlen)
-				fprintf(fp, "%up ", st.qlen);
-		}
-	}
-}
-
 static int filter_ifindex;
 
 static int print_qdisc(const struct sockaddr_nl *who, 
@@ -264,13 +231,15 @@ static int print_qdisc(const struct sockaddr_nl *who,
 	}
 	fprintf(fp, "\n");
 	if (show_stats) {
-		if (tb[TCA_STATS]) {
-			print_tcstats_attr(fp, tb[TCA_STATS]);
+		struct rtattr *xstats = NULL;
+
+		if (tb[TCA_STATS] || tb[TCA_STATS2] || tb[TCA_XSTATS]) {
+			print_tcstats_attr(fp, tb, " ", &xstats);
 			fprintf(fp, "\n");
 		}
 
-		if (q && tb[TCA_XSTATS] && q->print_xstats) {
-			q->print_xstats(q, fp, tb[TCA_XSTATS]);
+		if (q && xstats && q->print_xstats) {
+			q->print_xstats(q, fp, xstats);
 			fprintf(fp, "\n");
 		}
 	}

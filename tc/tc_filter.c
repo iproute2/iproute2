@@ -254,8 +254,8 @@ static int print_filter(const struct sockaddr_nl *who,
 	}
 	fprintf(fp, "\n");
 
-	if (show_stats && tb[TCA_STATS]) {
-		print_tcstats_attr(fp, tb[TCA_STATS]);
+	if (show_stats && (tb[TCA_STATS] || tb[TCA_STATS2])) {
+		print_tcstats_attr(fp, tb, " ", NULL);
 		fprintf(fp, "\n");
 	}
 

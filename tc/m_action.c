@@ -261,9 +261,9 @@ tc_print_one_action(FILE * f, struct rtattr *arg)
 	if (0 > err)
 		return err;
 
-	if (show_stats && tb[TCA_STATS]) {
-		fprintf(f, "\t");
-		print_tcstats_attr(f, tb[TCA_STATS]);
+	if (show_stats && tb[TCA_ACT_STATS]) {
+		fprintf(f, "\tAction statistics:\n");
+		print_tcstats2_attr(f, tb[TCA_ACT_STATS], "\t", NULL);
 		fprintf(f, "\n");
 	}
 
