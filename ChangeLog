@@ -1,3 +1,9 @@
+2004-07-30  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Change configure script to make sure netem is the correct
+	  version. I changed the structure def. a couple of times before
+	  settling on the final API
+
 2004-07-07  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Fix if_ether.h to fix arpd build

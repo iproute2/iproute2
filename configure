@@ -14,13 +14,23 @@ then
 fi
 
 echo -n " netem scheduler... "
-if grep -q 'tc_netem_qopt' $PKT_SCHED
-then
+cat >/tmp/netemtest.c <<EOF
+#include <asm/types.h>
+#include <linux/pkt_sched.h>
+int main(int argc, char **argv) {
+	static struct tc_netem_qopt qopt;
+	exit(qopt.latency | qopt.limit | qopt.loss | qopt.gap | qopt.duplicate | qopt.jitter);
+}
+EOF
+gcc -I$INCLUDE -c /tmp/netemtest.c  >/dev/null 2>&1
+if [ $? -eq 0 ]
+then 
     echo "TC_CONFIG_NETEM:=y" >>Config
     echo y
 else
     echo n
 fi
+rm -f /tmp/netemtest.c /tmp/netemtest.o
 
 echo -n " ATM...              "
 cat >/tmp/atmtest.c <<EOF
@@ -31,7 +41,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 EOF
-gcc -o /tmp/atmtest /tmp/atmtest.c -latm >/dev/null 2>&1 
+gcc -I$INCLUDE -o /tmp/atmtest /tmp/atmtest.c -latm >/dev/null 2>&1 
 if [ $? -eq 0 ]
 then
     echo "TC_CONFIG_ATM:=y" >>Config
@@ -39,6 +49,7 @@ then
 else
     echo n
 fi
+rm -f /tmp/atmtest.c /tmp/atmtest
 
 # See if we know about TCP Vegas
 echo "SS"
