@@ -21,6 +21,7 @@ TCMODULES += q_ingress.o
 TCMODULES += q_hfsc.o
 TCMODULES += q_htb.o
 TCMODULES += m_gact.o
+TCMODULES += m_mirred.o
 
 TCOBJ += $(TCMODULES)
 

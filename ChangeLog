@@ -1,3 +1,7 @@
+2004-12-08  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Add mirror and redirect actions
+
 2004-10-20  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Don't include <asm/byteorder.h> since then we get dependant on
