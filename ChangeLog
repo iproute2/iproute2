@@ -2,7 +2,9 @@
 
 	* Warn about wildcard deletions and provide IFA_ADDRESS upon
 	  deletions to enforce prefix length validation for IPv4.
-
+	* Fix netlink message alignment when the last routing attribute added
+	  has a data length not aligned to RTA_ALIGNTO.
+	
 2005-03-30  Masahide NAKAMURA <nakam@linux-ipv6.org>
 	
 	* ipv6 xfrm allocspi and monitor support.
