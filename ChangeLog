@@ -1,3 +1,7 @@
+2005-02-07  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+
+	* Validate classid is not too large to cause loss of bits.
+
 2005-02-07 Jean-Marc Ranger <jmranger@sympatico.ca>
 
 	* need to call getline() with null for first usage

@@ -61,10 +61,14 @@ int get_tc_classid(__u32 *h, const char *str)
 			return -1;
 	}
 	if (*p == ':') {
+		if (maj >= (1<<16))
+			return -1;
 		maj <<= 16;
 		str = p+1;
 		min = strtoul(str, &p, 16);
 		if (*p != 0)
+			return -1;
+		if (min >= (1<<16))
 			return -1;
 		maj |= min;
 	} else if (*p != 0)
