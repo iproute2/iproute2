@@ -29,6 +29,11 @@
 #include <linux/if.h>
 #include <linux/if_arp.h>
 #include <linux/ip.h>
+
+#ifndef __constant_htons
+#define __constant_htons(x)  htons(x)
+#endif
+
 #include <linux/if_tunnel.h>
 
 #include "rt_names.h"
