@@ -1,3 +1,7 @@
+2004-10-19  Mads Martin Joergensen <mmj@suse.de>
+
+	* Ip is using the wrong structure in ipaddress.c when showing stats.
+
 2004-10-19  Michal <md@lnet.pl>
 
 	* fix scaling in print_rates (for bits)
