@@ -143,7 +143,7 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 		int idx;
 		if (rtnl_open(&rth, 0) < 0) {
 			fprintf(stderr, "Cannot open rtnetlink\n");
-			exit(1);
+			return 1;
 		}
 		ll_init_map(&rth);
 
