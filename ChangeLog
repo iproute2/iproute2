@@ -4,6 +4,12 @@
 	  version. I changed the structure def. a couple of times before
 	  settling on the final API
 
+2004-07-16  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add htb mpu support 
+	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_tc_overhead.diff
+	* Three small xfrm updates
+
 2004-07-07  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Fix if_ether.h to fix arpd build
