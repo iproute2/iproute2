@@ -1,0 +1,270 @@
+diff -ur ../pidentd-3.0.12-orig/src/k_linux.c ./src/k_linux.c
+--- ../pidentd-3.0.12-orig/src/k_linux.c	Sat Jan 12 00:44:05 2002
++++ ./src/k_linux.c	Sat Nov  3 07:51:28 2001
+@@ -26,12 +26,65 @@
+ 
+ #include "pidentd.h"
+ 
++#define NETLINK_TCPDIAG 4
++#define TCPDIAG_GETSOCK 18
++
++#include <linux/uio.h>
++#include <linux/netlink.h>
++
++/* Socket identity */
++struct tcpdiag_sockid
++{
++	__u16	tcpdiag_sport;
++	__u16	tcpdiag_dport;
++	__u32	tcpdiag_src[4];
++	__u32	tcpdiag_dst[4];
++	__u32	tcpdiag_if;
++	__u32	tcpdiag_cookie[2];
++#define TCPDIAG_NOCOOKIE (~0U)
++};
++
++/* Request structure */
++
++struct tcpdiagreq
++{
++	__u8	tcpdiag_family;		/* Family of addresses. */
++	__u8	tcpdiag_src_len;
++	__u8	tcpdiag_dst_len;
++	__u8	tcpdiag_ext;		/* Query extended information */
++
++	struct tcpdiag_sockid id;
++
++	__u32	tcpdiag_states;		/* States to dump */
++	__u32	tcpdiag_dbs;		/* Tables to dump (NI) */
++};
++
++struct tcpdiagmsg
++{
++	__u8	tcpdiag_family;
++	__u8	tcpdiag_state;
++	__u8	tcpdiag_timer;
++	__u8	tcpdiag_retrans;
++
++	struct tcpdiag_sockid id;
++
++	__u32	tcpdiag_expires;
++	__u32	tcpdiag_rqueue;
++	__u32	tcpdiag_wqueue;
++	__u32	tcpdiag_uid;
++	__u32	tcpdiag_inode;
++};
++
++
++int tcpdiag_fd = -1;
++
+ /*
+ ** Make sure we are running on a supported OS version
+ */
+ int
+ ka_init(void)
+ {
++    tcpdiag_fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_TCPDIAG);
+     return 0; /* We always succeed */
+ }
+ 
+@@ -56,6 +109,144 @@
+ }
+ 
+ 
++
++int k_lookup_tcpdiag(struct kernel *kp)
++{
++	struct sockaddr_nl nladdr;
++	struct {
++		struct nlmsghdr nlh;
++		struct tcpdiagreq r;
++	} req;
++	struct msghdr msg;
++	char	buf[8192];
++	struct  iovec iov[1];
++	struct  tcpdiagmsg *r;
++	static  unsigned seqno = 123456;
++
++	memset(&nladdr, 0, sizeof(nladdr));
++	nladdr.nl_family = AF_NETLINK;
++
++	req.nlh.nlmsg_len = sizeof(req);
++	req.nlh.nlmsg_type = TCPDIAG_GETSOCK;
++	req.nlh.nlmsg_flags = NLM_F_REQUEST;
++	req.nlh.nlmsg_pid = 0;
++	req.nlh.nlmsg_seq = ++seqno;
++	memset(&req.r, 0, sizeof(req.r));
++	req.r.tcpdiag_family = AF_INET;
++	req.r.tcpdiag_states = ~0;
++
++	req.r.id.tcpdiag_dport = kp->remote.sin_port;
++	req.r.id.tcpdiag_sport = kp->local.sin_port;
++	req.r.id.tcpdiag_dst[0] = kp->remote.sin_addr.s_addr;
++	req.r.id.tcpdiag_src[0] = kp->local.sin_addr.s_addr;
++	req.r.id.tcpdiag_cookie[0] = TCPDIAG_NOCOOKIE;
++	req.r.id.tcpdiag_cookie[1] = TCPDIAG_NOCOOKIE;
++	kp->ruid = NO_UID;
++
++	iov[0] = (struct iovec){ &req, sizeof(req) };
++
++	msg = (struct msghdr) {
++		(void*)&nladdr, sizeof(nladdr),
++		iov,	1,
++		NULL,	0,
++		0
++	};
++
++	if (sendmsg(tcpdiag_fd, &msg, 0) < 0) {
++		if (errno == ECONNREFUSED) {
++			close(tcpdiag_fd);
++			tcpdiag_fd = -1;
++			return 0;
++		}
++		syslog(LOG_ERR, "system error on tcpdiag sendmsg: %m");
++		return -1;
++	}
++
++	iov[0] = (struct iovec){ buf, sizeof(buf) };
++
++	while (1) {
++		int status;
++		struct nlmsghdr *h;
++
++		msg = (struct msghdr) {
++			(void*)&nladdr, sizeof(nladdr),
++			iov,	1,
++			NULL,	0,
++			0
++		};
++
++		status = recvmsg(tcpdiag_fd, &msg, 0);
++
++		if (status < 0) {
++			if (errno == EINTR || errno == EAGAIN)
++				continue;
++			return -1;
++		}
++		if (status == 0) {
++			return -1;
++		}
++
++		h = (struct nlmsghdr*)buf;
++		while (NLMSG_OK(h, status)) {
++			int err;
++
++			if (/*h->nlmsg_pid != rth->local.nl_pid ||*/
++			    h->nlmsg_seq != seqno)
++				goto skip_it;
++
++			if (h->nlmsg_type == NLMSG_DONE)
++				return -1;
++			if (h->nlmsg_type == NLMSG_ERROR) {
++				struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
++				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
++					return -1;
++				} else {
++					errno = -err->error;
++					if (errno == ECONNREFUSED) {
++						close(tcpdiag_fd);
++						tcpdiag_fd = -1;
++						return 0;
++					}
++					if (errno != ENOENT)
++						syslog(LOG_ERR, "tcpdiag answers: %m");
++				}
++				return -1;
++			}
++
++			r = NLMSG_DATA(h);
++
++			/* Lookup _may_ return listening socket, if no
++			 * better matches are found. */
++			if (r->id.tcpdiag_dport == kp->remote.sin_port &&
++			    r->id.tcpdiag_dst[0] == kp->remote.sin_addr.s_addr) {
++				kp->ruid = r->tcpdiag_uid;
++				if (!r->tcpdiag_inode && !r->tcpdiag_uid) {
++					/* _NEVER_ return "root" for closed
++					 * sockets. Otherwise people think
++					 * that it is sysadmin who abuses their
++					 * poor ircd. :-) */
++					syslog(LOG_NOTICE,
++					       "Req for stale socket(%d) %d from %x/%d",
++					       r->tcpdiag_state, ntohs(r->id.tcpdiag_sport),
++					       r->id.tcpdiag_dst[0], ntohs(r->id.tcpdiag_dport));
++					return -1;
++				}
++				return 1;
++			}
++
++			return -1;
++
++skip_it:
++			h = NLMSG_NEXT(h, status);
++		}
++		if ((msg.msg_flags & MSG_TRUNC) || status) {
++			syslog(LOG_ERR, "truncated tcp_diag message");
++			return -1;
++		}
++	}
++}
++
++
+ int 
+ ka_lookup(void *vp, struct kernel *kp)
+ {
+@@ -64,16 +255,23 @@
+     long r_laddr, r_raddr, myladdr, myraddr;
+     int r_lport, r_rport, mylport, myrport;
+     int euid;
+-    
+-    
++
++    if (tcpdiag_fd >= 0) {
++	    int res;
++	    if ((res = k_lookup_tcpdiag(kp)) != 0)
++		    return res;
++	    syslog(LOG_ERR, "tcp_diag is not loaded, fallback to proc");
++    }
++
++
+     r_rport = ntohs(kp->remote.sin_port);
+     r_lport = ntohs(kp->local.sin_port);
+     r_raddr = kp->remote.sin_addr.s_addr;
+     r_laddr = kp->local.sin_addr.s_addr;
++    kp->ruid = NO_UID;
+ 
+     fp = (FILE *) vp;
+ 
+-    kp->ruid = NO_UID;
+     rewind(fp);
+ 
+     /* eat header */
+@@ -82,13 +280,26 @@
+ 
+     while (fgets(buf, sizeof(buf)-1, fp) != NULL)
+     {
+-	if (sscanf(buf, "%*d: %lx:%x %lx:%x %*x %*x:%*x %*x:%*x %*x %d %*d %*d",
+-		   &myladdr, &mylport, &myraddr, &myrport, &euid) == 5)
++        int state, ino;
++	if (sscanf(buf, "%*d: %x:%x %x:%x %x %*x:%*x %*x:%*x %*x %d %*d %u",
++		   &myladdr, &mylport, &myraddr, &myrport,
++		   &state, &euid, &ino) == 7)
+ 	{
+ 	    if (myladdr == r_laddr && mylport == r_lport &&
+ 		myraddr == r_raddr && myrport == r_rport)
+ 	    {
+ 		kp->euid = euid;
++                if (ino == 0 && euid == 0)
++		{
++			/* _NEVER_ return "root" for closed
++			 * sockets. Otherwise people think
++			 * that it is sysadmin who abuses their
++			 * poor ircd. :-) */
++		    syslog(LOG_NOTICE,
++			   "Req for stale socket(%d) %d from %x/%d",
++			   state, r_rport, r_raddr, r_lport);
++		    return -1;
++		}
+ 		return 1;
+ 	    }
+ 	}

@@ -1,0 +1,7 @@
+File:		tcp_diag.c
+Status:		desired for kernels < 2.4.17
+		not needed for kernels >= 2.4.17
+Description:	adds tcpdiag facility to kernel to accelerate ss utility
+		and pidentd
+Side effects:	none
+ 

@@ -1,0 +1,46 @@
+File:		rt_cache_stat.dif
+Apply to:	kernel < 2.4.7
+Status:		recommended for kernels < 2.4.7.
+		already present in >= 2.4.7
+Description:	tracing efficiency of routing cache
+Side effects:	none
+
+File:		pidentd-3.0.12.dif
+Apply to:	pident-3.0.12 tree f.e. from am redhat rpm
+Status:		highly recommended
+Description:	Patch to pidentd allowing to use tcpdiag facility and fixing
+		some bugs in original pident.
+Side effects:	none. Does not break anything not depending on kernel version,
+		even if tcpdiag is absent.
+Advice:		not related to this patch but should be said yet.
+		Do NOT configure pidentd to use threads! Use option
+		"--without-threads" when doing "configure".
+		pidentd is typical example of application where
+		threading results in nothing but collapse of performance.
+		Apparently author learned thread programming and decided
+		to apply new knowledge to the first victim.
+
+File:		symbol_exports.dif 
+Apply to:	kernel < 2.4.17
+Status:		desired for kernels < 2.4.17
+		not needed for kernels >= 2.4.17
+Description:	exports symbols required to load tcpdiag module
+		tcpdiag is builtin since 2.4.17, hence the exports
+		are redundant.
+Side effects:	none
+
+File:		af_unix.dif
+Apply to:	kernel
+Status:		recommended
+Desciption:	implements fragmented skb for unix sockets reducing
+		vm pressure for datagram sockets and adds to /proc/net/unix
+		columns allowing to monitor recv/send memory and identify
+		peer of connected sockets.
+Side effects:	"lsof" blames something about unix sockets.
+		Not a big loss, lsof is not able to tell anything more
+		clever than "can't identify protocol" for sockets anyway. 
+Note:		the patch affects area where one or two lines changed
+		several times while 2.4. It does not depend on this,
+		but unfortunately may reject. It apply cleanly to
+		2.4.17.
+

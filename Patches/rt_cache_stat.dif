@@ -1,0 +1,230 @@
+--- linux/include/net/route.h.orig	Tue Apr 17 07:25:48 2001
++++ linux/include/net/route.h	Tue Jul 10 23:35:18 2001
+@@ -14,6 +14,7 @@
+  *		Alan Cox	:	Support for TCP parameters.
+  *		Alexey Kuznetsov:	Major changes for new routing code.
+  *		Mike McLagan    :	Routing by source
++ *		Robert Olsson   :	Added rt_cache statistics
+  *
+  *		This program is free software; you can redistribute it and/or
+  *		modify it under the terms of the GNU General Public License
+@@ -90,6 +91,20 @@
+ 	__u32 	o_packets;
+ 	__u32 	i_bytes;
+ 	__u32 	i_packets;
++};
++
++struct rt_cache_stat 
++{
++        unsigned in_hit;
++        unsigned in_slow_tot;
++        unsigned in_slow_mc;
++        unsigned in_no_route;
++        unsigned in_brd;
++        unsigned in_martian_dst;
++        unsigned in_martian_src;
++        unsigned out_hit;
++        unsigned out_slow_tot;
++        unsigned out_slow_mc;
+ };
+ 
+ extern struct ip_rt_acct *ip_rt_acct;
+--- linux/net/ipv4/route.c.orig	Wed Mar 28 22:01:15 2001
++++ linux/net/ipv4/route.c	Tue Jul 10 23:27:51 2001
+@@ -52,6 +52,7 @@
+  *	Tobias Ringstrom	:	Uninitialized res.type in ip_route_output_slow.
+  *	Vladimir V. Ivanov	:	IP rule info (flowid) is really useful.
+  *		Marc Boucher	:	routing by fwmark
++ *	Robert Olsson		:	Added rt_cache statistics
+  *
+  *		This program is free software; you can redistribute it and/or
+  *		modify it under the terms of the GNU General Public License
+@@ -201,6 +202,8 @@
+ static unsigned			rt_hash_mask;
+ static int			rt_hash_log;
+ 
++struct rt_cache_stat rt_cache_stat[NR_CPUS];
++
+ static int rt_intern_hash(unsigned hash, struct rtable * rth, struct rtable ** res);
+ 
+ static __inline__ unsigned rt_hash_code(u32 daddr, u32 saddr, u8 tos)
+@@ -270,6 +273,44 @@
+   		len = length;
+   	return len;
+ }
++
++
++#ifdef CONFIG_PROC_FS
++static int rt_cache_stat_get_info(char *buffer, char **start, off_t offset, int length)
++{
++	int i, lcpu;
++        int len=0;
++	unsigned int dst_entries = atomic_read(&ipv4_dst_ops.entries);
++
++        for (lcpu=0; lcpu<smp_num_cpus; lcpu++) {
++                i = cpu_logical_map(lcpu);
++
++		len += sprintf(buffer+len, "%08x  %08x %08x %08x %08x %08x %08x %08x  %08x %08x %08x\n",
++			       dst_entries,		       
++			       rt_cache_stat[i].in_hit,
++			       rt_cache_stat[i].in_slow_tot,
++			       rt_cache_stat[i].in_slow_mc,
++			       rt_cache_stat[i].in_no_route,
++			       rt_cache_stat[i].in_brd,
++			       rt_cache_stat[i].in_martian_dst,
++			       rt_cache_stat[i].in_martian_src,
++
++			       rt_cache_stat[i].out_hit,
++			       rt_cache_stat[i].out_slow_tot,
++			       rt_cache_stat[i].out_slow_mc
++			);
++	}
++	len -= offset;
++
++	if (len > length)
++		len = length;
++	if (len < 0)
++		len = 0;
++
++	*start = buffer + offset;
++  	return len;
++}
++#endif
+   
+ static __inline__ void rt_free(struct rtable *rt)
+ {
+@@ -1163,6 +1204,8 @@
+ 	u32 spec_dst;
+ 	struct in_device *in_dev = in_dev_get(dev);
+ 	u32 itag = 0;
++	int cpu = smp_processor_id();
++
+ 
+ 	/* Primary sanity checks. */
+ 
+@@ -1221,6 +1264,7 @@
+ 	if (!LOCAL_MCAST(daddr) && IN_DEV_MFORWARD(in_dev))
+ 		rth->u.dst.input = ip_mr_input;
+ #endif
++	rt_cache_stat[cpu].in_slow_mc++;
+ 
+ 	in_dev_put(in_dev);
+ 	hash = rt_hash_code(daddr, saddr^(dev->ifindex<<5), tos);
+@@ -1259,6 +1303,7 @@
+ 	u32		spec_dst;
+ 	int		err = -EINVAL;
+ 	int		free_res = 0;
++	int cpu = smp_processor_id();
+ 
+ 	/*
+ 	 *	IP on this device is disabled.
+@@ -1308,6 +1353,8 @@
+ 	}
+ 	free_res = 1;
+ 
++	rt_cache_stat[cpu].in_slow_tot++;
++
+ #ifdef CONFIG_IP_ROUTE_NAT
+ 	/* Policy is applied before mapping destination,
+ 	   but rerouting after map should be made with old source.
+@@ -1455,6 +1502,7 @@
+ 	}
+ 	flags |= RTCF_BROADCAST;
+ 	res.type = RTN_BROADCAST;
++	rt_cache_stat[cpu].in_brd++;
+ 
+ local_input:
+ 	rth = dst_alloc(&ipv4_dst_ops);
+@@ -1498,6 +1546,7 @@
+ 	goto intern;
+ 
+ no_route:
++	rt_cache_stat[cpu].in_no_route++;
+ 	spec_dst = inet_select_addr(dev, 0, RT_SCOPE_UNIVERSE);
+ 	res.type = RTN_UNREACHABLE;
+ 	goto local_input;
+@@ -1506,6 +1555,7 @@
+ 	 *	Do not cache martian addresses: they should be logged (RFC1812)
+ 	 */
+ martian_destination:
++	rt_cache_stat[cpu].in_martian_dst++;
+ #ifdef CONFIG_IP_ROUTE_VERBOSE
+ 	if (IN_DEV_LOG_MARTIANS(in_dev) && net_ratelimit())
+ 		printk(KERN_WARNING "martian destination %u.%u.%u.%u from %u.%u.%u.%u, dev %s\n",
+@@ -1520,6 +1570,8 @@
+ 	goto done;
+ 
+ martian_source:
++
++	rt_cache_stat[cpu].in_martian_src++;
+ #ifdef CONFIG_IP_ROUTE_VERBOSE
+ 	if (IN_DEV_LOG_MARTIANS(in_dev) && net_ratelimit()) {
+ 		/*
+@@ -1550,6 +1602,7 @@
+ 	struct rtable * rth;
+ 	unsigned	hash;
+ 	int iif = dev->ifindex;
++	int cpu = smp_processor_id();
+ 
+ 	tos &= IPTOS_RT_MASK;
+ 	hash = rt_hash_code(daddr, saddr^(iif<<5), tos);
+@@ -1567,6 +1620,7 @@
+ 			rth->u.dst.lastuse = jiffies;
+ 			dst_hold(&rth->u.dst);
+ 			rth->u.dst.__use++;
++			rt_cache_stat[cpu].in_hit++;
+ 			read_unlock(&rt_hash_table[hash].lock);
+ 			skb->dst = (struct dst_entry*)rth;
+ 			return 0;
+@@ -1621,6 +1675,7 @@
+ 	int free_res = 0;
+ 	int err;
+ 	u32 tos;
++	int cpu = smp_processor_id();
+ 
+ 	tos = oldkey->tos & (IPTOS_RT_MASK|RTO_ONLINK);
+ 	key.dst = oldkey->dst;
+@@ -1847,14 +1902,18 @@
+ 
+ 	rth->u.dst.output=ip_output;
+ 
++	rt_cache_stat[cpu].out_slow_tot++;
++
+ 	if (flags&RTCF_LOCAL) {
+ 		rth->u.dst.input = ip_local_deliver;
+ 		rth->rt_spec_dst = key.dst;
+ 	}
+ 	if (flags&(RTCF_BROADCAST|RTCF_MULTICAST)) {
+ 		rth->rt_spec_dst = key.src;
+-		if (flags&RTCF_LOCAL && !(dev_out->flags&IFF_LOOPBACK))
++		if (flags&RTCF_LOCAL && !(dev_out->flags&IFF_LOOPBACK)) {
+ 			rth->u.dst.output = ip_mc_output;
++			rt_cache_stat[cpu].out_slow_mc++;
++		}
+ #ifdef CONFIG_IP_MROUTE
+ 		if (res.type == RTN_MULTICAST) {
+ 			struct in_device *in_dev = in_dev_get(dev_out);
+@@ -1894,6 +1953,7 @@
+ {
+ 	unsigned hash;
+ 	struct rtable *rth;
++	int cpu = smp_processor_id();
+ 
+ 	hash = rt_hash_code(key->dst, key->src^(key->oif<<5), key->tos);
+ 
+@@ -1912,6 +1972,7 @@
+ 			rth->u.dst.lastuse = jiffies;
+ 			dst_hold(&rth->u.dst);
+ 			rth->u.dst.__use++;
++			rt_cache_stat[cpu].out_hit++;
+ 			read_unlock_bh(&rt_hash_table[hash].lock);
+ 			*rp = rth;
+ 			return 0;
+@@ -2339,6 +2400,7 @@
+ 	add_timer(&rt_periodic_timer);
+ 
+ 	proc_net_create ("rt_cache", 0, rt_cache_get_info);
++	proc_net_create ("rt_cache_stat", 0, rt_cache_stat_get_info);
+ #ifdef CONFIG_NET_CLS_ROUTE
+ 	create_proc_read_entry("net/rt_acct", 0, 0, ip_rt_acct_read, NULL);
+ #endif

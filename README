@@ -1,0 +1,65 @@
+Primary FTP site is:
+
+	ftp://ftp.inr.ac.ru/ip-routing/
+
+Mirrors are:
+
+	ftp://linux.wauug.org/pub/net
+	ftp://ftp.nc.ras.ru/pub/mirrors/ftp.inr.ac.ru/ip-routing/
+	ftp://ftp.gts.cz/MIRRORS/ftp.inr.ac.ru/
+	ftp://ftp.funet.fi/pub/mirrors/ftp.inr.ac.ru/ip-routing/ (STM1 to USA)
+	ftp://sunsite.icm.edu.pl/pub/Linux/iproute/
+	ftp://ftp.sunet.se/pub/Linux/ip-routing/
+	ftp://ftp.nvg.ntnu.no/pub/linux/ip-routing/
+	ftp://ftp.crc.ca/pub/systems/linux/ip-routing/
+	ftp://ftp.proxad.net/mirrors/ftp.inr.ac.ru/ip-routing/
+	ftp://donlug.dn.ua/pub/mirrors/ip-routing/
+	ftp://omni.rk.tusur.ru/mirrors/ftp.inr.ac.ru/ip-routing/
+	ftp://ftp.src.uchicago.edu/pub/linux/ip-routing/
+	http://www.asit.ro/ip-routing/
+	ftp://ftp.infoscience.co.jp/pub/linux/ip-routing/ (Japan)
+	ftp://ftp.sucs.swan.ac.uk/pub/mirrors/ftp.inr.ac.ru/ip-routing
+	http://mirror.schell.de/ftp.inr.ac.ru/ip-routing/ (Germany)
+	ftp://ftp.gin.cz/MIRRORS/ftp.inr.ac.ru/ip-routing
+	ftp://mirror.aarnet.edu.au/pub/ip-routing/  (Australia)
+	http://mirror.aarnet.edu.au/pub/ip-routing/ (Australia)
+
+RPMs are available at:
+	ftp://omni.rk.tusur.ru/Tango/
+	ftp://ftp4.dgtu.donetsk.ua/pub/BlackCat/6.0/contrib/SRPMS/i[35]86/
+
+
+
+How to compile this.
+--------------------
+
+
+1. Look at start of Makefile and set correct values for:
+
+KERNEL_INCLUDE should point to correct linux kernel include directory.
+Default (/usr/src/linux/include) is right as rule.
+
+ADDLIB should contain inet_* functions, if your libc contains
+obsolete resolver library (<4.9.4) and you have no correct libresolv.
+ADDLIB should also contain dnet_* functions if you don't have a
+libdnet with support for them. If your libdnet does have support,
+then comment out that line and uncomment the line to add -ldnet to
+LDLIBS.
+
+LDLIBS should be empty, if you have no libresolv.
+
+
+2. make
+
+Utilities "ip" and "rtmon" are in ip/ directory now,
+"tc" is in tc/. That's all.
+
+3. To make documentation, cd to doc/ directory , then
+   look at start of Makefile and set correct values for
+   PAGESIZE=a4		, ie: a4 , letter ...	(string)
+   PAGESPERPAGE=2	, ie: 1 , 2 ...		(numeric)
+   and make there. It assumes, that latex, dvips and psnup
+   are in your path.
+
+Alexey Kuznetsov
+kuznet@ms2.inr.ac.ru

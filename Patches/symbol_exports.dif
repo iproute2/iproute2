@@ -1,0 +1,56 @@
+diff -ur ../vger3-010830/linux/net/ipv6/tcp_ipv6.c linux/net/ipv6/tcp_ipv6.c
+--- ../vger3-010830/linux/net/ipv6/tcp_ipv6.c	Wed Jun 13 21:14:05 2001
++++ linux/net/ipv6/tcp_ipv6.c	Fri Oct 12 06:59:07 2001
+@@ -339,13 +339,18 @@
+ 	return tcp_v6_lookup_listener(daddr, hnum, dif);
+ }
+ 
+-#define tcp_v6_lookup(sa, sp, da, dp, dif) \
+-({	struct sock *___sk; \
+-	local_bh_disable(); \
+-	___sk = __tcp_v6_lookup((sa),(sp),(da),ntohs(dp),(dif)); \
+-	local_bh_enable(); \
+-	___sk; \
+-})
++__inline__ struct sock *tcp_v6_lookup(struct in6_addr *saddr, u16 sport,
++				      struct in6_addr *daddr, u16 dport,
++				      int dif)
++{
++	struct sock *sk;
++
++	local_bh_disable();
++	sk = __tcp_v6_lookup(saddr, sport, daddr, ntohs(dport), dif);
++	local_bh_enable();
++
++	return sk;
++}
+ 
+ 
+ /*
+diff -ur ../vger3-010830/linux/net/netsyms.c linux/net/netsyms.c
+--- ../vger3-010830/linux/net/netsyms.c	Sun Aug 19 22:01:45 2001
++++ linux/net/netsyms.c	Fri Oct 12 07:59:17 2001
+@@ -72,6 +72,11 @@
+ 
+ extern int netdev_finish_unregister(struct net_device *dev);
+ 
++extern struct sock *tcp_v6_lookup(struct in6_addr *saddr, u16 sport,
++				  struct in6_addr *daddr, u16 dport,
++				  int dif);
++extern struct sock *tcp_v4_lookup(u32 saddr, u16 sport, u32 daddr, u16 dport, int dif);
++
+ #include <linux/rtnetlink.h>
+ 
+ #ifdef CONFIG_IPX_MODULE
+@@ -284,7 +289,11 @@
+ EXPORT_SYMBOL(ndisc_mc_map);
+ EXPORT_SYMBOL(register_inet6addr_notifier);
+ EXPORT_SYMBOL(unregister_inet6addr_notifier);
++EXPORT_SYMBOL(tcp_v6_lookup);
+ #endif
++EXPORT_SYMBOL(tcp_v4_lookup);
++EXPORT_SYMBOL(tcp_timewait_cachep);
++EXPORT_SYMBOL(tcp_hashinfo);
+ #if defined (CONFIG_IPV6_MODULE) || defined (CONFIG_KHTTPD) || defined (CONFIG_KHTTPD_MODULE)
+ /* inet functions common to v4 and v6 */
+ EXPORT_SYMBOL(inet_release);

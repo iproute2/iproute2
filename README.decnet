@@ -1,0 +1,41 @@
+
+Here are a few quick points about DECnet support...
+
+ o No name resolution is available as yet, all addresses must be
+   entered numerically.
+
+ o The neighbour cache may well list every entry as having the address
+   0.170. This is due to a problem that I need to sort out kernel side.
+   It is harmless (but don't try and use neigh add yet) just look in
+   /proc/net/decnet_neigh to see the real addresses for now.
+
+ o The rtnetlink support in the kernel is rather exprimental, expect a
+   few odd things to happen for the next few DECnet kernel releases.
+
+ o Whilst you can use ip addr add to add more than one DECnet address to an
+   interface, don't expect addresses which are not the same as the
+   kernels node address to work properly. i.e. You will break the DECnet
+   protocol if you do add anything other than the automatically generated
+   interface addresses to ethernet cards. This option is there for future
+   link layer support, where the device will have to be configed for
+   DECnet explicitly.
+
+ o The DECnet support is currently self contained. You do not need the
+   libdnet library to use it. In fact until I've sent the dnet_pton and
+   dnet_ntop functions to Patrick to add, you can't use libdnet.
+
+ o If you are not using the very latest 2.3.xx series kernels, don't
+   try and list DECnet routes if you've got IPv6 compiled into the
+   kernel. It will oops.
+
+ o My main reason for writing the DECnet support for iproute2 was to
+   check out the DECnet routing code, so the route get and
+   route show cache commands are likely to be the most debugged out of
+   all of them.
+
+ o If you find bugs in the DECnet support, please send them to me in the
+   first instance, and then I'll send Alexey a patch to fix it. IPv4/6
+   bugs should be sent to Alexey as before.
+
+Steve Whitehouse <SteveW@ACM.org>
+

@@ -1,0 +1,401 @@
+diff -ur ../vger3-011229/linux/net/unix/af_unix.c linux/net/unix/af_unix.c
+--- ../vger3-011229/linux/net/unix/af_unix.c	Mon Dec  3 20:24:03 2001
++++ linux/net/unix/af_unix.c	Sat Jan  5 04:30:19 2002
+@@ -112,6 +112,7 @@
+ #include <asm/checksum.h>
+ 
+ int sysctl_unix_max_dgram_qlen = 10;
++int sysctl_unix_stream_pages = MAX_SKB_FRAGS;
+ 
+ unix_socket *unix_socket_table[UNIX_HASH_SIZE+1];
+ rwlock_t unix_table_lock = RW_LOCK_UNLOCKED;
+@@ -1123,9 +1124,6 @@
+ 	struct scm_cookie scm;
+ 	memset(&scm, 0, sizeof(scm));
+ 	unix_detach_fds(&scm, skb);
+-
+-	/* Alas, it calls VFS */
+-	/* So fscking what? fput() had been SMP-safe since the last Summer */
+ 	scm_destroy(&scm);
+ 	sock_wfree(skb);
+ }
+@@ -1140,6 +1138,67 @@
+ 	scm->fp = NULL;
+ }
+ 
++int datagram_copy_fromiovec(struct iovec *iov, struct sk_buff *skb, int size)
++{
++	struct sock *sk;
++	struct sk_buff **tail, *skb1;
++	int copy = min_t(int, size, skb_tailroom(skb));
++
++	if (memcpy_fromiovec(skb_put(skb, copy), iov, copy))
++		goto do_fault;
++
++	if ((size -= copy) == 0)
++		return 0;
++
++	sk = skb->sk;
++	skb1 = skb;
++	tail = &skb_shinfo(skb)->frag_list;
++
++	do {
++		struct page *page;
++		int i = skb_shinfo(skb1)->nr_frags;
++
++		if (i == MAX_SKB_FRAGS) {
++			skb1 = alloc_skb(0, sk->allocation);
++			if (skb1 == NULL)
++				goto do_oom;
++			*tail = skb1;
++			tail = &skb1->next;
++			i = 0;
++			skb->truesize += skb1->truesize;
++			atomic_add(skb1->truesize, &sk->wmem_alloc);
++		}
++
++		page = alloc_pages(sk->allocation, 0);
++		if (page == NULL)
++			goto do_oom;
++
++		copy = min_t(int, size, PAGE_SIZE);
++		skb_shinfo(skb1)->nr_frags=i+1;
++		skb_shinfo(skb1)->frags[i].page = page;
++		skb_shinfo(skb1)->frags[i].page_offset = 0;
++		skb_shinfo(skb1)->frags[i].size = copy;
++
++		skb1->len += copy;
++		skb1->data_len += copy;
++		if (skb != skb1) {
++			skb->len += copy;
++			skb->data_len += copy;
++		}
++		skb->truesize += PAGE_SIZE;
++		atomic_add(PAGE_SIZE, &sk->wmem_alloc);
++		if (memcpy_fromiovec(page_address(page), iov, copy))
++			goto do_fault;
++	} while ((size -= copy) > 0);
++	return 0;
++
++do_oom:
++	return -ENOMEM;
++
++do_fault:
++	return -EFAULT;
++}
++
+ /*
+  *	Send AF_UNIX data.
+  */
+@@ -1155,6 +1214,7 @@
+ 	unsigned hash;
+ 	struct sk_buff *skb;
+ 	long timeo;
++	int alloc;
+ 
+ 	err = -EOPNOTSUPP;
+ 	if (msg->msg_flags&MSG_OOB)
+@@ -1178,10 +1238,14 @@
+ 		goto out;
+ 
+ 	err = -EMSGSIZE;
+-	if ((unsigned)len > sk->sndbuf - 32)
++	if ((unsigned)len > sk->sndbuf)
+ 		goto out;
+ 
+-	skb = sock_alloc_send_skb(sk, len, msg->msg_flags&MSG_DONTWAIT, &err);
++ 	alloc = len;
++ 	if (alloc > SKB_MAX_HEAD(0))
++ 		alloc = SKB_MAX_HEAD(0);
++
++	skb = sock_alloc_send_skb(sk, alloc, msg->msg_flags&MSG_DONTWAIT, &err);
+ 	if (skb==NULL)
+ 		goto out;
+ 
+@@ -1190,7 +1254,7 @@
+ 		unix_attach_fds(scm, skb);
+ 
+ 	skb->h.raw = skb->data;
+-	err = memcpy_fromiovec(skb_put(skb,len), msg->msg_iov, len);
++	err = datagram_copy_fromiovec(msg->msg_iov, skb, len);
+ 	if (err)
+ 		goto out_free;
+ 
+@@ -1275,74 +1339,57 @@
+ 	return err;
+ }
+ 
+-		
+ static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg, int len,
+ 			       struct scm_cookie *scm)
+ {
+ 	struct sock *sk = sock->sk;
+ 	unix_socket *other = NULL;
+-	struct sockaddr_un *sunaddr=msg->msg_name;
+-	int err,size;
+ 	struct sk_buff *skb;
++	int err;
+ 	int sent=0;
+ 
+ 	err = -EOPNOTSUPP;
+ 	if (msg->msg_flags&MSG_OOB)
+ 		goto out_err;
+ 
+-	if (msg->msg_namelen) {
+-		err = (sk->state==TCP_ESTABLISHED ? -EISCONN : -EOPNOTSUPP);
++	err = -ENOTCONN;
++	other = unix_peer_get(sk);
++	if (!other)
+ 		goto out_err;
+-	} else {
+-		sunaddr = NULL;
+-		err = -ENOTCONN;
+-		other = unix_peer_get(sk);
+-		if (!other)
+-			goto out_err;
+-	}
+ 
+ 	if (sk->shutdown&SEND_SHUTDOWN)
+ 		goto pipe_err;
+ 
+-	while(sent < len)
+-	{
+-		/*
+-		 *	Optimisation for the fact that under 0.01% of X messages typically
+-		 *	need breaking up.
+-		 */
++	while(sent < len) {
++		int size, alloc;
+ 
+-		size=len-sent;
++		size = len-sent;
+ 
+ 		/* Keep two messages in the pipe so it schedules better */
+-		if (size > sk->sndbuf/2 - 64)
+-			size = sk->sndbuf/2 - 64;
++		if (size > sk->sndbuf/2)
++			size = sk->sndbuf/2;
+ 
+-		if (size > SKB_MAX_ALLOC)
+-			size = SKB_MAX_ALLOC;
+-			
+ 		/*
+ 		 *	Grab a buffer
+ 		 */
+-		 
+-		skb=sock_alloc_send_skb(sk,size,msg->msg_flags&MSG_DONTWAIT, &err);
++		alloc = size;
++
++		if (size > SKB_MAX_HEAD(0)) {
++			alloc = SKB_MAX_HEAD(0);
++			if (size > alloc + sysctl_unix_stream_pages*PAGE_SIZE)
++				size = alloc + sysctl_unix_stream_pages*PAGE_SIZE;
++		}
++
++ 		skb=sock_alloc_send_skb(sk,alloc,msg->msg_flags&MSG_DONTWAIT, &err);
+ 
+ 		if (skb==NULL)
+ 			goto out_err;
+ 
+-		/*
+-		 *	If you pass two values to the sock_alloc_send_skb
+-		 *	it tries to grab the large buffer with GFP_NOFS
+-		 *	(which can fail easily), and if it fails grab the
+-		 *	fallback size buffer which is under a page and will
+-		 *	succeed. [Alan]
+-		 */
+-		size = min_t(int, size, skb_tailroom(skb));
+-
+ 		memcpy(UNIXCREDS(skb), &scm->creds, sizeof(struct ucred));
+ 		if (scm->fp)
+ 			unix_attach_fds(scm, skb);
+ 
+-		if ((err = memcpy_fromiovec(skb_put(skb,size), msg->msg_iov, size)) != 0) {
++ 		if ((err = datagram_copy_fromiovec(msg->msg_iov, skb, size)) != 0) {
+ 			kfree_skb(skb);
+ 			goto out_err;
+ 		}
+@@ -1418,13 +1465,10 @@
+ 
+ 	scm->creds = *UNIXCREDS(skb);
+ 
+-	if (!(flags & MSG_PEEK))
+-	{
++	if (!(flags & MSG_PEEK)) {
+ 		if (UNIXCB(skb).fp)
+ 			unix_detach_fds(scm, skb);
+-	}
+-	else 
+-	{
++	} else {
+ 		/* It is questionable: on PEEK we could:
+ 		   - do not return fds - good, but too simple 8)
+ 		   - return fds, and do not return them on read (old strategy,
+@@ -1483,13 +1527,10 @@
+ 	return timeo;
+ }
+ 
+-
+-
+ static int unix_stream_recvmsg(struct socket *sock, struct msghdr *msg, int size,
+ 			       int flags, struct scm_cookie *scm)
+ {
+ 	struct sock *sk = sock->sk;
+-	struct sockaddr_un *sunaddr=msg->msg_name;
+ 	int copied = 0;
+ 	int check_creds = 0;
+ 	int target;
+@@ -1515,21 +1556,18 @@
+ 
+ 	down(&sk->protinfo.af_unix.readsem);
+ 
+-	do
+-	{
++	do {
+ 		int chunk;
+ 		struct sk_buff *skb;
+ 
+ 		skb=skb_dequeue(&sk->receive_queue);
+-		if (skb==NULL)
+-		{
++		if (skb==NULL) {
+ 			if (copied >= target)
+ 				break;
+ 
+ 			/*
+ 			 *	POSIX 1003.1g mandates this order.
+ 			 */
+-			 
+ 			if ((err = sock_error(sk)) != 0)
+ 				break;
+ 			if (sk->shutdown & RCV_SHUTDOWN)
+@@ -1551,60 +1589,44 @@
+ 
+ 		if (check_creds) {
+ 			/* Never glue messages from different writers */
+-			if (memcmp(UNIXCREDS(skb), &scm->creds, sizeof(scm->creds)) != 0) {
+-				skb_queue_head(&sk->receive_queue, skb);
+-				break;
+-			}
++			if (memcmp(UNIXCREDS(skb), &scm->creds, sizeof(scm->creds)) != 0)
++				goto out_put_back;
+ 		} else {
+ 			/* Copy credentials */
+ 			scm->creds = *UNIXCREDS(skb);
+ 			check_creds = 1;
+ 		}
+ 
+-		/* Copy address just once */
+-		if (sunaddr)
+-		{
+-			unix_copy_addr(msg, skb->sk);
+-			sunaddr = NULL;
+-		}
++		chunk = min_t(int, skb->len - sk->protinfo.af_unix.copied, size);
++		err = skb_copy_datagram_iovec(skb, sk->protinfo.af_unix.copied, msg->msg_iov, chunk);
++		if (err)
++			goto out_put_back;
+ 
+-		chunk = min_t(unsigned int, skb->len, size);
+-		if (memcpy_toiovec(msg->msg_iov, skb->data, chunk)) {
+-			skb_queue_head(&sk->receive_queue, skb);
+-			if (copied == 0)
+-				copied = -EFAULT;
+-			break;
+-		}
+ 		copied += chunk;
+ 		size -= chunk;
+ 
+ 		/* Mark read part of skb as used */
+-		if (!(flags & MSG_PEEK))
+-		{
+-			skb_pull(skb, chunk);
+-
++		if (!(flags & MSG_PEEK)) {
+ 			if (UNIXCB(skb).fp)
+ 				unix_detach_fds(scm, skb);
+ 
+ 			/* put the skb back if we didn't use it up.. */
+-			if (skb->len)
+-			{
+-				skb_queue_head(&sk->receive_queue, skb);
+-				break;
+-			}
++			if ((sk->protinfo.af_unix.copied += chunk) < skb->len)
++				goto out_put_back;
++
++			sk->protinfo.af_unix.copied = 0;
+ 
+ 			kfree_skb(skb);
+ 
+ 			if (scm->fp)
+ 				break;
+-		}
+-		else
+-		{
++		} else {
+ 			/* It is questionable, see note in unix_dgram_recvmsg.
+ 			 */
+ 			if (UNIXCB(skb).fp)
+ 				scm->fp = scm_fp_dup(UNIXCB(skb).fp);
+ 
++out_put_back:
+ 			/* put message back and return */
+ 			skb_queue_head(&sk->receive_queue, skb);
+ 			break;
+@@ -1676,10 +1698,12 @@
+ 				break;
+ 			}
+ 
++			down(&sk->protinfo.af_unix.readsem);
+ 			spin_lock(&sk->receive_queue.lock);
+ 			if((skb=skb_peek(&sk->receive_queue))!=NULL)
+-				amount=skb->len;
++				amount=skb->len - sk->protinfo.af_unix.copied;
+ 			spin_unlock(&sk->receive_queue.lock);
++			up(&sk->protinfo.af_unix.readsem);
+ 			err = put_user(amount, (int *)arg);
+ 			break;
+ 		}
+@@ -1734,7 +1758,7 @@
+ 	int i;
+ 	unix_socket *s;
+ 	
+-	len+= sprintf(buffer,"Num       RefCount Protocol Flags    Type St "
++	len+= sprintf(buffer,"Peer      RcvQueue WMem     Flags    Type St "
+ 	    "Inode Path\n");
+ 
+ 	read_lock(&unix_table_lock);
+@@ -1742,10 +1766,10 @@
+ 	{
+ 		unix_state_rlock(s);
+ 
+-		len+=sprintf(buffer+len,"%p: %08X %08X %08X %04X %02X %5ld",
+-			s,
+-			atomic_read(&s->refcnt),
+-			0,
++		len+=sprintf(buffer+len,"%08lX: %08X %08X %08X %04X %02X %5ld",
++			unix_peer(s) ? sock_i_ino(unix_peer(s)) : 0,
++			skb_queue_len(&s->receive_queue),
++			atomic_read(&s->wmem_alloc),
+ 			s->state == TCP_LISTEN ? __SO_ACCEPTCON : 0,
+ 			s->type,
+ 			s->socket ?
+diff -ur ../vger3-011229/linux/net/unix/sysctl_net_unix.c linux/net/unix/sysctl_net_unix.c
+--- ../vger3-011229/linux/net/unix/sysctl_net_unix.c	Tue Jan 30 21:20:16 2001
++++ linux/net/unix/sysctl_net_unix.c	Sat Jan  5 04:10:58 2002
+@@ -13,10 +13,14 @@
+ #include <linux/sysctl.h>
+ 
+ extern int sysctl_unix_max_dgram_qlen;
++extern int sysctl_unix_stream_pages;
+ 
+ ctl_table unix_table[] = {
+ 	{NET_UNIX_MAX_DGRAM_QLEN, "max_dgram_qlen",
+ 	&sysctl_unix_max_dgram_qlen, sizeof(int), 0600, NULL, 
++	 &proc_dointvec },
++	{NET_UNIX_STREAM_PAGES, "stream_pages",
++	&sysctl_unix_stream_pages, sizeof(int), 0600, NULL, 
+ 	 &proc_dointvec },
+ 	{0}
+ };
