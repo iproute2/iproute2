@@ -97,7 +97,10 @@ char * sprint_tc_classid(__u32 h, char *buf)
 	return buf;
 }
 
-
+/*
+ * NB: rates are in Kilo = 1000 but sizes are in Kilo = 1024
+ *     according to standard usage.
+ */
 int get_rate(unsigned *rate, const char *str)
 {
 	char *p;
@@ -108,17 +111,17 @@ int get_rate(unsigned *rate, const char *str)
 
 	if (*p) {
 		if (strcasecmp(p, "kbps") == 0)
-			bps *= 1024;
+			bps *= 1000;
 		else if (strcasecmp(p, "gbps") == 0)
-			bps *= 1024*1024*1024;
+			bps *= 1000000000.;
 		else if (strcasecmp(p, "gbit") == 0)
-			bps *= 1024*1024*1024/8;
+			bps = (bps * 1000000000.)/8;
 		else if (strcasecmp(p, "mbps") == 0)
-			bps *= 1024*1024;
+			bps *= 1000000.;
 		else if (strcasecmp(p, "mbit") == 0)
-			bps *= 1024*1024/8;
+			bps = (bps * 1000000.)/8;
 		else if (strcasecmp(p, "kbit") == 0)
-			bps *= 1024/8;
+			bps = (bps * 1000.) / 8;
 		else if (strcasecmp(p, "bps") != 0)
 			return -1;
 	} else
@@ -162,10 +165,10 @@ int print_rate(char *buf, int len, __u32 rate)
 {
 	double tmp = (double)rate*8;
 
-	if (tmp >= 1024*1023 && fabs(1024*1024*rint(tmp/(1024*1024)) - tmp) < 1024)
-		snprintf(buf, len, "%gMbit", rint(tmp/(1024*1024)));
-	else if (tmp >= 1024-16 && fabs(1024*rint(tmp/1024) - tmp) < 16)
-		snprintf(buf, len, "%gKbit", rint(tmp/1024));
+	if (tmp >= 999999 && fabs(1000000.*rint(tmp/1000000.) - tmp) < 1000)
+		snprintf(buf, len, "%gMbit", rint(tmp/1000000.));
+	else if (tmp >= 990 && fabs(1000.*rint(tmp/1000.) - tmp) < 10)
+		snprintf(buf, len, "%gKbit", rint(tmp/1000.));
 	else
 		snprintf(buf, len, "%ubps", rate);
 	return 0;
