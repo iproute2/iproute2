@@ -72,15 +72,6 @@ static struct iptables_target *t_list = NULL;
 static unsigned int global_option_offset = 0;
 #define OPTION_OFFSET 256
 
-#if 0
-/* no clue why register match is within targets
- figure out later. Talk to Harald -- JHS
-*/
-void
-register_match(struct iptables_match *me)
-{
-/*      fprintf(stderr, "\nDummy register_match\n"); */
-}
 
 void
 register_target(struct iptables_target *me)
@@ -91,7 +82,6 @@ register_target(struct iptables_target *me)
 	t_list = me;
 
 }
-#endif
 
 void
 exit_tryhelp(int status)
@@ -179,28 +169,6 @@ int string_to_number(const char *s, unsigned int min, unsigned int max,
 	return result;
 }
 
-#if 0
-static int
-string_to_number(const char *s, unsigned int min, unsigned int max,
-		 unsigned int *ret)
-{
-	long number;
-	char *end;
-
-	/* Handle hex, octal, etc. */
-	errno = 0;
-	number = strtol(s, &end, 0);
-	if (*end == '\0' && end != s) {
-		/* we parsed a number, let's see if we want this */
-		if (errno != ERANGE && min <= number && number <= max) {
-			*ret = number;
-			return 0;
-		}
-	}
-	return -1;
-}
-#endif
-
 static struct option *
 copy_options(struct option *oldopts)
 {
@@ -249,34 +217,6 @@ fw_calloc(size_t count, size_t size)
 	}
 	return p;
 }
-
-#if 0
-static void *
-fw_malloc(size_t size)
-{
-	void *p;
-
-	if ((p = (void *) malloc(size)) == NULL) {
-		perror("iptables: malloc failed");
-		exit(1);
-	}
-	return p;
-}
-
-static int
-check_inverse(const char option[], int *invert)
-{
-	if (option && strcmp(option, "!") == 0) {
-		if (*invert)
-			exit_error(PARAMETER_PROBLEM,
-				   "Multiple `!' flags not allowed");
-
-		*invert = TRUE;
-		return TRUE;
-	}
-	return FALSE;
-}
-#endif
 
 static struct iptables_target *
 find_t(char *name)
@@ -361,18 +301,6 @@ get_target_name(char *name)
 	return m;
 }
 
-#if 0
-static char *
-addr_to_dotted(const struct in_addr *addrp)
-{
-	static char buf[20];
-	const unsigned char *bytep;
-
-	bytep = (const unsigned char *) &(addrp->s_addr);
-	sprintf(buf, "%d.%d.%d.%d", bytep[0], bytep[1], bytep[2], bytep[3]);
-	return buf;
-}
-#endif
 
 struct in_addr *dotted_to_addr(const char *dotted)
 {
