@@ -1282,11 +1282,8 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 		minfo = RTA_DATA(tb[TCPDIAG_MEMINFO]);
 	if (tb[TCPDIAG_INFO])
 		info = RTA_DATA(tb[TCPDIAG_INFO]);
-
-#ifdef TCPDIAG_VEGASINFO
 	if (tb[TCPDIAG_VEGASINFO]) 
 		vinfo = RTA_DATA(tb[TCPDIAG_VEGASINFO]);
-#endif
 
 	if (minfo) {
 		printf(" mem:(r%u,w%u,f%u,t%u)",
@@ -1310,8 +1307,6 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 		if (info->tcpi_snd_ssthresh < 0xFFFF)
 			printf(" ssthresh:%d", info->tcpi_snd_ssthresh);
 
-
-#ifdef TCPDIAG_VEGASINFO
 		if (vinfo) {
 			if (vinfo->tcpv_enabled)
 				printf(" vegas");
@@ -1325,7 +1320,6 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 				       8000000. / (double) vinfo->tcpv_rtt);
 			}
 		}
-#endif
 	}
 #else
 #warning No TCP_INFO. Please, do not repeat this experiment, use right kernel.
