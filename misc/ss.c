@@ -1305,7 +1305,6 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 	char b1[64];
 	double rtt = 0;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, TCPDIAG_MAX, (struct rtattr*)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
