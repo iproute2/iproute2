@@ -26,6 +26,7 @@ endif
 TCMODULES += q_delay.o
 
 #TCMODULES += q_csz.o
+TCMODULES += q_htb.o
 #TCMODULES += q_hpfq.o
 #TCMODULES += q_hfsc.o
 
