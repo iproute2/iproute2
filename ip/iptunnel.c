@@ -23,12 +23,13 @@
 #include <syslog.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <asm/byteorder.h>
 #include <linux/if.h>
 #include <linux/if_arp.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
+#include <linux/ip.h>
 #include <linux/if_tunnel.h>
 
 #include "rt_names.h"
