@@ -35,6 +35,8 @@ int show_details = 0;
 int show_raw = 0;
 int resolve_hosts = 0;
 int use_iec = 0;
+struct rtnl_handle g_rth;
+int is_batch_mode = 0;
 
 static void *BODY;	/* cached handle dlopen(NULL) */
 static struct qdisc_util * qdisc_list;
@@ -175,14 +177,12 @@ noexist:
 	return q;
 }
 
-static void usage(void) __attribute__((noreturn));
-
-static void usage(void)
+static int usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	                "where  OBJECT := { qdisc | class | filter | action }\n"
 	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] file }\n");
-	exit(-1);
+	return -1;
 }
 
 
@@ -208,21 +208,27 @@ int main(int argc, char **argv)
 
 		if (argc != 3) {
 			fprintf(stderr, "Wrong number of arguments in batch mode\n");
-			exit(-1);
+			return -1;
 		}
 		if (matches(argv[2], "-") != 0) {
 			if ((batch = fopen(argv[2], "r")) == NULL) {
 				fprintf(stderr, "Cannot open file \"%s\" for reading: %s=n", argv[2], strerror(errno));
-				exit(-1);
+				return -1;
 			}
 		} else {
 			if ((batch = fdopen(0, "r")) == NULL) {
 				fprintf(stderr, "Cannot open stdin for reading: %s=n", strerror(errno));
-				exit(-1);
+				return -1;
 			}
 		}
 
 		tc_core_init();
+ 		is_batch_mode=1;
+ 
+ 		if (rtnl_open(&g_rth, 0) < 0) {
+ 			fprintf(stderr, "Cannot open rtnetlink\n");
+ 			return 1;
+ 		}
 
 		while (fgets(line, sizeof(line)-1, batch)) {
 			if (line[strlen(line)-1]=='\n') {
@@ -230,18 +236,22 @@ int main(int argc, char **argv)
 			} else {
 				fprintf(stderr, "No newline at the end of line, looks like to long (%d chars or more)\n", 
 					(int) strlen(line));
-				exit(-1);
+				return -1;
 			}
 			largc = 0;
 			largv[largc]=strtok(line, " ");
+ 			if (largv[largc]==NULL)
+ 				continue;
 			while ((largv[++largc]=strtok(NULL, " ")) != NULL) {
 				if (largc > BMAXARG) {
 					fprintf(stderr, "Over %d arguments in batch mode, enough!\n", 
 						(int) BMAXARG);
-					exit(-1);
+					return -1;
 				}
 			}
 
+ 			if (largv[0][0]=='#')
+ 				continue;
 			if (matches(largv[0], "qdisc") == 0) {
 				ret += do_qdisc(largc-1, largv+1);
 			} else if (matches(largv[0], "class") == 0) {
@@ -254,11 +264,11 @@ int main(int argc, char **argv)
 				usage();	/* note that usage() doesn't return */
 			} else {
 				fprintf(stderr, "Object \"%s\" is unknown, try \"tc help\".\n", largv[1]);
-				exit(-1);
 			}
 		}
 		fclose(batch);
-		exit(0); /* end of batch, that's all */
+		rtnl_close(&g_rth);
+		return 0; /* end of batch, that's all */
 	}
 
 	while (argc > 1) {
@@ -273,14 +283,14 @@ int main(int argc, char **argv)
 			++show_raw;
 		} else if (matches(argv[1], "-Version") == 0) {
 			printf("tc utility, iproute2-ss%s\n", SNAPSHOT);
-			exit(0);
+			return 0;
 		} else if (matches(argv[1], "-iec") == 0) {
 			++use_iec;
 		} else if (matches(argv[1], "-help") == 0) {
 			usage();
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
-			exit(-1);
+			return -1;
 		}
 		argc--;	argv++;
 	}
@@ -299,8 +309,9 @@ int main(int argc, char **argv)
 		if (matches(argv[1], "help") == 0)
 			usage();
 		fprintf(stderr, "Object \"%s\" is unknown, try \"tc help\".\n", argv[1]);
-		exit(-1);
+		return -1;
 	}
 
 	usage();
+	return 0;
 }
