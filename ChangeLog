@@ -1,3 +1,14 @@
+2004-07-02  Stephen Hemminger  <shemminger@osdl.org>
+
+	* use compile to test for ATM libraries
+	* put TC layered scheduler hooks in /usr/lib/tc as shared lib
+	  before it looked in standard search path (/lib;/usr/lib;...)
+	  which seems out of place.
+	* build netem as shared library (more for testing/example)
+	* build ATM as shared library since libatm may be on build
+	  machine but not on deployment machine
+	* fix make install to not install SCCS directories
+
 2004-07-01  Stephen Hemminger  <shemminger@osdl.org>
 
 	* add more link options to ip command (from Mark Smith
