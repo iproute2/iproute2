@@ -294,7 +294,7 @@ struct slabstat
 
 struct slabstat slabstat;
 
-const char *slabstat_ids[] = 
+static const char *slabstat_ids[] = 
 {
 	"sock",
 	"tcp_bind_bucket",
@@ -392,7 +392,7 @@ static const char *tmr_name[] = {
 	"unknown"
 };
 
-char *print_ms_timer(int timeout)
+const char *print_ms_timer(int timeout)
 {
 	static char buf[64];
 	int secs, msecs, minutes;
@@ -419,7 +419,7 @@ char *print_ms_timer(int timeout)
 	return buf;
 };
 
-char *print_hz_timer(int timeout)
+const char *print_hz_timer(int timeout)
 {
 	int hz = get_hz();
 	return print_ms_timer(((timeout*1000) + hz-1)/hz);
@@ -1270,22 +1270,14 @@ outerr:
 void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 {
 	struct rtattr * tb[TCPDIAG_MAX+1];
-	const struct tcpdiag_meminfo *minfo = NULL;
-	const struct tcp_info *info = NULL;
-	const struct tcpvegas_info *vinfo = NULL;
 
 	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, TCPDIAG_MAX, (struct rtattr*)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
-	if (tb[TCPDIAG_MEMINFO])
-		minfo = RTA_DATA(tb[TCPDIAG_MEMINFO]);
-	if (tb[TCPDIAG_INFO])
-		info = RTA_DATA(tb[TCPDIAG_INFO]);
-	if (tb[TCPDIAG_VEGASINFO]) 
-		vinfo = RTA_DATA(tb[TCPDIAG_VEGASINFO]);
-
-	if (minfo) {
+	if (tb[TCPDIAG_MEMINFO]) {
+		const struct tcpdiag_meminfo *minfo
+			= RTA_DATA(tb[TCPDIAG_MEMINFO]);
 		printf(" mem:(r%u,w%u,f%u,t%u)",
 		       minfo->tcpdiag_rmem,
 		       minfo->tcpdiag_wmem,
@@ -1293,8 +1285,27 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 		       minfo->tcpdiag_tmem);
 	}
 
-	if (info) {
-#ifdef TCP_INFO
+	if (tb[TCPDIAG_INFO]) {
+		struct tcp_info *info;
+		int len = RTA_PAYLOAD(tb[TCPDIAG_INFO]);
+
+		/* workaround for older kernels with less fields */
+		if (len < sizeof(*info)) {
+			info = alloca(sizeof(*info));
+			memset(info, 0, sizeof(*info));
+			memcpy(info, RTA_DATA(tb[TCPDIAG_INFO]), len);
+		} else
+			info = RTA_DATA(tb[TCPDIAG_INFO]);
+
+		if (info->tcpi_options & TCPI_OPT_TIMESTAMPS)
+			printf(" ts");
+		if (info->tcpi_options & TCPI_OPT_SACK)
+			printf(" sack");
+		if (info->tcpi_options & TCPI_OPT_WSCALE) 
+			printf(" wscale:%d,%d", info->tcpi_snd_wscale,
+			       info->tcpi_rcv_wscale);
+		if (info->tcpi_options & TCPI_OPT_ECN)
+			printf(" ecn");
 		if (info->tcpi_rto && info->tcpi_rto != 3000000)
 			printf(" rto:%g", (double)info->tcpi_rto/1000);
 		if (info->tcpi_rtt)
@@ -1306,10 +1317,19 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 			printf(" cwnd:%d", info->tcpi_snd_cwnd);
 		if (info->tcpi_snd_ssthresh < 0xFFFF)
 			printf(" ssthresh:%d", info->tcpi_snd_ssthresh);
+		
+		if (info->tcpi_rcv_rtt)
+			printf(" rcv_rtt:%g", (double) info->tcpi_rcv_rtt/1000);
+		if (info->tcpi_rcv_space)
+			printf(" rcv_space:%d", info->tcpi_rcv_space);
 
-		if (vinfo) {
+		if (tb[TCPDIAG_VEGASINFO]) {
+			const struct tcpvegas_info *vinfo
+				= RTA_DATA(tb[TCPDIAG_VEGASINFO]);
+
 			if (vinfo->tcpv_enabled)
 				printf(" vegas");
+
 			if (vinfo->tcpv_rtt && 
 			    vinfo->tcpv_rtt != 0x7fffffff &&
 			    info->tcpi_snd_mss && 
@@ -1321,10 +1341,6 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 			}
 		}
 	}
-#else
-#warning No TCP_INFO. Please, do not repeat this experiment, use right kernel.
-	printf(" MORE_INFO_PROVIDED_YOU_COMPILED_SS_RIGHT");
-#endif
 }
 
 int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
