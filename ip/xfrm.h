@@ -41,6 +41,14 @@
 #define XFRMP_RTA(x)  ((struct rtattr*)(((char*)(x)) + NLMSG_ALIGN(sizeof(struct xfrm_userpolicy_info))))
 #define XFRMP_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct xfrm_userpoilcy_info))
 
+#define XFRM_FLAG_PRINT(fp, flags, f, s) \
+	do { \
+		if (flags & f) { \
+			flags &= ~f; \
+			fprintf(fp, s "%s", (flags ? " " : "")); \
+		} \
+	} while(0)
+
 struct xfrm_buffer {
 	char *buf;
 	int size;
@@ -54,43 +62,45 @@ struct xfrm_filter {
 	int use;
 
 	struct xfrm_usersa_info xsinfo;
-	__u32 id_src_mask;
-	__u32 id_dst_mask;
-	__u32 id_proto_mask;
+	__u8 id_src_mask;
+	__u8 id_dst_mask;
+	__u8 id_proto_mask;
 	__u32 id_spi_mask;
-	__u32 mode_mask;
+	__u8 mode_mask;
 	__u32 reqid_mask;
-	__u32 state_flags_mask;
+	__u8 state_flags_mask;
 
 	struct xfrm_userpolicy_info xpinfo;
-	__u32 dir_mask;
-	__u32 sel_src_mask;
-	__u32 sel_dst_mask;
+	__u8 dir_mask;
+	__u8 sel_src_mask;
+	__u8 sel_dst_mask;
 	__u32 sel_dev_mask;
-	__u32 upspec_proto_mask;
-	__u32 upspec_sport_mask;
-	__u32 upspec_dport_mask;
+	__u8 upspec_proto_mask;
+	__u16 upspec_sport_mask;
+	__u16 upspec_dport_mask;
 	__u32 index_mask;
-	__u32 action_mask;
+	__u8 action_mask;
 	__u32 priority_mask;
 };
-#define XFRM_FILTER_MASK_FULL (~(__u32)0)
+#define XFRM_FILTER_MASK_FULL (~0)
 
 extern struct xfrm_filter filter;
 
 int do_xfrm_state(int argc, char **argv);
 int do_xfrm_policy(int argc, char **argv);
 
+int xfrm_addr_match(xfrm_address_t *x1, xfrm_address_t *x2, int bits);
 int xfrm_xfrmproto_getbyname(char *name);
 int xfrm_algotype_getbyname(char *name);
 const char *strxf_xfrmproto(__u8 proto);
 const char *strxf_algotype(int type);
-const char *strxf_flags(__u8 flags);
+const char *strxf_mask8(__u8 mask);
+const char *strxf_mask32(__u32 mask);
 const char *strxf_share(__u8 share);
 const char *strxf_proto(__u8 proto);
 void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
-			__u8 mode, __u32 reqid, __u16 family, FILE *fp,
-			const char *prefix);
+			__u8 mode, __u32 reqid, __u16 family, int force_spi,
+			FILE *fp, const char *prefix);
 void xfrm_stats_print(struct xfrm_stats *s, FILE *fp, const char *prefix);
 void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 			 struct xfrm_lifetime_cur *cur,

@@ -56,11 +56,12 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip xfrm state { add | update } ID [ ALGO-LIST ] [ mode MODE ]\n");
-	fprintf(stderr, "        [ reqid REQID ] [ FLAG-LIST ] [ sel SELECTOR ] [ LIMIT-LIST ]\n");
+	fprintf(stderr, "        [ reqid REQID ] [ replay-window SIZE ] [ flag FLAG-LIST ]\n");
+	fprintf(stderr, "        [ sel SELECTOR ] [ LIMIT-LIST ]\n");
 
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID\n");
 	fprintf(stderr, "Usage: ip xfrm state { flush | list } [ ID ] [ mode MODE ] [ reqid REQID ]\n");
-	fprintf(stderr, "        [ FLAG_LIST ]\n");
+	fprintf(stderr, "        [ flag FLAG_LIST ]\n");
 
 	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM_PROTO ] [ spi SPI ]\n");
 	//fprintf(stderr, "XFRM_PROTO := [ esp | ah | comp ]\n");
@@ -75,8 +76,8 @@ static void usage(void)
  	fprintf(stderr, "MODE := [ transport | tunnel ](default=transport)\n");
  	//fprintf(stderr, "REQID - number(default=0)\n");
 
-	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] [ flag FLAG ]\n");
-	fprintf(stderr, "FLAG := [ noecn ]\n");
+	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
+	fprintf(stderr, "FLAG := [ noecn | decap-dscp ]\n");
 
 	fprintf(stderr, "ALGO-LIST := [ ALGO-LIST ] | [ ALGO ]\n");
 	fprintf(stderr, "ALGO := ALGO_TYPE ALGO_NAME ALGO_KEY\n");
@@ -89,7 +90,7 @@ static void usage(void)
 	//fprintf(stderr, "ALGO_NAME - algorithm name\n");
 	//fprintf(stderr, "ALGO_KEY - algorithm key\n");
 
-	fprintf(stderr, "SELECTOR := src ADDR[/PLEN] dst ADDR[/PLEN] [ upspec UPSPEC ] [ dev DEV ]\n");
+	fprintf(stderr, "SELECTOR := src ADDR[/PLEN] dst ADDR[/PLEN] [ UPSPEC ] [ dev DEV ]\n");
 
 	fprintf(stderr, "UPSPEC := proto PROTO [ [ sport PORT ] [ dport PORT ] |\n");
 	fprintf(stderr, "                        [ type NUMBER ] [ code NUMBER ] ]\n");
@@ -108,7 +109,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 	int len;
 	int slen = strlen(key);
 
-#if 1
+#if 0
 	/* XXX: verifying both name and key is required! */
 	fprintf(stderr, "warning: ALGONAME/ALGOKEY will send to kernel promiscuously!(verifying them isn't implemented yet)\n");
 #endif
@@ -173,10 +174,20 @@ static int xfrm_state_flag_parse(__u8 *flags, int *argcp, char ***argvp)
 			invarg("\"FLAG\" is invalid", *argv);
 		*flags = val;
 	} else {
-		if (strcmp(*argv, "noecn") == 0)
-			*flags |= XFRM_STATE_NOECN;
-		else
-			invarg("\"FLAG\" is invalid", *argv);
+		while (1) {
+			if (strcmp(*argv, "noecn") == 0)
+				*flags |= XFRM_STATE_NOECN;
+			else if (strcmp(*argv, "decap-dscp") == 0)
+				*flags |= XFRM_STATE_DECAP_DSCP;
+			else {
+				PREV_ARG(); /* back track */
+				break;
+			}
+
+			if (!NEXT_ARG_OK())
+				break;
+			NEXT_ARG();
+		}
 	}
 
 	filter.state_flags_mask = XFRM_FILTER_MASK_FULL;
@@ -219,6 +230,10 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "reqid") == 0) {
 			NEXT_ARG();
 			xfrm_reqid_parse(&req.xsinfo.reqid, &argc, &argv);
+		} else if (strcmp(*argv, "replay-window") == 0) {
+			NEXT_ARG();
+			if (get_u8(&req.xsinfo.replay_window, *argv, 0))
+				invarg("\"replay-window\" value is invalid", *argv);
 		} else if (strcmp(*argv, "flag") == 0) {
 			NEXT_ARG();
 			xfrm_state_flag_parse(&req.xsinfo.flags, &argc, &argv);
@@ -343,12 +358,12 @@ static int xfrm_state_filter_match(struct xfrm_usersa_info *xsinfo)
 		return 1;
 
 	if (filter.id_src_mask)
-		if (memcmp(&xsinfo->saddr, &filter.xsinfo.saddr,
-			   filter.id_src_mask) != 0)
+		if (xfrm_addr_match(&xsinfo->saddr, &filter.xsinfo.saddr,
+				    filter.id_src_mask))
 			return 0;
 	if (filter.id_dst_mask)
-		if (memcmp(&xsinfo->id.daddr, &filter.xsinfo.id.daddr,
-			   filter.id_dst_mask) != 0)
+		if (xfrm_addr_match(&xsinfo->id.daddr, &filter.xsinfo.id.daddr,
+				    filter.id_dst_mask))
 			return 0;
 	if ((xsinfo->id.proto^filter.xsinfo.id.proto)&filter.id_proto_mask)
 		return 0;
@@ -407,22 +422,22 @@ static int xfrm_state_print(const struct sockaddr_nl *who,
 		fprintf(fp, "Deleted ");
 
 	xfrm_id_info_print(&xsinfo->saddr, &xsinfo->id, xsinfo->mode,
-			   xsinfo->reqid, xsinfo->family, fp, NULL);
+			   xsinfo->reqid, xsinfo->family, 1, fp, NULL);
 
 	fprintf(fp, "\t");
-	fprintf(fp, "replay-window %d ", xsinfo->replay_window);
+	fprintf(fp, "replay-window %u ", xsinfo->replay_window);
 	if (show_stats > 0)
 		fprintf(fp, "seq 0x%08u ", xsinfo->seq);
-	if (xsinfo->flags) {
-		fprintf(fp, "flag 0x%s", strxf_flags(xsinfo->flags));
-		if (show_stats > 0) {
-			if (xsinfo->flags) {
-				fprintf(fp, "(");
-				if (xsinfo->flags & XFRM_STATE_NOECN)
-					fprintf(fp, "noecn");
-				fprintf(fp, ")");
-			}
-		}
+	if (show_stats > 0 || xsinfo->flags) {
+		__u8 flags = xsinfo->flags;
+
+		fprintf(fp, "flag ");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_NOECN, "noecn");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_DECAP_DSCP, "decap-dscp");
+		if (flags)
+			fprintf(fp, "%x", flags);
+		if (show_stats > 0)
+			fprintf(fp, " (0x%s)", strxf_mask8(flags));
 	}
 	fprintf(fp, "%s", _SL_);
 

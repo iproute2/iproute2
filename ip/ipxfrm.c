@@ -52,14 +52,43 @@ static void usage(void)
 	exit(-1);
 }
 
+/* This is based on utils.c(inet_addr_match) */
+int xfrm_addr_match(xfrm_address_t *x1, xfrm_address_t *x2, int bits)
+{
+	__u32 *a1 = (__u32 *)x1;
+	__u32 *a2 = (__u32 *)x2;
+	int words = bits >> 0x05;
+
+	bits &= 0x1f;
+
+	if (words)
+		if (memcmp(a1, a2, words << 2))
+			return -1;
+
+	if (bits) {
+		__u32 w1, w2;
+		__u32 mask;
+
+		w1 = a1[words];
+		w2 = a2[words];
+
+		mask = htonl((0xffffffff) << (0x20 - bits));
+
+		if ((w1 ^ w2) & mask)
+			return 1;
+	}
+
+	return 0;
+}
+
 struct typeent {
 	const char *t_name;
 	int t_type;
 };
 
 static const struct typeent xfrmproto_types[]= {
-	{ "esp", IPPROTO_ESP }, { "ah", IPPROTO_AH },
-	{ "comp", IPPROTO_COMP }, { NULL, -1 }
+	{ "esp", IPPROTO_ESP }, { "ah", IPPROTO_AH }, { "comp", IPPROTO_COMP },
+	{ NULL, -1 }
 };
 
 int xfrm_xfrmproto_getbyname(char *name)
@@ -131,16 +160,25 @@ const char *strxf_algotype(int type)
 	return NULL;
 }
 
-const char *strxf_flags(__u8 flags)
+const char *strxf_mask8(__u8 mask)
 {
 	static char str[16];
-	const int sn = sizeof(flags) * 8 - 1;
+	const int sn = sizeof(mask) * 8 - 1;
 	__u8 b;
 	int i = 0;
 
 	for (b = (1 << sn); b > 0; b >>= 1)
-		str[i++] = ((b & flags) ? '1' : '0');
+		str[i++] = ((b & mask) ? '1' : '0');
 	str[i] = '\0';
+
+	return str;
+}
+
+const char *strxf_mask32(__u32 mask)
+{
+	static char str[16];
+
+	sprintf(str, "%.8x", mask);
 
 	return str;
 }
@@ -163,7 +201,7 @@ const char *strxf_share(__u8 share)
 		strcpy(str, "unique");
 		break;
 	default:
-		sprintf(str, "%d", share);
+		sprintf(str, "%u", share);
 		break;
 	}
 
@@ -180,7 +218,7 @@ const char *strxf_proto(__u8 proto)
 	if (pp)
 		p = pp->p_name;
 	else {
-		sprintf(buf, "%d", proto);
+		sprintf(buf, "%u", proto);
 		p = buf;
 	}
 
@@ -188,11 +226,10 @@ const char *strxf_proto(__u8 proto)
 }
 
 void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
-			__u8 mode, __u32 reqid, __u16 family, FILE *fp,
-			const char *prefix)
+			__u8 mode, __u32 reqid, __u16 family, int force_spi,
+			FILE *fp, const char *prefix)
 {
 	char abuf[256];
-	__u32 spi;
 
 	if (prefix)
 		fprintf(fp, prefix);
@@ -211,11 +248,14 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 
 	fprintf(fp, "proto %s ", strxf_xfrmproto(id->proto));
 
-	spi = ntohl(id->spi);
-	fprintf(fp, "spi 0x%08x", spi);
-	if (show_stats > 0)
-		fprintf(fp, "(%u)", spi);
-	fprintf(fp, " ");
+
+	if (show_stats > 0 || force_spi || id->spi) {
+		__u32 spi = ntohl(id->spi);
+		fprintf(fp, "spi 0x%08x", spi);
+		if (show_stats > 0)
+			fprintf(fp, "(%u)", spi);
+		fprintf(fp, " ");
+	}
 
 	fprintf(fp, "reqid %u", reqid);
 	if (show_stats > 0)
@@ -258,9 +298,9 @@ void xfrm_stats_print(struct xfrm_stats *s, FILE *fp, const char *prefix)
 	if (prefix)
 		fprintf(fp, prefix);
 	fprintf(fp, "  ");
-	fprintf(fp, "replay-window %d ", s->replay_window);
-	fprintf(fp, "replay %d ", s->replay);
-	fprintf(fp, "failed %d", s->integrity_failed);
+	fprintf(fp, "replay-window %u ", s->replay_window);
+	fprintf(fp, "replay %u ", s->replay);
+	fprintf(fp, "failed %u", s->integrity_failed);
 	fprintf(fp, "%s", _SL_);
 }
 
@@ -378,12 +418,12 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		fprintf(fp, prefix);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s/%d ", rt_addr_n2a(f, sizeof(sel->saddr),
+	fprintf(fp, "src %s/%u ", rt_addr_n2a(f, sizeof(sel->saddr),
 					      &sel->saddr, abuf, sizeof(abuf)),
 		sel->prefixlen_s);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s/%d ", rt_addr_n2a(f, sizeof(sel->daddr),
+	fprintf(fp, "dst %s/%u ", rt_addr_n2a(f, sizeof(sel->daddr),
 					      &sel->daddr, abuf, sizeof(abuf)),
 		sel->prefixlen_d);
 
@@ -423,64 +463,55 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 	fprintf(fp, "%s", _SL_);
 }
 
-static void xfrm_algo_print(struct xfrm_algo *algo, int type, FILE *fp,
-			    const char *prefix)
+static void xfrm_algo_print(struct xfrm_algo *algo, int type, int len,
+			    FILE *fp, const char *prefix)
 {
-	int len;
+	int keylen;
 	int i;
 
 	if (prefix)
 		fprintf(fp, prefix);
 
 	fprintf(fp, "%s ", strxf_algotype(type));
+
+	if (len < sizeof(*algo)) {
+		fprintf(fp, "(ERROR truncated)");
+		goto fin;
+	}
+	len -= sizeof(*algo);
+
 	fprintf(fp, "%s ", algo->alg_name);
 
+	keylen = algo->alg_key_len / 8;
+	if (len < keylen) {
+		fprintf(fp, "(ERROR truncated)");
+		goto fin;
+	}
+
 	fprintf(fp, "0x");
-	len = algo->alg_key_len / 8;
-	for (i = 0; i < len; i ++)
+	for (i = 0; i < keylen; i ++)
 		fprintf(fp, "%.2x", (unsigned char)algo->alg_key[i]);
 
 	if (show_stats > 0)
 		fprintf(fp, " (%d bits)", algo->alg_key_len);
 
+ fin:
 	fprintf(fp, "%s", _SL_);
 }
 
-static const char *strxf_mask(__u32 mask)
-{
-	static char str[128];
-	const int sn = 	sizeof(mask) * 8 - 1;
-	__u32 b;
-	int finish = 0;
-	int broken = 0;
-	int i = 0;
-
-	for (b = (1 << sn); b > 0; b >>= 1) {
-		if ((b & mask) == 0) {
-			if (!finish)
-				finish = 1;
-		} else {
-			if (!finish)
-				i ++;
-			else {
-				broken = 1;
-				break;
-			}
-		}
-	}
-
-	if (!broken)
-		sprintf(str, "%u", i);
-	else
-		sprintf(str, "broken(%u)", mask);
-
-	return str;
-}
-
-static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int ntmpls,
+static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
 			    __u16 family, FILE *fp, const char *prefix)
 {
+	int ntmpls = len / sizeof(struct xfrm_user_tmpl);
 	int i;
+
+	if (ntmpls <= 0) {
+		if (prefix)
+			fprintf(fp, prefix);
+		fprintf(fp, "(ERROR \"tmpl\" truncated)");
+		fprintf(fp, "%s", _SL_);
+		return;
+	}
 
 	for (i = 0; i < ntmpls; i++) {
 		struct xfrm_user_tmpl *tmpl = &tmpls[i];
@@ -490,38 +521,47 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int ntmpls,
 
 		fprintf(fp, "tmpl");
 		xfrm_id_info_print(&tmpl->saddr, &tmpl->id, tmpl->mode,
-				   tmpl->reqid, family, fp, prefix);
+				   tmpl->reqid, family, 0, fp, prefix);
 
-		if (prefix)
-			fprintf(fp, prefix);
-		fprintf(fp, "\t");
-		switch (tmpl->optional) {
-		case 0:
+		if (show_stats > 0 || tmpl->optional) {
+			if (prefix)
+				fprintf(fp, prefix);
+			fprintf(fp, "\t");
+			switch (tmpl->optional) {
+			case 0:
+				if (show_stats > 0)
+					fprintf(fp, "level required ");
+				break;
+			case 1:
+				fprintf(fp, "level use ");
+				break;
+			default:
+				fprintf(fp, "level %u ", tmpl->optional);
+				break;
+			}
+
 			if (show_stats > 0)
-				fprintf(fp, "level required ");
-			break;
-		case 1:
-			fprintf(fp, "level use ");
-			break;
-		default:
-			fprintf(fp, "level %d ", tmpl->optional);
-			break;
+				fprintf(fp, "share %s ", strxf_share(tmpl->share));
+
+			fprintf(fp, "%s", _SL_);
 		}
 
 		if (show_stats > 0) {
-			fprintf(fp, "share %s ", strxf_share(tmpl->share));
-			fprintf(fp, "algo-mask:");
-			fprintf(fp, "%s=%s, ",
+			if (prefix)
+				fprintf(fp, prefix);
+			fprintf(fp, "\t");
+			fprintf(fp, "%s-mask %s ",
 				strxf_algotype(XFRMA_ALG_CRYPT),
-				strxf_mask(tmpl->ealgos));
-			fprintf(fp, "%s=%s, ",
+				strxf_mask32(tmpl->ealgos));
+			fprintf(fp, "%s-mask %s ",
 				strxf_algotype(XFRMA_ALG_AUTH),
-				strxf_mask(tmpl->aalgos));
-			fprintf(fp, "%s=%s",
+				strxf_mask32(tmpl->aalgos));
+			fprintf(fp, "%s-mask %s",
 				strxf_algotype(XFRMA_ALG_COMP),
-				strxf_mask(tmpl->calgos));
+				strxf_mask32(tmpl->calgos));
+
+			fprintf(fp, "%s", _SL_);
 		}
-		fprintf(fp, "%s", _SL_);
 	}
 }
 
@@ -532,31 +572,47 @@ void xfrm_xfrma_print(struct rtattr *tb[], int ntb, __u16 family,
 
 	for (i = 0; i < ntb; i++) {
 		__u16 type = tb[i]->rta_type;
+		int len = RTA_PAYLOAD(tb[i]);
 		void *data = RTA_DATA(tb[i]);
 
 		switch (type) {
 		case XFRMA_ALG_CRYPT:
 		case XFRMA_ALG_AUTH:
 		case XFRMA_ALG_COMP:
-			xfrm_algo_print((struct xfrm_algo *)data, type, fp,
-					prefix);
+			xfrm_algo_print((struct xfrm_algo *)data, type, len,
+					fp, prefix);
 			break;
 		case XFRMA_ENCAP:
+		{
+			struct xfrm_encap_tmpl *e;
+			char abuf[256];
+
 			if (prefix)
 				fprintf(fp, prefix);
-			/* XXX */
-			fprintf(fp, "encap (not implemented yet!)");
+			fprintf(fp, "encap ");
+
+			if (len < sizeof(*e)) {
+				fprintf(fp, "(ERROR truncated)");
+				fprintf(fp, "%s", _SL_);
+				break;
+			}
+			e = (struct xfrm_encap_tmpl *)data;
+
+			fprintf(fp, "type %u ", e->encap_type);
+			fprintf(fp, "sport %u ", ntohs(e->encap_sport));
+			fprintf(fp, "dport %u ", ntohs(e->encap_dport));
+
+			memset(abuf, '\0', sizeof(abuf));
+			fprintf(fp, "addr %s",
+				rt_addr_n2a(family, sizeof(e->encap_oa),
+					    &e->encap_oa, abuf, sizeof(abuf)));
 			fprintf(fp, "%s", _SL_);
 			break;
-		case XFRMA_TMPL:
-		{
-			int len = tb[i]->rta_len;
-			int ntmpls = len / sizeof(struct xfrm_user_tmpl);
-
-			xfrm_tmpl_print((struct xfrm_user_tmpl *)data,
-					ntmpls, family, fp, prefix);
-			break;
 		}
+		case XFRMA_TMPL:
+			xfrm_tmpl_print((struct xfrm_user_tmpl *)data,
+					len, family, fp, prefix);
+			break;
 		default:
 			if (prefix)
 				fprintf(fp, prefix);
@@ -584,7 +640,7 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 
 			get_prefix(&src, *argv, preferred_family);
 			if (src.family == AF_UNSPEC)
-				invarg("\"SADDR\" address family is AF_UNSPEC", *argv);
+				invarg("\"src\" address family is AF_UNSPEC", *argv);
 			if (family)
 				*family = src.family;
 
@@ -597,7 +653,7 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 
 			get_prefix(&dst, *argv, preferred_family);
 			if (dst.family == AF_UNSPEC)
-				invarg("\"DADDR\" address family is AF_UNSPEC", *argv);
+				invarg("\"dst\" address family is AF_UNSPEC", *argv);
 			if (family)
 				*family = dst.family;
 
@@ -641,7 +697,7 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 	}
 
 	if (src.family && dst.family && (src.family != dst.family))
-		invarg("the same address family is required between \"SADDR\" and \"DADDR\"", *argv);
+		invarg("the same address family is required between \"src\" and \"dst\"", *argv);
 
 	if (loose == 0 && id->proto == 0)
 		missarg("XFRM_PROTO");
@@ -828,7 +884,7 @@ int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp)
 
 			get_prefix(&src, *argv, preferred_family);
 			if (src.family == AF_UNSPEC)
-				invarg("\"SADDR\" address family is AF_UNSPEC", *argv);
+				invarg("\"src\" address family is AF_UNSPEC", *argv);
 			sel->family = src.family;
 
 			memcpy(&sel->saddr, &src.data, sizeof(sel->saddr));
@@ -841,7 +897,7 @@ int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp)
 
 			get_prefix(&dst, *argv, preferred_family);
 			if (dst.family == AF_UNSPEC)
-				invarg("\"DADDR\" address family is AF_UNSPEC", *argv);
+				invarg("\"dst\" address family is AF_UNSPEC", *argv);
 			sel->family = dst.family;
 
 			memcpy(&sel->daddr, &dst.data, sizeof(sel->daddr));
@@ -882,7 +938,7 @@ int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp)
 	}
 
 	if (src.family && dst.family && (src.family != dst.family))
-		invarg("the same address family is required between \"SADDR\" and \"DADDR\"", *argv);
+		invarg("the same address family is required between \"src\" and \"dst\"", *argv);
 
 	if (argc == *argcp)
 		missarg("SELECTOR");

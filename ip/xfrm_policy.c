@@ -292,18 +292,14 @@ static int xfrm_policy_filter_match(struct xfrm_userpolicy_info *xpinfo)
 		return 0;
 
 	if (filter.sel_src_mask) {
-		if (memcmp(&xpinfo->sel.saddr, &filter.xpinfo.sel.saddr,
-			   filter.sel_src_mask) != 0)
-			return 0;
-		if (xpinfo->sel.prefixlen_s != filter.xpinfo.sel.prefixlen_s)
+		if (xfrm_addr_match(&xpinfo->sel.saddr, &filter.xpinfo.sel.saddr,
+				    filter.sel_src_mask))
 			return 0;
 	}
 
 	if (filter.sel_dst_mask) {
-		if (memcmp(&xpinfo->sel.daddr, &filter.xpinfo.sel.daddr,
-			   filter.sel_dst_mask) != 0)
-			return 0;
-		if (xpinfo->sel.prefixlen_d != filter.xpinfo.sel.prefixlen_d)
+		if (xfrm_addr_match(&xpinfo->sel.daddr, &filter.xpinfo.sel.daddr,
+				    filter.sel_dst_mask))
 			return 0;
 	}
 
@@ -381,7 +377,7 @@ static int xfrm_policy_print(const struct sockaddr_nl *who,
 		fprintf(fp, "fwd");
 		break;
 	default:
-		fprintf(fp, "%d", xpinfo->dir);
+		fprintf(fp, "%u", xpinfo->dir);
 		break;
 	}
 	fprintf(fp, " ");
@@ -395,7 +391,7 @@ static int xfrm_policy_print(const struct sockaddr_nl *who,
 		fprintf(fp, "action block ");
 		break;
 	default:
-		fprintf(fp, "action %d ", xpinfo->action);
+		fprintf(fp, "action %u ", xpinfo->action);
 		break;
 	}
 
@@ -404,7 +400,7 @@ static int xfrm_policy_print(const struct sockaddr_nl *who,
 	fprintf(fp, "priority %u ", xpinfo->priority);
 	if (show_stats > 0) {
 		fprintf(fp, "share %s ", strxf_share(xpinfo->share));
-		fprintf(fp, "flags 0x%s", strxf_flags(xpinfo->flags));
+		fprintf(fp, "flag 0x%s", strxf_mask8(xpinfo->flags));
 	}
 	fprintf(fp, "%s", _SL_);
 
