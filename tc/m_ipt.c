@@ -337,6 +337,17 @@ struct in_addr *dotted_to_addr(const char *dotted)
 	return &addr;
 }
 
+static void set_revision(char *name, u_int8_t revision)
+{
+	/* Old kernel sources don't have ".revision" field,
+	*  but we stole a byte from name. */
+	name[IPT_FUNCTION_MAXNAMELEN - 2] = '\0';
+	name[IPT_FUNCTION_MAXNAMELEN - 1] = revision;
+}
+
+/* 
+ * we may need to check for version mismatch
+*/
 int
 build_st(struct iptables_target *target, struct ipt_entry_target *t)
 {
@@ -350,8 +361,11 @@ build_st(struct iptables_target *target, struct ipt_entry_target *t)
 
 		if (NULL == t) {
 			target->t = fw_calloc(1, size);
-			target->init(target->t, &nfcache);
 			target->t->u.target_size = size;
+
+			if (target->init != NULL)
+				target->init(target->t, &nfcache);
+			set_revision(target->t->u.user.name, target->revision);
 		} else {
 			target->t = t;
 		}
