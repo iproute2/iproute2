@@ -24,7 +24,7 @@
 #include "utils.h"
 #include "tc_util.h"
 
-int get_qdisc_handle(__u32 *h, char *str)
+int get_qdisc_handle(__u32 *h, const char *str)
 {
 	__u32 maj;
 	char *p;
@@ -43,7 +43,7 @@ ok:
 	return 0;
 }
 
-int get_tc_classid(__u32 *h, char *str)
+int get_tc_classid(__u32 *h, const char *str)
 {
 	__u32 maj, min;
 	char *p;
@@ -98,7 +98,7 @@ char * sprint_tc_classid(__u32 h, char *buf)
 }
 
 
-int get_rate(unsigned *rate, char *str)
+int get_rate(unsigned *rate, const char *str)
 {
 	char *p;
 	double bps = strtod(str, &p);
@@ -109,6 +109,10 @@ int get_rate(unsigned *rate, char *str)
 	if (*p) {
 		if (strcasecmp(p, "kbps") == 0)
 			bps *= 1024;
+		else if (strcasecmp(p, "gbps") == 0)
+			bps *= 1024*1024*1024;
+		else if (strcasecmp(p, "gbit") == 0)
+			bps *= 1024*1024*1024/8;
 		else if (strcasecmp(p, "mbps") == 0)
 			bps *= 1024*1024;
 		else if (strcasecmp(p, "mbit") == 0)
@@ -174,7 +178,7 @@ char * sprint_rate(__u32 rate, char *buf)
 	return buf;
 }
 
-int get_usecs(unsigned *usecs, char *str)
+int get_usecs(unsigned *usecs, const char *str)
 {
 	double t;
 	char *p;
@@ -222,7 +226,7 @@ char * sprint_usecs(__u32 usecs, char *buf)
 	return buf;
 }
 
-int get_size(unsigned *size, char *str)
+int get_size(unsigned *size, const char *str)
 {
 	double sz;
 	char *p;
@@ -234,6 +238,10 @@ int get_size(unsigned *size, char *str)
 	if (*p) {
 		if (strcasecmp(p, "kb") == 0 || strcasecmp(p, "k")==0)
 			sz *= 1024;
+		else if (strcasecmp(p, "gb") == 0 || strcasecmp(p, "g")==0)
+			sz *= 1024*1024*1024;
+		else if (strcasecmp(p, "gbit") == 0)
+			sz *= 1024*1024*1024/8;
 		else if (strcasecmp(p, "mb") == 0 || strcasecmp(p, "m")==0)
 			sz *= 1024*1024;
 		else if (strcasecmp(p, "mbit") == 0)
