@@ -42,9 +42,7 @@ print: $(PSFILES)
 	done
 
 %.ps: %.dvi
-	$(DVIPS) $< -o $@.tmp
-	./do-psnup $@.tmp $@ $(PAGESIZE) $(PAGESPERPAGE)
-	rm -f $@.tmp
+	$(DVIPS) $< -o $@
 
 %.html: %.sgml
 	$(SGML2HTML) $<
