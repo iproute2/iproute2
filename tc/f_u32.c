@@ -1005,7 +1005,9 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 	}
 
 	if (sel && show_stats && NULL != pf)
-		fprintf(f, " (rule hit %llu success %llu)",pf->rcnt,pf->rhit);
+		fprintf(f, " (rule hit %llu success %llu)",
+			(unsigned long long) pf->rcnt,
+			(unsigned long long) pf->rhit);
 
 	if (tb[TCA_U32_MARK]) {
 		struct tc_u32_mark *mark = RTA_DATA(tb[TCA_U32_MARK]);
@@ -1028,7 +1030,8 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 					key->offmask ? "nexthdr+" : "",
 					key->off);
 				if (show_stats && NULL != pf)
-					fprintf(f, " (success %lld ) ",pf->kcnts[i]);
+					fprintf(f, " (success %lld ) ",
+						(unsigned long long) pf->kcnts[i]);
 			}
 		}
 

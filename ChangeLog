@@ -1,3 +1,8 @@
+2005-01-12  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+
+	* Fix compile warnings when building 64bit system since
+	  u64 is unsigned long, but format is %llu
+
 2005-01-12  "Catalin(ux aka Dino) BOIE" <util@deuroconsult.ro>
 
 	* Add the possibility to use fwmark in u32 filters

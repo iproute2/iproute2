@@ -243,7 +243,7 @@ static const char *strxf_limit(__u64 limit)
 	if (limit == XFRM_INF)
 		strcpy(str, "(INF)");
 	else
-		sprintf(str, "%llu", limit);
+		sprintf(str, "%llu", (unsigned long long) limit);
 
 	return str;
 }
@@ -323,9 +323,9 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 		fprintf(fp, "  ");
 		fprintf(fp, "expire add: ");
 		fprintf(fp, "soft ");
-		fprintf(fp, "%llu", cfg->soft_add_expires_seconds);
+		fprintf(fp, "%llu", (unsigned long long) cfg->soft_add_expires_seconds);
 		fprintf(fp, "(sec), hard ");
-		fprintf(fp, "%llu", cfg->hard_add_expires_seconds);
+		fprintf(fp, "%llu", (unsigned long long) cfg->hard_add_expires_seconds);
 		fprintf(fp, "(sec)");
 		fprintf(fp, "%s", _SL_);
 
@@ -334,9 +334,9 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 		fprintf(fp, "  ");
 		fprintf(fp, "expire use: ");
 		fprintf(fp, "soft ");
-		fprintf(fp, "%llu", cfg->soft_use_expires_seconds);
+		fprintf(fp, "%llu", (unsigned long long) cfg->soft_use_expires_seconds);
 		fprintf(fp, "(sec), hard ");
-		fprintf(fp, "%llu", cfg->hard_use_expires_seconds);
+		fprintf(fp, "%llu", (unsigned long long) cfg->hard_use_expires_seconds);
 		fprintf(fp, "(sec)");
 		fprintf(fp, "%s", _SL_);
 	}
@@ -349,8 +349,8 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 		if (prefix)
 			fprintf(fp, prefix);
 		fprintf(fp, "  ");
-		fprintf(fp, "%llu(bytes), ", cur->bytes);
-		fprintf(fp, "%llu(packets)", cur->packets);
+		fprintf(fp, "%llu(bytes), ", (unsigned long long) cur->bytes);
+		fprintf(fp, "%llu(packets)", (unsigned long long) cur->packets);
 		fprintf(fp, "%s", _SL_);
 
 		if (prefix)

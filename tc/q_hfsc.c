@@ -129,9 +129,9 @@ hfsc_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
 
 	fprintf(f, " period %u ", st->period);
 	if (st->work != 0)
-		fprintf(f, "work %llu bytes ", st->work);
+		fprintf(f, "work %llu bytes ", (unsigned long long) st->work);
 	if (st->rtwork != 0)
-		fprintf(f, "rtwork %llu bytes ", st->rtwork);
+		fprintf(f, "rtwork %llu bytes ", (unsigned long long) st->rtwork);
 	fprintf(f, "level %u ", st->level);
 	fprintf(f, "\n");
 

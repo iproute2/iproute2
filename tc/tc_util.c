@@ -437,7 +437,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		struct gnet_stats_basic bs = {0};
 		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]), sizeof(bs)));
 		fprintf(fp, "%sSent %llu bytes %u pkt",
-			prefix, bs.bytes, bs.packets);
+			prefix, (unsigned long long) bs.bytes, bs.packets);
 	}
 
 	if (tbs[TCA_STATS_QUEUE]) {
