@@ -53,14 +53,14 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip xfrm policy { add | update } dir DIR sel SELECTOR [ index INDEX ] \n");
+	fprintf(stderr, "Usage: ip xfrm policy { add | update } dir DIR SELECTOR [ index INDEX ] \n");
 	fprintf(stderr, "        [ action ACTION ] [ priority PRIORITY ] [ LIMIT-LIST ] [ TMPL-LIST ]\n");
-	fprintf(stderr, "Usage: ip xfrm policy { delete | get } dir DIR [ sel SELECTOR | index INDEX ]\n");
-	fprintf(stderr, "Usage: ip xfrm policy { flush | list } [ dir DIR ] [ sel SELECTOR ]\n");
+	fprintf(stderr, "Usage: ip xfrm policy { delete | get } dir DIR [ SELECTOR | index INDEX ]\n");
+	fprintf(stderr, "Usage: ip xfrm policy { flush | list } [ dir DIR ] [ SELECTOR ]\n");
 	fprintf(stderr, "        [ index INDEX ] [ action ACTION ] [ priority PRIORITY ]\n");
 	fprintf(stderr, "DIR := [ in | out | fwd ]\n");
 
-	fprintf(stderr, "SELECTOR := src ADDR[/PLEN] dst ADDR[/PLEN] [ upspec UPSPEC ] [ dev DEV ]\n");
+	fprintf(stderr, "SELECTOR := src ADDR[/PLEN] dst ADDR[/PLEN] [ UPSPEC ] [ dev DEV ]\n");
 
 	fprintf(stderr, "UPSPEC := proto PROTO [ sport PORT ] [ dport PORT ]\n");
 
@@ -134,7 +134,7 @@ static int xfrm_tmpl_parse(struct xfrm_user_tmpl *tmpl,
 			else if (strcmp(*argv, "use") == 0)
 				tmpl->optional = 1;
 			else
-				invarg("\"level\" value is invalid\n", *argv);
+				invarg("\"LEVEL\" is invalid\n", *argv);
 
 		} else {
 			if (idp) {
@@ -143,7 +143,7 @@ static int xfrm_tmpl_parse(struct xfrm_user_tmpl *tmpl,
 			}
 			idp = *argv;
 			xfrm_id_parse(&tmpl->saddr, &tmpl->id, &tmpl->family,
-				      &argc, &argv);
+				      0, &argc, &argv);
 			if (preferred_family == AF_UNSPEC)
 				preferred_family = tmpl->family;
 		}
@@ -171,6 +171,7 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 		char				buf[RTA_BUF_SIZE];
 	} req;
 	char *dirp = NULL;
+	char *selp = NULL;
 	char tmpls_buf[XFRM_TMPLS_BUF_SIZE];
 	int tmpls_len = 0;
 
@@ -197,12 +198,6 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 			xfrm_policy_dir_parse(&req.xpinfo.dir, &argc, &argv);
 
 			filter.dir_mask = XFRM_FILTER_MASK_FULL;
-
-		} else if (strcmp(*argv, "sel") == 0) {
-			NEXT_ARG();
-			xfrm_selector_parse(&req.xpinfo.sel, &argc, &argv);
-			if (preferred_family == AF_UNSPEC)
-				preferred_family = req.xpinfo.sel.family;
 
 		} else if (strcmp(*argv, "index") == 0) {
 			NEXT_ARG();
@@ -250,8 +245,15 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 			xfrm_tmpl_parse(tmpl, &argc, &argv);
 
 			tmpls_len += sizeof(*tmpl);
-		} else
-			invarg("unknown", *argv);
+		} else {
+			if (selp)
+				duparg("unknown", *argv);
+			selp = *argv;
+
+			xfrm_selector_parse(&req.xpinfo.sel, &argc, &argv);
+			if (preferred_family == AF_UNSPEC)
+				preferred_family = req.xpinfo.sel.family;
+		}
 
 		argc--; argv++;
 	}
@@ -362,7 +364,6 @@ int xfrm_policy_print(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)
 		fprintf(fp, "Deleted ");
 
-	fprintf(fp, "sel ");
 	xfrm_selector_print(&xpinfo->sel, preferred_family, fp, NULL);
 
 	fprintf(fp, "\t");
@@ -383,32 +384,35 @@ int xfrm_policy_print(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 	fprintf(fp, " ");
 
-	fprintf(fp, "action ");
 	switch (xpinfo->action) {
 	case XFRM_POLICY_ALLOW:
-		fprintf(fp, "allow");
+		if (show_stats > 0)
+			fprintf(fp, "action allow ");
 		break;
 	case XFRM_POLICY_BLOCK:
-		fprintf(fp, "block");
+		fprintf(fp, "action block ");
 		break;
 	default:
-		fprintf(fp, "%d", xpinfo->action);
+		fprintf(fp, "action %d ", xpinfo->action);
 		break;
 	}
-	fprintf(fp, " ");
 
-	fprintf(fp, "index %u ", xpinfo->index);
+	if (show_stats)
+		fprintf(fp, "index %u ", xpinfo->index);
 	fprintf(fp, "priority %u ", xpinfo->priority);
 	if (show_stats > 0) {
 		fprintf(fp, "share %s ", strxf_share(xpinfo->share));
 		fprintf(fp, "flags 0x%s", strxf_flags(xpinfo->flags));
 	}
-	fprintf(fp, "\n");
+	fprintf(fp, "%s", _SL_);
 
 	if (show_stats > 0)
 		xfrm_lifetime_print(&xpinfo->lft, &xpinfo->curlft, fp, "\t");
 
 	xfrm_xfrma_print(tb, ntb, xpinfo->sel.family, fp, "\t");
+
+	if (oneline)
+		fprintf(fp, "\n");
 
 	return 0;
 }
@@ -440,16 +444,6 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 			NEXT_ARG();
 			xfrm_policy_dir_parse(&req.xpid.dir, &argc, &argv);
 
-		} else if (strcmp(*argv, "sel") == 0) {
-			if (selp)
-				duparg("sel", *argv);
-			selp = *argv;
-
-			NEXT_ARG();
-			xfrm_selector_parse(&req.xpid.sel, &argc, &argv);
-			if (preferred_family == AF_UNSPEC)
-				preferred_family = req.xpid.sel.family;
-
 		} else if (strcmp(*argv, "index") == 0) {
 			if (indexp)
 				duparg("index", *argv);
@@ -459,8 +453,16 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 			if (get_u32(&req.xpid.index, *argv, 0))
 				invarg("\"INDEX\" is invalid", *argv);
 
-		} else
-			invarg("unknown", *argv);
+		} else {
+			if (selp)
+				invarg("unknown", *argv);
+			selp = *argv;
+
+			xfrm_selector_parse(&req.xpid.sel, &argc, &argv);
+			if (preferred_family == AF_UNSPEC)
+				preferred_family = req.xpid.sel.family;
+
+		}
 
 		argc--; argv++;
 	}
@@ -564,6 +566,7 @@ int xfrm_policy_keep(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 {
+	char *selp = NULL;
 	struct rtnl_handle rth;
 
 	if (argc > 0)
@@ -576,12 +579,6 @@ static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 			xfrm_policy_dir_parse(&filter.xpinfo.dir, &argc, &argv);
 
 			filter.dir_mask = XFRM_FILTER_MASK_FULL;
-
-		} else if (strcmp(*argv, "sel") == 0) {
-			NEXT_ARG();
-			xfrm_selector_parse(&filter.xpinfo.sel, &argc, &argv);
-			if (preferred_family == AF_UNSPEC)
-				preferred_family = filter.xpinfo.sel.family;
 
 		} else if (strcmp(*argv, "index") == 0) {
 			NEXT_ARG();
@@ -597,7 +594,7 @@ static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 			else if (strcmp(*argv, "block") == 0)
 				filter.xpinfo.action = XFRM_POLICY_BLOCK;
 			else
-				invarg("\"action\" value is invalid\n", *argv);
+				invarg("\"ACTION\" is invalid\n", *argv);
 
 			filter.action_mask = XFRM_FILTER_MASK_FULL;
 
@@ -608,8 +605,16 @@ static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 
 			filter.priority_mask = XFRM_FILTER_MASK_FULL;
 
-		} else
-			invarg("unknown", *argv);
+		} else {
+			if (selp)
+				invarg("unknown", *argv);
+			selp = *argv;
+
+			xfrm_selector_parse(&filter.xpinfo.sel, &argc, &argv);
+			if (preferred_family == AF_UNSPEC)
+				preferred_family = filter.xpinfo.sel.family;
+
+		}
 
 		argc--; argv++;
 	}

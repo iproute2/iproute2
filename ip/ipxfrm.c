@@ -52,6 +52,48 @@ static void usage(void)
 	exit(-1);
 }
 
+struct typeent {
+	const char *t_name;
+	int t_type;
+};
+
+static const struct typeent algo_types[]= {
+	{ "enc", XFRMA_ALG_CRYPT }, { "auth", XFRMA_ALG_AUTH },
+	{ "comp", XFRMA_ALG_COMP }, { NULL, -1 }
+};
+
+int xfrm_algotype_getbyname(char *name)
+{
+	int i;
+
+	for (i = 0; ; i++) {
+		const struct typeent *t = &algo_types[i];
+		if (!t->t_name || t->t_type == -1)
+			break;
+
+		if (strcmp(t->t_name, name) == 0)
+			return t->t_type;
+	}
+
+	return -1;
+}
+
+const char *strxf_algotype(int type)
+{
+	int i;
+
+	for (i = 0; ; i++) {
+		const struct typeent *t = &algo_types[i];
+		if (!t->t_name || t->t_type == -1)
+			break;
+
+		if (t->t_type == type)
+			return t->t_name;
+	}
+
+	return NULL;
+}
+
 const char *strxf_flags(__u8 flags)
 {
 	static char str[16];
@@ -84,7 +126,7 @@ const char *strxf_share(__u8 share)
 		strcpy(str, "unique");
 		break;
 	default:
-		sprintf(str, "unknown-share(%d)", share);
+		sprintf(str, "%d", share);
 		break;
 	}
 
@@ -114,9 +156,6 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 {
 	char abuf[256];
 	__u32 spi;
-	struct protoent *pp;
-	char pbuf[32];
-	char *p;
 
 	if (prefix)
 		fprintf(fp, prefix);
@@ -125,26 +164,20 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 	fprintf(fp, "src %s ", rt_addr_n2a(family, sizeof(*saddr),
 					   saddr, abuf, sizeof(abuf)));
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s\n", rt_addr_n2a(family, sizeof(id->daddr),
-					    &id->daddr, abuf, sizeof(abuf)));
+	fprintf(fp, "dst %s", rt_addr_n2a(family, sizeof(id->daddr),
+					  &id->daddr, abuf, sizeof(abuf)));
+	fprintf(fp, "%s", _SL_);
 
 	if (prefix)
 		fprintf(fp, prefix);
 	fprintf(fp, "\t");
 
-	pp = getprotobynumber(id->proto);
-	if (pp)
-		p = pp->p_name;
-	else {
-		sprintf(pbuf, "%d", id->proto);
-		p = pbuf;
-	}
-	fprintf(fp, "proto %s ", p);
+	fprintf(fp, "proto %s ", strxf_proto(id->proto));
 
 	spi = ntohl(id->spi);
-	fprintf(fp, "spi %u", spi);
+	fprintf(fp, "spi 0x%08x", spi);
 	if (show_stats > 0)
-		fprintf(fp, "(0x%08x)", spi);
+		fprintf(fp, "(%u)", spi);
 	fprintf(fp, " ");
 
 	fprintf(fp, "reqid %u", reqid);
@@ -152,7 +185,19 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 		fprintf(fp, "(0x%08x)", reqid);
 	fprintf(fp, " ");
 
-	fprintf(fp, "mode %s\n", (mode ? "tunnel" : "transport"));
+	fprintf(fp, "mode ");
+	switch (mode) {
+	case 0:
+		fprintf(fp, "transport");
+		break;
+	case 1:
+		fprintf(fp, "tunnel");
+		break;
+	default:
+		fprintf(fp, "%u", mode);
+		break;
+	}
+	fprintf(fp, "%s", _SL_);
 }
 
 static const char *strxf_limit(__u64 limit)
@@ -170,7 +215,8 @@ void xfrm_stats_print(struct xfrm_stats *s, FILE *fp, const char *prefix)
 {
 	if (prefix)
 		fprintf(fp, prefix);
-	fprintf(fp, "stats:\n");
+	fprintf(fp, "stats:");
+	fprintf(fp, "%s", _SL_);
 
 	if (prefix)
 		fprintf(fp, prefix);
@@ -178,25 +224,26 @@ void xfrm_stats_print(struct xfrm_stats *s, FILE *fp, const char *prefix)
 	fprintf(fp, "replay-window %d ", s->replay_window);
 	fprintf(fp, "replay %d ", s->replay);
 	fprintf(fp, "failed %d", s->integrity_failed);
-	fprintf(fp, "\n");
+	fprintf(fp, "%s", _SL_);
 }
 
 static const char *strxf_time(__u64 time)
 {
 	static char str[32];
-	struct tm *tp;
-	time_t t;
 
-	if (time == 0) {
-		strcpy(str, "(undefined)");
-	} else {
-		/* XXX: treat time in the same manner of xfrm_{user,state}.c */
+	if (time == 0)
+		strcpy(str, "-");
+	else {
+		time_t t;
+		struct tm *tp;
+
+		/* XXX: treat time in the same manner of kernel's 
+		 * net/xfrm/xfrm_{user,state}.c
+		 */
 		t = (long)time;
 		tp = localtime(&t);
 
-		sprintf(str, "%04d/%02d/%02d %02d:%02d:%02d",
-			tp->tm_year + 1900, tp->tm_mon + 1, tp->tm_mday,
-			tp->tm_hour, tp->tm_min, tp->tm_sec);
+		strftime(str, sizeof(str), "%F %T", tp);
 	}
 
 	return str;
@@ -209,7 +256,8 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 	if (cfg) {
 		if (prefix)
 			fprintf(fp, prefix);
-		fprintf(fp, "lifetime config:\n");
+		fprintf(fp, "lifetime config:");
+		fprintf(fp, "%s", _SL_);
 
 		if (prefix)
 			fprintf(fp, prefix);
@@ -219,7 +267,8 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 		fprintf(fp, strxf_limit(cfg->soft_byte_limit));
 		fprintf(fp, "(bytes), hard ");
 		fprintf(fp, strxf_limit(cfg->hard_byte_limit));
-		fprintf(fp, "(bytes)\n");
+		fprintf(fp, "(bytes)");
+		fprintf(fp, "%s", _SL_);
 
 		if (prefix)
 			fprintf(fp, prefix);
@@ -229,7 +278,8 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 		fprintf(fp, strxf_limit(cfg->soft_packet_limit));
 		fprintf(fp, "(packets), hard ");
 		fprintf(fp, strxf_limit(cfg->hard_packet_limit));
-		fprintf(fp, "(packets)\n");
+		fprintf(fp, "(packets)");
+		fprintf(fp, "%s", _SL_);
 
 		if (prefix)
 			fprintf(fp, prefix);
@@ -239,7 +289,8 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 		fprintf(fp, "%llu", cfg->soft_add_expires_seconds);
 		fprintf(fp, "(sec), hard ");
 		fprintf(fp, "%llu", cfg->hard_add_expires_seconds);
-		fprintf(fp, "(sec)\n");
+		fprintf(fp, "(sec)");
+		fprintf(fp, "%s", _SL_);
 
 		if (prefix)
 			fprintf(fp, prefix);
@@ -249,24 +300,28 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 		fprintf(fp, "%llu", cfg->soft_use_expires_seconds);
 		fprintf(fp, "(sec), hard ");
 		fprintf(fp, "%llu", cfg->hard_use_expires_seconds);
-		fprintf(fp, "(sec)\n");
+		fprintf(fp, "(sec)");
+		fprintf(fp, "%s", _SL_);
 	}
 	if (cur) {
 		if (prefix)
 			fprintf(fp, prefix);
-		fprintf(fp, "lifetime current:\n");
+		fprintf(fp, "lifetime current:");
+		fprintf(fp, "%s", _SL_);
 
 		if (prefix)
 			fprintf(fp, prefix);
 		fprintf(fp, "  ");
 		fprintf(fp, "%llu(bytes), ", cur->bytes);
-		fprintf(fp, "%llu(packets)\n", cur->packets);
+		fprintf(fp, "%llu(packets)", cur->packets);
+		fprintf(fp, "%s", _SL_);
+
 		if (prefix)
 			fprintf(fp, prefix);
 		fprintf(fp, "  ");
 		fprintf(fp, "add %s ", strxf_time(cur->add_time));
 		fprintf(fp, "use %s", strxf_time(cur->use_time));
-		fprintf(fp, "\n");
+		fprintf(fp, "%s", _SL_);
 	}
 }
 
@@ -291,18 +346,16 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		sel->prefixlen_s);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s/%d", rt_addr_n2a(f, sizeof(sel->daddr),
+	fprintf(fp, "dst %s/%d ", rt_addr_n2a(f, sizeof(sel->daddr),
 					      &sel->daddr, abuf, sizeof(abuf)),
 		sel->prefixlen_d);
 
-	fprintf(fp, "\n");
-
-	if (prefix)
-		fprintf(fp, prefix);
-	fprintf(fp, "\t");
-
-	fprintf(fp, "upspec proto %u ", sel->proto);
-	fprintf(fp, "sport %u dport %u ", sel->sport, sel->dport);
+	if (sel->proto)
+		fprintf(fp, "proto %s ", strxf_proto(sel->proto));
+	if (sel->sport)
+		fprintf(fp, "sport %u ", ntohs(sel->sport));
+	if (sel->dport)
+		fprintf(fp, "dport %u ", ntohs(sel->dport));
 
 	if (sel->ifindex > 0) {
 		char buf[IF_NAMESIZE];
@@ -314,10 +367,11 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 
 	if (show_stats > 0)
 		fprintf(fp, "uid %u", sel->user);
-	fprintf(fp, "\n");
+
+	fprintf(fp, "%s", _SL_);
 }
 
-static void xfrm_algo_print(struct xfrm_algo *algo, FILE *fp,
+static void xfrm_algo_print(struct xfrm_algo *algo, int type, FILE *fp,
 			    const char *prefix)
 {
 	int len;
@@ -326,16 +380,18 @@ static void xfrm_algo_print(struct xfrm_algo *algo, FILE *fp,
 	if (prefix)
 		fprintf(fp, prefix);
 
-	fprintf(fp, "%s", algo->alg_name);
+	fprintf(fp, "%s ", strxf_algotype(type));
+	fprintf(fp, "%s ", algo->alg_name);
 
+	fprintf(fp, "0x");
 	len = algo->alg_key_len / 8;
-	for (i = 0; i < len; i ++) {
-		if (i % 4 == 0)
-			fprintf(fp, " ");
-		fprintf(fp, "%x", algo->alg_key[i]);
-	}
+	for (i = 0; i < len; i ++)
+		fprintf(fp, "%.2x", (unsigned char)algo->alg_key[i]);
 
-	fprintf(fp, "\n");
+	if (show_stats > 0)
+		fprintf(fp, " (%d bits)", algo->alg_key_len);
+
+	fprintf(fp, "%s", _SL_);
 }
 
 static const char *strxf_mask(__u32 mask)
@@ -384,30 +440,36 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int ntmpls,
 		xfrm_id_info_print(&tmpl->saddr, &tmpl->id, tmpl->mode,
 				   tmpl->reqid, family, fp, prefix);
 
-		fprintf(fp, prefix);
+		if (prefix)
+			fprintf(fp, prefix);
 		fprintf(fp, "\t");
-		fprintf(fp, "level ");
 		switch (tmpl->optional) {
 		case 0:
-			fprintf(fp, "required");
+			if (show_stats > 0)
+				fprintf(fp, "level required ");
 			break;
 		case 1:
-			fprintf(fp, "use");
+			fprintf(fp, "level use ");
 			break;
 		default:
-			fprintf(fp, "%d", tmpl->optional);
+			fprintf(fp, "level %d ", tmpl->optional);
 			break;
 		}
-		fprintf(fp, " ");
 
 		if (show_stats > 0) {
 			fprintf(fp, "share %s ", strxf_share(tmpl->share));
 			fprintf(fp, "algo-mask:");
-			fprintf(fp, "E=%s, ", strxf_mask(tmpl->ealgos));
-			fprintf(fp, "A=%s, ", strxf_mask(tmpl->aalgos));
-			fprintf(fp, "C=%s", strxf_mask(tmpl->calgos));
+			fprintf(fp, "%s=%s, ",
+				strxf_algotype(XFRMA_ALG_CRYPT),
+				strxf_mask(tmpl->ealgos));
+			fprintf(fp, "%s=%s, ",
+				strxf_algotype(XFRMA_ALG_AUTH),
+				strxf_mask(tmpl->aalgos));
+			fprintf(fp, "%s=%s",
+				strxf_algotype(XFRMA_ALG_COMP),
+				strxf_mask(tmpl->calgos));
 		}
-		fprintf(fp, "\n");
+		fprintf(fp, "%s", _SL_);
 	}
 }
 
@@ -422,25 +484,17 @@ void xfrm_xfrma_print(struct rtattr *tb[], int ntb, __u16 family,
 
 		switch (type) {
 		case XFRMA_ALG_CRYPT:
-			if (prefix)
-				fprintf(fp, prefix);
-			xfrm_algo_print((struct xfrm_algo *)data, fp, "algo E ");
-			break;
 		case XFRMA_ALG_AUTH:
-			if (prefix)
-				fprintf(fp, prefix);
-			xfrm_algo_print((struct xfrm_algo *)data, fp, "algo A ");
-			break;
 		case XFRMA_ALG_COMP:
-			if (prefix)
-				fprintf(fp, prefix);
-			xfrm_algo_print((struct xfrm_algo *)data, fp, "algo C ");
+			xfrm_algo_print((struct xfrm_algo *)data, type, fp,
+					prefix);
 			break;
 		case XFRMA_ENCAP:
 			if (prefix)
 				fprintf(fp, prefix);
 			/* XXX */
-			fprintf(fp, "encap: (not implemented yet!)\n");
+			fprintf(fp, "encap (not implemented yet!)");
+			fprintf(fp, "%s", _SL_);
 			break;
 		case XFRMA_TMPL:
 		{
@@ -454,14 +508,15 @@ void xfrm_xfrma_print(struct rtattr *tb[], int ntb, __u16 family,
 		default:
 			if (prefix)
 				fprintf(fp, prefix);
-			fprintf(fp, "unknown rta_type: %u\n", type);
+			fprintf(fp, "%u (unknown rta_type)", type);
+			fprintf(fp, "%s", _SL_);
 			break;
 		}
 	}
 }
 
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
-		  int *argcp, char ***argvp)
+		  int loose, int *argcp, char ***argvp)
 {
 	int argc = *argcp;
 	char **argv = *argvp;
@@ -509,7 +564,7 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 				proto = pp->p_proto;
 			else {
 				if (get_u8(&proto, *argv, 0))
-					invarg("\"PROTO\" is invalid", *argv);
+					invarg("\"XFRM_PROTO\" is invalid", *argv);
 			}
 
 			switch (proto) {
@@ -519,7 +574,7 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 				id->proto = proto;
 				break;
 			default:
-				invarg("\"PROTO\" is unsuppored proto", *argv);
+				invarg("\"XFRM_PROTO\" is unsuppored proto", *argv);
 			}
 
 			filter.id_proto_mask = XFRM_FILTER_MASK_FULL;
@@ -548,9 +603,9 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 
 	if (src.family && dst.family && (src.family != dst.family))
 		invarg("the same address family is required between \"SADDR\" and \"DADDR\"", *argv);
-	if (proto == 0)
-		missarg("PROTO");
 
+	if (loose == 0 && proto == 0)
+		missarg("PROTO");
 	if (argc == *argcp)
 		missarg("ID");
 
@@ -598,10 +653,11 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 {
 	int argc = *argcp;
 	char **argv = *argvp;
-	__u8 upspec;
 
 	while (1) {
 		if (strcmp(*argv, "proto") == 0) {
+			__u8 upspec;
+
 			NEXT_ARG();
 
 			if (strcmp(*argv, "any") == 0)
@@ -613,7 +669,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 					upspec = pp->p_proto;
 				else {
 					if (get_u8(&upspec, *argv, 0))
-						invarg("\"UPSPEC\" is invalid", *argv);
+						invarg("\"PROTO\" is invalid", *argv);
 				}
 			}
 			sel->proto = upspec;
@@ -666,6 +722,7 @@ int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp)
 	char **argv = *argvp;
 	inet_prefix dst;
 	inet_prefix src;
+	char *upspecp = NULL;
 
 	memset(&dst, 0, sizeof(dst));
 	memset(&src, 0, sizeof(src));
@@ -697,11 +754,6 @@ int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp)
 
 			filter.sel_dst_mask = dst.bitlen;
 
-		} else if (strcmp(*argv, "upspec") == 0) {
-			NEXT_ARG();
-
-			xfrm_selector_upspec_parse(sel, &argc, &argv);
-
 		} else if (strcmp(*argv, "dev") == 0) {
 			int ifindex;
 
@@ -719,8 +771,13 @@ int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp)
 			filter.sel_dev_mask = XFRM_FILTER_MASK_FULL;
 
 		} else {
-			PREV_ARG(); /* back track */
-			break;
+			if (upspecp) {
+				PREV_ARG(); /* back track */
+				break;
+			} else {
+				upspecp = *argv;
+				xfrm_selector_upspec_parse(sel, &argc, &argv);
+			}
 		}
 
 		if (!NEXT_ARG_OK())

@@ -78,6 +78,8 @@ extern struct xfrm_filter filter;
 int do_xfrm_state(int argc, char **argv);
 int do_xfrm_policy(int argc, char **argv);
 
+int xfrm_algotype_getbyname(char *name);
+const char *strxf_algotype(int type);
 const char *strxf_flags(__u8 flags);
 const char *strxf_share(__u8 share);
 const char *strxf_proto(__u8 proto);
@@ -93,7 +95,7 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 void xfrm_xfrma_print(struct rtattr *tb[], int ntb, __u16 family,
 		      FILE *fp, const char *prefix);
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
-		    int *argcp, char ***argvp);
+		  int loose, int *argcp, char ***argvp);
 int xfrm_mode_parse(__u8 *mode, int *argcp, char ***argvp);
 int xfrm_reqid_parse(__u32 *reqid, int *argcp, char ***argvp);
 int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp);

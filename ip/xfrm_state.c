@@ -67,8 +67,8 @@ static void usage(void)
 	fprintf(stderr, "XFRM_PROTO := [ ");
 	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_ESP));
 	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_AH));
-	fprintf(stderr, "%s", strxf_proto(IPPROTO_COMP));
-	fprintf(stderr, " ]\n");
+	fprintf(stderr, "%s ", strxf_proto(IPPROTO_COMP));
+	fprintf(stderr, "]\n");
 
 	//fprintf(stderr, "SPI - security parameter index(default=0)\n");
 
@@ -78,9 +78,14 @@ static void usage(void)
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] [ flag FLAG ]\n");
 	fprintf(stderr, "FLAG := [ noecn ]\n");
 
-	fprintf(stderr, "ALGO-LIST := [ ALGO-LIST ] | [ algo ALGO ]\n");
+	fprintf(stderr, "ALGO-LIST := [ ALGO-LIST ] | [ ALGO ]\n");
 	fprintf(stderr, "ALGO := ALGO_TYPE ALGO_NAME ALGO_KEY\n");
-	fprintf(stderr, "ALGO_TYPE := [ E | A | C ]\n");
+	fprintf(stderr, "ALGO_TYPE := [ ");
+	fprintf(stderr, "%s | ", strxf_algotype(XFRMA_ALG_CRYPT));
+	fprintf(stderr, "%s | ", strxf_algotype(XFRMA_ALG_AUTH));
+	fprintf(stderr, "%s ", strxf_algotype(XFRMA_ALG_COMP));
+	fprintf(stderr, "]\n");
+
 	//fprintf(stderr, "ALGO_NAME - algorithm name\n");
 	//fprintf(stderr, "ALGO_KEY - algorithm key\n");
 
@@ -99,6 +104,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 			   char *name, char *key, int max)
 {
 	int len;
+	int slen = strlen(key);
 
 #if 1
 	/* XXX: verifying both name and key is required! */
@@ -107,30 +113,37 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 
 	strncpy(alg->alg_name, name, sizeof(alg->alg_name));
 
-	if (strncmp(key, "0x", 2) == 0) {
+	if (slen > 2 && strncmp(key, "0x", 2) == 0) {
 		/*
 		 * XXX: fix me!!
 		 */
-		__u64 val = 0;
-		char *p = (char *)&val;
+		union {
+			__u64 x;
+			unsigned char p[8];
+		} val;
 
-		if (get_u64(&val, key, 16))
+		memset(&val, 0, sizeof(val));
+
+		if (get_u64(&val.x, key, 16))
 			invarg("\"ALGOKEY\" is invalid", key);
 
-		len = (strlen(key) - 2) / 2;
+		len = (slen - 2) / 2;
 		if (len > sizeof(val))
 			invarg("\"ALGOKEY\" is invalid: too large", key);
 
 		if (len > 0) {
-			int index = sizeof(val) - len;
+			int i;
+
 			if (len > max)
 				invarg("\"ALGOKEY\" makes buffer overflow\n", key);
-
-			memcpy(alg->alg_key, &p[index], len);
+			for (i = sizeof(val.p) - 1; i >= 0; i--) {
+				int j = sizeof(val.p) - 1 - i;
+				alg->alg_key[j] = val.p[i];
+			}
 		}
 
 	} else {
-		len = strlen(key);
+		len = slen;
 		if (len > 0) {
 			if (len > max)
 				invarg("\"ALGOKEY\" makes buffer overflow\n", key);
@@ -197,56 +210,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 	req.xsinfo.lft.hard_packet_limit = XFRM_INF;
 
 	while (argc > 0) {
-		if (strcmp(*argv, "algo") == 0) {
-			struct {
-				struct xfrm_algo alg;
-				char buf[XFRM_ALGO_KEY_BUF_SIZE];
-			} alg;
-			int len;
-			enum xfrm_attr_type_t type;
-			char *name;
-			char *key;
-
-			NEXT_ARG();
-
-			if (strcmp(*argv, "E") == 0) {
-				if (ealgop)
-					duparg("ALGOTYPE", *argv);
-				ealgop = *argv;
-				type = XFRMA_ALG_CRYPT;
-			} else if (strcmp(*argv, "A") == 0) {
-				if (aalgop)
-					duparg("ALGOTYPE", *argv);
-				aalgop = *argv;
-				type = XFRMA_ALG_AUTH;
-
-			} else if (strcmp(*argv, "C") == 0) {
-				if (calgop)
-					duparg("ALGOTYPE", *argv);
-				calgop = *argv;
-				type = XFRMA_ALG_COMP;
-			} else
-				invarg("\"ALGOTYPE\" is invalid\n", *argv);
-
-			if (!NEXT_ARG_OK())
-				missarg("ALGONAME");
-			NEXT_ARG();
-			name = *argv;
-
-			if (!NEXT_ARG_OK())
-				missarg("ALGOKEY");
-			NEXT_ARG();
-			key = *argv;
-
-			memset(&alg, 0, sizeof(alg));
-
-			xfrm_algo_parse((void *)&alg, type, name, key, sizeof(alg.buf));
-			len = sizeof(struct xfrm_algo) + alg.alg.alg_key_len;
-
-			addattr_l(&req.n, sizeof(req.buf), type,
-				  (void *)&alg, len);
-
-		} else if (strcmp(*argv, "mode") == 0) {
+		if (strcmp(*argv, "mode") == 0) {
 			NEXT_ARG();
 			xfrm_mode_parse(&req.xsinfo.mode, &argc, &argv);
 		} else if (strcmp(*argv, "reqid") == 0) {
@@ -258,20 +222,79 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "sel") == 0) {
 			NEXT_ARG();
 			xfrm_selector_parse(&req.xsinfo.sel, &argc, &argv);
-
 		} else if (strcmp(*argv, "limit") == 0) {
 			NEXT_ARG();
 			xfrm_lifetime_cfg_parse(&req.xsinfo.lft, &argc, &argv);
 		} else {
-			if (idp)
-				invarg("unknown", *argv);
-			idp = *argv;
+			/* try to assume ALGO */
+			int type = xfrm_algotype_getbyname(*argv);
+			switch (type) {
+			case XFRMA_ALG_CRYPT:
+			case XFRMA_ALG_AUTH:
+			case XFRMA_ALG_COMP:
+			{
+				/* ALGO */
+				struct {
+					struct xfrm_algo alg;
+					char buf[XFRM_ALGO_KEY_BUF_SIZE];
+				} alg;
+				int len;
+				char *name;
+				char *key;
 
-			/* ID */
-			xfrm_id_parse(&req.xsinfo.saddr, &req.xsinfo.id,
-				      &req.xsinfo.family, &argc, &argv);
-			if (preferred_family == AF_UNSPEC)
-				preferred_family = req.xsinfo.family;
+				switch (type) {
+				case XFRMA_ALG_CRYPT:
+					if (ealgop)
+						duparg("ALGOTYPE", *argv);
+					ealgop = *argv;
+					break;
+				case XFRMA_ALG_AUTH:
+					if (aalgop)
+						duparg("ALGOTYPE", *argv);
+					aalgop = *argv;
+					break;
+				case XFRMA_ALG_COMP:
+					if (calgop)
+						duparg("ALGOTYPE", *argv);
+					calgop = *argv;
+					break;
+				default:
+					/* not reached */
+					invarg("\"ALGOTYPE\" is invalid\n", *argv);
+				}
+
+				if (!NEXT_ARG_OK())
+					missarg("ALGONAME");
+				NEXT_ARG();
+				name = *argv;
+
+				if (!NEXT_ARG_OK())
+					missarg("ALGOKEY");
+				NEXT_ARG();
+				key = *argv;
+
+				memset(&alg, 0, sizeof(alg));
+
+				xfrm_algo_parse((void *)&alg, type, name, key,
+						sizeof(alg.buf));
+				len = sizeof(struct xfrm_algo) + alg.alg.alg_key_len;
+
+				addattr_l(&req.n, sizeof(req.buf), type,
+					  (void *)&alg, len);
+				break;
+			}
+			default:
+				/* try to assume ID */
+				if (idp)
+					invarg("unknown", *argv);
+				idp = *argv;
+
+				/* ID */
+				xfrm_id_parse(&req.xsinfo.saddr, &req.xsinfo.id,
+					      &req.xsinfo.family, 0, &argc, &argv);
+				if (preferred_family == AF_UNSPEC)
+					preferred_family = req.xsinfo.family;
+			}
 		}
 		argc--; argv++;
 	}
@@ -285,14 +308,14 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		if (req.xsinfo.id.proto != IPPROTO_ESP &&
 		    req.xsinfo.id.proto != IPPROTO_AH &&
 		    req.xsinfo.id.proto != IPPROTO_COMP) {
-			fprintf(stderr, "\"ALGO\" is invalid with proto=%d\n", req.xsinfo.id.proto);
+			fprintf(stderr, "\"ALGO\" is invalid with proto=%s\n", strxf_proto(req.xsinfo.id.proto));
 			exit(1);
 		}
 	} else {
 		if (req.xsinfo.id.proto == IPPROTO_ESP ||
 		    req.xsinfo.id.proto == IPPROTO_AH ||
 		    req.xsinfo.id.proto == IPPROTO_COMP) {
-			fprintf(stderr, "\"ALGO\" is required with proto=%d\n", req.xsinfo.id.proto);
+			fprintf(stderr, "\"ALGO\" is required with proto=%s\n", strxf_proto(req.xsinfo.id.proto));
 			exit (1);
 		}
 	}
@@ -339,6 +362,15 @@ static int xfrm_state_filter_match(struct xfrm_usersa_info *xsinfo)
 	return 1;
 }
 
+static int xfrm_selector_iszero(struct xfrm_selector *s)
+{
+	struct xfrm_selector s0;
+
+	memset(&s0, 0, sizeof(s0));
+
+	return (memcmp(&s0, s, sizeof(s0)) == 0);
+}
+
 int xfrm_state_print(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
@@ -373,32 +405,34 @@ int xfrm_state_print(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			   xsinfo->reqid, xsinfo->family, fp, NULL);
 
 	fprintf(fp, "\t");
-	if (show_stats > 0) {
+	fprintf(fp, "replay-window %d ", xsinfo->replay_window);
+	if (show_stats > 0)
 		fprintf(fp, "seq 0x%08u ", xsinfo->seq);
-		fprintf(fp, "replay-window %d ", xsinfo->replay_window);
-	}
-	fprintf(fp, "flag 0x%s", strxf_flags(xsinfo->flags));
-	if (show_stats > 0) {
-		if (xsinfo->flags) {
-			fprintf(fp, "(");
-			if (xsinfo->flags & XFRM_STATE_NOECN)
-				fprintf(fp, "noecn");
-			fprintf(fp, ")");
+	if (xsinfo->flags) {
+		fprintf(fp, "flag 0x%s", strxf_flags(xsinfo->flags));
+		if (show_stats > 0) {
+			if (xsinfo->flags) {
+				fprintf(fp, "(");
+				if (xsinfo->flags & XFRM_STATE_NOECN)
+					fprintf(fp, "noecn");
+				fprintf(fp, ")");
+			}
 		}
 	}
-	fprintf(fp, "\n");
+	fprintf(fp, "%s", _SL_);
 
 	xfrm_xfrma_print(tb, ntb, xsinfo->family, fp, "\t");
 
-	if (show_stats > 0) {
-		fprintf(fp, "\tsel\n");
-		xfrm_selector_print(&xsinfo->sel, xsinfo->family, fp, "\t  ");
-	}
+	if (!xfrm_selector_iszero(&xsinfo->sel))
+		xfrm_selector_print(&xsinfo->sel, xsinfo->family, fp, "\tsel ");
 
 	if (show_stats > 0) {
 		xfrm_lifetime_print(&xsinfo->lft, &xsinfo->curlft, fp, "\t");
 		xfrm_stats_print(&xsinfo->stats, fp, "\t");
 	}
+
+	if (oneline)
+		fprintf(fp, "\n");
 
 	return 0;
 }
@@ -434,7 +468,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 
 		/* ID */
 		memset(&id, 0, sizeof(id));
-		xfrm_id_parse(&ignore_saddr, &id, &req.xsid.family,
+		xfrm_id_parse(&ignore_saddr, &id, &req.xsid.family, 0,
 			      &argc, &argv);
 
 		memcpy(&req.xsid.daddr, &id.daddr, sizeof(req.xsid.daddr));
@@ -557,9 +591,8 @@ static int xfrm_state_list_or_flush(int argc, char **argv, int flush)
 			idp = *argv;
 
 			/* ID */
-			xfrm_id_parse(&filter.xsinfo.saddr,
-				      &filter.xsinfo.id,
-					&filter.xsinfo.family, &argc, &argv);
+			xfrm_id_parse(&filter.xsinfo.saddr, &filter.xsinfo.id,
+				      &filter.xsinfo.family, 1, &argc, &argv);
 			if (preferred_family == AF_UNSPEC)
 				preferred_family = filter.xsinfo.family;
 		}
