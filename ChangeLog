@@ -1,7 +1,7 @@
 2004-08-30  Stephen Hemminger  <shemminger@osdl.org>
 
+	* Make clean and install changes for man pages
 	* Patch from jamal to support gact
-
 	* Add support for loading distributions to netem
 	
 
