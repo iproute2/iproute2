@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <getopt.h>
 
 #define VERSION "0.33 010829"
