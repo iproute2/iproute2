@@ -176,91 +176,126 @@ noexist:
 	return q;
 }
 
-static int usage(void)
+static void usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	                "where  OBJECT := { qdisc | class | filter | action }\n"
 	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] file }\n");
+}
+
+static int do_cmd(int argc, char **argv)
+{
+	if (matches(*argv, "qdisc") == 0)
+		return do_qdisc(argc-1, argv+1);
+
+	if (matches(*argv, "class") == 0)
+		return do_class(argc-1, argv+1);
+
+	if (matches(*argv, "filter") == 0)
+		return do_filter(argc-1, argv+1);
+
+	if (matches(*argv, "actions") == 0)
+		return do_action(argc-1, argv+1);
+
+	if (matches(*argv, "help") == 0) {
+		usage();
+		return 0;
+	}
+	
+	fprintf(stderr, "Object \"%s\" is unknown, try \"tc help\".\n", 
+		*argv);
 	return -1;
 }
 
+static int makeargs(char *line, char *argv[], int maxargs)
+{
+	static const char ws[] = " \t\r\n";
+	char *cp;
+	int argc = 0;
+
+	for (cp = strtok(line, ws); cp; cp = strtok(NULL, ws)) {
+		if (argc >= maxargs) {
+			fprintf(stderr, "Too many arguments to command\n");
+			exit(1);
+		}
+		argv[argc++] = cp;
+	}
+	argv[argc] = NULL;
+
+	return argc;
+}
+
+static int batch(const char *name)
+{
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t cc;
+	int lineno = 0;
+	char *largv[100];
+	int largc, ret = 0;
+
+	if (strcmp(name, "-") != 0) {
+		if (freopen(name, "r", stdin) == NULL) {
+			fprintf(stderr, "Cannot open file \"%s\" for reading: %s=n",
+				name, strerror(errno));
+			return -1;
+		}
+	}
+
+	tc_core_init();
+
+	if (rtnl_open(&rth, 0) < 0) {
+		fprintf(stderr, "Cannot open rtnetlink\n");
+		return -1;
+	}
+
+	while ((cc = getline(&line, &len, stdin)) != -1) {
+		++lineno;
+
+		/* ignore blank lines and comments */
+		if (*line == '\n' || *line == '#')
+			continue;
+
+		/* handle continuation lines */
+		while (cc >= 2 && strcmp(line+cc-2, "\\\n") == 0) {
+			char *line1 = NULL;
+			ssize_t len1 = 0;
+			int cc1;
+			cc1 = getline(&line1, &len1, stdin);
+
+			if (cc1 < 0) {
+				fprintf(stderr, "Missing continuation line\n");
+				return -1;
+			}
+			++lineno;
+			line = realloc(line, cc + cc1);
+			if (!line) {
+				fprintf(stderr, "Out of memory\n");
+				return -1;
+			}
+
+			strcpy(line+cc-2, line1);
+			cc += cc1 - 2;
+			free(line1);
+		}
+
+		largc = makeargs(line, largv, 100);
+
+		ret = do_cmd(largc, largv);
+		if (ret) {
+			fprintf(stderr, "Command failed %s:%d\n", name, lineno);
+			break;
+		}
+	}
+
+	rtnl_close(&rth);
+	return ret;
+}
 
 
 int main(int argc, char **argv)
 {
-	/* batch mode */
-	if (argc > 1 && matches(argv[1], "-batch") == 0) {
-		FILE *batch;
-		char line[400];
-		char *largv[100];
-		int largc, ret=0;
-#define	BMAXARG	(sizeof(largv)/sizeof(char *)-2)
-
-		if (argc != 3) {
-			fprintf(stderr, "Wrong number of arguments in batch mode\n");
-			return -1;
-		}
-		if (matches(argv[2], "-") != 0) {
-			if ((batch = fopen(argv[2], "r")) == NULL) {
-				fprintf(stderr, "Cannot open file \"%s\" for reading: %s=n", argv[2], strerror(errno));
-				return -1;
-			}
-		} else {
-			if ((batch = fdopen(0, "r")) == NULL) {
-				fprintf(stderr, "Cannot open stdin for reading: %s=n", strerror(errno));
-				return -1;
-			}
-		}
-
-		tc_core_init();
-		if (rtnl_open(&rth, 0) < 0) {
-			fprintf(stderr, "Cannot open rtnetlink\n");
-			exit(1);
-		}
-
-		while (fgets(line, sizeof(line)-1, batch)) {
-			if (line[strlen(line)-1]=='\n') {
-				line[strlen(line)-1] = '\0';
-			} else {
-				fprintf(stderr, "No newline at the end of line, looks like to long (%d chars or more)\n", 
-					(int) strlen(line));
-				return -1;
-			}
-			largc = 0;
-			largv[largc]=strtok(line, " ");
- 			if (largv[largc]==NULL)
- 				continue;
-			while ((largv[++largc]=strtok(NULL, " ")) != NULL) {
-				if (largc > BMAXARG) {
-					fprintf(stderr, "Over %d arguments in batch mode, enough!\n", 
-						(int) BMAXARG);
-					return -1;
-				}
-			}
-
- 			if (largv[0][0]=='#')
- 				continue;
-
-			if (matches(largv[0], "qdisc") == 0) {
-				ret += do_qdisc(largc-1, largv+1);
-			} else if (matches(largv[0], "class") == 0) {
-				ret += do_class(largc-1, largv+1);
-			} else if (matches(largv[0], "filter") == 0) {
-				ret += do_filter(largc-1, largv+1);
-			} else if (matches(largv[0], "action") == 0) {
-				ret += do_action(largc-1, largv+1);
-			} else if (matches(largv[0], "help") == 0) {
-				usage();	/* note that usage() doesn't return */
-			} else {
-				fprintf(stderr, "Object \"%s\" is unknown, try \"tc help\".\n", largv[1]);
-			}
-		}
-		fclose(batch);
-
-		rtnl_close(&rth);
-
-		return 0; /* end of batch, that's all */
-	}
+	int ret;
 
 	while (argc > 1) {
 		if (argv[1][0] != '-')
@@ -279,11 +314,24 @@ int main(int argc, char **argv)
 			++use_iec;
 		} else if (matches(argv[1], "-help") == 0) {
 			usage();
+			return 0;
+		} else 	if (matches(argv[1], "-batch") == 0) {
+			if (argc < 3) {
+				fprintf(stderr, "Wrong number of arguments in batch mode\n");
+				return -1;
+			}
+
+			return batch(argv[2]);
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;
 		}
 		argc--;	argv++;
+	}
+
+	if (argc <= 1) {
+		usage();
+		return 0;
 	}
 
 	tc_core_init();
@@ -292,22 +340,8 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (argc > 1) {
-		if (matches(argv[1], "qdisc") == 0)
-			return do_qdisc(argc-2, argv+2);
-		if (matches(argv[1], "class") == 0)
-			return do_class(argc-2, argv+2);
-		if (matches(argv[1], "filter") == 0)
-			return do_filter(argc-2, argv+2);
-		if (matches(argv[1], "actions") == 0)
-			return do_action(argc-2, argv+2);
-		if (matches(argv[1], "help") == 0)
-			usage();
-		fprintf(stderr, "Object \"%s\" is unknown, try \"tc help\".\n", argv[1]);
-		return -1;
-	}
-
+	ret = do_cmd(argc-1, argv+1);
 	rtnl_close(&rth);
-	usage();
-	return 0;
+
+	return ret;
 }
