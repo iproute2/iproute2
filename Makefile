@@ -3,9 +3,6 @@ SBINDIR=/usr/sbin
 CONFDIR=/etc/iproute2
 DOCDIR=/usr/doc/iproute2
 
-# Path to parent kernel include files directory
-KERNEL_INCLUDE:=/usr/include
-
 # Path to db_185.h include
 DBM_INCLUDE:=/usr/include
 
@@ -23,7 +20,7 @@ ADDLIB+=ipx_ntop.o ipx_pton.o
 
 CC = gcc
 CCOPTS = -D_GNU_SOURCE -O2 -Wstrict-prototypes -Wall -g
-CFLAGS = $(CCOPTS) -I$(KERNEL_INCLUDE) -I../include $(DEFINES)
+CFLAGS = $(CCOPTS) -I../include $(DEFINES)
 
 LDLIBS += -L../lib -lnetlink -lutil
 
