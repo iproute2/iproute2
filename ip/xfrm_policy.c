@@ -331,8 +331,8 @@ static int xfrm_policy_filter_match(struct xfrm_userpolicy_info *xpinfo)
 	return 1;
 }
 
-static int xfrm_policy_print(const struct sockaddr_nl *who, 
-			     struct nlmsghdr *n, void *arg)
+int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
+		      void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct xfrm_userpolicy_info *xpinfo = NLMSG_DATA(n);
@@ -360,52 +360,7 @@ static int xfrm_policy_print(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)
 		fprintf(fp, "Deleted ");
 
-	xfrm_selector_print(&xpinfo->sel, preferred_family, fp, NULL);
-
-	fprintf(fp, "\t");
-	fprintf(fp, "dir ");
-	switch (xpinfo->dir) {
-	case XFRM_POLICY_IN:
-		fprintf(fp, "in");
-		break;
-	case XFRM_POLICY_OUT:
-		fprintf(fp, "out");
-		break;
-	case XFRM_POLICY_FWD:
-		fprintf(fp, "fwd");
-		break;
-	default:
-		fprintf(fp, "%u", xpinfo->dir);
-		break;
-	}
-	fprintf(fp, " ");
-
-	switch (xpinfo->action) {
-	case XFRM_POLICY_ALLOW:
-		if (show_stats > 0)
-			fprintf(fp, "action allow ");
-		break;
-	case XFRM_POLICY_BLOCK:
-		fprintf(fp, "action block ");
-		break;
-	default:
-		fprintf(fp, "action %u ", xpinfo->action);
-		break;
-	}
-
-	if (show_stats)
-		fprintf(fp, "index %u ", xpinfo->index);
-	fprintf(fp, "priority %u ", xpinfo->priority);
-	if (show_stats > 0) {
-		fprintf(fp, "share %s ", strxf_share(xpinfo->share));
-		fprintf(fp, "flag 0x%s", strxf_mask8(xpinfo->flags));
-	}
-	fprintf(fp, "%s", _SL_);
-
-	if (show_stats > 0)
-		xfrm_lifetime_print(&xpinfo->lft, &xpinfo->curlft, fp, "\t");
-
-	xfrm_xfrma_print(tb, xpinfo->sel.family, fp, "\t");
+	xfrm_policy_info_print(xpinfo, tb, fp, NULL, NULL);
 
 	if (oneline)
 		fprintf(fp, "\n");
