@@ -36,9 +36,14 @@ static void usage(void) __attribute__((noreturn));
 
 void iplink_usage(void)
 {
-	fprintf(stderr, "Usage: ip link set DEVICE { up | down | arp { on | off } |\n");
+	fprintf(stderr, "Usage: ip link set DEVICE { up | down |\n");
+	fprintf(stderr, "	                     arp { on | off } |\n");
 	fprintf(stderr, "	                     dynamic { on | off } |\n");
-	fprintf(stderr, "	                     multicast { on | off } | txqueuelen PACKETS |\n");
+	fprintf(stderr, "	                     multicast { on | off } |\n");
+	fprintf(stderr, "	                     allmulticast { on | off } |\n");
+	fprintf(stderr, "	                     promisc { on | off } |\n");
+	fprintf(stderr, "	                     trailers { on | off } |\n");
+	fprintf(stderr, "	                     txqueuelen PACKETS |\n");
 	fprintf(stderr, "	                     name NEWNAME |\n");
 	fprintf(stderr, "	                     address LLADDR | broadcast LLADDR |\n");
 	fprintf(stderr, "	                     mtu MTU }\n");
@@ -298,6 +303,33 @@ static int do_set(int argc, char **argv)
 				flags &= ~IFF_MULTICAST;
 			} else
 				return on_off("multicast");
+		} else if (strcmp(*argv, "allmulticast") == 0) {
+			NEXT_ARG();
+			mask |= IFF_ALLMULTI;
+			if (strcmp(*argv, "on") == 0) {
+				flags |= IFF_ALLMULTI;
+			} else if (strcmp(*argv, "off") == 0) {
+				flags &= ~IFF_ALLMULTI;
+			} else
+				return on_off("allmulticast");
+		} else if (strcmp(*argv, "promisc") == 0) {
+			NEXT_ARG();
+			mask |= IFF_PROMISC;
+			if (strcmp(*argv, "on") == 0) {
+				flags |= IFF_PROMISC;
+			} else if (strcmp(*argv, "off") == 0) {
+				flags &= ~IFF_PROMISC;
+			} else
+				return on_off("promisc");
+		} else if (strcmp(*argv, "trailers") == 0) {
+			NEXT_ARG();
+			mask |= IFF_NOTRAILERS;
+			if (strcmp(*argv, "off") == 0) {
+				flags |= IFF_NOTRAILERS;
+			} else if (strcmp(*argv, "on") == 0) {
+				flags &= ~IFF_NOTRAILERS;
+			} else
+				return on_off("trailers");
 		} else if (strcmp(*argv, "arp") == 0) {
 			NEXT_ARG();
 			mask |= IFF_NOARP;
