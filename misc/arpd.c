@@ -27,6 +27,7 @@
 #include <time.h>
 #include <signal.h>
 #include <linux/if.h>
+#include <linux/if_ether.h>
 #include <linux/if_arp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
