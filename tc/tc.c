@@ -40,7 +40,8 @@ static void *BODY;	/* cached handle dlopen(NULL) */
 static struct qdisc_util * qdisc_list;
 static struct filter_util * filter_list;
 
-static int print_noqopt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int print_noqopt(struct qdisc_util *qu, FILE *f, 
+			struct rtattr *opt)
 {
 	if (opt && RTA_PAYLOAD(opt))
 		fprintf(f, "[Unknown qdisc, optlen=%u] ", RTA_PAYLOAD(opt));
@@ -119,8 +120,9 @@ reg:
 noexist:
 	q = malloc(sizeof(*q));
 	if (q) {
+
 		memset(q, 0, sizeof(*q));
-		strncpy(q->id, str, 15);
+		q->id = strcpy(malloc(strlen(str)+1), str);
 		q->parse_qopt = parse_noqopt;
 		q->print_qopt = print_noqopt;
 		goto reg;
