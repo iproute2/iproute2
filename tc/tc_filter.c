@@ -28,7 +28,7 @@
 #include "tc_util.h"
 #include "tc_common.h"
 
-static void usage(void) __attribute__((noreturn));
+static void usage(void);
 
 static void usage(void)
 {
@@ -43,7 +43,7 @@ static void usage(void)
 	fprintf(stderr, "FILTER_TYPE := { rsvp | u32 | fw | route | etc. }\n");
 	fprintf(stderr, "FILTERID := ... format depends on classifier, see there\n");
 	fprintf(stderr, "OPTIONS := ... try tc filter add <desired FILTER_KIND> help\n");
-	exit(-1);
+	return;
 }
 
 
@@ -83,7 +83,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
-				exit(-1);
+				return -1;
 			}
 			req.t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "parent") == 0) {
@@ -137,46 +137,48 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 
 	if (q) {
 		if (q->parse_fopt(q, fhandle, argc, argv, &req.n))
-			exit(1);
+			return 1;
 	} else {
 		if (fhandle) {
 			fprintf(stderr, "Must specify filter type when using "
 				"\"handle\"\n");
-			exit(-1);
+			return -1;
 		}
 		if (argc) {
 			if (matches(*argv, "help") == 0)
 				usage();
 			fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"tc filter help\".\n", *argv);
-			exit(-1);
+			return -1;
 		}
 	}
 	if (est.ewma_log)
 		addattr_l(&req.n, sizeof(req), TCA_RATE, &est, sizeof(est));
 
-
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		exit(1);
-	}
+ 	if (!is_batch_mode)
+ 		if (rtnl_open(&rth, 0) < 0) {
+ 			fprintf(stderr, "Cannot open rtnetlink\n");
+ 			return 1;
+ 		}
 
 	if (d[0])  {
-		ll_init_map(&rth);
+ 		ll_init_map(&(is_batch_mode?g_rth:rth));
 
 		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			rtnl_close(&rth);
-			exit(1);
+			return 1;
 		}
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
+ 	if (rtnl_talk(&(is_batch_mode?g_rth:rth), &req.n, 0, 0, NULL, NULL, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
-		rtnl_close(&rth);
-		exit(2);
+		if (!is_batch_mode)
+			rtnl_close(&rth);
+		return 2;
 	}
 
-	rtnl_close(&rth);
+ 	if (!is_batch_mode)
+		rtnl_close(&rth);
 	return 0;
 }
 
@@ -286,7 +288,7 @@ int tc_filter_list(int argc, char **argv)
 		} else if (strcmp(*argv, "root") == 0) {
 			if (t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
-				exit(-1);
+				return -1;
 			}
 			filter_parent = t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "parent") == 0) {
@@ -323,7 +325,7 @@ int tc_filter_list(int argc, char **argv)
 			usage();
 		} else {
 			fprintf(stderr, " What is \"%s\"? Try \"tc filter help\"\n", *argv);
-			exit(-1);
+			return -1;
 		}
 
 		argc--; argv++;
@@ -331,34 +333,37 @@ int tc_filter_list(int argc, char **argv)
 
 	t.tcm_info = TC_H_MAKE(prio<<16, protocol);
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		exit(1);
-	}
-
-	ll_init_map(&rth);
+ 	if (!is_batch_mode)
+ 		if (rtnl_open(&rth, 0) < 0) {
+ 			fprintf(stderr, "Cannot open rtnetlink\n");
+ 			return 1;
+ 		}
+ 
+ 	ll_init_map(&(is_batch_mode?g_rth:rth));
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			rtnl_close(&rth);
-			exit(1);
+			return 1;
 		}
 		filter_ifindex = t.tcm_ifindex;
 	}
 
-	if (rtnl_dump_request(&rth, RTM_GETTFILTER, &t, sizeof(t)) < 0) {
+ 	if (rtnl_dump_request(&(is_batch_mode?g_rth:rth), RTM_GETTFILTER, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
-		rtnl_close(&rth);
-		exit(1);
+		if (!is_batch_mode)
+			rtnl_close(&rth);
+		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, print_filter, stdout, NULL, NULL) < 0) {
+ 	if (rtnl_dump_filter(&(is_batch_mode?g_rth:rth), print_filter, stdout, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
-		exit(1);
+		return 1;
 	}
 
-	rtnl_close(&rth);
+ 	if (!is_batch_mode)
+		rtnl_close(&rth);
 	return 0;
 }
 
@@ -384,6 +389,6 @@ int do_filter(int argc, char **argv)
 	if (matches(*argv, "help") == 0)
 		usage();
 	fprintf(stderr, "Command \"%s\" is unknown, try \"tc filter help\".\n", *argv);
-	exit(-1);
+	return -1;
 }
 
