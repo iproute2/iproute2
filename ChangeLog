@@ -2,12 +2,15 @@
 
 	* include/linux/netfilter_ipv4/ip_tables.h dont include compiler.h
 	  because it isn't needed and not on all systems
+	* Update rtnetlink.h and pkt_cls.h to be stripped versions
+	  of headers from 2.6.12-rc1
 
 2005-03-30  Jamal Hadi Salim <hadi@znyx.com>
 
 	* Proper verison of iptables headers (from 1.3.1)
 	* Set revision file in m_ipt
 	* Fix action_util naming in mirred
+	* don't call ll_init_map in mirred
 
 2005-03-19  Thomas Graf <tgraf@suug.ch>
 
