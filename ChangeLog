@@ -3,6 +3,11 @@
 	* fix build problems with arpd and pthread
 	* add pkt_sched.h
 
+2004-09-28  Mike Frysinger <vapier@gentoo.org>
+	
+	* make man8 directory
+	* install ifcfg and rtpr scripts
+
 2004-09-28  Andreas Haumer <andreas@xss.co.at>
 
 	* make install symlink fix.
