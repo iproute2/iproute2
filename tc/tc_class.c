@@ -152,7 +152,7 @@ int filter_ifindex;
 __u32 filter_qdisc;
 
 static int print_class(const struct sockaddr_nl *who, 
-		       const struct nlmsghdr *n, void *arg)
+		       struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct tcmsg *t = NLMSG_DATA(n);

@@ -20,7 +20,8 @@ extern void rtnl_close(struct rtnl_handle *rth);
 extern int rtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type);
 extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len);
 
-typedef int (*rtnl_filter_t)(const struct sockaddr_nl *, const struct nlmsghdr *n, void *);
+typedef int (*rtnl_filter_t)(const struct sockaddr_nl *, 
+			     struct nlmsghdr *n, void *);
 extern int rtnl_dump_filter(struct rtnl_handle *rth, rtnl_filter_t filter,
 			    void *arg1,
 			    rtnl_filter_t junk,

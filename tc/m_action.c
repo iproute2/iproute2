@@ -303,7 +303,7 @@ tc_print_action(FILE * f, const struct rtattr *arg)
 }
 
 static int do_print_action(const struct sockaddr_nl *who,
-			   const struct nlmsghdr *n,
+			   struct nlmsghdr *n,
 			   void *arg)
 {
 	FILE *fp = (FILE*)arg;

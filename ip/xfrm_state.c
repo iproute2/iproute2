@@ -375,7 +375,7 @@ static int xfrm_selector_iszero(struct xfrm_selector *s)
 }
 
 static int xfrm_state_print(const struct sockaddr_nl *who,
-			    const struct nlmsghdr *n,
+			    struct nlmsghdr *n,
 			    void *arg)
 {
 	FILE *fp = (FILE*)arg;
@@ -517,7 +517,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
  * and store it to buffer.
  */
 static int xfrm_state_keep(const struct sockaddr_nl *who,
-			   const struct nlmsghdr *n,
+			   struct nlmsghdr *n,
 			   void *arg)
 {
 	struct xfrm_buffer *xb = (struct xfrm_buffer *)arg;

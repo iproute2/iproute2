@@ -336,7 +336,7 @@ static int xfrm_policy_filter_match(struct xfrm_userpolicy_info *xpinfo)
 }
 
 static int xfrm_policy_print(const struct sockaddr_nl *who, 
-			     const struct nlmsghdr *n, void *arg)
+			     struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct xfrm_userpolicy_info *xpinfo = NLMSG_DATA(n);
@@ -521,7 +521,7 @@ static int xfrm_policy_get(int argc, char **argv)
  * and store it to buffer.
  */
 static int xfrm_policy_keep(const struct sockaddr_nl *who,
-			    const struct nlmsghdr *n,
+			    struct nlmsghdr *n,
 			    void *arg)
 {
 	struct xfrm_buffer *xb = (struct xfrm_buffer *)arg;

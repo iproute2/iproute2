@@ -203,7 +203,7 @@ void print_tcstats_attr(FILE *fp, const struct rtattr *rta)
 static int filter_ifindex;
 
 static int print_qdisc(const struct sockaddr_nl *who, 
-		       const struct nlmsghdr *n, 
+		       struct nlmsghdr *n, 
 		       void *arg)
 {
 	FILE *fp = (FILE*)arg;

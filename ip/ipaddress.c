@@ -126,7 +126,8 @@ void print_queuelen(char *name)
 		printf("qlen %d", ifr.ifr_qlen);
 }
 
-int print_linkinfo(const struct sockaddr_nl *who, const struct nlmsghdr *n, void *arg)
+int print_linkinfo(const struct sockaddr_nl *who, 
+		   struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
@@ -275,7 +276,7 @@ static int flush_update(void)
 	return 0;
 }
 
-int print_addrinfo(const struct sockaddr_nl *who, const struct nlmsghdr *n, 
+int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n, 
 		   void *arg)
 {
 	FILE *fp = (FILE*)arg;
@@ -466,7 +467,7 @@ int print_selected_addrinfo(int ifindex, struct nlmsg_list *ainfo, FILE *fp)
 }
 
 
-static int store_nlmsg(const struct sockaddr_nl *who, const struct nlmsghdr *n, 
+static int store_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n, 
 		       void *arg)
 {
 	struct nlmsg_list **linfo = (struct nlmsg_list**)arg;

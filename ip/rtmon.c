@@ -46,7 +46,7 @@ static void write_stamp(FILE *fp)
 	fwrite((void*)n1, 1, NLMSG_ALIGN(n1->nlmsg_len), fp);
 }
 
-static int dump_msg(const struct sockaddr_nl *who, const struct nlmsghdr *n, 
+static int dump_msg(const struct sockaddr_nl *who, struct nlmsghdr *n, 
 		    void *arg)
 {
 	FILE *fp = (FILE*)arg;

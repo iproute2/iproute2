@@ -217,7 +217,7 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 }
 
 
-int print_neigh(const struct sockaddr_nl *who, const struct nlmsghdr *n, void *arg)
+int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct ndmsg *r = NLMSG_DATA(n);

@@ -63,7 +63,7 @@ struct ifstat_ent
 struct ifstat_ent *kern_db;
 struct ifstat_ent *hist_db;
 
-int match(char *id)
+static int match(const char *id)
 {
 	int i;
 
@@ -77,7 +77,8 @@ int match(char *id)
 	return 0;
 }
 
-int get_nlmsg(const struct sockaddr_nl *who, const struct nlmsghdr *m, void *arg)
+static int get_nlmsg(const struct sockaddr_nl *who, 
+		     struct nlmsghdr *m, void *arg)
 {
 	struct ifinfomsg *ifi = NLMSG_DATA(m);
 	struct rtattr * tb[IFLA_MAX+1];
