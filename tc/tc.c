@@ -36,7 +36,7 @@ int show_raw = 0;
 int resolve_hosts = 0;
 int use_iec = 0;
 
-void *BODY;
+static void *BODY;	/* cached handle dlopen(NULL) */
 static struct qdisc_util * qdisc_list;
 static struct filter_util * filter_list;
 
@@ -84,19 +84,6 @@ static int parse_nofopt(struct filter_util *qu, char *fhandle, int argc, char **
 	return 0;
 }
 
-#if 0
-/* Builtin filter types */
-
-static int f_parse_noopt(struct filter_util *qu, char *fhandle, int argc, char **argv, struct nlmsghdr *n)
-{
-	if (argc || fhandle) {
-		fprintf(stderr, "Filter \"%s\" has no options.\n", qu->id);
-		return -1;
-	}
-	return 0;
-}
-#endif
-
 struct qdisc_util *get_qdisc_kind(const char *str)
 {
 	void *dlh;
@@ -107,9 +94,10 @@ struct qdisc_util *get_qdisc_kind(const char *str)
 		if (strcmp(q->id, str) == 0)
 			return q;
 
-	snprintf(buf, sizeof(buf), "q_%s.so", str);
+	snprintf(buf, sizeof(buf), "/usr/lib/tc/q_%s.so", str);
 	dlh = dlopen(buf, RTLD_LAZY);
-	if (dlh == NULL) {
+	if (!dlh) {
+		/* look in current binary, only open once */
 		dlh = BODY;
 		if (dlh == NULL) {
 			dlh = BODY = dlopen(NULL, RTLD_LAZY);
@@ -151,7 +139,7 @@ struct filter_util *get_filter_kind(const char *str)
 		if (strcmp(q->id, str) == 0)
 			return q;
 
-	snprintf(buf, sizeof(buf), "f_%s.so", str);
+	snprintf(buf, sizeof(buf), "/usr/lib/tc/f_%s.so", str);
 	dlh = dlopen(buf, RTLD_LAZY);
 	if (dlh == NULL) {
 		dlh = BODY;
@@ -171,7 +159,6 @@ reg:
 	q->next = filter_list;
 	filter_list = q;
 	return q;
-
 noexist:
 	q = malloc(sizeof(*q));
 	if (q) {
