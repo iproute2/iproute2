@@ -4,7 +4,7 @@ SBINDIR=/sbin
 CONFDIR=/etc/iproute2
 DOCDIR=/usr/doc/iproute2
 
-KERNEL_INCLUDE=/usr/src/linux/include
+KERNEL_INCLUDE=/usr/include
 LIBC_INCLUDE=/usr/include
 
 DEFINES= -DRESOLVE_HOSTNAMES
@@ -43,19 +43,9 @@ SUBDIRS=lib ip tc misc
 
 LIBNETLINK=../lib/libnetlink.a ../lib/libutil.a
 
-all: check-kernel
-	@set -e; \
+all:
 	for i in $(SUBDIRS); \
 	do $(MAKE) -C $$i; done
-
-check-kernel:
-ifeq ($(KERNEL_INCLUDE),)
-	@echo "Please, set correct KERNEL_INCLUDE"; false
-else
-	@set -e; \
-	if [ ! -r $(KERNEL_INCLUDE)/linux/autoconf.h ]; then \
-		echo "Please, compile the kernel first"; false; fi
-endif
 
 install: all
 	install -m 0755 -d $(DESTDIR)$(SBINDIR)
