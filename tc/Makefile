@@ -71,7 +71,7 @@ install: all
 	done
 
 clean:
-	rm -f $(TCOBJ) $(TCLIB) $(NETEM_DIST) libtc.a tc
+	rm -f $(TCOBJ) $(TCLIB) $(NETEM_DIST) libtc.a tc *.so
 
 q_atm.so: q_atm.c
 	$(CC) $(CFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
