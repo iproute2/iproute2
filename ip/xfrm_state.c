@@ -56,8 +56,10 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip xfrm state { add | update } ID [ ALGO-LIST ] [ mode MODE ]\n");
-	fprintf(stderr, "        [ reqid REQID ] [ replay-window SIZE ] [ flag FLAG-LIST ]\n");
+	fprintf(stderr, "        [ reqid REQID ] [ seq SEQ ] [ replay-window SIZE ] [ flag FLAG-LIST ]\n");
 	fprintf(stderr, "        [ encap ENCAP ] [ sel SELECTOR ] [ LIMIT-LIST ]\n");
+	fprintf(stderr, "Usage: ip xfrm state allocspi ID [ mode MODE ] [ reqid REQID ] [ seq SEQ ]\n");
+	fprintf(stderr, "        [ min SPI max SPI ]\n");
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID\n");
 	fprintf(stderr, "Usage: ip xfrm state { flush | list } [ ID ] [ mode MODE ] [ reqid REQID ]\n");
 	fprintf(stderr, "        [ flag FLAG_LIST ]\n");
@@ -163,6 +165,22 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 	return 0;
 }
 
+static int xfrm_seq_parse(__u32 *seq, int *argcp, char ***argvp)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+
+	if (get_u32(seq, *argv, 0))
+		invarg("\"SEQ\" is invalid", *argv);
+
+	*seq = htonl(*seq);
+
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
 static int xfrm_state_flag_parse(__u8 *flags, int *argcp, char ***argvp)
 {
 	int argc = *argcp;
@@ -232,6 +250,9 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "reqid") == 0) {
 			NEXT_ARG();
 			xfrm_reqid_parse(&req.xsinfo.reqid, &argc, &argv);
+		} else if (strcmp(*argv, "seq") == 0) {
+			NEXT_ARG();
+			xfrm_seq_parse(&req.xsinfo.seq, &argc, &argv);
 		} else if (strcmp(*argv, "replay-window") == 0) {
 			NEXT_ARG();
 			if (get_u8(&req.xsinfo.replay_window, *argv, 0))
@@ -372,6 +393,136 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 	return 0;
 }
 
+static int xfrm_state_allocspi(int argc, char **argv)
+{
+	struct rtnl_handle rth;
+	struct {
+		struct nlmsghdr 	n;
+		struct xfrm_userspi_info xspi;
+		char   			buf[RTA_BUF_SIZE];
+	} req;
+	char *idp = NULL;
+	char *minp = NULL;
+	char *maxp = NULL;
+	char res_buf[NLMSG_BUF_SIZE];
+	struct nlmsghdr *res_n = (struct nlmsghdr *)res_buf;
+
+	memset(res_buf, 0, sizeof(res_buf));
+
+	memset(&req, 0, sizeof(req));
+
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(req.xspi));
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = XFRM_MSG_ALLOCSPI;
+	req.xspi.info.family = preferred_family;
+
+#if 0
+	req.xsinfo.lft.soft_byte_limit = XFRM_INF;
+	req.xsinfo.lft.hard_byte_limit = XFRM_INF;
+	req.xsinfo.lft.soft_packet_limit = XFRM_INF;
+	req.xsinfo.lft.hard_packet_limit = XFRM_INF;
+#endif
+
+	while (argc > 0) {
+		if (strcmp(*argv, "mode") == 0) {
+			NEXT_ARG();
+			xfrm_mode_parse(&req.xspi.info.mode, &argc, &argv);
+		} else if (strcmp(*argv, "reqid") == 0) {
+			NEXT_ARG();
+			xfrm_reqid_parse(&req.xspi.info.reqid, &argc, &argv);
+		} else if (strcmp(*argv, "seq") == 0) {
+			NEXT_ARG();
+			xfrm_seq_parse(&req.xspi.info.seq, &argc, &argv);
+		} else if (strcmp(*argv, "min") == 0) {
+			if (minp)
+				duparg("min", *argv);
+			minp = *argv;
+
+			NEXT_ARG();
+
+			if (get_u32(&req.xspi.min, *argv, 0))
+				invarg("\"min\" value is invalid", *argv);
+		} else if (strcmp(*argv, "max") == 0) {
+			if (maxp)
+				duparg("max", *argv);
+			maxp = *argv;
+
+			NEXT_ARG();
+
+			if (get_u32(&req.xspi.max, *argv, 0))
+				invarg("\"max\" value is invalid", *argv);
+		} else {
+			/* try to assume ID */
+			if (idp)
+				invarg("unknown", *argv);
+			idp = *argv;
+
+			/* ID */
+			xfrm_id_parse(&req.xspi.info.saddr, &req.xspi.info.id,
+				      &req.xspi.info.family, 0, &argc, &argv);
+			if (req.xspi.info.id.spi) {
+				fprintf(stderr, "\"SPI\" must be zero\n");
+				exit(1);
+			}
+			if (preferred_family == AF_UNSPEC)
+				preferred_family = req.xspi.info.family;
+		}
+		argc--; argv++;
+	}
+
+	if (!idp) {
+		fprintf(stderr, "Not enough information: \"ID\" is required\n");
+		exit(1);
+	}
+
+	if (minp) {
+		if (!maxp) {
+			fprintf(stderr, "\"max\" is missing\n");
+			exit(1);
+		}
+		if (req.xspi.min > req.xspi.max) {
+			fprintf(stderr, "\"min\" valie is larger than \"max\" one\n");
+			exit(1);
+		}
+	} else {
+		if (maxp) {
+			fprintf(stderr, "\"min\" is missing\n");
+			exit(1);
+		}
+
+		/* XXX: Default value defined in PF_KEY;
+		 * See kernel's net/key/af_key.c(pfkey_getspi).
+		 */
+		req.xspi.min = 0x100;
+		req.xspi.max = 0x0fffffff;
+
+		/* XXX: IPCOMP spi is 16-bits;
+		 * See kernel's net/xfrm/xfrm_user(verify_userspi_info).
+		 */
+		if (req.xspi.info.id.proto == IPPROTO_COMP)
+			req.xspi.max = 0xffff;
+	}
+
+	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
+		exit(1);
+
+	if (req.xspi.info.family == AF_UNSPEC)
+		req.xspi.info.family = AF_INET;
+
+
+	if (rtnl_talk(&rth, &req.n, 0, 0, res_n, NULL, NULL) < 0)
+		exit(2);
+
+	if (xfrm_state_print(NULL, res_n, (void*)stdout) < 0) {
+		fprintf(stderr, "An error :-)\n");
+		exit(1);
+	}
+
+	rtnl_close(&rth);
+
+	return 0;
+}
+
 static int xfrm_state_filter_match(struct xfrm_usersa_info *xsinfo)
 {
 	if (!filter.use)
@@ -400,18 +551,8 @@ static int xfrm_state_filter_match(struct xfrm_usersa_info *xsinfo)
 	return 1;
 }
 
-static int xfrm_selector_iszero(struct xfrm_selector *s)
-{
-	struct xfrm_selector s0;
-
-	memset(&s0, 0, sizeof(s0));
-
-	return (memcmp(&s0, s, sizeof(s0)) == 0);
-}
-
-static int xfrm_state_print(const struct sockaddr_nl *who,
-			    struct nlmsghdr *n,
-			    void *arg)
+int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
+		     void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct xfrm_usersa_info *xsinfo = NLMSG_DATA(n);
@@ -439,35 +580,7 @@ static int xfrm_state_print(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == XFRM_MSG_DELSA)
 		fprintf(fp, "Deleted ");
 
-	xfrm_id_info_print(&xsinfo->saddr, &xsinfo->id, xsinfo->mode,
-			   xsinfo->reqid, xsinfo->family, 1, fp, NULL);
-
-	fprintf(fp, "\t");
-	fprintf(fp, "replay-window %u ", xsinfo->replay_window);
-	if (show_stats > 0)
-		fprintf(fp, "seq 0x%08u ", xsinfo->seq);
-	if (show_stats > 0 || xsinfo->flags) {
-		__u8 flags = xsinfo->flags;
-
-		fprintf(fp, "flag ");
-		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_NOECN, "noecn");
-		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_DECAP_DSCP, "decap-dscp");
-		if (flags)
-			fprintf(fp, "%x", flags);
-		if (show_stats > 0)
-			fprintf(fp, " (0x%s)", strxf_mask8(flags));
-	}
-	fprintf(fp, "%s", _SL_);
-
-	xfrm_xfrma_print(tb, xsinfo->family, fp, "\t");
-
-	if (!xfrm_selector_iszero(&xsinfo->sel))
-		xfrm_selector_print(&xsinfo->sel, xsinfo->family, fp, "\tsel ");
-
-	if (show_stats > 0) {
-		xfrm_lifetime_print(&xsinfo->lft, &xsinfo->curlft, fp, "\t");
-		xfrm_stats_print(&xsinfo->stats, fp, "\t");
-	}
+	xfrm_state_info_print(xsinfo, tb, fp, NULL, NULL);
 
 	if (oneline)
 		fprintf(fp, "\n");
@@ -742,6 +855,8 @@ int do_xfrm_state(int argc, char **argv)
 	if (matches(*argv, "update") == 0)
 		return xfrm_state_modify(XFRM_MSG_UPDSA, 0,
 					 argc-1, argv+1);
+	if (matches(*argv, "allocspi") == 0)
+		return xfrm_state_allocspi(argc-1, argv+1);
 	if (matches(*argv, "delete") == 0 || matches(*argv, "del") == 0)
 		return xfrm_state_get_or_delete(argc-1, argv+1, 1);
 	if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0
