@@ -51,10 +51,35 @@ else
 fi
 rm -f /tmp/atmtest.c /tmp/atmtest
 
+echo -n " HTB...              "
+DEF_HTB=`grep '^#define HTB_TC_VER' tc/q_htb.c`
+cat >/tmp/htbtest.c <<EOF
+#include <stdio.h>
+#include <asm/types.h>
+#include <linux/pkt_sched.h>
+$DEF_HTB
+int main(int argc, char **argv) {
+	if (HTB_TC_VER >>16 != TC_HTB_PROTOVER) {
+		fprintf(stderr, "different kernel and TC HTB versions\n");
+		return 1;
+	} 
+	return 0;
+}
+EOF
+gcc -I$INCLUDE -o /tmp/htbtest /tmp/htbtest.c
+if [ $? -eq 0 -a /tmp/htbtest ]
+then
+	echo "TC_CONFIG_HTB:=y" >>Config
+	echo y
+else
+    echo n
+fi
+rm -f /tmp/htbtest /tmp/htbtest.c
+
 # See if we know about TCP Vegas
 echo "SS"
 echo -n " TCP Vegas...        "
-if grep -q TCPDIAG_VEGASINFO $INCLUDE/linux/tcp_diag.h
+if grep -q TCPDIAG_VEGASINFO $INCLUDE/linux/tcp_diag.h  >/dev/null 2>&1
 then
     echo "SS_CONFIG_VEGAS:=y" >>Config
     echo y

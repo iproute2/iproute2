@@ -1,5 +1,9 @@
 2004-07-30  Stephen Hemminger  <shemminger@osdl.org>
 
+	* HTB API changed and won't build with mismatched version.
+	  Rather than sticking user with a build error, just don't
+	  build it in on mismatch.
+
 	* Change configure script to make sure netem is the correct
 	  version. I changed the structure def. a couple of times before
 	  settling on the final API
