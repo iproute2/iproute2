@@ -1,0 +1,54 @@
+#! /bin/bash
+# This is not an autconf generated configure
+#
+INCLUDE=${1:-"/usr/include"}
+
+echo "# Generated config based on" $INCLUDE >Config
+
+echo "TC"
+PKT_SCHED=$INCLUDE/linux/pkt_sched.h
+if [ ! -r $PKT_SCHED ];
+then
+    echo " can't find file" $PKT_SCHED
+    exit 1
+fi
+
+echo -n " netsim scheduler... "
+if grep -q 'tc_netsim_qopt' $PKT_SCHED
+then
+    echo "TC_CONFIG_NETSIM = y" >>Config
+    echo y
+else
+    echo n
+fi
+
+echo -n " ATM...              "
+if [ -r $INCLUDE/linux/atm.h ]
+then
+    echo "TC_CONFIG_ATM = y" >>Config
+    echo y
+else
+    echo n
+fi
+
+# See if we know about TCP Vegas
+echo "SS"
+echo -n " TCP Vegas...        "
+if grep -q TCPDIAG_VEGASINFO $INCLUDE/linux/tcp_diag.h
+then
+    echo "SS_CONFIG_VEGAS = y" >>Config
+    echo y
+else
+    echo n
+fi
+
+echo -n " TCP DRS...          "
+if grep -q tcpi_rcv_space $INCLUDE/linux/tcp.h
+then
+    echo "SS_CONFIG_DRS = y" >>Config
+    echo y
+else
+    echo n
+fi
+
+
