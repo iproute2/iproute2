@@ -571,19 +571,19 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_ALG_AUTH]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH];
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
-			XFRMA_ALG_AUTH, RTA_PAYLOAD(rta), fp, prefix);
+				XFRMA_ALG_AUTH, RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_CRYPT]) {
 		struct rtattr *rta = tb[XFRMA_ALG_CRYPT];
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
-			XFRMA_ALG_CRYPT, RTA_PAYLOAD(rta), fp, prefix);
+				XFRMA_ALG_CRYPT, RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_COMP]) {
 		struct rtattr *rta = tb[XFRMA_ALG_COMP];
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
-			XFRMA_ALG_COMP, RTA_PAYLOAD(rta), fp, prefix);
+				XFRMA_ALG_COMP, RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ENCAP]) {
@@ -601,7 +601,18 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		}
 		e = (struct xfrm_encap_tmpl *) RTA_DATA(tb[XFRMA_ENCAP]);
 
-		fprintf(fp, "type %u ", e->encap_type);
+		fprintf(fp, "type ");
+		switch (e->encap_type) {
+		case 1:
+			fprintf(fp, "espinudp-nonike ");
+			break;
+		case 2:
+			fprintf(fp, "espinudp ");
+			break;
+		default:
+			fprintf(fp, "%u ", e->encap_type);
+			break;
+		}
 		fprintf(fp, "sport %u ", ntohs(e->encap_sport));
 		fprintf(fp, "dport %u ", ntohs(e->encap_dport));
 
@@ -615,7 +626,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_TMPL]) {
 		struct rtattr *rta = tb[XFRMA_TMPL];
 		xfrm_tmpl_print((struct xfrm_user_tmpl *) RTA_DATA(rta),
-			RTA_PAYLOAD(rta), family, fp, prefix);
+				RTA_PAYLOAD(rta), family, fp, prefix);
 	}
 }
 
@@ -717,6 +728,24 @@ int xfrm_mode_parse(__u8 *mode, int *argcp, char ***argvp)
 		*mode = 1;
 	else
 		invarg("\"MODE\" is invalid", *argv);
+
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
+int xfrm_encap_type_parse(__u16 *type, int *argcp, char ***argvp)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+
+	if (strcmp(*argv, "espinudp-nonike") == 0)
+		*type = 1;
+	else if (strcmp(*argv, "espinudp") == 0)
+		*type = 2;
+	else
+		invarg("\"ENCAP-TYPE\" is invalid", *argv);
 
 	*argcp = argc;
 	*argvp = argv;

@@ -110,6 +110,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 		  int loose, int *argcp, char ***argvp);
 int xfrm_mode_parse(__u8 *mode, int *argcp, char ***argvp);
+int xfrm_encap_type_parse(__u16 *type, int *argcp, char ***argvp);
 int xfrm_reqid_parse(__u32 *reqid, int *argcp, char ***argvp);
 int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp);
 int xfrm_lifetime_cfg_parse(struct xfrm_lifetime_cfg *lft,

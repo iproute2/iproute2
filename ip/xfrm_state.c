@@ -57,8 +57,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ip xfrm state { add | update } ID [ ALGO-LIST ] [ mode MODE ]\n");
 	fprintf(stderr, "        [ reqid REQID ] [ replay-window SIZE ] [ flag FLAG-LIST ]\n");
-	fprintf(stderr, "        [ sel SELECTOR ] [ LIMIT-LIST ]\n");
-
+	fprintf(stderr, "        [ encap ENCAP ] [ sel SELECTOR ] [ LIMIT-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID\n");
 	fprintf(stderr, "Usage: ip xfrm state { flush | list } [ ID ] [ mode MODE ] [ reqid REQID ]\n");
 	fprintf(stderr, "        [ flag FLAG_LIST ]\n");
@@ -78,6 +77,9 @@ static void usage(void)
 
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG := [ noecn | decap-dscp ]\n");
+ 
+        fprintf(stderr, "ENCAP := ENCAP-TYPE SPORT DPORT OADDR\n");
+        fprintf(stderr, "ENCAP-TYPE := espinudp | espinudp-nonike\n");
 
 	fprintf(stderr, "ALGO-LIST := [ ALGO-LIST ] | [ ALGO ]\n");
 	fprintf(stderr, "ALGO := ALGO_TYPE ALGO_NAME ALGO_KEY\n");
@@ -243,6 +245,24 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "limit") == 0) {
 			NEXT_ARG();
 			xfrm_lifetime_cfg_parse(&req.xsinfo.lft, &argc, &argv);
+		} else if (strcmp(*argv, "encap") == 0) {
+			struct xfrm_encap_tmpl encap;
+			inet_prefix oa;
+		        NEXT_ARG();
+			xfrm_encap_type_parse(&encap.encap_type, &argc, &argv);
+			NEXT_ARG();
+			if (get_u16(&encap.encap_sport, *argv, 0))
+				invarg("\"encap\" sport value is invalid", *argv);
+			encap.encap_sport = htons(encap.encap_sport);
+			NEXT_ARG();
+			if (get_u16(&encap.encap_dport, *argv, 0))
+				invarg("\"encap\" dport value is invalid", *argv);
+			encap.encap_dport = htons(encap.encap_dport);
+			NEXT_ARG();
+			get_addr(&oa, *argv, AF_UNSPEC);
+			memcpy(&encap.encap_oa, &oa.data, sizeof(encap.encap_oa));
+			addattr_l(&req.n, sizeof(req.buf), XFRMA_ENCAP,
+				  (void *)&encap, sizeof(encap));
 		} else {
 			/* try to assume ALGO */
 			int type = xfrm_algotype_getbyname(*argv);
