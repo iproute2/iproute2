@@ -169,7 +169,7 @@ int iprule_list(int argc, char **argv)
 		af = AF_INET;
 
 	if (argc > 0) {
-		fprintf(stderr, "\"ip rule show\" need not eny arguments.\n");
+		fprintf(stderr, "\"ip rule show\" does not take any arguments.\n");
 		return -1;
 	}
 

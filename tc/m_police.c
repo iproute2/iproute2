@@ -37,7 +37,7 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... police rate BPS burst BYTES[/BYTES] [ mtu BYTES[/BYTES] ]\n");
 	fprintf(stderr, "                [ peakrate BPS ] [ avrate BPS ]\n");
 	fprintf(stderr, "                [ ACTIONTERM ]\n");
-	fprintf(stderr, "Old Syntax ACTIOTERMN := action <EXCEEDACT>[/NOTEXCEEDACT] \n"); 
+	fprintf(stderr, "Old Syntax ACTIONTERM := action <EXCEEDACT>[/NOTEXCEEDACT] \n"); 
 	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT] \n"); 
 	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue \n");
 	fprintf(stderr, "Where:  pipe is only valid for new syntax \n");
