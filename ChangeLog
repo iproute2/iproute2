@@ -1,3 +1,7 @@
+2004-10-19  Michal <md@lnet.pl>
+
+	* fix scaling in print_rates (for bits)
+
 2004-09-28  Stephen Hemminger  <shemminger@osdl.org>
 
 	* fix build problems with arpd and pthread

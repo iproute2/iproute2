@@ -183,22 +183,19 @@ void print_rate(char *buf, int len, __u32 rate)
 	extern int use_iec;
 
 	if (use_iec) {
-		if (tmp >= 1024*1023 && 
-		    fabs(1024*1024*rint(tmp/(1024*1024)) - tmp) < 1024)
-			snprintf(buf, len, "%gMibit", rint(tmp/(1024*1024)));
-		else if (tmp >= 1024-16 && fabs(1024*rint(tmp/1024) - tmp) < 16)
-			snprintf(buf, len, "%gKibit", rint(tmp/1024));
+		if (tmp >= 1000.0*1024.0*1024.0)
+			snprintf(buf, len, "%.0fMibit", tmp/1024.0*1024.0);
+		else if (tmp >= 1000.0*1024)
+			snprintf(buf, len, "%.0fKibit", tmp/1024);
 		else
-			snprintf(buf, len, "%ubit", rate);
-
-	} else { 
-		if (tmp >= 999999 && 
-		    fabs(1000000.*rint(tmp/1000000.) - tmp) < 1000)
-			snprintf(buf, len, "%gMbit", rint(tmp/1000000.));
-		else if (tmp >= 990 && fabs(1000.*rint(tmp/1000.) - tmp) < 10)
-			snprintf(buf, len, "%gKbit", rint(tmp/1000.));
+			snprintf(buf, len, "%.0fbit", tmp);
+	} else {
+		if (tmp >= 1000.0*1000000.0)
+			snprintf(buf, len, "%.0fMbit", tmp/1000000.0);
+		else if (tmp >= 1000.0 * 1000.0)
+			snprintf(buf, len, "%.0fKbit", tmp/1000.0);
 		else
-			snprintf(buf, len, "%ubit", rate);
+			snprintf(buf, len, "%.0fbit",  tmp);
 	}
 }
 
