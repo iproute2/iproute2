@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <netdb.h>
-#include <db41/db_185.h>
+#include <db_185.h>
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <errno.h>
