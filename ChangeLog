@@ -1,7 +1,6 @@
 2004-08-13  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Add jamal's tc extensions for classification
-
 	* Get rid of old Patches/ directory for tcp_diag module
 	* Make get_rate table based.
 
