@@ -1,7 +1,7 @@
 DESTDIR=
 SBINDIR=/usr/sbin
 CONFDIR=/etc/iproute2
-DOCDIR=/usr/doc/iproute2
+DOCDIR=/usr/share/doc/iproute2
 MANDIR=/usr/share/man
 
 # Path to db_185.h include
