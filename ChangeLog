@@ -1,5 +1,7 @@
 2004-08-09  Stephen Hemminger  <shemminger@osdl.org>
 
+	* Fix netem scheduler to handle case where psched us != real us
+
 	* Remove configuration for everything that can depend on 
 	  extracted kernel headers
 	* Add kernel headers required to include/linux

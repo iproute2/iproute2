@@ -42,6 +42,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n)
 {
 	struct tc_netem_qopt opt;
+	unsigned latency = 0;
 	int ok = 0;
 
 	memset(&opt, 0, sizeof(opt));
@@ -57,7 +58,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			ok++;
 		} else if (matches(*argv, "latency") == 0) {
 			NEXT_ARG();
-			if (get_usecs(&opt.latency, *argv)) {
+			if (get_usecs(&latency, *argv)) {
 				explain1("latency");
 				return -1;
 			}
@@ -101,6 +102,8 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		argc--; argv++;
 	}
 
+	opt.latency = tc_core_usec2tick(latency);
+
 	return ok ? addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt)) : 0;
 }
 
@@ -120,7 +123,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	fprintf(f, "limit %d", qopt->limit);
 	if (qopt->latency)
 		fprintf(f, " latency %s", 
-			sprint_usecs(qopt->latency, b1));
+			sprint_usecs(tc_core_tick2usec(qopt->latency), b1));
 	if (qopt->jitter)
 		fprintf(f, " jitter %s", sprint_usecs(qopt->jitter, b1));
 
