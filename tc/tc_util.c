@@ -314,6 +314,35 @@ char * sprint_size(__u32 size, char *buf)
 	return buf;
 }
 
+static double percent_scale = (double)(1ull << 32) / 100.;
+
+int get_percent(__u32 *percent, const char *str)
+{
+	char *p;
+	double per = strtod(str, &p);
+
+	if (per > 100.)
+		return -1;
+	if (*p && strcmp(p, "%"))
+		return -1;
+
+	*percent = per * percent_scale;
+	return 0;
+}
+
+int print_percent(char *buf, int len, __u32 per)
+{
+	snprintf(buf, len, "%g%%", (double) per / percent_scale);
+	return 0;
+}
+
+char * sprint_percent(__u32 per, char *buf)
+{
+	if (print_percent(buf, SPRINT_BSIZE-1, per))
+		strcpy(buf, "???");
+	return buf;
+}
+
 int print_qdisc_handle(char *buf, int len, __u32 h)
 {
 	snprintf(buf, len, "%x:", TC_H_MAJ(h)>>16);

@@ -31,11 +31,13 @@ extern struct filter_util *get_filter_kind(const char *str);
 
 extern int get_qdisc_handle(__u32 *h, const char *str);
 extern int get_rate(unsigned *rate, const char *str);
+extern int get_percent(unsigned *percent, const char *str);
 extern int get_size(unsigned *size, const char *str);
 extern int get_size_and_cell(unsigned *size, int *cell_log, char *str);
 extern int get_usecs(unsigned *usecs, const char *str);
 extern int print_rate(char *buf, int len, __u32 rate);
 extern int print_size(char *buf, int len, __u32 size);
+extern int print_percent(char *buf, int len, __u32 percent);
 extern int print_qdisc_handle(char *buf, int len, __u32 h);
 extern int print_usecs(char *buf, int len, __u32 usecs);
 extern char * sprint_rate(__u32 rate, char *buf);
@@ -43,6 +45,7 @@ extern char * sprint_size(__u32 size, char *buf);
 extern char * sprint_qdisc_handle(__u32 h, char *buf);
 extern char * sprint_tc_classid(__u32 h, char *buf);
 extern char * sprint_usecs(__u32 usecs, char *buf);
+extern char * sprint_percent(__u32 percent, char *buf);
 
 extern void print_tcstats(FILE *fp, struct tc_stats *st);
 

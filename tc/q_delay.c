@@ -64,6 +64,13 @@ static int delay_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 			ok++;
+		} else if (matches(*argv, "loss") == 0) {
+			NEXT_ARG();
+			if (get_percent(&opt.loss, *argv)) {
+				explain1("loss");
+				return -1;
+			}
+			ok++;
 		} else if (matches(*argv, "rate") == 0) {
 			NEXT_ARG();
 			if (rate) {
@@ -125,11 +132,15 @@ static int delay_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (RTA_PAYLOAD(opt)  < sizeof(*qopt))
 		return -1;
+
 	qopt = RTA_DATA(opt);
 
 	fprintf(f, "delay limit %s latency %s ",
 		sprint_size(qopt->limit, b1),
 		sprint_usecs(qopt->latency, b2));
+	if (qopt->loss)
+		fprintf(f, "loss %s ",
+			sprint_percent(qopt->loss, b1));
 	return 0;
 }
 
