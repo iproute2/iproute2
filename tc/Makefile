@@ -17,8 +17,11 @@ TCMODULES += q_dsmark.o
 TCMODULES += q_gred.o
 TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
-TCMODULES += q_htb.o
 TCMODULES += q_hfsc.o
+
+ifeq ($(TC_CONFIG_HTB),y)
+	TCMODULES += q_htb.o
+endif
 
 # deadmen walking
 #TCMODULES += q_csz.o
