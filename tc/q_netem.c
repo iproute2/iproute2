@@ -26,9 +26,9 @@
 static void explain(void)
 {
 	fprintf(stderr, 
-"Usage: ... netem latency TIME [ gap PACKETS] \n" \
+"Usage: ... netem latency TIME [ jitter TIME ] [ limit PACKETS] \n" \
 "                 [ loss PERCENT ] [ duplicate PERCENT ]\n" \
-"                 [ rate KBPS ] [ limit BYTES]\n");
+"                 [ gap PACKETS]\n");
 }
 
 static void explain1(const char *arg)
@@ -70,10 +70,8 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			}
 			ok++;
 		} else if (matches(*argv, "gap") == 0) {
-			char *p;
 			NEXT_ARG();
-			opt.gap = strtoul(*argv, &p, 0);
-			if (p == *argv || *p) {
+			if (get_u32(&opt.gap, *argv, 0)) {
 				explain1("gap");
 				return -1;
 			}
@@ -85,10 +83,10 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 			ok++;
-		} else if (matches(*argv, "rate") == 0) {
+		} else if (matches(*argv, "jitter") == 0) {
 			NEXT_ARG();
-			if (get_rate(&opt.rate, *argv)) {
-				explain1("rate");
+			if (get_usecs(&opt.jitter, *argv)) {
+				explain1("jitter");
 				return -1;
 			}
 			ok++;
@@ -103,16 +101,13 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		argc--; argv++;
 	}
 
-	if (ok)
-		addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
-	return 0;
+	return ok ? addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt)) : 0;
 }
 
 static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct tc_netem_qopt *qopt;
 	SPRINT_BUF(b1);
-	SPRINT_BUF(b2);
 
 	if (opt == NULL)
 		return 0;
@@ -125,15 +120,16 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	fprintf(f, "limit %d", qopt->limit);
 	if (qopt->latency)
 		fprintf(f, " latency %s", 
-			sprint_usecs(qopt->latency, b2));
+			sprint_usecs(qopt->latency, b1));
+	if (qopt->jitter)
+		fprintf(f, " jitter %s", sprint_usecs(qopt->jitter, b1));
+
 	if (qopt->loss)
 		fprintf(f, " loss %s",
 			sprint_percent(qopt->loss, b1));
 	if (qopt->gap)
 		fprintf(f, " gap %lu", (unsigned long)qopt->gap);
 
-	if (qopt->rate)
-		fprintf(f, " rate %s", sprint_rate(qopt->rate, b1));
 
 	return 0;
 }
@@ -144,9 +140,8 @@ static int netem_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xst
 }
 
 struct qdisc_util netem_util = {
-	NULL,
-	"netem",
-	netem_parse_opt,
-	netem_print_opt,
-	netem_print_xstats,
+	.id	   	= "netem",
+	.parse_qopt	= netem_parse_opt,
+	.print_qopt	= netem_print_opt,
+	.print_xstats	= netem_print_xstats,
 };
