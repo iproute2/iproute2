@@ -427,7 +427,7 @@ int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
-		exit(1);
+		return 1;
 	}
 
 	req.n.nlmsg_seq = rth.dump = ++rth.seq;
@@ -436,13 +436,13 @@ int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	if (rtnl_talk(&rth, &req.n, 0, 0, ans, NULL, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		rtnl_close(&rth);
-		exit (1);
+		return 1;
 	}
 
 	if (ans && do_print_action(NULL, &req.n, (void*)stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		rtnl_close(&rth);
-		exit(1);
+		return 1;
 	}
 
 	*argc_p = argc;
@@ -484,7 +484,7 @@ int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
-		exit(1);
+		return 1;
 	}
 
 
@@ -546,7 +546,7 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
-		exit(1);
+		return 1;
 	}
 
 	msg_size = NLMSG_ALIGN(req.n.nlmsg_len) - NLMSG_ALIGN(sizeof(struct nlmsghdr));
@@ -554,7 +554,7 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 	if (event == RTM_GETACTION) { 
 		if (rtnl_dump_request(&rth, event, (void *)&req.t, msg_size) < 0) {
 			perror("Cannot send dump request");
-			exit(1);
+			return 1;
 		}
 		ret = rtnl_dump_filter(&rth, do_print_action, stdout, NULL, NULL);
 	}
@@ -567,7 +567,7 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 		if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
 			fprintf(stderr, "We have an error flushing\n");
 			rtnl_close(&rth);
-			exit (1);
+			return 1;
 		}
 
 	}
