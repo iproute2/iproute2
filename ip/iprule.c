@@ -60,7 +60,6 @@ static int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (len < 0)
 		return -1;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
 
 	if (r->rtm_family == AF_INET)
@@ -316,7 +315,6 @@ static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *a
 	if (len < 0)
 		return -1;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
 
 	if (tb[RTA_PRIORITY]) {
