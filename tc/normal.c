@@ -26,7 +26,7 @@ main(int argc, char **argv)
 	double x, *table;
 	int i, n;
 
-	table = calloc(sizeof(double), TABLESIZE);
+	table = calloc(sizeof(double), TABLESIZE+1);
 	if (!table) {
 		fprintf(stderr, "Not enough memory\n");
 		return 1;

@@ -54,7 +54,7 @@ main(int argc, char **argv)
 	double *table;
 	int i,n;
 
-	table = calloc(TABLESIZE, sizeof(double));
+	table = calloc(TABLESIZE+1, sizeof(double));
 	if (!table) {
 		fprintf(stderr, "Out of memory!\n");
 		exit(1);
