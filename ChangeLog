@@ -1,3 +1,12 @@
+2004-12-07  Jim Gifford (patches at jg555 dot com)
+
+	* Fix build issues with other versions of find
+
+2004-12-07  Thomas Graf <tgraf@suug.ch>
+	
+	* Generic TC stats.
+	* NDM states are flags
+	
 2004-12-07  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Cleanup warning generated because ip_rule_flush needs to modify
