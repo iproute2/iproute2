@@ -1,5 +1,9 @@
-2005-01-12  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+2005-01-12  Andi Kleen <ak@suse.de>
 
+	* Add netlink manual page
+
+2004-10-20  Stephen Hemminger  <shemminger@osdl.org>
+	
 	* Add warning about "ip route nat" no longer supported
 
 2005-01-12  Thomas Graf <tgraf@suug.ch>
