@@ -477,7 +477,7 @@ int addattr32(struct nlmsghdr *n, int maxlen, int type, __u32 data)
 		fprintf(stderr,"addattr32: Error! max allowed bound %d exceeded\n",maxlen);
 		return -1;
 	}
-	rta = (struct rtattr*)(((char*)n) + NLMSG_ALIGN(n->nlmsg_len));
+	rta = NLMSG_TAIL(n);
 	rta->rta_type = type;
 	rta->rta_len = len;
 	memcpy(RTA_DATA(rta), &data, 4);
@@ -495,11 +495,24 @@ int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data,
 		fprintf(stderr, "addattr_l ERROR: message exceeded bound of %d\n",maxlen);
 		return -1;
 	}
-	rta = (struct rtattr*)(((char*)n) + NLMSG_ALIGN(n->nlmsg_len));
+	rta = NLMSG_TAIL(n);
 	rta->rta_type = type;
 	rta->rta_len = len;
 	memcpy(RTA_DATA(rta), data, alen);
 	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + len;
+	return 0;
+}
+
+int addraw_l(struct nlmsghdr *n, int maxlen, const void *data, int len)
+{
+	if (NLMSG_ALIGN(n->nlmsg_len) + NLMSG_ALIGN(len) > maxlen) {
+		fprintf(stderr, "addraw_l ERROR: message exceeded bound of %d\n",maxlen);
+		return -1;
+	}
+
+	memcpy(NLMSG_TAIL(n), data, len);
+	memset((void *) NLMSG_TAIL(n) + len, 0, NLMSG_ALIGN(len) - len);
+	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + NLMSG_ALIGN(len);
 	return 0;
 }
 
