@@ -26,3 +26,12 @@ else
 fi
 rm -f /tmp/atmtest.c /tmp/atmtest
 
+# hack for now 
+echo "TC actions"
+
+if [ -e "tc/m_gact.c" ]
+then
+	echo "TC_CONFIG_ACTION_GACT=y" >>Config
+	echo "TC_CONFIG_ACTION_PROB=y" >>Config
+fi
+

@@ -28,6 +28,14 @@ TCLIB += tc_red.o
 TCLIB += tc_cbq.o
 TCLIB += tc_estimator.o
 
+ifeq ($(TC_CONFIG_ACTION_GACT),y)
+  TCMODULES += m_gact.o
+  CFLAGS += -DCONFIG_GACT
+ifeq ($(TC_CONFIG_ACTION_PROB),y)
+  CFLAGS += -DCONFIG_GACT_PROB
+endif
+endif
+
 TCSO :=
 TCSO += q_netem.so
 ifeq ($(TC_CONFIG_ATM),y)
@@ -37,6 +45,7 @@ endif
 NETEM_DIST := normal.dist pareto.dist paretonormal.dist
 
 LDLIBS += -L. -ltc -lm -ldl
+
 LDFLAGS += -Wl,-export-dynamic
 
 %.so: %.c
@@ -50,6 +59,7 @@ LDFLAGS += -Wl,-export-dynamic
 all: libtc.a tc $(TCSO) $(NETEM_DIST)
 
 tc: $(TCOBJ) $(LIBNETLINK) $(LIBUTIL) $(TCLIB)
+
 
 libtc.a: $(TCLIB)
 	$(AR) rcs $@ $(TCLIB)
