@@ -43,8 +43,11 @@ typedef struct
 	__u8 family;
 	__u8 bytelen;
 	__s16 bitlen;
+	__u32 flags;
 	__u32 data[4];
 } inet_prefix;
+
+#define PREFIXLEN_SPECIFIED 1
 
 #define DN_MAXADDL 20
 #ifndef AF_DECnet

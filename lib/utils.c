@@ -241,6 +241,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 				err = -1;
 				goto done;
 			}
+			dst->flags |= PREFIXLEN_SPECIFIED;
 			dst->bitlen = plen;
 		}
 	}

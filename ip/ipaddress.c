@@ -744,6 +744,7 @@ int ipaddr_modify(int cmd, int argc, char **argv)
 	} req;
 	char  *d = NULL;
 	char  *l = NULL;
+	char  *lcl_arg = NULL;
 	inet_prefix lcl;
 	inet_prefix peer;
 	int local_len = 0;
@@ -821,6 +822,7 @@ int ipaddr_modify(int cmd, int argc, char **argv)
 				usage();
 			if (local_len)
 				duparg2("local", *argv);
+			lcl_arg = *argv;
 			get_prefix(&lcl, *argv, req.ifa.ifa_family);
 			if (req.ifa.ifa_family == AF_UNSPEC)
 				req.ifa.ifa_family = lcl.family;
@@ -838,9 +840,17 @@ int ipaddr_modify(int cmd, int argc, char **argv)
 		exit(1);
 	}
 
-	if (peer_len == 0 && local_len && cmd != RTM_DELADDR) {
-		peer = lcl;
-		addattr_l(&req.n, sizeof(req), IFA_ADDRESS, &lcl.data, lcl.bytelen);
+	if (peer_len == 0 && local_len) {
+		if (cmd == RTM_DELADDR && lcl.family == AF_INET && !(lcl.flags & PREFIXLEN_SPECIFIED)) {
+			fprintf(stderr,
+			    "Warning: Executing wildcard deletion to stay compatible with old scripts.\n" \
+			    "         Explicitly specify the prefix length (%s/%d) to avoid this warning.\n" \
+			    "         This special behaviour is likely to disappear in further releases,\n" \
+			    "         fix your scripts!\n", lcl_arg, local_len*8);
+		} else {
+			peer = lcl;
+			addattr_l(&req.n, sizeof(req), IFA_ADDRESS, &lcl.data, lcl.bytelen);
+		}
 	}
 	if (req.ifa.ifa_prefixlen == 0)
 		req.ifa.ifa_prefixlen = lcl.bitlen;

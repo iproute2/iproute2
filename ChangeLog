@@ -1,3 +1,8 @@
+2005-03-19  Thomas Graf <tgraf@suug.ch>
+
+	* Warn about wildcard deletions and provide IFA_ADDRESS upon
+	  deletions to enforce prefix length validation for IPv4.
+
 2005-03-30  Masahide NAKAMURA <nakam@linux-ipv6.org>
 	
 	* ipv6 xfrm allocspi and monitor support.
