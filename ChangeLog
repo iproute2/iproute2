@@ -1,3 +1,12 @@
+2004-08-31  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add gact documentation from jamal
+	* Chang more arguments to rtnetlink API const
+	* Drop dead queuing disciplines
+	* Handle qdisc without xstats in core rather than
+	  putting stub's everywhere
+	* Add requeue to tc_stats and handle new/old ABI issues
+
 2004-08-30  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Make clean and install changes for man pages
