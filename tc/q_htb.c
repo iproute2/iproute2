@@ -187,8 +187,8 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 
 	/* compute minimal allowed burst from rate; mtu is added here to make
 	   sute that buffer is larger than mtu and to have some safeguard space */
-	if (!buffer) buffer = opt.rate.rate / HZ + mtu;
-	if (!cbuffer) cbuffer = opt.ceil.rate / HZ + mtu;
+	if (!buffer) buffer = opt.rate.rate / get_hz() + mtu;
+	if (!cbuffer) cbuffer = opt.ceil.rate / get_hz() + mtu;
 
 	if ((cell_log = tc_calc_rtable(opt.rate.rate, rtab, cell_log, mtu, 0)) < 0) {
 		fprintf(stderr, "htb: failed to calculate rate table.\n");
