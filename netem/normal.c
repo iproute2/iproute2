@@ -20,21 +20,16 @@ normal(double x, double mu, double sigma)
 	return .5 + .5*erf((x-mu)/(sqrt(2.0)*sigma));
 }
 
+
 int
 main(int argc, char **argv)
 {
-	double x, *table;
 	int i, n;
-
-	table = calloc(sizeof(double), TABLESIZE+1);
-	if (!table) {
-		fprintf(stderr, "Not enough memory\n");
-		return 1;
-	}
-
+	double x;
+	double table[TABLESIZE+1];
 
 	for (x = -10.0; x < 10.05; x += .00005) {
-		i = (int)rint(TABLESIZE*normal(x, 0.0, 1.0));
+		i = rint(TABLESIZE * normal(x, 0.0, 1.0));
 		table[i] = x;
 	}
 
@@ -51,6 +46,6 @@ main(int argc, char **argv)
 			n = 0;
 		}
 	}
-	free(table);
+
 	return 0;
 }

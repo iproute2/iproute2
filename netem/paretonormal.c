@@ -29,7 +29,6 @@ normal(double x, double mu, double sigma)
 	return .5 + .5*erf((x-mu)/(sqrt(2.0)*sigma));
 }
 
-
 static const double a=3.0;
 
 static int
@@ -50,18 +49,12 @@ paretovalue(int i)
 int
 main(int argc, char **argv)
 {
-	double x;
-	double *table;
 	int i,n;
-
-	table = calloc(TABLESIZE+1, sizeof(double));
-	if (!table) {
-		fprintf(stderr, "Out of memory!\n");
-		exit(1);
-	}
+	double x;
+	double table[TABLESIZE];
 
 	for (x = -10.0; x < 10.05; x += .00005) {
-		i = (int)rint(TABLESIZE*normal(x, 0.0, 1.0));
+		i = rint(TABLESIZE*normal(x, 0.0, 1.0));
 		table[i] = x;
 	}
 	printf(
@@ -84,7 +77,6 @@ main(int argc, char **argv)
 			n = 0;
 		}
 	}
-	free(table);
 
 	return 0;
 }
