@@ -46,5 +46,8 @@ extern int rtnl_listen(struct rtnl_handle *, rtnl_filter_t handler,
 extern int rtnl_from_file(FILE *, rtnl_filter_t handler,
 		       void *jarg);
 
+#define NLMSG_TAIL(nmsg) \
+	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
+
 #endif /* __LIBNETLINK_H__ */
 
