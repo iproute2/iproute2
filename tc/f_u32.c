@@ -123,8 +123,6 @@ static int pack_key(struct tc_u32_sel *sel, __u32 key, __u32 mask, int off, int 
 				return -1;
 			sel->keys[i].val |= key;
 			sel->keys[i].mask |= mask;
-			sel->keys[i].off = 0;
-			sel->keys[i].offmask = 0;
 			return 0;
 		}
 	}
@@ -710,19 +708,10 @@ static int parse_hashkey(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 	while (argc > 0) {
 		if (matches(*argv, "mask") == 0) {
 			__u32 mask;
-			int i = 0;
 			NEXT_ARG();
 			if (get_u32(&mask, *argv, 16))
 				return -1;
 			sel->hmask = htonl(mask);
-			mask = sel->hmask;
-			while (!(mask & 1)) {
-				i++;
-				mask>>=1;
-			}
-#ifdef fix_u32_bug
-			sel->fshift = i;
-#endif
 		} else if (matches(*argv, "at") == 0) {
 			int num;
 			NEXT_ARG();
@@ -875,6 +864,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 			}
 			strncpy(ind, *argv, sizeof (ind) - 1);
 			addattr_l(n, MAX_MSG, TCA_U32_INDEV, ind, strlen(ind) + 1);
+
 		} else if (matches(*argv, "action") == 0) {
 			NEXT_ARG();
 			if (parse_action(&argc, &argv, TCA_U32_ACT, n)) {
@@ -882,6 +872,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				return -1;
 			}
 			continue;
+
 		} else if (matches(*argv, "police") == 0) {
 			NEXT_ARG();
 			if (parse_police(&argc, &argv, TCA_U32_POLICE, n)) {
@@ -920,6 +911,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 {
 	struct rtattr *tb[TCA_U32_MAX+1];
 	struct tc_u32_sel *sel = NULL;
+	struct tc_u32_pcnt *pf = NULL;
 
 	if (opt == NULL)
 		return 0;
@@ -964,10 +956,19 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 		fprintf(f, "link %s ", sprint_u32_handle(*(__u32*)RTA_DATA(tb[TCA_U32_LINK]), b1));
 	}
 
+	if (tb[TCA_U32_PCNT]) {
+		if (RTA_PAYLOAD(tb[TCA_U32_PCNT])  < sizeof(*pf)) {
+			fprintf(f, "Broken perf counters \n");
+			return -1;
+		}
+		pf = RTA_DATA(tb[TCA_U32_PCNT]);
+	}
 
 	if (sel) {
 		int i;
 		struct tc_u32_key *key = sel->keys;
+		if (show_stats && NULL != pf)
+			fprintf(f, " (rule hit %llu success %llu)",pf->rcnt,pf->rhit);
 		if (sel->nkeys) {
 			for (i=0; i<sel->nkeys; i++, key++) {
 				fprintf(f, "\n  match %08x/%08x at %s%d",
@@ -975,6 +976,8 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 					(unsigned int)ntohl(key->mask),
 					key->offmask ? "nexthdr+" : "",
 					key->off);
+				if (show_stats && NULL != pf)
+					fprintf(f, " (success %lld ) ",pf->kcnts[i]);
 			}
 		}
 
@@ -994,11 +997,6 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 		}
 	}
 
-	if (show_stats && tb[TCA_U32_PCNT]){
-		struct tc_u32_pcnt *p = RTA_DATA(tb[TCA_U32_PCNT]);
-		fprintf(f, " (rule hit %llu success %llu)",
-			p->rcnt, p->rhit);
-	}
 	if (tb[TCA_U32_POLICE]) {
 		fprintf(f, "\n");
 		tc_print_police(f, tb[TCA_U32_POLICE]);

@@ -254,18 +254,14 @@ int print_filter(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (show_stats) {
 		if (tb[TCA_STATS]) {
-#ifndef STOOPID_8BYTE
 			if (RTA_PAYLOAD(tb[TCA_STATS]) < sizeof(struct tc_stats))
 				fprintf(fp, "statistics truncated");
 			else {
-#endif
 				struct tc_stats st;
 				memcpy(&st, RTA_DATA(tb[TCA_STATS]), sizeof(st));
 				print_tcstats(fp, &st);
 				fprintf(fp, "\n");
-#ifndef STOOPID_8BYTE
 			}
-#endif
 		}
 	}
 	fflush(fp);

@@ -173,7 +173,6 @@ void print_tcstats(FILE *fp, struct tc_stats *st)
 
 	fprintf(fp, " Sent %llu bytes %u pkts (dropped %u, overlimits %u ) ",
 		(unsigned long long)st->bytes, st->packets, st->drops, st->overlimits);
-
 	if (st->bps || st->pps || st->qlen || st->backlog) {
 		fprintf(fp, "\n ");
 		if (st->bps || st->pps) {
@@ -256,19 +255,15 @@ int print_qdisc(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	fprintf(fp, "\n");
 	if (show_stats) {
 		if (tb[TCA_STATS]) {
-#ifndef STOOPID_8BYTE
 			if (RTA_PAYLOAD(tb[TCA_STATS]) < sizeof(struct tc_stats))
 				fprintf(fp, "statistics truncated");
 			else {
-#endif
 				struct tc_stats st;
 				memcpy(&st, RTA_DATA(tb[TCA_STATS]), sizeof(st));
 				print_tcstats(fp, &st);
 				fprintf(fp, "\n");
 			}
-#ifndef STOOPID_8BYTE
 		}
-#endif
 		if (q && tb[TCA_XSTATS]) {
 			q->print_xstats(q, fp, tb[TCA_XSTATS]);
 			fprintf(fp, "\n");

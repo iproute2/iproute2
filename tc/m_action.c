@@ -262,21 +262,17 @@ tc_print_one_action(FILE * f, struct rtattr *arg)
 
 	if (show_stats) {
 		if (tb[TCA_STATS]) {
-#ifndef STOOPID_8BYTE
 			if (RTA_PAYLOAD(tb[TCA_STATS]) <
 			    sizeof (struct tc_stats))
 				fprintf(f, "statistics truncated");
 			else {
-#endif
 				struct tc_stats st;
 				memcpy(&st, RTA_DATA(tb[TCA_STATS]),
 				       sizeof (st));
 				fprintf(f, "\t");
 				print_tcstats(f, &st);
 				fprintf(f, "\n");
-#ifndef STOOPID_8BYTE
 			}
-#endif
 		}
 	}
 
