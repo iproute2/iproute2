@@ -190,6 +190,7 @@ struct xfrm_usersa_info {
 	__u8				replay_window;
 	__u8				flags;
 #define XFRM_STATE_NOECN	1
+#define XFRM_STATE_DECAP_DSCP	2
 };
 
 struct xfrm_usersa_id {
