@@ -544,21 +544,26 @@ int verify_forging(int fd)
 	return -1;
 }
 
+static void usage(void) __attribute__((noreturn));
+
 static void usage(void)
 {
-	printf("Usage: ifstat [OPTION] [ PATTERN [ PATTERN ] ]\n");
-	printf("   -h, --help		this message\n");
-	printf("   -a, --ignore		ignore history\n");
-	printf("   -d, --scan=SECS	sample every statistics every SECS\n");
-	printf("   -e, --errors		show errors\n");
-	printf("   -n, --nooutput	do history only\n");
-	printf("   -r, --reset		reset history\n");
-	printf("   -s, --noupdate	don;t update history\n");
-	printf("   -t, --interval=SECS	report average over the last SECS\n");
-	printf("   -V, --version	output version information\n");
-	printf("   -z, --zeros		show entries with zero activity\n");
-	printf("   -e, --errors		show errors\n");
-	printf("   -z, --zeros		show entries with zero activity\n");
+	fprintf(stderr,
+"Usage: ifstat [OPTION] [ PATTERN [ PATTERN ] ]\n"
+"   -h, --help		this message\n"
+"   -a, --ignore	ignore history\n"
+"   -d, --scan=SECS	sample every statistics every SECS\n"
+"   -e, --errors	show errors\n"
+"   -n, --nooutput	do history only\n"
+"   -r, --reset		reset history\n"
+"   -s, --noupdate	don;t update history\n"
+"   -t, --interval=SECS	report average over the last SECS\n"
+"   -V, --version	output version information\n"
+"   -z, --zeros		show entries with zero activity\n"
+"   -e, --errors	show errors\n"
+"   -z, --zeros		show entries with zero activity\n");
+
+	exit(-1);
 }
 
 static const struct option longopts[] = {
@@ -628,7 +633,6 @@ int main(int argc, char *argv[])
 		case '?':
 		default:
 			usage();
-			exit(1);
 		}
 	}
 
