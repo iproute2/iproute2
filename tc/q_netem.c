@@ -56,7 +56,7 @@ static int get_distribution(const char *type, __s16 *data)
 	int n;
 	long x;
 	size_t len;
-	char *line;
+	char *line = NULL;
 	char name[128];
 
 	snprintf(name, sizeof(name), "/usr/lib/tc/%s.dist", type);

@@ -1,3 +1,8 @@
+2005-02-07 Jean-Marc Ranger <jmranger@sympatico.ca>
+
+	* need to call getline() with null for first usage
+	* don't overwrite const arg
+
 2005-02-07  Stephen Hemminger  <shemminger@linux.site>
 
 	* Add experimental distribution

@@ -200,7 +200,7 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	return 0;
 }
 
-int get_prefix_1(inet_prefix *dst, const char *arg, int family)
+int get_prefix_1(inet_prefix *dst, char *arg, int family)
 {
 	int err;
 	unsigned plen;
@@ -222,6 +222,7 @@ int get_prefix_1(inet_prefix *dst, const char *arg, int family)
 	slash = strchr(arg, '/');
 	if (slash)
 		*slash = 0;
+
 	err = get_addr_1(dst, arg, family);
 	if (err == 0) {
 		switch(dst->family) {
@@ -262,7 +263,7 @@ int get_addr(inet_prefix *dst, const char *arg, int family)
 	return 0;
 }
 
-int get_prefix(inet_prefix *dst, const char *arg, int family)
+int get_prefix(inet_prefix *dst, char *arg, int family)
 {
 	if (family == AF_PACKET) {
 		fprintf(stderr, "Error: \"%s\" may be inet prefix, but it is not allowed in this context.\n", arg);
