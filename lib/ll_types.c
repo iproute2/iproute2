@@ -17,19 +17,22 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/sockios.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 
-char * ll_type_n2a(int type, char *buf, int len)
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/sockios.h>
+
+#include "rt_names.h"
+
+const char * ll_type_n2a(int type, char *buf, int len)
 {
 #define __PF(f,n) { ARPHRD_##f, #n },
 static struct {
 	int type;
-	char *name;
+	const char *name;
 } arphrd_names[] = {
 { 0, "generic" },
 __PF(ETHER,ether)
