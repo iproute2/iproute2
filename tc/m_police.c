@@ -282,7 +282,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 		p.peakrate.mpu = mpu;
 	}
 
-	tail = (struct rtattr*)(((void*)n)+NLMSG_ALIGN(n->nlmsg_len));
+	tail = NLMSG_TAIL(n);
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
 	addattr_l(n, MAX_MSG, TCA_POLICE_TBF, &p, sizeof(p));
 	if (p.rate.rate)
@@ -294,7 +294,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 	if (presult)
 		addattr32(n, MAX_MSG, TCA_POLICE_RESULT, presult);
 
-	tail->rta_len = (((void*)n)+NLMSG_ALIGN(n->nlmsg_len)) - (void*)tail;
+	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	res = 0;
 
 	*argc_p = argc;
