@@ -243,7 +243,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	memcpy(&qopt, RTA_DATA(opt), sizeof(qopt));
 
 	if (len > 0) {
-		struct rtattr *tb[TCA_NETEM_MAX];
+		struct rtattr *tb[TCA_NETEM_MAX+1];
 		parse_rtattr(tb, TCA_NETEM_MAX, RTA_DATA(opt) + sizeof(qopt),
 			     len);
 		
