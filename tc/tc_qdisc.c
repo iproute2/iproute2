@@ -44,15 +44,15 @@ static void usage(void)
 int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct rtnl_handle rth;
-	struct {
-		struct nlmsghdr 	n;
-		struct tcmsg 		t;
-		char   			buf[4096];
-	} req;
 	struct qdisc_util *q = NULL;
 	struct tc_estimator est;
 	char  d[16];
 	char  k[16];
+	struct {
+		struct nlmsghdr 	n;
+		struct tcmsg 		t;
+		char   			buf[TCA_BUF_MAX];
+	} req;
 
 	memset(&req, 0, sizeof(req));
 	memset(&est, 0, sizeof(est));
