@@ -1,6 +1,7 @@
 2005-03-14  Stephen Hemminger  <shemminger@osdl.org>
 
-	* cleanup batch mode
+	* cleanup batch mode, allow continuation, comments etc.
+	* recode reuse of netlink socket
 
 2005-03-14  Boian Bonev <boian@bonev.com>
 	
