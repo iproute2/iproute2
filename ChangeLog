@@ -1,3 +1,8 @@
+2005-03-14  Thomas Graf <tgraf@suug.ch>
+	
+	* ip link command
+	  print NO-CARRIER flag if there is no carrier and the link is up.
+
 2005-03-14  Patrick McHardy <kaber@trash.net>
 
 	* bug: Use USER_HZ where necessary
