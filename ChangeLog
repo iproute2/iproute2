@@ -1,4 +1,8 @@
-2005-03-10  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+2005-03-14  Patrick McHardy <kaber@trash.net>
+
+	* bug: Use USER_HZ where necessary
+
+2005-03-10  Stephen Hemminger  <shemminger@osdl.org>
 
 	* fix pkt_cls.h to have tc_u32_mark
 	* update include files to be stripped versions of 2.6.11
