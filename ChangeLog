@@ -1,3 +1,8 @@
+2004-09-28  Stephen Hemminger  <shemminger@osdl.org>
+
+	* fix build problems with arpd and pthread
+	* add pkt_sched.h
+
 2004-09-28  Andreas Haumer <andreas@xss.co.at>
 
 	* make install symlink fix.
