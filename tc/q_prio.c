@@ -94,7 +94,7 @@ static int prio_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 	return 0;
 }
 
-static int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	int i;
 	struct tc_prio_qopt *qopt;

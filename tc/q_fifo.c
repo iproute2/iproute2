@@ -99,3 +99,12 @@ struct qdisc_util pfifo_util = {
 	fifo_print_opt,
 	fifo_print_xstats,
 };
+
+extern int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
+struct qdisc_util pfifo_fast_util = {
+	NULL,
+	"pfifo_fast",
+	NULL,
+	prio_print_opt,
+	fifo_print_xstats,
+};
