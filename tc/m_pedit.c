@@ -534,11 +534,10 @@ parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, stru
 		}
 	}
 
-	tail = (struct rtattr *) (((void *) n) + NLMSG_ALIGN(n->nlmsg_len));
+	tail = NLMSG_TAIL(n);
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
 	addattr_l(n, MAX_MSG, TCA_PEDIT_PARMS,&sel, sizeof(sel.sel)+sel.sel.nkeys*sizeof(struct tc_pedit_key));
-	tail->rta_len =
-	    (((void *) n) + NLMSG_ALIGN(n->nlmsg_len)) - (void *) tail;
+	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 
 	*argc_p = argc;
 	*argv_p = argv;
