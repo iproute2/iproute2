@@ -6,9 +6,10 @@ IPOBJ=ip.o ipaddress.o iproute.o iprule.o \
 RTMONOBJ=rtmon.o
 
 ALLOBJ=$(IPOBJ) $(RTMONOBJ)
-TARGETS=ip rtmon ifcfg rtpr
+SCRIPTS=ifcfg rtpr routel routef
+TARGETS=ip rtmon
 
-all: $(TARGETS)
+all: $(TARGETS) $(SCRIPTS)
 
 ip: $(IPOBJ) $(LIBNETLINK) $(LIBUTIL)
 
@@ -16,7 +17,7 @@ rtmon: $(RTMONOBJ) $(LIBNETLINK)
 
 install: all
 	install -m 0755 -s $(TARGETS) $(DESTDIR)$(SBINDIR)
-	install -m 0755 routel routef $(DESTDIR)$(SBINDIR)
+	install -m 0755 $(SCRIPTS) $(DESTDIR)$(SBINDIR)
 
 clean:
 	rm -f $(ALLOBJ) $(TARGETS)
