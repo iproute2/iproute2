@@ -372,7 +372,6 @@ static const char *strxf_mask(__u32 mask)
 static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int ntmpls,
 			    __u16 family, FILE *fp, const char *prefix)
 {
-	char buf[32];
 	int i;
 
 	for (i = 0; i < ntmpls; i++) {
