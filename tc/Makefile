@@ -23,6 +23,7 @@ ifeq ($(TC_CONFIG_ATM),y)
   TCMODULES += q_atm.o
   LDLIBS += -latm
 endif
+TCMODULES += q_delay.o
 
 #TCMODULES += q_csz.o
 #TCMODULES += q_hpfq.o
