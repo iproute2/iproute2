@@ -1,14 +1,7 @@
 IPOBJ=ip.o ipaddress.o iproute.o iprule.o \
     rtm_map.o iptunnel.o ipneigh.o iplink.o \
-    ipmaddr.o ipmonitor.o ipmroute.o 
-
-include ../Config
-
-ifeq ($(IP_CONFIG_XFRM),y)
-	IPOBJ   += ipxfrm.o xfrm_state.o xfrm_policy.o
-else
-	IPOBJ	+= xfrm_stub.o
-endif
+    ipmaddr.o ipmonitor.o ipmroute.o \
+    ipxfrm.o xfrm_state.o xfrm_policy.o
 
 RTMONOBJ=rtmon.o
 

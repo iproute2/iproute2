@@ -1,3 +1,9 @@
+2004-08-09  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Remove configuration for everything that can depend on 
+	  extracted kernel headers
+	* Add kernel headers required to include/linux
+
 2004-08-04  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Get rid of old tcp_diag module, it is part of kernel.

@@ -17,18 +17,9 @@ TCMODULES += q_dsmark.o
 TCMODULES += q_gred.o
 TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
-
-ifeq ($(TC_CONFIG_HFSC),y)
-	TCMODULES += q_hfsc.o
-endif
-
-ifeq ($(TC_CONFIG_HTB),y)
-	TCMODULES += q_htb.o
-endif
-
-# deadmen walking
-#TCMODULES += q_csz.o
-#TCMODULES += q_hpfq.o
+TCMODULES += q_hfsc.o
+TCMODULES += q_htb.o
+TCMODULES += q_netem.o
 
 TCOBJ += $(TCMODULES)
 
@@ -40,10 +31,6 @@ TCLIB += tc_estimator.o
 TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)
   TCSO += q_atm.so
-endif
-
-ifeq ($(TC_CONFIG_NETEM),y)
-  TCSO += q_netem.so
 endif
 
 LDLIBS += -L. -ltc -lm -ldl
