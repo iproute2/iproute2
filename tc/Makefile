@@ -1,4 +1,5 @@
-TCOBJ=tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o m_police.o m_estimator.o
+TCOBJ= tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o \
+       m_police.o m_estimator.o m_action.o
 
 include ../Config
 
