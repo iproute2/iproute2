@@ -683,6 +683,33 @@ static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 	exit(0);
 }
 
+static int xfrm_policy_flush_all(void)
+{
+	struct rtnl_handle rth;
+	struct {
+		struct nlmsghdr	n;
+	} req;
+
+	memset(&req, 0, sizeof(req));
+
+	req.n.nlmsg_len = NLMSG_LENGTH(0); /* nlmsg data is nothing */
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = XFRM_MSG_FLUSHPOLICY;
+
+	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
+		exit(1);
+
+	if (show_stats > 1)
+		fprintf(stderr, "Flush all\n");
+
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+		exit(2);
+
+	rtnl_close(&rth);
+
+	return 0;
+}
+
 int do_xfrm_policy(int argc, char **argv)
 {
 	if (argc < 1)
@@ -701,8 +728,12 @@ int do_xfrm_policy(int argc, char **argv)
 		return xfrm_policy_list_or_flush(argc-1, argv+1, 0);
 	if (matches(*argv, "get") == 0)
 		return xfrm_policy_get(argc-1, argv+1);
-	if (matches(*argv, "flush") == 0)
-		return xfrm_policy_list_or_flush(argc-1, argv+1, 1);
+	if (matches(*argv, "flush") == 0) {
+		if (argc-1 < 1)
+			return xfrm_policy_flush_all();
+		else
+			return xfrm_policy_list_or_flush(argc-1, argv+1, 1);
+	}
 	if (matches(*argv, "help") == 0)
 		usage();
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip xfrm policy help\".\n", *argv);

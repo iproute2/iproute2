@@ -568,7 +568,8 @@ static int xfrm_state_list_or_flush(int argc, char **argv, int flush)
 	char *idp = NULL;
 	struct rtnl_handle rth;
 
-	filter.use = 1;
+	if(argc > 0)
+		filter.use = 1;
 	filter.xsinfo.family = preferred_family;
 
 	while (argc > 0) {
@@ -666,6 +667,35 @@ static int xfrm_state_list_or_flush(int argc, char **argv, int flush)
 	exit(0);
 }
 
+static int xfrm_state_flush_all(void)
+{
+	struct rtnl_handle rth;
+	struct {
+		struct nlmsghdr			n;
+		struct xfrm_usersa_flush	xsf;
+	} req;
+
+	memset(&req, 0, sizeof(req));
+
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(req.xsf));
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = XFRM_MSG_FLUSHSA;
+	req.xsf.proto = IPSEC_PROTO_ANY;
+
+	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
+		exit(1);
+
+	if (show_stats > 1)
+		fprintf(stderr, "Flush all\n");
+
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+		exit(2);
+
+	rtnl_close(&rth);
+
+	return 0;
+}
+
 int do_xfrm_state(int argc, char **argv)
 {
 	if (argc < 1)
@@ -684,8 +714,12 @@ int do_xfrm_state(int argc, char **argv)
 		return xfrm_state_list_or_flush(argc-1, argv+1, 0);
 	if (matches(*argv, "get") == 0)
 		return xfrm_state_get_or_delete(argc-1, argv+1, 0);
-	if (matches(*argv, "flush") == 0)
-		return xfrm_state_list_or_flush(argc-1, argv+1, 1);
+	if (matches(*argv, "flush") == 0) {
+		if (argc-1 < 1)
+			return xfrm_state_flush_all();
+		else
+			return xfrm_state_list_or_flush(argc-1, argv+1, 1);
+	}
 	if (matches(*argv, "help") == 0)
 		usage();
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip xfrm state help\".\n", *argv);
