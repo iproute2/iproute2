@@ -17,13 +17,14 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+
 #include <linux/netdevice.h>
 #include <linux/if.h>
 #include <linux/if_arp.h>
 #include <linux/sockios.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
 
 #include "utils.h"
 
