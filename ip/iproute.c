@@ -21,6 +21,7 @@
 #include <syslog.h>
 #include <fcntl.h>
 #include <string.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -1133,6 +1134,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 	if (flush) {
 		int round = 0;
 		char flushb[4096-512];
+		time_t start = time(0);
 
 		if (filter.tb == -1) {
 			if (do_ipv6 != AF_INET6) {
@@ -1171,6 +1173,13 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 			round++;
 			if (flush_update() < 0)
 				exit(1);
+
+			if (time(0) - start > 30) {
+				printf("\n*** Flush not completed after %ld seconds, %d entries remain ***\n",
+				       time(0) - start, filter.flushed);
+				exit(1);
+			}
+
 			if (show_stats) {
 				printf("\n*** Round %d, deleting %d entries ***\n", round, filter.flushed);
 				fflush(stdout);
