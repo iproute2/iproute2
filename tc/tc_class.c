@@ -201,7 +201,7 @@ int print_class(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
 
 	if (tb[TCA_KIND] == NULL) {
-		fprintf(stderr, "NULL kind\n");
+		fprintf(stderr, "print_class: NULL kind\n");
 		return -1;
 	}
 
@@ -241,14 +241,18 @@ int print_class(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	fprintf(fp, "\n");
 	if (show_stats) {
 		if (tb[TCA_STATS]) {
+#ifndef STOOPID_8BYTE
 			if (RTA_PAYLOAD(tb[TCA_STATS]) < sizeof(struct tc_stats))
 				fprintf(fp, "statistics truncated");
 			else {
+#endif
 				struct tc_stats st;
 				memcpy(&st, RTA_DATA(tb[TCA_STATS]), sizeof(st));
 				print_class_tcstats(fp, &st);
 				fprintf(fp, "\n");
+#ifndef STOOPID_8BYTE
 			}
+#endif
 		}
 		if (q && tb[TCA_XSTATS]) {
 			q->print_xstats(q, fp, tb[TCA_XSTATS]);
@@ -323,11 +327,13 @@ int tc_class_list(int argc, char **argv)
 
 	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
+		rtnl_close(&rth);
 		exit(1);
 	}
 
 	if (rtnl_dump_filter(&rth, print_class, stdout, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		rtnl_close(&rth);
 		exit(1);
 	}
 

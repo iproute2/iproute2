@@ -141,6 +141,7 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
+		rtnl_close(&rth);
 		exit(1);
 	}
 
@@ -151,13 +152,16 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 
 		if ((idx = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
+			rtnl_close(&rth);
 			exit(1);
 		}
 		req.t.tcm_ifindex = idx;
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
+		rtnl_close(&rth);
 		exit(2);
+	}
 
 	rtnl_close(&rth);
 	return 0;
@@ -167,8 +171,9 @@ void print_tcstats(FILE *fp, struct tc_stats *st)
 {
 	SPRINT_BUF(b1);
 
-	fprintf(fp, " Sent %llu bytes %u pkts (dropped %u, overlimits %u) ",
+	fprintf(fp, " Sent %llu bytes %u pkts (dropped %u, overlimits %u ) ",
 		(unsigned long long)st->bytes, st->packets, st->drops, st->overlimits);
+
 	if (st->bps || st->pps || st->qlen || st->backlog) {
 		fprintf(fp, "\n ");
 		if (st->bps || st->pps) {
@@ -216,7 +221,7 @@ int print_qdisc(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
 
 	if (tb[TCA_KIND] == NULL) {
-		fprintf(stderr, "NULL kind\n");
+		fprintf(stderr, "print_qdisc: NULL kind\n");
 		return -1;
 	}
 
@@ -235,7 +240,13 @@ int print_qdisc(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (t->tcm_info != 1) {
 		fprintf(fp, "refcnt %d ", t->tcm_info);
 	}
-	q = get_qdisc_kind(RTA_DATA(tb[TCA_KIND]));
+	/* pfifo_fast is generic enough to warrant the hardcoding --JHS */	
+		
+	if (0 == strcmp("pfifo_fast", RTA_DATA(tb[TCA_KIND])))
+		q = get_qdisc_kind("prio");
+	else
+		q = get_qdisc_kind(RTA_DATA(tb[TCA_KIND]));
+	
 	if (tb[TCA_OPTIONS]) {
 		if (q)
 			q->print_qopt(q, fp, tb[TCA_OPTIONS]);
@@ -245,15 +256,19 @@ int print_qdisc(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	fprintf(fp, "\n");
 	if (show_stats) {
 		if (tb[TCA_STATS]) {
+#ifndef STOOPID_8BYTE
 			if (RTA_PAYLOAD(tb[TCA_STATS]) < sizeof(struct tc_stats))
 				fprintf(fp, "statistics truncated");
 			else {
+#endif
 				struct tc_stats st;
 				memcpy(&st, RTA_DATA(tb[TCA_STATS]), sizeof(st));
 				print_tcstats(fp, &st);
 				fprintf(fp, "\n");
 			}
+#ifndef STOOPID_8BYTE
 		}
+#endif
 		if (q && tb[TCA_XSTATS]) {
 			q->print_xstats(q, fp, tb[TCA_XSTATS]);
 			fprintf(fp, "\n");
@@ -306,6 +321,7 @@ int tc_qdisc_list(int argc, char **argv)
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
+			rtnl_close(&rth);
 			exit(1);
 		}
 		filter_ifindex = t.tcm_ifindex;
@@ -313,11 +329,13 @@ int tc_qdisc_list(int argc, char **argv)
 
 	if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
+		rtnl_close(&rth);
 		exit(1);
 	}
 
 	if (rtnl_dump_filter(&rth, print_qdisc, stdout, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		rtnl_close(&rth);
 		exit(1);
 	}
 

@@ -369,4 +369,62 @@ char * sprint_qdisc_handle(__u32 h, char *buf)
 	return buf;
 }
 
+char * action_n2a(int action, char *buf, int len)
+{
+	switch (action) {
+	case -1:
+		return "continue";
+		break;
+	case TC_ACT_OK:
+		return "pass";
+		break;
+	case TC_ACT_SHOT:
+		return "drop";
+		break;
+	case TC_ACT_RECLASSIFY:
+		return "reclassify";
+	case TC_ACT_PIPE:
+		return "pipe";
+	case TC_ACT_STOLEN:
+		return "stolen";
+	default:
+		snprintf(buf, len, "%d", action);
+		return buf;
+	}
+}
 
+int action_a2n(char *arg, int *result)
+{
+	int res;
+
+	if (matches(arg, "continue") == 0)
+		res = -1;
+	else if (matches(arg, "drop") == 0)
+		res = TC_ACT_SHOT;
+	else if (matches(arg, "shot") == 0)
+		res = TC_ACT_SHOT;
+	else if (matches(arg, "pass") == 0)
+		res = TC_ACT_OK;
+	else if (strcmp(arg, "ok") == 0)
+		res = TC_ACT_OK;
+	else if (matches(arg, "reclassify") == 0)
+		res = TC_ACT_RECLASSIFY;
+	else {
+		char dummy;
+		if (sscanf(arg, "%d%c", &res, &dummy) != 1)
+			return -1;
+	}
+	*result = res;
+	return 0;
+}
+
+void print_tm(FILE * f, struct tcf_t *tm)
+{
+	int hz = get_hz();
+	if (tm->install != 0)
+		fprintf(f, " installed %d sec", tm->install/hz);
+	if (tm->lastuse != 0)
+		fprintf(f, " used %d sec", tm->lastuse/hz);
+	if (tm->expires != 0)
+		fprintf(f, " expires %d sec", tm->expires/hz);
+}

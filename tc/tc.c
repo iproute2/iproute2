@@ -176,7 +176,7 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
-	                "where  OBJECT := { qdisc | class | filter }\n"
+	                "where  OBJECT := { qdisc | class | filter | action }\n"
 	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] file }\n");
 	exit(-1);
 }
@@ -242,6 +242,8 @@ int main(int argc, char **argv)
 				ret += do_class(largc-1, largv+1);
 			} else if (matches(largv[0], "filter") == 0) {
 				ret += do_filter(largc-1, largv+1);
+			} else if (matches(largv[0], "action") == 0) {
+				ret += do_action(largc-1, largv+1);
 			} else if (matches(largv[0], "help") == 0) {
 				usage();	/* note that usage() doesn't return */
 			} else {
@@ -286,6 +288,8 @@ int main(int argc, char **argv)
 			return do_class(argc-2, argv+2);
 		if (matches(argv[1], "filter") == 0)
 			return do_filter(argc-2, argv+2);
+		if (matches(argv[1], "actions") == 0)
+			return do_action(argc-2, argv+2);
 		if (matches(argv[1], "help") == 0)
 			usage();
 		fprintf(stderr, "Object \"%s\" is unknown, try \"tc help\".\n", argv[1]);

@@ -9,6 +9,8 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  * FIXES:       19990619 - J Hadi Salim (hadi@cyberus.ca) 
  *		simple addattr packaging fix.            
+ *		2002: J Hadi Salim - Add tc action extensions syntax
+ *
  */
 
 #include <stdio.h>
@@ -24,12 +26,22 @@
 #include "utils.h"
 #include "tc_util.h"
 
+struct action_util police_util = {
+	.id = "police",
+	.parse_aopt = act_parse_police,
+	.print_aopt = print_police,
+	.print_xstats = police_print_xstats,
+};
+
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... police rate BPS burst BYTES[/BYTES] [ mtu BYTES[/BYTES] ]\n");
 	fprintf(stderr, "                [ peakrate BPS ] [ avrate BPS ]\n");
-	fprintf(stderr, "                [ ACTION ]\n");
-	fprintf(stderr, "Where: ACTION := reclassify | drop | continue \n");
+	fprintf(stderr, "                [ ACTIONTERM ]\n");
+	fprintf(stderr, "Old Syntax ACTIOTERMN := action <EXCEEDACT>[/NOTEXCEEDACT] \n"); 
+	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT] \n"); 
+	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue \n");
+	fprintf(stderr, "Where:  pipe is only valid for new syntax \n");
 }
 
 static void explain1(char *arg)
@@ -54,6 +66,8 @@ char *police_action_n2a(int action, char *buf, int len)
 		break;
 	case TC_POLICE_RECLASSIFY:
 		return "reclassify";
+	case TC_POLICE_PIPE:
+		return "pipe";
 	default:
 		snprintf(buf, len, "%d", action);
 		return buf;
@@ -76,6 +90,8 @@ int police_action_a2n(char *arg, int *result)
 		res = TC_POLICE_OK;
 	else if (matches(arg, "reclassify") == 0)
 		res = TC_POLICE_RECLASSIFY;
+	else if (matches(arg, "pipe") == 0)
+		res = TC_POLICE_PIPE;
 	else {
 		char dummy;
 		if (sscanf(arg, "%d%c", &res, &dummy) != 1)
@@ -107,7 +123,8 @@ int get_police_result(int *action, int *result, char *arg)
 	return 0;
 }
 
-int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
+
+int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -125,13 +142,17 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	memset(&p, 0, sizeof(p));
 	p.action = TC_POLICE_RECLASSIFY;
 
+	if (a) /* new way of doing things */
+		NEXT_ARG();
+
 	if (argc <= 0)
 		return -1;
 
 	while (argc > 0) {
+
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
-			if (get_u32(&p.index, *argv, 16)) {
+			if (get_u32(&p.index, *argv, 10)) {
 				fprintf(stderr, "Illegal \"index\"\n");
 				return -1;
 			}
@@ -207,7 +228,9 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 			p.action = TC_POLICE_UNSPEC;
 		} else if (matches(*argv, "pass") == 0) {
 			p.action = TC_POLICE_OK;
-		} else if (strcmp(*argv, "action") == 0) {
+		} else if (matches(*argv, "pipe") == 0) {
+			p.action = TC_POLICE_PIPE;
+		} else if (strcmp(*argv, "conform-exceed") == 0) {
 			NEXT_ARG();
 			if (get_police_result(&p.action, &presult, *argv)) {
 				fprintf(stderr, "Illegal \"action\"\n");
@@ -261,18 +284,16 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	}
 
 	tail = (struct rtattr*)(((void*)n)+NLMSG_ALIGN(n->nlmsg_len));
-	addattr_l(n, 1024, tca_id, NULL, 0);
-	addattr_l(n, 2024, TCA_POLICE_TBF, &p, sizeof(p));
+	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	addattr_l(n, MAX_MSG, TCA_POLICE_TBF, &p, sizeof(p));
 	if (p.rate.rate)
-		addattr_l(n, 3024, TCA_POLICE_RATE, rtab, 1024);
+		addattr_l(n, MAX_MSG, TCA_POLICE_RATE, rtab, 1024);
 	if (p.peakrate.rate)
-                addattr_l(n, 4096, TCA_POLICE_PEAKRATE, ptab, 1024);
+                addattr_l(n, MAX_MSG, TCA_POLICE_PEAKRATE, ptab, 1024);
 	if (avrate)
-		addattr32(n, 4096, TCA_POLICE_AVRATE, avrate);
+		addattr32(n, MAX_MSG, TCA_POLICE_AVRATE, avrate);
 	if (presult)
-		addattr32(n, 4096, TCA_POLICE_RESULT, presult);
-#if 0
-#endif
+		addattr32(n, MAX_MSG, TCA_POLICE_RESULT, presult);
 
 	tail->rta_len = (((void*)n)+NLMSG_ALIGN(n->nlmsg_len)) - (void*)tail;
 	res = 0;
@@ -282,8 +303,13 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	return res;
 }
 
+int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
+{
+	return act_parse_police(NULL,argc_p,argv_p,tca_id,n);
+}
 
-int tc_print_police(FILE *f, struct rtattr *arg)
+int 
+print_police(struct action_util *a,FILE *f, struct rtattr *arg)
 {
 	SPRINT_BUF(b1);
 	struct tc_police *p;
@@ -300,18 +326,15 @@ int tc_print_police(FILE *f, struct rtattr *arg)
 		fprintf(f, "[NULL police tbf]");
 		return 0;
 	}
+#ifndef STOOPID_8BYTE
 	if (RTA_PAYLOAD(tb[TCA_POLICE_TBF])  < sizeof(*p)) {
 		fprintf(f, "[truncated police tbf]");
 		return -1;
 	}
+#endif
 	p = RTA_DATA(tb[TCA_POLICE_TBF]);
 
-	fprintf(f, "police %x ", p->index);
-	fprintf(f, "action %s", police_action_n2a(p->action, b1, sizeof(b1)));
-	if (tb[TCA_POLICE_RESULT]) {
-		fprintf(f, "/%s ", police_action_n2a(*(int*)RTA_DATA(tb[TCA_POLICE_RESULT]), b1, sizeof(b1)));
-	} else
-		fprintf(f, " ");
+	fprintf(f, " police 0x%x ", p->index);
 	fprintf(f, "rate %s ", sprint_rate(p->rate.rate, b1));
 	buffer = ((double)p->rate.rate*tc_core_tick2usec(p->burst))/1000000;
 	fprintf(f, "burst %s ", sprint_size(buffer, b1));
@@ -322,7 +345,24 @@ int tc_print_police(FILE *f, struct rtattr *arg)
 		fprintf(f, "peakrate %s ", sprint_rate(p->peakrate.rate, b1));
 	if (tb[TCA_POLICE_AVRATE])
 		fprintf(f, "avrate %s ", sprint_rate(*(__u32*)RTA_DATA(tb[TCA_POLICE_AVRATE]), b1));
+	fprintf(f, "action %s", police_action_n2a(p->action, b1, sizeof(b1)));
+	if (tb[TCA_POLICE_RESULT]) {
+		fprintf(f, "/%s ", police_action_n2a(*(int*)RTA_DATA(tb[TCA_POLICE_RESULT]), b1, sizeof(b1)));
+	} else
+		fprintf(f, " ");
+	fprintf(f, "\nref %d bind %d\n",p->refcnt, p->bindcnt);
 
+	return 0;
+}
+
+int 
+tc_print_police(FILE *f, struct rtattr *arg) {
+	return print_police(&police_util,f,arg);
+}
+
+int
+police_print_xstats(struct action_util *au, FILE *f, struct rtattr *xstats)
+{
 	return 0;
 }
 

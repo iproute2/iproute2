@@ -53,7 +53,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 	struct {
 		struct nlmsghdr 	n;
 		struct tcmsg 		t;
-		char   			buf[4096];
+		char   			buf[MAX_MSG];
 	} req;
 	struct filter_util *q = NULL;
 	__u32 prio = 0;
@@ -165,12 +165,16 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 
 		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
+			rtnl_close(&rth);
 			exit(1);
 		}
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
+		fprintf(stderr, "We have an error talking to the kernel\n");
+		rtnl_close(&rth);
 		exit(2);
+	}
 
 	rtnl_close(&rth);
 	return 0;
@@ -204,7 +208,7 @@ int print_filter(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
 
 	if (tb[TCA_KIND] == NULL) {
-		fprintf(stderr, "NULL kind\n");
+		fprintf(stderr, "print_filter: NULL kind\n");
 		return -1;
 	}
 
@@ -250,14 +254,18 @@ int print_filter(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (show_stats) {
 		if (tb[TCA_STATS]) {
+#ifndef STOOPID_8BYTE
 			if (RTA_PAYLOAD(tb[TCA_STATS]) < sizeof(struct tc_stats))
 				fprintf(fp, "statistics truncated");
 			else {
+#endif
 				struct tc_stats st;
 				memcpy(&st, RTA_DATA(tb[TCA_STATS]), sizeof(st));
 				print_tcstats(fp, &st);
 				fprintf(fp, "\n");
+#ifndef STOOPID_8BYTE
 			}
+#endif
 		}
 	}
 	fflush(fp);
@@ -342,6 +350,7 @@ int tc_filter_list(int argc, char **argv)
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
+			rtnl_close(&rth);
 			exit(1);
 		}
 		filter_ifindex = t.tcm_ifindex;
@@ -349,6 +358,7 @@ int tc_filter_list(int argc, char **argv)
 
 	if (rtnl_dump_request(&rth, RTM_GETTFILTER, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
+		rtnl_close(&rth);
 		exit(1);
 	}
 
