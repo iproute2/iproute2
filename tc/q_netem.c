@@ -43,39 +43,52 @@ static void explain1(const char *arg)
 
 #define usage() return(-1)
 
-static int get_distribution(const char *type, __s16 *data, int limit)
+/*
+ * Simplistic file parser for distrbution data.
+ * Format is:
+ *	# comment line(s)
+ *	data0 data1
+ */
+#define MAXDIST	65536
+static int get_distribution(const char *type, __s16 *data)
 {
 	FILE *f;
 	int n;
-	char *p, *endp, buf[256];
+	long x;
+	size_t len;
+	char *line;
+	char name[128];
 
-	snprintf(buf, 256, "/usr/lib/tc/%s.dist", type);
-	f = fopen(buf, "r");
-	if (!f) {
+	snprintf(name, sizeof(name), "/usr/lib/tc/%s.dist", type);
+	if ((f = fopen(name, "r")) == NULL) {
 		fprintf(stderr, "No distribution data for %s (%s: %s)\n", 
-			type, buf, strerror(errno));
+			type, name, strerror(errno));
 		return -1;
 	}
 	
 	n = 0;
-	while (fgets(buf, sizeof(buf), f) != NULL) {
-		if (*buf == '#')
+	while (getline(&line, &len, f) != -1) {
+		char *p, *endp;
+		if (*line == '\n' || *line == '#')
 			continue;
 
-		for (p = buf; *p && n < limit; p = endp) {
-			long x = strtol(p, &endp, 0);
-			if (endp == p)
-				break;	/* no more digits */
+		for (p = line; ; p = endp) {
+			x = strtol(p, &endp, 0);
+			if (endp == p) 
+				break;
+
+			if (n >= MAXDIST) {
+				fprintf(stderr, "%s: too much data\n",
+					name);
+				n = -1;
+				goto error;
+			}
 			data[n++] = x;
 		}
 	}
+ error:
+	free(line);
 	fclose(f);
-
-	if (n > limit) {
-		fprintf(stderr, "Too much distribution data for %s\n", type);
-		return -1;
-	}
-
 	return n;
 }
 
@@ -110,41 +123,41 @@ static char *sprint_ticks(__u32 ticks, char *buf)
 static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv, 
 			   struct nlmsghdr *n)
 {
-#define REQ_DIST_SIZE (TCA_BUF_MAX/sizeof(__s16))
-	struct {
-		struct tc_netem_qopt opt;
-		__s16 dbuf[REQ_DIST_SIZE];
-	} req;
-	int size = sizeof(struct tc_netem_qopt);
+	size_t dist_size = 0;
+	struct rtattr *tail;
+	struct tc_netem_qopt opt;
+	struct tc_netem_corr cor;
+	__s16 dist_data[MAXDIST];
 
-	memset(&req.opt, 0, sizeof(req.opt));
-	req.opt.limit = 1000;
+	memset(&opt, 0, sizeof(opt));
+	opt.limit = 1000;
+	memset(&cor, 0, sizeof(cor));
 
 	while (argc > 0) {
 		if (matches(*argv, "limit") == 0) {
 			NEXT_ARG();
-			if (get_size(&req.opt.limit, *argv)) {
+			if (get_size(&opt.limit, *argv)) {
 				explain1("limit");
 				return -1;
 			}
 		} else if (matches(*argv, "latency") == 0 ||
 			   matches(*argv, "delay") == 0) {
 			NEXT_ARG();
-			if (get_ticks(&req.opt.latency, *argv)) {
+			if (get_ticks(&opt.latency, *argv)) {
 				explain1("latency");
 				return -1;
 			}
 
 			if (NEXT_IS_NUMBER()) {
 				NEXT_ARG();
-				if (get_ticks(&req.opt.jitter, *argv)) {
+				if (get_ticks(&opt.jitter, *argv)) {
 					explain1("latency");
 					return -1;
 				}
 
 				if (NEXT_IS_NUMBER()) {
 					NEXT_ARG();
-					if (get_percent(&req.opt.delay_corr, 
+					if (get_percent(&cor.delay_corr, 
 							*argv)) {
 						explain1("latency");
 						return -1;
@@ -154,47 +167,41 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		} else if (matches(*argv, "loss") == 0 ||
 			   matches(*argv, "drop") == 0) {
 			NEXT_ARG();
-			if (get_percent(&req.opt.loss, *argv)) {
+			if (get_percent(&opt.loss, *argv)) {
 				explain1("loss");
 				return -1;
 			}
 			if (NEXT_IS_NUMBER()) {
 				NEXT_ARG();
-				if (get_percent(&req.opt.loss_corr, *argv)) {
+				if (get_percent(&cor.loss_corr, *argv)) {
 					explain1("loss");
 					return -1;
 				}
 			}
 		} else if (matches(*argv, "gap") == 0) {
 			NEXT_ARG();
-			if (get_u32(&req.opt.gap, *argv, 0)) {
+			if (get_u32(&opt.gap, *argv, 0)) {
 				explain1("gap");
 				return -1;
 			}
 		} else if (matches(*argv, "duplicate") == 0) {
 			NEXT_ARG();
-			if (get_percent(&req.opt.duplicate, *argv)) {
+			if (get_percent(&opt.duplicate, *argv)) {
 				explain1("duplicate");
 				return -1;
 			}
 			if (NEXT_IS_NUMBER()) {
 				NEXT_ARG();
-				if (get_percent(&req.opt.dup_corr, *argv)) {
+				if (get_percent(&cor.dup_corr, *argv)) {
 					explain1("duplicate");
 					return -1;
 				}
 			}
 		} else if (matches(*argv, "distribution") == 0) {
-			int count;
 			NEXT_ARG();
-			count = get_distribution(*argv, req.opt.delay_dist,
-						 REQ_DIST_SIZE);
-			if (count < 0) {
-				explain1("distribution");
+			dist_size = get_distribution(*argv, dist_data);
+			if (dist_size < 0)
 				return -1;
-			}
-			size = sizeof(struct tc_netem_qopt) 
-				+ count * sizeof(req.opt.delay_dist[0]);
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -206,57 +213,74 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		argc--; argv++;
 	}
 
-	if (addattr_l(n, TCA_BUF_MAX, TCA_OPTIONS, &req, size)) {
-		fprintf(stderr, "netem: options encoding problem\n");
-		return -1;
-	}
+	tail = (struct rtattr*)(((void*)n) + NLMSG_ALIGN(n->nlmsg_len));
 
+	addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
+	addattr_l(n, 1024, TCA_NETEM_CORR, &cor, sizeof(cor));
+
+	if (dist_size > 0) {
+		addattr_l(n, 32768, TCA_NETEM_DELAY_DIST,
+			  dist_data, dist_size*sizeof(dist_data[0]));
+	}
+	tail->rta_len = (((void*)n)+NLMSG_ALIGN(n->nlmsg_len)) - (void*)tail;
 	return 0;
 }
 
 static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
-	struct tc_netem_qopt *qopt;
+	const struct tc_netem_corr *cor = NULL;
+	struct tc_netem_qopt qopt;
+	int len = RTA_PAYLOAD(opt) - sizeof(qopt);
 	SPRINT_BUF(b1);
 
 	if (opt == NULL)
 		return 0;
 
-	if (RTA_PAYLOAD(opt) < sizeof(*qopt)) {
-		fprintf(stderr, "netem response too short\n");
+	if (len < 0) {
+		fprintf(stderr, "options size error\n");
 		return -1;
 	}
+	memcpy(&qopt, RTA_DATA(opt), sizeof(qopt));
 
-	qopt = RTA_DATA(opt);
-
-	fprintf(f, "limit %d", qopt->limit);
-
-	if (qopt->latency) {
-		fprintf(f, " delay %s", sprint_ticks(qopt->latency, b1));
-
-		if (qopt->jitter) {
-			fprintf(f, "  %s", sprint_ticks(qopt->jitter, b1));
-			if (qopt->delay_corr)
-				fprintf(f, " %s", sprint_percent(qopt->delay_corr, b1));
+	if (len > 0) {
+		struct rtattr *tb[TCA_NETEM_MAX];
+		parse_rtattr(tb, TCA_NETEM_MAX, RTA_DATA(opt) + sizeof(qopt),
+			     len);
+		
+		if (tb[TCA_NETEM_CORR]) {
+			if (RTA_PAYLOAD(tb[TCA_NETEM_CORR]) < sizeof(*cor))
+				return -1;
+			cor = RTA_DATA(tb[TCA_NETEM_CORR]);
 		}
 	}
 
-	if (qopt->loss) {
-		fprintf(f, " loss %s",
-			sprint_percent(qopt->loss, b1));
-		if (qopt->loss_corr)
-			fprintf(f, " %s", sprint_percent(qopt->loss_corr, b1));
+	fprintf(f, "limit %d", qopt.limit);
+
+	if (qopt.latency) {
+		fprintf(f, " delay %s", sprint_ticks(qopt.latency, b1));
+
+		if (qopt.jitter) {
+			fprintf(f, "  %s", sprint_ticks(qopt.jitter, b1));
+			if (cor && cor->delay_corr)
+				fprintf(f, " %s", sprint_percent(cor->delay_corr, b1));
+		}
 	}
 
-	if (qopt->duplicate) {
+	if (qopt.loss) {
+		fprintf(f, " loss %s", sprint_percent(qopt.loss, b1));
+		if (cor && cor->loss_corr)
+			fprintf(f, " %s", sprint_percent(cor->loss_corr, b1));
+	}
+
+	if (qopt.duplicate) {
 		fprintf(f, " duplicate %s",
-			sprint_percent(qopt->duplicate, b1));
-		if (qopt->dup_corr)
-			fprintf(f, " %s", sprint_percent(qopt->dup_corr, b1));
+			sprint_percent(qopt.duplicate, b1));
+		if (cor && cor->dup_corr)
+			fprintf(f, " %s", sprint_percent(cor->dup_corr, b1));
 	}
 
-	if (qopt->gap)
-		fprintf(f, " gap %lu", (unsigned long)qopt->gap);
+	if (qopt.gap)
+		fprintf(f, " gap %lu", (unsigned long)qopt.gap);
 
 	return 0;
 }
