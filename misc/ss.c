@@ -728,7 +728,7 @@ int run_ssfilter(struct ssfilter *f, struct tcpstat *s)
 }
 
 /* Relocate external jumps by reloc. */ 
-void ssfilter_patch(char *a, int len, int reloc)
+static void ssfilter_patch(char *a, int len, int reloc)
 {
 	while (len > 0) {
 		struct tcpdiag_bc_op *op = (struct tcpdiag_bc_op*)a;
@@ -741,7 +741,7 @@ void ssfilter_patch(char *a, int len, int reloc)
 		abort();
 }
 
-int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
+static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 {
 	switch (f->type) {
 		case SSF_S_AUTO:
@@ -865,7 +865,7 @@ int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	}
 }
 
-int remember_he(struct aafilter *a, struct hostent *he)
+static int remember_he(struct aafilter *a, struct hostent *he)
 {
 	char **ptr = he->h_addr_list; 
 	int cnt = 0;
@@ -897,7 +897,7 @@ int remember_he(struct aafilter *a, struct hostent *he)
 	return cnt;
 }
 
-int get_dns_host(struct aafilter *a, char *addr, int fam)
+static int get_dns_host(struct aafilter *a, const char *addr, int fam)
 {
 	static int notfirst;
 	int cnt = 0;
@@ -919,9 +919,9 @@ int get_dns_host(struct aafilter *a, char *addr, int fam)
 	return !cnt;
 }
 
-int xll_initted = 0;
+static int xll_initted = 0;
 
-void xll_init(void)
+static void xll_init(void)
 {
 	struct rtnl_handle rth;
 	rtnl_open(&rth, 0);
@@ -930,14 +930,14 @@ void xll_init(void)
 	xll_initted = 1;
 }
 
-const char *xll_index_to_name(int index)
+static const char *xll_index_to_name(int index)
 {
 	if (!xll_initted)
 		xll_init();
 	return ll_index_to_name(index);
 }
 
-int xll_name_to_index(char *dev)
+static int xll_name_to_index(const char *dev)
 {
 	if (!xll_initted)
 		xll_init();
@@ -1102,7 +1102,7 @@ void *parse_hostcond(char *addr)
 	return res;
 }
 
-int tcp_show_line(char *line, struct filter *f, int family)
+static int tcp_show_line(char *line, struct filter *f, int family)
 {
 	struct tcpstat s;
 	char *loc, *rem, *data;
@@ -1224,7 +1224,7 @@ int tcp_show_line(char *line, struct filter *f, int family)
 	return 0;
 }
 
-int generic_record_read(int fd, char *buf, int bufsize,
+static int generic_record_read(int fd, char *buf, int bufsize,
 			int (*worker)(char*, struct filter *, int),
 			struct filter *f, int fam)
 {
@@ -1287,10 +1287,24 @@ outwrongformat:
 outerr:
 	return -1;
 }
+			
+static char *sprint_bw(char *buf, double bw)
+{
+	if (bw > 1000000.) 
+		sprintf(buf,"%.1fM", bw / 1000000.);
+	else if (bw > 1000.)
+		sprintf(buf,"%.1fK", bw / 1000.);
+	else
+		sprintf(buf, "%g", bw);
 
-void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
+	return buf;
+}
+
+static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 {
 	struct rtattr * tb[TCPDIAG_MAX+1];
+	char b1[64];
+	double rtt = 0;
 
 	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, TCPDIAG_MAX, (struct rtattr*)(r+1),
@@ -1318,15 +1332,17 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 		} else
 			info = RTA_DATA(tb[TCPDIAG_INFO]);
 
-		if (info->tcpi_options & TCPI_OPT_TIMESTAMPS)
-			printf(" ts");
-		if (info->tcpi_options & TCPI_OPT_SACK)
-			printf(" sack");
+		if (show_options) {
+			if (info->tcpi_options & TCPI_OPT_TIMESTAMPS)
+				printf(" ts");
+			if (info->tcpi_options & TCPI_OPT_SACK)
+				printf(" sack");
+			if (info->tcpi_options & TCPI_OPT_ECN)
+				printf(" ecn");
+		}
 		if (info->tcpi_options & TCPI_OPT_WSCALE) 
 			printf(" wscale:%d,%d", info->tcpi_snd_wscale,
 			       info->tcpi_rcv_wscale);
-		if (info->tcpi_options & TCPI_OPT_ECN)
-			printf(" ecn");
 		if (info->tcpi_rto && info->tcpi_rto != 3000000)
 			printf(" rto:%g", (double)info->tcpi_rto/1000);
 		if (info->tcpi_rtt)
@@ -1339,14 +1355,7 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 		if (info->tcpi_snd_ssthresh < 0xFFFF)
 			printf(" ssthresh:%d", info->tcpi_snd_ssthresh);
 		
-#ifdef HAVE_TCP_DRS
-		if (info->tcpi_rcv_rtt)
-			printf(" rcv_rtt:%g", (double) info->tcpi_rcv_rtt/1000);
-		if (info->tcpi_rcv_space)
-			printf(" rcv_space:%d", info->tcpi_rcv_space);
-#endif
-
-#ifdef HAVE_TCP_VEGAS
+		rtt = (double) info->tcpi_rtt;
 		if (tb[TCPDIAG_VEGASINFO]) {
 			const struct tcpvegas_info *vinfo
 				= RTA_DATA(tb[TCPDIAG_VEGASINFO]);
@@ -1355,16 +1364,22 @@ void tcp_show_info(struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 				printf(" vegas");
 
 			if (vinfo->tcpv_rtt && 
-			    vinfo->tcpv_rtt != 0x7fffffff &&
-			    info->tcpi_snd_mss && 
-			    info->tcpi_snd_cwnd) {
-				printf(" bw:%g", 
-				       (double) info->tcpi_snd_cwnd *
-				       (double) info->tcpi_snd_mss *
-				       8000000. / (double) vinfo->tcpv_rtt);
-			}
+			    vinfo->tcpv_rtt != 0x7fffffff)
+			    rtt =  vinfo->tcpv_rtt;
 		}
-#endif
+
+		if (rtt > 0 && info->tcpi_snd_mss && info->tcpi_snd_cwnd) {
+			printf(" send %sbps",
+			       sprint_bw(b1, (double) info->tcpi_snd_cwnd *
+					 (double) info->tcpi_snd_mss * 8000000.
+					 / rtt));
+		}
+
+		if (info->tcpi_rcv_rtt)
+			printf(" rcv_rtt:%g", (double) info->tcpi_rcv_rtt/1000);
+		if (info->tcpi_rcv_space)
+			printf(" rcv_space:%d", info->tcpi_rcv_space);
+
 	}
 }
 
@@ -1463,11 +1478,10 @@ int tcp_show_netlink(struct filter *f, FILE *dump_fp)
 	req.r.tcpdiag_states = f->states;
 	if (show_mem)
 		req.r.tcpdiag_ext |= (1<<(TCPDIAG_MEMINFO-1)); 
+
 	if (show_tcpinfo) {
 		req.r.tcpdiag_ext |= (1<<(TCPDIAG_INFO-1));
-#ifdef TCPDIAG_VEGASINFO
 		req.r.tcpdiag_ext |= (1<<(TCPDIAG_VEGASINFO-1));
-#endif
 	}
 
 	iov[0] = (struct iovec){ &req, sizeof(req) };
