@@ -42,7 +42,8 @@ static void usage(void)
 	exit(-1);
 }
 
-int print_rule(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int print_rule(const struct sockaddr_nl *who, const struct nlmsghdr *n,
+		      void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct rtmsg *r = NLMSG_DATA(n);

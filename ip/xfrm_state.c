@@ -371,7 +371,9 @@ static int xfrm_selector_iszero(struct xfrm_selector *s)
 	return (memcmp(&s0, s, sizeof(s0)) == 0);
 }
 
-int xfrm_state_print(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int xfrm_state_print(const struct sockaddr_nl *who,
+			    const struct nlmsghdr *n,
+			    void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct xfrm_usersa_info *xsinfo = NLMSG_DATA(n);
@@ -511,7 +513,9 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
  * With an existing state of nlmsg, make new nlmsg for deleting the state
  * and store it to buffer.
  */
-int xfrm_state_keep(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int xfrm_state_keep(const struct sockaddr_nl *who,
+			   const struct nlmsghdr *n,
+			   void *arg)
 {
 	struct xfrm_buffer *xb = (struct xfrm_buffer *)arg;
 	struct rtnl_handle *rth = xb->rth;

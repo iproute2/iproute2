@@ -105,7 +105,7 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 	return sendto(rth->fd, (void*)&req, sizeof(req), 0, (struct sockaddr*)&nladdr, sizeof(nladdr));
 }
 
-int rtnl_send(struct rtnl_handle *rth, char *buf, int len)
+int rtnl_send(struct rtnl_handle *rth, const char *buf, int len)
 {
 	struct sockaddr_nl nladdr;
 
@@ -140,9 +140,9 @@ int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 }
 
 int rtnl_dump_filter(struct rtnl_handle *rth,
-		     int (*filter)(struct sockaddr_nl *, struct nlmsghdr *n, void *),
+		     rtnl_filter_t filter,
 		     void *arg1,
-		     int (*junk)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+		     rtnl_filter_t junk,
 		     void *arg2)
 {
 	char	buf[16384];
@@ -224,7 +224,7 @@ skip_it:
 
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 	      unsigned groups, struct nlmsghdr *answer,
-	      int (*junk)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+	      rtnl_filter_t junk,
 	      void *jarg)
 {
 	int status;
@@ -341,8 +341,8 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 }
 
 int rtnl_listen(struct rtnl_handle *rtnl, 
-	      int (*handler)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
-	      void *jarg)
+		rtnl_filter_t handler,
+		void *jarg)
 {
 	int status;
 	struct nlmsghdr *h;
@@ -414,9 +414,8 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 	}
 }
 
-int rtnl_from_file(FILE *rtnl, 
-	      int (*handler)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
-	      void *jarg)
+int rtnl_from_file(FILE *rtnl, rtnl_filter_t handler,
+		   void *jarg)
 {
 	int status;
 	struct sockaddr_nl nladdr;
@@ -486,7 +485,8 @@ int addattr32(struct nlmsghdr *n, int maxlen, int type, __u32 data)
 	return 0;
 }
 
-int addattr_l(struct nlmsghdr *n, int maxlen, int type, void *data, int alen)
+int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data, 
+	      int alen)
 {
 	int len = RTA_LENGTH(alen);
 	struct rtattr *rta;
@@ -520,7 +520,8 @@ int rta_addattr32(struct rtattr *rta, int maxlen, int type, __u32 data)
 	return 0;
 }
 
-int rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data, int alen)
+int rta_addattr_l(struct rtattr *rta, int maxlen, int type, 
+		  const void *data, int alen)
 {
 	struct rtattr *subrta;
 	int len = RTA_LENGTH(alen);
@@ -536,7 +537,6 @@ int rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data, int alen
 	rta->rta_len = NLMSG_ALIGN(rta->rta_len) + len;
 	return 0;
 }
-
 
 int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 {

@@ -33,7 +33,8 @@ static void usage(void)
 }
 
 
-int accept_msg(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int accept_msg(const struct sockaddr_nl *who,
+	       const struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 

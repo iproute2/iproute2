@@ -19,29 +19,30 @@ extern int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions, in
 extern void rtnl_close(struct rtnl_handle *rth);
 extern int rtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type);
 extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len);
-extern int rtnl_dump_filter(struct rtnl_handle *rth,
-			    int (*filter)(struct sockaddr_nl *, struct nlmsghdr *n, void *),
+
+typedef int (*rtnl_filter_t)(const struct sockaddr_nl *, const struct nlmsghdr *n, void *);
+extern int rtnl_dump_filter(struct rtnl_handle *rth, rtnl_filter_t filter,
 			    void *arg1,
-			    int (*junk)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+			    rtnl_filter_t junk,
 			    void *arg2);
 extern int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 		     unsigned groups, struct nlmsghdr *answer,
-		     int (*junk)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+		     rtnl_filter_t junk,
 		     void *jarg);
-extern int rtnl_send(struct rtnl_handle *rth, char *buf, int);
+extern int rtnl_send(struct rtnl_handle *rth, const char *buf, int);
 
 
 extern int addattr32(struct nlmsghdr *n, int maxlen, int type, __u32 data);
-extern int addattr_l(struct nlmsghdr *n, int maxlen, int type, void *data, int alen);
+extern int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data, int alen);
 extern int rta_addattr32(struct rtattr *rta, int maxlen, int type, __u32 data);
-extern int rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data, int alen);
+extern int rta_addattr_l(struct rtattr *rta, int maxlen, int type, const void *data, int alen);
 
 extern int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 extern int parse_rtattr_byindex(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 
-extern int rtnl_listen(struct rtnl_handle *, int (*handler)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+extern int rtnl_listen(struct rtnl_handle *, rtnl_filter_t handler, 
 		       void *jarg);
-extern int rtnl_from_file(FILE *, int (*handler)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
+extern int rtnl_from_file(FILE *, rtnl_filter_t handler,
 		       void *jarg);
 
 #endif /* __LIBNETLINK_H__ */

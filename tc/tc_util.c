@@ -418,7 +418,7 @@ int action_a2n(char *arg, int *result)
 	return 0;
 }
 
-void print_tm(FILE * f, struct tcf_t *tm)
+void print_tm(FILE * f, const struct tcf_t *tm)
 {
 	int hz = get_hz();
 	if (tm->install != 0)

@@ -35,7 +35,7 @@ struct idxmap
 
 static struct idxmap *idxmap[16];
 
-int ll_remember_index(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int ll_remember_index(const struct sockaddr_nl *who, const struct nlmsghdr *n, void *arg)
 {
 	int h;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
@@ -131,7 +131,7 @@ unsigned ll_index_to_flags(int idx)
 	return 0;
 }
 
-int ll_name_to_index(char *name)
+int ll_name_to_index(const char *name)
 {
 	static char ncache[16];
 	static int icache;

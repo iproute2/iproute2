@@ -176,7 +176,8 @@ void print_class_tcstats(FILE *fp, struct tc_stats *st)
 int filter_ifindex;
 __u32 filter_qdisc;
 
-int print_class(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int print_class(const struct sockaddr_nl *who, 
+		       const struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
@@ -250,7 +251,7 @@ int print_class(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				fprintf(fp, "\n");
 			}
 		}
-		if (q && tb[TCA_XSTATS]) {
+		if (q && tb[TCA_XSTATS] && q->print_xstats) {
 			q->print_xstats(q, fp, tb[TCA_XSTATS]);
 			fprintf(fp, "\n");
 		}

@@ -334,7 +334,8 @@ static int xfrm_policy_filter_match(struct xfrm_userpolicy_info *xpinfo)
 	return 1;
 }
 
-int xfrm_policy_print(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int xfrm_policy_print(const struct sockaddr_nl *who, 
+			     const struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct xfrm_userpolicy_info *xpinfo = NLMSG_DATA(n);
@@ -518,7 +519,9 @@ static int xfrm_policy_get(int argc, char **argv)
  * With an existing policy of nlmsg, make new nlmsg for deleting the policy
  * and store it to buffer.
  */
-int xfrm_policy_keep(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int xfrm_policy_keep(const struct sockaddr_nl *who,
+			    const struct nlmsghdr *n,
+			    void *arg)
 {
 	struct xfrm_buffer *xb = (struct xfrm_buffer *)arg;
 	struct rtnl_handle *rth = xb->rth;

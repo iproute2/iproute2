@@ -103,7 +103,7 @@ static int flush_update(void)
 	return 0;
 }
 
-int print_route(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_route(const struct sockaddr_nl *who, const struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct rtmsg *r = NLMSG_DATA(n);

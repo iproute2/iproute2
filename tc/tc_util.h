@@ -9,7 +9,7 @@
 struct qdisc_util
 {
 	struct  qdisc_util *next;
-	char	id[16];
+	const char *id;
 	int	(*parse_qopt)(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n);
 	int	(*print_qopt)(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 	int 	(*print_xstats)(struct qdisc_util *qu, FILE *f, struct rtattr *xstats);
@@ -58,7 +58,7 @@ extern char * sprint_tc_classid(__u32 h, char *buf);
 extern char * sprint_usecs(__u32 usecs, char *buf);
 extern char * sprint_percent(__u32 percent, char *buf);
 
-extern void print_tcstats(FILE *fp, struct tc_stats *st);
+extern void print_tcstats_attr(FILE *fp, const struct rtattr *ts);
 
 extern int get_tc_classid(__u32 *h, const char *str);
 extern int print_tc_classid(char *buf, int len, __u32 h);
@@ -70,11 +70,13 @@ extern int parse_police(int *, char ***, int, struct nlmsghdr *);
 extern char *action_n2a(int action, char *buf, int len);
 extern int  action_a2n(char *arg, int *result);
 extern int  act_parse_police(struct action_util *a,int *, char ***, int, struct nlmsghdr *);
-extern int  print_police(struct action_util *a,FILE *f, struct rtattr *tb);
-extern int  police_print_xstats(struct action_util *a,FILE *f, struct rtattr *tb);
-extern int  tc_print_action(FILE *f, struct rtattr *tb);
-extern int  tc_print_ipt(FILE *f, struct rtattr *tb);
+extern int  print_police(struct action_util *a, FILE *f, 
+			 struct rtattr *tb);
+extern int  police_print_xstats(struct action_util *a,FILE *f, 
+				struct rtattr *tb);
+extern int  tc_print_action(FILE *f, const struct rtattr *tb);
+extern int  tc_print_ipt(FILE *f, const struct rtattr *tb);
 extern int  parse_action(int *, char ***, int, struct nlmsghdr *);
-extern void print_tm(FILE *f, struct tcf_t *tm);
+extern void print_tm(FILE *f, const struct tcf_t *tm);
 
 #endif
