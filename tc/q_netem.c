@@ -122,7 +122,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	qopt = RTA_DATA(opt);
 
-	fprintf(f, "limit %s", sprint_size(qopt->limit, b1));
+	fprintf(f, "limit %d", qopt->limit);
 	if (qopt->latency)
 		fprintf(f, " latency %s", 
 			sprint_usecs(qopt->latency, b2));
@@ -131,6 +131,9 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			sprint_percent(qopt->loss, b1));
 	if (qopt->gap)
 		fprintf(f, " gap %lu", (unsigned long)qopt->gap);
+
+	if (qopt->rate)
+		fprintf(f, " rate %s", sprint_rate(qopt->rate, b1));
 
 	return 0;
 }
