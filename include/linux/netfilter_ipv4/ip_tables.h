@@ -15,7 +15,6 @@
 #ifndef _IPTABLES_H
 #define _IPTABLES_H
 
-#include <linux/compiler.h>
 #include <linux/netfilter_ipv4.h>
 
 #define IPT_FUNCTION_MAXNAMELEN 30

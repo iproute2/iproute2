@@ -1,3 +1,8 @@
+2005-03-30  Stephen Hemminger  <shemminger@osdl.org>
+
+	* include/linux/netfilter_ipv4/ip_tables.h dont include compiler.h
+	  because it isn't needed and not on all systems
+
 2005-03-30  Jamal Hadi Salim <hadi@znyx.com>
 
 	* Proper verison of iptables headers (from 1.3.1)
@@ -15,7 +20,7 @@
 	
 	* ipv6 xfrm allocspi and monitor support.
 	
-2005-03-29  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+2005-03-29  Stephen Hemminger  <shemminger@osdl.org>
 
 	* switch to stack for netem tables
 
