@@ -53,7 +53,7 @@ static int scan_lines(struct lnstat_file *lf, int i)
 		gettimeofday(&lf->last_read, NULL);
 
 		for (j = 0; j < lf->num_fields; j++)
-			lf->fields[j].values[i] = strtoul(ptr, &ptr, 16);
+			lf->fields[j].values[i] += strtoul(ptr, &ptr, 16);
 	}
 	return num_lines;
 }
