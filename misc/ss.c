@@ -33,7 +33,6 @@
 #include "libnetlink.h"
 #include "SNAPSHOT.h"
 
-#include <asm/byteorder.h>
 #include <linux/tcp.h>
 #include <linux/tcp_diag.h>
 
