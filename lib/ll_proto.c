@@ -17,20 +17,22 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/sockios.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/sockios.h>
+
 #include "utils.h"
+#include "rt_names.h"
 
 
 #define __PF(f,n) { ETH_P_##f, #n },
 static struct {
 	int id;
-	char *name;
+	const char *name;
 } llproto_names[] = {
 __PF(LOOP,loop)
 __PF(PUP,pup)  
@@ -97,7 +99,7 @@ __PF(ECONET,econet)
 #undef __PF
 
 
-char * ll_proto_n2a(unsigned short id, char *buf, int len)
+const char * ll_proto_n2a(unsigned short id, char *buf, int len)
 {
         int i;
 
