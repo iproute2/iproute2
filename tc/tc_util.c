@@ -429,9 +429,9 @@ void print_tm(FILE * f, const struct tcf_t *tm)
 void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats)
 {
 	SPRINT_BUF(b1);
-	struct rtattr *tbs[TCA_STATS_MAX + 1] = {0};
+	struct rtattr *tbs[TCA_STATS_MAX + 1];
 
-	parse_rtattr(tbs, TCA_STATS_MAX, RTA_DATA(rta), RTA_PAYLOAD(rta));
+	parse_rtattr_nested(tbs, TCA_STATS_MAX, rta);
 
 	if (tbs[TCA_STATS_BASIC]) {
 		struct gnet_stats_basic bs = {0};
