@@ -189,7 +189,7 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 	if (argc == 0)
 		return 0;
 
-	tail = (struct rtattr*)(((void*)n)+NLMSG_ALIGN(n->nlmsg_len));
+	tail = NLMSG_TAIL(n);
 	addattr_l(n, 4096, TCA_OPTIONS, NULL, 0);
 
 	while (argc > 0) {
@@ -282,7 +282,7 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 
 	if (pinfo_ok)
 		addattr_l(n, 4096, TCA_RSVP_PINFO, &pinfo, sizeof(pinfo));
-	tail->rta_len = (((void*)n)+n->nlmsg_len) - (void*)tail;
+	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
 

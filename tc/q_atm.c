@@ -179,12 +179,12 @@ static int atm_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 			perror("ioctl ATMARP_MKIP");
 			return -1;
 		}
-	tail = (struct rtattr *) (((void *) n)+NLMSG_ALIGN(n->nlmsg_len));
+	tail = NLMSG_TAIL(n);
 	addattr_l(n,1024,TCA_OPTIONS,NULL,0);
 	addattr_l(n,1024,TCA_ATM_FD,&s,sizeof(s));
 	if (excess) addattr_l(n,1024,TCA_ATM_EXCESS,&excess,sizeof(excess));
 	if (hdr_len != -1) addattr_l(n,1024,TCA_ATM_HDR,hdr,hdr_len);
-	tail->rta_len = (((void *) n)+NLMSG_ALIGN(n->nlmsg_len))-(void *) tail;
+	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
 

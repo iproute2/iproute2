@@ -177,7 +177,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struc
 	if (!ok)
 		return -1;
 
-	tail = (struct rtattr *) (((void *) n) + NLMSG_ALIGN(n->nlmsg_len));
+	tail = NLMSG_TAIL(n);
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
 	addattr_l(n, MAX_MSG, TCA_GACT_PARMS, &p, sizeof (p));
 #ifdef CONFIG_GACT_PROB
@@ -185,8 +185,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struc
 		addattr_l(n, MAX_MSG, TCA_GACT_PROB, &pp, sizeof (pp));
 	}
 #endif
-	tail->rta_len =
-	    (((void *) n) + NLMSG_ALIGN(n->nlmsg_len)) - (void *) tail;
+	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 
 	*argc_p = argc;
 	*argv_p = argv;
