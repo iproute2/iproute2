@@ -19,7 +19,6 @@ TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
 TCMODULES += q_hfsc.o
 TCMODULES += q_htb.o
-TCMODULES += q_netem.o
 
 TCOBJ += $(TCMODULES)
 
@@ -29,6 +28,7 @@ TCLIB += tc_cbq.o
 TCLIB += tc_estimator.o
 
 TCSO :=
+TCSO += q_netem.so
 ifeq ($(TC_CONFIG_ATM),y)
   TCSO += q_atm.so
 endif
