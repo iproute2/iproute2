@@ -1,3 +1,10 @@
+2004-07-01  Stephen Hemminger  <shemminger@osdl.org>
+
+	* add more link options to ip command (from Mark Smith
+	* add rate and duplicate arguments to tc command
+	* add -iec flag for tc printout
+	* rename delay scheduler to netem
+
 2004-06-25  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Add loss parameter to delay
@@ -7,7 +14,7 @@
 
 2004-06-09  Stephen Hemminger  <shemminger@osdl.org>
 
-	* Report rates in K=1000
+	* Report rates in K=1000 (requested by several people)
 	* Add GNU long style options
 	* For HTB use get_hz to pick up value of system HZ at runtime
 	* Delete unused funcs.
