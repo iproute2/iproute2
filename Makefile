@@ -59,5 +59,6 @@ clean:
 clobber: clean
 	rm -f Config
 
+distclean: clean clobber
 
 .EXPORT_ALL_VARIABLES:

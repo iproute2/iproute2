@@ -280,7 +280,7 @@ static const char *strxf_time(__u64 time)
 		t = (long)time;
 		tp = localtime(&t);
 
-		strftime(str, sizeof(str), "%F %T", tp);
+		strftime(str, sizeof(str), "%Y-%m-%d %T", tp);
 	}
 
 	return str;
@@ -410,7 +410,7 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 	}
 
 	if (sel->ifindex > 0) {
-		char buf[IF_NAMESIZE];
+		char buf[IFNAMSIZ];
 
 		memset(buf, '\0', sizeof(buf));
 		if_indextoname(sel->ifindex, buf);
