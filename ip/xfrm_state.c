@@ -63,7 +63,13 @@ static void usage(void)
 	fprintf(stderr, "        [ FLAG_LIST ]\n");
 
 	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM_PROTO ] [ spi SPI ]\n");
-	fprintf(stderr, "XFRM_PROTO := [ esp | ah | ipcomp ]\n");
+	//fprintf(stderr, "XFRM_PROTO := [ esp | ah | ipcomp ]\n");
+	fprintf(stderr, "XFRM_PROTO := [ ");
+	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_ESP));
+	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_AH));
+	fprintf(stderr, "%s", strxf_proto(IPPROTO_COMP));
+	fprintf(stderr, " ]\n");
+
 	//fprintf(stderr, "SPI - security parameter index(default=0)\n");
 
  	fprintf(stderr, "MODE := [ transport | tunnel ](default=transport)\n");
@@ -142,11 +148,20 @@ static int xfrm_state_flag_parse(__u8 *flags, int *argcp, char ***argvp)
 {
 	int argc = *argcp;
 	char **argv = *argvp;
+	int len = strlen(*argv);
 
-	if (strcmp(*argv, "noecn") == 0)
-		*flags |= XFRM_STATE_NOECN;
-	else
-		invarg("\"FLAG\" is invalid", *argv);
+	if (len > 2 && strncmp(*argv, "0x", 2) == 0) {
+		__u8 val = 0;
+
+		if (get_u8(&val, *argv, 16))
+			invarg("\"FLAG\" is invalid", *argv);
+		*flags = val;
+	} else {
+		if (strcmp(*argv, "noecn") == 0)
+			*flags |= XFRM_STATE_NOECN;
+		else
+			invarg("\"FLAG\" is invalid", *argv);
+	}
 
 	filter.state_flags_mask = XFRM_FILTER_MASK_FULL;
 
@@ -357,22 +372,26 @@ int xfrm_state_print(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	xfrm_id_info_print(&xsinfo->saddr, &xsinfo->id, xsinfo->mode,
 			   xsinfo->reqid, xsinfo->family, fp, NULL);
 
+	fprintf(fp, "\t");
 	if (show_stats > 0) {
-		fprintf(fp, "\t");
 		fprintf(fp, "seq 0x%08u ", xsinfo->seq);
 		fprintf(fp, "replay-window %d ", xsinfo->replay_window);
-		fprintf(fp, "flags ");
-		if (xsinfo->flags & XFRM_STATE_NOECN)
-			fprintf(fp, "noecn ");
-		fprintf(fp, "(0x%s)", strxf_flags(xsinfo->flags));
-
-		fprintf(fp, "\n");
 	}
+	fprintf(fp, "flag 0x%s", strxf_flags(xsinfo->flags));
+	if (show_stats > 0) {
+		if (xsinfo->flags) {
+			fprintf(fp, "(");
+			if (xsinfo->flags & XFRM_STATE_NOECN)
+				fprintf(fp, "noecn");
+			fprintf(fp, ")");
+		}
+	}
+	fprintf(fp, "\n");
 
 	xfrm_xfrma_print(tb, ntb, xsinfo->family, fp, "\t");
 
 	if (show_stats > 0) {
-		fprintf(fp, "\tsel:\n");
+		fprintf(fp, "\tsel\n");
 		xfrm_selector_print(&xsinfo->sel, xsinfo->family, fp, "\t  ");
 	}
 
