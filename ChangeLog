@@ -1,3 +1,9 @@
+2004-08-23  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Update from jamal for all the parts that got broken in the
+	  last classification patch.
+	* Hfsc/sc patch from patrick
+
 2004-08-13  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Add jamal's tc extensions for classification
