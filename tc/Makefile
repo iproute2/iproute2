@@ -23,7 +23,7 @@ ifeq ($(TC_CONFIG_ATM),y)
   LDLIBS += -latm
 endif
 
-TCMODULES += q_netsim.o
+TCMODULES += q_netem.o
 TCMODULES += q_csz.o
 TCMODULES += q_htb.o
 TCMODULES += q_hpfq.o
