@@ -80,6 +80,7 @@ int do_xfrm_policy(int argc, char **argv);
 
 const char *strxf_flags(__u8 flags);
 const char *strxf_share(__u8 share);
+const char *strxf_proto(__u8 proto);
 void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 			__u8 mode, __u32 reqid, __u16 family, FILE *fp,
 			const char *prefix);
