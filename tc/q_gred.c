@@ -165,10 +165,6 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				fprintf(stderr, "GRED: only %d DPs are currently supported\n",MAX_DPs);
 				return -1;
 			}
-#if 0
-				return -1;
-			}
-#endif
 			ok++;
 		} else if (strcmp(*argv, "burst") == 0) {
 			NEXT_ARG();
@@ -274,27 +270,13 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (tb[TCA_GRED_PARMS] == NULL)
 		return -1;
-#if 0
-	sopt = RTA_DATA(tb[TCA_GRED_DPS]);
-	if (RTA_PAYLOAD(tb[TCA_GRED_DPS])  < sizeof(*sopt)) {
-		printf("\n GRED DPs message smaller than expected\n");
-		return -1;
-		}
-         
-	DPRINTF(f, "\n\tDPs:%d Default DP %d\n ",
-		sopt->DPs, sopt->def_DP);
-#endif
+
 	qopt = RTA_DATA(tb[TCA_GRED_PARMS]);
 	if (RTA_PAYLOAD(tb[TCA_GRED_PARMS])  < sizeof(*qopt)*MAX_DPs) {
 		fprintf(f,"\n GRED received message smaller than expected\n");
 		return -1;
 		}
          
-
-#if 0
-
-	for (i=0;i<sopt->DPs;i++)
-#endif
 /* Bad hack! should really return a proper message as shown above*/
 
 	for (i=0;i<MAX_DPs;i++, qopt++) {
