@@ -34,6 +34,7 @@ int show_stats = 0;
 int show_details = 0;
 int show_raw = 0;
 int resolve_hosts = 0;
+int use_iec = 0;
 
 void *BODY;
 static struct qdisc_util * qdisc_list;
@@ -269,7 +270,7 @@ int main(int argc, char **argv)
 		if (argv[1][0] != '-')
 			break;
 		if (matches(argv[1], "-stats") == 0 ||
-		    matches(argv[1], "-statistics") == 0) {
+			 matches(argv[1], "-statistics") == 0) {
 			++show_stats;
 		} else if (matches(argv[1], "-details") == 0) {
 			++show_details;
@@ -278,6 +279,8 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-Version") == 0) {
 			printf("tc utility, iproute2-ss%s\n", SNAPSHOT);
 			exit(0);
+		} else if (matches(argv[1], "-iec") == 0) {
+			++use_iec;
 		} else if (matches(argv[1], "-help") == 0) {
 			usage();
 		} else {
