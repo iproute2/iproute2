@@ -16,16 +16,25 @@ fi
 echo -n " netem scheduler... "
 if grep -q 'tc_netem_qopt' $PKT_SCHED
 then
-    echo "TC_CONFIG_NETEM = y" >>Config
+    echo "TC_CONFIG_NETEM:=y" >>Config
     echo y
 else
     echo n
 fi
 
 echo -n " ATM...              "
-if [ -r $INCLUDE/linux/atm.h ]
+cat >/tmp/atmtest.c <<EOF
+#include <atm.h>
+int main(int argc, char **argv) {
+	struct atm_qos qos;
+	(void) text2qos("aal5,ubr:sdu=9180,rx:none",&qos,0);
+	return 0;
+}
+EOF
+gcc -o /tmp/atmtest /tmp/atmtest.c -latm >/dev/null 2>&1 
+if [ $? -eq 0 ]
 then
-    echo "TC_CONFIG_ATM = y" >>Config
+    echo "TC_CONFIG_ATM:=y" >>Config
     echo y
 else
     echo n
@@ -36,7 +45,7 @@ echo "SS"
 echo -n " TCP Vegas...        "
 if grep -q TCPDIAG_VEGASINFO $INCLUDE/linux/tcp_diag.h
 then
-    echo "SS_CONFIG_VEGAS = y" >>Config
+    echo "SS_CONFIG_VEGAS:=y" >>Config
     echo y
 else
     echo n
@@ -45,7 +54,7 @@ fi
 echo -n " TCP DRS...          "
 if grep -q tcpi_rcv_space $INCLUDE/linux/tcp.h
 then
-    echo "SS_CONFIG_DRS = y" >>Config
+    echo "SS_CONFIG_DRS:=y" >>Config
     echo y
 else
     echo n
