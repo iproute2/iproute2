@@ -57,33 +57,35 @@ struct ipx_addr {
 };
 
 extern __u32 get_addr32(char *name);
-extern int get_addr_1(inet_prefix *dst, char *arg, int family);
+extern int get_addr_1(inet_prefix *dst, const char *arg, int family);
 extern int get_prefix_1(inet_prefix *dst, char *arg, int family);
 extern int get_addr(inet_prefix *dst, char *arg, int family);
 extern int get_prefix(inet_prefix *dst, char *arg, int family);
 
-extern int get_integer(int *val, char *arg, int base);
-extern int get_unsigned(unsigned *val, char *arg, int base);
+extern int get_integer(int *val, const char *arg, int base);
+extern int get_unsigned(unsigned *val, const char *arg, int base);
 #define get_byte get_u8
 #define get_ushort get_u16
 #define get_short get_s16
-extern int get_u32(__u32 *val, char *arg, int base);
-extern int get_u16(__u16 *val, char *arg, int base);
-extern int get_s16(__s16 *val, char *arg, int base);
-extern int get_u8(__u8 *val, char *arg, int base);
-extern int get_s8(__s8 *val, char *arg, int base);
+extern int get_u32(__u32 *val, const char *arg, int base);
+extern int get_u16(__u16 *val, const char *arg, int base);
+extern int get_s16(__s16 *val, const char *arg, int base);
+extern int get_u8(__u8 *val, const char *arg, int base);
+extern int get_s8(__s8 *val, const char *arg, int base);
 
 extern __u8* hexstring_n2a(const __u8 *str, int len, __u8 *buf, int blen);
 extern __u8* hexstring_a2n(const __u8 *str, __u8 *buf, int blen);
 
-extern const char *format_host(int af, int len, void *addr, char *buf, int buflen);
-extern const char *rt_addr_n2a(int af, int len, void *addr, char *buf, int buflen);
+extern const char *format_host(int af, int len, const void *addr, 
+			       char *buf, int buflen);
+extern const char *rt_addr_n2a(int af, int len, const void *addr, 
+			       char *buf, int buflen);
 
-void invarg(char *, char *) __attribute__((noreturn));
-void duparg(char *, char *) __attribute__((noreturn));
-void duparg2(char *, char *) __attribute__((noreturn));
-int matches(char *arg, char *pattern);
-extern int inet_addr_match(inet_prefix *a, inet_prefix *b, int bits);
+void invarg(const char *, const char *) __attribute__((noreturn));
+void duparg(const char *, const char *) __attribute__((noreturn));
+void duparg2(const char *, const char *) __attribute__((noreturn));
+int matches(const char *arg, const char *pattern);
+extern int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits);
 
 const char *dnet_ntop(int af, const void *addr, char *str, size_t len);
 int dnet_pton(int af, const char *src, void *addr);
