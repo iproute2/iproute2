@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <math.h>
+#include <getopt.h>
 
 #include <libnetlink.h>
 #include <linux/netdevice.h>
@@ -237,22 +238,26 @@ void dump_raw_db(FILE *fp, int to_hist)
 	}
 }
 
+/* use communication definitions of meg/kilo etc */
+static const unsigned long long giga = 1000000000ull;
+static const unsigned long mega = 1000000;
+static const unsigned long kilo = 1000;
 
 void format_rate(FILE *fp, unsigned long long *vals, double *rates, int i)
 {
 	char temp[64];
-	if (vals[i] > 1024*1024*1024)
-		fprintf(fp, "%7lluM ", vals[i]/(1024*1024));
-	else if (vals[i] > 1024*1024)
-		fprintf(fp, "%7lluK ", vals[i]/1024);
+	if (vals[i] > giga)
+		fprintf(fp, "%7lluM ", vals[i]/mega);
+	else if (vals[i] > mega)
+		fprintf(fp, "%7lluK ", vals[i]/kilo);
 	else
 		fprintf(fp, "%8llu ", vals[i]);
 
-	if (rates[i] > 1024*1024) {
-		sprintf(temp, "%uM", (unsigned)(rates[i]/(1024*1024)));
+	if (rates[i] > mega) {
+		sprintf(temp, "%uM", (unsigned)(rates[i]/mega));
 		fprintf(fp, "%-6s ", temp);
-	} else if (rates[i] > 1024) {
-		sprintf(temp, "%uK", (unsigned)(rates[i]/1024));
+	} else if (rates[i] > kilo) {
+		sprintf(temp, "%uK", (unsigned)(rates[i]/kilo));
 		fprintf(fp, "%-6s ", temp);
 	} else
 		fprintf(fp, "%-6u ", (unsigned)rates[i]);
@@ -261,18 +266,18 @@ void format_rate(FILE *fp, unsigned long long *vals, double *rates, int i)
 void format_pair(FILE *fp, unsigned long long *vals, int i, int k)
 {
 	char temp[64];
-	if (vals[i] > 1024*1024*1024)
-		fprintf(fp, "%7lluM ", vals[i]/(1024*1024));
-	else if (vals[i] > 1024*1024)
-		fprintf(fp, "%7lluK ", vals[i]/1024);
+	if (vals[i] > giga)
+		fprintf(fp, "%7lluM ", vals[i]/mega);
+	else if (vals[i] > mega)
+		fprintf(fp, "%7lluK ", vals[i]/kilo);
 	else
 		fprintf(fp, "%8llu ", vals[i]);
 
-	if (vals[k] > 1024*1024*1024) {
-		sprintf(temp, "%uM", (unsigned)(vals[k]/(1024*1024)));
+	if (vals[k] > giga) {
+		sprintf(temp, "%uM", (unsigned)(vals[k]/mega));
 		fprintf(fp, "%-6s ", temp);
-	} else if (vals[k] > 1024*1024) {
-		sprintf(temp, "%uK", (unsigned)(vals[k]/1024));
+	} else if (vals[k] > mega) {
+		sprintf(temp, "%uK", (unsigned)(vals[k]/kilo));
 		fprintf(fp, "%-6s ", temp);
 	} else
 		fprintf(fp, "%-6u ", (unsigned)vals[k]);
@@ -539,16 +544,38 @@ int verify_forging(int fd)
 	return -1;
 }
 
-static void usage(void) __attribute__((noreturn));
-
 static void usage(void)
 {
-	fprintf(stderr,
-"Usage: ifstat [ -h?vVzrnasd:t: ] [ PATTERN [ PATTERN ] ]\n"
-		);
-	exit(-1);
+	printf("Usage: ifstat [OPTION] [ PATTERN [ PATTERN ] ]\n");
+	printf("   -h, --help		this message\n");
+	printf("   -a, --ignore		ignore history\n");
+	printf("   -d, --scan=SECS	sample every statistics every SECS\n");
+	printf("   -e, --errors		show errors\n");
+	printf("   -n, --nooutput	do history only\n");
+	printf("   -r, --reset		reset history\n");
+	printf("   -s, --noupdate	don;t update history\n");
+	printf("   -t, --interval=SECS	report average over the last SECS\n");
+	printf("   -V, --version	output version information\n");
+	printf("   -z, --zeros		show entries with zero activity\n");
+	printf("   -e, --errors		show errors\n");
+	printf("   -z, --zeros		show entries with zero activity\n");
 }
 
+static const struct option longopts[] = {
+	{ "help", 0, 0, 'h' },
+	{ "ignore",  0,  0, 'a' },
+	{ "scan", 1, 0, 'd'},
+	{ "errors", 0, 0, 'e' },
+	{ "nooutput", 0, 0, 'n' },
+	{ "reset", 0, 0, 'r' },
+	{ "noupdate", 0, 0, 's' },
+	{ "interval", 1, 0, 't' },
+	{ "version", 0, 0, 'V' },
+	{ "zeros", 0, 0, 'z' },
+	{ "errors", 0, 0, 'e' },
+	{ "zeros", 0, 0, 'z' },
+	{ 0 }
+};
 
 int main(int argc, char *argv[])
 {
@@ -558,7 +585,8 @@ int main(int argc, char *argv[])
 	int ch;
 	int fd;
 
-	while ((ch = getopt(argc, argv, "h?vVzrnasd:t:e")) != EOF) {
+	while ((ch = getopt_long(argc, argv, "hvVzrnasd:t:eK",
+			longopts, NULL)) != EOF) {
 		switch(ch) {
 		case 'z':
 			dump_zeros = 1;
@@ -579,11 +607,15 @@ int main(int argc, char *argv[])
 			show_errors = 1;
 			break;
 		case 'd':
-			scan_interval = 1000*atoi(optarg);
+			scan_interval = atoi(optarg) * 1000;
+			if (scan_interval <= 0) {
+				fprintf(stderr, "ifstat: invalid scan interval\n");
+				exit(-1);
+			}
 			break;
 		case 't':
-			if (sscanf(optarg, "%d", &time_constant) != 1 ||
-			    time_constant <= 0) {
+			time_constant = atoi(optarg);
+			if (time_constant <= 0) {
 				fprintf(stderr, "ifstat: invalid time constant divisor\n");
 				exit(-1);
 			}
@@ -596,6 +628,7 @@ int main(int argc, char *argv[])
 		case '?':
 		default:
 			usage();
+			exit(1);
 		}
 	}
 
