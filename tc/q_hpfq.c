@@ -23,17 +23,6 @@
 #include "utils.h"
 #include "tc_util.h"
 
-static void explain()
-{
-	fprintf(stderr, "Usage: ... hpfq \n");
-}
-
-static void explain1(char *arg)
-{
-	fprintf(stderr, "Illegal \"%s\"\n", arg);
-}
-
-
 #define usage() return(-1)
 
 static int hpfq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
