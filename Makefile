@@ -1,6 +1,6 @@
 # Path to parent kernel include files directory
 DESTDIR=
-SBINDIR=/sbin
+SBINDIR=/usr/sbin
 CONFDIR=/etc/iproute2
 DOCDIR=/usr/doc/iproute2
 
@@ -25,7 +25,7 @@ ADDLIB+=ipx_ntop.o ipx_pton.o
 
 CC = gcc
 CCOPTS = -D_GNU_SOURCE -O2 -Wstrict-prototypes -Wall -g
-CFLAGS = $(CCOPTS) $(GLIBCFIX) -I$(KERNEL_INCLUDE) -I../include $(DEFINES)
+CFLAGS = $(CCOPTS) -I$(KERNEL_INCLUDE) -I../include -I/usr/include/db41 $(DEFINES)
 
 LDLIBS += -L../lib -lnetlink -lutil
 
