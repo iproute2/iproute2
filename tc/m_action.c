@@ -144,8 +144,7 @@ parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	if (argc <= 0)
 		return -1;
 
-	tail = tail2 =
-	    (struct rtattr *) (((void *) n) + NLMSG_ALIGN(n->nlmsg_len));
+	tail = tail2 = NLMSG_TAIL(n);
 
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
 
@@ -185,9 +184,7 @@ done0:
 				goto bad_val;
 			}
 
-			tail =
-			    (struct rtattr *) (((void *) n) +
-				       NLMSG_ALIGN(n->nlmsg_len));
+			tail = NLMSG_TAIL(n);
 			addattr_l(n, MAX_MSG, ++prio, NULL, 0);
 			addattr_l(n, MAX_MSG, TCA_ACT_KIND, k, strlen(k) + 1);
 
@@ -197,9 +194,7 @@ done0:
 				fprintf(stderr,"bad action parsing\n");
 				goto bad_val;
 			}
-			tail->rta_len =
-			    (((void *) n) + NLMSG_ALIGN(n->nlmsg_len)) -
-			    (void *) tail;
+			tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 			ok++;
 		}
 
@@ -210,8 +205,7 @@ done0:
 		goto bad_val;
 	}
 
-	tail2->rta_len =
-	    (((void *) n) + NLMSG_ALIGN(n->nlmsg_len)) - (void *) tail2;
+	tail2->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail2;
 
 done:
 	*argc_p = argc;
@@ -376,8 +370,7 @@ int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	argv +=1;
 
 
-	tail = (struct rtattr*)(((void*)&req.n)+NLMSG_ALIGN(req.n.nlmsg_len));
-
+	tail = NLMSG_TAIL(&req.n);
 	addattr_l(&req.n, MAX_MSG, TCA_ACT_TAB, NULL, 0);
 
 	while (argc > 0) {
@@ -425,17 +418,15 @@ int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 			goto bad_val;
 		}
 
-	tail2 =
-	   (struct rtattr *) (((void *) &req.n) + NLMSG_ALIGN(req.n.nlmsg_len));
-	addattr_l(&req.n, MAX_MSG, ++prio, NULL, 0);
-	addattr_l(&req.n, MAX_MSG, TCA_ACT_KIND, k, strlen(k) + 1);
-	addattr32(&req.n, MAX_MSG, TCA_ACT_INDEX, i);
-	tail2->rta_len =
-	    (((void *) &req.n) + NLMSG_ALIGN(req.n.nlmsg_len)) - (void *) tail2;
+		tail2 = NLMSG_TAIL(&req.n);
+		addattr_l(&req.n, MAX_MSG, ++prio, NULL, 0);
+		addattr_l(&req.n, MAX_MSG, TCA_ACT_KIND, k, strlen(k) + 1);
+		addattr32(&req.n, MAX_MSG, TCA_ACT_INDEX, i);
+		tail2->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail2;
 
 	}
 
-	tail->rta_len = (((void*)&req.n)+ NLMSG_ALIGN(req.n.nlmsg_len)) - (void*)tail;
+	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
@@ -485,14 +476,14 @@ int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg));
 	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
 	req.n.nlmsg_type = cmd;
-	tail = (struct rtattr*)(((void*)&req.n)+NLMSG_ALIGN(req.n.nlmsg_len));
+	tail = NLMSG_TAIL(&req.n);
 	argc -=1;
 	argv +=1;
 	if (parse_action(&argc, &argv, TCA_ACT_TAB, &req.n)) {
 		fprintf(stderr, "Illegal \"action\"\n");
 		return -1;
 	}
-	tail->rta_len = (((void*)&req.n)+req.n.nlmsg_len) - (void*)tail;
+	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
@@ -530,11 +521,9 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg));
 
-	tail = (struct rtattr*)(((void*)&req.n)+NLMSG_ALIGN(req.n.nlmsg_len));
-
+	tail = NLMSG_TAIL(&req.n);
 	addattr_l(&req.n, MAX_MSG, TCA_ACT_TAB, NULL, 0);
-	tail2 =
-	   (struct rtattr *) (((void *) &req.n) + NLMSG_ALIGN(req.n.nlmsg_len));
+	tail2 = NLMSG_TAIL(&req.n);
 
 	strncpy(k, *argv, sizeof (k) - 1);
 #ifdef CONFIG_GACT
@@ -555,10 +544,8 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 
 	addattr_l(&req.n, MAX_MSG, ++prio, NULL, 0);
 	addattr_l(&req.n, MAX_MSG, TCA_ACT_KIND, k, strlen(k) + 1);
-	tail2->rta_len =
-	    (((void *) &req.n) + NLMSG_ALIGN(req.n.nlmsg_len)) - (void *) tail2;
-	tail->rta_len = (((void*)&req.n)+NLMSG_ALIGN(req.n.nlmsg_len)) - (void*)tail;
-
+	tail2->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail2;
+	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
