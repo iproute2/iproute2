@@ -1,4 +1,28 @@
-2005-02-09  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+2005-03-10  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+
+	* fix pkt_cls.h to have tc_u32_mark
+	* update include files to be stripped versions of 2.6.11
+	* add documentation about netem distributions [from nistnet]
+	* turn off nup in document make [from FC3]
+	* don't build with extra debug info (-g) [from FC3]
+	
+2005-03-10 Nix <nix@esperi.org.uk>
+
+	* make man3 directory
+	
+2005-03-10 Pasi <Pasi.Eronen@nokia.com>
+	
+	* add ESP-in-UDP encapsulation
+
+2005-03-10 Thomas Graf <tgraf@suug.ch>
+	* [NETEM] Fix off by one
+ 	* update local header file copies
+	* [NEIGH] print number of probes done so far (statistics mode only)
+	
+2005-03-10 Herbert Xu <herbert@gondor.apana.org.au>
+	* Trivial typo in ip help
+
+2005-02-09  Stephen Hemminger  <shemminger@osdl.org>
 
 	* netem distribution data reorganization
 
@@ -14,7 +38,7 @@
 	
 	* Don't mix address families when flushing	
 	
-2005-02-07  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+2005-02-07  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Validate classid is not too large to cause loss of bits.
 
@@ -52,7 +76,7 @@
 	* ipmonitor shows IPv6 prefix list notification
 	* update to iproute2 xfrm for ipv6	
 	
-2005-01-12  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+2005-01-12  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Fix compile warnings when building 64bit system since
 	  u64 is unsigned long, but format is %llu
