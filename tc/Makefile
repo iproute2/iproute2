@@ -17,7 +17,10 @@ TCMODULES += q_dsmark.o
 TCMODULES += q_gred.o
 TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
-TCMODULES += q_hfsc.o
+
+ifeq ($(TC_CONFIG_HFSC),y)
+	TCMODULES += q_hfsc.o
+endif
 
 ifeq ($(TC_CONFIG_HTB),y)
 	TCMODULES += q_htb.o
