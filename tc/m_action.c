@@ -260,27 +260,17 @@ tc_print_one_action(FILE * f, struct rtattr *arg)
 	if (0 > err)
 		return err;
 
-	if (show_stats) {
-		if (tb[TCA_STATS]) {
-			if (RTA_PAYLOAD(tb[TCA_STATS]) <
-			    sizeof (struct tc_stats))
-				fprintf(f, "statistics truncated");
-			else {
-				struct tc_stats st;
-				memcpy(&st, RTA_DATA(tb[TCA_STATS]),
-				       sizeof (st));
-				fprintf(f, "\t");
-				print_tcstats(f, &st);
-				fprintf(f, "\n");
-			}
-		}
+	if (show_stats && tb[TCA_STATS]) {
+		fprintf(f, "\t");
+		print_tcstats_attr(f, tb[TCA_STATS]);
+		fprintf(f, "\n");
 	}
 
 	return 0;
 }
 
 int
-tc_print_action(FILE * f, struct rtattr *arg)
+tc_print_action(FILE * f, const struct rtattr *arg)
 {
 
 	int i;
@@ -311,7 +301,9 @@ tc_print_action(FILE * f, struct rtattr *arg)
 	return 0;
 }
 
-int do_print_action(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int do_print_action(const struct sockaddr_nl *who,
+			   const struct nlmsghdr *n,
+			   void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct tcamsg *t = NLMSG_DATA(n);
