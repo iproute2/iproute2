@@ -25,7 +25,7 @@
 #include "tc_util.h"
 #include "tc_common.h"
 
-static void usage(void) __attribute__((noreturn));
+static void usage(void);
 
 static void usage(void)
 {
@@ -37,7 +37,7 @@ static void usage(void)
 	fprintf(stderr, "Where:\n");
 	fprintf(stderr, "QDISC_KIND := { prio | cbq | etc. }\n");
 	fprintf(stderr, "OPTIONS := ... try tc class add <desired QDISC_KIND> help\n");
-	exit(-1);
+	return;
 }
 
 int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
@@ -80,7 +80,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID.\n");
-				exit(-1);
+				return -1;
 			}
 			req.t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "parent") == 0) {
@@ -114,37 +114,39 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (q) {
 		if (q->parse_copt == NULL) {
 			fprintf(stderr, "Error: Qdisc \"%s\" is classless.\n", k);
-			exit(1);
+			return 1;
 		}
 		if (q->parse_copt(q, argc, argv, &req.n))
-			exit(1);
+			return 1;
 	} else {
 		if (argc) {
 			if (matches(*argv, "help") == 0)
 				usage();
 			fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"tc class help\".", *argv);
-			exit(-1);
+			return -1;
 		}
 	}
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		exit(1);
-	}
+	if (!is_batch_mode)
+		if (rtnl_open(&rth, 0) < 0) {
+			fprintf(stderr, "Cannot open rtnetlink\n");
+			return 1;
+		}
 
 	if (d[0])  {
-		ll_init_map(&rth);
+		ll_init_map(&(is_batch_mode?g_rth:rth));
 
 		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			exit(1);
+			return 1;
 		}
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
-		exit(2);
+	if (rtnl_talk(&(is_batch_mode?g_rth:rth), &req.n, 0, 0, NULL, NULL, NULL) < 0)
+		return 2;
 
-	rtnl_close(&rth);
+	if (!is_batch_mode)
+		rtnl_close(&rth);
 	return 0;
 }
 
@@ -257,7 +259,7 @@ int tc_class_list(int argc, char **argv)
 		} else if (strcmp(*argv, "root") == 0) {
 			if (t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
-				exit(-1);
+				return -1;
 			}
 			t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "parent") == 0) {
@@ -272,40 +274,42 @@ int tc_class_list(int argc, char **argv)
 			usage();
 		} else {
 			fprintf(stderr, "What is \"%s\"? Try \"tc class help\".\n", *argv);
-			exit(-1);
+			return -1;
 		}
 
 		argc--; argv++;
 	}
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		exit(1);
-	}
-
-	ll_init_map(&rth);
+ 	if (!is_batch_mode)
+ 		if (rtnl_open(&rth, 0) < 0) {
+ 			fprintf(stderr, "Cannot open rtnetlink\n");
+ 			return 1;
+ 		}
+ 
+ 	ll_init_map(&(is_batch_mode?g_rth:rth));
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			exit(1);
+			return 1;
 		}
 		filter_ifindex = t.tcm_ifindex;
 	}
 
-	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
+ 	if (rtnl_dump_request(&(is_batch_mode?g_rth:rth), RTM_GETTCLASS, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
 		rtnl_close(&rth);
-		exit(1);
+		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, print_class, stdout, NULL, NULL) < 0) {
+ 	if (rtnl_dump_filter(&(is_batch_mode?g_rth:rth), print_class, stdout, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		rtnl_close(&rth);
-		exit(1);
+		return 1;
 	}
 
-	rtnl_close(&rth);
+ 	if (!is_batch_mode)
+ 		rtnl_close(&rth);
 	return 0;
 }
 
