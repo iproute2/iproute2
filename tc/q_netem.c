@@ -213,7 +213,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		argc--; argv++;
 	}
 
-	tail = (struct rtattr*)(((void*)n) + NLMSG_ALIGN(n->nlmsg_len));
+	tail = NLMSG_TAIL(n);
 
 	addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
 	addattr_l(n, 1024, TCA_NETEM_CORR, &cor, sizeof(cor));
@@ -222,7 +222,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		addattr_l(n, 32768, TCA_NETEM_DELAY_DIST,
 			  dist_data, dist_size*sizeof(dist_data[0]));
 	}
-	tail->rta_len = (((void*)n)+NLMSG_ALIGN(n->nlmsg_len)) - (void*)tail;
+	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
 
