@@ -1,3 +1,7 @@
+2005-03-30  Masahide NAKAMURA <nakam@linux-ipv6.org>
+	
+	* ipv6 xfrm allocspi and monitor support.
+	
 2005-03-29  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
 
 	* switch to stack for netem tables
