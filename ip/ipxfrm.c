@@ -565,61 +565,57 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
 	}
 }
 
-void xfrm_xfrma_print(struct rtattr *tb[], int ntb, __u16 family,
+void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		      FILE *fp, const char *prefix)
 {
-	int i;
+	if (tb[XFRMA_ALG_AUTH]) {
+		struct rtattr *rta = tb[XFRMA_ALG_AUTH];
+		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
+			XFRMA_ALG_AUTH, RTA_PAYLOAD(rta), fp, prefix);
+	}
 
-	for (i = 0; i < ntb; i++) {
-		__u16 type = tb[i]->rta_type;
-		int len = RTA_PAYLOAD(tb[i]);
-		void *data = RTA_DATA(tb[i]);
+	if (tb[XFRMA_ALG_CRYPT]) {
+		struct rtattr *rta = tb[XFRMA_ALG_CRYPT];
+		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
+			XFRMA_ALG_CRYPT, RTA_PAYLOAD(rta), fp, prefix);
+	}
 
-		switch (type) {
-		case XFRMA_ALG_CRYPT:
-		case XFRMA_ALG_AUTH:
-		case XFRMA_ALG_COMP:
-			xfrm_algo_print((struct xfrm_algo *)data, type, len,
-					fp, prefix);
-			break;
-		case XFRMA_ENCAP:
-		{
-			struct xfrm_encap_tmpl *e;
-			char abuf[256];
+	if (tb[XFRMA_ALG_COMP]) {
+		struct rtattr *rta = tb[XFRMA_ALG_COMP];
+		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
+			XFRMA_ALG_COMP, RTA_PAYLOAD(rta), fp, prefix);
+	}
 
-			if (prefix)
-				fprintf(fp, prefix);
-			fprintf(fp, "encap ");
+	if (tb[XFRMA_ENCAP]) {
+		struct xfrm_encap_tmpl *e;
+		char abuf[256];
 
-			if (len < sizeof(*e)) {
-				fprintf(fp, "(ERROR truncated)");
-				fprintf(fp, "%s", _SL_);
-				break;
-			}
-			e = (struct xfrm_encap_tmpl *)data;
+		if (prefix)
+			fprintf(fp, prefix);
+		fprintf(fp, "encap ");
 
-			fprintf(fp, "type %u ", e->encap_type);
-			fprintf(fp, "sport %u ", ntohs(e->encap_sport));
-			fprintf(fp, "dport %u ", ntohs(e->encap_dport));
-
-			memset(abuf, '\0', sizeof(abuf));
-			fprintf(fp, "addr %s",
-				rt_addr_n2a(family, sizeof(e->encap_oa),
-					    &e->encap_oa, abuf, sizeof(abuf)));
+		if (RTA_PAYLOAD(tb[XFRMA_ENCAP]) < sizeof(*e)) {
+			fprintf(fp, "(ERROR truncated)");
 			fprintf(fp, "%s", _SL_);
-			break;
+			return;
 		}
-		case XFRMA_TMPL:
-			xfrm_tmpl_print((struct xfrm_user_tmpl *)data,
-					len, family, fp, prefix);
-			break;
-		default:
-			if (prefix)
-				fprintf(fp, prefix);
-			fprintf(fp, "%u (unknown rta_type)", type);
-			fprintf(fp, "%s", _SL_);
-			break;
-		}
+		e = (struct xfrm_encap_tmpl *) RTA_DATA(tb[XFRMA_ENCAP]);
+
+		fprintf(fp, "type %u ", e->encap_type);
+		fprintf(fp, "sport %u ", ntohs(e->encap_sport));
+		fprintf(fp, "dport %u ", ntohs(e->encap_dport));
+
+		memset(abuf, '\0', sizeof(abuf));
+		fprintf(fp, "addr %s",
+			rt_addr_n2a(family, sizeof(e->encap_oa),
+				    &e->encap_oa, abuf, sizeof(abuf)));
+		fprintf(fp, "%s", _SL_);
+	}
+
+	if (tb[XFRMA_TMPL]) {
+		struct rtattr *rta = tb[XFRMA_TMPL];
+		xfrm_tmpl_print((struct xfrm_user_tmpl *) RTA_DATA(rta),
+			RTA_PAYLOAD(rta), family, fp, prefix);
 	}
 }
 
