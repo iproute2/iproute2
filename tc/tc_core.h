@@ -13,4 +13,7 @@ int tc_setup_estimator(unsigned A, unsigned time_const, struct tc_estimator *est
 
 int tc_core_init(void);
 
+extern struct rtnl_handle g_rth;
+extern int is_batch_mode;
+
 #endif
