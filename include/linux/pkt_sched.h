@@ -401,7 +401,8 @@ enum {
 
 #define TCA_ATM_MAX	TCA_ATM_STATE
 
-/* Network emulator */
+/* Network section */
+
 struct tc_netem_qopt
 {
 	__u32	latency;	/* added delay (us) */
@@ -409,6 +410,14 @@ struct tc_netem_qopt
 	__u32	loss;		/* random packet loss (0=none ~0=100%) */
 	__u32	gap;		/* re-ordering gap (0 for delay all) */
 	__u32   duplicate;	/* random packet dup  (0=none ~0=100%) */
-	__u32	jitter;		/* random jitter in latency (us) */
+	__u32	jitter;		/* delay sigma (us) */
+
+	__u32	delay_corr;	/* delay correllation (0=none ~0=100%) */
+	__u32	loss_corr;	/* packet loss correllation (0=none ~0=100%) */
+	__u32	dup_corr;	/* duplicate correlation (0=none ~0=100%) */
+
+	__s16	delay_dist[0];	/* delay distribution table (optional) */
+#define TCA_NETEM_TABLEFACTOR	8192
 };
+
 #endif
