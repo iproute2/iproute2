@@ -1,6 +1,6 @@
 IPOBJ=ip.o ipaddress.o iproute.o iprule.o \
     rtm_map.o iptunnel.o ipneigh.o iplink.o ipmaddr.o \
-    ipmonitor.o ipmroute.o
+    ipmonitor.o ipmroute.o ipxfrm.o xfrm_state.o xfrm_policy.o
 
 RTMONOBJ=rtmon.o
 

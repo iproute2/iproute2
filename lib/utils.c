@@ -58,6 +58,20 @@ int get_unsigned(unsigned *val, const char *arg, int base)
 	return 0;
 }
 
+int get_u64(__u64 *val, const char *arg, int base)
+{
+	unsigned long long res;
+	char *ptr;
+
+	if (!arg || !*arg)
+		return -1;
+	res = strtoull(arg, &ptr, base);
+	if (!ptr || ptr == arg || *ptr || res == 0xFFFFFFFFULL)
+ 		return -1;
+ 	*val = res;
+ 	return 0;
+}
+
 int get_u32(__u32 *val, const char *arg, int base)
 {
 	unsigned long res;
@@ -186,7 +200,7 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	return 0;
 }
 
-int get_prefix_1(inet_prefix *dst, char *arg, int family)
+int get_prefix_1(inet_prefix *dst, const char *arg, int family)
 {
 	int err;
 	unsigned plen;
@@ -235,7 +249,7 @@ done:
 	return err;
 }
 
-int get_addr(inet_prefix *dst, char *arg, int family)
+int get_addr(inet_prefix *dst, const char *arg, int family)
 {
 	if (family == AF_PACKET) {
 		fprintf(stderr, "Error: \"%s\" may be inet address, but it is not allowed in this context.\n", arg);
@@ -248,7 +262,7 @@ int get_addr(inet_prefix *dst, char *arg, int family)
 	return 0;
 }
 
-int get_prefix(inet_prefix *dst, char *arg, int family)
+int get_prefix(inet_prefix *dst, const char *arg, int family)
 {
 	if (family == AF_PACKET) {
 		fprintf(stderr, "Error: \"%s\" may be inet prefix, but it is not allowed in this context.\n", arg);
@@ -261,7 +275,7 @@ int get_prefix(inet_prefix *dst, char *arg, int family)
 	return 0;
 }
 
-__u32 get_addr32(char *name)
+__u32 get_addr32(const char *name)
 {
 	inet_prefix addr;
 	if (get_addr_1(&addr, name, AF_INET)) {
@@ -274,6 +288,12 @@ __u32 get_addr32(char *name)
 void incomplete_command(void)
 {
 	fprintf(stderr, "Command line is not complete. Try option \"help\"\n");
+	exit(-1);
+}
+
+void missarg(const char *key)
+{
+	fprintf(stderr, "Error: argument \"%s\" is required\n", key);
 	exit(-1);
 }
 
@@ -344,7 +364,7 @@ int __get_hz(void)
 
 	if (getenv("PROC_NET_PSCHED")) {
 		snprintf(name, sizeof(name)-1, "%s", getenv("PROC_NET_PSCHED"));
-	} else if (getenv("PROC_ROOT")) { 
+	} else if (getenv("PROC_ROOT")) {
 		snprintf(name, sizeof(name)-1, "%s/net/psched", getenv("PROC_ROOT"));
 	} else {
 		strcpy(name, "/proc/net/psched");
@@ -427,7 +447,7 @@ char *resolve_address(const char *addr, int len, int af)
 		sethostent(1);
 	fflush(stdout);
 
-	if ((h_ent = gethostbyaddr(addr, len, af)) != NULL) 
+	if ((h_ent = gethostbyaddr(addr, len, af)) != NULL)
 		n->name = strdup(h_ent->h_name);
 
 	/* Even if we fail, "negative" entry is remembered. */
@@ -436,7 +456,7 @@ char *resolve_address(const char *addr, int len, int af)
 #endif
 
 
-const char *format_host(int af, int len, const void *addr, 
+const char *format_host(int af, int len, const void *addr,
 			char *buf, int buflen)
 {
 #ifdef RESOLVE_HOSTNAMES

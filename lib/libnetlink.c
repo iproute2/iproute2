@@ -30,13 +30,13 @@ void rtnl_close(struct rtnl_handle *rth)
 	close(rth->fd);
 }
 
-int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions)
+int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions, int protocol)
 {
 	int addr_len;
 
 	memset(rth, 0, sizeof(rth));
 
-	rth->fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	rth->fd = socket(AF_NETLINK, SOCK_RAW, protocol);
 	if (rth->fd < 0) {
 		perror("Cannot open netlink socket");
 		return -1;
@@ -65,6 +65,11 @@ int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions)
 	}
 	rth->seq = time(NULL);
 	return 0;
+}
+
+int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions)
+{
+	return rtnl_open_byproto(rth, subscriptions, NETLINK_ROUTE);
 }
 
 int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
@@ -520,4 +525,17 @@ int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 	if (len)
 		fprintf(stderr, "!!!Deficit %d, rta_len=%d\n", len, rta->rta_len);
 	return 0;
+}
+
+int parse_rtattr_byindex(struct rtattr *tb[], int max, struct rtattr *rta, int len)
+{
+	int i = 0;
+	while (RTA_OK(rta, len)) {
+		if (rta->rta_type <= max)
+			tb[i++] = rta;
+		rta = RTA_NEXT(rta,len);
+	}
+	if (len)
+		fprintf(stderr, "!!!Deficit %d, rta_len=%d\n", len, rta->rta_len);
+	return i;
 }

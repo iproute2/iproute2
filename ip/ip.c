@@ -40,7 +40,7 @@ static void usage(void)
 	fprintf(stderr,
 "Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
 "where  OBJECT := { link | addr | route | rule | neigh | tunnel |\n"
-"                   maddr | mroute | monitor }\n"
+"                   maddr | mroute | monitor | xfrm }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -r[esolve] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | link } | -o[neline] }\n");
 	exit(-1);
@@ -136,6 +136,8 @@ int main(int argc, char **argv)
 		return do_iptunnel(argc-1, argv+1);
 	if (strcmp(basename, "ipmonitor") == 0)
 		return do_ipmonitor(argc-1, argv+1);
+	if (strcmp(basename, "ipxfrm") == 0)
+		return do_xfrm(argc-1, argv+1);
 
 	if (argc > 1) {
 		if (matches(argv[1], "address") == 0)
@@ -158,6 +160,8 @@ int main(int argc, char **argv)
 			return do_iptunnel(argc-2, argv+2);
 		if (matches(argv[1], "monitor") == 0)
 			return do_ipmonitor(argc-2, argv+2);
+		if (matches(argv[1], "xfrm") == 0)
+			return do_xfrm(argc-2, argv+2);
 		if (matches(argv[1], "help") == 0)
 			usage();
 		fprintf(stderr, "Object \"%s\" is unknown, try \"ip help\".\n", argv[1]);

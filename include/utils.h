@@ -22,6 +22,9 @@ extern char * _SL_;
 #ifndef IPPROTO_AH
 #define IPPROTO_AH	51
 #endif
+#ifndef IPPROTO_COMP
+#define IPPROTO_COMP	108
+#endif
 
 #define SPRINT_BSIZE 64
 #define SPRINT_BUF(x)	char x[SPRINT_BSIZE]
@@ -29,6 +32,8 @@ extern char * _SL_;
 extern void incomplete_command(void) __attribute__((noreturn));
 
 #define NEXT_ARG() do { argv++; if (--argc <= 0) incomplete_command(); } while(0)
+#define NEXT_ARG_OK() (argc - 1 > 0)
+#define PREV_ARG() do { argv--; argc++; } while(0)
 
 typedef struct
 {
@@ -56,17 +61,18 @@ struct ipx_addr {
 	u_int8_t  ipx_node[IPX_NODE_LEN];
 };
 
-extern __u32 get_addr32(char *name);
+extern __u32 get_addr32(const char *name);
 extern int get_addr_1(inet_prefix *dst, const char *arg, int family);
-extern int get_prefix_1(inet_prefix *dst, char *arg, int family);
-extern int get_addr(inet_prefix *dst, char *arg, int family);
-extern int get_prefix(inet_prefix *dst, char *arg, int family);
+extern int get_prefix_1(inet_prefix *dst, const char *arg, int family);
+extern int get_addr(inet_prefix *dst, const char *arg, int family);
+extern int get_prefix(inet_prefix *dst, const char *arg, int family);
 
 extern int get_integer(int *val, const char *arg, int base);
 extern int get_unsigned(unsigned *val, const char *arg, int base);
 #define get_byte get_u8
 #define get_ushort get_u16
 #define get_short get_s16
+extern int get_u64(__u64 *val, const char *arg, int base);
 extern int get_u32(__u32 *val, const char *arg, int base);
 extern int get_u16(__u16 *val, const char *arg, int base);
 extern int get_s16(__s16 *val, const char *arg, int base);
@@ -81,6 +87,7 @@ extern const char *format_host(int af, int len, const void *addr,
 extern const char *rt_addr_n2a(int af, int len, const void *addr, 
 			       char *buf, int buflen);
 
+void missarg(const char *) __attribute__((noreturn));
 void invarg(const char *, const char *) __attribute__((noreturn));
 void duparg(const char *, const char *) __attribute__((noreturn));
 void duparg2(const char *, const char *) __attribute__((noreturn));

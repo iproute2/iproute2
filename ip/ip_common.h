@@ -18,3 +18,4 @@ extern int do_iplink(int argc, char **argv);
 extern int do_ipmonitor(int argc, char **argv);
 extern int do_multiaddr(int argc, char **argv);
 extern int do_multiroute(int argc, char **argv);
+extern int do_xfrm(int argc, char **argv);
