@@ -12,7 +12,7 @@
 #include <linux/pkt_sched.h>
 
 #define TABLESIZE 16384
-#define TABLEFACTOR TCA_NETEM_TABLEFACTOR
+#define TABLEFACTOR NETEM_DIST_SCALE
 
 static double
 normal(double x, double mu, double sigma)
@@ -38,10 +38,8 @@ main(int argc, char **argv)
 		table[i] = x;
 	}
 
-	printf(
-"# This is the distribution table for the normal distribution.\n"
-	);
-
+	
+	printf("# This is the distribution table for the normal distribution.\n");
 	for (i = n = 0; i < TABLESIZE; i += 4) {
 		int value = (int) rint(table[i]*TABLEFACTOR);
 		if (value < SHRT_MIN) value = SHRT_MIN;

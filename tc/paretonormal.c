@@ -21,7 +21,7 @@
 #include <linux/pkt_sched.h>
 
 #define TABLESIZE	16384
-#define TABLEFACTOR	TCA_NETEM_TABLEFACTOR
+#define TABLEFACTOR	NETEM_DIST_SCALE
 
 static double
 normal(double x, double mu, double sigma)

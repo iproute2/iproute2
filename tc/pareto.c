@@ -12,7 +12,7 @@
 
 static const double a=3.0;
 #define TABLESIZE	16384
-#define TABLEFACTOR 	TCA_NETEM_TABLEFACTOR
+#define TABLEFACTOR	NETEM_DIST_SCALE
 
 int
 main(int argc, char **argv)
@@ -20,9 +20,7 @@ main(int argc, char **argv)
 	int i, n;
 	double dvalue;
 
-	printf(
-"# This is the distribution table for the pareto distribution.\n"
-	);
+	printf("# This is the distribution table for the pareto distribution.\n");
 
 	for (i = 65536, n = 0; i > 0; i -= 16) {
 		dvalue = (double)i/(double)65536;
