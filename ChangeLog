@@ -18,6 +18,10 @@
 
 	* bug: Use USER_HZ where necessary
 
+2005-03-10  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Fix bug with register_target
+
 2005-03-10  Stephen Hemminger  <shemminger@osdl.org>
 
 	* fix pkt_cls.h to have tc_u32_mark
