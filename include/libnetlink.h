@@ -42,6 +42,9 @@ extern int rta_addattr_l(struct rtattr *rta, int maxlen, int type, const void *d
 extern int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 extern int parse_rtattr_byindex(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 
+#define parse_rtattr_nested(tb, max, rta) \
+	(parse_rtattr((tb), (max), RTA_DATA(rta), RTA_PAYLOAD(rta)))
+
 extern int rtnl_listen(struct rtnl_handle *, rtnl_filter_t handler, 
 		       void *jarg);
 extern int rtnl_from_file(FILE *, rtnl_filter_t handler,
