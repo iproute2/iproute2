@@ -1,3 +1,7 @@
+2005-02-07 	Mads Martin Joergensen <mmj@suse.de>
+	
+	* Don't mix address families when flushing	
+	
 2005-02-07  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
 
 	* Validate classid is not too large to cause loss of bits.
