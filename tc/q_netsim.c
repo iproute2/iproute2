@@ -139,7 +139,7 @@ static int netsim_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	qopt = RTA_DATA(opt);
 
-	fprintf(f, "netsim limit %s", sprint_size(qopt->limit, b1));
+	fprintf(f, "limit %s", sprint_size(qopt->limit, b1));
 	if (qopt->latency)
 		fprintf(f, " latency %s", 
 			sprint_usecs(qopt->latency, b2));
