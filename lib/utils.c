@@ -384,6 +384,13 @@ int __get_hz(void)
 	return HZ;
 }
 
+int __iproute2_user_hz_internal;
+
+int __get_user_hz(void)
+{
+	return sysconf(_SC_CLK_TCK);
+}
+
 const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen)
 {
 	switch (af) {

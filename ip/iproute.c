@@ -410,7 +410,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			struct rta_cacheinfo *ci = RTA_DATA(tb[RTA_CACHEINFO]);
 			static int hz;
 			if (!hz)
-				hz = get_hz();
+				hz = get_user_hz();
 			if (ci->rta_expires != 0)
 				fprintf(fp, " expires %dsec", ci->rta_expires/hz);
 			if (ci->rta_error != 0)
@@ -437,7 +437,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if ((r->rtm_flags & RTM_F_CLONED) || (ci && ci->rta_expires)) {
 			static int hz;
 			if (!hz)
-				hz = get_hz();
+				hz = get_user_hz();
 			if (r->rtm_flags & RTM_F_CLONED)
 				fprintf(fp, "%s    cache ", _SL_);
 			if (ci->rta_expires)
@@ -487,7 +487,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			if (i-2 < sizeof(mx_names)/sizeof(char*))
 				fprintf(fp, " %s", mx_names[i-2]);
 			else
-				fprintf(fp, " metric%d", i);
+				fprintf(fp, " metric %d", i);
 			if (mxlock & (1<<i))
 				fprintf(fp, " lock");
 

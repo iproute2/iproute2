@@ -113,4 +113,14 @@ static __inline__ int get_hz(void)
 	return __iproute2_hz_internal;
 }
 
+extern int __iproute2_user_hz_internal;
+extern int __get_user_hz(void);
+
+static __inline__ int get_user_hz(void)
+{
+	if (__iproute2_user_hz_internal == 0)
+		__iproute2_user_hz_internal = __get_user_hz();
+	return __iproute2_user_hz_internal;
+}
+
 #endif /* __UTILS_H__ */

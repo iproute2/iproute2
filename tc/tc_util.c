@@ -421,7 +421,7 @@ int action_a2n(char *arg, int *result)
 
 void print_tm(FILE * f, const struct tcf_t *tm)
 {
-	int hz = get_hz();
+	int hz = get_user_hz();
 	if (tm->install != 0)
 		fprintf(f, " installed %u sec", (unsigned)(tm->install/hz));
 	if (tm->lastuse != 0)
