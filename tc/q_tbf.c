@@ -257,7 +257,7 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-struct qdisc_util tbf_util = {
+struct qdisc_util tbf_qdisc_util = {
 	.id		= "tbf",
 	.parse_qopt	= tbf_parse_opt,
 	.print_qopt	= tbf_print_opt,

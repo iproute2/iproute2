@@ -111,7 +111,7 @@ int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-struct qdisc_util prio_util = {
+struct qdisc_util prio_qdisc_util = {
 	.id	 	= "prio",
 	.parse_qopt	= prio_parse_opt,
 	.print_qopt	= prio_print_opt,

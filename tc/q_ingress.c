@@ -62,7 +62,7 @@ static int ingress_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-struct qdisc_util ingress_util = {
+struct qdisc_util ingress_qdisc_util = {
 	.id		= "ingress",
 	.parse_qopt	= ingress_parse_opt,
 	.print_qopt	= ingress_print_opt,

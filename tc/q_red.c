@@ -213,7 +213,7 @@ static int red_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 }
 
 
-struct qdisc_util red_util = {
+struct qdisc_util red_qdisc_util = {
 	.id		= "red",
 	.parse_qopt	= red_parse_opt,
 	.print_qopt	= red_print_opt,

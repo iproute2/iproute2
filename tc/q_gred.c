@@ -329,7 +329,7 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-struct qdisc_util gred_util = {
+struct qdisc_util gred_qdisc_util = {
 	.id		= "gred",
 	.parse_qopt	= gred_parse_opt,
 	.print_qopt	= gred_print_opt,

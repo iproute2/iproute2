@@ -100,7 +100,7 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-struct qdisc_util sfq_util = {
+struct qdisc_util sfq_qdisc_util = {
 	.id		= "sfq",
 	.parse_qopt	= sfq_parse_opt,
 	.print_qopt	= sfq_print_opt,

@@ -239,7 +239,7 @@ print_gact(struct action_util *au,FILE * f, struct rtattr *arg)
 	return 0;
 }
 
-struct action_util gact_util = {
+struct action_util gact_action_util = {
 	.id = "gact",
 	.parse_aopt = parse_gact,
 	.print_aopt = print_gact,

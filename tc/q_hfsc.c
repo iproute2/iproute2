@@ -277,7 +277,7 @@ hfsc_print_class_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
  
-struct qdisc_util hfsc_util = {
+struct qdisc_util hfsc_qdisc_util = {
 	.id		= "hfsc",
 	.parse_qopt	= hfsc_parse_opt,
 	.print_qopt	= hfsc_print_opt,

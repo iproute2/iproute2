@@ -542,7 +542,7 @@ static int cbq_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 	return 0;
 }
 
-struct qdisc_util cbq_util = {
+struct qdisc_util cbq_qdisc_util = {
 	.id		= "cbq",
 	.parse_qopt	= cbq_parse_opt,
 	.print_qopt	= cbq_print_opt,

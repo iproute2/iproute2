@@ -107,7 +107,7 @@ struct qdisc_util *get_qdisc_kind(const char *str)
 		}
 	}
 
-	snprintf(buf, sizeof(buf), "%s_util", str);
+	snprintf(buf, sizeof(buf), "%s_qdisc_util", str);
 	q = dlsym(dlh, buf);
 	if (q == NULL)
 		goto noexist;
@@ -152,7 +152,7 @@ struct filter_util *get_filter_kind(const char *str)
 		}
 	}
 
-	snprintf(buf, sizeof(buf), "%s_util", str);
+	snprintf(buf, sizeof(buf), "%s_filter_util", str);
 	q = dlsym(dlh, buf);
 	if (q == NULL)
 		goto noexist;

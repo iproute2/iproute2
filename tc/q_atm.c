@@ -250,7 +250,7 @@ static int atm_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 }
 
 
-struct qdisc_util atm_util = {
+struct qdisc_util atm_qdisc_util = {
 	.id 		= "atm",
 	.parse_qopt	= atm_parse_opt,
 	.print_qopt	= atm_print_opt,

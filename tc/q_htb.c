@@ -311,7 +311,7 @@ static int htb_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 	return 0;
 }
 
-struct qdisc_util htb_util = {
+struct qdisc_util htb_qdisc_util = {
 	.id 		= "htb",
 	.parse_qopt	= htb_parse_opt,
 	.print_qopt	= htb_print_opt,
@@ -321,7 +321,7 @@ struct qdisc_util htb_util = {
 };
 
 /* for testing of old one */
-struct qdisc_util htb2_util = {
+struct qdisc_util htb2_qdisc_util = {
 	.id		=  "htb2",
 	.parse_qopt	= htb_parse_opt,
 	.print_qopt	= htb_print_opt,

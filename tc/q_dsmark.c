@@ -168,7 +168,7 @@ static int dsmark_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 }
 
 
-struct qdisc_util dsmark_util = {
+struct qdisc_util dsmark_qdisc_util = {
 	.id		= "dsmark",
 	.parse_qopt	= dsmark_parse_opt,
 	.print_qopt	= dsmark_print_opt,

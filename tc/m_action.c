@@ -87,7 +87,7 @@ restart_s:
 		}
 	}
 
-	snprintf(buf, sizeof(buf), "%s_util", str);
+	snprintf(buf, sizeof(buf), "%s_action_util", str);
 	a = dlsym(dlh, buf);
 	if (a == NULL)
 		goto noexist;

@@ -79,20 +79,20 @@ static int fifo_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 }
 
 
-struct qdisc_util bfifo_util = {
+struct qdisc_util bfifo_qdisc_util = {
 	.id = "bfifo",
 	.parse_qopt = fifo_parse_opt,
 	.print_qopt = fifo_print_opt,
 };
 
-struct qdisc_util pfifo_util = {
+struct qdisc_util pfifo_qdisc_util = {
 	.id = "pfifo",
 	.parse_qopt = fifo_parse_opt,
 	.print_qopt = fifo_print_opt,
 };
 
 extern int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
-struct qdisc_util pfifo_fast_util = {
+struct qdisc_util pfifo_fast_qdisc_util = {
 	.id = "pfifo_fast",
 	.print_qopt = prio_print_opt,
 };

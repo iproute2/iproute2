@@ -26,7 +26,7 @@
 #include "utils.h"
 #include "tc_util.h"
 
-struct action_util police_util = {
+struct action_util police_action_util = {
 	.id = "police",
 	.parse_aopt = act_parse_police,
 	.print_aopt = print_police,
@@ -356,5 +356,5 @@ print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 
 int 
 tc_print_police(FILE *f, struct rtattr *arg) {
-	return print_police(&police_util,f,arg);
+	return print_police(&police_action_util,f,arg);
 }
