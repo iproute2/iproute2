@@ -121,14 +121,16 @@ void load_good_table(FILE *fp)
 		int nr;
 		unsigned long long val;
 		double rate;
-		char idbuf[256];
+		char idbuf[sizeof(buf)];
 		if (buf[0] == '#') {
 			buf[strlen(buf)-1] = 0;
 			if (info_source[0] && strcmp(info_source, buf+1))
 				source_mismatch = 1;
-			strncpy(info_source, buf+1, sizeof(info_source)-1);
+			info_source[0] = 0;
+			strncat(info_source, buf+1, sizeof(info_source)-1);
 			continue;
 		}
+		/* idbuf is as big as buf, so this is safe */
 		nr = sscanf(buf, "%s%llu%lg", idbuf, &val, &rate);
 		if (nr < 2)
 			abort();
@@ -162,7 +164,7 @@ void load_ugly_table(FILE *fp)
 	struct nstat_ent *n;
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		char idbuf[256];
+		char idbuf[sizeof(buf)];
 		int  off;
 		char *p;
 
@@ -170,8 +172,9 @@ void load_ugly_table(FILE *fp)
 		if (!p)
 			abort();
 		*p = 0;
-		strcpy(idbuf, buf);
-		off = strlen(idbuf);
+		idbuf[0] = 0;
+		strncat(idbuf, buf, sizeof(idbuf) - 1);
+		off = p - buf;
 		p += 2;
 
 		while (*p) {
@@ -180,7 +183,10 @@ void load_ugly_table(FILE *fp)
 				*next++ = 0;
 			else if ((next = strchr(p, '\n')) != NULL)
 				*next++ = 0;
-			strcpy(idbuf+off, p);
+			if (off < sizeof(idbuf)) {
+				idbuf[off] = 0;
+				strncat(idbuf, p, sizeof(idbuf) - off - 1);
+			}
 			n = malloc(sizeof(*n));
 			if (!n)
 				abort();
