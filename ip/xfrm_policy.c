@@ -55,7 +55,6 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ip xfrm policy { add | update } dir DIR sel SELECTOR [ index INDEX ] \n");
 	fprintf(stderr, "        [ action ACTION ] [ priority PRIORITY ] [ LIMIT-LIST ] [ TMPL-LIST ]\n");
-	fprintf(stderr, "        [ sel SELECTOR | index INDEX ] [ TMPL-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy { delete | get } dir DIR [ sel SELECTOR | index INDEX ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy { flush | list } [ dir DIR ] [ sel SELECTOR ]\n");
 	fprintf(stderr, "        [ index INDEX ] [ action ACTION ] [ priority PRIORITY ]\n");
@@ -75,11 +74,16 @@ static void usage(void)
 	fprintf(stderr, "LIMIT := [ [time-soft|time-hard|time-use-soft|time-use-hard] SECONDS ] |\n");
 	fprintf(stderr, "         [ [byte-soft|byte-hard] SIZE ] | [ [packet-soft|packet-hard] NUMBER ]\n");
 
-	fprintf(stderr, "TMPL-LIST := [ TMPL-LIST ] | [ tmpl TMPL ] | [ tmpl remain ](change only)\n");
+	fprintf(stderr, "TMPL-LIST := [ TMPL-LIST ] | [ tmpl TMPL ]\n");
 	fprintf(stderr, "TMPL := ID [ mode MODE ] [ reqid REQID ] [ level LEVEL ]\n");
 	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM_PROTO ] [ spi SPI ]\n");
 
-	fprintf(stderr, "XFRM_PROTO := [ esp | ah | ipcomp ]\n");
+	//fprintf(stderr, "XFRM_PROTO := [ esp | ah | ipcomp ]\n");
+	fprintf(stderr, "XFRM_PROTO := [ ");
+	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_ESP));
+	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_AH));
+	fprintf(stderr, "%s", strxf_proto(IPPROTO_COMP));
+	fprintf(stderr, " ]\n");
 
  	fprintf(stderr, "MODE := [ transport | tunnel ](default=transport)\n");
  	//fprintf(stderr, "REQID - number(default=0)\n");
@@ -358,20 +362,47 @@ int xfrm_policy_print(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)
 		fprintf(fp, "Deleted ");
 
+	fprintf(fp, "sel ");
 	xfrm_selector_print(&xpinfo->sel, preferred_family, fp, NULL);
 
 	fprintf(fp, "\t");
-	fprintf(fp, "%s ", (xpinfo->dir == XFRM_POLICY_IN ? "in " :
-			    xpinfo->dir == XFRM_POLICY_OUT ? "out" :
-			    xpinfo->dir == XFRM_POLICY_FWD ? "fwd" :
-			    "unknown-dir"));
-	fprintf(fp, "%s ", (xpinfo->action == XFRM_POLICY_ALLOW ? "allow" :
-			   xpinfo->action == XFRM_POLICY_BLOCK ? "block" :
-			   "unknown-action"));
+	fprintf(fp, "dir ");
+	switch (xpinfo->dir) {
+	case XFRM_POLICY_IN:
+		fprintf(fp, "in");
+		break;
+	case XFRM_POLICY_OUT:
+		fprintf(fp, "out");
+		break;
+	case XFRM_POLICY_FWD:
+		fprintf(fp, "fwd");
+		break;
+	default:
+		fprintf(fp, "%d", xpinfo->dir);
+		break;
+	}
+	fprintf(fp, " ");
+
+	fprintf(fp, "action ");
+	switch (xpinfo->action) {
+	case XFRM_POLICY_ALLOW:
+		fprintf(fp, "allow");
+		break;
+	case XFRM_POLICY_BLOCK:
+		fprintf(fp, "block");
+		break;
+	default:
+		fprintf(fp, "%d", xpinfo->action);
+		break;
+	}
+	fprintf(fp, " ");
+
 	fprintf(fp, "index %u ", xpinfo->index);
 	fprintf(fp, "priority %u ", xpinfo->priority);
-	fprintf(fp, "share %s ", strxf_share(xpinfo->share));
-	fprintf(fp, "flags 0x%s", strxf_flags(xpinfo->flags));
+	if (show_stats > 0) {
+		fprintf(fp, "share %s ", strxf_share(xpinfo->share));
+		fprintf(fp, "flags 0x%s", strxf_flags(xpinfo->flags));
+	}
 	fprintf(fp, "\n");
 
 	if (show_stats > 0)

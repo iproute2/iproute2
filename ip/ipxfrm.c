@@ -91,6 +91,23 @@ const char *strxf_share(__u8 share)
 	return str;
 }
 
+const char *strxf_proto(__u8 proto)
+{
+	static char buf[32];
+	struct protoent *pp;
+	const char *p;
+
+	pp = getprotobynumber(proto);
+	if (pp)
+		p = pp->p_name;
+	else {
+		sprintf(buf, "%d", proto);
+		p = buf;
+	}
+
+	return p;
+}
+
 void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 			__u8 mode, __u32 reqid, __u16 family, FILE *fp,
 			const char *prefix)
@@ -105,11 +122,11 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 		fprintf(fp, prefix);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "%s ", rt_addr_n2a(family, sizeof(*saddr),
-				       saddr, abuf, sizeof(abuf)));
+	fprintf(fp, "src %s ", rt_addr_n2a(family, sizeof(*saddr),
+					   saddr, abuf, sizeof(abuf)));
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "%s\n", rt_addr_n2a(family, sizeof(id->daddr),
-					&id->daddr, abuf, sizeof(abuf)));
+	fprintf(fp, "dst %s\n", rt_addr_n2a(family, sizeof(id->daddr),
+					    &id->daddr, abuf, sizeof(abuf)));
 
 	if (prefix)
 		fprintf(fp, prefix);
@@ -122,30 +139,20 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 		sprintf(pbuf, "%d", id->proto);
 		p = pbuf;
 	}
+	fprintf(fp, "proto %s ", p);
 
-	switch (id->proto) {
-	case IPPROTO_ESP:
-	case IPPROTO_AH:
-	case IPPROTO_COMP:
-		fprintf(fp, "%s ", p);
-		break;
-	default:
-		fprintf(fp, "unspec(%s)", p);
-		break;
-	}
+	spi = ntohl(id->spi);
+	fprintf(fp, "spi %u", spi);
+	if (show_stats > 0)
+		fprintf(fp, "(0x%08x)", spi);
+	fprintf(fp, " ");
 
-	switch (id->proto) {
-	case IPPROTO_ESP:
-	case IPPROTO_AH:
-	case IPPROTO_COMP:
-	default:
-		spi = ntohl(id->spi);
-		fprintf(fp, "spi %d(0x%08x) ", spi, spi);
-		break;
-	}
+	fprintf(fp, "reqid %u", reqid);
+	if (show_stats > 0)
+		fprintf(fp, "(0x%08x)", reqid);
+	fprintf(fp, " ");
 
-	fprintf(fp, "reqid %d ", reqid);
-	fprintf(fp, "%s\n", (mode ? "tunnel" : "transport"));
+	fprintf(fp, "mode %s\n", (mode ? "tunnel" : "transport"));
 }
 
 static const char *strxf_limit(__u64 limit)
@@ -279,16 +286,14 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		fprintf(fp, prefix);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "%s/%d[%u]", rt_addr_n2a(f, sizeof(sel->saddr),
-					     &sel->saddr,
-					     abuf, sizeof(abuf)),
-		sel->prefixlen_s, sel->sport);
+	fprintf(fp, "src %s/%d ", rt_addr_n2a(f, sizeof(sel->saddr),
+					      &sel->saddr, abuf, sizeof(abuf)),
+		sel->prefixlen_s);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, " %s/%d[%u]", rt_addr_n2a(f, sizeof(sel->daddr),
-					      &sel->daddr,
-					      abuf, sizeof(abuf)),
-		sel->prefixlen_d, sel->dport);
+	fprintf(fp, "dst %s/%d", rt_addr_n2a(f, sizeof(sel->daddr),
+					      &sel->daddr, abuf, sizeof(abuf)),
+		sel->prefixlen_d);
 
 	fprintf(fp, "\n");
 
@@ -296,7 +301,8 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		fprintf(fp, prefix);
 	fprintf(fp, "\t");
 
-	fprintf(fp, "upspec %u ", sel->proto);
+	fprintf(fp, "upspec proto %u ", sel->proto);
+	fprintf(fp, "sport %u dport %u ", sel->sport, sel->dport);
 
 	if (sel->ifindex > 0) {
 		char buf[IF_NAMESIZE];
@@ -304,10 +310,10 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		memset(buf, '\0', sizeof(buf));
 		if_indextoname(sel->ifindex, buf);
 		fprintf(fp, "dev %s ", buf);
-	} else
-		fprintf(fp, "dev (none) ");
+	}
 
-	fprintf(fp, "uid %u", sel->user);
+	if (show_stats > 0)
+		fprintf(fp, "uid %u", sel->user);
 	fprintf(fp, "\n");
 }
 
@@ -367,35 +373,41 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int ntmpls,
 			    __u16 family, FILE *fp, const char *prefix)
 {
 	char buf[32];
-	const char *p = NULL;
 	int i;
-
-	if (prefix) {
-		strcpy(buf, prefix);
-		strcat(buf, "  ");
-	} else
-		strcpy(buf, "  ");
-	p = buf;
 
 	for (i = 0; i < ntmpls; i++) {
 		struct xfrm_user_tmpl *tmpl = &tmpls[i];
 
 		if (prefix)
 			fprintf(fp, prefix);
-		fprintf(fp, "tmpl-%d:\n", i+1);
-		xfrm_id_info_print(&tmpl->saddr, &tmpl->id, tmpl->mode,
-				   tmpl->reqid, family, fp, p);
 
-		fprintf(fp, p);
+		fprintf(fp, "tmpl");
+		xfrm_id_info_print(&tmpl->saddr, &tmpl->id, tmpl->mode,
+				   tmpl->reqid, family, fp, prefix);
+
+		fprintf(fp, prefix);
 		fprintf(fp, "\t");
-		fprintf(fp, "level %s ", ((tmpl->optional == 0) ? "required" :
-					  (tmpl->optional == 1) ? "use" :
-					  "unknown-level"));
-		fprintf(fp, "share %s ", strxf_share(tmpl->share));
-		fprintf(fp, "algo-mask:");
-		fprintf(fp, "E=%s, ", strxf_mask(tmpl->ealgos));
-		fprintf(fp, "A=%s, ", strxf_mask(tmpl->aalgos));
-		fprintf(fp, "C=%s", strxf_mask(tmpl->calgos));
+		fprintf(fp, "level ");
+		switch (tmpl->optional) {
+		case 0:
+			fprintf(fp, "required");
+			break;
+		case 1:
+			fprintf(fp, "use");
+			break;
+		default:
+			fprintf(fp, "%d", tmpl->optional);
+			break;
+		}
+		fprintf(fp, " ");
+
+		if (show_stats > 0) {
+			fprintf(fp, "share %s ", strxf_share(tmpl->share));
+			fprintf(fp, "algo-mask:");
+			fprintf(fp, "E=%s, ", strxf_mask(tmpl->ealgos));
+			fprintf(fp, "A=%s, ", strxf_mask(tmpl->aalgos));
+			fprintf(fp, "C=%s", strxf_mask(tmpl->calgos));
+		}
 		fprintf(fp, "\n");
 	}
 }
@@ -413,17 +425,17 @@ void xfrm_xfrma_print(struct rtattr *tb[], int ntb, __u16 family,
 		case XFRMA_ALG_CRYPT:
 			if (prefix)
 				fprintf(fp, prefix);
-			xfrm_algo_print((struct xfrm_algo *)data, fp, "E:");
+			xfrm_algo_print((struct xfrm_algo *)data, fp, "algo E ");
 			break;
 		case XFRMA_ALG_AUTH:
 			if (prefix)
 				fprintf(fp, prefix);
-			xfrm_algo_print((struct xfrm_algo *)data, fp, "A:");
+			xfrm_algo_print((struct xfrm_algo *)data, fp, "algo A ");
 			break;
 		case XFRMA_ALG_COMP:
 			if (prefix)
 				fprintf(fp, prefix);
-			xfrm_algo_print((struct xfrm_algo *)data, fp, "C:");
+			xfrm_algo_print((struct xfrm_algo *)data, fp, "algo C ");
 			break;
 		case XFRMA_ENCAP:
 			if (prefix)
@@ -793,13 +805,12 @@ int do_xfrm(int argc, char **argv)
 	if (argc < 1)
 		usage();
 
-	if (strcmp(*argv, "state") == 0 ||
-	    strcmp(*argv, "sa") == 0) {
+	if (matches(*argv, "state") == 0 ||
+	    matches(*argv, "sa") == 0) {
 		return do_xfrm_state(argc-1, argv+1);
-	} else if (strcmp(*argv, "policy") == 0 ||
-		   strcmp(*argv, "pol") == 0) {
+	} else if (matches(*argv, "policy") == 0)
 		return do_xfrm_policy(argc-1, argv+1);
-	} else if (strcmp(*argv, "help") == 0) {
+	else if (matches(*argv, "help") == 0) {
 		usage();
 		fprintf(stderr, "xfrm Object \"%s\" is unknown.\n", *argv);
 		exit(-1);
