@@ -207,8 +207,7 @@ print_gact(struct action_util *au,FILE * f, struct rtattr *arg)
 	if (arg == NULL)
 		return -1;
 
-	memset(tb, 0, sizeof (tb));
-	parse_rtattr(tb, TCA_GACT_MAX, RTA_DATA(arg), RTA_PAYLOAD(arg));
+	parse_rtattr_nested(tb, TCA_GACT_MAX, arg);
 
 	if (tb[TCA_GACT_PARMS] == NULL) {
 		fprintf(f, "[NULL gact parameters]");

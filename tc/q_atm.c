@@ -195,9 +195,10 @@ static int atm_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct rtattr *tb[TCA_ATM_MAX+1];
 	char buffer[MAX_ATM_ADDR_LEN+1];
 
-	if (!opt) return 0;
-	memset(tb, 0, sizeof(tb));
-	parse_rtattr(tb, TCA_ATM_MAX, RTA_DATA(opt), RTA_PAYLOAD(opt));
+	if (opt == NULL)
+		return 0;
+
+	parse_rtattr_nested(tb, TCA_ATM_MAX, opt);
 	if (tb[TCA_ATM_ADDR]) {
 		if (RTA_PAYLOAD(tb[TCA_ATM_ADDR]) <
 		    sizeof(struct sockaddr_atmpvc))
