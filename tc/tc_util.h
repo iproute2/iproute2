@@ -22,7 +22,8 @@ struct filter_util
 {
 	struct filter_util *next;
 	char	id[16];
-	int	(*parse_fopt)(struct filter_util *qu, char *fhandle, int argc, char **argv, struct nlmsghdr *n);
+	int	(*parse_fopt)(struct filter_util *qu, char *fhandle, int argc, 
+			      char **argv, struct nlmsghdr *n);
 	int	(*print_fopt)(struct filter_util *qu, FILE *f, struct rtattr *opt, __u32 fhandle);
 };
 
@@ -30,12 +31,11 @@ struct action_util
 {
 	struct  action_util *next;
 	char    id[16];
-	int     (*parse_aopt)(struct action_util *a, int *argc, char ***argv, int code, struct nlmsghdr *n);
+	int     (*parse_aopt)(struct action_util *a, int *argc, char ***argv, 
+			      int code, struct nlmsghdr *n);
 	int     (*print_aopt)(struct action_util *au, FILE *f, struct rtattr *opt);
 	int     (*print_xstats)(struct action_util *au, FILE *f, struct rtattr *xstats);
-	 
 };
- 
 
 extern struct qdisc_util *get_qdisc_kind(const char *str);
 extern struct filter_util *get_filter_kind(const char *str);
