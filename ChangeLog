@@ -1,3 +1,15 @@
+2004-09-28  Andreas Haumer <andreas@xss.co.at>
+
+	* make install symlink fix.
+
+2004-09-28  Masahide Nakamura <nakam@linux-ipv6.org>
+
+	* ICMP/ICMPv6's type and code in IPsec selector.
+	* fixes `ip xfrm`'s algorithm key when using hexadecimal
+	* support 'ip xfrm' protocol types
+	* flush message types for XFRM's policy/state
+
+
 2004-09-01  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Fix ip command to not crash when interface name is too long.
