@@ -55,6 +55,10 @@ int accept_msg(const struct sockaddr_nl *who,
 		print_neigh(who, n, arg);
 		return 0;
 	}
+	if (n->nlmsg_type == RTM_NEWPREFIX) {
+		print_prefix(who, n, arg);
+		return 0;
+	}
 	if (n->nlmsg_type == 15) {
 		char *tstr;
 		time_t secs = ((__u32*)NLMSG_DATA(n))[0];
@@ -87,6 +91,7 @@ int do_ipmonitor(int argc, char **argv)
 	int llink=0;
 	int laddr=0;
 	int lroute=0;
+	int lprefix=0;
 
 	ipaddr_reset_filter(1);
 	iproute_reset_filter();
@@ -104,6 +109,9 @@ int do_ipmonitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "route") == 0) {
 			lroute=1;
+			groups = 0;
+		} else if (matches(*argv, "prefix") == 0) {
+			lprefix=1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
@@ -129,6 +137,10 @@ int do_ipmonitor(int argc, char **argv)
 			groups |= RTMGRP_IPV4_ROUTE;
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= RTMGRP_IPV6_ROUTE;
+	}
+	if (lprefix) {
+		if (!preferred_family || preferred_family == AF_INET6)
+			groups |= RTMGRP_IPV6_PREFIX;
 	}
 
 	if (file) {
