@@ -331,25 +331,25 @@ char * sprint_size(__u32 size, char *buf)
 	return buf;
 }
 
-static double percent_scale = (double)(1ull << 32) / 100.;
+static const double max_percent_value = 0xffffffff;
 
 int get_percent(__u32 *percent, const char *str)
 {
 	char *p;
-	double per = strtod(str, &p);
+	double per = strtod(str, &p) / 100.;
 
-	if (per > 100.)
+	if (per > 1. || per < 0)
 		return -1;
 	if (*p && strcmp(p, "%"))
 		return -1;
 
-	*percent = per * percent_scale;
+	*percent = (unsigned) rint(per * max_percent_value);
 	return 0;
 }
 
 void print_percent(char *buf, int len, __u32 per)
 {
-	snprintf(buf, len, "%g%%", (double) per / percent_scale);
+	snprintf(buf, len, "%g%%", 100. * (double) per / max_percent_value);
 }
 
 char * sprint_percent(__u32 per, char *buf)
