@@ -28,7 +28,10 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <linux/xfrm.h>
-#include "utils.h"
+
+#ifndef IPPROTO_SCTP
+# define IPPROTO_SCTP	132
+#endif
 
 #define XFRM_MAX_DEPTH 6
 
