@@ -1,15 +1,9 @@
 SSOBJ=ss.o ssfilter.o
+LNSTATOBJ=lnstat.o lnstat_util.o
 
-TARGETS=ss nstat ifstat rtacct arpd rtstat
+TARGETS=ss nstat ifstat rtacct arpd lnstat
 
 include ../Config
-
-ifeq ($(SS_CONFIG_VEGAS),y)
-	DEFINES += -DHAVE_TCP_VEGAS
-endif
-ifeq ($(SS_CONFIG_DRS),y)
-	DEFINES += -DHAVE_TCP_DRS
-endif
 
 all: $(TARGETS)
 
@@ -27,14 +21,15 @@ rtacct: rtacct.c
 arpd: arpd.c
 	$(CC) $(CFLAGS) -I$(DBM_INCLUDE) $(LDFLAGS) -o arpd arpd.c $(LIBNETLINK) -ldb -lpthread
 
-rtstat: rtstat.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o rtstat rtstat.c
-
 ssfilter.c: ssfilter.y
 	bison ssfilter.y -o ssfilter.c
 
-install: all 
+lnstat: $(LNSTATOBJ)
+
+install: all
 	install -m 0755 -s $(TARGETS) $(DESTDIR)$(SBINDIR)
+	ln -sf $(SBINDIR)/lnstat $(DESTDIR)$(SBINDIR)/rtstat
+	ln -sf $(SBINDIR)/lnstat $(DESTDIR)$(SBINDIR)/ctstat
 
 clean:
 	rm -f *.o $(TARGETS) ssfilter.c
