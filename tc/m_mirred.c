@@ -263,7 +263,10 @@ print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_MIRRED_PARMS]);
 
+	/*
 	ll_init_map(&rth);
+	*/
+
 
 	if ((dev = ll_index_to_name(p->ifindex)) == 0) {
 		fprintf(stderr, "Cannot find device %d\n", p->ifindex);
@@ -285,7 +288,7 @@ print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
 	return 0;
 }
 
-struct action_util mirred_util_util = {
+struct action_util mirred_action_util = {
 	.id = "mirred",
 	.parse_aopt = parse_mirred,
 	.print_aopt = print_mirred,
