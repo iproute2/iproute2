@@ -23,6 +23,7 @@
 #include <string.h>
 #include "utils.h"
 #include "tc_util.h"
+#include "tc_common.h"
 #include <linux/tc_act/tc_mirred.h>
 
 int mirred_d = 1;
@@ -66,7 +67,6 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 	struct tc_mirred p;
 	struct rtattr *tail;
 	char d[16];
-	struct rtnl_handle rth;
 
 	memset(d,0,sizeof(d)-1);
 	memset(&p,0,sizeof(struct tc_mirred));
@@ -141,21 +141,14 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 
 	if (d[0])  {
 		int idx;
-		if (rtnl_open(&rth, 0) < 0) {
-			fprintf(stderr, "Cannot open rtnetlink\n");
-			return 1;
-		}
 		ll_init_map(&rth);
-
 
 		if ((idx = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			rtnl_close(&rth);
 			return -1;
 		}
 
 		p.ifindex = idx;
-		rtnl_close(&rth);
 	}
 
 
@@ -256,7 +249,6 @@ print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
 {
 	struct tc_mirred *p;
 	struct rtattr *tb[TCA_MIRRED_MAX + 1];
-	struct rtnl_handle rth;
 	const char *dev;
 	SPRINT_BUF(b1);
 
@@ -271,17 +263,10 @@ print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_MIRRED_PARMS]);
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		return -1;
-	}
-
 	ll_init_map(&rth);
-
 
 	if ((dev = ll_index_to_name(p->ifindex)) == 0) {
 		fprintf(stderr, "Cannot find device %d\n", p->ifindex);
-		rtnl_close(&rth);
 		return -1;
 	}
 
@@ -297,7 +282,6 @@ print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
 		}
 	}
 	fprintf(f, "\n ");
-	rtnl_close(&rth);
 	return 0;
 }
 

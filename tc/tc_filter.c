@@ -159,7 +159,6 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 
 		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			rtnl_close(&rth);
 			return 1;
 		}
 	}
@@ -259,7 +258,6 @@ static int print_filter(const struct sockaddr_nl *who,
 int tc_filter_list(int argc, char **argv)
 {
 	struct tcmsg t;
-	struct rtnl_handle rth;
 	char d[16];
 	__u32 prio = 0;
 	__u32 protocol = 0;
@@ -328,7 +326,6 @@ int tc_filter_list(int argc, char **argv)
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			rtnl_close(&rth);
 			return 1;
 		}
 		filter_ifindex = t.tcm_ifindex;

@@ -22,6 +22,7 @@
 
 #include "utils.h"
 #include "rt_names.h"
+#include "tc_common.h"
 #include "tc_util.h"
 
 static void explain(void)
@@ -79,13 +80,9 @@ static int route_parse_opt(struct filter_util *qu, char *handle, int argc, char 
 			fh &= 0xFFFF;
 			fh |= id<<16;
 		} else if (matches(*argv, "fromif") == 0) {
-			struct rtnl_handle rth;
 			__u32 id;
 			NEXT_ARG();
-			if (rtnl_open(&rth, 0) == 0) {
-				ll_init_map(&rth);
-				rtnl_close(&rth);
-			}
+			ll_init_map(&rth);
 			if ((id=ll_name_to_index(*argv)) <= 0) {
 				fprintf(stderr, "Illegal \"fromif\"\n");
 				return -1;

@@ -25,6 +25,7 @@
 #include <dlfcn.h>
 
 #include "utils.h"
+#include "tc_common.h"
 #include "tc_util.h"
 
 static struct action_util * action_list;
@@ -341,7 +342,6 @@ int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	int prio = 0;
 	int ret = 0;
 	__u32 i;
-	struct rtnl_handle rth;
 	struct sockaddr_nl nladdr;
 	struct rtattr *tail;
 	struct rtattr *tail2;
@@ -425,29 +425,22 @@ int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 
 	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		return 1;
-	}
-
 	req.n.nlmsg_seq = rth.dump = ++rth.seq;
 	if (cmd == RTM_GETACTION)
 		ans = &req.n;
+
 	if (rtnl_talk(&rth, &req.n, 0, 0, ans, NULL, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
-		rtnl_close(&rth);
 		return 1;
 	}
 
 	if (ans && do_print_action(NULL, &req.n, (void*)stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
-		rtnl_close(&rth);
 		return 1;
 	}
 
 	*argc_p = argc;
 	*argv_p = argv;
-	rtnl_close(&rth);
 bad_val:
 	return ret;
 }
@@ -458,7 +451,6 @@ int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	char **argv = *argv_p;
 	int ret = 0;
 
-	struct rtnl_handle rth;
 	struct rtattr *tail;
 	struct {
 		struct nlmsghdr         n;
@@ -482,12 +474,6 @@ int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	}
 	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		return 1;
-	}
-
-
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		ret = -1;
@@ -495,7 +481,7 @@ int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 
 	*argc_p = argc;
 	*argv_p = argv;
-	rtnl_close(&rth);
+
 	return ret;
 }
 
@@ -503,7 +489,6 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 {
 	int ret = 0, prio = 0, msg_size = 0;
 	char k[16];
-	struct rtnl_handle rth;
 	struct rtattr *tail,*tail2;
 	struct action_util *a = NULL;
 	struct {
@@ -544,11 +529,6 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 	tail2->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail2;
 	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
-	if (rtnl_open(&rth, 0) < 0) {
-		fprintf(stderr, "Cannot open rtnetlink\n");
-		return 1;
-	}
-
 	msg_size = NLMSG_ALIGN(req.n.nlmsg_len) - NLMSG_ALIGN(sizeof(struct nlmsghdr));
 
 	if (event == RTM_GETACTION) { 
@@ -566,7 +546,6 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 		req.n.nlmsg_flags |= NLM_F_REQUEST;
 		if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
 			fprintf(stderr, "We have an error flushing\n");
-			rtnl_close(&rth);
 			return 1;
 		}
 
@@ -574,7 +553,6 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 
 bad_val:
 
-	rtnl_close(&rth);
 	return ret;
 }
 

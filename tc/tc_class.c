@@ -228,7 +228,6 @@ static int print_class(const struct sockaddr_nl *who,
 int tc_class_list(int argc, char **argv)
 {
 	struct tcmsg t;
-	struct rtnl_handle rth;
 	char d[16];
 
 	memset(&t, 0, sizeof(t));
@@ -283,13 +282,11 @@ int tc_class_list(int argc, char **argv)
 
  	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
-		rtnl_close(&rth);
 		return 1;
 	}
 
  	if (rtnl_dump_filter(&rth, print_class, stdout, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
-		rtnl_close(&rth);
 		return 1;
 	}
 
