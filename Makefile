@@ -6,6 +6,9 @@ DOCDIR=/usr/doc/iproute2
 # Path to parent kernel include files directory
 KERNEL_INCLUDE:=/usr/include
 
+# Path to db_185.h include
+DBM_INCLUDE:=/usr/include
+
 DEFINES= -DRESOLVE_HOSTNAMES
 
 #options if you have a bind>=4.9.4 libresolv (or, maybe, glibc)
