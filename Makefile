@@ -40,16 +40,16 @@ Config:
 
 install: all
 	install -m 0755 -d $(DESTDIR)$(SBINDIR)
-	install -m 0755 -d $(CONFDIR)
+	install -m 0755 -d $(DESTDIR)$(CONFDIR)
 	install -m 0755 -d $(DESTDIR)$(DOCDIR)/examples
 	install -m 0755 -d $(DESTDIR)$(DOCDIR)/examples/diffserv
-	install -m 0644 README.iproute2+tc $(shell find examples -type f -maxdepth 1) $(DESTDIR)$(DOCDIR)/examples
-	install -m 0644 $(shell echo examples/diffserv/*) $(DESTDIR)$(DOCDIR)/examples/diffserv
+	install -m 0644 README.iproute2+tc $(shell find examples -type f -maxdepth 1) \
+		$(DESTDIR)$(DOCDIR)/examples
+	install -m 0644 $(shell find examples/diffserv -type f -maxdepth 1) \
+		$(DESTDIR)$(DOCDIR)/examples/diffserv
 	@for i in $(SUBDIRS) doc; do $(MAKE) -C $$i install; done
-	@cd etc/iproute2; for i in *; do \
-		if [ ! -e $(CONFDIR)/$$i ]; then \
-			echo install -m 0644 $$i $(CONFDIR); \
-			install -m 0644 $$i $(CONFDIR); fi; done
+	install -m 0644 $(shell find etc/iproute2 -type f -maxdepth 1) $(DESTDIR)$(CONFDIR)
+
 
 clean:
 	@for i in $(SUBDIRS) doc; \
