@@ -337,8 +337,7 @@ static int xfrm_policy_print(const struct sockaddr_nl *who,
 	FILE *fp = (FILE*)arg;
 	struct xfrm_userpolicy_info *xpinfo = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[XFRM_MAX_DEPTH];
-	int ntb;
+	struct rtattr * tb[XFRMA_MAX+1];
 
 	if (n->nlmsg_type != XFRM_MSG_NEWPOLICY &&
 	    n->nlmsg_type != XFRM_MSG_DELPOLICY) {
@@ -356,8 +355,7 @@ static int xfrm_policy_print(const struct sockaddr_nl *who,
 	if (!xfrm_policy_filter_match(xpinfo))
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
-	ntb = parse_rtattr_byindex(tb, XFRM_MAX_DEPTH, XFRMP_RTA(xpinfo), len);
+	parse_rtattr(tb, XFRMA_MAX, XFRMP_RTA(xpinfo), len);
 
 	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)
 		fprintf(fp, "Deleted ");
@@ -407,7 +405,7 @@ static int xfrm_policy_print(const struct sockaddr_nl *who,
 	if (show_stats > 0)
 		xfrm_lifetime_print(&xpinfo->lft, &xpinfo->curlft, fp, "\t");
 
-	xfrm_xfrma_print(tb, ntb, xpinfo->sel.family, fp, "\t");
+	xfrm_xfrma_print(tb, xpinfo->sel.family, fp, "\t");
 
 	if (oneline)
 		fprintf(fp, "\n");

@@ -43,7 +43,7 @@
  *   data = struct xfrm_usersa_info
  *   rtattr
  *   rtattr
- *   ... (max count of rtattr is XFRM_MAX_DEPTH)
+ *   ... (max count of rtattr is XFRM_MAX+1
  *
  *  each rtattr data = struct xfrm_algo(dynamic size) or xfrm_address_t
  */
@@ -397,7 +397,6 @@ static int xfrm_state_print(const struct sockaddr_nl *who,
 	struct xfrm_usersa_info *xsinfo = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr * tb[XFRMA_MAX+1];
-	int ntb;
 
 	if (n->nlmsg_type != XFRM_MSG_NEWSA &&
 	    n->nlmsg_type != XFRM_MSG_DELSA) {
@@ -415,8 +414,7 @@ static int xfrm_state_print(const struct sockaddr_nl *who,
 	if (!xfrm_state_filter_match(xsinfo))
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
-	ntb = parse_rtattr_byindex(tb, XFRM_MAX_DEPTH, XFRMS_RTA(xsinfo), len);
+	parse_rtattr(tb, XFRMA_MAX, XFRMS_RTA(xsinfo), len);
 
 	if (n->nlmsg_type == XFRM_MSG_DELSA)
 		fprintf(fp, "Deleted ");
@@ -441,7 +439,7 @@ static int xfrm_state_print(const struct sockaddr_nl *who,
 	}
 	fprintf(fp, "%s", _SL_);
 
-	xfrm_xfrma_print(tb, ntb, xsinfo->family, fp, "\t");
+	xfrm_xfrma_print(tb, xsinfo->family, fp, "\t");
 
 	if (!xfrm_selector_iszero(&xsinfo->sel))
 		xfrm_selector_print(&xsinfo->sel, xsinfo->family, fp, "\tsel ");
