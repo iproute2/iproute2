@@ -35,8 +35,7 @@ int show_details = 0;
 int show_raw = 0;
 int resolve_hosts = 0;
 int use_iec = 0;
-struct rtnl_handle g_rth;
-int is_batch_mode = 0;
+struct rtnl_handle rth;
 
 static void *BODY;	/* cached handle dlopen(NULL) */
 static struct qdisc_util * qdisc_list;
@@ -189,15 +188,6 @@ static int usage(void)
 
 int main(int argc, char **argv)
 {
-	char *basename;
-
-	basename = strrchr(argv[0], '/');
-	if (basename == NULL)
-		basename = argv[0];
-	else
-		basename++;
-	
-
 	/* batch mode */
 	if (argc > 1 && matches(argv[1], "-batch") == 0) {
 		FILE *batch;
@@ -223,12 +213,10 @@ int main(int argc, char **argv)
 		}
 
 		tc_core_init();
- 		is_batch_mode=1;
- 
- 		if (rtnl_open(&g_rth, 0) < 0) {
- 			fprintf(stderr, "Cannot open rtnetlink\n");
- 			return 1;
- 		}
+		if (rtnl_open(&rth, 0) < 0) {
+			fprintf(stderr, "Cannot open rtnetlink\n");
+			exit(1);
+		}
 
 		while (fgets(line, sizeof(line)-1, batch)) {
 			if (line[strlen(line)-1]=='\n') {
@@ -252,6 +240,7 @@ int main(int argc, char **argv)
 
  			if (largv[0][0]=='#')
  				continue;
+
 			if (matches(largv[0], "qdisc") == 0) {
 				ret += do_qdisc(largc-1, largv+1);
 			} else if (matches(largv[0], "class") == 0) {
@@ -267,7 +256,9 @@ int main(int argc, char **argv)
 			}
 		}
 		fclose(batch);
-		rtnl_close(&g_rth);
+
+		rtnl_close(&rth);
+
 		return 0; /* end of batch, that's all */
 	}
 
@@ -296,6 +287,10 @@ int main(int argc, char **argv)
 	}
 
 	tc_core_init();
+	if (rtnl_open(&rth, 0) < 0) {
+		fprintf(stderr, "Cannot open rtnetlink\n");
+		exit(1);
+	}
 
 	if (argc > 1) {
 		if (matches(argv[1], "qdisc") == 0)
@@ -312,6 +307,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	rtnl_close(&rth);
 	usage();
 	return 0;
 }

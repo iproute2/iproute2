@@ -49,7 +49,6 @@ static void usage(void)
 
 int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr 	n;
 		struct tcmsg 		t;
@@ -154,14 +153,9 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (est.ewma_log)
 		addattr_l(&req.n, sizeof(req), TCA_RATE, &est, sizeof(est));
 
- 	if (!is_batch_mode)
- 		if (rtnl_open(&rth, 0) < 0) {
- 			fprintf(stderr, "Cannot open rtnetlink\n");
- 			return 1;
- 		}
 
 	if (d[0])  {
- 		ll_init_map(&(is_batch_mode?g_rth:rth));
+ 		ll_init_map(&rth);
 
 		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
@@ -170,15 +164,11 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
- 	if (rtnl_talk(&(is_batch_mode?g_rth:rth), &req.n, 0, 0, NULL, NULL, NULL) < 0) {
+ 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
-		if (!is_batch_mode)
-			rtnl_close(&rth);
 		return 2;
 	}
 
- 	if (!is_batch_mode)
-		rtnl_close(&rth);
 	return 0;
 }
 
@@ -333,13 +323,7 @@ int tc_filter_list(int argc, char **argv)
 
 	t.tcm_info = TC_H_MAKE(prio<<16, protocol);
 
- 	if (!is_batch_mode)
- 		if (rtnl_open(&rth, 0) < 0) {
- 			fprintf(stderr, "Cannot open rtnetlink\n");
- 			return 1;
- 		}
- 
- 	ll_init_map(&(is_batch_mode?g_rth:rth));
+ 	ll_init_map(&rth);
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
@@ -350,20 +334,16 @@ int tc_filter_list(int argc, char **argv)
 		filter_ifindex = t.tcm_ifindex;
 	}
 
- 	if (rtnl_dump_request(&(is_batch_mode?g_rth:rth), RTM_GETTFILTER, &t, sizeof(t)) < 0) {
+ 	if (rtnl_dump_request(&rth, RTM_GETTFILTER, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
-		if (!is_batch_mode)
-			rtnl_close(&rth);
 		return 1;
 	}
 
- 	if (rtnl_dump_filter(&(is_batch_mode?g_rth:rth), print_filter, stdout, NULL, NULL) < 0) {
+ 	if (rtnl_dump_filter(&rth, print_filter, stdout, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
 
- 	if (!is_batch_mode)
-		rtnl_close(&rth);
 	return 0;
 }
 

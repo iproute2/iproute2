@@ -42,7 +42,6 @@ static void usage(void)
 
 int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr 	n;
 		struct tcmsg 		t;
@@ -127,14 +126,8 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
-	if (!is_batch_mode)
-		if (rtnl_open(&rth, 0) < 0) {
-			fprintf(stderr, "Cannot open rtnetlink\n");
-			return 1;
-		}
-
 	if (d[0])  {
-		ll_init_map(&(is_batch_mode?g_rth:rth));
+		ll_init_map(&rth);
 
 		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
@@ -142,11 +135,9 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
-	if (rtnl_talk(&(is_batch_mode?g_rth:rth), &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
 		return 2;
 
-	if (!is_batch_mode)
-		rtnl_close(&rth);
 	return 0;
 }
 
@@ -280,13 +271,7 @@ int tc_class_list(int argc, char **argv)
 		argc--; argv++;
 	}
 
- 	if (!is_batch_mode)
- 		if (rtnl_open(&rth, 0) < 0) {
- 			fprintf(stderr, "Cannot open rtnetlink\n");
- 			return 1;
- 		}
- 
- 	ll_init_map(&(is_batch_mode?g_rth:rth));
+ 	ll_init_map(&rth);
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
@@ -296,20 +281,18 @@ int tc_class_list(int argc, char **argv)
 		filter_ifindex = t.tcm_ifindex;
 	}
 
- 	if (rtnl_dump_request(&(is_batch_mode?g_rth:rth), RTM_GETTCLASS, &t, sizeof(t)) < 0) {
+ 	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
 		rtnl_close(&rth);
 		return 1;
 	}
 
- 	if (rtnl_dump_filter(&(is_batch_mode?g_rth:rth), print_class, stdout, NULL, NULL) < 0) {
+ 	if (rtnl_dump_filter(&rth, print_class, stdout, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		rtnl_close(&rth);
 		return 1;
 	}
 
- 	if (!is_batch_mode)
- 		rtnl_close(&rth);
 	return 0;
 }
 
