@@ -26,6 +26,7 @@ extern int iptables_insmod(const char *modname, const char *modprobe);
 void exit_error(enum exittype, char *, ...)__attribute__((noreturn,
 							  format(printf,2,3)));
 extern const char *program_name, *program_version;
+extern char *lib_dir;
 
 #ifdef NO_SHARED_LIBS
 # ifdef _INIT

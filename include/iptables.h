@@ -4,9 +4,25 @@
 #include "iptables_common.h"
 #include "libiptc/libiptc.h"
 
+#ifndef IPT_LIB_DIR
+#define IPT_LIB_DIR "/usr/local/lib/iptables"
+#endif
+
 #ifndef IPPROTO_SCTP
 #define IPPROTO_SCTP 132
 #endif
+
+#ifndef IPT_SO_GET_REVISION_MATCH /* Old kernel source. */
+#define IPT_SO_GET_REVISION_MATCH	(IPT_BASE_CTL + 2)
+#define IPT_SO_GET_REVISION_TARGET	(IPT_BASE_CTL + 3)
+
+struct ipt_get_revision
+{
+	char name[IPT_FUNCTION_MAXNAMELEN-1];
+
+	u_int8_t revision;
+};
+#endif /* IPT_SO_GET_REVISION_MATCH   Old kernel source */
 
 struct iptables_rule_match
 {
@@ -21,6 +37,9 @@ struct iptables_match
 	struct iptables_match *next;
 
 	ipt_chainlabel name;
+
+	/* Revision of match (0 by default). */
+	u_int8_t revision;
 
 	const char *version;
 
@@ -71,6 +90,9 @@ struct iptables_target
 	struct iptables_target *next;
 
 	ipt_chainlabel name;
+
+	/* Revision of target (0 by default). */
+	u_int8_t revision;
 
 	const char *version;
 
