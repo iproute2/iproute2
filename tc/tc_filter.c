@@ -185,7 +185,9 @@ static int filter_ifindex;
 static __u32 filter_prio;
 static __u32 filter_protocol;
 
-int print_filter(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int print_filter(const struct sockaddr_nl *who,
+			const struct nlmsghdr *n, 
+			void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
@@ -252,18 +254,11 @@ int print_filter(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 	fprintf(fp, "\n");
 
-	if (show_stats) {
-		if (tb[TCA_STATS]) {
-			if (RTA_PAYLOAD(tb[TCA_STATS]) < sizeof(struct tc_stats))
-				fprintf(fp, "statistics truncated");
-			else {
-				struct tc_stats st;
-				memcpy(&st, RTA_DATA(tb[TCA_STATS]), sizeof(st));
-				print_tcstats(fp, &st);
-				fprintf(fp, "\n");
-			}
-		}
+	if (show_stats && tb[TCA_STATS]) {
+		print_tcstats_attr(fp, tb[TCA_STATS]);
+		fprintf(fp, "\n");
 	}
+
 	fflush(fp);
 	return 0;
 }
