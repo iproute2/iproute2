@@ -120,7 +120,7 @@ int print_rule(struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
 	}
 	if (tb[RTA_PROTOINFO]) {
-		fprintf(fp, "fwmark %8x ", *(__u32*)RTA_DATA(tb[RTA_PROTOINFO]));
+		fprintf(fp, "fwmark %#x ", *(__u32*)RTA_DATA(tb[RTA_PROTOINFO]));
 	}
 
 	if (tb[RTA_IIF]) {
@@ -245,7 +245,7 @@ int iprule_modify(int cmd, int argc, char **argv)
 		} else if (strcmp(*argv, "fwmark") == 0) {
 			__u32 fwmark;
 			NEXT_ARG();
-			if (get_u32(&fwmark, *argv, 16))
+			if (get_u32(&fwmark, *argv, 0))
 				invarg("fwmark value is invalid\n", *argv);
 			addattr32(&req.n, sizeof(req), RTA_PROTOINFO, fwmark);
 		} else if (matches(*argv, "realms") == 0) {
