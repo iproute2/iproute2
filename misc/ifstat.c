@@ -96,7 +96,6 @@ static int get_nlmsg(const struct sockaddr_nl *who,
 	if (!(ifi->ifi_flags&IFF_UP))
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 	if (tb[IFLA_IFNAME] == NULL || tb[IFLA_STATS] == NULL)
 		return 0;
