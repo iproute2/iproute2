@@ -13,10 +13,10 @@ then
     exit 1
 fi
 
-echo -n " netsim scheduler... "
-if grep -q 'tc_netsim_qopt' $PKT_SCHED
+echo -n " netem scheduler... "
+if grep -q 'tc_netem_qopt' $PKT_SCHED
 then
-    echo "TC_CONFIG_NETSIM = y" >>Config
+    echo "TC_CONFIG_NETEM = y" >>Config
     echo y
 else
     echo n
