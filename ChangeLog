@@ -1,3 +1,9 @@
+2004-08-04  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Get rid of old tcp_diag module, it is part of kernel.
+
+	* Add some kernel include files back (netlink, tcp_diag, pkt_sched)
+
 2004-07-30  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Make ip xfrm stuff config option since it doesn't exist on 2.4
