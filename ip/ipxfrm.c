@@ -57,6 +57,43 @@ struct typeent {
 	int t_type;
 };
 
+static const struct typeent xfrmproto_types[]= {
+	{ "esp", IPPROTO_ESP }, { "ah", IPPROTO_AH },
+	{ "comp", IPPROTO_COMP }, { NULL, -1 }
+};
+
+int xfrm_xfrmproto_getbyname(char *name)
+{
+	int i;
+
+	for (i = 0; ; i++) {
+		const struct typeent *t = &xfrmproto_types[i];
+		if (!t->t_name || t->t_type == -1)
+			break;
+
+		if (strcmp(t->t_name, name) == 0)
+			return t->t_type;
+	}
+
+	return -1;
+}
+
+const char *strxf_xfrmproto(__u8 proto)
+{
+	int i;
+
+	for (i = 0; ; i++) {
+		const struct typeent *t = &xfrmproto_types[i];
+		if (!t->t_name || t->t_type == -1)
+			break;
+
+		if (t->t_type == proto)
+			return t->t_name;
+	}
+
+	return NULL;
+}
+
 static const struct typeent algo_types[]= {
 	{ "enc", XFRMA_ALG_CRYPT }, { "auth", XFRMA_ALG_AUTH },
 	{ "comp", XFRMA_ALG_COMP }, { NULL, -1 }
@@ -172,7 +209,7 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 		fprintf(fp, prefix);
 	fprintf(fp, "\t");
 
-	fprintf(fp, "proto %s ", strxf_proto(id->proto));
+	fprintf(fp, "proto %s ", strxf_xfrmproto(id->proto));
 
 	spi = ntohl(id->spi);
 	fprintf(fp, "spi 0x%08x", spi);
@@ -522,7 +559,6 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 	char **argv = *argvp;
 	inet_prefix dst;
 	inet_prefix src;
-	__u8 proto = 0;
 
 	memset(&dst, 0, sizeof(dst));
 	memset(&src, 0, sizeof(src));
@@ -555,27 +591,15 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 			filter.id_dst_mask = dst.bitlen;
 
 		} else if (strcmp(*argv, "proto") == 0) {
-			struct protoent *pp;
+			int ret;
 
 			NEXT_ARG();
 
-			pp = getprotobyname(*argv);
-			if (pp)
-				proto = pp->p_proto;
-			else {
-				if (get_u8(&proto, *argv, 0))
-					invarg("\"XFRM_PROTO\" is invalid", *argv);
-			}
+			ret = xfrm_xfrmproto_getbyname(*argv);
+			if (ret < 0)
+				invarg("\"XFRM_PROTO\" is invalid", *argv);
 
-			switch (proto) {
-			case IPPROTO_ESP:
-			case IPPROTO_AH:
-			case IPPROTO_COMP:
-				id->proto = proto;
-				break;
-			default:
-				invarg("\"XFRM_PROTO\" is unsuppored proto", *argv);
-			}
+			id->proto = (__u8)ret;
 
 			filter.id_proto_mask = XFRM_FILTER_MASK_FULL;
 
@@ -604,8 +628,8 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 	if (src.family && dst.family && (src.family != dst.family))
 		invarg("the same address family is required between \"SADDR\" and \"DADDR\"", *argv);
 
-	if (loose == 0 && proto == 0)
-		missarg("PROTO");
+	if (loose == 0 && id->proto == 0)
+		missarg("XFRM_PROTO");
 	if (argc == *argcp)
 		missarg("ID");
 

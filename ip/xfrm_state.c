@@ -63,11 +63,11 @@ static void usage(void)
 	fprintf(stderr, "        [ FLAG_LIST ]\n");
 
 	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM_PROTO ] [ spi SPI ]\n");
-	//fprintf(stderr, "XFRM_PROTO := [ esp | ah | ipcomp ]\n");
+	//fprintf(stderr, "XFRM_PROTO := [ esp | ah | comp ]\n");
 	fprintf(stderr, "XFRM_PROTO := [ ");
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_ESP));
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_AH));
-	fprintf(stderr, "%s ", strxf_proto(IPPROTO_COMP));
+	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ESP));
+	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_AH));
+	fprintf(stderr, "%s ", strxf_xfrmproto(IPPROTO_COMP));
 	fprintf(stderr, "]\n");
 
 	//fprintf(stderr, "SPI - security parameter index(default=0)\n");
@@ -309,14 +309,14 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		if (req.xsinfo.id.proto != IPPROTO_ESP &&
 		    req.xsinfo.id.proto != IPPROTO_AH &&
 		    req.xsinfo.id.proto != IPPROTO_COMP) {
-			fprintf(stderr, "\"ALGO\" is invalid with proto=%s\n", strxf_proto(req.xsinfo.id.proto));
+			fprintf(stderr, "\"ALGO\" is invalid with proto=%s\n", strxf_xfrmproto(req.xsinfo.id.proto));
 			exit(1);
 		}
 	} else {
 		if (req.xsinfo.id.proto == IPPROTO_ESP ||
 		    req.xsinfo.id.proto == IPPROTO_AH ||
 		    req.xsinfo.id.proto == IPPROTO_COMP) {
-			fprintf(stderr, "\"ALGO\" is required with proto=%s\n", strxf_proto(req.xsinfo.id.proto));
+			fprintf(stderr, "\"ALGO\" is required with proto=%s\n", strxf_xfrmproto(req.xsinfo.id.proto));
 			exit (1);
 		}
 	}

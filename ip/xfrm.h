@@ -78,7 +78,9 @@ extern struct xfrm_filter filter;
 int do_xfrm_state(int argc, char **argv);
 int do_xfrm_policy(int argc, char **argv);
 
+int xfrm_xfrmproto_getbyname(char *name);
 int xfrm_algotype_getbyname(char *name);
+const char *strxf_xfrmproto(__u8 proto);
 const char *strxf_algotype(int type);
 const char *strxf_flags(__u8 flags);
 const char *strxf_share(__u8 share);
