@@ -1,3 +1,8 @@
+2004-09-01  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Fix ip command to not crash when interface name is too long.
+	  always use strncpy(.., IFNAMSIZ)
+
 2004-08-31  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Add gact documentation from jamal

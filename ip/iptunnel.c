@@ -52,13 +52,13 @@ static void usage(void)
 	exit(-1);
 }
 
-static int do_ioctl_get_ifindex(char *dev)
+static int do_ioctl_get_ifindex(const char *dev)
 {
 	struct ifreq ifr;
 	int fd;
 	int err;
 
-	strcpy(ifr.ifr_name, dev);
+	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCGIFINDEX, &ifr);
 	if (err) {
@@ -69,13 +69,13 @@ static int do_ioctl_get_ifindex(char *dev)
 	return ifr.ifr_ifindex;
 }
 
-static int do_ioctl_get_iftype(char *dev)
+static int do_ioctl_get_iftype(const char *dev)
 {
 	struct ifreq ifr;
 	int fd;
 	int err;
 
-	strcpy(ifr.ifr_name, dev);
+	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCGIFHWADDR, &ifr);
 	if (err) {
@@ -105,14 +105,13 @@ static char * do_ioctl_get_ifname(int idx)
 }
 
 
-
-static int do_get_ioctl(char *basedev, struct ip_tunnel_parm *p)
+static int do_get_ioctl(const char *basedev, struct ip_tunnel_parm *p)
 {
 	struct ifreq ifr;
 	int fd;
 	int err;
 
-	strcpy(ifr.ifr_name, basedev);
+	strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = (void*)p;
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCGETTUNNEL, &ifr);
@@ -122,16 +121,16 @@ static int do_get_ioctl(char *basedev, struct ip_tunnel_parm *p)
 	return err;
 }
 
-static int do_add_ioctl(int cmd, char *basedev, struct ip_tunnel_parm *p)
+static int do_add_ioctl(int cmd, const char *basedev, struct ip_tunnel_parm *p)
 {
 	struct ifreq ifr;
 	int fd;
 	int err;
 
 	if (cmd == SIOCCHGTUNNEL && p->name[0])
-		strcpy(ifr.ifr_name, p->name);
+		strncpy(ifr.ifr_name, p->name, IFNAMSIZ);
 	else
-		strcpy(ifr.ifr_name, basedev);
+		strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = (void*)p;
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	err = ioctl(fd, cmd, &ifr);
@@ -141,16 +140,16 @@ static int do_add_ioctl(int cmd, char *basedev, struct ip_tunnel_parm *p)
 	return err;
 }
 
-static int do_del_ioctl(char *basedev, struct ip_tunnel_parm *p)
+static int do_del_ioctl(const char *basedev, struct ip_tunnel_parm *p)
 {
 	struct ifreq ifr;
 	int fd;
 	int err;
 
 	if (p->name[0])
-		strcpy(ifr.ifr_name, p->name);
+		strncpy(ifr.ifr_name, p->name, IFNAMSIZ);
 	else
-		strcpy(ifr.ifr_name, basedev);
+		strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = (void*)p;
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCDELTUNNEL, &ifr);
