@@ -40,6 +40,19 @@
 #include "utils.h"
 #include "xfrm.h"
 
+#define STRBUF_SIZE	(128)
+#define STRBUF_CAT(buf, str) \
+	do { \
+		int rest = sizeof(buf) - 1 - strlen(buf); \
+		if (rest > 0) { \
+			int len = strlen(str); \
+			if (len > rest) \
+				len = rest; \
+			strncat(buf, str, len); \
+			buf[sizeof(buf) - 1] = '\0'; \
+		} \
+	} while(0);
+
 struct xfrm_filter filter;
 
 static void usage(void) __attribute__((noreturn));
@@ -48,7 +61,7 @@ static void usage(void)
 {
 	fprintf(stderr, 
 		"Usage: ip xfrm XFRM_OBJECT { COMMAND | help }\n"
-		"where  XFRM_OBJECT := { state | policy }\n");
+		"where  XFRM_OBJECT := { state | policy | monitor }\n");
 	exit(-1);
 }
 
@@ -227,12 +240,12 @@ const char *strxf_proto(__u8 proto)
 
 void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 			__u8 mode, __u32 reqid, __u16 family, int force_spi,
-			FILE *fp, const char *prefix)
+			FILE *fp, const char *prefix, const char *title)
 {
 	char abuf[256];
 
-	if (prefix)
-		fprintf(fp, prefix);
+	if (title)
+		fprintf(fp, title);
 
 	memset(abuf, '\0', sizeof(abuf));
 	fprintf(fp, "src %s ", rt_addr_n2a(family, sizeof(*saddr),
@@ -247,7 +260,6 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 	fprintf(fp, "\t");
 
 	fprintf(fp, "proto %s ", strxf_xfrmproto(id->proto));
-
 
 	if (show_stats > 0 || force_spi || id->spi) {
 		__u32 spi = ntohl(id->spi);
@@ -519,9 +531,8 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
 		if (prefix)
 			fprintf(fp, prefix);
 
-		fprintf(fp, "tmpl");
 		xfrm_id_info_print(&tmpl->saddr, &tmpl->id, tmpl->mode,
-				   tmpl->reqid, family, 0, fp, prefix);
+				   tmpl->reqid, family, 0, fp, prefix, "tmpl ");
 
 		if (show_stats > 0 || tmpl->optional) {
 			if (prefix)
@@ -628,6 +639,125 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		xfrm_tmpl_print((struct xfrm_user_tmpl *) RTA_DATA(rta),
 				RTA_PAYLOAD(rta), family, fp, prefix);
 	}
+}
+
+static int xfrm_selector_iszero(struct xfrm_selector *s)
+{
+	struct xfrm_selector s0;
+
+	memset(&s0, 0, sizeof(s0));
+
+	return (memcmp(&s0, s, sizeof(s0)) == 0);
+}
+
+void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
+			    struct rtattr *tb[], FILE *fp, const char *prefix,
+			    const char *title)
+{
+	char buf[STRBUF_SIZE];
+
+	memset(buf, '\0', sizeof(buf));
+
+	xfrm_id_info_print(&xsinfo->saddr, &xsinfo->id, xsinfo->mode,
+			   xsinfo->reqid, xsinfo->family, 1, fp, prefix,
+			   title);
+
+	if (prefix)
+		STRBUF_CAT(buf, prefix);
+	STRBUF_CAT(buf, "\t");
+
+	fprintf(fp, buf);
+	fprintf(fp, "replay-window %u ", xsinfo->replay_window);
+	if (show_stats > 0)
+		fprintf(fp, "seq 0x%08u ", xsinfo->seq);
+	if (show_stats > 0 || xsinfo->flags) {
+		__u8 flags = xsinfo->flags;
+
+		fprintf(fp, "flag ");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_NOECN, "noecn");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_DECAP_DSCP, "decap-dscp");
+		if (flags)
+			fprintf(fp, "%x", flags);
+		if (show_stats > 0)
+			fprintf(fp, " (0x%s)", strxf_mask8(flags));
+	}
+	fprintf(fp, "%s", _SL_);
+
+	xfrm_xfrma_print(tb, xsinfo->family, fp, buf);
+
+	if (!xfrm_selector_iszero(&xsinfo->sel)) {
+		char sbuf[STRBUF_SIZE];
+
+		memcpy(sbuf, buf, sizeof(sbuf));
+		STRBUF_CAT(sbuf, "sel ");
+
+		xfrm_selector_print(&xsinfo->sel, xsinfo->family, fp, sbuf);
+	}
+
+	if (show_stats > 0) {
+		xfrm_lifetime_print(&xsinfo->lft, &xsinfo->curlft, fp, buf);
+		xfrm_stats_print(&xsinfo->stats, fp, buf);
+	}
+}
+
+void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
+			    struct rtattr *tb[], FILE *fp, const char *prefix,
+			    const char *title)
+{
+	char buf[STRBUF_SIZE];
+
+	memset(buf, '\0', sizeof(buf));
+
+	xfrm_selector_print(&xpinfo->sel, preferred_family, fp, title);
+
+	if (prefix)
+		STRBUF_CAT(buf, prefix);
+	STRBUF_CAT(buf, "\t");
+
+	fprintf(fp, buf);
+	fprintf(fp, "dir ");
+	switch (xpinfo->dir) {
+	case XFRM_POLICY_IN:
+		fprintf(fp, "in");
+		break;
+	case XFRM_POLICY_OUT:
+		fprintf(fp, "out");
+		break;
+	case XFRM_POLICY_FWD:
+		fprintf(fp, "fwd");
+		break;
+	default:
+		fprintf(fp, "%u", xpinfo->dir);
+		break;
+	}
+	fprintf(fp, " ");
+
+	switch (xpinfo->action) {
+	case XFRM_POLICY_ALLOW:
+		if (show_stats > 0)
+			fprintf(fp, "action allow ");
+		break;
+	case XFRM_POLICY_BLOCK:
+		fprintf(fp, "action block ");
+		break;
+	default:
+		fprintf(fp, "action %u ", xpinfo->action);
+		break;
+	}
+
+	if (show_stats)
+		fprintf(fp, "index %u ", xpinfo->index);
+	fprintf(fp, "priority %u ", xpinfo->priority);
+	if (show_stats > 0) {
+		fprintf(fp, "share %s ", strxf_share(xpinfo->share));
+		fprintf(fp, "flag 0x%s", strxf_mask8(xpinfo->flags));
+	}
+	fprintf(fp, "%s", _SL_);
+
+	if (show_stats > 0)
+		xfrm_lifetime_print(&xpinfo->lft, &xpinfo->curlft, fp, buf);
+
+	xfrm_xfrma_print(tb, xpinfo->sel.family, fp, buf);
 }
 
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
@@ -1038,10 +1168,12 @@ int do_xfrm(int argc, char **argv)
 		usage();
 
 	if (matches(*argv, "state") == 0 ||
-	    matches(*argv, "sa") == 0) {
+	    matches(*argv, "sa") == 0)
 		return do_xfrm_state(argc-1, argv+1);
-	} else if (matches(*argv, "policy") == 0)
+	else if (matches(*argv, "policy") == 0)
 		return do_xfrm_policy(argc-1, argv+1);
+	else if (matches(*argv, "monitor") == 0)
+		return do_xfrm_monitor(argc-1, argv+1);
 	else if (matches(*argv, "help") == 0) {
 		usage();
 		fprintf(stderr, "xfrm Object \"%s\" is unknown.\n", *argv);
