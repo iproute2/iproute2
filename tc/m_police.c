@@ -318,8 +318,7 @@ print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	if (arg == NULL)
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
-	parse_rtattr(tb, TCA_POLICE_MAX, RTA_DATA(arg), RTA_PAYLOAD(arg));
+	parse_rtattr_nested(tb, TCA_POLICE_MAX, arg);
 
 	if (tb[TCA_POLICE_TBF] == NULL) {
 		fprintf(f, "[NULL police tbf]");
