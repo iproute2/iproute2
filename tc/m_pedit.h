@@ -37,10 +37,12 @@
 #define RU16 0xFFFF
 #define RU8 0xFF
 
+#define PEDITKINDSIZ 16
+
 struct m_pedit_util
 {
 	struct m_pedit_util *next;
-	char    id[16];
+	char    id[PEDITKINDSIZ];
 	int     (*parse_peopt)(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
 };
 
