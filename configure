@@ -25,20 +25,3 @@ else
     echo no
 fi
 rm -f /tmp/atmtest.c /tmp/atmtest
-
-# hacks for now 
-echo "TC actions"
-
-if [ -e "tc/m_gact.c" ]
-then
-	echo "   GACT found"
-	echo "TC_CONFIG_ACTION_GACT=y" >>Config
-	echo "TC_CONFIG_ACTION_PROB=y" >>Config
-fi
-
-if [ -e "tc/m_mirred.c" ]
-then
-	echo "   MIRRED found"
-	echo "TC_CONFIG_ACTION_MIRRED=y" >>Config
-fi
-
