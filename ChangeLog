@@ -1,0 +1,62 @@
+2004-06-25  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add loss parameter to delay
+	* Rename delay qdisc to netsim
+	* Add autoconfiguration by building a Config file
+	  and using it.
+
+2004-06-09  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Report rates in K=1000
+	* Add GNU long style options
+	* For HTB use get_hz to pick up value of system HZ at runtime
+	* Delete unused funcs.
+
+2004-06-08  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Cleanup ss
+	     - use const char and local functions where possible
+	* Add man pages from SuSe
+	* SuSE patches
+	     - path to db4.1
+	     - don't hardcode path to /tmp in ifstat
+	       Alternat fix: was to use TMPDIR
+	     - handle non-root user calling ip route flush going into
+	       an infinite loop.
+	       Alternate fix: was to timeout if route table doesn't empty.
+	* Try and get rid of dependency on kernel include files
+	  Get rid of having private glibc-include headers
+	
+2004-06-07  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Import patches that make sense from Fedora Core 2
+		- iproute2-2.4.7-hex
+		     print fwmark in hex
+		- iproute2-2.4.7-netlink
+		     handle getting right netlink mesg back
+		- iproute2-2.4.7-htb3-tc
+		     add HTB scheduler
+		- iproute2-2.4.7-default
+		     add entry default to rttable
+                    
+2004-06-04  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add support for vegas info to ss
+
+2004-06-02  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Use const char in utility routines where appropriate
+	* Rearrange include files so can build with standard headers
+	* For "tc qdisc ls" see the default queuing discpline "pfifo_fast"
+	  and understand it
+	* Get rid of private defintions of network headers which existed
+	  only to handle old glibc
+
+2004-04-15  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add the delay (network simulation scheduler)
+
+2004-04-15  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Starting point baseline based on iproute2-2.4.7-ss020116-try
+
