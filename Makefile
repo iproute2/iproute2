@@ -26,7 +26,7 @@ CFLAGS = $(CCOPTS) -I../include $(DEFINES)
 
 LDLIBS += -L../lib -lnetlink -lutil
 
-SUBDIRS=lib ip tc misc
+SUBDIRS=lib ip tc misc netem
 
 LIBNETLINK=../lib/libnetlink.a ../lib/libutil.a
 
