@@ -423,11 +423,11 @@ void print_tm(FILE * f, const struct tcf_t *tm)
 {
 	int hz = get_hz();
 	if (tm->install != 0)
-		fprintf(f, " installed %d sec", tm->install/hz);
+		fprintf(f, " installed %u sec", (unsigned)(tm->install/hz));
 	if (tm->lastuse != 0)
-		fprintf(f, " used %d sec", tm->lastuse/hz);
+		fprintf(f, " used %u sec", (unsigned)(tm->lastuse/hz));
 	if (tm->expires != 0)
-		fprintf(f, " expires %d sec", tm->expires/hz);
+		fprintf(f, " expires %u sec", (unsigned)(tm->expires/hz));
 }
 
 void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats)
