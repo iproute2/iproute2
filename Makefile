@@ -23,16 +23,6 @@ ADDLIB+=dnet_ntop.o dnet_pton.o
 #options for ipx
 ADDLIB+=ipx_ntop.o ipx_pton.o
 
-ifeq ($(LIBC_INCLUDE)/socketbits.h,$(wildcard $(LIBC_INCLUDE)/socketbits.h))
-  ifeq ($(LIBC_INCLUDE)/net/if_packet.h,$(wildcard $(LIBC_INCLUDE)/net/if_packet.h))
-    GLIBCFIX=-I../include-glibc -include ../include-glibc/glibc-bugs.h
-  endif
-endif
-ifeq ($(LIBC_INCLUDE)/bits/socket.h,$(wildcard $(LIBC_INCLUDE)/bits/socket.h))
-  GLIBCFIX=-I../include-glibc -I/usr/include/db3 -include ../include-glibc/glibc-bugs.h
-endif
-
-
 CC = gcc
 CCOPTS = -D_GNU_SOURCE -O2 -Wstrict-prototypes -Wall -g
 CFLAGS = $(CCOPTS) $(GLIBCFIX) -I$(KERNEL_INCLUDE) -I../include $(DEFINES)
