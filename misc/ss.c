@@ -25,6 +25,7 @@
 #include <resolv.h>
 #include <dirent.h>
 #include <fnmatch.h>
+#include <getopt.h>
 
 #include "utils.h"
 #include "rt_names.h"
@@ -465,6 +466,32 @@ void init_service_resolver(void)
 	}
 }
 
+static int ip_local_port_min, ip_local_port_max;
+
+/* Even do not try default linux ephemeral port ranges:
+ * default /etc/services contains so much of useless crap
+ * wouldbe "allocated" to this area that resolution
+ * is really harmful. I shrug each time when seeing
+ * "socks" or "cfinger" in dumps.
+ */
+static int is_ephemeral(int port)
+{
+	if (!ip_local_port_min) {
+		FILE *f = fdopen(ephemeral_ports_open(), "r");
+		if (f) {
+			fscanf(f, "%d %d", 
+			       &ip_local_port_min, &ip_local_port_max);
+			fclose(f);
+		} else {
+			ip_local_port_min = 1024;
+			ip_local_port_max = 4999;
+		}
+	}
+
+	return (port >= ip_local_port_min && port<= ip_local_port_max);
+}
+
+
 const char *__resolve_service(int port)
 {
 	struct scache *c;
@@ -474,13 +501,7 @@ const char *__resolve_service(int port)
 			return c->name;
 	}
 
-	/* Even do not try default linux ephemeral port ranges:
-	 * default /etc/services contains so much of useless crap
-	 * wouldbe "allocated" to this area that resolution
-	 * is really harmful. I shrug each time when seeing
-	 * "socks" or "cfinger" in dumps.
-	 */
-	if (port < 32768 && (port < 1024 || port > 4999)) {
+	if (!is_ephemeral(port)) {
 		static int notfirst;
 		struct servent *se;
 		if (!notfirst) {
@@ -2330,13 +2351,34 @@ static void usage(void)
 	fprintf(stderr,
 "Usage: ss [ OPTIONS ]\n"
 "       ss [ OPTIONS ] [ FILTER ]\n"
-"where  OPTIONS := { -h[elp] | -V[ersion] | -n[umeric] | -r[esolve] |\n"
-"                    -a[ll] -l[istening] -o[ptions] -e[xtended] -p[rocesses]\n"
-"                    -A QUERY -i[nfo] } -s[ummary]\n"
-"                    -f[amily] { inet | inet6 | link | unix } }\n"
+"   -h, --help		this message\n"
+"   -V, --version	output version information\n"
+"   -n, --numeric	don't resolve service names\n"
+"   -r, --resolve       resolve host names\n"
+"   -a, --all		display all sockets\n"
+"   -l, --listening	display listening sockets\n"
+"   -o, --options       show timer information\n"
+"   -e, --extended      show detailed socket information\n"
+"   -m, --memory        show socket memory usage\n"
+"   -p, --processes	show process using socket\n"
+"   -i, --info		show internal TCP information\n"
+"   -s, --summary	show socket usage summary\n"
+"\n"
+"   -4, --ipv4          display only IP version 4 sockets\n"
+"   -6, --ipv6          display only IP version 6 sockets\n"
+"   -0, --packet	display PACKET sockets\n"
+"   -t, --tcp		display only TCP sockets\n"
+"   -u, --udp		display only UDP sockets\n"
+"   -w, --raw		display only RAW sockets\n"
+"   -x, --unix		display only Unix domain sockets\n"
+"   -f, --family=FAMILY display sockets of type FAMILY\n"
+"\n"
+"   -A, --query=QUERY\n"
 "       QUERY := {all|inet|tcp|udp|raw|unix|packet|netlink}[,QUERY]\n"
+"\n"
+"   -F, --filter=FILE   read filter information from FILE\n"
 "       FILTER := [ state TCP-STATE ] [ EXPRESSION ]\n"
-);
+		);
 	exit(-1);
 }
 
@@ -2368,6 +2410,34 @@ int scan_state(const char *state)
 	return 0;
 }
 
+static const struct option long_opts[] = {
+	{ "numeric", 0, 0, 'n' },
+	{ "resolve", 0, 0, 'r' },
+	{ "options", 0, 0, 'o' },
+	{ "extended", 0, 0, 'e' },
+	{ "memory", 0, 0, 'm' },
+	{ "info", 0, 0, 'i' },
+	{ "processes", 0, 0, 'p' },
+	{ "tcp", 0, 0, 't' },
+	{ "udp", 0, 0, 'u' },
+	{ "raw", 0, 0, 'w' },
+	{ "unix", 0, 0, 'x' },
+	{ "all", 0, 0, 'a' },
+	{ "listening", 0, 0, 'l' },
+	{ "ipv4", 0, 0, '4' },
+	{ "ipv6", 0, 0, '6' },
+	{ "packet", 0, 0, '0' },
+	{ "family", 1, 0, 'f' },
+	{ "socket", 1, 0, 'A' },
+	{ "summaary", 0, 0, 's' },
+	{ "diag", 0, 0, 'D' },
+	{ "filter", 1, 0, 'F' },
+	{ "version", 0, 0, 'V' },
+	{ "help", 0, 0, 'h' },
+	{ 0 }
+	
+};
+
 int main(int argc, char *argv[])
 {
 	int do_default = 1;
@@ -2382,7 +2452,8 @@ int main(int argc, char *argv[])
 
 	current_filter.states = default_filter.states;
 
-	while ((ch = getopt(argc, argv, "h?aletuwxnro460spf:miA:D:F:vV")) != EOF) {
+	while ((ch = getopt_long(argc, argv, "haletuwxnro460spf:miA:D:F:vV",
+				 long_opts, NULL)) != EOF) {
 		switch(ch) {
 		case 'n':
 			resolve_services = 0;
