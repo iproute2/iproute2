@@ -166,24 +166,34 @@ int get_rate_and_cell(unsigned *rate, int *cell_log, char *str)
 	return 0;
 }
 
-
-int print_rate(char *buf, int len, __u32 rate)
+void print_rate(char *buf, int len, __u32 rate)
 {
 	double tmp = (double)rate*8;
+	extern int use_iec;
 
-	if (tmp >= 999999 && fabs(1000000.*rint(tmp/1000000.) - tmp) < 1000)
-		snprintf(buf, len, "%gmbit", rint(tmp/1000000.));
-	else if (tmp >= 990 && fabs(1000.*rint(tmp/1000.) - tmp) < 10)
-		snprintf(buf, len, "%gkbit", rint(tmp/1000.));
-	else
-		snprintf(buf, len, "%ubit", rate);
-	return 0;
+	if (use_iec) {
+		if (tmp >= 1024*1023 && 
+		    fabs(1024*1024*rint(tmp/(1024*1024)) - tmp) < 1024)
+			snprintf(buf, len, "%gMibps", rint(tmp/(1024*1024)));
+		else if (tmp >= 1024-16 && fabs(1024*rint(tmp/1024) - tmp) < 16)
+			snprintf(buf, len, "%gKibps", rint(tmp/1024));
+		else
+			snprintf(buf, len, "%ubps", rate);
+
+	} else { 
+		if (tmp >= 999999 && 
+		    fabs(1000000.*rint(tmp/1000000.) - tmp) < 1000)
+			snprintf(buf, len, "%gMbit", rint(tmp/1000000.));
+		else if (tmp >= 990 && fabs(1000.*rint(tmp/1000.) - tmp) < 10)
+			snprintf(buf, len, "%gKbit", rint(tmp/1000.));
+		else
+			snprintf(buf, len, "%ubit", rate);
+	}
 }
 
 char * sprint_rate(__u32 rate, char *buf)
 {
-	if (print_rate(buf, SPRINT_BSIZE-1, rate))
-		strcpy(buf, "???");
+	print_rate(buf, SPRINT_BSIZE-1, rate);
 	return buf;
 }
 
@@ -215,7 +225,7 @@ int get_usecs(unsigned *usecs, const char *str)
 }
 
 
-int print_usecs(char *buf, int len, __u32 usec)
+void print_usecs(char *buf, int len, __u32 usec)
 {
 	double tmp = usec;
 
@@ -225,13 +235,11 @@ int print_usecs(char *buf, int len, __u32 usec)
 		snprintf(buf, len, "%.1fms", tmp/1000);
 	else
 		snprintf(buf, len, "%uus", usec);
-	return 0;
 }
 
 char * sprint_usecs(__u32 usecs, char *buf)
 {
-	if (print_usecs(buf, SPRINT_BSIZE-1, usecs))
-		strcpy(buf, "???");
+	print_usecs(buf, SPRINT_BSIZE-1, usecs);
 	return buf;
 }
 
@@ -294,7 +302,7 @@ int get_size_and_cell(unsigned *size, int *cell_log, char *str)
 	return 0;
 }
 
-int print_size(char *buf, int len, __u32 sz)
+void print_size(char *buf, int len, __u32 sz)
 {
 	double tmp = sz;
 
@@ -304,13 +312,11 @@ int print_size(char *buf, int len, __u32 sz)
 		snprintf(buf, len, "%gKb", rint(tmp/1024));
 	else
 		snprintf(buf, len, "%ub", sz);
-	return 0;
 }
 
 char * sprint_size(__u32 size, char *buf)
 {
-	if (print_size(buf, SPRINT_BSIZE-1, size))
-		strcpy(buf, "???");
+	print_size(buf, SPRINT_BSIZE-1, size);
 	return buf;
 }
 
@@ -330,29 +336,25 @@ int get_percent(__u32 *percent, const char *str)
 	return 0;
 }
 
-int print_percent(char *buf, int len, __u32 per)
+void print_percent(char *buf, int len, __u32 per)
 {
 	snprintf(buf, len, "%g%%", (double) per / percent_scale);
-	return 0;
 }
 
 char * sprint_percent(__u32 per, char *buf)
 {
-	if (print_percent(buf, SPRINT_BSIZE-1, per))
-		strcpy(buf, "???");
+	print_percent(buf, SPRINT_BSIZE-1, per);
 	return buf;
 }
 
-int print_qdisc_handle(char *buf, int len, __u32 h)
+void print_qdisc_handle(char *buf, int len, __u32 h)
 {
 	snprintf(buf, len, "%x:", TC_H_MAJ(h)>>16);
-	return 0;
 }
 
 char * sprint_qdisc_handle(__u32 h, char *buf)
 {
-	if (print_qdisc_handle(buf, SPRINT_BSIZE-1, h))
-		strcpy(buf, "???");
+	print_qdisc_handle(buf, SPRINT_BSIZE-1, h);
 	return buf;
 }
 
