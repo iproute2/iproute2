@@ -2393,20 +2393,20 @@ int scan_state(const char *state)
 		return (1<<SS_CLOSE);
 	if (strcasecmp(state, "syn-rcv") == 0)
 		return (1<<SS_SYN_RECV);
-	if (matches(state, "established") == 0)
+	if (strcasecmp(state, "established") == 0)
 		return (1<<SS_ESTABLISHED);
 	if (strcasecmp(state, "all") == 0)
 		return SS_ALL;
 	if (strcasecmp(state, "connected") == 0)
 		return SS_ALL & ~((1<<SS_CLOSE)|(1<<SS_LISTEN));
-	if (matches(state, "synchronized") == 0)
+	if (strcasecmp(state, "synchronized") == 0)
 		return SS_ALL & ~((1<<SS_CLOSE)|(1<<SS_LISTEN)|(1<<SS_SYN_SENT));
 	if (strcasecmp(state, "bucket") == 0)
 		return (1<<SS_SYN_RECV)|(1<<SS_TIME_WAIT);
 	if (strcasecmp(state, "big") == 0)
 		return SS_ALL & ~((1<<SS_SYN_RECV)|(1<<SS_TIME_WAIT));
 	for (i=0; i<SS_MAX; i++) {
-		if (matches(state, sstate_namel[i]) == 0)
+		if (strcasecmp(state, sstate_namel[i]) == 0)
 			return (1<<i);
 	}
 	return 0;
@@ -2552,10 +2552,10 @@ int main(int argc, char *argv[])
 					current_filter.dbs |= (1<<RAW_DB);
 				} else if (strcmp(p, "unix") == 0) {
 					current_filter.dbs |= UNIX_DBM;
-				} else if (matches(p, "unix_stream") == 0 ||
+				} else if (strcasecmp(p, "unix_stream") == 0 ||
 					   strcmp(p, "u_str") == 0) {
 					current_filter.dbs |= (1<<UNIX_ST_DB);
-				} else if (matches(p, "unix_dgram") == 0 ||
+				} else if (strcasecmp(p, "unix_dgram") == 0 ||
 					   strcmp(p, "u_dgr") == 0) {
 					current_filter.dbs |= (1<<UNIX_DG_DB);
 				} else if (strcmp(p, "packet") == 0) {
