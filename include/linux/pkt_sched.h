@@ -38,7 +38,6 @@ struct tc_stats
 	__u32	pps;			/* Current flow packet rate */
 	__u32	qlen;
 	__u32	backlog;
-	__u32	reqs;
 };
 
 struct tc_estimator

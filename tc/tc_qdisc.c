@@ -177,9 +177,9 @@ void print_tcstats_attr(FILE *fp, const struct rtattr *rta)
 	memset(&st, 0, sizeof(st));
 	memcpy(&st, RTA_DATA(rta), MIN(RTA_PAYLOAD(rta), sizeof(st)));
 
-	fprintf(fp, " Sent %llu bytes %u pkts (dropped %u, overlimits %u requeues %u) ",
+	fprintf(fp, " Sent %llu bytes %u pkts (dropped %u, overlimits %u) ",
 		(unsigned long long)st.bytes, st.packets, st.drops, 
-		st.overlimits, st.reqs);
+		st.overlimits);
 
 	if (st.bps || st.pps || st.qlen || st.backlog) {
 		fprintf(fp, "\n ");
