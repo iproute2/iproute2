@@ -190,8 +190,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (filter.rprefsrc.family && r->rtm_family != filter.rprefsrc.family)
 		return 0;
 
-
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
 
 	memset(&dst, 0, sizeof(dst));
@@ -464,8 +462,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		unsigned mxlock = 0;
 		struct rtattr *mxrta[RTAX_MAX+1];
 
-		memset(mxrta, 0, sizeof(mxrta));
-
 		parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(tb[RTA_METRICS]),
 			    RTA_PAYLOAD(tb[RTA_METRICS]));
 		if (mxrta[RTAX_LOCK])
@@ -534,7 +530,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			} else
 				fprintf(fp, "%s\tnexthop", _SL_);
 			if (nh->rtnh_len > sizeof(*nh)) {
-				memset(tb, 0, sizeof(tb));
 				parse_rtattr(tb, RTA_MAX, RTNH_DATA(nh), nh->rtnh_len - sizeof(*nh));
 				if (tb[RTA_GATEWAY]) {
 					fprintf(fp, " via %s ", 
@@ -1340,7 +1335,6 @@ int iproute_get(int argc, char **argv)
 			return -1;
 		}
 
-		memset(tb, 0, sizeof(tb));
 		parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
 
 		if (tb[RTA_PREFSRC]) {

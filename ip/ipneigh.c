@@ -222,7 +222,6 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
              (r->ndm_family != AF_DECnet))
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, NDA_MAX, NDA_RTA(r), n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
 	if (tb[NDA_DST]) {

@@ -329,7 +329,6 @@ int do_one_request(struct nlmsghdr *n)
 	    !(ndm->ndm_state&~NUD_NOARP))
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, NDA_MAX, NDA_RTA(ndm), len);
 
 	if (!tb[NDA_DST])
