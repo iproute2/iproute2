@@ -148,31 +148,6 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 	return 0;
 }
 
-void print_class_tcstats(FILE *fp, struct tc_stats *st)
-{
-	SPRINT_BUF(b1);
-
-	fprintf(fp, " Sent %llu bytes %u pkts (dropped %u, overlimits %u) ",
-		(unsigned long long)st->bytes, st->packets, st->drops, st->overlimits);
-	if (st->bps || st->pps || st->qlen || st->backlog) {
-		fprintf(fp, "\n ");
-		if (st->bps || st->pps) {
-			fprintf(fp, "rate ");
-			if (st->bps)
-				fprintf(fp, "%s ", sprint_rate(st->bps, b1));
-			if (st->pps)
-				fprintf(fp, "%upps ", st->pps);
-		}
-		if (st->qlen || st->backlog) {
-			fprintf(fp, "backlog ");
-			if (st->backlog)
-				fprintf(fp, "%s ", sprint_size(st->backlog, b1));
-			if (st->qlen)
-				fprintf(fp, "%up ", st->qlen);
-		}
-	}
-}
-
 int filter_ifindex;
 __u32 filter_qdisc;
 
@@ -242,14 +217,8 @@ static int print_class(const struct sockaddr_nl *who,
 	fprintf(fp, "\n");
 	if (show_stats) {
 		if (tb[TCA_STATS]) {
-			if (RTA_PAYLOAD(tb[TCA_STATS]) < sizeof(struct tc_stats))
-				fprintf(fp, "statistics truncated");
-			else {
-				struct tc_stats st;
-				memcpy(&st, RTA_DATA(tb[TCA_STATS]), sizeof(st));
-				print_class_tcstats(fp, &st);
-				fprintf(fp, "\n");
-			}
+			print_tcstats_attr(fp, tb[TCA_STATS]);
+			fprintf(fp, "\n");
 		}
 		if (q && tb[TCA_XSTATS] && q->print_xstats) {
 			q->print_xstats(q, fp, tb[TCA_XSTATS]);
