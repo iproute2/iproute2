@@ -20,6 +20,7 @@ TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
 TCMODULES += q_hfsc.o
 TCMODULES += q_htb.o
+TCMODULES += m_gact.o
 
 TCOBJ += $(TCMODULES)
 
@@ -28,13 +29,8 @@ TCLIB += tc_red.o
 TCLIB += tc_cbq.o
 TCLIB += tc_estimator.o
 
-ifeq ($(TC_CONFIG_ACTION_GACT),y)
-  TCMODULES += m_gact.o
-  CFLAGS += -DCONFIG_GACT
-ifeq ($(TC_CONFIG_ACTION_PROB),y)
-  CFLAGS += -DCONFIG_GACT_PROB
-endif
-endif
+CFLAGS += -DCONFIG_GACT -DCONFIG_GACT_PROB
+
 
 TCSO :=
 TCSO += q_netem.so
