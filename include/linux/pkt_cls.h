@@ -1,6 +1,8 @@
 #ifndef __LINUX_PKT_CLS_H
 #define __LINUX_PKT_CLS_H
 
+#include <linux/pkt_sched.h>
+
 /* I think i could have done better macros ; for now this is stolen from
  * some arch/mips code - jhs
 */
@@ -136,9 +138,9 @@ struct tc_police
 
 struct tcf_t
 {
-	__u32   install;
-	__u32   lastuse;
-	__u32   expires;
+	__u64   install;
+	__u64   lastuse;
+	__u64   expires;
 };
 
 struct tc_cnt
@@ -219,18 +221,18 @@ struct tc_u32_sel
 	struct tc_u32_key	keys[0];
 };
 
+struct tc_u32_mark
+{
+	__u32		val;
+	__u32		mask;
+	__u32		success;
+};
+
 struct tc_u32_pcnt
 {
 	__u64 rcnt;
 	__u64 rhit;
 	__u64 kcnts[0];
-};
-
-struct tc_u32_mark
-{
-	__u32	val;
-	__u32	mask;
-	__u32	success;
 };
 
 /* Flags */
@@ -253,6 +255,7 @@ enum
 	TCA_RSVP_SRC,
 	TCA_RSVP_PINFO,
 	TCA_RSVP_POLICE,
+	TCA_RSVP_ACT,
 	__TCA_RSVP_MAX
 };
 
@@ -284,6 +287,7 @@ enum
 	TCA_ROUTE4_FROM,
 	TCA_ROUTE4_IIF,
 	TCA_ROUTE4_POLICE,
+	TCA_ROUTE4_ACT,
 	__TCA_ROUTE4_MAX
 };
 
@@ -315,9 +319,107 @@ enum
 	TCA_TCINDEX_FALL_THROUGH,
 	TCA_TCINDEX_CLASSID,
 	TCA_TCINDEX_POLICE,
+	TCA_TCINDEX_ACT,
 	__TCA_TCINDEX_MAX
 };
 
 #define TCA_TCINDEX_MAX     (__TCA_TCINDEX_MAX - 1)
+
+/* Basic filter */
+
+enum
+{
+	TCA_BASIC_UNSPEC,
+	TCA_BASIC_CLASSID,
+	TCA_BASIC_EMATCHES,
+	TCA_BASIC_ACT,
+	TCA_BASIC_POLICE,
+	__TCA_BASIC_MAX
+};
+
+#define TCA_BASIC_MAX (__TCA_BASIC_MAX - 1)
+
+/* Extended Matches */
+
+struct tcf_ematch_tree_hdr
+{
+	__u16		nmatches;
+	__u16		progid;
+};
+
+enum
+{
+	TCA_EMATCH_TREE_UNSPEC,
+	TCA_EMATCH_TREE_HDR,
+	TCA_EMATCH_TREE_LIST,
+	__TCA_EMATCH_TREE_MAX
+};
+#define TCA_EMATCH_TREE_MAX (__TCA_EMATCH_TREE_MAX - 1)
+
+struct tcf_ematch_hdr
+{
+	__u16		matchid;
+	__u16		kind;
+	__u16		flags;
+	__u16		pad; /* currently unused */
+};
+
+/*  0                   1
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 
+ * +-----------------------+-+-+---+
+ * |         Unused        |S|I| R |
+ * +-----------------------+-+-+---+
+ *
+ * R(2) ::= relation to next ematch
+ *          where: 0 0 END (last ematch)
+ *                 0 1 AND
+ *                 1 0 OR
+ *                 1 1 Unused (invalid)
+ * I(1) ::= invert result
+ * S(1) ::= simple payload
+ */
+#define TCF_EM_REL_END	0
+#define TCF_EM_REL_AND	(1<<0)
+#define TCF_EM_REL_OR	(1<<1)
+#define TCF_EM_INVERT	(1<<2)
+#define TCF_EM_SIMPLE	(1<<3)
+
+#define TCF_EM_REL_MASK	3
+#define TCF_EM_REL_VALID(v) (((v) & TCF_EM_REL_MASK) != TCF_EM_REL_MASK)
+
+enum
+{
+	TCF_LAYER_LINK,
+	TCF_LAYER_NETWORK,
+	TCF_LAYER_TRANSPORT,
+	__TCF_LAYER_MAX
+};
+#define TCF_LAYER_MAX (__TCF_LAYER_MAX - 1)
+
+/* Ematch type assignments
+ *   1..32767		Reserved for ematches inside kernel tree
+ *   32768..65535	Free to use, not reliable
+ */
+enum
+{
+	TCF_EM_CONTAINER,
+	TCF_EM_CMP,
+	TCF_EM_NBYTE,
+	TCF_EM_U32,
+	TCF_EM_META,
+	__TCF_EM_MAX
+};
+
+enum
+{
+	TCF_EM_PROG_TC
+};
+
+enum
+{
+	TCF_EM_OPND_EQ,
+	TCF_EM_OPND_GT,
+	TCF_EM_OPND_LT
+};
 
 #endif
