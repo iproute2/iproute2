@@ -242,9 +242,10 @@ int main(int argc, char **argv)
 
 	while ((c = getopt_long(argc, argv,"Vc:df:h?i:k:s:w:", 
 				opts, NULL)) != -1) {
+		int i, len = 0;
+		char *tmp, *tok;
+
 		switch (c) {
-			int i, len = 0;
-			char *tmp, *tok;
 			case 'c':
 				count = strtoul(optarg, NULL, 0);
 				break;
