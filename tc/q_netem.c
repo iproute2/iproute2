@@ -25,8 +25,10 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... netem latency TIME  rate KBPS [ mtu BYTES ]\n");
-	fprintf(stderr, "                 [ limit BYTES]\n");
+	fprintf(stderr, 
+"Usage: ... netem latency TIME [ gap PACKETS] \n" \
+"                 [ loss PERCENT ] [ duplicate PERCENT ]\n" \
+"                 [ rate KBPS ] [ limit BYTES]\n");
 }
 
 static void explain1(const char *arg)
@@ -40,18 +42,14 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n)
 {
 	struct tc_netem_qopt opt;
-	unsigned mtu=1500, rate=0;
 	int ok = 0;
 
 	memset(&opt, 0, sizeof(opt));
+	opt.limit = 1000;
 
 	while (argc > 0) {
 		if (matches(*argv, "limit") == 0) {
 			NEXT_ARG();
-			if (opt.limit || rate) {
-				fprintf(stderr, "Double \"limit/rate\" spec\n");
-				return -1;
-			}
 			if (get_size(&opt.limit, *argv)) {
 				explain1("limit");
 				return -1;
@@ -80,21 +78,17 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 			ok++;
-		} else if (matches(*argv, "rate") == 0) {
+		} else if (matches(*argv, "duplicate") == 0) {
 			NEXT_ARG();
-			if (rate) {
-				fprintf(stderr, "Double \"rate\" spec\n");
-				return -1;
-			}
-			if (get_rate(&rate, *argv)) {
-				explain1("rate");
+			if (get_percent(&opt.duplicate, *argv)) {
+				explain1("duplicate");
 				return -1;
 			}
 			ok++;
-		} else if (strcmp(*argv, "mtu") == 0) {
+		} else if (matches(*argv, "rate") == 0) {
 			NEXT_ARG();
-			if (get_size(&mtu, *argv)) {
-				explain1("mtu");
+			if (get_rate(&opt.rate, *argv)) {
+				explain1("rate");
 				return -1;
 			}
 			ok++;
@@ -109,19 +103,8 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		argc--; argv++;
 	}
 
-	if (!ok)
-		return 0;
-
-	if (!opt.limit && !rate) {
-		fprintf(stderr, "Either \"limit\" or \"rate\" are required.\n");
-		return -1;
-	}
-	
-	/* Compute netem bandwith product as limit */
-	if (opt.limit == 0) 
-		opt.limit = ((double)rate * (double)opt.latency/1000000.);
-
-	addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
+	if (ok)
+		addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
 	return 0;
 }
 
