@@ -35,7 +35,7 @@ all: Config
 	do $(MAKE) $(MFLAGS) -C $$i; done
 
 Config:
-	./configure $(KERNEL_INCLUDE)
+	sh configure $(KERNEL_INCLUDE)
 
 install: all
 	install -m 0755 -d $(DESTDIR)$(SBINDIR)
