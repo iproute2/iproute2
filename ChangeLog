@@ -1,3 +1,9 @@
+2005-06-07   Masahide NAKAMURA <nakam@linux-ipv6.org>
+	
+	* [ip] show timestamp when using '-t' option.
+	* [ip] remove duplicated code for expired message of xfrm.
+	
+
 2005-03-30  Stephen Hemminger  <shemminger@osdl.org>
 
 	* include/linux/netfilter_ipv4/ip_tables.h dont include compiler.h
