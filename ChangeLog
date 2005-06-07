@@ -2,7 +2,10 @@
 	
 	* [ip] show timestamp when using '-t' option.
 	* [ip] remove duplicated code for expired message of xfrm.
-	
+	* [ip] add "deleteall" command for xfrm;
+	  "flush" uses kernel's flush interface and
+	  "deleteall" uses legacy iproute2's flush feature like
+	   getting-and-deleting-for-each.
 
 2005-03-30  Stephen Hemminger  <shemminger@osdl.org>
 

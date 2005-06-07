@@ -35,8 +35,8 @@
 #include "xfrm.h"
 #include "ip_common.h"
 
-//#define NLMSG_FLUSH_BUF_SIZE (4096-512)
-#define NLMSG_FLUSH_BUF_SIZE 8192
+//#define NLMSG_DELETEALL_BUF_SIZE (4096-512)
+#define NLMSG_DELETEALL_BUF_SIZE 8192
 
 /*
  * Receiving buffer defines:
@@ -56,8 +56,9 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip xfrm policy { add | update } dir DIR SELECTOR [ index INDEX ] \n");
 	fprintf(stderr, "        [ action ACTION ] [ priority PRIORITY ] [ LIMIT-LIST ] [ TMPL-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy { delete | get } dir DIR [ SELECTOR | index INDEX ]\n");
-	fprintf(stderr, "Usage: ip xfrm policy { flush | list } [ dir DIR ] [ SELECTOR ]\n");
+	fprintf(stderr, "Usage: ip xfrm policy { deleteall | list } [ dir DIR ] [ SELECTOR ]\n");
 	fprintf(stderr, "        [ index INDEX ] [ action ACTION ] [ priority PRIORITY ]\n");
+	fprintf(stderr, "Usage: ip xfrm policy flush\n");
 	fprintf(stderr, "DIR := [ in | out | fwd ]\n");
 
 	fprintf(stderr, "SELECTOR := src ADDR[/PLEN] dst ADDR[/PLEN] [ UPSPEC ] [ dev DEV ]\n");
@@ -523,7 +524,7 @@ static int xfrm_policy_keep(const struct sockaddr_nl *who,
 		return 0;
 
 	if (xb->offset > xb->size) {
-		fprintf(stderr, "Flush buffer overflow\n");
+		fprintf(stderr, "Policy buffer overflow\n");
 		return -1;
 	}
 
@@ -544,7 +545,7 @@ static int xfrm_policy_keep(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
+static int xfrm_policy_list_or_deleteall(int argc, char **argv, int deleteall)
 {
 	char *selp = NULL;
 	struct rtnl_handle rth;
@@ -602,9 +603,9 @@ static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
-	if (flush) {
+	if (deleteall) {
 		struct xfrm_buffer xb;
-		char buf[NLMSG_FLUSH_BUF_SIZE];
+		char buf[NLMSG_DELETEALL_BUF_SIZE];
 		int i;
 
 		xb.buf = buf;
@@ -616,7 +617,7 @@ static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 			xb.nlmsg_count = 0;
 
 			if (show_stats > 1)
-				fprintf(stderr, "Flush round = %d\n", i);
+				fprintf(stderr, "Delete-all round = %d\n", i);
 
 			if (rtnl_wilddump_request(&rth, preferred_family, XFRM_MSG_GETPOLICY) < 0) {
 				perror("Cannot send dump request");
@@ -624,21 +625,21 @@ static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 			}
 
 			if (rtnl_dump_filter(&rth, xfrm_policy_keep, &xb, NULL, NULL) < 0) {
-				fprintf(stderr, "Flush terminated\n");
+				fprintf(stderr, "Delete-all terminated\n");
 				exit(1);
 			}
 			if (xb.nlmsg_count == 0) {
 				if (show_stats > 1)
-					fprintf(stderr, "Flush completed\n");
+					fprintf(stderr, "Delete-all completed\n");
 				break;
 			}
 
 			if (rtnl_send(&rth, xb.buf, xb.offset) < 0) {
-				perror("Failed to send flush request\n");
+				perror("Failed to send delete-all request\n");
 				exit(1);
 			}
 			if (show_stats > 1)
-				fprintf(stderr, "Flushed nlmsg count = %d\n", xb.nlmsg_count);
+				fprintf(stderr, "Delete-all nlmsg count = %d\n", xb.nlmsg_count);
 
 			xb.offset = 0;
 			xb.nlmsg_count = 0;
@@ -660,7 +661,7 @@ static int xfrm_policy_list_or_flush(int argc, char **argv, int flush)
 	exit(0);
 }
 
-static int xfrm_policy_flush_all(void)
+static int xfrm_policy_flush(void)
 {
 	struct rtnl_handle rth;
 	struct {
@@ -677,7 +678,7 @@ static int xfrm_policy_flush_all(void)
 		exit(1);
 
 	if (show_stats > 1)
-		fprintf(stderr, "Flush all\n");
+		fprintf(stderr, "Flush policy\n");
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
 		exit(2);
@@ -690,7 +691,7 @@ static int xfrm_policy_flush_all(void)
 int do_xfrm_policy(int argc, char **argv)
 {
 	if (argc < 1)
-		return xfrm_policy_list_or_flush(0, NULL, 0);
+		return xfrm_policy_list_or_deleteall(0, NULL, 0);
 
 	if (matches(*argv, "add") == 0)
 		return xfrm_policy_modify(XFRM_MSG_NEWPOLICY, 0,
@@ -698,19 +699,17 @@ int do_xfrm_policy(int argc, char **argv)
 	if (matches(*argv, "update") == 0)
 		return xfrm_policy_modify(XFRM_MSG_UPDPOLICY, 0,
 					  argc-1, argv+1);
-	if (matches(*argv, "delete") == 0 || matches(*argv, "del") == 0)
+	if (matches(*argv, "delete") == 0)
 		return xfrm_policy_delete(argc-1, argv+1);
+	if (matches(*argv, "deleteall") == 0 || matches(*argv, "delall") == 0)
+		return xfrm_policy_list_or_deleteall(argc-1, argv+1, 1);
 	if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0
 	    || matches(*argv, "lst") == 0)
-		return xfrm_policy_list_or_flush(argc-1, argv+1, 0);
+		return xfrm_policy_list_or_deleteall(argc-1, argv+1, 0);
 	if (matches(*argv, "get") == 0)
 		return xfrm_policy_get(argc-1, argv+1);
-	if (matches(*argv, "flush") == 0) {
-		if (argc-1 < 1)
-			return xfrm_policy_flush_all();
-		else
-			return xfrm_policy_list_or_flush(argc-1, argv+1, 1);
-	}
+	if (matches(*argv, "flush") == 0)
+		return xfrm_policy_flush();
 	if (matches(*argv, "help") == 0)
 		usage();
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip xfrm policy help\".\n", *argv);

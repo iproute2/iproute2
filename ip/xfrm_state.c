@@ -34,8 +34,8 @@
 #include "xfrm.h"
 #include "ip_common.h"
 
-//#define NLMSG_FLUSH_BUF_SIZE (4096-512)
-#define NLMSG_FLUSH_BUF_SIZE 8192
+//#define NLMSG_DELETEALL_BUF_SIZE (4096-512)
+#define NLMSG_DELETEALL_BUF_SIZE 8192
 
 /*
  * Receiving buffer defines:
@@ -61,8 +61,9 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip xfrm state allocspi ID [ mode MODE ] [ reqid REQID ] [ seq SEQ ]\n");
 	fprintf(stderr, "        [ min SPI max SPI ]\n");
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID\n");
-	fprintf(stderr, "Usage: ip xfrm state { flush | list } [ ID ] [ mode MODE ] [ reqid REQID ]\n");
+	fprintf(stderr, "Usage: ip xfrm state { deleteall | list } [ ID ] [ mode MODE ] [ reqid REQID ]\n");
 	fprintf(stderr, "        [ flag FLAG_LIST ]\n");
+	fprintf(stderr, "Usage: ip xfrm state flush [ proto XFRM_PROTO ]\n");
 
 	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM_PROTO ] [ spi SPI ]\n");
 	//fprintf(stderr, "XFRM_PROTO := [ esp | ah | comp ]\n");
@@ -716,7 +717,7 @@ static int xfrm_state_keep(const struct sockaddr_nl *who,
 		return 0;
 
 	if (xb->offset > xb->size) {
-		fprintf(stderr, "Flush buffer overflow\n");
+		fprintf(stderr, "State buffer overflow\n");
 		return -1;
 	}
 
@@ -738,7 +739,7 @@ static int xfrm_state_keep(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static int xfrm_state_list_or_flush(int argc, char **argv, int flush)
+static int xfrm_state_list_or_deleteall(int argc, char **argv, int deleteall)
 {
 	char *idp = NULL;
 	struct rtnl_handle rth;
@@ -783,9 +784,9 @@ static int xfrm_state_list_or_flush(int argc, char **argv, int flush)
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
-	if (flush) {
+	if (deleteall) {
 		struct xfrm_buffer xb;
-		char buf[NLMSG_FLUSH_BUF_SIZE];
+		char buf[NLMSG_DELETEALL_BUF_SIZE];
 		int i;
 
 		xb.buf = buf;
@@ -797,7 +798,7 @@ static int xfrm_state_list_or_flush(int argc, char **argv, int flush)
 			xb.nlmsg_count = 0;
 
 			if (show_stats > 1)
-				fprintf(stderr, "Flush round = %d\n", i);
+				fprintf(stderr, "Delete-all round = %d\n", i);
 
 			if (rtnl_wilddump_request(&rth, preferred_family, XFRM_MSG_GETSA) < 0) {
 				perror("Cannot send dump request");
@@ -805,21 +806,21 @@ static int xfrm_state_list_or_flush(int argc, char **argv, int flush)
 			}
 
 			if (rtnl_dump_filter(&rth, xfrm_state_keep, &xb, NULL, NULL) < 0) {
-				fprintf(stderr, "Flush terminated\n");
+				fprintf(stderr, "Delete-all terminated\n");
 				exit(1);
 			}
 			if (xb.nlmsg_count == 0) {
 				if (show_stats > 1)
-					fprintf(stderr, "Flush completed\n");
+					fprintf(stderr, "Delete-all completed\n");
 				break;
 			}
 
 			if (rtnl_send(&rth, xb.buf, xb.offset) < 0) {
-				perror("Failed to send flush request\n");
+				perror("Failed to send delete-all request\n");
 				exit(1);
 			}
 			if (show_stats > 1)
-				fprintf(stderr, "Flushed nlmsg count = %d\n", xb.nlmsg_count);
+				fprintf(stderr, "Delete-all nlmsg count = %d\n", xb.nlmsg_count);
 
 			xb.offset = 0;
 			xb.nlmsg_count = 0;
@@ -842,13 +843,14 @@ static int xfrm_state_list_or_flush(int argc, char **argv, int flush)
 	exit(0);
 }
 
-static int xfrm_state_flush_all(void)
+static int xfrm_state_flush(int argc, char **argv)
 {
 	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr			n;
 		struct xfrm_usersa_flush	xsf;
 	} req;
+	char *protop = NULL;
 
 	memset(&req, 0, sizeof(req));
 
@@ -857,11 +859,34 @@ static int xfrm_state_flush_all(void)
 	req.n.nlmsg_type = XFRM_MSG_FLUSHSA;
 	req.xsf.proto = IPSEC_PROTO_ANY;
 
+	while (argc > 0) {
+		if (strcmp(*argv, "proto") == 0) {
+			int ret;
+
+			if (protop)
+				duparg("proto", *argv);
+			protop = *argv;
+
+			NEXT_ARG();
+
+			ret = xfrm_xfrmproto_getbyname(*argv);
+			if (ret < 0)
+				invarg("\"XFRM_PROTO\" is invalid", *argv);
+
+			req.xsf.proto = (__u8)ret;
+		} else
+			invarg("unknown", *argv);
+
+		argc--; argv++;
+	}
+
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
 	if (show_stats > 1)
-		fprintf(stderr, "Flush all\n");
+		fprintf(stderr, "Flush state proto=%s\n",
+			(req.xsf.proto == IPSEC_PROTO_ANY) ? "any" :
+			strxf_xfrmproto(req.xsf.proto));
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
 		exit(2);
@@ -874,7 +899,7 @@ static int xfrm_state_flush_all(void)
 int do_xfrm_state(int argc, char **argv)
 {
 	if (argc < 1)
-		return xfrm_state_list_or_flush(0, NULL, 0);
+		return xfrm_state_list_or_deleteall(0, NULL, 0);
 
 	if (matches(*argv, "add") == 0)
 		return xfrm_state_modify(XFRM_MSG_NEWSA, 0,
@@ -884,19 +909,17 @@ int do_xfrm_state(int argc, char **argv)
 					 argc-1, argv+1);
 	if (matches(*argv, "allocspi") == 0)
 		return xfrm_state_allocspi(argc-1, argv+1);
-	if (matches(*argv, "delete") == 0 || matches(*argv, "del") == 0)
+	if (matches(*argv, "delete") == 0)
 		return xfrm_state_get_or_delete(argc-1, argv+1, 1);
+	if (matches(*argv, "deleteall") == 0 || matches(*argv, "delall") == 0)
+		return xfrm_state_list_or_deleteall(argc-1, argv+1, 1);
 	if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0
 	    || matches(*argv, "lst") == 0)
-		return xfrm_state_list_or_flush(argc-1, argv+1, 0);
+		return xfrm_state_list_or_deleteall(argc-1, argv+1, 0);
 	if (matches(*argv, "get") == 0)
 		return xfrm_state_get_or_delete(argc-1, argv+1, 0);
-	if (matches(*argv, "flush") == 0) {
-		if (argc-1 < 1)
-			return xfrm_state_flush_all();
-		else
-			return xfrm_state_list_or_flush(argc-1, argv+1, 1);
-	}
+	if (matches(*argv, "flush") == 0)
+		return xfrm_state_flush(argc-1, argv+1);
 	if (matches(*argv, "help") == 0)
 		usage();
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip xfrm state help\".\n", *argv);
