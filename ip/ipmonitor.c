@@ -38,6 +38,9 @@ int accept_msg(const struct sockaddr_nl *who,
 {
 	FILE *fp = (FILE*)arg;
 
+	if (timestamp)
+		print_timestamp(fp);
+
 	if (n->nlmsg_type == RTM_NEWROUTE || n->nlmsg_type == RTM_DELROUTE) {
 		print_route(who, n, arg);
 		return 0;

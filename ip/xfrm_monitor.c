@@ -63,7 +63,7 @@ static int xfrm_acquire_print(const struct sockaddr_nl *who,
 	}
 
 	parse_rtattr(tb, XFRMA_MAX, XFRMACQ_RTA(xacq), len);
-	
+
 	family = xacq->sel.family;
 	if (family == AF_UNSPEC)
 		family = xacq->policy.sel.family;
@@ -107,92 +107,24 @@ static int xfrm_acquire_print(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static int xfrm_state_expire_print(const struct sockaddr_nl *who,
-				   struct nlmsghdr *n, void *arg)
-{
-	FILE *fp = (FILE*)arg;
-	struct xfrm_user_expire *xexp = NLMSG_DATA(n);
-	int len = n->nlmsg_len;
-	struct rtattr * tb[XFRMA_MAX+1];
-
-	if (n->nlmsg_type != XFRM_MSG_EXPIRE) {
-		fprintf(stderr, "Not an expire: %08x %08x %08x\n",
-			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
-		return 0;
-	}
-
-	len -= NLMSG_LENGTH(sizeof(*xexp));
-	if (len < 0) {
-		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
-		return -1;
-	}
-
-	parse_rtattr(tb, XFRMA_MAX, XFRMEXP_RTA(xexp), len);
-
-	fprintf(fp, "Expired ");
-
-	xfrm_state_info_print(&xexp->state, tb, fp, NULL, NULL);
-
-	fprintf(fp, "\t");
-	fprintf(fp, "hard %u", xexp->hard);
-	fprintf(fp, "%s", _SL_);
-
-	if (oneline)
-		fprintf(fp, "\n");
-
-	return 0;
-}
-
-static int xfrm_policy_expire_print(const struct sockaddr_nl *who,
-				    struct nlmsghdr *n, void *arg)
-{
-	FILE *fp = (FILE*)arg;
-	struct xfrm_user_polexpire *xpexp = NLMSG_DATA(n);
-	int len = n->nlmsg_len;
-	struct rtattr * tb[XFRMA_MAX+1];
-
-	if (n->nlmsg_type != XFRM_MSG_POLEXPIRE) {
-		fprintf(stderr, "Not a polexpire: %08x %08x %08x\n",
-			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
-		return 0;
-	}
-
-	len -= NLMSG_LENGTH(sizeof(*xpexp));
-	if (len < 0) {
-		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
-		return -1;
-	}
-
-	parse_rtattr(tb, XFRMA_MAX, XFRMPEXP_RTA(xpexp), len);
-
-	fprintf(fp, "Expired ");
-	xfrm_policy_info_print(&xpexp->pol, tb, fp, NULL, NULL);
-
-	fprintf(fp, "\t");
-	fprintf(fp, "hard %u", xpexp->hard);
-	fprintf(fp, "%s", _SL_);
-
-	if (oneline)
-		fprintf(fp, "\n");
-
-	return 0;
-}
-
 static int xfrm_accept_msg(const struct sockaddr_nl *who,
 			   struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
+
+	if (timestamp)
+		print_timestamp(fp);
 
 	if (n->nlmsg_type == XFRM_MSG_ACQUIRE) {
 		xfrm_acquire_print(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == XFRM_MSG_EXPIRE) {
-		xfrm_state_expire_print(who, n, arg);
+		xfrm_state_print(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
-		xfrm_policy_expire_print(who, n, arg);
+		xfrm_policy_print(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == XFRM_MSG_FLUSHSA) {

@@ -555,18 +555,32 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		     void *arg)
 {
 	FILE *fp = (FILE*)arg;
-	struct xfrm_usersa_info *xsinfo = NLMSG_DATA(n);
+	struct xfrm_usersa_info *xsinfo;
+	struct xfrm_user_expire *xexp;
 	int len = n->nlmsg_len;
 	struct rtattr * tb[XFRMA_MAX+1];
+	struct rtattr * rta;
 
 	if (n->nlmsg_type != XFRM_MSG_NEWSA &&
-	    n->nlmsg_type != XFRM_MSG_DELSA) {
+	    n->nlmsg_type != XFRM_MSG_DELSA &&
+	    n->nlmsg_type != XFRM_MSG_EXPIRE) {
 		fprintf(stderr, "Not a state: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 		return 0;
 	}
 
-	len -= NLMSG_LENGTH(sizeof(*xsinfo));
+	if (n->nlmsg_type == XFRM_MSG_EXPIRE) {
+		xexp = NLMSG_DATA(n);
+		xsinfo = &xexp->state;
+
+		len -= NLMSG_LENGTH(sizeof(*xexp));
+	} else {
+		xexp = NULL;
+		xsinfo = NLMSG_DATA(n);
+
+		len -= NLMSG_LENGTH(sizeof(*xsinfo));
+	}
+
 	if (len < 0) {
 		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
 		return -1;
@@ -575,12 +589,25 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (!xfrm_state_filter_match(xsinfo))
 		return 0;
 
-	parse_rtattr(tb, XFRMA_MAX, XFRMS_RTA(xsinfo), len);
+	if (n->nlmsg_type == XFRM_MSG_EXPIRE)
+		rta = XFRMEXP_RTA(xexp);
+	else
+		rta = XFRMS_RTA(xsinfo);
+
+	parse_rtattr(tb, XFRMA_MAX, rta, len);
 
 	if (n->nlmsg_type == XFRM_MSG_DELSA)
 		fprintf(fp, "Deleted ");
+	else if (n->nlmsg_type == XFRM_MSG_EXPIRE)
+		fprintf(fp, "Expired ");
 
 	xfrm_state_info_print(xsinfo, tb, fp, NULL, NULL);
+
+	if (n->nlmsg_type == XFRM_MSG_EXPIRE) {
+		fprintf(fp, "\t");
+		fprintf(fp, "hard %u", xexp->hard);
+		fprintf(fp, "%s", _SL_);
+	}
 
 	if (oneline)
 		fprintf(fp, "\n");

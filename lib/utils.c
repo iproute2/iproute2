@@ -27,6 +27,9 @@
 #include <resolv.h>
 #include <asm/types.h>
 #include <linux/pkt_sched.h>
+#include <time.h>
+#include <sys/time.h>
+
 
 #include "utils.h"
 
@@ -556,4 +559,18 @@ __u8* hexstring_a2n(const __u8 *str, __u8 *buf, int blen)
 	if (cnt < blen)
 		memset(buf+cnt, 0, blen-cnt);
 	return buf;
+}
+
+int print_timestamp(FILE *fp)
+{
+	struct timeval tv;
+	char *tstr;
+
+	memset(&tv, 0, sizeof(tv));
+	gettimeofday(&tv, NULL);
+
+	tstr = asctime(localtime(&tv.tv_sec));
+	tstr[strlen(tstr)-1] = 0;
+	fprintf(fp, "Timestamp: %s %lu usec\n", tstr, tv.tv_usec);
+	return 0;
 }

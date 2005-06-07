@@ -335,18 +335,32 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		      void *arg)
 {
 	FILE *fp = (FILE*)arg;
-	struct xfrm_userpolicy_info *xpinfo = NLMSG_DATA(n);
+	struct xfrm_userpolicy_info *xpinfo;
+	struct xfrm_user_polexpire *xpexp;
 	int len = n->nlmsg_len;
 	struct rtattr * tb[XFRMA_MAX+1];
+	struct rtattr * rta;
 
 	if (n->nlmsg_type != XFRM_MSG_NEWPOLICY &&
-	    n->nlmsg_type != XFRM_MSG_DELPOLICY) {
+	    n->nlmsg_type != XFRM_MSG_DELPOLICY &&
+	    n->nlmsg_type != XFRM_MSG_POLEXPIRE) {
 		fprintf(stderr, "Not a policy: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 		return 0;
 	}
 
-	len -= NLMSG_LENGTH(sizeof(*xpinfo));
+	if (n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
+		xpexp = NLMSG_DATA(n);
+		xpinfo = &xpexp->pol;
+
+		len -= NLMSG_LENGTH(sizeof(*xpexp));
+	} else {
+		xpexp = NULL;
+		xpinfo = NLMSG_DATA(n);
+
+		len -= NLMSG_LENGTH(sizeof(*xpinfo));
+	}
+
 	if (len < 0) {
 		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
 		return -1;
@@ -355,12 +369,25 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (!xfrm_policy_filter_match(xpinfo))
 		return 0;
 
-	parse_rtattr(tb, XFRMA_MAX, XFRMP_RTA(xpinfo), len);
+	if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
+		rta = XFRMPEXP_RTA(xpexp);
+	else
+		rta = XFRMP_RTA(xpinfo);
+
+	parse_rtattr(tb, XFRMA_MAX, rta, len);
 
 	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)
 		fprintf(fp, "Deleted ");
+	else if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
+		fprintf(fp, "Expired ");
 
 	xfrm_policy_info_print(xpinfo, tb, fp, NULL, NULL);
+
+	if (n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
+		fprintf(fp, "\t");
+		fprintf(fp, "hard %u", xpexp->hard);
+		fprintf(fp, "%s", _SL_);
+	}
 
 	if (oneline)
 		fprintf(fp, "\n");

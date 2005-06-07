@@ -31,6 +31,7 @@ int preferred_family = AF_UNSPEC;
 int show_stats = 0;
 int resolve_hosts = 0;
 int oneline = 0;
+int timestamp = 0;
 char * _SL_ = NULL;
 
 static void usage(void) __attribute__((noreturn));
@@ -42,7 +43,8 @@ static void usage(void)
 "where  OBJECT := { link | addr | route | rule | neigh | tunnel |\n"
 "                   maddr | mroute | monitor | xfrm }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -r[esolve] |\n"
-"                    -f[amily] { inet | inet6 | ipx | dnet | link } | -o[neline] }\n");
+"                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
+"                    -o[neline] | -t[imestamp] }\n");
 	exit(-1);
 }
 
@@ -102,6 +104,8 @@ int main(int argc, char **argv)
 			++resolve_hosts;
 		} else if (matches(opt, "-oneline") == 0) {
 			++oneline;
+		} else if (matches(opt, "-timestamp") == 0) {
+			++timestamp;
 #if 0
 		} else if (matches(opt, "-numeric") == 0) {
 			rtnl_names_numeric++;

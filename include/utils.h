@@ -14,6 +14,7 @@ extern int show_details;
 extern int show_raw;
 extern int resolve_hosts;
 extern int oneline;
+extern int timestamp;
 extern char * _SL_;
 
 #ifndef IPPROTO_ESP
@@ -125,5 +126,7 @@ static __inline__ int get_user_hz(void)
 		__iproute2_user_hz_internal = __get_user_hz();
 	return __iproute2_user_hz_internal;
 }
+
+int print_timestamp(FILE *fp);
 
 #endif /* __UTILS_H__ */
