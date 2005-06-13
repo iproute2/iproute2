@@ -1,3 +1,7 @@
+2005-06-13  Steven Whitehouse <steve@chygwyn.com>
+
+	* Decnet doc's update
+
 2005-06-07  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Fix 'ip link' map to handle case where device gets autoloaded
