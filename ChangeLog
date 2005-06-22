@@ -1,3 +1,8 @@
+2005-06-22  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+
+	* Update include files to 2.6.12
+	* Add ss support for TCP_CONG
+
 2005-06-13  Steven Whitehouse <steve@chygwyn.com>
 
 	* Decnet doc's update

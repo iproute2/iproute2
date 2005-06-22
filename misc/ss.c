@@ -1338,6 +1338,9 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 			if (info->tcpi_options & TCPI_OPT_ECN)
 				printf(" ecn");
 		}
+		if (tb[TCPDIAG_CONG])
+			printf("%s", (char *) RTA_DATA(tb[TCPDIAG_CONG]));
+
 		if (info->tcpi_options & TCPI_OPT_WSCALE) 
 			printf(" wscale:%d,%d", info->tcpi_snd_wscale,
 			       info->tcpi_rcv_wscale);
@@ -1358,12 +1361,9 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 			const struct tcpvegas_info *vinfo
 				= RTA_DATA(tb[TCPDIAG_VEGASINFO]);
 
-			if (vinfo->tcpv_enabled)
-				printf(" vegas");
-
-			if (vinfo->tcpv_rtt && 
-			    vinfo->tcpv_rtt != 0x7fffffff)
-			    rtt =  vinfo->tcpv_rtt;
+			if (vinfo->tcpv_enabled && 
+			    vinfo->tcpv_rtt && vinfo->tcpv_rtt != 0x7fffffff)
+				rtt =  vinfo->tcpv_rtt;
 		}
 
 		if (rtt > 0 && info->tcpi_snd_mss && info->tcpi_snd_cwnd) {
@@ -1442,7 +1442,6 @@ int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	printf("\n");
 
 	return 0;
-
 }
 
 int tcp_show_netlink(struct filter *f, FILE *dump_fp)
@@ -1480,9 +1479,13 @@ int tcp_show_netlink(struct filter *f, FILE *dump_fp)
 	if (show_tcpinfo) {
 		req.r.tcpdiag_ext |= (1<<(TCPDIAG_INFO-1));
 		req.r.tcpdiag_ext |= (1<<(TCPDIAG_VEGASINFO-1));
+		req.r.tcpdiag_ext |= (1<<(TCPDIAG_CONG-1));
 	}
 
-	iov[0] = (struct iovec){ &req, sizeof(req) };
+	iov[0] = (struct iovec){ 
+		.iov_base = &req, 
+		.iov_len = sizeof(req) 
+	};
 	if (f->f) {
 		bclen = ssfilter_bytecompile(f->f, &bc);
 		rta.rta_type = TCPDIAG_REQ_BYTECODE;
@@ -1493,17 +1496,19 @@ int tcp_show_netlink(struct filter *f, FILE *dump_fp)
 	}
 
 	msg = (struct msghdr) {
-		(void*)&nladdr, sizeof(nladdr),
-		iov,	f->f ? 3 : 1,
-		NULL,	0,
-		0
+		.msg_name = (void*)&nladdr, 
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = iov,	
+		.msg_iovlen = f->f ? 3 : 1,
 	};
 
 	if (sendmsg(fd, &msg, 0) < 0)
 		return -1;
 
-
-	iov[0] = (struct iovec){ buf, sizeof(buf) };
+	iov[0] = (struct iovec){ 
+		.iov_base = buf, 
+		.iov_len = sizeof(buf) 
+	};
 
 	while (1) {
 		int status;

@@ -29,11 +29,11 @@ static void explain(void)
 {
 	fprintf(stderr, 
 "Usage: ... netem [ limit PACKETS ] \n" \
-"		  [ delay TIME [ JITTER [CORRELATION]]]\n" \
+"                 [ delay TIME [ JITTER [CORRELATION]]]\n" \
+"                 [ distribution {uniform|normal|pareto|paretonormal} ]\n" \
 "                 [ drop PERCENT [CORRELATION]] \n" \
 "                 [ duplicate PERCENT [CORRELATION]]\n" \
-"		  [ distribution {uniform|normal|pareto|paretonormal} ]\n" \
-"                 [ gap PACKETS ]\n");
+"                 [ reorder PRECENT [CORRELATION] [ gap DISTANCE ]]\n");
 }
 
 static void explain1(const char *arg)
@@ -127,11 +127,13 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	struct rtattr *tail;
 	struct tc_netem_qopt opt;
 	struct tc_netem_corr cor;
+	struct tc_netem_reorder reorder;
 	__s16 dist_data[MAXDIST];
 
 	memset(&opt, 0, sizeof(opt));
 	opt.limit = 1000;
 	memset(&cor, 0, sizeof(cor));
+	memset(&reorder, 0, sizeof(reorder));
 
 	while (argc > 0) {
 		if (matches(*argv, "limit") == 0) {
@@ -178,6 +180,19 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 					return -1;
 				}
 			}
+		} else if (matches(*argv, "reorder") == 0) {
+			NEXT_ARG();
+			if (get_percent(&reorder.probability, *argv)) {
+				explain1("reorder");
+				return -1;
+			}
+			if (NEXT_IS_NUMBER()) {
+				NEXT_ARG();
+				if (get_percent(&reorder.correlation, *argv)) {
+					explain1("reorder");
+					return -1;
+				}
+			}
 		} else if (matches(*argv, "gap") == 0) {
 			NEXT_ARG();
 			if (get_u32(&opt.gap, *argv, 0)) {
@@ -215,8 +230,27 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 
 	tail = NLMSG_TAIL(n);
 
+	if (reorder.probability) {
+		if (opt.latency == 0) {
+			fprintf(stderr, "reordering not possible without specifying some delay\n");
+		}
+		if (opt.gap == 0)
+			opt.gap = 1;
+	} else if (opt.gap > 0) {
+		fprintf(stderr, "gap specified without reorder probability\n");
+		explain();
+		return -1;
+	}
+
+	if (dist_size > 0 && (opt.latency == 0 || opt.jitter == 0)) {
+		fprintf(stderr, "distribution specified but no latency and jitter values\n");
+		explain();
+		return -1;
+	}
+
 	addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
 	addattr_l(n, 1024, TCA_NETEM_CORR, &cor, sizeof(cor));
+	addattr_l(n, 1024, TCA_NETEM_REORDER, &reorder, sizeof(reorder));
 
 	if (dist_size > 0) {
 		addattr_l(n, 32768, TCA_NETEM_DELAY_DIST,
@@ -229,6 +263,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	const struct tc_netem_corr *cor = NULL;
+	const struct tc_netem_reorder *reorder = NULL;
 	struct tc_netem_qopt qopt;
 	int len = RTA_PAYLOAD(opt) - sizeof(qopt);
 	SPRINT_BUF(b1);
@@ -251,6 +286,11 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			if (RTA_PAYLOAD(tb[TCA_NETEM_CORR]) < sizeof(*cor))
 				return -1;
 			cor = RTA_DATA(tb[TCA_NETEM_CORR]);
+		}
+		if (tb[TCA_NETEM_REORDER]) {
+			if (RTA_PAYLOAD(tb[TCA_NETEM_REORDER]) < sizeof(*reorder))
+				return -1;
+			reorder = RTA_DATA(tb[TCA_NETEM_REORDER]);
 		}
 	}
 
@@ -277,6 +317,14 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			sprint_percent(qopt.duplicate, b1));
 		if (cor && cor->dup_corr)
 			fprintf(f, " %s", sprint_percent(cor->dup_corr, b1));
+	}
+			
+	if (reorder && reorder->probability) {
+		fprintf(f, " reorder %s", 
+			sprint_percent(reorder->probability, b1));
+		if (reorder->correlation)
+			fprintf(f, " %s", 
+				sprint_percent(reorder->correlation, b1));
 	}
 
 	if (qopt.gap)

@@ -140,8 +140,11 @@ enum {
 	XFRM_MSG_FLUSHPOLICY,
 #define XFRM_MSG_FLUSHPOLICY XFRM_MSG_FLUSHPOLICY
 
-	XFRM_MSG_MAX
+	__XFRM_MSG_MAX
 };
+#define XFRM_MSG_MAX (__XFRM_MSG_MAX - 1)
+
+#define XFRM_NR_MSGTYPES (XFRM_MSG_MAX + 1 - XFRM_MSG_BASE)
 
 struct xfrm_user_tmpl {
 	struct xfrm_id		id;
@@ -171,6 +174,8 @@ enum xfrm_attr_type_t {
 	XFRMA_ALG_COMP,		/* struct xfrm_algo */
 	XFRMA_ENCAP,		/* struct xfrm_algo + struct xfrm_encap_tmpl */
 	XFRMA_TMPL,		/* 1 or more struct xfrm_user_tmpl */
+	XFRMA_SA,
+	XFRMA_POLICY,
 	__XFRMA_MAX
 
 #define XFRMA_MAX (__XFRMA_MAX - 1)
@@ -254,5 +259,7 @@ struct xfrm_usersa_flush {
 
 #define XFRMGRP_ACQUIRE		1
 #define XFRMGRP_EXPIRE		2
+#define XFRMGRP_SA		4
+#define XFRMGRP_POLICY		8
 
 #endif /* _LINUX_XFRM_H */
