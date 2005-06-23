@@ -1,3 +1,7 @@
+2005-06-23  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Fix for options process with ipt
+
 2005-06-23  Thomas Graf <tgraf@suug.ch>
 	
 	* Add extended matches (nbyte, cmp, u32, meta)
@@ -10,7 +14,7 @@
 	  in batched mode.
 	* Assume stdin if no argument is given to -batch
 
-2005-06-22  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+2005-06-22  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Update include files to 2.6.12
 	* Add ss support for TCP_CONG

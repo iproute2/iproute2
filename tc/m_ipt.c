@@ -69,6 +69,7 @@ static struct option original_opts[] = {
 };
 
 static struct iptables_target *t_list = NULL;
+static struct option *opts = original_opts;
 static unsigned int global_option_offset = 0;
 #define OPTION_OFFSET 256
 
@@ -169,18 +170,13 @@ int string_to_number(const char *s, unsigned int min, unsigned int max,
 	return result;
 }
 
-static struct option *
-copy_options(struct option *oldopts)
+static void free_opts(struct option *opts)
 {
-	struct option *merge;
-	unsigned int num_old;
-	for (num_old = 0; oldopts[num_old].name; num_old++) ;
-	merge = malloc(sizeof (struct option) * (num_old + 1));
-	if (NULL == merge)
-		return NULL;
-	memcpy(merge, oldopts, num_old * sizeof (struct option));
-	memset(merge + num_old, 0, sizeof (struct option));
-	return merge;
+	if (opts != original_opts) {
+		free(opts);
+		opts = original_opts;
+		global_option_offset = 0;
+	}
 }
 
 static struct option *
@@ -385,7 +381,6 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	int c;
 	int rargc = *argc_p;
 	char **argv = *argv_p;
-	struct option *opts;
 	int argc = 0, iargc = 0;
 	char k[16];
 	int res = -1;
@@ -408,11 +403,6 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 		fprintf(stderr,"bad arguements to ipt %d vs %d \n", argc, rargc);
 		return -1;
 	}
-
-	opts = copy_options(original_opts);
-
-	if (NULL == opts)
-		return -1;
 
 	while (1) {
 		c = getopt_long(argc, argv, "j:", opts, NULL);
@@ -440,23 +430,14 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 		default:
 			memset(&fw, 0, sizeof (fw));
 			if (m) {
-				unsigned int fake_flags = 0;
 				m->parse(c - m->option_offset, argv, 0,
-					 &fake_flags, NULL, &m->t);
+					 &m->tflags, NULL, &m->t);
 			} else {
 				fprintf(stderr," failed to find target %s\n\n", optarg);
 				return -1;
 
 			}
 			ok++;
-
-			/*m->final_check(m->t); -- Is this necessary?
-			** useful when theres depencies
-			** eg ipt_TCPMSS.c has have the TCP match loaded
-			** before this can be used;
-			**  also seems the ECN target needs it 
-			*/
-
 			break;
 
 		}
@@ -466,6 +447,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 		if (matches(argv[optind], "index") == 0) {
 			if (get_u32(&index, argv[optind + 1], 10)) {
 				fprintf(stderr, "Illegal \"index\"\n");
+				free_opts(opts);
 				return -1;
 			}
 			iok++;
@@ -478,6 +460,10 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 		fprintf(stderr," ipt Parser BAD!! (%s)\n", *argv);
 		return -1;
 	}
+
+	/* check that we passed the correct parameters to the target */
+	if (m)
+		m->final_check(m->tflags);
 
 	{
 		struct tcmsg *t = NLMSG_DATA(n);
@@ -519,6 +505,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	*argv_p = argv;
 	
 	optind = 1;
+	free_opts(opts);
 
 	return 0;
 
@@ -529,14 +516,8 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_IPT_MAX + 1];
 	struct ipt_entry_target *t = NULL;
-	struct option *opts;
 
 	if (arg == NULL)
-		return -1;
-
-	opts = copy_options(original_opts);
-
-	if (NULL == opts)
 		return -1;
 
 	parse_rtattr_nested(tb, TCA_IPT_MAX, arg);
@@ -601,6 +582,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 		fprintf(f, " \n");
 
 	}
+	free_opts(opts);
 
 	return 0;
 }
