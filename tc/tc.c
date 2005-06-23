@@ -181,7 +181,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	                "where  OBJECT := { qdisc | class | filter | action }\n"
-	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] file }\n");
+	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] [file] }\n");
 }
 
 static int do_cmd(int argc, char **argv)
@@ -216,7 +216,7 @@ static int makeargs(char *line, char *argv[], int maxargs)
 	int argc = 0;
 
 	for (cp = strtok(line, ws); cp; cp = strtok(NULL, ws)) {
-		if (argc >= maxargs) {
+		if (argc >= (maxargs - 1)) {
 			fprintf(stderr, "Too many arguments to command\n");
 			exit(1);
 		}
@@ -234,7 +234,7 @@ static size_t getcmdline(char **linep, size_t *lenp, FILE *in)
 	size_t cc;
 	char *cp;
 		
-	if ( (cc = getline(linep, lenp, in)) < 0)
+	if ((cc = getline(linep, lenp, in)) < 0)
 		return cc;	/* eof or error */
 	++lineno;
 
@@ -277,7 +277,7 @@ static int batch(const char *name)
 	size_t len = 0;
 	int ret = 0;
 
-	if (strcmp(name, "-") != 0) {
+	if (name && strcmp(name, "-") != 0) {
 		if (freopen(name, "r", stdin) == NULL) {
 			fprintf(stderr, "Cannot open file \"%s\" for reading: %s=n",
 				name, strerror(errno));
@@ -317,6 +317,7 @@ static int batch(const char *name)
 int main(int argc, char **argv)
 {
 	int ret;
+	int do_batching = 0;
 	char *batchfile = NULL;
 
 	while (argc > 1) {
@@ -340,11 +341,9 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-force") == 0) {
 			++force;
 		} else 	if (matches(argv[1], "-batch") == 0) {
-			if (argc < 3) {
-				fprintf(stderr, "Wrong number of arguments in batch mode\n");
-				return -1;
-			}
-			batchfile = argv[2];
+			do_batching = 1;
+			if (argc > 2)
+				batchfile = argv[2];
 			argc--;	argv++;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
@@ -353,7 +352,7 @@ int main(int argc, char **argv)
 		argc--;	argv++;
 	}
 
-	if (batchfile)
+	if (do_batching)
 		return batch(batchfile);
 
 	if (argc <= 1) {
