@@ -1,5 +1,6 @@
 TCOBJ= tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o \
-       m_police.o m_estimator.o m_action.o
+       m_police.o m_estimator.o m_action.o m_ematch.o \
+       emp_ematch.yacc.o emp_ematch.lex.o
 
 include ../Config
 
@@ -14,6 +15,7 @@ TCMODULES += f_rsvp.o
 TCMODULES += f_u32.o
 TCMODULES += f_route.o
 TCMODULES += f_fw.o
+TCMODULES += f_basic.o
 TCMODULES += q_dsmark.o
 TCMODULES += q_gred.o
 TCMODULES += f_tcindex.o
@@ -28,6 +30,10 @@ TCMODULES += p_ip.o
 TCMODULES += p_icmp.o
 TCMODULES += p_tcp.o
 TCMODULES += p_udp.o
+TCMODULES += em_nbyte.o
+TCMODULES += em_cmp.o
+TCMODULES += em_u32.o
+TCMODULES += em_meta.o
 
 TCOBJ += $(TCMODULES)
 
@@ -72,3 +78,8 @@ clean:
 q_atm.so: q_atm.c
 	$(CC) $(CFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
 
+%.yacc.c: %.y
+	$(YACC) $(YACCFLAGS) -o $@ $<
+
+%.lex.c: %.l
+	$(LEX) $(LEXFLAGS) -o $@ $<
