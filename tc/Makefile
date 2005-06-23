@@ -54,6 +54,9 @@ LDLIBS += -L. -ltc -lm -ldl
 
 LDFLAGS += -Wl,-export-dynamic
 
+YACC := bison
+LEX := flex
+
 %.so: %.c
 	$(CC) $(CFLAGS) -shared -fpic $< -o $@
 
