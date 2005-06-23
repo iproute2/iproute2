@@ -1,3 +1,15 @@
+2005-06-23  Thomas Graf <tgraf@suug.ch>
+	
+	* Add extended matches (nbyte, cmp, u32, meta)
+	* Add basic classifier
+	* Fix clean/distclean makefile targets
+	* update local header file copies
+	* IPv4 multipath algorithm selection support
+	* cscope Makefile target
+	* Fix off-by-one while generating argument vector
+	  in batched mode.
+	* Assume stdin if no argument is given to -batch
+
 2005-06-22  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
 
 	* Update include files to 2.6.12
