@@ -57,6 +57,7 @@ install: all
 	install -m 0644 $(shell find man/man3 -maxdepth 1 -type f) $(DESTDIR)$(MANDIR)/man3
 
 clean:
+	rm -f cscope.*
 	@for i in $(SUBDIRS) doc; \
 	do $(MAKE) $(MFLAGS) -C $$i clean; done
 
@@ -64,5 +65,8 @@ clobber: clean
 	rm -f Config
 
 distclean: clobber
+
+cscope:
+	cscope -b -q -R -Iinclude -sip -slib -smisc -snetem -stc
 
 .EXPORT_ALL_VARIABLES:
