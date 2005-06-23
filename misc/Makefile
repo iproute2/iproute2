@@ -28,8 +28,8 @@ lnstat: $(LNSTATOBJ)
 
 install: all
 	install -m 0755 -s $(TARGETS) $(DESTDIR)$(SBINDIR)
-	ln -sf $(SBINDIR)/lnstat $(DESTDIR)$(SBINDIR)/rtstat
-	ln -sf $(SBINDIR)/lnstat $(DESTDIR)$(SBINDIR)/ctstat
+	ln -sf lnstat $(DESTDIR)$(SBINDIR)/rtstat
+	ln -sf lnstat $(DESTDIR)$(SBINDIR)/ctstat
 
 clean:
 	rm -f *.o $(TARGETS) ssfilter.c
