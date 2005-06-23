@@ -129,4 +129,6 @@ static __inline__ int get_user_hz(void)
 
 int print_timestamp(FILE *fp);
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 #endif /* __UTILS_H__ */
