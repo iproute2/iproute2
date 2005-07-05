@@ -1,3 +1,7 @@
+2005-07-05  Thomas Graf <tgraf@suug.ch>
+
+	* Build check for GNU Bison
+
 2005-06-23  Jamal Hadi Salim <hadi@znyx.com>
 
 	* Fix for options process with ipt

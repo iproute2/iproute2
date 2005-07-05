@@ -86,4 +86,4 @@ q_atm.so: q_atm.c
 	$(YACC) $(YACCFLAGS) -o $@ $<
 
 %.lex.c: %.l
-	$(LEX) $(LEXFLAGS) -o $@ $<
+	$(LEX) $(LEXFLAGS) -o$@ $<

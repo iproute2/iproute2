@@ -1338,6 +1338,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 			if (info->tcpi_options & TCPI_OPT_ECN)
 				printf(" ecn");
 		}
+
 		if (tb[TCPDIAG_CONG])
 			printf("%s", (char *) RTA_DATA(tb[TCPDIAG_CONG]));
 
@@ -1355,7 +1356,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 			printf(" cwnd:%d", info->tcpi_snd_cwnd);
 		if (info->tcpi_snd_ssthresh < 0xFFFF)
 			printf(" ssthresh:%d", info->tcpi_snd_ssthresh);
-		
+
 		rtt = (double) info->tcpi_rtt;
 		if (tb[TCPDIAG_VEGASINFO]) {
 			const struct tcpvegas_info *vinfo
