@@ -10,7 +10,7 @@
 
 struct bstr
 {
-	unsigned char	*data;
+	char	*data;
 	unsigned int	len;
 	int		quoted;
 	struct bstr	*next;
@@ -53,7 +53,7 @@ static inline int bstrcmp(struct bstr *b, const char *text)
 	int d = b->len - len;
 
 	if (d == 0)
-		return strncmp((char *) b->data, text, len);
+		return strncmp(b->data, text, len);
 
 	return d;
 }
@@ -77,7 +77,7 @@ static inline unsigned long bstrtoul(struct bstr *b)
 static inline void bstr_print(FILE *fd, struct bstr *b, int ascii)
 {
 	int i;
-	char *s = (char *) b->data;
+	char *s = b->data;
 
 	if (ascii)
 		for (i = 0; i < b->len; i++)

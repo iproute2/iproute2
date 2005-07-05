@@ -524,7 +524,7 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 			if (filter.family == AF_UNSPEC)
 				filter.family = filter.pfx.family;
 		} else if (strcmp(*argv, "scope") == 0) {
-			int scope = 0;
+			unsigned scope = 0;
 			NEXT_ARG();
 			filter.scopemask = -1;
 			if (rtnl_rtscope_a2n(&scope, *argv)) {
@@ -801,7 +801,7 @@ int ipaddr_modify(int cmd, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), IFA_ANYCAST, &addr.data, addr.bytelen);
 			any_len = addr.bytelen;
 		} else if (strcmp(*argv, "scope") == 0) {
-			int scope = 0;
+			unsigned scope = 0;
 			NEXT_ARG();
 			if (rtnl_rtscope_a2n(&scope, *argv))
 				invarg(*argv, "invalid scope value.");

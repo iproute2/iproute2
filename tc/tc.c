@@ -244,7 +244,7 @@ static size_t getcmdline(char **linep, size_t *lenp, FILE *in)
 	
 	while ((cp = strstr(*linep, "\\\n")) != NULL) {
 		char *line1 = NULL;
-		ssize_t len1 = 0;
+		size_t len1 = 0;
 		size_t cc1;
 
 		if ((cc1 = getline(&line1, &len1, in)) < 0) {

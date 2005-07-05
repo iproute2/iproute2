@@ -178,7 +178,7 @@ static int get_address(const char *dev, int *htype)
 {
 	struct ifreq ifr;
 	struct sockaddr_ll me;
-	int alen;
+	socklen_t alen;
 	int s;
 
 	s = socket(PF_PACKET, SOCK_DGRAM, 0);

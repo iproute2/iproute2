@@ -180,7 +180,7 @@ int send_probe(int ifindex, __u32 addr)
 {
 	struct ifreq ifr;
 	struct sockaddr_in dst;
-	int len;
+	socklen_t len;
 	unsigned char buf[256];
 	struct arphdr *ah = (struct arphdr*)buf;
 	unsigned char *p = (unsigned char *)(ah+1);
@@ -228,8 +228,7 @@ int send_probe(int ifindex, __u32 addr)
 	memcpy(p, &addr, 4);
 	p+=4;
 
-	len = sendto(pset[0].fd, buf, p-buf, 0, (struct sockaddr*)&sll, sizeof(sll));
-	if (len < 0)
+	if (sendto(pset[0].fd, buf, p-buf, 0, (struct sockaddr*)&sll, sizeof(sll)) < 0)
 		return -1;
 	stats.probes_sent++;
 	return 0;
@@ -480,13 +479,14 @@ void get_arp_pkt(void)
 {
 	unsigned char buf[1024];
 	struct sockaddr_ll sll;
-	int sll_len = sizeof(sll);
+	socklen_t sll_len = sizeof(sll);
 	struct arphdr *a = (struct arphdr*)buf;
 	struct dbkey key;
 	DBT dbkey, dbdat;
 	int n;
 
-	n = recvfrom(pset[0].fd, buf, sizeof(buf), MSG_DONTWAIT, (struct sockaddr*)&sll, &sll_len);
+	n = recvfrom(pset[0].fd, buf, sizeof(buf), MSG_DONTWAIT, 
+		     (struct sockaddr*)&sll, &sll_len);
 	if (n < 0) {
 		if (errno != EINTR && errno != EAGAIN)
 			syslog(LOG_ERR, "recvfrom: %m");
@@ -708,6 +708,7 @@ int main(int argc, char **argv)
 				fprintf(stderr, "Invalid IP address: \"%s\"\n", ipbuf);
 				goto do_abort;
 			}
+
 			dbdat.data = hexstring_a2n(macbuf, b1, 6);
 			if (dbdat.data == NULL)
 				goto do_abort;
@@ -730,7 +731,7 @@ int main(int argc, char **argv)
 			struct dbkey *key = dbkey.data; 
 			if (handle_if(key->iface)) {
 				if (!IS_NEG(dbdat.data)) {
-					__u8 b1[18];
+					char b1[18];
 					printf("%-8d %-15s %s\n",
 					       key->iface,
 					       inet_ntoa(*(struct in_addr*)&key->addr),

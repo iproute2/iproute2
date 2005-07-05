@@ -726,7 +726,7 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 				invarg("\"metric\" value is invalid\n", *argv);
 			addattr32(&req.n, sizeof(req), RTA_PRIORITY, metric);
 		} else if (strcmp(*argv, "scope") == 0) {
-			int scope = 0;
+			__u32 scope = 0;
 			NEXT_ARG();
 			if (rtnl_rtscope_a2n(&scope, *argv))
 				invarg("invalid \"scope\" value\n", *argv);
@@ -831,14 +831,14 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			nhs_ok = 1;
 			break;
 		} else if (matches(*argv, "protocol") == 0) {
-			int prot;
+			__u32 prot;
 			NEXT_ARG();
 			if (rtnl_rtprot_a2n(&prot, *argv))
 				invarg("\"protocol\" value is invalid\n", *argv);
 			req.r.rtm_protocol = prot;
 			proto_ok =1;
 		} else if (matches(*argv, "table") == 0) {
-			int tid;
+			__u32 tid;
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv))
 				invarg("\"table\" value is invalid\n", *argv);
@@ -1012,7 +1012,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 
 	while (argc > 0) {
 		if (matches(*argv, "table") == 0) {
-			int tid;
+			__u32 tid;
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv)) {
 				if (strcmp(*argv, "all") == 0) {
@@ -1038,7 +1038,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 			filter.tos = tos;
 			filter.tosmask = -1;
 		} else if (matches(*argv, "protocol") == 0) {
-			int prot = 0;
+			__u32 prot = 0;
 			NEXT_ARG();
 			filter.protocolmask = -1;
 			if (rtnl_rtprot_a2n(&prot, *argv)) {
@@ -1049,7 +1049,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 			}
 			filter.protocol = prot;
 		} else if (matches(*argv, "scope") == 0) {
-			int scope = 0;
+			__u32 scope = 0;
 			NEXT_ARG();
 			filter.scopemask = -1;
 			if (rtnl_rtscope_a2n(&scope, *argv)) {

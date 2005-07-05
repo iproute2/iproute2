@@ -120,6 +120,7 @@ static int lookup_map_id(char *kind, int *dst, const char *file)
 	}
 
 	err = -ENOENT;
+	*dst = 0;
 out:
 	fclose(fd);
 	return err;

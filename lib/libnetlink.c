@@ -32,7 +32,7 @@ void rtnl_close(struct rtnl_handle *rth)
 
 int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions, int protocol)
 {
-	int addr_len;
+	socklen_t addr_len;
 	int sndbuf = 32768;
 	int rcvbuf = 32768;
 

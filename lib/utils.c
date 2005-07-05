@@ -240,7 +240,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 				dst->bitlen = 32;
 		}
 		if (slash) {
-			if (get_integer(&plen, slash+1, 0) || plen > dst->bitlen) {
+			if (get_unsigned(&plen, slash+1, 0) || plen > dst->bitlen) {
 				err = -1;
 				goto done;
 			}
@@ -504,9 +504,9 @@ const char *format_host(int af, int len, const void *addr,
 }
 
 
-__u8* hexstring_n2a(const __u8 *str, int len, __u8 *buf, int blen)
+char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen)
 {
-	__u8 *ptr = buf;
+	char *ptr = buf;
 	int i;
 
 	for (i=0; i<len; i++) {
@@ -523,7 +523,7 @@ __u8* hexstring_n2a(const __u8 *str, int len, __u8 *buf, int blen)
 	return buf;
 }
 
-__u8* hexstring_a2n(const __u8 *str, __u8 *buf, int blen)
+__u8* hexstring_a2n(const char *str, __u8 *buf, int blen)
 {
 	int cnt = 0;
 

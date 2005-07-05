@@ -70,7 +70,7 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 			}
 		} else if (strcmp(*argv, "ewma") == 0) {
 			NEXT_ARG();
-			if (get_unsigned(&ewma_log, *argv, 0)) {
+			if (get_integer(&ewma_log, *argv, 0)) {
 				explain1("ewma");
 				return -1;
 			}
@@ -236,7 +236,7 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			lss.change |= TCF_CBQ_LSS_FLAGS;
 		} else if (strcmp(*argv, "ewma") == 0) {
 			NEXT_ARG();
-			if (get_u32(&ewma_log, *argv, 0)) {
+			if (get_integer(&ewma_log, *argv, 0)) {
 				explain1("ewma");
 				return -1;
 			}

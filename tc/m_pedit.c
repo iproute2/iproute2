@@ -238,9 +238,11 @@ parse_val(int *argc_p, char ***argv_p, __u32 * val, int type)
 		return -1;
 
 	if (TINT == type)
-		return get_integer(val, *argv, 0);
+		return get_integer((int *) val, *argv, 0);
+
 	if (TU32 == type)
 		return get_u32(val, *argv, 0);
+
 	if (TIPV4 == type) {
 		inet_prefix addr;
 		if (get_prefix_1(&addr, *argv, AF_INET)) {
