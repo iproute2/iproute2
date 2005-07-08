@@ -31,16 +31,9 @@ SUBDIRS=lib ip tc misc netem
 
 LIBNETLINK=../lib/libnetlink.a ../lib/libutil.a
 
-all: flex_check Config
+all: Config
 	@for i in $(SUBDIRS); \
 	do $(MAKE) $(MFLAGS) -C $$i; done
-
-flex_check:
-	@if [ -z "`flex -h | grep '^Usage: flex '`" ]; then \
-		echo "GNU flex required, please install it."; \
-		echo " see http://lex.sourceforge.net"; \
-		exit 1; \
-	fi
 
 Config:
 	sh configure $(KERNEL_INCLUDE)

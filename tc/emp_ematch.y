@@ -7,7 +7,6 @@
 %}
 
 %locations
-%pure_parser
 %token-table
 %error-verbose
 %name-prefix="ematch_"
@@ -19,7 +18,7 @@
 }
 
 %{
- extern int yylex(YYSTYPE *, YYLTYPE *);
+ extern int ematch_lex(void);
  extern void yyerror(char *s);
  extern struct ematch *ematch_root;
  extern char *ematch_err;

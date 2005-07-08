@@ -369,7 +369,7 @@ void update_db(int interval)
 
 void server_loop(int fd)
 {
-	struct timeval snaptime;
+	struct timeval snaptime = { 0 };
 	struct pollfd p;
 	p.fd = fd;
 	p.events = p.revents = POLLIN;
@@ -422,7 +422,8 @@ void server_loop(int fd)
 int verify_forging(int fd)
 {
 	struct ucred cred;
-	int olen = sizeof(cred);
+	socklen_t olen = sizeof(cred);
+
 	if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, (void*)&cred, &olen) ||
 	    olen < sizeof(cred))
 		return -1;

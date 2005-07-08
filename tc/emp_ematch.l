@@ -5,6 +5,8 @@
  extern int ematch_argc;
  extern char **ematch_argv;
 
+ #define yylval ematch_lval
+
  #define NEXT_EM_ARG() do { ematch_argc--; ematch_argv++; } while(0);
 
  #define YY_INPUT(buf, result, max_size)				\
@@ -37,27 +39,27 @@
 
 %x str
 
-%option 8bit stack warn bison-bridge noyywrap prefix="ematch_"
+%option 8bit stack warn noyywrap prefix="ematch_"
 %%
 
  static unsigned char *strbuf;
  static unsigned int strbuf_size;
  static unsigned int strbuf_index;
 
- static inline void strbuf_enlarge(void)
+ static void strbuf_enlarge(void)
  {
  	strbuf_size += 512;
  	strbuf = realloc(strbuf, strbuf_size);
  }
 
- static inline void strbuf_append_char(unsigned char c)
+ static void strbuf_append_char(unsigned char c)
  {
  	while (strbuf_index >= strbuf_size)
  		strbuf_enlarge();
  	strbuf[strbuf_index++] = c;
  }
 
- static inline void strbuf_append_charp(unsigned char *s)
+ static void strbuf_append_charp(unsigned char *s)
  {
  	while (strbuf_index >= strbuf_size)
  		strbuf_enlarge();
@@ -81,8 +83,8 @@
 
 <str>\"					{
 						BEGIN(INITIAL);
-						yylval->b = bstr_new(strbuf, strbuf_index);
-						yylval->b->quoted = 1;
+						yylval.b = bstr_new(strbuf, strbuf_index);
+						yylval.b->quoted = 1;
 						return ATTRIBUTE;
 					}
 
@@ -132,11 +134,11 @@
 [nN][oO][tT]				return NOT;
 "("					|
 ")"					{
-						return yylval->i = *yytext;
+						return yylval.i = *yytext;
 					}
 [^ \t\r\n()]+				{
-						yylval->b = bstr_alloc(yytext);
-						if (yylval->b == NULL)
+						yylval.b = bstr_alloc(yytext);
+						if (yylval.b == NULL)
 							return ERROR;
 						return ATTRIBUTE;
 					}

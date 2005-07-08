@@ -2,6 +2,8 @@
 #define __TC_EMATCH_H_
 
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "utils.h"
 #include "tc_util.h"

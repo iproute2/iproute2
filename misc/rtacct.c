@@ -68,7 +68,7 @@ struct rtacct_data
 
 	unsigned long long	val[256*4];
 	double			rate[256*4];
-	__u8			signature[128];
+	char			signature[128];
 };
 
 struct rtacct_data kern_db_static;
@@ -363,13 +363,15 @@ void pad_kern_table(struct rtacct_data *dat, __u32 *ival)
 
 void server_loop(int fd)
 {
-	struct timeval snaptime;
+	struct timeval snaptime = { 0 };
 	struct pollfd p;
 	p.fd = fd;
 	p.events = p.revents = POLLIN;
 
-	sprintf(kern_db->signature, "%d.%lu sampling_interval=%d time_const=%d",
-		getpid(), (unsigned long)random(), scan_interval/1000, time_constant/1000);
+	sprintf(kern_db->signature, 
+		"%u.%lu sampling_interval=%d time_const=%d",
+		(unsigned) getpid(), (unsigned long)random(), 
+		scan_interval/1000, time_constant/1000);
 
 	pad_kern_table(kern_db, read_kern_table(kern_db->ival));
 
@@ -411,7 +413,8 @@ void server_loop(int fd)
 int verify_forging(int fd)
 {
 	struct ucred cred;
-	int olen = sizeof(cred);
+	socklen_t olen = sizeof(cred);
+
 	if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, (void*)&cred, &olen) ||
 	    olen < sizeof(cred))
 		return -1;

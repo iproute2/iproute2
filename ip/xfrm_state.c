@@ -140,7 +140,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 
 		for (i = - (plen % 2), j = 0; j < len; i += 2, j++) {
 			char vbuf[3];
-			char val;
+			__u8 val;
 
 			vbuf[0] = i >= 0 ? p[i] : '0';
 			vbuf[1] = p[i + 1];

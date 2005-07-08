@@ -484,7 +484,7 @@ void update_db(int interval)
 
 void server_loop(int fd)
 {
-	struct timeval snaptime;
+	struct timeval snaptime = { 0 };
 	struct pollfd p;
 	p.fd = fd;
 	p.events = p.revents = POLLIN;
@@ -498,6 +498,7 @@ void server_loop(int fd)
 		int status;
 		int tdiff;
 		struct timeval now;
+
 		gettimeofday(&now, NULL);
 		tdiff = T_DIFF(now, snaptime);
 		if (tdiff >= scan_interval) {
@@ -505,6 +506,7 @@ void server_loop(int fd)
 			snaptime = now;
 			tdiff = 0;
 		}
+
 		if (poll(&p, 1, tdiff + scan_interval) > 0
 		    && (p.revents&POLLIN)) {
 			int clnt = accept(fd, NULL, NULL);
@@ -535,7 +537,8 @@ void server_loop(int fd)
 int verify_forging(int fd)
 {
 	struct ucred cred;
-	int olen = sizeof(cred);
+	socklen_t olen = sizeof(cred);
+
 	if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, (void*)&cred, &olen) ||
 	    olen < sizeof(cred))
 		return -1;
