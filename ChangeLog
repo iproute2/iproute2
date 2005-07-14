@@ -1,6 +1,10 @@
-2005-07-05  Thomas Graf <tgraf@suug.ch>
+2005-07-14  Thomas Graf <tgraf@suug.ch>
 
-	* Build check for GNU Bison
+	* Make ematch bison/lex build with common flex
+	
+2005-07-10  Stephen Hemminger  <shemminger@osdl.org>
+	
+	* Fix Gcc 4.0 build warnings signed/unsigned
 
 2005-06-23  Jamal Hadi Salim <hadi@znyx.com>
 

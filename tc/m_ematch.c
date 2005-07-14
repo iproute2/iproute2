@@ -193,7 +193,7 @@ static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 			addraw_l(n, MAX_MSG, &hdr, sizeof(hdr));
 			addraw_l(n, MAX_MSG, &r, sizeof(r));
 		} else {
-			int num, err;
+			int num = 0, err;
 			char buf[64];
 			struct ematch_util *e;
 

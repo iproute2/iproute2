@@ -35,14 +35,8 @@
  static void __attribute__ ((unused)) yy_push_state (int  new_state );
  static void __attribute__ ((unused)) yy_pop_state  (void);
  static int  __attribute__ ((unused)) yy_top_state (void );
-%}
 
-%x str
-
-%option 8bit stack warn noyywrap prefix="ematch_"
-%%
-
- static unsigned char *strbuf;
+ static char *strbuf;
  static unsigned int strbuf_size;
  static unsigned int strbuf_index;
 
@@ -52,14 +46,14 @@
  	strbuf = realloc(strbuf, strbuf_size);
  }
 
- static void strbuf_append_char(unsigned char c)
+ static void strbuf_append_char(char c)
  {
  	while (strbuf_index >= strbuf_size)
  		strbuf_enlarge();
  	strbuf[strbuf_index++] = c;
  }
 
- static void strbuf_append_charp(unsigned char *s)
+ static void strbuf_append_charp(char *s)
  {
  	while (strbuf_index >= strbuf_size)
  		strbuf_enlarge();
@@ -67,6 +61,12 @@
  	strbuf_index += strlen(s);
  }
 
+%}
+
+%x str
+
+%option 8bit stack warn noyywrap prefix="ematch_"
+%%
 [ \t\r\n]+
 
 \"					{
