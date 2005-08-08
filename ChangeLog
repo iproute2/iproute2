@@ -1,3 +1,9 @@
+2005-08-08  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Update to 2.6.13+ kernel headers
+	* Fix array overrun in paretonormal
+	* Fix ematch to not include dropped fields from skb.
+	
 2005-07-14  Thomas Graf <tgraf@suug.ch>
 
 	* Make ematch bison/lex build with common flex

@@ -62,18 +62,11 @@ struct meta_entry {
 	__A(SECTION,		"Interfaces", "", ""),
 	__A(DEV,		"dev",		"iv",
 				"Device the packet is on"),
-	__A(INDEV,		"indev",	"iv",
-				"Device the packet came in"),
-	__A(REALDEV,		"realdev",	"iv",
-				"Underlying real device"),
-
 	__A(SECTION,		"Packet attributes", "", ""),
 	__A(PRIORITY,		"priority",	"i",
 				"Priority of packet"),
 	__A(PROTOCOL,		"protocol",	"i",
 				"Link layer protocol"),
-	__A(SECURITY,		"security",	"i",
-				"Security level"),
 	__A(PKTTYPE,		"pkt_type",	"i",
 				"Packet type (uni|multi|broad|...)cast"),
 	__A(PKTLEN,		"pkt_len",	"i",
@@ -91,9 +84,6 @@ struct meta_entry {
 
 	__A(SECTION,		"Traffic Control", "", ""),
 	__A(TCINDEX,		"tc_index",	"i",	"TC Index"),
-	__A(TCVERDICT,		"tc_verdict",	"i",	"TC Verdict"),
-	__A(TCCLASSID,		"tc_classid",	"i",	"TC ClassID"),
-
 	__A(SECTION,		"Routing", "", ""),
 	__A(RTCLASSID,		"rt_classid",	"i",
 				"Routing ClassID (cls_route)"),

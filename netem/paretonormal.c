@@ -51,7 +51,7 @@ main(int argc, char **argv)
 {
 	int i,n;
 	double x;
-	double table[TABLESIZE];
+	double table[TABLESIZE+1];
 
 	for (x = -10.0; x < 10.05; x += .00005) {
 		i = rint(TABLESIZE*normal(x, 0.0, 1.0));
