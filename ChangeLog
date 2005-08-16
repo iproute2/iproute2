@@ -1,3 +1,8 @@
+2005-08-16  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Limit ip route flush to 10 rounds.
+	* Cleanup ip rule flush error message
+	
 2005-08-08  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Update to 2.6.13+ kernel headers

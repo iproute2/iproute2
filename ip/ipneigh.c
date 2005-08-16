@@ -31,6 +31,7 @@
 #include "ip_common.h"
 
 #define NUD_VALID	(NUD_PERMANENT|NUD_NOARP|NUD_REACHABLE|NUD_PROBE|NUD_STALE|NUD_DELAY)
+#define MAX_ROUNDS	10
 
 static struct
 {
@@ -402,7 +403,7 @@ int do_show_or_flush(int argc, char **argv, int flush)
 		filter.rth = &rth;
 		filter.state &= ~NUD_FAILED;
 
-		for (;;) {
+		while (round < MAX_ROUNDS) {
 			if (rtnl_wilddump_request(&rth, filter.family, RTM_GETNEIGH) < 0) {
 				perror("Cannot send dump request");
 				exit(1);
@@ -428,6 +429,9 @@ int do_show_or_flush(int argc, char **argv, int flush)
 				fflush(stdout);
 			}
 		}
+		printf("*** Flush not complete bailing out after %d rounds\n",
+			MAX_ROUNDS);
+		return 1;
 	}
 
 	if (rtnl_wilddump_request(&rth, filter.family, RTM_GETNEIGH) < 0) {

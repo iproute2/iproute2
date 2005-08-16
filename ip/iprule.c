@@ -340,7 +340,7 @@ static int iprule_flush(int argc, char **argv)
 		af = AF_INET;
 
 	if (argc > 0) {
-		fprintf(stderr, "\"ip rule flush\" need not any arguments.\n");
+		fprintf(stderr, "\"ip rule flush\" does not allow arguments\n");
 		return -1;
 	}
 
