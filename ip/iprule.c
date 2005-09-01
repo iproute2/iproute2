@@ -28,6 +28,8 @@
 #include "rt_names.h"
 #include "utils.h"
 
+extern struct rtnl_handle rth;
+
 static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
@@ -161,7 +163,6 @@ static int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 static int iprule_list(int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	int af = preferred_family;
 
 	if (af == AF_UNSPEC)
@@ -171,9 +172,6 @@ static int iprule_list(int argc, char **argv)
 		fprintf(stderr, "\"ip rule show\" does not take any arguments.\n");
 		return -1;
 	}
-
-	if (rtnl_open(&rth, 0) < 0)
-		return 1;
 
 	if (rtnl_wilddump_request(&rth, af, RTM_GETRULE) < 0) {
 		perror("Cannot send dump request");
@@ -192,7 +190,6 @@ static int iprule_list(int argc, char **argv)
 static int iprule_modify(int cmd, int argc, char **argv)
 {
 	int table_ok = 0;
-	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr 	n;
 		struct rtmsg 		r;
@@ -294,9 +291,6 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	if (!table_ok && cmd == RTM_NEWRULE)
 		req.r.rtm_table = RT_TABLE_MAIN;
 
-	if (rtnl_open(&rth, 0) < 0)
-		return 1;
-
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
 		return 2;
 
@@ -306,7 +300,6 @@ static int iprule_modify(int cmd, int argc, char **argv)
 
 static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
-	struct rtnl_handle rth;
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr * tb[RTA_MAX+1];
@@ -321,9 +314,6 @@ static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *a
 		n->nlmsg_type = RTM_DELRULE;
 		n->nlmsg_flags = NLM_F_REQUEST;
 
-		if (rtnl_open(&rth, 0) < 0)
-			return -1;
-
 		if (rtnl_talk(&rth, n, 0, 0, NULL, NULL, NULL) < 0)
 			return -2;
 	}
@@ -333,7 +323,6 @@ static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *a
 
 static int iprule_flush(int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	int af = preferred_family;
 
 	if (af == AF_UNSPEC)
@@ -343,9 +332,6 @@ static int iprule_flush(int argc, char **argv)
 		fprintf(stderr, "\"ip rule flush\" does not allow arguments\n");
 		return -1;
 	}
-
-	if (rtnl_open(&rth, 0) < 0)
-		return 1;
 
 	if (rtnl_wilddump_request(&rth, af, RTM_GETRULE) < 0) {
 		perror("Cannot send dump request");

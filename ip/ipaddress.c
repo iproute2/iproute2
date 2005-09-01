@@ -49,7 +49,6 @@ static struct
 	char *flushb;
 	int flushp;
 	int flushe;
-	struct rtnl_handle *rth;
 } filter;
 
 static int do_link;
@@ -269,7 +268,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 static int flush_update(void)
 {
-	if (rtnl_send(filter.rth, filter.flushb, filter.flushp) < 0) {
+	if (rtnl_send(&rth, filter.flushb, filter.flushp) < 0) {
 		perror("Failed to send flush request\n");
 		return -1;
 	}
@@ -345,7 +344,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		memcpy(fn, n, n->nlmsg_len);
 		fn->nlmsg_type = RTM_DELADDR;
 		fn->nlmsg_flags = NLM_F_REQUEST;
-		fn->nlmsg_seq = ++filter.rth->seq;
+		fn->nlmsg_seq = ++rth.seq;
 		filter.flushp = (((char*)fn) + n->nlmsg_len) - filter.flushb;
 		filter.flushed++;
 		if (show_stats < 2)
@@ -496,7 +495,6 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 	struct nlmsg_list *linfo = NULL;
 	struct nlmsg_list *ainfo = NULL;
 	struct nlmsg_list *l;
-	struct rtnl_handle rth;
 	char *filter_dev = NULL;
 	int no_link = 0;
 
@@ -570,9 +568,6 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		argv++; argc--;
 	}
 
-	if (rtnl_open(&rth, 0) < 0)
-		exit(1);
-
 	if (rtnl_wilddump_request(&rth, preferred_family, RTM_GETLINK) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
@@ -598,7 +593,6 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		filter.flushb = flushb;
 		filter.flushp = 0;
 		filter.flushe = sizeof(flushb);
-		filter.rth = &rth;
 
 		for (;;) {
 			if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
@@ -620,7 +614,8 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 			}
 			round++;
 			if (flush_update() < 0)
-				exit(1);
+				return 1;
+
 			if (show_stats) {
 				printf("\n*** Round %d, deleting %d addresses ***\n", round, filter.flushed);
 				fflush(stdout);
@@ -709,7 +704,7 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		fflush(stdout);
 	}
 
-	exit(0);
+	return 0;
 }
 
 int ipaddr_list_link(int argc, char **argv)
@@ -736,7 +731,6 @@ int default_scope(inet_prefix *lcl)
 
 int ipaddr_modify(int cmd, int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr 	n;
 		struct ifaddrmsg 	ifa;
@@ -877,9 +871,6 @@ int ipaddr_modify(int cmd, int argc, char **argv)
 	if (!scoped && cmd != RTM_DELADDR)
 		req.ifa.ifa_scope = default_scope(&lcl);
 
-	if (rtnl_open(&rth, 0) < 0)
-		exit(1);
-
 	ll_init_map(&rth);
 
 	if ((req.ifa.ifa_index = ll_name_to_index(d)) == 0) {
@@ -890,7 +881,7 @@ int ipaddr_modify(int cmd, int argc, char **argv)
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
 		exit(2);
 
-	exit(0);
+	return 0;
 }
 
 int do_ipaddr(int argc, char **argv)

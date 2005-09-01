@@ -1,3 +1,9 @@
+2005-09-01  Stephen Hemminger  <shemminger@dxpl.pdx.osdl.net>
+
+	* Integrate support for DCCP into 'ss' (from acme)
+	* Add -batch option to ip.
+	* Update to 2.6.14 headers
+
 2005-09-01  Eric Dumazet <dada1@cosmosbay.com>
 	* Fix lnstat : First column should not be summed
 

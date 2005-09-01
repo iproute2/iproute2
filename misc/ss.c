@@ -33,8 +33,9 @@
 #include "libnetlink.h"
 #include "SNAPSHOT.h"
 
+#include <linux/inet_diag.h>
 #include <linux/tcp.h>
-#include <linux/tcp_diag.h>
+#include <net/tcp_states.h>
 
 int resolve_hosts = 0;
 int resolve_services = 1;
@@ -60,6 +61,7 @@ static const char *dg_proto = NULL;
 enum
 {
 	TCP_DB,
+	DCCP_DB,
 	UDP_DB,
 	RAW_DB,
 	UNIX_DG_DB,
@@ -730,7 +732,7 @@ int run_ssfilter(struct ssfilter *f, struct tcpstat *s)
 static void ssfilter_patch(char *a, int len, int reloc)
 {
 	while (len > 0) {
-		struct tcpdiag_bc_op *op = (struct tcpdiag_bc_op*)a;
+		struct inet_diag_bc_op *op = (struct inet_diag_bc_op*)a;
 		if (op->no == len+4)
 			op->no += reloc;
 		len -= op->yes;
@@ -746,7 +748,7 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 		case SSF_S_AUTO:
 	{
 		if (!(*bytecode=malloc(4))) abort();
-		((struct tcpdiag_bc_op*)*bytecode)[0] = (struct tcpdiag_bc_op){ TCPDIAG_BC_AUTO, 4, 8 };
+		((struct inet_diag_bc_op*)*bytecode)[0] = (struct inet_diag_bc_op){ INET_DIAG_BC_AUTO, 4, 8 };
 		return 8;
 	}
 		case SSF_DCOND:
@@ -755,11 +757,11 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 		struct aafilter *a = (void*)f->pred;
 		struct aafilter *b;
 		char *ptr;
-		int  code = (f->type == SSF_DCOND ? TCPDIAG_BC_D_COND : TCPDIAG_BC_S_COND);
+		int  code = (f->type == SSF_DCOND ? INET_DIAG_BC_D_COND : INET_DIAG_BC_S_COND);
 		int len = 0;
 
 		for (b=a; b; b=b->next) {
-			len += 4 + sizeof(struct tcpdiag_hostcond);
+			len += 4 + sizeof(struct inet_diag_hostcond);
 			if (a->addr.family == AF_INET6)
 				len += 16;
 			else
@@ -770,20 +772,20 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 		if (!(ptr = malloc(len))) abort();
 		*bytecode = ptr;
 		for (b=a; b; b=b->next) {
-			struct tcpdiag_bc_op *op = (struct tcpdiag_bc_op *)ptr;
+			struct inet_diag_bc_op *op = (struct inet_diag_bc_op *)ptr;
 			int alen = (a->addr.family == AF_INET6 ? 16 : 4);
-			int oplen = alen + 4 + sizeof(struct tcpdiag_hostcond);
-			struct tcpdiag_hostcond *cond = (struct tcpdiag_hostcond*)(ptr+4);
+			int oplen = alen + 4 + sizeof(struct inet_diag_hostcond);
+			struct inet_diag_hostcond *cond = (struct inet_diag_hostcond*)(ptr+4);
 
-			*op = (struct tcpdiag_bc_op){ code, oplen, oplen+4 };
+			*op = (struct inet_diag_bc_op){ code, oplen, oplen+4 };
 			cond->family = a->addr.family;
 			cond->port = a->port;
 			cond->prefix_len = a->addr.bitlen;
 			memcpy(cond->addr, a->addr.data, alen);
 			ptr += oplen;
 			if (b->next) {
-				op = (struct tcpdiag_bc_op *)ptr;
-				*op = (struct tcpdiag_bc_op){ TCPDIAG_BC_JMP, 4, len - (ptr-*bytecode)};
+				op = (struct inet_diag_bc_op *)ptr;
+				*op = (struct inet_diag_bc_op){ INET_DIAG_BC_JMP, 4, len - (ptr-*bytecode)};
 				ptr += 4;
 			}
 		}
@@ -793,32 +795,32 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	{
 		struct aafilter *x = (void*)f->pred;
 		if (!(*bytecode=malloc(8))) abort();
-		((struct tcpdiag_bc_op*)*bytecode)[0] = (struct tcpdiag_bc_op){ TCPDIAG_BC_D_GE, 8, 12 };
-		((struct tcpdiag_bc_op*)*bytecode)[1] = (struct tcpdiag_bc_op){ 0, 0, x->port };
+		((struct inet_diag_bc_op*)*bytecode)[0] = (struct inet_diag_bc_op){ INET_DIAG_BC_D_GE, 8, 12 };
+		((struct inet_diag_bc_op*)*bytecode)[1] = (struct inet_diag_bc_op){ 0, 0, x->port };
 		return 8;
 	}
 		case SSF_D_LE:
 	{
 		struct aafilter *x = (void*)f->pred;
 		if (!(*bytecode=malloc(8))) abort();
-		((struct tcpdiag_bc_op*)*bytecode)[0] = (struct tcpdiag_bc_op){ TCPDIAG_BC_D_LE, 8, 12 };
-		((struct tcpdiag_bc_op*)*bytecode)[1] = (struct tcpdiag_bc_op){ 0, 0, x->port };
+		((struct inet_diag_bc_op*)*bytecode)[0] = (struct inet_diag_bc_op){ INET_DIAG_BC_D_LE, 8, 12 };
+		((struct inet_diag_bc_op*)*bytecode)[1] = (struct inet_diag_bc_op){ 0, 0, x->port };
 		return 8;
 	}
 		case SSF_S_GE:
 	{
 		struct aafilter *x = (void*)f->pred;
 		if (!(*bytecode=malloc(8))) abort();
-		((struct tcpdiag_bc_op*)*bytecode)[0] = (struct tcpdiag_bc_op){ TCPDIAG_BC_S_GE, 8, 12 };
-		((struct tcpdiag_bc_op*)*bytecode)[1] = (struct tcpdiag_bc_op){ 0, 0, x->port };
+		((struct inet_diag_bc_op*)*bytecode)[0] = (struct inet_diag_bc_op){ INET_DIAG_BC_S_GE, 8, 12 };
+		((struct inet_diag_bc_op*)*bytecode)[1] = (struct inet_diag_bc_op){ 0, 0, x->port };
 		return 8;
 	}
 		case SSF_S_LE:
 	{
 		struct aafilter *x = (void*)f->pred;
 		if (!(*bytecode=malloc(8))) abort();
-		((struct tcpdiag_bc_op*)*bytecode)[0] = (struct tcpdiag_bc_op){ TCPDIAG_BC_S_LE, 8, 12 };
-		((struct tcpdiag_bc_op*)*bytecode)[1] = (struct tcpdiag_bc_op){ 0, 0, x->port };
+		((struct inet_diag_bc_op*)*bytecode)[0] = (struct inet_diag_bc_op){ INET_DIAG_BC_S_LE, 8, 12 };
+		((struct inet_diag_bc_op*)*bytecode)[1] = (struct inet_diag_bc_op){ 0, 0, x->port };
 		return 8;
 	}
 
@@ -844,7 +846,7 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 		memcpy(a, a1, l1);
 		memcpy(a+l1+4, a2, l2);
 		free(a1); free(a2);
-		*(struct tcpdiag_bc_op*)(a+l1) = (struct tcpdiag_bc_op){ TCPDIAG_BC_JMP, 4, l2+4 };
+		*(struct inet_diag_bc_op*)(a+l1) = (struct inet_diag_bc_op){ INET_DIAG_BC_JMP, 4, l2+4 };
 		*bytecode = a;
 		return l1+l2+4;
 	}
@@ -855,7 +857,7 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 		if (!(a = malloc(l1+4))) abort();
 		memcpy(a, a1, l1);
 		free(a1);
-		*(struct tcpdiag_bc_op*)(a+l1) = (struct tcpdiag_bc_op){ TCPDIAG_BC_JMP, 4, 8 };
+		*(struct inet_diag_bc_op*)(a+l1) = (struct inet_diag_bc_op){ INET_DIAG_BC_JMP, 4, 8 };
 		*bytecode = a;
 		return l1+4;
 	}
@@ -1299,36 +1301,36 @@ static char *sprint_bw(char *buf, double bw)
 	return buf;
 }
 
-static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
+static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 {
-	struct rtattr * tb[TCPDIAG_MAX+1];
+	struct rtattr * tb[INET_DIAG_MAX+1];
 	char b1[64];
 	double rtt = 0;
 
-	parse_rtattr(tb, TCPDIAG_MAX, (struct rtattr*)(r+1),
+	parse_rtattr(tb, INET_DIAG_MAX, (struct rtattr*)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
-	if (tb[TCPDIAG_MEMINFO]) {
-		const struct tcpdiag_meminfo *minfo
-			= RTA_DATA(tb[TCPDIAG_MEMINFO]);
+	if (tb[INET_DIAG_MEMINFO]) {
+		const struct inet_diag_meminfo *minfo
+			= RTA_DATA(tb[INET_DIAG_MEMINFO]);
 		printf(" mem:(r%u,w%u,f%u,t%u)",
-		       minfo->tcpdiag_rmem,
-		       minfo->tcpdiag_wmem,
-		       minfo->tcpdiag_fmem,
-		       minfo->tcpdiag_tmem);
+		       minfo->idiag_rmem,
+		       minfo->idiag_wmem,
+		       minfo->idiag_fmem,
+		       minfo->idiag_tmem);
 	}
 
-	if (tb[TCPDIAG_INFO]) {
+	if (tb[INET_DIAG_INFO]) {
 		struct tcp_info *info;
-		int len = RTA_PAYLOAD(tb[TCPDIAG_INFO]);
+		int len = RTA_PAYLOAD(tb[INET_DIAG_INFO]);
 
 		/* workaround for older kernels with less fields */
 		if (len < sizeof(*info)) {
 			info = alloca(sizeof(*info));
 			memset(info, 0, sizeof(*info));
-			memcpy(info, RTA_DATA(tb[TCPDIAG_INFO]), len);
+			memcpy(info, RTA_DATA(tb[INET_DIAG_INFO]), len);
 		} else
-			info = RTA_DATA(tb[TCPDIAG_INFO]);
+			info = RTA_DATA(tb[INET_DIAG_INFO]);
 
 		if (show_options) {
 			if (info->tcpi_options & TCPI_OPT_TIMESTAMPS)
@@ -1339,8 +1341,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 				printf(" ecn");
 		}
 
-		if (tb[TCPDIAG_CONG])
-			printf("%s", (char *) RTA_DATA(tb[TCPDIAG_CONG]));
+		if (tb[INET_DIAG_CONG])
+			printf("%s", (char *) RTA_DATA(tb[INET_DIAG_CONG]));
 
 		if (info->tcpi_options & TCPI_OPT_WSCALE) 
 			printf(" wscale:%d,%d", info->tcpi_snd_wscale,
@@ -1358,9 +1360,9 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 			printf(" ssthresh:%d", info->tcpi_snd_ssthresh);
 
 		rtt = (double) info->tcpi_rtt;
-		if (tb[TCPDIAG_VEGASINFO]) {
+		if (tb[INET_DIAG_VEGASINFO]) {
 			const struct tcpvegas_info *vinfo
-				= RTA_DATA(tb[TCPDIAG_VEGASINFO]);
+				= RTA_DATA(tb[INET_DIAG_VEGASINFO]);
 
 			if (vinfo->tcpv_enabled && 
 			    vinfo->tcpv_rtt && vinfo->tcpv_rtt != 0x7fffffff)
@@ -1384,20 +1386,20 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct tcpdiagmsg *r)
 
 int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 {
-	struct tcpdiagmsg *r = NLMSG_DATA(nlh);
+	struct inet_diag_msg *r = NLMSG_DATA(nlh);
 	struct tcpstat s;
 
-	s.state = r->tcpdiag_state;
-	s.local.family = s.remote.family = r->tcpdiag_family;
-	s.lport = ntohs(r->id.tcpdiag_sport);
-	s.rport = ntohs(r->id.tcpdiag_dport);
+	s.state = r->idiag_state;
+	s.local.family = s.remote.family = r->idiag_family;
+	s.lport = ntohs(r->id.idiag_sport);
+	s.rport = ntohs(r->id.idiag_dport);
 	if (s.local.family == AF_INET) {
 		s.local.bytelen = s.remote.bytelen = 4;
 	} else {
 		s.local.bytelen = s.remote.bytelen = 16;
 	}
-	memcpy(s.local.data, r->id.tcpdiag_src, s.local.bytelen);
-	memcpy(s.remote.data, r->id.tcpdiag_dst, s.local.bytelen);
+	memcpy(s.local.data, r->id.idiag_src, s.local.bytelen);
+	memcpy(s.remote.data, r->id.idiag_dst, s.local.bytelen);
 
 	if (f && f->f && run_ssfilter(f->f, &s) == 0)
 		return 0;
@@ -1407,33 +1409,33 @@ int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	if (state_width)
 		printf("%-*s ", state_width, sstate_name[s.state]);
 
-	printf("%-6d %-6d ", r->tcpdiag_rqueue, r->tcpdiag_wqueue);
+	printf("%-6d %-6d ", r->idiag_rqueue, r->idiag_wqueue);
 
 	formatted_print(&s.local, s.lport);
 	formatted_print(&s.remote, s.rport);
 
 	if (show_options) {
-		if (r->tcpdiag_timer) {
-			if (r->tcpdiag_timer > 4)
-				r->tcpdiag_timer = 5;
+		if (r->idiag_timer) {
+			if (r->idiag_timer > 4)
+				r->idiag_timer = 5;
 			printf(" timer:(%s,%s,%d)",
-			       tmr_name[r->tcpdiag_timer],
-			       print_ms_timer(r->tcpdiag_expires),
-			       r->tcpdiag_retrans);
+			       tmr_name[r->idiag_timer],
+			       print_ms_timer(r->idiag_expires),
+			       r->idiag_retrans);
 		}
 	}
 	if (show_users) {
 		char ubuf[4096];
-		if (find_users(r->tcpdiag_inode, ubuf, sizeof(ubuf)) > 0)
+		if (find_users(r->idiag_inode, ubuf, sizeof(ubuf)) > 0)
 			printf(" users:(%s)", ubuf);
 	}
 	if (show_details) {
-		if (r->tcpdiag_uid)
-			printf(" uid:%u", (unsigned)r->tcpdiag_uid);
-		printf(" ino:%u", (unsigned)r->tcpdiag_inode);
-		printf(" sk:%08x", r->id.tcpdiag_cookie[0]);
-		if (r->id.tcpdiag_cookie[1] != 0)
-			printf("%08x", r->id.tcpdiag_cookie[1]);
+		if (r->idiag_uid)
+			printf(" uid:%u", (unsigned)r->idiag_uid);
+		printf(" ino:%u", (unsigned)r->idiag_inode);
+		printf(" sk:%08x", r->id.idiag_cookie[0]);
+		if (r->id.idiag_cookie[1] != 0)
+			printf("%08x", r->id.idiag_cookie[1]);
 	}
 	if (show_mem || show_tcpinfo) {
 		printf("\n\t");
@@ -1445,13 +1447,13 @@ int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	return 0;
 }
 
-int tcp_show_netlink(struct filter *f, FILE *dump_fp)
+int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 {
 	int fd;
 	struct sockaddr_nl nladdr;
 	struct {
 		struct nlmsghdr nlh;
-		struct tcpdiagreq r;
+		struct inet_diag_req r;
 	} req;
 	char    *bc = NULL;
 	int	bclen;
@@ -1460,27 +1462,27 @@ int tcp_show_netlink(struct filter *f, FILE *dump_fp)
 	char	buf[8192];
 	struct iovec iov[3];
 
-	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_TCPDIAG)) < 0)
+	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
 		return -1;
 
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
 
 	req.nlh.nlmsg_len = sizeof(req);
-	req.nlh.nlmsg_type = TCPDIAG_GETSOCK;
+	req.nlh.nlmsg_type = socktype;
 	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
 	req.nlh.nlmsg_pid = 0;
 	req.nlh.nlmsg_seq = 123456;
 	memset(&req.r, 0, sizeof(req.r));
-	req.r.tcpdiag_family = AF_INET;
-	req.r.tcpdiag_states = f->states;
+	req.r.idiag_family = AF_INET;
+	req.r.idiag_states = f->states;
 	if (show_mem)
-		req.r.tcpdiag_ext |= (1<<(TCPDIAG_MEMINFO-1)); 
+		req.r.idiag_ext |= (1<<(INET_DIAG_MEMINFO-1)); 
 
 	if (show_tcpinfo) {
-		req.r.tcpdiag_ext |= (1<<(TCPDIAG_INFO-1));
-		req.r.tcpdiag_ext |= (1<<(TCPDIAG_VEGASINFO-1));
-		req.r.tcpdiag_ext |= (1<<(TCPDIAG_CONG-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_INFO-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_VEGASINFO-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_CONG-1));
 	}
 
 	iov[0] = (struct iovec){ 
@@ -1489,7 +1491,7 @@ int tcp_show_netlink(struct filter *f, FILE *dump_fp)
 	};
 	if (f->f) {
 		bclen = ssfilter_bytecompile(f->f, &bc);
-		rta.rta_type = TCPDIAG_REQ_BYTECODE;
+		rta.rta_type = INET_DIAG_REQ_BYTECODE;
 		rta.rta_len = RTA_LENGTH(bclen);
 		iov[1] = (struct iovec){ &rta, sizeof(rta) };
 		iov[2] = (struct iovec){ bc, bclen };
@@ -1635,7 +1637,7 @@ int tcp_show_netlink_file(struct filter *f)
 	}
 }
 
-int tcp_show(struct filter *f)
+int tcp_show(struct filter *f, int socktype)
 {
 	int fd = -1;
 	char *buf = NULL;
@@ -1647,7 +1649,7 @@ int tcp_show(struct filter *f)
 		return tcp_show_netlink_file(f);
 
 	if (!getenv("PROC_NET_TCP") && !getenv("PROC_ROOT")
-	    && tcp_show_netlink(f, NULL) == 0)
+	    && tcp_show_netlink(f, NULL, socktype) == 0)
 		return 0;
 
 	/* Sigh... We have to parse /proc/net/tcp... */
@@ -2389,6 +2391,7 @@ static void usage(void)
 "   -0, --packet	display PACKET sockets\n"
 "   -t, --tcp		display only TCP sockets\n"
 "   -u, --udp		display only UDP sockets\n"
+"   -d, --dccp		display only DCCP sockets\n"
 "   -w, --raw		display only RAW sockets\n"
 "   -x, --unix		display only Unix domain sockets\n"
 "   -f, --family=FAMILY display sockets of type FAMILY\n"
@@ -2438,6 +2441,7 @@ static const struct option long_opts[] = {
 	{ "memory", 0, 0, 'm' },
 	{ "info", 0, 0, 'i' },
 	{ "processes", 0, 0, 'p' },
+	{ "dccp", 0, 0, 'd' },
 	{ "tcp", 0, 0, 't' },
 	{ "udp", 0, 0, 'u' },
 	{ "raw", 0, 0, 'w' },
@@ -2472,7 +2476,7 @@ int main(int argc, char *argv[])
 
 	current_filter.states = default_filter.states;
 
-	while ((ch = getopt_long(argc, argv, "haletuwxnro460spf:miA:D:F:vV",
+	while ((ch = getopt_long(argc, argv, "dhaletuwxnro460spf:miA:D:F:vV",
 				 long_opts, NULL)) != EOF) {
 		switch(ch) {
 		case 'n':
@@ -2496,6 +2500,10 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			show_users++;
+			break;
+		case 'd':
+			current_filter.dbs |= (1<<DCCP_DB);
+			do_default = 0;
 			break;
 		case 't':
 			current_filter.dbs |= (1<<TCP_DB);
@@ -2561,9 +2569,11 @@ int main(int argc, char *argv[])
 				if (strcmp(p, "all") == 0) {
 					current_filter.dbs = ALL_DB;
 				} else if (strcmp(p, "inet") == 0) {
-					current_filter.dbs |= (1<<TCP_DB)|(1<<UDP_DB)|(1<<RAW_DB);
+					current_filter.dbs |= (1<<TCP_DB)|(1<<DCCP_DB)|(1<<UDP_DB)|(1<<RAW_DB);
 				} else if (strcmp(p, "udp") == 0) {
 					current_filter.dbs |= (1<<UDP_DB);
+				} else if (strcmp(p, "dccp") == 0) {
+					current_filter.dbs |= (1<<DCCP_DB);
 				} else if (strcmp(p, "tcp") == 0) {
 					current_filter.dbs |= (1<<TCP_DB);
 				} else if (strcmp(p, "raw") == 0) {
@@ -2686,7 +2696,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (resolve_services && resolve_hosts &&
-	    (current_filter.dbs&(UNIX_DBM|(1<<TCP_DB)|(1<<UDP_DB))))
+	    (current_filter.dbs&(UNIX_DBM|(1<<TCP_DB)|(1<<UDP_DB)|(1<<DCCP_DB))))
 		init_service_resolver();
 
 	/* Now parse filter... */
@@ -2735,7 +2745,7 @@ int main(int argc, char *argv[])
 				exit(-1);
 			}
 		}
-		tcp_show_netlink(&current_filter, dump_fp);
+		tcp_show_netlink(&current_filter, dump_fp, TCPDIAG_GETSOCK);
 		fflush(dump_fp);
 		exit(0);
 	}
@@ -2804,6 +2814,8 @@ int main(int argc, char *argv[])
 	if (current_filter.dbs & (1<<UDP_DB))
 		udp_show(&current_filter);
 	if (current_filter.dbs & (1<<TCP_DB))
-		tcp_show(&current_filter);
+		tcp_show(&current_filter, TCPDIAG_GETSOCK);
+	if (current_filter.dbs & (1<<DCCP_DB))
+		tcp_show(&current_filter, DCCPDIAG_GETSOCK);
 	return 0;
 }

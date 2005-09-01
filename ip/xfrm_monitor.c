@@ -186,13 +186,10 @@ int do_xfrm_monitor(int argc, char **argv)
 		return rtnl_from_file(fp, xfrm_accept_msg, (void*)stdout);
 	}
 
-	if (rtnl_open_byproto(&rth, groups, NETLINK_XFRM) < 0)
-		exit(1);
-
 	//ll_init_map(&rth);
 
 	if (rtnl_listen(&rth, xfrm_accept_msg, (void*)stdout) < 0)
 		exit(2);
 
-	exit(0);
+	return 0;
 }

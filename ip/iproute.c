@@ -80,7 +80,6 @@ static struct
 	char *flushb;
 	int flushp;
 	int flushe;
-	struct rtnl_handle *rth;
 	int protocol, protocolmask;
 	int scope, scopemask;
 	int type, typemask;
@@ -106,7 +105,7 @@ static char *mp_alg_names[IP_MP_ALG_MAX+1] = {
 
 static int flush_update(void)
 {
-	if (rtnl_send(filter.rth, filter.flushb, filter.flushp) < 0) {
+	if (rtnl_send(&rth, filter.flushb, filter.flushp) < 0) {
 		perror("Failed to send flush request\n");
 		return -1;
 	}
@@ -281,7 +280,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		memcpy(fn, n, n->nlmsg_len);
 		fn->nlmsg_type = RTM_DELROUTE;
 		fn->nlmsg_flags = NLM_F_REQUEST;
-		fn->nlmsg_seq = ++filter.rth->seq;
+		fn->nlmsg_seq = ++rth.seq;
 		filter.flushp = (((char*)fn) + n->nlmsg_len) - filter.flushb;
 		filter.flushed++;
 		if (show_stats < 2)
@@ -649,7 +648,6 @@ int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r, int argc, char **argv)
 
 int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr 	n;
 		struct rtmsg 		r;
@@ -889,9 +887,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 		argc--; argv++;
 	}
 
-	if (rtnl_open(&rth, 0) < 0)
-		exit(1);
-
 	if (d || nhs_ok)  {
 		int idx;
 
@@ -998,7 +993,6 @@ static int iproute_flush_cache(void)
 static int iproute_list_or_flush(int argc, char **argv, int flush)
 {
 	int do_ipv6 = preferred_family;
-	struct rtnl_handle rth;
 	char *id = NULL;
 	char *od = NULL;
 
@@ -1132,9 +1126,6 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 	if (do_ipv6 == AF_UNSPEC && filter.tb)
 		do_ipv6 = AF_INET;
 
-	if (rtnl_open(&rth, 0) < 0)
-		exit(1);
-
 	ll_init_map(&rth);
 
 	if (id || od)  {
@@ -1176,7 +1167,6 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 		filter.flushb = flushb;
 		filter.flushp = 0;
 		filter.flushe = sizeof(flushb);
-		filter.rth = &rth;
 
 		for (;;) {
 			if (rtnl_wilddump_request(&rth, do_ipv6, RTM_GETROUTE) < 0) {
@@ -1237,7 +1227,6 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 
 int iproute_get(int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr 	n;
 		struct rtmsg 		r;
@@ -1316,9 +1305,6 @@ int iproute_get(int argc, char **argv)
 		fprintf(stderr, "need at least destination address\n");
 		exit(1);
 	}
-
-	if (rtnl_open(&rth, 0) < 0)
-		exit(1);
 
 	ll_init_map(&rth);
 

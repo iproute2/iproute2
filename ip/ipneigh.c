@@ -44,7 +44,6 @@ static struct
 	char *flushb;
 	int flushp;
 	int flushe;
-	struct rtnl_handle *rth;
 } filter;
 
 static void usage(void) __attribute__((noreturn));
@@ -89,7 +88,7 @@ int nud_state_a2n(unsigned *state, char *arg)
 
 static int flush_update(void)
 {
-	if (rtnl_send(filter.rth, filter.flushb, filter.flushp) < 0) {
+	if (rtnl_send(&rth, filter.flushb, filter.flushp) < 0) {
 		perror("Failed to send flush request\n");
 		return -1;
 	}
@@ -100,7 +99,6 @@ static int flush_update(void)
 
 static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr 	n;
 		struct ndmsg 		ndm;
@@ -174,9 +172,6 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 		addattr_l(&req.n, sizeof(req), NDA_LLADDR, llabuf, l);
 	}
 
-	if (rtnl_open(&rth, 0) < 0)
-		exit(1);
-
 	ll_init_map(&rth);
 
 	if ((req.ndm.ndm_ifindex = ll_name_to_index(d)) == 0) {
@@ -187,7 +182,7 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
 		exit(2);
 
-	exit(0);
+	return 0;
 }
 
 
@@ -251,7 +246,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		memcpy(fn, n, n->nlmsg_len);
 		fn->nlmsg_type = RTM_DELNEIGH;
 		fn->nlmsg_flags = NLM_F_REQUEST;
-		fn->nlmsg_seq = ++filter.rth->seq;
+		fn->nlmsg_seq = ++rth.seq;
 		filter.flushp = (((char*)fn) + n->nlmsg_len) - filter.flushb;
 		filter.flushed++;
 		if (show_stats < 2)
@@ -326,7 +321,6 @@ void ipneigh_reset_filter()
 int do_show_or_flush(int argc, char **argv, int flush)
 {
 	char *filter_dev = NULL;
-	struct rtnl_handle rth;
 	int state_given = 0;
 
 	ipneigh_reset_filter();
@@ -381,9 +375,6 @@ int do_show_or_flush(int argc, char **argv, int flush)
 		argc--; argv++;
 	}
 
-	if (rtnl_open(&rth, 0) < 0)
-		exit(1);
-
 	ll_init_map(&rth);
 
 	if (filter_dev) {
@@ -400,7 +391,6 @@ int do_show_or_flush(int argc, char **argv, int flush)
 		filter.flushb = flushb;
 		filter.flushp = 0;
 		filter.flushe = sizeof(flushb);
-		filter.rth = &rth;
 		filter.state &= ~NUD_FAILED;
 
 		while (round < MAX_ROUNDS) {

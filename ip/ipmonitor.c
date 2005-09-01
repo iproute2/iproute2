@@ -88,7 +88,6 @@ int accept_msg(const struct sockaddr_nl *who,
 
 int do_ipmonitor(int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	char *file = NULL;
 	unsigned groups = ~RTMGRP_TC;
 	int llink=0;
@@ -156,13 +155,10 @@ int do_ipmonitor(int argc, char **argv)
 		return rtnl_from_file(fp, accept_msg, (void*)stdout);
 	}
 
-	if (rtnl_open(&rth, groups) < 0)
-		exit(1);
-
 	ll_init_map(&rth);
 
 	if (rtnl_listen(&rth, accept_msg, (void*)stdout) < 0)
 		exit(2);
 
-	exit(0);
+	return 0;
 }

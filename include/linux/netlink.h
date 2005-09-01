@@ -8,19 +8,17 @@
 #define NETLINK_W1		1	/* 1-wire subsystem				*/
 #define NETLINK_USERSOCK	2	/* Reserved for user mode socket protocols 	*/
 #define NETLINK_FIREWALL	3	/* Firewalling hook				*/
-#define NETLINK_TCPDIAG		4	/* TCP socket monitoring			*/
+#define NETLINK_INET_DIAG	4	/* INET socket monitoring			*/
 #define NETLINK_NFLOG		5	/* netfilter/iptables ULOG */
 #define NETLINK_XFRM		6	/* ipsec */
 #define NETLINK_SELINUX		7	/* SELinux event notifications */
-#define NETLINK_ARPD		8
+#define NETLINK_ISCSI		8	/* Open-iSCSI */
 #define NETLINK_AUDIT		9	/* auditing */
 #define NETLINK_FIB_LOOKUP	10	
-#define NETLINK_ROUTE6		11	/* af_inet6 route comm channel */
 #define NETLINK_NETFILTER	12	/* netfilter subsystem */
 #define NETLINK_IP6_FW		13
 #define NETLINK_DNRTMSG		14	/* DECnet routing messages */
 #define NETLINK_KOBJECT_UEVENT	15	/* Kernel messages to userspace */
-#define NETLINK_TAPBASE		16	/* 16 to 31 are ethertap */
 
 #define MAX_LINKS 32		
 
@@ -90,6 +88,15 @@ struct nlmsgerr
 {
 	int		error;
 	struct nlmsghdr msg;
+};
+
+#define NETLINK_ADD_MEMBERSHIP	1
+#define NETLINK_DROP_MEMBERSHIP	2
+#define NETLINK_PKTINFO		3
+
+struct nl_pktinfo
+{
+	__u32	group;
 };
 
 #define NET_MAJOR 36		/* Major 36 is reserved for networking 						*/

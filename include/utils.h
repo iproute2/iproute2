@@ -131,4 +131,8 @@ int print_timestamp(FILE *fp);
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+extern int cmdlineno;
+extern size_t getcmdline(char **line, size_t *len, FILE *in);
+extern int makeargs(char *line, char *argv[], int maxargs);
+
 #endif /* __UTILS_H__ */
