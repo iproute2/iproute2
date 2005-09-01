@@ -1,3 +1,6 @@
+2005-09-01  Eric Dumazet <dada1@cosmosbay.com>
+	* Fix lnstat : First column should not be summed
+
 2005-08-16  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Limit ip route flush to 10 rounds.
