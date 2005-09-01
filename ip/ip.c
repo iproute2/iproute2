@@ -44,6 +44,7 @@ static void usage(void)
 {
 	fprintf(stderr,
 "Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
+"       ip [ -force ] [-batch filename\n"
 "where  OBJECT := { link | addr | route | rule | neigh | tunnel |\n"
 "                   maddr | mroute | monitor | xfrm }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -r[esolve] |\n"
