@@ -180,6 +180,7 @@ noexist:
 static void usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
+			"       tc [-force] -batch file\n"
 	                "where  OBJECT := { qdisc | class | filter | action }\n"
 	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] [file] }\n");
 }
