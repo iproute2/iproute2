@@ -1,16 +1,19 @@
 DISTGEN = maketable normal pareto paretonormal
 DISTDATA = normal.dist pareto.dist paretonormal.dist experimental.dist
 
+HOSTCC ?= $(CC)
 LDLIBS += -lm 
 
-%.dist: %.c
-	$(HOSTCC) $(CFLAGS) -o $* $< -lm
-	./$* >$@
-
-%.dist: %.dat
-	./maketable $< >$@
-
 all: $(DISTGEN) $(DISTDATA)
+
+$(DISTGEN):
+	$(HOSTCC) -Wall -O1 -I../include -o $@ $@.c -lm
+
+%.dist: %
+	./$* > $@
+
+experimental.dist: maketable experimental.dat
+	./maketable experimental.dat > experimental.dist
 
 install: all
 	mkdir -p $(DESTDIR)/usr/lib/tc
@@ -20,8 +23,3 @@ install: all
 
 clean:
 	rm -f $(DISTDATA) $(DISTGEN)
-
-maketable: maketable.c
-	$(HOSTCC) $(CFLAGS) -o $@ $< -lm
-
-
