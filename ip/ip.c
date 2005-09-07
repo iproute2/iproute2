@@ -53,6 +53,11 @@ static void usage(void)
 	exit(-1);
 }
 
+static int do_help(int argc, char **argv)
+{
+	usage();
+}
+
 static const struct cmd {
 	const char *cmd;
 	int (*func)(int argc, char **argv);
@@ -66,6 +71,7 @@ static const struct cmd {
 	{ "tunnel",	do_iptunnel },
 	{ "monitor",	do_ipmonitor },
 	{ "xfrm",	do_xfrm },
+	{ "help",	do_help },
 	{ 0 }
 };
 

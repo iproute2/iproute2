@@ -95,6 +95,7 @@ int do_ipmonitor(int argc, char **argv)
 	int lroute=0;
 	int lprefix=0;
 
+	rtnl_close(&rth);
 	ipaddr_reset_filter(1);
 	iproute_reset_filter();
 	ipneigh_reset_filter();
@@ -152,12 +153,14 @@ int do_ipmonitor(int argc, char **argv)
 			perror("Cannot fopen");
 			exit(-1);
 		}
-		return rtnl_from_file(fp, accept_msg, (void*)stdout);
+		return rtnl_from_file(fp, accept_msg, stdout);
 	}
 
+	if (rtnl_open(&rth, groups) < 0)
+		exit(1);
 	ll_init_map(&rth);
 
-	if (rtnl_listen(&rth, accept_msg, (void*)stdout) < 0)
+	if (rtnl_listen(&rth, accept_msg, stdout) < 0)
 		exit(2);
 
 	return 0;
