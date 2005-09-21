@@ -494,7 +494,7 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 {
 	struct nlmsg_list *linfo = NULL;
 	struct nlmsg_list *ainfo = NULL;
-	struct nlmsg_list *l;
+	struct nlmsg_list *l, *n;
 	char *filter_dev = NULL;
 	int no_link = 0;
 
@@ -695,13 +695,15 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		}
 	}
 
-	for (l=linfo; l; l = l->next) {
+	for (l=linfo; l; l = n) {
+		n = l->next;
 		if (no_link || print_linkinfo(NULL, &l->h, stdout) == 0) {
 			struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 			if (filter.family != AF_PACKET)
 				print_selected_addrinfo(ifi->ifi_index, ainfo, stdout);
 		}
 		fflush(stdout);
+		free(l);
 	}
 
 	return 0;

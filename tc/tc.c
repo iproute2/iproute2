@@ -246,6 +246,8 @@ static int batch(const char *name)
 				break;
 		}
 	}
+	if (line)
+		free(line);
 
 	rtnl_close(&rth);
 	return ret;

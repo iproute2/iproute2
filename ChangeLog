@@ -1,3 +1,8 @@
+2005-09-21  Stephen Hemminger  <shemminger@localhost.localdomain>
+
+	* Fix uninitialized memory and leaks with valgrind
+	  Reported by Redhat
+
 2005-09-01   Mike Frysinger <vapier@gentoo.org>
 
 	* Fix build issues with netem tables (parallel make and HOSTCC)

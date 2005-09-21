@@ -30,7 +30,8 @@ void rtnl_close(struct rtnl_handle *rth)
 	close(rth->fd);
 }
 
-int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions, int protocol)
+int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions,
+		      int protocol)
 {
 	socklen_t addr_len;
 	int sndbuf = 32768;
@@ -95,6 +96,7 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
 
+	memset(&req, 0, sizeof(req));
 	req.nlh.nlmsg_len = sizeof(req);
 	req.nlh.nlmsg_type = type;
 	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
@@ -102,7 +104,8 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
 	req.g.rtgen_family = family;
 
-	return sendto(rth->fd, (void*)&req, sizeof(req), 0, (struct sockaddr*)&nladdr, sizeof(nladdr));
+	return sendto(rth->fd, (void*)&req, sizeof(req), 0,
+		      (struct sockaddr*)&nladdr, sizeof(nladdr));
 }
 
 int rtnl_send(struct rtnl_handle *rth, const char *buf, int len)
@@ -119,12 +122,15 @@ int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 {
 	struct nlmsghdr nlh;
 	struct sockaddr_nl nladdr;
-	struct iovec iov[2] = { { &nlh, sizeof(nlh) }, { req, len } };
+	struct iovec iov[2] = {
+		{ .iov_base = &nlh, .iov_len = sizeof(nlh) },
+		{ .iov_base = req, .iov_len = len }
+	};
 	struct msghdr msg = {
-		(void*)&nladdr, sizeof(nladdr),
-		iov,	2,
-		NULL,	0,
-		0
+		.msg_name = &nladdr,
+		.msg_namelen = 	sizeof(nladdr),
+		.msg_iov = iov,
+		.msg_iovlen = 2,
 	};
 
 	memset(&nladdr, 0, sizeof(nladdr));
@@ -145,21 +151,22 @@ int rtnl_dump_filter(struct rtnl_handle *rth,
 		     rtnl_filter_t junk,
 		     void *arg2)
 {
-	char	buf[16384];
 	struct sockaddr_nl nladdr;
-	struct iovec iov = { buf, sizeof(buf) };
+	struct iovec iov;
+	struct msghdr msg = {
+		.msg_name = &nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+	};
+	char buf[16384];
 
+	iov.iov_base = buf;
 	while (1) {
 		int status;
 		struct nlmsghdr *h;
 
-		struct msghdr msg = {
-			(void*)&nladdr, sizeof(nladdr),
-			&iov,	1,
-			NULL,	0,
-			0
-		};
-
+		iov.iov_len = sizeof(buf);
 		status = recvmsg(rth->fd, &msg, 0);
 
 		if (status < 0) {
@@ -168,13 +175,10 @@ int rtnl_dump_filter(struct rtnl_handle *rth,
 			perror("OVERRUN");
 			continue;
 		}
+
 		if (status == 0) {
 			fprintf(stderr, "EOF on netlink\n");
 			return -1;
-		}
-		if (msg.msg_namelen != sizeof(nladdr)) {
-			fprintf(stderr, "sender address length == %d\n", msg.msg_namelen);
-			exit(1);
 		}
 
 		h = (struct nlmsghdr*)buf;
@@ -231,14 +235,14 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 	unsigned seq;
 	struct nlmsghdr *h;
 	struct sockaddr_nl nladdr;
-	struct iovec iov = { (void*)n, n->nlmsg_len };
-	char   buf[16384];
+	struct iovec iov;
 	struct msghdr msg = {
-		(void*)&nladdr, sizeof(nladdr),
-		&iov,	1,
-		NULL,	0,
-		0
+		.msg_name = &nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
 	};
+	char   buf[16384];
 
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
@@ -340,7 +344,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 	}
 }
 
-int rtnl_listen(struct rtnl_handle *rtnl, 
+int rtnl_listen(struct rtnl_handle *rtnl,
 		rtnl_filter_t handler,
 		void *jarg)
 {
@@ -348,22 +352,20 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 	struct nlmsghdr *h;
 	struct sockaddr_nl nladdr;
 	struct iovec iov;
-	char   buf[8192];
 	struct msghdr msg = {
-		(void*)&nladdr, sizeof(nladdr),
-		&iov,	1,
-		NULL,	0,
-		0
+		.msg_name = &nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
 	};
+	char   buf[8192];
 
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
 	nladdr.nl_pid = 0;
 	nladdr.nl_groups = 0;
 
-
 	iov.iov_base = buf;
-
 	while (1) {
 		iov.iov_len = sizeof(buf);
 		status = recvmsg(rtnl->fd, &msg, 0);
@@ -485,7 +487,7 @@ int addattr32(struct nlmsghdr *n, int maxlen, int type, __u32 data)
 	return 0;
 }
 
-int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data, 
+int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data,
 	      int alen)
 {
 	int len = RTA_LENGTH(alen);
@@ -533,7 +535,7 @@ int rta_addattr32(struct rtattr *rta, int maxlen, int type, __u32 data)
 	return 0;
 }
 
-int rta_addattr_l(struct rtattr *rta, int maxlen, int type, 
+int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 		  const void *data, int alen)
 {
 	struct rtattr *subrta;
