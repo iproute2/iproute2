@@ -235,7 +235,10 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 	unsigned seq;
 	struct nlmsghdr *h;
 	struct sockaddr_nl nladdr;
-	struct iovec iov;
+	struct iovec iov = {
+		.iov_base = (void*) n,
+		.iov_len = n->nlmsg_len
+	};
 	struct msghdr msg = {
 		.msg_name = &nladdr,
 		.msg_namelen = sizeof(nladdr),

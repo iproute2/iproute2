@@ -1,4 +1,8 @@
-2005-09-21  Stephen Hemminger  <shemminger@localhost.localdomain>
+2005-10-04  Jerome Borsboom <j.borsboom@erasmusmc.nl>
+
+	* Fix regression in ip addr (libnetlink) handling
+
+2005-09-21  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Fix uninitialized memory and leaks with valgrind
 	  Reported by Redhat
