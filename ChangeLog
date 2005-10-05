@@ -1,3 +1,7 @@
+2005-10-05  Mads Martin Joergensen <mmj@suse.de>
+
+	* Trivial netem ccopts
+
 2005-10-04  Jerome Borsboom <j.borsboom@erasmusmc.nl>
 
 	* Fix regression in ip addr (libnetlink) handling
@@ -188,7 +192,7 @@
 	* need to call getline() with null for first usage
 	* don't overwrite const arg
 
-2005-02-07  Stephen Hemminger  <shemminger@linux.site>
+2005-02-07  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Add experimental distribution
 
