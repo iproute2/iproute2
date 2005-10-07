@@ -38,7 +38,7 @@ int use_iec = 0;
 int force = 0;
 struct rtnl_handle rth;
 
-static void *BODY;	/* cached handle dlopen(NULL) */
+static void *BODY = NULL;	/* cached handle dlopen(NULL) */
 static struct qdisc_util * qdisc_list;
 static struct filter_util * filter_list;
 

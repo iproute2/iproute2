@@ -1,3 +1,7 @@
+2005-10-07  Mike Frysinger <vapier@gentoo.org>
+
+	* Handle pfifo_fast that has no qopt without segfaulting
+
 2005-10-05  Mads Martin Joergensen <mmj@suse.de>
 
 	* Trivial netem ccopts
