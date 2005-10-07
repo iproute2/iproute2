@@ -42,7 +42,7 @@ static void usage(void)
 	exit(-1);
 }
 
-char *viftable[32];
+static char *viftable[32];
 
 struct rtfilter
 {
@@ -50,7 +50,7 @@ struct rtfilter
 	inet_prefix msrc;
 } filter;
 
-void read_viftable(void)
+static void read_viftable(void)
 {
 	char buf[256];
 	FILE *fp = fopen("/proc/net/ip_mr_vif", "r");
@@ -75,7 +75,7 @@ void read_viftable(void)
 	fclose(fp);
 }
 
-void read_mroute_list(FILE *ofp)
+static void read_mroute_list(FILE *ofp)
 {
 	char buf[256];
 	FILE *fp = fopen("/proc/net/ip_mr_cache", "r");
