@@ -1,3 +1,7 @@
+2005-10-12  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add more CBQ examples from Fedora Core
+
 2005-10-12  Jamal Hadi Salim <hadi@znyx.com>
 
 	* Fix ip rule flush, need to reopen rtnl
