@@ -1,3 +1,7 @@
+2005-10-12  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Fix ip rule flush, need to reopen rtnl
+
 2005-10-07  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Reenable ip mroute

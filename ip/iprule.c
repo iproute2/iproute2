@@ -300,6 +300,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 
 static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
+	struct rtnl_handle rth2;
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr * tb[RTA_MAX+1];
@@ -314,8 +315,13 @@ static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *a
 		n->nlmsg_type = RTM_DELRULE;
 		n->nlmsg_flags = NLM_F_REQUEST;
 
-		if (rtnl_talk(&rth, n, 0, 0, NULL, NULL, NULL) < 0)
+		if (rtnl_open(&rth2, 0) < 0)
+			return -1;
+
+		if (rtnl_talk(&rth2, n, 0, 0, NULL, NULL, NULL) < 0)
 			return -2;
+
+		rtnl_close(&rth2);
 	}
 
 	return 0;
