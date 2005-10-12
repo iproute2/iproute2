@@ -216,13 +216,13 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		memset(&via, 0, sizeof(via));
 		via.family = r->rtm_family;
 		if (tb[RTA_GATEWAY])
-			memcpy(&via.data, RTA_DATA(tb[RTA_GATEWAY]), host_len);
+			memcpy(&via.data, RTA_DATA(tb[RTA_GATEWAY]), host_len/8);
 	}
 	if (filter.rprefsrc.bitlen>0) {
 		memset(&prefsrc, 0, sizeof(prefsrc));
 		prefsrc.family = r->rtm_family;
 		if (tb[RTA_PREFSRC])
-			memcpy(&prefsrc.data, RTA_DATA(tb[RTA_PREFSRC]), host_len);
+			memcpy(&prefsrc.data, RTA_DATA(tb[RTA_PREFSRC]), host_len/8);
 	}
 
 	if (filter.rdst.family && inet_addr_match(&dst, &filter.rdst, filter.rdst.bitlen))
