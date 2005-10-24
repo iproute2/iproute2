@@ -1,3 +1,7 @@
+2005-10-24  Patrick McHardy <kaber@trash.net>
+
+	* Fix ip commnad shortcuts
+
 2005-10-12  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Add more CBQ examples from Fedora Core

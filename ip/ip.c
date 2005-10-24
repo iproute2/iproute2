@@ -81,7 +81,7 @@ static int do_cmd(const char *argv0, int argc, char **argv)
 	const struct cmd *c;
 
 	for (c = cmds; c->cmd; ++c)
-		if (strcmp(c->cmd, argv0) == 0)
+		if (matches(argv0, c->cmd) == 0)
 			return c->func(argc-1, argv+1);
 
 	fprintf(stderr, "Object \"%s\" is unknown, try \"ip help\".\n", argv0);
