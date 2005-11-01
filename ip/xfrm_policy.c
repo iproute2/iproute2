@@ -335,12 +335,13 @@ static int xfrm_policy_filter_match(struct xfrm_userpolicy_info *xpinfo)
 int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		      void *arg)
 {
-	FILE *fp = (FILE*)arg;
-	struct xfrm_userpolicy_info *xpinfo;
-	struct xfrm_user_polexpire *xpexp;
-	int len = n->nlmsg_len;
 	struct rtattr * tb[XFRMA_MAX+1];
 	struct rtattr * rta;
+	struct xfrm_userpolicy_info *xpinfo = NULL;
+	struct xfrm_user_polexpire *xpexp = NULL;
+	struct xfrm_userpolicy_id *xpid = NULL;
+	FILE *fp = (FILE*)arg;
+	int len = n->nlmsg_len;
 
 	if (n->nlmsg_type != XFRM_MSG_NEWPOLICY &&
 	    n->nlmsg_type != XFRM_MSG_DELPOLICY &&
@@ -355,6 +356,9 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		xpinfo = &xpexp->pol;
 
 		len -= NLMSG_LENGTH(sizeof(*xpexp));
+	} else if (n->nlmsg_type == XFRM_MSG_DELPOLICY)  {
+		xpid = NLMSG_DATA(n);
+		len -= NLMSG_LENGTH(sizeof(*xpid));
 	} else {
 		xpexp = NULL;
 		xpinfo = NLMSG_DATA(n);
@@ -372,14 +376,25 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
 		rta = XFRMPEXP_RTA(xpexp);
+	else if (n->nlmsg_type == XFRM_MSG_DELPOLICY) 
+		rta = (struct rtattr*)(((char*)(xpid)) + NLMSG_ALIGN(sizeof(*xpid)));
 	else
 		rta = XFRMP_RTA(xpinfo);
 
 	parse_rtattr(tb, XFRMA_MAX, rta, len);
 
-	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)
+	if (n->nlmsg_type == XFRM_MSG_DELPOLICY) {
 		fprintf(fp, "Deleted ");
-	else if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
+		//xfrm_policy_id_print();
+		
+		if (tb[XFRMA_POLICY])
+		xpinfo = (struct xfrm_userpolicy_info *)RTA_DATA(tb[XFRMA_POLICY]);
+		else {
+			fprintf(stderr, "Buggy XFRM_MSG_DELPOLICY ");
+			return 0;
+		}
+
+	} else if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
 		fprintf(fp, "Expired ");
 
 	xfrm_policy_info_print(xpinfo, tb, fp, NULL, NULL);

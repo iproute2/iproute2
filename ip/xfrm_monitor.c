@@ -115,6 +115,19 @@ static int xfrm_accept_msg(const struct sockaddr_nl *who,
 	if (timestamp)
 		print_timestamp(fp);
 
+	if (n->nlmsg_type == XFRM_MSG_NEWSA ||
+	     n->nlmsg_type == XFRM_MSG_DELSA ||
+	     n->nlmsg_type == XFRM_MSG_UPDSA) {
+		xfrm_state_print(who, n, arg);
+		return 0;
+	}
+	if (n->nlmsg_type == XFRM_MSG_NEWPOLICY ||
+	     n->nlmsg_type == XFRM_MSG_DELPOLICY ||
+	     n->nlmsg_type == XFRM_MSG_UPDPOLICY) {
+		xfrm_policy_print(who, n, arg);
+		return 0;
+	}
+
 	if (n->nlmsg_type == XFRM_MSG_ACQUIRE) {
 		xfrm_acquire_print(who, n, arg);
 		return 0;
@@ -138,7 +151,7 @@ static int xfrm_accept_msg(const struct sockaddr_nl *who,
 	}
 	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&
 	    n->nlmsg_type != NLMSG_DONE) {
-		fprintf(fp, "Unknown message: %08x %08x %08x\n",
+		fprintf(fp, "Unknown message: %08d 0x%08x 0x%08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 	}
 	return 0;
@@ -151,6 +164,8 @@ int do_xfrm_monitor(int argc, char **argv)
 	unsigned groups = ~((unsigned)0); /* XXX */
 	int lacquire=0;
 	int lexpire=0;
+	int lpolicy=0;
+	int lsa=0;
 
 	while (argc > 0) {
 		if (matches(*argv, "file") == 0) {
@@ -161,6 +176,12 @@ int do_xfrm_monitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "expire") == 0) {
 			lexpire=1;
+			groups = 0;
+		} else if (matches(*argv, "SA") == 0) {
+			lsa=1;
+			groups = 0;
+		} else if (matches(*argv, "policy") == 0) {
+			lpolicy=1;
 			groups = 0;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
@@ -175,6 +196,10 @@ int do_xfrm_monitor(int argc, char **argv)
 		groups |= XFRMGRP_ACQUIRE;
 	if (lexpire)
 		groups |= XFRMGRP_EXPIRE;
+	if (lsa)
+		groups |= XFRMGRP_SA;
+	if (lpolicy)
+		groups |= XFRMGRP_POLICY;
 
 	if (file) {
 		FILE *fp;
@@ -187,6 +212,9 @@ int do_xfrm_monitor(int argc, char **argv)
 	}
 
 	//ll_init_map(&rth);
+
+	if (rtnl_open_byproto(&rth, groups, NETLINK_XFRM) < 0)
+		exit(1);
 
 	if (rtnl_listen(&rth, xfrm_accept_msg, (void*)stdout) < 0)
 		exit(2);
