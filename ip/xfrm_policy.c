@@ -345,24 +345,23 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (n->nlmsg_type != XFRM_MSG_NEWPOLICY &&
 	    n->nlmsg_type != XFRM_MSG_DELPOLICY &&
+	    n->nlmsg_type != XFRM_MSG_UPDPOLICY &&
 	    n->nlmsg_type != XFRM_MSG_POLEXPIRE) {
 		fprintf(stderr, "Not a policy: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 		return 0;
 	}
 
-	if (n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
-		xpexp = NLMSG_DATA(n);
-		xpinfo = &xpexp->pol;
-
-		len -= NLMSG_LENGTH(sizeof(*xpexp));
-	} else if (n->nlmsg_type == XFRM_MSG_DELPOLICY)  {
+	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)  {
 		xpid = NLMSG_DATA(n);
 		len -= NLMSG_LENGTH(sizeof(*xpid));
+	} else if (n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
+		xpexp = NLMSG_DATA(n);
+		xpinfo = &xpexp->pol;
+		len -= NLMSG_LENGTH(sizeof(*xpexp));
 	} else {
 		xpexp = NULL;
 		xpinfo = NLMSG_DATA(n);
-
 		len -= NLMSG_LENGTH(sizeof(*xpinfo));
 	}
 
@@ -371,31 +370,37 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		return -1;
 	}
 
-	if (!xfrm_policy_filter_match(xpinfo))
+	if (xpinfo && !xfrm_policy_filter_match(xpinfo))
 		return 0;
 
-	if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
+	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)
+		fprintf(fp, "Deleted ");
+	else if (n->nlmsg_type == XFRM_MSG_UPDPOLICY)
+		fprintf(fp, "Updated ");
+	else if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
+		fprintf(fp, "Expired ");
+
+	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)
+		rta = XFRMPID_RTA(xpid);
+	else if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
 		rta = XFRMPEXP_RTA(xpexp);
-	else if (n->nlmsg_type == XFRM_MSG_DELPOLICY) 
-		rta = (struct rtattr*)(((char*)(xpid)) + NLMSG_ALIGN(sizeof(*xpid)));
 	else
 		rta = XFRMP_RTA(xpinfo);
 
 	parse_rtattr(tb, XFRMA_MAX, rta, len);
 
 	if (n->nlmsg_type == XFRM_MSG_DELPOLICY) {
-		fprintf(fp, "Deleted ");
 		//xfrm_policy_id_print();
-		
-		if (tb[XFRMA_POLICY])
-		xpinfo = (struct xfrm_userpolicy_info *)RTA_DATA(tb[XFRMA_POLICY]);
-		else {
-			fprintf(stderr, "Buggy XFRM_MSG_DELPOLICY ");
-			return 0;
+		if (!tb[XFRMA_POLICY]) {
+			fprintf(stderr, "Buggy XFRM_MSG_DELPOLICY: no XFRMA_POLICY\n");
+			return -1;
 		}
-
-	} else if (n->nlmsg_type == XFRM_MSG_POLEXPIRE)
-		fprintf(fp, "Expired ");
+		if (RTA_PAYLOAD(tb[XFRMA_POLICY]) < sizeof(*xpinfo)) {
+			fprintf(stderr, "Buggy XFRM_MSG_DELPOLICY: too short XFRMA_POLICY len\n");
+			return -1;
+		}
+		xpinfo = (struct xfrm_userpolicy_info *)RTA_DATA(tb[XFRMA_POLICY]);
+	}
 
 	xfrm_policy_info_print(xpinfo, tb, fp, NULL, NULL);
 
@@ -407,6 +412,7 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (oneline)
 		fprintf(fp, "\n");
+	fflush(fp);
 
 	return 0;
 }

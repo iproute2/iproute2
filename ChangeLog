@@ -1,3 +1,13 @@
+2005-11-07  Masahide NAKAMURA <nakam@linux-ipv6.org>
+
+	* Updating for 2.6.14
+	- Show UPD{SA,POLICY} message information from kernel instead of error
+	- Add lengh check of deleting message from kernel
+	- Use macro for struct xfrm_user{sa,policy}_id
+
+	* Minor fix:
+	- Add fflush at the end of normal dump
+
 2005-11-01  Jamal Hadi Salim <hadi@znyx.com>
 
 	* Fix handling of XFRM monitor and state

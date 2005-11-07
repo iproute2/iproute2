@@ -565,25 +565,24 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (n->nlmsg_type != XFRM_MSG_NEWSA &&
 	    n->nlmsg_type != XFRM_MSG_DELSA &&
+	    n->nlmsg_type != XFRM_MSG_UPDSA &&
 	    n->nlmsg_type != XFRM_MSG_EXPIRE) {
 		fprintf(stderr, "Not a state: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 		return 0;
 	}
 
-	if (n->nlmsg_type == XFRM_MSG_EXPIRE) {
-		xexp = NLMSG_DATA(n);
-		xsinfo = &xexp->state;
-
-		len -= NLMSG_LENGTH(sizeof(*xexp));
-	} else if (n->nlmsg_type == XFRM_MSG_DELSA) {
+	if (n->nlmsg_type == XFRM_MSG_DELSA) {
 		/* Dont blame me for this .. Herbert made me do it */
 		xsid = NLMSG_DATA(n);
-		len -= NLMSG_LENGTH(sizeof(struct xfrm_usersa_id));
+		len -= NLMSG_LENGTH(sizeof(*xsid));
+	} else if (n->nlmsg_type == XFRM_MSG_EXPIRE) {
+		xexp = NLMSG_DATA(n);
+		xsinfo = &xexp->state;
+		len -= NLMSG_LENGTH(sizeof(*xexp));
 	} else {
 		xexp = NULL;
 		xsinfo = NLMSG_DATA(n);
-
 		len -= NLMSG_LENGTH(sizeof(*xsinfo));
 	}
 
@@ -592,33 +591,37 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		return -1;
 	}
 
-	if (!xfrm_state_filter_match(xsinfo))
+	if (xsinfo && !xfrm_state_filter_match(xsinfo))
 		return 0;
 
-	if (n->nlmsg_type == XFRM_MSG_DELSA) {
+	if (n->nlmsg_type == XFRM_MSG_DELSA)
 		fprintf(fp, "Deleted ");
-		//xfrm_state_print_id();
-	}
+	else if (n->nlmsg_type == XFRM_MSG_UPDSA)
+		fprintf(fp, "Updated ");
 	else if (n->nlmsg_type == XFRM_MSG_EXPIRE)
 		fprintf(fp, "Expired ");
 
-	if (n->nlmsg_type == XFRM_MSG_EXPIRE)
+	if (n->nlmsg_type == XFRM_MSG_DELSA)
+		rta = XFRMSID_RTA(xsid);
+	else if (n->nlmsg_type == XFRM_MSG_EXPIRE)
 		rta = XFRMEXP_RTA(xexp);
-	else if (n->nlmsg_type == XFRM_MSG_DELSA)
-		rta = (struct rtattr*)(((char*)(xsid)) + NLMSG_ALIGN(sizeof(*xsid)));
 	else 
 		rta = XFRMS_RTA(xsinfo);
-
 
 	parse_rtattr(tb, XFRMA_MAX, rta, len);
 
 	if (n->nlmsg_type == XFRM_MSG_DELSA) {
-		if (tb[XFRMA_SA])
-			xsinfo = (struct xfrm_usersa_info *)RTA_DATA(tb[XFRMA_SA]);
-		else {
-			fprintf(stderr, "Buggy XFRM_MSG_DELSA ");
-			return 0;
+		//xfrm_policy_id_print();
+
+		if (!tb[XFRMA_SA]) {
+			fprintf(stderr, "Buggy XFRM_MSG_DELSA: no XFRMA_SA\n");
+			return -1;
 		}
+		if (RTA_PAYLOAD(tb[XFRMA_SA]) < sizeof(*xsinfo)) {
+			fprintf(stderr, "Buggy XFRM_MSG_DELPOLICY: too short XFRMA_POLICY len\n");
+			return -1;
+		}
+		xsinfo = (struct xfrm_usersa_info *)RTA_DATA(tb[XFRMA_SA]);
 	}
 
 	xfrm_state_info_print(xsinfo, tb, fp, NULL, NULL);
@@ -631,6 +634,7 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (oneline)
 		fprintf(fp, "\n");
+	fflush(fp);
 
 	return 0;
 }

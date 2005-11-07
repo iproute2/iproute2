@@ -103,6 +103,7 @@ static int xfrm_acquire_print(const struct sockaddr_nl *who,
 
 	if (oneline)
 		fprintf(fp, "\n");
+	fflush(fp);
 
 	return 0;
 }
@@ -116,28 +117,22 @@ static int xfrm_accept_msg(const struct sockaddr_nl *who,
 		print_timestamp(fp);
 
 	if (n->nlmsg_type == XFRM_MSG_NEWSA ||
-	     n->nlmsg_type == XFRM_MSG_DELSA ||
-	     n->nlmsg_type == XFRM_MSG_UPDSA) {
+	    n->nlmsg_type == XFRM_MSG_DELSA ||
+	    n->nlmsg_type == XFRM_MSG_UPDSA ||
+	    n->nlmsg_type == XFRM_MSG_EXPIRE) {
 		xfrm_state_print(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == XFRM_MSG_NEWPOLICY ||
-	     n->nlmsg_type == XFRM_MSG_DELPOLICY ||
-	     n->nlmsg_type == XFRM_MSG_UPDPOLICY) {
+	    n->nlmsg_type == XFRM_MSG_DELPOLICY ||
+	    n->nlmsg_type == XFRM_MSG_UPDPOLICY ||
+	    n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
 		xfrm_policy_print(who, n, arg);
 		return 0;
 	}
 
 	if (n->nlmsg_type == XFRM_MSG_ACQUIRE) {
 		xfrm_acquire_print(who, n, arg);
-		return 0;
-	}
-	if (n->nlmsg_type == XFRM_MSG_EXPIRE) {
-		xfrm_state_print(who, n, arg);
-		return 0;
-	}
-	if (n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
-		xfrm_policy_print(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == XFRM_MSG_FLUSHSA) {
