@@ -4,6 +4,7 @@ SBINDIR=/sbin
 CONFDIR=/etc/iproute2
 DOCDIR=/share/doc/iproute2
 MANDIR=/share/man
+ARPDDIR=/var/lib/arpd
 
 # Path to db_185.h include
 DBM_INCLUDE:=/usr/include
@@ -43,6 +44,7 @@ Config:
 install: all
 	install -m 0755 -d $(DESTDIR)$(SBINDIR)
 	install -m 0755 -d $(DESTDIR)$(CONFDIR)
+	install -m 0755 -d $(DESTDIR)$(ARPDDIR)
 	install -m 0755 -d $(DESTDIR)$(DOCDIR)/examples
 	install -m 0755 -d $(DESTDIR)$(DOCDIR)/examples/diffserv
 	install -m 0644 README.iproute2+tc $(shell find examples -maxdepth 1 -type f) \
