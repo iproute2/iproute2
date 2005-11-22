@@ -1,3 +1,11 @@
+2005-11-22  Stephen Hemminger  <shemminger@osdl.org
+
+	* Handle ambigious ip command matches
+
+2005-11-22  Patrick McHardy <kaber@trash.net>
+
+	* Add back ip command aliases
+
 2005-11-07  Masahide NAKAMURA <nakam@linux-ipv6.org>
 
 	* Updating for 2.6.14

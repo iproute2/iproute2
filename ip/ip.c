@@ -62,13 +62,15 @@ static const struct cmd {
 	const char *cmd;
 	int (*func)(int argc, char **argv);
 } cmds[] = {
-	{ "addr", 	do_ipaddr },
-	{ "maddr",	do_multiaddr },
+	{ "address", 	do_ipaddr },
+	{ "maddress",	do_multiaddr },
 	{ "route",	do_iproute },
 	{ "rule",	do_iprule },
-	{ "neigh",	do_ipneigh },
+	{ "neighbor",	do_ipneigh },
+	{ "neighbour",	do_ipneigh },
 	{ "link",	do_iplink },
 	{ "tunnel",	do_iptunnel },
+	{ "tunl",	do_iptunnel },
 	{ "monitor",	do_ipmonitor },
 	{ "xfrm",	do_xfrm },
 	{ "mroute",	do_multiroute },
@@ -78,14 +80,25 @@ static const struct cmd {
 
 static int do_cmd(const char *argv0, int argc, char **argv)
 {
-	const struct cmd *c;
+	const struct cmd *c, *m = NULL;
 
-	for (c = cmds; c->cmd; ++c)
-		if (matches(argv0, c->cmd) == 0)
-			return c->func(argc-1, argv+1);
+	for (c = cmds; c->cmd; ++c) {
+		if (matches(argv0, c->cmd) == 0) {
+			if (m && m->func != c->func) {
+				fprintf(stderr, 
+					"Ambiguious command \"%s\" matches both %s and %s\n",
+					argv0,  m->cmd, c->cmd);
+				return -1;
+			}
+			m = c;
+		}
+	}
+
+	if (m) 
+		return m->func(argc-1, argv+1);
 
 	fprintf(stderr, "Object \"%s\" is unknown, try \"ip help\".\n", argv0);
-	exit(-1);
+	return -1;
 }
 
 static int batch(const char *name)
