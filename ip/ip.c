@@ -80,22 +80,12 @@ static const struct cmd {
 
 static int do_cmd(const char *argv0, int argc, char **argv)
 {
-	const struct cmd *c, *m = NULL;
+	const struct cmd *c;
 
 	for (c = cmds; c->cmd; ++c) {
-		if (matches(argv0, c->cmd) == 0) {
-			if (m && m->func != c->func) {
-				fprintf(stderr, 
-					"Ambiguious command \"%s\" matches both %s and %s\n",
-					argv0,  m->cmd, c->cmd);
-				return -1;
-			}
-			m = c;
-		}
+		if (matches(argv0, c->cmd) == 0)
+			return c->func(argc-1, argv+1);
 	}
-
-	if (m) 
-		return m->func(argc-1, argv+1);
 
 	fprintf(stderr, "Object \"%s\" is unknown, try \"ip help\".\n", argv0);
 	return -1;

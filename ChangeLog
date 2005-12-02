@@ -1,3 +1,7 @@
+2005-12-02  Stephen Hemminger  <shemminger@osdl.org
+
+	* Backout ambigious ip command matches
+
 2005-11-22  Stephen Hemminger  <shemminger@osdl.org
 
 	* Handle ambigious ip command matches
