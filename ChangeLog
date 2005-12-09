@@ -1,3 +1,7 @@
+2005-12-02  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add corrupt feature to netem
+
 2005-12-02  Stephen Hemminger  <shemminger@osdl.org
 
 	* Backout ambigious ip command matches
