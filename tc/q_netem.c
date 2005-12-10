@@ -273,10 +273,8 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			return -1;
 	}
 
-	if (reorder.probability) {
-		if (addattr_l(n, TCA_BUF_MAX, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
-			return -1;
-	}
+	if (addattr_l(n, TCA_BUF_MAX, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
+		return -1;
 
 	if (corrupt.probability) {
 		if (addattr_l(n, TCA_BUF_MAX, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
@@ -328,7 +326,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (tb[TCA_NETEM_CORRUPT]) {
 			if (RTA_PAYLOAD(tb[TCA_NETEM_CORRUPT]) < sizeof(*corrupt))
 				return -1;
-			corrupt = RTA_DATA(tb[TCA_NETEM_REORDER]);
+			corrupt = RTA_DATA(tb[TCA_NETEM_CORRUPT]);
 		}
 	}
 
