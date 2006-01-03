@@ -66,6 +66,6 @@ action mirred egress mirror dev eth1
 ---
 
 A more interesting example is when you mirror flows to a dummy device
-so you could tcpdump them (dummy by defaults drops all devices it sees).
+so you could tcpdump them (dummy by defaults drops all packets it sees).
 This is a very useful debug feature.
 
