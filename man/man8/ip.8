@@ -211,7 +211,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 
 .ti -8
 .B  ip rule
-.RB " [ " list " | " add " | " del " ]"
+.RB " [ " list " | " add " | " del " | " flush " ]"
 .I  SELECTOR ACTION
 
 .ti -8
@@ -1573,6 +1573,9 @@ Changes to the RPDB made with these commands do not become active
 immediately.  It is assumed that after a script finishes a batch of
 updates, it flushes the routing cache with
 .BR "ip route flush cache" .
+
+.SS ip rule flush - also dumps all the deleted rules.
+This command has no arguments.
 
 .SS ip rule show - list rules
 This command has no arguments.
