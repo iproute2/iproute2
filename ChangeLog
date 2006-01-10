@@ -5,7 +5,8 @@
 2006-01-10  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Update headers to santized kernel 2.6.15
-
+	* Fix ipv6 priority option in u32 
+	
 2006-01-03 Alpt <alpt@freaknet.org>
 
 	* Ip man page addition

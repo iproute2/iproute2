@@ -495,7 +495,7 @@ static int parse_ip6(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 	}
 	if (strcmp(*argv, "priority") == 0) {
 		NEXT_ARG();
-		res = parse_u8(&argc, &argv, sel, 0, 0);
+		res = parse_u8(&argc, &argv, sel, 4, 0);
 		goto done;
 	}
 	if (strcmp(*argv, "protocol") == 0) {
