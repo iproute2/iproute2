@@ -45,7 +45,7 @@ static void usage(void)
 	fprintf(stderr,
 "Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
 "       ip [ -force ] [-batch filename\n"
-"where  OBJECT := { link | addr | route | rule | neigh | tunnel |\n"
+"where  OBJECT := { link | addr | route | rule | neigh | ntable | tunnel |\n"
 "                   maddr | mroute | monitor | xfrm }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -r[esolve] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
@@ -68,6 +68,8 @@ static const struct cmd {
 	{ "rule",	do_iprule },
 	{ "neighbor",	do_ipneigh },
 	{ "neighbour",	do_ipneigh },
+	{ "ntable",	do_ipntable },
+	{ "ntbl",	do_ipntable },
 	{ "link",	do_iplink },
 	{ "tunnel",	do_iptunnel },
 	{ "tunl",	do_iptunnel },
