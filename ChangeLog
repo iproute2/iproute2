@@ -1,3 +1,7 @@
+2006-01-12  Patrick McHardy <kaber@trash.net>
+
+	* Handle DCCP in ipxfrm.c to allow using port numbers in the selector.
+
 2006-01-10  Masahide NAKAMURA <nakam@linux-ipv6.org>
 
 	* Add ip link ntable
@@ -19,11 +23,11 @@
 
 	* Add corrupt feature to netem
 
-2005-12-02  Stephen Hemminger  <shemminger@osdl.org
+2005-12-02  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Backout ambigious ip command matches
 
-2005-11-22  Stephen Hemminger  <shemminger@osdl.org
+2005-11-22  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Handle ambigious ip command matches
 

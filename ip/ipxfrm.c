@@ -445,6 +445,7 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 	case IPPROTO_TCP:
 	case IPPROTO_UDP:
 	case IPPROTO_SCTP:
+	case IPPROTO_DCCP:
 	default: /* XXX */
 		if (sel->sport_mask)
 			fprintf(fp, "sport %u ", ntohs(sel->sport));
@@ -999,6 +1000,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 		case IPPROTO_TCP:
 		case IPPROTO_UDP:
 		case IPPROTO_SCTP:
+		case IPPROTO_DCCP:
 			break;
 		default:
 			fprintf(stderr, "\"sport\" and \"dport\" are invalid with proto=%s\n", strxf_proto(sel->proto));
