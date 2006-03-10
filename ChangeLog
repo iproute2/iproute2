@@ -1,3 +1,7 @@
+2006-03-10  Russell Stuart <russell-lartc@stuart.id.au>
+
+	* Fix missing memset in tc sample
+
 2006-03-10  shemminger  <shemminger@osdl.org>
 
 	* Change default lnstat count to 1

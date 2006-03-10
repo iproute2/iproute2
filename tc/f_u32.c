@@ -878,6 +878,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				struct tc_u32_sel sel;
 				struct tc_u32_key keys[4];
 			} sel2;
+			memset(sel2, 0, sizeof(sel32));
 			NEXT_ARG();
 			if (parse_selector(&argc, &argv, &sel2.sel, n)) {
 				fprintf(stderr, "Illegal \"sample\"\n");
