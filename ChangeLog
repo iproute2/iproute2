@@ -1,3 +1,8 @@
+2006-03-10  shemminger  <shemminger@osdl.org>
+
+	* Update to 2.6.16 headers
+	* Add fake version of include/linux/socket.h to fix warnings
+
 2006-01-12  Patrick McHardy <kaber@trash.net>
 
 	* Handle DCCP in ipxfrm.c to allow using port numbers in the selector.
