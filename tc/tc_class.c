@@ -76,7 +76,10 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (get_tc_classid(&handle, *argv))
 				invarg(*argv, "invalid class ID");
 			req.t.tcm_handle = handle;
-		} else if (strcmp(*argv, "root") == 0) {
+		} else if (strcmp(*argv, "handle") == 0) {
+			fprintf(stderr, "Error: try \"classid\" instead of \"handle\"\n");
+			return -1;
+ 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID.\n");
 				return -1;
