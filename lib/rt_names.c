@@ -71,9 +71,8 @@ static char * rtnl_rtprot_tab[256] = {
 	[RTPROT_ZEBRA] ="zebra",
 	[RTPROT_BIRD] = "bird",
 	[RTPROT_DNROUTED] = "dnrouted",
-#ifdef RTPROT_XORP
 	[RTPROT_XORP] = "xorp",
-#endif
+	[RTPROT_NTK] = "ntk",
 };
 
 

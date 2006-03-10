@@ -11,6 +11,10 @@
 10	mrt
 11	zebra
 12	bird
+13	dnrouted
+14	xorp
+15	ntk
+
 #
 #	Used by me for gated
 #
