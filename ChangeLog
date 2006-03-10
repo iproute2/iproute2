@@ -1,8 +1,12 @@
+2006-03-10  Jean Tourrilhes <jt@hpl.hp.com>
+
+	* Fix endless loop in netlink error handling
+
 2006-03-10  Russell Stuart <russell-lartc@stuart.id.au>
 
 	* Fix missing memset in tc sample
 
-2006-03-10  shemminger  <shemminger@osdl.org>
+2006-03-10  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Change default lnstat count to 1
 	* Update to 2.6.16 headers

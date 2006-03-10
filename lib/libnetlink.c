@@ -308,6 +308,9 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 					if (err < 0)
 						return err;
 				}
+				/* Don't forget to skip that message. */
+				status -= NLMSG_ALIGN(len);
+				h = (struct nlmsghdr*)((char*)h + NLMSG_ALIGN(len));
 				continue;
 			}
 
