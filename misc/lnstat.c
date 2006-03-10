@@ -218,7 +218,7 @@ int main(int argc, char **argv)
 		MODE_NORMAL,
 	} mode = MODE_NORMAL;
 
-	unsigned long count = 0;
+	unsigned long count = 1;
 	static struct field_params fp;
 	int num_req_files = 0;
 	char *req_files[LNSTAT_MAX_FILES];

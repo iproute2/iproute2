@@ -1,5 +1,6 @@
 2006-03-10  shemminger  <shemminger@osdl.org>
 
+	* Change default lnstat count to 1
 	* Update to 2.6.16 headers
 	* Add fake version of include/linux/socket.h to fix warnings
 
