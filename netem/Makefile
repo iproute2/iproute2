@@ -7,7 +7,7 @@ LDLIBS += -lm
 all: $(DISTGEN) $(DISTDATA)
 
 $(DISTGEN):
-	$(HOSTCC) $(CCOPTS) -Wall -O1 -I../include -o $@ $@.c -lm
+	$(HOSTCC) $(CCOPTS) -I../include -o $@ $@.c -lm
 
 %.dist: %
 	./$* > $@
