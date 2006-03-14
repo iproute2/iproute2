@@ -834,8 +834,9 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 		} else if (matches(*argv, "divisor") == 0) {
 			unsigned divisor;
 			NEXT_ARG();
-			if (get_unsigned(&divisor, *argv, 0) || divisor == 0 ||
-			    divisor > 0x100 || (divisor - 1 & divisor)) {
+			if (get_unsigned(&divisor, *argv, 0) || 
+			    divisor == 0 ||
+			    divisor > 0x100 || ((divisor - 1) & divisor)) {
 				fprintf(stderr, "Illegal \"divisor\"\n");
 				return -1;
 			}
@@ -881,7 +882,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				struct tc_u32_sel sel;
 				struct tc_u32_key keys[4];
 			} sel2;
-			memset(sel2, 0, sizeof(sel32));
+			memset(&sel2, 0, sizeof(sel2));
 			NEXT_ARG();
 			if (parse_selector(&argc, &argv, &sel2.sel, n)) {
 				fprintf(stderr, "Illegal \"sample\"\n");
@@ -894,7 +895,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 			if (*argv != 0 && strcmp(*argv, "divisor") == 0) {
 				NEXT_ARG();
 				if (get_unsigned(&divisor, *argv, 0) || divisor == 0 ||
-				    divisor > 0x100 || (divisor - 1 & divisor)) {
+				    divisor > 0x100 || ((divisor - 1) & divisor)) {
 					fprintf(stderr, "Illegal sample \"divisor\"\n");
 					return -1;
 				}
