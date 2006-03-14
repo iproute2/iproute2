@@ -17,6 +17,7 @@
 #include <syslog.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <sys/utsname.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -34,7 +35,7 @@ static void explain(void)
 	fprintf(stderr, "or         u32 divisor DIVISOR\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: SELECTOR := SAMPLE SAMPLE ...\n");
-	fprintf(stderr, "       SAMPLE := { ip | ip6 | udp | tcp | icmp | u{32|16|8} | mark } SAMPLE_ARGS\n");
+	fprintf(stderr, "       SAMPLE := { ip | ip6 | udp | tcp | icmp | u{32|16|8} | mark } SAMPLE_ARGS [divisor DIVISOR]\n");
 	fprintf(stderr, "       FILTERID := X:Y:Z\n");
 }
 
@@ -834,7 +835,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 			unsigned divisor;
 			NEXT_ARG();
 			if (get_unsigned(&divisor, *argv, 0) || divisor == 0 ||
-			    divisor > 0x100) {
+			    divisor > 0x100 || (divisor - 1 & divisor)) {
 				fprintf(stderr, "Illegal \"divisor\"\n");
 				return -1;
 			}
@@ -874,6 +875,8 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				htid = (handle&0xFFFFF000);
 		} else if (strcmp(*argv, "sample") == 0) {
 			__u32 hash;
+			unsigned divisor = 0x100;
+			struct utsname utsname;
 			struct {
 				struct tc_u32_sel sel;
 				struct tc_u32_key keys[4];
@@ -888,10 +891,30 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				fprintf(stderr, "\"sample\" must contain exactly ONE key.\n");
 				return -1;
 			}
+			if (*argv != 0 && strcmp(*argv, "divisor") == 0) {
+				NEXT_ARG();
+				if (get_unsigned(&divisor, *argv, 0) || divisor == 0 ||
+				    divisor > 0x100 || (divisor - 1 & divisor)) {
+					fprintf(stderr, "Illegal sample \"divisor\"\n");
+					return -1;
+				}
+				NEXT_ARG();
+			}
 			hash = sel2.sel.keys[0].val&sel2.sel.keys[0].mask;
-			hash ^= hash>>16;
-			hash ^= hash>>8;
-			htid = ((hash<<12)&0xFF000)|(htid&0xFFF00000);
+			uname(&utsname);
+			if (strncmp(utsname.release, "2.4.", 4) == 0) {
+				hash ^= hash>>16;
+				hash ^= hash>>8;
+			}
+			else {
+				__u32 mask = sel2.sel.keys[0].mask;
+				while (mask && !(mask & 1)) {
+				  	mask >>= 1;
+					hash >>= 1;
+				}
+				hash &= 0xFF;
+			}
+			htid = ((hash%divisor)<<12)|(htid&0xFFF00000);
 			sample_ok = 1;
 			continue;
 		} else if (strcmp(*argv, "indev") == 0) {

@@ -1,3 +1,9 @@
+2006-03-14  Russell Stuart <russell-lartc@stuart.id.au>
+	
+	* Fix missing memset in tc sample
+	* Fixes for tc hash samples
+	* Add sample divisor
+
 2006-03-10  Alpt <alpt@freaknet.org>
 
 	* Add more rt_proto values
@@ -10,9 +16,6 @@
 
 	* Fix endless loop in netlink error handling
 
-2006-03-10  Russell Stuart <russell-lartc@stuart.id.au>
-
-	* Fix missing memset in tc sample
 
 2006-03-10  Stephen Hemminger  <shemminger@osdl.org>
 
