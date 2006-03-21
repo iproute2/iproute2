@@ -165,7 +165,7 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 	addattr_l(&req.n, sizeof(req), NDA_DST, &dst.data, dst.bytelen);
 
 	if (lla && strcmp(lla, "null")) {
-		char llabuf[16];
+		char llabuf[20];
 		int l;
 
 		l = ll_addr_a2n(llabuf, sizeof(llabuf), lla);

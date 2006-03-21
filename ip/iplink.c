@@ -216,7 +216,8 @@ static int get_address(const char *dev, int *htype)
 	return me.sll_halen;
 }
 
-static int parse_address(const char *dev, int hatype, int halen, char *lla, struct ifreq *ifr)
+static int parse_address(const char *dev, int hatype, int halen, 
+		char *lla, struct ifreq *ifr)
 {
 	int alen;
 

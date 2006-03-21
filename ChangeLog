@@ -1,3 +1,8 @@
+2006-03-21  James Lentini <jlentini@netapp.com>
+	
+	* Increase size of hw address allowed for ip neigh to allow
+	  for IB.
+
 2006-03-14  Russell Stuart <russell-lartc@stuart.id.au>
 	
 	* Fix missing memset in tc sample
