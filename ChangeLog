@@ -1,3 +1,7 @@
+2006-03-21  Stephen Hemminger  <shemminger@freekitty.pdx.osdl.net>
+
+	* Back out the 2.4 utsname patch
+
 2006-03-21  James Lentini <jlentini@netapp.com>
 	
 	* Increase size of hw address allowed for ip neigh to allow

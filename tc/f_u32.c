@@ -17,7 +17,6 @@
 #include <syslog.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-#include <sys/utsname.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -877,7 +876,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 		} else if (strcmp(*argv, "sample") == 0) {
 			__u32 hash;
 			unsigned divisor = 0x100;
-			struct utsname utsname;
+
 			struct {
 				struct tc_u32_sel sel;
 				struct tc_u32_key keys[4];
@@ -902,19 +901,8 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				NEXT_ARG();
 			}
 			hash = sel2.sel.keys[0].val&sel2.sel.keys[0].mask;
-			uname(&utsname);
-			if (strncmp(utsname.release, "2.4.", 4) == 0) {
-				hash ^= hash>>16;
-				hash ^= hash>>8;
-			}
-			else {
-				__u32 mask = sel2.sel.keys[0].mask;
-				while (mask && !(mask & 1)) {
-				  	mask >>= 1;
-					hash >>= 1;
-				}
-				hash &= 0xFF;
-			}
+			hash ^= hash>>16;
+			hash ^= hash>>8;
 			htid = ((hash%divisor)<<12)|(htid&0xFFF00000);
 			sample_ok = 1;
 			continue;
