@@ -86,6 +86,10 @@ if [ "$peer" != "" ]; then
   fi
   pfx="$ipaddr peer $peer"
 else
+  if [ "$ipaddr" = "" ]; then
+    echo "Missing IP address argument." 1>&2
+    exit 1
+  fi
   if [ "$pfxlen" = "" ]; then
     ABCMaskLen $ipaddr
     pfxlen=$?
