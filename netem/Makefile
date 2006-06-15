@@ -15,6 +15,9 @@ $(DISTGEN):
 experimental.dist: maketable experimental.dat
 	./maketable experimental.dat > experimental.dist
 
+stats: stats.c
+	$(HOSTCC) $(CCOPTS) -I../include -o $@ $@.c -lm
+
 install: all
 	mkdir -p $(DESTDIR)/usr/lib/tc
 	for i in $(DISTDATA); \

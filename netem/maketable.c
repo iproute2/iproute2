@@ -1,8 +1,8 @@
 /*
  * Experimental data  distribution table generator
- * Taken from the uncopyrighted NISTnet code.
+ * Taken from the uncopyrighted NISTnet code (public domain).
  *
- * Rread in a series of "random" data values, either
+ * Read in a series of "random" data values, either
  * experimentally or generated from some probability distribution.
  * From this, create the inverse distribution table used to approximate
  * the distribution.
