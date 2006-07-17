@@ -59,8 +59,8 @@ static void usage(void)
 	fprintf(stderr, "NH := [ via ADDRESS ] [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
 	fprintf(stderr, "OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ]\n");
 	fprintf(stderr, "           [ rtt NUMBER ] [ rttvar NUMBER ]\n");
-	fprintf(stderr, "           [ window NUMBER] [ cwnd NUMBER ] [ ssthresh NUMBER ]\n");
-	fprintf(stderr, "           [ realms REALM ]\n");
+	fprintf(stderr, "           [ window NUMBER] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n");
+	fprintf(stderr, "           [ ssthresh NUMBER ] [ realms REALM ]\n");
 	fprintf(stderr, "TYPE := [ unicast | local | broadcast | multicast | throw |\n");
 	fprintf(stderr, "          unreachable | prohibit | blackhole | nat ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
@@ -487,6 +487,15 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			mxlock = *(unsigned*)RTA_DATA(mxrta[RTAX_LOCK]);
 
 		for (i=2; i<=RTAX_MAX; i++) {
+
+			/*
+			 * "hoplimit" and "features" are not supported in
+			 * userspace yet, but they are present in kernel's
+			 * RTM_METRICS array in include/linux/rtnetlink.h,
+			 * so putting placeholders in here for now so we
+			 * can match the position of initcwnd in this
+			 * structure:					*/
+
 			static char *mx_names[] = 
 			{
 				"mtu",
@@ -497,6 +506,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				"cwnd",
 				"advmss",
 				"reordering",
+				"hoplimit",
+				"initcwnd",
+				"features",
 			};
 			static int hz;
 			if (mxrta[i] == NULL)
@@ -794,6 +806,16 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (get_unsigned(&win, *argv, 0))
 				invarg("\"cwnd\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_CWND, win);
+		} else if (matches(*argv, "initcwnd") == 0) {
+			unsigned win;
+			NEXT_ARG();
+			if (strcmp(*argv, "lock") == 0) {
+				mxlock |= (1<<RTAX_INITCWND);
+				NEXT_ARG();
+			}
+			if (get_unsigned(&win, *argv, 0))
+				invarg("\"initcwnd\" value is invalid\n", *argv);
+			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_INITCWND, win);
 		} else if (matches(*argv, "rttvar") == 0) {
 			unsigned win;
 			NEXT_ARG();
