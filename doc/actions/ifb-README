@@ -1,16 +1,16 @@
 
+IFB is intended to replace IMQ.
 Advantage over current IMQ; cleaner in particular in in SMP;
 with a _lot_ less code.
-Old Dummy device functionality is preserved while new one only
-kicks in if you use actions.
 
-IMQ USES
---------
+Known IMQ/IFB USES
+------------------
+
 As far as i know the reasons listed below is why people use IMQ. 
 It would be nice to know of anything else that i missed.
 
 1) qdiscs/policies that are per device as opposed to system wide.
-IMQ allows for sharing.
+IFB allows for sharing.
 
 2) Allows for queueing incoming traffic for shaping instead of
 dropping. I am not aware of any study that shows policing is 
@@ -34,40 +34,11 @@ on incoming packets; if we find they are of known state we could send to
 a different queue than one which didnt have existing state. This
 all however is dependent on whatever rules the admin enters.
 
-At the moment this function does not exist yet. I have decided instead
-of sitting on the patch to release it and then if theres pressure i will
-add this feature.
+At the moment this 3rd function does not exist yet. I have decided that
+instead of sitting on the patch for another year, to release it and then 
+if theres pressure i will add this feature.
 
-What you can do with ifb currently with actions
---------------------------------------------------
-
-Lets say you are policing packets from alias 192.168.200.200/32
-you dont want those to exceed 100kbps going out.
-
-tc filter add dev eth0 parent 1: protocol ip prio 10 u32 \
-match ip src 192.168.200.200/32 flowid 1:2 \
-action police rate 100kbit burst 90k drop
-
-If you run tcpdump on eth0 you will see all packets going out
-with src 192.168.200.200/32 dropped or not
-Extend the rule a little to see only the ones that made it out:
-
-tc filter add dev eth0 parent 1: protocol ip prio 10 u32 \
-match ip src 192.168.200.200/32 flowid 1:2 \
-action police rate 10kbit burst 90k drop \
-action mirred egress mirror dev ifb0 
-
-Now fire tcpdump on ifb0 to see only those packets ..
-tcpdump -n -i ifb0 -x -e -t 
-
-Essentially a good debugging/logging interface.
-
-If you replace mirror with redirect, those packets will be
-blackholed and will never make it out. This redirect behavior
-changes with new patch (but not the mirror). 
-
-What you can do with the patch to provide functionality
-that most people use IMQ for below:
+An example, to provide functionality that most people use IMQ for below:
 
 --------
 export TC="/sbin/tc"
@@ -147,7 +118,6 @@ ifb0    Link encap:Ethernet  HWaddr 00:00:00:00:00:00
           RX bytes:504 (504.0 b)  TX bytes:252 (252.0 b)
 -----
 
-Dummy continues to behave like it always did.
 You send it any packet not originating from the actions it will drop them.
 [In this case the three dropped packets were ipv6 ndisc].
 

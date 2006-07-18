@@ -12,12 +12,59 @@ ACTION := <mirror | redirect>
 INDEX is the specific policy instance id
 DEVICENAME is the devicename
 
+Direction Ingress is not supported at the moment. It will be in the
+future as well as mirror/redirecting to a socket.
 
 Mirroring essentially takes a copy of the packet whereas redirecting
 steals the packet and redirects to specified destination.
 
+What NOT to do if you dont want your machine to crash:
+------------------------------------------------------
+
+Do not create loops! 
+Loops are not hard to create in the egress qdiscs.
+
+Here are simple rules to follow if you dont want to get
+hurt:
+A) Do not have the same packet go to same netdevice twice
+in a single graph of policies. Your machine will just hang!
+This is design intent _not a bug_ to teach you some lessons. 
+
+In the future if there are easy ways to do this in the kernel
+without affecting other packets not interested in this feature
+I will add them. At the moment that is not clear.
+
+Some examples of bad things to do:
+1) redirecting eth0 to eth0
+2) eth0->eth1-> eth0
+3) eth0->lo-> eth1-> eth0
+
+B) Do not redirect from one IFB device to another.
+Remember that IFB is a very specialized case of packet redirecting
+device. Instead of redirecting it puts packets at the exact spot
+on the stack it found them from.
+This bad policy will actually not crash your machine but your 
+packets will all be dropped (this is much simpler to detect
+and resolve and is only affecting users of ifb as opposed to the
+whole stack).
+
+In the case of A) the problem has to do with a recursive contention
+for the devices queue lock and in the second case for the transmit lock.
+
 Some examples:
-Host A is hooked  up to us on eth0
+------------
+
+1) Mirror all packets arriving on eth0 to be sent out on eth1.
+You may have a sniffer or some accounting box hooked up on eth1.
+ 
+tc qdisc add dev lo eth0
+tc filter add dev eth0 parent ffff: protocol ip prio 10 u32 \
+match u32 0 0 flowid 1:2 action mirred egress mirror dev eth1
+
+If you replace "mirror" with "redirect" then not a copy but rather
+the original packet is sent to eth1.
+
+2) Host A is hooked  up to us on eth0
 
 tc qdisc add dev lo ingress
 # redirect all packets arriving on ingress of lo to eth0
@@ -28,7 +75,7 @@ On host A start a tcpdump on interface connecting to us.
 
 on our host ping -c 2 127.0.0.1
 
-Ping would fail sinc all packets are heading out eth0
+Ping would fail since all packets are heading out eth0
 tcpudmp on host A would show them
 
 if you substitute the redirect with mirror above as in:
@@ -38,7 +85,7 @@ match u32 0 0 flowid 1:2 action mirred egress mirror dev eth0
 Then you should see the packets on both host A and the local
 stack (i.e ping would work).
 
-Even more funky example:
+3) Even more funky example:
 
 #
 #allow 1 out 10 packets to randomly make it to the 
@@ -49,11 +96,10 @@ match u32 0 0 flowid 1:2 \
 action drop random determ ok 10\
 action mirred egress mirror dev eth0
 
-------
-Example 2:
+4)
 # for packets coming from 10.0.0.9:
-#Redirect packets on egress (to ISP A) if you exceed a certain rate
-# to eth1 (to ISP B) if you exceed a certain rate
+#Redirect packets on egress, if exceeding a 100Kbps rate,
+# to eth1 
 #
 
 tc qdisc add dev eth0 handle 1:0 root prio
@@ -69,3 +115,31 @@ A more interesting example is when you mirror flows to a dummy device
 so you could tcpdump them (dummy by defaults drops all packets it sees).
 This is a very useful debug feature.
 
+Lets say you are policing packets from alias 192.168.200.200/32
+you dont want those to exceed 100kbps going out.
+
+tc filter add dev eth0 parent 1: protocol ip prio 10 u32 \
+match ip src 192.168.200.200/32 flowid 1:2 \
+action police rate 100kbit burst 90k drop
+
+If you run tcpdump on eth0 you will see all packets going out
+with src 192.168.200.200/32 dropped or not
+Extend the rule a little to see only the ones that made it out:
+
+tc filter add dev eth0 parent 1: protocol ip prio 10 u32 \
+match ip src 192.168.200.200/32 flowid 1:2 \
+action police rate 10kbit burst 90k drop \
+action mirred egress mirror dev dummy0
+
+Now fire tcpdump on dummy0 to see only those packets ..
+tcpdump -n -i dummy0 -x -e -t
+
+Essentially a good debugging/logging interface (sort of like
+BSDs speacialized log device does without needing one).
+
+If you replace mirror with redirect, those packets will be
+blackholed and will never make it out. This redirect behavior
+changes with new patch (but not the mirror).
+
+cheers,
+jamal
