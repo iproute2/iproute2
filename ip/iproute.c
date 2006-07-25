@@ -559,6 +559,18 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 							    RTA_DATA(tb[RTA_GATEWAY]),
 							    abuf, sizeof(abuf)));
 				}
+				if (tb[RTA_FLOW]) {
+					__u32 to = *(__u32*)RTA_DATA(tb[RTA_FLOW]);
+					__u32 from = to>>16;
+					to &= 0xFFFF;
+					fprintf(fp, " realm%s ", from ? "s" : "");
+					if (from) {
+						fprintf(fp, "%s/",
+							rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
+					}
+					fprintf(fp, "%s",
+						rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
+				}
 			}
 			if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
 				fprintf(fp, " %s", ll_index_to_name(nh->rtnh_ifindex));
@@ -608,6 +620,13 @@ int parse_one_nh(struct rtattr *rta, struct rtnexthop *rtnh, int *argcp, char **
 			rtnh->rtnh_hops = w - 1;
 		} else if (strcmp(*argv, "onlink") == 0) {
 			rtnh->rtnh_flags |= RTNH_F_ONLINK;
+		} else if (matches(*argv, "realms") == 0) {
+			__u32 realm;
+			NEXT_ARG();
+			if (get_rt_realms(&realm, *argv))
+				invarg("\"realm\" value is invalid\n", *argv);
+			rta_addattr32(rta, 4096, RTA_FLOW, realm);
+			rtnh->rtnh_len += sizeof(struct rtattr) + 4;
 		} else
 			break;
 	}
