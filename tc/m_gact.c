@@ -46,17 +46,17 @@ explain(void)
 	fprintf(stderr, "Usage: ... gact <ACTION> [RAND] [INDEX]\n");
 	fprintf(stderr,
 		"Where: ACTION := reclassify | drop | continue | pass "
-		        "RAND := random <RANDTYPE> <ACTION> <VAL>"
-		        "RANDTYPE := netrand | determ"
-			"VAL : = value not exceeding 10000"
-			"INDEX := index value used"
-			"\n");
+		"RAND := random <RANDTYPE> <ACTION> <VAL>"
+		"RANDTYPE := netrand | determ"
+		"VAL : = value not exceeding 10000"
+		"INDEX := index value used"
+		"\n");
 #else
 	fprintf(stderr, "Usage: ... gact <ACTION> [INDEX]\n");
 	fprintf(stderr,
 		"Where: ACTION := reclassify | drop | continue | pass "
 		"INDEX := index value used"
-			"\n");
+		"\n");
 #endif
 }
 
@@ -171,6 +171,8 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struc
 			argc--;
 			argv++;
 			ok++;
+		} else if (matches(*argv, "help") == 0) {
+			usage();
 		}
 	}
 

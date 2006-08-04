@@ -37,7 +37,27 @@ int tab_flush = 0;
 
 void act_usage(void)
 {
-	fprintf (stderr, "action usage improper\n");
+	/*XXX: In the near future add a action->print_help to improve
+	 * usability
+	 * This would mean new tc will not be backward compatible
+	 * with any action .so from the old days. But if someone really
+	 * does that, they would know how to fix this ..
+	 *
+	 */
+	fprintf (stderr, "usage: tc actions <ACTSPECOP>*\n");
+	fprintf(stderr,
+		"Where: \tACTSPECOP := ACR | GD | FL\n"
+		"\tACR := add | change | replace <ACTSPEC>* \n"
+		"\tGD := get | delete | <ACTISPEC>*\n"
+		"\tFL := ls | list | flush | <ACTNAMESPEC>\n"
+		"\tACTNAMESPEC :=  action <ACTNAME>\n"
+		"\tACTISPEC := <ACTNAMESPEC> <INDEXSPEC>\n"
+		"\tACTSPEC := action <ACTDETAIL> [INDEXSPEC]\n"
+		"\tINDEXSPEC := index <32 bit indexvalue>\n"
+		"\tACTDETAIL := <ACTNAME> <ACTPARAMS>\n"
+		"\t\tExample ACTNAME is gact, mirred etc\n"
+		"\t\tEach action has its own parameters (ACTPARAMS)\n"
+		"\n");
 }
 
 static int print_noaopt(struct action_util *au, FILE *f, struct rtattr *opt)
@@ -598,7 +618,7 @@ int do_action(int argc, char **argv)
 		}
 
 		if (ret < 0) {
-			fprintf(stderr, "Command \"%s\" is unknown, try \"tc action help\".\n", *argv);
+			fprintf(stderr, "Command \"%s\" is unknown, try \"tc actions help\".\n", *argv);
 			return -1;
 		}
 	}
