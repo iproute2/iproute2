@@ -39,6 +39,19 @@
 #endif
 
 
+static const char *mx_names[RTAX_MAX+1] = {
+	[RTAX_MTU]	= "mtu",
+	[RTAX_WINDOW]	= "window",
+	[RTAX_RTT]	= "rtt",
+	[RTAX_RTTVAR]	= "rttvar",
+	[RTAX_SSTHRESH] = "ssthresh",
+	[RTAX_CWND]	= "cwnd",
+	[RTAX_ADVMSS]	= "advmss",
+	[RTAX_REORDERING]="reordering",
+	[RTAX_HOPLIMIT] = "hoplimit",
+	[RTAX_INITCWND] = "initcwnd",
+	[RTAX_FEATURES] = "features",
+};
 static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
@@ -486,30 +499,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (mxrta[RTAX_LOCK])
 			mxlock = *(unsigned*)RTA_DATA(mxrta[RTAX_LOCK]);
 
-		for (i=2; i<=RTAX_MAX; i++) {
-
-			/*
-			 * "hoplimit" and "features" are not supported in
-			 * userspace yet, but they are present in kernel's
-			 * RTM_METRICS array in include/linux/rtnetlink.h,
-			 * so putting placeholders in here for now so we
-			 * can match the position of initcwnd in this
-			 * structure:					*/
-
-			static char *mx_names[] = 
-			{
-				"mtu",
-				"window",
-				"rtt",
-				"rttvar",
-				"ssthresh",
-				"cwnd",
-				"advmss",
-				"reordering",
-				"hoplimit",
-				"initcwnd",
-				"features",
-			};
+		for (i=2; i<= RTAX_MAX; i++) {
 			static int hz;
 			if (mxrta[i] == NULL)
 				continue;
