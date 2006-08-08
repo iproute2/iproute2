@@ -33,13 +33,19 @@ explain(void)
 {
 	fprintf(stderr, "Usage: mirred <DIRECTION> <ACTION> [index INDEX] <dev DEVICENAME> \n");
 	fprintf(stderr, "where: \n");
-	fprintf(stderr, "DIRECTION := <ingress | egress>\n");
-	fprintf(stderr, "aCTION := <mirror | redirect>\n");
-	fprintf(stderr, "     : INDEX  is the specific policy instance id\n");
-	fprintf(stderr, "     : DEVICENAME is the devicename \n");
+	fprintf(stderr, "\tDIRECTION := <ingress | egress>\n");
+	fprintf(stderr, "\tACTION := <mirror | redirect>\n");
+	fprintf(stderr, "\tINDEX  is the specific policy instance id\n");
+	fprintf(stderr, "\tDEVICENAME is the devicename \n");
+
 }
 
-#define usage() return(-1)
+static void
+usage(void)
+{
+	explain();
+	exit(-1);
+}
 
 char *mirred_n2a(int action)
 {
@@ -133,7 +139,6 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 	}
 
 	if (!ok && !iok) {
-		explain();
 		return -1;
 	}
 
@@ -235,9 +240,10 @@ parse_mirred(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 
 	} else if (matches(*argv, "ingress") == 0) {
 		fprintf(stderr,"mirred ingress not supported at the moment\n");
-
+	} else if (matches(*argv, "help") == 0) {
+		usage();
 	} else {
-		fprintf(stderr,"mirred not supported %s\n", *argv);
+		fprintf(stderr,"mirred option not supported %s\n", *argv);
 	}
 
 	return -1;

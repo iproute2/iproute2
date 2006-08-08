@@ -58,6 +58,7 @@ void act_usage(void)
 		"\t\tExample ACTNAME is gact, mirred etc\n"
 		"\t\tEach action has its own parameters (ACTPARAMS)\n"
 		"\n");
+	exit(-1);
 }
 
 static int print_noaopt(struct action_util *au, FILE *f, struct rtattr *opt)

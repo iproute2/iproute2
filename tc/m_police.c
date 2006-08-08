@@ -32,7 +32,7 @@ struct action_util police_action_util = {
 	.print_aopt = print_police,
 };
 
-static void explain(void)
+static void usage(void)
 {
 	fprintf(stderr, "Usage: ... police rate BPS burst BYTES[/BYTES] [ mtu BYTES[/BYTES] ]\n");
 	fprintf(stderr, "                [ peakrate BPS ] [ avrate BPS ]\n");
@@ -41,15 +41,13 @@ static void explain(void)
 	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT] \n"); 
 	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue \n");
 	fprintf(stderr, "Where:  pipe is only valid for new syntax \n");
+	exit(-1);
 }
 
 static void explain1(char *arg)
 {
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
-
-#define usage() return(-1)
-
 
 char *police_action_n2a(int action, char *buf, int len)
 {
@@ -236,8 +234,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 				return -1;
 			}
 		} else if (strcmp(*argv, "help") == 0) {
-			explain();
-			return -1;
+			usage();
 		} else {
 			break;
 		}

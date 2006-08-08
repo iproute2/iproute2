@@ -33,25 +33,30 @@ static struct m_pedit_util *pedit_list;
 int pedit_debug = 1;
 
 static void
-p_explain(void)
+explain(void)
 {
-	fprintf(stderr, "Usage: ... pedit <MUNGE>\n");
+	fprintf(stderr, "Usage: ... pedit munge <MUNGE>\n");
 	fprintf(stderr,
 		"Where: MUNGE := <RAW>|<LAYERED>\n" 
-		"<RAW>:= <OFFSETC>[ATC]<CMD>\n "
-		"OFFSETC:= offset <offval> <u8|u16|u32>\n "
-		"ATC:= at <atval> offmask <maskval> shift <shiftval>\n "
-		"NOTE: offval is byte offset, must be multiple of 4\n "
-		"NOTE: maskval is a 32 bit hex number\n "
-		"NOTE: shiftval is a is a shift value\n "
-		"CMD:= clear | invert | set <setval>| retain\n "
-		"<LAYERED>:= ip <ipdata> | ip6 <ip6data> \n "
-		" | udp <udpdata> | tcp <tcpdata> | icmp <icmpdata> \n"
-		"For Example usage look at the examples directory");
+		"\t<RAW>:= <OFFSETC>[ATC]<CMD>\n "
+		"\t\tOFFSETC:= offset <offval> <u8|u16|u32>\n "
+		"\t\tATC:= at <atval> offmask <maskval> shift <shiftval>\n "
+		"\t\tNOTE: offval is byte offset, must be multiple of 4\n "
+		"\t\tNOTE: maskval is a 32 bit hex number\n "
+		"\t\tNOTE: shiftval is a is a shift value\n "
+		"\t\tCMD:= clear | invert | set <setval>| retain\n "
+		"\t<LAYERED>:= ip <ipdata> | ip6 <ip6data> \n "
+		" \t\t| udp <udpdata> | tcp <tcpdata> | icmp <icmpdata> \n"
+		"For Example usage look at the examples directory\n");
 
 }
 
-#define usage() return(-1)
+static void
+usage(void)
+{
+	explain();
+	exit(-1);
+}
 
 static int 
 pedit_parse_nopopt (int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey) 
@@ -423,11 +428,6 @@ parse_munge(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel)
 		NEXT_ARG();
 		res = parse_offset(&argc, &argv,sel,&tkey);
 		goto done;
-#if jamal
-	} else if (strcmp(*argv, "help") == 0) {
-		p_explain();
-		return -1;
-#endif
 	} else {
 		char k[16];
 		struct m_pedit_util *p = NULL;
@@ -479,16 +479,18 @@ parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, stru
 			NEXT_ARG();
 			ok++;
 			continue;
+		} else if (matches(*argv, "help") == 0) {
+			usage();
 		} else if (matches(*argv, "munge") == 0) {
 			if (!ok) {
 				fprintf(stderr, "Illegal pedit construct (%s) \n", *argv);
-				p_explain();
+				explain();
 				return -1;
 			}
 			NEXT_ARG();
 			if (parse_munge(&argc, &argv,&sel.sel)) {
 				fprintf(stderr, "Illegal pedit construct (%s) \n", *argv);
-				p_explain();
+				explain();
 				return -1;
 			}
 			ok++;
@@ -499,7 +501,7 @@ parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, stru
 	}
 
 	if (!ok) {
-		p_explain();
+		explain();
 		return -1;
 	}
 
