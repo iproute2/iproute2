@@ -313,7 +313,7 @@ tc_print_action(FILE * f, const struct rtattr *arg)
 	return 0;
 }
 
-static int do_print_action(const struct sockaddr_nl *who,
+int print_action(const struct sockaddr_nl *who,
 			   struct nlmsghdr *n,
 			   void *arg)
 {
@@ -333,7 +333,7 @@ static int do_print_action(const struct sockaddr_nl *who,
 
 	if (NULL == tb[TCA_ACT_TAB]) {
 		if (n->nlmsg_type != RTM_GETACTION)
-			fprintf(stderr, "do_print_action: NULL kind\n");
+			fprintf(stderr, "print_action: NULL kind\n");
 		return -1;
 	}     
 
@@ -454,7 +454,7 @@ int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 		return 1;
 	}
 
-	if (ans && do_print_action(NULL, &req.n, (void*)stdout) < 0) {
+	if (ans && print_action(NULL, &req.n, (void*)stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
@@ -556,7 +556,7 @@ int tc_act_list_or_flush(int argc, char **argv, int event)
 			perror("Cannot send dump request");
 			return 1;
 		}
-		ret = rtnl_dump_filter(&rth, do_print_action, stdout, NULL, NULL);
+		ret = rtnl_dump_filter(&rth, print_action, stdout, NULL, NULL);
 	}
 
 	if (event == RTM_DELACTION) { 

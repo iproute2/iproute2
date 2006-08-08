@@ -147,7 +147,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 int filter_ifindex;
 __u32 filter_qdisc;
 
-static int print_class(const struct sockaddr_nl *who, 
+int print_class(const struct sockaddr_nl *who, 
 		       struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;

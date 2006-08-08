@@ -176,7 +176,7 @@ static int filter_ifindex;
 static __u32 filter_prio;
 static __u32 filter_protocol;
 
-static int print_filter(const struct sockaddr_nl *who,
+int print_filter(const struct sockaddr_nl *who,
 			struct nlmsghdr *n, 
 			void *arg)
 {

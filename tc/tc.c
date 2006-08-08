@@ -181,7 +181,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 			"       tc [-force] -batch file\n"
-	                "where  OBJECT := { qdisc | class | filter | action }\n"
+	                "where  OBJECT := { qdisc | class | filter | action | monitor }\n"
 	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] [file] }\n");
 }
 
@@ -198,6 +198,9 @@ static int do_cmd(int argc, char **argv)
 
 	if (matches(*argv, "actions") == 0)
 		return do_action(argc-1, argv+1);
+
+	if (matches(*argv, "monitor") == 0)
+		return do_tcmonitor(argc-1, argv+1);
 
 	if (matches(*argv, "help") == 0) {
 		usage();

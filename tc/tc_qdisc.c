@@ -162,7 +162,7 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 
 static int filter_ifindex;
 
-static int print_qdisc(const struct sockaddr_nl *who, 
+int print_qdisc(const struct sockaddr_nl *who, 
 		       struct nlmsghdr *n, 
 		       void *arg)
 {
