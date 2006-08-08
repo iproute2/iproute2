@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <asm/byteorder.h>
 #include <linux/if.h>
 #include <linux/if_arp.h>
 #include <linux/ip.h>
