@@ -89,6 +89,7 @@ static void usage(void)
 static struct
 {
 	int tb;
+	int cloned;
 	int flushed;
 	char *flushb;
 	int flushp;
@@ -168,22 +169,21 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		ip6_multiple_tables = 1;
 
 	if (r->rtm_family == AF_INET6 && !ip6_multiple_tables) {
+		if (filter.cloned) {
+			if (!(r->rtm_flags&RTM_F_CLONED))
+				return 0;
+		}
 		if (filter.tb) {
-			if (filter.tb < 0) {
-				if (!(r->rtm_flags&RTM_F_CLONED))
+			if (r->rtm_flags&RTM_F_CLONED)
+				return 0;
+			if (filter.tb == RT_TABLE_LOCAL) {
+				if (r->rtm_type != RTN_LOCAL)
+					return 0;
+			} else if (filter.tb == RT_TABLE_MAIN) {
+				if (r->rtm_type == RTN_LOCAL)
 					return 0;
 			} else {
-				if (r->rtm_flags&RTM_F_CLONED)
-					return 0;
-				if (filter.tb == RT_TABLE_LOCAL) {
-					if (r->rtm_type != RTN_LOCAL)
-						return 0;
-				} else if (filter.tb == RT_TABLE_MAIN) {
-					if (r->rtm_type == RTN_LOCAL)
-						return 0;
-				} else {
-					return 0;
-				}
+				return 0;
 			}
 		}
 	} else {
@@ -1045,19 +1045,19 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv)) {
 				if (strcmp(*argv, "all") == 0) {
-					tid = 0;
+					filter.tb = 0;
 				} else if (strcmp(*argv, "cache") == 0) {
-					tid = -1;
+					filter.cloned = 1;
 				} else if (strcmp(*argv, "help") == 0) {
 					usage();
 				} else {
 					invarg("table id value is invalid\n", *argv);
 				}
-			}
-			filter.tb = tid;
+			} else
+				filter.tb = tid;
 		} else if (matches(*argv, "cached") == 0 ||
 			   matches(*argv, "cloned") == 0) {
-			filter.tb = -1;
+			filter.cloned = 1;
 		} else if (strcmp(*argv, "tos") == 0 ||
 			   matches(*argv, "dsfield") == 0) {
 			__u32 tos;
@@ -1189,7 +1189,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 		char flushb[4096-512];
 		time_t start = time(0);
 
-		if (filter.tb == -1) {
+		if (filter.cloned) {
 			if (do_ipv6 != AF_INET6) {
 				iproute_flush_cache();
 				if (show_stats)
@@ -1215,7 +1215,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 			}
 			if (filter.flushed == 0) {
 				if (round == 0) {
-					if (filter.tb != -1 || do_ipv6 == AF_INET6)
+					if (!filter.cloned || do_ipv6 == AF_INET6)
 						fprintf(stderr, "Nothing to flush.\n");
 				} else if (show_stats)
 					printf("*** Flush is complete after %d round%s ***\n", round, round>1?"s":"");
@@ -1239,7 +1239,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 		}
 	}
 
-	if (filter.tb != -1) {
+	if (!filter.cloned) {
 		if (rtnl_wilddump_request(&rth, do_ipv6, RTM_GETROUTE) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
