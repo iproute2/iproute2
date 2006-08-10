@@ -138,6 +138,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	inet_prefix prefsrc;
 	inet_prefix via;
 	int host_len = -1;
+	static int ip6_multiple_tables;
 	SPRINT_BUF(b1);
 	
 
@@ -163,7 +164,10 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	else if (r->rtm_family == AF_IPX)
 		host_len = 80;
 
-	if (r->rtm_family == AF_INET6) {
+	if (r->rtm_family == AF_INET6 && r->rtm_table != RT_TABLE_MAIN)
+		ip6_multiple_tables = 1;
+
+	if (r->rtm_family == AF_INET6 && !ip6_multiple_tables) {
 		if (filter.tb) {
 			if (filter.tb < 0) {
 				if (!(r->rtm_flags&RTM_F_CLONED))
