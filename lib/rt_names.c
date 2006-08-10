@@ -329,7 +329,7 @@ static void rtnl_rttable_initialize(void)
 			     rtnl_rttable_hash, 256);
 }
 
-char * rtnl_rttable_n2a(int id, char *buf, int len)
+char * rtnl_rttable_n2a(__u32 id, char *buf, int len)
 {
 	struct rtnl_hash_entry *entry;
 
@@ -354,7 +354,7 @@ int rtnl_rttable_a2n(__u32 *id, char *arg)
 	static unsigned long res;
 	struct rtnl_hash_entry *entry;
 	char *end;
-	int i;
+	__u32 i;
 
 	if (cache && strcmp(cache, arg) == 0) {
 		*id = res;

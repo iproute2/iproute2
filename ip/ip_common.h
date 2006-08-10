@@ -32,4 +32,12 @@ extern int do_multiaddr(int argc, char **argv);
 extern int do_multiroute(int argc, char **argv);
 extern int do_xfrm(int argc, char **argv);
 
+static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
+{
+	__u32 table = r->rtm_table;
+	if (tb[RTA_TABLE])
+		table = *(__u32*) RTA_DATA(tb[RTA_TABLE]);
+	return table;
+}
+
 extern struct rtnl_handle rth;

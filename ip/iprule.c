@@ -27,6 +27,7 @@
 
 #include "rt_names.h"
 #include "utils.h"
+#include "ip_common.h"
 
 extern struct rtnl_handle rth;
 
@@ -51,6 +52,7 @@ static int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	int host_len = -1;
+	__u32 table;
 	struct rtattr * tb[RTA_MAX+1];
 	char abuf[256];
 	SPRINT_BUF(b1);
@@ -129,8 +131,9 @@ static int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		fprintf(fp, "iif %s ", (char*)RTA_DATA(tb[RTA_IIF]));
 	}
 
-	if (r->rtm_table)
-		fprintf(fp, "lookup %s ", rtnl_rttable_n2a(r->rtm_table, b1, sizeof(b1)));
+	table = rtm_get_table(r, tb);
+	if (table)
+		fprintf(fp, "lookup %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
 
 	if (tb[RTA_FLOW]) {
 		__u32 to = *(__u32*)RTA_DATA(tb[RTA_FLOW]);
@@ -257,7 +260,12 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv))
 				invarg("invalid table ID\n", *argv);
-			req.r.rtm_table = tid;
+			if (tid < 256)
+				req.r.rtm_table = tid;
+			else {
+				req.r.rtm_table = RT_TABLE_UNSPEC;
+				addattr32(&req.n, sizeof(req), RTA_TABLE, tid);
+			}
 			table_ok = 1;
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "iif") == 0) {

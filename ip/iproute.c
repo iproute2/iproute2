@@ -140,6 +140,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	inet_prefix via;
 	int host_len = -1;
 	static int ip6_multiple_tables;
+	__u32 table;
 	SPRINT_BUF(b1);
 	
 
@@ -165,7 +166,10 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	else if (r->rtm_family == AF_IPX)
 		host_len = 80;
 
-	if (r->rtm_family == AF_INET6 && r->rtm_table != RT_TABLE_MAIN)
+	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
+	table = rtm_get_table(r, tb);
+
+	if (r->rtm_family == AF_INET6 && table != RT_TABLE_MAIN)
 		ip6_multiple_tables = 1;
 
 	if (r->rtm_family == AF_INET6 && !ip6_multiple_tables) {
@@ -187,7 +191,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			}
 		}
 	} else {
-		if (filter.tb > 0 && filter.tb != r->rtm_table)
+		if (filter.tb > 0 && filter.tb != table)
 			return 0;
 	}
 	if ((filter.protocol^r->rtm_protocol)&filter.protocolmask)
@@ -216,8 +220,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 	if (filter.rprefsrc.family && r->rtm_family != filter.rprefsrc.family)
 		return 0;
-
-	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
 
 	memset(&dst, 0, sizeof(dst));
 	dst.family = r->rtm_family;
@@ -371,8 +373,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "dev %s ", ll_index_to_name(*(int*)RTA_DATA(tb[RTA_OIF])));
 
 	if (!(r->rtm_flags&RTM_F_CLONED)) {
-		if (r->rtm_table != RT_TABLE_MAIN && !filter.tb)
-			fprintf(fp, " table %s ", rtnl_rttable_n2a(r->rtm_table, b1, sizeof(b1)));
+		if (table != RT_TABLE_MAIN && !filter.tb)
+			fprintf(fp, " table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
 		if (r->rtm_protocol != RTPROT_BOOT && filter.protocolmask != -1)
 			fprintf(fp, " proto %s ", rtnl_rtprot_n2a(r->rtm_protocol, b1, sizeof(b1)));
 		if (r->rtm_scope != RT_SCOPE_UNIVERSE && filter.scopemask != -1)
@@ -875,7 +877,12 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv))
 				invarg("\"table\" value is invalid\n", *argv);
-			req.r.rtm_table = tid;
+			if (tid < 256)
+				req.r.rtm_table = tid;
+			else {
+				req.r.rtm_table = RT_TABLE_UNSPEC;
+				addattr32(&req.n, sizeof(req), RTA_TABLE, tid);
+			}
 			table_ok = 1;
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "oif") == 0) {
