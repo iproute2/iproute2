@@ -354,15 +354,15 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (n->nlmsg_type == XFRM_MSG_DELPOLICY)  {
 		xpid = NLMSG_DATA(n);
-		len -= NLMSG_LENGTH(sizeof(*xpid));
+		len -= NLMSG_SPACE(sizeof(*xpid));
 	} else if (n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
 		xpexp = NLMSG_DATA(n);
 		xpinfo = &xpexp->pol;
-		len -= NLMSG_LENGTH(sizeof(*xpexp));
+		len -= NLMSG_SPACE(sizeof(*xpexp));
 	} else {
 		xpexp = NULL;
 		xpinfo = NLMSG_DATA(n);
-		len -= NLMSG_LENGTH(sizeof(*xpinfo));
+		len -= NLMSG_SPACE(sizeof(*xpinfo));
 	}
 
 	if (len < 0) {

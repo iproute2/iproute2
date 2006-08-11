@@ -575,15 +575,15 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (n->nlmsg_type == XFRM_MSG_DELSA) {
 		/* Dont blame me for this .. Herbert made me do it */
 		xsid = NLMSG_DATA(n);
-		len -= NLMSG_LENGTH(sizeof(*xsid));
+		len -= NLMSG_SPACE(sizeof(*xsid));
 	} else if (n->nlmsg_type == XFRM_MSG_EXPIRE) {
 		xexp = NLMSG_DATA(n);
 		xsinfo = &xexp->state;
-		len -= NLMSG_LENGTH(sizeof(*xexp));
+		len -= NLMSG_SPACE(sizeof(*xexp));
 	} else {
 		xexp = NULL;
 		xsinfo = NLMSG_DATA(n);
-		len -= NLMSG_LENGTH(sizeof(*xsinfo));
+		len -= NLMSG_SPACE(sizeof(*xsinfo));
 	}
 
 	if (len < 0) {
