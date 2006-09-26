@@ -152,15 +152,18 @@ static int xfrm_accept_msg(const struct sockaddr_nl *who,
 	return 0;
 }
 
+extern struct rtnl_handle rth;
+
 int do_xfrm_monitor(int argc, char **argv)
 {
-	struct rtnl_handle rth;
 	char *file = NULL;
 	unsigned groups = ~((unsigned)0); /* XXX */
 	int lacquire=0;
 	int lexpire=0;
 	int lpolicy=0;
 	int lsa=0;
+
+	rtnl_close(&rth);
 
 	while (argc > 0) {
 		if (matches(*argv, "file") == 0) {
