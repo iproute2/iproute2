@@ -50,15 +50,16 @@ explain(void)
 		        "\tRANDTYPE := netrand | determ\n"
 			"\tVAL : = value not exceeding 10000\n"
 			"\tINDEX := index value used\n"
-		"\n");
+			"\n");
 #else
 	fprintf(stderr, "Usage: ... gact <ACTION> [INDEX]\n");
 	fprintf(stderr,
-	"Where: \tACTION := reclassify | drop | continue | pass \n"
+		"Where: \tACTION := reclassify | drop | continue | pass \n"
 		"\tINDEX := index value used\n"
 		"\n");
 #endif
 }
+
 
 static void
 usage(void)
@@ -66,7 +67,6 @@ usage(void)
 	explain();
 	exit(-1);
 }
-
 
 int
 get_act(char ***argv_p)
@@ -180,7 +180,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struc
 			argv++;
 			ok++;
 		} else if (matches(*argv, "help") == 0) {
-			usage();
+				usage();
 		}
 	}
 

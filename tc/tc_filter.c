@@ -32,7 +32,7 @@ static void usage(void);
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: tc filter [ add | del | change | replace ] dev STRING\n");
+	fprintf(stderr, "Usage: tc filter [ add | del | change | get ] dev STRING\n");
 	fprintf(stderr, "       [ pref PRIO ] [ protocol PROTO ]\n");
 	fprintf(stderr, "       [ estimator INTERVAL TIME_CONSTANT ]\n");
 	fprintf(stderr, "       [ root | classid CLASSID ] [ handle FILTERID ]\n");
