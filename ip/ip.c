@@ -36,7 +36,7 @@ int timestamp = 0;
 char * _SL_ = NULL;
 char *batch_file = NULL;
 int force = 0;
-struct rtnl_handle rth;
+struct rtnl_handle rth = { .fd = -1 };
 
 static void usage(void) __attribute__((noreturn));
 

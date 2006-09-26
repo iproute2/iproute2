@@ -27,7 +27,10 @@
 
 void rtnl_close(struct rtnl_handle *rth)
 {
-	close(rth->fd);
+	if (rth->fd >= 0) {
+		close(rth->fd);
+		rth->fd = -1;
+	}
 }
 
 int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions,
