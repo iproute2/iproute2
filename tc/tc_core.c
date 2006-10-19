@@ -27,6 +27,15 @@ static __u32 t2us=1;
 static __u32 us2t=1;
 static double tick_in_usec = 1;
 
+int tc_core_usec2big(long usec)
+{
+	__u64 t = usec;
+
+	t *= tick_in_usec;
+	return (t >> 32) != 0;
+}
+
+
 long tc_core_usec2tick(long usec)
 {
 	return usec*tick_in_usec;

@@ -111,6 +111,11 @@ static int get_ticks(__u32 *ticks, const char *str)
 	if(get_usecs(&t, str))
 		return -1;
 	
+	if (tc_core_usec2big(t)) {
+		fprintf(stderr, "Illegal %d usecs (too large)\n", t);
+		return -1;
+	}
+
 	*ticks = tc_core_usec2tick(t);
 	return 0;
 }
