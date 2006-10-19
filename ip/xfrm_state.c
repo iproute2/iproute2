@@ -75,7 +75,7 @@ static void usage(void)
 
 	//fprintf(stderr, "SPI - security parameter index(default=0)\n");
 
- 	fprintf(stderr, "MODE := [ transport | tunnel ](default=transport)\n");
+ 	fprintf(stderr, "MODE := [ transport | tunnel | beet ](default=transport)\n");
  	//fprintf(stderr, "REQID - number(default=0)\n");
 
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");

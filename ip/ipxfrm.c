@@ -282,6 +282,9 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 	case 1:
 		fprintf(fp, "tunnel");
 		break;
+	case 4:
+		fprintf(fp, "beet");
+		break;
 	default:
 		fprintf(fp, "%u", mode);
 		break;
@@ -857,6 +860,8 @@ int xfrm_mode_parse(__u8 *mode, int *argcp, char ***argvp)
 		*mode = 0;
 	else if (matches(*argv, "tunnel") == 0)
 		*mode = 1;
+	else if (matches(*argv, "beet") == 0)
+		*mode = 4;
 	else
 		invarg("\"MODE\" is invalid", *argv);
 

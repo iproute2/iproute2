@@ -87,7 +87,7 @@ static void usage(void)
 	fprintf(stderr, "%s", strxf_xfrmproto(IPPROTO_COMP));
 	fprintf(stderr, " ]\n");
 
- 	fprintf(stderr, "MODE := [ transport | tunnel ](default=transport)\n");
+ 	fprintf(stderr, "MODE := [ transport | tunnel | beet ](default=transport)\n");
  	//fprintf(stderr, "REQID - number(default=0)\n");
 	fprintf(stderr, "LEVEL := [ required | use ](default=required)\n");
 
