@@ -142,7 +142,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	static int ip6_multiple_tables;
 	__u32 table;
 	SPRINT_BUF(b1);
-	
+	static int hz;
 
 	if (n->nlmsg_type != RTM_NEWROUTE && n->nlmsg_type != RTM_DELROUTE) {
 		fprintf(stderr, "Not a route: %08x %08x %08x\n",
@@ -446,7 +446,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			fprintf(fp, "%s%x> ", first ? "<" : "", flags);
 		if (tb[RTA_CACHEINFO]) {
 			struct rta_cacheinfo *ci = RTA_DATA(tb[RTA_CACHEINFO]);
-			static int hz;
 			if (!hz)
 				hz = get_user_hz();
 			if (ci->rta_expires != 0)
@@ -473,7 +472,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (tb[RTA_CACHEINFO])
 			ci = RTA_DATA(tb[RTA_CACHEINFO]);
 		if ((r->rtm_flags & RTM_F_CLONED) || (ci && ci->rta_expires)) {
-			static int hz;
 			if (!hz)
 				hz = get_user_hz();
 			if (r->rtm_flags & RTM_F_CLONED)
@@ -506,13 +504,13 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			mxlock = *(unsigned*)RTA_DATA(mxrta[RTAX_LOCK]);
 
 		for (i=2; i<= RTAX_MAX; i++) {
-			static int hz;
 			if (mxrta[i] == NULL)
 				continue;
 			if (!hz)
 				hz = get_hz();
-			if (i-2 < sizeof(mx_names)/sizeof(char*))
-				fprintf(fp, " %s", mx_names[i-2]);
+
+			if (i < sizeof(mx_names)/sizeof(char*) && mx_names[i])
+				fprintf(fp, " %s", mx_names[i]);
 			else
 				fprintf(fp, " metric %d", i);
 			if (mxlock & (1<<i))
