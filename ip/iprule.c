@@ -24,6 +24,7 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <linux/fib_rules.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -36,7 +37,7 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip rule [ list | add | del | flush ] SELECTOR ACTION\n");
-	fprintf(stderr, "SELECTOR := [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK ]\n");
+	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK ]\n");
 	fprintf(stderr, "            [ dev STRING ] [ pref NUMBER ]\n");
 	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
 	fprintf(stderr, "          [ prohibit | reject | unreachable ]\n");
@@ -79,6 +80,9 @@ static int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		fprintf(fp, "%u:\t", *(unsigned*)RTA_DATA(tb[RTA_PRIORITY]));
 	else
 		fprintf(fp, "0:\t");
+
+	if (r->rtm_flags & FIB_RULE_INVERT)
+		fprintf(fp, "not ");
 
 	if (tb[RTA_SRC]) {
 		if (r->rtm_src_len != host_len) {
@@ -209,6 +213,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	req.r.rtm_scope = RT_SCOPE_UNIVERSE;
 	req.r.rtm_table = 0;
 	req.r.rtm_type = RTN_UNSPEC;
+	req.r.rtm_flags = 0;
 
 	if (cmd == RTM_NEWRULE) {
 		req.n.nlmsg_flags |= NLM_F_CREATE|NLM_F_EXCL;
@@ -216,7 +221,9 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	}
 
 	while (argc > 0) {
-		if (strcmp(*argv, "from") == 0) {
+		if (strcmp(*argv, "not") == 0) {
+			req.r.rtm_flags |= FIB_RULE_INVERT;
+		} else if (strcmp(*argv, "from") == 0) {
 			inet_prefix dst;
 			NEXT_ARG();
 			get_prefix(&dst, *argv, req.r.rtm_family);
