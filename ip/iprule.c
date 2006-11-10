@@ -46,8 +46,7 @@ static void usage(void)
 	exit(-1);
 }
 
-static int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		      void *arg)
+int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct rtmsg *r = NLMSG_DATA(n);
@@ -58,7 +57,7 @@ static int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	char abuf[256];
 	SPRINT_BUF(b1);
 
-	if (n->nlmsg_type != RTM_NEWRULE)
+	if (n->nlmsg_type != RTM_NEWRULE && n->nlmsg_type != RTM_DELRULE)
 		return 0;
 
 	len -= NLMSG_LENGTH(sizeof(*r));
@@ -75,6 +74,9 @@ static int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		host_len = 16;
 	else if (r->rtm_family == AF_IPX)
 		host_len = 80;
+
+	if (n->nlmsg_type == RTM_DELRULE)
+		fprintf(fp, "Deleted ");
 
 	if (tb[RTA_PRIORITY])
 		fprintf(fp, "%u:\t", *(unsigned*)RTA_DATA(tb[RTA_PRIORITY]));

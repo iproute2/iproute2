@@ -20,6 +20,8 @@ extern int print_route(const struct sockaddr_nl *who,
 		       struct nlmsghdr *n, void *arg);
 extern int print_prefix(const struct sockaddr_nl *who,
 			struct nlmsghdr *n, void *arg);
+extern int print_rule(const struct sockaddr_nl *who,
+		      struct nlmsghdr *n, void *arg);
 extern int do_ipaddr(int argc, char **argv);
 extern int do_iproute(int argc, char **argv);
 extern int do_iprule(int argc, char **argv);

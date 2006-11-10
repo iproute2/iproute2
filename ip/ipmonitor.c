@@ -62,6 +62,10 @@ int accept_msg(const struct sockaddr_nl *who,
 		print_prefix(who, n, arg);
 		return 0;
 	}
+	if (n->nlmsg_type == RTM_NEWRULE || n->nlmsg_type == RTM_DELRULE) {
+		print_rule(who, n, arg);
+		return 0;
+	}
 	if (n->nlmsg_type == 15) {
 		char *tstr;
 		time_t secs = ((__u32*)NLMSG_DATA(n))[0];
