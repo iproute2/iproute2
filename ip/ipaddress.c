@@ -60,7 +60,7 @@ static void usage(void)
 	if (do_link) {
 		iplink_usage();
 	}
-	fprintf(stderr, "Usage: ip addr add IFADDR dev STRING [ LIFETIME ]\n");
+	fprintf(stderr, "Usage: ip addr {add|change|replace} IFADDR dev STRING [ LIFETIME ]\n");
 	fprintf(stderr, "       ip addr del IFADDR dev STRING\n");
 	fprintf(stderr, "       ip addr {show|flush} [ dev STRING ] [ scope SCOPE-ID ]\n");
 	fprintf(stderr, "                            [ to PREFIX ] [ FLAG-LIST ] [ label PATTERN ]\n");
@@ -746,7 +746,7 @@ int default_scope(inet_prefix *lcl)
 	return 0;
 }
 
-int ipaddr_modify(int cmd, int argc, char **argv)
+int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
 		struct nlmsghdr 	n;
@@ -772,7 +772,7 @@ int ipaddr_modify(int cmd, int argc, char **argv)
 	memset(&req, 0, sizeof(req));
 
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_flags = NLM_F_REQUEST | flags;
 	req.n.nlmsg_type = cmd;
 	req.ifa.ifa_family = preferred_family;
 
@@ -942,9 +942,14 @@ int do_ipaddr(int argc, char **argv)
 	if (argc < 1)
 		return ipaddr_list_or_flush(0, NULL, 0);
 	if (matches(*argv, "add") == 0)
-		return ipaddr_modify(RTM_NEWADDR, argc-1, argv+1);
+		return ipaddr_modify(RTM_NEWADDR, NLM_F_CREATE|NLM_F_EXCL, argc-1, argv+1);
+	if (matches(*argv, "change") == 0 ||
+		strcmp(*argv, "chg") == 0)
+		return ipaddr_modify(RTM_NEWADDR, NLM_F_REPLACE, argc-1, argv+1);
+	if (matches(*argv, "replace") == 0)
+		return ipaddr_modify(RTM_NEWADDR, NLM_F_CREATE|NLM_F_REPLACE, argc-1, argv+1);
 	if (matches(*argv, "delete") == 0)
-		return ipaddr_modify(RTM_DELADDR, argc-1, argv+1);
+		return ipaddr_modify(RTM_DELADDR, 0, argc-1, argv+1);
 	if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0
 	    || matches(*argv, "lst") == 0)
 		return ipaddr_list_or_flush(argc-1, argv+1, 0);
