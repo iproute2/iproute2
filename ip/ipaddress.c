@@ -283,7 +283,7 @@ static int flush_update(void)
 static int set_lifetime(unsigned int *lifetime, char *argv)
 {
 	if (strcmp(argv, "forever") == 0)
-		*lifetime = 0xFFFFFFFFU;
+		*lifetime = INFINITY_LIFE_TIME;
 	else if (get_u32(lifetime, argv, 0))
 		return -1;
 
@@ -439,11 +439,11 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		struct ifa_cacheinfo *ci = RTA_DATA(rta_tb[IFA_CACHEINFO]);
 		char buf[128];
 		fprintf(fp, "%s", _SL_);
-		if (ci->ifa_valid == 0xFFFFFFFFU)
+		if (ci->ifa_valid == INFINITY_LIFE_TIME)
 			sprintf(buf, "valid_lft forever");
 		else
 			sprintf(buf, "valid_lft %usec", ci->ifa_valid);
-		if (ci->ifa_prefered == 0xFFFFFFFFU)
+		if (ci->ifa_prefered == INFINITY_LIFE_TIME)
 			sprintf(buf+strlen(buf), " preferred_lft forever");
 		else
 			sprintf(buf+strlen(buf), " preferred_lft %usec",
@@ -765,8 +765,8 @@ int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	int brd_len = 0;
 	int any_len = 0;
 	int scoped = 0;
-	__u32 preferred_lft = 0xFFFFFFFFU;
-	__u32 valid_lft = 0xFFFFFFFFU;
+	__u32 preferred_lft = INFINITY_LIFE_TIME;
+	__u32 valid_lft = INFINITY_LIFE_TIME;
 	struct ifa_cacheinfo cinfo;
 
 	memset(&req, 0, sizeof(req));

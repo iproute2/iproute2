@@ -43,3 +43,7 @@ static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 }
 
 extern struct rtnl_handle rth;
+
+#ifndef	INFINITY_LIFE_TIME
+#define     INFINITY_LIFE_TIME      0xFFFFFFFFU
+#endif
