@@ -428,11 +428,12 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		if (ci->ifa_valid == 0xFFFFFFFFU)
 			sprintf(buf, "valid_lft forever");
 		else
-			sprintf(buf, "valid_lft %dsec", ci->ifa_valid);
+			sprintf(buf, "valid_lft %usec", ci->ifa_valid);
 		if (ci->ifa_prefered == 0xFFFFFFFFU)
 			sprintf(buf+strlen(buf), " preferred_lft forever");
 		else
-			sprintf(buf+strlen(buf), " preferred_lft %dsec", ci->ifa_prefered);
+			sprintf(buf+strlen(buf), " preferred_lft %usec",
+				ci->ifa_prefered);
 		fprintf(fp, "       %s", buf);
 	}
 	fprintf(fp, "\n");
