@@ -31,6 +31,7 @@
 
 #include "rt_names.h"
 #include "utils.h"
+#include "ip_common.h"
 #include "tunnel.h"
 
 static void usage(void) __attribute__((noreturn));
@@ -455,6 +456,13 @@ int do_iptunnel(int argc, char **argv)
 		break;
 	case AF_INET:
 		break;
+	/*
+	 * This is silly enough but we have no easy way to make it
+	 * protocol-independent because of unarranged structure between
+	 * IPv4 and IPv6.
+	 */
+	case AF_INET6:
+		return do_ip6tunnel(argc, argv);
 	default:
 		fprintf(stderr, "Unsupported family:%d\n", preferred_family);
 		exit(-1);
