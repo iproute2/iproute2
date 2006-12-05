@@ -19,12 +19,13 @@
 
 #include <linux/types.h>
 #include <asm/byteorder.h>
+#include <linux/socket.h>
 
 struct tcphdr {
-	__u16	source;
-	__u16	dest;
-	__u32	seq;
-	__u32	ack_seq;
+	__be16	source;
+	__be16	dest;
+	__be32	seq;
+	__be32	ack_seq;
 #if defined(__LITTLE_ENDIAN_BITFIELD)
 	__u16	res1:4,
 		doff:4,
@@ -50,9 +51,9 @@ struct tcphdr {
 #else
 #error	"Adjust your <asm/byteorder.h> defines"
 #endif	
-	__u16	window;
-	__u16	check;
-	__u16	urg_ptr;
+	__be16	window;
+	__sum16	check;
+	__be16	urg_ptr;
 };
 
 /*
@@ -62,7 +63,7 @@ struct tcphdr {
  */
 union tcp_word_hdr { 
 	struct tcphdr hdr;
-	__u32 		  words[5];
+	__be32 		  words[5];
 }; 
 
 #define tcp_flag_word(tp) ( ((union tcp_word_hdr *)(tp))->words [3]) 
@@ -94,6 +95,7 @@ enum {
 #define TCP_INFO		11	/* Information about this connection. */
 #define TCP_QUICKACK		12	/* Block/reenable quick acks */
 #define TCP_CONGESTION		13	/* Congestion control algorithm */
+#define TCP_MD5SIG		14	/* TCP MD5 Signature (RFC2385) */
 
 #define TCPI_OPT_TIMESTAMPS	1
 #define TCPI_OPT_SACK		2
@@ -155,6 +157,17 @@ struct tcp_info
 	__u32	tcpi_rcv_space;
 
 	__u32	tcpi_total_retrans;
+};
+
+/* for TCP_MD5SIG socket option */
+#define TCP_MD5SIG_MAXKEYLEN	80
+
+struct tcp_md5sig {
+	struct __kernel_sockaddr_storage tcpm_addr;	/* address associated */
+	__u16	__tcpm_pad1;				/* zero */
+	__u16	tcpm_keylen;				/* key length */
+	__u32	__tcpm_pad2;				/* zero */
+	__u8	tcpm_key[TCP_MD5SIG_MAXKEYLEN];		/* key (binary) */
 };
 
 
