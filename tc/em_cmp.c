@@ -63,7 +63,7 @@ static int cmp_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 		align = TCF_EM_ALIGN_U32;
 	else
 		return PARSE_ERR(args, "cmp: invalid alignment");
-	
+
 	for (a = bstr_next(args); a; a = bstr_next(a)) {
 		if (!bstrcmp(a, "at")) {
 			if (a->next == NULL)
@@ -111,7 +111,7 @@ static int cmp_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 				opnd = TCF_EM_OPND_GT;
 			else if (!bstrcmp(a, "lt"))
 				opnd = TCF_EM_OPND_LT;
-			
+
 			if (a->next == NULL)
 				return PARSE_ERR(a, "cmp: missing argument");
 			a = bstr_next(a);

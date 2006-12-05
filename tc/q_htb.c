@@ -216,7 +216,7 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	}
 	opt.buffer = tc_calc_xmittime(opt.rate.rate, buffer);
 	opt.rate.cell_log = cell_log;
-	
+
 	if ((ccell_log = tc_calc_rtable(opt.ceil.rate, ctab, cell_log, mtu, mpu)) < 0) {
 		fprintf(stderr, "htb: failed to calculate ceil rate table.\n");
 		return -1;
@@ -279,14 +279,14 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		fprintf(f, "cburst %s ", sprint_size(cbuffer, b1));
 	    }
 	    if (show_raw)
-		fprintf(f, "buffer [%08x] cbuffer [%08x] ", 
+		fprintf(f, "buffer [%08x] cbuffer [%08x] ",
 			hopt->buffer,hopt->cbuffer);
 	}
 	if (tb[TCA_HTB_INIT]) {
 	    gopt = RTA_DATA(tb[TCA_HTB_INIT]);
 	    if (RTA_PAYLOAD(tb[TCA_HTB_INIT])  < sizeof(*gopt)) return -1;
 
-	    fprintf(f, "r2q %d default %x direct_packets_stat %u", 
+	    fprintf(f, "r2q %d default %x direct_packets_stat %u",
 		    gopt->rate2quantum,gopt->defcls,gopt->direct_pkts);
 		if (show_details)
 			fprintf(f," ver %d.%d",gopt->version >> 16,gopt->version & 0xffff);
@@ -304,7 +304,7 @@ static int htb_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 		return -1;
 
 	st = RTA_DATA(xstats);
-	fprintf(f, " lended: %u borrowed: %u giants: %u\n", 
+	fprintf(f, " lended: %u borrowed: %u giants: %u\n",
 		st->lends,st->borrows,st->giants);
 	fprintf(f, " tokens: %d ctokens: %d\n", st->tokens,st->ctokens);
 	return 0;

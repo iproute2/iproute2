@@ -212,7 +212,7 @@ static void print_maddr(FILE *fp, struct ma_info *list)
 			fprintf(fp, "family %d ", list->addr.family);
 			break;
 		}
-		fprintf(fp, "%s", 
+		fprintf(fp, "%s",
 			format_host(list->addr.family,
 				    -1,
 				    list->addr.data,
@@ -298,7 +298,7 @@ int multiaddr_modify(int cmd, int argc, char **argv)
 				usage();
 			if (ifr.ifr_hwaddr.sa_data[0])
 				duparg("address", *argv);
-			if (ll_addr_a2n(ifr.ifr_hwaddr.sa_data, 
+			if (ll_addr_a2n(ifr.ifr_hwaddr.sa_data,
 					14, *argv) < 0) {
 				fprintf(stderr, "Error: \"%s\" is not a legal ll address.\n", *argv);
 				exit(1);

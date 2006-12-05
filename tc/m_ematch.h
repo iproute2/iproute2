@@ -68,7 +68,7 @@ static inline unsigned long bstrtoul(struct bstr *b)
 
 	memcpy(buf, b->data, b->len);
 	buf[b->len] = '\0';
-	
+
 	l = strtol(buf, &inv, 0);
 	if (l == ULONG_MAX || inv == buf)
 		return LONG_MAX;

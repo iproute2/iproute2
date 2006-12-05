@@ -6,9 +6,9 @@
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:    J Hadi Salim(hadi@nortelnetworks.com)	
- *             code ruthlessly ripped from 
- *	       Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> 
+ * Authors:    J Hadi Salim(hadi@nortelnetworks.com)
+ *             code ruthlessly ripped from
+ *	       Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
  */
 
@@ -140,7 +140,7 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				return -1;
 			}
 		return init_gred(qu,argc-1, argv+1,n);
-	         	
+
 		} else if (strcmp(*argv, "min") == 0) {
 			NEXT_ARG();
 			if (get_size(&opt.qth_min, *argv)) {
@@ -276,7 +276,7 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		fprintf(f,"\n GRED received message smaller than expected\n");
 		return -1;
 		}
-         
+
 /* Bad hack! should really return a proper message as shown above*/
 
 	for (i=0;i<MAX_DPs;i++, qopt++) {

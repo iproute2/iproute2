@@ -197,7 +197,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH) {
 		fprintf(stderr, "Not RTM_NEWNEIGH: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
-		
+
 		return 0;
 	}
 	len -= NLMSG_LENGTH(sizeof(*r));
@@ -254,7 +254,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[NDA_DST]) {
-		fprintf(fp, "%s ", 
+		fprintf(fp, "%s ",
 			format_host(r->ndm_family,
 				    RTA_PAYLOAD(tb[NDA_DST]),
 				    RTA_DATA(tb[NDA_DST]),

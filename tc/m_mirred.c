@@ -1,13 +1,13 @@
 /*
- * m_egress.c		ingress/egress packet mirror/redir actions module 
+ * m_egress.c		ingress/egress packet mirror/redir actions module
  *
  *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:  J Hadi Salim (hadi@cyberus.ca) 
- * 
+ * Authors:  J Hadi Salim (hadi@cyberus.ca)
+ *
  * TODO: Add Ingress support
  *
  */
@@ -247,7 +247,7 @@ parse_mirred(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 	}
 
 	return -1;
-	
+
 }
 
 int

@@ -35,63 +35,63 @@ static struct {
 	const char *name;
 } llproto_names[] = {
 __PF(LOOP,loop)
-__PF(PUP,pup)  
+__PF(PUP,pup)
 #ifdef ETH_P_PUPAT
 __PF(PUPAT,pupat)
-#endif    
+#endif
 __PF(IP,ip)
 __PF(X25,x25)
 __PF(ARP,arp)
 __PF(BPQ,bpq)
 #ifdef ETH_P_IEEEPUP
 __PF(IEEEPUP,ieeepup)
-#endif  
+#endif
 #ifdef ETH_P_IEEEPUPAT
 __PF(IEEEPUPAT,ieeepupat)
-#endif  
-__PF(DEC,dec)       
-__PF(DNA_DL,dna_dl)    
-__PF(DNA_RC,dna_rc)    
-__PF(DNA_RT,dna_rt)    
-__PF(LAT,lat)       
-__PF(DIAG,diag)      
-__PF(CUST,cust)      
-__PF(SCA,sca)       
-__PF(RARP,rarp)      
-__PF(ATALK,atalk)     
-__PF(AARP,aarp)      
-__PF(IPX,ipx)       
-__PF(IPV6,ipv6)      
+#endif
+__PF(DEC,dec)
+__PF(DNA_DL,dna_dl)
+__PF(DNA_RC,dna_rc)
+__PF(DNA_RT,dna_rt)
+__PF(LAT,lat)
+__PF(DIAG,diag)
+__PF(CUST,cust)
+__PF(SCA,sca)
+__PF(RARP,rarp)
+__PF(ATALK,atalk)
+__PF(AARP,aarp)
+__PF(IPX,ipx)
+__PF(IPV6,ipv6)
 #ifdef ETH_P_PPP_DISC
 __PF(PPP_DISC,ppp_disc)
-#endif      
+#endif
 #ifdef ETH_P_PPP_SES
 __PF(PPP_SES,ppp_ses)
-#endif      
+#endif
 #ifdef ETH_P_ATMMPOA
 __PF(ATMMPOA,atmmpoa)
 #endif
 #ifdef ETH_P_ATMFATE
 __PF(ATMFATE,atmfate)
-#endif      
+#endif
 
-__PF(802_3,802_3)     
-__PF(AX25,ax25)      
-__PF(ALL,all)       
-__PF(802_2,802_2)     
-__PF(SNAP,snap)      
-__PF(DDCMP,ddcmp)     
-__PF(WAN_PPP,wan_ppp)   
-__PF(PPP_MP,ppp_mp)    
-__PF(LOCALTALK,localtalk) 
-__PF(PPPTALK,ppptalk)   
-__PF(TR_802_2,tr_802_2)  
-__PF(MOBITEX,mobitex)   
-__PF(CONTROL,control)   
-__PF(IRDA,irda)      
+__PF(802_3,802_3)
+__PF(AX25,ax25)
+__PF(ALL,all)
+__PF(802_2,802_2)
+__PF(SNAP,snap)
+__PF(DDCMP,ddcmp)
+__PF(WAN_PPP,wan_ppp)
+__PF(PPP_MP,ppp_mp)
+__PF(LOCALTALK,localtalk)
+__PF(PPPTALK,ppptalk)
+__PF(TR_802_2,tr_802_2)
+__PF(MOBITEX,mobitex)
+__PF(CONTROL,control)
+__PF(IRDA,irda)
 #ifdef ETH_P_ECONET
 __PF(ECONET,econet)
-#endif      
+#endif
 
 { 0x8100, "802.1Q" },
 { ETH_P_IP, "ipv4" },

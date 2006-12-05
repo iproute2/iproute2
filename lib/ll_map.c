@@ -36,7 +36,7 @@ struct idxmap
 
 static struct idxmap *idxmap[16];
 
-int ll_remember_index(const struct sockaddr_nl *who, 
+int ll_remember_index(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg)
 {
 	int h;

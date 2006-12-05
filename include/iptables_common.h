@@ -10,16 +10,16 @@ enum exittype {
 extern void exit_printhelp(void) __attribute__((noreturn));
 extern void exit_tryhelp(int) __attribute__((noreturn));
 int check_inverse(const char option[], int *invert, int *optind, int argc);
-extern int string_to_number(const char *, 
-			    unsigned int, 
+extern int string_to_number(const char *,
+			    unsigned int,
 			    unsigned int,
 			    unsigned int *);
-extern int string_to_number_l(const char *, 
-			    unsigned long int, 
+extern int string_to_number_l(const char *,
+			    unsigned long int,
 			    unsigned long int,
 			    unsigned long *);
-extern int string_to_number_ll(const char *, 
-			    unsigned long long int, 
+extern int string_to_number_ll(const char *,
+			    unsigned long long int,
 			    unsigned long long int,
 			    unsigned long long *);
 extern int iptables_insmod(const char *modname, const char *modprobe);

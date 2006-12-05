@@ -92,7 +92,7 @@ static int nbyte_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 
 	if (offset_present == 0)
 		return PARSE_ERR(a, "nbyte: offset required");
-	
+
 	nb.len = needle->len;
 	nb.layer = (__u8) layer;
 	nb.off = (__u16) offset;
@@ -131,7 +131,7 @@ static int nbyte_print_eopt(FILE *fd, struct tcf_ematch_hdr *hdr, void *data,
 	for (i = 0; i < nb->len; i++)
 		fprintf(fd, "%c", isprint(needle[i]) ? needle[i] : '.');
 	fprintf(fd, "\" at %d layer %d", nb->off, nb->layer);
-	
+
 	return 0;
 }
 

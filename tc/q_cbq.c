@@ -53,7 +53,7 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	struct tc_cbq_lssopt lss;
 	__u32 rtab[256];
 	unsigned mpu=0, avpkt=0, allot=0;
-	int cell_log=-1; 
+	int cell_log=-1;
 	int ewma_log=-1;
 	struct rtattr *tail;
 
@@ -176,7 +176,7 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	struct tc_cbq_ovl ovl;
 	__u32 rtab[256];
 	unsigned mpu=0;
-	int cell_log=-1; 
+	int cell_log=-1;
 	int ewma_log=-1;
 	unsigned bndw = 0;
 	unsigned minburst=0, maxburst=0;
@@ -451,7 +451,7 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_CBQ_OVL_STRATEGY]) {
 		if (RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]) < sizeof(*ovl))
 			fprintf(stderr, "CBQ: too short overlimit strategy %u/%u\n",
-				(unsigned) RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]), 
+				(unsigned) RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]),
 				(unsigned) sizeof(*ovl));
 		else
 			ovl = RTA_DATA(tb[TCA_CBQ_OVL_STRATEGY]);

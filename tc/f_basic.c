@@ -52,7 +52,7 @@ static int basic_parse_opt(struct filter_util *qu, char *handle,
 			return -1;
 		}
 	}
-		
+
 	t->tcm_handle = h;
 
 	tail = (struct rtattr*)(((void*)n)+NLMSG_ALIGN(n->nlmsg_len));

@@ -373,7 +373,7 @@ void server_loop(int fd)
 	struct pollfd p;
 	p.fd = fd;
 	p.events = p.revents = POLLIN;
-	
+
 	sprintf(info_source, "%d.%lu sampling_interval=%d time_const=%d",
 		getpid(), (unsigned long)random(), scan_interval/1000, time_constant/1000);
 

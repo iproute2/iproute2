@@ -205,7 +205,7 @@ static int red_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 	fprintf(f, "  marked %u early %u pdrop %u other %u",
 		st->marked, st->early, st->pdrop, st->other);
 	return 0;
-	
+
 #endif
 	return 0;
 }

@@ -65,7 +65,7 @@ struct ip6tables_match
 struct ip6tables_target
 {
 	struct ip6tables_target *next;
-	
+
 	ip6t_chainlabel name;
 
 	const char *version;
@@ -87,7 +87,7 @@ struct ip6tables_target
 	int (*parse)(int c, char **argv, int invert, unsigned int *flags,
 		     const struct ip6t_entry *entry,
 		     struct ip6t_entry_target **target);
-	
+
 	/* Final check; exit if not ok. */
 	void (*final_check)(unsigned int flags);
 

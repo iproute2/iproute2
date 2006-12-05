@@ -125,7 +125,7 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 		struct rtattr *idev = tb[TCA_FW_INDEV];
 		fprintf(f, "input dev %s ",(char *)RTA_DATA(idev));
 	}
-	
+
 	if (tb[TCA_FW_ACT]) {
 		fprintf(f, "\n");
 		tc_print_action(f, tb[TCA_FW_ACT]);

@@ -55,7 +55,7 @@ expr:	DCOND HOSTCOND
 		$$ = alloc_node(SSF_DCOND, $2);
         }
         | SCOND HOSTCOND
-        { 
+        {
 		$$ = alloc_node(SSF_SCOND, $2);
         }
         | DPORT GEQ HOSTCOND

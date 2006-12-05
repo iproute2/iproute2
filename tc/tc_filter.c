@@ -177,7 +177,7 @@ static __u32 filter_prio;
 static __u32 filter_protocol;
 
 int print_filter(const struct sockaddr_nl *who,
-			struct nlmsghdr *n, 
+			struct nlmsghdr *n,
 			void *arg)
 {
 	FILE *fp = (FILE*)arg;

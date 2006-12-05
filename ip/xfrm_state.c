@@ -2,17 +2,17 @@
 
 /*
  * Copyright (C)2004 USAGI/WIDE Project
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -82,7 +82,7 @@ static void usage(void)
 
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG := [ noecn | decap-dscp | wildrecv ]\n");
- 
+
         fprintf(stderr, "ENCAP := ENCAP-TYPE SPORT DPORT OADDR\n");
         fprintf(stderr, "ENCAP-TYPE := espinudp | espinudp-nonike\n");
 
@@ -669,7 +669,7 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		rta = XFRMSID_RTA(xsid);
 	else if (n->nlmsg_type == XFRM_MSG_EXPIRE)
 		rta = XFRMEXP_RTA(xexp);
-	else 
+	else
 		rta = XFRMS_RTA(xsinfo);
 
 	parse_rtattr(tb, XFRMA_MAX, rta, len);

@@ -55,7 +55,7 @@ typedef struct
 #define AF_DECnet 12
 #endif
 
-struct dn_naddr 
+struct dn_naddr
 {
         unsigned short          a_len;
         unsigned char a_addr[DN_MAXADDL];
@@ -89,9 +89,9 @@ extern int get_s8(__s8 *val, const char *arg, int base);
 extern char* hexstring_n2a(const __u8 *str, int len, char *buf, int blen);
 extern __u8* hexstring_a2n(const char *str, __u8 *buf, int blen);
 
-extern const char *format_host(int af, int len, const void *addr, 
+extern const char *format_host(int af, int len, const void *addr,
 			       char *buf, int buflen);
-extern const char *rt_addr_n2a(int af, int len, const void *addr, 
+extern const char *rt_addr_n2a(int af, int len, const void *addr,
 			       char *buf, int buflen);
 
 void missarg(const char *) __attribute__((noreturn));

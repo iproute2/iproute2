@@ -77,7 +77,7 @@
 								return ERROR;
 						}
 						strbuf_index = 0;
-						
+
 						BEGIN(str);
 					}
 
@@ -90,7 +90,7 @@
 
 <str>\\[0-7]{1,3}			{ /* octal escape sequence */
 						int res;
-						
+
 						sscanf(yytext + 1, "%o", &res);
 						if (res > 0xFF) {
 							fprintf(stderr, "error: octal escape sequence" \
@@ -107,9 +107,9 @@
 
 <str>\\x[0-9a-fA-F]{1,2}		{
 						int res;
-						
+
 						sscanf(yytext + 2, "%x", &res);
-						
+
 						if (res > 0xFF) {
 							fprintf(stderr, "error: hexadecimal escape " \
 							"sequence out of range\n");

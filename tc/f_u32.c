@@ -833,7 +833,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 		} else if (matches(*argv, "divisor") == 0) {
 			unsigned divisor;
 			NEXT_ARG();
-			if (get_unsigned(&divisor, *argv, 0) || 
+			if (get_unsigned(&divisor, *argv, 0) ||
 			    divisor == 0 ||
 			    divisor > 0x100 || ((divisor - 1) & divisor)) {
 				fprintf(stderr, "Illegal \"divisor\"\n");

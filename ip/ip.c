@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 		basename = argv[0];
 	else
 		basename++;
-	
+
 	while (argc > 1) {
 		char *opt = argv[1];
 		if (strcmp(opt,"--") == 0) {
@@ -220,16 +220,16 @@ int main(int argc, char **argv)
 
 	_SL_ = oneline ? "\\" : "\n" ;
 
-	if (batch_file) 
+	if (batch_file)
 		return batch(batch_file);
-		
+
 	if (rtnl_open(&rth, 0) < 0)
 		exit(1);
 
-	if (strlen(basename) > 2) 
+	if (strlen(basename) > 2)
 		return do_cmd(basename+2, argc, argv);
 
-	if (argc > 1) 
+	if (argc > 1)
 		return do_cmd(argv[1], argc-1, argv+1);
 
 	rtnl_close(&rth);

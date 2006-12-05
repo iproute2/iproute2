@@ -42,11 +42,11 @@ static void *BODY = NULL;	/* cached handle dlopen(NULL) */
 static struct qdisc_util * qdisc_list;
 static struct filter_util * filter_list;
 
-static int print_noqopt(struct qdisc_util *qu, FILE *f, 
+static int print_noqopt(struct qdisc_util *qu, FILE *f,
 			struct rtattr *opt)
 {
 	if (opt && RTA_PAYLOAD(opt))
-		fprintf(f, "[Unknown qdisc, optlen=%u] ", 
+		fprintf(f, "[Unknown qdisc, optlen=%u] ",
 			(unsigned) RTA_PAYLOAD(opt));
 	return 0;
 }
@@ -63,7 +63,7 @@ static int parse_noqopt(struct qdisc_util *qu, int argc, char **argv, struct nlm
 static int print_nofopt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u32 fhandle)
 {
 	if (opt && RTA_PAYLOAD(opt))
-		fprintf(f, "fh %08x [Unknown filter, optlen=%u] ", 
+		fprintf(f, "fh %08x [Unknown filter, optlen=%u] ",
 			fhandle, (unsigned) RTA_PAYLOAD(opt));
 	else if (fhandle)
 		fprintf(f, "fh %08x ", fhandle);
@@ -206,8 +206,8 @@ static int do_cmd(int argc, char **argv)
 		usage();
 		return 0;
 	}
-	
-	fprintf(stderr, "Object \"%s\" is unknown, try \"tc help\".\n", 
+
+	fprintf(stderr, "Object \"%s\" is unknown, try \"tc help\".\n",
 		*argv);
 	return -1;
 }

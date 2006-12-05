@@ -147,7 +147,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 int filter_ifindex;
 __u32 filter_qdisc;
 
-int print_class(const struct sockaddr_nl *who, 
+int print_class(const struct sockaddr_nl *who,
 		       struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
@@ -213,7 +213,7 @@ int print_class(const struct sockaddr_nl *who,
 	fprintf(fp, "\n");
 	if (show_stats) {
 		struct rtattr *xstats = NULL;
-		
+
 		if (tb[TCA_STATS] || tb[TCA_STATS2]) {
 			print_tcstats_attr(fp, tb, " ", &xstats);
 			fprintf(fp, "\n");

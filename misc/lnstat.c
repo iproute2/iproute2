@@ -119,7 +119,7 @@ static int map_field_params(struct lnstat_file *lnstat_files,
 				fps->params[j].lf->file->interval.tv_sec =
 								interval;
 				if (!fps->params[j].print.width)
-					fps->params[j].print.width = 
+					fps->params[j].print.width =
 							FIELD_WIDTH_DEFAULT;
 				j++;
 			}
@@ -204,7 +204,7 @@ static int print_hdr(FILE *of, struct table_hdr *th)
 	}
 	return 0;
 }
-		
+
 
 int main(int argc, char **argv)
 {
@@ -222,10 +222,10 @@ int main(int argc, char **argv)
 	static struct field_params fp;
 	int num_req_files = 0;
 	char *req_files[LNSTAT_MAX_FILES];
-	
+
 	/* backwards compatibility mode for old tools */
 	basename = strrchr(argv[0], '/');
-	if (basename) 
+	if (basename)
 		basename += 1;	  /* name after slash */
 	else
 		basename = argv[0]; /* no slash */
@@ -240,7 +240,7 @@ int main(int argc, char **argv)
 		num_req_files = 1;
 	}
 
-	while ((c = getopt_long(argc, argv,"Vc:df:h?i:k:s:w:", 
+	while ((c = getopt_long(argc, argv,"Vc:df:h?i:k:s:w:",
 				opts, NULL)) != -1) {
 		int i, len = 0;
 		char *tmp, *tok;
@@ -256,7 +256,7 @@ int main(int argc, char **argv)
 				req_files[num_req_files++] = strdup(optarg);
 				break;
 			case '?':
-			case 'h':       
+			case 'h':
 				usage(argv[0], 0);
 				break;
 			case 'i':
@@ -315,12 +315,12 @@ int main(int argc, char **argv)
 
 		if (!map_field_params(lnstat_files, &fp, interval))
 			exit(1);
-	
+
 		header = build_hdr_string(lnstat_files, &fp, 80);
 		if (!header)
 			exit(1);
 
-		if (interval < 1 ) 
+		if (interval < 1 )
 			interval=1;
 
 		for (i = 0; i < count; i++) {

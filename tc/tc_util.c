@@ -450,7 +450,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		fprintf(fp, " (dropped %u, overlimits %u requeues %u) ",
 			q.drops, q.overlimits, q.requeues);
 	}
-			
+
 	if (tbs[TCA_STATS_RATE_EST]) {
 		struct gnet_stats_rate_est re = {0};
 		memcpy(&re, RTA_DATA(tbs[TCA_STATS_RATE_EST]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_RATE_EST]), sizeof(re)));
@@ -490,7 +490,7 @@ void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix, struct rtat
 		memcpy(&st, RTA_DATA(tb[TCA_STATS]), MIN(RTA_PAYLOAD(tb[TCA_STATS]), sizeof(st)));
 
 		fprintf(fp, "%sSent %llu bytes %u pkts (dropped %u, overlimits %u) ",
-			prefix, (unsigned long long)st.bytes, st.packets, st.drops, 
+			prefix, (unsigned long long)st.bytes, st.packets, st.drops,
 			st.overlimits);
 
 		if (st.bps || st.pps || st.qlen || st.backlog) {

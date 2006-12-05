@@ -23,7 +23,7 @@ struct filter_util
 {
 	struct filter_util *next;
 	char	id[16];
-	int	(*parse_fopt)(struct filter_util *qu, char *fhandle, int argc, 
+	int	(*parse_fopt)(struct filter_util *qu, char *fhandle, int argc,
 			      char **argv, struct nlmsghdr *n);
 	int	(*print_fopt)(struct filter_util *qu, FILE *f, struct rtattr *opt, __u32 fhandle);
 };
@@ -32,7 +32,7 @@ struct action_util
 {
 	struct  action_util *next;
 	char    id[16];
-	int     (*parse_aopt)(struct action_util *a, int *argc, char ***argv, 
+	int     (*parse_aopt)(struct action_util *a, int *argc, char ***argv,
 			      int code, struct nlmsghdr *n);
 	int     (*print_aopt)(struct action_util *au, FILE *f, struct rtattr *opt);
 	int     (*print_xstats)(struct action_util *au, FILE *f, struct rtattr *xstats);
@@ -72,9 +72,9 @@ extern int parse_police(int *, char ***, int, struct nlmsghdr *);
 extern char *action_n2a(int action, char *buf, int len);
 extern int  action_a2n(char *arg, int *result);
 extern int  act_parse_police(struct action_util *a,int *, char ***, int, struct nlmsghdr *);
-extern int  print_police(struct action_util *a, FILE *f, 
+extern int  print_police(struct action_util *a, FILE *f,
 			 struct rtattr *tb);
-extern int  police_print_xstats(struct action_util *a,FILE *f, 
+extern int  police_print_xstats(struct action_util *a,FILE *f,
 				struct rtattr *tb);
 extern int  tc_print_action(FILE *f, const struct rtattr *tb);
 extern int  tc_print_ipt(FILE *f, const struct rtattr *tb);

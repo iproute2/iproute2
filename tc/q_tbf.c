@@ -44,7 +44,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	__u32 rtab[256];
 	__u32 ptab[256];
 	unsigned buffer=0, mtu=0, mpu=0, latency=0;
-	int Rcell_log=-1, Pcell_log = -1; 
+	int Rcell_log=-1, Pcell_log = -1;
 	struct rtattr *tail;
 
 	memset(&opt, 0, sizeof(opt));

@@ -260,7 +260,7 @@ hfsc_print_class_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			usc = RTA_DATA(tb[TCA_HFSC_USC]);
 	}
 
-	
+
 	if (rsc != NULL && fsc != NULL &&
 	    memcmp(rsc, fsc, sizeof(*rsc)) == 0)
 		hfsc_print_sc(f, "sc", rsc);
@@ -275,7 +275,7 @@ hfsc_print_class_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	return 0;
 }
- 
+
 struct qdisc_util hfsc_qdisc_util = {
 	.id		= "hfsc",
 	.parse_qopt	= hfsc_parse_opt,

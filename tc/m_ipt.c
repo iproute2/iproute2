@@ -1,5 +1,5 @@
 /*
- * m_ipt.c	iptables based targets 
+ * m_ipt.c	iptables based targets
  * 		utilities mostly ripped from iptables <duh, its the linux way>
  *
  *		This program is free software; you can distribute it and/or
@@ -7,8 +7,8 @@
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:  J Hadi Salim (hadi@cyberus.ca) 
- * 
+ * Authors:  J Hadi Salim (hadi@cyberus.ca)
+ *
  * TODO: bad bad hardcoding IPT_LIB_DIR and PROC_SYS_MODPROBE
  *
 */
@@ -126,7 +126,7 @@ addr_to_dotted(const struct in_addr *addrp)
 	return buf;
 }
 
-int string_to_number_ll(const char *s, unsigned long long min, 
+int string_to_number_ll(const char *s, unsigned long long min,
 			unsigned long long max,
 		 unsigned long long *ret)
 {
@@ -341,7 +341,7 @@ static void set_revision(char *name, u_int8_t revision)
 	name[IPT_FUNCTION_MAXNAMELEN - 1] = revision;
 }
 
-/* 
+/*
  * we may need to check for version mismatch
 */
 int
@@ -372,7 +372,7 @@ build_st(struct iptables_target *target, struct ipt_entry_target *t)
 	return -1;
 }
 
-static int parse_ipt(struct action_util *a,int *argc_p, 
+static int parse_ipt(struct action_util *a,int *argc_p,
 		     char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	struct iptables_target *m = NULL;
@@ -503,7 +503,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	argv += optind;
 	*argc_p = rargc - iargc;
 	*argv_p = argv;
-	
+
 	optind = 1;
 	free_opts(opts);
 
@@ -578,7 +578,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 				struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
 				print_tm(f,tm);
 			}
-		} 
+		}
 		fprintf(f, " \n");
 
 	}

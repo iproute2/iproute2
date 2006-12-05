@@ -1,16 +1,16 @@
 /*
  * Copyright (C)2006 USAGI/WIDE Project
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -24,7 +24,7 @@
  * Author:
  *	Masahide NAKAMURA @USAGI
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -72,7 +72,7 @@ static void print_tunnel(struct ip6_tnl_parm *p)
 {
 	char remote[64];
 	char local[64];
-	
+
 	inet_ntop(AF_INET6, &p->raddr, remote, sizeof(remote));
 	inet_ntop(AF_INET6, &p->laddr, local, sizeof(local));
 
@@ -353,8 +353,8 @@ static int do_del(int argc, char **argv)
 	return tnl_del_ioctl(p.name[0] ? p.name : "ip6tnl0", p.name, &p);
 }
 
-int do_ip6tunnel(int argc, char **argv) 
-{ 
+int do_ip6tunnel(int argc, char **argv)
+{
 	switch (preferred_family) {
 	case AF_UNSPEC:
 		preferred_family = AF_INET6;

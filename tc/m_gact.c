@@ -1,13 +1,13 @@
 /*
- * m_gact.c		generic actions module 
+ * m_gact.c		generic actions module
  *
  *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:  J Hadi Salim (hadi@cyberus.ca) 
- * 
+ * Authors:  J Hadi Salim (hadi@cyberus.ca)
+ *
  */
 
 #include <stdio.h>
@@ -27,7 +27,7 @@
 /* define to turn on probablity stuff */
 
 #ifdef CONFIG_GACT_PROB
-static const char *prob_n2a(int p) 
+static const char *prob_n2a(int p)
 {
 	if (p == PGACT_NONE)
 		return "none";

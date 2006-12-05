@@ -120,7 +120,7 @@ void print_queuelen(char *name)
 
 	memset(&ifr, 0, sizeof(ifr));
 	strcpy(ifr.ifr_name, name);
-	if (ioctl(s, SIOCGIFTXQLEN, &ifr) < 0) { 
+	if (ioctl(s, SIOCGIFTXQLEN, &ifr) < 0) {
 		perror("SIOCGIFXQLEN");
 		close(s);
 		return;
@@ -131,7 +131,7 @@ void print_queuelen(char *name)
 		printf("qlen %d", ifr.ifr_qlen);
 }
 
-int print_linkinfo(const struct sockaddr_nl *who, 
+int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
@@ -195,7 +195,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 #endif
 	if (filter.showqueue)
 		print_queuelen((char*)RTA_DATA(tb[IFLA_IFNAME]));
-	
+
 	if (!filter.family || filter.family == AF_PACKET) {
 		SPRINT_BUF(b1);
 		fprintf(fp, "%s", _SL_);
@@ -290,7 +290,7 @@ static int set_lifetime(unsigned int *lifetime, char *argv)
 	return 0;
 }
 
-int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n, 
+int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		   void *arg)
 {
 	FILE *fp = (FILE*)arg;
@@ -474,7 +474,7 @@ int print_selected_addrinfo(int ifindex, struct nlmsg_list *ainfo, FILE *fp)
 		if (n->nlmsg_len < NLMSG_LENGTH(sizeof(ifa)))
 			return -1;
 
-		if (ifa->ifa_index != ifindex || 
+		if (ifa->ifa_index != ifindex ||
 		    (filter.family && filter.family != ifa->ifa_family))
 			continue;
 
@@ -484,7 +484,7 @@ int print_selected_addrinfo(int ifindex, struct nlmsg_list *ainfo, FILE *fp)
 }
 
 
-static int store_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n, 
+static int store_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		       void *arg)
 {
 	struct nlmsg_list **linfo = (struct nlmsg_list**)arg;
@@ -667,7 +667,7 @@ int ipaddr_list_or_flush(int argc, char **argv, int flush)
 				struct nlmsghdr *n = &a->h;
 				struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
-				if (ifa->ifa_index != ifi->ifi_index || 
+				if (ifa->ifa_index != ifi->ifi_index ||
 				    (filter.family && filter.family != ifa->ifa_family))
 					continue;
 				if ((filter.scope^ifa->ifa_scope)&filter.scopemask)

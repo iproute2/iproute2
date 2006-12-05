@@ -49,12 +49,12 @@ static int scan_lines(struct lnstat_file *lf, int i)
 
 		num_lines++;
 
-		fgets(buf, sizeof(buf)-1, lf->fp); 
+		fgets(buf, sizeof(buf)-1, lf->fp);
 		gettimeofday(&lf->last_read, NULL);
 
 		for (j = 0; j < lf->num_fields; j++) {
 			unsigned long f = strtoul(ptr, &ptr, 16);
-			if (j == 0) 
+			if (j == 0)
 				lf->fields[j].values[i] = f;
 			else
 				lf->fields[j].values[i] += f;
@@ -63,8 +63,8 @@ static int scan_lines(struct lnstat_file *lf, int i)
 	return num_lines;
 }
 
-static int time_after(struct timeval *last, 
-		      struct timeval *tout, 
+static int time_after(struct timeval *last,
+		      struct timeval *tout,
 		      struct timeval *now)
 {
 	if (now->tv_sec > last->tv_sec + tout->tv_sec)
@@ -98,7 +98,7 @@ int lnstat_update(struct lnstat_file *lnstat_files)
 			}
 			scan_lines(lf, 1);
 
-			for (i = 0, lfi = &lf->fields[i]; 
+			for (i = 0, lfi = &lf->fields[i];
 			     i < lf->num_fields; i++, lfi = &lf->fields[i]) {
 				if (i == 0)
 					lfi->result = lfi->values[1];
@@ -211,7 +211,7 @@ struct lnstat_file *lnstat_scan_dir(const char *path, const int num_req_files,
 
 	if (!path)
 		path = PROC_NET_STAT;
-	
+
 	dir = opendir(path);
 	if (!dir) {
 		struct lnstat_file *lf;
@@ -307,7 +307,7 @@ struct lnstat_field *lnstat_find_field(struct lnstat_file *lnstat_files,
 		file = NULL;
 		field = name;
 	}
-		
+
 	for (lf = lnstat_files; lf; lf = lf->next) {
 		int i;
 

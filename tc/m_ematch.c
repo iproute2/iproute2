@@ -45,7 +45,7 @@ static inline void map_warning(int num, char *kind)
 	    "Error: Unable to find ematch \"%s\" in %s\n" \
 	    "Please assign a unique ID to the ematch kind the suggested " \
 	    "entry is:\n" \
-	    "\t%d\t%s\n", 
+	    "\t%d\t%s\n",
 	    kind, EMATCH_MAP, num, kind);
 }
 
@@ -66,7 +66,7 @@ static int lookup_map(__u16 num, char *dst, int len, const char *file)
 			p++;
 		if (*p == '#' || *p == '\n' || *p == 0)
 			continue;
-	
+
 		if (sscanf(p, "%d %s", &id, namebuf) != 2) {
 			fprintf(stderr, "ematch map %s corrupted at %s\n",
 			    file, p);
@@ -104,7 +104,7 @@ static int lookup_map_id(char *kind, int *dst, const char *file)
 			p++;
 		if (*p == '#' || *p == '\n' || *p == 0)
 			continue;
-	
+
 		if (sscanf(p, "%d %s", &id, namebuf) != 2) {
 			fprintf(stderr, "ematch map %s corrupted at %s\n",
 			    file, p);
@@ -185,7 +185,7 @@ static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 
 		if (t->inverted)
 			hdr.flags |= TCF_EM_INVERT;
-		
+
 		addattr_l(n, MAX_MSG, index++, NULL, 0);
 
 		if (t->child) {
@@ -278,7 +278,7 @@ int em_parse_error(int err, struct bstr *args, struct bstr *carg,
 		begin_argv++;
 		begin_argc--;
 	}
-	
+
 	fprintf(stderr, "...\n");
 
 	if (args) {
@@ -437,7 +437,7 @@ static int print_ematch_seq(FILE *fd, struct rtattr **tb, int start,
 
 		i++;
 	}
-	
+
 	return 0;
 }
 

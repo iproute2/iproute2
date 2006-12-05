@@ -168,7 +168,7 @@ void dump_abs_db(FILE *fp)
 "%-10s "
 "%-10s "
 "\n"
-		       , "Realm", "BytesTo", "PktsTo", "BytesFrom", "PktsFrom"); 
+		       , "Realm", "BytesTo", "PktsTo", "BytesFrom", "PktsFrom");
 		fprintf(fp,
 "%-10s "
 "%-10s "
@@ -176,7 +176,7 @@ void dump_abs_db(FILE *fp)
 "%-10s "
 "%-10s "
 "\n"
-		       , "", "BPSTo", "PPSTo", "BPSFrom", "PPSFrom"); 
+		       , "", "BPSTo", "PPSTo", "BPSFrom", "PPSFrom");
 
 	}
 
@@ -207,10 +207,10 @@ void dump_abs_db(FILE *fp)
 
 		fprintf(fp, "%-10s", rtnl_rtrealm_n2a(realm, b1, sizeof(b1)));
 		for (i = 0; i < 4; i++)
-			format_count(fp, val[i]); 
+			format_count(fp, val[i]);
 		fprintf(fp, "\n%-10s", "");
 		for (i = 0; i < 4; i++)
-			format_rate(fp, rate[i]); 
+			format_rate(fp, rate[i]);
 		fprintf(fp, "\n");
 	}
 }
@@ -230,7 +230,7 @@ void dump_incr_db(FILE *fp)
 "%-10s "
 "%-10s "
 "\n"
-		       , "Realm", "BytesTo", "PktsTo", "BytesFrom", "PktsFrom"); 
+		       , "Realm", "BytesTo", "PktsTo", "BytesFrom", "PktsFrom");
 		fprintf(fp,
 "%-10s "
 "%-10s "
@@ -238,7 +238,7 @@ void dump_incr_db(FILE *fp)
 "%-10s "
 "%-10s "
 "\n"
-		       , "", "BPSTo", "PPSTo", "BPSFrom", "PPSFrom"); 
+		       , "", "BPSTo", "PPSTo", "BPSFrom", "PPSFrom");
 	}
 
 	for (realm=0; realm<256; realm++) {
@@ -282,10 +282,10 @@ void dump_incr_db(FILE *fp)
 
 		fprintf(fp, "%-10s", rtnl_rtrealm_n2a(realm, b1, sizeof(b1)));
 		for (i = 0; i < 4; i++)
-			format_count(fp, rval[i]); 
+			format_count(fp, rval[i]);
 		fprintf(fp, "\n%-10s", "");
 		for (i = 0; i < 4; i++)
-			format_rate(fp, rate[i]); 
+			format_rate(fp, rate[i]);
 		fprintf(fp, "\n");
 	}
 }
@@ -297,7 +297,7 @@ void sigchild(int signo)
 {
 }
 
-/* Server side only: read kernel data, update tables, calculate rates. */ 
+/* Server side only: read kernel data, update tables, calculate rates. */
 
 void update_db(int interval)
 {
@@ -368,9 +368,9 @@ void server_loop(int fd)
 	p.fd = fd;
 	p.events = p.revents = POLLIN;
 
-	sprintf(kern_db->signature, 
+	sprintf(kern_db->signature,
 		"%u.%lu sampling_interval=%d time_const=%d",
-		(unsigned) getpid(), (unsigned long)random(), 
+		(unsigned) getpid(), (unsigned long)random(),
 		scan_interval/1000, time_constant/1000);
 
 	pad_kern_table(kern_db, read_kern_table(kern_db->ival));

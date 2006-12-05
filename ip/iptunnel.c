@@ -262,7 +262,7 @@ static int do_add(int cmd, int argc, char **argv)
 		return tnl_add_ioctl(cmd, "gre0", p.name, &p);
 	case IPPROTO_IPV6:
 		return tnl_add_ioctl(cmd, "sit0", p.name, &p);
-	default:	
+	default:
 		fprintf(stderr, "cannot determine tunnel mode (ipip, gre or sit)\n");
 		return -1;
 	}
@@ -283,7 +283,7 @@ static int do_del(int argc, char **argv)
 		return tnl_del_ioctl("gre0", p.name, &p);
 	case IPPROTO_IPV6:
 		return tnl_del_ioctl("sit0", p.name, &p);
-	default:	
+	default:
 		return tnl_del_ioctl(p.name, p.name, &p);
 	}
 	return -1;
@@ -318,7 +318,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 		printf(" ttl %d ", p->iph.ttl);
 	else
 		printf(" ttl inherit ");
-	
+
 	if (p->iph.tos) {
 		SPRINT_BUF(b1);
 		printf(" tos");
@@ -427,7 +427,7 @@ static int do_show(int argc, char **argv)
 		return -1;
 
 	switch (p.iph.protocol) {
-	case IPPROTO_IPIP:	
+	case IPPROTO_IPIP:
 		err = tnl_get_ioctl(p.name[0] ? p.name : "tunl0", &p);
 		break;
 	case IPPROTO_GRE:

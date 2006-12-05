@@ -2,17 +2,17 @@
 
 /*
  * Copyright (C)2004 USAGI/WIDE Project
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -59,7 +59,7 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, 
+	fprintf(stderr,
 		"Usage: ip xfrm XFRM_OBJECT { COMMAND | help }\n"
 		"where  XFRM_OBJECT := { state | policy | monitor }\n");
 	exit(-1);
@@ -349,7 +349,7 @@ static const char *strxf_time(__u64 time)
 		time_t t;
 		struct tm *tp;
 
-		/* XXX: treat time in the same manner of kernel's 
+		/* XXX: treat time in the same manner of kernel's
 		 * net/xfrm/xfrm_{user,state}.c
 		 */
 		t = (long)time;
@@ -690,7 +690,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "%s",
-			rt_addr_n2a(family, sizeof(*coa), coa, 
+			rt_addr_n2a(family, sizeof(*coa), coa,
 				    abuf, sizeof(abuf)));
 		fprintf(fp, "%s", _SL_);
 	}

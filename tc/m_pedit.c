@@ -1,18 +1,18 @@
 /*
- * m_pedit.c		generic packet editor actions module 
+ * m_pedit.c		generic packet editor actions module
  *
  *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:  J Hadi Salim (hadi@cyberus.ca) 
- * 
- * TODO: 
+ * Authors:  J Hadi Salim (hadi@cyberus.ca)
+ *
+ * TODO:
  * 	1) Big endian broken in some spots
  * 	2) A lot of this stuff was added on the fly; get a big double-double
  * 	and clean it up at some point.
- * 	
+ *
  */
 
 #include <stdio.h>
@@ -37,7 +37,7 @@ explain(void)
 {
 	fprintf(stderr, "Usage: ... pedit munge <MUNGE>\n");
 	fprintf(stderr,
-		"Where: MUNGE := <RAW>|<LAYERED>\n" 
+		"Where: MUNGE := <RAW>|<LAYERED>\n"
 		"\t<RAW>:= <OFFSETC>[ATC]<CMD>\n "
 		"\t\tOFFSETC:= offset <offval> <u8|u16|u32>\n "
 		"\t\tATC:= at <atval> offmask <maskval> shift <shiftval>\n "
@@ -58,8 +58,8 @@ usage(void)
 	exit(-1);
 }
 
-static int 
-pedit_parse_nopopt (int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey) 
+static int
+pedit_parse_nopopt (int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -73,7 +73,7 @@ pedit_parse_nopopt (int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct 
 
 }
 
-struct m_pedit_util 
+struct m_pedit_util
 *get_pedit_kind(char *str)
 {
 	static void *pBODY;
@@ -227,7 +227,7 @@ pack_key8(__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey)
 	retain <<= stride;
 	tkey->mask = retain|m[ind];
 	tkey->off &= ~3;
-	
+
 	if (pedit_debug)
 		printf("pack_key8: Final word off %d  val %08x mask %08x \n",tkey->off , tkey->val,tkey->mask);
 	return pack_key(sel,tkey);
@@ -293,7 +293,7 @@ parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type,__u32 retain,struct t
 	} else if (matches(*argv, "preserve") == 0) {
 		retain = mask = o;
 	} else {
-		if (matches(*argv, "clear") != 0) 
+		if (matches(*argv, "clear") != 0)
 			return -1;
 	}
 
@@ -390,7 +390,7 @@ done:
 		tkey->at = atv;
 
 		NEXT_ARG();
-		
+
 		if (get_u32(&offmask, *argv, 16))
 			return -1;
 		tkey->offmask = offmask;
@@ -595,7 +595,7 @@ print_pedit(struct action_util *au,FILE * f, struct rtattr *arg)
 	return 0;
 }
 
-int 
+int
 pedit_print_xstats(struct action_util *au, FILE *f, struct rtattr *xstats)
 {
 	return 0;

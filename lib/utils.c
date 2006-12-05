@@ -582,15 +582,15 @@ size_t getcmdline(char **linep, size_t *lenp, FILE *in)
 {
 	size_t cc;
 	char *cp;
-		
+
 	if ((cc = getline(linep, lenp, in)) < 0)
 		return cc;	/* eof or error */
 	++cmdlineno;
 
 	cp = strchr(*linep, '#');
-	if (cp) 
+	if (cp)
 		*cp = '\0';
-	
+
 	while ((cp = strstr(*linep, "\\\n")) != NULL) {
 		char *line1 = NULL;
 		size_t len1 = 0;
@@ -605,7 +605,7 @@ size_t getcmdline(char **linep, size_t *lenp, FILE *in)
 		*cp = 0;
 
 		cp = strchr(line1, '#');
-		if (cp) 
+		if (cp)
 			*cp = '\0';
 
 		*linep = realloc(*linep, strlen(*linep) + strlen(line1) + 1);

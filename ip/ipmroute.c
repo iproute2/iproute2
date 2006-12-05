@@ -66,7 +66,7 @@ static void read_viftable(void)
 
 		if (sscanf(buf, "%d%s", &vifi, dev) < 2)
 			continue;
-		
+
 		if (vifi<0 || vifi>31)
 			continue;
 
@@ -109,7 +109,7 @@ static void read_mroute_list(FILE *ofp)
 		if (filter.msrc.family && inet_addr_match(&msrc, &filter.msrc, filter.msrc.bitlen))
 			continue;
 
-		snprintf(obuf, sizeof(obuf), "(%s, %s)", 
+		snprintf(obuf, sizeof(obuf), "(%s, %s)",
 			 format_host(AF_INET, 4, &msrc.data[0], sbuf, sizeof(sbuf)),
 			 format_host(AF_INET, 4, &maddr.data[0], mbuf, sizeof(mbuf)));
 

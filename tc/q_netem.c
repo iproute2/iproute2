@@ -27,7 +27,7 @@
 
 static void explain(void)
 {
-	fprintf(stderr, 
+	fprintf(stderr,
 "Usage: ... netem [ limit PACKETS ] \n" \
 "                 [ delay TIME [ JITTER [CORRELATION]]]\n" \
 "                 [ distribution {uniform|normal|pareto|paretonormal} ]\n" \
@@ -62,11 +62,11 @@ static int get_distribution(const char *type, __s16 *data)
 
 	snprintf(name, sizeof(name), "/usr/lib/tc/%s.dist", type);
 	if ((f = fopen(name, "r")) == NULL) {
-		fprintf(stderr, "No distribution data for %s (%s: %s)\n", 
+		fprintf(stderr, "No distribution data for %s (%s: %s)\n",
 			type, name, strerror(errno));
 		return -1;
 	}
-	
+
 	n = 0;
 	while (getline(&line, &len, f) != -1) {
 		char *p, *endp;
@@ -75,7 +75,7 @@ static int get_distribution(const char *type, __s16 *data)
 
 		for (p = line; ; p = endp) {
 			x = strtol(p, &endp, 0);
-			if (endp == p) 
+			if (endp == p)
 				break;
 
 			if (n >= MAXDIST) {
@@ -93,7 +93,7 @@ static int get_distribution(const char *type, __s16 *data)
 	return n;
 }
 
-static int isnumber(const char *arg) 
+static int isnumber(const char *arg)
 {
 	char *p;
 	(void) strtod(arg, &p);
@@ -102,7 +102,7 @@ static int isnumber(const char *arg)
 
 #define NEXT_IS_NUMBER() (NEXT_ARG_OK() && isnumber(argv[1]))
 
-/* Adjust for the fact that psched_ticks aren't always usecs 
+/* Adjust for the fact that psched_ticks aren't always usecs
    (based on kernel PSCHED_CLOCK configuration */
 static int get_ticks(__u32 *ticks, const char *str)
 {
@@ -110,7 +110,7 @@ static int get_ticks(__u32 *ticks, const char *str)
 
 	if(get_usecs(&t, str))
 		return -1;
-	
+
 	if (tc_core_usec2big(t)) {
 		fprintf(stderr, "Illegal %d usecs (too large)\n", t);
 		return -1;
@@ -126,7 +126,7 @@ static char *sprint_ticks(__u32 ticks, char *buf)
 }
 
 
-static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv, 
+static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n)
 {
 	size_t dist_size = 0;
@@ -167,7 +167,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 
 				if (NEXT_IS_NUMBER()) {
 					NEXT_ARG();
-					if (get_percent(&cor.delay_corr, 
+					if (get_percent(&cor.delay_corr,
 							*argv)) {
 						explain1("latency");
 						return -1;
@@ -317,7 +317,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		struct rtattr *tb[TCA_NETEM_MAX+1];
 		parse_rtattr(tb, TCA_NETEM_MAX, RTA_DATA(opt) + sizeof(qopt),
 			     len);
-		
+
 		if (tb[TCA_NETEM_CORR]) {
 			if (RTA_PAYLOAD(tb[TCA_NETEM_CORR]) < sizeof(*cor))
 				return -1;
@@ -359,20 +359,20 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (cor && cor->dup_corr)
 			fprintf(f, " %s", sprint_percent(cor->dup_corr, b1));
 	}
-			
+
 	if (reorder && reorder->probability) {
-		fprintf(f, " reorder %s", 
+		fprintf(f, " reorder %s",
 			sprint_percent(reorder->probability, b1));
 		if (reorder->correlation)
-			fprintf(f, " %s", 
+			fprintf(f, " %s",
 				sprint_percent(reorder->correlation, b1));
 	}
 
 	if (corrupt && corrupt->probability) {
-		fprintf(f, " corrupt %s", 
+		fprintf(f, " corrupt %s",
 			sprint_percent(corrupt->probability, b1));
 		if (corrupt->correlation)
-			fprintf(f, " %s", 
+			fprintf(f, " %s",
 				sprint_percent(corrupt->correlation, b1));
 	}
 

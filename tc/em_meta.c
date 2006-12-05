@@ -131,7 +131,7 @@ static struct meta_entry * lookup_meta_entry(struct bstr *kind)
 		if (!bstrcmp(kind, meta_table[i].kind) &&
 		    meta_table[i].id != 0)
 			return &meta_table[i];
-	
+
 	return NULL;
 }
 
@@ -142,7 +142,7 @@ static struct meta_entry * lookup_meta_entry_byid(int id)
 	for (i = 0; i < (sizeof(meta_table)/sizeof(meta_table[0])); i++)
 		if (meta_table[i].id == id)
 			return &meta_table[i];
-	
+
 	return NULL;
 }
 
@@ -171,12 +171,12 @@ static inline int is_compatible(struct tcf_meta_val *what,
 {
 	char *p;
 	struct meta_entry *entry;
-	
+
 	entry = lookup_meta_entry_byid(TCF_META_ID(what->kind));
 
 	if (entry == NULL)
 		return 0;
-	
+
 	for (p = entry->mask; p; p++)
 		if (map_type(*p) == TCF_META_TYPE(needed->kind))
 			return 1;
@@ -244,7 +244,7 @@ static inline int overwrite_type(struct tcf_meta_val *src,
 {
 	return (TCF_META_TYPE(dst->kind) << 12) | TCF_META_ID(src->kind);
 }
-	
+
 
 static inline struct bstr *
 parse_object(struct bstr *args, struct bstr *arg, struct tcf_meta_val *obj,
@@ -280,7 +280,7 @@ parse_object(struct bstr *args, struct bstr *arg, struct tcf_meta_val *obj,
 
 	if (left) {
 		struct tcf_meta_val *right = obj;
-		
+
 		if (TCF_META_TYPE(right->kind) == TCF_META_TYPE(left->kind))
 			goto compatible;
 
@@ -301,7 +301,7 @@ parse_object(struct bstr *args, struct bstr *arg, struct tcf_meta_val *obj,
 				right->kind = overwrite_type(right, left);
 			else
 				goto not_compatible;
-		} else 
+		} else
 			goto not_compatible;
 	}
 
@@ -318,7 +318,7 @@ compatible:
 				return PARSE_FAILURE;
 			}
 			a = bstr_next(a);
-			
+
 			shift = bstrtoul(a);
 			if (shift == LONG_MAX) {
 				PARSE_ERR(a, "meta: invalid shift, must " \
@@ -336,7 +336,7 @@ compatible:
 				return PARSE_FAILURE;
 			}
 			a = bstr_next(a);
-			
+
 			mask = bstrtoul(a);
 			if (mask == LONG_MAX) {
 				PARSE_ERR(a, "meta: invalid mask, must be " \
@@ -400,7 +400,7 @@ static int meta_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 		return -1;
 	else if (a != NULL)
 		return PARSE_ERR(a, "meta: unexpected trailer");
-	
+
 
 	addraw_l(n, MAX_MSG, hdr, sizeof(*hdr));
 

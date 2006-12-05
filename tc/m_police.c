@@ -7,8 +7,8 @@
  *		2 of the License, or (at your option) any later version.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
- * FIXES:       19990619 - J Hadi Salim (hadi@cyberus.ca) 
- *		simple addattr packaging fix.            
+ * FIXES:       19990619 - J Hadi Salim (hadi@cyberus.ca)
+ *		simple addattr packaging fix.
  *		2002: J Hadi Salim - Add tc action extensions syntax
  *
  */
@@ -37,8 +37,8 @@ static void usage(void)
 	fprintf(stderr, "Usage: ... police rate BPS burst BYTES[/BYTES] [ mtu BYTES[/BYTES] ]\n");
 	fprintf(stderr, "                [ peakrate BPS ] [ avrate BPS ]\n");
 	fprintf(stderr, "                [ ACTIONTERM ]\n");
-	fprintf(stderr, "Old Syntax ACTIONTERM := action <EXCEEDACT>[/NOTEXCEEDACT] \n"); 
-	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT] \n"); 
+	fprintf(stderr, "Old Syntax ACTIONTERM := action <EXCEEDACT>[/NOTEXCEEDACT] \n");
+	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT] \n");
 	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue \n");
 	fprintf(stderr, "Where:  pipe is only valid for new syntax \n");
 	exit(-1);
@@ -133,7 +133,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 	__u32 avrate = 0;
 	int presult = 0;
 	unsigned buffer=0, mtu=0, mpu=0;
-	int Rcell_log=-1, Pcell_log = -1; 
+	int Rcell_log=-1, Pcell_log = -1;
 	struct rtattr *tail;
 
 	memset(&p, 0, sizeof(p));
@@ -304,7 +304,7 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	return act_parse_police(NULL,argc_p,argv_p,tca_id,n);
 }
 
-int 
+int
 print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 {
 	SPRINT_BUF(b1);
@@ -350,7 +350,7 @@ print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	return 0;
 }
 
-int 
+int
 tc_print_police(FILE *f, struct rtattr *arg) {
 	return print_police(&police_action_util,f,arg);
 }

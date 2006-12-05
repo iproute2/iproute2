@@ -42,7 +42,7 @@ int resolve_hosts;
 DB	*dbase;
 char	*dbname = "/var/lib/arpd/arpd.db";
 
-int	ifnum;	
+int	ifnum;
 int	*ifvec;
 char	**ifnames;
 
@@ -53,7 +53,7 @@ struct dbkey
 };
 
 #define IS_NEG(x)	(((__u8*)(x))[0] == 0xFF)
-#define NEG_TIME(x)	(((x)[2]<<24)|((x)[3]<<16)|((x)[4]<<8)|(x)[5]) 
+#define NEG_TIME(x)	(((x)[2]<<24)|((x)[3]<<16)|((x)[4]<<8)|(x)[5])
 #define NEG_AGE(x)	((__u32)time(NULL) - NEG_TIME((__u8*)x))
 #define NEG_VALID(x)	(NEG_AGE(x) < negative_timeout)
 #define NEG_CNT(x)	(((__u8*)(x))[1])
@@ -485,7 +485,7 @@ void get_arp_pkt(void)
 	DBT dbkey, dbdat;
 	int n;
 
-	n = recvfrom(pset[0].fd, buf, sizeof(buf), MSG_DONTWAIT, 
+	n = recvfrom(pset[0].fd, buf, sizeof(buf), MSG_DONTWAIT,
 		     (struct sockaddr*)&sll, &sll_len);
 	if (n < 0) {
 		if (errno != EINTR && errno != EAGAIN)
@@ -510,7 +510,7 @@ void get_arp_pkt(void)
 	key.iface = sll.sll_ifindex;
 	memcpy(&key.addr, (char*)(a+1) + a->ar_hln, 4);
 
-	/* DAD message, ignore. */ 
+	/* DAD message, ignore. */
 	if (key.addr == 0)
 		return;
 
@@ -538,7 +538,7 @@ void catch_signal(int sig, void (*handler)(int))
 	sa.sa_handler = handler;
 #ifdef SA_INTERRUPT
 	sa.sa_flags = SA_INTERRUPT;
-#endif	
+#endif
 	sigaction(sig, &sa, NULL);
 }
 
@@ -728,7 +728,7 @@ int main(int argc, char **argv)
 		DBT dbkey, dbdat;
 		printf("%-8s %-15s %s\n", "#Ifindex", "IP", "MAC");
 		while (dbase->seq(dbase, &dbkey, &dbdat, R_NEXT) == 0) {
-			struct dbkey *key = dbkey.data; 
+			struct dbkey *key = dbkey.data;
 			if (handle_if(key->iface)) {
 				if (!IS_NEG(dbdat.data)) {
 					char b1[18];

@@ -6,8 +6,8 @@
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:  J Hadi Salim (hadi@cyberus.ca) 
- * 
+ * Authors:  J Hadi Salim (hadi@cyberus.ca)
+ *
  */
 
 #include <stdio.h>

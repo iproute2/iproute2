@@ -77,7 +77,7 @@ static int match(const char *id)
 	return 0;
 }
 
-static int get_nlmsg(const struct sockaddr_nl *who, 
+static int get_nlmsg(const struct sockaddr_nl *who,
 		     struct nlmsghdr *m, void *arg)
 {
 	struct ifinfomsg *ifi = NLMSG_DATA(m);
@@ -442,11 +442,11 @@ void update_db(int interval)
 				int i;
 				for (i = 0; i < MAXS; i++) {
 					if ((long)(h1->ival[i] - n->ival[i]) < 0) {
-						memset(n->ival, 0, sizeof(n->ival)); 
+						memset(n->ival, 0, sizeof(n->ival));
 						break;
 					}
 				}
-				for (i = 0; i < MAXS; i++) { 
+				for (i = 0; i < MAXS; i++) {
 					double sample;
 					unsigned long incr = h1->ival[i] - n->ival[i];
 					n->val[i] += incr;

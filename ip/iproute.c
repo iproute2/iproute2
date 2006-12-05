@@ -281,7 +281,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if ((oif^filter.oif)&filter.oifmask)
 			return 0;
 	}
-	if (filter.flushb && 
+	if (filter.flushb &&
 	    r->rtm_family == AF_INET6 &&
 	    r->rtm_dst_len == 0 &&
 	    r->rtm_type == RTN_UNREACHABLE &&
@@ -363,7 +363,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len) {
-		fprintf(fp, "via %s ", 
+		fprintf(fp, "via %s ",
 			format_host(r->rtm_family,
 				    RTA_PAYLOAD(tb[RTA_GATEWAY]),
 				    RTA_DATA(tb[RTA_GATEWAY]),
@@ -384,7 +384,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		/* Do not use format_host(). It is our local addr
 		   and symbolic name will not be useful.
 		 */
-		fprintf(fp, " src %s ", 
+		fprintf(fp, " src %s ",
 			rt_addr_n2a(r->rtm_family,
 				    RTA_PAYLOAD(tb[RTA_PREFSRC]),
 				    RTA_DATA(tb[RTA_PREFSRC]),
@@ -557,7 +557,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			if (nh->rtnh_len > sizeof(*nh)) {
 				parse_rtattr(tb, RTA_MAX, RTNH_DATA(nh), nh->rtnh_len - sizeof(*nh));
 				if (tb[RTA_GATEWAY]) {
-					fprintf(fp, " via %s ", 
+					fprintf(fp, " via %s ",
 						format_host(r->rtm_family,
 							    RTA_PAYLOAD(tb[RTA_GATEWAY]),
 							    RTA_DATA(tb[RTA_GATEWAY]),
@@ -1020,7 +1020,7 @@ static int iproute_flush_cache(void)
 	}
 
 	len = strlen (buffer);
-		
+
 	if ((write (flush_fd, (void *)buffer, len)) < len) {
 		fprintf (stderr, "Cannot flush routing cache\n");
 		return -1;
@@ -1292,7 +1292,7 @@ int iproute_get(int argc, char **argv)
 	req.r.rtm_src_len = 0;
 	req.r.rtm_dst_len = 0;
 	req.r.rtm_tos = 0;
-	
+
 	while (argc > 0) {
 		if (strcmp(*argv, "tos") == 0 ||
 		    matches(*argv, "dsfield") == 0) {
@@ -1434,7 +1434,7 @@ int do_iproute(int argc, char **argv)
 {
 	if (argc < 1)
 		return iproute_list_or_flush(0, NULL, 0);
-	
+
 	if (matches(*argv, "add") == 0)
 		return iproute_modify(RTM_NEWROUTE, NLM_F_CREATE|NLM_F_EXCL,
 				      argc-1, argv+1);

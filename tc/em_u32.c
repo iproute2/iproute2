@@ -96,7 +96,7 @@ static int u32_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 		offset = bstrtoul(a);
 	} else
 		offset = bstrtoul(a);
-		
+
 	if (offset == ULONG_MAX)
 		return PARSE_ERR(a, "u32: invalid offset");
 

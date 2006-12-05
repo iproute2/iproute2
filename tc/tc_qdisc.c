@@ -154,7 +154,7 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 		req.t.tcm_ifindex = idx;
 	}
 
- 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0) 
+ 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
 		return 2;
 
 	return 0;
@@ -162,8 +162,8 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 
 static int filter_ifindex;
 
-int print_qdisc(const struct sockaddr_nl *who, 
-		       struct nlmsghdr *n, 
+int print_qdisc(const struct sockaddr_nl *who,
+		       struct nlmsghdr *n,
 		       void *arg)
 {
 	FILE *fp = (FILE*)arg;
@@ -209,13 +209,13 @@ int print_qdisc(const struct sockaddr_nl *who,
 	if (t->tcm_info != 1) {
 		fprintf(fp, "refcnt %d ", t->tcm_info);
 	}
-	/* pfifo_fast is generic enough to warrant the hardcoding --JHS */	
-		
+	/* pfifo_fast is generic enough to warrant the hardcoding --JHS */
+
 	if (0 == strcmp("pfifo_fast", RTA_DATA(tb[TCA_KIND])))
 		q = get_qdisc_kind("prio");
 	else
 		q = get_qdisc_kind(RTA_DATA(tb[TCA_KIND]));
-	
+
 	if (tb[TCA_OPTIONS]) {
 		if (q)
 			q->print_qopt(q, fp, tb[TCA_OPTIONS]);
@@ -249,7 +249,7 @@ int tc_qdisc_list(int argc, char **argv)
 	memset(&t, 0, sizeof(t));
 	t.tcm_family = AF_UNSPEC;
 	memset(&d, 0, sizeof(d));
-	
+
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();

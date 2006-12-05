@@ -38,7 +38,7 @@ static const char *ipx_ntop1(const struct ipx_addr *addr, char *str, size_t len)
 
 	*(str + pos) = '.';
 	pos++;
-	
+
 	for(i = 0; i < 6; i++) {
 		if (do_digit(str + pos, addr->ipx_node[i], 1, &pos, len))
 			return str;

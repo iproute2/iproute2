@@ -170,7 +170,7 @@ extern struct iptables_match *find_match(const char *name, enum ipt_tryload, str
 
 extern int delete_chain(const ipt_chainlabel chain, int verbose,
 			iptc_handle_t *handle);
-extern int flush_entries(const ipt_chainlabel chain, int verbose, 
+extern int flush_entries(const ipt_chainlabel chain, int verbose,
 			iptc_handle_t *handle);
 extern int for_each_chain(int (*fn)(const ipt_chainlabel, int, iptc_handle_t *),
 		int verbose, int builtinstoo, iptc_handle_t *handle);
