@@ -92,6 +92,10 @@ struct xfrm_filter {
 	__u32 index_mask;
 	__u8 action_mask;
 	__u32 priority_mask;
+
+	__u8 ptype;
+	__u8 ptype_mask;
+
 };
 #define XFRM_FILTER_MASK_FULL (~0)
 

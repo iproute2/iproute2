@@ -709,6 +709,7 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 			    const char *title)
 {
 	char buf[STRBUF_SIZE];
+	__u8 ptype = XFRM_POLICY_TYPE_MAIN;
 
 	memset(buf, '\0', sizeof(buf));
 
@@ -752,6 +753,32 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 	if (show_stats)
 		fprintf(fp, "index %u ", xpinfo->index);
 	fprintf(fp, "priority %u ", xpinfo->priority);
+
+	fprintf(fp, "ptype ");
+
+	if (tb[XFRMA_POLICY_TYPE]) {
+		struct xfrm_userpolicy_type *upt;
+
+		if (RTA_PAYLOAD(tb[XFRMA_POLICY_TYPE]) < sizeof(*upt))
+			fprintf(fp, "(ERROR truncated)");
+
+		upt = (struct xfrm_userpolicy_type *)RTA_DATA(tb[XFRMA_POLICY_TYPE]);
+		ptype = upt->type;
+	}
+
+	switch (ptype) {
+	case XFRM_POLICY_TYPE_MAIN:
+		fprintf(fp, "main");
+		break;
+	case XFRM_POLICY_TYPE_SUB:
+		fprintf(fp, "sub");
+		break;
+	default:
+		fprintf(fp, "%u", ptype);
+		break;
+	}
+	fprintf(fp, " ");
+
 	if (show_stats > 0) {
 		fprintf(fp, "share %s ", strxf_share(xpinfo->share));
 		fprintf(fp, "flag 0x%s", strxf_mask8(xpinfo->flags));
