@@ -108,6 +108,48 @@ static int xfrm_acquire_print(const struct sockaddr_nl *who,
 	return 0;
 }
 
+static int xfrm_report_print(const struct sockaddr_nl *who,
+			     struct nlmsghdr *n, void *arg)
+{
+	FILE *fp = (FILE*)arg;
+	struct xfrm_user_report *xrep = NLMSG_DATA(n);
+	int len = n->nlmsg_len;
+	struct rtattr * tb[XFRMA_MAX+1];
+	__u16 family;
+
+	if (n->nlmsg_type != XFRM_MSG_REPORT) {
+		fprintf(stderr, "Not a report: %08x %08x %08x\n",
+			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
+		return 0;
+	}
+
+	len -= NLMSG_LENGTH(sizeof(*xrep));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
+	}
+
+	family = xrep->sel.family;
+	if (family == AF_UNSPEC)
+		family = preferred_family;
+
+	fprintf(fp, "report ");
+
+	fprintf(fp, "proto %s ", strxf_xfrmproto(xrep->proto));
+	fprintf(fp, "%s", _SL_);
+
+	xfrm_selector_print(&xrep->sel, family, fp, "  sel ");
+
+	parse_rtattr(tb, XFRMA_MAX, XFRMREP_RTA(xrep), len);
+
+	xfrm_xfrma_print(tb, family, fp, "  ");
+
+	if (oneline)
+		fprintf(fp, "\n");
+
+	return 0;
+}
+
 static int xfrm_accept_msg(const struct sockaddr_nl *who,
 			   struct nlmsghdr *n, void *arg)
 {
@@ -144,6 +186,10 @@ static int xfrm_accept_msg(const struct sockaddr_nl *who,
 		fprintf(fp, "Flushed policy\n");
 		return 0;
 	}
+	if (n->nlmsg_type == XFRM_MSG_REPORT) {
+		xfrm_report_print(who, n, arg);
+		return 0;
+	}
 	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&
 	    n->nlmsg_type != NLMSG_DONE) {
 		fprintf(fp, "Unknown message: %08d 0x%08x 0x%08x\n",
@@ -162,6 +208,7 @@ int do_xfrm_monitor(int argc, char **argv)
 	int lexpire=0;
 	int lpolicy=0;
 	int lsa=0;
+	int lreport=0;
 
 	rtnl_close(&rth);
 
@@ -181,6 +228,9 @@ int do_xfrm_monitor(int argc, char **argv)
 		} else if (matches(*argv, "policy") == 0) {
 			lpolicy=1;
 			groups = 0;
+		} else if (matches(*argv, "report") == 0) {
+			lreport=1;
+			groups = 0;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -198,6 +248,8 @@ int do_xfrm_monitor(int argc, char **argv)
 		groups |= XFRMGRP_SA;
 	if (lpolicy)
 		groups |= XFRMGRP_POLICY;
+	if (lreport)
+		groups |= XFRMGRP_REPORT;
 
 	if (file) {
 		FILE *fp;
