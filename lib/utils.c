@@ -330,8 +330,8 @@ int matches(const char *cmd, const char *pattern)
 
 int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits)
 {
-	__u32 *a1 = a->data;
-	__u32 *a2 = b->data;
+	const __u32 *a1 = a->data;
+	const __u32 *a2 = b->data;
 	int words = bits >> 0x05;
 
 	bits &= 0x1f;
