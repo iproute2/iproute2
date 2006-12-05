@@ -35,6 +35,9 @@
 #ifndef IPPPROTO_DCCP
 # define IPPROTO_DCCP	33
 #endif
+#ifndef IPPROTO_MH
+# define IPPROTO_MH	135
+#endif
 
 #define XFRMS_RTA(x)  ((struct rtattr*)(((char*)(x)) + NLMSG_ALIGN(sizeof(struct xfrm_usersa_info))))
 #define XFRMS_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct xfrm_usersa_info))

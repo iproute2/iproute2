@@ -483,6 +483,14 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		if (sel->dport_mask)
 			fprintf(fp, "code %u ", ntohs(sel->dport));
 		break;
+	case IPPROTO_MH:
+		if (sel->sport_mask)
+			fprintf(fp, "type %u ", ntohs(sel->sport));
+		if (sel->dport_mask) {
+			if (show_stats > 0)
+				fprintf(fp, "(dport) 0x%.4x ", sel->dport);
+		}
+		break;
 	}
 
 	if (sel->ifindex > 0) {
@@ -1111,6 +1119,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 		switch (sel->proto) {
 		case IPPROTO_ICMP:
 		case IPPROTO_ICMPV6:
+		case IPPROTO_MH:
 			break;
 		default:
 			fprintf(stderr, "\"type\" and \"code\" are invalid with proto=%s\n", strxf_proto(sel->proto));
