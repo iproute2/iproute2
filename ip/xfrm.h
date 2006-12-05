@@ -110,6 +110,8 @@ int do_xfrm_policy(int argc, char **argv);
 int do_xfrm_monitor(int argc, char **argv);
 
 int xfrm_addr_match(xfrm_address_t *x1, xfrm_address_t *x2, int bits);
+int xfrm_xfrmproto_is_ipsec(__u8 proto);
+int xfrm_xfrmproto_is_ro(__u8 proto);
 int xfrm_xfrmproto_getbyname(char *name);
 int xfrm_algotype_getbyname(char *name);
 const char *strxf_xfrmproto(__u8 proto);

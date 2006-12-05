@@ -94,6 +94,19 @@ int xfrm_addr_match(xfrm_address_t *x1, xfrm_address_t *x2, int bits)
 	return 0;
 }
 
+int xfrm_xfrmproto_is_ipsec(__u8 proto)
+{
+	return (proto ==  IPPROTO_ESP ||
+		proto ==  IPPROTO_AH  ||
+		proto ==  IPPROTO_COMP);
+}
+
+int xfrm_xfrmproto_is_ro(__u8 proto)
+{
+	return (proto ==  IPPROTO_ROUTING ||
+		proto ==  IPPROTO_DSTOPTS);
+}
+
 struct typeent {
 	const char *t_name;
 	int t_type;
@@ -101,6 +114,7 @@ struct typeent {
 
 static const struct typeent xfrmproto_types[]= {
 	{ "esp", IPPROTO_ESP }, { "ah", IPPROTO_AH }, { "comp", IPPROTO_COMP },
+	{ "route2", IPPROTO_ROUTING }, { "hao", IPPROTO_DSTOPTS },
 	{ NULL, -1 }
 };
 
@@ -276,13 +290,19 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 
 	fprintf(fp, "mode ");
 	switch (mode) {
-	case 0:
+	case XFRM_MODE_TRANSPORT:
 		fprintf(fp, "transport");
 		break;
-	case 1:
+	case XFRM_MODE_TUNNEL:
 		fprintf(fp, "tunnel");
 		break;
-	case 4:
+	case XFRM_MODE_ROUTEOPTIMIZATION:
+		fprintf(fp, "ro");
+		break;
+	case XFRM_MODE_IN_TRIGGER:
+		fprintf(fp, "in_trigger");
+		break;
+	case XFRM_MODE_BEET:
 		fprintf(fp, "beet");
 		break;
 	default:
@@ -643,6 +663,48 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		xfrm_tmpl_print((struct xfrm_user_tmpl *) RTA_DATA(rta),
 				RTA_PAYLOAD(rta), family, fp, prefix);
 	}
+
+	if (tb[XFRMA_COADDR]) {
+		char abuf[256];
+		xfrm_address_t *coa;
+
+		if (prefix)
+			fprintf(fp, prefix);
+		fprintf(fp, "coa ");
+
+		coa = (xfrm_address_t *)RTA_DATA(tb[XFRMA_COADDR]);
+
+		if (RTA_PAYLOAD(tb[XFRMA_COADDR]) < sizeof(*coa)) {
+			fprintf(fp, "(ERROR truncated)");
+			fprintf(fp, "%s", _SL_);
+			return;
+		}
+
+		memset(abuf, '\0', sizeof(abuf));
+		fprintf(fp, "%s",
+			rt_addr_n2a(family, sizeof(*coa), coa, 
+				    abuf, sizeof(abuf)));
+		fprintf(fp, "%s", _SL_);
+	}
+
+	if (tb[XFRMA_LASTUSED]) {
+		__u64 lastused;
+
+		if (prefix)
+			fprintf(fp, prefix);
+		fprintf(fp, "lastused ");
+
+		if (RTA_PAYLOAD(tb[XFRMA_LASTUSED]) < sizeof(lastused)) {
+			fprintf(fp, "(ERROR truncated)");
+			fprintf(fp, "%s", _SL_);
+			return;
+		}
+
+		lastused = *(__u64 *)RTA_DATA(tb[XFRMA_LASTUSED]);
+
+		fprintf(fp, "%s", strxf_time(lastused));
+		fprintf(fp, "%s", _SL_);
+	}
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)
@@ -659,12 +721,13 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 			    const char *title)
 {
 	char buf[STRBUF_SIZE];
+	int force_spi = xfrm_xfrmproto_is_ipsec(xsinfo->id.proto);
 
 	memset(buf, '\0', sizeof(buf));
 
 	xfrm_id_info_print(&xsinfo->saddr, &xsinfo->id, xsinfo->mode,
-			   xsinfo->reqid, xsinfo->family, 1, fp, prefix,
-			   title);
+			   xsinfo->reqid, xsinfo->family, force_spi, fp,
+			   prefix, title);
 
 	if (prefix)
 		STRBUF_CAT(buf, prefix);
@@ -680,6 +743,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		fprintf(fp, "flag ");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_NOECN, "noecn");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_DECAP_DSCP, "decap-dscp");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_WILDRECV, "wildrecv");
 		if (flags)
 			fprintf(fp, "%x", flags);
 		if (show_stats > 0)
@@ -884,11 +948,15 @@ int xfrm_mode_parse(__u8 *mode, int *argcp, char ***argvp)
 	char **argv = *argvp;
 
 	if (matches(*argv, "transport") == 0)
-		*mode = 0;
+		*mode = XFRM_MODE_TRANSPORT;
 	else if (matches(*argv, "tunnel") == 0)
-		*mode = 1;
+		*mode = XFRM_MODE_TUNNEL;
+	else if (matches(*argv, "ro") == 0)
+		*mode = XFRM_MODE_ROUTEOPTIMIZATION;
+	else if (matches(*argv, "in_trigger") == 0)
+		*mode = XFRM_MODE_IN_TRIGGER;
 	else if (matches(*argv, "beet") == 0)
-		*mode = 4;
+		*mode = XFRM_MODE_BEET;
 	else
 		invarg("\"MODE\" is invalid", *argv);
 

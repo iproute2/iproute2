@@ -82,12 +82,13 @@ static void usage(void)
 	fprintf(stderr, "TMPL := ID [ mode MODE ] [ reqid REQID ] [ level LEVEL ]\n");
 	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM_PROTO ] [ spi SPI ]\n");
 
-	//fprintf(stderr, "XFRM_PROTO := [ esp | ah | comp ]\n");
 	fprintf(stderr, "XFRM_PROTO := [ ");
 	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ESP));
 	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_AH));
-	fprintf(stderr, "%s", strxf_xfrmproto(IPPROTO_COMP));
-	fprintf(stderr, " ]\n");
+	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_COMP));
+	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ROUTING));
+	fprintf(stderr, "%s ", strxf_xfrmproto(IPPROTO_DSTOPTS));
+	fprintf(stderr, "]\n");
 
  	fprintf(stderr, "MODE := [ transport | tunnel | beet ](default=transport)\n");
  	//fprintf(stderr, "REQID - number(default=0)\n");
