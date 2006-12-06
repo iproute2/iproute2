@@ -65,7 +65,7 @@ action police mtu 4000 rate 1500kbit burst 90k
 { drop, pass, reclassify, continue}
 (If you have others, no listed here give me a reason and we will add them)
 +drop says to drop the packet
-+pass says to accept it
++pass and ok (are equivalent) says to accept it
 +reclassify requests for reclassification of the packet
 +continue requests for next lookup to match
 
