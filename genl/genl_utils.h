@@ -16,7 +16,7 @@ extern int genl_ctrl_resolve_family(const char *family);
 /* seems to have dissapeared from netlink.h */
 static inline __u32 nl_mgrp(__u32 group)
 {
-	return group ? 1 << group : 0;
+	return group ? (1 << (group -1)) : 0;
 }
 
 #endif
