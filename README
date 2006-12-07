@@ -11,6 +11,8 @@ How to compile this.
 KERNEL_INCLUDE should point to correct linux kernel include directory.
 Default (/usr/src/linux/include) is right as rule.
 
+arpd needs to have the db4 development libraries. For debian
+users this is the package with a name like libdb4.x-dev.
 DBM_INCLUDE points to the directory with db_185.h which
 is the include file used by arpd to get to the old format Berkely
 database routines.  Often this is in the db-devel package.
