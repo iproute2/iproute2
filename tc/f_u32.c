@@ -779,7 +779,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 	} sel;
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
-	int sel_ok = 0;
+	int sel_ok = 0, terminal_ok = 0;
 	int sample_ok = 0;
 	__u32 htid = 0;
 	__u32 order = 0;
@@ -924,6 +924,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				fprintf(stderr, "Illegal \"action\"\n");
 				return -1;
 			}
+			terminal_ok++;
 			continue;
 
 		} else if (matches(*argv, "police") == 0) {
@@ -932,6 +933,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 				fprintf(stderr, "Illegal \"police\"\n");
 				return -1;
 			}
+			terminal_ok++;
 			continue;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
@@ -944,6 +946,10 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 		argc--; argv++;
 	}
 
+	/* We dont necessarily need class/flowids */
+	if (terminal_ok) 
+		sel.sel.flags |= TC_U32_TERMINAL;
+	
 	if (order) {
 		if (TC_U32_NODE(t->tcm_handle) && order != TC_U32_NODE(t->tcm_handle)) {
 			fprintf(stderr, "\"order\" contradicts \"handle\"\n");
