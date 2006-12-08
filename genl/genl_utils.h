@@ -1,6 +1,7 @@
 #ifndef _TC_UTIL_H_
 #define _TC_UTIL_H_ 1
 
+#include "utils.h"
 #include "linux/genetlink.h"
 
 struct genl_util
@@ -12,11 +13,5 @@ struct genl_util
 };
 
 extern int genl_ctrl_resolve_family(const char *family);
-
-/* seems to have dissapeared from netlink.h */
-static inline __u32 nl_mgrp(__u32 group)
-{
-	return group ? (1 << (group -1)) : 0;
-}
 
 #endif

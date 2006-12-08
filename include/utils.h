@@ -127,6 +127,12 @@ static __inline__ int get_user_hz(void)
 	return __iproute2_user_hz_internal;
 }
 
+static inline __u32 nl_mgrp(__u32 group)
+{
+	return group ? (1 << (group -1)) : 0;
+}
+
+
 int print_timestamp(FILE *fp);
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
