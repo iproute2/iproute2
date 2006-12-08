@@ -292,17 +292,17 @@ int do_xfrm_monitor(int argc, char **argv)
 	}
 
 	if (lacquire)
-		groups |= XFRMGRP_ACQUIRE;
+		groups |= nl_mgrp(XFRMNLGRP_ACQUIRE);
 	if (lexpire)
-		groups |= XFRMGRP_EXPIRE;
+		groups |= nl_mgrp(XFRMNLGRP_EXPIRE);
 	if (lsa)
-		groups |= XFRMGRP_SA;
+		groups |= nl_mgrp(XFRMNLGRP_SA);
 	if (lpolicy)
-		groups |= XFRMGRP_POLICY;
+		groups |= nl_mgrp(XFRMNLGRP_POLICY);
 	if (laevent)
-		groups |= (1 <<  (XFRMNLGRP_AEVENTS - 1));
+		groups |= nl_mgrp(XFRMNLGRP_AEVENTS);
 	if (lreport)
-		groups |= XFRMGRP_REPORT;
+		groups |= nl_mgrp(XFRMNLGRP_REPORT);
 
 	if (file) {
 		FILE *fp;
