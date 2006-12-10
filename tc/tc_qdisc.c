@@ -29,7 +29,7 @@ static int usage(void);
 
 static int usage(void)
 {
-	fprintf(stderr, "Usage: tc qdisc [ add | del | replace | change | get ] dev STRING\n");
+	fprintf(stderr, "Usage: tc qdisc [ add | del | replace | change | show ] dev STRING\n");
 	fprintf(stderr, "       [ handle QHANDLE ] [ root | ingress | parent CLASSID ]\n");
 	fprintf(stderr, "       [ estimator INTERVAL TIME_CONSTANT ]\n");
 	fprintf(stderr, "       [ [ QDISC_KIND ] [ help | OPTIONS ] ]\n");
@@ -316,8 +316,10 @@ int do_qdisc(int argc, char **argv)
 	if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0
 	    || matches(*argv, "lst") == 0)
 		return tc_qdisc_list(argc-1, argv+1);
-	if (matches(*argv, "help") == 0)
+	if (matches(*argv, "help") == 0) {
 		usage();
+		return 0;
+        }
 	fprintf(stderr, "Command \"%s\" is unknown, try \"tc qdisc help\".\n", *argv);
 	return -1;
 }
