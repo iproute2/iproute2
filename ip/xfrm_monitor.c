@@ -176,12 +176,12 @@ static int xfrm_ae_print(const struct sockaddr_nl *who,
 	xfrm_ae_flags_print(id->flags, arg);
 	fprintf(fp,"\n\t");
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s ", rt_addr_n2a(id->sa_id.family, 
-		sizeof(id->saddr), &id->saddr, 
+	fprintf(fp, "src %s ", rt_addr_n2a(id->sa_id.family,
+		sizeof(id->saddr), &id->saddr,
 		abuf, sizeof(abuf)));
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s ", rt_addr_n2a(id->sa_id.family, 
-		sizeof(id->sa_id.daddr), &id->sa_id.daddr, 
+	fprintf(fp, "dst %s ", rt_addr_n2a(id->sa_id.family,
+		sizeof(id->sa_id.daddr), &id->sa_id.daddr,
 		abuf, sizeof(abuf)));
 	fprintf(fp, " reqid 0x%x", id->reqid);
 	fprintf(fp, " protocol %s ", strxf_proto(id->sa_id.proto));

@@ -138,7 +138,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (tb[RTA_FWMASK] &&
 		    (mask = *(__u32*)RTA_DATA(tb[RTA_FWMASK])) != 0xFFFFFFFF)
 			fprintf(fp, "fwmark 0x%x/0x%x ", mark, mask);
-		else 
+		else
 			fprintf(fp, "fwmark 0x%x ", mark);
 	}
 

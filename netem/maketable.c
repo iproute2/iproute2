@@ -192,7 +192,7 @@ printtable(const short *table, int limit)
 	}
 }
 
-int 
+int
 main(int argc, char **argv)
 {
 	FILE *fp;

@@ -162,7 +162,7 @@ static int print_ctrl(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	int len = n->nlmsg_len;
 	struct rtattr *attrs;
 	FILE *fp = (FILE *) arg;
-	__u32 ctrl_v = 0x1; 
+	__u32 ctrl_v = 0x1;
 
 	if (n->nlmsg_type !=  GENL_ID_CTRL) {
 		fprintf(stderr, "Not a controller message, nlmsg_len=%d "
