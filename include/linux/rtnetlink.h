@@ -263,6 +263,7 @@ enum rtattr_type_t
 	RTA_SESSION,
 	RTA_MP_ALGO,
 	RTA_TABLE,
+	RTA_FWMASK,
 	__RTA_MAX
 };
 

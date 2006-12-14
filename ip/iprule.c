@@ -37,7 +37,7 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip rule [ list | add | del | flush ] SELECTOR ACTION\n");
-	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK ]\n");
+	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n");
 	fprintf(stderr, "            [ dev STRING ] [ pref NUMBER ]\n");
 	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
 	fprintf(stderr, "          [ prohibit | reject | unreachable ]\n");
@@ -129,8 +129,17 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		SPRINT_BUF(b1);
 		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
 	}
-	if (tb[RTA_PROTOINFO]) {
-		fprintf(fp, "fwmark %#x ", *(__u32*)RTA_DATA(tb[RTA_PROTOINFO]));
+	if (tb[RTA_PROTOINFO] || tb[RTA_FWMASK]) {
+		__u32 mark = 0, mask = 0;
+
+		if (tb[RTA_PROTOINFO])
+			mark = *(__u32*)RTA_DATA(tb[RTA_PROTOINFO]);
+
+		if (tb[RTA_FWMASK] &&
+		    (mask = *(__u32*)RTA_DATA(tb[RTA_FWMASK])) != 0xFFFFFFFF)
+			fprintf(fp, "fwmark 0x%x/0x%x ", mark, mask);
+		else 
+			fprintf(fp, "fwmark 0x%x ", mark);
 	}
 
 	if (tb[RTA_IIF]) {
@@ -252,11 +261,19 @@ static int iprule_modify(int cmd, int argc, char **argv)
 				invarg("TOS value is invalid\n", *argv);
 			req.r.rtm_tos = tos;
 		} else if (strcmp(*argv, "fwmark") == 0) {
-			__u32 fwmark;
+			char *slash;
+			__u32 fwmark, fwmask;
 			NEXT_ARG();
+			if ((slash = strchr(*argv, '/')) != NULL)
+				*slash = '\0';
 			if (get_u32(&fwmark, *argv, 0))
 				invarg("fwmark value is invalid\n", *argv);
 			addattr32(&req.n, sizeof(req), RTA_PROTOINFO, fwmark);
+			if (slash) {
+				if (get_u32(&fwmask, slash+1, 0))
+					invarg("fwmask value is invalid\n", slash+1);
+				addattr32(&req.n, sizeof(req), RTA_FWMASK, fwmask);
+			}
 		} else if (matches(*argv, "realms") == 0) {
 			__u32 realm;
 			NEXT_ARG();
