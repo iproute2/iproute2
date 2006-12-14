@@ -17,8 +17,14 @@
 
 #include <linux/netfilter_ipv4.h>
 
-#define IPT_FUNCTION_MAXNAMELEN 30
-#define IPT_TABLE_MAXNAMELEN 32
+#include <linux/netfilter/x_tables.h>
+
+#define IPT_FUNCTION_MAXNAMELEN XT_FUNCTION_MAXNAMELEN
+#define IPT_TABLE_MAXNAMELEN XT_FUNCTION_MAXNAMELEN
+#define ipt_match xt_match
+#define ipt_target xt_target
+#define ipt_table xt_table
+#define ipt_get_revision xt_get_revision
 
 /* Yes, Virginia, you have to zero the padding. */
 struct ipt_ip {
@@ -38,70 +44,16 @@ struct ipt_ip {
 	u_int8_t invflags;
 };
 
-struct ipt_entry_match
-{
-	union {
-		struct {
-			u_int16_t match_size;
+#define ipt_entry_match xt_entry_match
+#define ipt_entry_target xt_entry_target
+#define ipt_standard_target xt_standard_target
 
-			/* Used by userspace */
-			char name[IPT_FUNCTION_MAXNAMELEN-1];
-
-			u_int8_t revision;
-		} user;
-		struct {
-			u_int16_t match_size;
-
-			/* Used inside the kernel */
-			struct ipt_match *match;
-		} kernel;
-
-		/* Total length */
-		u_int16_t match_size;
-	} u;
-
-	unsigned char data[0];
-};
-
-struct ipt_entry_target
-{
-	union {
-		struct {
-			u_int16_t target_size;
-
-			/* Used by userspace */
-			char name[IPT_FUNCTION_MAXNAMELEN-1];
-
-			u_int8_t revision;
-		} user;
-		struct {
-			u_int16_t target_size;
-
-			/* Used inside the kernel */
-			struct ipt_target *target;
-		} kernel;
-
-		/* Total length */
-		u_int16_t target_size;
-	} u;
-
-	unsigned char data[0];
-};
-
-struct ipt_standard_target
-{
-	struct ipt_entry_target target;
-	int verdict;
-};
-
-struct ipt_counters
-{
-	u_int64_t pcnt, bcnt;			/* Packet and byte counters */
-};
+#define ipt_counters xt_counters
 
 /* Values for "flag" field in struct ipt_ip (general ip structure). */
 #define IPT_F_FRAG		0x01	/* Set if rule is a fragment rule */
-#define IPT_F_MASK		0x01	/* All possible flag bits mask. */
+#define IPT_F_GOTO		0x02	/* Set if jump is a goto */
+#define IPT_F_MASK		0x03	/* All possible flag bits mask. */
 
 /* Values for "inv" field in struct ipt_ip. */
 #define IPT_INV_VIA_IN		0x01	/* Invert the sense of IN IFACE. */
@@ -110,7 +62,7 @@ struct ipt_counters
 #define IPT_INV_SRCIP		0x08	/* Invert the sense of SRC IP. */
 #define IPT_INV_DSTIP		0x10	/* Invert the sense of DST OP. */
 #define IPT_INV_FRAG		0x20	/* Invert the sense of FRAG. */
-#define IPT_INV_PROTO		0x40	/* Invert the sense of PROTO. */
+#define IPT_INV_PROTO		XT_INV_PROTO
 #define IPT_INV_MASK		0x7F	/* All possible flag bits mask. */
 
 /* This structure defines each of the firewall rules.  Consists of 3
@@ -132,7 +84,7 @@ struct ipt_entry
 	unsigned int comefrom;
 
 	/* Packet and byte counters. */
-	struct ipt_counters counters;
+	struct xt_counters counters;
 
 	/* The matches (if any), then the target. */
 	unsigned char elems[0];
@@ -141,8 +93,11 @@ struct ipt_entry
 /*
  * New IP firewall options for [gs]etsockopt at the RAW IP level.
  * Unlike BSD Linux inherits IP options so you don't have to use a raw
- * socket for this. Instead we check rights in the calls. */
-#define IPT_BASE_CTL		64	/* base for firewall socket options */
+ * socket for this. Instead we check rights in the calls.
+ *
+ * ATTENTION: check linux/in.h before adding new number here.
+ */
+#define IPT_BASE_CTL		64
 
 #define IPT_SO_SET_REPLACE	(IPT_BASE_CTL)
 #define IPT_SO_SET_ADD_COUNTERS	(IPT_BASE_CTL + 1)
@@ -154,42 +109,22 @@ struct ipt_entry
 #define IPT_SO_GET_REVISION_TARGET	(IPT_BASE_CTL + 3)
 #define IPT_SO_GET_MAX			IPT_SO_GET_REVISION_TARGET
 
-/* CONTINUE verdict for targets */
-#define IPT_CONTINUE 0xFFFFFFFF
+#define IPT_CONTINUE XT_CONTINUE
+#define IPT_RETURN XT_RETURN
 
-/* For standard target */
-#define IPT_RETURN (-NF_MAX_VERDICT - 1)
+#include <linux/netfilter/xt_tcpudp.h>
+#define ipt_udp xt_udp
+#define ipt_tcp xt_tcp
 
-/* TCP matching stuff */
-struct ipt_tcp
-{
-	u_int16_t spts[2];			/* Source port range. */
-	u_int16_t dpts[2];			/* Destination port range. */
-	u_int8_t option;			/* TCP Option iff non-zero*/
-	u_int8_t flg_mask;			/* TCP flags mask byte */
-	u_int8_t flg_cmp;			/* TCP flags compare byte */
-	u_int8_t invflags;			/* Inverse flags */
-};
+#define IPT_TCP_INV_SRCPT	XT_TCP_INV_SRCPT
+#define IPT_TCP_INV_DSTPT	XT_TCP_INV_DSTPT
+#define IPT_TCP_INV_FLAGS	XT_TCP_INV_FLAGS
+#define IPT_TCP_INV_OPTION	XT_TCP_INV_OPTION
+#define IPT_TCP_INV_MASK	XT_TCP_INV_MASK
 
-/* Values for "inv" field in struct ipt_tcp. */
-#define IPT_TCP_INV_SRCPT	0x01	/* Invert the sense of source ports. */
-#define IPT_TCP_INV_DSTPT	0x02	/* Invert the sense of dest ports. */
-#define IPT_TCP_INV_FLAGS	0x04	/* Invert the sense of TCP flags. */
-#define IPT_TCP_INV_OPTION	0x08	/* Invert the sense of option test. */
-#define IPT_TCP_INV_MASK	0x0F	/* All possible flags. */
-
-/* UDP matching stuff */
-struct ipt_udp
-{
-	u_int16_t spts[2];			/* Source port range. */
-	u_int16_t dpts[2];			/* Destination port range. */
-	u_int8_t invflags;			/* Inverse flags */
-};
-
-/* Values for "invflags" field in struct ipt_udp. */
-#define IPT_UDP_INV_SRCPT	0x01	/* Invert the sense of source ports. */
-#define IPT_UDP_INV_DSTPT	0x02	/* Invert the sense of dest ports. */
-#define IPT_UDP_INV_MASK	0x03	/* All possible flags. */
+#define IPT_UDP_INV_SRCPT	XT_UDP_INV_SRCPT
+#define IPT_UDP_INV_DSTPT	XT_UDP_INV_DSTPT
+#define IPT_UDP_INV_MASK	XT_UDP_INV_MASK
 
 /* ICMP matching stuff */
 struct ipt_icmp
@@ -250,25 +185,15 @@ struct ipt_replace
 	/* Information about old entries: */
 	/* Number of counters (must be equal to current number of entries). */
 	unsigned int num_counters;
-
 	/* The old entries' counters. */
-	struct ipt_counters  *counters;
+	struct xt_counters *counters;
 
 	/* The entries (hang off end: not really an array). */
 	struct ipt_entry entries[0];
 };
 
 /* The argument to IPT_SO_ADD_COUNTERS. */
-struct ipt_counters_info
-{
-	/* Which table. */
-	char name[IPT_TABLE_MAXNAMELEN];
-
-	unsigned int num_counters;
-
-	/* The counters (actually `number' of these). */
-	struct ipt_counters counters[0];
-};
+#define ipt_counters_info xt_counters_info
 
 /* The argument to IPT_SO_GET_ENTRIES. */
 struct ipt_get_entries
@@ -283,19 +208,10 @@ struct ipt_get_entries
 	struct ipt_entry entrytable[0];
 };
 
-/* The argument to IPT_SO_GET_REVISION_*.  Returns highest revision
- * kernel supports, if >= revision. */
-struct ipt_get_revision
-{
-	char name[IPT_FUNCTION_MAXNAMELEN-1];
-
-	u_int8_t revision;
-};
-
 /* Standard return verdict, or do jump. */
-#define IPT_STANDARD_TARGET ""
+#define IPT_STANDARD_TARGET XT_STANDARD_TARGET
 /* Error verdict. */
-#define IPT_ERROR_TARGET "ERROR"
+#define IPT_ERROR_TARGET XT_ERROR_TARGET
 
 /* Helper functions */
 static __inline__ struct ipt_entry_target *
