@@ -136,12 +136,14 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	struct tc_netem_reorder reorder;
 	struct tc_netem_corrupt corrupt;
 	__s16 *dist_data = NULL;
+	int present[__TCA_NETEM_MAX];
 
 	memset(&opt, 0, sizeof(opt));
 	opt.limit = 1000;
 	memset(&cor, 0, sizeof(cor));
 	memset(&reorder, 0, sizeof(reorder));
 	memset(&corrupt, 0, sizeof(corrupt));
+	memset(present, 0, sizeof(present));
 
 	while (argc > 0) {
 		if (matches(*argv, "limit") == 0) {
@@ -167,8 +169,8 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 
 				if (NEXT_IS_NUMBER()) {
 					NEXT_ARG();
-					if (get_percent(&cor.delay_corr,
-							*argv)) {
+					++present[TCA_NETEM_CORR];
+					if (get_percent(&cor.delay_corr,							*argv)) {
 						explain1("latency");
 						return -1;
 					}
@@ -183,6 +185,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			}
 			if (NEXT_IS_NUMBER()) {
 				NEXT_ARG();
+				++present[TCA_NETEM_CORR];
 				if (get_percent(&cor.loss_corr, *argv)) {
 					explain1("loss");
 					return -1;
@@ -190,12 +193,14 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			}
 		} else if (matches(*argv, "reorder") == 0) {
 			NEXT_ARG();
+			present[TCA_NETEM_REORDER] = 1;
 			if (get_percent(&reorder.probability, *argv)) {
 				explain1("reorder");
 				return -1;
 			}
 			if (NEXT_IS_NUMBER()) {
 				NEXT_ARG();
+				++present[TCA_NETEM_CORR];
 				if (get_percent(&reorder.correlation, *argv)) {
 					explain1("reorder");
 					return -1;
@@ -203,12 +208,14 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			}
 		} else if (matches(*argv, "corrupt") == 0) {
 			NEXT_ARG();
+			present[TCA_NETEM_CORRUPT] = 1;
 			if (get_percent(&corrupt.probability, *argv)) {
 				explain1("corrupt");
 				return -1;
 			}
 			if (NEXT_IS_NUMBER()) {
 				NEXT_ARG();
+				++present[TCA_NETEM_CORR];
 				if (get_percent(&corrupt.correlation, *argv)) {
 					explain1("corrupt");
 					return -1;
@@ -273,18 +280,17 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (addattr_l(n, TCA_BUF_MAX, TCA_OPTIONS, &opt, sizeof(opt)) < 0)
 		return -1;
 
-	if (cor.delay_corr || cor.loss_corr || cor.dup_corr) {
-		if (addattr_l(n, TCA_BUF_MAX, TCA_NETEM_CORR, &cor, sizeof(cor)) < 0)
+	if (present[TCA_NETEM_CORR] &&
+	    addattr_l(n, TCA_BUF_MAX, TCA_NETEM_CORR, &cor, sizeof(cor)) < 0)
 			return -1;
-	}
 
-	if (addattr_l(n, TCA_BUF_MAX, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
+	if (present[TCA_NETEM_REORDER] && 
+	    addattr_l(n, TCA_BUF_MAX, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
 		return -1;
 
-	if (corrupt.probability) {
-		if (addattr_l(n, TCA_BUF_MAX, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
-			return -1;
-	}
+	if (present[TCA_NETEM_CORRUPT] &&
+	    addattr_l(n, TCA_BUF_MAX, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
+		return -1;
 
 	if (dist_data) {
 		if (addattr_l(n, 32768, TCA_NETEM_DELAY_DIST,
