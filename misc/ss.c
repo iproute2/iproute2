@@ -121,7 +121,7 @@ int generic_proc_open(char *env, char *name)
 		snprintf(store, sizeof(store)-1, "%s/%s", p, name);
 		p = store;
 	}
-	return open(store, O_RDONLY);
+	return open(p, O_RDONLY);
 }
 
 int net_tcp_open(void)
