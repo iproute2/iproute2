@@ -68,7 +68,7 @@ int do_tcmonitor(int argc, char **argv)
 {
 	struct rtnl_handle rth;
 	char *file = NULL;
-	unsigned groups = RTMGRP_TC;
+	unsigned groups = nl_mgrp(RTNLGRP_TC);
 
 	while (argc > 0) {
 		if (matches(*argv, "file") == 0) {

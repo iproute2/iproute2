@@ -134,18 +134,18 @@ main(int argc, char **argv)
 		exit(-1);
 	}
 	if (llink)
-		groups |= RTMGRP_LINK;
+		groups |= nl_mgrp(RTNLGRP_LINK);
 	if (laddr) {
 		if (!family || family == AF_INET)
-			groups |= RTMGRP_IPV4_IFADDR;
+			groups |= nl_mgrp(RTNLGRP_IPV4_IFADDR);
 		if (!family || family == AF_INET6)
-			groups |= RTMGRP_IPV6_IFADDR;
+			groups |= nl_mgrp(RTNLGRP_IPV6_IFADDR);
 	}
 	if (lroute) {
 		if (!family || family == AF_INET)
-			groups |= RTMGRP_IPV4_ROUTE;
+			groups |= nl_mgrp(RTNLGRP_IPV4_ROUTE);
 		if (!family || family == AF_INET6)
-			groups |= RTMGRP_IPV6_ROUTE;
+			groups |= nl_mgrp(RTNLGRP_IPV6_ROUTE);
 	}
 
 	fp = fopen(file, "w");
