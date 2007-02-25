@@ -3,6 +3,7 @@
 
 #include <asm/types.h>
 #include <resolv.h>
+#include <stdlib.h>
 
 #include "libnetlink.h"
 #include "ll_map.h"
@@ -129,7 +130,11 @@ static __inline__ int get_user_hz(void)
 
 static inline __u32 nl_mgrp(__u32 group)
 {
-	return group ? (1 << (group -1)) : 0;
+	if (group > 31 ) {
+		fprintf(stderr, "Use setsockopt for this group %d\n", group);
+		exit(-1);
+	}
+	return group ? (1 << (group - 1)) : 0;
 }
 
 
