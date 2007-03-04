@@ -255,6 +255,11 @@ char * sprint_time(__u32 time, char *buf)
 	return buf;
 }
 
+char * sprint_ticks(__u32 ticks, char *buf)
+{
+	return sprint_time(tc_core_tick2time(ticks), buf);
+}
+
 int get_size(unsigned *size, const char *str)
 {
 	double sz;

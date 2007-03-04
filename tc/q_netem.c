@@ -120,12 +120,6 @@ static int get_ticks(__u32 *ticks, const char *str)
 	return 0;
 }
 
-static char *sprint_ticks(__u32 ticks, char *buf)
-{
-	return sprint_usecs(tc_core_tick2usec(ticks), buf);
-}
-
-
 static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n)
 {
