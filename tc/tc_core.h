@@ -4,7 +4,7 @@
 #include <asm/types.h>
 #include <linux/pkt_sched.h>
 
-#define TIME_UNITS_PER_SEC	1000000
+#define TIME_UNITS_PER_SEC	1000000000
 
 int  tc_core_time2big(long time);
 long tc_core_time2tick(long time);
