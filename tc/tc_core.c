@@ -23,9 +23,8 @@
 
 #include "tc_core.h"
 
-static __u32 t2us=1;
-static __u32 us2t=1;
 static double tick_in_usec = 1;
+static double clock_factor = 1;
 
 int tc_core_time2big(long time)
 {
@@ -48,12 +47,12 @@ long tc_core_tick2time(long tick)
 
 long tc_core_time2ktime(long time)
 {
-	return time;
+	return time * clock_factor;
 }
 
 long tc_core_ktime2time(long ktime)
 {
-	return ktime;
+	return ktime / clock_factor;
 }
 
 unsigned tc_calc_xmittime(unsigned rate, unsigned size)
@@ -98,16 +97,29 @@ int tc_calc_rtable(unsigned bps, __u32 *rtab, int cell_log, unsigned mtu,
 
 int tc_core_init()
 {
-	FILE *fp = fopen("/proc/net/psched", "r");
+	FILE *fp;
+	__u32 clock_res;
+	__u32 t2us;
+	__u32 us2t;
 
+	fp = fopen("/proc/net/psched", "r");
 	if (fp == NULL)
 		return -1;
 
-	if (fscanf(fp, "%08x%08x", &t2us, &us2t) != 2) {
+	if (fscanf(fp, "%08x%08x%08x", &t2us, &us2t, &clock_res) != 3) {
 		fclose(fp);
 		return -1;
 	}
 	fclose(fp);
-	tick_in_usec = (double)t2us/us2t;
+
+	/* compatibility hack: for old iproute binaries (ignoring
+	 * the kernel clock resolution) the kernel advertises a
+	 * tick multiplier of 1000 in case of nano-second resolution,
+	 * which really is 1. */
+	if (clock_res == 1000000000)
+		t2us = us2t;
+
+	clock_factor  = (double)clock_res / TIME_UNITS_PER_SEC;
+	tick_in_usec = (double)t2us / us2t * clock_factor;
 	return 0;
 }
