@@ -147,7 +147,7 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	if (ewma_log < 0)
 		ewma_log = TC_CBQ_DEF_EWMA;
 	lss.ewma_log = ewma_log;
-	lss.maxidle = tc_cbq_calc_maxidle(r.rate, r.rate, avpkt, lss.ewma_log, 0);
+	lss.maxidle = tc_calc_xmittime(r.rate, avpkt);
 	lss.change = TCF_CBQ_LSS_MAXIDLE|TCF_CBQ_LSS_EWMA|TCF_CBQ_LSS_AVPKT;
 	lss.avpkt = avpkt;
 

@@ -71,7 +71,7 @@ int tc_red_eval_ewma(unsigned qmin, unsigned burst, unsigned avpkt)
 
 int tc_red_eval_idle_damping(int Wlog, unsigned avpkt, unsigned bps, __u8 *sbuf)
 {
-	double xmit_time = tc_core_usec2tick(1000000*(double)avpkt/bps);
+	double xmit_time = tc_calc_xmittime(bps, avpkt);
 	double lW = -log(1.0 - 1.0/(1<<Wlog))/xmit_time;
 	double maxtime = 31/lW;
 	int clog;

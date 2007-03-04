@@ -76,7 +76,7 @@ int tc_calc_rtable(unsigned bps, __u32 *rtab, int cell_log, unsigned mtu,
 			sz += overhead;
 		if (sz < mpu)
 			sz = mpu;
-		rtab[i] = tc_core_usec2tick(1000000*((double)sz/bps));
+		rtab[i] = tc_calc_xmittime(bps, sz);
 	}
 	return cell_log;
 }
