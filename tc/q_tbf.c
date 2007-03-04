@@ -251,7 +251,7 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (lat2 > latency)
 			latency = lat2;
 	}
-	fprintf(f, "lat %s ", sprint_usecs(tc_core_tick2usec(latency), b1));
+	fprintf(f, "lat %s ", sprint_usecs(latency, b1));
 
 	return 0;
 }
