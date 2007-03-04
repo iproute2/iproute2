@@ -46,14 +46,24 @@ long tc_core_tick2usec(long tick)
 	return tick/tick_in_usec;
 }
 
+long tc_core_time2ktime(long time)
+{
+	return time;
+}
+
+long tc_core_ktime2time(long ktime)
+{
+	return ktime;
+}
+
 unsigned tc_calc_xmittime(unsigned rate, unsigned size)
 {
-	return tc_core_usec2tick(1000000*((double)size/rate));
+	return tc_core_usec2tick(TIME_UNITS_PER_SEC*((double)size/rate));
 }
 
 unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
 {
-	return ((double)rate*tc_core_tick2usec(ticks))/1000000;
+	return ((double)rate*tc_core_tick2usec(ticks))/TIME_UNITS_PER_SEC;
 }
 
 /*

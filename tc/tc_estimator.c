@@ -26,7 +26,7 @@
 int tc_setup_estimator(unsigned A, unsigned time_const, struct tc_estimator *est)
 {
 	for (est->interval=0; est->interval<=5; est->interval++) {
-		if (A <= (1<<est->interval)*(1000000/4))
+		if (A <= (1<<est->interval)*(TIME_UNITS_PER_SEC/4))
 			break;
 	}
 	if (est->interval > 5)

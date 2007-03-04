@@ -226,7 +226,7 @@ hfsc_print_sc(FILE *f, char *name, struct tc_service_curve *sc)
 
 	fprintf(f, "%s ", name);
 	fprintf(f, "m1 %s ", sprint_rate(sc->m1, b1));
-	fprintf(f, "d %s ", sprint_usecs(sc->d, b1));
+	fprintf(f, "d %s ", sprint_usecs(tc_core_ktime2time(sc->d), b1));
 	fprintf(f, "m2 %s ", sprint_rate(sc->m2, b1));
 }
 
@@ -320,7 +320,7 @@ hfsc_get_sc1(int *argcp, char ***argvp, struct tc_service_curve *sc)
 		return -1;
 
 	sc->m1 = m1;
-	sc->d  = d;
+	sc->d  = tc_core_time2ktime(d);
 	sc->m2 = m2;
 
 	*argvp = argv;
@@ -367,13 +367,13 @@ hfsc_get_sc2(int *argcp, char ***argvp, struct tc_service_curve *sc)
 		return -1;
 	}
 
-	if (dmax != 0 && ceil(umax * 1000000.0 / dmax) > rate) {
+	if (dmax != 0 && ceil(1.0 * umax * TIME_UNITS_PER_SEC / dmax) > rate) {
 		/*
 		 * concave curve, slope of first segment is umax/dmax,
 		 * intersection is at dmax
 		 */
-		sc->m1 = ceil(umax * 1000000.0 / dmax); /* in bps */
-		sc->d  = dmax;
+		sc->m1 = ceil(1.0 * umax * TIME_UNITS_PER_SEC / dmax); /* in bps */
+		sc->d  = tc_core_time2ktime(dmax);
 		sc->m2 = rate;
 	} else {
 		/*
@@ -381,7 +381,7 @@ hfsc_get_sc2(int *argcp, char ***argvp, struct tc_service_curve *sc)
 		 * is at dmax - umax / rate
 		 */
 		sc->m1 = 0;
-		sc->d  = ceil(dmax - umax * 1000000.0 / rate); /* in usec */
+		sc->d  = tc_core_time2ktime(ceil(dmax - umax * TIME_UNITS_PER_SEC / rate));
 		sc->m2 = rate;
 	}
 

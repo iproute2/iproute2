@@ -161,9 +161,9 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	}
 
 	if (opt.limit == 0) {
-		double lim = opt.rate.rate*(double)latency/1000000 + buffer;
+		double lim = opt.rate.rate*(double)latency/TIME_UNITS_PER_SEC + buffer;
 		if (opt.peakrate.rate) {
-			double lim2 = opt.peakrate.rate*(double)latency/1000000 + mtu;
+			double lim2 = opt.peakrate.rate*(double)latency/TIME_UNITS_PER_SEC + mtu;
 			if (lim2 < lim)
 				lim = lim2;
 		}
@@ -245,9 +245,9 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (show_raw)
 		fprintf(f, "limit %s ", sprint_size(qopt->limit, b1));
 
-	latency = 1000000*(qopt->limit/(double)qopt->rate.rate) - tc_core_tick2usec(qopt->buffer);
+	latency = TIME_UNITS_PER_SEC*(qopt->limit/(double)qopt->rate.rate) - tc_core_tick2usec(qopt->buffer);
 	if (qopt->peakrate.rate) {
-		double lat2 = 1000000*(qopt->limit/(double)qopt->peakrate.rate) - tc_core_tick2usec(qopt->mtu);
+		double lat2 = TIME_UNITS_PER_SEC*(qopt->limit/(double)qopt->peakrate.rate) - tc_core_tick2usec(qopt->mtu);
 		if (lat2 > latency)
 			latency = lat2;
 	}

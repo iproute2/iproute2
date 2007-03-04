@@ -221,13 +221,13 @@ int get_usecs(unsigned *usecs, const char *str)
 	if (*p) {
 		if (strcasecmp(p, "s") == 0 || strcasecmp(p, "sec")==0 ||
 		    strcasecmp(p, "secs")==0)
-			t *= 1000000;
+			t *= TIME_UNITS_PER_SEC;
 		else if (strcasecmp(p, "ms") == 0 || strcasecmp(p, "msec")==0 ||
 			 strcasecmp(p, "msecs") == 0)
-			t *= 1000;
+			t *= TIME_UNITS_PER_SEC/1000;
 		else if (strcasecmp(p, "us") == 0 || strcasecmp(p, "usec")==0 ||
 			 strcasecmp(p, "usecs") == 0)
-			t *= 1;
+			t *= TIME_UNITS_PER_SEC/1000000;
 		else
 			return -1;
 	}
@@ -241,10 +241,10 @@ void print_usecs(char *buf, int len, __u32 usec)
 {
 	double tmp = usec;
 
-	if (tmp >= 1000000)
-		snprintf(buf, len, "%.1fs", tmp/1000000);
-	else if (tmp >= 1000)
-		snprintf(buf, len, "%.1fms", tmp/1000);
+	if (tmp >= TIME_UNITS_PER_SEC)
+		snprintf(buf, len, "%.1fs", tmp/TIME_UNITS_PER_SEC);
+	else if (tmp >= TIME_UNITS_PER_SEC/1000)
+		snprintf(buf, len, "%.1fms", tmp/(TIME_UNITS_PER_SEC/1000));
 	else
 		snprintf(buf, len, "%uus", usec);
 }
