@@ -51,6 +51,11 @@ unsigned tc_calc_xmittime(unsigned rate, unsigned size)
 	return tc_core_usec2tick(1000000*((double)size/rate));
 }
 
+unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
+{
+	return ((double)rate*tc_core_tick2usec(ticks))/1000000;
+}
+
 /*
    rtab[pkt_len>>cell_log] = pkt_xmit_time
  */

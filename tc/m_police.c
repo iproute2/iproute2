@@ -331,7 +331,7 @@ print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 
 	fprintf(f, " police 0x%x ", p->index);
 	fprintf(f, "rate %s ", sprint_rate(p->rate.rate, b1));
-	buffer = ((double)p->rate.rate*tc_core_tick2usec(p->burst))/1000000;
+	buffer = tc_calc_xmitsize(p->rate.rate, p->burst);
 	fprintf(f, "burst %s ", sprint_size(buffer, b1));
 	fprintf(f, "mtu %s ", sprint_size(p->mtu, b1));
 	if (show_raw)
