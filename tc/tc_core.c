@@ -27,21 +27,21 @@ static __u32 t2us=1;
 static __u32 us2t=1;
 static double tick_in_usec = 1;
 
-int tc_core_usec2big(long usec)
+int tc_core_time2big(long time)
 {
-	__u64 t = usec;
+	__u64 t = time;
 
 	t *= tick_in_usec;
 	return (t >> 32) != 0;
 }
 
 
-long tc_core_usec2tick(long usec)
+long tc_core_time2tick(long time)
 {
-	return usec*tick_in_usec;
+	return time*tick_in_usec;
 }
 
-long tc_core_tick2usec(long tick)
+long tc_core_tick2time(long tick)
 {
 	return tick/tick_in_usec;
 }
@@ -58,12 +58,12 @@ long tc_core_ktime2time(long ktime)
 
 unsigned tc_calc_xmittime(unsigned rate, unsigned size)
 {
-	return tc_core_usec2tick(TIME_UNITS_PER_SEC*((double)size/rate));
+	return tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/rate));
 }
 
 unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
 {
-	return ((double)rate*tc_core_tick2usec(ticks))/TIME_UNITS_PER_SEC;
+	return ((double)rate*tc_core_tick2time(ticks))/TIME_UNITS_PER_SEC;
 }
 
 /*

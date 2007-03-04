@@ -6,9 +6,9 @@
 
 #define TIME_UNITS_PER_SEC	1000000
 
-int  tc_core_usec2big(long usec);
-long tc_core_usec2tick(long usec);
-long tc_core_tick2usec(long tick);
+int  tc_core_time2big(long time);
+long tc_core_time2tick(long time);
+long tc_core_tick2time(long tick);
 long tc_core_time2ktime(long time);
 long tc_core_ktime2time(long ktime);
 unsigned tc_calc_xmittime(unsigned rate, unsigned size);

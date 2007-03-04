@@ -67,7 +67,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 				fprintf(stderr, "Double \"limit/latency\" spec\n");
 				return -1;
 			}
-			if (get_usecs(&latency, *argv)) {
+			if (get_time(&latency, *argv)) {
 				explain1("latency");
 				return -1;
 			}
@@ -245,13 +245,13 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (show_raw)
 		fprintf(f, "limit %s ", sprint_size(qopt->limit, b1));
 
-	latency = TIME_UNITS_PER_SEC*(qopt->limit/(double)qopt->rate.rate) - tc_core_tick2usec(qopt->buffer);
+	latency = TIME_UNITS_PER_SEC*(qopt->limit/(double)qopt->rate.rate) - tc_core_tick2time(qopt->buffer);
 	if (qopt->peakrate.rate) {
-		double lat2 = TIME_UNITS_PER_SEC*(qopt->limit/(double)qopt->peakrate.rate) - tc_core_tick2usec(qopt->mtu);
+		double lat2 = TIME_UNITS_PER_SEC*(qopt->limit/(double)qopt->peakrate.rate) - tc_core_tick2time(qopt->mtu);
 		if (lat2 > latency)
 			latency = lat2;
 	}
-	fprintf(f, "lat %s ", sprint_usecs(latency, b1));
+	fprintf(f, "lat %s ", sprint_time(latency, b1));
 
 	return 0;
 }

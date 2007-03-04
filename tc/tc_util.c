@@ -209,7 +209,7 @@ char * sprint_rate(__u32 rate, char *buf)
 	return buf;
 }
 
-int get_usecs(unsigned *usecs, const char *str)
+int get_time(unsigned *time, const char *str)
 {
 	double t;
 	char *p;
@@ -232,26 +232,26 @@ int get_usecs(unsigned *usecs, const char *str)
 			return -1;
 	}
 
-	*usecs = t;
+	*time = t;
 	return 0;
 }
 
 
-void print_usecs(char *buf, int len, __u32 usec)
+void print_time(char *buf, int len, __u32 time)
 {
-	double tmp = usec;
+	double tmp = time;
 
 	if (tmp >= TIME_UNITS_PER_SEC)
 		snprintf(buf, len, "%.1fs", tmp/TIME_UNITS_PER_SEC);
 	else if (tmp >= TIME_UNITS_PER_SEC/1000)
 		snprintf(buf, len, "%.1fms", tmp/(TIME_UNITS_PER_SEC/1000));
 	else
-		snprintf(buf, len, "%uus", usec);
+		snprintf(buf, len, "%uus", time);
 }
 
-char * sprint_usecs(__u32 usecs, char *buf)
+char * sprint_time(__u32 time, char *buf)
 {
-	print_usecs(buf, SPRINT_BSIZE-1, usecs);
+	print_time(buf, SPRINT_BSIZE-1, time);
 	return buf;
 }
 

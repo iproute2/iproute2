@@ -38,7 +38,7 @@ unsigned tc_cbq_calc_maxidle(unsigned bndw, unsigned rate, unsigned avpkt,
 		if (vxmt > maxidle)
 			maxidle = vxmt;
 	}
-	return tc_core_usec2tick(maxidle*(1<<ewma_log)*TIME_UNITS_PER_SEC);
+	return tc_core_time2tick(maxidle*(1<<ewma_log)*TIME_UNITS_PER_SEC);
 }
 
 unsigned tc_cbq_calc_offtime(unsigned bndw, unsigned rate, unsigned avpkt,
@@ -53,5 +53,5 @@ unsigned tc_cbq_calc_offtime(unsigned bndw, unsigned rate, unsigned avpkt,
 		offtime *= pow(g, -(double)minburst) - 1;
 	else
 		offtime *= 1 + (pow(g, -(double)(minburst-1)) - 1)/(1-g);
-	return tc_core_usec2tick(offtime*TIME_UNITS_PER_SEC);
+	return tc_core_time2tick(offtime*TIME_UNITS_PER_SEC);
 }

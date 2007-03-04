@@ -226,7 +226,7 @@ hfsc_print_sc(FILE *f, char *name, struct tc_service_curve *sc)
 
 	fprintf(f, "%s ", name);
 	fprintf(f, "m1 %s ", sprint_rate(sc->m1, b1));
-	fprintf(f, "d %s ", sprint_usecs(tc_core_ktime2time(sc->d), b1));
+	fprintf(f, "d %s ", sprint_time(tc_core_ktime2time(sc->d), b1));
 	fprintf(f, "m2 %s ", sprint_rate(sc->m2, b1));
 }
 
@@ -303,7 +303,7 @@ hfsc_get_sc1(int *argcp, char ***argvp, struct tc_service_curve *sc)
 
 	if (matches(*argv, "d") == 0) {
 		NEXT_ARG();
-		if (get_usecs(&d, *argv) < 0) {
+		if (get_time(&d, *argv) < 0) {
 			explain1("d");
 			return -1;
 		}
@@ -346,7 +346,7 @@ hfsc_get_sc2(int *argcp, char ***argvp, struct tc_service_curve *sc)
 
 	if (matches(*argv, "dmax") == 0) {
 		NEXT_ARG();
-		if (get_usecs(&dmax, *argv) < 0) {
+		if (get_time(&dmax, *argv) < 0) {
 			explain1("dmax");
 			return -1;
 		}

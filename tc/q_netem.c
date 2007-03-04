@@ -108,15 +108,15 @@ static int get_ticks(__u32 *ticks, const char *str)
 {
 	unsigned t;
 
-	if(get_usecs(&t, str))
+	if(get_time(&t, str))
 		return -1;
 
-	if (tc_core_usec2big(t)) {
-		fprintf(stderr, "Illegal %d usecs (too large)\n", t);
+	if (tc_core_time2big(t)) {
+		fprintf(stderr, "Illegal %u time (too large)\n", t);
 		return -1;
 	}
 
-	*ticks = tc_core_usec2tick(t);
+	*ticks = tc_core_time2tick(t);
 	return 0;
 }
 
