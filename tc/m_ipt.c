@@ -8,10 +8,7 @@
  *		2 of the License, or (at your option) any later version.
  *
  * Authors:  J Hadi Salim (hadi@cyberus.ca)
- *
- * TODO: bad bad hardcoding IPT_LIB_DIR and PROC_SYS_MODPROBE
- *
-*/
+ */
 
 #include <syslog.h>
 #include <sys/socket.h>
@@ -58,6 +55,7 @@ static struct option *opts = original_opts;
 static unsigned int global_option_offset = 0;
 #define OPTION_OFFSET 256
 
+char *lib_dir;
 
 void
 register_target(struct iptables_target *me)
@@ -212,14 +210,13 @@ find_t(char *name)
 }
 
 static struct iptables_target *
-get_target_name(char *name)
+get_target_name(const char *name)
 {
 	void *handle;
 	char *error;
 	char *new_name, *lname;
 	struct iptables_target *m;
-
-	char path[sizeof (IPT_LIB_DIR) + sizeof ("/libipt_.so") + strlen(name)];
+	char path[strlen(lib_dir) + sizeof ("/libipt_.so") + strlen(name)];
 
 	new_name = malloc(strlen(name) + 1);
 	lname = malloc(strlen(name) + 1);
@@ -250,10 +247,10 @@ get_target_name(char *name)
 		}
 	}
 
-	sprintf(path, IPT_LIB_DIR "/libipt_%s.so", new_name);
+	sprintf(path, lib_dir, "/libipt_%s.so", new_name);
 	handle = dlopen(path, RTLD_LAZY);
 	if (!handle) {
-		sprintf(path, IPT_LIB_DIR "/libipt_%s.so", lname);
+		sprintf(path, lib_dir, "/libipt_%s.so", lname);
 		handle = dlopen(path, RTLD_LAZY);
 		if (!handle) {
 			fputs(dlerror(), stderr);
@@ -373,6 +370,10 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	int iok = 0, ok = 0;
 	__u32 hook = 0, index = 0;
 	res = 0;
+
+	lib_dir = getenv("IPTABLES_LIB_DIR");
+	if (!lib_dir)
+		lib_dir = IPT_LIB_DIR;
 
 	{
 		int i;
