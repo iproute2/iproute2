@@ -36,24 +36,9 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 
-const char *pname = "tc-ipt";
-const char *tname = "mangle";
-const char *pversion = "0.1";
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#ifndef IPT_LIB_DIR
-#define IPT_LIB_DIR "/usr/local/lib/iptables"
-#endif
-
-#ifndef PROC_SYS_MODPROBE
-#define PROC_SYS_MODPROBE "/proc/sys/kernel/modprobe"
-#endif
+static const char *pname = "tc-ipt";
+static const char *tname = "mangle";
+static const char *pversion = "0.1";
 
 static const char *ipthooks[] = {
 	"NF_IP_PRE_ROUTING",
