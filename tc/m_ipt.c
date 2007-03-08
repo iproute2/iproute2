@@ -247,7 +247,7 @@ get_target_name(const char *name)
 		}
 	}
 
-	sprintf(path, lib_dir, "/libipt_%s.so", new_name);
+	sprintf(path,  "%s/libipt_%s.so",lib_dir, new_name);
 	handle = dlopen(path, RTLD_LAZY);
 	if (!handle) {
 		sprintf(path, lib_dir, "/libipt_%s.so", lname);
