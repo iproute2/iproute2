@@ -42,6 +42,7 @@ static void usage(void)
 	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
 	fprintf(stderr, "          [ prohibit | reject | unreachable ]\n");
 	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
+	fprintf(stderr, "          [ goto NUMBER ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | NUMBER ]\n");
 	exit(-1);
 }
@@ -144,6 +145,8 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[RTA_IIF]) {
 		fprintf(fp, "iif %s ", (char*)RTA_DATA(tb[RTA_IIF]));
+		if (r->rtm_flags & FIB_RULE_DEV_DETACHED)
+			fprintf(fp, "[detached] ");
 	}
 
 	table = rtm_get_table(r, tb);
@@ -171,7 +174,17 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 					    abuf, sizeof(abuf)));
 		} else
 			fprintf(fp, "masquerade");
-	} else if (r->rtm_type != RTN_UNICAST)
+	} else if (r->rtm_type == FR_ACT_GOTO) {
+		fprintf(fp, "goto ");
+		if (tb[FRA_GOTO])
+			fprintf(fp, "%u", *(__u32 *) RTA_DATA(tb[FRA_GOTO]));
+		else
+			fprintf(fp, "none");
+		if (r->rtm_flags & FIB_RULE_UNRESOLVED)
+			fprintf(fp, " [unresolved]");
+	} else if (r->rtm_type == FR_ACT_NOP)
+		fprintf(fp, "nop");
+	else if (r->rtm_type != RTN_UNICAST)
 		fprintf(fp, "%s", rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
 
 	fprintf(fp, "\n");
@@ -311,9 +324,19 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			}
 			if (matches(*argv, "help") == 0)
 				usage();
-			if (rtnl_rtntype_a2n(&type, *argv))
+			else if (matches(*argv, "goto") == 0) {
+				__u32 target;
+				type = FR_ACT_GOTO;
+				NEXT_ARG();
+				if (get_u32(&target, *argv, 0))
+					invarg("invalid target\n", *argv);
+				addattr32(&req.n, sizeof(req), FRA_GOTO, target);
+			} else if (matches(*argv, "nop") == 0)
+				type = FR_ACT_NOP;
+			else if (rtnl_rtntype_a2n(&type, *argv))
 				invarg("Failed to parse rule type", *argv);
 			req.r.rtm_type = type;
+			table_ok = 1;
 		}
 		argc--;
 		argv++;
