@@ -118,6 +118,12 @@ __PF(IEEE802_TR,tr)
 #ifdef ARPHRD_IEEE80211
 __PF(IEEE80211,ieee802.11)
 #endif
+#ifdef ARPHRD_IEEE80211_PRISM
+__PF(IEEE80211_PRISM,ieee802.11/prism)
+#endif
+#ifdef ARPHRD_IEEE80211_RADIOTAP
+__PF(IEEE80211_RADIOTAP,ieee802.11/radiotap)
+#endif
 #ifdef ARPHRD_VOID
 __PF(VOID,void)
 #endif
