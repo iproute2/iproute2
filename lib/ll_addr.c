@@ -38,6 +38,9 @@ const char *ll_addr_n2a(unsigned char *addr, int alen, int type, char *buf, int 
 	    (type == ARPHRD_TUNNEL || type == ARPHRD_SIT || type == ARPHRD_IPGRE)) {
 		return inet_ntop(AF_INET, addr, buf, blen);
 	}
+	if (alen == 16 && type == ARPHRD_TUNNEL6) {
+		return inet_ntop(AF_INET6, addr, buf, blen);
+	}
 	l = 0;
 	for (i=0; i<alen; i++) {
 		if (i==0) {
