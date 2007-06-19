@@ -23,6 +23,7 @@
 #define NETLINK_GENERIC		16
 /* leave room for NETLINK_DM (DM Events) */
 #define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
+#define NETLINK_ECRYPTFS	19
 
 #define MAX_LINKS 32		
 
@@ -30,7 +31,7 @@ struct sockaddr_nl
 {
 	sa_family_t	nl_family;	/* AF_NETLINK	*/
 	unsigned short	nl_pad;		/* zero		*/
-	__u32		nl_pid;		/* process pid	*/
+	__u32		nl_pid;		/* port ID	*/
        	__u32		nl_groups;	/* multicast groups mask */
 };
 
@@ -40,7 +41,7 @@ struct nlmsghdr
 	__u16		nlmsg_type;	/* Message content */
 	__u16		nlmsg_flags;	/* Additional flags */
 	__u32		nlmsg_seq;	/* Sequence number */
-	__u32		nlmsg_pid;	/* Sending process PID */
+	__u32		nlmsg_pid;	/* Sending process port ID */
 };
 
 /* Flags values */
