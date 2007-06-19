@@ -780,8 +780,6 @@ int print_spdinfo( struct nlmsghdr *n, void *arg)
 	__u32 *f = NLMSG_DATA(n);
 	struct rtattr * tb[XFRMA_SPD_MAX+1];
 	struct rtattr * rta;
-	struct xfrmu_spdinfo *si;
-	struct xfrmu_spdhinfo *sh;
 
 	int len = n->nlmsg_len;
 
@@ -795,12 +793,14 @@ int print_spdinfo( struct nlmsghdr *n, void *arg)
 	parse_rtattr(tb, XFRMA_SPD_MAX, rta, len);
 
 	fprintf(fp,"\t SPD");
-	if (tb[XFRMA_SPDINFO]) {
-		if (RTA_PAYLOAD(tb[XFRMA_SPDINFO]) < sizeof(*si)) {
+	if (tb[XFRMA_SPD_INFO]) {
+		struct xfrmu_spdinfo *si;
+
+		if (RTA_PAYLOAD(tb[XFRMA_SPD_INFO]) < sizeof(*si)) {
 			fprintf(stderr, "SPDinfo: Wrong len %d\n", len);
 			return -1;
 		}
-		si = (struct xfrmu_spdinfo *)RTA_DATA(tb[XFRMA_SPDINFO]);
+		si = RTA_DATA(tb[XFRMA_SPD_INFO]);
 		fprintf(fp," IN  %d", si->incnt);
 		fprintf(fp," OUT %d", si->outcnt);
 		fprintf(fp," FWD %d", si->fwdcnt);
@@ -816,12 +816,14 @@ int print_spdinfo( struct nlmsghdr *n, void *arg)
 		fprintf(fp,"\n");
 	}
 	if (show_stats > 1) {
-		if (tb[XFRMA_SPDHINFO]) {
-			if (RTA_PAYLOAD(tb[XFRMA_SPDHINFO]) < sizeof(*sh)) {
+		struct xfrmu_spdhinfo *sh;
+
+		if (tb[XFRMA_SPD_HINFO]) {
+			if (RTA_PAYLOAD(tb[XFRMA_SPD_HINFO]) < sizeof(*sh)) {
 				fprintf(stderr, "SPDinfo: Wrong len %d\n", len);
 				return -1;
 			}
-			sh = (struct xfrmu_spdhinfo *)RTA_DATA(tb[XFRMA_SPDHINFO]);
+			sh = RTA_DATA(tb[XFRMA_SPD_HINFO]);
 			fprintf(fp,"\t SPD buckets:");
 			fprintf(fp," count %d", sh->spdhcnt);
 			fprintf(fp," Max %d", sh->spdhmcnt);

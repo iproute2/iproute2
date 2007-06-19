@@ -686,7 +686,7 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			fprintf(stderr, "Buggy XFRM_MSG_DELPOLICY: too short XFRMA_POLICY len\n");
 			return -1;
 		}
-		xsinfo = (struct xfrm_usersa_info *)RTA_DATA(tb[XFRMA_SA]);
+		xsinfo = RTA_DATA(tb[XFRMA_SA]);
 	}
 
 	xfrm_state_info_print(xsinfo, tb, fp, NULL, NULL);
@@ -940,7 +940,6 @@ int print_sadinfo(struct nlmsghdr *n, void *arg)
 	__u32 *f = NLMSG_DATA(n);
 	struct rtattr *tb[XFRMA_SAD_MAX+1];
 	struct rtattr *rta;
-	struct xfrmu_sadhinfo *si;	
 	__u32 *cnt;
 
 	int len = n->nlmsg_len;
@@ -954,9 +953,9 @@ int print_sadinfo(struct nlmsghdr *n, void *arg)
 	rta = XFRMSAPD_RTA(f);
 	parse_rtattr(tb, XFRMA_SAD_MAX, rta, len);
 
-	if (tb[XFRMA_SADCNT]) {
+	if (tb[XFRMA_SAD_CNT]) {
 		fprintf(fp,"\t SAD");
-		cnt = (__u32 *)RTA_DATA(tb[XFRMA_SADCNT]);
+		cnt = (__u32 *)RTA_DATA(tb[XFRMA_SAD_CNT]);
 		fprintf(fp," count %d", *cnt);
 	} else {
 		fprintf(fp,"BAD SAD info returned\n");
@@ -964,18 +963,20 @@ int print_sadinfo(struct nlmsghdr *n, void *arg)
 	}
 
 	if (show_stats) {
-		if (!tb[XFRMA_SADHINFO]) {
-		}
-		if (RTA_PAYLOAD(tb[XFRMA_SADHINFO]) < sizeof(*si)) {
-			fprintf(fp,"BAD SAD length returned\n");
-			return -1;
-		}
+		if (tb[XFRMA_SAD_HINFO]) {
+			struct xfrmu_sadhinfo *si;
 
-		si = (struct xfrmu_sadhinfo *)RTA_DATA(tb[XFRMA_SADHINFO]);
-		fprintf(fp," (buckets ");
-		fprintf(fp,"count %d", si->sadhcnt);
-		fprintf(fp," Max %d", si->sadhmcnt);
-		fprintf(fp,")");
+			if (RTA_PAYLOAD(tb[XFRMA_SAD_HINFO]) < sizeof(*si)) {
+				fprintf(fp,"BAD SAD length returned\n");
+				return -1;
+			}
+				
+			si = RTA_DATA(tb[XFRMA_SAD_HINFO]);
+			fprintf(fp," (buckets ");
+			fprintf(fp,"count %d", si->sadhcnt);
+			fprintf(fp," Max %d", si->sadhmcnt);
+			fprintf(fp,")");
+		}
 	}
 	fprintf(fp,"\n");
 
