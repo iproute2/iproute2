@@ -21,7 +21,6 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/time.h>
-#include <net/if.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>

@@ -104,6 +104,8 @@ void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
 	_PF(PORTSEL);
 	_PF(NOTRAILERS);
 	_PF(UP);
+	_PF(LOWER_UP);
+	_PF(DORMANT);
 #undef _PF
         if (flags)
 		fprintf(fp, "%x", flags);

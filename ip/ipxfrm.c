@@ -32,7 +32,6 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <netdb.h>
-#include <net/if.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <linux/xfrm.h>
@@ -493,13 +492,8 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		break;
 	}
 
-	if (sel->ifindex > 0) {
-		char buf[IFNAMSIZ];
-
-		memset(buf, '\0', sizeof(buf));
-		if_indextoname(sel->ifindex, buf);
-		fprintf(fp, "dev %s ", buf);
-	}
+	if (sel->ifindex > 0)
+		fprintf(fp, "dev %s ", ll_index_to_name(sel->ifindex));
 
 	if (show_stats > 0)
 		fprintf(fp, "uid %u", sel->user);
@@ -1179,7 +1173,7 @@ int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp)
 			if (strcmp(*argv, "none") == 0)
 				ifindex = 0;
 			else {
-				ifindex = if_nametoindex(*argv);
+				ifindex = ll_name_to_index(*argv);
 				if (ifindex <= 0)
 					invarg("\"DEV\" is invalid", *argv);
 			}

@@ -11,7 +11,6 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#include <net/if.h>
 #include <sys/types.h>
 #else /* libc5 */
 #include <sys/socket.h>

@@ -17,7 +17,6 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <net/if.h>
 #include <netinet/in.h>
 #include <string.h>
 

@@ -15,8 +15,6 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <fcntl.h>
-#include <net/if.h>
-#include <net/if_arp.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
