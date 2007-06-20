@@ -60,7 +60,7 @@ static int get_distribution(const char *type, __s16 *data)
 	char *line = NULL;
 	char name[128];
 
-	snprintf(name, sizeof(name), "/usr/lib/tc/%s.dist", type);
+	snprintf(name, sizeof(name), "%s/%s.dist", get_tc_lib(), type);
 	if ((f = fopen(name, "r")) == NULL) {
 		fprintf(stderr, "No distribution data for %s (%s: %s)\n",
 			type, name, strerror(errno));

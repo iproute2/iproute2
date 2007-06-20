@@ -99,7 +99,7 @@ struct qdisc_util *get_qdisc_kind(const char *str)
 		if (strcmp(q->id, str) == 0)
 			return q;
 
-	snprintf(buf, sizeof(buf), "/usr/lib/tc/q_%s.so", str);
+	snprintf(buf, sizeof(buf), "%s/q_%s.so", get_tc_lib(), str);
 	dlh = dlopen(buf, RTLD_LAZY);
 	if (!dlh) {
 		/* look in current binary, only open once */
@@ -145,7 +145,7 @@ struct filter_util *get_filter_kind(const char *str)
 		if (strcmp(q->id, str) == 0)
 			return q;
 
-	snprintf(buf, sizeof(buf), "/usr/lib/tc/f_%s.so", str);
+	snprintf(buf, sizeof(buf), "%s/f_%s.so", get_tc_lib(), str);
 	dlh = dlopen(buf, RTLD_LAZY);
 	if (dlh == NULL) {
 		dlh = BODY;

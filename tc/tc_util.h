@@ -38,6 +38,8 @@ struct action_util
 	int     (*print_xstats)(struct action_util *au, FILE *f, struct rtattr *xstats);
 };
 
+extern const char *get_tc_lib(void);
+
 extern struct qdisc_util *get_qdisc_kind(const char *str);
 extern struct filter_util *get_filter_kind(const char *str);
 
