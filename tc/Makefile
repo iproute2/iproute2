@@ -11,6 +11,7 @@ TCMODULES += q_red.o
 TCMODULES += q_prio.o
 TCMODULES += q_tbf.o
 TCMODULES += q_cbq.o
+TCMODULES += q_netem.so
 TCMODULES += f_rsvp.o
 TCMODULES += f_u32.o
 TCMODULES += f_route.o
@@ -45,7 +46,6 @@ TCLIB += tc_estimator.o
 CFLAGS += -DCONFIG_GACT -DCONFIG_GACT_PROB
 
 TCSO :=
-TCSO += q_netem.so
 ifeq ($(TC_CONFIG_ATM),y)
   TCSO += q_atm.so
 endif
