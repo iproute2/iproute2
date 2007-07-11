@@ -406,11 +406,8 @@ static int meta_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 
 	addattr_l(n, MAX_MSG, TCA_EM_META_HDR, &meta_hdr, sizeof(meta_hdr));
 
-	if (lvalue)
-		dump_value(n, TCA_EM_META_LVALUE, lvalue, &meta_hdr.left);
-
-	if (rvalue)
-		dump_value(n, TCA_EM_META_RVALUE, rvalue, &meta_hdr.right);
+	dump_value(n, TCA_EM_META_LVALUE, lvalue, &meta_hdr.left);
+	dump_value(n, TCA_EM_META_RVALUE, rvalue, &meta_hdr.right);
 
 	return 0;
 }
