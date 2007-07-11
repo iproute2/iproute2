@@ -105,9 +105,9 @@ struct filter
 };
 
 struct filter default_filter = {
-	dbs: (1<<TCP_DB),
-	states: SS_ALL & ~((1<<SS_LISTEN)|(1<<SS_CLOSE)|(1<<SS_TIME_WAIT)|(1<<SS_SYN_RECV)),
-	families: (1<<AF_INET)|(1<<AF_INET6),
+	.dbs	=  (1<<TCP_DB),
+	.states = SS_ALL & ~((1<<SS_LISTEN)|(1<<SS_CLOSE)|(1<<SS_TIME_WAIT)|(1<<SS_SYN_RECV)),
+	.families= (1<<AF_INET)|(1<<AF_INET6),
 };
 
 struct filter current_filter;
@@ -199,7 +199,7 @@ int ephemeral_ports_open(void)
 	return generic_proc_open("PROC_IP_LOCAL_PORT_RANGE", "sys/net/ipv4/ip_local_port_range");
 }
 
-int find_users(int ino, char *buf, int buflen)
+int find_users(unsigned ino, char *buf, int buflen)
 {
 	char pattern[64];
 	int  pattern_len;
@@ -213,7 +213,7 @@ int find_users(int ino, char *buf, int buflen)
 	if (!ino)
 		return 0;
 
-	sprintf(pattern, "socket:[%d]", ino);
+	sprintf(pattern, "socket:[%u]", ino);
 	pattern_len = strlen(pattern);
 
 	strncpy(name, getenv("PROC_ROOT") ? : "/proc/", sizeof(name)/2);
@@ -377,9 +377,9 @@ struct tcpstat
 	int		timer;
 	int		timeout;
 	int		retrs;
-	int		ino;
+	unsigned	ino;
 	int		probes;
-	int		uid;
+	unsigned	uid;
 	int		refcnt;
 	unsigned long long sk;
 	int		rto, ato, qack, cwnd, ssthresh;
@@ -419,13 +419,13 @@ const char *print_ms_timer(int timeout)
 	if (msecs)
 		sprintf(buf+strlen(buf), "%03dms", msecs);
 	return buf;
-};
+}
 
 const char *print_hz_timer(int timeout)
 {
 	int hz = get_hz();
 	return print_ms_timer(((timeout*1000) + hz-1)/hz);
-};
+}
 
 struct scache
 {
@@ -1157,7 +1157,7 @@ static int tcp_show_line(char *line, struct filter *f, int family)
 		return 0;
 
 	opt[0] = 0;
-	n = sscanf(data, "%x %x:%x %x:%x %x %d %d %d %d %llx %d %d %d %d %d %[^\n]\n",
+	n = sscanf(data, "%x %x:%x %x:%x %x %d %d %u %d %llx %d %d %d %d %d %[^\n]\n",
 		   &s.state, &s.wq, &s.rq,
 		   &s.timer, &s.timeout, &s.retrs, &s.uid, &s.probes, &s.ino,
 		   &s.refcnt, &s.sk, &s.rto, &s.ato, &s.qack,
@@ -1215,7 +1215,7 @@ static int tcp_show_line(char *line, struct filter *f, int family)
 	if (show_details) {
 		if (s.uid)
 			printf(" uid:%u", (unsigned)s.uid);
-		printf(" ino:%u", (unsigned)s.ino);
+		printf(" ino:%u", s.ino);
 		printf(" sk:%llx", s.sk);
 		if (opt[0])
 			printf(" opt:\"%s\"", opt);
@@ -1432,7 +1432,7 @@ int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	if (show_details) {
 		if (r->idiag_uid)
 			printf(" uid:%u", (unsigned)r->idiag_uid);
-		printf(" ino:%u", (unsigned)r->idiag_inode);
+		printf(" ino:%u", r->idiag_inode);
 		printf(" sk:%08x", r->id.idiag_cookie[0]);
 		if (r->id.idiag_cookie[1] != 0)
 			printf("%08x", r->id.idiag_cookie[1]);
@@ -1765,7 +1765,7 @@ int dgram_show_line(char *line, struct filter *f, int family)
 		return 0;
 
 	opt[0] = 0;
-	n = sscanf(data, "%x %x:%x %*x:%*x %*x %d %*d %d %d %llx %[^\n]\n",
+	n = sscanf(data, "%x %x:%x %*x:%*x %*x %d %*d %u %d %llx %[^\n]\n",
 	       &s.state, &s.wq, &s.rq,
 	       &s.uid, &s.ino,
 	       &s.refcnt, &s.sk, opt);
@@ -1792,7 +1792,7 @@ int dgram_show_line(char *line, struct filter *f, int family)
 	if (show_details) {
 		if (s.uid)
 			printf(" uid=%u", (unsigned)s.uid);
-		printf(" ino=%u", (unsigned)s.ino);
+		printf(" ino=%u", s.ino);
 		printf(" sk=%llx", s.sk);
 		if (opt[0])
 			printf(" opt:\"%s\"", opt);
@@ -2800,7 +2800,6 @@ int main(int argc, char *argv[])
 	       addr_width, "Local Address", serv_width, "Port",
 	       addr_width, "Peer Address", serv_width, "Port");
 
-//printf("%08x %08x %08x\n", current_filter.dbs, current_filter.states, current_filter.families);
 	fflush(stdout);
 
 	if (current_filter.dbs & (1<<NETLINK_DB))
