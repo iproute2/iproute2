@@ -112,89 +112,86 @@ struct filter default_filter = {
 
 struct filter current_filter;
 
-int generic_proc_open(char *env, char *name)
+static FILE *generic_proc_open(const char *env, const char *name)
 {
+	const char *p = getenv(env);
 	char store[128];
-	char *p = getenv(env);
+
 	if (!p) {
 		p = getenv("PROC_ROOT") ? : "/proc";
 		snprintf(store, sizeof(store)-1, "%s/%s", p, name);
 		p = store;
 	}
-	return open(p, O_RDONLY);
+
+	return fopen(p, "r");
 }
 
-int net_tcp_open(void)
+static FILE *net_tcp_open(void)
 {
 	return generic_proc_open("PROC_NET_TCP", "net/tcp");
 }
 
-int net_tcp6_open(void)
+static FILE *net_tcp6_open(void)
 {
 	return generic_proc_open("PROC_NET_TCP6", "net/tcp6");
 }
 
-int net_udp_open(void)
+static FILE *net_udp_open(void)
 {
 	return generic_proc_open("PROC_NET_UDP", "net/udp");
 }
 
-int net_udp6_open(void)
+static FILE *net_udp6_open(void)
 {
 	return generic_proc_open("PROC_NET_UDP6", "net/udp6");
 }
 
-int net_raw_open(void)
+static FILE *net_raw_open(void)
 {
 	return generic_proc_open("PROC_NET_RAW", "net/raw");
 }
 
-int net_raw6_open(void)
+static FILE *net_raw6_open(void)
 {
 	return generic_proc_open("PROC_NET_RAW6", "net/raw6");
 }
 
-int net_unix_open(void)
+static FILE *net_unix_open(void)
 {
 	return generic_proc_open("PROC_NET_UNIX", "net/unix");
 }
 
-int net_packet_open(void)
+static FILE *net_packet_open(void)
 {
 	return generic_proc_open("PROC_NET_PACKET", "net/packet");
 }
 
-int net_netlink_open(void)
+static FILE *net_netlink_open(void)
 {
 	return generic_proc_open("PROC_NET_NETLINK", "net/netlink");
 }
 
-int slabinfo_open(void)
+static FILE *slabinfo_open(void)
 {
 	return generic_proc_open("PROC_SLABINFO", "slabinfo");
 }
 
-int net_sockstat_open(void)
+static FILE *net_sockstat_open(void)
 {
 	return generic_proc_open("PROC_NET_SOCKSTAT", "net/sockstat");
 }
 
-int net_sockstat6_open(void)
+static FILE *net_sockstat6_open(void)
 {
 	return generic_proc_open("PROC_NET_SOCKSTAT6", "net/sockstat6");
 }
 
-int net_snmp_open(void)
+static FILE *net_snmp_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP", "net/snmp");
 }
 
-int net_netstat_open(void)
-{
-	return generic_proc_open("PROC_NET_NETSTAT", "net/netstat");
-}
-
-int ephemeral_ports_open(void)
+static FILE *ephemeral_ports_open(void)
 {
 	return generic_proc_open("PROC_IP_LOCAL_PORT_RANGE", "sys/net/ipv4/ip_local_port_range");
 }
@@ -313,7 +310,8 @@ int get_slabstat(struct slabstat *s)
 
 	memset(s, 0, sizeof(*s));
 
-	if ((fp = fdopen(slabinfo_open(), "r")) == NULL)
+	fp = slabinfo_open();
+	if (!fp)
 		return -1;
 
 	cnt = sizeof(*s)/sizeof(int);
@@ -478,7 +476,7 @@ static int ip_local_port_min, ip_local_port_max;
 static int is_ephemeral(int port)
 {
 	if (!ip_local_port_min) {
-		FILE *f = fdopen(ephemeral_ports_open(), "r");
+		FILE *f = ephemeral_ports_open();
 		if (f) {
 			fscanf(f, "%d %d",
 			       &ip_local_port_min, &ip_local_port_max);
@@ -655,7 +653,7 @@ int run_ssfilter(struct ssfilter *f, struct tcpstat *s)
 			return s->lport < 0;
 
                 if (!low) {
-			FILE *fp = fdopen(ephemeral_ports_open(), "r");
+			FILE *fp = ephemeral_ports_open();
 			if (fp) {
 				fscanf(fp, "%d%d", &low, &high);
 				fclose(fp);
@@ -1103,7 +1101,7 @@ void *parse_hostcond(char *addr)
 	return res;
 }
 
-static int tcp_show_line(char *line, struct filter *f, int family)
+static int tcp_show_line(char *line, const struct filter *f, int family)
 {
 	struct tcpstat s;
 	char *loc, *rem, *data;
@@ -1225,68 +1223,30 @@ static int tcp_show_line(char *line, struct filter *f, int family)
 	return 0;
 }
 
-static int generic_record_read(int fd, char *buf, int bufsize,
-			int (*worker)(char*, struct filter *, int),
-			struct filter *f, int fam)
+static int generic_record_read(FILE *fp,
+			       int (*worker)(char*, const struct filter *, int),
+			       const struct filter *f, int fam)
 {
-	int n;
-	int recsize;
-	int eof = 0;
-	char *p;
+	char line[256];
 
-	/* Load the first chunk and calculate record length from it. */
-	n = read(fd, buf, bufsize);
-	if (n < 0)
+	/* skip header */
+	if (fgets(line, sizeof(line), fp) == NULL)
 		goto outerr;
-	/* I _know_ that this is wrong, do not remind. :-)
-	 * But this works nowadays. */
-	if (n < bufsize)
-		eof = 1;
-	p = memchr(buf, '\n', n);
-	if (p == NULL || (p-buf) >= n)
-		goto outwrongformat;
-	recsize = (p-buf)+1;
-	p = buf+recsize;
 
-	for (;;) {
-		while ((p+recsize) - buf <= n) {
-			if (p[recsize-1] != '\n')
-				goto outwrongformat;
-			p[recsize-1] = 0;
-			if (worker(p, f, fam) < 0)
-				goto done;
-			p += recsize;
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		int n = strlen(line);
+		if (n == 0 || line[n-1] != '\n') {
+			errno = -EINVAL;
+			return -1;
 		}
-		if (!eof) {
-			int remains = (buf+bufsize) - p;
-			memcpy(buf, p, remains);
-			p = buf+remains;
-			n = read(fd, p, (buf+bufsize) - p);
-			if (n < 0)
-				goto outerr;
-			if (n < (buf+bufsize) - p) {
-				eof = 1;
-				if (n == 0) {
-					if (remains)
-						goto outwrongformat;
-					goto done;
-				}
-			}
-			n += remains;
-			p = buf;
-		} else {
-			if (p != buf+n)
-				goto outwrongformat;
-			goto done;
-		}
+		line[n-1] = 0;
+
+		if (worker(line, f, fam) < 0)
+			return 0;
 	}
-done:
-	return 0;
-
-outwrongformat:
-	errno = EINVAL;
 outerr:
-	return -1;
+
+	return ferror(fp) ? -1 : 0;
 }
 
 static char *sprint_bw(char *buf, double bw)
@@ -1384,7 +1344,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 	}
 }
 
-int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
+static int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 {
 	struct inet_diag_msg *r = NLMSG_DATA(nlh);
 	struct tcpstat s;
@@ -1447,7 +1407,7 @@ int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	return 0;
 }
 
-int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
+static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 {
 	int fd;
 	struct sockaddr_nl nladdr;
@@ -1581,7 +1541,7 @@ skip_it:
 	return 0;
 }
 
-int tcp_show_netlink_file(struct filter *f)
+static int tcp_show_netlink_file(struct filter *f)
 {
 	FILE	*fp;
 	char	buf[8192];
@@ -1637,9 +1597,9 @@ int tcp_show_netlink_file(struct filter *f)
 	}
 }
 
-int tcp_show(struct filter *f, int socktype)
+static int tcp_show(struct filter *f, int socktype)
 {
-	int fd = -1;
+	FILE *fp = NULL;
 	char *buf = NULL;
 	int bufsize = 64*1024;
 
@@ -1653,6 +1613,7 @@ int tcp_show(struct filter *f, int socktype)
 		return 0;
 
 	/* Sigh... We have to parse /proc/net/tcp... */
+
 
 	/* Estimate amount of sockets and try to allocate
 	 * huge buffer to read all the table at one read.
@@ -1681,18 +1642,21 @@ int tcp_show(struct filter *f, int socktype)
 	}
 
 	if (f->families & (1<<AF_INET)) {
-		if ((fd = net_tcp_open()) < 0)
+		if ((fp = net_tcp_open()) < 0)
 			goto outerr;
-		if (generic_record_read(fd, buf, bufsize, tcp_show_line, f, AF_INET))
+
+		setbuffer(fp, buf, bufsize);
+		if (generic_record_read(fp, tcp_show_line, f, AF_INET))
 			goto outerr;
-		close(fd);
+		fclose(fp);
 	}
 
 	if ((f->families & (1<<AF_INET6)) &&
-	    (fd = net_tcp6_open()) >= 0) {
-		if (generic_record_read(fd, buf, bufsize, tcp_show_line, f, AF_INET6))
+	    (fp = net_tcp6_open()) >= 0) {
+		setbuffer(fp, buf, bufsize);
+		if (generic_record_read(fp, tcp_show_line, f, AF_INET6))
 			goto outerr;
-		close(fd);
+		fclose(fp);
 	}
 
 	free(buf);
@@ -1703,15 +1667,15 @@ outerr:
 		int saved_errno = errno;
 		if (buf)
 			free(buf);
-		if (fd >= 0)
-			close(fd);
+		if (fp)
+			fclose(fp);
 		errno = saved_errno;
 		return -1;
 	} while (0);
 }
 
 
-int dgram_show_line(char *line, struct filter *f, int family)
+int dgram_show_line(char *line, const struct filter *f, int family)
 {
 	struct tcpstat s;
 	char *loc, *rem, *data;
@@ -1805,33 +1769,31 @@ int dgram_show_line(char *line, struct filter *f, int family)
 
 int udp_show(struct filter *f)
 {
-	int fd = -1;
-	char buf[8192];
-	int  bufsize = sizeof(buf);
+	FILE *fp = NULL;
 
 	dg_proto = UDP_PROTO;
 
 	if (f->families&(1<<AF_INET)) {
-		if ((fd = net_udp_open()) < 0)
+		if ((fp = net_udp_open()) < 0)
 			goto outerr;
-		if (generic_record_read(fd, buf, bufsize, dgram_show_line, f, AF_INET))
+		if (generic_record_read(fp, dgram_show_line, f, AF_INET))
 			goto outerr;
-		close(fd);
+		fclose(fp);
 	}
 
 	if ((f->families&(1<<AF_INET6)) &&
-	    (fd = net_udp6_open()) >= 0) {
-		if (generic_record_read(fd, buf, bufsize, dgram_show_line, f, AF_INET6))
+	    (fp = net_udp6_open()) >= 0) {
+		if (generic_record_read(fp, dgram_show_line, f, AF_INET6))
 			goto outerr;
-		close(fd);
+		fclose(fp);
 	}
 	return 0;
 
 outerr:
 	do {
 		int saved_errno = errno;
-		if (fd >= 0)
-			close(fd);
+		if (fp)
+			fclose(fp);
 		errno = saved_errno;
 		return -1;
 	} while (0);
@@ -1839,33 +1801,31 @@ outerr:
 
 int raw_show(struct filter *f)
 {
-	int fd = -1;
-	char buf[8192];
-	int  bufsize = sizeof(buf);
+	FILE *fp = NULL;
 
 	dg_proto = RAW_PROTO;
 
 	if (f->families&(1<<AF_INET)) {
-		if ((fd = net_raw_open()) < 0)
+		if ((fp = net_raw_open()) < 0)
 			goto outerr;
-		if (generic_record_read(fd, buf, bufsize, dgram_show_line, f, AF_INET))
+		if (generic_record_read(fp, dgram_show_line, f, AF_INET))
 			goto outerr;
-		close(fd);
+		fclose(fp);
 	}
 
 	if ((f->families&(1<<AF_INET6)) &&
-	    (fd = net_raw6_open()) >= 0) {
-		if (generic_record_read(fd, buf, bufsize, dgram_show_line, f, AF_INET6))
+	    (fp = net_raw6_open()) >= 0) {
+		if (generic_record_read(fp, dgram_show_line, f, AF_INET6))
 			goto outerr;
-		close(fd);
+		fclose(fp);
 	}
 	return 0;
 
 outerr:
 	do {
 		int saved_errno = errno;
-		if (fd >= 0)
-			close(fd);
+		if (fp)
+			fclose(fp);
 		errno = saved_errno;
 		return -1;
 	} while (0);
@@ -1970,7 +1930,7 @@ int unix_show(struct filter *f)
 	int  cnt;
 	struct unixstat *list = NULL;
 
-	if ((fp = fdopen(net_unix_open(), "r")) == NULL)
+	if ((fp = net_unix_open()) == NULL)
 		return -1;
 	fgets(buf, sizeof(buf)-1, fp);
 
@@ -2058,7 +2018,7 @@ int packet_show(struct filter *f)
 	if (!(f->states & (1<<SS_CLOSE)))
 		return 0;
 
-	if ((fp = fdopen(net_packet_open(), "r")) == NULL)
+	if ((fp = net_packet_open()) == NULL)
 		return -1;
 	fgets(buf, sizeof(buf)-1, fp);
 
@@ -2131,7 +2091,7 @@ int netlink_show(struct filter *f)
 	if (!(f->states & (1<<SS_CLOSE)))
 		return 0;
 
-	if ((fp = fdopen(net_netlink_open(), "r")) == NULL)
+	if ((fp = net_netlink_open()) == NULL)
 		return -1;
 	fgets(buf, sizeof(buf)-1, fp);
 
@@ -2217,7 +2177,7 @@ int get_snmp_int(char *proto, char *key, int *result)
 
 	*result = 0;
 
-	if ((fp = fdopen(net_snmp_open(), "r")) == NULL)
+	if ((fp = net_snmp_open()) == NULL)
 		return -1;
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -2310,13 +2270,13 @@ int get_sockstat(struct sockstat *s)
 
 	memset(s, 0, sizeof(*s));
 
-	if ((fp = fdopen(net_sockstat_open(), "r")) == NULL)
+	if ((fp = net_sockstat_open()) == NULL)
 		return -1;
 	while(fgets(buf, sizeof(buf), fp) != NULL)
 		get_sockstat_line(buf, s);
 	fclose(fp);
 
-	if ((fp = fdopen(net_sockstat6_open(), "r")) == NULL)
+	if ((fp = net_sockstat6_open()) == NULL)
 		return 0;
 	while(fgets(buf, sizeof(buf), fp) != NULL)
 		get_sockstat_line(buf, s);
