@@ -6,7 +6,8 @@
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:  J Hadi Salim (hadi@cyberus.ca)
+ * Authors:	J Hadi Salim (hadi@cyberus.ca)
+ *		Johannes Berg (johannes@sipsolutions.net)
  */
 
 #include <stdio.h>
@@ -23,6 +24,8 @@
 #include "genl_utils.h"
 
 #define GENL_MAX_FAM_OPS	256
+#define GENL_MAX_FAM_GRPS	256
+
 static int usage(void)
 {
 	fprintf(stderr,"Usage: ctrl <CMD>\n" \
@@ -82,7 +85,7 @@ int genl_ctrl_resolve_family(const char *family)
 		}
 
 		if (ghdr->cmd != CTRL_CMD_NEWFAMILY) {
-			fprintf(stderr, "Unkown controller command %d\n", ghdr->cmd);
+			fprintf(stderr, "Unknown controller command %d\n", ghdr->cmd);
 			goto errout;
 		}
 
@@ -151,6 +154,26 @@ static int print_ctrl_cmds(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
 
 }
 
+static int print_ctrl_grp(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
+{
+	struct rtattr *tb[CTRL_ATTR_MCAST_GRP_MAX + 1];
+
+	if (arg == NULL)
+		return -1;
+
+	parse_rtattr_nested(tb, CTRL_ATTR_MCAST_GRP_MAX, arg);
+	if (tb[2]) {
+		__u32 *id = RTA_DATA(tb[CTRL_ATTR_MCAST_GRP_ID]);
+		fprintf(fp, " ID-0x%x ",*id);
+	}
+	if (tb[1]) {
+		char *name = RTA_DATA(tb[CTRL_ATTR_MCAST_GRP_NAME]);
+		fprintf(fp, " name: %s ", name);
+	}
+	return 0;
+
+}
+
 /*
  * The controller sends one nlmsg per family
 */
@@ -172,8 +195,10 @@ static int print_ctrl(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (ghdr->cmd != CTRL_CMD_GETFAMILY &&
 	    ghdr->cmd != CTRL_CMD_DELFAMILY &&
-	    ghdr->cmd != CTRL_CMD_NEWFAMILY) {
-		fprintf(stderr, "Unkown controller command %d\n", ghdr->cmd);
+	    ghdr->cmd != CTRL_CMD_NEWFAMILY &&
+	    ghdr->cmd != CTRL_CMD_NEWMCAST_GRP &&
+	    ghdr->cmd != CTRL_CMD_DELMCAST_GRP) {
+		fprintf(stderr, "Unknown controller command %d\n", ghdr->cmd);
 		return 0;
 	}
 
@@ -229,6 +254,29 @@ static int print_ctrl(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		/* end of family::cmds definitions .. */
 		fprintf(fp,"\n");
 	}
+
+	if (tb[CTRL_ATTR_MCAST_GROUPS]) {
+		struct rtattr *tb2[GENL_MAX_FAM_GRPS + 1];
+		int i;
+
+		parse_rtattr_nested(tb2, GENL_MAX_FAM_GRPS,
+				    tb[CTRL_ATTR_MCAST_GROUPS]);
+		fprintf(fp, "\tmulticast groups:\n");
+
+		for (i = 0; i < GENL_MAX_FAM_GRPS; i++) {
+			if (tb2[i]) {
+				fprintf(fp, "\t\t#%d: ", i);
+				if (0 > print_ctrl_grp(fp, tb2[i], ctrl_v))
+					fprintf(fp, "Error printing group\n");
+				/* for next group */
+				fprintf(fp,"\n");
+			}
+		}
+
+		/* end of family::groups definitions .. */
+		fprintf(fp,"\n");
+	}
+
 	fflush(fp);
 	return 0;
 }
