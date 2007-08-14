@@ -527,6 +527,39 @@ int addraw_l(struct nlmsghdr *n, int maxlen, const void *data, int len)
 	return 0;
 }
 
+struct rtattr *addattr_nest(struct nlmsghdr *n, int maxlen, int type)
+{
+	struct rtattr *nest = NLMSG_TAIL(n);
+
+	addattr_l(n, maxlen, type, NULL, 0);
+	return nest;
+}
+
+int addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest)
+{
+	nest->rta_len = (void *)NLMSG_TAIL(n) - (void *)nest;
+	return n->nlmsg_len;
+}
+
+struct rtattr *addattr_nest_compat(struct nlmsghdr *n, int maxlen, int type,
+				   const void *data, int len)
+{
+	struct rtattr *start = NLMSG_TAIL(n);
+
+	addattr_l(n, maxlen, type, data, len);
+	addattr_nest(n, maxlen, type);
+	return start;
+}
+
+int addattr_nest_compat_end(struct nlmsghdr *n, struct rtattr *start)
+{
+	struct rtattr *nest = (void *)start + NLMSG_ALIGN(start->rta_len);
+
+	start->rta_len = (void *)NLMSG_TAIL(n) - (void *)start;
+	addattr_nest_end(n, nest);
+	return n->nlmsg_len;
+}
+
 int rta_addattr32(struct rtattr *rta, int maxlen, int type, __u32 data)
 {
 	int len = RTA_LENGTH(4);
@@ -588,4 +621,17 @@ int parse_rtattr_byindex(struct rtattr *tb[], int max, struct rtattr *rta, int l
 	if (len)
 		fprintf(stderr, "!!!Deficit %d, rta_len=%d\n", len, rta->rta_len);
 	return i;
+}
+
+int __parse_rtattr_nested_compat(struct rtattr *tb[], int max, struct rtattr *rta,
+			         int len)
+{
+	if (RTA_PAYLOAD(rta) < len)
+		return -1;
+	if (RTA_PAYLOAD(rta) >= RTA_ALIGN(len) + sizeof(struct rtattr)) {
+		rta = RTA_DATA(rta) + RTA_ALIGN(len);
+		return parse_rtattr_nested(tb, max, rta);
+	}
+	memset(tb, 0, sizeof(struct rtattr *) * max);
+	return 0;
 }
