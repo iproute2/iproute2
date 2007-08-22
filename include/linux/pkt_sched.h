@@ -103,9 +103,9 @@ struct tc_prio_qopt
 
 enum
 {
-        TCA_PRIO_UNSPEC,
-        TCA_PRIO_MQ,
-        __TCA_PRIO_MAX
+	TCA_PRIO_UNSPEC,
+	TCA_PRIO_MQ,
+	__TCA_PRIO_MAX
 };
 
 #define TCA_PRIO_MAX    (__TCA_PRIO_MAX - 1)
