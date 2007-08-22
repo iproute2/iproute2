@@ -178,7 +178,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				return 0;
 		}
 		if (filter.tb) {
-			if (r->rtm_flags&RTM_F_CLONED)
+			if (!filter.cloned && r->rtm_flags&RTM_F_CLONED)
 				return 0;
 			if (filter.tb == RT_TABLE_LOCAL) {
 				if (r->rtm_type != RTN_LOCAL)
@@ -191,6 +191,10 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			}
 		}
 	} else {
+		if (filter.cloned) {
+			if (!(r->rtm_flags&RTM_F_CLONED))
+				return 0;
+		}
 		if (filter.tb > 0 && filter.tb != table)
 			return 0;
 	}
