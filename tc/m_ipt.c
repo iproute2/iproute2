@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <linux/if.h>
 #include <iptables.h>
 #include <linux/netfilter_ipv4/ip_tables.h>
 #include "utils.h"
