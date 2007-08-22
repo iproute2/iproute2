@@ -45,6 +45,21 @@ static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 
 extern struct rtnl_handle rth;
 
+struct link_util
+{
+	struct link_util	*next;
+	const char		*id;
+	int			maxattr;
+	int			(*parse_opt)(struct link_util *, int, char **,
+					     struct nlmsghdr *);
+	void			(*print_opt)(struct link_util *, FILE *,
+					     struct rtattr *[]);
+	void			(*print_xstats)(struct link_util *, FILE *,
+					     struct rtattr *);
+};
+
+struct link_util *get_link_kind(const char *kind);
+
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
 #endif

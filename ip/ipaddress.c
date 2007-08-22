@@ -136,6 +136,41 @@ void print_queuelen(char *name)
 		printf("qlen %d", ifr.ifr_qlen);
 }
 
+static void print_linktype(FILE *fp, struct rtattr *tb)
+{
+	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
+	struct link_util *lu;
+	char *kind;
+
+	parse_rtattr_nested(linkinfo, IFLA_INFO_MAX, tb);
+
+	if (!linkinfo[IFLA_INFO_KIND])
+		return;
+	kind = RTA_DATA(linkinfo[IFLA_INFO_KIND]);
+
+	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "    %s ", kind);
+
+	lu = get_link_kind(kind);
+	if (!lu || !lu->print_opt)
+		return;
+
+	if (1) {
+		struct rtattr *attr[lu->maxattr+1], **data = NULL;
+
+		if (linkinfo[IFLA_INFO_DATA]) {
+			parse_rtattr_nested(attr, lu->maxattr,
+					    linkinfo[IFLA_INFO_DATA]);
+			data = attr;
+		}
+		lu->print_opt(lu, fp, data);
+
+		if (linkinfo[IFLA_INFO_XSTATS] && show_stats &&
+		    lu->print_xstats)
+			lu->print_xstats(lu, fp, linkinfo[IFLA_INFO_XSTATS]);
+	}
+}
+
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg)
 {
@@ -223,6 +258,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 						      b1, sizeof(b1)));
 		}
 	}
+
+	if (do_link && tb[IFLA_LINKINFO] && show_details)
+		print_linktype(fp, tb[IFLA_LINKINFO]);
+
 	if (do_link && tb[IFLA_STATS] && show_stats) {
 		struct rtnl_link_stats slocal;
 		struct rtnl_link_stats *s = RTA_DATA(tb[IFLA_STATS]);

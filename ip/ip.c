@@ -31,6 +31,7 @@
 
 int preferred_family = AF_UNSPEC;
 int show_stats = 0;
+int show_details = 0;
 int resolve_hosts = 0;
 int oneline = 0;
 int timestamp = 0;
@@ -48,7 +49,7 @@ static void usage(void)
 "       ip [ -force ] [-batch filename\n"
 "where  OBJECT := { link | addr | route | rule | neigh | ntable | tunnel |\n"
 "                   maddr | mroute | monitor | xfrm | veth }\n"
-"       OPTIONS := { -V[ersion] | -s[tatistics] | -r[esolve] |\n"
+"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
 "                    -o[neline] | -t[imestamp] }\n");
 	exit(-1);
@@ -190,6 +191,8 @@ int main(int argc, char **argv)
 		} else if (matches(opt, "-stats") == 0 ||
 			   matches(opt, "-statistics") == 0) {
 			++show_stats;
+		} else if (matches(opt, "-details") == 0) {
+			++show_details;
 		} else if (matches(opt, "-resolve") == 0) {
 			++resolve_hosts;
 		} else if (matches(opt, "-oneline") == 0) {
