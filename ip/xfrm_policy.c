@@ -222,16 +222,10 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 
 			NEXT_ARG();
 			xfrm_policy_dir_parse(&req.xpinfo.dir, &argc, &argv);
-
-			filter.dir_mask = XFRM_FILTER_MASK_FULL;
-
 		} else if (strcmp(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (get_u32(&req.xpinfo.index, *argv, 0))
 				invarg("\"INDEX\" is invalid", *argv);
-
-			filter.index_mask = XFRM_FILTER_MASK_FULL;
-
 		} else if (strcmp(*argv, "ptype") == 0) {
 			if (ptypep)
 				duparg("ptype", *argv);
@@ -239,9 +233,6 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 
 			NEXT_ARG();
 			xfrm_policy_ptype_parse(&upt.type, &argc, &argv);
-
-			filter.dir_mask = XFRM_FILTER_MASK_FULL;
-
 		} else if (strcmp(*argv, "action") == 0) {
 			NEXT_ARG();
 			if (strcmp(*argv, "allow") == 0)
@@ -250,16 +241,10 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 				req.xpinfo.action = XFRM_POLICY_BLOCK;
 			else
 				invarg("\"action\" value is invalid\n", *argv);
-
-			filter.action_mask = XFRM_FILTER_MASK_FULL;
-
 		} else if (strcmp(*argv, "priority") == 0) {
 			NEXT_ARG();
 			if (get_u32(&req.xpinfo.priority, *argv, 0))
 				invarg("\"PRIORITY\" is invalid", *argv);
-
-			filter.priority_mask = XFRM_FILTER_MASK_FULL;
-
 		} else if (strcmp(*argv, "limit") == 0) {
 			NEXT_ARG();
 			xfrm_lifetime_cfg_parse(&req.xpinfo.lft, &argc, &argv);
@@ -888,8 +873,6 @@ static int xfrm_policy_flush(int argc, char **argv)
 
 			NEXT_ARG();
 			xfrm_policy_ptype_parse(&upt.type, &argc, &argv);
-
-			filter.dir_mask = XFRM_FILTER_MASK_FULL;
 		} else
 			invarg("unknown", *argv);
 

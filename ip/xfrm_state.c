@@ -216,8 +216,6 @@ static int xfrm_state_flag_parse(__u8 *flags, int *argcp, char ***argvp)
 		}
 	}
 
-	filter.state_flags_mask = XFRM_FILTER_MASK_FULL;
-
 	*argcp = argc;
 	*argvp = argv;
 
