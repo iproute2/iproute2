@@ -54,10 +54,10 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip xfrm policy { add | update } dir DIR SELECTOR [ index INDEX ] [ ptype PTYPE ]\n");
-	fprintf(stderr, "        [ action ACTION ] [ priority PRIORITY ] [ LIMIT-LIST ] [ TMPL-LIST ]\n");
+	fprintf(stderr, "        [ action ACTION ] [ priority PRIORITY ] [ flag FLAG-LIST ] [ LIMIT-LIST ] [ TMPL-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy { delete | get } dir DIR [ SELECTOR | index INDEX ] [ ptype PTYPE ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy { deleteall | list } [ dir DIR ] [ SELECTOR ]\n");
-	fprintf(stderr, "        [ index INDEX ] [ action ACTION ] [ priority PRIORITY ]\n");
+	fprintf(stderr, "        [ index INDEX ] [ action ACTION ] [ priority PRIORITY ]  [ flag FLAG-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy flush [ ptype PTYPE ]\n");
 	fprintf(stderr, "Usage: ip xfrm count\n");
 	fprintf(stderr, "PTYPE := [ main | sub ](default=main)\n");
@@ -73,6 +73,9 @@ static void usage(void)
 	fprintf(stderr, "ACTION := [ allow | block ](default=allow)\n");
 
 	//fprintf(stderr, "PRIORITY - priority value(default=0)\n");
+
+	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
+	fprintf(stderr, "FLAG := [ localok ]\n");
 
 	fprintf(stderr, "LIMIT-LIST := [ LIMIT-LIST ] | [ limit LIMIT ]\n");
 	fprintf(stderr, "LIMIT := [ [time-soft|time-hard|time-use-soft|time-use-hard] SECONDS ] |\n");
@@ -128,6 +131,39 @@ static int xfrm_policy_ptype_parse(__u8 *ptype, int *argcp, char ***argvp)
 		*ptype = XFRM_POLICY_TYPE_SUB;
 	else
 		invarg("\"PTYPE\" is invalid", *argv);
+
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
+static int xfrm_policy_flag_parse(__u8 *flags, int *argcp, char ***argvp)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+	int len = strlen(*argv);
+
+	if (len > 2 && strncmp(*argv, "0x", 2) == 0) {
+		__u8 val = 0;
+
+		if (get_u8(&val, *argv, 16))
+			invarg("\"FLAG\" is invalid", *argv);
+		*flags = val;
+	} else {
+		while (1) {
+			if (strcmp(*argv, "localok") == 0)
+				*flags |= XFRM_POLICY_LOCALOK;
+			else {
+				PREV_ARG(); /* back track */
+				break;
+			}
+
+			if (!NEXT_ARG_OK())
+				break;
+			NEXT_ARG();
+		}
+	}
 
 	*argcp = argc;
 	*argvp = argv;
@@ -245,6 +281,10 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 			NEXT_ARG();
 			if (get_u32(&req.xpinfo.priority, *argv, 0))
 				invarg("\"PRIORITY\" is invalid", *argv);
+		} else if (strcmp(*argv, "flag") == 0) {
+			NEXT_ARG();
+			xfrm_policy_flag_parse(&req.xpinfo.flags, &argc,
+					       &argv);
 		} else if (strcmp(*argv, "limit") == 0) {
 			NEXT_ARG();
 			xfrm_lifetime_cfg_parse(&req.xpinfo.lft, &argc, &argv);
@@ -356,6 +396,10 @@ static int xfrm_policy_filter_match(struct xfrm_userpolicy_info *xpinfo,
 
 	if ((xpinfo->priority^filter.xpinfo.priority)&filter.priority_mask)
 		return 0;
+
+	if (filter.policy_flags_mask)
+		if ((xpinfo->flags & filter.xpinfo.flags) == 0)
+			return 0;
 
 	return 1;
 }
@@ -683,6 +727,13 @@ static int xfrm_policy_list_or_deleteall(int argc, char **argv, int deleteall)
 				invarg("\"PRIORITY\" is invalid", *argv);
 
 			filter.priority_mask = XFRM_FILTER_MASK_FULL;
+
+		} else if (strcmp(*argv, "flag") == 0) {
+			NEXT_ARG();
+			xfrm_policy_flag_parse(&filter.xpinfo.flags, &argc,
+					       &argv);
+
+			filter.policy_flags_mask = XFRM_FILTER_MASK_FULL;
 
 		} else {
 			if (selp)

@@ -745,12 +745,13 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		fprintf(fp, "flag ");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_NOECN, "noecn");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_DECAP_DSCP, "decap-dscp");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_NOPMTUDISC, "nopmtudisc");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_WILDRECV, "wildrecv");
 		if (flags)
 			fprintf(fp, "%x", flags);
-		if (show_stats > 0)
-			fprintf(fp, " (0x%s)", strxf_mask8(flags));
 	}
+	if (show_stats > 0)
+		fprintf(fp, " (0x%s)", strxf_mask8(xsinfo->flags));
 	fprintf(fp, "%s", _SL_);
 
 	xfrm_xfrma_print(tb, xsinfo->family, fp, buf);
@@ -845,10 +846,19 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 	}
 	fprintf(fp, " ");
 
-	if (show_stats > 0) {
+	if (show_stats > 0)
 		fprintf(fp, "share %s ", strxf_share(xpinfo->share));
-		fprintf(fp, "flag 0x%s", strxf_mask8(xpinfo->flags));
+
+	if (show_stats > 0 || xpinfo->flags) {
+		__u8 flags = xpinfo->flags;
+
+		fprintf(fp, "flag ");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_POLICY_LOCALOK, "localok");
+		if (flags)
+			fprintf(fp, "%x", flags);
 	}
+	if (show_stats > 0)
+		fprintf(fp, " (0x%s)", strxf_mask8(xpinfo->flags));
 	fprintf(fp, "%s", _SL_);
 
 	if (show_stats > 0)

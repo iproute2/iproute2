@@ -62,7 +62,7 @@ static void usage(void)
 	fprintf(stderr, "        [ min SPI max SPI ]\n");
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID\n");
 	fprintf(stderr, "Usage: ip xfrm state { deleteall | list } [ ID ] [ mode MODE ] [ reqid REQID ]\n");
-	fprintf(stderr, "        [ flag FLAG_LIST ]\n");
+	fprintf(stderr, "        [ flag FLAG-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm state flush [ proto XFRM_PROTO ]\n");
 	fprintf(stderr, "Usage: ip xfrm state count \n");
 
@@ -82,7 +82,7 @@ static void usage(void)
  	//fprintf(stderr, "REQID - number(default=0)\n");
 
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
-	fprintf(stderr, "FLAG := [ noecn | decap-dscp | wildrecv ]\n");
+	fprintf(stderr, "FLAG := [ noecn | decap-dscp | nopmtudisc | wildrecv ]\n");
 
         fprintf(stderr, "ENCAP := ENCAP-TYPE SPORT DPORT OADDR\n");
         fprintf(stderr, "ENCAP-TYPE := espinudp | espinudp-nonike\n");
@@ -203,6 +203,8 @@ static int xfrm_state_flag_parse(__u8 *flags, int *argcp, char ***argvp)
 				*flags |= XFRM_STATE_NOECN;
 			else if (strcmp(*argv, "decap-dscp") == 0)
 				*flags |= XFRM_STATE_DECAP_DSCP;
+			else if (strcmp(*argv, "nopmtudisc") == 0)
+				*flags |= XFRM_STATE_NOPMTUDISC;
 			else if (strcmp(*argv, "wildrecv") == 0)
 				*flags |= XFRM_STATE_WILDRECV;
 			else {
