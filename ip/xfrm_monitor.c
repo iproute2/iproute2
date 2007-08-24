@@ -50,12 +50,6 @@ static int xfrm_acquire_print(const struct sockaddr_nl *who,
 	struct rtattr * tb[XFRMA_MAX+1];
 	__u16 family;
 
-	if (n->nlmsg_type != XFRM_MSG_ACQUIRE) {
-		fprintf(stderr, "Not an acquire: %08x %08x %08x\n",
-			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
-		return 0;
-	}
-
 	len -= NLMSG_LENGTH(sizeof(*xacq));
 	if (len < 0) {
 		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
@@ -108,6 +102,74 @@ static int xfrm_acquire_print(const struct sockaddr_nl *who,
 	return 0;
 }
 
+static int xfrm_state_flush_print(const struct sockaddr_nl *who,
+				  struct nlmsghdr *n, void *arg)
+{
+	FILE *fp = (FILE*)arg;
+	struct xfrm_usersa_flush *xsf = NLMSG_DATA(n);
+	int len = n->nlmsg_len;
+	const char *str;
+
+	len -= NLMSG_SPACE(sizeof(*xsf));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
+	}
+
+	fprintf(fp, "Flushed state ");
+
+	str = strxf_xfrmproto(xsf->proto);
+	if (str)
+		fprintf(fp, "proto %s", str);
+	else
+		fprintf(fp, "proto %u", xsf->proto);
+	fprintf(fp, "%s", _SL_);
+
+	if (oneline)
+		fprintf(fp, "\n");
+	fflush(fp);
+
+	return 0;
+}
+
+static int xfrm_policy_flush_print(const struct sockaddr_nl *who,
+				   struct nlmsghdr *n, void *arg)
+{
+	struct rtattr * tb[XFRMA_MAX+1];
+	FILE *fp = (FILE*)arg;
+	int len = n->nlmsg_len;
+
+	len -= NLMSG_SPACE(0);
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
+	}
+
+	fprintf(fp, "Flushed policy ");
+
+	parse_rtattr(tb, XFRMA_MAX, NLMSG_DATA(n), len);
+
+	if (tb[XFRMA_POLICY_TYPE]) {
+		struct xfrm_userpolicy_type *upt;
+
+		fprintf(fp, "ptype ");
+
+		if (RTA_PAYLOAD(tb[XFRMA_POLICY_TYPE]) < sizeof(*upt))
+			fprintf(fp, "(ERROR truncated)");
+
+		upt = (struct xfrm_userpolicy_type *)RTA_DATA(tb[XFRMA_POLICY_TYPE]);
+		fprintf(fp, "%s ", strxf_ptype(upt->type));
+	}
+
+	fprintf(fp, "%s", _SL_);
+
+	if (oneline)
+		fprintf(fp, "\n");
+	fflush(fp);
+
+	return 0;
+}
+
 static int xfrm_report_print(const struct sockaddr_nl *who,
 			     struct nlmsghdr *n, void *arg)
 {
@@ -116,12 +178,6 @@ static int xfrm_report_print(const struct sockaddr_nl *who,
 	int len = n->nlmsg_len;
 	struct rtattr * tb[XFRMA_MAX+1];
 	__u16 family;
-
-	if (n->nlmsg_type != XFRM_MSG_REPORT) {
-		fprintf(stderr, "Not a report: %08x %08x %08x\n",
-			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
-		return 0;
-	}
 
 	len -= NLMSG_LENGTH(sizeof(*xrep));
 	if (len < 0) {
@@ -201,42 +257,38 @@ static int xfrm_accept_msg(const struct sockaddr_nl *who,
 	if (timestamp)
 		print_timestamp(fp);
 
-	if (n->nlmsg_type == XFRM_MSG_NEWSA ||
-	    n->nlmsg_type == XFRM_MSG_DELSA ||
-	    n->nlmsg_type == XFRM_MSG_UPDSA ||
-	    n->nlmsg_type == XFRM_MSG_EXPIRE) {
+	switch (n->nlmsg_type) {
+	case XFRM_MSG_NEWSA:
+	case XFRM_MSG_DELSA:
+	case XFRM_MSG_UPDSA:
+	case XFRM_MSG_EXPIRE:
 		xfrm_state_print(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == XFRM_MSG_NEWPOLICY ||
-	    n->nlmsg_type == XFRM_MSG_DELPOLICY ||
-	    n->nlmsg_type == XFRM_MSG_UPDPOLICY ||
-	    n->nlmsg_type == XFRM_MSG_POLEXPIRE) {
+	case XFRM_MSG_NEWPOLICY:
+	case XFRM_MSG_DELPOLICY:
+	case XFRM_MSG_UPDPOLICY:
+	case XFRM_MSG_POLEXPIRE:
 		xfrm_policy_print(who, n, arg);
 		return 0;
-	}
-
-	if (n->nlmsg_type == XFRM_MSG_ACQUIRE) {
+	case XFRM_MSG_ACQUIRE:
 		xfrm_acquire_print(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == XFRM_MSG_FLUSHSA) {
-		/* XXX: Todo: show proto in xfrm_usersa_flush */
-		fprintf(fp, "Flushed state\n");
+	case XFRM_MSG_FLUSHSA:
+		xfrm_state_flush_print(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == XFRM_MSG_FLUSHPOLICY) {
-		fprintf(fp, "Flushed policy\n");
+	case XFRM_MSG_FLUSHPOLICY:
+		xfrm_policy_flush_print(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == XFRM_MSG_REPORT) {
+	case XFRM_MSG_REPORT:
 		xfrm_report_print(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == XFRM_MSG_NEWAE) {
+	case XFRM_MSG_NEWAE:
 		xfrm_ae_print(who, n, arg);
 		return 0;
+	default:
+		break;
 	}
+
 	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&
 	    n->nlmsg_type != NLMSG_DONE) {
 		fprintf(fp, "Unknown message: %08d 0x%08x 0x%08x\n",

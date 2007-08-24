@@ -127,6 +127,7 @@ const char *strxf_mask8(__u8 mask);
 const char *strxf_mask32(__u32 mask);
 const char *strxf_share(__u8 share);
 const char *strxf_proto(__u8 proto);
+const char *strxf_ptype(__u8 ptype);
 void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 			__u8 mode, __u32 reqid, __u16 family, int force_spi,
 			FILE *fp, const char *prefix, const char *title);

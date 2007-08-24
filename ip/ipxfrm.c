@@ -114,6 +114,7 @@ struct typeent {
 static const struct typeent xfrmproto_types[]= {
 	{ "esp", IPPROTO_ESP }, { "ah", IPPROTO_AH }, { "comp", IPPROTO_COMP },
 	{ "route2", IPPROTO_ROUTING }, { "hao", IPPROTO_DSTOPTS },
+	{ "ipsec-any", IPSEC_PROTO_ANY },
 	{ NULL, -1 }
 };
 
@@ -135,6 +136,7 @@ int xfrm_xfrmproto_getbyname(char *name)
 
 const char *strxf_xfrmproto(__u8 proto)
 {
+	static char str[16];
 	int i;
 
 	for (i = 0; ; i++) {
@@ -146,7 +148,8 @@ const char *strxf_xfrmproto(__u8 proto)
 			return t->t_name;
 	}
 
-	return NULL;
+	sprintf(str, "%u", proto);
+	return str;
 }
 
 static const struct typeent algo_types[]= {
@@ -172,6 +175,7 @@ int xfrm_algotype_getbyname(char *name)
 
 const char *strxf_algotype(int type)
 {
+	static char str[32];
 	int i;
 
 	for (i = 0; ; i++) {
@@ -183,7 +187,8 @@ const char *strxf_algotype(int type)
 			return t->t_name;
 	}
 
-	return NULL;
+	sprintf(str, "%d", type);
+	return str;
 }
 
 const char *strxf_mask8(__u8 mask)
@@ -249,6 +254,25 @@ const char *strxf_proto(__u8 proto)
 	}
 
 	return p;
+}
+
+const char *strxf_ptype(__u8 ptype)
+{
+	static char str[16];
+
+	switch (ptype) {
+	case XFRM_POLICY_TYPE_MAIN:
+		strcpy(str, "main");
+		break;
+	case XFRM_POLICY_TYPE_SUB:
+		strcpy(str, "sub");
+		break;
+	default:
+		sprintf(str, "%u", ptype);
+		break;
+	}
+
+	return str;
 }
 
 void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
@@ -776,7 +800,6 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 			    const char *title)
 {
 	char buf[STRBUF_SIZE];
-	__u8 ptype = XFRM_POLICY_TYPE_MAIN;
 
 	memset(buf, '\0', sizeof(buf));
 
@@ -821,30 +844,17 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 		fprintf(fp, "index %u ", xpinfo->index);
 	fprintf(fp, "priority %u ", xpinfo->priority);
 
-	fprintf(fp, "ptype ");
-
 	if (tb[XFRMA_POLICY_TYPE]) {
 		struct xfrm_userpolicy_type *upt;
+
+		fprintf(fp, "ptype ");
 
 		if (RTA_PAYLOAD(tb[XFRMA_POLICY_TYPE]) < sizeof(*upt))
 			fprintf(fp, "(ERROR truncated)");
 
 		upt = (struct xfrm_userpolicy_type *)RTA_DATA(tb[XFRMA_POLICY_TYPE]);
-		ptype = upt->type;
+		fprintf(fp, "%s ", strxf_ptype(upt->type));
 	}
-
-	switch (ptype) {
-	case XFRM_POLICY_TYPE_MAIN:
-		fprintf(fp, "main");
-		break;
-	case XFRM_POLICY_TYPE_SUB:
-		fprintf(fp, "sub");
-		break;
-	default:
-		fprintf(fp, "%u", ptype);
-		break;
-	}
-	fprintf(fp, " ");
 
 	if (show_stats > 0)
 		fprintf(fp, "share %s ", strxf_share(xpinfo->share));

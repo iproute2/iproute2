@@ -1053,7 +1053,6 @@ static int xfrm_state_flush(int argc, char **argv)
 
 	if (show_stats > 1)
 		fprintf(stderr, "Flush state proto=%s\n",
-			(req.xsf.proto == IPSEC_PROTO_ANY) ? "any" :
 			strxf_xfrmproto(req.xsf.proto));
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
