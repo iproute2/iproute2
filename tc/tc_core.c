@@ -84,11 +84,12 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab, int cell_log, unsigned mt
 			cell_log++;
 	}
 	for (i=0; i<256; i++) {
-		unsigned sz = (i<<cell_log);
+		unsigned sz = ((i+1)<<cell_log);
 		if (sz < mpu)
 			sz = mpu;
 		rtab[i] = tc_calc_xmittime(bps, sz);
 	}
+	r->cell_align=-1; // Due to the sz calc
 	r->cell_log=cell_log;
 	return cell_log;
 }
