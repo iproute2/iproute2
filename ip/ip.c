@@ -27,7 +27,6 @@
 #include "SNAPSHOT.h"
 #include "utils.h"
 #include "ip_common.h"
-#include "veth.h"
 
 int preferred_family = AF_UNSPEC;
 int show_stats = 0;
@@ -48,7 +47,7 @@ static void usage(void)
 "Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
 "       ip [ -force ] [-batch filename\n"
 "where  OBJECT := { link | addr | route | rule | neigh | ntable | tunnel |\n"
-"                   maddr | mroute | monitor | xfrm | veth }\n"
+"                   maddr | mroute | monitor | xfrm }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
 "                    -o[neline] | -t[imestamp] }\n");
@@ -78,7 +77,6 @@ static const struct cmd {
 	{ "monitor",	do_ipmonitor },
 	{ "xfrm",	do_xfrm },
 	{ "mroute",	do_multiroute },
-	{ "veth",	do_veth },
 	{ "help",	do_help },
 	{ 0 }
 };
