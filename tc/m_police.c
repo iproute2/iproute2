@@ -263,22 +263,20 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 	}
 
 	if (p.rate.rate) {
-		if ((Rcell_log = tc_calc_rtable(p.rate.rate, rtab, Rcell_log, mtu, mpu)) < 0) {
+		p.rate.mpu = mpu;
+		if (tc_calc_rtable(&p.rate, rtab, Rcell_log, mtu) < 0) {
 			fprintf(stderr, "TBF: failed to calculate rate table.\n");
 			return -1;
 		}
 		p.burst = tc_calc_xmittime(p.rate.rate, buffer);
-		p.rate.cell_log = Rcell_log;
-		p.rate.mpu = mpu;
 	}
 	p.mtu = mtu;
 	if (p.peakrate.rate) {
-		if ((Pcell_log = tc_calc_rtable(p.peakrate.rate, ptab, Pcell_log, mtu, mpu)) < 0) {
+		p.peakrate.mpu = mpu;
+		if (tc_calc_rtable(&p.peakrate, ptab, Pcell_log, mtu) < 0) {
 			fprintf(stderr, "POLICE: failed to calculate peak rate table.\n");
 			return -1;
 		}
-		p.peakrate.cell_log = Pcell_log;
-		p.peakrate.mpu = mpu;
 	}
 
 	tail = NLMSG_TAIL(n);

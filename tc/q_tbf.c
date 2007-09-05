@@ -170,21 +170,20 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		opt.limit = lim;
 	}
 
-	if ((Rcell_log = tc_calc_rtable(opt.rate.rate, rtab, Rcell_log, mtu, mpu)) < 0) {
+	opt.rate.mpu = mpu;
+	if (tc_calc_rtable(&opt.rate, rtab, Rcell_log, mtu) < 0) {
 		fprintf(stderr, "TBF: failed to calculate rate table.\n");
 		return -1;
 	}
 	opt.buffer = tc_calc_xmittime(opt.rate.rate, buffer);
-	opt.rate.cell_log = Rcell_log;
-	opt.rate.mpu = mpu;
+
 	if (opt.peakrate.rate) {
-		if ((Pcell_log = tc_calc_rtable(opt.peakrate.rate, ptab, Pcell_log, mtu, mpu)) < 0) {
+		opt.peakrate.mpu = mpu;
+		if (tc_calc_rtable(&opt.peakrate, ptab, Pcell_log, mtu) < 0) {
 			fprintf(stderr, "TBF: failed to calculate peak rate table.\n");
 			return -1;
 		}
 		opt.mtu = tc_calc_xmittime(opt.peakrate.rate, mtu);
-		opt.peakrate.cell_log = Pcell_log;
-		opt.peakrate.mpu = mpu;
 	}
 
 	tail = NLMSG_TAIL(n);

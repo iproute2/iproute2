@@ -213,19 +213,17 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	opt.ceil.mpu = mpu;
 	opt.rate.mpu = mpu;
 
-	if ((cell_log = tc_calc_rtable(opt.rate.rate, rtab, cell_log, mtu, mpu)) < 0) {
+	if (tc_calc_rtable(&opt.rate, rtab, cell_log, mtu) < 0) {
 		fprintf(stderr, "htb: failed to calculate rate table.\n");
 		return -1;
 	}
 	opt.buffer = tc_calc_xmittime(opt.rate.rate, buffer);
-	opt.rate.cell_log = cell_log;
 
-	if ((ccell_log = tc_calc_rtable(opt.ceil.rate, ctab, cell_log, mtu, mpu)) < 0) {
+	if (tc_calc_rtable(&opt.ceil, ctab, ccell_log, mtu) < 0) {
 		fprintf(stderr, "htb: failed to calculate ceil rate table.\n");
 		return -1;
 	}
 	opt.cbuffer = tc_calc_xmittime(opt.ceil.rate, cbuffer);
-	opt.ceil.cell_log = ccell_log;
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
