@@ -73,8 +73,6 @@ int tc_calc_rtable(unsigned bps, __u32 *rtab, int cell_log, unsigned mtu,
 		   unsigned mpu)
 {
 	int i;
-	unsigned overhead = (mpu >> 8) & 0xFF;
-	mpu = mpu & 0xFF;
 
 	if (mtu == 0)
 		mtu = 2047;
@@ -86,8 +84,6 @@ int tc_calc_rtable(unsigned bps, __u32 *rtab, int cell_log, unsigned mtu,
 	}
 	for (i=0; i<256; i++) {
 		unsigned sz = (i<<cell_log);
-		if (overhead)
-			sz += overhead;
 		if (sz < mpu)
 			sz = mpu;
 		rtab[i] = tc_calc_xmittime(bps, sz);
