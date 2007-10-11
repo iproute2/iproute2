@@ -1,16 +1,14 @@
 IPOBJ=ip.o ipaddress.o iproute.o iprule.o \
     rtm_map.o iptunnel.o ip6tunnel.o tunnel.o ipneigh.o ipntable.o iplink.o \
     ipmaddr.o ipmonitor.o ipmroute.o ipprefix.o \
-    ipxfrm.o xfrm_state.o xfrm_policy.o xfrm_monitor.o
-
-IPOBJ += iplink_vlan.o
+    ipxfrm.o xfrm_state.o xfrm_policy.o xfrm_monitor.o \
+    iplink_vlan.o link_veth.o
 
 RTMONOBJ=rtmon.o
 
 ALLOBJ=$(IPOBJ) $(RTMONOBJ)
 SCRIPTS=ifcfg rtpr routel routef
 TARGETS=ip rtmon
-LIBS=link_veth.so
 
 all: $(TARGETS) $(SCRIPTS) $(LIBS)
 
@@ -25,8 +23,4 @@ install: all
 clean:
 	rm -f $(ALLOBJ) $(TARGETS)
 
-LDLIBS	+= -ldl
-LDFLAGS	+= -Wl,-export-dynamic
-
-%.so: %.c
-	$(CC) $(CFLAGS) -shared $< -o $@
+LDLIBS += -ldl
