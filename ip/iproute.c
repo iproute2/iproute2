@@ -51,6 +51,7 @@ static const char *mx_names[RTAX_MAX+1] = {
 	[RTAX_HOPLIMIT] = "hoplimit",
 	[RTAX_INITCWND] = "initcwnd",
 	[RTAX_FEATURES] = "features",
+	[RTAX_RTO_MIN]	= "rto_min",
 };
 static void usage(void) __attribute__((noreturn));
 
@@ -71,9 +72,10 @@ static void usage(void)
 	fprintf(stderr, "INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n");
 	fprintf(stderr, "NH := [ via ADDRESS ] [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
 	fprintf(stderr, "OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ]\n");
-	fprintf(stderr, "           [ rtt NUMBER ] [ rttvar NUMBER ]\n");
+	fprintf(stderr, "           [ rtt TIME ] [ rttvar TIME ]\n");
 	fprintf(stderr, "           [ window NUMBER] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n");
 	fprintf(stderr, "           [ ssthresh NUMBER ] [ realms REALM ]\n");
+	fprintf(stderr, "           [ rto_min TIME ]\n");
 	fprintf(stderr, "TYPE := [ unicast | local | broadcast | multicast | throw |\n");
 	fprintf(stderr, "          unreachable | prohibit | blackhole | nat ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
@@ -82,6 +84,7 @@ static void usage(void)
 	fprintf(stderr, "MP_ALGO := { rr | drr | random | wrandom }\n");
 	fprintf(stderr, "NHFLAGS := [ onlink | pervasive ]\n");
 	fprintf(stderr, "RTPROTO := [ kernel | boot | static | NUMBER ]\n");
+	fprintf(stderr, "TIME := NUMBER[s|ms|us|ns|j]\n");
 	exit(-1);
 }
 
@@ -520,7 +523,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			if (mxlock & (1<<i))
 				fprintf(fp, " lock");
 
-			if (i != RTAX_RTT && i != RTAX_RTTVAR)
+			if (i != RTAX_RTT && i != RTAX_RTTVAR &&
+			    i != RTAX_RTO_MIN)
 				fprintf(fp, " %u", *(unsigned*)RTA_DATA(mxrta[i]));
 			else {
 				unsigned val = *(unsigned*)RTA_DATA(mxrta[i]);
@@ -528,7 +532,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				val *= 1000;
 				if (i == RTAX_RTT)
 					val /= 8;
-				else
+				else if (i == RTAX_RTTVAR)
 					val /= 4;
 				if (val >= hz)
 					fprintf(fp, " %ums", val/hz);
@@ -693,6 +697,7 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 	int table_ok = 0;
 	int proto_ok = 0;
 	int type_ok = 0;
+	int raw = 0;
 
 	memset(&req, 0, sizeof(req));
 
@@ -800,9 +805,19 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 				mxlock |= (1<<RTAX_RTT);
 				NEXT_ARG();
 			}
-			if (get_unsigned(&rtt, *argv, 0))
+			if (get_jiffies(&rtt, *argv, 0, &raw))
 				invarg("\"rtt\" value is invalid\n", *argv);
-			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTT, rtt);
+			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTT, 
+				(raw) ? rtt : rtt * 8);
+		} else if (strcmp(*argv, "rto_min") == 0) {
+			unsigned rto_min;
+			NEXT_ARG();
+			mxlock |= (1<<RTAX_RTO_MIN);
+			if (get_jiffies(&rto_min, *argv, 0, &raw))
+				invarg("\"rto_min\" value is invalid\n",
+				       *argv);
+			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTO_MIN,
+				      rto_min);
 		} else if (matches(*argv, "window") == 0) {
 			unsigned win;
 			NEXT_ARG();
@@ -840,9 +855,10 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 				mxlock |= (1<<RTAX_RTTVAR);
 				NEXT_ARG();
 			}
-			if (get_unsigned(&win, *argv, 0))
+			if (get_jiffies(&win, *argv, 0, &raw))
 				invarg("\"rttvar\" value is invalid\n", *argv);
-			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTTVAR, win);
+			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTTVAR,
+				(raw) ? win : win * 4);
 		} else if (matches(*argv, "ssthresh") == 0) {
 			unsigned win;
 			NEXT_ARG();

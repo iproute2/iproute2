@@ -61,6 +61,70 @@ int get_unsigned(unsigned *val, const char *arg, int base)
 	return 0;
 }
 
+/*
+ * get_jiffies is "translated" from a similar routine "get_time" in
+ * tc_util.c.  we don't use the exact same routine because tc passes
+ * microseconds to the kernel and the callers of get_jiffies want 
+ * to pass jiffies, and have a different assumption for the units of
+ * a "raw" number.
+ */
+
+int get_jiffies(unsigned *jiffies, const char *arg, int base, int *raw)
+{
+	double t;
+	unsigned long res;
+	char *p;
+
+	if (strchr(arg,'.') != NULL) {
+		t = strtod(arg,&p);
+		if (t < 0.0)
+			return -1;
+	}
+	else {
+		res = strtoul(arg,&p,base);
+		if (res > UINT_MAX)
+			return -1;
+		t = (double)res;
+	}
+	if (p == arg)
+		return -1;
+
+	if (__iproute2_hz_internal == 0)
+                __iproute2_hz_internal = __get_hz();
+	
+	*raw = 1;
+
+	if (*p) {
+		*raw = 0;
+                if (strcasecmp(p, "s") == 0 || strcasecmp(p, "sec")==0 ||
+                    strcasecmp(p, "secs")==0)
+                        t *= __iproute2_hz_internal;
+                else if (strcasecmp(p, "ms") == 0 || strcasecmp(p, "msec")==0 ||
+                         strcasecmp(p, "msecs") == 0)
+                        t *= __iproute2_hz_internal/1000.0;
+                else if (strcasecmp(p, "us") == 0 || strcasecmp(p, "usec")==0 ||
+                         strcasecmp(p, "usecs") == 0)
+                        t *= __iproute2_hz_internal/1000000.0;
+                else if (strcasecmp(p, "ns") == 0 || strcasecmp(p, "nsec")==0 ||
+                         strcasecmp(p, "nsecs") == 0)
+                        t *= __iproute2_hz_internal/1000000000.0;
+		else if (strcasecmp(p, "j") == 0 || strcasecmp(p, "hz") == 0 ||
+			 strcasecmp(p,"jiffies") == 0)
+			t *= 1.0; /* allow suffix, do nothing */
+                else
+                        return -1;
+        }
+
+	/* emulate ceil() without having to bring-in -lm and always be >= 1 */
+
+	*jiffies = t;
+	if (*jiffies < t)
+		*jiffies += 1;
+	
+        return 0;
+
+}
+
 int get_u64(__u64 *val, const char *arg, int base)
 {
 	unsigned long long res;

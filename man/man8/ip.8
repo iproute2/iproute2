@@ -169,9 +169,9 @@ replace " | " monitor " } "
 .B  advmss
 .IR NUMBER " ] [ "
 .B  rtt
-.IR NUMBER " ] [ "
+.IR TIME " ] [ "
 .B  rttvar
-.IR NUMBER " ] [ "
+.IR TIME " ] [ "
 .B  window
 .IR NUMBER " ] [ "
 .B  cwnd
@@ -179,7 +179,9 @@ replace " | " monitor " } "
 .B  ssthresh
 .IR REALM " ] [ "
 .B  realms
-.IR REALM " ]"
+.IR REALM " ] [ "
+.B  rto_min
+.IR TIME " ]"
 
 .ti -8
 .IR TYPE " := [ "
@@ -299,6 +301,9 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 
 .ti -8
 .IR KEY " := { " DOTTED_QUAD " | " NUMBER " }"
+
+.ti -8
+.IR TIME " := " NUMBER "[s|ms|us|ns|j]"
 
 .ti -8
 .BR "ip maddr" " [ " add " | " del " ]"
@@ -1062,12 +1067,29 @@ measured in bytes.  It limits maximal data bursts that our TCP
 peers are allowed to send to us.
 
 .TP
-.BI rtt " NUMBER"
-the initial RTT ('Round Trip Time') estimate.
+.BI rtt " TIME"
+the initial RTT ('Round Trip Time') estimate. If no suffix is
+specified the units are raw values passed directly to the
+routing code to maintain compatability with previous releases.
+Otherwise if a suffix of s, sec or secs is used to specify
+seconds; ms, msec or msecs to specify milliseconds; us, usec 
+or usecs to specify microseconds; ns, nsec or nsecs to specify 
+nanoseconds; j, hz or jiffies to specify jiffies, the value is 
+converted to what the routing code expects.
+
 
 .TP
-.BI rttvar " NUMBER " "(2.3.15+ only)"
-the initial RTT variance estimate.
+.BI rttvar " TIME " "(2.3.15+ only)"
+the initial RTT variance estimate. Values are specified as with 
+.BI rtt
+above.
+
+.TP
+.BI rto_min " TIME " "(2.6.23+ only)"
+the minimum TCP Retransmission TimeOut to use when communicating with this
+destination.  Values are specified as with
+.BI rtt
+above.
 
 .TP
 .BI ssthresh " NUMBER " "(2.3.15+ only)"
