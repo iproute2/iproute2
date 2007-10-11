@@ -328,6 +328,7 @@ int main(int argc, char **argv)
 				print_hdr(stdout, header);
 			lnstat_update(lnstat_files);
 			print_line(stdout, lnstat_files, &fp);
+			fflush(stdout);
 			sleep(interval);
 		}
 	}
