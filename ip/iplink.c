@@ -336,8 +336,10 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (name) {
 		len = strlen(name) + 1;
+		if (len == 1)
+			invarg("\"\" is not a valid device identifier\n", "name");
 		if (len > IFNAMSIZ)
-			invarg("\"name\" too long\n", *argv);
+			invarg("\"name\" too long\n", name);
 		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, len);
 	}
 
@@ -670,6 +672,8 @@ static int do_set(int argc, char **argv)
 	}
 
 	if (newname && strcmp(dev, newname)) {
+		if (strlen(newname) == 0)
+			invarg("\"\" is not a valid device identifier\n", "name");
 		if (do_changename(dev, newname) < 0)
 			return -1;
 		dev = newname;
