@@ -26,7 +26,7 @@
 static double tick_in_usec = 1;
 static double clock_factor = 1;
 
-int tc_core_time2big(long time)
+int tc_core_time2big(unsigned time)
 {
 	__u64 t = time;
 

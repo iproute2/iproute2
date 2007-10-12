@@ -6,7 +6,7 @@
 
 #define TIME_UNITS_PER_SEC	1000000
 
-int  tc_core_time2big(long time);
+int  tc_core_time2big(unsigned time);
 unsigned tc_core_time2tick(unsigned time);
 unsigned tc_core_tick2time(unsigned tick);
 unsigned tc_core_time2ktime(unsigned time);
