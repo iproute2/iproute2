@@ -336,8 +336,6 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (name) {
 		len = strlen(name) + 1;
-		if (len == 1)
-			invarg("null string is not valid name\n");
 		if (len > IFNAMSIZ)
 			invarg("\"name\" too long\n", *argv);
 		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, len);
