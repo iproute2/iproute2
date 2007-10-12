@@ -642,9 +642,9 @@ int print_timestamp(FILE *fp)
 int cmdlineno;
 
 /* Like glibc getline but handle continuation lines and comments */
-size_t getcmdline(char **linep, size_t *lenp, FILE *in)
+ssize_t getcmdline(char **linep, size_t *lenp, FILE *in)
 {
-	size_t cc;
+	ssize_t cc;
 	char *cp;
 
 	if ((cc = getline(linep, lenp, in)) < 0)
@@ -672,9 +672,11 @@ size_t getcmdline(char **linep, size_t *lenp, FILE *in)
 		if (cp)
 			*cp = '\0';
 
-		*linep = realloc(*linep, strlen(*linep) + strlen(line1) + 1);
+		*lenp = strlen(*linep) + strlen(line1) + 1;
+		*linep = realloc(*linep, *lenp);
 		if (!*linep) {
 			fprintf(stderr, "Out of memory\n");
+			*lenp = 0;
 			return -1;
 		}
 		cc += cc1 - 2;
