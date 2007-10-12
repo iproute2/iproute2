@@ -1,5 +1,5 @@
 /*
- * em_cmp.c		Simle coparison Ematch
+ * em_cmp.c		Simple comparison Ematch
  *
  *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@ static void cmp_print_usage(FILE *fd)
 	    "Usage: cmp(ALIGN at OFFSET [ ATTRS ] { eq | lt | gt } VALUE)\n" \
 	    "where: ALIGN  := { u8 | u16 | u32 }\n" \
 	    "       ATTRS  := [ layer LAYER ] [ mask MASK ] [ trans ]\n" \
-	    "       LAYER  := { link | header | next-header | 0..%d }\n" \
+	    "       LAYER  := { link | network | transport | 0..%d }\n" \
 	    "\n" \
 	    "Example: cmp(u16 at 3 layer 2 mask 0xff00 gt 20)\n",
 	    TCF_LAYER_MAX);

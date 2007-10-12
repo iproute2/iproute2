@@ -32,7 +32,7 @@ static void nbyte_print_usage(FILE *fd)
 	    "Usage: nbyte(NEEDLE at OFFSET [layer LAYER])\n" \
 	    "where: NEEDLE := { string | \"c-escape-sequence\" }\n" \
 	    "       OFFSET := int\n" \
-	    "       LAYER  := { link | header | next-header | 0..%d }\n" \
+	    "       LAYER  := { link | network | transport | 0..%d }\n" \
 	    "\n" \
 	    "Example: nbyte(\"ababa\" at 12 layer 1)\n",
 	    TCF_LAYER_MAX);
