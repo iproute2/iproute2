@@ -28,7 +28,6 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <linux/in_route.h>
-#include <linux/ip_mp_alg.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -68,7 +67,6 @@ static void usage(void)
 	fprintf(stderr, "NODE_SPEC := [ TYPE ] PREFIX [ tos TOS ]\n");
 	fprintf(stderr, "             [ table TABLE_ID ] [ proto RTPROTO ]\n");
 	fprintf(stderr, "             [ scope SCOPE ] [ metric METRIC ]\n");
-	fprintf(stderr, "             [ mpath MP_ALGO ]\n");
 	fprintf(stderr, "INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n");
 	fprintf(stderr, "NH := [ via ADDRESS ] [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
 	fprintf(stderr, "OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ]\n");
@@ -111,14 +109,6 @@ static struct
 	inet_prefix rsrc;
 	inet_prefix msrc;
 } filter;
-
-static char *mp_alg_names[IP_MP_ALG_MAX+1] = {
-	[IP_MP_ALG_NONE] = "none",
-	[IP_MP_ALG_RR] = "rr",
-	[IP_MP_ALG_DRR] = "drr",
-	[IP_MP_ALG_RANDOM] = "random",
-	[IP_MP_ALG_WRANDOM] = "wrandom"
-};
 
 static int flush_update(void)
 {
@@ -359,14 +349,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (r->rtm_tos && filter.tosmask != -1) {
 		SPRINT_BUF(b1);
 		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
-	}
-
-	if (tb[RTA_MP_ALGO]) {
-		__u32 mp_alg = *(__u32*) RTA_DATA(tb[RTA_MP_ALGO]);
-		if (mp_alg > IP_MP_ALG_NONE) {
-			fprintf(fp, "mpath %s ",
-			    mp_alg < IP_MP_ALG_MAX ? mp_alg_names[mp_alg] : "unknown");
-		}
 	}
 
 	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len) {
@@ -906,18 +888,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			   strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
 			d = *argv;
-		} else if (strcmp(*argv, "mpath") == 0 ||
-			   strcmp(*argv, "mp") == 0) {
-			int i;
-			__u32 mp_alg = IP_MP_ALG_NONE;
-
-			NEXT_ARG();
-			for (i = 1; i < ARRAY_SIZE(mp_alg_names); i++)
-				if (strcmp(*argv, mp_alg_names[i]) == 0)
-					mp_alg = i;
-			if (mp_alg == IP_MP_ALG_NONE)
-				invarg("\"mpath\" value is invalid\n", *argv);
-			addattr_l(&req.n, sizeof(req), RTA_MP_ALGO, &mp_alg, sizeof(mp_alg));
 		} else {
 			int type;
 			inet_prefix dst;
