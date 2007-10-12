@@ -35,12 +35,12 @@ int tc_core_time2big(long time)
 }
 
 
-long tc_core_time2tick(long time)
+unsigned tc_core_time2tick(unsigned time)
 {
 	return time*tick_in_usec;
 }
 
-long tc_core_tick2time(long tick)
+unsigned tc_core_tick2time(unsigned tick)
 {
 	return tick/tick_in_usec;
 }
