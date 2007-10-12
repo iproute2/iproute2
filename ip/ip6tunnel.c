@@ -52,6 +52,7 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip -f inet6 tunnel { add | change | del | show } [ NAME ]\n");
+	fprintf(stderr, "          [ mode { ip6ip6 | ipip6 | any } ]\n");
 	fprintf(stderr, "          [ remote ADDR local ADDR ] [ dev PHYS_DEV ]\n");
 	fprintf(stderr, "          [ encaplimit ELIM ]\n");
 	fprintf(stderr ,"          [ hoplimit HLIM ] [ tc TC ] [ fl FL ]\n");
@@ -116,7 +117,24 @@ static int parse_args(int argc, char **argv, struct ip6_tnl_parm *p)
 	memset(medium, 0, sizeof(medium));
 
 	while (argc > 0) {
-		if (strcmp(*argv, "remote") == 0) {
+		if (strcmp(*argv, "mode") == 0) {
+			NEXT_ARG();
+			if (strcmp(*argv, "ipv6/ipv6") == 0 ||
+			    strcmp(*argv, "ip6ip6") == 0)
+				p->proto = IPPROTO_IPV6;
+			else if (strcmp(*argv, "ip/ipv6") == 0 ||
+				 strcmp(*argv, "ipv4/ipv6") == 0 ||
+				 strcmp(*argv, "ipip6") == 0 ||
+				 strcmp(*argv, "ip4ip6") == 0)
+				p->proto = IPPROTO_IPIP;
+			else if (strcmp(*argv, "any/ipv6") == 0 ||
+				 strcmp(*argv, "any") == 0)
+				p->proto = 0;
+			else {
+                                fprintf(stderr,"Cannot guess tunnel mode.\n");
+                                exit(-1);
+                        }
+                } else if (strcmp(*argv, "remote") == 0) {
 			inet_prefix raddr;
 			NEXT_ARG();
 			get_prefix(&raddr, *argv, preferred_family);
