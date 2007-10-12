@@ -53,6 +53,9 @@ install: all
 	install -m 0755 -d $(DESTDIR)$(MANDIR)/man8
 	install -m 0644 $(shell find man/man8 -maxdepth 1 -type f) $(DESTDIR)$(MANDIR)/man8
 	ln -sf tc-bfifo.8  $(DESTDIR)$(MANDIR)/man8/tc-pfifo.8
+	ln -sf lnstat.8  $(DESTDIR)$(MANDIR)/man8/rtstat.8
+	ln -sf lnstat.8  $(DESTDIR)$(MANDIR)/man8/ctstat.8
+	ln -sf rtacct.8  $(DESTDIR)$(MANDIR)/man8/nstat.8
 	install -m 0755 -d $(DESTDIR)$(MANDIR)/man3
 	install -m 0644 $(shell find man/man3 -maxdepth 1 -type f) $(DESTDIR)$(MANDIR)/man3
 
