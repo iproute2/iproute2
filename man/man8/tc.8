@@ -202,8 +202,7 @@ qdiscs will use all three:
 tc filters
 If tc filters are attached to a class, they are consulted first 
 for relevant instructions. Filters can match on all fields of a packet header, 
-as well as on the firewall mark applied by ipchains or iptables. See 
-.BR tc-filters (8).
+as well as on the firewall mark applied by ipchains or iptables. 
 .TP
 Type of Service
 Some qdiscs have built in rules for classifying packets based on the TOS field.
@@ -242,8 +241,7 @@ qdiscs applies.
 .TP 
 FILTERS
 Filters have a three part ID, which is only needed when using a hashed
-filter hierarchy, for which see
-.BR tc-filters (8).
+filter hierarchy.
 .SH UNITS
 All parameters accept a floating point number, possibly followed by a unit.
 .P
