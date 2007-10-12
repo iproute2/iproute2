@@ -9,8 +9,8 @@
 int  tc_core_time2big(long time);
 unsigned tc_core_time2tick(unsigned time);
 unsigned tc_core_tick2time(unsigned tick);
-long tc_core_time2ktime(long time);
-long tc_core_ktime2time(long ktime);
+unsigned tc_core_time2ktime(unsigned time);
+unsigned tc_core_ktime2time(unsigned ktime);
 unsigned tc_calc_xmittime(unsigned rate, unsigned size);
 unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks);
 int tc_calc_rtable(unsigned bps, __u32 *rtab, int cell_log, unsigned mtu, unsigned mpu);
