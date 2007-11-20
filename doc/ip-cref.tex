@@ -298,9 +298,9 @@ Do not use it, if you do not understand what this operation really does.
 
 \vskip 1mm
 \begin{NB}
-The {\tt ip} utility does not change the \verb|PROMISC| 
-or \verb|ALLMULTI| flags. These flags are considered
-obsolete and should not be changed administratively.
+The \verb|PROMISC| and \verb|ALLMULTI| flags are considered
+obsolete and should not be changed administratively, though
+the {\tt ip} utility will allow that.
 \end{NB}
 
 \paragraph{Warning:} If multiple parameter changes are requested,
@@ -449,13 +449,6 @@ There are other flags but they are either obsolete (\verb|NOTRAILERS|)
 or not implemented (\verb|DEBUG|) or specific to some devices
 (\verb|MASTER|, \verb|AUTOMEDIA| and \verb|PORTSEL|). We do not discuss
 them here.
-\end{NB}
-\begin{NB}
-The values of \verb|PROMISC| and \verb|ALLMULTI| flags
-shown by the \verb|ifconfig| utility and by the \verb|ip| utility
-are {\em different\/}. \verb|ip link ls| shows the true device state,
-while \verb|ifconfig| shows the virtual state which was set with
-\verb|ifconfig| itself.
 \end{NB}
 
 
