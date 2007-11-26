@@ -40,18 +40,29 @@ static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **a
 
 	memset(&tp, 0, sizeof(tp));
 
+	tail = NLMSG_TAIL(n);
+	addattr_l(n, 4096, TCA_OPTIONS, NULL, 0);
+
 	if (handle) {
+		char *slash;
+		__u32 mask = 0;
+		if ((slash = strchr(handle, '/')) != NULL)
+			*slash = '\0';
 		if (get_u32(&t->tcm_handle, handle, 0)) {
 			fprintf(stderr, "Illegal \"handle\"\n");
 			return -1;
+		}
+		if (slash) {
+			if (get_u32(&mask, slash+1, 0)) {
+				fprintf(stderr, "Illegal \"handle\" mask\n");
+				return -1;
+			}
+			addattr32(n, MAX_MSG, TCA_FW_MASK, mask);
 		}
 	}
 
 	if (argc == 0)
 		return 0;
-
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 4096, TCA_OPTIONS, NULL, 0);
 
 	while (argc > 0) {
 		if (matches(*argv, "classid") == 0 ||
@@ -111,8 +122,16 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 
 	parse_rtattr_nested(tb, TCA_FW_MAX, opt);
 
-	if (handle)
-		fprintf(f, "handle 0x%x ", handle);
+	if (handle || tb[TCA_FW_MASK]) {
+		__u32 mark = 0, mask = 0;
+		if(handle)
+			mark = handle;
+		if(tb[TCA_FW_MASK] &&
+		    (mask = *(__u32*)RTA_DATA(tb[TCA_FW_MASK])) != 0xFFFFFFFF)
+			fprintf(f, "handle 0x%x/0x%x ", mark, mask);
+		else
+			fprintf(f, "handle 0x%x ", handle);
+	}
 
 	if (tb[TCA_FW_CLASSID]) {
 		SPRINT_BUF(b1);
