@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 #include <linux/if.h>
 #include <iptables.h>
+#include <linux/netfilter.h>
 #include <linux/netfilter_ipv4/ip_tables.h>
 #include "utils.h"
 #include "tc_util.h"
