@@ -47,7 +47,7 @@ int get_integer(int *val, const char *arg, int base)
 	return 0;
 }
 
-/* a valid netmask must be 2^n - 1 (n = 1..31) */
+/* a valid netmask must be 2^n - 1 */
 static int is_valid_netmask(const inet_prefix *addr)
 {
         uint32_t host;
@@ -60,6 +60,17 @@ static int is_valid_netmask(const inet_prefix *addr)
         return (host & (host + 1)) == 0;
 }
 
+static unsigned cidr(const inet_prefix *addr)
+{
+	unsigned bits = 0;
+	u_int32_t mask;
+
+	for (mask = ntohl(addr->data[0]); mask; mask <<= 1)
+		++bits;
+
+	return bits;
+}
+
 static int get_netmask(unsigned *val, const char *arg, int base)
 {
 	inet_prefix addr;
@@ -69,14 +80,10 @@ static int get_netmask(unsigned *val, const char *arg, int base)
 
 	/* try coverting dotted quad to CIDR */
 	if (!get_addr_1(&addr, arg, AF_INET)) {
-		u_int32_t mask;
-
-		*val=0;
-		for (mask = addr.data[0]; mask; mask >>= 1)
-			(*val)++;
-
 		if (is_valid_netmask(&addr))
 			return 0;
+
+	        *val = cidr(&addr);
 	}
 
 	return -1;
