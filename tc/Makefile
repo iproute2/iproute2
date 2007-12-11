@@ -27,6 +27,7 @@ TCMODULES += q_htb.o
 TCMODULES += m_gact.o
 TCMODULES += m_mirred.o
 TCMODULES += m_ipt.o
+TCMODULES += m_nat.o
 TCMODULES += m_pedit.o
 TCMODULES += p_ip.o
 TCMODULES += p_icmp.o

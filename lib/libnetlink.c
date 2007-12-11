@@ -632,6 +632,6 @@ int __parse_rtattr_nested_compat(struct rtattr *tb[], int max, struct rtattr *rt
 		rta = RTA_DATA(rta) + RTA_ALIGN(len);
 		return parse_rtattr_nested(tb, max, rta);
 	}
-	memset(tb, 0, sizeof(struct rtattr *) * max);
+	memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
 	return 0;
 }
