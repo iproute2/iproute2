@@ -44,14 +44,18 @@ static void explain1(const char *arg)
 
 #define usage() return(-1)
 
+/* Upper bound on size of distribution 
+ *  really (TCA_BUF_MAX - other headers) / sizeof (__s16)
+ */
+#define MAX_DIST	(16*1024)
+
 /*
  * Simplistic file parser for distrbution data.
  * Format is:
  *	# comment line(s)
- *	data0 data1
+ *	data0 data1 ...
  */
-#define MAXDIST	65536
-static int get_distribution(const char *type, __s16 *data)
+static int get_distribution(const char *type, __s16 *data, int maxdata)
 {
 	FILE *f;
 	int n;
@@ -78,7 +82,7 @@ static int get_distribution(const char *type, __s16 *data)
 			if (endp == p)
 				break;
 
-			if (n >= MAXDIST) {
+			if (n >= maxdata) {
 				fprintf(stderr, "%s: too much data\n",
 					name);
 				n = -1;
@@ -236,10 +240,12 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			}
 		} else if (matches(*argv, "distribution") == 0) {
 			NEXT_ARG();
-			dist_data = alloca(MAXDIST);
-			dist_size = get_distribution(*argv, dist_data);
-			if (dist_size < 0)
+			dist_data = calloc(sizeof(dist_data[0]), MAX_DIST);
+			dist_size = get_distribution(*argv, dist_data, MAX_DIST);
+			if (dist_size <= 0) {
+				free(dist_data);
 				return -1;
+			}
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -271,25 +277,27 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 
-	if (addattr_l(n, TCA_BUF_MAX, TCA_OPTIONS, &opt, sizeof(opt)) < 0)
+	if (addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt)) < 0)
 		return -1;
 
 	if (present[TCA_NETEM_CORR] &&
-	    addattr_l(n, TCA_BUF_MAX, TCA_NETEM_CORR, &cor, sizeof(cor)) < 0)
+	    addattr_l(n, 1024, TCA_NETEM_CORR, &cor, sizeof(cor)) < 0)
 			return -1;
 
 	if (present[TCA_NETEM_REORDER] && 
-	    addattr_l(n, TCA_BUF_MAX, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
+	    addattr_l(n, 1024, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
 		return -1;
 
 	if (present[TCA_NETEM_CORRUPT] &&
-	    addattr_l(n, TCA_BUF_MAX, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
+	    addattr_l(n, 1024, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
 		return -1;
 
 	if (dist_data) {
-		if (addattr_l(n, 32768, TCA_NETEM_DELAY_DIST,
-			      dist_data, dist_size*sizeof(dist_data[0])) < 0)
+		if (addattr_l(n, MAX_DIST * sizeof(dist_data[0]),
+			      TCA_NETEM_DELAY_DIST,
+			      dist_data, dist_size * sizeof(dist_data[0])) < 0)
 			return -1;
+		free(dist_data);
 	}
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
