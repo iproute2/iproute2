@@ -509,7 +509,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			    i != RTAX_RTO_MIN)
 				fprintf(fp, " %u", *(unsigned*)RTA_DATA(mxrta[i]));
 			else {
-				unsigned val = *(unsigned*)RTA_DATA(mxrta[i]);
+				unsigned long long val = *(unsigned*)RTA_DATA(mxrta[i]);
 
 				val *= 1000;
 				if (i == RTAX_RTT)
@@ -517,7 +517,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				else if (i == RTAX_RTTVAR)
 					val /= 4;
 				if (val >= hz)
-					fprintf(fp, " %ums", val/hz);
+					fprintf(fp, " %llums", val/hz);
 				else
 					fprintf(fp, " %.2fms", (float)val/hz);
 			}
