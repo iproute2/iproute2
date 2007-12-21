@@ -1,5 +1,5 @@
-#ifndef __NET_VETH_H__
-#define __NET_VETH_H__
+#ifndef __NET_VETH_H_
+#define __NET_VETH_H_
 
 enum {
 	VETH_INFO_UNSPEC,

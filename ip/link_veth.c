@@ -11,22 +11,21 @@
  */
 
 #include <string.h>
+#include <net/if.h>
+#include <net/veth.h>
 
 #include "utils.h"
 #include "ip_common.h"
-#include "veth.h"
-
-#define	IFNAMSIZ	16
 
 static void usage(void)
 {
 	printf("Usage: ip link <options> type veth "
-		"[peer <options>]\nTo get <options> type "
-		"'ip link add help'\n");
+	       "[peer <options>]\nTo get <options> type "
+	       "'ip link add help'\n");
 }
 
 static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
-		struct nlmsghdr *hdr)
+			  struct nlmsghdr *hdr)
 {
 	char *name, *type, *link, *dev;
 	int err, len;
@@ -43,7 +42,7 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 	hdr->nlmsg_len += sizeof(struct ifinfomsg);
 
 	err = iplink_parse(argc - 1, argv + 1, (struct iplink_req *)hdr,
-			&name, &type, &link, &dev);
+			   &name, &type, &link, &dev);
 	if (err < 0)
 		return err;
 
