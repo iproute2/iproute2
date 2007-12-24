@@ -69,6 +69,13 @@ register_target(struct iptables_target *me)
 }
 
 void
+xtables_register_target(struct iptables_target *me)
+{
+	me->next = t_list;
+	t_list = me;
+}
+
+void
 exit_tryhelp(int status)
 {
 	fprintf(stderr, "Try `%s -h' or '%s --help' for more information.\n",
@@ -248,11 +255,24 @@ get_target_name(const char *name)
 		}
 	}
 
-	sprintf(path,  "%s/libipt_%s.so",lib_dir, new_name);
+	/* try libxt_xx first */
+	sprintf(path, "%s/libxt_%s.so", lib_dir, new_name);
 	handle = dlopen(path, RTLD_LAZY);
 	if (!handle) {
-		sprintf(path, lib_dir, "/libipt_%s.so", lname);
+		/* try libipt_xx next */
+		sprintf(path, "%s/libipt_%s.so", lib_dir, new_name);
 		handle = dlopen(path, RTLD_LAZY);
+
+		if (!handle) {
+			sprintf(path, "%s/libxt_%s.so", lib_dir , lname);
+			handle = dlopen(path, RTLD_LAZY);
+		}
+
+		if (!handle) {
+			sprintf(path, "%s/libipt_%s.so", lib_dir , lname);
+			handle = dlopen(path, RTLD_LAZY);
+		}
+		/* ok, lets give up .. */
 		if (!handle) {
 			fputs(dlerror(), stderr);
 			printf("\n");
