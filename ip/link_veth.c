@@ -12,7 +12,7 @@
 
 #include <string.h>
 #include <net/if.h>
-#include <net/veth.h>
+#include <linux/veth.h>
 
 #include "utils.h"
 #include "ip_common.h"
