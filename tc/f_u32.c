@@ -473,7 +473,7 @@ done:
 	*argv_p = argv;
 	return res;
 }
-
+				
 static int parse_ip6(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 {
 	int res = -1;
@@ -563,6 +563,7 @@ done:
 	*argv_p = argv;
 	return res;
 }
+
 
 static int parse_icmp(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 {
@@ -771,7 +772,47 @@ static int parse_hashkey(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 	return 0;
 }
 
-static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **argv, struct nlmsghdr *n)
+static void show_key(FILE *f, const struct tc_u32_key *key)
+{
+	char abuf[256];
+
+	if (show_raw)
+		goto raw;
+
+	switch (key->off) {
+	case 12:
+	case 16: {
+			int bits = mask2bits(key->mask);
+			if (bits >= 0) {
+				fprintf(f, "\n  %s %s/%d\n", 
+					key->off == 12 ? "src" : "dst",
+					inet_ntop(AF_INET, &key->val, abuf, sizeof(abuf)),
+					bits);
+				return;
+			}
+		}
+		break;
+
+	case 20:
+	case 22:
+		if (key->mask == ntohl(0xffff)) {
+			fprintf(f, "\n  %s %u\n", 
+				key->off == 20 ? "sport" : "dport",
+				(unsigned short) ntohl(key->val));
+			return;
+		}
+	}
+
+raw:
+	fprintf(f, "\n  match %08x/%08x at %s%d",
+		(unsigned int)ntohl(key->val),
+		(unsigned int)ntohl(key->mask),
+		key->offmask ? "nexthdr+" : "",
+		key->off);
+}
+
+static int u32_parse_opt(struct filter_util *qu, char *handle, 
+			 int argc, char **argv, struct nlmsghdr *n)
 {
 	struct {
 		struct tc_u32_sel sel;
@@ -966,7 +1007,8 @@ static int u32_parse_opt(struct filter_util *qu, char *handle, int argc, char **
 	return 0;
 }
 
-static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u32 handle)
+static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
+			 __u32 handle)
 {
 	struct rtattr *tb[TCA_U32_MAX+1];
 	struct tc_u32_sel *sel = NULL;
@@ -1037,17 +1079,12 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __
 	}
 
 	if (sel) {
-		int i;
-		struct tc_u32_key *key = sel->keys;
 		if (sel->nkeys) {
-			for (i=0; i<sel->nkeys; i++, key++) {
-				fprintf(f, "\n  match %08x/%08x at %s%d",
-					(unsigned int)ntohl(key->val),
-					(unsigned int)ntohl(key->mask),
-					key->offmask ? "nexthdr+" : "",
-					key->off);
+			int i;
+			for (i=0; i<sel->nkeys; i++) {
+				show_key(f, sel->keys + i);
 				if (show_stats && NULL != pf)
-					fprintf(f, " (success %lld ) ",
+					fprintf(f, " (success %llu ) ",
 						(unsigned long long) pf->kcnts[i]);
 			}
 		}

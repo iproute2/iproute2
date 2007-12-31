@@ -74,6 +74,7 @@ extern int get_addr_1(inet_prefix *dst, const char *arg, int family);
 extern int get_prefix_1(inet_prefix *dst, char *arg, int family);
 extern int get_addr(inet_prefix *dst, const char *arg, int family);
 extern int get_prefix(inet_prefix *dst, char *arg, int family);
+extern int mask2bits(__u32 netmask);
 
 extern int get_integer(int *val, const char *arg, int base);
 extern int get_unsigned(unsigned *val, const char *arg, int base);
