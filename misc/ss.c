@@ -33,9 +33,8 @@
 #include "libnetlink.h"
 #include "SNAPSHOT.h"
 
+#include <netinet/tcp.h>
 #include <linux/inet_diag.h>
-#include <linux/tcp.h>
-#include <net/tcp_states.h>
 
 int resolve_hosts = 0;
 int resolve_services = 1;
