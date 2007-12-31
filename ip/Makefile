@@ -24,3 +24,5 @@ clean:
 	rm -f $(ALLOBJ) $(TARGETS)
 
 LDLIBS += -ldl
+
+LDFLAGS += -Wl,-export-dynamic

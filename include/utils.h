@@ -74,6 +74,7 @@ extern int get_addr_1(inet_prefix *dst, const char *arg, int family);
 extern int get_prefix_1(inet_prefix *dst, char *arg, int family);
 extern int get_addr(inet_prefix *dst, const char *arg, int family);
 extern int get_prefix(inet_prefix *dst, char *arg, int family);
+extern int mask2bits(__u32 netmask);
 
 extern int get_integer(int *val, const char *arg, int base);
 extern int get_unsigned(unsigned *val, const char *arg, int base);
@@ -147,4 +148,7 @@ extern int cmdlineno;
 extern ssize_t getcmdline(char **line, size_t *len, FILE *in);
 extern int makeargs(char *line, char *argv[], int maxargs);
 
+struct iplink_req;
+int iplink_parse(int argc, char **argv, struct iplink_req *req,
+		char **name, char **type, char **link, char **dev);
 #endif /* __UTILS_H__ */

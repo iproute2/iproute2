@@ -69,12 +69,11 @@ unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
    rtab[pkt_len>>cell_log] = pkt_xmit_time
  */
 
-int tc_calc_rtable(unsigned bps, __u32 *rtab, int cell_log, unsigned mtu,
-		   unsigned mpu)
+int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab, int cell_log, unsigned mtu)
 {
 	int i;
-	unsigned overhead = (mpu >> 8) & 0xFF;
-	mpu = mpu & 0xFF;
+	unsigned bps = r->rate;
+	unsigned mpu = r->mpu;
 
 	if (mtu == 0)
 		mtu = 2047;
@@ -85,13 +84,13 @@ int tc_calc_rtable(unsigned bps, __u32 *rtab, int cell_log, unsigned mtu,
 			cell_log++;
 	}
 	for (i=0; i<256; i++) {
-		unsigned sz = (i<<cell_log);
-		if (overhead)
-			sz += overhead;
+		unsigned sz = ((i+1)<<cell_log);
 		if (sz < mpu)
 			sz = mpu;
 		rtab[i] = tc_calc_xmittime(bps, sz);
 	}
+	r->cell_align=-1; // Due to the sz calc
+	r->cell_log=cell_log;
 	return cell_log;
 }
 

@@ -107,7 +107,7 @@ Display all UDP sockets.
 .B ss -o state established '( dport = :ssh or sport = :ssh )'
 Display all established ssh connections.
 .TP
-.B ss -x src \"/tmp/.X11-unix/*\"
+.B ss -x src /tmp/.X11-unix/*
 Find all local processes connected to X server.
 .TP
 .B ss -o state fin-wait-1 '( sport = :http or sport = :https )' dst 193.233.7/24

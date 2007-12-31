@@ -137,12 +137,11 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	if (allot < (avpkt*3)/2)
 		allot = (avpkt*3)/2;
 
-	if ((cell_log = tc_calc_rtable(r.rate, rtab, cell_log, allot, mpu)) < 0) {
+	r.mpu = mpu;
+	if (tc_calc_rtable(&r, rtab, cell_log, allot) < 0) {
 		fprintf(stderr, "CBQ: failed to calculate rate table.\n");
 		return -1;
 	}
-	r.cell_log = cell_log;
-	r.mpu = mpu;
 
 	if (ewma_log < 0)
 		ewma_log = TC_CBQ_DEF_EWMA;
@@ -336,12 +335,11 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 		unsigned pktsize = wrr.allot;
 		if (wrr.allot < (lss.avpkt*3)/2)
 			wrr.allot = (lss.avpkt*3)/2;
-		if ((cell_log = tc_calc_rtable(r.rate, rtab, cell_log, pktsize, mpu)) < 0) {
+		r.mpu = mpu;
+		if (tc_calc_rtable(&r, rtab, cell_log, pktsize) < 0) {
 			fprintf(stderr, "CBQ: failed to calculate rate table.\n");
 			return -1;
 		}
-		r.cell_log = cell_log;
-		r.mpu = mpu;
 	}
 	if (ewma_log < 0)
 		ewma_log = TC_CBQ_DEF_EWMA;
