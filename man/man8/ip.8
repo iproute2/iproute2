@@ -1568,10 +1568,12 @@ the priority of this rule.  Each rule should have an explicitly
 set
 .I unique
 priority value.
+The options preference and order are synonyms with priority.
 
 .TP
 .BI table " TABLEID"
 the routing table identifier to lookup if the rule selector matches.
+It is also possible to use lookup instead of table.
 
 .TP
 .BI realms " FROM/TO"
@@ -1589,6 +1591,7 @@ may be either the start of the block of NAT addresses (selected by NAT
 routes) or a local host address (or even zero).
 In the last case the router does not translate the packets, but
 masquerades them to this address.
+Using map-to instead of nat means the same thing.
 
 .B Warning:
 Changes to the RPDB made with these commands do not become active
@@ -1601,6 +1604,7 @@ This command has no arguments.
 
 .SS ip rule show - list rules
 This command has no arguments.
+The options list or lst are synonyms with show.
 
 .SH ip maddress - multicast addresses management
 
