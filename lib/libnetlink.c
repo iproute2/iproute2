@@ -173,10 +173,11 @@ int rtnl_dump_filter(struct rtnl_handle *rth,
 		status = recvmsg(rth->fd, &msg, 0);
 
 		if (status < 0) {
-			if (errno == EINTR)
+			if (errno == EINTR || errno == EAGAIN)
 				continue;
-			perror("OVERRUN");
-			continue;
+			fprintf(stderr, "netlink receive error %s (%d)\n",
+				strerror(errno), errno);
+			return -1;
 		}
 
 		if (status == 0) {
@@ -276,10 +277,11 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 		status = recvmsg(rtnl->fd, &msg, 0);
 
 		if (status < 0) {
-			if (errno == EINTR)
+			if (errno == EINTR || errno == EAGAIN)
 				continue;
-			perror("OVERRUN");
-			continue;
+			fprintf(stderr, "netlink receive error %s (%d)\n",
+				strerror(errno), errno);
+			return -1;
 		}
 		if (status == 0) {
 			fprintf(stderr, "EOF on netlink\n");
@@ -380,10 +382,11 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 		status = recvmsg(rtnl->fd, &msg, 0);
 
 		if (status < 0) {
-			if (errno == EINTR)
+			if (errno == EINTR || errno == EAGAIN)
 				continue;
-			perror("OVERRUN");
-			continue;
+			fprintf(stderr, "netlink receive error %s (%d)\n",
+				strerror(errno), errno);
+			return -1;
 		}
 		if (status == 0) {
 			fprintf(stderr, "EOF on netlink\n");
