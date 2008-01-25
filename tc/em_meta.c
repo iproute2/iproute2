@@ -109,6 +109,7 @@ struct meta_entry {
 	__A(SK_ERR_QLEN,	"sk_err_queue",	"i",	"Error queue length"),
 	__A(SK_FORWARD_ALLOCS,	"sk_fwd_alloc",	"i",	"Forward allocations"),
 	__A(SK_SNDBUF,		"sk_sndbuf",	"i",	"Send buffer size"),
+	__A(VLAN_TAG,		"vlan",		"i",	"Vlan tag"),
 #undef __A
 };
 

@@ -39,7 +39,7 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip tunnel { add | change | del | show } [ NAME ]\n");
-	fprintf(stderr, "          [ mode { ipip | gre | sit } ] [ remote ADDR ] [ local ADDR ]\n");
+	fprintf(stderr, "          [ mode { ipip | gre | sit | isatap } ] [ remote ADDR ] [ local ADDR ]\n");
 	fprintf(stderr, "          [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n");
 	fprintf(stderr, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
 	fprintf(stderr, "\n");
@@ -55,6 +55,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 {
 	int count = 0;
 	char medium[IFNAMSIZ];
+	int isatap = 0;
 
 	memset(p, 0, sizeof(*p));
 	memset(&medium, 0, sizeof(medium));
@@ -90,6 +91,13 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 					exit(-1);
 				}
 				p->iph.protocol = IPPROTO_IPV6;
+			} else if (strcmp(*argv, "isatap") == 0) {
+				if (p->iph.protocol && p->iph.protocol != IPPROTO_IPV6) {
+					fprintf(stderr, "You managed to ask for more than one tunnel mode.\n");
+					exit(-1);
+				}
+				p->iph.protocol = IPPROTO_IPV6;
+				isatap++;
 			} else {
 				fprintf(stderr,"Cannot guess tunnel mode.\n");
 				exit(-1);
@@ -212,6 +220,10 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 			p->iph.protocol = IPPROTO_IPIP;
 		else if (memcmp(p->name, "sit", 3) == 0)
 			p->iph.protocol = IPPROTO_IPV6;
+		else if (memcmp(p->name, "isatap", 6) == 0) {
+			p->iph.protocol = IPPROTO_IPV6;
+			isatap++;
+		}
 	}
 
 	if (p->iph.protocol == IPPROTO_IPIP || p->iph.protocol == IPPROTO_IPV6) {
@@ -239,6 +251,14 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 		fprintf(stderr, "Broadcast tunnel requires a source address.\n");
 		return -1;
 	}
+	if (isatap) {
+		if (p->iph.daddr) {
+			fprintf(stderr, "no remote with isatap.\n");
+			return -1;
+		}
+		p->i_flags |= SIT_ISATAP;
+	}
+
 	return 0;
 }
 
