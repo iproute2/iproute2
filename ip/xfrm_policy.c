@@ -784,7 +784,7 @@ static int xfrm_policy_list_or_deleteall(int argc, char **argv, int deleteall)
 			}
 
 			if (rtnl_send(&rth, xb.buf, xb.offset) < 0) {
-				perror("Failed to send delete-all request\n");
+				perror("Failed to send delete-all request");
 				exit(1);
 			}
 			if (show_stats > 1)
