@@ -100,8 +100,25 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
+static int sfq_print_xstats(struct qdisc_util *qu, FILE *f,
+			    struct rtattr *xstats)
+{
+	struct tc_sfq_xstats *st;
+
+	if (xstats == NULL)
+		return 0;
+	if (RTA_PAYLOAD(xstats) < sizeof(*st))
+		return -1;
+	st = RTA_DATA(xstats);
+
+	fprintf(f, " allot %d ", st->allot);
+	fprintf(f, "\n");
+	return 0;
+}
+
 struct qdisc_util sfq_qdisc_util = {
 	.id		= "sfq",
 	.parse_qopt	= sfq_parse_opt,
 	.print_qopt	= sfq_print_opt,
+	.print_xstats	= sfq_print_xstats,
 };
