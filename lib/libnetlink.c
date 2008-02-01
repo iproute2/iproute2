@@ -94,10 +94,6 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 		struct nlmsghdr nlh;
 		struct rtgenmsg g;
 	} req;
-	struct sockaddr_nl nladdr;
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
 
 	memset(&req, 0, sizeof(req));
 	req.nlh.nlmsg_len = sizeof(req);
@@ -107,22 +103,21 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
 	req.g.rtgen_family = family;
 
-	return sendto(rth->fd, (void*)&req, sizeof(req), 0,
-		      (struct sockaddr*)&nladdr, sizeof(nladdr));
+	return send(rth->fd, (void*)&req, sizeof(req), 0);
 }
 
 int rtnl_send(struct rtnl_handle *rth, const char *buf, int len)
 {
-	struct sockaddr_nl nladdr;
+	return send(rth->fd, buf, len, 0);
+}
+
+int rtnl_send_check(struct rtnl_handle *rth, const char *buf, int len)
+{
 	struct nlmsghdr *h;
 	int status;
 	char resp[1024];
 
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
-
-	status = sendto(rth->fd, buf, len, 0, 
-		     (struct sockaddr*)&nladdr, sizeof(nladdr));
+	status = send(rth->fd, buf, len, 0);
 	if (status < 0)
 		return status;
 

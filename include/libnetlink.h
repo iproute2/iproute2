@@ -34,7 +34,7 @@ extern int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 		     rtnl_filter_t junk,
 		     void *jarg);
 extern int rtnl_send(struct rtnl_handle *rth, const char *buf, int);
-
+extern int rtnl_send_check(struct rtnl_handle *rth, const char *buf, int);
 
 extern int addattr32(struct nlmsghdr *n, int maxlen, int type, __u32 data);
 extern int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data, int alen);

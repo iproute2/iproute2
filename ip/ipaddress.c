@@ -316,7 +316,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 static int flush_update(void)
 {
-	if (rtnl_send(&rth, filter.flushb, filter.flushp) < 0) {
+	if (rtnl_send_check(&rth, filter.flushb, filter.flushp) < 0) {
 		perror("Failed to send flush request");
 		return -1;
 	}
