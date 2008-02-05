@@ -2,3 +2,4 @@ Config
 *.o
 *.a
 *.so
+*~
