@@ -89,6 +89,7 @@ struct meta_entry {
 				"Routing ClassID (cls_route)"),
 	__A(RTIIF,		"rt_iif",	"i",
 				"Incoming interface index"),
+	__A(VLAN_TAG,		"vlan",		"i",	"Vlan tag"),
 
 	__A(SECTION,		"Sockets", "", ""),
 	__A(SK_FAMILY,		"sk_family",	"i",	"Address family"),
@@ -109,7 +110,6 @@ struct meta_entry {
 	__A(SK_ERR_QLEN,	"sk_err_queue",	"i",	"Error queue length"),
 	__A(SK_FORWARD_ALLOCS,	"sk_fwd_alloc",	"i",	"Forward allocations"),
 	__A(SK_SNDBUF,		"sk_sndbuf",	"i",	"Send buffer size"),
-	__A(VLAN_TAG,		"vlan",		"i",	"Vlan tag"),
 #undef __A
 };
 
