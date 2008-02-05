@@ -32,7 +32,8 @@ static void explain(void)
 "KEY-LIST := [ KEY-LIST , ] KEY\n"
 "KEY      := [ src | dst | proto | proto-src | proto-dst | iif | priority | \n"
 "              mark | nfct | nfct-src | nfct-dst | nfct-proto-src | \n"
-"              nfct-proto-dst | rt-classid | sk-uid | sk-gid ]\n"
+"              nfct-proto-dst | rt-classid | sk-uid | sk-gid |\n"
+"              vlan-tag ]\n"
 "OPS      := [ or NUM | and NUM | xor NUM | rshift NUM | addend NUM ]\n"
 "ID       := X:Y\n"
 	);
@@ -55,6 +56,7 @@ static const char *flow_keys[FLOW_KEY_MAX+1] = {
 	[FLOW_KEY_RTCLASSID]		= "rt-classid",
 	[FLOW_KEY_SKUID]		= "sk-uid",
 	[FLOW_KEY_SKGID]		= "sk-gid",
+	[FLOW_KEY_VLAN_TAG]		= "vlan-tag",
 };
 
 static int flow_parse_keys(__u32 *keys, __u32 *nkeys, char *argv)
