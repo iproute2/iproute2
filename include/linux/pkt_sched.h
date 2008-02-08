@@ -152,7 +152,7 @@ struct tc_sfq_qopt
 
 struct tc_sfq_xstats
 {
-	__u32		allot;
+	__s32		allot;
 };
 
 /*
