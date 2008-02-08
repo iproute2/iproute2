@@ -92,6 +92,9 @@ __PF(IRDA,irda)
 #ifdef ETH_P_ECONET
 __PF(ECONET,econet)
 #endif
+__PF(TIPC,tipc)
+__PF(AOE,aoe)
+__PF(CAN,can)
 
 { 0x8100, "802.1Q" },
 { ETH_P_IP, "ipv4" },
