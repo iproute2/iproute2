@@ -1,7 +1,7 @@
 /*
  * f_basic.c		Basic Classifier
  *
- *		This program is free software; you can u32istribute it and/or
+ *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.

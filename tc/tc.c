@@ -220,7 +220,7 @@ static int batch(const char *name)
 
 	if (name && strcmp(name, "-") != 0) {
 		if (freopen(name, "r", stdin) == NULL) {
-			fprintf(stderr, "Cannot open file \"%s\" for reading: %s=n",
+			fprintf(stderr, "Cannot open file \"%s\" for reading: %s\n",
 				name, strerror(errno));
 			return -1;
 		}
