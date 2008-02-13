@@ -13,8 +13,8 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 
 .ti -8
 .IR OBJECT " := { "
-.BR link " | " addr " | " route " | " rule " | " neigh " | " tunnel " | "\
-maddr " | "  mroute " | " monitor " }"
+.BR link " | " addr " | " addrlabel " | " route " | " rule " | " neigh " | "\
+ tunnel " | " maddr " | "  mroute " | " monitor " }"
 .sp
 
 .ti -8
@@ -95,6 +95,17 @@ maddr " | "  mroute " | " monitor " }"
 .IR FLAG " := "
 .RB "[ " permanent " | " dynamic " | " secondary " | " primary " | "\
 tentative " | " deprecated " ]"
+
+.ti -8
+.BR "ip addrlabel" " { " add " | " del " } " prefix 
+.BR PREFIX " [ "
+.B dev
+.IR DEV " ] [ "
+.B label
+.IR NUMBER " ]"
+
+.ti -8
+.BR "ip addrlabel" " { " list " | " flush " }"
 
 .ti -8
 .BR "ip route" " { "
@@ -404,6 +415,11 @@ host addresses.
 .TP
 .B address
 - protocol (IP or IPv6) address on a device.
+
+.TP
+.B addrlabel
+- label configuration for protocol address selection.
+
 .TP
 .B neighbour
 - ARP or NDISC cache entry.
@@ -708,6 +724,33 @@ this option is given twice,
 also dumps all the deleted addresses in the format described in the
 previous subsection.
 
+.SH ip addrlabel - protocol address label management.
+
+IPv6 address label is used for address selection
+described in RFC 3484.  Precedence is managed by userspace,
+and only label is stored in kernel.
+
+.SS ip addrlabel add - add an address label
+the command adds an address label entry to the kernel.
+.TP
+.BI prefix " PREFIX"
+.TP
+.BI dev " DEV"
+the outgoing interface.
+.TP
+.BI label " NUMBER"
+the label for the prefix.
+0xffffffff is reserved.
+.SS ip addrlabel del - delete an address label
+the command deletes an address label entry in the kernel.
+.B Arguments:
+coincide with the arguments of
+.B ip addrlabel add
+but label is not required.
+.SS ip addrlabel list - list address labels
+the command show contents of address labels.
+.SS ip addrlabel flush - flush address labels
+the commoand flushes the contents of address labels and it does not restore default settings.
 .SH ip neighbour - neighbour/arp tables management.
 
 .B neighbour

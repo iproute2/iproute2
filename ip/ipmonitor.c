@@ -54,6 +54,10 @@ int accept_msg(const struct sockaddr_nl *who,
 		print_addrinfo(who, n, arg);
 		return 0;
 	}
+	if (n->nlmsg_type == RTM_NEWADDRLABEL || n->nlmsg_type == RTM_DELADDRLABEL) {
+		print_addrlabel(who, n, arg);
+		return 0;
+	}
 	if (n->nlmsg_type == RTM_NEWNEIGH || n->nlmsg_type == RTM_DELNEIGH) {
 		print_neigh(who, n, arg);
 		return 0;
