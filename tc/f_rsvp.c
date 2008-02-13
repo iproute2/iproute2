@@ -34,6 +34,7 @@ static void explain(void)
 	fprintf(stderr, "                u{8|16|32} NUMBER mask MASK at OFFSET}\n");
 	fprintf(stderr, "       POLICE_SPEC := ... look at TBF\n");
 	fprintf(stderr, "       FILTERID := X:Y\n");
+	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
 #define usage() return(-1)

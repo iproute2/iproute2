@@ -31,6 +31,7 @@ static void explain(void)
 	fprintf(stderr, "                [ flowid CLASSID ] [ police POLICE_SPEC ]\n");
 	fprintf(stderr, "       POLICE_SPEC := ... look at TBF\n");
 	fprintf(stderr, "       CLASSID := X:Y\n");
+	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
 #define usage() return(-1)

@@ -88,6 +88,9 @@ tc filter add dev lo parent ffff: protocol ip prio 8 u32 \
 match ip dst 127.0.0.8/32 flowid 1:12 \
 action ipt -j mark --set-mark 2
 
+NOTE: flowid 1:12 is parsed flowid 0x1:0x12.  Make sure if you want flowid
+decimal 12, then use flowid 1:c.
+
 3) A feature i call pipe
 The motivation is derived from Unix pipe mechanism but applied to packets.
 Essentially take a matching packet and pass it through 
