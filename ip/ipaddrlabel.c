@@ -173,6 +173,7 @@ static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 
 	addattr32(&req.n, sizeof(req), IFAL_LABEL, label);
 	addattr_l(&req.n, sizeof(req), IFAL_ADDRESS, &prefix.data, prefix.bytelen);
+	req.ifal.ifal_prefixlen = prefix.bitlen;
 
 	if (req.ifal.ifal_family == AF_UNSPEC)
 		req.ifal.ifal_family = AF_INET6;
