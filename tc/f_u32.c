@@ -797,11 +797,27 @@ static void show_key(FILE *f, const struct tc_u32_key *key)
 		goto raw;
 
 	switch (key->off) {
+	case 0:
+		switch (ntohl(key->mask)) {
+		case 0x0f000000:
+			fprintf(f, "\n ihl %u", ntohl(key->val) >> 24);
+			return;
+		case 0x00ff0000:
+			fprintf(f, "\n dsfield %#x", ntohl(key->val) >> 16);
+			return;
+		}
+		break;
+	case 8:
+		if (ntohl(key->mask) == 0x00ff0000) {
+			fprintf(f, "\n protocol %u", ntohl(key->val) >> 16);
+			return;
+		}
+		break;
 	case 12:
 	case 16: {
 			int bits = mask2bits(key->mask);
 			if (bits >= 0) {
-				fprintf(f, "\n  %s %s/%d\n", 
+				fprintf(f, "\n  %s %s/%d", 
 					key->off == 12 ? "src" : "dst",
 					inet_ntop(AF_INET, &key->val,
 						  abuf, sizeof(abuf)),
@@ -812,11 +828,20 @@ static void show_key(FILE *f, const struct tc_u32_key *key)
 		break;
 
 	case 20:
-	case 22:
-		if (key->mask == ntohl(0xffff)) {
-			fprintf(f, "\n  %s %u\n", 
-				key->off == 20 ? "sport" : "dport",
-				(unsigned short) ntohl(key->val));
+		switch (ntohl(key->mask)) {
+		case 0x0000ffff:
+			fprintf(f, "\n  sport %u", 
+				ntohl(key->val) & 0xffff);
+			return;
+		case 0xffff0000:
+			fprintf(f, "\n  dport %u", 
+				ntohl(key->val) >> 16);
+			return;
+		case 0xffffffff:
+			fprintf(f, "\n  sport %u, port %u", 
+				ntohl(key->val) & 0xffff,
+				ntohl(key->val) >> 16);
+
 			return;
 		}
 	}
