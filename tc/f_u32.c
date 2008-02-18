@@ -27,14 +27,17 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... u32 [ match SELECTOR ... ] [ link HTID ] [ classid CLASSID ]\n");
-	fprintf(stderr, "               [ police POLICE_SPEC ] [ offset OFFSET_SPEC ]\n");
+	fprintf(stderr, "Usage: ... u32 [ match SELECTOR ... ] [ link HTID ]"
+		" [ classid CLASSID ]\n");
+	fprintf(stderr, "               [ police POLICE_SPEC ]"
+		" [ offset OFFSET_SPEC ]\n");
 	fprintf(stderr, "               [ ht HTID ] [ hashkey HASHKEY_SPEC ]\n");
 	fprintf(stderr, "               [ sample SAMPLE ]\n");
 	fprintf(stderr, "or         u32 divisor DIVISOR\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: SELECTOR := SAMPLE SAMPLE ...\n");
-	fprintf(stderr, "       SAMPLE := { ip | ip6 | udp | tcp | icmp | u{32|16|8} | mark } SAMPLE_ARGS [divisor DIVISOR]\n");
+	fprintf(stderr, "       SAMPLE := { ip | ip6 | udp | tcp | icmp |"
+		" u{32|16|8} | mark } SAMPLE_ARGS [divisor DIVISOR]\n");
 	fprintf(stderr, "       FILTERID := X:Y:Z\n");
 	fprintf(stderr, "\nNOTE: CLASSID is parsed at hexadecimal input.\n");
 }
@@ -110,7 +113,8 @@ char * sprint_u32_handle(__u32 handle, char *buf)
 	return buf;
 }
 
-static int pack_key(struct tc_u32_sel *sel, __u32 key, __u32 mask, int off, int offmask)
+static int pack_key(struct tc_u32_sel *sel, __u32 key, __u32 mask,
+		    int off, int offmask)
 {
 	int i;
 	int hwm = sel->nkeys;
@@ -141,14 +145,16 @@ static int pack_key(struct tc_u32_sel *sel, __u32 key, __u32 mask, int off, int 
 	return 0;
 }
 
-static int pack_key32(struct tc_u32_sel *sel, __u32 key, __u32 mask, int off, int offmask)
+static int pack_key32(struct tc_u32_sel *sel, __u32 key, __u32 mask,
+		      int off, int offmask)
 {
 	key = htonl(key);
 	mask = htonl(mask);
 	return pack_key(sel, key, mask, off, offmask);
 }
 
-static int pack_key16(struct tc_u32_sel *sel, __u32 key, __u32 mask, int off, int offmask)
+static int pack_key16(struct tc_u32_sel *sel, __u32 key, __u32 mask,
+		      int off, int offmask)
 {
 	if (key > 0xFFFF || mask > 0xFFFF)
 		return -1;
@@ -216,7 +222,8 @@ int parse_at(int *argc_p, char ***argv_p, int *off, int *offmask)
 }
 
 
-static int parse_u32(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, int off, int offmask)
+static int parse_u32(int *argc_p, char ***argv_p, struct tc_u32_sel *sel,
+		     int off, int offmask)
 {
 	int res = -1;
 	int argc = *argc_p;
@@ -247,7 +254,8 @@ static int parse_u32(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, int of
 	return res;
 }
 
-static int parse_u16(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, int off, int offmask)
+static int parse_u16(int *argc_p, char ***argv_p, struct tc_u32_sel *sel,
+		     int off, int offmask)
 {
 	int res = -1;
 	int argc = *argc_p;
@@ -277,7 +285,8 @@ static int parse_u16(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, int of
 	return res;
 }
 
-static int parse_u8(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, int off, int offmask)
+static int parse_u8(int *argc_p, char ***argv_p, struct tc_u32_sel *sel,
+		    int off, int offmask)
 {
 	int res = -1;
 	int argc = *argc_p;
@@ -311,7 +320,8 @@ static int parse_u8(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, int off
 	return res;
 }
 
-static int parse_ip_addr(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, int off)
+static int parse_ip_addr(int *argc_p, char ***argv_p, struct tc_u32_sel *sel,
+			 int off)
 {
 	int res = -1;
 	int argc = *argc_p;
@@ -345,7 +355,8 @@ static int parse_ip_addr(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, in
 	return res;
 }
 
-static int parse_ip6_addr(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, int off)
+static int parse_ip6_addr(int *argc_p, char ***argv_p,
+			  struct tc_u32_sel *sel, int off)
 {
 	int res = -1;
 	int argc = *argc_p;
@@ -371,12 +382,16 @@ static int parse_ip6_addr(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, i
 	plen = addr.bitlen;
 	for (i=0; i<plen; i+=32) {
 //		if (((i+31)&~0x1F)<=plen) {
-		if (((i+31))<=plen) {
-			if ((res = pack_key(sel, addr.data[i/32], 0xFFFFFFFF, off+4*(i/32), offmask)) < 0)
+		if (i + 31 <= plen) {
+			res = pack_key(sel, addr.data[i/32],
+				       0xFFFFFFFF, off+4*(i/32), offmask);
+			if (res < 0)
 				return -1;
-		} else if (i<plen) {
-			__u32 mask = htonl(0xFFFFFFFF<<(32-(plen-i)));
-			if ((res = pack_key(sel, addr.data[i/32], mask, off+4*(i/32), offmask)) < 0)
+		} else if (i < plen) {
+			__u32 mask = htonl(0xFFFFFFFF << (32 - (plen -i )));
+			res = pack_key(sel, addr.data[i/32],
+				       mask, off+4*(i/32), offmask);
+			if (res < 0)
 				return -1;
 		}
 	}
@@ -628,7 +643,8 @@ static int parse_mark(int *argc_p, char ***argv_p, struct nlmsghdr *n)
 	return res;
 }
 
-static int parse_selector(int *argc_p, char ***argv_p, struct tc_u32_sel *sel, struct nlmsghdr *n)
+static int parse_selector(int *argc_p, char ***argv_p,
+			  struct tc_u32_sel *sel, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -787,7 +803,8 @@ static void show_key(FILE *f, const struct tc_u32_key *key)
 			if (bits >= 0) {
 				fprintf(f, "\n  %s %s/%d\n", 
 					key->off == 12 ? "src" : "dst",
-					inet_ntop(AF_INET, &key->val, abuf, sizeof(abuf)),
+					inet_ntop(AF_INET, &key->val,
+						  abuf, sizeof(abuf)),
 					bits);
 				return;
 			}
@@ -930,7 +947,8 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 				return -1;
 			}
 			if (sel2.sel.nkeys != 1) {
-				fprintf(stderr, "\"sample\" must contain exactly ONE key.\n");
+				fprintf(stderr, "\"sample\" must contain"
+					" exactly ONE key.\n");
 				return -1;
 			}
 			if (*argv != 0 && strcmp(*argv, "divisor") == 0) {
@@ -1003,7 +1021,8 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	if (htid)
 		addattr_l(n, MAX_MSG, TCA_U32_HASH, &htid, 4);
 	if (sel_ok)
-		addattr_l(n, MAX_MSG, TCA_U32_SEL, &sel, sizeof(sel.sel)+sel.sel.nkeys*sizeof(struct tc_u32_key));
+		addattr_l(n, MAX_MSG, TCA_U32_SEL, &sel, 
+			  sizeof(sel.sel)+sel.sel.nkeys*sizeof(struct tc_u32_key));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
@@ -1039,7 +1058,8 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		fprintf(f, "ht divisor %d ", *(__u32*)RTA_DATA(tb[TCA_U32_DIVISOR]));
 	} else if (tb[TCA_U32_HASH]) {
 		__u32 htid = *(__u32*)RTA_DATA(tb[TCA_U32_HASH]);
-		fprintf(f, "key ht %x bkt %x ", TC_U32_USERHTID(htid), TC_U32_HASH(htid));
+		fprintf(f, "key ht %x bkt %x ", TC_U32_USERHTID(htid),
+			TC_U32_HASH(htid));
 	} else {
 		fprintf(f, "??? ");
 	}
@@ -1053,7 +1073,8 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	}
 	if (tb[TCA_U32_LINK]) {
 		SPRINT_BUF(b1);
-		fprintf(f, "link %s ", sprint_u32_handle(*(__u32*)RTA_DATA(tb[TCA_U32_LINK]), b1));
+		fprintf(f, "link %s ",
+			sprint_u32_handle(*(__u32*)RTA_DATA(tb[TCA_U32_LINK]), b1));
 	}
 
 	if (tb[TCA_U32_PCNT]) {
@@ -1093,7 +1114,9 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		if (sel->flags&(TC_U32_VAROFFSET|TC_U32_OFFSET)) {
 			fprintf(f, "\n    offset ");
 			if (sel->flags&TC_U32_VAROFFSET)
-				fprintf(f, "%04x>>%d at %d ", ntohs(sel->offmask), sel->offshift,  sel->offoff);
+				fprintf(f, "%04x>>%d at %d ",
+					ntohs(sel->offmask),
+					sel->offshift,  sel->offoff);
 			if (sel->off)
 				fprintf(f, "plus %d ", sel->off);
 		}
