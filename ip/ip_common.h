@@ -4,9 +4,8 @@ extern int print_linkinfo(const struct sockaddr_nl *who,
 extern int print_addrinfo(const struct sockaddr_nl *who,
 			  struct nlmsghdr *n,
 			  void *arg);
-extern int print_addrlabelinfo(const struct sockaddr_nl *who,
-			       struct nlmsghdr *n,
-			       void *arg);
+extern int print_addrlabel(const struct sockaddr_nl *who,
+			   struct nlmsghdr *n, void *arg);
 extern int print_neigh(const struct sockaddr_nl *who,
 		       struct nlmsghdr *n, void *arg);
 extern int print_ntable(const struct sockaddr_nl *who,
