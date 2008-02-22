@@ -838,7 +838,7 @@ static void show_key(FILE *f, const struct tc_u32_key *key)
 				ntohl(key->val) >> 16);
 			return;
 		case 0xffffffff:
-			fprintf(f, "\n  sport %u, port %u", 
+			fprintf(f, "\n  sport %u, dport %u", 
 				ntohl(key->val) & 0xffff,
 				ntohl(key->val) >> 16);
 
