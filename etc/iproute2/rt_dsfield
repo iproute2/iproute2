@@ -1,3 +1,4 @@
+0x00	default
 0x10	lowdelay
 0x08	throughput
 0x04	reliability
