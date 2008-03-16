@@ -27,7 +27,7 @@ ssfilter.c: ssfilter.y
 lnstat: $(LNSTATOBJ)
 
 install: all
-	install -m 0755 -s $(TARGETS) $(DESTDIR)$(SBINDIR)
+	install -m 0755 $(TARGETS) $(DESTDIR)$(SBINDIR)
 	ln -sf lnstat $(DESTDIR)$(SBINDIR)/rtstat
 	ln -sf lnstat $(DESTDIR)$(SBINDIR)/ctstat
 
