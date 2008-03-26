@@ -54,7 +54,8 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 	} req;
 	struct filter_util *q = NULL;
 	__u32 prio = 0;
-	__u32 protocol = 0;
+	__u32 protocol = ETH_P_ALL;
+	int protocol_set = 0;
 	char *fhandle = NULL;
 	char  d[16];
 	char  k[16];
@@ -106,11 +107,12 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (matches(*argv, "protocol") == 0) {
 			__u16 id;
 			NEXT_ARG();
-			if (protocol)
+			if (protocol_set)
 				duparg("protocol", *argv);
 			if (ll_proto_a2n(&id, *argv))
 				invarg(*argv, "invalid protocol");
 			protocol = id;
+			protocol_set = 1;
 		} else if (matches(*argv, "estimator") == 0) {
 			if (parse_estimator(&argc, &argv, &est) < 0)
 				return -1;
@@ -125,11 +127,6 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 
 		argc--; argv++;
-	}
-
-	if (!protocol) {
-		fprintf(stderr, "\"protocol\" is required.\n");
-		return -1;
 	}
 
 	req.t.tcm_info = TC_H_MAKE(prio<<16, protocol);
