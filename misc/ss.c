@@ -1641,7 +1641,7 @@ static int tcp_show(struct filter *f, int socktype)
 	}
 
 	if (f->families & (1<<AF_INET)) {
-		if ((fp = net_tcp_open()) < 0)
+		if ((fp = net_tcp_open()) == NULL)
 			goto outerr;
 
 		setbuffer(fp, buf, bufsize);
@@ -1651,7 +1651,7 @@ static int tcp_show(struct filter *f, int socktype)
 	}
 
 	if ((f->families & (1<<AF_INET6)) &&
-	    (fp = net_tcp6_open()) >= 0) {
+	    (fp = net_tcp6_open()) != NULL) {
 		setbuffer(fp, buf, bufsize);
 		if (generic_record_read(fp, tcp_show_line, f, AF_INET6))
 			goto outerr;
@@ -1773,7 +1773,7 @@ int udp_show(struct filter *f)
 	dg_proto = UDP_PROTO;
 
 	if (f->families&(1<<AF_INET)) {
-		if ((fp = net_udp_open()) < 0)
+		if ((fp = net_udp_open()) == NULL)
 			goto outerr;
 		if (generic_record_read(fp, dgram_show_line, f, AF_INET))
 			goto outerr;
@@ -1781,7 +1781,7 @@ int udp_show(struct filter *f)
 	}
 
 	if ((f->families&(1<<AF_INET6)) &&
-	    (fp = net_udp6_open()) >= 0) {
+	    (fp = net_udp6_open()) != NULL) {
 		if (generic_record_read(fp, dgram_show_line, f, AF_INET6))
 			goto outerr;
 		fclose(fp);
@@ -1805,7 +1805,7 @@ int raw_show(struct filter *f)
 	dg_proto = RAW_PROTO;
 
 	if (f->families&(1<<AF_INET)) {
-		if ((fp = net_raw_open()) < 0)
+		if ((fp = net_raw_open()) == NULL)
 			goto outerr;
 		if (generic_record_read(fp, dgram_show_line, f, AF_INET))
 			goto outerr;
@@ -1813,7 +1813,7 @@ int raw_show(struct filter *f)
 	}
 
 	if ((f->families&(1<<AF_INET6)) &&
-	    (fp = net_raw6_open()) >= 0) {
+	    (fp = net_raw6_open()) != NULL) {
 		if (generic_record_read(fp, dgram_show_line, f, AF_INET6))
 			goto outerr;
 		fclose(fp);

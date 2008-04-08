@@ -171,7 +171,8 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			strncpy(medium, *argv, IFNAMSIZ-1);
-		} else if (strcmp(*argv, "ttl") == 0) {
+		} else if (strcmp(*argv, "ttl") == 0 ||
+			   strcmp(*argv, "hoplimit") == 0) {
 			unsigned uval;
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
@@ -182,6 +183,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				p->iph.ttl = uval;
 			}
 		} else if (strcmp(*argv, "tos") == 0 ||
+			   strcmp(*argv, "tclass") == 0 ||
 			   matches(*argv, "dsfield") == 0) {
 			__u32 uval;
 			NEXT_ARG();

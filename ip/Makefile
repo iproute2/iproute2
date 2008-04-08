@@ -17,7 +17,7 @@ ip: $(IPOBJ) $(LIBNETLINK) $(LIBUTIL)
 rtmon: $(RTMONOBJ) $(LIBNETLINK)
 
 install: all
-	install -m 0755 -s $(TARGETS) $(DESTDIR)$(SBINDIR)
+	install -m 0755 $(TARGETS) $(DESTDIR)$(SBINDIR)
 	install -m 0755 $(SCRIPTS) $(DESTDIR)$(SBINDIR)
 
 clean:
