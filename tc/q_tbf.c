@@ -27,7 +27,7 @@ static void explain(void)
 {
 	fprintf(stderr, "Usage: ... tbf limit BYTES burst BYTES[/BYTES] rate KBPS [ mtu BYTES[/BYTES] ]\n");
 	fprintf(stderr, "               [ peakrate KBPS ] [ latency TIME ] ");
-	fprintf(stderr, "[ overhead BYTES ]\n");
+	fprintf(stderr, "[ overhead BYTES ] [ linklayer TYPE ]\n");
 }
 
 static void explain1(char *arg)
@@ -47,6 +47,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	unsigned buffer=0, mtu=0, mpu=0, latency=0;
 	int Rcell_log=-1, Pcell_log = -1;
 	unsigned short overhead=0;
+	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 
 	memset(&opt, 0, sizeof(opt));
@@ -141,6 +142,11 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 			if (get_u16(&overhead, *argv, 10)) {
 				explain1("overhead"); return -1;
 			}
+		} else if (matches(*argv, "linklayer") == 0) {
+			NEXT_ARG();
+			if (get_linklayer(&linklayer, *argv)) {
+				explain1("linklayer"); return -1;
+			}
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -183,7 +189,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 
 	opt.rate.mpu      = mpu;
 	opt.rate.overhead = overhead;
-	if (tc_calc_rtable(&opt.rate, rtab, Rcell_log, mtu) < 0) {
+	if (tc_calc_rtable(&opt.rate, rtab, Rcell_log, mtu, linklayer) < 0) {
 		fprintf(stderr, "TBF: failed to calculate rate table.\n");
 		return -1;
 	}
@@ -192,7 +198,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	if (opt.peakrate.rate) {
 		opt.peakrate.mpu      = mpu;
 		opt.peakrate.overhead = overhead;
-		if (tc_calc_rtable(&opt.peakrate, ptab, Pcell_log, mtu) < 0) {
+		if (tc_calc_rtable(&opt.peakrate, ptab, Pcell_log, mtu, linklayer) < 0) {
 			fprintf(stderr, "TBF: failed to calculate peak rate table.\n");
 			return -1;
 		}

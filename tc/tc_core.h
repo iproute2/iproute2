@@ -6,6 +6,12 @@
 
 #define TIME_UNITS_PER_SEC	1000000
 
+enum link_layer {
+	LINKLAYER_ETHERNET=1,
+	LINKLAYER_ATM     =2,
+};
+
+
 int  tc_core_time2big(unsigned time);
 unsigned tc_core_time2tick(unsigned time);
 unsigned tc_core_tick2time(unsigned tick);
@@ -13,7 +19,8 @@ unsigned tc_core_time2ktime(unsigned time);
 unsigned tc_core_ktime2time(unsigned ktime);
 unsigned tc_calc_xmittime(unsigned rate, unsigned size);
 unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks);
-int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab, int cell_log, unsigned mtu);
+int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
+		   int cell_log, unsigned mtu, enum link_layer link_layer);
 
 int tc_setup_estimator(unsigned A, unsigned time_const, struct tc_estimator *est);
 
