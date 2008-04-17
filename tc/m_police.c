@@ -133,7 +133,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 	__u32 avrate = 0;
 	int presult = 0;
 	unsigned buffer=0, mtu=0, mpu=0;
-	unsigned short overhead;
+	unsigned short overhead=0;
 	int Rcell_log=-1, Pcell_log = -1;
 	struct rtattr *tail;
 
