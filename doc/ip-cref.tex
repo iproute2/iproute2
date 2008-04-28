@@ -751,6 +751,11 @@ An IP address becomes secondary if another address with the same
 prefix bits already exists. The first address is primary.
 It is the leader of the group of all secondary addresses. When the leader
 is deleted, all secondaries are purged too.
+There is a tweak in \verb|/proc/sys/net/ipv4/conf/<dev>/promote_secondaries|
+which activate secondaries promotion when a primary is deleted.
+To permanently enable this feature on all devices add
+\verb|net.ipv4.conf.all.promote_secondaries=1| to \verb|/etc/sysctl.conf|.
+This tweak is available in linux 2.6.15 and later.
 
 
 \item \verb|dynamic|

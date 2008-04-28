@@ -35,6 +35,8 @@
 #include "ll_map.h"
 #include "ip_common.h"
 
+#define MAX_ROUNDS 10
+
 static struct
 {
 	int ifindex;
@@ -684,7 +686,7 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		filter.flushp = 0;
 		filter.flushe = sizeof(flushb);
 
-		for (;;) {
+		while (round < MAX_ROUNDS) {
 			if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
 				perror("Cannot send dump request");
 				exit(1);
@@ -711,6 +713,8 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 				fflush(stdout);
 			}
 		}
+		fprintf(stderr, "*** Flush remains incomplete after %d rounds. ***\n", MAX_ROUNDS); fflush(stderr);
+		return 1;
 	}
 
 	if (filter.family != AF_PACKET) {

@@ -32,7 +32,7 @@ static void explain_class(void)
 	fprintf(stderr, "               [ prio NUMBER ] [ cell BYTES ] [ ewma LOG ]\n");
 	fprintf(stderr, "               [ estimator INTERVAL TIME_CONSTANT ]\n");
 	fprintf(stderr, "               [ split CLASSID ] [ defmap MASK/CHANGE ]\n");
-	fprintf(stderr, "               [ overhead BYTES ]\n");
+	fprintf(stderr, "               [ overhead BYTES ] [ linklayer TYPE ]\n");
 }
 
 static void explain(void)
@@ -55,6 +55,7 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	__u32 rtab[256];
 	unsigned mpu=0, avpkt=0, allot=0;
 	unsigned short overhead=0;
+	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	int cell_log=-1;
 	int ewma_log=-1;
 	struct rtattr *tail;
@@ -120,6 +121,11 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 			if (get_u16(&overhead, *argv, 10)) {
 				explain1("overhead"); return -1;
 			}
+		} else if (matches(*argv, "linklayer") == 0) {
+			NEXT_ARG();
+			if (get_linklayer(&linklayer, *argv)) {
+				explain1("linklayer"); return -1;
+			}
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -146,7 +152,7 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 
 	r.mpu = mpu;
 	r.overhead = overhead;
-	if (tc_calc_rtable(&r, rtab, cell_log, allot) < 0) {
+	if (tc_calc_rtable(&r, rtab, cell_log, allot, linklayer) < 0) {
 		fprintf(stderr, "CBQ: failed to calculate rate table.\n");
 		return -1;
 	}
@@ -188,6 +194,7 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	unsigned bndw = 0;
 	unsigned minburst=0, maxburst=0;
 	unsigned short overhead=0;
+	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 
 	memset(&r, 0, sizeof(r));
@@ -331,6 +338,11 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			if (get_u16(&overhead, *argv, 10)) {
 				explain1("overhead"); return -1;
 			}
+		} else if (matches(*argv, "linklayer") == 0) {
+			NEXT_ARG();
+			if (get_linklayer(&linklayer, *argv)) {
+				explain1("linklayer"); return -1;
+			}
 		} else if (matches(*argv, "help") == 0) {
 			explain_class();
 			return -1;
@@ -351,7 +363,7 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			wrr.allot = (lss.avpkt*3)/2;
 		r.mpu = mpu;
 		r.overhead = overhead;
-		if (tc_calc_rtable(&r, rtab, cell_log, pktsize) < 0) {
+		if (tc_calc_rtable(&r, rtab, cell_log, pktsize, linklayer) < 0) {
 			fprintf(stderr, "CBQ: failed to calculate rate table.\n");
 			return -1;
 		}

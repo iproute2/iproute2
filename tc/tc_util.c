@@ -435,6 +435,23 @@ int action_a2n(char *arg, int *result)
 	return 0;
 }
 
+int get_linklayer(unsigned int *val, const char *arg)
+{
+	int res;
+
+	if (matches(arg, "ethernet") == 0)
+		res = LINKLAYER_ETHERNET;
+	else if (matches(arg, "atm") == 0)
+		res = LINKLAYER_ATM;
+	else if (matches(arg, "adsl") == 0)
+		res = LINKLAYER_ATM;
+	else
+		return -1; /* Indicate error */
+
+	*val = res;
+	return 0;
+}
+
 void print_tm(FILE * f, const struct tcf_t *tm)
 {
 	int hz = get_user_hz();

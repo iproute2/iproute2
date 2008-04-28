@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "tc_core.h"
+#include <linux/atm.h>
 
 static double tick_in_usec = 1;
 static double clock_factor = 1;
@@ -66,10 +67,33 @@ unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
 }
 
 /*
+ * The align to ATM cells is used for determining the (ATM) SAR
+ * alignment overhead at the ATM layer. (SAR = Segmentation And
+ * Reassembly).  This is for example needed when scheduling packet on
+ * an ADSL connection.  Note that the extra ATM-AAL overhead is _not_
+ * included in this calculation. This overhead is added in the kernel
+ * before doing the rate table lookup, as this gives better precision
+ * (as the table will always be aligned for 48 bytes).
+ *  --Hawk, d.7/11-2004. <hawk@diku.dk>
+ */
+unsigned tc_align_to_atm(unsigned size)
+{
+	int linksize, cells;
+	cells = size / ATM_CELL_PAYLOAD;
+	if ((size % ATM_CELL_PAYLOAD) > 0)
+		cells++;
+
+	linksize = cells * ATM_CELL_SIZE; /* Use full cell size to add ATM tax */
+	return linksize;
+}
+
+/*
    rtab[pkt_len>>cell_log] = pkt_xmit_time
  */
 
-int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab, int cell_log, unsigned mtu)
+int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
+		   int cell_log, unsigned mtu,
+		   enum link_layer linklayer)
 {
 	int i;
 	unsigned bps = r->rate;
@@ -80,15 +104,29 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab, int cell_log, unsigned mt
 
 	if (cell_log < 0) {
 		cell_log = 0;
-		while ((mtu>>cell_log) > 255)
+		while ((mtu >> cell_log) > 255)
 			cell_log++;
 	}
+
 	for (i=0; i<256; i++) {
-		unsigned sz = ((i+1)<<cell_log);
+		unsigned sz = (i+1)<<cell_log;
 		if (sz < mpu)
 			sz = mpu;
+
+		switch (linklayer) {
+		case LINKLAYER_ATM:
+			sz = tc_align_to_atm(sz);
+			break;
+		case LINKLAYER_ETHERNET:
+			// No size adjustments on Ethernet
+			break;
+		default:
+			break;
+		}
+
 		rtab[i] = tc_calc_xmittime(bps, sz);
 	}
+
 	r->cell_align=-1; // Due to the sz calc
 	r->cell_log=cell_log;
 	return cell_log;
