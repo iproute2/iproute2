@@ -518,13 +518,14 @@ const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen
 struct namerec
 {
 	struct namerec *next;
+	const char *name;
 	inet_prefix addr;
-	char	    *name;
 };
 
-static struct namerec *nht[256];
+#define NHASH 257
+static struct namerec *nht[NHASH];
 
-char *resolve_address(const char *addr, int len, int af)
+static const char *resolve_address(const void *addr, int len, int af)
 {
 	struct namerec *n;
 	struct hostent *h_ent;
@@ -539,7 +540,7 @@ char *resolve_address(const char *addr, int len, int af)
 		len = 4;
 	}
 
-	hash = addr[len-1] ^ addr[len-2] ^ addr[len-3] ^ addr[len-4];
+	hash = *(__u32 *)(addr + len - 4) % NHASH;
 
 	for (n = nht[hash]; n; n = n->next) {
 		if (n->addr.family == af &&
@@ -573,7 +574,8 @@ const char *format_host(int af, int len, const void *addr,
 {
 #ifdef RESOLVE_HOSTNAMES
 	if (resolve_hosts) {
-		char *n;
+		const char *n;
+
 		if (len <= 0) {
 			switch (af) {
 			case AF_INET:
