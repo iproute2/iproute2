@@ -25,6 +25,8 @@
 #include "utils.h"
 #include "tc_util.h"
 
+extern int show_pretty;
+
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... u32 [ match SELECTOR ... ] [ link HTID ]"
@@ -793,7 +795,7 @@ static void show_key(FILE *f, const struct tc_u32_key *key)
 {
 	char abuf[256];
 
-	if (show_raw)
+	if (!show_pretty)
 		goto raw;
 
 	switch (key->off) {
