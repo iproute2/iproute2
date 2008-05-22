@@ -246,10 +246,6 @@ int get_s8(__s8 *val, const char *arg, int base)
 
 int get_addr_1(inet_prefix *addr, const char *name, int family)
 {
-	const char *cp;
-	unsigned char *ap = (unsigned char*)addr->data;
-	int i;
-
 	memset(addr, 0, sizeof(*addr));
 
 	if (strcmp(name, "default") == 0 ||
@@ -288,17 +284,10 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	addr->family = AF_INET;
 	if (family != AF_UNSPEC && family != AF_INET)
 		return -1;
+	if (inet_pton(AF_INET, name, addr->data) <= 0)
+		return -1;
 	addr->bytelen = 4;
 	addr->bitlen = -1;
-	for (cp=name, i=0; *cp; cp++) {
-		if (*cp <= '9' && *cp >= '0') {
-			ap[i] = 10*ap[i] + (*cp-'0');
-			continue;
-		}
-		if (*cp == '.' && ++i <= 3)
-			continue;
-		return -1;
-	}
 	return 0;
 }
 
