@@ -491,3 +491,80 @@ int print_ematch(FILE *fd, const struct rtattr *rta)
 
 	return print_ematch_list(fd, hdr, tb[TCA_EMATCH_TREE_LIST]);
 }
+
+struct bstr * bstr_alloc(const char *text)
+{
+	struct bstr *b = calloc(1, sizeof(*b));
+
+	if (b == NULL)
+		return NULL;
+
+	b->data = strdup(text);
+	if (b->data == NULL) {
+		free(b);
+		return NULL;
+	}
+
+	b->len = strlen(text);
+
+	return b;
+}
+
+unsigned long bstrtoul(const struct bstr *b)
+{
+	char *inv = NULL;
+	unsigned long l;
+	char buf[b->len+1];
+
+	memcpy(buf, b->data, b->len);
+	buf[b->len] = '\0';
+
+	l = strtoul(buf, &inv, 0);
+	if (l == ULONG_MAX || inv == buf)
+		return ULONG_MAX;
+
+	return l;
+}
+
+void bstr_print(FILE *fd, const struct bstr *b, int ascii)
+{
+	int i;
+	char *s = b->data;
+
+	if (ascii)
+		for (i = 0; i < b->len; i++)
+		    fprintf(fd, "%c", isprint(s[i]) ? s[i] : '.');
+	else {
+		for (i = 0; i < b->len; i++)
+		    fprintf(fd, "%02x", s[i]);
+		fprintf(fd, "\"");
+		for (i = 0; i < b->len; i++)
+		    fprintf(fd, "%c", isprint(s[i]) ? s[i] : '.');
+		fprintf(fd, "\"");
+	}
+}
+
+void print_ematch_tree(const struct ematch *tree)
+{
+	const struct ematch *t;
+
+	for (t = tree; t; t = t->next) {
+		if (t->inverted)
+			printf("NOT ");
+
+		if (t->child) {
+			printf("(");
+			print_ematch_tree(t->child);
+			printf(")");
+		} else {
+			struct bstr *b;
+			for (b = t->args; b; b = b->next)
+				printf("%s%s", b->data, b->next ? " " : "");
+		}
+
+		if (t->relation == TCF_EM_REL_AND)
+			printf(" AND ");
+		else if (t->relation == TCF_EM_REL_OR)
+			printf(" OR ");
+	}
+}
