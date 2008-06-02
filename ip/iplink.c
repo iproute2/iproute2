@@ -33,6 +33,9 @@
 #include "ip_common.h"
 
 #define IPLINK_IOCTL_COMPAT	1
+#ifndef DESTDIR
+#define DESTDIR "/usr/"
+#endif
 
 static void usage(void) __attribute__((noreturn));
 
@@ -78,7 +81,7 @@ struct link_util *get_link_kind(const char *id)
 		if (strcmp(l->id, id) == 0)
 			return l;
 
-	snprintf(buf, sizeof(buf), "/usr/lib/ip/link_%s.so", id);
+	snprintf(buf, sizeof(buf), DESTDIR "/lib/ip/link_%s.so", id);
 	dlh = dlopen(buf, RTLD_LAZY);
 	if (dlh == NULL) {
 		/* look in current binary, only open once */

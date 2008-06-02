@@ -1,13 +1,13 @@
-DESTDIR=
-SBINDIR=/usr/sbin
+DESTDIR=/usr/
+SBINDIR=/sbin
 CONFDIR=/etc/iproute2
-DOCDIR=/usr/share/doc/iproute2
-MANDIR=/usr/share/man
+DOCDIR=/share/doc/iproute2
+MANDIR=/share/man
 
 # Path to db_185.h include
 DBM_INCLUDE:=/usr/include
 
-DEFINES= -DRESOLVE_HOSTNAMES
+DEFINES= -DRESOLVE_HOSTNAMES -DDESTDIR=\"$(DESTDIR)\"
 
 #options if you have a bind>=4.9.4 libresolv (or, maybe, glibc)
 LDLIBS=-lresolv
