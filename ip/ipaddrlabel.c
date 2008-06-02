@@ -139,6 +139,8 @@ static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 
 	inet_prefix prefix;
 	uint32_t label = 0xffffffffUL;
+	char *p = NULL;
+	char *l = NULL;        
 
 	memset(&req, 0, sizeof(req));
 	memset(&prefix, 0, sizeof(prefix));
@@ -157,6 +159,7 @@ static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 	while (argc > 0) {
 		if (strcmp(*argv, "prefix") == 0) {
 			NEXT_ARG();
+			p = *argv;
 			get_prefix(&prefix, *argv, preferred_family);
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
@@ -164,13 +167,21 @@ static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 				invarg("dev is invalid\n", *argv);
 		} else if (strcmp(*argv, "label") == 0) {
 			NEXT_ARG();
+			l = *argv;
 			if (get_u32(&label, *argv, 0) || label == 0xffffffffUL)
 				invarg("label is invalid\n", *argv);
 		}
 		argc--;
 		argv++;
 	}
-
+	if (p == NULL) {
+		fprintf(stderr, "Not enough information: \"prefix\" argument is required.\n");
+		return -1;
+	}
+	if (l == NULL) {
+		fprintf(stderr, "Not enough information: \"label\" argument is required.\n");
+		return -1;
+	}
 	addattr32(&req.n, sizeof(req), IFAL_LABEL, label);
 	addattr_l(&req.n, sizeof(req), IFAL_ADDRESS, &prefix.data, prefix.bytelen);
 	req.ifal.ifal_prefixlen = prefix.bitlen;
