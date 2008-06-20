@@ -49,6 +49,7 @@ void iplink_usage(void)
 	fprintf(stderr, "	                     name NEWNAME |\n");
 	fprintf(stderr, "	                     address LLADDR | broadcast LLADDR |\n");
 	fprintf(stderr, "	                     mtu MTU }\n");
+	fprintf(stderr, "	                     netns PID }\n");
 	fprintf(stderr, "       ip link show [ DEVICE ]\n");
 	exit(-1);
 }
@@ -156,6 +157,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	char abuf[32];
 	int qlen = -1;
 	int mtu = -1;
+	int netns = -1;
 
 	ret = argc;
 
@@ -197,6 +199,13 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (get_integer(&mtu, *argv, 0))
 				invarg("Invalid \"mtu\" value\n", *argv);
 			addattr_l(&req->n, sizeof(*req), IFLA_MTU, &mtu, 4);
+                } else if (strcmp(*argv, "netns") == 0) {
+                        NEXT_ARG();
+                        if (netns != -1)
+                                duparg("netns", *argv);
+                        if (get_integer(&netns, *argv, 0))
+                                invarg("Invalid \"netns\" value\n", *argv);
+                        addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_PID, &netns, 4);
 		} else if (strcmp(*argv, "multicast") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_MULTICAST;

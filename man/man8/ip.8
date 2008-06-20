@@ -50,7 +50,10 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .IR LLADDR " |"
 .br
 .B  mtu
-.IR MTU " }"
+.IR MTU " |"
+.br
+.B  netns
+.IR PID " }"
 
 .ti -8
 .B ip link show
@@ -872,6 +875,11 @@ change the station address of the interface.
 change the link layer broadcast address or the peer address when
 the interface is
 .IR "POINTOPOINT" .
+
+.TP
+.BI netns " PID"
+move the device to the network namespace associated with the process
+.IR "PID" .
 
 .PP
 .B Warning:
