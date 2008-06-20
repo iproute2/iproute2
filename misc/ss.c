@@ -420,7 +420,7 @@ const char *print_ms_timer(int timeout)
 
 const char *print_hz_timer(int timeout)
 {
-	int hz = get_hz();
+	int hz = get_user_hz();
 	return print_ms_timer(((timeout*1000) + hz-1)/hz);
 }
 
