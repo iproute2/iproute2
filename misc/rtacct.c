@@ -43,7 +43,7 @@ int dump_zeros = 0;
 unsigned long magic_number = 0;
 double W;
 
-int generic_proc_open(char *env, char *name)
+static int generic_proc_open(const char *env, const char *name)
 {
 	char store[1024];
 	char *p = getenv(env);
@@ -52,7 +52,7 @@ int generic_proc_open(char *env, char *name)
 		snprintf(store, sizeof(store)-1, "%s/%s", p, name);
 		p = store;
 	}
-	return open(store, O_RDONLY);
+	return open(p, O_RDONLY);
 }
 
 int net_rtacct_open(void)

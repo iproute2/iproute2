@@ -43,7 +43,7 @@ int npatterns;
 char info_source[128];
 int source_mismatch;
 
-int generic_proc_open(char *env, char *name)
+static int generic_proc_open(const char *env, char *name)
 {
 	char store[128];
 	char *p = getenv(env);
@@ -52,7 +52,7 @@ int generic_proc_open(char *env, char *name)
 		snprintf(store, sizeof(store)-1, "%s/%s", p, name);
 		p = store;
 	}
-	return open(store, O_RDONLY);
+	return open(p, O_RDONLY);
 }
 
 int net_netstat_open(void)
