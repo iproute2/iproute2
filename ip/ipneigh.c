@@ -272,10 +272,9 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, " router");
 	}
 	if (tb[NDA_CACHEINFO] && show_stats) {
-		static int hz;
 		struct nda_cacheinfo *ci = RTA_DATA(tb[NDA_CACHEINFO]);
-		if (!hz)
-			hz = get_hz();
+		int hz = get_user_hz();
+
 		if (ci->ndm_refcnt)
 			printf(" ref %d", ci->ndm_refcnt);
 		fprintf(fp, " used %d/%d/%d", ci->ndm_used/hz,
