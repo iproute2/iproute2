@@ -54,7 +54,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 	} req;
 	struct filter_util *q = NULL;
 	__u32 prio = 0;
-	__u32 protocol = ETH_P_ALL;
+	__u32 protocol = 0;
 	int protocol_set = 0;
 	char *fhandle = NULL;
 	char  d[16];
@@ -71,6 +71,9 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
 	req.n.nlmsg_type = cmd;
 	req.t.tcm_family = AF_UNSPEC;
+
+	if (cmd == RTM_NEWTFILTER && flags & NLM_F_CREATE)
+		protocol = ETH_P_ALL;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
