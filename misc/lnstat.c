@@ -122,8 +122,13 @@ static int map_field_params(struct lnstat_file *lnstat_files,
 					fps->params[j].print.width =
 							FIELD_WIDTH_DEFAULT;
 				
-				if (++j >= MAX_FIELDS - 1)
+				if (++j >= MAX_FIELDS - 1) {
+					fprintf(stderr,
+						"WARN: MAX_FIELDS (%d) reached,"
+						" truncating number of keys\n",
+						MAX_FIELDS);
 					goto full;
+				}
 			}
 		}
 	full:
@@ -272,8 +277,13 @@ int main(int argc, char **argv)
 				for (tok = strtok(tmp, ",");
 				     tok;
 				     tok = strtok(NULL, ",")) {
-					if (fp.num >= MAX_FIELDS)
+					if (fp.num >= MAX_FIELDS) {
+						fprintf(stderr, 
+							"WARN: too many keys"
+							" requested: (%d max)\n",
+							MAX_FIELDS);
 						break;
+					}
 					fp.params[fp.num++].name = tok;
 				}
 				break;
