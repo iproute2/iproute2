@@ -17,7 +17,7 @@
  */
 
 /* Maximum number of fields that can be displayed */
-#define MAX_FIELDS		64
+#define MAX_FIELDS		128
 
 /* Maximum number of header lines */
 #define HDR_LINES 		10
@@ -121,9 +121,12 @@ static int map_field_params(struct lnstat_file *lnstat_files,
 				if (!fps->params[j].print.width)
 					fps->params[j].print.width =
 							FIELD_WIDTH_DEFAULT;
-				j++;
+				
+				if (++j >= MAX_FIELDS - 1)
+					goto full;
 			}
 		}
+	full:
 		fps->num = j;
 		return 1;
 	}
