@@ -26,7 +26,7 @@ static void explain(void)
 		"\n"
 		"VLANID := 0-4095\n"
 		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
-		"FLAG := [ reorder_hdr { on | off } ]\n"
+		"FLAG := [ reorder_hdr { on | off } ] [ gvrp { on | off } ]\n"
 		"QOS-MAP := [ QOS-MAP ] QOS-MAPPING\n"
 		"QOS-MAPPING := FROM:TO\n"
 	);
@@ -93,6 +93,15 @@ static int vlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				flags.flags &= ~VLAN_FLAG_REORDER_HDR;
 			else
 				return on_off("reorder_hdr");
+		} else if (matches(*argv, "gvrp") == 0) {
+			NEXT_ARG();
+			flags.mask |= VLAN_FLAG_GVRP;
+			if (strcmp(*argv, "on") == 0)
+				flags.flags |= VLAN_FLAG_GVRP;
+			else if (strcmp(*argv, "off") == 0)
+				flags.flags &= ~VLAN_FLAG_GVRP;
+			else
+				return on_off("gvrp");
 		} else if (matches(*argv, "ingress-qos-map") == 0) {
 			NEXT_ARG();
 			if (vlan_parse_qos_map(&argc, &argv, n,
@@ -146,6 +155,7 @@ static void vlan_print_flags(FILE *fp, __u32 flags)
 			fprintf(fp, #f "%s", flags ? "," : ""); \
 		}
 	_PF(REORDER_HDR);
+	_PF(GVRP);
 #undef _PF
 	if (flags)
 		fprintf(fp, "%x", flags);
