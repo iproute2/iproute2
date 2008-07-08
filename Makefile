@@ -56,6 +56,7 @@ install: all
 	ln -sf lnstat.8  $(DESTDIR)$(MANDIR)/man8/rtstat.8
 	ln -sf lnstat.8  $(DESTDIR)$(MANDIR)/man8/ctstat.8
 	ln -sf rtacct.8  $(DESTDIR)$(MANDIR)/man8/nstat.8
+	ln -sf routel.8  $(DESTDIR)$(MANDIR)/man8/routef.8
 	install -m 0755 -d $(DESTDIR)$(MANDIR)/man3
 	install -m 0644 $(shell find man/man3 -maxdepth 1 -type f) $(DESTDIR)$(MANDIR)/man3
 

@@ -33,6 +33,8 @@
 int show_stats = 0;
 int show_details = 0;
 int show_raw = 0;
+int show_pretty = 0;
+
 int resolve_hosts = 0;
 int use_iec = 0;
 int force = 0;
@@ -182,7 +184,7 @@ static void usage(void)
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 			"       tc [-force] -batch file\n"
 	                "where  OBJECT := { qdisc | class | filter | action | monitor }\n"
-	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] [file] }\n");
+	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [file] }\n");
 }
 
 static int do_cmd(int argc, char **argv)
@@ -273,6 +275,8 @@ int main(int argc, char **argv)
 			++show_details;
 		} else if (matches(argv[1], "-raw") == 0) {
 			++show_raw;
+		} else if (matches(argv[1], "-pretty") == 0) {
+			++show_pretty;
 		} else if (matches(argv[1], "-Version") == 0) {
 			printf("tc utility, iproute2-ss%s\n", SNAPSHOT);
 			return 0;

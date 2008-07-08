@@ -420,7 +420,7 @@ const char *print_ms_timer(int timeout)
 
 const char *print_hz_timer(int timeout)
 {
-	int hz = get_hz();
+	int hz = get_user_hz();
 	return print_ms_timer(((timeout*1000) + hz-1)/hz);
 }
 
@@ -1191,10 +1191,11 @@ static int tcp_show_line(char *line, const struct filter *f, int family)
 		}
 	}
 	if (show_tcpinfo) {
-		if (s.rto && s.rto != 3*get_hz())
-			printf(" rto:%g", (double)s.rto/get_hz());
+		int hz = get_user_hz();
+		if (s.rto && s.rto != 3*hz)
+			printf(" rto:%g", (double)s.rto/hz);
 		if (s.ato)
-			printf(" ato:%g", (double)s.ato/get_hz());
+			printf(" ato:%g", (double)s.ato/hz);
 		if (s.cwnd != 2)
 			printf(" cwnd:%d", s.cwnd);
 		if (s.ssthresh != -1)

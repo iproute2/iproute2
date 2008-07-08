@@ -246,10 +246,6 @@ int get_s8(__s8 *val, const char *arg, int base)
 
 int get_addr_1(inet_prefix *addr, const char *name, int family)
 {
-	const char *cp;
-	unsigned char *ap = (unsigned char*)addr->data;
-	int i;
-
 	memset(addr, 0, sizeof(*addr));
 
 	if (strcmp(name, "default") == 0 ||
@@ -288,17 +284,10 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	addr->family = AF_INET;
 	if (family != AF_UNSPEC && family != AF_INET)
 		return -1;
+	if (inet_pton(AF_INET, name, addr->data) <= 0)
+		return -1;
 	addr->bytelen = 4;
 	addr->bitlen = -1;
-	for (cp=name, i=0; *cp; cp++) {
-		if (*cp <= '9' && *cp >= '0') {
-			ap[i] = 10*ap[i] + (*cp-'0');
-			continue;
-		}
-		if (*cp == '.' && ++i <= 3)
-			continue;
-		return -1;
-	}
 	return 0;
 }
 
@@ -518,13 +507,14 @@ const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen
 struct namerec
 {
 	struct namerec *next;
+	const char *name;
 	inet_prefix addr;
-	char	    *name;
 };
 
-static struct namerec *nht[256];
+#define NHASH 257
+static struct namerec *nht[NHASH];
 
-char *resolve_address(const char *addr, int len, int af)
+static const char *resolve_address(const void *addr, int len, int af)
 {
 	struct namerec *n;
 	struct hostent *h_ent;
@@ -539,7 +529,7 @@ char *resolve_address(const char *addr, int len, int af)
 		len = 4;
 	}
 
-	hash = addr[len-1] ^ addr[len-2] ^ addr[len-3] ^ addr[len-4];
+	hash = *(__u32 *)(addr + len - 4) % NHASH;
 
 	for (n = nht[hash]; n; n = n->next) {
 		if (n->addr.family == af &&
@@ -573,7 +563,8 @@ const char *format_host(int af, int len, const void *addr,
 {
 #ifdef RESOLVE_HOSTNAMES
 	if (resolve_hosts) {
-		char *n;
+		const char *n;
+
 		if (len <= 0) {
 			switch (af) {
 			case AF_INET:

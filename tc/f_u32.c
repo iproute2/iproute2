@@ -21,9 +21,12 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <linux/if.h>
+#include <linux/if_ether.h>
 
 #include "utils.h"
 #include "tc_util.h"
+
+extern int show_pretty;
 
 static void explain(void)
 {
@@ -789,27 +792,24 @@ static int parse_hashkey(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 	return 0;
 }
 
-static void show_key(FILE *f, const struct tc_u32_key *key)
+static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 {
 	char abuf[256];
-
-	if (show_raw)
-		goto raw;
 
 	switch (key->off) {
 	case 0:
 		switch (ntohl(key->mask)) {
 		case 0x0f000000:
-			fprintf(f, "\n ihl %u", ntohl(key->val) >> 24);
+			fprintf(f, "\n  match IP ihl %u", ntohl(key->val) >> 24);
 			return;
 		case 0x00ff0000:
-			fprintf(f, "\n dsfield %#x", ntohl(key->val) >> 16);
+			fprintf(f, "\n  match IP dsfield %#x", ntohl(key->val) >> 16);
 			return;
 		}
 		break;
 	case 8:
 		if (ntohl(key->mask) == 0x00ff0000) {
-			fprintf(f, "\n protocol %u", ntohl(key->val) >> 16);
+			fprintf(f, "\n  match IP protocol %d", ntohl(key->val) >> 16);
 			return;
 		}
 		break;
@@ -818,7 +818,7 @@ static void show_key(FILE *f, const struct tc_u32_key *key)
 			int bits = mask2bits(key->mask);
 			if (bits >= 0) {
 				fprintf(f, "\n  %s %s/%d", 
-					key->off == 12 ? "src" : "dst",
+					key->off == 12 ? "match IP src" : "match IP dst",
 					inet_ntop(AF_INET, &key->val,
 						  abuf, sizeof(abuf)),
 					bits);
@@ -830,31 +830,62 @@ static void show_key(FILE *f, const struct tc_u32_key *key)
 	case 20:
 		switch (ntohl(key->mask)) {
 		case 0x0000ffff:
-			fprintf(f, "\n  sport %u", 
+			fprintf(f, "\n  match sport %u",
 				ntohl(key->val) & 0xffff);
 			return;
 		case 0xffff0000:
-			fprintf(f, "\n  dport %u", 
+			fprintf(f, "\n  match dport %u",
 				ntohl(key->val) >> 16);
 			return;
 		case 0xffffffff:
-			fprintf(f, "\n  sport %u, dport %u", 
+			fprintf(f, "\n  match sport %u, match dport %u",
 				ntohl(key->val) & 0xffff,
 				ntohl(key->val) >> 16);
 
 			return;
 		}
+		/* XXX: Default print_raw */
 	}
+}
 
-raw:
-	fprintf(f, "\n  match %08x/%08x at %s%d",
+static void print_raw(FILE *f, const struct tc_u32_key *key)
+{
+	fprintf(f, "\n  match %08x/%08x at %s%d", 
 		(unsigned int)ntohl(key->val),
 		(unsigned int)ntohl(key->mask),
 		key->offmask ? "nexthdr+" : "",
 		key->off);
 }
 
-static int u32_parse_opt(struct filter_util *qu, char *handle, 
+static const struct {
+	__u16 proto;
+	__u16 pad;
+	void (*pprinter)(FILE *f, const struct tc_u32_key *key);
+} u32_pprinters[] = {
+	{0, 	   0, print_raw},
+	{ETH_P_IP, 0, print_ipv4},
+};
+
+static void show_keys(FILE *f, const struct tc_u32_key *key)
+{
+	int i = 0;
+
+	if (!show_pretty)
+		goto show_k;
+
+	for (i = 0; i < sizeof(u32_pprinters) / sizeof(u32_pprinters[0]); i++) {
+		if (u32_pprinters[i].proto == ntohs(f_proto)) {
+show_k:
+			u32_pprinters[i].pprinter(f, key);
+			return;
+		}
+	}
+
+	i = 0;
+	goto show_k;
+}
+
+static int u32_parse_opt(struct filter_util *qu, char *handle,
 			 int argc, char **argv, struct nlmsghdr *n)
 {
 	struct {
@@ -1129,7 +1160,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		if (sel->nkeys) {
 			int i;
 			for (i=0; i<sel->nkeys; i++) {
-				show_key(f, sel->keys + i);
+				show_keys(f, sel->keys + i);
 				if (show_stats && NULL != pf)
 					fprintf(f, " (success %llu ) ",
 						(unsigned long long) pf->kcnts[i]);

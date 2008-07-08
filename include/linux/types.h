@@ -162,11 +162,4 @@ typedef __u16 __bitwise __sum16;
 typedef __u32 __bitwise __wsum;
 
 
-struct ustat {
-	__kernel_daddr_t	f_tfree;
-	__kernel_ino_t		f_tinode;
-	char			f_fname[6];
-	char			f_fpack[6];
-};
-
 #endif /* _LINUX_TYPES_H */

@@ -57,7 +57,8 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ip xfrm state { add | update } ID [ XFRM_OPT ] [ mode MODE ]\n");
 	fprintf(stderr, "        [ reqid REQID ] [ seq SEQ ] [ replay-window SIZE ] [ flag FLAG-LIST ]\n");
-	fprintf(stderr, "        [ encap ENCAP ] [ sel SELECTOR ] [ LIMIT-LIST ]\n");
+	fprintf(stderr, "        [ encap ENCAP ] [ sel SELECTOR ] [ replay-seq SEQ ]\n");
+	fprintf(stderr, "        [ replay-oseq SEQ ] [ LIMIT-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm state allocspi ID [ mode MODE ] [ reqid REQID ] [ seq SEQ ]\n");
 	fprintf(stderr, "        [ min SPI max SPI ]\n");
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID\n");
@@ -232,6 +233,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		struct xfrm_usersa_info xsinfo;
 		char   			buf[RTA_BUF_SIZE];
 	} req;
+	struct xfrm_replay_state replay;
 	char *idp = NULL;
 	char *ealgop = NULL;
 	char *aalgop = NULL;
@@ -239,6 +241,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 	char *coap = NULL;
 
 	memset(&req, 0, sizeof(req));
+	memset(&replay, 0, sizeof(replay));
 
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(req.xsinfo));
 	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
@@ -264,6 +267,14 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 			NEXT_ARG();
 			if (get_u8(&req.xsinfo.replay_window, *argv, 0))
 				invarg("\"replay-window\" value is invalid", *argv);
+		} else if (strcmp(*argv, "replay-seq") == 0) {
+			NEXT_ARG();
+			if (get_u32(&replay.seq, *argv, 0))
+				invarg("\"replay-seq\" value is invalid", *argv);
+		} else if (strcmp(*argv, "replay-oseq") == 0) {
+			NEXT_ARG();
+			if (get_u32(&replay.oseq, *argv, 0))
+				invarg("\"replay-oseq\" value is invalid", *argv);
 		} else if (strcmp(*argv, "flag") == 0) {
 			NEXT_ARG();
 			xfrm_state_flag_parse(&req.xsinfo.flags, &argc, &argv);
@@ -385,6 +396,10 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 		argc--; argv++;
 	}
+
+	if (replay.seq || replay.oseq)
+		addattr_l(&req.n, sizeof(req.buf), XFRMA_REPLAY_VAL,
+			  (void *)&replay, sizeof(replay));
 
 	if (!idp) {
 		fprintf(stderr, "Not enough information: \"ID\" is required\n");

@@ -19,6 +19,7 @@ struct qdisc_util
 	int	(*print_copt)(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 };
 
+extern __u16 f_proto;
 struct filter_util
 {
 	struct filter_util *next;
