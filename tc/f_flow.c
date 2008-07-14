@@ -24,7 +24,7 @@ static void explain(void)
 "Usage: ... flow ...\n"
 "\n"
 " [mapping mode]: map key KEY [ OPS ] ...\n"
-" [hashing mode]: hash keys KEY-LIST ...\n"
+" [hashing mode]: hash keys KEY-LIST ... [ perturb SECS ]\n"
 "\n"
 "                 [ divisor NUM ] [ baseclass ID ] [ match EMATCH_TREE ]\n"
 "                 [ police POLICE_SPEC ] [ action ACTION_SPEC ]\n"
@@ -211,6 +211,13 @@ static int flow_parse_opt(struct filter_util *fu, char *handle,
 				return -1;
 			}
 			addattr32(n, 4096, TCA_FLOW_BASECLASS, tmp);
+		} else if (matches(*argv, "perturb") == 0) {
+			NEXT_ARG();
+			if (get_u32(&tmp, *argv, 0)) {
+				fprintf(stderr, "Illegal \"perturb\"\n");
+				return -1;
+			}
+			addattr32(n, 4096, TCA_FLOW_PERTURB, tmp);
 		} else if (matches(*argv, "police") == 0) {
 			NEXT_ARG();
 			if (parse_police(&argc, &argv, TCA_FLOW_POLICE, n)) {
@@ -330,6 +337,10 @@ static int flow_print_opt(struct filter_util *fu, FILE *f, struct rtattr *opt,
 	if (tb[TCA_FLOW_BASECLASS])
 		fprintf(f, "baseclass %s ",
 			sprint_tc_classid(*(__u32 *)RTA_DATA(tb[TCA_FLOW_BASECLASS]), b1));
+
+	if (tb[TCA_FLOW_PERTURB])
+		fprintf(f, "perturb %usec ",
+			*(__u32 *)RTA_DATA(tb[TCA_FLOW_PERTURB]));
 
 	if (tb[TCA_FLOW_EMATCHES])
 		print_ematch(f, tb[TCA_FLOW_EMATCHES]);
