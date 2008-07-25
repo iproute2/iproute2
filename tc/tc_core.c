@@ -87,6 +87,21 @@ unsigned tc_align_to_atm(unsigned size)
 	return linksize;
 }
 
+unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linklayer)
+{
+	if (sz < mpu)
+		sz = mpu;
+
+	switch (linklayer) {
+	case LINKLAYER_ATM:
+		return tc_align_to_atm(sz);
+	case LINKLAYER_ETHERNET:
+	default:
+		// No size adjustments on Ethernet
+		return sz;
+	}
+}
+
 /*
    rtab[pkt_len>>cell_log] = pkt_xmit_time
  */
@@ -96,6 +111,7 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
 		   enum link_layer linklayer)
 {
 	int i;
+	unsigned sz;
 	unsigned bps = r->rate;
 	unsigned mpu = r->mpu;
 
@@ -109,27 +125,60 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
 	}
 
 	for (i=0; i<256; i++) {
-		unsigned sz = (i+1)<<cell_log;
-		if (sz < mpu)
-			sz = mpu;
-
-		switch (linklayer) {
-		case LINKLAYER_ATM:
-			sz = tc_align_to_atm(sz);
-			break;
-		case LINKLAYER_ETHERNET:
-			// No size adjustments on Ethernet
-			break;
-		default:
-			break;
-		}
-
+		sz = tc_adjust_size((i + 1) << cell_log, mpu, linklayer);
 		rtab[i] = tc_calc_xmittime(bps, sz);
 	}
 
 	r->cell_align=-1; // Due to the sz calc
 	r->cell_log=cell_log;
 	return cell_log;
+}
+
+/*
+   stab[pkt_len>>cell_log] = pkt_xmit_size>>size_log
+ */
+
+int tc_calc_size_table(struct tc_sizespec *s, __u16 **stab)
+{
+	int i;
+	enum link_layer linklayer = s->linklayer;
+	unsigned int sz;
+
+	if (linklayer <= LINKLAYER_ETHERNET && s->mpu == 0) {
+		/* don't need data table in this case (only overhead set) */
+		s->mtu = 0;
+		s->tsize = 0;
+		s->cell_log = 0;
+		s->cell_align = 0;
+		*stab = NULL;
+		return 0;
+	}
+
+	if (s->mtu == 0)
+		s->mtu = 2047;
+	if (s->tsize == 0)
+		s->tsize = 512;
+
+	s->cell_log = 0;
+	while ((s->mtu >> s->cell_log) > s->tsize - 1)
+		s->cell_log++;
+
+	*stab = malloc(s->tsize * sizeof(__u16));
+	if (!*stab)
+		return -1;
+
+again:
+	for (i = s->tsize - 1; i >= 0; i--) {
+		sz = tc_adjust_size((i + 1) << s->cell_log, s->mpu, linklayer);
+		if ((sz >> s->size_log) > UINT16_MAX) {
+			s->size_log++;
+			goto again;
+		}
+		(*stab)[i] = sz >> s->size_log;
+	}
+
+	s->cell_align = -1; // Due to the sz calc
+	return 0;
 }
 
 int tc_core_init()

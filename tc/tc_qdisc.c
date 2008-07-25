@@ -20,6 +20,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <math.h>
+#include <malloc.h>
 
 #include "utils.h"
 #include "tc_util.h"
@@ -32,12 +33,14 @@ static int usage(void)
 	fprintf(stderr, "Usage: tc qdisc [ add | del | replace | change | show ] dev STRING\n");
 	fprintf(stderr, "       [ handle QHANDLE ] [ root | ingress | parent CLASSID ]\n");
 	fprintf(stderr, "       [ estimator INTERVAL TIME_CONSTANT ]\n");
+	fprintf(stderr, "       [ stab [ help | STAB_OPTIONS] ]\n");
 	fprintf(stderr, "       [ [ QDISC_KIND ] [ help | OPTIONS ] ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "       tc qdisc show [ dev STRING ] [ingress]\n");
 	fprintf(stderr, "Where:\n");
 	fprintf(stderr, "QDISC_KIND := { [p|b]fifo | tbf | prio | cbq | red | etc. }\n");
 	fprintf(stderr, "OPTIONS := ... try tc qdisc add <desired QDISC_KIND> help\n");
+	fprintf(stderr, "STAB_OPTIONS := ... try tc qdisc add stab help\n");
 	return -1;
 }
 
@@ -45,6 +48,10 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct qdisc_util *q = NULL;
 	struct tc_estimator est;
+	struct {
+		struct tc_sizespec	szopts;
+		__u16			*data;
+	} stab;
 	char  d[16];
 	char  k[16];
 	struct {
@@ -54,6 +61,7 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 	} req;
 
 	memset(&req, 0, sizeof(req));
+	memset(&stab, 0, sizeof(stab));
 	memset(&est, 0, sizeof(est));
 	memset(&d, 0, sizeof(d));
 	memset(&k, 0, sizeof(k));
@@ -108,6 +116,10 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (matches(*argv, "estimator") == 0) {
 			if (parse_estimator(&argc, &argv, &est))
 				return -1;
+		} else if (matches(*argv, "stab") == 0) {
+			if (parse_size_table(&argc, &argv, &stab.szopts) < 0)
+				return -1;
+			continue;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -140,6 +152,26 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 			fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"tc qdisc help\".\n", *argv);
 			return -1;
 		}
+	}
+
+	if (check_size_table_opts(&stab.szopts)) {
+		struct rtattr *tail;
+
+		if (tc_calc_size_table(&stab.szopts, &stab.data) < 0) {
+			fprintf(stderr, "failed to calculate size table.\n");
+			return -1;
+		}
+
+		tail = NLMSG_TAIL(&req.n);
+		addattr_l(&req.n, sizeof(req), TCA_STAB, NULL, 0);
+		addattr_l(&req.n, sizeof(req), TCA_STAB_BASE, &stab.szopts,
+			  sizeof(stab.szopts));
+		if (stab.data)
+			addattr_l(&req.n, sizeof(req), TCA_STAB_DATA, stab.data,
+				  stab.szopts.tsize * sizeof(__u16));
+		tail->rta_len = (void *)NLMSG_TAIL(&req.n) - (void *)tail;
+		if (stab.data)
+			free(stab.data);
 	}
 
 	if (d[0])  {
@@ -223,6 +255,10 @@ int print_qdisc(const struct sockaddr_nl *who,
 			fprintf(fp, "[cannot parse qdisc parameters]");
 	}
 	fprintf(fp, "\n");
+	if (show_details && tb[TCA_STAB]) {
+		print_size_table(fp, " ", tb[TCA_STAB]);
+		fprintf(fp, "\n");
+	}
 	if (show_stats) {
 		struct rtattr *xstats = NULL;
 
