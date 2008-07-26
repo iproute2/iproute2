@@ -24,13 +24,17 @@
 #include "utils.h"
 #include "tc_util.h"
 
+#ifndef DESTDIR
+#define DESTDIR "/usr/"
+#endif
+
 const char *get_tc_lib(void)
 {
 	const char *lib_dir;
 
 	lib_dir = getenv("TC_LIB_DIR");
 	if (!lib_dir)
-		lib_dir = "/usr/lib/tc";
+		lib_dir = DESTDIR "/lib/tc";
 
 	return lib_dir;
 }

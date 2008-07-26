@@ -15,6 +15,7 @@
 #ifndef _IPTABLES_H
 #define _IPTABLES_H
 
+#include <linux/types.h>
 #include <linux/netfilter_ipv4.h>
 
 #include <linux/netfilter/x_tables.h>
