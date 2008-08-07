@@ -45,12 +45,12 @@ static void usage(void)
 {
 	fprintf(stderr,
 "Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
-"       ip [ -force ] [-batch filename\n"
+"       ip [ -force ] -batch filename\n"
 "where  OBJECT := { link | addr | addrlabel | route | rule | neigh | ntable |\n"
 "                   tunnel | maddr | mroute | monitor | xfrm }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
-"                    -o[neline] | -t[imestamp] }\n");
+"                    -o[neline] | -t[imestamp] | -b[atch] [filename] }\n");
 	exit(-1);
 }
 
