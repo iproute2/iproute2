@@ -73,10 +73,10 @@ libtc.a: $(TCLIB)
 	$(AR) rcs $@ $(TCLIB)
 
 install: all
-	mkdir -p $(DESTDIR)/lib/tc
+	mkdir -p $(DESTDIR)$(LIBDIR)/tc
 	install -m 0755 tc $(DESTDIR)$(SBINDIR)
 	for i in $(TCSO); \
-	do install -m 755 $$i $(DESTDIR)/lib/tc; \
+	do install -m 755 $$i $(DESTDIR)$(LIBDIR)/tc; \
 	done
 
 clean:

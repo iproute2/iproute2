@@ -24,8 +24,8 @@
 #include "utils.h"
 #include "tc_util.h"
 
-#ifndef DESTDIR
-#define DESTDIR "/usr/"
+#ifndef LIBDIR
+#define LIBDIR "/usr/lib/"
 #endif
 
 const char *get_tc_lib(void)
@@ -34,7 +34,7 @@ const char *get_tc_lib(void)
 
 	lib_dir = getenv("TC_LIB_DIR");
 	if (!lib_dir)
-		lib_dir = DESTDIR "/lib/tc";
+		lib_dir = LIBDIR "/tc/";
 
 	return lib_dir;
 }
