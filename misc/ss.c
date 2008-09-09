@@ -2622,9 +2622,7 @@ int main(int argc, char *argv[])
 		int mask2;
 		if (preferred_family == AF_INET ||
 		    preferred_family == AF_INET6) {
-			mask2= (1<<TCP_DB);
-			if (!do_default)
-				mask2 = (1<<UDP_DB)|(1<<RAW_DB);
+			mask2= current_filter.dbs;
 		} else if (preferred_family == AF_PACKET) {
 			mask2 = PACKET_DBM;
 		} else if (preferred_family == AF_UNIX) {
