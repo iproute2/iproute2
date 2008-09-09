@@ -1503,6 +1503,7 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 		h = (struct nlmsghdr*)buf;
 		while (NLMSG_OK(h, status)) {
 			int err;
+			struct inet_diag_msg *r = NLMSG_DATA(h);
 
 			if (/*h->nlmsg_pid != rth->local.nl_pid ||*/
 			    h->nlmsg_seq != 123456)
@@ -1521,6 +1522,10 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 				return 0;
 			}
 			if (!dump_fp) {
+				if (!(f->families & (1<<r->idiag_family))) {
+					h = NLMSG_NEXT(h, status);
+					continue;
+				}
 				err = tcp_show_sock(h, NULL);
 				if (err < 0)
 					return err;
