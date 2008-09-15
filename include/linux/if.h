@@ -21,6 +21,7 @@
 
 #include <linux/types.h>		/* for "__kernel_caddr_t" et al	*/
 #include <linux/socket.h>		/* for "struct sockaddr" et al	*/
+		/* for "__user" et al           */
 
 #define	IFNAMSIZ	16
 #include <linux/hdlc/ioctl.h>
@@ -135,15 +136,15 @@ struct if_settings
 	unsigned int size;	/* Size of the data allocated by the caller */
 	union {
 		/* {atm/eth/dsl}_settings anyone ? */
-		raw_hdlc_proto	 *raw_hdlc;
-		cisco_proto	 *cisco;
-		fr_proto	 *fr;
-		fr_proto_pvc	 *fr_pvc;
-		fr_proto_pvc_info *fr_pvc_info;
+		raw_hdlc_proto		*raw_hdlc;
+		cisco_proto		*cisco;
+		fr_proto		*fr;
+		fr_proto_pvc		*fr_pvc;
+		fr_proto_pvc_info	*fr_pvc_info;
 
 		/* interface settings */
-		sync_serial_settings *sync;
-		te1_settings	 *te1;
+		sync_serial_settings	*sync;
+		te1_settings		*te1;
 	} ifs_ifsu;
 };
 
