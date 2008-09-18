@@ -7,6 +7,18 @@
 #include <linux/gen_stats.h>
 #include "tc_core.h"
 
+/* This is the deprecated multiqueue interface */
+#ifndef TCA_PRIO_MAX
+enum
+{
+	TCA_PRIO_UNSPEC,
+	TCA_PRIO_MQ,
+	__TCA_PRIO_MAX
+};
+
+#define TCA_PRIO_MAX    (__TCA_PRIO_MAX - 1)
+#endif
+
 struct qdisc_util
 {
 	struct  qdisc_util *next;

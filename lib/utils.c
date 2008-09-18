@@ -284,7 +284,7 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	addr->family = AF_INET;
 	if (family != AF_UNSPEC && family != AF_INET)
 		return -1;
-	if (inet_pton(AF_INET, name, addr->data) <= 0)
+	if (inet_aton(name, addr->data) <= 0)
 		return -1;
 	addr->bytelen = 4;
 	addr->bitlen = -1;

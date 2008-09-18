@@ -123,16 +123,6 @@ struct tc_prio_qopt
 	__u8	priomap[TC_PRIO_MAX+1];	/* Map: logical priority -> PRIO band */
 };
 
-/* Obsolete option from original multiqueue */
-enum
-{
-	TCA_PRIO_UNSPEC,
-	TCA_PRIO_MQ,
-	__TCA_PRIO_MAX
-};
-
-#define TCA_PRIO_MAX    (__TCA_PRIO_MAX - 1)
-
 /* TBF section */
 
 struct tc_tbf_qopt
