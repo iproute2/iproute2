@@ -196,8 +196,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 		} else {
 			if (strcmp(*argv, "name") == 0) {
 				NEXT_ARG();
-			}
-			if (matches(*argv, "help") == 0)
+			} else if (matches(*argv, "help") == 0)
 				usage();
 			if (p->name[0])
 				duparg2("name", *argv);
