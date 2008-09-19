@@ -168,8 +168,6 @@ static struct ematch_util *get_ematch_kind_num(__u16 kind)
 		return NULL;
 
 	return get_ematch_kind(name);
-
-	return NULL;
 }
 
 static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
