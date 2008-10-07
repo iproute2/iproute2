@@ -274,6 +274,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
 			}
+			if (matches(*argv, "help") == 0)
+				usage();
 			if (*dev)
 				duparg2("dev", *argv);
 			*dev = *argv;
