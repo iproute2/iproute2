@@ -336,6 +336,10 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			return -1;
 		}
 		linkinfo->rta_len = (void *)NLMSG_TAIL(&req.n) - (void *)linkinfo;
+	} else if (flags & NLM_F_CREATE) {
+		fprintf(stderr, "Not enough information: \"type\" argument "
+				"is required\n");
+		return -1;
 	}
 
 	if (!(flags & NLM_F_CREATE)) {
