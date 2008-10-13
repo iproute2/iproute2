@@ -121,6 +121,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 				return -1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
+			return 0;
 		} else {
 			strncpy(k, *argv, sizeof(k)-1);
 
