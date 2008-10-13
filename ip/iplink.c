@@ -38,22 +38,41 @@
 #endif
 
 static void usage(void) __attribute__((noreturn));
+static int iplink_have_newlink(void);
 
 void iplink_usage(void)
 {
-	fprintf(stderr, "Usage: ip link set DEVICE { up | down |\n");
-	fprintf(stderr, "	                     arp { on | off } |\n");
-	fprintf(stderr, "	                     dynamic { on | off } |\n");
-	fprintf(stderr, "	                     multicast { on | off } |\n");
-	fprintf(stderr, "	                     allmulticast { on | off } |\n");
-	fprintf(stderr, "	                     promisc { on | off } |\n");
-	fprintf(stderr, "	                     trailers { on | off } |\n");
-	fprintf(stderr, "	                     txqueuelen PACKETS |\n");
-	fprintf(stderr, "	                     name NEWNAME |\n");
-	fprintf(stderr, "	                     address LLADDR | broadcast LLADDR |\n");
-	fprintf(stderr, "	                     mtu MTU }\n");
-	fprintf(stderr, "	                     netns PID }\n");
+	if (iplink_have_newlink()) {
+		fprintf(stderr, "Usage: ip link add link DEV [ name ] NAME\n");
+		fprintf(stderr, "                   [ txqueuelen PACKETS ]\n");
+		fprintf(stderr, "                   [ address LLADDR ]\n");
+		fprintf(stderr, "                   [ broadcast LLADDR ]\n");
+		fprintf(stderr, "                   [ mtu MTU ]\n");
+		fprintf(stderr, "                   type TYPE [ ARGS ]\n");
+		fprintf(stderr, "       ip link delete DEV type TYPE [ ARGS ]\n");
+		fprintf(stderr, "\n");
+		fprintf(stderr, "       ip link set DEVICE [ { up | down } ]\n");
+	} else
+		fprintf(stderr, "Usage: ip link set DEVICE [ { up | down } ]\n");
+
+	fprintf(stderr, "	                  [ arp { on | off } ]\n");
+	fprintf(stderr, "	                  [ dynamic { on | off } ]\n");
+	fprintf(stderr, "	                  [ multicast { on | off } ]\n");
+	fprintf(stderr, "	                  [ allmulticast { on | off } ]\n");
+	fprintf(stderr, "	                  [ promisc { on | off } ]\n");
+	fprintf(stderr, "	                  [ trailers { on | off } ]\n");
+	fprintf(stderr, "	                  [ txqueuelen PACKETS ]\n");
+	fprintf(stderr, "	                  [ name NEWNAME ]\n");
+	fprintf(stderr, "	                  [ address LLADDR ]\n");
+	fprintf(stderr, "	                  [ broadcast LLADDR ]\n");
+	fprintf(stderr, "	                  [ mtu MTU ]\n");
+	fprintf(stderr, "	                  [ netns PID ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE ]\n");
+
+	if (iplink_have_newlink()) {
+		fprintf(stderr, "\n");
+		fprintf(stderr, "TYPE := { vlan | veth | dummy | ifb | macvlan }\n");
+	}
 	exit(-1);
 }
 
