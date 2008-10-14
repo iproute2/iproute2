@@ -246,6 +246,9 @@ int get_s8(__s8 *val, const char *arg, int base)
 
 int get_addr_1(inet_prefix *addr, const char *name, int family)
 {
+	unsigned long n;
+	char *endp;
+
 	memset(addr, 0, sizeof(*addr));
 
 	if (strcmp(name, "default") == 0 ||
@@ -284,8 +287,25 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	addr->family = AF_INET;
 	if (family != AF_UNSPEC && family != AF_INET)
 		return -1;
-	if (inet_aton(name, addr->data) <= 0)
+
+	n = strtoul(name, &endp, 0);
+	if (n > 255)
+		return -1;	/* bogus network value */
+
+	if (endp == name)	/* not a number */
 		return -1;
+
+	/* compatable with older usage (ie 10/8 = 10.0.0.0/8) */
+	if (strchr(name, '.') == NULL) {
+		addr->data[0] = n;
+		addr->bytelen = 4;
+		addr->bitlen = -1;
+		return 0;
+	}
+
+	if (inet_aton(name, (struct in_addr *)addr->data) <= 0)
+		return -1;
+
 	addr->bytelen = 4;
 	addr->bitlen = -1;
 	return 0;
