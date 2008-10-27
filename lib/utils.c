@@ -244,11 +244,39 @@ int get_s8(__s8 *val, const char *arg, int base)
 	return 0;
 }
 
+/* This uses a non-standard parsing (ie not inet_aton, or inet_pton)
+ * because of legacy choice to parse 10.8 as 10.8.0.0 not 10.0.0.8
+ */
+static int get_addr_ipv4(__u8 *ap, const char *cp)
+{
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		unsigned long n;
+		char *endp;
+		
+		n = strtoul(cp, &endp, 0);
+		if (n > 255)
+			return -1;	/* bogus network value */
+
+		if (endp == cp) /* no digits */
+			return -1;
+
+		ap[i] = n;
+
+		if (*endp == '\0')
+			break;
+
+		if (i == 3 || *endp != '.')
+			return -1; 	/* extra characters */
+		cp = endp + 1;
+	}
+
+	return 1;
+}
+
 int get_addr_1(inet_prefix *addr, const char *name, int family)
 {
-	unsigned long n;
-	char *endp;
-
 	memset(addr, 0, sizeof(*addr));
 
 	if (strcmp(name, "default") == 0 ||
@@ -288,22 +316,7 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	if (family != AF_UNSPEC && family != AF_INET)
 		return -1;
 
-	n = strtoul(name, &endp, 0);
-	if (n > 255)
-		return -1;	/* bogus network value */
-
-	if (endp == name)	/* not a number */
-		return -1;
-
-	/* compatable with older usage (ie 10/8 = 10.0.0.0/8) */
-	if (strchr(name, '.') == NULL) {
-		addr->data[0] = n;
-		addr->bytelen = 4;
-		addr->bitlen = -1;
-		return 0;
-	}
-
-	if (inet_aton(name, (struct in_addr *)addr->data) <= 0)
+	if (get_addr_ipv4((__u8 *)addr->data, name) <= 0)
 		return -1;
 
 	addr->bytelen = 4;
