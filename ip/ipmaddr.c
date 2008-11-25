@@ -43,11 +43,11 @@ static void usage(void)
 	exit(-1);
 }
 
-static int parse_hex(char *str, unsigned char *addr)
+static int parse_hex(char *str, unsigned char *addr, size_t size)
 {
 	int len=0;
 
-	while (*str) {
+	while (*str && (len < 2 * size)) {
 		int tmp;
 		if (str[1] == 0)
 			return -1;
@@ -104,7 +104,7 @@ void read_dev_mcast(struct ma_info **result_p)
 
 		m.addr.family = AF_PACKET;
 
-		len = parse_hex(hexa, (unsigned char*)&m.addr.data);
+		len = parse_hex(hexa, (unsigned char*)&m.addr.data, sizeof (m.addr.data));
 		if (len >= 0) {
 			struct ma_info *ma = malloc(sizeof(m));
 
@@ -176,7 +176,7 @@ void read_igmp6(struct ma_info **result_p)
 
 		m.addr.family = AF_INET6;
 
-		len = parse_hex(hexa, (unsigned char*)&m.addr.data);
+		len = parse_hex(hexa, (unsigned char*)&m.addr.data, sizeof (m.addr.data));
 		if (len >= 0) {
 			struct ma_info *ma = malloc(sizeof(m));
 

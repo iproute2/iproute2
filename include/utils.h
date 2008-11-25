@@ -46,7 +46,7 @@ typedef struct
 	__u8 bytelen;
 	__s16 bitlen;
 	__u32 flags;
-	__u32 data[4];
+	__u32 data[8];
 } inet_prefix;
 
 #define PREFIXLEN_SPECIFIED 1
