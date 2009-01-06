@@ -38,6 +38,16 @@ enum nf_inet_hooks {
 	NF_INET_NUMHOOKS
 };
 
+enum {
+	NFPROTO_UNSPEC =  0,
+	NFPROTO_IPV4   =  2,
+	NFPROTO_ARP    =  3,
+	NFPROTO_BRIDGE =  7,
+	NFPROTO_IPV6   = 10,
+	NFPROTO_DECNET = 12,
+	NFPROTO_NUMPROTO,
+};
+
 union nf_inet_addr {
 	__u32		all[4];
 	__be32		ip;
