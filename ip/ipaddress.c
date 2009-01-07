@@ -359,6 +359,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	FILE *fp = (FILE*)arg;
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
+	int deprecated = 0;
 	struct rtattr * rta_tb[IFA_MAX+1];
 	char abuf[256];
 	SPRINT_BUF(b1);
@@ -488,6 +489,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	}
 	if (ifa->ifa_flags&IFA_F_DEPRECATED) {
 		ifa->ifa_flags &= ~IFA_F_DEPRECATED;
+		deprecated = 1;
 		fprintf(fp, "deprecated ");
 	}
 	if (ifa->ifa_flags&IFA_F_HOMEADDRESS) {
@@ -516,9 +518,14 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			sprintf(buf, "valid_lft %usec", ci->ifa_valid);
 		if (ci->ifa_prefered == INFINITY_LIFE_TIME)
 			sprintf(buf+strlen(buf), " preferred_lft forever");
-		else
-			sprintf(buf+strlen(buf), " preferred_lft %usec",
-				ci->ifa_prefered);
+		else {
+			if (deprecated)
+				sprintf(buf+strlen(buf), " preferred_lft %dsec",
+					ci->ifa_prefered);
+			else
+				sprintf(buf+strlen(buf), " preferred_lft %usec",
+					ci->ifa_prefered);
+		}
 		fprintf(fp, "       %s", buf);
 	}
 	fprintf(fp, "\n");
