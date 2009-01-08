@@ -277,7 +277,6 @@ get_target_name(const char *name)
 		if (!handle) {
 			fputs(dlerror(), stderr);
 			printf("\n");
-			free(l_name);
 			free(new_name);
 			return NULL;
 		}
@@ -294,7 +293,6 @@ get_target_name(const char *name)
 					fputs(error, stderr);
 					fprintf(stderr, "\n");
 					dlclose(handle);
-					free(l_name);
 					free(new_name);
 					return NULL;
 				}
@@ -302,7 +300,6 @@ get_target_name(const char *name)
 		}
 	}
 
-	free(l_name);
 	free(new_name);
 	return m;
 }
