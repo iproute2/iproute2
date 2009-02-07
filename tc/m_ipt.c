@@ -162,10 +162,10 @@ int string_to_number(const char *s, unsigned int min, unsigned int max,
 	return result;
 }
 
-static void free_opts(struct option *opts)
+static void free_opts(struct option *local_opts)
 {
-	if (opts != original_opts) {
-		free(opts);
+	if (local_opts != original_opts) {
+		free(local_opts);
 		opts = original_opts;
 		global_option_offset = 0;
 	}
