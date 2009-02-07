@@ -25,3 +25,70 @@ else
     echo no
 fi
 rm -f /tmp/atmtest.c /tmp/atmtest
+
+echo -n " IPT	"
+
+#check if we need dont our internal header ..
+cat >/tmp/ipttest.c <<EOF
+#include <xtables.h>
+char *lib_dir;
+unsigned int global_option_offset = 0;
+const char *program_version = XTABLES_VERSION;
+const char *program_name = "tc-ipt";
+struct afinfo afinfo = {
+	.libprefix      = "libxt_",
+};
+
+void exit_error(enum exittype status, const char *msg, ...)
+{
+}
+
+int main(int argc, char **argv) {
+
+	return 0;
+}
+
+EOF
+gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl >/dev/null 2>&1
+
+if [ $? -eq 0 ]
+then
+	echo "TC_CONFIG_XT:=y" >>Config
+	echo "using xtables seems no need for internal.h"
+else
+	echo "failed test 2"
+fi
+
+#check if we need our own internal.h
+cat >/tmp/ipttest.c <<EOF
+#include <xtables.h>
+#include "xt-internal.h"
+char *lib_dir;
+unsigned int global_option_offset = 0;
+const char *program_version = XTABLES_VERSION;
+const char *program_name = "tc-ipt";
+struct afinfo afinfo = {
+	.libprefix      = "libxt_",
+};
+
+void exit_error(enum exittype status, const char *msg, ...)
+{
+}
+
+int main(int argc, char **argv) {
+
+	return 0;
+}
+
+EOF
+gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl >/dev/null 2>&1
+
+if [ $? -eq 0 ]
+then
+	echo "using xtables instead of iptables (need for internal.h)"
+	echo "TC_CONFIG_XT_H:=y" >>Config
+
+else
+	echo "failed test 3 using iptables"
+fi
+rm -f /tmp/ipttest.c /tmp/ipttest
