@@ -48,7 +48,6 @@ static int
 parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	      struct nlmsghdr *n)
 {
-	struct tc_skbedit sel;
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ok = 0;
@@ -56,6 +55,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	unsigned int tmp;
 	__u16 queue_mapping;
 	__u32 flags = 0, priority;
+	struct tc_skbedit sel = { 0 };
 
 	if (matches(*argv, "skbedit") != 0)
 		return -1;
