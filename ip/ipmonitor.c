@@ -102,6 +102,7 @@ int do_ipmonitor(int argc, char **argv)
 	int laddr=0;
 	int lroute=0;
 	int lprefix=0;
+	int lneigh=0;
 
 	rtnl_close(&rth);
 	ipaddr_reset_filter(1);
@@ -124,6 +125,9 @@ int do_ipmonitor(int argc, char **argv)
 		} else if (matches(*argv, "prefix") == 0) {
 			lprefix=1;
 			groups = 0;
+		} else if (matches(*argv, "neigh") == 0) {
+			lneigh=1;
+			groups = 0;		
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
 		} else if (matches(*argv, "help") == 0) {
@@ -153,7 +157,9 @@ int do_ipmonitor(int argc, char **argv)
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_PREFIX);
 	}
-
+	if (lneigh) {
+		groups |= nl_mgrp(RTNLGRP_NEIGH);
+	}
 	if (file) {
 		FILE *fp;
 		fp = fopen(file, "r");
