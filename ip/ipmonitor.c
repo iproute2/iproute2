@@ -25,6 +25,7 @@
 #include "ip_common.h"
 
 static void usage(void) __attribute__((noreturn));
+int prefix_banner;
 
 static void usage(void)
 {
@@ -42,31 +43,45 @@ int accept_msg(const struct sockaddr_nl *who,
 		print_timestamp(fp);
 
 	if (n->nlmsg_type == RTM_NEWROUTE || n->nlmsg_type == RTM_DELROUTE) {
+		if (prefix_banner)
+			fprintf(fp, "[ROUTE]");
 		print_route(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWLINK || n->nlmsg_type == RTM_DELLINK) {
 		ll_remember_index(who, n, NULL);
+		if (prefix_banner)
+			fprintf(fp, "[LINK]");
 		print_linkinfo(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWADDR || n->nlmsg_type == RTM_DELADDR) {
+		if (prefix_banner)
+			fprintf(fp, "[ADDR]");
 		print_addrinfo(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWADDRLABEL || n->nlmsg_type == RTM_DELADDRLABEL) {
+		if (prefix_banner)
+			fprintf(fp, "[ADDRLABEL]");
 		print_addrlabel(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWNEIGH || n->nlmsg_type == RTM_DELNEIGH) {
+		if (prefix_banner)
+			fprintf(fp, "[NEIGH]");
 		print_neigh(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWPREFIX) {
+		if (prefix_banner)
+			fprintf(fp, "[PREFIX]");
 		print_prefix(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWRULE || n->nlmsg_type == RTM_DELRULE) {
+		if (prefix_banner)
+			fprintf(fp, "[RULE]");
 		print_rule(who, n, arg);
 		return 0;
 	}
@@ -130,6 +145,7 @@ int do_ipmonitor(int argc, char **argv)
 			groups = 0;		
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
+			prefix_banner=1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
