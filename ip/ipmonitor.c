@@ -141,8 +141,8 @@ int do_ipmonitor(int argc, char **argv)
 			lprefix=1;
 			groups = 0;
 		} else if (matches(*argv, "neigh") == 0) {
-			lneigh=1;
-			groups = 0;		
+			lneigh = 1;
+			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
 			prefix_banner=1;
