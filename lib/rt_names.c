@@ -117,6 +117,7 @@ static char * rtnl_rtprot_tab[256] = {
 	[RTPROT_DNROUTED] = "dnrouted",
 	[RTPROT_XORP] = "xorp",
 	[RTPROT_NTK] = "ntk",
+	[RTPROT_DHCP] = "dhcp",
 };
 
 
