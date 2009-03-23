@@ -67,6 +67,7 @@ void iplink_usage(void)
 	fprintf(stderr, "	                  [ broadcast LLADDR ]\n");
 	fprintf(stderr, "	                  [ mtu MTU ]\n");
 	fprintf(stderr, "	                  [ netns PID ]\n");
+	fprintf(stderr, "			  [ alias NAME ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE ]\n");
 
 	if (iplink_have_newlink()) {
@@ -287,6 +288,12 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		} else if (matches(*argv, "type") == 0) {
 			NEXT_ARG();
 			*type = *argv;
+			argc--; argv++;
+			break;
+		} else if (matches(*argv, "alias") == 0) {
+			NEXT_ARG();
+			addattr_l(&req->n, sizeof(*req), IFLA_IFALIAS,
+				  *argv, strlen(*argv));
 			argc--; argv++;
 			break;
 		} else {

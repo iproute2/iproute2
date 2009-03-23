@@ -281,6 +281,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (do_link && tb[IFLA_LINKINFO] && show_details)
 		print_linktype(fp, tb[IFLA_LINKINFO]);
 
+	if (do_link && tb[IFLA_IFALIAS])
+		fprintf(fp,"\n    alias %s", 
+			(const char *) RTA_DATA(tb[IFLA_IFALIAS]));
+
 	if (do_link && tb[IFLA_STATS] && show_stats) {
 		struct rtnl_link_stats slocal;
 		struct rtnl_link_stats *s = RTA_DATA(tb[IFLA_STATS]);
