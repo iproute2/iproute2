@@ -493,6 +493,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			mxlock = *(unsigned*)RTA_DATA(mxrta[RTAX_LOCK]);
 
 		for (i=2; i<= RTAX_MAX; i++) {
+			unsigned val;
+
 			if (mxrta[i] == NULL)
 				continue;
 			if (!hz)
@@ -505,21 +507,31 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			if (mxlock & (1<<i))
 				fprintf(fp, " lock");
 
-			if (i != RTAX_RTT && i != RTAX_RTTVAR &&
-			    i != RTAX_RTO_MIN)
-				fprintf(fp, " %u", *(unsigned*)RTA_DATA(mxrta[i]));
-			else {
-				unsigned long long val = *(unsigned*)RTA_DATA(mxrta[i]);
+			val = *(unsigned*)RTA_DATA(mxrta[i]);
+			switch (i) {
+			case RTAX_HOPLIMIT:
+				if ((long)val == -1)
+					val = 0;
+				/* fall through */
+			default:
+				fprintf(fp, " %u", val);
+				break;
 
+			case RTAX_RTT:
+			case RTAX_RTTVAR:
+			case RTAX_RTO_MIN:
 				val *= 1000;
 				if (i == RTAX_RTT)
 					val /= 8;
 				else if (i == RTAX_RTTVAR)
 					val /= 4;
+
 				if (val >= hz)
-					fprintf(fp, " %llums", val/hz);
+					fprintf(fp, " %llums",
+						(unsigned long long) val / hz);
 				else
-					fprintf(fp, " %.2fms", (float)val/hz);
+					fprintf(fp, " %.2fms", 
+						(double)val / hz);
 			}
 		}
 	}
