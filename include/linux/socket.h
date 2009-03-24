@@ -105,7 +105,7 @@ struct cmsghdr {
 #if    defined(__GNUC__) 
 #define __KINLINE static __inline__
 #elif defined(__cplusplus)
-#define __KINLINE static inline
+#define __KINLINE static __inline__
 #else
 #define __KINLINE static
 #endif

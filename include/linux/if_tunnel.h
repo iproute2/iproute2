@@ -2,7 +2,7 @@
 #define _IF_TUNNEL_H_
 
 #include <linux/types.h>
-#include <linux/ip.h>
+
 
 #define SIOCGETTUNNEL   (SIOCDEVPRIVATE + 0)
 #define SIOCADDTUNNEL   (SIOCDEVPRIVATE + 1)
