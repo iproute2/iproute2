@@ -12,11 +12,12 @@
 
 #include <string.h>
 #include <net/if.h>
-#include <linux/if_tunnel.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include <linux/ip.h>
+#include <linux/if_tunnel.h>
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
