@@ -84,6 +84,7 @@ __PF(DDCMP,ddcmp)
 __PF(WAN_PPP,wan_ppp)
 __PF(PPP_MP,ppp_mp)
 __PF(LOCALTALK,localtalk)
+__PF(CAN,can)
 __PF(PPPTALK,ppptalk)
 __PF(TR_802_2,tr_802_2)
 __PF(MOBITEX,mobitex)
@@ -94,7 +95,6 @@ __PF(ECONET,econet)
 #endif
 __PF(TIPC,tipc)
 __PF(AOE,aoe)
-__PF(CAN,can)
 
 { 0x8100, "802.1Q" },
 { ETH_P_IP, "ipv4" },

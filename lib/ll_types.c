@@ -70,6 +70,7 @@ __PF(X25,x25)
 #ifdef ARPHRD_HWX25
 __PF(HWX25,hwx25)
 #endif
+__PF(CAN,can)
 __PF(PPP,ppp)
 __PF(HDLC,hdlc)
 __PF(LAPB,lapb)
