@@ -252,13 +252,8 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 		fprintf(stderr, "Broadcast tunnel requires a source address.\n");
 		return -1;
 	}
-	if (isatap) {
-		if (p->iph.daddr) {
-			fprintf(stderr, "no remote with isatap.\n");
-			return -1;
-		}
+	if (isatap)
 		p->i_flags |= SIT_ISATAP;
-	}
 
 	return 0;
 }
