@@ -18,7 +18,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#include <limits.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4/ip_tables.h>
 #include <xtables.h>

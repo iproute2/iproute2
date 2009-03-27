@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
-#include <limits.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
