@@ -335,6 +335,7 @@ static int do_show(int argc, char **argv)
         struct ip6_tnl_parm p;
 
 	ip6_tnl_parm_init(&p, 0);
+	p.proto = 0;  /* default to any */
 
         if (parse_args(argc, argv, &p) < 0)
                 return -1;
