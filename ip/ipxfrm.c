@@ -609,7 +609,7 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
 			fputs(prefix, fp);
 
 		xfrm_id_info_print(&tmpl->saddr, &tmpl->id, tmpl->mode,
-				   tmpl->reqid, family, 0, fp, prefix, "tmpl ");
+				   tmpl->reqid, tmpl->family, 0, fp, prefix, "tmpl ");
 
 		if (show_stats > 0 || tmpl->optional) {
 			if (prefix)
