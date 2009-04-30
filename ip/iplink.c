@@ -200,11 +200,15 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		} else if (matches(*argv, "address") == 0) {
 			NEXT_ARG();
 			len = ll_addr_a2n(abuf, sizeof(abuf), *argv);
+			if (len < 0)
+				return -1;
 			addattr_l(&req->n, sizeof(*req), IFLA_ADDRESS, abuf, len);
 		} else if (matches(*argv, "broadcast") == 0 ||
 				strcmp(*argv, "brd") == 0) {
 			NEXT_ARG();
 			len = ll_addr_a2n(abuf, sizeof(abuf), *argv);
+			if (len < 0)
+				return -1;
 			addattr_l(&req->n, sizeof(*req), IFLA_BROADCAST, abuf, len);
 		} else if (matches(*argv, "txqueuelen") == 0 ||
 				strcmp(*argv, "qlen") == 0 ||
