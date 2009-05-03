@@ -38,9 +38,10 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip tunnel { add | change | del | show } [ NAME ]\n");
+	fprintf(stderr, "Usage: ip tunnel { add | change | del | show | prl } [ NAME ]\n");
 	fprintf(stderr, "          [ mode { ipip | gre | sit | isatap } ] [ remote ADDR ] [ local ADDR ]\n");
 	fprintf(stderr, "          [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n");
+	fprintf(stderr, "          [ prl-default ADDR ] [ prl-nodefault ADDR ] [ prl-delete ADDR ]\n");
 	fprintf(stderr, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: NAME := STRING\n");
@@ -324,6 +325,25 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	       p->iph.daddr ? format_host(AF_INET, 4, &p->iph.daddr, s1, sizeof(s1))  : "any",
 	       p->iph.saddr ? rt_addr_n2a(AF_INET, 4, &p->iph.saddr, s2, sizeof(s2)) : "any");
 
+	if (p->i_flags & SIT_ISATAP) {
+		struct ip_tunnel_prl prl[16];
+		int i;
+		
+		memset(prl, 0, sizeof(prl));
+		prl[0].datalen = sizeof(prl) - sizeof(prl[0]);
+		prl[0].addr = htonl(INADDR_ANY);
+	
+		if (!tnl_prl_ioctl(SIOCGETPRL, p->name, prl))
+			for (i = 1; i < sizeof(prl) / sizeof(prl[0]); i++)
+		{
+			if (prl[i].addr != htonl(INADDR_ANY)) {
+				printf(" %s %s ", 
+					(prl[i].flags & PRL_DEFAULT) ? "pdr" : "pr",
+					format_host(AF_INET, 4, &prl[i].addr, s1, sizeof(s1)));
+			}
+		}
+	}
+
 	if (p->link) {
 		char *n = tnl_ioctl_get_ifname(p->link);
 		if (n)
@@ -464,6 +484,56 @@ static int do_show(int argc, char **argv)
 	return 0;
 }
 
+static int do_prl(int argc, char **argv)
+{
+	struct ip_tunnel_prl p;
+	int count = 0;
+	int devname = 0;
+	int cmd = 0;
+	char medium[IFNAMSIZ];
+
+	memset(&p, 0, sizeof(p));
+	memset(&medium, 0, sizeof(medium));
+
+	while (argc > 0) {
+		if (strcmp(*argv, "prl-default") == 0) {
+			NEXT_ARG();
+			cmd = SIOCADDPRL;
+			p.addr = get_addr32(*argv);
+			p.flags |= PRL_DEFAULT;
+			count++;
+		} else if (strcmp(*argv, "prl-nodefault") == 0) {
+			NEXT_ARG();
+			cmd = SIOCADDPRL;
+			p.addr = get_addr32(*argv);
+			count++;
+		} else if (strcmp(*argv, "prl-delete") == 0) {
+			NEXT_ARG();
+			cmd = SIOCDELPRL;
+			p.addr = get_addr32(*argv);
+			count++;
+		} else if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			strncpy(medium, *argv, IFNAMSIZ-1);
+			devname++;
+		} else {
+			fprintf(stderr,"%s: Invalid PRL parameter.\n", *argv);
+			exit(-1);
+		}
+		if (count > 1) {
+			fprintf(stderr,"One PRL entry at a time.\n");
+			exit(-1);
+		}
+		argc--; argv++;
+	}
+	if (devname == 0) {
+		fprintf(stderr, "Must specify dev.\n");
+		exit(-1);
+	}
+
+	return tnl_prl_ioctl(cmd, medium, &p);
+}
+
 int do_iptunnel(int argc, char **argv)
 {
 	switch (preferred_family) {
@@ -495,6 +565,8 @@ int do_iptunnel(int argc, char **argv)
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
 			return do_show(argc-1, argv+1);
+		if (matches(*argv, "prl") == 0)
+			return do_prl(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else

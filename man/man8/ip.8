@@ -278,7 +278,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR STATE " ]"
 
 .ti -8
-.BR "ip tunnel" " { " add " | " change " | " del " | " show " }"
+.BR "ip tunnel" " { " add " | " change " | " del " | " show " | " prl " }"
 .RI "[ " NAME " ]"
 .br
 .RB "[ " mode
@@ -301,6 +301,13 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR TOS " ] [ "
 .B flowlabel
 .IR FLOWLABEL " ]"
+.br
+.RB "[ " prl-default
+.IR ADDR " ] [ "
+.B prl-nodefault
+.IR ADDR " ] [ "
+.B prl-delete
+.IR ADDR " ]"
 .br
 .RB "[ [" no "]" pmtudisc " ]"
 .RB "[ " dev
@@ -2177,6 +2184,21 @@ set a fixed encapsulation limit.  Default is 4.
 .BI flowlabel " FLOWLABEL"
 .RB ( " only IPv6 tunnels " )
 set a fixed flowlabel.
+
+.SS ip tunnel prl - potential router list (ISATAP only)
+
+.TP
+.BI dev " NAME"
+mandatory device name.
+
+.TP
+.BI prl-default " ADDR"
+.TP
+.BI prl-nodefault " ADDR"
+.TP
+.BI prl-delete " ADDR"
+.RB "Add or delete " ADDR
+as a potential router or default router.
 
 .SS ip tunnel show - list tunnels
 This command has no arguments.
