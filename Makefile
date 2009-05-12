@@ -1,4 +1,5 @@
 DESTDIR=/usr/
+ROOTDIR=$(DESTDIR)
 LIBDIR=/usr/lib/
 SBINDIR=/sbin
 CONFDIR=/etc/iproute2
@@ -7,7 +8,7 @@ MANDIR=/share/man
 ARPDDIR=/var/lib/arpd
 
 # Path to db_185.h include
-DBM_INCLUDE:=/usr/include
+DBM_INCLUDE:=$(ROOTDIR)/usr/include
 
 DEFINES= -DRESOLVE_HOSTNAMES -DLIBDIR=\"$(LIBDIR)\"
 
