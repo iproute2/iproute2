@@ -146,6 +146,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 
 int filter_ifindex;
 __u32 filter_qdisc;
+__u32 filter_classid;
 
 int print_class(const struct sockaddr_nl *who,
 		       struct nlmsghdr *n, void *arg)
@@ -167,6 +168,9 @@ int print_class(const struct sockaddr_nl *who,
 		return -1;
 	}
 	if (filter_qdisc && TC_H_MAJ(t->tcm_handle^filter_qdisc))
+		return 0;
+
+	if (filter_classid && t->tcm_handle != filter_classid)
 		return 0;
 
 	memset(tb, 0, sizeof(tb));
@@ -249,6 +253,12 @@ int tc_class_list(int argc, char **argv)
 				duparg("qdisc", *argv);
 			if (get_qdisc_handle(&filter_qdisc, *argv))
 				invarg(*argv, "invalid qdisc ID");
+		} else if (strcmp(*argv, "classid") == 0) {
+			NEXT_ARG();
+			if (filter_classid)
+				duparg("classid", *argv);
+			if (get_tc_classid(&filter_classid, *argv))
+				invarg(*argv, "invalid class ID");
 		} else if (strcmp(*argv, "root") == 0) {
 			if (t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
