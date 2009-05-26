@@ -48,39 +48,40 @@ static void explain(void)
 
 #define usage() return(-1)
 
-static int init_gred(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
+static int init_gred(struct qdisc_util *qu, int argc, char **argv, 
+		     struct nlmsghdr *n)
 {
 
 	struct rtattr *tail;
 	struct tc_gred_sopt opt;
-	memset(&opt, 0, sizeof(struct tc_gred_sopt));
+	int dps = 0;
+	int def_dp = -1;
 
 	while (argc > 0) {
 		DPRINTF(stderr,"init_gred: invoked with %s\n",*argv);
 		if (strcmp(*argv, "DPs") == 0) {
 			NEXT_ARG();
 			DPRINTF(stderr,"init_gred: next_arg with %s\n",*argv);
-			opt.DPs=strtol(*argv, (char **)NULL, 10);
-			if (opt.DPs >MAX_DPs) { /* need a better error check */
-				fprintf(stderr, "DPs =%u \n",opt.DPs);
+			dps = strtol(*argv, (char **)NULL, 10);
+			if (dps < 0 || dps >MAX_DPs) {
+				fprintf(stderr, "DPs =%d\n", dps);
 				fprintf(stderr, "Illegal \"DPs\"\n");
 				fprintf(stderr, "GRED: only %d DPs are "
-				    "currently supported\n",MAX_DPs);
+					"currently supported\n",MAX_DPs);
 				return -1;
 			}
 		} else if (strcmp(*argv, "default") == 0) {
 			NEXT_ARG();
-			opt.def_DP=strtol(*argv, (char **)NULL, 10);
-			if (!opt.DPs) {
+			def_dp = strtol(*argv, (char **)NULL, 10);
+			if (dps) {
 				fprintf(stderr, "\"default DP\" must be "
-				    "defined after DPs\n");
+					"defined after DPs\n");
 				return -1;
 			}
-			if (opt.def_DP>opt.DPs) {
-/*
-				fprintf(stderr, "\"default DP\" must be less than %d\nNote: DP runs from 0 to %d for %d DPs\n",opt.DPs,opt.DPs-1,opt.DPs);
-*/
-				fprintf(stderr, "\"default DP\" must be less than %d\n",opt.DPs);
+			if (def_dp < 0 || def_dp > dps) {
+				fprintf(stderr, 
+					"\"default DP\" must be less than %d\n",
+					opt.DPs);
 				return -1;
 			}
 		} else if (strcmp(*argv, "grio") == 0) {
@@ -94,20 +95,24 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv, struct nlmsgh
 			return -1;
 		}
 		argc--; argv++;
-}
+	}
 
-if ((!opt.DPs) || (!opt.def_DP))
-{
-	fprintf(stderr, "Illegal gred setup parameters \n");
-			return -1;
-}
-DPRINTF("TC_GRED: sending DPs=%d default=%d\n",opt.DPs,opt.def_DP);
+	if (!dps || def_dp == -1) {
+		fprintf(stderr, "Illegal gred setup parameters \n");
+		return -1;
+	}
+
+	memset(&opt, 0, sizeof(struct tc_gred_sopt));
+	opt.DPs = dps;
+	opt.def_DP = def_dp;
+
+	DPRINTF("TC_GRED: sending DPs=%d default=%d\n",opt.DPs,opt.def_DP);
 	n->nlmsg_flags|=NLM_F_CREATE;
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 1024, TCA_GRED_DPS, &opt, sizeof(struct tc_gred_sopt));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
-return 0;
+	return 0;
 }
 /*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
