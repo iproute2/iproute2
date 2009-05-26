@@ -73,7 +73,7 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 		} else if (strcmp(*argv, "default") == 0) {
 			NEXT_ARG();
 			def_dp = strtol(*argv, (char **)NULL, 10);
-			if (dps) {
+			if (dps == 0) {
 				fprintf(stderr, "\"default DP\" must be "
 					"defined after DPs\n");
 				return -1;
