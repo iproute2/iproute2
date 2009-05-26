@@ -845,6 +845,62 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 	}
 }
 
+static void print_ipv6(FILE *f, const struct tc_u32_key *key)
+{
+	char abuf[256];
+
+	switch (key->off) {
+	case 0:
+		switch (ntohl(key->mask)) {
+		case 0x0f000000:
+			fprintf(f, "\n  match IP ihl %u", ntohl(key->val) >> 24);
+			return;
+		case 0x00ff0000:
+			fprintf(f, "\n  match IP dsfield %#x", ntohl(key->val) >> 16);
+			return;
+		}
+		break;
+	case 8:
+		if (ntohl(key->mask) == 0x00ff0000) {
+			fprintf(f, "\n  match IP protocol %d", ntohl(key->val) >> 16);
+			return;
+		}
+		break;
+	case 12:
+	case 16: {
+			int bits = mask2bits(key->mask);
+			if (bits >= 0) {
+				fprintf(f, "\n  %s %s/%d", 
+					key->off == 12 ? "match IP src" : "match IP dst",
+					inet_ntop(AF_INET, &key->val,
+						  abuf, sizeof(abuf)),
+					bits);
+				return;
+			}
+		}
+		break;
+
+	case 20:
+		switch (ntohl(key->mask)) {
+		case 0x0000ffff:
+			fprintf(f, "\n  match sport %u",
+				ntohl(key->val) & 0xffff);
+			return;
+		case 0xffff0000:
+			fprintf(f, "\n  match dport %u",
+				ntohl(key->val) >> 16);
+			return;
+		case 0xffffffff:
+			fprintf(f, "\n  match sport %u, match dport %u",
+				ntohl(key->val) & 0xffff,
+				ntohl(key->val) >> 16);
+
+			return;
+		}
+		/* XXX: Default print_raw */
+	}
+}
+
 static void print_raw(FILE *f, const struct tc_u32_key *key)
 {
 	fprintf(f, "\n  match %08x/%08x at %s%d", 
@@ -861,6 +917,7 @@ static const struct {
 } u32_pprinters[] = {
 	{0, 	   0, print_raw},
 	{ETH_P_IP, 0, print_ipv4},
+	{ETH_P_IPV6, 0, print_ipv6},
 };
 
 static void show_keys(FILE *f, const struct tc_u32_key *key)
