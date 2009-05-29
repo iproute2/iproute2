@@ -101,7 +101,7 @@ clean:
 	rm -f emp_ematch.yacc.output
 
 q_atm.so: q_atm.c
-	$(CC) $(CFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
 
 %.yacc.c: %.y
 	$(YACC) $(YACCFLAGS) -o $@ $<
