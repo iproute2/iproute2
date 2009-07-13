@@ -121,8 +121,8 @@ int rtnl_send_check(struct rtnl_handle *rth, const char *buf, int len)
 	if (status < 0)
 		return status;
 
-	/* Check for errors */
-	status = recv(rth->fd, resp, sizeof(resp), MSG_DONTWAIT);
+	/* Check for immediate errors */
+	status = recv(rth->fd, resp, sizeof(resp), MSG_DONTWAIT|MSG_PEEK);
 	if (status < 0) {
 		if (errno == EAGAIN)
 			return 0;
