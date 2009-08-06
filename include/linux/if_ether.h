@@ -17,7 +17,7 @@
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  */
- 
+
 #ifndef _LINUX_IF_ETHER_H
 #define _LINUX_IF_ETHER_H
 
@@ -25,7 +25,7 @@
 
 /*
  *	IEEE 802.3 Ethernet magic constants.  The frame sizes omit the preamble
- *	and FCS/CRC (frame check sequence). 
+ *	and FCS/CRC (frame check sequence).
  */
 
 #define ETH_ALEN	6		/* Octets in one ethernet addr	 */
@@ -78,12 +78,15 @@
 #define ETH_P_PAE	0x888E		/* Port Access Entity (IEEE 802.1X) */
 #define ETH_P_AOE	0x88A2		/* ATA over Ethernet		*/
 #define ETH_P_TIPC	0x88CA		/* TIPC 			*/
+#define ETH_P_1588	0x88F7		/* IEEE 1588 Timesync */
+#define ETH_P_FCOE	0x8906		/* Fibre Channel over Ethernet  */
+#define ETH_P_FIP	0x8914		/* FCoE Initialization Protocol */
 #define ETH_P_EDSA	0xDADA		/* Ethertype DSA [ NOT AN OFFICIALLY REGISTERED ID ] */
 
 /*
  *	Non DIX types. Won't clash for 1500 types.
  */
- 
+
 #define ETH_P_802_3	0x0001		/* Dummy type for 802.3 frames  */
 #define ETH_P_AX25	0x0002		/* Dummy protocol id for AX.25  */
 #define ETH_P_ALL	0x0003		/* Every packet (be careful!!!) */
@@ -105,16 +108,42 @@
 #define ETH_P_DSA	0x001B		/* Distributed Switch Arch.	*/
 #define ETH_P_TRAILER	0x001C		/* Trailer switch tagging	*/
 #define ETH_P_PHONET	0x00F5		/* Nokia Phonet frames          */
+#define ETH_P_IEEE802154 0x00F6		/* IEEE802.15.4 frame		*/
 
 /*
  *	This is an Ethernet frame header.
  */
- 
+
 struct ethhdr {
 	unsigned char	h_dest[ETH_ALEN];	/* destination eth addr	*/
 	unsigned char	h_source[ETH_ALEN];	/* source ether addr	*/
 	__be16		h_proto;		/* packet type ID field	*/
 } __attribute__((packed));
 
+#ifdef __KERNEL__
+#include <linux/skbuff.h>
+
+static inline struct ethhdr *eth_hdr(const struct sk_buff *skb)
+{
+	return (struct ethhdr *)skb_mac_header(skb);
+}
+
+int eth_header_parse(const struct sk_buff *skb, unsigned char *haddr);
+
+#ifdef CONFIG_SYSCTL
+extern struct ctl_table ether_table[];
+#endif
+
+extern ssize_t sysfs_format_mac(char *buf, const unsigned char *addr, int len);
+
+/*
+ *	Display a 6 byte device address (MAC) in a readable format.
+ */
+extern char *print_mac(char *buf, const unsigned char *addr);
+#define MAC_FMT "%02x:%02x:%02x:%02x:%02x:%02x"
+#define MAC_BUF_SIZE	18
+#define DECLARE_MAC_BUF(var) char var[MAC_BUF_SIZE] __maybe_unused
+
+#endif
 
 #endif	/* _LINUX_IF_ETHER_H */
