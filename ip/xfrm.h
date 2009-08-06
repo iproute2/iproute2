@@ -32,7 +32,7 @@
 #ifndef IPPROTO_SCTP
 # define IPPROTO_SCTP	132
 #endif
-#ifndef IPPPROTO_DCCP
+#ifndef IPPROTO_DCCP
 # define IPPROTO_DCCP	33
 #endif
 #ifndef IPPROTO_MH
