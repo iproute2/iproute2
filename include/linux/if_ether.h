@@ -120,30 +120,5 @@ struct ethhdr {
 	__be16		h_proto;		/* packet type ID field	*/
 } __attribute__((packed));
 
-#ifdef __KERNEL__
-#include <linux/skbuff.h>
-
-static inline struct ethhdr *eth_hdr(const struct sk_buff *skb)
-{
-	return (struct ethhdr *)skb_mac_header(skb);
-}
-
-int eth_header_parse(const struct sk_buff *skb, unsigned char *haddr);
-
-#ifdef CONFIG_SYSCTL
-extern struct ctl_table ether_table[];
-#endif
-
-extern ssize_t sysfs_format_mac(char *buf, const unsigned char *addr, int len);
-
-/*
- *	Display a 6 byte device address (MAC) in a readable format.
- */
-extern char *print_mac(char *buf, const unsigned char *addr);
-#define MAC_FMT "%02x:%02x:%02x:%02x:%02x:%02x"
-#define MAC_BUF_SIZE	18
-#define DECLARE_MAC_BUF(var) char var[MAC_BUF_SIZE] __maybe_unused
-
-#endif
 
 #endif	/* _LINUX_IF_ETHER_H */

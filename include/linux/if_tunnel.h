@@ -3,9 +3,6 @@
 
 #include <linux/types.h>
 
-#ifdef __KERNEL__
-#include <linux/ip.h>
-#endif
 
 #define SIOCGETTUNNEL   (SIOCDEVPRIVATE + 0)
 #define SIOCADDTUNNEL   (SIOCDEVPRIVATE + 1)

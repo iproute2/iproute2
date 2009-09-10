@@ -450,14 +450,12 @@ struct xfrm_user_mapping {
 	__be16				new_sport;
 };
 
-#ifndef __KERNEL__
 /* backwards compatibility for userspace */
 #define XFRMGRP_ACQUIRE		1
 #define XFRMGRP_EXPIRE		2
 #define XFRMGRP_SA		4
 #define XFRMGRP_POLICY		8
 #define XFRMGRP_REPORT		0x20
-#endif
 
 enum xfrm_nlgroups {
 	XFRMNLGRP_NONE,
