@@ -1393,9 +1393,10 @@ static int tcp_show_sock(struct nlmsghdr *nlh, struct filter *f)
 		if (r->idiag_uid)
 			printf(" uid:%u", (unsigned)r->idiag_uid);
 		printf(" ino:%u", r->idiag_inode);
-		printf(" sk:%08x", r->id.idiag_cookie[0]);
+		printf(" sk:");
 		if (r->id.idiag_cookie[1] != 0)
 			printf("%08x", r->id.idiag_cookie[1]);
+ 		printf("%08x", r->id.idiag_cookie[0]);
 	}
 	if (show_mem || show_tcpinfo) {
 		printf("\n\t");
