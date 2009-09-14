@@ -97,7 +97,7 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .ti -8
 .IR FLAG " := "
 .RB "[ " permanent " | " dynamic " | " secondary " | " primary " | "\
-tentative " | " deprecated " | " dadfailed " ]"
+tentative " | " deprecated " | " dadfailed " | " temporary " ]"
 
 .ti -8
 .BR "ip addrlabel" " { " add " | " del " } " prefix
@@ -1039,6 +1039,10 @@ address detection.
 .B dadfailed
 (IPv6 only) only list addresses which have failed duplicate
 address detection.
+
+.TP
+.B temporary
+(IPv6 only) only list temporary addresses.
 
 .TP
 .BR primary " and " secondary

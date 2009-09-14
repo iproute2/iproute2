@@ -72,7 +72,7 @@ static void usage(void)
 	fprintf(stderr, "SCOPE-ID := [ host | link | global | NUMBER ]\n");
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG  := [ permanent | dynamic | secondary | primary |\n");
-	fprintf(stderr, "           tentative | deprecated | dadfailed |\n");
+	fprintf(stderr, "           tentative | deprecated | dadfailed | temporary |\n");
 	fprintf(stderr, "           CONFFLAG-LIST ]\n");
 	fprintf(stderr, "CONFFLAG-LIST := [ CONFFLAG-LIST ] CONFFLAG\n");
 	fprintf(stderr, "CONFFLAG  := [ home | nodad ]\n");
@@ -484,7 +484,10 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	fprintf(fp, "scope %s ", rtnl_rtscope_n2a(ifa->ifa_scope, b1, sizeof(b1)));
 	if (ifa->ifa_flags&IFA_F_SECONDARY) {
 		ifa->ifa_flags &= ~IFA_F_SECONDARY;
-		fprintf(fp, "secondary ");
+		if (ifa->ifa_family == AF_INET6)
+			fprintf(fp, "temporary ");
+		else
+			fprintf(fp, "secondary ");
 	}
 	if (ifa->ifa_flags&IFA_F_TENTATIVE) {
 		ifa->ifa_flags &= ~IFA_F_TENTATIVE;
@@ -661,7 +664,8 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		} else if (strcmp(*argv, "permanent") == 0) {
 			filter.flags |= IFA_F_PERMANENT;
 			filter.flagmask |= IFA_F_PERMANENT;
-		} else if (strcmp(*argv, "secondary") == 0) {
+		} else if (strcmp(*argv, "secondary") == 0 ||
+			   strcmp(*argv, "temporary") == 0) {
 			filter.flags |= IFA_F_SECONDARY;
 			filter.flagmask |= IFA_F_SECONDARY;
 		} else if (strcmp(*argv, "primary") == 0) {
