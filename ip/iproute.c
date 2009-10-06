@@ -65,10 +65,10 @@ static void usage(void)
 	fprintf(stderr, "INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n");
 	fprintf(stderr, "NH := [ via ADDRESS ] [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
 	fprintf(stderr, "OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ]\n");
-	fprintf(stderr, "           [ rtt TIME ] [ rttvar TIME ]\n");
+	fprintf(stderr, "           [ rtt TIME ] [ rttvar TIME ] [reordering NUMBER ]\n");
 	fprintf(stderr, "           [ window NUMBER] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n");
 	fprintf(stderr, "           [ ssthresh NUMBER ] [ realms REALM ] [ src ADDRESS ]\n");
-	fprintf(stderr, "           [ rto_min TIME ]\n");
+	fprintf(stderr, "           [ rto_min TIME ] [ hoplimit NUMBER ] \n");
 	fprintf(stderr, "TYPE := [ unicast | local | broadcast | multicast | throw |\n");
 	fprintf(stderr, "          unreachable | prohibit | blackhole | nat ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
@@ -763,6 +763,18 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (get_unsigned(&mtu, *argv, 0))
 				invarg("\"mtu\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_MTU, mtu);
+#ifdef RTAX_HOPLIMIT
+		} else if (strcmp(*argv, "hoplimit") == 0) {
+			unsigned hoplimit;
+			NEXT_ARG();
+			if (strcmp(*argv, "lock") == 0) {
+				mxlock |= (1<<RTAX_HOPLIMIT);
+				NEXT_ARG();
+			}
+			if (get_unsigned(&hoplimit, *argv, 0))
+				invarg("\"hoplimit\" value is invalid\n", *argv);
+			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_HOPLIMIT, hoplimit);
+#endif
 #ifdef RTAX_ADVMSS
 		} else if (strcmp(*argv, "advmss") == 0) {
 			unsigned mss;
