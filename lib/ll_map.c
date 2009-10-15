@@ -134,6 +134,27 @@ unsigned ll_index_to_flags(unsigned idx)
 	return 0;
 }
 
+unsigned ll_index_to_addr(unsigned idx, unsigned char *addr,
+			  unsigned alen)
+{
+	struct idxmap *im;
+
+	if (idx == 0)
+		return 0;
+
+	for (im = idxmap[idx&0xF]; im; im = im->next) {
+		if (im->index == idx) {
+			if (alen > sizeof(im->addr))
+				alen = sizeof(im->addr);
+			if (alen > im->alen)
+				alen = im->alen;
+			memcpy(addr, im->addr, alen);
+			return alen;
+		}
+	}
+	return 0;
+}
+
 unsigned ll_name_to_index(const char *name)
 {
 	static char ncache[16];
