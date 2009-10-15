@@ -31,7 +31,7 @@ struct idxmap
 	int		type;
 	int		alen;
 	unsigned	flags;
-	unsigned char	addr[8];
+	unsigned char	addr[20];
 	char		name[16];
 };
 
