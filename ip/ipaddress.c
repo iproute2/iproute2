@@ -130,26 +130,31 @@ static void print_operstate(FILE *f, __u8 state)
 		fprintf(f, "state %s ", oper_states[state]);
 }
 
-static void print_queuelen(FILE *f, const char *name)
+static void print_queuelen(FILE *f, struct rtattr *tb[IFLA_MAX + 1])
 {
-	struct ifreq ifr;
-	int s;
+	int qlen;
 
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (s < 0)
-		return;
+	if (tb[IFLA_TXQLEN])
+		qlen = *(int *)RTA_DATA(tb[IFLA_TXQLEN]);
+	else {
+		struct ifreq ifr;
+		int s = socket(AF_INET, SOCK_STREAM, 0);
 
-	memset(&ifr, 0, sizeof(ifr));
-	strcpy(ifr.ifr_name, name);
-	if (ioctl(s, SIOCGIFTXQLEN, &ifr) < 0) {
-		fprintf(f, "ioctl(SIOCGIFXQLEN) failed: %s\n", strerror(errno));
+		if (s < 0)
+			return;
+
+		memset(&ifr, 0, sizeof(ifr));
+		strcpy(ifr.ifr_name, (char *)RTA_DATA(tb[IFLA_IFNAME]));
+		if (ioctl(s, SIOCGIFTXQLEN, &ifr) < 0) {
+			fprintf(f, "ioctl(SIOCGIFXQLEN) failed: %s\n", strerror(errno));
+			close(s);
+			return;
+		}
 		close(s);
-		return;
+		qlen = ifr.ifr_qlen;
 	}
-	close(s);
-
-	if (ifr.ifr_qlen)
-		fprintf(f, "qlen %d", ifr.ifr_qlen);
+	if (qlen)
+		fprintf(f, "qlen %d", qlen);
 }
 
 static void print_linktype(FILE *fp, struct rtattr *tb)
@@ -286,7 +291,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_operstate(fp, *(__u8 *)RTA_DATA(tb[IFLA_OPERSTATE]));
 		
 	if (filter.showqueue)
-		print_queuelen(fp, (char*)RTA_DATA(tb[IFLA_IFNAME]));
+		print_queuelen(fp, tb);
 
 	if (!filter.family || filter.family == AF_PACKET) {
 		SPRINT_BUF(b1);
