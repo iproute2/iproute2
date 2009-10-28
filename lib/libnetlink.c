@@ -25,6 +25,8 @@
 
 #include "libnetlink.h"
 
+int rcvbuf = 1024 * 1024;
+
 void rtnl_close(struct rtnl_handle *rth)
 {
 	if (rth->fd >= 0) {
@@ -38,7 +40,6 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions,
 {
 	socklen_t addr_len;
 	int sndbuf = 32768;
-	int rcvbuf = 32768;
 
 	memset(rth, 0, sizeof(*rth));
 
@@ -409,6 +410,8 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 				continue;
 			fprintf(stderr, "netlink receive error %s (%d)\n",
 				strerror(errno), errno);
+			if (errno == ENOBUFS)
+				continue;
 			return -1;
 		}
 		if (status == 0) {

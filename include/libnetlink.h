@@ -17,6 +17,8 @@ struct rtnl_handle
 	__u32			dump;
 };
 
+extern int rcvbuf;
+
 extern int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions);
 extern int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions, int protocol);
 extern void rtnl_close(struct rtnl_handle *rth);
