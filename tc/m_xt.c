@@ -25,7 +25,6 @@
 #include "tc_util.h"
 #include <linux/tc_act/tc_ipt.h>
 #include <stdio.h>
-#include <dlfcn.h>
 #include <getopt.h>
 #include <errno.h>
 #include <string.h>

@@ -18,7 +18,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
-#include <dlfcn.h>
 #include <errno.h>
 
 #include "m_ematch.h"
