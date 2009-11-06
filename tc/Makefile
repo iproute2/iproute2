@@ -3,6 +3,7 @@ TCOBJ= tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o \
        m_ematch.o emp_ematch.yacc.o emp_ematch.lex.o
 
 include ../Config
+SHARED_LIBS ?= y
 
 TCMODULES :=
 TCMODULES += q_fifo.o
@@ -57,7 +58,12 @@ else
 endif
 
 TCOBJ += $(TCMODULES)
-LDLIBS += -L. -ltc -lm -ldl
+LDLIBS += -L. -ltc -lm
+
+ifeq ($(SHARED_LIBS),y)
+LDLIBS += -ldl
+LDFLAGS += -Wl,-export-dynamic
+endif
 
 TCLIB := tc_core.o
 TCLIB += tc_red.o
@@ -71,9 +77,6 @@ TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)
   TCSO += q_atm.so
 endif
-
-
-LDFLAGS += -Wl,-export-dynamic
 
 YACC := bison
 LEX := flex
@@ -108,3 +111,15 @@ q_atm.so: q_atm.c
 
 %.lex.c: %.l
 	$(LEX) $(LEXFLAGS) -o$@ $<
+
+ifneq ($(SHARED_LIBS),y)
+
+tc: static-syms.o
+static-syms.o: static-syms.h
+static-syms.h: $(wildcard *.c)
+	files="$^" ; \
+	for s in `grep -B 3 '\<dlsym' $$files | sed -n '/snprintf/{s:.*"\([^"]*\)".*:\1:;s:%s::;p}'` ; do \
+		sed -n '/'$$s'[^ ]* =/{s:.* \([^ ]*'$$s'[^ ]*\) .*:extern char \1[] __attribute__((weak)); if (!strcmp(sym, "\1")) return \1;:;p}' $$files ; \
+	done > $@
+
+endif
