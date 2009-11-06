@@ -663,10 +663,10 @@ int main(int argc, char *argv[])
 			perror("ifstat: listen");
 			exit(-1);
 		}
-		if (fork())
-			exit(0);
-		chdir("/");
-		close(0); close(1); close(2); setsid();
+		if (daemon(0, 0)) {
+			perror("ifstat: daemon");
+			exit(-1);
+		}
 		signal(SIGPIPE, SIG_IGN);
 		signal(SIGCHLD, sigchild);
 		server_loop(fd);
