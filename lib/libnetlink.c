@@ -137,8 +137,8 @@ int rtnl_send_check(struct rtnl_handle *rth, const char *buf, int len)
 				fprintf(stderr, "ERROR truncated\n");
 			else 
 				errno = -err->error;
+			return -1;
 		}
-		return -1;
 	}
 
 	return 0;
