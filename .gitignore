@@ -16,3 +16,7 @@ ncscope.*
 # for quilt
 patches
 series
+# for gdb
+.gdbinit
+.gdb_history
+*.gdb
