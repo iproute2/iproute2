@@ -4,3 +4,15 @@ Config
 *.a
 *.so
 *~
+\#*#
+# cscope
+cscope.*
+ncscope.*
+# for patch generation
+*.diff
+*.patch
+*.orig
+*.rej
+# for quilt
+patches
+series
