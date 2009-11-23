@@ -38,15 +38,13 @@ static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **a
 	struct tc_police tp;
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
+	__u32 mask = 0;
+	int mask_set = 0;
 
 	memset(&tp, 0, sizeof(tp));
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 4096, TCA_OPTIONS, NULL, 0);
-
 	if (handle) {
 		char *slash;
-		__u32 mask = 0;
 		if ((slash = strchr(handle, '/')) != NULL)
 			*slash = '\0';
 		if (get_u32(&t->tcm_handle, handle, 0)) {
@@ -58,12 +56,18 @@ static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **a
 				fprintf(stderr, "Illegal \"handle\" mask\n");
 				return -1;
 			}
-			addattr32(n, MAX_MSG, TCA_FW_MASK, mask);
+			mask_set = 1;
 		}
 	}
 
 	if (argc == 0)
 		return 0;
+
+	tail = NLMSG_TAIL(n);
+	addattr_l(n, 4096, TCA_OPTIONS, NULL, 0);
+
+	if (mask_set)
+		addattr32(n, MAX_MSG, TCA_FW_MASK, mask);
 
 	while (argc > 0) {
 		if (matches(*argv, "classid") == 0 ||
