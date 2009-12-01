@@ -8,10 +8,6 @@
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
- * Changes:
- *
- * Ole Husgaard <sparre@login.dknet.dk>: 990513: prio2band map was always reset.
- * J Hadi Salim <hadi@cyberus.ca>: 990609: priomap fix.
  */
 
 #include <stdio.h>

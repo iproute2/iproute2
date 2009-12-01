@@ -8,12 +8,6 @@
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
- *
- * Changes:
- *
- * Rani Assaf <rani@magic.metawire.com> 980929:	resolve addresses
- * Rani Assaf <rani@magic.metawire.com> 980930:	do not allow key for ipip/sit
- * Phil Karn <karn@ka9q.ampr.org>	990408:	"pmtudisc" flag
  */
 
 #include <stdio.h>

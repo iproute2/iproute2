@@ -7,11 +7,6 @@
  *		2 of the License, or (at your option) any later version.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
- *
- *
- * Changes:
- *
- * Rani Assaf <rani@magic.metawire.com> 980929:	resolve addresses
  */
 
 #include <stdio.h>
