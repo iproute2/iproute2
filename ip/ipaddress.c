@@ -506,6 +506,10 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		fprintf(fp, "dynamic ");
 	} else
 		ifa->ifa_flags &= ~IFA_F_PERMANENT;
+	if (ifa->ifa_flags&IFA_F_DADFAILED) {
+		ifa->ifa_flags &= ~IFA_F_DADFAILED;
+		fprintf(fp, "dadfailed ");
+	}
 	if (ifa->ifa_flags)
 		fprintf(fp, "flags %02x ", ifa->ifa_flags);
 	if (rta_tb[IFA_LABEL])
