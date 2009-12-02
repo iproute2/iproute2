@@ -48,12 +48,17 @@ ifeq ($(TC_CONFIG_XT),y)
   TCMODULES += m_xt.o
   LDLIBS += -lxtables
 else
-  ifeq ($(TC_CONFIG_XT_H),y)
-	CFLAGS += -DTC_CONFIG_XT_H
-	TCMODULES += m_xt.o
-	LDLIBS += -lxtables
+  ifeq ($(TC_CONFIG_XT_OLD),y)
+    TCMODULES += m_xt_old.o
+    LDLIBS += -lxtables
   else
-  TCMODULES += m_ipt.o
+    ifeq ($(TC_CONFIG_XT_OLD_H),y)
+	CFLAGS += -DTC_CONFIG_XT_H
+	TCMODULES += m_xt_old.o
+	LDLIBS += -lxtables
+    else
+      TCMODULES += m_ipt.o
+    endif
   endif
 endif
 
