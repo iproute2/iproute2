@@ -95,7 +95,8 @@ static void read_mroute_list(FILE *ofp)
 		char obuf[256];
 
 		oiflist[0] = 0;
-		if (sscanf(buf, "%x%x%d%u%u%u%s", maddr.data, msrc.data, &vifi,
+		if (sscanf(buf, "%x%x%d%u%u%u %[^\n]",
+			   maddr.data, msrc.data, &vifi,
 			   &pkts, &b, &w, oiflist) < 6)
 			continue;
 
