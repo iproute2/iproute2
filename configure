@@ -28,6 +28,33 @@ rm -f /tmp/atmtest.c /tmp/atmtest
 
 echo -n " IPT	"
 
+#check if we have xtables from iptables >= 1.4.5.
+cat >/tmp/ipttest.c <<EOF
+#include <xtables.h>
+#include <linux/netfilter.h>
+static struct xtables_globals test_globals = {
+	.option_offset = 0,
+	.program_name = "tc-ipt",
+	.program_version = XTABLES_VERSION,
+	.orig_opts = NULL,
+	.opts = NULL,
+	.exit_err = NULL,
+};
+
+int main(int argc, char **argv)
+{
+	xtables_init_all(&test_globals, NFPROTO_IPV4);
+	return 0;
+}
+
+EOF
+
+if gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl -lxtables >/dev/null 2>&1
+then
+	echo "TC_CONFIG_XT:=y" >>Config
+	echo "using xtables instead of iptables"
+fi
+
 #check if we need dont our internal header ..
 cat >/tmp/ipttest.c <<EOF
 #include <xtables.h>
