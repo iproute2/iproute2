@@ -3,11 +3,8 @@
 #
 INCLUDE=${1:-"$PWD/include"}
 
-echo "# Generated config based on" $INCLUDE >Config
-
-echo "TC schedulers"
-
-echo -n " ATM	"
+function check_atm
+{
 cat >/tmp/atmtest.c <<EOF
 #include <atm.h>
 int main(int argc, char **argv) {
@@ -25,9 +22,10 @@ else
     echo no
 fi
 rm -f /tmp/atmtest.c /tmp/atmtest
+}
 
-echo -n " IPT	"
-
+function check_xt
+{
 #check if we have xtables from iptables >= 1.4.5.
 cat >/tmp/ipttest.c <<EOF
 #include <xtables.h>
@@ -52,7 +50,17 @@ EOF
 if gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl -lxtables >/dev/null 2>&1
 then
 	echo "TC_CONFIG_XT:=y" >>Config
-	echo "using xtables instead of iptables"
+	echo "using xtables"
+fi
+rm -f /tmp/ipttest.c /tmp/ipttest
+}
+
+function check_xt_old
+{
+# bail if previous XT checks has already succeded.
+if grep TC_CONFIG_XT Config > /dev/null
+then
+	return
 fi
 
 #check if we need dont our internal header ..
@@ -81,9 +89,17 @@ gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl >/dev/null 2>&1
 if [ $? -eq 0 ]
 then
 	echo "TC_CONFIG_XT_OLD:=y" >>Config
-	echo "using xtables seems no need for internal.h"
-else
-	echo "failed test 2"
+	echo "using old xtables (no need for xt-internal.h)"
+fi
+rm -f /tmp/ipttest.c /tmp/ipttest
+}
+
+function check_xt_old_internal_h
+{
+# bail if previous XT checks has already succeded.
+if grep TC_CONFIG_XT Config > /dev/null
+then
+	return
 fi
 
 #check if we need our own internal.h
@@ -112,10 +128,30 @@ gcc -I$INCLUDE $IPTC -o /tmp/ipttest /tmp/ipttest.c $IPTL -ldl >/dev/null 2>&1
 
 if [ $? -eq 0 ]
 then
-	echo "using xtables instead of iptables (need for internal.h)"
+	echo "using old xtables with xt-internal.h"
 	echo "TC_CONFIG_XT_OLD_H:=y" >>Config
-
-else
-	echo "failed test 3 using iptables"
 fi
 rm -f /tmp/ipttest.c /tmp/ipttest
+}
+
+function check_ipt
+{
+	if ! grep TC_CONFIG_XT Config > /dev/null
+	then
+		echo "using iptables"
+	fi
+}
+
+echo "# Generated config based on" $INCLUDE >Config
+
+echo "TC schedulers"
+
+echo -n " ATM	"
+check_atm
+
+echo -n " IPT	"
+check_xt
+check_xt_old
+check_xt_old_internal_h
+check_ipt
+
