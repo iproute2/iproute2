@@ -240,7 +240,9 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR TOS " ] [ "
 .B  fwmark
 .IR FWMARK[/MASK] " ] [ "
-.B  dev
+.B  iif
+.IR STRING " ] [ "
+.B  oif
 .IR STRING " ] [ "
 .B  pref
 .IR NUMBER " ]"
@@ -1934,6 +1936,12 @@ select the incoming device to match.  If the interface is loopback,
 the rule only matches packets originating from this host.  This means
 that you may create separate routing tables for forwarded and local
 packets and, hence, completely segregate them.
+
+.TP
+.BI oif " NAME"
+select the outgoing device to match.  The outgoing interface is only
+available for packets originating from local sockets that are bound to
+a device.
 
 .TP
 .BI tos " TOS"
