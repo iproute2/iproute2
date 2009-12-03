@@ -172,11 +172,8 @@ int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 	return sendmsg(rth->fd, &msg, 0);
 }
 
-int rtnl_dump_filter(struct rtnl_handle *rth,
-		     rtnl_filter_t filter,
-		     void *arg1,
-		     rtnl_filter_t junk,
-		     void *arg2)
+int rtnl_dump_filter_l(struct rtnl_handle *rth,
+		       const struct rtnl_dump_filter_arg *arg)
 {
 	struct sockaddr_nl nladdr;
 	struct iovec iov;
@@ -191,7 +188,7 @@ int rtnl_dump_filter(struct rtnl_handle *rth,
 	iov.iov_base = buf;
 	while (1) {
 		int status;
-		struct nlmsghdr *h;
+		const struct rtnl_dump_filter_arg *a;
 
 		iov.iov_len = sizeof(buf);
 		status = recvmsg(rth->fd, &msg, 0);
@@ -209,40 +206,45 @@ int rtnl_dump_filter(struct rtnl_handle *rth,
 			return -1;
 		}
 
-		h = (struct nlmsghdr*)buf;
-		while (NLMSG_OK(h, status)) {
-			int err;
+		for (a = arg; a->filter; a++) {
+			struct nlmsghdr *h = (struct nlmsghdr*)buf;
 
-			if (nladdr.nl_pid != 0 ||
-			    h->nlmsg_pid != rth->local.nl_pid ||
-			    h->nlmsg_seq != rth->dump) {
-				if (junk) {
-					err = junk(&nladdr, h, arg2);
-					if (err < 0)
-						return err;
-				}
-				goto skip_it;
-			}
+			while (NLMSG_OK(h, status)) {
+				int err;
 
-			if (h->nlmsg_type == NLMSG_DONE)
-				return 0;
-			if (h->nlmsg_type == NLMSG_ERROR) {
-				struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
-				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
-					fprintf(stderr, "ERROR truncated\n");
-				} else {
-					errno = -err->error;
-					perror("RTNETLINK answers");
+				if (nladdr.nl_pid != 0 ||
+				    h->nlmsg_pid != rth->local.nl_pid ||
+				    h->nlmsg_seq != rth->dump) {
+					if (a->junk) {
+						err = a->junk(&nladdr, h,
+							      a->arg2);
+						if (err < 0)
+							return err;
+					}
+					goto skip_it;
 				}
-				return -1;
-			}
-			err = filter(&nladdr, h, arg1);
-			if (err < 0)
-				return err;
+
+				if (h->nlmsg_type == NLMSG_DONE)
+					return 0;
+				if (h->nlmsg_type == NLMSG_ERROR) {
+					struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
+					if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
+						fprintf(stderr,
+							"ERROR truncated\n");
+					} else {
+						errno = -err->error;
+						perror("RTNETLINK answers");
+					}
+					return -1;
+				}
+				err = a->filter(&nladdr, h, a->arg1);
+				if (err < 0)
+					return err;
 
 skip_it:
-			h = NLMSG_NEXT(h, status);
-		}
+				h = NLMSG_NEXT(h, status);
+			}
+		} while (0);
 		if (msg.msg_flags & MSG_TRUNC) {
 			fprintf(stderr, "Message truncated\n");
 			continue;
@@ -252,6 +254,20 @@ skip_it:
 			exit(1);
 		}
 	}
+}
+
+int rtnl_dump_filter(struct rtnl_handle *rth,
+		     rtnl_filter_t filter,
+		     void *arg1,
+		     rtnl_filter_t junk,
+		     void *arg2)
+{
+	const struct rtnl_dump_filter_arg a[2] = {
+		{ .filter = filter, .arg1 = arg1, .junk = junk, .arg2 = arg2 },
+		{ .filter = NULL,   .arg1 = NULL, .junk = NULL, .arg2 = NULL }
+	};
+
+	return rtnl_dump_filter_l(rth, a);
 }
 
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,

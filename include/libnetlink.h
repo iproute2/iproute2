@@ -27,10 +27,22 @@ extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int l
 
 typedef int (*rtnl_filter_t)(const struct sockaddr_nl *,
 			     struct nlmsghdr *n, void *);
+
+struct rtnl_dump_filter_arg
+{
+	rtnl_filter_t filter;
+	void *arg1;
+	rtnl_filter_t junk;
+	void *arg2;
+};
+
+extern int rtnl_dump_filter_l(struct rtnl_handle *rth,
+			      const struct rtnl_dump_filter_arg *arg);
 extern int rtnl_dump_filter(struct rtnl_handle *rth, rtnl_filter_t filter,
 			    void *arg1,
 			    rtnl_filter_t junk,
 			    void *arg2);
+
 extern int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 		     unsigned groups, struct nlmsghdr *answer,
 		     rtnl_filter_t junk,
