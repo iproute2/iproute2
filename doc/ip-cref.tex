@@ -1336,6 +1336,13 @@ peers are allowed to send to us.
     MSS (``Maximal Segment Size'') for same connection. The default is
     zero, meaning to use the values specified in~\cite{RFC2414}.
 
++\item \verb|initrwnd NUMBER|
+ 
++--- [2.6.33+ only] Initial receive window size for connections to 
++    this destination. The actual window size is this value multiplied
++    by the MSS (''Maximal Segment Size'') of the connection. The default
++    value is zero, meaning to use Slow Start value.
+ 
 \item \verb|nexthop NEXTHOP|
 
 --- the nexthop of a multipath route. \verb|NEXTHOP| is a complex value
