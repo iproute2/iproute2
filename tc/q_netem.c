@@ -100,8 +100,8 @@ static int get_distribution(const char *type, __s16 *data, int maxdata)
 static int isnumber(const char *arg)
 {
 	char *p;
-	(void) strtod(arg, &p);
-	return (p != arg);
+
+	return strtod(arg, &p) != 0 || p != arg;
 }
 
 #define NEXT_IS_NUMBER() (NEXT_ARG_OK() && isnumber(argv[1]))
