@@ -87,7 +87,7 @@ YACC := bison
 LEX := flex
 
 %.so: %.c
-	$(CC) $(CFLAGS) -shared -fpic $< -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic $< -o $@
 
 
 all: libtc.a tc $(TCSO)
