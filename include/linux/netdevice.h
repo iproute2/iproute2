@@ -38,8 +38,7 @@
  *	with byte counters.
  */
 
-struct net_device_stats
-{
+struct net_device_stats {
 	unsigned long	rx_packets;		/* total packets received	*/
 	unsigned long	tx_packets;		/* total packets transmitted	*/
 	unsigned long	rx_bytes;		/* total bytes received 	*/
