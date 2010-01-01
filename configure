@@ -3,7 +3,7 @@
 #
 INCLUDE=${1:-"$PWD/include"}
 
-function check_atm
+check_atm()
 {
 cat >/tmp/atmtest.c <<EOF
 #include <atm.h>
@@ -24,7 +24,7 @@ fi
 rm -f /tmp/atmtest.c /tmp/atmtest
 }
 
-function check_xt
+check_xt()
 {
 #check if we have xtables from iptables >= 1.4.5.
 cat >/tmp/ipttest.c <<EOF
@@ -55,7 +55,7 @@ fi
 rm -f /tmp/ipttest.c /tmp/ipttest
 }
 
-function check_xt_old
+check_xt_old()
 {
 # bail if previous XT checks has already succeded.
 if grep TC_CONFIG_XT Config > /dev/null
@@ -94,7 +94,7 @@ fi
 rm -f /tmp/ipttest.c /tmp/ipttest
 }
 
-function check_xt_old_internal_h
+check_xt_old_internal_h()
 {
 # bail if previous XT checks has already succeded.
 if grep TC_CONFIG_XT Config > /dev/null
@@ -134,7 +134,7 @@ fi
 rm -f /tmp/ipttest.c /tmp/ipttest
 }
 
-function check_ipt
+check_ipt()
 {
 	if ! grep TC_CONFIG_XT Config > /dev/null
 	then
