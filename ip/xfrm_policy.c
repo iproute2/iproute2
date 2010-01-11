@@ -201,10 +201,10 @@ static int xfrm_tmpl_parse(struct xfrm_user_tmpl *tmpl,
 				break;
 			}
 			idp = *argv;
+			preferred_family = AF_UNSPEC;
 			xfrm_id_parse(&tmpl->saddr, &tmpl->id, &tmpl->family,
 				      0, &argc, &argv);
-			if (preferred_family == AF_UNSPEC)
-				preferred_family = tmpl->family;
+			preferred_family = tmpl->family;
 		}
 
 		if (!NEXT_ARG_OK())
