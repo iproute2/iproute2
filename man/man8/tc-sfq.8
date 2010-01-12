@@ -51,6 +51,9 @@ on the fullest bucket, thus maintaining fairness.
 
 .SH PARAMETERS
 .TP 
+limit
+Upper limit of the SFQ. Can be used to reduce the default length of 128 packets.
+.TP
 perturb
 Interval in seconds for queue algorithm perturbation. Defaults to 0, which means that 
 no perturbation occurs. Do not set too low for each perturbation may cause some packet
