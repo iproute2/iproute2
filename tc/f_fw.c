@@ -31,8 +31,6 @@ static void explain(void)
 	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
-#define usage() return(-1)
-
 static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **argv, struct nlmsghdr *n)
 {
 	struct tc_police tp;

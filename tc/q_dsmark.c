@@ -19,9 +19,6 @@
 #include "tc_util.h"
 
 
-#define usage() return(-1)
-
-
 static void explain(void)
 {
 	fprintf(stderr,"Usage: dsmark indices INDICES [ default_index "

@@ -24,10 +24,6 @@ static void explain(void)
 	    "[ police POLICE_SPEC ]\n");
 }
 
-
-#define usage() return(-1)
-
-
 static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
     char **argv, struct nlmsghdr *n)
 {

@@ -42,8 +42,6 @@ static void explain1(const char *arg)
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
 
-#define usage() return(-1)
-
 /* Upper bound on size of distribution 
  *  really (TCA_BUF_MAX - other headers) / sizeof (__s16)
  */

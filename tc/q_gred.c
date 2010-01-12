@@ -46,8 +46,6 @@ static void explain(void)
 	    "[grio]\n");
 }
 
-#define usage() return(-1)
-
 static int init_gred(struct qdisc_util *qu, int argc, char **argv, 
 		     struct nlmsghdr *n)
 {

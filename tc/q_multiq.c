@@ -41,8 +41,6 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... multiq [help]\n");
 }
 
-#define usage() return(-1)
-
 static int multiq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			    struct nlmsghdr *n)
 {

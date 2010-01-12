@@ -31,8 +31,6 @@ static void explain(void)
 	fprintf(stderr, "               probability PROBABILITY bandwidth KBPS [ ecn ]\n");
 }
 
-#define usage() return(-1)
-
 static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	struct tc_red_qopt opt;

@@ -28,11 +28,8 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... prio bands NUMBER priomap P1 P2...[multiqueue]\n");
 }
 
-#define usage() return(-1)
-
 static int prio_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-	int ok=0;
 	int pmap_mode = 0;
 	int idx = 0;
 	struct tc_prio_qopt opt={3,{ 1, 2, 2, 2, 1, 2, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 }};
@@ -48,7 +45,6 @@ static int prio_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				fprintf(stderr, "Illegal \"bands\"\n");
 				return -1;
 			}
-			ok++;
 		} else if (strcmp(*argv, "priomap") == 0) {
 			if (pmap_mode) {
 				fprintf(stderr, "Error: duplicate priomap\n");

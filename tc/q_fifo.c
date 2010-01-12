@@ -28,8 +28,6 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... [p|b]fifo [ limit NUMBER ]\n");
 }
 
-#define usage() return(-1)
-
 static int fifo_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	int ok=0;
