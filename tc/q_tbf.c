@@ -158,8 +158,10 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		argc--; argv++;
 	}
 
-	if (!ok)
-		return 0;
+	if (!ok) {
+		explain();
+		return -1;
+	}
 
 	if (opt.rate.rate == 0 || !buffer) {
 		fprintf(stderr, "Both \"rate\" and \"burst\" are required.\n");
