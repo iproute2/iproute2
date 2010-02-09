@@ -213,10 +213,6 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR NUMBER " ]"
 
 .ti -8
-.IR FLAGS " := [ "
-.BR equalize " ]"
-
-.ti -8
 .IR NHFLAGS " := [ "
 .BR onlink " | " pervasive " ]"
 
@@ -1595,14 +1591,6 @@ to assign (or not to assign) protocol tags.
 .B onlink
 pretend that the nexthop is directly attached to this link,
 even if it does not match any interface prefix.
-
-.TP
-.B equalize
-allow packet by packet randomization on multipath routes.
-Without this modifier, the route will be frozen to one selected
-nexthop, so that load splitting will only occur on per-flow base.
-.B equalize
-only works if the kernel is patched.
 
 .SS ip route delete - delete route
 

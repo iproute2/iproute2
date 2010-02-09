@@ -73,7 +73,6 @@ static void usage(void)
 	fprintf(stderr, "          unreachable | prohibit | blackhole | nat ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
 	fprintf(stderr, "SCOPE := [ host | link | global | NUMBER ]\n");
-	fprintf(stderr, "FLAGS := [ equalize ]\n");
 	fprintf(stderr, "MP_ALGO := { rr | drr | random | wrandom }\n");
 	fprintf(stderr, "NHFLAGS := [ onlink | pervasive ]\n");
 	fprintf(stderr, "RTPROTO := [ kernel | boot | static | NUMBER ]\n");
@@ -382,8 +381,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "onlink ");
 	if (r->rtm_flags & RTNH_F_PERVASIVE)
 		fprintf(fp, "pervasive ");
-	if (r->rtm_flags & RTM_F_EQUALIZE)
-		fprintf(fp, "equalize ");
 	if (r->rtm_flags & RTM_F_NOTIFY)
 		fprintf(fp, "notify ");
 
@@ -423,9 +420,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		PRTFL(FAST, "fastroute");
 		PRTFL(NOTIFY, "notify");
 		PRTFL(TPROXY, "proxy");
-#ifdef RTCF_EQUALIZE
-		PRTFL(EQUALIZE, "equalize");
-#endif
+
 		if (flags)
 			fprintf(fp, "%s%x> ", first ? "<" : "", flags);
 		if (tb[RTA_CACHEINFO]) {
@@ -878,9 +873,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			addattr32(&req.n, sizeof(req), RTA_FLOW, realm);
 		} else if (strcmp(*argv, "onlink") == 0) {
 			req.r.rtm_flags |= RTNH_F_ONLINK;
-		} else if (matches(*argv, "equalize") == 0 ||
-			   strcmp(*argv, "eql") == 0) {
-			req.r.rtm_flags |= RTM_F_EQUALIZE;
 		} else if (strcmp(*argv, "nexthop") == 0) {
 			nhs_ok = 1;
 			break;
