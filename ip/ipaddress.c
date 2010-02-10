@@ -331,6 +331,31 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				);
 		}
 	}
+	if (do_link && tb[IFLA_VFINFO] && tb[IFLA_NUM_VF]) {
+		SPRINT_BUF(b1);
+		struct rtattr *rta = tb[IFLA_VFINFO];
+		struct ifla_vf_info *ivi;
+		int i;
+		for (i = 0; i < *(int *)RTA_DATA(tb[IFLA_NUM_VF]); i++) {
+			if (rta->rta_type != IFLA_VFINFO) {
+				fprintf(stderr, "BUG: rta type is %d\n", rta->rta_type);
+				break;
+			}
+			ivi = RTA_DATA(rta);
+			fprintf(fp, "\n    vf %d: MAC %s",
+				ivi->vf,
+				ll_addr_n2a((unsigned char *)&ivi->mac,
+					    ETH_ALEN, 0, b1, sizeof(b1)));
+				if (ivi->vlan)
+					fprintf(fp, ", vlan %d", ivi->vlan);
+				if (ivi->qos)
+					fprintf(fp, ", qos %d", ivi->qos);
+				if (ivi->tx_rate)
+					fprintf(fp, ", tx rate %d (Mbps_",
+						ivi->tx_rate);
+			rta = (struct rtattr *)((char *)rta + RTA_ALIGN(rta->rta_len));
+		}
+	}
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
