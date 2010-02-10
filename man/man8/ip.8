@@ -53,7 +53,23 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .IR MTU " |"
 .br
 .B  netns
-.IR PID " }"
+.IR PID " |"
+.br
+.B alias
+.IR NAME  " |"
+.br
+.B vf
+.IR NUM " ["
+.B  mac
+.IR LLADDR " ] ["
+.B vlan
+.IR VLANID " [ "
+.B qos
+.IR VLAN-QOS " ] ] ["
+.B rate
+.IR TXRATE " ]"
+.BR " }"
+
 
 .ti -8
 .B ip link show
@@ -822,7 +838,9 @@ display and change the state of devices.
 .TP
 .BI dev " NAME " (default)
 .I NAME
-specifies network device to operate on.
+specifies network device to operate on. When configuring SR-IOV Virtual Fuction
+(VF) devices, this keyword should specify the associated Physical Function (PF)
+device.
 
 .TP
 .BR up " and " down
@@ -884,7 +902,56 @@ the interface is
 .TP
 .BI netns " PID"
 move the device to the network namespace associated with the process
-.IR "PID" .
+.IR "PID".
+
+.TP
+.BI alias " NAME"
+give the device a symbolic name for easy reference.
+
+.TP
+.BI vf " NUM"
+specify a Virtual Function device to be configured. The associated PF device
+must be specified using the
+.B dev
+parameter.
+
+.in +8
+.BI mac " LLADDRESS"
+- change the station address for the specified VF. The
+.B vf
+parameter must be specified.
+
+.sp
+.BI vlan " VLANID"
+- change the assigned VLAN for the specified VF. When specified, all traffic
+sent from the VF will be tagged with the specified VLAN ID. Incoming traffic
+will be filtered for the specified VLAN ID, and will have all VLAN tags
+stripped before being passed to the VF. Setting this parameter to 0 disables
+VLAN tagging and filtering. The
+.B vf
+parameter must be specified.
+
+.sp
+.BI qos " VLAN-QOS"
+- assign VLAN QOS (priority) bits for the VLAN tag. When specified, all VLAN
+tags transmitted by the VF will include the specified priority bits in the
+VLAN tag. If not specified, the value is assumed to be 0. Both the
+.B vf
+and
+.B vlan
+parameters must be specified. Setting both
+.B vlan
+and
+.B qos
+as 0 disables VLAN tagging and filtering for the VF.
+
+.sp
+.BI rate " TXRATE"
+- change the allowed transmit bandwidth, in Mbps, for the specified VF.
+Setting this parameter to 0 disables rate limiting. The
+.B vf
+parameter must be specified.
+.in -8
 
 .PP
 .B Warning:
