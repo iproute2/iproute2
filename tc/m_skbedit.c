@@ -86,7 +86,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		} else if (matches(*argv, "mark") == 0) {
 			flags |= SKBEDIT_F_MARK;
 			NEXT_ARG();
-			if (get_tc_classid(&mark, *argv)) {
+			if (get_u32(&mark, *argv, 0)) {
 				fprintf(stderr, "Illegal mark\n");
 				return -1;
 			}
