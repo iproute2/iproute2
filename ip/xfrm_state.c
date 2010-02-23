@@ -67,7 +67,7 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip xfrm state flush [ proto XFRM_PROTO ]\n");
 	fprintf(stderr, "Usage: ip xfrm state count \n");
 
-	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM_PROTO ] [ spi SPI ]\n");
+	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM_PROTO ] [ spi SPI ] [mark MARK [mask MASK]]\n");
 	//fprintf(stderr, "XFRM_PROTO := [ esp | ah | comp ]\n");
 	fprintf(stderr, "XFRM_PROTO := [ ");
 	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ESP));
@@ -246,6 +246,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 	char *aalgop = NULL;
 	char *calgop = NULL;
 	char *coap = NULL;
+	struct xfrm_mark mark = {0, 0};
 
 	memset(&req, 0, sizeof(req));
 	memset(&replay, 0, sizeof(replay));
@@ -264,6 +265,8 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		if (strcmp(*argv, "mode") == 0) {
 			NEXT_ARG();
 			xfrm_mode_parse(&req.xsinfo.mode, &argc, &argv);
+		} else if (strcmp(*argv, "mark") == 0) {
+			xfrm_parse_mark(&mark, &argc, &argv);
 		} else if (strcmp(*argv, "reqid") == 0) {
 			NEXT_ARG();
 			xfrm_reqid_parse(&req.xsinfo.reqid, &argc, &argv);
@@ -440,6 +443,15 @@ parse_algo:
 		exit(1);
 	}
 
+	if (mark.m & mark.v) {
+		int r = addattr_l(&req.n, sizeof(req.buf), XFRMA_MARK,
+				  (void *)&mark, sizeof(mark));
+		if (r < 0) {
+			fprintf(stderr, "XFRMA_MARK failed\n");
+			exit(1);
+		}
+	}
+
 	switch (req.xsinfo.mode) {
 	case XFRM_MODE_TRANSPORT:
 	case XFRM_MODE_TUNNEL:
@@ -519,6 +531,7 @@ static int xfrm_state_allocspi(int argc, char **argv)
 	char *idp = NULL;
 	char *minp = NULL;
 	char *maxp = NULL;
+	struct xfrm_mark mark = {0, 0};
 	char res_buf[NLMSG_BUF_SIZE];
 	struct nlmsghdr *res_n = (struct nlmsghdr *)res_buf;
 
@@ -542,6 +555,8 @@ static int xfrm_state_allocspi(int argc, char **argv)
 		if (strcmp(*argv, "mode") == 0) {
 			NEXT_ARG();
 			xfrm_mode_parse(&req.xspi.info.mode, &argc, &argv);
+		} else if (strcmp(*argv, "mark") == 0) {
+			xfrm_parse_mark(&mark, &argc, &argv);
 		} else if (strcmp(*argv, "reqid") == 0) {
 			NEXT_ARG();
 			xfrm_reqid_parse(&req.xspi.info.reqid, &argc, &argv);
@@ -616,6 +631,15 @@ static int xfrm_state_allocspi(int argc, char **argv)
 		 */
 		if (req.xspi.info.id.proto == IPPROTO_COMP)
 			req.xspi.max = 0xffff;
+	}
+
+	if (mark.m & mark.v) {
+		int r = addattr_l(&req.n, sizeof(req.buf), XFRMA_MARK,
+				  (void *)&mark, sizeof(mark));
+		if (r < 0) {
+			fprintf(stderr, "XFRMA_MARK failed\n");
+			exit(1);
+		}
 	}
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
@@ -763,6 +787,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 	} req;
 	struct xfrm_id id;
 	char *idp = NULL;
+	struct xfrm_mark mark = {0, 0};
 
 	memset(&req, 0, sizeof(req));
 
@@ -774,24 +799,37 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 	while (argc > 0) {
 		xfrm_address_t saddr;
 
-		if (idp)
-			invarg("unknown", *argv);
-		idp = *argv;
+		if (strcmp(*argv, "mark") == 0) {
+			xfrm_parse_mark(&mark, &argc, &argv);
+		} else {
+			if (idp)
+				invarg("unknown", *argv);
+			idp = *argv;
 
-		/* ID */
-		memset(&id, 0, sizeof(id));
-		memset(&saddr, 0, sizeof(saddr));
-		xfrm_id_parse(&saddr, &id, &req.xsid.family, 0,
-			      &argc, &argv);
+			/* ID */
+			memset(&id, 0, sizeof(id));
+			memset(&saddr, 0, sizeof(saddr));
+			xfrm_id_parse(&saddr, &id, &req.xsid.family, 0,
+				      &argc, &argv);
 
-		memcpy(&req.xsid.daddr, &id.daddr, sizeof(req.xsid.daddr));
-		req.xsid.spi = id.spi;
-		req.xsid.proto = id.proto;
+			memcpy(&req.xsid.daddr, &id.daddr, sizeof(req.xsid.daddr));
+			req.xsid.spi = id.spi;
+			req.xsid.proto = id.proto;
 
-		addattr_l(&req.n, sizeof(req.buf), XFRMA_SRCADDR,
-			  (void *)&saddr, sizeof(saddr));
+			addattr_l(&req.n, sizeof(req.buf), XFRMA_SRCADDR,
+				  (void *)&saddr, sizeof(saddr));
+		}
 
 		argc--; argv++;
+	}
+
+	if (mark.m & mark.v) {
+		int r = addattr_l(&req.n, sizeof(req.buf), XFRMA_MARK,
+				  (void *)&mark, sizeof(mark));
+		if (r < 0) {
+			fprintf(stderr, "XFRMA_MARK failed\n");
+			exit(1);
+		}
 	}
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
