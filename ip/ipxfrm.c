@@ -629,9 +629,48 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
 	}
 }
 
+int xfrm_parse_mark(struct xfrm_mark *mark, int *argcp, char ***argvp)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+
+	NEXT_ARG();
+	if (get_u32(&mark->v, *argv, 0)) {
+		invarg("Illegal \"mark\" value\n", *argv);
+	}
+	if (argc > 1)
+		NEXT_ARG();
+	else { /* last entry on parse line */
+		mark->m = 0xffffffff;
+		goto done;
+	}
+
+	if (strcmp(*argv, "mask") == 0) {
+		NEXT_ARG();
+		if (get_u32(&mark->m, *argv, 0)) {
+			invarg("Illegal \"mark\" mask\n", *argv);
+		}
+	} else {
+		mark->m = 0xffffffff;
+		PREV_ARG();
+	}
+
+done:
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
 void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		      FILE *fp, const char *prefix)
 {
+	if (tb[XFRMA_MARK]) {
+		struct rtattr *rta = tb[XFRMA_MARK];
+		struct xfrm_mark *m = (struct xfrm_mark *) RTA_DATA(rta);
+		fprintf(fp, "\tmark %d/0x%x\n", m->v, m->m);
+	}
+
 	if (tb[XFRMA_ALG_AUTH]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH];
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
@@ -740,6 +779,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		fprintf(fp, "%s", strxf_time(lastused));
 		fprintf(fp, "%s", _SL_);
 	}
+
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)
