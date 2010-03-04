@@ -96,7 +96,6 @@ static int batch(const char *name)
 	char *line = NULL;
 	size_t len = 0;
 	int ret = 0;
-	int lineno = 0;
 
 	if (name && strcmp(name, "-") != 0) {
 		if (freopen(name, "r", stdin) == NULL) {
@@ -111,6 +110,7 @@ static int batch(const char *name)
 		return -1;
 	}
 
+	cmdlineno = 0;
 	while (getcmdline(&line, &len, stdin) != -1) {
 		char *largv[100];
 		int largc;
@@ -120,7 +120,7 @@ static int batch(const char *name)
 			continue;	/* blank line */
 
 		if (do_cmd(largv[0], largc, largv)) {
-			fprintf(stderr, "Command failed %s:%d\n", name, lineno);
+			fprintf(stderr, "Command failed %s:%d\n", name, cmdlineno);
 			ret = 1;
 			if (!force)
 				break;
