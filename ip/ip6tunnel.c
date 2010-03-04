@@ -16,11 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
- * based on:
- * $Id: s.ipv6tunnel.c 1.7 02/12/11 11:21:51+02:00 antti@traci.mipl.mediapoli.com $
- *
- */
-/*
  * Author:
  *	Masahide NAKAMURA @USAGI
  */

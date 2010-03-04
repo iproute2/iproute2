@@ -46,8 +46,6 @@ static void explain(void)
 	    "[grio]\n");
 }
 
-#define usage() return(-1)
-
 static int init_gred(struct qdisc_util *qu, int argc, char **argv, 
 		     struct nlmsghdr *n)
 {
@@ -215,16 +213,13 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 		argc--; argv++;
 	}
 
-	if (!ok)
-		return 0;
-
 	if (rate == 0)
 		get_rate(&rate, "10Mbit");
 
 	if (!opt.qth_min || !opt.qth_max || !burst || !opt.limit || !avpkt ||
 	    (opt.DP<0)) {
 		fprintf(stderr, "Required parameter (min, max, burst, limit, "
-		    "avpket, DP) is missing\n");
+		    "avpkt, DP) is missing\n");
 		return -1;
 	}
 

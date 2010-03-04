@@ -32,8 +32,6 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... ingress \n");
 }
 
-#define usage() return(-1)
-
 static int ingress_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 

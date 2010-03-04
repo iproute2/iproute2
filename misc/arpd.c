@@ -775,27 +775,9 @@ int main(int argc, char **argv)
 
 	load_initial_table();
 
-	if (1) {
-		int fd;
-		pid_t pid = fork();
-
-		if (pid > 0)
-			_exit(0);
-		if (pid < 0) {
-			perror("arpd: fork");
-			goto do_abort;
-		}
-
-		chdir("/");
-		fd = open("/dev/null", O_RDWR);
-		if (fd >= 0) {
-			dup2(fd, 0);
-			dup2(fd, 1);
-			dup2(fd, 2);
-			if (fd > 2)
-				close(fd);
-		}
-		setsid();
+	if (daemon(0, 0)) {
+		perror("arpd: daemon");
+		goto do_abort;
 	}
 
 	openlog("arpd", LOG_PID | LOG_CONS, LOG_DAEMON);

@@ -19,7 +19,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
-#include <dlfcn.h>
 #include "utils.h"
 #include "tc_util.h"
 #include <linux/tc_act/tc_nat.h>

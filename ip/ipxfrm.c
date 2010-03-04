@@ -351,16 +351,12 @@ void xfrm_stats_print(struct xfrm_stats *s, FILE *fp, const char *prefix)
 {
 	if (prefix)
 		fputs(prefix, fp);
-	fprintf(fp, "stats:");
-	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "stats:%s", _SL_);
 
 	if (prefix)
 		fputs(prefix, fp);
-	fprintf(fp, "  ");
-	fprintf(fp, "replay-window %u ", s->replay_window);
-	fprintf(fp, "replay %u ", s->replay);
-	fprintf(fp, "failed %u", s->integrity_failed);
-	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "  replay-window %u replay %u failed %u%s", 
+		s->replay_window, s->replay, s->integrity_failed, _SL_);
 }
 
 static const char *strxf_time(__u64 time)
@@ -392,72 +388,52 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 	if (cfg) {
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "lifetime config:");
-		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "lifetime config:%s",_SL_);
 
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "  ");
-		fprintf(fp, "limit: ");
-		fprintf(fp, "soft ");
-		fprintf(fp, strxf_limit(cfg->soft_byte_limit));
-		fprintf(fp, "(bytes), hard ");
-		fprintf(fp, strxf_limit(cfg->hard_byte_limit));
-		fprintf(fp, "(bytes)");
-		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "  limit: soft %s(bytes),",
+			strxf_limit(cfg->soft_byte_limit));
+		fprintf(fp, " hard %s(bytes)%s",
+			strxf_limit(cfg->hard_byte_limit), _SL_);
 
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "  ");
-		fprintf(fp, "limit: ");
-		fprintf(fp, "soft ");
-		fprintf(fp, strxf_limit(cfg->soft_packet_limit));
-		fprintf(fp, "(packets), hard ");
-		fprintf(fp, strxf_limit(cfg->hard_packet_limit));
-		fprintf(fp, "(packets)");
-		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "  limit: soft %s(packets),",
+			strxf_limit(cfg->soft_packet_limit));
+		fprintf(fp, " hard %s(packets)%s",
+			strxf_limit(cfg->hard_packet_limit), _SL_);
 
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "  ");
-		fprintf(fp, "expire add: ");
-		fprintf(fp, "soft ");
-		fprintf(fp, "%llu", (unsigned long long) cfg->soft_add_expires_seconds);
-		fprintf(fp, "(sec), hard ");
-		fprintf(fp, "%llu", (unsigned long long) cfg->hard_add_expires_seconds);
-		fprintf(fp, "(sec)");
-		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "  expire add: soft %llu(sec), hard %llu(sec)%s", 
+			(unsigned long long) cfg->soft_add_expires_seconds,
+			(unsigned long long) cfg->hard_add_expires_seconds,
+			_SL_);
 
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "  ");
-		fprintf(fp, "expire use: ");
-		fprintf(fp, "soft ");
-		fprintf(fp, "%llu", (unsigned long long) cfg->soft_use_expires_seconds);
-		fprintf(fp, "(sec), hard ");
-		fprintf(fp, "%llu", (unsigned long long) cfg->hard_use_expires_seconds);
-		fprintf(fp, "(sec)");
-		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "  expire use: soft %llu(sec), hard %llu(sec)%s",
+			(unsigned long long) cfg->soft_use_expires_seconds,
+			(unsigned long long) cfg->hard_use_expires_seconds,
+			_SL_);
 	}
 	if (cur) {
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "lifetime current:");
-		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "lifetime current:%s", _SL_);
 
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "  ");
-		fprintf(fp, "%llu(bytes), ", (unsigned long long) cur->bytes);
-		fprintf(fp, "%llu(packets)", (unsigned long long) cur->packets);
-		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "  %llu(bytes), %llu(packets)%s",
+			(unsigned long long) cur->bytes,
+			(unsigned long long) cur->packets,
+			 _SL_);
 
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "  ");
-		fprintf(fp, "add %s ", strxf_time(cur->add_time));
-		fprintf(fp, "use %s", strxf_time(cur->use_time));
-		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "  add %s ", strxf_time(cur->add_time));
+		fprintf(fp, "use %s%s", strxf_time(cur->use_time), _SL_);
 	}
 }
 
@@ -653,9 +629,48 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
 	}
 }
 
+int xfrm_parse_mark(struct xfrm_mark *mark, int *argcp, char ***argvp)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+
+	NEXT_ARG();
+	if (get_u32(&mark->v, *argv, 0)) {
+		invarg("Illegal \"mark\" value\n", *argv);
+	}
+	if (argc > 1)
+		NEXT_ARG();
+	else { /* last entry on parse line */
+		mark->m = 0xffffffff;
+		goto done;
+	}
+
+	if (strcmp(*argv, "mask") == 0) {
+		NEXT_ARG();
+		if (get_u32(&mark->m, *argv, 0)) {
+			invarg("Illegal \"mark\" mask\n", *argv);
+		}
+	} else {
+		mark->m = 0xffffffff;
+		PREV_ARG();
+	}
+
+done:
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
 void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		      FILE *fp, const char *prefix)
 {
+	if (tb[XFRMA_MARK]) {
+		struct rtattr *rta = tb[XFRMA_MARK];
+		struct xfrm_mark *m = (struct xfrm_mark *) RTA_DATA(rta);
+		fprintf(fp, "\tmark %d/0x%x\n", m->v, m->m);
+	}
+
 	if (tb[XFRMA_ALG_AUTH]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH];
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
@@ -764,6 +779,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		fprintf(fp, "%s", strxf_time(lastused));
 		fprintf(fp, "%s", _SL_);
 	}
+
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)
@@ -804,6 +820,8 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_DECAP_DSCP, "decap-dscp");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_NOPMTUDISC, "nopmtudisc");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_WILDRECV, "wildrecv");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_ICMP, "icmp");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_AF_UNSPEC, "af-unspec");
 		if (flags)
 			fprintf(fp, "%x", flags);
 	}

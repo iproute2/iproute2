@@ -121,6 +121,7 @@ int xfrm_xfrmproto_is_ipsec(__u8 proto);
 int xfrm_xfrmproto_is_ro(__u8 proto);
 int xfrm_xfrmproto_getbyname(char *name);
 int xfrm_algotype_getbyname(char *name);
+int xfrm_parse_mark(struct xfrm_mark *mark, int *argcp, char ***argvp);
 const char *strxf_xfrmproto(__u8 proto);
 const char *strxf_algotype(int type);
 const char *strxf_mask8(__u8 mask);

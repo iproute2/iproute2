@@ -46,7 +46,6 @@ static void explain1(char *arg)
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
 
-#define usage() return(-1)
 
 static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
@@ -319,7 +318,7 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			NEXT_ARG();
 			if (get_tc_classid(&fopt.split, *argv)) {
 				fprintf(stderr, "Invalid split node ID.\n");
-				usage();
+				return -1;
 			}
 			fopt_ok++;
 		} else if (matches(*argv, "defmap") == 0) {

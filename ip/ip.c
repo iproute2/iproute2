@@ -7,11 +7,6 @@
  *		2 of the License, or (at your option) any later version.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
- *
- *
- * Changes:
- *
- * Rani Assaf <rani@magic.metawire.com> 980929:	resolve addresses
  */
 
 #include <stdio.h>
@@ -50,7 +45,8 @@ static void usage(void)
 "                   tunnel | tuntap | maddr | mroute | monitor | xfrm }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
-"                    -o[neline] | -t[imestamp] | -b[atch] [filename] }\n");
+"                    -o[neline] | -t[imestamp] | -b[atch] [filename] |\n"
+"                    -rc[vbuf] [size]}\n");
 	exit(-1);
 }
 
@@ -102,7 +98,6 @@ static int batch(const char *name)
 	char *line = NULL;
 	size_t len = 0;
 	int ret = 0;
-	int lineno = 0;
 
 	if (name && strcmp(name, "-") != 0) {
 		if (freopen(name, "r", stdin) == NULL) {
@@ -117,6 +112,7 @@ static int batch(const char *name)
 		return -1;
 	}
 
+	cmdlineno = 0;
 	while (getcmdline(&line, &len, stdin) != -1) {
 		char *largv[100];
 		int largc;
@@ -126,7 +122,7 @@ static int batch(const char *name)
 			continue;	/* blank line */
 
 		if (do_cmd(largv[0], largc, largv)) {
-			fprintf(stderr, "Command failed %s:%d\n", name, lineno);
+			fprintf(stderr, "Command failed %s:%d\n", name, cmdlineno);
 			ret = 1;
 			if (!force)
 				break;
@@ -215,6 +211,19 @@ int main(int argc, char **argv)
 			if (argc <= 1)
 				usage();
 			batch_file = argv[1];
+		} else if (matches(opt, "-rcvbuf") == 0) {
+			unsigned int size;
+
+			argc--;
+			argv++;
+			if (argc <= 1)
+				usage();
+			if (get_unsigned(&size, argv[1], 0)) {
+				fprintf(stderr, "Invalid rcvbuf size '%s'\n",
+					argv[1]);
+				exit(-1);
+			}
+			rcvbuf = size;
 		} else if (matches(opt, "-help") == 0) {
 			usage();
 		} else {

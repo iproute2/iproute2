@@ -42,8 +42,6 @@ static void explain1(const char *arg)
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
 
-#define usage() return(-1)
-
 /* Upper bound on size of distribution 
  *  really (TCA_BUF_MAX - other headers) / sizeof (__s16)
  */
@@ -100,8 +98,8 @@ static int get_distribution(const char *type, __s16 *data, int maxdata)
 static int isnumber(const char *arg)
 {
 	char *p;
-	(void) strtod(arg, &p);
-	return (p != arg);
+
+	return strtod(arg, &p) != 0 || p != arg;
 }
 
 #define NEXT_IS_NUMBER() (NEXT_ARG_OK() && isnumber(argv[1]))

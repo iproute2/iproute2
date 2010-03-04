@@ -30,6 +30,8 @@ static void usage(void)
 	        "\t[ loopback { on | off } ]\n"
 	        "\t[ listen-only { on | off } ]\n"
 	        "\t[ triple-sampling { on | off } ]\n"
+	        "\t[ one-shot { on | off } ]\n"
+	        "\t[ berr-reporting { on | off } ]\n"
 		"\n"
 	        "\t[ restart-ms TIME-MS ]\n"
 	        "\t[ restart ]\n"
@@ -84,6 +86,8 @@ static void print_ctrlmode(FILE *f, __u32 cm)
 	_PF(CAN_CTRLMODE_LOOPBACK, "LOOPBACK");
 	_PF(CAN_CTRLMODE_LISTENONLY, "LISTEN-ONLY");
 	_PF(CAN_CTRLMODE_3_SAMPLES, "TRIPLE-SAMPLING");
+	_PF(CAN_CTRLMODE_ONE_SHOT, "ONE-SHOT");
+	_PF(CAN_CTRLMODE_BERR_REPORTING, "BERR-REPORTING");
 #undef _PF
 	if (cm)
 		fprintf(f, "%x", cm);
@@ -142,6 +146,14 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			set_ctrlmode("triple-sampling", *argv, &cm,
 				     CAN_CTRLMODE_3_SAMPLES);
+		} else if (matches(*argv, "one-shot") == 0) {
+			NEXT_ARG();
+			set_ctrlmode("one-shot", *argv, &cm,
+				     CAN_CTRLMODE_ONE_SHOT);
+		} else if (matches(*argv, "berr-reporting") == 0) {
+			NEXT_ARG();
+			set_ctrlmode("berr-reporting", *argv, &cm,
+				     CAN_CTRLMODE_BERR_REPORTING);
 		} else if (matches(*argv, "restart") == 0) {
 			__u32 val = 1;
 
@@ -198,6 +210,13 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		fprintf(f, "state %s ", *state <= CAN_STATE_MAX ?
 			can_state_names[*state] : "UNKNOWN");
+	}
+
+	if (tb[IFLA_CAN_BERR_COUNTER]) {
+		struct can_berr_counter *bc =
+			RTA_DATA(tb[IFLA_CAN_BERR_COUNTER]);
+
+		fprintf(f, "(berr-counter tx %d rx %d) ", bc->txerr, bc->rxerr);
 	}
 
 	if (tb[IFLA_CAN_RESTART_MS]) {

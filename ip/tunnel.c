@@ -168,7 +168,7 @@ int tnl_del_ioctl(const char *basedev, const char *name, void *p)
 	return err;
 }
 
-int tnl_prl_ioctl(int cmd, const char *name, void *p)
+static int tnl_gen_ioctl(int cmd, const char *name, void *p)
 {
 	struct ifreq ifr;
 	int fd;
@@ -182,4 +182,19 @@ int tnl_prl_ioctl(int cmd, const char *name, void *p)
 		perror("ioctl");
 	close(fd);
 	return err;
+}
+
+int tnl_prl_ioctl(int cmd, const char *name, void *p)
+{
+	return tnl_gen_ioctl(cmd, name, p);
+}
+
+int tnl_6rd_ioctl(int cmd, const char *name, void *p)
+{
+	return tnl_gen_ioctl(cmd, name, p);
+}
+
+int tnl_ioctl_get_6rd(const char *name, void *p)
+{
+	return tnl_gen_ioctl(SIOCGET6RD, name, p);
 }

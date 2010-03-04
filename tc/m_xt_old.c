@@ -10,12 +10,14 @@
  * Authors:  J Hadi Salim (hadi@cyberus.ca)
  */
 
+/*XXX: in the future (xtables 1.4.3?) get rid of everything tagged
+ * as TC_CONFIG_XT_H */
+
 #include <syslog.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#include <limits.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4/ip_tables.h>
 #include <xtables.h>
@@ -23,7 +25,6 @@
 #include "tc_util.h"
 #include <linux/tc_act/tc_ipt.h>
 #include <stdio.h>
-#include <dlfcn.h>
 #include <getopt.h>
 #include <errno.h>
 #include <string.h>
@@ -35,13 +36,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-#ifndef XT_LIB_DIR
-#       define XT_LIB_DIR "/lib/xtables"
+#ifdef TC_CONFIG_XT_H
+#include "xt-internal.h"
 #endif
 
+static const char *pname = "tc-ipt";
 static const char *tname = "mangle";
-
-char *lib_dir;
+static const char *pversion = "0.2";
 
 static const char *ipthooks[] = {
 	"NF_IP_PRE_ROUTING",
@@ -52,22 +53,112 @@ static const char *ipthooks[] = {
 };
 
 static struct option original_opts[] = {
-	{
-		.name = "jump",
-		.has_arg = 1,
-		.val = 'j'
-	},
+	{"jump", 1, 0, 'j'},
 	{0, 0, 0, 0}
 };
 
-static struct xtables_globals tcipt_globals = {
-	.option_offset = 0,
-	.program_name = "tc-ipt",
-	.program_version = "0.2",
-	.orig_opts = original_opts,
-	.opts = original_opts,
-	.exit_err = NULL,
+static struct option *opts = original_opts;
+static unsigned int global_option_offset = 0;
+char *lib_dir;
+const char *program_version = XTABLES_VERSION;
+const char *program_name = "tc-ipt";
+struct afinfo afinfo = {
+	.family         = AF_INET,
+	.libprefix      = "libxt_",
+	.ipproto        = IPPROTO_IP,
+	.kmod           = "ip_tables",
+	.so_rev_target  = IPT_SO_GET_REVISION_TARGET,
 };
+
+
+#define OPTION_OFFSET 256
+
+/*XXX: TC_CONFIG_XT_H */
+static void free_opts(struct option *local_opts)
+{
+	if (local_opts != original_opts) {
+		free(local_opts);
+		opts = original_opts;
+		global_option_offset = 0;
+	}
+}
+
+/*XXX: TC_CONFIG_XT_H */
+static struct option *
+merge_options(struct option *oldopts, const struct option *newopts,
+	      unsigned int *option_offset)
+{
+	struct option *merge;
+	unsigned int num_old, num_new, i;
+
+	for (num_old = 0; oldopts[num_old].name; num_old++) ;
+	for (num_new = 0; newopts[num_new].name; num_new++) ;
+
+	*option_offset = global_option_offset + OPTION_OFFSET;
+
+	merge = malloc(sizeof (struct option) * (num_new + num_old + 1));
+	memcpy(merge, oldopts, num_old * sizeof (struct option));
+	for (i = 0; i < num_new; i++) {
+		merge[num_old + i] = newopts[i];
+		merge[num_old + i].val += *option_offset;
+	}
+	memset(merge + num_old + num_new, 0, sizeof (struct option));
+
+	return merge;
+}
+
+
+/*XXX: TC_CONFIG_XT_H */
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+/*XXX: TC_CONFIG_XT_H */
+int
+check_inverse(const char option[], int *invert, int *my_optind, int argc)
+{
+        if (option && strcmp(option, "!") == 0) {
+                if (*invert)
+                        exit_error(PARAMETER_PROBLEM,
+                                   "Multiple `!' flags not allowed");
+                *invert = TRUE;
+                if (my_optind != NULL) {
+                        ++*my_optind;
+                        if (argc && *my_optind > argc)
+                                exit_error(PARAMETER_PROBLEM,
+                                           "no argument following `!'");
+                }
+
+                return TRUE;
+        }
+        return FALSE;
+}
+
+/*XXX: TC_CONFIG_XT_H */
+void exit_error(enum exittype status, const char *msg, ...)
+{
+        va_list args;
+
+        va_start(args, msg);
+        fprintf(stderr, "%s v%s: ", pname, pversion);
+        vfprintf(stderr, msg, args);
+        va_end(args);
+        fprintf(stderr, "\n");
+        /* On error paths, make sure that we don't leak memory */
+        exit(status);
+}
+
+/*XXX: TC_CONFIG_XT_H */
+static void set_revision(char *name, u_int8_t revision)
+{
+	/* Old kernel sources don't have ".revision" field,
+	*  but we stole a byte from name. */
+	name[IPT_FUNCTION_MAXNAMELEN - 2] = '\0';
+	name[IPT_FUNCTION_MAXNAMELEN - 1] = revision;
+}
 
 /*
  * we may need to check for version mismatch
@@ -80,10 +171,10 @@ build_st(struct xtables_target *target, struct xt_entry_target *t)
 		    XT_ALIGN(sizeof (struct xt_entry_target)) + target->size;
 
 	if (NULL == t) {
-		target->t = xtables_calloc(1, size);
+		target->t = fw_calloc(1, size);
 		target->t->u.target_size = size;
 		strcpy(target->t->u.user.name, target->name);
-		xtables_set_revision(target->t->u.user.name, target->revision);
+		set_revision(target->t->u.user.name, target->revision);
 
 		if (target->init != NULL)
 			target->init(target->t);
@@ -125,7 +216,6 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	__u32 hook = 0, index = 0;
 	res = 0;
 
-	xtables_init_all(&tcipt_globals, NFPROTO_IPV4);
 	set_lib_dir();
 
 	{
@@ -144,22 +234,21 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	while (1) {
-		c = getopt_long(argc, argv, "j:", tcipt_globals.opts, NULL);
+		c = getopt_long(argc, argv, "j:", opts, NULL);
 		if (c == -1)
 			break;
 		switch (c) {
 		case 'j':
-			m = xtables_find_target(optarg, XTF_TRY_LOAD);
+			m = find_target(optarg, TRY_LOAD);
 			if (NULL != m) {
 
 				if (0 > build_st(m, NULL)) {
 					printf(" %s error \n", m->name);
 					return -1;
 				}
-				tcipt_globals.opts =
-				    xtables_merge_options(tcipt_globals.opts,
-				                          m->extra_opts,
-				                          &m->option_offset);
+				opts =
+				    merge_options(opts, m->extra_opts,
+						  &m->option_offset);
 			} else {
 				fprintf(stderr," failed to find target %s\n\n", optarg);
 				return -1;
@@ -187,7 +276,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 		if (matches(argv[optind], "index") == 0) {
 			if (get_u32(&index, argv[optind + 1], 10)) {
 				fprintf(stderr, "Illegal \"index\"\n");
-				xtables_free_opts(1);
+				free_opts(opts);
 				return -1;
 			}
 			iok++;
@@ -202,7 +291,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	/* check that we passed the correct parameters to the target */
-	if (m && m->final_check)
+	if (m)
 		m->final_check(m->tflags);
 
 	{
@@ -245,7 +334,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	*argv_p = argv;
 
 	optind = 0;
-	xtables_free_opts(1);
+	free_opts(opts);
 	/* Clear flags if target will be used again */
         m->tflags=0;
         m->used=0;
@@ -267,7 +356,6 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 	if (arg == NULL)
 		return -1;
 
-	xtables_init_all(&tcipt_globals, NFPROTO_IPV4);
 	set_lib_dir();
 
 	parse_rtattr_nested(tb, TCA_IPT_MAX, arg);
@@ -294,17 +382,16 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 	} else {
 		struct xtables_target *m = NULL;
 		t = RTA_DATA(tb[TCA_IPT_TARG]);
-		m = xtables_find_target(t->u.user.name, XTF_TRY_LOAD);
+		m = find_target(t->u.user.name, TRY_LOAD);
 		if (NULL != m) {
 			if (0 > build_st(m, t)) {
 				fprintf(stderr, " %s error \n", m->name);
 				return -1;
 			}
 
-			tcipt_globals.opts =
-			    xtables_merge_options(tcipt_globals.opts,
-			                          m->extra_opts,
-			                          &m->option_offset);
+			opts =
+			    merge_options(opts, m->extra_opts,
+					  &m->option_offset);
 		} else {
 			fprintf(stderr, " failed to find target %s\n\n",
 				t->u.user.name);
@@ -333,7 +420,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 		fprintf(f, " \n");
 
 	}
-	xtables_free_opts(1);
+	free_opts(opts);
 
 	return 0;
 }

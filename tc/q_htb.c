@@ -58,8 +58,6 @@ static void explain1(char *arg)
 }
 
 
-#define usage() return(-1)
-
 static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	struct tc_htb_glob opt;

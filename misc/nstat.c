@@ -445,7 +445,7 @@ static void usage(void)
 
 int main(int argc, char *argv[])
 {
-	char hist_name[128];
+	char *hist_name;
 	struct sockaddr_un sun;
 	FILE *hist_fp = NULL;
 	int ch;
@@ -513,10 +513,10 @@ int main(int argc, char *argv[])
 			perror("nstat: listen");
 			exit(-1);
 		}
-		if (fork())
-			exit(0);
-		chdir("/");
-		close(0); close(1); close(2); setsid();
+		if (daemon(0, 0)) {
+			perror("nstat: daemon");
+			exit(-1);
+		}
 		signal(SIGPIPE, SIG_IGN);
 		signal(SIGCHLD, sigchild);
 		server_loop(fd);
@@ -526,10 +526,10 @@ int main(int argc, char *argv[])
 	patterns = argv;
 	npatterns = argc;
 
-	if (getenv("NSTAT_HISTORY"))
-		snprintf(hist_name, sizeof(hist_name), getenv("NSTAT_HISTORY"));
-	else
+	if ((hist_name = getenv("NSTAT_HISTORY")) == NULL) {
+		hist_name = malloc(128);
 		sprintf(hist_name, "/tmp/.nstat.u%d", getuid());
+	}
 
 	if (reset_history)
 		unlink(hist_name);

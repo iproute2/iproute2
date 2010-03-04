@@ -8,8 +8,6 @@
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
- * Changes:
- *	Laszlo Valko <valko@linux.karinthy.hu> 990223: address label must be zero terminated
  */
 
 #include <stdio.h>
@@ -64,7 +62,7 @@ static void usage(void)
 		iplink_usage();
 	}
 	fprintf(stderr, "Usage: ip addr {add|change|replace} IFADDR dev STRING [ LIFETIME ]\n");
-	fprintf(stderr, "                                                      [ CONFFLAG-LIST]\n");
+	fprintf(stderr, "                                                      [ CONFFLAG-LIST ]\n");
 	fprintf(stderr, "       ip addr del IFADDR dev STRING\n");
 	fprintf(stderr, "       ip addr {show|flush} [ dev STRING ] [ scope SCOPE-ID ]\n");
 	fprintf(stderr, "                            [ to PREFIX ] [ FLAG-LIST ] [ label PATTERN ]\n");
@@ -74,7 +72,8 @@ static void usage(void)
 	fprintf(stderr, "SCOPE-ID := [ host | link | global | NUMBER ]\n");
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG  := [ permanent | dynamic | secondary | primary |\n");
-	fprintf(stderr, "           tentative | deprecated | CONFFLAG-LIST ]\n");
+	fprintf(stderr, "           tentative | deprecated | dadfailed | temporary |\n");
+	fprintf(stderr, "           CONFFLAG-LIST ]\n");
 	fprintf(stderr, "CONFFLAG-LIST := [ CONFFLAG-LIST ] CONFFLAG\n");
 	fprintf(stderr, "CONFFLAG  := [ home | nodad ]\n");
 	fprintf(stderr, "LIFETIME := [ valid_lft LFT ] [ preferred_lft LFT ]\n");
@@ -332,6 +331,31 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				);
 		}
 	}
+	if (do_link && tb[IFLA_VFINFO] && tb[IFLA_NUM_VF]) {
+		SPRINT_BUF(b1);
+		struct rtattr *rta = tb[IFLA_VFINFO];
+		struct ifla_vf_info *ivi;
+		int i;
+		for (i = 0; i < *(int *)RTA_DATA(tb[IFLA_NUM_VF]); i++) {
+			if (rta->rta_type != IFLA_VFINFO) {
+				fprintf(stderr, "BUG: rta type is %d\n", rta->rta_type);
+				break;
+			}
+			ivi = RTA_DATA(rta);
+			fprintf(fp, "\n    vf %d: MAC %s",
+				ivi->vf,
+				ll_addr_n2a((unsigned char *)&ivi->mac,
+					    ETH_ALEN, 0, b1, sizeof(b1)));
+				if (ivi->vlan)
+					fprintf(fp, ", vlan %d", ivi->vlan);
+				if (ivi->qos)
+					fprintf(fp, ", qos %d", ivi->qos);
+				if (ivi->tx_rate)
+					fprintf(fp, ", tx rate %d (Mbps_",
+						ivi->tx_rate);
+			rta = (struct rtattr *)((char *)rta + RTA_ALIGN(rta->rta_len));
+		}
+	}
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
@@ -485,7 +509,10 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	fprintf(fp, "scope %s ", rtnl_rtscope_n2a(ifa->ifa_scope, b1, sizeof(b1)));
 	if (ifa->ifa_flags&IFA_F_SECONDARY) {
 		ifa->ifa_flags &= ~IFA_F_SECONDARY;
-		fprintf(fp, "secondary ");
+		if (ifa->ifa_family == AF_INET6)
+			fprintf(fp, "temporary ");
+		else
+			fprintf(fp, "secondary ");
 	}
 	if (ifa->ifa_flags&IFA_F_TENTATIVE) {
 		ifa->ifa_flags &= ~IFA_F_TENTATIVE;
@@ -508,6 +535,10 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		fprintf(fp, "dynamic ");
 	} else
 		ifa->ifa_flags &= ~IFA_F_PERMANENT;
+	if (ifa->ifa_flags&IFA_F_DADFAILED) {
+		ifa->ifa_flags &= ~IFA_F_DADFAILED;
+		fprintf(fp, "dadfailed ");
+	}
 	if (ifa->ifa_flags)
 		fprintf(fp, "flags %02x ", ifa->ifa_flags);
 	if (rta_tb[IFA_LABEL])
@@ -537,6 +568,27 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return 0;
 }
 
+int print_addrinfo_primary(const struct sockaddr_nl *who, struct nlmsghdr *n,
+			   void *arg)
+{
+	struct ifaddrmsg *ifa = NLMSG_DATA(n);
+
+	if (!ifa->ifa_flags & IFA_F_SECONDARY)
+		return 0;
+
+	return print_addrinfo(who, n, arg);
+}
+
+int print_addrinfo_secondary(const struct sockaddr_nl *who, struct nlmsghdr *n,
+			     void *arg)
+{
+	struct ifaddrmsg *ifa = NLMSG_DATA(n);
+
+	if (ifa->ifa_flags & IFA_F_SECONDARY)
+		return 0;
+
+	return print_addrinfo(who, n, arg);
+}
 
 struct nlmsg_list
 {
@@ -637,7 +689,8 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		} else if (strcmp(*argv, "permanent") == 0) {
 			filter.flags |= IFA_F_PERMANENT;
 			filter.flagmask |= IFA_F_PERMANENT;
-		} else if (strcmp(*argv, "secondary") == 0) {
+		} else if (strcmp(*argv, "secondary") == 0 ||
+			   strcmp(*argv, "temporary") == 0) {
 			filter.flags |= IFA_F_SECONDARY;
 			filter.flagmask |= IFA_F_SECONDARY;
 		} else if (strcmp(*argv, "primary") == 0) {
@@ -655,6 +708,9 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		} else if (strcmp(*argv, "nodad") == 0) {
 			filter.flags |= IFA_F_NODAD;
 			filter.flagmask |= IFA_F_NODAD;
+		} else if (strcmp(*argv, "dadfailed") == 0) {
+			filter.flags |= IFA_F_DADFAILED;
+			filter.flagmask |= IFA_F_DADFAILED;
 		} else if (strcmp(*argv, "label") == 0) {
 			NEXT_ARG();
 			filter.label = *argv;
@@ -698,12 +754,32 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		filter.flushe = sizeof(flushb);
 
 		while (round < MAX_ROUNDS) {
+			const struct rtnl_dump_filter_arg a[3] = {
+				{
+					.filter = print_addrinfo_secondary,
+					.arg1 = stdout,
+					.junk = NULL,
+					.arg2 = NULL
+				},
+				{
+					.filter = print_addrinfo_primary,
+					.arg1 = stdout,
+					.junk = NULL,
+					.arg2 = NULL
+				},
+				{
+					.filter = NULL,
+					.arg1 = NULL,
+					.junk = NULL,
+					.arg2 = NULL
+				},
+			};
 			if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
 				perror("Cannot send dump request");
 				exit(1);
 			}
 			filter.flushed = 0;
-			if (rtnl_dump_filter(&rth, print_addrinfo, stdout, NULL, NULL) < 0) {
+			if (rtnl_dump_filter_l(&rth, a) < 0) {
 				fprintf(stderr, "Flush terminated\n");
 				exit(1);
 			}

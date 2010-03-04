@@ -31,10 +31,13 @@
 static void
 explain(void)
 {
-	fprintf(stderr, "Usage: ... skbedit "
-			"queue_mapping QUEUE_MAPPING | priority PRIORITY \n"
-			"QUEUE_MAPPING = device transmit queue to use\n"
-			"PRIORITY = classID to assign to priority field\n");
+ 	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM]>\n"
+		"QM = queue_mapping QUEUE_MAPPING\n"
+		"PM = priority PRIORITY \n"
+		"MM = mark MARK \n"
+		"QUEUE_MAPPING = device transmit queue to use\n"
+		"PRIORITY = classID to assign to priority field\n"
+		"MARK = firewall mark to set\n");
 }
 
 static void
@@ -54,7 +57,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	struct rtattr *tail;
 	unsigned int tmp;
 	__u16 queue_mapping;
-	__u32 flags = 0, priority;
+	__u32 flags = 0, priority, mark;
 	struct tc_skbedit sel = { 0 };
 
 	if (matches(*argv, "skbedit") != 0)
@@ -77,6 +80,14 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 			NEXT_ARG();
 			if (get_tc_classid(&priority, *argv)) {
 				fprintf(stderr, "Illegal priority\n");
+				return -1;
+			}
+			ok++;
+		} else if (matches(*argv, "mark") == 0) {
+			flags |= SKBEDIT_F_MARK;
+			NEXT_ARG();
+			if (get_u32(&mark, *argv, 0)) {
+				fprintf(stderr, "Illegal mark\n");
 				return -1;
 			}
 			ok++;
@@ -137,6 +148,9 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	if (flags & SKBEDIT_F_PRIORITY)
 		addattr_l(n, MAX_MSG, TCA_SKBEDIT_PRIORITY,
 			  &priority, sizeof(priority));
+	if (flags & SKBEDIT_F_MARK)
+		addattr_l(n, MAX_MSG, TCA_SKBEDIT_MARK,
+			  &mark, sizeof(mark));
 	tail->rta_len = (char *)NLMSG_TAIL(n) - (char *)tail;
 
 	*argc_p = argc;
@@ -150,6 +164,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_SKBEDIT_MAX + 1];
 	SPRINT_BUF(b1);
 	__u32 *priority;
+	__u32 *mark;
 	__u16 *queue_mapping;
 
 	if (arg == NULL)
@@ -173,6 +188,10 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (tb[TCA_SKBEDIT_PRIORITY] != NULL) {
 		priority = RTA_DATA(tb[TCA_SKBEDIT_PRIORITY]);
 		fprintf(f, " priority %s", sprint_tc_classid(*priority, b1));
+	}
+	if (tb[TCA_SKBEDIT_MARK] != NULL) {
+		mark = RTA_DATA(tb[TCA_SKBEDIT_MARK]);
+		fprintf(f, " mark %d", *mark);
 	}
 
 	if (show_stats) {

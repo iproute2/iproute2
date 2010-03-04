@@ -1324,8 +1324,25 @@ peers are allowed to send to us.
     If it is not given, Linux uses the value selected with \verb|sysctl|
     variable \verb|net/ipv4/tcp_reordering|.
 
+\item \verb|hoplimit NUMBER|
 
+--- [2.5.74+ only] Maximum number of hops on the path to this destination.
+    The default is the value selected with the \verb|sysctl| variable
+    \verb|net/ipv4/ip_default_ttl|.
 
+\item \verb|initcwnd NUMBER|
+--- [2.5.70+ only] Initial congestion window size for connections to
+    this destination. Actual window size is this value multiplied by the
+    MSS (``Maximal Segment Size'') for same connection. The default is
+    zero, meaning to use the values specified in~\cite{RFC2414}.
+
++\item \verb|initrwnd NUMBER|
+ 
++--- [2.6.33+ only] Initial receive window size for connections to 
++    this destination. The actual window size is this value multiplied
++    by the MSS (''Maximal Segment Size'') of the connection. The default
++    value is zero, meaning to use Slow Start value.
+ 
 \item \verb|nexthop NEXTHOP|
 
 --- the nexthop of a multipath route. \verb|NEXTHOP| is a complex value
@@ -1379,14 +1396,6 @@ database.
 --- pretend that the nexthop is directly attached to this link,
 even if it does not match any interface prefix. One application of this
 option may be found in~\cite{IP-TUNNELS}.
-
-\item \verb|equalize|
-
---- allow packet by packet randomization on multipath routes.
-Without this modifier, the route will be frozen to one selected
-nexthop, so that load splitting will only occur on per-flow base.
-\verb|equalize| only works if the kernel is patched.
-
 
 \end{itemize}
 
@@ -2652,6 +2661,9 @@ http://www.cisco.com/univercd/cc/td/doc/product/software/ios120.
 
 \bibitem{RFC-DHCP} R.~Droms.
 ``Dynamic Host Configuration Protocol.'', RFC-2131
+
+\bibitem{RFC2414}  M.~Allman, S.~Floyd, C.~Partridge.
+``Increasing TCP's Initial Window'', RFC-2414.
 
 \end{thebibliography}
 
