@@ -314,7 +314,60 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		fprintf(fp,"\n    alias %s", 
 			(const char *) RTA_DATA(tb[IFLA_IFALIAS]));
 
-	if (do_link && tb[IFLA_STATS] && show_stats) {
+	if (do_link && tb[IFLA_STATS64] && show_stats) {
+		struct rtnl_link_stats64 slocal;
+		struct rtnl_link_stats64 *s = RTA_DATA(tb[IFLA_STATS64]);
+		if (((unsigned long)s) & (sizeof(unsigned long)-1)) {
+			memcpy(&slocal, s, sizeof(slocal));
+			s = &slocal;
+		}
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
+			s->rx_compressed ? "compressed" : "", _SL_);
+		fprintf(fp, "    %-10llu %-8llu %-7llu %-7llu %-7llu %-7llu",
+			(unsigned long long)s->rx_bytes,
+			(unsigned long long)s->rx_packets,
+			(unsigned long long)s->rx_errors,
+			(unsigned long long)s->rx_dropped,
+			(unsigned long long)s->rx_over_errors,
+			(unsigned long long)s->multicast);
+		if (s->rx_compressed)
+			fprintf(fp, " %-7llu",
+				(unsigned long long)s->rx_compressed);
+		if (show_stats > 1) {
+			fprintf(fp, "%s", _SL_);
+			fprintf(fp, "    RX errors: length  crc     frame   fifo    missed%s", _SL_);
+			fprintf(fp, "               %-7llu  %-7llu %-7llu %-7llu %-7llu",
+				(unsigned long long)s->rx_length_errors,
+				(unsigned long long)s->rx_crc_errors,
+				(unsigned long long)s->rx_frame_errors,
+				(unsigned long long)s->rx_fifo_errors,
+				(unsigned long long)s->rx_missed_errors);
+		}
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
+			s->tx_compressed ? "compressed" : "", _SL_);
+		fprintf(fp, "    %-10llu %-8llu %-7llu %-7llu %-7llu %-7llu",
+			(unsigned long long)s->tx_bytes,
+			(unsigned long long)s->tx_packets,
+			(unsigned long long)s->tx_errors,
+			(unsigned long long)s->tx_dropped,
+			(unsigned long long)s->tx_carrier_errors,
+			(unsigned long long)s->collisions);
+		if (s->tx_compressed)
+			fprintf(fp, " %-7llu",
+				(unsigned long long)s->tx_compressed);
+		if (show_stats > 1) {
+			fprintf(fp, "%s", _SL_);
+			fprintf(fp, "    TX errors: aborted fifo    window  heartbeat%s", _SL_);
+			fprintf(fp, "               %-7llu  %-7llu %-7llu %-7llu",
+				(unsigned long long)s->tx_aborted_errors,
+				(unsigned long long)s->tx_fifo_errors,
+				(unsigned long long)s->tx_window_errors,
+				(unsigned long long)s->tx_heartbeat_errors);
+		}
+	}
+	if (do_link && !tb[IFLA_STATS64] && tb[IFLA_STATS] && show_stats) {
 		struct rtnl_link_stats slocal;
 		struct rtnl_link_stats *s = RTA_DATA(tb[IFLA_STATS]);
 		if (((unsigned long)s) & (sizeof(unsigned long)-1)) {
