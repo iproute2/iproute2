@@ -3,6 +3,8 @@
 #
 INCLUDE=${1:-"$PWD/include"}
 
+TABLES=
+
 check_atm()
 {
 cat >/tmp/atmtest.c <<EOF
@@ -139,7 +141,26 @@ check_ipt()
 	if ! grep TC_CONFIG_XT Config > /dev/null
 	then
 		echo "using iptables"
+		TABLES="iptables"
+	else
+		TABLES="xtables"
 	fi
+}
+
+check_ipt_lib_dir()
+{
+	IPT_LIB_DIR=""
+	for dir in /lib /usr/lib /usr/local/lib
+	do
+		for file in $dir/$TABLES/lib*t_*so ; do
+			if [ -f $file ]; then
+				echo $dir/$TABLES
+				echo "IPT_LIB_DIR:=$dir/$TABLES" >> Config
+				return
+			fi
+		done
+	done
+	echo "not found!"
 }
 
 echo "# Generated config based on" $INCLUDE >Config
@@ -155,3 +176,5 @@ check_xt_old
 check_xt_old_internal_h
 check_ipt
 
+echo -n "iptables modules directory: "
+check_ipt_lib_dir

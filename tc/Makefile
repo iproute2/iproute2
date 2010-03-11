@@ -77,6 +77,9 @@ TCLIB += tc_estimator.o
 TCLIB += tc_stab.o
 
 CFLAGS += -DCONFIG_GACT -DCONFIG_GACT_PROB
+ifneq ($(IPT_LIB_DIR),)
+	CFLAGS += -DIPT_LIB_DIR=\"$(IPT_LIB_DIR)\"
+endif
 
 TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)
