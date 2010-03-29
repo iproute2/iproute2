@@ -39,6 +39,11 @@
 #       define XT_LIB_DIR "/lib/xtables"
 #endif
 
+#ifndef ALIGN
+#define ALIGN(x,a)		__ALIGN_MASK(x,(typeof(x))(a)-1)
+#define __ALIGN_MASK(x,mask)	(((x)+(mask))&~(mask))
+#endif
+
 static const char *tname = "mangle";
 
 char *lib_dir;
