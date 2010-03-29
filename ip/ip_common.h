@@ -32,6 +32,7 @@ extern int do_ipneigh(int argc, char **argv);
 extern int do_ipntable(int argc, char **argv);
 extern int do_iptunnel(int argc, char **argv);
 extern int do_ip6tunnel(int argc, char **argv);
+extern int do_iptuntap(int argc, char **argv);
 extern int do_iplink(int argc, char **argv);
 extern int do_ipmonitor(int argc, char **argv);
 extern int do_multiaddr(int argc, char **argv);

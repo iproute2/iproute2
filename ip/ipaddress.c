@@ -1039,7 +1039,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	}
 	if (l && matches(d, l) != 0) {
 		fprintf(stderr, "\"dev\" (%s) must match \"label\" (%s).\n", d, l);
-		exit(1);
+		return -1;
 	}
 
 	if (peer_len == 0 && local_len) {
@@ -1104,7 +1104,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	}
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
-		exit(2);
+		return -2;
 
 	return 0;
 }
