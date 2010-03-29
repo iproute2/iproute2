@@ -18,6 +18,7 @@
 
 #include <linux/types.h>
 #include <linux/if_ether.h>
+#include <linux/filter.h>
 
 /* Read queue size */
 #define TUN_READQ_SIZE	500
@@ -48,6 +49,8 @@
 #define TUNGETIFF      _IOR('T', 210, unsigned int)
 #define TUNGETSNDBUF   _IOR('T', 211, int)
 #define TUNSETSNDBUF   _IOW('T', 212, int)
+#define TUNATTACHFILTER _IOW('T', 213, struct sock_fprog)
+#define TUNDETACHFILTER _IOW('T', 214, struct sock_fprog)
 
 /* TUNSETIFF ifr flags */
 #define IFF_TUN		0x0001
@@ -55,12 +58,14 @@
 #define IFF_NO_PI	0x1000
 #define IFF_ONE_QUEUE	0x2000
 #define IFF_VNET_HDR	0x4000
+#define IFF_TUN_EXCL	0x8000
 
 /* Features for GSO (TUNSETOFFLOAD). */
 #define TUN_F_CSUM	0x01	/* You can hand me unchecksummed packets. */
 #define TUN_F_TSO4	0x02	/* I can handle TSO for IPv4 packets */
 #define TUN_F_TSO6	0x04	/* I can handle TSO for IPv6 packets */
 #define TUN_F_TSO_ECN	0x08	/* I can handle TSO with ECN bits. */
+#define TUN_F_UFO	0x10	/* I can handle UFO packets */
 
 /* Protocol info prepended to the packets (when IFF_NO_PI is not set) */
 #define TUN_PKT_STRIP	0x0001

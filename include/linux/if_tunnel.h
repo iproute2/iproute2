@@ -2,6 +2,7 @@
 #define _IF_TUNNEL_H_
 
 #include <linux/types.h>
+#include <asm/byteorder.h>
 
 
 #define SIOCGETTUNNEL   (SIOCDEVPRIVATE + 0)
