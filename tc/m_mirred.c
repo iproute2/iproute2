@@ -26,8 +26,6 @@
 #include "tc_common.h"
 #include <linux/tc_act/tc_mirred.h>
 
-int mirred_d = 1;
-
 static void
 explain(void)
 {
@@ -195,9 +193,6 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 			}
 		}
 	}
-
-	if (mirred_d)
-		fprintf(stdout, "Action %d device %s ifindex %d\n",p.action, d,p.ifindex);
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
