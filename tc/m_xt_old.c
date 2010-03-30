@@ -40,6 +40,11 @@
 #include "xt-internal.h"
 #endif
 
+#ifndef ALIGN
+#define ALIGN(x,a)		__ALIGN_MASK(x,(typeof(x))(a)-1)
+#define __ALIGN_MASK(x,mask)	(((x)+(mask))&~(mask))
+#endif
+
 static const char *pname = "tc-ipt";
 static const char *tname = "mangle";
 static const char *pversion = "0.2";
