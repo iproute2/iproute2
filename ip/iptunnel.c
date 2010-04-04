@@ -365,7 +365,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	if (!(p->iph.frag_off&htons(IP_DF)))
 		printf(" nopmtudisc");
 
-	if (!tnl_ioctl_get_6rd(p->name, &ip6rd) && ip6rd.prefixlen) {
+	if (p->iph.protocol == IPPROTO_IPV6 && !tnl_ioctl_get_6rd(p->name, &ip6rd) && ip6rd.prefixlen) {
 		printf(" 6rd-prefix %s/%u ",
 		       inet_ntop(AF_INET6, &ip6rd.prefix, s1, sizeof(s1)),
 		       ip6rd.prefixlen);
