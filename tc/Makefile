@@ -43,19 +43,20 @@ TCMODULES += em_cmp.o
 TCMODULES += em_u32.o
 TCMODULES += em_meta.o
 
+TCSO :=
+ifeq ($(TC_CONFIG_ATM),y)
+  TCSO += q_atm.so
+endif
 
 ifeq ($(TC_CONFIG_XT),y)
-  TCMODULES += m_xt.o
-  LDLIBS += -lxtables
+  TCSO += m_xt.so
 else
   ifeq ($(TC_CONFIG_XT_OLD),y)
-    TCMODULES += m_xt_old.o
-    LDLIBS += -lxtables
+    TCSO += m_xt_old.so
   else
     ifeq ($(TC_CONFIG_XT_OLD_H),y)
 	CFLAGS += -DTC_CONFIG_XT_H
-	TCMODULES += m_xt_old.o
-	LDLIBS += -lxtables
+	TCSO += m_xt_old.so
     else
       TCMODULES += m_ipt.o
     endif
@@ -81,13 +82,10 @@ ifneq ($(IPT_LIB_DIR),)
 	CFLAGS += -DIPT_LIB_DIR=\"$(IPT_LIB_DIR)\"
 endif
 
-TCSO :=
-ifeq ($(TC_CONFIG_ATM),y)
-  TCSO += q_atm.so
-endif
-
 YACC := bison
 LEX := flex
+
+MODDESTDIR := $(DESTDIR)$(patsubst /usr%,%,$(LIBDIR))/tc
 
 %.so: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic $< -o $@
@@ -101,11 +99,18 @@ libtc.a: $(TCLIB)
 	$(AR) rcs $@ $(TCLIB)
 
 install: all
-	mkdir -p $(DESTDIR)$(LIBDIR)/tc
-	install -m 0755 tc $(DESTDIR)$(SBINDIR)
+	echo mkdir -p $(MODDESTDIR)
+	echo install -m 0755 tc $(DESTDIR)$(SBINDIR)
 	for i in $(TCSO); \
-	do install -m 755 $$i $(DESTDIR)$(LIBDIR)/tc; \
+	do echo install -m 755 $$i $(MODDESTDIR); \
 	done
+	if [ ! -f $(MODDESTDIR)/m_ipt.so ]; then \
+	if [ -f $(MODDESTDIR)/m_xt.so ]; \
+		then ln -s m_xt.so $(MODDESTDIR)/m_ipt.so ; \
+	elif [ -f $(MODDESTDIR)/m_xt_old.so ]; \
+		then ln -s m_xt_old.so $(MODDESTDIR)/m_ipt.so ; \
+	fi; \
+	fi
 
 clean:
 	rm -f $(TCOBJ) $(TCLIB) libtc.a tc *.so emp_ematch.yacc.h; \
@@ -113,6 +118,12 @@ clean:
 
 q_atm.so: q_atm.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
+
+m_xt.so: m_xt.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt.so m_xt.c -lxtables
+
+m_xt_old.so: m_xt_old.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt_old.so m_xt_old.c -lxtables
 
 %.yacc.c: %.y
 	$(YACC) $(YACCFLAGS) -o $@ $<
