@@ -63,7 +63,7 @@
 
 %}
 
-%x str
+%x lexstr
 
 %option 8bit stack warn noyywrap prefix="ematch_"
 %%
@@ -78,17 +78,17 @@
 						}
 						strbuf_index = 0;
 
-						BEGIN(str);
+						BEGIN(lexstr);
 					}
 
-<str>\"					{
+<lexstr>\"					{
 						BEGIN(INITIAL);
 						yylval.b = bstr_new(strbuf, strbuf_index);
 						yylval.b->quoted = 1;
 						return ATTRIBUTE;
 					}
 
-<str>\\[0-7]{1,3}			{ /* octal escape sequence */
+<lexstr>\\[0-7]{1,3}			{ /* octal escape sequence */
 						int res;
 
 						sscanf(yytext + 1, "%o", &res);
@@ -100,12 +100,12 @@
 						strbuf_append_char((unsigned char) res);
 					}
 
-<str>\\[0-9]+				{ /* catch wrong octal escape seq. */
+<lexstr>\\[0-9]+				{ /* catch wrong octal escape seq. */
 						fprintf(stderr, "error: invalid octale escape sequence\n");
 						return ERROR;
 					}
 
-<str>\\x[0-9a-fA-F]{1,2}		{
+<lexstr>\\x[0-9a-fA-F]{1,2}		{
 						int res;
 
 						sscanf(yytext + 2, "%x", &res);
@@ -118,16 +118,16 @@
 						strbuf_append_char((unsigned char) res);
 					}
 
-<str>\\n				strbuf_append_char('\n');
-<str>\\r				strbuf_append_char('\r');
-<str>\\t				strbuf_append_char('\t');
-<str>\\v				strbuf_append_char('\v');
-<str>\\b				strbuf_append_char('\b');
-<str>\\f				strbuf_append_char('\f');
-<str>\\a				strbuf_append_char('\a');
+<lexstr>\\n				strbuf_append_char('\n');
+<lexstr>\\r				strbuf_append_char('\r');
+<lexstr>\\t				strbuf_append_char('\t');
+<lexstr>\\v				strbuf_append_char('\v');
+<lexstr>\\b				strbuf_append_char('\b');
+<lexstr>\\f				strbuf_append_char('\f');
+<lexstr>\\a				strbuf_append_char('\a');
 
-<str>\\(.|\n)				strbuf_append_char(yytext[1]);
-<str>[^\\\n\"]+				strbuf_append_charp(yytext);
+<lexstr>\\(.|\n)			strbuf_append_char(yytext[1]);
+<lexstr>[^\\\n\"]+			strbuf_append_charp(yytext);
 
 [aA][nN][dD]				return AND;
 [oO][rR]				return OR;
