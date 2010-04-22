@@ -1395,13 +1395,13 @@ normal routing tables.
 
 .P
 .B Route tables:
-Linux-2.x can pack routes into several routing
-tables identified by a number in the range from 1 to 255 or by
-name from the file
+Linux-2.x can pack routes into several routing tables identified 
+by a number in the range from 1 to 2^31 or by name from the file
 .B /etc/iproute2/rt_tables
 By default all normal routes are inserted into the
 .B main
 table (ID 254) and the kernel only uses this table when calculating routes.
+Values (0, 253, 254, and 255) are reserved for built-in use.
 
 .sp
 Actually, one other table always exists, which is invisible but
