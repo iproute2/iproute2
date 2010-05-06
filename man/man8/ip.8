@@ -237,7 +237,9 @@ replace " | " monitor " } "
 .B  realms
 .IR REALM " ] [ "
 .B  rto_min
-.IR TIME " ]"
+.IR TIME " ] [ "
+.B  initcwnd
+.IR NUMBER " ]"
 
 .ti -8
 .IR TYPE " := [ "
@@ -1621,6 +1623,13 @@ an estimate for the initial slow start threshold.
 the clamp for congestion window.  It is ignored if the
 .B lock
 flag is not used.
+
+.TP
+.BI initcwnd " NUMBER " "(2.5.70+ only)"
+Initial congestion window size for connections to this destination.
+Actual window size is this value multiplied by the MSS
+(``Maximal Segment Size'') for same connection. The default is
+zero, meaning to use the values specified in RFC2414.
 
 .TP
 .BI advmss " NUMBER " "(2.3.15+ only)"
