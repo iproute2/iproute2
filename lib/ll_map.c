@@ -161,6 +161,7 @@ unsigned ll_name_to_index(const char *name)
 	static int icache;
 	struct idxmap *im;
 	int i;
+	unsigned idx;
 
 	if (name == NULL)
 		return 0;
@@ -176,7 +177,10 @@ unsigned ll_name_to_index(const char *name)
 		}
 	}
 
-	return if_nametoindex(name);
+	idx = if_nametoindex(name);
+	if (idx == 0)
+		sscanf(name, "if%u", &idx);
+	return idx;
 }
 
 int ll_init_map(struct rtnl_handle *rth)
