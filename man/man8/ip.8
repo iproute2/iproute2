@@ -27,6 +27,34 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 \fB\-o\fR[\fIneline\fR] }
 
 .ti -8
+.BI "ip link add link " DEVICE
+.RB "[ " name " ]"
+.I NAME
+.br
+.RB "[ " txqueuelen 
+.IR PACKETS " ]"
+.br
+.RB "[ " address
+.IR LLADDR " ]"
+.RB "[ " broadcast
+.IR LLADDR " ]"
+.br
+.RB "[ " mtu
+.IR MTU " ]"
+.br
+.BR type TYPE
+.RI "[ " ARGS " ]"
+
+.ti -8
+.IR TYPE " := [ "
+.BR vlan " | " maclan " | " can " ]"
+
+.ti -8
+.BI "ip link delete " DEVICE
+.BI type TYPE
+.RI "[ " ARGS " ]"
+
+.ti -8
 .BI "ip link set " DEVICE
 .RB "{ " up " | " down " | " arp " { " on " | " off " } |"
 .br
@@ -68,8 +96,6 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .IR VLAN-QOS " ] ] ["
 .B rate
 .IR TXRATE " ]"
-.BR " }"
-
 
 .ti -8
 .B ip link show
@@ -833,11 +859,47 @@ or, if the objects of this class cannot be listed,
 is a network device and the corresponding commands
 display and change the state of devices.
 
+.SS ip link add - add virtual link
+
+.TP
+.BI link " DEVICE "
+specifies the physical device to act operate on.
+
+.I NAME
+specifies the name of the new virtual device.
+
+.I TYPE
+specifies the type of the new device.
+.sp
+Link types:
+
+.in +8
+.B vlan
+- 802.1q tagged virrtual LAN interface
+.sp
+.B macvlan
+- virtual interface base on link layer address (MAC)
+.sp
+.B can
+- Controller Area Network interface
+.in -8
+
+.SS ip link delete - delete virtual link
+.I DEVICE
+specifies the virtual  device to act operate on.
+.I TYPE
+specifies the type of the device.
+
+
+.TP
+.BI dev " DEVICE "
+specifies the physical device to act operate on.
+
 .SS ip link set - change device attributes
 
 .TP
-.BI dev " NAME " (default)
-.I NAME
+.BI dev " DEVICE "
+.I DEVICE
 specifies network device to operate on. When configuring SR-IOV Virtual Fuction
 (VF) devices, this keyword should specify the associated Physical Function (PF)
 device.
