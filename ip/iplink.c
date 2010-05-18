@@ -176,6 +176,73 @@ struct iplink_req {
 	char			buf[1024];
 };
 
+int iplink_parse_vf(int vf, int *argcp, char ***argvp,
+			   struct iplink_req *req)
+{
+	int len, argc = *argcp;
+	char **argv = *argvp;
+	struct rtattr *vfinfo;
+
+	vfinfo = addattr_nest(&req->n, sizeof(*req), IFLA_VF_INFO);
+
+	while (NEXT_ARG_OK()) {
+		NEXT_ARG();
+		if (matches(*argv, "mac") == 0) {
+			struct ifla_vf_mac ivm;
+			NEXT_ARG();
+			ivm.vf = vf;
+			len = ll_addr_a2n((char *)ivm.mac, 32, *argv);
+			if (len < 0)
+				return -1;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_MAC, &ivm, sizeof(ivm));
+		} else if (matches(*argv, "vlan") == 0) {
+			struct ifla_vf_vlan ivv;
+			NEXT_ARG();
+			if (get_unsigned(&ivv.vlan, *argv, 0)) {
+				invarg("Invalid \"vlan\" value\n", *argv);
+			}
+			ivv.vf = vf;
+			ivv.qos = 0;
+			if (NEXT_ARG_OK()) {
+				NEXT_ARG();
+				if (matches(*argv, "qos") == 0) {
+					NEXT_ARG();
+					if (get_unsigned(&ivv.qos, *argv, 0)) {
+						invarg("Invalid \"qos\" value\n", *argv);
+					}
+				} else {
+					/* rewind arg */
+					PREV_ARG();
+				}
+			}
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_VLAN, &ivv, sizeof(ivv));
+		} else if (matches(*argv, "rate") == 0) {
+			struct ifla_vf_tx_rate ivt;
+			NEXT_ARG();
+			if (get_unsigned(&ivt.rate, *argv, 0)) {
+				invarg("Invalid \"rate\" value\n", *argv);
+			}
+			ivt.vf = vf;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
+		
+		} else {
+			/* rewind arg */
+			PREV_ARG();
+			break;
+		}
+	}
+
+	if (argc == *argcp)
+		incomplete_command();
+
+	addattr_nest_end(&req->n, vfinfo);
+
+	*argcp = argc;
+	*argvp = argv;
+	return 0;
+}
+
+
 int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		char **name, char **type, char **link, char **dev)
 {
@@ -283,53 +350,17 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			} else
 				return on_off("noarp");
 		} else if (strcmp(*argv, "vf") == 0) {
+			struct rtattr *vflist;
 			NEXT_ARG();
 			if (get_integer(&vf,  *argv, 0)) {
 				invarg("Invalid \"vf\" value\n", *argv);
 			}
-		} else if (matches(*argv, "mac") == 0) {
-			struct ifla_vf_mac ivm;
-			NEXT_ARG();
-			if (vf < 0) {
-				missarg("vf");
-			}
-			ivm.vf = vf;
-			len = ll_addr_a2n((char *)ivm.mac, 32, *argv);
+			vflist = addattr_nest(&req->n, sizeof(*req),
+					      IFLA_VFINFO_LIST);
+			len = iplink_parse_vf(vf, &argc, &argv, req);
 			if (len < 0)
 				return -1;
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_MAC, &ivm, sizeof(ivm));
-		} else if (matches(*argv, "vlan") == 0) {
-			struct ifla_vf_vlan ivv;
-			NEXT_ARG();
-			if (vf < 0) {
-				missarg("vf");
-			}
-			if (get_unsigned(&ivv.vlan, *argv, 0)) {
-				invarg("Invalid \"vlan\" value\n", *argv);
-			}
-			ivv.vf = vf;
-			ivv.qos = 0;
-			if (NEXT_ARG_OK()) {
-				NEXT_ARG();
-				if (matches(*argv, "qos") == 0) {
-					NEXT_ARG();
-					if (get_unsigned(&ivv.qos, *argv, 0)) {
-						invarg("Invalid \"qos\" value\n", *argv);
-					}
-				}
-			}
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_VLAN, &ivv, sizeof(ivv));
-		} else if (matches(*argv, "rate") == 0) {
-			struct ifla_vf_tx_rate ivt;
-			NEXT_ARG();
-			if (vf < 0) {
-				missarg("vf");
-			}
-			if (get_unsigned(&ivt.rate, *argv, 0)) {
-				invarg("Invalid \"rate\" value\n", *argv);
-			}
-			ivt.vf = vf;
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
+			addattr_nest_end(&req->n, vflist);
 #ifdef IFF_DYNAMIC
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();

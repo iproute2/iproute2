@@ -187,6 +187,36 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 	}
 }
 
+static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
+{
+	struct ifla_vf_mac *vf_mac;
+	struct ifla_vf_vlan *vf_vlan;
+	struct ifla_vf_tx_rate *vf_tx_rate;
+	struct rtattr *vf[IFLA_VF_MAX+1];
+	SPRINT_BUF(b1);
+
+	if (vfinfo->rta_type != IFLA_VF_INFO) {
+		fprintf(stderr, "BUG: rta type is %d\n", vfinfo->rta_type);
+		return;
+	}
+
+	parse_rtattr_nested(vf, IFLA_VF_MAX, vfinfo);
+
+	vf_mac = RTA_DATA(vf[IFLA_VF_MAC]);
+	vf_vlan = RTA_DATA(vf[IFLA_VF_VLAN]);
+	vf_tx_rate = RTA_DATA(vf[IFLA_VF_TX_RATE]);
+
+	fprintf(fp, "\n    vf %d MAC %s", vf_mac->vf,
+		ll_addr_n2a((unsigned char *)&vf_mac->mac,
+		ETH_ALEN, 0, b1, sizeof(b1)));
+	if (vf_vlan->vlan)
+		fprintf(fp, ", vlan %d", vf_vlan->vlan);
+	if (vf_vlan->qos)
+		fprintf(fp, ", qos %d", vf_vlan->qos);
+	if (vf_tx_rate->rate)
+		fprintf(fp, ", tx rate %d (Mbps)", vf_tx_rate->rate);
+}
+
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg)
 {
@@ -331,31 +361,13 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				);
 		}
 	}
-	if (do_link && tb[IFLA_VFINFO] && tb[IFLA_NUM_VF]) {
-		SPRINT_BUF(b1);
-		struct rtattr *rta = tb[IFLA_VFINFO];
-		struct ifla_vf_info *ivi;
-		int i;
-		for (i = 0; i < *(int *)RTA_DATA(tb[IFLA_NUM_VF]); i++) {
-			if (rta->rta_type != IFLA_VFINFO) {
-				fprintf(stderr, "BUG: rta type is %d\n", rta->rta_type);
-				break;
-			}
-			ivi = RTA_DATA(rta);
-			fprintf(fp, "\n    vf %d: MAC %s",
-				ivi->vf,
-				ll_addr_n2a((unsigned char *)&ivi->mac,
-					    ETH_ALEN, 0, b1, sizeof(b1)));
-				if (ivi->vlan)
-					fprintf(fp, ", vlan %d", ivi->vlan);
-				if (ivi->qos)
-					fprintf(fp, ", qos %d", ivi->qos);
-				if (ivi->tx_rate)
-					fprintf(fp, ", tx rate %d (Mbps_",
-						ivi->tx_rate);
-			rta = (struct rtattr *)((char *)rta + RTA_ALIGN(rta->rta_len));
-		}
+	if (do_link && tb[IFLA_VFINFO_LIST] && tb[IFLA_NUM_VF]) {
+		struct rtattr *i, *vflist = tb[IFLA_VFINFO_LIST];
+		int rem = RTA_PAYLOAD(vflist);
+		for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem))
+			print_vfinfo(fp, i);
 	}
+
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
