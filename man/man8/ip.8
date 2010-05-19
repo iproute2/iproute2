@@ -239,6 +239,8 @@ replace " | " monitor " } "
 .B  rto_min
 .IR TIME " ] [ "
 .B  initcwnd
+.IR NUMBER " ] [ "
+.B  initrwnd
 .IR NUMBER " ]"
 
 .ti -8
@@ -1626,10 +1628,16 @@ flag is not used.
 
 .TP
 .BI initcwnd " NUMBER " "(2.5.70+ only)"
-Initial congestion window size for connections to this destination.
+the initial congestion window size for connections to this destination.
 Actual window size is this value multiplied by the MSS
 (``Maximal Segment Size'') for same connection. The default is
 zero, meaning to use the values specified in RFC2414.
+
+.TP
+.BI initrwnd " NUMBER " "(2.6.33+ only)"
+the initial receive window size for connections to this destination.
+Actual window size is this value multiplied by the MSS of the connection.
+The default value is zero, meaning to use Slow Start value.
 
 .TP
 .BI advmss " NUMBER " "(2.3.15+ only)"
