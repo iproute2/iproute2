@@ -270,7 +270,8 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			if (get_u32(&pref, *argv, 0))
 				invarg("preference value is invalid\n", *argv);
 			addattr32(&req.n, sizeof(req), FRA_PRIORITY, pref);
-		} else if (strcmp(*argv, "tos") == 0) {
+		} else if (strcmp(*argv, "tos") == 0 ||
+			   matches(*argv, "dsfield") == 0) {
 			__u32 tos;
 			NEXT_ARG();
 			if (rtnl_dsfield_a2n(&tos, *argv))
