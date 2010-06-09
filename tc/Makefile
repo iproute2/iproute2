@@ -99,10 +99,10 @@ libtc.a: $(TCLIB)
 	$(AR) rcs $@ $(TCLIB)
 
 install: all
-	echo mkdir -p $(MODDESTDIR)
-	echo install -m 0755 tc $(DESTDIR)$(SBINDIR)
+	mkdir -p $(MODDESTDIR)
+	install -m 0755 tc $(DESTDIR)$(SBINDIR)
 	for i in $(TCSO); \
-	do echo install -m 755 $$i $(MODDESTDIR); \
+	do install -m 755 $$i $(MODDESTDIR); \
 	done
 	if [ ! -f $(MODDESTDIR)/m_ipt.so ]; then \
 	if [ -f $(MODDESTDIR)/m_xt.so ]; \
