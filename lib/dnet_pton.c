@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 
@@ -37,6 +38,7 @@ static int dnet_num(const char *src, u_int16_t * dst)
 
 static int dnet_pton1(const char *src, struct dn_naddr *dna)
 {
+	u_int16_t addr;
 	u_int16_t area = 0;
 	u_int16_t node = 0;
 	int pos;
@@ -48,7 +50,8 @@ static int dnet_pton1(const char *src, struct dn_naddr *dna)
 	if ((pos == 0) || (node > 1023))
 		return 0;
 	dna->a_len = 2;
-	*(u_int16_t *)dna->a_addr = dn_htons((area << 10) | node);
+	addr = dn_htons((area << 10) | node);
+	memcpy(dna->a_addr, &addr, sizeof(addr));
 
 	return 1;
 }

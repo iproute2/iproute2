@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 
@@ -35,10 +36,13 @@ static __inline__ int do_digit(char *str, u_int16_t *addr, u_int16_t scale, size
 
 static const char *dnet_ntop1(const struct dn_naddr *dna, char *str, size_t len)
 {
-	u_int16_t addr = dn_ntohs(*(u_int16_t *)dna->a_addr);
-	u_int16_t area = addr >> 10;
+	u_int16_t addr, area;
 	size_t pos = 0;
 	int started = 0;
+
+	memcpy(&addr, dna->a_addr, sizeof(addr));
+	addr = dn_ntohs(addr);
+	area = addr >> 10;
 
 	if (dna->a_len != 2)
 		return NULL;
