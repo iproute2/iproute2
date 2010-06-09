@@ -20,9 +20,9 @@ stats: stats.c
 	$(HOSTCC) $(CCOPTS) -I../include -o $@ $@.c -lm
 
 install: all
-	mkdir -p $(DESTDIR)/lib/tc
+	mkdir -p $(DESTDIR)$(LIBDIR)/tc
 	for i in $(DISTDATA); \
-	do install -m 755 $$i $(DESTDIR)/lib/tc; \
+	do install -m 644 $$i $(DESTDIR)$(LIBDIR)/tc; \
 	done
 
 clean:
