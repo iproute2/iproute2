@@ -436,3 +436,20 @@ int do_iprule(int argc, char **argv)
 	exit(-1);
 }
 
+int do_multirule(int argc, char **argv)
+{
+	switch (preferred_family) {
+	case AF_UNSPEC:
+	case AF_INET:
+		preferred_family = RTNL_FAMILY_IPMR;
+		break;
+	case AF_INET6:
+		preferred_family = RTNL_FAMILY_IP6MR;
+		break;
+	default:
+		fprintf(stderr, "Multicast rules are only supported for IPv4/IPv6\n");
+		exit(-1);
+	}
+
+	return do_iprule(argc, argv);
+}
