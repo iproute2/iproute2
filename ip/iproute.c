@@ -55,6 +55,7 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip route { list | flush } SELECTOR\n");
 	fprintf(stderr, "       ip route get ADDRESS [ from ADDRESS iif STRING ]\n");
 	fprintf(stderr, "                            [ oif STRING ]  [ tos TOS ]\n");
+	fprintf(stderr, "                            [ mark NUMBER ]\n");
 	fprintf(stderr, "       ip route { add | del | change | append | replace | monitor } ROUTE\n");
 	fprintf(stderr, "SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n");
 	fprintf(stderr, "            [ table TABLE_ID ] [ proto RTPROTO ]\n");
@@ -96,6 +97,7 @@ static struct
 	int tos, tosmask;
 	int iif, iifmask;
 	int oif, oifmask;
+	int mark, markmask;
 	int realm, realmmask;
 	inet_prefix rprefsrc;
 	inet_prefix rvia;
@@ -266,6 +268,13 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if ((oif^filter.oif)&filter.oifmask)
 			return 0;
 	}
+	if (filter.markmask) {
+		int mark = 0;
+		if (tb[RTA_MARK])
+			mark = *(int *)RTA_DATA(tb[RTA_MARK]);
+		if ((mark ^ filter.mark) & filter.markmask)
+			return 0;
+	}
 	if (filter.flushb &&
 	    r->rtm_family == AF_INET6 &&
 	    r->rtm_dst_len == 0 &&
@@ -377,6 +386,15 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "pervasive ");
 	if (r->rtm_flags & RTM_F_NOTIFY)
 		fprintf(fp, "notify ");
+	if (tb[RTA_MARK]) {
+		unsigned int mark = *(unsigned int*)RTA_DATA(tb[RTA_MARK]);
+		if (mark) {
+			if (mark >= 16)
+				fprintf(fp, " mark 0x%x", mark);
+			else
+				fprintf(fp, " mark %u", mark);
+		}
+	}
 
 	if (tb[RTA_FLOW] && filter.realmmask != ~0U) {
 		__u32 to = *(__u32*)RTA_DATA(tb[RTA_FLOW]);
@@ -1040,6 +1058,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 	int do_ipv6 = preferred_family;
 	char *id = NULL;
 	char *od = NULL;
+	unsigned int mark = 0;
 
 	iproute_reset_filter();
 	filter.tb = RT_TABLE_MAIN;
@@ -1112,6 +1131,10 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 		} else if (strcmp(*argv, "iif") == 0) {
 			NEXT_ARG();
 			id = *argv;
+		} else if (strcmp(*argv, "mark") == 0) {
+			NEXT_ARG();
+			get_unsigned(&mark, *argv, 0);
+			filter.markmask = -1;
 		} else if (strcmp(*argv, "via") == 0) {
 			NEXT_ARG();
 			get_prefix(&filter.rvia, *argv, do_ipv6);
@@ -1193,6 +1216,7 @@ static int iproute_list_or_flush(int argc, char **argv, int flush)
 			filter.oifmask = -1;
 		}
 	}
+	filter.mark = mark;
 
 	if (flush) {
 		int round = 0;
@@ -1282,6 +1306,7 @@ int iproute_get(int argc, char **argv)
 	char  *odev = NULL;
 	int connected = 0;
 	int from_ok = 0;
+	unsigned int mark = 0;
 
 	memset(&req, 0, sizeof(req));
 
@@ -1323,6 +1348,9 @@ int iproute_get(int argc, char **argv)
 		} else if (matches(*argv, "iif") == 0) {
 			NEXT_ARG();
 			idev = *argv;
+		} else if (matches(*argv, "mark") == 0) {
+			NEXT_ARG();
+			get_unsigned(&mark, *argv, 0);
 		} else if (matches(*argv, "oif") == 0 ||
 			   strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
@@ -1373,6 +1401,8 @@ int iproute_get(int argc, char **argv)
 			addattr32(&req.n, sizeof(req), RTA_OIF, idx);
 		}
 	}
+	if (mark)
+		addattr32(&req.n, sizeof(req), RTA_MARK, mark);
 
 	if (req.r.rtm_family == AF_UNSPEC)
 		req.r.rtm_family = AF_INET;
