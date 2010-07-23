@@ -30,7 +30,7 @@
 const char * ll_type_n2a(int type, char *buf, int len)
 {
 #define __PF(f,n) { ARPHRD_##f, #n },
-static struct {
+static const struct {
 	int type;
 	const char *name;
 } arphrd_names[] = {
@@ -40,25 +40,14 @@ __PF(EETHER,eether)
 __PF(AX25,ax25)
 __PF(PRONET,pronet)
 __PF(CHAOS,chaos)
-#ifdef ARPHRD_IEEE802_TR
 __PF(IEEE802,ieee802)
-#else
-__PF(IEEE802,tr)
-#endif
 __PF(ARCNET,arcnet)
 __PF(APPLETLK,atalk)
 __PF(DLCI,dlci)
-#ifdef ARPHRD_ATM
 __PF(ATM,atm)
-#endif
 __PF(METRICOM,metricom)
-#ifdef ARPHRD_IEEE1394
 __PF(IEEE1394,ieee1394)
-#endif
-#ifdef ARPHRD_INFINIBAND
 __PF(INFINIBAND,infiniband)
-#endif
-
 __PF(SLIP,slip)
 __PF(CSLIP,cslip)
 __PF(SLIP6,slip6)
@@ -67,20 +56,13 @@ __PF(RSRVD,rsrvd)
 __PF(ADAPT,adapt)
 __PF(ROSE,rose)
 __PF(X25,x25)
-#ifdef ARPHRD_HWX25
 __PF(HWX25,hwx25)
-#endif
 __PF(CAN,can)
 __PF(PPP,ppp)
 __PF(HDLC,hdlc)
 __PF(LAPB,lapb)
-#ifdef ARPHRD_DDCMP
 __PF(DDCMP,ddcmp)
-#endif
-#ifdef ARPHRD_RAWHDLC
 __PF(RAWHDLC,rawhdlc)
-#endif
-
 __PF(TUNNEL,ipip)
 __PF(TUNNEL6,tunnel6)
 __PF(FRAD,frad)
@@ -113,24 +95,17 @@ __PF(FCFABRIC+9,fcfb9)
 __PF(FCFABRIC+10,fcfb10)
 __PF(FCFABRIC+11,fcfb11)
 __PF(FCFABRIC+12,fcfb12)
-#ifdef ARPHRD_IEEE802_TR
 __PF(IEEE802_TR,tr)
-#endif
-#ifdef ARPHRD_IEEE80211
 __PF(IEEE80211,ieee802.11)
-#endif
-#ifdef ARPHRD_IEEE80211_PRISM
 __PF(IEEE80211_PRISM,ieee802.11/prism)
-#endif
-#ifdef ARPHRD_IEEE80211_RADIOTAP
 __PF(IEEE80211_RADIOTAP,ieee802.11/radiotap)
-#endif
-#ifdef ARPHRD_NONE
+__PF(IEEE802154, ieee802.15.4)
+__PF(PHONET, phonet)
+__PF(PHONET_PIPE, phonet_pipe)
+__PF(CAIF, caif)
+
 __PF(NONE, none)
-#endif
-#ifdef ARPHRD_VOID
 __PF(VOID,void)
-#endif
 };
 #undef __PF
 
