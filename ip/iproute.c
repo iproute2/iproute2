@@ -494,7 +494,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			val = *(unsigned*)RTA_DATA(mxrta[i]);
 			switch (i) {
 			case RTAX_HOPLIMIT:
-				if ((long)val == -1)
+				if ((int)val == -1)
 					val = 0;
 				/* fall through */
 			default:
