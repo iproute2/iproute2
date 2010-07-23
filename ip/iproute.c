@@ -160,14 +160,11 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (r->rtm_family == AF_INET6 && table != RT_TABLE_MAIN)
 		ip6_multiple_tables = 1;
 
+	if (filter.cloned == !(r->rtm_flags&RTM_F_CLONED))
+		return 0;
+
 	if (r->rtm_family == AF_INET6 && !ip6_multiple_tables) {
-		if (filter.cloned) {
-			if (!(r->rtm_flags&RTM_F_CLONED))
-				return 0;
-		}
 		if (filter.tb) {
-			if (!filter.cloned && r->rtm_flags&RTM_F_CLONED)
-				return 0;
 			if (filter.tb == RT_TABLE_LOCAL) {
 				if (r->rtm_type != RTN_LOCAL)
 					return 0;
@@ -179,10 +176,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			}
 		}
 	} else {
-		if (filter.cloned) {
-			if (!(r->rtm_flags&RTM_F_CLONED))
-				return 0;
-		}
 		if (filter.tb > 0 && filter.tb != table)
 			return 0;
 	}
