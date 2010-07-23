@@ -482,7 +482,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			if (mxrta[i] == NULL)
 				continue;
 			if (!hz)
-				hz = get_hz();
+				hz = get_user_hz();
 
 			if (i < sizeof(mx_names)/sizeof(char*) && mx_names[i])
 				fprintf(fp, " %s", mx_names[i]);
