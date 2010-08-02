@@ -99,7 +99,7 @@ restart_s:
 	}
 
 	snprintf(buf, sizeof(buf), "%s/m_%s.so", get_tc_lib(), str);
-	dlh = dlopen(buf, RTLD_LAZY);
+	dlh = dlopen(buf, RTLD_LAZY | RTLD_GLOBAL);
 	if (dlh == NULL) {
 		dlh = aBODY;
 		if (dlh == NULL) {
