@@ -448,7 +448,6 @@ static int parse_ether_addr(int *argc_p, char ***argv_p,
 	char **argv = *argv_p;
 	__u8 addr[6];
 	int offmask = 0;
-	__u32 key;
 	int i;
 
 	if (argc < 1)
@@ -469,10 +468,8 @@ static int parse_ether_addr(int *argc_p, char ***argv_p,
 			return -1;
 	}
 
-	for (i = 0; i < 6; i += 2) {
-		key = *(__u16 *) (addr + i);
-		
-		res = pack_key16(sel, key, 0xFFFF, off + i, offmask);
+	for (i = 0; i < 6; i++) {
+		res = pack_key8(sel, addr[i], 0xFF, off + i, offmask);
 		if (res < 0)
 			return -1;
 	}
