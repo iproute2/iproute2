@@ -189,6 +189,8 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 	while (1) {
 		int status;
 		const struct rtnl_dump_filter_arg *a;
+		int found_done = 0;
+		int msglen = 0;
 
 		iov.iov_len = sizeof(buf);
 		status = recvmsg(rth->fd, &msg, 0);
@@ -208,8 +210,9 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 
 		for (a = arg; a->filter; a++) {
 			struct nlmsghdr *h = (struct nlmsghdr*)buf;
+			msglen = status;
 
-			while (NLMSG_OK(h, status)) {
+			while (NLMSG_OK(h, msglen)) {
 				int err;
 
 				if (nladdr.nl_pid != 0 ||
@@ -224,8 +227,10 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 					goto skip_it;
 				}
 
-				if (h->nlmsg_type == NLMSG_DONE)
-					return 0;
+				if (h->nlmsg_type == NLMSG_DONE) {
+					found_done = 1;
+					break; /* process next filter */
+				}
 				if (h->nlmsg_type == NLMSG_ERROR) {
 					struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
 					if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
@@ -242,15 +247,19 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 					return err;
 
 skip_it:
-				h = NLMSG_NEXT(h, status);
+				h = NLMSG_NEXT(h, msglen);
 			}
-		} while (0);
+		}
+
+		if (found_done)
+			return 0;
+
 		if (msg.msg_flags & MSG_TRUNC) {
 			fprintf(stderr, "Message truncated\n");
 			continue;
 		}
-		if (status) {
-			fprintf(stderr, "!!!Remnant of size %d\n", status);
+		if (msglen) {
+			fprintf(stderr, "!!!Remnant of size %d\n", msglen);
 			exit(1);
 		}
 	}

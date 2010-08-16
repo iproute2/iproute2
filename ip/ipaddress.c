@@ -453,6 +453,8 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	int deprecated = 0;
+	/* Use local copy of ifa_flags to not interfere with filtering code */
+	unsigned int ifa_flags;
 	struct rtattr * rta_tb[IFA_MAX+1];
 	char abuf[256];
 	SPRINT_BUF(b1);
@@ -572,40 +574,41 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 				    abuf, sizeof(abuf)));
 	}
 	fprintf(fp, "scope %s ", rtnl_rtscope_n2a(ifa->ifa_scope, b1, sizeof(b1)));
+	ifa_flags = ifa->ifa_flags;
 	if (ifa->ifa_flags&IFA_F_SECONDARY) {
-		ifa->ifa_flags &= ~IFA_F_SECONDARY;
+		ifa_flags &= ~IFA_F_SECONDARY;
 		if (ifa->ifa_family == AF_INET6)
 			fprintf(fp, "temporary ");
 		else
 			fprintf(fp, "secondary ");
 	}
 	if (ifa->ifa_flags&IFA_F_TENTATIVE) {
-		ifa->ifa_flags &= ~IFA_F_TENTATIVE;
+		ifa_flags &= ~IFA_F_TENTATIVE;
 		fprintf(fp, "tentative ");
 	}
 	if (ifa->ifa_flags&IFA_F_DEPRECATED) {
-		ifa->ifa_flags &= ~IFA_F_DEPRECATED;
+		ifa_flags &= ~IFA_F_DEPRECATED;
 		deprecated = 1;
 		fprintf(fp, "deprecated ");
 	}
 	if (ifa->ifa_flags&IFA_F_HOMEADDRESS) {
-		ifa->ifa_flags &= ~IFA_F_HOMEADDRESS;
+		ifa_flags &= ~IFA_F_HOMEADDRESS;
 		fprintf(fp, "home ");
 	}
 	if (ifa->ifa_flags&IFA_F_NODAD) {
-		ifa->ifa_flags &= ~IFA_F_NODAD;
+		ifa_flags &= ~IFA_F_NODAD;
 		fprintf(fp, "nodad ");
 	}
 	if (!(ifa->ifa_flags&IFA_F_PERMANENT)) {
 		fprintf(fp, "dynamic ");
 	} else
-		ifa->ifa_flags &= ~IFA_F_PERMANENT;
+		ifa_flags &= ~IFA_F_PERMANENT;
 	if (ifa->ifa_flags&IFA_F_DADFAILED) {
-		ifa->ifa_flags &= ~IFA_F_DADFAILED;
+		ifa_flags &= ~IFA_F_DADFAILED;
 		fprintf(fp, "dadfailed ");
 	}
-	if (ifa->ifa_flags)
-		fprintf(fp, "flags %02x ", ifa->ifa_flags);
+	if (ifa_flags)
+		fprintf(fp, "flags %02x ", ifa_flags);
 	if (rta_tb[IFA_LABEL])
 		fprintf(fp, "%s", (char*)RTA_DATA(rta_tb[IFA_LABEL]));
 	if (rta_tb[IFA_CACHEINFO]) {
@@ -638,7 +641,7 @@ int print_addrinfo_primary(const struct sockaddr_nl *who, struct nlmsghdr *n,
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
-	if (!ifa->ifa_flags & IFA_F_SECONDARY)
+	if (ifa->ifa_flags & IFA_F_SECONDARY)
 		return 0;
 
 	return print_addrinfo(who, n, arg);
@@ -649,7 +652,7 @@ int print_addrinfo_secondary(const struct sockaddr_nl *who, struct nlmsghdr *n,
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
-	if (ifa->ifa_flags & IFA_F_SECONDARY)
+	if (!(ifa->ifa_flags & IFA_F_SECONDARY))
 		return 0;
 
 	return print_addrinfo(who, n, arg);
@@ -849,6 +852,7 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 				exit(1);
 			}
 			if (filter.flushed == 0) {
+flush_done:
 				if (show_stats) {
 					if (round == 0)
 						printf("Nothing to flush.\n");
@@ -866,6 +870,14 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 				printf("\n*** Round %d, deleting %d addresses ***\n", round, filter.flushed);
 				fflush(stdout);
 			}
+
+			/* If we are flushing, and specifying primary, then we
+			 * want to flush only a single round.  Otherwise, we'll
+			 * start flushing secondaries that were promoted to
+			 * primaries.
+			 */
+			if (!(filter.flags & IFA_F_SECONDARY) && (filter.flagmask & IFA_F_SECONDARY))
+				goto flush_done;
 		}
 		fprintf(stderr, "*** Flush remains incomplete after %d rounds. ***\n", MAX_ROUNDS); fflush(stderr);
 		return 1;
