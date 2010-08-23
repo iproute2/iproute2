@@ -29,7 +29,8 @@
 #include <getopt.h>
 
 #include <libnetlink.h>
-#include <linux/netdevice.h>
+#include <linux/if.h>
+#include <linux/if_link.h>
 
 #include <SNAPSHOT.h>
 
@@ -48,7 +49,7 @@ int npatterns;
 char info_source[128];
 int source_mismatch;
 
-#define MAXS (sizeof(struct net_device_stats)/sizeof(unsigned long))
+#define MAXS (sizeof(struct rtnl_link_stats)/sizeof(unsigned long))
 
 struct ifstat_ent
 {
@@ -677,9 +678,11 @@ int main(int argc, char *argv[])
 	npatterns = argc;
 
 	if (getenv("IFSTAT_HISTORY"))
-		snprintf(hist_name, sizeof(hist_name), getenv("IFSTAT_HISTORY"));
+		snprintf(hist_name, sizeof(hist_name),
+			 "%s", getenv("IFSTAT_HISTORY"));
 	else
-		sprintf(hist_name, "%s/.ifstat.u%d", P_tmpdir, getuid());
+		snprintf(hist_name, sizeof(hist_name),
+			 "%s/.ifstat.u%d", P_tmpdir, getuid());
 
 	if (reset_history)
 		unlink(hist_name);
