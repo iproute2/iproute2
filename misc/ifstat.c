@@ -49,7 +49,7 @@ int npatterns;
 char info_source[128];
 int source_mismatch;
 
-#define MAXS (sizeof(struct rtnl_link_stats)/sizeof(unsigned long))
+#define MAXS (sizeof(struct rtnl_link_stats)/sizeof(__u32))
 
 struct ifstat_ent
 {
@@ -58,7 +58,7 @@ struct ifstat_ent
 	int			ifindex;
 	unsigned long long	val[MAXS];
 	double			rate[MAXS];
-	unsigned long		ival[MAXS];
+	__u32			ival[MAXS];
 };
 
 struct ifstat_ent *kern_db;
@@ -187,7 +187,7 @@ void load_raw_table(FILE *fp)
 			*next++ = 0;
 			if (sscanf(p, "%llu", n->val+i) != 1)
 				abort();
-			n->ival[i] = (unsigned long)n->val[i];
+			n->ival[i] = (__u32)n->val[i];
 			p = next;
 			if (!(next = strchr(p, ' ')))
 				abort();
@@ -563,8 +563,6 @@ static void usage(void)
 "   -s, --noupdate	don;t update history\n"
 "   -t, --interval=SECS	report average over the last SECS\n"
 "   -V, --version	output version information\n"
-"   -z, --zeros		show entries with zero activity\n"
-"   -e, --errors	show errors\n"
 "   -z, --zeros		show entries with zero activity\n");
 
 	exit(-1);
@@ -580,8 +578,6 @@ static const struct option longopts[] = {
 	{ "noupdate", 0, 0, 's' },
 	{ "interval", 1, 0, 't' },
 	{ "version", 0, 0, 'V' },
-	{ "zeros", 0, 0, 'z' },
-	{ "errors", 0, 0, 'e' },
 	{ "zeros", 0, 0, 'z' },
 	{ 0 }
 };
