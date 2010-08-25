@@ -51,7 +51,7 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 {
 
 	struct rtattr *tail;
-	struct tc_gred_sopt opt;
+	struct tc_gred_sopt opt = { 0 };
 	int dps = 0;
 	int def_dp = -1;
 
@@ -83,7 +83,7 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 		} else if (strcmp(*argv, "grio") == 0) {
-			opt.grio=1;
+			opt.grio = 1;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -100,7 +100,6 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 
-	memset(&opt, 0, sizeof(struct tc_gred_sopt));
 	opt.DPs = dps;
 	opt.def_DP = def_dp;
 
