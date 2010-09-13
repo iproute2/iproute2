@@ -861,7 +861,12 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 	STRBUF_CAT(buf, "\t");
 
 	fputs(buf, fp);
-	fprintf(fp, "dir ");
+	if (xpinfo->dir >= XFRM_POLICY_MAX) {
+		xpinfo->dir -= XFRM_POLICY_MAX;
+		fprintf(fp, "socket ");
+	} else
+		fprintf(fp, "dir ");
+
 	switch (xpinfo->dir) {
 	case XFRM_POLICY_IN:
 		fprintf(fp, "in");
