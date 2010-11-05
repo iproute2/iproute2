@@ -613,23 +613,21 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		fprintf(fp, "%s", (char*)RTA_DATA(rta_tb[IFA_LABEL]));
 	if (rta_tb[IFA_CACHEINFO]) {
 		struct ifa_cacheinfo *ci = RTA_DATA(rta_tb[IFA_CACHEINFO]);
-		char buf[128];
 		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "       valid_lft ");
 		if (ci->ifa_valid == INFINITY_LIFE_TIME)
-			sprintf(buf, "valid_lft forever");
+			fprintf(fp, "forever");
 		else
-			sprintf(buf, "valid_lft %usec", ci->ifa_valid);
+			fprintf(fp, "%usec", ci->ifa_valid);
+		fprintf(fp, " preferred_lft ");
 		if (ci->ifa_prefered == INFINITY_LIFE_TIME)
-			sprintf(buf+strlen(buf), " preferred_lft forever");
+			fprintf(fp, "forever");
 		else {
 			if (deprecated)
-				sprintf(buf+strlen(buf), " preferred_lft %dsec",
-					ci->ifa_prefered);
+				fprintf(fp, "%dsec", ci->ifa_prefered);
 			else
-				sprintf(buf+strlen(buf), " preferred_lft %usec",
-					ci->ifa_prefered);
+				fprintf(fp, "%usec", ci->ifa_prefered);
 		}
-		fprintf(fp, "       %s", buf);
 	}
 	fprintf(fp, "\n");
 	fflush(fp);
