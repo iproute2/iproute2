@@ -78,7 +78,9 @@ clean:
 	@for i in $(SUBDIRS) doc; \
 	do $(MAKE) $(MFLAGS) -C $$i clean; done
 
-clobber: clean
+clobber:
+	touch Config
+	$(MAKE) $(MFLAGS) clean
 	rm -f Config
 
 distclean: clobber
