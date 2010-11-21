@@ -88,7 +88,7 @@ build_st(struct xtables_target *target, struct xt_entry_target *t)
 		target->t = xtables_calloc(1, size);
 		target->t->u.target_size = size;
 		strcpy(target->t->u.user.name, target->name);
-		xtables_set_revision(target->t->u.user.name, target->revision);
+		target->t->u.user.revision = target->revision;
 
 		if (target->init != NULL)
 			target->init(target->t);
