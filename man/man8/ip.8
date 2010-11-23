@@ -547,7 +547,10 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .RB " [ " type
 .IR NUMBER " ] "
 .RB " [ " code
-.IR NUMBER " ]] "
+.IR NUMBER " ] | "
+.br
+.RB " [ " key
+.IR KEY " ]] "
 
 .ti -8
 .IR LIMIT-LIST " := [ " LIMIT-LIST " ] |"
@@ -642,7 +645,10 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .RB " [ " type
 .IR NUMBER " ] "
 .RB " [ " code
-.IR NUMBER " ] ] "
+.IR NUMBER " ] | "
+.br
+.RB " [ " key
+.IR KEY " ] ] "
 
 .ti -8
 .IR ACTION " := "
@@ -2487,9 +2493,11 @@ is defined by source port
 .BR sport ", "
 destination port
 .BR dport ", " type
-as number and
+as number,
 .B code
-also number.
+also number and
+.BR key
+as dotted-quad or number.
 
 .TP
 .BI dev " DEV "
@@ -2556,11 +2564,10 @@ and the other choice is
 .TP
 .IR UPSPEC
 is specified by
-.BR sport ", "
-.BR dport ", " type
-and
-.B code
-(NUMBER).
+.BR sport " and " dport " (for UDP/TCP), "
+.BR type " and " code " (for ICMP; as number) or "
+.BR key " (for GRE; as dotted-quad or number)."
+.
 
 .SS ip xfrm monitor - is used for listing all objects or defined group of them.
 The

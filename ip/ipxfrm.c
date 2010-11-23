@@ -483,6 +483,12 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		if (sel->dport_mask)
 			fprintf(fp, "code %u ", ntohs(sel->dport));
 		break;
+	case IPPROTO_GRE:
+		if (sel->sport_mask || sel->dport_mask)
+			fprintf(fp, "key %u ",
+				(((__u32)ntohs(sel->sport)) << 16) +
+				ntohs(sel->dport));
+		break;
 	case IPPROTO_MH:
 		if (sel->sport_mask)
 			fprintf(fp, "type %u ", ntohs(sel->sport));
@@ -1086,6 +1092,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 	char *dportp = NULL;
 	char *typep = NULL;
 	char *codep = NULL;
+	char *grekey = NULL;
 
 	while (1) {
 		if (strcmp(*argv, "proto") == 0) {
@@ -1162,6 +1169,29 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 
 			filter.upspec_dport_mask = XFRM_FILTER_MASK_FULL;
 
+		} else if (strcmp(*argv, "key") == 0) {
+			unsigned uval;
+
+			grekey = *argv;
+
+			NEXT_ARG();
+
+			if (strchr(*argv, '.'))
+				uval = htonl(get_addr32(*argv));
+			else {
+				if (get_unsigned(&uval, *argv, 0)<0) {
+					fprintf(stderr, "invalid value of \"key\"\n");
+					exit(-1);
+				}
+			}
+
+			sel->sport = htons(uval >> 16);
+			sel->dport = htons(uval & 0xffff);
+			sel->sport_mask = ~((__u16)0);
+			sel->dport_mask = ~((__u16)0);
+
+			filter.upspec_dport_mask = XFRM_FILTER_MASK_FULL;
+
 		} else {
 			PREV_ARG(); /* back track */
 			break;
@@ -1193,6 +1223,15 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 			break;
 		default:
 			fprintf(stderr, "\"type\" and \"code\" are invalid with proto=%s\n", strxf_proto(sel->proto));
+			exit(1);
+		}
+	}
+	if (grekey) {
+		switch (sel->proto) {
+		case IPPROTO_GRE:
+			break;
+		default:
+			fprintf(stderr, "\"key\" is invalid with proto=%s\n", strxf_proto(sel->proto));
 			exit(1);
 		}
 	}
