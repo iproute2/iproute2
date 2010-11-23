@@ -306,12 +306,8 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	struct ip_tunnel_6rd ip6rd;
 	char s1[1024];
 	char s2[1024];
-	char s3[64];
-	char s4[64];
 
 	memset(&ip6rd, 0, sizeof(ip6rd));
-	inet_ntop(AF_INET, &p->i_key, s3, sizeof(s3));
-	inet_ntop(AF_INET, &p->o_key, s4, sizeof(s4));
 
 	/* Do not use format_host() for local addr,
 	 * symbolic name will not be useful.
@@ -377,12 +373,12 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	}
 
 	if ((p->i_flags&GRE_KEY) && (p->o_flags&GRE_KEY) && p->o_key == p->i_key)
-		printf(" key %s", s3);
+		printf(" key %u", ntohl(p->i_key));
 	else if ((p->i_flags|p->o_flags)&GRE_KEY) {
 		if (p->i_flags&GRE_KEY)
-			printf(" ikey %s ", s3);
+			printf(" ikey %u ", ntohl(p->i_key));
 		if (p->o_flags&GRE_KEY)
-			printf(" okey %s ", s4);
+			printf(" okey %u ", ntohl(p->o_key));
 	}
 
 	if (p->i_flags&GRE_SEQ)
