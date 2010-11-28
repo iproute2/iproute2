@@ -18,8 +18,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
-#include <linux/if.h>
-#include <linux/if_arp.h>
+#include <net/if.h>
+#include <net/if_arp.h>
 #include <linux/ip.h>
 #include <linux/if_tunnel.h>
 
@@ -231,7 +231,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 	}
 
 	if (medium[0]) {
-		p->link = tnl_ioctl_get_ifindex(medium);
+		p->link = if_nametoindex(medium);
 		if (p->link == 0)
 			return -1;
 	}
@@ -342,7 +342,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	}
 
 	if (p->link) {
-		char *n = tnl_ioctl_get_ifname(p->link);
+		const char *n = ll_index_to_name(p->link);
 		if (n)
 			printf(" dev %s ", n);
 	}
@@ -402,7 +402,6 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 	rx_fifo, rx_frame,
 	tx_bytes, tx_packets, tx_errs, tx_drops,
 	tx_fifo, tx_colls, tx_carrier, rx_multi;
-	int type;
 	struct ip_tunnel_parm p1;
 
 	char buf[512];
@@ -416,6 +415,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 	fgets(buf, sizeof(buf), fp);
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		int index, type;
 		char *ptr;
 		buf[sizeof(buf) - 1] = 0;
 		if ((ptr = strchr(buf, ':')) == NULL ||
@@ -431,7 +431,10 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 			continue;
 		if (p->name[0] && strcmp(p->name, name))
 			continue;
-		type = tnl_ioctl_get_iftype(name);
+		index = ll_name_to_index(name);
+		if (index == 0)
+			continue;
+		type = ll_index_to_type(index);
 		if (type == -1) {
 			fprintf(stderr, "Failed to get type of [%s]\n", name);
 			continue;
@@ -467,6 +470,7 @@ static int do_show(int argc, char **argv)
 	int err;
 	struct ip_tunnel_parm p;
 
+	ll_init_map(&rth);
 	if (parse_args(argc, argv, SIOCGETTUNNEL, &p) < 0)
 		return -1;
 

@@ -206,7 +206,7 @@ get_failed:
 				saddr = get_addr32(*argv);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
-			link = tnl_ioctl_get_ifindex(*argv);
+			link = if_nametoindex(*argv);
 			if (link == 0)
 				exit(-1);
 		} else if (!matches(*argv, "ttl") ||
@@ -298,7 +298,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GRE_LINK] && *(__u32 *)RTA_DATA(tb[IFLA_GRE_LINK])) {
 		unsigned link = *(__u32 *)RTA_DATA(tb[IFLA_GRE_LINK]);
-		char *n = tnl_ioctl_get_ifname(link);
+		const char *n = if_indextoname(link, s2);
 
 		if (n)
 			fprintf(f, "dev %s ", n);

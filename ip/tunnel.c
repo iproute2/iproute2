@@ -63,58 +63,6 @@ const char *tnl_strproto(__u8 proto)
 	return buf;
 }
 
-int tnl_ioctl_get_ifindex(const char *dev)
-{
-	struct ifreq ifr;
-	int fd;
-	int err;
-
-	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
-	fd = socket(preferred_family, SOCK_DGRAM, 0);
-	err = ioctl(fd, SIOCGIFINDEX, &ifr);
-	if (err) {
-		perror("ioctl");
-		return 0;
-	}
-	close(fd);
-	return ifr.ifr_ifindex;
-}
-
-int tnl_ioctl_get_iftype(const char *dev)
-{
-	struct ifreq ifr;
-	int fd;
-	int err;
-
-	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
-	fd = socket(preferred_family, SOCK_DGRAM, 0);
-	err = ioctl(fd, SIOCGIFHWADDR, &ifr);
-	if (err) {
-		perror("ioctl");
-		return -1;
-	}
-	close(fd);
-	return ifr.ifr_addr.sa_family;
-}
-
-
-char * tnl_ioctl_get_ifname(int idx)
-{
-	static struct ifreq ifr;
-	int fd;
-	int err;
-
-	ifr.ifr_ifindex = idx;
-	fd = socket(preferred_family, SOCK_DGRAM, 0);
-	err = ioctl(fd, SIOCGIFNAME, &ifr);
-	if (err) {
-		perror("ioctl");
-		return NULL;
-	}
-	close(fd);
-	return ifr.ifr_name;
-}
-
 int tnl_get_ioctl(const char *basedev, void *p)
 {
 	struct ifreq ifr;
@@ -126,7 +74,9 @@ int tnl_get_ioctl(const char *basedev, void *p)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCGETTUNNEL, &ifr);
 	if (err)
-		perror("ioctl");
+		fprintf(stderr, "get tunnel %s failed: %s\n", basedev, 
+			strerror(errno));
+
 	close(fd);
 	return err;
 }
@@ -145,7 +95,8 @@ int tnl_add_ioctl(int cmd, const char *basedev, const char *name, void *p)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, cmd, &ifr);
 	if (err)
-		perror("ioctl");
+		fprintf(stderr, "add tunnel %s failed: %s\n", ifr.ifr_name,
+			strerror(errno));
 	close(fd);
 	return err;
 }
@@ -160,16 +111,19 @@ int tnl_del_ioctl(const char *basedev, const char *name, void *p)
 		strncpy(ifr.ifr_name, name, IFNAMSIZ);
 	else
 		strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
+
 	ifr.ifr_ifru.ifru_data = p;
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCDELTUNNEL, &ifr);
 	if (err)
-		perror("ioctl");
+		fprintf(stderr, "delete tunnel %s failed: %s\n",
+			ifr.ifr_name, strerror(errno));
 	close(fd);
 	return err;
 }
 
-static int tnl_gen_ioctl(int cmd, const char *name, void *p, int skiperr)
+static int tnl_gen_ioctl(int cmd, const char *name, 
+			 void *p, int skiperr)
 {
 	struct ifreq ifr;
 	int fd;
@@ -180,7 +134,8 @@ static int tnl_gen_ioctl(int cmd, const char *name, void *p, int skiperr)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, cmd, &ifr);
 	if (err && errno != skiperr)
-		perror("ioctl");
+		fprintf(stderr, "%s: ioctl %x failed: %s\n", name,
+			cmd, strerror(errno));
 	close(fd);
 	return err;
 }
