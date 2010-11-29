@@ -12,6 +12,9 @@ to
 It can display more TCP and state informations than other tools.
 
 .SH OPTIONS
+When no option is used ss displays a list of 
+open non-listening TCP sockets that have established connection.
+.TP
 These programs follow the usual GNU command line syntax, with long
 options starting with two dashes (`-').
 A summary of options is included below.
@@ -29,10 +32,10 @@ Do now try to resolve service names.
 Try to resolve numeric address/ports.
 .TP
 .B \-a, \-\-all
-Display all sockets.
+Display both listening and non-listening (for TCP this means established connections) sockets.
 .TP
 .B \-l, \-\-listening
-Display listening sockets.
+Display only listening sockets (these are omitted by default).
 .TP
 .B \-o, \-\-options
 Show timer information.
@@ -61,22 +64,22 @@ Display only IP version 4 sockets (alias for -f inet).
 Display only IP version 6 sockets (alias for -f inet6).
 .TP
 .B \-0, \-\-packet
-Display PACKET sockets.
+Display PACKET sockets (alias for -f link).
 .TP
 .B \-t, \-\-tcp
-Display only TCP sockets.
+Display TCP sockets.
 .TP
 .B \-u, \-\-udp
-Display only UDP sockets.
+Display UDP sockets.
 .TP
 .B \-d, \-\-dccp
-Display only DCCP sockets.
+Display DCCP sockets.
 .TP
 .B \-w, \-\-raw
-Display only RAW sockets.
+Display RAW sockets.
 .TP
 .B \-x, \-\-unix
-Display only Unix domain sockets.
+Display Unix domain sockets (alias for -f unix).
 .TP
 .B \-f FAMILY, \-\-family=FAMILY
 Display sockets of type FAMILY.
