@@ -32,6 +32,8 @@ int timestamp = 0;
 char * _SL_ = NULL;
 char *batch_file = NULL;
 int force = 0;
+int max_flush_loops = 10;
+
 struct rtnl_handle rth = { .fd = -1 };
 
 static void usage(void) __attribute__((noreturn));
@@ -45,6 +47,7 @@ static void usage(void)
 "                   tunnel | tuntap | maddr | mroute | mrule | monitor | xfrm }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
+"                    -l[oops] { maximum-addr-flush-attempts } |\n"
 "                    -o[neline] | -t[imestamp] | -b[atch] [filename] |\n"
 "                    -rc[vbuf] [size]}\n");
 	exit(-1);
@@ -157,7 +160,13 @@ int main(int argc, char **argv)
 			break;
 		if (opt[1] == '-')
 			opt++;
-		if (matches(opt, "-family") == 0) {
+		if (matches(opt, "-loops") == 0) {
+			argc--;
+			argv++;
+			if (argc <= 1)
+				usage();
+                        max_flush_loops = atoi(argv[1]);
+                } else if (matches(opt, "-family") == 0) {
 			argc--;
 			argv++;
 			if (argc <= 1)

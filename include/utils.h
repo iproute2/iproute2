@@ -17,6 +17,7 @@ extern int resolve_hosts;
 extern int oneline;
 extern int timestamp;
 extern char * _SL_;
+extern int max_flush_loops;
 
 #ifndef IPPROTO_ESP
 #define IPPROTO_ESP	50

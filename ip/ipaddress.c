@@ -33,7 +33,6 @@
 #include "ll_map.h"
 #include "ip_common.h"
 
-#define MAX_ROUNDS 10
 
 static struct
 {
@@ -819,7 +818,7 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		filter.flushp = 0;
 		filter.flushe = sizeof(flushb);
 
-		while (round < MAX_ROUNDS) {
+		while ((max_flush_loops == 0) || (round < max_flush_loops)) {
 			const struct rtnl_dump_filter_arg a[3] = {
 				{
 					.filter = print_addrinfo_secondary,
@@ -877,7 +876,8 @@ flush_done:
 			if (!(filter.flags & IFA_F_SECONDARY) && (filter.flagmask & IFA_F_SECONDARY))
 				goto flush_done;
 		}
-		fprintf(stderr, "*** Flush remains incomplete after %d rounds. ***\n", MAX_ROUNDS); fflush(stderr);
+		fprintf(stderr, "*** Flush remains incomplete after %d rounds. ***\n", max_flush_loops);
+		fflush(stderr);
 		return 1;
 	}
 
