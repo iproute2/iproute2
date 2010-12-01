@@ -34,6 +34,7 @@ TCMODULES += m_mirred.o
 TCMODULES += m_nat.o
 TCMODULES += m_pedit.o
 TCMODULES += m_skbedit.o
+TCMODULES += m_csum.o
 TCMODULES += p_ip.o
 TCMODULES += p_icmp.o
 TCMODULES += p_tcp.o
