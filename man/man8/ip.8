@@ -158,6 +158,13 @@ tentative " | " deprecated " | " dadfailed " | " temporary " ]"
 .I  SELECTOR
 
 .ti -8
+.BR "ip route save"
+.I SELECTOR
+
+.ti -8
+.BR "ip route restore"
+
+.ti -8
 .B  ip route get
 .IR ADDRESS " [ "
 .BI from " ADDRESS " iif " STRING"
@@ -1957,6 +1964,21 @@ however, no packets are actually sent.  With the
 .B iif
 argument, the kernel pretends that a packet arrived from this interface
 and searches for a path to forward the packet.
+
+.SS ip route save - save routing table information to stdout
+this command behaves like
+.BR "ip route show"
+except that the output is raw data suitable for passing to
+.BR "ip route restore" .
+
+.SS ip route restore - restore routing table information from stdin
+this command expects to read a data stream as returned from
+.BR "ip route save" .
+It will attempt to restore the routing table information exactly as
+it was at the time of the save, so any translation of information
+in the stream (such as device indexes) must be done first.  Any existing
+routes are left unchanged.  Any routes specified in the data stream that
+already exist in the table will be ignored.
 
 .SH ip rule - routing policy database management
 

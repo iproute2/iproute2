@@ -1675,6 +1675,41 @@ information about this route is shown:
 \item \verb|used| --- the number of lookups of this route since its creation.
 \end{itemize}
 
+\subsection{{\tt ip route save} -- save routing tables}
+\label{IP-ROUTE-SAVE}
+
+\paragraph{Description:} this command saves the contents of the routing
+tables or the route(s) selected by some criteria to standard output.
+
+\paragraph{Arguments:} \verb|ip route save| has the same arguments as
+\verb|ip route show|.
+
+\paragraph{Example:} This saves all the routes to the {\tt saved\_routes}
+file:
+\begin{verbatim}
+dan@caffeine:~ # ip route save > saved_routes
+\end{verbatim}
+
+\paragraph{Output format:} The format of the data stream provided by
+\verb|ip route save| is that of \verb|rtnetlink|.  See
+\verb|rtnetlink(7)| for more information.
+
+\subsection{{\tt ip route restore} -- restore routing tables}
+\label{IP-ROUTE-RESTORE}
+
+\paragraph{Description:} this command restores the contents of the routing
+tables according to a data stream as provided by \verb|ip route save| via
+standard input.  Note that any routes already in the table are left unchanged.
+Any routes in the input stream that already exist in the tables are ignored.
+
+\paragraph{Arguments:} This command takes no arguments.
+
+\paragraph{Example:} This restores all routes that were saved to the
+{\tt saved\_routes} file:
+
+\begin{verbatim}
+dan@caffeine:~ # ip route restore < saved_routes
+\end{verbatim}
 
 \subsection{{\tt ip route flush} --- flush routing tables}
 \label{IP-ROUTE-FLUSH}
