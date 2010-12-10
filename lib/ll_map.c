@@ -18,32 +18,38 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <linux/if.h>
 
 #include "libnetlink.h"
 #include "ll_map.h"
 
 extern unsigned int if_nametoindex (const char *);
 
-struct idxmap
+struct ll_cache
 {
-	struct idxmap * next;
-	unsigned	index;
-	int		type;
-	int		alen;
+	struct ll_cache   *idx_next;
 	unsigned	flags;
+	int		index;
+	unsigned short	type;
+	unsigned short	alen;
+	char		name[IFNAMSIZ];
 	unsigned char	addr[20];
-	char		name[16];
 };
 
 #define IDXMAP_SIZE	1024
-static struct idxmap *idxmap[IDXMAP_SIZE];
+static struct ll_cache *idx_head[IDXMAP_SIZE];
+
+static inline struct ll_cache *idxhead(int idx)
+{
+	return idx_head[idx & (IDXMAP_SIZE - 1)];
+}
 
 int ll_remember_index(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg)
 {
 	int h;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
-	struct idxmap *im, **imp;
+	struct ll_cache *im, **imp;
 	struct rtattr *tb[IFLA_MAX+1];
 
 	if (n->nlmsg_type != RTM_NEWLINK)
@@ -58,7 +64,7 @@ int ll_remember_index(const struct sockaddr_nl *who,
 		return 0;
 
 	h = ifi->ifi_index & (IDXMAP_SIZE - 1);
-	for (imp = &idxmap[h]; (im=*imp)!=NULL; imp = &im->next)
+	for (imp = &idx_head[h]; (im=*imp)!=NULL; imp = &im->idx_next)
 		if (im->index == ifi->ifi_index)
 			break;
 
@@ -66,7 +72,7 @@ int ll_remember_index(const struct sockaddr_nl *who,
 		im = malloc(sizeof(*im));
 		if (im == NULL)
 			return 0;
-		im->next = *imp;
+		im->idx_next = *imp;
 		im->index = ifi->ifi_index;
 		*imp = im;
 	}
@@ -89,33 +95,34 @@ int ll_remember_index(const struct sockaddr_nl *who,
 
 const char *ll_idx_n2a(unsigned idx, char *buf)
 {
-	struct idxmap *im;
+	const struct ll_cache *im;
 
 	if (idx == 0)
 		return "*";
 
-	for (im = idxmap[idx & (IDXMAP_SIZE - 1)]; im; im = im->next)
+	for (im = idxhead(idx); im; im = im->idx_next)
 		if (im->index == idx)
 			return im->name;
-	snprintf(buf, 16, "if%d", idx);
+
+	snprintf(buf, IFNAMSIZ, "if%d", idx);
 	return buf;
 }
 
 
 const char *ll_index_to_name(unsigned idx)
 {
-	static char nbuf[16];
+	static char nbuf[IFNAMSIZ];
 
 	return ll_idx_n2a(idx, nbuf);
 }
 
 int ll_index_to_type(unsigned idx)
 {
-	struct idxmap *im;
+	const struct ll_cache *im;
 
 	if (idx == 0)
 		return -1;
-	for (im = idxmap[idx&0xF]; im; im = im->next)
+	for (im = idxhead(idx); im; im = im->idx_next)
 		if (im->index == idx)
 			return im->type;
 	return -1;
@@ -123,12 +130,12 @@ int ll_index_to_type(unsigned idx)
 
 unsigned ll_index_to_flags(unsigned idx)
 {
-	struct idxmap *im;
+	const struct ll_cache *im;
 
 	if (idx == 0)
 		return 0;
 
-	for (im = idxmap[idx&0xF]; im; im = im->next)
+	for (im = idxhead(idx); im; im = im->idx_next)
 		if (im->index == idx)
 			return im->flags;
 	return 0;
@@ -137,12 +144,12 @@ unsigned ll_index_to_flags(unsigned idx)
 unsigned ll_index_to_addr(unsigned idx, unsigned char *addr,
 			  unsigned alen)
 {
-	struct idxmap *im;
+	const struct ll_cache *im;
 
 	if (idx == 0)
 		return 0;
 
-	for (im = idxmap[idx&0xF]; im; im = im->next) {
+	for (im = idxhead(idx); im; im = im->idx_next) {
 		if (im->index == idx) {
 			if (alen > sizeof(im->addr))
 				alen = sizeof(im->addr);
@@ -157,18 +164,20 @@ unsigned ll_index_to_addr(unsigned idx, unsigned char *addr,
 
 unsigned ll_name_to_index(const char *name)
 {
-	static char ncache[16];
+	static char ncache[IFNAMSIZ];
 	static int icache;
-	struct idxmap *im;
+	struct ll_cache *im;
 	int i;
 	unsigned idx;
 
 	if (name == NULL)
 		return 0;
+
 	if (icache && strcmp(name, ncache) == 0)
 		return icache;
-	for (i=0; i<16; i++) {
-		for (im = idxmap[i]; im; im = im->next) {
+
+	for (i=0; i<IDXMAP_SIZE; i++) {
+		for (im = idx_head[i]; im; im = im->idx_next) {
 			if (strcmp(im->name, name) == 0) {
 				icache = im->index;
 				strcpy(ncache, name);
@@ -195,7 +204,7 @@ int ll_init_map(struct rtnl_handle *rth)
 		exit(1);
 	}
 
-	if (rtnl_dump_filter(rth, ll_remember_index, &idxmap, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(rth, ll_remember_index, NULL, NULL, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
