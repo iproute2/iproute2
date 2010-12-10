@@ -185,6 +185,11 @@ unsigned ll_name_to_index(const char *name)
 
 int ll_init_map(struct rtnl_handle *rth)
 {
+	static int initialized;
+
+	if (initialized)
+		return 0;
+
 	if (rtnl_wilddump_request(rth, AF_UNSPEC, RTM_GETLINK) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
@@ -194,5 +199,8 @@ int ll_init_map(struct rtnl_handle *rth)
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
+
+	initialized = 1;
+
 	return 0;
 }
