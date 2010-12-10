@@ -35,7 +35,8 @@ struct idxmap
 	char		name[16];
 };
 
-static struct idxmap *idxmap[16];
+#define IDXMAP_SIZE	1024
+static struct idxmap *idxmap[IDXMAP_SIZE];
 
 int ll_remember_index(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg)
@@ -51,15 +52,13 @@ int ll_remember_index(const struct sockaddr_nl *who,
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(ifi)))
 		return -1;
 
-
 	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), IFLA_PAYLOAD(n));
 	if (tb[IFLA_IFNAME] == NULL)
 		return 0;
 
-	h = ifi->ifi_index&0xF;
-
-	for (imp=&idxmap[h]; (im=*imp)!=NULL; imp = &im->next)
+	h = ifi->ifi_index & (IDXMAP_SIZE - 1);
+	for (imp = &idxmap[h]; (im=*imp)!=NULL; imp = &im->next)
 		if (im->index == ifi->ifi_index)
 			break;
 
@@ -94,7 +93,8 @@ const char *ll_idx_n2a(unsigned idx, char *buf)
 
 	if (idx == 0)
 		return "*";
-	for (im = idxmap[idx&0xF]; im; im = im->next)
+
+	for (im = idxmap[idx & (IDXMAP_SIZE - 1)]; im; im = im->next)
 		if (im->index == idx)
 			return im->name;
 	snprintf(buf, 16, "if%d", idx);
