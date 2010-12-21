@@ -840,7 +840,7 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 				mxlock |= (1<<RTAX_RTT);
 				NEXT_ARG();
 			}
-			if (get_jiffies(&rtt, *argv, 0, &raw))
+			if (get_jiffies(&rtt, *argv, &raw))
 				invarg("\"rtt\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTT, 
 				(raw) ? rtt : rtt * 8);
@@ -848,7 +848,7 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			unsigned rto_min;
 			NEXT_ARG();
 			mxlock |= (1<<RTAX_RTO_MIN);
-			if (get_jiffies(&rto_min, *argv, 0, &raw))
+			if (get_jiffies(&rto_min, *argv, &raw))
 				invarg("\"rto_min\" value is invalid\n",
 				       *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTO_MIN,
@@ -900,7 +900,7 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 				mxlock |= (1<<RTAX_RTTVAR);
 				NEXT_ARG();
 			}
-			if (get_jiffies(&win, *argv, 0, &raw))
+			if (get_jiffies(&win, *argv, &raw))
 				invarg("\"rttvar\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTTVAR,
 				(raw) ? win : win * 4);

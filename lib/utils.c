@@ -100,7 +100,7 @@ int get_unsigned(unsigned *val, const char *arg, int base)
  * a "raw" number.
  */
 
-int get_jiffies(unsigned *jiffies, const char *arg, int base, int *raw)
+int get_jiffies(unsigned *jiffies, const char *arg, int *raw)
 {
 	double t;
 	unsigned long res;
@@ -112,7 +112,7 @@ int get_jiffies(unsigned *jiffies, const char *arg, int base, int *raw)
 			return -1;
 	}
 	else {
-		res = strtoul(arg,&p,base);
+		res = strtoul(arg, &p, 0);
 		if (res > UINT_MAX)
 			return -1;
 		t = (double)res;
