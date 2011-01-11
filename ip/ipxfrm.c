@@ -155,6 +155,7 @@ const char *strxf_xfrmproto(__u8 proto)
 static const struct typeent algo_types[]= {
 	{ "enc", XFRMA_ALG_CRYPT }, { "auth", XFRMA_ALG_AUTH },
 	{ "comp", XFRMA_ALG_COMP }, { "aead", XFRMA_ALG_AEAD },
+	{ "auth-trunc", XFRMA_ALG_AUTH_TRUNC },
 	{ NULL, -1 }
 };
 
@@ -570,6 +571,25 @@ static void xfrm_aead_print(struct xfrm_algo_aead *algo, int len,
 	fprintf(fp, "%s", _SL_);
 }
 
+static void xfrm_auth_trunc_print(struct xfrm_algo_auth *algo, int len,
+				  FILE *fp, const char *prefix)
+{
+	struct {
+		struct xfrm_algo algo;
+		char key[algo->alg_key_len / 8];
+	} base;
+
+	memcpy(base.algo.alg_name, algo->alg_name, sizeof(base.algo.alg_name));
+	base.algo.alg_key_len = algo->alg_key_len;
+	memcpy(base.algo.alg_key, algo->alg_key, algo->alg_key_len / 8);
+
+	__xfrm_algo_print(&base.algo, XFRMA_ALG_AUTH_TRUNC, len, fp, prefix, 0);
+
+	fprintf(fp, " %d", algo->alg_trunc_len);
+
+	fprintf(fp, "%s", _SL_);
+}
+
 static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
 			    __u16 family, FILE *fp, const char *prefix)
 {
@@ -677,10 +697,16 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		fprintf(fp, "\tmark %d/0x%x\n", m->v, m->m);
 	}
 
-	if (tb[XFRMA_ALG_AUTH]) {
+	if (tb[XFRMA_ALG_AUTH] && !tb[XFRMA_ALG_AUTH_TRUNC]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH];
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
 				XFRMA_ALG_AUTH, RTA_PAYLOAD(rta), fp, prefix);
+	}
+
+	if (tb[XFRMA_ALG_AUTH_TRUNC]) {
+		struct rtattr *rta = tb[XFRMA_ALG_AUTH_TRUNC];
+		xfrm_auth_trunc_print((struct xfrm_algo_auth *) RTA_DATA(rta),
+				      RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_AEAD]) {
