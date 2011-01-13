@@ -68,22 +68,14 @@ void iplink_usage(void)
 	fprintf(stderr, "	                  [ mtu MTU ]\n");
 	fprintf(stderr, "	                  [ netns PID ]\n");
 	fprintf(stderr, "			  [ alias NAME ]\n");
-	fprintf(stderr, "			  [ port MODE { PROFILE | VSI } ]\n");
 	fprintf(stderr, "	                  [ vf NUM [ mac LLADDR ]\n");
 	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] ]\n");
-	fprintf(stderr, "				   [ rate TXRATE ]\n");
-	fprintf(stderr, "				   [ port MODE { PROFILE | VSI } ] ]\n");
+	fprintf(stderr, "				   [ rate TXRATE ] ] \n");
 	fprintf(stderr, "       ip link show [ DEVICE ]\n");
 
 	if (iplink_have_newlink()) {
 		fprintf(stderr, "\n");
 		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | can }\n");
-		fprintf(stderr, "MODE := { assoc | preassoc | preassocrr | disassoc }\n");
-		fprintf(stderr, "PROFILE := profile PROFILE\n");
-		fprintf(stderr, "           [ instance UUID ]\n");
-		fprintf(stderr, "           [ host UUID ]\n");
-		fprintf(stderr, "VSI := vsi mgr MGRID type VTID ver VER\n");
-		fprintf(stderr, "       [ instance UUID ]\n");
 	}
 	exit(-1);
 }
@@ -184,170 +176,55 @@ struct iplink_req {
 	char			buf[1024];
 };
 
-void iplink_parse_port(int vf, int *argcp, char ***argvp,
-		       struct iplink_req *req)
-{
-	int argc = *argcp;
-	char **argv = *argvp;
-	struct rtattr *nest, *nest_inner = NULL;
-	struct ifla_port_vsi port_vsi;
-	char *port_profile = NULL;
-	char *instance_uuid = NULL;
-	char *host_uuid = NULL;
-	unsigned char uuid[16];
-	char *uuid_fmt = "%02X%02X%02X%02X-%02X%02X-%02X%02X-"
-		"%02X%02X-%02X%02X%02X%02X%02X%02X";
-	int parsed;
-	int manager_id = -1;
-	int type_id = -1;
-	int type_id_version = -1;
-	int request = -1;
-	int vsi = 0;
-
-	if (NEXT_ARG_OK()) {
-		NEXT_ARG();
-		if (matches(*argv, "assoc") == 0)
-			request = PORT_REQUEST_ASSOCIATE;
-		else if (matches(*argv, "preassoc") == 0)
-			request = PORT_REQUEST_PREASSOCIATE;
-		else if (matches(*argv, "preassocrr") == 0)
-			request = PORT_REQUEST_PREASSOCIATE_RR;
-		else if (matches(*argv, "disassoc") == 0)
-			request = PORT_REQUEST_DISASSOCIATE;
-	}
-
-	while (NEXT_ARG_OK()) {
-		NEXT_ARG();
-		if (matches(*argv, "vsi") == 0) {
-			vsi = 1;
-		} else if (matches(*argv, "mgr") == 0) {
-			NEXT_ARG();
-			if (get_integer(&manager_id, *argv, 0))
-				invarg("Invalid \"mgr\" value\n", *argv);
-		} else if (matches(*argv, "type") == 0) {
-			NEXT_ARG();
-			if (get_integer(&type_id, *argv, 0))
-				invarg("Invalid \"type\" value\n", *argv);
-		} else if (matches(*argv, "ver") == 0) {
-			NEXT_ARG();
-			if (get_integer(&type_id_version, *argv, 0))
-				invarg("Invalid \"ver\" value\n", *argv);
-		} else if (matches(*argv, "profile") == 0) {
-			NEXT_ARG();
-			port_profile = *argv;
-		} else if (matches(*argv, "instance") == 0) {
-			NEXT_ARG();
-			instance_uuid = *argv;
-		} else if (matches(*argv, "host") == 0) {
-			NEXT_ARG();
-			host_uuid = *argv;
-		} else {
-			/* rewind arg */
-			PREV_ARG();
-			break;
-		}
-	}
-
-	if (argc == *argcp)
-		incomplete_command();
-
-	if (vf == PORT_SELF_VF) {
-		nest = addattr_nest(&req->n, sizeof(*req), IFLA_PORT_SELF);
-	} else {
-		nest = addattr_nest(&req->n, sizeof(*req), IFLA_VF_PORTS);
-		nest_inner = addattr_nest(&req->n, sizeof(*req), IFLA_VF_PORT);
-		addattr_l(&req->n, sizeof(*req), IFLA_PORT_VF,
-			(uint32_t *)&vf, sizeof(uint32_t));
-	}
-
-	if (port_profile)
-		addattr_l(&req->n, sizeof(*req), IFLA_PORT_PROFILE,
-			port_profile, strlen(port_profile) + 1);
-
-	if (instance_uuid) {
-		parsed = sscanf(instance_uuid, uuid_fmt,
-			&uuid[0],  &uuid[1],  &uuid[2],  &uuid[3],
-			&uuid[4],  &uuid[5],  &uuid[6],  &uuid[7],
-			&uuid[8],  &uuid[9],  &uuid[10], &uuid[11],
-			&uuid[12], &uuid[13], &uuid[14], &uuid[15]);
-		if (parsed != sizeof(uuid))
-			invarg("Invalid \"uuid\" value\n", instance_uuid);
-		addattr_l(&req->n, sizeof(*req), IFLA_PORT_INSTANCE_UUID,
-			uuid, sizeof(uuid));
-
-	}
-
-	if (host_uuid) {
-		parsed = sscanf(host_uuid, uuid_fmt,
-			&uuid[0],  &uuid[1],  &uuid[2],  &uuid[3],
-			&uuid[4],  &uuid[5],  &uuid[6],  &uuid[7],
-			&uuid[8],  &uuid[9],  &uuid[10], &uuid[11],
-			&uuid[12], &uuid[13], &uuid[14], &uuid[15]);
-		if (parsed != sizeof(uuid))
-			invarg("Invalid \"uuid\" value\n", host_uuid);
-		addattr_l(&req->n, sizeof(*req), IFLA_PORT_HOST_UUID,
-			uuid, sizeof(uuid));
-
-	}
-
-	if (vsi) {
-		port_vsi.vsi_mgr_id = manager_id;
-		memcpy(&port_vsi.vsi_type_id, &type_id,
-			sizeof(port_vsi.vsi_type_id));
-		port_vsi.vsi_type_version = type_id_version;
-		addattr_l(&req->n, sizeof(*req), IFLA_PORT_VSI_TYPE,
-			&port_vsi, sizeof(port_vsi));
-	}
-
-	addattr_l(&req->n, sizeof(*req), IFLA_PORT_REQUEST,
-		&request, 1);
-
-	if (nest_inner)
-		addattr_nest_end(&req->n, nest_inner);
-	addattr_nest_end(&req->n, nest);
-
-	*argcp = argc;
-	*argvp = argv;
-}
-
-void iplink_parse_vf(int vf, int *argcp, char ***argvp,
-		     struct iplink_req *req)
+int iplink_parse_vf(int vf, int *argcp, char ***argvp,
+			   struct iplink_req *req)
 {
 	int len, argc = *argcp;
 	char **argv = *argvp;
-	struct rtattr *vflist;
 	struct rtattr *vfinfo;
-	char *mac = NULL;
-	char *vlan = NULL;
-	char *qos = NULL;
-	char *rate = NULL;
-	struct ifla_vf_mac ivm = { .vf = vf, };
-	struct ifla_vf_vlan ivv = { .vf = vf, .qos = 0, };
-	struct ifla_vf_tx_rate ivt = { .vf = vf, };
+
+	vfinfo = addattr_nest(&req->n, sizeof(*req), IFLA_VF_INFO);
 
 	while (NEXT_ARG_OK()) {
 		NEXT_ARG();
-		if (matches(*argv, "port") == 0) {
-			iplink_parse_port(vf, &argc, &argv, req);
-		} else if (matches(*argv, "mac") == 0) {
+		if (matches(*argv, "mac") == 0) {
+			struct ifla_vf_mac ivm;
 			NEXT_ARG();
-			mac = *argv;
+			ivm.vf = vf;
+			len = ll_addr_a2n((char *)ivm.mac, 32, *argv);
+			if (len < 0)
+				return -1;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_MAC, &ivm, sizeof(ivm));
 		} else if (matches(*argv, "vlan") == 0) {
+			struct ifla_vf_vlan ivv;
 			NEXT_ARG();
-			vlan = *argv;
+			if (get_unsigned(&ivv.vlan, *argv, 0)) {
+				invarg("Invalid \"vlan\" value\n", *argv);
+			}
+			ivv.vf = vf;
+			ivv.qos = 0;
 			if (NEXT_ARG_OK()) {
 				NEXT_ARG();
 				if (matches(*argv, "qos") == 0) {
 					NEXT_ARG();
-					qos = *argv;
+					if (get_unsigned(&ivv.qos, *argv, 0)) {
+						invarg("Invalid \"qos\" value\n", *argv);
+					}
 				} else {
 					/* rewind arg */
 					PREV_ARG();
 				}
 			}
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_VLAN, &ivv, sizeof(ivv));
 		} else if (matches(*argv, "rate") == 0) {
+			struct ifla_vf_tx_rate ivt;
 			NEXT_ARG();
-			rate = *argv;
+			if (get_unsigned(&ivt.rate, *argv, 0)) {
+				invarg("Invalid \"rate\" value\n", *argv);
+			}
+			ivt.vf = vf;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
+		
 		} else {
 			/* rewind arg */
 			PREV_ARG();
@@ -358,43 +235,11 @@ void iplink_parse_vf(int vf, int *argcp, char ***argvp,
 	if (argc == *argcp)
 		incomplete_command();
 
-	if (mac || vlan || rate) {
-
-		vflist = addattr_nest(&req->n, sizeof(*req), IFLA_VFINFO_LIST);
-		vfinfo = addattr_nest(&req->n, sizeof(*req), IFLA_VF_INFO);
-
-		if (mac) {
-			len = ll_addr_a2n((char *)ivm.mac, 32, mac);
-			if (len < 0)
-				invarg("Invalid \"mac\" value\n", mac);
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_MAC,
-				&ivm, sizeof(ivm));
-		}
-
-		if (vlan) {
-			if (get_unsigned(&ivv.vlan, vlan, 0))
-				invarg("Invalid \"vlan\" value\n", vlan);
-			if (qos) {
-				if (get_unsigned(&ivv.qos, qos, 0))
-					invarg("Invalid \"qos\" value\n", qos);
-			}
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_VLAN,
-				&ivv, sizeof(ivv));
-		}
-
-		if (rate) {
-			if (get_unsigned(&ivt.rate, rate, 0))
-				invarg("Invalid \"rate\" value\n", rate);
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE,
-				&ivt, sizeof(ivt));
-		}
-
-		addattr_nest_end(&req->n, vfinfo);
-		addattr_nest_end(&req->n, vflist);
-	}
+	addattr_nest_end(&req->n, vfinfo);
 
 	*argcp = argc;
 	*argvp = argv;
+	return 0;
 }
 
 
@@ -504,14 +349,18 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				req->i.ifi_flags |= IFF_NOARP;
 			} else
 				return on_off("noarp");
-		} else if (strcmp(*argv, "port") == 0) {
-			iplink_parse_port(vf, &argc, &argv, req);
 		} else if (strcmp(*argv, "vf") == 0) {
+			struct rtattr *vflist;
 			NEXT_ARG();
 			if (get_integer(&vf,  *argv, 0)) {
 				invarg("Invalid \"vf\" value\n", *argv);
 			}
-			iplink_parse_vf(vf, &argc, &argv, req);
+			vflist = addattr_nest(&req->n, sizeof(*req),
+					      IFLA_VFINFO_LIST);
+			len = iplink_parse_vf(vf, &argc, &argv, req);
+			if (len < 0)
+				return -1;
+			addattr_nest_end(&req->n, vflist);
 #ifdef IFF_DYNAMIC
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();

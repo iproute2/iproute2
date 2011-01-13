@@ -186,114 +186,6 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 	}
 }
 
-static const char *vf_port_response_n2a(__u16 response)
-{
-	switch (response) {
-	case PORT_VDP_RESPONSE_SUCCESS:
-		return "SUCCESS";
-	case PORT_VDP_RESPONSE_INVALID_FORMAT:
-		return "INVALID FORMAT";
-	case PORT_VDP_RESPONSE_INSUFFICIENT_RESOURCES:
-		return "INSUFFICIENT RESOURCES";
-	case PORT_VDP_RESPONSE_UNUSED_VTID:
-		return "UNUSED VTID";
-	case PORT_VDP_RESPONSE_VTID_VIOLATION:
-		return "VTID VIOLATION";
-	case PORT_VDP_RESPONSE_VTID_VERSION_VIOALTION:
-		return "VTID VERSION VIOLATION";
-	case PORT_VDP_RESPONSE_OUT_OF_SYNC:
-		return "OUT-OF-SYNC";
-	case PORT_PROFILE_RESPONSE_SUCCESS:
-		return "SUCCESS";
-	case PORT_PROFILE_RESPONSE_INPROGRESS:
-		return "IN-PROGRESS";
-	case PORT_PROFILE_RESPONSE_INVALID:
-		return "INVALID";
-	case PORT_PROFILE_RESPONSE_BADSTATE:
-		return "BAD STATE";
-	case PORT_PROFILE_RESPONSE_INSUFFICIENT_RESOURCES:
-		return "INSUFFICIENT RESOURCES";
-	case PORT_PROFILE_RESPONSE_ERROR:
-		return "ERROR";
-	default:
-		return "UNKNOWN RESPONSE";
-	}
-}
-
-static void print_port(FILE *fp, struct rtattr *port[])
-{
-	struct ifla_port_vsi *vsi;
-#define uuid_fmt "%02X%02X%02X%02X-%02X%02X-%02X%02X-" \
-	"%02X%02X-%02X%02X%02X%02X%02X%02X"
-	unsigned char *uuid;
-	__u8 request;
-	__u16 response;
-
-	if (port[IFLA_PORT_VF])
-		fprintf(fp, "\n    vf %d port",
-			*(__u32 *)RTA_DATA(port[IFLA_PORT_VF]));
-	else
-		fprintf(fp, "\n    port");
-
-	if (port[IFLA_PORT_REQUEST]) {
-		request = *(__u8 *)RTA_DATA(port[IFLA_PORT_REQUEST]);
-		fprintf(fp, " %s",
-			request == PORT_REQUEST_PREASSOCIATE ? "preassoc" :
-			request == PORT_REQUEST_PREASSOCIATE_RR ? "preassocrr" :
-			request == PORT_REQUEST_ASSOCIATE ? "assoc" :
-			request == PORT_REQUEST_DISASSOCIATE ? "disassoc" :
-			"unknown request");
-	}
-
-	if (port[IFLA_PORT_PROFILE])
-		fprintf(fp, " profile \"%s\"",
-			(char *)RTA_DATA(port[IFLA_PORT_PROFILE]));
-
-	if (port[IFLA_PORT_VSI_TYPE]) {
-		vsi = RTA_DATA(port[IFLA_PORT_VSI_TYPE]);
-		fprintf(fp, " vsi mgr %d type 0x%02x%02x%02x ver %d",
-			vsi->vsi_mgr_id, vsi->vsi_type_id[0],
-			vsi->vsi_type_id[1], vsi->vsi_type_id[2],
-			vsi->vsi_type_version);
-	}
-
-	if (port[IFLA_PORT_RESPONSE]) {
-		response = *(__u16 *)RTA_DATA(port[IFLA_PORT_RESPONSE]);
-		fprintf(fp, " status: %s", vf_port_response_n2a(response));
-	}
-
-	if (port[IFLA_PORT_INSTANCE_UUID]) {
-		uuid = RTA_DATA(port[IFLA_PORT_INSTANCE_UUID]);
-		fprintf(fp, "\n        instance "uuid_fmt,
-			uuid[0],  uuid[1],  uuid[2],  uuid[3],
-			uuid[4],  uuid[5],  uuid[6],  uuid[7],
-			uuid[8],  uuid[9],  uuid[10], uuid[11],
-			uuid[12], uuid[13], uuid[14], uuid[15]);
-	}
-
-	if (port[IFLA_PORT_HOST_UUID]) {
-		uuid = RTA_DATA(port[IFLA_PORT_HOST_UUID]);
-		fprintf(fp, "\n            host "uuid_fmt,
-			uuid[0],  uuid[1],  uuid[2],  uuid[3],
-			uuid[4],  uuid[5],  uuid[6],  uuid[7],
-			uuid[8],  uuid[9],  uuid[10], uuid[11],
-			uuid[12], uuid[13], uuid[14], uuid[15]);
-	}
-}
-
-static void print_vfport(FILE *fp, struct rtattr *vfport)
-{
-	struct rtattr *port[IFLA_PORT_MAX+1];
-
-	if (vfport->rta_type != IFLA_VF_PORT) {
-		fprintf(stderr, "BUG: rta type is %d\n", vfport->rta_type);
-		return;
-	}
-
-	parse_rtattr_nested(port, IFLA_PORT_MAX, vfport);
-	print_port(fp, port);
-}
-
 static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
@@ -526,20 +418,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		int rem = RTA_PAYLOAD(vflist);
 		for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem))
 			print_vfinfo(fp, i);
-	}
-
-	if (do_link && tb[IFLA_PORT_SELF]) {
-		struct rtattr *port[IFLA_PORT_MAX+1];
-		parse_rtattr_nested(port, IFLA_PORT_MAX, tb[IFLA_PORT_SELF]);
-		print_port(fp, port);
-	}
-
-	if (do_link && tb[IFLA_VF_PORTS] && tb[IFLA_NUM_VF]) {
-		struct rtattr *i, *vfports = tb[IFLA_VF_PORTS];
-		int rem = RTA_PAYLOAD(vfports);
-		for (i = RTA_DATA(vfports); RTA_OK(i, rem);
-			i = RTA_NEXT(i, rem))
-			print_vfport(fp, i);
 	}
 
 	fprintf(fp, "\n");
