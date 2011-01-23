@@ -26,6 +26,7 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... sfq [ limit NUMBER ] [ perturb SECS ] [ quantum BYTES ]\n");
+	fprintf(stderr, "               [ divisor NUMBER ]\n");
 }
 
 static int sfq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
@@ -61,6 +62,13 @@ static int sfq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 				return -1;
 			}
 			ok++;
+		} else if (strcmp(*argv, "divisor") == 0) {
+			NEXT_ARG();
+			if (get_u32(&opt.divisor, *argv, 0)) {
+				fprintf(stderr, "Illegal \"divisor\"\n");
+				return -1;
+			}
+			ok++;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -93,6 +101,7 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (show_details) {
 		fprintf(f, "flows %u/%u ", qopt->flows, qopt->divisor);
 	}
+	fprintf(f, "divisor %u ", qopt->divisor);
 	if (qopt->perturb_period)
 		fprintf(f, "perturb %dsec ", qopt->perturb_period);
 	return 0;
