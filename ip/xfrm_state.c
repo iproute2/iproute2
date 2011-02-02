@@ -50,12 +50,13 @@
 #define NLMSG_BUF_SIZE 4096
 #define RTA_BUF_SIZE 2048
 #define XFRM_ALGO_KEY_BUF_SIZE 512
+#define CTX_BUF_SIZE 256
 
 static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip xfrm state { add | update } ID [ XFRM_OPT ] [ mode MODE ]\n");
+	fprintf(stderr, "Usage: ip xfrm state { add | update } ID [ XFRM_OPT ] [ ctx SEC_CTX ] [ mode MODE ]\n");
 	fprintf(stderr, "        [ reqid REQID ] [ seq SEQ ] [ replay-window SIZE ] [ flag FLAG-LIST ]\n");
 	fprintf(stderr, "        [ encap ENCAP ] [ sel SELECTOR ] [ replay-seq SEQ ]\n");
 	fprintf(stderr, "        [ replay-oseq SEQ ] [ LIMIT-LIST ]\n");
@@ -246,10 +247,16 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 	char *aalgop = NULL;
 	char *calgop = NULL;
 	char *coap = NULL;
+	char *sctxp = NULL;
 	struct xfrm_mark mark = {0, 0};
+	struct {
+		struct xfrm_user_sec_ctx sctx;
+		char    str[CTX_BUF_SIZE];
+	} ctx;
 
 	memset(&req, 0, sizeof(req));
 	memset(&replay, 0, sizeof(replay));
+	memset(&ctx, 0, sizeof(ctx));
 
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(req.xsinfo));
 	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
@@ -333,6 +340,19 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 
 			addattr_l(&req.n, sizeof(req.buf), XFRMA_COADDR,
 				  (void *)&xcoa, sizeof(xcoa));
+		} else if (strcmp(*argv, "ctx") == 0) {
+			char *context;
+
+			if (sctxp)
+				duparg("ctx", *argv);
+			sctxp = *argv;
+
+			NEXT_ARG();
+			context = *argv;
+
+			xfrm_sctx_parse((char *)&ctx.str, context, &ctx.sctx);
+			addattr_l(&req.n, sizeof(req.buf), XFRMA_SEC_CTX,
+				  (void *)&ctx, ctx.sctx.len);
 		} else {
 			/* try to assume ALGO */
 			int type = xfrm_algotype_getbyname(*argv);
