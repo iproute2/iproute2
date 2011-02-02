@@ -725,7 +725,7 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 	if (filter.family == AF_UNSPEC)
 		filter.family = preferred_family;
 
-	filter.group = INIT_NETDEV_GROUP;
+	filter.group = 0; /* INIT_NETDEV_GROUP */
 
 	if (flush) {
 		if (argc <= 0) {
