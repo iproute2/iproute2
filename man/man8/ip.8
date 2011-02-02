@@ -99,7 +99,9 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 
 .ti -8
 .B ip link show
-.RI "[ " DEVICE " ]"
+.RI "[ " DEVICE " | "
+.B group
+.IR GROUP " ]"
 
 .ti -8
 .BR "ip addr" " { " add " | " del " } "
@@ -1056,7 +1058,12 @@ call.
 .BI dev " NAME " (default)
 .I NAME
 specifies the network device to show.
-If this argument is omitted all devices are listed.
+If this argument is omitted all devices in the default group are listed.
+
+.TP
+.BI group " GROUP "
+.I GROUP
+specifies what group of devices to show.
 
 .TP
 .B up

@@ -447,3 +447,53 @@ int rtnl_dsfield_a2n(__u32 *id, char *arg)
 	return 0;
 }
 
+
+static struct rtnl_hash_entry dflt_group_entry  = { .id = 0, .name = "default" };
+
+static struct rtnl_hash_entry * rtnl_group_hash[256] = {
+	[0] = &dflt_group_entry,
+};
+
+static int rtnl_group_init;
+
+static void rtnl_group_initialize(void)
+{
+	rtnl_group_init = 1;
+	rtnl_hash_initialize("/etc/iproute2/group",
+			     rtnl_group_hash, 256);
+}
+
+int rtnl_group_a2n(int *id, char *arg)
+{
+	static char *cache = NULL;
+	static unsigned long res;
+	struct rtnl_hash_entry *entry;
+	char *end;
+	int i;
+
+	if (cache && strcmp(cache, arg) == 0) {
+		*id = res;
+		return 0;
+	}
+
+	if (!rtnl_group_init)
+		rtnl_group_initialize();
+
+	for (i=0; i<256; i++) {
+		entry = rtnl_group_hash[i];
+		while (entry && strcmp(entry->name, arg))
+			entry = entry->next;
+		if (entry) {
+			cache = entry->name;
+			res = entry->id;
+			*id = res;
+			return 0;
+		}
+	}
+
+	i = strtol(arg, &end, 0);
+	if (!end || end == arg || *end || i < 0)
+		return -1;
+	*id = i;
+	return 0;
+}
