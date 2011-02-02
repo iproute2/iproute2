@@ -13,6 +13,7 @@ int rtnl_rtscope_a2n(__u32 *id, char *arg);
 int rtnl_rttable_a2n(__u32 *id, char *arg);
 int rtnl_rtrealm_a2n(__u32 *id, char *arg);
 int rtnl_dsfield_a2n(__u32 *id, char *arg);
+int rtnl_group_a2n(int *id, char *arg);
 
 const char *inet_proto_n2a(int proto, char *buf, int len);
 int inet_proto_a2n(char *buf);
