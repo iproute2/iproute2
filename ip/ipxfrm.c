@@ -850,6 +850,20 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		xfrm_lifetime_print(&xsinfo->lft, &xsinfo->curlft, fp, buf);
 		xfrm_stats_print(&xsinfo->stats, fp, buf);
 	}
+
+	if (tb[XFRMA_SEC_CTX]) {
+		struct xfrm_user_sec_ctx *sctx;
+
+		fprintf(fp, "\tsecurity context ");
+
+		if (RTA_PAYLOAD(tb[XFRMA_SEC_CTX]) < sizeof(*sctx))
+			fprintf(fp, "(ERROR truncated)");
+
+		sctx = (struct xfrm_user_sec_ctx *)RTA_DATA(tb[XFRMA_SEC_CTX]);
+
+		fprintf(fp, "%s %s", (char *)(sctx + 1), _SL_);
+	}
+
 }
 
 void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
@@ -861,6 +875,20 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 	memset(buf, '\0', sizeof(buf));
 
 	xfrm_selector_print(&xpinfo->sel, preferred_family, fp, title);
+
+	if (tb[XFRMA_SEC_CTX]) {
+		struct xfrm_user_sec_ctx *sctx;
+
+		fprintf(fp, "\tsecurity context ");
+
+		if (RTA_PAYLOAD(tb[XFRMA_SEC_CTX]) < sizeof(*sctx))
+			fprintf(fp, "(ERROR truncated)");
+
+		sctx = (struct xfrm_user_sec_ctx *)RTA_DATA(tb[XFRMA_SEC_CTX]);
+
+		fprintf(fp, "%s ", (char *)(sctx + 1));
+		fprintf(fp, "%s", _SL_);
+	}
 
 	if (prefix)
 		STRBUF_CAT(buf, prefix);

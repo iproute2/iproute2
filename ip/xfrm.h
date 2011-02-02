@@ -154,5 +154,6 @@ int xfrm_reqid_parse(__u32 *reqid, int *argcp, char ***argvp);
 int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp);
 int xfrm_lifetime_cfg_parse(struct xfrm_lifetime_cfg *lft,
 			    int *argcp, char ***argvp);
-
+int xfrm_sctx_parse(char *ctxstr, char *context,
+		    struct xfrm_user_sec_ctx *sctx);
 #endif
