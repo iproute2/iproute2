@@ -79,7 +79,7 @@ extern int mask2bits(__u32 netmask);
 
 extern int get_integer(int *val, const char *arg, int base);
 extern int get_unsigned(unsigned *val, const char *arg, int base);
-extern int get_jiffies(unsigned *val, const char *arg, int *raw);
+extern int get_time_rtt(unsigned *val, const char *arg, int *raw);
 #define get_byte get_u8
 #define get_ushort get_u16
 #define get_short get_s16
