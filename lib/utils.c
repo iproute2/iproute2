@@ -119,28 +119,15 @@ int get_jiffies(unsigned *jiffies, const char *arg, int *raw)
 	}
 	if (p == arg)
 		return -1;
-
-	if (__iproute2_hz_internal == 0)
-                __iproute2_hz_internal = __get_hz();
-	
 	*raw = 1;
 
 	if (*p) {
 		*raw = 0;
                 if (strcasecmp(p, "s") == 0 || strcasecmp(p, "sec")==0 ||
                     strcasecmp(p, "secs")==0)
-                        t *= __iproute2_hz_internal;
+                        t *= 1000;
                 else if (strcasecmp(p, "ms") == 0 || strcasecmp(p, "msec")==0 ||
                          strcasecmp(p, "msecs") == 0)
-                        t *= __iproute2_hz_internal/1000.0;
-                else if (strcasecmp(p, "us") == 0 || strcasecmp(p, "usec")==0 ||
-                         strcasecmp(p, "usecs") == 0)
-                        t *= __iproute2_hz_internal/1000000.0;
-                else if (strcasecmp(p, "ns") == 0 || strcasecmp(p, "nsec")==0 ||
-                         strcasecmp(p, "nsecs") == 0)
-                        t *= __iproute2_hz_internal/1000000000.0;
-		else if (strcasecmp(p, "j") == 0 || strcasecmp(p, "hz") == 0 ||
-			 strcasecmp(p,"jiffies") == 0)
 			t *= 1.0; /* allow suffix, do nothing */
                 else
                         return -1;
