@@ -93,14 +93,13 @@ int get_unsigned(unsigned *val, const char *arg, int base)
 }
 
 /*
- * get_jiffies is "translated" from a similar routine "get_time" in
- * tc_util.c.  we don't use the exact same routine because tc passes
- * microseconds to the kernel and the callers of get_jiffies want 
- * to pass jiffies, and have a different assumption for the units of
- * a "raw" number.
+ * get_time_rtt is "translated" from a similar routine "get_time" in
+ * tc_util.c.  We don't use the exact same routine because tc passes
+ * microseconds to the kernel and the callers of get_time_rtt want to
+ * pass milliseconds (standard unit for rtt values since 2.6.27), and
+ * have a different assumption for the units of a "raw" number.
  */
-
-int get_jiffies(unsigned *jiffies, const char *arg, int *raw)
+int get_time_rtt(unsigned *val, const char *arg, int *raw)
 {
 	double t;
 	unsigned long res;
@@ -135,9 +134,9 @@ int get_jiffies(unsigned *jiffies, const char *arg, int *raw)
 
 	/* emulate ceil() without having to bring-in -lm and always be >= 1 */
 
-	*jiffies = t;
-	if (*jiffies < t)
-		*jiffies += 1;
+	*val = t;
+	if (*val < t)
+		*val += 1;
 	
         return 0;
 
