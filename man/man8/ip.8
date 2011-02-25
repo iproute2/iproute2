@@ -395,7 +395,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR KEY " := { " DOTTED_QUAD " | " NUMBER " }"
 
 .ti -8
-.IR TIME " := " NUMBER "[s|ms|us|ns|j]"
+.IR TIME " := " NUMBER "[s|ms]"
 
 .ti -8
 .BR "ip maddr" " [ " add " | " del " ]"
@@ -1638,10 +1638,7 @@ the initial RTT ('Round Trip Time') estimate. If no suffix is
 specified the units are raw values passed directly to the
 routing code to maintain compatibility with previous releases.
 Otherwise if a suffix of s, sec or secs is used to specify
-seconds; ms, msec or msecs to specify milliseconds; us, usec
-or usecs to specify microseconds; ns, nsec or nsecs to specify
-nanoseconds; j, hz or jiffies to specify jiffies, the value is
-converted to what the routing code expects.
+seconds and ms, msec or msecs to specify milliseconds.
 
 
 .TP
