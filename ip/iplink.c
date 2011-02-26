@@ -71,6 +71,8 @@ void iplink_usage(void)
 	fprintf(stderr, "	                  [ vf NUM [ mac LLADDR ]\n");
 	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] ]\n");
 	fprintf(stderr, "				   [ rate TXRATE ] ] \n");
+	fprintf(stderr, "			  [ master DEVICE ]\n");
+	fprintf(stderr, "			  [ nomaster ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ]\n");
 
 	if (iplink_have_newlink()) {
@@ -362,6 +364,20 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (len < 0)
 				return -1;
 			addattr_nest_end(&req->n, vflist);
+#ifdef IFLA_MASTER
+		} else if (matches(*argv, "master") == 0) {
+			int ifindex;
+			NEXT_ARG();
+			ifindex = ll_name_to_index(*argv);
+			if (!ifindex)
+				invarg("Device does not exist\n", *argv);
+			addattr_l(&req->n, sizeof(*req), IFLA_MASTER,
+				  &ifindex, 4);
+		} else if (matches(*argv, "nomaster") == 0) {
+			int ifindex = 0;
+			addattr_l(&req->n, sizeof(*req), IFLA_MASTER,
+				  &ifindex, 4);
+#endif
 #ifdef IFF_DYNAMIC
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();

@@ -97,7 +97,12 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .B qos
 .IR VLAN-QOS " ] ] ["
 .B rate
-.IR TXRATE " ]"
+.IR TXRATE " ] |"
+.br
+.B master
+.IR DEVICE
+.br
+.B nomaster
 
 .ti -8
 .B ip link show
@@ -1054,6 +1059,14 @@ Setting this parameter to 0 disables rate limiting. The
 .B vf
 parameter must be specified.
 .in -8
+
+.TP
+.BI master " DEVICE"
+set master device of the device (enslave device).
+
+.TP
+.BI nomaster
+unset master device of the device (release device).
 
 .PP
 .B Warning:
