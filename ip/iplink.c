@@ -364,7 +364,6 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (len < 0)
 				return -1;
 			addattr_nest_end(&req->n, vflist);
-#ifdef IFLA_MASTER
 		} else if (matches(*argv, "master") == 0) {
 			int ifindex;
 			NEXT_ARG();
@@ -377,8 +376,6 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			int ifindex = 0;
 			addattr_l(&req->n, sizeof(*req), IFLA_MASTER,
 				  &ifindex, 4);
-#endif
-#ifdef IFF_DYNAMIC
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_DYNAMIC;
@@ -388,7 +385,6 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				req->i.ifi_flags &= ~IFF_DYNAMIC;
 			} else
 				return on_off("dynamic");
-#endif
 		} else if (matches(*argv, "type") == 0) {
 			NEXT_ARG();
 			*type = *argv;
@@ -829,7 +825,6 @@ static int do_set(int argc, char **argv)
 				flags |= IFF_NOARP;
 			} else
 				return on_off("noarp");
-#ifdef IFF_DYNAMIC
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();
 			mask |= IFF_DYNAMIC;
@@ -839,7 +834,6 @@ static int do_set(int argc, char **argv)
 				flags &= ~IFF_DYNAMIC;
 			} else
 				return on_off("dynamic");
-#endif
 		} else {
                         if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
