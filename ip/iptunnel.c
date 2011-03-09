@@ -407,8 +407,12 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		return -1;
 	}
 
-	fgets(buf, sizeof(buf), fp);
-	fgets(buf, sizeof(buf), fp);
+	/* skip header lines */
+	if (!fgets(buf, sizeof(buf), fp) ||
+	    !fgets(buf, sizeof(buf), fp)) {
+		fprintf(stderr, "/proc/net/dev read error\n");
+		return -1;
+	}
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		int index, type;

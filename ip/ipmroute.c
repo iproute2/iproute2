@@ -58,7 +58,8 @@ static void read_viftable(void)
 	if (!fp)
 		return;
 
-	fgets(buf, sizeof(buf), fp);
+	if (!fgets(buf, sizeof(buf), fp))
+		return;
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		int vifi;
@@ -83,7 +84,8 @@ static void read_mroute_list(FILE *ofp)
 	if (!fp)
 		return;
 
-	fgets(buf, sizeof(buf), fp);
+	if (!fgets(buf, sizeof(buf), fp))
+		return;
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		inet_prefix maddr, msrc;

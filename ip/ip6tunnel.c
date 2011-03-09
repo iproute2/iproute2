@@ -262,8 +262,11 @@ static int do_tunnels_list(struct ip6_tnl_parm *p)
 	}
 
 	/* skip two lines at the begenning of the file */
-	fgets(buf, sizeof(buf), fp);
-	fgets(buf, sizeof(buf), fp);
+	if (!fgets(buf, sizeof(buf), fp) ||
+	    !fgets(buf, sizeof(buf), fp)) {
+		fprintf(stderr, "/proc/net/dev read error\n");
+		return -1;
+	}
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char name[IFNAMSIZ];
