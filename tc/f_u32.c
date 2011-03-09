@@ -432,7 +432,8 @@ static int parse_ip6_class(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 	key = htonl(key);
 	mask = htonl(mask);
 
-	if (res = pack_key(sel, key, mask, off, offmask) < 0)
+	res = pack_key(sel, key, mask, off, offmask);
+	if (res < 0)
 		return -1;
 
 	*argc_p = argc;
