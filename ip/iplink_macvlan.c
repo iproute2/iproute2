@@ -23,14 +23,14 @@
 static void explain(void)
 {
 	fprintf(stderr,
-		"Usage: ... macvlan mode { private | vepa | bridge }\n"
+		"Usage: ... macvlan mode { private | vepa | bridge | passthru }\n"
 	);
 }
 
 static int mode_arg(void)
 {
         fprintf(stderr, "Error: argument of \"mode\" must be \"private\", "
-		"\"vepa\" or \"bridge\"\n");
+		"\"vepa\", \"bridge\" or \"passthru\" \n");
         return -1;
 }
 
@@ -48,6 +48,8 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				mode = MACVLAN_MODE_VEPA;
 			else if (strcmp(*argv, "bridge") == 0)
 				mode = MACVLAN_MODE_BRIDGE;
+			else if (strcmp(*argv, "passthru") == 0)
+				mode = MACVLAN_MODE_PASSTHRU;
 			else
 				return mode_arg();
 
@@ -82,6 +84,7 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 		  mode == MACVLAN_MODE_PRIVATE ? "private"
 		: mode == MACVLAN_MODE_VEPA    ? "vepa"
 		: mode == MACVLAN_MODE_BRIDGE  ? "bridge"
+		: mode == MACVLAN_MODE_PASSTHRU  ? "passthru"
 		:				 "unknown");
 }
 
