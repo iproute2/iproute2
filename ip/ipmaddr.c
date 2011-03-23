@@ -136,7 +136,7 @@ void read_igmp(struct ma_info **result_p)
 	m.addr.bytelen = 4;
 
 	while (fgets(buf, sizeof(buf), fp)) {
-		struct ma_info *ma = malloc(sizeof(m));
+		struct ma_info *ma;
 
 		if (buf[0] != '\t') {
 			sscanf(buf, "%d%s", &m.index, m.name);
