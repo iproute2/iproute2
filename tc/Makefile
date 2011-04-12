@@ -15,6 +15,8 @@ TCMODULES += q_cbq.o
 TCMODULES += q_rr.o
 TCMODULES += q_multiq.o
 TCMODULES += q_netem.o
+TCMODULES += q_choke.o
+TCMODULES += q_sfb.o
 TCMODULES += f_rsvp.o
 TCMODULES += f_u32.o
 TCMODULES += f_route.o
@@ -43,6 +45,7 @@ TCMODULES += em_nbyte.o
 TCMODULES += em_cmp.o
 TCMODULES += em_u32.o
 TCMODULES += em_meta.o
+TCMODULES += q_mqprio.o
 
 TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)

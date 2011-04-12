@@ -51,7 +51,7 @@ void iplink_usage(void)
 		fprintf(stderr, "                   type TYPE [ ARGS ]\n");
 		fprintf(stderr, "       ip link delete DEV type TYPE [ ARGS ]\n");
 		fprintf(stderr, "\n");
-		fprintf(stderr, "       ip link set DEVICE [ { up | down } ]\n");
+		fprintf(stderr, "       ip link set { dev DEVICE | group DEVGROUP } [ { up | down } ]\n");
 	} else
 		fprintf(stderr, "Usage: ip link set DEVICE [ { up | down } ]\n");
 
@@ -71,6 +71,8 @@ void iplink_usage(void)
 	fprintf(stderr, "	                  [ vf NUM [ mac LLADDR ]\n");
 	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] ]\n");
 	fprintf(stderr, "				   [ rate TXRATE ] ] \n");
+	fprintf(stderr, "			  [ master DEVICE ]\n");
+	fprintf(stderr, "			  [ nomaster ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ]\n");
 
 	if (iplink_have_newlink()) {
@@ -244,7 +246,7 @@ int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 
 
 int iplink_parse(int argc, char **argv, struct iplink_req *req,
-		char **name, char **type, char **link, char **dev)
+		char **name, char **type, char **link, char **dev, int *group)
 {
 	int ret, len;
 	char abuf[32];
@@ -253,6 +255,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	int netns = -1;
 	int vf = -1;
 
+	*group = -1;
 	ret = argc;
 
 	while (argc > 0) {
@@ -361,7 +364,18 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (len < 0)
 				return -1;
 			addattr_nest_end(&req->n, vflist);
-#ifdef IFF_DYNAMIC
+		} else if (matches(*argv, "master") == 0) {
+			int ifindex;
+			NEXT_ARG();
+			ifindex = ll_name_to_index(*argv);
+			if (!ifindex)
+				invarg("Device does not exist\n", *argv);
+			addattr_l(&req->n, sizeof(*req), IFLA_MASTER,
+				  &ifindex, 4);
+		} else if (matches(*argv, "nomaster") == 0) {
+			int ifindex = 0;
+			addattr_l(&req->n, sizeof(*req), IFLA_MASTER,
+				  &ifindex, 4);
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_DYNAMIC;
@@ -371,7 +385,6 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				req->i.ifi_flags &= ~IFF_DYNAMIC;
 			} else
 				return on_off("dynamic");
-#endif
 		} else if (matches(*argv, "type") == 0) {
 			NEXT_ARG();
 			*type = *argv;
@@ -383,6 +396,12 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				  *argv, strlen(*argv));
 			argc--; argv++;
 			break;
+		} else if (strcmp(*argv, "group") == 0) {
+			NEXT_ARG();
+			if (*group != -1)
+				duparg("group", *argv);
+			if (rtnl_group_a2n(group, *argv))
+				invarg("Invalid \"group\" value\n", *argv);
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
@@ -406,6 +425,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	char *name = NULL;
 	char *link = NULL;
 	char *type = NULL;
+	int group;
 	struct link_util *lu = NULL;
 	struct iplink_req req;
 	int ret;
@@ -417,12 +437,38 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	req.n.nlmsg_type = cmd;
 	req.i.ifi_family = preferred_family;
 
-	ret = iplink_parse(argc, argv, &req, &name, &type, &link, &dev);
+	ret = iplink_parse(argc, argv, &req, &name, &type, &link, &dev, &group);
 	if (ret < 0)
 		return ret;
 
 	argc -= ret;
 	argv += ret;
+
+	if (group != -1) {
+		if (dev)
+			addattr_l(&req.n, sizeof(req), IFLA_GROUP,
+					&group, sizeof(group));
+		else {
+			if (argc) {
+				fprintf(stderr, "Garbage instead of arguments "
+						"\"%s ...\". Try \"ip link "
+						"help\".\n", *argv);
+				return -1;
+			}
+			if (flags & NLM_F_CREATE) {
+				fprintf(stderr, "group cannot be used when "
+						"creating devices.\n");
+				return -1;
+			}
+
+			req.i.ifi_index = 0;
+			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
+			if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+				exit(2);
+			return 0;
+		}
+	}
+
 	ll_init_map(&rth);
 
 	if (type) {
@@ -779,7 +825,6 @@ static int do_set(int argc, char **argv)
 				flags |= IFF_NOARP;
 			} else
 				return on_off("noarp");
-#ifdef IFF_DYNAMIC
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();
 			mask |= IFF_DYNAMIC;
@@ -789,7 +834,6 @@ static int do_set(int argc, char **argv)
 				flags &= ~IFF_DYNAMIC;
 			} else
 				return on_off("dynamic");
-#endif
 		} else {
                         if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();

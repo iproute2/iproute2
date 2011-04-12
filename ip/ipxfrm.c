@@ -854,6 +854,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_WILDRECV, "wildrecv");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_ICMP, "icmp");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_AF_UNSPEC, "af-unspec");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_ALIGN4, "align4");
 		if (flags)
 			fprintf(fp, "%x", flags);
 	}
@@ -980,6 +981,7 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 
 		fprintf(fp, "flag ");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_POLICY_LOCALOK, "localok");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_POLICY_ICMP, "icmp");
 		if (flags)
 			fprintf(fp, "%x", flags);
 	}

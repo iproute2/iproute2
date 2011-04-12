@@ -128,14 +128,15 @@ void read_igmp(struct ma_info **result_p)
 	if (!fp)
 		return;
 	memset(&m, 0, sizeof(m));
-	fgets(buf, sizeof(buf), fp);
+	if (!fgets(buf, sizeof(buf), fp))
+		return;
 
 	m.addr.family = AF_INET;
 	m.addr.bitlen = 32;
 	m.addr.bytelen = 4;
 
 	while (fgets(buf, sizeof(buf), fp)) {
-		struct ma_info *ma = malloc(sizeof(m));
+		struct ma_info *ma;
 
 		if (buf[0] != '\t') {
 			sscanf(buf, "%d%s", &m.index, m.name);

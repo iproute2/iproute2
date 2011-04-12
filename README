@@ -1,15 +1,17 @@
-Primary site is:
-	http://developer.osdl.org/dev/iproute2
+This is a set of utilities for Linux networking.
 
-Original FTP site is:
-	ftp://ftp.inr.ac.ru/ip-routing/
+Information:
+    http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2
+
+Download:
+    http://devresources.linuxfoundation.org/dev/iproute2/download
+
+Repository:
+    git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
 
 How to compile this.
 --------------------
-1. Look at start of Makefile and set correct values for:
-
-KERNEL_INCLUDE should point to correct linux kernel include directory.
-Default (/usr/src/linux/include) is right as rule.
+1. libdbm
 
 arpd needs to have the db4 development libraries. For debian
 users this is the package with a name like libdb4.x-dev.
@@ -29,8 +31,13 @@ contains whether or not ATM is available, etc.
    and make there. It assumes, that latex, dvips and psnup
    are in your path.
 
+4. This package includes matching sanitized kernel headers because
+   the build environment may not have up to date versions. See Makefile
+   if you have special requirements and need to point at different
+   kernel include files.
+
 Stephen Hemminger
-shemminger@osdl.org
+shemminger@linux-foundation.org
 
 Alexey Kuznetsov
 kuznet@ms2.inr.ac.ru

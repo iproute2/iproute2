@@ -3,6 +3,8 @@ GENLOBJ=genl.o
 include ../Config
 SHARED_LIBS ?= y
 
+CFLAGS += -fno-strict-aliasing
+
 GENLMODULES :=
 GENLMODULES += ctrl.o
 

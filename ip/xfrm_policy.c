@@ -77,7 +77,7 @@ static void usage(void)
 	//fprintf(stderr, "PRIORITY - priority value(default=0)\n");
 
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
-	fprintf(stderr, "FLAG := [ localok ]\n");
+	fprintf(stderr, "FLAG := [ localok | icmp ]\n");
 
 	fprintf(stderr, "LIMIT-LIST := [ LIMIT-LIST ] | [ limit LIMIT ]\n");
 	fprintf(stderr, "LIMIT := [ [time-soft|time-hard|time-use-soft|time-use-hard] SECONDS ] |\n");
@@ -156,6 +156,8 @@ static int xfrm_policy_flag_parse(__u8 *flags, int *argcp, char ***argvp)
 		while (1) {
 			if (strcmp(*argv, "localok") == 0)
 				*flags |= XFRM_POLICY_LOCALOK;
+			else if (strcmp(*argv, "icmp") == 0)
+				*flags |= XFRM_POLICY_ICMP;
 			else {
 				PREV_ARG(); /* back track */
 				break;

@@ -151,5 +151,6 @@ extern int makeargs(char *line, char *argv[], int maxargs);
 
 struct iplink_req;
 int iplink_parse(int argc, char **argv, struct iplink_req *req,
-		char **name, char **type, char **link, char **dev);
+		char **name, char **type, char **link, char **dev,
+		int *group);
 #endif /* __UTILS_H__ */

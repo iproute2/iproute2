@@ -478,12 +478,11 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				if (ci->rta_lastuse != 0)
 					fprintf(fp, " age %dsec", ci->rta_lastuse/hz);
 			}
-#ifdef RTNETLINK_HAVE_PEERINFO
 			if (ci->rta_id)
 				fprintf(fp, " ipid 0x%04x", ci->rta_id);
 			if (ci->rta_ts || ci->rta_tsage)
-				fprintf(fp, " ts 0x%x tsage %dsec", ci->rta_ts, ci->rta_tsage);
-#endif
+				fprintf(fp, " ts 0x%x tsage %dsec",
+					ci->rta_ts, ci->rta_tsage);
 		}
 	} else if (r->rtm_family == AF_INET6) {
 		struct rta_cacheinfo *ci = NULL;
@@ -792,7 +791,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (get_unsigned(&mtu, *argv, 0))
 				invarg("\"mtu\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_MTU, mtu);
-#ifdef RTAX_HOPLIMIT
 		} else if (strcmp(*argv, "hoplimit") == 0) {
 			unsigned hoplimit;
 			NEXT_ARG();
@@ -803,8 +801,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (get_unsigned(&hoplimit, *argv, 0))
 				invarg("\"hoplimit\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_HOPLIMIT, hoplimit);
-#endif
-#ifdef RTAX_ADVMSS
 		} else if (strcmp(*argv, "advmss") == 0) {
 			unsigned mss;
 			NEXT_ARG();
@@ -815,8 +811,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (get_unsigned(&mss, *argv, 0))
 				invarg("\"mss\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_ADVMSS, mss);
-#endif
-#ifdef RTAX_REORDERING
 		} else if (matches(*argv, "reordering") == 0) {
 			unsigned reord;
 			NEXT_ARG();
@@ -827,7 +821,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (get_unsigned(&reord, *argv, 0))
 				invarg("\"reordering\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_REORDERING, reord);
-#endif
 		} else if (strcmp(*argv, "rtt") == 0) {
 			unsigned rtt;
 			NEXT_ARG();

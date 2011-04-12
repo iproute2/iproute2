@@ -15,6 +15,7 @@ PAGESPERPAGE=2
 
 HTMLFILES=$(subst .sgml,.html,$(shell echo *.sgml))
 DVIFILES=$(subst .ps,.dvi,$(PSFILES))
+PDFFILES=$(subst .ps,.pdf,$(PSFILES))
 
 
 all: pstwocol
@@ -24,6 +25,8 @@ pstwocol: $(PSFILES)
 html: $(HTMLFILES)
 
 dvi: $(DVIFILES)
+
+pdf: $(PDFFILES)
 
 print: $(PSFILES)
 	$(LPR) $(PSFILES)
@@ -40,6 +43,11 @@ print: $(PSFILES)
 		fi; \
 		echo "Re-running LaTeX $<, $${pass}d pass"; pass=$$[$$pass + 1]; \
 	done
+
+#%.pdf: %.tex
+#	pdflatex $<
+%.pdf: %.ps
+	ps2pdf $<
 
 %.ps: %.dvi
 	$(DVIPS) $< -o $@

@@ -30,6 +30,7 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 	char *name, *type, *link, *dev;
 	int err, len;
 	struct rtattr * data;
+	int group;
 
 	if (strcmp(argv[0], "peer") != 0) {
 		usage();
@@ -42,7 +43,7 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 	hdr->nlmsg_len += sizeof(struct ifinfomsg);
 
 	err = iplink_parse(argc - 1, argv + 1, (struct iplink_req *)hdr,
-			   &name, &type, &link, &dev);
+			   &name, &type, &link, &dev, &group);
 	if (err < 0)
 		return err;
 

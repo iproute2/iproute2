@@ -277,12 +277,10 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		       ci->ndm_confirmed/hz, ci->ndm_updated/hz);
 	}
 
-#ifdef NDA_PROBES
 	if (tb[NDA_PROBES] && show_stats) {
 		__u32 p = *(__u32 *) RTA_DATA(tb[NDA_PROBES]);
 		fprintf(fp, " probes %u", p);
 	}
-#endif
 
 	if (r->ndm_state) {
 		int nud = r->ndm_state;

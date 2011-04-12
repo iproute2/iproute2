@@ -55,8 +55,10 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .RI "[ " ARGS " ]"
 
 .ti -8
-.BI "ip link set " DEVICE
-.RB "{ " up " | " down " | " arp " { " on " | " off " } |"
+.BR "ip link set " {
+.IR DEVICE " | "
+.BI "group " GROUP
+.RB "} { " up " | " down " | " arp " { " on " | " off " } |"
 .br
 .BR promisc " { " on " | " off " } |"
 .br
@@ -95,7 +97,12 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .B qos
 .IR VLAN-QOS " ] ] ["
 .B rate
-.IR TXRATE " ]"
+.IR TXRATE " ] |"
+.br
+.B master
+.IR DEVICE
+.br
+.B nomaster
 
 .ti -8
 .B ip link show
@@ -930,6 +937,13 @@ specifies network device to operate on. When configuring SR-IOV Virtual Fuction
 device.
 
 .TP
+.BI group " GROUP "
+.I GROUP
+has a dual role: If both group and dev are present, then move the device to the
+specified group.  If only a group is specified, then the command operates on
+all devices in that group.
+
+.TP
 .BR up " and " down
 change the state of the device to
 .B UP
@@ -996,6 +1010,12 @@ move the device to the network namespace associated with the process
 give the device a symbolic name for easy reference.
 
 .TP
+.BI group " GROUP"
+specify the group the device belongs to.
+The available groups are listed in file
+.BR "/etc/iproute2/group" .
+
+.TP
 .BI vf " NUM"
 specify a Virtual Function device to be configured. The associated PF device
 must be specified using the
@@ -1039,6 +1059,14 @@ Setting this parameter to 0 disables rate limiting. The
 .B vf
 parameter must be specified.
 .in -8
+
+.TP
+.BI master " DEVICE"
+set master device of the device (enslave device).
+
+.TP
+.BI nomaster
+unset master device of the device (release device).
 
 .PP
 .B Warning:

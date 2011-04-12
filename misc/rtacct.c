@@ -535,7 +535,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (getenv("RTACCT_HISTORY"))
-		snprintf(hist_name, sizeof(hist_name), getenv("RTACCT_HISTORY"));
+		snprintf(hist_name, sizeof(hist_name), "%s", getenv("RTACCT_HISTORY"));
 	else
 		sprintf(hist_name, "/tmp/.rtacct.u%d", getuid());
 
@@ -563,7 +563,10 @@ int main(int argc, char *argv[])
 			exit(-1);
 		}
 		if (stb.st_size != sizeof(*hist_db))
-			write(fd, kern_db, sizeof(*hist_db));
+			if (write(fd, kern_db, sizeof(*hist_db)) < 0) {
+				perror("rtacct: write history file");
+				exit(-1);
+			}
 
 		hist_db = mmap(NULL, sizeof(*hist_db),
 			       PROT_READ|PROT_WRITE,
