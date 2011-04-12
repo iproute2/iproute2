@@ -33,6 +33,9 @@
 
 #define MAX_ADDR_LEN	32		/* Largest hardware address length */
 
+/* Initial net device group. All devices belong to group 0 by default. */
+#define INIT_NETDEV_GROUP	0
+
 
 
 /* Media selection options. */
