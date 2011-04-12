@@ -45,6 +45,7 @@ TCMODULES += em_nbyte.o
 TCMODULES += em_cmp.o
 TCMODULES += em_u32.o
 TCMODULES += em_meta.o
+TCMODULES += q_mqprio.o
 
 TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)
