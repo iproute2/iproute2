@@ -25,8 +25,8 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... mqprio [num_tc NUMBER] [map P0 P1 ...]\n");
-	fprintf(stderr, "                  [offset txq0 txq1 ...] ");
-	fprintf(stderr, "[count cnt0,cnt1 ...] [hw 1|0]\n");
+	fprintf(stderr, "                  [queues count1@offset1 count2@offset2 ...] ");
+	fprintf(stderr, "[hw 1|0]\n");
 }
 
 static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
@@ -58,22 +58,29 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 			}
 			for ( ; idx < TC_QOPT_MAX_QUEUE; idx++)
 				opt.prio_tc_map[idx] = 0;
-		} else if (strcmp(*argv, "offset") == 0) {
+		} else if (strcmp(*argv, "queues") == 0) {
+			char *tmp, *tok;
+
 			while (idx < TC_QOPT_MAX_QUEUE && NEXT_ARG_OK()) {
 				NEXT_ARG();
-				if (get_u16(&opt.offset[idx], *argv, 10)) {
+
+				tmp = strdup(*argv);
+				if (!tmp)
+					break;
+
+				tok = strtok(tmp, "@");
+				if (get_u16(&opt.count[idx], tok, 10)) {
+					free(tmp);
 					PREV_ARG();
 					break;
 				}
-				idx++;
-			}
-		} else if (strcmp(*argv, "count") == 0) {
-			while (idx < TC_QOPT_MAX_QUEUE && NEXT_ARG_OK()) {
-				NEXT_ARG();
-				if (get_u16(&opt.count[idx], *argv, 10)) {
+				tok = strtok(NULL, "@");
+				if (get_u16(&opt.offset[idx], tok, 10)) {
+					free(tmp);
 					PREV_ARG();
 					break;
 				}
+				free(tmp);
 				idx++;
 			}
 		} else if (strcmp(*argv, "hw") == 0) {
