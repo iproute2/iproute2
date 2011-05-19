@@ -860,15 +860,15 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 	case 20:
 		switch (ntohl(key->mask)) {
 		case 0x0000ffff:
-			fprintf(f, "\n  match sport %u",
+			fprintf(f, "\n  match dport %u",
 				ntohl(key->val) & 0xffff);
 			return;
 		case 0xffff0000:
-			fprintf(f, "\n  match dport %u",
+			fprintf(f, "\n  match sport %u",
 				ntohl(key->val) >> 16);
 			return;
 		case 0xffffffff:
-			fprintf(f, "\n  match sport %u, match dport %u",
+			fprintf(f, "\n  match dport %u, match sport %u",
 				ntohl(key->val) & 0xffff,
 				ntohl(key->val) >> 16);
 
