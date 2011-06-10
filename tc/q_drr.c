@@ -36,7 +36,7 @@ static void explain2(void)
 
 static int drr_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-	while (argc > 0) {
+	while (argc) {
 		if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -45,7 +45,6 @@ static int drr_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 			explain();
 			return -1;
 		}
-		argc--; argv++;
 	}
 	return 0;
 }

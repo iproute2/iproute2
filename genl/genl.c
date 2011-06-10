@@ -150,12 +150,6 @@ int main(int argc, char **argv)
 
 		ret = a->parse_genlopt(a, argc-1, argv+1);
 		return ret;
-
-		if (matches(argv[1], "help") == 0)
-			usage();
-		fprintf(stderr, "Object \"%s\" is unknown, try \"genl "
-			"-help\".\n", argv[1]);
-		exit(-1);
 	}
 
 	usage();

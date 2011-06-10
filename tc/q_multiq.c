@@ -46,7 +46,7 @@ static int multiq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 {
 	struct tc_multiq_qopt opt;
 
-	if (argc > 0) {
+	if (argc) {
 		if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -55,7 +55,6 @@ static int multiq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			explain();
 			return -1;
 		}
-		argc--; argv++;
 	}
 
 	addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));

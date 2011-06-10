@@ -74,7 +74,6 @@ static int cgroup_parse_opt(struct filter_util *qu, char *handle,
 			explain();
 			return -1;
 		}
-		argc--; argv++;
 	}
 
 	tail->rta_len = (((void*)n)+n->nlmsg_len) - (void*)tail;
