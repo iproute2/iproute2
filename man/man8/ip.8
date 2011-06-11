@@ -421,318 +421,348 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .ti -8
 .BR "ip monitor" " [ " all " |"
 .IR LISTofOBJECTS " ]"
+.sp
 
 .ti -8
-.BR "ip xfrm"
-.IR XFRM_OBJECT " { " COMMAND " }"
+.B "ip xfrm"
+.IR XFRM-OBJECT " { " COMMAND " | "
+.BR help " }"
+.sp
 
 .ti -8
-.IR XFRM_OBJECT " := { " state " | " policy " | " monitor " } "
+.IR XFRM-OBJECT " :="
+.BR state " | " policy " | " monitor
+.sp
 
 .ti -8
 .BR "ip xfrm state " { " add " | " update " } "
-.IR ID " [ "
-.IR XFRM_OPT " ] "
-.RB " [ " mode
-.IR MODE " ] "
-.br
-.RB " [ " reqid
-.IR REQID " ] "
-.RB " [ " seq
-.IR SEQ " ] "
-.RB " [ " replay-window
-.IR SIZE " ] "
-.br
-.RB " [ " flag
-.IR FLAG-LIST " ] "
-.RB " [ " encap
-.IR ENCAP " ] "
-.RB " [ " sel
-.IR SELECTOR " ] "
-.br
-.RB " [ "
-.IR LIMIT-LIST " ] "
+.IR ID " [ " ALGO-LIST " ]"
+.RB "[ " mode
+.IR MODE " ]"
+.RB "[ " mark
+.I MARK
+.RB "[ " mask
+.IR MASK " ] ]"
+.RB "[ " reqid
+.IR REQID " ]"
+.RB "[ " seq
+.IR SEQ " ]"
+.RB "[ " replay-window
+.IR SIZE " ]"
+.RB "[ " replay-seq
+.IR SEQ " ]"
+.RB "[ " replay-oseq
+.IR SEQ " ]"
+.RB "[ " flag
+.IR FLAG-LIST " ]"
+.RB "[ " sel
+.IR SELECTOR " ] [ " LIMIT-LIST " ]"
+.RB "[ " encap
+.IR ENCAP " ]"
+.RB "[ " coa
+.IR ADDR "[/" PLEN "] ]"
+.RB "[ " ctx
+.IR CTX " ]"
 
 .ti -8
-.BR "ip xfrm state allocspi "
-.IR ID
-.RB " [ " mode
-.IR MODE " ] "
-.RB " [ " reqid
-.IR REQID " ] "
-.RB " [ " seq
-.IR SEQ " ] "
-.RB " [ " min
-.IR SPI
+.B "ip xfrm state allocspi"
+.I ID
+.RB "[ " mode
+.IR MODE " ]"
+.RB "[ " mark
+.I MARK
+.RB "[ " mask
+.IR MASK " ] ]"
+.RB "[ " reqid
+.IR REQID " ]"
+.RB "[ " seq
+.IR SEQ " ]"
+.RB "[ " min
+.I SPI
 .B max
-.IR SPI " ] "
+.IR SPI " ]"
 
 .ti -8
 .BR "ip xfrm state" " { " delete " | " get " } "
-.IR ID
+.I ID
+.RB "[ " mark
+.I MARK
+.RB "[ " mask
+.IR MASK " ] ]"
 
 .ti -8
-.BR "ip xfrm state" " { " deleteall " | " list " } [ "
-.IR ID " ] "
-.RB " [ " mode
-.IR MODE " ] "
-.br
-.RB " [ " reqid
-.IR REQID " ] "
-.RB " [ " flag
-.IR FLAG_LIST " ] "
+.BR "ip xfrm state" " { " deleteall " | " list " } ["
+.IR ID " ]"
+.RB "[ " mode
+.IR MODE " ]"
+.RB "[ " reqid
+.IR REQID " ]"
+.RB "[ " flag
+.IR FLAG-LIST " ]"
 
 .ti -8
 .BR "ip xfrm state flush" " [ " proto
-.IR XFRM_PROTO " ] "
+.IR XFRM-PROTO " ]"
 
 .ti -8
 .BR "ip xfrm state count"
 
 .ti -8
-.IR ID " := "
-.RB " [ " src
-.IR ADDR " ] "
-.RB " [ " dst
-.IR ADDR " ] "
-.RB " [ " proto
-.IR XFRM_PROTO " ] "
-.RB " [ " spi
-.IR SPI " ] "
+.IR ID " :="
+.RB "[ " src
+.IR ADDR " ]"
+.RB "[ " dst
+.IR ADDR " ]"
+.RB "[ " proto
+.IR XFRM-PROTO " ]"
+.RB "[ " spi
+.IR SPI " ]"
 
 .ti -8
-.IR XFRM_PROTO " := "
-.RB " [ " esp " | " ah " | " comp " | " route2 " | " hao " ] "
+.IR XFRM-PROTO " :="
+.BR esp " | " ah " | " comp " | " route2 " | " hao
+
+.ti -8
+.IR ALGO-LIST " := [ " ALGO-LIST " ] " ALGO
+
+.ti -8
+.IR ALGO " :="
+.RB "{ " enc " | " auth " | " comp " } " 
+.IR ALGO-NAME " " ALGO-KEY
+.R "|"
+.br
+.B aead
+.IR ALGO-NAME " " ALGO-KEY " " ALGO-ICV-LEN
+.R "|"
+.br
+.B auth-trunc
+.IR ALGO-NAME " " ALGO-KEY " " ALGO-TRUNC-LEN
 
 .ti -8
 .IR MODE " := "
-.RB " [ " transport " | " tunnel " | " ro " | " beet " ] "
-.B (default=transport)
+.BR transport " | " tunnel " | " ro " | " in_trigger " | " beet
 
 .ti -8
-.IR FLAG-LIST " := "
-.RI " [ " FLAG-LIST " ] " FLAG
+.IR FLAG-LIST " := [ " FLAG-LIST " ] " FLAG
 
 .ti -8
-.IR FLAG " := "
-.RB " [ " noecn " | " decap-dscp " | " wildrecv " ] "
+.IR FLAG " :="
+.BR noecn " | " decap-dscp " | " nopmtudisc " | " wildrecv " | " icmp " | " af-unspec " | " align4
 
 .ti -8
-.IR ENCAP " := " ENCAP-TYPE " " SPORT " " DPORT " " OADDR
-
-.ti -8
-.IR ENCAP-TYPE " := "
-.B espinudp
-.RB " | "
-.B espinudp-nonike
-
-.ti -8
-.IR ALGO-LIST " := [ "
-.IR ALGO-LIST " ] | [ "
-.IR ALGO " ] "
-
-.ti -8
-.IR ALGO " := "
-.IR ALGO_TYPE
-.IR ALGO_NAME
-.IR ALGO_KEY
-
-.ti -8
-.IR ALGO_TYPE " := "
-.RB " [ " enc " | " auth " | " comp " ] "
-
-.ti -8
-.IR SELECTOR " := "
-.B src
-.IR ADDR "[/" PLEN "]"
-.B dst
-.IR ADDR "[/" PLEN "]"
-.RI " [ " UPSPEC " ] "
-.RB " [ " dev
-.IR DEV " ] "
+.IR SELECTOR " :="
+.RB "[ " src
+.IR ADDR "[/" PLEN "] ]"
+.RB "[ " dst
+.IR ADDR "[/" PLEN "] ]"
+.RB "[ " dev
+.IR DEV " ]"
+.br
+.RI "[ " UPSPEC " ]"
 
 .ti -8
 .IR UPSPEC " := "
-.B proto
-.IR PROTO " [[ "
-.B sport
-.IR PORT " ] "
-.RB " [ " dport
-.IR PORT " ] | "
+.BR proto " {"
+.IR PROTO " |"
 .br
-.RB " [ " type
-.IR NUMBER " ] "
-.RB " [ " code
-.IR NUMBER " ] | "
+.RB "{ " tcp " | " udp " | " sctp " | " dccp " } [ " sport
+.IR PORT " ]"
+.RB "[ " dport
+.IR PORT " ] |"
 .br
-.RB " [ " key
-.IR KEY " ]] "
+.RB "{ " icmp " | " ipv6-icmp " | " mobility-header " } [ " type
+.IR NUMBER " ]"
+.RB "[ " code
+.IR NUMBER " ] |"
+.br
+.BR gre " [ " key
+.RI "{ " DOTTED-QUAD " | " NUMBER " } ] }"
 
 .ti -8
-.IR LIMIT-LIST " := [ " LIMIT-LIST " ] |"
-.RB " [ "limit
-.IR LIMIT " ] "
+.IR LIMIT-LIST " := [ " LIMIT-LIST " ]"
+.B limit
+.I LIMIT
 
 .ti -8
-.IR LIMIT " := "
-.RB " [ [" time-soft "|" time-hard "|" time-use-soft "|" time-use-hard "]"
-.IR SECONDS " ] | "
-.RB "[ ["byte-soft "|" byte-hard "]"
-.IR SIZE " ] | "
+.IR LIMIT " :="
+.RB "{ " time-soft " | " time-hard " | " time-use-soft " | " time-use-hard " }"
+.IR "SECONDS" " |"
 .br
-.RB " [ ["packet-soft "|" packet-hard "]"
-.IR COUNT " ] "
+.RB "{ " byte-soft " | " byte-hard " }"
+.IR SIZE " |"
+.br
+.RB "{ " packet-soft " | " packet-hard " }"
+.I COUNT
 
 .ti -8
-.BR "ip xfrm policy" " { " add " | " update " } " " dir "
-.IR DIR
-.IR SELECTOR " [ "
-.BR index
-.IR INDEX " ] "
-.br
-.RB " [ " ptype
-.IR PTYPE " ] "
-.RB " [ " action
-.IR ACTION " ] "
-.RB " [ " priority
-.IR PRIORITY " ] "
-.br
-.RI " [ " LIMIT-LIST " ] [ "
-.IR TMPL-LIST " ] "
+.IR ENCAP " :="
+.RB "{ " espinudp " | " espinudp-nonike " }"
+.IR SPORT " " DPORT " " OADDR
 
 .ti -8
-.BR "ip xfrm policy" " { " delete " | " get " } " " dir "
-.IR DIR " [ " SELECTOR " | "
-.BR index
-.IR INDEX
-.RB " ] "
-.br
-.RB " [ " ptype
-.IR PTYPE " ] "
+.BR "ip xfrm policy" " { " add " | " update " }"
+.I SELECTOR
+.B dir
+.I DIR
+.RB "[ " ctx
+.IR CTX " ]"
+.RB "[ " mark
+.I MARK
+.RB "[ " mask
+.IR MASK " ] ]"
+.RB "[ " index
+.IR INDEX " ]"
+.RB "[ " ptype
+.IR PTYPE " ]"
+.RB "[ " action
+.IR ACTION " ]"
+.RB "[ " priority
+.IR PRIORITY " ]"
+.RB "[ " flag
+.IR FLAG-LIST " ]"
+.RI "[ " LIMIT-LIST " ] [ " TMPL-LIST " ]"
 
 .ti -8
-.BR "ip xfrm policy" " { " deleteall " | " list " } "
-.RB " [ " dir
-.IR DIR " ] [ "
-.IR SELECTOR " ] "
-.br
-.RB " [ " index
-.IR INDEX " ] "
-.RB " [ " action
-.IR ACTION " ] "
-.RB " [ " priority
-.IR PRIORITY " ] "
+.BR "ip xfrm policy" " { " delete " | " get " }"
+.RI "{ " SELECTOR " | "
+.B index
+.IR INDEX " }"
+.B dir
+.I DIR
+.RB "[ " ctx
+.IR CTX " ]"
+.RB "[ " mark
+.I MARK
+.RB "[ " mask
+.IR MASK " ] ]"
+.RB "[ " ptype
+.IR PTYPE " ]"
+
+.ti -8
+.BR "ip xfrm policy" " { " deleteall " | " list " }"
+.RI "[ " SELECTOR " ]"
+.RB "[ " dir
+.IR DIR " ]"
+.RB "[ " index
+.IR INDEX " ]"
+.RB "[ " ptype
+.IR PTYPE " ]"
+.RB "[ " action
+.IR ACTION " ]"
+.RB "[ " priority
+.IR PRIORITY " ]"
 
 .ti -8
 .B "ip xfrm policy flush"
-.RB " [ " ptype
-.IR PTYPE " ] "
+.RB "[ " ptype
+.IR PTYPE " ]"
 
 .ti -8
-.B "ip xfrm count"
+.B "ip xfrm policy count"
 
 .ti -8
-.IR PTYPE " := "
-.RB " [ " main " | " sub " ] "
-.B (default=main)
-
-.ti -8
-.IR DIR " := "
-.RB " [ " in " | " out " | " fwd " ] "
-
-.ti -8
-.IR SELECTOR " := "
-.B src
-.IR ADDR "[/" PLEN "]"
-.B dst
-.IR ADDR "[/" PLEN] " [ " UPSPEC
-.RB " ] [ " dev
-.IR DEV " ] "
+.IR SELECTOR " :="
+.RB "[ " src
+.IR ADDR "[/" PLEN "] ]"
+.RB "[ " dst
+.IR ADDR "[/" PLEN "] ]"
+.RB "[ " dev
+.IR DEV " ]"
+.RI "[ " UPSPEC " ]"
 
 .ti -8
 .IR UPSPEC " := "
-.B proto
-.IR PROTO " [ "
-.RB " [ " sport
-.IR PORT " ] "
-.RB " [ " dport
-.IR PORT " ] | "
+.BR proto " {"
+.IR PROTO " |"
 .br
-.RB " [ " type
-.IR NUMBER " ] "
-.RB " [ " code
-.IR NUMBER " ] | "
+.RB "{ " tcp " | " udp " | " sctp " | " dccp " } [ " sport
+.IR PORT " ]"
+.RB "[ " dport
+.IR PORT " ] |"
 .br
-.RB " [ " key
-.IR KEY " ] ] "
+.RB "{ " icmp " | " ipv6-icmp " | " mobility-header " } [ " type
+.IR NUMBER " ]"
+.RB "[ " code
+.IR NUMBER " ] |"
+.br
+.BR gre " [ " key
+.RI "{ " DOTTED-QUAD " | " NUMBER " } ] }"
+
+.ti -8
+.IR DIR " := "
+.BR in " | " out " | " fwd
+
+.ti -8
+.IR PTYPE " := "
+.BR main " | " sub
 
 .ti -8
 .IR ACTION " := "
-.RB " [ " allow " | " block " ]"
-.B (default=allow)
+.BR allow " | " block
 
 .ti -8
-.IR LIMIT-LIST " := "
-.RB " [ "
-.IR LIMIT-LIST " ] | "
-.RB " [ " limit
-.IR LIMIT " ] "
+.IR FLAG-LIST " := [ " FLAG-LIST " ] " FLAG
 
 .ti -8
-.IR LIMIT " := "
-.RB " [ [" time-soft "|" time-hard "|" time-use-soft "|" time-use-hard "]"
-.IR SECONDS " ] | "
-.RB " [ [" byte-soft "|" byte-hard "]"
-.IR SIZE " ] | "
-.br [ "
-.RB "[" packet-soft "|" packet-hard "]"
-.IR NUMBER " ] "
+.IR FLAG " :="
+.BR localok " | " icmp
 
 .ti -8
-.IR TMPL-LIST " := "
-.B " [ "
-.IR TMPL-LIST " ] | "
-.RB " [ " tmpl
-.IR TMPL " ] "
+.IR LIMIT-LIST " := [ " LIMIT-LIST " ]"
+.B limit
+.I LIMIT
 
 .ti -8
-.IR TMPL " := "
-.IR ID " [ "
-.B mode
-.IR MODE " ] "
-.RB " [ " reqid
-.IR REQID " ] "
-.RB " [ " level
-.IR LEVEL " ] "
+.IR LIMIT " :="
+.RB "{ " time-soft " | " time-hard " | " time-use-soft " | " time-use-hard " }"
+.IR "SECONDS" " |"
+.br
+.RB "{ " byte-soft " | " byte-hard " }"
+.IR SIZE " |"
+.br
+.RB "{ " packet-soft " | " packet-hard " }"
+.I COUNT
 
 .ti -8
-.IR ID " := "
-.RB " [ " src
-.IR ADDR " ] "
-.RB " [ " dst
-.IR ADDR " ] "
-.RB " [ " proto
-.IR XFRM_PROTO " ] "
-.RB " [ " spi
-.IR SPI " ] "
+.IR TMPL-LIST " := [ " TMPL-LIST " ]"
+.B tmpl
+.I TMPL
 
 .ti -8
-.IR XFRM_PROTO " := "
-.RB " [ " esp " | " ah " | " comp " | " route2 " | " hao " ] "
+.IR TMPL " := " ID
+.RB "[ " mode
+.IR MODE " ]"
+.RB "[ " reqid
+.IR REQID " ]"
+.RB "[ " level
+.IR LEVEL " ]"
+
+.ti -8
+.IR ID " :="
+.RB "[ " src
+.IR ADDR " ]"
+.RB "[ " dst
+.IR ADDR " ]"
+.RB "[ " proto
+.IR XFRM-PROTO " ]"
+.RB "[ " spi
+.IR SPI " ]"
+
+.ti -8
+.IR XFRM-PROTO " :="
+.BR esp " | " ah " | " comp " | " route2 " | " hao
 
 .ti -8
 .IR MODE " := "
-.RB " [ " transport " | " tunnel " | " beet " ] "
-.B (default=transport)
+.BR transport " | " tunnel " | " ro " | " in_trigger " | " beet
 
 .ti -8
-.IR LEVEL " := "
-.RB " [ " required " | " use " ] "
-.B (default=required)
+.IR LEVEL " :="
+.BR required " | " use
 
 .ti -8
-.BR "ip xfrm monitor" " [ " all " | "
-.IR LISTofOBJECTS " ] "
+.BR "ip xfrm monitor" " [ " all " |"
+.IR LISTofXFRM-OBJECTS " ]"
 
 .in -8
 .ad b
@@ -848,10 +878,6 @@ host addresses.
 .TP
 .B tunnel
 - tunnel over IP.
-
-.TP
-.B xfrm
-- framework for IPsec protocol.
 
 .PP
 The names of all objects may be written in full or
@@ -2470,169 +2496,226 @@ at any time.
 It prepends the history with the state snapshot dumped at the moment
 of starting.
 
-.SH ip xfrm - setting xfrm
-xfrm is an IP framework, which can transform format of the datagrams,
-.br
-i.e. encrypt the packets with some algorithm. xfrm policy and xfrm state
-are associated through templates
-.IR TMPL_LIST "."
-This framework is used as a part of IPsec protocol.
+.SH ip xfrm - transform configuration
+xfrm is an IP framework for transforming packets (such as encrypting
+their payloads). This framework is used to implement the IPsec protocol
+suite (with the
+.B state
+object operating on the Security Association Database, and the
+.B policy
+object operating on the Security Policy Database). It is also used for
+the IP Payload Compression Protocol and features of Mobile IPv6.
 
 .SS ip xfrm state add - add new state into xfrm
 
-.SS ip xfrm state update - update existing xfrm state
+.SS ip xfrm state update - update existing state in xfrm
 
-.SS ip xfrm state allocspi - allocate SPI value
+.SS ip xfrm state allocspi - allocate an SPI value
 
-.TP
-.I MODE
-is set as default to
-.BR transport ","
-but it could be set to
-.BR tunnel "," ro " or " beet "."
+.SS ip xfrm state delete - delete existing state in xfrm
 
-.TP
-.I FLAG-LIST
-contains one or more flags.
+.SS ip xfrm state get - get existing state in xfrm
 
-.TP
-.I FLAG
-could be set to
-.BR noecn ", " decap-dscp " or " wildrecv "."
+.SS ip xfrm state deleteall - delete all existing state in xfrm
+
+.SS ip xfrm state list - print out the list of existing state in xfrm
+
+.SS ip xfrm state flush - flush all state in xfrm
+
+.SS ip xfrm state count - count all existing state in xfrm
 
 .TP
-.I ENCAP
-encapsulation is set to encapsulation type
-.IR ENCAP-TYPE ", source port " SPORT ", destination port "  DPORT " and " OADDR "."
+.IR ID
+is specified by a source address, destination address,
+.RI "transform protocol " XFRM-PROTO ","
+and/or Security Parameter Index
+.IR SPI "."
 
 .TP
-.I ENCAP-TYPE
-could be set to
-.BR espinudp " or " espinudp-nonike "."
+.I XFRM-PROTO
+specifies a transform protocol:
+.RB "IPsec Encapsulating Security Payload (" esp "),"
+.RB "IPsec Authentication Header (" ah "),"
+.RB "IP Payload Compression (" comp "),"
+.RB "Mobile IPv6 Type 2 Routing Header (" route2 "), or"
+.RB "Mobile IPv6 Home Address Option (" hao ")."
 
 .TP
 .I ALGO-LIST
-contains one or more algorithms
-.I ALGO
-which depend on the type of algorithm set by
-.IR ALGO_TYPE "."
-Valid algorithms are:
-.BR enc ", " auth " or " comp "."
+specifies one or more algorithms
+.IR ALGO
+to use. Algorithm types include
+.RB "encryption (" enc "),"
+.RB "authentication (" auth "),"
+.RB "authentication with a specified truncation length (" auth-trunc "),"
+.RB "authenticated encryption with associated data (" aead "), and"
+.RB "compression (" comp ")."
+For each algorithm used, the algorithm type, the algorithm name
+.IR ALGO-NAME ","
+and the key
+.I ALGO-KEY
+must be specified. For
+.BR aead ","
+the Integrity Check Value length
+.I ALGO-ICV-LEN
+must additionally be specified.
+For
+.BR auth-trunc ","
+the signature truncation length
+.I ALGO-TRUNC-LEN
+must additionally be specified.
+
+.TP
+.I MODE
+specifies a mode of operation:
+.RB "IPsec transport mode (" transport "), "
+.RB "IPsec tunnel mode (" tunnel "), "
+.RB "Mobile IPv6 route optimization mode (" ro "), "
+.RB "Mobile IPv6 inbound trigger mode (" in_trigger "), or "
+.RB "IPsec ESP Bound End-to-End Tunnel Mode (" beet ")."
+
+.TP
+.I FLAG-LIST
+contains one or more of the following optional flags:
+.BR noecn ", " decap-dscp ", " nopmtudisc ", " wildrecv ", " icmp ", "
+.BR af-unspec ", or " align4 "."
+
+.TP
+.IR SELECTOR
+selects the traffic that will be controlled by the policy, based on the source
+address, the destination address, the network device, and/or
+.IR UPSPEC "."
+
+.TP
+.IR UPSPEC
+selects traffic by protocol. For the
+.BR tcp ", " udp ", " sctp ", or " dccp
+protocols, the source and destination port can optionally be specified.
+For the
+.BR icmp ", " ipv6-icmp ", or " mobility-header
+protocols, the type and code numbers can optionally be specified.
+For the
+.B gre
+protocol, the key can optionally be specified as a dotted-quad or number.
+Other protocols can be selected by name or number
+.IR PROTO "."
+
+.TP
+.I LIMIT-LIST
+sets limits in seconds, bytes, or numbers of packets.
+
+.TP
+.I ENCAP
+encapsulates packets with protocol
+.BR espinudp " or " espinudp-nonike ","
+.RI "using source port " SPORT ", destination port "  DPORT
+.RI ", and original address " OADDR "."
 
 .SS ip xfrm policy add - add a new policy
 
 .SS ip xfrm policy update - update an existing policy
 
-.SS ip xfrm policy delete - delete existing policy
+.SS ip xfrm policy delete - delete an existing policy
 
-.SS ip xfrm policy get - get existing policy
+.SS ip xfrm policy get - get an existing policy
 
-.SS ip xfrm policy deleteall - delete all existing xfrm policy
+.SS ip xfrm policy deleteall - delete all existing xfrm policies
 
-.SS ip xfrm policy list - print out the list of xfrm policy
+.SS ip xfrm policy list - print out the list of xfrm policies
 
 .SS ip xfrm policy flush - flush policies
-It can be flush
-.BR all
-policies or only those specified with
-.BR ptype "."
 
-.TP
-.BI dir " DIR "
-directory could be one of these:
-.BR "inp", " out " or " fwd".
+.SS ip xfrm policy count - count existing policies
 
 .TP
 .IR SELECTOR
-selects for which addresses will be set up the policy. The selector
-is defined by source and destination address.
+selects the traffic that will be controlled by the policy, based on the source
+address, the destination address, the network device, and/or
+.IR UPSPEC "."
 
 .TP
 .IR UPSPEC
-is defined by source port
-.BR sport ", "
-destination port
-.BR dport ", " type
-as number,
-.B code
-also number and
-.BR key
-as dotted-quad or number.
+selects traffic by protocol. For the
+.BR tcp ", " udp ", " sctp ", or " dccp
+protocols, the source and destination port can optionally be specified.
+For the
+.BR icmp ", " ipv6-icmp ", or " mobility-header
+protocols, the type and code numbers can optionally be specified.
+For the
+.B gre
+protocol, the key can optionally be specified as a dotted-quad or number.
+Other protocols can be selected by name or number
+.IR PROTO "."
 
 .TP
-.BI dev " DEV "
-specify network device.
+.I DIR
+selects the policy direction as
+.BR in ", " out ", or " fwd "."
 
 .TP
-.BI index " INDEX "
-the number of indexed policy.
+.I CTX
+sets the security context.
 
 .TP
-.BI ptype " PTYPE "
-type is set as default on
-.BR "main" ,
-could be switch on
-.BR "sub" .
+.I PTYPE
+can be
+.BR main " (default) or " sub "."
 
 .TP
-.BI action " ACTION "
-is set as default on
-.BR "allow".
-It could be switch on
-.BR "block".
+.I ACTION
+can be
+.BR allow " (default) or " block "."
 
 .TP
-.BI priority " PRIORITY "
-priority is a number. Default priority is set on zero.
+.I PRIORITY
+is a number that defaults to zero.
 
 .TP
-.IR LIMIT-LIST
-limits are set in seconds, bytes or numbers of packets.
+.I FLAG-LIST
+contains one or both of the following optional flags:
+.BR local " or " icmp "."
 
 .TP
-.IR TMPL-LIST
-template list is based on
-.IR ID ","
-.BR mode ", " reqid " and " level ". "
+.I LIMIT-LIST
+sets limits in seconds, bytes, or numbers of packets.
+
+.TP
+.I TMPL-LIST
+is a template list specified using
+.IR ID ", " MODE ", " REQID ", and/or " LEVEL ". "
 
 .TP
 .IR ID
-is specified by source address, destination address,
-.I proto
-and value of
-.IR spi "."
+is specified by a source address, destination address,
+.RI "transform protocol " XFRM-PROTO ","
+and/or Security Parameter Index
+.IR SPI "."
 
 .TP
-.IR XFRM_PROTO
-values:
-.BR esp ", " ah ", " comp ", " route2 " or " hao "."
+.I XFRM-PROTO
+specifies a transform protocol:
+.RB "IPsec Encapsulating Security Payload (" esp "),"
+.RB "IPsec Authentication Header (" ah "),"
+.RB "IP Payload Compression (" comp "),"
+.RB "Mobile IPv6 Type 2 Routing Header (" route2 "), or"
+.RB "Mobile IPv6 Home Address Option (" hao ")."
 
 .TP
-.IR MODE
-is set as default on
-.BR transport ","
-but it could be set on
-.BR tunnel " or " beet "."
+.I MODE
+specifies a mode of operation:
+.RB "IPsec transport mode (" transport "), "
+.RB "IPsec tunnel mode (" tunnel "), "
+.RB "Mobile IPv6 route optimization mode (" ro "), "
+.RB "Mobile IPv6 inbound trigger mode (" in_trigger "), or "
+.RB "IPsec ESP Bound End-to-End Tunnel Mode (" beet ")."
 
 .TP
-.IR LEVEL
-is set as default on
-.BR required
-and the other choice is
-.BR use "."
+.I LEVEL
+can be
+.BR required " (default) or " use "."
 
-.TP
-.IR UPSPEC
-is specified by
-.BR sport " and " dport " (for UDP/TCP), "
-.BR type " and " code " (for ICMP; as number) or "
-.BR key " (for GRE; as dotted-quad or number)."
-.
-
-.SS ip xfrm monitor - is used for listing all objects or defined group of them.
-The
-.B xfrm monitor
-can monitor the policies for all objects or defined group of them.
+.SS ip xfrm monitor - state monitoring for xfrm objects
+The xfrm objects to monitor can be optionally specified.
 
 .SH HISTORY
 .B ip

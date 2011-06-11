@@ -59,8 +59,8 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: ip xfrm XFRM_OBJECT { COMMAND | help }\n"
-		"where  XFRM_OBJECT := { state | policy | monitor }\n");
+		"Usage: ip xfrm XFRM-OBJECT { COMMAND | help }\n"
+		"where  XFRM-OBJECT := state | policy | monitor\n");
 	exit(-1);
 }
 
@@ -1040,7 +1040,7 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 
 			ret = xfrm_xfrmproto_getbyname(*argv);
 			if (ret < 0)
-				invarg("\"XFRM_PROTO\" is invalid", *argv);
+				invarg("\"XFRM-PROTO\" is invalid", *argv);
 
 			id->proto = (__u8)ret;
 
@@ -1072,7 +1072,7 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 		invarg("the same address family is required between \"src\" and \"dst\"", *argv);
 
 	if (loose == 0 && id->proto == 0)
-		missarg("XFRM_PROTO");
+		missarg("XFRM-PROTO");
 	if (argc == *argcp)
 		missarg("ID");
 
