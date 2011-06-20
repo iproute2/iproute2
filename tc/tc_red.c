@@ -76,9 +76,7 @@ int tc_red_eval_idle_damping(int Wlog, unsigned avpkt, unsigned bps, __u8 *sbuf)
 	double maxtime = 31/lW;
 	int clog;
 	int i;
-	double tmp;
 
-	tmp = maxtime;
 	for (clog=0; clog<32; clog++) {
 		if (maxtime/(1<<clog) < 512)
 			break;
