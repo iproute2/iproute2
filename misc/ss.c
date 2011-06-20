@@ -803,7 +803,7 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	{
 		if (!(*bytecode=malloc(4))) abort();
 		((struct inet_diag_bc_op*)*bytecode)[0] = (struct inet_diag_bc_op){ INET_DIAG_BC_AUTO, 4, 8 };
-		return 8;
+		return 4;
 	}
 		case SSF_DCOND:
 		case SSF_SCOND:
