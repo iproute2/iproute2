@@ -712,8 +712,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 	int nhs_ok = 0;
 	int scope_ok = 0;
 	int table_ok = 0;
-	int proto_ok = 0;
-	int type_ok = 0;
 	int raw = 0;
 
 	memset(&req, 0, sizeof(req));
@@ -919,7 +917,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (rtnl_rtprot_a2n(&prot, *argv))
 				invarg("\"protocol\" value is invalid\n", *argv);
 			req.r.rtm_protocol = prot;
-			proto_ok =1;
 		} else if (matches(*argv, "table") == 0) {
 			__u32 tid;
 			NEXT_ARG();
@@ -947,7 +944,6 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			    rtnl_rtntype_a2n(&type, *argv) == 0) {
 				NEXT_ARG();
 				req.r.rtm_type = type;
-				type_ok = 1;
 			}
 
 			if (matches(*argv, "help") == 0)
