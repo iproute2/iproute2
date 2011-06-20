@@ -59,7 +59,6 @@ int print_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg
 	FILE *fp = (FILE*)arg;
 	struct ifaddrlblmsg *ifal = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	int host_len = -1;
 	struct rtattr *tb[IFAL_MAX+1];
 	char abuf[256];
 
@@ -71,11 +70,6 @@ int print_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg
 		return -1;
 
 	parse_rtattr(tb, IFAL_MAX, IFAL_RTA(ifal), len);
-
-	if (ifal->ifal_family == AF_INET)
-		host_len = 32;
-	else if (ifal->ifal_family == AF_INET6)
-		host_len = 128;
 
 	if (n->nlmsg_type == RTM_DELADDRLABEL)
 		fprintf(fp, "Deleted ");
