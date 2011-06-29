@@ -272,14 +272,14 @@ static void user_ent_hash_build(void)
 			const char *pattern = "socket:[";
 			unsigned int ino;
 			char lnk[64];
-			int fd, n;
+			int fd;
 
 			if (sscanf(d1->d_name, "%d%c", &fd, &crap) != 1)
 				continue;
 
 			sprintf(name+pos, "%d", fd);
-			n = readlink(name, lnk, sizeof(lnk)-1);
-			if (strncmp(lnk, pattern, strlen(pattern)))
+			if (readlink(name, lnk, sizeof(lnk)-1) < 0 ||
+			    strncmp(lnk, pattern, strlen(pattern)))
 				continue;
 
 			sscanf(lnk, "socket:[%u]", &ino);
