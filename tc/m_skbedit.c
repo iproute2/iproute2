@@ -160,7 +160,6 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 
 static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 {
-	struct tc_skbedit *sel;
 	struct rtattr *tb[TCA_SKBEDIT_MAX + 1];
 	SPRINT_BUF(b1);
 	__u32 *priority;
@@ -176,8 +175,6 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, "[NULL skbedit parameters]");
 		return -1;
 	}
-
-	sel = RTA_DATA(tb[TCA_SKBEDIT_PARMS]);
 
 	fprintf(f, " skbedit");
 
