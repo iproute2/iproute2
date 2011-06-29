@@ -376,8 +376,7 @@ void print_one_if(FILE *fp, struct ifstat_ent *n, unsigned long long *vals)
 
 void dump_kern_db(FILE *fp)
 {
-	struct ifstat_ent *n, *h;
-	h = hist_db;
+	struct ifstat_ent *n;
 
 	print_head(fp);
 
