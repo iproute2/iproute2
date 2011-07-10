@@ -65,7 +65,7 @@ then
 	return
 fi
 
-#check if we need dont our internal header ..
+#check if we dont need our internal header ..
 cat >/tmp/ipttest.c <<EOF
 #include <xtables.h>
 char *lib_dir;

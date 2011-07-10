@@ -1,7 +1,7 @@
 Iproute2 development is closely tied to Linux kernel networking
 development. Most new features require a kernel and a utility component.
 
-Please submit both the the Linux networking mailing list
+Please submit both to the Linux networking mailing list
    <netdev@vger.kernel.org>
 
 The current source is in the git repository:
