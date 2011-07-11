@@ -3,6 +3,7 @@
 
 #include <linux/types.h>
 
+#include <linux/sysctl.h>
 
 /* Responses from hook functions. */
 #define NF_DROP 0
