@@ -38,6 +38,7 @@ extern int do_ipmonitor(int argc, char **argv);
 extern int do_multiaddr(int argc, char **argv);
 extern int do_multiroute(int argc, char **argv);
 extern int do_multirule(int argc, char **argv);
+extern int do_netns(int argc, char **argv);
 extern int do_xfrm(int argc, char **argv);
 
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
@@ -64,6 +65,7 @@ struct link_util
 };
 
 struct link_util *get_link_kind(const char *kind);
+int get_netns_fd(const char *name);
 
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
