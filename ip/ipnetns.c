@@ -41,16 +41,6 @@ static int setns(int fd, int nstype)
 #endif /* HAVE_SETNS */
 
 
-static int touch(const char *path, mode_t mode)
-{
-	int fd;
-	fd = open(path, O_RDONLY|O_CREAT, mode);
-	if (fd < 0)
-		return -1;
-	close(fd);
-	return 0;
-}
-
 static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
@@ -214,6 +204,7 @@ static int netns_add(int argc, char **argv)
 	 */
 	char netns_path[MAXPATHLEN];
 	const char *name;
+	int fd;
 
 	if (argc < 1) {
 		fprintf(stderr, "No netns name specified\n");
@@ -227,11 +218,13 @@ static int netns_add(int argc, char **argv)
 	mkdir(NETNS_RUN_DIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
 
 	/* Create the filesystem state */
-	if (touch(netns_path, 0) < 0) {
+	fd = open(netns_path, O_RDONLY|O_CREAT|O_EXCL, 0);
+	if (fd < 0) {
 		fprintf(stderr, "Could not create %s: %s\n",
 			netns_path, strerror(errno));
-		goto out_delete;
+		return -1;
 	}
+	close(fd);
 	if (unshare(CLONE_NEWNET) < 0) {
 		fprintf(stderr, "Failed to create a new network namespace: %s\n",
 			strerror(errno));
