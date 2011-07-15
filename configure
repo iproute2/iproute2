@@ -158,6 +158,27 @@ check_ipt_lib_dir()
 	echo "not found!"
 }
 
+check_setns()
+{
+cat >/tmp/setnstest.c <<EOF
+#include <sched.h>
+int main(int argc, char **argv) 
+{
+	(void)setns(0,0);
+	return 0;
+}
+EOF
+gcc -I$INCLUDE -o /tmp/setnstest /tmp/setnstest.c >/dev/null 2>&1
+if [ $? -eq 0 ]
+then
+	echo "IP_CONFIG_SETNS:=y" >>Config
+	echo "yes"
+else
+	echo "no"
+fi
+rm -f /tmp/setnstest.c /tmp/setnstest
+}
+
 echo "# Generated config based on" $INCLUDE >Config
 
 echo "TC schedulers"
@@ -173,3 +194,6 @@ check_ipt
 
 echo -n "iptables modules directory: "
 check_ipt_lib_dir
+
+echo -n "libc has setns: "
+check_setns

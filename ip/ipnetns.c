@@ -28,6 +28,7 @@
 #define MNT_DETACH	0x00000002	/* Just detach from the tree */
 #endif /* MNT_DETACH */
 
+#ifndef HAVE_SETNS
 static int setns(int fd, int nstype)
 {
 #ifdef __NR_setns
@@ -37,6 +38,7 @@ static int setns(int fd, int nstype)
 	return -1;
 #endif
 }
+#endif /* HAVE_SETNS */
 
 
 static int touch(const char *path, mode_t mode)
