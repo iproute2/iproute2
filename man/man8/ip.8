@@ -14,7 +14,7 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .ti -8
 .IR OBJECT " := { "
 .BR link " | " addr " | " addrlabel " | " route " | " rule " | " neigh " | "\
- tunnel " | " maddr " | "  mroute " | " monitor " }"
+ tunnel " | " maddr " | "  mroute " }"
 .sp
 
 .ti -8
@@ -165,7 +165,7 @@ tentative " | " deprecated " | " dadfailed " | " temporary " ]"
 .BR "ip addrlabel" " { " list " | " flush " }"
 
 .ti -8
-.BR "ip netns" " { " list " | " monitor " } "
+.BR "ip netns" " { " list " } "
 
 .ti -8
 .BR "ip netns" " { " add " | " delete " } "
@@ -198,7 +198,7 @@ tentative " | " deprecated " | " dadfailed " | " temporary " ]"
 
 .ti -8
 .BR "ip route" " { " add " | " del " | " change " | " append " | "\
-replace " | " monitor " } "
+replace " } "
 .I  ROUTE
 
 .ti -8
@@ -2547,7 +2547,6 @@ bind mounting all of the per network namespace configure files into
 their traditional location in /etc.
 
 .SS ip netns list - show all of the named network namespaces
-.SS ip netns monitor - report when network namespace names are created and destroyed
 .SS ip netns add NAME - create a new named network namespace
 .SS ip netns delete NAME - delete the name of a network namespace
 .SS ip netns exec NAME cmd ... - Run cmd in the named network namespace
