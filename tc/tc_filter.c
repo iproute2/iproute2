@@ -73,7 +73,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 	req.t.tcm_family = AF_UNSPEC;
 
 	if (cmd == RTM_NEWTFILTER && flags & NLM_F_CREATE)
-		protocol = ETH_P_ALL;
+		protocol = htons(ETH_P_ALL);
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
