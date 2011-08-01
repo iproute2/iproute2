@@ -2,7 +2,12 @@
 .SH NAME
 sfq \- Stochastic Fairness Queueing
 .SH SYNOPSIS
-.B tc qdisc ... perturb
+.B tc qdisc ...
+.B divisor
+hashtablesize
+.B limit
+packets
+.B perturb
 seconds
 .B quantum
 bytes
@@ -22,7 +27,13 @@ This may in fact have some effect in mitigating a Denial of Service attempt.
 
 SFQ is work-conserving and therefore always delivers a packet if it has one available.
 .SH ALGORITHM
-On enqueueing, each packet is assigned to a hash bucket, based on
+On enqueueing, each packet is assigned to a hash bucket, based on the packets hash value.
+This hash value is either obtained from an external flow classifier (use
+.B
+tc filter
+to set them), or a default internal classifier if no external classifier has been configured.
+
+When the internal classifier is used, sfq uses
 .TP
 (i)
 Source address
@@ -39,7 +50,7 @@ destination and the socket they belong to. A flow corresponds mostly to a TCP/IP
 connection.
 
 Each of these buckets should represent a unique flow. Because multiple flows may
-get hashed to the same bucket, the hashing algorithm is perturbed at configurable 
+get hashed to the same bucket, sfqs internal hashing algorithm may be perturbed at configurable 
 intervals so that the unfairness lasts only for a short while. Perturbation may 
 however cause some inadvertent packet reordering to occur.
 
@@ -50,6 +61,11 @@ at most 128 buckets of 1024 available. In case of overflow, tail-drop is perform
 on the fullest bucket, thus maintaining fairness.
 
 .SH PARAMETERS
+.TP
+divisor
+Can be used to set a different hash table size, available from kernel 2.6.39 onwards.
+The specified divisor must be a power of two and cannot be larger than 65536.
+Default value: 1024.
 .TP 
 limit
 Upper limit of the SFQ. Can be used to reduce the default length of 128 packets.
@@ -58,6 +74,7 @@ perturb
 Interval in seconds for queue algorithm perturbation. Defaults to 0, which means that 
 no perturbation occurs. Do not set too low for each perturbation may cause some packet
 reordering. Advised value: 10
+This value has no effect when external flow classification is used.
 .TP 
 quantum
 Amount of bytes a flow is allowed to dequeue during a round of the round robin process.
@@ -82,6 +99,14 @@ In this case, the effective queue does not reside within Linux and is therefore 
 available for scheduling.
 .P
 Embed SFQ in a classful qdisc to make sure it owns the queue.
+
+It is possible to use external classifiers with sfq, for example to hash traffic based only
+on source/destination ip addresses:
+.P
+# tc filter add ... flow hash keys src,dst perturb 30 divisor 1024
+Note that the given divisor should match the one used by sfq. If you have
+changed the sfq default of 1024, use the same value for the flow hash filter, too.
+
 
 .SH SOURCE
 .TP 
