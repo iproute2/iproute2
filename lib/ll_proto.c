@@ -30,7 +30,7 @@
 
 
 #define __PF(f,n) { ETH_P_##f, #n },
-static struct {
+static const struct {
 	int id;
 	const char *name;
 } llproto_names[] = {
@@ -80,6 +80,7 @@ __PF(TIPC,tipc)
 __PF(AOE,aoe)
 
 { 0x8100, "802.1Q" },
+{ 0x88cc, "LLDP" },
 { ETH_P_IP, "ipv4" },
 };
 #undef __PF
