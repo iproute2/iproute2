@@ -252,13 +252,15 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 
 	optind = 0;
 	xtables_free_opts(1);
-	/* Clear flags if target will be used again */
-        m->tflags=0;
-        m->used=0;
-	/* Free allocated memory */
-        if (m->t)
-            free(m->t);
 
+	if (m) {
+		/* Clear flags if target will be used again */
+		m->tflags = 0;
+		m->used = 0;
+		/* Free allocated memory */
+		if (m->t)
+			free(m->t);
+	}
 
 	return 0;
 
