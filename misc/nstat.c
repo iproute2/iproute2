@@ -560,7 +560,7 @@ int main(int argc, char *argv[])
 		}
 		if (!ignore_history) {
 			FILE *tfp;
-			long uptime;
+			long uptime = -1;
 			if ((tfp = fopen("/proc/uptime", "r")) != NULL) {
 				if (fscanf(tfp, "%ld", &uptime) != 1)
 					uptime = -1;
