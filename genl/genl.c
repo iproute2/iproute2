@@ -109,14 +109,6 @@ static void usage(void)
 
 int main(int argc, char **argv)
 {
-	char *basename;
-
-	basename = strrchr(argv[0], '/');
-	if (basename == NULL)
-		basename = argv[0];
-	else
-		basename++;
-
 	while (argc > 1) {
 		if (argv[1][0] != '-')
 			break;
@@ -144,8 +136,9 @@ int main(int argc, char **argv)
 		int ret;
 		struct genl_util *a = NULL;
 		a = get_genl_kind(argv[1]);
-		if (NULL == a) {
-			fprintf(stderr,"bad genl %s\n",argv[1]);
+		if (!a) {
+			fprintf(stderr,"bad genl %s\n", argv[1]);
+			exit(-1);
 		}
 
 		ret = a->parse_genlopt(a, argc-1, argv+1);
