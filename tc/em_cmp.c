@@ -155,7 +155,7 @@ static int cmp_print_eopt(FILE *fd, struct tcf_ematch_hdr *hdr, void *data,
 		fprintf(fd, "u8 ");
 	else if (cmp->align == TCF_EM_ALIGN_U16)
 		fprintf(fd, "u16 ");
-	else if (cmp->align == TCF_EM_ALIGN_U16)
+	else if (cmp->align == TCF_EM_ALIGN_U32)
 		fprintf(fd, "u32 ");
 
 	fprintf(fd, "at %d layer %d ", cmp->off, cmp->layer);
