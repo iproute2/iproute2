@@ -298,6 +298,7 @@ static int do_show(int argc, char **argv)
 			printf(" group %ld", group);
 		printf("\n");
 	}
+	closedir(dir);
 	return 0;
 }
 
