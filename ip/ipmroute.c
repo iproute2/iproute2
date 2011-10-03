@@ -85,8 +85,10 @@ static void read_mroute_list(FILE *ofp)
 	if (!fp)
 		return;
 
-	if (!fgets(buf, sizeof(buf), fp))
+	if (!fgets(buf, sizeof(buf), fp)) {
+		fclose(fp);
 		return;
+	}
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		inet_prefix maddr, msrc;
