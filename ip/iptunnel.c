@@ -411,6 +411,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 	if (!fgets(buf, sizeof(buf), fp) ||
 	    !fgets(buf, sizeof(buf), fp)) {
 		fprintf(stderr, "/proc/net/dev read error\n");
+		fclose(fp);
 		return -1;
 	}
 
@@ -421,6 +422,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		if ((ptr = strchr(buf, ':')) == NULL ||
 		    (*ptr++ = 0, sscanf(buf, "%s", name) != 1)) {
 			fprintf(stderr, "Wrong format of /proc/net/dev. Sorry.\n");
+			fclose(fp);
 			return -1;
 		}
 		if (sscanf(ptr, "%ld%ld%ld%ld%ld%ld%ld%*d%ld%ld%ld%ld%ld%ld%ld",
@@ -462,6 +464,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		}
 		printf("\n");
 	}
+	fclose(fp);
 	return 0;
 }
 
