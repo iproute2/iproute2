@@ -518,6 +518,7 @@ void init_service_resolver(void)
 				}
 			}
 		}
+		pclose(fp);
 	}
 }
 
