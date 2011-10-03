@@ -54,6 +54,7 @@ rtnl_hash_initialize(char *file, struct rtnl_hash_entry **hash, int size)
 		    sscanf(p, "%d %s #", &id, namebuf) != 2) {
 			fprintf(stderr, "Database %s is corrupted at %s\n",
 				file, p);
+			fclose(fp);
 			return;
 		}
 
@@ -91,6 +92,7 @@ static void rtnl_tab_initialize(char *file, char **tab, int size)
 		    sscanf(p, "%d %s #", &id, namebuf) != 2) {
 			fprintf(stderr, "Database %s is corrupted at %s\n",
 				file, p);
+			fclose(fp);
 			return;
 		}
 
