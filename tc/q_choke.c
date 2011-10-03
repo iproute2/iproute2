@@ -122,7 +122,7 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 
-	if (opt.qth_min > opt.qth_min) {
+	if (opt.qth_min >= opt.qth_max) {
 		fprintf(stderr, "\"min\" is not smaller than \"max\"\n");
 		return -1;
 	}
