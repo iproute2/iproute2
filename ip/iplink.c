@@ -43,7 +43,7 @@ static int iplink_have_newlink(void);
 void iplink_usage(void)
 {
 	if (iplink_have_newlink()) {
-		fprintf(stderr, "Usage: ip link add link DEV [ name ] NAME\n");
+		fprintf(stderr, "Usage: ip link add [link DEV] [ name ] NAME\n");
 		fprintf(stderr, "                   [ txqueuelen PACKETS ]\n");
 		fprintf(stderr, "                   [ address LLADDR ]\n");
 		fprintf(stderr, "                   [ broadcast LLADDR ]\n");
@@ -78,7 +78,7 @@ void iplink_usage(void)
 
 	if (iplink_have_newlink()) {
 		fprintf(stderr, "\n");
-		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | can }\n");
+		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | can | bridge }\n");
 	}
 	exit(-1);
 }
