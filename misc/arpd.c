@@ -94,7 +94,7 @@ int broadcast_burst = 3000;
 void usage(void)
 {
 	fprintf(stderr,
-"Usage: arpd [ -lk ] [ -a N ] [ -b dbase ] [ -f file ] [ interfaces ]\n");
+"Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ] [ -f file ] [ -n time ] [ -R rate ] [ interfaces ]\n");
 	exit(1);
 }
 

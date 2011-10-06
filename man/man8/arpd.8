@@ -4,7 +4,7 @@
 arpd \- userspace arp daemon.
 
 .SH SYNOPSIS
-Usage: arpd [ -lk ] [ -a N ] [ -b dbase ] [ -f file ] [ interfaces ]
+Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ] [ -f file ] [ -n time ] [ -R rate ] [ interfaces ]
 
 .SH DESCRIPTION
 The
@@ -34,7 +34,7 @@ Suppress sending broadcast queries by kernel. It takes sense together with optio
 -n <TIME>
 Timeout of negative cache. When resolution fails arpd suppresses further attempts to resolve for this period. It makes sense only together with option -k This timeout should not be too much longer than boot time of a typical host not supporting gratuitous ARP. Default value is 60 seconds.
 .TP
--r <RATE>
+-R <RATE>
 Maximal steady rate of broadcasts sent by arpd in packets per second. Default value is 1.
 .TP
 -B <NUMBER>
