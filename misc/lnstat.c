@@ -45,7 +45,7 @@ static struct option opts[] = {
 	{ "file", 1, NULL, 'f' },
 	{ "help", 0, NULL, 'h' },
 	{ "interval", 1, NULL, 'i' },
-	{ "key", 1, NULL, 'k' },
+	{ "keys", 1, NULL, 'k' },
 	{ "subject", 1, NULL, 's' },
 	{ "width", 1, NULL, 'w' },
 };
@@ -61,7 +61,7 @@ static int usage(char *name, int exit_code)
 	fprintf(stderr, "\t-V --version\t\tPrint Version of Program\n");
 	fprintf(stderr, "\t-c --count <count>\t"
 			"Print <count> number of intervals\n");
-	fprintf(stderr, "\t-d --dumpt\t\t"
+	fprintf(stderr, "\t-d --dump\t\t"
 			"Dump list of available files/keys\n");
 	fprintf(stderr, "\t-f --file <file>\tStatistics file to use\n");
 	fprintf(stderr, "\t-h --help\t\tThis help message\n");
