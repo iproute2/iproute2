@@ -584,12 +584,10 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .ti -8
 .IR ALGO " :="
 .RB "{ " enc " | " auth " | " comp " } " 
-.IR ALGO-NAME " " ALGO-KEY
-.R "|"
+.IR ALGO-NAME " " ALGO-KEY " |"
 .br
-.B aead
-.IR ALGO-NAME " " ALGO-KEY " " ALGO-ICV-LEN
-.R "|"
+.B  aead
+.IR ALGO-NAME " " ALGO-KEY " " ALGO-ICV-LEN  " |"
 .br
 .B auth-trunc
 .IR ALGO-NAME " " ALGO-KEY " " ALGO-TRUNC-LEN
