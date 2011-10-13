@@ -71,7 +71,10 @@ void iplink_usage(void)
 	fprintf(stderr, "			  [ alias NAME ]\n");
 	fprintf(stderr, "	                  [ vf NUM [ mac LLADDR ]\n");
 	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] ]\n");
+
 	fprintf(stderr, "				   [ rate TXRATE ] ] \n");
+
+	fprintf(stderr, "				   [ spoofchk { on | off} ] ] \n");
 	fprintf(stderr, "			  [ master DEVICE ]\n");
 	fprintf(stderr, "			  [ nomaster ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ]\n");
@@ -228,6 +231,18 @@ int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			ivt.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
 		
+		} else if (matches(*argv, "spoofchk") == 0) {
+			struct ifla_vf_spoofchk ivs;
+			NEXT_ARG();
+			if (matches(*argv, "on") == 0)
+				ivs.setting = 1;
+			else if (matches(*argv, "off") == 0)
+				ivs.setting = 0;
+			else
+				invarg("Invalid \"spoofchk\" value\n", *argv);
+			ivs.vf = vf;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_SPOOFCHK, &ivs, sizeof(ivs));
+
 		} else {
 			/* rewind arg */
 			PREV_ARG();
