@@ -136,6 +136,11 @@ m_xt_old.so: m_xt_old.c
 %.lex.c: %.l
 	$(LEX) $(LEXFLAGS) -o$@ $<
 
+# our lexer includes the header from yacc, so make sure
+# we don't attempt to compile it before the header has
+# been generated as part of the yacc step.
+emp_ematch.lex.o: emp_ematch.yacc.c
+
 ifneq ($(SHARED_LIBS),y)
 
 tc: static-syms.o
