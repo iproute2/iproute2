@@ -60,6 +60,8 @@ install: all
 	install -m 0644 $(shell find etc/iproute2 -maxdepth 1 -type f) $(DESTDIR)$(CONFDIR)
 	install -m 0755 -d $(DESTDIR)$(MANDIR)/man8
 	install -m 0644 $(shell find man/man8 -maxdepth 1 -type f) $(DESTDIR)$(MANDIR)/man8
+	install -m 0755 -d $(DESTDIR)$(MANDIR)/man7
+	install -m 0644 $(shell find man/man7 -maxdepth 1 -type f) $(DESTDIR)$(MANDIR)/man7
 	ln -sf tc-bfifo.8  $(DESTDIR)$(MANDIR)/man8/tc-pfifo.8
 	ln -sf lnstat.8  $(DESTDIR)$(MANDIR)/man8/rtstat.8
 	ln -sf lnstat.8  $(DESTDIR)$(MANDIR)/man8/ctstat.8
