@@ -2568,7 +2568,7 @@ int main(int argc, char *argv[])
 			current_filter.states = SS_ALL;
 			break;
 		case 'l':
-			current_filter.states = (1<<SS_LISTEN);
+			current_filter.states = (1<<SS_LISTEN) | (1<<SS_CLOSE);
 			break;
 		case '4':
 			preferred_family = AF_INET;
