@@ -125,7 +125,7 @@ static int get_ticks(__u32 *ticks, const char *str)
 static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n)
 {
-	size_t dist_size = 0;
+	int dist_size = 0;
 	struct rtattr *tail;
 	struct tc_netem_qopt opt;
 	struct tc_netem_corr cor;
