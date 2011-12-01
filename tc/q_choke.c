@@ -133,7 +133,7 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 	if (wlog >= 10)
-		fprintf(stderr, "CHOKE: WARNING. Burst %d seems to be to large.\n", burst);
+		fprintf(stderr, "CHOKE: WARNING. Burst %d seems to be too large.\n", burst);
 	opt.Wlog = wlog;
 
 	wlog = tc_red_eval_P(opt.qth_min*avpkt, opt.qth_max*avpkt, probability);

@@ -215,11 +215,15 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 	if (rate == 0)
 		get_rate(&rate, "10Mbit");
 
-	if (!opt.qth_min || !opt.qth_max || !burst || !opt.limit || !avpkt ||
+	if (!opt.qth_min || !opt.qth_max || !opt.limit || !avpkt ||
 	    (opt.DP<0)) {
-		fprintf(stderr, "Required parameter (min, max, burst, limit, "
+		fprintf(stderr, "Required parameter (min, max, limit, "
 		    "avpkt, DP) is missing\n");
 		return -1;
+	}
+	if (!burst) {
+		burst = (2 * opt.qth_min + opt.qth_max) / (3 * avpkt);
+		fprintf(stderr, "GRED: set burst to %u\n", burst);
 	}
 
 	if ((wlog = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
@@ -227,7 +231,7 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 		return -1;
 	}
 	if (wlog >= 10)
-		fprintf(stderr, "GRED: WARNING. Burst %d seems to be to "
+		fprintf(stderr, "GRED: WARNING. Burst %d seems to be too "
 		    "large.\n", burst);
 	opt.Wlog = wlog;
 	if ((wlog = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {
