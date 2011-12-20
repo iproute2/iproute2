@@ -25,6 +25,7 @@
 #include <linux/pkt_sched.h>
 #include <time.h>
 #include <sys/time.h>
+#include <errno.h>
 
 
 #include "utils.h"
@@ -193,6 +194,24 @@ int get_u8(__u8 *val, const char *arg, int base)
 		return -1;
 	res = strtoul(arg, &ptr, base);
 	if (!ptr || ptr == arg || *ptr || res > 0xFF)
+		return -1;
+	*val = res;
+	return 0;
+}
+
+int get_s32(__s32 *val, const char *arg, int base)
+{
+	long res;
+	char *ptr;
+
+	errno = 0;
+
+	if (!arg || !*arg)
+		return -1;
+	res = strtol(arg, &ptr, base);
+	if (ptr == arg || *ptr ||
+	    ((res ==  LONG_MIN || res == LONG_MAX) && errno == ERANGE) ||
+	    res > INT32_MAX || res < INT32_MIN)
 		return -1;
 	*val = res;
 	return 0;
