@@ -12,6 +12,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <fcntl.h>
@@ -31,9 +33,11 @@ static void explain(void)
 "Usage: ... netem [ limit PACKETS ] \n" \
 "                 [ delay TIME [ JITTER [CORRELATION]]]\n" \
 "                 [ distribution {uniform|normal|pareto|paretonormal} ]\n" \
-"                 [ drop PERCENT [CORRELATION]] \n" \
 "                 [ corrupt PERCENT [CORRELATION]] \n" \
 "                 [ duplicate PERCENT [CORRELATION]]\n" \
+"                 [ loss random PERCENT [CORRELATION]]\n" \
+"                 [ loss state P13 [P31 [P32 [P23 P14]]]\n" \
+"                 [ loss gemodel PERCENT [R [1-H [1-K]]]\n" \
 "                 [ reorder PRECENT [CORRELATION] [ gap DISTANCE ]]\n");
 }
 
@@ -42,10 +46,55 @@ static void explain1(const char *arg)
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
 
-/* Upper bound on size of distribution 
+/* Upper bound on size of distribution
  *  really (TCA_BUF_MAX - other headers) / sizeof (__s16)
  */
 #define MAX_DIST	(16*1024)
+
+static const double max_percent_value = 0xffffffff;
+
+/* scaled value used to percent of maximum. */
+static void set_percent(__u32 *percent, double per)
+{
+	*percent = (unsigned) rint(per * max_percent_value);
+}
+
+
+/* Parse either a fraction '.3' or percent '30%
+ * return: 0 = ok, -1 = error, 1 = out of range
+ */
+static int parse_percent(double *val, const char *str)
+{
+	char *p;
+
+	*val = strtod(str, &p) / 100.;
+	if (*p && strcmp(p, "%") )
+		return -1;
+
+	return 0;
+}
+
+static int get_percent(__u32 *percent, const char *str)
+{
+	double per;
+
+	if (parse_percent(&per, str))
+		return -1;
+
+	set_percent(percent, per);
+	return 0;
+}
+
+void print_percent(char *buf, int len, __u32 per)
+{
+	snprintf(buf, len, "%g%%", 100. * (double) per / max_percent_value);
+}
+
+char * sprint_percent(__u32 per, char *buf)
+{
+	print_percent(buf, SPRINT_BSIZE-1, per);
+	return buf;
+}
 
 /*
  * Simplistic file parser for distrbution data.
@@ -95,14 +144,7 @@ static int get_distribution(const char *type, __s16 *data, int maxdata)
 	return n;
 }
 
-static int isnumber(const char *arg)
-{
-	char *p;
-
-	return strtod(arg, &p) != 0 || p != arg;
-}
-
-#define NEXT_IS_NUMBER() (NEXT_ARG_OK() && isnumber(argv[1]))
+#define NEXT_IS_NUMBER() (NEXT_ARG_OK() && isdigit(argv[1][0]))
 
 /* Adjust for the fact that psched_ticks aren't always usecs
    (based on kernel PSCHED_CLOCK configuration */
@@ -127,21 +169,22 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 {
 	int dist_size = 0;
 	struct rtattr *tail;
-	struct tc_netem_qopt opt;
+	struct tc_netem_qopt opt = { .limit = 1000 };
 	struct tc_netem_corr cor;
 	struct tc_netem_reorder reorder;
 	struct tc_netem_corrupt corrupt;
+	struct tc_netem_gimodel gimodel;
+	struct tc_netem_gemodel gemodel;
 	__s16 *dist_data = NULL;
+	__u16 loss_type = NETEM_LOSS_UNSPEC;
 	int present[__TCA_NETEM_MAX];
 
-	memset(&opt, 0, sizeof(opt));
-	opt.limit = 1000;
 	memset(&cor, 0, sizeof(cor));
 	memset(&reorder, 0, sizeof(reorder));
 	memset(&corrupt, 0, sizeof(corrupt));
 	memset(present, 0, sizeof(present));
 
-	while (argc > 0) {
+	for( ; argc > 0; --argc, ++argv) {
 		if (matches(*argv, "limit") == 0) {
 			NEXT_ARG();
 			if (get_size(&opt.limit, *argv)) {
@@ -166,7 +209,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				if (NEXT_IS_NUMBER()) {
 					NEXT_ARG();
 					++present[TCA_NETEM_CORR];
-					if (get_percent(&cor.delay_corr,							*argv)) {
+					if (get_percent(&cor.delay_corr, *argv)) {
 						explain1("latency");
 						return -1;
 					}
@@ -174,18 +217,111 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			}
 		} else if (matches(*argv, "loss") == 0 ||
 			   matches(*argv, "drop") == 0) {
-			NEXT_ARG();
-			if (get_percent(&opt.loss, *argv)) {
-				explain1("loss");
+			if (opt.loss > 0 || loss_type != NETEM_LOSS_UNSPEC) {
+				explain1("duplicate loss argument\n");
 				return -1;
 			}
-			if (NEXT_IS_NUMBER()) {
+
+			NEXT_ARG();
+			/* Old (deprecated) random loss model syntax */
+			if (isdigit(argv[0][0]))
+				goto random_loss_model;
+
+			if (!strcmp(*argv, "random")) {
 				NEXT_ARG();
-				++present[TCA_NETEM_CORR];
-				if (get_percent(&cor.loss_corr, *argv)) {
-					explain1("loss");
+	random_loss_model:
+				if (get_percent(&opt.loss, *argv)) {
+					explain1("loss percent");
 					return -1;
 				}
+				if (NEXT_IS_NUMBER()) {
+					NEXT_ARG();
+					++present[TCA_NETEM_CORR];
+					if (get_percent(&cor.loss_corr, *argv)) {
+						explain1("loss correllation");
+						return -1;
+					}
+				}
+			} else if (!strcmp(*argv, "state")) {
+				double p13;
+
+				NEXT_ARG();
+				if (parse_percent(&p13, *argv)) {
+					explain1("loss p13");
+					return -1;
+				}
+
+				/* set defaults */
+				set_percent(&gimodel.p13, p13);
+				set_percent(&gimodel.p31, 1. - p13);
+				set_percent(&gimodel.p32, 0);
+				set_percent(&gimodel.p23, 1.);
+				loss_type = NETEM_LOSS_GI;
+
+				if (!NEXT_IS_NUMBER())
+					continue;
+				NEXT_ARG();
+				if (get_percent(&gimodel.p31, *argv)) {
+					explain1("loss p31");
+					return -1;
+				}
+
+				if (!NEXT_IS_NUMBER())
+					continue;
+				NEXT_ARG();
+				if (get_percent(&gimodel.p32, *argv)) {
+					explain1("loss p32");
+					return -1;
+				}
+
+				if (!NEXT_IS_NUMBER())
+					continue;
+				NEXT_ARG();
+				if (get_percent(&gimodel.p23, *argv)) {
+					explain1("loss p23");
+					return -1;
+				}
+
+			} else if (!strcmp(*argv, "gemodel")) {
+				NEXT_ARG();
+				if (get_percent(&gemodel.p, *argv)) {
+					explain1("loss gemodel p");
+					return -1;
+				}
+
+				/* set defaults */
+				set_percent(&gemodel.r, 1.);
+				set_percent(&gemodel.h, 0);
+				set_percent(&gemodel.k1, 1.);
+				loss_type = NETEM_LOSS_GE;
+
+				if (!NEXT_IS_NUMBER())
+					continue;
+				NEXT_ARG();
+				if (get_percent(&gemodel.r, *argv)) {
+					explain1("loss gemodel r");
+					return -1;
+				}
+
+				if (!NEXT_IS_NUMBER())
+					continue;
+				NEXT_ARG();
+				if (get_percent(&gemodel.h, *argv)) {
+					explain1("loss gemodel h");
+					return -1;
+				}
+
+				if (!NEXT_IS_NUMBER())
+					continue;
+				NEXT_ARG();
+				if (get_percent(&gemodel.k1, *argv)) {
+					explain1("loss gemodel k");
+					return -1;
+				}
+			} else {
+				fprintf(stderr, "Unknown loss parameter: %s\n",
+					*argv);
+				return -1;
 			}
 		} else if (matches(*argv, "reorder") == 0) {
 			NEXT_ARG();
@@ -252,7 +388,6 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			explain();
 			return -1;
 		}
-		argc--; argv++;
 	}
 
 	tail = NLMSG_TAIL(n);
@@ -282,13 +417,33 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	    addattr_l(n, 1024, TCA_NETEM_CORR, &cor, sizeof(cor)) < 0)
 			return -1;
 
-	if (present[TCA_NETEM_REORDER] && 
+	if (present[TCA_NETEM_REORDER] &&
 	    addattr_l(n, 1024, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
 		return -1;
 
 	if (present[TCA_NETEM_CORRUPT] &&
 	    addattr_l(n, 1024, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
 		return -1;
+
+	if (loss_type != NETEM_LOSS_UNSPEC) {
+		struct rtattr *start;
+
+		start = addattr_nest(n, 1024, TCA_NETEM_LOSS | NLA_F_NESTED);
+		if (loss_type == NETEM_LOSS_GI) {
+			if (addattr_l(n, 1024, NETEM_LOSS_GI,
+				      &gimodel, sizeof(gimodel)) < 0)
+			    return -1;
+		} else if (loss_type == NETEM_LOSS_GE) {
+			if (addattr_l(n, 1024, NETEM_LOSS_GE,
+				      &gemodel, sizeof(gemodel)) < 0)
+			    return -1;
+		} else {
+			fprintf(stderr, "loss in the weeds!\n");
+			return -1;
+		}
+		
+		addattr_nest_end(n, start);
+	}
 
 	if (dist_data) {
 		if (addattr_l(n, MAX_DIST * sizeof(dist_data[0]),
@@ -306,6 +461,8 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	const struct tc_netem_corr *cor = NULL;
 	const struct tc_netem_reorder *reorder = NULL;
 	const struct tc_netem_corrupt *corrupt = NULL;
+	const struct tc_netem_gimodel *gimodel = NULL;
+	const struct tc_netem_gemodel *gemodel = NULL;
 	struct tc_netem_qopt qopt;
 	int len = RTA_PAYLOAD(opt) - sizeof(qopt);
 	SPRINT_BUF(b1);
@@ -339,6 +496,15 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 				return -1;
 			corrupt = RTA_DATA(tb[TCA_NETEM_CORRUPT]);
 		}
+		if (tb[TCA_NETEM_LOSS]) {
+			struct rtattr *lb[NETEM_LOSS_MAX + 1];
+
+			parse_rtattr_nested(lb, NETEM_LOSS_MAX, tb[TCA_NETEM_LOSS]);
+			if (lb[NETEM_LOSS_GI])
+				gemodel = RTA_DATA(lb[NETEM_LOSS_GI]);
+			if (lb[NETEM_LOSS_GE])
+				gemodel = RTA_DATA(lb[NETEM_LOSS_GE]);
+		}			
 	}
 
 	fprintf(f, "limit %d", qopt.limit);
@@ -357,6 +523,22 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		fprintf(f, " loss %s", sprint_percent(qopt.loss, b1));
 		if (cor && cor->loss_corr)
 			fprintf(f, " %s", sprint_percent(cor->loss_corr, b1));
+	}
+
+	if (gimodel) {
+		fprintf(f, " loss state p13 %s", sprint_percent(gimodel->p13, b1));
+		fprintf(f, " p31 %s", sprint_percent(gimodel->p31, b1));
+		fprintf(f, " p32 %s", sprint_percent(gimodel->p32, b1));
+		fprintf(f, " p23 %s", sprint_percent(gimodel->p23, b1));
+		fprintf(f, " p14 %s", sprint_percent(gimodel->p14, b1));
+	}
+
+	if (gemodel) {
+		fprintf(f, "loss gemodel p %s",
+			sprint_percent(gemodel->p, b1));
+		fprintf(f, " r %s", sprint_percent(gemodel->r, b1));
+		fprintf(f, " 1-h %s", sprint_percent(gemodel->h, b1));
+		fprintf(f, " 1-k %s", sprint_percent(gemodel->k1, b1));
 	}
 
 	if (qopt.duplicate) {

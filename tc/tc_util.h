@@ -58,7 +58,6 @@ extern struct filter_util *get_filter_kind(const char *str);
 
 extern int get_qdisc_handle(__u32 *h, const char *str);
 extern int get_rate(unsigned *rate, const char *str);
-extern int get_percent(unsigned *percent, const char *str);
 extern int get_size(unsigned *size, const char *str);
 extern int get_size_and_cell(unsigned *size, int *cell_log, char *str);
 extern int get_time(unsigned *time, const char *str);
@@ -66,7 +65,6 @@ extern int get_linklayer(unsigned *val, const char *arg);
 
 extern void print_rate(char *buf, int len, __u32 rate);
 extern void print_size(char *buf, int len, __u32 size);
-extern void print_percent(char *buf, int len, __u32 percent);
 extern void print_qdisc_handle(char *buf, int len, __u32 h);
 extern void print_time(char *buf, int len, __u32 time);
 extern void print_linklayer(char *buf, int len, unsigned linklayer);
@@ -76,7 +74,6 @@ extern char * sprint_qdisc_handle(__u32 h, char *buf);
 extern char * sprint_tc_classid(__u32 h, char *buf);
 extern char * sprint_time(__u32 time, char *buf);
 extern char * sprint_ticks(__u32 ticks, char *buf);
-extern char * sprint_percent(__u32 percent, char *buf);
 extern char * sprint_linklayer(unsigned linklayer, char *buf);
 
 extern void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix, struct rtattr **xstats);
