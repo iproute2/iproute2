@@ -281,7 +281,7 @@ int respond_to_kernel(int ifindex, __u32 addr, char *lla, int llalen)
 
 	addattr_l(&req.n, sizeof(req), NDA_DST, &addr, 4);
 	addattr_l(&req.n, sizeof(req), NDA_LLADDR, lla, llalen);
-	return rtnl_send(&rth, (char*)&req, req.n.nlmsg_len) <= 0;
+	return rtnl_send(&rth, &req, req.n.nlmsg_len) <= 0;
 }
 
 void prepare_neg_entry(__u8 *ndata, __u32 stamp)

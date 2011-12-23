@@ -164,7 +164,7 @@ static int iplink_have_newlink(void)
 		req.n.nlmsg_type = RTM_NEWLINK;
 		req.i.ifi_family = AF_UNSPEC;
 
-		rtnl_send(&rth, (char *)&req.n, req.n.nlmsg_len);
+		rtnl_send(&rth, &req.n, req.n.nlmsg_len);
 		rtnl_listen(&rth, accept_msg, NULL);
 	}
 	return have_rtnl_newlink;

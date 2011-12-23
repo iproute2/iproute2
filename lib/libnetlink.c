@@ -107,12 +107,12 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 	return send(rth->fd, (void*)&req, sizeof(req), 0);
 }
 
-int rtnl_send(struct rtnl_handle *rth, const char *buf, int len)
+int rtnl_send(struct rtnl_handle *rth, const void *buf, int len)
 {
 	return send(rth->fd, buf, len, 0);
 }
 
-int rtnl_send_check(struct rtnl_handle *rth, const char *buf, int len)
+int rtnl_send_check(struct rtnl_handle *rth, const void *buf, int len)
 {
 	struct nlmsghdr *h;
 	int status;
@@ -148,7 +148,7 @@ int rtnl_send_check(struct rtnl_handle *rth, const char *buf, int len)
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 {
 	struct nlmsghdr nlh;
-	struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	struct iovec iov[2] = {
 		{ .iov_base = &nlh, .iov_len = sizeof(nlh) },
 		{ .iov_base = req, .iov_len = len }
@@ -159,9 +159,6 @@ int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 		.msg_iov = iov,
 		.msg_iovlen = 2,
 	};
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
 
 	nlh.nlmsg_len = NLMSG_LENGTH(len);
 	nlh.nlmsg_type = type;

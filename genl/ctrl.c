@@ -350,7 +350,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 		nlh->nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
 		nlh->nlmsg_seq = rth.dump = ++rth.seq;
 
-		if (rtnl_send(&rth, (const char *) nlh, nlh->nlmsg_len) < 0) {
+		if (rtnl_send(&rth, nlh, nlh->nlmsg_len) < 0) {
 			perror("Failed to send dump request\n");
 			goto ctrl_done;
 		}
