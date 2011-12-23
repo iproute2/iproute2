@@ -50,7 +50,13 @@ extern int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 extern int rtnl_send(struct rtnl_handle *rth, const void *buf, int);
 extern int rtnl_send_check(struct rtnl_handle *rth, const void *buf, int);
 
+extern int addattr(struct nlmsghdr *n, int maxlen, int type);
+extern int addattr8(struct nlmsghdr *n, int maxlen, int type, __u8 data);
+extern int addattr16(struct nlmsghdr *n, int maxlen, int type, __u16 data);
 extern int addattr32(struct nlmsghdr *n, int maxlen, int type, __u32 data);
+extern int addattr64(struct nlmsghdr *n, int maxlen, int type, __u64 data);
+extern int addattrstrz(struct nlmsghdr *n, int maxlen, int type, const char *data);
+
 extern int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data, int alen);
 extern int addraw_l(struct nlmsghdr *n, int maxlen, const void *data, int len);
 extern struct rtattr *addattr_nest(struct nlmsghdr *n, int maxlen, int type);

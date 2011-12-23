@@ -530,20 +530,34 @@ int rtnl_from_file(FILE *rtnl, rtnl_filter_t handler,
 	}
 }
 
+int addattr(struct nlmsghdr *n, int maxlen, int type)
+{
+	return addattr_l(n, maxlen, type, NULL, 0);
+}
+
+int addattr8(struct nlmsghdr *n, int maxlen, int type, __u8 data)
+{
+	return addattr_l(n, maxlen, type, &data, sizeof(__u8));
+}
+
+int addattr16(struct nlmsghdr *n, int maxlen, int type, __u16 data)
+{
+	return addattr_l(n, maxlen, type, &data, sizeof(__u16));
+}
+
 int addattr32(struct nlmsghdr *n, int maxlen, int type, __u32 data)
 {
-	int len = RTA_LENGTH(4);
-	struct rtattr *rta;
-	if (NLMSG_ALIGN(n->nlmsg_len) + len > maxlen) {
-		fprintf(stderr,"addattr32: Error! max allowed bound %d exceeded\n",maxlen);
-		return -1;
-	}
-	rta = NLMSG_TAIL(n);
-	rta->rta_type = type;
-	rta->rta_len = len;
-	memcpy(RTA_DATA(rta), &data, 4);
-	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + len;
-	return 0;
+	return addattr_l(n, maxlen, type, &data, sizeof(__u32));
+}
+
+int addattr64(struct nlmsghdr *n, int maxlen, int type, __u64 data)
+{
+	return addattr_l(n, maxlen, type, &data, sizeof(__u64));
+}
+
+int addattrstrz(struct nlmsghdr *n, int maxlen, int type, const char *str)
+{
+	return addattr_l(n, maxlen, type, str, strlen(str)+1);
 }
 
 int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data,
