@@ -38,7 +38,7 @@ static void explain(void)
 "                 [ loss random PERCENT [CORRELATION]]\n" \
 "                 [ loss state P13 [P31 [P32 [P23 P14]]]\n" \
 "                 [ loss gemodel PERCENT [R [1-H [1-K]]]\n" \
-"                 [ reorder PRECENT [CORRELATION] [ gap DISTANCE ]]\n");
+"                 [ reorder PERCENT [CORRELATION] [ gap DISTANCE ]]\n");
 }
 
 static void explain1(const char *arg)
