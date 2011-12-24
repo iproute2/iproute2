@@ -45,7 +45,7 @@ static void usage(void)
 "       ip [ -force ] -batch filename\n"
 "where  OBJECT := { link | addr | addrlabel | route | rule | neigh | ntable |\n"
 "                   tunnel | tuntap | maddr | mroute | mrule | monitor | xfrm |\n"
-"                   netns }\n"
+"                   netns | l2tp }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
@@ -72,6 +72,7 @@ static const struct cmd {
 	{ "neighbour",	do_ipneigh },
 	{ "ntable",	do_ipntable },
 	{ "ntbl",	do_ipntable },
+	{ "l2tp",	do_ipl2tp },
 	{ "link",	do_iplink },
 	{ "tunnel",	do_iptunnel },
 	{ "tunl",	do_iptunnel },
