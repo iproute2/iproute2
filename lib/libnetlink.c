@@ -214,15 +214,8 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 
 				if (nladdr.nl_pid != 0 ||
 				    h->nlmsg_pid != rth->local.nl_pid ||
-				    h->nlmsg_seq != rth->dump) {
-					if (a->junk) {
-						err = a->junk(&nladdr, h,
-							      a->arg2);
-						if (err < 0)
-							return err;
-					}
+				    h->nlmsg_seq != rth->dump)
 					goto skip_it;
-				}
 
 				if (h->nlmsg_type == NLMSG_DONE) {
 					found_done = 1;
@@ -264,22 +257,18 @@ skip_it:
 
 int rtnl_dump_filter(struct rtnl_handle *rth,
 		     rtnl_filter_t filter,
-		     void *arg1,
-		     rtnl_filter_t junk,
-		     void *arg2)
+		     void *arg1)
 {
 	const struct rtnl_dump_filter_arg a[2] = {
-		{ .filter = filter, .arg1 = arg1, .junk = junk, .arg2 = arg2 },
-		{ .filter = NULL,   .arg1 = NULL, .junk = NULL, .arg2 = NULL }
+		{ .filter = filter, .arg1 = arg1, },
+		{ .filter = NULL,   .arg1 = NULL, },
 	};
 
 	return rtnl_dump_filter_l(rth, a);
 }
 
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
-	      unsigned groups, struct nlmsghdr *answer,
-	      rtnl_filter_t junk,
-	      void *jarg)
+	      unsigned groups, struct nlmsghdr *answer)
 {
 	int status;
 	unsigned seq;
@@ -338,11 +327,10 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 			exit(1);
 		}
 		for (h = (struct nlmsghdr*)buf; status >= sizeof(*h); ) {
-			int err;
 			int len = h->nlmsg_len;
 			int l = len - sizeof(*h);
 
-			if (l<0 || len>status) {
+			if (l < 0 || len>status) {
 				if (msg.msg_flags & MSG_TRUNC) {
 					fprintf(stderr, "Truncated message\n");
 					return -1;
@@ -354,11 +342,6 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 			if (nladdr.nl_pid != peer ||
 			    h->nlmsg_pid != rtnl->local.nl_pid ||
 			    h->nlmsg_seq != seq) {
-				if (junk) {
-					err = junk(&nladdr, h, jarg);
-					if (err < 0)
-						return err;
-				}
 				/* Don't forget to skip that message. */
 				status -= NLMSG_ALIGN(len);
 				h = (struct nlmsghdr*)((char*)h + NLMSG_ALIGN(len));

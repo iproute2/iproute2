@@ -313,7 +313,7 @@ static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 			  RTA_PAYLOAD(parms_rta));
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		exit(2);
 
 	return 0;
@@ -625,7 +625,7 @@ static int ipntable_show(int argc, char **argv)
 		exit(1);
 	}
 
-	if (rtnl_dump_filter(&rth, print_ntable, stdout, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, print_ntable, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}

@@ -393,7 +393,7 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (req.xpinfo.sel.family == AF_UNSPEC)
 		req.xpinfo.sel.family = AF_INET;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -670,7 +670,7 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 			  (void *)&ctx, ctx.sctx.len);
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, res_nlbuf, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, res_nlbuf) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -859,7 +859,7 @@ static int xfrm_policy_list_or_deleteall(int argc, char **argv, int deleteall)
 				exit(1);
 			}
 
-			if (rtnl_dump_filter(&rth, xfrm_policy_keep, &xb, NULL, NULL) < 0) {
+			if (rtnl_dump_filter(&rth, xfrm_policy_keep, &xb) < 0) {
 				fprintf(stderr, "Delete-all terminated\n");
 				exit(1);
 			}
@@ -885,7 +885,7 @@ static int xfrm_policy_list_or_deleteall(int argc, char **argv, int deleteall)
 			exit(1);
 		}
 
-		if (rtnl_dump_filter(&rth, xfrm_policy_print, stdout, NULL, NULL) < 0) {
+		if (rtnl_dump_filter(&rth, xfrm_policy_print, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
@@ -975,7 +975,7 @@ static int xfrm_spd_getinfo(int argc, char **argv)
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, &req.n, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0)
 		exit(2);
 
 	print_spdinfo(&req.n, (void*)stdout);
@@ -1027,7 +1027,7 @@ static int xfrm_policy_flush(int argc, char **argv)
 	if (show_stats > 1)
 		fprintf(stderr, "Flush policy\n");
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		exit(2);
 
 	rtnl_close(&rth);

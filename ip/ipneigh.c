@@ -174,7 +174,7 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		exit(2);
 
 	return 0;
@@ -391,7 +391,7 @@ int do_show_or_flush(int argc, char **argv, int flush)
 				exit(1);
 			}
 			filter.flushed = 0;
-			if (rtnl_dump_filter(&rth, print_neigh, stdout, NULL, NULL) < 0) {
+			if (rtnl_dump_filter(&rth, print_neigh, stdout) < 0) {
 				fprintf(stderr, "Flush terminated\n");
 				exit(1);
 			}
@@ -423,7 +423,7 @@ int do_show_or_flush(int argc, char **argv, int flush)
 		exit(1);
 	}
 
-	if (rtnl_dump_filter(&rth, print_neigh, stdout, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, print_neigh, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}

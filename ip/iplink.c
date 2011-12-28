@@ -482,7 +482,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 			req.i.ifi_index = 0;
 			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
-			if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+			if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 				exit(2);
 			return 0;
 		}
@@ -559,7 +559,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, len);
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		exit(2);
 
 	return 0;

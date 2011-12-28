@@ -128,7 +128,7 @@ void load_info(void)
 		exit(1);
 	}
 
-	if (rtnl_dump_filter(&rth, get_nlmsg, NULL, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, get_nlmsg, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}

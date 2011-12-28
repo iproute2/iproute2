@@ -833,7 +833,7 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		exit(1);
 	}
 
-	if (rtnl_dump_filter(&rth, store_nlmsg, &linfo, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, store_nlmsg, &linfo) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
@@ -859,20 +859,14 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 				{
 					.filter = print_addrinfo_secondary,
 					.arg1 = stdout,
-					.junk = NULL,
-					.arg2 = NULL
 				},
 				{
 					.filter = print_addrinfo_primary,
 					.arg1 = stdout,
-					.junk = NULL,
-					.arg2 = NULL
 				},
 				{
 					.filter = NULL,
 					.arg1 = NULL,
-					.junk = NULL,
-					.arg2 = NULL
 				},
 			};
 			if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
@@ -923,7 +917,7 @@ flush_done:
 			exit(1);
 		}
 
-		if (rtnl_dump_filter(&rth, store_nlmsg, &ainfo, NULL, NULL) < 0) {
+		if (rtnl_dump_filter(&rth, store_nlmsg, &ainfo) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
@@ -1214,7 +1208,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			  sizeof(cinfo));
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		return -2;
 
 	return 0;

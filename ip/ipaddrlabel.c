@@ -114,7 +114,7 @@ static int ipaddrlabel_list(int argc, char **argv)
 		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, print_addrlabel, stdout, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, print_addrlabel, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
@@ -183,7 +183,7 @@ static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 	if (req.ifal.ifal_family == AF_UNSPEC)
 		req.ifal.ifal_family = AF_INET6;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		return 2;
 
 	return 0;
@@ -210,7 +210,7 @@ static int flush_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, vo
 		if (rtnl_open(&rth2, 0) < 0)
 			return -1;
 
-		if (rtnl_talk(&rth2, n, 0, 0, NULL, NULL, NULL) < 0)
+		if (rtnl_talk(&rth2, n, 0, 0, NULL) < 0)
 			return -2;
 
 		rtnl_close(&rth2);
@@ -236,7 +236,7 @@ static int ipaddrlabel_flush(int argc, char **argv)
 		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, flush_addrlabel, NULL, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, flush_addrlabel, NULL) < 0) {
 		fprintf(stderr, "Flush terminated\n");
 		return 1;
 	}

@@ -186,7 +186,7 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 		req.t.tcm_ifindex = idx;
 	}
 
- 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		return 2;
 
 	return 0;
@@ -323,7 +323,7 @@ int tc_qdisc_list(int argc, char **argv)
 		return 1;
 	}
 
- 	if (rtnl_dump_filter(&rth, print_qdisc, stdout, NULL, NULL) < 0) {
+ 	if (rtnl_dump_filter(&rth, print_qdisc, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}

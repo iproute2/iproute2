@@ -138,7 +138,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		return 2;
 
 	return 0;
@@ -298,7 +298,7 @@ int tc_class_list(int argc, char **argv)
 		return 1;
 	}
 
- 	if (rtnl_dump_filter(&rth, print_class, stdout, NULL, NULL) < 0) {
+ 	if (rtnl_dump_filter(&rth, print_class, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}

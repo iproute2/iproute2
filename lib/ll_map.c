@@ -204,7 +204,7 @@ int ll_init_map(struct rtnl_handle *rth)
 		exit(1);
 	}
 
-	if (rtnl_dump_filter(rth, ll_remember_index, NULL, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(rth, ll_remember_index, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}

@@ -1011,7 +1011,7 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (req.r.rtm_family == AF_UNSPEC)
 		req.r.rtm_family = AF_INET;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
 		exit(2);
 
 	return 0;
@@ -1289,7 +1289,7 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 				exit(1);
 			}
 			filter.flushed = 0;
-			if (rtnl_dump_filter(&rth, filter_fn, stdout, NULL, NULL) < 0) {
+			if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
 				fprintf(stderr, "Flush terminated\n");
 				exit(1);
 			}
@@ -1332,7 +1332,7 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 		}
 	}
 
-	if (rtnl_dump_filter(&rth, filter_fn, stdout, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
@@ -1453,7 +1453,7 @@ int iproute_get(int argc, char **argv)
 	if (req.r.rtm_family == AF_UNSPEC)
 		req.r.rtm_family = AF_INET;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, &req.n, NULL, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0)
 		exit(2);
 
 	if (connected && !from_ok) {
@@ -1494,7 +1494,7 @@ int iproute_get(int argc, char **argv)
 		req.n.nlmsg_flags = NLM_F_REQUEST;
 		req.n.nlmsg_type = RTM_GETROUTE;
 
-		if (rtnl_talk(&rth, &req.n, 0, 0, &req.n, NULL, NULL) < 0)
+		if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0)
 			exit(2);
 	}
 
@@ -1514,7 +1514,7 @@ int restore_handler(const struct sockaddr_nl *nl, struct nlmsghdr *n, void *arg)
 
 	ll_init_map(&rth);
 
-	ret = rtnl_talk(&rth, n, 0, 0, n, NULL, NULL);
+	ret = rtnl_talk(&rth, n, 0, 0, n);
 	if ((ret < 0) && (errno == EEXIST))
 		ret = 0;
 

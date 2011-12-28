@@ -163,7 +163,7 @@ main(int argc, char **argv)
 
 	write_stamp(fp);
 
-	if (rtnl_dump_filter(&rth, dump_msg, fp, NULL, NULL) < 0) {
+	if (rtnl_dump_filter(&rth, dump_msg, fp) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}

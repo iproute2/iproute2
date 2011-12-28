@@ -32,21 +32,14 @@ struct rtnl_dump_filter_arg
 {
 	rtnl_filter_t filter;
 	void *arg1;
-	rtnl_filter_t junk;
-	void *arg2;
 };
 
 extern int rtnl_dump_filter_l(struct rtnl_handle *rth,
 			      const struct rtnl_dump_filter_arg *arg);
 extern int rtnl_dump_filter(struct rtnl_handle *rth, rtnl_filter_t filter,
-			    void *arg1,
-			    rtnl_filter_t junk,
-			    void *arg2);
-
+			    void *arg);
 extern int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
-		     unsigned groups, struct nlmsghdr *answer,
-		     rtnl_filter_t junk,
-		     void *jarg);
+		     unsigned groups, struct nlmsghdr *answer);
 extern int rtnl_send(struct rtnl_handle *rth, const void *buf, int);
 extern int rtnl_send_check(struct rtnl_handle *rth, const void *buf, int);
 
@@ -74,8 +67,8 @@ extern int __parse_rtattr_nested_compat(struct rtattr *tb[], int max, struct rta
 	(parse_rtattr((tb), (max), RTA_DATA(rta), RTA_PAYLOAD(rta)))
 
 #define parse_rtattr_nested_compat(tb, max, rta, data, len) \
-({	data = RTA_PAYLOAD(rta) >= len ? RTA_DATA(rta) : NULL; \
-	__parse_rtattr_nested_compat(tb, max, rta, len); })
+	({ data = RTA_PAYLOAD(rta) >= len ? RTA_DATA(rta) : NULL;	\
+		__parse_rtattr_nested_compat(tb, max, rta, len); })
 
 extern int rtnl_listen(struct rtnl_handle *, rtnl_filter_t handler,
 		       void *jarg);
