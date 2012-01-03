@@ -89,6 +89,7 @@ endif
 
 YACC := bison
 LEX := flex
+CFLAGS += -DYY_NO_INPUT
 
 MODDESTDIR := $(DESTDIR)$(patsubst /usr%,%,$(LIBDIR))/tc
 
