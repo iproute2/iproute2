@@ -19,7 +19,7 @@
 
 %{
  extern int ematch_lex(void);
- extern void yyerror(char *s);
+ extern void yyerror(const char *s);
  extern struct ematch *ematch_root;
  extern char *ematch_err;
 %}
@@ -94,7 +94,7 @@ invert:
 	;
 %%
 
- void yyerror(char *s)
+ void yyerror(const char *s)
  {
 	 ematch_err = strdup(s);
  }
