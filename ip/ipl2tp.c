@@ -23,13 +23,6 @@
 #include <linux/if_arp.h>
 #include <linux/ip.h>
 
-#include <netlink/netlink.h>
-#include <netlink/genl/genl.h>
-#include <netlink/genl/family.h>
-#include <netlink/genl/mngt.h>
-#include <netlink/genl/ctrl.h>
-#include <netlink/utils.h>
-
 #include <linux/genetlink.h>
 #include <linux/l2tp.h>
 
