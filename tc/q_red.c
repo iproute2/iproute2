@@ -28,7 +28,8 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... red limit BYTES [min BYTES] [max BYTES] avpkt BYTES [burst PACKETS]\n");
-	fprintf(stderr, "               [probability PROBABILITY] bandwidth KBPS [ecn] [harddrop]\n");
+	fprintf(stderr, "               [adaptative] [probability PROBABILITY] bandwidth KBPS\n");
+	fprintf(stderr, "               [ecn] [harddrop]\n");
 }
 
 static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
@@ -40,6 +41,7 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	unsigned rate = 0;
 	int wlog;
 	__u8 sbuf[256];
+	__u32 max_P;
 	struct rtattr *tail;
 
 	memset(&opt, 0, sizeof(opt));
@@ -91,6 +93,8 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 			opt.flags |= TC_RED_ECN;
 		} else if (strcmp(*argv, "harddrop") == 0) {
 			opt.flags |= TC_RED_HARDDROP;
+		} else if (strcmp(*argv, "adaptative") == 0) {
+			opt.flags |= TC_RED_ADAPTATIVE;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -141,6 +145,8 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 1024, TCA_RED_PARMS, &opt, sizeof(opt));
 	addattr_l(n, 1024, TCA_RED_STAB, sbuf, 256);
+	max_P = probability * pow(2, 32);
+	addattr_l(n, 1024, TCA_RED_MAX_P, &max_P, sizeof(max_P));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
@@ -149,6 +155,7 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_RED_MAX + 1];
 	struct tc_red_qopt *qopt;
+	__u32 max_P = 0;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 	SPRINT_BUF(b3);
@@ -163,6 +170,11 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	qopt = RTA_DATA(tb[TCA_RED_PARMS]);
 	if (RTA_PAYLOAD(tb[TCA_RED_PARMS])  < sizeof(*qopt))
 		return -1;
+
+	if (tb[TCA_RED_MAX_P] &&
+	    RTA_PAYLOAD(tb[TCA_RED_MAX_P]) >= sizeof(__u32))
+		max_P = *(__u32 *)RTA_DATA(tb[TCA_RED_MAX_P]);
+
 	fprintf(f, "limit %s min %s max %s ",
 		sprint_size(qopt->limit, b1),
 		sprint_size(qopt->qth_min, b2),
@@ -171,9 +183,15 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		fprintf(f, "ecn ");
 	if (qopt->flags & TC_RED_HARDDROP)
 		fprintf(f, "harddrop ");
+	if (qopt->flags & TC_RED_ADAPTATIVE)
+		fprintf(f, "adaptative ");
 	if (show_details) {
-		fprintf(f, "ewma %u Plog %u Scell_log %u",
-			qopt->Wlog, qopt->Plog, qopt->Scell_log);
+		fprintf(f, "ewma %u ", qopt->Wlog);
+		if (max_P)
+			fprintf(f, "probability %lg ", max_P / pow(2, 32));
+		else
+			fprintf(f, "Plog %u ", qopt->Plog);
+		fprintf(f, "Scell_log %u", qopt->Scell_log);
 	}
 	return 0;
 }
