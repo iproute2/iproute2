@@ -3,12 +3,12 @@
 NetEm \- Network Emulator
 .SH SYNOPSIS
 .B "tc qdisc ... dev" 
-.IR dev " ] "
+.IR DEVICE " ] "
 .BR "add netem" 
 .I OPTIONS
 
 .IR OPTIONS " := [ " LIMIT " ] [ " DELAY " ] [ " LOSS \
-" ] [ " CORRUPT " ] [ " DUPLICATION " ] [ " REORDERING " ]"
+" ] [ " CORRUPT " ] [ " DUPLICATION " ] [ " REORDERING " ][ " RATE " ]"
 
 .IR LIMIT " := "
 .B limit
@@ -41,11 +41,16 @@ NetEm \- Network Emulator
 .B duplicate
 .IR PERCENT " [ " CORRELATION " ]]"
 
-.IR REODERING " := "
+.IR REORDERING " := "
 .B reorder
 .IR PERCENT " [ " CORRELATION " ] [ "
 .B gap 
 .IR DISTANCE " ]"
+
+.IR RATE " := "
+.B rate
+.IR RATE " [ " PACKETOVERHEAD " [ " CELLSIZE " [ " CELLOVERHEAD " ]]]]"
+	
 
 .SH DESCRIPTION
 NetEm is an enhancement of the Linux traffic control facilities
@@ -71,12 +76,12 @@ Delay and jitter values are expressed in ms while correlation is percentage.
 allow the choose the delay distribution. If not specified, the default
 distribution is normal. Additional parameters allow to consider situations in
 which network has variable delays depending on traffic flows concurring on the
-same path, that causes severeal delay peaks and a tail.
+same path, that causes several delay peaks and a tail.
 
 .SS loss random
 adds an independent loss probability to the packets outgoing from the chosen
-network interface. It is also possibile to add a correlation, but this option
-is now deprecated due to the noticed bad behaviour.
+network interface. It is also possible to add a correlation, but this option
+is now deprecated due to the noticed bad behavior.
 
 .SS loss state
 adds packet losses according to the 4-state Markov using the transition
@@ -103,7 +108,7 @@ for a chosen percent of packets. It is also possible to add a correlation
 through the proper parameter.
 
 .SS duplicate
-using this option the chosen percent of packets is duplicated before queueing
+using this option the chosen percent of packets is duplicated before queuing
 them. It is also possible to add a correlation through the proper parameter.
 
 .SS reorder
@@ -121,9 +126,41 @@ other packets are delayed by 10 ms
 in this second example 25% of packets are sent immediately (with correlation of
 50%) while the other are delayed by 10 ms.
 
+.SS rate
+delay packets based on packet size and is a replacement for 
+.IR TBF .
+Rate can be
+specified in common units (e.g. 100kbit). Optional 
+.I PACKETOVERHEAD 
+(in bytes) specify an per packet overhead and can be negative. A positive value can be
+used to simulate additional link layer headers. A negative value can be used to
+artificial strip the Ethernet header (e.g. -14) and/or simulate a link layer
+header compression scheme. The third parameter - an unsigned value - specify
+the cellsize. Cellsize can be used to simulate link layer schemes. ATM for
+example has an payload cellsize of 48 bytes and 5 byte per cell header. If a
+packet is 50 byte then ATM must use two cells: 2 * 48 bytes payload including 2
+* 5 byte header, thus consume 106 byte on the wire.  The last optional value
+.I CELLOVERHEAD 
+can be used to specify per cell overhead - for our ATM example 5.
+.I CELLOVERHEAD
+can be negative, but use negative values with caution.
+
+Note that rate throttling is limited by several factors: the kernel clock
+granularity avoid a perfect shaping at a specific level. This will show up in
+an artificial packet compression (bursts). Another influence factor are network
+adapter buffers which can also add artificial delay.
+
 .SH LIMITATIONS
 The main known limitation of Netem are related to timer granularity, since
 Linux is not a real-time operating system.
+
+.SH EXAMPLES
+.PP
+tc qdisc add dev eth0 root netem rate 5kbit 20 100 5
+.RS 4
+delay all outgoing packets on device eth0 with a rate of 5kbit, a per packet
+overhead of 20 byte, a cellsize of 100 byte and a per celloverhead of 5 byte:
+.RE
 
 .SH SOURCES
 .IP " 1. " 4
