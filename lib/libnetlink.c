@@ -99,7 +99,7 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 	memset(&req, 0, sizeof(req));
 	req.nlh.nlmsg_len = sizeof(req);
 	req.nlh.nlmsg_type = type;
-	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
+	req.nlh.nlmsg_flags = NLM_F_DUMP|NLM_F_REQUEST;
 	req.nlh.nlmsg_pid = 0;
 	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
 	req.g.rtgen_family = family;
@@ -162,7 +162,7 @@ int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 
 	nlh.nlmsg_len = NLMSG_LENGTH(len);
 	nlh.nlmsg_type = type;
-	nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
+	nlh.nlmsg_flags = NLM_F_DUMP|NLM_F_REQUEST;
 	nlh.nlmsg_pid = 0;
 	nlh.nlmsg_seq = rth->dump = ++rth->seq;
 
