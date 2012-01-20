@@ -426,6 +426,8 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (reorder.probability) {
 		if (opt.latency == 0) {
 			fprintf(stderr, "reordering not possible without specifying some delay\n");
+			explain();
+			return -1;
 		}
 		if (opt.gap == 0)
 			opt.gap = 1;
