@@ -28,7 +28,7 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... red limit BYTES [min BYTES] [max BYTES] avpkt BYTES [burst PACKETS]\n");
-	fprintf(stderr, "               [adaptative] [probability PROBABILITY] bandwidth KBPS\n");
+	fprintf(stderr, "               [adaptive] [probability PROBABILITY] bandwidth KBPS\n");
 	fprintf(stderr, "               [ecn] [harddrop]\n");
 }
 
@@ -94,6 +94,8 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		} else if (strcmp(*argv, "harddrop") == 0) {
 			opt.flags |= TC_RED_HARDDROP;
 		} else if (strcmp(*argv, "adaptative") == 0) {
+			opt.flags |= TC_RED_ADAPTATIVE;
+		} else if (strcmp(*argv, "adaptive") == 0) {
 			opt.flags |= TC_RED_ADAPTATIVE;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
@@ -184,7 +186,7 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (qopt->flags & TC_RED_HARDDROP)
 		fprintf(f, "harddrop ");
 	if (qopt->flags & TC_RED_ADAPTATIVE)
-		fprintf(f, "adaptative ");
+		fprintf(f, "adaptive ");
 	if (show_details) {
 		fprintf(f, "ewma %u ", qopt->Wlog);
 		if (max_P)
