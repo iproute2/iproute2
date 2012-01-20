@@ -14,7 +14,8 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .ti -8
 .IR OBJECT " := { "
 .BR link " | " addr " | " addrlabel " | " route " | " rule " | " neigh " | "\
- tunnel " | " maddr " | "  mroute " }"
+ ntable " | " tunnel " | " tuntap " | " maddr " | "  mroute " | " mrule " | "\
+ monitor " | " xfrm " | " netns " | "  l2tp " }"
 .sp
 
 .ti -8
@@ -103,10 +104,6 @@ host addresses.
 .I OBJECT
 
 .TP
-.B link
-- network device.
-
-.TP
 .B address
 - protocol (IP or IPv6) address on a device.
 
@@ -115,8 +112,40 @@ host addresses.
 - label configuration for protocol address selection.
 
 .TP
+.B l2tp
+- tunnel PPP over IP (L2TP).
+
+.TP
+.B link
+- network device.
+
+.TP
+.B maddress
+- multicast address.
+
+.TP
+.B monitor
+- watch for netlink messages.
+
+.TP
+.B mroute
+- multicast routing cache entry.
+
+.TP
+.B mrule
+- rule in multicast routing policy database.
+
+.TP
 .B neighbour
-- ARP or NDISC cache entry.
+- manage ARP or NDISC cache entries.
+
+.TP
+.B netns
+- manage network namespaces.
+
+.TP
+.B ntable
+- manage the neighbor cache's operation.
 
 .TP
 .B route
@@ -127,16 +156,16 @@ host addresses.
 - rule in routing policy database.
 
 .TP
-.B maddress
-- multicast address.
-
-.TP
-.B mroute
-- multicast routing cache entry.
-
-.TP
 .B tunnel
 - tunnel over IP.
+
+.TP
+.B tuntap
+- manage TUN/TAP devices.
+
+.TP
+.B xfrm
+- manage IPSec policies.
 
 .PP
 The names of all objects may be written in full or
@@ -181,6 +210,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR ip-monitor (8),
 .BR ip-mroute (8),
 .BR ip-neighbour (8),
+.BR ip-netns (8),
 .BR ip-ntable (8),
 .BR ip-route (8),
 .BR ip-rule (8),
