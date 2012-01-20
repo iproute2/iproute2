@@ -34,6 +34,7 @@
 #include "SNAPSHOT.h"
 
 #include <netinet/tcp.h>
+#include <linux/sock_diag.h>
 #include <linux/inet_diag.h>
 #include <linux/unix_diag.h>
 
