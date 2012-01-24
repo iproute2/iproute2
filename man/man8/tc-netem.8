@@ -112,19 +112,27 @@ using this option the chosen percent of packets is duplicated before queuing
 them. It is also possible to add a correlation through the proper parameter.
 
 .SS reorder
-there are two ways to use this option:
+to use reordering, a delay option must be specified. There are two ways to use
+this option (assuming 'delay 10ms' in the options list).
 
-.B "reorder gap"
-.I 5 10
+.B "reorder "
+.I 25% 50%
+.B "gap"
+.I 5
 .br
-in this first example every 5th (10th, 15th) packet is sent immediately while
-other packets are delayed by 10 ms
+in this first example, the first 4 (gap - 1) packets are delayed by 10ms and
+subsequent packets are sent immediately with a probability of 0.25 (with
+correlation of 50% ) or delayed with a probability of 0.75. After a packet is
+reordered, the process restarts i.e. the next 4 packets are delayed and
+subsequent packets are sent immediately or delayed based on reordering
+probability. To cause a repeatable pattern where every 5th packet is reordered
+reliably, a reorder probability of 100% can be used.
 
 .B reorder
 .I 25% 50%
 .br
 in this second example 25% of packets are sent immediately (with correlation of
-50%) while the other are delayed by 10 ms.
+50%) while the others are delayed by 10 ms.
 
 .SS rate
 delay packets based on packet size and is a replacement for 
