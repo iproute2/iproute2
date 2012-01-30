@@ -2092,8 +2092,10 @@ static int unix_show_netlink(struct filter *f, FILE *dump_fp)
 		.msg_iovlen = f->f ? 3 : 1,
 	};
 
-	if (sendmsg(fd, &msg, 0) < 0)
+	if (sendmsg(fd, &msg, 0) < 0) {
+		close(fd);
 		return -1;
+	}
 
 	iov[0] = (struct iovec){
 		.iov_base = buf,
@@ -2121,6 +2123,7 @@ static int unix_show_netlink(struct filter *f, FILE *dump_fp)
 		}
 		if (status == 0) {
 			fprintf(stderr, "EOF on netlink\n");
+			close(fd);
 			return 0;
 		}
 
@@ -2135,22 +2138,28 @@ static int unix_show_netlink(struct filter *f, FILE *dump_fp)
 			    h->nlmsg_seq != 123456)
 				goto skip_it;
 
-			if (h->nlmsg_type == NLMSG_DONE)
+			if (h->nlmsg_type == NLMSG_DONE) {
+				close(fd);
 				return 0;
+			}
 			if (h->nlmsg_type == NLMSG_ERROR) {
 				struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
 				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
 					fprintf(stderr, "ERROR truncated\n");
 				} else {
 					errno = -err->error;
-					perror("TCPDIAG answers");
+					if (errno != ENOENT)
+						fprintf(stderr, "UDIAG answers %d\n", errno);
 				}
-				return 0;
+				close(fd);
+				return -1;
 			}
 			if (!dump_fp) {
 				err = unix_show_sock(h, f);
-				if (err < 0)
+				if (err < 0) {
+					close(fd);
 					return err;
+				}
 			}
 
 skip_it:
@@ -2165,6 +2174,7 @@ skip_it:
 			exit(1);
 		}
 	}
+	close(fd);
 	return 0;
 }
 
@@ -2241,7 +2251,7 @@ int unix_show(struct filter *f)
 			cnt = 0;
 		}
 	}
-
+	fclose(fp);
 	if (list) {
 		unix_list_print(list, f);
 		unix_list_free(list);
