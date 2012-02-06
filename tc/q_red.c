@@ -19,6 +19,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <math.h>
 
 #include "utils.h"
 #include "tc_util.h"
