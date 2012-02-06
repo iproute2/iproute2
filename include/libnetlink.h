@@ -87,7 +87,7 @@ static inline __u64 rta_getattr_u64(const struct rtattr *rta)
 }
 static inline const char *rta_getattr_str(const struct rtattr *rta)
 {
-	return RTA_DATA(rta);
+	return (const char *)RTA_DATA(rta);
 }
 
 extern int rtnl_listen(struct rtnl_handle *, rtnl_filter_t handler,
