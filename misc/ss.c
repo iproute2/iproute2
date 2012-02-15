@@ -1563,6 +1563,7 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 		}
 		if (status == 0) {
 			fprintf(stderr, "EOF on netlink\n");
+			close(fd);
 			return 0;
 		}
 
@@ -1578,8 +1579,10 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 			    h->nlmsg_seq != 123456)
 				goto skip_it;
 
-			if (h->nlmsg_type == NLMSG_DONE)
+			if (h->nlmsg_type == NLMSG_DONE) {
+				close(fd);
 				return 0;
+			}
 			if (h->nlmsg_type == NLMSG_ERROR) {
 				struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
 				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
@@ -1588,6 +1591,7 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 					errno = -err->error;
 					perror("TCPDIAG answers");
 				}
+				close(fd);
 				return 0;
 			}
 			if (!dump_fp) {
@@ -1596,8 +1600,10 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 					continue;
 				}
 				err = tcp_show_sock(h, NULL);
-				if (err < 0)
+				if (err < 0) {
+					close(fd);
 					return err;
+				}
 			}
 
 skip_it:
@@ -1612,6 +1618,7 @@ skip_it:
 			exit(1);
 		}
 	}
+	close(fd);
 	return 0;
 }
 
