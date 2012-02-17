@@ -90,11 +90,13 @@ int negative_timeout = 60;
 int no_kernel_broadcasts;
 int broadcast_rate = 1000;
 int broadcast_burst = 3000;
+int poll_timeout = 30000;
 
 void usage(void)
 {
 	fprintf(stderr,
-"Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ] [ -f file ] [ -n time ] [ -R rate ] [ interfaces ]\n");
+		"Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ]"
+		" [ -f file ] [ -n time ] [-p interval ] [ -R rate ] [ interfaces ]\n");
 	exit(1);
 }
 
@@ -591,7 +593,7 @@ int main(int argc, char **argv)
 	int do_list = 0;
 	char *do_load = NULL;
 
-	while ((opt = getopt(argc, argv, "h?b:lf:a:n:kR:B:")) != EOF) {
+	while ((opt = getopt(argc, argv, "h?b:lf:a:n:p:kR:B:")) != EOF) {
 		switch (opt) {
 	        case 'b':
 			dbname = optarg;
@@ -614,6 +616,12 @@ int main(int argc, char **argv)
 			break;
 		case 'k':
 			no_kernel_broadcasts = 1;
+			break;
+		case 'p':
+			if ((poll_timeout = 1000 * strtod(optarg, NULL)) < 100) {
+				fprintf(stderr,"Invalid poll timeout\n");
+				exit(-1);
+			}
 			break;
 		case 'R':
 			if ((broadcast_rate = atoi(optarg)) <= 0 ||
@@ -807,7 +815,7 @@ int main(int argc, char **argv)
 		}
 		if (do_stats)
 			send_stats();
-		if (poll(pset, 2, 30000) > 0) {
+		if (poll(pset, 2, poll_timeout) > 0) {
 			in_poll = 0;
 			if (pset[0].revents&EVENTS)
 				get_arp_pkt();
