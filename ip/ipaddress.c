@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <inttypes.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -241,6 +242,97 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	}
 }
 
+static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s) {
+	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
+		s->rx_compressed ? "compressed" : "", _SL_);
+	fprintf(fp, "    %-10"PRIu64" %-8"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
+		(uint64_t)s->rx_bytes,
+		(uint64_t)s->rx_packets,
+		(uint64_t)s->rx_errors,
+		(uint64_t)s->rx_dropped,
+		(uint64_t)s->rx_over_errors,
+		(uint64_t)s->multicast);
+	if (s->rx_compressed)
+		fprintf(fp, " %-7"PRIu64"",
+			(uint64_t)s->rx_compressed);
+	if (show_stats > 1) {
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    RX errors: length  crc     frame   fifo    missed%s", _SL_);
+		fprintf(fp, "               %-7"PRIu64"  %-7"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
+			(uint64_t)s->rx_length_errors,
+			(uint64_t)s->rx_crc_errors,
+			(uint64_t)s->rx_frame_errors,
+			(uint64_t)s->rx_fifo_errors,
+			(uint64_t)s->rx_missed_errors);
+	}
+	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
+		(uint64_t)s->tx_compressed ? "compressed" : "", _SL_);
+	fprintf(fp, "    %-10"PRIu64" %-8"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
+		(uint64_t)s->tx_bytes,
+		(uint64_t)s->tx_packets,
+		(uint64_t)s->tx_errors,
+		(uint64_t)s->tx_dropped,
+		(uint64_t)s->tx_carrier_errors,
+		(uint64_t)s->collisions);
+	if (s->tx_compressed)
+		fprintf(fp, " %-7"PRIu64"",
+			(uint64_t)s->tx_compressed);
+	if (show_stats > 1) {
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    TX errors: aborted fifo    window  heartbeat%s", _SL_);
+		fprintf(fp, "               %-7"PRIu64"  %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
+			(uint64_t)s->tx_aborted_errors,
+			(uint64_t)s->tx_fifo_errors,
+			(uint64_t)s->tx_window_errors,
+			(uint64_t)s->tx_heartbeat_errors);
+	}
+}
+
+static void print_link_stats(FILE *fp, const struct rtnl_link_stats *s)
+{
+	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
+		s->rx_compressed ? "compressed" : "", _SL_);
+	fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
+		s->rx_bytes, s->rx_packets, s->rx_errors,
+		s->rx_dropped, s->rx_over_errors,
+		s->multicast
+		);
+	if (s->rx_compressed)
+		fprintf(fp, " %-7u", s->rx_compressed);
+	if (show_stats > 1) {
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    RX errors: length  crc     frame   fifo    missed%s", _SL_);
+		fprintf(fp, "               %-7u  %-7u %-7u %-7u %-7u",
+			s->rx_length_errors,
+			s->rx_crc_errors,
+			s->rx_frame_errors,
+			s->rx_fifo_errors,
+			s->rx_missed_errors
+			);
+	}
+	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
+		s->tx_compressed ? "compressed" : "", _SL_);
+	fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
+		s->tx_bytes, s->tx_packets, s->tx_errors,
+		s->tx_dropped, s->tx_carrier_errors, s->collisions);
+	if (s->tx_compressed)
+		fprintf(fp, " %-7u", s->tx_compressed);
+	if (show_stats > 1) {
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    TX errors: aborted fifo    window  heartbeat%s", _SL_);
+		fprintf(fp, "               %-7u  %-7u %-7u %-7u",
+			s->tx_aborted_errors,
+			s->tx_fifo_errors,
+			s->tx_window_errors,
+			s->tx_heartbeat_errors
+			);
+	}
+}
+
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg)
 {
@@ -342,106 +434,13 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		fprintf(fp,"\n    alias %s", 
 			(const char *) RTA_DATA(tb[IFLA_IFALIAS]));
 
-	if (do_link && tb[IFLA_STATS64] && show_stats) {
-		struct rtnl_link_stats64 slocal;
-		struct rtnl_link_stats64 *s = RTA_DATA(tb[IFLA_STATS64]);
-		if (((unsigned long)s) & (sizeof(unsigned long)-1)) {
-			memcpy(&slocal, s, sizeof(slocal));
-			s = &slocal;
-		}
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
-			s->rx_compressed ? "compressed" : "", _SL_);
-		fprintf(fp, "    %-10llu %-8llu %-7llu %-7llu %-7llu %-7llu",
-			(unsigned long long)s->rx_bytes,
-			(unsigned long long)s->rx_packets,
-			(unsigned long long)s->rx_errors,
-			(unsigned long long)s->rx_dropped,
-			(unsigned long long)s->rx_over_errors,
-			(unsigned long long)s->multicast);
-		if (s->rx_compressed)
-			fprintf(fp, " %-7llu",
-				(unsigned long long)s->rx_compressed);
-		if (show_stats > 1) {
-			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    RX errors: length  crc     frame   fifo    missed%s", _SL_);
-			fprintf(fp, "               %-7llu  %-7llu %-7llu %-7llu %-7llu",
-				(unsigned long long)s->rx_length_errors,
-				(unsigned long long)s->rx_crc_errors,
-				(unsigned long long)s->rx_frame_errors,
-				(unsigned long long)s->rx_fifo_errors,
-				(unsigned long long)s->rx_missed_errors);
-		}
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
-			s->tx_compressed ? "compressed" : "", _SL_);
-		fprintf(fp, "    %-10llu %-8llu %-7llu %-7llu %-7llu %-7llu",
-			(unsigned long long)s->tx_bytes,
-			(unsigned long long)s->tx_packets,
-			(unsigned long long)s->tx_errors,
-			(unsigned long long)s->tx_dropped,
-			(unsigned long long)s->tx_carrier_errors,
-			(unsigned long long)s->collisions);
-		if (s->tx_compressed)
-			fprintf(fp, " %-7llu",
-				(unsigned long long)s->tx_compressed);
-		if (show_stats > 1) {
-			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    TX errors: aborted fifo    window  heartbeat%s", _SL_);
-			fprintf(fp, "               %-7llu  %-7llu %-7llu %-7llu",
-				(unsigned long long)s->tx_aborted_errors,
-				(unsigned long long)s->tx_fifo_errors,
-				(unsigned long long)s->tx_window_errors,
-				(unsigned long long)s->tx_heartbeat_errors);
-		}
+	if (do_link && show_stats) {
+		if (tb[IFLA_STATS64])
+			print_link_stats64(fp, RTA_DATA(tb[IFLA_STATS64]));
+		else if (tb[IFLA_STATS])
+			print_link_stats(fp, RTA_DATA(tb[IFLA_STATS]));
 	}
-	if (do_link && !tb[IFLA_STATS64] && tb[IFLA_STATS] && show_stats) {
-		struct rtnl_link_stats slocal;
-		struct rtnl_link_stats *s = RTA_DATA(tb[IFLA_STATS]);
-		if (((unsigned long)s) & (sizeof(unsigned long)-1)) {
-			memcpy(&slocal, s, sizeof(slocal));
-			s = &slocal;
-		}
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
-			s->rx_compressed ? "compressed" : "", _SL_);
-		fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
-			s->rx_bytes, s->rx_packets, s->rx_errors,
-			s->rx_dropped, s->rx_over_errors,
-			s->multicast
-			);
-		if (s->rx_compressed)
-			fprintf(fp, " %-7u", s->rx_compressed);
-		if (show_stats > 1) {
-			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    RX errors: length  crc     frame   fifo    missed%s", _SL_);
-			fprintf(fp, "               %-7u  %-7u %-7u %-7u %-7u",
-				s->rx_length_errors,
-				s->rx_crc_errors,
-				s->rx_frame_errors,
-				s->rx_fifo_errors,
-				s->rx_missed_errors
-				);
-		}
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
-			s->tx_compressed ? "compressed" : "", _SL_);
-		fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
-			s->tx_bytes, s->tx_packets, s->tx_errors,
-			s->tx_dropped, s->tx_carrier_errors, s->collisions);
-		if (s->tx_compressed)
-			fprintf(fp, " %-7u", s->tx_compressed);
-		if (show_stats > 1) {
-			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    TX errors: aborted fifo    window  heartbeat%s", _SL_);
-			fprintf(fp, "               %-7u  %-7u %-7u %-7u",
-				s->tx_aborted_errors,
-				s->tx_fifo_errors,
-				s->tx_window_errors,
-				s->tx_heartbeat_errors
-				);
-		}
-	}
+
 	if (do_link && tb[IFLA_VFINFO_LIST] && tb[IFLA_NUM_VF]) {
 		struct rtattr *i, *vflist = tb[IFLA_VFINFO_LIST];
 		int rem = RTA_PAYLOAD(vflist);
