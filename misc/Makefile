@@ -7,7 +7,7 @@ include ../Config
 
 all: $(TARGETS)
 
-ss: $(SSOBJ) $(LIBUTIL)
+ss: $(SSOBJ)
 
 nstat: nstat.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o nstat nstat.c -lm

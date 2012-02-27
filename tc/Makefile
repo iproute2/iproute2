@@ -99,7 +99,7 @@ MODDESTDIR := $(DESTDIR)$(patsubst /usr%,%,$(LIBDIR))/tc
 
 all: libtc.a tc $(TCSO)
 
-tc: $(TCOBJ) $(LIBNETLINK) $(LIBUTIL) $(TCLIB)
+tc: $(TCOBJ) $(TCLIB)
 
 libtc.a: $(TCLIB)
 	$(AR) rcs $@ $(TCLIB)

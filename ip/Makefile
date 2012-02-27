@@ -17,11 +17,12 @@ ALLOBJ=$(IPOBJ) $(RTMONOBJ)
 SCRIPTS=ifcfg rtpr routel routef
 TARGETS=ip rtmon
 
-all: $(TARGETS) $(SCRIPTS) $(LIBS)
+all: $(TARGETS) $(SCRIPTS)
 
-ip: $(IPOBJ) $(LIBNETLINK) $(LIBUTIL)
+ip: $(IPOBJ) $(LIBNETLINK)
 
-rtmon: $(RTMONOBJ) $(LIBNETLINK)
+
+rtmon: $(RTMONOBJ)
 
 install: all
 	install -m 0755 $(TARGETS) $(DESTDIR)$(SBINDIR)
