@@ -29,8 +29,10 @@ ADDLIB+=ipx_ntop.o ipx_pton.o
 
 CC = gcc
 HOSTCC = gcc
-CCOPTS = -D_GNU_SOURCE -O2 -Wstrict-prototypes -Wall
-CFLAGS = $(CCOPTS) -I../include $(DEFINES)
+DEFINES += -D_GNU_SOURCE
+CCOPTS = -O2
+WFLAGS = -Wall -Wstrict-prototypes
+CFLAGS = $(WFLAGS) $(CCOPTS) -I../include $(DEFINES)
 YACCFLAGS = -d -t -v
 
 SUBDIRS=lib ip tc misc netem genl
