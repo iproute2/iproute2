@@ -34,7 +34,7 @@
 
 #define IPLINK_IOCTL_COMPAT	1
 #ifndef LIBDIR
-#define LIBDIR "/usr/lib/"
+#define LIBDIR "/usr/lib"
 #endif
 
 static void usage(void) __attribute__((noreturn));

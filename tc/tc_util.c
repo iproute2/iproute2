@@ -25,7 +25,7 @@
 #include "tc_util.h"
 
 #ifndef LIBDIR
-#define LIBDIR "/usr/lib/"
+#define LIBDIR "/usr/lib"
 #endif
 
 const char *get_tc_lib(void)

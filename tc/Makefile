@@ -91,7 +91,7 @@ YACC := bison
 LEX := flex
 CFLAGS += -DYY_NO_INPUT
 
-MODDESTDIR := $(DESTDIR)$(patsubst /usr%,%,$(LIBDIR))/tc
+MODDESTDIR := $(DESTDIR)$(LIBDIR)/tc
 
 %.so: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic $< -o $@

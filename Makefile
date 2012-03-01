@@ -1,10 +1,11 @@
-DESTDIR=/usr/
 ROOTDIR=$(DESTDIR)
-LIBDIR=/usr/lib/
+PREFIX=/usr
+LIBDIR=$(PREFIX)/lib
 SBINDIR=/sbin
 CONFDIR=/etc/iproute2
-DOCDIR=/share/doc/iproute2
-MANDIR=/share/man
+DATADIR=$(PREFIX)/share
+DOCDIR=$(DATADIR)/doc/iproute2
+MANDIR=$(DATADIR)/man
 ARPDDIR=/var/lib/arpd
 
 # Path to db_185.h include
@@ -16,6 +17,8 @@ DEFINES= -DRESOLVE_HOSTNAMES -DLIBDIR=\"$(LIBDIR)\"
 ifneq ($(SHARED_LIBS),y)
 DEFINES+= -DNO_SHARED_LIBS
 endif
+
+DEFINES+=-DCONFDIR=\"$(CONFDIR)\"
 
 #options if you have a bind>=4.9.4 libresolv (or, maybe, glibc)
 LDLIBS=-lresolv
