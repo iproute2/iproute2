@@ -203,7 +203,7 @@ void print_rate(char *buf, int len, __u32 rate)
 
 	if (use_iec) {
 		if (tmp >= 1000.0*1024.0*1024.0)
-			snprintf(buf, len, "%.0fMibit", tmp/1024.0*1024.0);
+			snprintf(buf, len, "%.0fMibit", tmp/(1024.0*1024.0));
 		else if (tmp >= 1000.0*1024)
 			snprintf(buf, len, "%.0fKibit", tmp/1024);
 		else
