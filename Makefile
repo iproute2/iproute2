@@ -75,14 +75,13 @@ snapshot:
 		> include/SNAPSHOT.h
 
 clean:
-	rm -f cscope.*
 	@for i in $(SUBDIRS) doc; \
 	do $(MAKE) $(MFLAGS) -C $$i clean; done
 
 clobber:
 	touch Config
 	$(MAKE) $(MFLAGS) clean
-	rm -f Config
+	rm -f Config cscope.*
 
 distclean: clobber
 
