@@ -71,11 +71,15 @@ extern int __parse_rtattr_nested_compat(struct rtattr *tb[], int max, struct rta
 	({ data = RTA_PAYLOAD(rta) >= len ? RTA_DATA(rta) : NULL;	\
 		__parse_rtattr_nested_compat(tb, max, rta, len); })
 
+static inline __u8 rta_getattr_u8(const struct rtattr *rta)
+{
+	return *(__u8 *)RTA_DATA(rta);
+}
 static inline __u16 rta_getattr_u16(const struct rtattr *rta)
 {
 	return *(__u16 *)RTA_DATA(rta);
 }
-static inline __u16 rta_getattr_u32(const struct rtattr *rta)
+static inline __u32 rta_getattr_u32(const struct rtattr *rta)
 {
 	return *(__u32 *)RTA_DATA(rta);
 }
