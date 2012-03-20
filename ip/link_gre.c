@@ -331,16 +331,14 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_GRE_OFLAGS])
 		oflags = *(__u16 *)RTA_DATA(tb[IFLA_GRE_OFLAGS]);
 
-	if (iflags & GRE_KEY && tb[IFLA_GRE_IKEY] &&
-	    *(__u32 *)RTA_DATA(tb[IFLA_GRE_IKEY])) {
+	if ((iflags & GRE_KEY) && tb[IFLA_GRE_IKEY]) {
 		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_GRE_IKEY]), s2, sizeof(s2));
 		fprintf(f, "ikey %s ", s2);
 	}
 
-	if (oflags & GRE_KEY && tb[IFLA_GRE_OKEY] &&
-	    *(__u32 *)RTA_DATA(tb[IFLA_GRE_OKEY])) {
+	if ((oflags & GRE_KEY) && tb[IFLA_GRE_OKEY]) {
 		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_GRE_OKEY]), s2, sizeof(s2));
-		fprintf(f, "ikey %s ", s2);
+		fprintf(f, "okey %s ", s2);
 	}
 
 	if (iflags & GRE_SEQ)
