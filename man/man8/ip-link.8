@@ -100,6 +100,9 @@ ip-link \- network device configuration
 .B spoofchk { on | off }
 ] |
 .br
+.B mode
+.IR LINKMODE " |"
+.br
 .B master
 .IR DEVICE
 .br
@@ -247,6 +250,14 @@ move the device to the network namespace associated with the process
 .BI netns " NETNSNAME"
 move the device to the network namespace associated with name
 .IR "NETNSNAME".
+
+.TP
+.BI mode " LINKMODE"
+allows setting link mode which determines which RFC2863 operational state
+the device will transistion to when it is brought up. Setting
+.I dormant
+mode changes the behaviour so that device goes into DORMANT state instead
+of UP when driver is ready.
 
 .TP
 .BI alias " NAME"

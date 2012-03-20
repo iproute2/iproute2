@@ -132,6 +132,15 @@ struct link_util *get_link_kind(const char *id)
 	return l;
 }
 
+int get_link_mode(const char *mode)
+{
+	if (strcmp(mode, "default") == 0)
+		return IF_LINK_MODE_DEFAULT;
+	if (strcmp(mode, "dormant") == 0)
+		return IF_LINK_MODE_DORMANT;
+	return -1;
+}
+
 #if IPLINK_IOCTL_COMPAT
 static int have_rtnl_newlink = -1;
 
@@ -421,6 +430,13 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				duparg("group", *argv);
 			if (rtnl_group_a2n(group, *argv))
 				invarg("Invalid \"group\" value\n", *argv);
+		} else if (strcmp(*argv, "mode") == 0) {
+			int mode;
+			NEXT_ARG();
+			mode  = get_link_mode(*argv);
+			if (mode < 0)
+				invarg("Invalid link mode\n", *argv);
+			addattr8(&req->n, sizeof(*req), IFLA_LINKMODE, mode);
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();

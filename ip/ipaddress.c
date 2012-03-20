@@ -158,6 +158,20 @@ static void print_queuelen(FILE *f, struct rtattr *tb[IFLA_MAX + 1])
 		fprintf(f, "qlen %d", qlen);
 }
 
+static const char *link_modes[] = {
+	"DEFAULT", "DORMANT"
+};
+
+static void print_linkmode(FILE *f, struct rtattr *tb)
+{
+	unsigned int mode = rta_getattr_u8(tb);
+
+	if (mode >= sizeof(link_modes) / sizeof(link_modes[0]))
+		fprintf(f, "mode %d ", mode);
+	else
+		fprintf(f, "mode %s ", link_modes[mode]);
+}
+
 static void print_linktype(FILE *fp, struct rtattr *tb)
 {
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
@@ -398,9 +412,13 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		SPRINT_BUF(b1);
 		fprintf(fp, "master %s ", ll_idx_n2a(*(int*)RTA_DATA(tb[IFLA_MASTER]), b1));
 	}
+
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, *(__u8 *)RTA_DATA(tb[IFLA_OPERSTATE]));
-		
+
+	if (do_link && tb[IFLA_LINKMODE])
+		print_linkmode(fp, tb[IFLA_LINKMODE]);
+
 	if (filter.showqueue)
 		print_queuelen(fp, tb);
 
