@@ -488,7 +488,7 @@ static void usage(void)
 	fprintf(stderr, "          tunnel_id ID peer_tunnel_id ID\n");
 	fprintf(stderr, "          [ encap { ip | udp } ]\n");
 	fprintf(stderr, "          [ udp_sport PORT ] [ udp_dport PORT ]\n");
-	fprintf(stderr, "Usage: ip l2tp add session\n");
+	fprintf(stderr, "Usage: ip l2tp add session [ name NAME ]\n");
 	fprintf(stderr, "          tunnel_id ID\n");
 	fprintf(stderr, "          session_id ID peer_session_id ID\n");
 	fprintf(stderr, "          [ cookie HEXSTR ] [ peer_cookie HEXSTR ]\n");
@@ -524,6 +524,9 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 				fprintf(stderr, "Unknown tunnel encapsulation.\n");
 				exit(-1);
 			}
+		} else if (strcmp(*argv, "name") == 0) {
+			NEXT_ARG();
+			p->ifname = *argv;
 		} else if (strcmp(*argv, "remote") == 0) {
 			NEXT_ARG();
 			p->peer_ip.s_addr = get_addr32(*argv);
