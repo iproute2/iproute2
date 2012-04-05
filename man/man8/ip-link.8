@@ -103,6 +103,9 @@ ip-link \- network device configuration
 .B mode
 .IR LINKMODE " |"
 .br
+.B state
+.IR LINKSTATE " |"
+.br
 .B master
 .IR DEVICE
 .br
@@ -259,6 +262,10 @@ the device will transistion to when it is brought up. Setting
 mode changes the behaviour so that device goes into DORMANT state instead
 of UP when driver is ready.
 
+.TP
+.BI state " LINKSTATE"
+allows setting the operational link state. The values (defined in RFC2863)
+are: UP, DOWN, TESTING, UNKNOWN, DORMANT, NOTPRESENT, LOWERLAYERDOWN.
 .TP
 .BI alias " NAME"
 give the device a symbolic name for easy reference.

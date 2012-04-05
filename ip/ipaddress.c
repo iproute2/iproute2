@@ -131,6 +131,16 @@ static void print_operstate(FILE *f, __u8 state)
 		fprintf(f, "state %s ", oper_states[state]);
 }
 
+int get_operstate(const char *name)
+{
+	int i;
+
+	for (i = 0; i < sizeof(oper_states)/sizeof(oper_states[0]); i++)
+		if (strcasecmp(name, oper_states[i]) == 0)
+			return i;
+	return -1;
+}
+
 static void print_queuelen(FILE *f, struct rtattr *tb[IFLA_MAX + 1])
 {
 	int qlen;
