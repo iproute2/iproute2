@@ -404,7 +404,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				    abuf, sizeof(abuf)));
 	}
 	if (tb[RTA_PRIORITY])
-		fprintf(fp, " metric %d ", *(__u32*)RTA_DATA(tb[RTA_PRIORITY]));
+		fprintf(fp, " metric %u ", *(__u32*)RTA_DATA(tb[RTA_PRIORITY]));
 	if (r->rtm_flags & RTNH_F_DEAD)
 		fprintf(fp, "dead ");
 	if (r->rtm_flags & RTNH_F_ONLINK)
