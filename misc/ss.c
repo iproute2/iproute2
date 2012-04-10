@@ -1534,8 +1534,10 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 		.msg_iovlen = f->f ? 3 : 1,
 	};
 
-	if (sendmsg(fd, &msg, 0) < 0)
+	if (sendmsg(fd, &msg, 0) < 0) {
+		close(fd);
 		return -1;
+	}
 
 	iov[0] = (struct iovec){
 		.iov_base = buf,
@@ -1589,6 +1591,10 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 					fprintf(stderr, "ERROR truncated\n");
 				} else {
 					errno = -err->error;
+					if (errno == EOPNOTSUPP) {
+						close(fd);
+						return -1;
+					}
 					perror("TCPDIAG answers");
 				}
 				close(fd);
