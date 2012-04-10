@@ -182,7 +182,7 @@ static int choke_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		return -1;
 	if (tb[TCA_CHOKE_MAX_P] &&
 	    RTA_PAYLOAD(tb[TCA_CHOKE_MAX_P]) >= sizeof(__u32))
-		max_P = *(__u32 *)RTA_DATA(tb[TCA_CHOKE_MAX_P]);
+		max_P = rta_getattr_u32(tb[TCA_CHOKE_MAX_P]);
 
 	fprintf(f, "limit %up min %up max %up ",
 		qopt->limit, qopt->qth_min, qopt->qth_max);

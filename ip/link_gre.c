@@ -98,35 +98,35 @@ get_failed:
 				    linkinfo[IFLA_INFO_DATA]);
 
 		if (greinfo[IFLA_GRE_IKEY])
-			ikey = *(__u32 *)RTA_DATA(greinfo[IFLA_GRE_IKEY]);
+			ikey = rta_getattr_u32(greinfo[IFLA_GRE_IKEY]);
 
 		if (greinfo[IFLA_GRE_OKEY])
-			okey = *(__u32 *)RTA_DATA(greinfo[IFLA_GRE_OKEY]);
+			okey = rta_getattr_u32(greinfo[IFLA_GRE_OKEY]);
 
 		if (greinfo[IFLA_GRE_IFLAGS])
-			iflags = *(__u16 *)RTA_DATA(greinfo[IFLA_GRE_IFLAGS]);
+			iflags = rta_getattr_u16(greinfo[IFLA_GRE_IFLAGS]);
 
 		if (greinfo[IFLA_GRE_OFLAGS])
-			oflags = *(__u16 *)RTA_DATA(greinfo[IFLA_GRE_OFLAGS]);
+			oflags = rta_getattr_u16(greinfo[IFLA_GRE_OFLAGS]);
 
 		if (greinfo[IFLA_GRE_LOCAL])
-			saddr = *(__u32 *)RTA_DATA(greinfo[IFLA_GRE_LOCAL]);
+			saddr = rta_getattr_u32(greinfo[IFLA_GRE_LOCAL]);
 
 		if (greinfo[IFLA_GRE_REMOTE])
-			daddr = *(__u32 *)RTA_DATA(greinfo[IFLA_GRE_REMOTE]);
+			daddr = rta_getattr_u32(greinfo[IFLA_GRE_REMOTE]);
 
 		if (greinfo[IFLA_GRE_PMTUDISC])
-			pmtudisc = *(__u8 *)RTA_DATA(
+			pmtudisc = rta_getattr_u8(
 				greinfo[IFLA_GRE_PMTUDISC]);
 
 		if (greinfo[IFLA_GRE_TTL])
-			ttl = *(__u8 *)RTA_DATA(greinfo[IFLA_GRE_TTL]);
+			ttl = rta_getattr_u8(greinfo[IFLA_GRE_TTL]);
 
 		if (greinfo[IFLA_GRE_TOS])
-			tos = *(__u8 *)RTA_DATA(greinfo[IFLA_GRE_TOS]);
+			tos = rta_getattr_u8(greinfo[IFLA_GRE_TOS]);
 
 		if (greinfo[IFLA_GRE_LINK])
-			link = *(__u8 *)RTA_DATA(greinfo[IFLA_GRE_LINK]);
+			link = rta_getattr_u8(greinfo[IFLA_GRE_LINK]);
 	}
 
 	while (argc > 0) {
@@ -279,7 +279,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		return;
 
 	if (tb[IFLA_GRE_REMOTE]) {
-		unsigned addr = *(__u32 *)RTA_DATA(tb[IFLA_GRE_REMOTE]);
+		unsigned addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
 
 		if (addr)
 			remote = format_host(AF_INET, 4, &addr, s1, sizeof(s1));
@@ -288,7 +288,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	fprintf(f, "remote %s ", remote);
 
 	if (tb[IFLA_GRE_LOCAL]) {
-		unsigned addr = *(__u32 *)RTA_DATA(tb[IFLA_GRE_LOCAL]);
+		unsigned addr = rta_getattr_u32(tb[IFLA_GRE_LOCAL]);
 
 		if (addr)
 			local = format_host(AF_INET, 4, &addr, s1, sizeof(s1));
@@ -296,8 +296,8 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	fprintf(f, "local %s ", local);
 
-	if (tb[IFLA_GRE_LINK] && *(__u32 *)RTA_DATA(tb[IFLA_GRE_LINK])) {
-		unsigned link = *(__u32 *)RTA_DATA(tb[IFLA_GRE_LINK]);
+	if (tb[IFLA_GRE_LINK] && rta_getattr_u32(tb[IFLA_GRE_LINK])) {
+		unsigned link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
 		const char *n = if_indextoname(link, s2);
 
 		if (n)
@@ -306,13 +306,13 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			fprintf(f, "dev %u ", link);
 	}
 
-	if (tb[IFLA_GRE_TTL] && *(__u8 *)RTA_DATA(tb[IFLA_GRE_TTL]))
-		fprintf(f, "ttl %d ", *(__u8 *)RTA_DATA(tb[IFLA_GRE_TTL]));
+	if (tb[IFLA_GRE_TTL] && rta_getattr_u8(tb[IFLA_GRE_TTL]))
+		fprintf(f, "ttl %d ", rta_getattr_u8(tb[IFLA_GRE_TTL]));
 	else
 		fprintf(f, "ttl inherit ");
 
-	if (tb[IFLA_GRE_TOS] && *(__u8 *)RTA_DATA(tb[IFLA_GRE_TOS])) {
-		int tos = *(__u8 *)RTA_DATA(tb[IFLA_GRE_TOS]);
+	if (tb[IFLA_GRE_TOS] && rta_getattr_u8(tb[IFLA_GRE_TOS])) {
+		int tos = rta_getattr_u8(tb[IFLA_GRE_TOS]);
 
 		fputs("tos ", f);
 		if (tos == 1)
@@ -322,14 +322,14 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	}
 
 	if (tb[IFLA_GRE_PMTUDISC] &&
-	    !*(__u8 *)RTA_DATA(tb[IFLA_GRE_PMTUDISC]))
+	    !rta_getattr_u8(tb[IFLA_GRE_PMTUDISC]))
 		fputs("nopmtudisc ", f);
 
 	if (tb[IFLA_GRE_IFLAGS])
-		iflags = *(__u16 *)RTA_DATA(tb[IFLA_GRE_IFLAGS]);
+		iflags = rta_getattr_u16(tb[IFLA_GRE_IFLAGS]);
 
 	if (tb[IFLA_GRE_OFLAGS])
-		oflags = *(__u16 *)RTA_DATA(tb[IFLA_GRE_OFLAGS]);
+		oflags = rta_getattr_u16(tb[IFLA_GRE_OFLAGS]);
 
 	if ((iflags & GRE_KEY) && tb[IFLA_GRE_IKEY]) {
 		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_GRE_IKEY]), s2, sizeof(s2));

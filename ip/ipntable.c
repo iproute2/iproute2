@@ -376,7 +376,7 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		     n->nlmsg_len - NLMSG_LENGTH(sizeof(*ndtm)));
 
 	if (tb[NDTA_NAME]) {
-		char *name = RTA_DATA(tb[NDTA_NAME]);
+		const char *name = rta_getattr_str(tb[NDTA_NAME]);
 
 		if (strlen(filter.name) > 0 && strcmp(filter.name, name))
 			return 0;
@@ -386,7 +386,7 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			     RTA_PAYLOAD(tb[NDTA_PARMS]));
 
 		if (tpb[NDTPA_IFINDEX]) {
-			__u32 ifindex = *(__u32 *)RTA_DATA(tpb[NDTPA_IFINDEX]);
+			__u32 ifindex = rta_getattr_u32(tpb[NDTPA_IFINDEX]);
 
 			if (filter.index && filter.index != ifindex)
 				return 0;
@@ -406,7 +406,7 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "(%d) ", ndtm->ndtm_family);
 
 	if (tb[NDTA_NAME]) {
-		char *name = RTA_DATA(tb[NDTA_NAME]);
+		const char *name = rta_getattr_str(tb[NDTA_NAME]);
 		fprintf(fp, "%s ", name);
 	}
 
@@ -418,19 +418,19 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "    ");
 
 	if (tb[NDTA_THRESH1]) {
-		__u32 thresh1 = *(__u32 *)RTA_DATA(tb[NDTA_THRESH1]);
+		__u32 thresh1 = rta_getattr_u32(tb[NDTA_THRESH1]);
 		fprintf(fp, "thresh1 %u ", thresh1);
 	}
 	if (tb[NDTA_THRESH2]) {
-		__u32 thresh2 = *(__u32 *)RTA_DATA(tb[NDTA_THRESH2]);
+		__u32 thresh2 = rta_getattr_u32(tb[NDTA_THRESH2]);
 		fprintf(fp, "thresh2 %u ", thresh2);
 	}
 	if (tb[NDTA_THRESH3]) {
-		__u32 thresh3 = *(__u32 *)RTA_DATA(tb[NDTA_THRESH3]);
+		__u32 thresh3 = rta_getattr_u32(tb[NDTA_THRESH3]);
 		fprintf(fp, "thresh3 %u ", thresh3);
 	}
 	if (tb[NDTA_GC_INTERVAL]) {
-		__u64 gc_int = *(__u64 *)RTA_DATA(tb[NDTA_GC_INTERVAL]);
+		__u64 gc_int = rta_getattr_u64(tb[NDTA_GC_INTERVAL]);
 		fprintf(fp, "gc_int %llu ", gc_int);
 	}
 
@@ -469,7 +469,7 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[NDTA_PARMS]) {
 		if (tpb[NDTPA_IFINDEX]) {
-			__u32 ifindex = *(__u32 *)RTA_DATA(tpb[NDTPA_IFINDEX]);
+			__u32 ifindex = rta_getattr_u32(tpb[NDTPA_IFINDEX]);
 
 			fprintf(fp, "    ");
 			fprintf(fp, "dev %s ", ll_index_to_name(ifindex));
@@ -479,19 +479,19 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "    ");
 
 		if (tpb[NDTPA_REFCNT]) {
-			__u32 refcnt = *(__u32 *)RTA_DATA(tpb[NDTPA_REFCNT]);
+			__u32 refcnt = rta_getattr_u32(tpb[NDTPA_REFCNT]);
 			fprintf(fp, "refcnt %u ", refcnt);
 		}
 		if (tpb[NDTPA_REACHABLE_TIME]) {
-			__u64 reachable = *(__u64 *)RTA_DATA(tpb[NDTPA_REACHABLE_TIME]);
+			__u64 reachable = rta_getattr_u64(tpb[NDTPA_REACHABLE_TIME]);
 			fprintf(fp, "reachable %llu ", reachable);
 		}
 		if (tpb[NDTPA_BASE_REACHABLE_TIME]) {
-			__u64 breachable = *(__u64 *)RTA_DATA(tpb[NDTPA_BASE_REACHABLE_TIME]);
+			__u64 breachable = rta_getattr_u64(tpb[NDTPA_BASE_REACHABLE_TIME]);
 			fprintf(fp, "base_reachable %llu ", breachable);
 		}
 		if (tpb[NDTPA_RETRANS_TIME]) {
-			__u64 retrans = *(__u64 *)RTA_DATA(tpb[NDTPA_RETRANS_TIME]);
+			__u64 retrans = rta_getattr_u64(tpb[NDTPA_RETRANS_TIME]);
 			fprintf(fp, "retrans %llu ", retrans);
 		}
 
@@ -500,15 +500,15 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "    ");
 
 		if (tpb[NDTPA_GC_STALETIME]) {
-			__u64 gc_stale = *(__u64 *)RTA_DATA(tpb[NDTPA_GC_STALETIME]);
+			__u64 gc_stale = rta_getattr_u64(tpb[NDTPA_GC_STALETIME]);
 			fprintf(fp, "gc_stale %llu ", gc_stale);
 		}
 		if (tpb[NDTPA_DELAY_PROBE_TIME]) {
-			__u64 delay_probe = *(__u64 *)RTA_DATA(tpb[NDTPA_DELAY_PROBE_TIME]);
+			__u64 delay_probe = rta_getattr_u64(tpb[NDTPA_DELAY_PROBE_TIME]);
 			fprintf(fp, "delay_probe %llu ", delay_probe);
 		}
 		if (tpb[NDTPA_QUEUE_LEN]) {
-			__u32 queue = *(__u32 *)RTA_DATA(tpb[NDTPA_QUEUE_LEN]);
+			__u32 queue = rta_getattr_u32(tpb[NDTPA_QUEUE_LEN]);
 			fprintf(fp, "queue %u ", queue);
 		}
 
@@ -517,15 +517,15 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "    ");
 
 		if (tpb[NDTPA_APP_PROBES]) {
-			__u32 aprobe = *(__u32 *)RTA_DATA(tpb[NDTPA_APP_PROBES]);
+			__u32 aprobe = rta_getattr_u32(tpb[NDTPA_APP_PROBES]);
 			fprintf(fp, "app_probes %u ", aprobe);
 		}
 		if (tpb[NDTPA_UCAST_PROBES]) {
-			__u32 uprobe = *(__u32 *)RTA_DATA(tpb[NDTPA_UCAST_PROBES]);
+			__u32 uprobe = rta_getattr_u32(tpb[NDTPA_UCAST_PROBES]);
 			fprintf(fp, "ucast_probes %u ", uprobe);
 		}
 		if (tpb[NDTPA_MCAST_PROBES]) {
-			__u32 mprobe = *(__u32 *)RTA_DATA(tpb[NDTPA_MCAST_PROBES]);
+			__u32 mprobe = rta_getattr_u32(tpb[NDTPA_MCAST_PROBES]);
 			fprintf(fp, "mcast_probes %u ", mprobe);
 		}
 
@@ -534,19 +534,19 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "    ");
 
 		if (tpb[NDTPA_ANYCAST_DELAY]) {
-			__u64 anycast_delay = *(__u64 *)RTA_DATA(tpb[NDTPA_ANYCAST_DELAY]);
+			__u64 anycast_delay = rta_getattr_u64(tpb[NDTPA_ANYCAST_DELAY]);
 			fprintf(fp, "anycast_delay %llu ", anycast_delay);
 		}
 		if (tpb[NDTPA_PROXY_DELAY]) {
-			__u64 proxy_delay = *(__u64 *)RTA_DATA(tpb[NDTPA_PROXY_DELAY]);
+			__u64 proxy_delay = rta_getattr_u64(tpb[NDTPA_PROXY_DELAY]);
 			fprintf(fp, "proxy_delay %llu ", proxy_delay);
 		}
 		if (tpb[NDTPA_PROXY_QLEN]) {
-			__u32 pqueue = *(__u32 *)RTA_DATA(tpb[NDTPA_PROXY_QLEN]);
+			__u32 pqueue = rta_getattr_u32(tpb[NDTPA_PROXY_QLEN]);
 			fprintf(fp, "proxy_queue %u ", pqueue);
 		}
 		if (tpb[NDTPA_LOCKTIME]) {
-			__u64 locktime = *(__u64 *)RTA_DATA(tpb[NDTPA_LOCKTIME]);
+			__u64 locktime = rta_getattr_u64(tpb[NDTPA_LOCKTIME]);
 			fprintf(fp, "locktime %llu ", locktime);
 		}
 

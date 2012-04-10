@@ -131,23 +131,23 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		__u32 mark = 0, mask = 0;
 
 		if (tb[FRA_FWMARK])
-			mark = *(__u32*)RTA_DATA(tb[FRA_FWMARK]);
+			mark = rta_getattr_u32(tb[FRA_FWMARK]);
 
 		if (tb[FRA_FWMASK] &&
-		    (mask = *(__u32*)RTA_DATA(tb[FRA_FWMASK])) != 0xFFFFFFFF)
+		    (mask = rta_getattr_u32(tb[FRA_FWMASK])) != 0xFFFFFFFF)
 			fprintf(fp, "fwmark 0x%x/0x%x ", mark, mask);
 		else
 			fprintf(fp, "fwmark 0x%x ", mark);
 	}
 
 	if (tb[FRA_IFNAME]) {
-		fprintf(fp, "iif %s ", (char*)RTA_DATA(tb[FRA_IFNAME]));
+		fprintf(fp, "iif %s ", rta_getattr_str(tb[FRA_IFNAME]));
 		if (r->rtm_flags & FIB_RULE_IIF_DETACHED)
 			fprintf(fp, "[detached] ");
 	}
 
 	if (tb[FRA_OIFNAME]) {
-		fprintf(fp, "oif %s ", (char*)RTA_DATA(tb[FRA_OIFNAME]));
+		fprintf(fp, "oif %s ", rta_getattr_str(tb[FRA_OIFNAME]));
 		if (r->rtm_flags & FIB_RULE_OIF_DETACHED)
 			fprintf(fp, "[detached] ");
 	}
@@ -157,7 +157,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "lookup %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
 
 	if (tb[FRA_FLOW]) {
-		__u32 to = *(__u32*)RTA_DATA(tb[FRA_FLOW]);
+		__u32 to = rta_getattr_u32(tb[FRA_FLOW]);
 		__u32 from = to>>16;
 		to &= 0xFFFF;
 		if (from) {
@@ -180,7 +180,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	} else if (r->rtm_type == FR_ACT_GOTO) {
 		fprintf(fp, "goto ");
 		if (tb[FRA_GOTO])
-			fprintf(fp, "%u", *(__u32 *) RTA_DATA(tb[FRA_GOTO]));
+			fprintf(fp, "%u", rta_getattr_u32(tb[FRA_GOTO]));
 		else
 			fprintf(fp, "none");
 		if (r->rtm_flags & FIB_RULE_UNRESOLVED)

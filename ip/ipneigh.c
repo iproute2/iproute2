@@ -282,7 +282,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[NDA_PROBES] && show_stats) {
-		__u32 p = *(__u32 *) RTA_DATA(tb[NDA_PROBES]);
+		__u32 p = rta_getattr_u32(tb[NDA_PROBES]);
 		fprintf(fp, " probes %u", p);
 	}
 

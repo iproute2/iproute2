@@ -1370,7 +1370,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 		}
 
 		if (tb[INET_DIAG_CONG])
-			printf(" %s", (char *) RTA_DATA(tb[INET_DIAG_CONG]));
+			printf(" %s", rta_getattr_str(tb[INET_DIAG_CONG]));
 
 		if (info->tcpi_options & TCPI_OPT_WSCALE)
 			printf(" wscale:%d,%d", info->tcpi_snd_wscale,

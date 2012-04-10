@@ -240,7 +240,7 @@ int print_filter(const struct sockaddr_nl *who,
 				fprintf(fp, "pref %u ", prio);
 		}
 	}
-	fprintf(fp, "%s ", (char*)RTA_DATA(tb[TCA_KIND]));
+	fprintf(fp, "%s ", rta_getattr_str(tb[TCA_KIND]));
 	q = get_filter_kind(RTA_DATA(tb[TCA_KIND]));
 	if (tb[TCA_OPTIONS]) {
 		if (q)

@@ -176,7 +176,7 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (tb[TCA_RED_MAX_P] &&
 	    RTA_PAYLOAD(tb[TCA_RED_MAX_P]) >= sizeof(__u32))
-		max_P = *(__u32 *)RTA_DATA(tb[TCA_RED_MAX_P]);
+		max_P = rta_getattr_u32(tb[TCA_RED_MAX_P]);
 
 	fprintf(f, "limit %s min %s max %s ",
 		sprint_size(qopt->limit, b1),

@@ -104,7 +104,7 @@ int genl_ctrl_resolve_family(const char *family)
 			goto errout;
 		}
 
-		ret = *(__u16 *) RTA_DATA(tb[CTRL_ATTR_FAMILY_ID]);
+		ret = rta_getattr_u16(tb[CTRL_ATTR_FAMILY_ID]);
 	}
 
 errout:

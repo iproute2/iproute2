@@ -183,7 +183,7 @@ static void vlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	    RTA_PAYLOAD(tb[IFLA_VLAN_ID]) < sizeof(__u16))
 		return;
 
-	fprintf(f, "id %u ", *(__u16 *)RTA_DATA(tb[IFLA_VLAN_ID]));
+	fprintf(f, "id %u ", rta_getattr_u16(tb[IFLA_VLAN_ID]));
 
 	if (tb[IFLA_VLAN_FLAGS]) {
 		if (RTA_PAYLOAD(tb[IFLA_VLAN_FLAGS]) < sizeof(*flags))

@@ -148,12 +148,12 @@ static int route_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, 
 
 	if (tb[TCA_ROUTE4_CLASSID]) {
 		SPRINT_BUF(b1);
-		fprintf(f, "flowid %s ", sprint_tc_classid(*(__u32*)RTA_DATA(tb[TCA_ROUTE4_CLASSID]), b1));
+		fprintf(f, "flowid %s ", sprint_tc_classid(rta_getattr_u32(tb[TCA_ROUTE4_CLASSID]), b1));
 	}
 	if (tb[TCA_ROUTE4_TO])
-		fprintf(f, "to %s ", rtnl_rtrealm_n2a(*(__u32*)RTA_DATA(tb[TCA_ROUTE4_TO]), b1, sizeof(b1)));
+		fprintf(f, "to %s ", rtnl_rtrealm_n2a(rta_getattr_u32(tb[TCA_ROUTE4_TO]), b1, sizeof(b1)));
 	if (tb[TCA_ROUTE4_FROM])
-		fprintf(f, "from %s ", rtnl_rtrealm_n2a(*(__u32*)RTA_DATA(tb[TCA_ROUTE4_FROM]), b1, sizeof(b1)));
+		fprintf(f, "from %s ", rtnl_rtrealm_n2a(rta_getattr_u32(tb[TCA_ROUTE4_FROM]), b1, sizeof(b1)));
 	if (tb[TCA_ROUTE4_IIF])
 		fprintf(f, "fromif %s", ll_index_to_name(*(int*)RTA_DATA(tb[TCA_ROUTE4_IIF])));
 	if (tb[TCA_ROUTE4_POLICE])

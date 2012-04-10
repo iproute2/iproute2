@@ -806,7 +806,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 			return;
 		}
 
-		lastused = *(__u64 *)RTA_DATA(tb[XFRMA_LASTUSED]);
+		lastused = rta_getattr_u64(tb[XFRMA_LASTUSED]);
 
 		fprintf(fp, "%s", strxf_time(lastused));
 		fprintf(fp, "%s", _SL_);

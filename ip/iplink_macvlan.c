@@ -79,7 +79,7 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 	    RTA_PAYLOAD(tb[IFLA_MACVLAN_MODE]) < sizeof(__u32))
 		return;
 
-	mode = *(__u32 *)RTA_DATA(tb[IFLA_VLAN_ID]);
+	mode = rta_getattr_u32(tb[IFLA_VLAN_ID]);
 	fprintf(f, " mode %s ",
 		  mode == MACVLAN_MODE_PRIVATE ? "private"
 		: mode == MACVLAN_MODE_VEPA    ? "vepa"

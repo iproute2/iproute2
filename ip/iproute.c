@@ -227,7 +227,7 @@ int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	if (filter.realmmask) {
 		__u32 realms = 0;
 		if (tb[RTA_FLOW])
-			realms = *(__u32*)RTA_DATA(tb[RTA_FLOW]);
+			realms = rta_getattr_u32(tb[RTA_FLOW]);
 		if ((realms^filter.realm)&filter.realmmask)
 			return 0;
 	}
@@ -404,7 +404,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				    abuf, sizeof(abuf)));
 	}
 	if (tb[RTA_PRIORITY])
-		fprintf(fp, " metric %u ", *(__u32*)RTA_DATA(tb[RTA_PRIORITY]));
+		fprintf(fp, " metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));
 	if (r->rtm_flags & RTNH_F_DEAD)
 		fprintf(fp, "dead ");
 	if (r->rtm_flags & RTNH_F_ONLINK)
@@ -424,7 +424,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[RTA_FLOW] && filter.realmmask != ~0U) {
-		__u32 to = *(__u32*)RTA_DATA(tb[RTA_FLOW]);
+		__u32 to = rta_getattr_u32(tb[RTA_FLOW]);
 		__u32 from = to>>16;
 		to &= 0xFFFF;
 		fprintf(fp, "realm%s ", from ? "s" : "");
@@ -589,7 +589,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 							    abuf, sizeof(abuf)));
 				}
 				if (tb[RTA_FLOW]) {
-					__u32 to = *(__u32*)RTA_DATA(tb[RTA_FLOW]);
+					__u32 to = rta_getattr_u32(tb[RTA_FLOW]);
 					__u32 from = to>>16;
 					to &= 0xFFFF;
 					fprintf(fp, " realm%s ", from ? "s" : "");

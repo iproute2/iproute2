@@ -1198,9 +1198,9 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	}
 
 	if (tb[TCA_U32_DIVISOR]) {
-		fprintf(f, "ht divisor %d ", *(__u32*)RTA_DATA(tb[TCA_U32_DIVISOR]));
+		fprintf(f, "ht divisor %d ", rta_getattr_u32(tb[TCA_U32_DIVISOR]));
 	} else if (tb[TCA_U32_HASH]) {
-		__u32 htid = *(__u32*)RTA_DATA(tb[TCA_U32_HASH]);
+		__u32 htid = rta_getattr_u32(tb[TCA_U32_HASH]);
 		fprintf(f, "key ht %x bkt %x ", TC_U32_USERHTID(htid),
 			TC_U32_HASH(htid));
 	} else {
@@ -1210,14 +1210,14 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		SPRINT_BUF(b1);
 		fprintf(f, "%sflowid %s ",
 			!sel || !(sel->flags&TC_U32_TERMINAL) ? "*" : "",
-			sprint_tc_classid(*(__u32*)RTA_DATA(tb[TCA_U32_CLASSID]), b1));
+			sprint_tc_classid(rta_getattr_u32(tb[TCA_U32_CLASSID]), b1));
 	} else if (sel && sel->flags&TC_U32_TERMINAL) {
 		fprintf(f, "terminal flowid ??? ");
 	}
 	if (tb[TCA_U32_LINK]) {
 		SPRINT_BUF(b1);
 		fprintf(f, "link %s ",
-			sprint_u32_handle(*(__u32*)RTA_DATA(tb[TCA_U32_LINK]), b1));
+			sprint_u32_handle(rta_getattr_u32(tb[TCA_U32_LINK]), b1));
 	}
 
 	if (tb[TCA_U32_PCNT]) {
@@ -1278,7 +1278,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	}
 	if (tb[TCA_U32_INDEV]) {
 		struct rtattr *idev = tb[TCA_U32_INDEV];
-		fprintf(f, "\n  input dev %s\n", (char *) RTA_DATA(idev));
+		fprintf(f, "\n  input dev %s\n", rta_getattr_str(idev));
 	}
 	if (tb[TCA_U32_ACT]) {
 		tc_print_action(f, tb[TCA_U32_ACT]);

@@ -552,7 +552,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 		fprintf(f, "[NULL ipt table name ] assuming mangle ");
 	} else {
 		fprintf(f, "tablename: %s ",
-			(char *) RTA_DATA(tb[TCA_IPT_TABLE]));
+			rta_getattr_str(tb[TCA_IPT_TABLE]));
 	}
 
 	if (tb[TCA_IPT_HOOK] == NULL) {
@@ -560,7 +560,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 		return -1;
 	} else {
 		__u32 hook;
-		hook = *(__u32 *) RTA_DATA(tb[TCA_IPT_HOOK]);
+		hook = rta_getattr_u32(tb[TCA_IPT_HOOK]);
 		fprintf(f, " hook: %s \n", ipthooks[hook]);
 	}
 
@@ -591,7 +591,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 			fprintf(f, " [NULL ipt target index ]\n");
 		} else {
 			__u32 index;
-			index = *(__u32 *) RTA_DATA(tb[TCA_IPT_INDEX]);
+			index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
 			fprintf(f, " \n\tindex %d", index);
 		}
 

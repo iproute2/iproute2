@@ -336,9 +336,9 @@ static int rsvp_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, _
 	if (tb[TCA_RSVP_CLASSID]) {
 		SPRINT_BUF(b1);
 		if (!pinfo || pinfo->tunnelhdr == 0)
-			fprintf(f, "flowid %s ", sprint_tc_classid(*(__u32*)RTA_DATA(tb[TCA_RSVP_CLASSID]), b1));
+			fprintf(f, "flowid %s ", sprint_tc_classid(rta_getattr_u32(tb[TCA_RSVP_CLASSID]), b1));
 		else
-			fprintf(f, "tunnel %d skip %d ", *(__u32*)RTA_DATA(tb[TCA_RSVP_CLASSID]), pinfo->tunnelhdr);
+			fprintf(f, "tunnel %d skip %d ", rta_getattr_u32(tb[TCA_RSVP_CLASSID]), pinfo->tunnelhdr);
 	} else if (pinfo && pinfo->tunnelhdr)
 		fprintf(f, "tunnel [BAD] skip %d ", pinfo->tunnelhdr);
 

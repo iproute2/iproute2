@@ -134,7 +134,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_HASH]) < sizeof(hash))
 			return -1;
-		hash = *(__u16 *) RTA_DATA(tb[TCA_TCINDEX_HASH]);
+		hash = rta_getattr_u16(tb[TCA_TCINDEX_HASH]);
 		fprintf(f,"hash %d ",hash);
 	}
 	if (tb[TCA_TCINDEX_MASK]) {
@@ -142,7 +142,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_MASK]) < sizeof(mask))
 			return -1;
-		mask = *(__u16 *) RTA_DATA(tb[TCA_TCINDEX_MASK]);
+		mask = rta_getattr_u16(tb[TCA_TCINDEX_MASK]);
 		fprintf(f,"mask 0x%04x ",mask);
 	}
 	if (tb[TCA_TCINDEX_SHIFT]) {
