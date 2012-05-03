@@ -1336,7 +1336,17 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 	parse_rtattr(tb, INET_DIAG_MAX, (struct rtattr*)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
-	if (tb[INET_DIAG_MEMINFO]) {
+	if (tb[INET_DIAG_SKMEMINFO]) {
+		const __u32 *skmeminfo =  RTA_DATA(tb[INET_DIAG_SKMEMINFO]);
+		printf(" skmem:(r%u,rb%u,t%u,tb%u,f%u,w%u,o%u)",
+			skmeminfo[SK_MEMINFO_RMEM_ALLOC],
+			skmeminfo[SK_MEMINFO_RCVBUF],
+			skmeminfo[SK_MEMINFO_WMEM_ALLOC],
+			skmeminfo[SK_MEMINFO_SNDBUF],
+			skmeminfo[SK_MEMINFO_FWD_ALLOC],
+			skmeminfo[SK_MEMINFO_WMEM_QUEUED],
+			skmeminfo[SK_MEMINFO_OPTMEM]);
+	}else if (tb[INET_DIAG_MEMINFO]) {
 		const struct inet_diag_meminfo *minfo
 			= RTA_DATA(tb[INET_DIAG_MEMINFO]);
 		printf(" mem:(r%u,w%u,f%u,t%u)",
@@ -1505,8 +1515,10 @@ static int tcp_show_netlink(struct filter *f, FILE *dump_fp, int socktype)
 	memset(&req.r, 0, sizeof(req.r));
 	req.r.idiag_family = AF_INET;
 	req.r.idiag_states = f->states;
-	if (show_mem)
+	if (show_mem) {
 		req.r.idiag_ext |= (1<<(INET_DIAG_MEMINFO-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_SKMEMINFO-1));
+	}
 
 	if (show_tcpinfo) {
 		req.r.idiag_ext |= (1<<(INET_DIAG_INFO-1));
