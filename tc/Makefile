@@ -48,6 +48,7 @@ TCMODULES += em_u32.o
 TCMODULES += em_meta.o
 TCMODULES += q_mqprio.o
 TCMODULES += q_codel.o
+TCMODULES += q_fq_codel.o
 
 TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)
