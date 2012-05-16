@@ -38,6 +38,7 @@ static void explain(void)
 "                 [ loss random PERCENT [CORRELATION]]\n" \
 "                 [ loss state P13 [P31 [P32 [P23 P14]]]\n" \
 "                 [ loss gemodel PERCENT [R [1-H [1-K]]]\n" \
+"                 [ ecn ]\n" \
 "                 [ reorder PRECENT [CORRELATION] [ gap DISTANCE ]]\n" \
 "                 [ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n");
 }
@@ -326,6 +327,8 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 					*argv);
 				return -1;
 			}
+		} else if (matches(*argv, "ecn") == 0) {
+				present[TCA_NETEM_ECN] = 1;
 		} else if (matches(*argv, "reorder") == 0) {
 			NEXT_ARG();
 			present[TCA_NETEM_REORDER] = 1;
@@ -437,6 +440,14 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 
+	if (present[TCA_NETEM_ECN]) {
+		if (opt.loss <= 0 && loss_type == NETEM_LOSS_UNSPEC) {
+			fprintf(stderr, "ecn requested without loss model\n");
+			explain();
+			return -1;
+		}
+	}
+
 	if (dist_data && (opt.latency == 0 || opt.jitter == 0)) {
 		fprintf(stderr, "distribution specified but no latency and jitter values\n");
 		explain();
@@ -453,6 +464,11 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (present[TCA_NETEM_REORDER] &&
 	    addattr_l(n, 1024, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
 		return -1;
+
+	if (present[TCA_NETEM_ECN] &&
+	    addattr_l(n, 1024, TCA_NETEM_ECN, &present[TCA_NETEM_ECN],
+		      sizeof(present[TCA_NETEM_ECN])) < 0)
+			return -1;
 
 	if (present[TCA_NETEM_CORRUPT] &&
 	    addattr_l(n, 1024, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
@@ -500,6 +516,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	const struct tc_netem_corrupt *corrupt = NULL;
 	const struct tc_netem_gimodel *gimodel = NULL;
 	const struct tc_netem_gemodel *gemodel = NULL;
+	int *ecn = NULL;
 	struct tc_netem_qopt qopt;
 	const struct tc_netem_rate *rate = NULL;
 	int len = RTA_PAYLOAD(opt) - sizeof(qopt);
@@ -547,6 +564,11 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			if (RTA_PAYLOAD(tb[TCA_NETEM_RATE]) < sizeof(*rate))
 				return -1;
 			rate = RTA_DATA(tb[TCA_NETEM_RATE]);
+		}
+		if (tb[TCA_NETEM_ECN]) {
+			if (RTA_PAYLOAD(tb[TCA_NETEM_ECN]) < sizeof(*ecn))
+				return -1;
+			ecn = RTA_DATA(tb[TCA_NETEM_ECN]);
 		}
 	}
 
@@ -617,8 +639,12 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			fprintf(f, " celloverhead %d", rate->cell_overhead);
 	}
 
+	if (ecn)
+		fprintf(f, " ecn ");
+
 	if (qopt.gap)
 		fprintf(f, " gap %lu", (unsigned long)qopt.gap);
+
 
 	return 0;
 }
