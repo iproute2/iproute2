@@ -30,8 +30,8 @@ NetEm \- Network Emulator
 .IR p13 " [ " p31 " [ " p32 " [ " p23 " [ " p14 "]]]] |"
 .br
 .RB "               " gemodel
-.IR p " [ " r " [ " 1-h " [ " 1-k " ]]]"
-.BR " }"
+.IR p " [ " r " [ " 1-h " [ " 1-k " ]]] } "
+.RB  " [ " ecn " ] "
 
 .IR CORRUPT " := "
 .B corrupt
@@ -101,6 +101,10 @@ Gilbert model and four (p, r, 1-h and 1-k) are needed for the Gilbert-Elliot
 model. As known, p and r are the transition probabilities between the bad and
 the good states, 1-h is the loss probability in the bad state and 1-k is the
 loss probability in the good state.
+
+.SS ecn
+can be used optionally to mark packets instead of dropping them. A loss model
+has to be used for this to be enabled.
 
 .SS corrupt
 allows the emulation of random noise introducing an error in a random position
