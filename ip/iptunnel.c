@@ -620,7 +620,7 @@ int do_iptunnel(int argc, char **argv)
 			return do_add(SIOCADDTUNNEL, argc-1, argv+1);
 		if (matches(*argv, "change") == 0)
 			return do_add(SIOCCHGTUNNEL, argc-1, argv+1);
-		if (matches(*argv, "del") == 0)
+		if (matches(*argv, "delete") == 0)
 			return do_del(argc-1, argv+1);
 		if (matches(*argv, "show") == 0 ||
 		    matches(*argv, "lst") == 0 ||

@@ -307,7 +307,7 @@ int do_iptuntap(int argc, char **argv)
 	if (argc > 0) {
 		if (matches(*argv, "add") == 0)
 			return do_add(argc-1, argv+1);
-		if (matches(*argv, "del") == 0)
+		if (matches(*argv, "delete") == 0)
 			return do_del(argc-1, argv+1);
 		if (matches(*argv, "show") == 0 ||
                     matches(*argv, "lst") == 0 ||
