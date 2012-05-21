@@ -23,7 +23,9 @@ ip-link \- network device configuration
 \fB\-o\fR[\fIneline\fR] }
 
 .ti -8
-.BI "ip link add link " DEVICE
+.BI "ip link add"
+.RB "[ " link
+.IR DEVICE " ]"
 .RB "[ " name " ]"
 .I NAME
 .br
