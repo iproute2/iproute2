@@ -64,9 +64,9 @@ flow filter:
 
 .B for i in .. 1024;do
 .br
-.B \ttc class add dev ..  classid $handle:$(print %x $i)
+.B "\ttc class add dev .. classid $handle:$(print %x $i)"
 .br
-.B \ttc qdisc add dev .. fifo limit 16
+.B "\ttc qdisc add dev .. fifo limit 16"
 .br
 .B done
 
