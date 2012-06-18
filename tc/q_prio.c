@@ -67,7 +67,7 @@ static int prio_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				fprintf(stderr, "Illegal \"priomap\" element\n");
 				return -1;
 			}
-			if (band > opt.bands) {
+			if (band >= opt.bands) {
 				fprintf(stderr, "\"priomap\" element is out of bands\n");
 				return -1;
 			}
