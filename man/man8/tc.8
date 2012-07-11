@@ -2,7 +2,7 @@
 .SH NAME
 tc \- show / manipulate traffic control settings
 .SH SYNOPSIS
-.B tc qdisc [ add | change | replace | link ] dev
+.B tc qdisc [ add | change | replace | link | delete ] dev
 DEV
 .B
 [ parent
@@ -13,7 +13,7 @@ qdisc-id ] qdisc
 [ qdisc specific parameters ]
 .P
 
-.B tc class [ add | change | replace ] dev
+.B tc class [ add | change | replace | delete ] dev
 DEV
 .B parent
 qdisc-id
@@ -22,7 +22,7 @@ class-id ] qdisc
 [ qdisc specific parameters ]
 .P
 
-.B tc filter [ add | change | replace ] dev
+.B tc filter [ add | change | replace | delete ] dev
 DEV
 .B  [ parent
 qdisc-id
@@ -316,8 +316,8 @@ parameter. A class is named with the
 parameter.
 
 .TP
-remove
-A qdisc can be removed by specifying its handle, which may also be 'root'. All subclasses and their leaf qdiscs
+delete
+A qdisc can be deleted by specifying its handle, which may also be 'root'. All subclasses and their leaf qdiscs
 are automatically deleted, as well as any filters attached to them.
 
 .TP
