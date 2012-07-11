@@ -153,7 +153,7 @@ int get_rate(unsigned *rate, const char *str)
 		return -1;
 
 	if (*p == '\0') {
-		*rate = bps / 8.;	/* assume bytes/sec */
+		*rate = bps / 8.;	/* assume bits/sec */
 		return 0;
 	}
 
