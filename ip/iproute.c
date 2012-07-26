@@ -1063,6 +1063,8 @@ static int iproute_flush_cache(void)
 	return 0;
 }
 
+static __u32 route_dump_magic = 0x45311224;
+
 int save_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	int ret;
@@ -1070,11 +1072,6 @@ int save_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	struct rtmsg *r = NLMSG_DATA(n);
 	struct rtattr *tb[RTA_MAX+1];
 	int host_len = -1;
-
-	if (isatty(STDOUT_FILENO)) {
-		fprintf(stderr, "Not sending binary stream to stdout\n");
-		return -1;
-	}
 
 	host_len = calc_host_len(r);
 	len -= NLMSG_LENGTH(sizeof(*r));
@@ -1092,6 +1089,24 @@ int save_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return ret == n->nlmsg_len ? 0 : ret;
 }
 
+static int save_route_prep(void)
+{
+	int ret;
+
+	if (isatty(STDOUT_FILENO)) {
+		fprintf(stderr, "Not sending binary stream to stdout\n");
+		return -1;
+	}
+
+	ret = write(STDOUT_FILENO, &route_dump_magic, sizeof(route_dump_magic));
+	if (ret != sizeof(route_dump_magic)) {
+		fprintf(stderr, "Can't write magic to dump file\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 static int iproute_list_flush_or_save(int argc, char **argv, int action)
 {
 	int do_ipv6 = preferred_family;
@@ -1100,9 +1115,12 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 	unsigned int mark = 0;
 	rtnl_filter_t filter_fn;
 
-	if (action == IPROUTE_SAVE)
+	if (action == IPROUTE_SAVE) {
+		if (save_route_prep())
+			return -1;
+
 		filter_fn = save_route;
-	else
+	} else
 		filter_fn = print_route;
 
 	iproute_reset_filter();
@@ -1520,8 +1538,30 @@ int restore_handler(const struct sockaddr_nl *nl, struct nlmsghdr *n, void *arg)
 	return ret;
 }
 
+static int route_dump_check_magic(void)
+{
+	int ret;
+	__u32 magic = 0;
+
+	if (isatty(STDIN_FILENO)) {
+		fprintf(stderr, "Can't restore route dump from a terminal\n");
+		return -1;
+	}
+
+	ret = fread(&magic, sizeof(magic), 1, stdin);
+	if (magic != route_dump_magic) {
+		fprintf(stderr, "Magic mismatch (%d elems, %x magic)\n", ret, magic);
+		return -1;
+	}
+
+	return 0;
+}
+
 int iproute_restore(void)
 {
+	if (route_dump_check_magic())
+		exit(-1);
+
 	exit(rtnl_from_file(stdin, &restore_handler, NULL));
 }
 
