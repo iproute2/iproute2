@@ -60,6 +60,7 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip route { list | flush } SELECTOR\n");
 	fprintf(stderr, "       ip route save SELECTOR\n");
 	fprintf(stderr, "       ip route restore\n");
+	fprintf(stderr, "       ip route showdump\n");
 	fprintf(stderr, "       ip route get ADDRESS [ from ADDRESS iif STRING ]\n");
 	fprintf(stderr, "                            [ oif STRING ]  [ tos TOS ]\n");
 	fprintf(stderr, "                            [ mark NUMBER ]\n");
@@ -1565,6 +1566,20 @@ int iproute_restore(void)
 	exit(rtnl_from_file(stdin, &restore_handler, NULL));
 }
 
+static int show_handler(const struct sockaddr_nl *nl, struct nlmsghdr *n, void *arg)
+{
+	print_route(nl, n, stdout);
+	return 0;
+}
+
+static int iproute_showdump(void)
+{
+	if (route_dump_check_magic())
+		exit(-1);
+
+	exit(rtnl_from_file(stdin, &show_handler, NULL));
+}
+
 void iproute_reset_filter()
 {
 	memset(&filter, 0, sizeof(filter));
@@ -1609,6 +1624,8 @@ int do_iproute(int argc, char **argv)
 		return iproute_list_flush_or_save(argc-1, argv+1, IPROUTE_SAVE);
 	if (matches(*argv, "restore") == 0)
 		return iproute_restore();
+	if (matches(*argv, "showdump") == 0)
+		return iproute_showdump();
 	if (matches(*argv, "help") == 0)
 		usage();
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip route help\".\n", *argv);
