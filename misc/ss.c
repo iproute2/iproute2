@@ -1392,6 +1392,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 			       (double)info->tcpi_rttvar/1000);
 		if (info->tcpi_ato)
 			printf(" ato:%g", (double)info->tcpi_ato/1000);
+		if (info->tcpi_snd_mss)
+			printf(" mss:%d", info->tcpi_snd_mss);
 		if (info->tcpi_snd_cwnd != 2)
 			printf(" cwnd:%d", info->tcpi_snd_cwnd);
 		if (info->tcpi_snd_ssthresh < 0xFFFF)
