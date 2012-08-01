@@ -1337,8 +1337,9 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
 	if (tb[INET_DIAG_SKMEMINFO]) {
-		const __u32 *skmeminfo =  RTA_DATA(tb[INET_DIAG_SKMEMINFO]);
-		printf(" skmem:(r%u,rb%u,t%u,tb%u,f%u,w%u,o%u)",
+		const __u32 *skmeminfo = RTA_DATA(tb[INET_DIAG_SKMEMINFO]);
+
+		printf(" skmem:(r%u,rb%u,t%u,tb%u,f%u,w%u,o%u",
 			skmeminfo[SK_MEMINFO_RMEM_ALLOC],
 			skmeminfo[SK_MEMINFO_RCVBUF],
 			skmeminfo[SK_MEMINFO_WMEM_ALLOC],
@@ -1346,7 +1347,13 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 			skmeminfo[SK_MEMINFO_FWD_ALLOC],
 			skmeminfo[SK_MEMINFO_WMEM_QUEUED],
 			skmeminfo[SK_MEMINFO_OPTMEM]);
-	}else if (tb[INET_DIAG_MEMINFO]) {
+
+		if (RTA_PAYLOAD(tb[INET_DIAG_SKMEMINFO]) >=
+			(SK_MEMINFO_BACKLOG + 1) * sizeof(__u32))
+			printf(",bl%u", skmeminfo[SK_MEMINFO_BACKLOG]);
+
+		printf(")");
+	} else if (tb[INET_DIAG_MEMINFO]) {
 		const struct inet_diag_meminfo *minfo
 			= RTA_DATA(tb[INET_DIAG_MEMINFO]);
 		printf(" mem:(r%u,w%u,f%u,t%u)",
