@@ -40,6 +40,11 @@ ip-link \- network device configuration
 .RB "[ " mtu
 .IR MTU " ]"
 .br
+.RB "[ " numtxqueues
+.IR QUEUE_COUNT " ]"
+.RB "[ " numrxqueues
+.IR QUEUE_COUNT " ]"
+.br
 .BR type " TYPE"
 .RI "[ " ARGS " ]"
 
@@ -155,6 +160,14 @@ Link types:
 .B bridge
 - Ethernet Bridge device
 .in -8
+
+.TP
+.BI numtxqueues " QUEUE_COUNT "
+specifies the number of transmit queues for new device.
+
+.TP
+.BI numrxqueues " QUEUE_COUNT "
+specifies the number of receive queues for new device.
 
 .SS ip link delete - delete virtual link
 .I DEVICE
