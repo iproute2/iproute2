@@ -1,0 +1,186 @@
+.TH BRIDGE 8 "1 August 2012" "iproute2" "Linux"
+.SH NAME
+bridge \- show / manipulate bridge addresses and devices
+.SH SYNOPSIS
+
+.ad l
+.in +8
+.ti -8
+.B bridge
+.RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OBJECT " := { "
+.BR fdb " | " monitor " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+\fB\-s\fR[\fItatistics\fR]
+
+.ti -8
+.BR "bridge fdb" " { " add " | " del " | " change " | " replace " } "
+.I LLADDR
+.B  dev
+.IR DEV " { "
+.BR local " | " temp " }"
+
+.ti -8
+.BR "bridge fdb" " [ " show " ] [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
+.BR "bridge monitor" " [ " all " | " neigh " | " link " ]"
+
+.SH OPTIONS
+
+.TP
+.BR "\-V" , " -Version"
+print the version of the
+.B bridge
+utility and exit.
+
+.TP
+.BR "\-s" , " \-stats", " \-statistics"
+output more information.  If the option
+appears twice or more, the amount of information increases.
+As a rule, the information is statistics or some time values.
+
+
+.SH BRIDGE - COMMAND SYNTAX
+
+.SS
+.I OBJECT
+
+.TP
+.B fdb 
+- Forwarding Database entry.
+
+.SS
+.I COMMAND
+
+Specifies the action to perform on the object.
+The set of possible actions depends on the object type.
+As a rule, it is possible to
+.BR "add" , " delete"
+and
+.B show
+(or
+.B list
+) objects, but some objects do not allow all of these operations
+or have some additional commands.  The
+.B help
+command is available for all objects.  It prints
+out a list of available commands and argument syntax conventions.
+.sp
+If no command is given, some default command is assumed.
+Usually it is
+.B list
+or, if the objects of this class cannot be listed,
+.BR "help" .
+
+.SH bridge fdb - forwarding database management
+
+.B fdb
+objects contain known Ethernet addresses on a  link.
+
+.P
+The corresponding commands display fdb entries, add new entries,
+and delete old ones.
+
+.SS bridge fdb add - add a new neighbor entry
+.SS bridge fdb change - change an existing entry
+.SS bridge fdb replace - add a new entry or change an existing one
+
+These commands create new neighbor records or update existing ones.
+
+.TP
+.BI "ADDRESS"
+the Ethernet MAC address.
+
+.TP
+.BI dev " NAME"
+the interface to which this address is associated.
+
+.TP
+.in +8
+.B local
+- the address is associated with a local interface on the system
+and is never forwarded.
+.sp
+
+.B temp
+- the address is a dynamic entry, and will be removed if not used.
+.sp
+
+.in -8
+
+.SS bridge fdb delete - delete a forwarding database entry
+This command removes an existing fdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge fdb add" ,
+
+.SS bridge fdb show - list forwarding entries.
+
+This commands displays current forwarding table.
+
+.PP
+With the
+.B -statistics
+option, the command becomes verbose.  It prints out the last updated
+and last used time for each entry.
+
+.SH bridge monitor - state monitoring
+
+The
+.B bridge
+utility can monitor the state of devices and  addresses
+continuously.  This option has a slightly different format.
+Namely, the
+.B monitor
+command is the first in the command line and then the object list follows:
+
+.BR "bridge monitor" " [ " all " |"
+.IR LISTofOBJECTS " ]"
+
+.I OBJECT-LIST
+is the list of object types that we want to monitor.
+It may contain
+.BR link ",  and " fdb "."
+If no
+.B file
+argument is given,
+.B bridge
+opens RTNETLINK, listens on it and dumps state changes in the format
+described in previous sections.
+
+.P
+If a file name is given, it does not listen on RTNETLINK,
+but opens the file containing RTNETLINK messages saved in binary format
+and dumps them.  Such a history file can be generated with the
+
+
+.SH NOTES
+This command uses facilities added in Linux 3.0.
+
+Although the forwarding table is maintained on a per-bridge device basis
+the bridge device is not part of the syntax. This is a limitation of the
+underlying netlink neighbour message protocol. When displaying the
+forwarding table, entries for all bridges are displayed.
+Add/delete/modify commands determine the underlying bridge device
+based on the bridge to which the coresponding ethernet device is attached. 
+
+
+.SH SEE ALSO
+.BR ip (8)
+.br
+.RB "Please direct bugreports and patches to: " <netdev@vger.kernel.org>
+
+.SH AUTHOR
+Original Manpage by Stephen Hemminger
