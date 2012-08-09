@@ -183,6 +183,37 @@ fi
 rm -f $TMPDIR/setnstest.c $TMPDIR/setnstest
 }
 
+check_ipset()
+{
+cat >$TMPDIR/ipsettest.c <<EOF
+#include <linux/netfilter/ipset/ip_set.h>
+#ifndef IP_SET_INVALID
+#define IPSET_DIM_MAX 3
+typedef unsigned short ip_set_id_t;
+#endif
+#include <linux/netfilter/xt_set.h>
+
+struct xt_set_info info;
+#if IPSET_PROTOCOL == 6
+int main(void)
+{
+	return IPSET_MAXNAMELEN;
+}
+#else
+#error unknown ipset version
+#endif
+EOF
+
+if gcc -I$INCLUDE -o $TMPDIR/ipsettest $TMPDIR/ipsettest.c >/dev/null 2>&1
+then
+	echo "TC_CONFIG_IPSET:=y" >>Config
+	echo "yes"
+else
+	echo "no"
+fi
+rm -f $TMPDIR/ipsettest.c $TMPDIR/ipsettest
+}
+
 echo "# Generated config based on" $INCLUDE >Config
 
 echo "TC schedulers"
@@ -195,6 +226,9 @@ check_xt
 check_xt_old
 check_xt_old_internal_h
 check_ipt
+
+echo -n " IPSET  "
+check_ipset
 
 echo -n "iptables modules directory: "
 check_ipt_lib_dir
