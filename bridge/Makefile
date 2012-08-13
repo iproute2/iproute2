@@ -7,8 +7,8 @@ all: bridge
 bridge: $(BROBJ) $(LIBNETLINK) 
 
 install: all
-	install -m 0755 br $(DESTDIR)$(SBINDIR)
+	install -m 0755 bridge $(DESTDIR)$(SBINDIR)
 
 clean:
-	rm -f $(BROBJ) br
+	rm -f $(BROBJ) bridge
 
