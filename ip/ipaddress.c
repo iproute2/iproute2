@@ -1018,7 +1018,7 @@ static int ipaddr_list_or_flush(int argc, char **argv, int flush)
 		exit(1);
 	}
 
-	if (filter.family && filter.family != AF_PACKET) {
+	if (filter.family != AF_PACKET) {
 		if (filter.oneline)
 			no_link = 1;
 
