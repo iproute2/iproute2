@@ -188,7 +188,7 @@ int main(int argc, char **argv)
 			else if (strcmp(argv[1], "help") == 0)
 				usage();
 			else
-				invarg(argv[1], "invalid protocol family");
+				invarg("invalid protocol family", argv[1]);
 		} else if (strcmp(opt, "-4") == 0) {
 			preferred_family = AF_INET;
 		} else if (strcmp(opt, "-6") == 0) {

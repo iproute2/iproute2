@@ -93,7 +93,7 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (req.t.tcm_parent)
 				duparg("parent", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "Invalid parent ID");
+				invarg("Invalid parent ID", *argv);
 			req.t.tcm_parent = handle;
 		} else if (strcmp(*argv, "handle") == 0) {
 			NEXT_ARG();
@@ -106,14 +106,14 @@ int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (prio)
 				duparg("priority", *argv);
 			if (get_u32(&prio, *argv, 0) || prio > 0xFFFF)
-				invarg(*argv, "invalid priority value");
+				invarg("invalid priority value", *argv);
 		} else if (matches(*argv, "protocol") == 0) {
 			__u16 id;
 			NEXT_ARG();
 			if (protocol_set)
 				duparg("protocol", *argv);
 			if (ll_proto_a2n(&id, *argv))
-				invarg(*argv, "invalid protocol");
+				invarg("invalid protocol", *argv);
 			protocol = id;
 			protocol_set = 1;
 		} else if (matches(*argv, "estimator") == 0) {
@@ -290,7 +290,7 @@ int tc_filter_list(int argc, char **argv)
 			if (t.tcm_parent)
 				duparg("parent", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid parent ID");
+				invarg("invalid parent ID", *argv);
 			filter_parent = t.tcm_parent = handle;
 		} else if (strcmp(*argv, "handle") == 0) {
 			NEXT_ARG();
@@ -303,7 +303,7 @@ int tc_filter_list(int argc, char **argv)
 			if (prio)
 				duparg("priority", *argv);
 			if (get_u32(&prio, *argv, 0))
-				invarg(*argv, "invalid preference");
+				invarg("invalid preference", *argv);
 			filter_prio = prio;
 		} else if (matches(*argv, "protocol") == 0) {
 			__u16 res;
@@ -311,7 +311,7 @@ int tc_filter_list(int argc, char **argv)
 			if (protocol)
 				duparg("protocol", *argv);
 			if (ll_proto_a2n(&res, *argv))
-				invarg(*argv, "invalid protocol");
+				invarg("invalid protocol", *argv);
 			protocol = res;
 			filter_protocol = protocol;
 		} else if (matches(*argv, "help") == 0) {

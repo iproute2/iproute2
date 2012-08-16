@@ -1147,7 +1147,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			unsigned scope = 0;
 			NEXT_ARG();
 			if (rtnl_rtscope_a2n(&scope, *argv))
-				invarg(*argv, "invalid scope value.");
+				invarg("invalid scope value.", *argv);
 			req.ifa.ifa_scope = scope;
 			scoped = 1;
 		} else if (strcmp(*argv, "dev") == 0) {

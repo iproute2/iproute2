@@ -83,7 +83,7 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 				duparg("handle", *argv);
 			NEXT_ARG();
 			if (get_qdisc_handle(&handle, *argv))
-				invarg(*argv, "invalid qdisc ID");
+				invarg("invalid qdisc ID", *argv);
 			req.t.tcm_handle = handle;
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
@@ -111,7 +111,7 @@ int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (req.t.tcm_parent)
 				duparg("parent", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid parent ID");
+				invarg("invalid parent ID", *argv);
 			req.t.tcm_parent = handle;
 		} else if (matches(*argv, "estimator") == 0) {
 			if (parse_estimator(&argc, &argv, &est))

@@ -74,7 +74,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (req.t.tcm_handle)
 				duparg("classid", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid class ID");
+				invarg("invalid class ID", *argv);
 			req.t.tcm_handle = handle;
 		} else if (strcmp(*argv, "handle") == 0) {
 			fprintf(stderr, "Error: try \"classid\" instead of \"handle\"\n");
@@ -91,7 +91,7 @@ int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (req.t.tcm_parent)
 				duparg("parent", *argv);
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid parent ID");
+				invarg("invalid parent ID", *argv);
 			req.t.tcm_parent = handle;
 		} else if (matches(*argv, "estimator") == 0) {
 			if (parse_estimator(&argc, &argv, &est))
@@ -252,13 +252,13 @@ int tc_class_list(int argc, char **argv)
 			if (filter_qdisc)
 				duparg("qdisc", *argv);
 			if (get_qdisc_handle(&filter_qdisc, *argv))
-				invarg(*argv, "invalid qdisc ID");
+				invarg("invalid qdisc ID", *argv);
 		} else if (strcmp(*argv, "classid") == 0) {
 			NEXT_ARG();
 			if (filter_classid)
 				duparg("classid", *argv);
 			if (get_tc_classid(&filter_classid, *argv))
-				invarg(*argv, "invalid class ID");
+				invarg("invalid class ID", *argv);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
@@ -271,7 +271,7 @@ int tc_class_list(int argc, char **argv)
 				duparg("parent", *argv);
 			NEXT_ARG();
 			if (get_tc_classid(&handle, *argv))
-				invarg(*argv, "invalid parent ID");
+				invarg("invalid parent ID", *argv);
 			t.tcm_parent = handle;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
