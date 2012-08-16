@@ -1,5 +1,5 @@
 /*
- * brmonitor.c		"br monitor"
+ * brmonitor.c		"bridge monitor"
  *
  *		This program is free software; you can redistribute it and/or
  *		modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ int prefix_banner;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: br monitor\n");
+	fprintf(stderr, "Usage: bridge monitor\n");
 	exit(-1);
 }
 
@@ -103,7 +103,7 @@ int do_monitor(int argc, char **argv)
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
-			fprintf(stderr, "Argument \"%s\" is unknown, try \"br monitor help\".\n", *argv);
+			fprintf(stderr, "Argument \"%s\" is unknown, try \"bridge monitor help\".\n", *argv);
 			exit(-1);
 		}
 		argc--;	argv++;

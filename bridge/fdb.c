@@ -26,8 +26,8 @@ int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: br fdb { add | del | replace } ADDR dev DEV\n");
-	fprintf(stderr, "       br fdb {show} [ dev DEV ]\n");
+	fprintf(stderr, "Usage: bridge fdb { add | del | replace } ADDR dev DEV\n");
+	fprintf(stderr, "       bridge fdb {show} [ dev DEV ]\n");
 	exit(-1);
 }
 
