@@ -45,6 +45,7 @@ TCMODULES += p_udp.o
 TCMODULES += em_nbyte.o
 TCMODULES += em_cmp.o
 TCMODULES += em_u32.o
+TCMODULES += em_canid.o
 TCMODULES += em_meta.o
 TCMODULES += q_mqprio.o
 TCMODULES += q_codel.o
