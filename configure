@@ -148,7 +148,13 @@ check_ipt()
 
 check_ipt_lib_dir()
 {
-	IPT_LIB_DIR=""
+	IPT_LIB_DIR=$(pkg-config --variable=xtlibdir xtables)
+	if [ -n "$IPT_LIB_DIR" ]; then
+		echo $IPT_LIB_DIR
+		echo "IPT_LIB_DIR:=$IPT_LIB_DIR" >> Config
+		return
+	fi
+
 	for dir in /lib /usr/lib /usr/local/lib
 	do
 		for file in $dir/{xtables,iptables}/lib*t_*so ; do
