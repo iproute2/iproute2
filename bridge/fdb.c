@@ -239,6 +239,6 @@ int do_fdb(int argc, char **argv)
 	} else
 		return fdb_show(0, NULL);
 
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip neigh help\".\n", *argv);
+	fprintf(stderr, "Command \"%s\" is unknown, try \"bridge fdb help\".\n", *argv);
 	exit(-1);
 }
