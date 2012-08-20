@@ -24,7 +24,7 @@ class-id ] qdisc
 
 .B tc filter [ add | change | replace | delete ] dev
 DEV
-.B  [ parent
+.B [ parent
 qdisc-id
 .B | root ] protocol
 protocol
@@ -38,7 +38,7 @@ flow-id
 .RI "[ " FORMAT " ]"
 .B qdisc show [ dev
 DEV
-.B  ]
+.B ]
 .P
 .B tc
 .RI "[ " FORMAT " ]"
@@ -233,7 +233,10 @@ attached to that class. Check qdisc specific manpages for details, however.
 All qdiscs, classes and filters have IDs, which can either be specified
 or be automatically assigned.
 
-IDs consist of a major number and a minor number, separated by a colon.
+ID's consist of a major number and a minor number, separated by a colon.
+Both major and minor number are limited to 16 bits. There are two special
+values: root is signified by major and minor of all ones, and unspecified
+is all zeros.
 
 .TP
 QDISCS
