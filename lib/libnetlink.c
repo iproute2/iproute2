@@ -360,13 +360,14 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 				if (l < sizeof(struct nlmsgerr)) {
 					fprintf(stderr, "ERROR truncated\n");
 				} else {
-					errno = -err->error;
-					if (errno == 0) {
+					if (!err->error) {
 						if (answer)
 							memcpy(answer, h, h->nlmsg_len);
 						return 0;
 					}
-					perror("RTNETLINK answers");
+
+					fprintf(stderr, "RTNETLINK answers: %s\n", strerror(-err->error));
+					errno = -err->error;
 				}
 				return -1;
 			}
