@@ -26,7 +26,7 @@ int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge fdb { add | del | replace } ADDR dev DEV\n");
+	fprintf(stderr, "Usage: bridge fdb { add | del | replace } ADDR dev DEV {self|master}\n");
 	fprintf(stderr, "       bridge fdb {show} [ dev DEV ]\n");
 	exit(-1);
 }
@@ -95,11 +95,12 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return -1;
 	}
 
-	printf("%s\t%.2x:%.2x:%.2x:%.2x:%.2x:%.2x\t%s",
+	printf("%s\t%.2x:%.2x:%.2x:%.2x:%.2x:%.2x\t%s %s",
 		ll_index_to_name(r->ndm_ifindex),
 		addr[0], addr[1], addr[2],
 		addr[3], addr[4], addr[5],
-		state_n2a(r->ndm_state));
+		state_n2a(r->ndm_state),
+		(r->ndm_flags & NTF_SELF) ? "self" : "master");
 
 	if (show_stats && tb[NDA_CACHEINFO]) {
 		struct nda_cacheinfo *ci = RTA_DATA(tb[NDA_CACHEINFO]);
@@ -176,6 +177,10 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_state = NUD_PERMANENT;
 		} else if (strcmp(*argv, "temp") == 0) {
 			req.ndm.ndm_state = NUD_REACHABLE;
+		} else if (strcmp(*argv, "self") == 0) {
+			req.ndm.ndm_flags |= NTF_SELF;
+		} else if (strcmp(*argv, "master") == 0) {
+			req.ndm.ndm_flags |= NTF_MASTER;
 		} else {
 			if (strcmp(*argv, "to") == 0) {
 				NEXT_ARG();
