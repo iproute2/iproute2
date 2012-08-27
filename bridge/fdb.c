@@ -26,7 +26,7 @@ int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge fdb { add | del | replace } ADDR dev DEV {self|master}\n");
+	fprintf(stderr, "Usage: bridge fdb { add | del } ADDR dev DEV {self|master}\n");
 	fprintf(stderr, "       bridge fdb {show} [ dev DEV ]\n");
 	exit(-1);
 }
@@ -228,11 +228,6 @@ int do_fdb(int argc, char **argv)
 	if (argc > 0) {
 		if (matches(*argv, "add") == 0)
 			return fdb_modify(RTM_NEWNEIGH, NLM_F_CREATE|NLM_F_EXCL, argc-1, argv+1);
-		if (matches(*argv, "change") == 0)
-			return fdb_modify(RTM_NEWNEIGH, NLM_F_REPLACE, argc-1, argv+1);
-
-		if (matches(*argv, "replace") == 0)
-			return fdb_modify(RTM_NEWNEIGH, NLM_F_CREATE|NLM_F_REPLACE, argc-1, argv+1);
 		if (matches(*argv, "delete") == 0)
 			return fdb_modify(RTM_DELNEIGH, 0, argc-1, argv+1);
 		if (matches(*argv, "show") == 0 ||
