@@ -94,8 +94,8 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 	struct {
 		struct nlmsghdr nlh;
 		struct rtgenmsg g;
-		__u16 align_rta;	/* attribute has to be 32bit aligned */
-		struct rtattr ext_req;
+		/* attribute has to be NLMSG aligned */
+		struct rtattr ext_req __attribute__ ((aligned(NLMSG_ALIGNTO)));
 		__u32 ext_filter_mask;
 	} req;
 
