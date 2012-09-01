@@ -5,7 +5,7 @@ INCLUDE=${1:-"$PWD/include"}
 
 # Make a temp directory in build tree.
 TMPDIR=$(mktemp -d config.XXXXXX)
-trap 'status=$?; rm -rf $TMPDIRa; exit $status' EXIT HUP INT QUIT TERM
+trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
 
 check_atm()
 {
