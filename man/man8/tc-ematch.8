@@ -21,7 +21,7 @@ ematch \- extended matches for use with "basic" or "flow" filters
 ]
 
 .ti -8
-.IR TERM " := [ " not " ] { " MATCH " | '(' " EXPR " ')' } "
+.IR TERM " := [ " \fBnot " ] { " MATCH " | '(' " EXPR " ')' } "
 
 .ti -8
 .IR MATCH " := " module " '(' " ARGS " ')' "
@@ -34,30 +34,27 @@ ematch \- extended matches for use with "basic" or "flow" filters
 .SS cmp
 Simple comparison ematch: arithmetic compare of packet data to a given value.
 .ti
-.IR cmp "( " ALIGN " at " OFFSET " [ " ATTRS " ]  { " eq " | " lt " | " gt "  } " VALUE " )
+.IR cmp "( " ALIGN " at " OFFSET " [ " ATTRS " ] { " eq " | " lt " | " gt " } " VALUE " )
 
 .ti
 .IR ALIGN " := { " u8 " | " u16 " | " u32 " } "
 
 .ti
-.IR ATTRS " := [  layer " LAYER " ] [ mask " MASK " ] [ " trans " ] "
+.IR ATTRS " := [ layer " LAYER " ] [ mask " MASK " ] [ trans ]
 
 .ti
-.IR ALIGN " := { " u8 " | " u16 " | " u32 } "
-
-.ti
-.IR LAYER " := { " link " | " network " | " transport " | " 0..%d " }
+.IR LAYER " := { " link " | " network " | " transport " | " 0..2 " }
 
 .SS meta
 Metadata ematch
 .ti
-.IR meta "( " OBJECT " { " eq " | " lt "  |" gt " } " OBJECT " )
+.IR meta "( " OBJECT " { " eq " | " lt " |" gt " } " OBJECT " )
 
 .ti
 .IR OBJECT " := { " META_ID " |  " VALUE " }
 
 .ti
-.IR META_ID " := id " [ shift " SHIFT " ] [ mask " MASK " ]
+.IR META_ID " := " id " [ shift " SHIFT " ] [ mask " MASK " ]
 
 .TP
 meta attributes:
@@ -91,26 +88,26 @@ match packet data byte sequence
 .IR OFFSET  " := " int
 
 .ti
-.IR LAYER " := { " link " | " network " | " transport " | " 0..%d " }
+.IR LAYER " := { " link " | " network " | " transport " | " 0..2 " }
 
 .SS u32
 u32 ematch
 .ti
-.IR u32 "( " ALIGN VALUE MASK " at " [ nexthdr+ ] " OFFSET " )
+.IR u32 "( " ALIGN " " VALUE " " MASK " at [ nexthdr+ ] " OFFSET " )
 
 .ti
-.IR ALIGN " := " { " u8 " | " u16 " | " u32 " }
+.IR ALIGN " := { " u8 " | " u16 " | " u32 " }
 
 .SS ipset
 test packet agains ipset membership
 .ti
-.IR ipset "( " SETNAME FLAGS )
+.IR ipset "( " SETNAME " " FLAGS " )
 
 .ti
 .IR SETNAME " := " string
 
 .ti
-.IR FLAGS " := " { " FLAG " [, " FLAGS "] }
+.IR FLAGS " := { " FLAG " [, " FLAGS "] }
 
 The flag options are the same as those used by the iptables "set" match.
 

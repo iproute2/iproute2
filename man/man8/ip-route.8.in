@@ -202,11 +202,10 @@ error.
 are considered to be dummy (or external) addresses which require translation
 to real (or internal) ones before forwarding.  The addresses to translate to
 are selected with the attribute
+.BR "via" .
 .B Warning:
 Route NAT is no longer supported in Linux 2.6.
 
-
-.BR "via" .
 .sp
 .B anycast
 .RI "- " "not implemented"
@@ -306,7 +305,7 @@ If this parameter is omitted,
 assumes the
 .B main
 table, with the exception of
-.BR local " , " broadcast " and " nat
+.BR local ", " broadcast " and " nat
 routes, which are put into the
 .B local
 table by default.
@@ -560,13 +559,14 @@ i.e. it lists the entire table.
 
 .TP
 .BI tos " TOS"
+.TP
 .BI dsfield " TOS"
 only select routes with the given TOS.
 
 .TP
 .BI table " TABLEID"
-show the routes from this table(s).  The default setting is to show
-.BR table main "."
+show the routes from this table(s).  The default setting is to show table
+.BR main "."
 .I TABLEID
 may either be the ID of a real table or one of the special values:
 .sp

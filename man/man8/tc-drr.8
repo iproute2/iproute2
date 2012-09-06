@@ -45,6 +45,7 @@ To attach to device eth0, using the interface MTU as its quantum:
 Adding two classes:
 .P
 # tc class add dev eth0 parent 1: classid 1:1 drr
+.br
 # tc class add dev eth0 parent 1: classid 1:2 drr
 .P
 You also need to add at least one filter to classify packets.
