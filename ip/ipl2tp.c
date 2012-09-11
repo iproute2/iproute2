@@ -25,6 +25,7 @@
 
 #include <linux/genetlink.h>
 #include <linux/l2tp.h>
+#include "libgenl.h"
 
 #include "utils.h"
 #include "ip_common.h"
@@ -92,20 +93,12 @@ static int genl_family = -1;
 
 static int create_tunnel(struct l2tp_parm *p)
 {
-	struct {
-		struct nlmsghdr 	n;
-		struct genlmsghdr	g;
-		char   			buf[1024];
-	} req;
 	uint32_t local_attr = L2TP_ATTR_IP_SADDR;
 	uint32_t peer_attr = L2TP_ATTR_IP_DADDR;
 
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_type = genl_family;
-	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	req.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	req.g.cmd = L2TP_CMD_TUNNEL_CREATE;
-	req.g.version = L2TP_GENL_VERSION;
+	GENL_REQUEST(req, 0, 1024)
+		= GENL_INITIALIZER(genl_family, NLM_F_REQUEST | NLM_F_ACK, 0,
+				   L2TP_CMD_TUNNEL_CREATE, L2TP_GENL_VERSION);
 
 	addattr32(&req.n, 1024, L2TP_ATTR_CONN_ID, p->tunnel_id);
 	addattr32(&req.n, 1024, L2TP_ATTR_PEER_CONN_ID, p->peer_tunnel_id);
@@ -133,18 +126,9 @@ static int create_tunnel(struct l2tp_parm *p)
 
 static int delete_tunnel(struct l2tp_parm *p)
 {
-	struct {
-		struct nlmsghdr 	n;
-		struct genlmsghdr	g;
-		char   			buf[128];
-	} req;
-
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_type = genl_family;
-	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	req.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	req.g.cmd = L2TP_CMD_TUNNEL_DELETE;
-	req.g.version = L2TP_GENL_VERSION;
+	GENL_REQUEST(req, 0, 1024)
+		= GENL_INITIALIZER(genl_family, NLM_F_REQUEST | NLM_F_ACK, 0,
+				   L2TP_CMD_TUNNEL_DELETE, L2TP_GENL_VERSION);
 
 	addattr32(&req.n, 128, L2TP_ATTR_CONN_ID, p->tunnel_id);
 
@@ -747,67 +731,6 @@ static int do_show(int argc, char **argv)
 	return 0;
 }
 
-static int genl_parse_getfamily(struct nlmsghdr *nlh)
-{
-	struct rtattr *tb[CTRL_ATTR_MAX + 1];
-	struct genlmsghdr *ghdr = NLMSG_DATA(nlh);
-	int len = nlh->nlmsg_len;
-	struct rtattr *attrs;
-
-	if (nlh->nlmsg_type != GENL_ID_CTRL) {
-		fprintf(stderr, "Not a controller message, nlmsg_len=%d "
-			"nlmsg_type=0x%x\n", nlh->nlmsg_len, nlh->nlmsg_type);
-		return -1;
-	}
-
-	if (ghdr->cmd != CTRL_CMD_NEWFAMILY) {
-		fprintf(stderr, "Unknown controller command %d\n", ghdr->cmd);
-		return -1;
-	}
-
-	len -= NLMSG_LENGTH(GENL_HDRLEN);
-
-	if (len < 0) {
-		fprintf(stderr, "wrong controller message len %d\n", len);
-		return -1;
-	}
-
-	attrs = (struct rtattr *) ((char *) ghdr + GENL_HDRLEN);
-	parse_rtattr(tb, CTRL_ATTR_MAX, attrs, len);
-
-	if (tb[CTRL_ATTR_FAMILY_ID] == NULL) {
-		fprintf(stderr, "Missing family id TLV\n");
-		return -1;
-	}
-
-	return rta_getattr_u16(tb[CTRL_ATTR_FAMILY_ID]);
-}
-
-int genl_ctrl_resolve_family(const char *family)
-{
-	struct {
-		struct nlmsghdr         n;
-		struct genlmsghdr	g;
-		char                    buf[1024];
-	} req;
-
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = GENL_ID_CTRL;
-	req.g.cmd = CTRL_CMD_GETFAMILY;
-
-	addattr_l(&req.n, 1024, CTRL_ATTR_FAMILY_NAME,
-		  family, strlen(family) + 1);
-
-	if (rtnl_talk(&genl_rth, &req.n, 0, 0, &req.n) < 0) {
-		fprintf(stderr, "Error talking to the kernel\n");
-		return -2;
-	}
-
-	return genl_parse_getfamily(&req.n);
-}
-
 int do_ipl2tp(int argc, char **argv)
 {
 	if (genl_family < 0) {
@@ -816,7 +739,7 @@ int do_ipl2tp(int argc, char **argv)
 			exit(1);
 		}
 
-		genl_family = genl_ctrl_resolve_family(L2TP_GENL_NAME);
+		genl_family = genl_resolve_family(&genl_rth, L2TP_GENL_NAME);
 		if (genl_family < 0)
 			exit(1);
 	}
