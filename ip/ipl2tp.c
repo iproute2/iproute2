@@ -96,9 +96,8 @@ static int create_tunnel(struct l2tp_parm *p)
 	uint32_t local_attr = L2TP_ATTR_IP_SADDR;
 	uint32_t peer_attr = L2TP_ATTR_IP_DADDR;
 
-	GENL_REQUEST(req, 0, 1024)
-		= GENL_INITIALIZER(genl_family, NLM_F_REQUEST | NLM_F_ACK, 0,
-				   L2TP_CMD_TUNNEL_CREATE, L2TP_GENL_VERSION);
+	GENL_REQUEST(req, 1024, genl_family, 0, L2TP_GENL_VERSION,
+		     L2TP_CMD_TUNNEL_CREATE, NLM_F_REQUEST | NLM_F_ACK);
 
 	addattr32(&req.n, 1024, L2TP_ATTR_CONN_ID, p->tunnel_id);
 	addattr32(&req.n, 1024, L2TP_ATTR_PEER_CONN_ID, p->peer_tunnel_id);
@@ -126,9 +125,8 @@ static int create_tunnel(struct l2tp_parm *p)
 
 static int delete_tunnel(struct l2tp_parm *p)
 {
-	GENL_REQUEST(req, 0, 1024)
-		= GENL_INITIALIZER(genl_family, NLM_F_REQUEST | NLM_F_ACK, 0,
-				   L2TP_CMD_TUNNEL_DELETE, L2TP_GENL_VERSION);
+	GENL_REQUEST(req, 128, genl_family, 0, L2TP_GENL_VERSION,
+		     L2TP_CMD_TUNNEL_DELETE, NLM_F_REQUEST | NLM_F_ACK);
 
 	addattr32(&req.n, 128, L2TP_ATTR_CONN_ID, p->tunnel_id);
 
@@ -140,18 +138,8 @@ static int delete_tunnel(struct l2tp_parm *p)
 
 static int create_session(struct l2tp_parm *p)
 {
-	struct {
-		struct nlmsghdr 	n;
-		struct genlmsghdr	g;
-		char   			buf[1024];
-	} req;
-
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_type = genl_family;
-	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	req.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	req.g.cmd = L2TP_CMD_SESSION_CREATE;
-	req.g.version = L2TP_GENL_VERSION;
+	GENL_REQUEST(req, 1024, genl_family, 0, L2TP_GENL_VERSION,
+		     L2TP_CMD_SESSION_CREATE, NLM_F_REQUEST | NLM_F_ACK);
 
 	addattr32(&req.n, 1024, L2TP_ATTR_CONN_ID, p->tunnel_id);
 	addattr32(&req.n, 1024, L2TP_ATTR_PEER_CONN_ID, p->peer_tunnel_id);
@@ -182,18 +170,8 @@ static int create_session(struct l2tp_parm *p)
 
 static int delete_session(struct l2tp_parm *p)
 {
-	struct {
-		struct nlmsghdr 	n;
-		struct genlmsghdr	g;
-		char   			buf[128];
-	} req;
-
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_type = genl_family;
-	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	req.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	req.g.cmd = L2TP_CMD_SESSION_DELETE;
-	req.g.version = L2TP_GENL_VERSION;
+	GENL_REQUEST(req, 1024, genl_family, 0, L2TP_GENL_VERSION,
+		     L2TP_CMD_SESSION_DELETE, NLM_F_REQUEST | NLM_F_ACK);
 
 	addattr32(&req.n, 1024, L2TP_ATTR_CONN_ID, p->tunnel_id);
 	addattr32(&req.n, 1024, L2TP_ATTR_SESSION_ID, p->session_id);
@@ -380,20 +358,11 @@ static int session_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n, void
 
 static int get_session(struct l2tp_data *p)
 {
-	struct {
-		struct nlmsghdr 	n;
-		struct genlmsghdr	g;
-		char buf[128];
-	} req;
+	GENL_REQUEST(req, 128, genl_family, 0, L2TP_GENL_VERSION,
+		     L2TP_CMD_SESSION_GET,
+		     NLM_F_ROOT | NLM_F_MATCH | NLM_F_REQUEST);
 
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	req.n.nlmsg_type = genl_family;
-	req.n.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
 	req.n.nlmsg_seq = genl_rth.dump = ++genl_rth.seq;
-
-	req.g.cmd = L2TP_CMD_SESSION_GET;
-	req.g.version = L2TP_GENL_VERSION;
 
 	if (p->config.tunnel_id && p->config.session_id) {
 		addattr32(&req.n, 128, L2TP_ATTR_CONN_ID, p->config.tunnel_id);
@@ -423,20 +392,11 @@ static int tunnel_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n, void 
 
 static int get_tunnel(struct l2tp_data *p)
 {
-	struct {
-		struct nlmsghdr 	n;
-		struct genlmsghdr	g;
-		char buf[1024];
-	} req;
+	GENL_REQUEST(req, 1024, genl_family, 0, L2TP_GENL_VERSION,
+		     L2TP_CMD_TUNNEL_GET,
+		     NLM_F_ROOT | NLM_F_MATCH | NLM_F_REQUEST);
 
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	req.n.nlmsg_type = genl_family;
-	req.n.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
 	req.n.nlmsg_seq = genl_rth.dump = ++genl_rth.seq;
-
-	req.g.cmd = L2TP_CMD_TUNNEL_GET;
-	req.g.version = L2TP_GENL_VERSION;
 
 	if (p->config.tunnel_id)
 		addattr32(&req.n, 1024, L2TP_ATTR_CONN_ID, p->config.tunnel_id);

@@ -47,11 +47,10 @@ static int genl_parse_getfamily(struct nlmsghdr *nlh)
 
 int genl_resolve_family(struct rtnl_handle *grth, const char *family)
 {
-	GENL_REQUEST(req, 0, 1024)
-		= GENL_INITIALIZER(GENL_ID_CTRL, 0,
-				   0, CTRL_CMD_GETFAMILY, NLM_F_REQUEST);
+	GENL_REQUEST(req, 1024, GENL_ID_CTRL, 0, 0, CTRL_CMD_GETFAMILY,
+		     NLM_F_REQUEST);
 
-	addattr_l(&req.n, 1024, CTRL_ATTR_FAMILY_NAME,
+	addattr_l(&req.n, sizeof(req), CTRL_ATTR_FAMILY_NAME,
 		  family, strlen(family) + 1);
 
 	if (rtnl_talk(grth, &req.n, 0, 0, &req.n) < 0) {
