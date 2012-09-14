@@ -22,11 +22,12 @@ bridge \- show / manipulate bridge addresses and devices
 \fB\-s\fR[\fItatistics\fR]
 
 .ti -8
-.BR "bridge fdb" " { " add " | " del " | " change " | " replace " } "
+.BR "bridge fdb" " { " add " | " del " } "
 .I LLADDR
 .B  dev
 .IR DEV " { "
-.BR local " | " temp " }"
+.BR local " | " temp " } { "
+.BR self " } { " embedded " } "
 
 .ti -8
 .BR "bridge fdb" " [ " show " ] [ "
@@ -92,11 +93,9 @@ objects contain known Ethernet addresses on a  link.
 The corresponding commands display fdb entries, add new entries,
 and delete old ones.
 
-.SS bridge fdb add - add a new neighbor entry
-.SS bridge fdb change - change an existing entry
-.SS bridge fdb replace - add a new entry or change an existing one
+.SS bridge fdb add - add a new fdb entry
 
-These commands create new neighbor records or update existing ones.
+This command creates a new fdb entry.
 
 .TP
 .BI "ADDRESS"
@@ -115,6 +114,14 @@ and is never forwarded.
 
 .B temp
 - the address is a dynamic entry, and will be removed if not used.
+.sp
+
+.B self
+- the address is associated with a software fdb (default)
+.sp
+
+.B embedded
+- the address is associated with an offloaded fdb
 .sp
 
 .in -8
