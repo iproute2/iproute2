@@ -50,7 +50,7 @@ Zero (0) means loop until all addresses are removed.
 .TP
 .BR "\-f" , " \-family"
 followed by protocol family identifier:
-.BR "inet" , " inet6"
+.BR "inet" , " inet6" , "bridge" , "ipx" , "dnet"
 or
 .BR link ,
 enforce the protocol family to use.  If the option is not present,
@@ -75,6 +75,11 @@ shortcut for
 .B \-6
 shortcut for
 .BR "\-family inet6" .
+
+.TP
+.B \-B
+shortcut for
+.BR "\-family bridge" .
 
 .TP
 .B \-0

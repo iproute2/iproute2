@@ -47,7 +47,7 @@ static void usage(void)
 "                   tunnel | tuntap | maddr | mroute | mrule | monitor | xfrm |\n"
 "                   netns | l2tp }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
-"                    -f[amily] { inet | inet6 | ipx | dnet | link } |\n"
+"                    -f[amily] { inet | inet6 | ipx | dnet | bridge | link } |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
 "                    -o[neline] | -t[imestamp] | -b[atch] [filename] |\n"
 "                    -rc[vbuf] [size]}\n");
@@ -185,6 +185,8 @@ int main(int argc, char **argv)
 				preferred_family = AF_PACKET;
 			else if (strcmp(argv[1], "ipx") == 0)
 				preferred_family = AF_IPX;
+			else if (strcmp(argv[1], "bridge") == 0)
+				preferred_family = AF_BRIDGE;
 			else if (strcmp(argv[1], "help") == 0)
 				usage();
 			else
@@ -199,6 +201,8 @@ int main(int argc, char **argv)
 			preferred_family = AF_IPX;
 		} else if (strcmp(opt, "-D") == 0) {
 			preferred_family = AF_DECnet;
+		} else if (strcmp(opt, "-B") == 0) {
+			preferred_family = AF_BRIDGE;
 		} else if (matches(opt, "-stats") == 0 ||
 			   matches(opt, "-statistics") == 0) {
 			++show_stats;
