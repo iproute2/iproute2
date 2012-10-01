@@ -7,6 +7,7 @@ extern int print_fdb(const struct sockaddr_nl *who,
 extern int do_fdb(int argc, char **argv);
 extern int do_monitor(int argc, char **argv);
 
+extern int preferred_family;
 extern int show_stats;
 extern int show_detail;
 extern int timestamp;
