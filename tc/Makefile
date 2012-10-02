@@ -52,7 +52,9 @@ TCMODULES += q_codel.o
 TCMODULES += q_fq_codel.o
 
 ifeq ($(TC_CONFIG_IPSET), y)
-  TCMODULES += em_ipset.o
+  ifeq ($(TC_CONFIG_XT), y)
+    TCMODULES += em_ipset.o
+  endif
 endif
 
 TCSO :=
