@@ -15,7 +15,7 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .IR OBJECT " := { "
 .BR link " | " addr " | " addrlabel " | " route " | " rule " | " neigh " | "\
  ntable " | " tunnel " | " tuntap " | " maddr " | "  mroute " | " mrule " | "\
- monitor " | " xfrm " | " netns " | "  l2tp " }"
+ monitor " | " xfrm " | " netns " | "  l2tp " | "  tcp_metrics " }"
 .sp
 
 .ti -8
@@ -161,6 +161,10 @@ host addresses.
 - rule in routing policy database.
 
 .TP
+.B tcp_metrics/tcpmetrics
+- manage TCP Metrics
+
+.TP
 .B tunnel
 - tunnel over IP.
 
@@ -220,6 +224,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR ip-ntable (8),
 .BR ip-route (8),
 .BR ip-rule (8),
+.BR ip-tcp_metrics (8),
 .BR ip-tunnel (8),
 .BR ip-xfrm (8)
 .br

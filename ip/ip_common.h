@@ -42,6 +42,7 @@ extern int do_multirule(int argc, char **argv);
 extern int do_netns(int argc, char **argv);
 extern int do_xfrm(int argc, char **argv);
 extern int do_ipl2tp(int argc, char **argv);
+extern int do_tcp_metrics(int argc, char **argv);
 
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 {

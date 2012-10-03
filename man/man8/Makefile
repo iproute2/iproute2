@@ -8,7 +8,8 @@ MAN8PAGES = $(TARGETS) ip.8 arpd.8 lnstat.8 routel.8 rtacct.8 rtmon.8 ss.8 \
 	bridge.8 rtstat.8 ctstat.8 nstat.8 routef.8 \
 	ip-address.8 ip-addrlabel.8 ip-l2tp.8 ip-link.8 \
 	ip-maddress.8 ip-monitor.8 ip-mroute.8 ip-neighbour.8 \
-	ip-netns.8 ip-ntable.8 ip-route.8 ip-rule.8 ip-tunnel.8 ip-xfrm.8
+	ip-netns.8 ip-ntable.8 ip-route.8 ip-rule.8 ip-tunnel.8 ip-xfrm.8 \
+	ip-tcp_metrics.8
 
 all: $(TARGETS)
 
