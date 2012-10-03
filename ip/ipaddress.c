@@ -884,6 +884,7 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 	lp = &linfo->head;
 	while ( (l = *lp) != NULL) {
 		int ok = 0;
+		int missing_net_address = 1;
 		struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 		struct nlmsg_list *a;
 
@@ -891,8 +892,10 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 			struct nlmsghdr *n = &a->h;
 			struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
-			if (ifa->ifa_index != ifi->ifi_index ||
-			    (filter.family && filter.family != ifa->ifa_family))
+			if (ifa->ifa_index != ifi->ifi_index)
+				continue;
+			missing_net_address = 0;
+			if (filter.family && filter.family != ifa->ifa_family)
 				continue;
 			if ((filter.scope^ifa->ifa_scope)&filter.scopemask)
 				continue;
@@ -927,6 +930,9 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 			ok = 1;
 			break;
 		}
+		if (missing_net_address &&
+		    (filter.family == AF_UNSPEC || filter.family == AF_PACKET))
+			ok = 1;
 		if (!ok) {
 			*lp = l->next;
 			free(l);
