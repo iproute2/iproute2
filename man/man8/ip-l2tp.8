@@ -311,9 +311,9 @@ those headers.
 .PP
 .nf
 site-A:# ip link set l2tpeth0 up mtu 1446
-site-A:# brctl addbr br0
-site-A:# brctl addif br0 l2tpeth0
-site-A:# brctl addif br0 eth0
+site-A:# ip link add br0 type bridge
+site-A:# ip link set l2tpeth0 master br0
+site-A:# ip link set eth0 master br0
 site-A:# ip link set br0 up
 .fi
 .PP
@@ -323,9 +323,9 @@ over an L2TP pseudowire:
 .PP
 .nf
 site-A:# ip link set l2tpeth0 up mtu 1446
-site-A:# brctl addbr brvlan5
-site-A:# brctl addif brvlan5 l2tpeth0.5
-site-A:# brctl addif brvlan5 eth1.5
+site-A:# ip link add brvlan5 type bridge
+site-A:# ip link set l2tpeth0.5 master brvlan5
+site-A:# ip link set eth1.5 master brvlan5
 site-A:# ip link set brvlan5 up
 .fi
 .PP
@@ -370,7 +370,6 @@ dynamic tunnels. If a non-Linux peer supports Hello messages in
 unmanaged tunnels, it must be turned off to interoperate with Linux.
 .SH SEE ALSO
 .br
-.BR brctl (8)
 .BR ip (8)
 .SH AUTHOR
 James Chapman <jchapman@katalix.com>
