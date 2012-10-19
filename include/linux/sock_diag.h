@@ -1,5 +1,5 @@
-#ifndef __SOCK_DIAG_H__
-#define __SOCK_DIAG_H__
+#ifndef _UAPI__SOCK_DIAG_H__
+#define _UAPI__SOCK_DIAG_H__
 
 #include <linux/types.h>
 
@@ -23,4 +23,4 @@ enum {
 	SK_MEMINFO_VARS,
 };
 
-#endif
+#endif /* _UAPI__SOCK_DIAG_H__ */

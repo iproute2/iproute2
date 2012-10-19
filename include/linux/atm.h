@@ -8,8 +8,8 @@
  *          Instead, #include <atm.h>
  */
 
-#ifndef _LINUX_ATM_H
-#define _LINUX_ATM_H
+#ifndef _UAPI_LINUX_ATM_H
+#define _UAPI_LINUX_ATM_H
 
 /*
  * BEGIN_xx and END_xx markers are used for automatic generation of
@@ -238,4 +238,4 @@ struct atmif_sioc {
 
 
 typedef unsigned short atm_backend_t;
-#endif
+#endif /* _UAPI_LINUX_ATM_H */

@@ -1,5 +1,5 @@
-#ifndef __LINUX_GENERIC_NETLINK_H
-#define __LINUX_GENERIC_NETLINK_H
+#ifndef _UAPI__LINUX_GENERIC_NETLINK_H
+#define _UAPI__LINUX_GENERIC_NETLINK_H
 
 #include <linux/types.h>
 #include <linux/netlink.h>
@@ -81,4 +81,4 @@ enum {
 #define CTRL_ATTR_MCAST_GRP_MAX (__CTRL_ATTR_MCAST_GRP_MAX - 1)
 
 
-#endif	/* __LINUX_GENERIC_NETLINK_H */
+#endif /* _UAPI__LINUX_GENERIC_NETLINK_H */

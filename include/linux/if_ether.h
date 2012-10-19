@@ -18,8 +18,8 @@
  *		2 of the License, or (at your option) any later version.
  */
 
-#ifndef _LINUX_IF_ETHER_H
-#define _LINUX_IF_ETHER_H
+#ifndef _UAPI_LINUX_IF_ETHER_H
+#define _UAPI_LINUX_IF_ETHER_H
 
 #include <linux/types.h>
 
@@ -132,4 +132,4 @@ struct ethhdr {
 } __attribute__((packed));
 
 
-#endif	/* _LINUX_IF_ETHER_H */
+#endif /* _UAPI_LINUX_IF_ETHER_H */

@@ -1,5 +1,5 @@
-#ifndef _IF_TUNNEL_H_
-#define _IF_TUNNEL_H_
+#ifndef _UAPI_IF_TUNNEL_H_
+#define _UAPI_IF_TUNNEL_H_
 
 #include <linux/types.h>
 #include <asm/byteorder.h>
@@ -93,4 +93,4 @@ enum {
 };
 
 #define IFLA_VTI_MAX	(__IFLA_VTI_MAX - 1)
-#endif /* _IF_TUNNEL_H_ */
+#endif /* _UAPI_IF_TUNNEL_H_ */

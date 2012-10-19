@@ -12,8 +12,8 @@
  * 	Port numbers are stored in HOST byte order.
  */
 
-#ifndef _IPTABLES_H
-#define _IPTABLES_H
+#ifndef _UAPI_IPTABLES_H
+#define _UAPI_IPTABLES_H
 
 #include <linux/types.h>
 
@@ -224,4 +224,4 @@ ipt_get_target(struct ipt_entry *e)
 /*
  *	Main firewall chains definitions and global var's definitions.
  */
-#endif /* _IPTABLES_H */
+#endif /* _UAPI_IPTABLES_H */

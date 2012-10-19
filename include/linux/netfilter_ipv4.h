@@ -1,9 +1,9 @@
-#ifndef __LINUX_IP_NETFILTER_H
-#define __LINUX_IP_NETFILTER_H
-
 /* IPv4-specific defines for netfilter. 
  * (C)1998 Rusty Russell -- This code is GPL.
  */
+#ifndef _UAPI__LINUX_IP_NETFILTER_H
+#define _UAPI__LINUX_IP_NETFILTER_H
+
 
 #include <linux/netfilter.h>
 
@@ -76,4 +76,4 @@ enum nf_ip_hook_priorities {
 #define SO_ORIGINAL_DST 80
 
 
-#endif /*__LINUX_IP_NETFILTER_H*/
+#endif /* _UAPI__LINUX_IP_NETFILTER_H */

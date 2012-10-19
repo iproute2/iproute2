@@ -1,5 +1,5 @@
-#ifndef __LINUX_RTNETLINK_H
-#define __LINUX_RTNETLINK_H
+#ifndef _UAPI__LINUX_RTNETLINK_H
+#define _UAPI__LINUX_RTNETLINK_H
 
 #include <linux/types.h>
 #include <linux/netlink.h>
@@ -607,4 +607,4 @@ struct tcamsg {
 
 
 
-#endif	/* __LINUX_RTNETLINK_H */
+#endif /* _UAPI__LINUX_RTNETLINK_H */

@@ -22,8 +22,8 @@
  *
  *		Moved to /usr/include/linux for NET3
  */
-#ifndef _LINUX_NETDEVICE_H
-#define _LINUX_NETDEVICE_H
+#ifndef _UAPI_LINUX_NETDEVICE_H
+#define _UAPI_LINUX_NETDEVICE_H
 
 #include <linux/if.h>
 #include <linux/if_ether.h>
@@ -50,4 +50,4 @@ enum {
 };
 
 
-#endif	/* _LINUX_NETDEVICE_H */
+#endif /* _UAPI_LINUX_NETDEVICE_H */

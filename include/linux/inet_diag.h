@@ -1,5 +1,5 @@
-#ifndef _INET_DIAG_H_
-#define _INET_DIAG_H_ 1
+#ifndef _UAPI_INET_DIAG_H_
+#define _UAPI_INET_DIAG_H_
 
 #include <linux/types.h>
 
@@ -133,4 +133,4 @@ struct tcpvegas_info {
 };
 
 
-#endif /* _INET_DIAG_H_ */
+#endif /* _UAPI_INET_DIAG_H_ */
