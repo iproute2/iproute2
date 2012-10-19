@@ -139,8 +139,10 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		return -1;
 	}
 	addattr32(n, 1024, IFLA_VXLAN_ID, vni);
-	addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
-	addattr_l(n, 1024, IFLA_VXLAN_LOCAL, &saddr, 4);
+	if (gaddr)
+		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
+	if (saddr)
+		addattr_l(n, 1024, IFLA_VXLAN_LOCAL, &saddr, 4);
 	if (link)
 		addattr32(n, 1024, IFLA_VXLAN_LINK, link);
 	addattr8(n, 1024, IFLA_VXLAN_TTL, ttl);
@@ -179,16 +181,14 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	fprintf(f, "id %u ", vni);
 
 	if (tb[IFLA_VXLAN_GROUP]) {
-		__u32 addr = rta_getattr_u32(tb[IFLA_VXLAN_GROUP]);
-
+		__be32 addr = rta_getattr_u32(tb[IFLA_VXLAN_GROUP]);
 		if (addr)
 			fprintf(f, "group %s ",
 				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
 	}
 
 	if (tb[IFLA_VXLAN_LOCAL]) {
-		unsigned addr = rta_getattr_u32(tb[IFLA_VXLAN_LOCAL]);
-
+		__be32 addr = rta_getattr_u32(tb[IFLA_VXLAN_LOCAL]);
 		if (addr)
 			fprintf(f, "local %s ", 
 				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
