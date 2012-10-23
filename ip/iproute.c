@@ -625,16 +625,20 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 }
 
 
-int parse_one_nh(struct rtattr *rta, struct rtnexthop *rtnh, int *argcp, char ***argvp)
+int parse_one_nh(struct rtmsg *r, struct rtattr *rta, struct rtnexthop *rtnh, int *argcp, char ***argvp)
 {
 	int argc = *argcp;
 	char **argv = *argvp;
 
 	while (++argv, --argc > 0) {
 		if (strcmp(*argv, "via") == 0) {
+			inet_prefix addr;
 			NEXT_ARG();
-			rta_addattr32(rta, 4096, RTA_GATEWAY, get_addr32(*argv));
-			rtnh->rtnh_len += sizeof(struct rtattr) + 4;
+			get_addr(&addr, *argv, r->rtm_family);
+			if (r->rtm_family == AF_UNSPEC)
+				r->rtm_family = addr.family;
+			rta_addattr_l(rta, 4096, RTA_GATEWAY, &addr.data, addr.bytelen);
+			rtnh->rtnh_len += sizeof(struct rtattr) + addr.bytelen;
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			if ((rtnh->rtnh_ifindex = ll_name_to_index(*argv)) == 0) {
@@ -686,7 +690,7 @@ int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r, int argc, char **argv)
 		memset(rtnh, 0, sizeof(*rtnh));
 		rtnh->rtnh_len = sizeof(*rtnh);
 		rta->rta_len += rtnh->rtnh_len;
-		parse_one_nh(rta, rtnh, &argc, &argv);
+		parse_one_nh(r, rta, rtnh, &argc, &argv);
 		rtnh = RTNH_NEXT(rtnh);
 	}
 
