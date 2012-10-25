@@ -1561,9 +1561,76 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	return 0;
 }
 
+static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
+{
+	struct sockaddr_nl nladdr;
+	struct {
+		struct nlmsghdr nlh;
+		struct inet_diag_req_v2 r;
+	} req;
+	char    *bc = NULL;
+	int	bclen;
+	struct msghdr msg;
+	struct rtattr rta;
+	struct iovec iov[3];
+
+	if (family == PF_UNSPEC)
+		return tcpdiag_send(fd, protocol, f);
+
+	memset(&nladdr, 0, sizeof(nladdr));
+	nladdr.nl_family = AF_NETLINK;
+
+	req.nlh.nlmsg_len = sizeof(req);
+	req.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
+	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
+	req.nlh.nlmsg_pid = 0;
+	req.nlh.nlmsg_seq = 123456;
+	memset(&req.r, 0, sizeof(req.r));
+	req.r.sdiag_family = family;
+	req.r.sdiag_protocol = protocol;
+	req.r.idiag_states = f->states;
+	if (show_mem) {
+		req.r.idiag_ext |= (1<<(INET_DIAG_MEMINFO-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_SKMEMINFO-1));
+	}
+
+	if (show_tcpinfo) {
+		req.r.idiag_ext |= (1<<(INET_DIAG_INFO-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_VEGASINFO-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_CONG-1));
+	}
+
+	iov[0] = (struct iovec){
+		.iov_base = &req,
+		.iov_len = sizeof(req)
+	};
+	if (f->f) {
+		bclen = ssfilter_bytecompile(f->f, &bc);
+		rta.rta_type = INET_DIAG_REQ_BYTECODE;
+		rta.rta_len = RTA_LENGTH(bclen);
+		iov[1] = (struct iovec){ &rta, sizeof(rta) };
+		iov[2] = (struct iovec){ bc, bclen };
+		req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+	}
+
+	msg = (struct msghdr) {
+		.msg_name = (void*)&nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = iov,
+		.msg_iovlen = f->f ? 3 : 1,
+	};
+
+	if (sendmsg(fd, &msg, 0) < 0) {
+		close(fd);
+		return -1;
+	}
+
+	return 0;
+}
+
 static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 {
-	int fd;
+	int fd, family;
 	struct sockaddr_nl nladdr;
 	struct msghdr msg;
 	char	buf[8192];
@@ -1572,7 +1639,9 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
 		return -1;
 
-	if (tcpdiag_send(fd, protocol, f))
+	family = PF_INET;
+again:
+	if (sockdiag_send(family, fd, protocol, f))
 		return -1;
 
 	memset(&nladdr, 0, sizeof(nladdr));
@@ -1620,15 +1689,19 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 			    h->nlmsg_seq != 123456)
 				goto skip_it;
 
-			if (h->nlmsg_type == NLMSG_DONE) {
-				close(fd);
-				return 0;
-			}
+			if (h->nlmsg_type == NLMSG_DONE)
+				goto done;
+
 			if (h->nlmsg_type == NLMSG_ERROR) {
 				struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
 				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
 					fprintf(stderr, "ERROR truncated\n");
 				} else {
+					if (family != PF_UNSPEC) {
+						family = PF_UNSPEC;
+						goto again;
+					}
+
 					errno = -err->error;
 					if (errno == EOPNOTSUPP) {
 						close(fd);
@@ -1636,8 +1709,8 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 					}
 					perror("TCPDIAG answers");
 				}
-				close(fd);
-				return 0;
+
+				goto done;
 			}
 			if (!dump_fp) {
 				if (!(f->families & (1<<r->idiag_family))) {
@@ -1663,6 +1736,12 @@ skip_it:
 			exit(1);
 		}
 	}
+done:
+	if (family == PF_INET) {
+		family = PF_INET6;
+		goto again;
+	}
+
 	close(fd);
 	return 0;
 }
