@@ -4,7 +4,7 @@ IPOBJ=ip.o ipaddress.o ipaddrlabel.o iproute.o iprule.o ipnetns.o \
     ipxfrm.o xfrm_state.o xfrm_policy.o xfrm_monitor.o \
     iplink_vlan.o link_veth.o link_gre.o iplink_can.o \
     iplink_macvlan.o iplink_macvtap.o ipl2tp.o link_vti.o \
-    iplink_vxlan.o tcp_metrics.o
+    iplink_vxlan.o tcp_metrics.o iplink_ipoib.o
 
 RTMONOBJ=rtmon.o
 

@@ -50,7 +50,7 @@ ip-link \- network device configuration
 
 .ti -8
 .IR TYPE " := [ "
-.BR vlan " | " veth " | " vcan " | " dummy " | " ifb " | " macvlan " | " can " | " bridge " ]"
+.BR vlan " | " veth " | " vcan " | " dummy " | " ifb " | " macvlan " | " can " | " bridge " | "ipoib" ]"
 
 .ti -8
 .BI "ip link delete " DEVICE
@@ -159,6 +159,9 @@ Link types:
 .sp
 .B bridge
 - Ethernet Bridge device
+.sp
+.B ipoib
+- IP over Infiniband device
 .in -8
 
 .TP
