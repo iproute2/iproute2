@@ -50,7 +50,16 @@ ip-link \- network device configuration
 
 .ti -8
 .IR TYPE " := [ "
-.BR vlan " | " veth " | " vcan " | " dummy " | " ifb " | " macvlan " | " can " | " bridge " | "ipoib" ]"
+.BR bridge " | "
+.BR can " | "
+.BR dummy " | "
+.BR ifb " | "
+.BR ipoib " |"
+.BR macvlan  " | "
+.BR vcan " | "
+.BR veth " | "
+.BR vlan " | "
+.BR vxlan " ]"
 
 .ti -8
 .BI "ip link delete " DEVICE
@@ -136,14 +145,11 @@ specifies the type of the new device.
 Link types:
 
 .in +8
-.B vlan
-- 802.1q tagged virtual LAN interface
+.B bridge
+- Ethernet Bridge device
 .sp
-.B veth
-- Virtual ethernet interface
-.sp
-.B vcan
-- Virtual Local CAN interface
+.B can
+- Controller Area Network interface
 .sp
 .B dummy
 - Dummy network interface
@@ -151,17 +157,23 @@ Link types:
 .B ifb
 - Intermediate Functional Block device
 .sp
-.B macvlan
-- virtual interface base on link layer address (MAC)
-.sp
-.B can
-- Controller Area Network interface
-.sp
-.B bridge
-- Ethernet Bridge device
-.sp
 .B ipoib
 - IP over Infiniband device
+.sp
+.B macvlan
+- Virtual interface base on link layer address (MAC)
+.sp
+.B vcan
+- Virtual Local CAN interface
+.sp
+.B veth
+- Virtual ethernet interface
+.sp
+.BR vlan
+- 802.1q tagged virtual LAN interface
+.sp
+.BR vxlan
+- Virtual eXtended LAN
 .in -8
 
 .TP
