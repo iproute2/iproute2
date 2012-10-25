@@ -1508,6 +1508,9 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	struct rtattr rta;
 	struct iovec iov[3];
 
+	if (protocol == IPPROTO_UDP)
+		return -1;
+
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
 
@@ -1975,6 +1978,10 @@ int dgram_show_line(char *line, const struct filter *f, int family)
 int udp_show(struct filter *f)
 {
 	FILE *fp = NULL;
+
+	if (!getenv("PROC_NET_UDP") && !getenv("PROC_ROOT")
+	    && inet_show_netlink(f, NULL, IPPROTO_UDP) == 0)
+		return 0;
 
 	dg_proto = UDP_PROTO;
 
