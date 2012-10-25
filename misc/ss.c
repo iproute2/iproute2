@@ -1495,9 +1495,8 @@ static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	return 0;
 }
 
-static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
+static int tcpdiag_send(int fd, int protocol, struct filter *f)
 {
-	int fd;
 	struct sockaddr_nl nladdr;
 	struct {
 		struct nlmsghdr nlh;
@@ -1507,11 +1506,7 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 	int	bclen;
 	struct msghdr msg;
 	struct rtattr rta;
-	char	buf[8192];
 	struct iovec iov[3];
-
-	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
-		return -1;
 
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
@@ -1562,6 +1557,26 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 		close(fd);
 		return -1;
 	}
+
+	return 0;
+}
+
+static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
+{
+	int fd;
+	struct sockaddr_nl nladdr;
+	struct msghdr msg;
+	char	buf[8192];
+	struct iovec iov[3];
+
+	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
+		return -1;
+
+	if (tcpdiag_send(fd, protocol, f))
+		return -1;
+
+	memset(&nladdr, 0, sizeof(nladdr));
+	nladdr.nl_family = AF_NETLINK;
 
 	iov[0] = (struct iovec){
 		.iov_base = buf,
