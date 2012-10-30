@@ -98,37 +98,33 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		fprintf(fp, "Deleted ");
 
 	fprintf(fp, "%d: %s ", ifi->ifi_index,
-		tb[IFLA_IFNAME] ? (char*)RTA_DATA(tb[IFLA_IFNAME]) : "<nil>");
+		tb[IFLA_IFNAME] ? rta_getattr_str(tb[IFLA_IFNAME]) : "<nil>");
 
 	if (tb[IFLA_OPERSTATE])
-		print_operstate(fp, *(__u8 *)RTA_DATA(tb[IFLA_OPERSTATE]));
+		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
 
 	if (tb[IFLA_LINK]) {
 		SPRINT_BUF(b1);
-		int iflink = *(int*)RTA_DATA(tb[IFLA_LINK]);
-
+		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
 		if (iflink == 0)
 			fprintf(fp, "@NONE: ");
-		else {
+		else
 			fprintf(fp, "@%s: ",
 				if_indextoname(iflink, b1));
-		}
-	} else {
+	} else
 		fprintf(fp, ": ");
-	}
 
 	print_link_flags(fp, ifi->ifi_flags);
 
 	if (tb[IFLA_MTU])
-		fprintf(fp, "mtu %u ", *(int*)RTA_DATA(tb[IFLA_MTU]));
+		fprintf(fp, "mtu %u ", rta_getattr_u32(tb[IFLA_MTU]));
 
-	if (tb[IFLA_MASTER]) {
+	if (tb[IFLA_MASTER])
 		fprintf(fp, "master %s ",
-			if_indextoname(*(int*)RTA_DATA(tb[IFLA_MASTER]), b1));
-	}
+			if_indextoname(rta_getattr_u32(tb[IFLA_MASTER]), b1));
 
 	if (tb[IFLA_PROTINFO]) {
-		uint8_t state = *(uint8_t *)RTA_DATA(tb[IFLA_PROTINFO]);
+		__u8 state = rta_getattr_u8(tb[IFLA_PROTINFO]);
 		if (state <= BR_STATE_BLOCKING)
 			fprintf(fp, "state %s", port_states[state]);
 		else
