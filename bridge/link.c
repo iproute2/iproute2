@@ -57,7 +57,7 @@ static void print_link_flags(FILE *fp, unsigned flags)
 }
 
 static const char *oper_states[] = {
-	"UNKNOWN", "NOTPRESENT", "DOWN", "LOWERLAYERDOWN", 
+	"UNKNOWN", "NOTPRESENT", "DOWN", "LOWERLAYERDOWN",
 	"TESTING", "DORMANT",	 "UP"
 };
 
@@ -100,17 +100,17 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	fprintf(fp, "%d: %s ", ifi->ifi_index,
 		tb[IFLA_IFNAME] ? (char*)RTA_DATA(tb[IFLA_IFNAME]) : "<nil>");
 
-	if (tb[IFLA_OPERSTATE]) 
+	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, *(__u8 *)RTA_DATA(tb[IFLA_OPERSTATE]));
-	
+
 	if (tb[IFLA_LINK]) {
 		SPRINT_BUF(b1);
 		int iflink = *(int*)RTA_DATA(tb[IFLA_LINK]);
-		
+
 		if (iflink == 0)
 			fprintf(fp, "@NONE: ");
 		else {
-			fprintf(fp, "@%s: ", 
+			fprintf(fp, "@%s: ",
 				if_indextoname(iflink, b1));
 		}
 	} else {
@@ -123,7 +123,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		fprintf(fp, "mtu %u ", *(int*)RTA_DATA(tb[IFLA_MTU]));
 
 	if (tb[IFLA_MASTER]) {
-		fprintf(fp, "master %s ", 
+		fprintf(fp, "master %s ",
 			if_indextoname(*(int*)RTA_DATA(tb[IFLA_MASTER]), b1));
 	}
 

@@ -94,7 +94,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				    ll_index_to_type(r->ndm_ifindex),
 				    b1, sizeof(b1)));
 	}
-	
+
 	if (!filter_index && r->ndm_ifindex)
 		fprintf(fp, "dev %s ", ll_index_to_name(r->ndm_ifindex));
 
@@ -106,7 +106,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				    RTA_DATA(tb[NDA_DST]),
 				    abuf, sizeof(abuf)));
 	}
-		
+
 	if (show_stats && tb[NDA_CACHEINFO]) {
 		struct nda_cacheinfo *ci = RTA_DATA(tb[NDA_CACHEINFO]);
 		int hz = get_user_hz();
@@ -194,7 +194,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_flags |= NTF_SELF;
 		} else if (matches(*argv, "master") == 0) {
 			req.ndm.ndm_flags |= NTF_MASTER;
-		} else if (matches(*argv, "local") == 0|| 
+		} else if (matches(*argv, "local") == 0||
 			   matches(*argv, "permanent") == 0) {
 			req.ndm.ndm_state |= NUD_PERMANENT;
 		} else if (matches(*argv, "temp") == 0) {

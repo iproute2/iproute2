@@ -74,7 +74,7 @@ int accept_msg(const struct sockaddr_nl *who,
 	default:
 		return 0;
 	}
-	
+
 
 }
 
