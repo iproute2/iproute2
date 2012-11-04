@@ -1,0 +1,11 @@
+# Output files
+*.dvi
+*.ps
+*.pdf
+*.html
+
+# Intermediate, scratch, and diagnostic files
+*.log
+*.aux
+*.toc
+*.out
