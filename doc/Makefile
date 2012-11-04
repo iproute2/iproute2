@@ -37,7 +37,10 @@ print: $(PSFILES)
 %.dvi: %.sgml
 	$(SGML2DVI) --output=dvi $<
 
-%.dvi: %.tex
+%.pdf: %.sgml
+	$(SGML2DVI) --output=pdf $<
+
+%.dvi: %.tex preamble.tex SNAPSHOT.tex
 	@set -e; pass=2; echo "Running LaTeX $<"; \
 	while [ `$(LATEX) $< </dev/null 2>&1 | \
 		 grep -c '^\(LaTeX Warning: Label(s) may\|No file \|! Emergency stop\)'` -ge 1 ]; do \
@@ -47,7 +50,7 @@ print: $(PSFILES)
 		echo "Re-running LaTeX $<, $${pass}d pass"; pass=$$[$$pass + 1]; \
 	done
 
-%.pdf: %.tex
+%.pdf: %.tex preamble.tex SNAPSHOT.tex
 	@set -e; pass=2; echo "Running pdfLaTeX $<"; \
 	while [ `pdflatex $< </dev/null 2>&1 | \
 		 grep -c '^\(LaTeX Warning: Label(s) may\|No file \|! Emergency stop\)'` -ge 1 ]; do \
@@ -70,4 +73,4 @@ install:
 	install -m 0644 $(shell echo *.sgml) $(DESTDIR)$(DOCDIR)
 
 clean:
-	rm -f *.aux *.log *.toc $(PSFILES) $(DVIFILES) *.html
+	rm -f *.aux *.log *.toc *.out $(PSFILES) $(DVIFILES) $(PDFFILES) *.html
