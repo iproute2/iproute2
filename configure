@@ -2,6 +2,8 @@
 # This is not an autconf generated configure
 #
 INCLUDE=${1:-"$PWD/include"}
+: ${PKG_CONFIG:=pkg-config}
+echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
 
 # Make a temp directory in build tree.
 TMPDIR=$(mktemp -d config.XXXXXX)
@@ -51,7 +53,7 @@ int main(int argc, char **argv)
 
 EOF
 
-if gcc -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL $(pkg-config xtables --cflags --libs) -ldl >/dev/null 2>&1
+if gcc -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL $(${PKG_CONFIG} xtables --cflags --libs) -ldl >/dev/null 2>&1
 then
 	echo "TC_CONFIG_XT:=y" >>Config
 	echo "using xtables"
@@ -148,7 +150,7 @@ check_ipt()
 
 check_ipt_lib_dir()
 {
-	IPT_LIB_DIR=$(pkg-config --variable=xtlibdir xtables)
+	IPT_LIB_DIR=$(${PKG_CONFIG} --variable=xtlibdir xtables)
 	if [ -n "$IPT_LIB_DIR" ]; then
 		echo $IPT_LIB_DIR
 		echo "IPT_LIB_DIR:=$IPT_LIB_DIR" >> Config
