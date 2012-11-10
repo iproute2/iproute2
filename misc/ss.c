@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <resolv.h>
 #include <dirent.h>
 #include <fnmatch.h>
 #include <getopt.h>

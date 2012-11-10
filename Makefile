@@ -20,10 +20,6 @@ endif
 
 DEFINES+=-DCONFDIR=\"$(CONFDIR)\"
 
-#options if you have a bind>=4.9.4 libresolv (or, maybe, glibc)
-LDLIBS=-lresolv
-ADDLIB=
-
 #options for decnet
 ADDLIB+=dnet_ntop.o dnet_pton.o
 

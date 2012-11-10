@@ -20,7 +20,6 @@
 #include <string.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <resolv.h>
 #include <asm/types.h>
 #include <linux/pkt_sched.h>
 #include <time.h>
