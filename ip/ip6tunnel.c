@@ -60,7 +60,7 @@ static void usage(void)
 		IPV6_DEFAULT_TNL_ENCAP_LIMIT);
 	fprintf(stderr, "       TTL       := 0..255 (default=%d)\n",
 		DEFAULT_TNL_HOP_LIMIT);
-	fprintf(stderr, "       TOS       := { 0x0..0xff | inherit }\n");
+	fprintf(stderr, "       TCLASS    := { 0x0..0xff | inherit }\n");
 	fprintf(stderr, "       FLOWLABEL := { 0x0..0xfffff | inherit }\n");
 	exit(-1);
 }
