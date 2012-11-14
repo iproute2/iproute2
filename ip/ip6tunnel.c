@@ -157,6 +157,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm *p)
 				if (get_u8(&uval, *argv, 0) < -1)
 					invarg("invalid ELIM", *argv);
 				p->encap_limit = uval;
+				p->flags &= ~IP6_TNL_F_IGN_ENCAP_LIMIT;
 			}
 		} else if (strcmp(*argv, "hoplimit") == 0 ||
 			   strcmp(*argv, "ttl") == 0 ||
