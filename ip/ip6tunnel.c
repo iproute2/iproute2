@@ -173,6 +173,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm *p)
 			   matches(*argv, "dsfield") == 0) {
 			__u8 uval;
 			NEXT_ARG();
+			p->flowinfo &= ~IP6_FLOWINFO_TCLASS;
 			if (strcmp(*argv, "inherit") == 0)
 				p->flags |= IP6_TNL_F_USE_ORIG_TCLASS;
 			else {
@@ -185,6 +186,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm *p)
 			   strcmp(*argv, "fl") == 0) {
 			__u32 uval;
 			NEXT_ARG();
+			p->flowinfo &= ~IP6_FLOWINFO_FLOWLABEL;
 			if (strcmp(*argv, "inherit") == 0)
 				p->flags |= IP6_TNL_F_USE_ORIG_FLOWLABEL;
 			else {
