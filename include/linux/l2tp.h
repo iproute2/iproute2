@@ -4,8 +4,8 @@
  * Author: James Chapman <jchapman@katalix.com>
  */
 
-#ifndef _UAPI_LINUX_L2TP_H_
-#define _UAPI_LINUX_L2TP_H_
+#ifndef _LINUX_L2TP_H_
+#define _LINUX_L2TP_H_
 
 #include <linux/types.h>
 #include <linux/socket.h>
@@ -175,4 +175,4 @@ enum l2tp_seqmode {
 #define L2TP_GENL_NAME		"l2tp"
 #define L2TP_GENL_VERSION	0x1
 
-#endif /* _UAPI_LINUX_L2TP_H_ */
+#endif /* _LINUX_L2TP_H_ */
