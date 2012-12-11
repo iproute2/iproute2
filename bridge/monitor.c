@@ -68,6 +68,12 @@ int accept_msg(const struct sockaddr_nl *who,
 			fprintf(fp, "[NEIGH]");
 		return print_fdb(who, n, arg);
 
+	case RTM_NEWMDB:
+	case RTM_DELMDB:
+		if (prefix_banner)
+			fprintf(fp, "[MDB]");
+		return print_mdb(who, n, arg);
+
 	case 15:
 		return show_mark(fp, n);
 
@@ -84,6 +90,7 @@ int do_monitor(int argc, char **argv)
 	unsigned groups = ~RTMGRP_TC;
 	int llink=0;
 	int lneigh=0;
+	int lmdb=0;
 
 	rtnl_close(&rth);
 
@@ -96,6 +103,9 @@ int do_monitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "fdb") == 0) {
 			lneigh = 1;
+			groups = 0;
+		} else if (matches(*argv, "mdb") == 0) {
+			lmdb = 1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
@@ -114,6 +124,10 @@ int do_monitor(int argc, char **argv)
 
 	if (lneigh) {
 		groups |= nl_mgrp(RTNLGRP_NEIGH);
+	}
+
+	if (lmdb) {
+		groups |= nl_mgrp(RTNLGRP_MDB);
 	}
 
 	if (file) {

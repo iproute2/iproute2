@@ -82,8 +82,8 @@ int print_mdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	int len = n->nlmsg_len;
 	struct rtattr * tb[MDBA_MAX+1];
 
-	if (n->nlmsg_type != RTM_GETMDB) {
-		fprintf(stderr, "Not RTM_GETMDB: %08x %08x %08x\n",
+	if (n->nlmsg_type != RTM_GETMDB && n->nlmsg_type != RTM_NEWMDB && n->nlmsg_type != RTM_DELMDB) {
+		fprintf(stderr, "Not RTM_GETMDB, RTM_NEWMDB or RTM_DELMDB: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 
 		return 0;
