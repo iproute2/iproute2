@@ -28,6 +28,7 @@ int filter_index;
 
 static void usage(void)
 {
+	fprintf(stderr, "Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP\n");
 	fprintf(stderr, "       bridge mdb {show} [ dev DEV ]\n");
 	exit(-1);
 }
@@ -153,11 +154,86 @@ static int mdb_show(int argc, char **argv)
 	return 0;
 }
 
+static int mdb_modify(int cmd, int flags, int argc, char **argv)
+{
+	struct {
+		struct nlmsghdr 	n;
+		struct br_port_msg	bpm;
+		char   			buf[1024];
+	} req;
+	struct br_mdb_entry entry;
+	char *d = NULL, *p = NULL, *grp = NULL;
+
+	memset(&req, 0, sizeof(req));
+	memset(&entry, 0, sizeof(entry));
+
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_port_msg));
+	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
+	req.n.nlmsg_type = cmd;
+	req.bpm.family = PF_BRIDGE;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			d = *argv;
+		} else if (strcmp(*argv, "grp") == 0) {
+			NEXT_ARG();
+			grp = *argv;
+		} else {
+			if (strcmp(*argv, "port") == 0) {
+				NEXT_ARG();
+				p = *argv;
+			}
+			if (matches(*argv, "help") == 0)
+				usage();
+		}
+		argc--; argv++;
+	}
+
+	if (d == NULL || grp == NULL || p == NULL) {
+		fprintf(stderr, "Device, group address and port name are required arguments.\n");
+		exit(-1);
+	}
+
+	req.bpm.ifindex = ll_name_to_index(d);
+	if (req.bpm.ifindex == 0) {
+		fprintf(stderr, "Cannot find device \"%s\"\n", d);
+		return -1;
+	}
+
+	entry.ifindex = ll_name_to_index(p);
+	if (entry.ifindex == 0) {
+		fprintf(stderr, "Cannot find device \"%s\"\n", p);
+		return -1;
+	}
+
+	if (!inet_pton(AF_INET, grp, &entry.addr.u.ip4)) {
+		if (!inet_pton(AF_INET6, grp, &entry.addr.u.ip6)) {
+			fprintf(stderr, "Invalid address \"%s\"\n", grp);
+			return -1;
+		} else
+			entry.addr.proto = htons(ETH_P_IPV6);
+	} else
+		entry.addr.proto = htons(ETH_P_IP);
+
+	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
+
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+		exit(2);
+
+	return 0;
+}
+
 int do_mdb(int argc, char **argv)
 {
 	ll_init_map(&rth);
 
 	if (argc > 0) {
+		if (matches(*argv, "add") == 0)
+			return mdb_modify(RTM_NEWMDB, NLM_F_CREATE|NLM_F_EXCL, argc-1, argv+1);
+		if (matches(*argv, "delete") == 0)
+			return mdb_modify(RTM_DELMDB, 0, argc-1, argv+1);
+
 		if (matches(*argv, "show") == 0 ||
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
