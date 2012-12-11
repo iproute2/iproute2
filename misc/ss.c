@@ -105,7 +105,7 @@ struct filter
 };
 
 struct filter default_filter = {
-	.dbs	=  (1<<TCP_DB),
+	.dbs	=  ~0,
 	.states = SS_ALL & ~((1<<SS_LISTEN)|(1<<SS_CLOSE)|(1<<SS_TIME_WAIT)|(1<<SS_SYN_RECV)),
 	.families= (1<<AF_INET)|(1<<AF_INET6),
 };
