@@ -67,7 +67,8 @@ int accept_msg(const struct sockaddr_nl *who,
 		print_addrlabel(who, n, arg);
 		return 0;
 	}
-	if (n->nlmsg_type == RTM_NEWNEIGH || n->nlmsg_type == RTM_DELNEIGH) {
+	if (n->nlmsg_type == RTM_NEWNEIGH || n->nlmsg_type == RTM_DELNEIGH ||
+	    n->nlmsg_type == RTM_GETNEIGH) {
 		if (prefix_banner)
 			fprintf(fp, "[NEIGH]");
 		print_neigh(who, n, arg);

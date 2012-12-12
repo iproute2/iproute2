@@ -26,6 +26,8 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... vxlan id VNI [ group ADDR ] [ local ADDR ]\n");
 	fprintf(stderr, "                 [ ttl TTL ] [ tos TOS ] [ dev PHYS_DEV ]\n");
 	fprintf(stderr, "                 [ port MIN MAX ] [ [no]learning ]\n");
+	fprintf(stderr, "                 [ [no]proxy ] [ [no]rsc ]\n");
+	fprintf(stderr, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: VNI := 0-16777215\n");
 	fprintf(stderr, "       ADDR := { IP_ADDRESS | any }\n");
@@ -44,6 +46,10 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 tos = 0;
 	__u8 ttl = 0;
 	__u8 learning = 1;
+	__u8 proxy = 0;
+	__u8 rsc = 0;
+	__u8 l2miss = 0;
+	__u8 l3miss = 0;
 	__u8 noage = 0;
 	__u32 age = 0;
 	__u32 maxaddr = 0;
@@ -123,6 +129,22 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			learning = 0;
 		} else if (!matches(*argv, "learning")) {
 			learning = 1;
+		} else if (!matches(*argv, "noproxy")) {
+			proxy = 0;
+		} else if (!matches(*argv, "proxy")) {
+			proxy = 1;
+		} else if (!matches(*argv, "norsc")) {
+			rsc = 0;
+		} else if (!matches(*argv, "rsc")) {
+			rsc = 1;
+		} else if (!matches(*argv, "nol2miss")) {
+			l2miss = 0;
+		} else if (!matches(*argv, "l2miss")) {
+			l2miss = 1;
+		} else if (!matches(*argv, "nol3miss")) {
+			l3miss = 0;
+		} else if (!matches(*argv, "l3miss")) {
+			l3miss = 1;
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -148,6 +170,10 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	addattr8(n, 1024, IFLA_VXLAN_TTL, ttl);
 	addattr8(n, 1024, IFLA_VXLAN_TOS, tos);
 	addattr8(n, 1024, IFLA_VXLAN_LEARNING, learning);
+	addattr8(n, 1024, IFLA_VXLAN_PROXY, proxy);
+	addattr8(n, 1024, IFLA_VXLAN_RSC, rsc);
+	addattr8(n, 1024, IFLA_VXLAN_L2MISS, l2miss);
+	addattr8(n, 1024, IFLA_VXLAN_L3MISS, l3miss);
 	if (noage)
 		addattr32(n, 1024, IFLA_VXLAN_AGEING, 0);
 	else if (age)
@@ -190,7 +216,7 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VXLAN_LOCAL]) {
 		__be32 addr = rta_getattr_u32(tb[IFLA_VXLAN_LOCAL]);
 		if (addr)
-			fprintf(f, "local %s ", 
+			fprintf(f, "local %s ",
 				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
 	}
 
@@ -208,12 +234,24 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		const struct ifla_vxlan_port_range *r
 			= RTA_DATA(tb[IFLA_VXLAN_PORT_RANGE]);
 		fprintf(f, "port %u %u ", ntohs(r->low), ntohs(r->high));
-	}	
+	}
 
 	if (tb[IFLA_VXLAN_LEARNING] &&
 	    !rta_getattr_u8(tb[IFLA_VXLAN_LEARNING]))
 		fputs("nolearning ", f);
-	
+
+	if (tb[IFLA_VXLAN_PROXY] && rta_getattr_u8(tb[IFLA_VXLAN_PROXY]))
+		fputs("proxy ", f);
+
+	if (tb[IFLA_VXLAN_RSC] && rta_getattr_u8(tb[IFLA_VXLAN_RSC]))
+		fputs("rsc ", f);
+
+	if (tb[IFLA_VXLAN_L2MISS] && rta_getattr_u8(tb[IFLA_VXLAN_L2MISS]))
+		fputs("l2miss ", f);
+
+	if (tb[IFLA_VXLAN_L3MISS] && rta_getattr_u8(tb[IFLA_VXLAN_L3MISS]))
+		fputs("l3miss ", f);
+
 	if (tb[IFLA_VXLAN_TOS] &&
 	    (tos = rta_getattr_u8(tb[IFLA_VXLAN_TOS]))) {
 		if (tos == 1)
