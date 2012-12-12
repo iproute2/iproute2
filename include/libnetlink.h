@@ -8,6 +8,7 @@
 #include <linux/if_link.h>
 #include <linux/if_addr.h>
 #include <linux/neighbour.h>
+#include <linux/netconf.h>
 
 struct rtnl_handle
 {

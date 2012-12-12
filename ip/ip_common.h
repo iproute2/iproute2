@@ -25,6 +25,8 @@ extern int print_prefix(const struct sockaddr_nl *who,
 			struct nlmsghdr *n, void *arg);
 extern int print_rule(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg);
+extern int print_netconf(const struct sockaddr_nl *who,
+			 struct nlmsghdr *n, void *arg);
 extern int do_ipaddr(int argc, char **argv);
 extern int do_ipaddrlabel(int argc, char **argv);
 extern int do_iproute(int argc, char **argv);
@@ -43,6 +45,7 @@ extern int do_netns(int argc, char **argv);
 extern int do_xfrm(int argc, char **argv);
 extern int do_ipl2tp(int argc, char **argv);
 extern int do_tcp_metrics(int argc, char **argv);
+extern int do_ipnetconf(int argc, char **argv);
 
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 {

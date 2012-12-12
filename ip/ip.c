@@ -85,6 +85,7 @@ static const struct cmd {
 	{ "mroute",	do_multiroute },
 	{ "mrule",	do_multirule },
 	{ "netns",	do_netns },
+	{ "netconf",	do_ipnetconf },
 	{ "help",	do_help },
 	{ 0 }
 };

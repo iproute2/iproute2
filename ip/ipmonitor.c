@@ -85,6 +85,12 @@ int accept_msg(const struct sockaddr_nl *who,
 		print_rule(who, n, arg);
 		return 0;
 	}
+	if (n->nlmsg_type == RTM_NEWNETCONF) {
+		if (prefix_banner)
+			fprintf(fp, "[NETCONF]");
+		print_netconf(who, n, arg);
+		return 0;
+	}
 	if (n->nlmsg_type == 15) {
 		char *tstr;
 		time_t secs = ((__u32*)NLMSG_DATA(n))[0];
@@ -118,6 +124,7 @@ int do_ipmonitor(int argc, char **argv)
 	int lroute=0;
 	int lprefix=0;
 	int lneigh=0;
+	int lnetconf=0;
 
 	rtnl_close(&rth);
 	ipaddr_reset_filter(1);
@@ -142,6 +149,9 @@ int do_ipmonitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "neigh") == 0) {
 			lneigh = 1;
+			groups = 0;
+		} else if (matches(*argv, "netconf") == 0) {
+			lnetconf = 1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
@@ -175,6 +185,12 @@ int do_ipmonitor(int argc, char **argv)
 	}
 	if (lneigh) {
 		groups |= nl_mgrp(RTNLGRP_NEIGH);
+	}
+	if (lnetconf) {
+		if (!preferred_family || preferred_family == AF_INET)
+			groups |= nl_mgrp(RTNLGRP_IPV4_NETCONF);
+		if (!preferred_family || preferred_family == AF_INET6)
+			groups |= nl_mgrp(RTNLGRP_IPV6_NETCONF);
 	}
 	if (file) {
 		FILE *fp;
