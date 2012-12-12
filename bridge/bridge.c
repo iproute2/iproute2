@@ -43,6 +43,7 @@ static const struct cmd {
 	int (*func)(int argc, char **argv);
 } cmds[] = {
 	{ "fdb", 	do_fdb },
+	{ "mdb", 	do_mdb },
 	{ "monitor",	do_monitor },
 	{ "help",	do_help },
 	{ 0 }
