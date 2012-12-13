@@ -1,4 +1,4 @@
-.TH IP\-LINK 8 "20 Dec 2011" "iproute2" "Linux"
+.TH IP\-LINK 8 "13 Dec 2012" "iproute2" "Linux"
 .SH "NAME"
 ip-link \- network device configuration
 .SH "SYNOPSIS"
@@ -59,7 +59,10 @@ ip-link \- network device configuration
 .BR vcan " | "
 .BR veth " | "
 .BR vlan " | "
-.BR vxlan " ]"
+.BR vxlan " |"
+.BR ip6tnl " |"
+.BR ipip " |"
+.BR sit " ]"
 
 .ti -8
 .BI "ip link delete " DEVICE
@@ -174,6 +177,15 @@ Link types:
 .sp
 .BR vxlan
 - Virtual eXtended LAN
+.sp
+.BR ip6tnl
+- Virtual tunnel interface IPv4|IPv6 over IPv6
+.sp
+.BR ipip
+- Virtual tunnel interface IPv4 over IPv4
+.sp
+.BR sit
+- Virtual tunnel interface IPv6 over IPv4
 .in -8
 
 .TP
