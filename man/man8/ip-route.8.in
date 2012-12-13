@@ -1,4 +1,4 @@
-.TH IP\-ROUTE 8 "20 Dec 2011" "iproute2" "Linux"
+.TH IP\-ROUTE 8 "13 Dec 2012" "iproute2" "Linux"
 .SH "NAME"
 ip-route \- routing table management
 .SH "SYNOPSIS"
@@ -7,7 +7,7 @@ ip-route \- routing table management
 .in +8
 .ti -8
 .B ip
-.RI "[ " OPTIONS " ]"
+.RI "[ " ip-OPTIONS " ]"
 .B route
 .RI " { " COMMAND " | "
 .BR help " }"
