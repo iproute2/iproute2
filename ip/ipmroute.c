@@ -36,6 +36,8 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip mroute show [ PREFIX ] [ from PREFIX ] [ iif DEVICE ]\n");
+	fprintf(stderr, "                      [ table TABLE_ID ]\n");
+	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
 #if 0
 	fprintf(stderr, "Usage: ip mroute [ add | del ] DESTINATION from SOURCE [ iif DEVICE ] [ oif DEVICE ]\n");
 #endif

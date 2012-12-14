@@ -1,4 +1,4 @@
-.TH IP\-MROUTE 8 "20 Dec 2011" "iproute2" "Linux"
+.TH IP\-MROUTE 8 "13 Dec 2012" "iproute2" "Linux"
 .SH "NAME"
 ip-mroute \- multicast routing cache management
 .SH "SYNOPSIS"
@@ -6,12 +6,15 @@ ip-mroute \- multicast routing cache management
 .ad l
 .in +8
 .ti -8
-.BR "ip mroute show" " ["
+.BR "ip " " [ ip-OPTIONS ] " "mroute show" " [ [ "
+.BR " to " " ] "
 .IR PREFIX " ] [ "
 .B  from
 .IR PREFIX " ] [ "
 .B  iif
-.IR DEVICE " ]"
+.IR DEVICE " ] [ "
+.B table
+.IR TABLE_ID " ] "
 
 .SH DESCRIPTION
 .B mroute
@@ -41,6 +44,11 @@ the interface on which multicast packets are received.
 .TP
 .BI from " PREFIX"
 the prefix selecting the IP source addresses of the multicast route.
+
+.TP
+.BI table " TABLE_ID"
+the table id selecting the multicast table. It can be
+.BR local ", " main ", " default ", " all " or a number."
 
 .SH SEE ALSO
 .br
