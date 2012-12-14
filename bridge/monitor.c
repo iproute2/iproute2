@@ -31,7 +31,7 @@ int prefix_banner;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge monitor\n");
+	fprintf(stderr, "Usage: bridge monitor [file | link | fdb | mdb | all]\n");
 	exit(-1);
 }
 
