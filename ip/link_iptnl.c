@@ -298,10 +298,10 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		fprintf(f, "nopmtudisc ");
 
 	if (tb[IFLA_IPTUN_FLAGS]) {
-	       __u16 iflags = rta_getattr_u16(tb[IFLA_IPTUN_FLAGS]);
+		__u16 iflags = rta_getattr_u16(tb[IFLA_IPTUN_FLAGS]);
 
-	      if (iflags & SIT_ISATAP)
-		      fprintf(f, "isatap ");
+		if (iflags & SIT_ISATAP)
+			fprintf(f, "isatap ");
 	}
 
 	if (tb[IFLA_IPTUN_6RD_PREFIXLEN] &&
@@ -314,12 +314,12 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 
 		printf("6rd-prefix %s/%u ",
 		       inet_ntop(AF_INET6, RTA_DATA(tb[IFLA_IPTUN_6RD_PREFIX]),
-			         s1, sizeof(s1)),
+				 s1, sizeof(s1)),
 		       prefixlen);
 		if (relayprefix) {
 			printf("6rd-relay_prefix %s/%u ",
 			       format_host(AF_INET, 4, &relayprefix, s1,
-				           sizeof(s1)),
+					   sizeof(s1)),
 			       relayprefixlen);
 		}
 	}
