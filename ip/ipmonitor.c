@@ -43,10 +43,26 @@ int accept_msg(const struct sockaddr_nl *who,
 		print_timestamp(fp);
 
 	if (n->nlmsg_type == RTM_NEWROUTE || n->nlmsg_type == RTM_DELROUTE) {
-		if (prefix_banner)
-			fprintf(fp, "[ROUTE]");
-		print_route(who, n, arg);
-		return 0;
+		struct rtmsg *r = NLMSG_DATA(n);
+		int len = n->nlmsg_len - NLMSG_LENGTH(sizeof(*r));
+
+		if (len < 0) {
+			fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+			return -1;
+		}
+
+		if (r->rtm_family == RTNL_FAMILY_IPMR ||
+		    r->rtm_family == RTNL_FAMILY_IP6MR) {
+			if (prefix_banner)
+				fprintf(fp, "[MROUTE]");
+			print_mroute(who, n, arg);
+			return 0;
+		} else {
+			if (prefix_banner)
+				fprintf(fp, "[ROUTE]");
+			print_route(who, n, arg);
+			return 0;
+		}
 	}
 	if (n->nlmsg_type == RTM_NEWLINK || n->nlmsg_type == RTM_DELLINK) {
 		ll_remember_index(who, n, NULL);
@@ -123,6 +139,7 @@ int do_ipmonitor(int argc, char **argv)
 	int llink=0;
 	int laddr=0;
 	int lroute=0;
+	int lmroute=0;
 	int lprefix=0;
 	int lneigh=0;
 	int lnetconf=0;
@@ -130,6 +147,7 @@ int do_ipmonitor(int argc, char **argv)
 	rtnl_close(&rth);
 	ipaddr_reset_filter(1);
 	iproute_reset_filter();
+	ipmroute_reset_filter();
 	ipneigh_reset_filter();
 
 	while (argc > 0) {
@@ -144,6 +162,9 @@ int do_ipmonitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "route") == 0) {
 			lroute=1;
+			groups = 0;
+		} else if (matches(*argv, "mroute") == 0) {
+			lmroute=1;
 			groups = 0;
 		} else if (matches(*argv, "prefix") == 0) {
 			lprefix=1;
@@ -179,6 +200,12 @@ int do_ipmonitor(int argc, char **argv)
 			groups |= nl_mgrp(RTNLGRP_IPV4_ROUTE);
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_ROUTE);
+	}
+	if (lmroute) {
+		if (!preferred_family || preferred_family == AF_INET)
+			groups |= nl_mgrp(RTNLGRP_IPV4_MROUTE);
+		if (!preferred_family || preferred_family == AF_INET6)
+			groups |= nl_mgrp(RTNLGRP_IPV6_MROUTE);
 	}
 	if (lprefix) {
 		if (!preferred_family || preferred_family == AF_INET6)

@@ -16,11 +16,14 @@ extern int ipaddr_list_link(int argc, char **argv);
 extern int iproute_monitor(int argc, char **argv);
 extern void iplink_usage(void) __attribute__((noreturn));
 extern void iproute_reset_filter(void);
+extern void ipmroute_reset_filter(void);
 extern void ipaddr_reset_filter(int);
 extern void ipneigh_reset_filter(void);
 extern void ipntable_reset_filter(void);
 extern int print_route(const struct sockaddr_nl *who,
 		       struct nlmsghdr *n, void *arg);
+extern int print_mroute(const struct sockaddr_nl *who,
+			struct nlmsghdr *n, void *arg);
 extern int print_prefix(const struct sockaddr_nl *who,
 			struct nlmsghdr *n, void *arg);
 extern int print_rule(const struct sockaddr_nl *who,
