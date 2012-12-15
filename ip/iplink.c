@@ -84,7 +84,7 @@ void iplink_usage(void)
 	if (iplink_have_newlink()) {
 		fprintf(stderr, "\n");
 		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | can |\n");
-		fprintf(stderr, "          bridge | ipoib | ip6tnl | ipip | sit }\n");
+		fprintf(stderr, "          bridge | ipoib | ip6tnl | ipip | sit | vxlan }\n");
 	}
 	exit(-1);
 }
