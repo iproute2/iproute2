@@ -10,7 +10,9 @@ trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
 check_toolchain()
 {
 : ${PKG_CONFIG:=pkg-config}
+: ${AR=ar}
 : ${CC=gcc}
+echo "AR:=${AR}" >>Config
 echo "CC:=${CC}" >>Config
 echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
 }
