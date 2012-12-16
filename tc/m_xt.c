@@ -118,6 +118,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	struct xtables_target *m = NULL;
 	struct ipt_entry fw;
 	struct rtattr *tail;
+
 	int c;
 	int rargc = *argc_p;
 	char **argv = *argv_p;
@@ -126,6 +127,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	int size = 0;
 	int iok = 0, ok = 0;
 	__u32 hook = 0, index = 0;
+	struct option *opts = NULL;
 
 	xtables_init_all(&tcipt_globals, NFPROTO_IPV4);
 	set_lib_dir();
@@ -158,14 +160,22 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 					printf(" %s error \n", m->name);
 					return -1;
 				}
-				tcipt_globals.opts =
-				    xtables_merge_options(
 #if (XTABLES_VERSION_CODE >= 6)
-				        tcipt_globals.orig_opts,
+			opts = xtables_options_xfrm(tcipt_globals.orig_opts,
+						    tcipt_globals.opts,
+						    m->x6_options,
+						    &m->option_offset);
+#else
+			opts = xtables_merge_options(tcipt_globals.orig_opts,
+						     tcipt_globals.opts,
+						     m->extra_opts,
+						     &m->option_offset);
 #endif
-				        tcipt_globals.opts,
-				        m->extra_opts,
-				        &m->option_offset);
+			if (opts == NULL) {
+				fprintf(stderr, " failed to find aditional options for target %s\n\n", optarg);
+				return -1;
+			} else
+				tcipt_globals.opts = opts;
 			} else {
 				fprintf(stderr," failed to find target %s\n\n", optarg);
 				return -1;
@@ -175,17 +185,21 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 
 		default:
 			memset(&fw, 0, sizeof (fw));
-			if (m) {
-				m->parse(c - m->option_offset, argv, 0,
-					 &m->tflags, NULL, &m->t);
+#if (XTABLES_VERSION_CODE >= 6)
+		if (m != NULL && m->x6_parse != NULL ) {
+			xtables_option_tpcall(c, argv, 0 , m, NULL);
+#else
+		if (m != NULL && m->parse != NULL ) {
+			m->parse(c - m->option_offset, argv, 0, &m->tflags,
+				 NULL, &m->t);
+#endif
 			} else {
-				fprintf(stderr," failed to find target %s\n\n", optarg);
+				fprintf(stderr,"failed to find target %s\n\n", optarg);
 				return -1;
 
 			}
 			ok++;
 			break;
-
 		}
 	}
 
@@ -208,8 +222,13 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	/* check that we passed the correct parameters to the target */
+#if (XTABLES_VERSION_CODE >= 6)
+	if (m)
+		xtables_option_tfcall(m);
+#else
 	if (m && m->final_check)
 		m->final_check(m->tflags);
+#endif
 
 	{
 		struct tcmsg *t = NLMSG_DATA(n);
@@ -271,6 +290,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_IPT_MAX + 1];
 	struct xt_entry_target *t = NULL;
+	struct option *opts = NULL;
 
 	if (arg == NULL)
 		return -1;
@@ -309,14 +329,22 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 				return -1;
 			}
 
-			tcipt_globals.opts =
-			    xtables_merge_options(
 #if (XTABLES_VERSION_CODE >= 6)
-				                  tcipt_globals.orig_opts,
+		opts = xtables_options_xfrm(tcipt_globals.orig_opts,
+					    tcipt_globals.opts,
+					    m->x6_options,
+					    &m->option_offset);
+#else
+		opts = xtables_merge_options(tcipt_globals.orig_opts,
+					     tcipt_globals.opts,
+					     m->extra_opts,
+					     &m->option_offset);
 #endif
-				                  tcipt_globals.opts,
-			                          m->extra_opts,
-			                          &m->option_offset);
+	if (opts == NULL) {
+		fprintf(stderr, " failed to find aditional options for target %s\n\n", optarg);
+		return -1;
+	} else
+		tcipt_globals.opts = opts;
 		} else {
 			fprintf(stderr, " failed to find target %s\n\n",
 				t->u.user.name);
@@ -355,4 +383,3 @@ struct action_util xt_action_util = {
         .parse_aopt = parse_ipt,
         .print_aopt = print_ipt,
 };
-
