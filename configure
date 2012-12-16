@@ -2,13 +2,18 @@
 # This is not an autconf generated configure
 #
 INCLUDE=${1:-"$PWD/include"}
-: ${PKG_CONFIG:=pkg-config}
-: ${CC=gcc}
-echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
 
 # Make a temp directory in build tree.
 TMPDIR=$(mktemp -d config.XXXXXX)
 trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
+
+check_toolchain()
+{
+: ${PKG_CONFIG:=pkg-config}
+: ${CC=gcc}
+echo "CC:=${CC}" >>Config
+echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
+}
 
 check_atm()
 {
@@ -224,6 +229,7 @@ rm -f $TMPDIR/ipsettest.c $TMPDIR/ipsettest
 }
 
 echo "# Generated config based on" $INCLUDE >Config
+check_toolchain
 
 echo "TC schedulers"
 
