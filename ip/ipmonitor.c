@@ -29,7 +29,10 @@ int prefix_banner;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ]\n");
+	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ]\n");
+	fprintf(stderr, "LISTofOBJECTS := link | address | route | mroute | prefix |\n");
+	fprintf(stderr, "                 neigh | netconf\n");
+	fprintf(stderr, "FILE := file FILENAME\n");
 	exit(-1);
 }
 
