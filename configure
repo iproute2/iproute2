@@ -1,5 +1,5 @@
 #! /bin/bash
-# This is not an autconf generated configure
+# This is not an autoconf generated configure
 #
 INCLUDE=${1:-"$PWD/include"}
 
@@ -9,16 +9,16 @@ trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
 
 check_toolchain()
 {
-: ${PKG_CONFIG:=pkg-config}
-: ${AR=ar}
-: ${CC=gcc}
-echo "AR:=${AR}" >>Config
-echo "CC:=${CC}" >>Config
+    : ${PKG_CONFIG:=pkg-config}
+    : ${AR=ar}
+    : ${CC=gcc}
+    echo "AR:=${AR}" >>Config
+    echo "CC:=${CC}" >>Config
 }
 
 check_atm()
 {
-cat >$TMPDIR/atmtest.c <<EOF
+    cat >$TMPDIR/atmtest.c <<EOF
 #include <atm.h>
 int main(int argc, char **argv) {
 	struct atm_qos qos;
@@ -26,21 +26,22 @@ int main(int argc, char **argv) {
 	return 0;
 }
 EOF
-$CC -I$INCLUDE -o $TMPDIR/atmtest $TMPDIR/atmtest.c -latm >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
-    echo "TC_CONFIG_ATM:=y" >>Config
-    echo yes
-else
-    echo no
-fi
-rm -f $TMPDIR/atmtest.c $TMPDIR/atmtest
+
+    $CC -I$INCLUDE -o $TMPDIR/atmtest $TMPDIR/atmtest.c -latm >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
+	echo "TC_CONFIG_ATM:=y" >>Config
+	echo yes
+    else
+	echo no
+    fi
+    rm -f $TMPDIR/atmtest.c $TMPDIR/atmtest
 }
 
 check_xt()
 {
-#check if we have xtables from iptables >= 1.4.5.
-cat >$TMPDIR/ipttest.c <<EOF
+    #check if we have xtables from iptables >= 1.4.5.
+    cat >$TMPDIR/ipttest.c <<EOF
 #include <xtables.h>
 #include <linux/netfilter.h>
 static struct xtables_globals test_globals = {
@@ -57,27 +58,27 @@ int main(int argc, char **argv)
 	xtables_init_all(&test_globals, NFPROTO_IPV4);
 	return 0;
 }
-
 EOF
 
-if $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL $(${PKG_CONFIG} xtables --cflags --libs) -ldl >/dev/null 2>&1
-then
+    if $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL \
+	$(${PKG_CONFIG} xtables --cflags --libs) -ldl >/dev/null 2>&1
+    then
 	echo "TC_CONFIG_XT:=y" >>Config
 	echo "using xtables"
-fi
-rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
+    fi
+    rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
 }
 
 check_xt_old()
 {
-# bail if previous XT checks has already succeded.
-if grep TC_CONFIG_XT Config > /dev/null
-then
+    # bail if previous XT checks has already succeded.
+    if grep -q TC_CONFIG_XT Config
+    then
 	return
-fi
+    fi
 
-#check if we dont need our internal header ..
-cat >$TMPDIR/ipttest.c <<EOF
+    #check if we dont need our internal header ..
+    cat >$TMPDIR/ipttest.c <<EOF
 #include <xtables.h>
 char *lib_dir;
 unsigned int global_option_offset = 0;
@@ -97,26 +98,26 @@ int main(int argc, char **argv) {
 }
 
 EOF
-$CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
 
-if [ $? -eq 0 ]
-then
+    $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
 	echo "TC_CONFIG_XT_OLD:=y" >>Config
 	echo "using old xtables (no need for xt-internal.h)"
-fi
-rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
+    fi
+    rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
 }
 
 check_xt_old_internal_h()
 {
-# bail if previous XT checks has already succeded.
-if grep TC_CONFIG_XT Config > /dev/null
-then
+    # bail if previous XT checks has already succeded.
+    if grep -q TC_CONFIG_XT Config
+    then
 	return
-fi
+    fi
 
-#check if we need our own internal.h
-cat >$TMPDIR/ipttest.c <<EOF
+    #check if we need our own internal.h
+    cat >$TMPDIR/ipttest.c <<EOF
 #include <xtables.h>
 #include "xt-internal.h"
 char *lib_dir;
@@ -137,14 +138,14 @@ int main(int argc, char **argv) {
 }
 
 EOF
-$CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
+	$CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
 
-if [ $? -eq 0 ]
-then
-	echo "using old xtables with xt-internal.h"
-	echo "TC_CONFIG_XT_OLD_H:=y" >>Config
-fi
-rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
+	if [ $? -eq 0 ]
+	then
+	    echo "using old xtables with xt-internal.h"
+	    echo "TC_CONFIG_XT_OLD_H:=y" >>Config
+	fi
+	rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
 }
 
 check_ipt()
@@ -179,7 +180,7 @@ check_ipt_lib_dir()
 
 check_setns()
 {
-cat >$TMPDIR/setnstest.c <<EOF
+    cat >$TMPDIR/setnstest.c <<EOF
 #include <sched.h>
 int main(int argc, char **argv) 
 {
@@ -187,20 +188,20 @@ int main(int argc, char **argv)
 	return 0;
 }
 EOF
-$CC -I$INCLUDE -o $TMPDIR/setnstest $TMPDIR/setnstest.c >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
+    $CC -I$INCLUDE -o $TMPDIR/setnstest $TMPDIR/setnstest.c >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
 	echo "IP_CONFIG_SETNS:=y" >>Config
 	echo "yes"
-else
+    else
 	echo "no"
-fi
-rm -f $TMPDIR/setnstest.c $TMPDIR/setnstest
+    fi
+    rm -f $TMPDIR/setnstest.c $TMPDIR/setnstest
 }
 
 check_ipset()
 {
-cat >$TMPDIR/ipsettest.c <<EOF
+    cat >$TMPDIR/ipsettest.c <<EOF
 #include <linux/netfilter/ipset/ip_set.h>
 #ifndef IP_SET_INVALID
 #define IPSET_DIM_MAX 3
@@ -219,14 +220,14 @@ int main(void)
 #endif
 EOF
 
-if $CC -I$INCLUDE -o $TMPDIR/ipsettest $TMPDIR/ipsettest.c >/dev/null 2>&1
-then
+    if $CC -I$INCLUDE -o $TMPDIR/ipsettest $TMPDIR/ipsettest.c >/dev/null 2>&1
+    then
 	echo "TC_CONFIG_IPSET:=y" >>Config
 	echo "yes"
-else
+    else
 	echo "no"
-fi
-rm -f $TMPDIR/ipsettest.c $TMPDIR/ipsettest
+    fi
+    rm -f $TMPDIR/ipsettest.c $TMPDIR/ipsettest
 }
 
 echo "# Generated config based on" $INCLUDE >Config
