@@ -14,7 +14,6 @@ check_toolchain()
 : ${CC=gcc}
 echo "AR:=${AR}" >>Config
 echo "CC:=${CC}" >>Config
-echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
 }
 
 check_atm()
@@ -231,6 +230,7 @@ rm -f $TMPDIR/ipsettest.c $TMPDIR/ipsettest
 }
 
 echo "# Generated config based on" $INCLUDE >Config
+echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
 check_toolchain
 
 echo "TC schedulers"
