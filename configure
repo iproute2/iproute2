@@ -12,6 +12,7 @@ check_toolchain()
     : ${PKG_CONFIG:=pkg-config}
     : ${AR=ar}
     : ${CC=gcc}
+    echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
     echo "AR:=${AR}" >>Config
     echo "CC:=${CC}" >>Config
 }
@@ -231,7 +232,6 @@ EOF
 }
 
 echo "# Generated config based on" $INCLUDE >Config
-echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
 check_toolchain
 
 echo "TC schedulers"
