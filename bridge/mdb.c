@@ -28,7 +28,7 @@ int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP\n");
+	fprintf(stderr, "Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [permanent | temp]\n");
 	fprintf(stderr, "       bridge mdb {show} [ dev DEV ]\n");
 	exit(-1);
 }
@@ -53,13 +53,15 @@ static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e)
 	SPRINT_BUF(abuf);
 
 	if (e->addr.proto == htons(ETH_P_IP))
-		fprintf(f, "bridge %s port %s group %s\n", ll_index_to_name(ifindex),
+		fprintf(f, "bridge %s port %s group %s %s\n", ll_index_to_name(ifindex),
 			ll_index_to_name(e->ifindex),
-			inet_ntop(AF_INET, &e->addr.u.ip4, abuf, sizeof(abuf)));
+			inet_ntop(AF_INET, &e->addr.u.ip4, abuf, sizeof(abuf)),
+			(e->state & MDB_PERMANENT) ? "permanent" : "temp");
 	else
-		fprintf(f, "bridge %s port %s group %s\n", ll_index_to_name(ifindex),
+		fprintf(f, "bridge %s port %s group %s %s\n", ll_index_to_name(ifindex),
 			ll_index_to_name(e->ifindex),
-			inet_ntop(AF_INET6, &e->addr.u.ip6, abuf, sizeof(abuf)));
+			inet_ntop(AF_INET6, &e->addr.u.ip6, abuf, sizeof(abuf)),
+			(e->state & MDB_PERMANENT) ? "permanent" : "temp");
 }
 
 static void br_print_mdb_entry(FILE *f, int ifindex, struct rtattr *attr)
@@ -179,11 +181,15 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "grp") == 0) {
 			NEXT_ARG();
 			grp = *argv;
+		} else if (strcmp(*argv, "port") == 0) {
+			NEXT_ARG();
+			p = *argv;
+		} else if (strcmp(*argv, "permanent") == 0) {
+			if (cmd == RTM_NEWMDB)
+				entry.state |= MDB_PERMANENT;
+		} else if (strcmp(*argv, "temp") == 0) {
+			;/* nothing */
 		} else {
-			if (strcmp(*argv, "port") == 0) {
-				NEXT_ARG();
-				p = *argv;
-			}
 			if (matches(*argv, "help") == 0)
 				usage();
 		}
