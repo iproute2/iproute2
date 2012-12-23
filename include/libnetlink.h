@@ -1,6 +1,7 @@
 #ifndef __LIBNETLINK_H__
 #define __LIBNETLINK_H__ 1
 
+#include <stdio.h>
 #include <string.h>
 #include <asm/types.h>
 #include <linux/netlink.h>
