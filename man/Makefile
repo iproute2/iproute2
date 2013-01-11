@@ -4,16 +4,10 @@ INSTALLMAN=install -m 0644
 
 SUBDIRS = man3 man7 man8
 
-all:
-	@for subdir in $(SUBDIRS); do $(MAKE) -C $$subdir; done
+all clean install:
+	@for subdir in $(SUBDIRS); do $(MAKE) -C $$subdir $@ || exit $$?; done
 
 distclean: clean
-
-clean:
-	@for subdir in $(SUBDIRS); do $(MAKE) -C $$subdir clean; done
-
-install:
-	@for subdir in $(SUBDIRS); do $(MAKE) -C $$subdir install; done
 
 .PHONY: install clean distclean
 
