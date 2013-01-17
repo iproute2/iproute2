@@ -152,6 +152,12 @@ static int netns_exec(int argc, char **argv)
 		fprintf(stderr, "unshare failed: %s\n", strerror(errno));
 		return -1;
 	}
+	/* Don't let any mounts propogate back to the parent */
+	if (mount("", "/", "none", MS_SLAVE | MS_REC, NULL)) {
+		fprintf(stderr, "mount --make-rslave / failed: %s\n",
+			strerror(errno));
+		return -1;
+	}
 	/* Mount a version of /sys that describes the network namespace */
 	if (umount2("/sys", MNT_DETACH) < 0) {
 		fprintf(stderr, "umount of /sys failed: %s\n", strerror(errno));
