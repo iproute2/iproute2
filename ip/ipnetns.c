@@ -135,8 +135,8 @@ static int netns_exec(int argc, char **argv)
 	snprintf(net_path, sizeof(net_path), "%s/%s", NETNS_RUN_DIR, name);
 	netns = open(net_path, O_RDONLY);
 	if (netns < 0) {
-		fprintf(stderr, "Cannot open network namespace: %s\n",
-			strerror(errno));
+		fprintf(stderr, "Cannot open network namespace %s: %s\n",
+			name, strerror(errno));
 		return EXIT_FAILURE;
 	}
 	if (setns(netns, CLONE_NEWNET) < 0) {
