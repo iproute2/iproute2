@@ -20,6 +20,14 @@ ip-netns \- process network namespace management
 .I NETNSNAME
 
 .ti -8
+.BR "ip netns identify"
+.I PID
+
+.ti -8
+.BR "ip netns pids"
+.I NETNSNAME
+
+.ti -8
 .BR "ip netns exec "
 .I NETNSNAME command ...
 
@@ -72,6 +80,16 @@ point is removed.  If this is the last user of the network namespace the
 network namespace will be freed, otherwise the network namespace
 persists until it has no more users.  ip netns delete may fail if
 the mount point is in use in another mount namespace.
+
+.SS ip netns identify PID - Report network namespaces names for process
+
+This command walks through /var/run/netns and finds all the network
+namespace names for network namespace of the specified process.
+
+.SS ip netns pids NAME - Report processes in the named network namespace
+
+This command walks through proc and finds all of the process who have
+the named network namespace as their primary network namespace.
 
 .SS ip netns exec NAME cmd ... - Run cmd in the named network namespace
 
