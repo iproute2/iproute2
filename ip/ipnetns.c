@@ -208,6 +208,7 @@ static int netns_add(int argc, char **argv)
 	char netns_path[MAXPATHLEN];
 	const char *name;
 	int fd;
+	int made_netns_run_dir_mount = 0;
 
 	if (argc < 1) {
 		fprintf(stderr, "No netns name specified\n");
@@ -219,6 +220,29 @@ static int netns_add(int argc, char **argv)
 
 	/* Create the base netns directory if it doesn't exist */
 	mkdir(NETNS_RUN_DIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+
+	/* Make it possible for network namespace mounts to propogate between
+	 * mount namespaces.  This makes it likely that a unmounting a network
+	 * namespace file in one namespace will unmount the network namespace
+	 * file in all namespaces allowing the network namespace to be freed
+	 * sooner.
+	 */
+	while (mount("", NETNS_RUN_DIR, "none", MS_SHARED | MS_REC, NULL)) {
+		/* Fail unless we need to make the mount point */
+		if (errno != EINVAL || made_netns_run_dir_mount) {
+			fprintf(stderr, "mount --make-shared %s failed: %s\n",
+				NETNS_RUN_DIR, strerror(errno));
+			return EXIT_FAILURE;
+		}
+
+		/* Upgrade NETNS_RUN_DIR to a mount point */
+		if (mount(NETNS_RUN_DIR, NETNS_RUN_DIR, "none", MS_BIND, NULL)) {
+			fprintf(stderr, "mount --bind %s %s failed: %s\n",
+				NETNS_RUN_DIR, NETNS_RUN_DIR, strerror(errno));
+			return EXIT_FAILURE;
+		}
+		made_netns_run_dir_mount = 1;
+	}
 
 	/* Create the filesystem state */
 	fd = open(netns_path, O_RDONLY|O_CREAT|O_EXCL, 0);
