@@ -4,7 +4,7 @@ Information:
     http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2
 
 Download:
-    http://devresources.linuxfoundation.org/dev/iproute2/download
+    http://www.kernel.org/pub/linux/utils/net/iproute2/
 
 Repository:
     git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
@@ -37,7 +37,7 @@ contains whether or not ATM is available, etc.
    kernel include files.
 
 Stephen Hemminger
-shemminger@linux-foundation.org
+stephen@networkplumber.org
 
 Alexey Kuznetsov
 kuznet@ms2.inr.ac.ru
