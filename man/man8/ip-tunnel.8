@@ -47,7 +47,6 @@ ip-tunnel - tunnel configuration
 .RB "[ [" no "]" pmtudisc " ]"
 .RB "[ " dev
 .IR PHYS_DEV " ]"
-.RB "[ " "dscp inherit" " ]"
 
 .ti -8
 .IR MODE " := "
@@ -58,8 +57,12 @@ ip-tunnel - tunnel configuration
 .BR any " }"
 
 .ti -8
-.IR TOS " := { " NUMBER " |"
-.BR inherit " }"
+.IR TOS " := { " STRING " | " 00 ".." ff " |"
+.BR inherit " |"
+.BI "inherit/" STRING
+.R " |"
+.BI "inherit/" 00 ".." ff
+.R " }"
 
 .ti -8
 .IR ELIM " := {"
@@ -132,11 +135,21 @@ The default value for IPv6 tunnels is:
 .BI dsfield " T"
 .TP
 .BI tclass " T"
-set a fixed TOS (or traffic class in IPv6)
-.I T
-on tunneled packets.
-The default value is:
-.BR "inherit" .
+set the type of service (IPv4) or traffic class (IPv6) field on
+tunneled packets, which can be specified as either a two-digit
+hex value (e.g. c0) or a predefined string (e.g. internet).
+The value
+.B inherit
+causes the field to be copied from the original IP header. The
+values
+.BI "inherit/" STRING
+or
+.BI "inherit/" 00 ".." ff
+will set the field to
+.I STRING
+or
+.IR 00 ".." ff
+when tunneling non-IP packets. The default value is 00.
 
 .TP
 .BI dev " NAME"
@@ -200,11 +213,6 @@ The
 flag is equivalent to the combination
 .BR "iseq oseq" .
 .B It isn't work. Don't use it.
-
-.TP
-.BR "dscp inherit"
-.RB ( " only IPv6 tunnels " )
-Inherit DS field between inner and outer header.
 
 .TP
 .BI encaplim " ELIM"

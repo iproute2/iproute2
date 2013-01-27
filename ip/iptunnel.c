@@ -41,7 +41,7 @@ static void usage(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: NAME := STRING\n");
 	fprintf(stderr, "       ADDR := { IP_ADDRESS | any }\n");
-	fprintf(stderr, "       TOS  := { NUMBER | inherit }\n");
+	fprintf(stderr, "       TOS  := { STRING | 00..ff | inherit | inherit/STRING | inherit/00..ff }\n");
 	fprintf(stderr, "       TTL  := { 1..255 | inherit }\n");
 	fprintf(stderr, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
 	exit(-1);
@@ -188,14 +188,21 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 		} else if (strcmp(*argv, "tos") == 0 ||
 			   strcmp(*argv, "tclass") == 0 ||
 			   matches(*argv, "dsfield") == 0) {
+			char *dsfield;
 			__u32 uval;
 			NEXT_ARG();
+			dsfield = *argv;
+			strsep(&dsfield, "/");
 			if (strcmp(*argv, "inherit") != 0) {
-				if (rtnl_dsfield_a2n(&uval, *argv))
-					invarg("bad TOS value", *argv);
-				p->iph.tos = uval;
+				dsfield = *argv;
+				p->iph.tos = 0;
 			} else
 				p->iph.tos = 1;
+			if (dsfield) {
+				if (rtnl_dsfield_a2n(&uval, dsfield))
+					invarg("bad TOS value", *argv);
+				p->iph.tos |= uval;
+			}
 		} else {
 			if (strcmp(*argv, "name") == 0) {
 				NEXT_ARG();
