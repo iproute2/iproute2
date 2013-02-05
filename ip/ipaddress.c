@@ -461,12 +461,12 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		}
 	}
 
+	if (do_link && tb[IFLA_PROMISCUITY] && show_details)
+		fprintf(fp, " promiscuity %u ",
+			*(int*)RTA_DATA(tb[IFLA_PROMISCUITY]));
+
 	if (do_link && tb[IFLA_LINKINFO] && show_details)
 		print_linktype(fp, tb[IFLA_LINKINFO]);
-
-	if (do_link && tb[IFLA_PROMISCUITY] && show_details)
-		fprintf(fp, "\n    promiscuity %u ",
-			*(int*)RTA_DATA(tb[IFLA_PROMISCUITY]));
 
 	if (do_link && tb[IFLA_IFALIAS])
 		fprintf(fp,"\n    alias %s", 
