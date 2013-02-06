@@ -140,6 +140,8 @@ m_xt.so: m_xt.c
 m_xt_old.so: m_xt_old.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt_old.so m_xt_old.c $$($(PKG_CONFIG) xtables --cflags --libs)
 
+em_ipset.o: CFLAGS += $$($(PKG_CONFIG) xtables --cflags)
+
 %.yacc.c: %.y
 	$(YACC) $(YACCFLAGS) -o $@ $<
 
