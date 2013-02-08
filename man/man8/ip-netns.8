@@ -48,8 +48,8 @@ descriptor can be used with the
 .B setns(2)
 system call to change the network namespace associated with a task.
 
-The convention for network namespace aware applications is to look
-for global network configuration files first in
+For applications that are aware of network namespaces, the convention
+is to look for global network configuration files first in
 .BR "/etc/netns/" NAME "/"
 then in
 .BR "/etc/".

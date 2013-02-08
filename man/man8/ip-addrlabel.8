@@ -34,12 +34,12 @@ ip-addrlabel \- protocol address label management
 .BR "ip addrlabel" " { " list " | " flush " }"
 
 .SH "DESCRIPTION"
-IPv6 address label is used for address selection
-described in RFC 3484.  Precedence is managed by userspace,
-and only label is stored in kernel.
+IPv6 address labels are used for address selection;
+they are described in RFC 3484.  Precedence is managed by userspace,
+and only the label itself is stored in the kernel.
 
 .SS ip addrlabel add - add an address label
-the command adds an address label entry to the kernel.
+add an address label entry to the kernel.
 .TP
 .BI prefix " PREFIX"
 .TP
@@ -50,15 +50,15 @@ the outgoing interface.
 the label for the prefix.
 0xffffffff is reserved.
 .SS ip addrlabel del - delete an address label
-the command deletes an address label entry in the kernel.
+delete an address label entry from the kernel.
 .B Arguments:
 coincide with the arguments of
 .B ip addrlabel add
-but label is not required.
+but the label is not required.
 .SS ip addrlabel list - list address labels
-the command show contents of address labels.
+list the current address label entries in the kernel.
 .SS ip addrlabel flush - flush address labels
-the command flushes the contents of address labels and it does not restore default settings.
+flush all address labels in the kernel. This does not restore any default settings.
 
 .SH SEE ALSO
 .br

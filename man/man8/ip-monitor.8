@@ -6,8 +6,12 @@ ip-monitor, rtmon \- state monitoring
 .ad l
 .in +8
 .ti -8
-.BR "ip " " [ ip-OPTIONS ] " "monitor" " [ " all " |"
-.IR LISTofOBJECTS " ] [ file " FILENAME " ]
+.BR "ip " " [ "
+.IR ip-OPTIONS " ]"
+.BR  "monitor" " [ " all " |"
+.IR OBJECT-LIST " ] ["
+.BI file " FILENAME "
+]
 .sp
 
 .SH DESCRIPTION
@@ -20,7 +24,9 @@ Namely, the
 command is the first in the command line and then the object list follows:
 
 .BR "ip monitor" " [ " all " |"
-.IR LISTofOBJECTS " ] [ file " FILENAME " ]
+.IR OBJECT-LIST " ] ["
+.BI file " FILENAME "
+]
 
 .I OBJECT-LIST
 is the list of object types that we want to monitor.
@@ -35,11 +41,12 @@ opens RTNETLINK, listens on it and dumps state changes in the format
 described in previous sections.
 
 .P
-If a
-.I FILENAME
-is given, it does not listen on RTNETLINK,
-but opens the file containing RTNETLINK messages saved in binary format
-and dumps them.  Such a history file can be generated with the
+If the
+.BI file
+option is given, the program does not listen on RTNETLINK,
+but opens the given file, and dumps its contents. The file
+should contain RTNETLINK messages saved in binary format.
+Such a file can be generated with the
 .B rtmon
 utility.  This utility has a command line syntax similar to
 .BR "ip monitor" .
@@ -56,7 +63,7 @@ in a startup script, you will be able to view the full history
 later.
 
 .P
-Certainly, it is possible to start
+Nevertheless, it is possible to start
 .B rtmon
 at any time.
 It prepends the history with the state snapshot dumped at the moment

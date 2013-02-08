@@ -47,8 +47,8 @@ utility and exit.
 
 .TP
 .BR "\-s" , " \-stats", " \-statistics"
-output more information.  If the option
-appears twice or more, the amount of information increases.
+output more information.  If this option
+is given multiple times, the amount of information increases.
 As a rule, the information is statistics or some time values.
 
 
@@ -135,7 +135,7 @@ The arguments are the same as with
 
 .SS bridge fdb show - list forwarding entries.
 
-This commands displays current forwarding table.
+This command displays the current forwarding table.
 
 .PP
 With the
@@ -154,7 +154,7 @@ Namely, the
 command is the first in the command line and then the object list follows:
 
 .BR "bridge monitor" " [ " all " |"
-.IR LISTofOBJECTS " ]"
+.IR OBJECT-LIST " ]"
 
 .I OBJECT-LIST
 is the list of object types that we want to monitor.
@@ -186,7 +186,7 @@ based on the bridge to which the coresponding ethernet device is attached.
 
 .SH SEE ALSO
 .BR ip (8)
-.br
+.SH BUGS
 .RB "Please direct bugreports and patches to: " <netdev@vger.kernel.org>
 
 .SH AUTHOR

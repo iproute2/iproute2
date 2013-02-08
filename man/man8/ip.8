@@ -36,24 +36,24 @@ print the version of the
 utility and exit.
 
 .TP
-.BR "\-s" , " \-stats", " \-statistics"
+.BR "\-s" , " \-stats" , " \-statistics"
 output more information.  If the option
 appears twice or more, the amount of information increases.
 As a rule, the information is statistics or some time values.
 
 .TP
-.BR "\-l" , " \-loops"
+.BR "\-l" , " \-loops " <COUNT>
 Specify maximum number of loops the 'ip addr flush' logic
 will attempt before giving up.  The default is 10.
 Zero (0) means loop until all addresses are removed.
 
 .TP
-.BR "\-f" , " \-family"
-followed by protocol family identifier:
-.BR "inet" , " inet6" , "bridge" , "ipx" , "dnet"
+.BR "\-f" , " \-family " <FAMILY>
+Specifies the protocol family to use. The protocol family identifier can be one of
+.BR "inet" , " inet6" , " bridge" , " ipx" , " dnet"
 or
-.BR link ,
-enforce the protocol family to use.  If the option is not present,
+.BR link .
+If this option is not present,
 the protocol family is guessed from other arguments.  If the rest
 of the command line does not give enough information to guess the
 family,
@@ -178,9 +178,9 @@ host addresses.
 
 .PP
 The names of all objects may be written in full or
-abbreviated form, f.e.
+abbreviated form, for exampe
 .B address
-is abbreviated as
+can be abbreviated as
 .B addr
 or just
 .B a.
@@ -230,7 +230,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .br
 .RB "IP Command reference " ip-cref.ps
 .SH REPORTING BUGS
-Report bug to the Network Developers mailing list
+Report any bugs to the Network Developers mailing list
 .B <netdev@vger.kernel.org>
 where the development and maintenance is primarily done.
 You do not have to be subscribed to the list to send a message there.
