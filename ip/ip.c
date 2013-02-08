@@ -57,6 +57,7 @@ static void usage(void)
 static int do_help(int argc, char **argv)
 {
 	usage();
+        return 0;
 }
 
 static const struct cmd {
