@@ -1099,7 +1099,7 @@ static int save_route_prep(void)
 	int ret;
 
 	if (isatty(STDOUT_FILENO)) {
-		fprintf(stderr, "Not sending binary stream to stdout\n");
+		fprintf(stderr, "Not sending a binary stream to stdout\n");
 		return -1;
 	}
 
@@ -1445,7 +1445,7 @@ int iproute_get(int argc, char **argv)
 	}
 
 	if (req.r.rtm_dst_len == 0) {
-		fprintf(stderr, "need at least destination address\n");
+		fprintf(stderr, "need at least a destination address\n");
 		exit(1);
 	}
 

@@ -785,7 +785,7 @@ static int ipadd_save_prep(void)
 	int ret;
 
 	if (isatty(STDOUT_FILENO)) {
-		fprintf(stderr, "Not sending binary stream to stdout\n");
+		fprintf(stderr, "Not sending a binary stream to stdout\n");
 		return -1;
 	}
 

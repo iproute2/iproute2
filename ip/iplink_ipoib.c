@@ -66,7 +66,7 @@ static int ipoib_parse_opt(struct link_util *lu, int argc, char **argv,
 			explain();
 			return -1;
 		} else {
-			fprintf(stderr, "ipoib: what is \"%s\"?\n", *argv);
+			fprintf(stderr, "ipoib: unknown option \"%s\"?\n", *argv);
 			explain();
 			return -1;
 		}

@@ -149,7 +149,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			explain();
 			return -1;
 		} else {
-			fprintf(stderr, "vxlan: what is \"%s\"?\n", *argv);
+			fprintf(stderr, "vxlan: unknown command \"%s\"?\n", *argv);
 			explain();
 			return -1;
 		}

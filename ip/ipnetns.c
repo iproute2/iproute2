@@ -130,7 +130,7 @@ static int netns_exec(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	if (argc < 2) {
-		fprintf(stderr, "No cmd specified\n");
+		fprintf(stderr, "No command specified\n");
 		return EXIT_FAILURE;
 	}
 	name = argv[0];
@@ -138,13 +138,13 @@ static int netns_exec(int argc, char **argv)
 	snprintf(net_path, sizeof(net_path), "%s/%s", NETNS_RUN_DIR, name);
 	netns = open(net_path, O_RDONLY);
 	if (netns < 0) {
-		fprintf(stderr, "Cannot open network namespace %s: %s\n",
+		fprintf(stderr, "Cannot open network namespace \"%s\": %s\n",
 			name, strerror(errno));
 		return EXIT_FAILURE;
 	}
 	if (setns(netns, CLONE_NEWNET) < 0) {
-		fprintf(stderr, "seting the network namespace failed: %s\n",
-			strerror(errno));
+		fprintf(stderr, "seting the network namespace \"%s\" failed: %s\n",
+			name, strerror(errno));
 		return EXIT_FAILURE;
 	}
 
@@ -154,7 +154,7 @@ static int netns_exec(int argc, char **argv)
 	}
 	/* Don't let any mounts propogate back to the parent */
 	if (mount("", "/", "none", MS_SLAVE | MS_REC, NULL)) {
-		fprintf(stderr, "mount --make-rslave / failed: %s\n",
+		fprintf(stderr, "\"mount --make-rslave /\" failed: %s\n",
 			strerror(errno));
 		return EXIT_FAILURE;
 	}
@@ -172,7 +172,7 @@ static int netns_exec(int argc, char **argv)
 	bind_etc(name);
 
 	if (execvp(cmd, argv + 1)  < 0)
-		fprintf(stderr, "exec of %s failed: %s\n",
+		fprintf(stderr, "exec of \"%s\" failed: %s\n",
 			cmd, strerror(errno));
 	return EXIT_FAILURE;
 }
@@ -330,7 +330,7 @@ static int netns_delete(int argc, char **argv)
 	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
 	umount2(netns_path, MNT_DETACH);
 	if (unlink(netns_path) < 0) {
-		fprintf(stderr, "Cannot remove %s: %s\n",
+		fprintf(stderr, "Cannot remove namespace file \"%s\": %s\n",
 			netns_path, strerror(errno));
 		return EXIT_FAILURE;
 	}
@@ -389,14 +389,14 @@ static int netns_add(int argc, char **argv)
 	/* Create the filesystem state */
 	fd = open(netns_path, O_RDONLY|O_CREAT|O_EXCL, 0);
 	if (fd < 0) {
-		fprintf(stderr, "Could not create %s: %s\n",
+		fprintf(stderr, "Cannot not create namespace file \"%s\": %s\n",
 			netns_path, strerror(errno));
 		return EXIT_FAILURE;
 	}
 	close(fd);
 	if (unshare(CLONE_NEWNET) < 0) {
-		fprintf(stderr, "Failed to create a new network namespace: %s\n",
-			strerror(errno));
+		fprintf(stderr, "Failed to create a new network namespace \"%s\": %s\n",
+			name, strerror(errno));
 		goto out_delete;
 	}
 

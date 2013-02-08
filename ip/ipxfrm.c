@@ -1231,7 +1231,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 				uval = htonl(get_addr32(*argv));
 			else {
 				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"key\"\n");
+					fprintf(stderr, "invalid value for \"key\"; it should be an unsigned integer\n");
 					exit(-1);
 				}
 			}

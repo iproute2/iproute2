@@ -60,7 +60,7 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 
 	if (prefix->prefix_family != AF_INET6) {
-		fprintf(stderr, "wrong family %d\n", prefix->prefix_family);
+		fprintf(stderr, "incorrect protocol family: %d\n", prefix->prefix_family);
 		return 0;
 	}
 	if (prefix->prefix_type != ND_OPT_PREFIX_INFORMATION) {
