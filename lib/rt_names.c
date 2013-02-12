@@ -29,12 +29,12 @@
 
 struct rtnl_hash_entry {
 	struct rtnl_hash_entry *next;
-	char *			name;
+	const char *		name;
 	unsigned int		id;
 };
 
 static void
-rtnl_hash_initialize(char *file, struct rtnl_hash_entry **hash, int size)
+rtnl_hash_initialize(const char *file, struct rtnl_hash_entry **hash, int size)
 {
 	struct rtnl_hash_entry *entry;
 	char buf[512];
@@ -73,7 +73,7 @@ rtnl_hash_initialize(char *file, struct rtnl_hash_entry **hash, int size)
 	fclose(fp);
 }
 
-static void rtnl_tab_initialize(char *file, char **tab, int size)
+static void rtnl_tab_initialize(const char *file, char **tab, int size)
 {
 	char buf[512];
 	FILE *fp;
@@ -127,7 +127,6 @@ static char * rtnl_rtprot_tab[256] = {
 };
 
 
-
 static int rtnl_rtprot_init;
 
 static void rtnl_rtprot_initialize(void)
@@ -137,10 +136,10 @@ static void rtnl_rtprot_initialize(void)
 			    rtnl_rtprot_tab, 256);
 }
 
-char * rtnl_rtprot_n2a(int id, char *buf, int len)
+const char * rtnl_rtprot_n2a(int id, char *buf, int len)
 {
 	if (id<0 || id>=256) {
-		snprintf(buf, len, "%d", id);
+		snprintf(buf, len, "%u", id);
 		return buf;
 	}
 	if (!rtnl_rtprot_tab[id]) {
@@ -149,11 +148,11 @@ char * rtnl_rtprot_n2a(int id, char *buf, int len)
 	}
 	if (rtnl_rtprot_tab[id])
 		return rtnl_rtprot_tab[id];
-	snprintf(buf, len, "%d", id);
+	snprintf(buf, len, "%u", id);
 	return buf;
 }
 
-int rtnl_rtprot_a2n(__u32 *id, char *arg)
+int rtnl_rtprot_a2n(__u32 *id, const char *arg)
 {
 	static char *cache = NULL;
 	static unsigned long res;
@@ -186,7 +185,6 @@ int rtnl_rtprot_a2n(__u32 *id, char *arg)
 }
 
 
-
 static char * rtnl_rtscope_tab[256] = {
 	"global",
 };
@@ -204,7 +202,7 @@ static void rtnl_rtscope_initialize(void)
 			    rtnl_rtscope_tab, 256);
 }
 
-char * rtnl_rtscope_n2a(int id, char *buf, int len)
+const char *rtnl_rtscope_n2a(int id, char *buf, int len)
 {
 	if (id<0 || id>=256) {
 		snprintf(buf, len, "%d", id);
@@ -220,9 +218,9 @@ char * rtnl_rtscope_n2a(int id, char *buf, int len)
 	return buf;
 }
 
-int rtnl_rtscope_a2n(__u32 *id, char *arg)
+int rtnl_rtscope_a2n(__u32 *id, const char *arg)
 {
-	static char *cache = NULL;
+	static const char *cache = NULL;
 	static unsigned long res;
 	char *end;
 	int i;
@@ -253,7 +251,6 @@ int rtnl_rtscope_a2n(__u32 *id, char *arg)
 }
 
 
-
 static char * rtnl_rtrealm_tab[256] = {
 	"unknown",
 };
@@ -267,7 +264,7 @@ static void rtnl_rtrealm_initialize(void)
 			    rtnl_rtrealm_tab, 256);
 }
 
-char * rtnl_rtrealm_n2a(int id, char *buf, int len)
+const char *rtnl_rtrealm_n2a(int id, char *buf, int len)
 {
 	if (id<0 || id>=256) {
 		snprintf(buf, len, "%d", id);
@@ -284,7 +281,7 @@ char * rtnl_rtrealm_n2a(int id, char *buf, int len)
 }
 
 
-int rtnl_rtrealm_a2n(__u32 *id, char *arg)
+int rtnl_rtrealm_a2n(__u32 *id, const char *arg)
 {
 	static char *cache = NULL;
 	static unsigned long res;
@@ -336,7 +333,7 @@ static void rtnl_rttable_initialize(void)
 			     rtnl_rttable_hash, 256);
 }
 
-char * rtnl_rttable_n2a(__u32 id, char *buf, int len)
+const char * rtnl_rttable_n2a(__u32 id, char *buf, int len)
 {
 	struct rtnl_hash_entry *entry;
 
@@ -355,9 +352,9 @@ char * rtnl_rttable_n2a(__u32 id, char *buf, int len)
 	return buf;
 }
 
-int rtnl_rttable_a2n(__u32 *id, char *arg)
+int rtnl_rttable_a2n(__u32 *id, const char *arg)
 {
-	static char *cache = NULL;
+	static const char *cache = NULL;
 	static unsigned long res;
 	struct rtnl_hash_entry *entry;
 	char *end;
@@ -404,7 +401,7 @@ static void rtnl_rtdsfield_initialize(void)
 			    rtnl_rtdsfield_tab, 256);
 }
 
-char * rtnl_dsfield_n2a(int id, char *buf, int len)
+const char *rtnl_dsfield_n2a(int id, char *buf, int len)
 {
 	if (id<0 || id>=256) {
 		snprintf(buf, len, "%d", id);
@@ -421,7 +418,7 @@ char * rtnl_dsfield_n2a(int id, char *buf, int len)
 }
 
 
-int rtnl_dsfield_a2n(__u32 *id, char *arg)
+int rtnl_dsfield_a2n(__u32 *id, const char *arg)
 {
 	static char *cache = NULL;
 	static unsigned long res;
@@ -469,9 +466,9 @@ static void rtnl_group_initialize(void)
 			     rtnl_group_hash, 256);
 }
 
-int rtnl_group_a2n(int *id, char *arg)
+int rtnl_group_a2n(int *id, const char *arg)
 {
-	static char *cache = NULL;
+	static const char *cache = NULL;
 	static unsigned long res;
 	struct rtnl_hash_entry *entry;
 	char *end;

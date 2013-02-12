@@ -100,10 +100,10 @@ const char * ll_proto_n2a(unsigned short id, char *buf, int len)
         return buf;
 }
 
-int ll_proto_a2n(unsigned short *id, char *buf)
+int ll_proto_a2n(unsigned short *id, const char *buf)
 {
         int i;
-        for (i=0; i<sizeof(llproto_names)/sizeof(llproto_names[0]); i++) {
+        for (i=0; i < sizeof(llproto_names)/sizeof(llproto_names[0]); i++) {
                  if (strcasecmp(llproto_names[i].name, buf) == 0) {
 			 *id = htons(llproto_names[i].id);
 			 return 0;
