@@ -28,7 +28,9 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/icmp6.h>
+
 #include "utils.h"
+#include "ip_common.h"
 
 /* prefix flags; see kernel's net/ipv6/addrconf.c and include/net/if_inet6.h */
 #define IF_PREFIX_ONLINK	0x01

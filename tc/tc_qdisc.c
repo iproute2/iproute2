@@ -44,7 +44,7 @@ static int usage(void)
 	return -1;
 }
 
-int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
+static int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct qdisc_util *q = NULL;
 	struct tc_estimator est;
@@ -277,7 +277,7 @@ int print_qdisc(const struct sockaddr_nl *who,
 }
 
 
-int tc_qdisc_list(int argc, char **argv)
+static int tc_qdisc_list(int argc, char **argv)
 {
 	struct tcmsg t;
 	char d[16];

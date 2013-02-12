@@ -52,7 +52,7 @@ static void usage(void)
 	exit(-1);
 }
 
-int nud_state_a2n(unsigned *state, char *arg)
+static int nud_state_a2n(unsigned *state, const char *arg)
 {
 	if (matches(arg, "permanent") == 0)
 		*state = NUD_PERMANENT;
@@ -313,13 +313,13 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-void ipneigh_reset_filter()
+void ipneigh_reset_filter(void)
 {
 	memset(&filter, 0, sizeof(filter));
 	filter.state = ~0;
 }
 
-int do_show_or_flush(int argc, char **argv, int flush)
+static int do_show_or_flush(int argc, char **argv, int flush)
 {
 	char *filter_dev = NULL;
 	int state_given = 0;

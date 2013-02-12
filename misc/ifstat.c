@@ -115,7 +115,7 @@ static int get_nlmsg(const struct sockaddr_nl *who,
 	return 0;
 }
 
-void load_info(void)
+static void load_info(void)
 {
 	struct ifstat_ent *db, *n;
 	struct rtnl_handle rth;
@@ -146,7 +146,7 @@ void load_info(void)
 	}
 }
 
-void load_raw_table(FILE *fp)
+static void load_raw_table(FILE *fp)
 {
 	char buf[4096];
 	struct ifstat_ent *db = NULL;
@@ -209,7 +209,7 @@ void load_raw_table(FILE *fp)
 	}
 }
 
-void dump_raw_db(FILE *fp, int to_hist)
+static void dump_raw_db(FILE *fp, int to_hist)
 {
 	struct ifstat_ent *n, *h;
 	h = hist_db;
@@ -244,7 +244,8 @@ static const unsigned long long giga = 1000000000ull;
 static const unsigned long long mega = 1000000;
 static const unsigned long long kilo = 1000;
 
-void format_rate(FILE *fp, unsigned long long *vals, double *rates, int i)
+static void format_rate(FILE *fp, unsigned long long *vals,
+			double *rates, int i)
 {
 	char temp[64];
 	if (vals[i] > giga)
@@ -264,7 +265,7 @@ void format_rate(FILE *fp, unsigned long long *vals, double *rates, int i)
 		fprintf(fp, "%-6u ", (unsigned)rates[i]);
 }
 
-void format_pair(FILE *fp, unsigned long long *vals, int i, int k)
+static void format_pair(FILE *fp, unsigned long long *vals, int i, int k)
 {
 	char temp[64];
 	if (vals[i] > giga)
@@ -284,7 +285,7 @@ void format_pair(FILE *fp, unsigned long long *vals, int i, int k)
 		fprintf(fp, "%-6u ", (unsigned)vals[k]);
 }
 
-void print_head(FILE *fp)
+static void print_head(FILE *fp)
 {
 	fprintf(fp, "#%s\n", info_source);
 	fprintf(fp, "%-15s ", "Interface");
@@ -327,7 +328,8 @@ void print_head(FILE *fp)
 	}
 }
 
-void print_one_if(FILE *fp, struct ifstat_ent *n, unsigned long long *vals)
+static void print_one_if(FILE *fp, struct ifstat_ent *n,
+			 unsigned long long *vals)
 {
 	int i;
 	fprintf(fp, "%-15s ", n->name);
@@ -374,7 +376,7 @@ void print_one_if(FILE *fp, struct ifstat_ent *n, unsigned long long *vals)
 }
 
 
-void dump_kern_db(FILE *fp)
+static void dump_kern_db(FILE *fp)
 {
 	struct ifstat_ent *n;
 
@@ -388,7 +390,7 @@ void dump_kern_db(FILE *fp)
 }
 
 
-void dump_incr_db(FILE *fp)
+static void dump_incr_db(FILE *fp)
 {
 	struct ifstat_ent *n, *h;
 	h = hist_db;
@@ -419,11 +421,11 @@ void dump_incr_db(FILE *fp)
 
 static int children;
 
-void sigchild(int signo)
+static void sigchild(int signo)
 {
 }
 
-void update_db(int interval)
+static void update_db(int interval)
 {
 	struct ifstat_ent *n, *h;
 
@@ -482,7 +484,7 @@ void update_db(int interval)
 #define T_DIFF(a,b) (((a).tv_sec-(b).tv_sec)*1000 + ((a).tv_usec-(b).tv_usec)/1000)
 
 
-void server_loop(int fd)
+static void server_loop(int fd)
 {
 	struct timeval snaptime = { 0 };
 	struct pollfd p;
@@ -534,7 +536,7 @@ void server_loop(int fd)
 	}
 }
 
-int verify_forging(int fd)
+static int verify_forging(int fd)
 {
 	struct ucred cred;
 	socklen_t olen = sizeof(cred);

@@ -87,12 +87,12 @@ static int get_percent(__u32 *percent, const char *str)
 	return 0;
 }
 
-void print_percent(char *buf, int len, __u32 per)
+static void print_percent(char *buf, int len, __u32 per)
 {
 	snprintf(buf, len, "%g%%", 100. * (double) per / max_percent_value);
 }
 
-char * sprint_percent(__u32 per, char *buf)
+static char * sprint_percent(__u32 per, char *buf)
 {
 	print_percent(buf, SPRINT_BSIZE-1, per);
 	return buf;

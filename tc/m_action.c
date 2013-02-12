@@ -35,7 +35,7 @@ int gact_ld = 0 ; //fuckin backward compatibility
 int batch_c = 0;
 int tab_flush = 0;
 
-void act_usage(void)
+static void act_usage(void)
 {
 	/*XXX: In the near future add a action->print_help to improve
 	 * usability
@@ -83,7 +83,7 @@ static int parse_noaopt(struct action_util *au, int *argc_p, char ***argv_p, int
 	return -1;
 }
 
-struct action_util *get_action_kind(char *str)
+static struct action_util *get_action_kind(char *str)
 {
 	static void *aBODY;
 	void *dlh;
@@ -138,7 +138,7 @@ noexist:
 	return a;
 }
 
-int
+static int
 new_cmd(char **argv)
 {
 	if ((matches(*argv, "change") == 0) ||
@@ -241,7 +241,7 @@ bad_val:
 	return -1;
 }
 
-int
+static int
 tc_print_one_action(FILE * f, struct rtattr *arg)
 {
 
@@ -355,7 +355,7 @@ int print_action(const struct sockaddr_nl *who,
 	return 0;
 }
 
-int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
+static int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 {
 	char k[16];
 	struct action_util *a = NULL;
@@ -467,7 +467,7 @@ bad_val:
 	return ret;
 }
 
-int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
+static int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -507,7 +507,7 @@ int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	return ret;
 }
 
-int tc_act_list_or_flush(int argc, char **argv, int event)
+static int tc_act_list_or_flush(int argc, char **argv, int event)
 {
 	int ret = 0, prio = 0, msg_size = 0;
 	char k[16];

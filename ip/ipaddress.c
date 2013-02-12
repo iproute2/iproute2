@@ -89,7 +89,7 @@ static void usage(void)
 	exit(-1);
 }
 
-void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
+static void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
 {
 	fprintf(fp, "<");
 	if (flags & IFF_UP && !(flags & IFF_RUNNING))
@@ -699,8 +699,8 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return 0;
 }
 
-int print_addrinfo_primary(const struct sockaddr_nl *who, struct nlmsghdr *n,
-			   void *arg)
+static int print_addrinfo_primary(const struct sockaddr_nl *who,
+				  struct nlmsghdr *n, void *arg)
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
@@ -710,8 +710,8 @@ int print_addrinfo_primary(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return print_addrinfo(who, n, arg);
 }
 
-int print_addrinfo_secondary(const struct sockaddr_nl *who, struct nlmsghdr *n,
-			     void *arg)
+static int print_addrinfo_secondary(const struct sockaddr_nl *who,
+				    struct nlmsghdr *n, void *arg)
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 

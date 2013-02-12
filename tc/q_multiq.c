@@ -61,7 +61,7 @@ static int multiq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-int multiq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int multiq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct tc_multiq_qopt *qopt;
 

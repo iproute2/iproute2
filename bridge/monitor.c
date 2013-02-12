@@ -46,8 +46,8 @@ static int show_mark(FILE *fp, const struct nlmsghdr *n)
 	return 0;
 }
 
-int accept_msg(const struct sockaddr_nl *who,
-	       struct nlmsghdr *n, void *arg)
+static int accept_msg(const struct sockaddr_nl *who,
+		      struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
 

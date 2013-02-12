@@ -119,12 +119,12 @@ int print_netconf(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-void ipnetconf_reset_filter(void)
+static void ipnetconf_reset_filter(void)
 {
 	memset(&filter, 0, sizeof(filter));
 }
 
-int do_show(int argc, char **argv)
+static int do_show(int argc, char **argv)
 {
 	struct {
 		struct nlmsghdr		n;

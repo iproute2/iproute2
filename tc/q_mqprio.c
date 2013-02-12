@@ -104,7 +104,7 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 	return 0;
 }
 
-int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	int i;
 	struct tc_mqprio_qopt *qopt;

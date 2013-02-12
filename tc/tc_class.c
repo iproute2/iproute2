@@ -40,7 +40,7 @@ static void usage(void)
 	return;
 }
 
-int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
+static int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct {
 		struct nlmsghdr 	n;
@@ -232,7 +232,7 @@ int print_class(const struct sockaddr_nl *who,
 }
 
 
-int tc_class_list(int argc, char **argv)
+static int tc_class_list(int argc, char **argv)
 {
 	struct tcmsg t;
 	char d[16];

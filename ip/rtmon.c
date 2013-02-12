@@ -56,7 +56,7 @@ static int dump_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return 0;
 }
 
-void usage(void)
+static void usage(void)
 {
 	fprintf(stderr, "Usage: rtmon file FILE [ all | LISTofOBJECTS]\n");
 	fprintf(stderr, "LISTofOBJECTS := [ link ] [ address ] [ route ]\n");

@@ -135,7 +135,7 @@ struct link_util *get_link_kind(const char *id)
 	return l;
 }
 
-int get_link_mode(const char *mode)
+static int get_link_mode(const char *mode)
 {
 	if (strcasecmp(mode, "default") == 0)
 		return IF_LINK_MODE_DEFAULT;
@@ -194,7 +194,7 @@ struct iplink_req {
 	char			buf[1024];
 };
 
-int iplink_parse_vf(int vf, int *argcp, char ***argvp,
+static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			   struct iplink_req *req)
 {
 	int len, argc = *argcp;

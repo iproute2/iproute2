@@ -76,7 +76,7 @@ static struct xtables_globals tcipt_globals = {
 /*
  * we may need to check for version mismatch
 */
-int
+static int
 build_st(struct xtables_target *target, struct xt_entry_target *t)
 {
 
@@ -98,7 +98,7 @@ build_st(struct xtables_target *target, struct xt_entry_target *t)
 
 }
 
-inline void set_lib_dir(void)
+static void set_lib_dir(void)
 {
 
 	lib_dir = getenv("XTABLES_LIBDIR");

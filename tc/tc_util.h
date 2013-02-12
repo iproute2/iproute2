@@ -97,5 +97,6 @@ extern int  tc_print_action(FILE *f, const struct rtattr *tb);
 extern int  tc_print_ipt(FILE *f, const struct rtattr *tb);
 extern int  parse_action(int *, char ***, int, struct nlmsghdr *);
 extern void print_tm(FILE *f, const struct tcf_t *tm);
+extern int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 
 #endif
