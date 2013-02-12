@@ -92,7 +92,7 @@ static void usage(void)
 
 static struct
 {
-	int tb;
+	unsigned int tb;
 	int cloned;
 	int flushed;
 	char *flushb;
