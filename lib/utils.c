@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -22,6 +23,7 @@
 #include <arpa/inet.h>
 #include <asm/types.h>
 #include <linux/pkt_sched.h>
+#include <linux/param.h>
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>

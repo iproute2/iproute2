@@ -494,7 +494,7 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 			} else if (strcmp(*argv, "udp") == 0) {
 				p->encap = L2TP_ENCAPTYPE_UDP;
 			} else {
-				fprintf(stderr, "Unknown tunnel encapsulation.\n");
+				fprintf(stderr, "Unknown tunnel encapsulation \"%s\"\n", *argv);
 				exit(-1);
 			}
 		} else if (strcmp(*argv, "name") == 0) {

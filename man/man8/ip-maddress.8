@@ -15,11 +15,11 @@ ip-maddress \- multicast addresses management
 .ti -8
 
 .BR "ip maddress" " [ " add " | " del " ]"
-.IB MULTIADDR " dev " STRING
+.IB MULTIADDR " dev " NAME
 
 .ti -8
 .BR "ip maddress show" " [ " dev
-.IR STRING " ]"
+.IR NAME " ]"
 
 .SH DESCRIPTION
 .B maddress
@@ -33,14 +33,14 @@ the device name.
 
 .SS ip maddress add - add a multicast address
 .SS ip maddress delete - delete a multicast address
-these commands attach/detach a static link layer multicast address
+these commands attach/detach a static link-layer multicast address
 to listen on the interface.
 Note that it is impossible to join protocol multicast groups
-statically.  This command only manages link layer addresses.
+statically.  This command only manages link-layer addresses.
 
 .TP
 .BI address " LLADDRESS " (default)
-the link layer multicast address.
+the link-layer multicast address.
 
 .TP
 .BI dev " NAME"

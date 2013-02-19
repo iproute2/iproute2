@@ -117,7 +117,7 @@ get_failed:
 			else {
 				if (get_unsigned(&uval, *argv, 0) < 0) {
 					fprintf(stderr,
-						"Invalid value for \"key\"\n");
+						"Invalid value for \"key\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				uval = htonl(uval);
@@ -132,7 +132,7 @@ get_failed:
 				uval = get_addr32(*argv);
 			else {
 				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value of \"ikey\"\n");
+					fprintf(stderr, "invalid value for \"ikey\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				uval = htonl(uval);
@@ -146,7 +146,7 @@ get_failed:
 				uval = get_addr32(*argv);
 			else {
 				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value of \"okey\"\n");
+					fprintf(stderr, "invalid value for \"okey\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				uval = htonl(uval);
@@ -155,7 +155,7 @@ get_failed:
 		} else if (!matches(*argv, "remote")) {
 			NEXT_ARG();
 			if (!strcmp(*argv, "any")) {
-				fprintf(stderr, "invalid value of \"remote\"\n");
+				fprintf(stderr, "invalid value for \"remote\": \"%s\"\n", *argv);
 				exit(-1);
 			} else {
 				daddr = get_addr32(*argv);
@@ -163,7 +163,7 @@ get_failed:
 		} else if (!matches(*argv, "local")) {
 			NEXT_ARG();
 			if (!strcmp(*argv, "any")) {
-				fprintf(stderr, "invalid value of \"local\"\n");
+				fprintf(stderr, "invalid value for \"local\": \"%s\"\n", *argv);
 				exit(-1);
 			} else {
 				saddr = get_addr32(*argv);

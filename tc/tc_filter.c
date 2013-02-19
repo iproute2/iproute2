@@ -45,7 +45,7 @@ static void usage(void)
 }
 
 
-int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
+static int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct {
 		struct nlmsghdr 	n;
@@ -260,7 +260,7 @@ int print_filter(const struct sockaddr_nl *who,
 }
 
 
-int tc_filter_list(int argc, char **argv)
+static int tc_filter_list(int argc, char **argv)
 {
 	struct tcmsg t;
 	char d[16];

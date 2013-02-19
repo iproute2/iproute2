@@ -105,7 +105,7 @@ struct filter
 };
 
 struct filter default_filter = {
-	.dbs	=  (1<<TCP_DB),
+	.dbs	=  ~0,
 	.states = SS_ALL & ~((1<<SS_LISTEN)|(1<<SS_CLOSE)|(1<<SS_TIME_WAIT)|(1<<SS_SYN_RECV)),
 	.families= (1<<AF_INET)|(1<<AF_INET6),
 };
@@ -309,7 +309,7 @@ static void user_ent_hash_build(void)
 	closedir(dir);
 }
 
-int find_users(unsigned ino, char *buf, int buflen)
+static int find_users(unsigned ino, char *buf, int buflen)
 {
 	struct user_ent *p;
 	int cnt = 0;
@@ -365,7 +365,7 @@ static const char *slabstat_ids[] =
 	"skbuff_head_cache",
 };
 
-int get_slabstat(struct slabstat *s)
+static int get_slabstat(struct slabstat *s)
 {
 	char buf[256];
 	FILE *fp;
@@ -455,7 +455,7 @@ static const char *tmr_name[] = {
 	"unknown"
 };
 
-const char *print_ms_timer(int timeout)
+static const char *print_ms_timer(int timeout)
 {
 	static char buf[64];
 	int secs, msecs, minutes;
@@ -482,7 +482,7 @@ const char *print_ms_timer(int timeout)
 	return buf;
 }
 
-const char *print_hz_timer(int timeout)
+static const char *print_hz_timer(int timeout)
 {
 	int hz = get_user_hz();
 	return print_ms_timer(((timeout*1000) + hz-1)/hz);
@@ -498,7 +498,7 @@ struct scache
 
 struct scache *rlist;
 
-void init_service_resolver(void)
+static void init_service_resolver(void)
 {
 	char buf[128];
 	FILE *fp = popen("/usr/sbin/rpcinfo -p 2>/dev/null", "r");
@@ -555,7 +555,7 @@ static int is_ephemeral(int port)
 }
 
 
-const char *__resolve_service(int port)
+static const char *__resolve_service(int port)
 {
 	struct scache *c;
 
@@ -580,7 +580,7 @@ const char *__resolve_service(int port)
 }
 
 
-const char *resolve_service(int port)
+static const char *resolve_service(int port)
 {
 	static char buf[128];
 	static struct scache cache[256];
@@ -634,7 +634,7 @@ const char *resolve_service(int port)
 	return buf;
 }
 
-void formatted_print(const inet_prefix *a, int port)
+static void formatted_print(const inet_prefix *a, int port)
 {
 	char buf[1024];
 	const char *ap = buf;
@@ -667,7 +667,8 @@ struct aafilter
 	struct aafilter *next;
 };
 
-int inet2_addr_match(const inet_prefix *a, const inet_prefix *p, int plen)
+static int inet2_addr_match(const inet_prefix *a, const inet_prefix *p,
+			    int plen)
 {
 	if (!inet_addr_match(a, p, plen))
 		return 0;
@@ -686,7 +687,7 @@ int inet2_addr_match(const inet_prefix *a, const inet_prefix *p, int plen)
 	return 1;
 }
 
-int unix_match(const inet_prefix *a, const inet_prefix *p)
+static int unix_match(const inet_prefix *a, const inet_prefix *p)
 {
 	char *addr, *pattern;
 	memcpy(&addr, a->data, sizeof(addr));
@@ -698,7 +699,7 @@ int unix_match(const inet_prefix *a, const inet_prefix *p)
 	return !fnmatch(pattern, addr, 0);
 }
 
-int run_ssfilter(struct ssfilter *f, struct tcpstat *s)
+static int run_ssfilter(struct ssfilter *f, struct tcpstat *s)
 {
 	switch (f->type) {
 		case SSF_S_AUTO:
@@ -1882,7 +1883,7 @@ outerr:
 }
 
 
-int dgram_show_line(char *line, const struct filter *f, int family)
+static int dgram_show_line(char *line, const struct filter *f, int family)
 {
 	struct tcpstat s;
 	char *loc, *rem, *data;
@@ -1974,7 +1975,7 @@ int dgram_show_line(char *line, const struct filter *f, int family)
 }
 
 
-int udp_show(struct filter *f)
+static int udp_show(struct filter *f)
 {
 	FILE *fp = NULL;
 
@@ -2010,7 +2011,7 @@ outerr:
 	} while (0);
 }
 
-int raw_show(struct filter *f)
+static int raw_show(struct filter *f)
 {
 	FILE *fp = NULL;
 
@@ -2063,7 +2064,7 @@ int unix_state_map[] = { SS_CLOSE, SS_SYN_SENT,
 
 #define MAX_UNIX_REMEMBER (1024*1024/sizeof(struct unixstat))
 
-void unix_list_free(struct unixstat *list)
+static void unix_list_free(struct unixstat *list)
 {
 	while (list) {
 		struct unixstat *s = list;
@@ -2074,7 +2075,7 @@ void unix_list_free(struct unixstat *list)
 	}
 }
 
-void unix_list_print(struct unixstat *list, struct filter *f)
+static void unix_list_print(struct unixstat *list, struct filter *f)
 {
 	struct unixstat *s;
 	char *peer;
@@ -2283,7 +2284,7 @@ close_it:
 	return 0;
 }
 
-int unix_show(struct filter *f)
+static int unix_show(struct filter *f)
 {
 	FILE *fp;
 	char buf[256];
@@ -2368,7 +2369,7 @@ int unix_show(struct filter *f)
 }
 
 
-int packet_show(struct filter *f)
+static int packet_show(struct filter *f)
 {
 	FILE *fp;
 	char buf[256];
@@ -2445,7 +2446,7 @@ int packet_show(struct filter *f)
 	return 0;
 }
 
-int netlink_show(struct filter *f)
+static int netlink_show(struct filter *f)
 {
 	FILE *fp;
 	char buf[256];
@@ -2534,7 +2535,7 @@ struct snmpstat
 	int tcp_estab;
 };
 
-int get_snmp_int(char *proto, char *key, int *result)
+static int get_snmp_int(char *proto, char *key, int *result)
 {
 	char buf[1024];
 	FILE *fp;
@@ -2629,7 +2630,7 @@ static void get_sockstat_line(char *line, struct sockstat *s)
 		       &s->tcp_orphans, &s->tcp_tws, &s->tcp_total, &s->tcp_mem);
 }
 
-int get_sockstat(struct sockstat *s)
+static int get_sockstat(struct sockstat *s)
 {
 	char buf[256];
 	FILE *fp;
@@ -2651,7 +2652,7 @@ int get_sockstat(struct sockstat *s)
 	return 0;
 }
 
-int print_summary(void)
+static int print_summary(void)
 {
 	struct sockstat s;
 	struct snmpstat sn;
@@ -2743,7 +2744,7 @@ static void usage(void)
 }
 
 
-int scan_state(const char *state)
+static int scan_state(const char *state)
 {
 	int i;
 	if (strcasecmp(state, "close") == 0 ||

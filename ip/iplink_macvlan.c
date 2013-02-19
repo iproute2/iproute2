@@ -58,7 +58,7 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			explain();
 			return -1;
 		} else {
-			fprintf(stderr, "macvlan: what is \"%s\"?\n", *argv);
+			fprintf(stderr, "macvlan: unknown option \"%s\"?\n", *argv);
 			explain();
 			return -1;
 		}

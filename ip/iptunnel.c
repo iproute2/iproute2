@@ -41,7 +41,7 @@ static void usage(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: NAME := STRING\n");
 	fprintf(stderr, "       ADDR := { IP_ADDRESS | any }\n");
-	fprintf(stderr, "       TOS  := { NUMBER | inherit }\n");
+	fprintf(stderr, "       TOS  := { STRING | 00..ff | inherit | inherit/STRING | inherit/00..ff }\n");
 	fprintf(stderr, "       TTL  := { 1..255 | inherit }\n");
 	fprintf(stderr, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
 	exit(-1);
@@ -102,7 +102,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				p->iph.protocol = IPPROTO_IPIP;
 				p->i_flags |= VTI_ISVTI;
 			} else {
-				fprintf(stderr,"Cannot guess tunnel mode.\n");
+				fprintf(stderr,"Unknown tunnel mode \"%s\"\n", *argv);
 				exit(-1);
 			}
 		} else if (strcmp(*argv, "key") == 0) {
@@ -114,7 +114,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				p->i_key = p->o_key = get_addr32(*argv);
 			else {
 				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"key\"\n");
+					fprintf(stderr, "invalid value for \"key\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				p->i_key = p->o_key = htonl(uval);
@@ -127,7 +127,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				p->i_key = get_addr32(*argv);
 			else {
 				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"ikey\"\n");
+					fprintf(stderr, "invalid value for \"ikey\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				p->i_key = htonl(uval);
@@ -140,7 +140,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				p->o_key = get_addr32(*argv);
 			else {
 				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"okey\"\n");
+					fprintf(stderr, "invalid value for \"okey\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				p->o_key = htonl(uval);
@@ -188,14 +188,21 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 		} else if (strcmp(*argv, "tos") == 0 ||
 			   strcmp(*argv, "tclass") == 0 ||
 			   matches(*argv, "dsfield") == 0) {
+			char *dsfield;
 			__u32 uval;
 			NEXT_ARG();
+			dsfield = *argv;
+			strsep(&dsfield, "/");
 			if (strcmp(*argv, "inherit") != 0) {
-				if (rtnl_dsfield_a2n(&uval, *argv))
-					invarg("bad TOS value", *argv);
-				p->iph.tos = uval;
+				dsfield = *argv;
+				p->iph.tos = 0;
 			} else
 				p->iph.tos = 1;
+			if (dsfield) {
+				if (rtnl_dsfield_a2n(&uval, dsfield))
+					invarg("bad TOS value", *argv);
+				p->iph.tos |= uval;
+			}
 		} else {
 			if (strcmp(*argv, "name") == 0) {
 				NEXT_ARG();
@@ -235,7 +242,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 
 	if (p->iph.protocol == IPPROTO_IPIP || p->iph.protocol == IPPROTO_IPV6) {
 		if ((p->i_flags & GRE_KEY) || (p->o_flags & GRE_KEY)) {
-			fprintf(stderr, "Keys are not allowed with ipip and sit.\n");
+			fprintf(stderr, "Keys are not allowed with ipip and sit tunnels\n");
 			return -1;
 		}
 	}
@@ -255,7 +262,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 		p->o_flags |= GRE_KEY;
 	}
 	if (IN_MULTICAST(ntohl(p->iph.daddr)) && !p->iph.saddr) {
-		fprintf(stderr, "Broadcast tunnel requires a source address.\n");
+		fprintf(stderr, "A broadcast tunnel requires a source address\n");
 		return -1;
 	}
 	if (isatap)
@@ -437,7 +444,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		buf[sizeof(buf) - 1] = 0;
 		if ((ptr = strchr(buf, ':')) == NULL ||
 		    (*ptr++ = 0, sscanf(buf, "%s", name) != 1)) {
-			fprintf(stderr, "Wrong format of /proc/net/dev. Sorry.\n");
+			fprintf(stderr, "Wrong format for /proc/net/dev. Giving up.\n");
 			fclose(fp);
 			return -1;
 		}
@@ -454,7 +461,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 			continue;
 		type = ll_index_to_type(index);
 		if (type == -1) {
-			fprintf(stderr, "Failed to get type of [%s]\n", name);
+			fprintf(stderr, "Failed to get type of \"%s\"\n", name);
 			continue;
 		}
 		if (type != ARPHRD_TUNNEL && type != ARPHRD_IPGRE && type != ARPHRD_SIT)
@@ -551,17 +558,17 @@ static int do_prl(int argc, char **argv)
 			strncpy(medium, *argv, IFNAMSIZ-1);
 			devname++;
 		} else {
-			fprintf(stderr,"%s: Invalid PRL parameter.\n", *argv);
+			fprintf(stderr,"Invalid PRL parameter \"%s\"\n", *argv);
 			exit(-1);
 		}
 		if (count > 1) {
-			fprintf(stderr,"One PRL entry at a time.\n");
+			fprintf(stderr,"One PRL entry at a time\n");
 			exit(-1);
 		}
 		argc--; argv++;
 	}
 	if (devname == 0) {
-		fprintf(stderr, "Must specify dev.\n");
+		fprintf(stderr, "Must specify device\n");
 		exit(-1);
 	}
 
@@ -601,13 +608,13 @@ static int do_6rd(int argc, char **argv)
 			strncpy(medium, *argv, IFNAMSIZ-1);
 			devname++;
 		} else {
-			fprintf(stderr,"%s: Invalid 6RD parameter.\n", *argv);
+			fprintf(stderr,"Invalid 6RD parameter \"%s\"\n", *argv);
 			exit(-1);
 		}
 		argc--; argv++;
 	}
 	if (devname == 0) {
-		fprintf(stderr, "Must specify dev.\n");
+		fprintf(stderr, "Must specify device\n");
 		exit(-1);
 	}
 
@@ -630,7 +637,7 @@ int do_iptunnel(int argc, char **argv)
 	case AF_INET6:
 		return do_ip6tunnel(argc, argv);
 	default:
-		fprintf(stderr, "Unsupported family:%d\n", preferred_family);
+		fprintf(stderr, "Unsupported protocol family: %d\n", preferred_family);
 		exit(-1);
 	}
 
@@ -654,6 +661,6 @@ int do_iptunnel(int argc, char **argv)
 	} else
 		return do_show(0, NULL);
 
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip tunnel help\".\n", *argv);
+	fprintf(stderr, "Command \"%s\" is unknown, try \"ip tunnel help\"\n", *argv);
 	exit(-1);
 }

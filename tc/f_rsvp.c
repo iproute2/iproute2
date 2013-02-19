@@ -37,7 +37,7 @@ static void explain(void)
 	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
-int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
+static int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
 		    struct tc_rsvp_pinfo *pinfo, int dir, int family)
 {
 	int argc = *argc_p;

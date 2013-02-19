@@ -128,7 +128,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm *p)
 				 strcmp(*argv, "any") == 0)
 				p->proto = 0;
 			else {
-                                fprintf(stderr,"Cannot guess tunnel mode.\n");
+                                fprintf(stderr,"Unknown tunnel mode \"%s\"\n", *argv);
                                 exit(-1);
                         }
                 } else if (strcmp(*argv, "remote") == 0) {
@@ -293,7 +293,7 @@ static int do_tunnels_list(struct ip6_tnl_parm *p)
 		buf[sizeof(buf) - 1] = '\0';
 		if ((ptr = strchr(buf, ':')) == NULL ||
 		    (*ptr++ = 0, sscanf(buf, "%s", name) != 1)) {
-			fprintf(stderr, "Wrong format of /proc/net/dev. Sorry.\n");
+			fprintf(stderr, "Wrong format for /proc/net/dev. Giving up.\n");
 			goto end;
 		}
 		if (sscanf(ptr, "%ld%ld%ld%ld%ld%ld%ld%*d%ld%ld%ld%ld%ld%ld%ld",
@@ -309,7 +309,7 @@ static int do_tunnels_list(struct ip6_tnl_parm *p)
 			continue;
 		type = ll_index_to_type(index);
 		if (type == -1) {
-			fprintf(stderr, "Failed to get type of [%s]\n", name);
+			fprintf(stderr, "Failed to get type of \"%s\"\n", name);
 			continue;
 		}
 		if (type != ARPHRD_TUNNEL6)
@@ -402,7 +402,7 @@ int do_ip6tunnel(int argc, char **argv)
 	case AF_INET6:
 		break;
 	default:
-		fprintf(stderr, "Unsupported family:%d\n", preferred_family);
+		fprintf(stderr, "Unsupported protocol family: %d\n", preferred_family);
 		exit(-1);
 	}
 

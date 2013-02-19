@@ -1,5 +1,5 @@
-#ifndef _UAPI_X_TABLES_H
-#define _UAPI_X_TABLES_H
+#ifndef _X_TABLES_H
+#define _X_TABLES_H
 #include <linux/kernel.h>
 #include <linux/types.h>
 
@@ -182,4 +182,4 @@ struct xt_counters_info {
 	             (pos)->u.match_size))
 
 
-#endif /* _UAPI_X_TABLES_H */
+#endif /* _X_TABLES_H */

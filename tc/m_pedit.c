@@ -73,8 +73,7 @@ pedit_parse_nopopt (int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct 
 
 }
 
-struct m_pedit_util
-*get_pedit_kind(char *str)
+static struct m_pedit_util *get_pedit_kind(const char *str)
 {
 	static void *pBODY;
 	void *dlh;
@@ -411,7 +410,7 @@ done:
 	return res;
 }
 
-int
+static int
 parse_munge(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel)
 {
 	struct tc_pedit_key tkey;

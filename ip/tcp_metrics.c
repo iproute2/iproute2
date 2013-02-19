@@ -268,7 +268,7 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 	case AF_INET6:
 		break;
 	default:
-		fprintf(stderr, "Unsupported family:%d\n", preferred_family);
+		fprintf(stderr, "Unsupported protocol family: %d\n", preferred_family);
 		return -1;
 	}
 

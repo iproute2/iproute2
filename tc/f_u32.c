@@ -45,7 +45,7 @@ static void explain(void)
 	fprintf(stderr, "\nNOTE: CLASSID is parsed at hexadecimal input.\n");
 }
 
-int get_u32_handle(__u32 *handle, const char *str)
+static int get_u32_handle(__u32 *handle, const char *str)
 {
 	__u32 htid=0, hash=0, nodeid=0;
 	char *tmp = strchr(str, ':');
@@ -80,7 +80,7 @@ int get_u32_handle(__u32 *handle, const char *str)
 	return 0;
 }
 
-char * sprint_u32_handle(__u32 handle, char *buf)
+static char * sprint_u32_handle(__u32 handle, char *buf)
 {
 	int bsize = SPRINT_BSIZE-1;
 	__u32 htid = TC_U32_HTID(handle);
@@ -194,7 +194,7 @@ static int pack_key8(struct tc_u32_sel *sel, __u32 key, __u32 mask, int off, int
 }
 
 
-int parse_at(int *argc_p, char ***argv_p, int *off, int *offmask)
+static int parse_at(int *argc_p, char ***argv_p, int *off, int *offmask)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;

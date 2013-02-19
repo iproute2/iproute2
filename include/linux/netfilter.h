@@ -1,5 +1,5 @@
-#ifndef _UAPI__LINUX_NETFILTER_H
-#define _UAPI__LINUX_NETFILTER_H
+#ifndef __LINUX_NETFILTER_H
+#define __LINUX_NETFILTER_H
 
 #include <linux/types.h>
 
@@ -67,4 +67,4 @@ union nf_inet_addr {
 	struct in6_addr	in6;
 };
 
-#endif /* _UAPI__LINUX_NETFILTER_H */
+#endif /* __LINUX_NETFILTER_H */

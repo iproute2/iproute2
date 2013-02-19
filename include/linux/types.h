@@ -1,5 +1,5 @@
-#ifndef _UAPI_LINUX_TYPES_H
-#define _UAPI_LINUX_TYPES_H
+#ifndef _LINUX_TYPES_H
+#define _LINUX_TYPES_H
 
 #include <asm/types.h>
 
@@ -48,4 +48,4 @@ typedef __u32 __bitwise __wsum;
 #define __aligned_le64 __le64 __attribute__((aligned(8)))
 
 #endif /*  __ASSEMBLY__ */
-#endif /* _UAPI_LINUX_TYPES_H */
+#endif /* _LINUX_TYPES_H */

@@ -50,7 +50,7 @@ static void explain1(char *arg)
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
 
-char *police_action_n2a(int action, char *buf, int len)
+static const char *police_action_n2a(int action, char *buf, int len)
 {
 	switch (action) {
 	case -1:
@@ -72,7 +72,7 @@ char *police_action_n2a(int action, char *buf, int len)
 	}
 }
 
-int police_action_a2n(char *arg, int *result)
+static int police_action_a2n(const char *arg, int *result)
 {
 	int res;
 
@@ -100,7 +100,7 @@ int police_action_a2n(char *arg, int *result)
 }
 
 
-int get_police_result(int *action, int *result, char *arg)
+static int get_police_result(int *action, int *result, char *arg)
 {
 	char *p = strchr(arg, '/');
 

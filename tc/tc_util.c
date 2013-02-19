@@ -167,35 +167,6 @@ int get_rate(unsigned *rate, const char *str)
 	return -1;
 }
 
-int get_rate_and_cell(unsigned *rate, int *cell_log, char *str)
-{
-	char * slash = strchr(str, '/');
-
-	if (slash)
-		*slash = 0;
-
-	if (get_rate(rate, str))
-		return -1;
-
-	if (slash) {
-		int cell;
-		int i;
-
-		if (get_integer(&cell, slash+1, 0))
-			return -1;
-		*slash = '/';
-
-		for (i=0; i<32; i++) {
-			if ((1<<i) == cell) {
-				*cell_log = i;
-				return 0;
-			}
-		}
-		return -1;
-	}
-	return 0;
-}
-
 void print_rate(char *buf, int len, __u32 rate)
 {
 	double tmp = (double)rate*8;

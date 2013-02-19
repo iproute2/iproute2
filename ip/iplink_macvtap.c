@@ -24,10 +24,10 @@ static void explain(void)
 	);
 }
 
-static int mode_arg(void)
+static int mode_arg(const char *arg)
 {
         fprintf(stderr, "Error: argument of \"mode\" must be \"private\", "
-		"\"vepa\", \"bridge\" or \"passthru\" \n");
+		"\"vepa\", \"bridge\" or \"passthru\", not \"%s\"\n", arg);
         return -1;
 }
 
@@ -48,14 +48,14 @@ static int macvtap_parse_opt(struct link_util *lu, int argc, char **argv,
 			else if (strcmp(*argv, "passthru") == 0)
 				mode = MACVLAN_MODE_PASSTHRU;
 			else
-				return mode_arg();
+				return mode_arg(*argv);
 
 			addattr32(n, 1024, IFLA_MACVLAN_MODE, mode);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
 		} else {
-			fprintf(stderr, "macvtap: what is \"%s\"?\n", *argv);
+			fprintf(stderr, "macvtap: unknown command \"%s\"?\n", *argv);
 			explain();
 			return -1;
 		}

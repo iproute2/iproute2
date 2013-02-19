@@ -74,7 +74,7 @@ int tnl_get_ioctl(const char *basedev, void *p)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCGETTUNNEL, &ifr);
 	if (err)
-		fprintf(stderr, "get tunnel %s failed: %s\n", basedev, 
+		fprintf(stderr, "get tunnel \"%s\" failed: %s\n", basedev,
 			strerror(errno));
 
 	close(fd);
@@ -95,7 +95,7 @@ int tnl_add_ioctl(int cmd, const char *basedev, const char *name, void *p)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, cmd, &ifr);
 	if (err)
-		fprintf(stderr, "add tunnel %s failed: %s\n", ifr.ifr_name,
+		fprintf(stderr, "add tunnel \"%s\" failed: %s\n", ifr.ifr_name,
 			strerror(errno));
 	close(fd);
 	return err;
@@ -116,7 +116,7 @@ int tnl_del_ioctl(const char *basedev, const char *name, void *p)
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	err = ioctl(fd, SIOCDELTUNNEL, &ifr);
 	if (err)
-		fprintf(stderr, "delete tunnel %s failed: %s\n",
+		fprintf(stderr, "delete tunnel \"%s\" failed: %s\n",
 			ifr.ifr_name, strerror(errno));
 	close(fd);
 	return err;

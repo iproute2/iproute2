@@ -25,6 +25,7 @@
  *	Masahide NAKAMURA @USAGI
  */
 
+#include <alloca.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,7 @@
 
 #include "utils.h"
 #include "xfrm.h"
+#include "ip_common.h"
 
 #define STRBUF_SIZE	(128)
 #define STRBUF_CAT(buf, str) \
@@ -555,16 +557,13 @@ static inline void xfrm_algo_print(struct xfrm_algo *algo, int type, int len,
 static void xfrm_aead_print(struct xfrm_algo_aead *algo, int len,
 			    FILE *fp, const char *prefix)
 {
-	struct {
-		struct xfrm_algo algo;
-		char key[algo->alg_key_len / 8];
-	} base;
+	struct xfrm_algo *base_algo = alloca(sizeof(*base_algo) + algo->alg_key_len / 8);
 
-	memcpy(base.algo.alg_name, algo->alg_name, sizeof(base.algo.alg_name));
-	base.algo.alg_key_len = algo->alg_key_len;
-	memcpy(base.algo.alg_key, algo->alg_key, algo->alg_key_len / 8);
+	memcpy(base_algo->alg_name, algo->alg_name, sizeof(base_algo->alg_name));
+	base_algo->alg_key_len = algo->alg_key_len;
+	memcpy(base_algo->alg_key, algo->alg_key, algo->alg_key_len / 8);
 
-	__xfrm_algo_print(&base.algo, XFRMA_ALG_AEAD, len, fp, prefix, 0);
+	__xfrm_algo_print(base_algo, XFRMA_ALG_AEAD, len, fp, prefix, 0);
 
 	fprintf(fp, " %d", algo->alg_icv_len);
 
@@ -574,16 +573,13 @@ static void xfrm_aead_print(struct xfrm_algo_aead *algo, int len,
 static void xfrm_auth_trunc_print(struct xfrm_algo_auth *algo, int len,
 				  FILE *fp, const char *prefix)
 {
-	struct {
-		struct xfrm_algo algo;
-		char key[algo->alg_key_len / 8];
-	} base;
+	struct xfrm_algo *base_algo = alloca(sizeof(*base_algo) + algo->alg_key_len / 8);
 
-	memcpy(base.algo.alg_name, algo->alg_name, sizeof(base.algo.alg_name));
-	base.algo.alg_key_len = algo->alg_key_len;
-	memcpy(base.algo.alg_key, algo->alg_key, algo->alg_key_len / 8);
+	memcpy(base_algo->alg_name, algo->alg_name, sizeof(base_algo->alg_name));
+	base_algo->alg_key_len = algo->alg_key_len;
+	memcpy(base_algo->alg_key, algo->alg_key, algo->alg_key_len / 8);
 
-	__xfrm_algo_print(&base.algo, XFRMA_ALG_AUTH_TRUNC, len, fp, prefix, 0);
+	__xfrm_algo_print(base_algo, XFRMA_ALG_AUTH_TRUNC, len, fp, prefix, 0);
 
 	fprintf(fp, " %d", algo->alg_trunc_len);
 
@@ -1236,7 +1232,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 				uval = htonl(get_addr32(*argv));
 			else {
 				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"key\"\n");
+					fprintf(stderr, "invalid value for \"key\"; it should be an unsigned integer\n");
 					exit(-1);
 				}
 			}

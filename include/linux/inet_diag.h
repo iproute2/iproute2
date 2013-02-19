@@ -1,5 +1,5 @@
-#ifndef _UAPI_INET_DIAG_H_
-#define _UAPI_INET_DIAG_H_
+#ifndef _INET_DIAG_H_
+#define _INET_DIAG_H_
 
 #include <linux/types.h>
 
@@ -109,9 +109,10 @@ enum {
 	INET_DIAG_TOS,
 	INET_DIAG_TCLASS,
 	INET_DIAG_SKMEMINFO,
+	INET_DIAG_SHUTDOWN,
 };
 
-#define INET_DIAG_MAX INET_DIAG_SKMEMINFO
+#define INET_DIAG_MAX INET_DIAG_SHUTDOWN
 
 
 /* INET_DIAG_MEM */
@@ -133,4 +134,4 @@ struct tcpvegas_info {
 };
 
 
-#endif /* _UAPI_INET_DIAG_H_ */
+#endif /* _INET_DIAG_H_ */

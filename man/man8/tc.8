@@ -75,7 +75,7 @@ is also called prioritizing, and happens only on egress.
 
 .TP
 POLICING
-Where shaping deals with transmission of traffic, policing pertains to traffic
+Whereas shaping deals with transmission of traffic, policing pertains to traffic
 arriving. Policing thus occurs on ingress.
 
 .TP
@@ -203,7 +203,7 @@ Furthermore, each class contains a
 .B leaf qdisc
 which by default has
 .B pfifo
-behaviour though another qdisc can be attached in place. This qdisc may again
+behaviour, although another qdisc can be attached in place. This qdisc may again
 contain classes, but each class can have only one leaf qdisc.
 
 When a packet enters a classful qdisc it can be
@@ -233,7 +233,7 @@ attached to that class. Check qdisc specific manpages for details, however.
 All qdiscs, classes and filters have IDs, which can either be specified
 or be automatically assigned.
 
-ID's consist of a major number and a minor number, separated by a colon.
+IDs consist of a major number and a minor number, separated by a colon.
 Both major and minor number are limited to 16 bits. There are two special
 values: root is signified by major and minor of all ones, and unspecified
 is all zeros.

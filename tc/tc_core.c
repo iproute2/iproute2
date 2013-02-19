@@ -76,7 +76,7 @@ unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
  * (as the table will always be aligned for 48 bytes).
  *  --Hawk, d.7/11-2004. <hawk@diku.dk>
  */
-unsigned tc_align_to_atm(unsigned size)
+static unsigned tc_align_to_atm(unsigned size)
 {
 	int linksize, cells;
 	cells = size / ATM_CELL_PAYLOAD;
@@ -87,7 +87,7 @@ unsigned tc_align_to_atm(unsigned size)
 	return linksize;
 }
 
-unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linklayer)
+static unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linklayer)
 {
 	if (sz < mpu)
 		sz = mpu;
@@ -181,7 +181,7 @@ again:
 	return 0;
 }
 
-int tc_core_init()
+int tc_core_init(void)
 {
 	FILE *fp;
 	__u32 clock_res;

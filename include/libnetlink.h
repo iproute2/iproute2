@@ -1,6 +1,7 @@
 #ifndef __LIBNETLINK_H__
 #define __LIBNETLINK_H__ 1
 
+#include <stdio.h>
 #include <string.h>
 #include <asm/types.h>
 #include <linux/netlink.h>
@@ -8,6 +9,7 @@
 #include <linux/if_link.h>
 #include <linux/if_addr.h>
 #include <linux/neighbour.h>
+#include <linux/netconf.h>
 
 struct rtnl_handle
 {

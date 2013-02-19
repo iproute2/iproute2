@@ -68,8 +68,8 @@ static void set_ctrlmode(char* name, char *arg,
 		cm->flags |= flags;
 	} else if (strcmp(arg, "off") != 0) {
 		fprintf(stderr,
-			"Error: argument of \"%s\" must be \"on\" or \"off\"\n",
-			name);
+			"Error: argument of \"%s\" must be \"on\" or \"off\", not \"%s\"\n",
+			name, arg);
 		exit(-1);
 	}
 	cm->mask |= flags;
@@ -169,7 +169,7 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			usage();
 			return -1;
 		} else {
-			fprintf(stderr, "can: what is \"%s\"?\n", *argv);
+			fprintf(stderr, "can: unknown option \"%s\"\n", *argv);
 			usage();
 			return -1;
 		}

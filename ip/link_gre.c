@@ -141,7 +141,7 @@ get_failed:
 			else {
 				if (get_unsigned(&uval, *argv, 0) < 0) {
 					fprintf(stderr,
-						"Invalid value for \"key\"\n");
+						"Invalid value for \"key\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				uval = htonl(uval);
@@ -157,7 +157,7 @@ get_failed:
 				uval = get_addr32(*argv);
 			else {
 				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"ikey\"\n");
+					fprintf(stderr, "invalid value for \"ikey\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				uval = htonl(uval);
@@ -172,7 +172,7 @@ get_failed:
 				uval = get_addr32(*argv);
 			else {
 				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"okey\"\n");
+					fprintf(stderr, "invalid value for \"okey\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
 				uval = htonl(uval);
@@ -247,7 +247,7 @@ get_failed:
 		oflags |= GRE_KEY;
 	}
 	if (IN_MULTICAST(ntohl(daddr)) && !saddr) {
-		fprintf(stderr, "Broadcast tunnel requires a source address.\n");
+		fprintf(stderr, "A broadcast tunnel requires a source address.\n");
 		return -1;
 	}
 

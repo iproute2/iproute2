@@ -87,12 +87,12 @@ static int get_percent(__u32 *percent, const char *str)
 	return 0;
 }
 
-void print_percent(char *buf, int len, __u32 per)
+static void print_percent(char *buf, int len, __u32 per)
 {
 	snprintf(buf, len, "%g%%", 100. * (double) per / max_percent_value);
 }
 
-char * sprint_percent(__u32 per, char *buf)
+static char * sprint_percent(__u32 per, char *buf)
 {
 	print_percent(buf, SPRINT_BSIZE-1, per);
 	return buf;
@@ -147,6 +147,8 @@ static int get_distribution(const char *type, __s16 *data, int maxdata)
 }
 
 #define NEXT_IS_NUMBER() (NEXT_ARG_OK() && isdigit(argv[1][0]))
+#define NEXT_IS_SIGNED_NUMBER() \
+	(NEXT_ARG_OK() && (isdigit(argv[1][0]) || argv[1][0] == '-'))
 
 /* Adjust for the fact that psched_ticks aren't always usecs
    (based on kernel PSCHED_CLOCK configuration */
@@ -393,7 +395,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				explain1("rate");
 				return -1;
 			}
-			if (NEXT_IS_NUMBER()) {
+			if (NEXT_IS_SIGNED_NUMBER()) {
 				NEXT_ARG();
 				if (get_s32(&rate.packet_overhead, *argv, 0)) {
 					explain1("rate");
@@ -407,7 +409,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 					return -1;
 				}
 			}
-			if (NEXT_IS_NUMBER()) {
+			if (NEXT_IS_SIGNED_NUMBER()) {
 				NEXT_ARG();
 				if (get_s32(&rate.cell_overhead, *argv, 0)) {
 					explain1("rate");

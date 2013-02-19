@@ -52,7 +52,7 @@ static void usage(void)
 	exit(-1);
 }
 
-int nud_state_a2n(unsigned *state, char *arg)
+static int nud_state_a2n(unsigned *state, const char *arg)
 {
 	if (matches(arg, "permanent") == 0)
 		*state = NUD_PERMANENT;
@@ -189,7 +189,8 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	struct rtattr * tb[NDA_MAX+1];
 	char abuf[256];
 
-	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH) {
+	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH &&
+	    n->nlmsg_type != RTM_GETNEIGH) {
 		fprintf(stderr, "Not RTM_NEWNEIGH: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 
@@ -251,6 +252,8 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (n->nlmsg_type == RTM_DELNEIGH)
 		fprintf(fp, "delete ");
+	else if (n->nlmsg_type == RTM_GETNEIGH)
+		fprintf(fp, "miss ");
 	if (tb[NDA_DST]) {
 		fprintf(fp, "%s ",
 			format_host(r->ndm_family,
@@ -310,13 +313,13 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-void ipneigh_reset_filter()
+void ipneigh_reset_filter(void)
 {
 	memset(&filter, 0, sizeof(filter));
 	filter.state = ~0;
 }
 
-int do_show_or_flush(int argc, char **argv, int flush)
+static int do_show_or_flush(int argc, char **argv, int flush)
 {
 	char *filter_dev = NULL;
 	int state_given = 0;

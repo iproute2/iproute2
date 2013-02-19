@@ -1,5 +1,5 @@
-#ifndef _UAPI__LINUX_NETLINK_H
-#define _UAPI__LINUX_NETLINK_H
+#ifndef __LINUX_NETLINK_H
+#define __LINUX_NETLINK_H
 
 #include <linux/socket.h> /* for __kernel_sa_family_t */
 #include <linux/types.h>
@@ -150,4 +150,4 @@ struct nlattr {
 #define NLA_HDRLEN		((int) NLA_ALIGN(sizeof(struct nlattr)))
 
 
-#endif /* _UAPI__LINUX_NETLINK_H */
+#endif /* __LINUX_NETLINK_H */

@@ -896,7 +896,7 @@ static int xfrm_policy_list_or_deleteall(int argc, char **argv, int deleteall)
 	exit(0);
 }
 
-int print_spdinfo( struct nlmsghdr *n, void *arg)
+static int print_spdinfo( struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	__u32 *f = NLMSG_DATA(n);

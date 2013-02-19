@@ -45,7 +45,7 @@ usage(void)
 	exit(-1);
 }
 
-char *mirred_n2a(int action)
+static const char *mirred_n2a(int action)
 {
 	switch (action) {
 	case TCA_EGRESS_REDIR:
@@ -61,8 +61,9 @@ char *mirred_n2a(int action)
 	}
 }
 
-int
-parse_egress(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
+static int
+parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
+	     int tca_id, struct nlmsghdr *n)
 {
 
 	int argc = *argc_p;
@@ -205,8 +206,9 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 }
 
 
-int
-parse_mirred(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
+static int
+parse_mirred(struct action_util *a, int *argc_p, char ***argv_p,
+	     int tca_id, struct nlmsghdr *n)
 {
 
 	int argc = *argc_p;
@@ -245,7 +247,7 @@ parse_mirred(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, str
 
 }
 
-int
+static int
 print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
 {
 	struct tc_mirred *p;

@@ -18,8 +18,8 @@
  *		2 of the License, or (at your option) any later version.
  */
 
-#ifndef _UAPI_LINUX_IF_ETHER_H
-#define _UAPI_LINUX_IF_ETHER_H
+#ifndef _LINUX_IF_ETHER_H
+#define _LINUX_IF_ETHER_H
 
 #include <linux/types.h>
 
@@ -48,6 +48,7 @@
 #define	ETH_P_BPQ	0x08FF		/* G8BPQ AX.25 Ethernet Packet	[ NOT AN OFFICIALLY REGISTERED ID ] */
 #define ETH_P_IEEEPUP	0x0a00		/* Xerox IEEE802.3 PUP packet */
 #define ETH_P_IEEEPUPAT	0x0a01		/* Xerox IEEE802.3 PUP Addr Trans packet */
+#define ETH_P_BATMAN	0x4305		/* B.A.T.M.A.N.-Advanced packet [ NOT AN OFFICIALLY REGISTERED ID ] */
 #define ETH_P_DEC       0x6000          /* DEC Assigned proto           */
 #define ETH_P_DNA_DL    0x6001          /* DEC DNA Dump/Load            */
 #define ETH_P_DNA_RC    0x6002          /* DEC DNA Remote Console       */
@@ -132,4 +133,4 @@ struct ethhdr {
 } __attribute__((packed));
 
 
-#endif /* _UAPI_LINUX_IF_ETHER_H */
+#endif /* _LINUX_IF_ETHER_H */

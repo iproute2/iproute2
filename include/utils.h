@@ -1,6 +1,7 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__ 1
 
+#include <sys/types.h>
 #include <asm/types.h>
 #include <resolv.h>
 #include <stdlib.h>

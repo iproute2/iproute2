@@ -55,17 +55,17 @@ static int generic_proc_open(const char *env, char *name)
 	return open(p, O_RDONLY);
 }
 
-int net_netstat_open(void)
+static int net_netstat_open(void)
 {
 	return generic_proc_open("PROC_NET_NETSTAT", "net/netstat");
 }
 
-int net_snmp_open(void)
+static int net_snmp_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP", "net/snmp");
 }
 
-int net_snmp6_open(void)
+static int net_snmp6_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP6", "net/snmp6");
 }
@@ -82,13 +82,13 @@ struct nstat_ent
 struct nstat_ent *kern_db;
 struct nstat_ent *hist_db;
 
-char *useless_numbers[] = {
-"IpForwarding", "IpDefaultTTL",
-"TcpRtoAlgorithm", "TcpRtoMin", "TcpRtoMax",
-"TcpMaxConn", "TcpCurrEstab"
+static const char *useless_numbers[] = {
+	"IpForwarding", "IpDefaultTTL",
+	"TcpRtoAlgorithm", "TcpRtoMin", "TcpRtoMax",
+	"TcpMaxConn", "TcpCurrEstab"
 };
 
-int useless_number(char *id)
+static int useless_number(const char *id)
 {
 	int i;
 	for (i=0; i<sizeof(useless_numbers)/sizeof(*useless_numbers); i++)
@@ -97,7 +97,7 @@ int useless_number(char *id)
 	return 0;
 }
 
-int match(char *id)
+static int match(const char *id)
 {
 	int i;
 
@@ -111,7 +111,7 @@ int match(char *id)
 	return 0;
 }
 
-void load_good_table(FILE *fp)
+static void load_good_table(FILE *fp)
 {
 	char buf[4096];
 	struct nstat_ent *db = NULL;
@@ -157,7 +157,7 @@ void load_good_table(FILE *fp)
 }
 
 
-void load_ugly_table(FILE *fp)
+static void load_ugly_table(FILE *fp)
 {
 	char buf[4096];
 	struct nstat_ent *db = NULL;
@@ -228,7 +228,7 @@ void load_ugly_table(FILE *fp)
 	}
 }
 
-void load_snmp(void)
+static void load_snmp(void)
 {
 	FILE *fp = fdopen(net_snmp_open(), "r");
 	if (fp) {
@@ -237,7 +237,7 @@ void load_snmp(void)
 	}
 }
 
-void load_snmp6(void)
+static void load_snmp6(void)
 {
 	FILE *fp = fdopen(net_snmp6_open(), "r");
 	if (fp) {
@@ -246,7 +246,7 @@ void load_snmp6(void)
 	}
 }
 
-void load_netstat(void)
+static void load_netstat(void)
 {
 	FILE *fp = fdopen(net_netstat_open(), "r");
 	if (fp) {
@@ -255,7 +255,7 @@ void load_netstat(void)
 	}
 }
 
-void dump_kern_db(FILE *fp, int to_hist)
+static void dump_kern_db(FILE *fp, int to_hist)
 {
 	struct nstat_ent *n, *h;
 	h = hist_db;
@@ -280,7 +280,7 @@ void dump_kern_db(FILE *fp, int to_hist)
 	}
 }
 
-void dump_incr_db(FILE *fp)
+static void dump_incr_db(FILE *fp)
 {
 	struct nstat_ent *n, *h;
 	h = hist_db;
@@ -311,11 +311,11 @@ void dump_incr_db(FILE *fp)
 
 static int children;
 
-void sigchild(int signo)
+static void sigchild(int signo)
 {
 }
 
-void update_db(int interval)
+static void update_db(int interval)
 {
 	struct nstat_ent *n, *h;
 
@@ -367,7 +367,7 @@ void update_db(int interval)
 #define T_DIFF(a,b) (((a).tv_sec-(b).tv_sec)*1000 + ((a).tv_usec-(b).tv_usec)/1000)
 
 
-void server_loop(int fd)
+static void server_loop(int fd)
 {
 	struct timeval snaptime = { 0 };
 	struct pollfd p;
@@ -419,7 +419,7 @@ void server_loop(int fd)
 	}
 }
 
-int verify_forging(int fd)
+static int verify_forging(int fd)
 {
 	struct ucred cred;
 	socklen_t olen = sizeof(cred);

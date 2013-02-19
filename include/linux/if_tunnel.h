@@ -1,5 +1,5 @@
-#ifndef _UAPI_IF_TUNNEL_H_
-#define _UAPI_IF_TUNNEL_H_
+#ifndef _IF_TUNNEL_H_
+#define _IF_TUNNEL_H_
 
 #include <linux/types.h>
 #include <asm/byteorder.h>
@@ -36,6 +36,26 @@ struct ip_tunnel_parm {
 	__be32			o_key;
 	struct iphdr		iph;
 };
+
+enum {
+	IFLA_IPTUN_UNSPEC,
+	IFLA_IPTUN_LINK,
+	IFLA_IPTUN_LOCAL,
+	IFLA_IPTUN_REMOTE,
+	IFLA_IPTUN_TTL,
+	IFLA_IPTUN_TOS,
+	IFLA_IPTUN_ENCAP_LIMIT,
+	IFLA_IPTUN_FLOWINFO,
+	IFLA_IPTUN_FLAGS,
+	IFLA_IPTUN_PROTO,
+	IFLA_IPTUN_PMTUDISC,
+	IFLA_IPTUN_6RD_PREFIX,
+	IFLA_IPTUN_6RD_RELAY_PREFIX,
+	IFLA_IPTUN_6RD_PREFIXLEN,
+	IFLA_IPTUN_6RD_RELAY_PREFIXLEN,
+	__IFLA_IPTUN_MAX,
+};
+#define IFLA_IPTUN_MAX	(__IFLA_IPTUN_MAX - 1)
 
 /* SIT-mode i_flags */
 #define	SIT_ISATAP	0x0001
@@ -93,4 +113,4 @@ enum {
 };
 
 #define IFLA_VTI_MAX	(__IFLA_VTI_MAX - 1)
-#endif /* _UAPI_IF_TUNNEL_H_ */
+#endif /* _IF_TUNNEL_H_ */

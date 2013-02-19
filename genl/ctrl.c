@@ -112,7 +112,7 @@ errout:
 	return ret;
 }
 
-void print_ctrl_cmd_flags(FILE *fp, __u32 fl)
+static void print_ctrl_cmd_flags(FILE *fp, __u32 fl)
 {
 	fprintf(fp, "\n\t\tCapabilities (0x%x):\n ", fl);
 	if (!fl) {

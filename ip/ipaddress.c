@@ -19,7 +19,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -89,7 +89,7 @@ static void usage(void)
 	exit(-1);
 }
 
-void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
+static void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
 {
 	fprintf(fp, "<");
 	if (flags & IFF_UP && !(flags & IFF_RUNNING))
@@ -163,7 +163,7 @@ static void print_queuelen(FILE *f, struct rtattr *tb[IFLA_MAX + 1])
 		memset(&ifr, 0, sizeof(ifr));
 		strcpy(ifr.ifr_name, rta_getattr_str(tb[IFLA_IFNAME]));
 		if (ioctl(s, SIOCGIFTXQLEN, &ifr) < 0) {
-			fprintf(f, "ioctl(SIOCGIFXQLEN) failed: %s\n", strerror(errno));
+			fprintf(f, "ioctl(SIOCGIFTXQLEN) failed: %s\n", strerror(errno));
 			close(s);
 			return;
 		}
@@ -461,6 +461,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		}
 	}
 
+	if (do_link && tb[IFLA_PROMISCUITY] && show_details)
+		fprintf(fp, " promiscuity %u ",
+			*(int*)RTA_DATA(tb[IFLA_PROMISCUITY]));
+
 	if (do_link && tb[IFLA_LINKINFO] && show_details)
 		print_linktype(fp, tb[IFLA_LINKINFO]);
 
@@ -695,8 +699,8 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return 0;
 }
 
-int print_addrinfo_primary(const struct sockaddr_nl *who, struct nlmsghdr *n,
-			   void *arg)
+static int print_addrinfo_primary(const struct sockaddr_nl *who,
+				  struct nlmsghdr *n, void *arg)
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
@@ -706,8 +710,8 @@ int print_addrinfo_primary(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return print_addrinfo(who, n, arg);
 }
 
-int print_addrinfo_secondary(const struct sockaddr_nl *who, struct nlmsghdr *n,
-			     void *arg)
+static int print_addrinfo_secondary(const struct sockaddr_nl *who,
+				    struct nlmsghdr *n, void *arg)
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
@@ -781,7 +785,7 @@ static int ipadd_save_prep(void)
 	int ret;
 
 	if (isatty(STDOUT_FILENO)) {
-		fprintf(stderr, "Not sending binary stream to stdout\n");
+		fprintf(stderr, "Not sending a binary stream to stdout\n");
 		return -1;
 	}
 
