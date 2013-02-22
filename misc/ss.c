@@ -2139,7 +2139,7 @@ static int unix_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	struct rtattr *tb[UNIX_DIAG_MAX+1];
 	char name[128];
 	int peer_ino;
-	int rqlen;
+	__u32 rqlen, wqlen;
 
 	parse_rtattr(tb, UNIX_DIAG_MAX, (struct rtattr*)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
@@ -2150,12 +2150,16 @@ static int unix_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	if (state_width)
 		printf("%-*s ", state_width, sstate_name[r->udiag_state]);
 
-	if (tb[UNIX_DIAG_RQLEN])
-		rqlen = *(int *)RTA_DATA(tb[UNIX_DIAG_RQLEN]);
-	else
+	if (tb[UNIX_DIAG_RQLEN]) {
+		struct unix_diag_rqlen *rql = RTA_DATA(tb[UNIX_DIAG_RQLEN]);
+		rqlen = rql->udiag_rqueue;
+		wqlen = rql->udiag_wqueue;
+	} else {
 		rqlen = 0;
+		wqlen = 0;
+	}
 
-	printf("%-6d %-6d ", rqlen, 0);
+	printf("%-6u %-6u ", rqlen, wqlen);
 
 	if (tb[UNIX_DIAG_NAME]) {
 		int len = RTA_PAYLOAD(tb[UNIX_DIAG_NAME]);
