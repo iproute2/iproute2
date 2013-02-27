@@ -26,7 +26,7 @@ static void explain(void)
 		"\n"
 		"VLANID := 0-4095\n"
 		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
-		"FLAG := [ reorder_hdr { on | off } ] [ gvrp { on | off } ]\n"
+		"FLAG := [ reorder_hdr { on | off } ] [ gvrp { on | off } ] [ mvrp { on | off } ]\n"
 		"        [ loose_binding { on | off } ]\n"
 		"QOS-MAP := [ QOS-MAP ] QOS-MAPPING\n"
 		"QOS-MAPPING := FROM:TO\n"
@@ -103,6 +103,15 @@ static int vlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				flags.flags &= ~VLAN_FLAG_GVRP;
 			else
 				return on_off("gvrp", *argv);
+		} else if (matches(*argv, "mvrp") == 0) {
+			NEXT_ARG();
+			flags.mask |= VLAN_FLAG_MVRP;
+			if (strcmp(*argv, "on") == 0)
+				flags.flags |= VLAN_FLAG_MVRP;
+			else if (strcmp(*argv, "off") == 0)
+				flags.flags &= ~VLAN_FLAG_MVRP;
+			else
+				return on_off("mvrp", *argv);
 		} else if (matches(*argv, "loose_binding") == 0) {
 			NEXT_ARG();
 			flags.mask |= VLAN_FLAG_LOOSE_BINDING;
@@ -166,6 +175,7 @@ static void vlan_print_flags(FILE *fp, __u32 flags)
 		}
 	_PF(REORDER_HDR);
 	_PF(GVRP);
+	_PF(MVRP);
 	_PF(LOOSE_BINDING);
 #undef _PF
 	if (flags)
