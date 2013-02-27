@@ -2172,7 +2172,7 @@ static int unix_show_sock(struct nlmsghdr *nlh, struct filter *f)
 		sprintf(name, "*");
 
 	if (tb[UNIX_DIAG_PEER])
-		peer_ino = *(int *)RTA_DATA(tb[UNIX_DIAG_PEER]);
+		peer_ino = rta_getattr_u32(tb[UNIX_DIAG_PEER]);
 	else
 		peer_ino = 0;
 
