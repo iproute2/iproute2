@@ -91,6 +91,12 @@ int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions)
 
 int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 {
+	return rtnl_wilddump_req_filter(rth, family, type, RTEXT_FILTER_VF);
+}
+
+int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int family, int type,
+			    __u32 filt_mask)
+{
 	struct {
 		struct nlmsghdr nlh;
 		struct rtgenmsg g;
@@ -109,7 +115,7 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 
 	req.ext_req.rta_type = IFLA_EXT_MASK;
 	req.ext_req.rta_len = RTA_LENGTH(sizeof(__u32));
-	req.ext_filter_mask = RTEXT_FILTER_VF;
+	req.ext_filter_mask = filt_mask;
 
 	return send(rth->fd, (void*)&req, sizeof(req), 0);
 }

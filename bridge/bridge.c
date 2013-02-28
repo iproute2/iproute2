@@ -27,7 +27,7 @@ static void usage(void)
 {
 	fprintf(stderr,
 "Usage: bridge [ OPTIONS ] OBJECT { COMMAND | help }\n"
-"where  OBJECT := { fdb |  mdb | monitor }\n"
+"where  OBJECT := { fdb | mdb | vlan | monitor }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails]\n" );
 	exit(-1);
 }
@@ -44,6 +44,7 @@ static const struct cmd {
 } cmds[] = {
 	{ "fdb", 	do_fdb },
 	{ "mdb", 	do_mdb },
+	{ "vlan",	do_vlan },
 	{ "monitor",	do_monitor },
 	{ "help",	do_help },
 	{ 0 }

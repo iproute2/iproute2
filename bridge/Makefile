@@ -1,4 +1,4 @@
-BROBJ = bridge.o fdb.o monitor.o link.o mdb.o
+BROBJ = bridge.o fdb.o monitor.o link.o mdb.o vlan.o
 
 include ../Config
 
