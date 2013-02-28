@@ -13,7 +13,7 @@ bridge \- show / manipulate bridge addresses and devices
 
 .ti -8
 .IR OBJECT " := { "
-.BR fdb " | " monitor " }"
+.BR fdb " | " vlan " | " monitor " }"
 .sp
 
 .ti -8
@@ -31,6 +31,20 @@ bridge \- show / manipulate bridge addresses and devices
 
 .ti -8
 .BR "bridge fdb" " [ " show " ] [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
+.BR "bridge vlan" " { " add " | " del " } "
+.B  dev
+.IR DEV
+.B  vid 
+.IR VID " [ "
+.BR  pvid " ] [ " untagged " ]  [ "
+.BR  self " ]  [ " master " ] "
+
+.ti -8
+.BR "bridge vlan" " [ " show " ] [ "
 .B  dev
 .IR DEV " ]"
 
@@ -60,6 +74,10 @@ As a rule, the information is statistics or some time values.
 .TP
 .B fdb 
 - Forwarding Database entry.
+
+.TP
+.B vlan
+- VLAN filter list.
 
 .SS
 .I COMMAND
@@ -142,6 +160,59 @@ With the
 .B -statistics
 option, the command becomes verbose.  It prints out the last updated
 and last used time for each entry.
+
+.SH bridge vlan - VLAN filter list
+
+.B vlan
+objects contain known VLAN IDs for a link.
+
+.P
+The corresponding commands display vlan filter entries, add new entries,
+and delete old ones.
+
+.SS bridge vlan add - add a new vlan filter entry
+
+This command creates a new vlan filter entry.
+
+.TP
+.BI dev " NAME"
+the interface with which this vlan is associated.
+
+.TP
+.BI vid " VID"
+the VLAN ID that identifies the vlan.
+
+.TP
+.BI pvid
+the vlan specified is to be considered a PVID at ingress.
+Any untagged frames will be assigned to this VLAN.
+
+.TP
+.BI untagged
+the vlan specified is to be treated as untagged on egress.
+
+.TP
+.BI self
+the vlan is configured on the specified physical device.  Required if the
+device is the bridge device.
+
+.TP
+.BI master
+the vlan is configured on the sofware bridge (default).
+
+.SS bridge vlan delete - delete a forwarding database entry
+This command removes an existing fdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge vlan add".
+The
+.BR "pvid " and " untagged"
+flags are ignored.
+
+.SS bridge vlan show - list vlan configuration.
+
+This command displays the current VLAN filter table.
 
 .SH bridge monitor - state monitoring
 
