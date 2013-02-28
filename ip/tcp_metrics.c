@@ -166,7 +166,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	a = attrs[TCP_METRICS_ATTR_AGE];
 	if (a) {
-		__u64 val = rta_getattr_u64(a);
+		unsigned long long val = rta_getattr_u64(a);
 
 		fprintf(fp, " age %llu.%03llusec",
 			val / 1000, val % 1000);
@@ -189,7 +189,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		parse_rtattr_nested(m, TCP_METRIC_MAX + 1, a);
 
 		for (i = 0; i < TCP_METRIC_MAX + 1; i++) {
-			__u32 val;
+			unsigned long val;
 
 			a = m[i + 1];
 			if (!a)
@@ -198,19 +198,20 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 				fprintf(fp, " %s ", metric_name[i]);
 			else
 				fprintf(fp, " metric_%d ", i);
+
 			val = rta_getattr_u32(a);
 			switch (i) {
 			case TCP_METRIC_RTT:
-				fprintf(fp, "%lluus", (val * 1000ULL) >> 3);
+				fprintf(fp, "%luus", (val * 1000UL) >> 3);
 				break;
 			case TCP_METRIC_RTTVAR:
-				fprintf(fp, "%lluus", (val * 1000ULL) >> 2);
+				fprintf(fp, "%luus", (val * 1000UL) >> 2);
 				break;
 			case TCP_METRIC_SSTHRESH:
 			case TCP_METRIC_CWND:
 			case TCP_METRIC_REORDERING:
 			default:
-				fprintf(fp, "%u", val);
+				fprintf(fp, "%lu", val);
 				break;
 			}
 		}
@@ -223,7 +224,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	a = attrs[TCP_METRICS_ATTR_FOPEN_SYN_DROPS];
 	if (a) {
 		__u16 syn_loss = rta_getattr_u16(a);
-		__u64 ts;
+		unsigned long long ts;
 
 		a = attrs[TCP_METRICS_ATTR_FOPEN_SYN_DROP_TS];
 		ts = a ? rta_getattr_u64(a) : 0;
