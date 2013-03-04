@@ -560,28 +560,38 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "    ");
 		fprintf(fp, "stats ");
 
-		fprintf(fp, "allocs %llu ", ndts->ndts_allocs);
-		fprintf(fp, "destroys %llu ", ndts->ndts_destroys);
-		fprintf(fp, "hash_grows %llu ", ndts->ndts_hash_grows);
+		fprintf(fp, "allocs %llu ",
+			(unsigned long long) ndts->ndts_allocs);
+		fprintf(fp, "destroys %llu ",
+			(unsigned long long) ndts->ndts_destroys);
+		fprintf(fp, "hash_grows %llu ",
+			(unsigned long long) ndts->ndts_hash_grows);
 
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "        ");
 
-		fprintf(fp, "res_failed %llu ", ndts->ndts_res_failed);
-		fprintf(fp, "lookups %llu ", ndts->ndts_lookups);
-		fprintf(fp, "hits %llu ", ndts->ndts_hits);
+		fprintf(fp, "res_failed %llu ",
+			(unsigned long long) ndts->ndts_res_failed);
+		fprintf(fp, "lookups %llu ",
+			(unsigned long long) ndts->ndts_lookups);
+		fprintf(fp, "hits %llu ",
+			(unsigned long long) ndts->ndts_hits);
 
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "        ");
 
-		fprintf(fp, "rcv_probes_mcast %llu ", ndts->ndts_rcv_probes_mcast);
-		fprintf(fp, "rcv_probes_ucast %llu ", ndts->ndts_rcv_probes_ucast);
+		fprintf(fp, "rcv_probes_mcast %llu ",
+			(unsigned long long) ndts->ndts_rcv_probes_mcast);
+		fprintf(fp, "rcv_probes_ucast %llu ",
+			(unsigned long long) ndts->ndts_rcv_probes_ucast);
 
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "        ");
 
-		fprintf(fp, "periodic_gc_runs %llu ", ndts->ndts_periodic_gc_runs);
-		fprintf(fp, "forced_gc_runs %llu ", ndts->ndts_forced_gc_runs);
+		fprintf(fp, "periodic_gc_runs %llu ",
+			(unsigned long long) ndts->ndts_periodic_gc_runs);
+		fprintf(fp, "forced_gc_runs %llu ",
+			(unsigned long long) ndts->ndts_forced_gc_runs);
 
 		fprintf(fp, "%s", _SL_);
 	}
