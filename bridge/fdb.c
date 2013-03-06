@@ -29,7 +29,8 @@ int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge fdb { add | del } ADDR dev DEV {self|master} [ temp ] [ dst IPADDR] [ vlan VID ]\n");
+	fprintf(stderr, "Usage: bridge fdb { add | del } ADDR dev DEV {self|master} [ temp ]\n"
+		        "              [ dst IPADDR] [ vlan VID ]\n");
 	fprintf(stderr, "       bridge fdb {show} [ dev DEV ]\n");
 	exit(-1);
 }
@@ -248,7 +249,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		addattr_l(&req.n, sizeof(req), NDA_DST, &dst.data, dst.bytelen);
 
 	if (vid >= 0)
-		addattr16(&req.n, sizeof(req), NDA_VLAN, vid); 
+		addattr16(&req.n, sizeof(req), NDA_VLAN, vid);
 
 	req.ndm.ndm_ifindex = ll_name_to_index(d);
 	if (req.ndm.ndm_ifindex == 0) {
