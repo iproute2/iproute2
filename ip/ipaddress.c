@@ -468,9 +468,11 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (do_link && tb[IFLA_LINKINFO] && show_details)
 		print_linktype(fp, tb[IFLA_LINKINFO]);
 
-	if (do_link && tb[IFLA_IFALIAS])
-		fprintf(fp,"\n    alias %s", 
+	if (do_link && tb[IFLA_IFALIAS]) {
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp,"    alias %s",
 			rta_getattr_str(tb[IFLA_IFALIAS]));
+	}
 
 	if (do_link && show_stats) {
 		if (tb[IFLA_STATS64])
