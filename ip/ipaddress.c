@@ -71,7 +71,7 @@ static void usage(void)
 	fprintf(stderr, "                                                      [ CONFFLAG-LIST ]\n");
 	fprintf(stderr, "       ip addr del IFADDR dev STRING\n");
 	fprintf(stderr, "       ip addr {show|save|flush} [ dev STRING ] [ scope SCOPE-ID ]\n");
-	fprintf(stderr, "                            [ to PREFIX ] [ FLAG-LIST ] [ label PATTERN ]\n");
+	fprintf(stderr, "                            [ to PREFIX ] [ FLAG-LIST ] [ label PATTERN ] [up]\n");
 	fprintf(stderr, "       ip addr {showdump|restore}\n");
 	fprintf(stderr, "IFADDR := PREFIX | ADDR peer PREFIX\n");
 	fprintf(stderr, "          [ broadcast ADDR ] [ anycast ADDR ]\n");

@@ -163,6 +163,10 @@ only list addresses with labels matching the
 is a usual shell style pattern.
 
 .TP
+.B up
+only list running interfaces.
+
+.TP
 .BR dynamic " and " permanent
 (IPv6 only) only list addresses installed due to stateless
 address configuration or only list permanent (not dynamic)
