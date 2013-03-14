@@ -46,7 +46,7 @@ static void usage(void)
 
 static int parse_hex(char *str, unsigned char *addr, size_t size)
 {
-	int len=0;
+	int len = 0;
 
 	while (*str && (len < 2 * size)) {
 		int tmp;
@@ -75,7 +75,7 @@ static void maddr_ins(struct ma_info **lst, struct ma_info *m)
 {
 	struct ma_info *mp;
 
-	for (; (mp=*lst) != NULL; lst = &mp->next) {
+	for (; (mp = *lst) != NULL; lst = &mp->next) {
 		if (mp->index > m->index)
 			break;
 	}
