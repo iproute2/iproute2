@@ -96,8 +96,8 @@ static void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
 		fprintf(fp, "NO-CARRIER%s", flags ? "," : "");
 	flags &= ~IFF_RUNNING;
 #define _PF(f) if (flags&IFF_##f) { \
-                  flags &= ~IFF_##f ; \
-                  fprintf(fp, #f "%s", flags ? "," : ""); }
+		  flags &= ~IFF_##f ; \
+		  fprintf(fp, #f "%s", flags ? "," : ""); }
 	_PF(LOOPBACK);
 	_PF(BROADCAST);
 	_PF(POINTOPOINT);
@@ -117,7 +117,7 @@ static void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
 	_PF(DORMANT);
 	_PF(ECHO);
 #undef _PF
-        if (flags)
+	if (flags)
 		fprintf(fp, "%x", flags);
 	if (mdown)
 		fprintf(fp, ",M-DOWN");
@@ -469,8 +469,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_linktype(fp, tb[IFLA_LINKINFO]);
 
 	if (do_link && tb[IFLA_IFALIAS]) {
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp,"    alias %s",
+		fprintf(fp, "%s    alias %s", _SL_,
 			rta_getattr_str(tb[IFLA_IFALIAS]));
 	}
 
@@ -1425,4 +1424,3 @@ int do_ipaddr(int argc, char **argv)
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip addr help\".\n", *argv);
 	exit(-1);
 }
-
