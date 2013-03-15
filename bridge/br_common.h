@@ -10,6 +10,7 @@ extern int do_fdb(int argc, char **argv);
 extern int do_mdb(int argc, char **argv);
 extern int do_monitor(int argc, char **argv);
 extern int do_vlan(int argc, char **argv);
+extern int do_link(int argc, char **argv);
 
 extern int preferred_family;
 extern int show_stats;
