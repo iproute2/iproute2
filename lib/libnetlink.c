@@ -658,10 +658,19 @@ int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 
 int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 {
+	return parse_rtattr_flags(tb, max, rta, len, 0);
+}
+
+int parse_rtattr_flags(struct rtattr *tb[], int max, struct rtattr *rta,
+		       int len, unsigned short flags)
+{
+	unsigned short type;
+
 	memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
 	while (RTA_OK(rta, len)) {
-		if ((rta->rta_type <= max) && (!tb[rta->rta_type]))
-			tb[rta->rta_type] = rta;
+		type = rta->rta_type & ~flags;
+		if ((type <= max) && (!tb[type]))
+			tb[type] = rta;
 		rta = RTA_NEXT(rta,len);
 	}
 	if (len)
