@@ -169,18 +169,23 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			if (prtb[IFLA_BRPORT_COST])
 				fprintf(fp, "cost %u ",
 					rta_getattr_u32(prtb[IFLA_BRPORT_COST]));
-			if (prtb[IFLA_BRPORT_MODE])
-				print_onoff(fp, "hairpin",
-					    rta_getattr_u8(prtb[IFLA_BRPORT_MODE]));
-			if (prtb[IFLA_BRPORT_GUARD])
-				print_onoff(fp, "guard",
-					    rta_getattr_u8(prtb[IFLA_BRPORT_GUARD]));
-			if (prtb[IFLA_BRPORT_PROTECT])
-				print_onoff(fp, "root_block",
-					    rta_getattr_u8(prtb[IFLA_BRPORT_PROTECT]));
-			if (prtb[IFLA_BRPORT_FAST_LEAVE])
-				print_onoff(fp, "fastleave",
-					    rta_getattr_u8(prtb[IFLA_BRPORT_FAST_LEAVE]));
+
+			if (show_details) {
+				fprintf(fp, "%s    ", _SL_);
+
+				if (prtb[IFLA_BRPORT_MODE])
+					print_onoff(fp, "hairpin",
+						    rta_getattr_u8(prtb[IFLA_BRPORT_MODE]));
+				if (prtb[IFLA_BRPORT_GUARD])
+					print_onoff(fp, "guard",
+						    rta_getattr_u8(prtb[IFLA_BRPORT_GUARD]));
+				if (prtb[IFLA_BRPORT_PROTECT])
+					print_onoff(fp, "root_block",
+						    rta_getattr_u8(prtb[IFLA_BRPORT_PROTECT]));
+				if (prtb[IFLA_BRPORT_FAST_LEAVE])
+					print_onoff(fp, "fastleave",
+						    rta_getattr_u8(prtb[IFLA_BRPORT_FAST_LEAVE]));
+			}
 		} else
 			print_portstate(fp, rta_getattr_u8(tb[IFLA_PROTINFO]));
 	}

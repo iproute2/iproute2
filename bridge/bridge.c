@@ -17,9 +17,11 @@
 struct rtnl_handle rth = { .fd = -1 };
 int preferred_family = AF_UNSPEC;
 int resolve_hosts;
+int oneline = 0;
 int show_stats;
 int show_details;
 int timestamp;
+char * _SL_ = NULL;
 
 static void usage(void) __attribute__((noreturn));
 
@@ -28,7 +30,8 @@ static void usage(void)
 	fprintf(stderr,
 "Usage: bridge [ OPTIONS ] OBJECT { COMMAND | help }\n"
 "where  OBJECT := { link | fdb | mdb | vlan | monitor }\n"
-"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails]\n" );
+"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] |\n"
+"                    -o[neline] | -t[imestamp] \n");
 	exit(-1);
 }
 
@@ -88,6 +91,8 @@ main(int argc, char **argv)
 			++show_stats;
 		} else if (matches(opt, "-details") == 0) {
 			++show_details;
+		} else if (matches(opt, "-oneline") == 0) {
+			++oneline;
 		} else if (matches(opt, "-timestamp") == 0) {
 			++timestamp;
                 } else if (matches(opt, "-family") == 0) {
@@ -113,6 +118,8 @@ main(int argc, char **argv)
 		}
 		argc--;	argv++;
 	}
+
+	_SL_ = oneline ? "\\" : "\n" ;
 
 	if (rtnl_open(&rth, 0) < 0)
 		exit(1);
