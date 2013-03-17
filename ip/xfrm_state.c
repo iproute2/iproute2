@@ -294,7 +294,9 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 			xfrm_state_flag_parse(&req.xsinfo.flags, &argc, &argv);
 		} else if (strcmp(*argv, "sel") == 0) {
 			NEXT_ARG();
+			preferred_family = AF_UNSPEC;
 			xfrm_selector_parse(&req.xsinfo.sel, &argc, &argv);
+			preferred_family = req.xsinfo.sel;
 		} else if (strcmp(*argv, "limit") == 0) {
 			NEXT_ARG();
 			xfrm_lifetime_cfg_parse(&req.xsinfo.lft, &argc, &argv);
