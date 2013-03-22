@@ -194,6 +194,7 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 		.msg_iovlen = 1,
 	};
 	char buf[16384];
+	int dump_intr = 0;
 
 	iov.iov_base = buf;
 	while (1) {
@@ -230,6 +231,9 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 				    h->nlmsg_seq != rth->dump)
 					goto skip_it;
 
+				if (h->nlmsg_flags & NLM_F_DUMP_INTR)
+					dump_intr = 1;
+
 				if (h->nlmsg_type == NLMSG_DONE) {
 					found_done = 1;
 					break; /* process next filter */
@@ -254,8 +258,12 @@ skip_it:
 			}
 		}
 
-		if (found_done)
+		if (found_done) {
+			if (dump_intr)
+				fprintf(stderr,
+					"Dump was interrupted and may be inconsistent.\n");
 			return 0;
+		}
 
 		if (msg.msg_flags & MSG_TRUNC) {
 			fprintf(stderr, "Message truncated\n");
