@@ -28,24 +28,20 @@ command.
 
 TBF is a pure shaper and never schedules traffic. It is non-work-conserving and may throttle
 itself, although packets are available, to ensure that the configured rate is not exceeded. 
-On all platforms except for Alpha,
-it is able to shape up to 1mbit/s of normal traffic with ideal minimal burstiness, 
-sending out  data exactly at the configured rates. 
+It is able to shape up to 1mbit/s of normal traffic with ideal minimal burstiness, 
+sending out data exactly at the configured rates.
 
 Much higher rates are possible but at the cost of losing the minimal burstiness. In that
 case, data is on average dequeued at the configured rate but may be sent much faster at millisecond 
 timescales. Because of further queues living in network adaptors, this is often not a problem.
 
-Kernels with a higher 'HZ' can achieve higher rates with perfect burstiness. On Alpha, HZ is ten
-times higher, leading to a 10mbit/s limit to perfection. These calculations hold for packets of on 
-average 1000 bytes.
-
 .SH ALGORITHM
 As the name implies, traffic is filtered based on the expenditure of 
 .B tokens.
-Tokens roughly correspond to bytes, with the additional constraint that each packet consumes
-some tokens, no matter how small it is. This reflects the fact that even a zero-sized packet occupies
-the link for some time.
+Tokens roughly correspond to bytes, with the additional constraint
+that each packet consumes some tokens, no matter how small it is. This
+reflects the fact that even a zero-sized packet occupies the link for
+some time.
 
 On creation, the TBF is stocked with tokens which correspond to the amount of traffic that can be burst 
 in one go. Tokens arrive at a steady rate, until the bucket is full.
@@ -106,8 +102,9 @@ Furthermore, if a peakrate is desired, the following parameters are available:
 
 .TP
 peakrate
-Maximum depletion rate of the bucket. Limited to 1mbit/s on Intel, 10mbit/s on Alpha. The peakrate does 
-not need to be set, it is only necessary if perfect millisecond timescale shaping is required.
+Maximum depletion rate of the bucket.  The peakrate does not
+need to be set, it is only necessary if perfect millisecond timescale
+shaping is required.
 
 .TP
 mtu/minburst
