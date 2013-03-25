@@ -502,11 +502,6 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 				strxf_xfrmproto(req.xsinfo.id.proto));
 			exit(1);
 		}
-		if (req.xsinfo.id.spi != 0) {
-			fprintf(stderr, "\"spi\" must be 0 with proto=%s\n",
-				strxf_xfrmproto(req.xsinfo.id.proto));
-			exit(1);
-		}
 		break;
 	default:
 		break;

@@ -1067,6 +1067,18 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 	if (src.family && dst.family && (src.family != dst.family))
 		invarg("the same address family is required between \"src\" and \"dst\"", *argv);
 
+	if (id->spi && id->proto) {
+		if (xfrm_xfrmproto_is_ro(id->proto)) {
+			fprintf(stderr, "\"spi\" is invalid with XFRM-PROTO value \"%s\"\n",
+			        strxf_xfrmproto(id->proto));
+			exit(1);
+		} else if (id->proto == IPPROTO_COMP && ntohl(id->spi) >= 0x10000) {
+			fprintf(stderr, "SPI value is too large with XFRM-PROTO value \"%s\"\n",
+			        strxf_xfrmproto(id->proto));
+			exit(1);
+		}
+	}
+
 	if (loose == 0 && id->proto == 0)
 		missarg("XFRM-PROTO");
 	if (argc == *argcp)
