@@ -96,7 +96,7 @@ static void usage(void)
 	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_COMP));
 	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ROUTING));
 	fprintf(stderr, "%s\n", strxf_xfrmproto(IPPROTO_DSTOPTS));
- 	fprintf(stderr, "MODE := transport | tunnel | ro | in_trigger | beet\n");
+ 	fprintf(stderr, "MODE := transport | tunnel | beet | ro | in_trigger\n");
 	fprintf(stderr, "LEVEL := required | use\n");
 
 	exit(-1);

@@ -118,20 +118,20 @@ ip-xfrm \- transform configuration
 .ti -8
 .IR ALGO " :="
 .RB "{ " enc " | " auth " } " 
-.IR ALGO-NAME " " ALGO-KEY " |"
+.IR ALGO-NAME " " ALGO-KEYMAT " |"
 .br
 .B auth-trunc
-.IR ALGO-NAME " " ALGO-KEY " " ALGO-TRUNC-LEN " |"
+.IR ALGO-NAME " " ALGO-KEYMAT " " ALGO-TRUNC-LEN " |"
 .br
 .B aead
-.IR ALGO-NAME " " ALGO-KEY " " ALGO-ICV-LEN " |"
+.IR ALGO-NAME " " ALGO-KEYMAT " " ALGO-ICV-LEN " |"
 .br
 .B comp
 .IR ALGO-NAME
 
 .ti -8
 .IR MODE " := "
-.BR transport " | " tunnel " | " ro " | " in_trigger " | " beet
+.BR transport " | " tunnel " | " beet " | " ro " | " in_trigger
 
 .ti -8
 .IR FLAG-LIST " := [ " FLAG-LIST " ] " FLAG
@@ -345,7 +345,7 @@ ip-xfrm \- transform configuration
 
 .ti -8
 .IR MODE " := "
-.BR transport " | " tunnel " | " ro " | " in_trigger " | " beet
+.BR transport " | " tunnel " | " beet " | " ro " | " in_trigger
 
 .ti -8
 .IR LEVEL " :="
@@ -393,6 +393,8 @@ is specified by a source address, destination address,
 .RI "transform protocol " XFRM-PROTO ","
 and/or Security Parameter Index
 .IR SPI "."
+(For IP Payload Compression, the Compression Parameter Index or CPI is used for
+.IR SPI ".)"
 
 .TP
 .I XFRM-PROTO
@@ -405,37 +407,68 @@ specifies a transform protocol:
 
 .TP
 .I ALGO-LIST
-specifies one or more algorithms
-.IR ALGO
-to use. Algorithm types include
+contains one or more algorithms to use. Each algorithm
+.I ALGO
+is specified by:
+.RS
+.IP \[bu]
+the algorithm type:
 .RB "encryption (" enc "),"
-.RB "authentication (" auth "),"
-.RB "authentication with a specified truncation length (" auth-trunc "),"
-.RB "authenticated encryption with associated data (" aead "), and"
-.RB "compression (" comp ")."
-For each algorithm used, the algorithm type, the algorithm name
-.IR ALGO-NAME ","
-and the key
-.I ALGO-KEY
-must be specified. For
-.BR aead ","
+.RB "authentication (" auth " or " auth-trunc "),"
+.RB "authenticated encryption with associated data (" aead "), or"
+.RB "compression (" comp ")"
+.IP \[bu]
+the algorithm name
+.IR ALGO-NAME
+(see below)
+.IP \[bu]
+.RB "(for all except " comp ")"
+the keying material
+.IR ALGO-KEYMAT ","
+which may include both a key and a salt or nonce value; refer to the
+corresponding RFC
+.IP \[bu]
+.RB "(for " auth-trunc " only)"
+the truncation length
+.I ALGO-TRUNC-LEN
+in bits
+.IP \[bu]
+.RB "(for " aead " only)"
 the Integrity Check Value length
 .I ALGO-ICV-LEN
-must additionally be specified.
-For
-.BR auth-trunc ","
-the signature truncation length
-.I ALGO-TRUNC-LEN
-must additionally be specified.
+in bits
+.RE
+
+.nh
+.RS
+Encryption algorithms include
+.BR ecb(cipher_null) ", " cbc(des) ", " cbc(des3_ede) ", " cbc(cast5) ","
+.BR cbc(blowfish) ", " cbc(aes) ", " cbc(serpent) ", " cbc(camellia) ","
+.BR cbc(twofish) ", and " rfc3686(ctr(aes)) "."
+
+Authentication algorithms include
+.BR digest_null ", " hmac(md5) ", " hmac(sha1) ", " hmac(sha256) ","
+.BR hmac(sha384) ", " hmac(sha512) ", " hmac(rmd610) ", and " xcbc(aes) "."
+
+Authenticated encryption with associated data (AEAD) algorithms include
+.BR rfc4106(gcm(aes)) ", " rfc4309(ccm(aes)) ", and " rfc4543(gcm(aes)) "."
+
+Compression algorithms include
+.BR deflate ", " lzs ", and " lzjh "."
+.RE
+.hy
 
 .TP
 .I MODE
-specifies a mode of operation:
-.RB "IPsec transport mode (" transport "), "
-.RB "IPsec tunnel mode (" tunnel "), "
-.RB "Mobile IPv6 route optimization mode (" ro "), "
-.RB "Mobile IPv6 inbound trigger mode (" in_trigger "), or "
-.RB "IPsec ESP Bound End-to-End Tunnel Mode (" beet ")."
+specifies a mode of operation for the transform protocol. IPsec and IP Payload
+Compression modes are
+.BR transport ", " tunnel ","
+and (for IPsec ESP only) Bound End-to-End Tunnel
+.RB "(" beet ")."
+Mobile IPv6 modes are route optimization
+.RB "(" ro ")"
+and inbound trigger
+.RB "(" in_trigger ")."
 
 .TP
 .I FLAG-LIST
@@ -553,6 +586,8 @@ is specified by a source address, destination address,
 .RI "transform protocol " XFRM-PROTO ","
 and/or Security Parameter Index
 .IR SPI "."
+(For IP Payload Compression, the Compression Parameter Index or CPI is used for
+.IR SPI ".)"
 
 .TP
 .I XFRM-PROTO
@@ -565,12 +600,15 @@ specifies a transform protocol:
 
 .TP
 .I MODE
-specifies a mode of operation:
-.RB "IPsec transport mode (" transport "), "
-.RB "IPsec tunnel mode (" tunnel "), "
-.RB "Mobile IPv6 route optimization mode (" ro "), "
-.RB "Mobile IPv6 inbound trigger mode (" in_trigger "), or "
-.RB "IPsec ESP Bound End-to-End Tunnel Mode (" beet ")."
+specifies a mode of operation for the transform protocol. IPsec and IP Payload
+Compression modes are
+.BR transport ", " tunnel ","
+and (for IPsec ESP only) Bound End-to-End Tunnel
+.RB "(" beet ")."
+Mobile IPv6 modes are route optimization
+.RB "(" ro ")"
+and inbound trigger
+.RB "(" in_trigger ")."
 
 .TP
 .I LEVEL
@@ -581,4 +619,4 @@ can be
 The xfrm objects to monitor can be optionally specified.
 
 .SH AUTHOR
-Manpage by David Ward
+Manpage revised by David Ward <david.ward@ll.mit.edu>

@@ -79,14 +79,14 @@ static void usage(void)
 	fprintf(stderr, "ALGO := { ");
 	fprintf(stderr, "%s | ", strxf_algotype(XFRMA_ALG_CRYPT));
 	fprintf(stderr, "%s", strxf_algotype(XFRMA_ALG_AUTH));
-	fprintf(stderr, " } ALGO-NAME ALGO-KEY |\n");
+	fprintf(stderr, " } ALGO-NAME ALGO-KEYMAT |\n");
 	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_AUTH_TRUNC));
-	fprintf(stderr, " ALGO-NAME ALGO-KEY ALGO-TRUNC-LEN |\n");
+	fprintf(stderr, " ALGO-NAME ALGO-KEYMAT ALGO-TRUNC-LEN |\n");
 	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_AEAD));
-	fprintf(stderr, " ALGO-NAME ALGO-KEY ALGO-ICV-LEN |\n");
+	fprintf(stderr, " ALGO-NAME ALGO-KEYMAT ALGO-ICV-LEN |\n");
 	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_COMP));
 	fprintf(stderr, " ALGO-NAME\n");
- 	fprintf(stderr, "MODE := transport | tunnel | ro | in_trigger | beet\n");
+ 	fprintf(stderr, "MODE := transport | tunnel | beet | ro | in_trigger\n");
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG := noecn | decap-dscp | nopmtudisc | wildrecv | icmp | af-unspec | align4\n");
 	fprintf(stderr, "SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n");
@@ -119,7 +119,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 
 #if 0
 	/* XXX: verifying both name and key is required! */
-	fprintf(stderr, "warning: ALGO-NAME/ALGO-KEY will send to kernel promiscuously! (verifying them isn't implemented yet)\n");
+	fprintf(stderr, "warning: ALGO-NAME/ALGO-KEYMAT values will be sent to the kernel promiscuously! (verifying them isn't implemented yet)\n");
 #endif
 
 	strncpy(alg->alg_name, name, sizeof(alg->alg_name));
@@ -139,7 +139,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 		/* calculate length of the converted values(real key) */
 		len = (plen + 1) / 2;
 		if (len > max)
-			invarg("\"ALGO-KEY\" makes buffer overflow\n", key);
+			invarg("ALGO-KEYMAT value makes buffer overflow\n", key);
 
 		for (i = - (plen % 2), j = 0; j < len; i += 2, j++) {
 			char vbuf[3];
@@ -150,7 +150,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 			vbuf[2] = '\0';
 
 			if (get_u8(&val, vbuf, 16))
-				invarg("\"ALGO-KEY\" is invalid", key);
+				invarg("ALGO-KEYMAT value is invalid", key);
 
 			buf[j] = val;
 		}
@@ -158,7 +158,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 		len = slen;
 		if (len > 0) {
 			if (len > max)
-				invarg("\"ALGO-KEY\" makes buffer overflow\n", key);
+				invarg("ALGO-KEYMAT value makes buffer overflow\n", key);
 
 			strncpy(buf, key, len);
 		}
@@ -416,7 +416,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 				case XFRMA_ALG_AUTH:
 				case XFRMA_ALG_AUTH_TRUNC:
 					if (!NEXT_ARG_OK())
-						missarg("ALGO-KEY");
+						missarg("ALGO-KEYMAT");
 					NEXT_ARG();
 					key = *argv;
 					break;
