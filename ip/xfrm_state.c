@@ -486,52 +486,104 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
-	switch (req.xsinfo.mode) {
-	case XFRM_MODE_TRANSPORT:
-	case XFRM_MODE_TUNNEL:
-		if (!xfrm_xfrmproto_is_ipsec(req.xsinfo.id.proto)) {
-			fprintf(stderr, "\"mode\" is invalid with proto=%s\n",
+	if (xfrm_xfrmproto_is_ipsec(req.xsinfo.id.proto)) {
+		switch (req.xsinfo.mode) {
+		case XFRM_MODE_TRANSPORT:
+		case XFRM_MODE_TUNNEL:
+			break;
+		case XFRM_MODE_BEET:
+			if (req.xsinfo.id.proto == IPPROTO_ESP)
+				break;
+		default:
+			fprintf(stderr, "MODE value is invalid with XFRM-PROTO value \"%s\"\n",
 				strxf_xfrmproto(req.xsinfo.id.proto));
 			exit(1);
 		}
-		break;
-	case XFRM_MODE_ROUTEOPTIMIZATION:
-	case XFRM_MODE_IN_TRIGGER:
-		if (!xfrm_xfrmproto_is_ro(req.xsinfo.id.proto)) {
-			fprintf(stderr, "\"mode\" is invalid with proto=%s\n",
+
+		switch (req.xsinfo.id.proto) {
+		case IPPROTO_ESP:
+			if (calgop) {
+				fprintf(stderr, "ALGO-TYPE value \"%s\" is invalid with XFRM-PROTO value \"%s\"\n",
+					strxf_algotype(XFRMA_ALG_COMP),
+					strxf_xfrmproto(req.xsinfo.id.proto));
+				exit(1);
+			}
+			if (!ealgop && !aeadop) {
+				fprintf(stderr, "ALGO-TYPE value \"%s\" or \"%s\" is required with XFRM-PROTO value \"%s\"\n",
+					strxf_algotype(XFRMA_ALG_CRYPT),
+					strxf_algotype(XFRMA_ALG_AEAD),
+					strxf_xfrmproto(req.xsinfo.id.proto));
+				exit(1);
+			}
+			break;
+		case IPPROTO_AH:
+			if (ealgop || aeadop || calgop) {
+				fprintf(stderr, "ALGO-TYPE values \"%s\", \"%s\", and \"%s\" are invalid with XFRM-PROTO value \"%s\"\n",
+					strxf_algotype(XFRMA_ALG_CRYPT),
+					strxf_algotype(XFRMA_ALG_AEAD),
+					strxf_algotype(XFRMA_ALG_COMP),
+					strxf_xfrmproto(req.xsinfo.id.proto));
+				exit(1);
+			}
+			if (!aalgop) {
+				fprintf(stderr, "ALGO-TYPE value \"%s\" or \"%s\" is required with XFRM-PROTO value \"%s\"\n",
+					strxf_algotype(XFRMA_ALG_AUTH),
+					strxf_algotype(XFRMA_ALG_AUTH_TRUNC),
+					strxf_xfrmproto(req.xsinfo.id.proto));
+				exit(1);
+			}
+			break;
+		case IPPROTO_COMP:
+			if (ealgop || aalgop || aeadop) {
+				fprintf(stderr, "ALGO-TYPE values \"%s\", \"%s\", \"%s\", and \"%s\" are invalid with XFRM-PROTO value \"%s\"\n",
+					strxf_algotype(XFRMA_ALG_CRYPT),
+					strxf_algotype(XFRMA_ALG_AUTH),
+					strxf_algotype(XFRMA_ALG_AUTH_TRUNC),
+					strxf_algotype(XFRMA_ALG_AEAD),
+					strxf_xfrmproto(req.xsinfo.id.proto));
+				exit(1);
+			}
+			if (!calgop) {
+				fprintf(stderr, "ALGO-TYPE value \"%s\" is required with XFRM-PROTO value \"%s\"\n",
+					strxf_algotype(XFRMA_ALG_COMP),
+					strxf_xfrmproto(req.xsinfo.id.proto));
+				exit(1);
+			}
+			break;
+		}
+	} else {
+		if (ealgop || aalgop || aeadop || calgop) {
+			fprintf(stderr, "ALGO is invalid with XFRM-PROTO value \"%s\"\n",
 				strxf_xfrmproto(req.xsinfo.id.proto));
 			exit(1);
 		}
-		break;
-	default:
-		break;
 	}
 
-	if (aeadop || ealgop || aalgop || calgop) {
-		if (!xfrm_xfrmproto_is_ipsec(req.xsinfo.id.proto)) {
-			fprintf(stderr, "\"ALGO\" is invalid with proto=%s\n",
+	if (xfrm_xfrmproto_is_ro(req.xsinfo.id.proto)) {
+		switch (req.xsinfo.mode) {
+		case XFRM_MODE_ROUTEOPTIMIZATION:
+		case XFRM_MODE_IN_TRIGGER:
+			break;
+		case 0:
+			fprintf(stderr, "\"mode\" is required with XFRM-PROTO value \"%s\"\n",
+				strxf_xfrmproto(req.xsinfo.id.proto));
+			exit(1);
+		default:
+			fprintf(stderr, "MODE value is invalid with XFRM-PROTO value \"%s\"\n",
+				strxf_xfrmproto(req.xsinfo.id.proto));
+			exit(1);
+		}
+
+		if (!coap) {
+			fprintf(stderr, "\"coa\" is required with XFRM-PROTO value \"%s\"\n",
 				strxf_xfrmproto(req.xsinfo.id.proto));
 			exit(1);
 		}
 	} else {
-		if (xfrm_xfrmproto_is_ipsec(req.xsinfo.id.proto)) {
-			fprintf(stderr, "\"ALGO\" is required with proto=%s\n",
-				strxf_xfrmproto(req.xsinfo.id.proto));
-			exit (1);
-		}
-	}
-
-	if (coap) {
-		if (!xfrm_xfrmproto_is_ro(req.xsinfo.id.proto)) {
-			fprintf(stderr, "\"coa\" is invalid with proto=%s\n",
+		if (coap) {
+			fprintf(stderr, "\"coa\" is invalid with XFRM-PROTO value \"%s\"\n",
 				strxf_xfrmproto(req.xsinfo.id.proto));
 			exit(1);
-		}
-	} else {
-		if (xfrm_xfrmproto_is_ro(req.xsinfo.id.proto)) {
-			fprintf(stderr, "\"coa\" is required with proto=%s\n",
-				strxf_xfrmproto(req.xsinfo.id.proto));
-			exit (1);
 		}
 	}
 
