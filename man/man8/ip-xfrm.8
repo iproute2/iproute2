@@ -117,14 +117,17 @@ ip-xfrm \- transform configuration
 
 .ti -8
 .IR ALGO " :="
-.RB "{ " enc " | " auth " | " comp " } " 
+.RB "{ " enc " | " auth " } " 
 .IR ALGO-NAME " " ALGO-KEY " |"
 .br
-.B  aead
-.IR ALGO-NAME " " ALGO-KEY " " ALGO-ICV-LEN  " |"
-.br
 .B auth-trunc
-.IR ALGO-NAME " " ALGO-KEY " " ALGO-TRUNC-LEN
+.IR ALGO-NAME " " ALGO-KEY " " ALGO-TRUNC-LEN " |"
+.br
+.B aead
+.IR ALGO-NAME " " ALGO-KEY " " ALGO-ICV-LEN " |"
+.br
+.B comp
+.IR ALGO-NAME
 
 .ti -8
 .IR MODE " := "

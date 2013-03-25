@@ -78,13 +78,14 @@ static void usage(void)
 	fprintf(stderr, "ALGO-LIST := [ ALGO-LIST ] ALGO\n");
 	fprintf(stderr, "ALGO := { ");
 	fprintf(stderr, "%s | ", strxf_algotype(XFRMA_ALG_CRYPT));
-	fprintf(stderr, "%s | ", strxf_algotype(XFRMA_ALG_AUTH));
-	fprintf(stderr, "%s", strxf_algotype(XFRMA_ALG_COMP));
+	fprintf(stderr, "%s", strxf_algotype(XFRMA_ALG_AUTH));
 	fprintf(stderr, " } ALGO-NAME ALGO-KEY |\n");
+	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_AUTH_TRUNC));
+	fprintf(stderr, " ALGO-NAME ALGO-KEY ALGO-TRUNC-LEN |\n");
 	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_AEAD));
 	fprintf(stderr, " ALGO-NAME ALGO-KEY ALGO-ICV-LEN |\n");
-	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_AUTH_TRUNC));
-	fprintf(stderr, " ALGO-NAME ALGO-KEY ALGO-TRUNC-LEN\n");
+	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_COMP));
+	fprintf(stderr, " ALGO-NAME\n");
  	fprintf(stderr, "MODE := transport | tunnel | ro | in_trigger | beet\n");
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG := noecn | decap-dscp | nopmtudisc | wildrecv | icmp | af-unspec | align4\n");
@@ -374,7 +375,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 				int len;
 				__u32 icvlen, trunclen;
 				char *name;
-				char *key;
+				char *key = "";
 				char *buf;
 
 				switch (type) {
@@ -409,10 +410,17 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 				NEXT_ARG();
 				name = *argv;
 
-				if (!NEXT_ARG_OK())
-					missarg("ALGO-KEY");
-				NEXT_ARG();
-				key = *argv;
+				switch (type) {
+				case XFRMA_ALG_AEAD:
+				case XFRMA_ALG_CRYPT:
+				case XFRMA_ALG_AUTH:
+				case XFRMA_ALG_AUTH_TRUNC:
+					if (!NEXT_ARG_OK())
+						missarg("ALGO-KEY");
+					NEXT_ARG();
+					key = *argv;
+					break;
+				}
 
 				buf = alg.u.alg.alg_key;
 				len = sizeof(alg.u.alg);
