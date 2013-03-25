@@ -379,18 +379,18 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 
 				switch (type) {
 				case XFRMA_ALG_AEAD:
-					if (aeadop)
+					if (ealgop || aalgop || aeadop)
 						duparg("ALGO-TYPE", *argv);
 					aeadop = *argv;
 					break;
 				case XFRMA_ALG_CRYPT:
-					if (ealgop)
+					if (ealgop || aeadop)
 						duparg("ALGO-TYPE", *argv);
 					ealgop = *argv;
 					break;
 				case XFRMA_ALG_AUTH:
 				case XFRMA_ALG_AUTH_TRUNC:
-					if (aalgop)
+					if (aalgop || aeadop)
 						duparg("ALGO-TYPE", *argv);
 					aalgop = *argv;
 					break;
