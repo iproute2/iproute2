@@ -536,12 +536,14 @@ static void __xfrm_algo_print(struct xfrm_algo *algo, int type, int len,
 		goto fin;
 	}
 
-	fprintf(fp, "0x");
-	for (i = 0; i < keylen; i ++)
-		fprintf(fp, "%.2x", (unsigned char)algo->alg_key[i]);
+	if (keylen > 0) {
+		fprintf(fp, "0x");
+		for (i = 0; i < keylen; i ++)
+			fprintf(fp, "%.2x", (unsigned char)algo->alg_key[i]);
 
-	if (show_stats > 0)
-		fprintf(fp, " (%d bits)", algo->alg_key_len);
+		if (show_stats > 0)
+			fprintf(fp, " (%d bits)", algo->alg_key_len);
+	}
 
  fin:
 	if (newline)
