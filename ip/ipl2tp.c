@@ -65,6 +65,8 @@ struct l2tp_parm {
 	int session:1;
 	int reorder_timeout;
 	const char *ifname;
+	uint8_t l2spec_type;
+	uint8_t l2spec_len;
 };
 
 struct l2tp_stats {
@@ -146,6 +148,8 @@ static int create_session(struct l2tp_parm *p)
 	addattr32(&req.n, 1024, L2TP_ATTR_SESSION_ID, p->session_id);
 	addattr32(&req.n, 1024, L2TP_ATTR_PEER_SESSION_ID, p->peer_session_id);
 	addattr16(&req.n, 1024, L2TP_ATTR_PW_TYPE, p->pw_type);
+	addattr8(&req.n, 1024, L2TP_ATTR_L2SPEC_TYPE, p->l2spec_type);
+	addattr8(&req.n, 1024, L2TP_ATTR_L2SPEC_LEN, p->l2spec_len);
 
 	if (p->mtu)		addattr16(&req.n, 1024, L2TP_ATTR_MTU, p->mtu);
 	if (p->recv_seq)	addattr(&req.n, 1024, L2TP_ATTR_RECV_SEQ);
@@ -271,6 +275,10 @@ static int get_response(struct nlmsghdr *n, void *arg)
 		p->session_id = rta_getattr_u32(attrs[L2TP_ATTR_SESSION_ID]);
 	if (attrs[L2TP_ATTR_PEER_SESSION_ID])
 		p->peer_session_id = rta_getattr_u32(attrs[L2TP_ATTR_PEER_SESSION_ID]);
+	if (attrs[L2TP_ATTR_L2SPEC_TYPE])
+		p->l2spec_type = rta_getattr_u8(attrs[L2TP_ATTR_L2SPEC_TYPE]);
+	if (attrs[L2TP_ATTR_L2SPEC_LEN])
+		p->l2spec_len = rta_getattr_u8(attrs[L2TP_ATTR_L2SPEC_LEN]);
 
 	p->udp_csum = !!attrs[L2TP_ATTR_UDP_CSUM];
 	if (attrs[L2TP_ATTR_COOKIE])
@@ -466,6 +474,7 @@ static void usage(void)
 	fprintf(stderr, "          session_id ID peer_session_id ID\n");
 	fprintf(stderr, "          [ cookie HEXSTR ] [ peer_cookie HEXSTR ]\n");
 	fprintf(stderr, "          [ offset OFFSET ] [ peer_offset OFFSET ]\n");
+	fprintf(stderr, "          [ l2spec_type L2SPEC ]\n");
 	fprintf(stderr, "       ip l2tp del tunnel tunnel_id ID\n");
 	fprintf(stderr, "       ip l2tp del session tunnel_id ID session_id ID\n");
 	fprintf(stderr, "       ip l2tp show tunnel [ tunnel_id ID ]\n");
@@ -476,6 +485,7 @@ static void usage(void)
 	fprintf(stderr, "       PORT   := { 0..65535 }\n");
 	fprintf(stderr, "       ID     := { 1..4294967295 }\n");
 	fprintf(stderr, "       HEXSTR := { 8 or 16 hex digits (4 / 8 bytes) }\n");
+	fprintf(stderr, "       L2SPEC := { none | default }\n");
 	exit(-1);
 }
 
@@ -485,6 +495,10 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 
 	if (argc == 0)
 		usage();
+
+	/* Defaults */
+	p->l2spec_type = L2TP_L2SPECTYPE_DEFAULT;
+	p->l2spec_len = 4;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "encap") == 0) {
@@ -580,6 +594,18 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 			p->peer_cookie_len = slen / 2;
 			if (hex2mem(*argv, p->peer_cookie, p->peer_cookie_len) < 0)
 				invarg("cookie must be a hex string\n", *argv);
+		} else if (strcmp(*argv, "l2spec_type") == 0) {
+			NEXT_ARG();
+			if (strcasecmp(*argv, "default") == 0) {
+				p->l2spec_type = L2TP_L2SPECTYPE_DEFAULT;
+				p->l2spec_len = 4;
+			} else if (strcasecmp(*argv, "none") == 0) {
+				p->l2spec_type = L2TP_L2SPECTYPE_NONE;
+				p->l2spec_len = 0;
+			} else {
+				fprintf(stderr, "Unknown layer2specific header type \"%s\"\n", *argv);
+				exit(-1);
+			}
 		} else if (strcmp(*argv, "tunnel") == 0) {
 			p->tunnel = 1;
 		} else if (strcmp(*argv, "session") == 0) {
