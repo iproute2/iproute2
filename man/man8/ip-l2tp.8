@@ -52,6 +52,8 @@ ip-l2tp - L2TPv3 static unmanaged tunnel configuration
 .IR HEXSTR
 .RB " ]"
 .br
+.RB "[ " l2spec_type " { " none " | " default " } ]"
+.br
 .RB "[ " offset
 .IR OFFSET
 .RB " ] [ " peer_offset
@@ -239,6 +241,12 @@ e.g. 014d3636deadbeef. The value must match the cookie value set at
 the peer. It tells the local system what cookie value to expect to
 find in received L2TP packets. Default is to use no cookie.
 .TP
+.BI l2spec_type " L2SPECTYPE"
+set the layer2specific header type of the session.
+.br
+Valid values are:
+.BR none ", " udp "."
+.TP
 .BI offset " OFFSET"
 sets the byte offset from the L2TP header where user data starts in
 transmitted L2TP data packets. This is hardly ever used. If set, the
@@ -368,6 +376,12 @@ tunnels. Hello messages are used by L2TP clients and servers to detect
 link failures in order to automate tearing down and reestablishing
 dynamic tunnels. If a non-Linux peer supports Hello messages in
 unmanaged tunnels, it must be turned off to interoperate with Linux.
+.PP
+Linux defaults to use the Default Layer2SpecificHeader type as defined
+in the L2TPv3 protocol specification, RFC3931. This setting must be
+consistent with that configured at the peer. Some vendor
+implementations (e.g. Cisco) default to use a Layer2SpecificHeader
+type of None.
 .SH SEE ALSO
 .br
 .BR ip (8)
