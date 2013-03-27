@@ -18,12 +18,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
-#include <linux/if.h>
+#include <net/if.h>
 
 #include "libnetlink.h"
 #include "ll_map.h"
-
-extern unsigned int if_nametoindex (const char *);
 
 struct ll_cache
 {
