@@ -31,9 +31,7 @@ struct ll_cache
 	unsigned	flags;
 	int		index;
 	unsigned short	type;
-	unsigned short	alen;
 	char		name[IFNAMSIZ];
-	unsigned char	addr[20];
 };
 
 #define IDXMAP_SIZE	1024
@@ -79,16 +77,6 @@ int ll_remember_index(const struct sockaddr_nl *who,
 
 	im->type = ifi->ifi_type;
 	im->flags = ifi->ifi_flags;
-	if (tb[IFLA_ADDRESS]) {
-		int alen;
-		im->alen = alen = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
-		if (alen > sizeof(im->addr))
-			alen = sizeof(im->addr);
-		memcpy(im->addr, RTA_DATA(tb[IFLA_ADDRESS]), alen);
-	} else {
-		im->alen = 0;
-		memset(im->addr, 0, sizeof(im->addr));
-	}
 	strcpy(im->name, RTA_DATA(tb[IFLA_IFNAME]));
 	return 0;
 }
@@ -138,27 +126,6 @@ unsigned ll_index_to_flags(unsigned idx)
 	for (im = idxhead(idx); im; im = im->idx_next)
 		if (im->index == idx)
 			return im->flags;
-	return 0;
-}
-
-unsigned ll_index_to_addr(unsigned idx, unsigned char *addr,
-			  unsigned alen)
-{
-	const struct ll_cache *im;
-
-	if (idx == 0)
-		return 0;
-
-	for (im = idxhead(idx); im; im = im->idx_next) {
-		if (im->index == idx) {
-			if (alen > sizeof(im->addr))
-				alen = sizeof(im->addr);
-			if (alen > im->alen)
-				alen = im->alen;
-			memcpy(addr, im->addr, alen);
-			return alen;
-		}
-	}
 	return 0;
 }
 
