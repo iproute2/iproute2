@@ -408,8 +408,6 @@ int do_xfrm_monitor(int argc, char **argv)
 		return rtnl_from_file(fp, xfrm_accept_msg, (void*)stdout);
 	}
 
-	//ll_init_map(&rth);
-
 	if (rtnl_open_byproto(&rth, groups, NETLINK_XFRM) < 0)
 		exit(1);
 

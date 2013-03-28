@@ -533,8 +533,6 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		}
 	}
 
-	ll_init_map(&rth);
-
 	if (!(flags & NLM_F_CREATE)) {
 		if (!dev) {
 			fprintf(stderr, "Not enough information: \"dev\" "

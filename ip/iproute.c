@@ -970,8 +970,6 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (d || nhs_ok)  {
 		int idx;
 
-		ll_init_map(&rth);
-
 		if (d) {
 			if ((idx = ll_name_to_index(d)) == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n", d);
@@ -1265,8 +1263,6 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 	if (do_ipv6 == AF_UNSPEC && filter.tb)
 		do_ipv6 = AF_INET;
 
-	ll_init_map(&rth);
-
 	if (id || od)  {
 		int idx;
 
@@ -1451,8 +1447,6 @@ static int iproute_get(int argc, char **argv)
 		fprintf(stderr, "need at least a destination address\n");
 		exit(1);
 	}
-
-	ll_init_map(&rth);
 
 	if (idev || odev)  {
 		int idx;
