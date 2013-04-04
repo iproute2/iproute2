@@ -178,7 +178,7 @@ adress tables.
 .sp
 
 .B 4
-- STP BLOCKING state.  Only valid if STP is eanbled on the bridge.  This state
+- STP BLOCKING state.  Only valid if STP is enabled on the bridge.  This state
 is used during the STP election process.  In this state, port will only process
 STP BPDUs.
 .sp
@@ -198,7 +198,7 @@ traffic back out of the receiving port.
 .TP
 .BR "fastleave on " or " fastleave off "
 This flag allows the bridge to immediately stop multicast traffic on a port
-that recieves IGMP Leave message.  It is only used with IGMP snooping is
+that receives IGMP Leave message.  It is only used with IGMP snooping is
 enabled on the bridge.  By default the flag is off.
 
 .TP
@@ -307,7 +307,7 @@ device is the bridge device.
 
 .TP
 .BI master
-the vlan is configured on the sofware bridge (default).
+the vlan is configured on the software bridge (default).
 
 .SS bridge vlan delete - delete a forwarding database entry
 This command removes an existing fdb entry.
@@ -361,7 +361,7 @@ the bridge device is not part of the syntax. This is a limitation of the
 underlying netlink neighbour message protocol. When displaying the
 forwarding table, entries for all bridges are displayed.
 Add/delete/modify commands determine the underlying bridge device
-based on the bridge to which the coresponding ethernet device is attached. 
+based on the bridge to which the corresponding ethernet device is attached.
 
 
 .SH SEE ALSO

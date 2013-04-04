@@ -26,7 +26,7 @@ Read and load an arpd database from FILE in a text format similar to that dumped
 the location of the database file. The default location is /var/lib/arpd/arpd.db
 .TP
 -a <NUMBER>
-With this option, arpd not only passively listens for ARP packets on the interface, but also sends brodcast queries itself. NUMBER is the number of such queries to make before a destination is considered dead. When arpd is started as kernel helper (i.e. with app_solicit enabled in sysctl or even with option -k) without this option and still did not learn enough information, you can observe 1 second gaps in service. Not fatal, but not good.
+With this option, arpd not only passively listens for ARP packets on the interface, but also sends broadcast queries itself. NUMBER is the number of such queries to make before a destination is considered dead. When arpd is started as kernel helper (i.e. with app_solicit enabled in sysctl or even with option -k) without this option and still did not learn enough information, you can observe 1 second gaps in service. Not fatal, but not good.
 .TP
 -k
 Suppress sending broadcast queries by the kernel. This option only makes sense together with option -a.

@@ -212,7 +212,7 @@ specifies the physical device to act operate on.
 .TP
 .BI dev " DEVICE "
 .I DEVICE
-specifies network device to operate on. When configuring SR-IOV Virtual Fuction
+specifies network device to operate on. When configuring SR-IOV Virtual Function
 (VF) devices, this keyword should specify the associated Physical Function (PF)
 device.
 
