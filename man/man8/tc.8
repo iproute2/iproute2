@@ -48,6 +48,9 @@ DEV
 .B tc filter show dev
 DEV
 
+.P
+.B tc [ -force ] -b\fR[\fIatch\fR] \fB[ filename ]
+
 .ti 8
 .IR FORMAT " := {"
 \fB\-s\fR[\fItatistics\fR] |
@@ -427,6 +430,15 @@ decode filter offset and mask values to equivalent filter commands based on TCP/
 .BR "\-iec"
 print rates in IEC units (ie. 1K = 1024).
 
+.TP
+.BR "\-b", " \-b filename", " \-batch", " \-batch filename"
+read commands from provided file or standard input and invoke them.
+First failure will cause termination of tc.
+
+.TP
+.BR "\-force"
+don't terminate tc on errors in batch mode.
+If there were any errors during execution of the commands, the application return code will be non zero.
 
 .SH HISTORY
 .B tc
