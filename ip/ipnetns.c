@@ -29,6 +29,20 @@
 #define MNT_DETACH	0x00000002	/* Just detach from the tree */
 #endif /* MNT_DETACH */
 
+/* sys/mount.h may be out too old to have these */
+#ifndef MS_REC
+#define MS_REC		16384
+#endif
+
+#ifndef MS_SLAVE
+#define MS_SLAVE	(1 << 19)
+#endif
+
+#ifndef MS_SHARED
+#define MS_SHARED	(1 << 20)
+#endif
+
+
 #ifndef HAVE_SETNS
 static int setns(int fd, int nstype)
 {
