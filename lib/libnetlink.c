@@ -99,7 +99,7 @@ int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int family, int type,
 {
 	struct {
 		struct nlmsghdr nlh;
-		struct rtgenmsg g;
+		struct ifinfomsg ifm;
 		/* attribute has to be NLMSG aligned */
 		struct rtattr ext_req __attribute__ ((aligned(NLMSG_ALIGNTO)));
 		__u32 ext_filter_mask;
@@ -111,7 +111,7 @@ int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int family, int type,
 	req.nlh.nlmsg_flags = NLM_F_DUMP|NLM_F_REQUEST;
 	req.nlh.nlmsg_pid = 0;
 	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
-	req.g.rtgen_family = family;
+	req.ifm.ifi_family = family;
 
 	req.ext_req.rta_type = IFLA_EXT_MASK;
 	req.ext_req.rta_len = RTA_LENGTH(sizeof(__u32));
