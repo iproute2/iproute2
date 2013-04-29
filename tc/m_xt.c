@@ -38,9 +38,13 @@
 #       define XT_LIB_DIR "/lib/xtables"
 #endif
 
+#ifndef __ALIGN_KERNEL
+#define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+#define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+#endif
+
 #ifndef ALIGN
-#define ALIGN(x,a)		__ALIGN_MASK(x,(typeof(x))(a)-1)
-#define __ALIGN_MASK(x,mask)	(((x)+(mask))&~(mask))
+#define ALIGN(x,a)	__ALIGN_KERNEL((x), (a))
 #endif
 
 static const char *tname = "mangle";
@@ -166,8 +170,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 						    m->x6_options,
 						    &m->option_offset);
 #else
-			opts = xtables_merge_options(tcipt_globals.orig_opts,
-						     tcipt_globals.opts,
+			opts = xtables_merge_options(tcipt_globals.opts,
 						     m->extra_opts,
 						     &m->option_offset);
 #endif
@@ -335,8 +338,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 					    m->x6_options,
 					    &m->option_offset);
 #else
-		opts = xtables_merge_options(tcipt_globals.orig_opts,
-					     tcipt_globals.opts,
+		opts = xtables_merge_options(tcipt_globals.opts,
 					     m->extra_opts,
 					     &m->option_offset);
 #endif
