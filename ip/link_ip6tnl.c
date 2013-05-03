@@ -33,6 +33,7 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip link { add | set | change | replace | del } NAME\n");
+	fprintf(stderr, "          [ mode { ip6ip6 | ipip6 | any } ]\n");
 	fprintf(stderr, "          type ip6tnl [ remote ADDR ] [ local ADDR ]\n");
 	fprintf(stderr, "          [ dev PHYS_DEV ] [ encaplimit ELIM ]\n");
 	fprintf(stderr ,"          [ hoplimit HLIM ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
