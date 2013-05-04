@@ -32,7 +32,7 @@
 #include "libnetlink.h"
 #include "SNAPSHOT.h"
 
-#include <netinet/tcp.h>
+#include <linux/tcp.h>
 #include <linux/sock_diag.h>
 #include <linux/inet_diag.h>
 #include <linux/unix_diag.h>
@@ -399,32 +399,32 @@ static int get_slabstat(struct slabstat *s)
 
 static const char *sstate_name[] = {
 	"UNKNOWN",
-	[TCP_ESTABLISHED] = "ESTAB",
-	[TCP_SYN_SENT] = "SYN-SENT",
-	[TCP_SYN_RECV] = "SYN-RECV",
-	[TCP_FIN_WAIT1] = "FIN-WAIT-1",
-	[TCP_FIN_WAIT2] = "FIN-WAIT-2",
-	[TCP_TIME_WAIT] = "TIME-WAIT",
-	[TCP_CLOSE] = "UNCONN",
-	[TCP_CLOSE_WAIT] = "CLOSE-WAIT",
-	[TCP_LAST_ACK] = "LAST-ACK",
-	[TCP_LISTEN] = 	"LISTEN",
-	[TCP_CLOSING] = "CLOSING",
+	[SS_ESTABLISHED] = "ESTAB",
+	[SS_SYN_SENT] = "SYN-SENT",
+	[SS_SYN_RECV] = "SYN-RECV",
+	[SS_FIN_WAIT1] = "FIN-WAIT-1",
+	[SS_FIN_WAIT2] = "FIN-WAIT-2",
+	[SS_TIME_WAIT] = "TIME-WAIT",
+	[SS_CLOSE] = "UNCONN",
+	[SS_CLOSE_WAIT] = "CLOSE-WAIT",
+	[SS_LAST_ACK] = "LAST-ACK",
+	[SS_LISTEN] = 	"LISTEN",
+	[SS_CLOSING] = "CLOSING",
 };
 
 static const char *sstate_namel[] = {
 	"UNKNOWN",
-	[TCP_ESTABLISHED] = "established",
-	[TCP_SYN_SENT] = "syn-sent",
-	[TCP_SYN_RECV] = "syn-recv",
-	[TCP_FIN_WAIT1] = "fin-wait-1",
-	[TCP_FIN_WAIT2] = "fin-wait-2",
-	[TCP_TIME_WAIT] = "time-wait",
-	[TCP_CLOSE] = "unconnected",
-	[TCP_CLOSE_WAIT] = "close-wait",
-	[TCP_LAST_ACK] = "last-ack",
-	[TCP_LISTEN] = 	"listening",
-	[TCP_CLOSING] = "closing",
+	[SS_ESTABLISHED] = "established",
+	[SS_SYN_SENT] = "syn-sent",
+	[SS_SYN_RECV] = "syn-recv",
+	[SS_FIN_WAIT1] = "fin-wait-1",
+	[SS_FIN_WAIT2] = "fin-wait-2",
+	[SS_TIME_WAIT] = "time-wait",
+	[SS_CLOSE] = "unconnected",
+	[SS_CLOSE_WAIT] = "close-wait",
+	[SS_LAST_ACK] = "last-ack",
+	[SS_LISTEN] = 	"listening",
+	[SS_CLOSING] = "closing",
 };
 
 struct tcpstat
@@ -1392,6 +1392,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 				printf(" ecn");
 			if (info->tcpi_options & TCPI_OPT_ECN_SEEN)
 				printf(" ecnseen");
+			if (info->tcpi_options & TCPI_OPT_SYN_DATA)
+				printf(" fastopen");
 		}
 
 		if (tb[INET_DIAG_CONG])
