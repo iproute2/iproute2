@@ -30,7 +30,7 @@ int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge fdb { add | del } ADDR dev DEV {self|master} [ temp ]\n"
+	fprintf(stderr, "Usage: bridge fdb { add | del } ADDR dev DEV {self|master} [ temp ] [router]\n"
 		        "              [ dst IPADDR] [ vlan VID ]\n"
 		        "              [ port PORT] [ vni VNI ] [via DEV]\n");
 	fprintf(stderr, "       bridge fdb {show} [ dev DEV ]\n");
@@ -143,6 +143,8 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "self ");
 	if (r->ndm_flags & NTF_MASTER)
 		fprintf(fp, "master ");
+	if (r->ndm_flags & NTF_ROUTER)
+		fprintf(fp, "router ");
 
 	fprintf(fp, "%s\n", state_n2a(r->ndm_state));
 	return 0;
@@ -248,6 +250,8 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_flags |= NTF_SELF;
 		} else if (matches(*argv, "master") == 0) {
 			req.ndm.ndm_flags |= NTF_MASTER;
+		} else if (matches(*argv, "router") == 0) {
+			req.ndm.ndm_flags |= NTF_ROUTER;
 		} else if (matches(*argv, "local") == 0||
 			   matches(*argv, "permanent") == 0) {
 			req.ndm.ndm_state |= NUD_PERMANENT;
