@@ -53,7 +53,8 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 noage = 0;
 	__u32 age = 0;
 	__u32 maxaddr = 0;
-	__u16 dstport = 4789;
+	__u16 dstport = 0;
+	int dst_port_set = 0;
 	struct ifla_vxlan_port_range range = { 0, 0 };
 
 	while (argc > 0) {
@@ -131,6 +132,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			if (get_u16(&dstport, *argv, 0))
 				invarg("dst port", *argv);
+			dst_port_set = 1;
 		} else if (!matches(*argv, "nolearning")) {
 			learning = 0;
 		} else if (!matches(*argv, "learning")) {
@@ -161,10 +163,20 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		}
 		argc--, argv++;
 	}
+
 	if (!vni_set) {
 		fprintf(stderr, "vxlan: missing virtual network identifier\n");
 		return -1;
 	}
+
+	if (!dst_port_set) {
+		fprintf(stderr, "vxlan: destination port not specified\n"
+			"Will use Linux kernel default (non-standard value)\n");
+		fprintf(stderr, 
+			"Use 'dstport 4789' to get the IANA assigned value\n"
+			"Use 'dstport 0' to get default and quiet this message\n");
+	}
+
 	addattr32(n, 1024, IFLA_VXLAN_ID, vni);
 	if (gaddr)
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
@@ -179,6 +191,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	addattr8(n, 1024, IFLA_VXLAN_RSC, rsc);
 	addattr8(n, 1024, IFLA_VXLAN_L2MISS, l2miss);
 	addattr8(n, 1024, IFLA_VXLAN_L3MISS, l3miss);
+
 	if (noage)
 		addattr32(n, 1024, IFLA_VXLAN_AGEING, 0);
 	else if (age)
