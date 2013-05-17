@@ -60,7 +60,7 @@ static void usage(void)
 	fprintf(stderr, "        [ mark MARK [ mask MASK ] ] [ reqid REQID ] [ seq SEQ ]\n");
 	fprintf(stderr, "        [ replay-window SIZE ] [ replay-seq SEQ ] [ replay-oseq SEQ ]\n");
 	fprintf(stderr, "        [ flag FLAG-LIST ] [ sel SELECTOR ] [ LIMIT-LIST ] [ encap ENCAP ]\n");
-	fprintf(stderr, "        [ coa ADDR[/PLEN] ] [ ctx CTX ]\n");
+	fprintf(stderr, "        [ coa ADDR[/PLEN] ] [ ctx CTX ] [ extra-flag EXTRA-FLAG-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n");
 	fprintf(stderr, "        [ reqid REQID ] [ seq SEQ ] [ min SPI max SPI ]\n");
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID [ mark MARK [ mask MASK ] ]\n");
@@ -89,6 +89,8 @@ static void usage(void)
 	fprintf(stderr, "MODE := transport | tunnel | beet | ro | in_trigger\n");
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG := noecn | decap-dscp | nopmtudisc | wildrecv | icmp | af-unspec | align4\n");
+	fprintf(stderr, "EXTRA-FLAG-LIST := [ EXTRA-FLAG-LIST ] EXTRA-FLAG\n");
+	fprintf(stderr, "EXTRA-FLAG := dont-encap-dscp\n");
 	fprintf(stderr, "SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n");
 	fprintf(stderr, "UPSPEC := proto { { ");
 	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_TCP));
@@ -230,6 +232,39 @@ static int xfrm_state_flag_parse(__u8 *flags, int *argcp, char ***argvp)
 	return 0;
 }
 
+static int xfrm_state_extra_flag_parse(__u32 *extra_flags, int *argcp, char ***argvp)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+	int len = strlen(*argv);
+
+	if (len > 2 && strncmp(*argv, "0x", 2) == 0) {
+		__u32 val = 0;
+
+		if (get_u32(&val, *argv, 16))
+			invarg("\"EXTRA-FLAG\" is invalid", *argv);
+		*extra_flags = val;
+	} else {
+		while (1) {
+			if (strcmp(*argv, "dont-encap-dscp") == 0)
+				*extra_flags |= XFRM_SA_XFLAG_DONT_ENCAP_DSCP;
+			else {
+				PREV_ARG(); /* back track */
+				break;
+			}
+
+			if (!NEXT_ARG_OK())
+				break;
+			NEXT_ARG();
+		}
+	}
+
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
 static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct rtnl_handle rth;
@@ -246,6 +281,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 	char *calgop = NULL;
 	char *coap = NULL;
 	char *sctxp = NULL;
+	__u32 extra_flags = 0;
 	struct xfrm_mark mark = {0, 0};
 	struct {
 		struct xfrm_user_sec_ctx sctx;
@@ -293,6 +329,9 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "flag") == 0) {
 			NEXT_ARG();
 			xfrm_state_flag_parse(&req.xsinfo.flags, &argc, &argv);
+		} else if (strcmp(*argv, "extra-flag") == 0) {
+			NEXT_ARG();
+			xfrm_state_extra_flag_parse(&extra_flags, &argc, &argv);
 		} else if (strcmp(*argv, "sel") == 0) {
 			NEXT_ARG();
 			preferred_family = AF_UNSPEC;
@@ -479,6 +518,10 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (replay.seq || replay.oseq)
 		addattr_l(&req.n, sizeof(req.buf), XFRMA_REPLAY_VAL,
 			  (void *)&replay, sizeof(replay));
+
+	if (extra_flags)
+		addattr32(&req.n, sizeof(req.buf), XFRMA_SA_EXTRA_FLAGS,
+			  extra_flags);
 
 	if (!idp) {
 		fprintf(stderr, "Not enough information: ID is required\n");

@@ -856,6 +856,16 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		if (flags)
 			fprintf(fp, "%x", flags);
 	}
+	if (show_stats > 0 || tb[XFRMA_SA_EXTRA_FLAGS]) {
+		__u32 extra_flags = *(__u32 *)RTA_DATA(tb[XFRMA_SA_EXTRA_FLAGS]);
+
+		fprintf(fp, "extra_flag ");
+		XFRM_FLAG_PRINT(fp, extra_flags,
+				XFRM_SA_XFLAG_DONT_ENCAP_DSCP,
+				"dont-encap-dscp");
+		if (extra_flags)
+			fprintf(fp, "%x", extra_flags);
+	}
 	if (show_stats > 0)
 		fprintf(fp, " (0x%s)", strxf_mask8(xsinfo->flags));
 	fprintf(fp, "%s", _SL_);
