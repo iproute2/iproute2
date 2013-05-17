@@ -136,7 +136,6 @@ static int do_show(int argc, char **argv)
 	filter.family = preferred_family;
 	if (filter.family == AF_UNSPEC)
 		filter.family = AF_INET;
-	filter.ifindex = NETCONFA_IFINDEX_ALL;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -152,17 +151,34 @@ static int do_show(int argc, char **argv)
 	}
 
 	ll_init_map(&rth);
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct netconfmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|NLM_F_ACK;
-	req.n.nlmsg_type = RTM_GETNETCONF;
-	req.ncm.ncm_family = filter.family;
-	addattr_l(&req.n, sizeof(req), NETCONFA_IFINDEX, &filter.ifindex,
-		  sizeof(filter.ifindex));
+	if (filter.ifindex) {
+		memset(&req, 0, sizeof(req));
+		req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct netconfmsg));
+		req.n.nlmsg_flags = NLM_F_REQUEST|NLM_F_ACK;
+		req.n.nlmsg_type = RTM_GETNETCONF;
+		req.ncm.ncm_family = filter.family;
+		if (filter.ifindex)
+			addattr_l(&req.n, sizeof(req), NETCONFA_IFINDEX,
+				  &filter.ifindex, sizeof(filter.ifindex));
 
-	rtnl_send(&rth, &req.n, req.n.nlmsg_len);
-	rtnl_listen(&rth, print_netconf, stdout);
-
+		rtnl_send(&rth, &req.n, req.n.nlmsg_len);
+		rtnl_listen(&rth, print_netconf, stdout);
+	} else {
+dump:
+		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETNETCONF) < 0) {
+			perror("Cannot send dump request");
+			exit(1);
+		}
+		if (rtnl_dump_filter(&rth, print_netconf, stdout) < 0) {
+			fprintf(stderr, "Dump terminated\n");
+			exit(1);
+		}
+		if (preferred_family == AF_UNSPEC) {
+			preferred_family = AF_INET6;
+			filter.family = AF_INET6;
+			goto dump;
+		}
+	}
 	return 0;
 }
 
