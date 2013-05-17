@@ -1354,14 +1354,11 @@ static void print_skmeminfo(struct rtattr *tb[], int attrtype)
 	printf(")");
 }
 
-static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
+static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
+		struct rtattr *tb[])
 {
-	struct rtattr * tb[INET_DIAG_MAX+1];
 	char b1[64];
 	double rtt = 0;
-
-	parse_rtattr(tb, INET_DIAG_MAX, (struct rtattr*)(r+1),
-		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
 	if (tb[INET_DIAG_SKMEMINFO]) {
 		print_skmeminfo(tb, INET_DIAG_SKMEMINFO);
@@ -1447,8 +1444,12 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r)
 
 static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f)
 {
+	struct rtattr * tb[INET_DIAG_MAX+1];
 	struct inet_diag_msg *r = NLMSG_DATA(nlh);
 	struct tcpstat s;
+
+	parse_rtattr(tb, INET_DIAG_MAX, (struct rtattr*)(r+1),
+		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
 	s.state = r->idiag_state;
 	s.local.family = s.remote.family = r->idiag_family;
@@ -1498,10 +1499,15 @@ static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f)
 		if (r->id.idiag_cookie[1] != 0)
 			printf("%08x", r->id.idiag_cookie[1]);
  		printf("%08x", r->id.idiag_cookie[0]);
+		if (tb[INET_DIAG_SHUTDOWN]) {
+			unsigned char mask;
+			mask = *(__u8 *)RTA_DATA(tb[INET_DIAG_SHUTDOWN]);
+			printf(" %c-%c", mask & 1 ? '-' : '<', mask & 2 ? '-' : '>');
+		}
 	}
 	if (show_mem || show_tcpinfo) {
 		printf("\n\t");
-		tcp_show_info(nlh, r);
+		tcp_show_info(nlh, r, tb);
 	}
 
 	printf("\n");
@@ -2205,6 +2211,14 @@ static int unix_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	if (show_mem) {
 		printf("\n\t");
 		print_skmeminfo(tb, UNIX_DIAG_MEMINFO);
+	}
+
+	if (show_details) {
+		if (tb[UNIX_DIAG_SHUTDOWN]) {
+			unsigned char mask;
+			mask = *(__u8 *)RTA_DATA(tb[UNIX_DIAG_SHUTDOWN]);
+			printf(" %c-%c", mask & 1 ? '-' : '<', mask & 2 ? '-' : '>');
+		}
 	}
 
 	printf("\n");
