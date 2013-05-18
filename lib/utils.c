@@ -799,7 +799,7 @@ int print_timestamp(FILE *fp)
 
 	tstr = asctime(localtime(&tv.tv_sec));
 	tstr[strlen(tstr)-1] = 0;
-	fprintf(fp, "Timestamp: %s %lu usec\n", tstr, tv.tv_usec);
+	fprintf(fp, "Timestamp: %s %ld usec\n", tstr, (long)tv.tv_usec);
 	return 0;
 }
 
