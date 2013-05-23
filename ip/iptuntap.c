@@ -38,7 +38,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ip tuntap { add | del } [ dev PHYS_DEV ] \n");
 	fprintf(stderr, "          [ mode { tun | tap } ] [ user USER ] [ group GROUP ]\n");
-	fprintf(stderr, "          [ one_queue ] [ pi ] [ vnet_hdr ]\n");
+	fprintf(stderr, "          [ one_queue ] [ pi ] [ vnet_hdr ] [ multi_queue ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: USER  := { STRING | NUMBER }\n");
 	fprintf(stderr, "       GROUP := { STRING | NUMBER }\n");
@@ -168,6 +168,8 @@ static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_
 			ifr->ifr_flags |= IFF_ONE_QUEUE;
 		} else if (matches(*argv, "vnet_hdr") == 0) {
 			ifr->ifr_flags |= IFF_VNET_HDR;
+		} else if (matches(*argv, "multi_queue") == 0) {
+			ifr->ifr_flags |= IFF_MULTI_QUEUE;
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			strncpy(ifr->ifr_name, *argv, IFNAMSIZ-1);
