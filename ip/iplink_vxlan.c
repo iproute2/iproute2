@@ -25,8 +25,8 @@ static void explain(void)
 {
 	fprintf(stderr, "Usage: ... vxlan id VNI [ group ADDR ] [ local ADDR ]\n");
 	fprintf(stderr, "                 [ ttl TTL ] [ tos TOS ] [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "                 [ dstport PORT ] [ srcport MIN MAX ]\n");
-	fprintf(stderr, "                 [ [no]learning ] [ [no]proxy ] [ [no]rsc ]\n");
+	fprintf(stderr, "                 [ port MIN MAX ] [ [no]learning ]\n");
+	fprintf(stderr, "                 [ [no]proxy ] [ [no]rsc ]\n");
 	fprintf(stderr, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: VNI := 0-16777215\n");
@@ -53,8 +53,6 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 noage = 0;
 	__u32 age = 0;
 	__u32 maxaddr = 0;
-	__u16 dstport = 0;
-	int dst_port_set = 0;
 	struct ifla_vxlan_port_range range = { 0, 0 };
 
 	while (argc > 0) {
@@ -117,8 +115,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				maxaddr = 0;
 			else if (get_u32(&maxaddr, *argv, 0))
 				invarg("max addresses", *argv);
-		} else if (!matches(*argv, "port") ||
-			   !matches(*argv, "srcport")) {
+		} else if (!matches(*argv, "port")) {
 			__u16 minport, maxport;
 			NEXT_ARG();
 			if (get_u16(&minport, *argv, 0))
@@ -128,11 +125,6 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("max port", *argv);
 			range.low = htons(minport);
 			range.high = htons(maxport);
-		} else if (!matches(*argv, "dstport")){
-			NEXT_ARG();
-			if (get_u16(&dstport, *argv, 0))
-				invarg("dst port", *argv);
-			dst_port_set = 1;
 		} else if (!matches(*argv, "nolearning")) {
 			learning = 0;
 		} else if (!matches(*argv, "learning")) {
@@ -168,15 +160,6 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		fprintf(stderr, "vxlan: missing virtual network identifier\n");
 		return -1;
 	}
-
-	if (!dst_port_set) {
-		fprintf(stderr, "vxlan: destination port not specified\n"
-			"Will use Linux kernel default (non-standard value)\n");
-		fprintf(stderr, 
-			"Use 'dstport 4789' to get the IANA assigned value\n"
-			"Use 'dstport 0' to get default and quiet this message\n");
-	}
-
 	addattr32(n, 1024, IFLA_VXLAN_ID, vni);
 	if (gaddr)
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
@@ -191,7 +174,6 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	addattr8(n, 1024, IFLA_VXLAN_RSC, rsc);
 	addattr8(n, 1024, IFLA_VXLAN_L2MISS, l2miss);
 	addattr8(n, 1024, IFLA_VXLAN_L3MISS, l3miss);
-
 	if (noage)
 		addattr32(n, 1024, IFLA_VXLAN_AGEING, 0);
 	else if (age)
@@ -201,8 +183,6 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	if (range.low || range.high)
 		addattr_l(n, 1024, IFLA_VXLAN_PORT_RANGE,
 			  &range, sizeof(range));
-	if (dstport)
-		addattr16(n, 1024, IFLA_VXLAN_PORT, htons(dstport));
 
 	return 0;
 }
@@ -253,12 +233,8 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VXLAN_PORT_RANGE]) {
 		const struct ifla_vxlan_port_range *r
 			= RTA_DATA(tb[IFLA_VXLAN_PORT_RANGE]);
-		fprintf(f, "srcport %u %u ", ntohs(r->low), ntohs(r->high));
+		fprintf(f, "port %u %u ", ntohs(r->low), ntohs(r->high));
 	}
-
-	if (tb[IFLA_VXLAN_PORT])
-		fprintf(f, "dstport %u ",
-			ntohs(rta_getattr_u16(tb[IFLA_VXLAN_PORT])));
 
 	if (tb[IFLA_VXLAN_LEARNING] &&
 	    !rta_getattr_u8(tb[IFLA_VXLAN_LEARNING]))
