@@ -198,8 +198,8 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 		parse_rtattr_nested(aftb, IFLA_BRIDGE_MAX, tb[IFLA_AF_SPEC]);
 
-		if (tb[IFLA_BRIDGE_MODE])
-			print_hwmode(fp, rta_getattr_u16(tb[IFLA_BRIDGE_MODE]));
+		if (aftb[IFLA_BRIDGE_MODE])
+			print_hwmode(fp, rta_getattr_u16(aftb[IFLA_BRIDGE_MODE]));
 	}
 
 	fprintf(fp, "\n");
@@ -281,18 +281,18 @@ static int brlink_modify(int argc, char **argv)
 			NEXT_ARG();
 			if (!on_off("root_block", &root_block, *argv))
 				exit(-1);
-		} else if (strcmp(*argv, "cost")) {
+		} else if (strcmp(*argv, "cost") == 0) {
 			NEXT_ARG();
 			cost = atoi(*argv);
-		} else if (strcmp(*argv, "priority")) {
+		} else if (strcmp(*argv, "priority") == 0) {
 			NEXT_ARG();
 			priority = atoi(*argv);
-		} else if (strcmp(*argv, "state")) {
+		} else if (strcmp(*argv, "state") == 0) {
 			NEXT_ARG();
 			state = atoi(*argv);
-		} else if (strcmp(*argv, "hwmode")) {
+		} else if (strcmp(*argv, "hwmode") == 0) {
 			NEXT_ARG();
-			flags |= BRIDGE_FLAGS_SELF;
+			flags = BRIDGE_FLAGS_SELF;
 			if (strcmp(*argv, "vepa") == 0)
 				mode = BRIDGE_MODE_VEPA;
 			else if (strcmp(*argv, "veb") == 0)
