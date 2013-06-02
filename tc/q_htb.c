@@ -264,6 +264,8 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 				fprintf(f, "quantum %d ", (int)hopt->quantum);
 		}
 	    fprintf(f, "rate %s ", sprint_rate(hopt->rate.rate, b1));
+	    if (hopt->rate.overhead)
+		fprintf(f, "overhead %u ", hopt->rate.overhead);
 	    buffer = tc_calc_xmitsize(hopt->rate.rate, hopt->buffer);
 	    fprintf(f, "ceil %s ", sprint_rate(hopt->ceil.rate, b1));
 	    cbuffer = tc_calc_xmitsize(hopt->ceil.rate, hopt->cbuffer);
