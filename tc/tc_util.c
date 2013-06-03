@@ -152,19 +152,23 @@ int get_rate(unsigned *rate, const char *str)
 	if (p == str)
 		return -1;
 
-	if (*p == '\0') {
-		*rate = bps / 8.;	/* assume bits/sec */
-		return 0;
-	}
-
 	for (s = suffixes; s->name; ++s) {
 		if (strcasecmp(s->name, p) == 0) {
-			*rate = (bps * s->scale) / 8.;
-			return 0;
+			bps *= s->scale;
+			p += strlen(p);
+			break;
 		}
 	}
 
-	return -1;
+	if (*p)
+		return -1; /* unknown suffix */
+
+	bps /= 8; /* -> bytes per second */
+	*rate = bps;
+	/* detect if an overflow happened */
+	if (*rate != floor(bps))
+		return -1;
+	return 0;
 }
 
 void print_rate(char *buf, int len, __u32 rate)
