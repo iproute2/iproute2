@@ -150,7 +150,7 @@ static int netns_exec(int argc, char **argv)
 	name = argv[0];
 	cmd = argv[1];
 	snprintf(net_path, sizeof(net_path), "%s/%s", NETNS_RUN_DIR, name);
-	netns = open(net_path, O_RDONLY);
+	netns = open(net_path, O_RDONLY | O_CLOEXEC);
 	if (netns < 0) {
 		fprintf(stderr, "Cannot open network namespace \"%s\": %s\n",
 			name, strerror(errno));
