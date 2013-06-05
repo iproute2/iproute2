@@ -2226,31 +2226,17 @@ static int unix_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	return 0;
 }
 
-static int unix_show_netlink(struct filter *f, FILE *dump_fp)
+static int handle_netlink_request(struct filter *f, FILE *dump_fp,
+				  struct nlmsghdr *req, size_t size,
+				  int (* show_one_sock)(struct nlmsghdr *nlh, struct filter *f))
 {
 	int fd;
-	struct {
-		struct nlmsghdr nlh;
-		struct unix_diag_req r;
-	} req;
 	char	buf[8192];
 
 	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
 		return -1;
 
-	memset(&req, 0, sizeof(req));
-	req.nlh.nlmsg_len = sizeof(req);
-	req.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
-	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
-	req.nlh.nlmsg_seq = 123456;
-
-	req.r.sdiag_family = AF_UNIX;
-	req.r.udiag_states = f->states;
-	req.r.udiag_show = UDIAG_SHOW_NAME | UDIAG_SHOW_PEER | UDIAG_SHOW_RQLEN;
-	if (show_mem)
-		req.r.udiag_show |= UDIAG_SHOW_MEMINFO;
-
-	if (send(fd, &req, sizeof(req), 0) < 0) {
+	if (send(fd, req, size, 0) < 0) {
 		close(fd);
 		return -1;
 	}
@@ -2295,13 +2281,13 @@ static int unix_show_netlink(struct filter *f, FILE *dump_fp)
 				} else {
 					errno = -err->error;
 					if (errno != ENOENT)
-						fprintf(stderr, "UDIAG answers %d\n", errno);
+						fprintf(stderr, "DIAG answers %d\n", errno);
 				}
 				close(fd);
 				return -1;
 			}
 			if (!dump_fp) {
-				err = unix_show_sock(h, f);
+				err = show_one_sock(h, f);
 				if (err < 0) {
 					close(fd);
 					return err;
@@ -2321,6 +2307,29 @@ skip_it:
 close_it:
 	close(fd);
 	return 0;
+}
+
+static int unix_show_netlink(struct filter *f, FILE *dump_fp)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct unix_diag_req r;
+	} req;
+
+	memset(&req, 0, sizeof(req));
+	req.nlh.nlmsg_len = sizeof(req);
+	req.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
+	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
+	req.nlh.nlmsg_seq = 123456;
+
+	req.r.sdiag_family = AF_UNIX;
+	req.r.udiag_states = f->states;
+	req.r.udiag_show = UDIAG_SHOW_NAME | UDIAG_SHOW_PEER | UDIAG_SHOW_RQLEN;
+	if (show_mem)
+		req.r.udiag_show |= UDIAG_SHOW_MEMINFO;
+
+	return handle_netlink_request(f, dump_fp, &req.nlh,
+					sizeof(req), unix_show_sock);
 }
 
 static int unix_show(struct filter *f)
