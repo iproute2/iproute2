@@ -2672,6 +2672,73 @@ static int packet_show(struct filter *f)
 	return 0;
 }
 
+static void netlink_show_one(struct filter *f,
+				int prot, int pid, unsigned groups,
+				int rq, int wq,
+				unsigned long long sk, unsigned long long cb)
+{
+	if (f->f) {
+		struct tcpstat tst;
+		tst.local.family = AF_NETLINK;
+		tst.remote.family = AF_NETLINK;
+		tst.rport = -1;
+		tst.lport = pid;
+		tst.local.data[0] = prot;
+		tst.remote.data[0] = 0;
+		if (run_ssfilter(f->f, &tst) == 0)
+			return;
+	}
+
+	if (netid_width)
+		printf("%-*s ", netid_width, "nl");
+	if (state_width)
+		printf("%-*s ", state_width, "UNCONN");
+	printf("%-6d %-6d ", rq, wq);
+	if (resolve_services && prot == 0)
+		printf("%*s:", addr_width, "rtnl");
+	else if (resolve_services && prot == 3)
+		printf("%*s:", addr_width, "fw");
+	else if (resolve_services && prot == 4)
+		printf("%*s:", addr_width, "tcpdiag");
+	else
+		printf("%*d:", addr_width, prot);
+	if (pid == -1) {
+		printf("%-*s ", serv_width, "*");
+	} else if (resolve_services) {
+		int done = 0;
+		if (!pid) {
+			done = 1;
+			printf("%-*s ", serv_width, "kernel");
+		} else if (pid > 0) {
+			char procname[64];
+			FILE *fp;
+			sprintf(procname, "%s/%d/stat",
+				getenv("PROC_ROOT") ? : "/proc", pid);
+			if ((fp = fopen(procname, "r")) != NULL) {
+				if (fscanf(fp, "%*d (%[^)])", procname) == 1) {
+					sprintf(procname+strlen(procname), "/%d", pid);
+					printf("%-*s ", serv_width, procname);
+					done = 1;
+				}
+				fclose(fp);
+			}
+		}
+		if (!done)
+			printf("%-*d ", serv_width, pid);
+	} else {
+		printf("%-*d ", serv_width, pid);
+	}
+	printf("%*s*%-*s",
+	       addr_width, "", serv_width, "");
+
+	if (show_details) {
+		printf(" sk=%llx cb=%llx groups=0x%08x", sk, cb, groups);
+	}
+	printf("\n");
+
+	return;
+}
+
 static int netlink_show(struct filter *f)
 {
 	FILE *fp;
@@ -2684,6 +2751,10 @@ static int netlink_show(struct filter *f)
 	if (!(f->states & (1<<SS_CLOSE)))
 		return 0;
 
+	if (!getenv("PROC_NET_NETLINK") && !getenv("PROC_ROOT") &&
+		netlink_show_netlink(f, NULL) == 0)
+		return 0;
+
 	if ((fp = net_netlink_open()) == NULL)
 		return -1;
 	fgets(buf, sizeof(buf)-1, fp);
@@ -2693,64 +2764,7 @@ static int netlink_show(struct filter *f)
 		       &sk,
 		       &prot, &pid, &groups, &rq, &wq, &cb, &rc);
 
-		if (f->f) {
-			struct tcpstat tst;
-			tst.local.family = AF_NETLINK;
-			tst.remote.family = AF_NETLINK;
-			tst.rport = -1;
-			tst.lport = pid;
-			tst.local.data[0] = prot;
-			tst.remote.data[0] = 0;
-			if (run_ssfilter(f->f, &tst) == 0)
-				continue;
-		}
-
-		if (netid_width)
-			printf("%-*s ", netid_width, "nl");
-		if (state_width)
-			printf("%-*s ", state_width, "UNCONN");
-		printf("%-6d %-6d ", rq, wq);
-		if (resolve_services && prot == 0)
-			printf("%*s:", addr_width, "rtnl");
-		else if (resolve_services && prot == 3)
-			printf("%*s:", addr_width, "fw");
-		else if (resolve_services && prot == 4)
-			printf("%*s:", addr_width, "tcpdiag");
-		else
-			printf("%*d:", addr_width, prot);
-		if (pid == -1) {
-			printf("%-*s ", serv_width, "*");
-		} else if (resolve_services) {
-			int done = 0;
-			if (!pid) {
-				done = 1;
-				printf("%-*s ", serv_width, "kernel");
-			} else if (pid > 0) {
-				char procname[64];
-				FILE *fp;
-				sprintf(procname, "%s/%d/stat",
-					getenv("PROC_ROOT") ? : "/proc", pid);
-				if ((fp = fopen(procname, "r")) != NULL) {
-					if (fscanf(fp, "%*d (%[^)])", procname) == 1) {
-						sprintf(procname+strlen(procname), "/%d", pid);
-						printf("%-*s ", serv_width, procname);
-						done = 1;
-					}
-					fclose(fp);
-				}
-			}
-			if (!done)
-				printf("%-*d ", serv_width, pid);
-		} else {
-			printf("%-*d ", serv_width, pid);
-		}
-		printf("%*s*%-*s",
-		       addr_width, "", serv_width, "");
-
-		if (show_details) {
-			printf(" sk=%llx cb=%llx groups=0x%08x", sk, cb, groups);
-		}
-		printf("\n");
+		netlink_show_one(f, prot, pid, groups, rq, wq, sk, cb);
 	}
 
 	return 0;
