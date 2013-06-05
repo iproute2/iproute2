@@ -39,6 +39,7 @@
 #include <linux/netdevice.h>	/* for MAX_ADDR_LEN */
 #include <linux/filter.h>
 #include <linux/packet_diag.h>
+#include <linux/netlink_diag.h>
 
 int resolve_hosts = 0;
 int resolve_services = 1;
@@ -2744,6 +2745,61 @@ static void netlink_show_one(struct filter *f,
 	printf("\n");
 
 	return;
+}
+
+static int netlink_show_sock(struct nlmsghdr *nlh, struct filter *f)
+{
+	struct netlink_diag_msg *r = NLMSG_DATA(nlh);
+	struct rtattr *tb[NETLINK_DIAG_MAX+1];
+	int rq = 0, wq = 0;
+	unsigned long groups = 0;
+
+	parse_rtattr(tb, NETLINK_DIAG_MAX, (struct rtattr*)(r+1),
+		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
+
+	if (tb[NETLINK_DIAG_GROUPS] && RTA_PAYLOAD(tb[NETLINK_DIAG_GROUPS]))
+		groups = *(unsigned long *) RTA_DATA(tb[NETLINK_DIAG_GROUPS]);
+
+	if (tb[NETLINK_DIAG_MEMINFO]) {
+		const __u32 *skmeminfo;
+		skmeminfo = RTA_DATA(tb[NETLINK_DIAG_MEMINFO]);
+
+		rq = skmeminfo[SK_MEMINFO_RMEM_ALLOC];
+		wq = skmeminfo[SK_MEMINFO_WMEM_ALLOC];
+	}
+
+	netlink_show_one(f, r->ndiag_protocol, r->ndiag_portid, groups,
+			 r->ndiag_state, r->ndiag_dst_portid, r->ndiag_dst_group,
+			 rq, wq, 0, 0);
+
+	if (show_mem) {
+		printf("\t");
+		print_skmeminfo(tb, NETLINK_DIAG_MEMINFO);
+		printf("\n");
+	}
+
+	return 0;
+}
+
+static int netlink_show_netlink(struct filter *f, FILE *dump_fp)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct netlink_diag_req r;
+	} req;
+
+	memset(&req, 0, sizeof(req));
+	req.nlh.nlmsg_len = sizeof(req);
+	req.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
+	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
+	req.nlh.nlmsg_seq = 123456;
+
+	req.r.sdiag_family = AF_NETLINK;
+	req.r.sdiag_protocol = NDIAG_PROTO_ALL;
+	req.r.ndiag_show = NDIAG_SHOW_GROUPS | NDIAG_SHOW_MEMINFO;
+
+	return handle_netlink_request(f, dump_fp, &req.nlh,
+					sizeof(req), netlink_show_sock);
 }
 
 static int netlink_show(struct filter *f)
