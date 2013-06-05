@@ -2674,6 +2674,7 @@ static int packet_show(struct filter *f)
 
 static void netlink_show_one(struct filter *f,
 				int prot, int pid, unsigned groups,
+				int state, int dst_pid, unsigned dst_group,
 				int rq, int wq,
 				unsigned long long sk, unsigned long long cb)
 {
@@ -2728,8 +2729,14 @@ static void netlink_show_one(struct filter *f,
 	} else {
 		printf("%-*d ", serv_width, pid);
 	}
-	printf("%*s*%-*s",
-	       addr_width, "", serv_width, "");
+
+	if (state == NETLINK_CONNECTED) {
+		printf("%*d:%-*d",
+		       addr_width, dst_group, serv_width, dst_pid);
+	} else {
+		printf("%*s*%-*s",
+		       addr_width, "", serv_width, "");
+	}
 
 	if (show_details) {
 		printf(" sk=%llx cb=%llx groups=0x%08x", sk, cb, groups);
@@ -2764,7 +2771,7 @@ static int netlink_show(struct filter *f)
 		       &sk,
 		       &prot, &pid, &groups, &rq, &wq, &cb, &rc);
 
-		netlink_show_one(f, prot, pid, groups, rq, wq, sk, cb);
+		netlink_show_one(f, prot, pid, groups, 0, 0, 0, rq, wq, sk, cb);
 	}
 
 	return 0;
