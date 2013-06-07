@@ -69,21 +69,21 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 
 	while (argc > 0) {
 		if (matches(*argv, "r2q") == 0) {
-		    NEXT_ARG();
-		    if (get_u32(&opt.rate2quantum, *argv, 10)) {
-			explain1("r2q"); return -1;
-		    }
+			NEXT_ARG();
+			if (get_u32(&opt.rate2quantum, *argv, 10)) {
+				explain1("r2q"); return -1;
+			}
 		} else if (matches(*argv, "default") == 0) {
-		    NEXT_ARG();
-		    if (get_u32(&opt.defcls, *argv, 16)) {
-			explain1("default"); return -1;
-		    }
+			NEXT_ARG();
+			if (get_u32(&opt.defcls, *argv, 16)) {
+				explain1("default"); return -1;
+			}
 		} else if (matches(*argv, "debug") == 0) {
-		    NEXT_ARG(); p = *argv;
-		    for (i=0; i<16; i++,p++) {
-			if (*p<'0' || *p>'3') break;
-			opt.debug |= (*p-'0')<<(2*i);
-		    }
+			NEXT_ARG(); p = *argv;
+			for (i=0; i<16; i++,p++) {
+				if (*p<'0' || *p>'3') break;
+				opt.debug |= (*p-'0')<<(2*i);
+			}
 		} else {
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
 			explain();
@@ -146,8 +146,8 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 				explain1("quantum"); return -1;
 			}
 		} else if (matches(*argv, "burst") == 0 ||
-			strcmp(*argv, "buffer") == 0 ||
-			strcmp(*argv, "maxburst") == 0) {
+			   strcmp(*argv, "buffer") == 0 ||
+			   strcmp(*argv, "maxburst") == 0) {
 			NEXT_ARG();
 			if (get_size_and_cell(&buffer, &cell_log, *argv) < 0) {
 				explain1("buffer");
@@ -155,8 +155,8 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			}
 			ok++;
 		} else if (matches(*argv, "cburst") == 0 ||
-			strcmp(*argv, "cbuffer") == 0 ||
-			strcmp(*argv, "cmaxburst") == 0) {
+			   strcmp(*argv, "cbuffer") == 0 ||
+			   strcmp(*argv, "cmaxburst") == 0) {
 			NEXT_ARG();
 			if (get_size_and_cell(&cbuffer, &ccell_log, *argv) < 0) {
 				explain1("cbuffer");
@@ -196,7 +196,7 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 		argc--; argv++;
 	}
 
-/*	if (!ok)
+	/*	if (!ok)
 		return 0;*/
 
 	if (opt.rate.rate == 0) {
@@ -254,47 +254,46 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	parse_rtattr_nested(tb, TCA_HTB_RTAB, opt);
 
 	if (tb[TCA_HTB_PARMS]) {
-
-	    hopt = RTA_DATA(tb[TCA_HTB_PARMS]);
-	    if (RTA_PAYLOAD(tb[TCA_HTB_PARMS])  < sizeof(*hopt)) return -1;
+		hopt = RTA_DATA(tb[TCA_HTB_PARMS]);
+		if (RTA_PAYLOAD(tb[TCA_HTB_PARMS])  < sizeof(*hopt)) return -1;
 
 		if (!hopt->level) {
 			fprintf(f, "prio %d ", (int)hopt->prio);
 			if (show_details)
 				fprintf(f, "quantum %d ", (int)hopt->quantum);
 		}
-	    fprintf(f, "rate %s ", sprint_rate(hopt->rate.rate, b1));
-	    if (hopt->rate.overhead)
-		fprintf(f, "overhead %u ", hopt->rate.overhead);
-	    buffer = tc_calc_xmitsize(hopt->rate.rate, hopt->buffer);
-	    fprintf(f, "ceil %s ", sprint_rate(hopt->ceil.rate, b1));
-	    cbuffer = tc_calc_xmitsize(hopt->ceil.rate, hopt->cbuffer);
-	    if (show_details) {
-		fprintf(f, "burst %s/%u mpu %s overhead %s ",
-			sprint_size(buffer, b1),
-			1<<hopt->rate.cell_log,
-			sprint_size(hopt->rate.mpu&0xFF, b2),
-			sprint_size((hopt->rate.mpu>>8)&0xFF, b3));
-		fprintf(f, "cburst %s/%u mpu %s overhead %s ",
-			sprint_size(cbuffer, b1),
-			1<<hopt->ceil.cell_log,
-			sprint_size(hopt->ceil.mpu&0xFF, b2),
-			sprint_size((hopt->ceil.mpu>>8)&0xFF, b3));
-		fprintf(f, "level %d ", (int)hopt->level);
-	    } else {
-		fprintf(f, "burst %s ", sprint_size(buffer, b1));
-		fprintf(f, "cburst %s ", sprint_size(cbuffer, b1));
-	    }
-	    if (show_raw)
-		fprintf(f, "buffer [%08x] cbuffer [%08x] ",
-			hopt->buffer,hopt->cbuffer);
+		fprintf(f, "rate %s ", sprint_rate(hopt->rate.rate, b1));
+		if (hopt->rate.overhead)
+			fprintf(f, "overhead %u ", hopt->rate.overhead);
+		buffer = tc_calc_xmitsize(hopt->rate.rate, hopt->buffer);
+		fprintf(f, "ceil %s ", sprint_rate(hopt->ceil.rate, b1));
+		cbuffer = tc_calc_xmitsize(hopt->ceil.rate, hopt->cbuffer);
+		if (show_details) {
+			fprintf(f, "burst %s/%u mpu %s overhead %s ",
+				sprint_size(buffer, b1),
+				1<<hopt->rate.cell_log,
+				sprint_size(hopt->rate.mpu&0xFF, b2),
+				sprint_size((hopt->rate.mpu>>8)&0xFF, b3));
+			fprintf(f, "cburst %s/%u mpu %s overhead %s ",
+				sprint_size(cbuffer, b1),
+				1<<hopt->ceil.cell_log,
+				sprint_size(hopt->ceil.mpu&0xFF, b2),
+				sprint_size((hopt->ceil.mpu>>8)&0xFF, b3));
+			fprintf(f, "level %d ", (int)hopt->level);
+		} else {
+			fprintf(f, "burst %s ", sprint_size(buffer, b1));
+			fprintf(f, "cburst %s ", sprint_size(cbuffer, b1));
+		}
+		if (show_raw)
+			fprintf(f, "buffer [%08x] cbuffer [%08x] ",
+				hopt->buffer,hopt->cbuffer);
 	}
 	if (tb[TCA_HTB_INIT]) {
-	    gopt = RTA_DATA(tb[TCA_HTB_INIT]);
-	    if (RTA_PAYLOAD(tb[TCA_HTB_INIT])  < sizeof(*gopt)) return -1;
+		gopt = RTA_DATA(tb[TCA_HTB_INIT]);
+		if (RTA_PAYLOAD(tb[TCA_HTB_INIT])  < sizeof(*gopt)) return -1;
 
-	    fprintf(f, "r2q %d default %x direct_packets_stat %u",
-		    gopt->rate2quantum,gopt->defcls,gopt->direct_pkts);
+		fprintf(f, "r2q %d default %x direct_packets_stat %u",
+			gopt->rate2quantum,gopt->defcls,gopt->direct_pkts);
 		if (show_details)
 			fprintf(f," ver %d.%d",gopt->version >> 16,gopt->version & 0xffff);
 	}
