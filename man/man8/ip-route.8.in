@@ -111,6 +111,8 @@ replace " } "
 .IR NUMBER " ] [ "
 .B  initrwnd
 .IR NUMBER " ]"
+.B  quickack
+.IR BOOL " ]"
 
 .ti -8
 .IR TYPE " := [ "
@@ -399,6 +401,10 @@ zero, meaning to use the values specified in RFC2414.
 the initial receive window size for connections to this destination.
 Actual window size is this value multiplied by the MSS of the connection.
 The default value is zero, meaning to use Slow Start value.
+
+.TP
+.BI quickack " BOOL " "(3.11+ only)"
+Enable or disable quick ack for connections to this destination.
 
 .TP
 .BI advmss " NUMBER " "(2.3.15+ only)"
