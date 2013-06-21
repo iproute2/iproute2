@@ -21,9 +21,11 @@
 static void explain(void)
 {
 	fprintf(stderr,
-		"Usage: ... vlan id VLANID [ FLAG-LIST ]\n"
-		"                          [ ingress-qos-map QOS-MAP ] [ egress-qos-map QOS-MAP ]\n"
+		"Usage: ... vlan [ protocol VLANPROTO ] id VLANID"
+		"                [ FLAG-LIST ]\n"
+		"                [ ingress-qos-map QOS-MAP ] [ egress-qos-map QOS-MAP ]\n"
 		"\n"
+		"VLANPROTO: [ 802.1Q / 802.1ad ]\n"
 		"VLANID := 0-4095\n"
 		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
 		"FLAG := [ reorder_hdr { on | off } ] [ gvrp { on | off } ] [ mvrp { on | off } ]\n"
@@ -77,10 +79,15 @@ static int vlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			  struct nlmsghdr *n)
 {
 	struct ifla_vlan_flags flags = { 0 };
-	__u16 id;
+	__u16 id, proto;
 
 	while (argc > 0) {
-		if (matches(*argv, "id") == 0) {
+		if (matches(*argv, "protocol") == 0) {
+			NEXT_ARG();
+			if (ll_proto_a2n(&proto, *argv))
+				invarg("protocol is invalid", *argv);
+			addattr_l(n, 1024, IFLA_VLAN_PROTOCOL, &proto, 2);
+		} else if (matches(*argv, "id") == 0) {
 			NEXT_ARG();
 			if (get_u16(&id, *argv, 0))
 				invarg("id is invalid", *argv);
@@ -186,12 +193,24 @@ static void vlan_print_flags(FILE *fp, __u32 flags)
 static void vlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	struct ifla_vlan_flags *flags;
+	SPRINT_BUF(b1);
+
 	if (!tb)
 		return;
 
+	if (tb[IFLA_VLAN_PROTOCOL] &&
+	    RTA_PAYLOAD(tb[IFLA_VLAN_PROTOCOL]) < sizeof(__u16))
+		return;
 	if (!tb[IFLA_VLAN_ID] ||
 	    RTA_PAYLOAD(tb[IFLA_VLAN_ID]) < sizeof(__u16))
 		return;
+
+	if (tb[IFLA_VLAN_PROTOCOL])
+		fprintf(f, "protocol %s ",
+			ll_proto_n2a(rta_getattr_u16(tb[IFLA_VLAN_PROTOCOL]),
+				     b1, sizeof(b1)));
+	else
+		fprintf(f, "protocol 802.1q ");
 
 	fprintf(f, "id %u ", rta_getattr_u16(tb[IFLA_VLAN_ID]));
 

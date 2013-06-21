@@ -78,6 +78,8 @@ __PF(IRDA,irda)
 __PF(ECONET,econet)
 __PF(TIPC,tipc)
 __PF(AOE,aoe)
+__PF(8021Q,802.1Q)
+__PF(8021AD,802.1ad)
 
 { 0x8100, "802.1Q" },
 { 0x88cc, "LLDP" },
