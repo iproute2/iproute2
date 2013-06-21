@@ -369,23 +369,19 @@ object operating on the Security Association Database, and the
 object operating on the Security Policy Database). It is also used for
 the IP Payload Compression Protocol and features of Mobile IPv6.
 
-.SS ip xfrm state add - add new state into xfrm
-
-.SS ip xfrm state update - update existing state in xfrm
-
-.SS ip xfrm state allocspi - allocate an SPI value
-
-.SS ip xfrm state delete - delete existing state in xfrm
-
-.SS ip xfrm state get - get existing state in xfrm
-
-.SS ip xfrm state deleteall - delete all existing state in xfrm
-
-.SS ip xfrm state list - print out the list of existing state in xfrm
-
-.SS ip xfrm state flush - flush all state in xfrm
-
-.SS ip xfrm state count - count all existing state in xfrm
+.TS
+l l.
+ip xfrm state add	add new state into xfrm
+ip xfrm state update	update existing state in xfrm
+ip xfrm state allocspi	allocate an SPI value
+ip xfrm state delete	delete existing state in xfrm
+ip xfrm state get	get existing state in xfrm
+ip xfrm state deleteall	delete all existing state in xfrm
+ip xfrm state list	print out the list of existing state in xfrm
+ip xfrm state flush	flush all state in xfrm
+ip xfrm state count	count all existing state in xfrm
+ip xfrm monitor 	state monitoring for xfrm objects
+.TE
 
 .TP
 .IR ID
@@ -506,22 +502,18 @@ encapsulates packets with protocol
 .BR espinudp " or " espinudp-nonike ","
 .RI "using source port " SPORT ", destination port "  DPORT
 .RI ", and original address " OADDR "."
-
-.SS ip xfrm policy add - add a new policy
-
-.SS ip xfrm policy update - update an existing policy
-
-.SS ip xfrm policy delete - delete an existing policy
-
-.SS ip xfrm policy get - get an existing policy
-
-.SS ip xfrm policy deleteall - delete all existing xfrm policies
-
-.SS ip xfrm policy list - print out the list of xfrm policies
-
-.SS ip xfrm policy flush - flush policies
-
-.SS ip xfrm policy count - count existing policies
+.sp
+.TS
+l l.
+ip xfrm policy add	add a new policy
+ip xfrm policy update	update an existing policy
+ip xfrm policy delete	delete an existing policy
+ip xfrm policy get	get an existing policy
+ip xfrm policy deleteall	delete all existing xfrm policies
+ip xfrm policy list	print out the list of xfrm policies
+ip xfrm policy flush	flush policies
+ip xfrm policy count	count existing policies
+.TE
 
 .TP
 .IR SELECTOR
@@ -615,7 +607,6 @@ and inbound trigger
 can be
 .BR required " (default) or " use "."
 
-.SS ip xfrm monitor - state monitoring for xfrm objects
 The xfrm objects to monitor can be optionally specified.
 
 .SH AUTHOR

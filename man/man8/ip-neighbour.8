@@ -46,10 +46,17 @@ is also known by another name - the ARP table.
 The corresponding commands display neighbour bindings
 and their properties, add new neighbour entries and delete old ones.
 
-.SS ip neighbour add - add a new neighbour entry
-.SS ip neighbour change - change an existing entry
-.SS ip neighbour replace - add a new entry or change an existing one
+.TP
+ip neighbour add
+add a new neighbour entry
+.TP
+ip neighbour change
+change an existing entry
+.TP
+ip neighbour replace
+add a new entry or change an existing one
 
+.PP
 These commands create new neighbour records or update existing ones.
 
 .TP
@@ -74,31 +81,28 @@ the state of the neighbour entry.
 is an abbreviation for 'Neighbour Unreachability Detection'.
 The state can take one of the following values:
 
-.in +8
+.TP
 .B permanent
-- the neighbour entry is valid forever and can be only
+the neighbour entry is valid forever and can be only
 be removed administratively.
-.sp
-
+.TP
 .B noarp
-- the neighbour entry is valid. No attempts to validate
+the neighbour entry is valid. No attempts to validate
 this entry will be made but it can be removed when its lifetime expires.
-.sp
-
+.TP
 .B reachable
-- the neighbour entry is valid until the reachability
+the neighbour entry is valid until the reachability
 timeout expires.
-.sp
-
+.TP
 .B stale
-- the neighbour entry is valid but suspicious.
+the neighbour entry is valid but suspicious.
 This option to
 .B ip neigh
 does not change the neighbour state if it was valid and the address
 is not changed by this command.
-.in -8
-
-.SS ip neighbour delete - delete a neighbour entry
+.RS
+ip neighbour delete - delete a neighbour entry
+.RE
 This command invalidates a neighbour entry.
 
 .PP
@@ -120,9 +124,11 @@ on a
 .B NOARP
 interface or if the address is multicast or broadcast.
 
-.SS ip neighbour show - list neighbour entries
+.RS
+ip neighbour show - list neighbour entries
+.RE
 
-This commands displays neighbour tables.
+This command displays neighbour tables.
 
 .TP
 .BI to " ADDRESS " (default)
@@ -154,7 +160,10 @@ lists all entries except for
 and
 .BR "noarp" .
 
-.SS ip neighbour flush - flush neighbour entries
+.RS
+ip neighbour flush - flush neighbour entries
+.RE
+
 This command flushes neighbour tables, selecting
 entries to flush by some criteria.
 

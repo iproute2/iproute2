@@ -88,10 +88,16 @@ The encapsulating (or outer) address family is specified by the
 .B -f
 option.  The default is IPv4.
 
-.SS ip tunnel add - add a new tunnel
-.SS ip tunnel change - change an existing tunnel
-.SS ip tunnel delete - destroy a tunnel
-
+.TP
+.B ip tunnel add
+add a new tunnel
+.TP
+.B ip tunnel change
+change an existing tunnel
+.TP
+.B ip tunnel delete
+destroy a tunnel
+.RS
 .TP
 .BI name " NAME " (default)
 select the tunnel device name.
@@ -223,9 +229,12 @@ set a fixed encapsulation limit.  Default is 4.
 .BI flowlabel " FLOWLABEL"
 .RB ( " only IPv6 tunnels " )
 set a fixed flowlabel.
+.RE
 
-.SS ip tunnel prl - potential router list (ISATAP only)
-
+.TP
+.B ip tunnel prl
+potential router list (ISATAP only)
+.RS
 .TP
 .BI dev " NAME"
 mandatory device name.
@@ -238,8 +247,11 @@ mandatory device name.
 .BI prl-delete " ADDR"
 .RB "Add or delete " ADDR
 as a potential router or default router.
+.RE
 
-.SS ip tunnel show - list tunnels
+.TP
+.B ip tunnel show
+list tunnels
 This command has no arguments.
 
 .SH SEE ALSO

@@ -31,13 +31,17 @@ objects are multicast addresses.
 .BI dev " NAME " (default)
 the device name.
 
-.SS ip maddress add - add a multicast address
-.SS ip maddress delete - delete a multicast address
-these commands attach/detach a static link-layer multicast address
+.TP
+.B ip maddress add - add a multicast address
+.TP
+.B ip maddress delete - delete a multicast address
+.sp
+These commands attach/detach a static link-layer multicast address
 to listen on the interface.
 Note that it is impossible to join protocol multicast groups
 statically.  This command only manages link-layer addresses.
 
+.RS
 .TP
 .BI address " LLADDRESS " (default)
 the link-layer multicast address.
@@ -45,6 +49,7 @@ the link-layer multicast address.
 .TP
 .BI dev " NAME"
 the device to join/leave this multicast address.
+.RE
 
 .SH SEE ALSO
 .br

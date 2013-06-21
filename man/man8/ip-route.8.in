@@ -246,10 +246,16 @@ The multiple routing tables enter the game when
 .I policy routing
 is used.
 
-.SS ip route add - add new route
-.SS ip route change - change route
-.SS ip route replace - change or add new one
-
+.TP
+ip route add
+add new route
+.TP
+ip route change
+change route
+.TP
+ip route replace
+change or add new one
+.RS
 .TP
 .BI to " TYPE PREFIX " (default)
 the destination prefix of the route.  If
@@ -502,9 +508,12 @@ to assign (or not to assign) protocol tags.
 .B onlink
 pretend that the nexthop is directly attached to this link,
 even if it does not match any interface prefix.
+.RE
 
-.SS ip route delete - delete route
-
+.TP
+ip route delete
+delete route
+.RS
 .B ip route del
 has the same arguments as
 .BR "ip route add" ,
@@ -518,8 +527,12 @@ verifies that they coincide with the attributes of the route to delete.
 If no route with the given key and attributes was found,
 .B ip route del
 fails.
+.RE
 
-.SS ip route show - list routes
+.TP
+ip route show
+list routes
+.RS
 the command displays the contents of the routing tables or the route(s)
 selected by some criteria.
 
@@ -628,8 +641,12 @@ by
 .TP
 .BI realms " FROMREALM/TOREALM"
 only list routes with these realms.
+.RE
 
-.SS ip route flush - flush routing tables
+.TP
+ip route flush
+flush routing tables
+.RS
 this command flushes routes selected by some criteria.
 
 .sp
@@ -652,8 +669,12 @@ twice,
 .B ip route flush
 also dumps all the deleted routes in the format described in the
 previous subsection.
+.RE
 
-.SS ip route get - get a single route
+.TP
+ip route get
+get a single route
+.RS
 this command gets a single route to a destination and prints its
 contents exactly as the kernel sees it.
 
@@ -707,21 +728,30 @@ however, no packets are actually sent.  With the
 .B iif
 argument, the kernel pretends that a packet arrived from this interface
 and searches for a path to forward the packet.
+.RE
 
-.SS ip route save - save routing table information to stdout
-this command behaves like
+.TP
+ip route save
+save routing table information to stdout
+.RS
+This command behaves like
 .BR "ip route show"
 except that the output is raw data suitable for passing to
 .BR "ip route restore" .
+.RE
 
-.SS ip route restore - restore routing table information from stdin
-this command expects to read a data stream as returned from
+.TP
+ip route restore
+restore routing table information from stdin
+.RS
+This command expects to read a data stream as returned from
 .BR "ip route save" .
 It will attempt to restore the routing table information exactly as
 it was at the time of the save, so any translation of information
 in the stream (such as device indexes) must be done first.  Any existing
 routes are left unchanged.  Any routes specified in the data stream that
 already exist in the table will be ignored.
+.RE
 
 .SH EXAMPLES
 .PP
