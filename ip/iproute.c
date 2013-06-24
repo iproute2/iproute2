@@ -1330,7 +1330,7 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 
 			if (time(0) - start > 30) {
 				printf("\n*** Flush not completed after %ld seconds, %d entries remain ***\n",
-				       time(0) - start, filter.flushed);
+				       (long)(time(0) - start), filter.flushed);
 				exit(1);
 			}
 
