@@ -1435,6 +1435,19 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 					 / rtt));
 		}
 
+		if (info->tcpi_unacked)
+			printf(" unacked:%u", info->tcpi_unacked);
+		if (info->tcpi_retrans || info->tcpi_total_retrans)
+			printf(" retrans:%u/%u", info->tcpi_retrans,
+			       info->tcpi_total_retrans);
+		if (info->tcpi_lost)
+			printf(" lost:%u", info->tcpi_lost);
+		if (info->tcpi_sacked && r->idiag_state != SS_LISTEN)
+			printf(" sacked:%u", info->tcpi_sacked);
+		if (info->tcpi_fackets)
+			printf(" fackets:%u", info->tcpi_fackets);
+		if (info->tcpi_reordering != 3)
+			printf(" reordering:%d", info->tcpi_reordering);
 		if (info->tcpi_rcv_rtt)
 			printf(" rcv_rtt:%g", (double) info->tcpi_rcv_rtt/1000);
 		if (info->tcpi_rcv_space)
