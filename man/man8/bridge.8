@@ -44,12 +44,20 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
-.BR "bridge fdb" " { " add " | " del " } "
+.BR "bridge fdb" " { " add " | " append " | " del " } "
 .I LLADDR
 .B  dev
 .IR DEV " { "
 .BR local " | " temp " } { "
-.BR self " } { " embedded " } "
+.BR self " } { " embedded " } { " router " } [ "
+.B  dst
+.IR IPADDR " ] [ "
+.B vni
+.IR VNI " ] ["
+.B port
+.IR PORT " ] ["
+.B via
+.IR DEVICE " ]"
 
 .ti -8
 .BR "bridge fdb" " [ " show " ] [ "
@@ -229,6 +237,7 @@ objects contain known Ethernet addresses on a  link.
 
 .P
 The corresponding commands display fdb entries, add new entries,
+append entries,
 and delete old ones.
 
 .SS bridge fdb add - add a new fdb entry
@@ -236,11 +245,11 @@ and delete old ones.
 This command creates a new fdb entry.
 
 .TP
-.BI "ADDRESS"
+.BI "LLADDR"
 the Ethernet MAC address.
 
 .TP
-.BI dev " NAME"
+.BI dev " DEV"
 the interface to which this address is associated.
 
 .B self
@@ -251,7 +260,54 @@ the interface to which this address is associated.
 - the address is associated with an offloaded fdb
 .sp
 
+.B router
+- the destination address is associated with a router.
+Valid if the referenced device is a VXLAN type device and has
+route shortcircuit enabled.
+.sp
+
 .in -8
+The next command line parameters apply only
+when the specified device
+.I DEV
+is of type VXLAN.
+.TP
+.BI dst " IPADDR"
+the IP address of the destination
+VXLAN tunnel endpoint where the Ethernet MAC ADDRESS resides.
+
+.TP
+.BI vni " VNI"
+the VXLAN VNI Network Identifier (or VXLAN Segment ID)
+to use to connect to the remote VXLAN tunnel endpoint.
+If omitted the value specified at vxlan device creation
+will be used.
+
+.TP
+.BI port " PORT"
+the UDP destination PORT number to use to connect to the
+remote VXLAN tunnel endpoint.
+If omitted the default value is used.
+
+.TP
+.BI via " DEVICE"
+device name of the outgoing interface for the
+VXLAN device driver to reach the
+remote VXLAN tunnel endpoint. 
+
+.SS bridge fdb append - append a forwarding database entry
+This command adds a new fdb entry with an already known
+.IR LLADDR .
+Valid only for multicast link layer addresses.
+The command adds support for broadcast and multicast
+Ethernet MAC addresses.
+The Ethernet MAC address is added multiple times into
+the forwarding database and the vxlan device driver
+sends a copy of the data packet to each entry found.
+
+.PP
+The arguments are the same as with
+.BR "bridge fdb add" ,
 
 .SS bridge fdb delete - delete a forwarding database entry
 This command removes an existing fdb entry.

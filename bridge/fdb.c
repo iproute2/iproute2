@@ -30,8 +30,8 @@ int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge fdb { add | del } ADDR dev DEV {self|master} [ temp ] [router]\n"
-		        "              [ dst IPADDR] [ vlan VID ]\n"
+	fprintf(stderr, "Usage: bridge fdb { add | append | del } ADDR dev DEV {self|master} [ temp ]\n"
+		        "              [router] [ dst IPADDR] [ vlan VID ]\n"
 		        "              [ port PORT] [ vni VNI ] [via DEV]\n");
 	fprintf(stderr, "       bridge fdb {show} [ dev DEV ]\n");
 	exit(-1);
