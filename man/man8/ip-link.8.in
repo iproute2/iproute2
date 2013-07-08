@@ -196,6 +196,91 @@ specifies the number of transmit queues for new device.
 .BI numrxqueues " QUEUE_COUNT "
 specifies the number of receive queues for new device.
 
+.TP
+VXLAN Type Support
+For a link of type 
+.I VXLAN
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BI type " vxlan " id " ID
+.R " [ "
+.BI dev " PHYS_DEV "
+.R " ] [ "
+.BI group " IPADDR "
+.R " ] [ "
+.BI local " IPADDR "
+.R " ] [ "
+.BI ttl " TTL "
+.R " ] [ "
+.BI tos " TOS "
+.R " ] [ "
+.BI port " MIN MAX "
+.R " ] [ "
+.I "[no]learning "
+.R " ] [ "
+.I "[no]proxy "
+.R " ] [ "
+.I "[no]rsc "
+.R " ] [ "
+.I "[no]l2miss "
+.R " ] [ "
+.I "[no]l3miss "
+.R " ]"
+
+.in +8
+.sp
+.BI  id " VNI "
+- specifies the VXLAN Network Identifer (or VXLAN Segment
+Identifier) to use.
+
+.BI dev " PHYS_DEV"
+- specifies the physical device to use for tunnel endpoint communication.
+
+.sp
+.BI group " IPADDR"
+- specifies the multicast IP address to join.
+
+.sp
+.BI local " IPADDR"
+- specifies the source IP address to use in outgoing packets.
+
+.sp
+.BI ttl " TTL"
+- specifies the TTL value to use in outgoing packets.
+
+.sp
+.BI tos " TOS"
+- specifies the TOS value to use in outgoing packets.
+
+.sp
+.BI port " MIN MAX"
+- specifies the range of port numbers to use as UDP
+source ports to communicate to the remote VXLAN tunnel endpoint.
+
+.sp
+.I [no]learning
+- specifies if unknown source link layer addresses and IP addresses
+are entered into the VXLAN device forwarding database.
+
+.sp
+.I [no]rsc
+- specifies if route short circuit is turned on.
+
+.sp
+.I [no]proxy
+- specifies ARP proxy is turned on.
+
+.sp
+.I [no]l2miss
+- specifies if netlink LLADDR miss notifications are generated.
+
+.sp
+.I [no]l3miss
+- specifies if netlink IP ADDR miss notifications are generated.
+
+.in -8
+
 .SS ip link delete - delete virtual link
 .I DEVICE
 specifies the virtual  device to act operate on.
