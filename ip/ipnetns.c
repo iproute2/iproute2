@@ -42,6 +42,7 @@
 #define MS_SHARED	(1 << 20)
 #endif
 
+extern char *batch_file;
 
 #ifndef HAVE_SETNS
 static int setns(int fd, int nstype)
@@ -185,10 +186,41 @@ static int netns_exec(int argc, char **argv)
 	/* Setup bind mounts for config files in /etc */
 	bind_etc(name);
 
+	fflush(stdout);
+
+	if (batch_file) {
+		int status;
+		pid_t pid;
+
+		pid = fork();
+		if (pid < 0) {
+			perror("fork");
+			return EXIT_FAILURE;
+		}
+
+		if (pid != 0) {
+			/* Parent  */
+			if (waitpid(pid, &status, 0) < 0) {
+				perror("waitpid");
+				return EXIT_FAILURE;
+			}
+
+			if (WIFEXITED(status)) {
+				/* ip must returns the status of the child,
+				 * but do_cmd() will add a minus to this,
+				 * so let's add another one here to cancel it.
+				 */
+				return -WEXITSTATUS(status);
+			}
+
+			return EXIT_FAILURE;
+		}
+	}
+
 	if (execvp(cmd, argv + 1)  < 0)
 		fprintf(stderr, "exec of \"%s\" failed: %s\n",
 			cmd, strerror(errno));
-	return EXIT_FAILURE;
+	_exit(EXIT_FAILURE);
 }
 
 static int is_pid(const char *str)
