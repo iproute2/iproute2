@@ -6,54 +6,43 @@ ematch \- extended matches for use with "basic" or "flow" filters
 .SH SYNOPSIS
 .sp
 .ad l
-.in +8
-.ti -8
 .B "tc filter add .. basic match"
 .RI EXPR
 .B .. flowid ..
 .sp
 
-.ti -8
 .IR EXPR " := " TERM " [ { "
 .B and | or
 }
 .IR EXPR
 ]
 
-.ti -8
 .IR TERM " := [ " \fBnot " ] { " MATCH " | '(' " EXPR " ')' } "
 
-.ti -8
 .IR MATCH " := " module " '(' " ARGS " ')' "
 
-.ti -8
 .IR ARGS " := " ARG1 " " ARG2 " ..
 
 .SH MATCHES
 
 .SS cmp
 Simple comparison ematch: arithmetic compare of packet data to a given value.
-.ti
+
 .IR cmp "( " ALIGN " at " OFFSET " [ " ATTRS " ] { " eq " | " lt " | " gt " } " VALUE " )
 
-.ti
 .IR ALIGN " := { " u8 " | " u16 " | " u32 " } "
 
-.ti
 .IR ATTRS " := [ layer " LAYER " ] [ mask " MASK " ] [ trans ]
 
-.ti
 .IR LAYER " := { " link " | " network " | " transport " | " 0..2 " }
 
 .SS meta
 Metadata ematch
-.ti
+
 .IR meta "( " OBJECT " { " eq " | " lt " |" gt " } " OBJECT " )
 
-.ti
 .IR OBJECT " := { " META_ID " |  " VALUE " }
 
-.ti
 .IR META_ID " := " id " [ shift " SHIFT " ] [ mask " MASK " ]
 
 .TP
@@ -78,35 +67,29 @@ A full list of meta attributes can be obtained via
 
 .SS nbyte
 match packet data byte sequence
-.ti
+
 .IR nbyte "( " NEEDLE  " at " OFFSET " [ layer " LAYER " ] )
 
-.ti
 .IR NEEDLE  " := { " string " | " c-escape-sequence "  } "
 
-.ti
 .IR OFFSET  " := " int
 
-.ti
 .IR LAYER " := { " link " | " network " | " transport " | " 0..2 " }
 
 .SS u32
 u32 ematch
-.ti
+
 .IR u32 "( " ALIGN " " VALUE " " MASK " at [ nexthdr+ ] " OFFSET " )
 
-.ti
 .IR ALIGN " := { " u8 " | " u16 " | " u32 " }
 
 .SS ipset
 test packet against ipset membership
-.ti
+
 .IR ipset "( " SETNAME " " FLAGS " )
 
-.ti
 .IR SETNAME " := " string
 
-.ti
 .IR FLAGS " := { " FLAG " [, " FLAGS "] }
 
 The flag options are the same as those used by the iptables "set" match.
