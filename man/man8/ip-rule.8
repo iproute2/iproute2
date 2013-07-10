@@ -140,7 +140,7 @@ are only used if the route did not select any attributes.
 .sp
 The RPDB may contain rules of the following types:
 
-.in +8
+.RS
 .B unicast
 - the rule prescribes to return the route found
 in the routing table referenced by the rule.
@@ -158,11 +158,13 @@ prohibited' error.
 .B nat
 - the rule prescribes to translate the source address
 of the IP packet into some other value.
-.in -8
+.RE
 
-.SS ip rule add - insert a new rule
-.SS ip rule delete - delete a rule
-
+.TP
+.B ip rule add - insert a new rule
+.TP
+.B ip rule delete - delete a rule
+.RS
 .TP
 .BI type " TYPE " (default)
 the type of this rule.  The list of valid types was given in the previous
@@ -237,11 +239,12 @@ Changes to the RPDB made with these commands do not become active
 immediately.  It is assumed that after a script finishes a batch of
 updates, it flushes the routing cache with
 .BR "ip route flush cache" .
-
-.SS ip rule flush - also dumps all the deleted rules.
+.RE
+.TP
+.B ip rule flush - also dumps all the deleted rules.
 This command has no arguments.
-
-.SS ip rule show - list rules
+.TP
+.B ip rule show - list rules
 This command has no arguments.
 The options list or lst are synonyms with show.
 
