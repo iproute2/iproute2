@@ -12,6 +12,12 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .sp
 
 .ti -8
+.B ip 
+.RB "[ " -force " ] "
+.BI "-batch " filename
+.sp
+
+.ti -8
 .IR OBJECT " := { "
 .BR link " | " addr " | " addrlabel " | " route " | " rule " | " neigh " | "\
  ntable " | " tunnel " | " tuntap " | " maddr " | "  mroute " | " mrule " | "\
@@ -27,17 +33,28 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
 \fB\-o\fR[\fIneline\fR] }
 
+
 .SH OPTIONS
 
 .TP
 .BR "\-V" , " -Version"
-print the version of the
+Print the version of the
 .B ip
 utility and exit.
 
 .TP
+.BR "\-b", " \-batch " <FILENAME>
+Read commands from provided file or standard input and invoke them.
+First failure will cause termination of ip.
+
+.TP
+.BR "\-force"
+Don't terminate ip on errors in batch mode.
+If there were any errors during execution of the commands, the application return code will be non zero.
+
+.TP
 .BR "\-s" , " \-stats" , " \-statistics"
-output more information.  If the option
+Output more information.  If the option
 appears twice or more, the amount of information increases.
 As a rule, the information is statistics or some time values.
 
