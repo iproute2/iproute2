@@ -30,9 +30,9 @@ int resolve_hosts = 0;
 int oneline = 0;
 int timestamp = 0;
 char * _SL_ = NULL;
-char *batch_file = NULL;
 int force = 0;
 int max_flush_loops = 10;
+int batch_mode = 0;
 
 struct rtnl_handle rth = { .fd = -1 };
 
@@ -113,6 +113,8 @@ static int batch(const char *name)
 	size_t len = 0;
 	int ret = EXIT_SUCCESS;
 
+	batch_mode = 1;
+
 	if (name && strcmp(name, "-") != 0) {
 		if (freopen(name, "r", stdin) == NULL) {
 			fprintf(stderr, "Cannot open file \"%s\" for reading: %s\n",
@@ -153,6 +155,7 @@ static int batch(const char *name)
 int main(int argc, char **argv)
 {
 	char *basename;
+	char *batch_file = NULL;
 
 	basename = strrchr(argv[0], '/');
 	if (basename == NULL)

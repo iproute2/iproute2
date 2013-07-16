@@ -42,8 +42,6 @@
 #define MS_SHARED	(1 << 20)
 #endif
 
-extern char *batch_file;
-
 #ifndef HAVE_SETNS
 static int setns(int fd, int nstype)
 {
@@ -190,7 +188,7 @@ static int netns_exec(int argc, char **argv)
 
 	fflush(stdout);
 
-	if (batch_file) {
+	if (batch_mode) {
 		int status;
 		pid_t pid;
 

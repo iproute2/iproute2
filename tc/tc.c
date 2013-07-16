@@ -34,6 +34,7 @@ int show_stats = 0;
 int show_details = 0;
 int show_raw = 0;
 int show_pretty = 0;
+int batch_mode = 0;
 
 int resolve_hosts = 0;
 int use_iec = 0;
@@ -220,6 +221,7 @@ static int batch(const char *name)
 	size_t len = 0;
 	int ret = 0;
 
+	batch_mode = 1;
 	if (name && strcmp(name, "-") != 0) {
 		if (freopen(name, "r", stdin) == NULL) {
 			fprintf(stderr, "Cannot open file \"%s\" for reading: %s\n",
@@ -262,8 +264,7 @@ static int batch(const char *name)
 int main(int argc, char **argv)
 {
 	int ret;
-	int do_batching = 0;
-	char *batchfile = NULL;
+	char *batch_file = NULL;
 
 	while (argc > 1) {
 		if (argv[1][0] != '-')
@@ -288,10 +289,10 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-force") == 0) {
 			++force;
 		} else 	if (matches(argv[1], "-batch") == 0) {
-			do_batching = 1;
-			if (argc > 2)
-				batchfile = argv[2];
 			argc--;	argv++;
+			if (argc <= 1)
+				usage();
+			batch_file = argv[1];
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;
@@ -299,8 +300,8 @@ int main(int argc, char **argv)
 		argc--;	argv++;
 	}
 
-	if (do_batching)
-		return batch(batchfile);
+	if (batch_file)
+		return batch(batch_file);
 
 	if (argc <= 1) {
 		usage();

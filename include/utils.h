@@ -19,6 +19,7 @@ extern int oneline;
 extern int timestamp;
 extern char * _SL_;
 extern int max_flush_loops;
+extern int batch_mode;
 
 #ifndef IPPROTO_ESP
 #define IPPROTO_ESP	50
