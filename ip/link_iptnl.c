@@ -30,8 +30,10 @@ static void usage(int sit)
 	fprintf(stderr, "          type { ipip | sit } [ remote ADDR ] [ local ADDR ]\n");
 	fprintf(stderr, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
 	fprintf(stderr, "          [ 6rd-prefix ADDR ] [ 6rd-relay_prefix ADDR ] [ 6rd-reset ]\n");
-	if (sit)
+	if (sit) {
+		fprintf(stderr, "          [ mode { ip6ip | ipip | any } ]\n");
 		fprintf(stderr, "          [ isatap ]\n");
+	}
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: NAME := STRING\n");
 	fprintf(stderr, "       ADDR := { IP_ADDRESS | any }\n");
@@ -60,6 +62,7 @@ static int iptunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 tos = 0;
 	__u8 pmtudisc = 1;
 	__u16 iflags = 0;
+	__u8 proto = 0;
 	struct in6_addr ip6rdprefix;
 	__u16 ip6rdprefixlen = 0;
 	__u32 ip6rdrelayprefix = 0;
@@ -123,6 +126,9 @@ get_failed:
 		if (iptuninfo[IFLA_IPTUN_LINK])
 			link = rta_getattr_u32(iptuninfo[IFLA_IPTUN_LINK]);
 
+		if (iptuninfo[IFLA_IPTUN_PROTO])
+			proto = rta_getattr_u8(iptuninfo[IFLA_IPTUN_PROTO]);
+
 		if (iptuninfo[IFLA_IPTUN_6RD_PREFIX])
 			memcpy(&ip6rdprefix,
 			       RTA_DATA(iptuninfo[IFLA_IPTUN_6RD_PREFIX]),
@@ -185,6 +191,21 @@ get_failed:
 		} else if (strcmp(lu->id, "sit") == 0 &&
 			   strcmp(*argv, "isatap") == 0) {
 			iflags |= SIT_ISATAP;
+		} else if (strcmp(lu->id, "sit") == 0 &&
+			   strcmp(*argv, "mode") == 0) {
+			NEXT_ARG();
+			if (strcmp(*argv, "ipv6/ipv4") == 0 ||
+			    strcmp(*argv, "ip6ip") == 0)
+				proto = IPPROTO_IPV6;
+			else if (strcmp(*argv, "ipv4/ipv4") == 0 ||
+				 strcmp(*argv, "ipip") == 0 ||
+				 strcmp(*argv, "ip4ip4") == 0)
+				proto = IPPROTO_IPIP;
+			else if (strcmp(*argv, "any/ipv4") == 0 ||
+				 strcmp(*argv, "any") == 0)
+				proto = 0;
+			else
+				invarg("Cannot guess tunnel mode.", *argv);
 		} else if (strcmp(*argv, "6rd-prefix") == 0) {
 			inet_prefix prefix;
 			NEXT_ARG();
@@ -224,6 +245,7 @@ get_failed:
 	addattr8(n, 1024, IFLA_IPTUN_PMTUDISC, pmtudisc);
 	if (strcmp(lu->id, "sit") == 0) {
 		addattr16(n, 1024, IFLA_IPTUN_FLAGS, iflags);
+		addattr8(n, 1024, IFLA_IPTUN_PROTO, proto);
 		if (ip6rdprefixlen) {
 			addattr_l(n, 1024, IFLA_IPTUN_6RD_PREFIX,
 				  &ip6rdprefix, sizeof(ip6rdprefix));
