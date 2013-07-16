@@ -77,6 +77,7 @@ void iplink_usage(void)
 	fprintf(stderr, "				   [ rate TXRATE ] ] \n");
 
 	fprintf(stderr, "				   [ spoofchk { on | off} ] ] \n");
+	fprintf(stderr, "				   [ state { auto | enable | disable} ] ]\n");
 	fprintf(stderr, "			  [ master DEVICE ]\n");
 	fprintf(stderr, "			  [ nomaster ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ] [up]\n");
@@ -255,6 +256,19 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			ivs.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_SPOOFCHK, &ivs, sizeof(ivs));
 
+		} else if (matches(*argv, "state") == 0) {
+			struct ifla_vf_link_state ivl;
+			NEXT_ARG();
+			if (matches(*argv, "auto") == 0)
+				ivl.link_state = IFLA_VF_LINK_STATE_AUTO;
+			else if (matches(*argv, "enable") == 0)
+				ivl.link_state = IFLA_VF_LINK_STATE_ENABLE;
+			else if (matches(*argv, "disable") == 0)
+				ivl.link_state = IFLA_VF_LINK_STATE_DISABLE;
+			else
+				invarg("Invalid \"state\" value\n", *argv);
+			ivl.vf = vf;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_LINK_STATE, &ivl, sizeof(ivl));
 		} else {
 			/* rewind arg */
 			PREV_ARG();
