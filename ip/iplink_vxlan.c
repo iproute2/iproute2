@@ -23,7 +23,7 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... vxlan id VNI [ group ADDR ] [ local ADDR ]\n");
+	fprintf(stderr, "Usage: ... vxlan id VNI [ { group | remote } ADDR ] [ local ADDR ]\n");
 	fprintf(stderr, "                 [ ttl TTL ] [ tos TOS ] [ dev PHYS_DEV ]\n");
 	fprintf(stderr, "                 [ port MIN MAX ] [ [no]learning ]\n");
 	fprintf(stderr, "                 [ [no]proxy ] [ [no]rsc ]\n");
@@ -42,6 +42,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	int vni_set = 0;
 	__u32 saddr = 0;
 	__u32 gaddr = 0;
+	__u32 daddr = 0;
 	unsigned link = 0;
 	__u8 tos = 0;
 	__u8 ttl = 0;
@@ -68,7 +69,13 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			gaddr = get_addr32(*argv);
 
 			if (!IN_MULTICAST(ntohl(gaddr)))
-				invarg("invald group address", *argv);
+				invarg("invalid group address", *argv);
+		} else if (!matches(*argv, "remote")) {
+			NEXT_ARG();
+			daddr = get_addr32(*argv);
+
+			if (IN_MULTICAST(ntohl(daddr)))
+				invarg("invalid remote address", *argv);
 		} else if (!matches(*argv, "local")) {
 			NEXT_ARG();
 			if (strcmp(*argv, "any"))
@@ -160,9 +167,15 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		fprintf(stderr, "vxlan: missing virtual network identifier\n");
 		return -1;
 	}
+	if (gaddr && daddr) {
+		fprintf(stderr, "vxlan: both group and remote cannot be specified\n");
+		return -1;
+	}
 	addattr32(n, 1024, IFLA_VXLAN_ID, vni);
 	if (gaddr)
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
+	else if (daddr)
+		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &daddr, 4);
 	if (saddr)
 		addattr_l(n, 1024, IFLA_VXLAN_LOCAL, &saddr, 4);
 	if (link)
@@ -208,9 +221,14 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_VXLAN_GROUP]) {
 		__be32 addr = rta_getattr_u32(tb[IFLA_VXLAN_GROUP]);
-		if (addr)
-			fprintf(f, "group %s ",
-				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
+		if (addr) {
+			if (IN_MULTICAST(ntohl(addr)))
+				fprintf(f, "group %s ",
+					format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
+			else
+				fprintf(f, "remote %s ",
+					format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
+		}
 	}
 
 	if (tb[IFLA_VXLAN_LOCAL]) {

@@ -206,8 +206,8 @@ the following additional arguments are supported:
 .BI type " vxlan " id " ID
 .R " [ "
 .BI dev " PHYS_DEV "
-.R " ] [ "
-.BI group " IPADDR "
+.RB " ] [ { " group " | " remote " } "
+.I IPADDR
 .R " ] [ "
 .BI local " IPADDR "
 .R " ] [ "
@@ -240,6 +240,17 @@ Identifier) to use.
 .sp
 .BI group " IPADDR"
 - specifies the multicast IP address to join.
+This parameter cannot be specified with the
+.B remote
+parameter.
+
+.sp
+.BI remote " IPADDR"
+- specifies the unicast destination IP address to use in outgoing packets
+when the destination link layer address is not known in the VXLAN device
+forwarding database.  This parameter cannot be specified with the
+.B group
+parameter.
 
 .sp
 .BI local " IPADDR"
