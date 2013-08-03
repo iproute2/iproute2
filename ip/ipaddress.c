@@ -418,7 +418,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_GROUP]) {
 		int group = *(int*)RTA_DATA(tb[IFLA_GROUP]);
-		if (group != filter.group)
+		if (filter.group != -1 && group != filter.group)
 			return -1;
 	}
 
@@ -457,6 +457,12 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (do_link && tb[IFLA_LINKMODE])
 		print_linkmode(fp, tb[IFLA_LINKMODE]);
+
+	if (tb[IFLA_GROUP]) {
+		SPRINT_BUF(b1);
+		int group = *(int*)RTA_DATA(tb[IFLA_GROUP]);
+		fprintf(fp, "group %s ", rtnl_group_n2a(group, b1, sizeof(b1)));
+	}
 
 	if (filter.showqueue)
 		print_queuelen(fp, tb);
@@ -1050,7 +1056,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	if (filter.family == AF_UNSPEC)
 		filter.family = preferred_family;
 
-	filter.group = INIT_NETDEV_GROUP;
+	filter.group = -1;
 
 	if (action == IPADD_FLUSH) {
 		if (argc <= 0) {
