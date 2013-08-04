@@ -147,7 +147,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	if (argc <= 2) {
-		fprintf(stderr,"bad arguements to ipt %d vs %d \n", argc, rargc);
+		fprintf(stderr,"bad arguments to ipt %d vs %d \n", argc, rargc);
 		return -1;
 	}
 
