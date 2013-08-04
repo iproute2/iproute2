@@ -305,7 +305,7 @@ static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 	if (!namep)
 		missarg("NAME");
 	if (!threshsp && !gc_intp && !parms_change) {
-		fprintf(stderr, "Not enough information: changable attributes required.\n");
+		fprintf(stderr, "Not enough information: changeable attributes required.\n");
 		exit(-1);
 	}
 
