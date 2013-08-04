@@ -500,3 +500,22 @@ int rtnl_group_a2n(int *id, const char *arg)
 	*id = i;
 	return 0;
 }
+
+const char *rtnl_group_n2a(int id, char *buf, int len)
+{
+	struct rtnl_hash_entry *entry;
+	int i;
+
+	if (!rtnl_group_init)
+		rtnl_group_initialize();
+
+	for (i=0; i<256; i++) {
+		entry = rtnl_group_hash[i];
+		if (entry && entry->id == id) {
+			return entry->name;
+		}
+	}
+
+	snprintf(buf, len, "%d", id);
+	return buf;
+}
