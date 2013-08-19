@@ -29,7 +29,7 @@ int prefix_banner;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ]\n");
+	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ] [ label ]\n");
 	fprintf(stderr, "LISTofOBJECTS := link | address | route | mroute | prefix |\n");
 	fprintf(stderr, "                 neigh | netconf\n");
 	fprintf(stderr, "FILE := file FILENAME\n");
@@ -157,6 +157,8 @@ int do_ipmonitor(int argc, char **argv)
 		if (matches(*argv, "file") == 0) {
 			NEXT_ARG();
 			file = *argv;
+		} else if (matches(*argv, "label") == 0) {
+			prefix_banner = 1;
 		} else if (matches(*argv, "link") == 0) {
 			llink=1;
 			groups = 0;
