@@ -233,7 +233,7 @@ get_failed:
 	}
 
 	if (ttl && pmtudisc == 0) {
-		fprintf(stderr, "ttl != 0 and noptmudisc are incompatible\n");
+		fprintf(stderr, "ttl != 0 and nopmtudisc are incompatible\n");
 		exit(-1);
 	}
 
