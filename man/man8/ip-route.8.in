@@ -97,6 +97,8 @@ replace " } "
 .IR TIME " ] [ "
 .B  rttvar
 .IR TIME " ] [ "
+.B  reordering
+.IR NUMBER " ] [ "
 .B  window
 .IR NUMBER " ] [ "
 .B  cwnd
@@ -110,7 +112,7 @@ replace " } "
 .B  initcwnd
 .IR NUMBER " ] [ "
 .B  initrwnd
-.IR NUMBER " ]"
+.IR NUMBER " ] [ "
 .B  quickack
 .IR BOOL " ]"
 
