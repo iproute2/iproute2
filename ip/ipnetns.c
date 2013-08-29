@@ -205,11 +205,15 @@ static int netns_exec(int argc, char **argv)
 				exit(1);
 			}
 
-			/* If child failed, propagate status */
-			if (WIFEXITED(status))
-				exit(WEXITSTATUS(status));
+			if (WIFEXITED(status)) {
+				/* ip must return the status of the child,
+				 * but do_cmd() will add a minus to this,
+				 * so let's add another one here to cancel it.
+				 */
+				return -WEXITSTATUS(status);
+			}
 
-			return 0;
+			exit(1);
 		}
 	}
 
