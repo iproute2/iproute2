@@ -244,9 +244,11 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct tc_htb_opt *hopt;
 	struct tc_htb_glob *gopt;
 	double buffer,cbuffer;
+	unsigned int linklayer;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 	SPRINT_BUF(b3);
+	SPRINT_BUF(b4);
 
 	if (opt == NULL)
 		return 0;
@@ -268,6 +270,9 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		buffer = tc_calc_xmitsize(hopt->rate.rate, hopt->buffer);
 		fprintf(f, "ceil %s ", sprint_rate(hopt->ceil.rate, b1));
 		cbuffer = tc_calc_xmitsize(hopt->ceil.rate, hopt->cbuffer);
+		linklayer = (hopt->rate.linklayer & TC_LINKLAYER_MASK);
+		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
+			fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b4));
 		if (show_details) {
 			fprintf(f, "burst %s/%u mpu %s overhead %s ",
 				sprint_size(buffer, b1),

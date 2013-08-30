@@ -239,10 +239,12 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_TBF_PTAB+1];
 	struct tc_tbf_qopt *qopt;
+	unsigned int linklayer;
 	double buffer, mtu;
 	double latency;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
+	SPRINT_BUF(b3);
 
 	if (opt == NULL)
 		return 0;
@@ -294,6 +296,9 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (qopt->rate.overhead) {
 		fprintf(f, "overhead %d", qopt->rate.overhead);
 	}
+	linklayer = (qopt->rate.linklayer & TC_LINKLAYER_MASK);
+	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
+		fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b3));
 
 	return 0;
 }

@@ -102,6 +102,21 @@ static unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linkla
 	}
 }
 
+/* Notice, the rate table calculated here, have gotten replaced in the
+ * kernel and is no-longer used for lookups.
+ *
+ * This happened in kernel release v3.8 caused by kernel
+ *  - commit 56b765b79 ("htb: improved accuracy at high rates").
+ * This change unfortunately caused breakage of tc overhead and
+ * linklayer parameters.
+ *
+ * Kernel overhead handling got fixed in kernel v3.10 by
+ * - commit 01cb71d2d47 (net_sched: restore "overhead xxx" handling)
+ *
+ * Kernel linklayer handling got fixed in kernel v3.11 by
+ * - commit 8a8e3d84b17 (net_sched: restore "linklayer atm" handling)
+ */
+
 /*
    rtab[pkt_len>>cell_log] = pkt_xmit_time
  */
@@ -131,6 +146,7 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
 
 	r->cell_align=-1; // Due to the sz calc
 	r->cell_log=cell_log;
+	r->linklayer = (linklayer & TC_LINKLAYER_MASK);
 	return cell_log;
 }
 
