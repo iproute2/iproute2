@@ -50,6 +50,7 @@ TCMODULES += em_meta.o
 TCMODULES += q_mqprio.o
 TCMODULES += q_codel.o
 TCMODULES += q_fq_codel.o
+TCMODULES += q_fq.o
 
 ifeq ($(TC_CONFIG_IPSET), y)
   ifeq ($(TC_CONFIG_XT), y)
