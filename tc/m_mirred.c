@@ -105,7 +105,7 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 			} else if (!mirror && matches(*argv, "mirror") == 0) {
 				mirror=1;
 				if (redir) {
-					fprintf(stderr, "Cant have both mirror and redir\n");
+					fprintf(stderr, "Can't have both mirror and redir\n");
 					return -1;
 				}
 				p.eaction = TCA_EGRESS_MIRROR;
@@ -114,7 +114,7 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 			} else if (!redir && matches(*argv, "redirect") == 0) {
 				redir=1;
 				if (mirror) {
-					fprintf(stderr, "Cant have both mirror and redir\n");
+					fprintf(stderr, "Can't have both mirror and redir\n");
 					return -1;
 				}
 				p.eaction = TCA_EGRESS_REDIR;
@@ -215,14 +215,14 @@ parse_mirred(struct action_util *a, int *argc_p, char ***argv_p,
 	char **argv = *argv_p;
 
 	if (argc < 0) {
-		fprintf(stderr,"mirred bad arguement count %d\n", argc);
+		fprintf(stderr,"mirred bad argument count %d\n", argc);
 		return -1;
 	}
 
 	if (matches(*argv, "mirred") == 0) {
 		NEXT_ARG();
 	} else {
-		fprintf(stderr,"mirred bad arguement %s\n", *argv);
+		fprintf(stderr,"mirred bad argument %s\n", *argv);
 		return -1;
 	}
 

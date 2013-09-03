@@ -856,7 +856,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		if (flags)
 			fprintf(fp, "%x", flags);
 	}
-	if (show_stats > 0 || tb[XFRMA_SA_EXTRA_FLAGS]) {
+	if (show_stats > 0 && tb[XFRMA_SA_EXTRA_FLAGS]) {
 		__u32 extra_flags = *(__u32 *)RTA_DATA(tb[XFRMA_SA_EXTRA_FLAGS]);
 
 		fprintf(fp, "extra_flag ");

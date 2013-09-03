@@ -167,7 +167,7 @@ static int netns_exec(int argc, char **argv)
 		fprintf(stderr, "unshare failed: %s\n", strerror(errno));
 		return -1;
 	}
-	/* Don't let any mounts propogate back to the parent */
+	/* Don't let any mounts propagate back to the parent */
 	if (mount("", "/", "none", MS_SLAVE | MS_REC, NULL)) {
 		fprintf(stderr, "\"mount --make-rslave /\" failed: %s\n",
 			strerror(errno));
@@ -205,11 +205,15 @@ static int netns_exec(int argc, char **argv)
 				exit(1);
 			}
 
-			/* If child failed, propogate status */
-			if (WIFEXITED(status))
-				exit(WEXITSTATUS(status));
+			if (WIFEXITED(status)) {
+				/* ip must return the status of the child,
+				 * but do_cmd() will add a minus to this,
+				 * so let's add another one here to cancel it.
+				 */
+				return -WEXITSTATUS(status);
+			}
 
-			return 0;
+			exit(1);
 		}
 	}
 
@@ -405,7 +409,7 @@ static int netns_add(int argc, char **argv)
 	/* Create the base netns directory if it doesn't exist */
 	mkdir(NETNS_RUN_DIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
 
-	/* Make it possible for network namespace mounts to propogate between
+	/* Make it possible for network namespace mounts to propagate between
 	 * mount namespaces.  This makes it likely that a unmounting a network
 	 * namespace file in one namespace will unmount the network namespace
 	 * file in all namespaces allowing the network namespace to be freed

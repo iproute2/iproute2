@@ -19,9 +19,8 @@
 
 static void usage(void)
 {
-	printf("Usage: ip link <options> type veth "
-	       "[peer <options>]\nTo get <options> type "
-	       "'ip link add help'\n");
+	printf("Usage: ip link <options> type veth [peer <options>]\n"
+	       "To get <options> type 'ip link add help'\n");
 }
 
 static int veth_parse_opt(struct link_util *lu, int argc, char **argv,

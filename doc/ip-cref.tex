@@ -2542,13 +2542,15 @@ Namely,
 the \verb|monitor| command is the first in the command line and then
 the object list follows:
 \begin{verbatim}
-  ip monitor [ file FILE ] [ all | OBJECT-LIST ]
+  ip monitor [ file FILE ] [ all | OBJECT-LIST ] [ label ]
 \end{verbatim}
-\verb|OBJECT-LIST| is the list of object types that we want to monitor.
-It may contain \verb|link|, \verb|address| and \verb|route|.
-If no \verb|file| argument is given, \verb|ip| opens RTNETLINK,
-listens on it and dumps state changes in the format described
-in previous sections.
+\verb|OBJECT-LIST| is the list of object types that we want to
+monitor.  It may contain \verb|link|, \verb|address| and \verb|route|.
+Specifying \verb|label| indicates that output lines should be labelled
+with the type of object being printed --- this happens by default if
+\verb|all| is specified.  If no \verb|file| argument is given,
+\verb|ip| opens RTNETLINK, listens on it and dumps state changes in
+the format described in previous sections.
 
 If a file name is given, it does not listen on RTNETLINK,
 but opens the file containing RTNETLINK messages saved in binary format

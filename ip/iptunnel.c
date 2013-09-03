@@ -280,7 +280,7 @@ static int do_add(int cmd, int argc, char **argv)
 		return -1;
 
 	if (p.iph.ttl && p.iph.frag_off == 0) {
-		fprintf(stderr, "ttl != 0 and noptmudisc are incompatible\n");
+		fprintf(stderr, "ttl != 0 and nopmtudisc are incompatible\n");
 		return -1;
 	}
 

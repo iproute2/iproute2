@@ -29,13 +29,12 @@ int prefix_banner;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ]\n");
+	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ] [ label ]\n");
 	fprintf(stderr, "LISTofOBJECTS := link | address | route | mroute | prefix |\n");
 	fprintf(stderr, "                 neigh | netconf\n");
 	fprintf(stderr, "FILE := file FILENAME\n");
 	exit(-1);
 }
-
 
 static int accept_msg(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg)
@@ -88,6 +87,13 @@ static int accept_msg(const struct sockaddr_nl *who,
 	}
 	if (n->nlmsg_type == RTM_NEWNEIGH || n->nlmsg_type == RTM_DELNEIGH ||
 	    n->nlmsg_type == RTM_GETNEIGH) {
+		if (preferred_family) {
+			struct ndmsg *r = NLMSG_DATA(n);
+
+			if (r->ndm_family != preferred_family)
+				return 0;
+		}
+
 		if (prefix_banner)
 			fprintf(fp, "[NEIGH]");
 		print_neigh(who, n, arg);
@@ -157,6 +163,8 @@ int do_ipmonitor(int argc, char **argv)
 		if (matches(*argv, "file") == 0) {
 			NEXT_ARG();
 			file = *argv;
+		} else if (matches(*argv, "label") == 0) {
+			prefix_banner = 1;
 		} else if (matches(*argv, "link") == 0) {
 			llink=1;
 			groups = 0;
