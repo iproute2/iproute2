@@ -31,9 +31,11 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... qdisc add ... htb [default N] [r2q N]\n"
+		"                      [direct_qlen P]\n"
 		" default  minor id of class to which unclassified packets are sent {0}\n"
 		" r2q      DRR quantums are computed as rate in Bps/r2q {10}\n"
 		" debug    string of 16 numbers each 0-3 {0}\n\n"
+		" direct_qlen  Limit of the direct queue {in packets}\n"
 		"... class add ... htb rate R1 [burst B1] [mpu B] [overhead O]\n"
 		"                      [prio P] [slot S] [pslot PS]\n"
 		"                      [ceil R2] [cburst B2] [mtu MTU] [quantum Q]\n"
@@ -108,6 +110,7 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	unsigned mtu;
 	unsigned short mpu = 0;
 	unsigned short overhead = 0;
+	unsigned int direct_qlen = ~0U;
 	unsigned int linklayer  = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 
@@ -124,6 +127,11 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			NEXT_ARG();
 			if (get_u32(&mtu, *argv, 10)) {
 				explain1("mtu"); return -1;
+			}
+		} else if (matches(*argv, "direct_qlen") == 0) {
+			NEXT_ARG();
+			if (get_u32(&direct_qlen, *argv, 10)) {
+				explain1("direct_qlen"); return -1;
 			}
 		} else if (matches(*argv, "mpu") == 0) {
 			NEXT_ARG();
@@ -230,6 +238,9 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	opt.cbuffer = tc_calc_xmittime(opt.ceil.rate, cbuffer);
 
 	tail = NLMSG_TAIL(n);
+	if (direct_qlen != ~0U)
+		addattr_l(n, 1024, TCA_HTB_DIRECT_QLEN,
+			  &direct_qlen, sizeof(direct_qlen));
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 2024, TCA_HTB_PARMS, &opt, sizeof(opt));
 	addattr_l(n, 3024, TCA_HTB_RTAB, rtab, 1024);
@@ -240,7 +251,7 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 
 static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
-	struct rtattr *tb[TCA_HTB_RTAB+1];
+	struct rtattr *tb[TCA_HTB_MAX + 1];
 	struct tc_htb_opt *hopt;
 	struct tc_htb_glob *gopt;
 	double buffer,cbuffer;
@@ -253,7 +264,7 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (opt == NULL)
 		return 0;
 
-	parse_rtattr_nested(tb, TCA_HTB_RTAB, opt);
+	parse_rtattr_nested(tb, TCA_HTB_MAX, opt);
 
 	if (tb[TCA_HTB_PARMS]) {
 		hopt = RTA_DATA(tb[TCA_HTB_PARMS]);
@@ -301,6 +312,12 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			gopt->rate2quantum,gopt->defcls,gopt->direct_pkts);
 		if (show_details)
 			fprintf(f," ver %d.%d",gopt->version >> 16,gopt->version & 0xffff);
+	}
+	if (tb[TCA_HTB_DIRECT_QLEN] &&
+	    RTA_PAYLOAD(tb[TCA_HTB_DIRECT_QLEN]) >= sizeof(__u32)) {
+		__u32 direct_qlen = rta_getattr_u32(tb[TCA_HTB_DIRECT_QLEN]);
+
+		fprintf(f, " direct_qlen %u", direct_qlen);
 	}
 	return 0;
 }
