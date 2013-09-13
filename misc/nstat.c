@@ -33,6 +33,7 @@ int dump_zeros = 0;
 int reset_history = 0;
 int ignore_history = 0;
 int no_output = 0;
+int json_output = 0;
 int no_update = 0;
 int scan_interval = 0;
 int time_constant = 0;
@@ -255,11 +256,17 @@ static void load_netstat(void)
 	}
 }
 
+
 static void dump_kern_db(FILE *fp, int to_hist)
 {
 	struct nstat_ent *n, *h;
+	const char *eol = "\n";
+
 	h = hist_db;
-	fprintf(fp, "#%s\n", info_source);
+	if (json_output)
+		fprintf(fp, "{ \"%s\": [", info_source);
+	else
+		fprintf(fp, "#%s\n", info_source);
 	for (n=kern_db; n; n=n->next) {
 		unsigned long long val = n->val;
 		if (!dump_zeros && !val && !n->rate)
@@ -276,15 +283,30 @@ static void dump_kern_db(FILE *fp, int to_hist)
 				}
 			}
 		}
-		fprintf(fp, "%-32s%-16llu%6.1f\n", n->id, val, n->rate);
+
+		if (json_output) {
+			fprintf(fp, "%s    { \"id\":\"%s\", \"val\":%llu,"
+				" \"rate\":%.1f }",
+				eol, n->id, val, n->rate);
+			eol = ",\n";
+		} else
+			fprintf(fp, "%-32s%-16llu%6.1f\n", n->id, val, n->rate);
 	}
+	if (json_output)
+		fprintf(fp, "\n] }\n");
 }
 
 static void dump_incr_db(FILE *fp)
 {
 	struct nstat_ent *n, *h;
+	const char *eol = "\n";
+
 	h = hist_db;
-	fprintf(fp, "#%s\n", info_source);
+	if (json_output)
+		fprintf(fp, "{ \"%s\": [", info_source);
+	else
+		fprintf(fp, "#%s\n", info_source);
+
 	for (n=kern_db; n; n=n->next) {
 		int ovfl = 0;
 		unsigned long long val = n->val;
@@ -304,9 +326,18 @@ static void dump_incr_db(FILE *fp)
 			continue;
 		if (!match(n->id))
 			continue;
-		fprintf(fp, "%-32s%-16llu%6.1f%s\n", n->id, val,
-			n->rate, ovfl?" (overflow)":"");
+
+		if (json_output) {
+			fprintf(fp, "%s    { \"id\":\"%s\", \"val\":%llu,"
+				" \"rate\":%.1f, \"overflow\":%d }",
+				eol, n->id, val, n->rate, ovfl);
+			eol = ",\n";
+		} else
+			fprintf(fp, "%-32s%-16llu%6.1f%s\n", n->id, val,
+				n->rate, ovfl?" (overflow)":"");
 	}
+	if (json_output)
+		fprintf(fp, "\n] }\n");
 }
 
 static int children;
@@ -451,7 +482,7 @@ int main(int argc, char *argv[])
 	int ch;
 	int fd;
 
-	while ((ch = getopt(argc, argv, "h?vVzrnasd:t:")) != EOF) {
+	while ((ch = getopt(argc, argv, "h?vVzrnasd:t:j")) != EOF) {
 		switch(ch) {
 		case 'z':
 			dump_zeros = 1;
@@ -477,6 +508,9 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "nstat: invalid time constant divisor\n");
 				exit(-1);
 			}
+			break;
+		case 'j':
+			json_output = 1;
 			break;
 		case 'v':
 		case 'V':
