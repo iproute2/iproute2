@@ -39,6 +39,9 @@ static void usage(void)
 	fprintf(stderr, "          [ prohibit | reject | unreachable ]\n");
 	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
 	fprintf(stderr, "          [ goto NUMBER ]\n");
+	fprintf(stderr, "          SUPPRESSOR\n");
+	fprintf(stderr, "SUPPRESSOR := [ suppress_prefixlength NUMBER ]\n");
+	fprintf(stderr, "              [ suppress_ifgroup DEVGROUP ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | NUMBER ]\n");
 	exit(-1);
 }
@@ -153,8 +156,23 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	table = rtm_get_table(r, tb);
-	if (table)
+	if (table) {
 		fprintf(fp, "lookup %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
+
+		if (tb[FRA_SUPPRESS_PREFIXLEN]) {
+			int pl = rta_getattr_u32(tb[FRA_SUPPRESS_PREFIXLEN]);
+			if (pl != -1) {
+				fprintf(fp, "suppress_prefixlength %d ", pl);
+			}
+		}
+		if (tb[FRA_SUPPRESS_IFGROUP]) {
+			int group = rta_getattr_u32(tb[FRA_SUPPRESS_IFGROUP]);
+			if (group != -1) {
+				SPRINT_BUF(b1);
+				fprintf(fp, "suppress_ifgroup %s ", rtnl_group_n2a(group, b1, sizeof(b1)));
+			}
+		}
+	}
 
 	if (tb[FRA_FLOW]) {
 		__u32 to = rta_getattr_u32(tb[FRA_FLOW]);
@@ -310,6 +328,20 @@ static int iprule_modify(int cmd, int argc, char **argv)
 				addattr32(&req.n, sizeof(req), FRA_TABLE, tid);
 			}
 			table_ok = 1;
+		} else if (matches(*argv, "suppress_prefixlength") == 0 ||
+			   strcmp(*argv, "sup_pl") == 0) {
+			int pl;
+			NEXT_ARG();
+			if (get_s32(&pl, *argv, 0) || pl < 0)
+				invarg("suppress_prefixlength value is invalid\n", *argv);
+			addattr32(&req.n, sizeof(req), FRA_SUPPRESS_PREFIXLEN, pl);
+		} else if (matches(*argv, "suppress_ifgroup") == 0 ||
+			   strcmp(*argv, "sup_group") == 0) {
+			NEXT_ARG();
+			int group;
+			if (rtnl_group_a2n(&group, *argv))
+				invarg("Invalid \"suppress_ifgroup\" value\n", *argv);
+			addattr32(&req.n, sizeof(req), FRA_SUPPRESS_IFGROUP, group);
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "iif") == 0) {
 			NEXT_ARG();

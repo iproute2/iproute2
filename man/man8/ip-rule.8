@@ -43,6 +43,14 @@ ip-rule \- routing policy database management
 .IR ADDRESS " ] [ "
 .BR prohibit " | " reject " | " unreachable " ] [ " realms
 .RI "[" SRCREALM "/]" DSTREALM " ]"
+.I  SUPPRESSOR
+
+.ti -8
+.IR SUPPRESSOR " := [ "
+.B  suppress_prefixlength
+.IR NUMBER " ] [ "
+.B  suppress_ifgroup
+.IR GROUP " ]"
 
 .ti -8
 .IR TABLE_ID " := [ "
@@ -215,6 +223,15 @@ The options preference and order are synonyms with priority.
 .BI table " TABLEID"
 the routing table identifier to lookup if the rule selector matches.
 It is also possible to use lookup instead of table.
+
+.TP
+.BI suppress_prefixlength " NUMBER"
+reject routing decisions that have a prefix length of NUMBER or less.
+
+.TP
+.BI suppress_ifgroup " GROUP"
+reject routing decisions that use a device belonging to the interface
+group GROUP.
 
 .TP
 .BI realms " FROM/TO"
