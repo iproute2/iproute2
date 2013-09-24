@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <math.h>
+#include <getopt.h>
 
 #include <SNAPSHOT.h>
 
@@ -264,9 +265,10 @@ static void dump_kern_db(FILE *fp, int to_hist)
 
 	h = hist_db;
 	if (json_output)
-		fprintf(fp, "{ \"%s\": [", info_source);
+		fprintf(fp, "{ \"%s\":{", info_source);
 	else
 		fprintf(fp, "#%s\n", info_source);
+
 	for (n=kern_db; n; n=n->next) {
 		unsigned long long val = n->val;
 		if (!dump_zeros && !val && !n->rate)
@@ -285,15 +287,14 @@ static void dump_kern_db(FILE *fp, int to_hist)
 		}
 
 		if (json_output) {
-			fprintf(fp, "%s    { \"id\":\"%s\", \"val\":%llu,"
-				" \"rate\":%.1f }",
-				eol, n->id, val, n->rate);
+			fprintf(fp, "%s    \"%s\":%llu",
+				eol, n->id, val);
 			eol = ",\n";
 		} else
 			fprintf(fp, "%-32s%-16llu%6.1f\n", n->id, val, n->rate);
 	}
 	if (json_output)
-		fprintf(fp, "\n] }\n");
+		fprintf(fp, "\n} }\n");
 }
 
 static void dump_incr_db(FILE *fp)
@@ -303,7 +304,7 @@ static void dump_incr_db(FILE *fp)
 
 	h = hist_db;
 	if (json_output)
-		fprintf(fp, "{ \"%s\": [", info_source);
+		fprintf(fp, "{ \"%s\":{", info_source);
 	else
 		fprintf(fp, "#%s\n", info_source);
 
@@ -328,16 +329,15 @@ static void dump_incr_db(FILE *fp)
 			continue;
 
 		if (json_output) {
-			fprintf(fp, "%s    { \"id\":\"%s\", \"val\":%llu,"
-				" \"rate\":%.1f, \"overflow\":%d }",
-				eol, n->id, val, n->rate, ovfl);
+			fprintf(fp, "%s    \"%s\":%llu",
+				eol, n->id, val);
 			eol = ",\n";
 		} else
 			fprintf(fp, "%-32s%-16llu%6.1f%s\n", n->id, val,
 				n->rate, ovfl?" (overflow)":"");
 	}
 	if (json_output)
-		fprintf(fp, "\n] }\n");
+		fprintf(fp, "\n} }\n");
 }
 
 static int children;
@@ -468,11 +468,33 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr,
-"Usage: nstat [ -h?vVzrnasd:t: ] [ PATTERN [ PATTERN ] ]\n"
-		);
+"Usage: nstat [OPTION] [ PATTERN [ PATTERN ] ]\n"
+"   -h, --help		this message\n"
+"   -a, --ignore	ignore history\n"
+"   -d, --scan=SECS	sample every statistics every SECS\n"
+"   -j, --json          format output in JSON\n"
+"   -n, --nooutput	do history only\n"
+"   -r, --reset		reset history\n"
+"   -s, --noupdate	don\'t update history\n"
+"   -t, --interval=SECS	report average over the last SECS\n"
+"   -V, --version	output version information\n"
+"   -z, --zeros		show entries with zero activity\n");
 	exit(-1);
 }
 
+static const struct option longopts[] = {
+	{ "help", 0, 0, 'h' },
+	{ "ignore",  0,  0, 'a' },
+	{ "scan", 1, 0, 'd'},
+	{ "nooutput", 0, 0, 'n' },
+	{ "json", 0, 0, 'j' },
+	{ "reset", 0, 0, 'r' },
+	{ "noupdate", 0, 0, 's' },
+	{ "interval", 1, 0, 't' },
+	{ "version", 0, 0, 'V' },
+	{ "zeros", 0, 0, 'z' },
+	{ 0 }
+};
 
 int main(int argc, char *argv[])
 {
@@ -482,7 +504,8 @@ int main(int argc, char *argv[])
 	int ch;
 	int fd;
 
-	while ((ch = getopt(argc, argv, "h?vVzrnasd:t:j")) != EOF) {
+	while ((ch = getopt_long(argc, argv, "h?vVzrnasd:t:j",
+				 longopts, NULL)) != EOF) {
 		switch(ch) {
 		case 'z':
 			dump_zeros = 1;
@@ -648,8 +671,10 @@ int main(int argc, char *argv[])
 	if (!no_update) {
 		ftruncate(fileno(hist_fp), 0);
 		rewind(hist_fp);
+
+		json_output = 0;
 		dump_kern_db(hist_fp, 1);
-		fflush(hist_fp);
+		fclose(hist_fp);
 	}
 	exit(0);
 }
