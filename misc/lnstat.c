@@ -41,7 +41,8 @@
 static struct option opts[] = {
 	{ "version", 0, NULL, 'V' },
 	{ "count", 1, NULL, 'c' },
-	{ "dump", 1, NULL, 'd' },
+	{ "dump", 0, NULL, 'd' },
+	{ "json", 0, NULL, 'j' },
 	{ "file", 1, NULL, 'f' },
 	{ "help", 0, NULL, 'h' },
 	{ "interval", 1, NULL, 'i' },
@@ -63,6 +64,8 @@ static int usage(char *name, int exit_code)
 			"Print <count> number of intervals\n");
 	fprintf(stderr, "\t-d --dump\t\t"
 			"Dump list of available files/keys\n");
+	fprintf(stderr, "\t-j --json\t\t"
+			"Display in JSON format\n");
 	fprintf(stderr, "\t-f --file <file>\tStatistics file to use\n");
 	fprintf(stderr, "\t-h --help\t\tThis help message\n");
 	fprintf(stderr, "\t-i --interval <intv>\t"
@@ -94,7 +97,7 @@ static void print_line(FILE *of, const struct lnstat_file *lnstat_files,
 	int i;
 
 	for (i = 0; i < fp->num; i++) {
-		struct lnstat_field *lf = fp->params[i].lf;
+		const struct lnstat_field *lf = fp->params[i].lf;
 		char formatbuf[255];
 
 		snprintf(formatbuf, sizeof(formatbuf)-1, "%%%ulu|",
@@ -102,6 +105,30 @@ static void print_line(FILE *of, const struct lnstat_file *lnstat_files,
 		fprintf(of, formatbuf, lf->result);
 	}
 	fputc('\n', of);
+}
+
+static void print_json(FILE *of, const struct lnstat_file *lnstat_files,
+		       const struct field_params *fp)
+{
+	int i;
+	const char *sep;
+	const char *base = NULL;
+
+	fputs("{\n", of);
+	for (i = 0; i < fp->num; i++) {
+		const struct lnstat_field *lf = fp->params[i].lf;
+		
+		if (!base || lf->file->basename != base) {
+			if (base) fputs("},\n", of);
+			base = lf->file->basename;
+			sep = "\n\t";
+			fprintf(of, "    \"%s\":{", base);
+		}
+		fprintf(of, "%s\"%s\":%lu", sep,
+			lf->name, lf->result);
+		sep = ",\n\t";
+	}
+	fputs("}\n}\n", of);
 }
 
 /* find lnstat_field according to user specification */
@@ -218,15 +245,16 @@ int main(int argc, char **argv)
 {
 	struct lnstat_file *lnstat_files;
 	const char *basename;
-	int c;
+	int i, c;
 	int interval = DEFAULT_INTERVAL;
 	int hdr = 2;
 	enum {
 		MODE_DUMP,
+		MODE_JSON,
 		MODE_NORMAL,
 	} mode = MODE_NORMAL;
-
 	unsigned long count = 1;
+	struct table_hdr *header;
 	static struct field_params fp;
 	int num_req_files = 0;
 	char *req_files[LNSTAT_MAX_FILES];
@@ -248,70 +276,73 @@ int main(int argc, char **argv)
 		num_req_files = 1;
 	}
 
-	while ((c = getopt_long(argc, argv,"Vc:df:h?i:k:s:w:",
+	while ((c = getopt_long(argc, argv,"Vc:djf:h?i:k:s:w:",
 				opts, NULL)) != -1) {
-		int i, len = 0;
+		int len = 0;
 		char *tmp, *tok;
 
 		switch (c) {
-			case 'c':
-				count = strtoul(optarg, NULL, 0);
+		case 'c':
+			count = strtoul(optarg, NULL, 0);
+			break;
+		case 'd':
+			mode = MODE_DUMP;
+			break;
+		case 'j':
+			mode = MODE_JSON;
+			break;
+		case 'f':
+			req_files[num_req_files++] = strdup(optarg);
+			break;
+		case '?':
+		case 'h':
+			usage(argv[0], 0);
+			break;
+		case 'i':
+			sscanf(optarg, "%u", &interval);
+			break;
+		case 'k':
+			tmp = strdup(optarg);
+			if (!tmp)
 				break;
-			case 'd':
-				mode = MODE_DUMP;
-				break;
-			case 'f':
-				req_files[num_req_files++] = strdup(optarg);
-				break;
-			case '?':
-			case 'h':
-				usage(argv[0], 0);
-				break;
-			case 'i':
-				sscanf(optarg, "%u", &interval);
-				break;
-			case 'k':
-				tmp = strdup(optarg);
-				if (!tmp)
+			for (tok = strtok(tmp, ",");
+			     tok;
+			     tok = strtok(NULL, ",")) {
+				if (fp.num >= MAX_FIELDS) {
+					fprintf(stderr, 
+						"WARN: too many keys"
+						" requested: (%d max)\n",
+						MAX_FIELDS);
 					break;
-				for (tok = strtok(tmp, ",");
-				     tok;
-				     tok = strtok(NULL, ",")) {
-					if (fp.num >= MAX_FIELDS) {
-						fprintf(stderr, 
-							"WARN: too many keys"
-							" requested: (%d max)\n",
-							MAX_FIELDS);
-						break;
-					}
-					fp.params[fp.num++].name = tok;
 				}
+				fp.params[fp.num++].name = tok;
+			}
+			break;
+		case 's':
+			sscanf(optarg, "%u", &hdr);
+			break;
+		case 'w':
+			tmp = strdup(optarg);
+			if (!tmp)
 				break;
-			case 's':
-				sscanf(optarg, "%u", &hdr);
-				break;
-			case 'w':
-				tmp = strdup(optarg);
-				if (!tmp)
-					break;
-				i = 0;
-				for (tok = strtok(tmp, ",");
-				     tok;
-				     tok = strtok(NULL, ",")) {
-					len  = strtoul(tok, NULL, 0);
-					if (len > FIELD_WIDTH_MAX)
-						len = FIELD_WIDTH_MAX;
+			i = 0;
+			for (tok = strtok(tmp, ",");
+			     tok;
+			     tok = strtok(NULL, ",")) {
+				len  = strtoul(tok, NULL, 0);
+				if (len > FIELD_WIDTH_MAX)
+					len = FIELD_WIDTH_MAX;
+				fp.params[i].print.width = len;
+				i++;
+			}
+			if (i == 1) {
+				for (i = 0; i < MAX_FIELDS; i++)
 					fp.params[i].print.width = len;
-					i++;
-				}
-				if (i == 1) {
-					for (i = 0; i < MAX_FIELDS; i++)
-						fp.params[i].print.width = len;
-				}
-				break;
-			default:
-				usage(argv[0], 1);
-				break;
+			}
+			break;
+		default:
+			usage(argv[0], 1);
+			break;
 		}
 	}
 
@@ -319,13 +350,12 @@ int main(int argc, char **argv)
 				       (const char **) req_files);
 
 	switch (mode) {
-		int i;
-		struct table_hdr *header;
 	case MODE_DUMP:
 		lnstat_dump(stderr, lnstat_files);
 		break;
-	case MODE_NORMAL:
 
+	case MODE_NORMAL:
+	case MODE_JSON:
 		if (!map_field_params(lnstat_files, &fp, interval))
 			exit(1);
 
@@ -334,16 +364,23 @@ int main(int argc, char **argv)
 			exit(1);
 
 		if (interval < 1 )
-			interval=1;
+			interval = 1;
 
 		for (i = 0; i < count; i++) {
-			if  ((hdr > 1 && (! (i % 20))) || (hdr == 1 && i == 0))
-				print_hdr(stdout, header);
 			lnstat_update(lnstat_files);
-			print_line(stdout, lnstat_files, &fp);
+			if (mode == MODE_JSON)
+				print_json(stdout, lnstat_files, &fp);
+			else {
+				if  ((hdr > 1 &&
+				      (! (i % 20))) || (hdr == 1 && i == 0))
+					print_hdr(stdout, header);
+				print_line(stdout, lnstat_files, &fp);
+			}
 			fflush(stdout);
-			sleep(interval);
+			if (i < count - 1)
+				sleep(interval);
 		}
+		break;
 	}
 
 	return 1;
