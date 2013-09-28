@@ -85,7 +85,8 @@ void iplink_usage(void)
 	if (iplink_have_newlink()) {
 		fprintf(stderr, "\n");
 		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | can |\n");
-		fprintf(stderr, "          bridge | ipoib | ip6tnl | ipip | sit | vxlan }\n");
+		fprintf(stderr, "          bridge | ipoib | ip6tnl | ipip | sit | vxlan |\n");
+		fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap }\n");
 	}
 	exit(-1);
 }
@@ -243,7 +244,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			}
 			ivt.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
-		
+
 		} else if (matches(*argv, "spoofchk") == 0) {
 			struct ifla_vf_spoofchk ivs;
 			NEXT_ARG();
@@ -285,7 +286,6 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 	*argvp = argv;
 	return 0;
 }
-
 
 int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		char **name, char **type, char **link, char **dev, int *group)
@@ -810,7 +810,6 @@ static int set_address(struct ifreq *ifr, int brd)
 	close(s);
 	return 0;
 }
-
 
 static int do_set(int argc, char **argv)
 {
