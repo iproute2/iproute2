@@ -62,7 +62,11 @@ ip-link \- network device configuration
 .BR vxlan " |"
 .BR ip6tnl " |"
 .BR ipip " |"
-.BR sit " ]"
+.BR sit " |"
+.BR gre " |"
+.BR gretap " |"
+.BR ip6gre " |"
+.BR ip6gretap " ]"
 
 .ti -8
 .BI "ip link delete " DEVICE
@@ -186,6 +190,18 @@ Link types:
 .sp
 .BR sit
 - Virtual tunnel interface IPv6 over IPv4
+.sp
+.BR gre
+- Virtual tunnel interface GRE over IPv4
+.sp
+.BR gretap
+- Virtual L2 tuunel interface GRE over IPv4
+.sp
+.BR ip6gre
+- Virtual tuunel interface GRE over IPv6
+.sp
+.BR ip6gretap
+- Virtual L2 tuunel interface GRE over IPv6
 .in -8
 
 .TP
@@ -289,6 +305,112 @@ are entered into the VXLAN device forwarding database.
 .sp
 .I [no]l3miss
 - specifies if netlink IP ADDR miss notifications are generated.
+
+.in -8
+
+.TP
+IP6GRE/IP6GRETAP Type Support
+For a link of type 
+.I IP6GRE/IP6GRETAP
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BI type " { ip6gre | ip6gretap }  " remote " ADDR " local " ADDR
+.R " [ "
+.I "[i|o]seq]"
+.R " ] [ "
+.I "[i|o]key" KEY
+.R " ] [ "
+.I " [i|o]csum "
+.R " ] [ "
+.BI hoplimit " TTL "
+.R " ] [ "
+.BI encaplimit " ELIM "
+.R " ] [ "
+.BI tclass " TCLASS "
+.R " ] [ "
+.BI flowlabel " FLOWLABEL "
+.R " ] [ "
+.BI "dscp inherit"
+.R " ] [ "
+.BI dev " PHYS_DEV "
+.R " ]"
+
+.in +8
+.sp
+.BI  remote " ADDR "
+- specifies the remote IPv6 address of the tunnel.
+
+.sp
+.BI  local " ADDR "
+- specifies the fixed local IPv6 address for tunneled packets.
+It must be and address on another interface on this host.
+
+.sp
+.BI  [i|o]seq
+- serialize packets.
+The
+.B oseq
+flag enables sequencing of outgoing packets.
+The
+.B iseq
+flag requires that all input packets are serialized.
+
+.sp
+.BI  [i|o]key " KEY"
+- use keyed GRE with key
+.IR KEY ". "KEY
+is either a number or an IPv4 address-like dotted quad.
+The
+.B key
+parameter specifies the same key to use in both directions.
+The
+.BR ikey " and " okey
+parameters specify different keys for input and output.
+
+.sp
+.BI  [i|o]csum
+- generate/require checksums for tunneled packets.
+The
+.B ocsum
+flag calculates checksums for outgoing packets.
+The
+.B icsum
+flag requires that all input packets have the correct
+checksum.  The
+.B csum
+flag is equivalent to the combination
+.BR "icsum ocsum" .
+
+.sp
+.BI  hoplimit " TTL"
+- specifies Hop Limit value to use in outgoing packets.
+
+.sp
+.BI  encaplimit " ELIM"
+- specifies a fixed encapsulation limit.  Default is 4.
+
+.sp
+.BI  flowlabel " FLOWLABEL"
+- specifies a fixed flowlabel. 
+
+.sp
+.BI  tclass " TCLASS"
+- specifies the traffic class field on
+tunneled packets, which can be specified as either a two-digit
+hex value (e.g. c0) or a predefined string (e.g. internet).
+The value
+.B inherit
+causes the field to be copied from the original IP header. The
+values
+.BI "inherit/" STRING
+or
+.BI "inherit/" 00 ".." ff
+will set the field to
+.I STRING
+or
+.IR 00 ".." ff
+when tunneling non-IP packets. The default value is 00.
 
 .in -8
 
