@@ -162,7 +162,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 			if (len > max)
 				invarg("ALGO-KEYMAT value makes buffer overflow\n", key);
 
-			strncpy(buf, key, len);
+			memcpy(buf, key, len);
 		}
 	}
 
