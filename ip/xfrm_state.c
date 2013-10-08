@@ -528,7 +528,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		exit(1);
 	}
 
-	if (mark.m & mark.v) {
+	if (mark.m) {
 		int r = addattr_l(&req.n, sizeof(req.buf), XFRMA_MARK,
 				  (void *)&mark, sizeof(mark));
 		if (r < 0) {
