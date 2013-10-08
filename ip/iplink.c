@@ -84,9 +84,9 @@ void iplink_usage(void)
 
 	if (iplink_have_newlink()) {
 		fprintf(stderr, "\n");
-		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | can |\n");
-		fprintf(stderr, "          bridge | ipoib | ip6tnl | ipip | sit | vxlan |\n");
-		fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap }\n");
+		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
+		fprintf(stderr, "          can | bridge | ipoib | ip6tnl | ipip | sit | vxlan |\n");
+		fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti }\n");
 	}
 	exit(-1);
 }
