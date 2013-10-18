@@ -51,6 +51,7 @@ ip-link \- network device configuration
 .ti -8
 .IR TYPE " := [ "
 .BR bridge " | "
+.BR bond " ]"
 .BR can " | "
 .BR dummy " | "
 .BR ifb " | "
@@ -154,6 +155,9 @@ Link types:
 .in +8
 .B bridge
 - Ethernet Bridge device
+.sp
+.B bond
+- Bonding device
 .sp
 .B can
 - Controller Area Network interface
