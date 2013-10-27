@@ -346,13 +346,3 @@ struct qdisc_util htb_qdisc_util = {
 	.parse_copt	= htb_parse_class_opt,
 	.print_copt	= htb_print_opt,
 };
-
-/* for testing of old one */
-struct qdisc_util htb2_qdisc_util = {
-	.id		=  "htb2",
-	.parse_qopt	= htb_parse_opt,
-	.print_qopt	= htb_print_opt,
-	.print_xstats 	= htb_print_xstats,
-	.parse_copt	= htb_parse_class_opt,
-	.print_copt	= htb_print_opt,
-};
