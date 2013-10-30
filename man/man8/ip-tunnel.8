@@ -50,7 +50,7 @@ ip-tunnel - tunnel configuration
 
 .ti -8
 .IR MODE " := "
-.RB " { " ipip " | " gre " | " sit " | " isatap " | " ip6ip6 " | " ipip6 " | " any " }"
+.RB " { " ipip " | " gre " | " sit " | " isatap " | " ip6ip6 " | " ipip6 " | " ip6gre " | " any " }"
 
 .ti -8
 .IR ADDR " := { " IP_ADDRESS " |"
@@ -110,7 +110,7 @@ Modes for IPv4 encapsulation available:
 .BR ipip ", " sit ", " isatap " and " gre "."
 .br
 Modes for IPv6 encapsulation available:
-.BR ip6ip6 ", " ipip6 " and " any "."
+.BR ip6ip6 ", " ipip6 ", " ip6gre ", and " any "."
 
 .TP
 .BI remote " ADDRESS"

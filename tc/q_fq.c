@@ -53,7 +53,7 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... fq [ limit PACKETS ] [ flow_limit PACKETS ]\n");
 	fprintf(stderr, "              [ quantum BYTES ] [ initial_quantum BYTES ]\n");
 	fprintf(stderr, "              [ maxrate RATE  ] [ buckets NUMBER ]\n");
-	fprintf(stderr, "              [ [no]pacing ]\n"); 
+	fprintf(stderr, "              [ [no]pacing ]\n");
 }
 
 static unsigned int ilog2(unsigned int val)

@@ -868,3 +868,11 @@ int makeargs(char *line, char *argv[], int maxargs)
 
 	return argc;
 }
+
+int inet_get_addr(const char *src, __u32 *dst, struct in6_addr *dst6)
+{
+	if (strchr(src, ':'))
+		return inet_pton(AF_INET6, src, dst6);
+	else
+		return inet_pton(AF_INET, src, dst);
+}

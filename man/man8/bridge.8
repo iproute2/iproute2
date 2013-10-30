@@ -13,7 +13,7 @@ bridge \- show / manipulate bridge addresses and devices
 
 .ti -8
 .IR OBJECT " := { "
-.BR link " | " fdb " | " vlan " | " monitor " }"
+.BR link " | " fdb " | " mdb " | " vlan " | " monitor " }"
 .sp
 
 .ti -8
@@ -65,6 +65,21 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
+.BR "bridge mdb" " { " add " | " del " } "
+.B  dev
+.IR DEV
+.B port
+.IR PORT
+.B grp
+.IR GROUP " [ "
+.BR permanent " | " temp " ]"
+
+.ti -8
+.BR "bridge mdb show " [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
 .BR "bridge vlan" " { " add " | " del " } "
 .B  dev
 .IR DEV
@@ -79,7 +94,7 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
-.BR "bridge monitor" " [ " all " | " neigh " | " link " ]"
+.BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " ]"
 
 .SH OPTIONS
 
@@ -108,6 +123,10 @@ As a rule, the information is statistics or some time values.
 .TP
 .B fdb 
 - Forwarding Database entry.
+
+.TP
+.B mdb
+- Multicast group database entry.
 
 .TP
 .B vlan
@@ -326,6 +345,69 @@ With the
 option, the command becomes verbose.  It prints out the last updated
 and last used time for each entry.
 
+.SH bridge mdb - multicast group database management
+
+.B mdb
+objects contain known IP multicast group addresses on a link.
+
+.P
+The corresponding commands display mdb entries, add new entries,
+and delete old ones.
+
+.SS bridge mdb add - add a new multicast group database entry
+
+This command creates a new mdb entry.
+
+.TP
+.BI dev " DEV"
+the interface where this group address is associated.
+
+.TP
+.BI port " PORT"
+the port whose link is known to have members of this multicast group.
+
+.TP
+.BI grp " GROUP"
+the IP multicast group address whose members reside on the link connected to
+the port.
+
+.B permanent
+- the mdb entry is permanent
+.sp
+
+.B temp
+- the mdb entry is temporary (default)
+.sp
+
+.in -8
+.SS bridge mdb delete - delete a multicast group database entry
+This command removes an existing mdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge mdb add" .
+
+.SS bridge mdb show - list multicast group database entries
+
+This command displays the current multicast group membership table. The table
+is populated by IGMP and MLD snooping in the bridge driver automatically. It
+can be altered by
+.B bridge mdb add
+and
+.B bridge mdb del
+commands manually too.
+
+.TP
+.BI dev " DEV"
+the interface only whose entries should be listed. Default is to list all
+bridge interfaces.
+
+.PP
+With the
+.B -details
+option, the command becomes verbose.  It prints out the ports known to have
+a connected router.
+
 .SH bridge vlan - VLAN filter list
 
 .B vlan
@@ -395,7 +477,7 @@ command is the first in the command line and then the object list follows:
 .I OBJECT-LIST
 is the list of object types that we want to monitor.
 It may contain
-.BR link ",  and " fdb "."
+.BR link ",  " fdb ", and " mdb "."
 If no
 .B file
 argument is given,

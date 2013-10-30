@@ -43,6 +43,9 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u32 saddr = 0;
 	__u32 gaddr = 0;
 	__u32 daddr = 0;
+	struct in6_addr saddr6 = IN6ADDR_ANY_INIT;
+	struct in6_addr gaddr6 = IN6ADDR_ANY_INIT;
+	struct in6_addr daddr6 = IN6ADDR_ANY_INIT;
 	unsigned link = 0;
 	__u8 tos = 0;
 	__u8 ttl = 0;
@@ -66,21 +69,30 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			vni_set = 1;
 		} else if (!matches(*argv, "group")) {
 			NEXT_ARG();
-			gaddr = get_addr32(*argv);
-
-			if (!IN_MULTICAST(ntohl(gaddr)))
+			if (!inet_get_addr(*argv, &gaddr, &gaddr6)) {
+				fprintf(stderr, "Invalid address \"%s\"\n", *argv);
+				return -1;
+			}
+			if (!IN6_IS_ADDR_MULTICAST(&gaddr6) && !IN_MULTICAST(ntohl(gaddr)))
 				invarg("invalid group address", *argv);
 		} else if (!matches(*argv, "remote")) {
 			NEXT_ARG();
-			daddr = get_addr32(*argv);
-
-			if (IN_MULTICAST(ntohl(daddr)))
+			if (!inet_get_addr(*argv, &daddr, &daddr6)) {
+				fprintf(stderr, "Invalid address \"%s\"\n", *argv);
+				return -1;
+			}
+			if (IN6_IS_ADDR_MULTICAST(&daddr6) || IN_MULTICAST(ntohl(daddr)))
 				invarg("invalid remote address", *argv);
 		} else if (!matches(*argv, "local")) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				saddr = get_addr32(*argv);
-			if (IN_MULTICAST(ntohl(saddr)))
+			if (strcmp(*argv, "any")) {
+				if (!inet_get_addr(*argv, &saddr, &saddr6)) {
+					fprintf(stderr, "Invalid address \"%s\"\n", *argv);
+					return -1;
+				}
+			}
+
+			if (IN_MULTICAST(ntohl(saddr)) || IN6_IS_ADDR_MULTICAST(&saddr6))
 				invarg("invalid local address", *argv);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
@@ -167,7 +179,9 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		fprintf(stderr, "vxlan: missing virtual network identifier\n");
 		return -1;
 	}
-	if (gaddr && daddr) {
+	if ((gaddr && daddr) ||
+		(memcmp(&gaddr6, &in6addr_any, sizeof(gaddr6)) &&
+		 memcmp(&daddr6, &in6addr_any, sizeof(daddr6)))) {
 		fprintf(stderr, "vxlan: both group and remote cannot be specified\n");
 		return -1;
 	}
@@ -176,8 +190,16 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
 	else if (daddr)
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &daddr, 4);
+	if (memcmp(&gaddr6, &in6addr_any, sizeof(gaddr6)) != 0)
+		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &gaddr6, sizeof(struct in6_addr));
+	else if (memcmp(&daddr6, &in6addr_any, sizeof(daddr6)) != 0)
+		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &daddr6, sizeof(struct in6_addr));
+
 	if (saddr)
 		addattr_l(n, 1024, IFLA_VXLAN_LOCAL, &saddr, 4);
+	else if (memcmp(&saddr6, &in6addr_any, sizeof(saddr6)) != 0)
+		addattr_l(n, 1024, IFLA_VXLAN_LOCAL6, &saddr6, sizeof(struct in6_addr));
+
 	if (link)
 		addattr32(n, 1024, IFLA_VXLAN_LINK, link);
 	addattr8(n, 1024, IFLA_VXLAN_TTL, ttl);
@@ -229,6 +251,17 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				fprintf(f, "remote %s ",
 					format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
 		}
+	} else if (tb[IFLA_VXLAN_GROUP6]) {
+		struct in6_addr addr;
+		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_GROUP6]), sizeof(struct in6_addr));
+		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0) {
+			if (IN6_IS_ADDR_MULTICAST(&addr))
+				fprintf(f, "group %s ",
+					format_host(AF_INET6, sizeof(struct in6_addr), &addr, s1, sizeof(s1)));
+			else
+				fprintf(f, "remote %s ",
+					format_host(AF_INET6, sizeof(struct in6_addr), &addr, s1, sizeof(s1)));
+		}
 	}
 
 	if (tb[IFLA_VXLAN_LOCAL]) {
@@ -236,6 +269,12 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		if (addr)
 			fprintf(f, "local %s ",
 				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
+	} else if (tb[IFLA_VXLAN_LOCAL6]) {
+		struct in6_addr addr;
+		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_LOCAL6]), sizeof(struct in6_addr));
+		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0)
+			fprintf(f, "local %s ",
+				format_host(AF_INET6, sizeof(struct in6_addr), &addr, s1, sizeof(s1)));
 	}
 
 	if (tb[IFLA_VXLAN_LINK] &&

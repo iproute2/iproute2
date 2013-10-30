@@ -162,7 +162,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 			if (len > max)
 				invarg("ALGO-KEYMAT value makes buffer overflow\n", key);
 
-			strncpy(buf, key, len);
+			memcpy(buf, key, len);
 		}
 	}
 
@@ -528,7 +528,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		exit(1);
 	}
 
-	if (mark.m & mark.v) {
+	if (mark.m) {
 		int r = addattr_l(&req.n, sizeof(req.buf), XFRMA_MARK,
 				  (void *)&mark, sizeof(mark));
 		if (r < 0) {
