@@ -241,6 +241,9 @@ static int tc_class_list(int argc, char **argv)
 	t.tcm_family = AF_UNSPEC;
 	memset(d, 0, sizeof(d));
 
+	filter_qdisc = 0;
+	filter_classid = 0;
+
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
