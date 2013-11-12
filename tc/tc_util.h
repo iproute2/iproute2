@@ -58,6 +58,7 @@ extern struct filter_util *get_filter_kind(const char *str);
 
 extern int get_qdisc_handle(__u32 *h, const char *str);
 extern int get_rate(unsigned *rate, const char *str);
+extern int get_rate64(__u64 *rate, const char *str);
 extern int get_size(unsigned *size, const char *str);
 extern int get_size_and_cell(unsigned *size, int *cell_log, char *str);
 extern int get_time(unsigned *time, const char *str);
