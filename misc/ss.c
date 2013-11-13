@@ -894,7 +894,8 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 
 		case SSF_AND:
 	{
-		char *a1, *a2, *a, l1, l2;
+		char *a1, *a2, *a;
+		int l1, l2;
 		l1 = ssfilter_bytecompile(f->pred, &a1);
 		l2 = ssfilter_bytecompile(f->post, &a2);
 		if (!(a = malloc(l1+l2))) abort();
@@ -907,7 +908,8 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	}
 		case SSF_OR:
 	{
-		char *a1, *a2, *a, l1, l2;
+		char *a1, *a2, *a;
+		int l1, l2;
 		l1 = ssfilter_bytecompile(f->pred, &a1);
 		l2 = ssfilter_bytecompile(f->post, &a2);
 		if (!(a = malloc(l1+l2+4))) abort();
@@ -920,7 +922,8 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	}
 		case SSF_NOT:
 	{
-		char *a1, *a, l1;
+		char *a1, *a;
+		int l1;
 		l1 = ssfilter_bytecompile(f->pred, &a1);
 		if (!(a = malloc(l1+4))) abort();
 		memcpy(a, a1, l1);
