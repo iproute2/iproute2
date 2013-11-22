@@ -173,28 +173,22 @@ int get_rate(unsigned *rate, const char *str)
 
 void print_rate(char *buf, int len, __u64 rate)
 {
-	double tmp = (double)rate*8;
 	extern int use_iec;
+	unsigned long kilo = use_iec ? 1024 : 1000;
+	const char *str = use_iec ? "i" : "";
+	int i = 0;
+	static char *units[5] = {"", "K", "M", "G", "T"};
 
-	if (use_iec) {
-		if (tmp >= 1000.0*1024.0*1024.0*1024.0)
-			snprintf(buf, len, "%.0fGibit", tmp/(1024.0*1024.0*1024.0));
-		else if (tmp >= 1000.0*1024.0*1024.0)
-			snprintf(buf, len, "%.0fMibit", tmp/(1024.0*1024.0));
-		else if (tmp >= 1000.0*1024)
-			snprintf(buf, len, "%.0fKibit", tmp/1024);
-		else
-			snprintf(buf, len, "%.0fbit", tmp);
-	} else {
-		if (tmp >= 1000.0*1000000000.0)
-			snprintf(buf, len, "%.0fGbit", tmp/1000000000.0);
-		else if (tmp >= 1000.0*1000000.0)
-			snprintf(buf, len, "%.0fMbit", tmp/1000000.0);
-		else if (tmp >= 1000.0 * 1000.0)
-			snprintf(buf, len, "%.0fKbit", tmp/1000.0);
-		else
-			snprintf(buf, len, "%.0fbit",  tmp);
+	rate <<= 3; /* bytes/sec -> bits/sec */
+
+	for (i = 0; i < ARRAY_SIZE(units); i++)  {
+		if (rate < kilo)
+			break;
+		if (((rate % kilo) != 0) && rate < 1000*kilo)
+			break;
+		rate /= kilo;
 	}
+	snprintf(buf, len, "%.0f%s%sbit", (double)rate, units[i], str);
 }
 
 char * sprint_rate(__u64 rate, char *buf)
