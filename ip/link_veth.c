@@ -56,6 +56,9 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr_l(hdr, 1024, IFLA_IFNAME, name, len);
 	}
 
+	if (group != -1)
+		addattr32(hdr, 1024, IFLA_GROUP, group);
+
 	data->rta_len = (void *)NLMSG_TAIL(hdr) - (void *)data;
 	return argc - 1 - err;
 }
