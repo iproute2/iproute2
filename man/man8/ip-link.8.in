@@ -54,6 +54,7 @@ ip-link \- network device configuration
 .BR bond " ]"
 .BR can " | "
 .BR dummy " | "
+.BR hsr " | "
 .BR ifb " | "
 .BR ipoib " |"
 .BR macvlan  " | "
