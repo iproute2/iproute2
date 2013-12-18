@@ -114,6 +114,10 @@ int print_netconf(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "mc_forwarding %d ",
 			*(int *)RTA_DATA(tb[NETCONFA_MC_FORWARDING]));
 
+	if (tb[NETCONFA_PROXY_NEIGH])
+		fprintf(fp, "proxy_neigh %s ",
+			*(int *)RTA_DATA(tb[NETCONFA_PROXY_NEIGH])?"on":"off");
+
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
