@@ -996,7 +996,9 @@ static int xll_initted = 0;
 static void xll_init(void)
 {
 	struct rtnl_handle rth;
-	rtnl_open(&rth, 0);
+	if (rtnl_open(&rth, 0) < 0)
+		exit(1);
+
 	ll_init_map(&rth);
 	rtnl_close(&rth);
 	xll_initted = 1;

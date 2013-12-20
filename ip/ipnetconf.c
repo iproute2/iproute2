@@ -161,7 +161,10 @@ static int do_show(int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), NETCONFA_IFINDEX,
 				  &filter.ifindex, sizeof(filter.ifindex));
 
-		rtnl_send(&rth, &req.n, req.n.nlmsg_len);
+		if (rtnl_send(&rth, &req.n, req.n.nlmsg_len) < 0) {
+			perror("Can not send request");
+			exit(1);
+		}
 		rtnl_listen(&rth, print_netconf, stdout);
 	} else {
 dump:

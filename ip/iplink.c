@@ -178,7 +178,10 @@ static int iplink_have_newlink(void)
 		req.n.nlmsg_type = RTM_NEWLINK;
 		req.i.ifi_family = AF_UNSPEC;
 
-		rtnl_send(&rth, &req.n, req.n.nlmsg_len);
+		if (rtnl_send(&rth, &req.n, req.n.nlmsg_len) < 0) {
+			perror("request send failed");
+			exit(1);
+		}
 		rtnl_listen(&rth, accept_msg, NULL);
 	}
 	return have_rtnl_newlink;
