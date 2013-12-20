@@ -26,7 +26,10 @@ static void usage(void)
 static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 			  struct nlmsghdr *hdr)
 {
-	char *name, *type, *link, *dev;
+	char *dev = NULL;
+	char *name = NULL;
+	char *link = NULL;
+	char *type = NULL;
 	int err, len;
 	struct rtattr * data;
 	int group;
