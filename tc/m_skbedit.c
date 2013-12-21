@@ -99,6 +99,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		argv++;
 	}
 
+	sel.action = TC_ACT_PIPE;
 	if (argc) {
 		if (matches(*argv, "reclassify") == 0) {
 			sel.action = TC_ACT_RECLASSIFY;
