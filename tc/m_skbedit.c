@@ -165,6 +165,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	__u32 *priority;
 	__u32 *mark;
 	__u16 *queue_mapping;
+	struct tc_skbedit *p = NULL;
 
 	if (arg == NULL)
 		return -1;
@@ -175,6 +176,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, "[NULL skbedit parameters]");
 		return -1;
 	}
+	p = RTA_DATA(tb[TCA_SKBEDIT_PARMS]);
 
 	fprintf(f, " skbedit");
 
@@ -191,12 +193,16 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, " mark %d", *mark);
 	}
 
+	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
+
 	if (show_stats) {
 		if (tb[TCA_SKBEDIT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_SKBEDIT_TM]);
 			print_tm(f, tm);
 		}
 	}
+
+	fprintf(f, "\n ");
 
 	return 0;
 }
