@@ -188,9 +188,9 @@ static int print_simple(struct action_util *au, FILE * f, struct rtattr *arg)
 		if (tb[TCA_DEF_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_DEF_TM]);
 			print_tm(f, tm);
-			fprintf(f, "\n");
 		}
 	}
+	fprintf(f, "\n");
 
 	return 0;
 }
