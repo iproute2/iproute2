@@ -32,7 +32,6 @@ static struct action_util * action_list;
 #ifdef CONFIG_GACT
 int gact_ld = 0 ; //fuckin backward compatibility
 #endif
-int batch_c = 0;
 int tab_flush = 0;
 
 static void act_usage(void)
@@ -304,7 +303,7 @@ tc_print_action(FILE * f, const struct rtattr *arg)
 
 	for (i = 0; i < TCA_ACT_MAX_PRIO; i++) {
 		if (tb[i]) {
-			fprintf(f, "\n\taction order %d: ", i + batch_c);
+			fprintf(f, "\n\taction order %d: ", i);
 			if (0 > tc_print_one_action(f, tb[i])) {
 				fprintf(f, "Error printing action\n");
 			}
@@ -312,7 +311,6 @@ tc_print_action(FILE * f, const struct rtattr *arg)
 
 	}
 
-	batch_c+=TCA_ACT_MAX_PRIO ;
 	return 0;
 }
 
