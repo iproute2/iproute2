@@ -144,6 +144,7 @@ new_cmd(char **argv)
 	if ((matches(*argv, "change") == 0) ||
 		(matches(*argv, "replace") == 0)||
 		(matches(*argv, "delete") == 0)||
+		(matches(*argv, "get") == 0)||
 		(matches(*argv, "add") == 0))
 			return 1;
 
