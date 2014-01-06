@@ -82,7 +82,7 @@ static void usage(void)
 	fprintf(stderr, "           tentative | deprecated | dadfailed | temporary |\n");
 	fprintf(stderr, "           CONFFLAG-LIST ]\n");
 	fprintf(stderr, "CONFFLAG-LIST := [ CONFFLAG-LIST ] CONFFLAG\n");
-	fprintf(stderr, "CONFFLAG  := [ home | nodad ]\n");
+	fprintf(stderr, "CONFFLAG  := [ home | nodad | mngtmpaddr ]\n");
 	fprintf(stderr, "LIFETIME := [ valid_lft LFT ] [ preferred_lft LFT ]\n");
 	fprintf(stderr, "LFT := forever | SECONDS\n");
 
@@ -703,6 +703,10 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		ifa_flags &= ~IFA_F_NODAD;
 		fprintf(fp, "nodad ");
 	}
+	if (ifa_flags & IFA_F_MANAGETEMPADDR) {
+		ifa_flags &= ~IFA_F_MANAGETEMPADDR;
+		fprintf(fp, "mngtmpaddr ");
+	}
 	if (!(ifa_flags & IFA_F_PERMANENT)) {
 		fprintf(fp, "dynamic ");
 	} else
@@ -1126,6 +1130,9 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		} else if (strcmp(*argv, "nodad") == 0) {
 			filter.flags |= IFA_F_NODAD;
 			filter.flagmask |= IFA_F_NODAD;
+		} else if (strcmp(*argv, "mngtmpaddr") == 0) {
+			filter.flags |= IFA_F_MANAGETEMPADDR;
+			filter.flagmask |= IFA_F_MANAGETEMPADDR;
 		} else if (strcmp(*argv, "dadfailed") == 0) {
 			filter.flags |= IFA_F_DADFAILED;
 			filter.flagmask |= IFA_F_DADFAILED;
@@ -1345,6 +1352,8 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			ifa_flags |= IFA_F_HOMEADDRESS;
 		} else if (strcmp(*argv, "nodad") == 0) {
 			ifa_flags |= IFA_F_NODAD;
+		} else if (strcmp(*argv, "mngtmpaddr") == 0) {
+			ifa_flags |= IFA_F_MANAGETEMPADDR;
 		} else {
 			if (strcmp(*argv, "local") == 0) {
 				NEXT_ARG();
