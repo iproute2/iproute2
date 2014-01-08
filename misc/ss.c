@@ -71,6 +71,7 @@ enum
 	RAW_DB,
 	UNIX_DG_DB,
 	UNIX_ST_DB,
+	UNIX_SQ_DB,
 	PACKET_DG_DB,
 	PACKET_R_DB,
 	NETLINK_DB,
@@ -78,7 +79,7 @@ enum
 };
 
 #define PACKET_DBM ((1<<PACKET_DG_DB)|(1<<PACKET_R_DB))
-#define UNIX_DBM ((1<<UNIX_DG_DB)|(1<<UNIX_ST_DB))
+#define UNIX_DBM ((1<<UNIX_DG_DB)|(1<<UNIX_ST_DB)|(1<<UNIX_SQ_DB))
 #define ALL_DB ((1<<MAX_DB)-1)
 
 enum {
@@ -2114,6 +2115,25 @@ static void unix_list_free(struct unixstat *list)
 	}
 }
 
+static const char *unix_netid_name(int type)
+{
+	const char *netid;
+
+	switch (type) {
+	case SOCK_STREAM:
+		netid = "u_str";
+		break;
+	case SOCK_SEQPACKET:
+		netid = "u_seq";
+		break;
+	case SOCK_DGRAM:
+	default:
+		netid = "u_dgr";
+		break;
+	}
+	return netid;
+}
+
 static void unix_list_print(struct unixstat *list, struct filter *f)
 {
 	struct unixstat *s;
@@ -2125,6 +2145,8 @@ static void unix_list_print(struct unixstat *list, struct filter *f)
 		if (s->type == SOCK_STREAM && !(f->dbs&(1<<UNIX_ST_DB)))
 			continue;
 		if (s->type == SOCK_DGRAM && !(f->dbs&(1<<UNIX_DG_DB)))
+			continue;
+		if (s->type == SOCK_SEQPACKET && !(f->dbs&(1<<UNIX_SQ_DB)))
 			continue;
 
 		peer = "*";
@@ -2156,7 +2178,7 @@ static void unix_list_print(struct unixstat *list, struct filter *f)
 
 		if (netid_width)
 			printf("%-*s ", netid_width,
-			       s->type == SOCK_STREAM ? "u_str" : "u_dgr");
+			       unix_netid_name(s->type));
 		if (state_width)
 			printf("%-*s ", state_width, sstate_name[s->state]);
 		printf("%-6d %-6d ", s->rq, s->wq);
@@ -2185,7 +2207,7 @@ static int unix_show_sock(struct nlmsghdr *nlh, struct filter *f)
 
 	if (netid_width)
 		printf("%-*s ", netid_width,
-				r->udiag_type == SOCK_STREAM ? "u_str" : "u_dgr");
+		       unix_netid_name(r->udiag_type));
 	if (state_width)
 		printf("%-*s ", state_width, sstate_name[r->udiag_state]);
 
@@ -3253,6 +3275,9 @@ int main(int argc, char *argv[])
 				} else if (strcasecmp(p, "unix_dgram") == 0 ||
 					   strcmp(p, "u_dgr") == 0) {
 					current_filter.dbs |= (1<<UNIX_DG_DB);
+				} else if (strcasecmp(p, "unix_seqpacket") == 0 ||
+					   strcmp(p, "u_seq") == 0) {
+					current_filter.dbs |= (1<<UNIX_SQ_DB);
 				} else if (strcmp(p, "packet") == 0) {
 					current_filter.dbs |= PACKET_DBM;
 				} else if (strcmp(p, "packet_raw") == 0 ||
