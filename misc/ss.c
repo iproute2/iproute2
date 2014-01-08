@@ -2205,6 +2205,13 @@ static int unix_show_sock(struct nlmsghdr *nlh, struct filter *f)
 	parse_rtattr(tb, UNIX_DIAG_MAX, (struct rtattr*)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
+	if (r->udiag_type == SOCK_STREAM && !(f->dbs&(1<<UNIX_ST_DB)))
+		return 0;
+	if (r->udiag_type == SOCK_DGRAM && !(f->dbs&(1<<UNIX_DG_DB)))
+		return 0;
+	if (r->udiag_type == SOCK_SEQPACKET && !(f->dbs&(1<<UNIX_SQ_DB)))
+		return 0;
+
 	if (netid_width)
 		printf("%-*s ", netid_width,
 		       unix_netid_name(r->udiag_type));
