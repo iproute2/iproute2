@@ -428,7 +428,11 @@ static int do_one_request(struct nlmsghdr *n)
 
 static void load_initial_table(void)
 {
-	rtnl_wilddump_request(&rth, AF_INET, RTM_GETNEIGH);
+	if (rtnl_wilddump_request(&rth, AF_INET, RTM_GETNEIGH) < 0) {
+		perror("dump request failed");
+		exit(1);
+	}
+		
 }
 
 static void get_kern_msg(void)

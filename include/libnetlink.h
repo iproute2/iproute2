@@ -22,13 +22,22 @@ struct rtnl_handle
 
 extern int rcvbuf;
 
-extern int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions);
-extern int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions, int protocol);
+extern int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions)
+	__attribute__((warn_unused_result));
+
+extern int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions,
+			     int protocol)
+	__attribute__((warn_unused_result));
+
 extern void rtnl_close(struct rtnl_handle *rth);
-extern int rtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type);
+extern int rtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type)
+	__attribute__((warn_unused_result));
 extern int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int fam, int type,
-				    __u32 filt_mask);
-extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len);
+				    __u32 filt_mask)
+	__attribute__((warn_unused_result));
+extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
+			     int len)
+	__attribute__((warn_unused_result));
 
 typedef int (*rtnl_filter_t)(const struct sockaddr_nl *,
 			     struct nlmsghdr *n, void *);
@@ -44,9 +53,12 @@ extern int rtnl_dump_filter_l(struct rtnl_handle *rth,
 extern int rtnl_dump_filter(struct rtnl_handle *rth, rtnl_filter_t filter,
 			    void *arg);
 extern int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
-		     unsigned groups, struct nlmsghdr *answer);
-extern int rtnl_send(struct rtnl_handle *rth, const void *buf, int);
-extern int rtnl_send_check(struct rtnl_handle *rth, const void *buf, int);
+		     unsigned groups, struct nlmsghdr *answer)
+	__attribute__((warn_unused_result));
+extern int rtnl_send(struct rtnl_handle *rth, const void *buf, int)
+	__attribute__((warn_unused_result));
+extern int rtnl_send_check(struct rtnl_handle *rth, const void *buf, int)
+	__attribute__((warn_unused_result));
 
 extern int addattr(struct nlmsghdr *n, int maxlen, int type);
 extern int addattr8(struct nlmsghdr *n, int maxlen, int type, __u8 data);

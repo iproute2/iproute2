@@ -38,7 +38,6 @@ static void usage(void)
 	fprintf(stderr, "                [ peakrate BPS ] [ avrate BPS ] [ overhead BYTES ]\n");
 	fprintf(stderr, "                [ linklayer TYPE ] [ ACTIONTERM ]\n");
 
-	fprintf(stderr, "Old Syntax ACTIONTERM := action <EXCEEDACT>[/NOTEXCEEDACT] \n");
 	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT] \n");
 	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue \n");
 	fprintf(stderr, "Where:  pipe is only valid for new syntax \n");
@@ -150,6 +149,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 
 	while (argc > 0) {
 
+		fprintf(stderr,"police argc %d argv %s\n", argc, *argv);
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (get_u32(&p.index, *argv, 10)) {
@@ -230,8 +230,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 			p.action = TC_POLICE_OK;
 		} else if (matches(*argv, "pipe") == 0) {
 			p.action = TC_POLICE_PIPE;
-		} else if (strcmp(*argv, "action") == 0 ||
-			   strcmp(*argv, "conform-exceed") == 0) {
+		} else if (strcmp(*argv, "conform-exceed") == 0) {
 			NEXT_ARG();
 			if (get_police_result(&p.action, &presult, *argv)) {
 				fprintf(stderr, "Illegal \"action\"\n");

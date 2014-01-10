@@ -26,7 +26,11 @@ static void usage(void)
 static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 			  struct nlmsghdr *hdr)
 {
-	char *name, *type, *link, *dev;
+	char *dev = NULL;
+	char *name = NULL;
+	char *link = NULL;
+	char *type = NULL;
+	int index = 0;
 	int err, len;
 	struct rtattr * data;
 	int group;
@@ -42,7 +46,7 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 	hdr->nlmsg_len += sizeof(struct ifinfomsg);
 
 	err = iplink_parse(argc - 1, argv + 1, (struct iplink_req *)hdr,
-			   &name, &type, &link, &dev, &group);
+			   &name, &type, &link, &dev, &group, &index);
 	if (err < 0)
 		return err;
 
@@ -52,6 +56,14 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 			invarg("\"name\" too long\n", *argv);
 		addattr_l(hdr, 1024, IFLA_IFNAME, name, len);
 	}
+
+	if (index) {
+		struct ifinfomsg *ifi = (struct ifinfomsg *)(data + 1);
+		ifi->ifi_index = index;
+	}
+
+	if (group != -1)
+		addattr32(hdr, 1024, IFLA_GROUP, group);
 
 	data->rta_len = (void *)NLMSG_TAIL(hdr) - (void *)data;
 	return argc - 1 - err;

@@ -240,8 +240,9 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 		}
 	}
 
-	if (p->iph.protocol == IPPROTO_IPIP || p->iph.protocol == IPPROTO_IPV6) {
-		if ((p->i_flags & GRE_KEY) || (p->o_flags & GRE_KEY)) {
+	if ((p->i_flags & GRE_KEY) || (p->o_flags & GRE_KEY)) {
+		if (!(p->i_flags & VTI_ISVTI) &&
+		    (p->iph.protocol != IPPROTO_GRE)) {
 			fprintf(stderr, "Keys are not allowed with ipip and sit tunnels\n");
 			return -1;
 		}
