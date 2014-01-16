@@ -232,12 +232,14 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 2024, TCA_TBF_PARMS, &opt, sizeof(opt));
+	addattr_l(n, 2124, TCA_TBF_BURST, &buffer, sizeof(buffer));
 	if (rate64 >= (1ULL << 32))
 		addattr_l(n, 2124, TCA_TBF_RATE64, &rate64, sizeof(rate64));
 	addattr_l(n, 3024, TCA_TBF_RTAB, rtab, 1024);
 	if (opt.peakrate.rate) {
 		if (prate64 >= (1ULL << 32))
 			addattr_l(n, 3124, TCA_TBF_PRATE64, &prate64, sizeof(prate64));
+		addattr_l(n, 3224, TCA_TBF_PBURST, &mtu, sizeof(mtu));
 		addattr_l(n, 4096, TCA_TBF_PTAB, ptab, 1024);
 	}
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
