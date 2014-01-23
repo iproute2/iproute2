@@ -27,6 +27,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <linux/sockios.h>
+#include <stdbool.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -105,14 +106,15 @@ static int on_off(const char *msg, const char *realval)
 static void *BODY;		/* cached dlopen(NULL) handle */
 static struct link_util *linkutil_list;
 
-struct link_util *get_link_kind(const char *id)
+static struct link_util *__get_link_kind(const char *id, bool slave)
 {
 	void *dlh;
 	char buf[256];
 	struct link_util *l;
 
 	for (l = linkutil_list; l; l = l->next)
-		if (strcmp(l->id, id) == 0)
+		if (strcmp(l->id, id) == 0 &&
+		    l->slave == slave)
 			return l;
 
 	snprintf(buf, sizeof(buf), LIBDIR "/ip/link_%s.so", id);
@@ -127,7 +129,10 @@ struct link_util *get_link_kind(const char *id)
 		}
 	}
 
-	snprintf(buf, sizeof(buf), "%s_link_util", id);
+	if (slave)
+		snprintf(buf, sizeof(buf), "%s_slave_link_util", id);
+	else
+		snprintf(buf, sizeof(buf), "%s_link_util", id);
 	l = dlsym(dlh, buf);
 	if (l == NULL)
 		return NULL;
@@ -135,6 +140,16 @@ struct link_util *get_link_kind(const char *id)
 	l->next = linkutil_list;
 	linkutil_list = l;
 	return l;
+}
+
+struct link_util *get_link_kind(const char *id)
+{
+	return __get_link_kind(id, false);
+}
+
+struct link_util *get_link_slave_kind(const char *id)
+{
+	return __get_link_kind(id, true);
 }
 
 static int get_link_mode(const char *mode)

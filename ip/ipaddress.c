@@ -192,34 +192,52 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 {
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct link_util *lu;
+	struct link_util *slave_lu;
 	char *kind;
+	char *slave_kind;
 
 	parse_rtattr_nested(linkinfo, IFLA_INFO_MAX, tb);
 
-	if (!linkinfo[IFLA_INFO_KIND])
-		return;
-	kind = RTA_DATA(linkinfo[IFLA_INFO_KIND]);
+	if (linkinfo[IFLA_INFO_KIND]) {
+		kind = RTA_DATA(linkinfo[IFLA_INFO_KIND]);
 
-	fprintf(fp, "%s", _SL_);
-	fprintf(fp, "    %s ", kind);
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    %s ", kind);
 
-	lu = get_link_kind(kind);
-	if (!lu || !lu->print_opt)
-		return;
+		lu = get_link_kind(kind);
+		if (lu && lu->print_opt) {
+			struct rtattr *attr[lu->maxattr+1], **data = NULL;
 
-	if (1) {
-		struct rtattr *attr[lu->maxattr+1], **data = NULL;
+			if (linkinfo[IFLA_INFO_DATA]) {
+				parse_rtattr_nested(attr, lu->maxattr,
+						    linkinfo[IFLA_INFO_DATA]);
+				data = attr;
+			}
+			lu->print_opt(lu, fp, data);
 
-		if (linkinfo[IFLA_INFO_DATA]) {
-			parse_rtattr_nested(attr, lu->maxattr,
-					    linkinfo[IFLA_INFO_DATA]);
-			data = attr;
+			if (linkinfo[IFLA_INFO_XSTATS] && show_stats &&
+			    lu->print_xstats)
+				lu->print_xstats(lu, fp, linkinfo[IFLA_INFO_XSTATS]);
 		}
-		lu->print_opt(lu, fp, data);
+	}
 
-		if (linkinfo[IFLA_INFO_XSTATS] && show_stats &&
-		    lu->print_xstats)
-			lu->print_xstats(lu, fp, linkinfo[IFLA_INFO_XSTATS]);
+	if (linkinfo[IFLA_INFO_SLAVE_KIND]) {
+		slave_kind = RTA_DATA(linkinfo[IFLA_INFO_SLAVE_KIND]);
+
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    %s_slave ", slave_kind);
+
+		slave_lu = get_link_slave_kind(slave_kind);
+		if (slave_lu && slave_lu->print_opt) {
+			struct rtattr *attr[slave_lu->maxattr+1], **data = NULL;
+
+			if (linkinfo[IFLA_INFO_SLAVE_DATA]) {
+				parse_rtattr_nested(attr, slave_lu->maxattr,
+						    linkinfo[IFLA_INFO_SLAVE_DATA]);
+				data = attr;
+			}
+			slave_lu->print_opt(slave_lu, fp, data);
+		}
 	}
 }
 
