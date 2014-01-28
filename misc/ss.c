@@ -1462,7 +1462,21 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 	}
 }
 
-static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f)
+static char *proto_name(int protocol)
+{
+	switch (protocol) {
+	case IPPROTO_UDP:
+		return "udp";
+	case IPPROTO_TCP:
+		return "tcp";
+	case IPPROTO_DCCP:
+		return "dccp";
+	}
+
+	return "???";
+}
+
+static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f, int protocol)
 {
 	struct rtattr * tb[INET_DIAG_MAX+1];
 	struct inet_diag_msg *r = NLMSG_DATA(nlh);
@@ -1487,7 +1501,7 @@ static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f)
 		return 0;
 
 	if (netid_width)
-		printf("%-*s ", netid_width, "tcp");
+		printf("%-*s ", netid_width, proto_name(protocol));
 	if (state_width)
 		printf("%-*s ", state_width, sstate_name[s.state]);
 
@@ -1760,7 +1774,7 @@ again:
 					h = NLMSG_NEXT(h, status);
 					continue;
 				}
-				err = inet_show_sock(h, NULL);
+				err = inet_show_sock(h, NULL, protocol);
 				if (err < 0) {
 					close(fd);
 					return err;
@@ -1839,7 +1853,7 @@ static int tcp_show_netlink_file(struct filter *f)
 			return -1;
 		}
 
-		err = inet_show_sock(h, f);
+		err = inet_show_sock(h, f, IPPROTO_TCP);
 		if (err < 0)
 			return err;
 	}
