@@ -399,7 +399,7 @@ static int parse_ctrl(struct genl_util *a, int argc, char **argv)
 	if (matches(*argv, "help") == 0)
 		return usage();
 
-	fprintf(stderr, "ctrl command \"%s\" is unknown, try \"ctrl -help\".\n",
+	fprintf(stderr, "ctrl command \"%s\" is unknown, try \"ctrl help\".\n",
 		*argv);
 
 	return -1;
