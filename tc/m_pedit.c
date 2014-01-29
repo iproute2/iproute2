@@ -30,7 +30,7 @@
 #include "m_pedit.h"
 
 static struct m_pedit_util *pedit_list;
-int pedit_debug = 1;
+static int pedit_debug;
 
 static void
 explain(void)
