@@ -428,7 +428,7 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BOND_ARP_ALL_TARGETS]) {
 		const char *arp_all_targets = get_name(arp_all_targets_tbl,
 			rta_getattr_u32(tb[IFLA_BOND_ARP_ALL_TARGETS]));
-		fprintf(f, "arp_all_target %s ", arp_all_targets);
+		fprintf(f, "arp_all_targets %s ", arp_all_targets);
 	}
 
 	if (tb[IFLA_BOND_PRIMARY] &&
