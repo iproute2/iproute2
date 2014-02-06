@@ -95,8 +95,8 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	struct rtattr *attrs[TCP_METRICS_ATTR_MAX + 1], *a;
 	int len = n->nlmsg_len;
 	char abuf[256];
-	inet_prefix daddr;
-	int family, i, atype, dlen = 0;
+	inet_prefix daddr, saddr;
+	int family, i, atype, stype, dlen = 0, slen = 0;
 
 	if (n->nlmsg_type != genl_family)
 		return -1;
@@ -133,6 +133,26 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			dlen = RTA_PAYLOAD(a);
 		} else
 			return 0;
+	}
+
+	a = attrs[TCP_METRICS_ATTR_SADDR_IPV4];
+	if (a) {
+		if (f.saddr.family && f.saddr.family != AF_INET)
+			return 0;
+		memcpy(&saddr.data, RTA_DATA(a), 4);
+		saddr.bytelen = 4;
+		stype = TCP_METRICS_ATTR_SADDR_IPV4;
+		slen = RTA_PAYLOAD(a);
+	} else {
+		a = attrs[TCP_METRICS_ATTR_SADDR_IPV6];
+		if (a) {
+			if (f.saddr.family && f.saddr.family != AF_INET6)
+				return 0;
+			memcpy(&saddr.data, RTA_DATA(a), 16);
+			saddr.bytelen = 16;
+			stype = TCP_METRICS_ATTR_SADDR_IPV6;
+			slen = RTA_PAYLOAD(a);
+		}
 	}
 
 	if (f.daddr.family && f.daddr.bitlen >= 0 &&
@@ -246,6 +266,12 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		for (i = 0; i < max; i++)
 			sprintf(cookie + i + i, "%02x", ptr[i]);
 		fprintf(fp, " fo_cookie %s", cookie);
+	}
+
+	if (slen) {
+		fprintf(fp, " source %s",
+			format_host(family, slen, &saddr.data, abuf,
+				    sizeof(abuf)));
 	}
 
 	fprintf(fp, "\n");
