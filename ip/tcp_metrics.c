@@ -75,6 +75,7 @@ static struct
 	int flushe;
 	int cmd;
 	inet_prefix daddr;
+	inet_prefix saddr;
 } f;
 
 static int flush_update(void)
@@ -157,6 +158,12 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (f.daddr.family && f.daddr.bitlen >= 0 &&
 	    inet_addr_match(&daddr, &f.daddr, f.daddr.bitlen))
+	       return 0;
+	/* Only check for the source-address if the kernel supports it,
+	 * meaning slen != 0.
+	 */
+	if (slen && f.saddr.family && f.saddr.bitlen >= 0 &&
+	    inet_addr_match(&saddr, &f.saddr, f.saddr.bitlen))
 		return 0;
 
 	if (f.flushb) {
@@ -165,6 +172,9 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 		addattr_l(&req2.n, sizeof(req2), atype, &daddr.data,
 			  daddr.bytelen);
+		if (slen)
+			addattr_l(&req2.n, sizeof(req2), stype, &saddr.data,
+				  saddr.bytelen);
 
 		if (NLMSG_ALIGN(f.flushp) + req2.n.nlmsg_len > f.flushe) {
 			if (flush_update())
@@ -283,12 +293,14 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 static int tcpm_do_cmd(int cmd, int argc, char **argv)
 {
 	TCPM_REQUEST(req, 1024, TCP_METRICS_CMD_GET, NLM_F_REQUEST);
-	int atype = -1;
+	int atype = -1, stype = -1;
 	int ack;
 
 	memset(&f, 0, sizeof(f));
 	f.daddr.bitlen = -1;
 	f.daddr.family = preferred_family;
+	f.saddr.bitlen = -1;
+	f.saddr.family = preferred_family;
 
 	switch (preferred_family) {
 	case AF_UNSPEC:
@@ -301,31 +313,53 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 	}
 
 	for (; argc > 0; argc--, argv++) {
-		char *who = "address";
-
-		if (strcmp(*argv, "addr") == 0 ||
-		    strcmp(*argv, "address") == 0) {
-			who = *argv;
+		if (strcmp(*argv, "src") == 0 ||
+		    strcmp(*argv, "source") == 0) {
+			char *who = *argv;
 			NEXT_ARG();
-		}
-		if (matches(*argv, "help") == 0)
-			usage();
-		if (f.daddr.bitlen >= 0)
-			duparg2(who, *argv);
+			if (matches(*argv, "help") == 0)
+				usage();
+			if (f.saddr.bitlen >= 0)
+				duparg2(who, *argv);
 
-		get_prefix(&f.daddr, *argv, preferred_family);
-		if (f.daddr.bytelen && f.daddr.bytelen * 8 == f.daddr.bitlen) {
-			if (f.daddr.family == AF_INET)
-				atype = TCP_METRICS_ATTR_ADDR_IPV4;
-			else if (f.daddr.family == AF_INET6)
-				atype = TCP_METRICS_ATTR_ADDR_IPV6;
-		}
-		if ((CMD_DEL & cmd) && atype < 0) {
-			fprintf(stderr, "Error: a specific IP address is expected rather than \"%s\"\n",
-				*argv);
-			return -1;
-		}
+			get_prefix(&f.saddr, *argv, preferred_family);
+			if (f.saddr.bytelen && f.saddr.bytelen * 8 == f.saddr.bitlen) {
+				if (f.saddr.family == AF_INET)
+					stype = TCP_METRICS_ATTR_SADDR_IPV4;
+				else if (f.saddr.family == AF_INET6)
+					stype = TCP_METRICS_ATTR_SADDR_IPV6;
+			}
 
+			if (stype < 0) {
+				fprintf(stderr, "Error: a specific IP address is expected rather than \"%s\"\n",
+					*argv);
+				return -1;
+			}
+		} else {
+			char *who = "address";
+			if (strcmp(*argv, "addr") == 0 ||
+			    strcmp(*argv, "address") == 0) {
+				who = *argv;
+				NEXT_ARG();
+			}
+			if (matches(*argv, "help") == 0)
+				usage();
+			if (f.daddr.bitlen >= 0)
+				duparg2(who, *argv);
+
+			get_prefix(&f.daddr, *argv, preferred_family);
+			if (f.daddr.bytelen && f.daddr.bytelen * 8 == f.daddr.bitlen) {
+				if (f.daddr.family == AF_INET)
+					atype = TCP_METRICS_ATTR_ADDR_IPV4;
+				else if (f.daddr.family == AF_INET6)
+					atype = TCP_METRICS_ATTR_ADDR_IPV6;
+			}
+			if ((CMD_DEL & cmd) && atype < 0) {
+				fprintf(stderr, "Error: a specific IP address is expected rather than \"%s\"\n",
+					*argv);
+				return -1;
+			}
+		}
 		argc--; argv++;
 	}
 
@@ -338,7 +372,7 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 
 	/* flush for all addresses ? Single del without address */
 	if (cmd == CMD_FLUSH && f.daddr.bitlen <= 0 &&
-	    preferred_family == AF_UNSPEC) {
+	    f.saddr.bitlen <= 0 && preferred_family == AF_UNSPEC) {
 		cmd = CMD_DEL;
 		req.g.cmd = TCP_METRICS_CMD_DEL;
 		ack = 1;
@@ -367,6 +401,9 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 		if (atype >= 0)
 			addattr_l(&req.n, sizeof(req), atype, &f.daddr.data,
 				  f.daddr.bytelen);
+		if (stype >= 0)
+			addattr_l(&req.n, sizeof(req), stype, &f.saddr.data,
+				  f.saddr.bytelen);
 	} else {
 		req.n.nlmsg_flags |= NLM_F_DUMP;
 	}
