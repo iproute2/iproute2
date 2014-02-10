@@ -113,6 +113,7 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	unsigned int direct_qlen = ~0U;
 	unsigned int linklayer  = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
+	__u64 ceil64 = 0, rate64 = 0;
 
 	memset(&opt, 0, sizeof(opt)); mtu = 1600; /* eth packet len */
 
@@ -173,22 +174,22 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			ok++;
 		} else if (strcmp(*argv, "ceil") == 0) {
 			NEXT_ARG();
-			if (opt.ceil.rate) {
+			if (ceil64) {
 				fprintf(stderr, "Double \"ceil\" spec\n");
 				return -1;
 			}
-			if (get_rate(&opt.ceil.rate, *argv)) {
+			if (get_rate64(&ceil64, *argv)) {
 				explain1("ceil");
 				return -1;
 			}
 			ok++;
 		} else if (strcmp(*argv, "rate") == 0) {
 			NEXT_ARG();
-			if (opt.rate.rate) {
+			if (rate64) {
 				fprintf(stderr, "Double \"rate\" spec\n");
 				return -1;
 			}
-			if (get_rate(&opt.rate.rate, *argv)) {
+			if (get_rate64(&rate64, *argv)) {
 				explain1("rate");
 				return -1;
 			}
@@ -207,17 +208,23 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	/*	if (!ok)
 		return 0;*/
 
-	if (opt.rate.rate == 0) {
+	if (!rate64) {
 		fprintf(stderr, "\"rate\" is required.\n");
 		return -1;
 	}
 	/* if ceil params are missing, use the same as rate */
-	if (!opt.ceil.rate) opt.ceil = opt.rate;
+	if (!ceil64)
+		ceil64 = rate64;
+
+	opt.rate.rate = (rate64 >= (1ULL << 32)) ? ~0U : rate64;
+	opt.ceil.rate = (ceil64 >= (1ULL << 32)) ? ~0U : ceil64;
 
 	/* compute minimal allowed burst from rate; mtu is added here to make
 	   sute that buffer is larger than mtu and to have some safeguard space */
-	if (!buffer) buffer = opt.rate.rate / get_hz() + mtu;
-	if (!cbuffer) cbuffer = opt.ceil.rate / get_hz() + mtu;
+	if (!buffer)
+		buffer = rate64 / get_hz() + mtu;
+	if (!cbuffer)
+		cbuffer = ceil64 / get_hz() + mtu;
 
 	opt.ceil.overhead = overhead;
 	opt.rate.overhead = overhead;
@@ -229,19 +236,26 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 		fprintf(stderr, "htb: failed to calculate rate table.\n");
 		return -1;
 	}
-	opt.buffer = tc_calc_xmittime(opt.rate.rate, buffer);
+	opt.buffer = tc_calc_xmittime(rate64, buffer);
 
 	if (tc_calc_rtable(&opt.ceil, ctab, ccell_log, mtu, linklayer) < 0) {
 		fprintf(stderr, "htb: failed to calculate ceil rate table.\n");
 		return -1;
 	}
-	opt.cbuffer = tc_calc_xmittime(opt.ceil.rate, cbuffer);
+	opt.cbuffer = tc_calc_xmittime(ceil64, cbuffer);
 
 	tail = NLMSG_TAIL(n);
 	if (direct_qlen != ~0U)
 		addattr_l(n, 1024, TCA_HTB_DIRECT_QLEN,
 			  &direct_qlen, sizeof(direct_qlen));
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
+
+	if (rate64 >= (1ULL << 32))
+		addattr_l(n, 1124, TCA_HTB_RATE64, &rate64, sizeof(rate64));
+
+	if (ceil64 >= (1ULL << 32))
+		addattr_l(n, 1224, TCA_HTB_CEIL64, &ceil64, sizeof(ceil64));
+
 	addattr_l(n, 2024, TCA_HTB_PARMS, &opt, sizeof(opt));
 	addattr_l(n, 3024, TCA_HTB_RTAB, rtab, 1024);
 	addattr_l(n, 4024, TCA_HTB_CTAB, ctab, 1024);
@@ -256,6 +270,7 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct tc_htb_glob *gopt;
 	double buffer,cbuffer;
 	unsigned int linklayer;
+	__u64 rate64, ceil64;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 	SPRINT_BUF(b3);
@@ -275,12 +290,25 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			if (show_details)
 				fprintf(f, "quantum %d ", (int)hopt->quantum);
 		}
-		fprintf(f, "rate %s ", sprint_rate(hopt->rate.rate, b1));
+
+		rate64 = hopt->rate.rate;
+		if (tb[TCA_HTB_RATE64] &&
+		    RTA_PAYLOAD(tb[TCA_HTB_RATE64]) >= sizeof(rate64)) {
+			rate64 = rta_getattr_u64(tb[TCA_HTB_RATE64]);
+		}
+
+		ceil64 = hopt->ceil.rate;
+		if (tb[TCA_HTB_CEIL64] &&
+		    RTA_PAYLOAD(tb[TCA_HTB_CEIL64]) >= sizeof(ceil64))
+			ceil64 = rta_getattr_u64(tb[TCA_HTB_CEIL64]);
+
+		fprintf(f, "rate %s ", sprint_rate(rate64, b1));
 		if (hopt->rate.overhead)
 			fprintf(f, "overhead %u ", hopt->rate.overhead);
-		buffer = tc_calc_xmitsize(hopt->rate.rate, hopt->buffer);
-		fprintf(f, "ceil %s ", sprint_rate(hopt->ceil.rate, b1));
-		cbuffer = tc_calc_xmitsize(hopt->ceil.rate, hopt->cbuffer);
+		buffer = tc_calc_xmitsize(rate64, hopt->buffer);
+
+		fprintf(f, "ceil %s ", sprint_rate(ceil64, b1));
+		cbuffer = tc_calc_xmitsize(ceil64, hopt->cbuffer);
 		linklayer = (hopt->rate.linklayer & TC_LINKLAYER_MASK);
 		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
 			fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b4));

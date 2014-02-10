@@ -171,6 +171,31 @@ int get_rate(unsigned *rate, const char *str)
 	return 0;
 }
 
+int get_rate64(__u64 *rate, const char *str)
+{
+	char *p;
+	double bps = strtod(str, &p);
+	const struct rate_suffix *s;
+
+	if (p == str)
+		return -1;
+
+	for (s = suffixes; s->name; ++s) {
+		if (strcasecmp(s->name, p) == 0) {
+			bps *= s->scale;
+			p += strlen(p);
+			break;
+		}
+	}
+
+	if (*p)
+		return -1; /* unknown suffix */
+
+	bps /= 8; /* -> bytes per second */
+	*rate = bps;
+	return 0;
+}
+
 void print_rate(char *buf, int len, __u64 rate)
 {
 	extern int use_iec;

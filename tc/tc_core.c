@@ -56,12 +56,12 @@ unsigned tc_core_ktime2time(unsigned ktime)
 	return ktime / clock_factor;
 }
 
-unsigned tc_calc_xmittime(unsigned rate, unsigned size)
+unsigned tc_calc_xmittime(__u64 rate, unsigned size)
 {
-	return tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/rate));
+	return tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/(double)rate));
 }
 
-unsigned tc_calc_xmitsize(unsigned rate, unsigned ticks)
+unsigned tc_calc_xmitsize(__u64 rate, unsigned ticks)
 {
 	return ((double)rate*tc_core_tick2time(ticks))/TIME_UNITS_PER_SEC;
 }
