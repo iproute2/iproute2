@@ -640,7 +640,7 @@ static const char *resolve_service(int port)
 	return buf;
 }
 
-static void formatted_print(const inet_prefix *a, int port)
+static void formatted_print(const inet_prefix *a, int port, unsigned int ifindex)
 {
 	char buf[1024];
 	const char *ap = buf;
@@ -663,7 +663,14 @@ static void formatted_print(const inet_prefix *a, int port)
 		else
 			est_len = addr_width + ((est_len-addr_width+3)/4)*4;
 	}
-	printf("%*s:%-*s ", est_len, ap, serv_width, resolve_service(port));
+	if (ifindex) {
+		const char *ifname = ll_index_to_name(ifindex);
+		const int len = strlen(ifname) + 1;  /* +1 for percent char */
+
+		printf("%*s%%%s:%-*s ", est_len - len, ap, ifname, serv_width,
+		       resolve_service(port));
+	} else
+		printf("%*s:%-*s ", est_len, ap, serv_width, resolve_service(port));
 }
 
 struct aafilter
@@ -1254,8 +1261,8 @@ static int tcp_show_line(char *line, const struct filter *f, int family)
 
 	printf("%-6d %-6d ", s.rq, s.wq);
 
-	formatted_print(&s.local, s.lport);
-	formatted_print(&s.remote, s.rport);
+	formatted_print(&s.local, s.lport, 0);
+	formatted_print(&s.remote, s.rport, 0);
 
 	if (show_options) {
 		if (s.timer) {
@@ -1507,8 +1514,8 @@ static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f, int protocol)
 
 	printf("%-6d %-6d ", r->idiag_rqueue, r->idiag_wqueue);
 
-	formatted_print(&s.local, s.lport);
-	formatted_print(&s.remote, s.rport);
+	formatted_print(&s.local, s.lport, r->id.idiag_if);
+	formatted_print(&s.remote, s.rport, 0);
 
 	if (show_options) {
 		if (r->idiag_timer) {
@@ -2006,8 +2013,8 @@ static int dgram_show_line(char *line, const struct filter *f, int family)
 
 	printf("%-6d %-6d ", s.rq, s.wq);
 
-	formatted_print(&s.local, s.lport);
-	formatted_print(&s.remote, s.rport);
+	formatted_print(&s.local, s.lport, 0);
+	formatted_print(&s.remote, s.rport, 0);
 
 	if (show_users) {
 		char ubuf[4096];
