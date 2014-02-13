@@ -106,7 +106,7 @@ static int get_index(const char **tbl, char *name)
 				return i;
 
 	for (i = 0; tbl[i]; i++)
-		if (strncmp(tbl[i], name, strlen(tbl[i])) == 0)
+		if (strcmp(tbl[i], name) == 0)
 			return i;
 
 	return -1;
