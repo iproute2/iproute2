@@ -95,9 +95,9 @@ static int flush_update(void)
 static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct ndmsg 		ndm;
-		char   			buf[256];
+		struct nlmsghdr	n;
+		struct ndmsg		ndm;
+		char  			buf[256];
 	} req;
 	char  *d = NULL;
 	int dst_ok = 0;

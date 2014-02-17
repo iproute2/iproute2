@@ -279,5 +279,5 @@ struct link_util can_link_util = {
 	.maxattr	= IFLA_CAN_MAX,
 	.parse_opt	= can_parse_opt,
 	.print_opt	= can_print_opt,
-	.print_xstats 	= can_print_xstats,
+	.print_xstats	= can_print_xstats,
 };

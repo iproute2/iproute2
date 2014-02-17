@@ -708,9 +708,9 @@ static int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r,
 static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct rtmsg 		r;
-		char   			buf[1024];
+		struct nlmsghdr	n;
+		struct rtmsg		r;
+		char  			buf[1024];
 	} req;
 	char  mxbuf[256];
 	struct rtattr * mxrta = (void*)mxbuf;
@@ -1376,9 +1376,9 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 static int iproute_get(int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct rtmsg 		r;
-		char   			buf[1024];
+		struct nlmsghdr	n;
+		struct rtmsg		r;
+		char  			buf[1024];
 	} req;
 	char  *idev = NULL;
 	char  *odev = NULL;

@@ -63,9 +63,9 @@ static void usage(void)
 static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
+		struct nlmsghdr	n;
 		struct ndtmsg		ndtm;
-		char   			buf[1024];
+		char  			buf[1024];
 	} req;
 	char *namep = NULL;
 	char *threshsp = NULL;

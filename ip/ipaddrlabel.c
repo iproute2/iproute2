@@ -125,9 +125,9 @@ static int ipaddrlabel_list(int argc, char **argv)
 static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
+		struct nlmsghdr	n;
 		struct ifaddrlblmsg	ifal;
-		char   			buf[1024];
+		char  			buf[1024];
 	} req;
 
 	inet_prefix prefix;

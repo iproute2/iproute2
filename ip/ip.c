@@ -65,7 +65,7 @@ static const struct cmd {
 	const char *cmd;
 	int (*func)(int argc, char **argv);
 } cmds[] = {
-	{ "address", 	do_ipaddr },
+	{ "address",	do_ipaddr },
 	{ "addrlabel",	do_ipaddrlabel },
 	{ "maddress",	do_multiaddr },
 	{ "route",	do_iproute },

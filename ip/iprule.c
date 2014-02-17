@@ -130,7 +130,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
 	}
 
- 	if (tb[FRA_FWMARK] || tb[FRA_FWMASK]) {
+	if (tb[FRA_FWMARK] || tb[FRA_FWMASK]) {
 		__u32 mark = 0, mask = 0;
 
 		if (tb[FRA_FWMARK])
@@ -243,9 +243,9 @@ static int iprule_modify(int cmd, int argc, char **argv)
 {
 	int table_ok = 0;
 	struct {
-		struct nlmsghdr 	n;
-		struct rtmsg 		r;
-		char   			buf[1024];
+		struct nlmsghdr	n;
+		struct rtmsg		r;
+		char  			buf[1024];
 	} req;
 
 	memset(&req, 0, sizeof(req));

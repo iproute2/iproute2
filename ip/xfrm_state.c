@@ -268,9 +268,9 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 {
 	struct rtnl_handle rth;
 	struct {
-		struct nlmsghdr 	n;
+		struct nlmsghdr	n;
 		struct xfrm_usersa_info xsinfo;
-		char   			buf[RTA_BUF_SIZE];
+		char  			buf[RTA_BUF_SIZE];
 	} req;
 	struct xfrm_replay_state replay;
 	char *idp = NULL;
@@ -655,9 +655,9 @@ static int xfrm_state_allocspi(int argc, char **argv)
 {
 	struct rtnl_handle rth;
 	struct {
-		struct nlmsghdr 	n;
+		struct nlmsghdr	n;
 		struct xfrm_userspi_info xspi;
-		char   			buf[RTA_BUF_SIZE];
+		char  			buf[RTA_BUF_SIZE];
 	} req;
 	char *idp = NULL;
 	char *minp = NULL;
@@ -912,9 +912,9 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 {
 	struct rtnl_handle rth;
 	struct {
-		struct nlmsghdr 	n;
+		struct nlmsghdr	n;
 		struct xfrm_usersa_id	xsid;
-		char   			buf[RTA_BUF_SIZE];
+		char  			buf[RTA_BUF_SIZE];
 	} req;
 	struct xfrm_id id;
 	char *idp = NULL;

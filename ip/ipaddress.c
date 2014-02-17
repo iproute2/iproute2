@@ -1277,9 +1277,9 @@ static int default_scope(inet_prefix *lcl)
 static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct ifaddrmsg 	ifa;
-		char   			buf[256];
+		struct nlmsghdr	n;
+		struct ifaddrmsg	ifa;
+		char  			buf[256];
 	} req;
 	char  *d = NULL;
 	char  *l = NULL;

@@ -961,7 +961,7 @@ static int xfrm_spd_getinfo(int argc, char **argv)
 	struct {
 		struct nlmsghdr			n;
 		__u32				flags;
-		char 				ans[128];
+		char				ans[128];
 	} req;
 
 	memset(&req, 0, sizeof(req));
