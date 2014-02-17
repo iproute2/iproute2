@@ -233,7 +233,7 @@ get_failed:
 				tos = uval;
 			} else
 				tos = 1;
-		} else 
+		} else
 			usage();
 		argc--; argv++;
 	}

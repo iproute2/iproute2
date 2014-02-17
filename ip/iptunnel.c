@@ -345,16 +345,16 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	if (p->iph.protocol == IPPROTO_IPV6 && (p->i_flags & SIT_ISATAP)) {
 		struct ip_tunnel_prl prl[16];
 		int i;
-		
+
 		memset(prl, 0, sizeof(prl));
 		prl[0].datalen = sizeof(prl) - sizeof(prl[0]);
 		prl[0].addr = htonl(INADDR_ANY);
-	
+
 		if (!tnl_prl_ioctl(SIOCGETPRL, p->name, prl))
 			for (i = 1; i < sizeof(prl) / sizeof(prl[0]); i++)
 		{
 			if (prl[i].addr != htonl(INADDR_ANY)) {
-				printf(" %s %s ", 
+				printf(" %s %s ",
 					(prl[i].flags & PRL_DEFAULT) ? "pdr" : "pr",
 					format_host(AF_INET, 4, &prl[i].addr, s1, sizeof(s1)));
 			}

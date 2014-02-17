@@ -837,7 +837,7 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			}
 			if (get_time_rtt(&rtt, *argv, &raw))
 				invarg("\"rtt\" value is invalid\n", *argv);
-			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTT, 
+			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_RTT,
 				(raw) ? rtt : rtt * 8);
 		} else if (strcmp(*argv, "rto_min") == 0) {
 			unsigned rto_min;

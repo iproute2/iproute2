@@ -125,7 +125,7 @@ static void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
 }
 
 static const char *oper_states[] = {
-	"UNKNOWN", "NOTPRESENT", "DOWN", "LOWERLAYERDOWN", 
+	"UNKNOWN", "NOTPRESENT", "DOWN", "LOWERLAYERDOWN",
 	"TESTING", "DORMANT",	 "UP"
 };
 

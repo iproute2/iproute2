@@ -1188,7 +1188,7 @@ static int print_sadinfo(struct nlmsghdr *n, void *arg)
 				fprintf(fp,"BAD SAD length returned\n");
 				return -1;
 			}
-				
+
 			si = RTA_DATA(tb[XFRMA_SAD_HINFO]);
 			fprintf(fp," (buckets ");
 			fprintf(fp,"count %d", si->sadhcnt);

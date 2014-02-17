@@ -198,7 +198,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	if (!dst_port_set) {
 		fprintf(stderr, "vxlan: destination port not specified\n"
 			"Will use Linux kernel default (non-standard value)\n");
-		fprintf(stderr, 
+		fprintf(stderr,
 			"Use 'dstport 4789' to get the IANA assigned value\n"
 			"Use 'dstport 0' to get default and quiet this message\n");
 	}

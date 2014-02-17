@@ -286,7 +286,7 @@ static int netns_pids(int argc, char **argv)
 	}
 	closedir(dir);
 	return 0;
-	
+
 }
 
 static int netns_identify(int argc, char **argv)
@@ -359,7 +359,7 @@ static int netns_identify(int argc, char **argv)
 	}
 	closedir(dir);
 	return 0;
-	
+
 }
 
 static int netns_delete(int argc, char **argv)
