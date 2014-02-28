@@ -43,7 +43,6 @@ static void print_slave_mii_status(FILE *f, struct rtattr *tb)
 {
 	unsigned int status = rta_getattr_u8(tb);
 
-	fprintf(f, "mii_status %d ", status);
 	if (status >= sizeof(slave_mii_status) / sizeof(slave_mii_status[0]))
 		fprintf(f, "mii_status %d ", status);
 	else
