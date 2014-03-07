@@ -194,10 +194,10 @@ static int rtnl_rtscope_init;
 static void rtnl_rtscope_initialize(void)
 {
 	rtnl_rtscope_init = 1;
-	rtnl_rtscope_tab[255] = "nowhere";
-	rtnl_rtscope_tab[254] = "host";
-	rtnl_rtscope_tab[253] = "link";
-	rtnl_rtscope_tab[200] = "site";
+	rtnl_rtscope_tab[RT_SCOPE_NOWHERE] = "nowhere";
+	rtnl_rtscope_tab[RT_SCOPE_HOST]    = "host";
+	rtnl_rtscope_tab[RT_SCOPE_LINK]    = "link";
+	rtnl_rtscope_tab[RT_SCOPE_SITE]    = "site";
 	rtnl_tab_initialize(CONFDIR "/rt_scopes",
 			    rtnl_rtscope_tab, 256);
 }
