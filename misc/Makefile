@@ -5,6 +5,11 @@ TARGETS=ss nstat ifstat rtacct arpd lnstat
 
 include ../Config
 
+ifeq ($(HAVE_SELINUX),y)
+	LDLIBS += $(shell pkg-config --libs libselinux)
+	CFLAGS += $(shell pkg-config --cflags libselinux) -DHAVE_SELINUX
+endif
+
 all: $(TARGETS)
 
 ss: $(SSOBJ)

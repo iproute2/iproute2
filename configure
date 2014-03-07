@@ -231,6 +231,18 @@ EOF
     rm -f $TMPDIR/ipsettest.c $TMPDIR/ipsettest
 }
 
+check_selinux()
+# SELinux is a compile time option in the ss utility
+{
+	if ${PKG_CONFIG} libselinux --exists
+	then
+		echo "HAVE_SELINUX:=y" >>Config
+		echo "yes"
+	else
+		echo "no"
+	fi
+}
+
 echo "# Generated config based on" $INCLUDE >Config
 check_toolchain
 
@@ -253,3 +265,6 @@ check_ipt_lib_dir
 
 echo -n "libc has setns: "
 check_setns
+
+echo -n "SELinux support: "
+check_selinux

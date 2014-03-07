@@ -53,6 +53,37 @@ Print summary statistics. This option does not parse socket lists obtaining
 summary from various sources. It is useful when amount of sockets is so huge
 that parsing /proc/net/tcp is painful.
 .TP
+.B \-Z, \-\-context
+As the
+.B \-p
+option but also shows process security context.
+.sp
+For
+.BR netlink (7)
+sockets the initiating process context is displayed as follows:
+.RS
+.RS
+.IP "1." 4
+If valid pid show the process context.
+.IP "2." 4
+If destination is kernel (pid = 0) show kernel initial context.
+.IP "3." 4
+If a unique identifier has been allocated by the kernel or netlink user,
+show context as "unavailable". This will generally indicate that a
+process has more than one netlink socket active.
+.RE
+.RE
+.TP
+.B \-z, \-\-contexts
+As the
+.B \-Z
+option but also shows the socket context. The socket context is
+taken from the associated inode and is not the actual socket
+context held by the kernel. Sockets are typically labeled with the
+context of the creating process, however the context shown will reflect
+any policy role, type and/or range transition rules applied,
+and is therefore a useful reference.
+.TP
 .B \-b, \-\-bpf
 Show socket BPF filters (only administrators are allowed to get these information).
 .TP
@@ -102,6 +133,9 @@ Please take a look at the official documentation (Debian package iproute-doc) fo
 .TP
 .B ss -t -a
 Display all TCP sockets.
+.TP
+.B ss -t -a -Z
+Display all TCP sockets with process SELinux security contexts.
 .TP
 .B ss -u -a
 Display all UDP sockets.
