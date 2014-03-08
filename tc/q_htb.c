@@ -62,6 +62,7 @@ static void explain1(char *arg)
 
 static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
+	unsigned int direct_qlen = ~0U;
 	struct tc_htb_glob opt;
 	struct rtattr *tail;
 	unsigned i; char *p;
@@ -86,6 +87,11 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 				if (*p<'0' || *p>'3') break;
 				opt.debug |= (*p-'0')<<(2*i);
 			}
+		} else if (matches(*argv, "direct_qlen") == 0) {
+			NEXT_ARG();
+			if (get_u32(&direct_qlen, *argv, 10)) {
+				explain1("direct_qlen"); return -1;
+			}
 		} else {
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
 			explain();
@@ -96,6 +102,9 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 2024, TCA_HTB_INIT, &opt, NLMSG_ALIGN(sizeof(opt)));
+	if (direct_qlen != ~0U)
+		addattr_l(n, 2024, TCA_HTB_DIRECT_QLEN,
+			  &direct_qlen, sizeof(direct_qlen));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
@@ -110,7 +119,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	unsigned mtu;
 	unsigned short mpu = 0;
 	unsigned short overhead = 0;
-	unsigned int direct_qlen = ~0U;
 	unsigned int linklayer  = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 	__u64 ceil64 = 0, rate64 = 0;
@@ -128,11 +136,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			NEXT_ARG();
 			if (get_u32(&mtu, *argv, 10)) {
 				explain1("mtu"); return -1;
-			}
-		} else if (matches(*argv, "direct_qlen") == 0) {
-			NEXT_ARG();
-			if (get_u32(&direct_qlen, *argv, 10)) {
-				explain1("direct_qlen"); return -1;
 			}
 		} else if (matches(*argv, "mpu") == 0) {
 			NEXT_ARG();
@@ -245,9 +248,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	opt.cbuffer = tc_calc_xmittime(ceil64, cbuffer);
 
 	tail = NLMSG_TAIL(n);
-	if (direct_qlen != ~0U)
-		addattr_l(n, 1024, TCA_HTB_DIRECT_QLEN,
-			  &direct_qlen, sizeof(direct_qlen));
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 
 	if (rate64 >= (1ULL << 32))
