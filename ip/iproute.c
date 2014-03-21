@@ -332,7 +332,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (n->nlmsg_type == RTM_DELROUTE)
 		fprintf(fp, "Deleted ");
-	if (r->rtm_type != RTN_UNICAST && !filter.type)
+	if ((r->rtm_type != RTN_UNICAST || show_details > 0) && !filter.type)
 		fprintf(fp, "%s ", rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
 
 	if (tb[RTA_DST]) {
@@ -389,11 +389,11 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "dev %s ", ll_index_to_name(*(int*)RTA_DATA(tb[RTA_OIF])));
 
 	if (!(r->rtm_flags&RTM_F_CLONED)) {
-		if (table != RT_TABLE_MAIN && !filter.tb)
+		if ((table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
 			fprintf(fp, " table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
-		if (r->rtm_protocol != RTPROT_BOOT && filter.protocolmask != -1)
+		if ((r->rtm_protocol != RTPROT_BOOT || show_details > 0) && filter.protocolmask != -1)
 			fprintf(fp, " proto %s ", rtnl_rtprot_n2a(r->rtm_protocol, b1, sizeof(b1)));
-		if (r->rtm_scope != RT_SCOPE_UNIVERSE && filter.scopemask != -1)
+		if ((r->rtm_scope != RT_SCOPE_UNIVERSE || show_details > 0) && filter.scopemask != -1)
 			fprintf(fp, " scope %s ", rtnl_rtscope_n2a(r->rtm_scope, b1, sizeof(b1)));
 	}
 	if (tb[RTA_PREFSRC] && filter.rprefsrc.bitlen != host_len) {

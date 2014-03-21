@@ -103,8 +103,13 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[NDA_DST]) {
 		SPRINT_BUF(abuf);
+		int family = AF_INET;
+
+		if (RTA_PAYLOAD(tb[NDA_DST]) == sizeof(struct in6_addr))
+			family = AF_INET6;
+
 		fprintf(fp, "dst %s ",
-			format_host(AF_INET,
+			format_host(family,
 				    RTA_PAYLOAD(tb[NDA_DST]),
 				    RTA_DATA(tb[NDA_DST]),
 				    abuf, sizeof(abuf)));
