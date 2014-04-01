@@ -55,7 +55,7 @@ change an existing entry
 .TP
 ip neighbour replace
 add a new entry or change an existing one
-
+.RS
 .PP
 These commands create new neighbour records or update existing ones.
 
@@ -100,11 +100,12 @@ This option to
 .B ip neigh
 does not change the neighbour state if it was valid and the address
 is not changed by this command.
-.RS
-ip neighbour delete - delete a neighbour entry
 .RE
-This command invalidates a neighbour entry.
 
+.TP
+ip neighbour delete
+delete a neighbour entry
+.RS
 .PP
 The arguments are the same as with
 .BR "ip neigh add" ,
@@ -123,13 +124,12 @@ Particularly, the kernel may try to resolve this address even
 on a
 .B NOARP
 interface or if the address is multicast or broadcast.
-
-.RS
-ip neighbour show - list neighbour entries
 .RE
 
-This command displays neighbour tables.
-
+.TP
+ip neighbour show
+list neighbour entries
+.RS
 .TP
 .BI to " ADDRESS " (default)
 the prefix selecting the neighbours to list.
@@ -159,15 +159,12 @@ lists all entries except for
 .B none
 and
 .BR "noarp" .
-
-.RS
-ip neighbour flush - flush neighbour entries
 .RE
 
-This command flushes neighbour tables, selecting
-entries to flush by some criteria.
-
-.PP
+.TP
+ip neighbour flush
+flush neighbour entries
+.RS
 This command has the same arguments as
 .B show.
 The differences are that it does not run when no arguments are given,
@@ -185,6 +182,7 @@ neighbour table.  If the option is given
 twice,
 .B ip neigh flush
 also dumps all the deleted neighbours.
+.RE
 
 .SH EXAMPLES
 .PP
