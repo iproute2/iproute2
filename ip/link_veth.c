@@ -34,11 +34,19 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 	int err, len;
 	struct rtattr * data;
 	int group;
+	struct ifinfomsg *ifm, *peer_ifm;
+	unsigned int ifi_flags, ifi_change;
 
 	if (strcmp(argv[0], "peer") != 0) {
 		usage();
 		return -1;
 	}
+
+	ifm = NLMSG_DATA(hdr);
+	ifi_flags = ifm->ifi_flags;
+	ifi_change = ifm->ifi_change;
+	ifm->ifi_flags = 0;
+	ifm->ifi_change = 0;
 
 	data = NLMSG_TAIL(hdr);
 	addattr_l(hdr, 1024, VETH_INFO_PEER, NULL, 0);
@@ -57,10 +65,12 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr_l(hdr, 1024, IFLA_IFNAME, name, len);
 	}
 
-	if (index) {
-		struct ifinfomsg *ifi = (struct ifinfomsg *)(data + 1);
-		ifi->ifi_index = index;
-	}
+	peer_ifm = RTA_DATA(data);
+	peer_ifm->ifi_index = index;
+	peer_ifm->ifi_flags = ifm->ifi_flags;
+	peer_ifm->ifi_change = ifm->ifi_change;
+	ifm->ifi_flags = ifi_flags;
+	ifm->ifi_change = ifi_change;
 
 	if (group != -1)
 		addattr32(hdr, 1024, IFLA_GROUP, group);
