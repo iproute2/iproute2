@@ -1398,8 +1398,10 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		}
 		argc--; argv++;
 	}
-	req.ifa.ifa_flags = ifa_flags;
-	addattr32(&req.n, sizeof(req), IFA_FLAGS, ifa_flags);
+	if (ifa_flags <= 0xff)
+		req.ifa.ifa_flags = ifa_flags;
+	else
+		addattr32(&req.n, sizeof(req), IFA_FLAGS, ifa_flags);
 
 	if (d == NULL) {
 		fprintf(stderr, "Not enough information: \"dev\" argument is required.\n");
