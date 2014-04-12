@@ -1136,7 +1136,30 @@ static int xfrm_state_list_or_deleteall(int argc, char **argv, int deleteall)
 		}
 
 	} else {
-		if (rtnl_wilddump_request(&rth, preferred_family, XFRM_MSG_GETSA) < 0) {
+		struct xfrm_address_filter addrfilter = {
+			.saddr = filter.xsinfo.saddr,
+			.daddr = filter.xsinfo.id.daddr,
+			.family = filter.xsinfo.family,
+			.splen = filter.id_src_mask,
+			.dplen = filter.id_dst_mask,
+		};
+		struct {
+			struct nlmsghdr n;
+			char buf[NLMSG_BUF_SIZE];
+		} req = {
+			.n.nlmsg_len = NLMSG_HDRLEN,
+			.n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+			.n.nlmsg_type = XFRM_MSG_GETSA,
+			.n.nlmsg_seq = rth.dump = ++rth.seq,
+		};
+
+		if (filter.xsinfo.id.proto)
+			addattr8(&req.n, sizeof(req), XFRMA_PROTO,
+				 filter.xsinfo.id.proto);
+		addattr_l(&req.n, sizeof(req), XFRMA_ADDRESS_FILTER,
+			  &addrfilter, sizeof(addrfilter));
+
+		if (rtnl_send(&rth, (void *)&req, req.n.nlmsg_len) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
