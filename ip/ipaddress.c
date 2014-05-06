@@ -313,7 +313,8 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	}
 }
 
-static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s) {
+static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
+                               const struct rtattr *carrier_changes) {
 	fprintf(fp, "%s", _SL_);
 	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
 		s->rx_compressed ? "compressed" : "", _SL_);
@@ -352,16 +353,23 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s) {
 			(uint64_t)s->tx_compressed);
 	if (show_stats > 1) {
 		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    TX errors: aborted fifo    window  heartbeat%s", _SL_);
-		fprintf(fp, "               %-7"PRIu64"  %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
+		fprintf(fp, "    TX errors: aborted fifo    window  heartbeat");
+                if (carrier_changes)
+			fprintf(fp, " transns");
+		fprintf(fp, _SL_);
+		fprintf(fp, "               %-7"PRIu64"  %-7"PRIu64" %-7"PRIu64" %-8"PRIu64"",
 			(uint64_t)s->tx_aborted_errors,
 			(uint64_t)s->tx_fifo_errors,
 			(uint64_t)s->tx_window_errors,
 			(uint64_t)s->tx_heartbeat_errors);
+		if (carrier_changes)
+			fprintf(fp, " %-7u",
+				*(uint32_t*)RTA_DATA(carrier_changes));
 	}
 }
 
-static void print_link_stats(FILE *fp, const struct rtnl_link_stats *s)
+static void print_link_stats(FILE *fp, const struct rtnl_link_stats *s,
+			     const struct rtattr *carrier_changes)
 {
 	fprintf(fp, "%s", _SL_);
 	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
@@ -394,13 +402,19 @@ static void print_link_stats(FILE *fp, const struct rtnl_link_stats *s)
 		fprintf(fp, " %-7u", s->tx_compressed);
 	if (show_stats > 1) {
 		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    TX errors: aborted fifo    window  heartbeat%s", _SL_);
-		fprintf(fp, "               %-7u  %-7u %-7u %-7u",
+		fprintf(fp, "    TX errors: aborted fifo    window  heartbeat");
+                if (carrier_changes)
+			fprintf(fp, " transns");
+		fprintf(fp, _SL_);
+		fprintf(fp, "               %-7u  %-7u %-7u %-8u",
 			s->tx_aborted_errors,
 			s->tx_fifo_errors,
 			s->tx_window_errors,
 			s->tx_heartbeat_errors
 			);
+		if (carrier_changes)
+			fprintf(fp, " %-7u",
+				*(uint32_t*)RTA_DATA(carrier_changes));
 	}
 }
 
@@ -522,9 +536,11 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (do_link && show_stats) {
 		if (tb[IFLA_STATS64])
-			print_link_stats64(fp, RTA_DATA(tb[IFLA_STATS64]));
+			print_link_stats64(fp, RTA_DATA(tb[IFLA_STATS64]),
+					   tb[IFLA_CARRIER_CHANGES]);
 		else if (tb[IFLA_STATS])
-			print_link_stats(fp, RTA_DATA(tb[IFLA_STATS]));
+			print_link_stats(fp, RTA_DATA(tb[IFLA_STATS]),
+					 tb[IFLA_CARRIER_CHANGES]);
 	}
 
 	if (do_link && tb[IFLA_VFINFO_LIST] && tb[IFLA_NUM_VF]) {
