@@ -152,10 +152,10 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 				 strcmp(*argv, "any") == 0)
 				p->proto = 0;
 			else {
-                                fprintf(stderr,"Unknown tunnel mode \"%s\"\n", *argv);
-                                exit(-1);
-                        }
-                } else if (strcmp(*argv, "remote") == 0) {
+				fprintf(stderr,"Unknown tunnel mode \"%s\"\n", *argv);
+				exit(-1);
+			}
+		} else if (strcmp(*argv, "remote") == 0) {
 			inet_prefix raddr;
 			NEXT_ARG();
 			get_prefix(&raddr, *argv, preferred_family);
@@ -234,7 +234,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 			if (strchr(*argv, '.'))
 				p->i_key = p->o_key = get_addr32(*argv);
 			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
+				if (get_unsigned(&uval, *argv, 0) < 0) {
 					fprintf(stderr, "invalid value of \"key\"\n");
 					exit(-1);
 				}
