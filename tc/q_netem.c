@@ -263,6 +263,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				set_percent(&gimodel.p31, 1. - p13);
 				set_percent(&gimodel.p32, 0);
 				set_percent(&gimodel.p23, 1.);
+				set_percent(&gimodel.p14, 0);
 				loss_type = NETEM_LOSS_GI;
 
 				if (!NEXT_IS_NUMBER())
@@ -286,6 +287,13 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				NEXT_ARG();
 				if (get_percent(&gimodel.p23, *argv)) {
 					explain1("loss p23");
+					return -1;
+				}
+				if (!NEXT_IS_NUMBER())
+					continue;
+				NEXT_ARG();
+				if (get_percent(&gimodel.p14, *argv)) {
+					explain1("loss p14");
 					return -1;
 				}
 
@@ -569,7 +577,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 			parse_rtattr_nested(lb, NETEM_LOSS_MAX, tb[TCA_NETEM_LOSS]);
 			if (lb[NETEM_LOSS_GI])
-				gemodel = RTA_DATA(lb[NETEM_LOSS_GI]);
+				gimodel = RTA_DATA(lb[NETEM_LOSS_GI]);
 			if (lb[NETEM_LOSS_GE])
 				gemodel = RTA_DATA(lb[NETEM_LOSS_GE]);
 		}			
