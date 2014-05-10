@@ -302,16 +302,16 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		}
 	}
 
-	if (show_raw)
-		fprintf(f, "limit %s ", sprint_size(qopt->limit, b1));
-
 	latency = TIME_UNITS_PER_SEC*(qopt->limit/(double)rate64) - tc_core_tick2time(qopt->buffer);
 	if (prate64) {
 		double lat2 = TIME_UNITS_PER_SEC*(qopt->limit/(double)prate64) - tc_core_tick2time(qopt->mtu);
 		if (lat2 > latency)
 			latency = lat2;
 	}
-	fprintf(f, "lat %s ", sprint_time(latency, b1));
+	if (latency >= 0.0)
+		fprintf(f, "lat %s ", sprint_time(latency, b1));
+	if (show_raw || latency < 0.0)
+		fprintf(f, "limit %s ", sprint_size(qopt->limit, b1));
 
 	if (qopt->rate.overhead) {
 		fprintf(f, "overhead %d", qopt->rate.overhead);
