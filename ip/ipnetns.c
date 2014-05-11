@@ -435,7 +435,7 @@ static int netns_add(int argc, char **argv)
 	/* Create the filesystem state */
 	fd = open(netns_path, O_RDONLY|O_CREAT|O_EXCL, 0);
 	if (fd < 0) {
-		fprintf(stderr, "Cannot not create namespace file \"%s\": %s\n",
+		fprintf(stderr, "Cannot create namespace file \"%s\": %s\n",
 			netns_path, strerror(errno));
 		return -1;
 	}
