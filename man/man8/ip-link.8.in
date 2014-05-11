@@ -124,7 +124,8 @@ ip-link \- network device configuration
 .IR VLAN-QOS " ] ] ["
 .B rate
 .IR TXRATE " ] ["
-.B spoofchk { on | off }
+.B spoofchk { on | off } ] [
+.B state { auto | enable | disable}
 ] |
 .br
 .B master
@@ -225,7 +226,7 @@ specifies the desired index of the new virtual device. The link creation fails, 
 
 .TP
 VXLAN Type Support
-For a link of type 
+For a link of type
 .I VXLAN
 the following additional arguments are supported:
 
@@ -321,7 +322,7 @@ are entered into the VXLAN device forwarding database.
 
 .TP
 IP6GRE/IP6GRETAP Type Support
-For a link of type 
+For a link of type
 .I IP6GRE/IP6GRETAP
 the following additional arguments are supported:
 
@@ -403,7 +404,7 @@ flag is equivalent to the combination
 
 .sp
 .BI  flowlabel " FLOWLABEL"
-- specifies a fixed flowlabel. 
+- specifies a fixed flowlabel.
 
 .sp
 .BI  tclass " TCLASS"
@@ -576,6 +577,12 @@ parameter must be specified.
 .sp
 .BI spoofchk " on|off"
 - turn packet spoof checking on or off for the specified VF.
+.sp
+.BI state " auto|enable|disable"
+- set the virtual link state as seen by the specified VF. Setting to auto means a
+reflection of the PF link state, enable lets the VF to communicate with other VFs on
+this host even if the PF link state is down, disable causes the HW to drop any packets
+sent by the VF.
 .in -8
 
 .TP
