@@ -485,6 +485,14 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		fprintf(fp, "master %s ", ll_idx_n2a(*(int*)RTA_DATA(tb[IFLA_MASTER]), b1));
 	}
 
+	if (tb[IFLA_PHYS_PORT_ID]) {
+		SPRINT_BUF(b1);
+		fprintf(fp, "portid %s ",
+			hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_PORT_ID]),
+				      RTA_PAYLOAD(tb[IFLA_PHYS_PORT_ID]),
+				      b1, sizeof(b1)));
+	}
+
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
 
