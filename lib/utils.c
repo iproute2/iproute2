@@ -743,10 +743,6 @@ char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen)
 		sprintf(ptr, "%02x", str[i]);
 		ptr += 2;
 		blen -= 2;
-		if (i != len-1 && blen > 1) {
-			*ptr++ = ':';
-			blen--;
-		}
 	}
 	return buf;
 }
@@ -754,38 +750,22 @@ char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen)
 __u8* hexstring_a2n(const char *str, __u8 *buf, int blen)
 {
 	int cnt = 0;
+	char *endptr;
 
-	for (;;) {
-		unsigned acc;
-		char ch;
+	if (strlen(str) % 2)
+		return NULL;
+	while (cnt < blen && strlen(str) > 1) {
+		unsigned int tmp;
+		char tmpstr[3];
 
-		acc = 0;
-
-		while ((ch = *str) != ':' && ch != 0) {
-			if (ch >= '0' && ch <= '9')
-				ch -= '0';
-			else if (ch >= 'a' && ch <= 'f')
-				ch -= 'a'-10;
-			else if (ch >= 'A' && ch <= 'F')
-				ch -= 'A'-10;
-			else
-				return NULL;
-			acc = (acc<<4) + ch;
-			str++;
-		}
-
-		if (acc > 255)
+		strncpy(tmpstr, str, 2);
+		tmpstr[2] = '\0';
+		tmp = strtoul(tmpstr, &endptr, 16);
+		if (errno != 0 || tmp > 0xFF || *endptr != '\0')
 			return NULL;
-		if (cnt < blen) {
-			buf[cnt] = acc;
-			cnt++;
-		}
-		if (ch == 0)
-			break;
-		++str;
+		buf[cnt++] = tmp;
+		str += 2;
 	}
-	if (cnt < blen)
-		memset(buf+cnt, 0, blen-cnt);
 	return buf;
 }
 
