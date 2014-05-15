@@ -36,6 +36,7 @@
 
 #include "libnetlink.h"
 #include "utils.h"
+#include "rt_names.h"
 
 int resolve_hosts;
 
@@ -721,8 +722,7 @@ int main(int argc, char **argv)
 				goto do_abort;
 			}
 
-			dbdat.data = hexstring_a2n(macbuf, b1, 6);
-			if (dbdat.data == NULL)
+			if (ll_addr_a2n((char *) b1, 6, macbuf) != 6)
 				goto do_abort;
 			dbdat.size = 6;
 
@@ -747,7 +747,7 @@ int main(int argc, char **argv)
 					printf("%-8d %-15s %s\n",
 					       key->iface,
 					       inet_ntoa(*(struct in_addr*)&key->addr),
-					       hexstring_n2a(dbdat.data, 6, b1, 18));
+					       ll_addr_n2a(dbdat.data, 6, ARPHRD_ETHER, b1, 18));
 				} else {
 					printf("%-8d %-15s FAILED: %dsec ago\n",
 					       key->iface,
