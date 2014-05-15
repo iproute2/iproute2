@@ -163,9 +163,6 @@ Link types:
 .B bond
 - Bonding device
 .sp
-.B can
-- Controller Area Network interface
-.sp
 .B dummy
 - Dummy network interface
 .sp
@@ -179,7 +176,7 @@ Link types:
 - Virtual interface base on link layer address (MAC)
 .sp
 .B vcan
-- Virtual Local CAN interface
+- Virtual Controller Area Network interface
 .sp
 .B veth
 - Virtual ethernet interface
