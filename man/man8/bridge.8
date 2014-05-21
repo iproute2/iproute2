@@ -36,6 +36,8 @@ bridge \- show / manipulate bridge addresses and devices
 .BR hairpin " { " on " | " off " } ] [ "
 .BR fastleave " { " on " | " off " } ] [ "
 .BR root_block " { " on " | " off " } ] [ "
+.BR learning " { " on " | " off " } ] [ "
+.BR flood " { " on " | " off " } ] [ "
 .BR hwmode " { " vepa " | " veb " } ] "
 
 .ti -8
@@ -232,6 +234,16 @@ enabled on the bridge.  By default the flag is off.
 .BR "root_block on " or " root_block off "
 Controls whether a given port is allowed to become root port or not.  Only used
 when STP is enabled on the bridge.  By default the flag is off.
+
+.TP
+.BR "learning on " or " learning off "
+Controls whether a given port will learn MAC addresses from received traffic or
+not.  If learning if off, the bridge will end up flooding any traffic for which
+it has no FDB entry.  By default this flag is on.
+
+.TP
+.BR "flooding on " or " flooding off "
+Controls whether a given port will flood unicast traffic for which there is no FDB entry.  By default this flag is on.
 
 .TP
 .BI hwmode
