@@ -149,7 +149,6 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 
 	while (argc > 0) {
 
-		fprintf(stderr,"police argc %d argv %s\n", argc, *argv);
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (get_u32(&p.index, *argv, 10)) {
