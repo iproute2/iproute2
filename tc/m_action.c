@@ -249,37 +249,38 @@ static int
 tc_print_one_action(FILE * f, struct rtattr *arg)
 {
 
-	struct rtattr *tb[TCA_ACT_MAX + 1];
+	struct rtattr *tb[TCA_MAX + 1];
 	int err = 0;
 	struct action_util *a = NULL;
 
 	if (arg == NULL)
 		return -1;
 
-	parse_rtattr_nested(tb, TCA_ACT_MAX, arg);
-	if (tb[TCA_ACT_KIND] == NULL) {
+	parse_rtattr_nested(tb, TCA_MAX, arg);
+	if (tb[TCA_KIND] == NULL) {
 		fprintf(stderr, "NULL Action!\n");
 		return -1;
 	}
 
 
-	a = get_action_kind(RTA_DATA(tb[TCA_ACT_KIND]));
+	a = get_action_kind(RTA_DATA(tb[TCA_KIND]));
 	if (NULL == a)
 		return err;
 
 	if (tab_flush) {
-		fprintf(f," %s \n", a->id);
+		__u32 *delete_count = RTA_DATA(tb[TCA_FCNT]);
+		fprintf(f," %s (%d entries)\n", a->id, *delete_count);
 		tab_flush = 0;
 		return 0;
 	}
 
-	err = a->print_aopt(a,f,tb[TCA_ACT_OPTIONS]);
+	err = a->print_aopt(a,f,tb[TCA_OPTIONS]);
 
 
 	if (0 > err)
 		return err;
 
-	if (show_stats && tb[TCA_ACT_STATS]) {
+	if (show_stats && tb[TCA_STATS]) {
 		fprintf(f, "\tAction statistics:\n");
 		print_tcstats2_attr(f, tb[TCA_ACT_STATS], "\t", NULL);
 		fprintf(f, "\n");
