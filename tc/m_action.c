@@ -185,6 +185,10 @@ parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 			}
 #endif
 			continue;
+		} else if (strcmp(*argv, "flowid") == 0) {
+			break;
+		} else if (strcmp(*argv, "classid") == 0) {
+			break;
 		} else if (strcmp(*argv, "help") == 0) {
 			return -1;
 		} else if (new_cmd(argv)) {
