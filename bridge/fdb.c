@@ -20,6 +20,7 @@
 #include <linux/if_ether.h>
 #include <linux/neighbour.h>
 #include <string.h>
+#include <limits.h>
 
 #include "libnetlink.h"
 #include "br_common.h"

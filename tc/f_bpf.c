@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <limits.h>
 #include <linux/filter.h>
 #include <linux/if.h>
 
