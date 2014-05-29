@@ -31,7 +31,7 @@ HOSTCC = gcc
 DEFINES += -D_GNU_SOURCE
 CCOPTS = -O2
 WFLAGS := -Wall -Wstrict-prototypes  -Wmissing-prototypes
-WFLAGS += -Wmissing-declarations -Wold-style-definition
+WFLAGS += -Wmissing-declarations -Wold-style-definition -Wformat=2
 
 CFLAGS = $(WFLAGS) $(CCOPTS) -I../include $(DEFINES)
 YACCFLAGS = -d -t -v

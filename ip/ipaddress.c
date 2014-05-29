@@ -357,7 +357,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 		fprintf(fp, "    TX errors: aborted fifo    window  heartbeat");
                 if (carrier_changes)
 			fprintf(fp, " transns");
-		fprintf(fp, _SL_);
+		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "               %-7"PRIu64"  %-7"PRIu64" %-7"PRIu64" %-8"PRIu64"",
 			(uint64_t)s->tx_aborted_errors,
 			(uint64_t)s->tx_fifo_errors,
@@ -406,7 +406,7 @@ static void print_link_stats(FILE *fp, const struct rtnl_link_stats *s,
 		fprintf(fp, "    TX errors: aborted fifo    window  heartbeat");
                 if (carrier_changes)
 			fprintf(fp, " transns");
-		fprintf(fp, _SL_);
+		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "               %-7u  %-7u %-7u %-8u",
 			s->tx_aborted_errors,
 			s->tx_fifo_errors,
