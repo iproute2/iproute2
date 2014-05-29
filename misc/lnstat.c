@@ -98,11 +98,8 @@ static void print_line(FILE *of, const struct lnstat_file *lnstat_files,
 
 	for (i = 0; i < fp->num; i++) {
 		const struct lnstat_field *lf = fp->params[i].lf;
-		char formatbuf[255];
 
-		snprintf(formatbuf, sizeof(formatbuf)-1, "%%%ulu|",
-			 fp->params[i].print.width);
-		fprintf(of, formatbuf, lf->result);
+		fprintf(of, "%*lu|", fp->params[i].print.width, lf->result);
 	}
 	fputc('\n', of);
 }
@@ -198,21 +195,20 @@ static struct table_hdr *build_hdr_string(struct lnstat_file *lnstat_files,
 
 	for (i = 0; i < fps->num; i++) {
 		char *cname, *fname = fps->params[i].lf->name;
-		char fmt[12];
 		unsigned int width = fps->params[i].print.width;
 
-		snprintf(fmt, sizeof(fmt)-1, "%%%u.%us|", width, width);
-
-		snprintf(th.hdr[0]+ofs, width+2, fmt,
+		snprintf(th.hdr[0]+ofs, width+2, "%*.*s|", width, width,
 			 fps->params[i].lf->file->basename);
 
 		cname = fname;
 		for (h = 1; h < HDR_LINES; h++) {
 			if (cname - fname >= strlen(fname))
-				snprintf(th.hdr[h]+ofs, width+2, fmt, "");
+				snprintf(th.hdr[h]+ofs, width+2,
+					 "%*.*s|", width, width, "");
 			else {
 				th.num_lines = h+1;
-				snprintf(th.hdr[h]+ofs, width+2, fmt, cname);
+				snprintf(th.hdr[h]+ofs, width+2,
+					 "%*.*s|", width, width, cname);
 			}
 			cname += width;
 		}
