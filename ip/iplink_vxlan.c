@@ -99,8 +99,11 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);
-			if (link == 0)
+			if (link == 0) {
+				fprintf(stderr, "Cannot find device \"%s\"\n",
+					*argv);
 				exit(-1);
+			}
 		} else if (!matches(*argv, "ttl") ||
 			   !matches(*argv, "hoplimit")) {
 			unsigned uval;

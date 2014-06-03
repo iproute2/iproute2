@@ -250,8 +250,11 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 
 	if (medium[0]) {
 		p->link = if_nametoindex(medium);
-		if (p->link == 0)
+		if (p->link == 0) {
+			fprintf(stderr, "Cannot find device \"%s\"\n",
+				medium);
 			return -1;
+		}
 	}
 
 	if (p->i_key == 0 && IN_MULTICAST(ntohl(p->iph.daddr))) {
