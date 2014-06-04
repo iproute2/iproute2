@@ -15,7 +15,7 @@
 #include "utils.h"
 #include "br_common.h"
 
-unsigned int filter_index;
+static unsigned int filter_index;
 
 static const char *port_states[] = {
 	[BR_STATE_DISABLED] = "disabled",

@@ -24,7 +24,7 @@
 	((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct br_port_msg))))
 #endif
 
-int filter_index;
+static unsigned int filter_index;
 
 static void usage(void)
 {

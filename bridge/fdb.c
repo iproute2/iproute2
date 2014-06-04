@@ -27,7 +27,7 @@
 #include "rt_names.h"
 #include "utils.h"
 
-int filter_index;
+static unsigned int filter_index;
 
 static void usage(void)
 {

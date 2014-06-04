@@ -13,7 +13,7 @@
 #include "br_common.h"
 #include "utils.h"
 
-int filter_index;
+static unsigned int filter_index;
 
 static void usage(void)
 {
