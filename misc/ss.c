@@ -1583,6 +1583,16 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 					 / rtt));
 		}
 
+		if (info->tcpi_pacing_rate &&
+		    info->tcpi_pacing_rate != ~0ULL) {
+			printf(" pacing_rate %sbps",
+				sprint_bw(b1, info->tcpi_pacing_rate * 8.));
+
+			if (info->tcpi_max_pacing_rate &&
+			    info->tcpi_max_pacing_rate != ~0ULL)
+				printf("/%sbps",
+					sprint_bw(b1, info->tcpi_max_pacing_rate * 8.));
+		}
 		if (info->tcpi_unacked)
 			printf(" unacked:%u", info->tcpi_unacked);
 		if (info->tcpi_retrans || info->tcpi_total_retrans)
