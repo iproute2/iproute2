@@ -290,10 +290,10 @@ static int do_add(int cmd, int argc, char **argv)
 
 	switch (p.iph.protocol) {
 	case IPPROTO_IPIP:
-		if (p.i_flags != VTI_ISVTI)
-			return tnl_add_ioctl(cmd, "tunl0", p.name, &p);
-		else
+		if (p.i_flags & VTI_ISVTI)
 			return tnl_add_ioctl(cmd, "ip_vti0", p.name, &p);
+		else
+			return tnl_add_ioctl(cmd, "tunl0", p.name, &p);
 	case IPPROTO_GRE:
 		return tnl_add_ioctl(cmd, "gre0", p.name, &p);
 	case IPPROTO_IPV6:
@@ -314,10 +314,10 @@ static int do_del(int argc, char **argv)
 
 	switch (p.iph.protocol) {
 	case IPPROTO_IPIP:
-		if (p.i_flags != VTI_ISVTI)
-			return tnl_del_ioctl("tunl0", p.name, &p);
-		else
+		if (p.i_flags & VTI_ISVTI)
 			return tnl_del_ioctl("ip_vti0", p.name, &p);
+		else
+			return tnl_del_ioctl("tunl0", p.name, &p);
 	case IPPROTO_GRE:
 		return tnl_del_ioctl("gre0", p.name, &p);
 	case IPPROTO_IPV6:
@@ -506,10 +506,10 @@ static int do_show(int argc, char **argv)
 
 	switch (p.iph.protocol) {
 	case IPPROTO_IPIP:
-		if (p.i_flags != VTI_ISVTI)
-			err = tnl_get_ioctl(p.name[0] ? p.name : "tunl0", &p);
-		else
+		if (p.i_flags & VTI_ISVTI)
 			err = tnl_get_ioctl(p.name[0] ? p.name : "ip_vti0", &p);
+		else
+			err = tnl_get_ioctl(p.name[0] ? p.name : "tunl0", &p);
 		break;
 	case IPPROTO_GRE:
 		err = tnl_get_ioctl(p.name[0] ? p.name : "gre0", &p);
