@@ -215,13 +215,37 @@ struct iplink_req {
 };
 
 static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
-			   struct iplink_req *req)
+			   struct iplink_req *req, int dev_index)
 {
+	char new_rate_api = 0, count = 0, override_legacy_rate = 0;
+	struct ifla_vf_rate tivt;
 	int len, argc = *argcp;
 	char **argv = *argvp;
 	struct rtattr *vfinfo;
 
+	tivt.min_tx_rate = -1;
+	tivt.max_tx_rate = -1;
+
 	vfinfo = addattr_nest(&req->n, sizeof(*req), IFLA_VF_INFO);
+
+	while (NEXT_ARG_OK()) {
+		NEXT_ARG();
+		count++;
+		if (!matches(*argv, "max_tx_rate")) {
+			/* new API in use */
+			new_rate_api = 1;
+			/* override legacy rate */
+			override_legacy_rate = 1;
+		} else if (!matches(*argv, "min_tx_rate")) {
+			/* new API in use */
+			new_rate_api = 1;
+		}
+	}
+
+	while (count--) {
+		/* rewind arg */
+		PREV_ARG();
+	}
 
 	while (NEXT_ARG_OK()) {
 		NEXT_ARG();
@@ -261,7 +285,25 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 				invarg("Invalid \"rate\" value\n", *argv);
 			}
 			ivt.vf = vf;
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
+			if (!new_rate_api)
+				addattr_l(&req->n, sizeof(*req),
+					  IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
+			else if (!override_legacy_rate)
+				tivt.max_tx_rate = ivt.rate;
+
+		} else if (matches(*argv, "max_tx_rate") == 0) {
+			NEXT_ARG();
+			if (get_unsigned(&tivt.max_tx_rate, *argv, 0))
+				invarg("Invalid \"max tx rate\" value\n",
+				       *argv);
+			tivt.vf = vf;
+
+		} else if (matches(*argv, "min_tx_rate") == 0) {
+			NEXT_ARG();
+			if (get_unsigned(&tivt.min_tx_rate, *argv, 0))
+				invarg("Invalid \"min tx rate\" value\n",
+				       *argv);
+			tivt.vf = vf;
 
 		} else if (matches(*argv, "spoofchk") == 0) {
 			struct ifla_vf_spoofchk ivs;
@@ -295,6 +337,19 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 		}
 	}
 
+	if (new_rate_api) {
+		int tmin, tmax;
+		if (tivt.min_tx_rate == -1 || tivt.max_tx_rate == -1) {
+			ipaddr_get_vf_rate(tivt.vf, &tmin, &tmax, dev_index);
+			if (tivt.min_tx_rate == -1)
+				tivt.min_tx_rate = tmin;
+			if (tivt.max_tx_rate == -1)
+				tivt.max_tx_rate = tmax;
+		}
+		addattr_l(&req->n, sizeof(*req), IFLA_VF_RATE, &tivt,
+			  sizeof(tivt));
+	}
+
 	if (argc == *argcp)
 		incomplete_command();
 
@@ -316,6 +371,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	int vf = -1;
 	int numtxqueues = -1;
 	int numrxqueues = -1;
+	int dev_index;
 
 	*group = -1;
 	ret = argc;
@@ -428,7 +484,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			}
 			vflist = addattr_nest(&req->n, sizeof(*req),
 					      IFLA_VFINFO_LIST);
-			len = iplink_parse_vf(vf, &argc, &argv, req);
+			len = iplink_parse_vf(vf, &argc, &argv, req, dev_index);
 			if (len < 0)
 				return -1;
 			addattr_nest_end(&req->n, vflist);
@@ -510,6 +566,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (*dev)
 				duparg2("dev", *argv);
 			*dev = *argv;
+			dev_index = ll_name_to_index(*dev);
 		}
 		argc--; argv++;
 	}

@@ -245,6 +245,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
 	struct ifla_vf_vlan *vf_vlan;
+	struct ifla_vf_rate *vf_rate;
 	struct ifla_vf_tx_rate *vf_tx_rate;
 	struct ifla_vf_spoofchk *vf_spoofchk;
 	struct ifla_vf_link_state *vf_linkstate;
@@ -262,6 +263,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	vf_mac = RTA_DATA(vf[IFLA_VF_MAC]);
 	vf_vlan = RTA_DATA(vf[IFLA_VF_VLAN]);
 	vf_tx_rate = RTA_DATA(vf[IFLA_VF_TX_RATE]);
+	vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
 
 	/* Check if the spoof checking vf info type is supported by
 	 * this kernel.
@@ -297,6 +299,10 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		fprintf(fp, ", qos %d", vf_vlan->qos);
 	if (vf_tx_rate->rate)
 		fprintf(fp, ", tx rate %d (Mbps)", vf_tx_rate->rate);
+	if (vf_rate->max_tx_rate)
+		fprintf(fp, ", max_tx_rate %dMbps", vf_rate->max_tx_rate);
+	if (vf_rate->min_tx_rate)
+		fprintf(fp, ", min_tx_rate %dMbps", vf_rate->min_tx_rate);
 	if (vf_spoofchk && vf_spoofchk->setting != -1) {
 		if (vf_spoofchk->setting)
 			fprintf(fp, ", spoof checking on");
@@ -1276,6 +1282,63 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	free_nlmsg_chain(&linfo);
 
 	return 0;
+}
+
+static void
+ipaddr_loop_each_vf(struct rtattr *tb[], int vfnum, int *min, int *max)
+{
+	struct rtattr *vflist = tb[IFLA_VFINFO_LIST];
+	struct rtattr *i, *vf[IFLA_VF_MAX+1];
+	struct ifla_vf_rate *vf_rate;
+	int rem;
+
+	rem = RTA_PAYLOAD(vflist);
+
+	for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+		parse_rtattr_nested(vf, IFLA_VF_MAX, i);
+		vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
+		if (vf_rate->vf == vfnum) {
+			*min = vf_rate->min_tx_rate;
+			*max = vf_rate->max_tx_rate;
+			return;
+		}
+	}
+	fprintf(stderr, "Cannot find VF %d\n", vfnum);
+	exit(1);
+}
+
+void ipaddr_get_vf_rate(int vfnum, int *min, int *max, int idx)
+{
+	struct nlmsg_chain linfo = { NULL, NULL};
+	struct rtattr *tb[IFLA_MAX+1];
+	struct ifinfomsg *ifi;
+	struct nlmsg_list *l;
+	struct nlmsghdr *n;
+	int len;
+
+	if (rtnl_wilddump_request(&rth, AF_UNSPEC, RTM_GETLINK) < 0) {
+		perror("Cannot send dump request");
+		exit(1);
+	}
+	if (rtnl_dump_filter(&rth, store_nlmsg, &linfo) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		exit(1);
+	}
+	for (l = linfo.head; l; l = l->next) {
+		n = &l->h;
+		ifi = NLMSG_DATA(n);
+
+		len = n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
+		if (len < 0 || idx && idx != ifi->ifi_index)
+			continue;
+
+		parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
+
+		if ((tb[IFLA_VFINFO_LIST] && tb[IFLA_NUM_VF])) {
+			ipaddr_loop_each_vf(tb, vfnum, min, max);
+			return;
+		}
+	}
 }
 
 int ipaddr_list_link(int argc, char **argv)

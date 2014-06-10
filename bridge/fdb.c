@@ -147,7 +147,10 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 	if (r->ndm_flags & NTF_SELF)
 		fprintf(fp, "self ");
-	if (r->ndm_flags & NTF_MASTER)
+	if (tb[NDA_MASTER])
+		fprintf(fp, "master %s ",
+			ll_index_to_name(rta_getattr_u32(tb[NDA_MASTER])));
+	else if (r->ndm_flags & NTF_MASTER)
 		fprintf(fp, "master ");
 	if (r->ndm_flags & NTF_ROUTER)
 		fprintf(fp, "router ");
