@@ -1,1 +1,1 @@
-static const char SNAPSHOT[] = "140411";
+static const char SNAPSHOT[] = "140610";
