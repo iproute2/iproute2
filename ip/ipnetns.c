@@ -158,7 +158,7 @@ static int netns_exec(int argc, char **argv)
 	}
 
 	if (setns(netns, CLONE_NEWNET) < 0) {
-		fprintf(stderr, "seting the network namespace \"%s\" failed: %s\n",
+		fprintf(stderr, "setting the network namespace \"%s\" failed: %s\n",
 			name, strerror(errno));
 		return -1;
 	}
