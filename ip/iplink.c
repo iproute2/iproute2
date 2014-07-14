@@ -339,6 +339,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 
 	if (new_rate_api) {
 		int tmin, tmax;
+
 		if (tivt.min_tx_rate == -1 || tivt.max_tx_rate == -1) {
 			ipaddr_get_vf_rate(tivt.vf, &tmin, &tmax, dev_index);
 			if (tivt.min_tx_rate == -1)
@@ -371,7 +372,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	int vf = -1;
 	int numtxqueues = -1;
 	int numrxqueues = -1;
-	int dev_index;
+	int dev_index = 0;
 
 	*group = -1;
 	ret = argc;
@@ -484,6 +485,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			}
 			vflist = addattr_nest(&req->n, sizeof(*req),
 					      IFLA_VFINFO_LIST);
+			if (dev_index == 0)
+				missarg("dev");
+
 			len = iplink_parse_vf(vf, &argc, &argv, req, dev_index);
 			if (len < 0)
 				return -1;
@@ -567,6 +571,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				duparg2("dev", *argv);
 			*dev = *argv;
 			dev_index = ll_name_to_index(*dev);
+			if (dev_index == 0)
+				invarg("Unknown device", *argv);
 		}
 		argc--; argv++;
 	}
