@@ -1329,7 +1329,7 @@ void ipaddr_get_vf_rate(int vfnum, int *min, int *max, int idx)
 		ifi = NLMSG_DATA(n);
 
 		len = n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
-		if (len < 0 || idx && idx != ifi->ifi_index)
+		if (len < 0 || (idx && idx != ifi->ifi_index))
 			continue;
 
 		parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
