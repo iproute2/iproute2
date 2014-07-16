@@ -1241,6 +1241,19 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		exit(0);
 	}
 
+	/*
+	 * If only filter_dev present and none of the other
+	 * link filters are present, use RTM_GETLINK to get
+	 * the link device
+	 */
+	if (filter_dev && filter.group == -1 && do_link == 1) {
+		if (iplink_get(0, filter_dev, RTEXT_FILTER_VF) < 0) {
+			perror("Cannot send link get request");
+			exit(1);
+		}
+		exit(0);
+	}
+
 	if (rtnl_wilddump_request(&rth, preferred_family, RTM_GETLINK) < 0) {
 		perror("Cannot send dump request");
 		exit(1);

@@ -709,6 +709,38 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	return 0;
 }
 
+int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
+{
+	int len;
+	struct iplink_req req;
+	char answer[16384];
+
+	memset(&req, 0, sizeof(req));
+
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
+	req.n.nlmsg_type = RTM_GETLINK;
+	req.i.ifi_family = preferred_family;
+
+	if (name) {
+		len = strlen(name) + 1;
+		if (len == 1)
+			invarg("\"\" is not a valid device identifier\n",
+				   "name");
+		if (len > IFNAMSIZ)
+			invarg("\"name\" too long\n", name);
+		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, len);
+	}
+	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
+
+	if (rtnl_talk(&rth, &req.n, 0, 0, (struct nlmsghdr *)answer) < 0)
+		return -2;
+
+	print_linkinfo(NULL, (struct nlmsghdr *)answer, stdout);
+
+	return 0;
+}
+
 #if IPLINK_IOCTL_COMPAT
 static int get_ctl_fd(void)
 {
