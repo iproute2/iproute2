@@ -60,6 +60,7 @@ ip-link \- network device configuration
 .BR ifb " | "
 .BR ipoib " |"
 .BR macvlan  " | "
+.BR macvtap  " | "
 .BR vcan " | "
 .BR veth " | "
 .BR vlan " | "
@@ -178,6 +179,9 @@ Link types:
 .sp
 .B macvlan
 - Virtual interface base on link layer address (MAC)
+.sp
+.B macvtap
+- Virtual interface based on link layer address (MAC) and TAP.
 .sp
 .B vcan
 - Virtual Controller Area Network interface
