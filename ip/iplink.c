@@ -81,6 +81,7 @@ void iplink_usage(void)
 	fprintf(stderr, "				   [ state { auto | enable | disable} ] ]\n");
 	fprintf(stderr, "			  [ master DEVICE ]\n");
 	fprintf(stderr, "			  [ nomaster ]\n");
+	fprintf(stderr, "			  [ addrgenmode { eui64 | none } ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ] [up]\n");
 
 	if (iplink_have_newlink()) {
@@ -158,6 +159,15 @@ static int get_link_mode(const char *mode)
 		return IF_LINK_MODE_DEFAULT;
 	if (strcasecmp(mode, "dormant") == 0)
 		return IF_LINK_MODE_DORMANT;
+	return -1;
+}
+
+static int get_addr_gen_mode(const char *mode)
+{
+	if (strcasecmp(mode, "eui64") == 0)
+		return IN6_ADDR_GEN_MODE_EUI64;
+	if (strcasecmp(mode, "none") == 0)
+		return IN6_ADDR_GEN_MODE_NONE;
 	return -1;
 }
 
@@ -561,6 +571,18 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				invarg("Invalid \"numrxqueues\" value\n", *argv);
 			addattr_l(&req->n, sizeof(*req), IFLA_NUM_RX_QUEUES,
 				  &numrxqueues, 4);
+		} else if (matches(*argv, "addrgenmode") == 0) {
+			struct rtattr *afs, *afs6;
+			int mode;
+			NEXT_ARG();
+			mode = get_addr_gen_mode(*argv);
+			if (mode < 0)
+				invarg("Invalid address generation mode\n", *argv);
+			afs = addattr_nest(&req->n, sizeof(*req), IFLA_AF_SPEC);
+			afs6 = addattr_nest(&req->n, sizeof(*req), AF_INET6);
+			addattr8(&req->n, sizeof(*req), IFLA_INET6_ADDR_GEN_MODE, mode);
+			addattr_nest_end(&req->n, afs6);
+			addattr_nest_end(&req->n, afs);
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
