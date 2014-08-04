@@ -225,8 +225,8 @@ static void xfrm_usersa_print(const struct xfrm_usersa_id *sa_id, __u32 reqid, F
 	char buf[256];
 
 	buf[0] = 0;
-	fprintf(fp, "dst %s ", rt_addr_n2a(sa_id->family,
-		sizeof(sa_id->daddr), &sa_id->daddr, buf, sizeof(buf)));
+	fprintf(fp, "dst %s ",
+		rt_addr_n2a(sa_id->family, &sa_id->daddr, buf, sizeof(buf)));
 
 	fprintf(fp, " reqid 0x%x", reqid);
 
@@ -245,9 +245,8 @@ static int xfrm_ae_print(const struct sockaddr_nl *who,
 	xfrm_ae_flags_print(id->flags, arg);
 	fprintf(fp,"\n\t");
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s ", rt_addr_n2a(id->sa_id.family,
-		sizeof(id->saddr), &id->saddr,
-		abuf, sizeof(abuf)));
+	fprintf(fp, "src %s ", rt_addr_n2a(id->sa_id.family, &id->saddr,
+					   abuf, sizeof(abuf)));
 
 	xfrm_usersa_print(&id->sa_id, id->reqid, fp);
 
@@ -257,12 +256,12 @@ static int xfrm_ae_print(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static void xfrm_print_addr(FILE *fp, int family, xfrm_address_t *a, size_t s)
+static void xfrm_print_addr(FILE *fp, int family, xfrm_address_t *a)
 {
 	char buf[256];
 
 	buf[0] = 0;
-	fprintf(fp, "%s", rt_addr_n2a(family, s, a, buf, sizeof(buf)));
+	fprintf(fp, "%s", rt_addr_n2a(family, a, buf, sizeof(buf)));
 }
 
 static int xfrm_mapping_print(const struct sockaddr_nl *who,
@@ -272,12 +271,10 @@ static int xfrm_mapping_print(const struct sockaddr_nl *who,
 	struct xfrm_user_mapping *map = NLMSG_DATA(n);
 
 	fprintf(fp, "Mapping change ");
-	xfrm_print_addr(fp, map->id.family, &map->old_saddr,
-			sizeof(map->old_saddr));
+	xfrm_print_addr(fp, map->id.family, &map->old_saddr);
 
 	fprintf(fp, ":%d -> ", ntohs(map->old_sport));
-	xfrm_print_addr(fp, map->id.family, &map->new_saddr,
-			sizeof(map->new_saddr));
+	xfrm_print_addr(fp, map->id.family, &map->new_saddr);
 	fprintf(fp, ":%d\n\t", ntohs(map->new_sport));
 
 	xfrm_usersa_print(&map->id, map->reqid, fp);

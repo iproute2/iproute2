@@ -80,7 +80,7 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		pfx = (struct in6_addr *)RTA_DATA(tb[PREFIX_ADDRESS]);
 
 		memset(abuf, '\0', sizeof(abuf));
-		fprintf(fp, "%s", rt_addr_n2a(family, sizeof(*pfx), pfx,
+		fprintf(fp, "%s", rt_addr_n2a(family, pfx,
 					      abuf, sizeof(abuf)));
 	}
 	fprintf(fp, "/%u ", prefix->prefix_len);

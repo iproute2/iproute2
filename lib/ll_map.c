@@ -28,7 +28,7 @@ struct ll_cache {
 	struct hlist_node idx_hash;
 	struct hlist_node name_hash;
 	unsigned	flags;
-	int		index;
+	unsigned 	index;
 	unsigned short	type;
 	char		name[IFNAMSIZ];
 };
@@ -173,7 +173,7 @@ int ll_index_to_type(unsigned idx)
 	return im ? im->type : -1;
 }
 
-unsigned ll_index_to_flags(unsigned idx)
+int ll_index_to_flags(unsigned idx)
 {
 	const struct ll_cache *im;
 

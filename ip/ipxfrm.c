@@ -288,10 +288,10 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 		fputs(title, fp);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s ", rt_addr_n2a(family, sizeof(*saddr),
+	fprintf(fp, "src %s ", rt_addr_n2a(family,
 					   saddr, abuf, sizeof(abuf)));
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s", rt_addr_n2a(family, sizeof(id->daddr),
+	fprintf(fp, "dst %s", rt_addr_n2a(family,
 					  &id->daddr, abuf, sizeof(abuf)));
 	fprintf(fp, "%s", _SL_);
 
@@ -455,13 +455,11 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		fputs(prefix, fp);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s/%u ", rt_addr_n2a(f, sizeof(sel->saddr),
-					      &sel->saddr, abuf, sizeof(abuf)),
+	fprintf(fp, "src %s/%u ", rt_addr_n2a(f, &sel->saddr, abuf, sizeof(abuf)),
 		sel->prefixlen_s);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s/%u ", rt_addr_n2a(f, sizeof(sel->daddr),
-					      &sel->daddr, abuf, sizeof(abuf)),
+	fprintf(fp, "dst %s/%u ", rt_addr_n2a(f, &sel->daddr, abuf, sizeof(abuf)),
 		sel->prefixlen_d);
 
 	if (sel->proto)
@@ -588,7 +586,7 @@ static void xfrm_auth_trunc_print(struct xfrm_algo_auth *algo, int len,
 }
 
 static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
-			    __u16 family, FILE *fp, const char *prefix)
+			    FILE *fp, const char *prefix)
 {
 	int ntmpls = len / sizeof(struct xfrm_user_tmpl);
 	int i;
@@ -756,15 +754,14 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "addr %s",
-			rt_addr_n2a(family, sizeof(e->encap_oa),
-				    &e->encap_oa, abuf, sizeof(abuf)));
+			rt_addr_n2a(family, &e->encap_oa, abuf, sizeof(abuf)));
 		fprintf(fp, "%s", _SL_);
 	}
 
 	if (tb[XFRMA_TMPL]) {
 		struct rtattr *rta = tb[XFRMA_TMPL];
 		xfrm_tmpl_print((struct xfrm_user_tmpl *) RTA_DATA(rta),
-				RTA_PAYLOAD(rta), family, fp, prefix);
+				RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_COADDR]) {
@@ -785,7 +782,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "%s",
-			rt_addr_n2a(family, sizeof(*coa), coa,
+			rt_addr_n2a(family, coa,
 				    abuf, sizeof(abuf)));
 		fprintf(fp, "%s", _SL_);
 	}

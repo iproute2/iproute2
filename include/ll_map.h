@@ -9,6 +9,6 @@ extern unsigned ll_name_to_index(const char *name);
 extern const char *ll_index_to_name(unsigned idx);
 extern const char *ll_idx_n2a(unsigned idx, char *buf);
 extern int ll_index_to_type(unsigned idx);
-extern unsigned ll_index_to_flags(unsigned idx);
+extern int ll_index_to_flags(unsigned idx);
 
 #endif /* __LL_MAP_H__ */

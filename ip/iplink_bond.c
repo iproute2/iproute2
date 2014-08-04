@@ -407,7 +407,6 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			if (iptb[i])
 				fprintf(f, "%s",
 					rt_addr_n2a(AF_INET,
-						    RTA_PAYLOAD(iptb[i]),
 						    RTA_DATA(iptb[i]),
 						    buf,
 						    INET_ADDRSTRLEN));

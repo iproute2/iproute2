@@ -454,19 +454,19 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 	err = get_addr_1(dst, arg, family);
 	if (err == 0) {
 		switch(dst->family) {
-			case AF_INET6:
-				dst->bitlen = 128;
-				break;
-			case AF_DECnet:
-				dst->bitlen = 16;
-				break;
-			default:
-			case AF_INET:
-				dst->bitlen = 32;
+		case AF_INET6:
+			dst->bitlen = 128;
+			break;
+		case AF_DECnet:
+			dst->bitlen = 16;
+			break;
+		default:
+		case AF_INET:
+			dst->bitlen = 32;
 		}
 		if (slash) {
 			if (get_netmask(&plen, slash+1, 0)
-					|| plen > dst->bitlen) {
+			    || plen > dst->bitlen) {
 				err = -1;
 				goto done;
 			}
@@ -621,7 +621,7 @@ int __get_user_hz(void)
 	return sysconf(_SC_CLK_TCK);
 }
 
-const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen)
+const char *rt_addr_n2a(int af, const void *addr, char *buf, int buflen)
 {
 	switch (af) {
 	case AF_INET:
@@ -728,7 +728,7 @@ const char *format_host(int af, int len, const void *addr,
 			return n;
 	}
 #endif
-	return rt_addr_n2a(af, len, addr, buf, buflen);
+	return rt_addr_n2a(af, addr, buf, buflen);
 }
 
 
