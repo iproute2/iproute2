@@ -77,7 +77,6 @@ struct nstat_ent
 	struct nstat_ent *next;
 	char		 *id;
 	unsigned long long val;
-	unsigned long	   ival;
 	double		   rate;
 };
 
@@ -143,7 +142,6 @@ static void load_good_table(FILE *fp)
 		if ((n = malloc(sizeof(*n))) == NULL)
 			abort();
 		n->id = strdup(idbuf);
-		n->ival = (unsigned long)val;
 		n->val = val;
 		n->rate = rate;
 		n->next = db;
@@ -206,9 +204,8 @@ static void load_ugly_table(FILE *fp)
 			if (!p)
 				abort();
 			*p = 0;
-			if (sscanf(p+1, "%lu", &n->ival) != 1)
+			if (sscanf(p+1, "%llu", &n->val) != 1)
 				abort();
-			n->val = n->ival;
 			/* Trick to skip "dummy" trailing ICMP MIB in 2.4 */
 			if (strcmp(idbuf, "IcmpOutAddrMaskReps") == 0)
 				idbuf[5] = 0;
@@ -365,10 +362,10 @@ static void update_db(int interval)
 		for (h1 = h; h1; h1 = h1->next) {
 			if (strcmp(h1->id, n->id) == 0) {
 				double sample;
-				unsigned long incr = h1->ival - n->ival;
-				n->val += incr;
-				n->ival = h1->ival;
-				sample = (double)(incr*1000)/interval;
+				unsigned long long incr = h1->val - n->val;
+
+				n->val = h1->val;
+				sample = (double)incr * 1000.0 / interval;
 				if (interval >= scan_interval) {
 					n->rate += W*(sample-n->rate);
 				} else if (interval >= 1000) {
