@@ -407,7 +407,13 @@ static int netns_add(int argc, char **argv)
 	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
 
 	/* Create the base netns directory if it doesn't exist */
-	mkdir(NETNS_RUN_DIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+	if (mkdir(NETNS_RUN_DIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
+		if (errno != EEXIST) {
+			fprintf(stderr, "mkdir %s failed: %s\n",
+				NETNS_RUN_DIR, strerror(errno));
+			return -1;
+		}
+	}
 
 	/* Make it possible for network namespace mounts to propagate between
 	 * mount namespaces.  This makes it likely that a unmounting a network
