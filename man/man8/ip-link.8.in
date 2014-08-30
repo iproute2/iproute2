@@ -171,6 +171,9 @@ Link types:
 .B dummy
 - Dummy network interface
 .sp
+.B hsr
+- High-availability Seamless Redundancy device
+.sp
 .B ifb
 - Intermediate Functional Block device
 .sp
