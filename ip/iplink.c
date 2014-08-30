@@ -593,8 +593,6 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				duparg2("dev", *argv);
 			*dev = *argv;
 			dev_index = ll_name_to_index(*dev);
-			if (dev_index == 0)
-				invarg("Unknown device", *argv);
 		}
 		argc--; argv++;
 	}
