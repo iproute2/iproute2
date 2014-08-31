@@ -383,6 +383,20 @@ static int netns_delete(int argc, char **argv)
 	return 0;
 }
 
+static int create_netns_dir(void)
+{
+	/* Create the base netns directory if it doesn't exist */
+	if (mkdir(NETNS_RUN_DIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
+		if (errno != EEXIST) {
+			fprintf(stderr, "mkdir %s failed: %s\n",
+				NETNS_RUN_DIR, strerror(errno));
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 static int netns_add(int argc, char **argv)
 {
 	/* This function creates a new network namespace and
@@ -406,14 +420,8 @@ static int netns_add(int argc, char **argv)
 
 	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
 
-	/* Create the base netns directory if it doesn't exist */
-	if (mkdir(NETNS_RUN_DIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
-		if (errno != EEXIST) {
-			fprintf(stderr, "mkdir %s failed: %s\n",
-				NETNS_RUN_DIR, strerror(errno));
-			return -1;
-		}
-	}
+	if (create_netns_dir())
+		return -1;
 
 	/* Make it possible for network namespace mounts to propagate between
 	 * mount namespaces.  This makes it likely that a unmounting a network
@@ -476,6 +484,10 @@ static int netns_monitor(int argc, char **argv)
 			strerror(errno));
 		return -1;
 	}
+
+	if (create_netns_dir())
+		return -1;
+
 	if (inotify_add_watch(fd, NETNS_RUN_DIR, IN_CREATE | IN_DELETE) < 0) {
 		fprintf(stderr, "inotify_add_watch failed: %s\n",
 			strerror(errno));
