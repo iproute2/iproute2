@@ -88,7 +88,8 @@ void iplink_usage(void)
 		fprintf(stderr, "\n");
 		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
 		fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n");
-		fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon }\n");
+		fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon |\n");
+		fprintf(stderr, "          bond_slave }\n");
 	}
 	exit(-1);
 }
@@ -702,14 +703,29 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (type) {
 		struct rtattr *linkinfo = NLMSG_TAIL(&req.n);
+		char slavebuf[128], *ulinep = strchr(type, '_');
+		int iflatype;
+
 		addattr_l(&req.n, sizeof(req), IFLA_LINKINFO, NULL, 0);
 		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, type,
 			 strlen(type));
 
-		lu = get_link_kind(type);
+		if (ulinep && !strcmp(ulinep, "_slave")) {
+			strncpy(slavebuf, type, sizeof(slavebuf));
+			slavebuf[sizeof(slavebuf) - 1] = '\0';
+			ulinep = strchr(slavebuf, '_');
+			/* check in case it was after sizeof(slavebuf) - 1*/
+			if (ulinep)
+				*ulinep = '\0';
+			lu = get_link_slave_kind(slavebuf);
+			iflatype = IFLA_INFO_SLAVE_DATA;
+		} else {
+			lu = get_link_kind(type);
+			iflatype = IFLA_INFO_DATA;
+		}
 		if (lu && argc) {
 			struct rtattr * data = NLMSG_TAIL(&req.n);
-			addattr_l(&req.n, sizeof(req), IFLA_INFO_DATA, NULL, 0);
+			addattr_l(&req.n, sizeof(req), iflatype, NULL, 0);
 
 			if (lu->parse_opt &&
 			    lu->parse_opt(lu, argc, argv, &req.n))

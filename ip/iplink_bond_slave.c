@@ -80,10 +80,29 @@ static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *t
 			rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_AGGREGATOR_ID]));
 }
 
+static int bond_slave_parse_opt(struct link_util *lu, int argc, char **argv,
+				struct nlmsghdr *n)
+{
+	__u16 queue_id;
+
+	while (argc > 0) {
+		if (matches(*argv, "queue_id") == 0) {
+			NEXT_ARG();
+			if (get_u16(&queue_id, *argv, 0))
+				invarg("queue_id is invalid", *argv);
+			addattr16(n, 1024, IFLA_BOND_SLAVE_QUEUE_ID, queue_id);
+		}
+		argc--, argv++;
+	}
+
+	return 0;
+}
+
 struct link_util bond_slave_link_util = {
 	.id		= "bond",
 	.maxattr	= IFLA_BOND_SLAVE_MAX,
 	.print_opt	= bond_slave_print_opt,
+	.parse_opt	= bond_slave_parse_opt,
 	.slave		= true,
 };
 
