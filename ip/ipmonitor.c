@@ -138,7 +138,8 @@ static int accept_msg(const struct sockaddr_nl *who,
 	    n->nlmsg_type == RTM_NEWTCLASS ||
 	    n->nlmsg_type == RTM_DELTCLASS ||
 	    n->nlmsg_type == RTM_NEWTFILTER ||
-	    n->nlmsg_type == RTM_DELTFILTER)
+	    n->nlmsg_type == RTM_DELTFILTER ||
+	    n->nlmsg_type == RTM_NEWNDUSEROPT)
 		return 0;
 	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&
 	    n->nlmsg_type != NLMSG_DONE) {
