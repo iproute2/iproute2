@@ -41,9 +41,6 @@ static int accept_msg(const struct sockaddr_nl *who,
 {
 	FILE *fp = (FILE*)arg;
 
-	if (timestamp)
-		print_timestamp(fp);
-
 	if (n->nlmsg_type == RTM_NEWROUTE || n->nlmsg_type == RTM_DELROUTE) {
 		struct rtmsg *r = NLMSG_DATA(n);
 		int len = n->nlmsg_len - NLMSG_LENGTH(sizeof(*r));
@@ -52,6 +49,12 @@ static int accept_msg(const struct sockaddr_nl *who,
 			fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
 			return -1;
 		}
+
+		if (r->rtm_flags & RTM_F_CLONED)
+			return 0;
+
+		if (timestamp)
+			print_timestamp(fp);
 
 		if (r->rtm_family == RTNL_FAMILY_IPMR ||
 		    r->rtm_family == RTNL_FAMILY_IP6MR) {
@@ -66,6 +69,10 @@ static int accept_msg(const struct sockaddr_nl *who,
 			return 0;
 		}
 	}
+
+	if (timestamp)
+		print_timestamp(fp);
+
 	if (n->nlmsg_type == RTM_NEWLINK || n->nlmsg_type == RTM_DELLINK) {
 		ll_remember_index(who, n, NULL);
 		if (prefix_banner)
