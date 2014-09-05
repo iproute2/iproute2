@@ -216,6 +216,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	a = attrs[TCP_METRICS_ATTR_VALS];
 	if (a) {
 		struct rtattr *m[TCP_METRIC_MAX + 1 + 1];
+		unsigned long rtt = 0, rttvar = 0;
 
 		parse_rtattr_nested(m, TCP_METRIC_MAX + 1, a);
 
@@ -225,18 +226,30 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			a = m[i + 1];
 			if (!a)
 				continue;
-			if (metric_name[i])
-				fprintf(fp, " %s ", metric_name[i]);
-			else
-				fprintf(fp, " metric_%d ", i);
-
+			if (i != TCP_METRIC_RTT &&
+			    i != TCP_METRIC_RTT_US &&
+			    i != TCP_METRIC_RTTVAR &&
+			    i != TCP_METRIC_RTTVAR_US) {
+				if (metric_name[i])
+					fprintf(fp, " %s ", metric_name[i]);
+				else
+					fprintf(fp, " metric_%d ", i);
+			}
 			val = rta_getattr_u32(a);
 			switch (i) {
 			case TCP_METRIC_RTT:
-				fprintf(fp, "%luus", (val * 1000UL) >> 3);
+				if (!rtt)
+					rtt = (val * 1000UL) >> 3;
 				break;
 			case TCP_METRIC_RTTVAR:
-				fprintf(fp, "%luus", (val * 1000UL) >> 2);
+				if (!rttvar)
+					rttvar = (val * 1000UL) >> 2;
+				break;
+			case TCP_METRIC_RTT_US:
+				rtt = val >> 3;
+				break;
+			case TCP_METRIC_RTTVAR_US:
+				rttvar = val >> 2;
 				break;
 			case TCP_METRIC_SSTHRESH:
 			case TCP_METRIC_CWND:
@@ -246,6 +259,10 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 				break;
 			}
 		}
+		if (rtt)
+			fprintf(fp, " rtt %luus", rtt);
+		if (rttvar)
+			fprintf(fp, " rttvar %luus", rttvar);
 	}
 
 	a = attrs[TCP_METRICS_ATTR_FOPEN_MSS];
