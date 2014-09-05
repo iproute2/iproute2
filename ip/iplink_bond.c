@@ -339,6 +339,9 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 			}
 			ad_select = get_index(ad_select_tbl, *argv);
 			addattr8(n, 1024, IFLA_BOND_AD_SELECT, ad_select);
+		} else if (matches(*argv, "help") == 0) {
+			explain();
+			return -1;
 		} else {
 			fprintf(stderr, "bond: unknown command \"%s\"?\n", *argv);
 			explain();
