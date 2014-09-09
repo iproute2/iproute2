@@ -361,7 +361,7 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	}
 
 	if (tb[IFLA_VXLAN_LIMIT] &&
-	    (maxaddr = rta_getattr_u32(tb[IFLA_VXLAN_LIMIT]) != 0))
+	    ((maxaddr = rta_getattr_u32(tb[IFLA_VXLAN_LIMIT])) != 0))
 		    fprintf(f, "maxaddr %u ", maxaddr);
 }
 
