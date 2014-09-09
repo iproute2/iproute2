@@ -262,6 +262,10 @@ the following additional arguments are supported:
 .I "[no]l2miss "
 .R " ] [ "
 .I "[no]l3miss "
+.R " ] [ "
+.BI ageing " SECONDS "
+.R " ] [ "
+.BI maxaddress " NUMBER "
 .R " ]"
 
 .in +8
@@ -325,6 +329,14 @@ are entered into the VXLAN device forwarding database.
 .sp
 .I [no]l3miss
 - specifies if netlink IP ADDR miss notifications are generated.
+
+.sp
+.BI ageing " SECONDS"
+- specifies the lifetime in seconds of FDB entries learnt by the kernel.
+
+.sp
+.BI maxaddress " NUMBER"
+- specifies the maximum number of FDB entries.
 
 .in -8
 

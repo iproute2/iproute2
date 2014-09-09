@@ -28,6 +28,7 @@ static void explain(void)
 	fprintf(stderr, "                 [ dstport PORT ] [ srcport MIN MAX ]\n");
 	fprintf(stderr, "                 [ [no]learning ] [ [no]proxy ] [ [no]rsc ]\n");
 	fprintf(stderr, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
+	fprintf(stderr, "                 [ ageing SECONDS ] [ maxaddress NUMBER ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: VNI := 0-16777215\n");
 	fprintf(stderr, "       ADDR := { IP_ADDRESS | any }\n");
