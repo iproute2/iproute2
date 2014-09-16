@@ -186,6 +186,11 @@ static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_
 		argc--; argv++;
 	}
 
+	if (!(ifr->ifr_flags & TUN_TYPE_MASK)) {
+		fprintf(stderr, "You failed to specify a tunnel mode\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -199,10 +204,6 @@ static int do_add(int argc, char **argv)
 	if (parse_args(argc, argv, &ifr, &uid, &gid) < 0)
 		return -1;
 
-	if (!(ifr.ifr_flags & TUN_TYPE_MASK)) {
-		fprintf(stderr, "You failed to specify a tunnel mode\n");
-		return -1;
-	}
 	return tap_add_ioctl(&ifr, uid, gid);
 }
 
