@@ -249,38 +249,31 @@ static int
 tc_print_one_action(FILE * f, struct rtattr *arg)
 {
 
-	struct rtattr *tb[TCA_MAX + 1];
+	struct rtattr *tb[TCA_ACT_MAX + 1];
 	int err = 0;
 	struct action_util *a = NULL;
 
 	if (arg == NULL)
 		return -1;
 
-	parse_rtattr_nested(tb, TCA_MAX, arg);
-	if (tb[TCA_KIND] == NULL) {
+	parse_rtattr_nested(tb, TCA_ACT_MAX, arg);
+
+	if (tb[TCA_ACT_KIND] == NULL) {
 		fprintf(stderr, "NULL Action!\n");
 		return -1;
 	}
 
 
-	a = get_action_kind(RTA_DATA(tb[TCA_KIND]));
+	a = get_action_kind(RTA_DATA(tb[TCA_ACT_KIND]));
 	if (NULL == a)
 		return err;
 
-	if (tab_flush) {
-		__u32 *delete_count = RTA_DATA(tb[TCA_FCNT]);
-		fprintf(f," %s (%d entries)\n", a->id, *delete_count);
-		tab_flush = 0;
-		return 0;
-	}
-
-	err = a->print_aopt(a,f,tb[TCA_OPTIONS]);
-
+	err = a->print_aopt(a, f, tb[TCA_ACT_OPTIONS]);
 
 	if (0 > err)
 		return err;
 
-	if (show_stats && tb[TCA_STATS]) {
+	if (show_stats && tb[TCA_ACT_STATS]) {
 		fprintf(f, "\tAction statistics:\n");
 		print_tcstats2_attr(f, tb[TCA_ACT_STATS], "\t", NULL);
 		fprintf(f, "\n");
@@ -289,8 +282,34 @@ tc_print_one_action(FILE * f, struct rtattr *arg)
 	return 0;
 }
 
+static int
+tc_print_action_flush(FILE *f, const struct rtattr *arg)
+{
+
+	struct rtattr *tb[TCA_MAX + 1];
+	int err = 0;
+	struct action_util *a = NULL;
+	__u32 *delete_count = 0;
+
+	parse_rtattr_nested(tb, TCA_MAX, arg);
+
+	if (tb[TCA_KIND] == NULL) {
+		fprintf(stderr, "NULL Action!\n");
+		return -1;
+	}
+
+	a = get_action_kind(RTA_DATA(tb[TCA_KIND]));
+	if (NULL == a)
+		return err;
+
+	delete_count = RTA_DATA(tb[TCA_FCNT]);
+	fprintf(f," %s (%d entries)\n", a->id, *delete_count);
+	tab_flush = 0;
+	return 0;
+}
+
 int
-tc_print_action(FILE * f, const struct rtattr *arg)
+tc_print_action(FILE *f, const struct rtattr *arg)
 {
 
 	int i;
@@ -301,10 +320,8 @@ tc_print_action(FILE * f, const struct rtattr *arg)
 
 	parse_rtattr_nested(tb, TCA_ACT_MAX_PRIO, arg);
 
-	if (tab_flush && NULL != tb[0]  && NULL == tb[1]) {
-		int ret = tc_print_one_action(f, tb[0]);
-		return ret;
-	}
+	if (tab_flush && NULL != tb[0]  && NULL == tb[1])
+		return tc_print_action_flush(f, tb[0]);
 
 	for (i = 0; i < TCA_ACT_MAX_PRIO; i++) {
 		if (tb[i]) {
