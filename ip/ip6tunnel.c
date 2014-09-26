@@ -47,7 +47,7 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr, "Usage: ip -f inet6 tunnel { add | change | del | show } [ NAME ]\n");
-	fprintf(stderr, "          [ mode { ip6ip6 | ipip6 | ip6gre | any } ]\n");
+	fprintf(stderr, "          [ mode { ip6ip6 | ipip6 | ip6gre | vti6 | any } ]\n");
 	fprintf(stderr, "          [ remote ADDR local ADDR ] [ dev PHYS_DEV ]\n");
 	fprintf(stderr, "          [ encaplimit ELIM ]\n");
 	fprintf(stderr ,"          [ hoplimit TTL ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
@@ -140,7 +140,10 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 			if (strcmp(*argv, "ipv6/ipv6") == 0 ||
 			    strcmp(*argv, "ip6ip6") == 0)
 				p->proto = IPPROTO_IPV6;
-			else if (strcmp(*argv, "ip/ipv6") == 0 ||
+			else if (strcmp(*argv, "vti6") == 0) {
+				p->proto = IPPROTO_IPV6;
+				p->i_flags |= VTI_ISVTI;
+			} else if (strcmp(*argv, "ip/ipv6") == 0 ||
 				 strcmp(*argv, "ipv4/ipv6") == 0 ||
 				 strcmp(*argv, "ipip6") == 0 ||
 				 strcmp(*argv, "ip4ip6") == 0)
@@ -459,11 +462,14 @@ static int do_add(int cmd, int argc, char **argv)
 	switch (p.proto) {
 	case IPPROTO_IPIP:
 	case IPPROTO_IPV6:
+	if (p.i_flags != VTI_ISVTI)
+		return tnl_add_ioctl(cmd, "ip6_vti0", p.name, &p);
+	else
 		return tnl_add_ioctl(cmd, "ip6tnl0", p.name, &p);
 	case IPPROTO_GRE:
 		return tnl_add_ioctl(cmd, "ip6gre0", p.name, &p);
 	default:
-		fprintf(stderr, "cannot determine tunnel mode (ip6ip6, ipip6 or gre)\n");
+		fprintf(stderr, "cannot determine tunnel mode (ip6ip6, ipip6, vti6 or gre)\n");
 	}
 	return -1;
 }
@@ -480,6 +486,9 @@ static int do_del(int argc, char **argv)
 	switch (p.proto) {
 	case IPPROTO_IPIP:
 	case IPPROTO_IPV6:
+	if (p.i_flags != VTI_ISVTI)
+		return tnl_del_ioctl("ip6_vti0", p.name, &p);
+	else
 		return tnl_del_ioctl("ip6tnl0", p.name, &p);
 	case IPPROTO_GRE:
 		return tnl_del_ioctl("ip6gre0", p.name, &p);
