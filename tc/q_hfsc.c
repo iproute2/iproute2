@@ -376,6 +376,10 @@ hfsc_get_sc2(int *argcp, char ***argvp, struct tc_service_curve *sc)
 		sc->d  = tc_core_time2ktime(dmax);
 		sc->m2 = rate;
 	} else {
+		if (rate == 0) {
+			fprintf(stderr, "HFSC: rate is zero.\n");
+			return -1;
+		}
 		/*
 		 * convex curve, slope of first segment is 0, intersection
 		 * is at dmax - umax / rate
