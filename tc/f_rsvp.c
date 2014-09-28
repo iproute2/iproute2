@@ -261,6 +261,13 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 			}
 			pinfo.tunnelhdr = tid;
 			pinfo_ok++;
+		} else if (matches(*argv, "action") == 0) {
+			NEXT_ARG();
+			if (parse_action(&argc, &argv, TCA_RSVP_ACT, n)) {
+				fprintf(stderr, "Illegal \"action\"\n");
+				return -1;
+			}
+			continue;
 		} else if (matches(*argv, "police") == 0) {
 			NEXT_ARG();
 			if (parse_police(&argc, &argv, TCA_RSVP_POLICE, n)) {
@@ -384,6 +391,10 @@ static int rsvp_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, _
 	} else if (pinfo && pinfo->spi.mask) {
 		SPRINT_BUF(b2);
 		fprintf(f, "sender [NONE]%s ", sprint_spi(&pinfo->spi, 0, b2));
+	}
+
+	if (tb[TCA_RSVP_ACT]) {
+		tc_print_action(f, tb[TCA_RSVP_ACT]);
 	}
 	if (tb[TCA_RSVP_POLICE])
 		tc_print_police(f, tb[TCA_RSVP_POLICE]);
