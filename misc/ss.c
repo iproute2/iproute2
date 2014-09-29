@@ -1578,6 +1578,19 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 				rtt =  vinfo->tcpv_rtt;
 		}
 
+		if (tb[INET_DIAG_DCTCPINFO]) {
+			const struct tcp_dctcp_info *dinfo
+				= RTA_DATA(tb[INET_DIAG_DCTCPINFO]);
+
+			if (dinfo->dctcp_enabled) {
+				printf(" ce_state %u alpha %u ab_ecn %u ab_tot %u",
+				       dinfo->dctcp_ce_state, dinfo->dctcp_alpha,
+				       dinfo->dctcp_ab_ecn, dinfo->dctcp_ab_tot);
+			} else {
+				printf(" fallback_mode");
+			}
+		}
+
 		if (rtt > 0 && info->tcpi_snd_mss && info->tcpi_snd_cwnd) {
 			printf(" send %sbps",
 			       sprint_bw(b1, (double) info->tcpi_snd_cwnd *
