@@ -31,3 +31,7 @@ series
 .gdbinit
 .gdb_history
 *.gdb
+
+# tests
+testsuite/results
+testsuite/iproute2/iproute2-this
