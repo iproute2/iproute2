@@ -32,7 +32,7 @@ static void meta_print_usage(FILE *fd)
 	    "where: OBJECT  := { META_ID | VALUE }\n" \
 	    "       META_ID := id [ shift SHIFT ] [ mask MASK ]\n" \
 	    "\n" \
-	    "Example: meta(nfmark gt 24)\n" \
+	    "Example: meta(nf_mark gt 24)\n" \
 	    "         meta(indev shift 1 eq \"ppp\")\n" \
 	    "         meta(tcindex mask 0xf0 eq 0xf0)\n" \
 	    "\n" \
