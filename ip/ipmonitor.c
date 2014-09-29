@@ -143,8 +143,10 @@ static int accept_msg(const struct sockaddr_nl *who,
 		return 0;
 	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&
 	    n->nlmsg_type != NLMSG_DONE) {
-		fprintf(fp, "Unknown message: %08x %08x %08x\n",
-			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
+		fprintf(fp, "Unknown message: type=0x%08x(%d) flags=0x%08x(%d)"
+			"len=0x%08x(%d)\n", n->nlmsg_type, n->nlmsg_type,
+			n->nlmsg_flags, n->nlmsg_flags, n->nlmsg_len,
+			n->nlmsg_len);
 	}
 	return 0;
 }
