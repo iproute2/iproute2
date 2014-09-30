@@ -6,7 +6,10 @@ RESULTS_DIR := results
 
 TESTS := $(patsubst tests/%,%,$(wildcard tests/*.t))
 IPVERS := $(filter-out iproute2/Makefile,$(wildcard iproute2/*))
-KENV := $(shell cat /proc/config.gz | gunzip | grep ^CONFIG)
+
+ifneq (,$(wildcard /proc/config.gz))
+	KENV := $(shell cat /proc/config.gz | gunzip | grep ^CONFIG)
+endif
 
 .PHONY: compile listtests alltests configure $(TESTS)
 
