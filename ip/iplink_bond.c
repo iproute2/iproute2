@@ -112,9 +112,9 @@ static int get_index(const char **tbl, char *name)
 	return -1;
 }
 
-static void explain(void)
+static void print_explain(FILE *f)
 {
-	fprintf(stderr,
+	fprintf(f,
 		"Usage: ... bond [ mode BONDMODE ] [ active_slave SLAVE_DEV ]\n"
 		"                [ clear_active_slave ] [ miimon MIIMON ]\n"
 		"                [ updelay UPDELAY ] [ downdelay DOWNDELAY ]\n"
@@ -145,6 +145,11 @@ static void explain(void)
 		"LACP_RATE := slow|fast\n"
 		"AD_SELECT := stable|bandwidth|count\n"
 	);
+}
+
+static void explain(void)
+{
+	print_explain(stderr);
 }
 
 static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -530,9 +535,16 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	}
 }
 
+static void bond_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_explain(f);
+}
+
 struct link_util bond_link_util = {
 	.id		= "bond",
 	.maxattr	= IFLA_BOND_MAX,
 	.parse_opt	= bond_parse_opt,
 	.print_opt	= bond_print_opt,
+	.print_help	= bond_print_help,
 };

@@ -17,10 +17,15 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void usage(void)
+static void print_usage(FILE *f)
 {
 	printf("Usage: ip link <options> type veth [peer <options>]\n"
 	       "To get <options> type 'ip link add help'\n");
+}
+
+static void usage(void)
+{
+	print_usage(stderr);
 }
 
 static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -79,7 +84,14 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 	return argc - 1 - err;
 }
 
+static void veth_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f);
+}
+
 struct link_util veth_link_util = {
 	.id = "veth",
 	.parse_opt = veth_parse_opt,
+	.print_help = veth_print_help,
 };

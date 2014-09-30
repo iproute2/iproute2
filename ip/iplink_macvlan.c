@@ -20,11 +20,16 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void explain(void)
+static void print_explain(FILE *f)
 {
-	fprintf(stderr,
+	fprintf(f,
 		"Usage: ... macvlan mode { private | vepa | bridge | passthru }\n"
 	);
+}
+
+static void explain(void)
+{
+	print_explain(stderr);
 }
 
 static int mode_arg(void)
@@ -88,9 +93,16 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 		:				 "unknown");
 }
 
+static void macvlan_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_explain(f);
+}
+
 struct link_util macvlan_link_util = {
 	.id		= "macvlan",
 	.maxattr	= IFLA_MACVLAN_MAX,
 	.parse_opt	= macvlan_parse_opt,
 	.print_opt	= macvlan_print_opt,
+	.print_help	= macvlan_print_help,
 };

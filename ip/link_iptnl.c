@@ -23,22 +23,27 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
+static void print_usage(FILE *f, int sit)
+{
+	fprintf(f, "Usage: ip link { add | set | change | replace | del } NAME\n");
+	fprintf(f, "          type { ipip | sit } [ remote ADDR ] [ local ADDR ]\n");
+	fprintf(f, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
+	fprintf(f, "          [ 6rd-prefix ADDR ] [ 6rd-relay_prefix ADDR ] [ 6rd-reset ]\n");
+	if (sit) {
+		fprintf(f, "          [ mode { ip6ip | ipip | any } ]\n");
+		fprintf(f, "          [ isatap ]\n");
+	}
+	fprintf(f, "\n");
+	fprintf(f, "Where: NAME := STRING\n");
+	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
+	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
+	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
+}
+
 static void usage(int sit) __attribute__((noreturn));
 static void usage(int sit)
 {
-	fprintf(stderr, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(stderr, "          type { ipip | sit } [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(stderr, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "          [ 6rd-prefix ADDR ] [ 6rd-relay_prefix ADDR ] [ 6rd-reset ]\n");
-	if (sit) {
-		fprintf(stderr, "          [ mode { ip6ip | ipip | any } ]\n");
-		fprintf(stderr, "          [ isatap ]\n");
-	}
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: NAME := STRING\n");
-	fprintf(stderr, "       ADDR := { IP_ADDRESS | any }\n");
-	fprintf(stderr, "       TOS  := { NUMBER | inherit }\n");
-	fprintf(stderr, "       TTL  := { 1..255 | inherit }\n");
+	print_usage(stderr, sit);
 	exit(-1);
 }
 
@@ -347,11 +352,18 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 	}
 }
 
+static void iptunnel_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f, strcmp(lu->id, "sit") == 0);
+}
+
 struct link_util ipip_link_util = {
 	.id = "ipip",
 	.maxattr = IFLA_IPTUN_MAX,
 	.parse_opt = iptunnel_parse_opt,
 	.print_opt = iptunnel_print_opt,
+	.print_help = iptunnel_print_help,
 };
 
 struct link_util sit_link_util = {
@@ -359,4 +371,5 @@ struct link_util sit_link_util = {
 	.maxattr = IFLA_IPTUN_MAX,
 	.parse_opt = iptunnel_parse_opt,
 	.print_opt = iptunnel_print_opt,
+	.print_help = iptunnel_print_help,
 };

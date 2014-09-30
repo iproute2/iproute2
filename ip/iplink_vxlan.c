@@ -21,19 +21,24 @@
 #include "utils.h"
 #include "ip_common.h"
 
+static void print_explain(FILE *f)
+{
+	fprintf(f, "Usage: ... vxlan id VNI [ { group | remote } ADDR ] [ local ADDR ]\n");
+	fprintf(f, "                 [ ttl TTL ] [ tos TOS ] [ dev PHYS_DEV ]\n");
+	fprintf(f, "                 [ dstport PORT ] [ srcport MIN MAX ]\n");
+	fprintf(f, "                 [ [no]learning ] [ [no]proxy ] [ [no]rsc ]\n");
+	fprintf(f, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
+	fprintf(f, "                 [ ageing SECONDS ] [ maxaddress NUMBER ]\n");
+	fprintf(f, "\n");
+	fprintf(f, "Where: VNI := 0-16777215\n");
+	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
+	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
+	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
+}
+
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... vxlan id VNI [ { group | remote } ADDR ] [ local ADDR ]\n");
-	fprintf(stderr, "                 [ ttl TTL ] [ tos TOS ] [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "                 [ dstport PORT ] [ srcport MIN MAX ]\n");
-	fprintf(stderr, "                 [ [no]learning ] [ [no]proxy ] [ [no]rsc ]\n");
-	fprintf(stderr, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
-	fprintf(stderr, "                 [ ageing SECONDS ] [ maxaddress NUMBER ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: VNI := 0-16777215\n");
-	fprintf(stderr, "       ADDR := { IP_ADDRESS | any }\n");
-	fprintf(stderr, "       TOS  := { NUMBER | inherit }\n");
-	fprintf(stderr, "       TTL  := { 1..255 | inherit }\n");
+	print_explain(stderr);
 }
 
 static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -365,9 +370,16 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		    fprintf(f, "maxaddr %u ", maxaddr);
 }
 
+static void vxlan_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_explain(f);
+}
+
 struct link_util vxlan_link_util = {
 	.id		= "vxlan",
 	.maxattr	= IFLA_VXLAN_MAX,
 	.parse_opt	= vxlan_parse_opt,
 	.print_opt	= vxlan_print_opt,
+	.print_help	= vxlan_print_help,
 };

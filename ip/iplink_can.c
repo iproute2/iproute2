@@ -19,9 +19,9 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void usage(void)
+static void print_usage(FILE *f)
 {
-	fprintf(stderr,
+	fprintf(f,
 		"Usage: ip link set DEVICE type can\n"
 		"\t[ bitrate BITRATE [ sample-point SAMPLE-POINT] ] | \n"
 		"\t[ tq TQ prop-seg PROP_SEG phase-seg1 PHASE-SEG1\n "
@@ -50,6 +50,11 @@ static void usage(void)
 		"\t	  SJW		:= { 1..4 }\n"
 		"\t	  RESTART-MS	:= { 0 | NUMBER }\n"
 		);
+}
+
+static void usage(void)
+{
+	print_usage(stderr);
 }
 
 static int get_float(float *val, const char *arg)
@@ -344,10 +349,17 @@ static void can_print_xstats(struct link_util *lu,
 	}
 }
 
+static void can_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f);
+}
+
 struct link_util can_link_util = {
 	.id		= "can",
 	.maxattr	= IFLA_CAN_MAX,
 	.parse_opt	= can_parse_opt,
 	.print_opt	= can_print_opt,
 	.print_xstats	= can_print_xstats,
+	.print_help	= can_print_help,
 };

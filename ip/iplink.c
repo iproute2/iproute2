@@ -85,6 +85,7 @@ void iplink_usage(void)
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ] [up]\n");
 
 	if (iplink_have_newlink()) {
+		fprintf(stderr, "       ip link help [ TYPE ]\n");
 		fprintf(stderr, "\n");
 		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
 		fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n");
@@ -1137,6 +1138,23 @@ static int do_set(int argc, char **argv)
 }
 #endif /* IPLINK_IOCTL_COMPAT */
 
+static void do_help(int argc, char **argv)
+{
+	struct link_util *lu = NULL;
+
+	if (argc <= 0) {
+		usage();
+		return ;
+	}
+
+	lu = get_link_kind(*argv);
+
+	if (lu && lu->print_help)
+		lu->print_help(lu, argc-1, argv+1, stdout);
+	else
+		usage();
+}
+
 int do_iplink(int argc, char **argv)
 {
 	if (argc > 0) {
@@ -1166,8 +1184,10 @@ int do_iplink(int argc, char **argv)
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
 			return ipaddr_list_link(argc-1, argv+1);
-		if (matches(*argv, "help") == 0)
-			usage();
+		if (matches(*argv, "help") == 0) {
+			do_help(argc-1, argv+1);
+			return 0;
+		}
 	} else
 		return ipaddr_list_link(0, NULL);
 

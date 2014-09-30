@@ -18,9 +18,9 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void explain(void)
+static void print_explain(FILE *f)
 {
-	fprintf(stderr,
+	fprintf(f,
 		"Usage: ... vlan [ protocol VLANPROTO ] id VLANID"
 		"                [ FLAG-LIST ]\n"
 		"                [ ingress-qos-map QOS-MAP ] [ egress-qos-map QOS-MAP ]\n"
@@ -33,6 +33,11 @@ static void explain(void)
 		"QOS-MAP := [ QOS-MAP ] QOS-MAPPING\n"
 		"QOS-MAPPING := FROM:TO\n"
 	);
+}
+
+static void explain(void)
+{
+	print_explain(stderr);
 }
 
 static int on_off(const char *msg, const char *arg)
@@ -226,9 +231,16 @@ static void vlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		vlan_print_map(f, "egress-qos-map", tb[IFLA_VLAN_EGRESS_QOS]);
 }
 
+static void vlan_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_explain(f);
+}
+
 struct link_util vlan_link_util = {
 	.id		= "vlan",
 	.maxattr	= IFLA_VLAN_MAX,
 	.parse_opt	= vlan_parse_opt,
 	.print_opt	= vlan_print_opt,
+	.print_help	= vlan_print_help,
 };

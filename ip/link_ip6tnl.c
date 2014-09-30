@@ -29,24 +29,29 @@
 
 #define DEFAULT_TNL_HOP_LIMIT	(64)
 
+static void print_usage(FILE *f)
+{
+	fprintf(f, "Usage: ip link { add | set | change | replace | del } NAME\n");
+	fprintf(f, "          [ mode { ip6ip6 | ipip6 | any } ]\n");
+	fprintf(f, "          type ip6tnl [ remote ADDR ] [ local ADDR ]\n");
+	fprintf(f, "          [ dev PHYS_DEV ] [ encaplimit ELIM ]\n");
+	fprintf(f ,"          [ hoplimit HLIM ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
+	fprintf(f, "          [ dscp inherit ] [ fwmark inherit ]\n");
+	fprintf(f, "\n");
+	fprintf(f, "Where: NAME      := STRING\n");
+	fprintf(f, "       ADDR      := IPV6_ADDRESS\n");
+	fprintf(f, "       ELIM      := { none | 0..255 }(default=%d)\n",
+		IPV6_DEFAULT_TNL_ENCAP_LIMIT);
+	fprintf(f, "       HLIM      := 0..255 (default=%d)\n",
+		DEFAULT_TNL_HOP_LIMIT);
+	fprintf(f, "       TCLASS    := { 0x0..0xff | inherit }\n");
+	fprintf(f, "       FLOWLABEL := { 0x0..0xfffff | inherit }\n");
+}
+
 static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(stderr, "          [ mode { ip6ip6 | ipip6 | any } ]\n");
-	fprintf(stderr, "          type ip6tnl [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(stderr, "          [ dev PHYS_DEV ] [ encaplimit ELIM ]\n");
-	fprintf(stderr ,"          [ hoplimit HLIM ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
-	fprintf(stderr, "          [ dscp inherit ] [ fwmark inherit ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: NAME      := STRING\n");
-	fprintf(stderr, "       ADDR      := IPV6_ADDRESS\n");
-	fprintf(stderr, "       ELIM      := { none | 0..255 }(default=%d)\n",
-		IPV6_DEFAULT_TNL_ENCAP_LIMIT);
-	fprintf(stderr, "       HLIM      := 0..255 (default=%d)\n",
-		DEFAULT_TNL_HOP_LIMIT);
-	fprintf(stderr, "       TCLASS    := { 0x0..0xff | inherit }\n");
-	fprintf(stderr, "       FLOWLABEL := { 0x0..0xfffff | inherit }\n");
+	print_usage(stderr);
 	exit(-1);
 }
 
@@ -335,9 +340,16 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 		fprintf(f, "fwmark inherit ");
 }
 
+static void ip6tunnel_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f);
+}
+
 struct link_util ip6tnl_link_util = {
 	.id = "ip6tnl",
 	.maxattr = IFLA_IPTUN_MAX,
 	.parse_opt = ip6tunnel_parse_opt,
 	.print_opt = ip6tunnel_print_opt,
+	.print_help = ip6tunnel_print_help,
 };

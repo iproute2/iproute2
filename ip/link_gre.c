@@ -23,19 +23,24 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
+static void print_usage(FILE *f)
+{
+	fprintf(f, "Usage: ip link { add | set | change | replace | del } NAME\n");
+	fprintf(f, "          type { gre | gretap } [ remote ADDR ] [ local ADDR ]\n");
+	fprintf(f, "          [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n");
+	fprintf(f, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
+	fprintf(f, "\n");
+	fprintf(f, "Where: NAME := STRING\n");
+	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
+	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
+	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
+	fprintf(f, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
+}
+
 static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(stderr, "          type { gre | gretap } [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(stderr, "          [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n");
-	fprintf(stderr, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: NAME := STRING\n");
-	fprintf(stderr, "       ADDR := { IP_ADDRESS | any }\n");
-	fprintf(stderr, "       TOS  := { NUMBER | inherit }\n");
-	fprintf(stderr, "       TTL  := { 1..255 | inherit }\n");
-	fprintf(stderr, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
+	print_usage(stderr);
 	exit(-1);
 }
 
@@ -354,11 +359,18 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fputs("ocsum ", f);
 }
 
+static void gre_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f);
+}
+
 struct link_util gre_link_util = {
 	.id = "gre",
 	.maxattr = IFLA_GRE_MAX,
 	.parse_opt = gre_parse_opt,
 	.print_opt = gre_print_opt,
+	.print_help = gre_print_help,
 };
 
 struct link_util gretap_link_util = {
@@ -366,4 +378,5 @@ struct link_util gretap_link_util = {
 	.maxattr = IFLA_GRE_MAX,
 	.parse_opt = gre_parse_opt,
 	.print_opt = gre_print_opt,
+	.print_help = gre_print_help,
 };

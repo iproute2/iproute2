@@ -21,9 +21,9 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void usage(void)
+static void print_usage(FILE *f)
 {
-	fprintf(stderr,
+	fprintf(f,
 "Usage:\tip link add name NAME type hsr slave1 SLAVE1-IF slave2 SLAVE2-IF\n"
 "\t[ supervision ADDR-BYTE ]\n"
 "\n"
@@ -34,6 +34,11 @@ static void usage(void)
 "ADDR-BYTE\n"
 "	0-255; the last byte of the multicast address used for HSR supervision\n"
 "	frames (default = 0)\n");
+}
+
+static void usage(void)
+{
+	print_usage(stderr);
 }
 
 static int hsr_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -121,9 +126,16 @@ static void hsr_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				    b1, sizeof(b1)));
 }
 
+static void hsr_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f);
+}
+
 struct link_util hsr_link_util = {
 	.id		= "hsr",
 	.maxattr	= IFLA_VLAN_MAX,
 	.parse_opt	= hsr_parse_opt,
 	.print_opt	= hsr_print_opt,
+	.print_help	= hsr_print_help,
 };

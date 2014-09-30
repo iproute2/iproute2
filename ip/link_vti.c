@@ -24,17 +24,22 @@
 #include "tunnel.h"
 
 
+static void print_usage(FILE *f)
+{
+	fprintf(f, "Usage: ip link { add | set | change | replace | del } NAME\n");
+	fprintf(f, "          type { vti } [ remote ADDR ] [ local ADDR ]\n");
+	fprintf(f, "          [ [i|o]key KEY ]\n");
+	fprintf(f, "          [ dev PHYS_DEV ]\n");
+	fprintf(f, "\n");
+	fprintf(f, "Where: NAME := STRING\n");
+	fprintf(f, "       ADDR := { IP_ADDRESS }\n");
+	fprintf(f, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
+}
+
 static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(stderr, "          type { vti } [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(stderr, "          [ [i|o]key KEY ]\n");
-	fprintf(stderr, "          [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: NAME := STRING\n");
-	fprintf(stderr, "       ADDR := { IP_ADDRESS }\n");
-	fprintf(stderr, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
+	print_usage(stderr);
 	exit(-1);
 }
 
@@ -240,9 +245,16 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	}
 }
 
+static void vti_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f);
+}
+
 struct link_util vti_link_util = {
 	.id = "vti",
 	.maxattr = IFLA_VTI_MAX,
 	.parse_opt = vti_parse_opt,
 	.print_opt = vti_print_opt,
+	.print_help = vti_print_help,
 };

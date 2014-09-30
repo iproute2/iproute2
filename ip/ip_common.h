@@ -76,6 +76,8 @@ struct link_util
 					     struct rtattr *[]);
 	void			(*print_xstats)(struct link_util *, FILE *,
 					     struct rtattr *);
+	void			(*print_help)(struct link_util *, int, char **,
+					     FILE *);
 	bool			slave;
 };
 
