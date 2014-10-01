@@ -1554,6 +1554,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 			       info->tcpi_rcv_wscale);
 		if (info->tcpi_rto && info->tcpi_rto != 3000000)
 			printf(" rto:%g", (double)info->tcpi_rto/1000);
+		if (info->tcpi_backoff)
+			printf(" backoff:%u", info->tcpi_backoff);
 		if (info->tcpi_rtt)
 			printf(" rtt:%g/%g", (double)info->tcpi_rtt/1000,
 			       (double)info->tcpi_rttvar/1000);
@@ -1582,6 +1584,15 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 					 (double) info->tcpi_snd_mss * 8000000.
 					 / rtt));
 		}
+
+		if (info->tcpi_last_data_sent)
+			printf(" lastsnd:%u", info->tcpi_last_data_sent);
+
+		if (info->tcpi_last_data_recv)
+			printf(" lastrcv:%u", info->tcpi_last_data_recv);
+
+		if (info->tcpi_last_ack_recv)
+			printf(" lastack:%u", info->tcpi_last_ack_recv);
 
 		if (info->tcpi_pacing_rate &&
 		    info->tcpi_pacing_rate != ~0ULL) {
