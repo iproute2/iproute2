@@ -689,7 +689,10 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), IFLA_LINK, &ifindex, 4);
 		}
 
-		req.i.ifi_index = index;
+		if (index == -1)
+			req.i.ifi_index = 0;
+		else
+			req.i.ifi_index = index;
 	}
 
 	if (name) {
