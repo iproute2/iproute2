@@ -322,7 +322,6 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
                                const struct rtattr *carrier_changes)
 {
-	fprintf(fp, "%s", _SL_);
 	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
 		s->rx_compressed ? "compressed" : "", _SL_);
 	fprintf(fp, "    %-10"PRIu64" %-8"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
@@ -375,10 +374,9 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 	}
 }
 
-static void print_link_stats(FILE *fp, const struct rtnl_link_stats *s,
-			     const struct rtattr *carrier_changes)
+static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
+			       const struct rtattr *carrier_changes)
 {
-	fprintf(fp, "%s", _SL_);
 	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
 		s->rx_compressed ? "compressed" : "", _SL_);
 	fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
@@ -423,6 +421,27 @@ static void print_link_stats(FILE *fp, const struct rtnl_link_stats *s,
 			fprintf(fp, " %-7u",
 				*(uint32_t*)RTA_DATA(carrier_changes));
 	}
+}
+
+static void __print_link_stats(FILE *fp, struct rtattr **tb)
+{
+	if (tb[IFLA_STATS64])
+		print_link_stats64(fp, RTA_DATA(tb[IFLA_STATS64]),
+					tb[IFLA_CARRIER_CHANGES]);
+	else if (tb[IFLA_STATS])
+		print_link_stats32(fp, RTA_DATA(tb[IFLA_STATS]),
+					tb[IFLA_CARRIER_CHANGES]);
+}
+
+static void print_link_stats(FILE *fp, struct nlmsghdr *n)
+{
+	struct ifinfomsg *ifi = NLMSG_DATA(n);
+	struct rtattr * tb[IFLA_MAX+1];
+
+	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi),
+		     n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi)));
+	__print_link_stats(fp, tb);
+	fprintf(fp, "%s", _SL_);
 }
 
 int print_linkinfo(const struct sockaddr_nl *who,
@@ -550,12 +569,8 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	}
 
 	if (do_link && show_stats) {
-		if (tb[IFLA_STATS64])
-			print_link_stats64(fp, RTA_DATA(tb[IFLA_STATS64]),
-					   tb[IFLA_CARRIER_CHANGES]);
-		else if (tb[IFLA_STATS])
-			print_link_stats(fp, RTA_DATA(tb[IFLA_STATS]),
-					 tb[IFLA_CARRIER_CHANGES]);
+		fprintf(fp, "%s", _SL_);
+		__print_link_stats(fp, tb);
 	}
 
 	if (do_link && tb[IFLA_VFINFO_LIST] && tb[IFLA_NUM_VF]) {
@@ -567,7 +582,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	fprintf(fp, "\n");
 	fflush(fp);
-	return 0;
+	return 1;
 }
 
 static int flush_update(void)
@@ -1282,11 +1297,15 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	}
 
 	for (l = linfo.head; l; l = l->next) {
-		if (no_link || print_linkinfo(NULL, &l->h, stdout) == 0) {
+		int res = 0;
+
+		if (no_link || (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
 			struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 			if (filter.family != AF_PACKET)
 				print_selected_addrinfo(ifi->ifi_index,
 							ainfo.head, stdout);
+			if (res > 0 && !do_link && show_stats)
+				print_link_stats(stdout, &l->h);
 		}
 	}
 	fflush(stdout);
