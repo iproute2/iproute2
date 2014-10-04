@@ -409,7 +409,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	}
 
 	if (p->i_flags&GRE_SEQ)
-		printf("%s  Drop packets out of sequence.\n", _SL_);
+		printf("%s  Drop packets out of sequence.", _SL_);
 	if (p->i_flags&GRE_CSUM)
 		printf("%s  Checksum in received packet is required.", _SL_);
 	if (p->o_flags&GRE_SEQ)
