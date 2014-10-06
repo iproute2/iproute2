@@ -28,11 +28,11 @@ static void explain(void)
 {
 	fprintf(stderr, "Usage: ... rsvp ipproto PROTOCOL session DST[/PORT | GPI ]\n");
 	fprintf(stderr, "                [ sender SRC[/PORT | GPI ]\n");
-	fprintf(stderr, "                [ classid CLASSID ] [ police POLICE_SPEC ]\n");
+	fprintf(stderr, "                [ classid CLASSID ] [ action ACTION_SPEC ]\n");
 	fprintf(stderr, "                [ tunnelid ID ] [ tunnel ID skip NUMBER ]\n");
 	fprintf(stderr, "Where: GPI := { flowlabel NUMBER | spi/ah SPI | spi/esp SPI |\n");
 	fprintf(stderr, "                u{8|16|32} NUMBER mask MASK at OFFSET}\n");
-	fprintf(stderr, "       POLICE_SPEC := ... look at TBF\n");
+	fprintf(stderr, "       ACTION_SPEC := ... look at individual actions\n");
 	fprintf(stderr, "       FILTERID := X:Y\n");
 	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
 }

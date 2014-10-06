@@ -32,7 +32,7 @@ static void explain(void)
 {
 	fprintf(stderr, "Usage: ... u32 [ match SELECTOR ... ] [ link HTID ]"
 		" [ classid CLASSID ]\n");
-	fprintf(stderr, "               [ police POLICE_SPEC ]"
+	fprintf(stderr, "               [ action ACTION_SPEC ]"
 		" [ offset OFFSET_SPEC ]\n");
 	fprintf(stderr, "               [ ht HTID ] [ hashkey HASHKEY_SPEC ]\n");
 	fprintf(stderr, "               [ sample SAMPLE ]\n");

@@ -34,13 +34,14 @@ static void explain(void)
 	fprintf(stderr, " [inline]:     run bytecode BPF_BYTECODE\n");
 	fprintf(stderr, " [from file]:  run bytecode-file FILE\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "               [ police POLICE_SPEC ] [ action ACTION_SPEC ]\n");
+	fprintf(stderr, "               [ action ACTION_SPEC ]\n");
 	fprintf(stderr, "               [ classid CLASSID ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where BPF_BYTECODE := \'s,c t f k,c t f k,c t f k,...\'\n");
 	fprintf(stderr, "      c,t,f,k and s are decimals; s denotes number of 4-tuples\n");
 	fprintf(stderr, "Where FILE points to a file containing the BPF_BYTECODE string\n");
-	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
+	fprintf(stderr, "\nACTION_SPEC := ... look at individual actions\n");
+	fprintf(stderr, "NOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
 static int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
