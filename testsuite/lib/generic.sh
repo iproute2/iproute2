@@ -21,6 +21,11 @@ ts_err_cat()
 	ts_cat "$@" | tee >> $ERRF
 }
 
+ts_skip()
+{
+    exit 127
+}
+
 ts_tc()
 {
 	SCRIPT=$1; shift
