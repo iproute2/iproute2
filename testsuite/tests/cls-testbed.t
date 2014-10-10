@@ -13,7 +13,7 @@ fi
 for q in ${QDISCS}; do
 	ts_log "Preparing classifier testbed with qdisc $q"
 
-	for c in tests/cls/*.t; do
+	for c in tests/cls/*.c; do
 
 		case "$q" in
 		cbq)

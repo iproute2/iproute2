@@ -4,7 +4,11 @@ PREFIX := sudo -E
 RESULTS_DIR := results
 ## -- End Config --
 
-TESTS := $(patsubst tests/%,%,$(wildcard tests/*.t))
+rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
+
+TESTS := $(patsubst tests/%,%,$(call rwildcard,tests/,*.t))
+TESTS_DIR := $(dir $(TESTS))
+
 IPVERS := $(filter-out iproute2/Makefile,$(wildcard iproute2/*))
 
 ifneq (,$(wildcard /proc/config.gz))
@@ -34,6 +38,11 @@ distclean: clean
 
 $(TESTS):
 	@mkdir -p $(RESULTS_DIR)
+	
+	@for d in $(TESTS_DIR); do \
+	    mkdir -p $(RESULTS_DIR)/$$d; \
+	done
+	
 	@for i in $(IPVERS); do \
 		o=`echo $$i | sed -e 's/iproute2\///'`; \
 		echo -n "Running $@ [$$o/`uname -r`]: "; \
