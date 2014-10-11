@@ -1877,7 +1877,7 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 	int fd, family;
 	struct sockaddr_nl nladdr;
 	struct msghdr msg;
-	char	buf[8192];
+	char	buf[16384];
 	struct iovec iov[3];
 
 	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
@@ -1993,7 +1993,7 @@ done:
 static int tcp_show_netlink_file(struct filter *f)
 {
 	FILE	*fp;
-	char	buf[8192];
+	char	buf[16384];
 
 	if ((fp = fopen(getenv("TCPDIAG_FILE"), "r")) == NULL) {
 		perror("fopen($TCPDIAG_FILE)");
@@ -2510,7 +2510,7 @@ static int handle_netlink_request(struct filter *f, FILE *dump_fp,
 				  int (* show_one_sock)(struct nlmsghdr *nlh, struct filter *f))
 {
 	int fd;
-	char	buf[8192];
+	char	buf[16384];
 
 	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
 		return -1;
@@ -2795,7 +2795,7 @@ static int packet_show_netlink(struct filter *f, FILE *dump_fp)
 		struct nlmsghdr nlh;
 		struct packet_diag_req r;
 	} req;
-	char	buf[8192];
+	char	buf[16384];
 
 	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
 		return -1;
