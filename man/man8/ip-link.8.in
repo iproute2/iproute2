@@ -144,7 +144,9 @@ ip-link \- network device configuration
 .B ip link show
 .RI "[ " DEVICE " | "
 .B group
-.IR GROUP " ]"
+.IR GROUP " |"
+.B up
+]
 
 .SH "DESCRIPTION"
 .SS ip link add - add virtual link
