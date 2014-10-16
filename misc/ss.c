@@ -2895,9 +2895,6 @@ static int packet_show(struct filter *f)
 	int ino;
 	unsigned long long sk;
 
-	if (!(f->states & (1<<SS_CLOSE)))
-		return 0;
-
 	if (packet_show_netlink(f, NULL) == 0)
 		return 0;
 
@@ -3132,9 +3129,6 @@ static int netlink_show(struct filter *f)
 	unsigned groups;
 	int rq, wq, rc;
 	unsigned long long sk, cb;
-
-	if (!(f->states & (1<<SS_CLOSE)))
-		return 0;
 
 	if (!getenv("PROC_NET_NETLINK") && !getenv("PROC_ROOT") &&
 		netlink_show_netlink(f, NULL) == 0)
