@@ -88,6 +88,8 @@ int state_width;
 int addrp_width;
 int addr_width;
 int serv_width;
+int paddr_width;
+int pserv_width;
 int screen_width;
 
 static const char *TCP_PROTO = "tcp";
@@ -3031,10 +3033,10 @@ static void netlink_show_one(struct filter *f,
 
 	if (state == NETLINK_CONNECTED) {
 		printf("%*d:%-*d",
-		       addr_width, dst_group, serv_width, dst_pid);
+		       paddr_width, dst_group, pserv_width, dst_pid);
 	} else {
 		printf("%*s*%-*s",
-		       addr_width, "", serv_width, "");
+		       paddr_width, "", pserv_width, "");
 	}
 
 	char *pid_context = NULL;
@@ -3777,9 +3779,22 @@ int main(int argc, char *argv[])
 		printf("%-*s ", state_width, "State");
 	printf("%-6s %-6s ", "Recv-Q", "Send-Q");
 
+	paddr_width = addr_width;
+	pserv_width = serv_width;
+
+	/* Netlink service column can be resolved as process name/pid thus it
+	 * can be much wider than address column which is just a
+	 * protocol name/id.
+	 */
+	if (current_filter.dbs & (1<<NETLINK_DB)) {
+		serv_width = addr_width - 10;
+		paddr_width = 13;
+		pserv_width = 13;
+	}
+
 	printf("%*s:%-*s %*s:%-*s\n",
 	       addr_width, "Local Address", serv_width, "Port",
-	       addr_width, "Peer Address", serv_width, "Port");
+	       paddr_width, "Peer Address", pserv_width, "Port");
 
 	fflush(stdout);
 
