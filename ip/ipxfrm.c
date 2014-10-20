@@ -806,6 +806,62 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		fprintf(fp, "%s", _SL_);
 	}
 
+	if (tb[XFRMA_REPLAY_VAL]) {
+		struct xfrm_replay_state *replay;
+
+		if (prefix)
+			fputs(prefix, fp);
+		fprintf(fp, "anti-replay context: ");
+
+		if (RTA_PAYLOAD(tb[XFRMA_REPLAY_VAL]) < sizeof(*replay)) {
+			fprintf(fp, "(ERROR truncated)");
+			fprintf(fp, "%s", _SL_);
+			return;
+		}
+
+		replay = (struct xfrm_replay_state *)RTA_DATA(tb[XFRMA_REPLAY_VAL]);
+		fprintf(fp, "seq 0x%x, oseq 0x%x, bitmap 0x%08x",
+			replay->seq, replay->oseq, replay->bitmap);
+		fprintf(fp, "%s", _SL_);
+	}
+
+	if (tb[XFRMA_REPLAY_ESN_VAL]) {
+		struct xfrm_replay_state_esn *replay;
+		unsigned int i, j;
+
+		if (prefix)
+			fputs(prefix, fp);
+		fprintf(fp, "anti-replay esn context:");
+
+		if (RTA_PAYLOAD(tb[XFRMA_REPLAY_ESN_VAL]) < sizeof(*replay)) {
+			fprintf(fp, "(ERROR truncated)");
+			fprintf(fp, "%s", _SL_);
+			return;
+		}
+		fprintf(fp, "%s", _SL_);
+
+		replay = (struct xfrm_replay_state_esn *)RTA_DATA(tb[XFRMA_REPLAY_ESN_VAL]);
+		if (prefix)
+			fputs(prefix, fp);
+		fprintf(fp, " seq-hi 0x%x, seq 0x%x, oseq-hi 0x%0x, oseq 0x%0x",
+			replay->seq_hi, replay->seq, replay->oseq_hi,
+			replay->oseq);
+		fprintf(fp, "%s", _SL_);
+		if (prefix)
+			fputs(prefix, fp);
+		fprintf(fp, " replay_window %u, bitmap-length %u",
+			replay->replay_window, replay->bmp_len);
+		for (i = replay->bmp_len, j = 0; i; i--) {
+			if (j++ % 8 == 0) {
+				fprintf(fp, "%s", _SL_);
+				if (prefix)
+					fputs(prefix, fp);
+				fprintf(fp, " ");
+			}
+			fprintf(fp, "%08x ", replay->bmp[i - 1]);
+		}
+		fprintf(fp, "%s", _SL_);
+	}
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)
@@ -849,6 +905,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_ICMP, "icmp");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_AF_UNSPEC, "af-unspec");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_ALIGN4, "align4");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_STATE_ESN, "esn");
 		if (flags)
 			fprintf(fp, "%x", flags);
 	}
