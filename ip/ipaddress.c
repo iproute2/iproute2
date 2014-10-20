@@ -1197,7 +1197,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	char *filter_dev = NULL;
 	int no_link = 0;
 
-	ipaddr_reset_filter(oneline);
+	ipaddr_reset_filter(oneline, 0);
 	filter.showqueue = 1;
 
 	if (filter.family == AF_UNSPEC)
@@ -1442,10 +1442,11 @@ int ipaddr_list_link(int argc, char **argv)
 	return ipaddr_list_flush_or_save(argc, argv, IPADD_LIST);
 }
 
-void ipaddr_reset_filter(int oneline)
+void ipaddr_reset_filter(int oneline, int ifindex)
 {
 	memset(&filter, 0, sizeof(filter));
 	filter.oneline = oneline;
+	filter.ifindex = ifindex;
 }
 
 static int default_scope(inet_prefix *lcl)

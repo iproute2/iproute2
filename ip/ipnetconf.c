@@ -123,9 +123,10 @@ int print_netconf(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static void ipnetconf_reset_filter(void)
+void ipnetconf_reset_filter(int ifindex)
 {
 	memset(&filter, 0, sizeof(filter));
+	filter.ifindex = ifindex;
 }
 
 static int do_show(int argc, char **argv)
@@ -136,7 +137,7 @@ static int do_show(int argc, char **argv)
 		char			buf[1024];
 	} req;
 
-	ipnetconf_reset_filter();
+	ipnetconf_reset_filter(0);
 	filter.family = preferred_family;
 	if (filter.family == AF_UNSPEC)
 		filter.family = AF_INET;

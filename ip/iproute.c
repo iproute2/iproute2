@@ -1137,7 +1137,7 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 	} else
 		filter_fn = print_route;
 
-	iproute_reset_filter();
+	iproute_reset_filter(0);
 	filter.tb = RT_TABLE_MAIN;
 
 	if ((action == IPROUTE_FLUSH) && argc <= 0) {
@@ -1385,7 +1385,7 @@ static int iproute_get(int argc, char **argv)
 
 	memset(&req, 0, sizeof(req));
 
-	iproute_reset_filter();
+	iproute_reset_filter(0);
 	filter.cloned = 2;
 
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
@@ -1590,11 +1590,14 @@ static int iproute_showdump(void)
 	exit(rtnl_from_file(stdin, &show_handler, NULL));
 }
 
-void iproute_reset_filter(void)
+void iproute_reset_filter(int ifindex)
 {
 	memset(&filter, 0, sizeof(filter));
 	filter.mdst.bitlen = -1;
 	filter.msrc.bitlen = -1;
+	filter.oif = ifindex;
+	if (filter.oif > 0)
+		filter.oifmask = -1;
 }
 
 int do_iproute(int argc, char **argv)

@@ -29,7 +29,8 @@ int prefix_banner;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ] [ label ]\n");
+	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ]"
+			"[ label ] [dev DEVICE]\n");
 	fprintf(stderr, "LISTofOBJECTS := link | address | route | mroute | prefix |\n");
 	fprintf(stderr, "                 neigh | netconf\n");
 	fprintf(stderr, "FILE := file FILENAME\n");
@@ -162,12 +163,9 @@ int do_ipmonitor(int argc, char **argv)
 	int lprefix=0;
 	int lneigh=0;
 	int lnetconf=0;
+	int ifindex=0;
 
 	rtnl_close(&rth);
-	ipaddr_reset_filter(1);
-	iproute_reset_filter();
-	ipmroute_reset_filter();
-	ipneigh_reset_filter();
 
 	while (argc > 0) {
 		if (matches(*argv, "file") == 0) {
@@ -201,12 +199,24 @@ int do_ipmonitor(int argc, char **argv)
 			prefix_banner=1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
+		} else if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+
+			ifindex = ll_name_to_index(*argv);
+			if (!ifindex)
+				invarg("Device does not exist\n", *argv);
 		} else {
 			fprintf(stderr, "Argument \"%s\" is unknown, try \"ip monitor help\".\n", *argv);
 			exit(-1);
 		}
 		argc--;	argv++;
 	}
+
+	ipaddr_reset_filter(1, ifindex);
+	iproute_reset_filter(ifindex);
+	ipmroute_reset_filter(ifindex);
+	ipneigh_reset_filter(ifindex);
+	ipnetconf_reset_filter(ifindex);
 
 	if (llink)
 		groups |= nl_mgrp(RTNLGRP_LINK);

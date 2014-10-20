@@ -13,14 +13,17 @@ extern int print_ntable(const struct sockaddr_nl *who,
 			struct nlmsghdr *n, void *arg);
 extern int ipaddr_list(int argc, char **argv);
 extern int ipaddr_list_link(int argc, char **argv);
+void ipaddr_get_vf_rate(int, int *, int *, int);
 extern int iproute_monitor(int argc, char **argv);
 extern void iplink_usage(void) __attribute__((noreturn));
-extern void iproute_reset_filter(void);
-extern void ipmroute_reset_filter(void);
-void ipaddr_get_vf_rate(int, int *, int *, int);
-extern void ipaddr_reset_filter(int);
-extern void ipneigh_reset_filter(void);
+
+extern void iproute_reset_filter(int ifindex);
+extern void ipmroute_reset_filter(int ifindex);
+extern void ipaddr_reset_filter(int oneline, int ifindex);
+extern void ipneigh_reset_filter(int ifindex);
 extern void ipntable_reset_filter(void);
+extern void ipnetconf_reset_filter(int ifindex);
+
 extern int print_route(const struct sockaddr_nl *who,
 		       struct nlmsghdr *n, void *arg);
 extern int print_mroute(const struct sockaddr_nl *who,

@@ -313,10 +313,11 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-void ipneigh_reset_filter(void)
+void ipneigh_reset_filter(int ifindex)
 {
 	memset(&filter, 0, sizeof(filter));
 	filter.state = ~0;
+	filter.index = ifindex;
 }
 
 static int do_show_or_flush(int argc, char **argv, int flush)
@@ -325,7 +326,7 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 	int state_given = 0;
 	struct ndmsg ndm = { 0 };
 
-	ipneigh_reset_filter();
+	ipneigh_reset_filter(0);
 
 	if (!filter.family)
 		filter.family = preferred_family;

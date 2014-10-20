@@ -11,6 +11,8 @@ ip-monitor, rtmon \- state monitoring
 .BR  "monitor" " [ " all " |"
 .IR OBJECT-LIST " ] ["
 .BI file " FILENAME "
+] [
+.BI dev " DEVICE "
 ]
 .sp
 
@@ -26,6 +28,8 @@ command is the first in the command line and then the object list follows:
 .BR "ip monitor" " [ " all " |"
 .IR OBJECT-LIST " ] ["
 .BI file " FILENAME "
+] [
+.BI dev " DEVICE "
 ]
 
 .I OBJECT-LIST
@@ -68,6 +72,11 @@ Nevertheless, it is possible to start
 at any time.
 It prepends the history with the state snapshot dumped at the moment
 of starting.
+
+.P
+If the
+.BI dev
+option is given, the program prints only events related to this device.
 
 .SH SEE ALSO
 .br

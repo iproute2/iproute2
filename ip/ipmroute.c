@@ -174,11 +174,12 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-void ipmroute_reset_filter(void)
+void ipmroute_reset_filter(int ifindex)
 {
 	memset(&filter, 0, sizeof(filter));
 	filter.mdst.bitlen = -1;
 	filter.msrc.bitlen = -1;
+	filter.iif = ifindex;
 }
 
 static int mroute_list(int argc, char **argv)
@@ -186,7 +187,7 @@ static int mroute_list(int argc, char **argv)
 	char *id = NULL;
 	int family;
 
-	ipmroute_reset_filter();
+	ipmroute_reset_filter(0);
 	if (preferred_family == AF_UNSPEC)
 		family = AF_INET;
 	else
