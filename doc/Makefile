@@ -70,4 +70,4 @@ install:
 	install -m 0644 $(shell echo *.sgml) $(DESTDIR)$(DOCDIR)
 
 clean:
-	rm -f *.aux *.log *.toc $(PSFILES) $(DVIFILES) *.html
+	rm -f *.aux *.log *.toc $(PSFILES) $(DVIFILES) *.html *.pdf
