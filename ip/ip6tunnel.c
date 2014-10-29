@@ -453,49 +453,37 @@ static int do_show(int argc, char **argv)
 static int do_add(int cmd, int argc, char **argv)
 {
 	struct ip6_tnl_parm2 p;
+	const char *basedev = "ip6tnl0";
 
 	ip6_tnl_parm_init(&p, 1);
 
 	if (parse_args(argc, argv, cmd, &p) < 0)
 		return -1;
 
-	switch (p.proto) {
-	case IPPROTO_IPIP:
-	case IPPROTO_IPV6:
-	if (p.i_flags != VTI_ISVTI)
-		return tnl_add_ioctl(cmd, "ip6_vti0", p.name, &p);
-	else
-		return tnl_add_ioctl(cmd, "ip6tnl0", p.name, &p);
-	case IPPROTO_GRE:
-		return tnl_add_ioctl(cmd, "ip6gre0", p.name, &p);
-	default:
-		fprintf(stderr, "cannot determine tunnel mode (ip6ip6, ipip6, vti6 or gre)\n");
-	}
-	return -1;
+	if (p.proto == IPPROTO_GRE)
+		basedev = "ip6gre0";
+	else if (p.i_flags & VTI_ISVTI)
+		basedev = "ip6_vti0";
+
+	return tnl_add_ioctl(cmd, basedev, p.name, &p);
 }
 
 static int do_del(int argc, char **argv)
 {
 	struct ip6_tnl_parm2 p;
+	const char *basedev = "ip6tnl0";
 
 	ip6_tnl_parm_init(&p, 1);
 
 	if (parse_args(argc, argv, SIOCDELTUNNEL, &p) < 0)
 		return -1;
 
-	switch (p.proto) {
-	case IPPROTO_IPIP:
-	case IPPROTO_IPV6:
-	if (p.i_flags != VTI_ISVTI)
-		return tnl_del_ioctl("ip6_vti0", p.name, &p);
-	else
-		return tnl_del_ioctl("ip6tnl0", p.name, &p);
-	case IPPROTO_GRE:
-		return tnl_del_ioctl("ip6gre0", p.name, &p);
-	default:
-		return tnl_del_ioctl(p.name, p.name, &p);
-	}
-	return -1;
+	if (p.proto == IPPROTO_GRE)
+		basedev = "ip6gre0";
+	else if (p.i_flags & VTI_ISVTI)
+		basedev = "ip6_vti0";
+
+	return tnl_del_ioctl(basedev, p.name, &p);
 }
 
 int do_ip6tunnel(int argc, char **argv)
