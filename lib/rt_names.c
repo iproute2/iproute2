@@ -525,3 +525,85 @@ const char *rtnl_group_n2a(int id, char *buf, int len)
 	snprintf(buf, len, "%d", id);
 	return buf;
 }
+
+static char *nl_proto_tab[256] = {
+	[NETLINK_ROUTE]          = "rtnl",
+	[NETLINK_UNUSED]         = "unused",
+	[NETLINK_USERSOCK]       = "usersock",
+	[NETLINK_FIREWALL]       = "fw",
+	[NETLINK_SOCK_DIAG]      = "tcpdiag",
+	[NETLINK_NFLOG]          = "nflog",
+	[NETLINK_XFRM]           = "xfrm",
+	[NETLINK_SELINUX]        = "selinux",
+	[NETLINK_ISCSI]          = "iscsi",
+	[NETLINK_AUDIT]          = "audit",
+	[NETLINK_FIB_LOOKUP]     = "fiblookup",
+	[NETLINK_CONNECTOR]      = "connector",
+	[NETLINK_NETFILTER]      = "nft",
+	[NETLINK_IP6_FW]         = "ip6fw",
+	[NETLINK_DNRTMSG]        = "dec-rt",
+	[NETLINK_KOBJECT_UEVENT] = "uevent",
+	[NETLINK_GENERIC]        = "genl",
+	[NETLINK_SCSITRANSPORT]  = "scsi-trans",
+	[NETLINK_ECRYPTFS]       = "ecryptfs",
+	[NETLINK_RDMA]           = "rdma",
+	[NETLINK_CRYPTO]         = "crypto",
+};
+
+static int nl_proto_init;
+
+static void nl_proto_initialize(void)
+{
+	nl_proto_init = 1;
+	rtnl_tab_initialize(CONFDIR "/nl_protos",
+			    nl_proto_tab, 256);
+}
+
+const char *nl_proto_n2a(int id, char *buf, int len)
+{
+	if (id < 0 || id >= 256) {
+		snprintf(buf, len, "%u", id);
+		return buf;
+	}
+
+	if (!nl_proto_init)
+		nl_proto_initialize();
+
+	if (nl_proto_tab[id])
+		return nl_proto_tab[id];
+
+	snprintf(buf, len, "%u", id);
+	return buf;
+}
+
+int nl_proto_a2n(__u32 *id, const char *arg)
+{
+	static char *cache = NULL;
+	static unsigned long res;
+	char *end;
+	int i;
+
+	if (cache && strcmp(cache, arg) == 0) {
+		*id = res;
+		return 0;
+	}
+
+	if (!nl_proto_init)
+		nl_proto_initialize();
+
+	for (i = 0; i < 256; i++) {
+		if (nl_proto_tab[i] &&
+		    strcmp(nl_proto_tab[i], arg) == 0) {
+			cache = nl_proto_tab[i];
+			res = i;
+			*id = res;
+			return 0;
+		}
+	}
+
+	res = strtoul(arg, &end, 0);
+	if (!end || end == arg || *end || res > 255)
+		return -1;
+	*id = res;
+	return 0;
+}

@@ -2979,6 +2979,8 @@ static void netlink_show_one(struct filter *f,
 				int rq, int wq,
 				unsigned long long sk, unsigned long long cb)
 {
+	SPRINT_BUF(prot_name);
+
 	if (f->f) {
 		struct tcpstat tst;
 		tst.local.family = AF_NETLINK;
@@ -2996,14 +2998,13 @@ static void netlink_show_one(struct filter *f,
 	if (state_width)
 		printf("%-*s ", state_width, "UNCONN");
 	printf("%-6d %-6d ", rq, wq);
-	if (resolve_services && prot == 0)
-		printf("%*s:", addr_width, "rtnl");
-	else if (resolve_services && prot == 3)
-		printf("%*s:", addr_width, "fw");
-	else if (resolve_services && prot == 4)
-		printf("%*s:", addr_width, "tcpdiag");
-	else
-		printf("%*d:", addr_width, prot);
+
+	if (resolve_services)
+	{
+		printf("%*s:", addr_width, nl_proto_n2a(prot, prot_name,
+					sizeof(prot_name)));
+	}
+
 	if (pid == -1) {
 		printf("%-*s ", serv_width, "*");
 	} else if (resolve_services) {
