@@ -43,6 +43,10 @@ ip-xfrm \- transform configuration
 .IR SEQ " ]"
 .RB "[ " replay-oseq
 .IR SEQ " ]"
+.RB "[ " replay-seq-hi
+.IR SEQ " ]"
+.RB "[ " replay-oseq-hi
+.IR SEQ " ]"
 .RB "[ " flag
 .IR FLAG-LIST " ]"
 .RB "[ " sel
@@ -138,7 +142,8 @@ ip-xfrm \- transform configuration
 
 .ti -8
 .IR FLAG " :="
-.BR noecn " | " decap-dscp " | " nopmtudisc " | " wildrecv " | " icmp " | " af-unspec " | " align4
+.BR noecn " | " decap-dscp " | " nopmtudisc " | " wildrecv " | " icmp " | "
+.BR af-unspec " | " align4 " | " esn
 
 .ti -8
 .IR SELECTOR " :="
@@ -470,7 +475,7 @@ and inbound trigger
 .I FLAG-LIST
 contains one or more of the following optional flags:
 .BR noecn ", " decap-dscp ", " nopmtudisc ", " wildrecv ", " icmp ", "
-.BR af-unspec ", or " align4 "."
+.BR af-unspec ", " align4 ", or " esn "."
 
 .TP
 .IR SELECTOR
