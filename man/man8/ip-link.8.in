@@ -16,6 +16,7 @@ ip-link \- network device configuration
 .ti -8
 .IR OPTIONS " := { "
 \fB\-V\fR[\fIersion\fR] |
+\fB\-h\fR[\fIuman-readable\fR] |
 \fB\-s\fR[\fItatistics\fR] |
 \fB\-r\fR[\fIesolve\fR] |
 \fB\-f\fR[\fIamily\fR] {
@@ -659,6 +660,12 @@ specifies what group of devices to show.
 .TP
 .B up
 only display running interfaces.
+
+.SH "NOTES"
+Human readable values are calculated with SI prefixes, so with a decimal
+base, not binary. (This is unlike
+.BR ifconfig (8)
+, with uses binary prefix.) 1,000 bytes are 1 kB, 1,000 kB are 1 MB, ...
 
 .SH "EXAMPLES"
 .PP
