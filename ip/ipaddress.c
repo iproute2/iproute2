@@ -319,61 +319,34 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	}
 }
 
-
-static void print_human64(FILE *fp, int length, uint64_t count)
+static void print_num(FILE *fp, unsigned width, uint64_t count)
 {
-	char * prefix = "kMGTPE";
-	int written = 0, i;
+	const char *prefix = "kMGTPE";
+	const unsigned int base = use_iec ? 1024 : 1000;
 	uint64_t powi = 1;
+	char buf[64];
 
-	if (count < 1000) {
-		/* we are below 1000, so no precision and no prefix */
-		written = fprintf(fp, "%"PRIu64, count);
-	} else {
-		/* increase value by a factor of 1000 and print
-		 * if result is something a human can read */
-		for (i = 0; i < 6; i++) {
-			powi *= 1000;
-			if (count / 1000 < powi) {
-				 written = fprintf(fp, "%"PRIu64".%"PRIu64"%c",
-					 count / powi, count * 10 / powi % 10, *prefix);
-				 break;
-			}
-			prefix++;
-		}
+	if (!human_readable || count < base) {
+		fprintf(fp, "%-*"PRIu64, width, count);
+		return;
 	}
 
-	do {
-		fputc(' ', fp);
-	} while (written++ < length);
-}
+	/* increase value by a factor of 1000/1024 and print
+	 * if result is something a human can read */
+	for(;;) {
+		powi *= base;
+		if (count / base < powi)
+			break;
 
-static void print_human32(FILE *fp, int length, uint32_t count)
-{
-	char * prefix = "KMG";
-	int written = 0, i;
-	uint32_t powi = 1;
-
-	if (count < 1000) {
-		/* we are below 1000, so no precision and no prefix */
-		written = fprintf(fp, "%u", count);
-	} else {
-		/* increase value by a factor of 1000 and print
-		 * if result is something a human can read */
-		for (i = 0; i < 3; i++) {
-			powi *= 1000;
-			if (count / 1000 < powi) {
-				 written = fprintf(fp, "%u.%u%c",
-					 count / powi, count * 10 / powi % 10, *prefix);
-				 break;
-			}
-			prefix++;
-		}
+		if (!prefix[1])
+			break;
+		++prefix;
 	}
 
-	do {
-		fputc(' ', fp);
-	} while (written++ < length);
+	snprintf(buf, sizeof(buf), "%.1f%c%s", (double) count / powi, 
+		 *prefix, use_iec ? "i" : "");
+
+	fprintf(fp, "%-*s", width, buf);
 }
 
 static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
@@ -382,76 +355,45 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 	/* RX stats */
 	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
 		s->rx_compressed ? "compressed" : "", _SL_);
-	if (human_readable) {
-		fprintf(fp, "    ");
-		print_human64(fp, 10, (uint64_t)s->rx_bytes);
-		print_human64(fp, 8, (uint64_t)s->rx_packets);
-		print_human64(fp, 7, (uint64_t)s->rx_errors);
-		print_human64(fp, 7, (uint64_t)s->rx_dropped);
-		print_human64(fp, 7, (uint64_t)s->rx_over_errors);
-		print_human64(fp, 7, (uint64_t)s->multicast);
-		if (s->rx_compressed)
-			print_human64(fp, 7, (uint64_t)s->rx_compressed);
-	} else {
-		fprintf(fp, "    %-10"PRIu64" %-8"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
-			(uint64_t)s->rx_bytes,
-			(uint64_t)s->rx_packets,
-			(uint64_t)s->rx_errors,
-			(uint64_t)s->rx_dropped,
-			(uint64_t)s->rx_over_errors,
-			(uint64_t)s->multicast);
-		if (s->rx_compressed)
-			fprintf(fp, " %-7"PRIu64"",
-				(uint64_t)s->rx_compressed);
-	}
+
+	fprintf(fp, "    ");
+	print_num(fp, 10, s->rx_bytes);
+	print_num(fp, 8, s->rx_packets);
+	print_num(fp, 7, s->rx_errors);
+	print_num(fp, 7, s->rx_dropped);
+	print_num(fp, 7, s->rx_over_errors);
+	print_num(fp, 7, s->multicast);
+	if (s->rx_compressed)
+		print_num(fp, 7, s->rx_compressed);
 
 	/* RX error stats */
 	if (show_stats > 1) {
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s", _SL_);
-		if (human_readable) {
-			fprintf(fp, "               ");
-			print_human64(fp, 8, (uint64_t)s->rx_length_errors);
-			print_human64(fp, 7, (uint64_t)s->rx_crc_errors);
-			print_human64(fp, 7, (uint64_t)s->rx_frame_errors);
-			print_human64(fp, 7, (uint64_t)s->rx_fifo_errors);
-			print_human64(fp, 7, (uint64_t)s->rx_missed_errors);
-		} else {
-			fprintf(fp, "               %-8"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
-				(uint64_t)s->rx_length_errors,
-				(uint64_t)s->rx_crc_errors,
-				(uint64_t)s->rx_frame_errors,
-				(uint64_t)s->rx_fifo_errors,
-				(uint64_t)s->rx_missed_errors);
-		}
+
+		fprintf(fp, "               ");
+		print_num(fp, 8, s->rx_length_errors);
+		print_num(fp, 7, s->rx_crc_errors);
+		print_num(fp, 7, s->rx_frame_errors);
+		print_num(fp, 7, s->rx_fifo_errors);
+		print_num(fp, 7, s->rx_missed_errors);
 	}
 	fprintf(fp, "%s", _SL_);
 
 	/* TX stats */
 	fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
-		(uint64_t)s->tx_compressed ? "compressed" : "", _SL_);
-	if (human_readable) {
-		fprintf(fp, "    ");
-		print_human64(fp, 10, (uint64_t)s->tx_bytes);
-		print_human64(fp, 8, (uint64_t)s->tx_packets);
-		print_human64(fp, 7, (uint64_t)s->tx_errors);
-		print_human64(fp, 7, (uint64_t)s->tx_dropped);
-		print_human64(fp, 7, (uint64_t)s->tx_carrier_errors);
-		print_human64(fp, 7, (uint64_t)s->collisions);
-		if (s->tx_compressed)
-			print_human64(fp, 7, (uint64_t)s->tx_compressed);
-	} else {
-		fprintf(fp, "    %-10"PRIu64" %-8"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
-			(uint64_t)s->tx_bytes,
-			(uint64_t)s->tx_packets,
-			(uint64_t)s->tx_errors,
-			(uint64_t)s->tx_dropped,
-			(uint64_t)s->tx_carrier_errors,
-			(uint64_t)s->collisions);
-		if (s->tx_compressed)
-			fprintf(fp, " %-7"PRIu64"",
-				(uint64_t)s->tx_compressed);
-	}
+		s->tx_compressed ? "compressed" : "", _SL_);
+
+
+	fprintf(fp, "    ");
+	print_num(fp, 10, s->tx_bytes);
+	print_num(fp, 8, s->tx_packets);
+	print_num(fp, 7, s->tx_errors);
+	print_num(fp, 7, s->tx_dropped);
+	print_num(fp, 7, s->tx_carrier_errors);
+	print_num(fp, 7, s->collisions);
+	if (s->tx_compressed)
+		print_num(fp, 7, s->tx_compressed);
 
 	/* TX error stats */
 	if (show_stats > 1) {
@@ -460,24 +402,14 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
                 if (carrier_changes)
 			fprintf(fp, " transns");
 		fprintf(fp, "%s", _SL_);
-		if (human_readable) {
-			fprintf(fp, "               ");
-			print_human64(fp, 8, (uint64_t)s->tx_aborted_errors);
-			print_human64(fp, 7, (uint64_t)s->tx_fifo_errors);
-			print_human64(fp, 7, (uint64_t)s->tx_window_errors);
-			print_human64(fp, 7, (uint64_t)s->tx_heartbeat_errors);
-			if (carrier_changes)
-				print_human64(fp, 7, (uint64_t)*(uint32_t*)RTA_DATA(carrier_changes));
-		} else {
-			fprintf(fp, "               %-8"PRIu64" %-7"PRIu64" %-7"PRIu64" %-7"PRIu64"",
-				(uint64_t)s->tx_aborted_errors,
-				(uint64_t)s->tx_fifo_errors,
-				(uint64_t)s->tx_window_errors,
-				(uint64_t)s->tx_heartbeat_errors);
-			if (carrier_changes)
-				fprintf(fp, " %-7u",
-					*(uint32_t*)RTA_DATA(carrier_changes));
-		}
+
+		fprintf(fp, "               ");
+		print_num(fp, 8, s->tx_aborted_errors);
+		print_num(fp, 7, s->tx_fifo_errors);
+		print_num(fp, 7, s->tx_window_errors);
+		print_num(fp, 7, s->tx_heartbeat_errors);
+		if (carrier_changes)
+			print_num(fp, 7, *(uint32_t*)RTA_DATA(carrier_changes));
 	}
 }
 
@@ -487,67 +419,44 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 	/* RX stats */
 	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
 		s->rx_compressed ? "compressed" : "", _SL_);
-	if (human_readable) {
-		fprintf(fp, "    ");
-		print_human32(fp, 10, s->rx_bytes);
-		print_human32(fp, 8, s->rx_packets);
-		print_human32(fp, 7, s->rx_errors);
-		print_human32(fp, 7, s->rx_dropped);
-		print_human32(fp, 7, s->rx_over_errors);
-		print_human32(fp, 7, s->multicast);
-		if (s->rx_compressed)
-			print_human32(fp, 7, s->rx_compressed);
-	} else {
-		fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
-			s->rx_bytes, s->rx_packets, s->rx_errors,
-			s->rx_dropped, s->rx_over_errors,
-			s->multicast);
-		if (s->rx_compressed)
-			fprintf(fp, " %-7u", s->rx_compressed);
-	}
+
+
+	fprintf(fp, "    ");
+	print_num(fp, 10, s->rx_bytes);
+	print_num(fp, 8, s->rx_packets);
+	print_num(fp, 7, s->rx_errors);
+	print_num(fp, 7, s->rx_dropped);
+	print_num(fp, 7, s->rx_over_errors);
+	print_num(fp, 7, s->multicast);
+	if (s->rx_compressed)
+		print_num(fp, 7, s->rx_compressed);
 
 	/* RX error stats */
 	if (show_stats > 1) {
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s", _SL_);
-		if (human_readable) {
-			fprintf(fp, "               ");
-			print_human32(fp, 8, s->rx_length_errors);
-			print_human32(fp, 7, s->rx_crc_errors);
-			print_human32(fp, 7, s->rx_frame_errors);
-			print_human32(fp, 7, s->rx_fifo_errors);
-			print_human32(fp, 7, s->rx_missed_errors);
-		} else {
-			fprintf(fp, "               %-8u %-7u %-7u %-7u %-7u",
-				s->rx_length_errors,
-				s->rx_crc_errors,
-				s->rx_frame_errors,
-				s->rx_fifo_errors,
-				s->rx_missed_errors);
-		}
+		fprintf(fp, "               ");
+		print_num(fp, 8, s->rx_length_errors);
+		print_num(fp, 7, s->rx_crc_errors);
+		print_num(fp, 7, s->rx_frame_errors);
+		print_num(fp, 7, s->rx_fifo_errors);
+		print_num(fp, 7, s->rx_missed_errors);
 	}
 	fprintf(fp, "%s", _SL_);
 
 	/* TX stats */
 	fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
 		s->tx_compressed ? "compressed" : "", _SL_);
-	if (human_readable) {
-		fprintf(fp, "    ");
-		print_human32(fp, 10, s->tx_bytes);
-		print_human32(fp, 8, s->tx_packets);
-		print_human32(fp, 7, s->tx_errors);
-		print_human32(fp, 7, s->tx_dropped);
-		print_human32(fp, 7, s->tx_carrier_errors);
-		print_human32(fp, 7, s->collisions);
-		if (s->tx_compressed)
-			print_human32(fp, 7, s->tx_compressed);
-	} else {
-		fprintf(fp, "    %-10u %-8u %-7u %-7u %-7u %-7u",
-			s->tx_bytes, s->tx_packets, s->tx_errors,
-			s->tx_dropped, s->tx_carrier_errors, s->collisions);
-		if (s->tx_compressed)
-			fprintf(fp, " %-7u", s->tx_compressed);
-	}
+
+	fprintf(fp, "    ");
+	print_num(fp, 10, s->tx_bytes);
+	print_num(fp, 8, s->tx_packets);
+	print_num(fp, 7, s->tx_errors);
+	print_num(fp, 7, s->tx_dropped);
+	print_num(fp, 7, s->tx_carrier_errors);
+	print_num(fp, 7, s->collisions);
+	if (s->tx_compressed)
+		print_num(fp, 7, s->tx_compressed);
 
 	/* TX error stats */
 	if (show_stats > 1) {
@@ -556,24 +465,14 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
                 if (carrier_changes)
 			fprintf(fp, " transns");
 		fprintf(fp, "%s", _SL_);
-		if (human_readable) {
-			fprintf(fp, "               ");
-			print_human32(fp, 8, s->tx_aborted_errors);
-			print_human32(fp, 7, s->tx_fifo_errors);
-			print_human32(fp, 7, s->tx_window_errors);
-			print_human32(fp, 7, s->tx_heartbeat_errors);
-			if (carrier_changes)
-				print_human32(fp, 7, *(uint32_t*)RTA_DATA(carrier_changes));
-		} else {
-			fprintf(fp, "               %-8u %-7u %-7u %-7u",
-				s->tx_aborted_errors,
-				s->tx_fifo_errors,
-				s->tx_window_errors,
-				s->tx_heartbeat_errors);
-			if (carrier_changes)
-				fprintf(fp, " %-7u",
-					*(uint32_t*)RTA_DATA(carrier_changes));
-		}
+
+		fprintf(fp, "               ");
+		print_num(fp, 8, s->tx_aborted_errors);
+		print_num(fp, 7, s->tx_fifo_errors);
+		print_num(fp, 7, s->tx_window_errors);
+		print_num(fp, 7, s->tx_heartbeat_errors);
+		if (carrier_changes)
+			print_num(fp, 7, *(uint32_t*)RTA_DATA(carrier_changes));
 	}
 }
 

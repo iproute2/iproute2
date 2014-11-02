@@ -25,6 +25,7 @@
 
 int preferred_family = AF_UNSPEC;
 int human_readable = 0;
+int use_iec = 0;
 int show_stats = 0;
 int show_details = 0;
 int resolve_hosts = 0;
@@ -48,7 +49,7 @@ static void usage(void)
 "                   tunnel | tuntap | maddr | mroute | mrule | monitor | xfrm |\n"
 "                   netns | l2tp | tcp_metrics | token | netconf }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
-"                    -h[uman-readable] |\n"
+"                    -h[uman-readable] | -iec |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | bridge | link } |\n"
 "                    -4 | -6 | -I | -D | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
@@ -217,6 +218,8 @@ int main(int argc, char **argv)
 		} else if (matches(opt, "-human") == 0 ||
 			   matches(opt, "-human-readable") == 0) {
 			++human_readable;
+		} else if (matches(opt, "-iec") == 0) {
+			++use_iec;
 		} else if (matches(opt, "-stats") == 0 ||
 			   matches(opt, "-statistics") == 0) {
 			++show_stats;

@@ -661,11 +661,23 @@ specifies what group of devices to show.
 .B up
 only display running interfaces.
 
-.SH "NOTES"
-Human readable values are calculated with SI prefixes, so with a decimal
-base, not binary. (This is unlike
-.BR ifconfig (8)
-, with uses binary prefix.) 1,000 bytes are 1 kB, 1,000 kB are 1 MB, ...
+The show command has additional formatting options:
+
+.TP
+.BR "\-s" , " \-stats", " \-statistics"
+output more statistics about packet usage.
+
+.TP
+.BR "\-d", " \-details"
+output more detailed information.
+
+.TP
+.BR "\-h", " \-human", " \-human-readble"
+output statistics with human readable values number followed by suffix
+
+.TP
+.BR "\-iec"
+print human readable rates in IEC units (ie. 1K = 1024).
 
 .SH "EXAMPLES"
 .PP
