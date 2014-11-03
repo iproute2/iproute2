@@ -327,7 +327,7 @@ static void print_num(FILE *fp, unsigned width, uint64_t count)
 	char buf[64];
 
 	if (!human_readable || count < base) {
-		fprintf(fp, "%-*"PRIu64, width, count);
+		fprintf(fp, "%-*"PRIu64" ", width, count);
 		return;
 	}
 
@@ -346,7 +346,7 @@ static void print_num(FILE *fp, unsigned width, uint64_t count)
 	snprintf(buf, sizeof(buf), "%.1f%c%s", (double) count / powi, 
 		 *prefix, use_iec ? "i" : "");
 
-	fprintf(fp, "%-*s", width, buf);
+	fprintf(fp, "%-*s ", width, buf);
 }
 
 static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
