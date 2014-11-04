@@ -324,6 +324,8 @@ static void print_num(FILE *fp, unsigned width, uint64_t count)
 	const char *prefix = "kMGTPE";
 	const unsigned int base = use_iec ? 1024 : 1000;
 	uint64_t powi = 1;
+	uint16_t powj = 1;
+	uint8_t precision = 2;
 	char buf[64];
 
 	if (!human_readable || count < base) {
@@ -343,8 +345,15 @@ static void print_num(FILE *fp, unsigned width, uint64_t count)
 		++prefix;
 	}
 
-	snprintf(buf, sizeof(buf), "%.1f%c%s", (double) count / powi, 
-		 *prefix, use_iec ? "i" : "");
+	/* try to guess a good number of digits for precision */
+	for (; precision > 0; precision--) {
+		powj *= 10;
+		if (count / powi < powj)
+			break;
+	}
+
+	snprintf(buf, sizeof(buf), "%.*f%c%s", precision,
+		(double) count / powi, *prefix, use_iec ? "i" : "");
 
 	fprintf(fp, "%-*s ", width, buf);
 }
