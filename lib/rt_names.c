@@ -120,6 +120,7 @@ static char * rtnl_rtprot_tab[256] = {
 	[RTPROT_MRT] =	"mrt",
 	[RTPROT_ZEBRA] ="zebra",
 	[RTPROT_BIRD] = "bird",
+	[RTPROT_BABEL] = "babel",
 	[RTPROT_DNROUTED] = "dnrouted",
 	[RTPROT_XORP] = "xorp",
 	[RTPROT_NTK] = "ntk",
