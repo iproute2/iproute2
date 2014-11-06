@@ -54,7 +54,7 @@ ip-link \- network device configuration
 .ti -8
 .IR TYPE " := [ "
 .BR bridge " | "
-.BR bond " ]"
+.BR bond " | "
 .BR can " | "
 .BR dummy " | "
 .BR hsr " | "
