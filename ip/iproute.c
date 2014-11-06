@@ -80,6 +80,7 @@ static void usage(void)
 	fprintf(stderr, "           [ window NUMBER] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n");
 	fprintf(stderr, "           [ ssthresh NUMBER ] [ realms REALM ] [ src ADDRESS ]\n");
 	fprintf(stderr, "           [ rto_min TIME ] [ hoplimit NUMBER ] [ initrwnd NUMBER ]\n");
+	fprintf(stderr, "           [ features FEATURES ]\n");
 	fprintf(stderr, "           [ quickack BOOL ]\n");
 	fprintf(stderr, "TYPE := [ unicast | local | broadcast | multicast | throw |\n");
 	fprintf(stderr, "          unreachable | prohibit | blackhole | nat ]\n");
@@ -89,6 +90,7 @@ static void usage(void)
 	fprintf(stderr, "RTPROTO := [ kernel | boot | static | NUMBER ]\n");
 	fprintf(stderr, "TIME := NUMBER[s|ms]\n");
 	fprintf(stderr, "BOOL := [1|0]\n");
+	fprintf(stderr, "FEATURES := ecn\n");
 	exit(-1);
 }
 
@@ -278,6 +280,19 @@ static int calc_host_len(const struct rtmsg *r)
 		return 80;
 	else
 		return -1;
+}
+
+static void print_rtax_features(FILE *fp, unsigned int features)
+{
+	unsigned int of = features;
+
+	if (features & RTAX_FEATURE_ECN) {
+		fprintf(fp, " ecn");
+		features &= ~RTAX_FEATURE_ECN;
+	}
+
+	if (features)
+		fprintf(fp, " 0x%x", of);
 }
 
 int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
@@ -535,6 +550,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 			val = *(unsigned*)RTA_DATA(mxrta[i]);
 			switch (i) {
+			case RTAX_FEATURES:
+				print_rtax_features(fp, val);
+				break;
 			case RTAX_HOPLIMIT:
 				if ((int)val == -1)
 					val = 0;
@@ -885,6 +903,20 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (get_unsigned(&win, *argv, 0))
 				invarg("\"initrwnd\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_INITRWND, win);
+		} else if (matches(*argv, "features") == 0) {
+			unsigned int features = 0;
+
+			while (argc > 0) {
+				NEXT_ARG();
+
+				if (strcmp(*argv, "ecn") == 0)
+					features |= RTAX_FEATURE_ECN;
+				else
+					invarg("\"features\" value not valid\n", *argv);
+				break;
+			}
+
+			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_FEATURES, features);
 		} else if (matches(*argv, "quickack") == 0) {
 			unsigned quickack;
 			NEXT_ARG();

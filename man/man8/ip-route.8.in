@@ -113,6 +113,8 @@ replace " } "
 .IR NUMBER " ] [ "
 .B  initrwnd
 .IR NUMBER " ] [ "
+.B  features
+.IR FEATURES " ] [ "
 .B  quickack
 .IR BOOL " ]"
 
@@ -139,6 +141,10 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR RTPROTO " := [ "
 .BR kernel " | " boot " | " static " |"
 .IR NUMBER " ]"
+
+.ti -8
+.IR FEATURES " := [ "
+.BR ecn " | ]"
 
 
 .SH DESCRIPTION
@@ -409,6 +415,18 @@ zero, meaning to use the values specified in RFC2414.
 the initial receive window size for connections to this destination.
 Actual window size is this value multiplied by the MSS of the connection.
 The default value is zero, meaning to use Slow Start value.
+
+.TP
+.BI features " FEATURES " (3.18+ only)
+Enable or disable per-route features.  Only available feature at this
+time is
+.B ecn
+to enable explicit congestion notification when initiating connections to the
+given destination network.
+When responding to a connection request from the given network, ecn will
+also be used even if the
+.B net.ipv4.tcp_ecn
+sysctl is set to 0.
 
 .TP
 .BI quickack " BOOL " "(3.11+ only)"
