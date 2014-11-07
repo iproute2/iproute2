@@ -21,7 +21,7 @@ ip-netns \- process network namespace management
 
 .ti -8
 .BR "ip netns identify"
-.I PID
+.RI "[ " PID " ]"
 
 .ti -8
 .BR "ip netns pids"
@@ -85,10 +85,11 @@ persists until it has no more users.  ip netns delete may fail if
 the mount point is in use in another mount namespace.
 
 .TP
-.B ip netns identify PID - Report network namespaces names for process
+.B ip netns identify [PID] - Report network namespaces names for process
 .sp
 This command walks through /var/run/netns and finds all the network
-namespace names for network namespace of the specified process.
+namespace names for network namespace of the specified process, if PID is
+not specified then the current process will be used.
 
 .TP
 .B ip netns pids NAME - Report processes in the named network namespace

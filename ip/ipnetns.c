@@ -59,7 +59,7 @@ static int usage(void)
 	fprintf(stderr, "Usage: ip netns list\n");
 	fprintf(stderr, "       ip netns add NAME\n");
 	fprintf(stderr, "       ip netns delete NAME\n");
-	fprintf(stderr, "       ip netns identify PID\n");
+	fprintf(stderr, "       ip netns identify [PID]\n");
 	fprintf(stderr, "       ip netns pids NAME\n");
 	fprintf(stderr, "       ip netns exec NAME cmd ...\n");
 	fprintf(stderr, "       ip netns monitor\n");
@@ -299,19 +299,17 @@ static int netns_identify(int argc, char **argv)
 	struct dirent *entry;
 
 	if (argc < 1) {
-		fprintf(stderr, "No pid specified\n");
-		return -1;
-	}
-	if (argc > 1) {
+		pidstr = "self";
+	} else if (argc > 1) {
 		fprintf(stderr, "extra arguments specified\n");
 		return -1;
-	}
-	pidstr = argv[0];
-
-	if (!is_pid(pidstr)) {
-		fprintf(stderr, "Specified string '%s' is not a pid\n",
-			pidstr);
-		return -1;
+	} else {
+		pidstr = argv[0];
+		if (!is_pid(pidstr)) {
+			fprintf(stderr, "Specified string '%s' is not a pid\n",
+					pidstr);
+			return -1;
+		}
 	}
 
 	snprintf(net_path, sizeof(net_path), "/proc/%s/ns/net", pidstr);
