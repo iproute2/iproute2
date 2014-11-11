@@ -144,8 +144,8 @@ int get_time_rtt(unsigned *val, const char *arg, int *raw)
 		if (t < 0.0)
 			return -1;
 
-		/* extra non-digits */
-		if (!p || p == arg || *p)
+		/* no digits? */
+		if (!p || p == arg)
 			return -1;
 
 		/* over/underflow */
@@ -154,8 +154,8 @@ int get_time_rtt(unsigned *val, const char *arg, int *raw)
 	} else {
 		res = strtoul(arg, &p, 0);
 
-		/* empty string or trailing non-digits */
-		if (!p || p == arg || *p)
+		/* empty string? */
+		if (!p || p == arg)
 			return -1;
 
 		/* overflow */
