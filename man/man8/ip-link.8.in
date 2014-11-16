@@ -449,6 +449,23 @@ when tunneling non-IP packets. The default value is 00.
 
 .in -8
 
+.TP
+IPoIB Type Support
+For a link of type
+.I IPoIB
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE " name " NAME
+.BI type " ipoib [ " pkey " PKEY ] [" mode " MODE " ]
+
+.in +8
+.sp
+.BI  pkey " PKEY "
+- specifies the IB P-Key to use.
+
+.BI  mode " MODE "
+- specifies the mode (datagram or connected) to use.
+
 .SS ip link delete - delete virtual link
 .I DEVICE
 specifies the virtual  device to act operate on.
