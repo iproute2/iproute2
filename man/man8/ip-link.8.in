@@ -150,6 +150,10 @@ ip-link \- network device configuration
 .B master
 .IR DEVICE " ]"
 
+.ti -8
+.B ip link help
+.RI "[ " TYPE " ]"
+
 .SH "DESCRIPTION"
 .SS ip link add - add virtual link
 
@@ -702,6 +706,12 @@ output statistics with human readable values number followed by suffix
 .BR "\-iec"
 print human readable rates in IEC units (ie. 1K = 1024).
 
+.SS  ip link help - display help
+
+.PP
+.I "TYPE"
+specifies which help of link type to dislpay.
+
 .SH "EXAMPLES"
 .PP
 ip link show
@@ -722,6 +732,11 @@ Creates a new vlan device eth0.10 on device eth0.
 ip link delete dev eth0.10
 .RS 4
 Removes vlan device.
+.RE
+
+ip link help gre
+.RS 4
+Display help for the gre link type.
 .RE
 
 .SH SEE ALSO
