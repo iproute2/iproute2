@@ -145,9 +145,10 @@ ip-link \- network device configuration
 .B ip link show
 .RI "[ " DEVICE " | "
 .B group
-.IR GROUP " |"
-.B up
-]
+.IR GROUP " | "
+.BR up " | "
+.B master
+.IR DEVICE " ]"
 
 .SH "DESCRIPTION"
 .SS ip link add - add virtual link
@@ -677,6 +678,11 @@ specifies what group of devices to show.
 .TP
 .B up
 only display running interfaces.
+
+.TP
+.BI master " DEVICE "
+.I DEVICE
+specifies the master device which enslaves devices to show.
 
 The show command has additional formatting options:
 

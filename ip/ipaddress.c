@@ -56,6 +56,7 @@ static struct
 	int flushp;
 	int flushe;
 	int group;
+	int master;
 } filter;
 
 static int do_link;
@@ -541,6 +542,14 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		if (filter.group != -1 && group != filter.group)
 			return -1;
 	}
+
+	if (tb[IFLA_MASTER]) {
+		int master = *(int*)RTA_DATA(tb[IFLA_MASTER]);
+		if (filter.master > 0 && master != filter.master)
+			return -1;
+	}
+	else if (filter.master > 0)
+		return -1;
 
 	if (n->nlmsg_type == RTM_DELLINK)
 		fprintf(fp, "Deleted ");
@@ -1277,6 +1286,13 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			NEXT_ARG();
 			if (rtnl_group_a2n(&filter.group, *argv))
 				invarg("Invalid \"group\" value\n", *argv);
+		} else if (strcmp(*argv, "master") == 0) {
+			int ifindex;
+			NEXT_ARG();
+			ifindex = ll_name_to_index(*argv);
+			if (!ifindex)
+				invarg("Device does not exist\n", *argv);
+			filter.master = ifindex;
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
