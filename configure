@@ -7,6 +7,24 @@ INCLUDE=${1:-"$PWD/include"}
 TMPDIR=$(mktemp -d config.XXXXXX)
 trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
 
+check_prog()
+{
+    echo -n "$2"
+    command -v $1 >/dev/null 2>&1 && (echo "$3:=y" >> Config; echo "yes") || (echo "no"; return 1)
+}
+
+check_docs()
+{
+    if check_prog latex " latex: " HAVE_LATEX; then
+        check_prog pdflatex " pdflatex: " HAVE_PDFLATEX || echo " WARNING: no PDF docs can be built from LaTeX files"
+        check_prog sgml2latex " sgml2latex: " HAVE_SGML2LATEX || echo " WARNING: no LaTeX files can be build from SGML files"
+    else
+        echo " WARNING: no docs can be built from LaTeX files"
+    fi
+
+    check_prog sgml2html " sgml2html: " HAVE_SGML2HTML || echo " WARNING: no HTML docs can be built from SGML"
+}
+
 check_toolchain()
 {
     : ${PKG_CONFIG:=pkg-config}
@@ -260,7 +278,7 @@ check_ipt
 echo -n " IPSET  "
 check_ipset
 
-echo -n "iptables modules directory: "
+echo -n -e "\niptables modules directory: "
 check_ipt_lib_dir
 
 echo -n "libc has setns: "
@@ -268,3 +286,6 @@ check_setns
 
 echo -n "SELinux support: "
 check_selinux
+
+echo -e "\nDocs"
+check_docs
