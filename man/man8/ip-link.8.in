@@ -688,8 +688,10 @@ only display running interfaces.
 .I DEVICE
 specifies the master device which enslaves devices to show.
 
+.TP
 The show command has additional formatting options:
 
+.RS
 .TP
 .BR "\-s" , " \-stats", " \-statistics"
 output more statistics about packet usage.
@@ -705,6 +707,7 @@ output statistics with human readable values number followed by suffix
 .TP
 .BR "\-iec"
 print human readable rates in IEC units (ie. 1K = 1024).
+.RE
 
 .SS  ip link help - display help
 
