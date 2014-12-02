@@ -975,6 +975,9 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 		argc--; argv++;
 	}
 
+	if (!dst_ok)
+		usage();
+
 	if (d || nhs_ok)  {
 		int idx;
 
