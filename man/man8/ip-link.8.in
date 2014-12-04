@@ -247,7 +247,7 @@ For a link of type
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BI type " vxlan " id " ID
+.BI type " vxlan " id " ID"
 .R " [ "
 .BI dev " PHYS_DEV "
 .RB " ] [ { " group " | " remote " } "
