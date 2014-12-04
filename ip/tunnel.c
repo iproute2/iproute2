@@ -51,6 +51,9 @@ const char *tnl_strproto(__u8 proto)
 	case IPPROTO_IPV6:
 		strcpy(buf, "ipv6");
 		break;
+	case IPPROTO_ESP:
+		strcpy(buf, "esp");
+		break;
 	case 0:
 		strcpy(buf, "any");
 		break;
