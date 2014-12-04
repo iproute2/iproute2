@@ -142,7 +142,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		struct nda_cacheinfo *ci = RTA_DATA(tb[NDA_CACHEINFO]);
 		int hz = get_user_hz();
 
-		fprintf(fp, " used %d/%d", ci->ndm_used/hz,
+		fprintf(fp, "used %d/%d ", ci->ndm_used/hz,
 		       ci->ndm_updated/hz);
 	}
 	if (r->ndm_flags & NTF_SELF)
