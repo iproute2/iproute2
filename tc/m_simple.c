@@ -8,7 +8,7 @@
  *
  * Authors:	J Hadi Salim <jhs@mojatatu.com>
  *
- * Pedagogical example. Adds a string that will be printed everytime
+ * Pedagogical example. Adds a string that will be printed every time
  * the simple instance is hit. 
  * Use this as a skeleton action and keep modifying it to meet your needs.
  * Look at linux/tc_act/tc_defact.h for the different components ids and
