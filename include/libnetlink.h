@@ -18,6 +18,7 @@ struct rtnl_handle
 	struct sockaddr_nl	peer;
 	__u32			seq;
 	__u32			dump;
+	int			proto;
 };
 
 extern int rcvbuf;
