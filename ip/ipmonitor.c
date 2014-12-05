@@ -134,14 +134,6 @@ static int accept_msg(const struct sockaddr_nl *who,
 		fprintf(fp, "Timestamp: %s %lu us\n", tstr, usecs);
 		return 0;
 	}
-	if (n->nlmsg_type == RTM_NEWQDISC ||
-	    n->nlmsg_type == RTM_DELQDISC ||
-	    n->nlmsg_type == RTM_NEWTCLASS ||
-	    n->nlmsg_type == RTM_DELTCLASS ||
-	    n->nlmsg_type == RTM_NEWTFILTER ||
-	    n->nlmsg_type == RTM_DELTFILTER ||
-	    n->nlmsg_type == RTM_NEWNDUSEROPT)
-		return 0;
 	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&
 	    n->nlmsg_type != NLMSG_DONE) {
 		fprintf(fp, "Unknown message: type=0x%08x(%d) flags=0x%08x(%d)"
@@ -155,7 +147,7 @@ static int accept_msg(const struct sockaddr_nl *who,
 int do_ipmonitor(int argc, char **argv)
 {
 	char *file = NULL;
-	unsigned groups = ~RTMGRP_TC;
+	unsigned groups = 0;
 	int llink=0;
 	int laddr=0;
 	int lroute=0;
@@ -164,6 +156,18 @@ int do_ipmonitor(int argc, char **argv)
 	int lneigh=0;
 	int lnetconf=0;
 	int ifindex=0;
+
+	groups |= nl_mgrp(RTNLGRP_LINK);
+	groups |= nl_mgrp(RTNLGRP_IPV4_IFADDR);
+	groups |= nl_mgrp(RTNLGRP_IPV6_IFADDR);
+	groups |= nl_mgrp(RTNLGRP_IPV4_ROUTE);
+	groups |= nl_mgrp(RTNLGRP_IPV6_ROUTE);
+	groups |= nl_mgrp(RTNLGRP_IPV4_MROUTE);
+	groups |= nl_mgrp(RTNLGRP_IPV6_MROUTE);
+	groups |= nl_mgrp(RTNLGRP_IPV6_PREFIX);
+	groups |= nl_mgrp(RTNLGRP_NEIGH);
+	groups |= nl_mgrp(RTNLGRP_IPV4_NETCONF);
+	groups |= nl_mgrp(RTNLGRP_IPV6_NETCONF);
 
 	rtnl_close(&rth);
 
@@ -195,7 +199,6 @@ int do_ipmonitor(int argc, char **argv)
 			lnetconf = 1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
-			groups = ~RTMGRP_TC;
 			prefix_banner=1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
