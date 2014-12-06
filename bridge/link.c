@@ -261,7 +261,7 @@ static int brlink_modify(int argc, char **argv)
 	__s16 priority = -1;
 	__s8 state = -1;
 	__s16 mode = -1;
-	__u16 flags = BRIDGE_FLAGS_MASTER;
+	__u16 flags = 0;
 	struct rtattr *nest;
 
 	memset(&req, 0, sizeof(req));
@@ -321,6 +321,8 @@ static int brlink_modify(int argc, char **argv)
 					"\"veb\".\n");
 				exit(-1);
 			}
+		} else if (strcmp(*argv, "self") == 0) {
+			flags = BRIDGE_FLAGS_SELF;
 		} else {
 			usage();
 		}
@@ -369,16 +371,16 @@ static int brlink_modify(int argc, char **argv)
 
 	addattr_nest_end(&req.n, nest);
 
-	/* IFLA_AF_SPEC nested attribute.  Contains IFLA_BRIDGE_FLAGS that
-	 * designates master or self operation as well as 'vepa' or 'veb'
-	 * operation modes.  These are only valid in 'self' mode on some
-	 * devices so far.  Thus we only need to include the flags attribute
-	 * if we are setting the hw mode.
+	/* IFLA_AF_SPEC nested attribute. Contains IFLA_BRIDGE_FLAGS that
+	 * designates master or self operation and IFLA_BRIDGE_MODE
+	 * for hw 'vepa' or 'veb' operation modes. The hwmodes are
+	 * only valid in 'self' mode on some devices so far.
 	 */
-	if (mode >= 0) {
+	if (mode >= 0 || flags > 0) {
 		nest = addattr_nest(&req.n, sizeof(req), IFLA_AF_SPEC);
 
-		addattr16(&req.n, sizeof(req), IFLA_BRIDGE_FLAGS, flags);
+		if (flags > 0)
+			addattr16(&req.n, sizeof(req), IFLA_BRIDGE_FLAGS, flags);
 
 		if (mode >= 0)
 			addattr16(&req.n, sizeof(req), IFLA_BRIDGE_MODE, mode);
