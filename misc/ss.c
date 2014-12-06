@@ -1229,16 +1229,8 @@ void *parse_hostcond(char *addr)
 		}
 		if (addr[0] && strcmp(addr, "*")) {
 			a.addr.bitlen = 32;
-			if (get_u32(a.addr.data, addr, 0)) {
-				if (strcmp(addr, "rtnl") == 0)
-					a.addr.data[0] = 0;
-				else if (strcmp(addr, "fw") == 0)
-					a.addr.data[0] = 3;
-				else if (strcmp(addr, "tcpdiag") == 0)
-					a.addr.data[0] = 4;
-				else
-					return NULL;
-			}
+			if (nl_proto_a2n(&a.addr.data[0], addr) == -1)
+				return NULL;
 		}
 		goto out;
 	}
