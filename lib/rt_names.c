@@ -469,7 +469,7 @@ static int rtnl_group_init;
 static void rtnl_group_initialize(void)
 {
 	rtnl_group_init = 1;
-	rtnl_hash_initialize("/etc/iproute2/group",
+	rtnl_hash_initialize(CONFDIR "/group",
 			     rtnl_group_hash, 256);
 }
 
