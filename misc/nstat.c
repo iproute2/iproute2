@@ -156,6 +156,15 @@ static void load_good_table(FILE *fp)
 	}
 }
 
+static int count_spaces(const char *line)
+{
+	int count = 0;
+	char c;
+
+	while ((c = *line++) != 0)
+		count += c == ' ' || c == '\n';
+	return count;
+}
 
 static void load_ugly_table(FILE *fp)
 {
@@ -167,10 +176,12 @@ static void load_ugly_table(FILE *fp)
 		char idbuf[sizeof(buf)];
 		int  off;
 		char *p;
+		int count1, count2, skip = 0;
 
 		p = strchr(buf, ':');
 		if (!p)
 			abort();
+		count1 = count_spaces(buf);
 		*p = 0;
 		idbuf[0] = 0;
 		strncat(idbuf, buf, sizeof(idbuf) - 1);
@@ -199,6 +210,9 @@ static void load_ugly_table(FILE *fp)
 		n = db;
 		if (fgets(buf, sizeof(buf), fp) == NULL)
 			abort();
+		count2 = count_spaces(buf);
+		if (count2 > count1)
+			skip = count2 - count1;
 		do {
 			p = strrchr(buf, ' ');
 			if (!p)
@@ -207,8 +221,8 @@ static void load_ugly_table(FILE *fp)
 			if (sscanf(p+1, "%llu", &n->val) != 1)
 				abort();
 			/* Trick to skip "dummy" trailing ICMP MIB in 2.4 */
-			if (strcmp(idbuf, "IcmpOutAddrMaskReps") == 0)
-				idbuf[5] = 0;
+			if (skip)
+				skip--;
 			else
 				n = n->next;
 		} while (p > buf + off + 2);
