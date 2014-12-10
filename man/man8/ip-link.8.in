@@ -148,7 +148,9 @@ ip-link \- network device configuration
 .IR GROUP " | "
 .BR up " | "
 .B master
-.IR DEVICE " ]"
+.IR DEVICE " | "
+.B type
+.IR TYPE " ]"
 
 .ti -8
 .B ip link help
@@ -689,6 +691,11 @@ only display running interfaces.
 specifies the master device which enslaves devices to show.
 
 .TP
+.BI type " TYPE "
+.I TYPE
+specifies the type of devices to show.
+
+.TP
 The show command has additional formatting options:
 
 .RS
@@ -720,6 +727,16 @@ specifies which help of link type to dislpay.
 ip link show
 .RS 4
 Shows the state of all network interfaces on the system.
+.RE
+.PP
+ip link show type bridge
+.RS 4
+Shows the bridge devices.
+.RE
+.PP
+ip link show type vlan
+.RS 4
+Shows the vlan devices.
 .RE
 .PP
 ip link set dev ppp0 mtu 1400
