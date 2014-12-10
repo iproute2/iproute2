@@ -175,7 +175,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 						     &m->option_offset);
 #endif
 			if (opts == NULL) {
-				fprintf(stderr, " failed to find aditional options for target %s\n\n", optarg);
+				fprintf(stderr, " failed to find additional options for target %s\n\n", optarg);
 				return -1;
 			} else
 				tcipt_globals.opts = opts;
@@ -346,7 +346,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 					     &m->option_offset);
 #endif
 	if (opts == NULL) {
-		fprintf(stderr, " failed to find aditional options for target %s\n\n", optarg);
+		fprintf(stderr, " failed to find additional options for target %s\n\n", optarg);
 		return -1;
 	} else
 		tmp_tcipt_globals.opts = opts;
