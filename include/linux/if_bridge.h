@@ -15,7 +15,6 @@
 
 #include <linux/types.h>
 #include <linux/if_ether.h>
-#include <linux/in6.h>
 
 #define SYSFS_BRIDGE_ATTR	"bridge"
 #define SYSFS_BRIDGE_FDB	"brforward"
