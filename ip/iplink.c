@@ -706,11 +706,11 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	}
 
 	if (type) {
-		struct rtattr *linkinfo = NLMSG_TAIL(&req.n);
+		struct rtattr *linkinfo;
 		char slavebuf[128], *ulinep = strchr(type, '_');
 		int iflatype;
 
-		addattr_l(&req.n, sizeof(req), IFLA_LINKINFO, NULL, 0);
+		linkinfo = addattr_nest(&req.n, sizeof(req), IFLA_LINKINFO);
 		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, type,
 			 strlen(type));
 
@@ -728,14 +728,13 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			iflatype = IFLA_INFO_DATA;
 		}
 		if (lu && argc) {
-			struct rtattr * data = NLMSG_TAIL(&req.n);
-			addattr_l(&req.n, sizeof(req), iflatype, NULL, 0);
+			struct rtattr *data = addattr_nest(&req.n, sizeof(req), iflatype);
 
 			if (lu->parse_opt &&
 			    lu->parse_opt(lu, argc, argv, &req.n))
 				return -1;
 
-			data->rta_len = (void *)NLMSG_TAIL(&req.n) - (void *)data;
+			addattr_nest_end(&req.n, data);
 		} else if (argc) {
 			if (matches(*argv, "help") == 0)
 				usage();
@@ -743,7 +742,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 					"Try \"ip link help\".\n", *argv);
 			return -1;
 		}
-		linkinfo->rta_len = (void *)NLMSG_TAIL(&req.n) - (void *)linkinfo;
+		addattr_nest_end(&req.n, linkinfo);
 	} else if (flags & NLM_F_CREATE) {
 		fprintf(stderr, "Not enough information: \"type\" argument "
 				"is required\n");
