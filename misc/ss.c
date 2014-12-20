@@ -1726,7 +1726,7 @@ static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f, int protocol)
 		printf(" sk:");
 		if (r->id.idiag_cookie[1] != 0)
 			printf("%08x", r->id.idiag_cookie[1]);
- 		printf("%08x", r->id.idiag_cookie[0]);
+		printf("%08x", r->id.idiag_cookie[0]);
 		if (tb[INET_DIAG_SHUTDOWN]) {
 			unsigned char mask;
 			mask = *(__u8 *)RTA_DATA(tb[INET_DIAG_SHUTDOWN]);
@@ -2743,7 +2743,7 @@ static int packet_show(struct filter *f)
 	int uid;
 	int ino;
 	unsigned long long sk;
- 
+
 	if (preferred_family != AF_PACKET && !(f->states & (1 << SS_CLOSE)))
 		return 0;
 

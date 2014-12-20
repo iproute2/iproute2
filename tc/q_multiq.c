@@ -18,7 +18,7 @@
  * Author: Alexander Duyck <alexander.h.duyck@intel.com>
  *
  * Original Authors:	PJ Waskiewicz, <peter.p.waskiewicz.jr@intel.com> (RR)
- * 			Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> (from PRIO)
+ *			Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> (from PRIO)
  *
  */
 

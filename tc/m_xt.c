@@ -1,6 +1,6 @@
 /*
  * m_xt.c	xtables based targets
- * 		utilities mostly ripped from iptables <duh, its the linux way>
+ *		utilities mostly ripped from iptables <duh, its the linux way>
  *
  *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License

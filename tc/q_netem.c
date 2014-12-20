@@ -505,7 +505,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			fprintf(stderr, "loss in the weeds!\n");
 			return -1;
 		}
-		
+
 		addattr_nest_end(n, start);
 	}
 
@@ -584,7 +584,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 				gimodel = RTA_DATA(lb[NETEM_LOSS_GI]);
 			if (lb[NETEM_LOSS_GE])
 				gemodel = RTA_DATA(lb[NETEM_LOSS_GE]);
-		}			
+		}
 		if (tb[TCA_NETEM_RATE]) {
 			if (RTA_PAYLOAD(tb[TCA_NETEM_RATE]) < sizeof(*rate))
 				return -1;

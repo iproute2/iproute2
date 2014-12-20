@@ -30,7 +30,7 @@
 static void
 explain(void)
 {
- 	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM]>\n"
+	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM]>\n"
 		"QM = queue_mapping QUEUE_MAPPING\n"
 		"PM = priority PRIORITY \n"
 		"MM = mark MARK \n"

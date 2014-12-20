@@ -433,7 +433,7 @@ static void load_initial_table(void)
 		perror("dump request failed");
 		exit(1);
 	}
-		
+
 }
 
 static void get_kern_msg(void)

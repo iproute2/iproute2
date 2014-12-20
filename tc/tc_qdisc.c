@@ -178,7 +178,7 @@ static int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (d[0])  {
 		int idx;
 
- 		ll_init_map(&rth);
+		ll_init_map(&rth);
 
 		if ((idx = ll_name_to_index(d)) == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
@@ -309,7 +309,7 @@ static int tc_qdisc_list(int argc, char **argv)
 		argc--; argv++;
 	}
 
- 	ll_init_map(&rth);
+	ll_init_map(&rth);
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
@@ -319,12 +319,12 @@ static int tc_qdisc_list(int argc, char **argv)
 		filter_ifindex = t.tcm_ifindex;
 	}
 
- 	if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
+	if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
 
- 	if (rtnl_dump_filter(&rth, print_qdisc, stdout) < 0) {
+	if (rtnl_dump_filter(&rth, print_qdisc, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}

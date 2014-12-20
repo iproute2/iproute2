@@ -108,11 +108,11 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 
-	/* Compute default min/max thresholds based on 
+	/* Compute default min/max thresholds based on
 	   Sally Floyd's recommendations:
 	   http://www.icir.org/floyd/REDparameters.txt
 	*/
-	if (!opt.qth_max) 
+	if (!opt.qth_max)
 		opt.qth_max = opt.limit / 4;
 	if (!opt.qth_min)
 		opt.qth_min = opt.qth_max / 3;

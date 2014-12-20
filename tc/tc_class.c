@@ -79,7 +79,7 @@ static int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "handle") == 0) {
 			fprintf(stderr, "Error: try \"classid\" instead of \"handle\"\n");
 			return -1;
- 		} else if (strcmp(*argv, "root") == 0) {
+		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID.\n");
 				return -1;
@@ -286,7 +286,7 @@ static int tc_class_list(int argc, char **argv)
 		argc--; argv++;
 	}
 
- 	ll_init_map(&rth);
+	ll_init_map(&rth);
 
 	if (d[0]) {
 		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
@@ -296,12 +296,12 @@ static int tc_class_list(int argc, char **argv)
 		filter_ifindex = t.tcm_ifindex;
 	}
 
- 	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
+	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
 
- 	if (rtnl_dump_filter(&rth, print_class, stdout) < 0) {
+	if (rtnl_dump_filter(&rth, print_class, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}

@@ -539,7 +539,7 @@ static int parse_ip(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 	*argv_p = argv;
 	return res;
 }
-				
+
 static int parse_ip6(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 {
 	int res = -1;
@@ -732,7 +732,7 @@ static int parse_selector(int *argc_p, char ***argv_p,
 	} else if (matches(*argv, "ether") == 0) {
 		NEXT_ARG();
 		res = parse_ether(&argc, &argv, sel);
-	} else 
+	} else
 		return -1;
 
 	*argc_p = argc;
@@ -847,7 +847,7 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 	case 16: {
 			int bits = mask2bits(key->mask);
 			if (bits >= 0) {
-				fprintf(f, "\n  %s %s/%d", 
+				fprintf(f, "\n  %s %s/%d",
 					key->off == 12 ? "match IP src" : "match IP dst",
 					inet_ntop(AF_INET, &key->val,
 						  abuf, sizeof(abuf)),
@@ -903,7 +903,7 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 	case 16: {
 			int bits = mask2bits(key->mask);
 			if (bits >= 0) {
-				fprintf(f, "\n  %s %s/%d", 
+				fprintf(f, "\n  %s %s/%d",
 					key->off == 12 ? "match IP src" : "match IP dst",
 					inet_ntop(AF_INET, &key->val,
 						  abuf, sizeof(abuf)),
@@ -936,7 +936,7 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 
 static void print_raw(FILE *f, const struct tc_u32_key *key)
 {
-	fprintf(f, "\n  match %08x/%08x at %s%d", 
+	fprintf(f, "\n  match %08x/%08x at %s%d",
 		(unsigned int)ntohl(key->val),
 		(unsigned int)ntohl(key->mask),
 		key->offmask ? "nexthdr+" : "",
@@ -1152,7 +1152,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	/* We dont necessarily need class/flowids */
 	if (terminal_ok)
 		sel.sel.flags |= TC_U32_TERMINAL;
-	
+
 	if (order) {
 		if (TC_U32_NODE(t->tcm_handle) && order != TC_U32_NODE(t->tcm_handle)) {
 			fprintf(stderr, "\"order\" contradicts \"handle\"\n");
@@ -1164,7 +1164,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	if (htid)
 		addattr_l(n, MAX_MSG, TCA_U32_HASH, &htid, 4);
 	if (sel_ok)
-		addattr_l(n, MAX_MSG, TCA_U32_SEL, &sel, 
+		addattr_l(n, MAX_MSG, TCA_U32_SEL, &sel,
 			  sizeof(sel.sel)+sel.sel.nkeys*sizeof(struct tc_u32_key));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;

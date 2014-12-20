@@ -9,9 +9,9 @@
  * Authors:  J Hadi Salim (hadi@cyberus.ca)
  *
  * TODO:
- * 	1) Big endian broken in some spots
- * 	2) A lot of this stuff was added on the fly; get a big double-double
- * 	and clean it up at some point.
+ *	1) Big endian broken in some spots
+ *	2) A lot of this stuff was added on the fly; get a big double-double
+ *	and clean it up at some point.
  *
  */
 

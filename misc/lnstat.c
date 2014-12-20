@@ -20,7 +20,7 @@
 #define MAX_FIELDS		128
 
 /* Maximum number of header lines */
-#define HDR_LINES 		10
+#define HDR_LINES		10
 
 /* default field width if none specified */
 #define FIELD_WIDTH_DEFAULT	8
@@ -114,7 +114,7 @@ static void print_json(FILE *of, const struct lnstat_file *lnstat_files,
 	fputs("{\n", of);
 	for (i = 0; i < fp->num; i++) {
 		const struct lnstat_field *lf = fp->params[i].lf;
-		
+
 		if (!base || lf->file->basename != base) {
 			if (base) fputs("},\n", of);
 			base = lf->file->basename;
@@ -145,7 +145,7 @@ static int map_field_params(struct lnstat_file *lnstat_files,
 				if (!fps->params[j].print.width)
 					fps->params[j].print.width =
 							FIELD_WIDTH_DEFAULT;
-				
+
 				if (++j >= MAX_FIELDS - 1) {
 					fprintf(stderr,
 						"WARN: MAX_FIELDS (%d) reached,"
@@ -305,7 +305,7 @@ int main(int argc, char **argv)
 			     tok;
 			     tok = strtok(NULL, ",")) {
 				if (fp.num >= MAX_FIELDS) {
-					fprintf(stderr, 
+					fprintf(stderr,
 						"WARN: too many keys"
 						" requested: (%d max)\n",
 						MAX_FIELDS);

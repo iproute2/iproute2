@@ -270,13 +270,13 @@ static void dump_raw_db(FILE *fp, int to_hist)
 				eol, n->name);
 			eol = ",\n";
 			for (i=0; i<MAXS && stats[i]; i++)
-				fprintf(fp, " \"%s\":%llu", 
+				fprintf(fp, " \"%s\":%llu",
 					stats[i], vals[i]);
 			fprintf(fp, "}");
 		} else {
 			fprintf(fp, "%d %s ", n->ifindex, n->name);
 			for (i=0; i<MAXS; i++)
-				fprintf(fp, "%llu %u ", vals[i], 
+				fprintf(fp, "%llu %u ", vals[i],
 					(unsigned)rates[i]);
 			fprintf(fp, "\n");
 		}
@@ -378,11 +378,11 @@ static void print_one_json(FILE *fp, const struct ifstat_ent *n,
 {
 	int i, m;
 	const char *sep = " ";
-	
+
 	m = show_errors ? 20 : 10;
 	fprintf(fp, "    \"%s\":{", n->name);
 	for (i=0; i < m && stats[i]; i++) {
-		fprintf(fp, "%s\"%s\":%llu", 
+		fprintf(fp, "%s\"%s\":%llu",
 			sep, stats[i], vals[i]);
 		sep = ", ";
 	}
