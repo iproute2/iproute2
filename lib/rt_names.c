@@ -196,7 +196,7 @@ int rtnl_rtprot_a2n(__u32 *id, const char *arg)
 	return 0;
 }
 
-static const char * rtnl_rtscope_tab[256] = {
+static char * rtnl_rtscope_tab[256] = {
 	"global",
 };
 
