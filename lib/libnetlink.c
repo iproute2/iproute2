@@ -43,6 +43,7 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned subscriptions,
 
 	memset(rth, 0, sizeof(*rth));
 
+	rth->proto = protocol;
 	rth->fd = socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, protocol);
 	if (rth->fd < 0) {
 		perror("Cannot open netlink socket");
@@ -245,6 +246,10 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 							"ERROR truncated\n");
 					} else {
 						errno = -err->error;
+						if (rth->proto == NETLINK_SOCK_DIAG &&
+						    errno == ENOENT)
+							return -1;
+
 						perror("RTNETLINK answers");
 					}
 					return -1;

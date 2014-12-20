@@ -27,43 +27,63 @@
 #define CONFDIR "/etc/iproute2"
 #endif
 
+#define NAME_MAX_LEN 512
+
 struct rtnl_hash_entry {
 	struct rtnl_hash_entry *next;
 	const char *		name;
 	unsigned int		id;
 };
 
+static int fread_id_name(FILE *fp, int *id, char *namebuf)
+{
+	char buf[NAME_MAX_LEN];
+
+	while (fgets(buf, sizeof(buf), fp)) {
+		char *p = buf;
+
+		while (*p == ' ' || *p == '\t')
+			p++;
+
+		if (*p == '#' || *p == '\n' || *p == 0)
+			continue;
+
+		if (sscanf(p, "0x%x %s\n", id, namebuf) != 2 &&
+				sscanf(p, "0x%x %s #", id, namebuf) != 2 &&
+				sscanf(p, "%d %s\n", id, namebuf) != 2 &&
+				sscanf(p, "%d %s #", id, namebuf) != 2) {
+			strcpy(namebuf, p);
+			return -1;
+		}
+		return 1;
+	}
+	return 0;
+}
+
 static void
 rtnl_hash_initialize(const char *file, struct rtnl_hash_entry **hash, int size)
 {
 	struct rtnl_hash_entry *entry;
-	char buf[512];
 	FILE *fp;
+	int id;
+	char namebuf[NAME_MAX_LEN] = {0};
+	int ret;
 
 	fp = fopen(file, "r");
 	if (!fp)
 		return;
-	while (fgets(buf, sizeof(buf), fp)) {
-		char *p = buf;
-		int id;
-		char namebuf[512];
 
-		while (*p == ' ' || *p == '\t')
-			p++;
-		if (*p == '#' || *p == '\n' || *p == 0)
-			continue;
-		if (sscanf(p, "0x%x %s\n", &id, namebuf) != 2 &&
-		    sscanf(p, "0x%x %s #", &id, namebuf) != 2 &&
-		    sscanf(p, "%d %s\n", &id, namebuf) != 2 &&
-		    sscanf(p, "%d %s #", &id, namebuf) != 2) {
+	while ((ret = fread_id_name(fp, &id, &namebuf[0]))) {
+		if (ret == -1) {
 			fprintf(stderr, "Database %s is corrupted at %s\n",
-				file, p);
+					file, namebuf);
 			fclose(fp);
 			return;
 		}
 
 		if (id<0)
 			continue;
+
 		entry = malloc(sizeof(*entry));
 		entry->id   = id;
 		entry->name = strdup(namebuf);
@@ -75,31 +95,22 @@ rtnl_hash_initialize(const char *file, struct rtnl_hash_entry **hash, int size)
 
 static void rtnl_tab_initialize(const char *file, char **tab, int size)
 {
-	char buf[512];
 	FILE *fp;
+	int id;
+	char namebuf[NAME_MAX_LEN] = {0};
+	int ret;
 
 	fp = fopen(file, "r");
 	if (!fp)
 		return;
-	while (fgets(buf, sizeof(buf), fp)) {
-		char *p = buf;
-		int id;
-		char namebuf[512];
 
-		while (*p == ' ' || *p == '\t')
-			p++;
-		if (*p == '#' || *p == '\n' || *p == 0)
-			continue;
-		if (sscanf(p, "0x%x %s\n", &id, namebuf) != 2 &&
-		    sscanf(p, "0x%x %s #", &id, namebuf) != 2 &&
-		    sscanf(p, "%d %s\n", &id, namebuf) != 2 &&
-		    sscanf(p, "%d %s #", &id, namebuf) != 2) {
+	while ((ret = fread_id_name(fp, &id, &namebuf[0]))) {
+		if (ret == -1) {
 			fprintf(stderr, "Database %s is corrupted at %s\n",
-				file, p);
+					file, namebuf);
 			fclose(fp);
 			return;
 		}
-
 		if (id<0 || id>size)
 			continue;
 
@@ -184,7 +195,6 @@ int rtnl_rtprot_a2n(__u32 *id, const char *arg)
 	*id = res;
 	return 0;
 }
-
 
 static char * rtnl_rtscope_tab[256] = {
 	"global",
@@ -469,7 +479,7 @@ static int rtnl_group_init;
 static void rtnl_group_initialize(void)
 {
 	rtnl_group_init = 1;
-	rtnl_hash_initialize("/etc/iproute2/group",
+	rtnl_hash_initialize(CONFDIR "/group",
 			     rtnl_group_hash, 256);
 }
 
