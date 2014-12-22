@@ -80,7 +80,7 @@ static void usage(void)
 	fprintf(stderr, "SCOPE-ID := [ host | link | global | NUMBER ]\n");
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG  := [ permanent | dynamic | secondary | primary |\n");
-	fprintf(stderr, "           tentative | deprecated | dadfailed | temporary |\n");
+	fprintf(stderr, "           [-]tentative | [-]deprecated | [-]dadfailed | temporary |\n");
 	fprintf(stderr, "           CONFFLAG-LIST ]\n");
 	fprintf(stderr, "CONFFLAG-LIST := [ CONFFLAG-LIST ] CONFFLAG\n");
 	fprintf(stderr, "CONFFLAG  := [ home | nodad | mngtmpaddr | noprefixroute ]\n");
@@ -1261,8 +1261,14 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		} else if (strcmp(*argv, "tentative") == 0) {
 			filter.flags |= IFA_F_TENTATIVE;
 			filter.flagmask |= IFA_F_TENTATIVE;
+		} else if (strcmp(*argv, "-tentative") == 0) {
+			filter.flags &= ~IFA_F_TENTATIVE;
+			filter.flagmask |= IFA_F_TENTATIVE;
 		} else if (strcmp(*argv, "deprecated") == 0) {
 			filter.flags |= IFA_F_DEPRECATED;
+			filter.flagmask |= IFA_F_DEPRECATED;
+		} else if (strcmp(*argv, "-deprecated") == 0) {
+			filter.flags &= ~IFA_F_DEPRECATED;
 			filter.flagmask |= IFA_F_DEPRECATED;
 		} else if (strcmp(*argv, "home") == 0) {
 			filter.flags |= IFA_F_HOMEADDRESS;
@@ -1278,6 +1284,9 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			filter.flagmask |= IFA_F_NOPREFIXROUTE;
 		} else if (strcmp(*argv, "dadfailed") == 0) {
 			filter.flags |= IFA_F_DADFAILED;
+			filter.flagmask |= IFA_F_DADFAILED;
+		} else if (strcmp(*argv, "-dadfailed") == 0) {
+			filter.flags &= ~IFA_F_DADFAILED;
 			filter.flagmask |= IFA_F_DADFAILED;
 		} else if (strcmp(*argv, "label") == 0) {
 			NEXT_ARG();
