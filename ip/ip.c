@@ -53,7 +53,7 @@ static void usage(void)
 "                    -f[amily] { inet | inet6 | ipx | dnet | bridge | link } |\n"
 "                    -4 | -6 | -I | -D | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
-"                    -o[neline] | -t[imestamp] | -b[atch] [filename] |\n"
+"                    -o[neline] | -t[imestamp] | -t[short] | -b[atch] [filename] |\n"
 "                    -rc[vbuf] [size]}\n");
 	exit(-1);
 }
@@ -232,6 +232,9 @@ int main(int argc, char **argv)
 			++oneline;
 		} else if (matches(opt, "-timestamp") == 0) {
 			++timestamp;
+		} else if (matches(opt, "-tshort") == 0) {
+			++timestamp;
+			++timestamp_short;
 #if 0
 		} else if (matches(opt, "-numeric") == 0) {
 			rtnl_names_numeric++;

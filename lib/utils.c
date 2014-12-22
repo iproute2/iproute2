@@ -32,6 +32,8 @@
 
 #include "utils.h"
 
+int timestamp_short = 0;
+
 int get_integer(int *val, const char *arg, int base)
 {
 	long res;
@@ -772,14 +774,24 @@ __u8* hexstring_a2n(const char *str, __u8 *buf, int blen)
 int print_timestamp(FILE *fp)
 {
 	struct timeval tv;
-	char *tstr;
+	struct tm *tm;
 
-	memset(&tv, 0, sizeof(tv));
 	gettimeofday(&tv, NULL);
+	tm = localtime(&tv.tv_sec);
 
-	tstr = asctime(localtime(&tv.tv_sec));
-	tstr[strlen(tstr)-1] = 0;
-	fprintf(fp, "Timestamp: %s %ld usec\n", tstr, (long)tv.tv_usec);
+	if (timestamp_short) {
+		char tshort[40];
+
+		strftime(tshort, sizeof(tshort), "%Y-%m-%dT%H:%M:%S", tm);
+		fprintf(fp, "[%s.%06ld] ", tshort, tv.tv_usec);
+	} else {
+		char *tstr = asctime(tm);
+
+		tstr[strlen(tstr)-1] = 0;
+		fprintf(fp, "Timestamp: %s %ld usec\n",
+			tstr, tv.tv_usec);
+	}
+
 	return 0;
 }
 
