@@ -13,6 +13,7 @@
 #include "SNAPSHOT.h"
 #include "utils.h"
 #include "br_common.h"
+#include "namespace.h"
 
 struct rtnl_handle rth = { .fd = -1 };
 int preferred_family = AF_UNSPEC;
@@ -31,7 +32,7 @@ static void usage(void)
 "Usage: bridge [ OPTIONS ] OBJECT { COMMAND | help }\n"
 "where  OBJECT := { link | fdb | mdb | vlan | monitor }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] |\n"
-"                    -o[neline] | -t[imestamp] \n");
+"                    -o[neline] | -t[imestamp] | -n[etns] name }\n");
 	exit(-1);
 }
 
@@ -112,6 +113,10 @@ main(int argc, char **argv)
 			preferred_family = AF_INET;
 		} else if (strcmp(opt, "-6") == 0) {
 			preferred_family = AF_INET6;
+		} else if (matches(opt, "-netns") == 0) {
+			NEXT_ARG();
+			if (netns_switch(argv[1]))
+				exit(-1);
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"bridge help\".\n", opt);
 			exit(-1);
