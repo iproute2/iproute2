@@ -22,6 +22,7 @@
 #include "SNAPSHOT.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "namespace.h"
 
 int preferred_family = AF_UNSPEC;
 int human_readable = 0;
@@ -54,7 +55,7 @@ static void usage(void)
 "                    -4 | -6 | -I | -D | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
 "                    -o[neline] | -t[imestamp] | -t[short] | -b[atch] [filename] |\n"
-"                    -rc[vbuf] [size]}\n");
+"                    -rc[vbuf] [size] | -n[etns] name }\n");
 	exit(-1);
 }
 
@@ -265,6 +266,10 @@ int main(int argc, char **argv)
 			rcvbuf = size;
 		} else if (matches(opt, "-help") == 0) {
 			usage();
+		} else if (matches(opt, "-netns") == 0) {
+			NEXT_ARG();
+			if (netns_switch(argv[1]))
+				exit(-1);
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"ip -help\".\n", opt);
 			exit(-1);

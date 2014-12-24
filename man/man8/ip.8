@@ -31,7 +31,8 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 \fB\-r\fR[\fIesolve\fR] |
 \fB\-f\fR[\fIamily\fR] {
 .BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
-\fB\-o\fR[\fIneline\fR] }
+\fB\-o\fR[\fIneline\fR] |
+\fB\-n\fR[\fIetns\fR] name }
 
 
 .SH OPTIONS
@@ -133,6 +134,26 @@ the output.
 .BR "\-r" , " \-resolve"
 use the system's name resolver to print DNS names instead of
 host addresses.
+
+.TP
+.BR "\-n" , " \-net" , " \-netns " <NETNS>
+switches
+.B ip
+to the specified network namespace
+.IR NETNS .
+Actually it just simplifies executing of:
+
+.B ip netns exec
+.IR NETNS
+.B ip
+.RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+
+to
+
+.B ip
+.RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
 
 .SH IP - COMMAND SYNTAX
 
