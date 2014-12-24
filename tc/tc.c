@@ -29,6 +29,7 @@
 #include "utils.h"
 #include "tc_util.h"
 #include "tc_common.h"
+#include "namespace.h"
 
 int show_stats = 0;
 int show_details = 0;
@@ -186,7 +187,8 @@ static void usage(void)
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 			"       tc [-force] -batch filename\n"
 	                "where  OBJECT := { qdisc | class | filter | action | monitor }\n"
-	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] }\n");
+	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] | "
+			"-n[etns] name }\n");
 }
 
 static int do_cmd(int argc, char **argv)
@@ -296,6 +298,10 @@ int main(int argc, char **argv)
 			if (argc <= 1)
 				usage();
 			batch_file = argv[1];
+		} else if (matches(argv[1], "-netns") == 0) {
+			NEXT_ARG();
+			if (netns_switch(argv[1]))
+				return -1;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;

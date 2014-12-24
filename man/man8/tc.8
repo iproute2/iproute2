@@ -2,7 +2,9 @@
 .SH NAME
 tc \- show / manipulate traffic control settings
 .SH SYNOPSIS
-.B tc qdisc [ add | change | replace | link | delete ] dev
+.B tc
+.RI "[ " OPTIONS " ]"
+.B qdisc [ add | change | replace | link | delete ] dev
 DEV
 .B
 [ parent
@@ -13,7 +15,9 @@ qdisc-id ] qdisc
 [ qdisc specific parameters ]
 .P
 
-.B tc class [ add | change | replace | delete ] dev
+.B tc
+.RI "[ " OPTIONS " ]"
+.B class [ add | change | replace | delete ] dev
 DEV
 .B parent
 qdisc-id
@@ -22,7 +26,9 @@ class-id ] qdisc
 [ qdisc specific parameters ]
 .P
 
-.B tc filter [ add | change | replace | delete ] dev
+.B tc
+.RI "[ " OPTIONS " ]"
+.B filter [ add | change | replace | delete ] dev
 DEV
 .B [ parent
 qdisc-id
@@ -35,21 +41,28 @@ priority filtertype
 flow-id
 
 .B tc
+.RI "[ " OPTIONS " ]"
 .RI "[ " FORMAT " ]"
 .B qdisc show [ dev
 DEV
 .B ]
 .P
 .B tc
+.RI "[ " OPTIONS " ]"
 .RI "[ " FORMAT " ]"
 .B class show dev
 DEV
 .P
-.B tc filter show dev
+.B tc
+.RI "[ " OPTIONS " ]"
+.B filter show dev
 DEV
 
 .P
-.B tc [ -force ] -b\fR[\fIatch\fR] \fB[ filename ]
+.ti 8
+.IR OPTIONS " := {"
+\fB[ -force ] -b\fR[\fIatch\fR] \fB[ filename ] \fR|
+\fB[ \fB-n\fR[\fIetns\fR] name \fB] \fR}
 
 .ti 8
 .IR FORMAT " := {"
@@ -407,6 +420,38 @@ link
 Only available for qdiscs and performs a replace where the node
 must exist already.
 
+.SH OPTIONS
+
+.TP
+.BR "\-b", " \-b filename", " \-batch", " \-batch filename"
+read commands from provided file or standard input and invoke them.
+First failure will cause termination of tc.
+
+.TP
+.BR "\-force"
+don't terminate tc on errors in batch mode.
+If there were any errors during execution of the commands, the application return code will be non zero.
+
+.TP
+.BR "\-n" , " \-net" , " \-netns " <NETNS>
+switches
+.B tc
+to the specified network namespace
+.IR NETNS .
+Actually it just simplifies executing of:
+
+.B ip netns exec
+.IR NETNS
+.B tc
+.RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+
+to
+
+.B tc
+.RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+
 .SH FORMAT
 The show command has additional formatting options:
 
@@ -429,16 +474,6 @@ decode filter offset and mask values to equivalent filter commands based on TCP/
 .TP
 .BR "\-iec"
 print rates in IEC units (ie. 1K = 1024).
-
-.TP
-.BR "\-b", " \-b filename", " \-batch", " \-batch filename"
-read commands from provided file or standard input and invoke them.
-First failure will cause termination of tc.
-
-.TP
-.BR "\-force"
-don't terminate tc on errors in batch mode.
-If there were any errors during execution of the commands, the application return code will be non zero.
 
 .SH HISTORY
 .B tc
