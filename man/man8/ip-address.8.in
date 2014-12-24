@@ -50,8 +50,9 @@ ip-address \- protocol address management
 
 .ti -8
 .IR FLAG " := "
-.RB "[ " permanent " | " dynamic " | " secondary " | " primary " | "\
-tentative " | " deprecated " | " dadfailed " | " temporary " ]"
+.RB "[ " permanent " | " dynamic " | " secondary " | " primary " | \
+[ - ] " tentative " | [ - ] " deprecated " | [ - ] " dadfailed " | "\
+temporary " ]"
 
 .SH "DESCRIPTION"
 The
@@ -178,12 +179,26 @@ addresses.
 address detection.
 
 .TP
+.B -tentative
+(IPv6 only) only list addresses which are not in the process of
+duplicate address detection currently.
+
+.TP
 .B deprecated
 (IPv6 only) only list deprecated addresses.
 
 .TP
+.B -deprecated
+(IPv6 only) only list addresses not being deprecated.
+
+.TP
 .B dadfailed
 (IPv6 only) only list addresses which have failed duplicate
+address detection.
+
+.TP
+.B -dadfailed
+(IPv6 only) only list addresses which have not failed duplicate
 address detection.
 
 .TP
