@@ -237,7 +237,6 @@ enum {
 #define RTPROT_MROUTED	17      /* Multicast daemon */
 #define RTPROT_BABEL	42      /* Babel daemon */
 
-
 /* rtm_scope
 
    Really it is not scope, but sort of distance to the destination.
