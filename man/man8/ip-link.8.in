@@ -739,6 +739,11 @@ ip link show type vlan
 Shows the vlan devices.
 .RE
 .PP
+ip link show master br0
+.RS 4
+Shows devices enslaved by br0
+.RE
+.PP
 ip link set dev ppp0 mtu 1400
 .RS 4
 Change the MTU the ppp0 device.
