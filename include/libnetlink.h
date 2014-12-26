@@ -19,6 +19,7 @@ struct rtnl_handle
 	__u32			seq;
 	__u32			dump;
 	int			proto;
+	FILE		       *dump_fp;
 };
 
 extern int rcvbuf;

@@ -1871,122 +1871,57 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 	return 0;
 }
 
+struct inet_diag_arg {
+	struct filter *f;
+	int protocol;
+};
+
+static int show_one_inet_sock(const struct sockaddr_nl *addr,
+		struct nlmsghdr *h, void *arg)
+{
+	int err;
+	struct inet_diag_arg *diag_arg = arg;
+	struct inet_diag_msg *r = NLMSG_DATA(h);
+
+	if (!(diag_arg->f->families & (1 << r->idiag_family)))
+		return 0;
+	if ((err = inet_show_sock(h, NULL, diag_arg->protocol)) < 0)
+		return err;
+
+	return 0;
+}
+
 static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 {
-	int fd, family;
-	struct sockaddr_nl nladdr;
-	struct msghdr msg;
-	char	buf[16384];
-	struct iovec iov[3];
+	int err = 0;
+	struct rtnl_handle rth;
+	int family = PF_INET;
+	struct inet_diag_arg arg = { .f = f, .protocol = protocol };
 
-	if ((fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_INET_DIAG)) < 0)
+	if (rtnl_open_byproto(&rth, 0, NETLINK_SOCK_DIAG))
 		return -1;
+	rth.dump = MAGIC_SEQ;
+	rth.dump_fp = dump_fp;
 
-	family = PF_INET;
 again:
-	if (sockdiag_send(family, fd, protocol, f))
-		return -1;
+	if ((err = sockdiag_send(family, rth.fd, protocol, f)))
+		goto Exit;
 
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
-
-	iov[0] = (struct iovec){
-		.iov_base = buf,
-		.iov_len = sizeof(buf)
-	};
-
-	while (1) {
-		int status;
-		struct nlmsghdr *h;
-
-		msg = (struct msghdr) {
-			(void*)&nladdr, sizeof(nladdr),
-			iov,	1,
-			NULL,	0,
-			0
-		};
-
-		status = recvmsg(fd, &msg, 0);
-
-		if (status < 0) {
-			if (errno == EINTR)
-				continue;
-			perror("OVERRUN");
-			continue;
+	if ((err = rtnl_dump_filter(&rth, show_one_inet_sock, &arg))) {
+		if (family != PF_UNSPEC) {
+			family = PF_UNSPEC;
+			goto again;
 		}
-		if (status == 0) {
-			fprintf(stderr, "EOF on netlink\n");
-			close(fd);
-			return 0;
-		}
-
-		if (dump_fp)
-			fwrite(buf, 1, NLMSG_ALIGN(status), dump_fp);
-
-		h = (struct nlmsghdr*)buf;
-		while (NLMSG_OK(h, status)) {
-			int err;
-			struct inet_diag_msg *r = NLMSG_DATA(h);
-
-			if (/*h->nlmsg_pid != rth->local.nl_pid ||*/
-			    h->nlmsg_seq != MAGIC_SEQ)
-				goto skip_it;
-
-			if (h->nlmsg_type == NLMSG_DONE)
-				goto done;
-
-			if (h->nlmsg_type == NLMSG_ERROR) {
-				struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
-				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
-					fprintf(stderr, "ERROR truncated\n");
-				} else {
-					if (family != PF_UNSPEC) {
-						family = PF_UNSPEC;
-						goto again;
-					}
-
-					errno = -err->error;
-					if (errno == EOPNOTSUPP) {
-						close(fd);
-						return -1;
-					}
-					perror("TCPDIAG answers");
-				}
-
-				goto done;
-			}
-			if (!dump_fp) {
-				if (!(f->families & (1<<r->idiag_family))) {
-					h = NLMSG_NEXT(h, status);
-					continue;
-				}
-				err = inet_show_sock(h, NULL, protocol);
-				if (err < 0) {
-					close(fd);
-					return err;
-				}
-			}
-
-skip_it:
-			h = NLMSG_NEXT(h, status);
-		}
-		if (msg.msg_flags & MSG_TRUNC) {
-			fprintf(stderr, "Message truncated\n");
-			continue;
-		}
-		if (status) {
-			fprintf(stderr, "!!!Remnant of size %d\n", status);
-			exit(1);
-		}
+		goto Exit;
 	}
-done:
 	if (family == PF_INET) {
 		family = PF_INET6;
 		goto again;
 	}
 
-	close(fd);
-	return 0;
+Exit:
+	rtnl_close(&rth);
+	return err;
 }
 
 static int tcp_show_netlink_file(struct filter *f)

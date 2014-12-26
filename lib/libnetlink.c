@@ -220,12 +220,15 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 			return -1;
 		}
 
+		if (rth->dump_fp)
+			fwrite(buf, 1, NLMSG_ALIGN(status), rth->dump_fp);
+
 		for (a = arg; a->filter; a++) {
 			struct nlmsghdr *h = (struct nlmsghdr*)buf;
 			msglen = status;
 
 			while (NLMSG_OK(h, msglen)) {
-				int err;
+				int err = 0;
 
 				if (nladdr.nl_pid != 0 ||
 				    h->nlmsg_pid != rth->local.nl_pid ||
@@ -247,16 +250,20 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 					} else {
 						errno = -err->error;
 						if (rth->proto == NETLINK_SOCK_DIAG &&
-						    errno == ENOENT)
+						    (errno == ENOENT ||
+						     errno == EOPNOTSUPP))
 							return -1;
 
 						perror("RTNETLINK answers");
 					}
 					return -1;
 				}
-				err = a->filter(&nladdr, h, a->arg1);
-				if (err < 0)
-					return err;
+
+				if (!rth->dump_fp) {
+					err = a->filter(&nladdr, h, a->arg1);
+					if (err < 0)
+						return err;
+				}
 
 skip_it:
 				h = NLMSG_NEXT(h, msglen);
