@@ -70,7 +70,8 @@ DEV
 \fB\-d\fR[\fIetails\fR] |
 \fB\-r\fR[\fIaw\fR] |
 \fB\-p\fR[\fIretty\fR] |
-\fB\-i\fR[\fIec\fR] }
+\fB\-i\fR[\fIec\fR] |
+\fB\-g\fR[\fIraph\fR] }
 
 .SH DESCRIPTION
 .B Tc
@@ -474,6 +475,25 @@ decode filter offset and mask values to equivalent filter commands based on TCP/
 .TP
 .BR "\-iec"
 print rates in IEC units (ie. 1K = 1024).
+
+.TP
+.BR "\-g", " \-graph"
+shows classes as ASCII graph. Prints generic stats info under each class if
+.BR "-s"
+option was specified. Classes can be filtered only by
+.BR "dev"
+option.
+
+.SH "EXAMPLES"
+.PP
+tc -g class show dev eth0
+.RS 4
+Shows classes as ASCII graph on eth0 interface.
+.RE
+.PP
+tc -g -s class show dev eth0
+.RS 4
+Shows classes as ASCII graph with stats info under each class.
 
 .SH HISTORY
 .B tc
