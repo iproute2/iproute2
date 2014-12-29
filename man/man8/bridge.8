@@ -38,6 +38,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR fastleave " { " on " | " off " } ] [ "
 .BR root_block " { " on " | " off " } ] [ "
 .BR learning " { " on " | " off " } ] [ "
+.BR learning_sync " { " on " | " off " } ] [ "
 .BR flood " { " on " | " off " } ] [ "
 .BR hwmode " { " vepa " | " veb " } ] "
 
@@ -261,6 +262,11 @@ when STP is enabled on the bridge.  By default the flag is off.
 Controls whether a given port will learn MAC addresses from received traffic or
 not.  If learning if off, the bridge will end up flooding any traffic for which
 it has no FDB entry.  By default this flag is on.
+
+.TP
+.BR "learning_sync on " or " learning_sync off "
+Controls whether a given port will sync MAC addresses learned on device port to
+bridge FDB.
 
 .TP
 .BR "flooding on " or " flooding off "

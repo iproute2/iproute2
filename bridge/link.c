@@ -188,6 +188,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				if (prtb[IFLA_BRPORT_LEARNING])
 					print_onoff(fp, "learning",
 						    rta_getattr_u8(prtb[IFLA_BRPORT_LEARNING]));
+				if (prtb[IFLA_BRPORT_LEARNING_SYNC])
+					print_onoff(fp, "learning_sync",
+						    rta_getattr_u8(prtb[IFLA_BRPORT_LEARNING_SYNC]));
 				if (prtb[IFLA_BRPORT_UNICAST_FLOOD])
 					print_onoff(fp, "flood",
 						    rta_getattr_u8(prtb[IFLA_BRPORT_UNICAST_FLOOD]));
@@ -221,6 +224,7 @@ static void usage(void)
 	fprintf(stderr, "                               [ fastleave {on | off} ]\n");
 	fprintf(stderr,	"                               [ root_block {on | off} ]\n");
 	fprintf(stderr,	"                               [ learning {on | off} ]\n");
+	fprintf(stderr,	"                               [ learning_sync {on | off} ]\n");
 	fprintf(stderr,	"                               [ flood {on | off} ]\n");
 	fprintf(stderr, "                               [ hwmode {vepa | veb} ]\n");
 	fprintf(stderr, "       bridge link show [dev DEV]\n");
@@ -252,6 +256,7 @@ static int brlink_modify(int argc, char **argv)
 	} req;
 	char *d = NULL;
 	__s8 learning = -1;
+	__s8 learning_sync = -1;
 	__s8 flood = -1;
 	__s8 hairpin = -1;
 	__s8 bpdu_guard = -1;
@@ -294,6 +299,10 @@ static int brlink_modify(int argc, char **argv)
 		} else if (strcmp(*argv, "learning") == 0) {
 			NEXT_ARG();
 			if (!on_off("learning", &learning, *argv))
+				exit(-1);
+		} else if (strcmp(*argv, "learning_sync") == 0) {
+			NEXT_ARG();
+			if (!on_off("learning_sync", &learning_sync, *argv))
 				exit(-1);
 		} else if (strcmp(*argv, "flood") == 0) {
 			NEXT_ARG();
@@ -359,6 +368,9 @@ static int brlink_modify(int argc, char **argv)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_UNICAST_FLOOD, flood);
 	if (learning >= 0)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_LEARNING, learning);
+	if (learning_sync >= 0)
+		addattr8(&req.n, sizeof(req), IFLA_BRPORT_LEARNING_SYNC,
+			 learning_sync);
 
 	if (cost > 0)
 		addattr32(&req.n, sizeof(req), IFLA_BRPORT_COST, cost);
