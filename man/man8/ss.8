@@ -127,8 +127,41 @@ Do not display anything, just dump raw information about TCP sockets to FILE aft
 Read filter information from FILE.
 Each line of FILE is interpreted like single command line option. If FILE is - stdin is used.
 .TP
-.B FILTER := [ state TCP-STATE ] [ EXPRESSION ]
+.B FILTER := [ state STATE-FILTER ] [ EXPRESSION ]
 Please take a look at the official documentation (Debian package iproute-doc) for details regarding filters.
+
+.SH STATE-FILTER
+
+.B STATE-FILTER
+allows to construct arbitrary set of states to match. Its syntax is sequence of keywords state and exclude followed by identifier of state.
+.TP
+Available identifiers are:
+
+All standard TCP states:
+.BR established ", " syn-sent ", " syn-recv ", " fin-wait-1 ", " fin-wait-2 ", " time-wait ", " closed ", " close-wait ", " last-ack ", "
+.BR  listen " and " closing.
+
+.B all
+- for all the states
+
+.B connected
+- all the states except for
+.BR listen " and " closed
+
+.B synchronized
+- all the
+.B connected
+states except for
+.B syn-sent
+
+.B bucket
+- states, which are maintained as minisockets, i.e.
+.BR time-wait " and " syn-recv
+
+.B big
+- opposite to
+.B bucket
+
 .SH USAGE EXAMPLES
 .TP
 .B ss -t -a
@@ -150,7 +183,11 @@ Find all local processes connected to X server.
 List all the tcp sockets in state FIN-WAIT-1 for our apache to network 193.233.7/24 and look at their timers.
 .SH SEE ALSO
 .BR ip (8),
-.BR /usr/share/doc/iproute-doc/ss.html " (package iproute­doc)"
+.BR /usr/share/doc/iproute-doc/ss.html " (package iproute­doc)",
+.br
+.BR RFC " 793 "
+- https://tools.ietf.org/rfc/rfc793.txt (TCP states) 
+
 .SH AUTHOR
 .I ss 
 was written by Alexey Kuznetosv, <kuznet@ms2.inr.ac.ru>.
