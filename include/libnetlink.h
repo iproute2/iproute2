@@ -82,10 +82,14 @@ extern int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int le
 extern int parse_rtattr_flags(struct rtattr *tb[], int max, struct rtattr *rta,
 			      int len, unsigned short flags);
 extern int parse_rtattr_byindex(struct rtattr *tb[], int max, struct rtattr *rta, int len);
+extern struct rtattr *parse_rtattr_one(int type, struct rtattr *rta, int len);
 extern int __parse_rtattr_nested_compat(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 
 #define parse_rtattr_nested(tb, max, rta) \
 	(parse_rtattr((tb), (max), RTA_DATA(rta), RTA_PAYLOAD(rta)))
+
+#define parse_rtattr_one_nested(type, rta) \
+	(parse_rtattr_one(type, RTA_DATA(rta), RTA_PAYLOAD(rta)))
 
 #define parse_rtattr_nested_compat(tb, max, rta, data, len) \
 	({ data = RTA_PAYLOAD(rta) >= len ? RTA_DATA(rta) : NULL;	\
