@@ -255,6 +255,29 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 	}
 }
 
+static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
+{
+	struct rtattr *inet6_attr;
+	struct rtattr *tb[IFLA_INET6_MAX + 1];
+
+	inet6_attr = parse_rtattr_one_nested(AF_INET6, af_spec_attr);
+	if (!inet6_attr)
+		return;
+
+	parse_rtattr_nested(tb, IFLA_INET6_MAX, inet6_attr);
+
+	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
+		switch (rta_getattr_u8(tb[IFLA_INET6_ADDR_GEN_MODE])) {
+		case IN6_ADDR_GEN_MODE_EUI64:
+			fprintf(fp, "addrgenmode eui64 ");
+			break;
+		case IN6_ADDR_GEN_MODE_NONE:
+			fprintf(fp, "addrgenmode none ");
+			break;
+		}
+	}
+}
+
 static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
@@ -657,6 +680,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_LINKINFO] && show_details)
 		print_linktype(fp, tb[IFLA_LINKINFO]);
+
+	if (do_link && tb[IFLA_AF_SPEC] && show_details)
+		print_af_spec(fp, tb[IFLA_AF_SPEC]);
 
 	if ((do_link || show_details) && tb[IFLA_IFALIAS]) {
 		fprintf(fp, "%s    alias %s", _SL_,
