@@ -2287,11 +2287,11 @@ static int udp_show(struct filter *f)
 {
 	FILE *fp = NULL;
 
+	dg_proto = UDP_PROTO;
+
 	if (!getenv("PROC_NET_UDP") && !getenv("PROC_ROOT")
 	    && inet_show_netlink(f, NULL, IPPROTO_UDP) == 0)
 		return 0;
-
-	dg_proto = UDP_PROTO;
 
 	if (f->families&(1<<AF_INET)) {
 		if ((fp = net_udp_open()) == NULL)
