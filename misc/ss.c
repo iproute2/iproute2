@@ -170,11 +170,11 @@ static const struct filter default_dbs[MAX_DB] = {
 		.families = (1 << AF_INET) | (1 << AF_INET6),
 	},
 	[UDP_DB] = {
-		.states   = (1 << SS_CLOSE),
+		.states   = (1 << SS_ESTABLISHED),
 		.families = (1 << AF_INET) | (1 << AF_INET6),
 	},
 	[RAW_DB] = {
-		.states   = (1 << SS_CLOSE),
+		.states   = (1 << SS_ESTABLISHED),
 		.families = (1 << AF_INET) | (1 << AF_INET6),
 	},
 	[UNIX_DG_DB] = {
