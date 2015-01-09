@@ -282,11 +282,10 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
 	struct ifla_vf_vlan *vf_vlan;
-	struct ifla_vf_rate *vf_rate;
 	struct ifla_vf_tx_rate *vf_tx_rate;
 	struct ifla_vf_spoofchk *vf_spoofchk;
 	struct ifla_vf_link_state *vf_linkstate;
-	struct rtattr *vf[IFLA_VF_MAX+1];
+	struct rtattr *vf[IFLA_VF_MAX + 1] = {};
 	struct rtattr *tmp;
 	SPRINT_BUF(b1);
 
@@ -300,7 +299,6 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	vf_mac = RTA_DATA(vf[IFLA_VF_MAC]);
 	vf_vlan = RTA_DATA(vf[IFLA_VF_VLAN]);
 	vf_tx_rate = RTA_DATA(vf[IFLA_VF_TX_RATE]);
-	vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
 
 	/* Check if the spoof checking vf info type is supported by
 	 * this kernel.
@@ -336,10 +334,16 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		fprintf(fp, ", qos %d", vf_vlan->qos);
 	if (vf_tx_rate->rate)
 		fprintf(fp, ", tx rate %d (Mbps)", vf_tx_rate->rate);
-	if (vf_rate->max_tx_rate)
-		fprintf(fp, ", max_tx_rate %dMbps", vf_rate->max_tx_rate);
-	if (vf_rate->min_tx_rate)
-		fprintf(fp, ", min_tx_rate %dMbps", vf_rate->min_tx_rate);
+
+	if (vf[IFLA_VF_RATE]) {
+		struct ifla_vf_rate *vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
+
+		if (vf_rate->max_tx_rate)
+			fprintf(fp, ", max_tx_rate %dMbps", vf_rate->max_tx_rate);
+		if (vf_rate->min_tx_rate)
+			fprintf(fp, ", min_tx_rate %dMbps", vf_rate->min_tx_rate);
+	}
+
 	if (vf_spoofchk && vf_spoofchk->setting != -1) {
 		if (vf_spoofchk->setting)
 			fprintf(fp, ", spoof checking on");
