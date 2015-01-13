@@ -125,7 +125,7 @@ static int accept_msg(const struct sockaddr_nl *who,
 		print_netconf(who, n, arg);
 		return 0;
 	}
-	if (n->nlmsg_type == 15) {
+	if (n->nlmsg_type == NLMSG_TSTAMP) {
 		char *tstr;
 		time_t secs = ((__u32*)NLMSG_DATA(n))[0];
 		long usecs = ((__u32*)NLMSG_DATA(n))[1];

@@ -74,14 +74,12 @@ static int accept_msg(const struct sockaddr_nl *who,
 			fprintf(fp, "[MDB]");
 		return print_mdb(who, n, arg);
 
-	case 15:
+	case NLMSG_TSTAMP:
 		return show_mark(fp, n);
 
 	default:
 		return 0;
 	}
-
-
 }
 
 int do_monitor(int argc, char **argv)
