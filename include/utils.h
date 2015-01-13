@@ -148,6 +148,7 @@ static inline __u32 nl_mgrp(__u32 group)
 
 
 int print_timestamp(FILE *fp);
+void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
@@ -160,4 +161,5 @@ struct iplink_req;
 int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		char **name, char **type, char **link, char **dev,
 		int *group, int *index);
+
 #endif /* __UTILS_H__ */
