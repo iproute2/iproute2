@@ -42,5 +42,6 @@ static int setns(int fd, int nstype)
 #endif /* HAVE_SETNS */
 
 extern int netns_switch(char *netns);
+extern int netns_get_fd(const char *netns);
 
 #endif /* __NAMESPACE_H__ */

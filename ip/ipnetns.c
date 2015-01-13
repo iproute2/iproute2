@@ -31,21 +31,6 @@ static int usage(void)
 	exit(-1);
 }
 
-int get_netns_fd(const char *name)
-{
-	char pathbuf[MAXPATHLEN];
-	const char *path, *ptr;
-
-	path = name;
-	ptr = strchr(name, '/');
-	if (!ptr) {
-		snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
-			NETNS_RUN_DIR, name );
-		path = pathbuf;
-	}
-	return open(path, O_RDONLY);
-}
-
 static int netns_list(int argc, char **argv)
 {
 	struct dirent *entry;
