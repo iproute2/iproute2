@@ -157,14 +157,19 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 		exit(-1);
 	}
 	req.ndm.ndm_family = dst.family;
-	addattr_l(&req.n, sizeof(req), NDA_DST, &dst.data, dst.bytelen);
+	if (addattr_l(&req.n, sizeof(req), NDA_DST, &dst.data, dst.bytelen) < 0)
+		return -1;
 
 	if (lla && strcmp(lla, "null")) {
 		char llabuf[20];
 		int l;
 
 		l = ll_addr_a2n(llabuf, sizeof(llabuf), lla);
-		addattr_l(&req.n, sizeof(req), NDA_LLADDR, llabuf, l);
+		if (l < 0)
+			return -1;
+
+		if (addattr_l(&req.n, sizeof(req), NDA_LLADDR, llabuf, l) < 0)
+			return -1;
 	}
 
 	ll_init_map(&rth);
