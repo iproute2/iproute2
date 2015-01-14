@@ -868,3 +868,13 @@ int inet_get_addr(const char *src, __u32 *dst, struct in6_addr *dst6)
 	else
 		return inet_pton(AF_INET, src, dst);
 }
+
+void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n)
+{
+	char *tstr;
+	time_t secs = ((__u32*)NLMSG_DATA(n))[0];
+	long usecs = ((__u32*)NLMSG_DATA(n))[1];
+	tstr = asctime(localtime(&secs));
+	tstr[strlen(tstr)-1] = 0;
+	fprintf(fp, "Timestamp: %s %lu us\n", tstr, usecs);
+}

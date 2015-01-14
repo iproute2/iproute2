@@ -125,13 +125,8 @@ static int accept_msg(const struct sockaddr_nl *who,
 		print_netconf(who, n, arg);
 		return 0;
 	}
-	if (n->nlmsg_type == 15) {
-		char *tstr;
-		time_t secs = ((__u32*)NLMSG_DATA(n))[0];
-		long usecs = ((__u32*)NLMSG_DATA(n))[1];
-		tstr = asctime(localtime(&secs));
-		tstr[strlen(tstr)-1] = 0;
-		fprintf(fp, "Timestamp: %s %lu us\n", tstr, usecs);
+	if (n->nlmsg_type == NLMSG_TSTAMP) {
+		print_nlmsg_timestamp(fp, n);
 		return 0;
 	}
 	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&

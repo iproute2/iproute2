@@ -255,15 +255,37 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 	}
 }
 
+static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
+{
+	struct rtattr *inet6_attr;
+	struct rtattr *tb[IFLA_INET6_MAX + 1];
+
+	inet6_attr = parse_rtattr_one_nested(AF_INET6, af_spec_attr);
+	if (!inet6_attr)
+		return;
+
+	parse_rtattr_nested(tb, IFLA_INET6_MAX, inet6_attr);
+
+	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
+		switch (rta_getattr_u8(tb[IFLA_INET6_ADDR_GEN_MODE])) {
+		case IN6_ADDR_GEN_MODE_EUI64:
+			fprintf(fp, "addrgenmode eui64 ");
+			break;
+		case IN6_ADDR_GEN_MODE_NONE:
+			fprintf(fp, "addrgenmode none ");
+			break;
+		}
+	}
+}
+
 static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
 	struct ifla_vf_vlan *vf_vlan;
-	struct ifla_vf_rate *vf_rate;
 	struct ifla_vf_tx_rate *vf_tx_rate;
 	struct ifla_vf_spoofchk *vf_spoofchk;
 	struct ifla_vf_link_state *vf_linkstate;
-	struct rtattr *vf[IFLA_VF_MAX+1];
+	struct rtattr *vf[IFLA_VF_MAX + 1] = {};
 	struct rtattr *tmp;
 	SPRINT_BUF(b1);
 
@@ -277,7 +299,6 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	vf_mac = RTA_DATA(vf[IFLA_VF_MAC]);
 	vf_vlan = RTA_DATA(vf[IFLA_VF_VLAN]);
 	vf_tx_rate = RTA_DATA(vf[IFLA_VF_TX_RATE]);
-	vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
 
 	/* Check if the spoof checking vf info type is supported by
 	 * this kernel.
@@ -313,10 +334,16 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		fprintf(fp, ", qos %d", vf_vlan->qos);
 	if (vf_tx_rate->rate)
 		fprintf(fp, ", tx rate %d (Mbps)", vf_tx_rate->rate);
-	if (vf_rate->max_tx_rate)
-		fprintf(fp, ", max_tx_rate %dMbps", vf_rate->max_tx_rate);
-	if (vf_rate->min_tx_rate)
-		fprintf(fp, ", min_tx_rate %dMbps", vf_rate->min_tx_rate);
+
+	if (vf[IFLA_VF_RATE]) {
+		struct ifla_vf_rate *vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
+
+		if (vf_rate->max_tx_rate)
+			fprintf(fp, ", max_tx_rate %dMbps", vf_rate->max_tx_rate);
+		if (vf_rate->min_tx_rate)
+			fprintf(fp, ", min_tx_rate %dMbps", vf_rate->min_tx_rate);
+	}
+
 	if (vf_spoofchk && vf_spoofchk->setting != -1) {
 		if (vf_spoofchk->setting)
 			fprintf(fp, ", spoof checking on");
@@ -657,6 +684,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_LINKINFO] && show_details)
 		print_linktype(fp, tb[IFLA_LINKINFO]);
+
+	if (do_link && tb[IFLA_AF_SPEC] && show_details)
+		print_af_spec(fp, tb[IFLA_AF_SPEC]);
 
 	if ((do_link || show_details) && tb[IFLA_IFALIAS]) {
 		fprintf(fp, "%s    alias %s", _SL_,

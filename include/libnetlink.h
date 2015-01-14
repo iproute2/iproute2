@@ -158,5 +158,9 @@ extern int rtnl_from_file(FILE *, rtnl_filter_t handler,
 #define NDTA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct ndtmsg))
 #endif
 
+/* User defined nlmsg_type which is used mostly for logging netlink
+ * messages from dump file */
+#define NLMSG_TSTAMP	15
+
 #endif /* __LIBNETLINK_H__ */
 

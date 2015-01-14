@@ -2287,11 +2287,11 @@ static int udp_show(struct filter *f)
 {
 	FILE *fp = NULL;
 
+	dg_proto = UDP_PROTO;
+
 	if (!getenv("PROC_NET_UDP") && !getenv("PROC_ROOT")
 	    && inet_show_netlink(f, NULL, IPPROTO_UDP) == 0)
 		return 0;
-
-	dg_proto = UDP_PROTO;
 
 	if (f->families&(1<<AF_INET)) {
 		if ((fp = net_udp_open()) == NULL)
@@ -3192,30 +3192,30 @@ static void _usage(FILE *dest)
 	fprintf(dest,
 "Usage: ss [ OPTIONS ]\n"
 "       ss [ OPTIONS ] [ FILTER ]\n"
-"   -h, --help		this message\n"
-"   -V, --version	output version information\n"
-"   -n, --numeric	don't resolve service names\n"
+"   -h, --help          this message\n"
+"   -V, --version       output version information\n"
+"   -n, --numeric       don't resolve service names\n"
 "   -r, --resolve       resolve host names\n"
-"   -a, --all		display all sockets\n"
-"   -l, --listening	display listening sockets\n"
+"   -a, --all           display all sockets\n"
+"   -l, --listening     display listening sockets\n"
 "   -o, --options       show timer information\n"
 "   -e, --extended      show detailed socket information\n"
 "   -m, --memory        show socket memory usage\n"
-"   -p, --processes	show process using socket\n"
-"   -i, --info		show internal TCP information\n"
-"   -s, --summary	show socket usage summary\n"
+"   -p, --processes     show process using socket\n"
+"   -i, --info          show internal TCP information\n"
+"   -s, --summary       show socket usage summary\n"
 "   -b, --bpf           show bpf filter socket information\n"
-"   -Z, --context	display process SELinux security contexts\n"
-"   -z, --contexts	display process and socket SELinux security contexts\n"
+"   -Z, --context       display process SELinux security contexts\n"
+"   -z, --contexts      display process and socket SELinux security contexts\n"
 "\n"
 "   -4, --ipv4          display only IP version 4 sockets\n"
 "   -6, --ipv6          display only IP version 6 sockets\n"
-"   -0, --packet	display PACKET sockets\n"
-"   -t, --tcp		display only TCP sockets\n"
-"   -u, --udp		display only UDP sockets\n"
-"   -d, --dccp		display only DCCP sockets\n"
-"   -w, --raw		display only RAW sockets\n"
-"   -x, --unix		display only Unix domain sockets\n"
+"   -0, --packet        display PACKET sockets\n"
+"   -t, --tcp           display only TCP sockets\n"
+"   -u, --udp           display only UDP sockets\n"
+"   -d, --dccp          display only DCCP sockets\n"
+"   -w, --raw           display only RAW sockets\n"
+"   -x, --unix          display only Unix domain sockets\n"
 "   -f, --family=FAMILY display sockets of type FAMILY\n"
 "\n"
 "   -A, --query=QUERY, --socket=QUERY\n"
@@ -3223,7 +3223,13 @@ static void _usage(FILE *dest)
 "\n"
 "   -D, --diag=FILE     Dump raw information about TCP sockets to FILE\n"
 "   -F, --filter=FILE   read filter information from FILE\n"
-"       FILTER := [ state TCP-STATE ] [ EXPRESSION ]\n"
+"       FILTER := [ state STATE-FILTER ] [ EXPRESSION ]\n"
+"       STATE-FILTER := {all|connected|synchronized|bucket|big|TCP-STATES}\n"
+"         TCP-STATES := {established|syn-sent|syn-recv|fin-wait-{1,2}|time-wait|closed|close-wait|last-ack|listen|closing}\n"
+"          connected := {established|syn-sent|syn-recv|fin-wait-{1,2}|time-wait|close-wait|last-ack|closing}\n"
+"       synchronized := {established|syn-recv|fin-wait-{1,2}|time-wait|close-wait|last-ack|closing}\n"
+"             bucket := {syn-recv|time-wait}\n"
+"                big := {established|syn-sent|fin-wait-{1,2}|closed|close-wait|last-ack|listen|closing}\n"
 		);
 }
 

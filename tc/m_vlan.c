@@ -103,20 +103,25 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 	if (argc) {
 		if (matches(*argv, "reclassify") == 0) {
 			parm.action = TC_ACT_RECLASSIFY;
-			NEXT_ARG();
+			argc--;
+			argv++;
 		} else if (matches(*argv, "pipe") == 0) {
 			parm.action = TC_ACT_PIPE;
-			NEXT_ARG();
+			argc--;
+			argv++;
 		} else if (matches(*argv, "drop") == 0 ||
 			   matches(*argv, "shot") == 0) {
 			parm.action = TC_ACT_SHOT;
-			NEXT_ARG();
+			argc--;
+			argv++;
 		} else if (matches(*argv, "continue") == 0) {
 			parm.action = TC_ACT_UNSPEC;
-			NEXT_ARG();
+			argc--;
+			argv++;
 		} else if (matches(*argv, "pass") == 0) {
 			parm.action = TC_ACT_OK;
-			NEXT_ARG();
+			argc--;
+			argv++;
 		}
 	}
 
@@ -198,6 +203,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 		break;
 	}
+	fprintf(f, " %s", action_n2a(parm->action, b1, sizeof (b1)));
 
 	fprintf(f, "\n\t index %d ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);

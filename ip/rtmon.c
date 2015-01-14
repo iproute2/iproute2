@@ -34,7 +34,7 @@ static void write_stamp(FILE *fp)
 	struct nlmsghdr *n1 = (void*)buf;
 	struct timeval tv;
 
-	n1->nlmsg_type = 15;
+	n1->nlmsg_type = NLMSG_TSTAMP;
 	n1->nlmsg_flags = 0;
 	n1->nlmsg_seq = 0;
 	n1->nlmsg_pid = 0;

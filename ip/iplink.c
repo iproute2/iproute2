@@ -32,6 +32,7 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "namespace.h"
 
 #define IPLINK_IOCTL_COMPAT	1
 #ifndef LIBDIR
@@ -440,7 +441,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			NEXT_ARG();
 			if (netns != -1)
 				duparg("netns", *argv);
-			if ((netns = get_netns_fd(*argv)) >= 0)
+			if ((netns = netns_get_fd(*argv)) >= 0)
 				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_FD, &netns, 4);
 			else if (get_integer(&netns, *argv, 0) == 0)
 				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_PID, &netns, 4);

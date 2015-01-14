@@ -35,17 +35,6 @@ static void usage(void)
 	exit(-1);
 }
 
-static int show_mark(FILE *fp, const struct nlmsghdr *n)
-{
-	char *tstr;
-	time_t secs = ((__u32*)NLMSG_DATA(n))[0];
-	long usecs = ((__u32*)NLMSG_DATA(n))[1];
-	tstr = asctime(localtime(&secs));
-	tstr[strlen(tstr)-1] = 0;
-	fprintf(fp, "Timestamp: %s %lu us\n", tstr, usecs);
-	return 0;
-}
-
 static int accept_msg(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg)
 {
@@ -74,14 +63,13 @@ static int accept_msg(const struct sockaddr_nl *who,
 			fprintf(fp, "[MDB]");
 		return print_mdb(who, n, arg);
 
-	case 15:
-		return show_mark(fp, n);
+	case NLMSG_TSTAMP:
+		print_nlmsg_timestamp(fp, n);
+		return 0;
 
 	default:
 		return 0;
 	}
-
-
 }
 
 int do_monitor(int argc, char **argv)

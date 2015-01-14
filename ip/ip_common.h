@@ -87,7 +87,6 @@ struct link_util
 
 struct link_util *get_link_kind(const char *kind);
 struct link_util *get_link_slave_kind(const char *slave_kind);
-int get_netns_fd(const char *name);
 
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
