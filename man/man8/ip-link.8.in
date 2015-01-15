@@ -276,6 +276,8 @@ the following additional arguments are supported:
 .BI ageing " SECONDS "
 .R " ] [ "
 .BI maxaddress " NUMBER "
+.R " ] [ "
+.B gbp
 .R " ]"
 
 .in +8
@@ -347,6 +349,49 @@ are entered into the VXLAN device forwarding database.
 .sp
 .BI maxaddress " NUMBER"
 - specifies the maximum number of FDB entries.
+
+.sp
+.B gbp
+- enables the Group Policy extension (VXLAN-GBP).
+
+.in +4
+Allows to transport group policy context across VXLAN network peers.
+If enabled, includes the mark of a packet in the VXLAN header for outgoing
+packets and fills the packet mark based on the information found in the
+VXLAN header for incomming packets.
+
+Format of upper 16 bits of packet mark (flags);
+
+.in +2
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+.br
+|-|-|-|-|-|-|-|-|-|D|-|-|A|-|-|-|
+.br
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+.B D :=
+Don't Learn bit. When set, this bit indicates that the egress
+VTEP MUST NOT learn the source address of the encapsulated frame.
+
+.B A :=
+Indicates that the group policy has already been applied to
+this packet. Policies MUST NOT be applied by devices when the A bit is set.
+.in -2
+
+Format of lower 16 bits of packet mark (policy ID):
+
+.in +2
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+.br
+|        Group Policy ID        |
+.br
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+.in -2
+
+Example:
+  iptables -A OUTPUT [...] -j MARK --set-mark 0x800FF
+
+.in -4
 
 .in -8
 
