@@ -30,7 +30,7 @@
 #endif
 
 #ifndef HAVE_SETNS
-static int setns(int fd, int nstype)
+static inline int setns(int fd, int nstype)
 {
 #ifdef __NR_setns
 	return syscall(__NR_setns, fd, nstype);
