@@ -3,6 +3,7 @@
 
 #include <sched.h>
 #include <sys/mount.h>
+#include <sys/syscall.h>
 #include <errno.h>
 
 #define NETNS_RUN_DIR "/var/run/netns"
