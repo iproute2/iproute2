@@ -36,6 +36,7 @@ char * _SL_ = NULL;
 int force = 0;
 int max_flush_loops = 10;
 int batch_mode = 0;
+bool do_all = false;
 
 struct rtnl_handle rth = { .fd = -1 };
 
@@ -55,7 +56,7 @@ static void usage(void)
 "                    -4 | -6 | -I | -D | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
 "                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
-"                    -rc[vbuf] [size] | -n[etns] name }\n");
+"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] }\n");
 	exit(-1);
 }
 
@@ -270,6 +271,8 @@ int main(int argc, char **argv)
 			NEXT_ARG();
 			if (netns_switch(argv[1]))
 				exit(-1);
+		} else if (matches(opt, "-all") == 0) {
+			do_all = true;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"ip -help\".\n", opt);
 			exit(-1);

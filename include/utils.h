@@ -24,6 +24,7 @@ extern int timestamp_short;
 extern char * _SL_;
 extern int max_flush_loops;
 extern int batch_mode;
+extern bool do_all;
 
 #ifndef IPPROTO_ESP
 #define IPPROTO_ESP	50

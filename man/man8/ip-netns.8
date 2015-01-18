@@ -28,8 +28,8 @@ ip-netns \- process network namespace management
 .I NETNSNAME
 
 .ti -8
-.BR "ip netns exec "
-.I NETNSNAME command ...
+.BR "ip [-all] netns exec "
+.RI "[ " NETNSNAME " ] " command ...
 
 .ti -8
 .BR "ip netns monitor"
@@ -98,7 +98,7 @@ This command walks through proc and finds all of the process who have
 the named network namespace as their primary network namespace.
 
 .TP
-.B ip netns exec NAME cmd ... - Run cmd in the named network namespace
+.B ip [-all] netns exec [ NAME ] cmd ... - Run cmd in the named network namespace
 .sp
 This command allows applications that are network namespace unaware
 to be run in something other than the default network namespace with
@@ -106,6 +106,16 @@ all of the configuration for the specified network namespace appearing
 in the customary global locations.  A network namespace and bind mounts
 are used to move files from their network namespace specific location
 to their default locations without affecting other processes.
+
+If
+.B -all
+option was specified then
+.B cmd
+will be executed synchronously on the each named network namespace even if
+.B cmd
+fails on some of them. Network namespace name is printed on each
+.B cmd
+executing.
 
 .TP
 .B ip netns monitor - Report as network namespace names are added and deleted
