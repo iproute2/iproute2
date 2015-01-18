@@ -44,5 +44,11 @@ static inline int setns(int fd, int nstype)
 
 extern int netns_switch(char *netns);
 extern int netns_get_fd(const char *netns);
+extern int netns_foreach(int (*func)(char *nsname, void *arg), void *arg);
+
+struct netns_func {
+	int (*func)(char *nsname, void *arg);
+	void *arg;
+};
 
 #endif /* __NAMESPACE_H__ */
