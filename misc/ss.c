@@ -1613,8 +1613,24 @@ static char *sprint_bw(char *buf, double bw)
 static void print_skmeminfo(struct rtattr *tb[], int attrtype)
 {
 	const __u32 *skmeminfo;
-	if (!tb[attrtype])
+
+	if (!tb[attrtype]) {
+		if (attrtype == INET_DIAG_SKMEMINFO) {
+			if (!tb[INET_DIAG_MEMINFO])
+				return;
+
+			const struct inet_diag_meminfo *minfo =
+				RTA_DATA(tb[INET_DIAG_MEMINFO]);
+
+			printf(" mem:(r%u,w%u,f%u,t%u)",
+					minfo->idiag_rmem,
+					minfo->idiag_wmem,
+					minfo->idiag_fmem,
+					minfo->idiag_tmem);
+		}
 		return;
+	}
+
 	skmeminfo = RTA_DATA(tb[attrtype]);
 
 	printf(" skmem:(r%u,rb%u,t%u,tb%u,f%u,w%u,o%u",
@@ -1639,17 +1655,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 	char b1[64];
 	double rtt = 0;
 
-	if (tb[INET_DIAG_SKMEMINFO]) {
-		print_skmeminfo(tb, INET_DIAG_SKMEMINFO);
-	} else if (tb[INET_DIAG_MEMINFO]) {
-		const struct inet_diag_meminfo *minfo
-			= RTA_DATA(tb[INET_DIAG_MEMINFO]);
-		printf(" mem:(r%u,w%u,f%u,t%u)",
-		       minfo->idiag_rmem,
-		       minfo->idiag_wmem,
-		       minfo->idiag_fmem,
-		       minfo->idiag_tmem);
-	}
+	print_skmeminfo(tb, INET_DIAG_SKMEMINFO);
 
 	if (tb[INET_DIAG_INFO]) {
 		struct tcp_info *info;
