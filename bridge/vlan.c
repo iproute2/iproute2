@@ -182,7 +182,12 @@ static int print_vlan(const struct sockaddr_nl *who,
 				continue;
 
 			vinfo = RTA_DATA(i);
-			fprintf(fp, "\t %hu", vinfo->vid);
+			if (vinfo->flags & BRIDGE_VLAN_INFO_RANGE_END)
+				fprintf(fp, "-%hu", vinfo->vid);
+			else
+				fprintf(fp, "\t %hu", vinfo->vid);
+			if (vinfo->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN)
+				continue;
 			if (vinfo->flags & BRIDGE_VLAN_INFO_PVID)
 				fprintf(fp, " PVID");
 			if (vinfo->flags & BRIDGE_VLAN_INFO_UNTAGGED)
@@ -218,7 +223,9 @@ static int vlan_show(int argc, char **argv)
 	}
 
 	if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
-				     RTEXT_FILTER_BRVLAN) < 0) {
+				    (compress_vlans ?
+				    RTEXT_FILTER_BRVLAN_COMPRESSED :
+				    RTEXT_FILTER_BRVLAN)) < 0) {
 		perror("Cannont send dump request");
 		exit(1);
 	}
