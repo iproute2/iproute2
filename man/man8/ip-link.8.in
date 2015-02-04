@@ -221,13 +221,13 @@ Link types:
 - Virtual tunnel interface GRE over IPv4
 .sp
 .BR gretap
-- Virtual L2 tuunel interface GRE over IPv4
+- Virtual L2 tunnel interface GRE over IPv4
 .sp
 .BR ip6gre
-- Virtual tuunel interface GRE over IPv6
+- Virtual tunnel interface GRE over IPv6
 .sp
 .BR ip6gretap
-- Virtual L2 tuunel interface GRE over IPv6
+- Virtual L2 tunnel interface GRE over IPv6
 .in -8
 
 .TP
