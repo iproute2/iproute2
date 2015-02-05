@@ -23,10 +23,10 @@ static int usage(void)
 {
 	fprintf(stderr, "Usage: ip netns list\n");
 	fprintf(stderr, "       ip netns add NAME\n");
-	fprintf(stderr, "       ip netns delete NAME\n");
+	fprintf(stderr, "       ip [-all] netns delete [NAME]\n");
 	fprintf(stderr, "       ip netns identify [PID]\n");
 	fprintf(stderr, "       ip netns pids NAME\n");
-	fprintf(stderr, "       ip netns exec NAME cmd ...\n");
+	fprintf(stderr, "       ip [-all] netns exec [NAME] cmd ...\n");
 	fprintf(stderr, "       ip netns monitor\n");
 	exit(-1);
 }
@@ -51,29 +51,10 @@ static int netns_list(int argc, char **argv)
 	return 0;
 }
 
-static int netns_exec(int argc, char **argv)
+static int cmd_exec(const char *cmd, char **argv, bool do_fork)
 {
-	/* Setup the proper environment for apps that are not netns
-	 * aware, and execute a program in that environment.
-	 */
-	const char *cmd;
-
-	if (argc < 1) {
-		fprintf(stderr, "No netns name specified\n");
-		return -1;
-	}
-	if (argc < 2) {
-		fprintf(stderr, "No command specified\n");
-		return -1;
-	}
-	cmd = argv[1];
-
-	if (netns_switch(argv[0]))
-		return -1;
-
 	fflush(stdout);
-
-	if (batch_mode) {
+	if (do_fork) {
 		int status;
 		pid_t pid;
 
@@ -91,21 +72,54 @@ static int netns_exec(int argc, char **argv)
 			}
 
 			if (WIFEXITED(status)) {
-				/* ip must return the status of the child,
-				 * but do_cmd() will add a minus to this,
-				 * so let's add another one here to cancel it.
-				 */
-				return -WEXITSTATUS(status);
+				return WEXITSTATUS(status);
 			}
 
 			exit(1);
 		}
 	}
 
-	if (execvp(cmd, argv + 1)  < 0)
+	if (execvp(cmd, argv)  < 0)
 		fprintf(stderr, "exec of \"%s\" failed: %s\n",
-			cmd, strerror(errno));
+				cmd, strerror(errno));
 	_exit(1);
+}
+
+static int on_netns_exec(char *nsname, void *arg)
+{
+	char **argv = arg;
+	cmd_exec(argv[1], argv + 1, true);
+	return 0;
+}
+
+static int netns_exec(int argc, char **argv)
+{
+	/* Setup the proper environment for apps that are not netns
+	 * aware, and execute a program in that environment.
+	 */
+	const char *cmd;
+
+	if (argc < 1 && !do_all) {
+		fprintf(stderr, "No netns name specified\n");
+		return -1;
+	}
+	if ((argc < 2 && !do_all) || (argc < 1 && do_all)) {
+		fprintf(stderr, "No command specified\n");
+		return -1;
+	}
+
+	if (do_all)
+		return do_each_netns(on_netns_exec, --argv, 1);
+
+	if (netns_switch(argv[0]))
+		return -1;
+
+	/* ip must return the status of the child,
+	 * but do_cmd() will add a minus to this,
+	 * so let's add another one here to cancel it.
+	 */
+	cmd = argv[1];
+	return -cmd_exec(cmd, argv + 1, !!batch_mode);
 }
 
 static int is_pid(const char *str)
@@ -245,18 +259,11 @@ static int netns_identify(int argc, char **argv)
 
 }
 
-static int netns_delete(int argc, char **argv)
+static int on_netns_del(char *nsname, void *arg)
 {
-	const char *name;
 	char netns_path[MAXPATHLEN];
 
-	if (argc < 1) {
-		fprintf(stderr, "No netns name specified\n");
-		return -1;
-	}
-
-	name = argv[0];
-	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
+	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, nsname);
 	umount2(netns_path, MNT_DETACH);
 	if (unlink(netns_path) < 0) {
 		fprintf(stderr, "Cannot remove namespace file \"%s\": %s\n",
@@ -264,6 +271,19 @@ static int netns_delete(int argc, char **argv)
 		return -1;
 	}
 	return 0;
+}
+
+static int netns_delete(int argc, char **argv)
+{
+	if (argc < 1 && !do_all) {
+		fprintf(stderr, "No netns name specified\n");
+		return -1;
+	}
+
+	if (do_all)
+		return netns_foreach(on_netns_del, NULL);
+
+	return on_netns_del(argv[0], NULL);
 }
 
 static int create_netns_dir(void)

@@ -32,7 +32,8 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 \fB\-f\fR[\fIamily\fR] {
 .BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
 \fB\-o\fR[\fIneline\fR] |
-\fB\-n\fR[\fIetns\fR] name }
+\fB\-n\fR[\fIetns\fR] name |
+\fB\-a\fR[\fIll\fR] }
 
 
 .SH OPTIONS
@@ -154,6 +155,10 @@ to
 .B ip
 .RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
 .BR help " }"
+
+.TP
+.BR "\-a" , " \-all"
+executes specified command over all objects, it depends if command supports this option.
 
 .SH IP - COMMAND SYNTAX
 

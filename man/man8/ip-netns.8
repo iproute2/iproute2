@@ -16,8 +16,12 @@ ip-netns \- process network namespace management
 .BR "ip netns" " { " list " } "
 
 .ti -8
-.BR "ip netns" " { " add " | " delete " } "
+.B ip netns add
 .I NETNSNAME
+
+.ti -8
+.B ip [-all] netns del
+.RI "[ " NETNSNAME " ]"
 
 .ti -8
 .BR "ip netns identify"
@@ -28,8 +32,8 @@ ip-netns \- process network namespace management
 .I NETNSNAME
 
 .ti -8
-.BR "ip netns exec "
-.I NETNSNAME command ...
+.BR "ip [-all] netns exec "
+.RI "[ " NETNSNAME " ] " command ...
 
 .ti -8
 .BR "ip netns monitor"
@@ -76,13 +80,17 @@ If NAME is available in /var/run/netns/ this command creates a new
 network namespace and assigns NAME.
 
 .TP
-.B ip netns delete NAME - delete the name of a network namespace
+.B ip [-all] netns delete [ NAME ] - delete the name of a network namespace(s)
 .sp
 If NAME is present in /var/run/netns it is umounted and the mount
 point is removed.  If this is the last user of the network namespace the
 network namespace will be freed, otherwise the network namespace
 persists until it has no more users.  ip netns delete may fail if
 the mount point is in use in another mount namespace.
+
+If
+.B -all
+option was specified then all the network namespace names will be removed.
 
 .TP
 .B ip netns identify [PID] - Report network namespaces names for process
@@ -98,7 +106,7 @@ This command walks through proc and finds all of the process who have
 the named network namespace as their primary network namespace.
 
 .TP
-.B ip netns exec NAME cmd ... - Run cmd in the named network namespace
+.B ip [-all] netns exec [ NAME ] cmd ... - Run cmd in the named network namespace
 .sp
 This command allows applications that are network namespace unaware
 to be run in something other than the default network namespace with
@@ -106,6 +114,16 @@ all of the configuration for the specified network namespace appearing
 in the customary global locations.  A network namespace and bind mounts
 are used to move files from their network namespace specific location
 to their default locations without affecting other processes.
+
+If
+.B -all
+option was specified then
+.B cmd
+will be executed synchronously on the each named network namespace even if
+.B cmd
+fails on some of them. Network namespace name is printed on each
+.B cmd
+executing.
 
 .TP
 .B ip netns monitor - Report as network namespace names are added and deleted

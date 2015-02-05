@@ -99,3 +99,25 @@ int netns_get_fd(const char *name)
 	}
 	return open(path, O_RDONLY);
 }
+
+int netns_foreach(int (*func)(char *nsname, void *arg), void *arg)
+{
+	DIR *dir;
+	struct dirent *entry;
+
+	dir = opendir(NETNS_RUN_DIR);
+	if (!dir)
+		return -1;
+
+	while ((entry = readdir(dir)) != NULL) {
+		if (strcmp(entry->d_name, ".") == 0)
+			continue;
+		if (strcmp(entry->d_name, "..") == 0)
+			continue;
+		if (func(entry->d_name, arg))
+			break;
+	}
+
+	closedir(dir);
+	return 0;
+}
