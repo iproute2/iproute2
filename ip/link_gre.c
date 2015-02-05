@@ -31,7 +31,7 @@ static void print_usage(FILE *f)
 	fprintf(f, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
 	fprintf(f, "          [ noencap ] [ encap { fou | gue | none } ]\n");
 	fprintf(f, "          [ encap-sport PORT ] [ encap-dport PORT ]\n");
-	fprintf(f, "          [ [no]encap-csum ] [ [no]encap-csum6 ]\n");
+	fprintf(f, "          [ [no]encap-csum ] [ [no]encap-csum6 ] [ [no]encap-remcsum ]\n");
 	fprintf(f, "\n");
 	fprintf(f, "Where: NAME := STRING\n");
 	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
@@ -287,6 +287,10 @@ get_failed:
 			encapflags |= TUNNEL_ENCAP_FLAG_CSUM6;
 		} else if (strcmp(*argv, "noencap-udp6-csum") == 0) {
 			encapflags |= ~TUNNEL_ENCAP_FLAG_CSUM6;
+		} else if (strcmp(*argv, "encap-remcsum") == 0) {
+			encapflags |= TUNNEL_ENCAP_FLAG_REMCSUM;
+		} else if (strcmp(*argv, "noencap-remcsum") == 0) {
+			encapflags |= ~TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else
 			usage();
 		argc--; argv++;
@@ -445,6 +449,11 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			fputs("encap-csum6 ", f);
 		else
 			fputs("noencap-csum6 ", f);
+
+		if (flags & TUNNEL_ENCAP_FLAG_REMCSUM)
+			fputs("encap-remcsum ", f);
+		else
+			fputs("noencap-remcsum ", f);
 	}
 }
 
