@@ -31,12 +31,13 @@ listtests:
 alltests: $(TESTS)
 
 clean:
+	@echo "Removing $(RESULTS_DIR) dir ..."
 	@rm -rf $(RESULTS_DIR)
 
 distclean: clean
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) distclean && cd ..;
 
-$(TESTS):
+$(TESTS): clean
 	@mkdir -p $(RESULTS_DIR)
 	
 	@for d in $(TESTS_DIR); do \
