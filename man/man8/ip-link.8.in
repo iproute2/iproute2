@@ -396,6 +396,63 @@ Example:
 .in -8
 
 .TP
+GRE, IPIP, SIT Type Support
+For a link of types
+.I GRE/IPIP/SIT
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BR type " { gre | ipip | sit } "
+.BI " remote " ADDR " local " ADDR
+.R " [ "
+.BR encap " { fou | gue | none } "
+.R " ] [ "
+.BI "encap-sport { " PORT " | auto } "
+.R " ] [ "
+.BI "encap-dport " PORT
+.R " ] [ "
+.I " [no]encap-csum "
+.R " ] [ "
+.I " [no]encap-remcsum "
+.R " ]"
+
+.in +8
+.sp
+.BI  remote " ADDR "
+- specifies the remote address of the tunnel.
+
+.sp
+.BI  local " ADDR "
+- specifies the fixed local address for tunneled packets.
+It must be an address on another interface on this host.
+
+.sp
+.BR encap " { fou | gue | none } "
+- specifies type of secondary UDP encapsulation. "fou" indicates
+Foo-Over-UDP, "gue" indicates Generic UDP Encapsulation.
+
+.sp
+.BI "encap-sport { " PORT " | auto } "
+- specifies the source port in UDP encapsulation.
+.IR PORT
+indicates the port by number, "auto"
+indicates that the port number should be chosen automatically
+(the kernel picks a flow based on the flow hash of the
+encapsulated packet).
+
+.sp
+.I [no]encap-csum
+- specifies if UDP checksums are enabled in the secondary
+encapsulation.
+
+.sp
+.I [no]encap-remcsum
+- specifies if Remote Checksum Offload is enabled. This is only
+applicable for Generic UDP Encapsulation.
+
+.in -8
+
+.TP
 IP6GRE/IP6GRETAP Type Support
 For a link of type
 .I IP6GRE/IP6GRETAP
@@ -431,7 +488,7 @@ the following additional arguments are supported:
 .sp
 .BI  local " ADDR "
 - specifies the fixed local IPv6 address for tunneled packets.
-It must be and address on another interface on this host.
+It must be an address on another interface on this host.
 
 .sp
 .BI  [i|o]seq
@@ -807,6 +864,15 @@ Removes vlan device.
 ip link help gre
 .RS 4
 Display help for the gre link type.
+.RE
+.PP
+ip link add name tun1 type ipip remote 192.168.1.1
+local 192.168.1.2 ttl 225 encap gue encap-sport auto
+encap-dport 5555 encap-csum encap-remcsum
+.RS 4
+Creates an IPIP that is encapsulated with Generic UDP Encapsulation,
+and the outer UDP checksum and remote checksum offload are enabled.
+
 .RE
 
 .SH SEE ALSO
