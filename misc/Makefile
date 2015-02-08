@@ -10,6 +10,10 @@ ifeq ($(HAVE_SELINUX),y)
 	CFLAGS += $(shell pkg-config --cflags libselinux) -DHAVE_SELINUX
 endif
 
+ifeq ($(IP_CONFIG_SETNS),y)
+	CFLAGS += -DHAVE_SETNS
+endif
+
 all: $(TARGETS)
 
 ss: $(SSOBJ)

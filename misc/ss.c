@@ -31,6 +31,7 @@
 #include "rt_names.h"
 #include "ll_map.h"
 #include "libnetlink.h"
+#include "namespace.h"
 #include "SNAPSHOT.h"
 
 #include <linux/tcp.h>
@@ -3246,6 +3247,7 @@ static void _usage(FILE *dest)
 "   -b, --bpf           show bpf filter socket information\n"
 "   -Z, --context       display process SELinux security contexts\n"
 "   -z, --contexts      display process and socket SELinux security contexts\n"
+"   -N, --net           switch to the specified network namespace name\n"
 "\n"
 "   -4, --ipv4          display only IP version 4 sockets\n"
 "   -6, --ipv6          display only IP version 6 sockets\n"
@@ -3345,6 +3347,7 @@ static const struct option long_opts[] = {
 	{ "help", 0, 0, 'h' },
 	{ "context", 0, 0, 'Z' },
 	{ "contexts", 0, 0, 'z' },
+	{ "net", 1, 0, 'N' },
 	{ 0 }
 
 };
@@ -3360,7 +3363,7 @@ int main(int argc, char *argv[])
 	struct filter dbs_filter = {};
 	int state_filter = 0;
 
-	while ((ch = getopt_long(argc, argv, "dhaletuwxnro460spbf:miA:D:F:vVzZ",
+	while ((ch = getopt_long(argc, argv, "dhaletuwxnro460spbf:miA:D:F:vVzZN:",
 				 long_opts, NULL)) != EOF) {
 		switch(ch) {
 		case 'n':
@@ -3531,6 +3534,10 @@ int main(int argc, char *argv[])
 			}
 			show_proc_ctx++;
 			user_ent_hash_build();
+			break;
+		case 'N':
+			if (netns_switch(optarg))
+				exit(1);
 			break;
 		case 'h':
 		case '?':
