@@ -116,7 +116,9 @@ replace " } "
 .B  features
 .IR FEATURES " ] [ "
 .B  quickack
-.IR BOOL " ]"
+.IR BOOL " ] [ "
+.B  congctl
+.IR NAME " ]"
 
 .ti -8
 .IR TYPE " := [ "
@@ -431,6 +433,21 @@ sysctl is set to 0.
 .TP
 .BI quickack " BOOL " "(3.11+ only)"
 Enable or disable quick ack for connections to this destination.
+
+.TP
+.BI congctl " NAME " "(3.20+ only)"
+.TP
+.BI "congctl lock" " NAME " "(3.20+ only)"
+Sets a specific TCP congestion control algorithm only for a given destination.
+If not specified, Linux keeps the current global default TCP congestion control
+algorithm, or the one set from the application. If the modifier
+.B lock
+is not used, an application may nevertheless overwrite the suggested congestion
+control algorithm for that destination. If the modifier
+.B lock
+is used, then an application is not allowed to overwrite the specified congestion
+control algorithm for that destination, thus it will be enforced/guaranteed to
+use the proposed algorithm.
 
 .TP
 .BI advmss " NUMBER " "(2.3.15+ only)"
