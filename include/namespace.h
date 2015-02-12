@@ -3,6 +3,7 @@
 
 #include <sched.h>
 #include <sys/mount.h>
+#include <sys/syscall.h>
 #include <errno.h>
 
 #define NETNS_RUN_DIR "/var/run/netns"
@@ -30,7 +31,7 @@
 #endif
 
 #ifndef HAVE_SETNS
-static int setns(int fd, int nstype)
+static inline int setns(int fd, int nstype)
 {
 #ifdef __NR_setns
 	return syscall(__NR_setns, fd, nstype);
@@ -43,5 +44,11 @@ static int setns(int fd, int nstype)
 
 extern int netns_switch(char *netns);
 extern int netns_get_fd(const char *netns);
+extern int netns_foreach(int (*func)(char *nsname, void *arg), void *arg);
+
+struct netns_func {
+	int (*func)(char *nsname, void *arg);
+	void *arg;
+};
 
 #endif /* __NAMESPACE_H__ */

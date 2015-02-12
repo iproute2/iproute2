@@ -970,7 +970,8 @@ struct nlmsg_chain
 	struct nlmsg_list *tail;
 };
 
-static int print_selected_addrinfo(int ifindex, struct nlmsg_list *ainfo, FILE *fp)
+static int print_selected_addrinfo(struct ifinfomsg *ifi,
+				   struct nlmsg_list *ainfo, FILE *fp)
 {
 	for ( ;ainfo ;  ainfo = ainfo->next) {
 		struct nlmsghdr *n = &ainfo->h;
@@ -982,8 +983,11 @@ static int print_selected_addrinfo(int ifindex, struct nlmsg_list *ainfo, FILE *
 		if (n->nlmsg_len < NLMSG_LENGTH(sizeof(ifa)))
 			return -1;
 
-		if (ifa->ifa_index != ifindex ||
+		if (ifa->ifa_index != ifi->ifi_index ||
 		    (filter.family && filter.family != ifa->ifa_family))
+			continue;
+
+		if (filter.up && !(ifi->ifi_flags&IFF_UP))
 			continue;
 
 		print_addrinfo(NULL, n, fp);
@@ -1446,7 +1450,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		if (no_link || (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
 			struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 			if (filter.family != AF_PACKET)
-				print_selected_addrinfo(ifi->ifi_index,
+				print_selected_addrinfo(ifi,
 							ainfo.head, stdout);
 			if (res > 0 && !do_link && show_stats)
 				print_link_stats(stdout, &l->h);

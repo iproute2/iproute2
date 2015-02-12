@@ -16,4 +16,5 @@ extern int preferred_family;
 extern int show_stats;
 extern int show_details;
 extern int timestamp;
+extern int compress_vlans;
 extern struct rtnl_handle rth;

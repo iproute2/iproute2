@@ -32,6 +32,7 @@ static int vlan_modify(int cmd, int argc, char **argv)
 	} req;
 	char *d = NULL;
 	short vid = -1;
+	short vid_end = -1;
 	struct rtattr *afspec;
 	struct bridge_vlan_info vinfo;
 	unsigned short flags = 0;
@@ -49,8 +50,18 @@ static int vlan_modify(int cmd, int argc, char **argv)
 			NEXT_ARG();
 			d = *argv;
 		} else if (strcmp(*argv, "vid") == 0) {
+			char *p;
 			NEXT_ARG();
-			vid = atoi(*argv);
+			p = strchr(*argv, '-');
+			if (p) {
+				*p = '\0';
+				p++;
+				vid = atoi(*argv);
+				vid_end = atoi(p);
+				vinfo.flags |= BRIDGE_VLAN_INFO_RANGE_BEGIN;
+			} else {
+				vid = atoi(*argv);
+			}
 		} else if (strcmp(*argv, "self") == 0) {
 			flags |= BRIDGE_FLAGS_SELF;
 		} else if (strcmp(*argv, "master") == 0) {
@@ -83,15 +94,40 @@ static int vlan_modify(int cmd, int argc, char **argv)
 		return -1;
 	}
 
-	vinfo.vid = vid;
+	if (vinfo.flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) {
+		if (vid_end == -1 || vid_end >= 4096 || vid >= vid_end) {
+			fprintf(stderr, "Invalid VLAN range \"%hu-%hu\"\n",
+				vid, vid_end);
+			return -1;
+		}
+		if (vinfo.flags & BRIDGE_VLAN_INFO_PVID) {
+			fprintf(stderr,
+				"pvid cannot be configured for a vlan range\n");
+			return -1;
+		}
+	}
 
 	afspec = addattr_nest(&req.n, sizeof(req), IFLA_AF_SPEC);
 
 	if (flags)
 		addattr16(&req.n, sizeof(req), IFLA_BRIDGE_FLAGS, flags);
 
-	addattr_l(&req.n, sizeof(req), IFLA_BRIDGE_VLAN_INFO, &vinfo,
-		  sizeof(vinfo));
+	vinfo.vid = vid;
+	if (vid_end != -1) {
+		/* send vlan range start */
+		addattr_l(&req.n, sizeof(req), IFLA_BRIDGE_VLAN_INFO, &vinfo,
+			  sizeof(vinfo));
+		vinfo.flags &= ~BRIDGE_VLAN_INFO_RANGE_BEGIN;
+
+		/* Now send the vlan range end */
+		vinfo.flags |= BRIDGE_VLAN_INFO_RANGE_END;
+		vinfo.vid = vid_end;
+		addattr_l(&req.n, sizeof(req), IFLA_BRIDGE_VLAN_INFO, &vinfo,
+			  sizeof(vinfo));
+	} else {
+		addattr_l(&req.n, sizeof(req), IFLA_BRIDGE_VLAN_INFO, &vinfo,
+			  sizeof(vinfo));
+	}
 
 	addattr_nest_end(&req.n, afspec);
 
@@ -146,7 +182,12 @@ static int print_vlan(const struct sockaddr_nl *who,
 				continue;
 
 			vinfo = RTA_DATA(i);
-			fprintf(fp, "\t %hu", vinfo->vid);
+			if (vinfo->flags & BRIDGE_VLAN_INFO_RANGE_END)
+				fprintf(fp, "-%hu", vinfo->vid);
+			else
+				fprintf(fp, "\t %hu", vinfo->vid);
+			if (vinfo->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN)
+				continue;
 			if (vinfo->flags & BRIDGE_VLAN_INFO_PVID)
 				fprintf(fp, " PVID");
 			if (vinfo->flags & BRIDGE_VLAN_INFO_UNTAGGED)
@@ -182,7 +223,9 @@ static int vlan_show(int argc, char **argv)
 	}
 
 	if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
-				     RTEXT_FILTER_BRVLAN) < 0) {
+				    (compress_vlans ?
+				    RTEXT_FILTER_BRVLAN_COMPRESSED :
+				    RTEXT_FILTER_BRVLAN)) < 0) {
 		perror("Cannont send dump request");
 		exit(1);
 	}

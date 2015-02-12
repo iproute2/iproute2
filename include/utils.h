@@ -5,6 +5,7 @@
 #include <asm/types.h>
 #include <resolv.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "libnetlink.h"
 #include "ll_map.h"
@@ -23,6 +24,7 @@ extern int timestamp_short;
 extern char * _SL_;
 extern int max_flush_loops;
 extern int batch_mode;
+extern bool do_all;
 
 #ifndef IPPROTO_ESP
 #define IPPROTO_ESP	50
@@ -161,5 +163,8 @@ struct iplink_req;
 int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		char **name, char **type, char **link, char **dev,
 		int *group, int *index);
+
+extern int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
+		bool show_label);
 
 #endif /* __UTILS_H__ */

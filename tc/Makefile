@@ -1,5 +1,5 @@
 TCOBJ= tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o \
-       tc_monitor.o m_police.o m_estimator.o m_action.o \
+       tc_monitor.o tc_bpf.o m_police.o m_estimator.o m_action.o \
        m_ematch.o emp_ematch.yacc.o emp_ematch.lex.o
 
 include ../Config
@@ -46,6 +46,7 @@ TCMODULES += m_skbedit.o
 TCMODULES += m_csum.o
 TCMODULES += m_simple.o
 TCMODULES += m_vlan.o
+TCMODULES += m_bpf.o
 TCMODULES += p_ip.o
 TCMODULES += p_icmp.o
 TCMODULES += p_tcp.o

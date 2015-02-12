@@ -30,6 +30,7 @@ static void print_explain(FILE *f)
 	fprintf(f, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
 	fprintf(f, "                 [ ageing SECONDS ] [ maxaddress NUMBER ]\n");
 	fprintf(f, "                 [ [no]udpcsum ] [ [no]udp6zerocsumtx ] [ [no]udp6zerocsumrx ]\n");
+	fprintf(f, "                 [ gbp ]\n");
 	fprintf(f, "\n");
 	fprintf(f, "Where: VNI := 0-16777215\n");
 	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
@@ -68,6 +69,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 udpcsum = 0;
 	__u8 udp6zerocsumtx = 0;
 	__u8 udp6zerocsumrx = 0;
+	__u8 gbp = 0;
 	int dst_port_set = 0;
 	struct ifla_vxlan_port_range range = { 0, 0 };
 
@@ -197,6 +199,8 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			udp6zerocsumrx = 1;
 		} else if (!matches(*argv, "noudp6zerocsumrx")) {
 			udp6zerocsumrx = 0;
+		} else if (!matches(*argv, "gbp")) {
+			gbp = 1;
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -267,6 +271,10 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			  &range, sizeof(range));
 	if (dstport)
 		addattr16(n, 1024, IFLA_VXLAN_PORT, htons(dstport));
+
+	if (gbp)
+		addattr_l(n, 1024, IFLA_VXLAN_GBP, NULL, 0);
+
 
 	return 0;
 }
@@ -398,6 +406,9 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX] &&
 	    rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]))
 		fputs("udp6zerocsumrx ", f);
+
+	if (tb[IFLA_VXLAN_GBP])
+		fputs("gbp ", f);
 }
 
 static void vxlan_print_help(struct link_util *lu, int argc, char **argv,
