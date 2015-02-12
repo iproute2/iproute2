@@ -618,7 +618,7 @@ struct slabstat
 	int skbs;
 };
 
-struct slabstat slabstat;
+static struct slabstat slabstat;
 
 static const char *slabstat_ids[] =
 {
@@ -634,6 +634,10 @@ static int get_slabstat(struct slabstat *s)
 	char buf[256];
 	FILE *fp;
 	int cnt;
+	static int slabstat_valid;
+
+	if (slabstat_valid)
+		return 0;
 
 	memset(s, 0, sizeof(*s));
 
@@ -656,6 +660,8 @@ static int get_slabstat(struct slabstat *s)
 		if (cnt <= 0)
 			break;
 	}
+
+	slabstat_valid = 1;
 
 	fclose(fp);
 	return 0;
@@ -2297,6 +2303,8 @@ static int tcp_show(struct filter *f, int socktype)
 	 * it is able to give us some memory for snapshot.
 	 */
 	if (1) {
+		get_slabstat(&slabstat);
+
 		int guess = slabstat.socks+slabstat.tcp_syns;
 		if (f->states&(1<<SS_TIME_WAIT))
 			guess += slabstat.tcp_tws;
@@ -3234,6 +3242,8 @@ static int print_summary(void)
 	if (get_snmp_int("Tcp:", "CurrEstab", &sn.tcp_estab) < 0)
 		perror("ss: get_snmpstat");
 
+	get_slabstat(&slabstat);
+
 	printf("Total: %d (kernel %d)\n", s.socks, slabstat.socks);
 
 	printf("TCP:   %d (estab %d, closed %d, orphaned %d, synrecv %d, timewait %d/%d), ports %d\n",
@@ -3586,8 +3596,6 @@ int main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
-
-	get_slabstat(&slabstat);
 
 	if (do_summary) {
 		print_summary();
