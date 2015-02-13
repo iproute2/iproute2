@@ -906,3 +906,9 @@ int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
 
 	return netns_foreach(on_netns, &nsf);
 }
+
+char *int_to_str(int val, char *buf)
+{
+	sprintf(buf, "%d", val);
+	return buf;
+}

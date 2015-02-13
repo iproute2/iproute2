@@ -167,4 +167,6 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 extern int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
 		bool show_label);
 
+char *int_to_str(int val, char *buf);
+
 #endif /* __UTILS_H__ */
