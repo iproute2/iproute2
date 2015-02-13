@@ -766,6 +766,16 @@ struct tcpstat
 	struct dctcpstat    *dctcp;
 };
 
+static void sock_state_print(struct sockstat *s, const char *sock_name)
+{
+	if (netid_width)
+		printf("%-*s ", netid_width, sock_name);
+	if (state_width)
+		printf("%-*s ", state_width, sstate_name[s->state]);
+
+	printf("%-6d %-6d ", s->rq, s->wq);
+}
+
 static const char *tmr_name[] = {
 	"off",
 	"on",
@@ -1510,12 +1520,7 @@ static void inet_stats_print(struct sockstat *s, int protocol)
 {
 	char *buf = NULL;
 
-	if (netid_width)
-		printf("%-*s ", netid_width, proto_name(protocol));
-	if (state_width)
-		printf("%-*s ", state_width, sstate_name[s->state]);
-
-	printf("%-6d %-6d ", s->rq, s->wq);
+	sock_state_print(s, proto_name(protocol));
 
 	formatted_print(&s->local, s->lport, s->iface);
 	formatted_print(&s->remote, s->rport, 0);
@@ -2534,12 +2539,8 @@ static void unix_stats_print(struct sockstat *list, struct filter *f)
 				continue;
 		}
 
-		if (netid_width)
-			printf("%-*s ", netid_width,
-			       unix_netid_name(s->type));
-		if (state_width)
-			printf("%-*s ", state_width, sstate_name[s->state]);
-		printf("%-6d %-6d ", s->rq, s->wq);
+		sock_state_print(s, unix_netid_name(s->type));
+
 		printf("%*s %-*d %*s %-*d",
 		       addr_width, local ? : "*", serv_width,
 		       s->lport, addr_width, peer, serv_width, s->rport);
@@ -2749,21 +2750,13 @@ static int packet_stats_print(struct sockstat *s, const struct filter *f)
 	if (f->f) {
 		s->local.family = AF_PACKET;
 		s->remote.family = AF_PACKET;
-		s->rport = 0;
-		s->lport = s->iface;
 		s->local.data[0] = s->prot;
-		s->remote.data[0] = 0;
 		if (run_ssfilter(f->f, s) == 0)
 			return 1;
 	}
 
-	if (netid_width)
-		printf("%-*s ", netid_width,
-				s->type == SOCK_RAW ? "p_raw" : "p_dgr");
-	if (state_width)
-		printf("%-*s ", state_width, "UNCONN");
+	sock_state_print(s, s->type == SOCK_RAW ? "p_raw" : "p_dgr");
 
-	printf("%-6d %-6d ", s->rq, 0);
 	if (s->prot == 3) {
 		printf("%*s:", addr_width, "*");
 	} else {
@@ -2811,9 +2804,10 @@ static int packet_show_sock(const struct sockaddr_nl *addr,
 	if (!tb[PACKET_DIAG_MEMINFO])
 		return -1;
 
-	stat.type = r->pdiag_type;
-	stat.prot = r->pdiag_num;
-	stat.ino = r->pdiag_ino;
+	stat.type   = r->pdiag_type;
+	stat.prot   = r->pdiag_num;
+	stat.ino    = r->pdiag_ino;
+	stat.state  = SS_CLOSE;
 
 	if (tb[PACKET_DIAG_MEMINFO]) {
 		__u32 *skmeminfo = RTA_DATA(tb[PACKET_DIAG_MEMINFO]);
@@ -2822,7 +2816,7 @@ static int packet_show_sock(const struct sockaddr_nl *addr,
 
 	if (tb[PACKET_DIAG_INFO]) {
 		struct packet_diag_info *pinfo = RTA_DATA(tb[PACKET_DIAG_INFO]);
-		stat.iface = pinfo->pdi_index;
+		stat.lport = stat.iface = pinfo->pdi_index;
 	}
 
 	if (packet_stats_print(&stat, f))
@@ -2886,11 +2880,13 @@ static int packet_show_line(char *buf, const struct filter *f, int fam)
 
 	stat.type  = type;
 	stat.prot  = prot;
-	stat.iface = iface;
+	stat.lport = stat.iface = iface;
 	stat.state = state;
 	stat.rq    = rq;
 	stat.uid   = uid;
 	stat.ino   = ino;
+	stat.state = SS_CLOSE;
+
 	if (packet_stats_print(&stat, f))
 		return 0;
 
@@ -2926,25 +2922,24 @@ static void netlink_show_one(struct filter *f,
 				int rq, int wq,
 				unsigned long long sk, unsigned long long cb)
 {
+	struct sockstat st;
 	SPRINT_BUF(prot_name);
 
+	st.state = SS_CLOSE;
+	st.rq	 = rq;
+	st.wq	 = wq;
+
 	if (f->f) {
-		struct sockstat st;
 		st.local.family = AF_NETLINK;
 		st.remote.family = AF_NETLINK;
 		st.rport = -1;
 		st.lport = pid;
 		st.local.data[0] = prot;
-		st.remote.data[0] = 0;
 		if (run_ssfilter(f->f, &st) == 0)
 			return;
 	}
 
-	if (netid_width)
-		printf("%-*s ", netid_width, "nl");
-	if (state_width)
-		printf("%-*s ", state_width, "UNCONN");
-	printf("%-6d %-6d ", rq, wq);
+	sock_state_print(&st, "nl");
 
 	if (resolve_services) {
 		printf("%*s:", addr_width, nl_proto_n2a(prot, prot_name,
