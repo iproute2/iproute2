@@ -1906,7 +1906,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.backoff	 = info->tcpi_backoff;
 		s.rtt		 = (double)info->tcpi_rtt / 1000;
 		s.rttvar	 = (double)info->tcpi_rttvar / 1000;
-		s.ato		 = (double)info->tcpi_rttvar / 1000;
+		s.ato		 = (double)info->tcpi_ato / 1000;
 		s.mss		 = info->tcpi_snd_mss;
 		s.rcv_space	 = info->tcpi_rcv_space;
 		s.rcv_rtt	 = (double)info->tcpi_rcv_rtt / 1000;
