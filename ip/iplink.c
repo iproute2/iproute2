@@ -72,6 +72,7 @@ void iplink_usage(void)
 	fprintf(stderr, "	                  [ mtu MTU ]\n");
 	fprintf(stderr, "	                  [ netns PID ]\n");
 	fprintf(stderr, "	                  [ netns NAME ]\n");
+	fprintf(stderr, "                         [ link-netnsid ID ]\n");
 	fprintf(stderr, "			  [ alias NAME ]\n");
 	fprintf(stderr, "	                  [ vf NUM [ mac LLADDR ]\n");
 	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] ]\n");
@@ -386,6 +387,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	int numtxqueues = -1;
 	int numrxqueues = -1;
 	int dev_index = 0;
+	int link_netnsid = -1;
 
 	*group = -1;
 	ret = argc;
@@ -588,6 +590,14 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			addattr8(&req->n, sizeof(*req), IFLA_INET6_ADDR_GEN_MODE, mode);
 			addattr_nest_end(&req->n, afs6);
 			addattr_nest_end(&req->n, afs);
+		} else if (matches(*argv, "link-netnsid") == 0) {
+			NEXT_ARG();
+			if (link_netnsid != -1)
+				duparg("link-netnsid", *argv);
+			if (get_integer(&link_netnsid, *argv, 0))
+				invarg("Invalid \"link-netnsid\" value\n", *argv);
+			addattr32(&req->n, sizeof(*req), IFLA_LINK_NETNSID,
+				  link_netnsid);
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();

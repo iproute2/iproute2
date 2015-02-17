@@ -28,6 +28,7 @@
 #include <linux/netdevice.h>
 #include <linux/if_arp.h>
 #include <linux/sockios.h>
+#include <linux/net_namespace.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -614,9 +615,13 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		if (iflink == 0)
 			fprintf(fp, "@NONE: ");
 		else {
-			fprintf(fp, "@%s: ", ll_idx_n2a(iflink, b1));
-			m_flag = ll_index_to_flags(iflink);
-			m_flag = !(m_flag & IFF_UP);
+			if (tb[IFLA_LINK_NETNSID])
+				fprintf(fp, "@if%d: ", iflink);
+			else {
+				fprintf(fp, "@%s: ", ll_idx_n2a(iflink, b1));
+				m_flag = ll_index_to_flags(iflink);
+				m_flag = !(m_flag & IFF_UP);
+			}
 		}
 	} else {
 		fprintf(fp, ": ");
@@ -676,6 +681,15 @@ int print_linkinfo(const struct sockaddr_nl *who,
 						      ifi->ifi_type,
 						      b1, sizeof(b1)));
 		}
+	}
+
+	if (tb[IFLA_LINK_NETNSID]) {
+		int id = *(int*)RTA_DATA(tb[IFLA_LINK_NETNSID]);
+
+		if (id >= 0)
+			fprintf(fp, " link-netnsid %d", id);
+		else
+			fprintf(fp, " link-netnsid unknown");
 	}
 
 	if (tb[IFLA_PROMISCUITY] && show_details)
