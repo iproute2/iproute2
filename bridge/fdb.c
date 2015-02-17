@@ -131,12 +131,16 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (ifindex) {
 			char ifname[IF_NAMESIZE];
 
-			if (if_indextoname(ifindex, ifname))
+			if (!tb[NDA_LINK_NETNSID] &&
+			    if_indextoname(ifindex, ifname))
 				fprintf(fp, "via %s ", ifname);
 			else
 				fprintf(fp, "via ifindex %u ", ifindex);
 		}
 	}
+	if (tb[NDA_LINK_NETNSID])
+		fprintf(fp, "link-netnsid %d ",
+			rta_getattr_u32(tb[NDA_LINK_NETNSID]));
 
 	if (show_stats && tb[NDA_CACHEINFO]) {
 		struct nda_cacheinfo *ci = RTA_DATA(tb[NDA_CACHEINFO]);
