@@ -24,6 +24,10 @@ ip-netns \- process network namespace management
 .RI "[ " NETNSNAME " ]"
 
 .ti -8
+.BR "ip netns" " { " set " } "
+.I NETNSNAME NETNSID
+
+.ti -8
 .BR "ip netns identify"
 .RI "[ " PID " ]"
 
@@ -91,6 +95,16 @@ the mount point is in use in another mount namespace.
 If
 .B -all
 option was specified then all the network namespace names will be removed.
+
+.TP
+.B ip netns set NAME NETNSID - assign an id to a peer network namespace
+.sp
+This command assigns a id to a peer network namespace. This id is valid
+only in the current network namespace.
+This id will be used by the kernel in some netlink messages. If no id is
+assigned when the kernel needs it, it will be automatically assigned by
+the kernel.
+Once it is assigned, it's not possible to change it.
 
 .TP
 .B ip netns identify [PID] - Report network namespaces names for process

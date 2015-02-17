@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#include <linux/net_namespace.h>
+
 #include "utils.h"
 #include "ip_common.h"
 #include "namespace.h"
@@ -23,6 +25,7 @@ static int usage(void)
 {
 	fprintf(stderr, "Usage: ip netns list\n");
 	fprintf(stderr, "       ip netns add NAME\n");
+	fprintf(stderr, "       ip netns set NAME NETNSID\n");
 	fprintf(stderr, "       ip [-all] netns delete [NAME]\n");
 	fprintf(stderr, "       ip netns identify [PID]\n");
 	fprintf(stderr, "       ip netns pids NAME\n");
@@ -31,10 +34,56 @@ static int usage(void)
 	exit(-1);
 }
 
+static int get_netnsid_from_name(const char *name)
+{
+	struct {
+		struct nlmsghdr n;
+		struct rtgenmsg g;
+		char            buf[1024];
+	} req, answer;
+	struct rtattr *tb[NETNSA_MAX + 1];
+	struct rtgenmsg *rthdr;
+	int len, fd;
+
+	memset(&req, 0, sizeof(req));
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg));
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = RTM_GETNSID;
+	req.g.rtgen_family = AF_UNSPEC;
+
+	fd = netns_get_fd(name);
+	if (fd < 0)
+		return fd;
+
+	addattr32(&req.n, 1024, NETNSA_FD, fd);
+	if (rtnl_talk(&rth, &req.n, 0, 0, &answer.n) < 0) {
+		close(fd);
+		return -2;
+	}
+	close(fd);
+
+	/* Validate message and parse attributes */
+	if (answer.n.nlmsg_type == NLMSG_ERROR)
+		return -1;
+
+	rthdr = NLMSG_DATA(&answer.n);
+	len = answer.n.nlmsg_len - NLMSG_SPACE(sizeof(*rthdr));
+	if (len < 0)
+		return -1;
+
+	parse_rtattr(tb, NETNSA_MAX, NETNS_RTA(rthdr), len);
+
+	if (tb[NETNSA_NSID])
+		return rta_getattr_u32(tb[NETNSA_NSID]);
+
+	return -1;
+}
+
 static int netns_list(int argc, char **argv)
 {
 	struct dirent *entry;
 	DIR *dir;
+	int id;
 
 	dir = opendir(NETNS_RUN_DIR);
 	if (!dir)
@@ -45,7 +94,11 @@ static int netns_list(int argc, char **argv)
 			continue;
 		if (strcmp(entry->d_name, "..") == 0)
 			continue;
-		printf("%s\n", entry->d_name);
+		printf("%s", entry->d_name);
+		id = get_netnsid_from_name(entry->d_name);
+		if (id >= 0)
+			printf(" (id: %d)", id);
+		printf("\n");
 	}
 	closedir(dir);
 	return 0;
@@ -375,6 +428,61 @@ out_delete:
 	return -1;
 }
 
+static int set_netnsid_from_name(const char *name, int nsid)
+{
+	struct {
+		struct nlmsghdr n;
+		struct rtgenmsg g;
+		char            buf[1024];
+	} req;
+	int fd, err = 0;
+
+	memset(&req, 0, sizeof(req));
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg));
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = RTM_NEWNSID;
+	req.g.rtgen_family = AF_UNSPEC;
+
+	fd = netns_get_fd(name);
+	if (fd < 0)
+		return fd;
+
+	addattr32(&req.n, 1024, NETNSA_FD, fd);
+	addattr32(&req.n, 1024, NETNSA_NSID, nsid);
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+		err = -2;
+
+	close(fd);
+	return err;
+}
+
+static int netns_set(int argc, char **argv)
+{
+	char netns_path[MAXPATHLEN];
+	const char *name;
+	int netns, nsid;
+
+	if (argc < 1) {
+		fprintf(stderr, "No netns name specified\n");
+		return -1;
+	}
+	if (argc < 2) {
+		fprintf(stderr, "No nsid specified\n");
+		return -1;
+	}
+	name = argv[0];
+	nsid = atoi(argv[1]);
+
+	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
+	netns = open(netns_path, O_RDONLY | O_CLOEXEC);
+	if (netns < 0) {
+		fprintf(stderr, "Cannot open network namespace \"%s\": %s\n",
+			name, strerror(errno));
+		return -1;
+	}
+
+	return set_netnsid_from_name(name, nsid);
+}
 
 static int netns_monitor(int argc, char **argv)
 {
@@ -429,6 +537,9 @@ int do_netns(int argc, char **argv)
 
 	if (matches(*argv, "add") == 0)
 		return netns_add(argc-1, argv+1);
+
+	if (matches(*argv, "set") == 0)
+		return netns_set(argc-1, argv+1);
 
 	if (matches(*argv, "delete") == 0)
 		return netns_delete(argc-1, argv+1);
