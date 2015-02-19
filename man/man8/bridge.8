@@ -207,7 +207,9 @@ droot port selectio algorithms.
 .TP
 .BI state " STATE "
 the operation state of the port.  This is primarily used by user space STP/RSTP
-implementation.  The following is a list of valid values:
+implementation.  One may enter a lowercased port state name, or one of the
+numbers below.  Negative inputs are ignored, and unrecognized names return an
+error.
 
 .B 0
 - port is DISABLED.  Make this port completely inactive.

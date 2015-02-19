@@ -316,7 +316,19 @@ static int brlink_modify(int argc, char **argv)
 			priority = atoi(*argv);
 		} else if (strcmp(*argv, "state") == 0) {
 			NEXT_ARG();
-			state = atoi(*argv);
+			char *endptr;
+			size_t nstates = sizeof(port_states) / sizeof(*port_states);
+			state = strtol(*argv, &endptr, 10);
+			if (!(**argv != '\0' && *endptr == '\0')) {
+				for (state = 0; state < nstates; state++)
+					if (strcmp(port_states[state], *argv) == 0)
+						break;
+				if (state == nstates) {
+					fprintf(stderr,
+						"Error: invalid STP port state\n");
+					exit(-1);
+				}
+			}
 		} else if (strcmp(*argv, "hwmode") == 0) {
 			NEXT_ARG();
 			flags = BRIDGE_FLAGS_SELF;
