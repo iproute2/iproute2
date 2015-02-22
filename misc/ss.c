@@ -2556,7 +2556,7 @@ static void unix_stats_print(struct sockstat *list, struct filter *f)
 			}
 		}
 
-		if (f->f) {
+		if (use_proc && f->f) {
 			if (strcmp(peer, "*") == 0)
 				memset(s->remote.data, 0, sizeof(char *));
 			else
@@ -2627,6 +2627,9 @@ static int unix_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
 	}
 	if (tb[UNIX_DIAG_PEER])
 		stat.rport = rta_getattr_u32(tb[UNIX_DIAG_PEER]);
+
+	if (f->f && run_ssfilter(f->f, &stat) == 0)
+		return 0;
 
 	unix_stats_print(&stat, f);
 
