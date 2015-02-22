@@ -2938,7 +2938,7 @@ static int packet_show(struct filter *f)
 	return 0;
 }
 
-static void netlink_show_one(struct filter *f,
+static int netlink_show_one(struct filter *f,
 				int prot, int pid, unsigned groups,
 				int state, int dst_pid, unsigned dst_group,
 				int rq, int wq,
@@ -2960,7 +2960,7 @@ static void netlink_show_one(struct filter *f,
 		st.lport = pid;
 		st.local.data[0] = prot;
 		if (run_ssfilter(f->f, &st) == 0)
-			return;
+			return 1;
 	}
 
 	sock_state_print(&st, "nl");
@@ -3032,7 +3032,7 @@ static void netlink_show_one(struct filter *f,
 	}
 	printf("\n");
 
-	return;
+	return 0;
 }
 
 static int netlink_show_sock(const struct sockaddr_nl *addr,
@@ -3058,9 +3058,11 @@ static int netlink_show_sock(const struct sockaddr_nl *addr,
 		wq = skmeminfo[SK_MEMINFO_WMEM_ALLOC];
 	}
 
-	netlink_show_one(f, r->ndiag_protocol, r->ndiag_portid, groups,
+	if (netlink_show_one(f, r->ndiag_protocol, r->ndiag_portid, groups,
 			 r->ndiag_state, r->ndiag_dst_portid, r->ndiag_dst_group,
-			 rq, wq, 0, 0);
+			 rq, wq, 0, 0)) {
+		return 0;
+	}
 
 	if (show_mem) {
 		printf("\t");
