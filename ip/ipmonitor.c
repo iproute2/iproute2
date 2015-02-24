@@ -32,7 +32,7 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ]"
 			"[ label ] [dev DEVICE]\n");
 	fprintf(stderr, "LISTofOBJECTS := link | address | route | mroute | prefix |\n");
-	fprintf(stderr, "                 neigh | netconf\n");
+	fprintf(stderr, "                 neigh | netconf | rule\n");
 	fprintf(stderr, "FILE := file FILENAME\n");
 	exit(-1);
 }
@@ -150,6 +150,7 @@ int do_ipmonitor(int argc, char **argv)
 	int lprefix=0;
 	int lneigh=0;
 	int lnetconf=0;
+	int lrule=0;
 	int ifindex=0;
 
 	groups |= nl_mgrp(RTNLGRP_LINK);
@@ -163,6 +164,8 @@ int do_ipmonitor(int argc, char **argv)
 	groups |= nl_mgrp(RTNLGRP_NEIGH);
 	groups |= nl_mgrp(RTNLGRP_IPV4_NETCONF);
 	groups |= nl_mgrp(RTNLGRP_IPV6_NETCONF);
+	groups |= nl_mgrp(RTNLGRP_IPV4_RULE);
+	groups |= nl_mgrp(RTNLGRP_IPV6_RULE);
 
 	rtnl_close(&rth);
 
@@ -192,6 +195,9 @@ int do_ipmonitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "netconf") == 0) {
 			lnetconf = 1;
+			groups = 0;
+		} else if (matches(*argv, "rule") == 0) {
+			lrule = 1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			prefix_banner=1;
@@ -248,6 +254,12 @@ int do_ipmonitor(int argc, char **argv)
 			groups |= nl_mgrp(RTNLGRP_IPV4_NETCONF);
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_NETCONF);
+	}
+	if (lrule) {
+		if (!preferred_family || preferred_family == AF_INET)
+			groups |= nl_mgrp(RTNLGRP_IPV4_RULE);
+		if (!preferred_family || preferred_family == AF_INET6)
+			groups |= nl_mgrp(RTNLGRP_IPV6_RULE);
 	}
 	if (file) {
 		FILE *fp;
