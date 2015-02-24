@@ -356,16 +356,16 @@ the recipient expects to receive ethernet frames exactly as
 transmitted. In such cases, it is important that frames leaving the
 tunnel are reassembled back into a single frame before being
 forwarded on. To do so, enable netfilter connection tracking
-(conntrack) or manually load the Linux netfilter degrag modules at
+(conntrack) or manually load the Linux netfilter defrag modules at
 each tunnel endpoint.
 .PP
 .nf
-site-A:# modprobe nf_degrag_ipv4
+site-A:# modprobe nf_defrag_ipv4
 
-site-B:# modprobe nf_degrag_ipv4
+site-B:# modprobe nf_defrag_ipv4
 .fi
 .PP
-If L2TP is being used over IPv6, use the IPv6 degrag module.
+If L2TP is being used over IPv6, use the IPv6 defrag module.
 .SH INTEROPERABILITY
 .PP
 Unmanaged (static) L2TPv3 tunnels are supported by some network
