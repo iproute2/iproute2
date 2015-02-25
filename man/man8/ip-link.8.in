@@ -662,14 +662,29 @@ the interface is
 .IR "POINTOPOINT" .
 
 .TP
-.BI netns " PID"
-move the device to the network namespace associated with the process
-.IR "PID".
-
-.TP
-.BI netns " NETNSNAME"
+.BI netns " NETNSNAME " \fR| " PID"
 move the device to the network namespace associated with name
-.IR "NETNSNAME".
+.IR "NETNSNAME " or
+.RI process " PID".
+
+Some devices are not allowed to change network namespace: loopback, bridge,
+ppp, wireless. These are network namespace local devices. In such case
+.B ip
+tool will return "Invalid argument" error. It is possible to find out if device is local
+to a single network namespace by checking
+.B netns-local
+flag in the output of the
+.BR ethtool ":"
+
+.in +8
+.B ethtool -k
+.I DEVICE
+.in -8
+
+To change network namespace for wireless devices the
+.B iw
+tool can be used. But it allows to change network namespace only for physical devices and by process
+.IR PID .
 
 .TP
 .BI alias " NAME"
