@@ -227,6 +227,7 @@ static void usage(void)
 	fprintf(stderr,	"                               [ learning_sync {on | off} ]\n");
 	fprintf(stderr,	"                               [ flood {on | off} ]\n");
 	fprintf(stderr, "                               [ hwmode {vepa | veb} ]\n");
+	fprintf(stderr, "                               [ self ] [ master ]\n");
 	fprintf(stderr, "       bridge link show [dev DEV]\n");
 	exit(-1);
 }
@@ -343,7 +344,9 @@ static int brlink_modify(int argc, char **argv)
 				exit(-1);
 			}
 		} else if (strcmp(*argv, "self") == 0) {
-			flags = BRIDGE_FLAGS_SELF;
+			flags |= BRIDGE_FLAGS_SELF;
+		} else if (strcmp(*argv, "master") == 0) {
+			flags |= BRIDGE_FLAGS_MASTER;
 		} else {
 			usage();
 		}

@@ -40,7 +40,8 @@ bridge \- show / manipulate bridge addresses and devices
 .BR learning " { " on " | " off " } ] [ "
 .BR learning_sync " { " on " | " off " } ] [ "
 .BR flood " { " on " | " off " } ] [ "
-.BR hwmode " { " vepa " | " veb " } ] "
+.BR hwmode " { " vepa " | " veb " } ] [ "
+.BR self " ]  [ " master " ] "
 
 .ti -8
 .BR "bridge link" " [ " show " ] [ "
@@ -285,6 +286,15 @@ switch.
 
 .B veb
 - bridging happens in hardware.
+
+.TP
+.BI self
+link setting is configured on specified physical device
+
+.TP
+.BI master
+link setting is configured on the software bridge (default)
+
 
 .SS bridge link show - list bridge port configuration.
 
