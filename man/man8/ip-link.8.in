@@ -625,7 +625,9 @@ flag on the device.
 .BR "dynamic on " or " dynamic off"
 change the
 .B DYNAMIC
-flag on the device.
+flag on the device. Indicates that address can change when interface goes down (currently
+.B NOT
+used by the Linux).
 
 .TP
 .BI name " NAME"
