@@ -31,8 +31,6 @@ static void explain(void)
 	fprintf(stderr, "Where BPF_BYTECODE := \'s,c t f k,c t f k,c t f k,...\'\n");
 	fprintf(stderr, "      c,t,f,k and s are decimals; s denotes number of 4-tuples\n");
 	fprintf(stderr, "Where FILE points to a file containing the BPF_BYTECODE string\n");
-	fprintf(stderr, "\nACTION_SPEC := ... look at individual actions\n");
-	fprintf(stderr, "NOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
 static void usage(void)
