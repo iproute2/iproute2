@@ -1380,7 +1380,7 @@ static int xll_name_to_index(const char *dev)
 	return ll_name_to_index(dev);
 }
 
-void *parse_hostcond(char *addr)
+void *parse_hostcond(char *addr, bool is_port)
 {
 	char *port = NULL;
 	struct aafilter a = { .port = -1 };
@@ -1473,10 +1473,14 @@ void *parse_hostcond(char *addr)
 	} else {
 		port = strrchr(strchr(addr, '/') ? : addr, ':');
 	}
+
+	if (is_port)
+		port = addr;
+
 	if (port && *port) {
-		if (*port != ':')
-			return NULL;
-		*port++ = 0;
+		if (*port == ':')
+			*port++ = 0;
+
 		if (*port && *port != '*') {
 			if (get_integer(&a.port, port, 0)) {
 				struct servent *se1 = NULL;
@@ -1517,7 +1521,7 @@ void *parse_hostcond(char *addr)
 			}
 		}
 	}
-	if (addr && *addr && *addr != '*') {
+	if (!is_port && addr && *addr && *addr != '*') {
 		if (get_prefix_1(&a.addr, addr, fam)) {
 			if (get_dns_host(&a, addr, fam)) {
 				fprintf(stderr, "Error: an inet prefix is expected rather than \"%s\".\n", addr);
