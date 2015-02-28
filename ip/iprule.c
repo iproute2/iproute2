@@ -66,14 +66,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	parse_rtattr(tb, FRA_MAX, RTM_RTA(r), len);
 
-	if (r->rtm_family == AF_INET)
-		host_len = 32;
-	else if (r->rtm_family == AF_INET6)
-		host_len = 128;
-	else if (r->rtm_family == AF_DECnet)
-		host_len = 16;
-	else if (r->rtm_family == AF_IPX)
-		host_len = 80;
+	host_len = af_bit_len(r->rtm_family);
 
 	if (n->nlmsg_type == RTM_DELRULE)
 		fprintf(fp, "Deleted ");

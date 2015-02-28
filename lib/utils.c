@@ -431,6 +431,27 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	return 0;
 }
 
+int af_bit_len(int af)
+{
+	switch (af) {
+	case AF_INET6:
+		return 128;
+	case AF_INET:
+		return 32;
+	case AF_DECnet:
+		return 16;
+	case AF_IPX:
+		return 80;
+	}
+
+	return 0;
+}
+
+int af_byte_len(int af)
+{
+	return af_bit_len(af) / 8;
+}
+
 int get_prefix_1(inet_prefix *dst, char *arg, int family)
 {
 	int err;
@@ -456,17 +477,8 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 
 	err = get_addr_1(dst, arg, family);
 	if (err == 0) {
-		switch(dst->family) {
-		case AF_INET6:
-			dst->bitlen = 128;
-			break;
-		case AF_DECnet:
-			dst->bitlen = 16;
-			break;
-		default:
-		case AF_INET:
-			dst->bitlen = 32;
-		}
+		dst->bitlen = af_bit_len(family);
+
 		if (slash) {
 			if (get_netmask(&plen, slash+1, 0)
 			    || plen > dst->bitlen) {
@@ -697,7 +709,6 @@ static const char *resolve_address(const void *addr, int len, int af)
 }
 #endif
 
-
 const char *format_host(int af, int len, const void *addr,
 			char *buf, int buflen)
 {
@@ -705,27 +716,8 @@ const char *format_host(int af, int len, const void *addr,
 	if (resolve_hosts) {
 		const char *n;
 
-		if (len <= 0) {
-			switch (af) {
-			case AF_INET:
-				len = 4;
-				break;
-			case AF_INET6:
-				len = 16;
-				break;
-			case AF_IPX:
-				len = 10;
-				break;
-#ifdef AF_DECnet
-			/* I see no reasons why gethostbyname
-			   may not work for DECnet */
-			case AF_DECnet:
-				len = 2;
-				break;
-#endif
-			default: ;
-			}
-		}
+		len = len <= 0 ? af_byte_len(af) : len;
+
 		if (len > 0 &&
 		    (n = resolve_address(addr, len, af)) != NULL)
 			return n;

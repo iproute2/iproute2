@@ -101,6 +101,9 @@ extern int get_s8(__s8 *val, const char *arg, int base);
 extern char* hexstring_n2a(const __u8 *str, int len, char *buf, int blen);
 extern __u8* hexstring_a2n(const char *str, __u8 *buf, int blen);
 
+extern int af_bit_len(int af);
+extern int af_byte_len(int af);
+
 extern const char *format_host(int af, int len, const void *addr,
 			       char *buf, int buflen);
 extern const char *rt_addr_n2a(int af, const void *addr,

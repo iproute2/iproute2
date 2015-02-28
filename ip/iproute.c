@@ -268,20 +268,6 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	return 1;
 }
 
-static int calc_host_len(const struct rtmsg *r)
-{
-	if (r->rtm_family == AF_INET6)
-		return 128;
-	else if (r->rtm_family == AF_INET)
-		return 32;
-	else if (r->rtm_family == AF_DECnet)
-		return 16;
-	else if (r->rtm_family == AF_IPX)
-		return 80;
-	else
-		return -1;
-}
-
 static void print_rtax_features(FILE *fp, unsigned int features)
 {
 	unsigned int of = features;
@@ -302,7 +288,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	int len = n->nlmsg_len;
 	struct rtattr * tb[RTA_MAX+1];
 	char abuf[256];
-	int host_len = -1;
+	int host_len;
 	__u32 table;
 	SPRINT_BUF(b1);
 	static int hz;
@@ -320,7 +306,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return -1;
 	}
 
-	host_len = calc_host_len(r);
+	host_len = af_bit_len(r->rtm_family);
 
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
 	table = rtm_get_table(r, tb);
@@ -1134,9 +1120,9 @@ static int save_route(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	int len = n->nlmsg_len;
 	struct rtmsg *r = NLMSG_DATA(n);
 	struct rtattr *tb[RTA_MAX+1];
-	int host_len = -1;
+	int host_len;
 
-	host_len = calc_host_len(r);
+	host_len = af_bit_len(r->rtm_family);
 	len -= NLMSG_LENGTH(sizeof(*r));
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
 
