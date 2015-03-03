@@ -100,4 +100,7 @@ extern int  parse_action(int *, char ***, int, struct nlmsghdr *);
 extern void print_tm(FILE *f, const struct tcf_t *tm);
 extern int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 
+extern int cls_names_init(char *path);
+extern void cls_names_uninit(void);
+
 #endif

@@ -23,11 +23,33 @@
 #include <math.h>
 
 #include "utils.h"
+#include "names.h"
 #include "tc_util.h"
+#include "tc_common.h"
 
 #ifndef LIBDIR
 #define LIBDIR "/usr/lib"
 #endif
+
+static struct db_names *cls_names = NULL;
+
+#define NAMES_DB "/etc/iproute2/cls_names"
+
+int cls_names_init(char *path)
+{
+	cls_names = db_names_alloc(path ?: NAMES_DB);
+	if (!cls_names) {
+		fprintf(stderr, "Error while opening class names file\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+void cls_names_uninit(void)
+{
+	db_names_free(cls_names);
+}
 
 const char *get_tc_lib(void)
 {
@@ -97,20 +119,34 @@ ok:
 
 int print_tc_classid(char *buf, int len, __u32 h)
 {
+	char handle[40] = {};
+
 	if (h == TC_H_ROOT)
-		sprintf(buf, "root");
+		sprintf(handle, "root");
 	else if (h == TC_H_UNSPEC)
-		snprintf(buf, len, "none");
+		snprintf(handle, len, "none");
 	else if (TC_H_MAJ(h) == 0)
-		snprintf(buf, len, ":%x", TC_H_MIN(h));
+		snprintf(handle, len, ":%x", TC_H_MIN(h));
 	else if (TC_H_MIN(h) == 0)
-		snprintf(buf, len, "%x:", TC_H_MAJ(h)>>16);
+		snprintf(handle, len, "%x:", TC_H_MAJ(h) >> 16);
 	else
-		snprintf(buf, len, "%x:%x", TC_H_MAJ(h)>>16, TC_H_MIN(h));
+		snprintf(handle, len, "%x:%x", TC_H_MAJ(h) >> 16, TC_H_MIN(h));
+
+	if (use_names) {
+		char clname[IDNAME_MAX] = {};
+
+		if (id_to_name(cls_names, h, clname))
+			snprintf(buf, len, "%s#%s", clname, handle);
+		else
+			snprintf(buf, len, "%s", handle);
+	} else {
+		snprintf(buf, len, "%s", handle);
+	}
+
 	return 0;
 }
 
-char * sprint_tc_classid(__u32 h, char *buf)
+char *sprint_tc_classid(__u32 h, char *buf)
 {
 	if (print_tc_classid(buf, SPRINT_BSIZE-1, h))
 		strcpy(buf, "???");
