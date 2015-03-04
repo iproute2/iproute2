@@ -85,7 +85,7 @@ static void usage(void)
 	fprintf(stderr, "           [-]tentative | [-]deprecated | [-]dadfailed | temporary |\n");
 	fprintf(stderr, "           CONFFLAG-LIST ]\n");
 	fprintf(stderr, "CONFFLAG-LIST := [ CONFFLAG-LIST ] CONFFLAG\n");
-	fprintf(stderr, "CONFFLAG  := [ home | nodad | mngtmpaddr | noprefixroute ]\n");
+	fprintf(stderr, "CONFFLAG  := [ home | nodad | mngtmpaddr | noprefixroute | autojoin ]\n");
 	fprintf(stderr, "LIFETIME := [ valid_lft LFT ] [ preferred_lft LFT ]\n");
 	fprintf(stderr, "LFT := forever | SECONDS\n");
 
@@ -915,6 +915,10 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		ifa_flags &= ~IFA_F_NOPREFIXROUTE;
 		fprintf(fp, "noprefixroute ");
 	}
+	if (ifa_flags & IFA_F_MCAUTOJOIN) {
+		ifa_flags &= ~IFA_F_MCAUTOJOIN;
+		fprintf(fp, "autojoin ");
+	}
 	if (!(ifa_flags & IFA_F_PERMANENT)) {
 		fprintf(fp, "dynamic ");
 	} else
@@ -1354,6 +1358,9 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		} else if (strcmp(*argv, "noprefixroute") == 0) {
 			filter.flags |= IFA_F_NOPREFIXROUTE;
 			filter.flagmask |= IFA_F_NOPREFIXROUTE;
+		} else if (strcmp(*argv, "autojoin") == 0) {
+			filter.flags |= IFA_F_MCAUTOJOIN;
+			filter.flagmask |= IFA_F_MCAUTOJOIN;
 		} else if (strcmp(*argv, "dadfailed") == 0) {
 			filter.flags |= IFA_F_DADFAILED;
 			filter.flagmask |= IFA_F_DADFAILED;
@@ -1558,6 +1565,16 @@ static int default_scope(inet_prefix *lcl)
 	return 0;
 }
 
+static bool ipaddr_is_multicast(inet_prefix *a)
+{
+	if (a->family == AF_INET)
+		return IN_MULTICAST(ntohl(a->data[0]));
+	else if (a->family == AF_INET6)
+		return IN6_IS_ADDR_MULTICAST(a->data);
+	else
+		return false;
+}
+
 static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -1665,6 +1682,8 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			ifa_flags |= IFA_F_MANAGETEMPADDR;
 		} else if (strcmp(*argv, "noprefixroute") == 0) {
 			ifa_flags |= IFA_F_NOPREFIXROUTE;
+		} else if (strcmp(*argv, "autojoin") == 0) {
+			ifa_flags |= IFA_F_MCAUTOJOIN;
 		} else {
 			if (strcmp(*argv, "local") == 0) {
 				NEXT_ARG();
@@ -1753,6 +1772,11 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		cinfo.ifa_valid = valid_lft;
 		addattr_l(&req.n, sizeof(req), IFA_CACHEINFO, &cinfo,
 			  sizeof(cinfo));
+	}
+
+	if ((ifa_flags & IFA_F_MCAUTOJOIN) && !ipaddr_is_multicast(&lcl)) {
+		fprintf(stderr, "autojoin needs multicast address\n");
+		return -1;
 	}
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
