@@ -841,6 +841,12 @@ print human readable rates in IEC units (ie. 1K = 1024).
 .I "TYPE"
 specifies which help of link type to dislpay.
 
+.SS
+.I GROUP
+may be a number or a string from the file
+.B /etc/iproute2/group
+which can be manually filled.
+
 .SH "EXAMPLES"
 .PP
 ip link show
