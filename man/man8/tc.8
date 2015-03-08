@@ -250,23 +250,33 @@ attached to that class. Check qdisc specific manpages for details, however.
 All qdiscs, classes and filters have IDs, which can either be specified
 or be automatically assigned.
 
-IDs consist of a major number and a minor number, separated by a colon.
-Both major and minor number are limited to 16 bits. There are two special
-values: root is signified by major and minor of all ones, and unspecified
-is all zeros.
+IDs consist of a
+.BR major " number and a " minor
+number, separated by a colon -
+.BR major ":" minor "."
+Both
+.BR major " and " minor
+are hexadecimal numbers and are limited to 16 bits. There are two special
+values: root is signified by
+.BR major " and " minor
+of all ones, and unspecified is all zeros.
 
 .TP
 QDISCS
-A qdisc, which potentially can have children,
-gets assigned a major number, called a 'handle', leaving the minor
+A qdisc, which potentially can have children, gets assigned a
+.B major
+number, called a 'handle', leaving the
+.B minor
 number namespace available for classes. The handle is expressed as '10:'.
-It is customary to explicitly assign a handle to qdiscs expected to have
-children.
+It is customary to explicitly assign a handle to qdiscs expected to have children.
 
 .TP
 CLASSES
-Classes residing under a qdisc share their qdisc major number, but each have
-a separate minor number called a 'classid' that has no relation to their
+Classes residing under a qdisc share their qdisc
+.B major
+number, but each have a separate
+.B minor
+number called a 'classid' that has no relation to their
 parent classes, only to their parent qdisc. The same naming custom as for
 qdiscs applies.
 
