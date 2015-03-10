@@ -679,9 +679,9 @@ static inline char *sock_addr_get_str(const inet_prefix *prefix)
     return tmp;
 }
 
-static unsigned long cookie_sk_get(uint32_t *cookie)
+static unsigned long long cookie_sk_get(const uint32_t *cookie)
 {
-	return (((unsigned long)cookie[1] << 31) << 1) | cookie[0];
+	return (((unsigned long long)cookie[1] << 31) << 1) | cookie[0];
 }
 
 static const char *sstate_name[] = {
