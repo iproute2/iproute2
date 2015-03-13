@@ -694,7 +694,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_MARK]) {
 		struct rtattr *rta = tb[XFRMA_MARK];
 		struct xfrm_mark *m = (struct xfrm_mark *) RTA_DATA(rta);
-		fprintf(fp, "\tmark %d/0x%x\n", m->v, m->m);
+		fprintf(fp, "\tmark %#x/%#x%s", m->v, m->m, _SL_);
 	}
 
 	if (tb[XFRMA_ALG_AUTH] && !tb[XFRMA_ALG_AUTH_TRUNC]) {
