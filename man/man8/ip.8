@@ -73,7 +73,7 @@ Zero (0) means loop until all addresses are removed.
 .TP
 .BR "\-f" , " \-family " <FAMILY>
 Specifies the protocol family to use. The protocol family identifier can be one of
-.BR "inet" , " inet6" , " bridge" , " ipx" , " dnet"
+.BR "inet" , " inet6" , " bridge" , " ipx" , " dnet" , " mpls"
 or
 .BR link .
 If this option is not present,
@@ -113,6 +113,11 @@ shortcut for
 .B \-I
 shortcut for
 .BR "\-family ipx" .
+
+.TP
+.B \-M
+shortcut for
+.BR "\-family mpls" .
 
 .TP
 .B \-0

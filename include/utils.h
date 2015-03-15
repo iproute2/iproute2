@@ -78,6 +78,13 @@ struct ipx_addr {
 	u_int8_t  ipx_node[IPX_NODE_LEN];
 };
 
+#ifndef AF_MPLS
+# define AF_MPLS 28
+#endif
+
+/* Maximum number of labels the mpls helpers support */
+#define MPLS_MAX_LABELS 8
+
 extern __u32 get_addr32(const char *name);
 extern int get_addr_1(inet_prefix *dst, const char *arg, int family);
 extern int get_prefix_1(inet_prefix *dst, char *arg, int family);
@@ -125,6 +132,9 @@ int dnet_pton(int af, const char *src, void *addr);
 
 const char *ipx_ntop(int af, const void *addr, char *str, size_t len);
 int ipx_pton(int af, const char *src, void *addr);
+
+const char *mpls_ntop(int af, const void *addr, char *str, size_t len);
+int mpls_pton(int af, const char *src, void *addr);
 
 extern int __iproute2_hz_internal;
 extern int __get_hz(void);

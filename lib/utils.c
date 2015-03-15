@@ -26,6 +26,7 @@
 #include <linux/pkt_sched.h>
 #include <linux/param.h>
 #include <linux/if_arp.h>
+#include <linux/mpls.h>
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
@@ -390,7 +391,7 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	if (strcmp(name, "default") == 0 ||
 	    strcmp(name, "all") == 0 ||
 	    strcmp(name, "any") == 0) {
-		if (family == AF_DECnet)
+		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
 		addr->family = family;
 		addr->bytelen = (family == AF_INET6 ? 16 : 4);
@@ -432,6 +433,23 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 		return 0;
 	}
 
+	if (family == AF_MPLS) {
+		int i;
+		addr->family = AF_MPLS;
+		if (mpls_pton(AF_MPLS, name, addr->data) <= 0)
+			return -1;
+		addr->bytelen = 4;
+		addr->bitlen = 20;
+		/* How many bytes do I need? */
+		for (i = 0; i < 8; i++) {
+			if (ntohl(addr->data[i]) & MPLS_LS_S_MASK) {
+				addr->bytelen = (i + 1)*4;
+				break;
+			}
+		}
+		return 0;
+	}
+
 	addr->family = AF_INET;
 	if (family != AF_UNSPEC && family != AF_INET)
 		return -1;
@@ -455,6 +473,8 @@ int af_bit_len(int af)
 		return 16;
 	case AF_IPX:
 		return 80;
+	case AF_MPLS:
+		return 20;
 	}
 
 	return 0;
@@ -476,7 +496,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 	if (strcmp(arg, "default") == 0 ||
 	    strcmp(arg, "any") == 0 ||
 	    strcmp(arg, "all") == 0) {
-		if (family == AF_DECnet)
+		if ((family == AF_DECnet) || (family = AF_MPLS))
 			return -1;
 		dst->family = family;
 		dst->bytelen = 0;
@@ -651,6 +671,8 @@ const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen
 	case AF_INET:
 	case AF_INET6:
 		return inet_ntop(af, addr, buf, buflen);
+	case AF_MPLS:
+		return mpls_ntop(af, addr, buf, buflen);
 	case AF_IPX:
 		return ipx_ntop(af, addr, buf, buflen);
 	case AF_DECnet:
@@ -679,6 +701,8 @@ int read_family(const char *name)
 		family = AF_PACKET;
 	else if (strcmp(name, "ipx") == 0)
 		family = AF_IPX;
+	else if (strcmp(name, "mpls") == 0)
+		family = AF_MPLS;
 	else if (strcmp(name, "bridge") == 0)
 		family = AF_BRIDGE;
 	return family;
@@ -696,6 +720,8 @@ const char *family_name(int family)
 		return "link";
 	if (family == AF_IPX)
 		return "ipx";
+	if (family == AF_MPLS)
+		return "mpls";
 	if (family == AF_BRIDGE)
 		return "bridge";
 	return "???";

@@ -26,6 +26,9 @@ ADDLIB+=dnet_ntop.o dnet_pton.o
 #options for ipx
 ADDLIB+=ipx_ntop.o ipx_pton.o
 
+#options for mpls
+ADDLIB+=mpls_ntop.o mpls_pton.o
+
 CC = gcc
 HOSTCC = gcc
 DEFINES += -D_GNU_SOURCE

@@ -158,6 +158,7 @@ int do_ipmonitor(int argc, char **argv)
 	groups |= nl_mgrp(RTNLGRP_IPV6_IFADDR);
 	groups |= nl_mgrp(RTNLGRP_IPV4_ROUTE);
 	groups |= nl_mgrp(RTNLGRP_IPV6_ROUTE);
+	groups |= nl_mgrp(RTNLGRP_MPLS_ROUTE);
 	groups |= nl_mgrp(RTNLGRP_IPV4_MROUTE);
 	groups |= nl_mgrp(RTNLGRP_IPV6_MROUTE);
 	groups |= nl_mgrp(RTNLGRP_IPV6_PREFIX);
@@ -235,6 +236,8 @@ int do_ipmonitor(int argc, char **argv)
 			groups |= nl_mgrp(RTNLGRP_IPV4_ROUTE);
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_ROUTE);
+		if (!preferred_family || preferred_family == AF_MPLS)
+			groups |= nl_mgrp(RTNLGRP_MPLS_ROUTE);
 	}
 	if (lmroute) {
 		if (!preferred_family || preferred_family == AF_INET)
