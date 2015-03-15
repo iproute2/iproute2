@@ -25,11 +25,12 @@
 #include <asm/types.h>
 #include <linux/pkt_sched.h>
 #include <linux/param.h>
+#include <linux/if_arp.h>
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
 
-
+#include "rt_names.h"
 #include "utils.h"
 #include "namespace.h"
 
@@ -397,6 +398,18 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 		return 0;
 	}
 
+	if (family == AF_PACKET) {
+		int len;
+		len = ll_addr_a2n((char *)&addr->data, sizeof(addr->data), name);
+		if (len < 0)
+			return -1;
+
+		addr->family = AF_PACKET;
+		addr->bytelen = len;
+		addr->bitlen = len * 8;
+		return 0;
+	}
+
 	if (strchr(name, ':')) {
 		addr->family = AF_INET6;
 		if (family != AF_UNSPEC && family != AF_INET6)
@@ -497,10 +510,6 @@ done:
 
 int get_addr(inet_prefix *dst, const char *arg, int family)
 {
-	if (family == AF_PACKET) {
-		fprintf(stderr, "Error: \"%s\" may be inet address, but it is not allowed in this context.\n", arg);
-		exit(1);
-	}
 	if (get_addr_1(dst, arg, family)) {
 		fprintf(stderr, "Error: an inet address is expected rather than \"%s\".\n", arg);
 		exit(1);
@@ -650,6 +659,8 @@ const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen
 		memcpy(dna.a_addr, addr, 2);
 		return dnet_ntop(af, &dna, buf, buflen);
 	}
+	case AF_PACKET:
+		return ll_addr_n2a(addr, len, ARPHRD_VOID, buf, buflen);
 	default:
 		return "???";
 	}
