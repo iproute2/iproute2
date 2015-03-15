@@ -666,6 +666,41 @@ const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen
 	}
 }
 
+int read_family(const char *name)
+{
+	int family = AF_UNSPEC;
+	if (strcmp(name, "inet") == 0)
+		family = AF_INET;
+	else if (strcmp(name, "inet6") == 0)
+		family = AF_INET6;
+	else if (strcmp(name, "dnet") == 0)
+		family = AF_DECnet;
+	else if (strcmp(name, "link") == 0)
+		family = AF_PACKET;
+	else if (strcmp(name, "ipx") == 0)
+		family = AF_IPX;
+	else if (strcmp(name, "bridge") == 0)
+		family = AF_BRIDGE;
+	return family;
+}
+
+const char *family_name(int family)
+{
+	if (family == AF_INET)
+		return "inet";
+	if (family == AF_INET6)
+		return "inet6";
+	if (family == AF_DECnet)
+		return "dnet";
+	if (family == AF_PACKET)
+		return "link";
+	if (family == AF_IPX)
+		return "ipx";
+	if (family == AF_BRIDGE)
+		return "bridge";
+	return "???";
+}
+
 #ifdef RESOLVE_HOSTNAMES
 struct namerec
 {

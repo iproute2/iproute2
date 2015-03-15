@@ -109,6 +109,9 @@ extern const char *format_host(int af, int len, const void *addr,
 extern const char *rt_addr_n2a(int af, int len, const void *addr,
 			       char *buf, int buflen);
 
+extern int read_family(const char *name);
+extern const char *family_name(int family);
+
 void missarg(const char *) __attribute__((noreturn));
 void invarg(const char *, const char *) __attribute__((noreturn));
 void duparg(const char *, const char *) __attribute__((noreturn));

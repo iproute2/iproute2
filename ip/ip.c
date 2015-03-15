@@ -190,21 +190,11 @@ int main(int argc, char **argv)
 			argv++;
 			if (argc <= 1)
 				usage();
-			if (strcmp(argv[1], "inet") == 0)
-				preferred_family = AF_INET;
-			else if (strcmp(argv[1], "inet6") == 0)
-				preferred_family = AF_INET6;
-			else if (strcmp(argv[1], "dnet") == 0)
-				preferred_family = AF_DECnet;
-			else if (strcmp(argv[1], "link") == 0)
-				preferred_family = AF_PACKET;
-			else if (strcmp(argv[1], "ipx") == 0)
-				preferred_family = AF_IPX;
-			else if (strcmp(argv[1], "bridge") == 0)
-				preferred_family = AF_BRIDGE;
-			else if (strcmp(argv[1], "help") == 0)
+			if (strcmp(argv[1], "help") == 0)
 				usage();
 			else
+				preferred_family = read_family(argv[1]);
+			if (preferred_family == AF_UNSPEC)
 				invarg("invalid protocol family", argv[1]);
 		} else if (strcmp(opt, "-4") == 0) {
 			preferred_family = AF_INET;
