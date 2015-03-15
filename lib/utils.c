@@ -636,7 +636,7 @@ int __get_user_hz(void)
 	return sysconf(_SC_CLK_TCK);
 }
 
-const char *rt_addr_n2a(int af, const void *addr, char *buf, int buflen)
+const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen)
 {
 	switch (af) {
 	case AF_INET:
@@ -723,7 +723,7 @@ const char *format_host(int af, int len, const void *addr,
 			return n;
 	}
 #endif
-	return rt_addr_n2a(af, addr, buf, buflen);
+	return rt_addr_n2a(af, len, addr, buf, buflen);
 }
 
 

@@ -339,8 +339,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[RTA_DST]) {
 		if (r->rtm_dst_len != host_len) {
 			fprintf(fp, "%s/%u ", rt_addr_n2a(r->rtm_family,
-							 RTA_DATA(tb[RTA_DST]),
-							 abuf, sizeof(abuf)),
+						       RTA_PAYLOAD(tb[RTA_DST]),
+						       RTA_DATA(tb[RTA_DST]),
+						       abuf, sizeof(abuf)),
 				r->rtm_dst_len
 				);
 		} else {
@@ -358,8 +359,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[RTA_SRC]) {
 		if (r->rtm_src_len != host_len) {
 			fprintf(fp, "from %s/%u ", rt_addr_n2a(r->rtm_family,
-							 RTA_DATA(tb[RTA_SRC]),
-							 abuf, sizeof(abuf)),
+						       RTA_PAYLOAD(tb[RTA_SRC]),
+						       RTA_DATA(tb[RTA_SRC]),
+						       abuf, sizeof(abuf)),
 				r->rtm_src_len
 				);
 		} else {
@@ -401,6 +403,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		 */
 		fprintf(fp, " src %s ",
 			rt_addr_n2a(r->rtm_family,
+				    RTA_PAYLOAD(tb[RTA_PREFSRC]),
 				    RTA_DATA(tb[RTA_PREFSRC]),
 				    abuf, sizeof(abuf)));
 	}

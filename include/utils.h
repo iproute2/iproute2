@@ -106,7 +106,7 @@ extern int af_byte_len(int af);
 
 extern const char *format_host(int af, int len, const void *addr,
 			       char *buf, int buflen);
-extern const char *rt_addr_n2a(int af, const void *addr,
+extern const char *rt_addr_n2a(int af, int len, const void *addr,
 			       char *buf, int buflen);
 
 void missarg(const char *) __attribute__((noreturn));

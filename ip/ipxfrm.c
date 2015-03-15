@@ -288,10 +288,10 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 		fputs(title, fp);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s ", rt_addr_n2a(family,
+	fprintf(fp, "src %s ", rt_addr_n2a(family, sizeof(*saddr),
 					   saddr, abuf, sizeof(abuf)));
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s", rt_addr_n2a(family,
+	fprintf(fp, "dst %s", rt_addr_n2a(family, sizeof(id->daddr),
 					  &id->daddr, abuf, sizeof(abuf)));
 	fprintf(fp, "%s", _SL_);
 
@@ -455,11 +455,15 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		fputs(prefix, fp);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s/%u ", rt_addr_n2a(f, &sel->saddr, abuf, sizeof(abuf)),
+	fprintf(fp, "src %s/%u ",
+		rt_addr_n2a(f, sizeof(sel->saddr), &sel->saddr,
+			    abuf, sizeof(abuf)),
 		sel->prefixlen_s);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s/%u ", rt_addr_n2a(f, &sel->daddr, abuf, sizeof(abuf)),
+	fprintf(fp, "dst %s/%u ",
+		rt_addr_n2a(f, sizeof(sel->daddr), &sel->daddr,
+			    abuf, sizeof(abuf)),
 		sel->prefixlen_d);
 
 	if (sel->proto)
@@ -755,7 +759,8 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "addr %s",
-			rt_addr_n2a(family, &e->encap_oa, abuf, sizeof(abuf)));
+			rt_addr_n2a(family, sizeof(e->encap_oa), &e->encap_oa,
+				    abuf, sizeof(abuf)));
 		fprintf(fp, "%s", _SL_);
 	}
 
@@ -783,7 +788,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "%s",
-			rt_addr_n2a(family, coa,
+			rt_addr_n2a(family, sizeof(*coa), coa,
 				    abuf, sizeof(abuf)));
 		fprintf(fp, "%s", _SL_);
 	}

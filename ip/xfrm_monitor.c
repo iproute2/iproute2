@@ -227,7 +227,8 @@ static void xfrm_usersa_print(const struct xfrm_usersa_id *sa_id, __u32 reqid, F
 
 	buf[0] = 0;
 	fprintf(fp, "dst %s ",
-		rt_addr_n2a(sa_id->family, &sa_id->daddr, buf, sizeof(buf)));
+		rt_addr_n2a(sa_id->family, sizeof(sa_id->daddr), &sa_id->daddr,
+			    buf, sizeof(buf)));
 
 	fprintf(fp, " reqid 0x%x", reqid);
 
@@ -246,7 +247,8 @@ static int xfrm_ae_print(const struct sockaddr_nl *who,
 	xfrm_ae_flags_print(id->flags, arg);
 	fprintf(fp,"\n\t");
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s ", rt_addr_n2a(id->sa_id.family, &id->saddr,
+	fprintf(fp, "src %s ", rt_addr_n2a(id->sa_id.family,
+					   sizeof(id->saddr), &id->saddr,
 					   abuf, sizeof(abuf)));
 
 	xfrm_usersa_print(&id->sa_id, id->reqid, fp);
@@ -262,7 +264,7 @@ static void xfrm_print_addr(FILE *fp, int family, xfrm_address_t *a)
 	char buf[256];
 
 	buf[0] = 0;
-	fprintf(fp, "%s", rt_addr_n2a(family, a, buf, sizeof(buf)));
+	fprintf(fp, "%s", rt_addr_n2a(family, sizeof(*a), a, buf, sizeof(buf)));
 }
 
 static int xfrm_mapping_print(const struct sockaddr_nl *who,
