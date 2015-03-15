@@ -50,10 +50,11 @@ extern void incomplete_command(void) __attribute__((noreturn));
 
 typedef struct
 {
-	__u8 family;
-	__u8 bytelen;
+	__u16 flags;
+	__u16 bytelen;
 	__s16 bitlen;
-	__u32 flags;
+	/* These next two fields match rtvia */
+	__u16 family;
 	__u32 data[8];
 } inet_prefix;
 

@@ -75,7 +75,8 @@ static void usage(void)
 	fprintf(stderr, "             [ table TABLE_ID ] [ proto RTPROTO ]\n");
 	fprintf(stderr, "             [ scope SCOPE ] [ metric METRIC ]\n");
 	fprintf(stderr, "INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n");
-	fprintf(stderr, "NH := [ via ADDRESS ] [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
+	fprintf(stderr, "NH := [ via [ FAMILY ] ADDRESS ] [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
+	fprintf(stderr, "FAMILY := [ inet | inet6 | ipx | dnet | bridge | link ]");
 	fprintf(stderr, "OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ]\n");
 	fprintf(stderr, "           [ rtt TIME ] [ rttvar TIME ] [ reordering NUMBER ]\n");
 	fprintf(stderr, "           [ window NUMBER] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n");
@@ -185,8 +186,15 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	    (r->rtm_family != filter.msrc.family ||
 	     (filter.msrc.bitlen >= 0 && filter.msrc.bitlen < r->rtm_src_len)))
 		return 0;
-	if (filter.rvia.family && r->rtm_family != filter.rvia.family)
-		return 0;
+	if (filter.rvia.family) {
+		int family = r->rtm_family;
+		if (tb[RTA_VIA]) {
+			struct rtvia *via = RTA_DATA(tb[RTA_VIA]);
+			family = via->rtvia_family;
+		}
+		if (family != filter.rvia.family)
+			return 0;
+	}
 	if (filter.rprefsrc.family && r->rtm_family != filter.rprefsrc.family)
 		return 0;
 
@@ -205,6 +213,12 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		via.family = r->rtm_family;
 		if (tb[RTA_GATEWAY])
 			memcpy(&via.data, RTA_DATA(tb[RTA_GATEWAY]), host_len/8);
+		if (tb[RTA_VIA]) {
+			size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
+			struct rtvia *rtvia = RTA_DATA(tb[RTA_VIA]);
+			via.family = rtvia->rtvia_family;
+			memcpy(&via.data, rtvia->rtvia_addr, len);
+		}
 	}
 	if (filter.rprefsrc.bitlen>0) {
 		memset(&prefsrc, 0, sizeof(prefsrc));
@@ -384,6 +398,14 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			format_host(r->rtm_family,
 				    RTA_PAYLOAD(tb[RTA_GATEWAY]),
 				    RTA_DATA(tb[RTA_GATEWAY]),
+				    abuf, sizeof(abuf)));
+	}
+	if (tb[RTA_VIA]) {
+		size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
+		struct rtvia *via = RTA_DATA(tb[RTA_VIA]);
+		fprintf(fp, "via %s %s ",
+			family_name(via->rtvia_family),
+			format_host(via->rtvia_family, len, via->rtvia_addr,
 				    abuf, sizeof(abuf)));
 	}
 	if (tb[RTA_OIF] && filter.oifmask != -1)
@@ -603,6 +625,14 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 							    RTA_DATA(tb[RTA_GATEWAY]),
 							    abuf, sizeof(abuf)));
 				}
+				if (tb[RTA_VIA]) {
+					size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
+					struct rtvia *via = RTA_DATA(tb[RTA_VIA]);
+					fprintf(fp, "via %s %s ",
+						family_name(via->rtvia_family),
+						format_host(via->rtvia_family, len, via->rtvia_addr,
+							    abuf, sizeof(abuf)));
+				}
 				if (tb[RTA_FLOW]) {
 					__u32 to = rta_getattr_u32(tb[RTA_FLOW]);
 					__u32 from = to>>16;
@@ -650,12 +680,23 @@ static int parse_one_nh(struct rtmsg *r, struct rtattr *rta,
 	while (++argv, --argc > 0) {
 		if (strcmp(*argv, "via") == 0) {
 			inet_prefix addr;
+			int family;
 			NEXT_ARG();
-			get_addr(&addr, *argv, r->rtm_family);
+			family = read_family(*argv);
+			if (family == AF_UNSPEC)
+				family = r->rtm_family;
+			else
+				NEXT_ARG();
+			get_addr(&addr, *argv, family);
 			if (r->rtm_family == AF_UNSPEC)
 				r->rtm_family = addr.family;
-			rta_addattr_l(rta, 4096, RTA_GATEWAY, &addr.data, addr.bytelen);
-			rtnh->rtnh_len += sizeof(struct rtattr) + addr.bytelen;
+			if (addr.family == r->rtm_family) {
+				rta_addattr_l(rta, 4096, RTA_GATEWAY, &addr.data, addr.bytelen);
+				rtnh->rtnh_len += sizeof(struct rtattr) + addr.bytelen;
+			} else {
+				rta_addattr_l(rta, 4096, RTA_VIA, &addr.family, addr.bytelen+2);
+				rtnh->rtnh_len += sizeof(struct rtattr) + addr.bytelen+2;
+			}
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			if ((rtnh->rtnh_ifindex = ll_name_to_index(*argv)) == 0) {
@@ -763,12 +804,21 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), RTA_PREFSRC, &addr.data, addr.bytelen);
 		} else if (strcmp(*argv, "via") == 0) {
 			inet_prefix addr;
+			int family;
 			gw_ok = 1;
 			NEXT_ARG();
-			get_addr(&addr, *argv, req.r.rtm_family);
+			family = read_family(*argv);
+			if (family == AF_UNSPEC)
+				family = req.r.rtm_family;
+			else
+				NEXT_ARG();
+			get_addr(&addr, *argv, family);
 			if (req.r.rtm_family == AF_UNSPEC)
 				req.r.rtm_family = addr.family;
-			addattr_l(&req.n, sizeof(req), RTA_GATEWAY, &addr.data, addr.bytelen);
+			if (addr.family == req.r.rtm_family)
+				addattr_l(&req.n, sizeof(req), RTA_GATEWAY, &addr.data, addr.bytelen);
+			else
+				addattr_l(&req.n, sizeof(req), RTA_VIA, &addr.family, addr.bytelen+2);
 		} else if (strcmp(*argv, "from") == 0) {
 			inet_prefix addr;
 			NEXT_ARG();
@@ -1253,8 +1303,14 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			get_unsigned(&mark, *argv, 0);
 			filter.markmask = -1;
 		} else if (strcmp(*argv, "via") == 0) {
+			int family;
 			NEXT_ARG();
-			get_prefix(&filter.rvia, *argv, do_ipv6);
+			family = read_family(*argv);
+			if (family == AF_UNSPEC)
+				family = do_ipv6;
+			else
+				NEXT_ARG();
+			get_prefix(&filter.rvia, *argv, family);
 		} else if (strcmp(*argv, "src") == 0) {
 			NEXT_ARG();
 			get_prefix(&filter.rprefsrc, *argv, do_ipv6);
@@ -1556,6 +1612,8 @@ static int iproute_get(int argc, char **argv)
 			tb[RTA_OIF]->rta_type = 0;
 		if (tb[RTA_GATEWAY])
 			tb[RTA_GATEWAY]->rta_type = 0;
+		if (tb[RTA_VIA])
+			tb[RTA_VIA]->rta_type = 0;
 		if (!idev && tb[RTA_IIF])
 			tb[RTA_IIF]->rta_type = 0;
 		req.n.nlmsg_flags = NLM_F_REQUEST;

@@ -81,11 +81,16 @@ replace " } "
 .ti -8
 .IR NH " := [ "
 .B  via
-.IR ADDRESS " ] [ "
+[
+.IR FAMILY " ] " ADDRESS " ] [ "
 .B  dev
 .IR STRING " ] [ "
 .B  weight
 .IR NUMBER " ] " NHFLAGS
+
+.ti -8
+.IR FAMILY " := [ "
+.BR inet " | " inet6 " | " ipx " | " dnet " | " bridge " | " link " ]"
 
 .ti -8
 .IR OPTIONS " := " FLAGS " [ "
@@ -333,9 +338,10 @@ table by default.
 the output device name.
 
 .TP
-.BI via " ADDRESS"
-the address of the nexthop router.  Actually, the sense of this field
-depends on the route type.  For normal
+.BI via " [ FAMILY ] ADDRESS"
+the address of the nexthop router, in the address family FAMILY.
+Actually, the sense of this field depends on the route type.  For
+normal
 .B unicast
 routes it is either the true next hop router or, if it is a direct
 route installed in BSD compatibility mode, it can be a local address
@@ -472,7 +478,7 @@ is a complex value with its own syntax similar to the top level
 argument lists:
 
 .in +8
-.BI via " ADDRESS"
+.BI via " [ FAMILY ] ADDRESS"
 - is the nexthop router.
 .sp
 
@@ -669,7 +675,7 @@ only list routes of this type.
 only list routes going via this device.
 
 .TP
-.BI via " PREFIX"
+.BI via " [ FAMILY ] PREFIX"
 only list routes going via the nexthop routers selected by
 .IR PREFIX "."
 
