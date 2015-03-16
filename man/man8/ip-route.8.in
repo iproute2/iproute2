@@ -129,6 +129,8 @@ replace " } "
 .IR BOOL " ] [ "
 .B  congctl
 .IR NAME " ]"
+.B  pref
+.IR PREF " ]"
 
 .ti -8
 .IR TYPE " := [ "
@@ -157,6 +159,10 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .ti -8
 .IR FEATURES " := [ "
 .BR ecn " | ]"
+
+.ti -8
+.IR PREF " := [ "
+.BR low " | " medium " | " high " ]"
 
 
 .SH DESCRIPTION
@@ -562,6 +568,28 @@ to assign (or not to assign) protocol tags.
 .B onlink
 pretend that the nexthop is directly attached to this link,
 even if it does not match any interface prefix.
+
+.TP
+.BI pref " PREF"
+the IPv6 route preference.
+.I PREF
+is a string specifying the route preference as defined in RFC4191 for Router
+Discovery messages. Namely:
+
+.in +8
+.B low
+- the route has a lowest priority
+.sp
+
+.B medium
+- the route has a default priority
+.sp
+
+.B high
+- the route has a highest priority
+.sp
+
+.in -8
 .RE
 
 .TP

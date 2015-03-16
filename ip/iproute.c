@@ -23,6 +23,7 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <linux/in_route.h>
+#include <linux/icmpv6.h>
 #include <errno.h>
 
 #include "rt_names.h"
@@ -83,12 +84,14 @@ static void usage(void)
 	fprintf(stderr, "           [ ssthresh NUMBER ] [ realms REALM ] [ src ADDRESS ]\n");
 	fprintf(stderr, "           [ rto_min TIME ] [ hoplimit NUMBER ] [ initrwnd NUMBER ]\n");
 	fprintf(stderr, "           [ features FEATURES ] [ quickack BOOL ] [ congctl NAME ]\n");
+	fprintf(stderr, "           [ pref PREF ]\n");
 	fprintf(stderr, "TYPE := [ unicast | local | broadcast | multicast | throw |\n");
 	fprintf(stderr, "          unreachable | prohibit | blackhole | nat ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
 	fprintf(stderr, "SCOPE := [ host | link | global | NUMBER ]\n");
 	fprintf(stderr, "NHFLAGS := [ onlink | pervasive ]\n");
 	fprintf(stderr, "RTPROTO := [ kernel | boot | static | NUMBER ]\n");
+	fprintf(stderr, "PREF := [ low | medium | high ]\n");
 	fprintf(stderr, "TIME := NUMBER[s|ms]\n");
 	fprintf(stderr, "BOOL := [1|0]\n");
 	fprintf(stderr, "FEATURES := ecn\n");
@@ -671,6 +674,24 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			nh = RTNH_NEXT(nh);
 		}
 	}
+	if (tb[RTA_PREF]) {
+		unsigned int pref = rta_getattr_u8(tb[RTA_PREF]);
+		fprintf(fp, " pref ");
+
+		switch (pref) {
+		case ICMPV6_ROUTER_PREF_LOW:
+			fprintf(fp, "low");
+			break;
+		case ICMPV6_ROUTER_PREF_MEDIUM:
+			fprintf(fp, "medium");
+			break;
+		case ICMPV6_ROUTER_PREF_HIGH:
+			fprintf(fp, "high");
+			break;
+		default:
+			fprintf(fp, "%u", pref);
+		}
+	}
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
@@ -854,7 +875,7 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			req.r.rtm_tos = tos;
 		} else if (matches(*argv, "metric") == 0 ||
 			   matches(*argv, "priority") == 0 ||
-			   matches(*argv, "preference") == 0) {
+			   strcmp(*argv, "preference") == 0) {
 			__u32 metric;
 			NEXT_ARG();
 			if (get_u32(&metric, *argv, 0))
@@ -1051,6 +1072,18 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			   strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
 			d = *argv;
+		} else if (matches(*argv, "pref") == 0) {
+			__u8 pref;
+			NEXT_ARG();
+			if (strcmp(*argv, "low") == 0)
+				pref = ICMPV6_ROUTER_PREF_LOW;
+			else if (strcmp(*argv, "medium") == 0)
+				pref = ICMPV6_ROUTER_PREF_MEDIUM;
+			else if (strcmp(*argv, "high") == 0)
+				pref = ICMPV6_ROUTER_PREF_HIGH;
+			else if (get_u8(&pref, *argv, 0))
+				invarg("\"pref\" value is invalid\n", *argv);
+			addattr8(&req.n, sizeof(req), RTA_PREF, pref);
 		} else {
 			int type;
 			inet_prefix dst;
