@@ -195,6 +195,7 @@ int do_iptoken(int argc, char **argv)
 	if (argc < 1) {
 		return iptoken_list(0, NULL);
 	} else if (matches(argv[0], "list") == 0 ||
+		   matches(argv[0], "lst") == 0 ||
 		   matches(argv[0], "show") == 0) {
 		return iptoken_list(argc - 1, argv + 1);
 	} else if (matches(argv[0], "set") == 0 ||
