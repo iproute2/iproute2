@@ -157,6 +157,11 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+#ifndef __check_format_string
+# define __check_format_string(pos_str, pos_args) \
+	__attribute__ ((format (printf, (pos_str), (pos_args))))
+#endif
+
 extern int cmdlineno;
 extern ssize_t getcmdline(char **line, size_t *len, FILE *in);
 extern int makeargs(char *line, char *argv[], int maxargs);

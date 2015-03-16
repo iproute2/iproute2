@@ -266,6 +266,29 @@ EOF
     rm -f $TMPDIR/ipsettest.c $TMPDIR/ipsettest
 }
 
+check_elf()
+{
+    cat >$TMPDIR/elftest.c <<EOF
+#include <libelf.h>
+#include <gelf.h>
+int main(void)
+{
+	Elf_Scn *scn;
+	GElf_Shdr shdr;
+	return elf_version(EV_CURRENT);
+}
+EOF
+
+    if $CC -I$INCLUDE -o $TMPDIR/elftest $TMPDIR/elftest.c -lelf >/dev/null 2>&1
+    then
+	echo "TC_CONFIG_ELF:=y" >>Config
+	echo "yes"
+    else
+	echo "no"
+    fi
+    rm -f $TMPDIR/elftest.c $TMPDIR/elftest
+}
+
 check_selinux()
 # SELinux is a compile time option in the ss utility
 {
@@ -305,6 +328,9 @@ check_netnsid
 
 echo -n "SELinux support: "
 check_selinux
+
+echo -n "ELF support: "
+check_elf
 
 echo -e "\nDocs"
 check_docs

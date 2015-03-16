@@ -34,13 +34,15 @@ static void explain(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, " [inline]:     run bytecode BPF_BYTECODE\n");
 	fprintf(stderr, " [from file]:  run bytecode-file FILE\n");
+	fprintf(stderr, " [from file]:  run object-file FILE\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "               [ action ACTION_SPEC ]\n");
 	fprintf(stderr, "               [ classid CLASSID ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where BPF_BYTECODE := \'s,c t f k,c t f k,c t f k,...\'\n");
 	fprintf(stderr, "      c,t,f,k and s are decimals; s denotes number of 4-tuples\n");
-	fprintf(stderr, "Where FILE points to a file containing the BPF_BYTECODE string\n");
+	fprintf(stderr, "Where FILE points to a file containing the BPF_BYTECODE string,\n");
+	fprintf(stderr, "or an ELF file containing eBPF map definitions and bytecode.\n");
 	fprintf(stderr, "\nACTION_SPEC := ... look at individual actions\n");
 	fprintf(stderr, "NOTE: CLASSID is parsed as hexadecimal input.\n");
 }
@@ -71,31 +73,40 @@ static int bpf_parse_opt(struct filter_util *qu, char *handle,
 
 	while (argc > 0) {
 		if (matches(*argv, "run") == 0) {
-			bool from_file;
+			bool from_file = true, ebpf;
 			struct sock_filter bpf_ops[BPF_MAXINSNS];
-			__u16 bpf_len;
 			int ret;
 
 			NEXT_ARG();
 			if (strcmp(*argv, "bytecode-file") == 0) {
-				from_file = true;
+				ebpf = false;
 			} else if (strcmp(*argv, "bytecode") == 0) {
 				from_file = false;
+				ebpf = false;
+			} else if (strcmp(*argv, "object-file") == 0) {
+				ebpf = true;
 			} else {
 				fprintf(stderr, "What is \"%s\"?\n", *argv);
 				explain();
 				return -1;
 			}
 			NEXT_ARG();
-			ret = bpf_parse_ops(argc, argv, bpf_ops, from_file);
+			ret = ebpf ? bpf_open_object(*argv, BPF_PROG_TYPE_SCHED_CLS) :
+			             bpf_parse_ops(argc, argv, bpf_ops, from_file);
 			if (ret < 0) {
-				fprintf(stderr, "Illegal \"bytecode\"\n");
+				fprintf(stderr, "%s\n", ebpf ?
+					"Could not load object" :
+					"Illegal \"bytecode\"");
 				return -1;
 			}
-			bpf_len = ret;
-			addattr16(n, MAX_MSG, TCA_BPF_OPS_LEN, bpf_len);
-			addattr_l(n, MAX_MSG, TCA_BPF_OPS, &bpf_ops,
-				  bpf_len * sizeof(struct sock_filter));
+			if (ebpf) {
+				addattr32(n, MAX_MSG, TCA_BPF_FD, ret);
+				addattrstrz(n, MAX_MSG, TCA_BPF_NAME, *argv);
+			} else {
+				addattr16(n, MAX_MSG, TCA_BPF_OPS_LEN, ret);
+				addattr_l(n, MAX_MSG, TCA_BPF_OPS, &bpf_ops,
+					  ret * sizeof(struct sock_filter));
+			}
 		} else if (matches(*argv, "classid") == 0 ||
 			   strcmp(*argv, "flowid") == 0) {
 			unsigned handle;
@@ -152,6 +163,11 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 		fprintf(f, "flowid %s ",
 			sprint_tc_classid(rta_getattr_u32(tb[TCA_BPF_CLASSID]), b1));
 	}
+
+	if (tb[TCA_BPF_NAME])
+		fprintf(f, "%s ", rta_getattr_str(tb[TCA_BPF_NAME]));
+	else if (tb[TCA_BPF_FD])
+		fprintf(f, "pfd %u ", rta_getattr_u32(tb[TCA_BPF_FD]));
 
 	if (tb[TCA_BPF_OPS] && tb[TCA_BPF_OPS_LEN])
 		bpf_print_ops(f, tb[TCA_BPF_OPS],

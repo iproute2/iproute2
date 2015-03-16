@@ -89,6 +89,11 @@ else
   endif
 endif
 
+ifeq ($(TC_CONFIG_ELF),y)
+  CFLAGS += -DHAVE_ELF
+  LDLIBS += -lelf
+endif
+
 TCOBJ += $(TCMODULES)
 LDLIBS += -L. -ltc -lm
 
