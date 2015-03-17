@@ -54,7 +54,7 @@ bridge \- show / manipulate bridge addresses and devices
 .B  dev
 .IR DEV " { "
 .BR local " | " temp " } { "
-.BR self " } { " embedded " } { " router " } [ "
+.BR self " } { " router " } [ "
 .B  dst
 .IR IPADDR " ] [ "
 .B vni
@@ -324,10 +324,6 @@ the interface to which this address is associated.
 
 .B self
 - the address is associated with a software fdb (default)
-.sp
-
-.B embedded
-- the address is associated with an offloaded fdb
 .sp
 
 .B router
