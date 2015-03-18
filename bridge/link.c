@@ -284,31 +284,31 @@ static int brlink_modify(int argc, char **argv)
 		} else if (strcmp(*argv, "guard") == 0) {
 			NEXT_ARG();
 			if (!on_off("guard", &bpdu_guard, *argv))
-				exit(-1);
+				return -1;
 		} else if (strcmp(*argv, "hairpin") == 0) {
 			NEXT_ARG();
 			if (!on_off("hairping", &hairpin, *argv))
-				exit(-1);
+				return -1;
 		} else if (strcmp(*argv, "fastleave") == 0) {
 			NEXT_ARG();
 			if (!on_off("fastleave", &fast_leave, *argv))
-				exit(-1);
+				return -1;
 		} else if (strcmp(*argv, "root_block") == 0) {
 			NEXT_ARG();
 			if (!on_off("root_block", &root_block, *argv))
-				exit(-1);
+				return -1;
 		} else if (strcmp(*argv, "learning") == 0) {
 			NEXT_ARG();
 			if (!on_off("learning", &learning, *argv))
-				exit(-1);
+				return -1;
 		} else if (strcmp(*argv, "learning_sync") == 0) {
 			NEXT_ARG();
 			if (!on_off("learning_sync", &learning_sync, *argv))
-				exit(-1);
+				return -1;
 		} else if (strcmp(*argv, "flood") == 0) {
 			NEXT_ARG();
 			if (!on_off("flood", &flood, *argv))
-				exit(-1);
+				return -1;
 		} else if (strcmp(*argv, "cost") == 0) {
 			NEXT_ARG();
 			cost = atoi(*argv);
@@ -327,7 +327,7 @@ static int brlink_modify(int argc, char **argv)
 				if (state == nstates) {
 					fprintf(stderr,
 						"Error: invalid STP port state\n");
-					exit(-1);
+					return -1;
 				}
 			}
 		} else if (strcmp(*argv, "hwmode") == 0) {
@@ -341,7 +341,7 @@ static int brlink_modify(int argc, char **argv)
 				fprintf(stderr,
 					"Mode argument must be \"vepa\" or "
 					"\"veb\".\n");
-				exit(-1);
+				return -1;
 			}
 		} else if (strcmp(*argv, "self") == 0) {
 			flags |= BRIDGE_FLAGS_SELF;
@@ -354,14 +354,14 @@ static int brlink_modify(int argc, char **argv)
 	}
 	if (d == NULL) {
 		fprintf(stderr, "Device is a required argument.\n");
-		exit(-1);
+		return -1;
 	}
 
 
 	req.ifm.ifi_index = ll_name_to_index(d);
 	if (req.ifm.ifi_index == 0) {
 		fprintf(stderr, "Cannot find bridge device \"%s\"\n", d);
-		exit(-1);
+		return -1;
 	}
 
 	/* Nested PROTINFO attribute.  Contains: port flags, cost, priority and
@@ -416,7 +416,7 @@ static int brlink_modify(int argc, char **argv)
 	}
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
-		exit(2);
+		return -1;
 
 	return 0;
 }

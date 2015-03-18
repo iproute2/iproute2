@@ -320,7 +320,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 
 	if (d == NULL || addr == NULL) {
 		fprintf(stderr, "Device and address are required arguments.\n");
-		exit(-1);
+		return -1;
 	}
 
 	/* Assume self */
@@ -335,7 +335,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		   abuf, abuf+1, abuf+2,
 		   abuf+3, abuf+4, abuf+5) != 6) {
 		fprintf(stderr, "Invalid mac address %s\n", addr);
-		exit(-1);
+		return -1;
 	}
 
 	addattr_l(&req.n, sizeof(req), NDA_LLADDR, abuf, ETH_ALEN);
@@ -363,7 +363,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 	}
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
-		exit(2);
+		return -1;
 
 	return 0;
 }

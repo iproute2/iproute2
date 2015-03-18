@@ -145,12 +145,12 @@ static int mdb_show(int argc, char **argv)
 
 	if (rtnl_wilddump_request(&rth, PF_BRIDGE, RTM_GETMDB) < 0) {
 		perror("Cannot send dump request");
-		exit(1);
+		return -1;
 	}
 
 	if (rtnl_dump_filter(&rth, print_mdb, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
-		exit(1);
+		return -1;
 	}
 
 	return 0;
@@ -198,7 +198,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 	if (d == NULL || grp == NULL || p == NULL) {
 		fprintf(stderr, "Device, group address and port name are required arguments.\n");
-		exit(-1);
+		return -1;
 	}
 
 	req.bpm.ifindex = ll_name_to_index(d);
@@ -225,7 +225,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
-		exit(2);
+		return -1;
 
 	return 0;
 }
