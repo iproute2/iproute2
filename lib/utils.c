@@ -477,7 +477,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 
 	err = get_addr_1(dst, arg, family);
 	if (err == 0) {
-		dst->bitlen = af_bit_len(family);
+		dst->bitlen = af_bit_len(dst->family);
 
 		if (slash) {
 			if (get_netmask(&plen, slash+1, 0)
