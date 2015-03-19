@@ -900,7 +900,8 @@ and the outer UDP checksum and remote checksum offload are enabled.
 
 .SH SEE ALSO
 .br
-.BR ip (8)
+.BR ip (8),
+.BR ip-netns (8)
 
 .SH AUTHOR
 Original Manpage by Michail Litvak <mci@owl.openwall.com>
