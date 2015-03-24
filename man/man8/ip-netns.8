@@ -46,7 +46,7 @@ ip-netns \- process network namespace management
 A network namespace is logically another copy of the network stack,
 with its own routes, firewall rules, and network devices.
 
-By default process inherits network namespace from its parent. Initially all
+By default a process inherits its network namespace from its parent. Initially all
 the processes share the same default network namespace from the init process.
 
 By convention a named network namespace is an object at
@@ -103,10 +103,18 @@ option was specified then all the network namespace names will be removed.
 It is possible to lose the physical device when it was moved to netns and
 then this netns was deleted with a running process:
 
-    $ ip netns add net0
-    $ ip link set dev eth0 netns net0
-    $ ip netns exec net0 SOME_PROCESS_IN_BACKGROUND
-    $ ip netns del net0
+.RS 10
+$ ip netns add net0
+.RE
+.RS 10
+$ ip link set dev eth0 netns net0
+.RE
+.RS 10
+$ ip netns exec net0 SOME_PROCESS_IN_BACKGROUND
+.RE
+.RS 10
+$ ip netns del net0
+.RE
 
 and eth0 will appear in the default netns only after SOME_PROCESS_IN_BACKGROUND
 will exit or will be killed. To prevent this the processes running in net0
