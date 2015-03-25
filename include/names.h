@@ -16,7 +16,8 @@ struct db_names {
 	int max;
 };
 
-struct db_names *db_names_alloc(const char *path);
+struct db_names *db_names_alloc(void);
+int db_names_load(struct db_names *db, const char *path);
 void db_names_free(struct db_names *db);
 
 char *id_to_name(struct db_names *db, int id, char *name);
