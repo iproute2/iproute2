@@ -171,6 +171,20 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+#define BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
+
+#ifndef offsetof
+# define offsetof(type, member) ((size_t) &((type *)0)->member)
+#endif
+
+#ifndef min
+# define min(x, y) ({			\
+	typeof(x) _min1 = (x);		\
+	typeof(y) _min2 = (y);		\
+	(void) (&_min1 == &_min2);	\
+	_min1 < _min2 ? _min1 : _min2; })
+#endif
+
 #ifndef __check_format_string
 # define __check_format_string(pos_str, pos_args) \
 	__attribute__ ((format (printf, (pos_str), (pos_args))))

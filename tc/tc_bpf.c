@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 #include <linux/filter.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -31,6 +32,10 @@
 #endif
 
 #include "utils.h"
+
+#include "bpf_elf.h"
+#include "bpf_scm.h"
+
 #include "tc_util.h"
 #include "tc_bpf.h"
 
@@ -151,30 +156,47 @@ void bpf_print_ops(FILE *f, struct rtattr *bpf_ops, __u16 len)
 		fprintf(f, "%hu %hhu %hhu %u,", ops[i].code, ops[i].jt,
 			ops[i].jf, ops[i].k);
 
-	fprintf(f, "%hu %hhu %hhu %u\'\n", ops[i].code, ops[i].jt,
+	fprintf(f, "%hu %hhu %hhu %u\'", ops[i].code, ops[i].jt,
 		ops[i].jf, ops[i].k);
 }
 
-#ifdef HAVE_ELF
-struct bpf_elf_sec_data {
-	GElf_Shdr	sec_hdr;
-	char		*sec_name;
-	Elf_Data	*sec_data;
-};
-
-static char bpf_log_buf[8192];
-
-static const char *prog_type_section(enum bpf_prog_type type)
+const char *bpf_default_section(const enum bpf_prog_type type)
 {
 	switch (type) {
 	case BPF_PROG_TYPE_SCHED_CLS:
 		return ELF_SECTION_CLASSIFIER;
-	/* case BPF_PROG_TYPE_SCHED_ACT:   */
-	/*	return ELF_SECTION_ACTION; */
+	case BPF_PROG_TYPE_SCHED_ACT:
+		return ELF_SECTION_ACTION;
 	default:
 		return NULL;
 	}
 }
+
+#ifdef HAVE_ELF
+struct bpf_elf_sec_data {
+	GElf_Shdr sec_hdr;
+	char *sec_name;
+	Elf_Data *sec_data;
+};
+
+struct bpf_map_data {
+	int *fds;
+	const char *obj;
+	struct bpf_elf_st *st;
+	struct bpf_elf_map *ent;
+};
+
+/* If we provide a small buffer with log level enabled, the kernel
+ * could fail program load as no buffer space is available for the
+ * log and thus verifier fails. In case something doesn't pass the
+ * verifier we still want to hand something descriptive to the user.
+ */
+static char bpf_log_buf[65536];
+
+static struct bpf_elf_st bpf_st;
+
+static int map_fds[ELF_MAX_MAPS];
+static struct bpf_elf_map map_ent[ELF_MAX_MAPS];
 
 static void bpf_dump_error(const char *format, ...)  __check_format_string(1, 2);
 static void bpf_dump_error(const char *format, ...)
@@ -185,8 +207,47 @@ static void bpf_dump_error(const char *format, ...)
 	vfprintf(stderr, format, vl);
 	va_end(vl);
 
-	fprintf(stderr, "%s", bpf_log_buf);
+	fprintf(stderr, "%s\n", bpf_log_buf);
 	memset(bpf_log_buf, 0, sizeof(bpf_log_buf));
+}
+
+static void bpf_save_finfo(int file_fd)
+{
+	struct stat st;
+	int ret;
+
+	memset(&bpf_st, 0, sizeof(bpf_st));
+
+	ret = fstat(file_fd, &st);
+	if (ret < 0) {
+		fprintf(stderr, "Stat of elf file failed: %s\n",
+			strerror(errno));
+		return;
+	}
+
+	bpf_st.st_dev = st.st_dev;
+	bpf_st.st_ino = st.st_ino;
+}
+
+static void bpf_clear_finfo(void)
+{
+	memset(&bpf_st, 0, sizeof(bpf_st));
+}
+
+static bool bpf_may_skip_map_creation(int file_fd)
+{
+	struct stat st;
+	int ret;
+
+	ret = fstat(file_fd, &st);
+	if (ret < 0) {
+		fprintf(stderr, "Stat of elf file failed: %s\n",
+			strerror(errno));
+		return false;
+	}
+
+	return (bpf_st.st_dev == st.st_dev) &&
+	       (bpf_st.st_ino == st.st_ino);
 }
 
 static int bpf_create_map(enum bpf_map_type type, unsigned int size_key,
@@ -240,30 +301,44 @@ static int bpf_map_attach(enum bpf_map_type type, unsigned int size_key,
 	return map_fd;
 }
 
-static void bpf_maps_init(int *map_fds, unsigned int max_fds)
+static void bpf_maps_init(void)
 {
 	int i;
 
-	for (i = 0; i < max_fds; i++)
+	memset(map_ent, 0, sizeof(map_ent));
+	for (i = 0; i < ARRAY_SIZE(map_fds); i++)
 		map_fds[i] = -1;
 }
 
-static void bpf_maps_destroy(const int *map_fds, unsigned int max_fds)
+static int bpf_maps_count(void)
+{
+	int i, count = 0;
+
+	for (i = 0; i < ARRAY_SIZE(map_fds); i++) {
+		if (map_fds[i] < 0)
+			break;
+		count++;
+	}
+
+	return count;
+}
+
+static void bpf_maps_destroy(void)
 {
 	int i;
 
-	for (i = 0; i < max_fds; i++) {
+	memset(map_ent, 0, sizeof(map_ent));
+	for (i = 0; i < ARRAY_SIZE(map_fds); i++) {
 		if (map_fds[i] >= 0)
 			close(map_fds[i]);
 	}
 }
 
-static int bpf_maps_attach(struct bpf_elf_map *maps, unsigned int num_maps,
-			   int *map_fds, unsigned int max_fds)
+static int bpf_maps_attach(struct bpf_elf_map *maps, unsigned int num_maps)
 {
 	int i, ret;
 
-	for (i = 0; i < num_maps && num_maps <= max_fds; i++) {
+	for (i = 0; (i < num_maps) && (num_maps <= ARRAY_SIZE(map_fds)); i++) {
 		struct bpf_elf_map *map = &maps[i];
 
 		ret = bpf_map_attach(map->type, map->size_key,
@@ -277,7 +352,7 @@ static int bpf_maps_attach(struct bpf_elf_map *maps, unsigned int num_maps,
 	return 0;
 
 err_unwind:
-	bpf_maps_destroy(map_fds, i);
+	bpf_maps_destroy();
 	return ret;
 }
 
@@ -316,7 +391,7 @@ static int bpf_fill_section_data(Elf *elf_fd, GElf_Ehdr *elf_hdr, int sec_index,
 
 static int bpf_apply_relo_data(struct bpf_elf_sec_data *data_relo,
 			       struct bpf_elf_sec_data *data_insn,
-			       Elf_Data *sym_tab, int *map_fds, int max_fds)
+			       Elf_Data *sym_tab)
 {
 	Elf_Data *idata = data_insn->sec_data;
 	GElf_Shdr *rhdr = &data_relo->sec_hdr;
@@ -342,7 +417,9 @@ static int bpf_apply_relo_data(struct bpf_elf_sec_data *data_relo,
 			return -EIO;
 
 		fnum = sym.st_value / sizeof(struct bpf_elf_map);
-		if (fnum >= max_fds)
+		if (fnum >= ARRAY_SIZE(map_fds))
+			return -EINVAL;
+		if (map_fds[fnum] < 0)
 			return -EINVAL;
 
 		insns[ioff].src_reg = BPF_PSEUDO_MAP_FD;
@@ -352,9 +429,8 @@ static int bpf_apply_relo_data(struct bpf_elf_sec_data *data_relo,
 	return 0;
 }
 
-static int bpf_fetch_ancillary(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
-			       int *map_fds, unsigned int max_fds,
-			       char *license, unsigned int lic_len,
+static int bpf_fetch_ancillary(int file_fd, Elf *elf_fd, GElf_Ehdr *elf_hdr,
+			       bool *sec_seen, char *license, unsigned int lic_len,
 			       Elf_Data **sym_tab)
 {
 	int sec_index, ret = -1;
@@ -368,14 +444,20 @@ static int bpf_fetch_ancillary(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
 			continue;
 
 		/* Extract and load eBPF map fds. */
-		if (!strcmp(data_anc.sec_name, ELF_SECTION_MAPS)) {
-			struct bpf_elf_map *maps = data_anc.sec_data->d_buf;
-			unsigned int maps_num = data_anc.sec_data->d_size /
-						sizeof(*maps);
+		if (!strcmp(data_anc.sec_name, ELF_SECTION_MAPS) &&
+		    !bpf_may_skip_map_creation(file_fd)) {
+			struct bpf_elf_map *maps;
+			unsigned int maps_num;
+
+			if (data_anc.sec_data->d_size % sizeof(*maps) != 0)
+				return -EINVAL;
+
+			maps = data_anc.sec_data->d_buf;
+			maps_num = data_anc.sec_data->d_size / sizeof(*maps);
+			memcpy(map_ent, maps, data_anc.sec_data->d_size);
 
 			sec_seen[sec_index] = true;
-			ret = bpf_maps_attach(maps, maps_num, map_fds,
-					      max_fds);
+			ret = bpf_maps_attach(maps, maps_num);
 			if (ret < 0)
 				return ret;
 		}
@@ -399,8 +481,8 @@ static int bpf_fetch_ancillary(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
 }
 
 static int bpf_fetch_prog_relo(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
-			       enum bpf_prog_type type, char *license,
-			       Elf_Data *sym_tab, int *map_fds, unsigned int max_fds)
+			       enum bpf_prog_type type, const char *sec,
+			       const char *license, Elf_Data *sym_tab)
 {
 	int sec_index, prog_fd = -1;
 
@@ -420,14 +502,13 @@ static int bpf_fetch_prog_relo(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
 					    &data_insn);
 		if (ret < 0)
 			continue;
-		if (strcmp(data_insn.sec_name, prog_type_section(type)))
+		if (strcmp(data_insn.sec_name, sec))
 			continue;
 
 		sec_seen[sec_index] = true;
 		sec_seen[ins_index] = true;
 
-		ret = bpf_apply_relo_data(&data_relo, &data_insn, sym_tab,
-					  map_fds, max_fds);
+		ret = bpf_apply_relo_data(&data_relo, &data_insn, sym_tab);
 		if (ret < 0)
 			continue;
 
@@ -443,7 +524,8 @@ static int bpf_fetch_prog_relo(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
 }
 
 static int bpf_fetch_prog(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
-			  enum bpf_prog_type type, char *license)
+			  enum bpf_prog_type type, const char *sec,
+			  const char *license)
 {
 	int sec_index, prog_fd = -1;
 
@@ -459,7 +541,7 @@ static int bpf_fetch_prog(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
 					    &data_insn);
 		if (ret < 0)
 			continue;
-		if (strcmp(data_insn.sec_name, prog_type_section(type)))
+		if (strcmp(data_insn.sec_name, sec))
 			continue;
 
 		prog_fd = bpf_prog_attach(type, data_insn.sec_data->d_buf,
@@ -473,9 +555,8 @@ static int bpf_fetch_prog(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
 	return prog_fd;
 }
 
-int bpf_open_object(const char *path, enum bpf_prog_type type)
+int bpf_open_object(const char *path, enum bpf_prog_type type, const char *sec)
 {
-	int map_fds[ELF_MAX_MAPS], max_fds = ARRAY_SIZE(map_fds);
 	char license[ELF_MAX_LICENSE_LEN];
 	int file_fd, prog_fd = -1, ret;
 	Elf_Data *sym_tab = NULL;
@@ -508,31 +589,119 @@ int bpf_open_object(const char *path, enum bpf_prog_type type)
 	}
 
 	memset(license, 0, sizeof(license));
-	bpf_maps_init(map_fds, max_fds);
+	if (!bpf_may_skip_map_creation(file_fd))
+		bpf_maps_init();
 
-	ret = bpf_fetch_ancillary(elf_fd, &elf_hdr, sec_seen, map_fds, max_fds,
+	ret = bpf_fetch_ancillary(file_fd, elf_fd, &elf_hdr, sec_seen,
 				  license, sizeof(license), &sym_tab);
 	if (ret < 0)
 		goto out_maps;
 	if (sym_tab)
 		prog_fd = bpf_fetch_prog_relo(elf_fd, &elf_hdr, sec_seen, type,
-					      license, sym_tab, map_fds, max_fds);
+					      sec, license, sym_tab);
 	if (prog_fd < 0)
-		prog_fd = bpf_fetch_prog(elf_fd, &elf_hdr, sec_seen, type,
+		prog_fd = bpf_fetch_prog(elf_fd, &elf_hdr, sec_seen, type, sec,
 					 license);
 	if (prog_fd < 0)
 		goto out_maps;
-out_sec:
+
+	bpf_save_finfo(file_fd);
+
+	free(sec_seen);
+
+	elf_end(elf_fd);
+	close(file_fd);
+
+	return prog_fd;
+
+out_maps:
+	bpf_maps_destroy();
 	free(sec_seen);
 out_elf:
 	elf_end(elf_fd);
 out:
 	close(file_fd);
+	bpf_clear_finfo();
 	return prog_fd;
-
-out_maps:
-	bpf_maps_destroy(map_fds, max_fds);
-	goto out_sec;
 }
 
+static int
+bpf_map_set_xmit(int fd, struct sockaddr_un *addr, unsigned int addr_len,
+		 const struct bpf_map_data *aux, unsigned int ents)
+{
+	struct bpf_map_set_msg msg;
+	int *cmsg_buf, min_fd;
+	char *amsg_buf;
+	int i;
+
+	memset(&msg, 0, sizeof(msg));
+
+	msg.aux.uds_ver = BPF_SCM_AUX_VER;
+	msg.aux.num_ent = ents;
+
+	strncpy(msg.aux.obj_name, aux->obj, sizeof(msg.aux.obj_name));
+	memcpy(&msg.aux.obj_st, aux->st, sizeof(msg.aux.obj_st));
+
+	cmsg_buf = bpf_map_set_init(&msg, addr, addr_len);
+	amsg_buf = (char *)msg.aux.ent;
+
+	for (i = 0; i < ents; i += min_fd) {
+		int ret;
+
+		min_fd = min(BPF_SCM_MAX_FDS * 1U, ents - i);
+
+		bpf_map_set_init_single(&msg, min_fd);
+
+		memcpy(cmsg_buf, &aux->fds[i], sizeof(aux->fds[0]) * min_fd);
+		memcpy(amsg_buf, &aux->ent[i], sizeof(aux->ent[0]) * min_fd);
+
+		ret = sendmsg(fd, &msg.hdr, 0);
+		if (ret <= 0)
+			return ret ? : -1;
+	}
+
+	return 0;
+}
+
+int bpf_handoff_map_fds(const char *path, const char *obj)
+{
+	struct sockaddr_un addr;
+	struct bpf_map_data bpf_aux;
+	int fd, ret;
+
+	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open socket: %s\n",
+			strerror(errno));
+		return -1;
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+
+	ret = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret < 0) {
+		fprintf(stderr, "Cannot connect to %s: %s\n",
+			path, strerror(errno));
+		return -1;
+	}
+
+	memset(&bpf_aux, 0, sizeof(bpf_aux));
+
+	bpf_aux.fds = map_fds;
+	bpf_aux.ent = map_ent;
+
+	bpf_aux.obj = obj;
+	bpf_aux.st = &bpf_st;
+
+	ret = bpf_map_set_xmit(fd, &addr, sizeof(addr), &bpf_aux,
+			       bpf_maps_count());
+	if (ret < 0)
+		fprintf(stderr, "Cannot xmit fds to %s: %s\n",
+			path, strerror(errno));
+
+	close(fd);
+	return ret;
+}
 #endif /* HAVE_ELF */
