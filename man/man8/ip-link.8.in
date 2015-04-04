@@ -72,7 +72,10 @@ ip-link \- network device configuration
 .BR gre " |"
 .BR gretap " |"
 .BR ip6gre " |"
-.BR ip6gretap " ]"
+.BR ip6gretap " |"
+.BR vti " |"
+.BR nlmon " |"
+.BR ipvlan " ]"
 
 .ti -8
 .BI "ip link delete " DEVICE
@@ -228,6 +231,15 @@ Link types:
 .sp
 .BR ip6gretap
 - Virtual L2 tunnel interface GRE over IPv6
+.sp
+.BR vti
+- Virtual tunnel interface
+.sp
+.BR nlmon
+- Netlink monitoring device
+.sp
+.BR ipvlan
+- Interface for L3 (IPv6/IPv4) based VLANs
 .in -8
 
 .TP
