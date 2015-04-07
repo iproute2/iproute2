@@ -47,7 +47,7 @@ has the same semantics as
 .B codel
 and is the acceptable minimum
 standing/persistent queue delay. This minimum delay is identified by tracking
-the local minimum queue delay that packets experience.  Default value is 5ms.
+the local minimum queue delay that packets experience. Default value is 5ms.
 
 .SS interval
 has the same semantics as
@@ -55,7 +55,7 @@ has the same semantics as
 and is used to ensure that the measured minimum delay does not become too stale.
 The minimum delay must be experienced in the last epoch of length .B interval.
 It should be set on the order of the worst-case RTT through the bottleneck to
-give endpoints sufficient time to react.  Default value is 100ms.
+give endpoints sufficient time to react. Default value is 100ms.
 
 .SS quantum
 is the number of bytes used as 'deficit' in the fair queuing algorithm. Default
@@ -65,7 +65,7 @@ header length of 14 bytes.
 .SS ecn | noecn
 has the same semantics as
 .B codel
-and can be used to mark packets instead of dropping them.  If
+and can be used to mark packets instead of dropping them. If
 .B ecn
 has been enabled,
 .B noecn

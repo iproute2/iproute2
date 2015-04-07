@@ -111,7 +111,7 @@ utility and exit.
 
 .TP
 .BR "\-s" , " \-stats", " \-statistics"
-output more information.  If this option
+output more information. If this option
 is given multiple times, the amount of information increases.
 As a rule, the information is statistics or some time values.
 
@@ -169,9 +169,9 @@ and
 (or
 .B list
 ) objects, but some objects do not allow all of these operations
-or have some additional commands.  The
+or have some additional commands. The
 .B help
-command is available for all objects.  It prints
+command is available for all objects. It prints
 out a list of available commands and argument syntax conventions.
 .sp
 If no command is given, some default command is assumed.
@@ -201,70 +201,70 @@ the STP path cost of the specified port.
 
 .TP
 .BI priority " PRIO "
-the STP port priority.  The priority value is an unsigned 8-bit quantity
-(number between 0 and 255).  This metric is used in the designated port an
+the STP port priority. The priority value is an unsigned 8-bit quantity
+(number between 0 and 255). This metric is used in the designated port an
 droot port selectio algorithms.
 
 .TP
 .BI state " STATE "
-the operation state of the port.  This is primarily used by user space STP/RSTP
-implementation.  One may enter a lowercased port state name, or one of the
-numbers below.  Negative inputs are ignored, and unrecognized names return an
+the operation state of the port. This is primarily used by user space STP/RSTP
+implementation. One may enter a lowercased port state name, or one of the
+numbers below. Negative inputs are ignored, and unrecognized names return an
 error.
 
 .B 0
-- port is DISABLED.  Make this port completely inactive.
+- port is DISABLED. Make this port completely inactive.
 .sp
 
 .B 1
-- STP LISTENING state.  Only valid if STP is enabled on the brige.  In this
+- STP LISTENING state. Only valid if STP is enabled on the brige. In this
 state the port for list for STP BPDUs and drop all other traffic.
 .sp
 
 .B 2
-- STP LEARNING state.  Only valid if STP is enabled on the bridge.  In this
+- STP LEARNING state. Only valid if STP is enabled on the bridge. In this
 state the port will accept traffic only for the purpose of updating MAC
 adress tables.
 .sp
 
 .B 3
-- STP FORWARDING state.  Port is fully active.
+- STP FORWARDING state. Port is fully active.
 .sp
 
 .B 4
-- STP BLOCKING state.  Only valid if STP is enabled on the bridge.  This state
-is used during the STP election process.  In this state, port will only process
+- STP BLOCKING state. Only valid if STP is enabled on the bridge. This state
+is used during the STP election process. In this state, port will only process
 STP BPDUs.
 .sp
 
 .TP
 .BR "guard on " or " guard off "
-Controls whether STP BPUDs will be processed by the bridge port.  By default,
-the flag is turned off allowed BPDU processing.  Turning this flag on will
+Controls whether STP BPUDs will be processed by the bridge port. By default,
+the flag is turned off allowed BPDU processing. Turning this flag on will
 cause the port to stop processing STP BPDUs.
 
 .TP
 .BR "hairpin on " or " hairpin off "
 Controls whether traffic may be send back out of the port on which it was
-received.  By default, this flag is turned off and the bridge will not forward
+received. By default, this flag is turned off and the bridge will not forward
 traffic back out of the receiving port.
 
 .TP
 .BR "fastleave on " or " fastleave off "
 This flag allows the bridge to immediately stop multicast traffic on a port
-that receives IGMP Leave message.  It is only used with IGMP snooping is
-enabled on the bridge.  By default the flag is off.
+that receives IGMP Leave message. It is only used with IGMP snooping is
+enabled on the bridge. By default the flag is off.
 
 .TP
 .BR "root_block on " or " root_block off "
-Controls whether a given port is allowed to become root port or not.  Only used
-when STP is enabled on the bridge.  By default the flag is off.
+Controls whether a given port is allowed to become root port or not. Only used
+when STP is enabled on the bridge. By default the flag is off.
 
 .TP
 .BR "learning on " or " learning off "
 Controls whether a given port will learn MAC addresses from received traffic or
-not.  If learning if off, the bridge will end up flooding any traffic for which
-it has no FDB entry.  By default this flag is on.
+not. If learning if off, the bridge will end up flooding any traffic for which
+it has no FDB entry. By default this flag is on.
 
 .TP
 .BR "learning_sync on " or " learning_sync off "
@@ -273,12 +273,12 @@ bridge FDB.
 
 .TP
 .BR "flooding on " or " flooding off "
-Controls whether a given port will flood unicast traffic for which there is no FDB entry.  By default this flag is on.
+Controls whether a given port will flood unicast traffic for which there is no FDB entry. By default this flag is on.
 
 .TP
 .BI hwmode
 Some network interface cards support HW bridge functionality and they may be
-configured in different modes.  Currently support modes are:
+configured in different modes. Currently support modes are:
 
 .B vepa
 - Data sent between HW ports is sent on the wire to the external
@@ -389,7 +389,7 @@ This command displays the current forwarding table.
 .PP
 With the
 .B -statistics
-option, the command becomes verbose.  It prints out the last updated
+option, the command becomes verbose. It prints out the last updated
 and last used time for each entry.
 
 .SH bridge mdb - multicast group database management
@@ -452,7 +452,7 @@ bridge interfaces.
 .PP
 With the
 .B -details
-option, the command becomes verbose.  It prints out the ports known to have
+option, the command becomes verbose. It prints out the ports known to have
 a connected router.
 
 .SH bridge vlan - VLAN filter list
@@ -487,7 +487,7 @@ the vlan specified is to be treated as untagged on egress.
 
 .TP
 .BI self
-the vlan is configured on the specified physical device.  Required if the
+the vlan is configured on the specified physical device. Required if the
 device is the bridge device.
 
 .TP
@@ -513,7 +513,7 @@ This command displays the current VLAN filter table.
 The
 .B bridge
 utility can monitor the state of devices and  addresses
-continuously.  This option has a slightly different format.
+continuously. This option has a slightly different format.
 Namely, the
 .B monitor
 command is the first in the command line and then the object list follows:
@@ -535,7 +535,7 @@ described in previous sections.
 .P
 If a file name is given, it does not listen on RTNETLINK,
 but opens the file containing RTNETLINK messages saved in binary format
-and dumps them.  Such a history file can be generated with the
+and dumps them. Such a history file can be generated with the
 
 
 .SH NOTES

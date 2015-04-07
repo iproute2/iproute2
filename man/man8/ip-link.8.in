@@ -72,7 +72,10 @@ ip-link \- network device configuration
 .BR gre " |"
 .BR gretap " |"
 .BR ip6gre " |"
-.BR ip6gretap " ]"
+.BR ip6gretap " |"
+.BR vti " |"
+.BR nlmon " |"
+.BR ipvlan " ]"
 
 .ti -8
 .BI "ip link delete " DEVICE
@@ -228,6 +231,15 @@ Link types:
 .sp
 .BR ip6gretap
 - Virtual L2 tunnel interface GRE over IPv6
+.sp
+.BR vti
+- Virtual tunnel interface
+.sp
+.BR nlmon
+- Netlink monitoring device
+.sp
+.BR ipvlan
+- Interface for L3 (IPv6/IPv4) based VLANs
 .in -8
 
 .TP
@@ -300,7 +312,7 @@ parameter.
 .BI remote " IPADDR"
 - specifies the unicast destination IP address to use in outgoing packets
 when the destination link layer address is not known in the VXLAN device
-forwarding database.  This parameter cannot be specified with the
+forwarding database. This parameter cannot be specified with the
 .B group
 parameter.
 
@@ -521,7 +533,7 @@ flag calculates checksums for outgoing packets.
 The
 .B icsum
 flag requires that all input packets have the correct
-checksum.  The
+checksum. The
 .B csum
 flag is equivalent to the combination
 .BR "icsum ocsum" .
@@ -532,7 +544,7 @@ flag is equivalent to the combination
 
 .sp
 .BI  encaplimit " ELIM"
-- specifies a fixed encapsulation limit.  Default is 4.
+- specifies a fixed encapsulation limit. Default is 4.
 
 .sp
 .BI  flowlabel " FLOWLABEL"
@@ -599,7 +611,7 @@ device.
 .BI group " GROUP "
 .I GROUP
 has a dual role: If both group and dev are present, then move the device to the
-specified group.  If only a group is specified, then the command operates on
+specified group. If only a group is specified, then the command operates on
 all devices in that group.
 
 .TP
@@ -631,7 +643,7 @@ used by the Linux).
 
 .TP
 .BI name " NAME"
-change the name of the device.  This operation is not
+change the name of the device. This operation is not
 recommended if the device is running or has some addresses
 already configured.
 
@@ -782,7 +794,7 @@ If multiple parameter changes are requested,
 aborts immediately after any of the changes have failed.
 This is the only case when
 .B ip
-can move the system to an unpredictable state.  The solution
+can move the system to an unpredictable state. The solution
 is to avoid changing several parameters with one
 .B ip link set
 call.

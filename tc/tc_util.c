@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <math.h>
+#include <errno.h>
 
 #include "utils.h"
 #include "names.h"
@@ -33,14 +34,24 @@
 
 static struct db_names *cls_names = NULL;
 
-#define NAMES_DB "/etc/iproute2/cls_names"
+#define NAMES_DB "/etc/iproute2/tc_cls"
 
 int cls_names_init(char *path)
 {
-	cls_names = db_names_alloc(path ?: NAMES_DB);
-	if (!cls_names) {
-		fprintf(stderr, "Error while opening class names file\n");
+	int ret;
+
+	cls_names = db_names_alloc();
+	if (!cls_names)
 		return -1;
+
+	ret = db_names_load(cls_names, path ?: NAMES_DB);
+	if (ret == -ENOENT && path) {
+		fprintf(stderr, "Can't open class names file: %s\n", path);
+		return -1;
+	}
+	if (ret) {
+		db_names_free(cls_names);
+		cls_names = NULL;
 	}
 
 	return 0;

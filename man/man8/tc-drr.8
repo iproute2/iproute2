@@ -23,9 +23,9 @@ Each class is assigned a deficit counter, initialized to
 .B quantum.
 
 DRR maintains an (internal) ''active'' list of classes whose qdiscs are
-non-empty.  This list is used for dequeuing.  A packet is dequeued from
+non-empty. This list is used for dequeuing. A packet is dequeued from
 the class at the head of the list if the packet size is smaller or equal
-to the deficit counter.  If the counter is too small, it is increased by
+to the deficit counter. If the counter is too small, it is increased by
 .B quantum
 and the scheduler moves on to the next class in the active list.
 
@@ -34,7 +34,7 @@ and the scheduler moves on to the next class in the active list.
 .TP
 quantum
 Amount of bytes a flow is allowed to dequeue before the scheduler moves to
-the next class.  Defaults to the MTU of the interface. The minimum value is 1.
+the next class. Defaults to the MTU of the interface. The minimum value is 1.
 
 .SH EXAMPLE & USAGE
 
@@ -54,9 +54,9 @@ You also need to add at least one filter to classify packets.
 .P
 
 Like SFQ, DRR is only useful when it owns the queue \-\- it is a pure scheduler and does
-not delay packets.  Attaching non-work-conserving qdiscs like tbf to it does not make
+not delay packets. Attaching non-work-conserving qdiscs like tbf to it does not make
 sense \-\- other qdiscs in the active list will also become inactive until the dequeue
-operation succeeds.  Embed DRR within another qdisc like HTB or HFSC to ensure it owns the queue.
+operation succeeds. Embed DRR within another qdisc like HTB or HFSC to ensure it owns the queue.
 .P
 You can mimic SFQ behavior by assigning packets to the attached classes using the
 flow filter:
