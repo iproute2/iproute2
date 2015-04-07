@@ -80,7 +80,7 @@ the name of the device to add the address to.
 .BI local " ADDRESS " (default)
 the address of the interface. The format of the address depends
 on the protocol. It is a dotted quad for IP and a sequence of
-hexadecimal halfwords separated by colons for IPv6.  The
+hexadecimal halfwords separated by colons for IPv6. The
 .I ADDRESS
 may be followed by a slash and a decimal number which encodes
 the network prefix length.
@@ -91,8 +91,8 @@ the address of the remote endpoint for pointopoint interfaces.
 Again, the
 .I ADDRESS
 may be followed by a slash and a decimal number, encoding the network
-prefix length.  If a peer address is specified, the local address
-cannot have a prefix length.  The network prefix is associated
+prefix length. If a peer address is specified, the local address
+cannot have a prefix length. The network prefix is associated
 with the peer rather than with the local address.
 
 .TP
@@ -103,7 +103,7 @@ It is possible to use the special symbols
 .B '+'
 and
 .B '-'
-instead of the broadcast address.  In this case, the broadcast address
+instead of the broadcast address. In this case, the broadcast address
 is derived by setting/resetting the host bits of the interface prefix.
 
 .TP
@@ -139,7 +139,7 @@ valid inside this site.
 .B Arguments:
 coincide with the arguments of
 .B ip addr add.
-The device name is a required argument.  The rest are optional.
+The device name is a required argument. The rest are optional.
 If no arguments are given, the first address is deleted.
 
 .SS ip address show - look at protocol addresses
@@ -221,14 +221,14 @@ The difference is that it does not run when no arguments are given.
 .B Warning:
 This command (and other
 .B flush
-commands described below) is pretty dangerous.  If you make a mistake,
+commands described below) is pretty dangerous. If you make a mistake,
 it will not forgive it, but will cruelly purge all the addresses.
 
 .PP
 With the
 .B -statistics
 option, the command becomes verbose. It prints out the number of deleted
-addresses and the number of rounds made to flush the address list.  If
+addresses and the number of rounds made to flush the address list. If
 this option is given twice,
 .B ip address flush
 also dumps all the deleted addresses in the format described in the
