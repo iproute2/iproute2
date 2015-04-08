@@ -224,7 +224,7 @@ check_netnsid()
 #include <linux/rtnetlink.h>
 int test_def = RTM_GETNSID;
 EOF
-    $CC -c $TMPDIR/netnsid.c >/dev/null 2>&1
+    $CC -I$INCLUDE -c $TMPDIR/netnsid.c >/dev/null 2>&1
     if [ $? -eq 0 ]
     then
 	echo "IP_CONFIG_NETNSID:=y" >> Config
