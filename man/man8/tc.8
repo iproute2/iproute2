@@ -62,7 +62,9 @@ DEV
 .ti 8
 .IR OPTIONS " := {"
 \fB[ -force ] -b\fR[\fIatch\fR] \fB[ filename ] \fR|
-\fB[ \fB-n\fR[\fIetns\fR] name \fB] \fR}
+\fB[ \fB-n\fR[\fIetns\fR] name \fB] \fR|
+\fB[ \fB-nm \fR| \fB-nam\fR[\fIes\fR] \fB] \fR|
+\fB[ \fR{ \fB-cf \fR| \fB-c\fR[\fIonf\fR] \fR} \fB[ filename ] \fB] \fR}
 
 .ti 8
 .IR FORMAT " := {"
@@ -463,6 +465,11 @@ to
 .RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
 .BR help " }"
 
+.TP
+.BR "\-cf" , " \-conf " <FILENAME>
+specifies path to the config file. This option is used in conjuction with other options (e.g.
+.BR -nm ")."
+
 .SH FORMAT
 The show command has additional formatting options:
 
@@ -493,6 +500,47 @@ shows classes as ASCII graph. Prints generic stats info under each class if
 option was specified. Classes can be filtered only by
 .BR "dev"
 option.
+
+.TP
+.BR "\-nm" , " \-name"
+resolve class name from
+.B /etc/iproute2/tc_cls
+file or from file specified by
+.B -cf
+option. This file is just a mapping of
+.B classid
+to class name:
+
+.RS 10
+# Here is comment
+.RE
+.RS 10
+1:40   voip # Here is another comment
+.RE
+.RS 10
+1:50   web
+.RE
+.RS 10
+1:60   ftp
+.RE
+.RS 10
+1:2    home
+.RE
+
+.RS
+.B tc
+will not fail if
+.B -nm
+was specified without
+.B -cf
+option but
+.B /etc/iproute2/tc_cls
+file does not exist, which makes it possible to pass
+.B -nm
+option for creating
+.B tc
+alias.
+.RE
 
 .SH "EXAMPLES"
 .PP
