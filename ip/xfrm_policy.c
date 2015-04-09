@@ -63,7 +63,8 @@ static void usage(void)
 	fprintf(stderr, "        [ index INDEX ] [ ptype PTYPE ] [ action ACTION ] [ priority PRIORITY ]\n");
 	fprintf(stderr, "        [ flag FLAG-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy flush [ ptype PTYPE ]\n");
-	fprintf(stderr, "Usage: ip xfrm count\n");
+	fprintf(stderr, "Usage: ip xfrm policy count\n");
+	fprintf(stderr, "Usage: ip xfrm policy set [ hthresh4 LBITS RBITS ] [ hthresh6 LBITS RBITS ]\n");
 	fprintf(stderr, "SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n");
 	fprintf(stderr, "UPSPEC := proto { { ");
 	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_TCP));
@@ -934,7 +935,7 @@ static int print_spdinfo( struct nlmsghdr *n, void *arg)
 			fprintf(fp,")");
 		}
 
-		fprintf(fp,"\n");
+		fprintf(fp, "%s", _SL_);
 	}
 	if (show_stats > 1) {
 		struct xfrmu_spdhinfo *sh;
@@ -948,11 +949,107 @@ static int print_spdinfo( struct nlmsghdr *n, void *arg)
 			fprintf(fp,"\t SPD buckets:");
 			fprintf(fp," count %d", sh->spdhcnt);
 			fprintf(fp," Max %d", sh->spdhmcnt);
+			fprintf(fp, "%s", _SL_);
+		}
+		if (tb[XFRMA_SPD_IPV4_HTHRESH]) {
+			struct xfrmu_spdhthresh *th;
+			if (RTA_PAYLOAD(tb[XFRMA_SPD_IPV4_HTHRESH]) < sizeof(*th)) {
+				fprintf(stderr, "SPDinfo: Wrong len %d\n", len);
+				return -1;
+			}
+			th = RTA_DATA(tb[XFRMA_SPD_IPV4_HTHRESH]);
+			fprintf(fp,"\t SPD IPv4 thresholds:");
+			fprintf(fp," local %d", th->lbits);
+			fprintf(fp," remote %d", th->rbits);
+			fprintf(fp, "%s", _SL_);
+
+		}
+		if (tb[XFRMA_SPD_IPV6_HTHRESH]) {
+			struct xfrmu_spdhthresh *th;
+			if (RTA_PAYLOAD(tb[XFRMA_SPD_IPV6_HTHRESH]) < sizeof(*th)) {
+				fprintf(stderr, "SPDinfo: Wrong len %d\n", len);
+				return -1;
+			}
+			th = RTA_DATA(tb[XFRMA_SPD_IPV6_HTHRESH]);
+			fprintf(fp,"\t SPD IPv6 thresholds:");
+			fprintf(fp," local %d", th->lbits);
+			fprintf(fp," remote %d", th->rbits);
+			fprintf(fp, "%s", _SL_);
 		}
 	}
-	fprintf(fp,"\n");
+
+	if (oneline)
+		fprintf(fp, "\n");
 
         return 0;
+}
+
+static int xfrm_spd_setinfo(int argc, char **argv)
+{
+	struct rtnl_handle rth;
+	struct {
+		struct nlmsghdr			n;
+		__u32				flags;
+		char				buf[RTA_BUF_SIZE];
+	} req;
+
+	char *thr4 = NULL;
+	char *thr6 = NULL;
+
+	memset(&req, 0, sizeof(req));
+
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(__u32));
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = XFRM_MSG_NEWSPDINFO;
+	req.flags = 0XFFFFFFFF;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "hthresh4") == 0) {
+			struct xfrmu_spdhthresh thr;
+
+			if (thr4)
+				duparg("hthresh4", *argv);
+			thr4 = *argv;
+			NEXT_ARG();
+			if (get_u8(&thr.lbits, *argv, 0) || thr.lbits > 32)
+				invarg("hthresh4 LBITS value is invalid", *argv);
+			NEXT_ARG();
+			if (get_u8(&thr.rbits, *argv, 0) || thr.rbits > 32)
+				invarg("hthresh4 RBITS value is invalid", *argv);
+
+			addattr_l(&req.n, sizeof(req), XFRMA_SPD_IPV4_HTHRESH,
+				  (void *)&thr, sizeof(thr));
+		} else if (strcmp(*argv, "hthresh6") == 0) {
+			struct xfrmu_spdhthresh thr;
+
+			if (thr6)
+				duparg("hthresh6", *argv);
+			thr6 = *argv;
+			NEXT_ARG();
+			if (get_u8(&thr.lbits, *argv, 0) || thr.lbits > 128)
+				invarg("hthresh6 LBITS value is invalid", *argv);
+			NEXT_ARG();
+			if (get_u8(&thr.rbits, *argv, 0) || thr.rbits > 128)
+				invarg("hthresh6 RBITS value is invalid", *argv);
+
+			addattr_l(&req.n, sizeof(req), XFRMA_SPD_IPV6_HTHRESH,
+				  (void *)&thr, sizeof(thr));
+		} else {
+			invarg("unknown", *argv);
+		}
+
+		argc--; argv++;
+	}
+
+	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
+		exit(1);
+
+	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+		exit(2);
+
+	rtnl_close(&rth);
+
+	return 0;
 }
 
 static int xfrm_spd_getinfo(int argc, char **argv)
@@ -1058,6 +1155,8 @@ int do_xfrm_policy(int argc, char **argv)
 		return xfrm_policy_flush(argc-1, argv+1);
 	if (matches(*argv, "count") == 0)
 		return xfrm_spd_getinfo(argc, argv);
+	if (matches(*argv, "set") == 0)
+		return xfrm_spd_setinfo(argc-1, argv+1);
 	if (matches(*argv, "help") == 0)
 		usage();
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip xfrm policy help\".\n", *argv);
