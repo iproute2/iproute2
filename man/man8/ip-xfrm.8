@@ -257,6 +257,13 @@ ip-xfrm \- transform configuration
 .B "ip xfrm policy count"
 
 .ti -8
+.B "ip xfrm policy set"
+.RB "[ " hthresh4
+.IR LBITS " " RBITS " ]"
+.RB "[ " hthresh6
+.IR LBITS " " RBITS " ]"
+
+.ti -8
 .IR SELECTOR " :="
 .RB "[ " src
 .IR ADDR "[/" PLEN "] ]"
@@ -360,6 +367,13 @@ ip-xfrm \- transform configuration
 .BR "ip xfrm monitor" " [ " all " |"
 .IR LISTofXFRM-OBJECTS " ]"
 
+.ti -8
+.IR LISTofXFRM-OBJECTS " := [ " LISTofXFRM-OBJECTS " ] " XFRM-OBJECT
+
+.ti -8
+.IR XFRM-OBJECT " := "
+.BR acquire " | " expire " | " SA " | " policy " | " aevent " | " report
+
 .in -8
 .ad b
 
@@ -385,7 +399,6 @@ ip xfrm state deleteall	delete all existing state in xfrm
 ip xfrm state list	print out the list of existing state in xfrm
 ip xfrm state flush	flush all state in xfrm
 ip xfrm state count	count all existing state in xfrm
-ip xfrm monitor 	state monitoring for xfrm objects
 .TE
 
 .TP
@@ -507,7 +520,9 @@ encapsulates packets with protocol
 .BR espinudp " or " espinudp-nonike ","
 .RI "using source port " SPORT ", destination port "  DPORT
 .RI ", and original address " OADDR "."
+
 .sp
+.PP
 .TS
 l l.
 ip xfrm policy add	add a new policy
@@ -517,7 +532,6 @@ ip xfrm policy get	get an existing policy
 ip xfrm policy deleteall	delete all existing xfrm policies
 ip xfrm policy list	print out the list of xfrm policies
 ip xfrm policy flush	flush policies
-ip xfrm policy count	count existing policies
 .TE
 
 .TP
@@ -612,7 +626,50 @@ and inbound trigger
 can be
 .BR required " (default) or " use "."
 
+.sp
+.PP
+.TS
+l l.
+ip xfrm policy count	count existing policies
+.TE
+
+.PP
+Use one or more -s options to display more details, including policy hash table
+information.
+
+.sp
+.PP
+.TS
+l l.
+ip xfrm policy set	configure the policy hash table
+.TE
+
+.PP
+Security policies whose address prefix lengths are greater than or equal
+policy hash table thresholds are hashed. Others are stored in the
+policy_inexact chained list.
+
+.TP
+.I LBITS
+specifies the minimum local address prefix length of policies that are
+stored in the Security Policy Database hash table.
+
+.TP
+.I RBITS
+specifies the minimum remote address prefix length of policies that are
+stored in the Security Policy Database hash table.
+
+.sp
+.PP
+.TS
+l l.
+ip xfrm monitor 	state monitoring for xfrm objects
+.TE
+
+.PP
 The xfrm objects to monitor can be optionally specified.
 
 .SH AUTHOR
 Manpage revised by David Ward <david.ward@ll.mit.edu>
+.br
+Manpage revised by Christophe Gouault <christophe.gouault@6wind.com>
