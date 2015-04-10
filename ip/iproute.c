@@ -448,7 +448,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (r->rtm_flags & RTNH_F_PERVASIVE)
 		fprintf(fp, "pervasive ");
 	if (r->rtm_flags & RTNH_F_EXTERNAL)
-		fprintf(fp, "external ");
+		fprintf(fp, "offload ");
 	if (r->rtm_flags & RTM_F_NOTIFY)
 		fprintf(fp, "notify ");
 	if (tb[RTA_MARK]) {

@@ -159,7 +159,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (r->ndm_flags & NTF_ROUTER)
 		fprintf(fp, "router ");
 	if (r->ndm_flags & NTF_EXT_LEARNED)
-		fprintf(fp, "external ");
+		fprintf(fp, "offload ");
 
 	fprintf(fp, "%s\n", state_n2a(r->ndm_state));
 	return 0;
