@@ -27,7 +27,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netinet/in.h>
 #include <linux/xfrm.h>
+
 #include "utils.h"
 #include "xfrm.h"
 #include "ip_common.h"
