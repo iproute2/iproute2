@@ -201,7 +201,7 @@ check_setns()
 {
     cat >$TMPDIR/setnstest.c <<EOF
 #include <sched.h>
-int main(int argc, char **argv)
+int main(int argc, char **argv) 
 {
 	(void)setns(0,0);
 	return 0;
@@ -216,23 +216,6 @@ EOF
 	echo "no"
     fi
     rm -f $TMPDIR/setnstest.c $TMPDIR/setnstest
-}
-
-check_netnsid()
-{
-    cat >$TMPDIR/netnsid.c <<EOF
-#include <linux/rtnetlink.h>
-int test_def = RTM_GETNSID;
-EOF
-    $CC -c $TMPDIR/netnsid.c >/dev/null 2>&1
-    if [ $? -eq 0 ]
-    then
-	echo "IP_CONFIG_NETNSID:=y" >> Config
-	echo "yes"
-    else
-	echo "no"
-    fi
-    rm -f $TMPDIR/netnsid.c $TMPDIR/netnsid.o
 }
 
 check_ipset()
@@ -300,8 +283,6 @@ check_ipt_lib_dir
 
 echo -n "libc has setns: "
 check_setns
-echo -n "netns has peer id suport: "
-check_netnsid
 
 echo -n "SELinux support: "
 check_selinux

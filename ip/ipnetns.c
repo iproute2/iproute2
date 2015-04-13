@@ -34,7 +34,6 @@ static int usage(void)
 	exit(-1);
 }
 
-#ifdef HAVE_NETNSID
 static int get_netnsid_from_name(const char *name)
 {
 	struct {
@@ -79,12 +78,6 @@ static int get_netnsid_from_name(const char *name)
 
 	return -1;
 }
-#else
-static int get_netnsid_from_name(const char *name)
-{
-	return -1;
-}
-#endif /* HAVE_NETNSID */
 
 static int netns_list(int argc, char **argv)
 {
