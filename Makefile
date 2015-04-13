@@ -1,15 +1,15 @@
-ROOTDIR=$(DESTDIR)
-PREFIX=/usr
-LIBDIR=$(PREFIX)/lib
-SBINDIR=/sbin
-CONFDIR=/etc/iproute2
-DATADIR=$(PREFIX)/share
-DOCDIR=$(DATADIR)/doc/iproute2
-MANDIR=$(DATADIR)/man
-ARPDDIR=/var/lib/arpd
+PREFIX?=/usr
+LIBDIR?=$(PREFIX)/lib
+SBINDIR?=/sbin
+CONFDIR?=/etc/iproute2
+DATADIR?=$(PREFIX)/share
+DOCDIR?=$(DATADIR)/doc/iproute2
+MANDIR?=$(DATADIR)/man
+ARPDDIR?=/var/lib/arpd
+KERNEL_INCLUDE?=/usr/include
 
 # Path to db_185.h include
-DBM_INCLUDE:=$(ROOTDIR)/usr/include
+DBM_INCLUDE:=$(DESTDIR)/usr/include
 
 SHARED_LIBS = y
 
@@ -36,7 +36,7 @@ CCOPTS = -O2
 WFLAGS := -Wall -Wstrict-prototypes  -Wmissing-prototypes
 WFLAGS += -Wmissing-declarations -Wold-style-definition -Wformat=2
 
-CFLAGS = $(WFLAGS) $(CCOPTS) -I../include $(DEFINES)
+CFLAGS := $(WFLAGS) $(CCOPTS) -I../include $(DEFINES) $(CFLAGS)
 YACCFLAGS = -d -t -v
 
 SUBDIRS=lib ip tc bridge misc netem genl man
