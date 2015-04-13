@@ -347,7 +347,7 @@ int main(int argc, char **argv)
 
 	switch (mode) {
 	case MODE_DUMP:
-		lnstat_dump(stderr, lnstat_files);
+		lnstat_dump(stdout, lnstat_files);
 		break;
 
 	case MODE_NORMAL:
