@@ -201,7 +201,7 @@ check_setns()
 {
     cat >$TMPDIR/setnstest.c <<EOF
 #include <sched.h>
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	(void)setns(0,0);
 	return 0;
