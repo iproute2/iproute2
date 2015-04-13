@@ -1344,6 +1344,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 		case IPPROTO_UDP:
 		case IPPROTO_SCTP:
 		case IPPROTO_DCCP:
+		case IPPROTO_IP: /* to allow shared SA for different protocols */
 			break;
 		default:
 			fprintf(stderr, "\"sport\" and \"dport\" are invalid with PROTO value \"%s\"\n", strxf_proto(sel->proto));
