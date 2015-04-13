@@ -34,7 +34,56 @@ static int usage(void)
 	exit(-1);
 }
 
-#ifdef HAVE_NETNSID
+static int have_rtnl_getnsid = -1;
+
+static int ipnetns_accept_msg(const struct sockaddr_nl *who,
+			      struct nlmsghdr *n, void *arg)
+{
+	struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(n);
+
+	if (n->nlmsg_type == NLMSG_ERROR &&
+	    (err->error == -EOPNOTSUPP || err->error == -EINVAL))
+		have_rtnl_getnsid = 0;
+	else
+		have_rtnl_getnsid = 1;
+	return -1;
+}
+
+static int ipnetns_have_nsid(void)
+{
+	struct {
+		struct nlmsghdr n;
+		struct rtgenmsg g;
+		char            buf[1024];
+	} req;
+	int fd;
+
+	if (have_rtnl_getnsid < 0) {
+		memset(&req, 0, sizeof(req));
+		req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg));
+		req.n.nlmsg_flags = NLM_F_REQUEST;
+		req.n.nlmsg_type = RTM_GETNSID;
+		req.g.rtgen_family = AF_UNSPEC;
+
+		fd = open("/proc/self/ns/net", O_RDONLY);
+		if (fd < 0) {
+			perror("open(\"/proc/self/ns/net\")");
+			exit(1);
+		}
+
+		addattr32(&req.n, 1024, NETNSA_FD, fd);
+
+		if (rtnl_send(&rth, &req.n, req.n.nlmsg_len) < 0) {
+			perror("request send failed");
+			exit(1);
+		}
+		rtnl_listen(&rth, ipnetns_accept_msg, NULL);
+		close(fd);
+	}
+
+	return have_rtnl_getnsid;
+}
+
 static int get_netnsid_from_name(const char *name)
 {
 	struct {
@@ -79,12 +128,6 @@ static int get_netnsid_from_name(const char *name)
 
 	return -1;
 }
-#else
-static int get_netnsid_from_name(const char *name)
-{
-	return -1;
-}
-#endif /* HAVE_NETNSID */
 
 static int netns_list(int argc, char **argv)
 {
@@ -102,9 +145,11 @@ static int netns_list(int argc, char **argv)
 		if (strcmp(entry->d_name, "..") == 0)
 			continue;
 		printf("%s", entry->d_name);
-		id = get_netnsid_from_name(entry->d_name);
-		if (id >= 0)
-			printf(" (id: %d)", id);
+		if (ipnetns_have_nsid()) {
+			id = get_netnsid_from_name(entry->d_name);
+			if (id >= 0)
+				printf(" (id: %d)", id);
+		}
 		printf("\n");
 	}
 	closedir(dir);
