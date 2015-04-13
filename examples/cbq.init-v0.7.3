@@ -578,14 +578,14 @@ cbq_show () {
 ### Check configuration and load DEVICES, DEVFIELDS and CLASSLIST from $1
 cbq_init () {
 	### Get a list of configured classes
-	CLASSLIST=`find $1 \( -type f -or -type l \) -name 'cbq-*' \
-		-not -name '*~' -maxdepth 1 -printf "%f\n"| sort`
+	CLASSLIST=`find $1 -maxdepth 1 \( -type f -or -type l \) -name 'cbq-*' \
+		-not -name '*~' -printf "%f\n"| sort`
 	[ -z "$CLASSLIST" ] &&
 		cbq_failure "no configuration files found in $1!"
 
 	### Gather all DEVICE fields from $1/cbq-*
-	DEVFIELDS=`find $1 \( -type f -or -type l \) -name 'cbq-*' \
-		  -not -name '*~' -maxdepth 1| xargs sed -n 's/#.*//; \
+	DEVFIELDS=`find $1 -maxdepth 1 \( -type f -or -type l \) -name 'cbq-*' \
+		  -not -name '*~' | xargs sed -n 's/#.*//; \
 		  s/[[:space:]]//g; /^DEVICE=[^,]*,[^,]*\(,[^,]*\)\?/ \
 		  { s/.*=//; p; }'| sort -u`
 	[ -z "$DEVFIELDS" ] &&
