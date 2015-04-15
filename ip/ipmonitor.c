@@ -32,7 +32,7 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ]"
 			"[ label ] [dev DEVICE]\n");
 	fprintf(stderr, "LISTofOBJECTS := link | address | route | mroute | prefix |\n");
-	fprintf(stderr, "                 neigh | netconf | rule\n");
+	fprintf(stderr, "                 neigh | netconf | rule | nsid\n");
 	fprintf(stderr, "FILE := file FILENAME\n");
 	exit(-1);
 }
@@ -129,6 +129,12 @@ static int accept_msg(const struct sockaddr_nl *who,
 		print_nlmsg_timestamp(fp, n);
 		return 0;
 	}
+	if (n->nlmsg_type == RTM_NEWNSID || n->nlmsg_type == RTM_DELNSID) {
+		if (prefix_banner)
+			fprintf(fp, "[NSID]");
+		print_nsid(who, n, arg);
+		return 0;
+	}
 	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&
 	    n->nlmsg_type != NLMSG_DONE) {
 		fprintf(fp, "Unknown message: type=0x%08x(%d) flags=0x%08x(%d)"
@@ -151,6 +157,7 @@ int do_ipmonitor(int argc, char **argv)
 	int lneigh=0;
 	int lnetconf=0;
 	int lrule=0;
+	int lnsid=0;
 	int ifindex=0;
 
 	groups |= nl_mgrp(RTNLGRP_LINK);
@@ -167,6 +174,7 @@ int do_ipmonitor(int argc, char **argv)
 	groups |= nl_mgrp(RTNLGRP_IPV6_NETCONF);
 	groups |= nl_mgrp(RTNLGRP_IPV4_RULE);
 	groups |= nl_mgrp(RTNLGRP_IPV6_RULE);
+	groups |= nl_mgrp(RTNLGRP_NSID);
 
 	rtnl_close(&rth);
 
@@ -199,6 +207,9 @@ int do_ipmonitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "rule") == 0) {
 			lrule = 1;
+			groups = 0;
+		} else if (matches(*argv, "nsid") == 0) {
+			lnsid = 1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			prefix_banner=1;
@@ -264,6 +275,9 @@ int do_ipmonitor(int argc, char **argv)
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_RULE);
 	}
+	if (lnsid) {
+		groups |= nl_mgrp(RTNLGRP_NSID);
+	}
 	if (file) {
 		FILE *fp;
 		fp = fopen(file, "r");
@@ -277,6 +291,7 @@ int do_ipmonitor(int argc, char **argv)
 	if (rtnl_open(&rth, groups) < 0)
 		exit(1);
 	ll_init_map(&rth);
+	netns_map_init();
 
 	if (rtnl_listen(&rth, accept_msg, stdout) < 0)
 		exit(2);

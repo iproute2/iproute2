@@ -42,6 +42,9 @@ ip-netns \- process network namespace management
 .ti -8
 .BR "ip netns monitor"
 
+.ti -8
+.BR "ip netns list-id"
+
 .SH DESCRIPTION
 A network namespace is logically another copy of the network stack,
 with its own routes, firewall rules, and network devices.
@@ -177,6 +180,13 @@ executing.
 .sp
 This command watches network namespace name addition and deletion events
 and prints a line for each event it sees.
+
+.TP
+.B ip netns list-id - list network namespace ids (nsid)
+.sp
+Network namespace ids are used to identify a peer network namespace. This
+command displays nsid of the current network namespace and provides the
+corresponding iproute2 netns name (from /var/run/netns) if any.
 
 .SH EXAMPLES
 .PP

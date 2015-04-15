@@ -14,10 +14,12 @@
 #include <errno.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <linux/limits.h>
 
 #include <linux/net_namespace.h>
 
 #include "utils.h"
+#include "hlist.h"
 #include "ip_common.h"
 #include "namespace.h"
 
@@ -31,8 +33,12 @@ static int usage(void)
 	fprintf(stderr, "       ip netns pids NAME\n");
 	fprintf(stderr, "       ip [-all] netns exec [NAME] cmd ...\n");
 	fprintf(stderr, "       ip netns monitor\n");
+	fprintf(stderr, "       ip netns list-id\n");
 	exit(-1);
 }
+
+/* This socket is used to get nsid */
+static struct rtnl_handle rtnsh = { .fd = -1 };
 
 static int have_rtnl_getnsid = -1;
 
@@ -106,7 +112,7 @@ static int get_netnsid_from_name(const char *name)
 		return fd;
 
 	addattr32(&req.n, 1024, NETNSA_FD, fd);
-	if (rtnl_talk(&rth, &req.n, 0, 0, &answer.n) < 0) {
+	if (rtnl_talk(&rtnsh, &req.n, 0, 0, &answer.n) < 0) {
 		close(fd);
 		return -2;
 	}
@@ -127,6 +133,196 @@ static int get_netnsid_from_name(const char *name)
 		return rta_getattr_u32(tb[NETNSA_NSID]);
 
 	return -1;
+}
+
+struct nsid_cache {
+	struct hlist_node	nsid_hash;
+	struct hlist_node	name_hash;
+	int			nsid;
+	char			name[NAME_MAX];
+};
+
+#define NSIDMAP_SIZE		128
+#define NSID_HASH_NSID(nsid)	(nsid & (NSIDMAP_SIZE - 1))
+#define NSID_HASH_NAME(name)	(namehash(name) & (NSIDMAP_SIZE - 1))
+
+static struct hlist_head	nsid_head[NSIDMAP_SIZE];
+static struct hlist_head	name_head[NSIDMAP_SIZE];
+
+static struct nsid_cache *netns_map_get_by_nsid(int nsid)
+{
+	uint32_t h = NSID_HASH_NSID(nsid);
+	struct hlist_node *n;
+
+	hlist_for_each(n, &nsid_head[h]) {
+		struct nsid_cache *c = container_of(n, struct nsid_cache,
+						    nsid_hash);
+		if (c->nsid == nsid)
+			return c;
+	}
+
+	return NULL;
+}
+
+static int netns_map_add(int nsid, char *name)
+{
+	struct nsid_cache *c;
+	uint32_t h;
+
+	if (netns_map_get_by_nsid(nsid) != NULL)
+		return -EEXIST;
+
+	c = malloc(sizeof(*c));
+	if (c == NULL) {
+		perror("malloc");
+		return -ENOMEM;
+	}
+	c->nsid = nsid;
+	strcpy(c->name, name);
+
+	h = NSID_HASH_NSID(nsid);
+	hlist_add_head(&c->nsid_hash, &nsid_head[h]);
+
+	h = NSID_HASH_NAME(name);
+	hlist_add_head(&c->name_hash, &name_head[h]);
+
+	return 0;
+}
+
+static void netns_map_del(struct nsid_cache *c)
+{
+	hlist_del(&c->name_hash);
+	hlist_del(&c->nsid_hash);
+	free(c);
+}
+
+void netns_map_init(void)
+{
+	static int initialized;
+	struct dirent *entry;
+	DIR *dir;
+	int nsid;
+
+	if (initialized || !ipnetns_have_nsid())
+		return;
+
+	if (rtnl_open(&rtnsh, 0) < 0) {
+		fprintf(stderr, "Cannot open rtnetlink\n");
+		exit(1);
+	}
+
+	dir = opendir(NETNS_RUN_DIR);
+	if (!dir)
+		return;
+
+	while ((entry = readdir(dir)) != NULL) {
+		if (strcmp(entry->d_name, ".") == 0)
+			continue;
+		if (strcmp(entry->d_name, "..") == 0)
+			continue;
+		nsid = get_netnsid_from_name(entry->d_name);
+
+		if (nsid >= 0)
+			netns_map_add(nsid, entry->d_name);
+	}
+	closedir(dir);
+	initialized = 1;
+}
+
+static int netns_get_name(int nsid, char *name)
+{
+	struct dirent *entry;
+	DIR *dir;
+	int id;
+
+	dir = opendir(NETNS_RUN_DIR);
+	if (!dir)
+		return -ENOENT;
+
+	while ((entry = readdir(dir)) != NULL) {
+		if (strcmp(entry->d_name, ".") == 0)
+			continue;
+		if (strcmp(entry->d_name, "..") == 0)
+			continue;
+		id = get_netnsid_from_name(entry->d_name);
+
+		if (nsid == id) {
+			strcpy(name, entry->d_name);
+			closedir(dir);
+			return 0;
+		}
+	}
+	closedir(dir);
+	return -ENOENT;
+}
+
+int print_nsid(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+{
+	struct rtgenmsg *rthdr = NLMSG_DATA(n);
+	struct rtattr *tb[NETNSA_MAX+1];
+	int len = n->nlmsg_len;
+	FILE *fp = (FILE *)arg;
+	struct nsid_cache *c;
+	char name[NAME_MAX];
+	int nsid;
+
+	if (n->nlmsg_type != RTM_NEWNSID && n->nlmsg_type != RTM_DELNSID)
+		return 0;
+
+	len -= NLMSG_SPACE(sizeof(*rthdr));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d in %s\n", len,
+			__func__);
+		return -1;
+	}
+
+	parse_rtattr(tb, NETNSA_MAX, NETNS_RTA(rthdr), len);
+	if (tb[NETNSA_NSID] == NULL) {
+		fprintf(stderr, "BUG: NETNSA_NSID is missing %s\n", __func__);
+		return -1;
+	}
+
+	if (n->nlmsg_type == RTM_DELNSID)
+		fprintf(fp, "Deleted ");
+
+	nsid = rta_getattr_u32(tb[NETNSA_NSID]);
+	fprintf(fp, "nsid %u ", nsid);
+
+	c = netns_map_get_by_nsid(nsid);
+	if (c != NULL) {
+		fprintf(fp, "(iproute2 netns name: %s)", c->name);
+		netns_map_del(c);
+	}
+
+	/* During 'ip monitor nsid', no chance to have new nsid in cache. */
+	if (c == NULL && n->nlmsg_type == RTM_NEWNSID)
+		if (netns_get_name(nsid, name) == 0) {
+			fprintf(fp, "(iproute2 netns name: %s)", name);
+			netns_map_add(nsid, name);
+		}
+
+	fprintf(fp, "\n");
+	fflush(fp);
+	return 0;
+}
+
+static int netns_list_id(int argc, char **argv)
+{
+	if (!ipnetns_have_nsid()) {
+		fprintf(stderr,
+			"RTM_GETNSID is not supported by the kernel.\n");
+		return -ENOTSUP;
+	}
+
+	if (rtnl_wilddump_request(&rth, AF_UNSPEC, RTM_GETNSID) < 0) {
+		perror("Cannot send dump request");
+		exit(1);
+	}
+	if (rtnl_dump_filter(&rth, print_nsid, stdout) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		exit(1);
+	}
+	return 0;
 }
 
 static int netns_list(int argc, char **argv)
@@ -577,12 +773,17 @@ static int netns_monitor(int argc, char **argv)
 
 int do_netns(int argc, char **argv)
 {
+	netns_map_init();
+
 	if (argc < 1)
 		return netns_list(0, NULL);
 
 	if ((matches(*argv, "list") == 0) || (matches(*argv, "show") == 0) ||
 	    (matches(*argv, "lst") == 0))
 		return netns_list(argc-1, argv+1);
+
+	if ((matches(*argv, "list-id") == 0))
+		return netns_list_id(argc-1, argv+1);
 
 	if (matches(*argv, "help") == 0)
 		return usage();

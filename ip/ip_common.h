@@ -34,6 +34,9 @@ extern int print_rule(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg);
 extern int print_netconf(const struct sockaddr_nl *who,
 			 struct nlmsghdr *n, void *arg);
+extern void netns_map_init(void);
+extern int print_nsid(const struct sockaddr_nl *who,
+		      struct nlmsghdr *n, void *arg);
 extern int do_ipaddr(int argc, char **argv);
 extern int do_ipaddrlabel(int argc, char **argv);
 extern int do_iproute(int argc, char **argv);
