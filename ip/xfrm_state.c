@@ -1148,13 +1148,23 @@ static int xfrm_state_list_or_deleteall(int argc, char **argv, int deleteall)
 		xb.rth = &rth;
 
 		for (i = 0; ; i++) {
+			struct {
+				struct nlmsghdr n;
+				char buf[NLMSG_BUF_SIZE];
+			} req = {
+				.n.nlmsg_len = NLMSG_HDRLEN,
+				.n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+				.n.nlmsg_type = XFRM_MSG_GETSA,
+				.n.nlmsg_seq = rth.dump = ++rth.seq,
+			};
+
 			xb.offset = 0;
 			xb.nlmsg_count = 0;
 
 			if (show_stats > 1)
 				fprintf(stderr, "Delete-all round = %d\n", i);
 
-			if (rtnl_wilddump_request(&rth, preferred_family, XFRM_MSG_GETSA) < 0) {
+			if (rtnl_send(&rth, (void *)&req, req.n.nlmsg_len) < 0) {
 				perror("Cannot send dump request");
 				exit(1);
 			}
