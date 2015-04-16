@@ -24,6 +24,8 @@
  *   -- Happy eBPF hacking! ;)
  */
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +33,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <assert.h>
+
 #include <sys/un.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -102,6 +105,23 @@ static void bpf_dump_proto(int fd)
 	printf("\n");
 }
 
+static void bpf_dump_map_data(int *tfd)
+{
+	int i;
+
+	for (i = 0; i < 30; i++) {
+		const int period = 5;
+
+		printf("data, period: %dsec\n", period);
+
+		bpf_dump_drops(tfd[BPF_MAP_ID_DROPS]);
+		bpf_dump_queue(tfd[BPF_MAP_ID_QUEUE]);
+		bpf_dump_proto(tfd[BPF_MAP_ID_PROTO]);
+
+		sleep(period);
+	}
+}
+
 static void bpf_info_loop(int *fds, struct bpf_map_aux *aux)
 {
 	int i, tfd[BPF_MAP_ID_MAX];
@@ -122,16 +142,22 @@ static void bpf_info_loop(int *fds, struct bpf_map_aux *aux)
 		tfd[aux->ent[i].id] = fds[i];
 	}
 
-	for (i = 0; i < 30; i++) {
-		int period = 5;
+	bpf_dump_map_data(tfd);
+}
 
-		printf("data, period: %dsec\n", period);
+static void bpf_map_get_from_env(int *tfd)
+{
+	char key[64], *val;
+	int i;
 
-		bpf_dump_drops(tfd[BPF_MAP_ID_DROPS]);
-		bpf_dump_queue(tfd[BPF_MAP_ID_QUEUE]);
-		bpf_dump_proto(tfd[BPF_MAP_ID_PROTO]);
+	for (i = 0; i < BPF_MAP_ID_MAX; i++) {
+		memset(key, 0, sizeof(key));
+		snprintf(key, sizeof(key), "BPF_MAP%d", i);
 
-		sleep(period);
+		val = secure_getenv(key);
+		assert(val != NULL);
+
+		tfd[i] = atoi(val);
 	}
 }
 
@@ -186,9 +212,17 @@ int main(int argc, char **argv)
 	struct sockaddr_un addr;
 	int fd, ret, i;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <path-uds>\n", argv[0]);
-		exit(1);
+	/* When arguments are being passed, we take it as a path
+	 * to a Unix domain socket, otherwise we grab the fds
+	 * from the environment to demonstrate both possibilities.
+	 */
+	if (argc == 1) {
+		int tfd[BPF_MAP_ID_MAX];
+
+		bpf_map_get_from_env(tfd);
+		bpf_dump_map_data(tfd);
+
+		return 0;
 	}
 
 	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -218,6 +252,7 @@ int main(int argc, char **argv)
 
 	for (i = 0; i < aux.num_ent; i++)
 		close(fds[i]);
+
 	close(fd);
 	return 0;
 }

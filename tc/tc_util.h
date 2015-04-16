@@ -19,8 +19,7 @@ enum
 #define TCA_PRIO_MAX    (__TCA_PRIO_MAX - 1)
 #endif
 
-struct qdisc_util
-{
+struct qdisc_util {
 	struct  qdisc_util *next;
 	const char *id;
 	int	(*parse_qopt)(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n);
@@ -32,8 +31,7 @@ struct qdisc_util
 };
 
 extern __u16 f_proto;
-struct filter_util
-{
+struct filter_util {
 	struct filter_util *next;
 	char	id[16];
 	int	(*parse_fopt)(struct filter_util *qu, char *fhandle, int argc,
@@ -41,14 +39,19 @@ struct filter_util
 	int	(*print_fopt)(struct filter_util *qu, FILE *f, struct rtattr *opt, __u32 fhandle);
 };
 
-struct action_util
-{
+struct action_util {
 	struct  action_util *next;
 	char    id[16];
 	int     (*parse_aopt)(struct action_util *a, int *argc, char ***argv,
 			      int code, struct nlmsghdr *n);
 	int     (*print_aopt)(struct action_util *au, FILE *f, struct rtattr *opt);
 	int     (*print_xstats)(struct action_util *au, FILE *f, struct rtattr *xstats);
+};
+
+struct exec_util {
+	struct	exec_util *next;
+	char	id[16];
+	int	(*parse_eopt)(struct exec_util *eu, int argc, char **argv);
 };
 
 extern const char *get_tc_lib(void);
@@ -69,6 +72,7 @@ extern void print_size(char *buf, int len, __u32 size);
 extern void print_qdisc_handle(char *buf, int len, __u32 h);
 extern void print_time(char *buf, int len, __u32 time);
 extern void print_linklayer(char *buf, int len, unsigned linklayer);
+
 extern char * sprint_rate(__u64 rate, char *buf);
 extern char * sprint_size(__u32 size, char *buf);
 extern char * sprint_qdisc_handle(__u32 h, char *buf);

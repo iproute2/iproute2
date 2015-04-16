@@ -190,7 +190,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 			"       tc [-force] -batch filename\n"
-	                "where  OBJECT := { qdisc | class | filter | action | monitor }\n"
+	                "where  OBJECT := { qdisc | class | filter | action | monitor | exec }\n"
 	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] | "
 			"-n[etns] name |\n"
 			"                    -nm | -nam[es] | { -cf | -conf } path }\n");
@@ -200,19 +200,16 @@ static int do_cmd(int argc, char **argv)
 {
 	if (matches(*argv, "qdisc") == 0)
 		return do_qdisc(argc-1, argv+1);
-
 	if (matches(*argv, "class") == 0)
 		return do_class(argc-1, argv+1);
-
 	if (matches(*argv, "filter") == 0)
 		return do_filter(argc-1, argv+1);
-
 	if (matches(*argv, "actions") == 0)
 		return do_action(argc-1, argv+1);
-
 	if (matches(*argv, "monitor") == 0)
 		return do_tcmonitor(argc-1, argv+1);
-
+	if (matches(*argv, "exec") == 0)
+		return do_exec(argc-1, argv+1);
 	if (matches(*argv, "help") == 0) {
 		usage();
 		return 0;

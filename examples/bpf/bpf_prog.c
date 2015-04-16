@@ -58,6 +58,33 @@
  *    random type none pass val 0
  *    index 38 ref 1 bind 1
  *
+ * Notes on BPF agent:
+ *
+ * In the above example, the bpf_agent creates the unix domain socket
+ * natively. "tc exec" can also spawn a shell and hold the socktes there:
+ *
+ *  # tc exec bpf imp /tmp/bpf-uds
+ *  # tc filter add dev em1 parent 1: bpf obj bpf.o exp /tmp/bpf-uds flowid 1:1 \
+ *                             action bpf obj bpf.o sec action-mark            \
+ *                             action bpf obj bpf.o sec action-rand ok
+ *  sh-4.2# (shell spawned from tc exec)
+ *  sh-4.2# bpf_agent
+ *  [...]
+ *
+ * This will read out fds over environment and produce the same data dump
+ * as below. This has the advantage that the spawned shell owns the fds
+ * and thus if the agent is restarted, it can reattach to the same fds, also
+ * various programs can easily read/modify the data simultaneously from user
+ * space side.
+ *
+ * If the shell is unnecessary, the agent can also just be spawned directly
+ * via tc exec:
+ *
+ *  # tc exec bpf imp /tmp/bpf-uds run bpf_agent
+ *  # tc filter add dev em1 parent 1: bpf obj bpf.o exp /tmp/bpf-uds flowid 1:1 \
+ *                             action bpf obj bpf.o sec action-mark            \
+ *                             action bpf obj bpf.o sec action-rand ok
+ *
  * BPF agent example output:
  *
  * ver: 1

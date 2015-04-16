@@ -23,6 +23,7 @@
 #include <stdint.h>
 
 #include "utils.h"
+#include "bpf_scm.h"
 
 int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
 		     char **bpf_string, bool *need_release,
@@ -36,7 +37,10 @@ const char *bpf_default_section(const enum bpf_prog_type type);
 #ifdef HAVE_ELF
 int bpf_open_object(const char *path, enum bpf_prog_type type,
 		    const char *sec);
-int bpf_handoff_map_fds(const char *path, const char *obj);
+
+int bpf_send_map_fds(const char *path, const char *obj);
+int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
+		     unsigned int entries);
 
 static inline __u64 bpf_ptr_to_u64(const void *ptr)
 {
@@ -62,9 +66,16 @@ static inline int bpf_open_object(const char *path, enum bpf_prog_type type,
 	return -1;
 }
 
-static inline int bpf_handoff_map_fds(const char *path, const char *obj)
+static inline int bpf_send_map_fds(const char *path, const char *obj)
 {
 	return 0;
+}
+
+static inline int bpf_recv_map_fds(const char *path, int *fds,
+				   struct bpf_map_aux *aux,
+				   unsigned int entries)
+{
+	return -1;
 }
 #endif /* HAVE_ELF */
 #endif /* _TC_BPF_H_ */

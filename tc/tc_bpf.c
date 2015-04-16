@@ -626,8 +626,8 @@ out:
 }
 
 static int
-bpf_map_set_xmit(int fd, struct sockaddr_un *addr, unsigned int addr_len,
-		 const struct bpf_map_data *aux, unsigned int ents)
+bpf_map_set_send(int fd, struct sockaddr_un *addr, unsigned int addr_len,
+		 const struct bpf_map_data *aux, unsigned int entries)
 {
 	struct bpf_map_set_msg msg;
 	int *cmsg_buf, min_fd;
@@ -637,7 +637,7 @@ bpf_map_set_xmit(int fd, struct sockaddr_un *addr, unsigned int addr_len,
 	memset(&msg, 0, sizeof(msg));
 
 	msg.aux.uds_ver = BPF_SCM_AUX_VER;
-	msg.aux.num_ent = ents;
+	msg.aux.num_ent = entries;
 
 	strncpy(msg.aux.obj_name, aux->obj, sizeof(msg.aux.obj_name));
 	memcpy(&msg.aux.obj_st, aux->st, sizeof(msg.aux.obj_st));
@@ -645,11 +645,10 @@ bpf_map_set_xmit(int fd, struct sockaddr_un *addr, unsigned int addr_len,
 	cmsg_buf = bpf_map_set_init(&msg, addr, addr_len);
 	amsg_buf = (char *)msg.aux.ent;
 
-	for (i = 0; i < ents; i += min_fd) {
+	for (i = 0; i < entries; i += min_fd) {
 		int ret;
 
-		min_fd = min(BPF_SCM_MAX_FDS * 1U, ents - i);
-
+		min_fd = min(BPF_SCM_MAX_FDS * 1U, entries - i);
 		bpf_map_set_init_single(&msg, min_fd);
 
 		memcpy(cmsg_buf, &aux->fds[i], sizeof(aux->fds[0]) * min_fd);
@@ -663,7 +662,54 @@ bpf_map_set_xmit(int fd, struct sockaddr_un *addr, unsigned int addr_len,
 	return 0;
 }
 
-int bpf_handoff_map_fds(const char *path, const char *obj)
+static int
+bpf_map_set_recv(int fd, int *fds,  struct bpf_map_aux *aux,
+		 unsigned int entries)
+{
+	struct bpf_map_set_msg msg;
+	int *cmsg_buf, min_fd;
+	char *amsg_buf, *mmsg_buf;
+	unsigned int needed = 1;
+	int i;
+
+	cmsg_buf = bpf_map_set_init(&msg, NULL, 0);
+	amsg_buf = (char *)msg.aux.ent;
+	mmsg_buf = (char *)&msg.aux;
+
+	for (i = 0; i < min(entries, needed); i += min_fd) {
+		struct cmsghdr *cmsg;
+		int ret;
+
+		min_fd = min(entries, entries - i);
+		bpf_map_set_init_single(&msg, min_fd);
+
+		ret = recvmsg(fd, &msg.hdr, 0);
+		if (ret <= 0)
+			return ret ? : -1;
+
+		cmsg = CMSG_FIRSTHDR(&msg.hdr);
+		if (!cmsg || cmsg->cmsg_type != SCM_RIGHTS)
+			return -EINVAL;
+		if (msg.hdr.msg_flags & MSG_CTRUNC)
+			return -EIO;
+		if (msg.aux.uds_ver != BPF_SCM_AUX_VER)
+			return -ENOSYS;
+
+		min_fd = (cmsg->cmsg_len - sizeof(*cmsg)) / sizeof(fd);
+		if (min_fd > entries || min_fd <= 0)
+			return -EINVAL;
+
+		memcpy(&fds[i], cmsg_buf, sizeof(fds[0]) * min_fd);
+		memcpy(&aux->ent[i], amsg_buf, sizeof(aux->ent[0]) * min_fd);
+		memcpy(aux, mmsg_buf, offsetof(struct bpf_map_aux, ent));
+
+		needed = aux->num_ent;
+	}
+
+	return 0;
+}
+
+int bpf_send_map_fds(const char *path, const char *obj)
 {
 	struct sockaddr_un addr;
 	struct bpf_map_data bpf_aux;
@@ -695,12 +741,46 @@ int bpf_handoff_map_fds(const char *path, const char *obj)
 	bpf_aux.obj = obj;
 	bpf_aux.st = &bpf_st;
 
-	ret = bpf_map_set_xmit(fd, &addr, sizeof(addr), &bpf_aux,
+	ret = bpf_map_set_send(fd, &addr, sizeof(addr), &bpf_aux,
 			       bpf_maps_count());
 	if (ret < 0)
-		fprintf(stderr, "Cannot xmit fds to %s: %s\n",
+		fprintf(stderr, "Cannot send fds to %s: %s\n",
 			path, strerror(errno));
 
+	close(fd);
+	return ret;
+}
+
+int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
+		     unsigned int entries)
+{
+	struct sockaddr_un addr;
+	int fd, ret;
+
+	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open socket: %s\n",
+			strerror(errno));
+		return -1;
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+
+	ret = bind(fd, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret < 0) {
+		fprintf(stderr, "Cannot bind to socket: %s\n",
+			strerror(errno));
+		return -1;
+	}
+
+	ret = bpf_map_set_recv(fd, fds, aux, entries);
+	if (ret < 0)
+		fprintf(stderr, "Cannot recv fds from %s: %s\n",
+			path, strerror(errno));
+
+	unlink(addr.sun_path);
 	close(fd);
 	return ret;
 }

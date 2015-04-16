@@ -38,7 +38,7 @@ static void usage(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "       tc filter show [ dev STRING ] [ root | parent CLASSID ]\n");
 	fprintf(stderr, "Where:\n");
-	fprintf(stderr, "FILTER_TYPE := { rsvp | u32 | fw | route | etc. }\n");
+	fprintf(stderr, "FILTER_TYPE := { rsvp | u32 | bpf | fw | route | etc. }\n");
 	fprintf(stderr, "FILTERID := ... format depends on classifier, see there\n");
 	fprintf(stderr, "OPTIONS := ... try tc filter add <desired FILTER_KIND> help\n");
 	return;

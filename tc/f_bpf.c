@@ -205,7 +205,7 @@ opt_bpf:
 	tail->rta_len = (((void *)n) + n->nlmsg_len) - (void *)tail;
 
 	if (bpf_uds_name)
-		ret = bpf_handoff_map_fds(bpf_uds_name, bpf_obj);
+		ret = bpf_send_map_fds(bpf_uds_name, bpf_obj);
 
 	return ret;
 }

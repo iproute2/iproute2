@@ -54,7 +54,7 @@ static void act_usage(void)
 			"\tACTSPEC := action <ACTDETAIL> [INDEXSPEC]\n"
 			"\tINDEXSPEC := index <32 bit indexvalue>\n"
 			"\tACTDETAIL := <ACTNAME> <ACTPARAMS>\n"
-			"\t\tExample ACTNAME is gact, mirred etc\n"
+			"\t\tExample ACTNAME is gact, mirred, bpf, etc\n"
 			"\t\tEach action has its own parameters (ACTPARAMS)\n"
 			"\n");
 
