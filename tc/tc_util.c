@@ -128,30 +128,31 @@ ok:
 	return 0;
 }
 
-int print_tc_classid(char *buf, int len, __u32 h)
+int print_tc_classid(char *buf, int blen, __u32 h)
 {
-	char handle[40] = {};
+	SPRINT_BUF(handle) = {};
+	int hlen = SPRINT_BSIZE - 1;
 
 	if (h == TC_H_ROOT)
 		sprintf(handle, "root");
 	else if (h == TC_H_UNSPEC)
-		snprintf(handle, len, "none");
+		snprintf(handle, hlen, "none");
 	else if (TC_H_MAJ(h) == 0)
-		snprintf(handle, len, ":%x", TC_H_MIN(h));
+		snprintf(handle, hlen, ":%x", TC_H_MIN(h));
 	else if (TC_H_MIN(h) == 0)
-		snprintf(handle, len, "%x:", TC_H_MAJ(h) >> 16);
+		snprintf(handle, hlen, "%x:", TC_H_MAJ(h) >> 16);
 	else
-		snprintf(handle, len, "%x:%x", TC_H_MAJ(h) >> 16, TC_H_MIN(h));
+		snprintf(handle, hlen, "%x:%x", TC_H_MAJ(h) >> 16, TC_H_MIN(h));
 
 	if (use_names) {
 		char clname[IDNAME_MAX] = {};
 
 		if (id_to_name(cls_names, h, clname))
-			snprintf(buf, len, "%s#%s", clname, handle);
+			snprintf(buf, blen, "%s#%s", clname, handle);
 		else
-			snprintf(buf, len, "%s", handle);
+			snprintf(buf, blen, "%s", handle);
 	} else {
-		snprintf(buf, len, "%s", handle);
+		snprintf(buf, blen, "%s", handle);
 	}
 
 	return 0;
