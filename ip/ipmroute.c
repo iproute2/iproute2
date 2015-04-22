@@ -67,8 +67,7 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	int family;
 
 	if ((n->nlmsg_type != RTM_NEWROUTE &&
-	     n->nlmsg_type != RTM_DELROUTE) ||
-	    !(n->nlmsg_flags & NLM_F_MULTI)) {
+	     n->nlmsg_type != RTM_DELROUTE)) {
 		fprintf(stderr, "Not a multicast route: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 		return 0;
