@@ -138,7 +138,7 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	}
 
 	if (strlen(simpdata) > (SIMP_MAX_DATA - 1)) {
-		fprintf(stderr, "simple: Illegal string len %ld <%s> \n",
+		fprintf(stderr, "simple: Illegal string len %zu <%s> \n",
 			strlen(simpdata), simpdata);
 		return -1;
 	}
