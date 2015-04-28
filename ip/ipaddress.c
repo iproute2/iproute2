@@ -34,6 +34,7 @@
 #include "utils.h"
 #include "ll_map.h"
 #include "ip_common.h"
+#include "color.h"
 
 enum {
 	IPADD_LIST,
@@ -136,8 +137,15 @@ static void print_operstate(FILE *f, __u8 state)
 {
 	if (state >= sizeof(oper_states)/sizeof(oper_states[0]))
 		fprintf(f, "state %#x ", state);
-	else
-		fprintf(f, "state %s ", oper_states[state]);
+	else {
+		fprintf(f, "state ");
+		if (strcmp(oper_states[state], "UP") == 0)
+			color_fprintf(f, COLOR_OPERSTATE_UP, "%s ", oper_states[state]);
+		else if (strcmp(oper_states[state], "DOWN") == 0)
+			color_fprintf(f, COLOR_OPERSTATE_DOWN, "%s ", oper_states[state]);
+		else
+			fprintf(f, "%s ", oper_states[state]);
+	}
 }
 
 int get_operstate(const char *name)
@@ -606,7 +614,8 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == RTM_DELLINK)
 		fprintf(fp, "Deleted ");
 
-	fprintf(fp, "%d: %s", ifi->ifi_index,
+	fprintf(fp, "%d: ", ifi->ifi_index);
+	color_fprintf(fp, COLOR_IFNAME, "%s",
 		tb[IFLA_IFNAME] ? rta_getattr_str(tb[IFLA_IFNAME]) : "<nil>");
 
 	if (tb[IFLA_LINK]) {
@@ -666,10 +675,11 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		fprintf(fp, "    link/%s ", ll_type_n2a(ifi->ifi_type, b1, sizeof(b1)));
 
 		if (tb[IFLA_ADDRESS]) {
-			fprintf(fp, "%s", ll_addr_n2a(RTA_DATA(tb[IFLA_ADDRESS]),
-						      RTA_PAYLOAD(tb[IFLA_ADDRESS]),
-						      ifi->ifi_type,
-						      b1, sizeof(b1)));
+			color_fprintf(fp, COLOR_MAC, "%s",
+					ll_addr_n2a(RTA_DATA(tb[IFLA_ADDRESS]),
+						RTA_PAYLOAD(tb[IFLA_ADDRESS]),
+						ifi->ifi_type,
+						b1, sizeof(b1)));
 		}
 		if (tb[IFLA_BROADCAST]) {
 			if (ifi->ifi_flags&IFF_POINTOPOINT)
@@ -849,10 +859,21 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		fprintf(fp, "    family %d ", ifa->ifa_family);
 
 	if (rta_tb[IFA_LOCAL]) {
-		fprintf(fp, "%s", format_host(ifa->ifa_family,
-					      RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
-					      RTA_DATA(rta_tb[IFA_LOCAL]),
-					      abuf, sizeof(abuf)));
+		if (ifa->ifa_family == AF_INET)
+			color_fprintf(fp, COLOR_INET, "%s", format_host(ifa->ifa_family,
+						RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
+						RTA_DATA(rta_tb[IFA_LOCAL]),
+						abuf, sizeof(abuf)));
+		else if (ifa->ifa_family == AF_INET6)
+			color_fprintf(fp, COLOR_INET6, "%s", format_host(ifa->ifa_family,
+						RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
+						RTA_DATA(rta_tb[IFA_LOCAL]),
+						abuf, sizeof(abuf)));
+		else
+			fprintf(fp, "%s", format_host(ifa->ifa_family,
+						RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
+						RTA_DATA(rta_tb[IFA_LOCAL]),
+						abuf, sizeof(abuf)));
 
 		if (rta_tb[IFA_ADDRESS] == NULL ||
 		    memcmp(RTA_DATA(rta_tb[IFA_ADDRESS]), RTA_DATA(rta_tb[IFA_LOCAL]),

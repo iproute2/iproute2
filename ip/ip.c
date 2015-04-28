@@ -23,6 +23,7 @@
 #include "utils.h"
 #include "ip_common.h"
 #include "namespace.h"
+#include "color.h"
 
 int preferred_family = AF_UNSPEC;
 int human_readable = 0;
@@ -56,7 +57,7 @@ static void usage(void)
 "                    -4 | -6 | -I | -D | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
 "                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
-"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] }\n");
+"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] | -c[olor]}\n");
 	exit(-1);
 }
 
@@ -257,6 +258,8 @@ int main(int argc, char **argv)
 				exit(-1);
 			}
 			rcvbuf = size;
+		} else if (matches(opt, "-color") == 0) {
+			enable_color();
 		} else if (matches(opt, "-help") == 0) {
 			usage();
 		} else if (matches(opt, "-netns") == 0) {
