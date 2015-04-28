@@ -36,7 +36,7 @@ const char *bpf_default_section(const enum bpf_prog_type type);
 
 #ifdef HAVE_ELF
 int bpf_open_object(const char *path, enum bpf_prog_type type,
-		    const char *sec);
+		    const char *sec, bool verbose);
 
 int bpf_send_map_fds(const char *path, const char *obj);
 int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
@@ -59,7 +59,7 @@ static inline int bpf(int cmd, union bpf_attr *attr, unsigned int size)
 }
 #else
 static inline int bpf_open_object(const char *path, enum bpf_prog_type type,
-				  const char *sec)
+				  const char *sec, bool verbose)
 {
 	fprintf(stderr, "No ELF library support compiled in.\n");
 	errno = ENOSYS;

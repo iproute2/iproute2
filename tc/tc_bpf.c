@@ -192,6 +192,7 @@ struct bpf_map_data {
  * verifier we still want to hand something descriptive to the user.
  */
 static char bpf_log_buf[65536];
+static bool bpf_verbose;
 
 static struct bpf_elf_st bpf_st;
 
@@ -207,8 +208,10 @@ static void bpf_dump_error(const char *format, ...)
 	vfprintf(stderr, format, vl);
 	va_end(vl);
 
-	fprintf(stderr, "%s\n", bpf_log_buf);
-	memset(bpf_log_buf, 0, sizeof(bpf_log_buf));
+	if (bpf_log_buf[0]) {
+		fprintf(stderr, "%s\n", bpf_log_buf);
+		memset(bpf_log_buf, 0, sizeof(bpf_log_buf));
+	}
 }
 
 static void bpf_save_finfo(int file_fd)
@@ -284,8 +287,11 @@ static int bpf_prog_attach(enum bpf_prog_type type, const struct bpf_insn *insns
 {
 	int prog_fd = bpf_prog_load(type, insns, size, license);
 
-	if (prog_fd < 0)
-		bpf_dump_error("BPF program rejected: %s\n", strerror(errno));
+	if (prog_fd < 0 || bpf_verbose) {
+		bpf_dump_error("%s: %s\n", prog_fd < 0 ?
+			       "BPF program rejected" :
+			       "BPF program verification", strerror(errno));
+	}
 
 	return prog_fd;
 }
@@ -555,7 +561,8 @@ static int bpf_fetch_prog(Elf *elf_fd, GElf_Ehdr *elf_hdr, bool *sec_seen,
 	return prog_fd;
 }
 
-int bpf_open_object(const char *path, enum bpf_prog_type type, const char *sec)
+int bpf_open_object(const char *path, enum bpf_prog_type type,
+		    const char *sec, bool verbose)
 {
 	char license[ELF_MAX_LICENSE_LEN];
 	int file_fd, prog_fd = -1, ret;
@@ -589,6 +596,8 @@ int bpf_open_object(const char *path, enum bpf_prog_type type, const char *sec)
 	}
 
 	memset(license, 0, sizeof(license));
+	bpf_verbose = verbose;
+
 	if (!bpf_may_skip_map_creation(file_fd))
 		bpf_maps_init();
 

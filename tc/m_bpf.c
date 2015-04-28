@@ -1,5 +1,5 @@
 /*
- * m_bpf.c	BFP based action module
+ * m_bpf.c	BPF based action module
  *
  *              This program is free software; you can redistribute it and/or
  *              modify it under the terms of the GNU General Public License
@@ -35,7 +35,8 @@ static void explain(void)
 	fprintf(stderr, " bytecode-file FILE\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "eBPF use case:\n");
-	fprintf(stderr, " object-file FILE [ section ACT_NAME ] [ export UDS_FILE ]\n");
+	fprintf(stderr, " object-file FILE [ section ACT_NAME ] [ export UDS_FILE ]");
+	fprintf(stderr, " [ verbose ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where BPF_BYTECODE := \'s,c t f k,c t f k,c t f k,...\'\n");
 	fprintf(stderr, "c,t,f,k and s are decimals; s denotes number of 4-tuples\n");
@@ -78,12 +79,13 @@ static int parse_bpf(struct action_util *a, int *argc_p, char ***argv_p,
 
 	while (argc > 0) {
 		if (matches(*argv, "run") == 0) {
-			bool from_file;
+			bool from_file, bpf_verbose;
 			int ret;
 
 			NEXT_ARG();
 opt_bpf:
 			bpf_sec_name = bpf_default_section(bpf_type);
+			bpf_verbose = false;
 			seen_run = true;
 
 			if (strcmp(*argv, "bytecode-file") == 0 ||
@@ -118,11 +120,17 @@ opt_bpf:
 					bpf_uds_name = *argv;
 					NEXT_ARG();
 				}
+				if (strcmp(*argv, "verbose") == 0 ||
+				    strcmp(*argv, "verb") == 0) {
+					bpf_verbose = true;
+					NEXT_ARG();
+				}
 
 				PREV_ARG();
 			}
 
-			ret = ebpf ? bpf_open_object(bpf_obj, bpf_type, bpf_sec_name) :
+			ret = ebpf ? bpf_open_object(bpf_obj, bpf_type, bpf_sec_name,
+						     bpf_verbose) :
 				     bpf_parse_ops(argc, argv, bpf_ops, from_file);
 			if (ret < 0) {
 				fprintf(stderr, "%s\n", ebpf ?

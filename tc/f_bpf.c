@@ -40,7 +40,8 @@ static void explain(void)
 	fprintf(stderr, " bytecode-file FILE\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "eBPF use case:\n");
-	fprintf(stderr, " object-file FILE [ section CLS_NAME ] [ export UDS_FILE ]\n");
+	fprintf(stderr, " object-file FILE [ section CLS_NAME ] [ export UDS_FILE ]");
+	fprintf(stderr, " [ verbose ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Common remaining options:\n");
 	fprintf(stderr, " [ action ACTION_SPEC ]\n");
@@ -94,12 +95,13 @@ static int bpf_parse_opt(struct filter_util *qu, char *handle,
 	while (argc > 0) {
 		if (matches(*argv, "run") == 0) {
 			struct sock_filter bpf_ops[BPF_MAXINSNS];
-			bool from_file, ebpf;
+			bool from_file, ebpf, bpf_verbose;
 			int ret;
 
 			NEXT_ARG();
 opt_bpf:
 			bpf_sec_name = bpf_default_section(bpf_type);
+			bpf_verbose = false;
 			ebpf = false;
 			seen_run = true;
 
@@ -135,11 +137,17 @@ opt_bpf:
 					bpf_uds_name = *argv;
 					NEXT_ARG();
 				}
+				if (strcmp(*argv, "verbose") == 0 ||
+				    strcmp(*argv, "verb") == 0) {
+					bpf_verbose = true;
+					NEXT_ARG();
+				}
 
 				PREV_ARG();
 			}
 
-			ret = ebpf ? bpf_open_object(bpf_obj, bpf_type, bpf_sec_name) :
+			ret = ebpf ? bpf_open_object(bpf_obj, bpf_type, bpf_sec_name,
+						     bpf_verbose) :
 				     bpf_parse_ops(argc, argv, bpf_ops, from_file);
 			if (ret < 0) {
 				fprintf(stderr, "%s\n", ebpf ?
