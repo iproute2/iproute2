@@ -78,7 +78,10 @@ ip-link \- network device configuration
 .BR ipvlan " ]"
 
 .ti -8
-.BI "ip link delete " DEVICE
+.BR "ip link delete " {
+.IR DEVICE " | "
+.BI "group " GROUP
+}
 .BI type " TYPE"
 .RI "[ " ARGS " ]"
 
@@ -588,15 +591,19 @@ the following additional arguments are supported:
 - specifies the mode (datagram or connected) to use.
 
 .SS ip link delete - delete virtual link
-.I DEVICE
-specifies the virtual  device to act operate on.
-.I TYPE
-specifies the type of the device.
-
 
 .TP
 .BI dev " DEVICE "
-specifies the physical device to act operate on.
+specifies the virtual device to act operate on.
+
+.TP
+.BI group " GROUP "
+specifies the group of virtual links to delete. Group 0 is not allowed to be
+deleted since it is the default group.
+
+.TP
+.BI type " TYPE "
+specifies the type of the device.
 
 .SS ip link set - change device attributes
 
