@@ -35,6 +35,7 @@ bits 9,10,11: redirect counter -  redirect TTL. Loop avoidance
  *
  * */
 
+/* backwards compat for userspace only */
 #define TC_MUNGED          _TC_MAKEMASK1(0)
 #define SET_TC_MUNGED(v)   ( TC_MUNGED | (v & ~TC_MUNGED))
 #define CLR_TC_MUNGED(v)   ( v & ~TC_MUNGED)
