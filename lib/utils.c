@@ -496,7 +496,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 	if (strcmp(arg, "default") == 0 ||
 	    strcmp(arg, "any") == 0 ||
 	    strcmp(arg, "all") == 0) {
-		if ((family == AF_DECnet) || (family = AF_MPLS))
+		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
 		dst->family = family;
 		dst->bytelen = 0;
