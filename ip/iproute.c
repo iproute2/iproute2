@@ -1164,7 +1164,7 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 		req.r.rtm_family = AF_INET;
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
-		return -1;
+		return -2;
 
 	return 0;
 }
