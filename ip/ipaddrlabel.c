@@ -183,7 +183,7 @@ static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 		req.ifal.ifal_family = AF_INET6;
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
-		return 2;
+		return -2;
 
 	return 0;
 }
@@ -232,12 +232,12 @@ static int ipaddrlabel_flush(int argc, char **argv)
 
 	if (rtnl_wilddump_request(&rth, af, RTM_GETADDRLABEL) < 0) {
 		perror("Cannot send dump request");
-		return 1;
+		return -1;
 	}
 
 	if (rtnl_dump_filter(&rth, flush_addrlabel, NULL) < 0) {
 		fprintf(stderr, "Flush terminated\n");
-		return 1;
+		return -1;
 	}
 
 	return 0;
