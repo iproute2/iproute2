@@ -1893,8 +1893,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		/* workaround for older kernels with less fields */
 		if (len < sizeof(*info)) {
 			info = alloca(sizeof(*info));
-			memset(info, 0, sizeof(*info));
 			memcpy(info, RTA_DATA(tb[INET_DIAG_INFO]), len);
+			memset((char *)info + len, 0, sizeof(*info) - len);
 		} else
 			info = RTA_DATA(tb[INET_DIAG_INFO]);
 
