@@ -1684,7 +1684,7 @@ static void tcp_stats_print(struct tcpstat *s)
 
 	if (s->mss)
 		printf(" mss:%d", s->mss);
-	if (s->cwnd && s->cwnd != 2)
+	if (s->cwnd)
 		printf(" cwnd:%d", s->cwnd);
 	if (s->ssthresh)
 		printf(" ssthresh:%d", s->ssthresh);
@@ -1692,11 +1692,11 @@ static void tcp_stats_print(struct tcpstat *s)
 	if (s->dctcp && s->dctcp->enabled) {
 		struct dctcpstat *dctcp = s->dctcp;
 
-		printf("dctcp:(ce_state:%u,alpha:%u,ab_ecn:%u,ab_tot:%u)",
+		printf(" dctcp:(ce_state:%u,alpha:%u,ab_ecn:%u,ab_tot:%u)",
 				dctcp->ce_state, dctcp->alpha, dctcp->ab_ecn,
 				dctcp->ab_tot);
 	} else if (s->dctcp) {
-		printf("dctcp:fallback_mode");
+		printf(" dctcp:fallback_mode");
 	}
 
 	if (s->send_bps)
