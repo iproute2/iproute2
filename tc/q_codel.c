@@ -4,7 +4,7 @@
  *  Copyright (C) 2011-2012 Kathleen Nichols <nichols@pollere.com>
  *  Copyright (C) 2011-2012 Van Jacobson <van@pollere.com>
  *  Copyright (C) 2012 Michael D. Taht <dave.taht@bufferbloat.net>
- *  Copyright (C) 2012 Eric Dumazet <edumazet@google.com>
+ *  Copyright (C) 2012,2015 Eric Dumazet <edumazet@google.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,6 +55,7 @@ static void explain(void)
 {
 	fprintf(stderr, "Usage: ... codel [ limit PACKETS ] [ target TIME]\n");
 	fprintf(stderr, "                 [ interval TIME ] [ ecn | noecn ]\n");
+	fprintf(stderr, "                 [ ce_threshold TIME ]\n");
 }
 
 static int codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
@@ -63,6 +64,7 @@ static int codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	unsigned limit = 0;
 	unsigned target = 0;
 	unsigned interval = 0;
+	unsigned ce_threshold = ~0U;
 	int ecn = -1;
 	struct rtattr *tail;
 
@@ -77,6 +79,12 @@ static int codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			NEXT_ARG();
 			if (get_time(&target, *argv)) {
 				fprintf(stderr, "Illegal \"target\"\n");
+				return -1;
+			}
+		} else if (strcmp(*argv, "ce_threshold") == 0) {
+			NEXT_ARG();
+			if (get_time(&ce_threshold, *argv)) {
+				fprintf(stderr, "Illegal \"ce_threshold\"\n");
 				return -1;
 			}
 		} else if (strcmp(*argv, "interval") == 0) {
@@ -110,6 +118,10 @@ static int codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		addattr_l(n, 1024, TCA_CODEL_TARGET, &target, sizeof(target));
 	if (ecn != -1)
 		addattr_l(n, 1024, TCA_CODEL_ECN, &ecn, sizeof(ecn));
+	if (ce_threshold != ~0U)
+		addattr_l(n, 1024, TCA_CODEL_CE_THRESHOLD,
+			  &ce_threshold, sizeof(ce_threshold));
+
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
@@ -121,6 +133,7 @@ static int codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	unsigned interval;
 	unsigned target;
 	unsigned ecn;
+	unsigned ce_threshold;
 	SPRINT_BUF(b1);
 
 	if (opt == NULL)
@@ -137,6 +150,11 @@ static int codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	    RTA_PAYLOAD(tb[TCA_CODEL_TARGET]) >= sizeof(__u32)) {
 		target = rta_getattr_u32(tb[TCA_CODEL_TARGET]);
 		fprintf(f, "target %s ", sprint_time(target, b1));
+	}
+	if (tb[TCA_CODEL_CE_THRESHOLD] &&
+	    RTA_PAYLOAD(tb[TCA_CODEL_CE_THRESHOLD]) >= sizeof(__u32)) {
+		ce_threshold = rta_getattr_u32(tb[TCA_CODEL_CE_THRESHOLD]);
+		fprintf(f, "ce_threshold %s ", sprint_time(ce_threshold, b1));
 	}
 	if (tb[TCA_CODEL_INTERVAL] &&
 	    RTA_PAYLOAD(tb[TCA_CODEL_INTERVAL]) >= sizeof(__u32)) {
@@ -156,16 +174,19 @@ static int codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 static int codel_print_xstats(struct qdisc_util *qu, FILE *f,
 			      struct rtattr *xstats)
 {
-	struct tc_codel_xstats *st;
+	struct tc_codel_xstats _st, *st;
 	SPRINT_BUF(b1);
 
 	if (xstats == NULL)
 		return 0;
 
-	if (RTA_PAYLOAD(xstats) < sizeof(*st))
-		return -1;
-
 	st = RTA_DATA(xstats);
+	if (RTA_PAYLOAD(xstats) < sizeof(*st)) {
+		memset(&_st, 0, sizeof(_st));
+		memcpy(&_st, st, RTA_PAYLOAD(xstats));
+		st = &_st;
+	}
+
 	fprintf(f, "  count %u lastcount %u ldelay %s",
 		st->count, st->lastcount, sprint_time(st->ldelay, b1));
 	if (st->dropping)
@@ -176,6 +197,8 @@ static int codel_print_xstats(struct qdisc_util *qu, FILE *f,
 		fprintf(f, " drop_next %s", sprint_time(st->drop_next, b1));
 	fprintf(f, "\n  maxpacket %u ecn_mark %u drop_overlimit %u",
 		st->maxpacket, st->ecn_mark, st->drop_overlimit);
+	if (st->ce_mark)
+		fprintf(f, " ce_mark %u", st->ce_mark);
 	return 0;
 
 }
