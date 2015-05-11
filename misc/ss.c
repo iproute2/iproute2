@@ -767,6 +767,8 @@ struct tcpstat
 	unsigned int	    lastack;
 	double		    pacing_rate;
 	double		    pacing_rate_max;
+	unsigned long long  bytes_acked;
+	unsigned long long  bytes_received;
 	unsigned int	    unacked;
 	unsigned int	    retrans;
 	unsigned int	    retrans_total;
@@ -1689,6 +1691,11 @@ static void tcp_stats_print(struct tcpstat *s)
 	if (s->ssthresh)
 		printf(" ssthresh:%d", s->ssthresh);
 
+	if (s->bytes_acked)
+		printf(" bytes_acked:%llu", s->bytes_acked);
+	if (s->bytes_received)
+		printf(" bytes_received:%llu", s->bytes_received);
+
 	if (s->dctcp && s->dctcp->enabled) {
 		struct dctcpstat *dctcp = s->dctcp;
 
@@ -1981,6 +1988,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 					info->tcpi_max_pacing_rate != ~0ULL)
 				s.pacing_rate_max = info->tcpi_max_pacing_rate * 8.;
 		}
+		s.bytes_acked = info->tcpi_bytes_acked;
+		s.bytes_received = info->tcpi_bytes_received;
 		tcp_stats_print(&s);
 		if (s.dctcp)
 			free(s.dctcp);
