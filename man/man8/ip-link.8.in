@@ -75,7 +75,8 @@ ip-link \- network device configuration
 .BR ip6gretap " |"
 .BR vti " |"
 .BR nlmon " |"
-.BR ipvlan " ]"
+.BR ipvlan " |"
+.BR lowpan " ]"
 
 .ti -8
 .BR "ip link delete " {
@@ -243,6 +244,9 @@ Link types:
 .sp
 .BR ipvlan
 - Interface for L3 (IPv6/IPv4) based VLANs
+.sp
+.BR lowpan
+- Interface for 6LoWPAN (IPv6) over IEEE 802.15.4 / Bluetooth
 .in -8
 
 .TP
@@ -915,6 +919,12 @@ encap-dport 5555 encap-csum encap-remcsum
 Creates an IPIP that is encapsulated with Generic UDP Encapsulation,
 and the outer UDP checksum and remote checksum offload are enabled.
 
+.RE
+.PP
+ip link add link wpan0 lowpan0 type lowpan
+.RS 4
+Creates a 6LoWPAN interface named lowpan0 on the underlying
+IEEE 802.15.4 device wpan0.
 .RE
 
 .SH SEE ALSO
