@@ -1,8 +1,10 @@
 ## -- Config --
 DEV := lo
-PREFIX := sudo -E
+PREFIX := sudo -E unshare -n
 RESULTS_DIR := results
 ## -- End Config --
+
+HAVE_UNSHARED_UTIL := $(shell unshare --version 2> /dev/null)
 
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
@@ -38,6 +40,9 @@ distclean: clean
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) distclean && cd ..;
 
 $(TESTS): clean
+ifeq (,$(HAVE_UNSHARED_UTIL))
+	$(error Please install util-linux tools to run tests in separated network namespace)
+endif
 	@mkdir -p $(RESULTS_DIR)
 	
 	@for d in $(TESTS_DIR); do \
