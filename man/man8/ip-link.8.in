@@ -714,12 +714,6 @@ tool can be used. But it allows to change network namespace only for physical de
 give the device a symbolic name for easy reference.
 
 .TP
-.BI group " GROUP"
-specify the group the device belongs to.
-The available groups are listed in file
-.BR "@SYSCONFDIR@/group" .
-
-.TP
 .BI vf " NUM"
 specify a Virtual Function device to be configured. The associated PF device
 must be specified using the
@@ -867,7 +861,7 @@ specifies which help of link type to dislpay.
 .SS
 .I GROUP
 may be a number or a string from the file
-.B /etc/iproute2/group
+.B @SYSCONFDIR@/group
 which can be manually filled.
 
 .SH "EXAMPLES"
