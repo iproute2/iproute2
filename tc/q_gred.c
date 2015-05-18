@@ -214,9 +214,6 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 		argc--; argv++;
 	}
 
-	if (rate == 0)
-		get_rate(&rate, "10Mbit");
-
 	if (!opt.qth_min || !opt.qth_max || !opt.limit || !avpkt ||
 	    (opt.DP<0)) {
 		fprintf(stderr, "Required parameter (min, max, limit, "
@@ -226,6 +223,10 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 	if (!burst) {
 		burst = (2 * opt.qth_min + opt.qth_max) / (3 * avpkt);
 		fprintf(stderr, "GRED: set burst to %u\n", burst);
+	}
+	if (!rate) {
+		get_rate(&rate, "10Mbit");
+		fprintf(stderr, "GRED: set bandwidth to 10Mbit\n");
 	}
 	if ((parm = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
 		fprintf(stderr, "GRED: failed to calculate EWMA constant.\n");

@@ -109,9 +109,6 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		argc--; argv++;
 	}
 
-	if (rate == 0)
-		get_rate(&rate, "10Mbit");
-
 	if (!opt.limit || !avpkt) {
 		fprintf(stderr, "RED: Required parameter (limit, avpkt) is missing\n");
 		return -1;
@@ -126,6 +123,10 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		opt.qth_min = opt.qth_max / 3;
 	if (!burst)
 		burst = (2 * opt.qth_min + opt.qth_max) / (3 * avpkt);
+	if (!rate) {
+		get_rate(&rate, "10Mbit");
+		fprintf(stderr, "RED: set bandwidth to 10Mbit\n");
+	}
 	if ((parm = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
 		fprintf(stderr, "RED: failed to calculate EWMA constant.\n");
 		return -1;
