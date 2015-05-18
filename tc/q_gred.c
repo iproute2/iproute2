@@ -123,7 +123,7 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 	unsigned avpkt = 0;
 	double probability = 0.02;
 	unsigned rate = 0;
-	int wlog;
+	int parm;
 	__u8 sbuf[256];
 	struct rtattr *tail;
 	__u32 max_P;
@@ -227,27 +227,26 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 		burst = (2 * opt.qth_min + opt.qth_max) / (3 * avpkt);
 		fprintf(stderr, "GRED: set burst to %u\n", burst);
 	}
-
-	if ((wlog = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
+	if ((parm = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
 		fprintf(stderr, "GRED: failed to calculate EWMA constant.\n");
 		return -1;
 	}
-	if (wlog >= 10)
+	if (parm >= 10)
 		fprintf(stderr, "GRED: WARNING. Burst %d seems to be too "
 		    "large.\n", burst);
-	opt.Wlog = wlog;
-	if ((wlog = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {
+	opt.Wlog = parm;
+	if ((parm = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {
 		fprintf(stderr, "GRED: failed to calculate probability.\n");
 		return -1;
 	}
-	opt.Plog = wlog;
-	if ((wlog = tc_red_eval_idle_damping(opt.Wlog, avpkt, rate, sbuf)) < 0)
+	opt.Plog = parm;
+	if ((parm = tc_red_eval_idle_damping(opt.Wlog, avpkt, rate, sbuf)) < 0)
 	    {
 		fprintf(stderr, "GRED: failed to calculate idle damping "
 		    "table.\n");
 		return -1;
 	}
-	opt.Scell_log = wlog;
+	opt.Scell_log = parm;
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
