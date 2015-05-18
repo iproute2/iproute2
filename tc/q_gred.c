@@ -232,7 +232,7 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 		return -1;
 	}
 	if (parm >= 10)
-		fprintf(stderr, "GRED: WARNING. Burst %d seems to be too "
+		fprintf(stderr, "GRED: WARNING. Burst %u seems to be too "
 		    "large.\n", burst);
 	opt.Wlog = parm;
 	if ((parm = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {

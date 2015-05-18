@@ -131,7 +131,7 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		return -1;
 	}
 	if (parm >= 10)
-		fprintf(stderr, "RED: WARNING. Burst %d seems to be too large.\n", burst);
+		fprintf(stderr, "RED: WARNING. Burst %u seems to be too large.\n", burst);
 	opt.Wlog = parm;
 	if ((parm = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {
 		fprintf(stderr, "RED: failed to calculate probability.\n");
