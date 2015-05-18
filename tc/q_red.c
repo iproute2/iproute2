@@ -29,7 +29,7 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... red limit BYTES [min BYTES] [max BYTES] avpkt BYTES [burst PACKETS]\n");
-	fprintf(stderr, "               [adaptive] [probability PROBABILITY] bandwidth KBPS\n");
+	fprintf(stderr, "               [adaptive] [probability PROBABILITY] [bandwidth KBPS]\n");
 	fprintf(stderr, "               [ecn] [harddrop]\n");
 }
 
