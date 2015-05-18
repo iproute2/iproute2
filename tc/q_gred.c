@@ -143,8 +143,7 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				fprintf(stderr, "Illegal \"setup\"\n");
 				return -1;
 			}
-		return init_gred(qu,argc-1, argv+1,n);
-
+			return init_gred(qu, argc-1, argv+1, n);
 		} else if (strcmp(*argv, "min") == 0) {
 			NEXT_ARG();
 			if (get_size(&opt.qth_min, *argv)) {
@@ -172,7 +171,7 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 			ok++;
 		} else if (strcmp(*argv, "burst") == 0) {
 			NEXT_ARG();
-                        if (get_unsigned(&burst, *argv, 0)) {
+			if (get_unsigned(&burst, *argv, 0)) {
 				fprintf(stderr, "Illegal \"burst\"\n");
 				return -1;
 			}
