@@ -35,10 +35,11 @@
 #include "ip_common.h"
 
 static void usage(void) __attribute__((noreturn));
+int listen_all_nsid;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip xfrm monitor [ all | OBJECTS | help ]\n");
+	fprintf(stderr, "Usage: ip xfrm monitor [all-nsid] [ all | OBJECTS | help ]\n");
 	fprintf(stderr, "OBJECTS := { acquire | expire | SA | aevent | policy | report }\n");
 	exit(-1);
 }
@@ -298,6 +299,13 @@ static int xfrm_accept_msg(const struct sockaddr_nl *who,
 	if (timestamp)
 		print_timestamp(fp);
 
+	if (listen_all_nsid) {
+		if (ctrl == NULL || ctrl->nsid < 0)
+			fprintf(fp, "[nsid current]");
+		else
+			fprintf(fp, "[nsid %d]", ctrl->nsid);
+	}
+
 	switch (n->nlmsg_type) {
 	case XFRM_MSG_NEWSA:
 	case XFRM_MSG_DELSA:
@@ -360,6 +368,8 @@ int do_xfrm_monitor(int argc, char **argv)
 		if (matches(*argv, "file") == 0) {
 			NEXT_ARG();
 			file = *argv;
+		} else if (matches(*argv, "all-nsid") == 0) {
+			listen_all_nsid = 1;
 		} else if (matches(*argv, "acquire") == 0) {
 			lacquire=1;
 			groups = 0;
@@ -411,6 +421,8 @@ int do_xfrm_monitor(int argc, char **argv)
 	}
 
 	if (rtnl_open_byproto(&rth, groups, NETLINK_XFRM) < 0)
+		exit(1);
+	if (listen_all_nsid && rtnl_listen_all_nsid(&rth) < 0)
 		exit(1);
 
 	if (rtnl_listen(&rth, xfrm_accept_msg, (void*)stdout) < 0)

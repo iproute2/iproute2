@@ -364,7 +364,11 @@ ip-xfrm \- transform configuration
 .BR required " | " use
 
 .ti -8
-.BR "ip xfrm monitor" " [ " all " |"
+.BR "ip xfrm monitor" " ["
+.BI all-nsid
+] [
+.BI all
+ |
 .IR LISTofXFRM-OBJECTS " ]"
 
 .ti -8
@@ -669,7 +673,22 @@ ip xfrm monitor 	state monitoring for xfrm objects
 .PP
 The xfrm objects to monitor can be optionally specified.
 
+.P
+If the
+.BI all-nsid
+option is set, the program listens to all network namespaces that have a
+nsid assigned into the network namespace were the program is running.
+A prefix is displayed to show the network namespace where the message
+originates. Example:
+.sp
+.in +2
+[nsid 1]Flushed state proto 0
+.in -2
+.sp
+
 .SH AUTHOR
 Manpage revised by David Ward <david.ward@ll.mit.edu>
 .br
 Manpage revised by Christophe Gouault <christophe.gouault@6wind.com>
+.br
+Manpage revised by Nicolas Dichtel <nicolas.dichtel@6wind.com>
