@@ -12,6 +12,8 @@ ip-monitor, rtmon \- state monitoring
 .IR OBJECT-LIST " ] ["
 .BI file " FILENAME "
 ] [
+.BI label
+] [
 .BI dev " DEVICE "
 ]
 .sp
@@ -42,6 +44,8 @@ command is the first in the command line and then the object list follows:
 .IR OBJECT-LIST " ] ["
 .BI file " FILENAME "
 ] [
+.BI label
+] [
 .BI dev " DEVICE "
 ]
 
@@ -56,6 +60,19 @@ argument is given,
 .B ip
 opens RTNETLINK, listens on it and dumps state changes in the format
 described in previous sections.
+
+.P
+If the
+.BI label
+option is set, a prefix is displayed before each message to
+show the family of the message. For example:
+.sp
+.in +2
+[NEIGH]10.16.0.112 dev eth0 lladdr 00:04:23:df:2f:d0 REACHABLE
+[LINK]3: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc pfifo_fast state DOWN group default
+    link/ether 52:54:00:12:34:57 brd ff:ff:ff:ff:ff:ff
+.in -2
+.sp
 
 .P
 If the
@@ -97,3 +114,5 @@ option is given, the program prints only events related to this device.
 
 .SH AUTHOR
 Original Manpage by Michail Litvak <mci@owl.openwall.com>
+.br
+Manpage revised by Nicolas Dichtel <nicolas.dichtel@6wind.com>
