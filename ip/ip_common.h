@@ -33,6 +33,7 @@ extern int print_prefix(const struct sockaddr_nl *who,
 extern int print_rule(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n, void *arg);
 extern int print_netconf(const struct sockaddr_nl *who,
+			 struct rtnl_ctrl_data *ctrl,
 			 struct nlmsghdr *n, void *arg);
 extern void netns_map_init(void);
 extern int print_nsid(const struct sockaddr_nl *who,

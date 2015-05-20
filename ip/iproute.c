@@ -1681,8 +1681,9 @@ static int iproute_get(int argc, char **argv)
 	exit(0);
 }
 
-static int restore_handler(const struct sockaddr_nl *nl, struct nlmsghdr *n,
-			   void *arg)
+static int restore_handler(const struct sockaddr_nl *nl,
+			   struct rtnl_ctrl_data *ctrl,
+			   struct nlmsghdr *n, void *arg)
 {
 	int ret;
 
@@ -1724,7 +1725,9 @@ static int iproute_restore(void)
 	exit(rtnl_from_file(stdin, &restore_handler, NULL));
 }
 
-static int show_handler(const struct sockaddr_nl *nl, struct nlmsghdr *n, void *arg)
+static int show_handler(const struct sockaddr_nl *nl,
+			struct rtnl_ctrl_data *ctrl,
+			struct nlmsghdr *n, void *arg)
 {
 	print_route(nl, n, stdout);
 	return 0;

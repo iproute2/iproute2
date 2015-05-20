@@ -180,6 +180,7 @@ static int get_addr_gen_mode(const char *mode)
 static int have_rtnl_newlink = -1;
 
 static int accept_msg(const struct sockaddr_nl *who,
+		      struct rtnl_ctrl_data *ctrl,
 		      struct nlmsghdr *n, void *arg)
 {
 	struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(n);

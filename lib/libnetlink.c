@@ -419,7 +419,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 }
 
 int rtnl_listen(struct rtnl_handle *rtnl,
-		rtnl_filter_t handler,
+		rtnl_listen_filter_t handler,
 		void *jarg)
 {
 	int status;
@@ -475,7 +475,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 				exit(1);
 			}
 
-			err = handler(&nladdr, h, jarg);
+			err = handler(&nladdr, NULL, h, jarg);
 			if (err < 0)
 				return err;
 
@@ -493,7 +493,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 	}
 }
 
-int rtnl_from_file(FILE *rtnl, rtnl_filter_t handler,
+int rtnl_from_file(FILE *rtnl, rtnl_listen_filter_t handler,
 		   void *jarg)
 {
 	int status;
@@ -541,7 +541,7 @@ int rtnl_from_file(FILE *rtnl, rtnl_filter_t handler,
 			return -1;
 		}
 
-		err = handler(&nladdr, h, jarg);
+		err = handler(&nladdr, NULL, h, jarg);
 		if (err < 0)
 			return err;
 	}

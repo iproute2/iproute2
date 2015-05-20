@@ -45,8 +45,8 @@ static void write_stamp(FILE *fp)
 	fwrite((void*)n1, 1, NLMSG_ALIGN(n1->nlmsg_len), fp);
 }
 
-static int dump_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		    void *arg)
+static int dump_msg(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
+		    struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	if (!init_phase)
@@ -54,6 +54,12 @@ static int dump_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	fwrite((void*)n, 1, NLMSG_ALIGN(n->nlmsg_len), fp);
 	fflush(fp);
 	return 0;
+}
+
+static int dump_msg2(const struct sockaddr_nl *who,
+		     struct nlmsghdr *n, void *arg)
+{
+	return dump_msg(who, NULL, n, arg);
 }
 
 static void usage(void)
@@ -163,7 +169,7 @@ main(int argc, char **argv)
 
 	write_stamp(fp);
 
-	if (rtnl_dump_filter(&rth, dump_msg, fp) < 0) {
+	if (rtnl_dump_filter(&rth, dump_msg2, fp) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}

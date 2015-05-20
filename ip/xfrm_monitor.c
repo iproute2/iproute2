@@ -290,6 +290,7 @@ static int xfrm_mapping_print(const struct sockaddr_nl *who,
 }
 
 static int xfrm_accept_msg(const struct sockaddr_nl *who,
+			   struct rtnl_ctrl_data *ctrl,
 			   struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;

@@ -40,7 +40,8 @@ static void usage(void)
 
 #define NETCONF_RTA(r)	((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct netconfmsg))))
 
-int print_netconf(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
+		  struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct netconfmsg *ncm = NLMSG_DATA(n);
@@ -123,6 +124,12 @@ int print_netconf(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static int print_netconf2(const struct sockaddr_nl *who,
+			  struct nlmsghdr *n, void *arg)
+{
+	return print_netconf(who, NULL, n, arg);
+}
+
 void ipnetconf_reset_filter(int ifindex)
 {
 	memset(&filter, 0, sizeof(filter));
@@ -177,7 +184,7 @@ dump:
 			perror("Cannot send dump request");
 			exit(1);
 		}
-		if (rtnl_dump_filter(&rth, print_netconf, stdout) < 0) {
+		if (rtnl_dump_filter(&rth, print_netconf2, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}

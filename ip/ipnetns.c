@@ -43,6 +43,7 @@ static struct rtnl_handle rtnsh = { .fd = -1 };
 static int have_rtnl_getnsid = -1;
 
 static int ipnetns_accept_msg(const struct sockaddr_nl *who,
+			      struct rtnl_ctrl_data *ctrl,
 			      struct nlmsghdr *n, void *arg)
 {
 	struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(n);

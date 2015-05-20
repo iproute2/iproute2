@@ -41,8 +41,15 @@ extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)
 	__attribute__((warn_unused_result));
 
+struct rtnl_ctrl_data {
+};
+
 typedef int (*rtnl_filter_t)(const struct sockaddr_nl *,
 			     struct nlmsghdr *n, void *);
+
+typedef int (*rtnl_listen_filter_t)(const struct sockaddr_nl *,
+				    struct rtnl_ctrl_data *,
+				    struct nlmsghdr *n, void *);
 
 struct rtnl_dump_filter_arg
 {
@@ -118,9 +125,9 @@ static inline const char *rta_getattr_str(const struct rtattr *rta)
 	return (const char *)RTA_DATA(rta);
 }
 
-extern int rtnl_listen(struct rtnl_handle *, rtnl_filter_t handler,
+extern int rtnl_listen(struct rtnl_handle *, rtnl_listen_filter_t handler,
 		       void *jarg);
-extern int rtnl_from_file(FILE *, rtnl_filter_t handler,
+extern int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
 		       void *jarg);
 
 #define NLMSG_TAIL(nmsg) \

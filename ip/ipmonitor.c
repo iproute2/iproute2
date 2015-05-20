@@ -38,6 +38,7 @@ static void usage(void)
 }
 
 static int accept_msg(const struct sockaddr_nl *who,
+		      struct rtnl_ctrl_data *ctrl,
 		      struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
@@ -122,7 +123,7 @@ static int accept_msg(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == RTM_NEWNETCONF) {
 		if (prefix_banner)
 			fprintf(fp, "[NETCONF]");
-		print_netconf(who, n, arg);
+		print_netconf(who, ctrl, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == NLMSG_TSTAMP) {

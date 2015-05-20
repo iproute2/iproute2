@@ -177,8 +177,9 @@ static int print_ctrl_grp(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
 /*
  * The controller sends one nlmsg per family
 */
-static int print_ctrl(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		      void *arg)
+static int print_ctrl(const struct sockaddr_nl *who,
+		      struct rtnl_ctrl_data *ctrl,
+		      struct nlmsghdr *n, void *arg)
 {
 	struct rtattr *tb[CTRL_ATTR_MAX + 1];
 	struct genlmsghdr *ghdr = NLMSG_DATA(n);
@@ -281,6 +282,12 @@ static int print_ctrl(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return 0;
 }
 
+static int print_ctrl2(const struct sockaddr_nl *who,
+		      struct nlmsghdr *n, void *arg)
+{
+	return print_ctrl(who, NULL, n, arg);
+}
+
 static int ctrl_list(int cmd, int argc, char **argv)
 {
 	struct rtnl_handle rth;
@@ -339,7 +346,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 			goto ctrl_done;
 		}
 
-		if (print_ctrl(NULL, nlh, (void *) stdout) < 0) {
+		if (print_ctrl2(NULL, nlh, (void *) stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			goto ctrl_done;
 		}
@@ -355,7 +362,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 			goto ctrl_done;
 		}
 
-		rtnl_dump_filter(&rth, print_ctrl, stdout);
+		rtnl_dump_filter(&rth, print_ctrl2, stdout);
 
         }
 
@@ -408,5 +415,5 @@ static int parse_ctrl(struct genl_util *a, int argc, char **argv)
 struct genl_util ctrl_genl_util = {
 	.name = "ctrl",
 	.parse_genlopt = parse_ctrl,
-	.print_genlopt = print_ctrl,
+	.print_genlopt = print_ctrl2,
 };
