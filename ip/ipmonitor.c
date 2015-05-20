@@ -26,21 +26,29 @@
 
 static void usage(void) __attribute__((noreturn));
 int prefix_banner;
+int listen_all_nsid;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ]"
-			"[ label ] [dev DEVICE]\n");
+	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ] "
+			"[ label ] [all-nsid] [dev DEVICE]\n");
 	fprintf(stderr, "LISTofOBJECTS := link | address | route | mroute | prefix |\n");
 	fprintf(stderr, "                 neigh | netconf | rule | nsid\n");
 	fprintf(stderr, "FILE := file FILENAME\n");
 	exit(-1);
 }
 
-static void print_headers(FILE *fp, char *label)
+static void print_headers(FILE *fp, char *label, struct rtnl_ctrl_data *ctrl)
 {
 	if (timestamp)
 		print_timestamp(fp);
+
+	if (listen_all_nsid) {
+		if (ctrl == NULL || ctrl->nsid < 0)
+			fprintf(fp, "[nsid current]");
+		else
+			fprintf(fp, "[nsid %d]", ctrl->nsid);
+	}
 
 	if (prefix_banner)
 		fprintf(fp, "%s", label);
@@ -66,11 +74,11 @@ static int accept_msg(const struct sockaddr_nl *who,
 
 		if (r->rtm_family == RTNL_FAMILY_IPMR ||
 		    r->rtm_family == RTNL_FAMILY_IP6MR) {
-			print_headers(fp, "[MROUTE]");
+			print_headers(fp, "[MROUTE]", ctrl);
 			print_mroute(who, n, arg);
 			return 0;
 		} else {
-			print_headers(fp, "[ROUTE]");
+			print_headers(fp, "[ROUTE]", ctrl);
 			print_route(who, n, arg);
 			return 0;
 		}
@@ -78,17 +86,17 @@ static int accept_msg(const struct sockaddr_nl *who,
 
 	if (n->nlmsg_type == RTM_NEWLINK || n->nlmsg_type == RTM_DELLINK) {
 		ll_remember_index(who, n, NULL);
-		print_headers(fp, "[LINK]");
+		print_headers(fp, "[LINK]", ctrl);
 		print_linkinfo(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWADDR || n->nlmsg_type == RTM_DELADDR) {
-		print_headers(fp, "[ADDR]");
+		print_headers(fp, "[ADDR]", ctrl);
 		print_addrinfo(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWADDRLABEL || n->nlmsg_type == RTM_DELADDRLABEL) {
-		print_headers(fp, "[ADDRLABEL]");
+		print_headers(fp, "[ADDRLABEL]", ctrl);
 		print_addrlabel(who, n, arg);
 		return 0;
 	}
@@ -101,22 +109,22 @@ static int accept_msg(const struct sockaddr_nl *who,
 				return 0;
 		}
 
-		print_headers(fp, "[NEIGH]");
+		print_headers(fp, "[NEIGH]", ctrl);
 		print_neigh(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWPREFIX) {
-		print_headers(fp, "[PREFIX]");
+		print_headers(fp, "[PREFIX]", ctrl);
 		print_prefix(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWRULE || n->nlmsg_type == RTM_DELRULE) {
-		print_headers(fp, "[RULE]");
+		print_headers(fp, "[RULE]", ctrl);
 		print_rule(who, n, arg);
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWNETCONF) {
-		print_headers(fp, "[NETCONF]");
+		print_headers(fp, "[NETCONF]", ctrl);
 		print_netconf(who, ctrl, n, arg);
 		return 0;
 	}
@@ -125,7 +133,7 @@ static int accept_msg(const struct sockaddr_nl *who,
 		return 0;
 	}
 	if (n->nlmsg_type == RTM_NEWNSID || n->nlmsg_type == RTM_DELNSID) {
-		print_headers(fp, "[NSID]");
+		print_headers(fp, "[NSID]", ctrl);
 		print_nsid(who, n, arg);
 		return 0;
 	}
@@ -178,6 +186,8 @@ int do_ipmonitor(int argc, char **argv)
 			file = *argv;
 		} else if (matches(*argv, "label") == 0) {
 			prefix_banner = 1;
+		} else if (matches(*argv, "all-nsid") == 0) {
+			listen_all_nsid = 1;
 		} else if (matches(*argv, "link") == 0) {
 			llink=1;
 			groups = 0;
@@ -284,6 +294,9 @@ int do_ipmonitor(int argc, char **argv)
 
 	if (rtnl_open(&rth, groups) < 0)
 		exit(1);
+	if (listen_all_nsid && rtnl_listen_all_nsid(&rth) < 0)
+		exit(1);
+
 	ll_init_map(&rth);
 	netns_map_init();
 

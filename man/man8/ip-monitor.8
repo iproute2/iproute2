@@ -14,6 +14,8 @@ ip-monitor, rtmon \- state monitoring
 ] [
 .BI label
 ] [
+.BI all-nsid
+] [
 .BI dev " DEVICE "
 ]
 .sp
@@ -46,6 +48,8 @@ command is the first in the command line and then the object list follows:
 ] [
 .BI label
 ] [
+.BI all-nsid
+] [
 .BI dev " DEVICE "
 ]
 
@@ -71,6 +75,19 @@ show the family of the message. For example:
 [NEIGH]10.16.0.112 dev eth0 lladdr 00:04:23:df:2f:d0 REACHABLE
 [LINK]3: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc pfifo_fast state DOWN group default
     link/ether 52:54:00:12:34:57 brd ff:ff:ff:ff:ff:ff
+.in -2
+.sp
+
+.P
+If the
+.BI all-nsid
+option is set, the program listens to all network namespaces that have a
+nsid assigned into the network namespace were the program is running.
+A prefix is displayed to show the network namespace where the message
+originates. Example:
+.sp
+.in +2
+[nsid 0]10.16.0.112 dev eth0 lladdr 00:04:23:df:2f:d0 REACHABLE
 .in -2
 .sp
 

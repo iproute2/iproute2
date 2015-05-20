@@ -20,6 +20,8 @@ struct rtnl_handle
 	__u32			dump;
 	int			proto;
 	FILE		       *dump_fp;
+#define RTNL_HANDLE_F_LISTEN_ALL_NSID		0x01
+	int			flags;
 };
 
 extern int rcvbuf;
@@ -42,6 +44,7 @@ extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 	__attribute__((warn_unused_result));
 
 struct rtnl_ctrl_data {
+	int	nsid;
 };
 
 typedef int (*rtnl_filter_t)(const struct sockaddr_nl *,
@@ -125,6 +128,7 @@ static inline const char *rta_getattr_str(const struct rtattr *rta)
 	return (const char *)RTA_DATA(rta);
 }
 
+extern int rtnl_listen_all_nsid(struct rtnl_handle *);
 extern int rtnl_listen(struct rtnl_handle *, rtnl_listen_filter_t handler,
 		       void *jarg);
 extern int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
