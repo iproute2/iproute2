@@ -53,7 +53,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct {
 		struct nlmsghdr n;
 		struct ifinfomsg i;
-		char buf[1024];
+		char buf[16384];
 	} req;
 	struct ifinfomsg *ifi = (struct ifinfomsg *)(n + 1);
 	struct rtattr *tb[IFLA_MAX + 1];
