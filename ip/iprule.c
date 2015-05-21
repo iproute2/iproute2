@@ -381,7 +381,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		req.r.rtm_table = RT_TABLE_MAIN;
 
 	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
-		return 2;
+		return -2;
 
 	return 0;
 }
