@@ -76,7 +76,8 @@ ip-link \- network device configuration
 .BR vti " |"
 .BR nlmon " |"
 .BR ipvlan " |"
-.BR lowpan " ]"
+.BR lowpan " |"
+.BR geneve " ]"
 
 .ti -8
 .BR "ip link delete " {
@@ -247,6 +248,9 @@ Link types:
 .sp
 .BR lowpan
 - Interface for 6LoWPAN (IPv6) over IEEE 802.15.4 / Bluetooth
+.sp
+.BR geneve
+- GEneric NEtwork Virtualization Encapsulation
 .in -8
 
 .TP
@@ -593,6 +597,26 @@ the following additional arguments are supported:
 
 .BI  mode " MODE "
 - specifies the mode (datagram or connected) to use.
+
+.TP
+GENEVE Type Support
+For a link of type
+.I GENEVE
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BI type " geneve " id " ID " remote " IPADDR"
+
+.in +8
+.sp
+.BI  id " VNI "
+- specifies the Virtual Network Identifer to use.
+
+.sp
+.BI remote " IPADDR"
+- specifies the unicast destination IP address to use in outgoing packets.
+
+.in -8
 
 .SS ip link delete - delete virtual link
 
