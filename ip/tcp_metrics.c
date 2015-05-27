@@ -467,10 +467,10 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 	}
 
 	if (ack) {
-		if (rtnl_talk(&grth, &req.n, 0, 0, NULL) < 0)
+		if (rtnl_talk(&grth, &req.n, NULL, 0) < 0)
 			return -2;
 	} else if (atype >= 0) {
-		if (rtnl_talk(&grth, &req.n, 0, 0, &req.n) < 0)
+		if (rtnl_talk(&grth, &req.n, &req.n, sizeof(req)) < 0)
 			return -2;
 		if (process_msg(NULL, &req.n, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");

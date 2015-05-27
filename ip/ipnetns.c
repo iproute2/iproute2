@@ -112,7 +112,7 @@ static int get_netnsid_from_name(const char *name)
 		return fd;
 
 	addattr32(&req.n, 1024, NETNSA_FD, fd);
-	if (rtnl_talk(&rtnsh, &req.n, 0, 0, &answer.n) < 0) {
+	if (rtnl_talk(&rtnsh, &req.n, &answer.n, sizeof(answer)) < 0) {
 		close(fd);
 		return -2;
 	}
@@ -697,7 +697,7 @@ static int set_netnsid_from_name(const char *name, int nsid)
 
 	addattr32(&req.n, 1024, NETNSA_FD, fd);
 	addattr32(&req.n, 1024, NETNSA_NSID, nsid);
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		err = -2;
 
 	close(fd);

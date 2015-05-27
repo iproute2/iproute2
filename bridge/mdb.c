@@ -224,7 +224,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		return -1;
 
 	return 0;

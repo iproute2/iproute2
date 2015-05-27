@@ -1136,7 +1136,7 @@ static int restore_handler(const struct sockaddr_nl *nl, struct nlmsghdr *n, voi
 
 	ll_init_map(&rth);
 
-	ret = rtnl_talk(&rth, n, 0, 0, n);
+	ret = rtnl_talk(&rth, n, n, sizeof(*n));
 	if ((ret < 0) && (errno == EEXIST))
 		ret = 0;
 
@@ -1800,7 +1800,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		return -2;
 
 	return 0;

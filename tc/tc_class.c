@@ -153,7 +153,7 @@ static int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		return 2;
 
 	return 0;

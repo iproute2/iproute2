@@ -67,7 +67,7 @@ int genl_ctrl_resolve_family(const char *family)
 
 	addattr_l(nlh, 128, CTRL_ATTR_FAMILY_NAME, family, strlen(family) + 1);
 
-	if (rtnl_talk(&rth, nlh, 0, 0, nlh) < 0) {
+	if (rtnl_talk(&rth, nlh, nlh, sizeof(req)) < 0) {
 		fprintf(stderr, "Error talking to the kernel\n");
 		goto errout;
 	}
@@ -334,7 +334,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 			goto ctrl_done;
 		}
 
-		if (rtnl_talk(&rth, nlh, 0, 0, nlh) < 0) {
+		if (rtnl_talk(&rth, nlh, nlh, sizeof(req)) < 0) {
 			fprintf(stderr, "Error talking to the kernel\n");
 			goto ctrl_done;
 		}

@@ -393,7 +393,7 @@ static int xfrm_policy_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (req.xpinfo.sel.family == AF_UNSPEC)
 		req.xpinfo.sel.family = AF_INET;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -555,7 +555,7 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 }
 
 static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
-				     void *res_nlbuf)
+				     void *res_nlbuf, size_t res_size)
 {
 	struct rtnl_handle rth;
 	struct {
@@ -670,7 +670,7 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 			  (void *)&ctx, ctx.sctx.len);
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, res_nlbuf) < 0)
+	if (rtnl_talk(&rth, &req.n, res_nlbuf, res_size) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -680,7 +680,7 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 
 static int xfrm_policy_delete(int argc, char **argv)
 {
-	return xfrm_policy_get_or_delete(argc, argv, 1, NULL);
+	return xfrm_policy_get_or_delete(argc, argv, 1, NULL, 0);
 }
 
 static int xfrm_policy_get(int argc, char **argv)
@@ -690,7 +690,7 @@ static int xfrm_policy_get(int argc, char **argv)
 
 	memset(buf, 0, sizeof(buf));
 
-	xfrm_policy_get_or_delete(argc, argv, 0, n);
+	xfrm_policy_get_or_delete(argc, argv, 0, n, sizeof(buf));
 
 	if (xfrm_policy_print(NULL, n, (void*)stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
@@ -1064,7 +1064,7 @@ static int xfrm_spd_setinfo(int argc, char **argv)
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -1091,7 +1091,7 @@ static int xfrm_spd_getinfo(int argc, char **argv)
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0)
+	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
 		exit(2);
 
 	print_spdinfo(&req.n, (void*)stdout);
@@ -1143,7 +1143,7 @@ static int xfrm_policy_flush(int argc, char **argv)
 	if (show_stats > 1)
 		fprintf(stderr, "Flush policy\n");
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		exit(2);
 
 	rtnl_close(&rth);

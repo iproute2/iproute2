@@ -53,7 +53,7 @@ int genl_resolve_family(struct rtnl_handle *grth, const char *family)
 	addattr_l(&req.n, sizeof(req), CTRL_ATTR_FAMILY_NAME,
 		  family, strlen(family) + 1);
 
-	if (rtnl_talk(grth, &req.n, 0, 0, &req.n) < 0) {
+	if (rtnl_talk(grth, &req.n, &req.n, sizeof(req)) < 0) {
 		fprintf(stderr, "Error talking to the kernel\n");
 		return -2;
 	}

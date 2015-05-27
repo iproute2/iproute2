@@ -131,7 +131,7 @@ static int vlan_modify(int cmd, int argc, char **argv)
 
 	addattr_nest_end(&req.n, afspec);
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		return -1;
 
 	return 0;

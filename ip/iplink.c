@@ -674,7 +674,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 			req.i.ifi_index = 0;
 			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
-			if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+			if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 				exit(2);
 			return 0;
 		}
@@ -773,7 +773,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		exit(2);
 
 	return 0;
@@ -783,7 +783,10 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 {
 	int len;
 	struct iplink_req req;
-	char answer[16384];
+	struct {
+		struct nlmsghdr n;
+		char buf[16384];
+	} answer;
 
 	memset(&req, 0, sizeof(req));
 
@@ -803,10 +806,10 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 	}
 	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, (struct nlmsghdr *)answer) < 0)
+	if (rtnl_talk(&rth, &req.n, &answer.n, sizeof(answer)) < 0)
 		return -2;
 
-	print_linkinfo(NULL, (struct nlmsghdr *)answer, stdout);
+	print_linkinfo(NULL, &answer.n, stdout);
 
 	return 0;
 }

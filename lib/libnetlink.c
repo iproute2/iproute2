@@ -25,6 +25,10 @@
 
 #include "libnetlink.h"
 
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 int rcvbuf = 1024 * 1024;
 
 void rtnl_close(struct rtnl_handle *rth)
@@ -300,8 +304,8 @@ int rtnl_dump_filter(struct rtnl_handle *rth,
 	return rtnl_dump_filter_l(rth, a);
 }
 
-int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
-	      unsigned groups, struct nlmsghdr *answer)
+int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+	      struct nlmsghdr *answer, size_t len)
 {
 	int status;
 	unsigned seq;
@@ -317,12 +321,10 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 		.msg_iov = &iov,
 		.msg_iovlen = 1,
 	};
-	char   buf[16384];
+	char   buf[32768];
 
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
-	nladdr.nl_pid = peer;
-	nladdr.nl_groups = groups;
 
 	n->nlmsg_seq = seq = ++rtnl->seq;
 
@@ -330,7 +332,6 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 		n->nlmsg_flags |= NLM_F_ACK;
 
 	status = sendmsg(rtnl->fd, &msg, 0);
-
 	if (status < 0) {
 		perror("Cannot talk to rtnetlink");
 		return -1;
@@ -339,7 +340,6 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 	memset(buf,0,sizeof(buf));
 
 	iov.iov_base = buf;
-
 	while (1) {
 		iov.iov_len = sizeof(buf);
 		status = recvmsg(rtnl->fd, &msg, 0);
@@ -372,7 +372,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 				exit(1);
 			}
 
-			if (nladdr.nl_pid != peer ||
+			if (nladdr.nl_pid != 0 ||
 			    h->nlmsg_pid != rtnl->local.nl_pid ||
 			    h->nlmsg_seq != seq) {
 				/* Don't forget to skip that message. */
@@ -385,20 +385,22 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 				struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
 				if (l < sizeof(struct nlmsgerr)) {
 					fprintf(stderr, "ERROR truncated\n");
-				} else {
-					if (!err->error) {
-						if (answer)
-							memcpy(answer, h, h->nlmsg_len);
-						return 0;
-					}
-
-					fprintf(stderr, "RTNETLINK answers: %s\n", strerror(-err->error));
-					errno = -err->error;
+				} else if (!err->error) {
+					if (answer)
+						memcpy(answer, h,
+						       MIN(len, h->nlmsg_len));
+					return 0;
 				}
+
+				fprintf(stderr, "RTNETLINK answers: %s\n",
+					strerror(-err->error));
+				errno = -err->error;
 				return -1;
 			}
+
 			if (answer) {
-				memcpy(answer, h, h->nlmsg_len);
+				memcpy(answer, h,
+				       MIN(len, h->nlmsg_len));
 				return 0;
 			}
 
@@ -407,10 +409,12 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 			status -= NLMSG_ALIGN(len);
 			h = (struct nlmsghdr*)((char*)h + NLMSG_ALIGN(len));
 		}
+
 		if (msg.msg_flags & MSG_TRUNC) {
 			fprintf(stderr, "Message truncated\n");
 			continue;
 		}
+
 		if (status) {
 			fprintf(stderr, "!!!Remnant of size %d\n", status);
 			exit(1);

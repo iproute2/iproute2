@@ -1163,7 +1163,7 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (req.r.rtm_family == AF_UNSPEC)
 		req.r.rtm_family = AF_INET;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		return -2;
 
 	return 0;
@@ -1626,7 +1626,7 @@ static int iproute_get(int argc, char **argv)
 	if (req.r.rtm_family == AF_UNSPEC)
 		req.r.rtm_family = AF_INET;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0)
+	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
 		exit(2);
 
 	if (connected && !from_ok) {
@@ -1669,7 +1669,7 @@ static int iproute_get(int argc, char **argv)
 		req.n.nlmsg_flags = NLM_F_REQUEST;
 		req.n.nlmsg_type = RTM_GETROUTE;
 
-		if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0)
+		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
 			exit(2);
 	}
 
@@ -1690,7 +1690,7 @@ static int restore_handler(const struct sockaddr_nl *nl, struct nlmsghdr *n,
 
 	ll_init_map(&rth);
 
-	ret = rtnl_talk(&rth, n, 0, 0, n);
+	ret = rtnl_talk(&rth, n, n, sizeof(*n));
 	if ((ret < 0) && (errno == EEXIST))
 		ret = 0;
 

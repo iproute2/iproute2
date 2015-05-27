@@ -112,7 +112,7 @@ static int do_add(int argc, char **argv)
 
 	fou_parse_opt(argc, argv, &req.n, true);
 
-	if (rtnl_talk(&genl_rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&genl_rth, &req.n, NULL, 0) < 0)
 		return -2;
 
 	return 0;
@@ -124,7 +124,7 @@ static int do_del(int argc, char **argv)
 
 	fou_parse_opt(argc, argv, &req.n, false);
 
-	if (rtnl_talk(&genl_rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&genl_rth, &req.n, NULL, 0) < 0)
 		return -2;
 
 	return 0;
