@@ -167,7 +167,7 @@ static int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0) {
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 2;
 	}

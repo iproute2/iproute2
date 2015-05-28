@@ -380,7 +380,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	if (!table_ok && cmd == RTM_NEWRULE)
 		req.r.rtm_table = RT_TABLE_MAIN;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		return -2;
 
 	return 0;
@@ -407,7 +407,7 @@ static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *a
 		if (rtnl_open(&rth2, 0) < 0)
 			return -1;
 
-		if (rtnl_talk(&rth2, n, 0, 0, NULL) < 0)
+		if (rtnl_talk(&rth2, n, NULL, 0) < 0)
 			return -2;
 
 		rtnl_close(&rth2);

@@ -91,7 +91,7 @@ static int iptunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 		req.i.ifi_family = preferred_family;
 		req.i.ifi_index = ifi->ifi_index;
 
-		if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0) {
+		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0) {
 get_failed:
 			fprintf(stderr,
 				"Failed to get existing tunnel info.\n");
