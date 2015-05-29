@@ -284,6 +284,17 @@ check_selinux()
 	fi
 }
 
+check_mnl()
+{
+	if ${PKG_CONFIG} libmnl --exists
+	then
+		echo "HAVE_MNL:=y" >>Config
+		echo -n "yes"
+	else
+		echo -n "no"
+	fi
+}
+
 echo "# Generated config based on" $INCLUDE >Config
 check_toolchain
 
@@ -313,5 +324,10 @@ check_selinux
 echo -n "ELF support: "
 check_elf
 
+echo -n "libmnl support: "
+check_mnl
+echo " (required by tipc)"
+
 echo -e "\nDocs"
 check_docs
+echo ""
