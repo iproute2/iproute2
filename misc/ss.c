@@ -755,7 +755,7 @@ struct tcpstat
 	int		    timer;
 	int		    timeout;
 	int		    probes;
-	char		    *cong_alg;
+	char		    cong_alg[16];
 	double		    rto, ato, rtt, rttvar;
 	int		    qack, cwnd, ssthresh, backoff;
 	double		    send_bps;
@@ -1664,7 +1664,7 @@ static void tcp_stats_print(struct tcpstat *s)
 		printf(" ecnseen");
 	if (s->has_fastopen_opt)
 		printf(" fastopen");
-	if (s->cong_alg)
+	if (s->cong_alg[0])
 		printf(" %s", s->cong_alg);
 	if (s->has_wscale_opt)
 		printf(" wscale:%d,%d", s->snd_wscale, s->rcv_wscale);
@@ -1906,11 +1906,10 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 			s.has_fastopen_opt = TCPI_HAS_OPT(info, TCPI_OPT_SYN_DATA);
 		}
 
-		if (tb[INET_DIAG_CONG]) {
-			const char *cong_attr = rta_getattr_str(tb[INET_DIAG_CONG]);
-			s.cong_alg = malloc(strlen(cong_attr + 1));
-			strcpy(s.cong_alg, cong_attr);
-		}
+		if (tb[INET_DIAG_CONG])
+			strncpy(s.cong_alg,
+				rta_getattr_str(tb[INET_DIAG_CONG]),
+				sizeof(s.cong_alg) - 1);
 
 		if (TCPI_HAS_OPT(info, TCPI_OPT_WSCALE)) {
 			s.has_wscale_opt  = true;
@@ -1984,8 +1983,6 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		tcp_stats_print(&s);
 		if (s.dctcp)
 			free(s.dctcp);
-		if (s.cong_alg)
-			free(s.cong_alg);
 	}
 }
 
