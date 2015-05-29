@@ -858,8 +858,7 @@ static const char *print_ms_timer(int timeout)
 	return buf;
 }
 
-struct scache
-{
+struct scache {
 	struct scache *next;
 	int port;
 	char *name;
@@ -949,11 +948,15 @@ static const char *__resolve_service(int port)
 	return NULL;
 }
 
+#define SCACHE_BUCKETS 1024
+static struct scache *cache_htab[SCACHE_BUCKETS];
 
 static const char *resolve_service(int port)
 {
 	static char buf[128];
-	static struct scache cache[256];
+	struct scache *c;
+	const char *res;
+	int hash;
 
 	if (port == 0) {
 		buf[0] = '*';
@@ -961,45 +964,35 @@ static const char *resolve_service(int port)
 		return buf;
 	}
 
-	if (resolve_services) {
-		if (dg_proto == RAW_PROTO) {
-			return inet_proto_n2a(port, buf, sizeof(buf));
-		} else {
-			struct scache *c;
-			const char *res;
-			int hash = (port^(((unsigned long)dg_proto)>>2))&255;
+	if (!resolve_services)
+		goto do_numeric;
 
-			for (c = &cache[hash]; c; c = c->next) {
-				if (c->port == port &&
-				    c->proto == dg_proto) {
-					if (c->name)
-						return c->name;
-					goto do_numeric;
-				}
-			}
+	if (dg_proto == RAW_PROTO)
+		return inet_proto_n2a(port, buf, sizeof(buf));
 
-			if ((res = __resolve_service(port)) != NULL) {
-				if ((c = malloc(sizeof(*c))) == NULL)
-					goto do_numeric;
-			} else {
-				c = &cache[hash];
-				if (c->name)
-					free(c->name);
-			}
-			c->port = port;
-			c->name = NULL;
-			c->proto = dg_proto;
-			if (res) {
-				c->name = strdup(res);
-				c->next = cache[hash].next;
-				cache[hash].next = c;
-			}
-			if (c->name)
-				return c->name;
-		}
+
+	hash = (port^(((unsigned long)dg_proto)>>2)) % SCACHE_BUCKETS;
+
+	for (c = cache_htab[hash]; c; c = c->next) {
+		if (c->port == port && c->proto == dg_proto)
+			goto do_cache;
 	}
 
-	do_numeric:
+	c = malloc(sizeof(*c));
+	if (!c)
+		goto do_numeric;
+	res = __resolve_service(port);
+	c->port = port;
+	c->name = res ? strdup(res) : NULL;
+	c->proto = dg_proto;
+	c->next = cache_htab[hash];
+	cache_htab[hash] = c;
+
+do_cache:
+	if (c->name)
+		return c->name;
+
+do_numeric:
 	sprintf(buf, "%u", port);
 	return buf;
 }
