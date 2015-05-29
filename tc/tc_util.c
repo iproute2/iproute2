@@ -250,18 +250,19 @@ void print_rate(char *buf, int len, __u64 rate)
 	extern int use_iec;
 	unsigned long kilo = use_iec ? 1024 : 1000;
 	const char *str = use_iec ? "i" : "";
-	int i = 0;
 	static char *units[5] = {"", "K", "M", "G", "T"};
+	int i;
 
 	rate <<= 3; /* bytes/sec -> bits/sec */
 
-	for (i = 0; i < ARRAY_SIZE(units); i++)  {
+	for (i = 0; i < ARRAY_SIZE(units) - 1; i++)  {
 		if (rate < kilo)
 			break;
 		if (((rate % kilo) != 0) && rate < 1000*kilo)
 			break;
 		rate /= kilo;
 	}
+
 	snprintf(buf, len, "%.0f%s%sbit", (double)rate, units[i], str);
 }
 
