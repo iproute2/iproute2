@@ -122,6 +122,7 @@ opt_bpf:
 
 			NEXT_ARG();
 			if (ebpf) {
+				bpf_uds_name = secure_getenv(BPF_ENV_UDS);
 				bpf_obj = *argv;
 				NEXT_ARG();
 
@@ -131,8 +132,9 @@ opt_bpf:
 					bpf_sec_name = *argv;
 					NEXT_ARG();
 				}
-				if (strcmp(*argv, "export") == 0 ||
-				    strcmp(*argv, "exp") == 0) {
+				if (!bpf_uds_name &&
+				    (strcmp(*argv, "export") == 0 ||
+				     strcmp(*argv, "exp") == 0)) {
 					NEXT_ARG();
 					bpf_uds_name = *argv;
 					NEXT_ARG();

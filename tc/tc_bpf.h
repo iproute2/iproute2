@@ -25,6 +25,8 @@
 #include "utils.h"
 #include "bpf_scm.h"
 
+#define BPF_ENV_UDS	"TC_BPF_UDS"
+
 int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
 		     char **bpf_string, bool *need_release,
 		     const char separator);
