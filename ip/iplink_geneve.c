@@ -11,16 +11,18 @@
 
 #include <stdio.h>
 
+#include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
 
 static void print_explain(FILE *f)
 {
 	fprintf(f, "Usage: ... geneve id VNI remote ADDR\n");
-	fprintf(f, "                 [ ttl TTL ]\n");
+	fprintf(f, "                 [ ttl TTL ] [ tos TOS ]\n");
 	fprintf(f, "\n");
 	fprintf(f, "Where: VNI  := 0-16777215\n");
 	fprintf(f, "       ADDR := IP_ADDRESS\n");
+	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
 	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
 }
 
@@ -37,6 +39,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u32 daddr = 0;
 	struct in6_addr daddr6 = IN6ADDR_ANY_INIT;
 	__u8 ttl = 0;
+	__u8 tos = 0;
 
 	while (argc > 0) {
 		if (!matches(*argv, "id") ||
@@ -66,6 +69,17 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 					invarg("TTL must be <= 255", *argv);
 				ttl = uval;
 			}
+		} else if (!matches(*argv, "tos") ||
+			   !matches(*argv, "dsfield")) {
+			__u32 uval;
+
+			NEXT_ARG();
+			if (strcmp(*argv, "inherit") != 0) {
+				if (rtnl_dsfield_a2n(&uval, *argv))
+					invarg("bad TOS value", *argv);
+				tos = uval;
+			} else
+				tos = 1;
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -95,6 +109,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	if (daddr)
 		addattr_l(n, 1024, IFLA_GENEVE_REMOTE, &daddr, 4);
 	addattr8(n, 1024, IFLA_GENEVE_TTL, ttl);
+	addattr8(n, 1024, IFLA_GENEVE_TOS, tos);
 
 	return 0;
 }
@@ -103,6 +118,7 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	__u32 vni;
 	char s1[1024];
+	__u8 tos;
 
 	if (!tb)
 		return;
@@ -125,6 +141,14 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		__u8 ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
 		if (ttl)
 			fprintf(f, "ttl %d ", ttl);
+	}
+
+	if (tb[IFLA_GENEVE_TOS] &&
+	    (tos = rta_getattr_u8(tb[IFLA_GENEVE_TOS]))) {
+		if (tos == 1)
+			fprintf(f, "tos inherit ");
+		else
+			fprintf(f, "tos %#x ", tos);
 	}
 }
 
