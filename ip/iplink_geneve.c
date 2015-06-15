@@ -17,9 +17,11 @@
 static void print_explain(FILE *f)
 {
 	fprintf(f, "Usage: ... geneve id VNI remote ADDR\n");
+	fprintf(f, "                 [ ttl TTL ]\n");
 	fprintf(f, "\n");
 	fprintf(f, "Where: VNI  := 0-16777215\n");
 	fprintf(f, "       ADDR := IP_ADDRESS\n");
+	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
 }
 
 static void explain(void)
@@ -34,7 +36,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	int vni_set = 0;
 	__u32 daddr = 0;
 	struct in6_addr daddr6 = IN6ADDR_ANY_INIT;
-
+	__u8 ttl = 0;
 
 	while (argc > 0) {
 		if (!matches(*argv, "id") ||
@@ -52,6 +54,18 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 			}
 			if (IN_MULTICAST(ntohl(daddr)))
 				invarg("invalid remote address", *argv);
+		} else if (!matches(*argv, "ttl") ||
+			   !matches(*argv, "hoplimit")) {
+			unsigned uval;
+
+			NEXT_ARG();
+			if (strcmp(*argv, "inherit") != 0) {
+				if (get_unsigned(&uval, *argv, 0))
+					invarg("invalid TTL", *argv);
+				if (uval > 255)
+					invarg("TTL must be <= 255", *argv);
+				ttl = uval;
+			}
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -80,6 +94,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	addattr32(n, 1024, IFLA_GENEVE_ID, vni);
 	if (daddr)
 		addattr_l(n, 1024, IFLA_GENEVE_REMOTE, &daddr, 4);
+	addattr8(n, 1024, IFLA_GENEVE_TTL, ttl);
 
 	return 0;
 }
@@ -104,6 +119,12 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		if (addr)
 			fprintf(f, "remote %s ",
 				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
+	}
+
+	if (tb[IFLA_GENEVE_TTL]) {
+		__u8 ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
+		if (ttl)
+			fprintf(f, "ttl %d ", ttl);
 	}
 }
 
