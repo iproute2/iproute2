@@ -24,6 +24,7 @@ static void explain(void)
 		"                  [ hello_time HELLO_TIME ]\n"
 		"                  [ max_age MAX_AGE ]\n"
 		"                  [ ageing_time AGEING_TIME ]\n"
+		"                  [ stp_state STP_STATE ]\n"
 	);
 }
 
@@ -61,6 +62,13 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				return -1;
 			}
 			addattr32(n, 1024, IFLA_BR_AGEING_TIME, val);
+		} else if (matches(*argv, "stp_state") == 0) {
+			NEXT_ARG();
+			if (get_u32(&val, *argv, 0)) {
+				invarg("invalid stp_state", *argv);
+				return -1;
+			}
+			addattr32(n, 1024, IFLA_BR_STP_STATE, val);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
