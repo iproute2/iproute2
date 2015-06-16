@@ -25,6 +25,7 @@ static void explain(void)
 		"                  [ max_age MAX_AGE ]\n"
 		"                  [ ageing_time AGEING_TIME ]\n"
 		"                  [ stp_state STP_STATE ]\n"
+		"                  [ priority PRIORITY ]\n"
 	);
 }
 
@@ -69,6 +70,15 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				return -1;
 			}
 			addattr32(n, 1024, IFLA_BR_STP_STATE, val);
+		} else if (matches(*argv, "priority") == 0) {
+			__u16 prio;
+
+			NEXT_ARG();
+			if (get_u16(&prio, *argv, 0)) {
+				invarg("invalid priority", *argv);
+				return -1;
+			}
+			addattr16(n, 1024, IFLA_BR_PRIORITY, prio);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
