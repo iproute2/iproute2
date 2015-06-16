@@ -287,6 +287,8 @@ static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
 	}
 }
 
+static void print_vf_stats64(FILE *fp, struct rtattr *vfstats);
+
 static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
@@ -367,6 +369,8 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		else
 			fprintf(fp, ", link-state disable");
 	}
+	if (vf[IFLA_VF_STATS] && show_stats)
+		print_vf_stats64(fp, vf[IFLA_VF_STATS]);
 }
 
 static void print_num(FILE *fp, unsigned width, uint64_t count)
@@ -406,6 +410,36 @@ static void print_num(FILE *fp, unsigned width, uint64_t count)
 		(double) count / powi, *prefix, use_iec ? "i" : "");
 
 	fprintf(fp, "%-*s ", width, buf);
+}
+
+static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
+{
+	struct rtattr *vf[IFLA_VF_STATS_MAX + 1] = {};
+
+	if (vfstats->rta_type != IFLA_VF_STATS) {
+		fprintf(stderr, "BUG: rta type is %d\n", vfstats->rta_type);
+		return;
+	}
+
+	parse_rtattr_nested(vf, IFLA_VF_MAX, vfstats);
+
+	/* RX stats */
+	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "    RX: bytes  packets  mcast   bcast %s", _SL_);
+	fprintf(fp, "    ");
+
+	print_num(fp, 10, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_RX_BYTES]));
+	print_num(fp, 8, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_RX_PACKETS]));
+	print_num(fp, 7, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_MULTICAST]));
+	print_num(fp, 7, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_BROADCAST]));
+
+	/* TX stats */
+	fprintf(fp, "%s", _SL_);
+	fprintf(fp, "    TX: bytes  packets %s", _SL_);
+	fprintf(fp, "    ");
+
+	print_num(fp, 10, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_TX_BYTES]));
+	print_num(fp, 8, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_TX_PACKETS]));
 }
 
 static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
