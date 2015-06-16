@@ -23,6 +23,7 @@ static void explain(void)
 		"Usage: ... bridge [ forward_delay FORWARD_DELAY ]\n"
 		"                  [ hello_time HELLO_TIME ]\n"
 		"                  [ max_age MAX_AGE ]\n"
+		"                  [ ageing_time AGEING_TIME ]\n"
 	);
 }
 
@@ -53,6 +54,13 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				return -1;
 			}
 			addattr32(n, 1024, IFLA_BR_MAX_AGE, val);
+		} else if (matches(*argv, "ageing_time") == 0) {
+			NEXT_ARG();
+			if (get_u32(&val, *argv, 0)) {
+				invarg("invalid ageing_time", *argv);
+				return -1;
+			}
+			addattr32(n, 1024, IFLA_BR_AGEING_TIME, val);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
