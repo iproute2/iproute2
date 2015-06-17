@@ -52,6 +52,9 @@ endif
 	@for i in $(IPVERS); do \
 		o=`echo $$i | sed -e 's/iproute2\///'`; \
 		echo -n "Running $@ [$$o/`uname -r`]: "; \
+		TMP_ERR=`mktemp /tmp/tc_testsuite.XXXXXX`; \
+		TMP_OUT=`mktemp /tmp/tc_testsuite.XXXXXX`; \
+		STD_ERR="$$TMP_ERR" STD_OUT="$$TMP_OUT" \
 		TC="$$i/tc/tc" IP="$$i/ip/ip" DEV="$(DEV)" IPVER="$@" SNAME="$$i" \
 		ERRF="$(RESULTS_DIR)/$@.$$o.err" $(KENV) $(PREFIX) tests/$@ > $(RESULTS_DIR)/$@.$$o.out; \
 		if [ "$$?" = "127" ]; then \
@@ -61,5 +64,6 @@ endif
 		else \
 			echo "PASS"; \
 		fi; \
+		rm "$$TMP_ERR" "$$TMP_OUT"; \
 		dmesg > $(RESULTS_DIR)/$@.$$o.dmesg; \
 	done

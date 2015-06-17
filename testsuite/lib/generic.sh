@@ -30,57 +30,49 @@ ts_tc()
 {
 	SCRIPT=$1; shift
 	DESC=$1; shift
-	TMP_ERR=`mktemp /tmp/tc_testsuite.XXXXXX` || exit
-	TMP_OUT=`mktemp /tmp/tc_testsuite.XXXXXX` || exit
 
-	$TC $@ 2> $TMP_ERR > $TMP_OUT
+	$TC $@ 2> $STD_ERR > $STD_OUT
 
-	if [ -s $TMP_ERR ]; then
+	if [ -s $STD_ERR ]; then
 		ts_err "${SCRIPT}: ${DESC} failed:"
 		ts_err "command: $TC $@"
 		ts_err "stderr output:"
-		ts_err_cat $TMP_ERR
-		if [ -s $TMP_OUT ]; then
+		ts_err_cat $STD_ERR
+		if [ -s $STD_OUT ]; then
 			ts_err "stdout output:"
-			ts_err_cat $TMP_OUT
+			ts_err_cat $STD_OUT
 		fi
-	elif [ -s $TMP_OUT ]; then
+	elif [ -s $STD_OUT ]; then
 		echo "${SCRIPT}: ${DESC} succeeded with output:"
-		cat $TMP_OUT
+		cat $STD_OUT
 	else
 		echo "${SCRIPT}: ${DESC} succeeded"
 	fi
-
-	rm $TMP_ERR $TMP_OUT
 }
 
 ts_ip()
 {
 	SCRIPT=$1; shift
 	DESC=$1; shift
-	TMP_ERR=`mktemp /tmp/tc_testsuite.XXXXXX` || exit
-	TMP_OUT=`mktemp /tmp/tc_testsuite.XXXXXX` || exit
 
-	$IP $@ 2> $TMP_ERR > $TMP_OUT
+	$IP $@ 2> $STD_ERR > $STD_OUT
         RET=$?
 
-	if [ -s $TMP_ERR ] || [ "$RET" != "0" ]; then
+	if [ -s $STD_ERR ] || [ "$RET" != "0" ]; then
 		ts_err "${SCRIPT}: ${DESC} failed:"
 		ts_err "command: $IP $@"
 		ts_err "stderr output:"
-		ts_err_cat $TMP_ERR
-		if [ -s $TMP_OUT ]; then
+		ts_err_cat $STD_ERR
+		if [ -s $STD_OUT ]; then
 			ts_err "stdout output:"
-			ts_err_cat $TMP_OUT
+			ts_err_cat $STD_OUT
 		fi
-	elif [ -s $TMP_OUT ]; then
+	elif [ -s $STD_OUT ]; then
 		echo "${SCRIPT}: ${DESC} succeeded with output:"
-		cat $TMP_OUT
+		cat $STD_OUT
 	else
 		echo "${SCRIPT}: ${DESC} succeeded"
 	fi
-
-	rm $TMP_ERR $TMP_OUT
 }
 
 ts_qdisc_available()
@@ -96,4 +88,48 @@ ts_qdisc_available()
 rand_dev()
 {
     echo "dev-$(tr -dc "[:alpha:]" < /dev/urandom | head -c 6)"
+}
+
+pr_failed()
+{
+	echo " [FAILED]"
+	ts_err "matching failed"
+}
+
+pr_success()
+{
+	echo " [SUCCESS]"
+}
+
+test_on()
+{
+	echo -n "test on: \"$1\""
+	if cat "$STD_OUT" | grep -qE "$1"
+	then
+		pr_success
+	else
+		pr_failed
+	fi
+}
+
+test_on_not()
+{
+	echo -n "test on: \"$1\""
+	if cat "$STD_OUT" | grep -vqE "$1"
+	then
+		pr_success
+	else
+		pr_failed
+	fi
+}
+
+test_lines_count()
+{
+	echo -n "test on lines count ($1): "
+	if cat "$STD_OUT" | wc -l | grep -q "$1"
+	then
+		pr_success
+	else
+		pr_failed
+	fi
 }
