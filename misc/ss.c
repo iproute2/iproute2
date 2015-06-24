@@ -2045,6 +2045,11 @@ static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f, int protocol)
 
 	if (show_details) {
 		sock_details_print(&s);
+		if (s.local.family == AF_INET6 && tb[INET_DIAG_SKV6ONLY]) {
+			unsigned char v6only;
+			v6only = *(__u8 *)RTA_DATA(tb[INET_DIAG_SKV6ONLY]);
+			printf(" v6only:%u", v6only);
+		}
 		if (tb[INET_DIAG_SHUTDOWN]) {
 			unsigned char mask;
 			mask = *(__u8 *)RTA_DATA(tb[INET_DIAG_SHUTDOWN]);
