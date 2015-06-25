@@ -312,7 +312,8 @@ check_ipt
 echo -n " IPSET  "
 check_ipset
 
-echo -n -e "\niptables modules directory: "
+echo
+echo -n "iptables modules directory: "
 check_ipt_lib_dir
 
 echo -n "libc has setns: "
@@ -326,8 +327,8 @@ check_elf
 
 echo -n "libmnl support: "
 check_mnl
-echo " (required by tipc)"
 
-echo -e "\nDocs"
+echo
+echo -n "docs:"
 check_docs
-echo ""
+echo
