@@ -86,7 +86,7 @@ objects are tunnels, encapsulating packets in IP packets and then
 sending them over the IP infrastructure.
 The encapsulating (or outer) address family is specified by the
 .B -f
-option.  The default is IPv4.
+option. The default is IPv4.
 
 .TP
 .B ip tunnel add
@@ -168,7 +168,7 @@ changes.
 .TP
 .B nopmtudisc
 disable Path MTU Discovery on this tunnel.
-It is enabled by default.  Note that a fixed ttl is incompatible
+It is enabled by default. Note that a fixed ttl is incompatible
 with this option: tunneling with a fixed ttl always makes pmtu
 discovery.
 
@@ -199,7 +199,7 @@ flag calculates checksums for outgoing packets.
 The
 .B icsum
 flag requires that all input packets have the correct
-checksum.  The
+checksum. The
 .B csum
 flag is equivalent to the combination
 .BR "icsum ocsum" .
@@ -223,7 +223,7 @@ flag is equivalent to the combination
 .TP
 .BI encaplim " ELIM"
 .RB ( " only IPv6 tunnels " )
-set a fixed encapsulation limit.  Default is 4.
+set a fixed encapsulation limit. Default is 4.
 
 .TP
 .BI flowlabel " FLOWLABEL"

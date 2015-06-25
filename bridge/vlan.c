@@ -80,7 +80,7 @@ static int vlan_modify(int cmd, int argc, char **argv)
 
 	if (d == NULL || vid == -1) {
 		fprintf(stderr, "Device and VLAN ID are required arguments.\n");
-		exit(-1);
+		return -1;
 	}
 
 	req.ifm.ifi_index = ll_name_to_index(d);
@@ -131,8 +131,8 @@ static int vlan_modify(int cmd, int argc, char **argv)
 
 	addattr_nest_end(&req.n, afspec);
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
-		exit(2);
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+		return -1;
 
 	return 0;
 }

@@ -52,7 +52,7 @@ static struct ll_cache *ll_get_by_index(unsigned index)
 	return NULL;
 }
 
-static unsigned namehash(const char *str)
+unsigned namehash(const char *str)
 {
 	unsigned hash = 5381;
 

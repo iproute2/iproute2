@@ -29,7 +29,7 @@
 #include "utils.h"
 
 
-const char *ll_addr_n2a(unsigned char *addr, int alen, int type, char *buf, int blen)
+const char *ll_addr_n2a(const unsigned char *addr, int alen, int type, char *buf, int blen)
 {
 	int i;
 	int l;

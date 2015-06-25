@@ -37,14 +37,11 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... gred DP drop-probability limit BYTES "
-	    "min BYTES max BYTES\n");
-	fprintf(stderr, "    avpkt BYTES burst PACKETS probability PROBABILITY "
-	    "bandwidth KBPS\n");
-	fprintf(stderr, "    [prio value]\n");
-	fprintf(stderr," OR ...\n");
-	fprintf(stderr," gred setup DPs <num of DPs> default <default DP> "
-	    "[grio]\n");
+	fprintf(stderr, "Usage: tc qdisc { add | replace | change } ... gred setup vqs NUMBER\n");
+	fprintf(stderr, "           default DEFAULT_VQ [ grio ] [ limit BYTES ]\n");
+	fprintf(stderr, "       tc qdisc change ... gred vq VQ [ prio VALUE ] limit BYTES\n");
+	fprintf(stderr, "           min BYTES max BYTES avpkt BYTES [ burst PACKETS ]\n");
+	fprintf(stderr, "           [ probability PROBABILITY ] [ bandwidth KBPS ]\n");
 }
 
 static int init_gred(struct qdisc_util *qu, int argc, char **argv,
@@ -53,38 +50,46 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 
 	struct rtattr *tail;
 	struct tc_gred_sopt opt = { 0 };
-	int dps = 0;
-	int def_dp = -1;
+	__u32 limit = 0;
+
+	opt.def_DP = MAX_DPs;
 
 	while (argc > 0) {
 		DPRINTF(stderr,"init_gred: invoked with %s\n",*argv);
-		if (strcmp(*argv, "DPs") == 0) {
+		if (strcmp(*argv, "vqs") == 0 ||
+		    strcmp(*argv, "DPs") == 0) {
 			NEXT_ARG();
-			DPRINTF(stderr,"init_gred: next_arg with %s\n",*argv);
-			dps = strtol(*argv, (char **)NULL, 10);
-			if (dps < 0 || dps >MAX_DPs) {
-				fprintf(stderr, "DPs =%d\n", dps);
-				fprintf(stderr, "Illegal \"DPs\"\n");
-				fprintf(stderr, "GRED: only %d DPs are "
-					"currently supported\n",MAX_DPs);
+			if (get_unsigned(&opt.DPs, *argv, 10)) {
+				fprintf(stderr, "Illegal \"vqs\"\n");
+				return -1;
+			} else if (opt.DPs > MAX_DPs) {
+				fprintf(stderr, "GRED: only %u VQs are "
+					"currently supported\n", MAX_DPs);
 				return -1;
 			}
 		} else if (strcmp(*argv, "default") == 0) {
-			NEXT_ARG();
-			def_dp = strtol(*argv, (char **)NULL, 10);
-			if (dps == 0) {
-				fprintf(stderr, "\"default DP\" must be "
-					"defined after DPs\n");
+			if (opt.DPs == 0) {
+				fprintf(stderr, "\"default\" must be defined "
+					"after \"vqs\"\n");
 				return -1;
 			}
-			if (def_dp < 0 || def_dp > dps) {
-				fprintf(stderr,
-					"\"default DP\" must be less than %d\n",
-					opt.DPs);
+			NEXT_ARG();
+			if (get_unsigned(&opt.def_DP, *argv, 10)) {
+				fprintf(stderr, "Illegal \"default\"\n");
+				return -1;
+			} else if (opt.def_DP >= opt.DPs) {
+				fprintf(stderr, "\"default\" must be less than "
+					"\"vqs\"\n");
 				return -1;
 			}
 		} else if (strcmp(*argv, "grio") == 0) {
 			opt.grio = 1;
+		} else if (strcmp(*argv, "limit") == 0) {
+			NEXT_ARG();
+			if (get_size(&limit, *argv)) {
+				fprintf(stderr, "Illegal \"limit\"\n");
+				return -1;
+			}
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -96,19 +101,18 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 		argc--; argv++;
 	}
 
-	if (!dps || def_dp == -1) {
+	if (!opt.DPs || opt.def_DP == MAX_DPs) {
 		fprintf(stderr, "Illegal gred setup parameters \n");
 		return -1;
 	}
 
-	opt.DPs = dps;
-	opt.def_DP = def_dp;
-
-	DPRINTF("TC_GRED: sending DPs=%d default=%d\n",opt.DPs,opt.def_DP);
+	DPRINTF("TC_GRED: sending DPs=%u def_DP=%u\n",opt.DPs,opt.def_DP);
 	n->nlmsg_flags|=NLM_F_CREATE;
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	addattr_l(n, 1024, TCA_GRED_DPS, &opt, sizeof(struct tc_gred_sopt));
+	if (limit)
+		addattr32(n, 1024, TCA_GRED_LIMIT, limit);
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
@@ -118,17 +122,17 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	int ok=0;
-	struct tc_gred_qopt opt;
+	struct tc_gred_qopt opt = { 0 };
 	unsigned burst = 0;
 	unsigned avpkt = 0;
 	double probability = 0.02;
 	unsigned rate = 0;
-	int wlog;
+	int parm;
 	__u8 sbuf[256];
 	struct rtattr *tail;
 	__u32 max_P;
 
-	memset(&opt, 0, sizeof(opt));
+	opt.DP = MAX_DPs;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "limit") == 0) {
@@ -143,8 +147,7 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				fprintf(stderr, "Illegal \"setup\"\n");
 				return -1;
 			}
-		return init_gred(qu,argc-1, argv+1,n);
-
+			return init_gred(qu, argc-1, argv+1, n);
 		} else if (strcmp(*argv, "min") == 0) {
 			NEXT_ARG();
 			if (get_size(&opt.qth_min, *argv)) {
@@ -159,20 +162,21 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				return -1;
 			}
 			ok++;
-		} else if (strcmp(*argv, "DP") == 0) {
+		} else if (strcmp(*argv, "vq") == 0 ||
+			   strcmp(*argv, "DP") == 0) {
 			NEXT_ARG();
-			opt.DP=strtol(*argv, (char **)NULL, 10);
-			DPRINTF ("\n ******* DP =%u\n",opt.DP);
-			if (opt.DP >MAX_DPs) { /* need a better error check */
-				fprintf(stderr, "DP =%u \n",opt.DP);
-				fprintf(stderr, "Illegal \"DP\"\n");
-				fprintf(stderr, "GRED: only %d DPs are currently supported\n",MAX_DPs);
+			if (get_unsigned(&opt.DP, *argv, 10)) {
+				fprintf(stderr, "Illegal \"vq\"\n");
 				return -1;
-			}
+			} else if (opt.DP >= MAX_DPs) {
+				fprintf(stderr, "GRED: only %u VQs are "
+					"currently supported\n", MAX_DPs);
+				return -1;
+			} /* need a better error check */
 			ok++;
 		} else if (strcmp(*argv, "burst") == 0) {
 			NEXT_ARG();
-                        if (get_unsigned(&burst, *argv, 0)) {
+			if (get_unsigned(&burst, *argv, 0)) {
 				fprintf(stderr, "Illegal \"burst\"\n");
 				return -1;
 			}
@@ -214,40 +218,44 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 		argc--; argv++;
 	}
 
-	if (rate == 0)
-		get_rate(&rate, "10Mbit");
-
-	if (!opt.qth_min || !opt.qth_max || !opt.limit || !avpkt ||
-	    (opt.DP<0)) {
-		fprintf(stderr, "Required parameter (min, max, limit, "
-		    "avpkt, DP) is missing\n");
+	if (!ok) {
+		explain();
+		return -1;
+	}
+	if (opt.DP == MAX_DPs || !opt.limit || !opt.qth_min || !opt.qth_max ||
+	    !avpkt) {
+		fprintf(stderr, "Required parameter (vq, limit, min, max, "
+			"avpkt) is missing\n");
 		return -1;
 	}
 	if (!burst) {
 		burst = (2 * opt.qth_min + opt.qth_max) / (3 * avpkt);
 		fprintf(stderr, "GRED: set burst to %u\n", burst);
 	}
-
-	if ((wlog = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
+	if (!rate) {
+		get_rate(&rate, "10Mbit");
+		fprintf(stderr, "GRED: set bandwidth to 10Mbit\n");
+	}
+	if ((parm = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
 		fprintf(stderr, "GRED: failed to calculate EWMA constant.\n");
 		return -1;
 	}
-	if (wlog >= 10)
-		fprintf(stderr, "GRED: WARNING. Burst %d seems to be too "
+	if (parm >= 10)
+		fprintf(stderr, "GRED: WARNING. Burst %u seems to be too "
 		    "large.\n", burst);
-	opt.Wlog = wlog;
-	if ((wlog = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {
+	opt.Wlog = parm;
+	if ((parm = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {
 		fprintf(stderr, "GRED: failed to calculate probability.\n");
 		return -1;
 	}
-	opt.Plog = wlog;
-	if ((wlog = tc_red_eval_idle_damping(opt.Wlog, avpkt, rate, sbuf)) < 0)
+	opt.Plog = parm;
+	if ((parm = tc_red_eval_idle_damping(opt.Wlog, avpkt, rate, sbuf)) < 0)
 	    {
 		fprintf(stderr, "GRED: failed to calculate idle damping "
 		    "table.\n");
 		return -1;
 	}
-	opt.Scell_log = wlog;
+	opt.Scell_log = parm;
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
@@ -262,14 +270,14 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_GRED_MAX + 1];
+	struct tc_gred_sopt *sopt;
 	struct tc_gred_qopt *qopt;
 	__u32 *max_p = NULL;
-	int i;
+	__u32 *limit = NULL;
+	unsigned i;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 	SPRINT_BUF(b3);
-	SPRINT_BUF(b4);
-	SPRINT_BUF(b5);
 
 	if (opt == NULL)
 		return 0;
@@ -283,40 +291,58 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	    RTA_PAYLOAD(tb[TCA_GRED_MAX_P]) >= sizeof(__u32) * MAX_DPs)
 		max_p = RTA_DATA(tb[TCA_GRED_MAX_P]);
 
+	if (tb[TCA_GRED_LIMIT] &&
+	    RTA_PAYLOAD(tb[TCA_GRED_LIMIT]) == sizeof(__u32))
+		limit = RTA_DATA(tb[TCA_GRED_LIMIT]);
+
+	sopt = RTA_DATA(tb[TCA_GRED_DPS]);
 	qopt = RTA_DATA(tb[TCA_GRED_PARMS]);
-	if (RTA_PAYLOAD(tb[TCA_GRED_PARMS])  < sizeof(*qopt)*MAX_DPs) {
+	if (RTA_PAYLOAD(tb[TCA_GRED_DPS]) < sizeof(*sopt) ||
+	    RTA_PAYLOAD(tb[TCA_GRED_PARMS]) < sizeof(*qopt)*MAX_DPs) {
 		fprintf(f,"\n GRED received message smaller than expected\n");
 		return -1;
-		}
+	}
 
 /* Bad hack! should really return a proper message as shown above*/
 
+	fprintf(f, "vqs %u default %u %s",
+		sopt->DPs,
+		sopt->def_DP,
+		sopt->grio ? "grio " : "");
+
+	if (limit)
+		fprintf(f, "limit %s ",
+			sprint_size(*limit, b1));
+
 	for (i=0;i<MAX_DPs;i++, qopt++) {
 		if (qopt->DP >= MAX_DPs) continue;
-		fprintf(f, "\n DP:%d (prio %d) Average Queue %s Measured "
-		    "Queue %s  ",
+		fprintf(f, "\n vq %u prio %hhu limit %s min %s max %s ",
 			qopt->DP,
 			qopt->prio,
-			sprint_size(qopt->qave, b4),
-			sprint_size(qopt->backlog, b5));
-		fprintf(f, "\n\t Packet drops: %d (forced %d early %d)  ",
-			qopt->forced+qopt->early,
-			qopt->forced,
-			qopt->early);
-		fprintf(f, "\n\t Packet totals: %u (bytes %u)  ",
-			qopt->packets,
-			qopt->bytesin);
-		if (show_details)
-			fprintf(f, "\n limit %s min %s max %s ",
-				sprint_size(qopt->limit, b1),
-				sprint_size(qopt->qth_min, b2),
-				sprint_size(qopt->qth_max, b3));
-		fprintf(f, "ewma %u ", qopt->Wlog);
-		if (max_p)
-			fprintf(f, "probability %lg ", max_p[i] / pow(2, 32));
-		else
-			fprintf(f, "Plog %u ", qopt->Plog);
-		fprintf(f, "Scell_log %u", qopt->Scell_log);
+			sprint_size(qopt->limit, b1),
+			sprint_size(qopt->qth_min, b2),
+			sprint_size(qopt->qth_max, b3));
+		if (show_details) {
+			fprintf(f, "ewma %u ", qopt->Wlog);
+			if (max_p)
+				fprintf(f, "probability %lg ", max_p[i] / pow(2, 32));
+			else
+				fprintf(f, "Plog %u ", qopt->Plog);
+			fprintf(f, "Scell_log %u ", qopt->Scell_log);
+		}
+		if (show_stats) {
+			fprintf(f, "\n  Queue size: average %s current %s ",
+				sprint_size(qopt->qave, b1),
+				sprint_size(qopt->backlog, b2));
+			fprintf(f, "\n  Dropped packets: forced %u early %u pdrop %u other %u ",
+				qopt->forced,
+				qopt->early,
+				qopt->pdrop,
+				qopt->other);
+			fprintf(f, "\n  Total packets: %u (%s) ",
+				qopt->packets,
+				sprint_size(qopt->bytesin, b1));
+		}
 	}
 	return 0;
 }

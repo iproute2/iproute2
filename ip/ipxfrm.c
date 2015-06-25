@@ -288,10 +288,10 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 		fputs(title, fp);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s ", rt_addr_n2a(family,
+	fprintf(fp, "src %s ", rt_addr_n2a(family, sizeof(*saddr),
 					   saddr, abuf, sizeof(abuf)));
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s", rt_addr_n2a(family,
+	fprintf(fp, "dst %s", rt_addr_n2a(family, sizeof(id->daddr),
 					  &id->daddr, abuf, sizeof(abuf)));
 	fprintf(fp, "%s", _SL_);
 
@@ -455,11 +455,15 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 		fputs(prefix, fp);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s/%u ", rt_addr_n2a(f, &sel->saddr, abuf, sizeof(abuf)),
+	fprintf(fp, "src %s/%u ",
+		rt_addr_n2a(f, sizeof(sel->saddr), &sel->saddr,
+			    abuf, sizeof(abuf)),
 		sel->prefixlen_s);
 
 	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s/%u ", rt_addr_n2a(f, &sel->daddr, abuf, sizeof(abuf)),
+	fprintf(fp, "dst %s/%u ",
+		rt_addr_n2a(f, sizeof(sel->daddr), &sel->daddr,
+			    abuf, sizeof(abuf)),
 		sel->prefixlen_d);
 
 	if (sel->proto)
@@ -689,7 +693,8 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_MARK]) {
 		struct rtattr *rta = tb[XFRMA_MARK];
 		struct xfrm_mark *m = (struct xfrm_mark *) RTA_DATA(rta);
-		fprintf(fp, "\tmark %d/0x%x\n", m->v, m->m);
+		fprintf(fp, "\tmark %#x/%#x", m->v, m->m);
+		fprintf(fp, "%s", _SL_);
 	}
 
 	if (tb[XFRMA_ALG_AUTH] && !tb[XFRMA_ALG_AUTH_TRUNC]) {
@@ -754,7 +759,8 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "addr %s",
-			rt_addr_n2a(family, &e->encap_oa, abuf, sizeof(abuf)));
+			rt_addr_n2a(family, sizeof(e->encap_oa), &e->encap_oa,
+				    abuf, sizeof(abuf)));
 		fprintf(fp, "%s", _SL_);
 	}
 
@@ -782,7 +788,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "%s",
-			rt_addr_n2a(family, coa,
+			rt_addr_n2a(family, sizeof(*coa), coa,
 				    abuf, sizeof(abuf)));
 		fprintf(fp, "%s", _SL_);
 	}
@@ -1338,6 +1344,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 		case IPPROTO_UDP:
 		case IPPROTO_SCTP:
 		case IPPROTO_DCCP:
+		case IPPROTO_IP: /* to allow shared SA for different protocols */
 			break;
 		default:
 			fprintf(stderr, "\"sport\" and \"dport\" are invalid with PROTO value \"%s\"\n", strxf_proto(sel->proto));

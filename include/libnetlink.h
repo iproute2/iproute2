@@ -20,6 +20,8 @@ struct rtnl_handle
 	__u32			dump;
 	int			proto;
 	FILE		       *dump_fp;
+#define RTNL_HANDLE_F_LISTEN_ALL_NSID		0x01
+	int			flags;
 };
 
 extern int rcvbuf;
@@ -41,8 +43,16 @@ extern int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)
 	__attribute__((warn_unused_result));
 
+struct rtnl_ctrl_data {
+	int	nsid;
+};
+
 typedef int (*rtnl_filter_t)(const struct sockaddr_nl *,
 			     struct nlmsghdr *n, void *);
+
+typedef int (*rtnl_listen_filter_t)(const struct sockaddr_nl *,
+				    struct rtnl_ctrl_data *,
+				    struct nlmsghdr *n, void *);
 
 struct rtnl_dump_filter_arg
 {
@@ -54,8 +64,8 @@ extern int rtnl_dump_filter_l(struct rtnl_handle *rth,
 			      const struct rtnl_dump_filter_arg *arg);
 extern int rtnl_dump_filter(struct rtnl_handle *rth, rtnl_filter_t filter,
 			    void *arg);
-extern int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
-		     unsigned groups, struct nlmsghdr *answer)
+extern int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+		     struct nlmsghdr *answer, size_t len)
 	__attribute__((warn_unused_result));
 extern int rtnl_send(struct rtnl_handle *rth, const void *buf, int)
 	__attribute__((warn_unused_result));
@@ -118,9 +128,10 @@ static inline const char *rta_getattr_str(const struct rtattr *rta)
 	return (const char *)RTA_DATA(rta);
 }
 
-extern int rtnl_listen(struct rtnl_handle *, rtnl_filter_t handler,
+extern int rtnl_listen_all_nsid(struct rtnl_handle *);
+extern int rtnl_listen(struct rtnl_handle *, rtnl_listen_filter_t handler,
 		       void *jarg);
-extern int rtnl_from_file(FILE *, rtnl_filter_t handler,
+extern int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
 		       void *jarg);
 
 #define NLMSG_TAIL(nmsg) \
@@ -156,6 +167,14 @@ extern int rtnl_from_file(FILE *, rtnl_filter_t handler,
 #endif
 #ifndef NDTA_PAYLOAD
 #define NDTA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct ndtmsg))
+#endif
+
+#ifndef NETNS_RTA
+#define NETNS_RTA(r) \
+	((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct rtgenmsg))))
+#endif
+#ifndef NETNS_PAYLOAD
+#define NETNS_PAYLOAD(n)	NLMSG_PAYLOAD(n,sizeof(struct rtgenmsg))
 #endif
 
 /* User defined nlmsg_type which is used mostly for logging netlink

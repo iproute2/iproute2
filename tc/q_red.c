@@ -29,7 +29,7 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... red limit BYTES [min BYTES] [max BYTES] avpkt BYTES [burst PACKETS]\n");
-	fprintf(stderr, "               [adaptive] [probability PROBABILITY] bandwidth KBPS\n");
+	fprintf(stderr, "               [adaptive] [probability PROBABILITY] [bandwidth KBPS]\n");
 	fprintf(stderr, "               [ecn] [harddrop]\n");
 }
 
@@ -40,7 +40,7 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	unsigned avpkt = 0;
 	double probability = 0.02;
 	unsigned rate = 0;
-	int wlog;
+	int parm;
 	__u8 sbuf[256];
 	__u32 max_P;
 	struct rtattr *tail;
@@ -109,9 +109,6 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		argc--; argv++;
 	}
 
-	if (rate == 0)
-		get_rate(&rate, "10Mbit");
-
 	if (!opt.limit || !avpkt) {
 		fprintf(stderr, "RED: Required parameter (limit, avpkt) is missing\n");
 		return -1;
@@ -126,23 +123,27 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		opt.qth_min = opt.qth_max / 3;
 	if (!burst)
 		burst = (2 * opt.qth_min + opt.qth_max) / (3 * avpkt);
-	if ((wlog = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
+	if (!rate) {
+		get_rate(&rate, "10Mbit");
+		fprintf(stderr, "RED: set bandwidth to 10Mbit\n");
+	}
+	if ((parm = tc_red_eval_ewma(opt.qth_min, burst, avpkt)) < 0) {
 		fprintf(stderr, "RED: failed to calculate EWMA constant.\n");
 		return -1;
 	}
-	if (wlog >= 10)
-		fprintf(stderr, "RED: WARNING. Burst %d seems to be too large.\n", burst);
-	opt.Wlog = wlog;
-	if ((wlog = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {
+	if (parm >= 10)
+		fprintf(stderr, "RED: WARNING. Burst %u seems to be too large.\n", burst);
+	opt.Wlog = parm;
+	if ((parm = tc_red_eval_P(opt.qth_min, opt.qth_max, probability)) < 0) {
 		fprintf(stderr, "RED: failed to calculate probability.\n");
 		return -1;
 	}
-	opt.Plog = wlog;
-	if ((wlog = tc_red_eval_idle_damping(opt.Wlog, avpkt, rate, sbuf)) < 0) {
+	opt.Plog = parm;
+	if ((parm = tc_red_eval_idle_damping(opt.Wlog, avpkt, rate, sbuf)) < 0) {
 		fprintf(stderr, "RED: failed to calculate idle damping table.\n");
 		return -1;
 	}
-	opt.Scell_log = wlog;
+	opt.Scell_log = parm;
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);

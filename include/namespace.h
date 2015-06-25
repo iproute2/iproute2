@@ -3,6 +3,7 @@
 
 #include <sched.h>
 #include <sys/mount.h>
+#include <unistd.h>
 #include <sys/syscall.h>
 #include <errno.h>
 

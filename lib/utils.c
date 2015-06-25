@@ -25,11 +25,13 @@
 #include <asm/types.h>
 #include <linux/pkt_sched.h>
 #include <linux/param.h>
+#include <linux/if_arp.h>
+#include <linux/mpls.h>
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
 
-
+#include "rt_names.h"
 #include "utils.h"
 #include "namespace.h"
 
@@ -389,11 +391,23 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	if (strcmp(name, "default") == 0 ||
 	    strcmp(name, "all") == 0 ||
 	    strcmp(name, "any") == 0) {
-		if (family == AF_DECnet)
+		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
 		addr->family = family;
 		addr->bytelen = (family == AF_INET6 ? 16 : 4);
 		addr->bitlen = -1;
+		return 0;
+	}
+
+	if (family == AF_PACKET) {
+		int len;
+		len = ll_addr_a2n((char *)&addr->data, sizeof(addr->data), name);
+		if (len < 0)
+			return -1;
+
+		addr->family = AF_PACKET;
+		addr->bytelen = len;
+		addr->bitlen = len * 8;
 		return 0;
 	}
 
@@ -419,6 +433,23 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 		return 0;
 	}
 
+	if (family == AF_MPLS) {
+		int i;
+		addr->family = AF_MPLS;
+		if (mpls_pton(AF_MPLS, name, addr->data) <= 0)
+			return -1;
+		addr->bytelen = 4;
+		addr->bitlen = 20;
+		/* How many bytes do I need? */
+		for (i = 0; i < 8; i++) {
+			if (ntohl(addr->data[i]) & MPLS_LS_S_MASK) {
+				addr->bytelen = (i + 1)*4;
+				break;
+			}
+		}
+		return 0;
+	}
+
 	addr->family = AF_INET;
 	if (family != AF_UNSPEC && family != AF_INET)
 		return -1;
@@ -429,6 +460,29 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	addr->bytelen = 4;
 	addr->bitlen = -1;
 	return 0;
+}
+
+int af_bit_len(int af)
+{
+	switch (af) {
+	case AF_INET6:
+		return 128;
+	case AF_INET:
+		return 32;
+	case AF_DECnet:
+		return 16;
+	case AF_IPX:
+		return 80;
+	case AF_MPLS:
+		return 20;
+	}
+
+	return 0;
+}
+
+int af_byte_len(int af)
+{
+	return af_bit_len(af) / 8;
 }
 
 int get_prefix_1(inet_prefix *dst, char *arg, int family)
@@ -442,7 +496,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 	if (strcmp(arg, "default") == 0 ||
 	    strcmp(arg, "any") == 0 ||
 	    strcmp(arg, "all") == 0) {
-		if (family == AF_DECnet)
+		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
 		dst->family = family;
 		dst->bytelen = 0;
@@ -456,17 +510,8 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 
 	err = get_addr_1(dst, arg, family);
 	if (err == 0) {
-		switch(dst->family) {
-		case AF_INET6:
-			dst->bitlen = 128;
-			break;
-		case AF_DECnet:
-			dst->bitlen = 16;
-			break;
-		default:
-		case AF_INET:
-			dst->bitlen = 32;
-		}
+		dst->bitlen = af_bit_len(dst->family);
+
 		if (slash) {
 			if (get_netmask(&plen, slash+1, 0)
 			    || plen > dst->bitlen) {
@@ -485,10 +530,6 @@ done:
 
 int get_addr(inet_prefix *dst, const char *arg, int family)
 {
-	if (family == AF_PACKET) {
-		fprintf(stderr, "Error: \"%s\" may be inet address, but it is not allowed in this context.\n", arg);
-		exit(1);
-	}
 	if (get_addr_1(dst, arg, family)) {
 		fprintf(stderr, "Error: an inet address is expected rather than \"%s\".\n", arg);
 		exit(1);
@@ -624,12 +665,14 @@ int __get_user_hz(void)
 	return sysconf(_SC_CLK_TCK);
 }
 
-const char *rt_addr_n2a(int af, const void *addr, char *buf, int buflen)
+const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen)
 {
 	switch (af) {
 	case AF_INET:
 	case AF_INET6:
 		return inet_ntop(af, addr, buf, buflen);
+	case AF_MPLS:
+		return mpls_ntop(af, addr, buf, buflen);
 	case AF_IPX:
 		return ipx_ntop(af, addr, buf, buflen);
 	case AF_DECnet:
@@ -638,9 +681,50 @@ const char *rt_addr_n2a(int af, const void *addr, char *buf, int buflen)
 		memcpy(dna.a_addr, addr, 2);
 		return dnet_ntop(af, &dna, buf, buflen);
 	}
+	case AF_PACKET:
+		return ll_addr_n2a(addr, len, ARPHRD_VOID, buf, buflen);
 	default:
 		return "???";
 	}
+}
+
+int read_family(const char *name)
+{
+	int family = AF_UNSPEC;
+	if (strcmp(name, "inet") == 0)
+		family = AF_INET;
+	else if (strcmp(name, "inet6") == 0)
+		family = AF_INET6;
+	else if (strcmp(name, "dnet") == 0)
+		family = AF_DECnet;
+	else if (strcmp(name, "link") == 0)
+		family = AF_PACKET;
+	else if (strcmp(name, "ipx") == 0)
+		family = AF_IPX;
+	else if (strcmp(name, "mpls") == 0)
+		family = AF_MPLS;
+	else if (strcmp(name, "bridge") == 0)
+		family = AF_BRIDGE;
+	return family;
+}
+
+const char *family_name(int family)
+{
+	if (family == AF_INET)
+		return "inet";
+	if (family == AF_INET6)
+		return "inet6";
+	if (family == AF_DECnet)
+		return "dnet";
+	if (family == AF_PACKET)
+		return "link";
+	if (family == AF_IPX)
+		return "ipx";
+	if (family == AF_MPLS)
+		return "mpls";
+	if (family == AF_BRIDGE)
+		return "bridge";
+	return "???";
 }
 
 #ifdef RESOLVE_HOSTNAMES
@@ -697,7 +781,6 @@ static const char *resolve_address(const void *addr, int len, int af)
 }
 #endif
 
-
 const char *format_host(int af, int len, const void *addr,
 			char *buf, int buflen)
 {
@@ -705,33 +788,14 @@ const char *format_host(int af, int len, const void *addr,
 	if (resolve_hosts) {
 		const char *n;
 
-		if (len <= 0) {
-			switch (af) {
-			case AF_INET:
-				len = 4;
-				break;
-			case AF_INET6:
-				len = 16;
-				break;
-			case AF_IPX:
-				len = 10;
-				break;
-#ifdef AF_DECnet
-			/* I see no reasons why gethostbyname
-			   may not work for DECnet */
-			case AF_DECnet:
-				len = 2;
-				break;
-#endif
-			default: ;
-			}
-		}
+		len = len <= 0 ? af_byte_len(af) : len;
+
 		if (len > 0 &&
 		    (n = resolve_address(addr, len, af)) != NULL)
 			return n;
 	}
 #endif
-	return rt_addr_n2a(af, addr, buf, buflen);
+	return rt_addr_n2a(af, len, addr, buf, buflen);
 }
 
 
@@ -905,4 +969,10 @@ int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
 		return netns_foreach(on_netns_label, &nsf);
 
 	return netns_foreach(on_netns, &nsf);
+}
+
+char *int_to_str(int val, char *buf)
+{
+	sprintf(buf, "%d", val);
+	return buf;
 }

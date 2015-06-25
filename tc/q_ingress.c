@@ -34,18 +34,14 @@ static void explain(void)
 
 static int ingress_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-
-	if (argc > 0) {
-		while (argc > 0) {
-
-			if (strcmp(*argv, "handle") == 0) {
-				NEXT_ARG();
-				argc--; argv++;
-			} else {
-				fprintf(stderr, "What is \"%s\"?\n", *argv);
-				explain();
-				return -1;
-			}
+	while (argc > 0) {
+		if (strcmp(*argv, "handle") == 0) {
+			NEXT_ARG();
+			argc--; argv++;
+		} else {
+			fprintf(stderr, "What is \"%s\"?\n", *argv);
+			explain();
+			return -1;
 		}
 	}
 
@@ -55,8 +51,7 @@ static int ingress_parse_opt(struct qdisc_util *qu, int argc, char **argv, struc
 
 static int ingress_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
-
-		fprintf(f, "---------------- ");
+	fprintf(f, "---------------- ");
 	return 0;
 }
 

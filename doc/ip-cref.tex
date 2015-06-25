@@ -1432,6 +1432,17 @@ database.
 even if it does not match any interface prefix. One application of this
 option may be found in~\cite{IP-TUNNELS}.
 
+\item \verb|pref PREF|
+
+--- the IPv6 route preference.
+\verb|PREF| PREF is a string specifying the route preference as defined in
+RFC4191 for Router Discovery messages. Namely:
+\begin{itemize}
+\item \verb|low| --- the route has a lowest priority.
+\item \verb|medium| --- the route has a default priority.
+\item \verb|high| --- the route has a highest priority.
+\end{itemize}
+
 \end{itemize}
 
 

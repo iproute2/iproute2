@@ -50,10 +50,11 @@ extern void incomplete_command(void) __attribute__((noreturn));
 
 typedef struct
 {
-	__u8 family;
-	__u8 bytelen;
+	__u16 flags;
+	__u16 bytelen;
 	__s16 bitlen;
-	__u32 flags;
+	/* These next two fields match rtvia */
+	__u16 family;
 	__u32 data[8];
 } inet_prefix;
 
@@ -76,6 +77,13 @@ struct ipx_addr {
 	u_int32_t ipx_net;
 	u_int8_t  ipx_node[IPX_NODE_LEN];
 };
+
+#ifndef AF_MPLS
+# define AF_MPLS 28
+#endif
+
+/* Maximum number of labels the mpls helpers support */
+#define MPLS_MAX_LABELS 8
 
 extern __u32 get_addr32(const char *name);
 extern int get_addr_1(inet_prefix *dst, const char *arg, int family);
@@ -101,10 +109,16 @@ extern int get_s8(__s8 *val, const char *arg, int base);
 extern char* hexstring_n2a(const __u8 *str, int len, char *buf, int blen);
 extern __u8* hexstring_a2n(const char *str, __u8 *buf, int blen);
 
+extern int af_bit_len(int af);
+extern int af_byte_len(int af);
+
 extern const char *format_host(int af, int len, const void *addr,
 			       char *buf, int buflen);
-extern const char *rt_addr_n2a(int af, const void *addr,
+extern const char *rt_addr_n2a(int af, int len, const void *addr,
 			       char *buf, int buflen);
+
+extern int read_family(const char *name);
+extern const char *family_name(int family);
 
 void missarg(const char *) __attribute__((noreturn));
 void invarg(const char *, const char *) __attribute__((noreturn));
@@ -118,6 +132,9 @@ int dnet_pton(int af, const char *src, void *addr);
 
 const char *ipx_ntop(int af, const void *addr, char *str, size_t len);
 int ipx_pton(int af, const char *src, void *addr);
+
+const char *mpls_ntop(int af, const void *addr, char *str, size_t len);
+int mpls_pton(int af, const char *src, void *addr);
 
 extern int __iproute2_hz_internal;
 extern int __get_hz(void);
@@ -154,6 +171,25 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+#define BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
+
+#ifndef offsetof
+# define offsetof(type, member) ((size_t) &((type *)0)->member)
+#endif
+
+#ifndef min
+# define min(x, y) ({			\
+	typeof(x) _min1 = (x);		\
+	typeof(y) _min2 = (y);		\
+	(void) (&_min1 == &_min2);	\
+	_min1 < _min2 ? _min1 : _min2; })
+#endif
+
+#ifndef __check_format_string
+# define __check_format_string(pos_str, pos_args) \
+	__attribute__ ((format (printf, (pos_str), (pos_args))))
+#endif
+
 extern int cmdlineno;
 extern ssize_t getcmdline(char **line, size_t *len, FILE *in);
 extern int makeargs(char *line, char *argv[], int maxargs);
@@ -166,5 +202,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 
 extern int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
 		bool show_label);
+
+char *int_to_str(int val, char *buf);
 
 #endif /* __UTILS_H__ */

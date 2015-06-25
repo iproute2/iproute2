@@ -72,10 +72,14 @@ ip route add 10.11.12.0/24 dev eth1 via whatever realm 1
 etc. The same thing can be made with rules.
 I still did not test ipchains, but they should work too.
 
+
+Setup and code example of BPF classifier and action can be found under
+examples/bpf/, which should explain everything for getting started.
+
+
 Setup of rsvp and u32 classifiers is more hairy.
 If you read RSVP specs, you will understand how rsvp classifier
 works easily. What's about u32... That's example:
-
 
 
 #! /bin/sh

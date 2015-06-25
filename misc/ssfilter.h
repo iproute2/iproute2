@@ -9,6 +9,8 @@
 #define SSF_S_LE  8
 #define SSF_S_AUTO  9
 
+#include <stdbool.h>
+
 struct ssfilter
 {
 	int type;
@@ -17,5 +19,5 @@ struct ssfilter
 };
 
 int ssfilter_parse(struct ssfilter **f, int argc, char **argv, FILE *fp);
-void *parse_hostcond(char*);
+void *parse_hostcond(char *addr, bool is_port);
 

@@ -54,7 +54,7 @@ static void act_usage(void)
 			"\tACTSPEC := action <ACTDETAIL> [INDEXSPEC]\n"
 			"\tINDEXSPEC := index <32 bit indexvalue>\n"
 			"\tACTDETAIL := <ACTNAME> <ACTPARAMS>\n"
-			"\t\tExample ACTNAME is gact, mirred etc\n"
+			"\t\tExample ACTNAME is gact, mirred, bpf, etc\n"
 			"\t\tEach action has its own parameters (ACTPARAMS)\n"
 			"\n");
 
@@ -472,7 +472,7 @@ static int tc_action_gd(int cmd, unsigned flags, int *argc_p, char ***argv_p)
 	if (cmd == RTM_GETACTION)
 		ans = &req.n;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, ans) < 0) {
+	if (rtnl_talk(&rth, &req.n, ans, MAX_MSG) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 1;
 	}
@@ -517,7 +517,7 @@ static int tc_action_modify(int cmd, unsigned flags, int *argc_p, char ***argv_p
 	}
 	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0) {
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		ret = -1;
 	}
@@ -587,7 +587,7 @@ static int tc_act_list_or_flush(int argc, char **argv, int event)
 		req.n.nlmsg_type = RTM_DELACTION;
 		req.n.nlmsg_flags |= NLM_F_ROOT;
 		req.n.nlmsg_flags |= NLM_F_REQUEST;
-		if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0) {
+		if (rtnl_talk(&rth, &req.n, NULL, 0) < 0) {
 			fprintf(stderr, "We have an error flushing\n");
 			return 1;
 		}

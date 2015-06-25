@@ -89,7 +89,7 @@ static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 		req.i.ifi_family = preferred_family;
 		req.i.ifi_index = ifi->ifi_index;
 
-		if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0) {
+		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0) {
 get_failed:
 			fprintf(stderr,
 				"Failed to get existing tunnel info.\n");
@@ -285,6 +285,7 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 	if (tb[IFLA_IPTUN_REMOTE]) {
 		fprintf(f, "remote %s ",
 			rt_addr_n2a(AF_INET6,
+				    RTA_PAYLOAD(tb[IFLA_IPTUN_REMOTE]),
 				    RTA_DATA(tb[IFLA_IPTUN_REMOTE]),
 				    s1, sizeof(s1)));
 	}
@@ -292,6 +293,7 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 	if (tb[IFLA_IPTUN_LOCAL]) {
 		fprintf(f, "local %s ",
 			rt_addr_n2a(AF_INET6,
+				    RTA_PAYLOAD(tb[IFLA_IPTUN_LOCAL]),
 				    RTA_DATA(tb[IFLA_IPTUN_LOCAL]),
 				    s1, sizeof(s1)));
 	}

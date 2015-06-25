@@ -23,6 +23,7 @@
 #include "utils.h"
 #include "ip_common.h"
 #include "namespace.h"
+#include "color.h"
 
 int preferred_family = AF_UNSPEC;
 int human_readable = 0;
@@ -52,11 +53,11 @@ static void usage(void)
 "                   netns | l2tp | fou | tcp_metrics | token | netconf }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -h[uman-readable] | -iec |\n"
-"                    -f[amily] { inet | inet6 | ipx | dnet | bridge | link } |\n"
+"                    -f[amily] { inet | inet6 | ipx | dnet | mpls | bridge | link } |\n"
 "                    -4 | -6 | -I | -D | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } |\n"
 "                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
-"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] }\n");
+"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] | -c[olor]}\n");
 	exit(-1);
 }
 
@@ -190,21 +191,11 @@ int main(int argc, char **argv)
 			argv++;
 			if (argc <= 1)
 				usage();
-			if (strcmp(argv[1], "inet") == 0)
-				preferred_family = AF_INET;
-			else if (strcmp(argv[1], "inet6") == 0)
-				preferred_family = AF_INET6;
-			else if (strcmp(argv[1], "dnet") == 0)
-				preferred_family = AF_DECnet;
-			else if (strcmp(argv[1], "link") == 0)
-				preferred_family = AF_PACKET;
-			else if (strcmp(argv[1], "ipx") == 0)
-				preferred_family = AF_IPX;
-			else if (strcmp(argv[1], "bridge") == 0)
-				preferred_family = AF_BRIDGE;
-			else if (strcmp(argv[1], "help") == 0)
+			if (strcmp(argv[1], "help") == 0)
 				usage();
 			else
+				preferred_family = read_family(argv[1]);
+			if (preferred_family == AF_UNSPEC)
 				invarg("invalid protocol family", argv[1]);
 		} else if (strcmp(opt, "-4") == 0) {
 			preferred_family = AF_INET;
@@ -216,6 +207,8 @@ int main(int argc, char **argv)
 			preferred_family = AF_IPX;
 		} else if (strcmp(opt, "-D") == 0) {
 			preferred_family = AF_DECnet;
+		} else if (strcmp(opt, "-M") == 0) {
+			preferred_family = AF_MPLS;
 		} else if (strcmp(opt, "-B") == 0) {
 			preferred_family = AF_BRIDGE;
 		} else if (matches(opt, "-human") == 0 ||
@@ -265,6 +258,8 @@ int main(int argc, char **argv)
 				exit(-1);
 			}
 			rcvbuf = size;
+		} else if (matches(opt, "-color") == 0) {
+			enable_color();
 		} else if (matches(opt, "-help") == 0) {
 			usage();
 		} else if (matches(opt, "-netns") == 0) {

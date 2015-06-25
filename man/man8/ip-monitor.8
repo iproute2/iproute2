@@ -12,6 +12,10 @@ ip-monitor, rtmon \- state monitoring
 .IR OBJECT-LIST " ] ["
 .BI file " FILENAME "
 ] [
+.BI label
+] [
+.BI all-nsid
+] [
 .BI dev " DEVICE "
 ]
 .sp
@@ -33,7 +37,7 @@ Prints short timestamp before the event message on the same line in format:
 The
 .B ip
 utility can monitor the state of devices, addresses
-and routes continuously.  This option has a slightly different format.
+and routes continuously. This option has a slightly different format.
 Namely, the
 .B monitor
 command is the first in the command line and then the object list follows:
@@ -42,6 +46,10 @@ command is the first in the command line and then the object list follows:
 .IR OBJECT-LIST " ] ["
 .BI file " FILENAME "
 ] [
+.BI label
+] [
+.BI all-nsid
+] [
 .BI dev " DEVICE "
 ]
 
@@ -49,7 +57,7 @@ command is the first in the command line and then the object list follows:
 is the list of object types that we want to monitor.
 It may contain
 .BR link ", " address ", " route ", " mroute ", " prefix ", "
-.BR neigh " and " netconf "."
+.BR neigh ", " netconf ", "  rule " and " nsid "."
 If no
 .B file
 argument is given,
@@ -59,13 +67,39 @@ described in previous sections.
 
 .P
 If the
+.BI label
+option is set, a prefix is displayed before each message to
+show the family of the message. For example:
+.sp
+.in +2
+[NEIGH]10.16.0.112 dev eth0 lladdr 00:04:23:df:2f:d0 REACHABLE
+[LINK]3: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc pfifo_fast state DOWN group default
+    link/ether 52:54:00:12:34:57 brd ff:ff:ff:ff:ff:ff
+.in -2
+.sp
+
+.P
+If the
+.BI all-nsid
+option is set, the program listens to all network namespaces that have a
+nsid assigned into the network namespace were the program is running.
+A prefix is displayed to show the network namespace where the message
+originates. Example:
+.sp
+.in +2
+[nsid 0]10.16.0.112 dev eth0 lladdr 00:04:23:df:2f:d0 REACHABLE
+.in -2
+.sp
+
+.P
+If the
 .BI file
 option is given, the program does not listen on RTNETLINK,
 but opens the given file, and dumps its contents. The file
 should contain RTNETLINK messages saved in binary format.
 Such a file can be generated with the
 .B rtmon
-utility.  This utility has a command line syntax similar to
+utility. This utility has a command line syntax similar to
 .BR "ip monitor" .
 Ideally,
 .B rtmon
@@ -97,3 +131,5 @@ option is given, the program prints only events related to this device.
 
 .SH AUTHOR
 Original Manpage by Michail Litvak <mci@owl.openwall.com>
+.br
+Manpage revised by Nicolas Dichtel <nicolas.dichtel@6wind.com>

@@ -35,7 +35,7 @@ tries to determine the ideal marking probability automatically.
 The
 .B BLUE
 algorithm maintains a probability which is used to mark or drop packets
-that are to be queued.  If the queue overflows, the mark/drop probability
+that are to be queued. If the queue overflows, the mark/drop probability
 is increased. If the queue becomes empty, the probability is decreased. The
 .B Stochastic Fair Blue
 (SFB) algorithm is designed to protect TCP flows against non-responsive flows.
@@ -44,8 +44,8 @@ This SFB implementation maintains 8 levels of 16 bins each for accounting.
 Each flow is mapped into a bin of each level using a per-level hash value.
 
 Every bin maintains a marking probability, which gets increased or decreased
-based on bin occupancy.  If the number of packets exceeds the size of that
-bin, the marking probability is increased.  If the number drops to zero, it
+based on bin occupancy. If the number of packets exceeds the size of that
+bin, the marking probability is increased. If the number drops to zero, it
 is decreased.
 
 The marking probability is based on the minimum value of all bins a flow is
@@ -63,7 +63,7 @@ with a non-responsive flow, causing the responsive flow to be misidentified as
 being non-responsive.
 
 The probability of a responsive flow to be misidentified is dependent on
-the number of non-responsive flows, M.  It is (1 - (1 - (1 / 16.0)) ** M) **8,
+the number of non-responsive flows, M. It is (1 - (1 - (1 / 16.0)) ** M) **8,
 so for example with 10 non-responsive flows approximately 0.2% of responsive flows
 will be misidentified.
 
@@ -89,7 +89,7 @@ implementation maintains a second set of levels/bins as described in section
 4.4 of the SFB reference.
 While one set is used to manage the queue, a second set is warmed up:
 Whenever a flow is then determined to be non-responsive, the marking
-probabilities in the second set are updated.  When the rehashing
+probabilities in the second set are updated. When the rehashing
 happens, these bins will be used to manage the queue and all non-responsive
 flows can be rate-limited immediately.
 This value determines how much time has to pass before the 2nd set
@@ -100,19 +100,19 @@ rehash.
 .TP
 limit
 Hard limit on the real (not average) total queue size in packets.
-Further packets are dropped.  Defaults to the transmit queue length of the
+Further packets are dropped. Defaults to the transmit queue length of the
 device the qdisc is attached to.
 .TP
 max
 Maximum length of a buckets queue, in packets, before packets start being
-dropped.  Should be sightly larger than
+dropped. Should be sightly larger than
 .B target
 , but should not be set to values exceeding 1.5 times that of
 .B target .
 Defaults to 25.
 .TP
 target
-The desired average bin length.  If the bin queue length reaches this value,
+The desired average bin length. If the bin queue length reaches this value,
 the marking probability is increased by
 .B increment.
 The default value depends on the
@@ -123,11 +123,11 @@ will default to 20.
 .TP
 increment
 A value used to increase the marking probability when the queue appears
-to be over-used.  Must be between 0 and 1.0.  Defaults to 0.00050.
+to be over-used. Must be between 0 and 1.0. Defaults to 0.00050.
 .TP
 decrement
 Value used to decrease the marking probability when the queue is found
-to be empty.  Must be between 0 and 1.0.
+to be empty. Must be between 0 and 1.0.
 Defaults to 0.00005.
 .TP
 penalty_rate
@@ -153,7 +153,7 @@ The number of packets dropped before a per-flow queue was full.
 ratedrop
 The number of packets dropped because of rate-limiting.
 If this value is high, there are many non-reactive flows being
-sent through sfb.  In such cases, it might be better to
+sent through sfb. In such cases, it might be better to
 embed sfb within a classful qdisc to better control such
 flows using a different, shaping qdisc.
 .TP
@@ -163,7 +163,7 @@ High bucketdrop may point to a high number of aggressive, short-lived
 flows.
 .TP
 queuedrop
-The number of packets dropped due to reaching limit.  This should normally be 0.
+The number of packets dropped due to reaching limit. This should normally be 0.
 .TP
 marked
 The number of packets marked with ECN.
@@ -172,7 +172,7 @@ maxqlen
 The length of the current longest per-flow (virtual) queue.
 .TP
 maxprob
-The maximum per-flow drop probability.  1 means that some
+The maximum per-flow drop probability. 1 means that some
 flows have been detected as non-reactive.
 
 .SH NOTES

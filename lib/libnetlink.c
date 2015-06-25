@@ -25,6 +25,14 @@
 
 #include "libnetlink.h"
 
+#ifndef SOL_NETLINK
+#define SOL_NETLINK 270
+#endif
+
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 int rcvbuf = 1024 * 1024;
 
 void rtnl_close(struct rtnl_handle *rth)
@@ -300,8 +308,8 @@ int rtnl_dump_filter(struct rtnl_handle *rth,
 	return rtnl_dump_filter_l(rth, a);
 }
 
-int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
-	      unsigned groups, struct nlmsghdr *answer)
+int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+	      struct nlmsghdr *answer, size_t len)
 {
 	int status;
 	unsigned seq;
@@ -317,12 +325,10 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 		.msg_iov = &iov,
 		.msg_iovlen = 1,
 	};
-	char   buf[16384];
+	char   buf[32768];
 
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
-	nladdr.nl_pid = peer;
-	nladdr.nl_groups = groups;
 
 	n->nlmsg_seq = seq = ++rtnl->seq;
 
@@ -330,7 +336,6 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 		n->nlmsg_flags |= NLM_F_ACK;
 
 	status = sendmsg(rtnl->fd, &msg, 0);
-
 	if (status < 0) {
 		perror("Cannot talk to rtnetlink");
 		return -1;
@@ -339,7 +344,6 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 	memset(buf,0,sizeof(buf));
 
 	iov.iov_base = buf;
-
 	while (1) {
 		iov.iov_len = sizeof(buf);
 		status = recvmsg(rtnl->fd, &msg, 0);
@@ -372,7 +376,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 				exit(1);
 			}
 
-			if (nladdr.nl_pid != peer ||
+			if (nladdr.nl_pid != 0 ||
 			    h->nlmsg_pid != rtnl->local.nl_pid ||
 			    h->nlmsg_seq != seq) {
 				/* Don't forget to skip that message. */
@@ -385,20 +389,22 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 				struct nlmsgerr *err = (struct nlmsgerr*)NLMSG_DATA(h);
 				if (l < sizeof(struct nlmsgerr)) {
 					fprintf(stderr, "ERROR truncated\n");
-				} else {
-					if (!err->error) {
-						if (answer)
-							memcpy(answer, h, h->nlmsg_len);
-						return 0;
-					}
-
-					fprintf(stderr, "RTNETLINK answers: %s\n", strerror(-err->error));
-					errno = -err->error;
+				} else if (!err->error) {
+					if (answer)
+						memcpy(answer, h,
+						       MIN(len, h->nlmsg_len));
+					return 0;
 				}
+
+				fprintf(stderr, "RTNETLINK answers: %s\n",
+					strerror(-err->error));
+				errno = -err->error;
 				return -1;
 			}
+
 			if (answer) {
-				memcpy(answer, h, h->nlmsg_len);
+				memcpy(answer, h,
+				       MIN(len, h->nlmsg_len));
 				return 0;
 			}
 
@@ -407,10 +413,12 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 			status -= NLMSG_ALIGN(len);
 			h = (struct nlmsghdr*)((char*)h + NLMSG_ALIGN(len));
 		}
+
 		if (msg.msg_flags & MSG_TRUNC) {
 			fprintf(stderr, "Message truncated\n");
 			continue;
 		}
+
 		if (status) {
 			fprintf(stderr, "!!!Remnant of size %d\n", status);
 			exit(1);
@@ -418,8 +426,21 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 	}
 }
 
+int rtnl_listen_all_nsid(struct rtnl_handle *rth)
+{
+	unsigned int on = 1;
+
+	if (setsockopt(rth->fd, SOL_NETLINK, NETLINK_LISTEN_ALL_NSID, &on,
+		       sizeof(on)) < 0) {
+		perror("NETLINK_LISTEN_ALL_NSID");
+		return -1;
+	}
+	rth->flags |= RTNL_HANDLE_F_LISTEN_ALL_NSID;
+	return 0;
+}
+
 int rtnl_listen(struct rtnl_handle *rtnl,
-		rtnl_filter_t handler,
+		rtnl_listen_filter_t handler,
 		void *jarg)
 {
 	int status;
@@ -433,6 +454,12 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 		.msg_iovlen = 1,
 	};
 	char   buf[16384];
+	char   cmsgbuf[BUFSIZ];
+
+	if (rtnl->flags & RTNL_HANDLE_F_LISTEN_ALL_NSID) {
+		msg.msg_control = &cmsgbuf;
+		msg.msg_controllen = sizeof(cmsgbuf);
+	}
 
 	memset(&nladdr, 0, sizeof(nladdr));
 	nladdr.nl_family = AF_NETLINK;
@@ -441,6 +468,9 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 
 	iov.iov_base = buf;
 	while (1) {
+		struct rtnl_ctrl_data ctrl;
+		struct cmsghdr *cmsg;
+
 		iov.iov_len = sizeof(buf);
 		status = recvmsg(rtnl->fd, &msg, 0);
 
@@ -461,6 +491,21 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 			fprintf(stderr, "Sender address length == %d\n", msg.msg_namelen);
 			exit(1);
 		}
+
+		if (rtnl->flags & RTNL_HANDLE_F_LISTEN_ALL_NSID) {
+			memset(&ctrl, 0, sizeof(ctrl));
+			ctrl.nsid = -1;
+			for (cmsg = CMSG_FIRSTHDR(&msg); cmsg;
+			     cmsg = CMSG_NXTHDR(&msg, cmsg))
+				if (cmsg->cmsg_level == SOL_NETLINK &&
+				    cmsg->cmsg_type == NETLINK_LISTEN_ALL_NSID &&
+				    cmsg->cmsg_len == CMSG_LEN(sizeof(int))) {
+					int *data = (int *)CMSG_DATA(cmsg);
+
+					ctrl.nsid = *data;
+				}
+		}
+
 		for (h = (struct nlmsghdr*)buf; status >= sizeof(*h); ) {
 			int err;
 			int len = h->nlmsg_len;
@@ -475,7 +520,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 				exit(1);
 			}
 
-			err = handler(&nladdr, h, jarg);
+			err = handler(&nladdr, &ctrl, h, jarg);
 			if (err < 0)
 				return err;
 
@@ -493,7 +538,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 	}
 }
 
-int rtnl_from_file(FILE *rtnl, rtnl_filter_t handler,
+int rtnl_from_file(FILE *rtnl, rtnl_listen_filter_t handler,
 		   void *jarg)
 {
 	int status;
@@ -541,7 +586,7 @@ int rtnl_from_file(FILE *rtnl, rtnl_filter_t handler,
 			return -1;
 		}
 
-		err = handler(&nladdr, h, jarg);
+		err = handler(&nladdr, NULL, h, jarg);
 		if (err < 0)
 			return err;
 	}

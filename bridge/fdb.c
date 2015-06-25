@@ -131,12 +131,16 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (ifindex) {
 			char ifname[IF_NAMESIZE];
 
-			if (if_indextoname(ifindex, ifname))
+			if (!tb[NDA_LINK_NETNSID] &&
+			    if_indextoname(ifindex, ifname))
 				fprintf(fp, "via %s ", ifname);
 			else
 				fprintf(fp, "via ifindex %u ", ifindex);
 		}
 	}
+	if (tb[NDA_LINK_NETNSID])
+		fprintf(fp, "link-netnsid %d ",
+			rta_getattr_u32(tb[NDA_LINK_NETNSID]));
 
 	if (show_stats && tb[NDA_CACHEINFO]) {
 		struct nda_cacheinfo *ci = RTA_DATA(tb[NDA_CACHEINFO]);
@@ -155,7 +159,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (r->ndm_flags & NTF_ROUTER)
 		fprintf(fp, "router ");
 	if (r->ndm_flags & NTF_EXT_LEARNED)
-		fprintf(fp, "external ");
+		fprintf(fp, "offload ");
 
 	fprintf(fp, "%s\n", state_n2a(r->ndm_state));
 	return 0;
@@ -316,7 +320,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 
 	if (d == NULL || addr == NULL) {
 		fprintf(stderr, "Device and address are required arguments.\n");
-		exit(-1);
+		return -1;
 	}
 
 	/* Assume self */
@@ -331,7 +335,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		   abuf, abuf+1, abuf+2,
 		   abuf+3, abuf+4, abuf+5) != 6) {
 		fprintf(stderr, "Invalid mac address %s\n", addr);
-		exit(-1);
+		return -1;
 	}
 
 	addattr_l(&req.n, sizeof(req), NDA_LLADDR, abuf, ETH_ALEN);
@@ -358,8 +362,8 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
-		exit(2);
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+		return -1;
 
 	return 0;
 }

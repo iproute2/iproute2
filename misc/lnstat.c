@@ -249,7 +249,7 @@ int main(int argc, char **argv)
 		MODE_JSON,
 		MODE_NORMAL,
 	} mode = MODE_NORMAL;
-	unsigned long count = 1;
+	unsigned long count = 0;
 	struct table_hdr *header;
 	static struct field_params fp;
 	int num_req_files = 0;
@@ -347,7 +347,7 @@ int main(int argc, char **argv)
 
 	switch (mode) {
 	case MODE_DUMP:
-		lnstat_dump(stderr, lnstat_files);
+		lnstat_dump(stdout, lnstat_files);
 		break;
 
 	case MODE_NORMAL:
@@ -362,7 +362,7 @@ int main(int argc, char **argv)
 		if (interval < 1 )
 			interval = 1;
 
-		for (i = 0; i < count; i++) {
+		for (i = 0; i < count || !count; ) {
 			lnstat_update(lnstat_files);
 			if (mode == MODE_JSON)
 				print_json(stdout, lnstat_files, &fp);
@@ -373,8 +373,10 @@ int main(int argc, char **argv)
 				print_line(stdout, lnstat_files, &fp);
 			}
 			fflush(stdout);
-			if (i < count - 1)
+			if (i < count - 1 || !count)
 				sleep(interval);
+			if (count)
+				++i;
 		}
 		break;
 	}

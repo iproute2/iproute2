@@ -688,7 +688,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (req.xsinfo.family == AF_UNSPEC)
 		req.xsinfo.family = AF_INET;
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -825,7 +825,7 @@ static int xfrm_state_allocspi(int argc, char **argv)
 		req.xspi.info.family = AF_INET;
 
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, res_n) < 0)
+	if (rtnl_talk(&rth, &req.n, res_n, sizeof(res_buf)) < 0)
 		exit(2);
 
 	if (xfrm_state_print(NULL, res_n, (void*)stdout) < 0) {
@@ -1015,7 +1015,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 		req.xsid.family = AF_INET;
 
 	if (delete) {
-		if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+		if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 			exit(2);
 	} else {
 		char buf[NLMSG_BUF_SIZE];
@@ -1023,7 +1023,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 
 		memset(buf, 0, sizeof(buf));
 
-		if (rtnl_talk(&rth, &req.n, 0, 0, res_n) < 0)
+		if (rtnl_talk(&rth, &req.n, res_n, sizeof(req)) < 0)
 			exit(2);
 
 		if (xfrm_state_print(NULL, res_n, (void*)stdout) < 0) {
@@ -1148,13 +1148,23 @@ static int xfrm_state_list_or_deleteall(int argc, char **argv, int deleteall)
 		xb.rth = &rth;
 
 		for (i = 0; ; i++) {
+			struct {
+				struct nlmsghdr n;
+				char buf[NLMSG_BUF_SIZE];
+			} req = {
+				.n.nlmsg_len = NLMSG_HDRLEN,
+				.n.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+				.n.nlmsg_type = XFRM_MSG_GETSA,
+				.n.nlmsg_seq = rth.dump = ++rth.seq,
+			};
+
 			xb.offset = 0;
 			xb.nlmsg_count = 0;
 
 			if (show_stats > 1)
 				fprintf(stderr, "Delete-all round = %d\n", i);
 
-			if (rtnl_wilddump_request(&rth, preferred_family, XFRM_MSG_GETSA) < 0) {
+			if (rtnl_send(&rth, (void *)&req, req.n.nlmsg_len) < 0) {
 				perror("Cannot send dump request");
 				exit(1);
 			}
@@ -1287,7 +1297,7 @@ static int xfrm_sad_getinfo(int argc, char **argv)
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, &req.n) < 0)
+	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
 		exit(2);
 
 	print_sadinfo(&req.n, (void*)stdout);
@@ -1341,7 +1351,7 @@ static int xfrm_state_flush(int argc, char **argv)
 		fprintf(stderr, "Flush state with XFRM-PROTO value \"%s\"\n",
 			strxf_xfrmproto(req.xsf.proto));
 
-	if (rtnl_talk(&rth, &req.n, 0, 0, NULL) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
