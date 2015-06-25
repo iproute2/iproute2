@@ -1081,7 +1081,7 @@ static int run_ssfilter(struct ssfilter *f, struct sockstat *s)
 					     strspn(p+1, "0123456789abcdef") == 5);
 		}
 		if (s->local.family == AF_PACKET)
-			return s->lport == 0 && s->local.data == 0;
+			return s->lport == 0 && s->local.data[0] == 0;
 		if (s->local.family == AF_NETLINK)
 			return s->lport < 0;
 
