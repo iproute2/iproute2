@@ -755,7 +755,7 @@ struct tcpstat
 	int		    timer;
 	int		    timeout;
 	int		    probes;
-	char		    *cong_alg;
+	char		    cong_alg[16];
 	double		    rto, ato, rtt, rttvar;
 	int		    qack, cwnd, ssthresh, backoff;
 	double		    send_bps;
@@ -860,8 +860,7 @@ static const char *print_ms_timer(int timeout)
 	return buf;
 }
 
-struct scache
-{
+struct scache {
 	struct scache *next;
 	int port;
 	char *name;
@@ -951,11 +950,15 @@ static const char *__resolve_service(int port)
 	return NULL;
 }
 
+#define SCACHE_BUCKETS 1024
+static struct scache *cache_htab[SCACHE_BUCKETS];
 
 static const char *resolve_service(int port)
 {
 	static char buf[128];
-	static struct scache cache[256];
+	struct scache *c;
+	const char *res;
+	int hash;
 
 	if (port == 0) {
 		buf[0] = '*';
@@ -963,45 +966,35 @@ static const char *resolve_service(int port)
 		return buf;
 	}
 
-	if (resolve_services) {
-		if (dg_proto == RAW_PROTO) {
-			return inet_proto_n2a(port, buf, sizeof(buf));
-		} else {
-			struct scache *c;
-			const char *res;
-			int hash = (port^(((unsigned long)dg_proto)>>2))&255;
+	if (!resolve_services)
+		goto do_numeric;
 
-			for (c = &cache[hash]; c; c = c->next) {
-				if (c->port == port &&
-				    c->proto == dg_proto) {
-					if (c->name)
-						return c->name;
-					goto do_numeric;
-				}
-			}
+	if (dg_proto == RAW_PROTO)
+		return inet_proto_n2a(port, buf, sizeof(buf));
 
-			if ((res = __resolve_service(port)) != NULL) {
-				if ((c = malloc(sizeof(*c))) == NULL)
-					goto do_numeric;
-			} else {
-				c = &cache[hash];
-				if (c->name)
-					free(c->name);
-			}
-			c->port = port;
-			c->name = NULL;
-			c->proto = dg_proto;
-			if (res) {
-				c->name = strdup(res);
-				c->next = cache[hash].next;
-				cache[hash].next = c;
-			}
-			if (c->name)
-				return c->name;
-		}
+
+	hash = (port^(((unsigned long)dg_proto)>>2)) % SCACHE_BUCKETS;
+
+	for (c = cache_htab[hash]; c; c = c->next) {
+		if (c->port == port && c->proto == dg_proto)
+			goto do_cache;
 	}
 
-	do_numeric:
+	c = malloc(sizeof(*c));
+	if (!c)
+		goto do_numeric;
+	res = __resolve_service(port);
+	c->port = port;
+	c->name = res ? strdup(res) : NULL;
+	c->proto = dg_proto;
+	c->next = cache_htab[hash];
+	cache_htab[hash] = c;
+
+do_cache:
+	if (c->name)
+		return c->name;
+
+do_numeric:
 	sprintf(buf, "%u", port);
 	return buf;
 }
@@ -1666,7 +1659,7 @@ static void tcp_stats_print(struct tcpstat *s)
 		printf(" ecnseen");
 	if (s->has_fastopen_opt)
 		printf(" fastopen");
-	if (s->cong_alg)
+	if (s->cong_alg[0])
 		printf(" %s", s->cong_alg);
 	if (s->has_wscale_opt)
 		printf(" wscale:%d,%d", s->snd_wscale, s->rcv_wscale);
@@ -1913,11 +1906,10 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 			s.has_fastopen_opt = TCPI_HAS_OPT(info, TCPI_OPT_SYN_DATA);
 		}
 
-		if (tb[INET_DIAG_CONG]) {
-			const char *cong_attr = rta_getattr_str(tb[INET_DIAG_CONG]);
-			s.cong_alg = malloc(strlen(cong_attr + 1));
-			strcpy(s.cong_alg, cong_attr);
-		}
+		if (tb[INET_DIAG_CONG])
+			strncpy(s.cong_alg,
+				rta_getattr_str(tb[INET_DIAG_CONG]),
+				sizeof(s.cong_alg) - 1);
 
 		if (TCPI_HAS_OPT(info, TCPI_OPT_WSCALE)) {
 			s.has_wscale_opt  = true;
@@ -1993,8 +1985,6 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		tcp_stats_print(&s);
 		if (s.dctcp)
 			free(s.dctcp);
-		if (s.cong_alg)
-			free(s.cong_alg);
 	}
 }
 
@@ -2218,6 +2208,8 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 		return -1;
 	rth.dump = MAGIC_SEQ;
 	rth.dump_fp = dump_fp;
+	if (preferred_family == PF_INET6)
+		family = PF_INET6;
 
 again:
 	if ((err = sockdiag_send(family, rth.fd, protocol, f)))
@@ -2230,7 +2222,7 @@ again:
 		}
 		goto Exit;
 	}
-	if (family == PF_INET) {
+	if (family == PF_INET && preferred_family != PF_INET) {
 		family = PF_INET6;
 		goto again;
 	}
