@@ -803,6 +803,7 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 	int scope_ok = 0;
 	int table_ok = 0;
 	int raw = 0;
+	int type_ok = 0;
 
 	memset(&req, 0, sizeof(req));
 
@@ -1095,6 +1096,7 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			    rtnl_rtntype_a2n(&type, *argv) == 0) {
 				NEXT_ARG();
 				req.r.rtm_type = type;
+				type_ok = 1;
 			}
 
 			if (matches(*argv, "help") == 0)
@@ -1136,6 +1138,9 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 	if (nhs_ok)
 		parse_nexthops(&req.n, &req.r, argc, argv);
 
+	if (req.r.rtm_family == AF_UNSPEC)
+		req.r.rtm_family = AF_INET;
+
 	if (!table_ok) {
 		if (req.r.rtm_type == RTN_LOCAL ||
 		    req.r.rtm_type == RTN_BROADCAST ||
@@ -1144,8 +1149,11 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			req.r.rtm_table = RT_TABLE_LOCAL;
 	}
 	if (!scope_ok) {
-		if (req.r.rtm_type == RTN_LOCAL ||
-		    req.r.rtm_type == RTN_NAT)
+		if (req.r.rtm_family == AF_INET6 ||
+		    req.r.rtm_family == AF_MPLS)
+			req.r.rtm_scope = RT_SCOPE_UNIVERSE;
+		else if (req.r.rtm_type == RTN_LOCAL ||
+			 req.r.rtm_type == RTN_NAT)
 			req.r.rtm_scope = RT_SCOPE_HOST;
 		else if (req.r.rtm_type == RTN_BROADCAST ||
 			 req.r.rtm_type == RTN_MULTICAST ||
@@ -1160,8 +1168,8 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 		}
 	}
 
-	if (req.r.rtm_family == AF_UNSPEC)
-		req.r.rtm_family = AF_INET;
+	if (!type_ok && req.r.rtm_family == AF_MPLS)
+		req.r.rtm_type = RTN_UNICAST;
 
 	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		return -2;
