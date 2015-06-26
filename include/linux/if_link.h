@@ -454,6 +454,8 @@ enum {
 	IFLA_BOND_SLAVE_PERM_HWADDR,
 	IFLA_BOND_SLAVE_QUEUE_ID,
 	IFLA_BOND_SLAVE_AD_AGGREGATOR_ID,
+	IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE,
+	IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE,
 	__IFLA_BOND_SLAVE_MAX,
 };
 
@@ -480,6 +482,7 @@ enum {
 	IFLA_VF_RSS_QUERY_EN,	/* RSS Redirection Table and Hash Key query
 				 * on/off switch
 				 */
+	IFLA_VF_STATS,		/* network device statistics */
 	__IFLA_VF_MAX,
 };
 
@@ -528,6 +531,18 @@ struct ifla_vf_rss_query_en {
 	__u32 vf;
 	__u32 setting;
 };
+
+enum {
+	IFLA_VF_STATS_RX_PACKETS,
+	IFLA_VF_STATS_TX_PACKETS,
+	IFLA_VF_STATS_RX_BYTES,
+	IFLA_VF_STATS_TX_BYTES,
+	IFLA_VF_STATS_BROADCAST,
+	IFLA_VF_STATS_MULTICAST,
+	__IFLA_VF_STATS_MAX,
+};
+
+#define IFLA_VF_STATS_MAX (__IFLA_VF_STATS_MAX - 1)
 
 /* VF ports management section
  *

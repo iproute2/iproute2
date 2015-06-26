@@ -220,6 +220,35 @@ enum bpf_func_id {
 	 * Return: 0 on success
 	 */
 	BPF_FUNC_tail_call,
+
+	/**
+	 * bpf_clone_redirect(skb, ifindex, flags) - redirect to another netdev
+	 * @skb: pointer to skb
+	 * @ifindex: ifindex of the net device
+	 * @flags: bit 0 - if set, redirect to ingress instead of egress
+	 *         other bits - reserved
+	 * Return: 0 on success
+	 */
+	BPF_FUNC_clone_redirect,
+
+	/**
+	 * u64 bpf_get_current_pid_tgid(void)
+	 * Return: current->tgid << 32 | current->pid
+	 */
+	BPF_FUNC_get_current_pid_tgid,
+
+	/**
+	 * u64 bpf_get_current_uid_gid(void)
+	 * Return: current_gid << 32 | current_uid
+	 */
+	BPF_FUNC_get_current_uid_gid,
+
+	/**
+	 * bpf_get_current_comm(char *buf, int size_of_buf)
+	 * stores current->comm into buf
+	 * Return: 0 on success
+	 */
+	BPF_FUNC_get_current_comm,
 	__BPF_FUNC_MAX_ID,
 };
 
@@ -236,6 +265,10 @@ struct __sk_buff {
 	__u32 vlan_tci;
 	__u32 vlan_proto;
 	__u32 priority;
+	__u32 ingress_ifindex;
+	__u32 ifindex;
+	__u32 tc_index;
+	__u32 cb[5];
 };
 
 #endif /* __LINUX_BPF_H__ */
