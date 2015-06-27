@@ -1,3 +1,6 @@
+include ../Config
+ifeq ($(HAVE_MNL),y)
+
 TIPCOBJ=bearer.o \
     cmdl.o link.o \
     media.o misc.o \
@@ -7,6 +10,8 @@ TIPCOBJ=bearer.o \
 
 TARGETS=tipc
 LDLIBS += -lmnl
+
+endif
 
 all: $(TARGETS) $(LIBS)
 
