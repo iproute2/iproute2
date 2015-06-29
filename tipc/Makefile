@@ -8,8 +8,11 @@ TIPCOBJ=bearer.o \
     node.o socket.o \
     tipc.o
 
+include ../Config
+
 TARGETS=tipc
-LDLIBS += -lmnl
+CFLAGS += $(shell $(PKG_CONFIG) libmnl --cflags)
+LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
 
 endif
 
