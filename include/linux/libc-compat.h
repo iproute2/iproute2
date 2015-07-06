@@ -117,6 +117,14 @@
  * that we need. */
 #else /* !defined(__GLIBC__) */
 
+/* Definitions for in.h */
+#define __UAPI_DEF_IN_ADDR		1
+#define __UAPI_DEF_IN_IPPROTO		1
+#define __UAPI_DEF_IN_PKTINFO		1
+#define __UAPI_DEF_IP_MREQ		1
+#define __UAPI_DEF_SOCKADDR_IN		1
+#define __UAPI_DEF_IN_CLASS		1
+
 /* Definitions for in6.h */
 #define __UAPI_DEF_IN6_ADDR		1
 #define __UAPI_DEF_IN6_ADDR_ALT		1
