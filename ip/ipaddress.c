@@ -688,6 +688,14 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				      b1, sizeof(b1)));
 	}
 
+	if (tb[IFLA_PHYS_SWITCH_ID]) {
+		SPRINT_BUF(b1);
+		fprintf(fp, "switchid %s ",
+			hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_SWITCH_ID]),
+				      RTA_PAYLOAD(tb[IFLA_PHYS_SWITCH_ID]),
+				      b1, sizeof(b1)));
+	}
+
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
 
