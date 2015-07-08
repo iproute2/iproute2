@@ -8,6 +8,10 @@
 #include <linux/if_addr.h>
 #include <linux/neighbour.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct rtnl_handle
 {
 	int			fd;
@@ -111,5 +115,8 @@ extern int rtnl_from_file(FILE *, rtnl_filter_t handler,
 #define NDTA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct ndtmsg))
 #endif
 
-#endif /* __LIBNETLINK_H__ */
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* __LIBNETLINK_H__ */
