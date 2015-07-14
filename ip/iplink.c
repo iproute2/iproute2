@@ -85,6 +85,7 @@ void iplink_usage(void)
 	fprintf(stderr, "			  [ master DEVICE ]\n");
 	fprintf(stderr, "			  [ nomaster ]\n");
 	fprintf(stderr, "			  [ addrgenmode { eui64 | none } ]\n");
+	fprintf(stderr, "	                  [ protodown { on | off } ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [type TYPE]\n");
 
 	if (iplink_have_newlink()) {
@@ -612,6 +613,18 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				invarg("Invalid \"link-netnsid\" value\n", *argv);
 			addattr32(&req->n, sizeof(*req), IFLA_LINK_NETNSID,
 				  link_netnsid);
+		} else if (strcmp(*argv, "protodown") == 0) {
+			unsigned int proto_down;
+
+			NEXT_ARG();
+			if (strcmp(*argv, "on") == 0)
+				proto_down = 1;
+			else if (strcmp(*argv, "off") == 0)
+				proto_down = 0;
+			else
+				return on_off("protodown", *argv);
+			addattr8(&req->n, sizeof(*req), IFLA_PROTO_DOWN,
+				 proto_down);
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();

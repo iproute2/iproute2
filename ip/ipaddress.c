@@ -744,6 +744,11 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			fprintf(fp, " link-netnsid unknown");
 	}
 
+	if (tb[IFLA_PROTO_DOWN]) {
+		if (rta_getattr_u8(tb[IFLA_PROTO_DOWN]))
+			fprintf(fp, " protodown on ");
+	}
+
 	if (tb[IFLA_PROMISCUITY] && show_details)
 		fprintf(fp, " promiscuity %u ",
 			*(int*)RTA_DATA(tb[IFLA_PROMISCUITY]));

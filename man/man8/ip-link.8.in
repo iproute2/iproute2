@@ -101,6 +101,8 @@ ip-link \- network device configuration
 .br
 .BR multicast " { " on " | " off " } |"
 .br
+.BR protodown " { " on " | " off " } |"
+.br
 .B  txqueuelen
 .IR PACKETS " |"
 .br
@@ -680,6 +682,12 @@ flag on the device.
 change the
 .B MULTICAST
 flag on the device.
+
+.TP
+.BR "protodown on " or " protodown off"
+change the
+.B PROTODOWN
+state on the device. Indicates that a protocol error has been detected on the port. Switch drivers can react to this error by doing a phys down on the switch port.
 
 .TP
 .BR "dynamic on " or " dynamic off"
