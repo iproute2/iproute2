@@ -1552,6 +1552,8 @@ out:
 static char *proto_name(int protocol)
 {
 	switch (protocol) {
+	case 0:
+		return "raw";
 	case IPPROTO_UDP:
 		return "udp";
 	case IPPROTO_TCP:
@@ -2416,7 +2418,7 @@ static int dgram_show_line(char *line, const struct filter *f, int family)
 	if (n < 9)
 		opt[0] = 0;
 
-	inet_stats_print(&s, IPPROTO_UDP);
+	inet_stats_print(&s, dg_proto == UDP_PROTO ? IPPROTO_UDP : 0);
 
 	if (show_details && opt[0])
 		printf(" opt:\"%s\"", opt);
