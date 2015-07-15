@@ -77,7 +77,9 @@ bridge \- show / manipulate bridge addresses and devices
 .IR PORT
 .B grp
 .IR GROUP " [ "
-.BR permanent " | " temp " ]"
+.BR permanent " | " temp " ] [ "
+.B vid
+.IR VID " ] "
 
 .ti -8
 .BR "bridge mdb show " [ "
@@ -425,6 +427,10 @@ the port.
 .B temp
 - the mdb entry is temporary (default)
 .sp
+
+.TP
+.BI vid " VID"
+the VLAN ID which is known to have members of this multicast group.
 
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry

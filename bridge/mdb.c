@@ -28,7 +28,7 @@ static unsigned int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [permanent | temp]\n");
+	fprintf(stderr, "Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [permanent | temp] [vid VID]\n");
 	fprintf(stderr, "       bridge mdb {show} [ dev DEV ]\n");
 	exit(-1);
 }
@@ -51,17 +51,19 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr)
 static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e)
 {
 	SPRINT_BUF(abuf);
+	const void *src;
+	int af;
 
-	if (e->addr.proto == htons(ETH_P_IP))
-		fprintf(f, "dev %s port %s grp %s %s\n", ll_index_to_name(ifindex),
-			ll_index_to_name(e->ifindex),
-			inet_ntop(AF_INET, &e->addr.u.ip4, abuf, sizeof(abuf)),
-			(e->state & MDB_PERMANENT) ? "permanent" : "temp");
-	else
-		fprintf(f, "dev %s port %s grp %s %s\n", ll_index_to_name(ifindex),
-			ll_index_to_name(e->ifindex),
-			inet_ntop(AF_INET6, &e->addr.u.ip6, abuf, sizeof(abuf)),
-			(e->state & MDB_PERMANENT) ? "permanent" : "temp");
+	af = e->addr.proto == htons(ETH_P_IP) ? AF_INET : AF_INET6;
+	src = af == AF_INET ? (const void *)&e->addr.u.ip4 :
+			      (const void *)&e->addr.u.ip6;
+	fprintf(f, "dev %s port %s grp %s %s", ll_index_to_name(ifindex),
+		ll_index_to_name(e->ifindex),
+		inet_ntop(af, src, abuf, sizeof(abuf)),
+		(e->state & MDB_PERMANENT) ? "permanent" : "temp");
+	if (e->vid)
+		fprintf(f, " vid %hu", e->vid);
+	fprintf(f, "\n");
 }
 
 static void br_print_mdb_entry(FILE *f, int ifindex, struct rtattr *attr)
@@ -177,6 +179,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	} req;
 	struct br_mdb_entry entry;
 	char *d = NULL, *p = NULL, *grp = NULL;
+	short vid = 0;
 
 	memset(&req, 0, sizeof(req));
 	memset(&entry, 0, sizeof(entry));
@@ -201,6 +204,9 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 				entry.state |= MDB_PERMANENT;
 		} else if (strcmp(*argv, "temp") == 0) {
 			;/* nothing */
+		} else if (strcmp(*argv, "vid") == 0) {
+			NEXT_ARG();
+			vid = atoi(*argv);
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
@@ -234,6 +240,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	} else
 		entry.addr.proto = htons(ETH_P_IP);
 
+	entry.vid = vid;
 	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
 
 	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
