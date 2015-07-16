@@ -1682,15 +1682,15 @@ static int iproute_get(int argc, char **argv)
 		req.n.nlmsg_type = RTM_GETROUTE;
 
 		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
-			exit(2);
+			return -2;
 	}
 
 	if (print_route(NULL, &req.n, (void*)stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
-		exit(1);
+		return -1;
 	}
 
-	exit(0);
+	return 0;
 }
 
 static int restore_handler(const struct sockaddr_nl *nl,
