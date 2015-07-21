@@ -1994,8 +1994,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.segs_out = info->tcpi_segs_out;
 		s.segs_in = info->tcpi_segs_in;
 		tcp_stats_print(&s);
-		if (s.dctcp)
-			free(s.dctcp);
+		free(s.dctcp);
 	}
 }
 
@@ -2380,8 +2379,7 @@ static int tcp_show(struct filter *f, int socktype)
 outerr:
 	do {
 		int saved_errno = errno;
-		if (buf)
-			free(buf);
+		free(buf);
 		if (fp)
 			fclose(fp);
 		errno = saved_errno;
@@ -2514,8 +2512,7 @@ static void unix_list_free(struct sockstat *list)
 
 		list = list->next;
 
-		if (name)
-			free(name);
+		free(name);
 		free(s);
 	}
 }
@@ -2679,8 +2676,7 @@ static int unix_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
 	if (show_mem || show_details)
 		printf("\n");
 
-	if (name)
-		free(name);
+	free(name);
 	return 0;
 }
 

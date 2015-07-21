@@ -322,8 +322,7 @@ struct lnstat_field *lnstat_find_field(struct lnstat_file *lnstat_files,
 		}
 	}
 out:
-	if (file)
-		free(file);
+	free(file);
 
 	return ret;
 }
