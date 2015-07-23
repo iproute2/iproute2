@@ -154,7 +154,7 @@ static void bpf_map_get_from_env(int *tfd)
 		memset(key, 0, sizeof(key));
 		snprintf(key, sizeof(key), "BPF_MAP%d", i);
 
-		val = secure_getenv(key);
+		val = getenv(key);
 		assert(val != NULL);
 
 		tfd[i] = atoi(val);

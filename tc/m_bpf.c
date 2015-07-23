@@ -105,7 +105,7 @@ opt_bpf:
 
 			NEXT_ARG();
 			if (ebpf) {
-				bpf_uds_name = secure_getenv(BPF_ENV_UDS);
+				bpf_uds_name = getenv(BPF_ENV_UDS);
 				bpf_obj = *argv;
 				NEXT_ARG();
 
