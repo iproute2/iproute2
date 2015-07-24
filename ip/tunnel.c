@@ -73,7 +73,13 @@ int tnl_get_ioctl(const char *basedev, void *p)
 
 	strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = (void*)p;
+
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		fprintf(stderr, "create socket failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	err = ioctl(fd, SIOCGETTUNNEL, &ifr);
 	if (err)
 		fprintf(stderr, "get tunnel \"%s\" failed: %s\n", basedev,
@@ -94,7 +100,13 @@ int tnl_add_ioctl(int cmd, const char *basedev, const char *name, void *p)
 	else
 		strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = p;
+
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		fprintf(stderr, "create socket failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	err = ioctl(fd, cmd, &ifr);
 	if (err)
 		fprintf(stderr, "add tunnel \"%s\" failed: %s\n", ifr.ifr_name,
@@ -115,7 +127,13 @@ int tnl_del_ioctl(const char *basedev, const char *name, void *p)
 		strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
 
 	ifr.ifr_ifru.ifru_data = p;
+
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		fprintf(stderr, "create socket failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	err = ioctl(fd, SIOCDELTUNNEL, &ifr);
 	if (err)
 		fprintf(stderr, "delete tunnel \"%s\" failed: %s\n",
@@ -133,7 +151,13 @@ static int tnl_gen_ioctl(int cmd, const char *name,
 
 	strncpy(ifr.ifr_name, name, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = p;
+
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		fprintf(stderr, "create socket failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	err = ioctl(fd, cmd, &ifr);
 	if (err && errno != skiperr)
 		fprintf(stderr, "%s: ioctl %x failed: %s\n", name,
