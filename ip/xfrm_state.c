@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
-#include <linux/xfrm.h>
 #include "utils.h"
 #include "xfrm.h"
 #include "ip_common.h"

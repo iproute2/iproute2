@@ -34,7 +34,6 @@
 #include <netdb.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
-#include <linux/xfrm.h>
 
 #include "utils.h"
 #include "xfrm.h"
