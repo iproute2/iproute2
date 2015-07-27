@@ -82,7 +82,7 @@ int print_mdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	FILE *fp = arg;
 	struct br_port_msg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[MDBA_MAX+1];
+	struct rtattr *tb[MDBA_MAX+1], *i;
 
 	if (n->nlmsg_type != RTM_GETMDB && n->nlmsg_type != RTM_NEWMDB && n->nlmsg_type != RTM_DELMDB) {
 		fprintf(stderr, "Not RTM_GETMDB, RTM_NEWMDB or RTM_DELMDB: %08x %08x %08x\n",
@@ -103,7 +103,6 @@ int print_mdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	parse_rtattr(tb, MDBA_MAX, MDBA_RTA(r), n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
 	if (tb[MDBA_MDB]) {
-		struct rtattr *i;
 		int rem = RTA_PAYLOAD(tb[MDBA_MDB]);
 
 		for (i = RTA_DATA(tb[MDBA_MDB]); RTA_OK(i, rem); i = RTA_NEXT(i, rem))
@@ -111,9 +110,22 @@ int print_mdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[MDBA_ROUTER]) {
-		if (show_details) {
-			fprintf(fp, "router ports on %s: ", ll_index_to_name(r->ifindex));
-			br_print_router_ports(fp, tb[MDBA_ROUTER]);
+		if (n->nlmsg_type == RTM_GETMDB) {
+			if (show_details) {
+				fprintf(fp, "router ports on %s: ",
+					ll_index_to_name(r->ifindex));
+				br_print_router_ports(fp, tb[MDBA_ROUTER]);
+			}
+		} else {
+			uint32_t *port_ifindex;
+
+			i = RTA_DATA(tb[MDBA_ROUTER]);
+			port_ifindex = RTA_DATA(i);
+			if (n->nlmsg_type == RTM_DELMDB)
+				fprintf(fp, "Deleted ");
+			fprintf(fp, "router port dev %s master %s\n",
+				ll_index_to_name(*port_ifindex),
+				ll_index_to_name(r->ifindex));
 		}
 	}
 
