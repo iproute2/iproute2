@@ -48,7 +48,8 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr)
 	fprintf(f, "\n");
 }
 
-static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e)
+static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e,
+			    struct nlmsghdr *n)
 {
 	SPRINT_BUF(abuf);
 	const void *src;
@@ -57,6 +58,8 @@ static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e)
 	af = e->addr.proto == htons(ETH_P_IP) ? AF_INET : AF_INET6;
 	src = af == AF_INET ? (const void *)&e->addr.u.ip4 :
 			      (const void *)&e->addr.u.ip6;
+	if (n->nlmsg_type == RTM_DELMDB)
+		fprintf(f, "Deleted ");
 	fprintf(f, "dev %s port %s grp %s %s", ll_index_to_name(ifindex),
 		ll_index_to_name(e->ifindex),
 		inet_ntop(af, src, abuf, sizeof(abuf)),
@@ -66,7 +69,8 @@ static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e)
 	fprintf(f, "\n");
 }
 
-static void br_print_mdb_entry(FILE *f, int ifindex, struct rtattr *attr)
+static void br_print_mdb_entry(FILE *f, int ifindex, struct rtattr *attr,
+			       struct nlmsghdr *n)
 {
 	struct rtattr *i;
 	int rem;
@@ -75,7 +79,7 @@ static void br_print_mdb_entry(FILE *f, int ifindex, struct rtattr *attr)
 	rem = RTA_PAYLOAD(attr);
 	for (i = RTA_DATA(attr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		e = RTA_DATA(i);
-		print_mdb_entry(f, ifindex, e);
+		print_mdb_entry(f, ifindex, e, n);
 	}
 }
 
@@ -108,7 +112,7 @@ int print_mdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		int rem = RTA_PAYLOAD(tb[MDBA_MDB]);
 
 		for (i = RTA_DATA(tb[MDBA_MDB]); RTA_OK(i, rem); i = RTA_NEXT(i, rem))
-			br_print_mdb_entry(fp, r->ifindex, i);
+			br_print_mdb_entry(fp, r->ifindex, i, n);
 	}
 
 	if (tb[MDBA_ROUTER]) {
