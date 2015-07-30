@@ -31,8 +31,9 @@ static unsigned int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge fdb { add | append | del | replace } ADDR dev DEV {self|master} [ temp ]\n"
-		        "              [router] [ dst IPADDR] [ vlan VID ]\n"
+	fprintf(stderr, "Usage: bridge fdb { add | append | del | replace ADDR dev DEV\n"
+			"              [ self ] [ master ] [ use ] [ router ]\n"
+			"              [ local | temp ] [ dst IPADDR ] [ vlan VID ]\n"
 		        "              [ port PORT] [ vni VNI ] [via DEV]\n");
 	fprintf(stderr, "       bridge fdb {show} [ br BRDEV ] [ brport DEV ]\n");
 	exit(-1);
@@ -305,6 +306,8 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 				duparg2("vlan", *argv);
 			NEXT_ARG();
 			vid = atoi(*argv);
+		} else if (matches(*argv, "use") == 0) {
+			req.ndm.ndm_flags |= NTF_USE;
 		} else {
 			if (strcmp(*argv, "to") == 0) {
 				NEXT_ARG();
