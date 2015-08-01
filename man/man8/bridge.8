@@ -53,8 +53,8 @@ bridge \- show / manipulate bridge addresses and devices
 .I LLADDR
 .B  dev
 .IR DEV " { "
-.BR local " | " temp " } { "
-.BR self " } { " router " } [ "
+.BR local " | " temp " } [ "
+.BR self " ] [ " master " ] [ " router " ] [ " use " ] [ "
 .B  dst
 .IR IPADDR " ] [ "
 .B vni
@@ -325,13 +325,22 @@ the Ethernet MAC address.
 the interface to which this address is associated.
 
 .B self
-- the address is associated with a software fdb (default)
+- the address is associated with the port drivers fdb. Usually hardware.
+.sp
+
+.B master
+- the address is associated with master devices fdb. Usually software (default).
 .sp
 
 .B router
 - the destination address is associated with a router.
 Valid if the referenced device is a VXLAN type device and has
 route shortcircuit enabled.
+.sp
+
+.B use
+- the address is in use. User space can use this option to
+indicate to the kernel that the fdb entry is in use.
 .sp
 
 .in -8
@@ -541,8 +550,7 @@ described in previous sections.
 .P
 If a file name is given, it does not listen on RTNETLINK,
 but opens the file containing RTNETLINK messages saved in binary format
-and dumps them. Such a history file can be generated with the
-
+and dumps them.
 
 .SH NOTES
 This command uses facilities added in Linux 3.0.

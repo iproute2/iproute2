@@ -118,6 +118,7 @@ static int batch(const char *name)
 	char *line = NULL;
 	size_t len = 0;
 	int ret = EXIT_SUCCESS;
+	int orig_family = preferred_family;
 
 	batch_mode = 1;
 
@@ -139,6 +140,8 @@ static int batch(const char *name)
 	while (getcmdline(&line, &len, stdin) != -1) {
 		char *largv[100];
 		int largc;
+
+		preferred_family = orig_family;
 
 		largc = makeargs(line, largv, 100);
 		if (largc == 0)
