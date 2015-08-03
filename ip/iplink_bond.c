@@ -133,6 +133,7 @@ static void print_explain(FILE *f)
 		"                [ min_links MIN_LINKS ]\n"
 		"                [ lp_interval LP_INTERVAL ]\n"
 		"                [ packets_per_slave PACKETS_PER_SLAVE ]\n"
+		"		 [ tlb_dynamic_lb TLB_DYNAMIC_LB ]\n"
 		"                [ lacp_rate LACP_RATE ]\n"
 		"                [ ad_select AD_SELECT ]\n"
 		"                [ ad_user_port_key PORTKEY ]\n"
@@ -160,7 +161,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 {
 	__u8 mode, use_carrier, primary_reselect, fail_over_mac;
 	__u8 xmit_hash_policy, num_peer_notif, all_slaves_active;
-	__u8 lacp_rate, ad_select;
+	__u8 lacp_rate, ad_select, tlb_dynamic_lb;
 	__u16 ad_user_port_key, ad_actor_sys_prio;
 	__u32 miimon, updelay, downdelay, arp_interval, arp_validate;
 	__u32 arp_all_targets, resend_igmp, min_links, lp_interval;
@@ -374,6 +375,14 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 				return -1;
 			addattr_l(n, 1024, IFLA_BOND_AD_ACTOR_SYSTEM,
 				  abuf, len);
+		} else if (matches(*argv, "tlb_dynamic_lb") == 0) {
+			NEXT_ARG();
+			if (get_u8(&tlb_dynamic_lb, *argv, 0)) {
+				invarg("invalid tlb_dynamic_lb", *argv);
+				return -1;
+			}
+			addattr8(n, 1024, IFLA_BOND_TLB_DYNAMIC_LB,
+				 tlb_dynamic_lb);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -582,6 +591,11 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			ll_addr_n2a(RTA_DATA(tb[IFLA_BOND_AD_ACTOR_SYSTEM]),
 				    RTA_PAYLOAD(tb[IFLA_BOND_AD_ACTOR_SYSTEM]),
 				    1 /*ARPHDR_ETHER*/, b1, sizeof(b1)));
+	}
+
+	if (tb[IFLA_BOND_TLB_DYNAMIC_LB]) {
+		fprintf(f, "tlb_dynamic_lb %u ",
+			rta_getattr_u8(tb[IFLA_BOND_TLB_DYNAMIC_LB]));
 	}
 }
 
