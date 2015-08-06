@@ -3025,6 +3025,7 @@ static int packet_show_line(char *buf, const struct filter *f, int fam)
 static int packet_show(struct filter *f)
 {
 	FILE *fp;
+	int rc = 0;
 
 	if (!filter_af_get(f, AF_PACKET) || !(f->states & (1 << SS_CLOSE)))
 		return 0;
@@ -3036,9 +3037,10 @@ static int packet_show(struct filter *f)
 	if ((fp = net_packet_open()) == NULL)
 		return -1;
 	if (generic_record_read(fp, packet_show_line, f, AF_PACKET))
-		return -1;
+		rc = -1;
 
-	return 0;
+	fclose(fp);
+	return rc;
 }
 
 static int netlink_show_one(struct filter *f,
@@ -3215,6 +3217,7 @@ static int netlink_show(struct filter *f)
 		netlink_show_one(f, prot, pid, groups, 0, 0, 0, rq, wq, sk, cb);
 	}
 
+	fclose(fp);
 	return 0;
 }
 
