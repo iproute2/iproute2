@@ -483,8 +483,10 @@ static void user_ent_hash_build(void)
 
 		sprintf(name + nameoff, "%d/fd/", pid);
 		pos = strlen(name);
-		if ((dir1 = opendir(name)) == NULL)
+		if ((dir1 = opendir(name)) == NULL) {
+			free(pid_context);
 			continue;
+		}
 
 		process[0] = '\0';
 		p = process;
