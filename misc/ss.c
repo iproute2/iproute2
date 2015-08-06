@@ -597,7 +597,7 @@ static int find_entry(unsigned ino, char **buf, int type)
 					fprintf(stderr, "ss: failed to malloc buffer\n");
 					abort();
 				}
-				**buf = **new_buf;
+				*buf = *new_buf;
 				buf_len = new_buf_len;
 				continue;
 			} else {
