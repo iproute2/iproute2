@@ -550,7 +550,7 @@ static int find_entry(unsigned ino, char **buf, int type)
 	struct user_ent *p;
 	int cnt = 0;
 	char *ptr;
-	char **new_buf = buf;
+	char *new_buf;
 	int len, new_buf_len;
 	int buf_used = 0;
 	int buf_len = 0;
@@ -592,12 +592,12 @@ static int find_entry(unsigned ino, char **buf, int type)
 
 			if (len < 0 || len >= buf_len - buf_used) {
 				new_buf_len = buf_len + ENTRY_BUF_SIZE;
-				*new_buf = realloc(*buf, new_buf_len);
+				new_buf = realloc(*buf, new_buf_len);
 				if (!new_buf) {
 					fprintf(stderr, "ss: failed to malloc buffer\n");
 					abort();
 				}
-				*buf = *new_buf;
+				*buf = new_buf;
 				buf_len = new_buf_len;
 				continue;
 			} else {
