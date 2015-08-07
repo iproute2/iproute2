@@ -3664,6 +3664,8 @@ int main(int argc, char *argv[])
 			char *p, *p1;
 			if (!saw_query) {
 				current_filter.dbs = 0;
+				state_filter = state_filter ?
+				               state_filter : SS_CONN;
 				saw_query = 1;
 				do_default = 0;
 			}
