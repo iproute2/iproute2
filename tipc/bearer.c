@@ -412,7 +412,7 @@ static int cmd_bearer_disable(struct nlmsghdr *nlh, const struct cmd *cmd,
 
 static void cmd_bearer_set_help(struct cmdl *cmdl)
 {
-	fprintf(stderr, "Usage: %s bearer set [OPTIONS] media MEDIA ARGS...\n",
+	fprintf(stderr, "Usage: %s bearer set OPTION media MEDIA ARGS...\n",
 		cmdl->argv[0]);
 	_print_bearer_opts();
 	_print_bearer_media();
@@ -420,7 +420,7 @@ static void cmd_bearer_set_help(struct cmdl *cmdl)
 
 static void cmd_bearer_set_udp_help(struct cmdl *cmdl)
 {
-	fprintf(stderr, "Usage: %s bearer set [OPTIONS] media udp name NAME\n\n",
+	fprintf(stderr, "Usage: %s bearer set OPTION media udp name NAME\n\n",
 		cmdl->argv[0]);
 	_print_bearer_opts();
 }
@@ -528,7 +528,7 @@ static int cmd_bearer_set(struct nlmsghdr *nlh, const struct cmd *cmd,
 
 static void cmd_bearer_get_help(struct cmdl *cmdl)
 {
-	fprintf(stderr, "Usage: %s bearer get [OPTIONS] media MEDIA ARGS...\n",
+	fprintf(stderr, "Usage: %s bearer get OPTION media MEDIA ARGS...\n",
 		cmdl->argv[0]);
 	_print_bearer_opts();
 	_print_bearer_media();
@@ -536,7 +536,7 @@ static void cmd_bearer_get_help(struct cmdl *cmdl)
 
 static void cmd_bearer_get_udp_help(struct cmdl *cmdl)
 {
-	fprintf(stderr, "Usage: %s bearer get [OPTIONS] media udp name NAME\n\n",
+	fprintf(stderr, "Usage: %s bearer get OPTION media udp name NAME\n\n",
 		cmdl->argv[0]);
 	_print_bearer_opts();
 }
