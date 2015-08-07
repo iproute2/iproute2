@@ -28,7 +28,7 @@ static const enum bpf_prog_type bpf_type = BPF_PROG_TYPE_SCHED_ACT;
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... bpf ...\n");
+	fprintf(stderr, "Usage: ... bpf ... [ index INDEX ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "BPF use case:\n");
 	fprintf(stderr, " bytecode BPF_BYTECODE\n");
@@ -49,6 +49,9 @@ static void explain(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where UDS_FILE points to a unix domain socket file in order\n");
 	fprintf(stderr, "to hand off control of all created eBPF maps to an agent.\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Where optionally INDEX points to an existing action, or\n");
+	fprintf(stderr, "explicitly specifies an action index upon creation.\n");
 }
 
 static void usage(void)
@@ -64,6 +67,7 @@ static int parse_bpf(struct action_util *a, int *argc_p, char ***argv_p,
 	struct rtattr *tail;
 	struct tc_act_bpf parm = { 0 };
 	struct sock_filter bpf_ops[BPF_MAXINSNS];
+	bool ebpf_fill = false, bpf_fill = false;
 	bool ebpf = false, seen_run = false;
 	const char *bpf_uds_name = NULL;
 	const char *bpf_sec_name = NULL;
@@ -148,11 +152,15 @@ opt_bpf:
 					 bpf_obj, bpf_sec_name);
 
 				bpf_fd = ret;
+				ebpf_fill = true;
 			} else {
 				bpf_len = ret;
+				bpf_fill = true;
 			}
 		} else if (matches(*argv, "help") == 0) {
 			usage();
+		} else if (matches(*argv, "index") == 0) {
+			break;
 		} else {
 			if (!seen_run)
 				goto opt_bpf;
@@ -200,21 +208,15 @@ opt_bpf:
 		}
 	}
 
-	if ((!bpf_len && !ebpf) || (!bpf_fd && ebpf)) {
-		fprintf(stderr, "bpf: Bytecode needs to be passed\n");
-		explain();
-		return -1;
-	}
-
 	tail = NLMSG_TAIL(n);
 
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
 	addattr_l(n, MAX_MSG, TCA_ACT_BPF_PARMS, &parm, sizeof(parm));
 
-	if (ebpf) {
+	if (ebpf_fill) {
 		addattr32(n, MAX_MSG, TCA_ACT_BPF_FD, bpf_fd);
 		addattrstrz(n, MAX_MSG, TCA_ACT_BPF_NAME, bpf_name);
-	} else {
+	} else if (bpf_fill) {
 		addattr16(n, MAX_MSG, TCA_ACT_BPF_OPS_LEN, bpf_len);
 		addattr_l(n, MAX_MSG, TCA_ACT_BPF_OPS, &bpf_ops,
 			  bpf_len * sizeof(struct sock_filter));
