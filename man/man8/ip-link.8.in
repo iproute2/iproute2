@@ -881,7 +881,7 @@ output more statistics about packet usage.
 output more detailed information.
 
 .TP
-.BR "\-h", " \-human", " \-human-readble"
+.BR "\-h", " \-human", " \-human-readable"
 output statistics with human readable values number followed by suffix
 
 .TP
