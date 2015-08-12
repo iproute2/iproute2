@@ -19,9 +19,9 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void explain(void)
+static void print_explain(FILE *f)
 {
-	fprintf(stderr,
+	fprintf(f,
 		"Usage: ... bridge_slave [ state STATE ] [ priority PRIO ] [cost COST ]\n"
 		"                        [ guard {on | off} ]\n"
 		"                        [ hairpin {on | off} ] \n"
@@ -30,6 +30,11 @@ static void explain(void)
 		"                        [ learning {on | off} ]\n"
 		"                        [ flood {on | off} ]\n"
 	);
+}
+
+static void explain(void)
+{
+	print_explain(stderr);
 }
 
 static const char *port_states[] = {
@@ -172,10 +177,17 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 	return 0;
 }
 
+static void bridge_slave_print_help(struct link_util *lu, int argc, char **argv,
+		FILE *f)
+{
+	print_explain(f);
+}
+
 struct link_util bridge_slave_link_util = {
 	.id		= "bridge",
 	.maxattr	= IFLA_BRPORT_MAX,
 	.print_opt	= bridge_slave_print_opt,
 	.parse_opt	= bridge_slave_parse_opt,
+	.print_help     = bridge_slave_print_help,
 	.slave		= true,
 };

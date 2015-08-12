@@ -17,9 +17,9 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void explain(void)
+static void print_explain(FILE *f)
 {
-	fprintf(stderr,
+	fprintf(f,
 		"Usage: ... bridge [ forward_delay FORWARD_DELAY ]\n"
 		"                  [ hello_time HELLO_TIME ]\n"
 		"                  [ max_age MAX_AGE ]\n"
@@ -27,6 +27,11 @@ static void explain(void)
 		"                  [ stp_state STP_STATE ]\n"
 		"                  [ priority PRIORITY ]\n"
 	);
+}
+
+static void explain(void)
+{
+	print_explain(stderr);
 }
 
 static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -111,9 +116,16 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			rta_getattr_u32(tb[IFLA_BR_MAX_AGE]));
 }
 
+static void bridge_print_help(struct link_util *lu, int argc, char **argv,
+		FILE *f)
+{
+	print_explain(f);
+}
+
 struct link_util bridge_link_util = {
 	.id		= "bridge",
 	.maxattr	= IFLA_BR_MAX,
 	.parse_opt	= bridge_parse_opt,
 	.print_opt	= bridge_print_opt,
+	.print_help     = bridge_print_help,
 };
