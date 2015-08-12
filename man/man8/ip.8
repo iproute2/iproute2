@@ -19,8 +19,8 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 
 .ti -8
 .IR OBJECT " := { "
-.BR link " | " addr " | " addrlabel " | " route " | " rule " | " neigh " | "\
- ntable " | " tunnel " | " tuntap " | " maddr " | "  mroute " | " mrule " | "\
+.BR link " | " address " | " addrlabel " | " route " | " rule " | " neigh " | "\
+ ntable " | " tunnel " | " tuntap " | " maddress " | "  mroute " | " mrule " | "\
  monitor " | " xfrm " | " netns " | "  l2tp " | "  tcp_metrics " }"
 .sp
 
@@ -67,7 +67,7 @@ Output more detailed information.
 
 .TP
 .BR "\-l" , " \-loops " <COUNT>
-Specify maximum number of loops the 'ip addr flush' logic
+Specify maximum number of loops the 'ip address flush' logic
 will attempt before giving up. The default is 10.
 Zero (0) means loop until all addresses are removed.
 
@@ -143,7 +143,7 @@ use the system's name resolver to print DNS names instead of
 host addresses.
 
 .TP
-.BR "\-n" , " \-net" , " \-netns " <NETNS>
+.BR "\-n" , " \-netns " <NETNS>
 switches
 .B ip
 to the specified network namespace
