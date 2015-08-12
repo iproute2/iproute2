@@ -14,18 +14,26 @@ ip-address \- protocol address management
 .sp
 
 .ti -8
-.BR "ip address" " { " add " | " del " } "
-.IB IFADDR " dev " STRING
+.BR "ip address" " { " add " | " change " | " replace " } "
+.IB IFADDR " dev " IFNAME
+.RI "[ " LIFETIME " ] [ " CONFFLAG-LIST " ]"
 
 .ti -8
-.BR "ip address" " { " show " | " flush " } [ " dev
-.IR STRING " ] [ "
+.BR "ip address del"
+.IB IFADDR " dev " IFNAME " [ " mngtmpaddr " ]"
+
+.ti -8
+.BR "ip address" " { " show " | " save " | " flush " } [ " dev
+.IR IFNAME " ] [ "
 .B  scope
 .IR SCOPE-ID " ] [ "
 .B  to
 .IR PREFIX " ] [ " FLAG-LIST " ] [ "
 .B  label
-.IR PATTERN " ]"
+.IR PATTERN " ] [ " up " ]"
+
+.ti -8
+.BR "ip address" " { " showdump " | " restore " }"
 
 .ti -8
 .IR IFADDR " := " PREFIX " | " ADDR
@@ -36,7 +44,7 @@ ip-address \- protocol address management
 .B  anycast
 .IR ADDR " ] [ "
 .B  label
-.IR STRING " ] [ "
+.IR LABEL " ] [ "
 .B  scope
 .IR SCOPE-ID " ]"
 
@@ -52,15 +60,33 @@ ip-address \- protocol address management
 .IR FLAG " := "
 .RB "[ " permanent " | " dynamic " | " secondary " | " primary " | \
 [ - ] " tentative " | [ - ] " deprecated " | [ - ] " dadfailed " | "\
-temporary " ]"
+temporary " ] " CONFFLAG-LIST " ]"
+
+.ti -8
+.IR CONFFLAG-LIST " := [ "  CONFFLAG-LIST " ] " CONFFLAG
+
+.ti -8
+.IR CONFFLAG " := "
+.RB "[ " home " | " nodad " ]"
+
+.ti -8
+.IR LIFETIME " := [ "
+.BI valid_lft " LFT"
+.RB "| " preferred_lft
+.IR  LFT " ]"
+
+.ti -8
+.IR LFT " := [ "
+.BR forever " |"
+.IR SECONDS " ]"
 
 .SH "DESCRIPTION"
 The
 .B address
-is a protocol (IP or IPv6) address attached
-to a network device.  Each device must have at least one address
-to use the corresponding protocol.  It is possible to have several
-different addresses attached to one device.  These addresses are not
+is a protocol (IPv4 or IPv6) address attached
+to a network device. Each device must have at least one address
+to use the corresponding protocol. It is possible to have several
+different addresses attached to one device. These addresses are not
 discriminated, so that the term
 .B alias
 is not quite appropriate for them and we do not use it in this document.
@@ -73,7 +99,7 @@ and deletes old ones.
 .SS ip address add - add new protocol address.
 
 .TP
-.BI dev " NAME"
+.BI dev " IFNAME "
 the name of the device to add the address to.
 
 .TP
@@ -107,7 +133,7 @@ instead of the broadcast address. In this case, the broadcast address
 is derived by setting/resetting the host bits of the interface prefix.
 
 .TP
-.BI label " NAME"
+.BI label " LABEL"
 Each address may be tagged with a label string.
 In order to preserve compatibility with Linux-2.0 net aliases,
 this string must coincide with the name of the device or must be prefixed
@@ -125,7 +151,7 @@ Predefined scope values are:
 - the address is globally valid.
 .sp
 .B site
-- (IPv6 only) the address is site local, i.e. it is
+- (IPv6 only, deprecated) the address is site local, i.e. it is
 valid inside this site.
 .sp
 .B link
@@ -134,6 +160,30 @@ valid inside this site.
 .B host
 - the address is valid only inside this host.
 .in -8
+
+.TP
+.BI valid_lft " LFT"
+the valid lifetime of this address; see section 5.5.4 of
+RFC 4862. When it expires, the address is removed by the kernel.
+Defaults to
+.BR "forever" .
+
+.TP
+.BI preferred_lft " LFT"
+the preferred lifetime of this address; see section 5.5.4
+of RFC 4862. When it expires, the address is no longer used for new
+outgoing connections. Defaults to
+.BR "forever" .
+
+.TP
+.B home
+(IPv6 only) designates this address the "home address" as defined in
+RFC 6275.
+
+.TP
+.B nodad
+(IPv6 only) do not perform Duplicate Address Detection (RFC 4862) when
+adding this address.
 
 .SS ip address delete - delete protocol address
 .B Arguments:
@@ -145,7 +195,7 @@ If no arguments are given, the first address is deleted.
 .SS ip address show - look at protocol addresses
 
 .TP
-.BI dev " NAME " (default)
+.BI dev " IFNAME " (default)
 name of device.
 
 .TP
@@ -219,36 +269,53 @@ The difference is that it does not run when no arguments are given.
 
 .PP
 .B Warning:
-This command (and other
+This command and other
 .B flush
-commands described below) is pretty dangerous. If you make a mistake,
-it will not forgive it, but will cruelly purge all the addresses.
+commands are unforgiving. They will cruelly purge all the addresses.
 
 .PP
 With the
 .B -statistics
 option, the command becomes verbose. It prints out the number of deleted
-addresses and the number of rounds made to flush the address list. If
-this option is given twice,
+addresses and the number of rounds made to flush the address list.
+If this option is given twice,
 .B ip address flush
 also dumps all the deleted addresses in the format described in the
 previous subsection.
 
 .SH "EXAMPLES"
 .PP
+ip address show
+.RS 4
+Shows IPv4 and IPv6 addresses assigned to all network interfaces. The 'show'
+subcommand can be omitted.
+.RE
+.PP
+ip address show up
+.RS 4
+Same as above except that only addresses assigned to active network interfaces
+are shown.
+.RE
+.PP
 ip address show dev eth0
 .RS 4
-Shows the addresses assigned to network interface eth0
+Shows IPv4 and IPv6 addresses assigned to network interface eth0.
 .RE
 .PP
-ip addr add 2001:0db8:85a3::0370:7334/64 dev eth1
+ip address add 2001:0db8:85a3::0370:7334/64 dev eth1
 .RS 4
-Adds an IPv6 address to network interface eth1
+Adds an IPv6 address to network interface eth1.
 .RE
 .PP
-ip addr flush dev eth4
+ip address delete 2001:0db8:85a3::0370:7334/64 dev eth1
 .RS 4
-Removes all addresses from device eth4
+Delete the IPv6 address added above.
+.RE
+.PP
+ip address flush dev eth4 scope global
+.RS 4
+Removes all global IPv4 and IPv6 addresses from device eth4. Without 'scope
+global' it would remove all addresses including IPv6 link-local ones.
 .RE
 
 .SH SEE ALSO
