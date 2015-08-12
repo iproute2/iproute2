@@ -139,7 +139,7 @@ struct nsid_cache {
 	struct hlist_node	nsid_hash;
 	struct hlist_node	name_hash;
 	int			nsid;
-	char			name[NAME_MAX];
+	char			name[0];
 };
 
 #define NSIDMAP_SIZE		128
@@ -164,7 +164,7 @@ static struct nsid_cache *netns_map_get_by_nsid(int nsid)
 	return NULL;
 }
 
-static int netns_map_add(int nsid, char *name)
+static int netns_map_add(int nsid, const char *name)
 {
 	struct nsid_cache *c;
 	uint32_t h;
@@ -172,7 +172,7 @@ static int netns_map_add(int nsid, char *name)
 	if (netns_map_get_by_nsid(nsid) != NULL)
 		return -EEXIST;
 
-	c = malloc(sizeof(*c));
+	c = malloc(sizeof(*c) + strlen(name));
 	if (c == NULL) {
 		perror("malloc");
 		return -ENOMEM;
