@@ -26,6 +26,7 @@ static void print_explain(FILE *f)
 		"                  [ ageing_time AGEING_TIME ]\n"
 		"                  [ stp_state STP_STATE ]\n"
 		"                  [ priority PRIORITY ]\n"
+		"                  [ vlan_filtering VLAN_FILTERING ]\n"
 	);
 }
 
@@ -84,6 +85,15 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				return -1;
 			}
 			addattr16(n, 1024, IFLA_BR_PRIORITY, prio);
+		} else if (matches(*argv, "vlan_filtering") == 0) {
+			__u8 vlan_filter;
+
+			NEXT_ARG();
+			if (get_u8(&vlan_filter, *argv, 0)) {
+				invarg("invalid vlan_filtering", *argv);
+				return -1;
+			}
+			addattr8(n, 1024, IFLA_BR_VLAN_FILTERING, vlan_filter);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -126,6 +136,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_PRIORITY])
 		fprintf(f, "priority %u ",
 			rta_getattr_u16(tb[IFLA_BR_PRIORITY]));
+
+	if (tb[IFLA_BR_VLAN_FILTERING])
+		fprintf(f, "vlan_filtering %u ",
+			rta_getattr_u8(tb[IFLA_BR_VLAN_FILTERING]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
