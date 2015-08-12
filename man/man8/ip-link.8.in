@@ -143,9 +143,13 @@ ip-link \- network device configuration
 ] |
 .br
 .B master
-.IR DEVICE
+.IR DEVICE " |"
 .br
-.B nomaster
+.B nomaster " |"
+.br
+.B addrgenmode { eui64 | none }
+.br
+.B link-netnsid ID
 .BR " }"
 
 
@@ -185,6 +189,8 @@ Link types:
 .sp
 .B bond
 - Bonding device
+.B can
+- Controller Area Network interface
 .sp
 .B dummy
 - Dummy network interface
@@ -266,6 +272,66 @@ specifies the number of receive queues for new device.
 specifies the desired index of the new virtual device. The link creation fails, if the index is busy.
 
 .TP
+VLAN Type Support
+For a link of type
+.I VLAN
+the following additional arguments are supported:
+
+.BI "ip link add
+.BI link " DEVICE "
+.BI name " NAME "
+.BI type " vlan "
+.R " [ "
+.BI protocol " VLAN_PROTO "
+.R " ] "
+.BI id " VLANID "
+.R " [ "
+.BR reorder_hdr " { " on " | " off " } "
+.R " ] "
+.R " [ "
+.BR gvrp " { " on " | " off " } "
+.R " ] "
+.R " [ "
+.BR mvrp " { " on " | " off " } "
+.R " ] "
+.R " [ "
+.BR loose_binding " { " on " | " off " } "
+.R " ] "
+.R " [ "
+.BI ingress-qos-map " QOS-MAP "
+.R " ] "
+.R " [ "
+.BI egress-qos-map " QOS-MAP "
+.R " ] "
+
+.in +8
+.sp
+.BI protocol " VLAN_PROTO "
+- either 802.1Q or 802.1ad.
+
+.BI id " VLANID "
+- specifies the VLAN Identifer to use. Note that numbers with a leading " 0 " or " 0x " are interpreted as octal or hexadeimal, respectively.
+
+.BR reorder_hdr " { " on " | " off " } "
+- specifies whether ethernet headers are reordered or not.
+
+.BR gvrp " { " on " | " off " } "
+- specifies whether this VLAN should be registered using GARP VLAN Registration Protocol.
+
+.BR mvrp " { " on " | " off " } "
+- specifies whether this VLAN should be registered using Multiple VLAN Registration Protocol.
+
+.BR loose_binding " { " on " | " off " } "
+- specifies whether the VLAN device state is bound to the physical device state.
+
+.BI ingress-qos-map " QOS-MAP "
+- defines a mapping between priority code points on incoming frames.  The format is FROM:TO with multiple mappings separated by spaces.
+
+.BI egress-qos-map " QOS-MAP "
+- the same as ingress-qos-map but for outgoing frames.
+.in -8
+
+.TP
 VXLAN Type Support
 For a link of type
 .I VXLAN
@@ -284,7 +350,9 @@ the following additional arguments are supported:
 .R " ] [ "
 .BI tos " TOS "
 .R " ] [ "
-.BI port " MIN MAX "
+.BI dstport " PORT "
+.R " ] [ "
+.BI srcport " MIN MAX "
 .R " ] [ "
 .I "[no]learning "
 .R " ] [ "
@@ -295,6 +363,12 @@ the following additional arguments are supported:
 .I "[no]l2miss "
 .R " ] [ "
 .I "[no]l3miss "
+.R " ] [ "
+.I "[no]udpcsum "
+.R " ] [ "
+.I "[no]udp6zerocsumtx "
+.R " ] [ "
+.I "[no]udp6zerocsumrx "
 .R " ] [ "
 .BI ageing " SECONDS "
 .R " ] [ "
@@ -340,7 +414,11 @@ parameter.
 - specifies the TOS value to use in outgoing packets.
 
 .sp
-.BI port " MIN MAX"
+.BI dstport " PORT"
+- specifies the UDP destination port to communicate to the remote VXLAN tunnel endpoint.
+
+.sp
+.BI srcport " MIN MAX"
 - specifies the range of port numbers to use as UDP
 source ports to communicate to the remote VXLAN tunnel endpoint.
 
@@ -364,6 +442,18 @@ are entered into the VXLAN device forwarding database.
 .sp
 .I [no]l3miss
 - specifies if netlink IP ADDR miss notifications are generated.
+
+.sp
+.I [no]udpcsum
+- specifies if UDP checksum is filled in
+
+.sp
+.I [no]udp6zerocsumtx
+- specifies if UDP checksum is filled in
+
+.sp
+.I [no]udp6zerocsumrx
+- specifies if UDP checksum is received
 
 .sp
 .BI ageing " SECONDS"
@@ -751,6 +841,12 @@ tool can be used. But it allows to change network namespace only for physical de
 give the device a symbolic name for easy reference.
 
 .TP
+.BI group " GROUP"
+specify the group the device belongs to.
+The available groups are listed in file
+.BR "@SYSCONFDIR@/group" .
+
+.TP
 .BI vf " NUM"
 specify a Virtual Function device to be configured. The associated PF device
 must be specified using the
@@ -828,6 +924,14 @@ set master device of the device (enslave device).
 .TP
 .BI nomaster
 unset master device of the device (release device).
+
+.TP
+.BR "addrgenmode eui64 " or " addrgenmode none"
+set IPv6 address generation mode
+
+.TP
+.BR "link-netnsid "
+set peer netnsid for a cross-netns interface
 
 .PP
 .B Warning:
