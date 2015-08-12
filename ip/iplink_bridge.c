@@ -114,6 +114,18 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_MAX_AGE])
 		fprintf(f, "max_age %u ",
 			rta_getattr_u32(tb[IFLA_BR_MAX_AGE]));
+
+	if (tb[IFLA_BR_AGEING_TIME])
+		fprintf(f, "ageing_time %u ",
+			rta_getattr_u32(tb[IFLA_BR_AGEING_TIME]));
+
+	if (tb[IFLA_BR_STP_STATE])
+		fprintf(f, "stp_state %u ",
+			rta_getattr_u32(tb[IFLA_BR_STP_STATE]));
+
+	if (tb[IFLA_BR_PRIORITY])
+		fprintf(f, "priority %u ",
+			rta_getattr_u16(tb[IFLA_BR_PRIORITY]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
