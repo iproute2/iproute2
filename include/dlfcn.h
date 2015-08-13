@@ -19,7 +19,7 @@ static inline void *dlopen(const char *file, int flag)
 		return NULL;
 }
 
-extern void *_dlsym(const char *sym);
+void *_dlsym(const char *sym);
 static inline void *dlsym(void *handle, const char *sym)
 {
 	if (handle != _FAKE_DLFCN_HDL)
