@@ -329,7 +329,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			else if (matches(*argv, "off") == 0)
 				ivs.setting = 0;
 			else
-				invarg("Invalid \"spoofchk\" value\n", *argv);
+				return on_off("spoofchk", *argv);
 			ivs.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_SPOOFCHK, &ivs, sizeof(ivs));
 
@@ -341,7 +341,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			else if (matches(*argv, "off") == 0)
 				ivs.setting = 0;
 			else
-				invarg("Invalid \"query_rss\" value\n", *argv);
+				return on_off("query_rss", *argv);
 			ivs.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_RSS_QUERY_EN, &ivs, sizeof(ivs));
 
@@ -1092,7 +1092,7 @@ static int do_set(int argc, char **argv)
 			} else if (strcmp(*argv, "off") == 0) {
 				flags |= IFF_NOARP;
 			} else
-				return on_off("noarp", *argv);
+				return on_off("arp", *argv);
 		} else if (matches(*argv, "dynamic") == 0) {
 			NEXT_ARG();
 			mask |= IFF_DYNAMIC;
