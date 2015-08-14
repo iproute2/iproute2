@@ -483,8 +483,10 @@ static void user_ent_hash_build(void)
 
 		sprintf(name + nameoff, "%d/fd/", pid);
 		pos = strlen(name);
-		if ((dir1 = opendir(name)) == NULL)
+		if ((dir1 = opendir(name)) == NULL) {
+			free(pid_context);
 			continue;
+		}
 
 		process[0] = '\0';
 		p = process;
@@ -550,7 +552,7 @@ static int find_entry(unsigned ino, char **buf, int type)
 	struct user_ent *p;
 	int cnt = 0;
 	char *ptr;
-	char **new_buf = buf;
+	char *new_buf;
 	int len, new_buf_len;
 	int buf_used = 0;
 	int buf_len = 0;
@@ -592,12 +594,12 @@ static int find_entry(unsigned ino, char **buf, int type)
 
 			if (len < 0 || len >= buf_len - buf_used) {
 				new_buf_len = buf_len + ENTRY_BUF_SIZE;
-				*new_buf = realloc(*buf, new_buf_len);
+				new_buf = realloc(*buf, new_buf_len);
 				if (!new_buf) {
 					fprintf(stderr, "ss: failed to malloc buffer\n");
 					abort();
 				}
-				**buf = **new_buf;
+				*buf = new_buf;
 				buf_len = new_buf_len;
 				continue;
 			} else {
@@ -3025,6 +3027,7 @@ static int packet_show_line(char *buf, const struct filter *f, int fam)
 static int packet_show(struct filter *f)
 {
 	FILE *fp;
+	int rc = 0;
 
 	if (!filter_af_get(f, AF_PACKET) || !(f->states & (1 << SS_CLOSE)))
 		return 0;
@@ -3036,9 +3039,10 @@ static int packet_show(struct filter *f)
 	if ((fp = net_packet_open()) == NULL)
 		return -1;
 	if (generic_record_read(fp, packet_show_line, f, AF_PACKET))
-		return -1;
+		rc = -1;
 
-	return 0;
+	fclose(fp);
+	return rc;
 }
 
 static int netlink_show_one(struct filter *f,
@@ -3215,6 +3219,7 @@ static int netlink_show(struct filter *f)
 		netlink_show_one(f, prot, pid, groups, 0, 0, 0, rq, wq, sk, cb);
 	}
 
+	fclose(fp);
 	return 0;
 }
 

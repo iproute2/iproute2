@@ -48,8 +48,8 @@ static void usage(void)
 	fprintf(stderr,
 "Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
 "       ip [ -force ] -batch filename\n"
-"where  OBJECT := { link | addr | addrlabel | route | rule | neigh | ntable |\n"
-"                   tunnel | tuntap | maddr | mroute | mrule | monitor | xfrm |\n"
+"where  OBJECT := { link | address | addrlabel | route | rule | neighbor | ntable |\n"
+"                   tunnel | tuntap | maddress | mroute | mrule | monitor | xfrm |\n"
 "                   netns | l2tp | fou | tcp_metrics | token | netconf }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -h[uman-readable] | -iec |\n"

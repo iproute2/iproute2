@@ -71,15 +71,15 @@ static void usage(void)
 	if (do_link) {
 		iplink_usage();
 	}
-	fprintf(stderr, "Usage: ip addr {add|change|replace} IFADDR dev STRING [ LIFETIME ]\n");
+	fprintf(stderr, "Usage: ip address {add|change|replace} IFADDR dev IFNAME [ LIFETIME ]\n");
 	fprintf(stderr, "                                                      [ CONFFLAG-LIST ]\n");
-	fprintf(stderr, "       ip addr del IFADDR dev STRING [mngtmpaddr]\n");
-	fprintf(stderr, "       ip addr {show|save|flush} [ dev STRING ] [ scope SCOPE-ID ]\n");
-	fprintf(stderr, "                            [ to PREFIX ] [ FLAG-LIST ] [ label PATTERN ] [up]\n");
-	fprintf(stderr, "       ip addr {showdump|restore}\n");
+	fprintf(stderr, "       ip address del IFADDR dev IFNAME [mngtmpaddr]\n");
+	fprintf(stderr, "       ip address {show|save|flush} [ dev IFNAME ] [ scope SCOPE-ID ]\n");
+	fprintf(stderr, "                            [ to PREFIX ] [ FLAG-LIST ] [ label LABEL ] [up]\n");
+	fprintf(stderr, "       ip address {showdump|restore}\n");
 	fprintf(stderr, "IFADDR := PREFIX | ADDR peer PREFIX\n");
 	fprintf(stderr, "          [ broadcast ADDR ] [ anycast ADDR ]\n");
-	fprintf(stderr, "          [ label STRING ] [ scope SCOPE-ID ]\n");
+	fprintf(stderr, "          [ label IFNAME ] [ scope SCOPE-ID ]\n");
 	fprintf(stderr, "SCOPE-ID := [ host | link | global | NUMBER ]\n");
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG  := [ permanent | dynamic | secondary | primary |\n");
@@ -1131,7 +1131,7 @@ static int ipadd_dump_check_magic(void)
 	__u32 magic = 0;
 
 	if (isatty(STDIN_FILENO)) {
-		fprintf(stderr, "Can't restore addr dump from a terminal\n");
+		fprintf(stderr, "Can't restore address dump from a terminal\n");
 		return -1;
 	}
 
@@ -1883,6 +1883,6 @@ int do_ipaddr(int argc, char **argv)
 		return ipaddr_restore();
 	if (matches(*argv, "help") == 0)
 		usage();
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip addr help\".\n", *argv);
+	fprintf(stderr, "Command \"%s\" is unknown, try \"ip address help\".\n", *argv);
 	exit(-1);
 }

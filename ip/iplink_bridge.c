@@ -43,47 +43,41 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 	while (argc > 0) {
 		if (matches(*argv, "forward_delay") == 0) {
 			NEXT_ARG();
-			if (get_u32(&val, *argv, 0)) {
+			if (get_u32(&val, *argv, 0))
 				invarg("invalid forward_delay", *argv);
-				return -1;
-			}
+
 			addattr32(n, 1024, IFLA_BR_FORWARD_DELAY, val);
 		} else if (matches(*argv, "hello_time") == 0) {
 			NEXT_ARG();
-			if (get_u32(&val, *argv, 0)) {
+			if (get_u32(&val, *argv, 0))
 				invarg("invalid hello_time", *argv);
-				return -1;
-			}
+
 			addattr32(n, 1024, IFLA_BR_HELLO_TIME, val);
 		} else if (matches(*argv, "max_age") == 0) {
 			NEXT_ARG();
-			if (get_u32(&val, *argv, 0)) {
+			if (get_u32(&val, *argv, 0))
 				invarg("invalid max_age", *argv);
-				return -1;
-			}
+
 			addattr32(n, 1024, IFLA_BR_MAX_AGE, val);
 		} else if (matches(*argv, "ageing_time") == 0) {
 			NEXT_ARG();
-			if (get_u32(&val, *argv, 0)) {
+			if (get_u32(&val, *argv, 0))
 				invarg("invalid ageing_time", *argv);
-				return -1;
-			}
+
 			addattr32(n, 1024, IFLA_BR_AGEING_TIME, val);
 		} else if (matches(*argv, "stp_state") == 0) {
 			NEXT_ARG();
-			if (get_u32(&val, *argv, 0)) {
+			if (get_u32(&val, *argv, 0))
 				invarg("invalid stp_state", *argv);
-				return -1;
-			}
+
 			addattr32(n, 1024, IFLA_BR_STP_STATE, val);
 		} else if (matches(*argv, "priority") == 0) {
 			__u16 prio;
 
 			NEXT_ARG();
-			if (get_u16(&prio, *argv, 0)) {
+			if (get_u16(&prio, *argv, 0))
 				invarg("invalid priority", *argv);
-				return -1;
-			}
+
 			addattr16(n, 1024, IFLA_BR_PRIORITY, prio);
 		} else if (matches(*argv, "vlan_filtering") == 0) {
 			__u8 vlan_filter;
