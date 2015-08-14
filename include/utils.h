@@ -137,7 +137,7 @@ const char *mpls_ntop(int af, const void *addr, char *str, size_t len);
 int mpls_pton(int af, const char *src, void *addr);
 
 extern int __iproute2_hz_internal;
-__get_hz(void);
+int __get_hz(void);
 
 static __inline__ int get_hz(void)
 {
