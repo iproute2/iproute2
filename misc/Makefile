@@ -19,7 +19,7 @@ all: $(TARGETS)
 ss: $(SSOBJ)
 
 nstat: nstat.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o nstat nstat.c -lm
+	$(CC) $(CFLAGS) $(LDFLAGS) -o nstat nstat.c $(LIBNETLINK) -lm
 
 ifstat: ifstat.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o ifstat ifstat.c $(LIBNETLINK) -lm

@@ -29,6 +29,7 @@
 #include <getopt.h>
 
 #include <libnetlink.h>
+#include <json_writer.h>
 #include <linux/if.h>
 #include <linux/if_link.h>
 
@@ -43,6 +44,7 @@ int no_update = 0;
 int scan_interval = 0;
 int time_constant = 0;
 int show_errors = 0;
+int pretty;
 double W;
 char **patterns;
 int npatterns;
@@ -238,13 +240,15 @@ static void load_raw_table(FILE *fp)
 
 static void dump_raw_db(FILE *fp, int to_hist)
 {
+	json_writer_t *jw = json_output ? jsonw_new(fp) : NULL;
 	struct ifstat_ent *n, *h;
-	const char *eol = "\n";
 
 	h = hist_db;
-	if (json_output)
-		fprintf(fp, "{ \"%s\":{", info_source);
-	else
+	if (jw) {
+		jsonw_pretty(jw, pretty);
+		jsonw_name(jw, info_source);
+		jsonw_start_object(jw);
+	} else
 		fprintf(fp, "#%s\n", info_source);
 
 	for (n=kern_db; n; n=n->next) {
@@ -265,14 +269,13 @@ static void dump_raw_db(FILE *fp, int to_hist)
 			}
 		}
 
-		if (json_output) {
-			fprintf(fp, "%s   \"%s\":{",
-				eol, n->name);
-			eol = ",\n";
+		if (jw) {
+			jsonw_name(jw, n->name);
+			jsonw_start_object(jw);
+			
 			for (i=0; i<MAXS && stats[i]; i++)
-				fprintf(fp, " \"%s\":%llu",
-					stats[i], vals[i]);
-			fprintf(fp, "}");
+				jsonw_uint_field(jw, stats[i], vals[i]);
+			jsonw_end_object(jw);
 		} else {
 			fprintf(fp, "%d %s ", n->ifindex, n->name);
 			for (i=0; i<MAXS; i++)
@@ -280,6 +283,10 @@ static void dump_raw_db(FILE *fp, int to_hist)
 					(unsigned)rates[i]);
 			fprintf(fp, "\n");
 		}
+	}
+	if (jw) {
+		jsonw_end_object(jw);
+		jsonw_destroy(&jw);
 	}
 }
 
@@ -373,20 +380,18 @@ static void print_head(FILE *fp)
 	}
 }
 
-static void print_one_json(FILE *fp, const struct ifstat_ent *n,
+static void print_one_json(json_writer_t *jw, const struct ifstat_ent *n,
 			   const unsigned long long *vals)
 {
-	int i, m;
-	const char *sep = " ";
+	int i, m = show_errors ? 20 : 10;
 
-	m = show_errors ? 20 : 10;
-	fprintf(fp, "    \"%s\":{", n->name);
-	for (i=0; i < m && stats[i]; i++) {
-		fprintf(fp, "%s\"%s\":%llu",
-			sep, stats[i], vals[i]);
-		sep = ", ";
-	}
-	fprintf(fp, " }");
+	jsonw_name(jw, n->name);
+	jsonw_start_object(jw);
+
+	for (i=0; i < m && stats[i]; i++)
+		jsonw_uint_field(jw, stats[i], vals[i]);
+
+	jsonw_end_object(jw);
 }
 
 static void print_one_if(FILE *fp, const struct ifstat_ent *n,
@@ -439,39 +444,40 @@ static void print_one_if(FILE *fp, const struct ifstat_ent *n,
 
 static void dump_kern_db(FILE *fp)
 {
+	json_writer_t *jw = json_output ? jsonw_new(fp) : NULL;
 	struct ifstat_ent *n;
-	const char *eol = "\n";
 
-	if (json_output)
-		fprintf(fp, "{ \"%s\": {", info_source);
-	else
+	if (jw) {
+		jsonw_pretty(jw, pretty);
+		jsonw_name(jw, info_source);
+		jsonw_start_object(jw);
+	} else
 		print_head(fp);
 
 	for (n=kern_db; n; n=n->next) {
 		if (!match(n->name))
 			continue;
 
-		if (json_output) {
-			fprintf(fp, "%s", eol);
-			eol = ",\n";
-			print_one_json(fp, n, n->val);
-		} else
+		if (jw)
+			print_one_json(jw, n, n->val);
+		else
 			print_one_if(fp, n, n->val);
 	}
 	if (json_output)
 		fprintf(fp, "\n} }\n");
 }
 
-
 static void dump_incr_db(FILE *fp)
 {
 	struct ifstat_ent *n, *h;
-	const char *eol = "\n";
+	json_writer_t *jw = json_output ? jsonw_new(fp) : NULL;
 
 	h = hist_db;
-	if (json_output)
-		fprintf(fp, "{ \"%s\":{", info_source);
-	else
+	if (jw) {
+		jsonw_pretty(jw, pretty);
+		jsonw_name(jw, info_source);
+		jsonw_start_object(jw);
+	} else
 		print_head(fp);
 
 	for (n=kern_db; n; n=n->next) {
@@ -492,17 +498,17 @@ static void dump_incr_db(FILE *fp)
 		if (!match(n->name))
 			continue;
 
-		if (json_output) {
-			fprintf(fp, "%s", eol);
-			eol = ",\n";
-			print_one_json(fp, n, n->val);
-		} else
+		if (jw)
+			print_one_json(jw, n, n->val);
+		else
 			print_one_if(fp, n, vals);
 	}
-	if (json_output)
-		fprintf(fp, "\n} }\n");
-}
 
+	if (jw) {
+		jsonw_end_object(jw);
+		jsonw_destroy(&jw);
+	}
+}
 
 static int children;
 
@@ -646,6 +652,7 @@ static void usage(void)
 "   -e, --errors	show errors\n"
 "   -j, --json          format output in JSON\n"
 "   -n, --nooutput	do history only\n"
+"   -p, --pretty        pretty print\n"
 "   -r, --reset		reset history\n"
 "   -s, --noupdate	don\'t update history\n"
 "   -t, --interval=SECS	report average over the last SECS\n"
@@ -663,6 +670,7 @@ static const struct option longopts[] = {
 	{ "nooutput", 0, 0, 'n' },
 	{ "json", 0, 0, 'j' },
 	{ "reset", 0, 0, 'r' },
+	{ "pretty", 0, 0, 'p' },
 	{ "noupdate", 0, 0, 's' },
 	{ "interval", 1, 0, 't' },
 	{ "version", 0, 0, 'V' },
@@ -678,7 +686,7 @@ int main(int argc, char *argv[])
 	int ch;
 	int fd;
 
-	while ((ch = getopt_long(argc, argv, "hjvVzrnasd:t:e",
+	while ((ch = getopt_long(argc, argv, "hjpvVzrnasd:t:e",
 			longopts, NULL)) != EOF) {
 		switch(ch) {
 		case 'z':
@@ -701,6 +709,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'j':
 			json_output = 1;
+			break;
+		case 'p':
+			pretty = 1;
 			break;
 		case 'd':
 			scan_interval = atoi(optarg) * 1000;
