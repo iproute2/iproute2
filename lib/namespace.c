@@ -58,35 +58,34 @@ int netns_switch(char *name)
 	if (setns(netns, CLONE_NEWNET) < 0) {
 		fprintf(stderr, "setting the network namespace \"%s\" failed: %s\n",
 			name, strerror(errno));
-		goto fail_close;
+		close(netns);
+		return -1;
 	}
+	close(netns);
 
 	if (unshare(CLONE_NEWNS) < 0) {
 		fprintf(stderr, "unshare failed: %s\n", strerror(errno));
-		goto fail_close;
+		return -1;
 	}
 	/* Don't let any mounts propagate back to the parent */
 	if (mount("", "/", "none", MS_SLAVE | MS_REC, NULL)) {
 		fprintf(stderr, "\"mount --make-rslave /\" failed: %s\n",
 			strerror(errno));
-		goto fail_close;
+		return -1;
 	}
 	/* Mount a version of /sys that describes the network namespace */
 	if (umount2("/sys", MNT_DETACH) < 0) {
 		fprintf(stderr, "umount of /sys failed: %s\n", strerror(errno));
-		goto fail_close;
+		return -1;
 	}
 	if (mount(name, "/sys", "sysfs", 0, NULL) < 0) {
 		fprintf(stderr, "mount of /sys failed: %s\n",strerror(errno));
-		goto fail_close;
+		return -1;
 	}
 
 	/* Setup bind mounts for config files in /etc */
 	bind_etc(name);
 	return 0;
-fail_close:
-	close(netns);
-	return -1;
 }
 
 int netns_get_fd(const char *name)

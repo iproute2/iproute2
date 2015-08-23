@@ -315,7 +315,31 @@ the following additional arguments are supported:
 - specifies the VLAN Identifer to use. Note that numbers with a leading " 0 " or " 0x " are interpreted as octal or hexadeimal, respectively.
 
 .BR reorder_hdr " { " on " | " off " } "
-- specifies whether ethernet headers are reordered or not.
+- specifies whether ethernet headers are reordered or not (default is
+.BR on ")."
+
+.in +4
+If
+.BR reorder_hdr " is " on
+then VLAN header will be not inserted immediately but only before passing to the
+physical device (if this device does not support VLAN offloading), the similar
+on the RX direction - by default the packet will be untagged before being
+received by VLAN device. Reordering allows to accelerate tagging on egress and
+to hide VLAN header on ingress so the packet looks like regular Ethernet packet,
+at the same time it might be confusing while the packet sniffing as the VLAN header
+does not exist within the packet.
+
+VLAN offloading can be checked by
+.BR ethtool "(8):"
+.in +4
+.sp
+.B ethtool -k
+<phy_dev> |
+.RB grep " tx-vlan-offload"
+.sp
+.in -4
+where <phy_dev> is the physical device to which VLAN device is bound.
+.in -4
 
 .BR gvrp " { " on " | " off " } "
 - specifies whether this VLAN should be registered using GARP VLAN Registration Protocol.
@@ -1073,7 +1097,8 @@ IEEE 802.15.4 device wpan0.
 .SH SEE ALSO
 .br
 .BR ip (8),
-.BR ip-netns (8)
+.BR ip-netns (8),
+.BR ethtool (8)
 
 .SH AUTHOR
 Original Manpage by Michail Litvak <mci@owl.openwall.com>

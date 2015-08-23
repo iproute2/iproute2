@@ -1197,40 +1197,41 @@ static void do_help(int argc, char **argv)
 
 int do_iplink(int argc, char **argv)
 {
-	if (argc > 0) {
-		if (iplink_have_newlink()) {
-			if (matches(*argv, "add") == 0)
-				return iplink_modify(RTM_NEWLINK,
-						     NLM_F_CREATE|NLM_F_EXCL,
-						     argc-1, argv+1);
-			if (matches(*argv, "set") == 0 ||
-			    matches(*argv, "change") == 0)
-				return iplink_modify(RTM_NEWLINK, 0,
-						     argc-1, argv+1);
-			if (matches(*argv, "replace") == 0)
-				return iplink_modify(RTM_NEWLINK,
-						     NLM_F_CREATE|NLM_F_REPLACE,
-						     argc-1, argv+1);
-			if (matches(*argv, "delete") == 0)
-				return iplink_modify(RTM_DELLINK, 0,
-						     argc-1, argv+1);
-		} else {
-#if IPLINK_IOCTL_COMPAT
-			if (matches(*argv, "set") == 0)
-				return do_set(argc-1, argv+1);
-#endif
-		}
-		if (matches(*argv, "show") == 0 ||
-		    matches(*argv, "lst") == 0 ||
-		    matches(*argv, "list") == 0)
-			return ipaddr_list_link(argc-1, argv+1);
-		if (matches(*argv, "help") == 0) {
-			do_help(argc-1, argv+1);
-			return 0;
-		}
-	} else
+	if (argc < 1)
 		return ipaddr_list_link(0, NULL);
 
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip link help\".\n", *argv);
+	if (iplink_have_newlink()) {
+		if (matches(*argv, "add") == 0)
+			return iplink_modify(RTM_NEWLINK,
+					NLM_F_CREATE|NLM_F_EXCL,
+					argc-1, argv+1);
+		if (matches(*argv, "set") == 0 ||
+				matches(*argv, "change") == 0)
+			return iplink_modify(RTM_NEWLINK, 0,
+					argc-1, argv+1);
+		if (matches(*argv, "replace") == 0)
+			return iplink_modify(RTM_NEWLINK,
+					NLM_F_CREATE|NLM_F_REPLACE,
+					argc-1, argv+1);
+		if (matches(*argv, "delete") == 0)
+			return iplink_modify(RTM_DELLINK, 0,
+					argc-1, argv+1);
+	} else {
+#if IPLINK_IOCTL_COMPAT
+		if (matches(*argv, "set") == 0)
+			return do_set(argc-1, argv+1);
+#endif
+	}
+	if (matches(*argv, "show") == 0 ||
+			matches(*argv, "lst") == 0 ||
+			matches(*argv, "list") == 0)
+		return ipaddr_list_link(argc-1, argv+1);
+	if (matches(*argv, "help") == 0) {
+		do_help(argc-1, argv+1);
+		return 0;
+	}
+
+	fprintf(stderr, "Command \"%s\" is unknown, try \"ip link help\".\n",
+			*argv);
 	exit(-1);
 }

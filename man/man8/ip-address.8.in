@@ -60,7 +60,7 @@ ip-address \- protocol address management
 .IR FLAG " := "
 .RB "[ " permanent " | " dynamic " | " secondary " | " primary " | \
 [ - ] " tentative " | [ - ] " deprecated " | [ - ] " dadfailed " | "\
-temporary " ] " CONFFLAG-LIST " ]"
+temporary " ] [ " CONFFLAG-LIST " ]"
 
 .ti -8
 .IR CONFFLAG-LIST " := [ "  CONFFLAG-LIST " ] " CONFFLAG
