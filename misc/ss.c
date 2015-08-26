@@ -1020,6 +1020,8 @@ static void inet_addr_print(const inet_prefix *a, int port, unsigned int ifindex
 	if (ifindex) {
 		ifname   = ll_index_to_name(ifindex);
 		est_len -= strlen(ifname) + 1;  /* +1 for percent char */
+		if (est_len < 0)
+			est_len = 0;
 	}
 
 	sock_addr_print_width(est_len, ap, ":", serv_width, resolve_service(port),
