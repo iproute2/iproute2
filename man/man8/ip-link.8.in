@@ -21,7 +21,8 @@ ip-link \- network device configuration
 \fB\-r\fR[\fIesolve\fR] |
 \fB\-f\fR[\fIamily\fR] {
 .BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
-\fB\-o\fR[\fIneline\fR] }
+\fB\-o\fR[\fIneline\fR] |
+\fB\-br\fR[\fIief\fR] }
 
 .ti -8
 .BI "ip link add"
