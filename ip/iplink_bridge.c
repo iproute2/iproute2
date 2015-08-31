@@ -14,6 +14,7 @@
 #include <string.h>
 #include <linux/if_link.h>
 
+#include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
 
@@ -27,6 +28,9 @@ static void print_explain(FILE *f)
 		"                  [ stp_state STP_STATE ]\n"
 		"                  [ priority PRIORITY ]\n"
 		"                  [ vlan_filtering VLAN_FILTERING ]\n"
+		"                  [ vlan_protocol VLAN_PROTOCOL ]\n"
+		"\n"
+		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
 	);
 }
 
@@ -88,6 +92,15 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				return -1;
 			}
 			addattr8(n, 1024, IFLA_BR_VLAN_FILTERING, vlan_filter);
+		} else if (matches(*argv, "vlan_protocol") == 0) {
+			__u16 vlan_proto;
+
+			NEXT_ARG();
+			if (ll_proto_a2n(&vlan_proto, *argv)) {
+				invarg("invalid vlan_protocol", *argv);
+				return -1;
+			}
+			addattr16(n, 1024, IFLA_BR_VLAN_PROTOCOL, vlan_proto);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -134,6 +147,14 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_VLAN_FILTERING])
 		fprintf(f, "vlan_filtering %u ",
 			rta_getattr_u8(tb[IFLA_BR_VLAN_FILTERING]));
+
+	if (tb[IFLA_BR_VLAN_PROTOCOL]) {
+		SPRINT_BUF(b1);
+
+		fprintf(f, "vlan_protocol %s ",
+			ll_proto_n2a(rta_getattr_u16(tb[IFLA_BR_VLAN_PROTOCOL]),
+				     b1, sizeof(b1)));
+	}
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
