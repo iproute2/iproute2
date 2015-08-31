@@ -19,6 +19,7 @@ extern int show_details;
 extern int show_raw;
 extern int resolve_hosts;
 extern int oneline;
+extern int brief;
 extern int timestamp;
 extern int timestamp_short;
 extern const char * _SL_;

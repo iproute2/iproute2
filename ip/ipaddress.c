@@ -138,13 +138,22 @@ static void print_operstate(FILE *f, __u8 state)
 	if (state >= sizeof(oper_states)/sizeof(oper_states[0]))
 		fprintf(f, "state %#x ", state);
 	else {
-		fprintf(f, "state ");
-		if (strcmp(oper_states[state], "UP") == 0)
-			color_fprintf(f, COLOR_OPERSTATE_UP, "%s ", oper_states[state]);
-		else if (strcmp(oper_states[state], "DOWN") == 0)
-			color_fprintf(f, COLOR_OPERSTATE_DOWN, "%s ", oper_states[state]);
-		else
-			fprintf(f, "%s ", oper_states[state]);
+		if (brief) {
+			if (strcmp(oper_states[state], "UP") == 0)
+				color_fprintf(f, COLOR_OPERSTATE_UP, "%-14s ", oper_states[state]);
+			else if (strcmp(oper_states[state], "DOWN") == 0)
+				color_fprintf(f, COLOR_OPERSTATE_DOWN, "%-14s ", oper_states[state]);
+			else
+				fprintf(f, "%-14s ", oper_states[state]);
+		} else {
+			fprintf(f, "state ");
+			if (strcmp(oper_states[state], "UP") == 0)
+				color_fprintf(f, COLOR_OPERSTATE_UP, "%s ", oper_states[state]);
+			else if (strcmp(oper_states[state], "DOWN") == 0)
+				color_fprintf(f, COLOR_OPERSTATE_DOWN, "%s ", oper_states[state]);
+			else
+				fprintf(f, "%s ", oper_states[state]);
+		}
 	}
 }
 
@@ -590,6 +599,88 @@ static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 	fprintf(fp, "%s", _SL_);
 }
 
+int print_linkinfo_brief(const struct sockaddr_nl *who,
+				struct nlmsghdr *n, void *arg)
+{
+	FILE *fp = (FILE*)arg;
+	struct ifinfomsg *ifi = NLMSG_DATA(n);
+	struct rtattr * tb[IFLA_MAX+1];
+	int len = n->nlmsg_len;
+	char *name;
+	char buf[32] = { 0, };
+	unsigned m_flag = 0;
+
+	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
+		return -1;
+
+	len -= NLMSG_LENGTH(sizeof(*ifi));
+	if (len < 0)
+		return -1;
+
+	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
+		return -1;
+	if (filter.up && !(ifi->ifi_flags&IFF_UP))
+		return -1;
+
+	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
+	if (tb[IFLA_IFNAME] == NULL) {
+		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
+	}
+	if (filter.label &&
+	    (!filter.family || filter.family == AF_PACKET) &&
+	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
+		return -1;
+
+	if (tb[IFLA_GROUP]) {
+		int group = *(int*)RTA_DATA(tb[IFLA_GROUP]);
+		if (filter.group != -1 && group != filter.group)
+			return -1;
+	}
+
+	if (n->nlmsg_type == RTM_DELLINK)
+		fprintf(fp, "Deleted ");
+
+	name = (char *)(tb[IFLA_IFNAME] ? rta_getattr_str(tb[IFLA_IFNAME]) : "<nil>");
+
+	if (tb[IFLA_LINK]) {
+		SPRINT_BUF(b1);
+		int iflink = *(int*)RTA_DATA(tb[IFLA_LINK]);
+		if (iflink == 0)
+			snprintf(buf, sizeof(buf), "%s@NONE", name);
+		else {
+			snprintf(buf, sizeof(buf),
+				 "%s@%s", name, ll_idx_n2a(iflink, b1));
+			m_flag = ll_index_to_flags(iflink);
+			m_flag = !(m_flag & IFF_UP);
+		}
+	} else
+		snprintf(buf, sizeof(buf), "%s", name);
+
+	fprintf(fp, "%-16s ", buf);
+
+	if (tb[IFLA_OPERSTATE])
+		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
+
+	if (filter.family == AF_PACKET) {
+		SPRINT_BUF(b1);
+		if (tb[IFLA_ADDRESS]) {
+			color_fprintf(fp, COLOR_MAC, "%s ",
+					ll_addr_n2a(RTA_DATA(tb[IFLA_ADDRESS]),
+						RTA_PAYLOAD(tb[IFLA_ADDRESS]),
+						ifi->ifi_type,
+						b1, sizeof(b1)));
+		}
+	}
+
+	if (filter.family == AF_PACKET)
+		print_link_flags(fp, ifi->ifi_flags, m_flag);
+
+	if (filter.family == AF_PACKET)
+		fprintf(fp, "\n");
+	fflush(fp);
+	return 0;
+}
+
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg)
 {
@@ -892,18 +983,20 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (n->nlmsg_type == RTM_DELADDR)
 		fprintf(fp, "Deleted ");
 
-	if (filter.oneline || filter.flushb)
-		fprintf(fp, "%u: %s", ifa->ifa_index, ll_index_to_name(ifa->ifa_index));
-	if (ifa->ifa_family == AF_INET)
-		fprintf(fp, "    inet ");
-	else if (ifa->ifa_family == AF_INET6)
-		fprintf(fp, "    inet6 ");
-	else if (ifa->ifa_family == AF_DECnet)
-		fprintf(fp, "    dnet ");
-	else if (ifa->ifa_family == AF_IPX)
-		fprintf(fp, "     ipx ");
-	else
-		fprintf(fp, "    family %d ", ifa->ifa_family);
+	if (!brief) {
+		if (filter.oneline || filter.flushb)
+			fprintf(fp, "%u: %s", ifa->ifa_index, ll_index_to_name(ifa->ifa_index));
+		if (ifa->ifa_family == AF_INET)
+			fprintf(fp, "    inet ");
+		else if (ifa->ifa_family == AF_INET6)
+			fprintf(fp, "    inet6 ");
+		else if (ifa->ifa_family == AF_DECnet)
+			fprintf(fp, "    dnet ");
+		else if (ifa->ifa_family == AF_IPX)
+			fprintf(fp, "     ipx ");
+		else
+			fprintf(fp, "    family %d ", ifa->ifa_family);
+	}
 
 	if (rta_tb[IFA_LOCAL]) {
 		if (ifa->ifa_family == AF_INET)
@@ -935,6 +1028,9 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 				ifa->ifa_prefixlen);
 		}
 	}
+
+	if (brief)
+		goto brief_exit;
 
 	if (rta_tb[IFA_BROADCAST]) {
 		fprintf(fp, "brd %s ",
@@ -1018,6 +1114,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		}
 	}
 	fprintf(fp, "\n");
+brief_exit:
 	fflush(fp);
 	return 0;
 }
@@ -1077,6 +1174,10 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 			continue;
 
 		print_addrinfo(NULL, n, fp);
+	}
+	if (brief) {
+		fprintf(fp, "\n");
+		fflush(fp);
 	}
 	return 0;
 }
@@ -1539,9 +1640,16 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 
 	for (l = linfo.head; l; l = l->next) {
 		int res = 0;
+		struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 
-		if (no_link || (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
-			struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
+		if (brief) {
+			if (print_linkinfo_brief(NULL, &l->h, stdout) == 0)
+				if (filter.family != AF_PACKET)
+					print_selected_addrinfo(ifi,
+								ainfo.head,
+								stdout);
+		} else if (no_link ||
+			 (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
 			if (filter.family != AF_PACKET)
 				print_selected_addrinfo(ifi,
 							ainfo.head, stdout);

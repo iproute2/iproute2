@@ -32,6 +32,7 @@ int show_stats;
 int show_details;
 int resolve_hosts;
 int oneline;
+int brief;
 int timestamp;
 const char *_SL_;
 int force;
@@ -55,7 +56,7 @@ static void usage(void)
 "                    -h[uman-readable] | -iec |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | mpls | bridge | link } |\n"
 "                    -4 | -6 | -I | -D | -B | -0 |\n"
-"                    -l[oops] { maximum-addr-flush-attempts } |\n"
+"                    -l[oops] { maximum-addr-flush-attempts } | -br[ief] |\n"
 "                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
 "                    -rc[vbuf] [size] | -n[etns] name | -a[ll] | -c[olor]}\n");
 	exit(-1);
@@ -250,6 +251,8 @@ int main(int argc, char **argv)
 			if (argc <= 1)
 				usage();
 			batch_file = argv[1];
+		} else if (matches(opt, "-brief") == 0) {
+			++brief;
 		} else if (matches(opt, "-rcvbuf") == 0) {
 			unsigned int size;
 

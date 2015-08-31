@@ -2,6 +2,9 @@ extern int get_operstate(const char *name);
 extern int print_linkinfo(const struct sockaddr_nl *who,
 			  struct nlmsghdr *n,
 			  void *arg);
+extern int print_linkinfo_brief(const struct sockaddr_nl *who,
+				struct nlmsghdr *n,
+				void *arg);
 extern int print_addrinfo(const struct sockaddr_nl *who,
 			  struct nlmsghdr *n,
 			  void *arg);

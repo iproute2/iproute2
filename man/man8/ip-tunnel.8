@@ -6,14 +6,12 @@ ip-tunnel - tunnel configuration
 .ad l
 .in +8
 .ti -8
-.B ip
-.RI "[ " OPTIONS " ]"
-.B tunnel
-.RI " { " COMMAND " | "
-.BR help " }"
+.B ip tunnel help
 .sp
 .ti -8
-.BR "ip tunnel" " { " add " | " change " | " del " | " show " | " prl " }"
+.BR "ip "
+.RI "[ " OPTIONS " ]"
+.BR "tunnel" " { " add " | " change " | " del " | " show " | " prl " }"
 .RI "[ " NAME " ]"
 .br
 .RB "[ " mode
@@ -29,7 +27,7 @@ ip-tunnel - tunnel configuration
 .br
 .RB "[ " encaplimit
 .IR ELIM " ]"
-.RB "[ " ttl
+.RB "[ " ttl "|" hoplimit
 .IR TTL " ]"
 .br
 .RB "[ " tos
@@ -50,7 +48,7 @@ ip-tunnel - tunnel configuration
 
 .ti -8
 .IR MODE " := "
-.RB " { " ipip " | " gre " | " sit " | " isatap " | " ip6ip6 " | " ipip6 " | " ip6gre " | " any " }"
+.RB " { " ipip " | " gre " | " sit " | " isatap " | " vti " | " ip6ip6 " | " ipip6 " | " ip6gre " | " vti6 " | " any " }"
 
 .ti -8
 .IR ADDR " := { " IP_ADDRESS " |"
@@ -107,10 +105,10 @@ select the tunnel device name.
 set the tunnel mode. Available modes depend on the encapsulating address family.
 .br
 Modes for IPv4 encapsulation available:
-.BR ipip ", " sit ", " isatap " and " gre "."
+.BR ipip ", " sit ", " isatap ", " vti ", and " gre "."
 .br
 Modes for IPv6 encapsulation available:
-.BR ip6ip6 ", " ipip6 ", " ip6gre ", and " any "."
+.BR ip6ip6 ", " ipip6 ", " ip6gre ", " vti6 ", and " any "."
 
 .TP
 .BI remote " ADDRESS"
@@ -123,7 +121,9 @@ It must be an address on another interface of this host.
 
 .TP
 .BI ttl " N"
-set a fixed TTL
+.TP
+.BI hoplimit " N"
+set a fixed TTL (IPv4) or hoplimit (IPv6)
 .I N
 on tunneled packets.
 .I N
@@ -218,7 +218,7 @@ The
 .B  seq
 flag is equivalent to the combination
 .BR "iseq oseq" .
-.B It isn't work. Don't use it.
+.B It doesn't work. Don't use it.
 
 .TP
 .BI encaplim " ELIM"
