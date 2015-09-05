@@ -1213,7 +1213,8 @@ static int iproute_flush_cache(void)
 	char *buffer = "-1";
 
 	if (flush_fd < 0) {
-		fprintf (stderr, "Cannot open \"%s\"\n", ROUTE_FLUSH_PATH);
+		fprintf (stderr, "Cannot open \"%s\": %s\n",
+				ROUTE_FLUSH_PATH, strerror(errno));
 		return -1;
 	}
 
