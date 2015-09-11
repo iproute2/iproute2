@@ -234,9 +234,10 @@ static void print_session(struct l2tp_data *data)
 	if (p->peer_cookie_len > 0)
 		print_cookie("peer cookie", p->peer_cookie, p->peer_cookie_len);
 
-	if (p->reorder_timeout != 0) {
+	if (p->reorder_timeout != 0)
 		printf("  reorder timeout: %u\n", p->reorder_timeout);
-	}
+	else
+		printf("\n");
 }
 
 static int get_response(struct nlmsghdr *n, void *arg)
