@@ -327,7 +327,7 @@ physical device (if this device does not support VLAN offloading), the similar
 on the RX direction - by default the packet will be untagged before being
 received by VLAN device. Reordering allows to accelerate tagging on egress and
 to hide VLAN header on ingress so the packet looks like regular Ethernet packet,
-at the same time it might be confusing while the packet sniffing as the VLAN header
+at the same time it might be confusing for packet capture as the VLAN header
 does not exist within the packet.
 
 VLAN offloading can be checked by
