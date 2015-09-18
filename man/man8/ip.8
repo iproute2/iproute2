@@ -27,6 +27,7 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .ti -8
 .IR OPTIONS " := { "
 \fB\-V\fR[\fIersion\fR] |
+\fB\-h\fR[\fIuman-readable\fR] |
 \fB\-s\fR[\fItatistics\fR] |
 \fB\-r\fR[\fIesolve\fR] |
 \fB\-f\fR[\fIamily\fR] {
@@ -44,6 +45,10 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 Print the version of the
 .B ip
 utility and exit.
+
+.TP
+.BR "\-h", " \-human", " \-human-readable"
+output statistics with human readable values followed by suffix.
 
 .TP
 .BR "\-b", " \-batch " <FILENAME>
