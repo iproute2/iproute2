@@ -289,10 +289,32 @@ check_mnl()
 	if ${PKG_CONFIG} libmnl --exists
 	then
 		echo "HAVE_MNL:=y" >>Config
-		echo -n "yes"
+		echo "yes"
 	else
-		echo -n "no"
+		echo "no"
 	fi
+}
+
+check_berkeley_db()
+{
+    cat >$TMPDIR/dbtest.c <<EOF
+#include <fcntl.h>
+#include <stdlib.h>
+#include <db_185.h>
+int main(int argc, char **argv) {
+	dbopen("/tmp/xxx_test_db.db", O_CREAT|O_RDWR, 0644, DB_HASH, NULL);
+	return 0;
+}
+EOF
+    $CC -I$INCLUDE -o $TMPDIR/dbtest $TMPDIR/dbtest.c -ldb >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
+	echo "HAVE_BERKELEY_DB:=y" >>Config
+	echo "yes"
+    else
+	echo "no"
+    fi
+    rm -f $TMPDIR/dbtest.c $TMPDIR/dbtest
 }
 
 echo "# Generated config based on" $INCLUDE >Config
@@ -327,6 +349,9 @@ check_elf
 
 echo -n "libmnl support: "
 check_mnl
+
+echo -n "Berkeley DB: "
+check_berkeley_db
 
 echo
 echo -n "docs:"

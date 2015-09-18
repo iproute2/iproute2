@@ -1,9 +1,13 @@
 SSOBJ=ss.o ssfilter.o
 LNSTATOBJ=lnstat.o lnstat_util.o
 
-TARGETS=ss nstat ifstat rtacct arpd lnstat
+TARGETS=ss nstat ifstat rtacct lnstat
 
 include ../Config
+
+ifeq ($(HAVE_BERKELEY_DB),y)
+	TARGETS += arpd
+endif
 
 ifeq ($(HAVE_SELINUX),y)
 	LDLIBS += $(shell pkg-config --libs libselinux)
