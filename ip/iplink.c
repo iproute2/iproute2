@@ -647,11 +647,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			addattr8(&req->n, sizeof(*req), IFLA_PROTO_DOWN,
 				 proto_down);
 		} else {
-			if (strcmp(*argv, "dev") == 0)
-				NEXT_ARG();
-
 			if (matches(*argv, "help") == 0)
 				usage();
+
+			if (strcmp(*argv, "dev") == 0)
+				NEXT_ARG();
 			if (*dev)
 				duparg2("dev", *argv);
 			*dev = *argv;
