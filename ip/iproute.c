@@ -424,9 +424,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[RTA_OIF] && filter.oifmask != -1)
 		fprintf(fp, "dev %s ", ll_index_to_name(*(int*)RTA_DATA(tb[RTA_OIF])));
 
+	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
+		fprintf(fp, " table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
 	if (!(r->rtm_flags&RTM_F_CLONED)) {
-		if ((table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
-			fprintf(fp, " table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
 		if ((r->rtm_protocol != RTPROT_BOOT || show_details > 0) && filter.protocolmask != -1)
 			fprintf(fp, " proto %s ", rtnl_rtprot_n2a(r->rtm_protocol, b1, sizeof(b1)));
 		if ((r->rtm_scope != RT_SCOPE_UNIVERSE || show_details > 0) && filter.scopemask != -1)
@@ -1641,6 +1641,8 @@ static int iproute_get(int argc, char **argv)
 
 	if (req.r.rtm_family == AF_UNSPEC)
 		req.r.rtm_family = AF_INET;
+
+	req.r.rtm_flags |= RTM_F_LOOKUP_TABLE;
 
 	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
 		exit(2);
