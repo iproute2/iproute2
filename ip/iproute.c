@@ -145,6 +145,9 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 
 	table = rtm_get_table(r, tb);
 
+	if (preferred_family != AF_UNSPEC && r->rtm_family != preferred_family)
+		return 0;
+
 	if (r->rtm_family == AF_INET6 && table != RT_TABLE_MAIN)
 		ip6_multiple_tables = 1;
 
