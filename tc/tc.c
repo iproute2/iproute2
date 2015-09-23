@@ -36,6 +36,7 @@ int show_details = 0;
 int show_raw = 0;
 int show_pretty = 0;
 int show_graph = 0;
+int timestamp;
 
 int batch_mode = 0;
 int resolve_hosts = 0;
@@ -311,6 +312,11 @@ int main(int argc, char **argv)
 				matches(argv[1], "-conf") == 0) {
 			NEXT_ARG();
 			conf_file = argv[1];
+		} else if (matches(argv[1], "-timestamp") == 0) {
+			timestamp++;
+		} else if (matches(argv[1], "-tshort") == 0) {
+			++timestamp;
+			++timestamp_short;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;
