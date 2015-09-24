@@ -3782,12 +3782,6 @@ int main(int argc, char *argv[])
 			exit(0);
 	}
 
-	/* Now parse filter... */
-	if (argc == 0 && filter_fp) {
-		if (ssfilter_parse(&current_filter.f, 0, NULL, filter_fp))
-			usage();
-	}
-
 	while (argc > 0) {
 		if (strcmp(*argv, "state") == 0) {
 			NEXT_ARG();
