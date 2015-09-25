@@ -257,7 +257,7 @@ static int multiaddr_list(int argc, char **argv)
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
 			}
-			if (matches(*argv, "help") == 0)
+			else if (matches(*argv, "help") == 0)
 				usage();
 			if (filter.dev)
 				duparg2("dev", *argv);

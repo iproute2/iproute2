@@ -1148,8 +1148,7 @@ static int do_set(int argc, char **argv)
 		} else {
 			if (strcmp(*argv, "dev") == 0)
 				NEXT_ARG();
-
-			if (matches(*argv, "help") == 0)
+			else if (matches(*argv, "help") == 0)
 				usage();
 
 			if (dev)
