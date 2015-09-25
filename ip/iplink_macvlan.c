@@ -29,7 +29,7 @@
 static void print_explain(struct link_util *lu, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... %s mode { private | vepa | bridge | passthru }\n",
+		"Usage: ... %s mode { private | vepa | bridge | passthru [nopromisc] }\n",
 		lu->id
 	);
 }
@@ -49,9 +49,11 @@ static int mode_arg(const char *arg)
 static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			  struct nlmsghdr *n)
 {
+	__u32 mode = 0;
+	__u16 flags = 0;
+
 	while (argc > 0) {
 		if (matches(*argv, "mode") == 0) {
-			__u32 mode = 0;
 			NEXT_ARG();
 
 			if (strcmp(*argv, "private") == 0)
@@ -64,7 +66,8 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				mode = MACVLAN_MODE_PASSTHRU;
 			else
 				return mode_arg(*argv);
-			addattr32(n, 1024, IFLA_MACVLAN_MODE, mode);
+		} else if (matches(*argv, "nopromisc") == 0) {
+			flags |= MACVLAN_FLAG_NOPROMISC;
 		} else if (matches(*argv, "help") == 0) {
 			explain(lu);
 			return -1;
@@ -76,12 +79,25 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		argc--, argv++;
 	}
 
+	if (mode)
+		addattr32(n, 1024, IFLA_MACVLAN_MODE, mode);
+
+	if (flags) {
+		if (flags & MACVLAN_FLAG_NOPROMISC &&
+		    mode != MACVLAN_MODE_PASSTHRU) {
+			pfx_err(lu, "nopromisc flag only valid in passthru mode");
+			explain(lu);
+			return -1;
+		}
+		addattr16(n, 1024, IFLA_MACVLAN_FLAGS, flags);
+	}
 	return 0;
 }
 
 static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	__u32 mode;
+	__u16 flags;
 
 	if (!tb)
 		return;
@@ -97,6 +113,14 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 		: mode == MACVLAN_MODE_BRIDGE  ? "bridge"
 		: mode == MACVLAN_MODE_PASSTHRU  ? "passthru"
 		:				 "unknown");
+
+	if (!tb[IFLA_MACVLAN_FLAGS] ||
+	    RTA_PAYLOAD(tb[IFLA_MACVLAN_FLAGS]) < sizeof(__u16))
+		return;
+
+	flags = rta_getattr_u16(tb[IFLA_MACVLAN_FLAGS]);
+	if (flags & MACVLAN_FLAG_NOPROMISC)
+		fprintf(f, "nopromisc ");
 }
 
 static void macvlan_print_help(struct link_util *lu, int argc, char **argv,
