@@ -47,6 +47,7 @@ void incomplete_command(void) __attribute__((noreturn));
 
 #define NEXT_ARG() do { argv++; if (--argc <= 0) incomplete_command(); } while(0)
 #define NEXT_ARG_OK() (argc - 1 > 0)
+#define NEXT_ARG_FWD() do { argv++; argc--; } while(0)
 #define PREV_ARG() do { argv--; argc++; } while(0)
 
 typedef struct
