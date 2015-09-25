@@ -201,10 +201,10 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			  &defrate, sizeof(defrate));
 	if (set_refill_delay)
 		addattr_l(n, 1024, TCA_FQ_FLOW_REFILL_DELAY,
-		          &refill_delay, sizeof(refill_delay));
+			  &refill_delay, sizeof(refill_delay));
 	if (set_orphan_mask)
 		addattr_l(n, 1024, TCA_FQ_ORPHAN_MASK,
-		          &orphan_mask, sizeof(refill_delay));
+			  &orphan_mask, sizeof(refill_delay));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
