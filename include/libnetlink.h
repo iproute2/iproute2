@@ -42,6 +42,8 @@ int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int fam, int type,
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)
 	__attribute__((warn_unused_result));
+int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
+	__attribute__((warn_unused_result));
 
 struct rtnl_ctrl_data {
 	int	nsid;

@@ -39,6 +39,7 @@ static struct
 	char *flushb;
 	int flushp;
 	int flushe;
+	int master;
 } filter;
 
 static void usage(void) __attribute__((noreturn));
@@ -193,6 +194,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	int len = n->nlmsg_len;
 	struct rtattr * tb[NDA_MAX+1];
 	char abuf[256];
+	static int logit = 1;
 
 	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH &&
 	    n->nlmsg_type != RTM_GETNEIGH) {
@@ -219,6 +221,14 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	    (r->ndm_state || !(filter.state&0x100)) &&
              (r->ndm_family != AF_DECnet))
 		return 0;
+
+	if (filter.master && !(n->nlmsg_flags & NLM_F_DUMP_FILTERED)) {
+		if (logit) {
+			logit = 0;
+			fprintf(fp,
+				"\nWARNING: Kernel does not support filtering by master device\n\n");
+		}
+	}
 
 	parse_rtattr(tb, NDA_MAX, NDA_RTA(r), n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
@@ -327,9 +337,18 @@ void ipneigh_reset_filter(int ifindex)
 
 static int do_show_or_flush(int argc, char **argv, int flush)
 {
+	struct {
+		struct nlmsghdr	n;
+		struct ndmsg		ndm;
+		char  			buf[256];
+	} req;
 	char *filter_dev = NULL;
 	int state_given = 0;
-	struct ndmsg ndm = { 0 };
+
+	memset(&req, 0, sizeof(req));
+
+	req.n.nlmsg_type = RTM_GETNEIGH;
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
 
 	ipneigh_reset_filter(0);
 
@@ -351,6 +370,14 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 			if (filter_dev)
 				duparg("dev", *argv);
 			filter_dev = *argv;
+		} else if (strcmp(*argv, "master") == 0) {
+			int ifindex;
+			NEXT_ARG();
+			ifindex = ll_name_to_index(*argv);
+			if (!ifindex)
+				invarg("Device does not exist\n", *argv);
+			addattr32(&req.n, sizeof(req), NDA_MASTER, ifindex);
+			filter.master = ifindex;
 		} else if (strcmp(*argv, "unused") == 0) {
 			filter.unused_only = 1;
 		} else if (strcmp(*argv, "nud") == 0) {
@@ -371,7 +398,7 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 				state = 0x100;
 			filter.state |= state;
 		} else if (strcmp(*argv, "proxy") == 0)
-			ndm.ndm_flags = NTF_PROXY;
+			req.ndm.ndm_flags = NTF_PROXY;
 		else {
 			if (strcmp(*argv, "to") == 0) {
 				NEXT_ARG();
@@ -436,9 +463,9 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 		return 1;
 	}
 
-	ndm.ndm_family = filter.family;
+	req.ndm.ndm_family = filter.family;
 
-	if (rtnl_dump_request(&rth, RTM_GETNEIGH, &ndm, sizeof(struct ndmsg)) < 0) {
+	if (rtnl_dump_request_n(&rth, &req.n) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
