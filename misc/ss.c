@@ -457,7 +457,9 @@ static void user_ent_hash_build(void)
 
 	user_ent_hash_build_init = 1;
 
-	strcpy(name, root);
+	strncpy(name, root, sizeof(name)-1);
+	name[sizeof(name)-1] = 0;
+
 	if (strlen(name) == 0 || name[strlen(name)-1] != '/')
 		strcat(name, "/");
 
@@ -481,7 +483,7 @@ static void user_ent_hash_build(void)
 		if (getpidcon(pid, &pid_context) != 0)
 			pid_context = strdup(no_ctx);
 
-		sprintf(name + nameoff, "%d/fd/", pid);
+		snprintf(name + nameoff, sizeof(name) - nameoff, "%d/fd/", pid);
 		pos = strlen(name);
 		if ((dir1 = opendir(name)) == NULL) {
 			free(pid_context);
@@ -502,7 +504,7 @@ static void user_ent_hash_build(void)
 			if (sscanf(d1->d_name, "%d%c", &fd, &crap) != 1)
 				continue;
 
-			sprintf(name+pos, "%d", fd);
+			snprintf(name+pos, sizeof(name) - pos, "%d", fd);
 
 			link_len = readlink(name, lnk, sizeof(lnk)-1);
 			if (link_len == -1)
@@ -2738,7 +2740,7 @@ static int unix_show(struct filter *f)
 		struct sockstat *u, **insp;
 		int flags;
 
-		if (!(u = malloc(sizeof(*u))))
+		if (!(u = calloc(1, sizeof(*u))))
 			break;
 		u->name = NULL;
 		u->peer_name = NULL;
@@ -3088,11 +3090,13 @@ static int netlink_show_one(struct filter *f,
 			strncpy(procname, "kernel", 6);
 		} else if (pid > 0) {
 			FILE *fp;
-			sprintf(procname, "%s/%d/stat",
+			snprintf(procname, sizeof(procname), "%s/%d/stat",
 				getenv("PROC_ROOT") ? : "/proc", pid);
 			if ((fp = fopen(procname, "r")) != NULL) {
 				if (fscanf(fp, "%*d (%[^)])", procname) == 1) {
-					sprintf(procname+strlen(procname), "/%d", pid);
+					snprintf(procname+strlen(procname),
+						sizeof(procname)-strlen(procname),
+						"/%d", pid);
 					done = 1;
 				}
 				fclose(fp);
