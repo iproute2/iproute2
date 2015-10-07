@@ -419,6 +419,7 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 			fprintf(stderr, "Cannot find device \"%s\"\n", filter_dev);
 			return -1;
 		}
+		addattr32(&req.n, sizeof(req), NDA_IFINDEX, filter.index);
 	}
 
 	if (flush) {
