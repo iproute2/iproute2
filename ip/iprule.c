@@ -391,7 +391,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		} else if (matches(*argv, "realms") == 0) {
 			__u32 realm;
 			NEXT_ARG();
-			if (get_rt_realms(&realm, *argv))
+			if (get_rt_realms_or_raw(&realm, *argv))
 				invarg("invalid realms\n", *argv);
 			addattr32(&req.n, sizeof(req), FRA_FLOW, realm);
 		} else if (matches(*argv, "table") == 0 ||
