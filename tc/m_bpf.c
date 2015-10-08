@@ -111,25 +111,28 @@ opt_bpf:
 			if (ebpf) {
 				bpf_uds_name = getenv(BPF_ENV_UDS);
 				bpf_obj = *argv;
-				NEXT_ARG();
 
-				if (strcmp(*argv, "section") == 0 ||
-				    strcmp(*argv, "sec") == 0) {
+				NEXT_ARG_FWD();
+
+				if (argc > 0 &&
+				    (strcmp(*argv, "section") == 0 ||
+				     strcmp(*argv, "sec") == 0)) {
 					NEXT_ARG();
 					bpf_sec_name = *argv;
-					NEXT_ARG();
+					NEXT_ARG_FWD();
 				}
-				if (!bpf_uds_name &&
+				if (argc > 0 && !bpf_uds_name &&
 				    (strcmp(*argv, "export") == 0 ||
 				     strcmp(*argv, "exp") == 0)) {
 					NEXT_ARG();
 					bpf_uds_name = *argv;
-					NEXT_ARG();
+					NEXT_ARG_FWD();
 				}
-				if (strcmp(*argv, "verbose") == 0 ||
-				    strcmp(*argv, "verb") == 0) {
+				if (argc > 0 &&
+				    (strcmp(*argv, "verbose") == 0 ||
+				     strcmp(*argv, "verb") == 0)) {
 					bpf_verbose = true;
-					NEXT_ARG();
+					NEXT_ARG_FWD();
 				}
 
 				PREV_ARG();
@@ -166,33 +169,29 @@ opt_bpf:
 				goto opt_bpf;
 			break;
 		}
-		argc--;
-		argv++;
+
+		NEXT_ARG_FWD();
 	}
 
 	parm.action = TC_ACT_PIPE;
 	if (argc) {
 		if (matches(*argv, "reclassify") == 0) {
 			parm.action = TC_ACT_RECLASSIFY;
-			argc--;
-			argv++;
+			NEXT_ARG_FWD();
 		} else if (matches(*argv, "pipe") == 0) {
 			parm.action = TC_ACT_PIPE;
-			argc--;
-			argv++;
+			NEXT_ARG_FWD();
 		} else if (matches(*argv, "drop") == 0 ||
 			   matches(*argv, "shot") == 0) {
 			parm.action = TC_ACT_SHOT;
-			argc--;
-			argv++;
+			NEXT_ARG_FWD();
 		} else if (matches(*argv, "continue") == 0) {
 			parm.action = TC_ACT_UNSPEC;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "pass") == 0) {
+			NEXT_ARG_FWD();
+		} else if (matches(*argv, "pass") == 0 ||
+			   matches(*argv, "ok") == 0) {
 			parm.action = TC_ACT_OK;
-			argc--;
-			argv++;
+			NEXT_ARG_FWD();
 		}
 	}
 
@@ -203,8 +202,8 @@ opt_bpf:
 				fprintf(stderr, "bpf: Illegal \"index\"\n");
 				return -1;
 			}
-			argc--;
-			argv++;
+
+			NEXT_ARG_FWD();
 		}
 	}
 
