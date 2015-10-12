@@ -30,7 +30,7 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: tc monitor\n");
+	fprintf(stderr, "Usage: tc [-timestamp [-tshort] monitor\n");
 	exit(-1);
 }
 
@@ -40,6 +40,9 @@ static int accept_tcmsg(const struct sockaddr_nl *who,
 			struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
+
+	if (timestamp)
+		print_timestamp(fp);
 
 	if (n->nlmsg_type == RTM_NEWTFILTER || n->nlmsg_type == RTM_DELTFILTER) {
 		print_filter(who, n, arg);

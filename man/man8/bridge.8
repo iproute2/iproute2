@@ -21,6 +21,7 @@ bridge \- show / manipulate bridge addresses and devices
 \fB\-V\fR[\fIersion\fR] |
 \fB\-s\fR[\fItatistics\fR] |
 \fB\-n\fR[\fIetns\fR] name }
+\fB\-b\fR[\fIatch\fR] filename }
 
 .ti -8
 .BR "bridge link set"
@@ -137,6 +138,16 @@ to
 .RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
 .BR help " }"
 
+.TP
+.BR "\-b", " \-batch " <FILENAME>
+Read commands from provided file or standard input and invoke them.
+First failure will cause termination of bridge command.
+
+.TP
+.BR "\-force"
+Don't terminate bridge command on errors in batch mode.
+If there were any errors during execution of the commands, the application
+return code will be non zero.
 
 .SH BRIDGE - COMMAND SYNTAX
 
@@ -297,6 +308,9 @@ link setting is configured on specified physical device
 .BI master
 link setting is configured on the software bridge (default)
 
+.TP
+.BR "\-t" , " \-timestamp"
+display current time when using monitor option.
 
 .SS bridge link show - list bridge port configuration.
 

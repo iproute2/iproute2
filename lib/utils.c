@@ -914,12 +914,31 @@ int makeargs(char *line, char *argv[], int maxargs)
 	char *cp;
 	int argc = 0;
 
-	for (cp = strtok(line, ws); cp; cp = strtok(NULL, ws)) {
+	for (cp = line + strspn(line, ws); *cp; cp += strspn(cp, ws)) {
 		if (argc >= (maxargs - 1)) {
 			fprintf(stderr, "Too many arguments to command\n");
 			exit(1);
 		}
+
+		/* word begins with quote */
+		if (*cp == '\'' || *cp == '"') {
+			char quote = *cp++;
+
+			argv[argc++] = cp;
+			/* find ending quote */
+			cp = strchr(cp, quote);
+			if (cp == NULL) {
+				fprintf(stderr, "Unterminated quoted string\n");
+				exit(1);
+			}
+			*cp++ = 0;
+			continue;
+		}
+
 		argv[argc++] = cp;
+		/* find end of word */
+		cp += strcspn(cp, ws);
+		*cp++ = 0;
 	}
 	argv[argc] = NULL;
 
