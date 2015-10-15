@@ -1643,7 +1643,7 @@ static int iproute_get(int argc, char **argv)
 		req.r.rtm_family = AF_INET;
 
 	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
-		exit(2);
+		return -2;
 
 	if (connected && !from_ok) {
 		struct rtmsg *r = NLMSG_DATA(&req.n);
