@@ -256,7 +256,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 
 	if (n->nlmsg_type == RTM_DELNEIGH)
-		fprintf(fp, "delete ");
+		fprintf(fp, "Deleted ");
 	else if (n->nlmsg_type == RTM_GETNEIGH)
 		fprintf(fp, "miss ");
 	if (tb[NDA_DST]) {
