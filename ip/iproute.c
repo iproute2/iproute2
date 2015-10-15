@@ -29,6 +29,7 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "iproute_lwtunnel.h"
 
 #ifndef RTAX_RTTVAR
 #define RTAX_RTTVAR RTAX_HOPS
@@ -76,7 +77,8 @@ static void usage(void)
 	fprintf(stderr, "             [ table TABLE_ID ] [ proto RTPROTO ]\n");
 	fprintf(stderr, "             [ scope SCOPE ] [ metric METRIC ]\n");
 	fprintf(stderr, "INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n");
-	fprintf(stderr, "NH := [ via [ FAMILY ] ADDRESS ] [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
+	fprintf(stderr, "NH := [ encap ENCAPTYPE ENCAPHDR ] [ via [ FAMILY ] ADDRESS ]\n");
+	fprintf(stderr, "	    [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
 	fprintf(stderr, "FAMILY := [ inet | inet6 | ipx | dnet | mpls | bridge | link ]\n");
 	fprintf(stderr, "OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ] [ as [ to ] ADDRESS ]\n");
 	fprintf(stderr, "           [ rtt TIME ] [ rttvar TIME ] [ reordering NUMBER ]\n");
@@ -95,6 +97,8 @@ static void usage(void)
 	fprintf(stderr, "TIME := NUMBER[s|ms]\n");
 	fprintf(stderr, "BOOL := [1|0]\n");
 	fprintf(stderr, "FEATURES := ecn\n");
+	fprintf(stderr, "ENCAPTYPE := [ mpls | ip | ip6 ]\n");
+	fprintf(stderr, "ENCAPHDR := [ MPLSLABEL ]\n");
 	exit(-1);
 }
 
@@ -401,6 +405,10 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 						  abuf, sizeof(abuf))
 			);
 	}
+
+	if (tb[RTA_ENCAP])
+		lwt_print_encap(fp, tb[RTA_ENCAP_TYPE], tb[RTA_ENCAP]);
+
 	if (r->rtm_tos && filter.tosmask != -1) {
 		SPRINT_BUF(b1);
 		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
@@ -633,6 +641,12 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				fprintf(fp, "%s\tnexthop", _SL_);
 			if (nh->rtnh_len > sizeof(*nh)) {
 				parse_rtattr(tb, RTA_MAX, RTNH_DATA(nh), nh->rtnh_len - sizeof(*nh));
+
+				if (tb[RTA_ENCAP])
+					lwt_print_encap(fp,
+							tb[RTA_ENCAP_TYPE],
+							tb[RTA_ENCAP]);
+
 				if (tb[RTA_GATEWAY]) {
 					fprintf(fp, " via %s ",
 						format_host(r->rtm_family,
@@ -704,9 +718,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-
-static int parse_one_nh(struct rtmsg *r, struct rtattr *rta,
-			struct rtnexthop *rtnh,
+static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
+			struct rtattr *rta, struct rtnexthop *rtnh,
 			int *argcp, char ***argvp)
 {
 	int argc = *argcp;
@@ -753,6 +766,11 @@ static int parse_one_nh(struct rtmsg *r, struct rtattr *rta,
 				invarg("\"realm\" value is invalid\n", *argv);
 			rta_addattr32(rta, 4096, RTA_FLOW, realm);
 			rtnh->rtnh_len += sizeof(struct rtattr) + 4;
+		} else if (strcmp(*argv, "encap") == 0) {
+			int len = rta->rta_len;
+
+			lwt_parse_encap(rta, 4096, &argc, &argv);
+			rtnh->rtnh_len += rta->rta_len - len;
 		} else
 			break;
 	}
@@ -784,7 +802,7 @@ static int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r,
 		memset(rtnh, 0, sizeof(*rtnh));
 		rtnh->rtnh_len = sizeof(*rtnh);
 		rta->rta_len += rtnh->rtnh_len;
-		parse_one_nh(r, rta, rtnh, &argc, &argv);
+		parse_one_nh(n, r, rta, rtnh, &argc, &argv);
 		rtnh = RTNH_NEXT(rtnh);
 	}
 
@@ -1092,6 +1110,17 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			else if (get_u8(&pref, *argv, 0))
 				invarg("\"pref\" value is invalid\n", *argv);
 			addattr8(&req.n, sizeof(req), RTA_PREF, pref);
+		} else if (strcmp(*argv, "encap") == 0) {
+			char buf[1024];
+			struct rtattr *rta = (void*)buf;
+
+			rta->rta_type = RTA_ENCAP;
+			rta->rta_len = RTA_LENGTH(0);
+
+			lwt_parse_encap(rta, sizeof(buf), &argc, &argv);
+
+			if (rta->rta_len > RTA_LENGTH(0))
+				addraw_l(&req.n, 1024, RTA_DATA(rta), RTA_PAYLOAD(rta));
 		} else {
 			int type;
 			inet_prefix dst;
