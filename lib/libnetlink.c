@@ -742,6 +742,37 @@ int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 	return 0;
 }
 
+int rta_addattr8(struct rtattr *rta, int maxlen, int type, __u8 data)
+{
+	return rta_addattr_l(rta, maxlen, type, &data, sizeof(__u8));
+}
+
+int rta_addattr16(struct rtattr *rta, int maxlen, int type, __u16 data)
+{
+	return rta_addattr_l(rta, maxlen, type, &data, sizeof(__u16));
+}
+
+int rta_addattr64(struct rtattr *rta, int maxlen, int type, __u64 data)
+{
+	return rta_addattr_l(rta, maxlen, type, &data, sizeof(__u64));
+}
+
+struct rtattr *rta_nest(struct rtattr *rta, int maxlen, int type)
+{
+	struct rtattr *nest = RTA_TAIL(rta);
+
+	rta_addattr_l(rta, maxlen, type, NULL, 0);
+
+	return nest;
+}
+
+int rta_nest_end(struct rtattr *rta, struct rtattr *nest)
+{
+	nest->rta_len = (void *)RTA_TAIL(rta) - (void *)nest;
+
+	return rta->rta_len;
+}
+
 int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 {
 	return parse_rtattr_flags(tb, max, rta, len, 0);

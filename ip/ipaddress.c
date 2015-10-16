@@ -345,7 +345,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	} else
 		vf_linkstate = NULL;
 
-	fprintf(fp, "\n    vf %d MAC %s", vf_mac->vf,
+	fprintf(fp, "%s    vf %d MAC %s", _SL_, vf_mac->vf,
 		ll_addr_n2a((unsigned char *)&vf_mac->mac,
 		ETH_ALEN, 0, b1, sizeof(b1)));
 	if (vf_vlan->vlan)
