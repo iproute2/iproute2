@@ -688,4 +688,3 @@ struct qdisc_util netem_qdisc_util = {
 	.parse_qopt	= netem_parse_opt,
 	.print_qopt	= netem_print_opt,
 };
-

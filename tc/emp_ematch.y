@@ -98,4 +98,3 @@ invert:
  {
 	 ematch_err = strdup(s);
  }
-

@@ -375,4 +375,3 @@ int do_filter(int argc, char **argv)
 	fprintf(stderr, "Command \"%s\" is unknown, try \"tc filter help\".\n", *argv);
 	return -1;
 }
-

@@ -263,4 +263,3 @@ int do_ipaddrlabel(int argc, char **argv)
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip addrlabel help\".\n", *argv);
 	exit(-1);
 }
-

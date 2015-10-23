@@ -28,7 +28,7 @@ static void explain(void)
 	fprintf(stderr, "                  [ action ACTION-SPEC ] [ classid CLASSID ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: MATCH-LIST := [ MATCH-LIST ] MATCH\n");
-	fprintf(stderr, "       MATCH      := [ indev DEV-NAME | \n");
+	fprintf(stderr, "       MATCH      := { indev DEV-NAME | \n");
 	fprintf(stderr, "                       dst_mac MAC-ADDR | \n");
 	fprintf(stderr, "                       src_mac MAC-ADDR | \n");
 	fprintf(stderr, "                       eth_type [ipv4 | ipv6 | ETH-TYPE ] | \n");
@@ -36,7 +36,7 @@ static void explain(void)
 	fprintf(stderr, "                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] | \n");
 	fprintf(stderr, "                       src_ip [ IPV4-ADDR | IPV6-ADDR ] | \n");
 	fprintf(stderr, "                       dst_port PORT-NUMBER | \n");
-	fprintf(stderr, "                       src_port PORT-NUMBER | \n");
+	fprintf(stderr, "                       src_port PORT-NUMBER }\n");
 	fprintf(stderr,	"       FILTERID := X:Y:Z\n");
 	fprintf(stderr,	"       ACTION-SPEC := ... look at individual actions\n");
 	fprintf(stderr,	"\n");

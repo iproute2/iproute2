@@ -582,4 +582,3 @@ struct qdisc_util cbq_qdisc_util = {
 	.parse_copt	= cbq_parse_class_opt,
 	.print_copt	= cbq_print_opt,
 };
-

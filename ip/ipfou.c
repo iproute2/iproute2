@@ -156,4 +156,3 @@ int do_ipfou(int argc, char **argv)
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip fou help\".\n", *argv);
 	exit(-1);
 }
-
