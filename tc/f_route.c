@@ -28,7 +28,7 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... route [ from REALM | fromif TAG ] [ to REALM ]\n");
-	fprintf(stderr, "                [ flowid CLASSID ] [ action ACTION_SPEC ]]\n");
+	fprintf(stderr, "                [ classid CLASSID ] [ action ACTION_SPEC ]\n");
 	fprintf(stderr, "       ACTION_SPEC := ... look at individual actions\n");
 	fprintf(stderr, "       CLASSID := X:Y\n");
 	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
