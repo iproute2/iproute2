@@ -1811,4 +1811,3 @@ int do_iproute(int argc, char **argv)
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip route help\".\n", *argv);
 	exit(-1);
 }
-

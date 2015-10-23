@@ -508,4 +508,3 @@ int do_tcp_metrics(int argc, char **argv)
 			"try \"ip tcp_metrics help\".\n", *argv);
 	exit(-1);
 }
-

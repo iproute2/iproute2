@@ -107,4 +107,3 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	return 0;
 }
-

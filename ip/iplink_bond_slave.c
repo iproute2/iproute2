@@ -113,4 +113,3 @@ struct link_util bond_slave_link_util = {
 	.parse_opt	= bond_slave_parse_opt,
 	.slave		= true,
 };
-
