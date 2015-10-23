@@ -272,7 +272,7 @@ static void dump_raw_db(FILE *fp, int to_hist)
 		if (jw) {
 			jsonw_name(jw, n->name);
 			jsonw_start_object(jw);
-			
+
 			for (i=0; i<MAXS && stats[i]; i++)
 				jsonw_uint_field(jw, stats[i], vals[i]);
 			jsonw_end_object(jw);
