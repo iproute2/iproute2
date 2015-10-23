@@ -93,7 +93,7 @@ int rtnl_rtntype_a2n(int *id, char *arg)
 	return 0;
 }
 
-int get_rt_realms(__u32 *realms, char *arg)
+static int get_rt_realms(__u32 *realms, char *arg)
 {
 	__u32 realm = 0;
 	char *p = strchr(arg, '/');
@@ -113,4 +113,12 @@ int get_rt_realms(__u32 *realms, char *arg)
 		return -1;
 	*realms |= realm;
 	return 0;
+}
+
+int get_rt_realms_or_raw(__u32 *realms, char *arg)
+{
+	if (!get_rt_realms(realms, arg))
+		return 0;
+
+	return get_unsigned(realms, arg, 0);
 }
