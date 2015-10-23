@@ -43,5 +43,3 @@ It is available only for alpha and pentiums with correct
 CPU timestamp. It is the fastest way, use it when it is available,
 but remember: not all pentiums have this facility, and
 a lot of them have clock, broken by APM etc. etc.
-
-
