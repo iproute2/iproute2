@@ -38,16 +38,11 @@ static void explain_class(void)
 static int qfq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n)
 {
-	while (argc > 0) {
-		if (matches(*argv, "help") == 0) {
-			explain();
-			return -1;
-		} else {
+	if (argc > 0) {
+		if (matches(*argv, "help") != 0)
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
-			explain();
-			return -1;
-		}
-		argc--; argv++;
+		explain();
+		return -1;
 	}
 
 	return 0;
