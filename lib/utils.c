@@ -531,7 +531,8 @@ done:
 int get_addr(inet_prefix *dst, const char *arg, int family)
 {
 	if (get_addr_1(dst, arg, family)) {
-		fprintf(stderr, "Error: an inet address is expected rather than \"%s\".\n", arg);
+		fprintf(stderr, "Error: %s address is expected rather than \"%s\".\n",
+				family_name(family) ,arg);
 		exit(1);
 	}
 	return 0;
@@ -544,7 +545,8 @@ int get_prefix(inet_prefix *dst, char *arg, int family)
 		exit(1);
 	}
 	if (get_prefix_1(dst, arg, family)) {
-		fprintf(stderr, "Error: an inet prefix is expected rather than \"%s\".\n", arg);
+		fprintf(stderr, "Error: %s prefix is expected rather than \"%s\".\n",
+				family_name(family) ,arg);
 		exit(1);
 	}
 	return 0;
