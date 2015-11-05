@@ -893,7 +893,17 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 static int flush_update(void)
 {
-	if (rtnl_send_check(&rth, filter.flushb, filter.flushp) < 0) {
+
+	/*
+	 * Note that the kernel may delete multiple addresses for one
+	 * delete request (e.g. if ipv4 address promotion is disabled).
+	 * Since a flush operation is really a series of delete requests
+	 * its possible that we may request an address delete that has
+	 * already been done by the kernel. Therefore, ignore EADDRNOTAVAIL
+	 * errors returned from a flush request
+	 */
+	if ((rtnl_send_check(&rth, filter.flushb, filter.flushp) < 0) &&
+	    (errno != EADDRNOTAVAIL)) {
 		perror("Failed to send flush request");
 		return -1;
 	}
