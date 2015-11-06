@@ -349,7 +349,7 @@ static const char *ntable_strtime_delta(__u32 msec)
 	return str;
 }
 
-int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE*)arg;
 	struct ndtmsg *ndtm = NLMSG_DATA(n);
@@ -601,7 +601,7 @@ int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-void ipntable_reset_filter(void)
+static void ipntable_reset_filter(void)
 {
 	memset(&filter, 0, sizeof(filter));
 }

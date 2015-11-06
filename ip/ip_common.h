@@ -1,68 +1,60 @@
-extern int get_operstate(const char *name);
-extern int print_linkinfo(const struct sockaddr_nl *who,
-			  struct nlmsghdr *n,
-			  void *arg);
-extern int print_linkinfo_brief(const struct sockaddr_nl *who,
-				struct nlmsghdr *n,
-				void *arg);
-extern int print_addrinfo(const struct sockaddr_nl *who,
-			  struct nlmsghdr *n,
-			  void *arg);
-extern int print_addrlabel(const struct sockaddr_nl *who,
-			   struct nlmsghdr *n, void *arg);
-extern int print_neigh(const struct sockaddr_nl *who,
-		       struct nlmsghdr *n, void *arg);
-extern int print_ntable(const struct sockaddr_nl *who,
-			struct nlmsghdr *n, void *arg);
-extern int ipaddr_list(int argc, char **argv);
-extern int ipaddr_list_link(int argc, char **argv);
-void ipaddr_get_vf_rate(int, int *, int *, int);
-extern int iproute_monitor(int argc, char **argv);
-extern void iplink_usage(void) __attribute__((noreturn));
-
-extern void iproute_reset_filter(int ifindex);
-extern void ipmroute_reset_filter(int ifindex);
-extern void ipaddr_reset_filter(int oneline, int ifindex);
-extern void ipneigh_reset_filter(int ifindex);
-extern void ipntable_reset_filter(void);
-extern void ipnetconf_reset_filter(int ifindex);
-
-extern int print_route(const struct sockaddr_nl *who,
-		       struct nlmsghdr *n, void *arg);
-extern int print_mroute(const struct sockaddr_nl *who,
-			struct nlmsghdr *n, void *arg);
-extern int print_prefix(const struct sockaddr_nl *who,
-			struct nlmsghdr *n, void *arg);
-extern int print_rule(const struct sockaddr_nl *who,
-		      struct nlmsghdr *n, void *arg);
-extern int print_netconf(const struct sockaddr_nl *who,
-			 struct rtnl_ctrl_data *ctrl,
+int get_operstate(const char *name);
+int print_linkinfo(const struct sockaddr_nl *who,
+		   struct nlmsghdr *n, void *arg);
+int print_linkinfo_brief(const struct sockaddr_nl *who,
 			 struct nlmsghdr *n, void *arg);
-extern void netns_map_init(void);
-extern int print_nsid(const struct sockaddr_nl *who,
-		      struct nlmsghdr *n, void *arg);
-extern int do_ipaddr(int argc, char **argv);
-extern int do_ipaddrlabel(int argc, char **argv);
-extern int do_iproute(int argc, char **argv);
-extern int do_iprule(int argc, char **argv);
-extern int do_ipneigh(int argc, char **argv);
-extern int do_ipntable(int argc, char **argv);
-extern int do_iptunnel(int argc, char **argv);
-extern int do_ip6tunnel(int argc, char **argv);
-extern int do_iptuntap(int argc, char **argv);
-extern int do_iplink(int argc, char **argv);
-extern int do_ipmonitor(int argc, char **argv);
-extern int do_multiaddr(int argc, char **argv);
-extern int do_multiroute(int argc, char **argv);
-extern int do_multirule(int argc, char **argv);
-extern int do_netns(int argc, char **argv);
-extern int do_xfrm(int argc, char **argv);
-extern int do_ipl2tp(int argc, char **argv);
-extern int do_ipfou(int argc, char **argv);
-extern int do_tcp_metrics(int argc, char **argv);
-extern int do_ipnetconf(int argc, char **argv);
-extern int do_iptoken(int argc, char **argv);
-extern int iplink_get(unsigned int flags, char *name, __u32 filt_mask);
+int print_addrinfo(const struct sockaddr_nl *who,
+		   struct nlmsghdr *n, void *arg);
+int print_addrlabel(const struct sockaddr_nl *who,
+		    struct nlmsghdr *n, void *arg);
+int print_neigh(const struct sockaddr_nl *who,
+	        struct nlmsghdr *n, void *arg);
+int ipaddr_list_link(int argc, char **argv);
+void ipaddr_get_vf_rate(int, int *, int *, int);
+void iplink_usage(void) __attribute__((noreturn));
+
+void iproute_reset_filter(int ifindex);
+void ipmroute_reset_filter(int ifindex);
+void ipaddr_reset_filter(int oneline, int ifindex);
+void ipneigh_reset_filter(int ifindex);
+void ipnetconf_reset_filter(int ifindex);
+
+int print_route(const struct sockaddr_nl *who,
+		struct nlmsghdr *n, void *arg);
+int print_mroute(const struct sockaddr_nl *who,
+		 struct nlmsghdr *n, void *arg);
+int print_prefix(const struct sockaddr_nl *who,
+		 struct nlmsghdr *n, void *arg);
+int print_rule(const struct sockaddr_nl *who,
+	       struct nlmsghdr *n, void *arg);
+int print_netconf(const struct sockaddr_nl *who,
+		  struct rtnl_ctrl_data *ctrl,
+		  struct nlmsghdr *n, void *arg);
+void netns_map_init(void);
+int print_nsid(const struct sockaddr_nl *who,
+	       struct nlmsghdr *n, void *arg);
+int do_ipaddr(int argc, char **argv);
+int do_ipaddrlabel(int argc, char **argv);
+int do_iproute(int argc, char **argv);
+int do_iprule(int argc, char **argv);
+int do_ipneigh(int argc, char **argv);
+int do_ipntable(int argc, char **argv);
+int do_iptunnel(int argc, char **argv);
+int do_ip6tunnel(int argc, char **argv);
+int do_iptuntap(int argc, char **argv);
+int do_iplink(int argc, char **argv);
+int do_ipmonitor(int argc, char **argv);
+int do_multiaddr(int argc, char **argv);
+int do_multiroute(int argc, char **argv);
+int do_multirule(int argc, char **argv);
+int do_netns(int argc, char **argv);
+int do_xfrm(int argc, char **argv);
+int do_ipl2tp(int argc, char **argv);
+int do_ipfou(int argc, char **argv);
+int do_tcp_metrics(int argc, char **argv);
+int do_ipnetconf(int argc, char **argv);
+int do_iptoken(int argc, char **argv);
+int iplink_get(unsigned int flags, char *name, __u32 filt_mask);
 
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 {
