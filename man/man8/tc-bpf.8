@@ -844,7 +844,7 @@ result in the default classid:
 Basically, such a minimal generator is equivalent to:
 
 .in +4n
-.B tcpdump -iem1 -ddd 'tcp[tcpflags] & tcp-syn != 0' | tr '\\n' ',' > /var/bpf/tcp-syn
+.B tcpdump -iem1 -ddd 'tcp[tcpflags] & tcp-syn != 0' | tr '\\\\n' ',' > /var/bpf/tcp-syn
 .in
 
 Since
