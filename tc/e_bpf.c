@@ -26,7 +26,7 @@ static char *argv_default[] = { BPF_DEFAULT_CMD, NULL };
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... bpf [ import UDS_FILE ] [ run CMD ]\n\n");
+	fprintf(stderr, "Usage: ... bpf [ import UDS_FILE ] [ run CMD ] [ debug ]\n\n");
 	fprintf(stderr, "Where UDS_FILE provides the name of a unix domain socket file\n");
 	fprintf(stderr, "to import eBPF maps and the optional CMD denotes the command\n");
 	fprintf(stderr, "to be executed (default: \'%s\').\n", BPF_DEFAULT_CMD);
@@ -58,17 +58,21 @@ static int parse_bpf(struct exec_util *eu, int argc, char **argv)
 			NEXT_ARG();
 			argv_run = argv;
 			break;
-		} else if (matches(*argv, "import") == 0 ||
-			   matches(*argv, "imp") == 0) {
+		} else if (matches(*argv, "import") == 0) {
 			NEXT_ARG();
 			bpf_uds_name = *argv;
+		} else if (matches(*argv, "debug") == 0 ||
+			   matches(*argv, "dbg") == 0) {
+			if (bpf_trace_pipe())
+				fprintf(stderr,
+					"No trace pipe, tracefs not mounted?\n");
+			return -1;
 		} else {
 			explain();
 			return -1;
 		}
 
-		argc--;
-		argv++;
+		NEXT_ARG_FWD();
 	}
 
 	if (!bpf_uds_name) {
@@ -142,6 +146,6 @@ err:
 }
 
 struct exec_util bpf_exec_util = {
-	.id = "bpf",
-	.parse_eopt = parse_bpf,
+	.id		= "bpf",
+	.parse_eopt	= parse_bpf,
 };

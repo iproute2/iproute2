@@ -192,6 +192,9 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 	__attribute__ ((format (printf, (pos_str), (pos_args))))
 #endif
 
+#define _textify(x)	#x
+#define textify(x)	_textify(x)
+
 #define htonll(x) ((1==htonl(1)) ? (x) : ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
 #define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 

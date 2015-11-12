@@ -11,25 +11,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <limits.h>
-#include <linux/filter.h>
-#include <linux/if.h>
+
+#include <linux/bpf.h>
 
 #include "utils.h"
 #include "tc_util.h"
 #include "tc_bpf.h"
 
 static const enum bpf_prog_type bpf_type = BPF_PROG_TYPE_SCHED_CLS;
+
+static const int nla_tbl[BPF_NLA_MAX] = {
+	[BPF_NLA_OPS_LEN]	= TCA_BPF_OPS_LEN,
+	[BPF_NLA_OPS]		= TCA_BPF_OPS,
+	[BPF_NLA_FD]		= TCA_BPF_FD,
+	[BPF_NLA_NAME]		= TCA_BPF_NAME,
+};
 
 static void explain(void)
 {
@@ -42,6 +38,7 @@ static void explain(void)
 	fprintf(stderr, "eBPF use case:\n");
 	fprintf(stderr, " object-file FILE [ section CLS_NAME ] [ export UDS_FILE ]");
 	fprintf(stderr, " [ verbose ] [ direct-action ]\n");
+	fprintf(stderr, " object-pinned FILE [ direct-action ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Common remaining options:\n");
 	fprintf(stderr, " [ action ACTION_SPEC ]\n");
@@ -51,7 +48,8 @@ static void explain(void)
 	fprintf(stderr, "c,t,f,k and s are decimals; s denotes number of 4-tuples\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where FILE points to a file containing the BPF_BYTECODE string,\n");
-	fprintf(stderr, "an ELF file containing eBPF map definitions and bytecode.\n");
+	fprintf(stderr, "an ELF file containing eBPF map definitions and bytecode, or a\n");
+	fprintf(stderr, "pinned eBPF program.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where CLS_NAME refers to the section name containing the\n");
 	fprintf(stderr, "classifier (default \'%s\').\n", bpf_default_section(bpf_type));
@@ -66,119 +64,38 @@ static void explain(void)
 static int bpf_parse_opt(struct filter_util *qu, char *handle,
 			 int argc, char **argv, struct nlmsghdr *n)
 {
+	const char *bpf_obj = NULL, *bpf_uds_name = NULL;
 	struct tcmsg *t = NLMSG_DATA(n);
-	const char *bpf_uds_name = NULL;
-	const char *bpf_sec_name = NULL;
 	unsigned int bpf_flags = 0;
-	char *bpf_obj = NULL;
-	struct rtattr *tail;
 	bool seen_run = false;
-	long h = 0;
+	struct rtattr *tail;
 	int ret = 0;
 
 	if (argc == 0)
 		return 0;
 
 	if (handle) {
-		h = strtol(handle, NULL, 0);
-		if (h == LONG_MIN || h == LONG_MAX) {
-			fprintf(stderr, "Illegal handle \"%s\", must be "
-				"numeric.\n", handle);
+		if (get_u32(&t->tcm_handle, handle, 0)) {
+			fprintf(stderr, "Illegal \"handle\"\n");
 			return -1;
 		}
 	}
-
-	t->tcm_handle = h;
 
 	tail = (struct rtattr *)(((void *)n) + NLMSG_ALIGN(n->nlmsg_len));
 	addattr_l(n, MAX_MSG, TCA_OPTIONS, NULL, 0);
 
 	while (argc > 0) {
 		if (matches(*argv, "run") == 0) {
-			struct sock_filter bpf_ops[BPF_MAXINSNS];
-			bool from_file, ebpf, bpf_verbose;
-			int ret;
-
 			NEXT_ARG();
 opt_bpf:
-			bpf_sec_name = bpf_default_section(bpf_type);
-			bpf_verbose = false;
-			ebpf = false;
 			seen_run = true;
-
-			if (strcmp(*argv, "bytecode-file") == 0 ||
-			    strcmp(*argv, "bcf") == 0) {
-				from_file = true;
-			} else if (strcmp(*argv, "bytecode") == 0 ||
-				   strcmp(*argv, "bc") == 0) {
-				from_file = false;
-			} else if (strcmp(*argv, "object-file") == 0 ||
-				   strcmp(*argv, "obj") == 0) {
-				ebpf = true;
-			} else {
-				fprintf(stderr, "What is \"%s\"?\n", *argv);
-				explain();
+			if (bpf_parse_common(&argc, &argv, nla_tbl, bpf_type,
+					     &bpf_obj, &bpf_uds_name, n)) {
+				fprintf(stderr, "Failed to retrieve (e)BPF data!\n");
 				return -1;
-			}
-
-			NEXT_ARG();
-			if (ebpf) {
-				bpf_uds_name = getenv(BPF_ENV_UDS);
-				bpf_obj = *argv;
-
-				NEXT_ARG_FWD();
-
-				if (argc > 0 &&
-				    (strcmp(*argv, "section") == 0 ||
-				     strcmp(*argv, "sec") == 0)) {
-					NEXT_ARG();
-					bpf_sec_name = *argv;
-					NEXT_ARG_FWD();
-				}
-				if (argc > 0 && !bpf_uds_name &&
-				    (strcmp(*argv, "export") == 0 ||
-				     strcmp(*argv, "exp") == 0)) {
-					NEXT_ARG();
-					bpf_uds_name = *argv;
-					NEXT_ARG_FWD();
-				}
-				if (argc > 0 &&
-				    (strcmp(*argv, "verbose") == 0 ||
-				     strcmp(*argv, "verb") == 0)) {
-					bpf_verbose = true;
-					NEXT_ARG_FWD();
-				}
-
-				PREV_ARG();
-			}
-
-			ret = ebpf ? bpf_open_object(bpf_obj, bpf_type, bpf_sec_name,
-						     bpf_verbose) :
-				     bpf_parse_ops(argc, argv, bpf_ops, from_file);
-			if (ret < 0) {
-				fprintf(stderr, "%s\n", ebpf ?
-					"Could not load object" :
-					"Illegal \"bytecode\"");
-				return -1;
-			}
-
-			if (ebpf) {
-				char bpf_name[256];
-
-				bpf_obj = basename(bpf_obj);
-
-				snprintf(bpf_name, sizeof(bpf_name), "%s:[%s]",
-					 bpf_obj, bpf_sec_name);
-
-				addattr32(n, MAX_MSG, TCA_BPF_FD, ret);
-				addattrstrz(n, MAX_MSG, TCA_BPF_NAME, bpf_name);
-			} else {
-				addattr16(n, MAX_MSG, TCA_BPF_OPS_LEN, ret);
-				addattr_l(n, MAX_MSG, TCA_BPF_OPS, &bpf_ops,
-					  ret * sizeof(struct sock_filter));
 			}
 		} else if (matches(*argv, "classid") == 0 ||
-			   strcmp(*argv, "flowid") == 0) {
+			   matches(*argv, "flowid") == 0) {
 			unsigned int handle;
 
 			NEXT_ARG();
@@ -204,7 +121,7 @@ opt_bpf:
 				return -1;
 			}
 			continue;
-		} else if (strcmp(*argv, "help") == 0) {
+		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
 		} else {
@@ -280,7 +197,7 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 }
 
 struct filter_util bpf_filter_util = {
-	.id = "bpf",
-	.parse_fopt = bpf_parse_opt,
-	.print_fopt = bpf_print_opt,
+	.id		= "bpf",
+	.parse_fopt	= bpf_parse_opt,
+	.print_fopt	= bpf_print_opt,
 };

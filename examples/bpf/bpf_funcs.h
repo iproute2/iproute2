@@ -1,6 +1,10 @@
 #ifndef __BPF_FUNCS__
 #define __BPF_FUNCS__
 
+#include <stdint.h>
+
+#include "../../include/bpf_elf.h"
+
 /* Misc macros. */
 #ifndef __maybe_unused
 # define __maybe_unused		__attribute__ ((__unused__))
@@ -42,6 +46,9 @@ static unsigned int (*get_smp_processor_id)(void) __maybe_unused =
 
 static unsigned int (*get_prandom_u32)(void) __maybe_unused =
 	(void *) BPF_FUNC_get_prandom_u32;
+
+static int (*bpf_printk)(const char *fmt, int fmt_size, ...) __maybe_unused =
+	(void *) BPF_FUNC_trace_printk;
 
 /* LLVM built-in functions that an eBPF C program may use to emit
  * BPF_LD_ABS and BPF_LD_IND instructions.
