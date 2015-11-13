@@ -278,8 +278,10 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 	}
 	if (medium[0]) {
 		p->link = ll_name_to_index(medium);
-		if (p->link == 0)
+		if (p->link == 0) {
+			fprintf(stderr, "Cannot find device \"%s\"\n", medium);
 			return -1;
+		}
 	}
 	return 0;
 }
