@@ -47,6 +47,15 @@ static void usage(void)
 	exit(-1);
 }
 
+static void set_tunnel_proto(struct ip_tunnel_parm *p, int proto)
+{
+	if (p->iph.protocol && p->iph.protocol != proto) {
+		fprintf(stderr,"You managed to ask for more than one tunnel mode.\n");
+		exit(-1);
+	}
+	p->iph.protocol = proto;
+}
+
 static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 {
 	int count = 0;
@@ -68,38 +77,18 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 			NEXT_ARG();
 			if (strcmp(*argv, "ipip") == 0 ||
 			    strcmp(*argv, "ip/ip") == 0) {
-				if (p->iph.protocol && p->iph.protocol != IPPROTO_IPIP) {
-					fprintf(stderr,"You managed to ask for more than one tunnel mode.\n");
-					exit(-1);
-				}
-				p->iph.protocol = IPPROTO_IPIP;
+				set_tunnel_proto(p, IPPROTO_IPIP);
 			} else if (strcmp(*argv, "gre") == 0 ||
 				   strcmp(*argv, "gre/ip") == 0) {
-				if (p->iph.protocol && p->iph.protocol != IPPROTO_GRE) {
-					fprintf(stderr,"You managed to ask for more than one tunnel mode.\n");
-					exit(-1);
-				}
-				p->iph.protocol = IPPROTO_GRE;
+				set_tunnel_proto(p, IPPROTO_GRE);
 			} else if (strcmp(*argv, "sit") == 0 ||
 				   strcmp(*argv, "ipv6/ip") == 0) {
-				if (p->iph.protocol && p->iph.protocol != IPPROTO_IPV6) {
-					fprintf(stderr,"You managed to ask for more than one tunnel mode.\n");
-					exit(-1);
-				}
-				p->iph.protocol = IPPROTO_IPV6;
+				set_tunnel_proto(p, IPPROTO_IPV6);
 			} else if (strcmp(*argv, "isatap") == 0) {
-				if (p->iph.protocol && p->iph.protocol != IPPROTO_IPV6) {
-					fprintf(stderr, "You managed to ask for more than one tunnel mode.\n");
-					exit(-1);
-				}
-				p->iph.protocol = IPPROTO_IPV6;
+				set_tunnel_proto(p, IPPROTO_IPV6);
 				isatap++;
 			} else if (strcmp(*argv, "vti") == 0) {
-				if (p->iph.protocol && p->iph.protocol != IPPROTO_IPIP) {
-					fprintf(stderr, "You managed to ask for more than one tunnel mode.\n");
-					exit(-1);
-				}
-				p->iph.protocol = IPPROTO_IPIP;
+				set_tunnel_proto(p, IPPROTO_IPIP);
 				p->i_flags |= VTI_ISVTI;
 			} else {
 				fprintf(stderr,"Unknown tunnel mode \"%s\"\n", *argv);
