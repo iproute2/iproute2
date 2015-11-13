@@ -68,14 +68,17 @@ static void usage(void)
 
 static void print_tunnel(struct ip6_tnl_parm2 *p)
 {
-	char remote[64];
-	char local[64];
+	char s1[1024];
+	char s2[1024];
 
-	inet_ntop(AF_INET6, &p->raddr, remote, sizeof(remote));
-	inet_ntop(AF_INET6, &p->laddr, local, sizeof(local));
-
+	/* Do not use format_host() for local addr,
+	 * symbolic name will not be useful.
+	 */
 	printf("%s: %s/ipv6 remote %s local %s",
-	       p->name, tnl_strproto(p->proto), remote, local);
+	       p->name,
+	       tnl_strproto(p->proto),
+	       format_host(AF_INET6, 16, &p->raddr, s1, sizeof(s1)),
+	       rt_addr_n2a(AF_INET6, 16, &p->laddr, s2, sizeof(s2)));
 	if (p->link) {
 		const char *n = ll_index_to_name(p->link);
 		if (n)
