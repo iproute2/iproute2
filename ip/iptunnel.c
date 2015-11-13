@@ -226,7 +226,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 	}
 
 	if (medium[0]) {
-		p->link = if_nametoindex(medium);
+		p->link = ll_name_to_index(medium);
 		if (p->link == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", medium);
 			return -1;
