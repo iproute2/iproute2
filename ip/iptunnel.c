@@ -139,7 +139,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				p->iph.saddr = htonl(INADDR_ANY);
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
-			strncpy(medium, *argv, IFNAMSIZ-1);
+			strncpy(medium, *argv, IFNAMSIZ - 1);
 		} else if (strcmp(*argv, "ttl") == 0 ||
 			   strcmp(*argv, "hoplimit") == 0 ||
 			   strcmp(*argv, "hlim") == 0) {
@@ -336,14 +336,14 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	if (p->iph.tos) {
 		SPRINT_BUF(b1);
 		printf(" tos");
-		if (p->iph.tos&1)
+		if (p->iph.tos & 1)
 			printf(" inherit");
-		if (p->iph.tos&~1)
-			printf("%c%s ", p->iph.tos&1 ? '/' : ' ',
-			       rtnl_dsfield_n2a(p->iph.tos&~1, b1, sizeof(b1)));
+		if (p->iph.tos & ~1)
+			printf("%c%s ", p->iph.tos & 1 ? '/' : ' ',
+			       rtnl_dsfield_n2a(p->iph.tos & ~1, b1, sizeof(b1)));
 	}
 
-	if (!(p->iph.frag_off&htons(IP_DF)))
+	if (!(p->iph.frag_off & htons(IP_DF)))
 		printf(" nopmtudisc");
 
 	if (p->iph.protocol == IPPROTO_IPV6 && !tnl_ioctl_get_6rd(p->name, &ip6rd) && ip6rd.prefixlen) {
@@ -357,22 +357,22 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 		}
 	}
 
-	if ((p->i_flags&GRE_KEY) && (p->o_flags&GRE_KEY) && p->o_key == p->i_key)
+	if ((p->i_flags & GRE_KEY) && (p->o_flags & GRE_KEY) && p->o_key == p->i_key)
 		printf(" key %u", ntohl(p->i_key));
-	else if ((p->i_flags|p->o_flags)&GRE_KEY) {
-		if (p->i_flags&GRE_KEY)
+	else if ((p->i_flags | p->o_flags) & GRE_KEY) {
+		if (p->i_flags & GRE_KEY)
 			printf(" ikey %u", ntohl(p->i_key));
-		if (p->o_flags&GRE_KEY)
+		if (p->o_flags & GRE_KEY)
 			printf(" okey %u", ntohl(p->o_key));
 	}
 
-	if (p->i_flags&GRE_SEQ)
+	if (p->i_flags & GRE_SEQ)
 		printf("%s  Drop packets out of sequence.", _SL_);
-	if (p->i_flags&GRE_CSUM)
+	if (p->i_flags & GRE_CSUM)
 		printf("%s  Checksum in received packet is required.", _SL_);
-	if (p->o_flags&GRE_SEQ)
+	if (p->o_flags & GRE_SEQ)
 		printf("%s  Sequence packets on output.", _SL_);
-	if (p->o_flags&GRE_CSUM)
+	if (p->o_flags & GRE_CSUM)
 		printf("%s  Checksum output packets.", _SL_);
 }
 
@@ -592,19 +592,19 @@ int do_iptunnel(int argc, char **argv)
 
 	if (argc > 0) {
 		if (matches(*argv, "add") == 0)
-			return do_add(SIOCADDTUNNEL, argc-1, argv+1);
+			return do_add(SIOCADDTUNNEL, argc - 1, argv + 1);
 		if (matches(*argv, "change") == 0)
-			return do_add(SIOCCHGTUNNEL, argc-1, argv+1);
+			return do_add(SIOCCHGTUNNEL, argc - 1, argv + 1);
 		if (matches(*argv, "delete") == 0)
-			return do_del(argc-1, argv+1);
+			return do_del(argc - 1, argv + 1);
 		if (matches(*argv, "show") == 0 ||
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
-			return do_show(argc-1, argv+1);
+			return do_show(argc - 1, argv + 1);
 		if (matches(*argv, "prl") == 0)
-			return do_prl(argc-1, argv+1);
+			return do_prl(argc - 1, argv + 1);
 		if (matches(*argv, "6rd") == 0)
-			return do_6rd(argc-1, argv+1);
+			return do_6rd(argc - 1, argv + 1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else

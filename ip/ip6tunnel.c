@@ -110,22 +110,22 @@ static void print_tunnel(struct ip6_tnl_parm2 *p)
 		printf(" dscp inherit");
 
 	if (p->proto == IPPROTO_GRE) {
-		if ((p->i_flags&GRE_KEY) && (p->o_flags&GRE_KEY) && p->o_key == p->i_key)
+		if ((p->i_flags & GRE_KEY) && (p->o_flags & GRE_KEY) && p->o_key == p->i_key)
 			printf(" key %u", ntohl(p->i_key));
-		else if ((p->i_flags|p->o_flags)&GRE_KEY) {
-			if (p->i_flags&GRE_KEY)
+		else if ((p->i_flags | p->o_flags) & GRE_KEY) {
+			if (p->i_flags & GRE_KEY)
 				printf(" ikey %u", ntohl(p->i_key));
-			if (p->o_flags&GRE_KEY)
+			if (p->o_flags & GRE_KEY)
 				printf(" okey %u", ntohl(p->o_key));
 		}
 
-		if (p->i_flags&GRE_SEQ)
+		if (p->i_flags & GRE_SEQ)
 			printf("%s  Drop packets out of sequence.", _SL_);
-		if (p->i_flags&GRE_CSUM)
+		if (p->i_flags & GRE_CSUM)
 			printf("%s  Checksum in received packet is required.", _SL_);
-		if (p->o_flags&GRE_SEQ)
+		if (p->o_flags & GRE_SEQ)
 			printf("%s  Sequence packets on output.", _SL_);
-		if (p->o_flags&GRE_CSUM)
+		if (p->o_flags & GRE_CSUM)
 			printf("%s  Checksum output packets.", _SL_);
 	}
 }
