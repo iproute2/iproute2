@@ -396,14 +396,8 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 
 static int do_tunnels_list(struct ip_tunnel_parm *p)
 {
-	char name[IFNAMSIZ];
-	unsigned long  rx_bytes, rx_packets, rx_errs, rx_drops,
-	rx_fifo, rx_frame,
-	tx_bytes, tx_packets, tx_errs, tx_drops,
-	tx_fifo, tx_colls, tx_carrier, rx_multi;
-	struct ip_tunnel_parm p1;
-
 	char buf[512];
+	int err = -1;
 	FILE *fp = fopen("/proc/net/dev", "r");
 	if (fp == NULL) {
 		perror("fopen");
@@ -414,19 +408,24 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 	if (!fgets(buf, sizeof(buf), fp) ||
 	    !fgets(buf, sizeof(buf), fp)) {
 		fprintf(stderr, "/proc/net/dev read error\n");
-		fclose(fp);
-		return -1;
+		goto end;
 	}
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		char name[IFNAMSIZ];
 		int index, type;
+		unsigned long rx_bytes, rx_packets, rx_errs, rx_drops,
+			rx_fifo, rx_frame,
+			tx_bytes, tx_packets, tx_errs, tx_drops,
+			tx_fifo, tx_colls, tx_carrier, rx_multi;
+		struct ip_tunnel_parm p1;
 		char *ptr;
+
 		buf[sizeof(buf) - 1] = 0;
 		if ((ptr = strchr(buf, ':')) == NULL ||
 		    (*ptr++ = 0, sscanf(buf, "%s", name) != 1)) {
 			fprintf(stderr, "Wrong format for /proc/net/dev. Giving up.\n");
-			fclose(fp);
-			return -1;
+			goto end;
 		}
 		if (sscanf(ptr, "%ld%ld%ld%ld%ld%ld%ld%*d%ld%ld%ld%ld%ld%ld%ld",
 			   &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
@@ -467,8 +466,10 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		}
 		printf("\n");
 	}
+	err = 0;
+ end:
 	fclose(fp);
-	return 0;
+	return err;
 }
 
 static int do_show(int argc, char **argv)

@@ -326,14 +326,14 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 	FILE *fp = fopen("/proc/net/dev", "r");
 	if (fp == NULL) {
 		perror("fopen");
-		goto end;
+		return -1;
 	}
 
 	/* skip two lines at the begenning of the file */
 	if (!fgets(buf, sizeof(buf), fp) ||
 	    !fgets(buf, sizeof(buf), fp)) {
 		fprintf(stderr, "/proc/net/dev read error\n");
-		return -1;
+		goto end;
 	}
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -395,10 +395,8 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 		printf("\n");
 	}
 	err = 0;
-
  end:
-	if (fp)
-		fclose(fp);
+	fclose(fp);
 	return err;
 }
 
