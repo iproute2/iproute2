@@ -239,10 +239,26 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 	return 0;
 }
 
+static const char *tnl_defname(const struct ip_tunnel_parm *p)
+{
+	switch (p->iph.protocol) {
+	case IPPROTO_IPIP:
+		if (p->i_flags & VTI_ISVTI)
+			return "ip_vti0";
+		else
+			return "tunl0";
+	case IPPROTO_GRE:
+		return "gre0";
+	case IPPROTO_IPV6:
+		return "sit0";
+	}
+	return NULL;
+}
 
 static int do_add(int cmd, int argc, char **argv)
 {
 	struct ip_tunnel_parm p;
+	const char *basedev;
 
 	if (parse_args(argc, argv, cmd, &p) < 0)
 		return -1;
@@ -252,21 +268,12 @@ static int do_add(int cmd, int argc, char **argv)
 		return -1;
 	}
 
-	switch (p.iph.protocol) {
-	case IPPROTO_IPIP:
-		if (p.i_flags & VTI_ISVTI)
-			return tnl_add_ioctl(cmd, "ip_vti0", p.name, &p);
-		else
-			return tnl_add_ioctl(cmd, "tunl0", p.name, &p);
-	case IPPROTO_GRE:
-		return tnl_add_ioctl(cmd, "gre0", p.name, &p);
-	case IPPROTO_IPV6:
-		return tnl_add_ioctl(cmd, "sit0", p.name, &p);
-	default:
+	if (!(basedev = tnl_defname(&p))) {
 		fprintf(stderr, "cannot determine tunnel mode (ipip, gre, vti or sit)\n");
 		return -1;
 	}
-	return -1;
+
+	return tnl_add_ioctl(cmd, basedev, p.name, &p);
 }
 
 static int do_del(int argc, char **argv)
@@ -276,20 +283,7 @@ static int do_del(int argc, char **argv)
 	if (parse_args(argc, argv, SIOCDELTUNNEL, &p) < 0)
 		return -1;
 
-	switch (p.iph.protocol) {
-	case IPPROTO_IPIP:
-		if (p.i_flags & VTI_ISVTI)
-			return tnl_del_ioctl("ip_vti0", p.name, &p);
-		else
-			return tnl_del_ioctl("tunl0", p.name, &p);
-	case IPPROTO_GRE:
-		return tnl_del_ioctl("gre0", p.name, &p);
-	case IPPROTO_IPV6:
-		return tnl_del_ioctl("sit0", p.name, &p);
-	default:
-		return tnl_del_ioctl(p.name, p.name, &p);
-	}
-	return -1;
+	return tnl_del_ioctl(tnl_defname(&p) ? : p.name, p.name, &p);
 }
 
 static void print_tunnel(struct ip_tunnel_parm *p)
@@ -462,31 +456,17 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 
 static int do_show(int argc, char **argv)
 {
-	int err;
 	struct ip_tunnel_parm p;
+	const char *basedev;
 
 	ll_init_map(&rth);
 	if (parse_args(argc, argv, SIOCGETTUNNEL, &p) < 0)
 		return -1;
 
-	switch (p.iph.protocol) {
-	case IPPROTO_IPIP:
-		if (p.i_flags & VTI_ISVTI)
-			err = tnl_get_ioctl(p.name[0] ? p.name : "ip_vti0", &p);
-		else
-			err = tnl_get_ioctl(p.name[0] ? p.name : "tunl0", &p);
-		break;
-	case IPPROTO_GRE:
-		err = tnl_get_ioctl(p.name[0] ? p.name : "gre0", &p);
-		break;
-	case IPPROTO_IPV6:
-		err = tnl_get_ioctl(p.name[0] ? p.name : "sit0", &p);
-		break;
-	default:
-		do_tunnels_list(&p);
-		return 0;
-	}
-	if (err)
+	if (!(basedev = tnl_defname(&p)))
+		return do_tunnels_list(&p);
+
+	if (tnl_get_ioctl(p.name[0] ? p.name : basedev, &p))
 		return -1;
 
 	print_tunnel(&p);
