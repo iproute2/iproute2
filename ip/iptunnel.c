@@ -343,7 +343,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	/* Do not use format_host() for local addr,
 	 * symbolic name will not be useful.
 	 */
-	printf("%s: %s/ip  remote %s  local %s ",
+	printf("%s: %s/ip remote %s local %s",
 	       p->name,
 	       tnl_strproto(p->iph.protocol),
 	       p->iph.daddr ? format_host(AF_INET, 4, &p->iph.daddr, s1, sizeof(s1)) : "any",
@@ -371,13 +371,13 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	if (p->link) {
 		const char *n = ll_index_to_name(p->link);
 		if (n)
-			printf(" dev %s ", n);
+			printf(" dev %s", n);
 	}
 
 	if (p->iph.ttl)
-		printf(" ttl %d ", p->iph.ttl);
+		printf(" ttl %d", p->iph.ttl);
 	else
-		printf(" ttl inherit ");
+		printf(" ttl inherit");
 
 	if (p->iph.tos) {
 		SPRINT_BUF(b1);
@@ -393,11 +393,11 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 		printf(" nopmtudisc");
 
 	if (p->iph.protocol == IPPROTO_IPV6 && !tnl_ioctl_get_6rd(p->name, &ip6rd) && ip6rd.prefixlen) {
-		printf(" 6rd-prefix %s/%u ",
+		printf(" 6rd-prefix %s/%u",
 		       inet_ntop(AF_INET6, &ip6rd.prefix, s1, sizeof(s1)),
 		       ip6rd.prefixlen);
 		if (ip6rd.relay_prefix) {
-			printf("6rd-relay_prefix %s/%u ",
+			printf(" 6rd-relay_prefix %s/%u",
 			       format_host(AF_INET, 4, &ip6rd.relay_prefix, s1, sizeof(s1)),
 			       ip6rd.relay_prefixlen);
 		}
@@ -407,9 +407,9 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 		printf(" key %u", ntohl(p->i_key));
 	else if ((p->i_flags|p->o_flags)&GRE_KEY) {
 		if (p->i_flags&GRE_KEY)
-			printf(" ikey %u ", ntohl(p->i_key));
+			printf(" ikey %u", ntohl(p->i_key));
 		if (p->o_flags&GRE_KEY)
-			printf(" okey %u ", ntohl(p->o_key));
+			printf(" okey %u", ntohl(p->o_key));
 	}
 
 	if (p->i_flags&GRE_SEQ)
