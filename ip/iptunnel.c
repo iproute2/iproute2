@@ -106,45 +106,18 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				exit(-1);
 			}
 		} else if (strcmp(*argv, "key") == 0) {
-			unsigned uval;
 			NEXT_ARG();
 			p->i_flags |= GRE_KEY;
 			p->o_flags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				p->i_key = p->o_key = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value for \"key\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				p->i_key = p->o_key = htonl(uval);
-			}
+			p->i_key = p->o_key = tnl_parse_key("key", *argv);
 		} else if (strcmp(*argv, "ikey") == 0) {
-			unsigned uval;
 			NEXT_ARG();
 			p->i_flags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				p->i_key = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value for \"ikey\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				p->i_key = htonl(uval);
-			}
+			p->i_key = tnl_parse_key("ikey", *argv);
 		} else if (strcmp(*argv, "okey") == 0) {
-			unsigned uval;
 			NEXT_ARG();
 			p->o_flags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				p->o_key = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value for \"okey\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				p->o_key = htonl(uval);
-			}
+			p->o_key = tnl_parse_key("okey", *argv);
 		} else if (strcmp(*argv, "seq") == 0) {
 			p->i_flags |= GRE_SEQ;
 			p->o_flags |= GRE_SEQ;

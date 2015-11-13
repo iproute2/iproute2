@@ -31,5 +31,6 @@ int tnl_del_ioctl(const char *basedev, const char *name, void *p);
 int tnl_prl_ioctl(int cmd, const char *name, void *p);
 int tnl_6rd_ioctl(int cmd, const char *name, void *p);
 int tnl_ioctl_get_6rd(const char *name, void *p);
+__be32 tnl_parse_key(const char *name, const char *key);
 
 #endif

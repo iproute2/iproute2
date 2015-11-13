@@ -180,3 +180,18 @@ int tnl_ioctl_get_6rd(const char *name, void *p)
 {
 	return tnl_gen_ioctl(SIOCGET6RD, name, p, EINVAL);
 }
+
+__be32 tnl_parse_key(const char *name, const char *key)
+{
+	unsigned uval;
+
+	if (strchr(key, '.'))
+		return get_addr32(key);
+
+	if (get_unsigned(&uval, key, 0) < 0) {
+		fprintf(stderr, "invalid value for \"%s\": \"%s\";", name, key);
+		fprintf(stderr, " it should be an unsigned integer\n");
+		exit(-1);
+	}
+	return htonl(uval);
+}
