@@ -73,7 +73,10 @@ static int usage(char *name, int exit_code)
 	fprintf(stderr, "\t-i --interval <intv>\t"
 			"Set interval to 'intv' seconds\n");
 	fprintf(stderr, "\t-k --keys k,k,k,...\tDisplay only keys specified\n");
-	fprintf(stderr, "\t-s --subject [0-2]\t?\n");
+	fprintf(stderr, "\t-s --subject [0-2]\tControl header printing:\n");
+	fprintf(stderr, "\t\t\t\t0 = never\n");
+	fprintf(stderr, "\t\t\t\t1 = once\n");
+	fprintf(stderr, "\t\t\t\t2 = every 20 lines (default))\n");
 	fprintf(stderr, "\t-w --width n,n,n,...\tWidth for each field\n");
 	fprintf(stderr, "\n");
 
