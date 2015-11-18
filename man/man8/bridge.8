@@ -50,7 +50,7 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
-.BR "bridge fdb" " { " add " | " append " | " del " } "
+.BR "bridge fdb" " { " add " | " append " | " del " | " replace " } "
 .I LLADDR
 .B  dev
 .IR DEV " { "
@@ -402,6 +402,13 @@ The arguments are the same as with
 
 .SS bridge fdb delete - delete a forwarding database entry
 This command removes an existing fdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge fdb add" ,
+
+.SS bridge fdb replace - replace a forwarding database entry
+If no matching entry is found, a new one will be created instead.
 
 .PP
 The arguments are the same as with
