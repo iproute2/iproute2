@@ -359,21 +359,19 @@ int main(int argc, char **argv)
 		if (interval < 1 )
 			interval = 1;
 
-		for (i = 0; i < count || !count; ) {
+		for (i = 0; i < count || !count; i++) {
 			lnstat_update(lnstat_files);
 			if (mode == MODE_JSON)
 				print_json(stdout, lnstat_files, &fp);
 			else {
-				if  ((hdr > 1 &&
-				      (! (i % 20))) || (hdr == 1 && i == 0))
+				if  ((hdr > 1 && !(i % 20)) ||
+				     (hdr == 1 && i == 0))
 					print_hdr(stdout, header);
 				print_line(stdout, lnstat_files, &fp);
 			}
 			fflush(stdout);
 			if (i < count - 1 || !count)
 				sleep(interval);
-			if (count)
-				++i;
 		}
 		break;
 	}
