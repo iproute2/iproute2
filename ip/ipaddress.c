@@ -1403,7 +1403,8 @@ static int ipaddr_flush(void)
 			exit(1);
 		}
 		filter.flushed = 0;
-		if (rtnl_dump_filter(&rth, print_addrinfo, stdout) < 0) {
+		if (rtnl_dump_filter_nc(&rth, print_addrinfo,
+					stdout, NLM_F_DUMP_INTR) < 0) {
 			fprintf(stderr, "Flush terminated\n");
 			exit(1);
 		}
