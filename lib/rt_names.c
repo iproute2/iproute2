@@ -17,6 +17,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <dirent.h>
 
 #include <asm/types.h>
 #include <linux/rtnetlink.h>
@@ -339,6 +340,8 @@ static int rtnl_rttable_init;
 
 static void rtnl_rttable_initialize(void)
 {
+	struct dirent *de;
+	DIR *d;
 	int i;
 
 	rtnl_rttable_init = 1;
@@ -348,6 +351,29 @@ static void rtnl_rttable_initialize(void)
 	}
 	rtnl_hash_initialize(CONFDIR "/rt_tables",
 			     rtnl_rttable_hash, 256);
+
+	d = opendir(CONFDIR "/rt_tables.d");
+	if (!d)
+		return;
+
+	while ((de = readdir(d)) != NULL) {
+		char path[PATH_MAX];
+		size_t len;
+
+		if (*de->d_name == '.')
+			continue;
+
+		/* only consider filenames ending in '.conf' */
+		len = strlen(de->d_name);
+		if (len <= 5)
+			continue;
+		if (strcmp(de->d_name + len - 5, ".conf"))
+			continue;
+
+		snprintf(path, sizeof(path), CONFDIR "/rt_tables.d/%s", de->d_name);
+		rtnl_hash_initialize(path, rtnl_rttable_hash, 256);
+	}
+	closedir(d);
 }
 
 const char * rtnl_rttable_n2a(__u32 id, char *buf, int len)
