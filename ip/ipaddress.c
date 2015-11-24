@@ -1148,28 +1148,6 @@ brief_exit:
 	return 0;
 }
 
-static int print_addrinfo_primary(const struct sockaddr_nl *who,
-				  struct nlmsghdr *n, void *arg)
-{
-	struct ifaddrmsg *ifa = NLMSG_DATA(n);
-
-	if (ifa->ifa_flags & IFA_F_SECONDARY)
-		return 0;
-
-	return print_addrinfo(who, n, arg);
-}
-
-static int print_addrinfo_secondary(const struct sockaddr_nl *who,
-				    struct nlmsghdr *n, void *arg)
-{
-	struct ifaddrmsg *ifa = NLMSG_DATA(n);
-
-	if (!(ifa->ifa_flags & IFA_F_SECONDARY))
-		return 0;
-
-	return print_addrinfo(who, n, arg);
-}
-
 struct nlmsg_list
 {
 	struct nlmsg_list *next;
@@ -1420,26 +1398,12 @@ static int ipaddr_flush(void)
 	filter.flushe = sizeof(flushb);
 
 	while ((max_flush_loops == 0) || (round < max_flush_loops)) {
-		const struct rtnl_dump_filter_arg a[3] = {
-			{
-				.filter = print_addrinfo_secondary,
-				.arg1 = stdout,
-			},
-			{
-				.filter = print_addrinfo_primary,
-				.arg1 = stdout,
-			},
-			{
-				.filter = NULL,
-				.arg1 = NULL,
-			},
-		};
 		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
 		filter.flushed = 0;
-		if (rtnl_dump_filter_l(&rth, a) < 0) {
+		if (rtnl_dump_filter(&rth, print_addrinfo, stdout) < 0) {
 			fprintf(stderr, "Flush terminated\n");
 			exit(1);
 		}
