@@ -1451,10 +1451,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 
 	ipaddr_reset_filter(oneline, 0);
 	filter.showqueue = 1;
-
-	if (filter.family == AF_UNSPEC)
-		filter.family = preferred_family;
-
+	filter.family = preferred_family;
 	filter.group = -1;
 
 	if (action == IPADD_FLUSH) {
