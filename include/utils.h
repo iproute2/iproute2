@@ -40,6 +40,10 @@ extern bool do_all;
 #define IPSEC_PROTO_ANY	255
 #endif
 
+#ifndef CONFDIR
+#define CONFDIR		"/etc/iproute2"
+#endif
+
 #define SPRINT_BSIZE 64
 #define SPRINT_BUF(x)	char x[SPRINT_BSIZE]
 
