@@ -570,8 +570,34 @@ static int do_6rd(int argc, char **argv)
 	return tnl_6rd_ioctl(cmd, medium, &ip6rd);
 }
 
+static int tunnel_mode_is_ipv6(char *tunnel_mode) {
+	static const char *ipv6_modes[] = {
+		"ipv6/ipv6", "ip6ip6",
+		"vti6",
+		"ip/ipv6", "ipv4/ipv6", "ipip6", "ip4ip6",
+		"ip6gre", "gre/ipv6",
+		"any/ipv6", "any"
+	};
+	int i;
+
+	for (i = 0; i < sizeof(ipv6_modes) / sizeof(ipv6_modes[0]); i++) {
+		if (strcmp(ipv6_modes[i], tunnel_mode) == 0)
+			return 1;
+	}
+	return 0;
+}
+
 int do_iptunnel(int argc, char **argv)
 {
+	int i;
+
+	for (i = 0; i < argc - 1; i++) {
+		if (strcmp(argv[i], "mode") == 0) {
+			if (tunnel_mode_is_ipv6(argv[i + 1]))
+				preferred_family = AF_INET6;
+			break;
+		}
+	}
 	switch (preferred_family) {
 	case AF_UNSPEC:
 		preferred_family = AF_INET;
