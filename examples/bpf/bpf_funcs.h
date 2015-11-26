@@ -10,8 +10,16 @@
 # define __maybe_unused		__attribute__ ((__unused__))
 #endif
 
+#ifndef __stringify
+# define __stringify(x)		#x
+#endif
+
 #ifndef __section
 # define __section(NAME)	__attribute__((section(NAME), used))
+#endif
+
+#ifndef __section_tail
+# define __section_tail(m, x)	__section(__stringify(m) "/" __stringify(x))
 #endif
 
 #ifndef offsetof
@@ -49,6 +57,9 @@ static unsigned int (*get_prandom_u32)(void) __maybe_unused =
 
 static int (*bpf_printk)(const char *fmt, int fmt_size, ...) __maybe_unused =
 	(void *) BPF_FUNC_trace_printk;
+
+static void (*bpf_tail_call)(void *ctx, void *map, int index) __maybe_unused =
+	(void *) BPF_FUNC_tail_call;
 
 /* LLVM built-in functions that an eBPF C program may use to emit
  * BPF_LD_ABS and BPF_LD_IND instructions.
