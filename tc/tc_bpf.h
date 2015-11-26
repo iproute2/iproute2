@@ -55,6 +55,7 @@ const char *bpf_default_section(const enum bpf_prog_type type);
 int bpf_parse_common(int *ptr_argc, char ***ptr_argv, const int *nla_tbl,
 		     enum bpf_prog_type type, const char **ptr_object,
 		     const char **ptr_uds_name, struct nlmsghdr *n);
+int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv);
 
 void bpf_print_ops(FILE *f, struct rtattr *bpf_ops, __u16 len);
 
