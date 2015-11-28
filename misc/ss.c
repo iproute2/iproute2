@@ -2729,7 +2729,7 @@ static int unix_show(struct filter *f)
 
 	if ((fp = net_unix_open()) == NULL)
 		return -1;
-	if (!fgets(buf, sizeof(buf)-1, fp)) {
+	if (!fgets(buf, sizeof(buf), fp)) {
 		fclose(fp);
 		return -1;
 	}
@@ -2738,7 +2738,7 @@ static int unix_show(struct filter *f)
 		newformat = 1;
 	cnt = 0;
 
-	while (fgets(buf, sizeof(buf)-1, fp)) {
+	while (fgets(buf, sizeof(buf), fp)) {
 		struct sockstat *u, **insp;
 		int flags;
 
@@ -3217,12 +3217,12 @@ static int netlink_show(struct filter *f)
 
 	if ((fp = net_netlink_open()) == NULL)
 		return -1;
-	if (!fgets(buf, sizeof(buf)-1, fp)) {
+	if (!fgets(buf, sizeof(buf), fp)) {
 		fclose(fp);
 		return -1;
 	}
 
-	while (fgets(buf, sizeof(buf)-1, fp)) {
+	while (fgets(buf, sizeof(buf), fp)) {
 		sscanf(buf, "%llx %d %d %x %d %d %llx %d",
 		       &sk,
 		       &prot, &pid, &groups, &rq, &wq, &cb, &rc);
