@@ -138,7 +138,8 @@ static int lnstat_scan_fields(struct lnstat_file *lf)
 	char buf[FGETS_BUF_SIZE];
 
 	rewind(lf->fp);
-	fgets(buf, sizeof(buf)-1, lf->fp);
+	if (!fgets(buf, sizeof(buf)-1, lf->fp))
+		return -1;
 
 	return __lnstat_scan_fields(lf, buf);
 }

@@ -528,7 +528,8 @@ static void user_ent_hash_build(void)
 				snprintf(tmp, sizeof(tmp), "%s/%d/stat",
 					root, pid);
 				if ((fp = fopen(tmp, "r")) != NULL) {
-					fscanf(fp, "%*d (%[^)])", p);
+					if (fscanf(fp, "%*d (%[^)])", p) < 1)
+						; /* ignore */
 					fclose(fp);
 				}
 			}
@@ -660,7 +661,10 @@ static int get_slabstat(struct slabstat *s)
 
 	cnt = sizeof(*s)/sizeof(int);
 
-	fgets(buf, sizeof(buf), fp);
+	if (!fgets(buf, sizeof(buf), fp)) {
+		fclose(fp);
+		return -1;
+	}
 	while(fgets(buf, sizeof(buf), fp) != NULL) {
 		int i;
 		for (i=0; i<sizeof(slabstat_ids)/sizeof(slabstat_ids[0]); i++) {
@@ -2725,7 +2729,10 @@ static int unix_show(struct filter *f)
 
 	if ((fp = net_unix_open()) == NULL)
 		return -1;
-	fgets(buf, sizeof(buf)-1, fp);
+	if (!fgets(buf, sizeof(buf)-1, fp)) {
+		fclose(fp);
+		return -1;
+	}
 
 	if (memcmp(buf, "Peer", 4) == 0)
 		newformat = 1;
@@ -3210,7 +3217,10 @@ static int netlink_show(struct filter *f)
 
 	if ((fp = net_netlink_open()) == NULL)
 		return -1;
-	fgets(buf, sizeof(buf)-1, fp);
+	if (!fgets(buf, sizeof(buf)-1, fp)) {
+		fclose(fp);
+		return -1;
+	}
 
 	while (fgets(buf, sizeof(buf)-1, fp)) {
 		sscanf(buf, "%llx %d %d %x %d %d %llx %d",
