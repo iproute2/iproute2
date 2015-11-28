@@ -870,31 +870,38 @@ static void init_service_resolver(void)
 {
 	char buf[128];
 	FILE *fp = popen("/usr/sbin/rpcinfo -p 2>/dev/null", "r");
-	if (fp) {
-		fgets(buf, sizeof(buf), fp);
-		while (fgets(buf, sizeof(buf), fp) != NULL) {
-			unsigned int progn, port;
-			char proto[128], prog[128];
-			if (sscanf(buf, "%u %*d %s %u %s", &progn, proto,
-				   &port, prog+4) == 4) {
-				struct scache *c = malloc(sizeof(*c));
-				if (c) {
-					c->port = port;
-					memcpy(prog, "rpc.", 4);
-					c->name = strdup(prog);
-					if (strcmp(proto, TCP_PROTO) == 0)
-						c->proto = TCP_PROTO;
-					else if (strcmp(proto, UDP_PROTO) == 0)
-						c->proto = UDP_PROTO;
-					else
-						c->proto = NULL;
-					c->next = rlist;
-					rlist = c;
-				}
-			}
-		}
+
+	if (!fp)
+		return;
+
+	if (!fgets(buf, sizeof(buf), fp)) {
 		pclose(fp);
+		return;
 	}
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		unsigned int progn, port;
+		char proto[128], prog[128] = "rpc.";
+		struct scache *c;
+
+		if (sscanf(buf, "%u %*d %s %u %s",
+		           &progn, proto, &port, prog+4) != 4)
+			continue;
+
+		if (!(c = malloc(sizeof(*c))))
+			continue;
+
+		c->port = port;
+		c->name = strdup(prog);
+		if (strcmp(proto, TCP_PROTO) == 0)
+			c->proto = TCP_PROTO;
+		else if (strcmp(proto, UDP_PROTO) == 0)
+			c->proto = UDP_PROTO;
+		else
+			c->proto = NULL;
+		c->next = rlist;
+		rlist = c;
+	}
+	pclose(fp);
 }
 
 static int ip_local_port_min, ip_local_port_max;
