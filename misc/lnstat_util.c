@@ -38,18 +38,22 @@
 /* Read (and summarize for SMP) the different stats vars. */
 static int scan_lines(struct lnstat_file *lf, int i)
 {
+	char buf[FGETS_BUF_SIZE];
 	int j, num_lines = 0;
 
 	for (j = 0; j < lf->num_fields; j++)
 		lf->fields[j].values[i] = 0;
 
-	while(!feof(lf->fp)) {
-		char buf[FGETS_BUF_SIZE];
+	rewind(lf->fp);
+	/* skip first line */
+	if (!lf->compat && !fgets(buf, sizeof(buf)-1, lf->fp))
+		return -1;
+
+	while(!feof(lf->fp) && fgets(buf, sizeof(buf)-1, lf->fp)) {
 		char *ptr = buf;
 
 		num_lines++;
 
-		fgets(buf, sizeof(buf)-1, lf->fp);
 		gettimeofday(&lf->last_read, NULL);
 
 		for (j = 0; j < lf->num_fields; j++) {
@@ -81,7 +85,6 @@ static int time_after(struct timeval *last,
 int lnstat_update(struct lnstat_file *lnstat_files)
 {
 	struct lnstat_file *lf;
-	char buf[FGETS_BUF_SIZE];
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
@@ -91,11 +94,6 @@ int lnstat_update(struct lnstat_file *lnstat_files)
 			int i;
 			struct lnstat_field *lfi;
 
-			rewind(lf->fp);
-			if (!lf->compat) {
-				/* skip first line */
-				fgets(buf, sizeof(buf)-1, lf->fp);
-			}
 			scan_lines(lf, 1);
 
 			for (i = 0, lfi = &lf->fields[i];
@@ -107,8 +105,6 @@ int lnstat_update(struct lnstat_file *lnstat_files)
 				    			/ lf->interval.tv_sec;
 			}
 
-			rewind(lf->fp);
-			fgets(buf, sizeof(buf)-1, lf->fp);
 			scan_lines(lf, 0);
 		}
 	}
