@@ -904,8 +904,6 @@ static void init_service_resolver(void)
 	pclose(fp);
 }
 
-static int ip_local_port_min, ip_local_port_max;
-
 /* Even do not try default linux ephemeral port ranges:
  * default /etc/services contains so much of useless crap
  * wouldbe "allocated" to this area that resolution
@@ -914,19 +912,18 @@ static int ip_local_port_min, ip_local_port_max;
  */
 static int is_ephemeral(int port)
 {
-	if (!ip_local_port_min) {
-		FILE *f = ephemeral_ports_open();
-		if (f) {
-			fscanf(f, "%d %d",
-			       &ip_local_port_min, &ip_local_port_max);
-			fclose(f);
-		} else {
-			ip_local_port_min = 1024;
-			ip_local_port_max = 4999;
-		}
-	}
+	static int min = 0, max = 0;
 
-	return (port >= ip_local_port_min && port<= ip_local_port_max);
+	if (!min) {
+		FILE *f = ephemeral_ports_open();
+		if (!f || fscanf(f, "%d %d", &min, &max) < 2) {
+			min = 1024;
+			max = 4999;
+		}
+		if (f)
+			fclose(f);
+	}
+	return port >= min && port <= max;
 }
 
 
@@ -1081,8 +1078,6 @@ static int run_ssfilter(struct ssfilter *f, struct sockstat *s)
 	switch (f->type) {
 		case SSF_S_AUTO:
 	{
-                static int low, high=65535;
-
 		if (s->local.family == AF_UNIX) {
 			char *p;
 			memcpy(&p, s->local.data, sizeof(p));
@@ -1094,14 +1089,7 @@ static int run_ssfilter(struct ssfilter *f, struct sockstat *s)
 		if (s->local.family == AF_NETLINK)
 			return s->lport < 0;
 
-                if (!low) {
-			FILE *fp = ephemeral_ports_open();
-			if (fp) {
-				fscanf(fp, "%d%d", &low, &high);
-				fclose(fp);
-			}
-		}
-		return s->lport >= low && s->lport <= high;
+		return is_ephemeral(s->lport);
 	}
 		case SSF_DCOND:
 	{
