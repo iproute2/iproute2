@@ -95,10 +95,6 @@ static int iptoken_list(int argc, char **argv)
 {
 	int af = AF_INET6;
 	struct rtnl_dump_args da;
-	const struct rtnl_dump_filter_arg a[2] = {
-		{ .filter = print_token, .arg1 = &da, },
-		{ .filter = NULL, .arg1 = NULL, },
-	};
 
 	memset(&da, 0, sizeof(da));
 	da.fp = stdout;
@@ -118,7 +114,7 @@ static int iptoken_list(int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_dump_filter_l(&rth, a) < 0) {
+	if (rtnl_dump_filter(&rth, print_token, &da) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return -1;
 	}

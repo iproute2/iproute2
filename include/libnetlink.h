@@ -60,11 +60,16 @@ struct rtnl_dump_filter_arg
 {
 	rtnl_filter_t filter;
 	void *arg1;
+	__u16 nc_flags;
 };
 
 int rtnl_dump_filter_l(struct rtnl_handle *rth,
 			      const struct rtnl_dump_filter_arg *arg);
-int rtnl_dump_filter(struct rtnl_handle *rth, rtnl_filter_t filter, void *arg);
+int rtnl_dump_filter_nc(struct rtnl_handle *rth,
+			rtnl_filter_t filter,
+			void *arg, __u16 nc_flags);
+#define rtnl_dump_filter(rth, filter, arg) \
+	rtnl_dump_filter_nc(rth, filter, arg, 0)
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr *answer, size_t len)
 	__attribute__((warn_unused_result));

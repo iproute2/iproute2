@@ -931,7 +931,7 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 				mxlock |= (1<<RTAX_HOPLIMIT);
 				NEXT_ARG();
 			}
-			if (get_unsigned(&hoplimit, *argv, 0))
+			if (get_unsigned(&hoplimit, *argv, 0) || hoplimit > 255)
 				invarg("\"hoplimit\" value is invalid\n", *argv);
 			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_HOPLIMIT, hoplimit);
 		} else if (strcmp(*argv, "advmss") == 0) {

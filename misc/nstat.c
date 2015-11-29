@@ -649,7 +649,8 @@ int main(int argc, char *argv[])
 			}
 			if (uptime >= 0 && time(NULL) >= stb.st_mtime+uptime) {
 				fprintf(stderr, "nstat: history is aged out, resetting\n");
-				ftruncate(fileno(hist_fp), 0);
+				if (ftruncate(fileno(hist_fp), 0) < 0)
+					perror("nstat: ftruncate");
 			}
 		}
 
@@ -693,7 +694,8 @@ int main(int argc, char *argv[])
 			dump_incr_db(stdout);
 	}
 	if (!no_update) {
-		ftruncate(fileno(hist_fp), 0);
+		if (ftruncate(fileno(hist_fp), 0) < 0)
+			perror("nstat: ftruncate");
 		rewind(hist_fp);
 
 		json_output = 0;
