@@ -100,8 +100,9 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 		struct ndmsg		ndm;
 		char  			buf[256];
 	} req;
-	char  *d = NULL;
+	char  *dev = NULL;
 	int dst_ok = 0;
+	int dev_ok = 0;
 	int lladdr_ok = 0;
 	char * lla = NULL;
 	inet_prefix dst;
@@ -135,10 +136,12 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 				duparg("address", *argv);
 			get_addr(&dst, *argv, preferred_family);
 			dst_ok = 1;
+			dev_ok = 1;
 			req.ndm.ndm_flags |= NTF_PROXY;
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
-			d = *argv;
+			dev = *argv;
+			dev_ok = 1;
 		} else {
 			if (strcmp(*argv, "to") == 0) {
 				NEXT_ARG();
@@ -153,7 +156,7 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 		}
 		argc--; argv++;
 	}
-	if (d == NULL || !dst_ok || dst.family == AF_UNSPEC) {
+	if (!dev_ok || !dst_ok || dst.family == AF_UNSPEC) {
 		fprintf(stderr, "Device and destination are required arguments.\n");
 		exit(-1);
 	}
@@ -175,8 +178,8 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 
 	ll_init_map(&rth);
 
-	if ((req.ndm.ndm_ifindex = ll_name_to_index(d)) == 0) {
-		fprintf(stderr, "Cannot find device \"%s\"\n", d);
+	if (dev && (req.ndm.ndm_ifindex = ll_name_to_index(dev)) == 0) {
+		fprintf(stderr, "Cannot find device \"%s\"\n", dev);
 		return -1;
 	}
 
