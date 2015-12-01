@@ -10,7 +10,7 @@ enum {
 };
 
 struct count_tuple {
-	long packets; /* type long for __sync_fetch_and_add() */
+	long packets; /* type long for lock_xadd() */
 	long bytes;
 };
 

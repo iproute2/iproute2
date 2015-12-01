@@ -1,6 +1,4 @@
-#include <linux/bpf.h>
-
-#include "bpf_funcs.h"
+#include "../../include/bpf_api.h"
 
 /* This example demonstrates how classifier run-time behaviour
  * can be altered with tail calls. We start out with an empty
@@ -34,37 +32,36 @@
  *   Socket Thread-19818 [001] ..s. 139022.156730: : bbb
  *   [...]
  */
-struct bpf_elf_map __section("maps") jmp_tc = {
-	.type		= BPF_MAP_TYPE_PROG_ARRAY,
-	.size_key	= sizeof(int),
-	.size_value	= sizeof(int),
-	.pinning	= PIN_GLOBAL_NS,
-	.max_elem	= 1,
-};
 
-__section("aaa") int cls_aaa(struct __sk_buff *skb)
+BPF_PROG_ARRAY(jmp_tc, 0, PIN_GLOBAL_NS, 1);
+
+__section("aaa")
+int cls_aaa(struct __sk_buff *skb)
 {
 	char fmt[] = "aaa\n";
 
-	bpf_printk(fmt, sizeof(fmt));
-	return -1;
+	trace_printk(fmt, sizeof(fmt));
+	return TC_H_MAKE(1, 42);
 }
 
-__section("bbb") int cls_bbb(struct __sk_buff *skb)
+__section("bbb")
+int cls_bbb(struct __sk_buff *skb)
 {
 	char fmt[] = "bbb\n";
 
-	bpf_printk(fmt, sizeof(fmt));
-	return -1;
+	trace_printk(fmt, sizeof(fmt));
+	return TC_H_MAKE(1, 43);
 }
 
-__section("classifier") int cls_entry(struct __sk_buff *skb)
+__section_cls_entry
+int cls_entry(struct __sk_buff *skb)
 {
 	char fmt[] = "fallthrough\n";
 
-	bpf_tail_call(skb, &jmp_tc, 0);
-	bpf_printk(fmt, sizeof(fmt));
-	return -1;
+	tail_call(skb, &jmp_tc, 0);
+	trace_printk(fmt, sizeof(fmt));
+
+	return BPF_H_DEFAULT;
 }
 
-char __license[] __section("license") = "GPL";
+BPF_LICENSE("GPL");

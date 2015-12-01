@@ -1,32 +1,30 @@
-#include <linux/bpf.h>
-
-#include "bpf_funcs.h"
+#include "../../include/bpf_api.h"
 
 /* Cyclic dependency example to test the kernel's runtime upper
- * bound on loops.
+ * bound on loops. Also demonstrates on how to use direct-actions,
+ * loaded as: tc filter add [...] bpf da obj [...]
  */
-struct bpf_elf_map __section("maps") jmp_tc = {
-	.type		= BPF_MAP_TYPE_PROG_ARRAY,
-	.id		= 0xabccba,
-	.size_key	= sizeof(int),
-	.size_value	= sizeof(int),
-	.pinning	= PIN_OBJECT_NS,
-	.max_elem	= 1,
-};
+#define JMP_MAP_ID	0xabccba
 
-__section_tail(0xabccba, 0) int cls_loop(struct __sk_buff *skb)
+BPF_PROG_ARRAY(jmp_tc, JMP_MAP_ID, PIN_OBJECT_NS, 1);
+
+__section_tail(JMP_MAP_ID, 0)
+int cls_loop(struct __sk_buff *skb)
 {
 	char fmt[] = "cb: %u\n";
 
-	bpf_printk(fmt, sizeof(fmt), skb->cb[0]++);
-	bpf_tail_call(skb, &jmp_tc, 0);
-	return -1;
+	trace_printk(fmt, sizeof(fmt), skb->cb[0]++);
+	tail_call(skb, &jmp_tc, 0);
+
+	skb->tc_classid = TC_H_MAKE(1, 42);
+	return TC_ACT_OK;
 }
 
-__section("classifier") int cls_entry(struct __sk_buff *skb)
+__section_cls_entry
+int cls_entry(struct __sk_buff *skb)
 {
-	bpf_tail_call(skb, &jmp_tc, 0);
-	return -1;
+	tail_call(skb, &jmp_tc, 0);
+	return TC_ACT_SHOT;
 }
 
-char __license[] __section("license") = "GPL";
+BPF_LICENSE("GPL");

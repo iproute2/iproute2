@@ -1,6 +1,4 @@
-#include <linux/bpf.h>
-
-#include "bpf_funcs.h"
+#include "../../include/bpf_api.h"
 
 #define ENTRY_INIT	3
 #define ENTRY_0		0
@@ -27,89 +25,75 @@
  * program array can be atomically replaced during run-time, e.g. to change
  * classifier behaviour.
  */
-struct bpf_elf_map __section("maps") map_sh = {
-	.type		= BPF_MAP_TYPE_ARRAY,
-	.size_key	= sizeof(int),
-	.size_value	= sizeof(int),
-	.pinning	= PIN_OBJECT_NS,
-	.max_elem	= 1,
-};
 
-struct bpf_elf_map __section("maps") jmp_tc = {
-	.type		= BPF_MAP_TYPE_PROG_ARRAY,
-	.id		= FOO,
-	.size_key	= sizeof(int),
-	.size_value	= sizeof(int),
-	.pinning	= PIN_OBJECT_NS,
-	.max_elem	= MAX_JMP_SIZE,
-};
+BPF_PROG_ARRAY(jmp_tc, FOO, PIN_OBJECT_NS, MAX_JMP_SIZE);
+BPF_PROG_ARRAY(jmp_ex, BAR, PIN_OBJECT_NS, 1);
 
-struct bpf_elf_map __section("maps") jmp_ex = {
-	.type		= BPF_MAP_TYPE_PROG_ARRAY,
-	.id		= BAR,
-	.size_key	= sizeof(int),
-	.size_value	= sizeof(int),
-	.pinning	= PIN_OBJECT_NS,
-	.max_elem	= 1,
-};
+BPF_ARRAY4(map_sh, 0, PIN_OBJECT_NS, 1);
 
-__section_tail(FOO, ENTRY_0) int cls_case1(struct __sk_buff *skb)
+__section_tail(FOO, ENTRY_0)
+int cls_case1(struct __sk_buff *skb)
 {
 	char fmt[] = "case1: map-val: %d from:%u\n";
 	int key = 0, *val;
 
-	val = bpf_map_lookup_elem(&map_sh, &key);
+	val = map_lookup_elem(&map_sh, &key);
 	if (val)
-		bpf_printk(fmt, sizeof(fmt), *val, skb->cb[0]);
+		trace_printk(fmt, sizeof(fmt), *val, skb->cb[0]);
 
 	skb->cb[0] = ENTRY_0;
-	bpf_tail_call(skb, &jmp_ex, ENTRY_0);
-	return 0;
+	tail_call(skb, &jmp_ex, ENTRY_0);
+
+	return BPF_H_DEFAULT;
 }
 
-__section_tail(FOO, ENTRY_1) int cls_case2(struct __sk_buff *skb)
+__section_tail(FOO, ENTRY_1)
+int cls_case2(struct __sk_buff *skb)
 {
 	char fmt[] = "case2: map-val: %d from:%u\n";
 	int key = 0, *val;
 
-	val = bpf_map_lookup_elem(&map_sh, &key);
+	val = map_lookup_elem(&map_sh, &key);
 	if (val)
-		bpf_printk(fmt, sizeof(fmt), *val, skb->cb[0]);
+		trace_printk(fmt, sizeof(fmt), *val, skb->cb[0]);
 
 	skb->cb[0] = ENTRY_1;
-	bpf_tail_call(skb, &jmp_tc, ENTRY_0);
-	return 0;
+	tail_call(skb, &jmp_tc, ENTRY_0);
+
+	return BPF_H_DEFAULT;
 }
 
-__section_tail(BAR, ENTRY_0) int cls_exit(struct __sk_buff *skb)
+__section_tail(BAR, ENTRY_0)
+int cls_exit(struct __sk_buff *skb)
 {
 	char fmt[] = "exit: map-val: %d from:%u\n";
 	int key = 0, *val;
 
-	val = bpf_map_lookup_elem(&map_sh, &key);
+	val = map_lookup_elem(&map_sh, &key);
 	if (val)
-		bpf_printk(fmt, sizeof(fmt), *val, skb->cb[0]);
+		trace_printk(fmt, sizeof(fmt), *val, skb->cb[0]);
 
 	/* Termination point. */
-	return -1;
+	return BPF_H_DEFAULT;
 }
 
-__section("classifier") int cls_entry(struct __sk_buff *skb)
+__section_cls_entry
+int cls_entry(struct __sk_buff *skb)
 {
 	char fmt[] = "fallthrough\n";
 	int key = 0, *val;
 
 	/* For transferring state, we can use skb->cb[0] ... skb->cb[4]. */
-	val = bpf_map_lookup_elem(&map_sh, &key);
+	val = map_lookup_elem(&map_sh, &key);
 	if (val) {
-		__sync_fetch_and_add(val, 1);
+		lock_xadd(val, 1);
 
 		skb->cb[0] = ENTRY_INIT;
-		bpf_tail_call(skb, &jmp_tc, skb->hash & (MAX_JMP_SIZE - 1));
+		tail_call(skb, &jmp_tc, skb->hash & (MAX_JMP_SIZE - 1));
 	}
 
-	bpf_printk(fmt, sizeof(fmt));
-	return 0;
+	trace_printk(fmt, sizeof(fmt));
+	return BPF_H_DEFAULT;
 }
 
-char __license[] __section("license") = "GPL";
+BPF_LICENSE("GPL");

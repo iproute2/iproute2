@@ -1,6 +1,4 @@
-#include <linux/bpf.h>
-
-#include "bpf_funcs.h"
+#include "../../include/bpf_api.h"
 
 /* Minimal, stand-alone toy map pinning example:
  *
@@ -20,35 +18,31 @@
  * instance is being created.
  */
 
-struct bpf_elf_map __section("maps") map_sh = {
-	.type		= BPF_MAP_TYPE_ARRAY,
-	.size_key	= sizeof(int),
-	.size_value	= sizeof(int),
-	.pinning	= PIN_OBJECT_NS, /* or PIN_GLOBAL_NS, or PIN_NONE */
-	.max_elem	= 1,
-};
+BPF_ARRAY4(map_sh, 0, PIN_OBJECT_NS, 1); /* or PIN_GLOBAL_NS, or PIN_NONE */
 
-__section("egress") int emain(struct __sk_buff *skb)
+__section("egress")
+int emain(struct __sk_buff *skb)
 {
 	int key = 0, *val;
 
-	val = bpf_map_lookup_elem(&map_sh, &key);
+	val = map_lookup_elem(&map_sh, &key);
 	if (val)
-		__sync_fetch_and_add(val, 1);
+		lock_xadd(val, 1);
 
-	return -1;
+	return BPF_H_DEFAULT;
 }
 
-__section("ingress") int imain(struct __sk_buff *skb)
+__section("ingress")
+int imain(struct __sk_buff *skb)
 {
 	char fmt[] = "map val: %d\n";
 	int key = 0, *val;
 
-	val = bpf_map_lookup_elem(&map_sh, &key);
+	val = map_lookup_elem(&map_sh, &key);
 	if (val)
-		bpf_printk(fmt, sizeof(fmt), *val);
+		trace_printk(fmt, sizeof(fmt), *val);
 
-	return -1;
+	return BPF_H_DEFAULT;
 }
 
-char __license[] __section("license") = "GPL";
+BPF_LICENSE("GPL");
