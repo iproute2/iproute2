@@ -28,12 +28,6 @@ static void explain(void)
 	vrf_explain(stderr);
 }
 
-static int table_arg(void)
-{
-	fprintf(stderr,"Error: argument of \"table\" must be 0-32767 and currently unused\n");
-	return -1;
-}
-
 static int vrf_parse_opt(struct link_util *lu, int argc, char **argv,
 			    struct nlmsghdr *n)
 {
@@ -43,9 +37,8 @@ static int vrf_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			NEXT_ARG();
 
-			table = atoi(*argv);
-			if (table > 32767)
-				return table_arg();
+			if (rtnl_rttable_a2n(&table, *argv))
+				invarg("invalid table ID\n", *argv);
 			addattr32(n, 1024, IFLA_VRF_TABLE, table);
 		} else if (matches(*argv, "help") == 0) {
 			explain();

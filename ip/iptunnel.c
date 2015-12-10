@@ -50,7 +50,8 @@ static void usage(void)
 static void set_tunnel_proto(struct ip_tunnel_parm *p, int proto)
 {
 	if (p->iph.protocol && p->iph.protocol != proto) {
-		fprintf(stderr,"You managed to ask for more than one tunnel mode.\n");
+		fprintf(stderr,
+			"You managed to ask for more than one tunnel mode.\n");
 		exit(-1);
 	}
 	p->iph.protocol = proto;
@@ -91,7 +92,8 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				set_tunnel_proto(p, IPPROTO_IPIP);
 				p->i_flags |= VTI_ISVTI;
 			} else {
-				fprintf(stderr,"Unknown tunnel mode \"%s\"\n", *argv);
+				fprintf(stderr,
+					"Unknown tunnel mode \"%s\"\n", *argv);
 				exit(-1);
 			}
 		} else if (strcmp(*argv, "key") == 0) {
@@ -144,6 +146,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 			   strcmp(*argv, "hoplimit") == 0 ||
 			   strcmp(*argv, "hlim") == 0) {
 			__u8 uval;
+
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
 				if (get_u8(&uval, *argv, 0))
@@ -155,6 +158,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 			   matches(*argv, "dsfield") == 0) {
 			char *dsfield;
 			__u32 uval;
+
 			NEXT_ARG();
 			dsfield = *argv;
 			strsep(&dsfield, "/");
@@ -169,15 +173,17 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				p->iph.tos |= uval;
 			}
 		} else {
-			if (strcmp(*argv, "name") == 0) {
+			if (strcmp(*argv, "name") == 0)
 				NEXT_ARG();
-			} else if (matches(*argv, "help") == 0)
+			else if (matches(*argv, "help") == 0)
 				usage();
+
 			if (p->name[0])
 				duparg2("name", *argv);
 			strncpy(p->name, *argv, IFNAMSIZ - 1);
 			if (cmd == SIOCCHGTUNNEL && count == 0) {
 				struct ip_tunnel_parm old_p;
+
 				memset(&old_p, 0, sizeof(old_p));
 				if (tnl_get_ioctl(*argv, &old_p))
 					return -1;
@@ -268,8 +274,10 @@ static int do_add(int cmd, int argc, char **argv)
 		return -1;
 	}
 
-	if (!(basedev = tnl_defname(&p))) {
-		fprintf(stderr, "cannot determine tunnel mode (ipip, gre, vti or sit)\n");
+	basedev = tnl_defname(&p);
+	if (!basedev) {
+		fprintf(stderr,
+			"cannot determine tunnel mode (ipip, gre, vti or sit)\n");
 		return -1;
 	}
 
@@ -312,18 +320,18 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 		prl[0].addr = htonl(INADDR_ANY);
 
 		if (!tnl_prl_ioctl(SIOCGETPRL, p->name, prl))
-			for (i = 1; i < sizeof(prl) / sizeof(prl[0]); i++)
-		{
-			if (prl[i].addr != htonl(INADDR_ANY)) {
-				printf(" %s %s ",
-					(prl[i].flags & PRL_DEFAULT) ? "pdr" : "pr",
-					format_host(AF_INET, 4, &prl[i].addr, s1, sizeof(s1)));
+			for (i = 1; i < ARRAY_SIZE(prl); i++) {
+				if (prl[i].addr != htonl(INADDR_ANY)) {
+					printf(" %s %s ",
+					       (prl[i].flags & PRL_DEFAULT) ? "pdr" : "pr",
+					       format_host(AF_INET, 4, &prl[i].addr, s1, sizeof(s1)));
+				}
 			}
-		}
 	}
 
 	if (p->link) {
 		const char *n = ll_index_to_name(p->link);
+
 		if (n)
 			printf(" dev %s", n);
 	}
@@ -381,6 +389,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 	char buf[512];
 	int err = -1;
 	FILE *fp = fopen("/proc/net/dev", "r");
+
 	if (fp == NULL) {
 		perror("fopen");
 		return -1;
@@ -404,12 +413,13 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		char *ptr;
 
 		buf[sizeof(buf) - 1] = 0;
-		if ((ptr = strchr(buf, ':')) == NULL ||
+		ptr = strchr(buf, ':');
+		if (ptr == NULL ||
 		    (*ptr++ = 0, sscanf(buf, "%s", name) != 1)) {
 			fprintf(stderr, "Wrong format for /proc/net/dev. Giving up.\n");
 			goto end;
 		}
-		if (sscanf(ptr, "%ld%ld%ld%ld%ld%ld%ld%*d%ld%ld%ld%ld%ld%ld%ld",
+		if (sscanf(ptr, "%lu%lu%lu%lu%lu%lu%lu%*d%lu%lu%lu%lu%lu%lu%lu",
 			   &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
 			   &rx_fifo, &rx_frame, &rx_multi,
 			   &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
@@ -463,7 +473,8 @@ static int do_show(int argc, char **argv)
 	if (parse_args(argc, argv, SIOCGETTUNNEL, &p) < 0)
 		return -1;
 
-	if (!(basedev = tnl_defname(&p)))
+	basedev = tnl_defname(&p);
+	if (!basedev)
 		return do_tunnels_list(&p);
 
 	if (tnl_get_ioctl(p.name[0] ? p.name : basedev, &p))
@@ -507,11 +518,13 @@ static int do_prl(int argc, char **argv)
 			strncpy(medium, *argv, IFNAMSIZ-1);
 			devname++;
 		} else {
-			fprintf(stderr,"Invalid PRL parameter \"%s\"\n", *argv);
+			fprintf(stderr,
+				"Invalid PRL parameter \"%s\"\n", *argv);
 			exit(-1);
 		}
 		if (count > 1) {
-			fprintf(stderr,"One PRL entry at a time\n");
+			fprintf(stderr,
+				"One PRL entry at a time\n");
 			exit(-1);
 		}
 		argc--; argv++;
@@ -557,7 +570,8 @@ static int do_6rd(int argc, char **argv)
 			strncpy(medium, *argv, IFNAMSIZ-1);
 			devname++;
 		} else {
-			fprintf(stderr,"Invalid 6RD parameter \"%s\"\n", *argv);
+			fprintf(stderr,
+				"Invalid 6RD parameter \"%s\"\n", *argv);
 			exit(-1);
 		}
 		argc--; argv++;
@@ -570,8 +584,35 @@ static int do_6rd(int argc, char **argv)
 	return tnl_6rd_ioctl(cmd, medium, &ip6rd);
 }
 
+static int tunnel_mode_is_ipv6(char *tunnel_mode)
+{
+	static const char * const ipv6_modes[] = {
+		"ipv6/ipv6", "ip6ip6",
+		"vti6",
+		"ip/ipv6", "ipv4/ipv6", "ipip6", "ip4ip6",
+		"ip6gre", "gre/ipv6",
+		"any/ipv6", "any"
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(ipv6_modes); i++) {
+		if (strcmp(ipv6_modes[i], tunnel_mode) == 0)
+			return 1;
+	}
+	return 0;
+}
+
 int do_iptunnel(int argc, char **argv)
 {
+	int i;
+
+	for (i = 0; i < argc - 1; i++) {
+		if (strcmp(argv[i], "mode") == 0) {
+			if (tunnel_mode_is_ipv6(argv[i + 1]))
+				preferred_family = AF_INET6;
+			break;
+		}
+	}
 	switch (preferred_family) {
 	case AF_UNSPEC:
 		preferred_family = AF_INET;

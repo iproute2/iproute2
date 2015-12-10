@@ -332,7 +332,7 @@ int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 }
 
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-	      struct nlmsghdr *answer, size_t len)
+	      struct nlmsghdr *answer, size_t maxlen)
 {
 	int status;
 	unsigned seq;
@@ -415,7 +415,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 				} else if (!err->error) {
 					if (answer)
 						memcpy(answer, h,
-						       MIN(len, h->nlmsg_len));
+						       MIN(maxlen, h->nlmsg_len));
 					return 0;
 				}
 
@@ -427,7 +427,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 
 			if (answer) {
 				memcpy(answer, h,
-				       MIN(len, h->nlmsg_len));
+				       MIN(maxlen, h->nlmsg_len));
 				return 0;
 			}
 

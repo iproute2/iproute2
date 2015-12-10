@@ -577,24 +577,23 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			if (mxrta[i] == NULL)
 				continue;
 
-			if (i < sizeof(mx_names)/sizeof(char*) && mx_names[i])
-				fprintf(fp, " %s", mx_names[i]);
-			else
-				fprintf(fp, " metric %d", i);
-
 			if (mxlock & (1<<i))
 				fprintf(fp, " lock");
 			if (i != RTAX_CC_ALGO)
 				val = rta_getattr_u32(mxrta[i]);
 
+			if (i == RTAX_HOPLIMIT && (int)val == -1)
+				continue;
+
+			if (i < sizeof(mx_names)/sizeof(char*) && mx_names[i])
+				fprintf(fp, " %s", mx_names[i]);
+			else
+				fprintf(fp, " metric %d", i);
+
 			switch (i) {
 			case RTAX_FEATURES:
 				print_rtax_features(fp, val);
 				break;
-			case RTAX_HOPLIMIT:
-				if ((int)val == -1)
-					val = 0;
-				/* fall through */
 			default:
 				fprintf(fp, " %u", val);
 				break;
