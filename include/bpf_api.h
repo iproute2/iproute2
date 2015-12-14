@@ -53,7 +53,7 @@
 #endif
 
 #ifndef ntohl
-# define ntohl(X)		__constant_ntohl((X)
+# define ntohl(X)		__constant_ntohl((X))
 #endif
 
 /** Section helper macros. */

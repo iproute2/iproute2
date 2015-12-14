@@ -1042,7 +1042,7 @@ static int bpf_prog_attach(const char *section,
 			       "license:\'%s\') %s%s (%d)!\n\n",
 			       section, prog->type,
 			       prog->size / sizeof(struct bpf_insn),
-			       prog->license, fd < 0 ? "rejected :" :
+			       prog->license, fd < 0 ? "rejected: " :
 			       "loaded", fd < 0 ? strerror(errno) : "",
 			       fd < 0 ? errno : fd);
 	}
