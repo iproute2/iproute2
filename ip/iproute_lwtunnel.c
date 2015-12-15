@@ -201,10 +201,14 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 		} else {
 			break;
 		}
+		argc--; argv++;
 	}
 
-	*argcp = argc;
-	*argvp = argv;
+	/* argv is currently the first unparsed argument,
+	 * but the lwt_parse_encap() caller will move to the next,
+	 * so step back */
+	*argcp = argc + 1;
+	*argvp = argv - 1;
 
 	return 0;
 }
