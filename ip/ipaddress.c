@@ -285,12 +285,19 @@ static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
 	parse_rtattr_nested(tb, IFLA_INET6_MAX, inet6_attr);
 
 	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
-		switch (rta_getattr_u8(tb[IFLA_INET6_ADDR_GEN_MODE])) {
+		__u8 mode = rta_getattr_u8(tb[IFLA_INET6_ADDR_GEN_MODE]);
+		switch (mode) {
 		case IN6_ADDR_GEN_MODE_EUI64:
 			fprintf(fp, "addrgenmode eui64 ");
 			break;
 		case IN6_ADDR_GEN_MODE_NONE:
 			fprintf(fp, "addrgenmode none ");
+			break;
+		case IN6_ADDR_GEN_MODE_STABLE_PRIVACY:
+			fprintf(fp, "addrgenmode stable_secret ");
+			break;
+		default:
+			fprintf(fp, "addrgenmode %#.2hhx ", mode);
 			break;
 		}
 	}
