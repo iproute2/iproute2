@@ -405,10 +405,6 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char name[IFNAMSIZ];
 		int index, type;
-		unsigned long rx_bytes, rx_packets, rx_errs, rx_drops,
-			rx_fifo, rx_frame,
-			tx_bytes, tx_packets, tx_errs, tx_drops,
-			tx_fifo, tx_colls, tx_carrier, rx_multi;
 		struct ip_tunnel_parm p1;
 		char *ptr;
 
@@ -419,12 +415,6 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 			fprintf(stderr, "Wrong format for /proc/net/dev. Giving up.\n");
 			goto end;
 		}
-		if (sscanf(ptr, "%lu%lu%lu%lu%lu%lu%lu%*d%lu%lu%lu%lu%lu%lu%lu",
-			   &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
-			   &rx_fifo, &rx_frame, &rx_multi,
-			   &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
-			   &tx_fifo, &tx_colls, &tx_carrier) != 14)
-			continue;
 		if (p->name[0] && strcmp(p->name, name))
 			continue;
 		index = ll_name_to_index(name);
@@ -447,15 +437,8 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		    (p->i_key && p1.i_key != p->i_key))
 			continue;
 		print_tunnel(&p1);
-		if (show_stats) {
-			printf("%s", _SL_);
-			printf("RX: Packets    Bytes        Errors CsumErrs OutOfSeq Mcasts%s", _SL_);
-			printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-8ld%s",
-			       rx_packets, rx_bytes, rx_errs, rx_frame, rx_fifo, rx_multi, _SL_);
-			printf("TX: Packets    Bytes        Errors DeadLoop NoRoute  NoBufs%s", _SL_);
-			printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-6ld",
-			       tx_packets, tx_bytes, tx_errs, tx_colls, tx_carrier, tx_drops);
-		}
+		if (show_stats)
+			tnl_print_stats(ptr);
 		printf("\n");
 	}
 	err = 0;

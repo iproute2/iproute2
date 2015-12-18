@@ -195,3 +195,31 @@ __be32 tnl_parse_key(const char *name, const char *key)
 	}
 	return htonl(uval);
 }
+
+/* tnl_print_stats - print tunnel statistics
+ *
+ * @buf - tunnel interface's line in /proc/net/dev,
+ *        starting past the interface name and following colon
+ */
+void tnl_print_stats(const char *buf)
+{
+	unsigned long rx_bytes, rx_packets, rx_errs, rx_drops,
+		      rx_fifo, rx_frame,
+		      tx_bytes, tx_packets, tx_errs, tx_drops,
+		      tx_fifo, tx_colls, tx_carrier, rx_multi;
+
+	if (sscanf(ptr, "%lu%lu%lu%lu%lu%lu%lu%*d%lu%lu%lu%lu%lu%lu%lu",
+	           &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
+	           &rx_fifo, &rx_frame, &rx_multi,
+	           &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
+	           &tx_fifo, &tx_colls, &tx_carrier) != 14)
+		return;
+
+	printf("%s", _SL_);
+	printf("RX: Packets    Bytes        Errors CsumErrs OutOfSeq Mcasts%s", _SL_);
+	printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-8ld%s",
+	       rx_packets, rx_bytes, rx_errs, rx_frame, rx_fifo, rx_multi, _SL_);
+	printf("TX: Packets    Bytes        Errors DeadLoop NoRoute  NoBufs%s", _SL_);
+	printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-6ld",
+	       tx_packets, tx_bytes, tx_errs, tx_colls, tx_carrier, tx_drops);
+}
