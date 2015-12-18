@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <linux/ila.h>
 #include <linux/lwtunnel.h>
 #include <linux/mpls_iptunnel.h>
 #include <errno.h>
@@ -32,6 +33,8 @@ static int read_encap_type(const char *name)
 		return LWTUNNEL_ENCAP_IP;
 	else if (strcmp(name, "ip6") == 0)
 		return LWTUNNEL_ENCAP_IP6;
+	else if (strcmp(name, "ila") == 0)
+		return LWTUNNEL_ENCAP_ILA;
 	else
 		return LWTUNNEL_ENCAP_NONE;
 }
@@ -45,6 +48,8 @@ static const char *format_encap_type(int type)
 		return "ip";
 	case LWTUNNEL_ENCAP_IP6:
 		return "ip6";
+	case LWTUNNEL_ENCAP_ILA:
+		return "ila";
 	default:
 		return "unknown";
 	}
@@ -95,6 +100,21 @@ static void print_encap_ip(FILE *fp, struct rtattr *encap)
 		fprintf(fp, "tos %d ", rta_getattr_u8(tb[LWTUNNEL_IP_TOS]));
 }
 
+static void print_encap_ila(FILE *fp, struct rtattr *encap)
+{
+	struct rtattr *tb[ILA_ATTR_MAX+1];
+
+	parse_rtattr_nested(tb, ILA_ATTR_MAX, encap);
+
+	if (tb[ILA_ATTR_LOCATOR]) {
+		char abuf[ADDR64_BUF_SIZE];
+
+		addr64_n2a(*(__u64 *)RTA_DATA(tb[ILA_ATTR_LOCATOR]),
+			   abuf, sizeof(abuf));
+		fprintf(fp, " %s ", abuf);
+	}
+}
+
 void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 			  struct rtattr *encap)
 {
@@ -113,6 +133,9 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 		break;
 	case LWTUNNEL_ENCAP_IP:
 		print_encap_ip(fp, encap);
+		break;
+	case LWTUNNEL_ENCAP_ILA:
+		print_encap_ila(fp, encap);
 		break;
 	}
 }
@@ -178,14 +201,37 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 		} else {
 			break;
 		}
+		argc--; argv++;
 	}
+
+	/* argv is currently the first unparsed argument,
+	 * but the lwt_parse_encap() caller will move to the next,
+	 * so step back */
+	*argcp = argc + 1;
+	*argvp = argv - 1;
+
+	return 0;
+}
+
+static int parse_encap_ila(struct rtattr *rta, size_t len,
+			   int *argcp, char ***argvp)
+{
+	__u64 locator;
+	int argc = *argcp;
+	char **argv = *argvp;
+
+	if (get_addr64(&locator, *argv) < 0) {
+		fprintf(stderr, "Bad locator: %s\n", *argv);
+		exit(1);
+	}
+
+	rta_addattr64(rta, 1024, ILA_ATTR_LOCATOR, locator);
 
 	*argcp = argc;
 	*argvp = argv;
 
 	return 0;
 }
-
 
 int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
 {
@@ -212,6 +258,9 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
 		break;
 	case LWTUNNEL_ENCAP_IP:
 		parse_encap_ip(rta, len, &argc, &argv);
+		break;
+	case LWTUNNEL_ENCAP_ILA:
+		parse_encap_ila(rta, len, &argc, &argv);
 		break;
 	default:
 		fprintf(stderr, "Error: unsupported encap type\n");

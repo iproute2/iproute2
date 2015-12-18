@@ -577,8 +577,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			if (mxrta[i] == NULL)
 				continue;
 
-			if (mxlock & (1<<i))
-				fprintf(fp, " lock");
 			if (i != RTAX_CC_ALGO)
 				val = rta_getattr_u32(mxrta[i]);
 
@@ -589,6 +587,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				fprintf(fp, " %s", mx_names[i]);
 			else
 				fprintf(fp, " metric %d", i);
+
+			if (mxlock & (1<<i))
+				fprintf(fp, " lock");
 
 			switch (i) {
 			case RTAX_FEATURES:

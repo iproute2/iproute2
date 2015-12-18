@@ -384,6 +384,41 @@ static int get_addr_ipv4(__u8 *ap, const char *cp)
 	return 1;
 }
 
+int get_addr64(__u64 *ap, const char *cp)
+{
+	int i;
+
+	union {
+		__u16 v16[4];
+		__u64 v64;
+	} val;
+
+	for (i = 0; i < 4; i++) {
+		unsigned long n;
+		char *endp;
+
+		n = strtoul(cp, &endp, 16);
+		if (n > 0xffff)
+			return -1;	/* bogus network value */
+
+		if (endp == cp) /* no digits */
+			return -1;
+
+		val.v16[i] = htons(n);
+
+		if (*endp == '\0')
+			break;
+
+		if (i == 3 || *endp != ':')
+			return -1;	/* extra characters */
+		cp = endp + 1;
+	}
+
+	*ap = val.v64;
+
+	return 1;
+}
+
 int get_addr_1(inet_prefix *addr, const char *name, int family)
 {
 	memset(addr, 0, sizeof(*addr));
@@ -836,6 +871,30 @@ __u8* hexstring_a2n(const char *str, __u8 *buf, int blen)
 		str += 2;
 	}
 	return buf;
+}
+
+int addr64_n2a(__u64 addr, char *buff, size_t len)
+{
+	__u16 *words = (__u16 *)&addr;
+	__u16 v;
+	int i, ret;
+	size_t written = 0;
+	char *sep = ":";
+
+	for (i = 0; i < 4; i++) {
+		v = ntohs(words[i]);
+
+		if (i == 3)
+			sep = "";
+
+		ret = snprintf(&buff[written], len - written, "%x%s", v, sep);
+		if (ret < 0)
+			return ret;
+
+		written += ret;
+	}
+
+	return written;
 }
 
 int print_timestamp(FILE *fp)

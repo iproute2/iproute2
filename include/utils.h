@@ -97,6 +97,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family);
 int get_addr(inet_prefix *dst, const char *arg, int family);
 int get_prefix(inet_prefix *dst, char *arg, int family);
 int mask2bits(__u32 netmask);
+int get_addr_ila(__u64 *val, const char *arg);
 
 int get_integer(int *val, const char *arg, int base);
 int get_unsigned(unsigned *val, const char *arg, int base);
@@ -111,9 +112,12 @@ int get_u16(__u16 *val, const char *arg, int base);
 int get_s16(__s16 *val, const char *arg, int base);
 int get_u8(__u8 *val, const char *arg, int base);
 int get_s8(__s8 *val, const char *arg, int base);
+int get_addr64(__u64 *ap, const char *cp);
 
 char* hexstring_n2a(const __u8 *str, int len, char *buf, int blen);
 __u8* hexstring_a2n(const char *str, __u8 *buf, int blen);
+#define ADDR64_BUF_SIZE sizeof("xxxx:xxxx:xxxx:xxxx")
+int addr64_n2a(__u64 addr, char *buff, size_t len);
 
 int af_bit_len(int af);
 int af_byte_len(int af);
