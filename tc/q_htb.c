@@ -273,7 +273,6 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	__u64 rate64, ceil64;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
-	SPRINT_BUF(b3);
 	SPRINT_BUF(b4);
 
 	if (opt == NULL)
@@ -313,16 +312,14 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
 			fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b4));
 		if (show_details) {
-			fprintf(f, "burst %s/%u mpu %s overhead %s ",
+			fprintf(f, "burst %s/%u mpu %s ",
 				sprint_size(buffer, b1),
 				1<<hopt->rate.cell_log,
-				sprint_size(hopt->rate.mpu&0xFF, b2),
-				sprint_size((hopt->rate.mpu>>8)&0xFF, b3));
-			fprintf(f, "cburst %s/%u mpu %s overhead %s ",
+				sprint_size(hopt->rate.mpu, b2));
+			fprintf(f, "cburst %s/%u mpu %s ",
 				sprint_size(cbuffer, b1),
 				1<<hopt->ceil.cell_log,
-				sprint_size(hopt->ceil.mpu&0xFF, b2),
-				sprint_size((hopt->ceil.mpu>>8)&0xFF, b3));
+				sprint_size(hopt->ceil.mpu, b2));
 			fprintf(f, "level %d ", (int)hopt->level);
 		} else {
 			fprintf(f, "burst %s ", sprint_size(buffer, b1));
