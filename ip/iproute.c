@@ -86,7 +86,7 @@ static void usage(void)
 	fprintf(stderr, "           [ ssthresh NUMBER ] [ realms REALM ] [ src ADDRESS ]\n");
 	fprintf(stderr, "           [ rto_min TIME ] [ hoplimit NUMBER ] [ initrwnd NUMBER ]\n");
 	fprintf(stderr, "           [ features FEATURES ] [ quickack BOOL ] [ congctl NAME ]\n");
-	fprintf(stderr, "           [ pref PREF ]\n");
+	fprintf(stderr, "           [ pref PREF ] [ expires TIME ]\n");
 	fprintf(stderr, "TYPE := [ unicast | local | broadcast | multicast | throw |\n");
 	fprintf(stderr, "          unreachable | prohibit | blackhole | nat ]\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
@@ -829,6 +829,7 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 	int table_ok = 0;
 	int raw = 0;
 	int type_ok = 0;
+	static int hz;
 
 	memset(&req, 0, sizeof(req));
 
@@ -899,6 +900,14 @@ static int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (rtnl_dsfield_a2n(&tos, *argv))
 				invarg("\"tos\" value is invalid\n", *argv);
 			req.r.rtm_tos = tos;
+		} else if (strcmp(*argv, "expires") == 0 ) {
+			__u32 expires;
+			NEXT_ARG();
+			if (get_u32(&expires, *argv, 0))
+				invarg("\"expires\" value is invalid\n", *argv);
+			if (!hz)
+				hz = get_user_hz();
+			addattr32(&req.n, sizeof(req), RTA_EXPIRES, expires*hz);
 		} else if (matches(*argv, "metric") == 0 ||
 			   matches(*argv, "priority") == 0 ||
 			   strcmp(*argv, "preference") == 0) {
