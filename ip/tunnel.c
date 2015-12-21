@@ -208,7 +208,7 @@ void tnl_print_stats(const char *buf)
 		      tx_bytes, tx_packets, tx_errs, tx_drops,
 		      tx_fifo, tx_colls, tx_carrier, rx_multi;
 
-	if (sscanf(ptr, "%lu%lu%lu%lu%lu%lu%lu%*d%lu%lu%lu%lu%lu%lu%lu",
+	if (sscanf(buf, "%lu%lu%lu%lu%lu%lu%lu%*d%lu%lu%lu%lu%lu%lu%lu",
 	           &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
 	           &rx_fifo, &rx_frame, &rx_multi,
 	           &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
