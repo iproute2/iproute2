@@ -130,7 +130,7 @@ replace " } "
 .B  quickack
 .IR BOOL " ] [ "
 .B  congctl
-.IR NAME " ]"
+.IR NAME " ] [ "
 .B  pref
 .IR PREF " ]"
 
