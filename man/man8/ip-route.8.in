@@ -132,7 +132,9 @@ replace " } "
 .B  congctl
 .IR NAME " ] [ "
 .B  pref
-.IR PREF " ]"
+.IR PREF " ] [ "
+.B  expires
+.IR TIME " ]"
 
 .ti -8
 .IR TYPE " := [ "
@@ -655,6 +657,12 @@ is a set of encapsulation attributes specific to the
 
 .in -8
 .RE
+
+.TP
+.BI expires " TIME " "(4.4+ only)"
+the route will be deleted after the expires time.
+.B Only
+support IPv6 at present.
 
 .TP
 ip route delete
