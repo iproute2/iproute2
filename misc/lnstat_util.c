@@ -172,8 +172,10 @@ static struct lnstat_file *alloc_and_open(const char *path, const char *file)
 
 	/* allocate */
 	lf = malloc(sizeof(*lf));
-	if (!lf)
+	if (!lf) {
+		fprintf(stderr, "out of memory\n");
 		return NULL;
+	}
 
 	/* initialize */
 	memset(lf, 0, sizeof(*lf));
@@ -190,6 +192,7 @@ static struct lnstat_file *alloc_and_open(const char *path, const char *file)
 	/* open */
 	lf->fp = fopen(lf->path, "r");
 	if (!lf->fp) {
+		perror(lf->path);
 		free(lf);
 		return NULL;
 	}
@@ -256,12 +259,16 @@ struct lnstat_file *lnstat_scan_dir(const char *path, const int num_req_files,
 			continue;
 
 		lf = alloc_and_open(path, de->d_name);
-		if (!lf)
+		if (!lf) {
+			closedir(dir);
 			return NULL;
+		}
 
 		/* fill in field structure */
-		if (lnstat_scan_fields(lf) < 0)
+		if (lnstat_scan_fields(lf) < 0) {
+			closedir(dir);
 			return NULL;
+		}
 
 		/* prepend to global list */
 		lf->next = lnstat_files;
