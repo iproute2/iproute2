@@ -296,6 +296,9 @@ static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
 		case IN6_ADDR_GEN_MODE_STABLE_PRIVACY:
 			fprintf(fp, "addrgenmode stable_secret ");
 			break;
+		case IN6_ADDR_GEN_MODE_RANDOM:
+			fprintf(fp, "addrgenmode random ");
+			break;
 		default:
 			fprintf(fp, "addrgenmode %#.2hhx ", mode);
 			break;

@@ -84,7 +84,7 @@ void iplink_usage(void)
 	fprintf(stderr, "				   [ state { auto | enable | disable} ] ]\n");
 	fprintf(stderr, "			  [ master DEVICE ]\n");
 	fprintf(stderr, "			  [ nomaster ]\n");
-	fprintf(stderr, "			  [ addrgenmode { eui64 | none | stable_secret } ]\n");
+	fprintf(stderr, "			  [ addrgenmode { eui64 | none | stable_secret | random } ]\n");
 	fprintf(stderr, "	                  [ protodown { on | off } ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [type TYPE]\n");
 
@@ -178,6 +178,8 @@ static int get_addr_gen_mode(const char *mode)
 		return IN6_ADDR_GEN_MODE_NONE;
 	if (strcasecmp(mode, "stable_secret") == 0)
 		return IN6_ADDR_GEN_MODE_STABLE_PRIVACY;
+	if (strcasecmp(mode, "random") == 0)
+		return IN6_ADDR_GEN_MODE_RANDOM;
 	return -1;
 }
 
