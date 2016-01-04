@@ -150,7 +150,7 @@ ip-link \- network device configuration
 .br
 .B nomaster " |"
 .br
-.B addrgenmode { eui64 | none }
+.B addrgenmode { eui64 | none | stable_secret | random }
 .br
 .B link-netnsid ID
 .BR " }"
@@ -1029,8 +1029,20 @@ set master device of the device (enslave device).
 unset master device of the device (release device).
 
 .TP
-.BR "addrgenmode eui64 " or " addrgenmode none"
-set IPv6 address generation mode
+.BI addrgenmode " eui64|none|stable_secret|random"
+set the IPv6 address generation mode
+
+.I eui64
+- use a Modified EUI-64 format interface identifier
+
+.I none
+- disable automatic address generation
+
+.I stable_secret
+- generate the interface identifier based on a preset /proc/sys/net/ipv6/conf/{default,DEVICE}/stable_secret
+
+.I random
+- like stable_secret, but auto-generate a new random secret if none is set
 
 .TP
 .BR "link-netnsid "
