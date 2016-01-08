@@ -48,6 +48,11 @@ Show process using socket.
 .B \-i, \-\-info
 Show internal TCP information.
 .TP
+.B \-K, \-\-kill
+Attempts to forcibly close sockets. This option displays sockets that are
+successfully closed and silently skips sockets that the kernel does not support
+closing. It supports IPv4 and IPv6 sockets only.
+.TP
 .B \-s, \-\-summary
 Print summary statistics. This option does not parse socket lists obtaining
 summary from various sources. It is useful when amount of sockets is so huge
