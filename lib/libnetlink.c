@@ -419,8 +419,10 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 					return 0;
 				}
 
-				fprintf(stderr, "RTNETLINK answers: %s\n",
-					strerror(-err->error));
+				if (rtnl->proto != NETLINK_SOCK_DIAG)
+					fprintf(stderr,
+						"RTNETLINK answers: %s\n",
+						strerror(-err->error));
 				errno = -err->error;
 				return -1;
 			}
