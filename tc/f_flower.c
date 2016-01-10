@@ -31,7 +31,7 @@ static void explain(void)
 	fprintf(stderr, "       MATCH      := { indev DEV-NAME | \n");
 	fprintf(stderr, "                       dst_mac MAC-ADDR | \n");
 	fprintf(stderr, "                       src_mac MAC-ADDR | \n");
-	fprintf(stderr, "                       eth_type [ipv4 | ipv6 | ETH-TYPE ] | \n");
+	fprintf(stderr, "                       [ipv4 | ipv6 ] | \n");
 	fprintf(stderr, "                       ip_proto [tcp | udp | IP-PROTO ] | \n");
 	fprintf(stderr, "                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] | \n");
 	fprintf(stderr, "                       src_ip [ IPV4-ADDR | IPV6-ADDR ] | \n");
@@ -57,29 +57,6 @@ static int flower_parse_eth_addr(char *str, int addr_type, int mask_type,
 	addattr_l(n, MAX_MSG, addr_type, addr, sizeof(addr));
 	memset(addr, 0xff, ETH_ALEN);
 	addattr_l(n, MAX_MSG, mask_type, addr, sizeof(addr));
-	return 0;
-}
-
-static int flower_parse_eth_type(char *str, int type, __be16 *p_eth_type,
-				 struct nlmsghdr *n)
-{
-	int ret;
-	__be16 eth_type;
-
-	if (matches(str, "ipv4") == 0) {
-		eth_type = htons(ETH_P_IP);
-	} else if (matches(str, "ipv6") == 0) {
-		eth_type = htons(ETH_P_IPV6);
-	} else {
-		__u16 tmp;
-
-		ret = get_u16(&tmp, str, 16);
-		if (ret)
-			return -1;
-		eth_type = htons(tmp);
-	}
-	addattr16(n, MAX_MSG, type, eth_type);
-	*p_eth_type = eth_type;
 	return 0;
 }
 
@@ -188,11 +165,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 	int ret;
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
-	__be16 eth_type = 0;
+	__be16 eth_type = TC_H_MIN(t->tcm_info);
 	__u8 ip_proto = 0xff;
-
-	if (argc == 0)
-		return 0;
 
 	if (handle) {
 		ret = get_u32(&t->tcm_handle, handle, 0);
@@ -204,6 +178,11 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 
 	tail = (struct rtattr *) (((void *) n) + NLMSG_ALIGN(n->nlmsg_len));
 	addattr_l(n, MAX_MSG, TCA_OPTIONS, NULL, 0);
+
+	if (argc == 0) {
+		/*at minimal we will match all ethertype packets */
+		goto parse_done;
+	}
 
 	while (argc > 0) {
 		if (matches(*argv, "classid") == 0 ||
@@ -242,15 +221,6 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 						    n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"src_mac\"\n");
-				return -1;
-			}
-		} else if (matches(*argv, "eth_type") == 0) {
-			NEXT_ARG();
-			ret = flower_parse_eth_type(*argv,
-						    TCA_FLOWER_KEY_ETH_TYPE,
-						    &eth_type, n);
-			if (ret < 0) {
-				fprintf(stderr, "Illegal \"eth_type\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "ip_proto") == 0) {
@@ -321,6 +291,14 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			return -1;
 		}
 		argc--; argv++;
+	}
+
+parse_done:
+	ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, eth_type);
+	if (ret) {
+		fprintf(stderr, "Illegal \"eth_type\"(0x%x)\n",
+			ntohs(eth_type));
+		return -1;
 	}
 
 	tail->rta_len = (((void*)n)+n->nlmsg_len) - (void*)tail;
@@ -489,7 +467,8 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	if (tb[TCA_FLOWER_CLASSID]) {
 		SPRINT_BUF(b1);
 		fprintf(f, "classid %s ",
-			sprint_tc_classid(rta_getattr_u32(tb[TCA_FLOWER_CLASSID]), b1));
+			sprint_tc_classid(rta_getattr_u32(tb[TCA_FLOWER_CLASSID]),
+					  b1));
 	}
 
 	if (tb[TCA_FLOWER_INDEV]) {
