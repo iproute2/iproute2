@@ -710,7 +710,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			req.i.ifi_index = 0;
 			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
 			if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
-				exit(2);
+				return -2;
 			return 0;
 		}
 	}
@@ -809,7 +809,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	}
 
 	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
-		exit(2);
+		return -2;
 
 	return 0;
 }
