@@ -20,7 +20,6 @@
 #include "socket.h"
 #include "media.h"
 #include "node.h"
-#include "peer.h"
 #include "cmdl.h"
 
 int help_flag;
@@ -40,7 +39,6 @@ static void about(struct cmdl *cmdl)
 		" media                 - Show or modify media\n"
 		" nametable             - Show nametable\n"
 		" node                  - Show or modify node related parameters\n"
-		" peer                  - Peer related operations\n"
 		" socket                - Show sockets\n",
 		cmdl->argv[0]);
 }
@@ -61,7 +59,6 @@ int main(int argc, char *argv[])
 		{ "media",	cmd_media,	cmd_media_help},
 		{ "nametable",	cmd_nametable,	cmd_nametable_help},
 		{ "node",	cmd_node,	cmd_node_help},
-		{ "peer",	cmd_peer,	cmd_peer_help},
 		{ "socket",	cmd_socket,	cmd_socket_help},
 		{ NULL }
 	};
