@@ -26,17 +26,15 @@
 #include "tc_util.h"
 #include "tc_common.h"
 
-static int usage(void);
-
 static int usage(void)
 {
 	fprintf(stderr, "Usage: tc qdisc [ add | del | replace | change | show ] dev STRING\n");
-	fprintf(stderr, "       [ handle QHANDLE ] [ root | ingress | parent CLASSID ]\n");
+	fprintf(stderr, "       [ handle QHANDLE ] [ root | ingress | clsact | parent CLASSID ]\n");
 	fprintf(stderr, "       [ estimator INTERVAL TIME_CONSTANT ]\n");
 	fprintf(stderr, "       [ stab [ help | STAB_OPTIONS] ]\n");
 	fprintf(stderr, "       [ [ QDISC_KIND ] [ help | OPTIONS ] ]\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "       tc qdisc show [ dev STRING ] [ingress]\n");
+	fprintf(stderr, "       tc qdisc show [ dev STRING ] [ ingress | clsact ]\n");
 	fprintf(stderr, "Where:\n");
 	fprintf(stderr, "QDISC_KIND := { [p|b]fifo | tbf | prio | cbq | red | etc. }\n");
 	fprintf(stderr, "OPTIONS := ... try tc qdisc add <desired QDISC_KIND> help\n");
@@ -91,6 +89,17 @@ static int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_ROOT;
+		} else if (strcmp(*argv, "clsact") == 0) {
+			if (req.t.tcm_parent) {
+				fprintf(stderr, "Error: \"clsact\" is a duplicate parent ID\n");
+				return -1;
+			}
+			req.t.tcm_parent = TC_H_CLSACT;
+			strncpy(k, "clsact", sizeof(k) - 1);
+			q = get_qdisc_kind(k);
+			req.t.tcm_handle = TC_H_MAKE(TC_H_CLSACT, 0);
+			NEXT_ARG_FWD();
+			break;
 		} else if (strcmp(*argv, "ingress") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"ingress\" is a duplicate parent ID\n");
@@ -274,7 +283,6 @@ int print_qdisc(const struct sockaddr_nl *who,
 	return 0;
 }
 
-
 static int tc_qdisc_list(int argc, char **argv)
 {
 	struct tcmsg t;
@@ -288,7 +296,8 @@ static int tc_qdisc_list(int argc, char **argv)
 		if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			strncpy(d, *argv, sizeof(d)-1);
-                } else if (strcmp(*argv, "ingress") == 0) {
+                } else if (strcmp(*argv, "ingress") == 0 ||
+			   strcmp(*argv, "clsact") == 0) {
                              if (t.tcm_parent) {
                                      fprintf(stderr, "Duplicate parent ID\n");
                                      usage();
