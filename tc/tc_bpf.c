@@ -39,6 +39,8 @@
 #include <linux/filter.h>
 #include <linux/if_alg.h>
 
+#include <arpa/inet.h>
+
 #include "utils.h"
 
 #include "bpf_elf.h"
@@ -1564,6 +1566,38 @@ static void bpf_hash_destroy(struct bpf_elf_ctx *ctx)
 	}
 }
 
+static int bpf_elf_check_ehdr(const struct bpf_elf_ctx *ctx)
+{
+	if (ctx->elf_hdr.e_type != ET_REL ||
+	    ctx->elf_hdr.e_machine != 0 ||
+	    ctx->elf_hdr.e_version != EV_CURRENT) {
+		fprintf(stderr, "ELF format error, ELF file not for eBPF?\n");
+		return -EINVAL;
+	}
+
+	switch (ctx->elf_hdr.e_ident[EI_DATA]) {
+	default:
+		fprintf(stderr, "ELF format error, wrong endianness info?\n");
+		return -EINVAL;
+	case ELFDATA2LSB:
+		if (htons(1) == 1) {
+			fprintf(stderr,
+				"We are big endian, eBPF object is little endian!\n");
+			return -EIO;
+		}
+		break;
+	case ELFDATA2MSB:
+		if (htons(1) != 1) {
+			fprintf(stderr,
+				"We are little endian, eBPF object is big endian!\n");
+			return -EIO;
+		}
+		break;
+	}
+
+	return 0;
+}
+
 static int bpf_elf_ctx_init(struct bpf_elf_ctx *ctx, const char *pathname,
 			    enum bpf_prog_type type, bool verbose)
 {
@@ -1587,11 +1621,20 @@ static int bpf_elf_ctx_init(struct bpf_elf_ctx *ctx, const char *pathname,
 		goto out_fd;
 	}
 
+	if (elf_kind(ctx->elf_fd) != ELF_K_ELF) {
+		ret = -EINVAL;
+		goto out_fd;
+	}
+
 	if (gelf_getehdr(ctx->elf_fd, &ctx->elf_hdr) !=
 	    &ctx->elf_hdr) {
 		ret = -EIO;
 		goto out_elf;
 	}
+
+	ret = bpf_elf_check_ehdr(ctx);
+	if (ret < 0)
+		goto out_elf;
 
 	ctx->sec_done = calloc(ctx->elf_hdr.e_shnum,
 			       sizeof(*(ctx->sec_done)));
