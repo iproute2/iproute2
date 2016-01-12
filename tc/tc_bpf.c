@@ -1237,14 +1237,17 @@ static int bpf_fetch_ancillary(struct bpf_elf_ctx *ctx)
 		if (ret < 0)
 			continue;
 
-		if (!strcmp(data.sec_name, ELF_SECTION_MAPS))
+		if (data.sec_hdr.sh_type == SHT_PROGBITS &&
+		    !strcmp(data.sec_name, ELF_SECTION_MAPS))
 			ret = bpf_fetch_maps(ctx, i, &data);
-		else if (!strcmp(data.sec_name, ELF_SECTION_LICENSE))
+		else if (data.sec_hdr.sh_type == SHT_PROGBITS &&
+			 !strcmp(data.sec_name, ELF_SECTION_LICENSE))
 			ret = bpf_fetch_license(ctx, i, &data);
-		else if (data.sec_hdr.sh_type == SHT_SYMTAB)
+		else if (data.sec_hdr.sh_type == SHT_SYMTAB &&
+			 !strcmp(data.sec_name, ".symtab"))
 			ret = bpf_fetch_symtab(ctx, i, &data);
 		else if (data.sec_hdr.sh_type == SHT_STRTAB &&
-			 i != ctx->elf_hdr.e_shstrndx)
+			 !strcmp(data.sec_name, ".strtab"))
 			ret = bpf_fetch_strtab(ctx, i, &data);
 		if (ret < 0) {
 			fprintf(stderr, "Error parsing section %d! Perhaps"
@@ -1275,7 +1278,10 @@ static int bpf_fetch_prog(struct bpf_elf_ctx *ctx, const char *section)
 			continue;
 
 		ret = bpf_fill_section_data(ctx, i, &data);
-		if (ret < 0 || strcmp(data.sec_name, section))
+		if (ret < 0 ||
+		    !(data.sec_hdr.sh_type == SHT_PROGBITS &&
+		      data.sec_hdr.sh_flags & SHF_EXECINSTR &&
+		      !strcmp(data.sec_name, section)))
 			continue;
 
 		memset(&prog, 0, sizeof(prog));
@@ -1353,7 +1359,10 @@ static int bpf_fetch_prog_relo(struct bpf_elf_ctx *ctx, const char *section)
 
 		idx = data_relo.sec_hdr.sh_info;
 		ret = bpf_fill_section_data(ctx, idx, &data_insn);
-		if (ret < 0 || strcmp(data_insn.sec_name, section))
+		if (ret < 0 ||
+		    !(data_insn.sec_hdr.sh_type == SHT_PROGBITS &&
+		      data_insn.sec_hdr.sh_flags & SHF_EXECINSTR &&
+		      !strcmp(data_insn.sec_name, section)))
 			continue;
 
 		ret = bpf_apply_relo_data(ctx, &data_relo, &data_insn);
