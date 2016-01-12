@@ -91,20 +91,17 @@ static int tc_qdisc_modify(int cmd, unsigned flags, int argc, char **argv)
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_ROOT;
-#ifdef TC_H_INGRESS
 		} else if (strcmp(*argv, "ingress") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"ingress\" is a duplicate parent ID\n");
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_INGRESS;
-			strncpy(k, "ingress", sizeof(k)-1);
+			strncpy(k, "ingress", sizeof(k) - 1);
 			q = get_qdisc_kind(k);
-			req.t.tcm_handle = 0xffff0000;
-
-			argc--; argv++;
+			req.t.tcm_handle = TC_H_MAKE(TC_H_INGRESS, 0);
+			NEXT_ARG_FWD();
 			break;
-#endif
 		} else if (strcmp(*argv, "parent") == 0) {
 			__u32 handle;
 			NEXT_ARG();
@@ -291,14 +288,12 @@ static int tc_qdisc_list(int argc, char **argv)
 		if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			strncpy(d, *argv, sizeof(d)-1);
-#ifdef TC_H_INGRESS
                 } else if (strcmp(*argv, "ingress") == 0) {
                              if (t.tcm_parent) {
                                      fprintf(stderr, "Duplicate parent ID\n");
                                      usage();
                              }
                              t.tcm_parent = TC_H_INGRESS;
-#endif
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
