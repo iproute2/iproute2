@@ -391,7 +391,8 @@ the following additional arguments are supported:
 .RB " ] [ { " group " | " remote " } "
 .I IPADDR
 .R " ] [ "
-.BI local " IPADDR "
+.B local
+.RI "{ "IPADDR " | "any " } "
 .R " ] [ "
 .BI ttl " TTL "
 .R " ] [ "
