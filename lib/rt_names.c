@@ -23,10 +23,7 @@
 #include <linux/rtnetlink.h>
 
 #include "rt_names.h"
-
-#ifndef CONFDIR
-#define CONFDIR "/etc/iproute2"
-#endif
+#include "utils.h"
 
 #define NAME_MAX_LEN 512
 

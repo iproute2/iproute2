@@ -54,7 +54,7 @@ static int parse_nofopt(struct genl_util *f, int argc, char **argv)
 	return 0;
 }
 
-static struct genl_util *get_genl_kind(char *str)
+static struct genl_util *get_genl_kind(const char *str)
 {
 	void *dlh;
 	char buf[256];

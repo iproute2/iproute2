@@ -168,8 +168,8 @@
 
 /* Common, shared definitions with ebpf_agent.c. */
 #include "bpf_shared.h"
-/* Selection of BPF helper functions for our example. */
-#include "bpf_funcs.h"
+/* BPF helper functions for our example. */
+#include "../../include/bpf_api.h"
 
 /* Could be defined here as well, or included from the header. */
 #define TC_ACT_UNSPEC		(-1)
@@ -387,10 +387,10 @@ static inline void cls_update_proto_map(const struct __sk_buff *skb,
 	uint8_t proto = flow->ip_proto;
 	struct count_tuple *ct, _ct;
 
-	ct = bpf_map_lookup_elem(&map_proto, &proto);
+	ct = map_lookup_elem(&map_proto, &proto);
 	if (likely(ct)) {
-		__sync_fetch_and_add(&ct->packets, 1);
-		__sync_fetch_and_add(&ct->bytes, skb->len);
+		lock_xadd(&ct->packets, 1);
+		lock_xadd(&ct->bytes, skb->len);
 		return;
 	}
 
@@ -398,7 +398,7 @@ static inline void cls_update_proto_map(const struct __sk_buff *skb,
 	_ct.packets = 1;
 	_ct.bytes = skb->len;
 
-	bpf_map_update_elem(&map_proto, &proto, &_ct, BPF_ANY);
+	map_update_elem(&map_proto, &proto, &_ct, BPF_ANY);
 }
 
 static inline void cls_update_queue_map(const struct __sk_buff *skb)
@@ -409,11 +409,11 @@ static inline void cls_update_queue_map(const struct __sk_buff *skb)
 
 	mismatch = skb->queue_mapping != get_smp_processor_id();
 
-	cq = bpf_map_lookup_elem(&map_queue, &queue);
+	cq = map_lookup_elem(&map_queue, &queue);
 	if (likely(cq)) {
-		__sync_fetch_and_add(&cq->total, 1);
+		lock_xadd(&cq->total, 1);
 		if (mismatch)
-			__sync_fetch_and_add(&cq->mismatch, 1);
+			lock_xadd(&cq->mismatch, 1);
 		return;
 	}
 
@@ -421,7 +421,7 @@ static inline void cls_update_queue_map(const struct __sk_buff *skb)
 	_cq.total = 1;
 	_cq.mismatch = mismatch ? 1 : 0;
 
-	bpf_map_update_elem(&map_queue, &queue, &_cq, BPF_ANY);
+	map_update_elem(&map_queue, &queue, &_cq, BPF_ANY);
 }
 
 /* eBPF program definitions, placed in various sections, which can
@@ -439,7 +439,8 @@ static inline void cls_update_queue_map(const struct __sk_buff *skb)
  * It is however not required to have multiple programs sharing
  * a file.
  */
-__section("classifier") int cls_main(struct __sk_buff *skb)
+__section("classifier")
+int cls_main(struct __sk_buff *skb)
 {
 	struct flow_keys flow;
 
@@ -456,13 +457,14 @@ static inline void act_update_drop_map(void)
 {
 	uint32_t *count, cpu = get_smp_processor_id();
 
-	count = bpf_map_lookup_elem(&map_drops, &cpu);
+	count = map_lookup_elem(&map_drops, &cpu);
 	if (count)
 		/* Only this cpu is accessing this element. */
 		(*count)++;
 }
 
-__section("action-mark") int act_mark_main(struct __sk_buff *skb)
+__section("action-mark")
+int act_mark_main(struct __sk_buff *skb)
 {
 	/* You could also mangle skb data here with the helper function
 	 * BPF_FUNC_skb_store_bytes, etc. Or, alternatively you could
@@ -479,7 +481,8 @@ __section("action-mark") int act_mark_main(struct __sk_buff *skb)
 	return TC_ACT_UNSPEC;
 }
 
-__section("action-rand") int act_rand_main(struct __sk_buff *skb)
+__section("action-rand")
+int act_rand_main(struct __sk_buff *skb)
 {
 	/* Sorry, we're near event horizon ... */
 	if ((get_prandom_u32() & 3) == 0) {
@@ -493,4 +496,4 @@ __section("action-rand") int act_rand_main(struct __sk_buff *skb)
 /* Last but not least, the file contains a license. Some future helper
  * functions may only be available with a GPL license.
  */
-char __license[] __section("license") = "GPL";
+BPF_LICENSE("GPL");

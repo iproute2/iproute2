@@ -91,13 +91,17 @@ int do_tcmonitor(int argc, char **argv)
 	}
 
 	if (file) {
-		FILE *fp;
-		fp = fopen(file, "r");
+		FILE *fp = fopen(file, "r");
+		int ret;
+
 		if (fp == NULL) {
 			perror("Cannot fopen");
 			exit(-1);
 		}
-		return rtnl_from_file(fp, accept_tcmsg, (void*)stdout);
+
+		ret = rtnl_from_file(fp, accept_tcmsg, stdout);
+		fclose(fp);
+		return ret;
 	}
 
 	if (rtnl_open(&rth, groups) < 0)

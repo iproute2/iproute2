@@ -12,19 +12,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdbool.h>
-#include <libgen.h>
+
 #include <linux/bpf.h>
 #include <linux/tc_act/tc_bpf.h>
 
 #include "utils.h"
-#include "rt_names.h"
 #include "tc_util.h"
 #include "tc_bpf.h"
 
 static const enum bpf_prog_type bpf_type = BPF_PROG_TYPE_SCHED_ACT;
+
+static const int nla_tbl[BPF_NLA_MAX] = {
+	[BPF_NLA_OPS_LEN]	= TCA_ACT_BPF_OPS_LEN,
+	[BPF_NLA_OPS]		= TCA_ACT_BPF_OPS,
+	[BPF_NLA_FD]		= TCA_ACT_BPF_FD,
+	[BPF_NLA_NAME]		= TCA_ACT_BPF_NAME,
+};
 
 static void explain(void)
 {
@@ -37,12 +40,14 @@ static void explain(void)
 	fprintf(stderr, "eBPF use case:\n");
 	fprintf(stderr, " object-file FILE [ section ACT_NAME ] [ export UDS_FILE ]");
 	fprintf(stderr, " [ verbose ]\n");
+	fprintf(stderr, " object-pinned FILE\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where BPF_BYTECODE := \'s,c t f k,c t f k,c t f k,...\'\n");
 	fprintf(stderr, "c,t,f,k and s are decimals; s denotes number of 4-tuples\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where FILE points to a file containing the BPF_BYTECODE string,\n");
-	fprintf(stderr, "an ELF file containing eBPF map definitions and bytecode.\n");
+	fprintf(stderr, "an ELF file containing eBPF map definitions and bytecode, or a\n");
+	fprintf(stderr, "pinned eBPF program.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where ACT_NAME refers to the section name containing the\n");
 	fprintf(stderr, "action (default \'%s\').\n", bpf_default_section(bpf_type));
@@ -54,114 +59,40 @@ static void explain(void)
 	fprintf(stderr, "explicitly specifies an action index upon creation.\n");
 }
 
-static void usage(void)
+static int bpf_parse_opt(struct action_util *a, int *ptr_argc, char ***ptr_argv,
+			 int tca_id, struct nlmsghdr *n)
 {
-	explain();
-	exit(-1);
-}
-
-static int parse_bpf(struct action_util *a, int *argc_p, char ***argv_p,
-		     int tca_id, struct nlmsghdr *n)
-{
-	char **argv = *argv_p, bpf_name[256];
+	const char *bpf_obj = NULL, *bpf_uds_name = NULL;
+	struct tc_act_bpf parm;
+	bool seen_run = false;
 	struct rtattr *tail;
-	struct tc_act_bpf parm = { 0 };
-	struct sock_filter bpf_ops[BPF_MAXINSNS];
-	bool ebpf_fill = false, bpf_fill = false;
-	bool ebpf = false, seen_run = false;
-	const char *bpf_uds_name = NULL;
-	const char *bpf_sec_name = NULL;
-	char *bpf_obj = NULL;
-	int argc = *argc_p, ret = 0;
-	__u16 bpf_len = 0;
-	__u32 bpf_fd = 0;
+	int argc, ret = 0;
+	char **argv;
+
+	argv = *ptr_argv;
+	argc = *ptr_argc;
 
 	if (matches(*argv, "bpf") != 0)
 		return -1;
 
 	NEXT_ARG();
 
+	tail = NLMSG_TAIL(n);
+	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+
 	while (argc > 0) {
 		if (matches(*argv, "run") == 0) {
-			bool from_file, bpf_verbose;
-			int ret;
-
 			NEXT_ARG();
 opt_bpf:
-			bpf_sec_name = bpf_default_section(bpf_type);
-			bpf_verbose = false;
 			seen_run = true;
-
-			if (strcmp(*argv, "bytecode-file") == 0 ||
-			    strcmp(*argv, "bcf") == 0) {
-				from_file = true;
-			} else if (strcmp(*argv, "bytecode") == 0 ||
-				   strcmp(*argv, "bc") == 0) {
-				from_file = false;
-			} else if (strcmp(*argv, "object-file") == 0 ||
-				   strcmp(*argv, "obj") == 0) {
-				ebpf = true;
-			} else {
-				fprintf(stderr, "unexpected \"%s\"\n", *argv);
-				explain();
+			if (bpf_parse_common(&argc, &argv, nla_tbl, bpf_type,
+					     &bpf_obj, &bpf_uds_name, n)) {
+				fprintf(stderr, "Failed to retrieve (e)BPF data!\n");
 				return -1;
-			}
-
-			NEXT_ARG();
-			if (ebpf) {
-				bpf_uds_name = getenv(BPF_ENV_UDS);
-				bpf_obj = *argv;
-
-				NEXT_ARG_FWD();
-
-				if (argc > 0 &&
-				    (strcmp(*argv, "section") == 0 ||
-				     strcmp(*argv, "sec") == 0)) {
-					NEXT_ARG();
-					bpf_sec_name = *argv;
-					NEXT_ARG_FWD();
-				}
-				if (argc > 0 && !bpf_uds_name &&
-				    (strcmp(*argv, "export") == 0 ||
-				     strcmp(*argv, "exp") == 0)) {
-					NEXT_ARG();
-					bpf_uds_name = *argv;
-					NEXT_ARG_FWD();
-				}
-				if (argc > 0 &&
-				    (strcmp(*argv, "verbose") == 0 ||
-				     strcmp(*argv, "verb") == 0)) {
-					bpf_verbose = true;
-					NEXT_ARG_FWD();
-				}
-
-				PREV_ARG();
-			}
-
-			ret = ebpf ? bpf_open_object(bpf_obj, bpf_type, bpf_sec_name,
-						     bpf_verbose) :
-				     bpf_parse_ops(argc, argv, bpf_ops, from_file);
-			if (ret < 0) {
-				fprintf(stderr, "%s\n", ebpf ?
-					"Could not load object" :
-					"Illegal \"bytecode\"");
-				return -1;
-			}
-
-			if (ebpf) {
-				bpf_obj = basename(bpf_obj);
-
-				snprintf(bpf_name, sizeof(bpf_name), "%s:[%s]",
-					 bpf_obj, bpf_sec_name);
-
-				bpf_fd = ret;
-				ebpf_fill = true;
-			} else {
-				bpf_len = ret;
-				bpf_fill = true;
 			}
 		} else if (matches(*argv, "help") == 0) {
-			usage();
+			explain();
+			return -1;
 		} else if (matches(*argv, "index") == 0) {
 			break;
 		} else {
@@ -173,7 +104,9 @@ opt_bpf:
 		NEXT_ARG_FWD();
 	}
 
+	memset(&parm, 0, sizeof(parm));
 	parm.action = TC_ACT_PIPE;
+
 	if (argc) {
 		if (matches(*argv, "reclassify") == 0) {
 			parm.action = TC_ACT_RECLASSIFY;
@@ -207,32 +140,19 @@ opt_bpf:
 		}
 	}
 
-	tail = NLMSG_TAIL(n);
-
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
 	addattr_l(n, MAX_MSG, TCA_ACT_BPF_PARMS, &parm, sizeof(parm));
-
-	if (ebpf_fill) {
-		addattr32(n, MAX_MSG, TCA_ACT_BPF_FD, bpf_fd);
-		addattrstrz(n, MAX_MSG, TCA_ACT_BPF_NAME, bpf_name);
-	} else if (bpf_fill) {
-		addattr16(n, MAX_MSG, TCA_ACT_BPF_OPS_LEN, bpf_len);
-		addattr_l(n, MAX_MSG, TCA_ACT_BPF_OPS, &bpf_ops,
-			  bpf_len * sizeof(struct sock_filter));
-	}
-
 	tail->rta_len = (char *)NLMSG_TAIL(n) - (char *)tail;
-
-	*argc_p = argc;
-	*argv_p = argv;
 
 	if (bpf_uds_name)
 		ret = bpf_send_map_fds(bpf_uds_name, bpf_obj);
 
+	*ptr_argc = argc;
+	*ptr_argv = argv;
+
 	return ret;
 }
 
-static int print_bpf(struct action_util *au, FILE *f, struct rtattr *arg)
+static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_ACT_BPF_MAX + 1];
 	struct tc_act_bpf *parm;
@@ -249,7 +169,6 @@ static int print_bpf(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 
 	parm = RTA_DATA(tb[TCA_ACT_BPF_PARMS]);
-
 	fprintf(f, "bpf ");
 
 	if (tb[TCA_ACT_BPF_NAME])
@@ -276,12 +195,11 @@ static int print_bpf(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 
 	fprintf(f, "\n ");
-
 	return 0;
 }
 
 struct action_util bpf_action_util = {
-	.id = "bpf",
-	.parse_aopt = parse_bpf,
-	.print_aopt = print_bpf,
+	.id		= "bpf",
+	.parse_aopt	= bpf_parse_opt,
+	.print_aopt	= bpf_print_opt,
 };
