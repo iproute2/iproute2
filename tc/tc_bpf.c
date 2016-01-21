@@ -1328,6 +1328,12 @@ static int bpf_apply_relo_data(struct bpf_elf_ctx *ctx,
 
 		if (gelf_getsym(ctx->sym_tab, GELF_R_SYM(relo.r_info), &sym) != &sym)
 			return -EIO;
+		if (sym.st_shndx != ctx->sec_maps) {
+			fprintf(stderr, "ELF contains non-map related relo data in "
+				"entry %u pointing to section %u! Compiler bug?!\n",
+				relo_ent, sym.st_shndx);
+			return -EIO;
+		}
 
 		rmap = sym.st_value / sizeof(struct bpf_elf_map);
 		if (rmap >= ARRAY_SIZE(ctx->map_fds))
