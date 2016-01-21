@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <dirent.h>
+#include <limits.h>
 
 #include <asm/types.h>
 #include <linux/rtnetlink.h>
