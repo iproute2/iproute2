@@ -64,6 +64,18 @@ static void vrf_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fprintf(f, "table %u ", rta_getattr_u32(tb[IFLA_VRF_TABLE]));
 }
 
+static void vrf_slave_print_opt(struct link_util *lu, FILE *f,
+				struct rtattr *tb[])
+{
+	if (!tb)
+		return;
+
+	if (tb[IFLA_VRF_PORT_TABLE]) {
+		fprintf(f, "table %u ",
+			rta_getattr_u32(tb[IFLA_VRF_PORT_TABLE]));
+	}
+}
+
 static void vrf_print_help(struct link_util *lu, int argc, char **argv,
 			      FILE *f)
 {
@@ -76,4 +88,11 @@ struct link_util vrf_link_util = {
 	.parse_opt	= vrf_parse_opt,
 	.print_opt	= vrf_print_opt,
 	.print_help	= vrf_print_help,
+};
+
+struct link_util vrf_slave_link_util = {
+        .id             = "vrf",
+        .maxattr        = IFLA_VRF_PORT_MAX,
+	.print_opt	= vrf_slave_print_opt,
+        .slave          = true,
 };
