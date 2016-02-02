@@ -68,14 +68,17 @@ static void usage(void)
 
 static void print_tunnel(struct ip6_tnl_parm2 *p)
 {
-	char remote[64];
-	char local[64];
+	char s1[1024];
+	char s2[1024];
 
-	inet_ntop(AF_INET6, &p->raddr, remote, sizeof(remote));
-	inet_ntop(AF_INET6, &p->laddr, local, sizeof(local));
-
+	/* Do not use format_host() for local addr,
+	 * symbolic name will not be useful.
+	 */
 	printf("%s: %s/ipv6 remote %s local %s",
-	       p->name, tnl_strproto(p->proto), remote, local);
+	       p->name,
+	       tnl_strproto(p->proto),
+	       format_host(AF_INET6, 16, &p->raddr, s1, sizeof(s1)),
+	       rt_addr_n2a(AF_INET6, 16, &p->laddr, s2, sizeof(s2)));
 	if (p->link) {
 		const char *n = ll_index_to_name(p->link);
 		if (n)
@@ -107,22 +110,22 @@ static void print_tunnel(struct ip6_tnl_parm2 *p)
 		printf(" dscp inherit");
 
 	if (p->proto == IPPROTO_GRE) {
-		if ((p->i_flags&GRE_KEY) && (p->o_flags&GRE_KEY) && p->o_key == p->i_key)
+		if ((p->i_flags & GRE_KEY) && (p->o_flags & GRE_KEY) && p->o_key == p->i_key)
 			printf(" key %u", ntohl(p->i_key));
-		else if ((p->i_flags|p->o_flags)&GRE_KEY) {
-			if (p->i_flags&GRE_KEY)
-				printf(" ikey %u ", ntohl(p->i_key));
-			if (p->o_flags&GRE_KEY)
-				printf(" okey %u ", ntohl(p->o_key));
+		else if ((p->i_flags | p->o_flags) & GRE_KEY) {
+			if (p->i_flags & GRE_KEY)
+				printf(" ikey %u", ntohl(p->i_key));
+			if (p->o_flags & GRE_KEY)
+				printf(" okey %u", ntohl(p->o_key));
 		}
 
-		if (p->i_flags&GRE_SEQ)
+		if (p->i_flags & GRE_SEQ)
 			printf("%s  Drop packets out of sequence.", _SL_);
-		if (p->i_flags&GRE_CSUM)
+		if (p->i_flags & GRE_CSUM)
 			printf("%s  Checksum in received packet is required.", _SL_);
-		if (p->o_flags&GRE_SEQ)
+		if (p->o_flags & GRE_SEQ)
 			printf("%s  Sequence packets on output.", _SL_);
-		if (p->o_flags&GRE_CSUM)
+		if (p->o_flags & GRE_CSUM)
 			printf("%s  Checksum output packets.", _SL_);
 	}
 }
@@ -230,45 +233,18 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 				invarg("not inherit", *argv);
 			p->flags |= IP6_TNL_F_RCV_DSCP_COPY;
 		} else if (strcmp(*argv, "key") == 0) {
-			unsigned uval;
 			NEXT_ARG();
 			p->i_flags |= GRE_KEY;
 			p->o_flags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				p->i_key = p->o_key = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value of \"key\"\n");
-					exit(-1);
-				}
-				p->i_key = p->o_key = htonl(uval);
-			}
+			p->i_key = p->o_key = tnl_parse_key("key", *argv);
 		} else if (strcmp(*argv, "ikey") == 0) {
-			unsigned uval;
 			NEXT_ARG();
 			p->i_flags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				p->i_key = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"ikey\"\n");
-					exit(-1);
-				}
-				p->i_key = htonl(uval);
-			}
+			p->i_key = tnl_parse_key("ikey", *argv);
 		} else if (strcmp(*argv, "okey") == 0) {
-			unsigned uval;
 			NEXT_ARG();
 			p->o_flags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				p->o_key = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
-					fprintf(stderr, "invalid value of \"okey\"\n");
-					exit(-1);
-				}
-				p->o_key = htonl(uval);
-			}
+			p->o_key = tnl_parse_key("okey", *argv);
 		} else if (strcmp(*argv, "seq") == 0) {
 			p->i_flags |= GRE_SEQ;
 			p->o_flags |= GRE_SEQ;
@@ -286,8 +262,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 		} else {
 			if (strcmp(*argv, "name") == 0) {
 				NEXT_ARG();
-			}
-			if (matches(*argv, "help") == 0)
+			} else if (matches(*argv, "help") == 0)
 				usage();
 			if (p->name[0])
 				duparg2("name", *argv);
@@ -305,8 +280,10 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 	}
 	if (medium[0]) {
 		p->link = ll_name_to_index(medium);
-		if (p->link == 0)
+		if (p->link == 0) {
+			fprintf(stderr, "Cannot find device \"%s\"\n", medium);
 			return -1;
+		}
 	}
 	return 0;
 }
@@ -351,23 +328,19 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 	FILE *fp = fopen("/proc/net/dev", "r");
 	if (fp == NULL) {
 		perror("fopen");
-		goto end;
+		return -1;
 	}
 
 	/* skip two lines at the begenning of the file */
 	if (!fgets(buf, sizeof(buf), fp) ||
 	    !fgets(buf, sizeof(buf), fp)) {
 		fprintf(stderr, "/proc/net/dev read error\n");
-		return -1;
+		goto end;
 	}
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char name[IFNAMSIZ];
 		int index, type;
-		unsigned long rx_bytes, rx_packets, rx_errs, rx_drops,
-			rx_fifo, rx_frame,
-			tx_bytes, tx_packets, tx_errs, tx_drops,
-			tx_fifo, tx_colls, tx_carrier, rx_multi;
 		struct ip6_tnl_parm2 p1;
 		char *ptr;
 
@@ -377,12 +350,6 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 			fprintf(stderr, "Wrong format for /proc/net/dev. Giving up.\n");
 			goto end;
 		}
-		if (sscanf(ptr, "%ld%ld%ld%ld%ld%ld%ld%*d%ld%ld%ld%ld%ld%ld%ld",
-			   &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
-			   &rx_fifo, &rx_frame, &rx_multi,
-			   &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
-			   &tx_fifo, &tx_colls, &tx_carrier) != 14)
-			continue;
 		if (p->name[0] && strcmp(p->name, name))
 			continue;
 		index = ll_name_to_index(name);
@@ -408,22 +375,13 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 		if (!ip6_tnl_parm_match(p, &p1))
 			continue;
 		print_tunnel(&p1);
-		if (show_stats) {
-			printf("%s", _SL_);
-			printf("RX: Packets    Bytes        Errors CsumErrs OutOfSeq Mcasts%s", _SL_);
-			printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-8ld%s",
-			       rx_packets, rx_bytes, rx_errs, rx_frame, rx_fifo, rx_multi, _SL_);
-			printf("TX: Packets    Bytes        Errors DeadLoop NoRoute  NoBufs%s", _SL_);
-			printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-6ld",
-			       tx_packets, tx_bytes, tx_errs, tx_colls, tx_carrier, tx_drops);
-		}
+		if (show_stats)
+			tnl_print_stats(ptr);
 		printf("\n");
 	}
 	err = 0;
-
  end:
-	if (fp)
-		fclose(fp);
+	fclose(fp);
 	return err;
 }
 

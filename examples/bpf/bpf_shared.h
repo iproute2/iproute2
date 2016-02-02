@@ -1,10 +1,6 @@
 #ifndef __BPF_SHARED__
 #define __BPF_SHARED__
 
-#include <stdint.h>
-
-#include "../../include/bpf_elf.h"
-
 enum {
 	BPF_MAP_ID_PROTO,
 	BPF_MAP_ID_QUEUE,
@@ -14,7 +10,7 @@ enum {
 };
 
 struct count_tuple {
-	long packets; /* type long for __sync_fetch_and_add() */
+	long packets; /* type long for lock_xadd() */
 	long bytes;
 };
 

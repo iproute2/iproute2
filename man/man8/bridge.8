@@ -21,17 +21,18 @@ bridge \- show / manipulate bridge addresses and devices
 \fB\-V\fR[\fIersion\fR] |
 \fB\-s\fR[\fItatistics\fR] |
 \fB\-n\fR[\fIetns\fR] name }
+\fB\-b\fR[\fIatch\fR] filename }
 
 .ti -8
 .BR "bridge link set"
-.B  dev
+.B dev
 .IR DEV
 .IR " [ "
-.B  cost
+.B cost
 .IR COST " ] [ "
-.B  priority
-.IR PRIO " ]  [ "
-.B  state
+.B priority
+.IR PRIO " ] [ "
+.B state
 .IR STATE "] ["
 .BR guard " { " on " | " off " } ] [ "
 .BR hairpin " { " on " | " off " } ] [ "
@@ -41,21 +42,21 @@ bridge \- show / manipulate bridge addresses and devices
 .BR learning_sync " { " on " | " off " } ] [ "
 .BR flood " { " on " | " off " } ] [ "
 .BR hwmode " { " vepa " | " veb " } ] [ "
-.BR self " ]  [ " master " ] "
+.BR self " ] [ " master " ] "
 
 .ti -8
 .BR "bridge link" " [ " show " ] [ "
-.B  dev
+.B dev
 .IR DEV " ]"
 
 .ti -8
-.BR "bridge fdb" " { " add " | " append " | " del " } "
+.BR "bridge fdb" " { " add " | " append " | " del " | " replace " } "
 .I LLADDR
-.B  dev
+.B dev
 .IR DEV " { "
 .BR local " | " temp " } [ "
 .BR self " ] [ " master " ] [ " router " ] [ " use " ] [ "
-.B  dst
+.B dst
 .IR IPADDR " ] [ "
 .B vni
 .IR VNI " ] ["
@@ -66,12 +67,12 @@ bridge \- show / manipulate bridge addresses and devices
 
 .ti -8
 .BR "bridge fdb" " [ " show " ] [ "
-.B  dev
+.B dev
 .IR DEV " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " } "
-.B  dev
+.B dev
 .IR DEV
 .B port
 .IR PORT
@@ -83,21 +84,21 @@ bridge \- show / manipulate bridge addresses and devices
 
 .ti -8
 .BR "bridge mdb show " [ "
-.B  dev
+.B dev
 .IR DEV " ]"
 
 .ti -8
 .BR "bridge vlan" " { " add " | " del " } "
-.B  dev
+.B dev
 .IR DEV
-.B  vid 
+.B vid
 .IR VID " [ "
-.BR  pvid " ] [ " untagged " ]  [ "
-.BR  self " ]  [ " master " ] "
+.BR pvid " ] [ " untagged " ] [ "
+.BR self " ] [ " master " ] "
 
 .ti -8
 .BR "bridge vlan" " [ " show " ] [ "
-.B  dev
+.B dev
 .IR DEV " ]"
 
 .ti -8
@@ -137,6 +138,16 @@ to
 .RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
 .BR help " }"
 
+.TP
+.BR "\-b", " \-batch " <FILENAME>
+Read commands from provided file or standard input and invoke them.
+First failure will cause termination of bridge command.
+
+.TP
+.BR "\-force"
+Don't terminate bridge command on errors in batch mode.
+If there were any errors during execution of the commands, the application
+return code will be non zero.
 
 .SH BRIDGE - COMMAND SYNTAX
 
@@ -148,7 +159,7 @@ to
 - Bridge port.
 
 .TP
-.B fdb 
+.B fdb
 - Forwarding Database entry.
 
 .TP
@@ -226,7 +237,7 @@ state the port for list for STP BPDUs and drop all other traffic.
 .B 2
 - STP LEARNING state. Only valid if STP is enabled on the bridge. In this
 state the port will accept traffic only for the purpose of updating MAC
-adress tables.
+address tables.
 .sp
 
 .B 3
@@ -297,6 +308,9 @@ link setting is configured on specified physical device
 .BI master
 link setting is configured on the software bridge (default)
 
+.TP
+.BR "\-t" , " \-timestamp"
+display current time when using monitor option.
 
 .SS bridge link show - list bridge port configuration.
 
@@ -305,7 +319,7 @@ This command displays the current bridge port configuration and flags.
 .SH bridge fdb - forwarding database management
 
 .B fdb
-objects contain known Ethernet addresses on a  link.
+objects contain known Ethernet addresses on a link.
 
 .P
 The corresponding commands display fdb entries, add new entries,
@@ -370,7 +384,7 @@ If omitted the default value is used.
 .BI via " DEVICE"
 device name of the outgoing interface for the
 VXLAN device driver to reach the
-remote VXLAN tunnel endpoint. 
+remote VXLAN tunnel endpoint.
 
 .SS bridge fdb append - append a forwarding database entry
 This command adds a new fdb entry with an already known
@@ -384,14 +398,21 @@ sends a copy of the data packet to each entry found.
 
 .PP
 The arguments are the same as with
-.BR "bridge fdb add" ,
+.BR "bridge fdb add" .
 
 .SS bridge fdb delete - delete a forwarding database entry
 This command removes an existing fdb entry.
 
 .PP
 The arguments are the same as with
-.BR "bridge fdb add" ,
+.BR "bridge fdb add" .
+
+.SS bridge fdb replace - replace a forwarding database entry
+If no matching entry is found, a new one will be created instead.
+
+.PP
+The arguments are the same as with
+.BR "bridge fdb add" .
 
 .SS bridge fdb show - list forwarding entries.
 
@@ -527,7 +548,7 @@ This command displays the current VLAN filter table.
 
 The
 .B bridge
-utility can monitor the state of devices and  addresses
+utility can monitor the state of devices and addresses
 continuously. This option has a slightly different format.
 Namely, the
 .B monitor
@@ -539,7 +560,7 @@ command is the first in the command line and then the object list follows:
 .I OBJECT-LIST
 is the list of object types that we want to monitor.
 It may contain
-.BR link ",  " fdb ", and " mdb "."
+.BR link ", " fdb ", and " mdb "."
 If no
 .B file
 argument is given,

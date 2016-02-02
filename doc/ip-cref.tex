@@ -2246,6 +2246,42 @@ Besides that, the host 193.233.7.83 is translated into
 another prefix to look like 192.203.80.144 when talking
 to the outer world.
 
+\subsection{{\tt ip rule save} -- save rules tables}
+\label{IP-RULE-SAVE}
+
+\paragraph{Description:} this command saves the contents of the rules
+tables or the rule(s) selected by some criteria to standard output.
+
+\paragraph{Arguments:} \verb|ip rule save| has the same arguments as
+\verb|ip rule show|.
+
+\paragraph{Example:} This saves all the rules to the {\tt saved\_rules}
+file:
+\begin{verbatim}
+dan@caffeine:~ # ip rule save > saved_rules
+\end{verbatim}
+
+\paragraph{Output format:} The format of the data stream provided by
+\verb|ip rule save| is that of \verb|rtnetlink|.  See
+\verb|rtnetlink(7)| for more information.
+
+\subsection{{\tt ip rule restore} -- restore rules tables}
+\label{IP-RULE-RESTORE}
+
+\paragraph{Description:} this command restores the contents of the rules
+tables according to a data stream as provided by \verb|ip rule save| via
+standard input.  Note that any rules already in the table are left unchanged,
+and duplicates are not ignored.
+
+\paragraph{Arguments:} This command takes no arguments.
+
+\paragraph{Example:} This restores all rules that were saved to the
+{\tt saved\_rules} file:
+
+\begin{verbatim}
+dan@caffeine:~ # ip rule restore < saved_rules
+\end{verbatim}
+
 
 
 \section{{\tt ip maddress} --- multicast addresses management}

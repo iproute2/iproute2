@@ -31,11 +31,11 @@ static unsigned int filter_index;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge fdb { add | append | del | replace ADDR dev DEV\n"
+	fprintf(stderr, "Usage: bridge fdb { add | append | del | replace } ADDR dev DEV\n"
 			"              [ self ] [ master ] [ use ] [ router ]\n"
 			"              [ local | temp ] [ dst IPADDR ] [ vlan VID ]\n"
-		        "              [ port PORT] [ vni VNI ] [via DEV]\n");
-	fprintf(stderr, "       bridge fdb {show} [ br BRDEV ] [ brport DEV ]\n");
+		        "              [ port PORT] [ vni VNI ] [ via DEV ]\n");
+	fprintf(stderr, "       bridge fdb [ show [ br BRDEV ] [ brport DEV ] ]\n");
 	exit(-1);
 }
 
@@ -163,6 +163,8 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "offload ");
 
 	fprintf(fp, "%s\n", state_n2a(r->ndm_state));
+	fflush(fp);
+
 	return 0;
 }
 

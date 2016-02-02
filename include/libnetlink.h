@@ -42,6 +42,8 @@ int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int fam, int type,
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)
 	__attribute__((warn_unused_result));
+int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
+	__attribute__((warn_unused_result));
 
 struct rtnl_ctrl_data {
 	int	nsid;
@@ -58,11 +60,16 @@ struct rtnl_dump_filter_arg
 {
 	rtnl_filter_t filter;
 	void *arg1;
+	__u16 nc_flags;
 };
 
 int rtnl_dump_filter_l(struct rtnl_handle *rth,
 			      const struct rtnl_dump_filter_arg *arg);
-int rtnl_dump_filter(struct rtnl_handle *rth, rtnl_filter_t filter, void *arg);
+int rtnl_dump_filter_nc(struct rtnl_handle *rth,
+			rtnl_filter_t filter,
+			void *arg, __u16 nc_flags);
+#define rtnl_dump_filter(rth, filter, arg) \
+	rtnl_dump_filter_nc(rth, filter, arg, 0)
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr *answer, size_t len)
 	__attribute__((warn_unused_result));
@@ -86,7 +93,10 @@ int addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest);
 struct rtattr *addattr_nest_compat(struct nlmsghdr *n, int maxlen, int type,
 				   const void *data, int len);
 int addattr_nest_compat_end(struct nlmsghdr *n, struct rtattr *nest);
+int rta_addattr8(struct rtattr *rta, int maxlen, int type, __u8 data);
+int rta_addattr16(struct rtattr *rta, int maxlen, int type, __u16 data);
 int rta_addattr32(struct rtattr *rta, int maxlen, int type, __u32 data);
+int rta_addattr64(struct rtattr *rta, int maxlen, int type, __u64 data);
 int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 		  const void *data, int alen);
 
@@ -97,6 +107,13 @@ int parse_rtattr_byindex(struct rtattr *tb[], int max,
 			 struct rtattr *rta, int len);
 struct rtattr *parse_rtattr_one(int type, struct rtattr *rta, int len);
 int __parse_rtattr_nested_compat(struct rtattr *tb[], int max, struct rtattr *rta, int len);
+
+struct rtattr *rta_nest(struct rtattr *rta, int maxlen, int type);
+int rta_nest_end(struct rtattr *rta, struct rtattr *nest);
+
+#define RTA_TAIL(rta) \
+		((struct rtattr *) (((void *) (rta)) + \
+				    RTA_ALIGN((rta)->rta_len)))
 
 #define parse_rtattr_nested(tb, max, rta) \
 	(parse_rtattr((tb), (max), RTA_DATA(rta), RTA_PAYLOAD(rta)))

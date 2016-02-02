@@ -433,4 +433,3 @@ struct action_util ipt_action_util = {
         .parse_aopt = parse_ipt,
         .print_aopt = print_ipt,
 };
-

@@ -34,5 +34,3 @@ struct m_pedit_util p_pedit_tcp = {
 	"tcp",
 	parse_tcp,
 };
-
-

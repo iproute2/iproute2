@@ -285,12 +285,22 @@ static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
 	parse_rtattr_nested(tb, IFLA_INET6_MAX, inet6_attr);
 
 	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
-		switch (rta_getattr_u8(tb[IFLA_INET6_ADDR_GEN_MODE])) {
+		__u8 mode = rta_getattr_u8(tb[IFLA_INET6_ADDR_GEN_MODE]);
+		switch (mode) {
 		case IN6_ADDR_GEN_MODE_EUI64:
 			fprintf(fp, "addrgenmode eui64 ");
 			break;
 		case IN6_ADDR_GEN_MODE_NONE:
 			fprintf(fp, "addrgenmode none ");
+			break;
+		case IN6_ADDR_GEN_MODE_STABLE_PRIVACY:
+			fprintf(fp, "addrgenmode stable_secret ");
+			break;
+		case IN6_ADDR_GEN_MODE_RANDOM:
+			fprintf(fp, "addrgenmode random ");
+			break;
+		default:
+			fprintf(fp, "addrgenmode %#.2hhx ", mode);
 			break;
 		}
 	}
@@ -345,7 +355,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	} else
 		vf_linkstate = NULL;
 
-	fprintf(fp, "\n    vf %d MAC %s", vf_mac->vf,
+	fprintf(fp, "%s    vf %d MAC %s", _SL_, vf_mac->vf,
 		ll_addr_n2a((unsigned char *)&vf_mac->mac,
 		ETH_ALEN, 0, b1, sizeof(b1)));
 	if (vf_vlan->vlan)
@@ -893,7 +903,17 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 static int flush_update(void)
 {
-	if (rtnl_send_check(&rth, filter.flushb, filter.flushp) < 0) {
+
+	/*
+	 * Note that the kernel may delete multiple addresses for one
+	 * delete request (e.g. if ipv4 address promotion is disabled).
+	 * Since a flush operation is really a series of delete requests
+	 * its possible that we may request an address delete that has
+	 * already been done by the kernel. Therefore, ignore EADDRNOTAVAIL
+	 * errors returned from a flush request
+	 */
+	if ((rtnl_send_check(&rth, filter.flushb, filter.flushp) < 0) &&
+	    (errno != EADDRNOTAVAIL)) {
 		perror("Failed to send flush request");
 		return -1;
 	}
@@ -1136,28 +1156,6 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 brief_exit:
 	fflush(fp);
 	return 0;
-}
-
-static int print_addrinfo_primary(const struct sockaddr_nl *who,
-				  struct nlmsghdr *n, void *arg)
-{
-	struct ifaddrmsg *ifa = NLMSG_DATA(n);
-
-	if (ifa->ifa_flags & IFA_F_SECONDARY)
-		return 0;
-
-	return print_addrinfo(who, n, arg);
-}
-
-static int print_addrinfo_secondary(const struct sockaddr_nl *who,
-				    struct nlmsghdr *n, void *arg)
-{
-	struct ifaddrmsg *ifa = NLMSG_DATA(n);
-
-	if (!(ifa->ifa_flags & IFA_F_SECONDARY))
-		return 0;
-
-	return print_addrinfo(who, n, arg);
 }
 
 struct nlmsg_list
@@ -1410,26 +1408,13 @@ static int ipaddr_flush(void)
 	filter.flushe = sizeof(flushb);
 
 	while ((max_flush_loops == 0) || (round < max_flush_loops)) {
-		const struct rtnl_dump_filter_arg a[3] = {
-			{
-				.filter = print_addrinfo_secondary,
-				.arg1 = stdout,
-			},
-			{
-				.filter = print_addrinfo_primary,
-				.arg1 = stdout,
-			},
-			{
-				.filter = NULL,
-				.arg1 = NULL,
-			},
-		};
 		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
 		filter.flushed = 0;
-		if (rtnl_dump_filter_l(&rth, a) < 0) {
+		if (rtnl_dump_filter_nc(&rth, print_addrinfo,
+					stdout, NLM_F_DUMP_INTR) < 0) {
 			fprintf(stderr, "Flush terminated\n");
 			exit(1);
 		}
@@ -1476,10 +1461,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 
 	ipaddr_reset_filter(oneline, 0);
 	filter.showqueue = 1;
-
-	if (filter.family == AF_UNSPEC)
-		filter.family = preferred_family;
-
+	filter.family = preferred_family;
 	filter.group = -1;
 
 	if (action == IPADD_FLUSH) {
@@ -1580,7 +1562,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
 			}
-			if (matches(*argv, "help") == 0)
+			else if (matches(*argv, "help") == 0)
 				usage();
 			if (filter_dev)
 				duparg2("dev", *argv);

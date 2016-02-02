@@ -40,6 +40,10 @@ extern bool do_all;
 #define IPSEC_PROTO_ANY	255
 #endif
 
+#ifndef CONFDIR
+#define CONFDIR		"/etc/iproute2"
+#endif
+
 #define SPRINT_BSIZE 64
 #define SPRINT_BUF(x)	char x[SPRINT_BSIZE]
 
@@ -47,6 +51,7 @@ void incomplete_command(void) __attribute__((noreturn));
 
 #define NEXT_ARG() do { argv++; if (--argc <= 0) incomplete_command(); } while(0)
 #define NEXT_ARG_OK() (argc - 1 > 0)
+#define NEXT_ARG_FWD() do { argv++; argc--; } while(0)
 #define PREV_ARG() do { argv--; argc++; } while(0)
 
 typedef struct
@@ -92,6 +97,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family);
 int get_addr(inet_prefix *dst, const char *arg, int family);
 int get_prefix(inet_prefix *dst, char *arg, int family);
 int mask2bits(__u32 netmask);
+int get_addr_ila(__u64 *val, const char *arg);
 
 int get_integer(int *val, const char *arg, int base);
 int get_unsigned(unsigned *val, const char *arg, int base);
@@ -106,9 +112,12 @@ int get_u16(__u16 *val, const char *arg, int base);
 int get_s16(__s16 *val, const char *arg, int base);
 int get_u8(__u8 *val, const char *arg, int base);
 int get_s8(__s8 *val, const char *arg, int base);
+int get_addr64(__u64 *ap, const char *cp);
 
 char* hexstring_n2a(const __u8 *str, int len, char *buf, int blen);
 __u8* hexstring_a2n(const char *str, __u8 *buf, int blen);
+#define ADDR64_BUF_SIZE sizeof("xxxx:xxxx:xxxx:xxxx")
+int addr64_n2a(__u64 addr, char *buff, size_t len);
 
 int af_bit_len(int af);
 int af_byte_len(int af);
@@ -190,6 +199,12 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 # define __check_format_string(pos_str, pos_args) \
 	__attribute__ ((format (printf, (pos_str), (pos_args))))
 #endif
+
+#define _textify(x)	#x
+#define textify(x)	_textify(x)
+
+#define htonll(x) ((1==htonl(1)) ? (x) : ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
+#define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 
 extern int cmdlineno;
 ssize_t getcmdline(char **line, size_t *len, FILE *in);

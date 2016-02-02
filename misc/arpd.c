@@ -703,7 +703,7 @@ int main(int argc, char **argv)
 		}
 
 		buf[sizeof(buf)-1] = 0;
-		while (fgets(buf, sizeof(buf)-1, fp)) {
+		while (fgets(buf, sizeof(buf), fp)) {
 			__u8 b1[6];
 			char ipbuf[128];
 			char macbuf[128];

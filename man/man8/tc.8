@@ -144,6 +144,50 @@ It is important to notice that filters reside
 .B within
 qdiscs - they are not masters of what happens.
 
+The available filters are:
+.TP
+basic
+Filter packets based on an ematch expression. See
+.BR tc-ematch (8)
+for details.
+.TP
+bpf
+Filter packets using (e)BPF, see
+.BR tc-bpf (8)
+for details.
+.TP
+cgroup
+Filter packets based on the control group of their process. See
+. BR tc-cgroup (8)
+for details.
+.TP
+flow, flower
+Flow-based classifiers, filtering packets based on their flow (identified by selectable keys). See
+.BR tc-flow "(8) and"
+.BR tc-flower (8)
+for details.
+.TP
+fw
+Filter based on fwmark. Directly maps fwmark value to traffic class. See
+.BR tc-fw (8).
+.TP
+route
+Filter packets based on routing table. See
+.BR tc-route (8)
+for details.
+.TP
+rsvp
+Match Resource Reservation Protocol (RSVP) packets.
+.TP
+tcindex
+Filter packets based on traffic control index. See
+.BR tc-tcindex (8).
+.TP
+u32
+Generic filtering on arbitrary packet data, assisted by syntax to abstract common operations. See
+.BR tc-u32 (8)
+for details.
+
 .SH CLASSLESS QDISCS
 The classless qdiscs are:
 .TP
@@ -565,7 +609,7 @@ to
 
 .TP
 .BR "\-cf" , " \-conf " <FILENAME>
-specifies path to the config file. This option is used in conjuction with other options (e.g.
+specifies path to the config file. This option is used in conjunction with other options (e.g.
 .BR -nm ")."
 
 .SH FORMAT
@@ -655,15 +699,20 @@ Shows classes as ASCII graph with stats info under each class.
 .B tc
 was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .SH SEE ALSO
+.BR tc-basic (8),
 .BR tc-bfifo (8),
 .BR tc-bpf (8),
 .BR tc-cbq (8),
+.BR tc-cgroup (8),
 .BR tc-choke (8),
 .BR tc-codel (8),
 .BR tc-drr (8),
 .BR tc-ematch (8),
+.BR tc-flow (8),
+.BR tc-flower (8),
 .BR tc-fq (8),
 .BR tc-fq_codel (8),
+.BR tc-fw (8),
 .BR tc-hfsc (7),
 .BR tc-hfsc (8),
 .BR tc-htb (8),
@@ -671,13 +720,15 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR tc-pfifo (8),
 .BR tc-pfifo_fast (8),
 .BR tc-red (8),
+.BR tc-route (8),
 .BR tc-sfb (8),
 .BR tc-sfq (8),
 .BR tc-stab (8),
 .BR tc-tbf (8),
+.BR tc-tcindex (8),
+.BR tc-u32 (8),
 .br
 .RB "User documentation at " http://lartc.org/ ", but please direct bugreports and patches to: " <netdev@vger.kernel.org>
 
 .SH AUTHOR
 Manpage maintained by bert hubert (ahu@ds9a.nl)
-

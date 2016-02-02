@@ -17,21 +17,19 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <dirent.h>
 
 #include <asm/types.h>
 #include <linux/rtnetlink.h>
 
 #include "rt_names.h"
-
-#ifndef CONFDIR
-#define CONFDIR "/etc/iproute2"
-#endif
+#include "utils.h"
 
 #define NAME_MAX_LEN 512
 
 struct rtnl_hash_entry {
-	struct rtnl_hash_entry *next;
-	const char *		name;
+	struct rtnl_hash_entry	*next;
+	const char		*name;
 	unsigned int		id;
 };
 
@@ -81,7 +79,7 @@ rtnl_hash_initialize(const char *file, struct rtnl_hash_entry **hash, int size)
 			return;
 		}
 
-		if (id<0)
+		if (id < 0)
 			continue;
 
 		entry = malloc(sizeof(*entry));
@@ -111,7 +109,7 @@ static void rtnl_tab_initialize(const char *file, char **tab, int size)
 			fclose(fp);
 			return;
 		}
-		if (id<0 || id>size)
+		if (id < 0 || id > size)
 			continue;
 
 		tab[id] = strdup(namebuf);
@@ -119,23 +117,23 @@ static void rtnl_tab_initialize(const char *file, char **tab, int size)
 	fclose(fp);
 }
 
-static char * rtnl_rtprot_tab[256] = {
-	[RTPROT_UNSPEC] = "none",
-	[RTPROT_REDIRECT] ="redirect",
-	[RTPROT_KERNEL] = "kernel",
-	[RTPROT_BOOT] = "boot",
-	[RTPROT_STATIC] = "static",
+static char *rtnl_rtprot_tab[256] = {
+	[RTPROT_UNSPEC]   = "none",
+	[RTPROT_REDIRECT] = "redirect",
+	[RTPROT_KERNEL]	  = "kernel",
+	[RTPROT_BOOT]	  = "boot",
+	[RTPROT_STATIC]	  = "static",
 
-	[RTPROT_GATED] = "gated",
-	[RTPROT_RA] = "ra",
-	[RTPROT_MRT] =	"mrt",
-	[RTPROT_ZEBRA] ="zebra",
-	[RTPROT_BIRD] = "bird",
-	[RTPROT_BABEL] = "babel",
+	[RTPROT_GATED]	  = "gated",
+	[RTPROT_RA]	  = "ra",
+	[RTPROT_MRT]	  = "mrt",
+	[RTPROT_ZEBRA]	  = "zebra",
+	[RTPROT_BIRD]	  = "bird",
+	[RTPROT_BABEL]	  = "babel",
 	[RTPROT_DNROUTED] = "dnrouted",
-	[RTPROT_XORP] = "xorp",
-	[RTPROT_NTK] = "ntk",
-	[RTPROT_DHCP] = "dhcp",
+	[RTPROT_XORP]	  = "xorp",
+	[RTPROT_NTK]	  = "ntk",
+	[RTPROT_DHCP]	  = "dhcp",
 };
 
 
@@ -148,9 +146,9 @@ static void rtnl_rtprot_initialize(void)
 			    rtnl_rtprot_tab, 256);
 }
 
-const char * rtnl_rtprot_n2a(int id, char *buf, int len)
+const char *rtnl_rtprot_n2a(int id, char *buf, int len)
 {
-	if (id<0 || id>=256) {
+	if (id < 0 || id >= 256) {
 		snprintf(buf, len, "%u", id);
 		return buf;
 	}
@@ -166,7 +164,7 @@ const char * rtnl_rtprot_n2a(int id, char *buf, int len)
 
 int rtnl_rtprot_a2n(__u32 *id, const char *arg)
 {
-	static char *cache = NULL;
+	static char *cache;
 	static unsigned long res;
 	char *end;
 	int i;
@@ -179,7 +177,7 @@ int rtnl_rtprot_a2n(__u32 *id, const char *arg)
 	if (!rtnl_rtprot_init)
 		rtnl_rtprot_initialize();
 
-	for (i=0; i<256; i++) {
+	for (i = 0; i < 256; i++) {
 		if (rtnl_rtprot_tab[i] &&
 		    strcmp(rtnl_rtprot_tab[i], arg) == 0) {
 			cache = rtnl_rtprot_tab[i];
@@ -196,8 +194,13 @@ int rtnl_rtprot_a2n(__u32 *id, const char *arg)
 	return 0;
 }
 
-static char * rtnl_rtscope_tab[256] = {
-	"global",
+
+static char *rtnl_rtscope_tab[256] = {
+	[RT_SCOPE_UNIVERSE]	= "global",
+	[RT_SCOPE_NOWHERE]	= "nowhere",
+	[RT_SCOPE_HOST]		= "host",
+	[RT_SCOPE_LINK]		= "link",
+	[RT_SCOPE_SITE]		= "site",
 };
 
 static int rtnl_rtscope_init;
@@ -205,33 +208,32 @@ static int rtnl_rtscope_init;
 static void rtnl_rtscope_initialize(void)
 {
 	rtnl_rtscope_init = 1;
-	rtnl_rtscope_tab[RT_SCOPE_NOWHERE] = "nowhere";
-	rtnl_rtscope_tab[RT_SCOPE_HOST]    = "host";
-	rtnl_rtscope_tab[RT_SCOPE_LINK]    = "link";
-	rtnl_rtscope_tab[RT_SCOPE_SITE]    = "site";
 	rtnl_tab_initialize(CONFDIR "/rt_scopes",
 			    rtnl_rtscope_tab, 256);
 }
 
 const char *rtnl_rtscope_n2a(int id, char *buf, int len)
 {
-	if (id<0 || id>=256) {
+	if (id < 0 || id >= 256) {
 		snprintf(buf, len, "%d", id);
 		return buf;
 	}
+
 	if (!rtnl_rtscope_tab[id]) {
 		if (!rtnl_rtscope_init)
 			rtnl_rtscope_initialize();
 	}
+
 	if (rtnl_rtscope_tab[id])
 		return rtnl_rtscope_tab[id];
+
 	snprintf(buf, len, "%d", id);
 	return buf;
 }
 
 int rtnl_rtscope_a2n(__u32 *id, const char *arg)
 {
-	static const char *cache = NULL;
+	static const char *cache;
 	static unsigned long res;
 	char *end;
 	int i;
@@ -244,7 +246,7 @@ int rtnl_rtscope_a2n(__u32 *id, const char *arg)
 	if (!rtnl_rtscope_init)
 		rtnl_rtscope_initialize();
 
-	for (i=0; i<256; i++) {
+	for (i = 0; i < 256; i++) {
 		if (rtnl_rtscope_tab[i] &&
 		    strcmp(rtnl_rtscope_tab[i], arg) == 0) {
 			cache = rtnl_rtscope_tab[i];
@@ -262,7 +264,7 @@ int rtnl_rtscope_a2n(__u32 *id, const char *arg)
 }
 
 
-static char * rtnl_rtrealm_tab[256] = {
+static char *rtnl_rtrealm_tab[256] = {
 	"unknown",
 };
 
@@ -277,7 +279,7 @@ static void rtnl_rtrealm_initialize(void)
 
 const char *rtnl_rtrealm_n2a(int id, char *buf, int len)
 {
-	if (id<0 || id>=256) {
+	if (id < 0 || id >= 256) {
 		snprintf(buf, len, "%d", id);
 		return buf;
 	}
@@ -294,7 +296,7 @@ const char *rtnl_rtrealm_n2a(int id, char *buf, int len)
 
 int rtnl_rtrealm_a2n(__u32 *id, const char *arg)
 {
-	static char *cache = NULL;
+	static char *cache;
 	static unsigned long res;
 	char *end;
 	int i;
@@ -307,7 +309,7 @@ int rtnl_rtrealm_a2n(__u32 *id, const char *arg)
 	if (!rtnl_rtrealm_init)
 		rtnl_rtrealm_initialize();
 
-	for (i=0; i<256; i++) {
+	for (i = 0; i < 256; i++) {
 		if (rtnl_rtrealm_tab[i] &&
 		    strcmp(rtnl_rtrealm_tab[i], arg) == 0) {
 			cache = rtnl_rtrealm_tab[i];
@@ -329,7 +331,7 @@ static struct rtnl_hash_entry dflt_table_entry  = { .name = "default" };
 static struct rtnl_hash_entry main_table_entry  = { .name = "main" };
 static struct rtnl_hash_entry local_table_entry = { .name = "local" };
 
-static struct rtnl_hash_entry * rtnl_rttable_hash[256] = {
+static struct rtnl_hash_entry *rtnl_rttable_hash[256] = {
 	[RT_TABLE_DEFAULT] = &dflt_table_entry,
 	[RT_TABLE_MAIN]    = &main_table_entry,
 	[RT_TABLE_LOCAL]   = &local_table_entry,
@@ -339,6 +341,8 @@ static int rtnl_rttable_init;
 
 static void rtnl_rttable_initialize(void)
 {
+	struct dirent *de;
+	DIR *d;
 	int i;
 
 	rtnl_rttable_init = 1;
@@ -348,9 +352,33 @@ static void rtnl_rttable_initialize(void)
 	}
 	rtnl_hash_initialize(CONFDIR "/rt_tables",
 			     rtnl_rttable_hash, 256);
+
+	d = opendir(CONFDIR "/rt_tables.d");
+	if (!d)
+		return;
+
+	while ((de = readdir(d)) != NULL) {
+		char path[PATH_MAX];
+		size_t len;
+
+		if (*de->d_name == '.')
+			continue;
+
+		/* only consider filenames ending in '.conf' */
+		len = strlen(de->d_name);
+		if (len <= 5)
+			continue;
+		if (strcmp(de->d_name + len - 5, ".conf"))
+			continue;
+
+		snprintf(path, sizeof(path),
+			 CONFDIR "/rt_tables.d/%s", de->d_name);
+		rtnl_hash_initialize(path, rtnl_rttable_hash, 256);
+	}
+	closedir(d);
 }
 
-const char * rtnl_rttable_n2a(__u32 id, char *buf, int len)
+const char *rtnl_rttable_n2a(__u32 id, char *buf, int len)
 {
 	struct rtnl_hash_entry *entry;
 
@@ -371,7 +399,7 @@ const char * rtnl_rttable_n2a(__u32 id, char *buf, int len)
 
 int rtnl_rttable_a2n(__u32 *id, const char *arg)
 {
-	static const char *cache = NULL;
+	static const char *cache;
 	static unsigned long res;
 	struct rtnl_hash_entry *entry;
 	char *end;
@@ -385,7 +413,7 @@ int rtnl_rttable_a2n(__u32 *id, const char *arg)
 	if (!rtnl_rttable_init)
 		rtnl_rttable_initialize();
 
-	for (i=0; i<256; i++) {
+	for (i = 0; i < 256; i++) {
 		entry = rtnl_rttable_hash[i];
 		while (entry && strcmp(entry->name, arg))
 			entry = entry->next;
@@ -405,7 +433,7 @@ int rtnl_rttable_a2n(__u32 *id, const char *arg)
 }
 
 
-static char * rtnl_rtdsfield_tab[256] = {
+static char *rtnl_rtdsfield_tab[256] = {
 	"0",
 };
 
@@ -420,7 +448,7 @@ static void rtnl_rtdsfield_initialize(void)
 
 const char *rtnl_dsfield_n2a(int id, char *buf, int len)
 {
-	if (id<0 || id>=256) {
+	if (id < 0 || id >= 256) {
 		snprintf(buf, len, "%d", id);
 		return buf;
 	}
@@ -437,7 +465,7 @@ const char *rtnl_dsfield_n2a(int id, char *buf, int len)
 
 int rtnl_dsfield_a2n(__u32 *id, const char *arg)
 {
-	static char *cache = NULL;
+	static char *cache;
 	static unsigned long res;
 	char *end;
 	int i;
@@ -450,7 +478,7 @@ int rtnl_dsfield_a2n(__u32 *id, const char *arg)
 	if (!rtnl_rtdsfield_init)
 		rtnl_rtdsfield_initialize();
 
-	for (i=0; i<256; i++) {
+	for (i = 0; i < 256; i++) {
 		if (rtnl_rtdsfield_tab[i] &&
 		    strcmp(rtnl_rtdsfield_tab[i], arg) == 0) {
 			cache = rtnl_rtdsfield_tab[i];
@@ -468,9 +496,11 @@ int rtnl_dsfield_a2n(__u32 *id, const char *arg)
 }
 
 
-static struct rtnl_hash_entry dflt_group_entry  = { .id = 0, .name = "default" };
+static struct rtnl_hash_entry dflt_group_entry = {
+	.id = 0, .name = "default"
+};
 
-static struct rtnl_hash_entry * rtnl_group_hash[256] = {
+static struct rtnl_hash_entry *rtnl_group_hash[256] = {
 	[0] = &dflt_group_entry,
 };
 
@@ -485,7 +515,7 @@ static void rtnl_group_initialize(void)
 
 int rtnl_group_a2n(int *id, const char *arg)
 {
-	static const char *cache = NULL;
+	static const char *cache;
 	static unsigned long res;
 	struct rtnl_hash_entry *entry;
 	char *end;
@@ -499,7 +529,7 @@ int rtnl_group_a2n(int *id, const char *arg)
 	if (!rtnl_group_init)
 		rtnl_group_initialize();
 
-	for (i=0; i<256; i++) {
+	for (i = 0; i < 256; i++) {
 		entry = rtnl_group_hash[i];
 		while (entry && strcmp(entry->name, arg))
 			entry = entry->next;
@@ -526,11 +556,10 @@ const char *rtnl_group_n2a(int id, char *buf, int len)
 	if (!rtnl_group_init)
 		rtnl_group_initialize();
 
-	for (i=0; i<256; i++) {
+	for (i = 0; i < 256; i++) {
 		entry = rtnl_group_hash[i];
-		if (entry && entry->id == id) {
+		if (entry && entry->id == id)
 			return entry->name;
-		}
 	}
 
 	snprintf(buf, len, "%d", id);
@@ -589,7 +618,7 @@ const char *nl_proto_n2a(int id, char *buf, int len)
 
 int nl_proto_a2n(__u32 *id, const char *arg)
 {
-	static char *cache = NULL;
+	static char *cache;
 	static unsigned long res;
 	char *end;
 	int i;

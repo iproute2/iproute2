@@ -150,7 +150,7 @@ ip-link \- network device configuration
 .br
 .B nomaster " |"
 .br
-.B addrgenmode { eui64 | none }
+.B addrgenmode { eui64 | none | stable_secret | random }
 .br
 .B link-netnsid ID
 .BR " }"
@@ -284,28 +284,28 @@ the following additional arguments are supported:
 .BI link " DEVICE "
 .BI name " NAME "
 .BI type " vlan "
-.R " [ "
+[
 .BI protocol " VLAN_PROTO "
-.R " ] "
+]
 .BI id " VLANID "
-.R " [ "
+[
 .BR reorder_hdr " { " on " | " off " } "
-.R " ] "
-.R " [ "
+]
+[
 .BR gvrp " { " on " | " off " } "
-.R " ] "
-.R " [ "
+]
+[
 .BR mvrp " { " on " | " off " } "
-.R " ] "
-.R " [ "
+]
+[
 .BR loose_binding " { " on " | " off " } "
-.R " ] "
-.R " [ "
+]
+[
 .BI ingress-qos-map " QOS-MAP "
-.R " ] "
-.R " [ "
+]
+[
 .BI egress-qos-map " QOS-MAP "
-.R " ] "
+]
 
 .in +8
 .sp
@@ -386,43 +386,44 @@ the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
 .BI type " vxlan " id " ID"
-.R " [ "
+[
 .BI dev " PHYS_DEV "
 .RB " ] [ { " group " | " remote " } "
 .I IPADDR
-.R " ] [ "
-.BI local " IPADDR "
-.R " ] [ "
+] [
+.B local
+.RI "{ "IPADDR " | "any " } "
+] [
 .BI ttl " TTL "
-.R " ] [ "
+] [
 .BI tos " TOS "
-.R " ] [ "
+] [
 .BI dstport " PORT "
-.R " ] [ "
+] [
 .BI srcport " MIN MAX "
-.R " ] [ "
+] [
 .I "[no]learning "
-.R " ] [ "
+] [
 .I "[no]proxy "
-.R " ] [ "
+] [
 .I "[no]rsc "
-.R " ] [ "
+] [
 .I "[no]l2miss "
-.R " ] [ "
+] [
 .I "[no]l3miss "
-.R " ] [ "
+] [
 .I "[no]udpcsum "
-.R " ] [ "
+] [
 .I "[no]udp6zerocsumtx "
-.R " ] [ "
+] [
 .I "[no]udp6zerocsumrx "
-.R " ] [ "
+] [
 .BI ageing " SECONDS "
-.R " ] [ "
+] [
 .BI maxaddress " NUMBER "
-.R " ] [ "
+] [
 .B gbp
-.R " ]"
+]
 
 .in +8
 .sp
@@ -564,17 +565,17 @@ the following additional arguments are supported:
 .BI "ip link add " DEVICE
 .BR type " { gre | ipip | sit } "
 .BI " remote " ADDR " local " ADDR
-.R " [ "
+[
 .BR encap " { fou | gue | none } "
-.R " ] [ "
+] [
 .BI "encap-sport { " PORT " | auto } "
-.R " ] [ "
+] [
 .BI "encap-dport " PORT
-.R " ] [ "
+] [
 .I " [no]encap-csum "
-.R " ] [ "
+] [
 .I " [no]encap-remcsum "
-.R " ]"
+]
 
 .in +8
 .sp
@@ -620,25 +621,25 @@ the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
 .BI type " { ip6gre | ip6gretap }  " remote " ADDR " local " ADDR
-.R " [ "
+[
 .I "[i|o]seq]"
-.R " ] [ "
+] [
 .I "[i|o]key" KEY
-.R " ] [ "
+] [
 .I " [i|o]csum "
-.R " ] [ "
+] [
 .BI hoplimit " TTL "
-.R " ] [ "
+] [
 .BI encaplimit " ELIM "
-.R " ] [ "
+] [
 .BI tclass " TCLASS "
-.R " ] [ "
+] [
 .BI flowlabel " FLOWLABEL "
-.R " ] [ "
+] [
 .BI "dscp inherit"
-.R " ] [ "
+] [
 .BI dev " PHYS_DEV "
-.R " ]"
+]
 
 .in +8
 .sp
@@ -743,11 +744,11 @@ the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
 .BI type " geneve " id " ID " remote " IPADDR"
-.R " [ "
+[
 .BI ttl " TTL "
-.R " ] [ "
+] [
 .BI tos " TOS "
-.R " ]"
+]
 
 .in +8
 .sp
@@ -766,6 +767,56 @@ the following additional arguments are supported:
 .BI tos " TOS"
 - specifies the TOS value to use in outgoing packets.
 
+.in -8
+
+.TP
+MACVLAN and MACVTAP Type Support
+For a link of type
+.I MACVLAN
+or
+.I MACVTAP
+the following additional arguments are supported:
+
+.BI "ip link add link " DEVICE " name " NAME
+.BR type " { " macvlan " | " macvtap " } "
+.BR mode " { " private " | " vepa " | " bridge " | " passthru
+.BR " [ " nopromisc " ] } "
+
+.in +8
+.sp
+.BR type " { " macvlan " | " macvtap " } "
+- specifies the link type to use.
+.BR macvlan " creates just a virtual interface, while "
+.BR macvtap " in addition creates a character device "
+.BR /dev/tapX " to be used just like a " tuntap " device."
+
+.B mode private
+- Do not allow communication between
+.B macvlan
+instances on the same physical interface, even if the external switch supports
+hairpin mode.
+
+.B mode vepa
+- Virtual Ethernet Port Aggregator mode. Data from one
+.B macvlan
+instance to the other on the same physical interface is transmitted over the
+physical interface. Either the attached switch needs to support hairpin mode,
+or there must be a TCP/IP router forwarding the packets in order to allow
+communication. This is the default mode.
+
+.B mode bridge
+- In bridge mode, all endpoints are directly connected to each other,
+communication is not redirected through the physical interface's peer.
+
+.BR mode " " passthru " [ " nopromisc " ] "
+- This mode gives more power to a single endpoint, usually in
+.BR macvtap " mode. It is not allowed for more than one endpoint on the same "
+physical interface. All traffic will be forwarded to this endpoint, allowing
+virtio guests to change MAC address or set promiscuous mode in order to bridge
+the interface or create vlan interfaces on top of it. By default, this mode
+forces the underlying interface into promiscuous mode. Passing the
+.BR nopromisc " flag prevents this, so the promisc flag may be controlled "
+using standard tools.
 .in -8
 
 .SS ip link delete - delete virtual link
@@ -979,8 +1030,20 @@ set master device of the device (enslave device).
 unset master device of the device (release device).
 
 .TP
-.BR "addrgenmode eui64 " or " addrgenmode none"
-set IPv6 address generation mode
+.BI addrgenmode " eui64|none|stable_secret|random"
+set the IPv6 address generation mode
+
+.I eui64
+- use a Modified EUI-64 format interface identifier
+
+.I none
+- disable automatic address generation
+
+.I stable_secret
+- generate the interface identifier based on a preset /proc/sys/net/ipv6/conf/{default,DEVICE}/stable_secret
+
+.I random
+- like stable_secret, but auto-generate a new random secret if none is set
 
 .TP
 .BR "link-netnsid "

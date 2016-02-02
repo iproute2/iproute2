@@ -2,9 +2,9 @@
 .SH NAME
 NetEm \- Network Emulator
 .SH SYNOPSIS
-.B "tc qdisc ... dev" 
+.B "tc qdisc ... dev"
 .IR DEVICE " ] "
-.BR "add netem" 
+.BR "add netem"
 .I OPTIONS
 
 .IR OPTIONS " := [ " LIMIT " ] [ " DELAY " ] [ " LOSS \
@@ -15,15 +15,15 @@ NetEm \- Network Emulator
 .I packets
 
 .IR DELAY " := "
-.BI delay 
+.BI delay
 .IR TIME " [ " JITTER " [ " CORRELATION " ]]]"
 .br
-       [ 
+       [
 .BR distribution " { "uniform " | " normal " | " pareto " |  " paretonormal " } ]"
 
 .IR LOSS " := "
 .BR loss " { "
-.BI random 
+.BI random
 .IR PERCENT " [ " CORRELATION " ]  |"
 .br
 .RB "               " state
@@ -44,13 +44,13 @@ NetEm \- Network Emulator
 .IR REORDERING " := "
 .B reorder
 .IR PERCENT " [ " CORRELATION " ] [ "
-.B gap 
+.B gap
 .IR DISTANCE " ]"
 
 .IR RATE " := "
 .B rate
 .IR RATE " [ " PACKETOVERHEAD " [ " CELLSIZE " [ " CELLOVERHEAD " ]]]]"
-	
+
 
 .SH DESCRIPTION
 NetEm is an enhancement of the Linux traffic control facilities
@@ -139,11 +139,11 @@ in this second example 25% of packets are sent immediately (with correlation of
 50%) while the others are delayed by 10 ms.
 
 .SS rate
-delay packets based on packet size and is a replacement for 
+delay packets based on packet size and is a replacement for
 .IR TBF .
 Rate can be
-specified in common units (e.g. 100kbit). Optional 
-.I PACKETOVERHEAD 
+specified in common units (e.g. 100kbit). Optional
+.I PACKETOVERHEAD
 (in bytes) specify an per packet overhead and can be negative. A positive value can be
 used to simulate additional link layer headers. A negative value can be used to
 artificial strip the Ethernet header (e.g. -14) and/or simulate a link layer
@@ -152,7 +152,7 @@ the cellsize. Cellsize can be used to simulate link layer schemes. ATM for
 example has an payload cellsize of 48 bytes and 5 byte per cell header. If a
 packet is 50 byte then ATM must use two cells: 2 * 48 bytes payload including 2
 * 5 byte header, thus consume 106 byte on the wire. The last optional value
-.I CELLOVERHEAD 
+.I CELLOVERHEAD
 can be used to specify per cell overhead - for our ATM example 5.
 .I CELLOVERHEAD
 can be negative, but use negative values with caution.

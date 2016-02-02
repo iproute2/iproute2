@@ -5,21 +5,21 @@ PRIO \- Priority qdisc
 .B tc qdisc ... dev
 dev
 .B  ( parent
-classid 
-.B | root) [ handle 
-major: 
-.B ] prio [ bands 
+classid
+.B | root) [ handle
+major:
+.B ] prio [ bands
 bands
 .B ] [ priomap
 band band band...
-.B ] [ estimator 
+.B ] [ estimator
 interval timeconstant
 .B ]
 
 .SH DESCRIPTION
 The PRIO qdisc is a simple classful queueing discipline that contains
 an arbitrary number of classes of differing priority. The classes are
-dequeued in numerical descending order of priority. PRIO is a scheduler 
+dequeued in numerical descending order of priority. PRIO is a scheduler
 and never delays packets - it is a work-conserving qdisc, though the qdiscs
 contained in the classes may not be.
 
@@ -51,22 +51,22 @@ From userspace
 A process with sufficient privileges can encode the destination class
 directly with SO_PRIORITY, see
 .BR socket(7).
-.TP 
+.TP
 with a tc filter
 A tc filter attached to the root qdisc can point traffic directly to a class
-.TP 
+.TP
 with the priomap
 Based on the packet priority, which in turn is derived from the Type of
 Service assigned to the packet.
 .P
-Only the priomap is specific to this qdisc. 
+Only the priomap is specific to this qdisc.
 .SH QDISC PARAMETERS
 .TP
 bands
 Number of bands. If changed from the default of 3,
 .B priomap
 must be updated as well.
-.TP 
+.TP
 priomap
 The priomap maps the priority of
 a packet to a class. The priority can either be set directly from userspace,
@@ -126,7 +126,7 @@ TOS     Bits  Means                    Linux Priority    Band
 The second column contains the value of the relevant
 four TOS bits, followed by their translated meaning. For example, 15 stands
 for a packet wanting Minimal Monetary Cost, Maximum Reliability, Maximum
-Throughput AND Minimum Delay. 
+Throughput AND Minimum Delay.
 
 The fourth column lists the way the Linux kernel interprets the TOS bits, by
 showing to which Priority they are mapped.
@@ -151,7 +151,7 @@ FTP
 
 TFTP                     1000           (minimize delay)
 
-SMTP 
+SMTP
         Command phase    1000           (minimize delay)
         DATA phase       0100           (maximize throughput)
 
@@ -176,12 +176,10 @@ further qdisc.
 
 .SH BUGS
 Large amounts of traffic in the lower bands can cause starvation of higher
-bands. Can be prevented by attaching a shaper (for example, 
+bands. Can be prevented by attaching a shaper (for example,
 .BR tc-tbf(8)
 to these bands to make sure they cannot dominate the link.
 
 .SH AUTHORS
 Alexey N. Kuznetsov, <kuznet@ms2.inr.ac.ru>,  J Hadi Salim
 <hadi@cyberus.ca>. This manpage maintained by bert hubert <ahu@ds9a.nl>
-
-

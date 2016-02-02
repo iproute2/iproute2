@@ -10,8 +10,8 @@ ifeq ($(HAVE_BERKELEY_DB),y)
 endif
 
 ifeq ($(HAVE_SELINUX),y)
-	LDLIBS += $(shell pkg-config --libs libselinux)
-	CFLAGS += $(shell pkg-config --cflags libselinux) -DHAVE_SELINUX
+	LDLIBS += $(shell $(PKG_CONFIG) --libs libselinux)
+	CFLAGS += $(shell $(PKG_CONFIG) --cflags libselinux) -DHAVE_SELINUX
 endif
 
 ifeq ($(IP_CONFIG_SETNS),y)

@@ -27,7 +27,7 @@
 static void
 explain(void)
 {
-	fprintf(stderr, "Usage: ... connmark [ZONE] [BRANCH] [index <INDEX>]\n");
+	fprintf(stderr, "Usage: ... connmark [zone ZONE] [BRANCH] [index <INDEX>]\n");
 	fprintf(stderr, "where :\n"
 		"\tZONE is the conntrack zone\n"
 		"\tBRANCH := reclassify|pipe|drop|continue|ok\n");

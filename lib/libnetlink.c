@@ -191,6 +191,27 @@ int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 	return sendmsg(rth->fd, &msg, 0);
 }
 
+int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
+{
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
+	struct iovec iov = {
+		.iov_base = (void*) n,
+		.iov_len = n->nlmsg_len
+	};
+	struct msghdr msg = {
+		.msg_name = &nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+	};
+
+	n->nlmsg_flags = NLM_F_DUMP|NLM_F_REQUEST;
+	n->nlmsg_pid = 0;
+	n->nlmsg_seq = rth->dump = ++rth->seq;
+
+	return sendmsg(rth->fd, &msg, 0);
+}
+
 int rtnl_dump_filter_l(struct rtnl_handle *rth,
 		       const struct rtnl_dump_filter_arg *arg)
 {
@@ -237,6 +258,8 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 
 			while (NLMSG_OK(h, msglen)) {
 				int err = 0;
+
+				h->nlmsg_flags &= ~a->nc_flags;
 
 				if (nladdr.nl_pid != 0 ||
 				    h->nlmsg_pid != rth->local.nl_pid ||
@@ -296,20 +319,20 @@ skip_it:
 	}
 }
 
-int rtnl_dump_filter(struct rtnl_handle *rth,
+int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 		     rtnl_filter_t filter,
-		     void *arg1)
+		     void *arg1, __u16 nc_flags)
 {
 	const struct rtnl_dump_filter_arg a[2] = {
-		{ .filter = filter, .arg1 = arg1, },
-		{ .filter = NULL,   .arg1 = NULL, },
+		{ .filter = filter, .arg1 = arg1, .nc_flags = nc_flags, },
+		{ .filter = NULL,   .arg1 = NULL, .nc_flags = 0, },
 	};
 
 	return rtnl_dump_filter_l(rth, a);
 }
 
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-	      struct nlmsghdr *answer, size_t len)
+	      struct nlmsghdr *answer, size_t maxlen)
 {
 	int status;
 	unsigned seq;
@@ -392,19 +415,21 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 				} else if (!err->error) {
 					if (answer)
 						memcpy(answer, h,
-						       MIN(len, h->nlmsg_len));
+						       MIN(maxlen, h->nlmsg_len));
 					return 0;
 				}
 
-				fprintf(stderr, "RTNETLINK answers: %s\n",
-					strerror(-err->error));
+				if (rtnl->proto != NETLINK_SOCK_DIAG)
+					fprintf(stderr,
+						"RTNETLINK answers: %s\n",
+						strerror(-err->error));
 				errno = -err->error;
 				return -1;
 			}
 
 			if (answer) {
 				memcpy(answer, h,
-				       MIN(len, h->nlmsg_len));
+				       MIN(maxlen, h->nlmsg_len));
 				return 0;
 			}
 
@@ -719,6 +744,37 @@ int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 	memcpy(RTA_DATA(subrta), data, alen);
 	rta->rta_len = NLMSG_ALIGN(rta->rta_len) + RTA_ALIGN(len);
 	return 0;
+}
+
+int rta_addattr8(struct rtattr *rta, int maxlen, int type, __u8 data)
+{
+	return rta_addattr_l(rta, maxlen, type, &data, sizeof(__u8));
+}
+
+int rta_addattr16(struct rtattr *rta, int maxlen, int type, __u16 data)
+{
+	return rta_addattr_l(rta, maxlen, type, &data, sizeof(__u16));
+}
+
+int rta_addattr64(struct rtattr *rta, int maxlen, int type, __u64 data)
+{
+	return rta_addattr_l(rta, maxlen, type, &data, sizeof(__u64));
+}
+
+struct rtattr *rta_nest(struct rtattr *rta, int maxlen, int type)
+{
+	struct rtattr *nest = RTA_TAIL(rta);
+
+	rta_addattr_l(rta, maxlen, type, NULL, 0);
+
+	return nest;
+}
+
+int rta_nest_end(struct rtattr *rta, struct rtattr *nest)
+{
+	nest->rta_len = (void *)RTA_TAIL(rta) - (void *)nest;
+
+	return rta->rta_len;
 }
 
 int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)

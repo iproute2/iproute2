@@ -135,6 +135,8 @@ int print_mdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		}
 	}
 
+	fflush(fp);
+
 	return 0;
 }
 

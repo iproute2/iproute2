@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <linux/fib_rules.h>
+#include <errno.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -32,11 +33,11 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip rule [ list | add | del | flush ] SELECTOR ACTION\n");
+	fprintf(stderr, "Usage: ip rule [ list | add | del | flush | save ] SELECTOR ACTION\n");
+	fprintf(stderr, "       ip rule restore\n");
 	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n");
 	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ]\n");
 	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
-	fprintf(stderr, "          [ prohibit | reject | unreachable ]\n");
 	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
 	fprintf(stderr, "          [ goto NUMBER ]\n");
 	fprintf(stderr, "          SUPPRESSOR\n");
@@ -206,16 +207,57 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static int iprule_list(int argc, char **argv)
+static __u32 rule_dump_magic = 0x71706986;
+
+static int save_rule_prep(void)
 {
+	int ret;
+
+	if (isatty(STDOUT_FILENO)) {
+		fprintf(stderr, "Not sending a binary stream to stdout\n");
+		return -1;
+	}
+
+	ret = write(STDOUT_FILENO, &rule_dump_magic, sizeof(rule_dump_magic));
+	if (ret != sizeof(rule_dump_magic)) {
+		fprintf(stderr, "Can't write magic to dump file\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int save_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+{
+	int ret;
+
+	ret = write(STDOUT_FILENO, n, n->nlmsg_len);
+	if ((ret > 0) && (ret != n->nlmsg_len)) {
+		fprintf(stderr, "Short write while saving nlmsg\n");
+		ret = -EIO;
+	}
+
+	return ret == n->nlmsg_len ? 0 : ret;
+}
+
+static int iprule_list_or_save(int argc, char **argv, int save)
+{
+	rtnl_filter_t filter = print_rule;
 	int af = preferred_family;
 
 	if (af == AF_UNSPEC)
 		af = AF_INET;
 
 	if (argc > 0) {
-		fprintf(stderr, "\"ip rule show\" does not take any arguments.\n");
+		fprintf(stderr, "\"ip rule %s\" does not take any arguments.\n",
+				save ? "save" : "show");
 		return -1;
+	}
+
+	if (save) {
+		if (save_rule_prep())
+			return -1;
+		filter = save_rule;
 	}
 
 	if (rtnl_wilddump_request(&rth, af, RTM_GETRULE) < 0) {
@@ -223,7 +265,7 @@ static int iprule_list(int argc, char **argv)
 		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, print_rule, stdout) < 0) {
+	if (rtnl_dump_filter(&rth, filter, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
@@ -231,6 +273,50 @@ static int iprule_list(int argc, char **argv)
 	return 0;
 }
 
+static int rule_dump_check_magic(void)
+{
+	int ret;
+	__u32 magic = 0;
+
+	if (isatty(STDIN_FILENO)) {
+		fprintf(stderr, "Can't restore rule dump from a terminal\n");
+		return -1;
+	}
+
+	ret = fread(&magic, sizeof(magic), 1, stdin);
+	if (magic != rule_dump_magic) {
+		fprintf(stderr, "Magic mismatch (%d elems, %x magic)\n", ret, magic);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int restore_handler(const struct sockaddr_nl *nl,
+			   struct rtnl_ctrl_data *ctrl,
+			   struct nlmsghdr *n, void *arg)
+{
+	int ret;
+
+	n->nlmsg_flags |= NLM_F_REQUEST | NLM_F_CREATE | NLM_F_ACK;
+
+	ll_init_map(&rth);
+
+	ret = rtnl_talk(&rth, n, n, sizeof(*n));
+	if ((ret < 0) && (errno == EEXIST))
+		ret = 0;
+
+	return ret;
+}
+
+
+static int iprule_restore(void)
+{
+	if (rule_dump_check_magic())
+		exit(-1);
+
+	exit(rtnl_from_file(stdin, &restore_handler, NULL));
+}
 
 static int iprule_modify(int cmd, int argc, char **argv)
 {
@@ -305,7 +391,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		} else if (matches(*argv, "realms") == 0) {
 			__u32 realm;
 			NEXT_ARG();
-			if (get_rt_realms(&realm, *argv))
+			if (get_rt_realms_or_raw(&realm, *argv))
 				invarg("invalid realms\n", *argv);
 			addattr32(&req.n, sizeof(req), FRA_FLOW, realm);
 		} else if (matches(*argv, "table") == 0 ||
@@ -444,11 +530,15 @@ static int iprule_flush(int argc, char **argv)
 int do_iprule(int argc, char **argv)
 {
 	if (argc < 1) {
-		return iprule_list(0, NULL);
+		return iprule_list_or_save(0, NULL, 0);
 	} else if (matches(argv[0], "list") == 0 ||
 		   matches(argv[0], "lst") == 0 ||
 		   matches(argv[0], "show") == 0) {
-		return iprule_list(argc-1, argv+1);
+		return iprule_list_or_save(argc-1, argv+1, 0);
+	} else if (matches(argv[0], "save") == 0) {
+		return iprule_list_or_save(argc-1, argv+1, 1);
+	} else if (matches(argv[0], "restore") == 0) {
+		return iprule_restore();
 	} else if (matches(argv[0], "add") == 0) {
 		return iprule_modify(RTM_NEWRULE, argc-1, argv+1);
 	} else if (matches(argv[0], "delete") == 0) {

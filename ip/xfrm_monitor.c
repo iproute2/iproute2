@@ -411,12 +411,16 @@ int do_xfrm_monitor(int argc, char **argv)
 
 	if (file) {
 		FILE *fp;
+		int err;
+
 		fp = fopen(file, "r");
 		if (fp == NULL) {
 			perror("Cannot fopen");
 			exit(-1);
 		}
-		return rtnl_from_file(fp, xfrm_accept_msg, (void*)stdout);
+		err = rtnl_from_file(fp, xfrm_accept_msg, stdout);
+		fclose(fp);
+		return err;
 	}
 
 	if (rtnl_open_byproto(&rth, groups, NETLINK_XFRM) < 0)

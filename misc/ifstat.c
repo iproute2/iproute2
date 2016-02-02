@@ -272,7 +272,7 @@ static void dump_raw_db(FILE *fp, int to_hist)
 		if (jw) {
 			jsonw_name(jw, n->name);
 			jsonw_start_object(jw);
-			
+
 			for (i=0; i<MAXS && stats[i]; i++)
 				jsonw_uint_field(jw, stats[i], vals[i]);
 			jsonw_end_object(jw);
@@ -819,7 +819,8 @@ int main(int argc, char *argv[])
 			}
 			if (uptime >= 0 && time(NULL) >= stb.st_mtime+uptime) {
 				fprintf(stderr, "ifstat: history is aged out, resetting\n");
-				ftruncate(fileno(hist_fp), 0);
+				if (ftruncate(fileno(hist_fp), 0))
+					perror("ifstat: ftruncate");
 			}
 		}
 
@@ -862,7 +863,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (!no_update) {
-		ftruncate(fileno(hist_fp), 0);
+		if (ftruncate(fileno(hist_fp), 0))
+			perror("ifstat: ftruncate");
 		rewind(hist_fp);
 
 		json_output = 0;

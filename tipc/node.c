@@ -245,7 +245,7 @@ static int cmd_node_get(struct nlmsghdr *nlh, const struct cmd *cmd,
 void cmd_node_help(struct cmdl *cmdl)
 {
 	fprintf(stderr,
-		"Usage: %s media COMMAND [ARGS] ...\n\n"
+		"Usage: %s node COMMAND [ARGS] ...\n\n"
 		"COMMANDS\n"
 		" list                  - List remote nodes\n"
 		" get                   - Get local node parameters\n"

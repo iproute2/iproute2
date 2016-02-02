@@ -394,7 +394,7 @@ socket, and spawning an application such as
 \&. This approach's advantage is that tc will place the file descriptors
 into the environment and thus make them available just like stdin, stdout,
 stderr file descriptors, meaning, in case user applications run from within
-this fd-owner shell, they can terminate and restart without loosing eBPF
+this fd-owner shell, they can terminate and restart without losing eBPF
 maps file descriptors. Example invocation with the previous classifier and
 action mixture:
 
@@ -844,7 +844,7 @@ result in the default classid:
 Basically, such a minimal generator is equivalent to:
 
 .in +4n
-.B tcpdump -iem1 -ddd 'tcp[tcpflags] & tcp-syn != 0' | tr '\\n' ',' > /var/bpf/tcp-syn
+.B tcpdump -iem1 -ddd 'tcp[tcpflags] & tcp-syn != 0' | tr '\\\\n' ',' > /var/bpf/tcp-syn
 .in
 
 Since

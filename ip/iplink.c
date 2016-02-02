@@ -84,7 +84,7 @@ void iplink_usage(void)
 	fprintf(stderr, "				   [ state { auto | enable | disable} ] ]\n");
 	fprintf(stderr, "			  [ master DEVICE ]\n");
 	fprintf(stderr, "			  [ nomaster ]\n");
-	fprintf(stderr, "			  [ addrgenmode { eui64 | none } ]\n");
+	fprintf(stderr, "			  [ addrgenmode { eui64 | none | stable_secret | random } ]\n");
 	fprintf(stderr, "	                  [ protodown { on | off } ]\n");
 	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [type TYPE]\n");
 
@@ -176,6 +176,10 @@ static int get_addr_gen_mode(const char *mode)
 		return IN6_ADDR_GEN_MODE_EUI64;
 	if (strcasecmp(mode, "none") == 0)
 		return IN6_ADDR_GEN_MODE_NONE;
+	if (strcasecmp(mode, "stable_secret") == 0)
+		return IN6_ADDR_GEN_MODE_STABLE_PRIVACY;
+	if (strcasecmp(mode, "random") == 0)
+		return IN6_ADDR_GEN_MODE_RANDOM;
 	return -1;
 }
 
@@ -710,7 +714,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			req.i.ifi_index = 0;
 			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
 			if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
-				exit(2);
+				return -2;
 			return 0;
 		}
 	}
@@ -809,7 +813,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	}
 
 	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
-		exit(2);
+		return -2;
 
 	return 0;
 }
@@ -1148,8 +1152,7 @@ static int do_set(int argc, char **argv)
 		} else {
 			if (strcmp(*argv, "dev") == 0)
 				NEXT_ARG();
-
-			if (matches(*argv, "help") == 0)
+			else if (matches(*argv, "help") == 0)
 				usage();
 
 			if (dev)

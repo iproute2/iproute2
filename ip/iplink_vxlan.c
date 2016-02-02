@@ -23,14 +23,15 @@
 
 static void print_explain(FILE *f)
 {
-	fprintf(f, "Usage: ... vxlan id VNI [ { group | remote } ADDR ] [ local ADDR ]\n");
+	fprintf(f, "Usage: ... vxlan id VNI [ { group | remote } IP_ADDRESS ] [ local ADDR ]\n");
 	fprintf(f, "                 [ ttl TTL ] [ tos TOS ] [ dev PHYS_DEV ]\n");
 	fprintf(f, "                 [ dstport PORT ] [ srcport MIN MAX ]\n");
 	fprintf(f, "                 [ [no]learning ] [ [no]proxy ] [ [no]rsc ]\n");
 	fprintf(f, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
 	fprintf(f, "                 [ ageing SECONDS ] [ maxaddress NUMBER ]\n");
 	fprintf(f, "                 [ [no]udpcsum ] [ [no]udp6zerocsumtx ] [ [no]udp6zerocsumrx ]\n");
-	fprintf(f, "                 [ gbp ]\n");
+	fprintf(f, "                 [ [no]remcsumtx ] [ [no]remcsumrx ]\n");
+	fprintf(f, "                 [ [no]external ] [ gbp ]\n");
 	fprintf(f, "\n");
 	fprintf(f, "Where: VNI := 0-16777215\n");
 	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
@@ -69,6 +70,9 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 udpcsum = 0;
 	__u8 udp6zerocsumtx = 0;
 	__u8 udp6zerocsumrx = 0;
+	__u8 remcsumtx = 0;
+	__u8 remcsumrx = 0;
+	__u8 metadata = 0;
 	__u8 gbp = 0;
 	int dst_port_set = 0;
 	struct ifla_vxlan_port_range range = { 0, 0 };
@@ -199,6 +203,18 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			udp6zerocsumrx = 1;
 		} else if (!matches(*argv, "noudp6zerocsumrx")) {
 			udp6zerocsumrx = 0;
+		} else if (!matches(*argv, "remcsumtx")) {
+			remcsumtx = 1;
+		} else if (!matches(*argv, "noremcsumtx")) {
+			remcsumtx = 0;
+		} else if (!matches(*argv, "remcsumrx")) {
+			remcsumrx = 1;
+		} else if (!matches(*argv, "noremcsumrx")) {
+			remcsumrx = 0;
+		} else if (!matches(*argv, "external")) {
+			metadata = 1;
+		} else if (!matches(*argv, "noexternal")) {
+			metadata = 0;
 		} else if (!matches(*argv, "gbp")) {
 			gbp = 1;
 		} else if (matches(*argv, "help") == 0) {
@@ -212,7 +228,12 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		argc--, argv++;
 	}
 
-	if (!vni_set) {
+	if (metadata && vni_set) {
+		fprintf(stderr, "vxlan: both 'external' and vni cannot be specified\n");
+		return -1;
+	}
+
+	if (!metadata && !vni_set) {
 		fprintf(stderr, "vxlan: missing virtual network identifier\n");
 		return -1;
 	}
@@ -259,6 +280,9 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	addattr8(n, 1024, IFLA_VXLAN_UDP_CSUM, udpcsum);
 	addattr8(n, 1024, IFLA_VXLAN_UDP_ZERO_CSUM6_TX, udp6zerocsumtx);
 	addattr8(n, 1024, IFLA_VXLAN_UDP_ZERO_CSUM6_RX, udp6zerocsumrx);
+	addattr8(n, 1024, IFLA_VXLAN_REMCSUM_TX, remcsumtx);
+	addattr8(n, 1024, IFLA_VXLAN_REMCSUM_RX, remcsumrx);
+	addattr8(n, 1024, IFLA_VXLAN_COLLECT_METADATA, metadata);
 
 	if (noage)
 		addattr32(n, 1024, IFLA_VXLAN_AGEING, 0);
@@ -406,6 +430,18 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX] &&
 	    rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]))
 		fputs("udp6zerocsumrx ", f);
+
+	if (tb[IFLA_VXLAN_REMCSUM_TX] &&
+	    rta_getattr_u8(tb[IFLA_VXLAN_REMCSUM_TX]))
+		fputs("remcsumtx ", f);
+
+	if (tb[IFLA_VXLAN_REMCSUM_RX] &&
+	    rta_getattr_u8(tb[IFLA_VXLAN_REMCSUM_RX]))
+		fputs("remcsumrx ", f);
+
+	if (tb[IFLA_VXLAN_COLLECT_METADATA] &&
+	    rta_getattr_u8(tb[IFLA_VXLAN_COLLECT_METADATA]))
+		fputs("external ", f);
 
 	if (tb[IFLA_VXLAN_GBP])
 		fputs("gbp ", f);
