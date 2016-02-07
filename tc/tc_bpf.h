@@ -32,7 +32,6 @@ enum {
 
 #define BPF_ENV_UDS	"TC_BPF_UDS"
 #define BPF_ENV_MNT	"TC_BPF_MNT"
-#define BPF_ENV_NOLOG	"TC_BPF_NOLOG"
 
 #ifndef BPF_FS_MAGIC
 # define BPF_FS_MAGIC	0xcafe4a11
