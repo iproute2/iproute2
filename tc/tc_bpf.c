@@ -1162,9 +1162,6 @@ static int bpf_map_attach(const char *name, const struct bpf_elf_map *map,
 	return fd;
 }
 
-#define __ELF_ST_BIND(x)	((x) >> 4)
-#define __ELF_ST_TYPE(x)	(((unsigned int) x) & 0xf)
-
 static const char *bpf_str_tab_name(const struct bpf_elf_ctx *ctx,
 				    const GElf_Sym *sym)
 {
@@ -1180,8 +1177,8 @@ static const char *bpf_map_fetch_name(struct bpf_elf_ctx *ctx, int which)
 		if (gelf_getsym(ctx->sym_tab, i, &sym) != &sym)
 			continue;
 
-		if (__ELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
-		    __ELF_ST_TYPE(sym.st_info) != STT_NOTYPE ||
+		if (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
+		    GELF_ST_TYPE(sym.st_info) != STT_NOTYPE ||
 		    sym.st_shndx != ctx->sec_maps ||
 		    sym.st_value / sizeof(struct bpf_elf_map) != which)
 			continue;
