@@ -1385,8 +1385,16 @@ static int bpf_apply_relo_data(struct bpf_elf_ctx *ctx,
 
 		ioff = relo.r_offset / sizeof(struct bpf_insn);
 		if (ioff >= num_insns ||
-		    insns[ioff].code != (BPF_LD | BPF_IMM | BPF_DW))
+		    insns[ioff].code != (BPF_LD | BPF_IMM | BPF_DW)) {
+			fprintf(stderr, "ELF contains relo data for non ld64 "
+				"instruction at offset %u! Compiler bug?!\n",
+				ioff);
+			if (ioff < num_insns &&
+			    insns[ioff].code == (BPF_JMP | BPF_CALL))
+				fprintf(stderr, " - Try to annotate functions "
+					"with always_inline attribute!\n");
 			return -EINVAL;
+		}
 
 		if (gelf_getsym(ctx->sym_tab, GELF_R_SYM(relo.r_info), &sym) != &sym)
 			return -EIO;
