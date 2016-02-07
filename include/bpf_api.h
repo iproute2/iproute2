@@ -56,6 +56,10 @@
 # define ntohl(X)		__constant_ntohl((X))
 #endif
 
+#ifndef __inline__
+# define __inline__		__attribute__((always_inline))
+#endif
+
 /** Section helper macros. */
 
 #ifndef __section
@@ -146,7 +150,7 @@
 # define BPF_H_DEFAULT	-1
 #endif
 
-/** BPF helper functions for tc. */
+/** BPF helper functions for tc. Individual flags are in linux/bpf.h */
 
 #ifndef BPF_FUNC
 # define BPF_FUNC(NAME, ...)						\
@@ -163,7 +167,21 @@ static int BPF_FUNC(map_delete_elem, void *map, const void *key);
 static uint64_t BPF_FUNC(ktime_get_ns);
 
 /* Debugging */
+
+/* FIXME: __attribute__ ((format(printf, 1, 3))) not possible unless
+ * llvm bug https://llvm.org/bugs/show_bug.cgi?id=26243 gets resolved.
+ * It would require ____fmt to be made const, which generates a reloc
+ * entry (non-map).
+ */
 static void BPF_FUNC(trace_printk, const char *fmt, int fmt_size, ...);
+
+#ifndef printt
+# define printt(fmt, ...)						\
+	({								\
+		char ____fmt[] = fmt;					\
+		trace_printk(____fmt, sizeof(____fmt), ##__VA_ARGS__);	\
+	})
+#endif
 
 /* Random numbers */
 static uint32_t BPF_FUNC(get_prandom_u32);
@@ -185,12 +203,11 @@ static int BPF_FUNC(clone_redirect, struct __sk_buff *skb, int ifindex,
 		    uint32_t flags);
 
 /* Packet manipulation */
-#define BPF_PSEUDO_HDR			0x10
-#define BPF_HAS_PSEUDO_HDR(flags)	((flags) & BPF_PSEUDO_HDR)
-#define BPF_HDR_FIELD_SIZE(flags)	((flags) & 0x0f)
-
+static int BPF_FUNC(skb_load_bytes, struct __sk_buff *skb, uint32_t off,
+		    void *to, uint32_t len);
 static int BPF_FUNC(skb_store_bytes, struct __sk_buff *skb, uint32_t off,
-		    void *from, uint32_t len, uint32_t flags);
+		    const void *from, uint32_t len, uint32_t flags);
+
 static int BPF_FUNC(l3_csum_replace, struct __sk_buff *skb, uint32_t off,
 		    uint32_t from, uint32_t to, uint32_t flags);
 static int BPF_FUNC(l4_csum_replace, struct __sk_buff *skb, uint32_t off,
@@ -205,12 +222,35 @@ static int BPF_FUNC(skb_vlan_pop, struct __sk_buff *skb);
 static int BPF_FUNC(skb_get_tunnel_key, struct __sk_buff *skb,
 		    struct bpf_tunnel_key *to, uint32_t size, uint32_t flags);
 static int BPF_FUNC(skb_set_tunnel_key, struct __sk_buff *skb,
-		    struct bpf_tunnel_key *from, uint32_t size, uint32_t flags);
+		    const struct bpf_tunnel_key *from, uint32_t size,
+		    uint32_t flags);
 
-/** LLVM built-ins */
+/** LLVM built-ins, mem*() routines work for constant size */
 
 #ifndef lock_xadd
 # define lock_xadd(ptr, val)	((void) __sync_fetch_and_add(ptr, val))
+#endif
+
+#ifndef memset
+# define memset(s, c, n)	__builtin_memset((s), (c), (n))
+#endif
+
+#ifndef memcpy
+# define memcpy(d, s, n)	__builtin_memcpy((d), (s), (n))
+#endif
+
+#ifndef memmove
+# define memmove(d, s, n)	__builtin_memmove((d), (s), (n))
+#endif
+
+/* FIXME: __builtin_memcmp() is not yet fully useable unless llvm bug
+ * https://llvm.org/bugs/show_bug.cgi?id=26218 gets resolved. Also
+ * this one would generate a reloc entry (non-map), otherwise.
+ */
+#if 0
+#ifndef memcmp
+# define memcmp(a, b, n)	__builtin_memcmp((a), (b), (n))
+#endif
 #endif
 
 unsigned long long load_byte(void *skb, unsigned long long off)

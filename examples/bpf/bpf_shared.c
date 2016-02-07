@@ -35,12 +35,11 @@ int emain(struct __sk_buff *skb)
 __section("ingress")
 int imain(struct __sk_buff *skb)
 {
-	char fmt[] = "map val: %d\n";
 	int key = 0, *val;
 
 	val = map_lookup_elem(&map_sh, &key);
 	if (val)
-		trace_printk(fmt, sizeof(fmt), *val);
+		printt("map val: %d\n", *val);
 
 	return BPF_H_DEFAULT;
 }

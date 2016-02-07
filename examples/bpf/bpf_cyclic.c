@@ -11,9 +11,7 @@ BPF_PROG_ARRAY(jmp_tc, JMP_MAP_ID, PIN_OBJECT_NS, 1);
 __section_tail(JMP_MAP_ID, 0)
 int cls_loop(struct __sk_buff *skb)
 {
-	char fmt[] = "cb: %u\n";
-
-	trace_printk(fmt, sizeof(fmt), skb->cb[0]++);
+	printt("cb: %u\n", skb->cb[0]++);
 	tail_call(skb, &jmp_tc, 0);
 
 	skb->tc_classid = TC_H_MAKE(1, 42);
