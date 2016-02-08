@@ -33,6 +33,7 @@ static void print_explain(FILE *f)
 		"                  [ vlan_filtering VLAN_FILTERING ]\n"
 		"                  [ vlan_protocol VLAN_PROTOCOL ]\n"
 		"                  [ vlan_default_pvid VLAN_DEFAULT_PVID ]\n"
+		"                  [ mcast_snooping MULTICAST_SNOOPING ]\n"
 		"                  [ mcast_router MULTICAST_ROUTER ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
@@ -149,6 +150,14 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid mcast_router", *argv);
 
 			addattr8(n, 1024, IFLA_BR_MCAST_ROUTER, mcast_router);
+		} else if (matches(*argv, "mcast_snooping") == 0) {
+			__u8 mcast_snoop;
+
+			NEXT_ARG();
+			if (get_u8(&mcast_snoop, *argv, 0))
+				invarg("invalid mcast_snooping", *argv);
+
+			addattr8(n, 1024, IFLA_BR_MCAST_SNOOPING, mcast_snoop);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -286,6 +295,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				    RTA_PAYLOAD(tb[IFLA_BR_GROUP_ADDR]),
 				    1 /*ARPHDR_ETHER*/, mac, sizeof(mac)));
 	}
+
+	if (tb[IFLA_BR_MCAST_SNOOPING])
+		fprintf(f, "mcast_snooping %u ",
+			rta_getattr_u8(tb[IFLA_BR_MCAST_SNOOPING]));
 
 	if (tb[IFLA_BR_MCAST_ROUTER])
 		fprintf(f, "mcast_router %u ",
