@@ -181,6 +181,22 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				  sizeof(root_id));
 		fprintf(f, "designated_root %s ", root_id);
 	}
+
+	if (tb[IFLA_BR_ROOT_PORT])
+		fprintf(f, "root_port %u ",
+			rta_getattr_u16(tb[IFLA_BR_ROOT_PORT]));
+
+	if (tb[IFLA_BR_ROOT_PATH_COST])
+		fprintf(f, "root_path_cost %u ",
+			rta_getattr_u32(tb[IFLA_BR_ROOT_PATH_COST]));
+
+	if (tb[IFLA_BR_TOPOLOGY_CHANGE])
+		fprintf(f, "topology_change %u ",
+			rta_getattr_u8(tb[IFLA_BR_TOPOLOGY_CHANGE]));
+
+	if (tb[IFLA_BR_TOPOLOGY_CHANGE_DETECTED])
+		fprintf(f, "topology_change_detected %u ",
+			rta_getattr_u8(tb[IFLA_BR_TOPOLOGY_CHANGE_DETECTED]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
