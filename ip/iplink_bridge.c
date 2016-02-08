@@ -32,6 +32,7 @@ static void print_explain(FILE *f)
 		"                  [ group_address ADDRESS ]\n"
 		"                  [ vlan_filtering VLAN_FILTERING ]\n"
 		"                  [ vlan_protocol VLAN_PROTOCOL ]\n"
+		"                  [ vlan_default_pvid VLAN_DEFAULT_PVID ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
 	);
@@ -130,6 +131,15 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (len < 0)
 				return -1;
 			addattr_l(n, 1024, IFLA_BR_GROUP_ADDR, llabuf, len);
+		} else if (matches(*argv, "vlan_default_pvid") == 0) {
+			__u16 default_pvid;
+
+			NEXT_ARG();
+			if (get_u16(&default_pvid, *argv, 0))
+				invarg("invalid vlan_default_pvid", *argv);
+
+			addattr16(n, 1024, IFLA_BR_VLAN_DEFAULT_PVID,
+				  default_pvid);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -250,6 +260,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fprintf(f, "gc_timer %4i.%.2i ", (int)tv.tv_sec,
 			(int)tv.tv_usec/10000);
 	}
+
+	if (tb[IFLA_BR_VLAN_DEFAULT_PVID])
+		fprintf(f, "vlan_default_pvid %u ",
+			rta_getattr_u16(tb[IFLA_BR_VLAN_DEFAULT_PVID]));
 
 	if (tb[IFLA_BR_GROUP_FWD_MASK])
 		fprintf(f, "group_fwd_mask %#x ",
