@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <linux/if_link.h>
+#include <netinet/ether.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -37,6 +38,15 @@ static void print_explain(FILE *f)
 static void explain(void)
 {
 	print_explain(stderr);
+}
+
+static void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf,
+			      size_t len)
+{
+	char eaddr[32];
+
+	ether_ntoa_r((const struct ether_addr *)id->addr, eaddr);
+	snprintf(buf, len, "%.2x%.2x.%s", id->prio[0], id->prio[1], eaddr);
 }
 
 static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -154,6 +164,22 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fprintf(f, "vlan_protocol %s ",
 			ll_proto_n2a(rta_getattr_u16(tb[IFLA_BR_VLAN_PROTOCOL]),
 				     b1, sizeof(b1)));
+	}
+
+	if (tb[IFLA_BR_BRIDGE_ID]) {
+		char bridge_id[32];
+
+		br_dump_bridge_id(RTA_DATA(tb[IFLA_BR_BRIDGE_ID]), bridge_id,
+				  sizeof(bridge_id));
+		fprintf(f, "bridge_id %s ", bridge_id);
+	}
+
+	if (tb[IFLA_BR_ROOT_ID]) {
+		char root_id[32];
+
+		br_dump_bridge_id(RTA_DATA(tb[IFLA_BR_BRIDGE_ID]), root_id,
+				  sizeof(root_id));
+		fprintf(f, "designated_root %s ", root_id);
 	}
 }
 
