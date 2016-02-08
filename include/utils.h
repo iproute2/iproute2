@@ -175,6 +175,24 @@ static inline __u32 nl_mgrp(__u32 group)
 	return group ? (1 << (group - 1)) : 0;
 }
 
+/* courtesy of bridge-utils */
+static inline unsigned long __tv_to_jiffies(const struct timeval *tv)
+{
+	unsigned long long jif;
+
+	jif = 1000000ULL * tv->tv_sec + tv->tv_usec;
+
+	return jif/10000;
+}
+
+static inline void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies)
+{
+	unsigned long long tvusec;
+
+	tvusec = 10000ULL*jiffies;
+	tv->tv_sec = tvusec/1000000;
+	tv->tv_usec = tvusec - 1000000 * tv->tv_sec;
+}
 
 int print_timestamp(FILE *fp);
 void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);

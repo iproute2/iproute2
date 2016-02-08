@@ -197,6 +197,40 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_TOPOLOGY_CHANGE_DETECTED])
 		fprintf(f, "topology_change_detected %u ",
 			rta_getattr_u8(tb[IFLA_BR_TOPOLOGY_CHANGE_DETECTED]));
+
+	if (tb[IFLA_BR_HELLO_TIMER]) {
+		struct timeval tv;
+
+		__jiffies_to_tv(&tv, rta_getattr_u64(tb[IFLA_BR_HELLO_TIMER]));
+		fprintf(f, "hello_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BR_TCN_TIMER]) {
+		struct timeval tv;
+
+		__jiffies_to_tv(&tv, rta_getattr_u64(tb[IFLA_BR_TCN_TIMER]));
+		fprintf(f, "tcn_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BR_TOPOLOGY_CHANGE_TIMER]) {
+		unsigned long jiffies;
+		struct timeval tv;
+
+		jiffies = rta_getattr_u64(tb[IFLA_BR_TOPOLOGY_CHANGE_TIMER]);
+		__jiffies_to_tv(&tv, jiffies);
+		fprintf(f, "topology_change_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BR_GC_TIMER]) {
+		struct timeval tv;
+
+		__jiffies_to_tv(&tv, rta_getattr_u64(tb[IFLA_BR_GC_TIMER]));
+		fprintf(f, "gc_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
