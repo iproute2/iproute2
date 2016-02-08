@@ -40,6 +40,7 @@ static void print_explain(FILE *f)
 		"                  [ mcast_hash_elasticity HASH_ELASTICITY ]\n"
 		"                  [ mcast_hash_max HASH_MAX ]\n"
 		"                  [ mcast_last_member_count LAST_MEMBER_COUNT ]\n"
+		"                  [ mcast_startup_query_count STARTUP_QUERY_COUNT ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
 	);
@@ -210,6 +211,16 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			addattr32(n, 1024, IFLA_BR_MCAST_LAST_MEMBER_CNT,
 				  mcast_lmc);
+		} else if (matches(*argv, "mcast_startup_query_count") == 0) {
+			__u32 mcast_sqc;
+
+			NEXT_ARG();
+			if (get_u32(&mcast_sqc, *argv, 0))
+				invarg("invalid mcast_startup_query_count",
+				       *argv);
+
+			addattr32(n, 1024, IFLA_BR_MCAST_STARTUP_QUERY_CNT,
+				  mcast_sqc);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -375,6 +386,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_MCAST_LAST_MEMBER_CNT])
 		fprintf(f, "mcast_last_member_count %u ",
 			rta_getattr_u32(tb[IFLA_BR_MCAST_LAST_MEMBER_CNT]));
+
+	if (tb[IFLA_BR_MCAST_STARTUP_QUERY_CNT])
+		fprintf(f, "mcast_startup_query_count %u ",
+			rta_getattr_u32(tb[IFLA_BR_MCAST_STARTUP_QUERY_CNT]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
