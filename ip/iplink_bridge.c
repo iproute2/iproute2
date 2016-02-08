@@ -29,6 +29,7 @@ static void print_explain(FILE *f)
 		"                  [ stp_state STP_STATE ]\n"
 		"                  [ priority PRIORITY ]\n"
 		"                  [ group_fwd_mask MASK ]\n"
+		"                  [ group_address ADDRESS ]\n"
 		"                  [ vlan_filtering VLAN_FILTERING ]\n"
 		"                  [ vlan_protocol VLAN_PROTOCOL ]\n"
 		"\n"
@@ -120,6 +121,15 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid group_fwd_mask", *argv);
 
 			addattr16(n, 1024, IFLA_BR_GROUP_FWD_MASK, fwd_mask);
+		} else if (matches(*argv, "group_address") == 0) {
+			char llabuf[32];
+			int len;
+
+			NEXT_ARG();
+			len = ll_addr_a2n(llabuf, sizeof(llabuf), *argv);
+			if (len < 0)
+				return -1;
+			addattr_l(n, 1024, IFLA_BR_GROUP_ADDR, llabuf, len);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -244,6 +254,15 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_GROUP_FWD_MASK])
 		fprintf(f, "group_fwd_mask %#x ",
 			rta_getattr_u16(tb[IFLA_BR_GROUP_FWD_MASK]));
+
+	if (tb[IFLA_BR_GROUP_ADDR]) {
+		SPRINT_BUF(mac);
+
+		fprintf(f, "group_address %s ",
+			ll_addr_n2a(RTA_DATA(tb[IFLA_BR_GROUP_ADDR]),
+				    RTA_PAYLOAD(tb[IFLA_BR_GROUP_ADDR]),
+				    1 /*ARPHDR_ETHER*/, mac, sizeof(mac)));
+	}
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
