@@ -47,6 +47,9 @@ static void print_explain(FILE *f)
 		"                  [ mcast_query_interval QUERY_INTERVAL ]\n"
 		"                  [ mcast_query_response_interval QUERY_RESPONSE_INTERVAL ]\n"
 		"                  [ mcast_startup_query_interval STARTUP_QUERY_INTERVAL ]\n"
+		"                  [ nf_call_iptables NF_CALL_IPTABLES ]\n"
+		"                  [ nf_call_ip6tables NF_CALL_IP6TABLES ]\n"
+		"                  [ nf_call_arptables NF_CALL_ARPTABLES ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
 	);
@@ -292,6 +295,36 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 			}
 			addattr64(n, 1024, IFLA_BR_MCAST_STARTUP_QUERY_INTVL,
 				  mcast_startup_query_intvl);
+		} else if (matches(*argv, "nf_call_iptables") == 0) {
+			__u8 nf_call_ipt;
+
+			NEXT_ARG();
+			if (get_u8(&nf_call_ipt, *argv, 0)) {
+				invarg("invalid nf_call_iptables", *argv);
+				return -1;
+			}
+			addattr8(n, 1024, IFLA_BR_NF_CALL_IPTABLES,
+				 nf_call_ipt);
+		} else if (matches(*argv, "nf_call_ip6tables") == 0) {
+			__u8 nf_call_ip6t;
+
+			NEXT_ARG();
+			if (get_u8(&nf_call_ip6t, *argv, 0)) {
+				invarg("invalid nf_call_ip6tables", *argv);
+				return -1;
+			}
+			addattr8(n, 1024, IFLA_BR_NF_CALL_IP6TABLES,
+				 nf_call_ip6t);
+		} else if (matches(*argv, "nf_call_arptables") == 0) {
+			__u8 nf_call_arpt;
+
+			NEXT_ARG();
+			if (get_u8(&nf_call_arpt, *argv, 0)) {
+				invarg("invalid nf_call_arptables", *argv);
+				return -1;
+			}
+			addattr8(n, 1024, IFLA_BR_NF_CALL_ARPTABLES,
+				 nf_call_arpt);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -485,6 +518,18 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_MCAST_STARTUP_QUERY_INTVL])
 		fprintf(f, "mcast_startup_query_interval %llu ",
 			rta_getattr_u64(tb[IFLA_BR_MCAST_STARTUP_QUERY_INTVL]));
+
+	if (tb[IFLA_BR_NF_CALL_IPTABLES])
+		fprintf(f, "nf_call_iptables %u ",
+			rta_getattr_u8(tb[IFLA_BR_NF_CALL_IPTABLES]));
+
+	if (tb[IFLA_BR_NF_CALL_IP6TABLES])
+		fprintf(f, "nf_call_ip6tables %u ",
+			rta_getattr_u8(tb[IFLA_BR_NF_CALL_IP6TABLES]));
+
+	if (tb[IFLA_BR_NF_CALL_ARPTABLES])
+		fprintf(f, "nf_call_arptables %u ",
+			rta_getattr_u8(tb[IFLA_BR_NF_CALL_ARPTABLES]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
