@@ -42,6 +42,7 @@ static void print_explain(FILE *f)
 		"                  [ mcast_last_member_count LAST_MEMBER_COUNT ]\n"
 		"                  [ mcast_startup_query_count STARTUP_QUERY_COUNT ]\n"
 		"                  [ mcast_last_member_interval LAST_MEMBER_INTERVAL ]\n"
+		"                  [ mcast_membership_interval MEMBERSHIP_INTERVAL ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
 	);
@@ -232,6 +233,17 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			addattr64(n, 1024, IFLA_BR_MCAST_LAST_MEMBER_INTVL,
 				  mcast_last_member_intvl);
+		} else if (matches(*argv, "mcast_membership_interval") == 0) {
+			__u64 mcast_membership_intvl;
+
+			NEXT_ARG();
+			if (get_u64(&mcast_membership_intvl, *argv, 0)) {
+				invarg("invalid mcast_membership_interval",
+				       *argv);
+				return -1;
+			}
+			addattr64(n, 1024, IFLA_BR_MCAST_MEMBERSHIP_INTVL,
+				  mcast_membership_intvl);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -405,6 +417,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_MCAST_LAST_MEMBER_INTVL])
 		fprintf(f, "mcast_last_member_interval %llu ",
 			rta_getattr_u64(tb[IFLA_BR_MCAST_LAST_MEMBER_INTVL]));
+
+	if (tb[IFLA_BR_MCAST_MEMBERSHIP_INTVL])
+		fprintf(f, "mcast_membership_interval %llu ",
+			rta_getattr_u64(tb[IFLA_BR_MCAST_MEMBERSHIP_INTVL]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
