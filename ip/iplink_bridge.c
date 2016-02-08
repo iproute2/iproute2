@@ -45,6 +45,7 @@ static void print_explain(FILE *f)
 		"                  [ mcast_membership_interval MEMBERSHIP_INTERVAL ]\n"
 		"                  [ mcast_querier_interval QUERIER_INTERVAL ]\n"
 		"                  [ mcast_query_interval QUERY_INTERVAL ]\n"
+		"                  [ mcast_query_response_interval QUERY_RESPONSE_INTERVAL ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
 	);
@@ -268,6 +269,17 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 			}
 			addattr64(n, 1024, IFLA_BR_MCAST_QUERY_INTVL,
 				  mcast_query_intvl);
+		} else if (!matches(*argv, "mcast_query_response_interval")) {
+			__u64 mcast_query_resp_intvl;
+
+			NEXT_ARG();
+			if (get_u64(&mcast_query_resp_intvl, *argv, 0)) {
+				invarg("invalid mcast_query_response_interval",
+				       *argv);
+				return -1;
+			}
+			addattr64(n, 1024, IFLA_BR_MCAST_QUERY_RESPONSE_INTVL,
+				  mcast_query_resp_intvl);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -453,6 +465,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_MCAST_QUERY_INTVL])
 		fprintf(f, "mcast_query_interval %llu ",
 			rta_getattr_u64(tb[IFLA_BR_MCAST_QUERY_INTVL]));
+
+	if (tb[IFLA_BR_MCAST_QUERY_RESPONSE_INTVL])
+		fprintf(f, "mcast_query_response_interval %llu ",
+			rta_getattr_u64(tb[IFLA_BR_MCAST_QUERY_RESPONSE_INTVL]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
