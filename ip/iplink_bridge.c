@@ -28,6 +28,7 @@ static void print_explain(FILE *f)
 		"                  [ ageing_time AGEING_TIME ]\n"
 		"                  [ stp_state STP_STATE ]\n"
 		"                  [ priority PRIORITY ]\n"
+		"                  [ group_fwd_mask MASK ]\n"
 		"                  [ vlan_filtering VLAN_FILTERING ]\n"
 		"                  [ vlan_protocol VLAN_PROTOCOL ]\n"
 		"\n"
@@ -111,6 +112,14 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				return -1;
 			}
 			addattr16(n, 1024, IFLA_BR_VLAN_PROTOCOL, vlan_proto);
+		} else if (matches(*argv, "group_fwd_mask") == 0) {
+			__u16 fwd_mask;
+
+			NEXT_ARG();
+			if (get_u16(&fwd_mask, *argv, 0))
+				invarg("invalid group_fwd_mask", *argv);
+
+			addattr16(n, 1024, IFLA_BR_GROUP_FWD_MASK, fwd_mask);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -231,6 +240,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fprintf(f, "gc_timer %4i.%.2i ", (int)tv.tv_sec,
 			(int)tv.tv_usec/10000);
 	}
+
+	if (tb[IFLA_BR_GROUP_FWD_MASK])
+		fprintf(f, "group_fwd_mask %#x ",
+			rta_getattr_u16(tb[IFLA_BR_GROUP_FWD_MASK]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
