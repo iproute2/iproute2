@@ -80,11 +80,11 @@ static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *t
 			rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_AGGREGATOR_ID]));
 
 	if (tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE])
-		fprintf(f, "ad_actor_oper_port_state %d\n",
+		fprintf(f, "ad_actor_oper_port_state %d ",
 			rta_getattr_u8(tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE]));
 
 	if (tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE])
-		fprintf(f, "ad_partner_oper_port_state %d\n",
+		fprintf(f, "ad_partner_oper_port_state %d ",
 			rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE]));
 }
 
