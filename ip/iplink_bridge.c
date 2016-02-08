@@ -36,6 +36,7 @@ static void print_explain(FILE *f)
 		"                  [ mcast_snooping MULTICAST_SNOOPING ]\n"
 		"                  [ mcast_router MULTICAST_ROUTER ]\n"
 		"                  [ mcast_query_use_ifaddr MCAST_QUERY_USE_IFADDR ]\n"
+		"                  [ mcast_querier MULTICAST_QUERIER ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
 	);
@@ -169,6 +170,14 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			addattr8(n, 1024, IFLA_BR_MCAST_QUERY_USE_IFADDR,
 				 mcast_qui);
+		} else if (matches(*argv, "mcast_querier") == 0) {
+			__u8 mcast_querier;
+
+			NEXT_ARG();
+			if (get_u8(&mcast_querier, *argv, 0))
+				invarg("invalid mcast_querier", *argv);
+
+			addattr8(n, 1024, IFLA_BR_MCAST_QUERIER, mcast_querier);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -318,6 +327,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_MCAST_QUERY_USE_IFADDR])
 		fprintf(f, "mcast_query_use_ifaddr %u ",
 			rta_getattr_u8(tb[IFLA_BR_MCAST_QUERY_USE_IFADDR]));
+
+	if (tb[IFLA_BR_MCAST_QUERIER])
+		fprintf(f, "mcast_querier %u ",
+			rta_getattr_u8(tb[IFLA_BR_MCAST_QUERIER]));
 }
 
 static void bridge_print_help(struct link_util *lu, int argc, char **argv,
