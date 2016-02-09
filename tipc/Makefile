@@ -6,7 +6,7 @@ TIPCOBJ=bearer.o \
     media.o misc.o \
     msg.o nametable.o \
     node.o socket.o \
-    peer.o tipc.o
+    tipc.o
 
 include ../Config
 
