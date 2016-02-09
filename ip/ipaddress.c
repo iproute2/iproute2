@@ -481,7 +481,8 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 	/* RX error stats */
 	if (show_stats > 1) {
 		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s", _SL_);
+		fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
+			s->rx_nohandler ? "   nohandler" : "",  _SL_);
 
 		fprintf(fp, "               ");
 		print_num(fp, 8, s->rx_length_errors);
@@ -489,13 +490,15 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 		print_num(fp, 7, s->rx_frame_errors);
 		print_num(fp, 7, s->rx_fifo_errors);
 		print_num(fp, 7, s->rx_missed_errors);
+		if (s->rx_nohandler)
+			print_num(fp, 7, s->rx_nohandler);
+
 	}
 	fprintf(fp, "%s", _SL_);
 
 	/* TX stats */
 	fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
 		s->tx_compressed ? "compressed" : "", _SL_);
-
 
 	fprintf(fp, "    ");
 	print_num(fp, 10, s->tx_bytes);
@@ -546,13 +549,16 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 	/* RX error stats */
 	if (show_stats > 1) {
 		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s", _SL_);
+		fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
+			s->rx_nohandler ? "   nohandler" : "",  _SL_);
 		fprintf(fp, "               ");
 		print_num(fp, 8, s->rx_length_errors);
 		print_num(fp, 7, s->rx_crc_errors);
 		print_num(fp, 7, s->rx_frame_errors);
 		print_num(fp, 7, s->rx_fifo_errors);
 		print_num(fp, 7, s->rx_missed_errors);
+		if (s->rx_nohandler)
+			print_num(fp, 7, s->rx_nohandler);
 	}
 	fprintf(fp, "%s", _SL_);
 
@@ -590,12 +596,23 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 
 static void __print_link_stats(FILE *fp, struct rtattr **tb)
 {
-	if (tb[IFLA_STATS64])
-		print_link_stats64(fp, RTA_DATA(tb[IFLA_STATS64]),
-					tb[IFLA_CARRIER_CHANGES]);
-	else if (tb[IFLA_STATS])
-		print_link_stats32(fp, RTA_DATA(tb[IFLA_STATS]),
-					tb[IFLA_CARRIER_CHANGES]);
+	const struct rtattr *carrier_changes = tb[IFLA_CARRIER_CHANGES];
+
+	if (tb[IFLA_STATS64]) {
+		struct rtnl_link_stats64 stats = { 0 };
+
+		memcpy(&stats, RTA_DATA(tb[IFLA_STATS64]),
+		       MIN(RTA_PAYLOAD(tb[IFLA_STATS64]), sizeof(stats)));
+
+		print_link_stats64(fp, &stats, carrier_changes);
+	} else if (tb[IFLA_STATS]) {
+		struct rtnl_link_stats stats = { 0 };
+
+		memcpy(&stats, RTA_DATA(tb[IFLA_STATS]),
+		       MIN(RTA_PAYLOAD(tb[IFLA_STATS]), sizeof(stats)));
+
+		print_link_stats32(fp, &stats, carrier_changes);
+	}
 }
 
 static void print_link_stats(FILE *fp, struct nlmsghdr *n)
