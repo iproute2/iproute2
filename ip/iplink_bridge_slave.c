@@ -29,6 +29,7 @@ static void print_explain(FILE *f)
 		"                        [ root_block {on | off} ]\n"
 		"                        [ learning {on | off} ]\n"
 		"                        [ flood {on | off} ]\n"
+		"                        [ proxy_arp {on | off} ]\n"
 	);
 }
 
@@ -168,6 +169,9 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_CONFIG_PENDING])
 		fprintf(f, "config_pending %u ",
 			rta_getattr_u8(tb[IFLA_BRPORT_CONFIG_PENDING]));
+	if (tb[IFLA_BRPORT_PROXYARP])
+		print_onoff(f, "proxy_arp",
+			    rta_getattr_u8(tb[IFLA_BRPORT_PROXYARP]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -232,6 +236,10 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("flood", *argv, n,
 						  IFLA_BRPORT_UNICAST_FLOOD);
+		} else if (matches(*argv, "proxy_arp") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("proxy_arp", *argv, n,
+						  IFLA_BRPORT_PROXYARP);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
