@@ -98,6 +98,76 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_UNICAST_FLOOD])
 		print_onoff(f, "flood",
 			rta_getattr_u8(tb[IFLA_BRPORT_UNICAST_FLOOD]));
+
+	if (tb[IFLA_BRPORT_ID])
+		fprintf(f, "port_id 0x%x ",
+			rta_getattr_u16(tb[IFLA_BRPORT_ID]));
+
+	if (tb[IFLA_BRPORT_NO])
+		fprintf(f, "port_no 0x%x ",
+			rta_getattr_u16(tb[IFLA_BRPORT_NO]));
+
+	if (tb[IFLA_BRPORT_DESIGNATED_PORT])
+		fprintf(f, "designated_port %u ",
+			rta_getattr_u16(tb[IFLA_BRPORT_DESIGNATED_PORT]));
+
+	if (tb[IFLA_BRPORT_DESIGNATED_COST])
+		fprintf(f, "designated_cost %u ",
+			rta_getattr_u16(tb[IFLA_BRPORT_DESIGNATED_COST]));
+
+	if (tb[IFLA_BRPORT_BRIDGE_ID]) {
+		char bridge_id[32];
+
+		br_dump_bridge_id(RTA_DATA(tb[IFLA_BRPORT_BRIDGE_ID]),
+				  bridge_id, sizeof(bridge_id));
+		fprintf(f, "designated_bridge %s ", bridge_id);
+	}
+
+	if (tb[IFLA_BRPORT_ROOT_ID]) {
+		char root_id[32];
+
+		br_dump_bridge_id(RTA_DATA(tb[IFLA_BRPORT_ROOT_ID]),
+				  root_id, sizeof(root_id));
+		fprintf(f, "designated_root %s ", root_id);
+	}
+
+	if (tb[IFLA_BRPORT_HOLD_TIMER]) {
+		struct timeval tv;
+		__u64 htimer;
+
+		htimer = rta_getattr_u64(tb[IFLA_BRPORT_HOLD_TIMER]);
+		__jiffies_to_tv(&tv, htimer);
+		fprintf(f, "hold_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BRPORT_MESSAGE_AGE_TIMER]) {
+		struct timeval tv;
+		__u64 agetimer;
+
+		agetimer = rta_getattr_u64(tb[IFLA_BRPORT_MESSAGE_AGE_TIMER]);
+		__jiffies_to_tv(&tv, agetimer);
+		fprintf(f, "message_age_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BRPORT_FORWARD_DELAY_TIMER]) {
+		struct timeval tv;
+		__u64 fwdtimer;
+
+		fwdtimer = rta_getattr_u64(tb[IFLA_BRPORT_FORWARD_DELAY_TIMER]);
+		__jiffies_to_tv(&tv, fwdtimer);
+		fprintf(f, "forward_delay_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BRPORT_TOPOLOGY_CHANGE_ACK])
+		fprintf(f, "topology_change_ack %u ",
+			rta_getattr_u8(tb[IFLA_BRPORT_TOPOLOGY_CHANGE_ACK]));
+
+	if (tb[IFLA_BRPORT_CONFIG_PENDING])
+		fprintf(f, "config_pending %u ",
+			rta_getattr_u8(tb[IFLA_BRPORT_CONFIG_PENDING]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,

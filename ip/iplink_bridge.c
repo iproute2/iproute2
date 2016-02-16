@@ -60,8 +60,7 @@ static void explain(void)
 	print_explain(stderr);
 }
 
-static void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf,
-			      size_t len)
+void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len)
 {
 	char eaddr[32];
 
