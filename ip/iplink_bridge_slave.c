@@ -31,6 +31,7 @@ static void print_explain(FILE *f)
 		"                        [ flood {on | off} ]\n"
 		"                        [ proxy_arp {on | off} ]\n"
 		"                        [ proxy_arp_wifi {on | off} ]\n"
+		"                        [ mcast_router MULTICAST_ROUTER ]\n"
 	);
 }
 
@@ -177,6 +178,10 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_PROXYARP_WIFI])
 		print_onoff(f, "proxy_arp_wifi",
 			    rta_getattr_u8(tb[IFLA_BRPORT_PROXYARP_WIFI]));
+
+	if (tb[IFLA_BRPORT_MULTICAST_ROUTER])
+		fprintf(f, "mcast_router %u ",
+			rta_getattr_u8(tb[IFLA_BRPORT_MULTICAST_ROUTER]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -249,6 +254,14 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("proxy_arp_wifi", *argv, n,
 						  IFLA_BRPORT_PROXYARP_WIFI);
+		} else if (matches(*argv, "mcast_router") == 0) {
+			__u8 mcast_router;
+
+			NEXT_ARG();
+			if (get_u8(&mcast_router, *argv, 0))
+				invarg("invalid mcast_router", *argv);
+			addattr8(n, 1024, IFLA_BRPORT_MULTICAST_ROUTER,
+				 mcast_router);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
