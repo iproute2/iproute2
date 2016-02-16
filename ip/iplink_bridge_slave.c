@@ -32,6 +32,7 @@ static void print_explain(FILE *f)
 		"                        [ proxy_arp {on | off} ]\n"
 		"                        [ proxy_arp_wifi {on | off} ]\n"
 		"                        [ mcast_router MULTICAST_ROUTER ]\n"
+		"                        [ mcast_fast_leave {on | off} ]\n"
 	);
 }
 
@@ -182,6 +183,10 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_MULTICAST_ROUTER])
 		fprintf(f, "mcast_router %u ",
 			rta_getattr_u8(tb[IFLA_BRPORT_MULTICAST_ROUTER]));
+
+	if (tb[IFLA_BRPORT_FAST_LEAVE])
+		print_onoff(f, "mcast_fast_leave",
+			    rta_getattr_u8(tb[IFLA_BRPORT_FAST_LEAVE]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -262,6 +267,10 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid mcast_router", *argv);
 			addattr8(n, 1024, IFLA_BRPORT_MULTICAST_ROUTER,
 				 mcast_router);
+		} else if (matches(*argv, "mcast_fast_leave") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("mcast_fast_leave", *argv, n,
+						  IFLA_BRPORT_FAST_LEAVE);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
