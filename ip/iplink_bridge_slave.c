@@ -29,6 +29,10 @@ static void print_explain(FILE *f)
 		"                        [ root_block {on | off} ]\n"
 		"                        [ learning {on | off} ]\n"
 		"                        [ flood {on | off} ]\n"
+		"                        [ proxy_arp {on | off} ]\n"
+		"                        [ proxy_arp_wifi {on | off} ]\n"
+		"                        [ mcast_router MULTICAST_ROUTER ]\n"
+		"                        [ mcast_fast_leave {on | off} ]\n"
 	);
 }
 
@@ -98,6 +102,91 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_UNICAST_FLOOD])
 		print_onoff(f, "flood",
 			rta_getattr_u8(tb[IFLA_BRPORT_UNICAST_FLOOD]));
+
+	if (tb[IFLA_BRPORT_ID])
+		fprintf(f, "port_id 0x%x ",
+			rta_getattr_u16(tb[IFLA_BRPORT_ID]));
+
+	if (tb[IFLA_BRPORT_NO])
+		fprintf(f, "port_no 0x%x ",
+			rta_getattr_u16(tb[IFLA_BRPORT_NO]));
+
+	if (tb[IFLA_BRPORT_DESIGNATED_PORT])
+		fprintf(f, "designated_port %u ",
+			rta_getattr_u16(tb[IFLA_BRPORT_DESIGNATED_PORT]));
+
+	if (tb[IFLA_BRPORT_DESIGNATED_COST])
+		fprintf(f, "designated_cost %u ",
+			rta_getattr_u16(tb[IFLA_BRPORT_DESIGNATED_COST]));
+
+	if (tb[IFLA_BRPORT_BRIDGE_ID]) {
+		char bridge_id[32];
+
+		br_dump_bridge_id(RTA_DATA(tb[IFLA_BRPORT_BRIDGE_ID]),
+				  bridge_id, sizeof(bridge_id));
+		fprintf(f, "designated_bridge %s ", bridge_id);
+	}
+
+	if (tb[IFLA_BRPORT_ROOT_ID]) {
+		char root_id[32];
+
+		br_dump_bridge_id(RTA_DATA(tb[IFLA_BRPORT_ROOT_ID]),
+				  root_id, sizeof(root_id));
+		fprintf(f, "designated_root %s ", root_id);
+	}
+
+	if (tb[IFLA_BRPORT_HOLD_TIMER]) {
+		struct timeval tv;
+		__u64 htimer;
+
+		htimer = rta_getattr_u64(tb[IFLA_BRPORT_HOLD_TIMER]);
+		__jiffies_to_tv(&tv, htimer);
+		fprintf(f, "hold_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BRPORT_MESSAGE_AGE_TIMER]) {
+		struct timeval tv;
+		__u64 agetimer;
+
+		agetimer = rta_getattr_u64(tb[IFLA_BRPORT_MESSAGE_AGE_TIMER]);
+		__jiffies_to_tv(&tv, agetimer);
+		fprintf(f, "message_age_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BRPORT_FORWARD_DELAY_TIMER]) {
+		struct timeval tv;
+		__u64 fwdtimer;
+
+		fwdtimer = rta_getattr_u64(tb[IFLA_BRPORT_FORWARD_DELAY_TIMER]);
+		__jiffies_to_tv(&tv, fwdtimer);
+		fprintf(f, "forward_delay_timer %4i.%.2i ", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
+
+	if (tb[IFLA_BRPORT_TOPOLOGY_CHANGE_ACK])
+		fprintf(f, "topology_change_ack %u ",
+			rta_getattr_u8(tb[IFLA_BRPORT_TOPOLOGY_CHANGE_ACK]));
+
+	if (tb[IFLA_BRPORT_CONFIG_PENDING])
+		fprintf(f, "config_pending %u ",
+			rta_getattr_u8(tb[IFLA_BRPORT_CONFIG_PENDING]));
+	if (tb[IFLA_BRPORT_PROXYARP])
+		print_onoff(f, "proxy_arp",
+			    rta_getattr_u8(tb[IFLA_BRPORT_PROXYARP]));
+
+	if (tb[IFLA_BRPORT_PROXYARP_WIFI])
+		print_onoff(f, "proxy_arp_wifi",
+			    rta_getattr_u8(tb[IFLA_BRPORT_PROXYARP_WIFI]));
+
+	if (tb[IFLA_BRPORT_MULTICAST_ROUTER])
+		fprintf(f, "mcast_router %u ",
+			rta_getattr_u8(tb[IFLA_BRPORT_MULTICAST_ROUTER]));
+
+	if (tb[IFLA_BRPORT_FAST_LEAVE])
+		print_onoff(f, "mcast_fast_leave",
+			    rta_getattr_u8(tb[IFLA_BRPORT_FAST_LEAVE]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -162,6 +251,26 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("flood", *argv, n,
 						  IFLA_BRPORT_UNICAST_FLOOD);
+		} else if (matches(*argv, "proxy_arp") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("proxy_arp", *argv, n,
+						  IFLA_BRPORT_PROXYARP);
+		} else if (matches(*argv, "proxy_arp_wifi") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("proxy_arp_wifi", *argv, n,
+						  IFLA_BRPORT_PROXYARP_WIFI);
+		} else if (matches(*argv, "mcast_router") == 0) {
+			__u8 mcast_router;
+
+			NEXT_ARG();
+			if (get_u8(&mcast_router, *argv, 0))
+				invarg("invalid mcast_router", *argv);
+			addattr8(n, 1024, IFLA_BRPORT_MULTICAST_ROUTER,
+				 mcast_router);
+		} else if (matches(*argv, "mcast_fast_leave") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("mcast_fast_leave", *argv, n,
+						  IFLA_BRPORT_FAST_LEAVE);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
