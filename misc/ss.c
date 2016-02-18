@@ -778,7 +778,9 @@ struct tcpstat
 	unsigned int	    sacked;
 	unsigned int	    fackets;
 	unsigned int	    reordering;
+	unsigned int	    not_sent;
 	double		    rcv_rtt;
+	double		    min_rtt;
 	int		    rcv_space;
 	bool		    has_ts_opt;
 	bool		    has_sack_opt;
@@ -1737,6 +1739,10 @@ static void tcp_stats_print(struct tcpstat *s)
 		printf(" rcv_rtt:%g", s->rcv_rtt);
 	if (s->rcv_space)
 		printf(" rcv_space:%d", s->rcv_space);
+	if (s->not_sent)
+		printf(" notsent:%u", s->not_sent);
+	if (s->min_rtt)
+		printf(" minrtt:%g", s->min_rtt);
 }
 
 static void tcp_timer_print(struct tcpstat *s)
@@ -1990,6 +1996,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.bytes_received = info->tcpi_bytes_received;
 		s.segs_out = info->tcpi_segs_out;
 		s.segs_in = info->tcpi_segs_in;
+		s.not_sent = info->tcpi_notsent_bytes;
+		s.min_rtt = (double) info->tcpi_min_rtt / 1000;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 	}
