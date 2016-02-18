@@ -172,7 +172,7 @@ static int netns_map_add(int nsid, const char *name)
 	if (netns_map_get_by_nsid(nsid) != NULL)
 		return -EEXIST;
 
-	c = malloc(sizeof(*c) + strlen(name));
+	c = malloc(sizeof(*c) + strlen(name) + 1);
 	if (c == NULL) {
 		perror("malloc");
 		return -ENOMEM;
