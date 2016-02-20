@@ -54,7 +54,7 @@ bridge \- show / manipulate bridge addresses and devices
 .I LLADDR
 .B dev
 .IR DEV " { "
-.BR local " | " temp " } [ "
+.BR local " | " static " | " dynamic " } [ "
 .BR self " ] [ " master " ] [ " router " ] [ " use " ] [ "
 .B dst
 .IR IPADDR " ] [ "
@@ -337,6 +337,18 @@ the Ethernet MAC address.
 .TP
 .BI dev " DEV"
 the interface to which this address is associated.
+
+.B local
+- is a local permanent fdb entry
+.sp
+
+.B static
+- is a static (no arp) fdb entry
+.sp
+
+.B dynamic
+- is a dynamic reachable age-able fdb entry
+.sp
 
 .B self
 - the address is associated with the port drivers fdb. Usually hardware.
