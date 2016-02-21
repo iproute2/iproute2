@@ -33,7 +33,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: bridge fdb { add | append | del | replace } ADDR dev DEV\n"
 			"              [ self ] [ master ] [ use ] [ router ]\n"
-			"              [ local | temp | static ] [ dst IPADDR ] [ vlan VID ]\n"
+			"              [ local | static | dynamic ] [ dst IPADDR ] [ vlan VID ]\n"
 		        "              [ port PORT] [ vni VNI ] [ via DEV ]\n");
 	fprintf(stderr, "       bridge fdb [ show [ br BRDEV ] [ brport DEV ] ]\n");
 	exit(-1);
@@ -304,6 +304,9 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (matches(*argv, "temp") == 0 ||
 			   matches(*argv, "static") == 0) {
 			req.ndm.ndm_state |= NUD_REACHABLE;
+		} else if (matches(*argv, "dynamic") == 0) {
+			req.ndm.ndm_state |= NUD_REACHABLE;
+			req.ndm.ndm_state &= ~NUD_NOARP;
 		} else if (matches(*argv, "vlan") == 0) {
 			if (vid >= 0)
 				duparg2("vlan", *argv);
