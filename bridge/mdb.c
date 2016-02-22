@@ -49,7 +49,7 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr)
 }
 
 static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e,
-			    struct nlmsghdr *n)
+			    struct nlmsghdr *n, struct rtattr **tb)
 {
 	SPRINT_BUF(abuf);
 	const void *src;
@@ -66,20 +66,29 @@ static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e,
 		(e->state & MDB_PERMANENT) ? "permanent" : "temp");
 	if (e->vid)
 		fprintf(f, " vid %hu", e->vid);
+	if (show_stats && tb && tb[MDBA_MDB_EATTR_TIMER]) {
+		struct timeval tv;
+
+		__jiffies_to_tv(&tv, rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]));
+		fprintf(f, "%4i.%.2i", (int)tv.tv_sec, (int)tv.tv_usec/10000);
+	}
 	fprintf(f, "\n");
 }
 
 static void br_print_mdb_entry(FILE *f, int ifindex, struct rtattr *attr,
 			       struct nlmsghdr *n)
 {
+	struct rtattr *etb[MDBA_MDB_EATTR_MAX + 1];
+	struct br_mdb_entry *e;
 	struct rtattr *i;
 	int rem;
-	struct br_mdb_entry *e;
 
 	rem = RTA_PAYLOAD(attr);
 	for (i = RTA_DATA(attr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		e = RTA_DATA(i);
-		print_mdb_entry(f, ifindex, e, n);
+		parse_rtattr(etb, MDBA_MDB_EATTR_MAX, MDB_RTA(RTA_DATA(i)),
+			     RTA_PAYLOAD(i) - RTA_ALIGN(sizeof(*e)));
+		print_mdb_entry(f, ifindex, e, n, etb);
 	}
 }
 
