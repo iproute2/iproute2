@@ -720,6 +720,9 @@ static int do_show(int argc, char **argv)
 
 int do_ipl2tp(int argc, char **argv)
 {
+	if (argc < 1 || !matches(*argv, "help"))
+		usage();
+
 	if (genl_family < 0) {
 		if (rtnl_open_byproto(&genl_rth, 0, NETLINK_GENERIC) < 0) {
 			fprintf(stderr, "Cannot open generic netlink socket\n");
@@ -731,9 +734,6 @@ int do_ipl2tp(int argc, char **argv)
 			exit(1);
 	}
 
-	if (argc < 1)
-		usage();
-
 	if (matches(*argv, "add") == 0)
 		return do_add(argc-1, argv+1);
 	if (matches(*argv, "delete") == 0)
@@ -742,8 +742,6 @@ int do_ipl2tp(int argc, char **argv)
 	    matches(*argv, "lst") == 0 ||
 	    matches(*argv, "list") == 0)
 		return do_show(argc-1, argv+1);
-	if (matches(*argv, "help") == 0)
-		usage();
 
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip l2tp help\".\n", *argv);
 	exit(-1);
