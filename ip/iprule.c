@@ -33,8 +33,9 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip rule [ list | add | del | flush | save ] SELECTOR ACTION\n");
-	fprintf(stderr, "       ip rule restore\n");
+	fprintf(stderr, "Usage: ip rule { add | del } SELECTOR ACTION\n");
+	fprintf(stderr, "       ip rule { flush | save | restore }\n");
+	fprintf(stderr, "       ip rule [ list ]\n");
 	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n");
 	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ]\n");
 	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
