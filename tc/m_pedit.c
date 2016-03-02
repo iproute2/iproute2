@@ -422,6 +422,7 @@ parse_munge(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel)
 			p = get_pedit_kind(k);
 			if (NULL == p)
 				goto bad_val;
+			NEXT_ARG();
 			res = p->parse_peopt(&argc, &argv, sel,&tkey);
 			if (res < 0) {
 				fprintf(stderr,"bad pedit parsing\n");
