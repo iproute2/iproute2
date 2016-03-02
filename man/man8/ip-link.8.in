@@ -49,7 +49,7 @@ ip-link \- network device configuration
 .RB "[ " numrxqueues
 .IR QUEUE_COUNT " ]"
 .br
-.BR type " TYPE"
+.BI type " TYPE"
 .RI "[ " ARGS " ]"
 
 .ti -8
