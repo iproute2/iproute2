@@ -142,7 +142,8 @@ ip-link \- network device configuration
 .B min_tx_rate
 .IR TXRATE " ] ["
 .B spoofchk { on | off } ] [
-.B state { auto | enable | disable}
+.B state { auto | enable | disable} ] [
+.B trust { on | off }
 ] |
 .br
 .B master
@@ -1019,6 +1020,10 @@ parameter must be specified.
 reflection of the PF link state, enable lets the VF to communicate with other VFs on
 this host even if the PF link state is down, disable causes the HW to drop any packets
 sent by the VF.
+.sp
+.BI trust " on|off"
+- trust the specified VF user. This enables that VF user can set a specific feature
+which may impact security and/or performance. (e.g. VF multicast promiscuous mode)
 .in -8
 
 .TP

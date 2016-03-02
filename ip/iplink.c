@@ -82,6 +82,7 @@ void iplink_usage(void)
 	fprintf(stderr, "				   [ spoofchk { on | off} ] ]\n");
 	fprintf(stderr, "				   [ query_rss { on | off} ] ]\n");
 	fprintf(stderr, "				   [ state { auto | enable | disable} ] ]\n");
+	fprintf(stderr, "				   [ trust { on | off} ] ]\n");
 	fprintf(stderr, "			  [ master DEVICE ]\n");
 	fprintf(stderr, "			  [ nomaster ]\n");
 	fprintf(stderr, "			  [ addrgenmode { eui64 | none | stable_secret | random } ]\n");
@@ -355,6 +356,18 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 				return on_off("query_rss", *argv);
 			ivs.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_RSS_QUERY_EN, &ivs, sizeof(ivs));
+
+		} else if (matches(*argv, "trust") == 0) {
+			struct ifla_vf_trust ivt;
+			NEXT_ARG();
+			if (matches(*argv, "on") == 0)
+				ivt.setting = 1;
+			else if (matches(*argv, "off") == 0)
+				ivt.setting = 0;
+			else
+				invarg("Invalid \"trust\" value\n", *argv);
+			ivt.vf = vf;
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_TRUST, &ivt, sizeof(ivt));
 
 		} else if (matches(*argv, "state") == 0) {
 			struct ifla_vf_link_state ivl;
