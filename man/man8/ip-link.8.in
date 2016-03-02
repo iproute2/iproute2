@@ -6,23 +6,10 @@ ip-link \- network device configuration
 .ad l
 .in +8
 .ti -8
-.B ip
-.RI "[ " OPTIONS " ]"
-.B link
+.B ip link
 .RI  " { " COMMAND " | "
 .BR help " }"
 .sp
-
-.ti -8
-.IR OPTIONS " := { "
-\fB\-V\fR[\fIersion\fR] |
-\fB\-h\fR[\fIuman-readable\fR] |
-\fB\-s\fR[\fItatistics\fR] |
-\fB\-r\fR[\fIesolve\fR] |
-\fB\-f\fR[\fIamily\fR] {
-.BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
-\fB\-o\fR[\fIneline\fR] |
-\fB\-br\fR[\fIief\fR] }
 
 .ti -8
 .BI "ip link add"
