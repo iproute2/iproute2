@@ -15,10 +15,7 @@ ip-l2tp - L2TPv3 static unmanaged tunnel configuration
 .ti -8
 .BR "ip l2tp add tunnel"
 .br
-.B remote
-.RI "[ " ADDR " ]"
-.B local
-.RI "[ " ADDR " ]"
+.BI remote " ADDR " local " ADDR "
 .br
 .B tunnel_id
 .IR ID
@@ -73,24 +70,21 @@ ip-l2tp - L2TPv3 static unmanaged tunnel configuration
 .IR ID
 .br
 .ti -8
-.BR "ip l2tp show tunnel"
-.B "[" tunnel_id
-.IR ID
-.B "]"
+.BR "ip l2tp show tunnel" " [ " tunnel_id
+.IR ID " ]"
 .br
 .ti -8
-.BR "ip l2tp show session"
-.B "[" tunnel_id
-.IR ID
-.B "] [" session_id
-.IR ID
-.B "]"
+.BR "ip l2tp show session" " [ " tunnel_id
+.IR ID .B " ] ["
+.B session_id
+.IR ID " ]"
 .br
 .ti -8
 .IR NAME " := "
 .IR STRING
 .ti -8
-.IR ADDR " := { " IP_ADDRESS " }"
+.IR ADDR " := { " IP_ADDRESS " |"
+.BR any " }"
 .ti -8
 .IR PORT " := { " NUMBER " }"
 .ti -8
