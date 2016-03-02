@@ -7,23 +7,23 @@ ip-token \- tokenized interface identifier support
 .in +8
 .ti -8
 .B ip token
-.RI " { " COMMAND " | "
+.RI "{ " COMMAND " | "
 .BR help " }"
 .sp
 
 .ti -8
-.BR "ip token" " { " set " } "
+.B ip token set
 .IR TOKEN
 .B dev
 .IR DEV
 
 .ti -8
-.BR "ip token" " { " get " } "
-.B dev
-.IR DEV
+.B ip token get
+.RB "[ " dev
+.IR DEV " ]"
 
 .ti -8
-.BR "ip token" " { " list " }"
+.BR "ip token" " [ " list " ]"
 
 .SH "DESCRIPTION"
 IPv6 tokenized interface identifier support is used for assigning well-known
