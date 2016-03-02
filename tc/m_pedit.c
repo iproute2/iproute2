@@ -153,8 +153,6 @@ pack_key32(__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey)
 
 	tkey->val = htonl(tkey->val & retain);
 	tkey->mask = htonl(tkey->mask | ~retain);
-	/* jamal remove this - it is not necessary given the if check above */
-	tkey->off &= ~3;
 	return pack_key(sel,tkey);
 }
 
@@ -177,11 +175,8 @@ pack_key16(__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey)
 	}
 
 	stride = 8 * ind;
-	tkey->val = htons(tkey->val);
-	tkey->val <<= stride;
-	tkey->mask <<= stride;
-	retain <<= stride;
-	tkey->mask = retain|m[ind];
+	tkey->val = htons(tkey->val & retain) << stride;
+	tkey->mask = (htons(tkey->mask | ~retain) << stride) | m[ind];
 
 	tkey->off &= ~3;
 
@@ -205,10 +200,8 @@ pack_key8(__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey)
 	ind = tkey->off & 3;
 
 	stride = 8 * ind;
-	tkey->val <<= stride;
-	tkey->mask <<= stride;
-	retain <<= stride;
-	tkey->mask = retain|m[ind];
+	tkey->val = (tkey->val & retain) << stride;
+	tkey->mask = ((tkey->mask | ~retain) << stride) | m[ind];
 
 	tkey->off &= ~3;
 
@@ -269,13 +262,13 @@ parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type,__u32 retain,struct t
 		o = 0xFFFFFFFF;
 
 	if (matches(*argv, "invert") == 0) {
-		retain = val = mask = o;
+		val = mask = o;
 	} else if (matches(*argv, "set") == 0) {
 		NEXT_ARG();
 		if (parse_val(&argc, &argv, &val, type))
 			return -1;
 	} else if (matches(*argv, "preserve") == 0) {
-		retain = mask = o;
+		retain = 0;
 	} else {
 		if (matches(*argv, "clear") != 0)
 			return -1;
@@ -291,19 +284,17 @@ parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type,__u32 retain,struct t
 	}
 
 	tkey->val = val;
+	tkey->mask = mask;
 
 	if (len == 1) {
-		tkey->mask = 0xFF;
 		res = pack_key8(retain,sel,tkey);
 		goto done;
 	}
 	if (len == 2) {
-		tkey->mask = mask;
 		res = pack_key16(retain,sel,tkey);
 		goto done;
 	}
 	if (len == 4) {
-		tkey->mask = mask;
 		res = pack_key32(retain,sel,tkey);
 		goto done;
 	}
