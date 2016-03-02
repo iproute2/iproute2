@@ -18,7 +18,9 @@ ip-neighbour \- neighbour/arp tables management.
 .IR ADDR " [ "
 .B  lladdr
 .IR LLADDR " ] [ "
-.BR nud " { " permanent " | " noarp " | " stale " | " reachable " } ] | " proxy
+.B nud
+.IR STATE " ] |"
+.B proxy
 .IR ADDR " } [ "
 .B  dev
 .IR DEV " ]"
@@ -31,6 +33,9 @@ ip-neighbour \- neighbour/arp tables management.
 .B  nud
 .IR STATE " ]"
 
+.ti -8
+.IR STATE " := {"
+.BR permanent " | " noarp " | " stale " | " reachable " }"
 
 .SH DESCRIPTION
 The
@@ -75,7 +80,7 @@ can also be
 .BR "null" .
 
 .TP
-.BI nud " NUD_STATE"
+.BI nud " STATE"
 the state of the neighbour entry.
 .B nud
 is an abbreviation for 'Neighbour Unreachability Detection'.
@@ -147,7 +152,7 @@ list neighbour proxies.
 only list neighbours which are not currently in use.
 
 .TP
-.BI nud " NUD_STATE"
+.BI nud " STATE"
 only list neighbour entries in this state.
 .I NUD_STATE
 takes values listed below or the special value
