@@ -589,7 +589,7 @@ static void server_loop(int fd)
 
 	for (;;) {
 		int status;
-		int tdiff;
+		time_t tdiff;
 		struct timeval now;
 
 		gettimeofday(&now, NULL);
@@ -600,7 +600,7 @@ static void server_loop(int fd)
 			tdiff = 0;
 		}
 
-		if (poll(&p, 1, tdiff + scan_interval) > 0
+		if (poll(&p, 1, scan_interval - tdiff) > 0
 		    && (p.revents&POLLIN)) {
 			int clnt = accept(fd, NULL, NULL);
 			if (clnt >= 0) {
@@ -613,11 +613,8 @@ static void server_loop(int fd)
 					close(clnt);
 				} else {
 					FILE *fp = fdopen(clnt, "w");
-					if (fp) {
-						if (tdiff > 0)
-							update_db(tdiff);
+					if (fp)
 						dump_raw_db(fp, 0);
-					}
 					exit(0);
 				}
 			}
