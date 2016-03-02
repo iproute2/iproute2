@@ -92,79 +92,89 @@ ip-link \- network device configuration
 .BR "ip link set " {
 .IR DEVICE " | "
 .BI "group " GROUP
-.RB "} { " up " | " down " | " arp " { " on " | " off " } |"
+.RB "} [ { " up " | " down " } ]"
 .br
-.BR promisc " { " on " | " off " } |"
+.RB "[ " arp " { " on " | " off " } ]"
 .br
-.BR allmulticast " { " on " | " off " } |"
+.RB "[ " dynamic " { " on " | " off " } ]"
 .br
-.BR dynamic " { " on " | " off " } |"
+.RB "[ " multicast " { " on " | " off " } ]"
 .br
-.BR multicast " { " on " | " off " } |"
+.RB "[ " allmulticast " { " on " | " off " } ]"
 .br
-.BR protodown " { " on " | " off " } |"
+.RB "[ " promisc " { " on " | " off " } ]"
 .br
-.B  txqueuelen
-.IR PACKETS " |"
+.RB "[ " protodown " { " on " | " off " } ]"
 .br
-.B  name
-.IR NEWNAME " |"
+.RB "[ " trailers " { " on " | " off " } ]"
 .br
-.B  address
-.IR LLADDR " |"
-.B  broadcast
-.IR LLADDR " |"
+.RB "[ " txqueuelen
+.IR PACKETS " ]"
 .br
-.B  mtu
-.IR MTU " |"
+.RB "[ " name
+.IR NEWNAME " ]"
 .br
-.B  netns
-.IR PID " |"
+.RB "[ " address
+.IR LLADDR " ]"
 .br
-.B  netns
-.IR NETNSNAME " |"
+.RB "[ " broadcast
+.IR LLADDR " ]"
 .br
-.B alias
-.IR NAME  " |"
+.RB "[ " mtu
+.IR MTU " ]"
 .br
-.B vf
+.RB "[ " netns " {"
+.IR PID " | " NETNSNAME " } ]"
+.br
+.RB "[ " link-netnsid
+.IR ID " ]"
+.br
+.RB "[ " alias
+.IR NAME  " ]"
+.br
+.RB "[ " vf
 .IR NUM " ["
 .B  mac
-.IR LLADDR " ] ["
-.B vlan
+.IR LLADDR " ]"
+.br
+.in +9
+.RB "[ " vlan
 .IR VLANID " [ "
 .B qos
-.IR VLAN-QOS " ] ] ["
-.B rate
-.IR TXRATE " ] ["
-.B max_tx_rate
-.IR TXRATE " ] ["
-.B min_tx_rate
-.IR TXRATE " ] ["
-.B spoofchk { on | off } ] [
-.B state { auto | enable | disable} ] [
-.B trust { on | off }
-] |
+.IR VLAN-QOS " ] ]"
 .br
-.B master
-.IR DEVICE " |"
+.RB "[ " rate
+.IR TXRATE " ]"
 .br
-.B nomaster " |"
+.RB "[ " max_tx_rate
+.IR TXRATE " ]"
 .br
-.B addrgenmode { eui64 | none | stable_secret | random }
+.RB "[ " min_tx_rate
+.IR TXRATE " ]"
 .br
-.B link-netnsid ID
-.BR " }"
+.RB "[ " spoofchk " { " on " | " off " } ]"
+.br
+.RB "[ " state " { " auto " | " enable " | " disable " } ]"
+.br
+.RB "[ " trust " { " on " | " off " } ] ]"
+.br
+.in -9
+.RB "[ " master
+.IR DEVICE " ]"
+.br
+.RB "[ " nomaster " ]"
+.br
+.RB "[ " addrgenmode " { " eui64 " | " none " | " stable_secret " | " random " } ]"
 
 
 .ti -8
 .B ip link show
 .RI "[ " DEVICE " | "
 .B group
-.IR GROUP " | "
-.BR up " | "
+.IR GROUP " ] ["
+.BR up " ] ["
 .B master
-.IR DEVICE " | "
+.IR DEVICE " ] ["
 .B type
 .IR TYPE " ]"
 
