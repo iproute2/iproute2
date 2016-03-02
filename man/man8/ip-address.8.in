@@ -58,9 +58,9 @@ ip-address \- protocol address management
 
 .ti -8
 .IR FLAG " := "
-.RB "[ " permanent " | " dynamic " | " secondary " | " primary " | \
-[ - ] " tentative " | [ - ] " deprecated " | [ - ] " dadfailed " | "\
-temporary " | " CONFFLAG-LIST " ]"
+.RB "[ " permanent " | " dynamic " | " secondary " | " primary " |"
+.RB [ - ] tentative " | [" - ] deprecated " | [" - ] dadfailed " |"
+.BR temporary " | " CONFFLAG-LIST " ]"
 
 .ti -8
 .IR CONFFLAG-LIST " := [ "  CONFFLAG-LIST " ] " CONFFLAG
@@ -72,7 +72,7 @@ temporary " | " CONFFLAG-LIST " ]"
 .ti -8
 .IR LIFETIME " := [ "
 .BI valid_lft " LFT"
-.RB "| " preferred_lft
+.RB "] [ " preferred_lft
 .IR  LFT " ]"
 
 .ti -8
