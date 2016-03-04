@@ -491,15 +491,15 @@ are entered into the VXLAN device forwarding database.
 
 .sp
 .I [no]udpcsum
-- specifies if UDP checksum is filled in
+- specifies if UDP checksum is calculated for transmitted packets over IPv4.
 
 .sp
 .I [no]udp6zerocsumtx
-- specifies if UDP checksum is filled in
+- skip UDP checksum calculation for transmitted packets over IPv6.
 
 .sp
 .I [no]udp6zerocsumrx
-- specifies if UDP checksum is received
+- allow incoming UDP packets over IPv6 with zero checksum field.
 
 .sp
 .BI ageing " SECONDS"
