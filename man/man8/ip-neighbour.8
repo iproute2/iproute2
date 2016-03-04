@@ -35,7 +35,8 @@ ip-neighbour \- neighbour/arp tables management.
 
 .ti -8
 .IR STATE " := {"
-.BR permanent " | " noarp " | " stale " | " reachable " }"
+.BR permanent " | " noarp " | " stale " | " reachable " | " none " |"
+.BR incomplete " | " delay " | " probe " | " failed " }"
 
 .SH DESCRIPTION
 The
@@ -86,6 +87,7 @@ the state of the neighbour entry.
 is an abbreviation for 'Neighbour Unreachability Detection'.
 The state can take one of the following values:
 
+.RS
 .TP
 .B permanent
 the neighbour entry is valid forever and can be only
@@ -105,6 +107,24 @@ This option to
 .B ip neigh
 does not change the neighbour state if it was valid and the address
 is not changed by this command.
+.TP
+.B none
+this is a pseudo state used when initially creating a neighbour entry or after
+trying to remove it before it becomes free to do so.
+.TP
+.B incomplete
+the neighbour entry has not (yet) been validated/resolved.
+.TP
+.B delay
+neighbor entry validation is currently delayed.
+.TP
+.B probe
+neighbor is being probed.
+.TP
+.B failed
+max number of probes exceeded without success, neighbor validation has
+ultimately failed.
+.RE
 .RE
 
 .TP
