@@ -57,6 +57,8 @@ ip-xfrm \- transform configuration
 .IR ADDR "[/" PLEN "] ]"
 .RB "[ " ctx
 .IR CTX " ]"
+.RB "[ " extra-flag
+.IR EXTRA-FLAG-LIST " ]"
 
 .ti -8
 .B "ip xfrm state allocspi"
@@ -196,6 +198,13 @@ ip-xfrm \- transform configuration
 .IR SPORT " " DPORT " " OADDR
 
 .ti -8
+.IR EXTRA-FLAG-LIST " := [ " EXTRA-FLAG-LIST " ] " EXTRA-FLAG
+
+.ti -8
+.IR EXTRA-FLAG " := "
+.B dont-encap-dscp
+
+.ti -8
 .BR "ip xfrm policy" " { " add " | " update " }"
 .I SELECTOR
 .B dir
@@ -247,6 +256,8 @@ ip-xfrm \- transform configuration
 .IR ACTION " ]"
 .RB "[ " priority
 .IR PRIORITY " ]"
+.RB "[ " flag
+.IR FLAG-LIST "]"
 
 .ti -8
 .B "ip xfrm policy flush"

@@ -21,7 +21,7 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 .IR OBJECT " := { "
 .BR link " | " address " | " addrlabel " | " route " | " rule " | " neigh " | "\
  ntable " | " tunnel " | " tuntap " | " maddress " | "  mroute " | " mrule " | "\
- monitor " | " xfrm " | " netns " | "  l2tp " | "  tcp_metrics " }"
+ monitor " | " xfrm " | " netns " | "  l2tp " | "  tcp_metrics " | " token " }"
 .sp
 
 .ti -8
@@ -29,10 +29,22 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 \fB\-V\fR[\fIersion\fR] |
 \fB\-h\fR[\fIuman-readable\fR] |
 \fB\-s\fR[\fItatistics\fR] |
+\fB\-d\fR[\fIetails\fR] |
 \fB\-r\fR[\fIesolve\fR] |
+\fB\-iec\fR |
 \fB\-f\fR[\fIamily\fR] {
 .BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
+\fB-4\fR |
+\fB-6\fR |
+\fB-I\fR |
+\fB-D\fR |
+\fB-B\fR |
+\fB-0\fR |
+\fB-l\fR[\fIoops\fR] { \fBmaximum-addr-flush-attempts\fR } |
 \fB\-o\fR[\fIneline\fR] |
+\fB\-rc\fR[\fIvbuf\fR] [\fBsize\fR] |
+\fB\-t\fR[\fIimestamp\fR] |
+\fB\-ts\fR[\fIhort\fR] |
 \fB\-n\fR[\fIetns\fR] name |
 \fB\-a\fR[\fIll\fR] |
 \fB\-c\fR[\fIolor\fR] }
@@ -179,6 +191,16 @@ Use color output.
 .BR "\-t" , " \-timestamp"
 display current time when using monitor option.
 
+.TP
+.BR "\-ts" , " \-tshort"
+Like
+.BR \-timestamp ,
+but use shorter format.
+
+.TP
+.BR "\-rc" , " \-rcvbuf" <SIZE>
+Set the netlink socket receive buffer size, defaults to 1MB.
+
 .SH IP - COMMAND SYNTAX
 
 .SS
@@ -239,6 +261,10 @@ display current time when using monitor option.
 .TP
 .B tcp_metrics/tcpmetrics
 - manage TCP Metrics
+
+.TP
+.B token
+- manage tokenized interface identifiers.
 
 .TP
 .B tunnel
@@ -305,6 +331,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR ip-route (8),
 .BR ip-rule (8),
 .BR ip-tcp_metrics (8),
+.BR ip-token (8),
 .BR ip-tunnel (8),
 .BR ip-xfrm (8)
 .br

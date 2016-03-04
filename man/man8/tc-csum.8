@@ -1,0 +1,54 @@
+.TH "Checksum action in tc" 8 "11 Jan 2015" "iproute2" "Linux"
+
+.SH NAME
+csum - checksum update action
+.SH SYNOPSIS
+.in +8
+.ti -8
+.BR tc " ... " "action csum"
+.I UPDATE
+
+.ti -8
+.IR UPDATE " := " TARGET " [ " UPDATE " ]"
+
+.ti -8
+.IR TARGET " := { "
+.BR ip4h " |"
+.BR icmp " |"
+.BR igmp " |"
+.BR tcp " |"
+.BR udp " |"
+.BR udplite " |"
+.IR SWEETS " }"
+
+.ti -8
+.IR SWEETS " := { "
+.BR and " | " or " | " + " }"
+.SH DESCRIPTION
+The
+.B csum
+action triggers checksum recalculation of specified packet headers. It is
+commonly used after packet editing using the
+.B pedit
+action to fix for then incorrect checksums.
+.SH OPTIONS
+.TP
+.I TARGET
+Specify which headers to update: IPv4 header
+.RB ( ip4h ),
+ICMP header
+.RB ( icmp ),
+IGMP header
+.RB ( igmp ),
+TCP header
+.RB ( tcp ),
+UDP header
+.RB ( udp ") or"
+UDPLite header
+.RB ( udplite ).
+.TP
+.B SWEETS
+These are merely syntactic sugar and ignored internally.
+.SH SEE ALSO
+.BR tc (8),
+.BR tc-pedit (8)

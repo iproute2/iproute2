@@ -82,13 +82,13 @@ static void usage(void)
 	fprintf(stderr, "FAMILY := [ inet | inet6 | ipx | dnet | mpls | bridge | link ]\n");
 	fprintf(stderr, "OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ] [ as [ to ] ADDRESS ]\n");
 	fprintf(stderr, "           [ rtt TIME ] [ rttvar TIME ] [ reordering NUMBER ]\n");
-	fprintf(stderr, "           [ window NUMBER] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n");
+	fprintf(stderr, "           [ window NUMBER ] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n");
 	fprintf(stderr, "           [ ssthresh NUMBER ] [ realms REALM ] [ src ADDRESS ]\n");
 	fprintf(stderr, "           [ rto_min TIME ] [ hoplimit NUMBER ] [ initrwnd NUMBER ]\n");
 	fprintf(stderr, "           [ features FEATURES ] [ quickack BOOL ] [ congctl NAME ]\n");
 	fprintf(stderr, "           [ pref PREF ] [ expires TIME ]\n");
-	fprintf(stderr, "TYPE := [ unicast | local | broadcast | multicast | throw |\n");
-	fprintf(stderr, "          unreachable | prohibit | blackhole | nat ]\n");
+	fprintf(stderr, "TYPE := { unicast | local | broadcast | multicast | throw |\n");
+	fprintf(stderr, "          unreachable | prohibit | blackhole | nat }\n");
 	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
 	fprintf(stderr, "SCOPE := [ host | link | global | NUMBER ]\n");
 	fprintf(stderr, "NHFLAGS := [ onlink | pervasive ]\n");

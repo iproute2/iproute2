@@ -1,0 +1,54 @@
+.TH "VLAN manipulation action in tc" 8 "12 Jan 2015" "iproute2" "Linux"
+
+.SH NAME
+vlan - vlan manipulation module
+.SH SYNOPSIS
+.in +8
+.ti -8
+.BR tc " ... " "action vlan" " { " pop " |"
+.IR PUSH " }"
+
+.ti -8
+.IR PUSH " := "
+.BR push " [ " protocol
+.IR VLANPROTO " ]"
+.BI id " VLANID"
+.SH DESCRIPTION
+The
+.B vlan
+action allows to perform 802.1Q en- or decapsulation on a packet, reflected by
+the two operation modes
+.IR POP " and " PUSH .
+The
+.I POP
+mode is simple, as no further information is required to just drop the
+outer-most VLAN encapsulation. The
+.I PUSH
+mode on the other hand requires at least a
+.I VLANID
+and allows to optionally choose the
+.I VLANPROTO
+to use.
+.SH OPTIONS
+.TP
+.B pop
+Decapsulation mode, no further arguments allowed.
+.TP
+.B push
+Encapsulation mode. Requires at least
+.B id
+option.
+.TP
+.BI id " VLANID"
+Specify the VLAN ID to encapsulate into.
+.I VLANID
+is an unsigned 16bit integer, the format is detected automatically (e.g. prefix
+with
+.RB ' 0x '
+for hexadecimal interpretation, etc.).
+.TP
+.BI protocol " VLANPROTO"
+Choose the VLAN protocol to use. At the time of writing, the kernel accepts only
+.BR 802.1Q " or " 802.1ad .
+.SH SEE ALSO
+.BR tc (8)

@@ -16,7 +16,7 @@ ip-route \- routing table management
 
 .ti -8
 .BR "ip route" " { "
-.BR list " | " flush " } "
+.BR show " | " flush " } "
 .I  SELECTOR
 
 .ti -8

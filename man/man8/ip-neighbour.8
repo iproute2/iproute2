@@ -18,7 +18,9 @@ ip-neighbour \- neighbour/arp tables management.
 .IR ADDR " [ "
 .B  lladdr
 .IR LLADDR " ] [ "
-.BR nud " { " permanent " | " noarp " | " stale " | " reachable " } ] | " proxy
+.B nud
+.IR STATE " ] |"
+.B proxy
 .IR ADDR " } [ "
 .B  dev
 .IR DEV " ]"
@@ -31,6 +33,10 @@ ip-neighbour \- neighbour/arp tables management.
 .B  nud
 .IR STATE " ]"
 
+.ti -8
+.IR STATE " := {"
+.BR permanent " | " noarp " | " stale " | " reachable " | " none " |"
+.BR incomplete " | " delay " | " probe " | " failed " }"
 
 .SH DESCRIPTION
 The
@@ -75,12 +81,13 @@ can also be
 .BR "null" .
 
 .TP
-.BI nud " NUD_STATE"
+.BI nud " STATE"
 the state of the neighbour entry.
 .B nud
 is an abbreviation for 'Neighbour Unreachability Detection'.
 The state can take one of the following values:
 
+.RS
 .TP
 .B permanent
 the neighbour entry is valid forever and can be only
@@ -100,6 +107,24 @@ This option to
 .B ip neigh
 does not change the neighbour state if it was valid and the address
 is not changed by this command.
+.TP
+.B none
+this is a pseudo state used when initially creating a neighbour entry or after
+trying to remove it before it becomes free to do so.
+.TP
+.B incomplete
+the neighbour entry has not (yet) been validated/resolved.
+.TP
+.B delay
+neighbor entry validation is currently delayed.
+.TP
+.B probe
+neighbor is being probed.
+.TP
+.B failed
+max number of probes exceeded without success, neighbor validation has
+ultimately failed.
+.RE
 .RE
 
 .TP
@@ -147,7 +172,7 @@ list neighbour proxies.
 only list neighbours which are not currently in use.
 
 .TP
-.BI nud " NUD_STATE"
+.BI nud " STATE"
 only list neighbour entries in this state.
 .I NUD_STATE
 takes values listed below or the special value

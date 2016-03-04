@@ -11,7 +11,7 @@ ip-tunnel - tunnel configuration
 .ti -8
 .BR "ip "
 .RI "[ " OPTIONS " ]"
-.BR "tunnel" " { " add " | " change " | " del " | " show " | " prl " }"
+.BR "tunnel" " { " add " | " change " | " del " | " show " | " prl " | " 6rd " }"
 .RI "[ " NAME " ]"
 .br
 .RB "[ " mode
@@ -41,6 +41,12 @@ ip-tunnel - tunnel configuration
 .IR ADDR " ] [ "
 .B prl-delete
 .IR ADDR " ]"
+.br
+.RB "[ " 6rd-prefix
+.IR ADDR " ] ["
+.B 6rd-relay_prefix
+.IR ADDR " ] [
+.BR 6rd-reset " ]"
 .br
 .RB "[ [" no "]" pmtudisc " ]"
 .RB "[ " dev
@@ -74,9 +80,6 @@ ip-tunnel - tunnel configuration
 
 .ti -8
 .IR KEY " := { " DOTTED_QUAD " | " NUMBER " }"
-
-.ti -8
-.IR TIME " := " NUMBER "[s|ms]"
 
 .SH DESCRIPTION
 .B tunnel

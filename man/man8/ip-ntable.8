@@ -8,7 +8,7 @@ ip-ntable - neighbour table configuration
 .ti -8
 .B ip
 .RI "[ " OPTIONS " ]"
-.B address
+.B ntable
 .RI " { " COMMAND " | "
 .BR help " }"
 .sp
@@ -17,34 +17,39 @@ ip-ntable - neighbour table configuration
 .BR "ip ntable change name"
 .IR NAME " [ "
 .B dev
-.IR DEV " ] " PARMS
-
-.ti -8
-.IR PARMS " := { "
+.IR DEV " ] ["
 .B thresh1
-.IR VAL " | "
+.IR VAL " ] ["
 .B thresh2
-.IR VAL " | "
+.IR VAL " ] ["
 .B thresh3
-.IR VAL " | "
+.IR VAL " ] ["
 .B gc_int
-.IR MSEC " | "
+.IR MSEC " ] ["
 .B base_reachable
-.IR MSEC " | "
+.IR MSEC " ] ["
 .B retrans
-.IR MSEC " | " "gc_stale MSEC " " | "
+.IR MSEC " ] ["
+.B gc_stale
+.IR MSEC " ] ["
 .B delay_probe
-.IR MSEC " | " "queue LEN " " | "
+.IR MSEC " ] ["
+.B queue
+.IR LEN " ] ["
 .B app_probs
-.IR VAL " | "
+.IR VAL " ] ["
 .B ucast_probes
-.IR VAL " | " "mcast_probes VAL " " | "
+.IR VAL " ] ["
+.B mcast_probes
+.IR VAL " ] ["
 .B anycast_delay
-.IR MSEC " | "
+.IR MSEC " ] ["
 .B proxy_delay
-.IR MSEC " | " "proxy_queue LEN " " | "
+.IR MSEC " ] ["
+.B proxy_queue
+.IR LEN " ] ["
 .B locktime
-.IR MSEC " }"
+.IR MSEC " ]"
 
 .ti -8
 .BR "ip ntable show" " [ "

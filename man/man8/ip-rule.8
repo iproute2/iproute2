@@ -9,20 +9,26 @@ ip-rule \- routing policy database management
 .B ip
 .RI "[ " OPTIONS " ]"
 .B rule
-.RI " { " COMMAND " | "
+.RI "{ " COMMAND " | "
 .BR help " }"
 .sp
 
 .ti -8
 .B  ip rule
-.RB " [ " list " | " add " | " del " | " flush " | " save " ]"
+.RB "[ " list " ]"
+
+.ti -8
+.B  ip rule
+.RB "{ " add " | " del " }"
 .I  SELECTOR ACTION
 
 .ti -8
-.B  ip rule  " restore "
+.B ip rule
+.RB "{ " flush " | " save " | " restore " }"
 
 .ti -8
 .IR SELECTOR " := [ "
+.BR not " ] ["
 .B  from
 .IR PREFIX " ] [ "
 .B  to
@@ -30,7 +36,7 @@ ip-rule \- routing policy database management
 .B  tos
 .IR TOS " ] [ "
 .B  fwmark
-.IR FWMARK[/MASK] " ] [ "
+.IR FWMARK\fR[\fB/\fIMASK "] ] [ "
 .B  iif
 .IR STRING " ] [ "
 .B  oif
@@ -45,8 +51,9 @@ ip-rule \- routing policy database management
 .B  nat
 .IR ADDRESS " ] [ "
 .B realms
-.RI "[" SRCREALM "/]" DSTREALM " ]"
-.I  SUPPRESSOR
+.RI "[" SRCREALM "\fB/\fR]" DSTREALM " ] ["
+.B goto
+.IR NUMBER " ] " SUPPRESSOR
 
 .ti -8
 .IR SUPPRESSOR " := [ "
@@ -111,8 +118,6 @@ The
 .B local
 table is a special routing table containing
 high priority control routes for local and broadcast addresses.
-.sp
-Rule 0 is special. It cannot be deleted or overridden.
 
 .TP
 2.
