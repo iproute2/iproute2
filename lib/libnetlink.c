@@ -223,7 +223,7 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 		.msg_iov = &iov,
 		.msg_iovlen = 1,
 	};
-	char buf[16384];
+	char buf[32768];
 	int dump_intr = 0;
 
 	iov.iov_base = buf;
