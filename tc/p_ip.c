@@ -58,7 +58,7 @@ parse_ip(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_ke
 	if (strcmp(*argv, "ihl") == 0) {
 		NEXT_ARG();
 		tkey->off = 0;
-		res = parse_cmd(&argc, &argv, 1, TU32,RU8,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32,0x0f,sel,tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "protocol") == 0) {
