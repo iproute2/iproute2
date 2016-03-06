@@ -60,10 +60,11 @@ static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e,
 			      (const void *)&e->addr.u.ip6;
 	if (n->nlmsg_type == RTM_DELMDB)
 		fprintf(f, "Deleted ");
-	fprintf(f, "dev %s port %s grp %s %s", ll_index_to_name(ifindex),
+	fprintf(f, "dev %s port %s grp %s %s %s", ll_index_to_name(ifindex),
 		ll_index_to_name(e->ifindex),
 		inet_ntop(af, src, abuf, sizeof(abuf)),
-		(e->state & MDB_PERMANENT) ? "permanent" : "temp");
+		(e->state & MDB_PERMANENT) ? "permanent" : "temp",
+		(e->flags & MDB_FLAGS_OFFLOAD) ? "offload" : "");
 	if (e->vid)
 		fprintf(f, " vid %hu", e->vid);
 	if (show_stats && tb && tb[MDBA_MDB_EATTR_TIMER]) {
