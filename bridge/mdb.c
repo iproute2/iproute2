@@ -33,19 +33,56 @@ static void usage(void)
 	exit(-1);
 }
 
-static void br_print_router_ports(FILE *f, struct rtattr *attr)
+static bool is_temp_mcast_rtr(__u8 type)
+{
+	return type == MDB_RTR_TYPE_TEMP_QUERY || type == MDB_RTR_TYPE_TEMP;
+}
+
+static void __print_router_port_stats(FILE *f, struct rtattr *pattr)
+{
+	struct rtattr *tb[MDBA_ROUTER_PATTR_MAX + 1];
+	struct timeval tv;
+	__u8 type;
+
+	parse_rtattr(tb, MDBA_ROUTER_PATTR_MAX, MDB_RTR_RTA(RTA_DATA(pattr)),
+		     RTA_PAYLOAD(pattr) - RTA_ALIGN(sizeof(uint32_t)));
+	if (tb[MDBA_ROUTER_PATTR_TIMER]) {
+		__jiffies_to_tv(&tv,
+				rta_getattr_u32(tb[MDBA_ROUTER_PATTR_TIMER]));
+		fprintf(f, " %4i.%.2i",
+			(int)tv.tv_sec, (int)tv.tv_usec/10000);
+	}
+	if (tb[MDBA_ROUTER_PATTR_TYPE]) {
+		type = rta_getattr_u8(tb[MDBA_ROUTER_PATTR_TYPE]);
+		fprintf(f, " %s",
+			is_temp_mcast_rtr(type) ? "temp" : "permanent");
+	}
+}
+
+static void br_print_router_ports(FILE *f, struct rtattr *attr, __u32 brifidx)
 {
 	uint32_t *port_ifindex;
 	struct rtattr *i;
 	int rem;
 
+	if (!show_stats)
+		fprintf(f, "router ports on %s: ", ll_index_to_name(brifidx));
+
 	rem = RTA_PAYLOAD(attr);
 	for (i = RTA_DATA(attr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		port_ifindex = RTA_DATA(i);
-		fprintf(f, "%s ", ll_index_to_name(*port_ifindex));
+		if (show_stats) {
+			fprintf(f, "router ports on %s: %s",
+				ll_index_to_name(brifidx),
+				ll_index_to_name(*port_ifindex));
+			__print_router_port_stats(f, i);
+			fprintf(f, "\n");
+		} else {
+			fprintf(f, "%s ", ll_index_to_name(*port_ifindex));
+		}
 	}
-
-	fprintf(f, "\n");
+	if (!show_stats)
+		fprintf(f, "\n");
 }
 
 static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e,
@@ -127,11 +164,9 @@ int print_mdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[MDBA_ROUTER]) {
 		if (n->nlmsg_type == RTM_GETMDB) {
-			if (show_details) {
-				fprintf(fp, "router ports on %s: ",
-					ll_index_to_name(r->ifindex));
-				br_print_router_ports(fp, tb[MDBA_ROUTER]);
-			}
+			if (show_details)
+				br_print_router_ports(fp, tb[MDBA_ROUTER],
+						      r->ifindex);
 		} else {
 			uint32_t *port_ifindex;
 
