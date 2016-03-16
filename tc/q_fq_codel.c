@@ -51,7 +51,7 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... fq_codel [ limit PACKETS ] [ flows NUMBER ]\n");
-	fprintf(stderr, "                    [ target TIME] [ interval TIME ]\n");
+	fprintf(stderr, "                    [ target TIME ] [ interval TIME ]\n");
 	fprintf(stderr, "                    [ quantum BYTES ] [ [no]ecn ]\n");
 	fprintf(stderr, "                    [ ce_threshold TIME ]\n");
 }
