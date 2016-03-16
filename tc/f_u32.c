@@ -47,7 +47,7 @@ static void explain(void)
 
 static int get_u32_handle(__u32 *handle, const char *str)
 {
-	__u32 htid=0, hash=0, nodeid=0;
+	__u32 htid = 0, hash = 0, nodeid = 0;
 	char *tmp = strchr(str, ':');
 
 	if (tmp == NULL) {
@@ -58,21 +58,21 @@ static int get_u32_handle(__u32 *handle, const char *str)
 	htid = strtoul(str, &tmp, 16);
 	if (tmp == str && *str != ':' && *str != 0)
 		return -1;
-	if (htid>=0x1000)
+	if (htid >= 0x1000)
 		return -1;
 	if (*tmp) {
 		str = tmp + 1;
 		hash = strtoul(str, &tmp, 16);
 		if (tmp == str && *str != ':' && *str != 0)
 			return -1;
-		if (hash>=0x100)
+		if (hash >= 0x100)
 			return -1;
 		if (*tmp) {
 			str = tmp + 1;
 			nodeid = strtoul(str, &tmp, 16);
 			if (tmp == str && *str != 0)
 				return -1;
-			if (nodeid>=0x1000)
+			if (nodeid >= 0x1000)
 				return -1;
 		}
 	}
@@ -122,7 +122,7 @@ static int pack_key(struct tc_u32_sel *sel, __u32 key, __u32 mask,
 
 	key &= mask;
 
-	for (i=0; i<hwm; i++) {
+	for (i = 0; i < hwm; i++) {
 		if (sel->keys[i].off == off && sel->keys[i].offmask == offmask) {
 			__u32 intersect = mask & sel->keys[i].mask;
 
@@ -1244,7 +1244,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	if (sel) {
 		if (sel->nkeys) {
 			int i;
-			for (i=0; i<sel->nkeys; i++) {
+			for (i = 0; i < sel->nkeys; i++) {
 				show_keys(f, sel->keys + i);
 				if (show_stats && NULL != pf)
 					fprintf(f, " (success %llu ) ",
