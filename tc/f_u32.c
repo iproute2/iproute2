@@ -80,7 +80,7 @@ static int get_u32_handle(__u32 *handle, const char *str)
 	return 0;
 }
 
-static char * sprint_u32_handle(__u32 handle, char *buf)
+static char *sprint_u32_handle(__u32 handle, char *buf)
 {
 	int bsize = SPRINT_BSIZE-1;
 	__u32 htid = TC_U32_HTID(handle);
@@ -382,7 +382,7 @@ static int parse_ip6_addr(int *argc_p, char ***argv_p,
 
 	plen = addr.bitlen;
 	for (i = 0; i < plen; i += 32) {
-//		if (((i + 31) & ~0x1F) <= plen) {
+		/* if (((i + 31) & ~0x1F) <= plen) { */
 		if (i + 31 <= plen) {
 			res = pack_key(sel, addr.data[i / 32],
 				       0xFFFFFFFF, off + 4 * (i / 32), offmask);
@@ -1109,14 +1109,14 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 			continue;
 		} else if (strcmp(*argv, "indev") == 0) {
 			char ind[IFNAMSIZ + 1];
-			memset(ind, 0, sizeof (ind));
+			memset(ind, 0, sizeof(ind));
 			argc--;
 			argv++;
 			if (argc < 1) {
 				fprintf(stderr, "Illegal indev\n");
 				return -1;
 			}
-			strncpy(ind, *argv, sizeof (ind) - 1);
+			strncpy(ind, *argv, sizeof(ind) - 1);
 			addattr_l(n, MAX_MSG, TCA_U32_INDEV, ind, strlen(ind) + 1);
 
 		} else if (matches(*argv, "action") == 0) {
