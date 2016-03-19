@@ -20,6 +20,7 @@ static void print_explain(FILE *f)
 	fprintf(f, "Usage: ... geneve id VNI remote ADDR\n");
 	fprintf(f, "                 [ ttl TTL ] [ tos TOS ]\n");
 	fprintf(f, "                 [ dstport PORT ] [ [no]external ]\n");
+	fprintf(f, "                 [ [no]udpcsum ] [ [no]udp6zerocsumtx ] [ [no]udp6zerocsumrx ]\n");
 	fprintf(f, "\n");
 	fprintf(f, "Where: VNI  := 0-16777215\n");
 	fprintf(f, "       ADDR := IP_ADDRESS\n");
@@ -43,6 +44,12 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 tos = 0;
 	__u16 dstport = 0;
 	bool metadata = 0;
+	__u8 udpcsum = 0;
+	bool udpcsum_set = false;
+	__u8 udp6zerocsumtx = 0;
+	bool udp6zerocsumtx_set = false;
+	__u8 udp6zerocsumrx = 0;
+	bool udp6zerocsumrx_set = false;
 
 	while (argc > 0) {
 		if (!matches(*argv, "id") ||
@@ -91,6 +98,24 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 			metadata = true;
 		} else if (!matches(*argv, "noexternal")) {
 			metadata = false;
+		} else if (!matches(*argv, "udpcsum")) {
+			udpcsum = 1;
+			udpcsum_set = true;
+		} else if (!matches(*argv, "noudpcsum")) {
+			udpcsum = 0;
+			udpcsum_set = true;
+		} else if (!matches(*argv, "udp6zerocsumtx")) {
+			udp6zerocsumtx = 1;
+			udp6zerocsumtx_set = true;
+		} else if (!matches(*argv, "noudp6zerocsumtx")) {
+			udp6zerocsumtx = 0;
+			udp6zerocsumtx_set = true;
+		} else if (!matches(*argv, "udp6zerocsumrx")) {
+			udp6zerocsumrx = 1;
+			udp6zerocsumrx_set = true;
+		} else if (!matches(*argv, "noudp6zerocsumrx")) {
+			udp6zerocsumrx = 0;
+			udp6zerocsumrx_set = true;
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -131,6 +156,12 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr16(n, 1024, IFLA_GENEVE_PORT, htons(dstport));
 	if (metadata)
 		addattr(n, 1024, IFLA_GENEVE_COLLECT_METADATA);
+	if (udpcsum_set)
+		addattr8(n, 1024, IFLA_GENEVE_UDP_CSUM, udpcsum);
+	if (udp6zerocsumtx_set)
+		addattr8(n, 1024, IFLA_GENEVE_UDP_ZERO_CSUM6_TX, udp6zerocsumtx);
+	if (udp6zerocsumrx_set)
+		addattr8(n, 1024, IFLA_GENEVE_UDP_ZERO_CSUM6_RX, udp6zerocsumrx);
 
 	return 0;
 }
@@ -189,6 +220,23 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_GENEVE_COLLECT_METADATA])
 		fputs("external ", f);
 
+	if (tb[IFLA_GENEVE_UDP_CSUM]) {
+		if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_CSUM]))
+			fputs("no", f);
+		fputs("udpcsum ", f);
+	}
+
+	if (tb[IFLA_GENEVE_UDP_ZERO_CSUM6_TX]) {
+		if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_ZERO_CSUM6_TX]))
+			fputs("no", f);
+		fputs("udp6zerocsumtx ", f);
+	}
+
+	if (tb[IFLA_GENEVE_UDP_ZERO_CSUM6_RX]) {
+		if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_ZERO_CSUM6_RX]))
+			fputs("no", f);
+		fputs("udp6zerocsumrx ", f);
+	}
 }
 
 static void geneve_print_help(struct link_util *lu, int argc, char **argv,
