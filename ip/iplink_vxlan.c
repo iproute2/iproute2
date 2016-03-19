@@ -68,8 +68,11 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u32 maxaddr = 0;
 	__u16 dstport = 0;
 	__u8 udpcsum = 0;
+	bool udpcsum_set = false;
 	__u8 udp6zerocsumtx = 0;
+	bool udp6zerocsumtx_set = false;
 	__u8 udp6zerocsumrx = 0;
+	bool udp6zerocsumrx_set = false;
 	__u8 remcsumtx = 0;
 	__u8 remcsumrx = 0;
 	__u8 metadata = 0;
@@ -194,16 +197,22 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			l3miss = 1;
 		} else if (!matches(*argv, "udpcsum")) {
 			udpcsum = 1;
+			udpcsum_set = true;
 		} else if (!matches(*argv, "noudpcsum")) {
 			udpcsum = 0;
+			udpcsum_set = true;
 		} else if (!matches(*argv, "udp6zerocsumtx")) {
 			udp6zerocsumtx = 1;
+			udp6zerocsumtx_set = true;
 		} else if (!matches(*argv, "noudp6zerocsumtx")) {
 			udp6zerocsumtx = 0;
+			udp6zerocsumtx_set = true;
 		} else if (!matches(*argv, "udp6zerocsumrx")) {
 			udp6zerocsumrx = 1;
+			udp6zerocsumrx_set = true;
 		} else if (!matches(*argv, "noudp6zerocsumrx")) {
 			udp6zerocsumrx = 0;
+			udp6zerocsumrx_set = true;
 		} else if (!matches(*argv, "remcsumtx")) {
 			remcsumtx = 1;
 		} else if (!matches(*argv, "noremcsumtx")) {
@@ -278,13 +287,16 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	addattr8(n, 1024, IFLA_VXLAN_RSC, rsc);
 	addattr8(n, 1024, IFLA_VXLAN_L2MISS, l2miss);
 	addattr8(n, 1024, IFLA_VXLAN_L3MISS, l3miss);
-	addattr8(n, 1024, IFLA_VXLAN_UDP_CSUM, udpcsum);
-	addattr8(n, 1024, IFLA_VXLAN_UDP_ZERO_CSUM6_TX, udp6zerocsumtx);
-	addattr8(n, 1024, IFLA_VXLAN_UDP_ZERO_CSUM6_RX, udp6zerocsumrx);
 	addattr8(n, 1024, IFLA_VXLAN_REMCSUM_TX, remcsumtx);
 	addattr8(n, 1024, IFLA_VXLAN_REMCSUM_RX, remcsumrx);
 	addattr8(n, 1024, IFLA_VXLAN_COLLECT_METADATA, metadata);
 
+	if (udpcsum_set)
+		addattr8(n, 1024, IFLA_VXLAN_UDP_CSUM, udpcsum);
+	if (udp6zerocsumtx_set)
+		addattr8(n, 1024, IFLA_VXLAN_UDP_ZERO_CSUM6_TX, udp6zerocsumtx);
+	if (udp6zerocsumrx_set)
+		addattr8(n, 1024, IFLA_VXLAN_UDP_ZERO_CSUM6_RX, udp6zerocsumrx);
 	if (noage)
 		addattr32(n, 1024, IFLA_VXLAN_AGEING, 0);
 	else if (age)
@@ -426,16 +438,23 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	    ((maxaddr = rta_getattr_u32(tb[IFLA_VXLAN_LIMIT])) != 0))
 		    fprintf(f, "maxaddr %u ", maxaddr);
 
-	if (tb[IFLA_VXLAN_UDP_CSUM] && rta_getattr_u8(tb[IFLA_VXLAN_UDP_CSUM]))
+	if (tb[IFLA_VXLAN_UDP_CSUM]) {
+		if (!rta_getattr_u8(tb[IFLA_VXLAN_UDP_CSUM]))
+			fputs("no", f);
 		fputs("udpcsum ", f);
+	}
 
-	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX] &&
-	    rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX]))
+	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX]) {
+		if (!rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX]))
+			fputs("no", f);
 		fputs("udp6zerocsumtx ", f);
+	}
 
-	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX] &&
-	    rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]))
+	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]) {
+		if (!rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]))
+			fputs("no", f);
 		fputs("udp6zerocsumrx ", f);
+	}
 
 	if (tb[IFLA_VXLAN_REMCSUM_TX] &&
 	    rta_getattr_u8(tb[IFLA_VXLAN_REMCSUM_TX]))
