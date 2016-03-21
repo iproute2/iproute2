@@ -49,7 +49,7 @@ static int scan_lines(struct lnstat_file *lf, int i)
 	if (!lf->compat && !fgets(buf, sizeof(buf)-1, lf->fp))
 		return -1;
 
-	while(!feof(lf->fp) && fgets(buf, sizeof(buf)-1, lf->fp)) {
+	while (!feof(lf->fp) && fgets(buf, sizeof(buf)-1, lf->fp)) {
 		char *ptr = buf;
 
 		num_lines++;
@@ -58,6 +58,7 @@ static int scan_lines(struct lnstat_file *lf, int i)
 
 		for (j = 0; j < lf->num_fields; j++) {
 			unsigned long f = strtoul(ptr, &ptr, 16);
+
 			if (j == 0)
 				lf->fields[j].values[i] = f;
 			else
@@ -102,7 +103,7 @@ int lnstat_update(struct lnstat_file *lnstat_files)
 					lfi->result = lfi->values[1];
 				else
 					lfi->result = (lfi->values[1]-lfi->values[0])
-				    			/ lf->interval.tv_sec;
+							/ lf->interval.tv_sec;
 			}
 
 			scan_lines(lf, 0);
@@ -158,6 +159,7 @@ static int lnstat_scan_compat_rtstat_fields(struct lnstat_file *lf)
 static int name_in_array(const int num, const char **arr, const char *name)
 {
 	int i;
+
 	for (i = 0; i < num; i++) {
 		if (!strcmp(arr[i], name))
 			return 1;

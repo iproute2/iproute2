@@ -47,17 +47,16 @@ int	ifnum;
 int	*ifvec;
 char	**ifnames;
 
-struct dbkey
-{
+struct dbkey {
 	__u32	iface;
 	__u32	addr;
 };
 
-#define IS_NEG(x)	(((__u8*)(x))[0] == 0xFF)
+#define IS_NEG(x)	(((__u8 *)(x))[0] == 0xFF)
 #define NEG_TIME(x)	(((x)[2]<<24)|((x)[3]<<16)|((x)[4]<<8)|(x)[5])
-#define NEG_AGE(x)	((__u32)time(NULL) - NEG_TIME((__u8*)x))
+#define NEG_AGE(x)	((__u32)time(NULL) - NEG_TIME((__u8 *)x))
 #define NEG_VALID(x)	(NEG_AGE(x) < negative_timeout)
-#define NEG_CNT(x)	(((__u8*)(x))[1])
+#define NEG_CNT(x)	(((__u8 *)(x))[1])
 
 struct rtnl_handle rth;
 
@@ -96,8 +95,7 @@ int poll_timeout = 30000;
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ]"
-		" [ -f file ] [ -n time ] [-p interval ] [ -R rate ] [ interfaces ]\n");
+		"Usage: arpd [ -lkh? ] [ -a N ] [ -b dbase ] [ -B number ] [ -f file ] [ -n time ] [-p interval ] [ -R rate ] [ interfaces ]\n");
 	exit(1);
 }
 
@@ -108,7 +106,7 @@ static int handle_if(int ifindex)
 	if (ifnum == 0)
 		return 1;
 
-	for (i=0; i<ifnum; i++)
+	for (i = 0; i < ifnum; i++)
 		if (ifvec[i] == ifindex)
 			return 1;
 	return 0;
@@ -123,7 +121,7 @@ static void do_sysctl_adjustments(void)
 	if (!ifnum)
 		return;
 
-	for (i=0; i<ifnum; i++) {
+	for (i = 0; i < ifnum; i++) {
 		char buf[128];
 		FILE *fp;
 
@@ -133,7 +131,7 @@ static void do_sysctl_adjustments(void)
 				if (no_kernel_broadcasts)
 					strcpy(buf, "0\n");
 				else
-					sprintf(buf, "%d\n", active_probing>=2 ? 1 : 3-active_probing);
+					sprintf(buf, "%d\n", active_probing >= 2 ? 1 : 3-active_probing);
 				fputs(buf, fp);
 				fclose(fp);
 			}
@@ -141,7 +139,7 @@ static void do_sysctl_adjustments(void)
 
 		sprintf(buf, "/proc/sys/net/ipv4/neigh/%s/app_solicit", ifnames[i]);
 		if ((fp = fopen(buf, "w")) != NULL) {
-			sprintf(buf, "%d\n", active_probing<=1 ? 1 : active_probing);
+			sprintf(buf, "%d\n", active_probing <= 1 ? 1 : active_probing);
 			fputs(buf, fp);
 			fclose(fp);
 		}
@@ -156,7 +154,7 @@ static void undo_sysctl_adjustments(void)
 	if (!sysctl_adjusted)
 		return;
 
-	for (i=0; i<ifnum; i++) {
+	for (i = 0; i < ifnum; i++) {
 		char buf[128];
 		FILE *fp;
 
@@ -185,7 +183,7 @@ static int send_probe(int ifindex, __u32 addr)
 	struct sockaddr_in dst;
 	socklen_t len;
 	unsigned char buf[256];
-	struct arphdr *ah = (struct arphdr*)buf;
+	struct arphdr *ah = (struct arphdr *)buf;
 	unsigned char *p = (unsigned char *)(ah+1);
 	struct sockaddr_ll sll;
 
@@ -203,10 +201,10 @@ static int send_probe(int ifindex, __u32 addr)
 	dst.sin_family = AF_INET;
 	dst.sin_port = htons(1025);
 	dst.sin_addr.s_addr = addr;
-	if (connect(udp_sock, (struct sockaddr*)&dst, sizeof(dst)) < 0)
+	if (connect(udp_sock, (struct sockaddr *)&dst, sizeof(dst)) < 0)
 		return -1;
 	len = sizeof(dst);
-	if (getsockname(udp_sock, (struct sockaddr*)&dst, &len) < 0)
+	if (getsockname(udp_sock, (struct sockaddr *)&dst, &len) < 0)
 		return -1;
 
 	ah->ar_hrd = htons(ifr.ifr_hwaddr.sa_family);
@@ -219,19 +217,19 @@ static int send_probe(int ifindex, __u32 addr)
 	p += ah->ar_hln;
 
 	memcpy(p, &dst.sin_addr, 4);
-	p+=4;
+	p += 4;
 
 	sll.sll_family = AF_PACKET;
 	memset(sll.sll_addr, 0xFF, sizeof(sll.sll_addr));
 	sll.sll_ifindex = ifindex;
 	sll.sll_protocol = htons(ETH_P_ARP);
 	memcpy(p, &sll.sll_addr, ah->ar_hln);
-	p+=ah->ar_hln;
+	p += ah->ar_hln;
 
 	memcpy(p, &addr, 4);
-	p+=4;
+	p += 4;
 
-	if (sendto(pset[0].fd, buf, p-buf, 0, (struct sockaddr*)&sll, sizeof(sll)) < 0)
+	if (sendto(pset[0].fd, buf, p-buf, 0, (struct sockaddr *)&sll, sizeof(sll)) < 0)
 		return -1;
 	stats.probes_sent++;
 	return 0;
@@ -248,6 +246,7 @@ static int queue_active_probe(int ifindex, __u32 addr)
 	gettimeofday(&now, NULL);
 	if (prev.tv_sec) {
 		int diff = (now.tv_sec-prev.tv_sec)*1000+(now.tv_usec-prev.tv_usec)/1000;
+
 		buckets += diff;
 	} else {
 		buckets = broadcast_burst;
@@ -266,9 +265,9 @@ static int queue_active_probe(int ifindex, __u32 addr)
 static int respond_to_kernel(int ifindex, __u32 addr, char *lla, int llalen)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct ndmsg 		ndm;
-		char   			buf[256];
+		struct nlmsghdr	n;
+		struct ndmsg		ndm;
+		char			buf[256];
 	} req;
 
 	memset(&req.n, 0, sizeof(req.n));
@@ -302,7 +301,7 @@ static int do_one_request(struct nlmsghdr *n)
 {
 	struct ndmsg *ndm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[NDA_MAX+1];
+	struct rtattr *tb[NDA_MAX+1];
 	struct dbkey key;
 	DBT dbkey, dbdat;
 	int do_acct = 0;
@@ -405,6 +404,7 @@ static int do_one_request(struct nlmsghdr *n)
 			    !IS_NEG(dbdat.data) ||
 			    !NEG_VALID(dbdat.data)) {
 				__u8 ndata[6];
+
 				stats.kern_neg++;
 				prepare_neg_entry(ndata, time(NULL));
 				dbdat.data = ndata;
@@ -444,7 +444,7 @@ static void get_kern_msg(void)
 	struct iovec iov;
 	char   buf[8192];
 	struct msghdr msg = {
-		(void*)&nladdr, sizeof(nladdr),
+		(void *)&nladdr, sizeof(nladdr),
 		&iov,	1,
 		NULL,	0,
 		0
@@ -466,7 +466,7 @@ static void get_kern_msg(void)
 	if (nladdr.nl_pid)
 		return;
 
-	for (h = (struct nlmsghdr*)buf; status >= sizeof(*h); ) {
+	for (h = (struct nlmsghdr *)buf; status >= sizeof(*h); ) {
 		int len = h->nlmsg_len;
 		int l = len - sizeof(*h);
 
@@ -477,7 +477,7 @@ static void get_kern_msg(void)
 			return;
 
 		status -= NLMSG_ALIGN(len);
-		h = (struct nlmsghdr*)((char*)h + NLMSG_ALIGN(len));
+		h = (struct nlmsghdr *)((char *)h + NLMSG_ALIGN(len));
 	}
 }
 
@@ -487,13 +487,13 @@ static void get_arp_pkt(void)
 	unsigned char buf[1024];
 	struct sockaddr_ll sll;
 	socklen_t sll_len = sizeof(sll);
-	struct arphdr *a = (struct arphdr*)buf;
+	struct arphdr *a = (struct arphdr *)buf;
 	struct dbkey key;
 	DBT dbkey, dbdat;
 	int n;
 
 	n = recvfrom(pset[0].fd, buf, sizeof(buf), MSG_DONTWAIT,
-		     (struct sockaddr*)&sll, &sll_len);
+		     (struct sockaddr *)&sll, &sll_len);
 	if (n < 0) {
 		if (errno != EINTR && errno != EAGAIN)
 			syslog(LOG_ERR, "recvfrom: %m");
@@ -515,7 +515,7 @@ static void get_arp_pkt(void)
 		return;
 
 	key.iface = sll.sll_ifindex;
-	memcpy(&key.addr, (char*)(a+1) + a->ar_hln, 4);
+	memcpy(&key.addr, (char *)(a+1) + a->ar_hln, 4);
 
 	/* DAD message, ignore. */
 	if (key.addr == 0)
@@ -600,7 +600,7 @@ int main(int argc, char **argv)
 
 	while ((opt = getopt(argc, argv, "h?b:lf:a:n:p:kR:B:")) != EOF) {
 		switch (opt) {
-	        case 'b':
+		case 'b':
 			dbname = optarg;
 			break;
 		case 'f':
@@ -624,7 +624,7 @@ int main(int argc, char **argv)
 			break;
 		case 'p':
 			if ((poll_timeout = 1000 * strtod(optarg, NULL)) < 100) {
-				fprintf(stderr,"Invalid poll timeout\n");
+				fprintf(stderr, "Invalid poll timeout\n");
 				exit(-1);
 			}
 			break;
@@ -666,15 +666,16 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 
-        if (ifnum) {
+	if (ifnum) {
 		int i;
 		struct ifreq ifr;
+
 		memset(&ifr, 0, sizeof(ifr));
-		for (i=0; i<ifnum; i++) {
+		for (i = 0; i < ifnum; i++) {
 			strncpy(ifr.ifr_name, ifnames[i], IFNAMSIZ);
 			if (ioctl(udp_sock, SIOCGIFINDEX, &ifr)) {
 				perror("ioctl(SIOCGIFINDEX)");
-				exit(-1);;
+				exit(-1);
 			}
 			ifvec[i] = ifr.ifr_ifindex;
 		}
@@ -717,7 +718,7 @@ int main(int argc, char **argv)
 			}
 			if (strncmp(macbuf, "FAILED:", 7) == 0)
 				continue;
-			if (!inet_aton(ipbuf, (struct in_addr*)&k.addr)) {
+			if (!inet_aton(ipbuf, (struct in_addr *)&k.addr)) {
 				fprintf(stderr, "Invalid IP address: \"%s\"\n", ipbuf);
 				goto do_abort;
 			}
@@ -738,20 +739,23 @@ int main(int argc, char **argv)
 
 	if (do_list) {
 		DBT dbkey, dbdat;
+
 		printf("%-8s %-15s %s\n", "#Ifindex", "IP", "MAC");
 		while (dbase->seq(dbase, &dbkey, &dbdat, R_NEXT) == 0) {
 			struct dbkey *key = dbkey.data;
+
 			if (handle_if(key->iface)) {
 				if (!IS_NEG(dbdat.data)) {
 					char b1[18];
+
 					printf("%-8d %-15s %s\n",
 					       key->iface,
-					       inet_ntoa(*(struct in_addr*)&key->addr),
+					       inet_ntoa(*(struct in_addr *)&key->addr),
 					       ll_addr_n2a(dbdat.data, 6, ARPHRD_ETHER, b1, 18));
 				} else {
 					printf("%-8d %-15s FAILED: %dsec ago\n",
 					       key->iface,
-					       inet_ntoa(*(struct in_addr*)&key->addr),
+					       inet_ntoa(*(struct in_addr *)&key->addr),
 					       NEG_AGE(dbdat.data));
 				}
 			}
@@ -769,11 +773,12 @@ int main(int argc, char **argv)
 
 	if (1) {
 		struct sockaddr_ll sll;
+
 		memset(&sll, 0, sizeof(sll));
 		sll.sll_family = AF_PACKET;
 		sll.sll_protocol = htons(ETH_P_ARP);
 		sll.sll_ifindex = (ifnum == 1 ? ifvec[0] : 0);
-		if (bind(pset[0].fd, (struct sockaddr*)&sll, sizeof(sll)) < 0) {
+		if (bind(pset[0].fd, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
 			perror("bind");
 			goto do_abort;
 		}

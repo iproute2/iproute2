@@ -56,10 +56,8 @@ static struct option opts[] = {
 static int usage(char *name, int exit_code)
 {
 	fprintf(stderr, "%s Version %s\n", name, LNSTAT_VERSION);
-	fprintf(stderr, "Copyright (C) 2004 by Harald Welte "
-			"<laforge@gnumonks.org>\n");
-	fprintf(stderr, "This program is free software licensed under GNU GPLv2"
-			"\nwith ABSOLUTELY NO WARRANTY.\n\n");
+	fprintf(stderr, "Copyright (C) 2004 by Harald Welte <laforge@gnumonks.org>\n");
+	fprintf(stderr, "This program is free software licensed under GNU GPLv2\nwith ABSOLUTELY NO WARRANTY.\n\n");
 	fprintf(stderr, "Parameters:\n");
 	fprintf(stderr, "\t-V --version\t\tPrint Version of Program\n");
 	fprintf(stderr, "\t-c --count <count>\t"
@@ -145,14 +143,13 @@ static int map_field_params(struct lnstat_file *lnstat_files,
 
 				if (++j >= MAX_FIELDS - 1) {
 					fprintf(stderr,
-						"WARN: MAX_FIELDS (%d) reached,"
-						" truncating number of keys\n",
+						"WARN: MAX_FIELDS (%d) reached, truncating number of keys\n",
 						MAX_FIELDS);
 					goto full;
 				}
 			}
 		}
-	full:
+full:
 		fps->num = j;
 		return 1;
 	}
@@ -181,7 +178,7 @@ static struct table_hdr *build_hdr_string(struct lnstat_file *lnstat_files,
 					  struct field_params *fps,
 					  int linewidth)
 {
-	int h,i;
+	int h, i;
 	static struct table_hdr th;
 	int ofs = 0;
 
@@ -269,7 +266,7 @@ int main(int argc, char **argv)
 		num_req_files = 1;
 	}
 
-	while ((c = getopt_long(argc, argv,"Vc:djpf:h?i:k:s:w:",
+	while ((c = getopt_long(argc, argv, "Vc:djpf:h?i:k:s:w:",
 				opts, NULL)) != -1) {
 		int len = 0;
 		char *tmp, *tok;
@@ -303,8 +300,7 @@ int main(int argc, char **argv)
 			     tok = strtok(NULL, ",")) {
 				if (fp.num >= MAX_FIELDS) {
 					fprintf(stderr,
-						"WARN: too many keys"
-						" requested: (%d max)\n",
+						"WARN: too many keys requested: (%d max)\n",
 						MAX_FIELDS);
 					break;
 				}
@@ -356,7 +352,7 @@ int main(int argc, char **argv)
 		if (!header)
 			exit(1);
 
-		if (interval < 1 )
+		if (interval < 1)
 			interval = 1;
 
 		for (i = 0; i < count || !count; i++) {

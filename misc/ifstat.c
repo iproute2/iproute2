@@ -35,15 +35,15 @@
 
 #include <SNAPSHOT.h>
 
-int dump_zeros = 0;
-int reset_history = 0;
-int ignore_history = 0;
-int no_output = 0;
-int json_output = 0;
-int no_update = 0;
-int scan_interval = 0;
-int time_constant = 0;
-int show_errors = 0;
+int dump_zeros;
+int reset_history;
+int ignore_history;
+int no_output;
+int json_output;
+int no_update;
+int scan_interval;
+int time_constant;
+int show_errors;
 int pretty;
 double W;
 char **patterns;
@@ -54,8 +54,7 @@ int source_mismatch;
 
 #define MAXS (sizeof(struct rtnl_link_stats)/sizeof(__u32))
 
-struct ifstat_ent
-{
+struct ifstat_ent {
 	struct ifstat_ent	*next;
 	char			*name;
 	int			ifindex;
@@ -100,7 +99,7 @@ static int match(const char *id)
 	if (npatterns == 0)
 		return 1;
 
-	for (i=0; i<npatterns; i++) {
+	for (i = 0; i < npatterns; i++) {
 		if (!fnmatch(patterns[i], id, 0))
 			return 1;
 	}
@@ -111,7 +110,7 @@ static int get_nlmsg(const struct sockaddr_nl *who,
 		     struct nlmsghdr *m, void *arg)
 {
 	struct ifinfomsg *ifi = NLMSG_DATA(m);
-	struct rtattr * tb[IFLA_MAX+1];
+	struct rtattr *tb[IFLA_MAX+1];
 	int len = m->nlmsg_len;
 	struct ifstat_ent *n;
 	int i;
@@ -137,7 +136,7 @@ static int get_nlmsg(const struct sockaddr_nl *who,
 	n->name = strdup(RTA_DATA(tb[IFLA_IFNAME]));
 	memcpy(&n->ival, RTA_DATA(tb[IFLA_STATS]), sizeof(n->ival));
 	memset(&n->rate, 0, sizeof(n->rate));
-	for (i=0; i<MAXS; i++)
+	for (i = 0; i < MAXS; i++)
 		n->val[i] = n->ival[i];
 	n->next = kern_db;
 	kern_db = n;
@@ -209,8 +208,9 @@ static void load_raw_table(FILE *fp)
 		n->name = strdup(p);
 		p = next;
 
-		for (i=0; i<MAXS; i++) {
-			unsigned rate;
+		for (i = 0; i < MAXS; i++) {
+			unsigned int rate;
+
 			if (!(next = strchr(p, ' ')))
 				abort();
 			*next++ = 0;
@@ -251,12 +251,14 @@ static void dump_raw_db(FILE *fp, int to_hist)
 	} else
 		fprintf(fp, "#%s\n", info_source);
 
-	for (n=kern_db; n; n=n->next) {
+	for (n = kern_db; n; n = n->next) {
 		int i;
 		unsigned long long *vals = n->val;
 		double *rates = n->rate;
+
 		if (!match(n->name)) {
 			struct ifstat_ent *h1;
+
 			if (!to_hist)
 				continue;
 			for (h1 = h; h1; h1 = h1->next) {
@@ -273,14 +275,14 @@ static void dump_raw_db(FILE *fp, int to_hist)
 			jsonw_name(jw, n->name);
 			jsonw_start_object(jw);
 
-			for (i=0; i<MAXS && stats[i]; i++)
+			for (i = 0; i < MAXS && stats[i]; i++)
 				jsonw_uint_field(jw, stats[i], vals[i]);
 			jsonw_end_object(jw);
 		} else {
 			fprintf(fp, "%d %s ", n->ifindex, n->name);
-			for (i=0; i<MAXS; i++)
+			for (i = 0; i < MAXS; i++)
 				fprintf(fp, "%llu %u ", vals[i],
-					(unsigned)rates[i]);
+					(unsigned int)rates[i]);
 			fprintf(fp, "\n");
 		}
 	}
@@ -308,18 +310,19 @@ static void format_rate(FILE *fp, const unsigned long long *vals,
 		fprintf(fp, "%8llu ", vals[i]);
 
 	if (rates[i] > mega) {
-		sprintf(temp, "%uM", (unsigned)(rates[i]/mega));
+		sprintf(temp, "%uM", (unsigned int)(rates[i]/mega));
 		fprintf(fp, "%-6s ", temp);
 	} else if (rates[i] > kilo) {
-		sprintf(temp, "%uK", (unsigned)(rates[i]/kilo));
+		sprintf(temp, "%uK", (unsigned int)(rates[i]/kilo));
 		fprintf(fp, "%-6s ", temp);
 	} else
-		fprintf(fp, "%-6u ", (unsigned)rates[i]);
+		fprintf(fp, "%-6u ", (unsigned int)rates[i]);
 }
 
 static void format_pair(FILE *fp, const unsigned long long *vals, int i, int k)
 {
 	char temp[64];
+
 	if (vals[i] > giga)
 		fprintf(fp, "%7lluM ", vals[i]/mega);
 	else if (vals[i] > mega)
@@ -328,13 +331,13 @@ static void format_pair(FILE *fp, const unsigned long long *vals, int i, int k)
 		fprintf(fp, "%8llu ", vals[i]);
 
 	if (vals[k] > giga) {
-		sprintf(temp, "%uM", (unsigned)(vals[k]/mega));
+		sprintf(temp, "%uM", (unsigned int)(vals[k]/mega));
 		fprintf(fp, "%-6s ", temp);
 	} else if (vals[k] > mega) {
-		sprintf(temp, "%uK", (unsigned)(vals[k]/kilo));
+		sprintf(temp, "%uK", (unsigned int)(vals[k]/kilo));
 		fprintf(fp, "%-6s ", temp);
 	} else
-		fprintf(fp, "%-6u ", (unsigned)vals[k]);
+		fprintf(fp, "%-6u ", (unsigned int)vals[k]);
 }
 
 static void print_head(FILE *fp)
@@ -345,38 +348,38 @@ static void print_head(FILE *fp)
 	fprintf(fp, "%8s/%-6s ", "RX Pkts", "Rate");
 	fprintf(fp, "%8s/%-6s ", "TX Pkts", "Rate");
 	fprintf(fp, "%8s/%-6s ", "RX Data", "Rate");
-	fprintf(fp, "%8s/%-6s\n","TX Data", "Rate");
+	fprintf(fp, "%8s/%-6s\n", "TX Data", "Rate");
 
 	if (!show_errors) {
 		fprintf(fp, "%-15s ", "");
 		fprintf(fp, "%8s/%-6s ", "RX Errs", "Drop");
 		fprintf(fp, "%8s/%-6s ", "TX Errs", "Drop");
 		fprintf(fp, "%8s/%-6s ", "RX Over", "Rate");
-		fprintf(fp, "%8s/%-6s\n","TX Coll", "Rate");
+		fprintf(fp, "%8s/%-6s\n", "TX Coll", "Rate");
 	} else {
 		fprintf(fp, "%-15s ", "");
 		fprintf(fp, "%8s/%-6s ", "RX Errs", "Rate");
 		fprintf(fp, "%8s/%-6s ", "RX Drop", "Rate");
 		fprintf(fp, "%8s/%-6s ", "RX Over", "Rate");
-		fprintf(fp, "%8s/%-6s\n","RX Leng", "Rate");
+		fprintf(fp, "%8s/%-6s\n", "RX Leng", "Rate");
 
 		fprintf(fp, "%-15s ", "");
 		fprintf(fp, "%8s/%-6s ", "RX Crc", "Rate");
 		fprintf(fp, "%8s/%-6s ", "RX Frm", "Rate");
 		fprintf(fp, "%8s/%-6s ", "RX Fifo", "Rate");
-		fprintf(fp, "%8s/%-6s\n","RX Miss", "Rate");
+		fprintf(fp, "%8s/%-6s\n", "RX Miss", "Rate");
 
 		fprintf(fp, "%-15s ", "");
 		fprintf(fp, "%8s/%-6s ", "TX Errs", "Rate");
 		fprintf(fp, "%8s/%-6s ", "TX Drop", "Rate");
 		fprintf(fp, "%8s/%-6s ", "TX Coll", "Rate");
-		fprintf(fp, "%8s/%-6s\n","TX Carr", "Rate");
+		fprintf(fp, "%8s/%-6s\n", "TX Carr", "Rate");
 
 		fprintf(fp, "%-15s ", "");
 		fprintf(fp, "%8s/%-6s ", "TX Abrt", "Rate");
 		fprintf(fp, "%8s/%-6s ", "TX Fifo", "Rate");
 		fprintf(fp, "%8s/%-6s ", "TX Hear", "Rate");
-		fprintf(fp, "%8s/%-6s\n","TX Wind", "Rate");
+		fprintf(fp, "%8s/%-6s\n", "TX Wind", "Rate");
 	}
 }
 
@@ -388,7 +391,7 @@ static void print_one_json(json_writer_t *jw, const struct ifstat_ent *n,
 	jsonw_name(jw, n->name);
 	jsonw_start_object(jw);
 
-	for (i=0; i < m && stats[i]; i++)
+	for (i = 0; i < m && stats[i]; i++)
 		jsonw_uint_field(jw, stats[i], vals[i]);
 
 	jsonw_end_object(jw);
@@ -400,7 +403,7 @@ static void print_one_if(FILE *fp, const struct ifstat_ent *n,
 	int i;
 
 	fprintf(fp, "%-15s ", n->name);
-	for (i=0; i<4; i++)
+	for (i = 0; i < 4; i++)
 		format_rate(fp, vals, n->rate, i);
 	fprintf(fp, "\n");
 
@@ -454,7 +457,7 @@ static void dump_kern_db(FILE *fp)
 	} else
 		print_head(fp);
 
-	for (n=kern_db; n; n=n->next) {
+	for (n = kern_db; n; n = n->next) {
 		if (!match(n->name))
 			continue;
 
@@ -480,7 +483,7 @@ static void dump_incr_db(FILE *fp)
 	} else
 		print_head(fp);
 
-	for (n=kern_db; n; n=n->next) {
+	for (n = kern_db; n; n = n->next) {
 		int i;
 		unsigned long long vals[MAXS];
 		struct ifstat_ent *h1;
@@ -530,9 +533,11 @@ static void update_db(int interval)
 
 	for (n = kern_db; n; n = n->next) {
 		struct ifstat_ent *h1;
+
 		for (h1 = h; h1; h1 = h1->next) {
 			if (h1->ifindex == n->ifindex) {
 				int i;
+
 				for (i = 0; i < MAXS; i++) {
 					if ((long)(h1->ival[i] - n->ival[i]) < 0) {
 						memset(n->ival, 0, sizeof(n->ival));
@@ -542,6 +547,7 @@ static void update_db(int interval)
 				for (i = 0; i < MAXS; i++) {
 					double sample;
 					unsigned long incr = h1->ival[i] - n->ival[i];
+
 					n->val[i] += incr;
 					n->ival[i] = h1->ival[i];
 					sample = (double)(incr*1000)/interval;
@@ -552,6 +558,7 @@ static void update_db(int interval)
 							n->rate[i] = sample;
 						} else {
 							double w = W*(double)interval/scan_interval;
+
 							n->rate[i] += w*(sample-n->rate[i]);
 						}
 					}
@@ -559,6 +566,7 @@ static void update_db(int interval)
 
 				while (h != h1) {
 					struct ifstat_ent *tmp = h;
+
 					h = h->next;
 					free(tmp->name);
 					free(tmp);
@@ -572,13 +580,14 @@ static void update_db(int interval)
 	}
 }
 
-#define T_DIFF(a,b) (((a).tv_sec-(b).tv_sec)*1000 + ((a).tv_usec-(b).tv_usec)/1000)
+#define T_DIFF(a, b) (((a).tv_sec-(b).tv_sec)*1000 + ((a).tv_usec-(b).tv_usec)/1000)
 
 
 static void server_loop(int fd)
 {
 	struct timeval snaptime = { 0 };
 	struct pollfd p;
+
 	p.fd = fd;
 	p.events = p.revents = POLLIN;
 
@@ -603,16 +612,19 @@ static void server_loop(int fd)
 		if (poll(&p, 1, scan_interval - tdiff) > 0
 		    && (p.revents&POLLIN)) {
 			int clnt = accept(fd, NULL, NULL);
+
 			if (clnt >= 0) {
 				pid_t pid;
+
 				if (children >= 5) {
 					close(clnt);
 				} else if ((pid = fork()) != 0) {
-					if (pid>0)
+					if (pid > 0)
 						children++;
 					close(clnt);
 				} else {
 					FILE *fp = fdopen(clnt, "w");
+
 					if (fp)
 						dump_raw_db(fp, 0);
 					exit(0);
@@ -629,7 +641,7 @@ static int verify_forging(int fd)
 	struct ucred cred;
 	socklen_t olen = sizeof(cred);
 
-	if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, (void*)&cred, &olen) ||
+	if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, (void *)&cred, &olen) ||
 	    olen < sizeof(cred))
 		return -1;
 	if (cred.uid == getuid() || cred.uid == 0)
@@ -685,7 +697,7 @@ int main(int argc, char *argv[])
 
 	while ((ch = getopt_long(argc, argv, "hjpvVzrnasd:t:e",
 			longopts, NULL)) != EOF) {
-		switch(ch) {
+		switch (ch) {
 		case 'z':
 			dump_zeros = 1;
 			break;
@@ -751,7 +763,7 @@ int main(int argc, char *argv[])
 			perror("ifstat: socket");
 			exit(-1);
 		}
-		if (bind(fd, (struct sockaddr*)&sun, 2+1+strlen(sun.sun_path+1)) < 0) {
+		if (bind(fd, (struct sockaddr *)&sun, 2+1+strlen(sun.sun_path+1)) < 0) {
 			perror("ifstat: bind");
 			exit(-1);
 		}
@@ -809,6 +821,7 @@ int main(int argc, char *argv[])
 		if (!ignore_history) {
 			FILE *tfp;
 			long uptime = -1;
+
 			if ((tfp = fopen("/proc/uptime", "r")) != NULL) {
 				if (fscanf(tfp, "%ld", &uptime) != 1)
 					uptime = -1;
@@ -828,11 +841,12 @@ int main(int argc, char *argv[])
 	}
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
-	    (connect(fd, (struct sockaddr*)&sun, 2+1+strlen(sun.sun_path+1)) == 0
+	    (connect(fd, (struct sockaddr *)&sun, 2+1+strlen(sun.sun_path+1)) == 0
 	     || (strcpy(sun.sun_path+1, "ifstat0"),
-		 connect(fd, (struct sockaddr*)&sun, 2+1+strlen(sun.sun_path+1)) == 0))
+		 connect(fd, (struct sockaddr *)&sun, 2+1+strlen(sun.sun_path+1)) == 0))
 	    && verify_forging(fd) == 0) {
 		FILE *sfp = fdopen(fd, "r");
+
 		load_raw_table(sfp);
 		if (hist_db && source_mismatch) {
 			fprintf(stderr, "ifstat: history is stale, ignoring it.\n");
