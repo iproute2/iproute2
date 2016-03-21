@@ -24,8 +24,7 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static struct
-{
+static struct {
 	int family;
 	int ifindex;
 } filter;
@@ -38,7 +37,11 @@ static void usage(void)
 	exit(-1);
 }
 
-#define NETCONF_RTA(r)	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct netconfmsg))))
+static struct rtattr *netconf_rta(struct netconfmsg *ncm)
+{
+	return (struct rtattr *)((char *)ncm
+				 + NLMSG_ALIGN(sizeof(struct netconfmsg)));
+}
 
 int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 		  struct nlmsghdr *n, void *arg)
@@ -65,7 +68,7 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	if (filter.family && filter.family != ncm->ncm_family)
 		return 0;
 
-	parse_rtattr(tb, NETCONFA_MAX, NETCONF_RTA(ncm),
+	parse_rtattr(tb, NETCONFA_MAX, netconf_rta(ncm),
 		     NLMSG_PAYLOAD(n, sizeof(*ncm)));
 
 	switch (ncm->ncm_family) {
