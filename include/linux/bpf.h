@@ -101,12 +101,15 @@ enum bpf_prog_type {
 #define BPF_NOEXIST	1 /* create new element if it didn't exist */
 #define BPF_EXIST	2 /* update existing element */
 
+#define BPF_F_NO_PREALLOC	(1U << 0)
+
 union bpf_attr {
 	struct { /* anonymous struct used by BPF_MAP_CREATE command */
 		__u32	map_type;	/* one of enum bpf_map_type */
 		__u32	key_size;	/* size of key in bytes */
 		__u32	value_size;	/* size of value in bytes */
 		__u32	max_entries;	/* max number of entries in a map */
+		__u32	map_flags;	/* prealloc or not */
 	};
 
 	struct { /* anonymous struct used by BPF_MAP_*_ELEM commands */
@@ -298,6 +301,17 @@ enum bpf_func_id {
 	 * Return: csum result
 	 */
 	BPF_FUNC_csum_diff,
+
+	/**
+	 * bpf_skb_[gs]et_tunnel_opt(skb, opt, size)
+	 * retrieve or populate tunnel options metadata
+	 * @skb: pointer to skb
+	 * @opt: pointer to raw tunnel option data
+	 * @size: size of @opt
+	 * Return: 0 on success for set, option size for get
+	 */
+	BPF_FUNC_skb_get_tunnel_opt,
+	BPF_FUNC_skb_set_tunnel_opt,
 	__BPF_FUNC_MAX_ID,
 };
 
@@ -305,6 +319,7 @@ enum bpf_func_id {
 
 /* BPF_FUNC_skb_store_bytes flags. */
 #define BPF_F_RECOMPUTE_CSUM		(1ULL << 0)
+#define BPF_F_INVALIDATE_HASH		(1ULL << 1)
 
 /* BPF_FUNC_l3_csum_replace and BPF_FUNC_l4_csum_replace flags.
  * First 4 bits are for passing the header field size.
@@ -326,6 +341,10 @@ enum bpf_func_id {
 #define BPF_F_USER_STACK		(1ULL << 8)
 #define BPF_F_FAST_STACK_CMP		(1ULL << 9)
 #define BPF_F_REUSE_STACKID		(1ULL << 10)
+
+/* BPF_FUNC_skb_set_tunnel_key flags. */
+#define BPF_F_ZERO_CSUM_TX		(1ULL << 1)
+#define BPF_F_DONT_FRAGMENT		(1ULL << 2)
 
 /* user accessible mirror of in-kernel sk_buff.
  * new fields can only be added to the end of this structure
@@ -356,6 +375,7 @@ struct bpf_tunnel_key {
 	};
 	__u8 tunnel_tos;
 	__u8 tunnel_ttl;
+	__u32 tunnel_label;
 };
 
 #endif /* __LINUX_BPF_H__ */
