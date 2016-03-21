@@ -17,11 +17,9 @@
 
 static void explain(void)
 {
-	fprintf(stderr," Usage: ... tcindex [ hash SIZE ] [ mask MASK ]"
-	    " [ shift SHIFT ]\n");
-	fprintf(stderr,"                    [ pass_on | fall_through ]\n");
-	fprintf(stderr,"                    [ classid CLASSID ] "
-	    "[ action ACTION_SPEC ]\n");
+	fprintf(stderr," Usage: ... tcindex [ hash SIZE ] [ mask MASK ] [ shift SHIFT ]\n");
+	fprintf(stderr, "                    [ pass_on | fall_through ]\n");
+	fprintf(stderr,"                    [ classid CLASSID ] [ action ACTION_SPEC ]\n");
 }
 
 static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
@@ -32,7 +30,7 @@ static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
 	char *end;
 
 	if (handle) {
-		t->tcm_handle = strtoul(handle,&end,0);
+		t->tcm_handle = strtoul(handle, &end, 0);
 		if (*end) {
 			fprintf(stderr, "Illegal filter ID\n");
 			return -1;
@@ -40,81 +38,73 @@ static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
 	}
 	if (!argc) return 0;
 	tail = NLMSG_TAIL(n);
-	addattr_l(n,4096,TCA_OPTIONS,NULL,0);
+	addattr_l(n, 4096, TCA_OPTIONS, NULL, 0);
 	while (argc) {
-		if (!strcmp(*argv,"hash")) {
+		if (!strcmp(*argv, "hash")) {
 			int hash;
 
 			NEXT_ARG();
-			hash = strtoul(*argv,&end,0);
+			hash = strtoul(*argv, &end, 0);
 			if (*end || !hash || hash > 0x10000) {
 				explain();
 				return -1;
 			}
-			addattr_l(n,4096,TCA_TCINDEX_HASH,&hash,sizeof(hash));
-		}
-		else if (!strcmp(*argv,"mask")) {
+			addattr_l(n, 4096, TCA_TCINDEX_HASH, &hash, sizeof(hash));
+		} else if (!strcmp(*argv,"mask")) {
 			__u16 mask;
 
 			NEXT_ARG();
-			mask = strtoul(*argv,&end,0);
+			mask = strtoul(*argv, &end, 0);
 			if (*end) {
 				explain();
 				return -1;
 			}
-			addattr_l(n,4096,TCA_TCINDEX_MASK,&mask,sizeof(mask));
-		}
-		else if (!strcmp(*argv,"shift")) {
+			addattr_l(n, 4096, TCA_TCINDEX_MASK, &mask, sizeof(mask));
+		} else if (!strcmp(*argv,"shift")) {
 			int shift;
 
 			NEXT_ARG();
-			shift = strtoul(*argv,&end,0);
+			shift = strtoul(*argv, &end, 0);
 			if (*end) {
 				explain();
 				return -1;
 			}
-			addattr_l(n,4096,TCA_TCINDEX_SHIFT,&shift,
+			addattr_l(n, 4096, TCA_TCINDEX_SHIFT, &shift,
 			    sizeof(shift));
-		}
-		else if (!strcmp(*argv,"fall_through")) {
+		} else if (!strcmp(*argv,"fall_through")) {
 			int value = 1;
 
-			addattr_l(n,4096,TCA_TCINDEX_FALL_THROUGH,&value,
+			addattr_l(n, 4096, TCA_TCINDEX_FALL_THROUGH, &value,
 			    sizeof(value));
-		}
-		else if (!strcmp(*argv,"pass_on")) {
+		} else if (!strcmp(*argv,"pass_on")) {
 			int value = 0;
 
-			addattr_l(n,4096,TCA_TCINDEX_FALL_THROUGH,&value,
+			addattr_l(n, 4096, TCA_TCINDEX_FALL_THROUGH, &value,
 			    sizeof(value));
-		}
-		else if (!strcmp(*argv,"classid")) {
+		} else if (!strcmp(*argv,"classid")) {
 			__u32 handle;
 
 			NEXT_ARG();
-			if (get_tc_classid(&handle,*argv)) {
+			if (get_tc_classid(&handle, *argv)) {
 				fprintf(stderr, "Illegal \"classid\"\n");
 				return -1;
 			}
 			addattr_l(n, 4096, TCA_TCINDEX_CLASSID, &handle, 4);
-		}
-		else if (!strcmp(*argv,"police")) {
+		} else if (!strcmp(*argv,"police")) {
 			NEXT_ARG();
 			if (parse_police(&argc, &argv, TCA_TCINDEX_POLICE, n)) {
 				fprintf(stderr, "Illegal \"police\"\n");
 				return -1;
 			}
 			continue;
-		}
-		else if (!strcmp(*argv,"action")) {
+		} else if (!strcmp(*argv,"action")) {
 			NEXT_ARG();
 			if (parse_police(&argc, &argv, TCA_TCINDEX_ACT, n)) {
 				fprintf(stderr, "Illegal \"action\"\n");
 				return -1;
 			}
 			continue;
-		}
-		else {
+		} else {
 			explain();
 			return -1;
 		}
@@ -136,14 +126,14 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 
 	parse_rtattr_nested(tb, TCA_TCINDEX_MAX, opt);
 
-	if (handle != ~0) fprintf(f,"handle 0x%04x ",handle);
+	if (handle != ~0) fprintf(f, "handle 0x%04x ", handle);
 	if (tb[TCA_TCINDEX_HASH]) {
 		__u16 hash;
 
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_HASH]) < sizeof(hash))
 			return -1;
 		hash = rta_getattr_u16(tb[TCA_TCINDEX_HASH]);
-		fprintf(f,"hash %d ",hash);
+		fprintf(f, "hash %d ", hash);
 	}
 	if (tb[TCA_TCINDEX_MASK]) {
 		__u16 mask;
@@ -151,7 +141,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_MASK]) < sizeof(mask))
 			return -1;
 		mask = rta_getattr_u16(tb[TCA_TCINDEX_MASK]);
-		fprintf(f,"mask 0x%04x ",mask);
+		fprintf(f, "mask 0x%04x ", mask);
 	}
 	if (tb[TCA_TCINDEX_SHIFT]) {
 		int shift;
@@ -159,7 +149,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_SHIFT]) < sizeof(shift))
 			return -1;
 		shift = *(int *) RTA_DATA(tb[TCA_TCINDEX_SHIFT]);
-		fprintf(f,"shift %d ",shift);
+		fprintf(f, "shift %d ", shift);
 	}
 	if (tb[TCA_TCINDEX_FALL_THROUGH]) {
 		int fall_through;
@@ -168,11 +158,11 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 		    sizeof(fall_through))
 			return -1;
 		fall_through = *(int *) RTA_DATA(tb[TCA_TCINDEX_FALL_THROUGH]);
-		fprintf(f,fall_through ? "fall_through " : "pass_on ");
+		fprintf(f, fall_through ? "fall_through " : "pass_on ");
 	}
 	if (tb[TCA_TCINDEX_CLASSID]) {
 		SPRINT_BUF(b1);
-		fprintf(f, "classid %s ",sprint_tc_classid(*(__u32 *)
+		fprintf(f, "classid %s ", sprint_tc_classid(*(__u32 *)
 		    RTA_DATA(tb[TCA_TCINDEX_CLASSID]), b1));
 	}
 	if (tb[TCA_TCINDEX_POLICE]) {

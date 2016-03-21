@@ -31,7 +31,7 @@
 static void stab_help(void)
 {
 	fprintf(stderr,
-		"Usage: ... stab [ mtu BYTES ] [ tsize SLOTS ] [ mpu BYTES ] \n"
+		"Usage: ... stab [ mtu BYTES ] [ tsize SLOTS ] [ mpu BYTES ]\n"
 		"                [ overhead BYTES ] [ linklayer TYPE ] ...\n"
 		"   mtu       : max packet size we create rate map for {2047}\n"
 		"   tsize     : how many slots should size table have {512}\n"
@@ -110,12 +110,14 @@ int parse_size_table(int *argcp, char ***argvp, struct tc_sizespec *sp)
 void print_size_table(FILE *fp, const char *prefix, struct rtattr *rta)
 {
 	struct rtattr *tb[TCA_STAB_MAX + 1];
+
 	SPRINT_BUF(b1);
 
 	parse_rtattr_nested(tb, TCA_STAB_MAX, rta);
 
 	if (tb[TCA_STAB_BASE]) {
 		struct tc_sizespec s = {0};
+
 		memcpy(&s, RTA_DATA(tb[TCA_STAB_BASE]),
 				MIN(RTA_PAYLOAD(tb[TCA_STAB_BASE]), sizeof(s)));
 
@@ -135,8 +137,9 @@ void print_size_table(FILE *fp, const char *prefix, struct rtattr *rta)
 
 #if 0
 	if (tb[TCA_STAB_DATA]) {
-		unsigned i, j, dlen;
+		unsigned int i, j, dlen;
 		__u16 *data = RTA_DATA(tb[TCA_STAB_DATA]);
+
 		dlen = RTA_PAYLOAD(tb[TCA_STAB_DATA]) / sizeof(__u16);
 
 		fprintf(fp, "\n%sstab data:", prefix);

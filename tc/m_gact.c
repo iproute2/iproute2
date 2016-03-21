@@ -45,16 +45,16 @@ explain(void)
 #ifdef CONFIG_GACT_PROB
 	fprintf(stderr, "Usage: ... gact <ACTION> [RAND] [INDEX]\n");
 	fprintf(stderr,
-		"Where: \tACTION := reclassify | drop | continue | pass \n"
-		        "\tRAND := random <RANDTYPE> <ACTION> <VAL>\n"
-		        "\tRANDTYPE := netrand | determ\n"
+		"Where: \tACTION := reclassify | drop | continue | pass\n"
+			"\tRAND := random <RANDTYPE> <ACTION> <VAL>\n"
+			"\tRANDTYPE := netrand | determ\n"
 			"\tVAL : = value not exceeding 10000\n"
 			"\tINDEX := index value used\n"
 			"\n");
 #else
 	fprintf(stderr, "Usage: ... gact <ACTION> [INDEX]\n");
 	fprintf(stderr,
-		"Where: \tACTION := reclassify | drop | continue | pass \n"
+		"Where: \tACTION := reclassify | drop | continue | pass\n"
 		"\tINDEX := index value used\n"
 		"\n");
 #endif
@@ -84,7 +84,7 @@ get_act(char ***argv_p)
 	} else if (matches(*argv, "pass") == 0 || matches(*argv, "ok") == 0)  {
 		return TC_ACT_OK;
 	} else {
-		fprintf(stderr,"bad action type %s\n",*argv);
+		fprintf(stderr, "bad action type %s\n", *argv);
 		return -10;
 	}
 }
@@ -104,7 +104,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 #endif
 	struct rtattr *tail;
 
-	memset(&p, 0, sizeof (p));
+	memset(&p, 0, sizeof(p));
 	p.action = TC_POLICE_RECLASSIFY;
 
 	if (argc < 0)
@@ -155,11 +155,11 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 			argc--;
 			argv++;
 			if (get_u16(&pp.pval, *argv, 10)) {
-				fprintf(stderr, "Illegal probability val 0x%x\n",pp.pval);
+				fprintf(stderr, "Illegal probability val 0x%x\n", pp.pval);
 				return -1;
 			}
 			if (pp.pval > 10000) {
-				fprintf(stderr, "Illegal probability val  0x%x\n",pp.pval);
+				fprintf(stderr, "Illegal probability val  0x%x\n", pp.pval);
 				return -1;
 			}
 			argc--;
@@ -190,10 +190,10 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
-	addattr_l(n, MAX_MSG, TCA_GACT_PARMS, &p, sizeof (p));
+	addattr_l(n, MAX_MSG, TCA_GACT_PARMS, &p, sizeof(p));
 #ifdef CONFIG_GACT_PROB
 	if (rd) {
-		addattr_l(n, MAX_MSG, TCA_GACT_PROB, &pp, sizeof (pp));
+		addattr_l(n, MAX_MSG, TCA_GACT_PROB, &pp, sizeof(pp));
 	}
 #endif
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
@@ -204,7 +204,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 }
 
 static int
-print_gact(struct action_util *au,FILE * f, struct rtattr *arg)
+print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 {
 	SPRINT_BUF(b1);
 #ifdef CONFIG_GACT_PROB
@@ -226,22 +226,23 @@ print_gact(struct action_util *au,FILE * f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_GACT_PARMS]);
 
-	fprintf(f, "gact action %s", action_n2a(p->action, b1, sizeof (b1)));
+	fprintf(f, "gact action %s", action_n2a(p->action, b1, sizeof(b1)));
 #ifdef CONFIG_GACT_PROB
-	if (NULL != tb[TCA_GACT_PROB]) {
+	if (tb[TCA_GACT_PROB] != NULL) {
 		pp = RTA_DATA(tb[TCA_GACT_PROB]);
 	} else {
 		/* need to keep consistent output */
-		memset(&pp_dummy, 0, sizeof (pp_dummy));
+		memset(&pp_dummy, 0, sizeof(pp_dummy));
 		pp = &pp_dummy;
 	}
-	fprintf(f, "\n\t random type %s %s val %d",prob_n2a(pp->ptype), action_n2a(pp->paction, b2, sizeof (b2)), pp->pval);
+	fprintf(f, "\n\t random type %s %s val %d", prob_n2a(pp->ptype), action_n2a(pp->paction, b2, sizeof (b2)), pp->pval);
 #endif
-	fprintf(f, "\n\t index %d ref %d bind %d",p->index, p->refcnt, p->bindcnt);
+	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
 	if (show_stats) {
 		if (tb[TCA_GACT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_GACT_TM]);
-			print_tm(f,tm);
+
+			print_tm(f, tm);
 		}
 	}
 	fprintf(f, "\n ");

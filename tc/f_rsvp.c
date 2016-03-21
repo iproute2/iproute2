@@ -37,7 +37,7 @@ static void explain(void)
 	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
-static int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
+static int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix *addr,
 		    struct tc_rsvp_pinfo *pinfo, int dir, int family)
 {
 	int argc = *argc_p;
@@ -76,6 +76,7 @@ static int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
 	if (strcmp(*argv, "spi/ah") == 0 ||
 	    strcmp(*argv, "gpi/ah") == 0) {
 		__u32 gpi;
+
 		NEXT_ARG();
 		if (get_u32(&gpi, *argv, 0))
 			return -1;
@@ -88,6 +89,7 @@ static int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
 	} else if (strcmp(*argv, "spi/esp") == 0 ||
 		   strcmp(*argv, "gpi/esp") == 0) {
 		__u32 gpi;
+
 		NEXT_ARG();
 		if (get_u32(&gpi, *argv, 0))
 			return -1;
@@ -99,6 +101,7 @@ static int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
 		argc--; argv++;
 	} else if (strcmp(*argv, "flowlabel") == 0) {
 		__u32 flabel;
+
 		NEXT_ARG();
 		if (get_u32(&flabel, *argv, 0))
 			return -1;
@@ -114,6 +117,7 @@ static int get_addr_and_pi(int *argc_p, char ***argv_p, inet_prefix * addr,
 		int sz = 1;
 		__u32 tmp;
 		__u32 mask = 0xff;
+
 		if (strcmp(*argv, "u32") == 0) {
 			sz = 4;
 			mask = 0xffff;
@@ -194,6 +198,7 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 	while (argc > 0) {
 		if (matches(*argv, "session") == 0) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			if (get_addr_and_pi(&argc, &argv, &addr, &pinfo, 1, family)) {
 				fprintf(stderr, "Illegal \"session\"\n");
@@ -206,6 +211,7 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 		} else if (matches(*argv, "sender") == 0 ||
 			   matches(*argv, "flowspec") == 0) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			if (get_addr_and_pi(&argc, &argv, &addr, &pinfo, 0, family)) {
 				fprintf(stderr, "Illegal \"sender\"\n");
@@ -217,6 +223,7 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 			continue;
 		} else if (matches("ipproto", *argv) == 0) {
 			int num;
+
 			NEXT_ARG();
 			num = inet_proto_a2n(*argv);
 			if (num < 0) {
@@ -227,7 +234,8 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 			pinfo_ok++;
 		} else if (matches(*argv, "classid") == 0 ||
 			   strcmp(*argv, "flowid") == 0) {
-			unsigned handle;
+			unsigned int handle;
+
 			NEXT_ARG();
 			if (get_tc_classid(&handle, *argv)) {
 				fprintf(stderr, "Illegal \"classid\"\n");
@@ -235,7 +243,8 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 			}
 			addattr_l(n, 4096, TCA_RSVP_CLASSID, &handle, 4);
 		} else if (strcmp(*argv, "tunnelid") == 0) {
-			unsigned tid;
+			unsigned int tid;
+
 			NEXT_ARG();
 			if (get_unsigned(&tid, *argv, 0)) {
 				fprintf(stderr, "Illegal \"tunnelid\"\n");
@@ -244,7 +253,8 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 			pinfo.tunnelid = tid;
 			pinfo_ok++;
 		} else if (strcmp(*argv, "tunnel") == 0) {
-			unsigned tid;
+			unsigned int tid;
+
 			NEXT_ARG();
 			if (get_unsigned(&tid, *argv, 0)) {
 				fprintf(stderr, "Illegal \"tunnel\"\n");
@@ -292,7 +302,7 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char *
 	return 0;
 }
 
-static char * sprint_spi(struct tc_rsvp_gpi *pi, int dir, char *buf)
+static char *sprint_spi(struct tc_rsvp_gpi *pi, int dir, char *buf)
 {
 	if (pi->offset == 0) {
 		if (dir && pi->mask == htonl(0xFFFF)) {
@@ -351,6 +361,7 @@ static int rsvp_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, _
 
 	if (tb[TCA_RSVP_DST]) {
 		char buf[128];
+
 		fprintf(f, "session ");
 		if (inet_ntop(family, RTA_DATA(tb[TCA_RSVP_DST]), buf, sizeof(buf)) == 0)
 			fprintf(f, " [INVALID DADDR] ");
@@ -377,6 +388,7 @@ static int rsvp_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, _
 		fprintf(f, "tunnelid %d ", pinfo->tunnelid);
 	if (tb[TCA_RSVP_SRC]) {
 		char buf[128];
+
 		fprintf(f, "sender ");
 		if (inet_ntop(family, RTA_DATA(tb[TCA_RSVP_SRC]), buf, sizeof(buf)) == 0) {
 			fprintf(f, "[BAD]");

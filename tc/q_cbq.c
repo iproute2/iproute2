@@ -52,11 +52,11 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	struct tc_ratespec r;
 	struct tc_cbq_lssopt lss;
 	__u32 rtab[256];
-	unsigned mpu=0, avpkt=0, allot=0;
-	unsigned short overhead=0;
+	unsigned mpu = 0, avpkt = 0, allot = 0;
+	unsigned short overhead = 0;
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
-	int cell_log=-1;
-	int ewma_log=-1;
+	int cell_log =  -1;
+	int ewma_log =  -1;
 	struct rtattr *tail;
 
 	memset(&lss, 0, sizeof(lss));
@@ -81,17 +81,18 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 				return -1;
 			}
 		} else if (matches(*argv, "cell") == 0) {
-			unsigned cell;
+			unsigned int cell;
 			int i;
+
 			NEXT_ARG();
 			if (get_size(&cell, *argv)) {
 				explain1("cell");
 				return -1;
 			}
-			for (i=0; i<32; i++)
+			for (i = 0; i < 32; i++)
 				if ((1<<i) == cell)
 					break;
-			if (i>=32) {
+			if (i >= 32) {
 				fprintf(stderr, "cell must be 2^n\n");
 				return -1;
 			}
@@ -170,7 +171,8 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	addattr_l(n, 3024, TCA_CBQ_RTAB, rtab, 1024);
 	if (show_raw) {
 		int i;
-		for (i=0; i<256; i++)
+
+		for (i = 0; i < 256; i++)
 			printf("%u ", rtab[i]);
 		printf("\n");
 	}
@@ -180,19 +182,19 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 
 static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-	int wrr_ok=0, fopt_ok=0;
+	int wrr_ok = 0, fopt_ok = 0;
 	struct tc_ratespec r;
 	struct tc_cbq_lssopt lss;
 	struct tc_cbq_wrropt wrr;
 	struct tc_cbq_fopt fopt;
 	struct tc_cbq_ovl ovl;
 	__u32 rtab[256];
-	unsigned mpu=0;
-	int cell_log=-1;
-	int ewma_log=-1;
-	unsigned bndw = 0;
-	unsigned minburst=0, maxburst=0;
-	unsigned short overhead=0;
+	unsigned mpu = 0;
+	int cell_log =  -1;
+	int ewma_log =  -1;
+	unsigned int bndw = 0;
+	unsigned minburst = 0, maxburst = 0;
+	unsigned short overhead = 0;
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 
@@ -260,23 +262,25 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			}
 			lss.change |= TCF_CBQ_LSS_EWMA;
 		} else if (matches(*argv, "cell") == 0) {
-			unsigned cell;
+			unsigned int cell;
 			int i;
+
 			NEXT_ARG();
 			if (get_size(&cell, *argv)) {
 				explain1("cell");
 				return -1;
 			}
-			for (i=0; i<32; i++)
+			for (i = 0; i < 32; i++)
 				if ((1<<i) == cell)
 					break;
-			if (i>=32) {
+			if (i >= 32) {
 				fprintf(stderr, "cell must be 2^n\n");
 				return -1;
 			}
 			cell_log = i;
 		} else if (matches(*argv, "prio") == 0) {
-			unsigned prio;
+			unsigned int prio;
+
 			NEXT_ARG();
 			if (get_u32(&prio, *argv, 0)) {
 				explain1("prio");
@@ -323,6 +327,7 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			fopt_ok++;
 		} else if (matches(*argv, "defmap") == 0) {
 			int err;
+
 			NEXT_ARG();
 			err = sscanf(*argv, "%08x/%08x", &fopt.defmap, &fopt.defchange);
 			if (err < 1) {
@@ -357,7 +362,8 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 
 	/* 1. Prepare link sharing scheduler parameters */
 	if (r.rate) {
-		unsigned pktsize = wrr.allot;
+		unsigned int pktsize = wrr.allot;
+
 		if (wrr.allot < (lss.avpkt*3)/2)
 			wrr.allot = (lss.avpkt*3)/2;
 		r.mpu = mpu;
@@ -375,7 +381,7 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			fprintf(stderr, "CBQ: avpkt is required for max/minburst.\n");
 			return -1;
 		}
-		if (bndw==0 || r.rate == 0) {
+		if (bndw == 0 || r.rate == 0) {
 			fprintf(stderr, "CBQ: bandwidth&rate are required for max/minburst.\n");
 			return -1;
 		}
@@ -424,7 +430,8 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 		addattr_l(n, 3024, TCA_CBQ_RTAB, rtab, 1024);
 		if (show_raw) {
 			int i;
-			for (i=0; i<256; i++)
+
+			for (i = 0; i < 256; i++)
 				printf("%u ", rtab[i]);
 			printf("\n");
 		}
@@ -443,6 +450,7 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct tc_cbq_fopt *fopt = NULL;
 	struct tc_cbq_ovl *ovl = NULL;
 	unsigned int linklayer;
+
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 
@@ -478,14 +486,15 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_CBQ_OVL_STRATEGY]) {
 		if (RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]) < sizeof(*ovl))
 			fprintf(stderr, "CBQ: too short overlimit strategy %u/%u\n",
-				(unsigned) RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]),
-				(unsigned) sizeof(*ovl));
+				(unsigned int) RTA_PAYLOAD(tb[TCA_CBQ_OVL_STRATEGY]),
+				(unsigned int) sizeof(*ovl));
 		else
 			ovl = RTA_DATA(tb[TCA_CBQ_OVL_STRATEGY]);
 	}
 
 	if (r) {
 		char buf[64];
+
 		print_rate(buf, sizeof(buf), r->rate);
 		fprintf(f, "rate %s ", buf);
 		linklayer = (r->linklayer & TC_LINKLAYER_MASK);
@@ -500,11 +509,12 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		}
 	}
 	if (lss && lss->flags) {
-		int comma=0;
+		int comma = 0;
+
 		fprintf(f, "(");
 		if (lss->flags&TCF_CBQ_LSS_BOUNDED) {
 			fprintf(f, "bounded");
-			comma=1;
+			comma = 1;
 		}
 		if (lss->flags&TCF_CBQ_LSS_ISOLATED) {
 			if (comma)
@@ -520,6 +530,7 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			fprintf(f, "prio no-transmit");
 		if (show_details) {
 			char buf[64];
+
 			fprintf(f, "/%u ", wrr->cpriority);
 			if (wrr->weight != 1) {
 				print_rate(buf, sizeof(buf), wrr->weight);
@@ -536,7 +547,7 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			if (show_raw)
 				fprintf(f, "[%08x] ", lss->maxidle);
 		}
-		if (lss->minidle!=0x7fffffff) {
+		if (lss->minidle != 0x7fffffff) {
 			fprintf(f, "minidle %s ", sprint_ticks(lss->minidle>>lss->ewma_log, b1));
 			if (show_raw)
 				fprintf(f, "[%08x] ", lss->minidle);
@@ -549,6 +560,7 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	}
 	if (fopt && show_details) {
 		char buf[64];
+
 		print_tc_classid(buf, sizeof(buf), fopt->split);
 		fprintf(f, "\nsplit %s ", buf);
 		if (fopt->defmap) {

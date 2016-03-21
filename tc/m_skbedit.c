@@ -32,8 +32,8 @@ explain(void)
 {
 	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM]>\n"
 		"QM = queue_mapping QUEUE_MAPPING\n"
-		"PM = priority PRIORITY \n"
-		"MM = mark MARK \n"
+		"PM = priority PRIORITY\n"
+		"MM = mark MARK\n"
 		"QUEUE_MAPPING = device transmit queue to use\n"
 		"PRIORITY = classID to assign to priority field\n"
 		"MARK = firewall mark to set\n");
@@ -161,6 +161,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_SKBEDIT_MAX + 1];
+
 	SPRINT_BUF(b1);
 	__u32 *priority;
 	__u32 *mark;
@@ -198,6 +199,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (show_stats) {
 		if (tb[TCA_SKBEDIT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_SKBEDIT_TM]);
+
 			print_tm(f, tm);
 		}
 	}

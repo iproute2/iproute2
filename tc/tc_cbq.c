@@ -24,8 +24,8 @@
 #include "tc_core.h"
 #include "tc_cbq.h"
 
-unsigned tc_cbq_calc_maxidle(unsigned bndw, unsigned rate, unsigned avpkt,
-			     int ewma_log, unsigned maxburst)
+unsigned int tc_cbq_calc_maxidle(unsigned int bndw, unsigned int rate, unsigned int avpkt,
+			     int ewma_log, unsigned int maxburst)
 {
 	double maxidle;
 	double g = 1.0 - 1.0/(1<<ewma_log);
@@ -34,6 +34,7 @@ unsigned tc_cbq_calc_maxidle(unsigned bndw, unsigned rate, unsigned avpkt,
 	maxidle = xmt*(1-g);
 	if (bndw != rate && maxburst) {
 		double vxmt = (double)avpkt/rate - xmt;
+
 		vxmt *= (pow(g, -(double)maxburst) - 1);
 		if (vxmt > maxidle)
 			maxidle = vxmt;
@@ -41,8 +42,8 @@ unsigned tc_cbq_calc_maxidle(unsigned bndw, unsigned rate, unsigned avpkt,
 	return tc_core_time2tick(maxidle*(1<<ewma_log)*TIME_UNITS_PER_SEC);
 }
 
-unsigned tc_cbq_calc_offtime(unsigned bndw, unsigned rate, unsigned avpkt,
-			     int ewma_log, unsigned minburst)
+unsigned int tc_cbq_calc_offtime(unsigned int bndw, unsigned int rate, unsigned int avpkt,
+			     int ewma_log, unsigned int minburst)
 {
 	double g = 1.0 - 1.0/(1<<ewma_log);
 	double offtime = (double)avpkt/rate - (double)avpkt/bndw;

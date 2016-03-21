@@ -41,7 +41,7 @@ usage(void)
 }
 
 static int
-parse_nat_args(int *argc_p, char ***argv_p,struct tc_nat *sel)
+parse_nat_args(int *argc_p, char ***argv_p, struct tc_nat *sel)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -97,7 +97,7 @@ parse_nat(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct
 		if (matches(*argv, "nat") == 0) {
 			NEXT_ARG();
 			if (parse_nat_args(&argc, &argv, &sel)) {
-				fprintf(stderr, "Illegal nat construct (%s) \n",
+				fprintf(stderr, "Illegal nat construct (%s)\n",
 					*argv);
 				explain();
 				return -1;
@@ -165,12 +165,13 @@ parse_nat(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct
 }
 
 static int
-print_nat(struct action_util *au,FILE * f, struct rtattr *arg)
+print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
 {
 	struct tc_nat *sel;
 	struct rtattr *tb[TCA_NAT_MAX + 1];
 	char buf1[256];
 	char buf2[256];
+
 	SPRINT_BUF(buf3);
 	int len;
 
@@ -193,12 +194,13 @@ print_nat(struct action_util *au,FILE * f, struct rtattr *arg)
 		format_host(AF_INET, 4, &sel->old_addr, buf1, sizeof(buf1)),
 		len,
 		format_host(AF_INET, 4, &sel->new_addr, buf2, sizeof(buf2)),
-		action_n2a(sel->action, buf3, sizeof (buf3)));
+		action_n2a(sel->action, buf3, sizeof(buf3)));
 
 	if (show_stats) {
 		if (tb[TCA_NAT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_NAT_TM]);
-			print_tm(f,tm);
+
+			print_tm(f, tm);
 		}
 	}
 

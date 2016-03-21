@@ -35,10 +35,10 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n)
 {
 	struct tc_red_qopt opt;
-	unsigned burst = 0;
-	unsigned avpkt = 1000;
+	unsigned int burst = 0;
+	unsigned int avpkt = 1000;
 	double probability = 0.02;
-	unsigned rate = 0;
+	unsigned int rate = 0;
 	int ecn_ok = 0;
 	int wlog;
 	__u8 sbuf[256];

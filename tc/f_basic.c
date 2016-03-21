@@ -27,7 +27,7 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... basic [ match EMATCH_TREE ] \n");
+	fprintf(stderr, "Usage: ... basic [ match EMATCH_TREE ]\n");
 	fprintf(stderr, "                 [ action ACTION_SPEC ] [ classid CLASSID ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: SELECTOR := SAMPLE SAMPLE ...\n");
@@ -56,7 +56,7 @@ static int basic_parse_opt(struct filter_util *qu, char *handle,
 	if (argc == 0)
 		return 0;
 
-	tail = (struct rtattr*)(((void*)n)+NLMSG_ALIGN(n->nlmsg_len));
+	tail = (struct rtattr *)(((void *)n)+NLMSG_ALIGN(n->nlmsg_len));
 	addattr_l(n, MAX_MSG, TCA_OPTIONS, NULL, 0);
 
 	while (argc > 0) {
@@ -69,7 +69,8 @@ static int basic_parse_opt(struct filter_util *qu, char *handle,
 			continue;
 		} else if (matches(*argv, "classid") == 0 ||
 			   strcmp(*argv, "flowid") == 0) {
-			unsigned handle;
+			unsigned int handle;
+
 			NEXT_ARG();
 			if (get_tc_classid(&handle, *argv)) {
 				fprintf(stderr, "Illegal \"classid\"\n");
@@ -102,7 +103,7 @@ static int basic_parse_opt(struct filter_util *qu, char *handle,
 		argc--; argv++;
 	}
 
-	tail->rta_len = (((void*)n)+n->nlmsg_len) - (void*)tail;
+	tail->rta_len = (((void *)n)+n->nlmsg_len) - (void *)tail;
 	return 0;
 }
 

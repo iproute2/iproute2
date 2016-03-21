@@ -40,7 +40,7 @@ static int cgroup_parse_opt(struct filter_util *qu, char *handle,
 
 	t->tcm_handle = h;
 
-	tail = (struct rtattr*)(((void*)n)+NLMSG_ALIGN(n->nlmsg_len));
+	tail = (struct rtattr *)(((void *)n)+NLMSG_ALIGN(n->nlmsg_len));
 	addattr_l(n, MAX_MSG, TCA_OPTIONS, NULL, 0);
 
 	while (argc > 0) {
@@ -76,7 +76,7 @@ static int cgroup_parse_opt(struct filter_util *qu, char *handle,
 		}
 	}
 
-	tail->rta_len = (((void*)n)+n->nlmsg_len) - (void*)tail;
+	tail->rta_len = (((void *)n)+n->nlmsg_len) - (void *)tail;
 	return 0;
 }
 

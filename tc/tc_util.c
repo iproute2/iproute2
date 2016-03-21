@@ -32,7 +32,7 @@
 #define LIBDIR "/usr/lib"
 #endif
 
-static struct db_names *cls_names = NULL;
+static struct db_names *cls_names;
 
 #define NAMES_DB "/etc/iproute2/tc_cls"
 
@@ -85,7 +85,7 @@ int get_qdisc_handle(__u32 *h, const char *str)
 	if (p == str)
 		return -1;
 	maj <<= 16;
-	if (*p != ':' && *p!=0)
+	if (*p != ':' && *p != 0)
 		return -1;
 ok:
 	*h = maj;
@@ -192,7 +192,7 @@ static const struct rate_suffix {
 };
 
 
-int get_rate(unsigned *rate, const char *str)
+int get_rate(unsigned int *rate, const char *str)
 {
 	char *p;
 	double bps = strtod(str, &p);
@@ -266,13 +266,13 @@ void print_rate(char *buf, int len, __u64 rate)
 	snprintf(buf, len, "%.0f%s%sbit", (double)rate, units[i], str);
 }
 
-char * sprint_rate(__u64 rate, char *buf)
+char *sprint_rate(__u64 rate, char *buf)
 {
 	print_rate(buf, SPRINT_BSIZE-1, rate);
 	return buf;
 }
 
-int get_time(unsigned *time, const char *str)
+int get_time(unsigned int *time, const char *str)
 {
 	double t;
 	char *p;
@@ -282,13 +282,13 @@ int get_time(unsigned *time, const char *str)
 		return -1;
 
 	if (*p) {
-		if (strcasecmp(p, "s") == 0 || strcasecmp(p, "sec")==0 ||
-		    strcasecmp(p, "secs")==0)
+		if (strcasecmp(p, "s") == 0 || strcasecmp(p, "sec") == 0 ||
+		    strcasecmp(p, "secs") == 0)
 			t *= TIME_UNITS_PER_SEC;
-		else if (strcasecmp(p, "ms") == 0 || strcasecmp(p, "msec")==0 ||
+		else if (strcasecmp(p, "ms") == 0 || strcasecmp(p, "msec") == 0 ||
 			 strcasecmp(p, "msecs") == 0)
 			t *= TIME_UNITS_PER_SEC/1000;
-		else if (strcasecmp(p, "us") == 0 || strcasecmp(p, "usec")==0 ||
+		else if (strcasecmp(p, "us") == 0 || strcasecmp(p, "usec") == 0 ||
 			 strcasecmp(p, "usecs") == 0)
 			t *= TIME_UNITS_PER_SEC/1000000;
 		else
@@ -312,18 +312,18 @@ void print_time(char *buf, int len, __u32 time)
 		snprintf(buf, len, "%uus", time);
 }
 
-char * sprint_time(__u32 time, char *buf)
+char *sprint_time(__u32 time, char *buf)
 {
 	print_time(buf, SPRINT_BSIZE-1, time);
 	return buf;
 }
 
-char * sprint_ticks(__u32 ticks, char *buf)
+char *sprint_ticks(__u32 ticks, char *buf)
 {
 	return sprint_time(tc_core_tick2time(ticks), buf);
 }
 
-int get_size(unsigned *size, const char *str)
+int get_size(unsigned int *size, const char *str)
 {
 	double sz;
 	char *p;
@@ -333,13 +333,13 @@ int get_size(unsigned *size, const char *str)
 		return -1;
 
 	if (*p) {
-		if (strcasecmp(p, "kb") == 0 || strcasecmp(p, "k")==0)
+		if (strcasecmp(p, "kb") == 0 || strcasecmp(p, "k") == 0)
 			sz *= 1024;
-		else if (strcasecmp(p, "gb") == 0 || strcasecmp(p, "g")==0)
+		else if (strcasecmp(p, "gb") == 0 || strcasecmp(p, "g") == 0)
 			sz *= 1024*1024*1024;
 		else if (strcasecmp(p, "gbit") == 0)
 			sz *= 1024*1024*1024/8;
-		else if (strcasecmp(p, "mb") == 0 || strcasecmp(p, "m")==0)
+		else if (strcasecmp(p, "mb") == 0 || strcasecmp(p, "m") == 0)
 			sz *= 1024*1024;
 		else if (strcasecmp(p, "mbit") == 0)
 			sz *= 1024*1024/8;
@@ -353,9 +353,9 @@ int get_size(unsigned *size, const char *str)
 	return 0;
 }
 
-int get_size_and_cell(unsigned *size, int *cell_log, char *str)
+int get_size_and_cell(unsigned int *size, int *cell_log, char *str)
 {
-	char * slash = strchr(str, '/');
+	char *slash = strchr(str, '/');
 
 	if (slash)
 		*slash = 0;
@@ -371,7 +371,7 @@ int get_size_and_cell(unsigned *size, int *cell_log, char *str)
 			return -1;
 		*slash = '/';
 
-		for (i=0; i<32; i++) {
+		for (i = 0; i < 32; i++) {
 			if ((1<<i) == cell) {
 				*cell_log = i;
 				return 0;
@@ -394,7 +394,7 @@ void print_size(char *buf, int len, __u32 sz)
 		snprintf(buf, len, "%ub", sz);
 }
 
-char * sprint_size(__u32 size, char *buf)
+char *sprint_size(__u32 size, char *buf)
 {
 	print_size(buf, SPRINT_BSIZE-1, size);
 	return buf;
@@ -405,13 +405,13 @@ void print_qdisc_handle(char *buf, int len, __u32 h)
 	snprintf(buf, len, "%x:", TC_H_MAJ(h)>>16);
 }
 
-char * sprint_qdisc_handle(__u32 h, char *buf)
+char *sprint_qdisc_handle(__u32 h, char *buf)
 {
 	print_qdisc_handle(buf, SPRINT_BSIZE-1, h);
 	return buf;
 }
 
-char * action_n2a(int action, char *buf, int len)
+char *action_n2a(int action, char *buf, int len)
 {
 	switch (action) {
 	case -1:
@@ -453,6 +453,7 @@ int action_a2n(char *arg, int *result)
 		res = TC_ACT_RECLASSIFY;
 	else {
 		char dummy;
+
 		if (sscanf(arg, "%d%c", &res, &dummy) != 1)
 			return -1;
 	}
@@ -460,7 +461,7 @@ int action_a2n(char *arg, int *result)
 	return 0;
 }
 
-int get_linklayer(unsigned *val, const char *arg)
+int get_linklayer(unsigned int *val, const char *arg)
 {
 	int res;
 
@@ -477,7 +478,7 @@ int get_linklayer(unsigned *val, const char *arg)
 	return 0;
 }
 
-void print_linklayer(char *buf, int len, unsigned linklayer)
+void print_linklayer(char *buf, int len, unsigned int linklayer)
 {
 	switch (linklayer) {
 	case LINKLAYER_UNSPEC:
@@ -495,21 +496,22 @@ void print_linklayer(char *buf, int len, unsigned linklayer)
 	}
 }
 
-char *sprint_linklayer(unsigned linklayer, char *buf)
+char *sprint_linklayer(unsigned int linklayer, char *buf)
 {
 	print_linklayer(buf, SPRINT_BSIZE-1, linklayer);
 	return buf;
 }
 
-void print_tm(FILE * f, const struct tcf_t *tm)
+void print_tm(FILE *f, const struct tcf_t *tm)
 {
 	int hz = get_user_hz();
+
 	if (tm->install != 0)
-		fprintf(f, " installed %u sec", (unsigned)(tm->install/hz));
+		fprintf(f, " installed %u sec", (unsigned int)(tm->install/hz));
 	if (tm->lastuse != 0)
-		fprintf(f, " used %u sec", (unsigned)(tm->lastuse/hz));
+		fprintf(f, " used %u sec", (unsigned int)(tm->lastuse/hz));
 	if (tm->expires != 0)
-		fprintf(f, " expires %u sec", (unsigned)(tm->expires/hz));
+		fprintf(f, " expires %u sec", (unsigned int)(tm->expires/hz));
 }
 
 void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats)
@@ -521,6 +523,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 
 	if (tbs[TCA_STATS_BASIC]) {
 		struct gnet_stats_basic bs = {0};
+
 		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]), sizeof(bs)));
 		fprintf(fp, "%sSent %llu bytes %u pkt",
 			prefix, (unsigned long long) bs.bytes, bs.packets);
@@ -528,6 +531,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 
 	if (tbs[TCA_STATS_QUEUE]) {
 		struct gnet_stats_queue q = {0};
+
 		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
 		fprintf(fp, " (dropped %u, overlimits %u requeues %u) ",
 			q.drops, q.overlimits, q.requeues);
@@ -552,6 +556,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 
 	if (tbs[TCA_STATS_QUEUE]) {
 		struct gnet_stats_queue q = {0};
+
 		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
 		if (!tbs[TCA_STATS_RATE_EST])
 			fprintf(fp, "\n%s", prefix);

@@ -49,7 +49,7 @@ static int nbyte_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 	memset(&nb, 0, sizeof(nb));
 
 #define PARSE_ERR(CARG, FMT, ARGS...) \
-	em_parse_error(EINVAL, args, CARG, &nbyte_ematch_util, FMT ,##ARGS)
+	em_parse_error(EINVAL, args, CARG, &nbyte_ematch_util, FMT, ##ARGS)
 
 	if (args == NULL)
 		return PARSE_ERR(args, "nbyte: missing arguments");

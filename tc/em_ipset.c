@@ -52,8 +52,8 @@ union ip_set_name_index {
 
 #define IP_SET_OP_GET_BYNAME	0x00000006	/* Get set index by name */
 struct ip_set_req_get_set {
-	unsigned op;
-	unsigned version;
+	unsigned int op;
+	unsigned int version;
 	union ip_set_name_index set;
 };
 
@@ -62,14 +62,14 @@ struct ip_set_req_get_set {
 
 #define IP_SET_OP_VERSION	0x00000100	/* Ask kernel version */
 struct ip_set_req_version {
-	unsigned op;
-	unsigned version;
+	unsigned int op;
+	unsigned int version;
 };
 #endif /* IPSET_INVALID_ID */
 
 extern struct ematch_util ipset_ematch_util;
 
-static int get_version(unsigned *version)
+static int get_version(unsigned int *version)
 {
 	int res, sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
 	struct ip_set_req_version req_version;
@@ -95,6 +95,7 @@ static int do_getsockopt(struct ip_set_req_get_set *req)
 {
 	int sockfd, res;
 	socklen_t size = sizeof(struct ip_set_req_get_set);
+
 	sockfd = get_version(&req->version);
 	if (sockfd < 0)
 		return -1;
@@ -107,8 +108,7 @@ static int do_getsockopt(struct ip_set_req_get_set *req)
 
 	if (size != sizeof(struct ip_set_req_get_set)) {
 		fprintf(stderr,
-			"Incorrect return size from kernel during ipset lookup, "
-			"(want %zu, got %zu)\n",
+			"Incorrect return size from kernel during ipset lookup, (want %zu, got %zu)\n",
 			sizeof(struct ip_set_req_get_set), (size_t)size);
 		return -1;
 	}
@@ -158,29 +158,29 @@ get_set_byname(const char *setname, struct xt_set_info *info)
 static int
 parse_dirs(const char *opt_arg, struct xt_set_info *info)
 {
-        char *saved = strdup(opt_arg);
-        char *ptr, *tmp = saved;
+	char *saved = strdup(opt_arg);
+	char *ptr, *tmp = saved;
 
 	if (!tmp) {
 		perror("strdup");
 		return -1;
 	}
 
-        while (info->dim < IPSET_DIM_MAX && tmp != NULL) {
-                info->dim++;
-                ptr = strsep(&tmp, ",");
-                if (strncmp(ptr, "src", 3) == 0)
-                        info->flags |= (1 << info->dim);
-                else if (strncmp(ptr, "dst", 3) != 0) {
-                        fputs("You must specify (the comma separated list of) 'src' or 'dst'\n", stderr);
+	while (info->dim < IPSET_DIM_MAX && tmp != NULL) {
+		info->dim++;
+		ptr = strsep(&tmp, ",");
+		if (strncmp(ptr, "src", 3) == 0)
+			info->flags |= (1 << info->dim);
+		else if (strncmp(ptr, "dst", 3) != 0) {
+			fputs("You must specify (the comma separated list of) 'src' or 'dst'\n", stderr);
 			free(saved);
 			return -1;
 		}
-        }
+	}
 
-        if (tmp)
-                fprintf(stderr, "Can't be more src/dst options than %u", IPSET_DIM_MAX);
-        free(saved);
+	if (tmp)
+		fprintf(stderr, "Can't be more src/dst options than %u", IPSET_DIM_MAX);
+	free(saved);
 	return tmp ? -1 : 0;
 }
 
@@ -204,7 +204,7 @@ static int ipset_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 	memset(&set_info, 0, sizeof(set_info));
 
 #define PARSE_ERR(CARG, FMT, ARGS...) \
-	em_parse_error(EINVAL, args, CARG, &ipset_ematch_util, FMT ,##ARGS)
+	em_parse_error(EINVAL, args, CARG, &ipset_ematch_util, FMT, ##ARGS)
 
 	if (args == NULL)
 		return PARSE_ERR(args, "ipset: missing set name");
@@ -238,7 +238,7 @@ static int ipset_print_eopt(FILE *fd, struct tcf_ematch_hdr *hdr, void *data,
 			    int data_len)
 {
 	int i;
-        char setname[IPSET_MAXNAMELEN];
+	char setname[IPSET_MAXNAMELEN];
 	const struct xt_set_info *set_info = data;
 
 	if (data_len != sizeof(*set_info)) {
@@ -246,7 +246,7 @@ static int ipset_print_eopt(FILE *fd, struct tcf_ematch_hdr *hdr, void *data,
 		return -1;
 	}
 
-        if (get_set_byid(setname, set_info->index))
+	if (get_set_byid(setname, set_info->index))
 		return -1;
 	fputs(setname, fd);
 	for (i = 1; i <= set_info->dim; i++) {

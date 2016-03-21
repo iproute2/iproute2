@@ -30,8 +30,8 @@ static void explain(void)
 "                 [ action ACTION_SPEC ]\n"
 "\n"
 "KEY-LIST := [ KEY-LIST , ] KEY\n"
-"KEY      := [ src | dst | proto | proto-src | proto-dst | iif | priority | \n"
-"              mark | nfct | nfct-src | nfct-dst | nfct-proto-src | \n"
+"KEY      := [ src | dst | proto | proto-src | proto-dst | iif | priority |\n"
+"              mark | nfct | nfct-src | nfct-dst | nfct-proto-src |\n"
 "              nfct-proto-dst | rt-classid | sk-uid | sk-gid |\n"
 "              vlan-tag | rxhash ]\n"
 "OPS      := [ or NUM | and NUM | xor NUM | rshift NUM | addend NUM ]\n"
@@ -270,6 +270,7 @@ static int flow_print_opt(struct filter_util *fu, FILE *f, struct rtattr *opt,
 			  __u32 handle)
 {
 	struct rtattr *tb[TCA_FLOW_MAX+1];
+
 	SPRINT_BUF(b1);
 	unsigned int i;
 	__u32 mask = ~0, val = 0;

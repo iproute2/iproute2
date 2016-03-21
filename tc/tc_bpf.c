@@ -167,8 +167,7 @@ static int bpf_ops_parse(int argc, char **argv, struct sock_filter *bpf_ops,
 	token = bpf_string;
 	while ((token = strchr(token, separator)) && (++token)[0]) {
 		if (i >= bpf_len) {
-			fprintf(stderr, "Real program length exceeds encoded "
-				"length parameter!\n");
+			fprintf(stderr, "Real program length exceeds encoded length parameter!\n");
 			ret = -EINVAL;
 			goto out;
 		}
@@ -185,8 +184,7 @@ static int bpf_ops_parse(int argc, char **argv, struct sock_filter *bpf_ops,
 	}
 
 	if (i != bpf_len) {
-		fprintf(stderr, "Parsed program length is less than encoded"
-			"length parameter!\n");
+		fprintf(stderr, "Parsed program length is less than encodedlength parameter!\n");
 		ret = -EINVAL;
 		goto out;
 	}
@@ -385,7 +383,7 @@ int bpf_trace_pipe(void)
 
 static const char *bpf_get_tc_dir(void)
 {
-	static bool bpf_mnt_cached = false;
+	static bool bpf_mnt_cached;
 	static char bpf_tc_dir[PATH_MAX];
 	static const char *mnt;
 	static const char * const bpf_known_mnts[] = {
@@ -648,8 +646,7 @@ int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
 	} else {
 		ret = sscanf(section, "%*i/%i", &map_key);
 		if (ret != 1) {
-			fprintf(stderr, "Couldn\'t infer map key from section "
-				"name! Please provide \'key\' argument!\n");
+			fprintf(stderr, "Couldn\'t infer map key from section name! Please provide \'key\' argument!\n");
 			ret = -EINVAL;
 			goto out_prog;
 		}
@@ -855,7 +852,7 @@ static int bpf_obj_hash(const char *object, uint8_t *out, size_t len)
 		goto out_ofd;
 	}
 
-        ret = fstat(ffd, &stbuff);
+	ret = fstat(ffd, &stbuff);
 	if (ret < 0) {
 		fprintf(stderr, "Error doing fstat: %s\n",
 			strerror(errno));
@@ -889,7 +886,7 @@ out_cfd:
 
 static const char *bpf_get_obj_uid(const char *pathname)
 {
-	static bool bpf_uid_cached = false;
+	static bool bpf_uid_cached;
 	static char bpf_uid[64];
 	uint8_t tmp[20];
 	int ret;
@@ -920,8 +917,7 @@ static int bpf_init_env(const char *pathname)
 	setrlimit(RLIMIT_MEMLOCK, &limit);
 
 	if (!bpf_get_tc_dir()) {
-		fprintf(stderr, "Continuing without mounted eBPF fs. "
-			"Too old kernel?\n");
+		fprintf(stderr, "Continuing without mounted eBPF fs. Too old kernel?\n");
 		return 0;
 	}
 
@@ -1091,8 +1087,7 @@ retry:
 			if (tries++ < 6 && !bpf_log_realloc(ctx))
 				goto retry;
 
-			fprintf(stderr, "Log buffer too small to dump "
-				"verifier log %zu bytes (%d tries)!\n",
+			fprintf(stderr, "Log buffer too small to dump verifier log %zu bytes (%d tries)!\n",
 				ctx->log_size, tries);
 			return fd;
 		}
@@ -1311,8 +1306,8 @@ static int bpf_fetch_ancillary(struct bpf_elf_ctx *ctx)
 			 !strcmp(data.sec_name, ".strtab"))
 			ret = bpf_fetch_strtab(ctx, i, &data);
 		if (ret < 0) {
-			fprintf(stderr, "Error parsing section %d! Perhaps"
-				"check with readelf -a?\n", i);
+			fprintf(stderr, "Error parsing section %d! Perhapscheck with readelf -a?\n",
+				i);
 			break;
 		}
 	}
@@ -1383,21 +1378,18 @@ static int bpf_apply_relo_data(struct bpf_elf_ctx *ctx,
 		ioff = relo.r_offset / sizeof(struct bpf_insn);
 		if (ioff >= num_insns ||
 		    insns[ioff].code != (BPF_LD | BPF_IMM | BPF_DW)) {
-			fprintf(stderr, "ELF contains relo data for non ld64 "
-				"instruction at offset %u! Compiler bug?!\n",
+			fprintf(stderr, "ELF contains relo data for non ld64 instruction at offset %u! Compiler bug?!\n",
 				ioff);
 			if (ioff < num_insns &&
 			    insns[ioff].code == (BPF_JMP | BPF_CALL))
-				fprintf(stderr, " - Try to annotate functions "
-					"with always_inline attribute!\n");
+				fprintf(stderr, " - Try to annotate functions with always_inline attribute!\n");
 			return -EINVAL;
 		}
 
 		if (gelf_getsym(ctx->sym_tab, GELF_R_SYM(relo.r_info), &sym) != &sym)
 			return -EIO;
 		if (sym.st_shndx != ctx->sec_maps) {
-			fprintf(stderr, "ELF contains non-map related relo data in "
-				"entry %u pointing to section %u! Compiler bug?!\n",
+			fprintf(stderr, "ELF contains non-map related relo data in entry %u pointing to section %u! Compiler bug?!\n",
 				relo_ent, sym.st_shndx);
 			return -EIO;
 		}
@@ -1409,8 +1401,7 @@ static int bpf_apply_relo_data(struct bpf_elf_ctx *ctx,
 			return -EINVAL;
 
 		if (ctx->verbose)
-			fprintf(stderr, "Map \'%s\' (%d) injected into prog "
-				"section \'%s\' at offset %u!\n",
+			fprintf(stderr, "Map \'%s\' (%d) injected into prog section \'%s\' at offset %u!\n",
 				bpf_str_tab_name(ctx, &sym), ctx->map_fds[rmap],
 				data_insn->sec_name, ioff);
 
@@ -1599,8 +1590,8 @@ static void bpf_hash_init(struct bpf_elf_ctx *ctx, const char *db_file)
 		}
 
 		if (bpf_pinning_reserved(pinning)) {
-			fprintf(stderr, "Database %s, id %u is reserved - "
-				"ignoring!\n", db_file, pinning);
+			fprintf(stderr, "Database %s, id %u is reserved - ignoring!\n",
+				db_file, pinning);
 			continue;
 		}
 

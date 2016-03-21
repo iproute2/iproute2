@@ -84,6 +84,7 @@ static int drr_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 static int drr_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_DRR_MAX + 1];
+
 	SPRINT_BUF(b1);
 
 	if (opt == NULL)
@@ -100,6 +101,7 @@ static int drr_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 static int drr_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
 {
 	struct tc_drr_stats *x;
+
 	SPRINT_BUF(b1);
 
 	if (xstats == NULL)

@@ -61,10 +61,10 @@ static void explain(void)
 static int codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n)
 {
-	unsigned limit = 0;
-	unsigned target = 0;
-	unsigned interval = 0;
-	unsigned ce_threshold = ~0U;
+	unsigned int limit = 0;
+	unsigned int target = 0;
+	unsigned int interval = 0;
+	unsigned int ce_threshold = ~0U;
 	int ecn = -1;
 	struct rtattr *tail;
 
@@ -129,11 +129,12 @@ static int codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 static int codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_CODEL_MAX + 1];
-	unsigned limit;
-	unsigned interval;
-	unsigned target;
-	unsigned ecn;
-	unsigned ce_threshold;
+	unsigned int limit;
+	unsigned int interval;
+	unsigned int target;
+	unsigned int ecn;
+	unsigned int ce_threshold;
+
 	SPRINT_BUF(b1);
 
 	if (opt == NULL)
@@ -175,6 +176,7 @@ static int codel_print_xstats(struct qdisc_util *qu, FILE *f,
 			      struct rtattr *xstats)
 {
 	struct tc_codel_xstats _st, *st;
+
 	SPRINT_BUF(b1);
 
 	if (xstats == NULL)

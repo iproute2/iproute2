@@ -138,7 +138,7 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	}
 
 	if (strlen(simpdata) > (SIMP_MAX_DATA - 1)) {
-		fprintf(stderr, "simple: Illegal string len %zu <%s> \n",
+		fprintf(stderr, "simple: Illegal string len %zu <%s>\n",
 			strlen(simpdata), simpdata);
 		return -1;
 	}
@@ -156,7 +156,7 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	return 0;
 }
 
-static int print_simple(struct action_util *au, FILE * f, struct rtattr *arg)
+static int print_simple(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_defact *sel;
 	struct rtattr *tb[TCA_DEF_MAX + 1];
@@ -187,6 +187,7 @@ static int print_simple(struct action_util *au, FILE * f, struct rtattr *arg)
 	if (show_stats) {
 		if (tb[TCA_DEF_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_DEF_TM]);
+
 			print_tm(f, tm);
 		}
 	}

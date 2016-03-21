@@ -19,7 +19,7 @@
 #include "tc_common.h"
 
 static struct exec_util *exec_list;
-static void *BODY = NULL;
+static void *BODY;
 
 static void usage(void)
 {
@@ -32,8 +32,8 @@ static void usage(void)
 static int parse_noeopt(struct exec_util *eu, int argc, char **argv)
 {
 	if (argc) {
-		fprintf(stderr, "Unknown exec \"%s\", hence option \"%s\" "
-			"is unparsable\n", eu->id, *argv);
+		fprintf(stderr, "Unknown exec \"%s\", hence option \"%s\" is unparsable\n",
+			eu->id, *argv);
 		return -1;
 	}
 

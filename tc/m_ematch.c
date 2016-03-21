@@ -33,7 +33,7 @@ static struct ematch_util *ematch_list;
 /* export to bison parser */
 int ematch_argc;
 char **ematch_argv;
-char *ematch_err = NULL;
+char *ematch_err;
 struct ematch *ematch_root;
 
 static int begin_argc;
@@ -188,6 +188,7 @@ static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 
 		if (t->child) {
 			__u32 r = t->child_ref;
+
 			addraw_l(n, MAX_MSG, &hdr, sizeof(hdr));
 			addraw_l(n, MAX_MSG, &r, sizeof(r));
 		} else {
@@ -198,7 +199,7 @@ static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 			if (t->args == NULL)
 				return -1;
 
-			strncpy(buf, (char*) t->args->data, sizeof(buf)-1);
+			strncpy(buf, (char *) t->args->data, sizeof(buf)-1);
 			e = get_ematch_kind(buf);
 			if (e == NULL) {
 				fprintf(stderr, "Unknown ematch \"%s\"\n",
@@ -218,7 +219,7 @@ static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 				return -1;
 		}
 
-		tail->rta_len = (void*) NLMSG_TAIL(n) - (void*) tail;
+		tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	}
 
 	return 0;
@@ -353,8 +354,8 @@ int parse_ematch(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 		if (parse_tree(n, ematch_root) < 0)
 			return -1;
 
-		tail_list->rta_len = (void*) NLMSG_TAIL(n) - (void*) tail_list;
-		tail->rta_len = (void*) NLMSG_TAIL(n) - (void*) tail;
+		tail_list->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail_list;
+		tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	}
 
 	*argc_p = ematch_argc;
@@ -492,7 +493,7 @@ int print_ematch(FILE *fd, const struct rtattr *rta)
 	return print_ematch_list(fd, hdr, tb[TCA_EMATCH_TREE_LIST]);
 }
 
-struct bstr * bstr_alloc(const char *text)
+struct bstr *bstr_alloc(const char *text)
 {
 	struct bstr *b = calloc(1, sizeof(*b));
 
@@ -558,6 +559,7 @@ void print_ematch_tree(const struct ematch *tree)
 			printf(")");
 		} else {
 			struct bstr *b;
+
 			for (b = t->args; b; b = b->next)
 				printf("%s%s", b->data, b->next ? " " : "");
 		}

@@ -51,9 +51,9 @@ static struct option original_opts[] = {
 	{0, 0, 0, 0}
 };
 
-static struct iptables_target *t_list = NULL;
+static struct iptables_target *t_list;
 static struct option *opts = original_opts;
-static unsigned int global_option_offset = 0;
+static unsigned int global_option_offset;
 #define OPTION_OFFSET 256
 
 char *lib_dir;
@@ -61,7 +61,7 @@ char *lib_dir;
 void
 register_target(struct iptables_target *me)
 {
-/*      fprintf(stderr, "\nDummy register_target %s \n", me->name);
+/*      fprintf(stderr, "\nDummy register_target %s\n", me->name);
 */
 	me->next = t_list;
 	t_list = me;
@@ -177,18 +177,18 @@ merge_options(struct option *oldopts, const struct option *newopts,
 	struct option *merge;
 	unsigned int num_old, num_new, i;
 
-	for (num_old = 0; oldopts[num_old].name; num_old++) ;
-	for (num_new = 0; newopts[num_new].name; num_new++) ;
+	for (num_old = 0; oldopts[num_old].name; num_old++);
+	for (num_new = 0; newopts[num_new].name; num_new++);
 
 	*option_offset = global_option_offset + OPTION_OFFSET;
 
-	merge = malloc(sizeof (struct option) * (num_new + num_old + 1));
-	memcpy(merge, oldopts, num_old * sizeof (struct option));
+	merge = malloc(sizeof(struct option) * (num_new + num_old + 1));
+	memcpy(merge, oldopts, num_old * sizeof(struct option));
 	for (i = 0; i < num_new; i++) {
 		merge[num_old + i] = newopts[i];
 		merge[num_old + i].val += *option_offset;
 	}
-	memset(merge + num_old + num_new, 0, sizeof (struct option));
+	memset(merge + num_old + num_new, 0, sizeof(struct option));
 
 	return merge;
 }
@@ -209,6 +209,7 @@ static struct iptables_target *
 find_t(char *name)
 {
 	struct iptables_target *m;
+
 	for (m = t_list; m; m = m->next) {
 		if (strcmp(m->name, name) == 0)
 			return m;
@@ -224,7 +225,7 @@ get_target_name(const char *name)
 	char *error;
 	char *new_name, *lname;
 	struct iptables_target *m;
-	char path[strlen(lib_dir) + sizeof ("/libipt_.so") + strlen(name)];
+	char path[strlen(lib_dir) + sizeof("/libipt_.so") + strlen(name)];
 
 #ifdef NO_SHARED_LIBS
 	return NULL;
@@ -247,6 +248,7 @@ get_target_name(const char *name)
 
 	if (isupper(lname[0])) {
 		int i;
+
 		for (i = 0; i < strlen(name); i++) {
 			lname[i] = tolower(lname[i]);
 		}
@@ -254,6 +256,7 @@ get_target_name(const char *name)
 
 	if (islower(new_name[0])) {
 		int i;
+
 		for (i = 0; i < strlen(new_name); i++) {
 			new_name[i] = toupper(new_name[i]);
 		}
@@ -268,12 +271,12 @@ get_target_name(const char *name)
 		handle = dlopen(path, RTLD_LAZY);
 
 		if (!handle) {
-			sprintf(path, "%s/libxt_%s.so", lib_dir , lname);
+			sprintf(path, "%s/libxt_%s.so", lib_dir, lname);
 			handle = dlopen(path, RTLD_LAZY);
 		}
 
 		if (!handle) {
-			sprintf(path, "%s/libipt_%s.so", lib_dir , lname);
+			sprintf(path, "%s/libipt_%s.so", lib_dir, lname);
 			handle = dlopen(path, RTLD_LAZY);
 		}
 		/* ok, lets give up .. */
@@ -291,9 +294,9 @@ get_target_name(const char *name)
 		m = (struct iptables_target *) dlsym(handle, lname);
 		if ((error = dlerror()) != NULL) {
 			m = find_t(new_name);
-			if (NULL == m) {
+			if (m == NULL) {
 				m = find_t(lname);
-				if (NULL == m) {
+				if (m == NULL) {
 					fputs(error, stderr);
 					fprintf(stderr, "\n");
 					dlclose(handle);
@@ -321,7 +324,7 @@ struct in_addr *dotted_to_addr(const char *dotted)
 	char buf[20];
 
 	/* copy dotted string, because we need to modify it */
-	strncpy(buf, dotted, sizeof (buf) - 1);
+	strncpy(buf, dotted, sizeof(buf) - 1);
 	addrp = (unsigned char *) &(addr.s_addr);
 
 	p = buf;
@@ -366,9 +369,9 @@ build_st(struct iptables_target *target, struct ipt_entry_target *t)
 		size_t size;
 
 		size =
-		    IPT_ALIGN(sizeof (struct ipt_entry_target)) + target->size;
+		    IPT_ALIGN(sizeof(struct ipt_entry_target)) + target->size;
 
-		if (NULL == t) {
+		if (t == NULL) {
 			target->t = fw_calloc(1, size);
 			target->t->u.target_size = size;
 
@@ -385,7 +388,7 @@ build_st(struct iptables_target *target, struct ipt_entry_target *t)
 	return -1;
 }
 
-static int parse_ipt(struct action_util *a,int *argc_p,
+static int parse_ipt(struct action_util *a, int *argc_p,
 		     char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	struct iptables_target *m = NULL;
@@ -406,6 +409,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 
 	{
 		int i;
+
 		for (i = 0; i < rargc; i++) {
 			if (NULL == argv[i] || 0 == strcmp(argv[i], "action")) {
 				break;
@@ -415,7 +419,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	if (argc <= 2) {
-		fprintf(stderr,"bad arguments to ipt %d vs %d \n", argc, rargc);
+		fprintf(stderr, "bad arguments to ipt %d vs %d\n", argc, rargc);
 		return -1;
 	}
 
@@ -426,29 +430,29 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 		switch (c) {
 		case 'j':
 			m = get_target_name(optarg);
-			if (NULL != m) {
+			if (m != NULL) {
 
-				if (0 > build_st(m, NULL)) {
-					printf(" %s error \n", m->name);
+				if (build_st(m, NULL) < 0) {
+					printf(" %s error\n", m->name);
 					return -1;
 				}
 				opts =
 				    merge_options(opts, m->extra_opts,
 						  &m->option_offset);
 			} else {
-				fprintf(stderr," failed to find target %s\n\n", optarg);
+				fprintf(stderr, " failed to find target %s\n\n", optarg);
 				return -1;
 			}
 			ok++;
 			break;
 
 		default:
-			memset(&fw, 0, sizeof (fw));
+			memset(&fw, 0, sizeof(fw));
 			if (m) {
 				m->parse(c - m->option_offset, argv, 0,
 					 &m->tflags, NULL, &m->t);
 			} else {
-				fprintf(stderr," failed to find target %s\n\n", optarg);
+				fprintf(stderr, " failed to find target %s\n\n", optarg);
 				return -1;
 
 			}
@@ -472,7 +476,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	if (!ok && !iok) {
-		fprintf(stderr," ipt Parser BAD!! (%s)\n", *argv);
+		fprintf(stderr, " ipt Parser BAD!! (%s)\n", *argv);
 		return -1;
 	}
 
@@ -482,6 +486,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 
 	{
 		struct tcmsg *t = NLMSG_DATA(n);
+
 		if (t->tcm_parent != TC_H_ROOT
 		    && t->tcm_parent == TC_H_MAJ(TC_H_INGRESS)) {
 			hook = NF_IP_PRE_ROUTING;
@@ -522,11 +527,11 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	optind = 0;
 	free_opts(opts);
 	/* Clear flags if target will be used again */
-        m->tflags=0;
-        m->used=0;
+        m->tflags = 0;
+        m->used = 0;
 	/* Free allocated memory */
-        if (m->t)
-            free(m->t);
+	if (m->t)
+	    free(m->t);
 
 
 	return 0;
@@ -534,7 +539,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 }
 
 static int
-print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
+print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_IPT_MAX + 1];
 	struct ipt_entry_target *t = NULL;
@@ -560,20 +565,22 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 		return -1;
 	} else {
 		__u32 hook;
+
 		hook = rta_getattr_u32(tb[TCA_IPT_HOOK]);
-		fprintf(f, " hook: %s \n", ipthooks[hook]);
+		fprintf(f, " hook: %s\n", ipthooks[hook]);
 	}
 
 	if (tb[TCA_IPT_TARG] == NULL) {
-		fprintf(f, "\t[NULL ipt target parameters ] \n");
+		fprintf(f, "\t[NULL ipt target parameters ]\n");
 		return -1;
 	} else {
 		struct iptables_target *m = NULL;
+
 		t = RTA_DATA(tb[TCA_IPT_TARG]);
 		m = get_target_name(t->u.user.name);
-		if (NULL != m) {
-			if (0 > build_st(m, t)) {
-				fprintf(stderr, " %s error \n", m->name);
+		if (m != NULL) {
+			if (build_st(m, t) < 0) {
+				fprintf(stderr, " %s error\n", m->name);
 				return -1;
 			}
 
@@ -591,21 +598,24 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 			fprintf(f, " [NULL ipt target index ]\n");
 		} else {
 			__u32 index;
+
 			index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
-			fprintf(f, " \n\tindex %d", index);
+			fprintf(f, "\n\tindex %d", index);
 		}
 
 		if (tb[TCA_IPT_CNT]) {
-			struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);;
+			struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);
+
 			fprintf(f, " ref %d bind %d", c->refcnt, c->bindcnt);
 		}
 		if (show_stats) {
 			if (tb[TCA_IPT_TM]) {
 				struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
-				print_tm(f,tm);
+
+				print_tm(f, tm);
 			}
 		}
-		fprintf(f, " \n");
+		fprintf(f, "\n");
 
 	}
 	free_opts(opts);
@@ -614,7 +624,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 }
 
 struct action_util ipt_action_util = {
-        .id = "ipt",
-        .parse_aopt = parse_ipt,
-        .print_aopt = print_ipt,
+	.id = "ipt",
+	.parse_aopt = parse_ipt,
+	.print_aopt = print_ipt,
 };

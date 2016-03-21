@@ -156,6 +156,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_ACT_BPF_MAX + 1];
 	struct tc_act_bpf *parm;
+
 	SPRINT_BUF(action_buf);
 
 	if (arg == NULL)
@@ -190,6 +191,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (show_stats) {
 		if (tb[TCA_ACT_BPF_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_ACT_BPF_TM]);
+
 			print_tm(f, tm);
 		}
 	}

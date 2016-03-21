@@ -28,13 +28,13 @@ static void explain(void)
 static int hhf_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n)
 {
-	unsigned limit = 0;
-	unsigned quantum = 0;
-	unsigned hh_limit = 0;
-	unsigned reset_timeout = 0;
-	unsigned admit_bytes = 0;
-	unsigned evict_timeout = 0;
-	unsigned non_hh_weight = 0;
+	unsigned int limit = 0;
+	unsigned int quantum = 0;
+	unsigned int hh_limit = 0;
+	unsigned int reset_timeout = 0;
+	unsigned int admit_bytes = 0;
+	unsigned int evict_timeout = 0;
+	unsigned int non_hh_weight = 0;
 	struct rtattr *tail;
 
 	while (argc > 0) {
@@ -120,13 +120,14 @@ static int hhf_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 static int hhf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_HHF_MAX + 1];
-	unsigned limit;
-	unsigned quantum;
-	unsigned hh_limit;
-	unsigned reset_timeout;
-	unsigned admit_bytes;
-	unsigned evict_timeout;
-	unsigned non_hh_weight;
+	unsigned int limit;
+	unsigned int quantum;
+	unsigned int hh_limit;
+	unsigned int reset_timeout;
+	unsigned int admit_bytes;
+	unsigned int evict_timeout;
+	unsigned int non_hh_weight;
+
 	SPRINT_BUF(b1);
 
 	if (opt == NULL)

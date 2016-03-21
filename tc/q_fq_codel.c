@@ -59,12 +59,12 @@ static void explain(void)
 static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			      struct nlmsghdr *n)
 {
-	unsigned limit = 0;
-	unsigned flows = 0;
-	unsigned target = 0;
-	unsigned interval = 0;
-	unsigned quantum = 0;
-	unsigned ce_threshold = ~0U;
+	unsigned int limit = 0;
+	unsigned int flows = 0;
+	unsigned int target = 0;
+	unsigned int interval = 0;
+	unsigned int quantum = 0;
+	unsigned int ce_threshold = ~0U;
 	int ecn = -1;
 	struct rtattr *tail;
 
@@ -144,13 +144,14 @@ static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 static int fq_codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_FQ_CODEL_MAX + 1];
-	unsigned limit;
-	unsigned flows;
-	unsigned interval;
-	unsigned target;
-	unsigned ecn;
-	unsigned quantum;
-	unsigned ce_threshold;
+	unsigned int limit;
+	unsigned int flows;
+	unsigned int interval;
+	unsigned int target;
+	unsigned int ecn;
+	unsigned int quantum;
+	unsigned int ce_threshold;
+
 	SPRINT_BUF(b1);
 
 	if (opt == NULL)
@@ -202,6 +203,7 @@ static int fq_codel_print_xstats(struct qdisc_util *qu, FILE *f,
 				 struct rtattr *xstats)
 {
 	struct tc_fq_codel_xstats _st, *st;
+
 	SPRINT_BUF(b1);
 
 	if (xstats == NULL)

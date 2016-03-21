@@ -41,9 +41,9 @@ static void meta_print_usage(FILE *fd)
 
 struct meta_entry {
 	int		id;
-	char *		kind;
-	char *		mask;
-	char *		desc;
+	char *kind;
+	char *mask;
+	char *desc;
 } meta_table[] = {
 #define TCF_META_ID_SECTION 0
 #define __A(id, name, mask, desc) { TCF_META_ID_##id, name, mask, desc }
@@ -102,7 +102,7 @@ struct meta_entry {
 	__A(SK_RMEM_ALLOC,	"sk_rmem",	"i",	"RMEM"),
 	__A(SK_WMEM_ALLOC,	"sk_wmem",	"i",	"WMEM"),
 	__A(SK_OMEM_ALLOC,	"sk_omem",	"i",	"OMEM"),
-	__A(SK_WMEM_QUEUED,	"sk_wmem_queue","i",	"WMEM queue"),
+	__A(SK_WMEM_QUEUED,	"sk_wmem_queue", "i",	"WMEM queue"),
 	__A(SK_SND_QLEN,	"sk_snd_queue",	"i",	"Send queue length"),
 	__A(SK_RCV_QLEN,	"sk_rcv_queue",	"i",	"Receive queue length"),
 	__A(SK_ERR_QLEN,	"sk_err_queue",	"i",	"Error queue length"),
@@ -122,11 +122,11 @@ static inline int map_type(char k)
 	return INT_MAX;
 }
 
-static struct meta_entry * lookup_meta_entry(struct bstr *kind)
+static struct meta_entry *lookup_meta_entry(struct bstr *kind)
 {
 	int i;
 
-	for (i = 0; i < (sizeof(meta_table)/sizeof(meta_table[0])); i++)
+	for (i = 0; i < ARRAY_SIZE(meta_table); i++)
 		if (!bstrcmp(kind, meta_table[i].kind) &&
 		    meta_table[i].id != 0)
 			return &meta_table[i];
@@ -134,11 +134,11 @@ static struct meta_entry * lookup_meta_entry(struct bstr *kind)
 	return NULL;
 }
 
-static struct meta_entry * lookup_meta_entry_byid(int id)
+static struct meta_entry *lookup_meta_entry_byid(int id)
 {
 	int i;
 
-	for (i = 0; i < (sizeof(meta_table)/sizeof(meta_table[0])); i++)
+	for (i = 0; i < ARRAY_SIZE(meta_table); i++)
 		if (meta_table[i].id == id)
 			return &meta_table[i];
 
@@ -159,6 +159,7 @@ static inline void dump_value(struct nlmsghdr *n, int tlv, unsigned long val,
 		case TCF_META_TYPE_VAR:
 			if (TCF_META_ID(hdr->kind) == TCF_META_ID_VALUE) {
 				struct bstr *a = (struct bstr *) val;
+
 				addattr_l(n, MAX_MSG, tlv, a->data, a->len);
 			}
 			break;
@@ -192,7 +193,7 @@ static void list_meta_ids(FILE *fd)
 	    "  ID               Type       Description\n" \
 	    "--------------------------------------------------------");
 
-	for (i = 0; i < (sizeof(meta_table)/sizeof(meta_table[0])); i++) {
+	for (i = 0; i < ARRAY_SIZE(meta_table); i++) {
 		if (meta_table[i].id == TCF_META_ID_SECTION) {
 			fprintf(fd, "\n%s:\n", meta_table[i].kind);
 		} else {
@@ -231,7 +232,7 @@ static void list_meta_ids(FILE *fd)
 #define PARSE_FAILURE ((void *) (-1))
 
 #define PARSE_ERR(CARG, FMT, ARGS...) \
-	em_parse_error(EINVAL, args, CARG, &meta_ematch_util, FMT ,##ARGS)
+	em_parse_error(EINVAL, args, CARG, &meta_ematch_util, FMT, ##ARGS)
 
 static inline int can_adopt(struct tcf_meta_val *val)
 {
@@ -308,7 +309,7 @@ compatible:
 
 	a = bstr_next(arg);
 
-	while(a) {
+	while (a) {
 		if (!bstrcmp(a, "shift")) {
 			unsigned long shift;
 
@@ -441,7 +442,7 @@ static inline int print_value(FILE *fd, int type, struct rtattr *rta)
 		return -1;
 	}
 
-	switch(type) {
+	switch (type) {
 		case TCF_META_TYPE_INT:
 			if (RTA_PAYLOAD(rta) < sizeof(__u32)) {
 				fprintf(stderr, "meta int type value TLV " \

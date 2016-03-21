@@ -29,12 +29,12 @@
 static void
 explain(void)
 {
-	fprintf(stderr, "Usage: mirred <DIRECTION> <ACTION> [index INDEX] <dev DEVICENAME> \n");
-	fprintf(stderr, "where: \n");
+	fprintf(stderr, "Usage: mirred <DIRECTION> <ACTION> [index INDEX] <dev DEVICENAME>\n");
+	fprintf(stderr, "where:\n");
 	fprintf(stderr, "\tDIRECTION := <ingress | egress>\n");
 	fprintf(stderr, "\tACTION := <mirror | redirect>\n");
 	fprintf(stderr, "\tINDEX  is the specific policy instance id\n");
-	fprintf(stderr, "\tDEVICENAME is the devicename \n");
+	fprintf(stderr, "\tDEVICENAME is the devicename\n");
 
 }
 
@@ -68,13 +68,13 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 
 	int argc = *argc_p;
 	char **argv = *argv_p;
-	int ok = 0, iok = 0, mirror=0,redir=0;
+	int ok = 0, iok = 0, mirror = 0, redir = 0;
 	struct tc_mirred p;
 	struct rtattr *tail;
 	char d[16];
 
-	memset(d,0,sizeof(d)-1);
-	memset(&p,0,sizeof(struct tc_mirred));
+	memset(d, 0, sizeof(d)-1);
+	memset(&p, 0, sizeof(struct tc_mirred));
 
 	while (argc > 0) {
 
@@ -98,12 +98,12 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 					argv++;
 					break;
 				}
-			} else if(!ok) {
+			} else if (!ok) {
 				fprintf(stderr, "was expecting egress (%s)\n", *argv);
 				break;
 
 			} else if (!mirror && matches(*argv, "mirror") == 0) {
-				mirror=1;
+				mirror = 1;
 				if (redir) {
 					fprintf(stderr, "Can't have both mirror and redir\n");
 					return -1;
@@ -112,7 +112,7 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 				p.action = TC_ACT_PIPE;
 				ok++;
 			} else if (!redir && matches(*argv, "redirect") == 0) {
-				redir=1;
+				redir = 1;
 				if (mirror) {
 					fprintf(stderr, "Can't have both mirror and redir\n");
 					return -1;
@@ -145,6 +145,7 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 
 	if (d[0])  {
 		int idx;
+
 		ll_init_map(&rth);
 
 		if ((idx = ll_name_to_index(d)) == 0) {
@@ -197,7 +198,7 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
-	addattr_l(n, MAX_MSG, TCA_MIRRED_PARMS, &p, sizeof (p));
+	addattr_l(n, MAX_MSG, TCA_MIRRED_PARMS, &p, sizeof(p));
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 
 	*argc_p = argc;
@@ -215,20 +216,21 @@ parse_mirred(struct action_util *a, int *argc_p, char ***argv_p,
 	char **argv = *argv_p;
 
 	if (argc < 0) {
-		fprintf(stderr,"mirred bad argument count %d\n", argc);
+		fprintf(stderr, "mirred bad argument count %d\n", argc);
 		return -1;
 	}
 
 	if (matches(*argv, "mirred") == 0) {
 		NEXT_ARG();
 	} else {
-		fprintf(stderr,"mirred bad argument %s\n", *argv);
+		fprintf(stderr, "mirred bad argument %s\n", *argv);
 		return -1;
 	}
 
 
 	if (matches(*argv, "egress") == 0 || matches(*argv, "index") == 0) {
 		int ret = parse_egress(a, &argc, &argv, tca_id, n);
+
 		if (ret == 0) {
 			*argc_p = argc;
 			*argv_p = argv;
@@ -236,11 +238,11 @@ parse_mirred(struct action_util *a, int *argc_p, char ***argv_p,
 		}
 
 	} else if (matches(*argv, "ingress") == 0) {
-		fprintf(stderr,"mirred ingress not supported at the moment\n");
+		fprintf(stderr, "mirred ingress not supported at the moment\n");
 	} else if (matches(*argv, "help") == 0) {
 		usage();
 	} else {
-		fprintf(stderr,"mirred option not supported %s\n", *argv);
+		fprintf(stderr, "mirred option not supported %s\n", *argv);
 	}
 
 	return -1;
@@ -248,11 +250,12 @@ parse_mirred(struct action_util *a, int *argc_p, char ***argv_p,
 }
 
 static int
-print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
+print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 {
 	struct tc_mirred *p;
 	struct rtattr *tb[TCA_MIRRED_MAX + 1];
 	const char *dev;
+
 	SPRINT_BUF(b1);
 
 	if (arg == NULL)
@@ -276,15 +279,16 @@ print_mirred(struct action_util *au,FILE * f, struct rtattr *arg)
 		return -1;
 	}
 
-	fprintf(f, "mirred (%s to device %s) %s", mirred_n2a(p->eaction), dev,action_n2a(p->action, b1, sizeof (b1)));
+	fprintf(f, "mirred (%s to device %s) %s", mirred_n2a(p->eaction), dev, action_n2a(p->action, b1, sizeof (b1)));
 
 	fprintf(f, "\n ");
-	fprintf(f, "\tindex %d ref %d bind %d",p->index,p->refcnt,p->bindcnt);
+	fprintf(f, "\tindex %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_MIRRED_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_MIRRED_TM]);
-			print_tm(f,tm);
+
+			print_tm(f, tm);
 		}
 	}
 	fprintf(f, "\n ");

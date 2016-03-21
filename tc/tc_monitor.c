@@ -39,7 +39,7 @@ static int accept_tcmsg(const struct sockaddr_nl *who,
 			struct rtnl_ctrl_data *ctrl,
 			struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 
 	if (timestamp)
 		print_timestamp(fp);
@@ -73,7 +73,7 @@ int do_tcmonitor(int argc, char **argv)
 {
 	struct rtnl_handle rth;
 	char *file = NULL;
-	unsigned groups = nl_mgrp(RTNLGRP_TC);
+	unsigned int groups = nl_mgrp(RTNLGRP_TC);
 
 	while (argc > 0) {
 		if (matches(*argv, "file") == 0) {
@@ -109,7 +109,7 @@ int do_tcmonitor(int argc, char **argv)
 
 	ll_init_map(&rth);
 
-	if (rtnl_listen(&rth, accept_tcmsg, (void*)stdout) < 0) {
+	if (rtnl_listen(&rth, accept_tcmsg, (void *)stdout) < 0) {
 		rtnl_close(&rth);
 		exit(2);
 	}

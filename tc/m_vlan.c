@@ -186,7 +186,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	fprintf(f, " vlan");
 
-	switch(parm->v_action) {
+	switch (parm->v_action) {
 	case TCA_VLAN_ACT_POP:
 		fprintf(f, " pop");
 		break;
@@ -203,7 +203,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 		break;
 	}
-	fprintf(f, " %s", action_n2a(parm->action, b1, sizeof (b1)));
+	fprintf(f, " %s", action_n2a(parm->action, b1, sizeof(b1)));
 
 	fprintf(f, "\n\t index %d ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);
@@ -211,6 +211,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (show_stats) {
 		if (tb[TCA_VLAN_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_VLAN_TM]);
+
 			print_tm(f, tm);
 		}
 	}

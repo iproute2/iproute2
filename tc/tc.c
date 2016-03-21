@@ -31,33 +31,33 @@
 #include "tc_common.h"
 #include "namespace.h"
 
-int show_stats = 0;
-int show_details = 0;
-int show_raw = 0;
-int show_pretty = 0;
-int show_graph = 0;
+int show_stats;
+int show_details;
+int show_raw;
+int show_pretty;
+int show_graph;
 int timestamp;
 
-int batch_mode = 0;
-int resolve_hosts = 0;
-int use_iec = 0;
-int force = 0;
-bool use_names = false;
+int batch_mode;
+int resolve_hosts;
+int use_iec;
+int force;
+bool use_names;
 
 static char *conf_file;
 
 struct rtnl_handle rth;
 
-static void *BODY = NULL;	/* cached handle dlopen(NULL) */
-static struct qdisc_util * qdisc_list;
-static struct filter_util * filter_list;
+static void *BODY;	/* cached handle dlopen(NULL) */
+static struct qdisc_util *qdisc_list;
+static struct filter_util *filter_list;
 
 static int print_noqopt(struct qdisc_util *qu, FILE *f,
 			struct rtattr *opt)
 {
 	if (opt && RTA_PAYLOAD(opt))
 		fprintf(f, "[Unknown qdisc, optlen=%u] ",
-			(unsigned) RTA_PAYLOAD(opt));
+			(unsigned int) RTA_PAYLOAD(opt));
 	return 0;
 }
 
@@ -74,7 +74,7 @@ static int print_nofopt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 {
 	if (opt && RTA_PAYLOAD(opt))
 		fprintf(f, "fh %08x [Unknown filter, optlen=%u] ",
-			fhandle, (unsigned) RTA_PAYLOAD(opt));
+			fhandle, (unsigned int) RTA_PAYLOAD(opt));
 	else if (fhandle)
 		fprintf(f, "fh %08x ", fhandle);
 	return 0;
@@ -90,6 +90,7 @@ static int parse_nofopt(struct filter_util *qu, char *fhandle, int argc, char **
 	}
 	if (fhandle) {
 		struct tcmsg *t = NLMSG_DATA(n);
+
 		if (get_u32(&handle, fhandle, 16)) {
 			fprintf(stderr, "Unparsable filter ID \"%s\"\n", fhandle);
 			return -1;
@@ -191,9 +192,8 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 			"       tc [-force] -batch filename\n"
-	                "where  OBJECT := { qdisc | class | filter | action | monitor | exec }\n"
-	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] | "
-			"-n[etns] name |\n"
+			"where  OBJECT := { qdisc | class | filter | action | monitor | exec }\n"
+	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] | -n[etns] name |\n"
 			"                    -nm | -nam[es] | { -cf | -conf } path }\n");
 }
 

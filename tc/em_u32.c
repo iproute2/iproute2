@@ -44,7 +44,7 @@ static int u32_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 	memset(&u_key, 0, sizeof(u_key));
 
 #define PARSE_ERR(CARG, FMT, ARGS...) \
-	em_parse_error(EINVAL, args, CARG, &u32_ematch_util, FMT ,##ARGS)
+	em_parse_error(EINVAL, args, CARG, &u32_ematch_util, FMT, ##ARGS)
 
 	if (args == NULL)
 		return PARSE_ERR(args, "u32: missing arguments");
@@ -85,6 +85,7 @@ static int u32_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 	nh_len = strlen("nexthdr+");
 	if (a->len > nh_len && !memcmp(a->data, "nexthdr+", nh_len)) {
 		char buf[a->len - nh_len + 1];
+
 		offmask = -1;
 		memcpy(buf, a->data + nh_len, a->len - nh_len);
 		offset = strtoul(buf, NULL, 0);

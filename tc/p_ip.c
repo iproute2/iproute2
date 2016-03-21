@@ -24,7 +24,7 @@
 #include "m_pedit.h"
 
 static int
-parse_ip(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey)
+parse_ip(int *argc_p, char ***argv_p, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 {
 	int res = -1;
 	int argc = *argc_p;
@@ -36,13 +36,13 @@ parse_ip(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_ke
 	if (strcmp(*argv, "src") == 0) {
 		NEXT_ARG();
 		tkey->off = 12;
-		res = parse_cmd(&argc, &argv, 4, TIPV4,RU32,sel,tkey);
+		res = parse_cmd(&argc, &argv, 4, TIPV4, RU32, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "dst") == 0) {
 		NEXT_ARG();
 		tkey->off = 16;
-		res = parse_cmd(&argc, &argv, 4, TIPV4,RU32,sel,tkey);
+		res = parse_cmd(&argc, &argv, 4, TIPV4, RU32, sel, tkey);
 		goto done;
 	}
 	/* jamal - look at these and make them either old or new
@@ -52,94 +52,94 @@ parse_ip(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_ke
 	if (strcmp(*argv, "tos") == 0 || matches(*argv, "dsfield") == 0) {
 		NEXT_ARG();
 		tkey->off = 1;
-		res = parse_cmd(&argc, &argv,  1, TU32,RU8,sel,tkey);
+		res = parse_cmd(&argc, &argv,  1, TU32, RU8, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "ihl") == 0) {
 		NEXT_ARG();
 		tkey->off = 0;
-		res = parse_cmd(&argc, &argv, 1, TU32,0x0f,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, 0x0f, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "protocol") == 0) {
 		NEXT_ARG();
 		tkey->off = 9;
-		res = parse_cmd(&argc, &argv, 1, TU32,RU8,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
 		goto done;
 	}
 	/* jamal - fix this */
 	if (matches(*argv, "precedence") == 0) {
 		NEXT_ARG();
 		tkey->off = 1;
-		res = parse_cmd(&argc, &argv, 1, TU32,RU8,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
 		goto done;
 	}
 	/* jamal - validate this at some point */
 	if (strcmp(*argv, "nofrag") == 0) {
 		NEXT_ARG();
 		tkey->off = 6;
-		res = parse_cmd(&argc, &argv, 1, TU32,0x3F,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, 0x3F, sel, tkey);
 		goto done;
 	}
 	/* jamal - validate this at some point */
 	if (strcmp(*argv, "firstfrag") == 0) {
 		NEXT_ARG();
 		tkey->off = 6;
-		res = parse_cmd(&argc, &argv, 1, TU32,0x1F,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, 0x1F, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "ce") == 0) {
 		NEXT_ARG();
 		tkey->off = 6;
-		res = parse_cmd(&argc, &argv, 1, TU32,0x80,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, 0x80, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "df") == 0) {
 		NEXT_ARG();
 		tkey->off = 6;
-		res = parse_cmd(&argc, &argv, 1, TU32,0x40,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, 0x40, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "mf") == 0) {
 		NEXT_ARG();
 		tkey->off = 6;
-		res = parse_cmd(&argc, &argv, 1, TU32,0x20,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, 0x20, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "dport") == 0) {
 		NEXT_ARG();
 		tkey->off = 22;
-		res = parse_cmd(&argc, &argv, 2, TU32,RU16,sel,tkey);
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "sport") == 0) {
 		NEXT_ARG();
 		tkey->off = 20;
-		res = parse_cmd(&argc, &argv, 2, TU32,RU16,sel,tkey);
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "icmp_type") == 0) {
 		NEXT_ARG();
 		tkey->off = 20;
-		res = parse_cmd(&argc, &argv, 1, TU32,RU8,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "icmp_code") == 0) {
 		NEXT_ARG();
 		tkey->off = 20;
-		res = parse_cmd(&argc, &argv, 1, TU32,RU8,sel,tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
 		goto done;
 	}
 	return -1;
 
-      done:
+done:
 	*argc_p = argc;
 	*argv_p = argv;
 	return res;
 }
 
 static int
-parse_ip6(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey)
+parse_ip6(int *argc_p, char ***argv_p, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 {
 	int res = -1;
 	return res;

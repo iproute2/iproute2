@@ -38,9 +38,9 @@ static void usage(void)
 	fprintf(stderr, "                [ peakrate BPS ] [ avrate BPS ] [ overhead BYTES ]\n");
 	fprintf(stderr, "                [ linklayer TYPE ] [ ACTIONTERM ]\n");
 
-	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT] \n");
-	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue \n");
-	fprintf(stderr, "Where:  pipe is only valid for new syntax \n");
+	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT]\n");
+	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue\n");
+	fprintf(stderr, "Where:  pipe is only valid for new syntax\n");
 	exit(-1);
 }
 
@@ -91,6 +91,7 @@ static int police_action_a2n(const char *arg, int *result)
 		res = TC_POLICE_PIPE;
 	else {
 		char dummy;
+
 		if (sscanf(arg, "%d%c", &res, &dummy) != 1)
 			return -1;
 	}
@@ -121,21 +122,21 @@ static int get_police_result(int *action, int *result, char *arg)
 }
 
 
-int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
+int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int res = -1;
-	int ok=0;
+	int ok = 0;
 	struct tc_police p;
 	__u32 rtab[256];
 	__u32 ptab[256];
 	__u32 avrate = 0;
 	int presult = 0;
-	unsigned buffer=0, mtu=0, mpu=0;
-	unsigned short overhead=0;
+	unsigned buffer = 0, mtu = 0, mpu = 0;
+	unsigned short overhead = 0;
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
-	int Rcell_log=-1, Pcell_log = -1;
+	int Rcell_log =  -1, Pcell_log = -1;
 	struct rtattr *tail;
 
 	memset(&p, 0, sizeof(p));
@@ -297,7 +298,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 	if (p.rate.rate)
 		addattr_l(n, MAX_MSG, TCA_POLICE_RATE, rtab, 1024);
 	if (p.peakrate.rate)
-                addattr_l(n, MAX_MSG, TCA_POLICE_PEAKRATE, ptab, 1024);
+		addattr_l(n, MAX_MSG, TCA_POLICE_PEAKRATE, ptab, 1024);
 	if (avrate)
 		addattr32(n, MAX_MSG, TCA_POLICE_AVRATE, avrate);
 	if (presult)
@@ -313,7 +314,7 @@ int act_parse_police(struct action_util *a,int *argc_p, char ***argv_p, int tca_
 
 int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
-	return act_parse_police(NULL,argc_p,argv_p,tca_id,n);
+	return act_parse_police(NULL, argc_p, argv_p, tca_id, n);
 }
 
 int
@@ -323,7 +324,7 @@ print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	SPRINT_BUF(b2);
 	struct tc_police *p;
 	struct rtattr *tb[TCA_POLICE_MAX+1];
-	unsigned buffer;
+	unsigned int buffer;
 	unsigned int linklayer;
 
 	if (arg == NULL)
@@ -356,19 +357,19 @@ print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 		fprintf(f, "avrate %s ", sprint_rate(rta_getattr_u32(tb[TCA_POLICE_AVRATE]), b1));
 	fprintf(f, "action %s", police_action_n2a(p->action, b1, sizeof(b1)));
 	if (tb[TCA_POLICE_RESULT]) {
-		fprintf(f, "/%s ", police_action_n2a(*(int*)RTA_DATA(tb[TCA_POLICE_RESULT]), b1, sizeof(b1)));
+		fprintf(f, "/%s ", police_action_n2a(*(int *)RTA_DATA(tb[TCA_POLICE_RESULT]), b1, sizeof(b1)));
 	} else
 		fprintf(f, " ");
 	fprintf(f, "overhead %ub ", p->rate.overhead);
 	linklayer = (p->rate.linklayer & TC_LINKLAYER_MASK);
 	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
 		fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b2));
-	fprintf(f, "\nref %d bind %d\n",p->refcnt, p->bindcnt);
+	fprintf(f, "\nref %d bind %d\n", p->refcnt, p->bindcnt);
 
 	return 0;
 }
 
 int
 tc_print_police(FILE *f, struct rtattr *arg) {
-	return print_police(&police_action_util,f,arg);
+	return print_police(&police_action_util, f, arg);
 }

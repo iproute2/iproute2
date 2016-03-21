@@ -30,8 +30,9 @@ static void explain(void)
 
 static int fifo_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-	int ok=0;
+	int ok = 0;
 	struct tc_fifo_qopt opt;
+
 	memset(&opt, 0, sizeof(opt));
 
 	while (argc > 0) {

@@ -24,8 +24,7 @@ explain(void)
 {
 	fprintf(stderr, "Usage: ... csum <UPDATE>\n"
 			"Where: UPDATE := <TARGET> [<UPDATE>]\n"
-			"       TARGET := { ip4h | icmp | igmp |"
-				" tcp | udp | udplite | <SWEETS> }\n"
+			"       TARGET := { ip4h | icmp | igmp | tcp | udp | udplite | <SWEETS> }\n"
 			"       SWEETS := { and | or | \'+\' }\n");
 }
 
@@ -45,7 +44,7 @@ parse_csum_args(int *argc_p, char ***argv_p, struct tc_csum *sel)
 	if (argc <= 0)
 		return -1;
 
-	while(argc > 0) {
+	while (argc > 0) {
 		if ((matches(*argv, "iph") == 0) ||
 		    (matches(*argv, "ip4h") == 0) ||
 		    (matches(*argv, "ipv4h") == 0))
@@ -108,8 +107,7 @@ parse_csum(struct action_util *a, int *argc_p,
 			continue;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
-		}
-		else {
+		} else {
 			break;
 		}
 	}
@@ -174,7 +172,7 @@ parse_csum(struct action_util *a, int *argc_p,
 }
 
 static int
-print_csum(struct action_util *au, FILE * f, struct rtattr *arg)
+print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_csum *sel;
 
@@ -186,6 +184,7 @@ print_csum(struct action_util *au, FILE * f, struct rtattr *arg)
 	char *uflag_4 = "";
 	char *uflag_5 = "";
 	char *uflag_6 = "";
+
 	SPRINT_BUF(action_buf);
 
 	int uflag_count = 0;
@@ -212,7 +211,7 @@ print_csum(struct action_util *au, FILE * f, struct rtattr *arg)
 					", " flag_string : flag_string; \
 				uflag_count++;				\
 			}						\
-		} while(0)
+		} while (0)
 	CSUM_UFLAG_BUFFER(uflag_2, TCA_CSUM_UPDATE_FLAG_ICMP, "icmp");
 	CSUM_UFLAG_BUFFER(uflag_3, TCA_CSUM_UPDATE_FLAG_IGMP, "igmp");
 	CSUM_UFLAG_BUFFER(uflag_4, TCA_CSUM_UPDATE_FLAG_TCP, "tcp");
@@ -231,7 +230,8 @@ print_csum(struct action_util *au, FILE * f, struct rtattr *arg)
 	if (show_stats) {
 		if (tb[TCA_CSUM_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_CSUM_TM]);
-			print_tm(f,tm);
+
+			print_tm(f, tm);
 		}
 	}
 	fprintf(f, "\n");

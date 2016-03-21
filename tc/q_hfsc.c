@@ -144,7 +144,7 @@ hfsc_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
 
 static int
 hfsc_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
-                     struct nlmsghdr *n)
+		     struct nlmsghdr *n)
 {
 	struct tc_service_curve rsc, fsc, usc;
 	int rsc_ok, fsc_ok, usc_ok;
@@ -203,8 +203,7 @@ hfsc_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 	if (usc_ok && !fsc_ok) {
-		fprintf(stderr, "HFSC: Upper-limit Service Curve without "
-		                "Link-Share Service Curve\n");
+		fprintf(stderr, "HFSC: Upper-limit Service Curve without Link-Share Service Curve\n");
 		explain_class();
 		return -1;
 	}

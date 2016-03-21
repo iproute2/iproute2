@@ -158,8 +158,7 @@ static int sfb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	fprintf(f,
 		"limit %d max %d target %d\n"
-		"  increment %.5f decrement %.5f penalty rate %d burst %d "
-		"(%ums %ums)",
+		"  increment %.5f decrement %.5f penalty rate %d burst %d (%ums %ums)",
 		qopt->limit, qopt->max, qopt->bin_size,
 		(double)qopt->increment / SFB_MAX_PROB,
 		(double)qopt->decrement / SFB_MAX_PROB,

@@ -55,12 +55,12 @@ static void usage(void)
 	return;
 }
 
-static int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
+static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct tcmsg 		t;
-		char   			buf[4096];
+		struct nlmsghdr	n;
+		struct tcmsg		t;
+		char			buf[4096];
 	} req;
 	struct qdisc_util *q = NULL;
 	struct tc_estimator est;
@@ -85,6 +85,7 @@ static int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 			strncpy(d, *argv, sizeof(d)-1);
 		} else if (strcmp(*argv, "classid") == 0) {
 			__u32 handle;
+
 			NEXT_ARG();
 			if (req.t.tcm_handle)
 				duparg("classid", *argv);
@@ -102,6 +103,7 @@ static int tc_class_modify(int cmd, unsigned flags, int argc, char **argv)
 			req.t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "parent") == 0) {
 			__u32 handle;
+
 			NEXT_ARG();
 			if (req.t.tcm_parent)
 				duparg("parent", *argv);
@@ -305,7 +307,7 @@ static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
 int print_class(const struct sockaddr_nl *who,
 		       struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[TCA_MAX + 1] = {};
@@ -430,6 +432,7 @@ static int tc_class_list(int argc, char **argv)
 			t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "parent") == 0) {
 			__u32 handle;
+
 			if (t.tcm_parent)
 				duparg("parent", *argv);
 			NEXT_ARG();

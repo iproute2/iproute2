@@ -28,14 +28,14 @@ static void explain(void)
 	fprintf(stderr, "                  [ action ACTION-SPEC ] [ classid CLASSID ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: MATCH-LIST := [ MATCH-LIST ] MATCH\n");
-	fprintf(stderr, "       MATCH      := { indev DEV-NAME | \n");
-	fprintf(stderr, "                       dst_mac MAC-ADDR | \n");
-	fprintf(stderr, "                       src_mac MAC-ADDR | \n");
-	fprintf(stderr, "                       [ipv4 | ipv6 ] | \n");
-	fprintf(stderr, "                       ip_proto [tcp | udp | IP-PROTO ] | \n");
-	fprintf(stderr, "                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] | \n");
-	fprintf(stderr, "                       src_ip [ IPV4-ADDR | IPV6-ADDR ] | \n");
-	fprintf(stderr, "                       dst_port PORT-NUMBER | \n");
+	fprintf(stderr, "       MATCH      := { indev DEV-NAME |\n");
+	fprintf(stderr, "                       dst_mac MAC-ADDR |\n");
+	fprintf(stderr, "                       src_mac MAC-ADDR |\n");
+	fprintf(stderr, "                       [ipv4 | ipv6 ] |\n");
+	fprintf(stderr, "                       ip_proto [tcp | udp | IP-PROTO ] |\n");
+	fprintf(stderr, "                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n");
+	fprintf(stderr, "                       src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n");
+	fprintf(stderr, "                       dst_port PORT-NUMBER |\n");
 	fprintf(stderr, "                       src_port PORT-NUMBER }\n");
 	fprintf(stderr,	"       FILTERID := X:Y:Z\n");
 	fprintf(stderr,	"       ACTION-SPEC := ... look at individual actions\n");
@@ -187,7 +187,7 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 	while (argc > 0) {
 		if (matches(*argv, "classid") == 0 ||
 		    matches(*argv, "flowid") == 0) {
-			unsigned handle;
+			unsigned int handle;
 
 			NEXT_ARG();
 			ret = get_tc_classid(&handle, *argv);
@@ -301,7 +301,7 @@ parse_done:
 		return -1;
 	}
 
-	tail->rta_len = (((void*)n)+n->nlmsg_len) - (void*)tail;
+	tail->rta_len = (((void *)n)+n->nlmsg_len) - (void *)tail;
 
 	return 0;
 }

@@ -43,6 +43,7 @@ static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **a
 
 	if (handle) {
 		char *slash;
+
 		if ((slash = strchr(handle, '/')) != NULL)
 			*slash = '\0';
 		if (get_u32(&t->tcm_handle, handle, 0)) {
@@ -70,7 +71,8 @@ static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **a
 	while (argc > 0) {
 		if (matches(*argv, "classid") == 0 ||
 		    matches(*argv, "flowid") == 0) {
-			unsigned handle;
+			unsigned int handle;
+
 			NEXT_ARG();
 			if (get_tc_classid(&handle, *argv)) {
 				fprintf(stderr, "Illegal \"classid\"\n");
@@ -93,14 +95,15 @@ static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **a
 			continue;
 		} else if (strcmp(*argv, "indev") == 0) {
 			char d[IFNAMSIZ+1];
-			memset(d, 0, sizeof (d));
+
+			memset(d, 0, sizeof(d));
 			argc--;
 			argv++;
 			if (argc < 1) {
 				fprintf(stderr, "Illegal indev\n");
 				return -1;
 			}
-			strncpy(d, *argv, sizeof (d) - 1);
+			strncpy(d, *argv, sizeof(d) - 1);
 			addattr_l(n, MAX_MSG, TCA_FW_INDEV, d, strlen(d) + 1);
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
@@ -127,9 +130,10 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 
 	if (handle || tb[TCA_FW_MASK]) {
 		__u32 mark = 0, mask = 0;
-		if(handle)
+
+		if (handle)
 			mark = handle;
-		if(tb[TCA_FW_MASK] &&
+		if (tb[TCA_FW_MASK] &&
 		    (mask = rta_getattr_u32(tb[TCA_FW_MASK])) != 0xFFFFFFFF)
 			fprintf(f, "handle 0x%x/0x%x ", mark, mask);
 		else
@@ -145,7 +149,8 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 		tc_print_police(f, tb[TCA_FW_POLICE]);
 	if (tb[TCA_FW_INDEV]) {
 		struct rtattr *idev = tb[TCA_FW_INDEV];
-		fprintf(f, "input dev %s ",rta_getattr_str(idev));
+
+		fprintf(f, "input dev %s ", rta_getattr_str(idev));
 	}
 
 	if (tb[TCA_FW_ACT]) {

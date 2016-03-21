@@ -38,13 +38,13 @@ static void explain1(const char *arg, const char *val)
 
 static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-	int ok=0;
+	int ok = 0;
 	struct tc_tbf_qopt opt;
 	__u32 rtab[256];
 	__u32 ptab[256];
-	unsigned buffer=0, mtu=0, mpu=0, latency=0;
-	int Rcell_log=-1, Pcell_log = -1;
-	unsigned short overhead=0;
+	unsigned buffer = 0, mtu = 0, mpu = 0, latency = 0;
+	int Rcell_log =  -1, Pcell_log = -1;
+	unsigned short overhead = 0;
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 	__u64 rate64 = 0, prate64 = 0;
@@ -86,6 +86,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 			strcmp(*argv, "buffer") == 0 ||
 			strcmp(*argv, "maxburst") == 0) {
 			const char *parm_name = *argv;
+
 			NEXT_ARG();
 			if (buffer) {
 				fprintf(stderr, "tbf: duplicate \"buffer/burst/maxburst\" specification\n");
@@ -99,6 +100,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		} else if (strcmp(*argv, "mtu") == 0 ||
 			   strcmp(*argv, "minburst") == 0) {
 			const char *parm_name = *argv;
+
 			NEXT_ARG();
 			if (mtu) {
 				fprintf(stderr, "tbf: duplicate \"mtu/minburst\" specification\n");
@@ -167,12 +169,12 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		argc--; argv++;
 	}
 
-        int verdict = 0;
+	int verdict = 0;
 
-        /* Be nice to the user: try to emit all error messages in
-         * one go rather than reveal one more problem when a
-         * previous one has been fixed.
-         */
+	/* Be nice to the user: try to emit all error messages in
+	 * one go rather than reveal one more problem when a
+	 * previous one has been fixed.
+	 */
 	if (rate64 == 0) {
 		fprintf(stderr, "tbf: the \"rate\" parameter is mandatory.\n");
 		verdict = -1;
@@ -193,18 +195,20 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		verdict = -1;
 	}
 
-        if (verdict != 0) {
-                explain();
-                return verdict;
-        }
+	if (verdict != 0) {
+		explain();
+		return verdict;
+	}
 
 	opt.rate.rate = (rate64 >= (1ULL << 32)) ? ~0U : rate64;
 	opt.peakrate.rate = (prate64 >= (1ULL << 32)) ? ~0U : prate64;
 
 	if (opt.limit == 0) {
 		double lim = rate64*(double)latency/TIME_UNITS_PER_SEC + buffer;
+
 		if (prate64) {
 			double lim2 = prate64*(double)latency/TIME_UNITS_PER_SEC + mtu;
+
 			if (lim2 < lim)
 				lim = lim2;
 		}
@@ -254,6 +258,7 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	double buffer, mtu;
 	double latency;
 	__u64 rate64 = 0, prate64 = 0;
+
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 	SPRINT_BUF(b3);
@@ -305,6 +310,7 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	latency = TIME_UNITS_PER_SEC*(qopt->limit/(double)rate64) - tc_core_tick2time(qopt->buffer);
 	if (prate64) {
 		double lat2 = TIME_UNITS_PER_SEC*(qopt->limit/(double)prate64) - tc_core_tick2time(qopt->mtu);
+
 		if (lat2 > latency)
 			latency = lat2;
 	}

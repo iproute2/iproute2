@@ -49,7 +49,7 @@ static int cmp_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 	memset(&cmp, 0, sizeof(cmp));
 
 #define PARSE_ERR(CARG, FMT, ARGS...) \
-	em_parse_error(EINVAL, args, CARG, &cmp_ematch_util, FMT ,##ARGS)
+	em_parse_error(EINVAL, args, CARG, &cmp_ematch_util, FMT, ##ARGS)
 
 	if (args == NULL)
 		return PARSE_ERR(args, "cmp: missing arguments");

@@ -41,12 +41,12 @@ static void usage(void)
 	fprintf(stderr, "OPTIONS := ... try tc filter add <desired FILTER_KIND> help\n");
 }
 
-static int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
+static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct tcmsg 		t;
-		char   			buf[MAX_MSG];
+		struct nlmsghdr	n;
+		struct tcmsg		t;
+		char			buf[MAX_MSG];
 	} req;
 	struct filter_util *q = NULL;
 	__u32 prio = 0;
@@ -99,6 +99,7 @@ static int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 						     TC_H_MIN_EGRESS);
 		} else if (strcmp(*argv, "parent") == 0) {
 			__u32 handle;
+
 			NEXT_ARG();
 			if (req.t.tcm_parent)
 				duparg("parent", *argv);
@@ -119,6 +120,7 @@ static int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 				invarg("invalid priority value", *argv);
 		} else if (matches(*argv, "protocol") == 0) {
 			__u16 id;
+
 			NEXT_ARG();
 			if (protocol_set)
 				duparg("protocol", *argv);
@@ -153,8 +155,7 @@ static int tc_filter_modify(int cmd, unsigned flags, int argc, char **argv)
 			return 1;
 	} else {
 		if (fhandle) {
-			fprintf(stderr, "Must specify filter type when using "
-				"\"handle\"\n");
+			fprintf(stderr, "Must specify filter type when using \"handle\"\n");
 			return -1;
 		}
 		if (argc) {
@@ -189,16 +190,16 @@ static __u32 filter_parent;
 static int filter_ifindex;
 static __u32 filter_prio;
 static __u32 filter_protocol;
-__u16 f_proto = 0;
+__u16 f_proto;
 
 int print_filter(const struct sockaddr_nl *who,
 			struct nlmsghdr *n,
 			void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[TCA_MAX+1];
+	struct rtattr *tb[TCA_MAX+1];
 	struct filter_util *q;
 	char abuf[256];
 
@@ -243,6 +244,7 @@ int print_filter(const struct sockaddr_nl *who,
 	if (t->tcm_info) {
 		f_proto = TC_H_MIN(t->tcm_info);
 		__u32 prio = TC_H_MAJ(t->tcm_info)>>16;
+
 		if (!filter_protocol || filter_protocol != f_proto) {
 			if (f_proto) {
 				SPRINT_BUF(b1);
@@ -316,6 +318,7 @@ static int tc_filter_list(int argc, char **argv)
 			t.tcm_parent = filter_parent;
 		} else if (strcmp(*argv, "parent") == 0) {
 			__u32 handle;
+
 			NEXT_ARG();
 			if (t.tcm_parent)
 				duparg("parent", *argv);
@@ -337,6 +340,7 @@ static int tc_filter_list(int argc, char **argv)
 			filter_prio = prio;
 		} else if (matches(*argv, "protocol") == 0) {
 			__u16 res;
+
 			NEXT_ARG();
 			if (protocol)
 				duparg("protocol", *argv);
@@ -401,7 +405,7 @@ int do_filter(int argc, char **argv)
 	if (matches(*argv, "help") == 0) {
 		usage();
 		return 0;
-        }
+	}
 	fprintf(stderr, "Command \"%s\" is unknown, try \"tc filter help\".\n", *argv);
 	return -1;
 }

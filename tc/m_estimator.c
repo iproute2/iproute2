@@ -38,7 +38,7 @@ int parse_estimator(int *p_argc, char ***p_argv, struct tc_estimator *est)
 {
 	int argc = *p_argc;
 	char **argv = *p_argv;
-	unsigned A, time_const;
+	unsigned int A, time_const;
 
 	NEXT_ARG();
 	if (est->ewma_log)

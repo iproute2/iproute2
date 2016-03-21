@@ -136,8 +136,9 @@ static int pie_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	unsigned int target;
 	unsigned int alpha;
 	unsigned int beta;
-	unsigned ecn;
-	unsigned bytemode;
+	unsigned int ecn;
+	unsigned int bytemode;
+
 	SPRINT_BUF(b1);
 
 	if (opt == NULL)

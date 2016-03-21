@@ -44,7 +44,7 @@
 #endif
 
 #ifndef ALIGN
-#define ALIGN(x,a)	__ALIGN_KERNEL((x), (a))
+#define ALIGN(x, a)	__ALIGN_KERNEL((x), (a))
 #endif
 
 static const char *tname = "mangle";
@@ -85,9 +85,9 @@ build_st(struct xtables_target *target, struct xt_entry_target *t)
 {
 
 	size_t size =
-		    XT_ALIGN(sizeof (struct xt_entry_target)) + target->size;
+		    XT_ALIGN(sizeof(struct xt_entry_target)) + target->size;
 
-	if (NULL == t) {
+	if (t == NULL) {
 		target->t = xtables_calloc(1, size);
 		target->t->u.target_size = size;
 		strcpy(target->t->u.user.name, target->name);
@@ -109,14 +109,14 @@ static void set_lib_dir(void)
 	if (!lib_dir) {
 		lib_dir = getenv("IPTABLES_LIB_DIR");
 		if (lib_dir)
-			fprintf(stderr, "using deprecated IPTABLES_LIB_DIR \n");
+			fprintf(stderr, "using deprecated IPTABLES_LIB_DIR\n");
 	}
 	if (lib_dir == NULL)
 		lib_dir = XT_LIB_DIR;
 
 }
 
-static int parse_ipt(struct action_util *a,int *argc_p,
+static int parse_ipt(struct action_util *a, int *argc_p,
 		     char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	struct xtables_target *m = NULL;
@@ -138,6 +138,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 
 	{
 		int i;
+
 		for (i = 0; i < rargc; i++) {
 			if (NULL == argv[i] || 0 == strcmp(argv[i], "action")) {
 				break;
@@ -147,7 +148,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	if (argc <= 2) {
-		fprintf(stderr,"bad arguments to ipt %d vs %d \n", argc, rargc);
+		fprintf(stderr, "bad arguments to ipt %d vs %d\n", argc, rargc);
 		return -1;
 	}
 
@@ -158,10 +159,10 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 		switch (c) {
 		case 'j':
 			m = xtables_find_target(optarg, XTF_TRY_LOAD);
-			if (NULL != m) {
+			if (m != NULL) {
 
-				if (0 > build_st(m, NULL)) {
-					printf(" %s error \n", m->name);
+				if (build_st(m, NULL) < 0) {
+					printf(" %s error\n", m->name);
 					return -1;
 				}
 #if (XTABLES_VERSION_CODE >= 6)
@@ -180,24 +181,24 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 			} else
 				tcipt_globals.opts = opts;
 			} else {
-				fprintf(stderr," failed to find target %s\n\n", optarg);
+				fprintf(stderr, " failed to find target %s\n\n", optarg);
 				return -1;
 			}
 			ok++;
 			break;
 
 		default:
-			memset(&fw, 0, sizeof (fw));
+			memset(&fw, 0, sizeof(fw));
 #if (XTABLES_VERSION_CODE >= 6)
-		if (m != NULL && m->x6_parse != NULL ) {
-			xtables_option_tpcall(c, argv, 0 , m, NULL);
+		if (m != NULL && m->x6_parse != NULL) {
+			xtables_option_tpcall(c, argv, 0, m, NULL);
 #else
-		if (m != NULL && m->parse != NULL ) {
+		if (m != NULL && m->parse != NULL) {
 			m->parse(c - m->option_offset, argv, 0, &m->tflags,
 				 NULL, &m->t);
 #endif
 			} else {
-				fprintf(stderr,"failed to find target %s\n\n", optarg);
+				fprintf(stderr, "failed to find target %s\n\n", optarg);
 				return -1;
 
 			}
@@ -220,7 +221,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 	}
 
 	if (!ok && !iok) {
-		fprintf(stderr," ipt Parser BAD!! (%s)\n", *argv);
+		fprintf(stderr, " ipt Parser BAD!! (%s)\n", *argv);
 		return -1;
 	}
 
@@ -235,6 +236,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 
 	{
 		struct tcmsg *t = NLMSG_DATA(n);
+
 		if (t->tcm_parent != TC_H_ROOT
 		    && t->tcm_parent == TC_H_MAJ(TC_H_INGRESS)) {
 			hook = NF_IP_PRE_ROUTING;
@@ -289,7 +291,7 @@ static int parse_ipt(struct action_util *a,int *argc_p,
 }
 
 static int
-print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
+print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_IPT_MAX + 1];
 	struct xt_entry_target *t = NULL;
@@ -318,20 +320,22 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 		return -1;
 	} else {
 		__u32 hook;
+
 		hook = rta_getattr_u32(tb[TCA_IPT_HOOK]);
-		fprintf(f, " hook: %s \n", ipthooks[hook]);
+		fprintf(f, " hook: %s\n", ipthooks[hook]);
 	}
 
 	if (tb[TCA_IPT_TARG] == NULL) {
-		fprintf(f, "\t[NULL ipt target parameters ] \n");
+		fprintf(f, "\t[NULL ipt target parameters ]\n");
 		return -1;
 	} else {
 		struct xtables_target *m = NULL;
+
 		t = RTA_DATA(tb[TCA_IPT_TARG]);
 		m = xtables_find_target(t->u.user.name, XTF_TRY_LOAD);
-		if (NULL != m) {
-			if (0 > build_st(m, t)) {
-				fprintf(stderr, " %s error \n", m->name);
+		if (m != NULL) {
+			if (build_st(m, t) < 0) {
+				fprintf(stderr, " %s error\n", m->name);
 				return -1;
 			}
 
@@ -361,21 +365,24 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 			fprintf(f, " [NULL ipt target index ]\n");
 		} else {
 			__u32 index;
+
 			index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
-			fprintf(f, " \n\tindex %d", index);
+			fprintf(f, "\n\tindex %d", index);
 		}
 
 		if (tb[TCA_IPT_CNT]) {
-			struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);;
+			struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);
+
 			fprintf(f, " ref %d bind %d", c->refcnt, c->bindcnt);
 		}
 		if (show_stats) {
 			if (tb[TCA_IPT_TM]) {
 				struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
-				print_tm(f,tm);
+
+				print_tm(f, tm);
 			}
 		}
-		fprintf(f, " \n");
+		fprintf(f, "\n");
 
 	}
 	xtables_free_opts(1);
@@ -384,7 +391,7 @@ print_ipt(struct action_util *au,FILE * f, struct rtattr *arg)
 }
 
 struct action_util xt_action_util = {
-        .id = "xt",
-        .parse_aopt = parse_ipt,
-        .print_aopt = print_ipt,
+	.id = "xt",
+	.parse_aopt = parse_ipt,
+	.print_aopt = print_ipt,
 };

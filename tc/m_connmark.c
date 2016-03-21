@@ -151,6 +151,7 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (show_stats) {
 		if (tb[TCA_CONNMARK_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_CONNMARK_TM]);
+
 			print_tm(f, tm);
 		}
 	}

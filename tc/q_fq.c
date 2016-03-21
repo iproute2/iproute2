@@ -218,6 +218,7 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	unsigned int rate, quantum;
 	unsigned int refill_delay;
 	unsigned int orphan_mask;
+
 	SPRINT_BUF(b1);
 
 	if (opt == NULL)

@@ -27,7 +27,7 @@
 static double tick_in_usec = 1;
 static double clock_factor = 1;
 
-int tc_core_time2big(unsigned time)
+int tc_core_time2big(unsigned int time)
 {
 	__u64 t = time;
 
@@ -36,32 +36,32 @@ int tc_core_time2big(unsigned time)
 }
 
 
-unsigned tc_core_time2tick(unsigned time)
+unsigned int tc_core_time2tick(unsigned int time)
 {
 	return time*tick_in_usec;
 }
 
-unsigned tc_core_tick2time(unsigned tick)
+unsigned int tc_core_tick2time(unsigned int tick)
 {
 	return tick/tick_in_usec;
 }
 
-unsigned tc_core_time2ktime(unsigned time)
+unsigned int tc_core_time2ktime(unsigned int time)
 {
 	return time * clock_factor;
 }
 
-unsigned tc_core_ktime2time(unsigned ktime)
+unsigned int tc_core_ktime2time(unsigned int ktime)
 {
 	return ktime / clock_factor;
 }
 
-unsigned tc_calc_xmittime(__u64 rate, unsigned size)
+unsigned int tc_calc_xmittime(__u64 rate, unsigned int size)
 {
 	return tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/(double)rate));
 }
 
-unsigned tc_calc_xmitsize(__u64 rate, unsigned ticks)
+unsigned int tc_calc_xmitsize(__u64 rate, unsigned int ticks)
 {
 	return ((double)rate*tc_core_tick2time(ticks))/TIME_UNITS_PER_SEC;
 }
@@ -76,9 +76,10 @@ unsigned tc_calc_xmitsize(__u64 rate, unsigned ticks)
  * (as the table will always be aligned for 48 bytes).
  *  --Hawk, d.7/11-2004. <hawk@diku.dk>
  */
-static unsigned tc_align_to_atm(unsigned size)
+static unsigned int tc_align_to_atm(unsigned int size)
 {
 	int linksize, cells;
+
 	cells = size / ATM_CELL_PAYLOAD;
 	if ((size % ATM_CELL_PAYLOAD) > 0)
 		cells++;
@@ -87,7 +88,7 @@ static unsigned tc_align_to_atm(unsigned size)
 	return linksize;
 }
 
-static unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linklayer)
+static unsigned int tc_adjust_size(unsigned int sz, unsigned int mpu, enum link_layer linklayer)
 {
 	if (sz < mpu)
 		sz = mpu;
@@ -97,7 +98,7 @@ static unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linkla
 		return tc_align_to_atm(sz);
 	case LINKLAYER_ETHERNET:
 	default:
-		// No size adjustments on Ethernet
+		/* No size adjustments on Ethernet */
 		return sz;
 	}
 }
@@ -122,13 +123,13 @@ static unsigned tc_adjust_size(unsigned sz, unsigned mpu, enum link_layer linkla
  */
 
 int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
-		   int cell_log, unsigned mtu,
+		   int cell_log, unsigned int mtu,
 		   enum link_layer linklayer)
 {
 	int i;
-	unsigned sz;
-	unsigned bps = r->rate;
-	unsigned mpu = r->mpu;
+	unsigned int sz;
+	unsigned int bps = r->rate;
+	unsigned int mpu = r->mpu;
 
 	if (mtu == 0)
 		mtu = 2047;
@@ -139,13 +140,13 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
 			cell_log++;
 	}
 
-	for (i=0; i<256; i++) {
+	for (i = 0; i < 256; i++) {
 		sz = tc_adjust_size((i + 1) << cell_log, mpu, linklayer);
 		rtab[i] = tc_calc_xmittime(bps, sz);
 	}
 
-	r->cell_align=-1; // Due to the sz calc
-	r->cell_log=cell_log;
+	r->cell_align =  -1; 
+	r->cell_log = cell_log;
 	r->linklayer = (linklayer & TC_LINKLAYER_MASK);
 	return cell_log;
 }
@@ -193,7 +194,7 @@ again:
 		(*stab)[i] = sz >> s->size_log;
 	}
 
-	s->cell_align = -1; // Due to the sz calc
+	s->cell_align = -1; /* Due to the sz calc */
 	return 0;
 }
 
