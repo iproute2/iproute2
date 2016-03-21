@@ -23,13 +23,11 @@ static void print_usage(FILE *f)
 {
 	fprintf(f,
 		"Usage: ip link set DEVICE type can\n"
-		"\t[ bitrate BITRATE [ sample-point SAMPLE-POINT] ] | \n"
-		"\t[ tq TQ prop-seg PROP_SEG phase-seg1 PHASE-SEG1\n "
-		"\t  phase-seg2 PHASE-SEG2 [ sjw SJW ] ]\n"
+		"\t[ bitrate BITRATE [ sample-point SAMPLE-POINT] ] |\n"
+		"\t[ tq TQ prop-seg PROP_SEG phase-seg1 PHASE-SEG1\n \t  phase-seg2 PHASE-SEG2 [ sjw SJW ] ]\n"
 		"\n"
-		"\t[ dbitrate BITRATE [ dsample-point SAMPLE-POINT] ] | \n"
-		"\t[ dtq TQ dprop-seg PROP_SEG dphase-seg1 PHASE-SEG1\n "
-		"\t  dphase-seg2 PHASE-SEG2 [ dsjw SJW ] ]\n"
+		"\t[ dbitrate BITRATE [ dsample-point SAMPLE-POINT] ] |\n"
+		"\t[ dtq TQ dprop-seg PROP_SEG dphase-seg1 PHASE-SEG1\n \t  dphase-seg2 PHASE-SEG2 [ dsjw SJW ] ]\n"
 		"\n"
 		"\t[ loopback { on | off } ]\n"
 		"\t[ listen-only { on | off } ]\n"
@@ -73,7 +71,7 @@ static int get_float(float *val, const char *arg)
 	return 0;
 }
 
-static void set_ctrlmode(char* name, char *arg,
+static void set_ctrlmode(char *name, char *arg,
 			 struct can_ctrlmode *cm, __u32 flags)
 {
 	if (strcmp(arg, "on") == 0) {
@@ -289,11 +287,9 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_CAN_BITTIMING]) {
 		struct can_bittiming *bt = RTA_DATA(tb[IFLA_CAN_BITTIMING]);
 
-		fprintf(f, "\n	  "
-			"bitrate %d sample-point %.3f ",
+		fprintf(f, "\n	  bitrate %d sample-point %.3f ",
 			bt->bitrate, (float)bt->sample_point / 1000.);
-		fprintf(f, "\n	  "
-			"tq %d prop-seg %d phase-seg1 %d phase-seg2 %d sjw %d",
+		fprintf(f, "\n	  tq %d prop-seg %d phase-seg1 %d phase-seg2 %d sjw %d",
 			bt->tq, bt->prop_seg, bt->phase_seg1, bt->phase_seg2,
 			bt->sjw);
 	}
@@ -302,8 +298,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		struct can_bittiming_const *btc =
 			RTA_DATA(tb[IFLA_CAN_BITTIMING_CONST]);
 
-		fprintf(f, "\n	  "
-			"%s: tseg1 %d..%d tseg2 %d..%d "
+		fprintf(f, "\n	  %s: tseg1 %d..%d tseg2 %d..%d "
 			"sjw 1..%d brp %d..%d brp-inc %d",
 			btc->name, btc->tseg1_min, btc->tseg1_max,
 			btc->tseg2_min, btc->tseg2_max, btc->sjw_max,
@@ -314,11 +309,9 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		struct can_bittiming *dbt =
 			RTA_DATA(tb[IFLA_CAN_DATA_BITTIMING]);
 
-		fprintf(f, "\n	  "
-			"dbitrate %d dsample-point %.3f ",
+		fprintf(f, "\n	  dbitrate %d dsample-point %.3f ",
 			dbt->bitrate, (float)dbt->sample_point / 1000.);
-		fprintf(f, "\n	  "
-			"dtq %d dprop-seg %d dphase-seg1 %d "
+		fprintf(f, "\n	  dtq %d dprop-seg %d dphase-seg1 %d "
 			"dphase-seg2 %d dsjw %d",
 			dbt->tq, dbt->prop_seg, dbt->phase_seg1,
 			dbt->phase_seg2, dbt->sjw);
@@ -328,8 +321,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		struct can_bittiming_const *dbtc =
 			RTA_DATA(tb[IFLA_CAN_DATA_BITTIMING_CONST]);
 
-		fprintf(f, "\n	  "
-			"%s: dtseg1 %d..%d dtseg2 %d..%d "
+		fprintf(f, "\n	  %s: dtseg1 %d..%d dtseg2 %d..%d "
 			"dsjw 1..%d dbrp %d..%d dbrp-inc %d",
 			dbtc->name, dbtc->tseg1_min, dbtc->tseg1_max,
 			dbtc->tseg2_min, dbtc->tseg2_max, dbtc->sjw_max,
@@ -351,8 +343,7 @@ static void can_print_xstats(struct link_util *lu,
 
 	if (xstats && RTA_PAYLOAD(xstats) == sizeof(*stats)) {
 		stats = RTA_DATA(xstats);
-		fprintf(f, "\n	  "
-			"re-started bus-errors arbit-lost "
+		fprintf(f, "\n	  re-started bus-errors arbit-lost "
 			"error-warn error-pass bus-off");
 		fprintf(f, "\n	  %-10d %-10d %-10d %-10d %-10d %-10d",
 			stats->restarts, stats->bus_error,

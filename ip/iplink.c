@@ -358,6 +358,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 
 		} else if (matches(*argv, "trust") == 0) {
 			struct ifla_vf_trust ivt;
+
 			NEXT_ARG();
 			if (matches(*argv, "on") == 0)
 				ivt.setting = 1;
@@ -712,14 +713,12 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 					&group, sizeof(group));
 		else {
 			if (argc) {
-				fprintf(stderr, "Garbage instead of arguments "
-						"\"%s ...\". Try \"ip link "
+				fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"ip link "
 						"help\".\n", *argv);
 				return -1;
 			}
 			if (flags & NLM_F_CREATE) {
-				fprintf(stderr, "group cannot be used when "
-						"creating devices.\n");
+				fprintf(stderr, "group cannot be used when creating devices.\n");
 				return -1;
 			}
 
@@ -733,13 +732,11 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (!(flags & NLM_F_CREATE)) {
 		if (!dev) {
-			fprintf(stderr, "Not enough information: \"dev\" "
-					"argument is required.\n");
+			fprintf(stderr, "Not enough information: \"dev\" argument is required.\n");
 			exit(-1);
 		}
 		if (cmd == RTM_NEWLINK && index != -1) {
-			fprintf(stderr, "index can be used only when "
-					"creating devices.\n");
+			fprintf(stderr, "index can be used only when creating devices.\n");
 			exit(-1);
 		}
 
@@ -813,14 +810,13 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		} else if (argc) {
 			if (matches(*argv, "help") == 0)
 				usage();
-			fprintf(stderr, "Garbage instead of arguments \"%s ...\". "
-					"Try \"ip link help\".\n", *argv);
+			fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"ip link help\".\n",
+					*argv);
 			return -1;
 		}
 		addattr_nest_end(&req.n, linkinfo);
 	} else if (flags & NLM_F_CREATE) {
-		fprintf(stderr, "Not enough information: \"type\" argument "
-				"is required\n");
+		fprintf(stderr, "Not enough information: \"type\" argument is required\n");
 		return -1;
 	}
 

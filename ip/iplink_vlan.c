@@ -21,8 +21,7 @@
 static void print_explain(FILE *f)
 {
 	fprintf(f,
-		"Usage: ... vlan [ protocol VLANPROTO ] id VLANID"
-		"                [ FLAG-LIST ]\n"
+		"Usage: ... vlan [ protocol VLANPROTO ] id VLANID                [ FLAG-LIST ]\n"
 		"                [ ingress-qos-map QOS-MAP ] [ egress-qos-map QOS-MAP ]\n"
 		"\n"
 		"VLANPROTO: [ 802.1Q / 802.1ad ]\n"
@@ -182,7 +181,7 @@ static void vlan_print_flags(FILE *fp, __u32 flags)
 {
 	fprintf(fp, "<");
 #define _PF(f)	if (flags & VLAN_FLAG_##f) { \
-			flags &= ~ VLAN_FLAG_##f; \
+			flags &= ~VLAN_FLAG_##f; \
 			fprintf(fp, #f "%s", flags ? "," : ""); \
 		}
 	_PF(REORDER_HDR);
@@ -198,6 +197,7 @@ static void vlan_print_flags(FILE *fp, __u32 flags)
 static void vlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	struct ifla_vlan_flags *flags;
+
 	SPRINT_BUF(b1);
 
 	if (!tb)

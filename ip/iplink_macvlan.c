@@ -41,9 +41,9 @@ static void explain(struct link_util *lu)
 
 static int mode_arg(const char *arg)
 {
-        fprintf(stderr, "Error: argument of \"mode\" must be \"private\", "
-		"\"vepa\", \"bridge\" or \"passthru\", not \"%s\"\n", arg);
-        return -1;
+        fprintf(stderr, "Error: argument of \"mode\" must be \"private\", \"vepa\", \"bridge\" or \"passthru\", not \"%s\"\n",
+		arg);
+	return -1;
 }
 
 static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,

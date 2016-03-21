@@ -71,13 +71,13 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *greinfo[IFLA_GRE_MAX + 1];
 	__u16 iflags = 0;
 	__u16 oflags = 0;
-	unsigned ikey = 0;
-	unsigned okey = 0;
+	unsigned int ikey = 0;
+	unsigned int okey = 0;
 	struct in6_addr raddr = IN6ADDR_ANY_INIT;
 	struct in6_addr laddr = IN6ADDR_ANY_INIT;
-	unsigned link = 0;
-	unsigned flowinfo = 0;
-	unsigned flags = 0;
+	unsigned int link = 0;
+	unsigned int flowinfo = 0;
+	unsigned int flags = 0;
 	__u8 hop_limit = DEFAULT_TNL_HOP_LIMIT;
 	__u8 encap_limit = IPV6_DEFAULT_TNL_ENCAP_LIMIT;
 	int len;
@@ -152,7 +152,7 @@ get_failed:
 
 	while (argc > 0) {
 		if (!matches(*argv, "key")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			iflags |= GRE_KEY;
@@ -170,14 +170,14 @@ get_failed:
 
 			ikey = okey = uval;
 		} else if (!matches(*argv, "ikey")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			iflags |= GRE_KEY;
 			if (strchr(*argv, '.'))
 				uval = get_addr32(*argv);
 			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
+				if (get_unsigned(&uval, *argv, 0) < 0) {
 					fprintf(stderr, "invalid value of \"ikey\"\n");
 					exit(-1);
 				}
@@ -185,14 +185,14 @@ get_failed:
 			}
 			ikey = uval;
 		} else if (!matches(*argv, "okey")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			oflags |= GRE_KEY;
 			if (strchr(*argv, '.'))
 				uval = get_addr32(*argv);
 			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
+				if (get_unsigned(&uval, *argv, 0) < 0) {
 					fprintf(stderr, "invalid value of \"okey\"\n");
 					exit(-1);
 				}
@@ -215,6 +215,7 @@ get_failed:
 			oflags |= GRE_CSUM;
 		} else if (!matches(*argv, "remote")) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			get_prefix(&addr, *argv, preferred_family);
 			if (addr.family == AF_UNSPEC)
@@ -222,6 +223,7 @@ get_failed:
 			memcpy(&raddr, &addr.data, sizeof(raddr));
 		} else if (!matches(*argv, "local")) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			get_prefix(&addr, *argv, preferred_family);
 			if (addr.family == AF_UNSPEC)
@@ -238,6 +240,7 @@ get_failed:
 		} else if (!matches(*argv, "ttl") ||
 			   !matches(*argv, "hoplimit")) {
 			__u8 uval;
+
 			NEXT_ARG();
 			if (get_u8(&uval, *argv, 0))
 				invarg("invalid TTL", *argv);
@@ -246,6 +249,7 @@ get_failed:
 			   !matches(*argv, "tclass") ||
 			   !matches(*argv, "dsfield")) {
 			__u8 uval;
+
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") == 0)
 				flags |= IP6_TNL_F_USE_ORIG_TCLASS;
@@ -258,6 +262,7 @@ get_failed:
 		} else if (strcmp(*argv, "flowlabel") == 0 ||
 			   strcmp(*argv, "fl") == 0) {
 			__u32 uval;
+
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") == 0)
 				flags |= IP6_TNL_F_USE_ORIG_FLOWLABEL;
@@ -301,10 +306,10 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
-	unsigned iflags = 0;
-	unsigned oflags = 0;
-	unsigned flags = 0;
-	unsigned flowinfo = 0;
+	unsigned int iflags = 0;
+	unsigned int oflags = 0;
+	unsigned int flags = 0;
+	unsigned int flowinfo = 0;
 	struct in6_addr in6_addr_any = IN6ADDR_ANY_INIT;
 
 	if (!tb)
@@ -318,6 +323,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GRE_REMOTE]) {
 		struct in6_addr addr;
+
 		memcpy(&addr, RTA_DATA(tb[IFLA_GRE_REMOTE]), sizeof(addr));
 
 		if (memcmp(&addr, &in6_addr_any, sizeof(addr)))
@@ -328,6 +334,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GRE_LOCAL]) {
 		struct in6_addr addr;
+
 		memcpy(&addr, RTA_DATA(tb[IFLA_GRE_LOCAL]), sizeof(addr));
 
 		if (memcmp(&addr, &in6_addr_any, sizeof(addr)))
@@ -337,7 +344,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	fprintf(f, "local %s ", local);
 
 	if (tb[IFLA_GRE_LINK] && rta_getattr_u32(tb[IFLA_GRE_LINK])) {
-		unsigned link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
+		unsigned int link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
 		const char *n = if_indextoname(link, s2);
 
 		if (n)

@@ -168,13 +168,11 @@ static int iptoken_set(int argc, char **argv)
 	}
 
 	if (!have_token) {
-		fprintf(stderr, "Not enough information: token "
-			"is required.\n");
+		fprintf(stderr, "Not enough information: token is required.\n");
 		return -1;
 	}
 	if (!have_dev) {
-		fprintf(stderr, "Not enough information: \"dev\" "
-			"argument is required.\n");
+		fprintf(stderr, "Not enough information: \"dev\" argument is required.\n");
 		return -1;
 	}
 

@@ -36,7 +36,7 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip tuntap { add | del | show | list | lst | help } [ dev PHYS_DEV ] \n");
+	fprintf(stderr, "Usage: ip tuntap { add | del | show | list | lst | help } [ dev PHYS_DEV ]\n");
 	fprintf(stderr, "          [ mode { tun | tap } ] [ user USER ] [ group GROUP ]\n");
 	fprintf(stderr, "          [ one_queue ] [ pi ] [ vnet_hdr ] [ multi_queue ]\n");
 	fprintf(stderr, "\n");
@@ -117,18 +117,18 @@ static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_
 			NEXT_ARG();
 			if (matches(*argv, "tun") == 0) {
 				if (ifr->ifr_flags & IFF_TAP) {
-					fprintf(stderr,"You managed to ask for more than one tunnel mode.\n");
+					fprintf(stderr, "You managed to ask for more than one tunnel mode.\n");
 					exit(-1);
 				}
 				ifr->ifr_flags |= IFF_TUN;
 			} else if (matches(*argv, "tap") == 0) {
 				if (ifr->ifr_flags & IFF_TUN) {
-					fprintf(stderr,"You managed to ask for more than one tunnel mode.\n");
+					fprintf(stderr, "You managed to ask for more than one tunnel mode.\n");
 					exit(-1);
 				}
 				ifr->ifr_flags |= IFF_TAP;
 			} else {
-				fprintf(stderr,"Unknown tunnel mode \"%s\"\n", *argv);
+				fprintf(stderr, "Unknown tunnel mode \"%s\"\n", *argv);
 				exit(-1);
 			}
 		} else if (uid && matches(*argv, "user") == 0) {
@@ -140,6 +140,7 @@ static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_
 				*uid = user;
 			else {
 				struct passwd *pw = getpwnam(*argv);
+
 				if (!pw) {
 					fprintf(stderr, "invalid user \"%s\"\n", *argv);
 					exit(-1);
@@ -156,6 +157,7 @@ static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_
 				*gid = group;
 			else {
 				struct group *gr = getgrnam(*argv);
+
 				if (!gr) {
 					fprintf(stderr, "invalid group \"%s\"\n", *argv);
 					exit(-1);
@@ -313,9 +315,9 @@ int do_iptuntap(int argc, char **argv)
 		if (matches(*argv, "delete") == 0)
 			return do_del(argc-1, argv+1);
 		if (matches(*argv, "show") == 0 ||
-                    matches(*argv, "lst") == 0 ||
-                    matches(*argv, "list") == 0)
-                        return do_show(argc-1, argv+1);
+		    matches(*argv, "lst") == 0 ||
+		    matches(*argv, "list") == 0)
+			return do_show(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else

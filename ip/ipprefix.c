@@ -37,10 +37,10 @@
 
 int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct prefixmsg *prefix = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[RTA_MAX+1];
+	struct rtattr *tb[RTA_MAX+1];
 	int family = preferred_family;
 
 	if (n->nlmsg_type != RTM_NEWPREFIX) {
@@ -96,6 +96,7 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[PREFIX_CACHEINFO]) {
 		struct prefix_cacheinfo *pc;
+
 		pc = (struct prefix_cacheinfo *)RTA_DATA(tb[PREFIX_CACHEINFO]);
 
 		fprintf(fp, "valid %u ", pc->valid_time);

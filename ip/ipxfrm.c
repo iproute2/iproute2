@@ -50,7 +50,7 @@
 			strncat(buf, str, len); \
 			buf[sizeof(buf) - 1] = '\0'; \
 		} \
-	} while(0);
+	} while (0);
 
 struct xfrm_filter filter;
 
@@ -111,7 +111,7 @@ struct typeent {
 	int t_type;
 };
 
-static const struct typeent xfrmproto_types[]= {
+static const struct typeent xfrmproto_types[] = {
 	{ "esp", IPPROTO_ESP }, { "ah", IPPROTO_AH }, { "comp", IPPROTO_COMP },
 	{ "route2", IPPROTO_ROUTING }, { "hao", IPPROTO_DSTOPTS },
 	{ "ipsec-any", IPSEC_PROTO_ANY },
@@ -124,6 +124,7 @@ int xfrm_xfrmproto_getbyname(char *name)
 
 	for (i = 0; ; i++) {
 		const struct typeent *t = &xfrmproto_types[i];
+
 		if (!t->t_name || t->t_type == -1)
 			break;
 
@@ -141,6 +142,7 @@ const char *strxf_xfrmproto(__u8 proto)
 
 	for (i = 0; ; i++) {
 		const struct typeent *t = &xfrmproto_types[i];
+
 		if (!t->t_name || t->t_type == -1)
 			break;
 
@@ -152,7 +154,7 @@ const char *strxf_xfrmproto(__u8 proto)
 	return str;
 }
 
-static const struct typeent algo_types[]= {
+static const struct typeent algo_types[] = {
 	{ "enc", XFRMA_ALG_CRYPT }, { "auth", XFRMA_ALG_AUTH },
 	{ "comp", XFRMA_ALG_COMP }, { "aead", XFRMA_ALG_AEAD },
 	{ "auth-trunc", XFRMA_ALG_AUTH_TRUNC },
@@ -165,6 +167,7 @@ int xfrm_algotype_getbyname(char *name)
 
 	for (i = 0; ; i++) {
 		const struct typeent *t = &algo_types[i];
+
 		if (!t->t_name || t->t_type == -1)
 			break;
 
@@ -182,6 +185,7 @@ const char *strxf_algotype(int type)
 
 	for (i = 0; ; i++) {
 		const struct typeent *t = &algo_types[i];
+
 		if (!t->t_name || t->t_type == -1)
 			break;
 
@@ -302,6 +306,7 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 
 	if (show_stats > 0 || force_spi || id->spi) {
 		__u32 spi = ntohl(id->spi);
+
 		fprintf(fp, "spi 0x%08x", spi);
 		if (show_stats > 0)
 			fprintf(fp, "(%u)", spi);
@@ -340,6 +345,7 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 static const char *strxf_limit(__u64 limit)
 {
 	static char str[32];
+
 	if (limit == XFRM_INF)
 		strcpy(str, "(INF)");
 	else
@@ -389,7 +395,7 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 	if (cfg) {
 		if (prefix)
 			fputs(prefix, fp);
-		fprintf(fp, "lifetime config:%s",_SL_);
+		fprintf(fp, "lifetime config:%s", _SL_);
 
 		if (prefix)
 			fputs(prefix, fp);
@@ -538,7 +544,7 @@ static void __xfrm_algo_print(struct xfrm_algo *algo, int type, int len,
 
 	if (keylen > 0) {
 		fprintf(fp, "0x");
-		for (i = 0; i < keylen; i ++)
+		for (i = 0; i < keylen; i++)
 			fprintf(fp, "%.2x", (unsigned char)algo->alg_key[i]);
 
 		if (show_stats > 0)
@@ -692,36 +698,42 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_MARK]) {
 		struct rtattr *rta = tb[XFRMA_MARK];
 		struct xfrm_mark *m = (struct xfrm_mark *) RTA_DATA(rta);
+
 		fprintf(fp, "\tmark %#x/%#x", m->v, m->m);
 		fprintf(fp, "%s", _SL_);
 	}
 
 	if (tb[XFRMA_ALG_AUTH] && !tb[XFRMA_ALG_AUTH_TRUNC]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH];
+
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
 				XFRMA_ALG_AUTH, RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_AUTH_TRUNC]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH_TRUNC];
+
 		xfrm_auth_trunc_print((struct xfrm_algo_auth *) RTA_DATA(rta),
 				      RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_AEAD]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AEAD];
+
 		xfrm_aead_print((struct xfrm_algo_aead *)RTA_DATA(rta),
 				RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_CRYPT]) {
 		struct rtattr *rta = tb[XFRMA_ALG_CRYPT];
+
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
 				XFRMA_ALG_CRYPT, RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_COMP]) {
 		struct rtattr *rta = tb[XFRMA_ALG_COMP];
+
 		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
 				XFRMA_ALG_COMP, RTA_PAYLOAD(rta), fp, prefix);
 	}
@@ -765,6 +777,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 	if (tb[XFRMA_TMPL]) {
 		struct rtattr *rta = tb[XFRMA_TMPL];
+
 		xfrm_tmpl_print((struct xfrm_user_tmpl *) RTA_DATA(rta),
 				RTA_PAYLOAD(rta), fp, prefix);
 	}
@@ -1140,11 +1153,11 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 	if (id->spi && id->proto) {
 		if (xfrm_xfrmproto_is_ro(id->proto)) {
 			fprintf(stderr, "\"spi\" is invalid with XFRM-PROTO value \"%s\"\n",
-			        strxf_xfrmproto(id->proto));
+				strxf_xfrmproto(id->proto));
 			exit(1);
 		} else if (id->proto == IPPROTO_COMP && ntohl(id->spi) >= 0x10000) {
 			fprintf(stderr, "SPI value is too large with XFRM-PROTO value \"%s\"\n",
-			        strxf_xfrmproto(id->proto));
+				strxf_xfrmproto(id->proto));
 			exit(1);
 		}
 	}
@@ -1238,6 +1251,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 				upspec = 0;
 			else {
 				struct protoent *pp;
+
 				pp = getprotobyname(*argv);
 				if (pp)
 					upspec = pp->p_proto;
@@ -1304,7 +1318,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 			filter.upspec_dport_mask = XFRM_FILTER_MASK_FULL;
 
 		} else if (strcmp(*argv, "key") == 0) {
-			unsigned uval;
+			unsigned int uval;
 
 			grekey = *argv;
 
@@ -1313,7 +1327,7 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 			if (strchr(*argv, '.'))
 				uval = htonl(get_addr32(*argv));
 			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
+				if (get_unsigned(&uval, *argv, 0) < 0) {
 					fprintf(stderr, "value after \"key\" is invalid\n");
 					exit(-1);
 				}

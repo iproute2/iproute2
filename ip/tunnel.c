@@ -72,7 +72,7 @@ int tnl_get_ioctl(const char *basedev, void *p)
 	int err;
 
 	strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
-	ifr.ifr_ifru.ifru_data = (void*)p;
+	ifr.ifr_ifru.ifru_data = (void *)p;
 
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
 	if (fd < 0) {
@@ -183,7 +183,7 @@ int tnl_ioctl_get_6rd(const char *name, void *p)
 
 __be32 tnl_parse_key(const char *name, const char *key)
 {
-	unsigned uval;
+	unsigned int uval;
 
 	if (strchr(key, '.'))
 		return get_addr32(key);
@@ -209,10 +209,10 @@ void tnl_print_stats(const char *buf)
 		      tx_fifo, tx_colls, tx_carrier, rx_multi;
 
 	if (sscanf(buf, "%lu%lu%lu%lu%lu%lu%lu%*d%lu%lu%lu%lu%lu%lu%lu",
-	           &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
-	           &rx_fifo, &rx_frame, &rx_multi,
-	           &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
-	           &tx_fifo, &tx_colls, &tx_carrier) != 14)
+		   &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
+		   &rx_fifo, &rx_frame, &rx_multi,
+		   &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
+		   &tx_fifo, &tx_colls, &tx_carrier) != 14)
 		return;
 
 	printf("%s", _SL_);

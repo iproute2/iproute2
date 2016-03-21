@@ -35,7 +35,7 @@
 static struct
 {
 	int family;
-        int index;
+	int index;
 #define NONE_DEV	(-1)
 	char name[1024];
 } filter;
@@ -65,7 +65,7 @@ static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 	struct {
 		struct nlmsghdr	n;
 		struct ndtmsg		ndtm;
-		char  			buf[1024];
+		char			buf[1024];
 	} req;
 	char *namep = NULL;
 	char *threshsp = NULL;
@@ -351,7 +351,7 @@ static const char *ntable_strtime_delta(__u32 msec)
 
 static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct ndtmsg *ndtm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[NDTA_MAX+1];
@@ -407,6 +407,7 @@ static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void 
 
 	if (tb[NDTA_NAME]) {
 		const char *name = rta_getattr_str(tb[NDTA_NAME]);
+
 		fprintf(fp, "%s ", name);
 	}
 
@@ -419,18 +420,22 @@ static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void 
 
 	if (tb[NDTA_THRESH1]) {
 		__u32 thresh1 = rta_getattr_u32(tb[NDTA_THRESH1]);
+
 		fprintf(fp, "thresh1 %u ", thresh1);
 	}
 	if (tb[NDTA_THRESH2]) {
 		__u32 thresh2 = rta_getattr_u32(tb[NDTA_THRESH2]);
+
 		fprintf(fp, "thresh2 %u ", thresh2);
 	}
 	if (tb[NDTA_THRESH3]) {
 		__u32 thresh3 = rta_getattr_u32(tb[NDTA_THRESH3]);
+
 		fprintf(fp, "thresh3 %u ", thresh3);
 	}
 	if (tb[NDTA_GC_INTERVAL]) {
 		unsigned long long gc_int = rta_getattr_u64(tb[NDTA_GC_INTERVAL]);
+
 		fprintf(fp, "gc_int %llu ", gc_int);
 	}
 
@@ -480,18 +485,22 @@ static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void 
 
 		if (tpb[NDTPA_REFCNT]) {
 			__u32 refcnt = rta_getattr_u32(tpb[NDTPA_REFCNT]);
+
 			fprintf(fp, "refcnt %u ", refcnt);
 		}
 		if (tpb[NDTPA_REACHABLE_TIME]) {
 			unsigned long long reachable = rta_getattr_u64(tpb[NDTPA_REACHABLE_TIME]);
+
 			fprintf(fp, "reachable %llu ", reachable);
 		}
 		if (tpb[NDTPA_BASE_REACHABLE_TIME]) {
 			unsigned long long breachable = rta_getattr_u64(tpb[NDTPA_BASE_REACHABLE_TIME]);
+
 			fprintf(fp, "base_reachable %llu ", breachable);
 		}
 		if (tpb[NDTPA_RETRANS_TIME]) {
 			unsigned long long retrans = rta_getattr_u64(tpb[NDTPA_RETRANS_TIME]);
+
 			fprintf(fp, "retrans %llu ", retrans);
 		}
 
@@ -501,14 +510,17 @@ static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void 
 
 		if (tpb[NDTPA_GC_STALETIME]) {
 			unsigned long long gc_stale = rta_getattr_u64(tpb[NDTPA_GC_STALETIME]);
+
 			fprintf(fp, "gc_stale %llu ", gc_stale);
 		}
 		if (tpb[NDTPA_DELAY_PROBE_TIME]) {
 			unsigned long long delay_probe = rta_getattr_u64(tpb[NDTPA_DELAY_PROBE_TIME]);
+
 			fprintf(fp, "delay_probe %llu ", delay_probe);
 		}
 		if (tpb[NDTPA_QUEUE_LEN]) {
 			__u32 queue = rta_getattr_u32(tpb[NDTPA_QUEUE_LEN]);
+
 			fprintf(fp, "queue %u ", queue);
 		}
 
@@ -518,14 +530,17 @@ static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void 
 
 		if (tpb[NDTPA_APP_PROBES]) {
 			__u32 aprobe = rta_getattr_u32(tpb[NDTPA_APP_PROBES]);
+
 			fprintf(fp, "app_probes %u ", aprobe);
 		}
 		if (tpb[NDTPA_UCAST_PROBES]) {
 			__u32 uprobe = rta_getattr_u32(tpb[NDTPA_UCAST_PROBES]);
+
 			fprintf(fp, "ucast_probes %u ", uprobe);
 		}
 		if (tpb[NDTPA_MCAST_PROBES]) {
 			__u32 mprobe = rta_getattr_u32(tpb[NDTPA_MCAST_PROBES]);
+
 			fprintf(fp, "mcast_probes %u ", mprobe);
 		}
 
@@ -535,18 +550,22 @@ static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void 
 
 		if (tpb[NDTPA_ANYCAST_DELAY]) {
 			unsigned long long anycast_delay = rta_getattr_u64(tpb[NDTPA_ANYCAST_DELAY]);
+
 			fprintf(fp, "anycast_delay %llu ", anycast_delay);
 		}
 		if (tpb[NDTPA_PROXY_DELAY]) {
 			unsigned long long proxy_delay = rta_getattr_u64(tpb[NDTPA_PROXY_DELAY]);
+
 			fprintf(fp, "proxy_delay %llu ", proxy_delay);
 		}
 		if (tpb[NDTPA_PROXY_QLEN]) {
 			__u32 pqueue = rta_getattr_u32(tpb[NDTPA_PROXY_QLEN]);
+
 			fprintf(fp, "proxy_queue %u ", pqueue);
 		}
 		if (tpb[NDTPA_LOCKTIME]) {
 			unsigned long long locktime = rta_getattr_u64(tpb[NDTPA_LOCKTIME]);
+
 			fprintf(fp, "locktime %llu ", locktime);
 		}
 

@@ -24,7 +24,7 @@ static void print_explain(FILE *f)
 	fprintf(f,
 		"Usage: ... bridge_slave [ state STATE ] [ priority PRIO ] [cost COST ]\n"
 		"                        [ guard {on | off} ]\n"
-		"                        [ hairpin {on | off} ] \n"
+		"                        [ hairpin {on | off} ]\n"
 		"                        [ fastleave {on | off} ]\n"
 		"                        [ root_block {on | off} ]\n"
 		"                        [ learning {on | off} ]\n"

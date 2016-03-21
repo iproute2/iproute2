@@ -7,7 +7,7 @@
  *		2 of the License, or (at your option) any later version.
  *
  * Authors:	Roopa Prabhu, <roopa@cumulusnetworks.com>
- * 		Thomas Graf <tgraf@suug.ch>
+ *		Thomas Graf <tgraf@suug.ch>
  *
  */
 
@@ -203,6 +203,7 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 	while (argc > 0) {
 		if (strcmp(*argv, "id") == 0) {
 			__u64 id;
+
 			NEXT_ARG();
 			if (id_ok++)
 				duparg2("id", *argv);
@@ -211,6 +212,7 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 			rta_addattr64(rta, len, LWTUNNEL_IP_ID, htonll(id));
 		} else if (strcmp(*argv, "dst") == 0) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			if (dst_ok++)
 				duparg2("dst", *argv);
@@ -218,6 +220,7 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 			rta_addattr_l(rta, len, LWTUNNEL_IP_DST, &addr.data, addr.bytelen);
 		} else if (strcmp(*argv, "tos") == 0) {
 			__u32 tos;
+
 			NEXT_ARG();
 			if (tos_ok++)
 				duparg2("tos", *argv);
@@ -226,6 +229,7 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 			rta_addattr8(rta, len, LWTUNNEL_IP_TOS, tos);
 		} else if (strcmp(*argv, "ttl") == 0) {
 			__u8 ttl;
+
 			NEXT_ARG();
 			if (ttl_ok++)
 				duparg2("ttl", *argv);
@@ -276,6 +280,7 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***a
 	while (argc > 0) {
 		if (strcmp(*argv, "id") == 0) {
 			__u64 id;
+
 			NEXT_ARG();
 			if (id_ok++)
 				duparg2("id", *argv);
@@ -284,6 +289,7 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***a
 			rta_addattr64(rta, len, LWTUNNEL_IP6_ID, htonll(id));
 		} else if (strcmp(*argv, "dst") == 0) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			if (dst_ok++)
 				duparg2("dst", *argv);
@@ -291,6 +297,7 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***a
 			rta_addattr_l(rta, len, LWTUNNEL_IP6_DST, &addr.data, addr.bytelen);
 		} else if (strcmp(*argv, "tc") == 0) {
 			__u32 tc;
+
 			NEXT_ARG();
 			if (tos_ok++)
 				duparg2("tc", *argv);
@@ -299,6 +306,7 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***a
 			rta_addattr8(rta, len, LWTUNNEL_IP6_TC, tc);
 		} else if (strcmp(*argv, "hoplimit") == 0) {
 			__u8 hoplimit;
+
 			NEXT_ARG();
 			if (ttl_ok++)
 				duparg2("hoplimit", *argv);

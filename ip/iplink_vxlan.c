@@ -55,7 +55,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct in6_addr saddr6 = IN6ADDR_ANY_INIT;
 	struct in6_addr gaddr6 = IN6ADDR_ANY_INIT;
 	struct in6_addr daddr6 = IN6ADDR_ANY_INIT;
-	unsigned link = 0;
+	unsigned int link = 0;
 	__u8 tos = 0;
 	__u8 ttl = 0;
 	__u8 learning = 1;
@@ -122,7 +122,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			}
 		} else if (!matches(*argv, "ttl") ||
 			   !matches(*argv, "hoplimit")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
@@ -158,6 +158,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		} else if (!matches(*argv, "port") ||
 			   !matches(*argv, "srcport")) {
 			__u16 minport, maxport;
+
 			NEXT_ARG();
 			if (get_u16(&minport, *argv, 0))
 				invarg("min port", *argv);
@@ -166,7 +167,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("max port", *argv);
 			range.low = htons(minport);
 			range.high = htons(maxport);
-		} else if (!matches(*argv, "dstport")){
+		} else if (!matches(*argv, "dstport")) {
 			NEXT_ARG();
 			if (get_u16(&dstport, *argv, 0))
 				invarg("dst port", *argv);
@@ -306,7 +307,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	__u32 vni;
-	unsigned link;
+	unsigned int link;
 	__u8 tos;
 	__u32 maxaddr;
 	char s1[1024];
@@ -324,6 +325,7 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_VXLAN_GROUP]) {
 		__be32 addr = rta_getattr_u32(tb[IFLA_VXLAN_GROUP]);
+
 		if (addr) {
 			if (IN_MULTICAST(ntohl(addr)))
 				fprintf(f, "group %s ",
@@ -334,6 +336,7 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 	} else if (tb[IFLA_VXLAN_GROUP6]) {
 		struct in6_addr addr;
+
 		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_GROUP6]), sizeof(struct in6_addr));
 		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0) {
 			if (IN6_IS_ADDR_MULTICAST(&addr))
@@ -347,11 +350,13 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_VXLAN_LOCAL]) {
 		__be32 addr = rta_getattr_u32(tb[IFLA_VXLAN_LOCAL]);
+
 		if (addr)
 			fprintf(f, "local %s ",
 				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
 	} else if (tb[IFLA_VXLAN_LOCAL6]) {
 		struct in6_addr addr;
+
 		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_LOCAL6]), sizeof(struct in6_addr));
 		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0)
 			fprintf(f, "local %s ",
@@ -404,12 +409,14 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_VXLAN_TTL]) {
 		__u8 ttl = rta_getattr_u8(tb[IFLA_VXLAN_TTL]);
+
 		if (ttl)
 			fprintf(f, "ttl %d ", ttl);
 	}
 
 	if (tb[IFLA_VXLAN_AGEING]) {
 		__u32 age = rta_getattr_u32(tb[IFLA_VXLAN_AGEING]);
+
 		if (age == 0)
 			fprintf(f, "ageing none ");
 		else

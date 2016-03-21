@@ -61,11 +61,11 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *greinfo[IFLA_GRE_MAX + 1];
 	__u16 iflags = 0;
 	__u16 oflags = 0;
-	unsigned ikey = 0;
-	unsigned okey = 0;
-	unsigned saddr = 0;
-	unsigned daddr = 0;
-	unsigned link = 0;
+	unsigned int ikey = 0;
+	unsigned int okey = 0;
+	unsigned int saddr = 0;
+	unsigned int daddr = 0;
+	unsigned int link = 0;
 	__u8 pmtudisc = 1;
 	__u8 ttl = 0;
 	__u8 tos = 0;
@@ -156,7 +156,7 @@ get_failed:
 
 	while (argc > 0) {
 		if (!matches(*argv, "key")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			iflags |= GRE_KEY;
@@ -174,14 +174,14 @@ get_failed:
 
 			ikey = okey = uval;
 		} else if (!matches(*argv, "ikey")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			iflags |= GRE_KEY;
 			if (strchr(*argv, '.'))
 				uval = get_addr32(*argv);
 			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
+				if (get_unsigned(&uval, *argv, 0) < 0) {
 					fprintf(stderr, "invalid value for \"ikey\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
@@ -189,14 +189,14 @@ get_failed:
 			}
 			ikey = uval;
 		} else if (!matches(*argv, "okey")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			oflags |= GRE_KEY;
 			if (strchr(*argv, '.'))
 				uval = get_addr32(*argv);
 			else {
-				if (get_unsigned(&uval, *argv, 0)<0) {
+				if (get_unsigned(&uval, *argv, 0) < 0) {
 					fprintf(stderr, "invalid value for \"okey\": \"%s\"; it should be an unsigned integer\n", *argv);
 					exit(-1);
 				}
@@ -239,7 +239,7 @@ get_failed:
 			}
 		} else if (!matches(*argv, "ttl") ||
 			   !matches(*argv, "hoplimit")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
@@ -343,14 +343,14 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
-	unsigned iflags = 0;
-	unsigned oflags = 0;
+	unsigned int iflags = 0;
+	unsigned int oflags = 0;
 
 	if (!tb)
 		return;
 
 	if (tb[IFLA_GRE_REMOTE]) {
-		unsigned addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
+		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
 
 		if (addr)
 			remote = format_host(AF_INET, 4, &addr, s1, sizeof(s1));
@@ -359,7 +359,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	fprintf(f, "remote %s ", remote);
 
 	if (tb[IFLA_GRE_LOCAL]) {
-		unsigned addr = rta_getattr_u32(tb[IFLA_GRE_LOCAL]);
+		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_LOCAL]);
 
 		if (addr)
 			local = format_host(AF_INET, 4, &addr, s1, sizeof(s1));
@@ -368,7 +368,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	fprintf(f, "local %s ", local);
 
 	if (tb[IFLA_GRE_LINK] && rta_getattr_u32(tb[IFLA_GRE_LINK])) {
-		unsigned link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
+		unsigned int link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
 		const char *n = if_indextoname(link, s2);
 
 		if (n)

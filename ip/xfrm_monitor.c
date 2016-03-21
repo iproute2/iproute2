@@ -46,10 +46,10 @@ static void usage(void)
 static int xfrm_acquire_print(const struct sockaddr_nl *who,
 			      struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct xfrm_user_acquire *xacq = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[XFRMA_MAX+1];
+	struct rtattr *tb[XFRMA_MAX+1];
 	__u16 family;
 
 	len -= NLMSG_LENGTH(sizeof(*xacq));
@@ -71,6 +71,7 @@ static int xfrm_acquire_print(const struct sockaddr_nl *who,
 	fprintf(fp, "proto %s ", strxf_xfrmproto(xacq->id.proto));
 	if (show_stats > 0 || xacq->id.spi) {
 		__u32 spi = ntohl(xacq->id.spi);
+
 		fprintf(fp, "spi 0x%08x", spi);
 		if (show_stats > 0)
 			fprintf(fp, "(%u)", spi);
@@ -107,7 +108,7 @@ static int xfrm_acquire_print(const struct sockaddr_nl *who,
 static int xfrm_state_flush_print(const struct sockaddr_nl *who,
 				  struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct xfrm_usersa_flush *xsf = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	const char *str;
@@ -137,8 +138,8 @@ static int xfrm_state_flush_print(const struct sockaddr_nl *who,
 static int xfrm_policy_flush_print(const struct sockaddr_nl *who,
 				   struct nlmsghdr *n, void *arg)
 {
-	struct rtattr * tb[XFRMA_MAX+1];
-	FILE *fp = (FILE*)arg;
+	struct rtattr *tb[XFRMA_MAX+1];
+	FILE *fp = (FILE *)arg;
 	int len = n->nlmsg_len;
 
 	len -= NLMSG_SPACE(0);
@@ -175,10 +176,10 @@ static int xfrm_policy_flush_print(const struct sockaddr_nl *who,
 static int xfrm_report_print(const struct sockaddr_nl *who,
 			     struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct xfrm_user_report *xrep = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[XFRMA_MAX+1];
+	struct rtattr *tb[XFRMA_MAX+1];
 	__u16 family;
 
 	len -= NLMSG_LENGTH(sizeof(*xrep));
@@ -210,7 +211,8 @@ static int xfrm_report_print(const struct sockaddr_nl *who,
 
 static void xfrm_ae_flags_print(__u32 flags, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
+
 	fprintf(fp, " (0x%x) ", flags);
 	if (!flags)
 		return;
@@ -241,13 +243,13 @@ static void xfrm_usersa_print(const struct xfrm_usersa_id *sa_id, __u32 reqid, F
 static int xfrm_ae_print(const struct sockaddr_nl *who,
 			     struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct xfrm_aevent_id *id = NLMSG_DATA(n);
 	char abuf[256];
 
 	fprintf(fp, "Async event ");
 	xfrm_ae_flags_print(id->flags, arg);
-	fprintf(fp,"\n\t");
+	fprintf(fp, "\n\t");
 	memset(abuf, '\0', sizeof(abuf));
 	fprintf(fp, "src %s ", rt_addr_n2a(id->sa_id.family,
 					   sizeof(id->saddr), &id->saddr,
@@ -272,7 +274,7 @@ static void xfrm_print_addr(FILE *fp, int family, xfrm_address_t *a)
 static int xfrm_mapping_print(const struct sockaddr_nl *who,
 			     struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct xfrm_user_mapping *map = NLMSG_DATA(n);
 
 	fprintf(fp, "Mapping change ");
@@ -293,7 +295,7 @@ static int xfrm_accept_msg(const struct sockaddr_nl *who,
 			   struct rtnl_ctrl_data *ctrl,
 			   struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 
 	if (timestamp)
 		print_timestamp(fp);
@@ -353,13 +355,13 @@ extern struct rtnl_handle rth;
 int do_xfrm_monitor(int argc, char **argv)
 {
 	char *file = NULL;
-	unsigned groups = ~((unsigned)0); /* XXX */
-	int lacquire=0;
-	int lexpire=0;
-	int laevent=0;
-	int lpolicy=0;
-	int lsa=0;
-	int lreport=0;
+	unsigned int groups = ~((unsigned)0); /* XXX */
+	int lacquire = 0;
+	int lexpire = 0;
+	int laevent = 0;
+	int lpolicy = 0;
+	int lsa = 0;
+	int lreport = 0;
 
 	rtnl_close(&rth);
 
@@ -370,22 +372,22 @@ int do_xfrm_monitor(int argc, char **argv)
 		} else if (matches(*argv, "all-nsid") == 0) {
 			listen_all_nsid = 1;
 		} else if (matches(*argv, "acquire") == 0) {
-			lacquire=1;
+			lacquire = 1;
 			groups = 0;
 		} else if (matches(*argv, "expire") == 0) {
-			lexpire=1;
+			lexpire = 1;
 			groups = 0;
 		} else if (matches(*argv, "SA") == 0) {
-			lsa=1;
+			lsa = 1;
 			groups = 0;
 		} else if (matches(*argv, "aevent") == 0) {
-			laevent=1;
+			laevent = 1;
 			groups = 0;
 		} else if (matches(*argv, "policy") == 0) {
-			lpolicy=1;
+			lpolicy = 1;
 			groups = 0;
 		} else if (matches(*argv, "report") == 0) {
-			lreport=1;
+			lreport = 1;
 			groups = 0;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
@@ -428,7 +430,7 @@ int do_xfrm_monitor(int argc, char **argv)
 	if (listen_all_nsid && rtnl_listen_all_nsid(&rth) < 0)
 		exit(1);
 
-	if (rtnl_listen(&rth, xfrm_accept_msg, (void*)stdout) < 0)
+	if (rtnl_listen(&rth, xfrm_accept_msg, (void *)stdout) < 0)
 		exit(2);
 
 	return 0;

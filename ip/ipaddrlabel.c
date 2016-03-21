@@ -40,8 +40,8 @@
 #include "utils.h"
 #include "ip_common.h"
 
-#define IFAL_RTA(r)	((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct ifaddrlblmsg))))
-#define IFAL_PAYLOAD(n)	NLMSG_PAYLOAD(n,sizeof(struct ifaddrlblmsg))
+#define IFAL_RTA(r)	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct ifaddrlblmsg))))
+#define IFAL_PAYLOAD(n)	NLMSG_PAYLOAD(n, sizeof(struct ifaddrlblmsg))
 
 extern struct rtnl_handle rth;
 
@@ -56,7 +56,7 @@ static void usage(void)
 
 int print_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct ifaddrlblmsg *ifal = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[IFAL_MAX+1];
@@ -88,6 +88,7 @@ int print_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg
 
 	if (tb[IFAL_LABEL] && RTA_PAYLOAD(tb[IFAL_LABEL]) == sizeof(uint32_t)) {
 		uint32_t label;
+
 		memcpy(&label, RTA_DATA(tb[IFAL_LABEL]), sizeof(label));
 		fprintf(fp, "label %u ", label);
 	}
@@ -128,7 +129,7 @@ static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 	struct {
 		struct nlmsghdr	n;
 		struct ifaddrlblmsg	ifal;
-		char  			buf[1024];
+		char			buf[1024];
 	} req;
 
 	inet_prefix prefix;
@@ -195,7 +196,7 @@ static int flush_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, vo
 	struct rtnl_handle rth2;
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[IFAL_MAX+1];
+	struct rtattr *tb[IFAL_MAX+1];
 
 	len -= NLMSG_LENGTH(sizeof(*r));
 	if (len < 0)

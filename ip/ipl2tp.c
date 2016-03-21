@@ -526,6 +526,7 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 		} else if ((strcmp(*argv, "tunnel_id") == 0) ||
 			   (strcmp(*argv, "tid") == 0)) {
 			__u32 uval;
+
 			NEXT_ARG();
 			if (get_u32(&uval, *argv, 0))
 				invarg("invalid ID\n", *argv);
@@ -533,6 +534,7 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 		} else if ((strcmp(*argv, "peer_tunnel_id") == 0) ||
 			   (strcmp(*argv, "ptid") == 0)) {
 			__u32 uval;
+
 			NEXT_ARG();
 			if (get_u32(&uval, *argv, 0))
 				invarg("invalid ID\n", *argv);
@@ -540,6 +542,7 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 		} else if ((strcmp(*argv, "session_id") == 0) ||
 			   (strcmp(*argv, "sid") == 0)) {
 			__u32 uval;
+
 			NEXT_ARG();
 			if (get_u32(&uval, *argv, 0))
 				invarg("invalid ID\n", *argv);
@@ -547,36 +550,42 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 		} else if ((strcmp(*argv, "peer_session_id") == 0) ||
 			   (strcmp(*argv, "psid") == 0)) {
 			__u32 uval;
+
 			NEXT_ARG();
 			if (get_u32(&uval, *argv, 0))
 				invarg("invalid ID\n", *argv);
 			p->peer_session_id = uval;
 		} else if (strcmp(*argv, "udp_sport") == 0) {
 			__u16 uval;
+
 			NEXT_ARG();
 			if (get_u16(&uval, *argv, 0))
 				invarg("invalid port\n", *argv);
 			p->local_udp_port = uval;
 		} else if (strcmp(*argv, "udp_dport") == 0) {
 			__u16 uval;
+
 			NEXT_ARG();
 			if (get_u16(&uval, *argv, 0))
 				invarg("invalid port\n", *argv);
 			p->peer_udp_port = uval;
 		} else if (strcmp(*argv, "offset") == 0) {
 			__u8 uval;
+
 			NEXT_ARG();
 			if (get_u8(&uval, *argv, 0))
 				invarg("invalid offset\n", *argv);
 			p->offset = uval;
 		} else if (strcmp(*argv, "peer_offset") == 0) {
 			__u8 uval;
+
 			NEXT_ARG();
 			if (get_u8(&uval, *argv, 0))
 				invarg("invalid offset\n", *argv);
 			p->peer_offset = uval;
 		} else if (strcmp(*argv, "cookie") == 0) {
 			int slen;
+
 			NEXT_ARG();
 			slen = strlen(*argv);
 			if ((slen != 8) && (slen != 16))
@@ -587,6 +596,7 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 				invarg("cookie must be a hex string\n", *argv);
 		} else if (strcmp(*argv, "peer_cookie") == 0) {
 			int slen;
+
 			NEXT_ARG();
 			slen = strlen(*argv);
 			if ((slen != 8) && (slen != 16))

@@ -26,7 +26,7 @@ static void print_slave_state(FILE *f, struct rtattr *tb)
 {
 	unsigned int state = rta_getattr_u8(tb);
 
-	if (state >= sizeof(slave_states) / sizeof(slave_states[0]))
+	if (state >= ARRAY_SIZE(slave_states))
 		fprintf(f, "state %d ", state);
 	else
 		fprintf(f, "state %s ", slave_states[state]);
@@ -43,7 +43,7 @@ static void print_slave_mii_status(FILE *f, struct rtattr *tb)
 {
 	unsigned int status = rta_getattr_u8(tb);
 
-	if (status >= sizeof(slave_mii_status) / sizeof(slave_mii_status[0]))
+	if (status >= ARRAY_SIZE(slave_mii_status))
 		fprintf(f, "mii_status %d ", status);
 	else
 		fprintf(f, "mii_status %s ", slave_mii_status[status]);

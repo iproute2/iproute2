@@ -44,8 +44,7 @@ static void usage(void)
 	exit(-1);
 }
 
-struct rtfilter
-{
+struct rtfilter {
 	int tb;
 	int af;
 	int iif;
@@ -55,12 +54,13 @@ struct rtfilter
 
 int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[RTA_MAX+1];
+	struct rtattr *tb[RTA_MAX+1];
 	char abuf[256];
 	char obuf[256];
+
 	SPRINT_BUF(b1);
 	__u32 table;
 	int iif = 0;
@@ -90,7 +90,7 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 
 	if (tb[RTA_IIF])
-		iif = *(int*)RTA_DATA(tb[RTA_IIF]);
+		iif = *(int *)RTA_DATA(tb[RTA_IIF]);
 	if (filter.iif && filter.iif != iif)
 		return 0;
 
@@ -212,6 +212,7 @@ static int mroute_list(int argc, char **argv)
 	while (argc > 0) {
 		if (matches(*argv, "table") == 0) {
 			__u32 tid;
+
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv)) {
 				if (strcmp(*argv, "all") == 0) {

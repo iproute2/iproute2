@@ -93,7 +93,7 @@ static void usage(void)
 	exit(-1);
 }
 
-static void print_link_flags(FILE *fp, unsigned flags, unsigned mdown)
+static void print_link_flags(FILE *fp, unsigned int flags, unsigned int mdown)
 {
 	fprintf(fp, "<");
 	if (flags & IFF_UP && !(flags & IFF_RUNNING))
@@ -135,7 +135,7 @@ static const char *oper_states[] = {
 
 static void print_operstate(FILE *f, __u8 state)
 {
-	if (state >= sizeof(oper_states)/sizeof(oper_states[0]))
+	if (state >= ARRAY_SIZE(oper_states))
 		fprintf(f, "state %#x ", state);
 	else {
 		if (brief) {
@@ -161,7 +161,7 @@ int get_operstate(const char *name)
 {
 	int i;
 
-	for (i = 0; i < sizeof(oper_states)/sizeof(oper_states[0]); i++)
+	for (i = 0; i < ARRAY_SIZE(oper_states); i++)
 		if (strcasecmp(name, oper_states[i]) == 0)
 			return i;
 	return -1;
@@ -202,7 +202,7 @@ static void print_linkmode(FILE *f, struct rtattr *tb)
 {
 	unsigned int mode = rta_getattr_u8(tb);
 
-	if (mode >= sizeof(link_modes) / sizeof(link_modes[0]))
+	if (mode >= ARRAY_SIZE(link_modes))
 		fprintf(f, "mode %d ", mode);
 	else
 		fprintf(f, "mode %s ", link_modes[mode]);
@@ -286,6 +286,7 @@ static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
 
 	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
 		__u8 mode = rta_getattr_u8(tb[IFLA_INET6_ADDR_GEN_MODE]);
+
 		switch (mode) {
 		case IN6_ADDR_GEN_MODE_EUI64:
 			fprintf(fp, "addrgenmode eui64 ");
@@ -317,6 +318,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	struct ifla_vf_link_state *vf_linkstate;
 	struct rtattr *vf[IFLA_VF_MAX + 1] = {};
 	struct rtattr *tmp;
+
 	SPRINT_BUF(b1);
 
 	if (vfinfo->rta_type != IFLA_VF_INFO) {
@@ -392,7 +394,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		print_vf_stats64(fp, vf[IFLA_VF_STATS]);
 }
 
-static void print_num(FILE *fp, unsigned width, uint64_t count)
+static void print_num(FILE *fp, unsigned int width, uint64_t count)
 {
 	const char *prefix = "kMGTPE";
 	const unsigned int base = use_iec ? 1024 : 1000;
@@ -408,7 +410,7 @@ static void print_num(FILE *fp, unsigned width, uint64_t count)
 
 	/* increase value by a factor of 1000/1024 and print
 	 * if result is something a human can read */
-	for(;;) {
+	for (;;) {
 		powi *= base;
 		if (count / base < powi)
 			break;
@@ -462,7 +464,7 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 }
 
 static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
-                               const struct rtattr *carrier_changes)
+			       const struct rtattr *carrier_changes)
 {
 	/* RX stats */
 	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
@@ -514,7 +516,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 	if (show_stats > 1) {
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    TX errors: aborted  fifo   window heartbeat");
-                if (carrier_changes)
+		if (carrier_changes)
 			fprintf(fp, " transns");
 		fprintf(fp, "%s", _SL_);
 
@@ -524,7 +526,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 		print_num(fp, 7, s->tx_window_errors);
 		print_num(fp, 7, s->tx_heartbeat_errors);
 		if (carrier_changes)
-			print_num(fp, 7, *(uint32_t*)RTA_DATA(carrier_changes));
+			print_num(fp, 7, *(uint32_t *)RTA_DATA(carrier_changes));
 	}
 }
 
@@ -580,7 +582,7 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 	if (show_stats > 1) {
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    TX errors: aborted  fifo   window heartbeat");
-                if (carrier_changes)
+		if (carrier_changes)
 			fprintf(fp, " transns");
 		fprintf(fp, "%s", _SL_);
 
@@ -590,7 +592,7 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 		print_num(fp, 7, s->tx_window_errors);
 		print_num(fp, 7, s->tx_heartbeat_errors);
 		if (carrier_changes)
-			print_num(fp, 7, *(uint32_t*)RTA_DATA(carrier_changes));
+			print_num(fp, 7, *(uint32_t *)RTA_DATA(carrier_changes));
 	}
 }
 
@@ -618,7 +620,7 @@ static void __print_link_stats(FILE *fp, struct rtattr **tb)
 static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 {
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
-	struct rtattr * tb[IFLA_MAX+1];
+	struct rtattr *tb[IFLA_MAX+1];
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi),
 		     n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi)));
@@ -629,13 +631,13 @@ static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 int print_linkinfo_brief(const struct sockaddr_nl *who,
 				struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
-	struct rtattr * tb[IFLA_MAX+1];
+	struct rtattr *tb[IFLA_MAX+1];
 	int len = n->nlmsg_len;
 	char *name;
 	char buf[32] = { 0, };
-	unsigned m_flag = 0;
+	unsigned int m_flag = 0;
 
 	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
 		return -1;
@@ -659,17 +661,18 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		return -1;
 
 	if (tb[IFLA_GROUP]) {
-		int group = *(int*)RTA_DATA(tb[IFLA_GROUP]);
+		int group = *(int *)RTA_DATA(tb[IFLA_GROUP]);
+
 		if (filter.group != -1 && group != filter.group)
 			return -1;
 	}
 
 	if (tb[IFLA_MASTER]) {
-		int master = *(int*)RTA_DATA(tb[IFLA_MASTER]);
+		int master = *(int *)RTA_DATA(tb[IFLA_MASTER]);
+
 		if (filter.master > 0 && master != filter.master)
 			return -1;
-	}
-	else if (filter.master > 0)
+	} else if (filter.master > 0)
 		return -1;
 
 	if (filter.kind) {
@@ -690,7 +693,8 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_LINK]) {
 		SPRINT_BUF(b1);
-		int iflink = *(int*)RTA_DATA(tb[IFLA_LINK]);
+		int iflink = *(int *)RTA_DATA(tb[IFLA_LINK]);
+
 		if (iflink == 0)
 			snprintf(buf, sizeof(buf), "%s@NONE", name);
 		else {
@@ -730,11 +734,11 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
-	struct rtattr * tb[IFLA_MAX+1];
+	struct rtattr *tb[IFLA_MAX+1];
 	int len = n->nlmsg_len;
-	unsigned m_flag = 0;
+	unsigned int m_flag = 0;
 
 	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
 		return 0;
@@ -758,17 +762,18 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		return 0;
 
 	if (tb[IFLA_GROUP]) {
-		int group = *(int*)RTA_DATA(tb[IFLA_GROUP]);
+		int group = *(int *)RTA_DATA(tb[IFLA_GROUP]);
+
 		if (filter.group != -1 && group != filter.group)
 			return -1;
 	}
 
 	if (tb[IFLA_MASTER]) {
-		int master = *(int*)RTA_DATA(tb[IFLA_MASTER]);
+		int master = *(int *)RTA_DATA(tb[IFLA_MASTER]);
+
 		if (filter.master > 0 && master != filter.master)
 			return -1;
-	}
-	else if (filter.master > 0)
+	} else if (filter.master > 0)
 		return -1;
 
 	if (filter.kind) {
@@ -791,7 +796,8 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_LINK]) {
 		SPRINT_BUF(b1);
-		int iflink = *(int*)RTA_DATA(tb[IFLA_LINK]);
+		int iflink = *(int *)RTA_DATA(tb[IFLA_LINK]);
+
 		if (iflink == 0)
 			fprintf(fp, "@NONE: ");
 		else {
@@ -809,12 +815,12 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	print_link_flags(fp, ifi->ifi_flags, m_flag);
 
 	if (tb[IFLA_MTU])
-		fprintf(fp, "mtu %u ", *(int*)RTA_DATA(tb[IFLA_MTU]));
+		fprintf(fp, "mtu %u ", *(int *)RTA_DATA(tb[IFLA_MTU]));
 	if (tb[IFLA_QDISC])
 		fprintf(fp, "qdisc %s ", rta_getattr_str(tb[IFLA_QDISC]));
 	if (tb[IFLA_MASTER]) {
 		SPRINT_BUF(b1);
-		fprintf(fp, "master %s ", ll_idx_n2a(*(int*)RTA_DATA(tb[IFLA_MASTER]), b1));
+		fprintf(fp, "master %s ", ll_idx_n2a(*(int *)RTA_DATA(tb[IFLA_MASTER]), b1));
 	}
 
 	if (tb[IFLA_PHYS_PORT_ID]) {
@@ -841,7 +847,8 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_GROUP]) {
 		SPRINT_BUF(b1);
-		int group = *(int*)RTA_DATA(tb[IFLA_GROUP]);
+		int group = *(int *)RTA_DATA(tb[IFLA_GROUP]);
+
 		fprintf(fp, "group %s ", rtnl_group_n2a(group, b1, sizeof(b1)));
 	}
 
@@ -873,7 +880,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	}
 
 	if (tb[IFLA_LINK_NETNSID]) {
-		int id = *(int*)RTA_DATA(tb[IFLA_LINK_NETNSID]);
+		int id = *(int *)RTA_DATA(tb[IFLA_LINK_NETNSID]);
 
 		if (id >= 0)
 			fprintf(fp, " link-netnsid %d", id);
@@ -888,7 +895,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_PROMISCUITY] && show_details)
 		fprintf(fp, " promiscuity %u ",
-			*(int*)RTA_DATA(tb[IFLA_PROMISCUITY]));
+			*(int *)RTA_DATA(tb[IFLA_PROMISCUITY]));
 
 	if (tb[IFLA_LINKINFO] && show_details)
 		print_linktype(fp, tb[IFLA_LINKINFO]);
@@ -909,6 +916,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if ((do_link || show_details) && tb[IFLA_VFINFO_LIST] && tb[IFLA_NUM_VF]) {
 		struct rtattr *i, *vflist = tb[IFLA_VFINFO_LIST];
 		int rem = RTA_PAYLOAD(vflist);
+
 		for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem))
 			print_vfinfo(fp, i);
 	}
@@ -964,8 +972,9 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	int deprecated = 0;
 	/* Use local copy of ifa_flags to not interfere with filtering code */
 	unsigned int ifa_flags;
-	struct rtattr * rta_tb[IFA_MAX+1];
+	struct rtattr *rta_tb[IFA_MAX+1];
 	char abuf[256];
+
 	SPRINT_BUF(b1);
 
 	if (n->nlmsg_type != RTM_NEWADDR && n->nlmsg_type != RTM_DELADDR)
@@ -998,6 +1007,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (filter.label) {
 		SPRINT_BUF(b1);
 		const char *label;
+
 		if (rta_tb[IFA_LABEL])
 			label = RTA_DATA(rta_tb[IFA_LABEL]);
 		else
@@ -1008,6 +1018,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (filter.pfx.family) {
 		if (rta_tb[IFA_LOCAL]) {
 			inet_prefix dst;
+
 			memset(&dst, 0, sizeof(dst));
 			dst.family = ifa->ifa_family;
 			memcpy(&dst.data, RTA_DATA(rta_tb[IFA_LOCAL]), RTA_PAYLOAD(rta_tb[IFA_LOCAL]));
@@ -1021,16 +1032,17 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (filter.flushb) {
 		struct nlmsghdr *fn;
+
 		if (NLMSG_ALIGN(filter.flushp) + n->nlmsg_len > filter.flushe) {
 			if (flush_update())
 				return -1;
 		}
-		fn = (struct nlmsghdr*)(filter.flushb + NLMSG_ALIGN(filter.flushp));
+		fn = (struct nlmsghdr *)(filter.flushb + NLMSG_ALIGN(filter.flushp));
 		memcpy(fn, n, n->nlmsg_len);
 		fn->nlmsg_type = RTM_DELADDR;
 		fn->nlmsg_flags = NLM_F_REQUEST;
 		fn->nlmsg_seq = ++rth.seq;
-		filter.flushp = (((char*)fn) + n->nlmsg_len) - filter.flushb;
+		filter.flushp = (((char *)fn) + n->nlmsg_len) - filter.flushb;
 		filter.flushed++;
 		if (show_stats < 2)
 			return 0;
@@ -1153,6 +1165,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		fprintf(fp, "%s", rta_getattr_str(rta_tb[IFA_LABEL]));
 	if (rta_tb[IFA_CACHEINFO]) {
 		struct ifa_cacheinfo *ci = RTA_DATA(rta_tb[IFA_CACHEINFO]);
+
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "       valid_lft ");
 		if (ci->ifa_valid == INFINITY_LIFE_TIME)
@@ -1175,14 +1188,12 @@ brief_exit:
 	return 0;
 }
 
-struct nlmsg_list
-{
+struct nlmsg_list {
 	struct nlmsg_list *next;
 	struct nlmsghdr	  h;
 };
 
-struct nlmsg_chain
-{
+struct nlmsg_chain {
 	struct nlmsg_list *head;
 	struct nlmsg_list *tail;
 };
@@ -1190,7 +1201,7 @@ struct nlmsg_chain
 static int print_selected_addrinfo(struct ifinfomsg *ifi,
 				   struct nlmsg_list *ainfo, FILE *fp)
 {
-	for ( ;ainfo ;  ainfo = ainfo->next) {
+	for ( ; ainfo ;  ainfo = ainfo->next) {
 		struct nlmsghdr *n = &ainfo->h;
 		struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
@@ -1223,7 +1234,7 @@ static int store_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	struct nlmsg_chain *lchain = (struct nlmsg_chain *)arg;
 	struct nlmsg_list *h;
 
-	h = malloc(n->nlmsg_len+sizeof(void*));
+	h = malloc(n->nlmsg_len+sizeof(void *));
 	if (h == NULL)
 		return -1;
 
@@ -1352,7 +1363,7 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 	struct nlmsg_list *l, **lp;
 
 	lp = &linfo->head;
-	while ( (l = *lp) != NULL) {
+	while ((l = *lp) != NULL) {
 		int ok = 0;
 		int missing_net_address = 1;
 		struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
@@ -1383,6 +1394,7 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 
 				if (filter.pfx.family && tb[IFA_LOCAL]) {
 					inet_prefix dst;
+
 					memset(&dst, 0, sizeof(dst));
 					dst.family = ifa->ifa_family;
 					memcpy(&dst.data, RTA_DATA(tb[IFA_LOCAL]), RTA_PAYLOAD(tb[IFA_LOCAL]));
@@ -1392,6 +1404,7 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 				if (filter.label) {
 					SPRINT_BUF(b1);
 					const char *label;
+
 					if (tb[IFA_LABEL])
 						label = RTA_DATA(tb[IFA_LABEL]);
 					else
@@ -1441,7 +1454,7 @@ static int ipaddr_flush(void)
 				if (round == 0)
 					printf("Nothing to flush.\n");
 				else
-					printf("*** Flush is complete after %d round%s ***\n", round, round>1?"s":"");
+					printf("*** Flush is complete after %d round%s ***\n", round, round > 1?"s":"");
 			}
 			fflush(stdout);
 			return 0;
@@ -1500,7 +1513,8 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			if (filter.family == AF_UNSPEC)
 				filter.family = filter.pfx.family;
 		} else if (strcmp(*argv, "scope") == 0) {
-			unsigned scope = 0;
+			unsigned int scope = 0;
+
 			NEXT_ARG();
 			filter.scopemask = -1;
 			if (rtnl_rtscope_a2n(&scope, *argv)) {
@@ -1567,6 +1581,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 				invarg("Invalid \"group\" value\n", *argv);
 		} else if (strcmp(*argv, "master") == 0) {
 			int ifindex;
+
 			NEXT_ARG();
 			ifindex = ll_name_to_index(*argv);
 			if (!ifindex)
@@ -1578,8 +1593,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
-			}
-			else if (matches(*argv, "help") == 0)
+			} else if (matches(*argv, "help") == 0)
 				usage();
 			if (filter_dev)
 				duparg2("dev", *argv);
@@ -1757,7 +1771,7 @@ void ipaddr_reset_filter(int oneline, int ifindex)
 static int default_scope(inet_prefix *lcl)
 {
 	if (lcl->family == AF_INET) {
-		if (lcl->bytelen >= 1 && *(__u8*)&lcl->data == 127)
+		if (lcl->bytelen >= 1 && *(__u8 *)&lcl->data == 127)
 			return RT_SCOPE_HOST;
 	}
 	return 0;
@@ -1820,6 +1834,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		} else if (matches(*argv, "broadcast") == 0 ||
 			   strcmp(*argv, "brd") == 0) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			if (brd_len)
 				duparg("broadcast", *argv);
@@ -1836,6 +1851,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			}
 		} else if (strcmp(*argv, "anycast") == 0) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			if (any_len)
 				duparg("anycast", *argv);
@@ -1845,7 +1861,8 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), IFA_ANYCAST, &addr.data, addr.bytelen);
 			any_len = addr.bytelen;
 		} else if (strcmp(*argv, "scope") == 0) {
-			unsigned scope = 0;
+			unsigned int scope = 0;
+
 			NEXT_ARG();
 			if (rtnl_rtscope_a2n(&scope, *argv))
 				invarg("invalid scope value.", *argv);
@@ -1931,6 +1948,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	if (brd_len < 0 && cmd != RTM_DELADDR) {
 		inet_prefix brd;
 		int i;
+
 		if (req.ifa.ifa_family != AF_INET) {
 			fprintf(stderr, "Broadcast can be set only for IPv4 addresses\n");
 			return -1;

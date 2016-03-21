@@ -35,7 +35,7 @@ static void print_usage(FILE *f)
 	fprintf(f, "          [ mode { ip6ip6 | ipip6 | any } ]\n");
 	fprintf(f, "          type ip6tnl [ remote ADDR ] [ local ADDR ]\n");
 	fprintf(f, "          [ dev PHYS_DEV ] [ encaplimit ELIM ]\n");
-	fprintf(f ,"          [ hoplimit HLIM ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
+	fprintf(f, "          [ hoplimit HLIM ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
 	fprintf(f, "          [ dscp inherit ] [ fwmark inherit ]\n");
 	fprintf(f, "\n");
 	fprintf(f, "Where: NAME      := STRING\n");
@@ -159,6 +159,7 @@ get_failed:
 				invarg("Cannot guess tunnel mode.", *argv);
 		} else if (strcmp(*argv, "remote") == 0) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			get_prefix(&addr, *argv, preferred_family);
 			if (addr.family == AF_UNSPEC)
@@ -166,6 +167,7 @@ get_failed:
 			memcpy(&raddr, addr.data, addr.bytelen);
 		} else if (strcmp(*argv, "local") == 0) {
 			inet_prefix addr;
+
 			NEXT_ARG();
 			get_prefix(&addr, *argv, preferred_family);
 			if (addr.family == AF_UNSPEC)
@@ -180,6 +182,7 @@ get_failed:
 			   strcmp(*argv, "ttl") == 0 ||
 			   strcmp(*argv, "hlim") == 0) {
 			__u8 uval;
+
 			NEXT_ARG();
 			if (get_u8(&uval, *argv, 0))
 				invarg("invalid HLIM", *argv);
@@ -190,6 +193,7 @@ get_failed:
 				flags |= IP6_TNL_F_IGN_ENCAP_LIMIT;
 			} else {
 				__u8 uval;
+
 				if (get_u8(&uval, *argv, 0) < -1)
 					invarg("invalid ELIM", *argv);
 				encap_limit = uval;
@@ -200,6 +204,7 @@ get_failed:
 			   strcmp(*argv, "tos") == 0 ||
 			   matches(*argv, "dsfield") == 0) {
 			__u8 uval;
+
 			NEXT_ARG();
 			flowinfo &= ~IP6_FLOWINFO_TCLASS;
 			if (strcmp(*argv, "inherit") == 0)
@@ -213,6 +218,7 @@ get_failed:
 		} else if (strcmp(*argv, "flowlabel") == 0 ||
 			   strcmp(*argv, "fl") == 0) {
 			__u32 uval;
+
 			NEXT_ARG();
 			flowinfo &= ~IP6_FLOWINFO_FLOWLABEL;
 			if (strcmp(*argv, "inherit") == 0)
@@ -299,7 +305,7 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 	}
 
 	if (tb[IFLA_IPTUN_LINK] && rta_getattr_u32(tb[IFLA_IPTUN_LINK])) {
-		unsigned link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
+		unsigned int link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
 		const char *n = if_indextoname(link, s2);
 
 		if (n)

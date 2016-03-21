@@ -168,6 +168,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (f.flushb) {
 		struct nlmsghdr *fn;
+
 		TCPM_REQUEST(req2, 128, TCP_METRICS_CMD_DEL, NLM_F_REQUEST);
 
 		addattr_l(&req2.n, sizeof(req2), atype, &daddr.data,
@@ -333,6 +334,7 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 		if (strcmp(*argv, "src") == 0 ||
 		    strcmp(*argv, "source") == 0) {
 			char *who = *argv;
+
 			NEXT_ARG();
 			if (matches(*argv, "help") == 0)
 				usage();
@@ -354,6 +356,7 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 			}
 		} else {
 			char *who = "address";
+
 			if (strcmp(*argv, "addr") == 0 ||
 			    strcmp(*argv, "address") == 0) {
 				who = *argv;
@@ -504,7 +507,7 @@ int do_tcp_metrics(int argc, char **argv)
 	if (matches(argv[0], "help") == 0)
 		usage();
 
-	fprintf(stderr, "Command \"%s\" is unknown, "
-			"try \"ip tcp_metrics help\".\n", *argv);
+	fprintf(stderr, "Command \"%s\" is unknown, try \"ip tcp_metrics help\".\n",
+			*argv);
 	exit(-1);
 }

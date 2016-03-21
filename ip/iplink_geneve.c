@@ -62,7 +62,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid remote address", *argv);
 		} else if (!matches(*argv, "ttl") ||
 			   !matches(*argv, "hoplimit")) {
-			unsigned uval;
+			unsigned int uval;
 
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
@@ -153,11 +153,13 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GENEVE_REMOTE]) {
 		__be32 addr = rta_getattr_u32(tb[IFLA_GENEVE_REMOTE]);
+
 		if (addr)
 			fprintf(f, "remote %s ",
 				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
 	} else if (tb[IFLA_GENEVE_REMOTE6]) {
 		struct in6_addr addr;
+
 		memcpy(&addr, RTA_DATA(tb[IFLA_GENEVE_REMOTE6]), sizeof(struct in6_addr));
 		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0) {
 			if (IN6_IS_ADDR_MULTICAST(&addr))
@@ -168,6 +170,7 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GENEVE_TTL]) {
 		__u8 ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
+
 		if (ttl)
 			fprintf(f, "ttl %d ", ttl);
 	}

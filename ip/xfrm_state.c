@@ -32,7 +32,7 @@
 #include "xfrm.h"
 #include "ip_common.h"
 
-//#define NLMSG_DELETEALL_BUF_SIZE (4096-512)
+/* #define NLMSG_DELETEALL_BUF_SIZE (4096-512) */
 #define NLMSG_DELETEALL_BUF_SIZE 8192
 
 /*
@@ -107,7 +107,7 @@ static void usage(void)
 	fprintf(stderr, "LIMIT-LIST := [ LIMIT-LIST ] limit LIMIT\n");
 	fprintf(stderr, "LIMIT := { time-soft | time-hard | time-use-soft | time-use-hard } SECONDS |\n");
 	fprintf(stderr, "         { byte-soft | byte-hard } SIZE | { packet-soft | packet-hard } COUNT\n");
-        fprintf(stderr, "ENCAP := { espinudp | espinudp-nonike } SPORT DPORT OADDR\n");
+	fprintf(stderr, "ENCAP := { espinudp | espinudp-nonike } SPORT DPORT OADDR\n");
 
 	exit(-1);
 }
@@ -142,7 +142,7 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 		if (len > max)
 			invarg("ALGO-KEYMAT value makes buffer overflow\n", key);
 
-		for (i = - (plen % 2), j = 0; j < len; i += 2, j++) {
+		for (i = -(plen % 2), j = 0; j < len; i += 2, j++) {
 			char vbuf[3];
 			__u8 val;
 
@@ -266,13 +266,13 @@ static int xfrm_state_extra_flag_parse(__u32 *extra_flags, int *argcp, char ***a
 	return 0;
 }
 
-static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
+static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 {
 	struct rtnl_handle rth;
 	struct {
 		struct nlmsghdr	n;
 		struct xfrm_usersa_info xsinfo;
-		char  			buf[RTA_BUF_SIZE];
+		char			buf[RTA_BUF_SIZE];
 	} req;
 	struct xfrm_replay_state replay;
 	struct xfrm_replay_state_esn replay_esn;
@@ -356,7 +356,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else if (strcmp(*argv, "encap") == 0) {
 			struct xfrm_encap_tmpl encap;
 			inet_prefix oa;
-		        NEXT_ARG();
+			NEXT_ARG();
 			xfrm_encap_type_parse(&encap.encap_type, &argc, &argv);
 			NEXT_ARG();
 			if (get_u16(&encap.encap_sport, *argv, 0))
@@ -408,6 +408,7 @@ static int xfrm_state_modify(int cmd, unsigned flags, int argc, char **argv)
 		} else {
 			/* try to assume ALGO */
 			int type = xfrm_algotype_getbyname(*argv);
+
 			switch (type) {
 			case XFRMA_ALG_AEAD:
 			case XFRMA_ALG_CRYPT:
@@ -701,7 +702,7 @@ static int xfrm_state_allocspi(int argc, char **argv)
 	struct {
 		struct nlmsghdr	n;
 		struct xfrm_userspi_info xspi;
-		char  			buf[RTA_BUF_SIZE];
+		char			buf[RTA_BUF_SIZE];
 	} req;
 	char *idp = NULL;
 	char *minp = NULL;
@@ -827,7 +828,7 @@ static int xfrm_state_allocspi(int argc, char **argv)
 	if (rtnl_talk(&rth, &req.n, res_n, sizeof(res_buf)) < 0)
 		exit(2);
 
-	if (xfrm_state_print(NULL, res_n, (void*)stdout) < 0) {
+	if (xfrm_state_print(NULL, res_n, (void *)stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
 		exit(1);
 	}
@@ -868,9 +869,9 @@ static int xfrm_state_filter_match(struct xfrm_usersa_info *xsinfo)
 int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		     void *arg)
 {
-	FILE *fp = (FILE*)arg;
-	struct rtattr * tb[XFRMA_MAX+1];
-	struct rtattr * rta;
+	FILE *fp = (FILE *)arg;
+	struct rtattr *tb[XFRMA_MAX+1];
+	struct rtattr *rta;
 	struct xfrm_usersa_info *xsinfo = NULL;
 	struct xfrm_user_expire *xexp = NULL;
 	struct xfrm_usersa_id	*xsid = NULL;
@@ -924,7 +925,7 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	parse_rtattr(tb, XFRMA_MAX, rta, len);
 
 	if (n->nlmsg_type == XFRM_MSG_DELSA) {
-		//xfrm_policy_id_print();
+		/* xfrm_policy_id_print(); */
 
 		if (!tb[XFRMA_SA]) {
 			fprintf(stderr, "Buggy XFRM_MSG_DELSA: no XFRMA_SA\n");
@@ -958,7 +959,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 	struct {
 		struct nlmsghdr	n;
 		struct xfrm_usersa_id	xsid;
-		char  			buf[RTA_BUF_SIZE];
+		char			buf[RTA_BUF_SIZE];
 	} req;
 	struct xfrm_id id;
 	char *idp = NULL;
@@ -1025,7 +1026,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 		if (rtnl_talk(&rth, &req.n, res_n, sizeof(req)) < 0)
 			exit(2);
 
-		if (xfrm_state_print(NULL, res_n, (void*)stdout) < 0) {
+		if (xfrm_state_print(NULL, res_n, (void *)stdout) < 0) {
 			fprintf(stderr, "An error :-)\n");
 			exit(1);
 		}
@@ -1087,7 +1088,7 @@ static int xfrm_state_keep(const struct sockaddr_nl *who,
 		  sizeof(xsid->daddr));
 
 	xb->offset += new_n->nlmsg_len;
-	xb->nlmsg_count ++;
+	xb->nlmsg_count++;
 
 	return 0;
 }
@@ -1097,7 +1098,7 @@ static int xfrm_state_list_or_deleteall(int argc, char **argv, int deleteall)
 	char *idp = NULL;
 	struct rtnl_handle rth;
 
-	if(argc > 0)
+	if (argc > 0)
 		filter.use = 1;
 	filter.xsinfo.family = preferred_family;
 
@@ -1231,7 +1232,7 @@ static int xfrm_state_list_or_deleteall(int argc, char **argv, int deleteall)
 
 static int print_sadinfo(struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	__u32 *f = NLMSG_DATA(n);
 	struct rtattr *tb[XFRMA_SAD_MAX+1];
 	struct rtattr *rta;
@@ -1249,11 +1250,11 @@ static int print_sadinfo(struct nlmsghdr *n, void *arg)
 	parse_rtattr(tb, XFRMA_SAD_MAX, rta, len);
 
 	if (tb[XFRMA_SAD_CNT]) {
-		fprintf(fp,"\t SAD");
+		fprintf(fp, "\t SAD");
 		cnt = (__u32 *)RTA_DATA(tb[XFRMA_SAD_CNT]);
-		fprintf(fp," count %d", *cnt);
+		fprintf(fp, " count %d", *cnt);
 	} else {
-		fprintf(fp,"BAD SAD info returned\n");
+		fprintf(fp, "BAD SAD info returned\n");
 		return -1;
 	}
 
@@ -1262,20 +1263,20 @@ static int print_sadinfo(struct nlmsghdr *n, void *arg)
 			struct xfrmu_sadhinfo *si;
 
 			if (RTA_PAYLOAD(tb[XFRMA_SAD_HINFO]) < sizeof(*si)) {
-				fprintf(fp,"BAD SAD length returned\n");
+				fprintf(fp, "BAD SAD length returned\n");
 				return -1;
 			}
 
 			si = RTA_DATA(tb[XFRMA_SAD_HINFO]);
-			fprintf(fp," (buckets ");
-			fprintf(fp,"count %d", si->sadhcnt);
-			fprintf(fp," Max %d", si->sadhmcnt);
-			fprintf(fp,")");
+			fprintf(fp, " (buckets ");
+			fprintf(fp, "count %d", si->sadhcnt);
+			fprintf(fp, " Max %d", si->sadhmcnt);
+			fprintf(fp, ")");
 		}
 	}
-	fprintf(fp,"\n");
+	fprintf(fp, "\n");
 
-        return 0;
+	return 0;
 }
 
 static int xfrm_sad_getinfo(int argc, char **argv)
@@ -1299,7 +1300,7 @@ static int xfrm_sad_getinfo(int argc, char **argv)
 	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
 		exit(2);
 
-	print_sadinfo(&req.n, (void*)stdout);
+	print_sadinfo(&req.n, (void *)stdout);
 
 	rtnl_close(&rth);
 

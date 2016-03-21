@@ -197,6 +197,7 @@ get_failed:
 			   strcmp(*argv, "tclass") == 0 ||
 			   matches(*argv, "dsfield") == 0) {
 			__u32 uval;
+
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
 				if (rtnl_dsfield_a2n(&uval, *argv))
@@ -262,6 +263,7 @@ get_failed:
 			encapflags &= ~TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "6rd-prefix") == 0) {
 			inet_prefix prefix;
+
 			NEXT_ARG();
 			if (get_prefix(&prefix, *argv, AF_INET6))
 				invarg("invalid 6rd_prefix\n", *argv);
@@ -269,6 +271,7 @@ get_failed:
 			ip6rdprefixlen = prefix.bitlen;
 		} else if (strcmp(*argv, "6rd-relay_prefix") == 0) {
 			inet_prefix prefix;
+
 			NEXT_ARG();
 			if (get_prefix(&prefix, *argv, AF_INET))
 				invarg("invalid 6rd-relay_prefix\n", *argv);
@@ -276,6 +279,7 @@ get_failed:
 			ip6rdrelayprefixlen = prefix.bitlen;
 		} else if (strcmp(*argv, "6rd-reset") == 0) {
 			inet_prefix prefix;
+
 			get_prefix(&prefix, "2002::", AF_INET6);
 			memcpy(&ip6rdprefix, prefix.data, 16);
 			ip6rdprefixlen = 16;
@@ -332,7 +336,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		return;
 
 	if (tb[IFLA_IPTUN_REMOTE]) {
-		unsigned addr = rta_getattr_u32(tb[IFLA_IPTUN_REMOTE]);
+		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_REMOTE]);
 
 		if (addr)
 			remote = format_host(AF_INET, 4, &addr, s1, sizeof(s1));
@@ -341,7 +345,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 	fprintf(f, "remote %s ", remote);
 
 	if (tb[IFLA_IPTUN_LOCAL]) {
-		unsigned addr = rta_getattr_u32(tb[IFLA_IPTUN_LOCAL]);
+		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_LOCAL]);
 
 		if (addr)
 			local = format_host(AF_INET, 4, &addr, s1, sizeof(s1));
@@ -350,7 +354,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 	fprintf(f, "local %s ", local);
 
 	if (tb[IFLA_IPTUN_LINK] && rta_getattr_u32(tb[IFLA_IPTUN_LINK])) {
-		unsigned link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
+		unsigned int link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
 		const char *n = if_indextoname(link, s2);
 
 		if (n)

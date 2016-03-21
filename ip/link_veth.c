@@ -37,7 +37,7 @@ static int veth_parse_opt(struct link_util *lu, int argc, char **argv,
 	char *type = NULL;
 	int index = 0;
 	int err, len;
-	struct rtattr * data;
+	struct rtattr *data;
 	int group;
 	struct ifinfomsg *ifm, *peer_ifm;
 	unsigned int ifi_flags, ifi_change;

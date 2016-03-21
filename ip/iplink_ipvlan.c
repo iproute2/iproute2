@@ -30,8 +30,7 @@ static void explain(void)
 
 static int mode_arg(void)
 {
-	fprintf(stderr, "Error: argument of \"mode\" must be either \"l2\", "
-		"or \"l3\"\n");
+	fprintf(stderr, "Error: argument of \"mode\" must be either \"l2\", or \"l3\"\n");
 	return -1;
 }
 
@@ -41,6 +40,7 @@ static int ipvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	while (argc > 0) {
 		if (matches(*argv, "mode") == 0) {
 			__u16 mode = 0;
+
 			NEXT_ARG();
 
 			if (strcmp(*argv, "l2") == 0)

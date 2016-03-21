@@ -38,12 +38,12 @@ static void usage(void)
 	exit(-1);
 }
 
-#define NETCONF_RTA(r)	((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct netconfmsg))))
+#define NETCONF_RTA(r)	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct netconfmsg))))
 
 int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 		  struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE*)arg;
+	FILE *fp = (FILE *)arg;
 	struct netconfmsg *ncm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[NETCONFA_MAX+1];
