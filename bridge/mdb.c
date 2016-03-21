@@ -21,7 +21,7 @@
 
 #ifndef MDBA_RTA
 #define MDBA_RTA(r) \
-	((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct br_port_msg))))
+	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct br_port_msg))))
 #endif
 
 static unsigned int filter_index;
@@ -224,9 +224,9 @@ static int mdb_show(int argc, char **argv)
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
+		struct nlmsghdr	n;
 		struct br_port_msg	bpm;
-		char   			buf[1024];
+		char			buf[1024];
 	} req;
 	struct br_mdb_entry entry;
 	char *d = NULL, *p = NULL, *grp = NULL;

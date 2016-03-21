@@ -76,10 +76,10 @@ static int accept_msg(const struct sockaddr_nl *who,
 int do_monitor(int argc, char **argv)
 {
 	char *file = NULL;
-	unsigned groups = ~RTMGRP_TC;
-	int llink=0;
-	int lneigh=0;
-	int lmdb=0;
+	unsigned int groups = ~RTMGRP_TC;
+	int llink = 0;
+	int lneigh = 0;
+	int lmdb = 0;
 
 	rtnl_close(&rth);
 
@@ -88,7 +88,7 @@ int do_monitor(int argc, char **argv)
 			NEXT_ARG();
 			file = *argv;
 		} else if (matches(*argv, "link") == 0) {
-			llink=1;
+			llink = 1;
 			groups = 0;
 		} else if (matches(*argv, "fdb") == 0) {
 			lneigh = 1;
@@ -98,7 +98,7 @@ int do_monitor(int argc, char **argv)
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
-			prefix_banner=1;
+			prefix_banner = 1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -122,6 +122,7 @@ int do_monitor(int argc, char **argv)
 	if (file) {
 		FILE *fp;
 		int err;
+
 		fp = fopen(file, "r");
 		if (fp == NULL) {
 			perror("Cannot fopen");

@@ -26,9 +26,9 @@ static void usage(void)
 static int vlan_modify(int cmd, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct ifinfomsg 	ifm;
-		char   			buf[1024];
+		struct nlmsghdr	n;
+		struct ifinfomsg	ifm;
+		char			buf[1024];
 	} req;
 	char *d = NULL;
 	short vid = -1;
@@ -51,6 +51,7 @@ static int vlan_modify(int cmd, int argc, char **argv)
 			d = *argv;
 		} else if (strcmp(*argv, "vid") == 0) {
 			char *p;
+
 			NEXT_ARG();
 			p = strchr(*argv, '-');
 			if (p) {
@@ -144,7 +145,7 @@ static int print_vlan(const struct sockaddr_nl *who,
 	FILE *fp = arg;
 	struct ifinfomsg *ifm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[IFLA_MAX+1];
+	struct rtattr *tb[IFLA_MAX+1];
 
 	if (n->nlmsg_type != RTM_NEWLINK) {
 		fprintf(stderr, "Not RTM_NEWLINK: %08x %08x %08x\n",

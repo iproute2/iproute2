@@ -34,12 +34,12 @@ static void usage(void)
 	fprintf(stderr, "Usage: bridge fdb { add | append | del | replace } ADDR dev DEV\n"
 			"              [ self ] [ master ] [ use ] [ router ]\n"
 			"              [ local | static | dynamic ] [ dst IPADDR ] [ vlan VID ]\n"
-		        "              [ port PORT] [ vni VNI ] [ via DEV ]\n");
+			"              [ port PORT] [ vni VNI ] [ via DEV ]\n");
 	fprintf(stderr, "       bridge fdb [ show [ br BRDEV ] [ brport DEV ] ]\n");
 	exit(-1);
 }
 
-static const char *state_n2a(unsigned s)
+static const char *state_n2a(unsigned int s)
 {
 	static char buf[32];
 
@@ -64,7 +64,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	FILE *fp = arg;
 	struct ndmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr * tb[NDA_MAX+1];
+	struct rtattr *tb[NDA_MAX+1];
 
 	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH) {
 		fprintf(stderr, "Not RTM_NEWNEIGH: %08x %08x %08x\n",
@@ -119,6 +119,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[NDA_VLAN]) {
 		__u16 vid = rta_getattr_u16(tb[NDA_VLAN]);
+
 		fprintf(fp, "vlan %hu ", vid);
 	}
 
@@ -171,9 +172,9 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 static int fdb_show(int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
+		struct nlmsghdr	n;
 		struct ifinfomsg	ifm;
-		char   			buf[256];
+		char			buf[256];
 	} req;
 
 	char *filter_dev = NULL;
@@ -200,6 +201,7 @@ static int fdb_show(int argc, char **argv)
 
 	if (br) {
 		int br_ifindex = ll_name_to_index(br);
+
 		if (br_ifindex == 0) {
 			fprintf(stderr, "Cannot find bridge device \"%s\"\n", br);
 			return -1;
@@ -235,9 +237,9 @@ static int fdb_show(int argc, char **argv)
 static int fdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
-		struct nlmsghdr 	n;
-		struct ndmsg 		ndm;
-		char   			buf[256];
+		struct nlmsghdr	n;
+		struct ndmsg		ndm;
+		char			buf[256];
 	} req;
 	char *addr = NULL;
 	char *d = NULL;
@@ -298,7 +300,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_flags |= NTF_MASTER;
 		} else if (matches(*argv, "router") == 0) {
 			req.ndm.ndm_flags |= NTF_ROUTER;
-		} else if (matches(*argv, "local") == 0||
+		} else if (matches(*argv, "local") == 0 || 
 			   matches(*argv, "permanent") == 0) {
 			req.ndm.ndm_state |= NUD_PERMANENT;
 		} else if (matches(*argv, "temp") == 0 ||
