@@ -6,13 +6,17 @@ vlan - vlan manipulation module
 .in +8
 .ti -8
 .BR tc " ... " "action vlan" " { " pop " |"
-.IR PUSH " }"
+.IR PUSH " } [ " CONTROL " ]"
 
 .ti -8
 .IR PUSH " := "
 .BR push " [ " protocol
 .IR VLANPROTO " ]"
 .BI id " VLANID"
+
+.ti -8
+.IR CONTROL " := { "
+.BR reclassify " | " pipe " | " drop " | " continue " | " pass " }"
 .SH DESCRIPTION
 The
 .B vlan
@@ -50,5 +54,55 @@ for hexadecimal interpretation, etc.).
 .BI protocol " VLANPROTO"
 Choose the VLAN protocol to use. At the time of writing, the kernel accepts only
 .BR 802.1Q " or " 802.1ad .
+.TP
+.I CONTROL
+How to continue after executing this action.
+.RS
+.TP
+.B reclassify
+Restarts classification by jumping back to the first filter attached to this
+action's parent.
+.TP
+.B pipe
+Continue with the next action, this is the default.
+.TP
+.B drop
+Packet will be dropped without running further actions.
+.TP
+.B continue
+Continue classification with next filter in line.
+.TP
+.B pass
+Return to calling qdisc for packet processing. This ends the classification
+process.
+.RE
+.SH EXAMPLES
+The following example encapsulates incoming ICMP packets on eth0 from 10.0.0.2
+into VLAN ID 123:
+
+.RS
+.EX
+#tc qdisc add dev eth0 handle ffff: ingress
+#tc filter add dev eth0 parent ffff: pref 11 protocol ip \\
+	u32 match ip protocol 1 0xff flowid 1:1 \\
+	u32 match ip src 10.0.0.2 flowid 1:1 \\
+	action vlan push id 123
+.EE
+.RE
+
+Here is an example of the
+.B pop
+function: Incoming VLAN packets on eth0 are decapsulated and the classification
+process then restarted for the plain packet:
+
+.RS
+.EX
+#tc qdisc add dev eth0 handle ffff: ingress
+#tc filter add dev $ETH parent ffff: pref 1 protocol 802.1Q \\
+	u32 match u32 0 0 flowid 1:1 \\
+	action vlan pop reclassify
+.EE
+.RE
+
 .SH SEE ALSO
 .BR tc (8)
