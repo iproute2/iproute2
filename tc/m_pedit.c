@@ -156,7 +156,7 @@ int
 pack_key16(__u32 retain, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 {
 	int ind, stride;
-	__u32 m[4] = {0xFFFF0000, 0xFF0000FF, 0x0000FFFF};
+	__u32 m[4] = {0x0000FFFF, 0xFF0000FF, 0xFFFF0000};
 
 	if (tkey->val > 0xFFFF || tkey->mask > 0xFFFF) {
 		fprintf(stderr, "pack_key16 bad value\n");
@@ -170,9 +170,9 @@ pack_key16(__u32 retain, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 		return -1;
 	}
 
-	stride = 8 * ind;
-	tkey->val = htons(tkey->val & retain) << stride;
-	tkey->mask = (htons(tkey->mask | ~retain) << stride) | m[ind];
+	stride = 8 * (2 - ind);
+	tkey->val = htonl((tkey->val & retain) << stride);
+	tkey->mask = htonl(((tkey->mask | ~retain) << stride) | m[ind]);
 
 	tkey->off &= ~3;
 
@@ -186,7 +186,7 @@ int
 pack_key8(__u32 retain, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 {
 	int ind, stride;
-	__u32 m[4] = {0xFFFFFF00, 0xFFFF00FF, 0xFF00FFFF, 0x00FFFFFF};
+	__u32 m[4] = {0x00FFFFFF, 0xFF00FFFF, 0xFFFF00FF, 0xFFFFFF00};
 
 	if (tkey->val > 0xFF || tkey->mask > 0xFF) {
 		fprintf(stderr, "pack_key8 bad value (val %x mask %x\n", tkey->val, tkey->mask);
@@ -195,9 +195,9 @@ pack_key8(__u32 retain, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 
 	ind = tkey->off & 3;
 
-	stride = 8 * ind;
-	tkey->val = (tkey->val & retain) << stride;
-	tkey->mask = ((tkey->mask | ~retain) << stride) | m[ind];
+	stride = 8 * (3 - ind);
+	tkey->val = htonl((tkey->val & retain) << stride);
+	tkey->mask = htonl(((tkey->mask | ~retain) << stride) | m[ind]);
 
 	tkey->off &= ~3;
 
@@ -282,6 +282,9 @@ parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain, struct
 
 	tkey->val = val;
 	tkey->mask = mask;
+
+	if (type == TIPV4)
+		tkey->val = ntohl(tkey->val);
 
 	if (len == 1) {
 		res = pack_key8(retain, sel, tkey);
