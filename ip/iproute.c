@@ -370,11 +370,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[RTA_DST]) {
 		if (r->rtm_dst_len != host_len) {
-			fprintf(fp, "%s/%u ", rt_addr_n2a(r->rtm_family,
-						       RTA_PAYLOAD(tb[RTA_DST]),
-						       RTA_DATA(tb[RTA_DST])),
-				r->rtm_dst_len
-				);
+			fprintf(fp, "%s/%u ",
+			        rt_addr_n2a_rta(r->rtm_family, tb[RTA_DST]),
+			        r->rtm_dst_len);
 		} else {
 			fprintf(fp, "%s ",
 			        format_host_rta(r->rtm_family, tb[RTA_DST]));
@@ -386,11 +384,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 	if (tb[RTA_SRC]) {
 		if (r->rtm_src_len != host_len) {
-			fprintf(fp, "from %s/%u ", rt_addr_n2a(r->rtm_family,
-						       RTA_PAYLOAD(tb[RTA_SRC]),
-						       RTA_DATA(tb[RTA_SRC])),
-				r->rtm_src_len
-				);
+			fprintf(fp, "from %s/%u ",
+			        rt_addr_n2a_rta(r->rtm_family, tb[RTA_SRC]),
+			        r->rtm_src_len);
 		} else {
 			fprintf(fp, "from %s ",
 			        format_host_rta(r->rtm_family, tb[RTA_SRC]));
@@ -439,9 +435,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		   and symbolic name will not be useful.
 		 */
 		fprintf(fp, " src %s ",
-			rt_addr_n2a(r->rtm_family,
-				    RTA_PAYLOAD(tb[RTA_PREFSRC]),
-				    RTA_DATA(tb[RTA_PREFSRC])));
+			rt_addr_n2a_rta(r->rtm_family, tb[RTA_PREFSRC]));
 	}
 	if (tb[RTA_PRIORITY])
 		fprintf(fp, " metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));

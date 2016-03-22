@@ -71,19 +71,11 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(prefix), len);
 
-	fprintf(fp, "prefix ");
-
 	if (tb[PREFIX_ADDRESS]) {
-		struct in6_addr *pfx;
-
-		pfx = (struct in6_addr *)RTA_DATA(tb[PREFIX_ADDRESS]);
-
-		fprintf(fp, "%s", rt_addr_n2a(family,
-					      RTA_PAYLOAD(tb[PREFIX_ADDRESS]),
-					      pfx));
+		fprintf(fp, "prefix %s/%u",
+		        rt_addr_n2a_rta(family, tb[PREFIX_ADDRESS]),
+			prefix->prefix_len);
 	}
-	fprintf(fp, "/%u ", prefix->prefix_len);
-
 	fprintf(fp, "dev %s ", ll_index_to_name(prefix->prefix_ifindex));
 
 	if (prefix->prefix_flags & IF_PREFIX_ONLINK)

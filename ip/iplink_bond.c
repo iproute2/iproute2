@@ -422,9 +422,7 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		for (i = 0; i < BOND_MAX_ARP_TARGETS; i++) {
 			if (iptb[i])
 				fprintf(f, "%s",
-					rt_addr_n2a(AF_INET,
-						    RTA_PAYLOAD(iptb[i]),
-						    RTA_DATA(iptb[i])));
+					rt_addr_n2a_rta(AF_INET, iptb[i]));
 			if (i < BOND_MAX_ARP_TARGETS-1 && iptb[i+1])
 				fprintf(f, ",");
 		}

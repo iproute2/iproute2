@@ -77,15 +77,11 @@ static void print_encap_ip(FILE *fp, struct rtattr *encap)
 
 	if (tb[LWTUNNEL_IP_SRC])
 		fprintf(fp, "src %s ",
-			rt_addr_n2a(AF_INET,
-				    RTA_PAYLOAD(tb[LWTUNNEL_IP_SRC]),
-				    RTA_DATA(tb[LWTUNNEL_IP_SRC])));
+			rt_addr_n2a_rta(AF_INET, tb[LWTUNNEL_IP_SRC]));
 
 	if (tb[LWTUNNEL_IP_DST])
 		fprintf(fp, "dst %s ",
-			rt_addr_n2a(AF_INET,
-				    RTA_PAYLOAD(tb[LWTUNNEL_IP_DST]),
-				    RTA_DATA(tb[LWTUNNEL_IP_DST])));
+			rt_addr_n2a_rta(AF_INET, tb[LWTUNNEL_IP_DST]));
 
 	if (tb[LWTUNNEL_IP_TTL])
 		fprintf(fp, "ttl %d ", rta_getattr_u8(tb[LWTUNNEL_IP_TTL]));
@@ -112,7 +108,6 @@ static void print_encap_ila(FILE *fp, struct rtattr *encap)
 static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[LWTUNNEL_IP6_MAX+1];
-	char abuf[256];
 
 	parse_rtattr_nested(tb, LWTUNNEL_IP6_MAX, encap);
 
@@ -121,17 +116,11 @@ static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 
 	if (tb[LWTUNNEL_IP6_SRC])
 		fprintf(fp, "src %s ",
-			rt_addr_n2a(AF_INET6,
-				    RTA_PAYLOAD(tb[LWTUNNEL_IP6_SRC]),
-				    RTA_DATA(tb[LWTUNNEL_IP6_SRC]),
-				    abuf, sizeof(abuf)));
+			rt_addr_n2a_rta(AF_INET6, tb[LWTUNNEL_IP6_SRC]));
 
 	if (tb[LWTUNNEL_IP6_DST])
 		fprintf(fp, "dst %s ",
-			rt_addr_n2a(AF_INET6,
-				    RTA_PAYLOAD(tb[LWTUNNEL_IP6_DST]),
-				    RTA_DATA(tb[LWTUNNEL_IP6_DST]),
-				    abuf, sizeof(abuf)));
+			rt_addr_n2a_rta(AF_INET6, tb[LWTUNNEL_IP6_DST]));
 
 	if (tb[LWTUNNEL_IP6_HOPLIMIT])
 		fprintf(fp, "hoplimit %d ", rta_getattr_u8(tb[LWTUNNEL_IP6_HOPLIMIT]));

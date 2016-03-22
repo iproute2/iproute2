@@ -289,16 +289,12 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 
 	if (tb[IFLA_IPTUN_REMOTE]) {
 		fprintf(f, "remote %s ",
-			rt_addr_n2a(AF_INET6,
-				    RTA_PAYLOAD(tb[IFLA_IPTUN_REMOTE]),
-				    RTA_DATA(tb[IFLA_IPTUN_REMOTE])));
+			rt_addr_n2a_rta(AF_INET6, tb[IFLA_IPTUN_REMOTE]));
 	}
 
 	if (tb[IFLA_IPTUN_LOCAL]) {
 		fprintf(f, "local %s ",
-			rt_addr_n2a(AF_INET6,
-				    RTA_PAYLOAD(tb[IFLA_IPTUN_LOCAL]),
-				    RTA_DATA(tb[IFLA_IPTUN_LOCAL])));
+			rt_addr_n2a_rta(AF_INET6, tb[IFLA_IPTUN_LOCAL]));
 	}
 
 	if (tb[IFLA_IPTUN_LINK] && rta_getattr_u32(tb[IFLA_IPTUN_LINK])) {

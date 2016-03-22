@@ -415,16 +415,12 @@ static void flower_print_ip_addr(FILE *f, char *name, __be16 eth_type,
 	}
 	if (!addr_attr || RTA_PAYLOAD(addr_attr) != len)
 		return;
-	fprintf(f, "\n  %s %s", name, rt_addr_n2a(family,
-						  RTA_PAYLOAD(addr_attr),
-						  RTA_DATA(addr_attr)));
+	fprintf(f, "\n  %s %s", name, rt_addr_n2a_rta(family, addr_attr));
 	if (!mask_attr || RTA_PAYLOAD(mask_attr) != len)
 		return;
 	bits = __mask_bits(RTA_DATA(mask_attr), len);
 	if (bits < 0)
-		fprintf(f, "/%s", rt_addr_n2a(family,
-					      RTA_PAYLOAD(mask_attr),
-					      RTA_DATA(mask_attr)));
+		fprintf(f, "/%s", rt_addr_n2a_rta(family, mask_attr));
 	else if (bits < len * 8)
 		fprintf(f, "/%d", bits);
 }

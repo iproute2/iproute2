@@ -83,11 +83,9 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[FRA_SRC]) {
 		if (r->rtm_src_len != host_len) {
-			fprintf(fp, "from %s/%u ", rt_addr_n2a(r->rtm_family,
-						       RTA_PAYLOAD(tb[FRA_SRC]),
-						       RTA_DATA(tb[FRA_SRC])),
-				r->rtm_src_len
-				);
+			fprintf(fp, "from %s/%u ",
+			        rt_addr_n2a_rta(r->rtm_family, tb[FRA_SRC]),
+			        r->rtm_src_len);
 		} else {
 			fprintf(fp, "from %s ",
 			        format_host_rta(r->rtm_family, tb[FRA_SRC]));
@@ -100,11 +98,9 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[FRA_DST]) {
 		if (r->rtm_dst_len != host_len) {
-			fprintf(fp, "to %s/%u ", rt_addr_n2a(r->rtm_family,
-						       RTA_PAYLOAD(tb[FRA_DST]),
-						       RTA_DATA(tb[FRA_DST])),
-				r->rtm_dst_len
-				);
+			fprintf(fp, "to %s/%u ",
+			        rt_addr_n2a_rta(r->rtm_family, tb[FRA_DST]),
+			        r->rtm_dst_len);
 		} else {
 			fprintf(fp, "to %s ",
 			        format_host_rta(r->rtm_family, tb[FRA_DST]));

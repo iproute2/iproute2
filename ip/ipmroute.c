@@ -123,16 +123,12 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[RTA_SRC])
 		len = snprintf(obuf, sizeof(obuf),
-			       "(%s, ", rt_addr_n2a(family,
-						    RTA_PAYLOAD(tb[RTA_SRC]),
-						    RTA_DATA(tb[RTA_SRC])));
+			       "(%s, ", rt_addr_n2a_rta(family, tb[RTA_SRC]));
 	else
 		len = sprintf(obuf, "(unknown, ");
 	if (tb[RTA_DST])
 		snprintf(obuf + len, sizeof(obuf) - len,
-			 "%s)", rt_addr_n2a(family,
-					    RTA_PAYLOAD(tb[RTA_DST]),
-					    RTA_DATA(tb[RTA_DST])));
+			 "%s)", rt_addr_n2a_rta(family, tb[RTA_DST]));
 	else
 		snprintf(obuf + len, sizeof(obuf) - len, "unknown) ");
 

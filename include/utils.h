@@ -130,6 +130,8 @@ const char *format_host(int af, int lne, const void *addr);
 const char *rt_addr_n2a_r(int af, int len, const void *addr,
 			       char *buf, int buflen);
 const char *rt_addr_n2a(int af, int len, const void *addr);
+#define rt_addr_n2a_rta(af, rta) \
+	rt_addr_n2a(af, RTA_PAYLOAD(rta), RTA_DATA(rta))
 
 int read_family(const char *name);
 const char *family_name(int family);
