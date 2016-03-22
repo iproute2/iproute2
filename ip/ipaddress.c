@@ -1058,18 +1058,16 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (rta_tb[IFA_LOCAL]) {
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s",
-		              format_host(ifa->ifa_family,
-		                          RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
-		                          RTA_DATA(rta_tb[IFA_LOCAL])));
+		              format_host_rta(ifa->ifa_family,
+		                              rta_tb[IFA_LOCAL]));
 		if (rta_tb[IFA_ADDRESS] &&
 		    memcmp(RTA_DATA(rta_tb[IFA_ADDRESS]),
 		           RTA_DATA(rta_tb[IFA_LOCAL]),
 		           ifa->ifa_family == AF_INET ? 4 : 16)) {
 			fprintf(fp, " peer ");
 			color_fprintf(fp, ifa_family_color(ifa->ifa_family),
-			              "%s", format_host(ifa->ifa_family,
-			              RTA_PAYLOAD(rta_tb[IFA_ADDRESS]),
-			              RTA_DATA(rta_tb[IFA_ADDRESS])));
+			              "%s", format_host_rta(ifa->ifa_family,
+			              rta_tb[IFA_ADDRESS]));
 		}
 		fprintf(fp, "/%d ", ifa->ifa_prefixlen);
 	}
@@ -1080,16 +1078,14 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (rta_tb[IFA_BROADCAST]) {
 		fprintf(fp, "brd ");
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
-			format_host(ifa->ifa_family,
-				    RTA_PAYLOAD(rta_tb[IFA_BROADCAST]),
-				    RTA_DATA(rta_tb[IFA_BROADCAST])));
+		              format_host_rta(ifa->ifa_family,
+		                              rta_tb[IFA_BROADCAST]));
 	}
 	if (rta_tb[IFA_ANYCAST]) {
 		fprintf(fp, "any ");
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
-			format_host(ifa->ifa_family,
-				    RTA_PAYLOAD(rta_tb[IFA_ANYCAST]),
-				    RTA_DATA(rta_tb[IFA_ANYCAST])));
+		              format_host_rta(ifa->ifa_family,
+		                              rta_tb[IFA_ANYCAST]));
 	}
 	fprintf(fp, "scope %s ", rtnl_rtscope_n2a(ifa->ifa_scope, b1, sizeof(b1)));
 	if (ifa_flags & IFA_F_SECONDARY) {

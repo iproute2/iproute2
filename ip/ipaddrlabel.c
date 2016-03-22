@@ -75,9 +75,8 @@ int print_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg
 
 	if (tb[IFAL_ADDRESS]) {
 		fprintf(fp, "prefix %s/%u ",
-			format_host(ifal->ifal_family,
-				    RTA_PAYLOAD(tb[IFAL_ADDRESS]),
-				    RTA_DATA(tb[IFAL_ADDRESS])),
+			format_host_rta(ifal->ifal_family,
+		                        tb[IFAL_ADDRESS]),
 			ifal->ifal_prefixlen);
 	}
 

@@ -62,9 +62,8 @@ static void print_encap_mpls(FILE *fp, struct rtattr *encap)
 	parse_rtattr_nested(tb, MPLS_IPTUNNEL_MAX, encap);
 
 	if (tb[MPLS_IPTUNNEL_DST])
-		fprintf(fp, " %s ", format_host(AF_MPLS,
-			RTA_PAYLOAD(tb[MPLS_IPTUNNEL_DST]),
-			RTA_DATA(tb[MPLS_IPTUNNEL_DST])));
+		fprintf(fp, " %s ",
+		        format_host_rta(AF_MPLS, tb[MPLS_IPTUNNEL_DST]));
 }
 
 static void print_encap_ip(FILE *fp, struct rtattr *encap)

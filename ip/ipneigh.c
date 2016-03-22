@@ -278,9 +278,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "miss ");
 	if (tb[NDA_DST]) {
 		fprintf(fp, "%s ",
-			format_host(r->ndm_family,
-				    RTA_PAYLOAD(tb[NDA_DST]),
-				    RTA_DATA(tb[NDA_DST])));
+			format_host_rta(r->ndm_family, tb[NDA_DST]));
 	}
 	if (!filter.index && r->ndm_ifindex)
 		fprintf(fp, "dev %s ", ll_index_to_name(r->ndm_ifindex));

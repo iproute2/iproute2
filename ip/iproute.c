@@ -376,10 +376,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				r->rtm_dst_len
 				);
 		} else {
-			fprintf(fp, "%s ", format_host(r->rtm_family,
-						       RTA_PAYLOAD(tb[RTA_DST]),
-						       RTA_DATA(tb[RTA_DST]))
-				);
+			fprintf(fp, "%s ",
+			        format_host_rta(r->rtm_family, tb[RTA_DST]));
 		}
 	} else if (r->rtm_dst_len) {
 		fprintf(fp, "0/%d ", r->rtm_dst_len);
@@ -394,19 +392,15 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				r->rtm_src_len
 				);
 		} else {
-			fprintf(fp, "from %s ", format_host(r->rtm_family,
-						       RTA_PAYLOAD(tb[RTA_SRC]),
-						       RTA_DATA(tb[RTA_SRC]))
-				);
+			fprintf(fp, "from %s ",
+			        format_host_rta(r->rtm_family, tb[RTA_SRC]));
 		}
 	} else if (r->rtm_src_len) {
 		fprintf(fp, "from 0/%u ", r->rtm_src_len);
 	}
 	if (tb[RTA_NEWDST]) {
-		fprintf(fp, "as to %s ", format_host(r->rtm_family,
-						  RTA_PAYLOAD(tb[RTA_NEWDST]),
-						  RTA_DATA(tb[RTA_NEWDST]))
-			);
+		fprintf(fp, "as to %s ",
+		        format_host_rta(r->rtm_family, tb[RTA_NEWDST]));
 	}
 
 	if (tb[RTA_ENCAP])
@@ -419,9 +413,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len) {
 		fprintf(fp, "via %s ",
-			format_host(r->rtm_family,
-				    RTA_PAYLOAD(tb[RTA_GATEWAY]),
-				    RTA_DATA(tb[RTA_GATEWAY])));
+		        format_host_rta(r->rtm_family, tb[RTA_GATEWAY]));
 	}
 	if (tb[RTA_VIA]) {
 		size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
@@ -653,16 +645,13 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 							tb[RTA_ENCAP]);
 				if (tb[RTA_NEWDST]) {
 					fprintf(fp, " as to %s ",
-						format_host(r->rtm_family,
-						RTA_PAYLOAD(tb[RTA_NEWDST]),
-						RTA_DATA(tb[RTA_NEWDST]),
-						abuf, sizeof(abuf)));
+						format_host_rta(r->rtm_family,
+								tb[RTA_NEWDST]));
 				}
 				if (tb[RTA_GATEWAY]) {
 					fprintf(fp, " via %s ",
-						format_host(r->rtm_family,
-							    RTA_PAYLOAD(tb[RTA_GATEWAY]),
-							    RTA_DATA(tb[RTA_GATEWAY])));
+						format_host_rta(r->rtm_family,
+								tb[RTA_GATEWAY]));
 				}
 				if (tb[RTA_VIA]) {
 					size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;

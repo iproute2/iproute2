@@ -78,12 +78,9 @@ static int print_token(const struct sockaddr_nl *who, struct nlmsghdr *n, void *
 		return -1;
 	}
 
-	fprintf(fp, "token %s ",
-		format_host(ifi->ifi_family,
-			    RTA_PAYLOAD(ltb[IFLA_INET6_TOKEN]),
-			    RTA_DATA(ltb[IFLA_INET6_TOKEN])));
-	fprintf(fp, "dev %s ", ll_index_to_name(ifi->ifi_index));
-	fprintf(fp, "\n");
+	fprintf(fp, "token %s dev %s\n",
+	        format_host_rta(ifi->ifi_family, ltb[IFLA_INET6_TOKEN]),
+	        ll_index_to_name(ifi->ifi_index));
 	fflush(fp);
 
 	return 0;
