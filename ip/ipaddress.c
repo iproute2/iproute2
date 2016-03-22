@@ -862,7 +862,8 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				fprintf(fp, " peer ");
 			else
 				fprintf(fp, " brd ");
-			fprintf(fp, "%s", ll_addr_n2a(RTA_DATA(tb[IFLA_BROADCAST]),
+			color_fprintf(fp, COLOR_MAC, "%s",
+					ll_addr_n2a(RTA_DATA(tb[IFLA_BROADCAST]),
 						      RTA_PAYLOAD(tb[IFLA_BROADCAST]),
 						      ifi->ifi_type,
 						      b1, sizeof(b1)));
@@ -1062,32 +1063,34 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		                          RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
 		                          RTA_DATA(rta_tb[IFA_LOCAL]),
 		                          abuf, sizeof(abuf)));
-		if (rta_tb[IFA_ADDRESS] == NULL ||
-		    memcmp(RTA_DATA(rta_tb[IFA_ADDRESS]), RTA_DATA(rta_tb[IFA_LOCAL]),
-			   ifa->ifa_family == AF_INET ? 4 : 16) == 0) {
-			fprintf(fp, "/%d ", ifa->ifa_prefixlen);
-		} else {
-			fprintf(fp, " peer %s/%d ",
-				format_host(ifa->ifa_family,
-					    RTA_PAYLOAD(rta_tb[IFA_ADDRESS]),
-					    RTA_DATA(rta_tb[IFA_ADDRESS]),
-					    abuf, sizeof(abuf)),
-				ifa->ifa_prefixlen);
+		if (rta_tb[IFA_ADDRESS] &&
+		    memcmp(RTA_DATA(rta_tb[IFA_ADDRESS]),
+		           RTA_DATA(rta_tb[IFA_LOCAL]),
+		           ifa->ifa_family == AF_INET ? 4 : 16)) {
+			fprintf(fp, " peer ");
+			color_fprintf(fp, ifa_family_color(ifa->ifa_family),
+			              "%s", format_host(ifa->ifa_family,
+			              RTA_PAYLOAD(rta_tb[IFA_ADDRESS]),
+			              RTA_DATA(rta_tb[IFA_ADDRESS]),
+			              abuf, sizeof(abuf)));
 		}
+		fprintf(fp, "/%d ", ifa->ifa_prefixlen);
 	}
 
 	if (brief)
 		goto brief_exit;
 
 	if (rta_tb[IFA_BROADCAST]) {
-		fprintf(fp, "brd %s ",
+		fprintf(fp, "brd ");
+		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
 			format_host(ifa->ifa_family,
 				    RTA_PAYLOAD(rta_tb[IFA_BROADCAST]),
 				    RTA_DATA(rta_tb[IFA_BROADCAST]),
 				    abuf, sizeof(abuf)));
 	}
 	if (rta_tb[IFA_ANYCAST]) {
-		fprintf(fp, "any %s ",
+		fprintf(fp, "any ");
+		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
 			format_host(ifa->ifa_family,
 				    RTA_PAYLOAD(rta_tb[IFA_ANYCAST]),
 				    RTA_DATA(rta_tb[IFA_ANYCAST]),
