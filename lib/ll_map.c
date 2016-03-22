@@ -22,7 +22,7 @@
 
 #include "libnetlink.h"
 #include "ll_map.h"
-#include "hlist.h"
+#include "list.h"
 
 struct ll_cache {
 	struct hlist_node idx_hash;

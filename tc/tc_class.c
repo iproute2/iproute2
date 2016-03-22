@@ -24,7 +24,7 @@
 #include "utils.h"
 #include "tc_util.h"
 #include "tc_common.h"
-#include "hlist.h"
+#include "list.h"
 
 struct graph_node {
 	struct hlist_node hlist;

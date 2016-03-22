@@ -18,7 +18,7 @@
 #include <linux/net_namespace.h>
 
 #include "utils.h"
-#include "hlist.h"
+#include "list.h"
 #include "ip_common.h"
 #include "namespace.h"
 
