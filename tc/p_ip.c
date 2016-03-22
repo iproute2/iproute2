@@ -24,7 +24,8 @@
 #include "m_pedit.h"
 
 static int
-parse_ip(int *argc_p, char ***argv_p, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
+parse_ip(int *argc_p, char ***argv_p,
+	 struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 {
 	int res = -1;
 	int argc = *argc_p;
@@ -52,7 +53,7 @@ parse_ip(int *argc_p, char ***argv_p, struct tc_pedit_sel *sel, struct tc_pedit_
 	if (strcmp(*argv, "tos") == 0 || matches(*argv, "dsfield") == 0) {
 		NEXT_ARG();
 		tkey->off = 1;
-		res = parse_cmd(&argc, &argv,  1, TU32, RU8, sel, tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
 		goto done;
 	}
 	if (strcmp(*argv, "ihl") == 0) {
@@ -139,7 +140,8 @@ done:
 }
 
 static int
-parse_ip6(int *argc_p, char ***argv_p, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
+parse_ip6(int *argc_p, char ***argv_p,
+	  struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 {
 	int res = -1;
 	return res;
