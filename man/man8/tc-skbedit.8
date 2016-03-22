@@ -17,6 +17,18 @@ The
 action allows to change a packet's associated meta data. It complements the
 .B pedit
 action, which in turn allows to change parts of the packet data itself.
+
+The most unique feature of
+.B skbedit
+is it's ability to decide over which queue of an interface with multiple
+transmit queues the packet is to be sent out. The number of available transmit
+queues is reflected by sysfs entries within
+.I /sys/class/net/<interface>/queues
+with name
+.I tx-N
+(where
+.I N
+is the actual queue number).
 .SH OPTIONS
 .TP
 .BI queue_mapping " QUEUE_MAPPING"
