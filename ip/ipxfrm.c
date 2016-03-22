@@ -285,17 +285,11 @@ void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 			__u8 mode, __u32 reqid, __u16 family, int force_spi,
 			FILE *fp, const char *prefix, const char *title)
 {
-	char abuf[256];
-
 	if (title)
 		fputs(title, fp);
 
-	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "src %s ", rt_addr_n2a(family, sizeof(*saddr),
-					   saddr, abuf, sizeof(abuf)));
-	memset(abuf, '\0', sizeof(abuf));
-	fprintf(fp, "dst %s", rt_addr_n2a(family, sizeof(id->daddr),
-					  &id->daddr, abuf, sizeof(abuf)));
+	fprintf(fp, "src %s ", rt_addr_n2a(family, sizeof(*saddr), saddr));
+	fprintf(fp, "dst %s", rt_addr_n2a(family, sizeof(id->daddr), &id->daddr));
 	fprintf(fp, "%s", _SL_);
 
 	if (prefix)
@@ -447,7 +441,6 @@ void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 			 FILE *fp, const char *prefix)
 {
-	char abuf[256];
 	__u16 f;
 
 	f = sel->family;
@@ -459,16 +452,12 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 	if (prefix)
 		fputs(prefix, fp);
 
-	memset(abuf, '\0', sizeof(abuf));
 	fprintf(fp, "src %s/%u ",
-		rt_addr_n2a(f, sizeof(sel->saddr), &sel->saddr,
-			    abuf, sizeof(abuf)),
+		rt_addr_n2a(f, sizeof(sel->saddr), &sel->saddr),
 		sel->prefixlen_s);
 
-	memset(abuf, '\0', sizeof(abuf));
 	fprintf(fp, "dst %s/%u ",
-		rt_addr_n2a(f, sizeof(sel->daddr), &sel->daddr,
-			    abuf, sizeof(abuf)),
+		rt_addr_n2a(f, sizeof(sel->daddr), &sel->daddr),
 		sel->prefixlen_d);
 
 	if (sel->proto)
@@ -740,7 +729,6 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 	if (tb[XFRMA_ENCAP]) {
 		struct xfrm_encap_tmpl *e;
-		char abuf[256];
 
 		if (prefix)
 			fputs(prefix, fp);
@@ -768,10 +756,8 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		fprintf(fp, "sport %u ", ntohs(e->encap_sport));
 		fprintf(fp, "dport %u ", ntohs(e->encap_dport));
 
-		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "addr %s",
-			rt_addr_n2a(family, sizeof(e->encap_oa), &e->encap_oa,
-				    abuf, sizeof(abuf)));
+			rt_addr_n2a(family, sizeof(e->encap_oa), &e->encap_oa));
 		fprintf(fp, "%s", _SL_);
 	}
 
@@ -783,7 +769,6 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	}
 
 	if (tb[XFRMA_COADDR]) {
-		char abuf[256];
 		xfrm_address_t *coa;
 
 		if (prefix)
@@ -798,10 +783,8 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 			return;
 		}
 
-		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "%s",
-			rt_addr_n2a(family, sizeof(*coa), coa,
-				    abuf, sizeof(abuf)));
+			rt_addr_n2a(family, sizeof(*coa), coa));
 		fprintf(fp, "%s", _SL_);
 	}
 

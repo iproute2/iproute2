@@ -411,7 +411,6 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_BOND_ARP_IP_TARGET]) {
 		struct rtattr *iptb[BOND_MAX_ARP_TARGETS + 1];
-		char buf[INET_ADDRSTRLEN];
 		int i;
 
 		parse_rtattr_nested(iptb, BOND_MAX_ARP_TARGETS,
@@ -425,9 +424,7 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				fprintf(f, "%s",
 					rt_addr_n2a(AF_INET,
 						    RTA_PAYLOAD(iptb[i]),
-						    RTA_DATA(iptb[i]),
-						    buf,
-						    INET_ADDRSTRLEN));
+						    RTA_DATA(iptb[i])));
 			if (i < BOND_MAX_ARP_TARGETS-1 && iptb[i+1])
 				fprintf(f, ",");
 		}

@@ -125,8 +125,9 @@ int af_byte_len(int af);
 const char *format_host_r(int af, int len, const void *addr,
 			       char *buf, int buflen);
 const char *format_host(int af, int lne, const void *addr);
-const char *rt_addr_n2a(int af, int len, const void *addr,
+const char *rt_addr_n2a_r(int af, int len, const void *addr,
 			       char *buf, int buflen);
+const char *rt_addr_n2a(int af, int len, const void *addr);
 
 int read_family(const char *name);
 const char *family_name(int family);

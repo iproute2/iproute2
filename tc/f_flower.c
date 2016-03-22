@@ -394,7 +394,6 @@ static void flower_print_ip_addr(FILE *f, char *name, __be16 eth_type,
 				 struct rtattr *addr6_attr,
 				 struct rtattr *mask6_attr)
 {
-	SPRINT_BUF(b1);
 	struct rtattr *addr_attr;
 	struct rtattr *mask_attr;
 	int family;
@@ -418,16 +417,14 @@ static void flower_print_ip_addr(FILE *f, char *name, __be16 eth_type,
 		return;
 	fprintf(f, "\n  %s %s", name, rt_addr_n2a(family,
 						  RTA_PAYLOAD(addr_attr),
-						  RTA_DATA(addr_attr),
-						  b1, sizeof(b1)));
+						  RTA_DATA(addr_attr)));
 	if (!mask_attr || RTA_PAYLOAD(mask_attr) != len)
 		return;
 	bits = __mask_bits(RTA_DATA(mask_attr), len);
 	if (bits < 0)
 		fprintf(f, "/%s", rt_addr_n2a(family,
 					      RTA_PAYLOAD(mask_attr),
-					      RTA_DATA(mask_attr),
-					      b1, sizeof(b1)));
+					      RTA_DATA(mask_attr)));
 	else if (bits < len * 8)
 		fprintf(f, "/%d", bits);
 }

@@ -57,8 +57,6 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	int host_len = -1;
 	__u32 table;
 	struct rtattr *tb[FRA_MAX+1];
-	char abuf[256];
-
 	SPRINT_BUF(b1);
 
 	if (n->nlmsg_type != RTM_NEWRULE && n->nlmsg_type != RTM_DELRULE)
@@ -87,8 +85,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (r->rtm_src_len != host_len) {
 			fprintf(fp, "from %s/%u ", rt_addr_n2a(r->rtm_family,
 						       RTA_PAYLOAD(tb[FRA_SRC]),
-						       RTA_DATA(tb[FRA_SRC]),
-						       abuf, sizeof(abuf)),
+						       RTA_DATA(tb[FRA_SRC])),
 				r->rtm_src_len
 				);
 		} else {
@@ -107,8 +104,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (r->rtm_dst_len != host_len) {
 			fprintf(fp, "to %s/%u ", rt_addr_n2a(r->rtm_family,
 						       RTA_PAYLOAD(tb[FRA_DST]),
-						       RTA_DATA(tb[FRA_DST]),
-						       abuf, sizeof(abuf)),
+						       RTA_DATA(tb[FRA_DST])),
 				r->rtm_dst_len
 				);
 		} else {

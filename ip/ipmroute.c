@@ -58,7 +58,6 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[RTA_MAX+1];
-	char abuf[256];
 	char obuf[256];
 
 	SPRINT_BUF(b1);
@@ -126,16 +125,14 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		len = snprintf(obuf, sizeof(obuf),
 			       "(%s, ", rt_addr_n2a(family,
 						    RTA_PAYLOAD(tb[RTA_SRC]),
-						    RTA_DATA(tb[RTA_SRC]),
-						    abuf, sizeof(abuf)));
+						    RTA_DATA(tb[RTA_SRC])));
 	else
 		len = sprintf(obuf, "(unknown, ");
 	if (tb[RTA_DST])
 		snprintf(obuf + len, sizeof(obuf) - len,
 			 "%s)", rt_addr_n2a(family,
 					    RTA_PAYLOAD(tb[RTA_DST]),
-					    RTA_DATA(tb[RTA_DST]),
-					    abuf, sizeof(abuf)));
+					    RTA_DATA(tb[RTA_DST])));
 	else
 		snprintf(obuf + len, sizeof(obuf) - len, "unknown) ");
 

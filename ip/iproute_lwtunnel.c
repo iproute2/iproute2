@@ -70,7 +70,6 @@ static void print_encap_mpls(FILE *fp, struct rtattr *encap)
 static void print_encap_ip(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[LWTUNNEL_IP_MAX+1];
-	char abuf[256];
 
 	parse_rtattr_nested(tb, LWTUNNEL_IP_MAX, encap);
 
@@ -81,15 +80,13 @@ static void print_encap_ip(FILE *fp, struct rtattr *encap)
 		fprintf(fp, "src %s ",
 			rt_addr_n2a(AF_INET,
 				    RTA_PAYLOAD(tb[LWTUNNEL_IP_SRC]),
-				    RTA_DATA(tb[LWTUNNEL_IP_SRC]),
-				    abuf, sizeof(abuf)));
+				    RTA_DATA(tb[LWTUNNEL_IP_SRC])));
 
 	if (tb[LWTUNNEL_IP_DST])
 		fprintf(fp, "dst %s ",
 			rt_addr_n2a(AF_INET,
 				    RTA_PAYLOAD(tb[LWTUNNEL_IP_DST]),
-				    RTA_DATA(tb[LWTUNNEL_IP_DST]),
-				    abuf, sizeof(abuf)));
+				    RTA_DATA(tb[LWTUNNEL_IP_DST])));
 
 	if (tb[LWTUNNEL_IP_TTL])
 		fprintf(fp, "ttl %d ", rta_getattr_u8(tb[LWTUNNEL_IP_TTL]));

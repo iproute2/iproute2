@@ -75,15 +75,12 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (tb[PREFIX_ADDRESS]) {
 		struct in6_addr *pfx;
-		char abuf[256];
 
 		pfx = (struct in6_addr *)RTA_DATA(tb[PREFIX_ADDRESS]);
 
-		memset(abuf, '\0', sizeof(abuf));
 		fprintf(fp, "%s", rt_addr_n2a(family,
 					      RTA_PAYLOAD(tb[PREFIX_ADDRESS]),
-					      pfx,
-					      abuf, sizeof(abuf)));
+					      pfx));
 	}
 	fprintf(fp, "/%u ", prefix->prefix_len);
 

@@ -260,7 +260,6 @@ get_failed:
 
 static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
-	char s1[256];
 	char s2[64];
 	int flags = 0;
 	__u32 flowinfo = 0;
@@ -292,16 +291,14 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 		fprintf(f, "remote %s ",
 			rt_addr_n2a(AF_INET6,
 				    RTA_PAYLOAD(tb[IFLA_IPTUN_REMOTE]),
-				    RTA_DATA(tb[IFLA_IPTUN_REMOTE]),
-				    s1, sizeof(s1)));
+				    RTA_DATA(tb[IFLA_IPTUN_REMOTE])));
 	}
 
 	if (tb[IFLA_IPTUN_LOCAL]) {
 		fprintf(f, "local %s ",
 			rt_addr_n2a(AF_INET6,
 				    RTA_PAYLOAD(tb[IFLA_IPTUN_LOCAL]),
-				    RTA_DATA(tb[IFLA_IPTUN_LOCAL]),
-				    s1, sizeof(s1)));
+				    RTA_DATA(tb[IFLA_IPTUN_LOCAL])));
 	}
 
 	if (tb[IFLA_IPTUN_LINK] && rta_getattr_u32(tb[IFLA_IPTUN_LINK])) {

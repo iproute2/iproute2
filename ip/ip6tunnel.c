@@ -78,7 +78,7 @@ static void print_tunnel(struct ip6_tnl_parm2 *p)
 	       p->name,
 	       tnl_strproto(p->proto),
 	       format_host_r(AF_INET6, 16, &p->raddr, s1, sizeof(s1)),
-	       rt_addr_n2a(AF_INET6, 16, &p->laddr, s2, sizeof(s2)));
+	       rt_addr_n2a_r(AF_INET6, 16, &p->laddr, s2, sizeof(s2)));
 	if (p->link) {
 		const char *n = ll_index_to_name(p->link);
 

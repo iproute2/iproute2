@@ -702,7 +702,7 @@ int __get_user_hz(void)
 	return sysconf(_SC_CLK_TCK);
 }
 
-const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen)
+const char *rt_addr_n2a_r(int af, int len, const void *addr, char *buf, int buflen)
 {
 	switch (af) {
 	case AF_INET:
@@ -723,6 +723,13 @@ const char *rt_addr_n2a(int af, int len, const void *addr, char *buf, int buflen
 	default:
 		return "???";
 	}
+}
+
+const char *rt_addr_n2a(int af, int len, const void *addr)
+{
+	static char buf[256];
+
+	return rt_addr_n2a_r(af, len, addr, buf, 256);
 }
 
 int read_family(const char *name)
@@ -832,7 +839,7 @@ const char *format_host_r(int af, int len, const void *addr,
 			return n;
 	}
 #endif
-	return rt_addr_n2a(af, len, addr, buf, buflen);
+	return rt_addr_n2a_r(af, len, addr, buf, buflen);
 }
 
 const char *format_host(int af, int len, const void *addr)
