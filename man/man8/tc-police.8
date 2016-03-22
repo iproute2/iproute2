@@ -12,13 +12,21 @@ police - policing action
 .IR BYTES [\fB/ BYTES "] ] ["
 .BI peakrate " RATE"
 ] [
-.BI avrate " RATE"
-] [
 .BI overhead " BYTES"
 ] [
 .BI linklayer " TYPE"
 ] [
-.BI conform-exceed " EXCEEDACT\fR[\fB/\fIEXCEEDACT\fR]"
+.IR CONTROL " ]"
+
+.ti -8
+.BR tc " ... " filter " ... [ " estimator
+.IR "SAMPLE AVERAGE " ]
+.BR "action police avrate"
+.IR RATE " [ " CONTROL " ]"
+
+.ti -8
+.IR CONTROL " :="
+.BI conform-exceed " EXCEEDACT\fR[\fB/\fIEXCEEDACT"
 
 .ti -8
 .IR EXCEEDACT " := { "
@@ -27,7 +35,14 @@ police - policing action
 The
 .B police
 action allows to limit bandwidth of traffic matched by the filter it is
-attached to.
+attached to. Basically there are two different algorithms available to measure
+the packet rate: The first one uses an internal dual token bucket and is
+configured using the
+.BR rate ", " burst ", " mtu ", " peakrate ", " overhead " and " linklayer
+parameters. The second one uses an in-kernel sampling mechanism. It can be
+fine-tuned using the
+.B estimator
+filter parameter.
 .SH OPTIONS
 .TP
 .BI rate " RATE"
@@ -72,6 +87,12 @@ may be one of
 cell sizes, for
 .B ethernet
 no action is taken.
+.TP
+.BI estimator " SAMPLE AVERAGE"
+Fine-tune the in-kernel packet rate estimator.
+.IR SAMPLE " and " AVERAGE
+are time values and control the frequency in which samples are taken and over
+what timespan an average is built.
 .TP
 .BI conform-exceed " EXCEEDACT\fR[\fB/\fIEXCEEDACT\fR]"
 Define how to handle packets which exceed (and, if the second
