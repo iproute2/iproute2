@@ -6,12 +6,12 @@ connmark - netfilter connmark retriever action
 .in +8
 .ti -8
 .BR tc " ... " "action connmark " [ " zone"
-.IR u16_zone_index " ] [ " BRANCH " ] ["
+.IR u16_zone_index " ] [ " CONTROL " ] ["
 .BI index " u32_index "
 ]
 
 .ti -8
-.IR BRANCH " := { " reclassify " | " pipe " | " drop " | " continue " | " ok " }"
+.IR CONTROL " := { " reclassify " | " pipe " | " drop " | " continue " | " ok " }"
 .SH DESCRIPTION
 The connmark action is used to restore the connection's mark value into the
 packet's fwmark.
@@ -22,7 +22,7 @@ Specify the conntrack zone when doing conntrack lookups for packets.
 .I u16_zone_index
 is a 16bit unsigned decimal value.
 .TP
-.I BRANCH
+.I CONTROL
 How to continue after executing this action.
 .RS
 .TP

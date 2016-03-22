@@ -35,7 +35,7 @@ static int pedit_debug;
 static void
 explain(void)
 {
-	fprintf(stderr, "Usage: ... pedit munge <MUNGE> [<BRANCH>]\n");
+	fprintf(stderr, "Usage: ... pedit munge <MUNGE> [CONTROL]\n");
 	fprintf(stderr,
 		"Where: MUNGE := <RAW>|<LAYERED>\n"
 		"\t<RAW>:= <OFFSETC>[ATC]<CMD>\n \t\tOFFSETC:= offset <offval> <u8|u16|u32>\n "
@@ -43,7 +43,7 @@ explain(void)
 		"\t\tNOTE: maskval is a 32 bit hex number\n \t\tNOTE: shiftval is a is a shift value\n "
 		"\t\tCMD:= clear | invert | set <setval>| retain\n \t<LAYERED>:= ip <ipdata> | ip6 <ip6data> \n "
 		" \t\t| udp <udpdata> | tcp <tcpdata> | icmp <icmpdata>\n"
-		"\t<BRANCH>:= reclassify | pipe | drop | continue | pass\n"
+		"\tCONTROL:= reclassify | pipe | drop | continue | pass\n"
 		"For Example usage look at the examples directory\n");
 
 }

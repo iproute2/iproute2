@@ -6,7 +6,7 @@ pedit - generic packet editor action
 .in +8
 .ti -8
 .BR tc " ... " "action pedit munge " {
-.IR RAW_OP " | " LAYERED_OP " } [ " BRANCH " ]"
+.IR RAW_OP " | " LAYERED_OP " } [ " CONTROL " ]"
 
 .ti -8
 .IR RAW_OP " := "
@@ -45,7 +45,7 @@ pedit - generic packet editor action
 .IR RVAL " ]"
 
 .ti -8
-.IR BRANCH " := {"
+.IR CONTROL " := {"
 .BR reclassify " | " pipe " | " drop " | " shot " | " continue " | " pass " }"
 .SH DESCRIPTION
 The
@@ -165,7 +165,7 @@ This optional extra part of
 .I CMD_SPEC
 allows to exclude bits from being changed.
 .TP
-.I BRANCH
+.I CONTROL
 The following keywords allow to control how the tree of qdisc, classes,
 filters and actions is further traversed after this action.
 .RS

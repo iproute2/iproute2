@@ -27,10 +27,10 @@
 static void
 explain(void)
 {
-	fprintf(stderr, "Usage: ... connmark [zone ZONE] [BRANCH] [index <INDEX>]\n");
+	fprintf(stderr, "Usage: ... connmark [zone ZONE] [CONTROL] [index <INDEX>]\n");
 	fprintf(stderr, "where :\n"
 		"\tZONE is the conntrack zone\n"
-		"\tBRANCH := reclassify|pipe|drop|continue|ok\n");
+		"\tCONTROL := reclassify|pipe|drop|continue|ok\n");
 }
 
 static void
