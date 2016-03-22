@@ -18,10 +18,6 @@
 \date{January 2016}
 \maketitle
 
-TC, the Traffic Control utility, has been there for a very long time - forever
-in my humble perception. It is still (and has ever been if I'm not mistaken) the
-only tool to configure QoS in Linux.
-
 Standard practice when transmitting packets over a medium which may block (due
 to congestion, e.g.) is to use a queue which temporarily holds these packets. In
 Linux, this queueing approach is where QoS happens: A Queueing Discipline
@@ -496,21 +492,10 @@ kernel itself doesn't.
 
 \section*{Conclusion}
 
-My personal impression is that although the \cmd{tc} utility is an absolute
-necessity for anyone aiming at doing QoS in Linux professionally, there are way
-too many loose ends and trip wires present in it's environment. Contributing to
-this is the fact, that much of the non-essential functionality is redundantly
-available in netfilter. Another problem which adds weight to the first one is a
-general lack of documentation. Of course, there are many HOWTOs and guides in
-the internet, but since it's often not clear how up to date these are, I prefer
-the usual resources such as man or info pages. Surely nothing one couldn't fix
-in hindsight, but quality certainly suffers if the original author of the code
-does not or can not contribute to that.
-
-All that being said, once the steep learning curve has been mastered, the
-conglomerate of (classful) qdiscs, filters and actions provides a highly
-sophisticated and flexible infrastructure to perform QoS, which plays nicely
-along with routing and firewalling setups.
+Once the steep learning curve has been mastered, the conglomerate of (classful)
+qdiscs, filters and actions provides a highly sophisticated and flexible
+infrastructure to perform QoS, which plays nicely along with routing and
+firewalling setups.
 
 
 \section*{Further Reading}
