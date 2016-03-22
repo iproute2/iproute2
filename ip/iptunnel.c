@@ -308,7 +308,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	printf("%s: %s/ip remote %s local %s",
 	       p->name,
 	       tnl_strproto(p->iph.protocol),
-	       p->iph.daddr ? format_host(AF_INET, 4, &p->iph.daddr, s1, sizeof(s1)) : "any",
+	       p->iph.daddr ? format_host_r(AF_INET, 4, &p->iph.daddr, s1, sizeof(s1)) : "any",
 	       p->iph.saddr ? rt_addr_n2a(AF_INET, 4, &p->iph.saddr, s2, sizeof(s2)) : "any");
 
 	if (p->iph.protocol == IPPROTO_IPV6 && (p->i_flags & SIT_ISATAP)) {
@@ -324,7 +324,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 				if (prl[i].addr != htonl(INADDR_ANY)) {
 					printf(" %s %s ",
 					       (prl[i].flags & PRL_DEFAULT) ? "pdr" : "pr",
-					       format_host(AF_INET, 4, &prl[i].addr, s1, sizeof(s1)));
+					       format_host(AF_INET, 4, &prl[i].addr));
 				}
 			}
 	}
@@ -360,7 +360,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 		       ip6rd.prefixlen);
 		if (ip6rd.relay_prefix) {
 			printf(" 6rd-relay_prefix %s/%u",
-			       format_host(AF_INET, 4, &ip6rd.relay_prefix, s1, sizeof(s1)),
+			       format_host(AF_INET, 4, &ip6rd.relay_prefix),
 			       ip6rd.relay_prefixlen);
 		}
 	}

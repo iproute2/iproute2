@@ -94,8 +94,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		} else {
 			fprintf(fp, "from %s ", format_host(r->rtm_family,
 						       RTA_PAYLOAD(tb[FRA_SRC]),
-						       RTA_DATA(tb[FRA_SRC]),
-						       abuf, sizeof(abuf))
+						       RTA_DATA(tb[FRA_SRC]))
 				);
 		}
 	} else if (r->rtm_src_len) {
@@ -115,8 +114,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		} else {
 			fprintf(fp, "to %s ", format_host(r->rtm_family,
 						       RTA_PAYLOAD(tb[FRA_DST]),
-						       RTA_DATA(tb[FRA_DST]),
-						       abuf, sizeof(abuf)));
+						       RTA_DATA(tb[FRA_DST])));
 		}
 	} else if (r->rtm_dst_len) {
 		fprintf(fp, "to 0/%d ", r->rtm_dst_len);
@@ -191,8 +189,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			fprintf(fp, "map-to %s ",
 				format_host(r->rtm_family,
 					    RTA_PAYLOAD(tb[RTA_GATEWAY]),
-					    RTA_DATA(tb[RTA_GATEWAY]),
-					    abuf, sizeof(abuf)));
+					    RTA_DATA(tb[RTA_GATEWAY])));
 		} else
 			fprintf(fp, "masquerade");
 	} else if (r->rtm_type == FR_ACT_GOTO) {

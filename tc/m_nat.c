@@ -191,9 +191,9 @@ print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
 
 	fprintf(f, " nat %s %s/%d %s %s", sel->flags & TCA_NAT_FLAG_EGRESS ?
 					  "egress" : "ingress",
-		format_host(AF_INET, 4, &sel->old_addr, buf1, sizeof(buf1)),
+		format_host_r(AF_INET, 4, &sel->old_addr, buf1, sizeof(buf1)),
 		len,
-		format_host(AF_INET, 4, &sel->new_addr, buf2, sizeof(buf2)),
+		format_host_r(AF_INET, 4, &sel->new_addr, buf2, sizeof(buf2)),
 		action_n2a(sel->action, buf3, sizeof(buf3)));
 
 	if (show_stats) {

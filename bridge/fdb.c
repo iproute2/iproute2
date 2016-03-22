@@ -104,7 +104,6 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "dev %s ", ll_index_to_name(r->ndm_ifindex));
 
 	if (tb[NDA_DST]) {
-		SPRINT_BUF(abuf);
 		int family = AF_INET;
 
 		if (RTA_PAYLOAD(tb[NDA_DST]) == sizeof(struct in6_addr))
@@ -113,8 +112,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "dst %s ",
 			format_host(family,
 				    RTA_PAYLOAD(tb[NDA_DST]),
-				    RTA_DATA(tb[NDA_DST]),
-				    abuf, sizeof(abuf)));
+				    RTA_DATA(tb[NDA_DST])));
 	}
 
 	if (tb[NDA_VLAN]) {

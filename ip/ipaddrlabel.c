@@ -60,7 +60,6 @@ int print_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg
 	struct ifaddrlblmsg *ifal = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[IFAL_MAX+1];
-	char abuf[256];
 
 	if (n->nlmsg_type != RTM_NEWADDRLABEL && n->nlmsg_type != RTM_DELADDRLABEL)
 		return 0;
@@ -78,8 +77,7 @@ int print_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg
 		fprintf(fp, "prefix %s/%u ",
 			format_host(ifal->ifal_family,
 				    RTA_PAYLOAD(tb[IFAL_ADDRESS]),
-				    RTA_DATA(tb[IFAL_ADDRESS]),
-				    abuf, sizeof(abuf)),
+				    RTA_DATA(tb[IFAL_ADDRESS])),
 			ifal->ifal_prefixlen);
 	}
 

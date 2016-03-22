@@ -198,7 +198,6 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	struct ndmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[NDA_MAX+1];
-	char abuf[256];
 	static int logit = 1;
 
 	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH &&
@@ -281,8 +280,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "%s ",
 			format_host(r->ndm_family,
 				    RTA_PAYLOAD(tb[NDA_DST]),
-				    RTA_DATA(tb[NDA_DST]),
-				    abuf, sizeof(abuf)));
+				    RTA_DATA(tb[NDA_DST])));
 	}
 	if (!filter.index && r->ndm_ifindex)
 		fprintf(fp, "dev %s ", ll_index_to_name(r->ndm_ifindex));

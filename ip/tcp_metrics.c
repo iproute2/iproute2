@@ -95,7 +95,6 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	struct genlmsghdr *ghdr;
 	struct rtattr *attrs[TCP_METRICS_ATTR_MAX + 1], *a;
 	int len = n->nlmsg_len;
-	char abuf[256];
 	inet_prefix daddr, saddr;
 	int family, i, atype, stype, dlen = 0, slen = 0;
 
@@ -194,7 +193,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		fprintf(fp, "Deleted ");
 
 	fprintf(fp, "%s",
-		format_host(family, dlen, &daddr.data, abuf, sizeof(abuf)));
+		format_host(family, dlen, &daddr.data));
 
 	a = attrs[TCP_METRICS_ATTR_AGE];
 	if (a) {
@@ -298,8 +297,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (slen) {
 		fprintf(fp, " source %s",
-			format_host(family, slen, &saddr.data, abuf,
-				    sizeof(abuf)));
+			format_host(family, slen, &saddr.data));
 	}
 
 	fprintf(fp, "\n");

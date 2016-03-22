@@ -380,8 +380,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		} else {
 			fprintf(fp, "%s ", format_host(r->rtm_family,
 						       RTA_PAYLOAD(tb[RTA_DST]),
-						       RTA_DATA(tb[RTA_DST]),
-						       abuf, sizeof(abuf))
+						       RTA_DATA(tb[RTA_DST]))
 				);
 		}
 	} else if (r->rtm_dst_len) {
@@ -400,8 +399,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		} else {
 			fprintf(fp, "from %s ", format_host(r->rtm_family,
 						       RTA_PAYLOAD(tb[RTA_SRC]),
-						       RTA_DATA(tb[RTA_SRC]),
-						       abuf, sizeof(abuf))
+						       RTA_DATA(tb[RTA_SRC]))
 				);
 		}
 	} else if (r->rtm_src_len) {
@@ -410,8 +408,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[RTA_NEWDST]) {
 		fprintf(fp, "as to %s ", format_host(r->rtm_family,
 						  RTA_PAYLOAD(tb[RTA_NEWDST]),
-						  RTA_DATA(tb[RTA_NEWDST]),
-						  abuf, sizeof(abuf))
+						  RTA_DATA(tb[RTA_NEWDST]))
 			);
 	}
 
@@ -427,8 +424,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "via %s ",
 			format_host(r->rtm_family,
 				    RTA_PAYLOAD(tb[RTA_GATEWAY]),
-				    RTA_DATA(tb[RTA_GATEWAY]),
-				    abuf, sizeof(abuf)));
+				    RTA_DATA(tb[RTA_GATEWAY])));
 	}
 	if (tb[RTA_VIA]) {
 		size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
@@ -436,8 +432,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 		fprintf(fp, "via %s %s ",
 			family_name(via->rtvia_family),
-			format_host(via->rtvia_family, len, via->rtvia_addr,
-				    abuf, sizeof(abuf)));
+			format_host(via->rtvia_family, len, via->rtvia_addr));
 	}
 	if (tb[RTA_OIF] && filter.oifmask != -1)
 		fprintf(fp, "dev %s ", ll_index_to_name(*(int *)RTA_DATA(tb[RTA_OIF])));
@@ -671,8 +666,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 					fprintf(fp, " via %s ",
 						format_host(r->rtm_family,
 							    RTA_PAYLOAD(tb[RTA_GATEWAY]),
-							    RTA_DATA(tb[RTA_GATEWAY]),
-							    abuf, sizeof(abuf)));
+							    RTA_DATA(tb[RTA_GATEWAY])));
 				}
 				if (tb[RTA_VIA]) {
 					size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
@@ -680,8 +674,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 					fprintf(fp, "via %s %s ",
 						family_name(via->rtvia_family),
-						format_host(via->rtvia_family, len, via->rtvia_addr,
-							    abuf, sizeof(abuf)));
+						format_host(via->rtvia_family, len, via->rtvia_addr));
 				}
 				if (tb[RTA_FLOW]) {
 					__u32 to = rta_getattr_u32(tb[RTA_FLOW]);

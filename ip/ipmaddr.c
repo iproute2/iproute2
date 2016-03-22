@@ -204,8 +204,6 @@ static void print_maddr(FILE *fp, struct ma_info *list)
 						    list->addr.bytelen, 0,
 						    b1, sizeof(b1)));
 	} else {
-		char abuf[256];
-
 		switch (list->addr.family) {
 		case AF_INET:
 			fprintf(fp, "inet  ");
@@ -219,9 +217,7 @@ static void print_maddr(FILE *fp, struct ma_info *list)
 		}
 		fprintf(fp, "%s",
 			format_host(list->addr.family,
-				    -1,
-				    list->addr.data,
-				    abuf, sizeof(abuf)));
+				    -1, list->addr.data));
 	}
 	if (list->users != 1)
 		fprintf(fp, " users %d", list->users);

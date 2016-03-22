@@ -1016,10 +1016,10 @@ static void inet_addr_print(const inet_prefix *a, int port, unsigned int ifindex
 			buf[0] = '*';
 			buf[1] = 0;
 		} else {
-			ap = format_host(AF_INET, 4, a->data, buf, sizeof(buf));
+			ap = format_host(AF_INET, 4, a->data);
 		}
 	} else {
-		ap = format_host(a->family, 16, a->data, buf, sizeof(buf));
+		ap = format_host(a->family, 16, a->data);
 		est_len = strlen(ap);
 		if (est_len <= addr_width)
 			est_len = addr_width;

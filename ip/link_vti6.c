@@ -197,7 +197,6 @@ get_failed:
 
 static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
-	char s1[1024];
 	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
@@ -210,7 +209,7 @@ static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VTI_REMOTE]) {
 		memcpy(&daddr, RTA_DATA(tb[IFLA_VTI_REMOTE]), sizeof(daddr));
 
-		remote = format_host(AF_INET6, 16, &daddr, s1, sizeof(s1));
+		remote = format_host(AF_INET6, 16, &daddr);
 	}
 
 	fprintf(f, "remote %s ", remote);
@@ -218,7 +217,7 @@ static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VTI_LOCAL]) {
 		memcpy(&saddr, RTA_DATA(tb[IFLA_VTI_LOCAL]), sizeof(saddr));
 
-		local = format_host(AF_INET6, 16, &saddr, s1, sizeof(s1));
+		local = format_host(AF_INET6, 16, &saddr);
 	}
 
 	fprintf(f, "local %s ", local);

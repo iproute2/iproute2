@@ -964,7 +964,6 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	/* Use local copy of ifa_flags to not interfere with filtering code */
 	unsigned int ifa_flags;
 	struct rtattr *rta_tb[IFA_MAX+1];
-	char abuf[256];
 
 	SPRINT_BUF(b1);
 
@@ -1061,8 +1060,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s",
 		              format_host(ifa->ifa_family,
 		                          RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
-		                          RTA_DATA(rta_tb[IFA_LOCAL]),
-		                          abuf, sizeof(abuf)));
+		                          RTA_DATA(rta_tb[IFA_LOCAL])));
 		if (rta_tb[IFA_ADDRESS] &&
 		    memcmp(RTA_DATA(rta_tb[IFA_ADDRESS]),
 		           RTA_DATA(rta_tb[IFA_LOCAL]),
@@ -1071,8 +1069,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			color_fprintf(fp, ifa_family_color(ifa->ifa_family),
 			              "%s", format_host(ifa->ifa_family,
 			              RTA_PAYLOAD(rta_tb[IFA_ADDRESS]),
-			              RTA_DATA(rta_tb[IFA_ADDRESS]),
-			              abuf, sizeof(abuf)));
+			              RTA_DATA(rta_tb[IFA_ADDRESS])));
 		}
 		fprintf(fp, "/%d ", ifa->ifa_prefixlen);
 	}
@@ -1085,16 +1082,14 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
 			format_host(ifa->ifa_family,
 				    RTA_PAYLOAD(rta_tb[IFA_BROADCAST]),
-				    RTA_DATA(rta_tb[IFA_BROADCAST]),
-				    abuf, sizeof(abuf)));
+				    RTA_DATA(rta_tb[IFA_BROADCAST])));
 	}
 	if (rta_tb[IFA_ANYCAST]) {
 		fprintf(fp, "any ");
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
 			format_host(ifa->ifa_family,
 				    RTA_PAYLOAD(rta_tb[IFA_ANYCAST]),
-				    RTA_DATA(rta_tb[IFA_ANYCAST]),
-				    abuf, sizeof(abuf)));
+				    RTA_DATA(rta_tb[IFA_ANYCAST])));
 	}
 	fprintf(fp, "scope %s ", rtnl_rtscope_n2a(ifa->ifa_scope, b1, sizeof(b1)));
 	if (ifa_flags & IFA_F_SECONDARY) {

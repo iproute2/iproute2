@@ -122,8 +122,9 @@ int addr64_n2a(__u64 addr, char *buff, size_t len);
 int af_bit_len(int af);
 int af_byte_len(int af);
 
-const char *format_host(int af, int len, const void *addr,
+const char *format_host_r(int af, int len, const void *addr,
 			       char *buf, int buflen);
+const char *format_host(int af, int lne, const void *addr);
 const char *rt_addr_n2a(int af, int len, const void *addr,
 			       char *buf, int buflen);
 

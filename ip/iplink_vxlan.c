@@ -310,7 +310,6 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	unsigned int link;
 	__u8 tos;
 	__u32 maxaddr;
-	char s1[1024];
 	char s2[64];
 
 	if (!tb)
@@ -329,10 +328,10 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		if (addr) {
 			if (IN_MULTICAST(ntohl(addr)))
 				fprintf(f, "group %s ",
-					format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
+					format_host(AF_INET, 4, &addr));
 			else
 				fprintf(f, "remote %s ",
-					format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
+					format_host(AF_INET, 4, &addr));
 		}
 	} else if (tb[IFLA_VXLAN_GROUP6]) {
 		struct in6_addr addr;
@@ -341,10 +340,10 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0) {
 			if (IN6_IS_ADDR_MULTICAST(&addr))
 				fprintf(f, "group %s ",
-					format_host(AF_INET6, sizeof(struct in6_addr), &addr, s1, sizeof(s1)));
+					format_host(AF_INET6, sizeof(struct in6_addr), &addr));
 			else
 				fprintf(f, "remote %s ",
-					format_host(AF_INET6, sizeof(struct in6_addr), &addr, s1, sizeof(s1)));
+					format_host(AF_INET6, sizeof(struct in6_addr), &addr));
 		}
 	}
 
@@ -353,14 +352,14 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		if (addr)
 			fprintf(f, "local %s ",
-				format_host(AF_INET, 4, &addr, s1, sizeof(s1)));
+				format_host(AF_INET, 4, &addr));
 	} else if (tb[IFLA_VXLAN_LOCAL6]) {
 		struct in6_addr addr;
 
 		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_LOCAL6]), sizeof(struct in6_addr));
 		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0)
 			fprintf(f, "local %s ",
-				format_host(AF_INET6, sizeof(struct in6_addr), &addr, s1, sizeof(s1)));
+				format_host(AF_INET6, sizeof(struct in6_addr), &addr));
 	}
 
 	if (tb[IFLA_VXLAN_LINK] &&

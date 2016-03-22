@@ -51,7 +51,6 @@ static int print_token(const struct sockaddr_nl *who, struct nlmsghdr *n, void *
 	int len = n->nlmsg_len;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *ltb[IFLA_INET6_MAX + 1];
-	char abuf[256];
 
 	if (n->nlmsg_type != RTM_NEWLINK)
 		return -1;
@@ -82,8 +81,7 @@ static int print_token(const struct sockaddr_nl *who, struct nlmsghdr *n, void *
 	fprintf(fp, "token %s ",
 		format_host(ifi->ifi_family,
 			    RTA_PAYLOAD(ltb[IFLA_INET6_TOKEN]),
-			    RTA_DATA(ltb[IFLA_INET6_TOKEN]),
-			    abuf, sizeof(abuf)));
+			    RTA_DATA(ltb[IFLA_INET6_TOKEN])));
 	fprintf(fp, "dev %s ", ll_index_to_name(ifi->ifi_index));
 	fprintf(fp, "\n");
 	fflush(fp);

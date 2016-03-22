@@ -818,7 +818,7 @@ static const char *resolve_address(const void *addr, int len, int af)
 }
 #endif
 
-const char *format_host(int af, int len, const void *addr,
+const char *format_host_r(int af, int len, const void *addr,
 			char *buf, int buflen)
 {
 #ifdef RESOLVE_HOSTNAMES
@@ -833,6 +833,13 @@ const char *format_host(int af, int len, const void *addr,
 	}
 #endif
 	return rt_addr_n2a(af, len, addr, buf, buflen);
+}
+
+const char *format_host(int af, int len, const void *addr)
+{
+	static char buf[256];
+
+	return format_host_r(af, len, addr, buf, 256);
 }
 
 

@@ -58,15 +58,13 @@ static const char *format_encap_type(int type)
 static void print_encap_mpls(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[MPLS_IPTUNNEL_MAX+1];
-	char abuf[256];
 
 	parse_rtattr_nested(tb, MPLS_IPTUNNEL_MAX, encap);
 
 	if (tb[MPLS_IPTUNNEL_DST])
 		fprintf(fp, " %s ", format_host(AF_MPLS,
 			RTA_PAYLOAD(tb[MPLS_IPTUNNEL_DST]),
-			RTA_DATA(tb[MPLS_IPTUNNEL_DST]),
-			abuf, sizeof(abuf)));
+			RTA_DATA(tb[MPLS_IPTUNNEL_DST])));
 }
 
 static void print_encap_ip(FILE *fp, struct rtattr *encap)

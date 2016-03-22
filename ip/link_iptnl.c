@@ -339,7 +339,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_REMOTE]);
 
 		if (addr)
-			remote = format_host(AF_INET, 4, &addr, s1, sizeof(s1));
+			remote = format_host(AF_INET, 4, &addr);
 	}
 
 	fprintf(f, "remote %s ", remote);
@@ -348,7 +348,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_LOCAL]);
 
 		if (addr)
-			local = format_host(AF_INET, 4, &addr, s1, sizeof(s1));
+			local = format_host(AF_INET, 4, &addr);
 	}
 
 	fprintf(f, "local %s ", local);
@@ -404,8 +404,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		       prefixlen);
 		if (relayprefix) {
 			printf("6rd-relay_prefix %s/%u ",
-			       format_host(AF_INET, 4, &relayprefix, s1,
-					   sizeof(s1)),
+			       format_host(AF_INET, 4, &relayprefix),
 			       relayprefixlen);
 		}
 	}
