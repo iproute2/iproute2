@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <linux/if.h>
 
 #include "color.h"
 
@@ -32,7 +35,8 @@ static enum color attr_colors[] = {
 	C_MAGENTA,
 	C_BLUE,
 	C_GREEN,
-	C_RED
+	C_RED,
+	C_CLEAR
 };
 
 static int color_is_enabled;
@@ -61,4 +65,28 @@ int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...)
 end:
 	va_end(args);
 	return ret;
+}
+
+enum color_attr ifa_family_color(__u8 ifa_family)
+{
+	switch (ifa_family) {
+	case AF_INET:
+		return COLOR_INET;
+	case AF_INET6:
+		return COLOR_INET6;
+	default:
+		return COLOR_CLEAR;
+	}
+}
+
+enum color_attr oper_state_color(__u8 state)
+{
+	switch (state) {
+	case IF_OPER_UP:
+		return COLOR_OPERSTATE_UP;
+	case IF_OPER_DOWN:
+		return COLOR_OPERSTATE_DOWN;
+	default:
+		return COLOR_CLEAR;
+	}
 }

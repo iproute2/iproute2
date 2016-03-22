@@ -135,25 +135,15 @@ static const char *oper_states[] = {
 
 static void print_operstate(FILE *f, __u8 state)
 {
-	if (state >= ARRAY_SIZE(oper_states))
+	if (state >= ARRAY_SIZE(oper_states)) {
 		fprintf(f, "state %#x ", state);
-	else {
-		if (brief) {
-			if (strcmp(oper_states[state], "UP") == 0)
-				color_fprintf(f, COLOR_OPERSTATE_UP, "%-14s ", oper_states[state]);
-			else if (strcmp(oper_states[state], "DOWN") == 0)
-				color_fprintf(f, COLOR_OPERSTATE_DOWN, "%-14s ", oper_states[state]);
-			else
-				fprintf(f, "%-14s ", oper_states[state]);
-		} else {
-			fprintf(f, "state ");
-			if (strcmp(oper_states[state], "UP") == 0)
-				color_fprintf(f, COLOR_OPERSTATE_UP, "%s ", oper_states[state]);
-			else if (strcmp(oper_states[state], "DOWN") == 0)
-				color_fprintf(f, COLOR_OPERSTATE_DOWN, "%s ", oper_states[state]);
-			else
-				fprintf(f, "%s ", oper_states[state]);
-		}
+	} else if (brief) {
+		color_fprintf(f, oper_state_color(state),
+		              "%-14s ", oper_states[state]);
+	} else {
+		fprintf(f, "state ");
+		color_fprintf(f, oper_state_color(state),
+		              "%s ", oper_states[state]);
 	}
 }
 
@@ -1067,22 +1057,11 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	}
 
 	if (rta_tb[IFA_LOCAL]) {
-		if (ifa->ifa_family == AF_INET)
-			color_fprintf(fp, COLOR_INET, "%s", format_host(ifa->ifa_family,
-						RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
-						RTA_DATA(rta_tb[IFA_LOCAL]),
-						abuf, sizeof(abuf)));
-		else if (ifa->ifa_family == AF_INET6)
-			color_fprintf(fp, COLOR_INET6, "%s", format_host(ifa->ifa_family,
-						RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
-						RTA_DATA(rta_tb[IFA_LOCAL]),
-						abuf, sizeof(abuf)));
-		else
-			fprintf(fp, "%s", format_host(ifa->ifa_family,
-						RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
-						RTA_DATA(rta_tb[IFA_LOCAL]),
-						abuf, sizeof(abuf)));
-
+		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s",
+		              format_host(ifa->ifa_family,
+		                          RTA_PAYLOAD(rta_tb[IFA_LOCAL]),
+		                          RTA_DATA(rta_tb[IFA_LOCAL]),
+		                          abuf, sizeof(abuf)));
 		if (rta_tb[IFA_ADDRESS] == NULL ||
 		    memcmp(RTA_DATA(rta_tb[IFA_ADDRESS]), RTA_DATA(rta_tb[IFA_LOCAL]),
 			   ifa->ifa_family == AF_INET ? 4 : 16) == 0) {
