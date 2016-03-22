@@ -339,12 +339,12 @@ parse_offset(int *argc_p, char ***argv_p, struct tc_pedit_sel *sel, struct tc_pe
 	}
 	if (matches(*argv, "u16") == 0) {
 		len = 2;
-		retain = 0x0;
+		retain = 0xffff;
 		goto done;
 	}
 	if (matches(*argv, "u8") == 0) {
 		len = 1;
-		retain = 0x0;
+		retain = 0xff;
 		goto done;
 	}
 
