@@ -21,11 +21,9 @@ mirred - mirror/redirect action
 .SH DESCRIPTION
 The
 .B mirred
-action allows to redirect or mirror packets to another network interface on the
-same system. It is typically used in combination with the
-.B ifb
-pseudo device to create a shrared instance where QoS happens, but serves well
-for debugging or monitoring purposes, too.
+action allows packet mirroring (copying) or redirecting (stealing) the packet it
+receives. Mirroring is what is sometimes referred to as Switch Port Analyzer
+(SPAN) and is commonly used to analyze and/or debug flows.
 .SH OPTIONS
 .TP
 .B ingress
@@ -67,9 +65,23 @@ debugging purposes:
 .EE
 .RE
 
-Use an
+Mirror all incoming ICMP packets on eth0 to a dummy interface for examination
+with e.g. tcpdump:
+
+.RS
+.EX
+# ip link add dummy0 type dummy
+# ip link set dummy0 up
+# tc qdisc add dev eth0 handle ffff: ingress
+# tc filter add dev eth0 parent ffff: protocol ip \\
+	u32 match ip protocol 1 0xff \\
+	action mirred egress mirror dev dummy0
+.EE
+.RE
+
+Using an
 .B ifb
-interface to send ingress traffic on eth0 through an instance of
+interface, it is possible to send ingress traffic through an instance of
 .BR sfq :
 
 .RS
