@@ -41,18 +41,9 @@ const char *ll_addr_n2a(const unsigned char *addr, int alen, int type, char *buf
 	if (alen == 16 && type == ARPHRD_TUNNEL6) {
 		return inet_ntop(AF_INET6, addr, buf, blen);
 	}
-	l = 0;
-	for (i=0; i<alen; i++) {
-		if (i==0) {
-			snprintf(buf+l, blen, "%02x", addr[i]);
-			blen -= 2;
-			l += 2;
-		} else {
-			snprintf(buf+l, blen, ":%02x", addr[i]);
-			blen -= 3;
-			l += 3;
-		}
-	}
+	snprintf(buf, blen, "%02x", addr[0]);
+	for (i = 1, l = 2; i < alen && l < blen; i++, l += 3)
+		snprintf(buf + l, blen - l, ":%02x", addr[i]);
 	return buf;
 }
 
