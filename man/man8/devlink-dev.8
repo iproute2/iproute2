@@ -1,0 +1,58 @@
+.TH DEVLINK\-DEV 8 "14 Mar 2016" "iproute2" "Linux"
+.SH NAME
+devlink-dev \- devlink device configuration
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B devlink
+.RI "[ " OPTIONS " ]"
+.B dev
+.RI  " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+
+.ti -8
+.B devlink dev show
+.RI "[ " DEV " ]"
+
+.ti -8
+.B devlink dev help
+
+.SH "DESCRIPTION"
+.SS devlink dev show - display devlink device attributes
+
+.PP
+.I "DEV"
+- specifies the devlink device to show.
+If this argument is omitted all devices are listed.
+
+.in +4
+Format is:
+.in +2
+BUS_NAME/BUS_ADDRESS
+
+.SH "EXAMPLES"
+.PP
+devlink dev show
+.RS 4
+Shows the state of all devlink devices on the system.
+.RE
+.PP
+devlink dev show pci/0000:01:00.0
+.RS 4
+Shows the state of specified devlink device.
+
+.SH SEE ALSO
+.BR devlink (8),
+.BR devlink-port (8),
+.BR devlink-monitor (8),
+.br
+
+.SH AUTHOR
+Jiri Pirko <jiri@mellanox.com>

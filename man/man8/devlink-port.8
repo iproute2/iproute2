@@ -1,0 +1,126 @@
+.TH DEVLINK\-PORT 8 "14 Mar 2016" "iproute2" "Linux"
+.SH NAME
+devlink-port \- devlink port configuration
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B devlink
+.RI "[ " OPTIONS " ]"
+.B port
+.RI  " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+
+.ti -8
+.BR "devlink port set "
+.IR DEV/PORT_INDEX
+.RI "[ "
+.BR type " { " eth " | " ib " | " auto " }"
+.RI "]"
+
+.ti -8
+.BR "devlink port split "
+.IR DEV/PORT_INDEX
+.BR count
+.IR COUNT
+
+.ti -8
+.BR "devlink port unsplit "
+.IR DEV/PORT_INDEX
+
+.ti -8
+.B devlink port show
+.RI "[ " DEV/PORT_INDEX " ]"
+
+.ti -8
+.B devlink port help
+
+.SH "DESCRIPTION"
+.SS devlink port set - change devlink port attributes
+
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port to operate on.
+
+.in +4
+Format is:
+.in +2
+BUS_NAME/BUS_ADDRESS/PORT_INDEX
+
+.TP
+.BR type " { " eth " | " ib " | " auto " } "
+set port type
+
+.I eth
+- Ethernet
+
+.I ib
+- Infiniband
+
+.I auto
+- autoselect
+
+.SS devlink port split - split devlink port into more
+
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port to operate on.
+
+.TP
+.BI count " COUNT"
+number of ports to split to.
+
+.SS devlink port unsplit - unsplit previously split devlink port
+Could be performed on any split port of the same split group.
+
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port to operate on.
+
+.SS devlink port show - display devlink port attributes
+
+.PP
+.I "DEV/PORT_INDEX"
+- specifies the devlink port to show.
+If this argument is omitted all ports are listed.
+
+.SH "EXAMPLES"
+.PP
+devlink port show
+.RS 4
+Shows the state of all devlink ports on the system.
+.RE
+.PP
+devlink port show pci/0000:01:00.0/1
+.RS 4
+Shows the state of specified devlink port.
+.RE
+.PP
+devlink port set pci/0000:01:00.0/1 type eth
+.RS 4
+Set type of specified devlink port to Ethernet.
+.RE
+.PP
+devlink port split pci/0000:01:00.0/1 count 4
+.RS 4
+Split the specified devlink port into four ports.
+.RE
+.PP
+devlink port unsplit pci/0000:01:00.0/1
+.RS 4
+Unplit the specified previously split devlink port.
+
+.SH SEE ALSO
+.BR devlink (8),
+.BR devlink-dev (8),
+.BR devlink-monitor (8),
+.br
+
+.SH AUTHOR
+Jiri Pirko <jiri@mellanox.com>
