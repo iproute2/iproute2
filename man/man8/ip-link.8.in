@@ -752,6 +752,8 @@ the following additional arguments are supported:
 .BI ttl " TTL "
 ] [
 .BI tos " TOS "
+] [
+.BI flowlabel " FLOWLABEL "
 ]
 
 .in +8
@@ -770,6 +772,10 @@ the following additional arguments are supported:
 .sp
 .BI tos " TOS"
 - specifies the TOS value to use in outgoing packets.
+
+.sp
+.BI flowlabel " FLOWLABEL"
+- specifies the flow label to use in outgoing packets.
 
 .in -8
 

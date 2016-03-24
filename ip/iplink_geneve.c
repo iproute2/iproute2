@@ -18,14 +18,15 @@
 static void print_explain(FILE *f)
 {
 	fprintf(f, "Usage: ... geneve id VNI remote ADDR\n");
-	fprintf(f, "                 [ ttl TTL ] [ tos TOS ]\n");
+	fprintf(f, "                 [ ttl TTL ] [ tos TOS ] [ flowlabel LABEL ]\n");
 	fprintf(f, "                 [ dstport PORT ] [ [no]external ]\n");
 	fprintf(f, "                 [ [no]udpcsum ] [ [no]udp6zerocsumtx ] [ [no]udp6zerocsumrx ]\n");
 	fprintf(f, "\n");
-	fprintf(f, "Where: VNI  := 0-16777215\n");
-	fprintf(f, "       ADDR := IP_ADDRESS\n");
-	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
-	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
+	fprintf(f, "Where: VNI   := 0-16777215\n");
+	fprintf(f, "       ADDR  := IP_ADDRESS\n");
+	fprintf(f, "       TOS   := { NUMBER | inherit }\n");
+	fprintf(f, "       TTL   := { 1..255 | inherit }\n");
+	fprintf(f, "       LABEL := 0-1048575\n");
 }
 
 static void explain(void)
@@ -40,6 +41,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	int vni_set = 0;
 	__u32 daddr = 0;
 	struct in6_addr daddr6 = IN6ADDR_ANY_INIT;
+	__u32 label = 0;
 	__u8 ttl = 0;
 	__u8 tos = 0;
 	__u16 dstport = 0;
@@ -90,6 +92,15 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 				tos = uval;
 			} else
 				tos = 1;
+		} else if (!matches(*argv, "label") ||
+			   !matches(*argv, "flowlabel")) {
+			__u32 uval;
+
+			NEXT_ARG();
+			if (get_u32(&uval, *argv, 0) ||
+			    (uval & ~LABEL_MAX_MASK))
+				invarg("invalid flowlabel", *argv);
+			label = htonl(uval);
 		} else if (!matches(*argv, "dstport")) {
 			NEXT_ARG();
 			if (get_u16(&dstport, *argv, 0))
@@ -150,6 +161,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr_l(n, 1024, IFLA_GENEVE_REMOTE, &daddr, 4);
 	if (memcmp(&daddr6, &in6addr_any, sizeof(daddr6)) != 0)
 		addattr_l(n, 1024, IFLA_GENEVE_REMOTE6, &daddr6, sizeof(struct in6_addr));
+	addattr32(n, 1024, IFLA_GENEVE_LABEL, label);
 	addattr8(n, 1024, IFLA_GENEVE_TTL, ttl);
 	addattr8(n, 1024, IFLA_GENEVE_TOS, tos);
 	if (dstport)
@@ -211,6 +223,13 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			fprintf(f, "tos inherit ");
 		else
 			fprintf(f, "tos %#x ", tos);
+	}
+
+	if (tb[IFLA_GENEVE_LABEL]) {
+		__u32 label = rta_getattr_u32(tb[IFLA_GENEVE_LABEL]);
+
+		if (label)
+			fprintf(f, "flowlabel %#x ", ntohl(label));
 	}
 
 	if (tb[IFLA_GENEVE_PORT])
