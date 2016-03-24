@@ -24,7 +24,7 @@
 static void print_explain(FILE *f)
 {
 	fprintf(f, "Usage: ... vxlan id VNI [ { group | remote } IP_ADDRESS ] [ local ADDR ]\n");
-	fprintf(f, "                 [ ttl TTL ] [ tos TOS ] [ dev PHYS_DEV ]\n");
+	fprintf(f, "                 [ ttl TTL ] [ tos TOS ] [ flowlabel LABEL ] [ dev PHYS_DEV ]\n");
 	fprintf(f, "                 [ dstport PORT ] [ srcport MIN MAX ]\n");
 	fprintf(f, "                 [ [no]learning ] [ [no]proxy ] [ [no]rsc ]\n");
 	fprintf(f, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
@@ -33,10 +33,11 @@ static void print_explain(FILE *f)
 	fprintf(f, "                 [ [no]remcsumtx ] [ [no]remcsumrx ]\n");
 	fprintf(f, "                 [ [no]external ] [ gbp ]\n");
 	fprintf(f, "\n");
-	fprintf(f, "Where: VNI := 0-16777215\n");
-	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
-	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
-	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
+	fprintf(f, "Where: VNI   := 0-16777215\n");
+	fprintf(f, "       ADDR  := { IP_ADDRESS | any }\n");
+	fprintf(f, "       TOS   := { NUMBER | inherit }\n");
+	fprintf(f, "       TTL   := { 1..255 | inherit }\n");
+	fprintf(f, "       LABEL := 0-1048575\n");
 }
 
 static void explain(void)
@@ -58,6 +59,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	unsigned int link = 0;
 	__u8 tos = 0;
 	__u8 ttl = 0;
+	__u32 label = 0;
 	__u8 learning = 1;
 	__u8 proxy = 0;
 	__u8 rsc = 0;
@@ -146,6 +148,15 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				tos = uval;
 			} else
 				tos = 1;
+		} else if (!matches(*argv, "label") ||
+			   !matches(*argv, "flowlabel")) {
+			__u32 uval;
+
+			NEXT_ARG();
+			if (get_u32(&uval, *argv, 0) ||
+			    (uval & ~LABEL_MAX_MASK))
+				invarg("invalid flowlabel", *argv);
+			label = htonl(uval);
 		} else if (!matches(*argv, "ageing")) {
 			NEXT_ARG();
 			if (strcmp(*argv, "none") == 0)
@@ -280,6 +291,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 
 	if (link)
 		addattr32(n, 1024, IFLA_VXLAN_LINK, link);
+	addattr32(n, 1024, IFLA_VXLAN_LABEL, label);
 	addattr8(n, 1024, IFLA_VXLAN_TTL, ttl);
 	addattr8(n, 1024, IFLA_VXLAN_TOS, tos);
 	addattr8(n, 1024, IFLA_VXLAN_LEARNING, learning);
@@ -423,6 +435,13 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		if (ttl)
 			fprintf(f, "ttl %d ", ttl);
+	}
+
+	if (tb[IFLA_VXLAN_LABEL]) {
+		__u32 label = rta_getattr_u32(tb[IFLA_VXLAN_LABEL]);
+
+		if (label)
+			fprintf(f, "flowlabel %#x ", ntohl(label));
 	}
 
 	if (tb[IFLA_VXLAN_AGEING]) {

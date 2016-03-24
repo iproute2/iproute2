@@ -396,6 +396,8 @@ the following additional arguments are supported:
 ] [
 .BI tos " TOS "
 ] [
+.BI flowlabel " FLOWLABEL "
+] [
 .BI dstport " PORT "
 ] [
 .BI srcport " MIN MAX "
@@ -458,6 +460,10 @@ parameter.
 .sp
 .BI tos " TOS"
 - specifies the TOS value to use in outgoing packets.
+
+.sp
+.BI flowlabel " FLOWLABEL"
+- specifies the flow label to use in outgoing packets.
 
 .sp
 .BI dstport " PORT"

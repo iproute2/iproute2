@@ -92,3 +92,7 @@ void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
 #endif
+
+#ifndef LABEL_MAX_MASK
+#define     LABEL_MAX_MASK          0xFFFFFU
+#endif
