@@ -567,7 +567,7 @@ int get_addr(inet_prefix *dst, const char *arg, int family)
 {
 	if (get_addr_1(dst, arg, family)) {
 		fprintf(stderr, "Error: %s address is expected rather than \"%s\".\n",
-				family_name(family) ,arg);
+				family_name(dst->family) ,arg);
 		exit(1);
 	}
 	return 0;
@@ -579,9 +579,10 @@ int get_prefix(inet_prefix *dst, char *arg, int family)
 		fprintf(stderr, "Error: \"%s\" may be inet prefix, but it is not allowed in this context.\n", arg);
 		exit(1);
 	}
+
 	if (get_prefix_1(dst, arg, family)) {
 		fprintf(stderr, "Error: %s prefix is expected rather than \"%s\".\n",
-				family_name(family) ,arg);
+				family_name(dst->family) ,arg);
 		exit(1);
 	}
 	return 0;
