@@ -68,5 +68,3 @@ const char *ipx_ntop(int af, const void *addr, char *str, size_t len)
 
 	return NULL;
 }
-
-

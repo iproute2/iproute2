@@ -15,5 +15,3 @@
  * Coverity Scan doesn't pick up modifications automatically. The model file
  * must be uploaded by an admin.
  */
-
-

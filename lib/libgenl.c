@@ -60,4 +60,3 @@ int genl_resolve_family(struct rtnl_handle *grth, const char *family)
 
 	return genl_parse_getfamily(&req.n);
 }
-

@@ -298,7 +298,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_flags |= NTF_MASTER;
 		} else if (matches(*argv, "router") == 0) {
 			req.ndm.ndm_flags |= NTF_ROUTER;
-		} else if (matches(*argv, "local") == 0 || 
+		} else if (matches(*argv, "local") == 0 ||
 			   matches(*argv, "permanent") == 0) {
 			req.ndm.ndm_state |= NUD_PERMANENT;
 		} else if (matches(*argv, "temp") == 0 ||

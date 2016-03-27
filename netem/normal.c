@@ -33,7 +33,7 @@ main(int argc, char **argv)
 		table[i] = x;
 	}
 
-	
+
 	printf("# This is the distribution table for the normal distribution.\n");
 	for (i = n = 0; i < TABLESIZE; i += 4) {
 		int value = (int) rint(table[i]*TABLEFACTOR);

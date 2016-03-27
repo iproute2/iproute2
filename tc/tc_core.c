@@ -145,7 +145,7 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
 		rtab[i] = tc_calc_xmittime(bps, sz);
 	}
 
-	r->cell_align =  -1; 
+	r->cell_align =  -1;
 	r->cell_log = cell_log;
 	r->linklayer = (linklayer & TC_LINKLAYER_MASK);
 	return cell_log;

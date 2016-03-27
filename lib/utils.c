@@ -95,7 +95,7 @@ static int get_netmask(unsigned *val, const char *arg, int base)
 	/* try coverting dotted quad to CIDR */
 	if (!get_addr_1(&addr, arg, AF_INET) && addr.family == AF_INET) {
 		int b = mask2bits(addr.data[0]);
-		
+
 		if (b >= 0) {
 			*val = b;
 			return 0;
@@ -191,7 +191,7 @@ int get_time_rtt(unsigned *val, const char *arg, int *raw)
 	*val = t;
 	if (*val < t)
 		*val += 1;
-	
+
         return 0;
 
 }
@@ -363,7 +363,7 @@ static int get_addr_ipv4(__u8 *ap, const char *cp)
 	for (i = 0; i < 4; i++) {
 		unsigned long n;
 		char *endp;
-		
+
 		n = strtoul(cp, &endp, 0);
 		if (n > 255)
 			return -1;	/* bogus network value */

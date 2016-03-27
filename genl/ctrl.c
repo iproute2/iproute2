@@ -132,7 +132,7 @@ static void print_ctrl_cmd_flags(FILE *fp, __u32 fl)
 
 	fprintf(fp, "\n");
 }
-	
+
 static int print_ctrl_cmds(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
 {
 	struct rtattr *tb[CTRL_ATTR_OP_MAX + 1];
