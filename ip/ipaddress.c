@@ -813,6 +813,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		fprintf(fp, "master %s ", ll_idx_n2a(*(int *)RTA_DATA(tb[IFLA_MASTER]), b1));
 	}
 
+	if (tb[IFLA_PHYS_PORT_NAME])
+		fprintf(fp, "portname %s ",
+			rta_getattr_str(tb[IFLA_PHYS_PORT_NAME]));
+
 	if (tb[IFLA_PHYS_PORT_ID]) {
 		SPRINT_BUF(b1);
 		fprintf(fp, "portid %s ",
