@@ -894,6 +894,12 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (do_link && tb[IFLA_AF_SPEC] && show_details)
 		print_af_spec(fp, tb[IFLA_AF_SPEC]);
 
+	if (tb[IFLA_NUM_TX_QUEUES] && show_details)
+		fprintf(fp, "numtxqueues %u ", rta_getattr_u32(tb[IFLA_NUM_TX_QUEUES]));
+
+	if (tb[IFLA_NUM_RX_QUEUES] && show_details)
+		fprintf(fp, "numrxqueues %u ", rta_getattr_u32(tb[IFLA_NUM_RX_QUEUES]));
+
 	if ((do_link || show_details) && tb[IFLA_IFALIAS]) {
 		fprintf(fp, "%s    alias %s", _SL_,
 			rta_getattr_str(tb[IFLA_IFALIAS]));
