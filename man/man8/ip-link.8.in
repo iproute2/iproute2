@@ -425,6 +425,8 @@ the following additional arguments are supported:
 .RI "[no]external "
 ] [
 .B gbp
+] [
+.B gpe
 ]
 
 .in +8
@@ -565,6 +567,13 @@ Example:
   iptables -A OUTPUT [...] -j MARK --set-mark 0x800FF
 
 .in -4
+
+.sp
+.B gpe
+- enables the Generic Protocol extension (VXLAN-GPE). Currently, this is
+only supported together with the
+.B external
+keyword.
 
 .in -8
 
