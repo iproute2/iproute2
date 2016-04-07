@@ -234,6 +234,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			remcsumrx = 0;
 		} else if (!matches(*argv, "external")) {
 			metadata = 1;
+			learning = 0;
 		} else if (!matches(*argv, "noexternal")) {
 			metadata = 0;
 		} else if (!matches(*argv, "gbp")) {
