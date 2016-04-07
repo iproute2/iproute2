@@ -422,6 +422,8 @@ the following additional arguments are supported:
 ] [
 .BI maxaddress " NUMBER "
 ] [
+.RI "[no]external "
+] [
 .B gbp
 ]
 
@@ -514,6 +516,12 @@ are entered into the VXLAN device forwarding database.
 .sp
 .BI maxaddress " NUMBER"
 - specifies the maximum number of FDB entries.
+
+.sp
+.I [no]external
+- specifies whether an external control plane
+.RB "(e.g. " "ip route encap" )
+or the internal FDB should be used.
 
 .sp
 .B gbp
