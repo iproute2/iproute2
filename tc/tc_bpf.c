@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #ifdef HAVE_ELF
 #include <libelf.h>
