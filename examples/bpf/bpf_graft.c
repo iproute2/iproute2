@@ -33,7 +33,13 @@
  *   [...]
  */
 
-BPF_PROG_ARRAY(jmp_tc, 0, PIN_GLOBAL_NS, 1);
+struct bpf_elf_map __section_maps jmp_tc = {
+	.type		= BPF_MAP_TYPE_PROG_ARRAY,
+	.size_key	= sizeof(uint32_t),
+	.size_value	= sizeof(uint32_t),
+	.pinning	= PIN_GLOBAL_NS,
+	.max_elem	= 1,
+};
 
 __section("aaa")
 int cls_aaa(struct __sk_buff *skb)

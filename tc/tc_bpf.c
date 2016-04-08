@@ -231,6 +231,9 @@ static void bpf_map_pin_report(const struct bpf_elf_map *pin,
 	if (obj->max_elem != pin->max_elem)
 		fprintf(stderr, " - Max elems:    %u (obj) != %u (pin)\n",
 			obj->max_elem, pin->max_elem);
+	if (obj->flags != pin->flags)
+		fprintf(stderr, " - Flags:        %#x (obj) != %#x (pin)\n",
+			obj->flags, pin->flags);
 
 	fprintf(stderr, "\n");
 }
@@ -261,6 +264,8 @@ static int bpf_map_selfcheck_pinned(int fd, const struct bpf_elf_map *map,
 			tmp.size_value = val;
 		else if (sscanf(buff, "max_entries:\t%u", &val) == 1)
 			tmp.max_elem = val;
+		else if (sscanf(buff, "map_flags:\t%i", &val) == 1)
+			tmp.flags = val;
 	}
 
 	fclose(fp);
@@ -796,8 +801,9 @@ static int bpf_log_realloc(struct bpf_elf_ctx *ctx)
 	return 0;
 }
 
-static int bpf_map_create(enum bpf_map_type type, unsigned int size_key,
-			  unsigned int size_value, unsigned int max_elem)
+static int bpf_map_create(enum bpf_map_type type, uint32_t size_key,
+			  uint32_t size_value, uint32_t max_elem,
+			  uint32_t flags)
 {
 	union bpf_attr attr;
 
@@ -806,6 +812,7 @@ static int bpf_map_create(enum bpf_map_type type, unsigned int size_key,
 	attr.key_size = size_key;
 	attr.value_size = size_value;
 	attr.max_entries = max_elem;
+	attr.map_flags = flags;
 
 	return bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
 }
@@ -1147,7 +1154,8 @@ static void bpf_map_report(int fd, const char *name,
 	fprintf(stderr, " - Pinning:      %u\n", map->pinning);
 	fprintf(stderr, " - Size key:     %u\n", map->size_key);
 	fprintf(stderr, " - Size value:   %u\n", map->size_value);
-	fprintf(stderr, " - Max elems:    %u\n\n", map->max_elem);
+	fprintf(stderr, " - Max elems:    %u\n", map->max_elem);
+	fprintf(stderr, " - Flags:        %#x\n\n", map->flags);
 }
 
 static int bpf_map_attach(const char *name, const struct bpf_elf_map *map,
@@ -1174,7 +1182,7 @@ static int bpf_map_attach(const char *name, const struct bpf_elf_map *map,
 
 	errno = 0;
 	fd = bpf_map_create(map->type, map->size_key, map->size_value,
-			    map->max_elem);
+			    map->max_elem, map->flags);
 	if (fd < 0 || ctx->verbose) {
 		bpf_map_report(fd, name, map, ctx);
 		if (fd < 0)

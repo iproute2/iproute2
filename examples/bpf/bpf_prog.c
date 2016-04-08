@@ -192,6 +192,7 @@ struct bpf_elf_map __section("maps") map_proto = {
 	.size_key	=	sizeof(uint8_t),
 	.size_value	=	sizeof(struct count_tuple),
 	.max_elem	=	256,
+	.flags		=	BPF_F_NO_PREALLOC,
 };
 
 struct bpf_elf_map __section("maps") map_queue = {
@@ -200,6 +201,7 @@ struct bpf_elf_map __section("maps") map_queue = {
 	.size_key	=	sizeof(uint32_t),
 	.size_value	=	sizeof(struct count_queue),
 	.max_elem	=	1024,
+	.flags		=	BPF_F_NO_PREALLOC,
 };
 
 struct bpf_elf_map __section("maps") map_drops = {
