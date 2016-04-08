@@ -212,6 +212,8 @@ static int BPF_FUNC(l3_csum_replace, struct __sk_buff *skb, uint32_t off,
 		    uint32_t from, uint32_t to, uint32_t flags);
 static int BPF_FUNC(l4_csum_replace, struct __sk_buff *skb, uint32_t off,
 		    uint32_t from, uint32_t to, uint32_t flags);
+static int BPF_FUNC(csum_diff, const void *from, uint32_t from_size,
+		    const void *to, uint32_t to_size, uint32_t seed);
 
 /* Packet vlan encap/decap */
 static int BPF_FUNC(skb_vlan_push, struct __sk_buff *skb, uint16_t proto,
@@ -224,6 +226,11 @@ static int BPF_FUNC(skb_get_tunnel_key, struct __sk_buff *skb,
 static int BPF_FUNC(skb_set_tunnel_key, struct __sk_buff *skb,
 		    const struct bpf_tunnel_key *from, uint32_t size,
 		    uint32_t flags);
+
+static int BPF_FUNC(skb_get_tunnel_opt, struct __sk_buff *skb,
+		    void *to, uint32_t size);
+static int BPF_FUNC(skb_set_tunnel_opt, struct __sk_buff *skb,
+		    const void *from, uint32_t size);
 
 /** LLVM built-ins, mem*() routines work for constant size */
 
