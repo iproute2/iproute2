@@ -33,6 +33,10 @@ enum {
 #define BPF_ENV_UDS	"TC_BPF_UDS"
 #define BPF_ENV_MNT	"TC_BPF_MNT"
 
+#ifndef BPF_MAX_LOG
+# define BPF_MAX_LOG	4096
+#endif
+
 #ifndef BPF_FS_MAGIC
 # define BPF_FS_MAGIC	0xcafe4a11
 #endif
