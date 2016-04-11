@@ -782,7 +782,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	fprintf(fp, "%d: ", ifi->ifi_index);
 	color_fprintf(fp, COLOR_IFNAME, "%s",
-		tb[IFLA_IFNAME] ? rta_getattr_str(tb[IFLA_IFNAME]) : "<nil>");
+		      tb[IFLA_IFNAME] ? rta_getattr_str(tb[IFLA_IFNAME]) : "<nil>");
 
 	if (tb[IFLA_LINK]) {
 		SPRINT_BUF(b1);
@@ -813,26 +813,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		fprintf(fp, "master %s ", ll_idx_n2a(*(int *)RTA_DATA(tb[IFLA_MASTER]), b1));
 	}
 
-	if (tb[IFLA_PHYS_PORT_NAME])
-		fprintf(fp, "portname %s ",
-			rta_getattr_str(tb[IFLA_PHYS_PORT_NAME]));
-
-	if (tb[IFLA_PHYS_PORT_ID]) {
-		SPRINT_BUF(b1);
-		fprintf(fp, "portid %s ",
-			hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_PORT_ID]),
-				      RTA_PAYLOAD(tb[IFLA_PHYS_PORT_ID]),
-				      b1, sizeof(b1)));
-	}
-
-	if (tb[IFLA_PHYS_SWITCH_ID]) {
-		SPRINT_BUF(b1);
-		fprintf(fp, "switchid %s ",
-			hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_SWITCH_ID]),
-				      RTA_PAYLOAD(tb[IFLA_PHYS_SWITCH_ID]),
-				      b1, sizeof(b1)));
-	}
-
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
 
@@ -856,10 +836,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 		if (tb[IFLA_ADDRESS]) {
 			color_fprintf(fp, COLOR_MAC, "%s",
-					ll_addr_n2a(RTA_DATA(tb[IFLA_ADDRESS]),
-						RTA_PAYLOAD(tb[IFLA_ADDRESS]),
-						ifi->ifi_type,
-						b1, sizeof(b1)));
+				      ll_addr_n2a(RTA_DATA(tb[IFLA_ADDRESS]),
+						  RTA_PAYLOAD(tb[IFLA_ADDRESS]),
+						  ifi->ifi_type,
+						  b1, sizeof(b1)));
 		}
 		if (tb[IFLA_BROADCAST]) {
 			if (ifi->ifi_flags&IFF_POINTOPOINT)
@@ -867,10 +847,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			else
 				fprintf(fp, " brd ");
 			color_fprintf(fp, COLOR_MAC, "%s",
-					ll_addr_n2a(RTA_DATA(tb[IFLA_BROADCAST]),
-						      RTA_PAYLOAD(tb[IFLA_BROADCAST]),
-						      ifi->ifi_type,
-						      b1, sizeof(b1)));
+				      ll_addr_n2a(RTA_DATA(tb[IFLA_BROADCAST]),
+						  RTA_PAYLOAD(tb[IFLA_BROADCAST]),
+						  ifi->ifi_type,
+						  b1, sizeof(b1)));
 		}
 	}
 
@@ -888,21 +868,46 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			fprintf(fp, " protodown on ");
 	}
 
-	if (tb[IFLA_PROMISCUITY] && show_details)
-		fprintf(fp, " promiscuity %u ",
-			*(int *)RTA_DATA(tb[IFLA_PROMISCUITY]));
+	if (show_details) {
+		if (tb[IFLA_PROMISCUITY])
+			fprintf(fp, " promiscuity %u ",
+				*(int *)RTA_DATA(tb[IFLA_PROMISCUITY]));
 
-	if (tb[IFLA_LINKINFO] && show_details)
-		print_linktype(fp, tb[IFLA_LINKINFO]);
+		if (tb[IFLA_LINKINFO])
+			print_linktype(fp, tb[IFLA_LINKINFO]);
 
-	if (do_link && tb[IFLA_AF_SPEC] && show_details)
-		print_af_spec(fp, tb[IFLA_AF_SPEC]);
+		if (do_link && tb[IFLA_AF_SPEC])
+			print_af_spec(fp, tb[IFLA_AF_SPEC]);
 
-	if (tb[IFLA_NUM_TX_QUEUES] && show_details)
-		fprintf(fp, "numtxqueues %u ", rta_getattr_u32(tb[IFLA_NUM_TX_QUEUES]));
+		if (tb[IFLA_NUM_TX_QUEUES])
+			fprintf(fp, "numtxqueues %u ",
+				rta_getattr_u32(tb[IFLA_NUM_TX_QUEUES]));
 
-	if (tb[IFLA_NUM_RX_QUEUES] && show_details)
-		fprintf(fp, "numrxqueues %u ", rta_getattr_u32(tb[IFLA_NUM_RX_QUEUES]));
+		if (tb[IFLA_NUM_RX_QUEUES])
+			fprintf(fp, "numrxqueues %u ",
+				rta_getattr_u32(tb[IFLA_NUM_RX_QUEUES]));
+
+		if (tb[IFLA_PHYS_PORT_NAME])
+			fprintf(fp, "portname %s ",
+				rta_getattr_str(tb[IFLA_PHYS_PORT_NAME]));
+
+		if (tb[IFLA_PHYS_PORT_ID]) {
+			SPRINT_BUF(b1);
+			fprintf(fp, "portid %s ",
+				hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_PORT_ID]),
+					      RTA_PAYLOAD(tb[IFLA_PHYS_PORT_ID]),
+					      b1, sizeof(b1)));
+		}
+
+		if (tb[IFLA_PHYS_SWITCH_ID]) {
+			SPRINT_BUF(b1);
+			fprintf(fp, "switchid %s ",
+				hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_SWITCH_ID]),
+					      RTA_PAYLOAD(tb[IFLA_PHYS_SWITCH_ID]),
+					      b1, sizeof(b1)));
+		}
+	}
+
 
 	if ((do_link || show_details) && tb[IFLA_IFALIAS]) {
 		fprintf(fp, "%s    alias %s", _SL_,
