@@ -24,12 +24,12 @@
 	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct br_port_msg))))
 #endif
 
-static unsigned int filter_index;
+static unsigned int filter_index, filter_vlan;
 
 static void usage(void)
 {
 	fprintf(stderr, "Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [permanent | temp] [vid VID]\n");
-	fprintf(stderr, "       bridge mdb {show} [ dev DEV ]\n");
+	fprintf(stderr, "       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
 
@@ -92,6 +92,8 @@ static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e,
 	const void *src;
 	int af;
 
+	if (filter_vlan && e->vid != filter_vlan)
+		return;
 	af = e->addr.proto == htons(ETH_P_IP) ? AF_INET : AF_INET6;
 	src = af == AF_INET ? (const void *)&e->addr.u.ip4 :
 			      (const void *)&e->addr.u.ip6;
@@ -195,6 +197,11 @@ static int mdb_show(int argc, char **argv)
 			if (filter_dev)
 				duparg("dev", *argv);
 			filter_dev = *argv;
+		} else if (strcmp(*argv, "vid") == 0) {
+			NEXT_ARG();
+			if (filter_vlan)
+				duparg("vid", *argv);
+			filter_vlan = atoi(*argv);
 		}
 		argc--; argv++;
 	}
