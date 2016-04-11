@@ -6,7 +6,14 @@
  */
 #define JMP_MAP_ID	0xabccba
 
-BPF_PROG_ARRAY(jmp_tc, JMP_MAP_ID, PIN_OBJECT_NS, 1);
+struct bpf_elf_map __section_maps jmp_tc = {
+	.type		= BPF_MAP_TYPE_PROG_ARRAY,
+	.id		= JMP_MAP_ID,
+	.size_key	= sizeof(uint32_t),
+	.size_value	= sizeof(uint32_t),
+	.pinning	= PIN_OBJECT_NS,
+	.max_elem	= 1,
+};
 
 __section_tail(JMP_MAP_ID, 0)
 int cls_loop(struct __sk_buff *skb)

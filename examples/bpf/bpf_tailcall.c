@@ -26,10 +26,31 @@
  * classifier behaviour.
  */
 
-BPF_PROG_ARRAY(jmp_tc, FOO, PIN_OBJECT_NS, MAX_JMP_SIZE);
-BPF_PROG_ARRAY(jmp_ex, BAR, PIN_OBJECT_NS, 1);
+struct bpf_elf_map __section_maps jmp_tc = {
+	.type		= BPF_MAP_TYPE_PROG_ARRAY,
+	.id		= FOO,
+	.size_key	= sizeof(uint32_t),
+	.size_value	= sizeof(uint32_t),
+	.pinning	= PIN_OBJECT_NS,
+	.max_elem	= MAX_JMP_SIZE,
+};
 
-BPF_ARRAY4(map_sh, 0, PIN_OBJECT_NS, 1);
+struct bpf_elf_map __section_maps jmp_ex = {
+	.type		= BPF_MAP_TYPE_PROG_ARRAY,
+	.id		= BAR,
+	.size_key	= sizeof(uint32_t),
+	.size_value	= sizeof(uint32_t),
+	.pinning	= PIN_OBJECT_NS,
+	.max_elem	= 1,
+};
+
+struct bpf_elf_map __section_maps map_sh = {
+	.type		= BPF_MAP_TYPE_ARRAY,
+	.size_key	= sizeof(uint32_t),
+	.size_value	= sizeof(uint32_t),
+	.pinning	= PIN_OBJECT_NS,
+	.max_elem	= 1,
+};
 
 __section_tail(FOO, ENTRY_0)
 int cls_case1(struct __sk_buff *skb)

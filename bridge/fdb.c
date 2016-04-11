@@ -27,7 +27,7 @@
 #include "rt_names.h"
 #include "utils.h"
 
-static unsigned int filter_index;
+static unsigned int filter_index, filter_vlan;
 
 static void usage(void)
 {
@@ -35,7 +35,7 @@ static void usage(void)
 			"              [ self ] [ master ] [ use ] [ router ]\n"
 			"              [ local | static | dynamic ] [ dst IPADDR ] [ vlan VID ]\n"
 			"              [ port PORT] [ vni VNI ] [ via DEV ]\n");
-	fprintf(stderr, "       bridge fdb [ show [ br BRDEV ] [ brport DEV ] ]\n");
+	fprintf(stderr, "       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ] ]\n");
 	exit(-1);
 }
 
@@ -65,6 +65,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	struct ndmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[NDA_MAX+1];
+	__u16 vid = 0;
 
 	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH) {
 		fprintf(stderr, "Not RTM_NEWNEIGH: %08x %08x %08x\n",
@@ -87,6 +88,12 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	parse_rtattr(tb, NDA_MAX, NDA_RTA(r),
 		     n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
+
+	if (tb[NDA_VLAN])
+		vid = rta_getattr_u16(tb[NDA_VLAN]);
+
+	if (filter_vlan && filter_vlan != vid)
+		return 0;
 
 	if (n->nlmsg_type == RTM_DELNEIGH)
 		fprintf(fp, "Deleted ");
@@ -115,11 +122,8 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				    RTA_DATA(tb[NDA_DST])));
 	}
 
-	if (tb[NDA_VLAN]) {
-		__u16 vid = rta_getattr_u16(tb[NDA_VLAN]);
-
+	if (vid)
 		fprintf(fp, "vlan %hu ", vid);
-	}
 
 	if (tb[NDA_PORT])
 		fprintf(fp, "port %d ", ntohs(rta_getattr_u16(tb[NDA_PORT])));
@@ -190,6 +194,11 @@ static int fdb_show(int argc, char **argv)
 		} else if (strcmp(*argv, "br") == 0) {
 			NEXT_ARG();
 			br = *argv;
+		} else if (strcmp(*argv, "vlan") == 0) {
+			NEXT_ARG();
+			if (filter_vlan)
+				duparg("vlan", *argv);
+			filter_vlan = atoi(*argv);
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
