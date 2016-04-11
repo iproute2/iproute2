@@ -326,7 +326,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	 * this kernel.
 	 */
 	tmp = (struct rtattr *)((char *)vf[IFLA_VF_TX_RATE] +
-			vf[IFLA_VF_TX_RATE]->rta_len);
+				vf[IFLA_VF_TX_RATE]->rta_len);
 
 	if (tmp->rta_type != IFLA_VF_SPOOFCHK)
 		vf_spoofchk = NULL;
@@ -338,7 +338,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		 * this kernel.
 		 */
 		tmp = (struct rtattr *)((char *)vf[IFLA_VF_SPOOFCHK] +
-				vf[IFLA_VF_SPOOFCHK]->rta_len);
+					vf[IFLA_VF_SPOOFCHK]->rta_len);
 
 		if (tmp->rta_type != IFLA_VF_LINK_STATE)
 			vf_linkstate = NULL;
@@ -349,7 +349,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 
 	fprintf(fp, "%s    vf %d MAC %s", _SL_, vf_mac->vf,
 		ll_addr_n2a((unsigned char *)&vf_mac->mac,
-		ETH_ALEN, 0, b1, sizeof(b1)));
+			    ETH_ALEN, 0, b1, sizeof(b1)));
 	if (vf_vlan->vlan)
 		fprintf(fp, ", vlan %d", vf_vlan->vlan);
 	if (vf_vlan->qos)
