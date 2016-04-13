@@ -2019,7 +2019,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.segs_out = info->tcpi_segs_out;
 		s.segs_in = info->tcpi_segs_in;
 		s.not_sent = info->tcpi_notsent_bytes;
-		s.min_rtt = (double) info->tcpi_min_rtt / 1000;
+		if (info->tcpi_min_rtt && info->tcpi_min_rtt != ~0U)
+			s.min_rtt = (double) info->tcpi_min_rtt / 1000;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 	}
