@@ -267,7 +267,7 @@ static void filter_default_dbs(struct filter *f)
 static void filter_states_set(struct filter *f, int states)
 {
 	if (states)
-		f->states = (f->states | states) & states;
+		f->states = states;
 }
 
 static void filter_merge_defaults(struct filter *f)
