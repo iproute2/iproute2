@@ -1556,9 +1556,10 @@ void *parse_hostcond(char *addr, bool is_port)
 
 out:
 	if (fam != AF_UNSPEC) {
+		int states = f->states;
 		f->families = 0;
 		filter_af_set(f, fam);
-		filter_states_set(f, 0);
+		filter_states_set(f, states);
 	}
 
 	res = malloc(sizeof(*res));
