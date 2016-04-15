@@ -578,9 +578,9 @@ static int cmd_dev(struct dl *dl)
 static void cmd_port_help(void)
 {
 	pr_out("Usage: devlink port show [ DEV/PORT_INDEX ]\n");
-	pr_out("       dl port set DEV/PORT_INDEX [ type { eth | ib | auto} ]\n");
-	pr_out("       dl port split DEV/PORT_INDEX count COUNT\n");
-	pr_out("       dl port unsplit DEV/PORT_INDEX\n");
+	pr_out("       devlink port set DEV/PORT_INDEX [ type { eth | ib | auto} ]\n");
+	pr_out("       devlink port split DEV/PORT_INDEX count COUNT\n");
+	pr_out("       devlink port unsplit DEV/PORT_INDEX\n");
 }
 
 static const char *port_type_name(uint32_t type)
