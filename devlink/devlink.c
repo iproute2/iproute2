@@ -563,6 +563,36 @@ static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
 	return 0;
 }
 
+static bool dl_dump_filter(struct dl *dl, struct nlattr **tb)
+{
+	struct dl_opts *opts = &dl->opts;
+	struct nlattr *attr_bus_name = tb[DEVLINK_ATTR_BUS_NAME];
+	struct nlattr *attr_dev_name = tb[DEVLINK_ATTR_DEV_NAME];
+	struct nlattr *attr_port_index = tb[DEVLINK_ATTR_PORT_INDEX];
+
+	if (opts->present & DL_OPT_HANDLE &&
+	    attr_bus_name && attr_dev_name) {
+		const char *bus_name = mnl_attr_get_str(attr_bus_name);
+		const char *dev_name = mnl_attr_get_str(attr_dev_name);
+
+		if (strcmp(bus_name, opts->bus_name) != 0 ||
+		    strcmp(dev_name, opts->dev_name) != 0)
+			return false;
+	}
+	if (opts->present & DL_OPT_HANDLEP &&
+	    attr_bus_name && attr_dev_name && attr_port_index) {
+		const char *bus_name = mnl_attr_get_str(attr_bus_name);
+		const char *dev_name = mnl_attr_get_str(attr_dev_name);
+		uint32_t port_index = mnl_attr_get_u32(attr_port_index);
+
+		if (strcmp(bus_name, opts->bus_name) != 0 ||
+		    strcmp(dev_name, opts->dev_name) != 0 ||
+		    port_index != opts->port_index)
+			return false;
+	}
+	return true;
+}
+
 static void cmd_dev_help(void)
 {
 	pr_out("Usage: devlink dev show [ DEV ]\n");
