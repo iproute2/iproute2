@@ -523,6 +523,12 @@ static void pr_out_handle(struct nlattr **tb)
 			mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
 }
 
+static void pr_out_port_handle(struct nlattr **tb)
+{
+	pr_out_handle(tb);
+	pr_out("/%d", mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]));
+}
+
 static void pr_out_dev(struct nlattr **tb)
 {
 	pr_out_handle(tb);
@@ -599,8 +605,8 @@ static void pr_out_port(struct nlattr **tb)
 	struct nlattr *pt_attr = tb[DEVLINK_ATTR_PORT_TYPE];
 	struct nlattr *dpt_attr = tb[DEVLINK_ATTR_PORT_DESIRED_TYPE];
 
-	pr_out_handle(tb);
-	pr_out("/%d:", mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]));
+	pr_out_port_handle(tb);
+	pr_out(":");
 	if (pt_attr) {
 		uint16_t port_type = mnl_attr_get_u16(pt_attr);
 
