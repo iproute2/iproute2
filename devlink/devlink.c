@@ -114,6 +114,7 @@ struct dl {
 	struct list_head ifname_map_list;
 	int argc;
 	char **argv;
+	bool no_nice_names;
 };
 
 static int dl_argc(struct dl *dl)
@@ -284,6 +285,23 @@ static int ifname_map_lookup(struct dl *dl, const char *ifname,
 			*p_bus_name = ifname_map->bus_name;
 			*p_dev_name = ifname_map->dev_name;
 			*p_port_index = ifname_map->port_index;
+			return 0;
+		}
+	}
+	return -ENOENT;
+}
+
+static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
+				 const char *dev_name, uint32_t port_index,
+				 char **p_ifname)
+{
+	struct ifname_map *ifname_map;
+
+	list_for_each_entry(ifname_map, &dl->ifname_map_list, list) {
+		if (strcmp(bus_name, ifname_map->bus_name) == 0 &&
+		    strcmp(dev_name, ifname_map->dev_name) == 0 &&
+		    port_index == ifname_map->port_index) {
+			*p_ifname = ifname_map->ifname;
 			return 0;
 		}
 	}
@@ -517,16 +535,62 @@ static void cmd_dev_help(void)
 	pr_out("Usage: devlink dev show [ DEV ]\n");
 }
 
+static void __pr_out_handle(const char *bus_name, const char *dev_name)
+{
+	pr_out("%s/%s", bus_name, dev_name);
+}
+
 static void pr_out_handle(struct nlattr **tb)
 {
-	pr_out("%s/%s", mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
+	__pr_out_handle(mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
 			mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
+}
+
+static void __pr_out_port_handle(const char *bus_name, const char *dev_name,
+				 uint32_t port_index)
+{
+	__pr_out_handle(bus_name, dev_name);
+	pr_out("/%d", port_index);
 }
 
 static void pr_out_port_handle(struct nlattr **tb)
 {
-	pr_out_handle(tb);
-	pr_out("/%d", mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]));
+	__pr_out_port_handle(mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
+			     mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]),
+			     mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]));
+}
+
+static void __pr_out_port_handle_nice(struct dl *dl, const char *bus_name,
+				      const char *dev_name, uint32_t port_index)
+{
+	char *ifname;
+	int err;
+
+	if (dl->no_nice_names)
+		goto no_nice_names;
+
+	err = ifname_map_rev_lookup(dl, bus_name, dev_name,
+				    port_index, &ifname);
+	if (err)
+		goto no_nice_names;
+	pr_out("%s", ifname);
+	return;
+
+no_nice_names:
+	__pr_out_port_handle(bus_name, dev_name, port_index);
+}
+
+static void pr_out_port_handle_nice(struct dl *dl, struct nlattr **tb)
+{
+	const char *bus_name;
+	const char *dev_name;
+	uint32_t port_index;
+
+	bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
+	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
+	port_index = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]);
+
+	__pr_out_port_handle_nice(dl, bus_name, dev_name, port_index);
 }
 
 static void pr_out_dev(struct nlattr **tb)
@@ -867,7 +931,7 @@ static void help(void)
 {
 	pr_out("Usage: devlink [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "where  OBJECT := { dev | port | monitor }\n"
-	       "       OPTIONS := { -V[ersion] }\n");
+	       "       OPTIONS := { -V[ersion] | -n[no-nice-names] }\n");
 }
 
 static int dl_cmd(struct dl *dl)
@@ -939,6 +1003,7 @@ int main(int argc, char **argv)
 {
 	static const struct option long_options[] = {
 		{ "Version",		no_argument,		NULL, 'V' },
+		{ "no-nice-names",	no_argument,		NULL, 'n' },
 		{ NULL, 0, NULL, 0 }
 	};
 	struct dl *dl;
@@ -946,13 +1011,22 @@ int main(int argc, char **argv)
 	int err;
 	int ret;
 
-	while ((opt = getopt_long(argc, argv, "V",
+	dl = dl_alloc();
+	if (!dl) {
+		pr_err("Failed to allocate memory for devlink\n");
+		return EXIT_FAILURE;
+	}
+
+	while ((opt = getopt_long(argc, argv, "Vn",
 				  long_options, NULL)) >= 0) {
 
 		switch (opt) {
 		case 'V':
 			printf("devlink utility, iproute2-ss%s\n", SNAPSHOT);
 			return EXIT_SUCCESS;
+		case 'n':
+			dl->no_nice_names = true;
+			break;
 		default:
 			pr_err("Unknown option.\n");
 			help();
@@ -962,12 +1036,6 @@ int main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
-
-	dl = dl_alloc();
-	if (!dl) {
-		pr_err("Failed to allocate memory for devlink\n");
-		return EXIT_FAILURE;
-	}
 
 	err = dl_init(dl, argc, argv);
 	if (err) {
