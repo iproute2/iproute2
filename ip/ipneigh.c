@@ -430,6 +430,8 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 		addattr32(&req.n, sizeof(req), NDA_IFINDEX, filter.index);
 	}
 
+	req.ndm.ndm_family = filter.family;
+
 	if (flush) {
 		int round = 0;
 		char flushb[4096-512];
@@ -440,7 +442,7 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 		filter.state &= ~NUD_FAILED;
 
 		while (round < MAX_ROUNDS) {
-			if (rtnl_wilddump_request(&rth, filter.family, RTM_GETNEIGH) < 0) {
+			if (rtnl_dump_request_n(&rth, &req.n) < 0) {
 				perror("Cannot send dump request");
 				exit(1);
 			}
@@ -471,8 +473,6 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 			MAX_ROUNDS);
 		return 1;
 	}
-
-	req.ndm.ndm_family = filter.family;
 
 	if (rtnl_dump_request_n(&rth, &req.n) < 0) {
 		perror("Cannot send dump request");

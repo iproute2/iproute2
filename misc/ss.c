@@ -267,7 +267,7 @@ static void filter_default_dbs(struct filter *f)
 static void filter_states_set(struct filter *f, int states)
 {
 	if (states)
-		f->states = (f->states | states) & states;
+		f->states = states;
 }
 
 static void filter_merge_defaults(struct filter *f)
@@ -1556,9 +1556,10 @@ void *parse_hostcond(char *addr, bool is_port)
 
 out:
 	if (fam != AF_UNSPEC) {
+		int states = f->states;
 		f->families = 0;
 		filter_af_set(f, fam);
-		filter_states_set(f, 0);
+		filter_states_set(f, states);
 	}
 
 	res = malloc(sizeof(*res));
@@ -2018,7 +2019,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.segs_out = info->tcpi_segs_out;
 		s.segs_in = info->tcpi_segs_in;
 		s.not_sent = info->tcpi_notsent_bytes;
-		s.min_rtt = (double) info->tcpi_min_rtt / 1000;
+		if (info->tcpi_min_rtt && info->tcpi_min_rtt != ~0U)
+			s.min_rtt = (double) info->tcpi_min_rtt / 1000;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 	}

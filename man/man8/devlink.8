@@ -19,6 +19,7 @@ devlink \- Devlink tool
 .ti -8
 .IR OPTIONS " := { "
 \fB\-V\fR[\fIersion\fR] |
+\fB\-n\fR[\fIno-nice-names\fR] }
 
 .SH OPTIONS
 
@@ -27,6 +28,10 @@ devlink \- Devlink tool
 Print the version of the
 .B devlink
 utility and exit.
+
+.TP
+.BR "\-n" , " -no-nice-names"
+Turn off printing out nice names, for example netdevice ifnames instead of devlink port identification.
 
 .SS
 .I OBJECT
