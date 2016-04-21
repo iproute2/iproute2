@@ -1905,6 +1905,10 @@ static void print_skmeminfo(struct rtattr *tb[], int attrtype)
 		(SK_MEMINFO_BACKLOG + 1) * sizeof(__u32))
 		printf(",bl%u", skmeminfo[SK_MEMINFO_BACKLOG]);
 
+	if (RTA_PAYLOAD(tb[attrtype]) >=
+		(SK_MEMINFO_DROPS + 1) * sizeof(__u32))
+		printf(",d%u", skmeminfo[SK_MEMINFO_DROPS]);
+
 	printf(")");
 }
 
