@@ -339,16 +339,13 @@ get_failed:
 	return 0;
 }
 
-static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
+static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
 	unsigned int iflags = 0;
 	unsigned int oflags = 0;
-
-	if (!tb)
-		return;
 
 	if (tb[IFLA_GRE_REMOTE]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
@@ -421,8 +418,16 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fputs("icsum ", f);
 	if (oflags & GRE_CSUM)
 		fputs("ocsum ", f);
+}
 
-	if (tb[IFLA_GRE_COLLECT_METADATA])
+static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
+{
+	if (!tb)
+		return;
+
+	if (!tb[IFLA_GRE_COLLECT_METADATA])
+		gre_print_direct_opt(f, tb);
+	else
 		fputs("external ", f);
 
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&
