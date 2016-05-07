@@ -167,7 +167,8 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 			p.action = TC_ACT_UNSPEC;
 			argc--;
 			argv++;
-		} else if (matches(*argv, "pass") == 0) {
+		} else if (matches(*argv, "pass") == 0 ||
+			   matches(*argv, "ok") == 0) {
 			p.action = TC_ACT_OK;
 			argc--;
 			argv++;
