@@ -1476,6 +1476,36 @@ static int ipaddr_flush(void)
 	return 1;
 }
 
+static int iplink_filter_req(struct nlmsghdr *nlh, int reqlen)
+{
+	int err;
+
+	err = addattr32(nlh, reqlen, IFLA_EXT_MASK, RTEXT_FILTER_VF);
+	if (err)
+		return err;
+
+	if (filter.master) {
+		err = addattr32(nlh, reqlen, IFLA_MASTER, filter.master);
+		if (err)
+			return err;
+	}
+
+	if (filter.kind) {
+		struct rtattr *linkinfo;
+
+		linkinfo = addattr_nest(nlh, reqlen, IFLA_LINKINFO);
+
+		err = addattr_l(nlh, reqlen, IFLA_INFO_KIND, filter.kind,
+				strlen(filter.kind));
+		if (err)
+			return err;
+
+		addattr_nest_end(nlh, linkinfo);
+	}
+
+	return 0;
+}
+
 static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 {
 	struct nlmsg_chain linfo = { NULL, NULL};
@@ -1638,7 +1668,8 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		exit(0);
 	}
 
-	if (rtnl_wilddump_request(&rth, preferred_family, RTM_GETLINK) < 0) {
+	if (rtnl_wilddump_req_filter_fn(&rth, preferred_family, RTM_GETLINK,
+					iplink_filter_req) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
