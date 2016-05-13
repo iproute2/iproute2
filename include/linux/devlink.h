@@ -9,8 +9,8 @@
  * (at your option) any later version.
  */
 
-#ifndef _UAPI_LINUX_DEVLINK_H_
-#define _UAPI_LINUX_DEVLINK_H_
+#ifndef _LINUX_DEVLINK_H_
+#define _LINUX_DEVLINK_H_
 
 #define DEVLINK_GENL_NAME "devlink"
 #define DEVLINK_GENL_VERSION 0x1
@@ -69,4 +69,4 @@ enum devlink_attr {
 	DEVLINK_ATTR_MAX = __DEVLINK_ATTR_MAX - 1
 };
 
-#endif /* _UAPI_LINUX_DEVLINK_H_ */
+#endif /* _LINUX_DEVLINK_H_ */
