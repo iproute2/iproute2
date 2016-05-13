@@ -307,23 +307,6 @@ static int ifname_map_lookup(struct dl *dl, const char *ifname,
 	return -ENOENT;
 }
 
-static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
-				 const char *dev_name, uint32_t port_index,
-				 char **p_ifname)
-{
-	struct ifname_map *ifname_map;
-
-	list_for_each_entry(ifname_map, &dl->ifname_map_list, list) {
-		if (strcmp(bus_name, ifname_map->bus_name) == 0 &&
-		    strcmp(dev_name, ifname_map->dev_name) == 0 &&
-		    port_index == ifname_map->port_index) {
-			*p_ifname = ifname_map->ifname;
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
-
 static unsigned int strslashcount(char *str)
 {
 	unsigned int count = 0;
@@ -663,26 +646,6 @@ static void pr_out_port_handle(struct nlattr **tb)
 	__pr_out_port_handle(mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
 			     mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]),
 			     mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]));
-}
-
-static void __pr_out_port_handle_nice(struct dl *dl, const char *bus_name,
-				      const char *dev_name, uint32_t port_index)
-{
-	char *ifname;
-	int err;
-
-	if (dl->no_nice_names)
-		goto no_nice_names;
-
-	err = ifname_map_rev_lookup(dl, bus_name, dev_name,
-				    port_index, &ifname);
-	if (err)
-		goto no_nice_names;
-	pr_out("%s", ifname);
-	return;
-
-no_nice_names:
-	__pr_out_port_handle(bus_name, dev_name, port_index);
 }
 
 static void pr_out_dev(struct nlattr **tb)
