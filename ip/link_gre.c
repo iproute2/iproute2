@@ -315,38 +315,37 @@ get_failed:
 		return -1;
 	}
 
-	addattr32(n, 1024, IFLA_GRE_IKEY, ikey);
-	addattr32(n, 1024, IFLA_GRE_OKEY, okey);
-	addattr_l(n, 1024, IFLA_GRE_IFLAGS, &iflags, 2);
-	addattr_l(n, 1024, IFLA_GRE_OFLAGS, &oflags, 2);
-	addattr_l(n, 1024, IFLA_GRE_LOCAL, &saddr, 4);
-	addattr_l(n, 1024, IFLA_GRE_REMOTE, &daddr, 4);
-	addattr_l(n, 1024, IFLA_GRE_PMTUDISC, &pmtudisc, 1);
-	if (link)
-		addattr32(n, 1024, IFLA_GRE_LINK, link);
-	addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
-	addattr_l(n, 1024, IFLA_GRE_TOS, &tos, 1);
+	if (!metadata) {
+		addattr32(n, 1024, IFLA_GRE_IKEY, ikey);
+		addattr32(n, 1024, IFLA_GRE_OKEY, okey);
+		addattr_l(n, 1024, IFLA_GRE_IFLAGS, &iflags, 2);
+		addattr_l(n, 1024, IFLA_GRE_OFLAGS, &oflags, 2);
+		addattr_l(n, 1024, IFLA_GRE_LOCAL, &saddr, 4);
+		addattr_l(n, 1024, IFLA_GRE_REMOTE, &daddr, 4);
+		addattr_l(n, 1024, IFLA_GRE_PMTUDISC, &pmtudisc, 1);
+		if (link)
+			addattr32(n, 1024, IFLA_GRE_LINK, link);
+		addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
+		addattr_l(n, 1024, IFLA_GRE_TOS, &tos, 1);
+	} else {
+		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
+	}
 
 	addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
 	addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
 	addattr16(n, 1024, IFLA_GRE_ENCAP_SPORT, htons(encapsport));
 	addattr16(n, 1024, IFLA_GRE_ENCAP_DPORT, htons(encapdport));
-	if (metadata)
-		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
 
 	return 0;
 }
 
-static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
+static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
 	unsigned int iflags = 0;
 	unsigned int oflags = 0;
-
-	if (!tb)
-		return;
 
 	if (tb[IFLA_GRE_REMOTE]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
@@ -419,8 +418,16 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fputs("icsum ", f);
 	if (oflags & GRE_CSUM)
 		fputs("ocsum ", f);
+}
 
-	if (tb[IFLA_GRE_COLLECT_METADATA])
+static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
+{
+	if (!tb)
+		return;
+
+	if (!tb[IFLA_GRE_COLLECT_METADATA])
+		gre_print_direct_opt(f, tb);
+	else
 		fputs("external ", f);
 
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&

@@ -7,6 +7,7 @@ DOCDIR?=$(DATADIR)/doc/iproute2
 MANDIR?=$(DATADIR)/man
 ARPDDIR?=/var/lib/arpd
 KERNEL_INCLUDE?=/usr/include
+BASH_COMPDIR?=$(DATADIR)/bash-completion/completions
 
 # Path to db_185.h include
 DBM_INCLUDE:=$(DESTDIR)/usr/include
@@ -66,6 +67,8 @@ install: all
 		$(DESTDIR)$(DOCDIR)/examples/diffserv
 	@for i in $(SUBDIRS) doc; do $(MAKE) -C $$i install; done
 	install -m 0644 $(shell find etc/iproute2 -maxdepth 1 -type f) $(DESTDIR)$(CONFDIR)
+	install -m 0755 -d $(DESTDIR)$(BASH_COMPDIR)
+	install -m 0644 bash-completion/tc $(DESTDIR)$(BASH_COMPDIR)
 
 snapshot:
 	echo "static const char SNAPSHOT[] = \""`date +%y%m%d`"\";" \

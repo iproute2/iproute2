@@ -204,7 +204,7 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		memcpy(&addr, RTA_DATA(tb[IFLA_GENEVE_REMOTE6]), sizeof(struct in6_addr));
 		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0) {
-			if (IN6_IS_ADDR_MULTICAST(&addr))
+			if (!IN6_IS_ADDR_MULTICAST(&addr))
 				fprintf(f, "remote %s ",
 					format_host(AF_INET6, sizeof(struct in6_addr), &addr));
 		}
