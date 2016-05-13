@@ -2236,8 +2236,7 @@ struct inet_diag_arg {
 	struct rtnl_handle *rth;
 };
 
-static int kill_inet_sock(const struct sockaddr_nl *addr,
-		struct nlmsghdr *h, void *arg)
+static int kill_inet_sock(struct nlmsghdr *h, void *arg)
 {
 	struct inet_diag_msg *d = NLMSG_DATA(h);
 	struct inet_diag_arg *diag_arg = arg;
@@ -2264,7 +2263,7 @@ static int show_one_inet_sock(const struct sockaddr_nl *addr,
 
 	if (!(diag_arg->f->families & (1 << r->idiag_family)))
 		return 0;
-	if (diag_arg->f->kill && kill_inet_sock(addr, h, arg) != 0) {
+	if (diag_arg->f->kill && kill_inet_sock(h, arg) != 0) {
 		if (errno == EOPNOTSUPP || errno == ENOENT) {
 			/* Socket can't be closed, or is already closed. */
 			return 0;
