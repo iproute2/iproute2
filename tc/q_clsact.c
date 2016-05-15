@@ -18,7 +18,6 @@ static int clsact_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 
-	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
 	return 0;
 }
 
