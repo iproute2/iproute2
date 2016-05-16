@@ -172,7 +172,8 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 		} else if (matches(*argv, "continue") == 0) {
 			p.action = TC_POLICE_UNSPEC;
 			NEXT_ARG();
-		} else if (matches(*argv, "pass") == 0) {
+		} else if (matches(*argv, "pass") == 0 ||
+			   matches(*argv, "ok") == 0) {
 			p.action = TC_POLICE_OK;
 			NEXT_ARG();
 		}
