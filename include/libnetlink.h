@@ -38,6 +38,12 @@ int rtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type)
 int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int fam, int type,
 				    __u32 filt_mask)
 	__attribute__((warn_unused_result));
+
+typedef int (*req_filter_fn_t)(struct nlmsghdr *nlh, int reqlen);
+
+int rtnl_wilddump_req_filter_fn(struct rtnl_handle *rth, int fam, int type,
+				req_filter_fn_t fn)
+	__attribute__((warn_unused_result));
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)
 	__attribute__((warn_unused_result));

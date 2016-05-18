@@ -129,6 +129,34 @@ int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int family, int type,
 	return send(rth->fd, (void*)&req, sizeof(req), 0);
 }
 
+int rtnl_wilddump_req_filter_fn(struct rtnl_handle *rth, int family, int type,
+				req_filter_fn_t filter_fn)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct ifinfomsg ifm;
+		char buf[1024];
+	} req;
+	int err;
+
+	if (!filter_fn)
+		return -EINVAL;
+
+	memset(&req, 0, sizeof(req));
+	req.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+	req.nlh.nlmsg_type = type;
+	req.nlh.nlmsg_flags = NLM_F_DUMP|NLM_F_REQUEST;
+	req.nlh.nlmsg_pid = 0;
+	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
+	req.ifm.ifi_family = family;
+
+	err = filter_fn(&req.nlh, sizeof(req));
+	if (err)
+		return err;
+
+	return send(rth->fd, (void*)&req, sizeof(req), 0);
+}
+
 int rtnl_send(struct rtnl_handle *rth, const void *buf, int len)
 {
 	return send(rth->fd, buf, len, 0);
