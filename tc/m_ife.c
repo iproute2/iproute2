@@ -182,6 +182,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 				fprintf(stderr, "ife: Illegal \"index\"\n");
 				return -1;
 			}
+			ok++;
 			argc--;
 			argv++;
 		}
