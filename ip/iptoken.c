@@ -38,7 +38,7 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip token [ list | set | get ] [ TOKEN ] [ dev DEV ]\n");
+	fprintf(stderr, "Usage: ip token [ list | set | del | get ] [ TOKEN ] [ dev DEV ]\n");
 	exit(-1);
 }
 
@@ -117,7 +117,7 @@ static int iptoken_list(int argc, char **argv)
 	return 0;
 }
 
-static int iptoken_set(int argc, char **argv)
+static int iptoken_set(int argc, char **argv, bool delete)
 {
 	struct {
 		struct nlmsghdr n;
@@ -125,10 +125,9 @@ static int iptoken_set(int argc, char **argv)
 		char buf[512];
 	} req;
 	struct rtattr *afs, *afs6;
-	bool have_token = false, have_dev = false;
-	inet_prefix addr;
+	bool have_token = delete, have_dev = false;
+	inet_prefix addr = { .bytelen = 16, };
 
-	memset(&addr, 0, sizeof(addr));
 	memset(&req, 0, sizeof(req));
 
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
@@ -149,13 +148,7 @@ static int iptoken_set(int argc, char **argv)
 			if (matches(*argv, "help") == 0)
 				usage();
 			if (!have_token) {
-				afs = addattr_nest(&req.n, sizeof(req), IFLA_AF_SPEC);
-				afs6 = addattr_nest(&req.n, sizeof(req), AF_INET6);
 				get_prefix(&addr, *argv, req.ifi.ifi_family);
-				addattr_l(&req.n, sizeof(req), IFLA_INET6_TOKEN,
-					  &addr.data, addr.bytelen);
-				addattr_nest_end(&req.n, afs6);
-				addattr_nest_end(&req.n, afs);
 				have_token = true;
 			}
 		}
@@ -170,6 +163,13 @@ static int iptoken_set(int argc, char **argv)
 		fprintf(stderr, "Not enough information: \"dev\" argument is required.\n");
 		return -1;
 	}
+
+	afs = addattr_nest(&req.n, sizeof(req), IFLA_AF_SPEC);
+	afs6 = addattr_nest(&req.n, sizeof(req), AF_INET6);
+	addattr_l(&req.n, sizeof(req), IFLA_INET6_TOKEN,
+		  &addr.data, addr.bytelen);
+	addattr_nest_end(&req.n, afs6);
+	addattr_nest_end(&req.n, afs);
 
 	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
 		return -2;
@@ -189,7 +189,9 @@ int do_iptoken(int argc, char **argv)
 		return iptoken_list(argc - 1, argv + 1);
 	} else if (matches(argv[0], "set") == 0 ||
 		   matches(argv[0], "add") == 0) {
-		return iptoken_set(argc - 1, argv + 1);
+		return iptoken_set(argc - 1, argv + 1, false);
+	} else if (matches(argv[0], "delete") == 0) {
+		return iptoken_set(argc - 1, argv + 1, true);
 	} else if (matches(argv[0], "get") == 0) {
 		return iptoken_list(argc - 1, argv + 1);
 	} else if (matches(argv[0], "help") == 0)
