@@ -100,7 +100,7 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	struct tc_defact sel = {};
 	int argc = *argc_p;
 	char **argv = *argv_p;
-	int ok = 0, maybe_bind = 0;
+	int ok = 0;
 	struct rtattr *tail;
 	char *simpdata = NULL;
 
@@ -150,7 +150,7 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (get_u32(&sel.index, *argv, 10)) {
-				fprintf(stderr, "simple: Illegal \"index\"\n",
+				fprintf(stderr, "simple: Illegal \"index\" (%s)\n",
 					*argv);
 				return -1;
 			}
@@ -170,7 +170,6 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 			strlen(simpdata), simpdata);
 		return -1;
 	}
-
 
 	sel.action = TC_ACT_PIPE;
 
