@@ -19,6 +19,7 @@ endif
 all: $(TARGETS) $(LIBS)
 
 tipc: $(TIPCOBJ)
+	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 install: all
 	install -m 0755 $(TARGETS) $(DESTDIR)$(SBINDIR)

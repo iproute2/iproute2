@@ -125,15 +125,16 @@ CFLAGS += -DYY_NO_INPUT
 MODDESTDIR := $(DESTDIR)$(LIBDIR)/tc
 
 %.so: %.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic $< -o $@
+	$(QUIET_CC)$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic $< -o $@
 
 
 all: libtc.a tc $(TCSO)
 
 tc: $(TCOBJ) $(TCLIB)
+	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 libtc.a: $(TCLIB)
-	$(AR) rcs $@ $(TCLIB)
+	$(QUIET_AR)$(AR) rcs $@ $(TCLIB)
 
 install: all
 	mkdir -p $(MODDESTDIR)
@@ -154,21 +155,21 @@ clean:
 	rm -f emp_ematch.yacc.*
 
 q_atm.so: q_atm.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
+	$(QUIET_CC)$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
 
 m_xt.so: m_xt.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt.so m_xt.c $$($(PKG_CONFIG) xtables --cflags --libs)
+	$(QUIET_CC)$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt.so m_xt.c $$($(PKG_CONFIG) xtables --cflags --libs)
 
 m_xt_old.so: m_xt_old.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt_old.so m_xt_old.c $$($(PKG_CONFIG) xtables --cflags --libs)
+	$(QUIET_CC)$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic -o m_xt_old.so m_xt_old.c $$($(PKG_CONFIG) xtables --cflags --libs)
 
 em_ipset.o: CFLAGS += $$($(PKG_CONFIG) xtables --cflags)
 
 %.yacc.c: %.y
-	$(YACC) $(YACCFLAGS) -o $@ $<
+	$(QUIET_YACC)$(YACC) $(YACCFLAGS) -o $@ $<
 
 %.lex.c: %.l
-	$(LEX) $(LEXFLAGS) -o$@ $<
+	$(QUIET_LEX)$(LEX) $(LEXFLAGS) -o$@ $<
 
 # our lexer includes the header from yacc, so make sure
 # we don't attempt to compile it before the header has

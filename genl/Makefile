@@ -20,6 +20,7 @@ endif
 all: genl
 
 genl: $(GENLOBJ) $(LIBNETLINK) $(LIBUTIL) $(GENLLIB)
+	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 install: all
 	install -m 0755 genl $(DESTDIR)$(SBINDIR)

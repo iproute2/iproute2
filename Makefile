@@ -1,3 +1,7 @@
+ifndef VERBOSE
+MAKEFLAGS += --no-print-directory
+endif
+
 PREFIX?=/usr
 LIBDIR?=$(PREFIX)/lib
 SBINDIR?=/sbin
@@ -50,7 +54,7 @@ LDLIBS += $(LIBNETLINK)
 all: Config
 	@set -e; \
 	for i in $(SUBDIRS); \
-	do $(MAKE) $(MFLAGS) -C $$i; done
+	do echo; echo $$i; $(MAKE) $(MFLAGS) -C $$i; done
 
 Config:
 	sh configure $(KERNEL_INCLUDE)

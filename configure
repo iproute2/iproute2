@@ -317,7 +317,35 @@ EOF
     rm -f $TMPDIR/dbtest.c $TMPDIR/dbtest
 }
 
+quiet_config()
+{
+	cat <<EOF
+# user can control verbosity similar to kernel builds (e.g., V=1)
+ifeq ("\$(origin V)", "command line")
+  VERBOSE = \$(V)
+endif
+ifndef VERBOSE
+  VERBOSE = 0
+endif
+ifeq (\$(VERBOSE),1)
+  Q =
+else
+  Q = @
+endif
+
+ifeq (\$(VERBOSE), 0)
+    QUIET_CC       = @echo '    CC       '\$@;
+    QUIET_AR       = @echo '    AR       '\$@;
+    QUIET_LINK     = @echo '    LINK     '\$@;
+    QUIET_YACC     = @echo '    YACC     '\$@;
+    QUIET_LEX      = @echo '    LEX      '\$@;
+endif
+EOF
+}
+
 echo "# Generated config based on" $INCLUDE >Config
+quiet_config >> Config
+
 check_toolchain
 
 echo "TC schedulers"
@@ -357,3 +385,7 @@ echo
 echo -n "docs:"
 check_docs
 echo
+
+echo >> Config
+echo "%.o: %.c" >> Config
+echo '	$(QUIET_CC)$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -c -o $@ $<' >> Config

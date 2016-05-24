@@ -15,10 +15,10 @@ NLOBJ=libgenl.o ll_map.o libnetlink.o
 all: libnetlink.a libutil.a
 
 libnetlink.a: $(NLOBJ)
-	$(AR) rcs $@ $(NLOBJ)
+	$(QUIET_AR)$(AR) rcs $@ $^
 
 libutil.a: $(UTILOBJ) $(ADDLIB)
-	$(AR) rcs $@ $(UTILOBJ) $(ADDLIB)
+	$(QUIET_AR)$(AR) rcs $@ $^
 
 install:
 

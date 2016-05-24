@@ -12,6 +12,7 @@ endif
 all: $(TARGETS) $(LIBS)
 
 devlink: $(DEVLINKOBJ)
+	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 install: all
 	install -m 0755 $(TARGETS) $(DESTDIR)$(SBINDIR)
