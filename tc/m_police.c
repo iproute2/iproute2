@@ -385,7 +385,16 @@ int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	linklayer = (p->rate.linklayer & TC_LINKLAYER_MASK);
 	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
 		fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b2));
-	fprintf(f, "\n\tref %d bind %d\n", p->refcnt, p->bindcnt);
+	fprintf(f, "\n\tref %d bind %d", p->refcnt, p->bindcnt);
+	if (show_stats) {
+		if (tb[TCA_POLICE_TM]) {
+			struct tcf_t *tm = RTA_DATA(tb[TCA_POLICE_TM]);
+
+			print_tm(f, tm);
+		}
+	}
+	fprintf(f, "\n");
+
 
 	return 0;
 }
