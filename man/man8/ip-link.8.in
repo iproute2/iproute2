@@ -1119,27 +1119,6 @@ specifies the master device which enslaves devices to show.
 .I TYPE
 specifies the type of devices to show.
 
-.TP
-The show command has additional formatting options:
-
-.RS
-.TP
-.BR "\-s" , " \-stats", " \-statistics"
-output more statistics about packet usage.
-
-.TP
-.BR "\-d", " \-details"
-output more detailed information.
-
-.TP
-.BR "\-h", " \-human", " \-human-readable"
-output statistics with human readable values number followed by suffix
-
-.TP
-.BR "\-iec"
-print human readable rates in IEC units (ie. 1K = 1024).
-.RE
-
 .SS  ip link help - display help
 
 .PP
