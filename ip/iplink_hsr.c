@@ -25,7 +25,7 @@ static void print_usage(FILE *f)
 {
 	fprintf(f,
 "Usage:\tip link add name NAME type hsr slave1 SLAVE1-IF slave2 SLAVE2-IF\n"
-"\t[ supervision ADDR-BYTE ]\n"
+"\t[ supervision ADDR-BYTE ] [version VERSION]\n"
 "\n"
 "NAME\n"
 "	name of new hsr device (e.g. hsr0)\n"
@@ -33,7 +33,9 @@ static void print_usage(FILE *f)
 "	the two slave devices bound to the HSR device\n"
 "ADDR-BYTE\n"
 "	0-255; the last byte of the multicast address used for HSR supervision\n"
-"	frames (default = 0)\n");
+"	frames (default = 0)\n"
+"VERSION\n"
+"	0,1; the protocol version to be used. (default = 0)\n");
 }
 
 static void usage(void)
@@ -46,6 +48,7 @@ static int hsr_parse_opt(struct link_util *lu, int argc, char **argv,
 {
 	int ifindex;
 	unsigned char multicast_spec;
+	unsigned char protocol_version;
 
 	while (argc > 0) {
 		if (matches(*argv, "supervision") == 0) {
@@ -54,6 +57,13 @@ static int hsr_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("ADDR-BYTE is invalid", *argv);
 			addattr_l(n, 1024, IFLA_HSR_MULTICAST_SPEC,
 				  &multicast_spec, 1);
+		} else if (matches(*argv, "version") == 0) {
+			NEXT_ARG();
+			if (!(get_u8(&protocol_version, *argv, 0) == 0 ||
+			      get_u8(&protocol_version, *argv, 0) == 1))
+				invarg("version is invalid", *argv);
+			addattr_l(n, 1024, IFLA_HSR_VERSION,
+				  &protocol_version, 1);
 		} else if (matches(*argv, "slave1") == 0) {
 			NEXT_ARG();
 			ifindex = ll_name_to_index(*argv);
