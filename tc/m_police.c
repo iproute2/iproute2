@@ -362,19 +362,25 @@ int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	fprintf(f, "mtu %s ", sprint_size(p->mtu, b1));
 	if (show_raw)
 		fprintf(f, "[%08x] ", p->burst);
+
 	if (p->peakrate.rate)
 		fprintf(f, "peakrate %s ", sprint_rate(p->peakrate.rate, b1));
+
 	if (tb[TCA_POLICE_AVRATE])
 		fprintf(f, "avrate %s ",
 			sprint_rate(rta_getattr_u32(tb[TCA_POLICE_AVRATE]),
 				    b1));
 	fprintf(f, "action %s",
 		police_action_n2a(p->action, b1, sizeof(b1)));
+
 	if (tb[TCA_POLICE_RESULT]) {
+		__u32 action = rta_getattr_u32(tb[TCA_POLICE_RESULT]);
+
 		fprintf(f, "/%s",
-			police_action_n2a(*(int *)RTA_DATA(tb[TCA_POLICE_RESULT]), b1, sizeof(b1)));
+			police_action_n2a(action, b1, sizeof(b1)));
 	} else
 		fprintf(f, " ");
+
 	fprintf(f, "overhead %ub ", p->rate.overhead);
 	linklayer = (p->rate.linklayer & TC_LINKLAYER_MASK);
 	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
