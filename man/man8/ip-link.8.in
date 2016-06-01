@@ -846,6 +846,39 @@ forces the underlying interface into promiscuous mode. Passing the
 using standard tools.
 .in -8
 
+.TP
+High-availability Seamless Redundancy (HSR) Support
+For a link of type
+.I HSR
+the following additional arguments are supported:
+
+.BI "ip link add link " DEVICE " name " NAME
+.BI type " hsr "
+.BI slave1 " SLAVE1-IF " slave2 " SLAVE2-IF "
+.BR " [ supervision " ADDR-BYTE "  ] "
+.BR " [ version  { " 0 " | " 1 " } ] "
+
+.in +8
+.sp
+.BR type " hsr "
+- specifies the link type to use, here HSR.
+
+.BI slave1 " SLAVE1-IF "
+- Specifies the physical device used for the first of the two ring ports.
+
+.BI slave2 " SLAVE2-IF "
+- Specifies the physical device used for the second of the two ring ports.
+
+.BR "supervision ADDR-BYTE "
+- The last byte of the multicast address used for HSR supervision frames.
+Default option is "0", possible values 0-255.
+
+.BR "version { 0 | 1 }"
+- Selects the protocol version of the interface. Default option is "0", which
+corresponds to the 2010 version of the HSR standard. Option "1" activates the
+2012 version.
+.in -8
+
 .SS ip link delete - delete virtual link
 
 .TP
