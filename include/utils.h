@@ -114,8 +114,8 @@ int get_u8(__u8 *val, const char *arg, int base);
 int get_s8(__s8 *val, const char *arg, int base);
 int get_addr64(__u64 *ap, const char *cp);
 
-char* hexstring_n2a(const __u8 *str, int len, char *buf, int blen);
-__u8* hexstring_a2n(const char *str, __u8 *buf, int blen);
+char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen);
+__u8 *hexstring_a2n(const char *str, __u8 *buf, int blen, unsigned int *len);
 #define ADDR64_BUF_SIZE sizeof("xxxx:xxxx:xxxx:xxxx")
 int addr64_n2a(__u64 addr, char *buff, size_t len);
 

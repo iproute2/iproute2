@@ -866,9 +866,9 @@ char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen)
 	return buf;
 }
 
-__u8* hexstring_a2n(const char *str, __u8 *buf, int blen)
+__u8 *hexstring_a2n(const char *str, __u8 *buf, int blen, unsigned int *len)
 {
-	int cnt = 0;
+	unsigned int cnt = 0;
 	char *endptr;
 
 	if (strlen(str) % 2)
@@ -885,6 +885,10 @@ __u8* hexstring_a2n(const char *str, __u8 *buf, int blen)
 		buf[cnt++] = tmp;
 		str += 2;
 	}
+
+	if (len)
+		*len = cnt;
+
 	return buf;
 }
 
