@@ -425,30 +425,19 @@ static int get_tunnel(struct l2tp_data *p)
  * Command parser
  *****************************************************************************/
 
-static int hex(char ch)
-{
-	if ((ch >= 'a') && (ch <= 'f'))
-		return ch - 'a' + 10;
-	if ((ch >= '0') && (ch <= '9'))
-		return ch - '0';
-	if ((ch >= 'A') && (ch <= 'F'))
-		return ch - 'A' + 10;
-	return -1;
-}
-
 static int hex2mem(const char *buf, uint8_t *mem, int count)
 {
 	int i, j;
 	int c;
 
 	for (i = 0, j = 0; i < count; i++, j += 2) {
-		c = hex(buf[j]);
+		c = get_hex(buf[j]);
 		if (c < 0)
 			goto err;
 
 		mem[i] = c << 4;
 
-		c = hex(buf[j + 1]);
+		c = get_hex(buf[j + 1]);
 		if (c < 0)
 			goto err;
 

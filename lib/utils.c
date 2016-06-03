@@ -37,6 +37,18 @@
 
 int timestamp_short = 0;
 
+int get_hex(char c)
+{
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	if (c >= 'a' && c <= 'f')
+		return c - 'a' + 10;
+	if (c >= '0' && c <= '9')
+		return c - '0';
+
+	return -1;
+}
+
 int get_integer(int *val, const char *arg, int base)
 {
 	long res;
