@@ -111,8 +111,7 @@ int ll_proto_a2n(unsigned short *id, const char *buf)
 			 return 0;
 		 }
 	}
-	if (get_u16(id, buf, 0))
+	if (get_be16(id, buf, 0))
 		return -1;
-	*id = htons(*id);
 	return 0;
 }

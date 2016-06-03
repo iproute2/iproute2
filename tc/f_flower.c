@@ -150,11 +150,11 @@ static int flower_parse_port(char *str, __u8 ip_port,
 		return -1;
 	}
 
-	ret = get_u16(&port, str, 10);
+	ret = get_be16(&port, str, 10);
 	if (ret)
 		return -1;
 
-	addattr16(n, MAX_MSG, type, htons(port));
+	addattr16(n, MAX_MSG, type, port);
 
 	return 0;
 }

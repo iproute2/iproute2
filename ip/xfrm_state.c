@@ -175,10 +175,8 @@ static int xfrm_seq_parse(__u32 *seq, int *argcp, char ***argvp)
 	int argc = *argcp;
 	char **argv = *argvp;
 
-	if (get_u32(seq, *argv, 0))
+	if (get_be32(seq, *argv, 0))
 		invarg("SEQ value is invalid", *argv);
-
-	*seq = htonl(*seq);
 
 	*argcp = argc;
 	*argvp = argv;
@@ -359,13 +357,11 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 			NEXT_ARG();
 			xfrm_encap_type_parse(&encap.encap_type, &argc, &argv);
 			NEXT_ARG();
-			if (get_u16(&encap.encap_sport, *argv, 0))
+			if (get_be16(&encap.encap_sport, *argv, 0))
 				invarg("SPORT value after \"encap\" is invalid", *argv);
-			encap.encap_sport = htons(encap.encap_sport);
 			NEXT_ARG();
-			if (get_u16(&encap.encap_dport, *argv, 0))
+			if (get_be16(&encap.encap_dport, *argv, 0))
 				invarg("DPORT value after \"encap\" is invalid", *argv);
-			encap.encap_dport = htons(encap.encap_dport);
 			NEXT_ARG();
 			get_addr(&oa, *argv, AF_UNSPEC);
 			memcpy(&encap.encap_oa, &oa.data, sizeof(encap.encap_oa));

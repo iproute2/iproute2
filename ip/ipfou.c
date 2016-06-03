@@ -55,9 +55,8 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 		if (!matches(*argv, "port")) {
 			NEXT_ARG();
 
-			if (get_u16(&port, *argv, 0) || port == 0)
+			if (get_be16(&port, *argv, 0) || port == 0)
 				invarg("invalid port", *argv);
-			port = htons(port);
 			port_set = 1;
 		} else if (!matches(*argv, "ipproto")) {
 			struct protoent *servptr;

@@ -172,16 +172,12 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("max addresses", *argv);
 		} else if (!matches(*argv, "port") ||
 			   !matches(*argv, "srcport")) {
-			__u16 minport, maxport;
-
 			NEXT_ARG();
-			if (get_u16(&minport, *argv, 0))
+			if (get_be16(&range.low, *argv, 0))
 				invarg("min port", *argv);
 			NEXT_ARG();
-			if (get_u16(&maxport, *argv, 0))
+			if (get_be16(&range.high, *argv, 0))
 				invarg("max port", *argv);
-			range.low = htons(minport);
-			range.high = htons(maxport);
 		} else if (!matches(*argv, "dstport")) {
 			NEXT_ARG();
 			if (get_u16(&dstport, *argv, 0))

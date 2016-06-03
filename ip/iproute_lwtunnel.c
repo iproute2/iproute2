@@ -190,9 +190,9 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 			NEXT_ARG();
 			if (id_ok++)
 				duparg2("id", *argv);
-			if (get_u64(&id, *argv, 0))
+			if (get_be64(&id, *argv, 0))
 				invarg("\"id\" value is invalid\n", *argv);
-			rta_addattr64(rta, len, LWTUNNEL_IP_ID, htonll(id));
+			rta_addattr64(rta, len, LWTUNNEL_IP_ID, id);
 		} else if (strcmp(*argv, "dst") == 0) {
 			inet_prefix addr;
 
@@ -267,9 +267,9 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***a
 			NEXT_ARG();
 			if (id_ok++)
 				duparg2("id", *argv);
-			if (get_u64(&id, *argv, 0))
+			if (get_be64(&id, *argv, 0))
 				invarg("\"id\" value is invalid\n", *argv);
-			rta_addattr64(rta, len, LWTUNNEL_IP6_ID, htonll(id));
+			rta_addattr64(rta, len, LWTUNNEL_IP6_ID, id);
 		} else if (strcmp(*argv, "dst") == 0) {
 			inet_prefix addr;
 

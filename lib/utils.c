@@ -353,6 +353,39 @@ int get_s8(__s8 *val, const char *arg, int base)
 	return 0;
 }
 
+int get_be64(__be64 *val, const char *arg, int base)
+{
+	__u64 v;
+	int ret = get_u64(&v, arg, base);
+
+	if (!ret)
+		*val = htonll(v);
+
+	return ret;
+}
+
+int get_be32(__be32 *val, const char *arg, int base)
+{
+	__u32 v;
+	int ret = get_u32(&v, arg, base);
+
+	if (!ret)
+		*val = htonl(v);
+
+	return ret;
+}
+
+int get_be16(__be16 *val, const char *arg, int base)
+{
+	__u16 v;
+	int ret = get_u16(&v, arg, base);
+
+	if (!ret)
+		*val = htons(v);
+
+	return ret;
+}
+
 /* This uses a non-standard parsing (ie not inet_aton, or inet_pton)
  * because of legacy choice to parse 10.8 as 10.8.0.0 not 10.0.0.8
  */

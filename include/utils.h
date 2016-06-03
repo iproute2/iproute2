@@ -112,6 +112,9 @@ int get_u16(__u16 *val, const char *arg, int base);
 int get_s16(__s16 *val, const char *arg, int base);
 int get_u8(__u8 *val, const char *arg, int base);
 int get_s8(__s8 *val, const char *arg, int base);
+int get_be64(__be64 *val, const char *arg, int base);
+int get_be32(__be32 *val, const char *arg, int base);
+int get_be16(__be16 *val, const char *arg, int base);
 int get_addr64(__u64 *ap, const char *cp);
 
 char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen);

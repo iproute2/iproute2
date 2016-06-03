@@ -1109,14 +1109,9 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 			filter.id_proto_mask = XFRM_FILTER_MASK_FULL;
 
 		} else if (strcmp(*argv, "spi") == 0) {
-			__u32 spi;
-
 			NEXT_ARG();
-			if (get_u32(&spi, *argv, 0))
+			if (get_be32(&id->spi, *argv, 0))
 				invarg("SPI value is invalid", *argv);
-
-			spi = htonl(spi);
-			id->spi = spi;
 
 			filter.id_spi_mask = XFRM_FILTER_MASK_FULL;
 
@@ -1252,9 +1247,8 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 
 			NEXT_ARG();
 
-			if (get_u16(&sel->sport, *argv, 0))
+			if (get_be16(&sel->sport, *argv, 0))
 				invarg("value after \"sport\" is invalid", *argv);
-			sel->sport = htons(sel->sport);
 			if (sel->sport)
 				sel->sport_mask = ~((__u16)0);
 
@@ -1265,9 +1259,8 @@ static int xfrm_selector_upspec_parse(struct xfrm_selector *sel,
 
 			NEXT_ARG();
 
-			if (get_u16(&sel->dport, *argv, 0))
+			if (get_be16(&sel->dport, *argv, 0))
 				invarg("value after \"dport\" is invalid", *argv);
-			sel->dport = htons(sel->dport);
 			if (sel->dport)
 				sel->dport_mask = ~((__u16)0);
 

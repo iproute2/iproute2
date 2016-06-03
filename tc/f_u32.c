@@ -767,12 +767,9 @@ static int parse_offset(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 			}
 			sel->flags |= TC_U32_VAROFFSET;
 		} else if (matches(*argv, "mask") == 0) {
-			__u16 mask;
-
 			NEXT_ARG();
-			if (get_u16(&mask, *argv, 16))
+			if (get_be16(&sel->offmask, *argv, 16))
 				return -1;
-			sel->offmask = htons(mask);
 			sel->flags |= TC_U32_VAROFFSET;
 		} else if (matches(*argv, "shift") == 0) {
 			int shift;
@@ -802,12 +799,9 @@ static int parse_hashkey(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 
 	while (argc > 0) {
 		if (matches(*argv, "mask") == 0) {
-			__u32 mask;
-
 			NEXT_ARG();
-			if (get_u32(&mask, *argv, 16))
+			if (get_be32(&sel->hmask, *argv, 16))
 				return -1;
-			sel->hmask = htonl(mask);
 		} else if (matches(*argv, "at") == 0) {
 			int num;
 
