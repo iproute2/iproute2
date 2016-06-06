@@ -3581,6 +3581,7 @@ static void _usage(FILE *dest)
 "   -w, --raw           display only RAW sockets\n"
 "   -x, --unix          display only Unix domain sockets\n"
 "   -f, --family=FAMILY display sockets of type FAMILY\n"
+"       FAMILY := {inet|inet6|link|unix|netlink|help}\n"
 "\n"
 "   -K, --kill          forcibly close sockets, display what was closed\n"
 "\n"
