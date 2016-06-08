@@ -30,7 +30,7 @@ extern int show_pretty;
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... u32 [ match SELECTOR ... ] [ link HTID ] [ classid CLASSID ]\n");
+	fprintf(stderr, "Usage: ... u32 [ match SELECTOR ... ] [ link HTID ] [ classid CLASSID ] [skip-hw | skip-sw]\n");
 	fprintf(stderr, "               [ action ACTION_SPEC ] [ offset OFFSET_SPEC ]\n");
 	fprintf(stderr, "               [ ht HTID ] [ hashkey HASHKEY_SPEC ]\n");
 	fprintf(stderr, "               [ sample SAMPLE ]\n");
@@ -993,6 +993,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	int sample_ok = 0;
 	__u32 htid = 0;
 	__u32 order = 0;
+	__u32 flags = 0;
 
 	memset(&sel, 0, sizeof(sel));
 
@@ -1152,6 +1153,14 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 			}
 			terminal_ok++;
 			continue;
+		} else if (strcmp(*argv, "skip_hw") == 0) {
+			NEXT_ARG();
+			flags |= TCA_CLS_FLAGS_SKIP_HW;
+			continue;
+		} else if (strcmp(*argv, "skip_sw") == 0) {
+			NEXT_ARG();
+			flags |= TCA_CLS_FLAGS_SKIP_SW;
+			continue;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -1182,6 +1191,15 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 		addattr_l(n, MAX_MSG, TCA_U32_SEL, &sel,
 			  sizeof(sel.sel) +
 			  sel.sel.nkeys * sizeof(struct tc_u32_key));
+	if (flags) {
+		if (!(flags ^ (TCA_CLS_FLAGS_SKIP_HW | TCA_CLS_FLAGS_SKIP_SW))) {
+			fprintf(stderr, "skip_hw and skip_sw are mutually "
+				"exclusive flags. Only one can be set\n");
+			return -1;
+		}
+		addattr_l(n, MAX_MSG, TCA_U32_FLAGS, &flags, 4);
+	}
+
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
@@ -1238,6 +1256,15 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		fprintf(f, "link %s ",
 			sprint_u32_handle(rta_getattr_u32(tb[TCA_U32_LINK]),
 					  b1));
+	}
+
+	if (tb[TCA_U32_FLAGS]) {
+		__u32 flags = rta_getattr_u32(tb[TCA_U32_FLAGS]);
+
+		if (flags & TCA_CLS_FLAGS_SKIP_HW)
+			fprintf(f, "skip_hw ");
+		if (flags & TCA_CLS_FLAGS_SKIP_SW)
+			fprintf(f, "skip_sw ");
 	}
 
 	if (tb[TCA_U32_PCNT]) {
