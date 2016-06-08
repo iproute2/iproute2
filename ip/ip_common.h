@@ -8,7 +8,7 @@ int print_addrinfo(const struct sockaddr_nl *who,
 int print_addrlabel(const struct sockaddr_nl *who,
 		    struct nlmsghdr *n, void *arg);
 int print_neigh(const struct sockaddr_nl *who,
-	        struct nlmsghdr *n, void *arg);
+		struct nlmsghdr *n, void *arg);
 int ipaddr_list_link(int argc, char **argv);
 void ipaddr_get_vf_rate(int, int *, int *, int);
 void iplink_usage(void) __attribute__((noreturn));
@@ -59,6 +59,7 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask);
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 {
 	__u32 table = r->rtm_table;
+
 	if (tb[RTA_TABLE])
 		table = rta_getattr_u32(tb[RTA_TABLE]);
 	return table;
@@ -68,8 +69,7 @@ extern struct rtnl_handle rth;
 
 #include <stdbool.h>
 
-struct link_util
-{
+struct link_util {
 	struct link_util	*next;
 	const char		*id;
 	int			maxattr;
