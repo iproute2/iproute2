@@ -1,0 +1,98 @@
+.TH IP\-MACSEC 8 "07 Mar 2016" "iproute" "Linux"
+.SH NAME
+ip-macsec \- MACsec device configuration
+.SH "SYNOPSIS"
+.BI "ip link add link " DEVICE " name " NAME " type macsec "
+[ [
+.BR cipher " { " default " | " gcm-aes-128 " } ] "
+.BI icvlen " ICVLEN"
+] [ [
+.BR encrypt " { " on " | " off " } ] ["
+.BR send_sci " { " on " | " off " } ] ["
+.BR end_station " { " on " | " off " } ] ["
+.BR scb " { " on " | " off " } ] ["
+.BR protect " { " on " | " off " } ] ["
+.BR replay " { " on " | " off " } ] ["
+.BI window " WINDOW"
+] [
+.BI encodingsa " SA"
+]
+
+.BI "ip macsec add " DEV " tx sa"
+.RI "{ " 0..3 " } [ " OPTS " ]"
+.BI key " ID KEY"
+.br
+.BI "ip macsec set " DEV " tx sa"
+.RI "{ " 0..3 " } [ " OPTS " ]"
+.br
+.BI "ip macsec del " DEV " tx sa"
+.RI "{ " 0..3 " }"
+
+.BI "ip macsec add " DEV " rx " SCI
+.RB [ " on " | " off " ]
+.br
+.BI "ip macsec set " DEV " rx " SCI
+.RB [ " on " | " off " ]
+.br
+.BI "ip macsec del " DEV " rx " SCI
+
+.BI "ip macsec add " DEV " rx " SCI " sa"
+.RI "{ " 0..3 " } [ " OPTS " ]"
+.BI key " ID KEY"
+.br
+.BI "ip macsec set " DEV " rx " SCI " sa"
+.RI "{ " 0..3 " } [ " OPTS " ]"
+.br
+.BI "ip macsec del " DEV " rx " SCI " sa"
+.RI "{ " 0..3 " }"
+
+.B ip macsec show
+.RI [ " DEV " ]
+
+.IR OPTS " := [ "
+.BR pn " { "
+.IR 1..2^32-1 " } ] ["
+.BR on " | " off " ]"
+.br
+.IR SCI " := { "
+.B sci
+.IR <u64> " | "
+.BI port " <u16> " address " <lladdr> "
+}
+
+
+.SH DESCRIPTION
+The
+.B ip macsec
+commands are used to configure transmit secure associations and receive secure channels and their secure associations on a MACsec device created with the
+.B ip link add
+command using the
+.I macsec
+type.
+
+.SH EXAMPLES
+.PP
+.SS Create a MACsec device on link eth0
+.nf
+# ip link add device eth0 macsec0 type macsec port 11 encrypt on
+.PP
+.SS Configure a secure association on that device
+.nf
+# ip macsec add macsec0 tx sa 0 pn 1024 on key 01 81818181818181818181818181818181
+.PP
+.SS Configure a receive channel
+.nf
+# ip macsec add macsec0 rx port 1234 address c6:19:52:8f:e6:a0
+.PP
+.SS Configure a receive association
+.nf
+# ip macsec add macsec0 rx port 1234 address c6:19:52:8f:e6:a0 sa 0 pn 1 on key 00 82828282828282828282828282828282
+.PP
+.SS Display MACsec configuration
+.nf
+# ip macsec show
+.SH SEE ALSO
+.br
+.BR ip-link (8)
+.SH AUTHOR
+Sabrina Dubroca <sd@queasysnail.net>

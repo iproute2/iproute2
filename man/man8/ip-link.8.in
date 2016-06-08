@@ -258,6 +258,9 @@ Link types:
 .sp
 .BR geneve
 - GEneric NEtwork Virtualization Encapsulation
+.sp
+.BR macsec
+- Interface for IEEE 802.1AE MAC Security (MACsec)
 .in -8
 
 .TP
@@ -877,6 +880,88 @@ Default option is "0", possible values 0-255.
 - Selects the protocol version of the interface. Default option is "0", which
 corresponds to the 2010 version of the HSR standard. Option "1" activates the
 2012 version.
+.in -8
+
+.TP
+MACsec Type Support
+For a link of type
+.I MACsec
+the following additional arguments are supported:
+
+.BI "ip link add link " DEVICE " name " NAME " type macsec"
+[
+.BI port " PORT"
+|
+.BI sci " SCI"
+] [
+.BI cipher " CIPHER_SUITE"
+] [
+.BR encrypt " {"
+.BR on " | " off " } ] [ "
+.BR send_sci " { " on " | " off " } ] ["
+.BR es " { " on " | " off " } ] ["
+.BR scb " { " on " | " off " } ] ["
+.BR protect " { " on " | " off " } ] ["
+.BR replay " { " on " | " off " }"
+.BR window " { "
+.IR 0..2^32-1 " } ] ["
+.BR validate " { " strict " | " check " | " disabled " } ] ["
+.BR encoding " { "
+.IR 0..3 " } ]"
+
+.in +8
+.sp
+.BI  port " PORT "
+- sets the port number for this MACsec device.
+
+.sp
+.BI sci " SCI "
+- sets the SCI for this MACsec device.
+
+.sp
+.BI cipher " CIPHER_SUITE "
+- defines the cipher suite to use.
+
+.sp
+.BR "encrypt on " or " encrypt off"
+- switches between authenticated encryption, or authenticity mode only.
+
+.sp
+.BR "send_sci on " or " send_sci off"
+- specifies whether the SCI is included in every packet, or only when it is necessary.
+
+.sp
+.BR "es on " or " es off"
+- sets the End Station bit.
+
+.sp
+.BR "scb on " or " scb off"
+- sets the Single Copy Broadcast bit.
+
+.sp
+.BR "protect on " or " protect off"
+- enables MACsec protection on the device.
+
+.sp
+.BR "replay on " or " replay off"
+- enables replay protection on the device.
+
+.in +8
+
+.sp
+.BI window " SIZE "
+- sets the size of the replay window.
+
+.in -8
+
+.sp
+.BR "validate strict " or " validate check " or " validate disabled"
+- sets the validation mode on the device.
+
+.sp
+.BI encoding " AN "
+- sets the active secure association for transmission.
+
 .in -8
 
 .SS ip link delete - delete virtual link
