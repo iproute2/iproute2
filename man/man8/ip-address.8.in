@@ -23,7 +23,7 @@ ip-address \- protocol address management
 .IB IFADDR " dev " IFNAME " [ " mngtmpaddr " ]"
 
 .ti -8
-.BR "ip address" " { " show " | " save " | " flush " } [ " dev
+.BR "ip address" " { " save " | " flush " } [ " dev
 .IR IFNAME " ] [ "
 .B  scope
 .IR SCOPE-ID " ] [ "
@@ -31,6 +31,21 @@ ip-address \- protocol address management
 .IR PREFIX " ] [ " FLAG-LIST " ] [ "
 .B  label
 .IR PATTERN " ] [ " up " ]"
+
+.ti -8
+.BR "ip address" " [ " show  " [ " dev
+.IR IFNAME " ] [ "
+.B  scope
+.IR SCOPE-ID " ] [ "
+.B  to
+.IR PREFIX " ] [ " FLAG-LIST " ] [ "
+.B  label
+.IR PATTERN " ] [ "
+.B  master
+.IR DEVICE " ] [ "
+.B  type
+.IR TYPE " ] [ "
+.BR up " ] ]"
 
 .ti -8
 .BR "ip address" " { " showdump " | " restore " }"
@@ -79,6 +94,34 @@ ip-address \- protocol address management
 .IR LFT " := [ "
 .BR forever " |"
 .IR SECONDS " ]"
+
+.ti -8
+.IR TYPE " := [ "
+.BR bridge " | "
+.BR bond " | "
+.BR can " | "
+.BR dummy " | "
+.BR hsr " | "
+.BR ifb " | "
+.BR ipoib " |"
+.BR macvlan  " | "
+.BR macvtap  " | "
+.BR vcan " | "
+.BR veth " | "
+.BR vlan " | "
+.BR vxlan " |"
+.BR ip6tnl " |"
+.BR ipip " |"
+.BR sit " |"
+.BR gre " |"
+.BR gretap " |"
+.BR ip6gre " |"
+.BR ip6gretap " |"
+.BR vti " |"
+.BR nlmon " |"
+.BR ipvlan " |"
+.BR lowpan " |"
+.BR geneve " ]"
 
 .SH "DESCRIPTION"
 The
@@ -230,6 +273,14 @@ only list addresses with labels matching the
 is a usual shell style pattern.
 
 .TP
+.BI master " DEVICE"
+only list interfaces enslaved to this master device.
+
+.TP
+.BI type " TYPE"
+only list interfaces of the given type.
+
+.TP
 .B up
 only list running interfaces.
 
@@ -280,8 +331,8 @@ This command flushes the protocol addresses selected by some criteria.
 
 .PP
 This command has the same arguments as
-.B show.
-The difference is that it does not run when no arguments are given.
+.BR show " except that " type " and " master " selectors are not supported."
+Another difference is that it does not run when no arguments are given.
 
 .PP
 .B Warning:
