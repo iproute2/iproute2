@@ -250,8 +250,12 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	fprintf(stdout, "tablename: %s hook: %s\n ", tname, ipthooks[hook]);
 	fprintf(stdout, "\ttarget: ");
 
-	if (m)
-		m->print(NULL, m->t, 0);
+	if (m) {
+		if (m->print)
+			m->print(NULL, m->t, 0);
+		else
+			printf("%s ", m->name);
+	}
 	fprintf(stdout, " index %d\n", index);
 
 	if (strlen(tname) > 16) {
