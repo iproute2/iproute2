@@ -120,7 +120,6 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		     char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	struct xtables_target *m = NULL;
-	struct ipt_entry fw;
 	struct rtattr *tail;
 
 	int c;
@@ -189,7 +188,6 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 			break;
 
 		default:
-			memset(&fw, 0, sizeof(fw));
 #if (XTABLES_VERSION_CODE >= 6)
 			if (m != NULL && m->x6_parse != NULL) {
 				xtables_option_tpcall(c, argv, 0, m, NULL);
