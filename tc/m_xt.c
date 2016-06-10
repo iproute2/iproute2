@@ -123,7 +123,6 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	struct rtattr *tail;
 
 	int c;
-	int rargc = *argc_p;
 	char **argv = *argv_p;
 	int argc = 0, iargc = 0;
 	char k[16];
@@ -140,7 +139,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	{
 		int i;
 
-		for (i = 0; i < rargc; i++) {
+		for (i = 0; i < *argc_p; i++) {
 			if (NULL == argv[i] || 0 == strcmp(argv[i], "action")) {
 				break;
 			}
@@ -149,7 +148,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	}
 
 	if (argc <= 2) {
-		fprintf(stderr, "bad arguments to ipt %d vs %d\n", argc, rargc);
+		fprintf(stderr, "bad arguments to ipt %d vs %d\n", argc, *argc_p);
 		return -1;
 	}
 
@@ -274,7 +273,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 
 	argc -= optind;
 	argv += optind;
-	*argc_p = rargc - iargc;
+	*argc_p -= iargc;
 	*argv_p = argv;
 
 	optind = 0;
