@@ -37,7 +37,7 @@ static void usage(void)
 	fprintf(stderr, "       ip rule { flush | save | restore }\n");
 	fprintf(stderr, "       ip rule [ list ]\n");
 	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n");
-	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ]\n");
+	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ l3mdev ]\n");
 	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
 	fprintf(stderr, "          [ nat ADDRESS ]\n");
 	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
@@ -137,6 +137,11 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "oif %s ", rta_getattr_str(tb[FRA_OIFNAME]));
 		if (r->rtm_flags & FIB_RULE_OIF_DETACHED)
 			fprintf(fp, "[detached] ");
+	}
+
+	if (tb[FRA_L3MDEV]) {
+		if (rta_getattr_u8(tb[FRA_L3MDEV]))
+			fprintf(fp, "lookup [l3mdev-table] ");
 	}
 
 	table = rtm_get_table(r, tb);
@@ -311,7 +316,9 @@ static int iprule_restore(void)
 
 static int iprule_modify(int cmd, int argc, char **argv)
 {
+	int l3mdev_rule = 0;
 	int table_ok = 0;
+	__u32 tid = 0;
 	struct {
 		struct nlmsghdr	n;
 		struct rtmsg		r;
@@ -393,8 +400,6 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			addattr32(&req.n, sizeof(req), FRA_FLOW, realm);
 		} else if (matches(*argv, "table") == 0 ||
 			   strcmp(*argv, "lookup") == 0) {
-			__u32 tid;
-
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv))
 				invarg("invalid table ID\n", *argv);
@@ -428,6 +433,10 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		} else if (strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
 			addattr_l(&req.n, sizeof(req), FRA_OIFNAME, *argv, strlen(*argv)+1);
+		} else if (strcmp(*argv, "l3mdev") == 0) {
+			addattr8(&req.n, sizeof(req), FRA_L3MDEV, 1);
+			table_ok = 1;
+			l3mdev_rule = 1;
 		} else if (strcmp(*argv, "nat") == 0 ||
 			   matches(*argv, "map-to") == 0) {
 			NEXT_ARG();
@@ -459,6 +468,12 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		}
 		argc--;
 		argv++;
+	}
+
+	if (l3mdev_rule && tid != 0) {
+		fprintf(stderr,
+			"table can not be specified for l3mdev rules\n");
+		return -EINVAL;
 	}
 
 	if (req.r.rtm_family == AF_UNSPEC)
