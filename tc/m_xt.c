@@ -124,7 +124,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 
 	int c;
 	char **argv = *argv_p;
-	int argc = 0;
+	int argc;
 	char k[16];
 	int size = 0;
 	int iok = 0, ok = 0;
@@ -136,19 +136,14 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	xtables_init_all(&tmp_tcipt_globals, NFPROTO_IPV4);
 	set_lib_dir();
 
-	{
-		int i;
-
-		for (i = 0; i < *argc_p; i++) {
-			if (NULL == argv[i] || 0 == strcmp(argv[i], "action")) {
-				break;
-			}
-		}
-		argc = i;
+	/* parse only up until the next action */
+	for (argc = 0; argc < *argc_p; argc++) {
+		if (!argv[argc] || !strcmp(argv[argc], "action"))
+			break;
 	}
 
 	if (argc <= 2) {
-		fprintf(stderr, "bad arguments to ipt %d vs %d\n", argc, *argc_p);
+		fprintf(stderr, "too few arguments for xt, need at least '-j <target>'\n");
 		return -1;
 	}
 
