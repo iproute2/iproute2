@@ -298,6 +298,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 static int
 print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 {
+	struct xtables_target *m;
 	struct rtattr *tb[TCA_IPT_MAX + 1];
 	struct xt_entry_target *t = NULL;
 	struct option *opts = NULL;
@@ -333,62 +334,60 @@ print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 	if (tb[TCA_IPT_TARG] == NULL) {
 		fprintf(f, "\t[NULL ipt target parameters ]\n");
 		return -1;
-	} else {
-		struct xtables_target *m = NULL;
+	}
 
-		t = RTA_DATA(tb[TCA_IPT_TARG]);
-		m = xtables_find_target(t->u.user.name, XTF_TRY_LOAD);
-		if (!m) {
-			fprintf(stderr, " failed to find target %s\n\n",
-				t->u.user.name);
-			return -1;
-		}
-		if (build_st(m, t) < 0) {
-			fprintf(stderr, " %s error\n", m->name);
-			return -1;
-		}
+	t = RTA_DATA(tb[TCA_IPT_TARG]);
+	m = xtables_find_target(t->u.user.name, XTF_TRY_LOAD);
+	if (!m) {
+		fprintf(stderr, " failed to find target %s\n\n",
+			t->u.user.name);
+		return -1;
+	}
+	if (build_st(m, t) < 0) {
+		fprintf(stderr, " %s error\n", m->name);
+		return -1;
+	}
 
 #if (XTABLES_VERSION_CODE >= 6)
-		opts = xtables_options_xfrm(tmp_tcipt_globals.orig_opts,
-					    tmp_tcipt_globals.opts,
-					    m->x6_options,
-					    &m->option_offset);
+	opts = xtables_options_xfrm(tmp_tcipt_globals.orig_opts,
+				    tmp_tcipt_globals.opts,
+				    m->x6_options,
+				    &m->option_offset);
 #else
-		opts = xtables_merge_options(tmp_tcipt_globals.opts,
-					     m->extra_opts,
-					     &m->option_offset);
+	opts = xtables_merge_options(tmp_tcipt_globals.opts,
+				     m->extra_opts,
+				     &m->option_offset);
 #endif
-		if (opts == NULL) {
-			fprintf(stderr, " failed to find additional options for target %s\n\n", optarg);
-			return -1;
-		} else
-			tmp_tcipt_globals.opts = opts;
-		fprintf(f, "\ttarget ");
-		m->print(NULL, m->t, 0);
-		if (tb[TCA_IPT_INDEX] == NULL) {
-			fprintf(f, " [NULL ipt target index ]\n");
-		} else {
-			__u32 index;
+	if (opts == NULL) {
+		fprintf(stderr, " failed to find additional options for target %s\n\n", optarg);
+		return -1;
+	} else
+		tmp_tcipt_globals.opts = opts;
+	fprintf(f, "\ttarget ");
+	m->print(NULL, m->t, 0);
+	if (tb[TCA_IPT_INDEX] == NULL) {
+		fprintf(f, " [NULL ipt target index ]\n");
+	} else {
+		__u32 index;
 
-			index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
-			fprintf(f, "\n\tindex %d", index);
-		}
-
-		if (tb[TCA_IPT_CNT]) {
-			struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);
-
-			fprintf(f, " ref %d bind %d", c->refcnt, c->bindcnt);
-		}
-		if (show_stats) {
-			if (tb[TCA_IPT_TM]) {
-				struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
-
-				print_tm(f, tm);
-			}
-		}
-		fprintf(f, "\n");
-
+		index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
+		fprintf(f, "\n\tindex %d", index);
 	}
+
+	if (tb[TCA_IPT_CNT]) {
+		struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);
+
+		fprintf(f, " ref %d bind %d", c->refcnt, c->bindcnt);
+	}
+	if (show_stats) {
+		if (tb[TCA_IPT_TM]) {
+			struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
+
+			print_tm(f, tm);
+		}
+	}
+	fprintf(f, "\n");
+
 	xtables_free_opts(1);
 
 	return 0;
