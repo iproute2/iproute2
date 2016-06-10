@@ -124,7 +124,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 
 	int c;
 	char **argv = *argv_p;
-	int argc = 0, iargc = 0;
+	int argc = 0;
 	char k[16];
 	int size = 0;
 	int iok = 0, ok = 0;
@@ -144,7 +144,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 				break;
 			}
 		}
-		iargc = argc = i;
+		argc = i;
 	}
 
 	if (argc <= 2) {
@@ -205,7 +205,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		}
 	}
 
-	if (iargc > optind) {
+	if (argc > optind) {
 		if (matches(argv[optind], "index") == 0) {
 			if (get_u32(&index, argv[optind + 1], 10)) {
 				fprintf(stderr, "Illegal \"index\"\n");
@@ -271,9 +271,8 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		addattr_l(n, MAX_MSG, TCA_IPT_TARG, m->t, m->t->u.target_size);
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 
-	argc -= optind;
 	argv += optind;
-	*argc_p -= iargc;
+	*argc_p -= argc;
 	*argv_p = argv;
 
 	optind = 0;
