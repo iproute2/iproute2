@@ -133,7 +133,9 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	__u32 hook = 0, index = 0;
 	struct option *opts = NULL;
 
-	xtables_init_all(&tcipt_globals, NFPROTO_IPV4);
+	/* copy tcipt_globals because .opts will be modified by iptables */
+	struct xtables_globals tmp_tcipt_globals = tcipt_globals;
+	xtables_init_all(&tmp_tcipt_globals, NFPROTO_IPV4);
 	set_lib_dir();
 
 	{
@@ -153,7 +155,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	}
 
 	while (1) {
-		c = getopt_long(argc, argv, "j:", tcipt_globals.opts, NULL);
+		c = getopt_long(argc, argv, "j:", tmp_tcipt_globals.opts, NULL);
 		if (c == -1)
 			break;
 		switch (c) {
@@ -166,12 +168,12 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 					return -1;
 				}
 #if (XTABLES_VERSION_CODE >= 6)
-			opts = xtables_options_xfrm(tcipt_globals.orig_opts,
-						    tcipt_globals.opts,
+			opts = xtables_options_xfrm(tmp_tcipt_globals.orig_opts,
+						    tmp_tcipt_globals.opts,
 						    m->x6_options,
 						    &m->option_offset);
 #else
-			opts = xtables_merge_options(tcipt_globals.opts,
+			opts = xtables_merge_options(tmp_tcipt_globals.opts,
 						     m->extra_opts,
 						     &m->option_offset);
 #endif
@@ -179,7 +181,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 				fprintf(stderr, " failed to find additional options for target %s\n\n", optarg);
 				return -1;
 			} else
-				tcipt_globals.opts = opts;
+				tmp_tcipt_globals.opts = opts;
 			} else {
 				fprintf(stderr, " failed to find target %s\n\n", optarg);
 				return -1;
