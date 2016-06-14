@@ -39,8 +39,10 @@
 #endif
 
 #ifndef __ALIGN_KERNEL
-#define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
-#define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+#define __ALIGN_KERNEL(x, a)	\
+	__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+#define __ALIGN_KERNEL_MASK(x, mask) \
+	(((x) + (mask)) & ~(mask))
 #endif
 
 #ifndef ALIGN
@@ -51,7 +53,7 @@ static const char *tname = "mangle";
 
 char *lib_dir;
 
-static const char *ipthooks[] = {
+static const char * const ipthooks[] = {
 	"NF_IP_PRE_ROUTING",
 	"NF_IP_LOCAL_IN",
 	"NF_IP_FORWARD",
@@ -153,6 +155,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 
 	/* copy tcipt_globals because .opts will be modified by iptables */
 	struct xtables_globals tmp_tcipt_globals = tcipt_globals;
+
 	xtables_init_all(&tmp_tcipt_globals, NFPROTO_IPV4);
 	set_lib_dir();
 
@@ -163,7 +166,8 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	}
 
 	if (argc <= 2) {
-		fprintf(stderr, "too few arguments for xt, need at least '-j <target>'\n");
+		fprintf(stderr,
+			"too few arguments for xt, need at least '-j <target>'\n");
 		return -1;
 	}
 
@@ -175,7 +179,9 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		case 'j':
 			m = xtables_find_target(optarg, XTF_TRY_LOAD);
 			if (!m) {
-				fprintf(stderr, " failed to find target %s\n\n", optarg);
+				fprintf(stderr,
+					" failed to find target %s\n\n",
+					optarg);
 				return -1;
 			}
 
@@ -184,8 +190,11 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 				return -1;
 			}
 
-			if (get_xtables_target_opts(&tmp_tcipt_globals, m) < 0) {
-				fprintf(stderr, " failed to find additional options for target %s\n\n", optarg);
+			if (get_xtables_target_opts(&tmp_tcipt_globals,
+						    m) < 0) {
+				fprintf(stderr,
+					" failed to find additional options for target %s\n\n",
+					optarg);
 				return -1;
 			}
 			ok++;
@@ -198,10 +207,11 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 #else
 			if (m != NULL && m->parse != NULL) {
 				m->parse(c - m->option_offset, argv, 0,
-				         &m->tflags, NULL, &m->t);
+					 &m->tflags, NULL, &m->t);
 #endif
 			} else {
-				fprintf(stderr, "failed to find target %s\n\n", optarg);
+				fprintf(stderr,
+					"failed to find target %s\n\n", optarg);
 				return -1;
 
 			}
@@ -297,7 +307,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 }
 
 static int
-print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
+print_ipt(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct xtables_target *m;
 	struct rtattr *tb[TCA_IPT_MAX + 1];
@@ -350,7 +360,7 @@ print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 
 	if (get_xtables_target_opts(&tmp_tcipt_globals, m) < 0) {
 		fprintf(stderr,
-		        " failed to find additional options for target %s\n\n",
+			" failed to find additional options for target %s\n\n",
 			t->u.user.name);
 		return -1;
 	}
