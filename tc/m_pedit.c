@@ -37,10 +37,12 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... pedit munge <MUNGE> [CONTROL]\n");
 	fprintf(stderr,
 		"Where: MUNGE := <RAW>|<LAYERED>\n"
-		"\t<RAW>:= <OFFSETC>[ATC]<CMD>\n \t\tOFFSETC:= offset <offval> <u8|u16|u32>\n "
-		"\t\tATC:= at <atval> offmask <maskval> shift <shiftval>\n \t\tNOTE: offval is byte offset, must be multiple of 4\n "
-		"\t\tNOTE: maskval is a 32 bit hex number\n \t\tNOTE: shiftval is a is a shift value\n "
-		"\t\tCMD:= clear | invert | set <setval>| retain\n \t<LAYERED>:= ip <ipdata> | ip6 <ip6data> \n "
+		"\t<RAW>:= <OFFSETC>[ATC]<CMD>\n \t\tOFFSETC:= offset <offval> <u8|u16|u32>\n"
+		"\t\tATC:= at <atval> offmask <maskval> shift <shiftval>\n"
+		"\t\tNOTE: offval is byte offset, must be multiple of 4\n"
+		"\t\tNOTE: maskval is a 32 bit hex number\n \t\tNOTE: shiftval is a is a shift value\n"
+		"\t\tCMD:= clear | invert | set <setval>| retain\n"
+		"\t<LAYERED>:= ip <ipdata> | ip6 <ip6data>\n"
 		" \t\t| udp <udpdata> | tcp <tcpdata> | icmp <icmpdata>\n"
 		"\tCONTROL:= reclassify | pipe | drop | continue | pass\n"
 		"For Example usage look at the examples directory\n");
@@ -207,7 +209,7 @@ int pack_key8(__u32 retain, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
 	return pack_key(sel, tkey);
 }
 
-int parse_val(int *argc_p, char ***argv_p, __u32 * val, int type)
+int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -224,16 +226,15 @@ int parse_val(int *argc_p, char ***argv_p, __u32 * val, int type)
 	if (type == TIPV4) {
 		inet_prefix addr;
 
-		if (get_prefix_1(&addr, *argv, AF_INET)) {
+		if (get_prefix_1(&addr, *argv, AF_INET))
 			return -1;
-		}
+
 		*val = addr.data[0];
 		return 0;
 	}
-	if (type == TIPV6) {
-		/* not implemented yet */
-		return -1;
-	}
+
+	if (type == TIPV6)
+		return -1; /* not implemented yet */
 
 	return -1;
 }
