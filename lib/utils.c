@@ -924,6 +924,7 @@ __u8 *hexstring_a2n(const char *str, __u8 *buf, int blen, unsigned int *len)
 
 		strncpy(tmpstr, str, 2);
 		tmpstr[2] = '\0';
+		errno = 0;
 		tmp = strtoul(tmpstr, &endptr, 16);
 		if (errno != 0 || tmp > 0xFF || *endptr != '\0')
 			return NULL;

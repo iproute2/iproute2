@@ -30,16 +30,18 @@ extern int show_pretty;
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... u32 [ match SELECTOR ... ] [ link HTID ] [ classid CLASSID ]\n");
-	fprintf(stderr, "               [ action ACTION_SPEC ] [ offset OFFSET_SPEC ]\n");
-	fprintf(stderr, "               [ ht HTID ] [ hashkey HASHKEY_SPEC ]\n");
-	fprintf(stderr, "               [ sample SAMPLE ]\n");
-	fprintf(stderr, "or         u32 divisor DIVISOR\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: SELECTOR := SAMPLE SAMPLE ...\n");
-	fprintf(stderr, "       SAMPLE := { ip | ip6 | udp | tcp | icmp | u{32|16|8} | mark } SAMPLE_ARGS [divisor DIVISOR]\n");
-	fprintf(stderr, "       FILTERID := X:Y:Z\n");
-	fprintf(stderr, "\nNOTE: CLASSID is parsed at hexadecimal input.\n");
+	fprintf(stderr,
+		"Usage: ... u32 [ match SELECTOR ... ] [ link HTID ] [ classid CLASSID ]\n"
+		"               [ action ACTION_SPEC ] [ offset OFFSET_SPEC ]\n"
+		"               [ ht HTID ] [ hashkey HASHKEY_SPEC ]\n"
+		"               [ sample SAMPLE ] [skip-hw | skip-sw]\n"
+		"or         u32 divisor DIVISOR\n"
+		"\n"
+		"Where: SELECTOR := SAMPLE SAMPLE ...\n"
+		"       SAMPLE := { ip | ip6 | udp | tcp | icmp | u{32|16|8} | mark }\n"
+		"                 SAMPLE_ARGS [ divisor DIVISOR ]\n"
+		"       FILTERID := X:Y:Z\n"
+		"\nNOTE: CLASSID is parsed at hexadecimal input.\n");
 }
 
 static int get_u32_handle(__u32 *handle, const char *str)
@@ -993,6 +995,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	int sample_ok = 0;
 	__u32 htid = 0;
 	__u32 order = 0;
+	__u32 flags = 0;
 
 	memset(&sel, 0, sizeof(sel));
 
@@ -1152,6 +1155,14 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 			}
 			terminal_ok++;
 			continue;
+		} else if (strcmp(*argv, "skip_hw") == 0) {
+			NEXT_ARG();
+			flags |= TCA_CLS_FLAGS_SKIP_HW;
+			continue;
+		} else if (strcmp(*argv, "skip_sw") == 0) {
+			NEXT_ARG();
+			flags |= TCA_CLS_FLAGS_SKIP_SW;
+			continue;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -1182,6 +1193,16 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 		addattr_l(n, MAX_MSG, TCA_U32_SEL, &sel,
 			  sizeof(sel.sel) +
 			  sel.sel.nkeys * sizeof(struct tc_u32_key));
+	if (flags) {
+		if (!(flags ^ (TCA_CLS_FLAGS_SKIP_HW |
+			       TCA_CLS_FLAGS_SKIP_SW))) {
+			fprintf(stderr,
+				"skip_hw and skip_sw are mutually exclusive\n");
+			return -1;
+		}
+		addattr_l(n, MAX_MSG, TCA_U32_FLAGS, &flags, 4);
+	}
+
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
 }
@@ -1202,9 +1223,9 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		SPRINT_BUF(b1);
 		fprintf(f, "fh %s ", sprint_u32_handle(handle, b1));
 	}
-	if (TC_U32_NODE(handle)) {
+
+	if (TC_U32_NODE(handle))
 		fprintf(f, "order %d ", TC_U32_NODE(handle));
-	}
 
 	if (tb[TCA_U32_SEL]) {
 		if (RTA_PAYLOAD(tb[TCA_U32_SEL])  < sizeof(*sel))
@@ -1238,6 +1259,15 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		fprintf(f, "link %s ",
 			sprint_u32_handle(rta_getattr_u32(tb[TCA_U32_LINK]),
 					  b1));
+	}
+
+	if (tb[TCA_U32_FLAGS]) {
+		__u32 flags = rta_getattr_u32(tb[TCA_U32_FLAGS]);
+
+		if (flags & TCA_CLS_FLAGS_SKIP_HW)
+			fprintf(f, "skip_hw ");
+		if (flags & TCA_CLS_FLAGS_SKIP_SW)
+			fprintf(f, "skip_sw ");
 	}
 
 	if (tb[TCA_U32_PCNT]) {
@@ -1298,14 +1328,15 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		fprintf(f, "\n");
 		tc_print_police(f, tb[TCA_U32_POLICE]);
 	}
+
 	if (tb[TCA_U32_INDEV]) {
 		struct rtattr *idev = tb[TCA_U32_INDEV];
 
 		fprintf(f, "\n  input dev %s\n", rta_getattr_str(idev));
 	}
-	if (tb[TCA_U32_ACT]) {
+
+	if (tb[TCA_U32_ACT])
 		tc_print_action(f, tb[TCA_U32_ACT]);
-	}
 
 	return 0;
 }

@@ -141,6 +141,8 @@ ip-link \- network device configuration
 .br
 .RB "[ " spoofchk " { " on " | " off " } ]"
 .br
+.RB "[ " query_rss " { " on " | " off " } ]"
+.br
 .RB "[ " state " { " auto " | " enable " | " disable " } ]"
 .br
 .RB "[ " trust " { " on " | " off " } ] ]"
@@ -1158,6 +1160,9 @@ parameter must be specified.
 .sp
 .BI spoofchk " on|off"
 - turn packet spoof checking on or off for the specified VF.
+.sp
+.BI query_rss " on|off"
+- toggle the ability of querying the RSS configuration of a specific VF. VF RSS information like RSS hash key may be considered sensitive on some devices where this information is shared between VF and PF and thus its querying may be prohibited by default.
 .sp
 .BI state " auto|enable|disable"
 - set the virtual link state as seen by the specified VF. Setting to auto means a

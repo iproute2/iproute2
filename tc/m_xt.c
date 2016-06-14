@@ -39,8 +39,10 @@
 #endif
 
 #ifndef __ALIGN_KERNEL
-#define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
-#define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+#define __ALIGN_KERNEL(x, a)	\
+	__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+#define __ALIGN_KERNEL_MASK(x, mask) \
+	(((x) + (mask)) & ~(mask))
 #endif
 
 #ifndef ALIGN
@@ -51,7 +53,7 @@ static const char *tname = "mangle";
 
 char *lib_dir;
 
-static const char *ipthooks[] = {
+static const char * const ipthooks[] = {
 	"NF_IP_PRE_ROUTING",
 	"NF_IP_LOCAL_IN",
 	"NF_IP_FORWARD",
@@ -116,89 +118,100 @@ static void set_lib_dir(void)
 
 }
 
+static int get_xtables_target_opts(struct xtables_globals *globals,
+				   struct xtables_target *m)
+{
+	struct option *opts;
+
+#if (XTABLES_VERSION_CODE >= 6)
+	opts = xtables_options_xfrm(globals->orig_opts,
+				    globals->opts,
+				    m->x6_options,
+				    &m->option_offset);
+#else
+	opts = xtables_merge_options(globals->opts,
+				     m->extra_opts,
+				     &m->option_offset);
+#endif
+	if (!opts)
+		return -1;
+	globals->opts = opts;
+	return 0;
+}
+
 static int parse_ipt(struct action_util *a, int *argc_p,
 		     char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	struct xtables_target *m = NULL;
-	struct ipt_entry fw;
 	struct rtattr *tail;
 
 	int c;
-	int rargc = *argc_p;
 	char **argv = *argv_p;
-	int argc = 0, iargc = 0;
+	int argc;
 	char k[16];
 	int size = 0;
 	int iok = 0, ok = 0;
 	__u32 hook = 0, index = 0;
-	struct option *opts = NULL;
 
-	xtables_init_all(&tcipt_globals, NFPROTO_IPV4);
+	/* copy tcipt_globals because .opts will be modified by iptables */
+	struct xtables_globals tmp_tcipt_globals = tcipt_globals;
+
+	xtables_init_all(&tmp_tcipt_globals, NFPROTO_IPV4);
 	set_lib_dir();
 
-	{
-		int i;
-
-		for (i = 0; i < rargc; i++) {
-			if (NULL == argv[i] || 0 == strcmp(argv[i], "action")) {
-				break;
-			}
-		}
-		iargc = argc = i;
+	/* parse only up until the next action */
+	for (argc = 0; argc < *argc_p; argc++) {
+		if (!argv[argc] || !strcmp(argv[argc], "action"))
+			break;
 	}
 
 	if (argc <= 2) {
-		fprintf(stderr, "bad arguments to ipt %d vs %d\n", argc, rargc);
+		fprintf(stderr,
+			"too few arguments for xt, need at least '-j <target>'\n");
 		return -1;
 	}
 
 	while (1) {
-		c = getopt_long(argc, argv, "j:", tcipt_globals.opts, NULL);
+		c = getopt_long(argc, argv, "j:", tmp_tcipt_globals.opts, NULL);
 		if (c == -1)
 			break;
 		switch (c) {
 		case 'j':
 			m = xtables_find_target(optarg, XTF_TRY_LOAD);
-			if (m != NULL) {
-
-				if (build_st(m, NULL) < 0) {
-					printf(" %s error\n", m->name);
-					return -1;
-				}
-#if (XTABLES_VERSION_CODE >= 6)
-			opts = xtables_options_xfrm(tcipt_globals.orig_opts,
-						    tcipt_globals.opts,
-						    m->x6_options,
-						    &m->option_offset);
-#else
-			opts = xtables_merge_options(tcipt_globals.opts,
-						     m->extra_opts,
-						     &m->option_offset);
-#endif
-			if (opts == NULL) {
-				fprintf(stderr, " failed to find additional options for target %s\n\n", optarg);
+			if (!m) {
+				fprintf(stderr,
+					" failed to find target %s\n\n",
+					optarg);
 				return -1;
-			} else
-				tcipt_globals.opts = opts;
-			} else {
-				fprintf(stderr, " failed to find target %s\n\n", optarg);
+			}
+
+			if (build_st(m, NULL) < 0) {
+				printf(" %s error\n", m->name);
+				return -1;
+			}
+
+			if (get_xtables_target_opts(&tmp_tcipt_globals,
+						    m) < 0) {
+				fprintf(stderr,
+					" failed to find additional options for target %s\n\n",
+					optarg);
 				return -1;
 			}
 			ok++;
 			break;
 
 		default:
-			memset(&fw, 0, sizeof(fw));
 #if (XTABLES_VERSION_CODE >= 6)
-		if (m != NULL && m->x6_parse != NULL) {
-			xtables_option_tpcall(c, argv, 0, m, NULL);
+			if (m != NULL && m->x6_parse != NULL) {
+				xtables_option_tpcall(c, argv, 0, m, NULL);
 #else
-		if (m != NULL && m->parse != NULL) {
-			m->parse(c - m->option_offset, argv, 0, &m->tflags,
-				 NULL, &m->t);
+			if (m != NULL && m->parse != NULL) {
+				m->parse(c - m->option_offset, argv, 0,
+					 &m->tflags, NULL, &m->t);
 #endif
 			} else {
-				fprintf(stderr, "failed to find target %s\n\n", optarg);
+				fprintf(stderr,
+					"failed to find target %s\n\n", optarg);
 				return -1;
 
 			}
@@ -207,7 +220,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		}
 	}
 
-	if (iargc > optind) {
+	if (argc > optind) {
 		if (matches(argv[optind], "index") == 0) {
 			if (get_u32(&index, argv[optind + 1], 10)) {
 				fprintf(stderr, "Illegal \"index\"\n");
@@ -250,8 +263,12 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	fprintf(stdout, "tablename: %s hook: %s\n ", tname, ipthooks[hook]);
 	fprintf(stdout, "\ttarget: ");
 
-	if (m)
-		m->print(NULL, m->t, 0);
+	if (m) {
+		if (m->print)
+			m->print(NULL, m->t, 0);
+		else
+			printf("%s ", m->name);
+	}
 	fprintf(stdout, " index %d\n", index);
 
 	if (strlen(tname) > 16) {
@@ -269,9 +286,8 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		addattr_l(n, MAX_MSG, TCA_IPT_TARG, m->t, m->t->u.target_size);
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 
-	argc -= optind;
 	argv += optind;
-	*argc_p = rargc - iargc;
+	*argc_p -= argc;
 	*argv_p = argv;
 
 	optind = 0;
@@ -291,11 +307,11 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 }
 
 static int
-print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
+print_ipt(struct action_util *au, FILE *f, struct rtattr *arg)
 {
+	struct xtables_target *m;
 	struct rtattr *tb[TCA_IPT_MAX + 1];
 	struct xt_entry_target *t = NULL;
-	struct option *opts = NULL;
 
 	if (arg == NULL)
 		return -1;
@@ -328,63 +344,51 @@ print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 	if (tb[TCA_IPT_TARG] == NULL) {
 		fprintf(f, "\t[NULL ipt target parameters ]\n");
 		return -1;
-	} else {
-		struct xtables_target *m = NULL;
-
-		t = RTA_DATA(tb[TCA_IPT_TARG]);
-		m = xtables_find_target(t->u.user.name, XTF_TRY_LOAD);
-		if (m != NULL) {
-			if (build_st(m, t) < 0) {
-				fprintf(stderr, " %s error\n", m->name);
-				return -1;
-			}
-
-#if (XTABLES_VERSION_CODE >= 6)
-		opts = xtables_options_xfrm(tmp_tcipt_globals.orig_opts,
-					    tmp_tcipt_globals.opts,
-					    m->x6_options,
-					    &m->option_offset);
-#else
-		opts = xtables_merge_options(tmp_tcipt_globals.opts,
-					     m->extra_opts,
-					     &m->option_offset);
-#endif
-	if (opts == NULL) {
-		fprintf(stderr, " failed to find additional options for target %s\n\n", optarg);
-		return -1;
-	} else
-		tmp_tcipt_globals.opts = opts;
-		} else {
-			fprintf(stderr, " failed to find target %s\n\n",
-				t->u.user.name);
-			return -1;
-		}
-		fprintf(f, "\ttarget ");
-		m->print(NULL, m->t, 0);
-		if (tb[TCA_IPT_INDEX] == NULL) {
-			fprintf(f, " [NULL ipt target index ]\n");
-		} else {
-			__u32 index;
-
-			index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
-			fprintf(f, "\n\tindex %d", index);
-		}
-
-		if (tb[TCA_IPT_CNT]) {
-			struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);
-
-			fprintf(f, " ref %d bind %d", c->refcnt, c->bindcnt);
-		}
-		if (show_stats) {
-			if (tb[TCA_IPT_TM]) {
-				struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
-
-				print_tm(f, tm);
-			}
-		}
-		fprintf(f, "\n");
-
 	}
+
+	t = RTA_DATA(tb[TCA_IPT_TARG]);
+	m = xtables_find_target(t->u.user.name, XTF_TRY_LOAD);
+	if (!m) {
+		fprintf(stderr, " failed to find target %s\n\n",
+			t->u.user.name);
+		return -1;
+	}
+	if (build_st(m, t) < 0) {
+		fprintf(stderr, " %s error\n", m->name);
+		return -1;
+	}
+
+	if (get_xtables_target_opts(&tmp_tcipt_globals, m) < 0) {
+		fprintf(stderr,
+			" failed to find additional options for target %s\n\n",
+			t->u.user.name);
+		return -1;
+	}
+	fprintf(f, "\ttarget ");
+	m->print(NULL, m->t, 0);
+	if (tb[TCA_IPT_INDEX] == NULL) {
+		fprintf(f, " [NULL ipt target index ]\n");
+	} else {
+		__u32 index;
+
+		index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
+		fprintf(f, "\n\tindex %d", index);
+	}
+
+	if (tb[TCA_IPT_CNT]) {
+		struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);
+
+		fprintf(f, " ref %d bind %d", c->refcnt, c->bindcnt);
+	}
+	if (show_stats) {
+		if (tb[TCA_IPT_TM]) {
+			struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
+
+			print_tm(f, tm);
+		}
+	}
+	fprintf(f, "\n");
+
 	xtables_free_opts(1);
 
 	return 0;
