@@ -386,7 +386,6 @@ static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p
 	int prio = 0;
 	int ret = 0;
 	__u32 i;
-	struct sockaddr_nl nladdr;
 	struct rtattr *tail;
 	struct rtattr *tail2;
 	struct nlmsghdr *ans = NULL;
@@ -404,9 +403,6 @@ static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p
 		.t.tca_family = AF_UNSPEC,
 		.buf = { 0 }
 	};
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
 
 	argc -= 1;
 	argv += 1;
