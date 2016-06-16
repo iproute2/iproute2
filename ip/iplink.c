@@ -273,7 +273,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 	while (NEXT_ARG_OK()) {
 		NEXT_ARG();
 		if (matches(*argv, "mac") == 0) {
-			struct ifla_vf_mac ivm;
+			struct ifla_vf_mac ivm = { 0 };
 
 			NEXT_ARG();
 			ivm.vf = vf;
