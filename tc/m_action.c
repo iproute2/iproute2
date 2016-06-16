@@ -386,7 +386,6 @@ static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p
 	int prio = 0;
 	int ret = 0;
 	__u32 i;
-	struct sockaddr_nl nladdr;
 	struct rtattr *tail;
 	struct rtattr *tail2;
 	struct nlmsghdr *ans = NULL;
@@ -395,18 +394,16 @@ static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p
 		struct nlmsghdr         n;
 		struct tcamsg           t;
 		char                    buf[MAX_MSG];
-	} req;
+	} req = {
+		.n = {
+			.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
+			.nlmsg_flags = NLM_F_REQUEST | flags,
+			.nlmsg_type = cmd,
+		},
+		.t.tca_family = AF_UNSPEC,
+		.buf = { 0 }
+	};
 
-	req.t.tca_family = AF_UNSPEC;
-
-	memset(&req, 0, sizeof(req));
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
 	argc -= 1;
 	argv += 1;
 
@@ -500,15 +497,16 @@ static int tc_action_modify(int cmd, unsigned int flags, int *argc_p, char ***ar
 		struct nlmsghdr         n;
 		struct tcamsg           t;
 		char                    buf[MAX_MSG];
-	} req;
+	} req = {
+		.n = {
+			.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
+			.nlmsg_flags = NLM_F_REQUEST | flags,
+			.nlmsg_type = cmd,
+		},
+		.t.tca_family = AF_UNSPEC,
+		.buf = { 0 }
+	};
 
-	req.t.tca_family = AF_UNSPEC;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
 	tail = NLMSG_TAIL(&req.n);
 	argc -= 1;
 	argv += 1;
@@ -539,13 +537,11 @@ static int tc_act_list_or_flush(int argc, char **argv, int event)
 		struct nlmsghdr         n;
 		struct tcamsg           t;
 		char                    buf[MAX_MSG];
-	} req;
-
-	req.t.tca_family = AF_UNSPEC;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg));
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
+		.t.tca_family = AF_UNSPEC,
+		.buf = { 0 }
+	};
 
 	tail = NLMSG_TAIL(&req.n);
 	addattr_l(&req.n, MAX_MSG, TCA_ACT_TAB, NULL, 0);
