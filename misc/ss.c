@@ -766,6 +766,8 @@ struct tcpstat {
 	unsigned long long  bytes_received;
 	unsigned int	    segs_out;
 	unsigned int	    segs_in;
+	unsigned int	    data_segs_out;
+	unsigned int	    data_segs_in;
 	unsigned int	    unacked;
 	unsigned int	    retrans;
 	unsigned int	    retrans_total;
@@ -1716,6 +1718,10 @@ static void tcp_stats_print(struct tcpstat *s)
 		printf(" segs_out:%u", s->segs_out);
 	if (s->segs_in)
 		printf(" segs_in:%u", s->segs_in);
+	if (s->data_segs_out)
+		printf(" data_segs_out:%u", s->data_segs_out);
+	if (s->data_segs_in)
+		printf(" data_segs_in:%u", s->data_segs_in);
 
 	if (s->dctcp && s->dctcp->enabled) {
 		struct dctcpstat *dctcp = s->dctcp;
@@ -2022,6 +2028,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.bytes_received = info->tcpi_bytes_received;
 		s.segs_out = info->tcpi_segs_out;
 		s.segs_in = info->tcpi_segs_in;
+		s.data_segs_out = info->tcpi_data_segs_out;
+		s.data_segs_in = info->tcpi_data_segs_in;
 		s.not_sent = info->tcpi_notsent_bytes;
 		if (info->tcpi_min_rtt && info->tcpi_min_rtt != ~0U)
 			s.min_rtt = (double) info->tcpi_min_rtt / 1000;
