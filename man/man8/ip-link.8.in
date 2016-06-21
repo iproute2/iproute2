@@ -65,7 +65,8 @@ ip-link \- network device configuration
 .BR nlmon " |"
 .BR ipvlan " |"
 .BR lowpan " |"
-.BR geneve " ]"
+.BR geneve " |"
+.BR vrf " ]"
 
 .ti -8
 .BR "ip link delete " {
@@ -263,6 +264,9 @@ Link types:
 .sp
 .BR macsec
 - Interface for IEEE 802.1AE MAC Security (MACsec)
+.sp
+.BR vrf
+- Interface for L3 VRF domains
 .in -8
 
 .TP
@@ -963,6 +967,20 @@ the following additional arguments are supported:
 .sp
 .BI encoding " AN "
 - sets the active secure association for transmission.
+
+.in -8
+
+.TP
+VRF Type Support
+For a link of type
+.I VRF
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE " type vrf table " TABLE
+
+.in +8
+.sp
+.BR table " table id associated with VRF device"
 
 .in -8
 
