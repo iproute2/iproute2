@@ -237,6 +237,36 @@ struct iplink_req {
 	char			buf[1024];
 };
 
+static int nl_get_ll_addr_len(unsigned int dev_index)
+{
+	int len;
+	struct iplink_req req = {
+		.n = {
+			.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+			.nlmsg_type = RTM_GETLINK,
+			.nlmsg_flags = NLM_F_REQUEST
+		},
+		.i = {
+			.ifi_family = preferred_family,
+			.ifi_index = dev_index,
+		}
+	};
+	struct rtattr *tb[IFLA_MAX+1];
+
+	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
+		return -1;
+
+	len = req.n.nlmsg_len - NLMSG_LENGTH(sizeof(req.i));
+	if (len < 0)
+		return -1;
+
+	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(&req.i), len, NLA_F_NESTED);
+	if (!tb[IFLA_ADDRESS])
+		return -1;
+
+	return RTA_PAYLOAD(tb[IFLA_ADDRESS]);
+}
+
 static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			   struct iplink_req *req, int dev_index)
 {
@@ -273,13 +303,20 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 	while (NEXT_ARG_OK()) {
 		NEXT_ARG();
 		if (matches(*argv, "mac") == 0) {
-			struct ifla_vf_mac ivm;
+			struct ifla_vf_mac ivm = { 0 };
+			int halen = nl_get_ll_addr_len(dev_index);
 
 			NEXT_ARG();
 			ivm.vf = vf;
 			len = ll_addr_a2n((char *)ivm.mac, 32, *argv);
 			if (len < 0)
 				return -1;
+			if (halen > 0 && len != halen) {
+				fprintf(stderr,
+					"Invalid address length %d - must be %d bytes\n",
+					len, halen);
+				return -1;
+			}
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_MAC, &ivm, sizeof(ivm));
 		} else if (matches(*argv, "vlan") == 0) {
 			struct ifla_vf_vlan ivv;
@@ -428,6 +465,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	int numrxqueues = -1;
 	int dev_index = 0;
 	int link_netnsid = -1;
+	int addr_len = 0;
 
 	*group = -1;
 	ret = argc;
@@ -452,10 +490,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			*link = *argv;
 		} else if (matches(*argv, "address") == 0) {
 			NEXT_ARG();
-			len = ll_addr_a2n(abuf, sizeof(abuf), *argv);
+			addr_len = ll_addr_a2n(abuf, sizeof(abuf), *argv);
 			if (len < 0)
 				return -1;
-			addattr_l(&req->n, sizeof(*req), IFLA_ADDRESS, abuf, len);
+			addattr_l(&req->n, sizeof(*req), IFLA_ADDRESS, abuf, addr_len);
 		} else if (matches(*argv, "broadcast") == 0 ||
 			   strcmp(*argv, "brd") == 0) {
 			NEXT_ARG();
@@ -675,6 +713,16 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			dev_index = ll_name_to_index(*dev);
 		}
 		argc--; argv++;
+	}
+
+	if (dev_index && addr_len) {
+		int halen = nl_get_ll_addr_len(dev_index);
+		if (halen >= 0 && halen != addr_len) {
+			fprintf(stderr,
+			        "Invalid address length %d - must be %d bytes\n",
+			        addr_len, halen);
+			return -1;
+		}
 	}
 
 	return ret - argc;
