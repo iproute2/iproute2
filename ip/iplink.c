@@ -491,7 +491,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		} else if (matches(*argv, "address") == 0) {
 			NEXT_ARG();
 			addr_len = ll_addr_a2n(abuf, sizeof(abuf), *argv);
-			if (len < 0)
+			if (addr_len < 0)
 				return -1;
 			addattr_l(&req->n, sizeof(*req), IFLA_ADDRESS, abuf, addr_len);
 		} else if (matches(*argv, "broadcast") == 0 ||
