@@ -285,6 +285,7 @@ static void dump_kern_db(FILE *fp, int to_hist)
 
 	h = hist_db;
 	if (jw) {
+		jsonw_start_object(jw);
 		jsonw_pretty(jw, pretty);
 		jsonw_name(jw, info_source);
 		jsonw_start_object(jw);
@@ -318,6 +319,8 @@ static void dump_kern_db(FILE *fp, int to_hist)
 
 	if (jw) {
 		jsonw_end_object(jw);
+
+		jsonw_end_object(jw);
 		jsonw_destroy(&jw);
 	}
 }
@@ -329,6 +332,7 @@ static void dump_incr_db(FILE *fp)
 
 	h = hist_db;
 	if (jw) {
+		jsonw_start_object(jw);
 		jsonw_pretty(jw, pretty);
 		jsonw_name(jw, info_source);
 		jsonw_start_object(jw);
@@ -364,6 +368,8 @@ static void dump_incr_db(FILE *fp)
 	}
 
 	if (jw) {
+		jsonw_end_object(jw);
+
 		jsonw_end_object(jw);
 		jsonw_destroy(&jw);
 	}
