@@ -1242,6 +1242,12 @@ specifies the master device which enslaves devices to show.
 .I TYPE
 specifies the type of devices to show.
 
+Note that the type name is not checked against the list of supported types -
+instead it is sent as-is to the kernel. Later it is used to filter the returned
+interface list by comparing it with the relevant attribute in case the kernel
+didn't filter already. Therefore any string is accepted, but may lead to empty
+output.
+
 .SS  ip link help - display help
 
 .PP
