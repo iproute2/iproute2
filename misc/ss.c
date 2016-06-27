@@ -1043,6 +1043,7 @@ static void inet_addr_print(const inet_prefix *a, int port, unsigned int ifindex
 struct aafilter {
 	inet_prefix	addr;
 	int		port;
+	unsigned int	iface;
 	struct aafilter *next;
 };
 
@@ -1157,7 +1158,12 @@ static int run_ssfilter(struct ssfilter *f, struct sockstat *s)
 
 		return s->lport <= a->port;
 	}
+		case SSF_DEVCOND:
+	{
+		struct aafilter *a = (void *)f->pred;
 
+		return s->iface == a->iface;
+	}
 		/* Yup. It is recursion. Sorry. */
 		case SSF_AND:
 		return run_ssfilter(f->pred, s) && run_ssfilter(f->post, s);
@@ -1328,6 +1334,11 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 		*bytecode = a;
 		return l1+4;
 	}
+		case SSF_DEVCOND:
+	{
+		/* bytecompile for SSF_DEVCOND not supported yet */
+		return 0;
+	}
 		default:
 		abort();
 	}
@@ -1414,6 +1425,27 @@ static int xll_name_to_index(const char *dev)
 	if (!xll_initted)
 		xll_init();
 	return ll_name_to_index(dev);
+}
+
+void *parse_devcond(char *name)
+{
+	struct aafilter a = { .iface = 0 };
+	struct aafilter *res;
+
+	a.iface = xll_name_to_index(name);
+	if (a.iface == 0) {
+		char *end;
+		unsigned long res;
+
+		res = strtoul(name, &end, 0);
+		if (!end || end == name || *end || res > UINT_MAX)
+			return NULL;
+	}
+
+	res = malloc(sizeof(*res));
+	*res = a;
+
+	return res;
 }
 
 void *parse_hostcond(char *addr, bool is_port)
