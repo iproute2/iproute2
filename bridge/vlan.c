@@ -299,6 +299,6 @@ int do_vlan(int argc, char **argv)
 	} else
 		return vlan_show(0, NULL);
 
-	fprintf(stderr, "Command \"%s\" is unknown, try \"bridge fdb help\".\n", *argv);
+	fprintf(stderr, "Command \"%s\" is unknown, try \"bridge vlan help\".\n", *argv);
 	exit(-1);
 }

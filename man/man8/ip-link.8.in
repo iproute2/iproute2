@@ -65,7 +65,8 @@ ip-link \- network device configuration
 .BR nlmon " |"
 .BR ipvlan " |"
 .BR lowpan " |"
-.BR geneve " ]"
+.BR geneve " |"
+.BR vrf " ]"
 
 .ti -8
 .BR "ip link delete " {
@@ -263,6 +264,9 @@ Link types:
 .sp
 .BR macsec
 - Interface for IEEE 802.1AE MAC Security (MACsec)
+.sp
+.BR vrf
+- Interface for L3 VRF domains
 .in -8
 
 .TP
@@ -966,6 +970,20 @@ the following additional arguments are supported:
 
 .in -8
 
+.TP
+VRF Type Support
+For a link of type
+.I VRF
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE " type vrf table " TABLE
+
+.in +8
+.sp
+.BR table " table id associated with VRF device"
+
+.in -8
+
 .SS ip link delete - delete virtual link
 
 .TP
@@ -1241,6 +1259,12 @@ specifies the master device which enslaves devices to show.
 .BI type " TYPE "
 .I TYPE
 specifies the type of devices to show.
+
+Note that the type name is not checked against the list of supported types -
+instead it is sent as-is to the kernel. Later it is used to filter the returned
+interface list by comparing it with the relevant attribute in case the kernel
+didn't filter already. Therefore any string is accepted, but may lead to empty
+output.
 
 .SS  ip link help - display help
 

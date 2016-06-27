@@ -280,6 +280,12 @@ only list interfaces enslaved to this master device.
 .BI type " TYPE"
 only list interfaces of the given type.
 
+Note that the type name is not checked against the list of supported types -
+instead it is sent as-is to the kernel. Later it is used to filter the returned
+interface list by comparing it with the relevant attribute in case the kernel
+didn't filter already. Therefore any string is accepted, but may lead to empty
+output.
+
 .TP
 .B up
 only list running interfaces.
