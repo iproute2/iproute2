@@ -1273,11 +1273,16 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 
 		case SSF_AND:
 	{
-		char *a1, *a2, *a;
+		char *a1 = NULL, *a2 = NULL, *a;
 		int l1, l2;
 
 		l1 = ssfilter_bytecompile(f->pred, &a1);
 		l2 = ssfilter_bytecompile(f->post, &a2);
+		if (!l1 || !l2) {
+			free(a1);
+			free(a2);
+			return 0;
+		}
 		if (!(a = malloc(l1+l2))) abort();
 		memcpy(a, a1, l1);
 		memcpy(a+l1, a2, l2);
@@ -1288,11 +1293,16 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	}
 		case SSF_OR:
 	{
-		char *a1, *a2, *a;
+		char *a1 = NULL, *a2 = NULL, *a;
 		int l1, l2;
 
 		l1 = ssfilter_bytecompile(f->pred, &a1);
 		l2 = ssfilter_bytecompile(f->post, &a2);
+		if (!l1 || !l2) {
+			free(a1);
+			free(a2);
+			return 0;
+		}
 		if (!(a = malloc(l1+l2+4))) abort();
 		memcpy(a, a1, l1);
 		memcpy(a+l1+4, a2, l2);
@@ -1303,10 +1313,14 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	}
 		case SSF_NOT:
 	{
-		char *a1, *a;
+		char *a1 = NULL, *a;
 		int l1;
 
 		l1 = ssfilter_bytecompile(f->pred, &a1);
+		if (!l1) {
+			free(a1);
+			return 0;
+		}
 		if (!(a = malloc(l1+4))) abort();
 		memcpy(a, a1, l1);
 		free(a1);
@@ -2127,6 +2141,7 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	struct msghdr msg;
 	struct rtattr rta;
 	struct iovec iov[3];
+	int iovlen = 1;
 
 	if (protocol == IPPROTO_UDP)
 		return -1;
@@ -2162,18 +2177,21 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	};
 	if (f->f) {
 		bclen = ssfilter_bytecompile(f->f, &bc);
-		rta.rta_type = INET_DIAG_REQ_BYTECODE;
-		rta.rta_len = RTA_LENGTH(bclen);
-		iov[1] = (struct iovec){ &rta, sizeof(rta) };
-		iov[2] = (struct iovec){ bc, bclen };
-		req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+		if (bclen) {
+			rta.rta_type = INET_DIAG_REQ_BYTECODE;
+			rta.rta_len = RTA_LENGTH(bclen);
+			iov[1] = (struct iovec){ &rta, sizeof(rta) };
+			iov[2] = (struct iovec){ bc, bclen };
+			req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+			iovlen = 3;
+		}
 	}
 
 	msg = (struct msghdr) {
 		.msg_name = (void *)&nladdr,
 		.msg_namelen = sizeof(nladdr),
 		.msg_iov = iov,
-		.msg_iovlen = f->f ? 3 : 1,
+		.msg_iovlen = iovlen,
 	};
 
 	if (sendmsg(fd, &msg, 0) < 0) {
@@ -2194,6 +2212,7 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 	struct msghdr msg;
 	struct rtattr rta;
 	struct iovec iov[3];
+	int iovlen = 1;
 
 	if (family == PF_UNSPEC)
 		return tcpdiag_send(fd, protocol, f);
@@ -2222,18 +2241,21 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 	};
 	if (f->f) {
 		bclen = ssfilter_bytecompile(f->f, &bc);
-		rta.rta_type = INET_DIAG_REQ_BYTECODE;
-		rta.rta_len = RTA_LENGTH(bclen);
-		iov[1] = (struct iovec){ &rta, sizeof(rta) };
-		iov[2] = (struct iovec){ bc, bclen };
-		req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+		if (bclen) {
+			rta.rta_type = INET_DIAG_REQ_BYTECODE;
+			rta.rta_len = RTA_LENGTH(bclen);
+			iov[1] = (struct iovec){ &rta, sizeof(rta) };
+			iov[2] = (struct iovec){ bc, bclen };
+			req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+			iovlen = 3;
+		}
 	}
 
 	msg = (struct msghdr) {
 		.msg_name = (void *)&nladdr,
 		.msg_namelen = sizeof(nladdr),
 		.msg_iov = iov,
-		.msg_iovlen = f->f ? 3 : 1,
+		.msg_iovlen = iovlen,
 	};
 
 	if (sendmsg(fd, &msg, 0) < 0) {
