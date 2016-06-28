@@ -666,7 +666,7 @@ static int get_slabstat(struct slabstat *s)
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		int i;
 
-		for (i = 0; i < sizeof(slabstat_ids)/sizeof(slabstat_ids[0]); i++) {
+		for (i = 0; i < ARRAY_SIZE(slabstat_ids); i++) {
 			if (memcmp(buf, slabstat_ids[i], strlen(slabstat_ids[i])) == 0) {
 				sscanf(buf, "%*s%d", ((int *)s) + i);
 				cnt--;

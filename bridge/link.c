@@ -319,7 +319,7 @@ static int brlink_modify(int argc, char **argv)
 		} else if (strcmp(*argv, "state") == 0) {
 			NEXT_ARG();
 			char *endptr;
-			size_t nstates = sizeof(port_states) / sizeof(*port_states);
+			size_t nstates = ARRAY_SIZE(port_states);
 
 			state = strtol(*argv, &endptr, 10);
 			if (!(**argv != '\0' && *endptr == '\0')) {
