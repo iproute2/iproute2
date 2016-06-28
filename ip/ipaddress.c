@@ -95,9 +95,9 @@ static void usage(void)
 	fprintf(stderr, "LIFETIME := [ valid_lft LFT ] [ preferred_lft LFT ]\n");
 	fprintf(stderr, "LFT := forever | SECONDS\n");
 	fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
-	fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n");
-	fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon |\n");
-	fprintf(stderr, "          bond_slave | ipvlan | geneve | bridge_slave | vrf }\n");
+	fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan | lowpan |\n");
+	fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon | can |\n");
+	fprintf(stderr, "          bond_slave | ipvlan | geneve | bridge_slave | vrf | hsr}\n");
 
 	exit(-1);
 }

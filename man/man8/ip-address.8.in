@@ -98,7 +98,9 @@ ip-address \- protocol address management
 .ti -8
 .IR TYPE " := [ "
 .BR bridge " | "
+.BR bridge_slave " |"
 .BR bond " | "
+.BR bond_slave " |"
 .BR can " | "
 .BR dummy " | "
 .BR hsr " | "
@@ -118,6 +120,7 @@ ip-address \- protocol address management
 .BR ip6gre " |"
 .BR ip6gretap " |"
 .BR vti " |"
+.BR vrf " |"
 .BR nlmon " |"
 .BR ipvlan " |"
 .BR lowpan " |"
