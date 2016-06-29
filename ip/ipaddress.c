@@ -80,7 +80,7 @@ static void usage(void)
 	fprintf(stderr, "                            [ to PREFIX ] [ FLAG-LIST ] [ label LABEL ] [up]\n");
 	fprintf(stderr, "       ip address [ show [ dev IFNAME ] [ scope SCOPE-ID ] [ master DEVICE ]\n");
 	fprintf(stderr, "                         [ type TYPE ] [ to PREFIX ] [ FLAG-LIST ]\n");
-	fprintf(stderr, "                         [ label LABEL ] [up] ]\n");
+	fprintf(stderr, "                         [ label LABEL ] [up] [ vrf NAME ] ]\n");
 	fprintf(stderr, "       ip address {showdump|restore}\n");
 	fprintf(stderr, "IFADDR := PREFIX | ADDR peer PREFIX\n");
 	fprintf(stderr, "          [ broadcast ADDR ] [ anycast ADDR ]\n");
@@ -1619,6 +1619,16 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			ifindex = ll_name_to_index(*argv);
 			if (!ifindex)
 				invarg("Device does not exist\n", *argv);
+			filter.master = ifindex;
+		} else if (strcmp(*argv, "vrf") == 0) {
+			int ifindex;
+
+			NEXT_ARG();
+			ifindex = ll_name_to_index(*argv);
+			if (!ifindex)
+				invarg("Not a valid VRF name\n", *argv);
+			if (!name_is_vrf(*argv))
+				invarg("Not a valid VRF name\n", *argv);
 			filter.master = ifindex;
 		} else if (strcmp(*argv, "type") == 0) {
 			int soff;
