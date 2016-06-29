@@ -48,7 +48,8 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ip neigh { add | del | change | replace }\n"
 			"                { ADDR [ lladdr LLADDR ] [ nud STATE ] | proxy ADDR } [ dev DEV ]\n");
-	fprintf(stderr, "       ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n\n");
+	fprintf(stderr, "       ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n");
+	fprintf(stderr, "                                 [ vrf NAME ]\n\n");
 	fprintf(stderr, "STATE := { permanent | noarp | stale | reachable | none |\n"
 			"           incomplete | delay | probe | failed }\n");
 	exit(-1);
@@ -383,6 +384,17 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 			ifindex = ll_name_to_index(*argv);
 			if (!ifindex)
 				invarg("Device does not exist\n", *argv);
+			addattr32(&req.n, sizeof(req), NDA_MASTER, ifindex);
+			filter.master = ifindex;
+		} else if (strcmp(*argv, "vrf") == 0) {
+			int ifindex;
+
+			NEXT_ARG();
+			ifindex = ll_name_to_index(*argv);
+			if (!ifindex)
+				invarg("Not a valid VRF name\n", *argv);
+			if (!name_is_vrf(*argv))
+				invarg("Not a valid VRF name\n", *argv);
 			addattr32(&req.n, sizeof(req), NDA_MASTER, ifindex);
 			filter.master = ifindex;
 		} else if (strcmp(*argv, "unused") == 0) {

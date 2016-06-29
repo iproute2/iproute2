@@ -31,7 +31,9 @@ ip-neighbour \- neighbour/arp tables management.
 .B  dev
 .IR DEV " ] [ "
 .B  nud
-.IR STATE " ]"
+.IR STATE " ] [ "
+.B  vrf
+.IR NAME " ] "
 
 .ti -8
 .IR STATE " := {"
@@ -162,6 +164,10 @@ the prefix selecting the neighbours to list.
 .TP
 .BI dev " NAME"
 only list the neighbours attached to this device.
+
+.TP
+.BI vrf " NAME"
+only list the neighbours for given VRF.
 
 .TP
 .BI proxy
