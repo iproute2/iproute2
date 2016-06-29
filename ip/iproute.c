@@ -113,7 +113,7 @@ static struct
 	int flushe;
 	int protocol, protocolmask;
 	int scope, scopemask;
-	int type, typemask;
+	__u64 typemask;
 	int tos, tosmask;
 	int iif, iifmask;
 	int oif, oifmask;
@@ -178,7 +178,8 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		return 0;
 	if ((filter.scope^r->rtm_scope)&filter.scopemask)
 		return 0;
-	if ((filter.type^r->rtm_type)&filter.typemask)
+
+	if (filter.typemask && !(filter.typemask & (1 << r->rtm_type)))
 		return 0;
 	if ((filter.tos^r->rtm_tos)&filter.tosmask)
 		return 0;
@@ -365,7 +366,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (n->nlmsg_type == RTM_DELROUTE)
 		fprintf(fp, "Deleted ");
-	if ((r->rtm_type != RTN_UNICAST || show_details > 0) && !filter.type)
+	if ((r->rtm_type != RTN_UNICAST || show_details > 0) &&
+	    (!filter.typemask || (filter.typemask & (1 << r->rtm_type))))
 		fprintf(fp, "%s ", rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
 
 	if (tb[RTA_DST]) {
@@ -1430,10 +1432,9 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			int type;
 
 			NEXT_ARG();
-			filter.typemask = -1;
 			if (rtnl_rtntype_a2n(&type, *argv))
 				invarg("node type value is invalid\n", *argv);
-			filter.type = type;
+			filter.typemask = (1<<type);
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
