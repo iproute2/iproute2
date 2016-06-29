@@ -90,6 +90,7 @@ struct link_util *get_link_slave_kind(const char *slave_kind);
 
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
 
+__u32 ipvrf_get_table(const char *name);
 bool name_is_vrf(const char *name);
 
 #ifndef	INFINITY_LIFE_TIME
