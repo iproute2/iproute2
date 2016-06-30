@@ -220,7 +220,7 @@ static char *parse_link_kind(struct rtattr *tb, bool slave)
 	return "";
 }
 
-static int match_link_kind(struct rtattr **tb, char *kind, bool slave)
+static int match_link_kind(struct rtattr **tb, const char *kind, bool slave)
 {
 	if (!tb[IFLA_LINKINFO])
 		return -1;
