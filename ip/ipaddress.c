@@ -61,6 +61,7 @@ static struct
 	int group;
 	int master;
 	char *kind;
+	char *slave_kind;
 } filter;
 
 static int do_link;
@@ -94,9 +95,9 @@ static void usage(void)
 	fprintf(stderr, "LIFETIME := [ valid_lft LFT ] [ preferred_lft LFT ]\n");
 	fprintf(stderr, "LFT := forever | SECONDS\n");
 	fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
-	fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n");
-	fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon |\n");
-	fprintf(stderr, "          bond_slave | ipvlan | geneve | bridge_slave | vrf }\n");
+	fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan | lowpan |\n");
+	fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon | can |\n");
+	fprintf(stderr, "          bond_slave | ipvlan | geneve | bridge_slave | vrf | hsr}\n");
 
 	exit(-1);
 }
@@ -206,16 +207,25 @@ static void print_linkmode(FILE *f, struct rtattr *tb)
 		fprintf(f, "mode %s ", link_modes[mode]);
 }
 
-static char *parse_link_kind(struct rtattr *tb)
+static char *parse_link_kind(struct rtattr *tb, bool slave)
 {
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
+	int attr = slave ? IFLA_INFO_SLAVE_KIND : IFLA_INFO_KIND;
 
 	parse_rtattr_nested(linkinfo, IFLA_INFO_MAX, tb);
 
-	if (linkinfo[IFLA_INFO_KIND])
-		return RTA_DATA(linkinfo[IFLA_INFO_KIND]);
+	if (linkinfo[attr])
+		return RTA_DATA(linkinfo[attr]);
 
 	return "";
+}
+
+static int match_link_kind(struct rtattr **tb, char *kind, bool slave)
+{
+	if (!tb[IFLA_LINKINFO])
+		return -1;
+
+	return strcmp(parse_link_kind(tb[IFLA_LINKINFO], slave), kind);
 }
 
 static void print_linktype(FILE *fp, struct rtattr *tb)
@@ -680,16 +690,11 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	} else if (filter.master > 0)
 		return -1;
 
-	if (filter.kind) {
-		if (tb[IFLA_LINKINFO]) {
-			char *kind = parse_link_kind(tb[IFLA_LINKINFO]);
+	if (filter.kind && match_link_kind(tb, filter.kind, 0))
+		return -1;
 
-			if (strcmp(kind, filter.kind))
-				return -1;
-		} else {
-			return -1;
-		}
-	}
+	if (filter.slave_kind && match_link_kind(tb, filter.slave_kind, 1))
+		return -1;
 
 	if (n->nlmsg_type == RTM_DELLINK)
 		fprintf(fp, "Deleted ");
@@ -781,16 +786,11 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	} else if (filter.master > 0)
 		return -1;
 
-	if (filter.kind) {
-		if (tb[IFLA_LINKINFO]) {
-			char *kind = parse_link_kind(tb[IFLA_LINKINFO]);
+	if (filter.kind && match_link_kind(tb, filter.kind, 0))
+		return -1;
 
-			if (strcmp(kind, filter.kind))
-				return -1;
-		} else {
-			return -1;
-		}
-	}
+	if (filter.slave_kind && match_link_kind(tb, filter.slave_kind, 1))
+		return -1;
 
 	if (n->nlmsg_type == RTM_DELLINK)
 		fprintf(fp, "Deleted ");
@@ -1621,8 +1621,16 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 				invarg("Device does not exist\n", *argv);
 			filter.master = ifindex;
 		} else if (strcmp(*argv, "type") == 0) {
+			int soff;
+
 			NEXT_ARG();
-			filter.kind = *argv;
+			soff = strlen(*argv) - strlen("_slave");
+			if (!strcmp(*argv + soff, "_slave")) {
+				(*argv)[soff] = '\0';
+				filter.slave_kind = *argv;
+			} else {
+				filter.kind = *argv;
+			}
 		} else {
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();

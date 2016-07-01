@@ -235,7 +235,7 @@ error.
 
 .B 1
 - STP LISTENING state. Only valid if STP is enabled on the bridge. In this
-state the port for list for STP BPDUs and drop all other traffic.
+state the port listens for STP BPDUs and drops all other traffic frames.
 .sp
 
 .B 2
@@ -256,7 +256,7 @@ STP BPDUs.
 
 .TP
 .BR "guard on " or " guard off "
-Controls whether STP BPUDs will be processed by the bridge port. By default,
+Controls whether STP BPDUs will be processed by the bridge port. By default,
 the flag is turned off allowed BPDU processing. Turning this flag on will
 cause the port to stop processing STP BPDUs.
 

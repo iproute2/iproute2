@@ -30,6 +30,7 @@
 
 #include <json_writer.h>
 #include <SNAPSHOT.h>
+#include "utils.h"
 
 int dump_zeros;
 int reset_history;
@@ -95,7 +96,7 @@ static int useless_number(const char *id)
 {
 	int i;
 
-	for (i = 0; i < sizeof(useless_numbers)/sizeof(*useless_numbers); i++)
+	for (i = 0; i < ARRAY_SIZE(useless_numbers); i++)
 		if (strcmp(id, useless_numbers[i]) == 0)
 			return 1;
 	return 0;

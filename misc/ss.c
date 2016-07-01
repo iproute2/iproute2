@@ -666,7 +666,7 @@ static int get_slabstat(struct slabstat *s)
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		int i;
 
-		for (i = 0; i < sizeof(slabstat_ids)/sizeof(slabstat_ids[0]); i++) {
+		for (i = 0; i < ARRAY_SIZE(slabstat_ids); i++) {
 			if (memcmp(buf, slabstat_ids[i], strlen(slabstat_ids[i])) == 0) {
 				sscanf(buf, "%*s%d", ((int *)s) + i);
 				cnt--;
@@ -1043,6 +1043,7 @@ static void inet_addr_print(const inet_prefix *a, int port, unsigned int ifindex
 struct aafilter {
 	inet_prefix	addr;
 	int		port;
+	unsigned int	iface;
 	struct aafilter *next;
 };
 
@@ -1157,7 +1158,12 @@ static int run_ssfilter(struct ssfilter *f, struct sockstat *s)
 
 		return s->lport <= a->port;
 	}
+		case SSF_DEVCOND:
+	{
+		struct aafilter *a = (void *)f->pred;
 
+		return s->iface == a->iface;
+	}
 		/* Yup. It is recursion. Sorry. */
 		case SSF_AND:
 		return run_ssfilter(f->pred, s) && run_ssfilter(f->post, s);
@@ -1273,11 +1279,16 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 
 		case SSF_AND:
 	{
-		char *a1, *a2, *a;
+		char *a1 = NULL, *a2 = NULL, *a;
 		int l1, l2;
 
 		l1 = ssfilter_bytecompile(f->pred, &a1);
 		l2 = ssfilter_bytecompile(f->post, &a2);
+		if (!l1 || !l2) {
+			free(a1);
+			free(a2);
+			return 0;
+		}
 		if (!(a = malloc(l1+l2))) abort();
 		memcpy(a, a1, l1);
 		memcpy(a+l1, a2, l2);
@@ -1288,11 +1299,16 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	}
 		case SSF_OR:
 	{
-		char *a1, *a2, *a;
+		char *a1 = NULL, *a2 = NULL, *a;
 		int l1, l2;
 
 		l1 = ssfilter_bytecompile(f->pred, &a1);
 		l2 = ssfilter_bytecompile(f->post, &a2);
+		if (!l1 || !l2) {
+			free(a1);
+			free(a2);
+			return 0;
+		}
 		if (!(a = malloc(l1+l2+4))) abort();
 		memcpy(a, a1, l1);
 		memcpy(a+l1+4, a2, l2);
@@ -1303,16 +1319,25 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	}
 		case SSF_NOT:
 	{
-		char *a1, *a;
+		char *a1 = NULL, *a;
 		int l1;
 
 		l1 = ssfilter_bytecompile(f->pred, &a1);
+		if (!l1) {
+			free(a1);
+			return 0;
+		}
 		if (!(a = malloc(l1+4))) abort();
 		memcpy(a, a1, l1);
 		free(a1);
 		*(struct inet_diag_bc_op *)(a+l1) = (struct inet_diag_bc_op){ INET_DIAG_BC_JMP, 4, 8 };
 		*bytecode = a;
 		return l1+4;
+	}
+		case SSF_DEVCOND:
+	{
+		/* bytecompile for SSF_DEVCOND not supported yet */
+		return 0;
 	}
 		default:
 		abort();
@@ -1400,6 +1425,27 @@ static int xll_name_to_index(const char *dev)
 	if (!xll_initted)
 		xll_init();
 	return ll_name_to_index(dev);
+}
+
+void *parse_devcond(char *name)
+{
+	struct aafilter a = { .iface = 0 };
+	struct aafilter *res;
+
+	a.iface = xll_name_to_index(name);
+	if (a.iface == 0) {
+		char *end;
+		unsigned long res;
+
+		res = strtoul(name, &end, 0);
+		if (!end || end == name || *end || res > UINT_MAX)
+			return NULL;
+	}
+
+	res = malloc(sizeof(*res));
+	*res = a;
+
+	return res;
 }
 
 void *parse_hostcond(char *addr, bool is_port)
@@ -2038,42 +2084,48 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 	}
 }
 
-static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f, int protocol)
+static void parse_diag_msg(struct nlmsghdr *nlh, struct sockstat *s)
 {
 	struct rtattr *tb[INET_DIAG_MAX+1];
 	struct inet_diag_msg *r = NLMSG_DATA(nlh);
-	struct sockstat s = {};
 
 	parse_rtattr(tb, INET_DIAG_MAX, (struct rtattr *)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
-	s.state		= r->idiag_state;
-	s.local.family  = s.remote.family = r->idiag_family;
-	s.lport		= ntohs(r->id.idiag_sport);
-	s.rport		= ntohs(r->id.idiag_dport);
-	s.wq		= r->idiag_wqueue;
-	s.rq		= r->idiag_rqueue;
-	s.ino		= r->idiag_inode;
-	s.uid		= r->idiag_uid;
-	s.iface		= r->id.idiag_if;
-	s.sk		= cookie_sk_get(&r->id.idiag_cookie[0]);
+	s->state	= r->idiag_state;
+	s->local.family	= s->remote.family = r->idiag_family;
+	s->lport	= ntohs(r->id.idiag_sport);
+	s->rport	= ntohs(r->id.idiag_dport);
+	s->wq		= r->idiag_wqueue;
+	s->rq		= r->idiag_rqueue;
+	s->ino		= r->idiag_inode;
+	s->uid		= r->idiag_uid;
+	s->iface	= r->id.idiag_if;
+	s->sk		= cookie_sk_get(&r->id.idiag_cookie[0]);
 
-	if (s.local.family == AF_INET) {
-		s.local.bytelen = s.remote.bytelen = 4;
-	} else {
-		s.local.bytelen = s.remote.bytelen = 16;
-	}
+	if (s->local.family == AF_INET)
+		s->local.bytelen = s->remote.bytelen = 4;
+	else
+		s->local.bytelen = s->remote.bytelen = 16;
 
-	memcpy(s.local.data, r->id.idiag_src, s.local.bytelen);
-	memcpy(s.remote.data, r->id.idiag_dst, s.local.bytelen);
+	memcpy(s->local.data, r->id.idiag_src, s->local.bytelen);
+	memcpy(s->remote.data, r->id.idiag_dst, s->local.bytelen);
+}
 
-	if (f && f->f && run_ssfilter(f->f, &s) == 0)
-		return 0;
+static int inet_show_sock(struct nlmsghdr *nlh,
+			  struct sockstat *s,
+			  int protocol)
+{
+	struct rtattr *tb[INET_DIAG_MAX+1];
+	struct inet_diag_msg *r = NLMSG_DATA(nlh);
+
+	parse_rtattr(tb, INET_DIAG_MAX, (struct rtattr *)(r+1),
+		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
 	if (tb[INET_DIAG_PROTOCOL])
 		protocol = *(__u8 *)RTA_DATA(tb[INET_DIAG_PROTOCOL]);
 
-	inet_stats_print(&s, protocol);
+	inet_stats_print(s, protocol);
 
 	if (show_options) {
 		struct tcpstat t = {};
@@ -2085,8 +2137,8 @@ static int inet_show_sock(struct nlmsghdr *nlh, struct filter *f, int protocol)
 	}
 
 	if (show_details) {
-		sock_details_print(&s);
-		if (s.local.family == AF_INET6 && tb[INET_DIAG_SKV6ONLY]) {
+		sock_details_print(s);
+		if (s->local.family == AF_INET6 && tb[INET_DIAG_SKV6ONLY]) {
 			unsigned char v6only;
 
 			v6only = *(__u8 *)RTA_DATA(tb[INET_DIAG_SKV6ONLY]);
@@ -2121,6 +2173,7 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	struct msghdr msg;
 	struct rtattr rta;
 	struct iovec iov[3];
+	int iovlen = 1;
 
 	if (protocol == IPPROTO_UDP)
 		return -1;
@@ -2156,18 +2209,21 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	};
 	if (f->f) {
 		bclen = ssfilter_bytecompile(f->f, &bc);
-		rta.rta_type = INET_DIAG_REQ_BYTECODE;
-		rta.rta_len = RTA_LENGTH(bclen);
-		iov[1] = (struct iovec){ &rta, sizeof(rta) };
-		iov[2] = (struct iovec){ bc, bclen };
-		req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+		if (bclen) {
+			rta.rta_type = INET_DIAG_REQ_BYTECODE;
+			rta.rta_len = RTA_LENGTH(bclen);
+			iov[1] = (struct iovec){ &rta, sizeof(rta) };
+			iov[2] = (struct iovec){ bc, bclen };
+			req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+			iovlen = 3;
+		}
 	}
 
 	msg = (struct msghdr) {
 		.msg_name = (void *)&nladdr,
 		.msg_namelen = sizeof(nladdr),
 		.msg_iov = iov,
-		.msg_iovlen = f->f ? 3 : 1,
+		.msg_iovlen = iovlen,
 	};
 
 	if (sendmsg(fd, &msg, 0) < 0) {
@@ -2188,6 +2244,7 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 	struct msghdr msg;
 	struct rtattr rta;
 	struct iovec iov[3];
+	int iovlen = 1;
 
 	if (family == PF_UNSPEC)
 		return tcpdiag_send(fd, protocol, f);
@@ -2216,18 +2273,21 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 	};
 	if (f->f) {
 		bclen = ssfilter_bytecompile(f->f, &bc);
-		rta.rta_type = INET_DIAG_REQ_BYTECODE;
-		rta.rta_len = RTA_LENGTH(bclen);
-		iov[1] = (struct iovec){ &rta, sizeof(rta) };
-		iov[2] = (struct iovec){ bc, bclen };
-		req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+		if (bclen) {
+			rta.rta_type = INET_DIAG_REQ_BYTECODE;
+			rta.rta_len = RTA_LENGTH(bclen);
+			iov[1] = (struct iovec){ &rta, sizeof(rta) };
+			iov[2] = (struct iovec){ bc, bclen };
+			req.nlh.nlmsg_len += RTA_LENGTH(bclen);
+			iovlen = 3;
+		}
 	}
 
 	msg = (struct msghdr) {
 		.msg_name = (void *)&nladdr,
 		.msg_namelen = sizeof(nladdr),
 		.msg_iov = iov,
-		.msg_iovlen = f->f ? 3 : 1,
+		.msg_iovlen = iovlen,
 	};
 
 	if (sendmsg(fd, &msg, 0) < 0) {
@@ -2268,9 +2328,16 @@ static int show_one_inet_sock(const struct sockaddr_nl *addr,
 	int err;
 	struct inet_diag_arg *diag_arg = arg;
 	struct inet_diag_msg *r = NLMSG_DATA(h);
+	struct sockstat s = {};
 
 	if (!(diag_arg->f->families & (1 << r->idiag_family)))
 		return 0;
+
+	parse_diag_msg(h, &s);
+
+	if (diag_arg->f->f && run_ssfilter(diag_arg->f->f, &s) == 0)
+		return 0;
+
 	if (diag_arg->f->kill && kill_inet_sock(h, arg) != 0) {
 		if (errno == EOPNOTSUPP || errno == ENOENT) {
 			/* Socket can't be closed, or is already closed. */
@@ -2280,7 +2347,9 @@ static int show_one_inet_sock(const struct sockaddr_nl *addr,
 			return -1;
 		}
 	}
-	if ((err = inet_show_sock(h, diag_arg->f, diag_arg->protocol)) < 0)
+
+	err = inet_show_sock(h, &s, diag_arg->protocol);
+	if (err < 0)
 		return err;
 
 	return 0;
@@ -2345,6 +2414,7 @@ static int tcp_show_netlink_file(struct filter *f)
 	while (1) {
 		int status, err;
 		struct nlmsghdr *h = (struct nlmsghdr *)buf;
+		struct sockstat s = {};
 
 		status = fread(buf, 1, sizeof(*h), fp);
 		if (status < 0) {
@@ -2383,7 +2453,12 @@ static int tcp_show_netlink_file(struct filter *f)
 			return -1;
 		}
 
-		err = inet_show_sock(h, f, IPPROTO_TCP);
+		parse_diag_msg(h, &s);
+
+		if (f && f->f && run_ssfilter(f->f, &s) == 0)
+			continue;
+
+		err = inet_show_sock(h, &s, IPPROTO_TCP);
 		if (err < 0)
 			return err;
 	}

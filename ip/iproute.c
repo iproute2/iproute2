@@ -839,7 +839,6 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	int table_ok = 0;
 	int raw = 0;
 	int type_ok = 0;
-	static int hz;
 
 	memset(&req, 0, sizeof(req));
 
@@ -923,9 +922,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			NEXT_ARG();
 			if (get_u32(&expires, *argv, 0))
 				invarg("\"expires\" value is invalid\n", *argv);
-			if (!hz)
-				hz = get_user_hz();
-			addattr32(&req.n, sizeof(req), RTA_EXPIRES, expires*hz);
+			addattr32(&req.n, sizeof(req), RTA_EXPIRES, expires);
 		} else if (matches(*argv, "metric") == 0 ||
 			   matches(*argv, "priority") == 0 ||
 			   strcmp(*argv, "preference") == 0) {

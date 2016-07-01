@@ -36,7 +36,7 @@ static void yyerror(char *s)
 
 %}
 
-%token HOSTCOND DCOND SCOND DPORT SPORT LEQ GEQ NEQ AUTOBOUND
+%token HOSTCOND DCOND SCOND DPORT SPORT LEQ GEQ NEQ AUTOBOUND DEVCOND DEVNAME
 %left '|'
 %left '&'
 %nonassoc '!'
@@ -107,6 +107,14 @@ expr:	DCOND HOSTCOND
         | SPORT NEQ HOSTCOND
         {
 		$$ = alloc_node(SSF_NOT, alloc_node(SSF_SCOND, $3));
+        }
+        | DEVNAME '=' DEVCOND
+        {
+		$$ = alloc_node(SSF_DEVCOND, $3);
+        }
+        | DEVNAME NEQ DEVCOND
+        {
+		$$ = alloc_node(SSF_NOT, alloc_node(SSF_DEVCOND, $3));
         }
 
         | AUTOBOUND
@@ -237,6 +245,10 @@ int yylex(void)
 		tok_type = SPORT;
 		return SPORT;
 	}
+	if (strcmp(curtok, "dev") == 0) {
+		tok_type = DEVNAME;
+		return DEVNAME;
+	}
 	if (strcmp(curtok, ">=") == 0 ||
 	    strcmp(curtok, "ge") == 0 ||
 	    strcmp(curtok, "geq") == 0)
@@ -262,6 +274,14 @@ int yylex(void)
 	if (strcmp(curtok, "autobound") == 0) {
 		tok_type = AUTOBOUND;
 		return AUTOBOUND;
+	}
+	if (tok_type == DEVNAME) {
+		yylval = (void*)parse_devcond(curtok);
+		if (yylval == NULL) {
+			fprintf(stderr, "Cannot parse device.\n");
+			exit(1);
+		}
+		return DEVCOND;
 	}
 	yylval = (void*)parse_hostcond(curtok, tok_type == SPORT || tok_type == DPORT);
 	if (yylval == NULL) {
