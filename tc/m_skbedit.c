@@ -26,14 +26,17 @@
 #include "utils.h"
 #include "tc_util.h"
 #include <linux/tc_act/tc_skbedit.h>
+#include <linux/if_packet.h>
 
-static void
-explain(void)
+static void explain(void)
 {
-	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM]>\n"
+	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM] [PT]>\n"
 		"QM = queue_mapping QUEUE_MAPPING\n"
 		"PM = priority PRIORITY\n"
 		"MM = mark MARK\n"
+		"PT = ptype PACKETYPE\n"
+		"PACKETYPE = is one of:\n"
+		"  host, otherhost, broadcast, multicast\n"
 		"QUEUE_MAPPING = device transmit queue to use\n"
 		"PRIORITY = classID to assign to priority field\n"
 		"MARK = firewall mark to set\n");
@@ -55,7 +58,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	int ok = 0;
 	struct rtattr *tail;
 	unsigned int tmp;
-	__u16 queue_mapping;
+	__u16 queue_mapping, ptype;
 	__u32 flags = 0, priority, mark;
 	struct tc_skbedit sel = { 0 };
 
@@ -89,6 +92,24 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 				fprintf(stderr, "Illegal mark\n");
 				return -1;
 			}
+			ok++;
+		} else if (matches(*argv, "ptype") == 0) {
+
+			NEXT_ARG();
+			if (matches(*argv, "host") == 0) {
+				ptype = PACKET_HOST;
+			} else if (matches(*argv, "broadcast") == 0) {
+				ptype = PACKET_BROADCAST;
+			} else if (matches(*argv, "multicast") == 0) {
+				ptype = PACKET_MULTICAST;
+			} else if (matches(*argv, "otherhost") == 0) {
+				ptype = PACKET_OTHERHOST;
+			} else {
+				fprintf(stderr, "Illegal ptype (%s)\n",
+					*argv);
+				return -1;
+			}
+			flags |= SKBEDIT_F_PTYPE;
 			ok++;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
@@ -152,6 +173,9 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	if (flags & SKBEDIT_F_MARK)
 		addattr_l(n, MAX_MSG, TCA_SKBEDIT_MARK,
 			  &mark, sizeof(mark));
+	if (flags & SKBEDIT_F_PTYPE)
+		addattr_l(n, MAX_MSG, TCA_SKBEDIT_PTYPE,
+			  &ptype, sizeof(ptype));
 	tail->rta_len = (char *)NLMSG_TAIL(n) - (char *)tail;
 
 	*argc_p = argc;
@@ -166,7 +190,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	SPRINT_BUF(b1);
 	__u32 *priority;
 	__u32 *mark;
-	__u16 *queue_mapping;
+	__u16 *queue_mapping, *ptype;
 	struct tc_skbedit *p = NULL;
 
 	if (arg == NULL)
@@ -194,8 +218,22 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		mark = RTA_DATA(tb[TCA_SKBEDIT_MARK]);
 		fprintf(f, " mark %d", *mark);
 	}
+	if (tb[TCA_SKBEDIT_PTYPE] != NULL) {
+		ptype = RTA_DATA(tb[TCA_SKBEDIT_PTYPE]);
+		if (*ptype == PACKET_HOST)
+			fprintf(f, " ptype host");
+		else if (*ptype == PACKET_BROADCAST)
+			fprintf(f, " ptype broadcast");
+		else if (*ptype == PACKET_MULTICAST)
+			fprintf(f, " ptype multicast");
+		else if (*ptype == PACKET_OTHERHOST)
+			fprintf(f, " ptype otherhost");
+		else
+			fprintf(f, " ptype %d", *ptype);
+	}
 
-	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
+	fprintf(f, "\n\t index %d ref %d bind %d",
+		p->index, p->refcnt, p->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_SKBEDIT_TM]) {

@@ -11,6 +11,8 @@ skbedit - SKB editing action
 .IR PRIORITY " ] ["
 .B mark
 .IR MARK " ]"
+.B ptype
+.IR PTYPE " ]"
 .SH DESCRIPTION
 The
 .B skbedit
@@ -52,6 +54,13 @@ Change the packet's firewall mark value.
 is an unsigned 32bit value in automatically detected format (i.e., prefix with
 .RB ' 0x '
 for hexadecimal interpretation, etc.).
+.TP
+.BI ptype " PTYPE"
+Override the packet's type. Useful for setting packet type to host when
+needing to allow ingressing packets with the wrong MAC address but
+correct IP address.
+.I PTYPE
+is one of: host, otherhost, broadcast, multicast
 .SH SEE ALSO
 .BR tc (8),
 .BR tc-pedit (8)
