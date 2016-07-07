@@ -33,7 +33,9 @@ ip-route \- routing table management
 .RB " ] [ " oif
 .IR STRING " ] [ "
 .B  tos
-.IR TOS " ]"
+.IR TOS " ] [ "
+.B  vrf
+.IR NAME " ] "
 
 .ti -8
 .BR "ip route" " { " add " | " del " | " change " | " append " | "\
@@ -50,6 +52,8 @@ replace " } "
 .IR PREFIX " ] [ "
 .B  table
 .IR TABLE_ID " ] [ "
+.B  vrf
+.IR NAME " ] [ "
 .B  proto
 .IR RTPROTO " ] [ "
 .B  type
@@ -367,6 +371,11 @@ table, with the exception of
 routes, which are put into the
 .B local
 table by default.
+
+.TP
+.BI vrf " NAME"
+the vrf name to add this route to. Implicitly means the table
+associated with the VRF.
 
 .TP
 .BI dev " NAME"
@@ -746,6 +755,10 @@ may either be the ID of a real table or one of the special values:
 .in -8
 
 .TP
+.BI vrf " NAME"
+show the routes for the table associated with the vrf name
+
+.TP
 .B cloned
 .TP
 .B cached
@@ -853,6 +866,10 @@ the device from which this packet is expected to arrive.
 .TP
 .BI oif " NAME"
 force the output device on which this packet will be routed.
+
+.TP
+.BI vrf " NAME"
+force the vrf device on which this packet will be routed.
 
 .TP
 .B connected

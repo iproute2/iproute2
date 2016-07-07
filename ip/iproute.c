@@ -67,10 +67,10 @@ static void usage(void)
 	fprintf(stderr, "       ip route showdump\n");
 	fprintf(stderr, "       ip route get ADDRESS [ from ADDRESS iif STRING ]\n");
 	fprintf(stderr, "                            [ oif STRING ] [ tos TOS ]\n");
-	fprintf(stderr, "                            [ mark NUMBER ]\n");
+	fprintf(stderr, "                            [ mark NUMBER ] [ vrf NAME ]\n");
 	fprintf(stderr, "       ip route { add | del | change | append | replace } ROUTE\n");
 	fprintf(stderr, "SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n");
-	fprintf(stderr, "            [ table TABLE_ID ] [ proto RTPROTO ]\n");
+	fprintf(stderr, "            [ table TABLE_ID ] [ vrf NAME ] [ proto RTPROTO ]\n");
 	fprintf(stderr, "            [ type TYPE ] [ scope SCOPE ]\n");
 	fprintf(stderr, "ROUTE := NODE_SPEC [ INFO_SPEC ]\n");
 	fprintf(stderr, "NODE_SPEC := [ TYPE ] PREFIX [ tos TOS ]\n");
@@ -113,7 +113,7 @@ static struct
 	int flushe;
 	int protocol, protocolmask;
 	int scope, scopemask;
-	int type, typemask;
+	__u64 typemask;
 	int tos, tosmask;
 	int iif, iifmask;
 	int oif, oifmask;
@@ -178,7 +178,8 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		return 0;
 	if ((filter.scope^r->rtm_scope)&filter.scopemask)
 		return 0;
-	if ((filter.type^r->rtm_type)&filter.typemask)
+
+	if (filter.typemask && !(filter.typemask & (1 << r->rtm_type)))
 		return 0;
 	if ((filter.tos^r->rtm_tos)&filter.tosmask)
 		return 0;
@@ -365,7 +366,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (n->nlmsg_type == RTM_DELROUTE)
 		fprintf(fp, "Deleted ");
-	if ((r->rtm_type != RTN_UNICAST || show_details > 0) && !filter.type)
+	if ((r->rtm_type != RTN_UNICAST || show_details > 0) &&
+	    (!filter.typemask || (filter.typemask & (1 << r->rtm_type))))
 		fprintf(fp, "%s ", rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
 
 	if (tb[RTA_DST]) {
@@ -1136,6 +1138,20 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 				addattr32(&req.n, sizeof(req), RTA_TABLE, tid);
 			}
 			table_ok = 1;
+		} else if (matches(*argv, "vrf") == 0) {
+			__u32 tid;
+
+			NEXT_ARG();
+			tid = ipvrf_get_table(*argv);
+			if (tid == 0)
+				invarg("Invalid VRF\n", *argv);
+			if (tid < 256)
+				req.r.rtm_table = tid;
+			else {
+				req.r.rtm_table = RT_TABLE_UNSPEC;
+				addattr32(&req.n, sizeof(req), RTA_TABLE, tid);
+			}
+			table_ok = 1;
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
@@ -1390,6 +1406,15 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 				}
 			} else
 				filter.tb = tid;
+		} else if (matches(*argv, "vrf") == 0) {
+			__u32 tid;
+
+			NEXT_ARG();
+			tid = ipvrf_get_table(*argv);
+			if (tid == 0)
+				invarg("Invalid VRF\n", *argv);
+			filter.tb = tid;
+			filter.typemask = ~(1 << RTN_LOCAL | 1<<RTN_BROADCAST);
 		} else if (matches(*argv, "cached") == 0 ||
 			   matches(*argv, "cloned") == 0) {
 			filter.cloned = 1;
@@ -1430,10 +1455,9 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			int type;
 
 			NEXT_ARG();
-			filter.typemask = -1;
 			if (rtnl_rtntype_a2n(&type, *argv))
 				invarg("node type value is invalid\n", *argv);
-			filter.type = type;
+			filter.typemask = (1<<type);
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
@@ -1677,6 +1701,11 @@ static int iproute_get(int argc, char **argv)
 			req.r.rtm_flags |= RTM_F_NOTIFY;
 		} else if (matches(*argv, "connected") == 0) {
 			connected = 1;
+		} else if (matches(*argv, "vrf") == 0) {
+			NEXT_ARG();
+			if (!name_is_vrf(*argv))
+				invarg("Invalid VRF\n", *argv);
+			odev = *argv;
 		} else {
 			inet_prefix addr;
 

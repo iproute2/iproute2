@@ -18,7 +18,9 @@ flower \- flow based traffic control filter
 .ti -8
 .IR MATCH " := { "
 .B indev
-.IR ifname " | { "
+.IR ifname " | "
+.BR skip_sw " | " skip_hw
+.R " | { "
 .BR dst_mac " | " src_mac " } "
 .IR mac_address " | "
 .BR eth_type " { " ipv4 " | " ipv6 " | "
@@ -54,6 +56,13 @@ flows.
 is the name of an interface which must exist at the time of
 .B tc
 invocation.
+.TP
+.BI skip_sw
+Do not process filter by software. If hardware has no offload support for this
+filter, or TC offload is not enabled for the interface, operation will fail.
+.TP
+.BI skip_hw
+Do not process filter by hardware.
 .TP
 .BI dst_mac " mac_address"
 .TQ

@@ -45,6 +45,8 @@ ip-address \- protocol address management
 .IR DEVICE " ] [ "
 .B  type
 .IR TYPE " ] [ "
+.B vrf
+.IR NAME " ] [ "
 .BR up " ] ]"
 
 .ti -8
@@ -278,6 +280,10 @@ is a usual shell style pattern.
 .TP
 .BI master " DEVICE"
 only list interfaces enslaved to this master device.
+
+.TP
+.BI vrf " NAME "
+only list interfaces enslaved to this vrf.
 
 .TP
 .BI type " TYPE"

@@ -154,6 +154,9 @@ ip-link \- network device configuration
 .br
 .RB "[ " nomaster " ]"
 .br
+.RB "[ " vrf
+.IR NAME " ]"
+.br
 .RB "[ " addrgenmode " { " eui64 " | " none " | " stable_secret " | " random " } ]"
 
 
@@ -167,6 +170,8 @@ ip-link \- network device configuration
 .IR DEVICE " ] ["
 .B type
 .IR TYPE " ]"
+.B vrf
+.IR NAME " ]"
 
 .ti -8
 .B ip link help
@@ -1254,6 +1259,11 @@ only display running interfaces.
 .BI master " DEVICE "
 .I DEVICE
 specifies the master device which enslaves devices to show.
+
+.TP
+.BI vrf " NAME "
+.I NAME
+speficies the VRF which enslaves devices to show.
 
 .TP
 .BI type " TYPE "
