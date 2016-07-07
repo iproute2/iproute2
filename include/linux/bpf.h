@@ -84,6 +84,7 @@ enum bpf_map_type {
 	BPF_MAP_TYPE_PERCPU_HASH,
 	BPF_MAP_TYPE_PERCPU_ARRAY,
 	BPF_MAP_TYPE_STACK_TRACE,
+	BPF_MAP_TYPE_CGROUP_ARRAY,
 };
 
 enum bpf_prog_type {
@@ -313,6 +314,49 @@ enum bpf_func_id {
 	 */
 	BPF_FUNC_skb_get_tunnel_opt,
 	BPF_FUNC_skb_set_tunnel_opt,
+
+	/**
+	 * bpf_skb_change_proto(skb, proto, flags)
+	 * Change protocol of the skb. Currently supported is
+	 * v4 -> v6, v6 -> v4 transitions. The helper will also
+	 * resize the skb. eBPF program is expected to fill the
+	 * new headers via skb_store_bytes and lX_csum_replace.
+	 * @skb: pointer to skb
+	 * @proto: new skb->protocol type
+	 * @flags: reserved
+	 * Return: 0 on success or negative error
+	 */
+	BPF_FUNC_skb_change_proto,
+
+	/**
+	 * bpf_skb_change_type(skb, type)
+	 * Change packet type of skb.
+	 * @skb: pointer to skb
+	 * @type: new skb->pkt_type type
+	 * Return: 0 on success or negative error
+	 */
+	BPF_FUNC_skb_change_type,
+
+	/**
+	 * bpf_skb_in_cgroup(skb, map, index) - Check cgroup2 membership of skb
+	 * @skb: pointer to skb
+	 * @map: pointer to bpf_map in BPF_MAP_TYPE_CGROUP_ARRAY type
+	 * @index: index of the cgroup in the bpf_map
+	 * Return:
+	 *   == 0 skb failed the cgroup2 descendant test
+	 *   == 1 skb succeeded the cgroup2 descendant test
+	 *    < 0 error
+	 */
+	BPF_FUNC_skb_in_cgroup,
+
+	/**
+	 * bpf_get_hash_recalc(skb)
+	 * Retrieve and possibly recalculate skb->hash.
+	 * @skb: pointer to skb
+	 * Return: hash
+	 */
+	BPF_FUNC_get_hash_recalc,
+
 	__BPF_FUNC_MAX_ID,
 };
 
@@ -347,7 +391,7 @@ enum bpf_func_id {
 #define BPF_F_ZERO_CSUM_TX		(1ULL << 1)
 #define BPF_F_DONT_FRAGMENT		(1ULL << 2)
 
-/* BPF_FUNC_perf_event_output flags. */
+/* BPF_FUNC_perf_event_output and BPF_FUNC_perf_event_read flags. */
 #define BPF_F_INDEX_MASK		0xffffffffULL
 #define BPF_F_CURRENT_CPU		BPF_F_INDEX_MASK
 
