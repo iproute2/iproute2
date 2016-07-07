@@ -248,5 +248,6 @@ int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
 		bool show_label);
 
 char *int_to_str(int val, char *buf);
+int get_guid(__u64 *guid, const char *arg);
 
 #endif /* __UTILS_H__ */

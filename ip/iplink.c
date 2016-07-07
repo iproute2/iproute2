@@ -420,6 +420,26 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 				invarg("Invalid \"state\" value\n", *argv);
 			ivl.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_LINK_STATE, &ivl, sizeof(ivl));
+		} else if (matches(*argv, "node_guid") == 0) {
+			struct ifla_vf_guid ivg;
+
+			NEXT_ARG();
+			ivg.vf = vf;
+			if (get_guid(&ivg.guid, *argv)) {
+				invarg("Invalid GUID format\n", *argv);
+				return -1;
+			}
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_IB_NODE_GUID, &ivg, sizeof(ivg));
+		} else if (matches(*argv, "port_guid") == 0) {
+			struct ifla_vf_guid ivg;
+
+			NEXT_ARG();
+			ivg.vf = vf;
+			if (get_guid(&ivg.guid, *argv)) {
+				invarg("Invalid GUID format\n", *argv);
+				return -1;
+			}
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_IB_PORT_GUID, &ivg, sizeof(ivg));
 		} else {
 			/* rewind arg */
 			PREV_ARG();
