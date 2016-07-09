@@ -1019,6 +1019,18 @@ specifies the type of the device.
 
 .SS ip link set - change device attributes
 
+.PP
+.B Warning:
+If multiple parameter changes are requested,
+.B ip
+aborts immediately after any of the changes have failed.
+This is the only case when
+.B ip
+can move the system to an unpredictable state. The solution
+is to avoid changing several parameters with one
+.B ip link set
+call.
+
 .TP
 .BI dev " DEVICE "
 .I DEVICE
@@ -1244,18 +1256,6 @@ set the IPv6 address generation mode
 .TP
 .BR "link-netnsid "
 set peer netnsid for a cross-netns interface
-
-.PP
-.B Warning:
-If multiple parameter changes are requested,
-.B ip
-aborts immediately after any of the changes have failed.
-This is the only case when
-.B ip
-can move the system to an unpredictable state. The solution
-is to avoid changing several parameters with one
-.B ip link set
-call.
 
 .SS  ip link show - display device attributes
 
