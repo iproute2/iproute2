@@ -40,35 +40,6 @@ ip-link \- network device configuration
 .RI "[ " ARGS " ]"
 
 .ti -8
-.IR TYPE " := [ "
-.BR bridge " | "
-.BR bond " | "
-.BR can " | "
-.BR dummy " | "
-.BR hsr " | "
-.BR ifb " | "
-.BR ipoib " |"
-.BR macvlan  " | "
-.BR macvtap  " | "
-.BR vcan " | "
-.BR veth " | "
-.BR vlan " | "
-.BR vxlan " |"
-.BR ip6tnl " |"
-.BR ipip " |"
-.BR sit " |"
-.BR gre " |"
-.BR gretap " |"
-.BR ip6gre " |"
-.BR ip6gretap " |"
-.BR vti " |"
-.BR nlmon " |"
-.BR ipvlan " |"
-.BR lowpan " |"
-.BR geneve " |"
-.BR vrf " ]"
-
-.ti -8
 .BR "ip link delete " {
 .IR DEVICE " | "
 .BI "group " GROUP
@@ -80,7 +51,12 @@ ip-link \- network device configuration
 .BR "ip link set " {
 .IR DEVICE " | "
 .BI "group " GROUP
-.RB "} [ { " up " | " down " } ]"
+}
+.br
+.RB "[ { " up " | " down " } ]"
+.br
+.RB "[ " type
+.IR "ETYPE TYPE_ARGS" " ]"
 .br
 .RB "[ " arp " { " on " | " off " } ]"
 .br
@@ -173,13 +149,46 @@ ip-link \- network device configuration
 .B master
 .IR DEVICE " ] ["
 .B type
-.IR TYPE " ]"
+.IR ETYPE " ]"
 .B vrf
 .IR NAME " ]"
 
 .ti -8
 .B ip link help
 .RI "[ " TYPE " ]"
+
+.ti -8
+.IR TYPE " := [ "
+.BR bridge " | "
+.BR bond " | "
+.BR can " | "
+.BR dummy " | "
+.BR hsr " | "
+.BR ifb " | "
+.BR ipoib " |"
+.BR macvlan  " | "
+.BR macvtap  " | "
+.BR vcan " | "
+.BR veth " | "
+.BR vlan " | "
+.BR vxlan " |"
+.BR ip6tnl " |"
+.BR ipip " |"
+.BR sit " |"
+.BR gre " |"
+.BR gretap " |"
+.BR ip6gre " |"
+.BR ip6gretap " |"
+.BR vti " |"
+.BR nlmon " |"
+.BR ipvlan " |"
+.BR lowpan " |"
+.BR geneve " |"
+.BR vrf " ]"
+
+.ti -8
+.IR ETYPE " := [ " TYPE " |"
+.BR bridge_slave " | " bond_slave " ]"
 
 .SH "DESCRIPTION"
 .SS ip link add - add virtual link
