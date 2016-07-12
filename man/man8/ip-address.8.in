@@ -77,14 +77,15 @@ ip-address \- protocol address management
 .IR FLAG " := "
 .RB "[ " permanent " | " dynamic " | " secondary " | " primary " |"
 .RB [ - ] tentative " | [" - ] deprecated " | [" - ] dadfailed " |"
-.BR temporary " | " CONFFLAG-LIST " ]"
+.BR temporary " |"
+.IR CONFFLAG-LIST " ]"
 
 .ti -8
 .IR CONFFLAG-LIST " := [ "  CONFFLAG-LIST " ] " CONFFLAG
 
 .ti -8
 .IR CONFFLAG " := "
-.RB "[ " home " | " mngtmpaddr " | " nodad " | " noprefixroute " ]"
+.RB "[ " home " | " mngtmpaddr " | " nodad " | " noprefixroute " | " autojoin " ]"
 
 .ti -8
 .IR LIFETIME " := [ "
@@ -248,6 +249,26 @@ Do not automatically create a route for the network prefix of the added
 address, and don't search for one to delete when removing the address. Changing
 an address to add this flag will remove the automatically added prefix route,
 changing it to remove this flag will create the prefix route automatically.
+
+.TP
+.B autojoin
+Joining multicast groups on Ethernet level via
+.B "ip maddr"
+command does not work if connected to an Ethernet switch that does IGMP
+snooping since the switch would not replicate multicast packets on ports that
+did not have IGMP reports for the multicast addresses.
+
+Linux VXLAN interfaces created via
+.B "ip link add vxlan"
+have the
+.B group
+option that enables them to do the required join.
+
+Using the
+.B autojoin
+flag when adding a multicast address enables similar functionality for
+Openvswitch VXLAN interfaces as well as other tunneling mechanisms that need to
+receive multicast traffic.
 
 .SS ip address delete - delete protocol address
 .B Arguments:
