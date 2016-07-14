@@ -483,8 +483,9 @@ static int print_object(FILE *fd, struct tcf_meta_val *obj, struct rtattr *rta)
 				if (RTA_PAYLOAD(rta) < sizeof(__u32))
 					goto size_mismatch;
 
-				fprintf(fd, " mask 0x%08x",
-				    rta_getattr_u32(rta));
+				if (rta_getattr_u32(rta))
+					fprintf(fd, " mask 0x%08x",
+						rta_getattr_u32(rta));
 			}
 			break;
 	}
