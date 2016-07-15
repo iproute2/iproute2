@@ -1810,7 +1810,7 @@ static int iproute_get(int argc, char **argv)
 	return 0;
 }
 
-static int rtattr_cmp(struct rtattr *rta1, struct rtattr *rta2)
+static int rtattr_cmp(const struct rtattr *rta1, const struct rtattr *rta2)
 {
 	if (!rta1 || !rta2 || rta1->rta_len != rta2->rta_len)
 		return 1;
