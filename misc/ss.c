@@ -97,6 +97,7 @@ int show_tcpinfo;
 int show_bpf;
 int show_proc_ctx;
 int show_sock_ctx;
+int show_header = 1;
 /* If show_users & show_proc_ctx only do user_ent_hash_build() once */
 int user_ent_hash_build_init;
 int follow_events;
@@ -3669,6 +3670,7 @@ static void _usage(FILE *dest)
 "       FAMILY := {inet|inet6|link|unix|netlink|help}\n"
 "\n"
 "   -K, --kill          forcibly close sockets, display what was closed\n"
+"   -H, --no-header     Suppress header line\n"
 "\n"
 "   -A, --query=QUERY, --socket=QUERY\n"
 "       QUERY := {all|inet|tcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|netlink}[,QUERY]\n"
@@ -3762,6 +3764,7 @@ static const struct option long_opts[] = {
 	{ "contexts", 0, 0, 'z' },
 	{ "net", 1, 0, 'N' },
 	{ "kill", 0, 0, 'K' },
+	{ "no-header", 0, 0, 'H' },
 	{ 0 }
 
 };
@@ -3776,7 +3779,7 @@ int main(int argc, char *argv[])
 	int ch;
 	int state_filter = 0;
 
-	while ((ch = getopt_long(argc, argv, "dhaletuwxnro460spbEf:miA:D:F:vVzZN:K",
+	while ((ch = getopt_long(argc, argv, "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KH",
 				 long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'n':
@@ -3961,6 +3964,9 @@ int main(int argc, char *argv[])
 		case 'K':
 			current_filter.kill = 1;
 			break;
+		case 'H':
+			show_header = 0;
+			break;
 		case 'h':
 			help();
 		case '?':
@@ -4086,19 +4092,23 @@ int main(int argc, char *argv[])
 
 	addr_width = addrp_width - serv_width - 1;
 
-	if (netid_width)
-		printf("%-*s ", netid_width, "Netid");
-	if (state_width)
-		printf("%-*s ", state_width, "State");
-	printf("%-6s %-6s ", "Recv-Q", "Send-Q");
+	if (show_header) {
+		if (netid_width)
+			printf("%-*s ", netid_width, "Netid");
+		if (state_width)
+			printf("%-*s ", state_width, "State");
+		printf("%-6s %-6s ", "Recv-Q", "Send-Q");
+	}
 
 	/* Make enough space for the local/remote port field */
 	addr_width -= 13;
 	serv_width += 13;
 
-	printf("%*s:%-*s %*s:%-*s\n",
-	       addr_width, "Local Address", serv_width, "Port",
-	       addr_width, "Peer Address", serv_width, "Port");
+	if (show_header) {
+		printf("%*s:%-*s %*s:%-*s\n",
+		       addr_width, "Local Address", serv_width, "Port",
+		       addr_width, "Peer Address", serv_width, "Port");
+	}
 
 	fflush(stdout);
 
