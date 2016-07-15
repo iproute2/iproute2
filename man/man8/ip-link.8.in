@@ -146,7 +146,11 @@ ip-link \- network device configuration
 .br
 .RB "[ " state " { " auto " | " enable " | " disable " } ]"
 .br
-.RB "[ " trust " { " on " | " off " } ] ]"
+.RB "[ " trust " { " on " | " off " } ]"
+.br
+.RB "[ " node_guid " eui64 ]"
+.br
+.RB "[ " port_guid " eui64 ] ]"
 .br
 .in -9
 .RB "[ " master
@@ -1196,6 +1200,12 @@ sent by the VF.
 .BI trust " on|off"
 - trust the specified VF user. This enables that VF user can set a specific feature
 which may impact security and/or performance. (e.g. VF multicast promiscuous mode)
+.sp
+.BI node_guid " eui64"
+- configure node GUID for the VF.
+.sp
+.BI port_guid " eui64"
+- configure port GUID for the VF.
 .in -8
 
 .TP

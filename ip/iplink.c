@@ -317,7 +317,8 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 					len, halen);
 				return -1;
 			}
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_MAC, &ivm, sizeof(ivm));
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_MAC,
+				  &ivm, sizeof(ivm));
 		} else if (matches(*argv, "vlan") == 0) {
 			struct ifla_vf_vlan ivv;
 
@@ -338,7 +339,8 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 					PREV_ARG();
 				}
 			}
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_VLAN, &ivv, sizeof(ivv));
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_VLAN,
+				  &ivv, sizeof(ivv));
 		} else if (matches(*argv, "rate") == 0) {
 			struct ifla_vf_tx_rate ivt;
 
@@ -378,7 +380,8 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			else
 				return on_off("spoofchk", *argv);
 			ivs.vf = vf;
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_SPOOFCHK, &ivs, sizeof(ivs));
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_SPOOFCHK,
+				  &ivs, sizeof(ivs));
 
 		} else if (matches(*argv, "query_rss") == 0) {
 			struct ifla_vf_rss_query_en ivs;
@@ -391,7 +394,8 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			else
 				return on_off("query_rss", *argv);
 			ivs.vf = vf;
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_RSS_QUERY_EN, &ivs, sizeof(ivs));
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_RSS_QUERY_EN,
+				  &ivs, sizeof(ivs));
 
 		} else if (matches(*argv, "trust") == 0) {
 			struct ifla_vf_trust ivt;
@@ -404,7 +408,8 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			else
 				invarg("Invalid \"trust\" value\n", *argv);
 			ivt.vf = vf;
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_TRUST, &ivt, sizeof(ivt));
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_TRUST,
+				  &ivt, sizeof(ivt));
 
 		} else if (matches(*argv, "state") == 0) {
 			struct ifla_vf_link_state ivl;
@@ -419,7 +424,30 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			else
 				invarg("Invalid \"state\" value\n", *argv);
 			ivl.vf = vf;
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_LINK_STATE, &ivl, sizeof(ivl));
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_LINK_STATE,
+				  &ivl, sizeof(ivl));
+		} else if (matches(*argv, "node_guid") == 0) {
+			struct ifla_vf_guid ivg;
+
+			NEXT_ARG();
+			ivg.vf = vf;
+			if (get_guid(&ivg.guid, *argv)) {
+				invarg("Invalid GUID format\n", *argv);
+				return -1;
+			}
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_IB_NODE_GUID,
+				  &ivg, sizeof(ivg));
+		} else if (matches(*argv, "port_guid") == 0) {
+			struct ifla_vf_guid ivg;
+
+			NEXT_ARG();
+			ivg.vf = vf;
+			if (get_guid(&ivg.guid, *argv)) {
+				invarg("Invalid GUID format\n", *argv);
+				return -1;
+			}
+			addattr_l(&req->n, sizeof(*req), IFLA_VF_IB_PORT_GUID,
+				  &ivg, sizeof(ivg));
 		} else {
 			/* rewind arg */
 			PREV_ARG();
@@ -523,9 +551,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				duparg("netns", *argv);
 			netns = netns_get_fd(*argv);
 			if (netns >= 0)
-				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_FD, &netns, 4);
+				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_FD,
+					  &netns, 4);
 			else if (get_integer(&netns, *argv, 0) == 0)
-				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_PID, &netns, 4);
+				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_PID,
+					  &netns, 4);
 			else
 				invarg("Invalid \"netns\" value\n", *argv);
 		} else if (strcmp(*argv, "multicast") == 0) {
@@ -689,7 +719,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				invarg("Invalid address generation mode\n", *argv);
 			afs = addattr_nest(&req->n, sizeof(*req), IFLA_AF_SPEC);
 			afs6 = addattr_nest(&req->n, sizeof(*req), AF_INET6);
-			addattr8(&req->n, sizeof(*req), IFLA_INET6_ADDR_GEN_MODE, mode);
+			addattr8(&req->n, sizeof(*req),
+				 IFLA_INET6_ADDR_GEN_MODE, mode);
 			addattr_nest_end(&req->n, afs6);
 			addattr_nest_end(&req->n, afs);
 		} else if (matches(*argv, "link-netnsid") == 0) {
@@ -728,10 +759,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 
 	if (dev_index && addr_len) {
 		int halen = nl_get_ll_addr_len(dev_index);
+
 		if (halen >= 0 && halen != addr_len) {
 			fprintf(stderr,
-			        "Invalid address length %d - must be %d bytes\n",
-			        addr_len, halen);
+				"Invalid address length %d - must be %d bytes\n",
+				addr_len, halen);
 			return -1;
 		}
 	}
@@ -759,7 +791,8 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	req.n.nlmsg_type = cmd;
 	req.i.ifi_family = preferred_family;
 
-	ret = iplink_parse(argc, argv, &req, &name, &type, &link, &dev, &group, &index);
+	ret = iplink_parse(argc, argv,
+			   &req, &name, &type, &link, &dev, &group, &index);
 	if (ret < 0)
 		return ret;
 
@@ -772,8 +805,8 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 					&group, sizeof(group));
 		else {
 			if (argc) {
-				fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"ip link "
-						"help\".\n", *argv);
+				fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"ip link help\".\n",
+						*argv);
 				return -1;
 			}
 			if (flags & NLM_F_CREATE) {
@@ -830,7 +863,8 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (name) {
 		len = strlen(name) + 1;
 		if (len == 1)
-			invarg("\"\" is not a valid device identifier\n", "name");
+			invarg("\"\" is not a valid device identifier\n",
+			       "name");
 		if (len > IFNAMSIZ)
 			invarg("\"name\" too long\n", name);
 		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, len);
@@ -859,7 +893,8 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			iflatype = IFLA_INFO_DATA;
 		}
 		if (lu && argc) {
-			struct rtattr *data = addattr_nest(&req.n, sizeof(req), iflatype);
+			struct rtattr *data = addattr_nest(&req.n,
+							   sizeof(req), iflatype);
 
 			if (lu->parse_opt &&
 			    lu->parse_opt(lu, argc, argv, &req.n))
@@ -1090,7 +1125,8 @@ static int parse_address(const char *dev, int hatype, int halen,
 	if (alen < 0)
 		return -1;
 	if (alen != halen) {
-		fprintf(stderr, "Wrong address (%s) length: expected %d bytes\n", lla, halen);
+		fprintf(stderr, "Wrong address (%s) length: expected %d bytes\n",
+			lla, halen);
 		return -1;
 	}
 	return 0;
@@ -1230,7 +1266,8 @@ static int do_set(int argc, char **argv)
 	}
 
 	if (!dev) {
-		fprintf(stderr, "Not enough of information: \"dev\" argument is required.\n");
+		fprintf(stderr,
+			"Not enough of information: \"dev\" argument is required.\n");
 		exit(-1);
 	}
 

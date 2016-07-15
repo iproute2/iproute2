@@ -1810,12 +1810,42 @@ static int iproute_get(int argc, char **argv)
 	return 0;
 }
 
+static int rtattr_cmp(const struct rtattr *rta1, const struct rtattr *rta2)
+{
+	if (!rta1 || !rta2 || rta1->rta_len != rta2->rta_len)
+		return 1;
+
+	return memcmp(RTA_DATA(rta1), RTA_DATA(rta2), RTA_PAYLOAD(rta1));
+}
+
 static int restore_handler(const struct sockaddr_nl *nl,
 			   struct rtnl_ctrl_data *ctrl,
 			   struct nlmsghdr *n, void *arg)
 {
-	int ret;
+	struct rtmsg *r = NLMSG_DATA(n);
+	struct rtattr *tb[RTA_MAX+1];
+	int len = n->nlmsg_len - NLMSG_LENGTH(sizeof(*r));
+	int ret, prio = *(int *)arg;
 
+	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
+
+	/* Restore routes in correct order:
+	 * 0. ones for local addresses,
+	 * 1. ones for local networks,
+	 * 2. others (remote networks/hosts).
+	 */
+	if (!prio && !tb[RTA_GATEWAY] && (!tb[RTA_PREFSRC] ||
+	    !rtattr_cmp(tb[RTA_PREFSRC], tb[RTA_DST])))
+		goto restore;
+	else if (prio == 1 && !tb[RTA_GATEWAY] &&
+		 rtattr_cmp(tb[RTA_PREFSRC], tb[RTA_DST]))
+		goto restore;
+	else if (prio == 2 && tb[RTA_GATEWAY])
+		goto restore;
+
+	return 0;
+
+restore:
 	n->nlmsg_flags |= NLM_F_REQUEST | NLM_F_CREATE | NLM_F_ACK;
 
 	ll_init_map(&rth);
@@ -1848,10 +1878,23 @@ static int route_dump_check_magic(void)
 
 static int iproute_restore(void)
 {
+	int pos, prio;
+
 	if (route_dump_check_magic())
 		exit(-1);
 
-	exit(rtnl_from_file(stdin, &restore_handler, NULL));
+	pos = ftell(stdin);
+	for (prio = 0; prio < 3; prio++) {
+		int err;
+
+		err = rtnl_from_file(stdin, &restore_handler, &prio);
+		if (err)
+			exit(err);
+
+		fseek(stdin, pos, SEEK_SET);
+	}
+
+	exit(0);
 }
 
 static int show_handler(const struct sockaddr_nl *nl,

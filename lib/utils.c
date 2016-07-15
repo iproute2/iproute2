@@ -1121,3 +1121,38 @@ char *int_to_str(int val, char *buf)
 	sprintf(buf, "%d", val);
 	return buf;
 }
+
+int get_guid(__u64 *guid, const char *arg)
+{
+	unsigned long int tmp;
+	char *endptr;
+	int i;
+
+#define GUID_STR_LEN 23
+	/* Verify strict format: format string must be
+	 * xx:xx:xx:xx:xx:xx:xx:xx where xx can be an arbitrary
+	 * hex digit
+	 */
+
+	if (strlen(arg) != GUID_STR_LEN)
+		return -1;
+
+	/* make sure columns are in place */
+	for (i = 0; i < 7; i++)
+		if (arg[2 + i * 3] != ':')
+			return -1;
+
+	*guid = 0;
+	for (i = 0; i < 8; i++) {
+		tmp = strtoul(arg + i * 3, &endptr, 16);
+		if (endptr != arg + i * 3 + 2)
+			return -1;
+
+		if (tmp > 255)
+			return -1;
+
+		 *guid |= tmp << (56 - 8 * i);
+	}
+
+	return 0;
+}
