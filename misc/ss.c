@@ -1435,11 +1435,13 @@ void *parse_devcond(char *name)
 	a.iface = xll_name_to_index(name);
 	if (a.iface == 0) {
 		char *end;
-		unsigned long res;
+		unsigned long n;
 
-		res = strtoul(name, &end, 0);
-		if (!end || end == name || *end || res > UINT_MAX)
+		n = strtoul(name, &end, 0);
+		if (!end || end == name || *end || n > UINT_MAX)
 			return NULL;
+
+		a.iface = n;
 	}
 
 	res = malloc(sizeof(*res));
