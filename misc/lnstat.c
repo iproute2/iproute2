@@ -182,10 +182,8 @@ static struct table_hdr *build_hdr_string(struct lnstat_file *lnstat_files,
 	static struct table_hdr th;
 	int ofs = 0;
 
-	for (i = 0; i < HDR_LINES; i++) {
-		th.hdr[i] = malloc(HDR_LINE_LENGTH);
-		memset(th.hdr[i], 0, HDR_LINE_LENGTH);
-	}
+	for (i = 0; i < HDR_LINES; i++)
+		th.hdr[i] = calloc(1, HDR_LINE_LENGTH);
 
 	for (i = 0; i < fps->num; i++) {
 		char *cname, *fname = fps->params[i].lf->name;

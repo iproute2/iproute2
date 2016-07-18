@@ -112,11 +112,9 @@ static int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
 		FILE *fp;
 
 		tmp_len = sizeof("4096,") + BPF_MAXINSNS * op_len;
-		tmp_string = malloc(tmp_len);
+		tmp_string = calloc(1, tmp_len);
 		if (tmp_string == NULL)
 			return -ENOMEM;
-
-		memset(tmp_string, 0, tmp_len);
 
 		fp = fopen(arg, "r");
 		if (fp == NULL) {

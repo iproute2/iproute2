@@ -86,9 +86,8 @@ reg:
 	return f;
 
 noexist:
-	f = malloc(sizeof(*f));
+	f = calloc(1, sizeof(*f));
 	if (f) {
-		memset(f, 0, sizeof(*f));
 		strncpy(f->name, str, 15);
 		f->parse_genlopt = parse_nofopt;
 		f->print_genlopt = print_nofopt;

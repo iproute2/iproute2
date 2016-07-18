@@ -71,9 +71,8 @@ reg:
 
 	return eu;
 noexist:
-	eu = malloc(sizeof(*eu));
+	eu = calloc(1, sizeof(*eu));
 	if (eu) {
-		memset(eu, 0, sizeof(*eu));
 		strncpy(eu->id, name, sizeof(eu->id) - 1);
 		eu->parse_eopt = parse_noeopt;
 		goto reg;

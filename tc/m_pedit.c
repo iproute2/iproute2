@@ -107,9 +107,8 @@ reg:
 	return p;
 
 noexist:
-	p = malloc(sizeof(*p));
+	p = calloc(1, sizeof(*p));
 	if (p) {
-		memset(p, 0, sizeof(*p));
 		strncpy(p->id, str, sizeof(p->id) - 1);
 		p->parse_peopt = pedit_parse_nopopt;
 		goto reg;

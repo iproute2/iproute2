@@ -164,16 +164,11 @@ get_target_name(const char *name)
 	return NULL;
 #endif
 
-	new_name = malloc(strlen(name) + 1);
-	lname = malloc(strlen(name) + 1);
-	if (new_name)
-		memset(new_name, '\0', strlen(name) + 1);
-	else
+	new_name = calloc(1, strlen(name) + 1);
+	lname = calloc(1, strlen(name) + 1);
+	if (!new_name)
 		exit_error(PARAMETER_PROBLEM, "get_target_name");
-
-	if (lname)
-		memset(lname, '\0', strlen(name) + 1);
-	else
+	if (!lname)
 		exit_error(PARAMETER_PROBLEM, "get_target_name");
 
 	strcpy(new_name, name);

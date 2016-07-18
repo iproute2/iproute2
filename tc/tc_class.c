@@ -163,9 +163,8 @@ __u32 filter_classid;
 static void graph_node_add(__u32 parent_id, __u32 id, void *data,
 		int len)
 {
-	struct graph_node *node = malloc(sizeof(struct graph_node));
+	struct graph_node *node = calloc(1, sizeof(struct graph_node));
 
-	memset(node, 0, sizeof(*node));
 	node->id         = id;
 	node->parent_id  = parent_id;
 

@@ -126,9 +126,8 @@ noexist:
 		goto restart_s;
 	}
 #endif
-	a = malloc(sizeof(*a));
+	a = calloc(1, sizeof(*a));
 	if (a) {
-		memset(a, 0, sizeof(*a));
 		strncpy(a->id, "noact", 15);
 		a->parse_aopt = parse_noaopt;
 		a->print_aopt = print_noaopt;
