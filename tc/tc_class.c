@@ -219,7 +219,7 @@ static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
 {
 	struct hlist_node *n, *tmp_cls;
 	char cls_id_str[256] = {};
-	struct rtattr *tb[TCA_MAX + 1] = {};
+	struct rtattr *tb[TCA_MAX + 1];
 	struct qdisc_util *q;
 	char str[100] = {};
 
@@ -304,7 +304,7 @@ int print_class(const struct sockaddr_nl *who,
 	FILE *fp = (FILE *)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr *tb[TCA_MAX + 1] = {};
+	struct rtattr *tb[TCA_MAX + 1];
 	struct qdisc_util *q;
 	char abuf[256];
 

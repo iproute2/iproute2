@@ -449,7 +449,7 @@ static void print_num(FILE *fp, unsigned int width, uint64_t count)
 
 static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 {
-	struct rtattr *vf[IFLA_VF_STATS_MAX + 1] = {};
+	struct rtattr *vf[IFLA_VF_STATS_MAX + 1];
 
 	if (vfstats->rta_type != IFLA_VF_STATS) {
 		fprintf(stderr, "BUG: rta type is %d\n", vfstats->rta_type);
