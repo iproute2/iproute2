@@ -54,6 +54,10 @@
 #define AF_ALG 38
 #endif
 
+#ifndef EM_BPF
+#define EM_BPF 247
+#endif
+
 #ifdef HAVE_ELF
 static int bpf_obj_open(const char *path, enum bpf_prog_type type,
 			const char *sec, bool verbose);
@@ -1690,7 +1694,8 @@ static void bpf_hash_destroy(struct bpf_elf_ctx *ctx)
 static int bpf_elf_check_ehdr(const struct bpf_elf_ctx *ctx)
 {
 	if (ctx->elf_hdr.e_type != ET_REL ||
-	    ctx->elf_hdr.e_machine != 0 ||
+	    (ctx->elf_hdr.e_machine != EM_NONE &&
+	     ctx->elf_hdr.e_machine != EM_BPF) ||
 	    ctx->elf_hdr.e_version != EV_CURRENT) {
 		fprintf(stderr, "ELF format error, ELF file not for eBPF?\n");
 		return -EINVAL;
