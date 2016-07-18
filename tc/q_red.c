@@ -35,7 +35,7 @@ static void explain(void)
 
 static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-	struct tc_red_qopt opt;
+	struct tc_red_qopt opt = {};
 	unsigned int burst = 0;
 	unsigned int avpkt = 0;
 	double probability = 0.02;
@@ -44,8 +44,6 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	__u8 sbuf[256];
 	__u32 max_P;
 	struct rtattr *tail;
-
-	memset(&opt, 0, sizeof(opt));
 
 	while (argc > 0) {
 		if (strcmp(*argv, "limit") == 0) {

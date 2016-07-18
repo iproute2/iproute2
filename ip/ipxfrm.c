@@ -867,9 +867,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)
 {
-	struct xfrm_selector s0;
-
-	memset(&s0, 0, sizeof(s0));
+	struct xfrm_selector s0 = {};
 
 	return (memcmp(&s0, s, sizeof(s0)) == 0);
 }
@@ -878,10 +876,8 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 			    struct rtattr *tb[], FILE *fp, const char *prefix,
 			    const char *title)
 {
-	char buf[STRBUF_SIZE];
+	char buf[STRBUF_SIZE] = {};
 	int force_spi = xfrm_xfrmproto_is_ipsec(xsinfo->id.proto);
-
-	memset(buf, '\0', sizeof(buf));
 
 	xfrm_id_info_print(&xsinfo->saddr, &xsinfo->id, xsinfo->mode,
 			   xsinfo->reqid, xsinfo->family, force_spi, fp,
@@ -959,9 +955,7 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 			    struct rtattr *tb[], FILE *fp, const char *prefix,
 			    const char *title)
 {
-	char buf[STRBUF_SIZE];
-
-	memset(buf, '\0', sizeof(buf));
+	char buf[STRBUF_SIZE] = {};
 
 	xfrm_selector_print(&xpinfo->sel, preferred_family, fp, title);
 
@@ -1062,11 +1056,8 @@ int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 {
 	int argc = *argcp;
 	char **argv = *argvp;
-	inet_prefix dst;
-	inet_prefix src;
-
-	memset(&dst, 0, sizeof(dst));
-	memset(&src, 0, sizeof(src));
+	inet_prefix dst = {};
+	inet_prefix src = {};
 
 	while (1) {
 		if (strcmp(*argv, "src") == 0) {
@@ -1371,12 +1362,9 @@ int xfrm_selector_parse(struct xfrm_selector *sel, int *argcp, char ***argvp)
 {
 	int argc = *argcp;
 	char **argv = *argvp;
-	inet_prefix dst;
-	inet_prefix src;
+	inet_prefix dst = {};
+	inet_prefix src = {};
 	char *upspecp = NULL;
-
-	memset(&dst, 0, sizeof(dst));
-	memset(&src, 0, sizeof(src));
 
 	while (1) {
 		if (strcmp(*argv, "src") == 0) {

@@ -289,15 +289,14 @@ static int fdb_show(int argc, char **argv)
 		struct nlmsghdr	n;
 		struct ifinfomsg	ifm;
 		char			buf[256];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.ifm.ifi_family = PF_BRIDGE,
+	};
 
 	char *filter_dev = NULL;
 	char *br = NULL;
 	int msg_size = sizeof(struct ifinfomsg);
-
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.ifm.ifi_family = PF_BRIDGE;
 
 	while (argc > 0) {
 		if ((strcmp(*argv, "brport") == 0) || strcmp(*argv, "dev") == 0) {
@@ -371,7 +370,13 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct ndmsg		ndm;
 		char			buf[256];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.ndm.ndm_family = PF_BRIDGE,
+		.ndm.ndm_state = NUD_NOARP,
+	};
 	char *addr = NULL;
 	char *d = NULL;
 	char abuf[ETH_ALEN];
@@ -382,14 +387,6 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 	unsigned int via = 0;
 	char *endptr;
 	short vid = -1;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
-	req.ndm.ndm_family = PF_BRIDGE;
-	req.ndm.ndm_state = NUD_NOARP;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {

@@ -85,7 +85,7 @@ noexist:
 int do_exec(int argc, char **argv)
 {
 	struct exec_util *eu;
-	char kind[16];
+	char kind[16] = {};
 
 	if (argc < 1) {
 		fprintf(stderr, "No command given, try \"tc exec help\".\n");
@@ -97,7 +97,6 @@ int do_exec(int argc, char **argv)
 		return 0;
 	}
 
-	memset(kind, 0, sizeof(kind));
 	strncpy(kind, *argv, sizeof(kind) - 1);
 
 	eu = get_exec_kind(kind);

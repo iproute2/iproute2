@@ -84,14 +84,12 @@ bad_val:
 static int
 parse_nat(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
-	struct tc_nat sel;
+	struct tc_nat sel = {};
 
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ok = 0;
 	struct rtattr *tail;
-
-	memset(&sel, 0, sizeof(sel));
 
 	while (argc > 0) {
 		if (matches(*argv, "nat") == 0) {

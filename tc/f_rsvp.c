@@ -173,14 +173,10 @@ done:
 static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc, char **argv, struct nlmsghdr *n)
 {
 	int family = strcmp(qu->id, "rsvp") == 0 ? AF_INET : AF_INET6;
-	struct tc_rsvp_pinfo pinfo;
-	struct tc_police tp;
+	struct tc_rsvp_pinfo pinfo = {};
 	struct tcmsg *t = NLMSG_DATA(n);
 	int pinfo_ok = 0;
 	struct rtattr *tail;
-
-	memset(&pinfo, 0, sizeof(pinfo));
-	memset(&tp, 0, sizeof(tp));
 
 	if (handle) {
 		if (get_u32(&t->tcm_handle, handle, 0)) {

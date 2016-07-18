@@ -988,7 +988,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	struct {
 		struct tc_u32_sel sel;
 		struct tc_u32_key keys[128];
-	} sel;
+	} sel = {};
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
 	int sel_ok = 0, terminal_ok = 0;
@@ -996,8 +996,6 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	__u32 htid = 0;
 	__u32 order = 0;
 	__u32 flags = 0;
-
-	memset(&sel, 0, sizeof(sel));
 
 	if (handle && get_u32_handle(&t->tcm_handle, handle)) {
 		fprintf(stderr, "Illegal filter ID\n");
@@ -1093,12 +1091,11 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 		} else if (strcmp(*argv, "sample") == 0) {
 			__u32 hash;
 			unsigned int divisor = 0x100;
-
 			struct {
 				struct tc_u32_sel sel;
 				struct tc_u32_key keys[4];
-			} sel2;
-			memset(&sel2, 0, sizeof(sel2));
+			} sel2 = {};
+
 			NEXT_ARG();
 			if (parse_selector(&argc, &argv, &sel2.sel, n)) {
 				fprintf(stderr, "Illegal \"sample\"\n");
@@ -1125,9 +1122,8 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 			sample_ok = 1;
 			continue;
 		} else if (strcmp(*argv, "indev") == 0) {
-			char ind[IFNAMSIZ + 1];
+			char ind[IFNAMSIZ + 1] = {};
 
-			memset(ind, 0, sizeof(ind));
 			argc--;
 			argv++;
 			if (argc < 1) {

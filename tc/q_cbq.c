@@ -49,8 +49,8 @@ static void explain1(char *arg)
 
 static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-	struct tc_ratespec r;
-	struct tc_cbq_lssopt lss;
+	struct tc_ratespec r = {};
+	struct tc_cbq_lssopt lss = {};
 	__u32 rtab[256];
 	unsigned mpu = 0, avpkt = 0, allot = 0;
 	unsigned short overhead = 0;
@@ -58,9 +58,6 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	int cell_log =  -1;
 	int ewma_log =  -1;
 	struct rtattr *tail;
-
-	memset(&lss, 0, sizeof(lss));
-	memset(&r, 0, sizeof(r));
 
 	while (argc > 0) {
 		if (matches(*argv, "bandwidth") == 0 ||
@@ -183,11 +180,10 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	int wrr_ok = 0, fopt_ok = 0;
-	struct tc_ratespec r;
-	struct tc_cbq_lssopt lss;
-	struct tc_cbq_wrropt wrr;
-	struct tc_cbq_fopt fopt;
-	struct tc_cbq_ovl ovl;
+	struct tc_ratespec r = {};
+	struct tc_cbq_lssopt lss = {};
+	struct tc_cbq_wrropt wrr = {};
+	struct tc_cbq_fopt fopt = {};
 	__u32 rtab[256];
 	unsigned mpu = 0;
 	int cell_log =  -1;
@@ -197,12 +193,6 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	unsigned short overhead = 0;
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
-
-	memset(&r, 0, sizeof(r));
-	memset(&lss, 0, sizeof(lss));
-	memset(&wrr, 0, sizeof(wrr));
-	memset(&fopt, 0, sizeof(fopt));
-	memset(&ovl, 0, sizeof(ovl));
 
 	while (argc > 0) {
 		if (matches(*argv, "rate") == 0) {

@@ -97,15 +97,12 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 	char **argv = *argv_p;
 	int ok = 0;
 	int action = TC_POLICE_RECLASSIFY;
-	struct tc_gact p;
+	struct tc_gact p = { .action = TC_POLICE_RECLASSIFY };
 #ifdef CONFIG_GACT_PROB
 	int rd = 0;
 	struct tc_gact_p pp;
 #endif
 	struct rtattr *tail;
-
-	memset(&p, 0, sizeof(p));
-	p.action = TC_POLICE_RECLASSIFY;
 
 	if (argc < 0)
 		return -1;

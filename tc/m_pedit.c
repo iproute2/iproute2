@@ -392,15 +392,13 @@ done:
 
 static int parse_munge(int *argc_p, char ***argv_p, struct tc_pedit_sel *sel)
 {
-	struct tc_pedit_key tkey;
+	struct tc_pedit_key tkey = {};
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int res = -1;
 
 	if (argc <= 0)
 		return -1;
-
-	memset(&tkey, 0, sizeof(tkey));
 
 	if (matches(*argv, "offset") == 0) {
 		NEXT_ARG();
@@ -442,14 +440,12 @@ int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	struct {
 		struct tc_pedit_sel sel;
 		struct tc_pedit_key keys[MAX_OFFS];
-	} sel;
+	} sel = {};
 
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ok = 0, iok = 0;
 	struct rtattr *tail;
-
-	memset(&sel, 0, sizeof(sel));
 
 	while (argc > 0) {
 		if (pedit_debug > 1)

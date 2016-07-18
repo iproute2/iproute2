@@ -61,16 +61,15 @@ static int ipnetns_have_nsid(void)
 		struct nlmsghdr n;
 		struct rtgenmsg g;
 		char            buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_GETNSID,
+		.g.rtgen_family = AF_UNSPEC,
+	};
 	int fd;
 
 	if (have_rtnl_getnsid < 0) {
-		memset(&req, 0, sizeof(req));
-		req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg));
-		req.n.nlmsg_flags = NLM_F_REQUEST;
-		req.n.nlmsg_type = RTM_GETNSID;
-		req.g.rtgen_family = AF_UNSPEC;
-
 		fd = open("/proc/self/ns/net", O_RDONLY);
 		if (fd < 0) {
 			perror("open(\"/proc/self/ns/net\")");
@@ -96,16 +95,15 @@ static int get_netnsid_from_name(const char *name)
 		struct nlmsghdr n;
 		struct rtgenmsg g;
 		char            buf[1024];
-	} req, answer;
+	} answer, req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_GETNSID,
+		.g.rtgen_family = AF_UNSPEC,
+	};
 	struct rtattr *tb[NETNSA_MAX + 1];
 	struct rtgenmsg *rthdr;
 	int len, fd;
-
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = RTM_GETNSID;
-	req.g.rtgen_family = AF_UNSPEC;
 
 	fd = netns_get_fd(name);
 	if (fd < 0)
@@ -685,14 +683,13 @@ static int set_netnsid_from_name(const char *name, int nsid)
 		struct nlmsghdr n;
 		struct rtgenmsg g;
 		char            buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_NEWNSID,
+		.g.rtgen_family = AF_UNSPEC,
+	};
 	int fd, err = 0;
-
-	memset(&req, 0, sizeof(req));
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = RTM_NEWNSID;
-	req.g.rtgen_family = AF_UNSPEC;
 
 	fd = netns_get_fd(name);
 	if (fd < 0)

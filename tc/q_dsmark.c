@@ -128,7 +128,6 @@ static int dsmark_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct rtattr *tb[TCA_DSMARK_MAX+1];
 
 	if (!opt) return 0;
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, TCA_DSMARK_MAX, RTA_DATA(opt), RTA_PAYLOAD(opt));
 	if (tb[TCA_DSMARK_MASK]) {
 		if (!RTA_PAYLOAD(tb[TCA_DSMARK_MASK]))

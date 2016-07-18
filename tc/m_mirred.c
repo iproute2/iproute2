@@ -69,12 +69,9 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ok = 0, iok = 0, mirror = 0, redir = 0;
-	struct tc_mirred p;
+	struct tc_mirred p = {};
 	struct rtattr *tail;
-	char d[16];
-
-	memset(d, 0, sizeof(d)-1);
-	memset(&p, 0, sizeof(struct tc_mirred));
+	char d[16] = {};
 
 	while (argc > 0) {
 

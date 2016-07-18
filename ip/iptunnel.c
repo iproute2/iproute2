@@ -60,12 +60,10 @@ static void set_tunnel_proto(struct ip_tunnel_parm *p, int proto)
 static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 {
 	int count = 0;
-	char medium[IFNAMSIZ];
+	char medium[IFNAMSIZ] = {};
 	int isatap = 0;
 
 	memset(p, 0, sizeof(*p));
-	memset(&medium, 0, sizeof(medium));
-
 	p->iph.version = 4;
 	p->iph.ihl = 5;
 #ifndef IP_DF
@@ -182,9 +180,8 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 				duparg2("name", *argv);
 			strncpy(p->name, *argv, IFNAMSIZ - 1);
 			if (cmd == SIOCCHGTUNNEL && count == 0) {
-				struct ip_tunnel_parm old_p;
+				struct ip_tunnel_parm old_p = {};
 
-				memset(&old_p, 0, sizeof(old_p));
 				if (tnl_get_ioctl(*argv, &old_p))
 					return -1;
 				*p = old_p;
@@ -296,11 +293,9 @@ static int do_del(int argc, char **argv)
 
 static void print_tunnel(struct ip_tunnel_parm *p)
 {
-	struct ip_tunnel_6rd ip6rd;
+	struct ip_tunnel_6rd ip6rd = {};
 	char s1[1024];
 	char s2[1024];
-
-	memset(&ip6rd, 0, sizeof(ip6rd));
 
 	/* Do not use format_host() for local addr,
 	 * symbolic name will not be useful.
@@ -312,10 +307,9 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	       p->iph.saddr ? rt_addr_n2a_r(AF_INET, 4, &p->iph.saddr, s2, sizeof(s2)) : "any");
 
 	if (p->iph.protocol == IPPROTO_IPV6 && (p->i_flags & SIT_ISATAP)) {
-		struct ip_tunnel_prl prl[16];
+		struct ip_tunnel_prl prl[16] = {};
 		int i;
 
-		memset(prl, 0, sizeof(prl));
 		prl[0].datalen = sizeof(prl) - sizeof(prl[0]);
 		prl[0].addr = htonl(INADDR_ANY);
 
@@ -405,7 +399,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char name[IFNAMSIZ];
 		int index, type;
-		struct ip_tunnel_parm p1;
+		struct ip_tunnel_parm p1 = {};
 		char *ptr;
 
 		buf[sizeof(buf) - 1] = 0;
@@ -427,7 +421,6 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		}
 		if (type != ARPHRD_TUNNEL && type != ARPHRD_IPGRE && type != ARPHRD_SIT)
 			continue;
-		memset(&p1, 0, sizeof(p1));
 		if (tnl_get_ioctl(name, &p1))
 			continue;
 		if ((p->link && p1.link != p->link) ||
@@ -470,14 +463,11 @@ static int do_show(int argc, char **argv)
 
 static int do_prl(int argc, char **argv)
 {
-	struct ip_tunnel_prl p;
+	struct ip_tunnel_prl p = {};
 	int count = 0;
 	int devname = 0;
 	int cmd = 0;
-	char medium[IFNAMSIZ];
-
-	memset(&p, 0, sizeof(p));
-	memset(&medium, 0, sizeof(medium));
+	char medium[IFNAMSIZ] = {};
 
 	while (argc > 0) {
 		if (strcmp(*argv, "prl-default") == 0) {
@@ -522,14 +512,11 @@ static int do_prl(int argc, char **argv)
 
 static int do_6rd(int argc, char **argv)
 {
-	struct ip_tunnel_6rd ip6rd;
+	struct ip_tunnel_6rd ip6rd = {};
 	int devname = 0;
 	int cmd = 0;
-	char medium[IFNAMSIZ];
+	char medium[IFNAMSIZ] = {};
 	inet_prefix prefix;
-
-	memset(&ip6rd, 0, sizeof(ip6rd));
-	memset(&medium, 0, sizeof(medium));
 
 	while (argc > 0) {
 		if (strcmp(*argv, "6rd-prefix") == 0) {

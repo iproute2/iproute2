@@ -135,9 +135,7 @@ static void print_tunnel(struct ip6_tnl_parm2 *p)
 static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 {
 	int count = 0;
-	char medium[IFNAMSIZ];
-
-	memset(medium, 0, sizeof(medium));
+	char medium[IFNAMSIZ] = {};
 
 	while (argc > 0) {
 		if (strcmp(*argv, "mode") == 0) {
@@ -276,9 +274,8 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 				duparg2("name", *argv);
 			strncpy(p->name, *argv, IFNAMSIZ - 1);
 			if (cmd == SIOCCHGTUNNEL && count == 0) {
-				struct ip6_tnl_parm2 old_p;
+				struct ip6_tnl_parm2 old_p = {};
 
-				memset(&old_p, 0, sizeof(old_p));
 				if (tnl_get_ioctl(*argv, &old_p))
 					return -1;
 				*p = old_p;
@@ -351,7 +348,7 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char name[IFNAMSIZ];
 		int index, type;
-		struct ip6_tnl_parm2 p1;
+		struct ip6_tnl_parm2 p1 = {};
 		char *ptr;
 
 		buf[sizeof(buf) - 1] = '\0';
@@ -372,7 +369,6 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 		}
 		if (type != ARPHRD_TUNNEL6 && type != ARPHRD_IP6GRE)
 			continue;
-		memset(&p1, 0, sizeof(p1));
 		ip6_tnl_parm_init(&p1, 0);
 		if (type == ARPHRD_IP6GRE)
 			p1.proto = IPPROTO_GRE;

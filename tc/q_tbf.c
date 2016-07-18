@@ -39,7 +39,7 @@ static void explain1(const char *arg, const char *val)
 static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	int ok = 0;
-	struct tc_tbf_qopt opt;
+	struct tc_tbf_qopt opt = {};
 	__u32 rtab[256];
 	__u32 ptab[256];
 	unsigned buffer = 0, mtu = 0, mpu = 0, latency = 0;
@@ -48,8 +48,6 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 	__u64 rate64 = 0, prate64 = 0;
-
-	memset(&opt, 0, sizeof(opt));
 
 	while (argc > 0) {
 		if (matches(*argv, "limit") == 0) {

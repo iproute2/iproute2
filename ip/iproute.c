@@ -140,10 +140,10 @@ static int flush_update(void)
 static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 {
 	struct rtmsg *r = NLMSG_DATA(n);
-	inet_prefix dst;
-	inet_prefix src;
-	inet_prefix via;
-	inet_prefix prefsrc;
+	inet_prefix dst = { .family = r->rtm_family };
+	inet_prefix src = { .family = r->rtm_family };
+	inet_prefix via = { .family = r->rtm_family };
+	inet_prefix prefsrc = { .family = r->rtm_family };
 	__u32 table;
 	static int ip6_multiple_tables;
 
@@ -211,19 +211,13 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	if (filter.rprefsrc.family && r->rtm_family != filter.rprefsrc.family)
 		return 0;
 
-	memset(&dst, 0, sizeof(dst));
-	dst.family = r->rtm_family;
 	if (tb[RTA_DST])
 		memcpy(&dst.data, RTA_DATA(tb[RTA_DST]), (r->rtm_dst_len+7)/8);
 	if (filter.rsrc.family || filter.msrc.family) {
-		memset(&src, 0, sizeof(src));
-		src.family = r->rtm_family;
 		if (tb[RTA_SRC])
 			memcpy(&src.data, RTA_DATA(tb[RTA_SRC]), (r->rtm_src_len+7)/8);
 	}
 	if (filter.rvia.bitlen > 0) {
-		memset(&via, 0, sizeof(via));
-		via.family = r->rtm_family;
 		if (tb[RTA_GATEWAY])
 			memcpy(&via.data, RTA_DATA(tb[RTA_GATEWAY]), host_len/8);
 		if (tb[RTA_VIA]) {
@@ -235,8 +229,6 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		}
 	}
 	if (filter.rprefsrc.bitlen > 0) {
-		memset(&prefsrc, 0, sizeof(prefsrc));
-		prefsrc.family = r->rtm_family;
 		if (tb[RTA_PREFSRC])
 			memcpy(&prefsrc.data, RTA_DATA(tb[RTA_PREFSRC]), host_len/8);
 	}
@@ -829,7 +821,14 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct rtmsg		r;
 		char			buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.r.rtm_family = preferred_family,
+		.r.rtm_table = RT_TABLE_MAIN,
+		.r.rtm_scope = RT_SCOPE_NOWHERE,
+	};
 	char  mxbuf[256];
 	struct rtattr *mxrta = (void *)mxbuf;
 	unsigned int mxlock = 0;
@@ -841,15 +840,6 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	int table_ok = 0;
 	int raw = 0;
 	int type_ok = 0;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
-	req.r.rtm_family = preferred_family;
-	req.r.rtm_table = RT_TABLE_MAIN;
-	req.r.rtm_scope = RT_SCOPE_NOWHERE;
 
 	if (cmd != RTM_DELROUTE) {
 		req.r.rtm_protocol = RTPROT_BOOT;
@@ -1277,20 +1267,15 @@ static int rtnl_rtcache_request(struct rtnl_handle *rth, int family)
 	struct {
 		struct nlmsghdr nlh;
 		struct rtmsg rtm;
-	} req;
-	struct sockaddr_nl nladdr;
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	memset(&req, 0, sizeof(req));
-	nladdr.nl_family = AF_NETLINK;
-
-	req.nlh.nlmsg_len = sizeof(req);
-	req.nlh.nlmsg_type = RTM_GETROUTE;
-	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_REQUEST;
-	req.nlh.nlmsg_pid = 0;
-	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
-	req.rtm.rtm_family = family;
-	req.rtm.rtm_flags |= RTM_F_CLONED;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_type = RTM_GETROUTE,
+		.nlh.nlmsg_flags = NLM_F_ROOT | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.rtm.rtm_family = family,
+		.rtm.rtm_flags = RTM_F_CLONED,
+	};
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 
 	return sendto(rth->fd, (void *)&req, sizeof(req), 0, (struct sockaddr *)&nladdr, sizeof(nladdr));
 }
@@ -1641,29 +1626,20 @@ static int iproute_get(int argc, char **argv)
 		struct nlmsghdr	n;
 		struct rtmsg		r;
 		char			buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_GETROUTE,
+		.r.rtm_family = preferred_family,
+	};
 	char  *idev = NULL;
 	char  *odev = NULL;
 	int connected = 0;
 	int from_ok = 0;
 	unsigned int mark = 0;
 
-	memset(&req, 0, sizeof(req));
-
 	iproute_reset_filter(0);
 	filter.cloned = 2;
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = RTM_GETROUTE;
-	req.r.rtm_family = preferred_family;
-	req.r.rtm_table = 0;
-	req.r.rtm_protocol = 0;
-	req.r.rtm_scope = 0;
-	req.r.rtm_type = 0;
-	req.r.rtm_src_len = 0;
-	req.r.rtm_dst_len = 0;
-	req.r.rtm_tos = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "tos") == 0 ||

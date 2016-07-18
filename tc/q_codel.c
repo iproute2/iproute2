@@ -175,7 +175,7 @@ static int codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 static int codel_print_xstats(struct qdisc_util *qu, FILE *f,
 			      struct rtattr *xstats)
 {
-	struct tc_codel_xstats _st, *st;
+	struct tc_codel_xstats _st = {}, *st;
 
 	SPRINT_BUF(b1);
 
@@ -184,7 +184,6 @@ static int codel_print_xstats(struct qdisc_util *qu, FILE *f,
 
 	st = RTA_DATA(xstats);
 	if (RTA_PAYLOAD(xstats) < sizeof(*st)) {
-		memset(&_st, 0, sizeof(_st));
 		memcpy(&_st, st, RTA_PAYLOAD(xstats));
 		st = &_st;
 	}

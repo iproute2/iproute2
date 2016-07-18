@@ -361,10 +361,8 @@ static int meta_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 {
 	int opnd;
 	struct bstr *a;
-	struct tcf_meta_hdr meta_hdr;
+	struct tcf_meta_hdr meta_hdr = {};
 	unsigned long lvalue = 0, rvalue = 0;
-
-	memset(&meta_hdr, 0, sizeof(meta_hdr));
 
 	if (args == NULL)
 		return PARSE_ERR(args, "meta: missing arguments");

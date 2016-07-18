@@ -2166,11 +2166,17 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 
 static int tcpdiag_send(int fd, int protocol, struct filter *f)
 {
-	struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	struct {
 		struct nlmsghdr nlh;
 		struct inet_diag_req r;
-	} req;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_flags = NLM_F_ROOT | NLM_F_MATCH | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = MAGIC_SEQ,
+		.r.idiag_family = AF_INET,
+		.r.idiag_states = f->states,
+	};
 	char    *bc = NULL;
 	int	bclen;
 	struct msghdr msg;
@@ -2181,20 +2187,10 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	if (protocol == IPPROTO_UDP)
 		return -1;
 
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
-
-	req.nlh.nlmsg_len = sizeof(req);
 	if (protocol == IPPROTO_TCP)
 		req.nlh.nlmsg_type = TCPDIAG_GETSOCK;
 	else
 		req.nlh.nlmsg_type = DCCPDIAG_GETSOCK;
-	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
-	req.nlh.nlmsg_pid = 0;
-	req.nlh.nlmsg_seq = MAGIC_SEQ;
-	memset(&req.r, 0, sizeof(req.r));
-	req.r.idiag_family = AF_INET;
-	req.r.idiag_states = f->states;
 	if (show_mem) {
 		req.r.idiag_ext |= (1<<(INET_DIAG_MEMINFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_SKMEMINFO-1));
@@ -2239,8 +2235,7 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 
 static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 {
-	struct sockaddr_nl nladdr;
-
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	DIAG_REQUEST(req, struct inet_diag_req_v2 r);
 	char    *bc = NULL;
 	int	bclen;
@@ -2251,9 +2246,6 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 
 	if (family == PF_UNSPEC)
 		return tcpdiag_send(fd, protocol, f);
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
 
 	memset(&req.r, 0, sizeof(req.r));
 	req.r.sdiag_family = family;
@@ -2750,14 +2742,13 @@ static void unix_stats_print(struct sockstat *list, struct filter *f)
 		}
 
 		if (use_proc && f->f) {
-			struct sockstat st;
+			struct sockstat st = {
+				.local.family = AF_UNIX,
+				.remote.family = AF_UNIX,
+			};
 
-			st.local.family = AF_UNIX;
-			st.remote.family = AF_UNIX;
 			memcpy(st.local.data, &s->name, sizeof(s->name));
-			if (strcmp(peer, "*") == 0)
-				memset(st.remote.data, 0, sizeof(peer));
-			else
+			if (strcmp(peer, "*"))
 				memcpy(st.remote.data, &peer, sizeof(peer));
 			if (run_ssfilter(f->f, &st) == 0)
 				continue;

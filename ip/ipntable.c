@@ -66,25 +66,18 @@ static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct ndtmsg		ndtm;
 		char			buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndtmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.ndtm.ndtm_family = preferred_family,
+	};
 	char *namep = NULL;
 	char *threshsp = NULL;
 	char *gc_intp = NULL;
-	char parms_buf[1024];
+	char parms_buf[1024] = {};
 	struct rtattr *parms_rta = (struct rtattr *)parms_buf;
 	int parms_change = 0;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndtmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
-
-	req.ndtm.ndtm_family = preferred_family;
-	req.ndtm.ndtm_pad1 = 0;
-	req.ndtm.ndtm_pad2 = 0;
-
-	memset(&parms_buf, 0, sizeof(parms_buf));
 
 	parms_rta->rta_type = NDTA_PARMS;
 	parms_rta->rta_len = RTA_LENGTH(0);
@@ -322,14 +315,12 @@ static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 static const char *ntable_strtime_delta(__u32 msec)
 {
 	static char str[32];
-	struct timeval now;
+	struct timeval now = {};
 	time_t t;
 	struct tm *tp;
 
 	if (msec == 0)
 		goto error;
-
-	memset(&now, 0, sizeof(now));
 
 	if (gettimeofday(&now, NULL) < 0) {
 		perror("gettimeofday");

@@ -175,22 +175,16 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	int dist_size = 0;
 	struct rtattr *tail;
 	struct tc_netem_qopt opt = { .limit = 1000 };
-	struct tc_netem_corr cor;
-	struct tc_netem_reorder reorder;
-	struct tc_netem_corrupt corrupt;
+	struct tc_netem_corr cor = {};
+	struct tc_netem_reorder reorder = {};
+	struct tc_netem_corrupt corrupt = {};
 	struct tc_netem_gimodel gimodel;
 	struct tc_netem_gemodel gemodel;
-	struct tc_netem_rate rate;
+	struct tc_netem_rate rate = {};
 	__s16 *dist_data = NULL;
 	__u16 loss_type = NETEM_LOSS_UNSPEC;
-	int present[__TCA_NETEM_MAX];
+	int present[__TCA_NETEM_MAX] = {};
 	__u64 rate64 = 0;
-
-	memset(&cor, 0, sizeof(cor));
-	memset(&reorder, 0, sizeof(reorder));
-	memset(&corrupt, 0, sizeof(corrupt));
-	memset(&rate, 0, sizeof(rate));
-	memset(present, 0, sizeof(present));
 
 	for ( ; argc > 0; --argc, ++argv) {
 		if (matches(*argv, "limit") == 0) {

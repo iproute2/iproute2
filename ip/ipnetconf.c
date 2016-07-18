@@ -154,7 +154,11 @@ static int do_show(int argc, char **argv)
 		struct nlmsghdr		n;
 		struct netconfmsg	ncm;
 		char			buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct netconfmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+		.n.nlmsg_type = RTM_GETNETCONF,
+	};
 
 	ipnetconf_reset_filter(0);
 	filter.family = preferred_family;
@@ -176,10 +180,6 @@ static int do_show(int argc, char **argv)
 
 	ll_init_map(&rth);
 	if (filter.ifindex) {
-		memset(&req, 0, sizeof(req));
-		req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct netconfmsg));
-		req.n.nlmsg_flags = NLM_F_REQUEST|NLM_F_ACK;
-		req.n.nlmsg_type = RTM_GETNETCONF;
 		req.ncm.ncm_family = filter.family;
 		if (filter.ifindex)
 			addattr_l(&req.n, sizeof(req), NETCONFA_IFINDEX,

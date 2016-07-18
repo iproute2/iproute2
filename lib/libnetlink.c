@@ -112,19 +112,16 @@ int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int family, int type,
 		/* attribute has to be NLMSG aligned */
 		struct rtattr ext_req __attribute__ ((aligned(NLMSG_ALIGNTO)));
 		__u32 ext_filter_mask;
-	} req;
-
-	memset(&req, 0, sizeof(req));
-	req.nlh.nlmsg_len = sizeof(req);
-	req.nlh.nlmsg_type = type;
-	req.nlh.nlmsg_flags = NLM_F_DUMP|NLM_F_REQUEST;
-	req.nlh.nlmsg_pid = 0;
-	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
-	req.ifm.ifi_family = family;
-
-	req.ext_req.rta_type = IFLA_EXT_MASK;
-	req.ext_req.rta_len = RTA_LENGTH(sizeof(__u32));
-	req.ext_filter_mask = filt_mask;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_type = type,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.ifm.ifi_family = family,
+		.ext_req.rta_type = IFLA_EXT_MASK,
+		.ext_req.rta_len = RTA_LENGTH(sizeof(__u32)),
+		.ext_filter_mask = filt_mask,
+	};
 
 	return send(rth->fd, (void*)&req, sizeof(req), 0);
 }
@@ -136,19 +133,17 @@ int rtnl_wilddump_req_filter_fn(struct rtnl_handle *rth, int family, int type,
 		struct nlmsghdr nlh;
 		struct ifinfomsg ifm;
 		char buf[1024];
-	} req;
+	} req = {
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.nlh.nlmsg_type = type,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.ifm.ifi_family = family,
+	};
 	int err;
 
 	if (!filter_fn)
 		return -EINVAL;
-
-	memset(&req, 0, sizeof(req));
-	req.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.nlh.nlmsg_type = type;
-	req.nlh.nlmsg_flags = NLM_F_DUMP|NLM_F_REQUEST;
-	req.nlh.nlmsg_pid = 0;
-	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
-	req.ifm.ifi_family = family;
 
 	err = filter_fn(&req.nlh, sizeof(req));
 	if (err)
@@ -197,7 +192,12 @@ int rtnl_send_check(struct rtnl_handle *rth, const void *buf, int len)
 
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 {
-	struct nlmsghdr nlh;
+	struct nlmsghdr nlh = {
+		.nlmsg_len = NLMSG_LENGTH(len),
+		.nlmsg_type = type,
+		.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlmsg_seq = rth->dump = ++rth->seq,
+	};
 	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	struct iovec iov[2] = {
 		{ .iov_base = &nlh, .iov_len = sizeof(nlh) },
@@ -205,16 +205,10 @@ int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req, int len)
 	};
 	struct msghdr msg = {
 		.msg_name = &nladdr,
-		.msg_namelen = 	sizeof(nladdr),
+		.msg_namelen = sizeof(nladdr),
 		.msg_iov = iov,
 		.msg_iovlen = 2,
 	};
-
-	nlh.nlmsg_len = NLMSG_LENGTH(len);
-	nlh.nlmsg_type = type;
-	nlh.nlmsg_flags = NLM_F_DUMP|NLM_F_REQUEST;
-	nlh.nlmsg_pid = 0;
-	nlh.nlmsg_seq = rth->dump = ++rth->seq;
 
 	return sendmsg(rth->fd, &msg, 0);
 }
@@ -365,7 +359,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	int status;
 	unsigned seq;
 	struct nlmsghdr *h;
-	struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	struct iovec iov = {
 		.iov_base = (void*) n,
 		.iov_len = n->nlmsg_len
@@ -376,10 +370,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 		.msg_iov = &iov,
 		.msg_iovlen = 1,
 	};
-	char   buf[32768];
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
+	char   buf[32768] = {};
 
 	n->nlmsg_seq = seq = ++rtnl->seq;
 
@@ -391,8 +382,6 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 		perror("Cannot talk to rtnetlink");
 		return -1;
 	}
-
-	memset(buf,0,sizeof(buf));
 
 	iov.iov_base = buf;
 	while (1) {
@@ -498,7 +487,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 {
 	int status;
 	struct nlmsghdr *h;
-	struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	struct iovec iov;
 	struct msghdr msg = {
 		.msg_name = &nladdr,
@@ -513,11 +502,6 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 		msg.msg_control = &cmsgbuf;
 		msg.msg_controllen = sizeof(cmsgbuf);
 	}
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
-	nladdr.nl_pid = 0;
-	nladdr.nl_groups = 0;
 
 	iov.iov_base = buf;
 	while (1) {
@@ -595,14 +579,9 @@ int rtnl_from_file(FILE *rtnl, rtnl_listen_filter_t handler,
 		   void *jarg)
 {
 	int status;
-	struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	char   buf[16384];
 	struct nlmsghdr *h = (void*)buf;
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
-	nladdr.nl_pid = 0;
-	nladdr.nl_groups = 0;
 
 	while (1) {
 		int err, len;

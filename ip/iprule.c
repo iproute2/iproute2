@@ -316,19 +316,15 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct rtmsg		r;
 		char			buf[1024];
-	} req;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_type = cmd;
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.r.rtm_family = preferred_family;
-	req.r.rtm_protocol = RTPROT_BOOT;
-	req.r.rtm_scope = RT_SCOPE_UNIVERSE;
-	req.r.rtm_table = 0;
-	req.r.rtm_type = RTN_UNSPEC;
-	req.r.rtm_flags = 0;
+	} req = {
+		.n.nlmsg_type = cmd,
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.r.rtm_family = preferred_family,
+		.r.rtm_protocol = RTPROT_BOOT,
+		.r.rtm_scope = RT_SCOPE_UNIVERSE,
+		.r.rtm_type = RTN_UNSPEC,
+	};
 
 	if (cmd == RTM_NEWRULE) {
 		req.n.nlmsg_flags |= NLM_F_CREATE|NLM_F_EXCL;

@@ -234,18 +234,15 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct br_port_msg	bpm;
 		char			buf[1024];
-	} req;
-	struct br_mdb_entry entry;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_port_msg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.bpm.family = PF_BRIDGE,
+	};
+	struct br_mdb_entry entry = {};
 	char *d = NULL, *p = NULL, *grp = NULL;
 	short vid = 0;
-
-	memset(&req, 0, sizeof(req));
-	memset(&entry, 0, sizeof(entry));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_port_msg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
-	req.bpm.family = PF_BRIDGE;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {

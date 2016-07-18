@@ -42,23 +42,19 @@ static int usage(void)
 int genl_ctrl_resolve_family(const char *family)
 {
 	struct rtnl_handle rth;
-	struct nlmsghdr *nlh;
-	struct genlmsghdr *ghdr;
 	int ret = 0;
 	struct {
 		struct nlmsghdr         n;
+		struct genlmsghdr	g;
 		char                    buf[4096];
-	} req;
-
-	memset(&req, 0, sizeof(req));
-
-	nlh = &req.n;
-	nlh->nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	nlh->nlmsg_type = GENL_ID_CTRL;
-
-	ghdr = NLMSG_DATA(&req.n);
-	ghdr->cmd = CTRL_CMD_GETFAMILY;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN),
+		.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+		.n.nlmsg_type = GENL_ID_CTRL,
+		.g.cmd = CTRL_CMD_GETFAMILY,
+	};
+	struct nlmsghdr *nlh = &req.n;
+	struct genlmsghdr *ghdr = &req.g;
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_GENERIC) < 0) {
 		fprintf(stderr, "Cannot open generic netlink socket\n");
@@ -74,7 +70,6 @@ int genl_ctrl_resolve_family(const char *family)
 
 	{
 		struct rtattr *tb[CTRL_ATTR_MAX + 1];
-		struct genlmsghdr *ghdr = NLMSG_DATA(nlh);
 		int len = nlh->nlmsg_len;
 		struct rtattr *attrs;
 
@@ -291,24 +286,19 @@ static int print_ctrl2(const struct sockaddr_nl *who,
 static int ctrl_list(int cmd, int argc, char **argv)
 {
 	struct rtnl_handle rth;
-	struct nlmsghdr *nlh;
-	struct genlmsghdr *ghdr;
 	int ret = -1;
 	char d[GENL_NAMSIZ];
 	struct {
 		struct nlmsghdr         n;
+		struct genlmsghdr	g;
 		char                    buf[4096];
-	} req;
-
-	memset(&req, 0, sizeof(req));
-
-	nlh = &req.n;
-	nlh->nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN);
-	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	nlh->nlmsg_type = GENL_ID_CTRL;
-
-	ghdr = NLMSG_DATA(&req.n);
-	ghdr->cmd = CTRL_CMD_GETFAMILY;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(GENL_HDRLEN),
+		.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+		.n.nlmsg_type = GENL_ID_CTRL,
+		.g.cmd = CTRL_CMD_GETFAMILY,
+	};
+	struct nlmsghdr *nlh = &req.n;
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_GENERIC) < 0) {
 		fprintf(stderr, "Cannot open generic netlink socket\n");

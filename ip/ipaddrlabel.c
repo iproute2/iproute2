@@ -127,22 +127,17 @@ static int ipaddrlabel_modify(int cmd, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct ifaddrlblmsg	ifal;
 		char			buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_type = cmd,
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrlblmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.ifal.ifal_family = preferred_family,
+	};
 
-	inet_prefix prefix;
+	inet_prefix prefix = {};
 	uint32_t label = 0xffffffffUL;
 	char *p = NULL;
 	char *l = NULL;
-
-	memset(&req, 0, sizeof(req));
-	memset(&prefix, 0, sizeof(prefix));
-
-	req.n.nlmsg_type = cmd;
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrlblmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.ifal.ifal_family = preferred_family;
-	req.ifal.ifal_prefixlen = 0;
-	req.ifal.ifal_index = 0;
 
 	if (cmd == RTM_NEWADDRLABEL) {
 		req.n.nlmsg_flags |= NLM_F_CREATE|NLM_F_EXCL;

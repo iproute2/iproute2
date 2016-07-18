@@ -93,17 +93,14 @@ static void read_dev_mcast(struct ma_info **result_p)
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		char hexa[256];
-		struct ma_info m;
+		struct ma_info m = { .addr.family = AF_PACKET };
 		int len;
 		int st;
 
-		memset(&m, 0, sizeof(m));
 		sscanf(buf, "%d%s%d%d%s", &m.index, m.name, &m.users, &st,
 		       hexa);
 		if (filter.dev && strcmp(filter.dev, m.name))
 			continue;
-
-		m.addr.family = AF_PACKET;
 
 		len = parse_hex(hexa, (unsigned char *)&m.addr.data, sizeof(m.addr.data));
 		if (len >= 0) {
@@ -122,21 +119,20 @@ static void read_dev_mcast(struct ma_info **result_p)
 
 static void read_igmp(struct ma_info **result_p)
 {
-	struct ma_info m;
+	struct ma_info m = {
+		.addr.family = AF_INET,
+		.addr.bitlen = 32,
+		.addr.bytelen = 4,
+	};
 	char buf[256];
 	FILE *fp = fopen("/proc/net/igmp", "r");
 
 	if (!fp)
 		return;
-	memset(&m, 0, sizeof(m));
 	if (!fgets(buf, sizeof(buf), fp)) {
 		fclose(fp);
 		return;
 	}
-
-	m.addr.family = AF_INET;
-	m.addr.bitlen = 32;
-	m.addr.bytelen = 4;
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		struct ma_info *ma;
@@ -169,16 +165,13 @@ static void read_igmp6(struct ma_info **result_p)
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		char hexa[256];
-		struct ma_info m;
+		struct ma_info m = { .addr.family = AF_INET6 };
 		int len;
 
-		memset(&m, 0, sizeof(m));
 		sscanf(buf, "%d%s%s%d", &m.index, m.name, hexa, &m.users);
 
 		if (filter.dev && strcmp(filter.dev, m.name))
 			continue;
-
-		m.addr.family = AF_INET6;
 
 		len = parse_hex(hexa, (unsigned char *)&m.addr.data, sizeof(m.addr.data));
 		if (len >= 0) {
@@ -274,10 +267,8 @@ static int multiaddr_list(int argc, char **argv)
 
 static int multiaddr_modify(int cmd, int argc, char **argv)
 {
-	struct ifreq ifr;
+	struct ifreq ifr = {};
 	int fd;
-
-	memset(&ifr, 0, sizeof(ifr));
 
 	if (cmd == RTM_NEWADDR)
 		cmd = SIOCADDMULTI;

@@ -255,7 +255,12 @@ static int brlink_modify(int argc, char **argv)
 		struct nlmsghdr  n;
 		struct ifinfomsg ifm;
 		char             buf[512];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_SETLINK,
+		.ifm.ifi_family = PF_BRIDGE,
+	};
 	char *d = NULL;
 	__s8 learning = -1;
 	__s8 learning_sync = -1;
@@ -270,13 +275,6 @@ static int brlink_modify(int argc, char **argv)
 	__s16 mode = -1;
 	__u16 flags = 0;
 	struct rtattr *nest;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = RTM_SETLINK;
-	req.ifm.ifi_family = PF_BRIDGE;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {

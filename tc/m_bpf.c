@@ -63,7 +63,7 @@ static int bpf_parse_opt(struct action_util *a, int *ptr_argc, char ***ptr_argv,
 			 int tca_id, struct nlmsghdr *n)
 {
 	const char *bpf_obj = NULL, *bpf_uds_name = NULL;
-	struct tc_act_bpf parm;
+	struct tc_act_bpf parm = { .action = TC_ACT_PIPE };
 	bool seen_run = false;
 	struct rtattr *tail;
 	int argc, ret = 0;
@@ -103,9 +103,6 @@ opt_bpf:
 
 		NEXT_ARG_FWD();
 	}
-
-	memset(&parm, 0, sizeof(parm));
-	parm.action = TC_ACT_PIPE;
 
 	if (argc) {
 		if (matches(*argv, "reclassify") == 0) {

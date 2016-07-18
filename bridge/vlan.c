@@ -32,21 +32,18 @@ static int vlan_modify(int cmd, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct ifinfomsg	ifm;
 		char			buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = cmd,
+		.ifm.ifi_family = PF_BRIDGE,
+	};
 	char *d = NULL;
 	short vid = -1;
 	short vid_end = -1;
 	struct rtattr *afspec;
-	struct bridge_vlan_info vinfo;
+	struct bridge_vlan_info vinfo = {};
 	unsigned short flags = 0;
-
-	memset(&vinfo, 0, sizeof(vinfo));
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = cmd;
-	req.ifm.ifi_family = PF_BRIDGE;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {

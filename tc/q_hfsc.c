@@ -73,9 +73,7 @@ explain1(char *arg)
 static int
 hfsc_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
-	struct tc_hfsc_qopt qopt;
-
-	memset(&qopt, 0, sizeof(qopt));
+	struct tc_hfsc_qopt qopt = {};
 
 	while (argc > 0) {
 		if (matches(*argv, "default") == 0) {
@@ -146,14 +144,9 @@ static int
 hfsc_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 		     struct nlmsghdr *n)
 {
-	struct tc_service_curve rsc, fsc, usc;
-	int rsc_ok, fsc_ok, usc_ok;
+	struct tc_service_curve rsc = {}, fsc = {}, usc = {};
+	int rsc_ok = 0, fsc_ok = 0, usc_ok = 0;
 	struct rtattr *tail;
-
-	memset(&rsc, 0, sizeof(rsc));
-	memset(&fsc, 0, sizeof(fsc));
-	memset(&usc, 0, sizeof(usc));
-	rsc_ok = fsc_ok = usc_ok = 0;
 
 	while (argc > 0) {
 		if (matches(*argv, "rt") == 0) {

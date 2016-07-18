@@ -90,9 +90,8 @@ static int bpf(int cmd, union bpf_attr *attr, unsigned int size)
 static int bpf_map_update(int fd, const void *key, const void *value,
 			  uint64_t flags)
 {
-	union bpf_attr attr;
+	union bpf_attr attr = {};
 
-	memset(&attr, 0, sizeof(attr));
 	attr.map_fd = fd;
 	attr.key = bpf_ptr_to_u64(key);
 	attr.value = bpf_ptr_to_u64(value);
@@ -247,7 +246,7 @@ static int bpf_map_selfcheck_pinned(int fd, const struct bpf_elf_map *map,
 				    int length)
 {
 	char file[PATH_MAX], buff[4096];
-	struct bpf_elf_map tmp, zero;
+	struct bpf_elf_map tmp = {}, zero = {};
 	unsigned int val;
 	FILE *fp;
 
@@ -259,7 +258,6 @@ static int bpf_map_selfcheck_pinned(int fd, const struct bpf_elf_map *map,
 		return -EIO;
 	}
 
-	memset(&tmp, 0, sizeof(tmp));
 	while (fgets(buff, sizeof(buff), fp)) {
 		if (sscanf(buff, "map_type:\t%u", &val) == 1)
 			tmp.type = val;
@@ -278,7 +276,6 @@ static int bpf_map_selfcheck_pinned(int fd, const struct bpf_elf_map *map,
 	if (!memcmp(&tmp, map, length)) {
 		return 0;
 	} else {
-		memset(&zero, 0, sizeof(zero));
 		/* If kernel doesn't have eBPF-related fdinfo, we cannot do much,
 		 * so just accept it. We know we do have an eBPF fd and in this
 		 * case, everything is 0. It is guaranteed that no such map exists
@@ -469,7 +466,7 @@ done:
 
 static int bpf_obj_get(const char *pathname)
 {
-	union bpf_attr attr;
+	union bpf_attr attr = {};
 	char tmp[PATH_MAX];
 
 	if (strlen(pathname) > 2 && pathname[0] == 'm' &&
@@ -479,7 +476,6 @@ static int bpf_obj_get(const char *pathname)
 		pathname = tmp;
 	}
 
-	memset(&attr, 0, sizeof(attr));
 	attr.pathname = bpf_ptr_to_u64(pathname);
 
 	return bpf(BPF_OBJ_GET, &attr, sizeof(attr));
@@ -810,9 +806,8 @@ static int bpf_map_create(enum bpf_map_type type, uint32_t size_key,
 			  uint32_t size_value, uint32_t max_elem,
 			  uint32_t flags)
 {
-	union bpf_attr attr;
+	union bpf_attr attr = {};
 
-	memset(&attr, 0, sizeof(attr));
 	attr.map_type = type;
 	attr.key_size = size_key;
 	attr.value_size = size_value;
@@ -826,9 +821,8 @@ static int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
 			 size_t size_insns, const char *license, char *log,
 			 size_t size_log)
 {
-	union bpf_attr attr;
+	union bpf_attr attr = {};
 
-	memset(&attr, 0, sizeof(attr));
 	attr.prog_type = type;
 	attr.insns = bpf_ptr_to_u64(insns);
 	attr.insn_cnt = size_insns / sizeof(struct bpf_insn);
@@ -845,9 +839,8 @@ static int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
 
 static int bpf_obj_pin(int fd, const char *pathname)
 {
-	union bpf_attr attr;
+	union bpf_attr attr = {};
 
-	memset(&attr, 0, sizeof(attr));
 	attr.pathname = bpf_ptr_to_u64(pathname);
 	attr.bpf_fd = fd;
 
@@ -1632,7 +1625,7 @@ static bool bpf_pinning_reserved(uint32_t pinning)
 static void bpf_hash_init(struct bpf_elf_ctx *ctx, const char *db_file)
 {
 	struct bpf_hash_entry *entry;
-	char subpath[PATH_MAX];
+	char subpath[PATH_MAX] = {};
 	uint32_t pinning;
 	FILE *fp;
 	int ret;
@@ -1641,7 +1634,6 @@ static void bpf_hash_init(struct bpf_elf_ctx *ctx, const char *db_file)
 	if (!fp)
 		return;
 
-	memset(subpath, 0, sizeof(subpath));
 	while ((ret = bpf_read_pin_mapping(fp, &pinning, subpath))) {
 		if (ret == -1) {
 			fprintf(stderr, "Database %s is corrupted at: %s\n",
@@ -1869,15 +1861,13 @@ static int
 bpf_map_set_send(int fd, struct sockaddr_un *addr, unsigned int addr_len,
 		 const struct bpf_map_data *aux, unsigned int entries)
 {
-	struct bpf_map_set_msg msg;
+	struct bpf_map_set_msg msg = {
+		.aux.uds_ver = BPF_SCM_AUX_VER,
+		.aux.num_ent = entries,
+	};
 	int *cmsg_buf, min_fd;
 	char *amsg_buf;
 	int i;
-
-	memset(&msg, 0, sizeof(msg));
-
-	msg.aux.uds_ver = BPF_SCM_AUX_VER;
-	msg.aux.num_ent = entries;
 
 	strncpy(msg.aux.obj_name, aux->obj, sizeof(msg.aux.obj_name));
 	memcpy(&msg.aux.obj_st, aux->st, sizeof(msg.aux.obj_st));
@@ -1952,8 +1942,13 @@ bpf_map_set_recv(int fd, int *fds,  struct bpf_map_aux *aux,
 int bpf_send_map_fds(const char *path, const char *obj)
 {
 	struct bpf_elf_ctx *ctx = &__ctx;
-	struct sockaddr_un addr;
-	struct bpf_map_data bpf_aux;
+	struct sockaddr_un addr = { .sun_family = AF_UNIX };
+	struct bpf_map_data bpf_aux = {
+		.fds = ctx->map_fds,
+		.ent = ctx->maps,
+		.st  = &ctx->stat,
+		.obj = obj,
+	};
 	int fd, ret;
 
 	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -1963,8 +1958,6 @@ int bpf_send_map_fds(const char *path, const char *obj)
 		return -1;
 	}
 
-	memset(&addr, 0, sizeof(addr));
-	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
 
 	ret = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
@@ -1973,13 +1966,6 @@ int bpf_send_map_fds(const char *path, const char *obj)
 			path, strerror(errno));
 		return -1;
 	}
-
-	memset(&bpf_aux, 0, sizeof(bpf_aux));
-
-	bpf_aux.fds = ctx->map_fds;
-	bpf_aux.ent = ctx->maps;
-	bpf_aux.st  = &ctx->stat;
-	bpf_aux.obj = obj;
 
 	ret = bpf_map_set_send(fd, &addr, sizeof(addr), &bpf_aux,
 			       bpf_maps_count(ctx));
@@ -1995,7 +1981,7 @@ int bpf_send_map_fds(const char *path, const char *obj)
 int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
 		     unsigned int entries)
 {
-	struct sockaddr_un addr;
+	struct sockaddr_un addr = { .sun_family = AF_UNIX };
 	int fd, ret;
 
 	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -2005,8 +1991,6 @@ int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
 		return -1;
 	}
 
-	memset(&addr, 0, sizeof(addr));
-	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
 
 	ret = bind(fd, (struct sockaddr *)&addr, sizeof(addr));

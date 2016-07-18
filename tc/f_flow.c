@@ -133,15 +133,12 @@ out:
 static int flow_parse_opt(struct filter_util *fu, char *handle,
 			  int argc, char **argv, struct nlmsghdr *n)
 {
-	struct tc_police tp;
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
 	__u32 mask = ~0U, xor = 0;
 	__u32 keys = 0, nkeys = 0;
 	__u32 mode = FLOW_MODE_MAP;
 	__u32 tmp;
-
-	memset(&tp, 0, sizeof(tp));
 
 	if (handle) {
 		if (get_u32(&t->tcm_handle, handle, 0)) {

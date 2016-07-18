@@ -177,9 +177,7 @@ static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 
 	for (t = tree; t; t = t->next) {
 		struct rtattr *tail = NLMSG_TAIL(n);
-		struct tcf_ematch_hdr hdr = {
-			.flags = t->relation
-		};
+		struct tcf_ematch_hdr hdr = { .flags = t->relation };
 
 		if (t->inverted)
 			hdr.flags |= TCF_EM_INVERT;
