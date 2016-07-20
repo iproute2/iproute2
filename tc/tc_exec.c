@@ -71,9 +71,8 @@ reg:
 
 	return eu;
 noexist:
-	eu = malloc(sizeof(*eu));
+	eu = calloc(1, sizeof(*eu));
 	if (eu) {
-		memset(eu, 0, sizeof(*eu));
 		strncpy(eu->id, name, sizeof(eu->id) - 1);
 		eu->parse_eopt = parse_noeopt;
 		goto reg;
@@ -85,7 +84,7 @@ noexist:
 int do_exec(int argc, char **argv)
 {
 	struct exec_util *eu;
-	char kind[16];
+	char kind[16] = {};
 
 	if (argc < 1) {
 		fprintf(stderr, "No command given, try \"tc exec help\".\n");
@@ -97,7 +96,6 @@ int do_exec(int argc, char **argv)
 		return 0;
 	}
 
-	memset(kind, 0, sizeof(kind));
 	strncpy(kind, *argv, sizeof(kind) - 1);
 
 	eu = get_exec_kind(kind);

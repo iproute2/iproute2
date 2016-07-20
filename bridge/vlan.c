@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <linux/if_bridge.h>
 #include <linux/if_ether.h>
+#include <json_writer.h>
 #include <string.h>
 
 #include "libnetlink.h"
@@ -14,6 +15,8 @@
 #include "utils.h"
 
 static unsigned int filter_index, filter_vlan;
+
+json_writer_t *jw_global = NULL;
 
 static void usage(void)
 {
@@ -29,21 +32,18 @@ static int vlan_modify(int cmd, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct ifinfomsg	ifm;
 		char			buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = cmd,
+		.ifm.ifi_family = PF_BRIDGE,
+	};
 	char *d = NULL;
 	short vid = -1;
 	short vid_end = -1;
 	struct rtattr *afspec;
-	struct bridge_vlan_info vinfo;
+	struct bridge_vlan_info vinfo = {};
 	unsigned short flags = 0;
-
-	memset(&vinfo, 0, sizeof(vinfo));
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = cmd;
-	req.ifm.ifi_family = PF_BRIDGE;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -158,6 +158,28 @@ static int filter_vlan_check(struct bridge_vlan_info *vinfo)
 	return 1;
 }
 
+static void print_vlan_port(FILE *fp, int ifi_index)
+{
+	if (jw_global) {
+		jsonw_pretty(jw_global, 1);
+		jsonw_name(jw_global,
+			   ll_index_to_name(ifi_index));
+		jsonw_start_array(jw_global);
+	} else {
+		fprintf(fp, "%s",
+			ll_index_to_name(ifi_index));
+	}
+}
+
+static void start_json_vlan_flags_array(bool *vlan_flags)
+{
+	if (*vlan_flags)
+		return;
+	jsonw_name(jw_global, "flags");
+	jsonw_start_array(jw_global);
+	*vlan_flags = true;
+}
+
 static int print_vlan(const struct sockaddr_nl *who,
 		      struct nlmsghdr *n,
 		      void *arg)
@@ -166,6 +188,7 @@ static int print_vlan(const struct sockaddr_nl *who,
 	struct ifinfomsg *ifm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[IFLA_MAX+1];
+	bool vlan_flags;
 
 	if (n->nlmsg_type != RTM_NEWLINK) {
 		fprintf(stderr, "Not RTM_NEWLINK: %08x %08x %08x\n",
@@ -199,7 +222,8 @@ static int print_vlan(const struct sockaddr_nl *who,
 		__u16 last_vid_start = 0;
 
 		if (!filter_vlan)
-			fprintf(fp, "%s", ll_index_to_name(ifm->ifi_index));
+			print_vlan_port(fp, ifm->ifi_index);
+
 		for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 			struct bridge_vlan_info *vinfo;
 			int vcheck_ret;
@@ -218,20 +242,58 @@ static int print_vlan(const struct sockaddr_nl *who,
 				continue;
 
 			if (filter_vlan)
-				fprintf(fp, "%s",
-					ll_index_to_name(ifm->ifi_index));
-			fprintf(fp, "\t %hu", last_vid_start);
-			if (last_vid_start != vinfo->vid)
-				fprintf(fp, "-%hu", vinfo->vid);
-			if (vinfo->flags & BRIDGE_VLAN_INFO_PVID)
-				fprintf(fp, " PVID");
-			if (vinfo->flags & BRIDGE_VLAN_INFO_UNTAGGED)
-				fprintf(fp, " Egress Untagged");
-			fprintf(fp, "\n");
+				print_vlan_port(fp, ifm->ifi_index);
+			if (jw_global) {
+				jsonw_start_object(jw_global);
+				jsonw_uint_field(jw_global, "vlan",
+						 last_vid_start);
+				if (vinfo->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN)
+					continue;
+			} else {
+				fprintf(fp, "\t %hu", last_vid_start);
+			}
+			if (last_vid_start != vinfo->vid) {
+				if (jw_global)
+					jsonw_uint_field(jw_global, "vlanEnd",
+							 vinfo->vid);
+				else
+					fprintf(fp, "-%hu", vinfo->vid);
+			}
+			if (vinfo->flags & BRIDGE_VLAN_INFO_PVID) {
+				if (jw_global) {
+					start_json_vlan_flags_array(&vlan_flags);
+					jsonw_string(jw_global, "PVID");
+				} else {
+					fprintf(fp, " PVID");
+				}
+			}
+			if (vinfo->flags & BRIDGE_VLAN_INFO_UNTAGGED) {
+				if (jw_global) {
+					start_json_vlan_flags_array(&vlan_flags);
+					jsonw_string(jw_global,
+						     "Egress Untagged");
+				} else {
+					fprintf(fp, " Egress Untagged");
+				}
+			}
+			if (vlan_flags) {
+				jsonw_end_array(jw_global);
+				vlan_flags = false;
+			}
+
+			if (jw_global)
+				jsonw_end_object(jw_global);
+			else
+				fprintf(fp, "\n");
 		}
 	}
-	if (!filter_vlan)
-		fprintf(fp, "\n");
+	if (!filter_vlan) {
+		if (jw_global)
+			jsonw_end_array(jw_global);
+		else
+			fprintf(fp, "\n");
+
+	}
 	fflush(fp);
 	return 0;
 }
@@ -271,10 +333,25 @@ static int vlan_show(int argc, char **argv)
 		exit(1);
 	}
 
-	printf("port\tvlan ids\n");
+	if (json_output) {
+		jw_global = jsonw_new(stdout);
+		if (!jw_global) {
+			fprintf(stderr, "Error allocation json object\n");
+			exit(1);
+		}
+		jsonw_start_object(jw_global);
+	} else {
+		printf("port\tvlan ids\n");
+	}
+
 	if (rtnl_dump_filter(&rth, print_vlan, stdout) < 0) {
 		fprintf(stderr, "Dump ternminated\n");
 		exit(1);
+	}
+
+	if (jw_global) {
+		jsonw_end_object(jw_global);
+		jsonw_destroy(&jw_global);
 	}
 
 	return 0;

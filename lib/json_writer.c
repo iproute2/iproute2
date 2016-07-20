@@ -33,7 +33,7 @@ struct json_writer {
 static void jsonw_indent(json_writer_t *self)
 {
 	unsigned i;
-	for (i = 0; i <= self->depth; ++i)
+	for (i = 0; i < self->depth; ++i)
 		fputs("    ", self->out);
 }
 
@@ -102,7 +102,6 @@ json_writer_t *jsonw_new(FILE *f)
 		self->depth = 0;
 		self->pretty = false;
 		self->sep = '\0';
-		putc('{', self->out);
 	}
 	return self;
 }
@@ -113,8 +112,7 @@ void jsonw_destroy(json_writer_t **self_p)
 	json_writer_t *self = *self_p;
 
 	assert(self->depth == 0);
-	jsonw_eol(self);
-	fputs("}\n", self->out);
+	fputs("\n", self->out);
 	fflush(self->out);
 	free(self);
 	*self_p = NULL;
@@ -269,6 +267,7 @@ int main(int argc, char **argv)
 {
 	json_writer_t *wr = jsonw_new(stdout);
 
+	jsonw_start_object(wr);
 	jsonw_pretty(wr, true);
 	jsonw_name(wr, "Vyatta");
 	jsonw_start_object(wr);
@@ -305,6 +304,7 @@ int main(int argc, char **argv)
 
 	jsonw_end_object(wr);
 
+	jsonw_end_object(wr);
 	jsonw_destroy(&wr);
 	return 0;
 }

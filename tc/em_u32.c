@@ -39,9 +39,7 @@ static int u32_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 	struct bstr *a;
 	int align, nh_len;
 	unsigned long key, mask, offmask = 0, offset;
-	struct tc_u32_key u_key;
-
-	memset(&u_key, 0, sizeof(u_key));
+	struct tc_u32_key u_key = {};
 
 #define PARSE_ERR(CARG, FMT, ARGS...) \
 	em_parse_error(EINVAL, args, CARG, &u32_ematch_util, FMT, ##ARGS)

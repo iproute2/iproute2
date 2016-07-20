@@ -44,9 +44,7 @@ static int cmp_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 	int align, opnd = 0;
 	unsigned long offset = 0, layer = TCF_LAYER_NETWORK, mask = 0, value = 0;
 	int offset_present = 0, value_present = 0;
-	struct tcf_em_cmp cmp;
-
-	memset(&cmp, 0, sizeof(cmp));
+	struct tcf_em_cmp cmp = {};
 
 #define PARSE_ERR(CARG, FMT, ARGS...) \
 	em_parse_error(EINVAL, args, CARG, &cmp_ematch_util, FMT, ##ARGS)

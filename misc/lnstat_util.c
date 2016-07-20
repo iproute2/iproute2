@@ -173,15 +173,13 @@ static struct lnstat_file *alloc_and_open(const char *path, const char *file)
 	struct lnstat_file *lf;
 
 	/* allocate */
-	lf = malloc(sizeof(*lf));
+	lf = calloc(1, sizeof(*lf));
 	if (!lf) {
 		fprintf(stderr, "out of memory\n");
 		return NULL;
 	}
 
 	/* initialize */
-	memset(lf, 0, sizeof(*lf));
-
 	/* de->d_name is guaranteed to be <= NAME_MAX */
 	strcpy(lf->basename, file);
 	strcpy(lf->path, path);

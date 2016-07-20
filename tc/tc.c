@@ -133,11 +133,9 @@ reg:
 	return q;
 
 noexist:
-	q = malloc(sizeof(*q));
+	q = calloc(1, sizeof(*q));
 	if (q) {
-
-		memset(q, 0, sizeof(*q));
-		q->id = strcpy(malloc(strlen(str)+1), str);
+		q->id = strdup(str);
 		q->parse_qopt = parse_noqopt;
 		q->print_qopt = print_noqopt;
 		goto reg;
@@ -177,9 +175,8 @@ reg:
 	filter_list = q;
 	return q;
 noexist:
-	q = malloc(sizeof(*q));
+	q = calloc(1, sizeof(*q));
 	if (q) {
-		memset(q, 0, sizeof(*q));
 		strncpy(q->id, str, 15);
 		q->parse_fopt = parse_nofopt;
 		q->print_fopt = print_nofopt;

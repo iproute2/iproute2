@@ -361,10 +361,8 @@ static int meta_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 {
 	int opnd;
 	struct bstr *a;
-	struct tcf_meta_hdr meta_hdr;
+	struct tcf_meta_hdr meta_hdr = {};
 	unsigned long lvalue = 0, rvalue = 0;
-
-	memset(&meta_hdr, 0, sizeof(meta_hdr));
 
 	if (args == NULL)
 		return PARSE_ERR(args, "meta: missing arguments");
@@ -485,8 +483,9 @@ static int print_object(FILE *fd, struct tcf_meta_val *obj, struct rtattr *rta)
 				if (RTA_PAYLOAD(rta) < sizeof(__u32))
 					goto size_mismatch;
 
-				fprintf(fd, " mask 0x%08x",
-				    rta_getattr_u32(rta));
+				if (rta_getattr_u32(rta))
+					fprintf(fd, " mask 0x%08x",
+						rta_getattr_u32(rta));
 			}
 			break;
 	}

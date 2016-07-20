@@ -61,21 +61,16 @@ static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct tcmsg		t;
 		char			buf[4096];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.t.tcm_family = AF_UNSPEC,
+	};
 	struct qdisc_util *q = NULL;
-	struct tc_estimator est;
-	char  d[16];
-	char  k[16];
-
-	memset(&req, 0, sizeof(req));
-	memset(&est, 0, sizeof(est));
-	memset(d, 0, sizeof(d));
-	memset(k, 0, sizeof(k));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
-	req.t.tcm_family = AF_UNSPEC;
+	struct tc_estimator est = {};
+	char  d[16] = {};
+	char  k[16] = {};
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -168,9 +163,8 @@ __u32 filter_classid;
 static void graph_node_add(__u32 parent_id, __u32 id, void *data,
 		int len)
 {
-	struct graph_node *node = malloc(sizeof(struct graph_node));
+	struct graph_node *node = calloc(1, sizeof(struct graph_node));
 
-	memset(node, 0, sizeof(*node));
 	node->id         = id;
 	node->parent_id  = parent_id;
 
@@ -225,7 +219,7 @@ static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
 {
 	struct hlist_node *n, *tmp_cls;
 	char cls_id_str[256] = {};
-	struct rtattr *tb[TCA_MAX + 1] = {};
+	struct rtattr *tb[TCA_MAX + 1];
 	struct qdisc_util *q;
 	char str[100] = {};
 
@@ -310,7 +304,7 @@ int print_class(const struct sockaddr_nl *who,
 	FILE *fp = (FILE *)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr *tb[TCA_MAX + 1] = {};
+	struct rtattr *tb[TCA_MAX + 1];
 	struct qdisc_util *q;
 	char abuf[256];
 
@@ -395,13 +389,9 @@ int print_class(const struct sockaddr_nl *who,
 
 static int tc_class_list(int argc, char **argv)
 {
-	struct tcmsg t;
-	char d[16];
+	struct tcmsg t = { .tcm_family = AF_UNSPEC };
+	char d[16] = {};
 	char buf[1024] = {0};
-
-	memset(&t, 0, sizeof(t));
-	t.tcm_family = AF_UNSPEC;
-	memset(d, 0, sizeof(d));
 
 	filter_qdisc = 0;
 	filter_classid = 0;

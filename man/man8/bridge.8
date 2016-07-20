@@ -20,8 +20,9 @@ bridge \- show / manipulate bridge addresses and devices
 .IR OPTIONS " := { "
 \fB\-V\fR[\fIersion\fR] |
 \fB\-s\fR[\fItatistics\fR] |
-\fB\-n\fR[\fIetns\fR] name }
-\fB\-b\fR[\fIatch\fR] filename }
+\fB\-n\fR[\fIetns\fR] name |
+\fB\-b\fR[\fIatch\fR] filename |
+\fB\-j\fR[\fIson\fR] }
 
 .ti -8
 .BR "bridge link set"
@@ -152,6 +153,10 @@ First failure will cause termination of bridge command.
 Don't terminate bridge command on errors in batch mode.
 If there were any errors during execution of the commands, the application
 return code will be non zero.
+
+.TP
+.BR "\-json"
+Display results in JSON format. Currently available for vlan and fdb.
 
 .SH BRIDGE - COMMAND SYNTAX
 

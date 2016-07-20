@@ -23,4 +23,5 @@ extern int show_stats;
 extern int show_details;
 extern int timestamp;
 extern int compress_vlans;
+extern int json_output;
 extern struct rtnl_handle rth;

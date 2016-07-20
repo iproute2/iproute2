@@ -47,7 +47,7 @@ static void explain(void)
 static int atm_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
    struct nlmsghdr *n)
 {
-	struct sockaddr_atmsvc addr;
+	struct sockaddr_atmsvc addr = {};
 	struct atm_qos qos;
 	struct atm_sap sap;
 	unsigned char hdr[MAX_HDR_LEN];
@@ -58,7 +58,6 @@ static int atm_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 	int set_clip = 0;
 	int s;
 
-	memset(&addr, 0, sizeof(addr));
 	(void) text2qos("aal5,ubr:sdu=9180,rx:none", &qos, 0);
 	(void) text2sap("blli:l2=iso8802", &sap, 0);
 	while (argc > 0) {

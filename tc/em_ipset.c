@@ -198,10 +198,8 @@ static void ipset_print_usage(FILE *fd)
 static int ipset_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 			    struct bstr *args)
 {
-	struct xt_set_info set_info;
+	struct xt_set_info set_info = {};
 	int ret;
-
-	memset(&set_info, 0, sizeof(set_info));
 
 #define PARSE_ERR(CARG, FMT, ARGS...) \
 	em_parse_error(EINVAL, args, CARG, &ipset_ematch_util, FMT, ##ARGS)

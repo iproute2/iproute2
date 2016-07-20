@@ -56,7 +56,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ok = 0;
-	struct tc_ife p;
+	struct tc_ife p = { .action = TC_ACT_PIPE };	/* good default */
 	struct rtattr *tail;
 	struct rtattr *tail2;
 	char dbuf[ETH_ALEN];
@@ -68,9 +68,6 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 	__u32 ife_mark_v = 0;
 	char *daddr = NULL;
 	char *saddr = NULL;
-
-	memset(&p, 0, sizeof(p));
-	p.action = TC_ACT_PIPE;	/* good default */
 
 	if (argc <= 0)
 		return -1;

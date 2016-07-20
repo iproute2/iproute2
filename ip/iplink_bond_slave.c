@@ -17,6 +17,16 @@
 #include "utils.h"
 #include "ip_common.h"
 
+static void print_explain(FILE *f)
+{
+	fprintf(f, "Usage: ... bond_slave [ queue_id ID ]\n");
+}
+
+static void explain(void)
+{
+	print_explain(stderr);
+}
+
 static const char *slave_states[] = {
 	[BOND_STATE_ACTIVE] = "ACTIVE",
 	[BOND_STATE_BACKUP] = "BACKUP",
@@ -99,6 +109,13 @@ static int bond_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (get_u16(&queue_id, *argv, 0))
 				invarg("queue_id is invalid", *argv);
 			addattr16(n, 1024, IFLA_BOND_SLAVE_QUEUE_ID, queue_id);
+		} else {
+			if (matches(*argv, "help") != 0)
+				fprintf(stderr,
+					"bond_slave: unknown option \"%s\"?\n",
+					*argv);
+			explain();
+			return -1;
 		}
 		argc--, argv++;
 	}
@@ -106,10 +123,17 @@ static int bond_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 	return 0;
 }
 
+static void bond_slave_print_help(struct link_util *lu, int argc, char **argv,
+				  FILE *f)
+{
+	print_explain(f);
+}
+
 struct link_util bond_slave_link_util = {
 	.id		= "bond",
 	.maxattr	= IFLA_BOND_SLAVE_MAX,
 	.print_opt	= bond_slave_print_opt,
 	.parse_opt	= bond_slave_parse_opt,
+	.print_help	= bond_slave_print_help,
 	.slave		= true,
 };

@@ -56,8 +56,8 @@ static int parse_bpf(struct exec_util *eu, int argc, char **argv)
 	char **argv_run = argv_default, **envp_run, *tmp;
 	int ret, i, env_old, env_num, env_map;
 	const char *bpf_uds_name = NULL;
-	int fds[BPF_SCM_MAX_FDS];
-	struct bpf_map_aux aux;
+	int fds[BPF_SCM_MAX_FDS] = {};
+	struct bpf_map_aux aux = {};
 
 	if (argc == 0)
 		return 0;
@@ -114,9 +114,6 @@ static int parse_bpf(struct exec_util *eu, int argc, char **argv)
 		explain();
 		return -1;
 	}
-
-	memset(fds, 0, sizeof(fds));
-	memset(&aux, 0, sizeof(aux));
 
 	ret = bpf_recv_map_fds(bpf_uds_name, fds, &aux, ARRAY_SIZE(fds));
 	if (ret < 0) {

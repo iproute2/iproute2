@@ -49,25 +49,19 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 	struct {
 		struct tc_sizespec	szopts;
 		__u16			*data;
-	} stab;
-	char  d[16];
-	char  k[16];
+	} stab = {};
+	char  d[16] = {};
+	char  k[16] = {};
 	struct {
 		struct nlmsghdr	n;
 		struct tcmsg		t;
 		char			buf[TCA_BUF_MAX];
-	} req;
-
-	memset(&req, 0, sizeof(req));
-	memset(&stab, 0, sizeof(stab));
-	memset(&est, 0, sizeof(est));
-	memset(&d, 0, sizeof(d));
-	memset(&k, 0, sizeof(k));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
-	req.t.tcm_family = AF_UNSPEC;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.t.tcm_family = AF_UNSPEC,
+	};
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -227,7 +221,6 @@ int print_qdisc(const struct sockaddr_nl *who,
 	if (filter_ifindex && filter_ifindex != t->tcm_ifindex)
 		return 0;
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
 
 	if (tb[TCA_KIND] == NULL) {
@@ -287,12 +280,8 @@ int print_qdisc(const struct sockaddr_nl *who,
 
 static int tc_qdisc_list(int argc, char **argv)
 {
-	struct tcmsg t;
-	char d[16];
-
-	memset(&t, 0, sizeof(t));
-	t.tcm_family = AF_UNSPEC;
-	memset(&d, 0, sizeof(d));
+	struct tcmsg t = { .tcm_family = AF_UNSPEC };
+	char d[16] = {};
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {

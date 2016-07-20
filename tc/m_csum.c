@@ -85,14 +85,12 @@ static int
 parse_csum(struct action_util *a, int *argc_p,
 	   char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
-	struct tc_csum sel;
+	struct tc_csum sel = {};
 
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ok = 0;
 	struct rtattr *tail;
-
-	memset(&sel, 0, sizeof(sel));
 
 	while (argc > 0) {
 		if (matches(*argv, "csum") == 0) {

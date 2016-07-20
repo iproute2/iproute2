@@ -203,10 +203,9 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 		} else if (matches(*argv, "skip_sw") == 0) {
 			flags |= TCA_CLS_FLAGS_SKIP_SW;
 		} else if (matches(*argv, "indev") == 0) {
-			char ifname[IFNAMSIZ];
+			char ifname[IFNAMSIZ] = {};
 
 			NEXT_ARG();
-			memset(ifname, 0, sizeof(ifname));
 			strncpy(ifname, *argv, sizeof(ifname) - 1);
 			addattrstrz(n, MAX_MSG, TCA_FLOWER_INDEV, ifname);
 		} else if (matches(*argv, "dst_mac") == 0) {

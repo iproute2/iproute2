@@ -63,13 +63,12 @@ static void explain1(char *arg)
 static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	unsigned int direct_qlen = ~0U;
-	struct tc_htb_glob opt;
+	struct tc_htb_glob opt = {
+		.rate2quantum = 10,
+		.version = 3,
+	};
 	struct rtattr *tail;
 	unsigned int i; char *p;
-
-	memset(&opt, 0, sizeof(opt));
-	opt.rate2quantum = 10;
-	opt.version = 3;
 
 	while (argc > 0) {
 		if (matches(*argv, "r2q") == 0) {
@@ -113,18 +112,16 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	int ok = 0;
-	struct tc_htb_opt opt;
+	struct tc_htb_opt opt = {};
 	__u32 rtab[256], ctab[256];
 	unsigned buffer = 0, cbuffer = 0;
 	int cell_log =  -1, ccell_log = -1;
-	unsigned int mtu;
+	unsigned int mtu = 1600; /* eth packet len */
 	unsigned short mpu = 0;
 	unsigned short overhead = 0;
 	unsigned int linklayer  = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 	__u64 ceil64 = 0, rate64 = 0;
-
-	memset(&opt, 0, sizeof(opt)); mtu = 1600; /* eth packet len */
 
 	while (argc > 0) {
 		if (matches(*argv, "prio") == 0) {

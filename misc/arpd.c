@@ -179,16 +179,22 @@ static void undo_sysctl_adjustments(void)
 
 static int send_probe(int ifindex, __u32 addr)
 {
-	struct ifreq ifr;
-	struct sockaddr_in dst;
+	struct ifreq ifr = { .ifr_ifindex = ifindex };
+	struct sockaddr_in dst = {
+		.sin_family = AF_INET,
+		.sin_port = htons(1025),
+		.sin_addr.s_addr = addr,
+	};
 	socklen_t len;
 	unsigned char buf[256];
 	struct arphdr *ah = (struct arphdr *)buf;
 	unsigned char *p = (unsigned char *)(ah+1);
-	struct sockaddr_ll sll;
+	struct sockaddr_ll sll = {
+		.sll_family = AF_PACKET,
+		.sll_ifindex = ifindex,
+		.sll_protocol = htons(ETH_P_ARP),
+	};
 
-	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_ifindex = ifindex;
 	if (ioctl(udp_sock, SIOCGIFNAME, &ifr))
 		return -1;
 	if (ioctl(udp_sock, SIOCGIFHWADDR, &ifr))
@@ -198,9 +204,6 @@ static int send_probe(int ifindex, __u32 addr)
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_BINDTODEVICE, ifr.ifr_name, strlen(ifr.ifr_name)+1) < 0)
 		return -1;
 
-	dst.sin_family = AF_INET;
-	dst.sin_port = htons(1025);
-	dst.sin_addr.s_addr = addr;
 	if (connect(udp_sock, (struct sockaddr *)&dst, sizeof(dst)) < 0)
 		return -1;
 	len = sizeof(dst);
@@ -219,10 +222,7 @@ static int send_probe(int ifindex, __u32 addr)
 	memcpy(p, &dst.sin_addr, 4);
 	p += 4;
 
-	sll.sll_family = AF_PACKET;
 	memset(sll.sll_addr, 0xFF, sizeof(sll.sll_addr));
-	sll.sll_ifindex = ifindex;
-	sll.sll_protocol = htons(ETH_P_ARP);
 	memcpy(p, &sll.sll_addr, ah->ar_hln);
 	p += ah->ar_hln;
 
@@ -268,18 +268,15 @@ static int respond_to_kernel(int ifindex, __u32 addr, char *lla, int llalen)
 		struct nlmsghdr	n;
 		struct ndmsg		ndm;
 		char			buf[256];
-	} req;
-
-	memset(&req.n, 0, sizeof(req.n));
-	memset(&req.ndm, 0, sizeof(req.ndm));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = RTM_NEWNEIGH;
-	req.ndm.ndm_family = AF_INET;
-	req.ndm.ndm_state = NUD_STALE;
-	req.ndm.ndm_ifindex = ifindex;
-	req.ndm.ndm_type = RTN_UNICAST;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_NEWNEIGH,
+		.ndm.ndm_family = AF_INET,
+		.ndm.ndm_state = NUD_STALE,
+		.ndm.ndm_ifindex = ifindex,
+		.ndm.ndm_type = RTN_UNICAST,
+	};
 
 	addattr_l(&req.n, sizeof(req), NDA_DST, &addr, 4);
 	addattr_l(&req.n, sizeof(req), NDA_LLADDR, lla, llalen);
@@ -440,7 +437,7 @@ static void get_kern_msg(void)
 {
 	int status;
 	struct nlmsghdr *h;
-	struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr = {};
 	struct iovec iov;
 	char   buf[8192];
 	struct msghdr msg = {
@@ -449,8 +446,6 @@ static void get_kern_msg(void)
 		NULL,	0,
 		0
 	};
-
-	memset(&nladdr, 0, sizeof(nladdr));
 
 	iov.iov_base = buf;
 	iov.iov_len = sizeof(buf);
@@ -539,10 +534,8 @@ static void get_arp_pkt(void)
 
 static void catch_signal(int sig, void (*handler)(int))
 {
-	struct sigaction sa;
+	struct sigaction sa = { .sa_handler = handler };
 
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = handler;
 #ifdef SA_INTERRUPT
 	sa.sa_flags = SA_INTERRUPT;
 #endif
@@ -668,9 +661,8 @@ int main(int argc, char **argv)
 
 	if (ifnum) {
 		int i;
-		struct ifreq ifr;
+		struct ifreq ifr = {};
 
-		memset(&ifr, 0, sizeof(ifr));
 		for (i = 0; i < ifnum; i++) {
 			strncpy(ifr.ifr_name, ifnames[i], IFNAMSIZ);
 			if (ioctl(udp_sock, SIOCGIFINDEX, &ifr)) {
@@ -772,12 +764,12 @@ int main(int argc, char **argv)
 	}
 
 	if (1) {
-		struct sockaddr_ll sll;
+		struct sockaddr_ll sll = {
+			.sll_family = AF_PACKET,
+			.sll_protocol = htons(ETH_P_ARP),
+			.sll_ifindex = (ifnum == 1 ? ifvec[0] : 0),
+		};
 
-		memset(&sll, 0, sizeof(sll));
-		sll.sll_family = AF_PACKET;
-		sll.sll_protocol = htons(ETH_P_ARP);
-		sll.sll_ifindex = (ifnum == 1 ? ifvec[0] : 0);
 		if (bind(pset[0].fd, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
 			perror("bind");
 			goto do_abort;

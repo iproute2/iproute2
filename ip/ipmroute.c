@@ -97,20 +97,16 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 
 	if (tb[RTA_DST] && filter.mdst.bitlen > 0) {
-		inet_prefix dst;
+		inet_prefix dst = { .family = r->rtm_family };
 
-		memset(&dst, 0, sizeof(dst));
-		dst.family = r->rtm_family;
 		memcpy(&dst.data, RTA_DATA(tb[RTA_DST]), RTA_PAYLOAD(tb[RTA_DST]));
 		if (inet_addr_match(&dst, &filter.mdst, filter.mdst.bitlen))
 			return 0;
 	}
 
 	if (tb[RTA_SRC] && filter.msrc.bitlen > 0) {
-		inet_prefix src;
+		inet_prefix src = { .family = r->rtm_family };
 
-		memset(&src, 0, sizeof(src));
-		src.family = r->rtm_family;
 		memcpy(&src.data, RTA_DATA(tb[RTA_SRC]), RTA_PAYLOAD(tb[RTA_SRC]));
 		if (inet_addr_match(&src, &filter.msrc, filter.msrc.bitlen))
 			return 0;

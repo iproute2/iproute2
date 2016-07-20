@@ -126,9 +126,8 @@ noexist:
 		goto restart_s;
 	}
 #endif
-	a = malloc(sizeof(*a));
+	a = calloc(1, sizeof(*a));
 	if (a) {
-		memset(a, 0, sizeof(*a));
 		strncpy(a->id, "noact", 15);
 		a->parse_aopt = parse_noaopt;
 		a->print_aopt = print_noaopt;
@@ -395,13 +394,10 @@ static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p
 		struct tcamsg           t;
 		char                    buf[MAX_MSG];
 	} req = {
-		.n = {
-			.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
-			.nlmsg_flags = NLM_F_REQUEST | flags,
-			.nlmsg_type = cmd,
-		},
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
 		.t.tca_family = AF_UNSPEC,
-		.buf = { 0 }
 	};
 
 	argc -= 1;
@@ -491,23 +487,18 @@ static int tc_action_modify(int cmd, unsigned int flags, int *argc_p, char ***ar
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ret = 0;
-
-	struct rtattr *tail;
 	struct {
 		struct nlmsghdr         n;
 		struct tcamsg           t;
 		char                    buf[MAX_MSG];
 	} req = {
-		.n = {
-			.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
-			.nlmsg_flags = NLM_F_REQUEST | flags,
-			.nlmsg_type = cmd,
-		},
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
 		.t.tca_family = AF_UNSPEC,
-		.buf = { 0 }
 	};
+	struct rtattr *tail = NLMSG_TAIL(&req.n);
 
-	tail = NLMSG_TAIL(&req.n);
 	argc -= 1;
 	argv += 1;
 	if (parse_action(&argc, &argv, TCA_ACT_TAB, &req.n)) {
@@ -540,7 +531,6 @@ static int tc_act_list_or_flush(int argc, char **argv, int event)
 	} req = {
 		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
 		.t.tca_family = AF_UNSPEC,
-		.buf = { 0 }
 	};
 
 	tail = NLMSG_TAIL(&req.n);

@@ -38,13 +38,11 @@ static void explain(void)
 static int sfq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
 {
 	int ok = 0, red = 0;
-	struct tc_sfq_qopt_v1 opt;
+	struct tc_sfq_qopt_v1 opt = {};
 	unsigned int burst = 0;
 	int wlog;
 	unsigned int avpkt = 1000;
 	double probability = 0.02;
-
-	memset(&opt, 0, sizeof(opt));
 
 	while (argc > 0) {
 		if (strcmp(*argv, "quantum") == 0) {

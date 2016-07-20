@@ -127,7 +127,7 @@ int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 	char **argv = *argv_p;
 	int res = -1;
 	int ok = 0;
-	struct tc_police p;
+	struct tc_police p = { .action = TC_POLICE_RECLASSIFY };
 	__u32 rtab[256];
 	__u32 ptab[256];
 	__u32 avrate = 0;
@@ -137,9 +137,6 @@ int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	int Rcell_log =  -1, Pcell_log = -1;
 	struct rtattr *tail;
-
-	memset(&p, 0, sizeof(p));
-	p.action = TC_POLICE_RECLASSIFY;
 
 	if (a) /* new way of doing things */
 		NEXT_ARG();

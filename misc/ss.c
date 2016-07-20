@@ -97,6 +97,7 @@ int show_tcpinfo;
 int show_bpf;
 int show_proc_ctx;
 int show_sock_ctx;
+int show_header = 1;
 /* If show_users & show_proc_ctx only do user_ent_hash_build() once */
 int user_ent_hash_build_init;
 int follow_events;
@@ -1435,11 +1436,13 @@ void *parse_devcond(char *name)
 	a.iface = xll_name_to_index(name);
 	if (a.iface == 0) {
 		char *end;
-		unsigned long res;
+		unsigned long n;
 
-		res = strtoul(name, &end, 0);
-		if (!end || end == name || *end || res > UINT_MAX)
+		n = strtoul(name, &end, 0);
+		if (!end || end == name || *end || n > UINT_MAX)
 			return NULL;
+
+		a.iface = n;
 	}
 
 	res = malloc(sizeof(*res));
@@ -2163,11 +2166,17 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 
 static int tcpdiag_send(int fd, int protocol, struct filter *f)
 {
-	struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	struct {
 		struct nlmsghdr nlh;
 		struct inet_diag_req r;
-	} req;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_flags = NLM_F_ROOT | NLM_F_MATCH | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = MAGIC_SEQ,
+		.r.idiag_family = AF_INET,
+		.r.idiag_states = f->states,
+	};
 	char    *bc = NULL;
 	int	bclen;
 	struct msghdr msg;
@@ -2178,20 +2187,10 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	if (protocol == IPPROTO_UDP)
 		return -1;
 
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
-
-	req.nlh.nlmsg_len = sizeof(req);
 	if (protocol == IPPROTO_TCP)
 		req.nlh.nlmsg_type = TCPDIAG_GETSOCK;
 	else
 		req.nlh.nlmsg_type = DCCPDIAG_GETSOCK;
-	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
-	req.nlh.nlmsg_pid = 0;
-	req.nlh.nlmsg_seq = MAGIC_SEQ;
-	memset(&req.r, 0, sizeof(req.r));
-	req.r.idiag_family = AF_INET;
-	req.r.idiag_states = f->states;
 	if (show_mem) {
 		req.r.idiag_ext |= (1<<(INET_DIAG_MEMINFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_SKMEMINFO-1));
@@ -2236,8 +2235,7 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 
 static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 {
-	struct sockaddr_nl nladdr;
-
+	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	DIAG_REQUEST(req, struct inet_diag_req_v2 r);
 	char    *bc = NULL;
 	int	bclen;
@@ -2248,9 +2246,6 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 
 	if (family == PF_UNSPEC)
 		return tcpdiag_send(fd, protocol, f);
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
 
 	memset(&req.r, 0, sizeof(req.r));
 	req.r.sdiag_family = family;
@@ -2747,14 +2742,13 @@ static void unix_stats_print(struct sockstat *list, struct filter *f)
 		}
 
 		if (use_proc && f->f) {
-			struct sockstat st;
+			struct sockstat st = {
+				.local.family = AF_UNIX,
+				.remote.family = AF_UNIX,
+			};
 
-			st.local.family = AF_UNIX;
-			st.remote.family = AF_UNIX;
 			memcpy(st.local.data, &s->name, sizeof(s->name));
-			if (strcmp(peer, "*") == 0)
-				memset(st.remote.data, 0, sizeof(peer));
-			else
+			if (strcmp(peer, "*"))
 				memcpy(st.remote.data, &peer, sizeof(peer));
 			if (run_ssfilter(f->f, &st) == 0)
 				continue;
@@ -3667,6 +3661,7 @@ static void _usage(FILE *dest)
 "       FAMILY := {inet|inet6|link|unix|netlink|help}\n"
 "\n"
 "   -K, --kill          forcibly close sockets, display what was closed\n"
+"   -H, --no-header     Suppress header line\n"
 "\n"
 "   -A, --query=QUERY, --socket=QUERY\n"
 "       QUERY := {all|inet|tcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|netlink}[,QUERY]\n"
@@ -3760,6 +3755,7 @@ static const struct option long_opts[] = {
 	{ "contexts", 0, 0, 'z' },
 	{ "net", 1, 0, 'N' },
 	{ "kill", 0, 0, 'K' },
+	{ "no-header", 0, 0, 'H' },
 	{ 0 }
 
 };
@@ -3774,7 +3770,7 @@ int main(int argc, char *argv[])
 	int ch;
 	int state_filter = 0;
 
-	while ((ch = getopt_long(argc, argv, "dhaletuwxnro460spbEf:miA:D:F:vVzZN:K",
+	while ((ch = getopt_long(argc, argv, "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KH",
 				 long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'n':
@@ -3959,6 +3955,9 @@ int main(int argc, char *argv[])
 		case 'K':
 			current_filter.kill = 1;
 			break;
+		case 'H':
+			show_header = 0;
+			break;
 		case 'h':
 			help();
 		case '?':
@@ -4084,19 +4083,23 @@ int main(int argc, char *argv[])
 
 	addr_width = addrp_width - serv_width - 1;
 
-	if (netid_width)
-		printf("%-*s ", netid_width, "Netid");
-	if (state_width)
-		printf("%-*s ", state_width, "State");
-	printf("%-6s %-6s ", "Recv-Q", "Send-Q");
+	if (show_header) {
+		if (netid_width)
+			printf("%-*s ", netid_width, "Netid");
+		if (state_width)
+			printf("%-*s ", state_width, "State");
+		printf("%-6s %-6s ", "Recv-Q", "Send-Q");
+	}
 
 	/* Make enough space for the local/remote port field */
 	addr_width -= 13;
 	serv_width += 13;
 
-	printf("%*s:%-*s %*s:%-*s\n",
-	       addr_width, "Local Address", serv_width, "Port",
-	       addr_width, "Peer Address", serv_width, "Port");
+	if (show_header) {
+		printf("%*s:%-*s %*s:%-*s\n",
+		       addr_width, "Local Address", serv_width, "Port",
+		       addr_width, "Peer Address", serv_width, "Port");
+	}
 
 	fflush(stdout);
 

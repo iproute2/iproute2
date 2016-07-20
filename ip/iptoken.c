@@ -89,10 +89,7 @@ static int print_token(const struct sockaddr_nl *who, struct nlmsghdr *n, void *
 static int iptoken_list(int argc, char **argv)
 {
 	int af = AF_INET6;
-	struct rtnl_dump_args da;
-
-	memset(&da, 0, sizeof(da));
-	da.fp = stdout;
+	struct rtnl_dump_args da = { .fp = stdout };
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -123,17 +120,15 @@ static int iptoken_set(int argc, char **argv, bool delete)
 		struct nlmsghdr n;
 		struct ifinfomsg ifi;
 		char buf[512];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_SETLINK,
+		.ifi.ifi_family = AF_INET6,
+	};
 	struct rtattr *afs, *afs6;
 	bool have_token = delete, have_dev = false;
 	inet_prefix addr = { .bytelen = 16, };
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = RTM_SETLINK;
-	req.ifi.ifi_family = AF_INET6;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {

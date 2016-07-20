@@ -173,13 +173,12 @@ static void print_queuelen(FILE *f, struct rtattr *tb[IFLA_MAX + 1])
 	if (tb[IFLA_TXQLEN])
 		qlen = *(int *)RTA_DATA(tb[IFLA_TXQLEN]);
 	else {
-		struct ifreq ifr;
+		struct ifreq ifr = {};
 		int s = socket(AF_INET, SOCK_STREAM, 0);
 
 		if (s < 0)
 			return;
 
-		memset(&ifr, 0, sizeof(ifr));
 		strcpy(ifr.ifr_name, rta_getattr_str(tb[IFLA_IFNAME]));
 		if (ioctl(s, SIOCGIFTXQLEN, &ifr) < 0) {
 			fprintf(f, "ioctl(SIOCGIFTXQLEN) failed: %s\n", strerror(errno));
@@ -450,7 +449,7 @@ static void print_num(FILE *fp, unsigned int width, uint64_t count)
 
 static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 {
-	struct rtattr *vf[IFLA_VF_STATS_MAX + 1] = {};
+	struct rtattr *vf[IFLA_VF_STATS_MAX + 1];
 
 	if (vfstats->rta_type != IFLA_VF_STATS) {
 		fprintf(stderr, "BUG: rta type is %d\n", vfstats->rta_type);
@@ -1037,10 +1036,8 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	}
 	if (filter.pfx.family) {
 		if (rta_tb[IFA_LOCAL]) {
-			inet_prefix dst;
+			inet_prefix dst = { .family = ifa->ifa_family };
 
-			memset(&dst, 0, sizeof(dst));
-			dst.family = ifa->ifa_family;
 			memcpy(&dst.data, RTA_DATA(rta_tb[IFA_LOCAL]), RTA_PAYLOAD(rta_tb[IFA_LOCAL]));
 			if (inet_addr_match(&dst, &filter.pfx, filter.pfx.bitlen))
 				return 0;
@@ -1396,10 +1393,10 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 					tb[IFA_LOCAL] = tb[IFA_ADDRESS];
 
 				if (filter.pfx.family && tb[IFA_LOCAL]) {
-					inet_prefix dst;
+					inet_prefix dst = {
+						.family = ifa->ifa_family
+					};
 
-					memset(&dst, 0, sizeof(dst));
-					dst.family = ifa->ifa_family;
 					memcpy(&dst.data, RTA_DATA(tb[IFA_LOCAL]), RTA_PAYLOAD(tb[IFA_LOCAL]));
 					if (inet_addr_match(&dst, &filter.pfx, filter.pfx.bitlen))
 						continue;
@@ -1845,7 +1842,12 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		struct nlmsghdr	n;
 		struct ifaddrmsg	ifa;
 		char			buf[256];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.ifa.ifa_family = preferred_family,
+	};
 	char  *d = NULL;
 	char  *l = NULL;
 	char  *lcl_arg = NULL;
@@ -1860,15 +1862,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	int scoped = 0;
 	__u32 preferred_lft = INFINITY_LIFE_TIME;
 	__u32 valid_lft = INFINITY_LIFE_TIME;
-	struct ifa_cacheinfo cinfo;
 	unsigned int ifa_flags = 0;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST | flags;
-	req.n.nlmsg_type = cmd;
-	req.ifa.ifa_family = preferred_family;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "peer") == 0 ||
@@ -2026,6 +2020,8 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	}
 
 	if (valid_lftp || preferred_lftp) {
+		struct ifa_cacheinfo cinfo = {};
+
 		if (!valid_lft) {
 			fprintf(stderr, "valid_lft is zero\n");
 			return -1;
@@ -2035,7 +2031,6 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			return -1;
 		}
 
-		memset(&cinfo, 0, sizeof(cinfo));
 		cinfo.ifa_prefered = preferred_lft;
 		cinfo.ifa_valid = valid_lft;
 		addattr_l(&req.n, sizeof(req), IFA_CACHEINFO, &cinfo,

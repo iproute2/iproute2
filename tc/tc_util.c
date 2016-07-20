@@ -580,10 +580,9 @@ void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix, struct rtat
 	}
 	/* backward compatibility */
 	if (tb[TCA_STATS]) {
-		struct tc_stats st;
+		struct tc_stats st = {};
 
 		/* handle case where kernel returns more/less than we know about */
-		memset(&st, 0, sizeof(st));
 		memcpy(&st, RTA_DATA(tb[TCA_STATS]), MIN(RTA_PAYLOAD(tb[TCA_STATS]), sizeof(st)));
 
 		fprintf(fp, "%sSent %llu bytes %u pkts (dropped %u, overlimits %u) ",

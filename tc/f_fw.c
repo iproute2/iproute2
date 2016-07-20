@@ -33,13 +33,10 @@ static void explain(void)
 
 static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **argv, struct nlmsghdr *n)
 {
-	struct tc_police tp;
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
 	__u32 mask = 0;
 	int mask_set = 0;
-
-	memset(&tp, 0, sizeof(tp));
 
 	if (handle) {
 		char *slash;
@@ -94,9 +91,8 @@ static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **a
 			}
 			continue;
 		} else if (strcmp(*argv, "indev") == 0) {
-			char d[IFNAMSIZ+1];
+			char d[IFNAMSIZ+1] = {};
 
-			memset(d, 0, sizeof(d));
 			argc--;
 			argv++;
 			if (argc < 1) {

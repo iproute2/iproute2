@@ -103,7 +103,6 @@ int ll_remember_index(const struct sockaddr_nl *who,
 		return 0;
 	}
 
-	memset(tb, 0, sizeof(tb));
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), IFLA_PAYLOAD(n));
 	ifname = rta_getattr_str(tb[IFLA_IFNAME]);
 	if (ifname == NULL)

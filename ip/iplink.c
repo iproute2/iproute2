@@ -55,7 +55,9 @@ void iplink_usage(void)
 		fprintf(stderr, "                   type TYPE [ ARGS ]\n");
 		fprintf(stderr, "       ip link delete { DEVICE | dev DEVICE | group DEVGROUP } type TYPE [ ARGS ]\n");
 		fprintf(stderr, "\n");
-		fprintf(stderr, "       ip link set { DEVICE | dev DEVICE | group DEVGROUP } [ { up | down } ]\n");
+		fprintf(stderr, "       ip link set { DEVICE | dev DEVICE | group DEVGROUP }\n");
+		fprintf(stderr, "	                  [ { up | down } ]\n");
+		fprintf(stderr, "	                  [ type TYPE ARGS ]\n");
 	} else
 		fprintf(stderr, "Usage: ip link set DEVICE [ { up | down } ]\n");
 
@@ -206,16 +208,14 @@ static int iplink_have_newlink(void)
 		struct nlmsghdr		n;
 		struct ifinfomsg	i;
 		char			buf[1024];
-	} req;
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+		.n.nlmsg_type = RTM_NEWLINK,
+		.i.ifi_family = AF_UNSPEC,
+	};
 
 	if (have_rtnl_newlink < 0) {
-		memset(&req, 0, sizeof(req));
-
-		req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-		req.n.nlmsg_flags = NLM_F_REQUEST|NLM_F_ACK;
-		req.n.nlmsg_type = RTM_NEWLINK;
-		req.i.ifi_family = AF_UNSPEC;
-
 		if (rtnl_send(&rth, &req.n, req.n.nlmsg_len) < 0) {
 			perror("request send failed");
 			exit(1);
@@ -781,15 +781,13 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	int index = -1;
 	int group;
 	struct link_util *lu = NULL;
-	struct iplink_req req;
+	struct iplink_req req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.i.ifi_family = preferred_family,
+	};
 	int ret;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = cmd;
-	req.i.ifi_family = preferred_family;
 
 	ret = iplink_parse(argc, argv,
 			   &req, &name, &type, &link, &dev, &group, &index);
@@ -923,18 +921,16 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 {
 	int len;
-	struct iplink_req req;
+	struct iplink_req req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = RTM_GETLINK,
+		.i.ifi_family = preferred_family,
+	};
 	struct {
 		struct nlmsghdr n;
 		char buf[16384];
 	} answer;
-
-	memset(&req, 0, sizeof(req));
-
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST|flags;
-	req.n.nlmsg_type = RTM_GETLINK;
-	req.i.ifi_family = preferred_family;
 
 	if (name) {
 		len = strlen(name) + 1;
@@ -1029,16 +1025,14 @@ static int do_changename(const char *dev, const char *newdev)
 
 static int set_qlen(const char *dev, int qlen)
 {
-	struct ifreq ifr;
+	struct ifreq ifr = { .ifr_qlen = qlen };
 	int s;
 
 	s = get_ctl_fd();
 	if (s < 0)
 		return -1;
 
-	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
-	ifr.ifr_qlen = qlen;
 	if (ioctl(s, SIOCSIFTXQLEN, &ifr) < 0) {
 		perror("SIOCSIFXQLEN");
 		close(s);
@@ -1051,16 +1045,14 @@ static int set_qlen(const char *dev, int qlen)
 
 static int set_mtu(const char *dev, int mtu)
 {
-	struct ifreq ifr;
+	struct ifreq ifr = { .ifr_mtu = mtu };
 	int s;
 
 	s = get_ctl_fd();
 	if (s < 0)
 		return -1;
 
-	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
-	ifr.ifr_mtu = mtu;
 	if (ioctl(s, SIOCSIFMTU, &ifr) < 0) {
 		perror("SIOCSIFMTU");
 		close(s);
@@ -1073,8 +1065,11 @@ static int set_mtu(const char *dev, int mtu)
 
 static int get_address(const char *dev, int *htype)
 {
-	struct ifreq ifr;
-	struct sockaddr_ll me;
+	struct ifreq ifr = {};
+	struct sockaddr_ll me = {
+		.sll_family = AF_PACKET,
+		.sll_protocol = htons(ETH_P_LOOP),
+	};
 	socklen_t alen;
 	int s;
 
@@ -1084,7 +1079,6 @@ static int get_address(const char *dev, int *htype)
 		return -1;
 	}
 
-	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
 	if (ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
 		perror("SIOCGIFINDEX");
@@ -1092,10 +1086,7 @@ static int get_address(const char *dev, int *htype)
 		return -1;
 	}
 
-	memset(&me, 0, sizeof(me));
-	me.sll_family = AF_PACKET;
 	me.sll_ifindex = ifr.ifr_ifindex;
-	me.sll_protocol = htons(ETH_P_LOOP);
 	if (bind(s, (struct sockaddr *)&me, sizeof(me)) == -1) {
 		perror("bind");
 		close(s);

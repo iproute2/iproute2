@@ -110,11 +110,9 @@ static void print_ctrlmode(FILE *f, __u32 cm)
 static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			 struct nlmsghdr *n)
 {
-	struct can_bittiming bt, dbt;
+	struct can_bittiming bt = {}, dbt = {};
 	struct can_ctrlmode cm = {0, 0};
 
-	memset(&bt, 0, sizeof(bt));
-	memset(&dbt, 0, sizeof(dbt));
 	while (argc > 0) {
 		if (matches(*argv, "bitrate") == 0) {
 			NEXT_ARG();

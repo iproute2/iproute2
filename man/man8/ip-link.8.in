@@ -40,35 +40,6 @@ ip-link \- network device configuration
 .RI "[ " ARGS " ]"
 
 .ti -8
-.IR TYPE " := [ "
-.BR bridge " | "
-.BR bond " | "
-.BR can " | "
-.BR dummy " | "
-.BR hsr " | "
-.BR ifb " | "
-.BR ipoib " |"
-.BR macvlan  " | "
-.BR macvtap  " | "
-.BR vcan " | "
-.BR veth " | "
-.BR vlan " | "
-.BR vxlan " |"
-.BR ip6tnl " |"
-.BR ipip " |"
-.BR sit " |"
-.BR gre " |"
-.BR gretap " |"
-.BR ip6gre " |"
-.BR ip6gretap " |"
-.BR vti " |"
-.BR nlmon " |"
-.BR ipvlan " |"
-.BR lowpan " |"
-.BR geneve " |"
-.BR vrf " ]"
-
-.ti -8
 .BR "ip link delete " {
 .IR DEVICE " | "
 .BI "group " GROUP
@@ -80,7 +51,12 @@ ip-link \- network device configuration
 .BR "ip link set " {
 .IR DEVICE " | "
 .BI "group " GROUP
-.RB "} [ { " up " | " down " } ]"
+}
+.br
+.RB "[ { " up " | " down " } ]"
+.br
+.RB "[ " type
+.IR "ETYPE TYPE_ARGS" " ]"
 .br
 .RB "[ " arp " { " on " | " off " } ]"
 .br
@@ -173,13 +149,46 @@ ip-link \- network device configuration
 .B master
 .IR DEVICE " ] ["
 .B type
-.IR TYPE " ]"
+.IR ETYPE " ]"
 .B vrf
 .IR NAME " ]"
 
 .ti -8
 .B ip link help
 .RI "[ " TYPE " ]"
+
+.ti -8
+.IR TYPE " := [ "
+.BR bridge " | "
+.BR bond " | "
+.BR can " | "
+.BR dummy " | "
+.BR hsr " | "
+.BR ifb " | "
+.BR ipoib " |"
+.BR macvlan  " | "
+.BR macvtap  " | "
+.BR vcan " | "
+.BR veth " | "
+.BR vlan " | "
+.BR vxlan " |"
+.BR ip6tnl " |"
+.BR ipip " |"
+.BR sit " |"
+.BR gre " |"
+.BR gretap " |"
+.BR ip6gre " |"
+.BR ip6gretap " |"
+.BR vti " |"
+.BR nlmon " |"
+.BR ipvlan " |"
+.BR lowpan " |"
+.BR geneve " |"
+.BR vrf " ]"
+
+.ti -8
+.IR ETYPE " := [ " TYPE " |"
+.BR bridge_slave " | " bond_slave " ]"
 
 .SH "DESCRIPTION"
 .SS ip link add - add virtual link
@@ -299,7 +308,7 @@ the following additional arguments are supported:
 .BI "ip link add
 .BI link " DEVICE "
 .BI name " NAME "
-.BI type " vlan "
+.B "type vlan"
 [
 .BI protocol " VLAN_PROTO "
 ]
@@ -401,7 +410,7 @@ For a link of type
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BI type " vxlan " id " ID"
+.BI type " vxlan " id " VNI"
 [
 .BI dev " PHYS_DEV "
 .RB " ] [ { " group " | " remote " } "
@@ -420,27 +429,27 @@ the following additional arguments are supported:
 ] [
 .BI srcport " MIN MAX "
 ] [
-.I "[no]learning "
+.RB [ no ] learning
 ] [
-.I "[no]proxy "
+.RB [ no ] proxy
 ] [
-.I "[no]rsc "
+.RB [ no ] rsc
 ] [
-.I "[no]l2miss "
+.RB [ no ] l2miss
 ] [
-.I "[no]l3miss "
+.RB [ no ] l3miss
 ] [
-.I "[no]udpcsum "
+.RB [ no ] udpcsum
 ] [
-.I "[no]udp6zerocsumtx "
+.RB [ no ] udp6zerocsumtx
 ] [
-.I "[no]udp6zerocsumrx "
+.RB [ no ] udp6zerocsumrx
 ] [
 .BI ageing " SECONDS "
 ] [
 .BI maxaddress " NUMBER "
 ] [
-.RI "[no]external "
+.RB [ no ] external
 ] [
 .B gbp
 ] [
@@ -497,36 +506,36 @@ parameter.
 source ports to communicate to the remote VXLAN tunnel endpoint.
 
 .sp
-.I [no]learning
+.RB [ no ] learning
 - specifies if unknown source link layer addresses and IP addresses
 are entered into the VXLAN device forwarding database.
 
 .sp
-.I [no]rsc
+.RB [ no ] rsc
 - specifies if route short circuit is turned on.
 
 .sp
-.I [no]proxy
+.RB [ no ] proxy
 - specifies ARP proxy is turned on.
 
 .sp
-.I [no]l2miss
+.RB [ no ] l2miss
 - specifies if netlink LLADDR miss notifications are generated.
 
 .sp
-.I [no]l3miss
+.RB [ no ] l3miss
 - specifies if netlink IP ADDR miss notifications are generated.
 
 .sp
-.I [no]udpcsum
+.RB [ no ] udpcsum
 - specifies if UDP checksum is calculated for transmitted packets over IPv4.
 
 .sp
-.I [no]udp6zerocsumtx
+.RB [ no ] udp6zerocsumtx
 - skip UDP checksum calculation for transmitted packets over IPv6.
 
 .sp
-.I [no]udp6zerocsumrx
+.RB [ no ] udp6zerocsumrx
 - allow incoming UDP packets over IPv6 with zero checksum field.
 
 .sp
@@ -538,7 +547,7 @@ are entered into the VXLAN device forwarding database.
 - specifies the maximum number of FDB entries.
 
 .sp
-.I [no]external
+.RB [ no ] external
 - specifies whether an external control plane
 .RB "(e.g. " "ip route encap" )
 or the internal FDB should be used.
@@ -602,18 +611,18 @@ For a link of types
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BR type " { gre | ipip | sit } "
+.BR type " { " gre " | " ipip " | " sit " }"
 .BI " remote " ADDR " local " ADDR
 [
-.BR encap " { fou | gue | none } "
+.BR encap " { " fou " | " gue " | " none " }"
 ] [
-.BI "encap-sport { " PORT " | auto } "
+.BR encap-sport " { " \fIPORT " | " auto " }"
 ] [
 .BI "encap-dport " PORT
 ] [
-.I " [no]encap-csum "
+.RB [ no ] encap-csum
 ] [
-.I " [no]encap-remcsum "
+.RB [ no ] encap-remcsum
 ]
 
 .in +8
@@ -627,12 +636,12 @@ the following additional arguments are supported:
 It must be an address on another interface on this host.
 
 .sp
-.BR encap " { fou | gue | none } "
+.BR encap " { " fou " | " gue " | " none " }"
 - specifies type of secondary UDP encapsulation. "fou" indicates
 Foo-Over-UDP, "gue" indicates Generic UDP Encapsulation.
 
 .sp
-.BI "encap-sport { " PORT " | auto } "
+.BR encap-sport " { " \fIPORT " | " auto " }"
 - specifies the source port in UDP encapsulation.
 .IR PORT
 indicates the port by number, "auto"
@@ -641,12 +650,12 @@ indicates that the port number should be chosen automatically
 encapsulated packet).
 
 .sp
-.I [no]encap-csum
+.RB [ no ] encap-csum
 - specifies if UDP checksums are enabled in the secondary
 encapsulation.
 
 .sp
-.I [no]encap-remcsum
+.RB [ no ] encap-remcsum
 - specifies if Remote Checksum Offload is enabled. This is only
 applicable for Generic UDP Encapsulation.
 
@@ -659,13 +668,15 @@ For a link of type
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BI type " { ip6gre | ip6gretap }  " remote " ADDR " local " ADDR
+.BR type " { " ip6gre " | " ip6gretap " }"
+.BI remote " ADDR " local " ADDR"
 [
-.I "[i|o]seq]"
+.RB [ i | o ] seq
 ] [
-.I "[i|o]key" KEY
+.RB [ i | o ] key
+.I KEY
 ] [
-.I " [i|o]csum "
+.RB [ i | o ] csum
 ] [
 .BI hoplimit " TTL "
 ] [
@@ -691,7 +702,7 @@ the following additional arguments are supported:
 It must be an address on another interface on this host.
 
 .sp
-.BI  [i|o]seq
+.RB  [ i | o ] seq
 - serialize packets.
 The
 .B oseq
@@ -701,7 +712,7 @@ The
 flag requires that all input packets are serialized.
 
 .sp
-.BI  [i|o]key " KEY"
+.RB  [ i | o ] key " \fIKEY"
 - use keyed GRE with key
 .IR KEY ". "KEY
 is either a number or an IPv4 address-like dotted quad.
@@ -713,7 +724,7 @@ The
 parameters specify different keys for input and output.
 
 .sp
-.BI  [i|o]csum
+.RB  [ i | o ] csum
 - generate/require checksums for tunneled packets.
 The
 .B ocsum
@@ -765,7 +776,7 @@ For a link of type
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE " name " NAME
-.BI type " ipoib [ " pkey " PKEY ] [" mode " MODE " ]
+.BR "type ipoib " [ " pkey \fIPKEY" " ] [ " mode " \fIMODE \fR]"
 
 .in +8
 .sp
@@ -782,7 +793,7 @@ For a link of type
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BI type " geneve " id " ID " remote " IPADDR"
+.BI type " geneve " id " VNI " remote " IPADDR"
 [
 .BI ttl " TTL "
 ] [
@@ -825,7 +836,7 @@ the following additional arguments are supported:
 .BI "ip link add link " DEVICE " name " NAME
 .BR type " { " macvlan " | " macvtap " } "
 .BR mode " { " private " | " vepa " | " bridge " | " passthru
-.BR " [ " nopromisc " ] } "
+.RB " [ " nopromisc " ] } "
 
 .in +8
 .sp
@@ -870,11 +881,11 @@ For a link of type
 .I HSR
 the following additional arguments are supported:
 
-.BI "ip link add link " DEVICE " name " NAME
-.BI type " hsr "
+.BI "ip link add link " DEVICE " name " NAME " type hsr"
 .BI slave1 " SLAVE1-IF " slave2 " SLAVE2-IF "
-.BR " [ supervision " ADDR-BYTE "  ] "
-.BR " [ version  { " 0 " | " 1 " } ] "
+.RB [ " supervision"
+.IR ADDR-BYTE " ] ["
+.BR version " { " 0 " | " 1 " } ]"
 
 .in +8
 .sp
@@ -887,11 +898,11 @@ the following additional arguments are supported:
 .BI slave2 " SLAVE2-IF "
 - Specifies the physical device used for the second of the two ring ports.
 
-.BR "supervision ADDR-BYTE "
+.BI supervision " ADDR-BYTE"
 - The last byte of the multicast address used for HSR supervision frames.
 Default option is "0", possible values 0-255.
 
-.BR "version { 0 | 1 }"
+.BR version " { " 0 " | " 1 " }"
 - Selects the protocol version of the interface. Default option is "0", which
 corresponds to the 2010 version of the HSR standard. Option "1" activates the
 2012 version.
@@ -1009,6 +1020,18 @@ deleted since it is the default group.
 specifies the type of the device.
 
 .SS ip link set - change device attributes
+
+.PP
+.B Warning:
+If multiple parameter changes are requested,
+.B ip
+aborts immediately after any of the changes have failed.
+This is the only case when
+.B ip
+can move the system to an unpredictable state. The solution
+is to avoid changing several parameters with one
+.B ip link set
+call.
 
 .TP
 .BI dev " DEVICE "
@@ -1236,17 +1259,134 @@ set the IPv6 address generation mode
 .BR "link-netnsid "
 set peer netnsid for a cross-netns interface
 
-.PP
-.B Warning:
-If multiple parameter changes are requested,
-.B ip
-aborts immediately after any of the changes have failed.
-This is the only case when
-.B ip
-can move the system to an unpredictable state. The solution
-is to avoid changing several parameters with one
-.B ip link set
-call.
+.TP
+.BI type " ETYPE TYPE_ARGS"
+Change type-specific settings. For a list of supported types and arguments refer
+to the description of
+.B "ip link add"
+above. In addition to that, it is possible to manipulate settings to slave
+devices:
+
+.TP
+Bridge Slave Support
+For a link with master
+.B bridge
+the following additional arguments are supported:
+
+.B "ip link set type bridge_slave"
+[
+.BI state " STATE"
+] [
+.BI priority " PRIO"
+] [
+.BI cost " COST"
+] [
+.BR guard " { " on " | " off " }"
+] [
+.BR hairpin " { " on " | " off " }"
+] [
+.BR fastleave " { " on " | " off " }"
+] [
+.BR root_block " { " on " | " off " }"
+] [
+.BR learning " { " on " | " off " }"
+] [
+.BR flood " { " on " | " off " }"
+] [
+.BR proxy_arp " { " on " | " off " }"
+] [
+.BR proxy_arp_wifi " { " on " | " off " }"
+] [
+.BI mcast_router " MULTICAST_ROUTER"
+] [
+.BR mcast_fast_leave " { " on " | " off "} ]"
+
+.in +8
+.sp
+.BI state " STATE"
+- Set port state.
+.I STATE
+is a number representing the following states:
+.BR 0 " (disabled),"
+.BR 1 " (listening),"
+.BR 2 " (learning),"
+.BR 3 " (forwarding),"
+.BR 4 " (blocking)."
+
+.BI priority " PRIO"
+- set port priority (a 16bit unsigned value).
+
+.BI cost " COST"
+- set port cost (a 32bit unsigned value).
+
+.BR guard " { " on " | " off " }"
+- block incoming BPDU packets on this port.
+
+.BR hairpin " { " on " | " off " }"
+- enable hairpin mode on this port. This will allow incoming packets on this
+port to be reflected back.
+
+.BR fastleave " { " on " | " off " }"
+- enable multicast fast leave on this port.
+
+.BR root_block " { " on " | " off " }"
+- block this port from becoming the bridge's root port.
+
+.BR learning " { " on " | " off " }"
+- allow MAC address learning on this port.
+
+.BR flood " { " on " | " off " }"
+- open the flood gates on this port, i.e. forward all unicast frames to this
+port also. Requires
+.BR proxy_arp " and " proxy_arp_wifi
+to be turned off.
+
+.BR proxy_arp " { " on " | " off " }"
+- enable proxy ARP on this port.
+
+.BR proxy_arp_wifi " { " on " | " off " }"
+- enable proxy ARP on this port which meets extended requirements by IEEE
+802.11 and Hotspot 2.0 specifications.
+
+.BI mcast_router " MULTICAST_ROUTER"
+- configure this port for having multicast routers attached. A port with a
+multicast router will receive all multicast traffic.
+.I MULTICAST_ROUTER
+may be either
+.B 0
+to disable multicast routers on this port,
+.B 1
+to let the system detect the presence of of routers (this is the default),
+.B 2
+to permanently enable multicast traffic forwarding on this port or
+.B 3
+to enable multicast routers temporarily on this port, not depending on incoming
+queries.
+
+.BR mcast_fast_leave " { " on " | " off " }"
+- this is a synonym to the
+.B fastleave
+option above.
+
+.in -8
+
+.TP
+Bonding Slave Support
+For a link with master
+.B bond
+the following additional arguments are supported:
+
+.B "ip link set type bond_slave"
+[
+.BI queue_id " ID"
+]
+
+.in +8
+.sp
+.BI queue_id " ID"
+- set the slave's queue ID (a 16bit unsigned value).
+
+.in -8
 
 .SS  ip link show - display device attributes
 

@@ -54,15 +54,12 @@ struct db_names *db_names_alloc(void)
 {
 	struct db_names *db;
 
-	db = malloc(sizeof(*db));
+	db = calloc(1, sizeof(*db));
 	if (!db)
 		return NULL;
 
-	memset(db, 0, sizeof(*db));
-
 	db->size = MAX_ENTRIES;
-	db->hash = malloc(sizeof(struct db_entry *) * db->size);
-	memset(db->hash, 0, sizeof(struct db_entry *) * db->size);
+	db->hash = calloc(db->size, sizeof(struct db_entry *));
 
 	return db;
 }

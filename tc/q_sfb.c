@@ -51,16 +51,15 @@ static int get_prob(__u32 *val, const char *arg)
 static int sfb_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n)
 {
-	struct tc_sfb_qopt opt;
+	struct tc_sfb_qopt opt = {
+		.rehash_interval = 600*1000,
+		.warmup_time = 60*1000,
+		.penalty_rate = 10,
+		.penalty_burst = 20,
+		.increment = (SFB_MAX_PROB + 1000) / 2000,
+		.decrement = (SFB_MAX_PROB + 10000) / 20000,
+	};
 	struct rtattr *tail;
-
-	memset(&opt, 0, sizeof(opt));
-	opt.rehash_interval = 600*1000;
-	opt.warmup_time = 60*1000;
-	opt.penalty_rate = 10;
-	opt.penalty_burst = 20;
-	opt.increment = (SFB_MAX_PROB + 1000) / 2000;
-	opt.decrement = (SFB_MAX_PROB + 10000) / 20000;
 
 	while (argc > 0) {
 	    if (strcmp(*argv, "rehash") == 0) {
