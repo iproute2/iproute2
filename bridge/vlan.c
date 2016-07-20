@@ -192,7 +192,6 @@ static int print_vlan(const struct sockaddr_nl *who,
 	int len = n->nlmsg_len;
 	struct rtattr *tb[IFLA_MAX+1];
 	bool vlan_flags;
-	char flags[80];
 
 	if (n->nlmsg_type != RTM_NEWLINK) {
 		fprintf(stderr, "Not RTM_NEWLINK: %08x %08x %08x\n",
