@@ -49,28 +49,6 @@ static void explain1(char *arg)
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
 
-static const char *police_action_n2a(int action, char *buf, int len)
-{
-	switch (action) {
-	case -1:
-		return "continue";
-		break;
-	case TC_POLICE_OK:
-		return "pass";
-		break;
-	case TC_POLICE_SHOT:
-		return "drop";
-		break;
-	case TC_POLICE_RECLASSIFY:
-		return "reclassify";
-	case TC_POLICE_PIPE:
-		return "pipe";
-	default:
-		snprintf(buf, len, "%d", action);
-		return buf;
-	}
-}
-
 static int get_police_result(int *action, int *result, char *arg)
 {
 	char *p = strchr(arg, '/');
@@ -339,14 +317,12 @@ int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 		fprintf(f, "avrate %s ",
 			sprint_rate(rta_getattr_u32(tb[TCA_POLICE_AVRATE]),
 				    b1));
-	fprintf(f, "action %s",
-		police_action_n2a(p->action, b1, sizeof(b1)));
+	fprintf(f, "action %s", action_n2a(p->action));
 
 	if (tb[TCA_POLICE_RESULT]) {
 		__u32 action = rta_getattr_u32(tb[TCA_POLICE_RESULT]);
 
-		fprintf(f, "/%s",
-			police_action_n2a(action, b1, sizeof(b1)));
+		fprintf(f, "/%s", action_n2a(action));
 	} else
 		fprintf(f, " ");
 

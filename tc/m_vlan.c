@@ -182,7 +182,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 		break;
 	}
-	fprintf(f, " %s", action_n2a(parm->action, b1, sizeof(b1)));
+	fprintf(f, " %s", action_n2a(parm->action));
 
 	fprintf(f, "\n\t index %d ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);

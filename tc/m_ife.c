@@ -215,7 +215,6 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	__u32 mhash = 0;
 	__u32 mprio = 0;
 	int has_optional = 0;
-	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 
 	if (arg == NULL)
@@ -231,7 +230,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	fprintf(f, "ife %s action %s ",
 		(p->flags & IFE_ENCODE) ? "encode" : "decode",
-		action_n2a(p->action, b1, sizeof(b1)));
+		action_n2a(p->action));
 
 	if (tb[TCA_IFE_TYPE]) {
 		ife_type = rta_getattr_u16(tb[TCA_IFE_TYPE]);

@@ -235,8 +235,6 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 	struct rtattr *tb[TCA_MIRRED_MAX + 1];
 	const char *dev;
 
-	SPRINT_BUF(b1);
-
 	if (arg == NULL)
 		return -1;
 
@@ -258,7 +256,8 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 		return -1;
 	}
 
-	fprintf(f, "mirred (%s to device %s) %s", mirred_n2a(p->eaction), dev, action_n2a(p->action, b1, sizeof (b1)));
+	fprintf(f, "mirred (%s to device %s) %s",
+		mirred_n2a(p->eaction), dev, action_n2a(p->action));
 
 	fprintf(f, "\n ");
 	fprintf(f, "\tindex %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);

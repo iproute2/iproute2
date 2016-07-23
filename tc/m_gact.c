@@ -194,9 +194,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 static int
 print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 {
-	SPRINT_BUF(b1);
 #ifdef CONFIG_GACT_PROB
-	SPRINT_BUF(b2);
 	struct tc_gact_p *pp = NULL;
 	struct tc_gact_p pp_dummy;
 #endif
@@ -214,7 +212,7 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_GACT_PARMS]);
 
-	fprintf(f, "gact action %s", action_n2a(p->action, b1, sizeof(b1)));
+	fprintf(f, "gact action %s", action_n2a(p->action));
 #ifdef CONFIG_GACT_PROB
 	if (tb[TCA_GACT_PROB] != NULL) {
 		pp = RTA_DATA(tb[TCA_GACT_PROB]);
@@ -223,7 +221,8 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 		memset(&pp_dummy, 0, sizeof(pp_dummy));
 		pp = &pp_dummy;
 	}
-	fprintf(f, "\n\t random type %s %s val %d", prob_n2a(pp->ptype), action_n2a(pp->paction, b2, sizeof (b2)), pp->pval);
+	fprintf(f, "\n\t random type %s %s val %d",
+		prob_n2a(pp->ptype), action_n2a(pp->paction), pp->pval);
 #endif
 	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
 	if (show_stats) {

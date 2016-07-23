@@ -99,7 +99,7 @@ char *sprint_tc_classid(__u32 h, char *buf);
 int tc_print_police(FILE *f, struct rtattr *tb);
 int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
 
-char *action_n2a(int action, char *buf, int len);
+const char *action_n2a(int action);
 int action_a2n(char *arg, int *result, bool allow_num);
 int act_parse_police(struct action_util *a, int *argc_p,
 		     char ***argv_p, int tca_id, struct nlmsghdr *n);

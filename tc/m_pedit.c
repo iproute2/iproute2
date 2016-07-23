@@ -514,8 +514,6 @@ int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct tc_pedit_sel *sel;
 	struct rtattr *tb[TCA_PEDIT_MAX + 1];
 
-	SPRINT_BUF(b1);
-
 	if (arg == NULL)
 		return -1;
 
@@ -528,7 +526,7 @@ int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	sel = RTA_DATA(tb[TCA_PEDIT_PARMS]);
 
 	fprintf(f, " pedit action %s keys %d\n ",
-		action_n2a(sel->action, b1, sizeof(b1)), sel->nkeys);
+		action_n2a(sel->action), sel->nkeys);
 	fprintf(f, "\t index %d ref %d bind %d", sel->index, sel->refcnt,
 		sel->bindcnt);
 

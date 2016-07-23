@@ -161,8 +161,6 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 	char *uflag_5 = "";
 	char *uflag_6 = "";
 
-	SPRINT_BUF(action_buf);
-
 	int uflag_count = 0;
 
 	if (arg == NULL)
@@ -200,7 +198,7 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 	fprintf(f, "csum (%s%s%s%s%s%s) action %s\n",
 		uflag_1, uflag_2, uflag_3,
 		uflag_4, uflag_5, uflag_6,
-		action_n2a(sel->action, action_buf, sizeof(action_buf)));
+		action_n2a(sel->action));
 	fprintf(f, "\tindex %d ref %d bind %d", sel->index, sel->refcnt, sel->bindcnt);
 
 	if (show_stats) {

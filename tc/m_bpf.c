@@ -136,8 +136,6 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_ACT_BPF_MAX + 1];
 	struct tc_act_bpf *parm;
 
-	SPRINT_BUF(action_buf);
-
 	if (arg == NULL)
 		return -1;
 
@@ -162,8 +160,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, " ");
 	}
 
-	fprintf(f, "default-action %s\n", action_n2a(parm->action, action_buf,
-		sizeof(action_buf)));
+	fprintf(f, "default-action %s\n", action_n2a(parm->action));
 	fprintf(f, "\tindex %d ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);
 

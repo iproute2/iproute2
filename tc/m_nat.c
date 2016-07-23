@@ -148,7 +148,6 @@ print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
 	char buf1[256];
 	char buf2[256];
 
-	SPRINT_BUF(buf3);
 	int len;
 
 	if (arg == NULL)
@@ -170,7 +169,7 @@ print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
 		format_host_r(AF_INET, 4, &sel->old_addr, buf1, sizeof(buf1)),
 		len,
 		format_host_r(AF_INET, 4, &sel->new_addr, buf2, sizeof(buf2)),
-		action_n2a(sel->action, buf3, sizeof(buf3)));
+		action_n2a(sel->action));
 
 	if (show_stats) {
 		if (tb[TCA_NAT_TM]) {

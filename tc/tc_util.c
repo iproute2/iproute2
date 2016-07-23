@@ -411,18 +411,17 @@ char *sprint_qdisc_handle(__u32 h, char *buf)
 	return buf;
 }
 
-char *action_n2a(int action, char *buf, int len)
+const char *action_n2a(int action)
 {
+	static char buf[64];
+
 	switch (action) {
-	case -1:
+	case TC_ACT_UNSPEC:
 		return "continue";
-		break;
 	case TC_ACT_OK:
 		return "pass";
-		break;
 	case TC_ACT_SHOT:
 		return "drop";
-		break;
 	case TC_ACT_RECLASSIFY:
 		return "reclassify";
 	case TC_ACT_PIPE:
@@ -430,7 +429,8 @@ char *action_n2a(int action, char *buf, int len)
 	case TC_ACT_STOLEN:
 		return "stolen";
 	default:
-		snprintf(buf, len, "%d", action);
+		snprintf(buf, 64, "%d", action);
+		buf[63] = '\0';
 		return buf;
 	}
 }
