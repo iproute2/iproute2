@@ -154,28 +154,9 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 	}
 
 
-	if (argc && p.eaction == TCA_EGRESS_MIRROR) {
-
-		if (matches(*argv, "reclassify") == 0) {
-			p.action = TC_POLICE_RECLASSIFY;
-			NEXT_ARG();
-		} else if (matches(*argv, "pipe") == 0) {
-			p.action = TC_POLICE_PIPE;
-			NEXT_ARG();
-		} else if (matches(*argv, "drop") == 0 ||
-			   matches(*argv, "shot") == 0) {
-			p.action = TC_POLICE_SHOT;
-			NEXT_ARG();
-		} else if (matches(*argv, "continue") == 0) {
-			p.action = TC_POLICE_UNSPEC;
-			NEXT_ARG();
-		} else if (matches(*argv, "pass") == 0 ||
-			   matches(*argv, "ok") == 0) {
-			p.action = TC_POLICE_OK;
-			NEXT_ARG();
-		}
-
-	}
+	if (argc && p.eaction == TCA_EGRESS_MIRROR
+	    && !action_a2n(*argv, &p.action, false))
+		NEXT_ARG();
 
 	if (argc) {
 		if (iok && matches(*argv, "index") == 0) {

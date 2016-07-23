@@ -71,22 +71,13 @@ usage(void)
 static int
 get_act(char ***argv_p)
 {
-	char **argv = *argv_p;
+	int n;
 
-	if (matches(*argv, "reclassify") == 0) {
-		return TC_ACT_RECLASSIFY;
-	} else if (matches(*argv, "drop") == 0 || matches(*argv, "shot") == 0) {
-		return TC_ACT_SHOT;
-	} else if (matches(*argv, "continue") == 0) {
-		return TC_ACT_UNSPEC;
-	} else if (matches(*argv, "pipe") == 0) {
-		return TC_ACT_PIPE;
-	} else if (matches(*argv, "pass") == 0 || matches(*argv, "ok") == 0)  {
-		return TC_ACT_OK;
-	} else {
-		fprintf(stderr, "bad action type %s\n", *argv);
+	if (!action_a2n(**argv_p, &n, false)) {
+		fprintf(stderr, "bad action type %s\n", **argv_p);
 		return -10;
 	}
+	return n;
 }
 
 static int

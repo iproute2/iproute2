@@ -71,34 +71,6 @@ static const char *police_action_n2a(int action, char *buf, int len)
 	}
 }
 
-static int police_action_a2n(const char *arg, int *result)
-{
-	int res;
-
-	if (matches(arg, "continue") == 0)
-		res = -1;
-	else if (matches(arg, "drop") == 0)
-		res = TC_POLICE_SHOT;
-	else if (matches(arg, "shot") == 0)
-		res = TC_POLICE_SHOT;
-	else if (matches(arg, "pass") == 0)
-		res = TC_POLICE_OK;
-	else if (strcmp(arg, "ok") == 0)
-		res = TC_POLICE_OK;
-	else if (matches(arg, "reclassify") == 0)
-		res = TC_POLICE_RECLASSIFY;
-	else if (matches(arg, "pipe") == 0)
-		res = TC_POLICE_PIPE;
-	else {
-		char dummy;
-
-		if (sscanf(arg, "%d%c", &res, &dummy) != 1)
-			return -1;
-	}
-	*result = res;
-	return 0;
-}
-
 static int get_police_result(int *action, int *result, char *arg)
 {
 	char *p = strchr(arg, '/');
@@ -106,7 +78,7 @@ static int get_police_result(int *action, int *result, char *arg)
 	if (p)
 		*p = 0;
 
-	if (police_action_a2n(arg, action)) {
+	if (action_a2n(arg, action, true)) {
 		if (p)
 			*p = '/';
 		return -1;
@@ -114,7 +86,7 @@ static int get_police_result(int *action, int *result, char *arg)
 
 	if (p) {
 		*p = '/';
-		if (police_action_a2n(p+1, result))
+		if (action_a2n(p+1, result, true))
 			return -1;
 	}
 	return 0;

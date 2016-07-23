@@ -100,26 +100,8 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	}
 
 	sel.action = TC_ACT_PIPE;
-	if (argc) {
-		if (matches(*argv, "reclassify") == 0) {
-			sel.action = TC_ACT_RECLASSIFY;
-			NEXT_ARG();
-		} else if (matches(*argv, "pipe") == 0) {
-			sel.action = TC_ACT_PIPE;
-			NEXT_ARG();
-		} else if (matches(*argv, "drop") == 0 ||
-			matches(*argv, "shot") == 0) {
-			sel.action = TC_ACT_SHOT;
-			NEXT_ARG();
-		} else if (matches(*argv, "continue") == 0) {
-			sel.action = TC_ACT_UNSPEC;
-			NEXT_ARG();
-		} else if (matches(*argv, "pass") == 0 ||
-			   matches(*argv, "ok") == 0) {
-			sel.action = TC_ACT_OK;
-			NEXT_ARG();
-		}
-	}
+	if (argc && !action_a2n(*argv, &sel.action, false))
+		NEXT_ARG();
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
