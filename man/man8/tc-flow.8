@@ -73,8 +73,10 @@ An offset for the resulting class ID.
 .I ID
 may be
 .BR root ", " none
-or a hexadecimal class ID in the form [\fIX\fB:\fR]\fIY\fR. If \fIX\fR is
-omitted, it is assumed to be zero.
+or a hexadecimal class ID in the form [\fIX\fB:\fR]\fIY\fR. \fIX\fR must
+match qdisc's/class's major handle (if omitted, the correct value is chosen
+automatically). If the whole \fBbaseclass\fR is omitted, \fIY\fR defaults
+to 1.
 .TP
 .BI divisor " NUM"
 Number of buckets to use for sorting into. Keys are calculated modulo
@@ -239,7 +241,7 @@ tc filter add ... flow hash \\
 	divisor 1024
 .EE
 .TP
-Map destination IPs of 192.168.0.0/24 to classids 1-257:
+Map destination IPs of 192.168.0.0/24 to classids 1-256:
 
 .EX
 tc filter add ... flow map \\
