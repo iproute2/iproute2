@@ -154,28 +154,9 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
 	}
 
 
-	if (argc && p.eaction == TCA_EGRESS_MIRROR) {
-
-		if (matches(*argv, "reclassify") == 0) {
-			p.action = TC_POLICE_RECLASSIFY;
-			NEXT_ARG();
-		} else if (matches(*argv, "pipe") == 0) {
-			p.action = TC_POLICE_PIPE;
-			NEXT_ARG();
-		} else if (matches(*argv, "drop") == 0 ||
-			   matches(*argv, "shot") == 0) {
-			p.action = TC_POLICE_SHOT;
-			NEXT_ARG();
-		} else if (matches(*argv, "continue") == 0) {
-			p.action = TC_POLICE_UNSPEC;
-			NEXT_ARG();
-		} else if (matches(*argv, "pass") == 0 ||
-			   matches(*argv, "ok") == 0) {
-			p.action = TC_POLICE_OK;
-			NEXT_ARG();
-		}
-
-	}
+	if (argc && p.eaction == TCA_EGRESS_MIRROR
+	    && !action_a2n(*argv, &p.action, false))
+		NEXT_ARG();
 
 	if (argc) {
 		if (iok && matches(*argv, "index") == 0) {
@@ -254,8 +235,6 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 	struct rtattr *tb[TCA_MIRRED_MAX + 1];
 	const char *dev;
 
-	SPRINT_BUF(b1);
-
 	if (arg == NULL)
 		return -1;
 
@@ -277,7 +256,8 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 		return -1;
 	}
 
-	fprintf(f, "mirred (%s to device %s) %s", mirred_n2a(p->eaction), dev, action_n2a(p->action, b1, sizeof (b1)));
+	fprintf(f, "mirred (%s to device %s) %s",
+		mirred_n2a(p->eaction), dev, action_n2a(p->action));
 
 	fprintf(f, "\n ");
 	fprintf(f, "\tindex %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);

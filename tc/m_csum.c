@@ -120,31 +120,8 @@ parse_csum(struct action_util *a, int *argc_p,
 		return -1;
 	}
 
-	if (argc) {
-		if (matches(*argv, "reclassify") == 0) {
-			sel.action = TC_ACT_RECLASSIFY;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "pipe") == 0) {
-			sel.action = TC_ACT_PIPE;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "drop") == 0 ||
-			matches(*argv, "shot") == 0) {
-			sel.action = TC_ACT_SHOT;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "continue") == 0) {
-			sel.action = TC_ACT_UNSPEC;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "pass") == 0 ||
-			   matches(*argv, "ok") == 0) {
-			sel.action = TC_ACT_OK;
-			argc--;
-			argv++;
-		}
-	}
+	if (argc && !action_a2n(*argv, &sel.action, false))
+		NEXT_ARG_FWD();
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -184,8 +161,6 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 	char *uflag_5 = "";
 	char *uflag_6 = "";
 
-	SPRINT_BUF(action_buf);
-
 	int uflag_count = 0;
 
 	if (arg == NULL)
@@ -223,7 +198,7 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 	fprintf(f, "csum (%s%s%s%s%s%s) action %s\n",
 		uflag_1, uflag_2, uflag_3,
 		uflag_4, uflag_5, uflag_6,
-		action_n2a(sel->action, action_buf, sizeof(action_buf)));
+		action_n2a(sel->action));
 	fprintf(f, "\tindex %d ref %d bind %d", sel->index, sel->refcnt, sel->bindcnt);
 
 	if (show_stats) {

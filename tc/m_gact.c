@@ -71,22 +71,13 @@ usage(void)
 static int
 get_act(char ***argv_p)
 {
-	char **argv = *argv_p;
+	int n;
 
-	if (matches(*argv, "reclassify") == 0) {
-		return TC_ACT_RECLASSIFY;
-	} else if (matches(*argv, "drop") == 0 || matches(*argv, "shot") == 0) {
-		return TC_ACT_SHOT;
-	} else if (matches(*argv, "continue") == 0) {
-		return TC_ACT_UNSPEC;
-	} else if (matches(*argv, "pipe") == 0) {
-		return TC_ACT_PIPE;
-	} else if (matches(*argv, "pass") == 0 || matches(*argv, "ok") == 0)  {
-		return TC_ACT_OK;
-	} else {
-		fprintf(stderr, "bad action type %s\n", *argv);
+	if (!action_a2n(**argv_p, &n, false)) {
+		fprintf(stderr, "bad action type %s\n", **argv_p);
 		return -10;
 	}
+	return n;
 }
 
 static int
@@ -203,9 +194,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 static int
 print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 {
-	SPRINT_BUF(b1);
 #ifdef CONFIG_GACT_PROB
-	SPRINT_BUF(b2);
 	struct tc_gact_p *pp = NULL;
 	struct tc_gact_p pp_dummy;
 #endif
@@ -223,7 +212,7 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_GACT_PARMS]);
 
-	fprintf(f, "gact action %s", action_n2a(p->action, b1, sizeof(b1)));
+	fprintf(f, "gact action %s", action_n2a(p->action));
 #ifdef CONFIG_GACT_PROB
 	if (tb[TCA_GACT_PROB] != NULL) {
 		pp = RTA_DATA(tb[TCA_GACT_PROB]);
@@ -232,7 +221,8 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 		memset(&pp_dummy, 0, sizeof(pp_dummy));
 		pp = &pp_dummy;
 	}
-	fprintf(f, "\n\t random type %s %s val %d", prob_n2a(pp->ptype), action_n2a(pp->paction, b2, sizeof (b2)), pp->pval);
+	fprintf(f, "\n\t random type %s %s val %d",
+		prob_n2a(pp->ptype), action_n2a(pp->paction), pp->pval);
 #endif
 	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
 	if (show_stats) {

@@ -49,56 +49,6 @@ static void explain1(char *arg)
 	fprintf(stderr, "Illegal \"%s\"\n", arg);
 }
 
-static const char *police_action_n2a(int action, char *buf, int len)
-{
-	switch (action) {
-	case -1:
-		return "continue";
-		break;
-	case TC_POLICE_OK:
-		return "pass";
-		break;
-	case TC_POLICE_SHOT:
-		return "drop";
-		break;
-	case TC_POLICE_RECLASSIFY:
-		return "reclassify";
-	case TC_POLICE_PIPE:
-		return "pipe";
-	default:
-		snprintf(buf, len, "%d", action);
-		return buf;
-	}
-}
-
-static int police_action_a2n(const char *arg, int *result)
-{
-	int res;
-
-	if (matches(arg, "continue") == 0)
-		res = -1;
-	else if (matches(arg, "drop") == 0)
-		res = TC_POLICE_SHOT;
-	else if (matches(arg, "shot") == 0)
-		res = TC_POLICE_SHOT;
-	else if (matches(arg, "pass") == 0)
-		res = TC_POLICE_OK;
-	else if (strcmp(arg, "ok") == 0)
-		res = TC_POLICE_OK;
-	else if (matches(arg, "reclassify") == 0)
-		res = TC_POLICE_RECLASSIFY;
-	else if (matches(arg, "pipe") == 0)
-		res = TC_POLICE_PIPE;
-	else {
-		char dummy;
-
-		if (sscanf(arg, "%d%c", &res, &dummy) != 1)
-			return -1;
-	}
-	*result = res;
-	return 0;
-}
-
 static int get_police_result(int *action, int *result, char *arg)
 {
 	char *p = strchr(arg, '/');
@@ -106,7 +56,7 @@ static int get_police_result(int *action, int *result, char *arg)
 	if (p)
 		*p = 0;
 
-	if (police_action_a2n(arg, action)) {
+	if (action_a2n(arg, action, true)) {
 		if (p)
 			*p = '/';
 		return -1;
@@ -114,7 +64,7 @@ static int get_police_result(int *action, int *result, char *arg)
 
 	if (p) {
 		*p = '/';
-		if (police_action_a2n(p+1, result))
+		if (action_a2n(p+1, result, true))
 			return -1;
 	}
 	return 0;
@@ -367,14 +317,12 @@ int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 		fprintf(f, "avrate %s ",
 			sprint_rate(rta_getattr_u32(tb[TCA_POLICE_AVRATE]),
 				    b1));
-	fprintf(f, "action %s",
-		police_action_n2a(p->action, b1, sizeof(b1)));
+	fprintf(f, "action %s", action_n2a(p->action));
 
 	if (tb[TCA_POLICE_RESULT]) {
 		__u32 action = rta_getattr_u32(tb[TCA_POLICE_RESULT]);
 
-		fprintf(f, "/%s",
-			police_action_n2a(action, b1, sizeof(b1)));
+		fprintf(f, "/%s", action_n2a(action));
 	} else
 		fprintf(f, " ");
 

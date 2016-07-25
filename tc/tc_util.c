@@ -411,18 +411,17 @@ char *sprint_qdisc_handle(__u32 h, char *buf)
 	return buf;
 }
 
-char *action_n2a(int action, char *buf, int len)
+const char *action_n2a(int action)
 {
+	static char buf[64];
+
 	switch (action) {
-	case -1:
+	case TC_ACT_UNSPEC:
 		return "continue";
-		break;
 	case TC_ACT_OK:
 		return "pass";
-		break;
 	case TC_ACT_SHOT:
 		return "drop";
-		break;
 	case TC_ACT_RECLASSIFY:
 		return "reclassify";
 	case TC_ACT_PIPE:
@@ -430,34 +429,49 @@ char *action_n2a(int action, char *buf, int len)
 	case TC_ACT_STOLEN:
 		return "stolen";
 	default:
-		snprintf(buf, len, "%d", action);
+		snprintf(buf, 64, "%d", action);
+		buf[63] = '\0';
 		return buf;
 	}
 }
 
-int action_a2n(char *arg, int *result)
+/* Convert action branch name into numeric format.
+ *
+ * Parameters:
+ * @arg - string to parse
+ * @result - pointer to output variable
+ * @allow_num - whether @arg may be in numeric format already
+ *
+ * In error case, returns -1 and does not touch @result. Otherwise returns 0.
+ */
+int action_a2n(char *arg, int *result, bool allow_num)
 {
-	int res;
+	int n;
+	char dummy;
+	struct {
+		const char *a;
+		int n;
+	} a2n[] = {
+		{"continue", TC_ACT_UNSPEC},
+		{"drop", TC_ACT_SHOT},
+		{"shot", TC_ACT_SHOT},
+		{"pass", TC_ACT_OK},
+		{"ok", TC_ACT_OK},
+		{"reclassify", TC_ACT_RECLASSIFY},
+		{"pipe", TC_ACT_PIPE},
+		{ NULL },
+	}, *iter;
 
-	if (matches(arg, "continue") == 0)
-		res = -1;
-	else if (matches(arg, "drop") == 0)
-		res = TC_ACT_SHOT;
-	else if (matches(arg, "shot") == 0)
-		res = TC_ACT_SHOT;
-	else if (matches(arg, "pass") == 0)
-		res = TC_ACT_OK;
-	else if (strcmp(arg, "ok") == 0)
-		res = TC_ACT_OK;
-	else if (matches(arg, "reclassify") == 0)
-		res = TC_ACT_RECLASSIFY;
-	else {
-		char dummy;
-
-		if (sscanf(arg, "%d%c", &res, &dummy) != 1)
-			return -1;
+	for (iter = a2n; iter->a; iter++) {
+		if (matches(arg, iter->a) != 0)
+			continue;
+		*result = iter->n;
+		return 0;
 	}
-	*result = res;
+	if (!allow_num || sscanf(arg, "%d%c", &n, &dummy) != 1)
+		return -1;
+
+	*result = n;
 	return 0;
 }
 

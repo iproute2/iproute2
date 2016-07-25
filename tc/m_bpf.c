@@ -104,26 +104,8 @@ opt_bpf:
 		NEXT_ARG_FWD();
 	}
 
-	if (argc) {
-		if (matches(*argv, "reclassify") == 0) {
-			parm.action = TC_ACT_RECLASSIFY;
-			NEXT_ARG_FWD();
-		} else if (matches(*argv, "pipe") == 0) {
-			parm.action = TC_ACT_PIPE;
-			NEXT_ARG_FWD();
-		} else if (matches(*argv, "drop") == 0 ||
-			   matches(*argv, "shot") == 0) {
-			parm.action = TC_ACT_SHOT;
-			NEXT_ARG_FWD();
-		} else if (matches(*argv, "continue") == 0) {
-			parm.action = TC_ACT_UNSPEC;
-			NEXT_ARG_FWD();
-		} else if (matches(*argv, "pass") == 0 ||
-			   matches(*argv, "ok") == 0) {
-			parm.action = TC_ACT_OK;
-			NEXT_ARG_FWD();
-		}
-	}
+	if (argc && !action_a2n(*argv, &parm.action, false))
+		NEXT_ARG_FWD();
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -154,8 +136,6 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_ACT_BPF_MAX + 1];
 	struct tc_act_bpf *parm;
 
-	SPRINT_BUF(action_buf);
-
 	if (arg == NULL)
 		return -1;
 
@@ -180,8 +160,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, " ");
 	}
 
-	fprintf(f, "default-action %s\n", action_n2a(parm->action, action_buf,
-		sizeof(action_buf)));
+	fprintf(f, "default-action %s\n", action_n2a(parm->action));
 	fprintf(f, "\tindex %d ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);
 
