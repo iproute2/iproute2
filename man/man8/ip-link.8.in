@@ -923,6 +923,8 @@ the following additional arguments are supported:
 ] [
 .BI cipher " CIPHER_SUITE"
 ] [
+.BR icvlen " { "
+.IR 8..16 " } ] ["
 .BR encrypt " {"
 .BR on " | " off " } ] [ "
 .BR send_sci " { " on " | " off " } ] ["
@@ -948,6 +950,10 @@ the following additional arguments are supported:
 .sp
 .BI cipher " CIPHER_SUITE "
 - defines the cipher suite to use.
+
+.sp
+.BI icvlen " LENGTH "
+- sets the length of the Integrity Check Value (ICV).
 
 .sp
 .BR "encrypt on " or " encrypt off"
