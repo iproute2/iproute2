@@ -184,7 +184,8 @@ ip-link \- network device configuration
 .BR ipvlan " |"
 .BR lowpan " |"
 .BR geneve " |"
-.BR vrf " ]"
+.BR vrf " |"
+.BR macsec " ]"
 
 .ti -8
 .IR ETYPE " := [ " TYPE " |"

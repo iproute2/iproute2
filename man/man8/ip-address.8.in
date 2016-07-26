@@ -127,7 +127,8 @@ ip-address \- protocol address management
 .BR nlmon " |"
 .BR ipvlan " |"
 .BR lowpan " |"
-.BR geneve " ]"
+.BR geneve " |"
+.BR macsec " ]"
 
 .SH "DESCRIPTION"
 The

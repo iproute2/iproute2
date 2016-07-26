@@ -96,7 +96,7 @@ void iplink_usage(void)
 		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
 		fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n");
 		fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon |\n");
-		fprintf(stderr, "          bond_slave | ipvlan | geneve | bridge_slave | vrf }\n");
+		fprintf(stderr, "          bond_slave | ipvlan | geneve | bridge_slave | vrf | macsec }\n");
 	}
 	exit(-1);
 }
