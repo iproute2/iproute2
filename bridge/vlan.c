@@ -188,7 +188,7 @@ static int print_vlan(const struct sockaddr_nl *who,
 	struct ifinfomsg *ifm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[IFLA_MAX+1];
-	bool vlan_flags;
+	bool vlan_flags = false;
 
 	if (n->nlmsg_type != RTM_NEWLINK) {
 		fprintf(stderr, "Not RTM_NEWLINK: %08x %08x %08x\n",
@@ -276,7 +276,7 @@ static int print_vlan(const struct sockaddr_nl *who,
 					fprintf(fp, " Egress Untagged");
 				}
 			}
-			if (vlan_flags) {
+			if (jw_global && vlan_flags) {
 				jsonw_end_array(jw_global);
 				vlan_flags = false;
 			}
