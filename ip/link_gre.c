@@ -429,7 +429,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fputs("external ", f);
 
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&
-	    *(__u16 *)RTA_DATA(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {
+	    rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {
 		__u16 type = rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]);
 		__u16 flags = rta_getattr_u16(tb[IFLA_GRE_ENCAP_FLAGS]);
 		__u16 sport = rta_getattr_u16(tb[IFLA_GRE_ENCAP_SPORT]);
