@@ -25,8 +25,9 @@
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip fou add port PORT { ipproto PROTO  | gue }\n");
-	fprintf(stderr, "       ip fou del port PORT\n");
+	fprintf(stderr, "Usage: ip fou add port PORT "
+		"{ ipproto PROTO  | gue } [ -6 ]\n");
+	fprintf(stderr, "       ip fou del port PORT [ -6 ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: PROTO { ipproto-name | 1..255 }\n");
 	fprintf(stderr, "       PORT { 1..65535 }\n");
@@ -50,6 +51,7 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 	__u8 ipproto, type;
 	bool gue_set = false;
 	int ipproto_set = 0;
+	unsigned short family = AF_INET;
 
 	while (argc > 0) {
 		if (!matches(*argv, "port")) {
@@ -71,6 +73,8 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 			ipproto_set = 1;
 		} else if (!matches(*argv, "gue")) {
 			gue_set = true;
+		} else if (!matches(*argv, "-6")) {
+			family = AF_INET6;
 		} else {
 			fprintf(stderr, "fou: unknown command \"%s\"?\n", *argv);
 			usage();
@@ -98,6 +102,7 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 
 	addattr16(n, 1024, FOU_ATTR_PORT, port);
 	addattr8(n, 1024, FOU_ATTR_TYPE, type);
+	addattr16(n, 1024, FOU_ATTR_AF, family);
 
 	if (ipproto_set)
 		addattr8(n, 1024, FOU_ATTR_IPPROTO, ipproto);
