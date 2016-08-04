@@ -52,6 +52,7 @@ int do_netns(int argc, char **argv);
 int do_xfrm(int argc, char **argv);
 int do_ipl2tp(int argc, char **argv);
 int do_ipfou(int argc, char **argv);
+extern int do_ipila(int argc, char **argv);
 int do_tcp_metrics(int argc, char **argv);
 int do_ipnetconf(int argc, char **argv);
 int do_iptoken(int argc, char **argv);
