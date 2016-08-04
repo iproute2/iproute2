@@ -90,6 +90,32 @@ static void print_encap_ip(FILE *fp, struct rtattr *encap)
 		fprintf(fp, "tos %d ", rta_getattr_u8(tb[LWTUNNEL_IP_TOS]));
 }
 
+static char *ila_csum_mode2name(__u8 csum_mode)
+{
+	switch (csum_mode) {
+	case ILA_CSUM_ADJUST_TRANSPORT:
+		return "adj-transport";
+	case ILA_CSUM_NEUTRAL_MAP:
+		return "neutral-map";
+	case ILA_CSUM_NO_ACTION:
+		return "no-action";
+	default:
+		return "unknown";
+	}
+}
+
+static __u8 ila_csum_name2mode(char *name)
+{
+	if (strcmp(name, "adj-transport") == 0)
+		return ILA_CSUM_ADJUST_TRANSPORT;
+	else if (strcmp(name, "neutral-map") == 0)
+		return ILA_CSUM_NEUTRAL_MAP;
+	else if (strcmp(name, "no-action") == 0)
+		return ILA_CSUM_NO_ACTION;
+	else
+		return -1;
+}
+
 static void print_encap_ila(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[ILA_ATTR_MAX+1];
@@ -103,6 +129,10 @@ static void print_encap_ila(FILE *fp, struct rtattr *encap)
 			   abuf, sizeof(abuf));
 		fprintf(fp, " %s ", abuf);
 	}
+
+	if (tb[ILA_ATTR_CSUM_MODE])
+		fprintf(fp, " csum-mode %s ",
+			ila_csum_mode2name(rta_getattr_u8(tb[ILA_ATTR_CSUM_MODE])));
 }
 
 static void print_encap_ip6(FILE *fp, struct rtattr *encap)
@@ -246,10 +276,34 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 		exit(1);
 	}
 
+	argc--; argv++;
+
 	rta_addattr64(rta, 1024, ILA_ATTR_LOCATOR, locator);
 
-	*argcp = argc;
-	*argvp = argv;
+	while (argc > 0) {
+		if (strcmp(*argv, "csum-mode") == 0) {
+			__u8 csum_mode;
+
+			NEXT_ARG();
+
+			csum_mode = ila_csum_name2mode(*argv);
+			if (csum_mode < 0)
+				invarg("\"csum-mode\" value is invalid\n", *argv);
+
+			rta_addattr8(rta, 1024, ILA_ATTR_CSUM_MODE, csum_mode);
+
+			argc--; argv++;
+		} else {
+			break;
+		}
+	}
+
+	/* argv is currently the first unparsed argument,
+	 * but the lwt_parse_encap() caller will move to the next,
+	 * so step back
+	 */
+	*argcp = argc + 1;
+	*argvp = argv - 1;
 
 	return 0;
 }
