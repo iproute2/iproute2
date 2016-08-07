@@ -212,7 +212,7 @@ static int print_vlan(const struct sockaddr_nl *who,
 
 	/* if AF_SPEC isn't there, vlan table is not preset for this port */
 	if (!tb[IFLA_AF_SPEC]) {
-		if (!filter_vlan)
+		if (!filter_vlan && !jw_global)
 			fprintf(fp, "%s\tNone\n",
 				ll_index_to_name(ifm->ifi_index));
 		return 0;
