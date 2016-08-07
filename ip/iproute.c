@@ -1813,7 +1813,7 @@ static int restore_handler(const struct sockaddr_nl *nl,
 	if (!prio && !tb[RTA_GATEWAY] && (!tb[RTA_PREFSRC] ||
 	    !rtattr_cmp(tb[RTA_PREFSRC], tb[RTA_DST])))
 		goto restore;
-	else if (prio == 1 && !tb[RTA_GATEWAY] &&
+	else if (prio == 1 && !tb[RTA_GATEWAY] && tb[RTA_PREFSRC] &&
 		 rtattr_cmp(tb[RTA_PREFSRC], tb[RTA_DST]))
 		goto restore;
 	else if (prio == 2 && tb[RTA_GATEWAY])
