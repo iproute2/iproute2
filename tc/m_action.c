@@ -623,14 +623,12 @@ int do_action(int argc, char **argv)
 			act_usage();
 			return -1;
 		} else {
-
-			ret = -1;
-		}
-
-		if (ret < 0) {
 			fprintf(stderr, "Command \"%s\" is unknown, try \"tc actions help\".\n", *argv);
 			return -1;
 		}
+
+		if (ret < 0)
+			return -1;
 	}
 
 	return 0;
