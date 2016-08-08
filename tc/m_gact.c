@@ -73,7 +73,7 @@ get_act(char ***argv_p)
 {
 	int n;
 
-	if (!action_a2n(**argv_p, &n, false)) {
+	if (action_a2n(**argv_p, &n, false)) {
 		fprintf(stderr, "bad action type %s\n", **argv_p);
 		return -10;
 	}
