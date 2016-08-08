@@ -184,7 +184,8 @@ ip-link \- network device configuration
 .BR ipvlan " |"
 .BR lowpan " |"
 .BR geneve " |"
-.BR vrf " ]"
+.BR vrf " |"
+.BR macsec " ]"
 
 .ti -8
 .IR ETYPE " := [ " TYPE " |"
@@ -922,17 +923,19 @@ the following additional arguments are supported:
 ] [
 .BI cipher " CIPHER_SUITE"
 ] [
+.BR icvlen " { "
+.IR 8..16 " } ] ["
 .BR encrypt " {"
 .BR on " | " off " } ] [ "
 .BR send_sci " { " on " | " off " } ] ["
-.BR es " { " on " | " off " } ] ["
+.BR end_station " { " on " | " off " } ] ["
 .BR scb " { " on " | " off " } ] ["
 .BR protect " { " on " | " off " } ] ["
 .BR replay " { " on " | " off " }"
 .BR window " { "
 .IR 0..2^32-1 " } ] ["
 .BR validate " { " strict " | " check " | " disabled " } ] ["
-.BR encoding " { "
+.BR encodingsa " { "
 .IR 0..3 " } ]"
 
 .in +8
@@ -949,6 +952,10 @@ the following additional arguments are supported:
 - defines the cipher suite to use.
 
 .sp
+.BI icvlen " LENGTH "
+- sets the length of the Integrity Check Value (ICV).
+
+.sp
 .BR "encrypt on " or " encrypt off"
 - switches between authenticated encryption, or authenticity mode only.
 
@@ -957,7 +964,7 @@ the following additional arguments are supported:
 - specifies whether the SCI is included in every packet, or only when it is necessary.
 
 .sp
-.BR "es on " or " es off"
+.BR "end_station on " or " end_station off"
 - sets the End Station bit.
 
 .sp
@@ -985,7 +992,7 @@ the following additional arguments are supported:
 - sets the validation mode on the device.
 
 .sp
-.BI encoding " AN "
+.BI encodingsa " AN "
 - sets the active secure association for transmission.
 
 .in -8

@@ -1071,34 +1071,6 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	}
 }
 
-
-static int do_cipher_suite(struct cipher_args *cipher, int *argcp,
-			   char ***argvp)
-{
-	char **argv = *argvp;
-	int argc = *argcp;
-
-	if (argc == 0)
-		return -1;
-
-	if (strcmp(*argv, "default") == 0 ||
-	    strcmp(*argv, "gcm-aes-128") == 0 ||
-	    strcmp(*argv, "GCM-AES-128") == 0)
-		cipher->id = MACSEC_DEFAULT_CIPHER_ID;
-	NEXT_ARG();
-
-	if (strcmp(*argv, "icvlen") == 0) {
-		NEXT_ARG();
-		if (cipher->icv_len != 0)
-			duparg2("icvlen", "icvlen");
-		get_icvlen(&cipher->icv_len, *argv);
-	}
-	*argcp = argc;
-	*argvp = argv;
-
-	return 0;
-}
-
 static bool check_txsc_flags(bool es, bool scb, bool sci)
 {
 	if (sci && (es || scb))
@@ -1112,7 +1084,8 @@ static void usage(FILE *f)
 {
 	fprintf(f,
 		"Usage: ... macsec [ port PORT | sci SCI ]\n"
-		"                  [ cipher CIPHER_SUITE ]\n"
+		"                  [ cipher { default | gcm-aes-128 } ]\n"
+		"                  [ icvlen { 8..16 } ]\n"
 		"                  [ encrypt { on | off } ]\n"
 		"                  [ send_sci { on | off } ]\n"
 		"                  [ end_station { on | off } ]\n"
@@ -1122,7 +1095,6 @@ static void usage(FILE *f)
 		"                  [ validate { strict | check | disabled } ]\n"
 		"                  [ encodingsa { 0..3 } ]\n"
 		);
-	fprintf(f, "CIPHER_SUITE := [ default = gcm-aes-128 ] icvlen { 8..32 }\n");
 }
 
 static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -1154,11 +1126,21 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 
 	while (argc > 0) {
 		if (strcmp(*argv, "cipher") == 0) {
-			if (cipher.id)
-				duparg2("cipher", "cipher");
 			NEXT_ARG();
-			if (do_cipher_suite(&cipher, &argc, &argv))
-				return -1;
+			if (cipher.id)
+				duparg("cipher", *argv);
+			if (strcmp(*argv, "default") == 0 ||
+			    strcmp(*argv, "gcm-aes-128") == 0 ||
+			    strcmp(*argv, "GCM-AES-128") == 0)
+				cipher.id = MACSEC_DEFAULT_CIPHER_ID;
+			else
+				invarg("expected: default or gcm-aes-128",
+				       *argv);
+		} else if (strcmp(*argv, "icvlen") == 0) {
+			NEXT_ARG();
+			if (cipher.icv_len)
+				duparg("icvlen", *argv);
+			get_icvlen(&cipher.icv_len, *argv);
 		} else if (strcmp(*argv, "encrypt") == 0) {
 			NEXT_ARG();
 			int i;
@@ -1264,12 +1246,12 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 		return -1;
 	}
 
-	if (cipher.id) {
+	if (cipher.id)
 		addattr_l(hdr, MACSEC_BUFLEN, IFLA_MACSEC_CIPHER_SUITE,
 			  &cipher.id, sizeof(cipher.id));
+	if (cipher.icv_len)
 		addattr_l(hdr, MACSEC_BUFLEN, IFLA_MACSEC_ICV_LEN,
 			  &cipher.icv_len, sizeof(cipher.icv_len));
-	}
 
 	if (replay_protect != -1) {
 		addattr32(hdr, MACSEC_BUFLEN, IFLA_MACSEC_WINDOW, window);

@@ -3,10 +3,14 @@
 ip-macsec \- MACsec device configuration
 .SH "SYNOPSIS"
 .BI "ip link add link " DEVICE " name " NAME " type macsec "
-[ [
-.BR cipher " { " default " | " gcm-aes-128 " } ] "
+[
+.BI port " PORT"
+|
+.BI sci  " SCI"
+] [
+.BR cipher " { " default " | " gcm-aes-128 " } ] ["
 .BI icvlen " ICVLEN"
-] [ [
+] [
 .BR encrypt " { " on " | " off " } ] ["
 .BR send_sci " { " on " | " off " } ] ["
 .BR end_station " { " on " | " off " } ] ["
@@ -15,6 +19,7 @@ ip-macsec \- MACsec device configuration
 .BR replay " { " on " | " off " } ] ["
 .BI window " WINDOW"
 ] [
+.BR validate " { " strict " | " check " | " disabled " } ] ["
 .BI encodingsa " SA"
 ]
 
@@ -74,7 +79,7 @@ type.
 .PP
 .SS Create a MACsec device on link eth0
 .nf
-# ip link add device eth0 macsec0 type macsec port 11 encrypt on
+# ip link add link eth0 macsec0 type macsec port 11 encrypt on
 .PP
 .SS Configure a secure association on that device
 .nf

@@ -45,7 +45,7 @@ static int usage(void)
 static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 {
 	struct qdisc_util *q = NULL;
-	struct tc_estimator est;
+	struct tc_estimator est = {};
 	struct {
 		struct tc_sizespec	szopts;
 		__u16			*data;
