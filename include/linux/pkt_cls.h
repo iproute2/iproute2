@@ -61,8 +61,8 @@ struct tc_police {
 	__u32			mtu;
 	struct tc_ratespec	rate;
 	struct tc_ratespec	peakrate;
-	int 			refcnt;
-	int 			bindcnt;
+	int			refcnt;
+	int			bindcnt;
 	__u32			capab;
 };
 
@@ -70,10 +70,11 @@ struct tcf_t {
 	__u64   install;
 	__u64   lastuse;
 	__u64   expires;
+	__u64   firstuse;
 };
 
 struct tc_cnt {
-	int                   refcnt; 
+	int                   refcnt;
 	int                   bindcnt;
 };
 
@@ -377,6 +378,18 @@ enum {
 };
 
 #define TCA_FLOWER_MAX (__TCA_FLOWER_MAX - 1)
+
+/* Match-all classifier */
+
+enum {
+	TCA_MATCHALL_UNSPEC,
+	TCA_MATCHALL_CLASSID,
+	TCA_MATCHALL_ACT,
+	TCA_MATCHALL_FLAGS,
+	__TCA_MATCHALL_MAX,
+};
+
+#define TCA_MATCHALL_MAX (__TCA_MATCHALL_MAX - 1)
 
 /* Extended Matches */
 

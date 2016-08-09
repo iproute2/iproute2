@@ -37,7 +37,7 @@ static void usage(void)
 	fprintf(stderr, "       ip rule { flush | save | restore }\n");
 	fprintf(stderr, "       ip rule [ list ]\n");
 	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n");
-	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ]\n");
+	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ l3mdev ]\n");
 	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
 	fprintf(stderr, "          [ nat ADDRESS ]\n");
 	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
@@ -57,6 +57,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	int host_len = -1;
 	__u32 table;
 	struct rtattr *tb[FRA_MAX+1];
+
 	SPRINT_BUF(b1);
 
 	if (n->nlmsg_type != RTM_NEWRULE && n->nlmsg_type != RTM_DELRULE)
@@ -74,7 +75,8 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "Deleted ");
 
 	if (tb[FRA_PRIORITY])
-		fprintf(fp, "%u:\t", *(unsigned *)RTA_DATA(tb[FRA_PRIORITY]));
+		fprintf(fp, "%u:\t",
+			rta_getattr_u32(tb[FRA_PRIORITY]));
 	else
 		fprintf(fp, "0:\t");
 
@@ -84,11 +86,11 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[FRA_SRC]) {
 		if (r->rtm_src_len != host_len) {
 			fprintf(fp, "from %s/%u ",
-			        rt_addr_n2a_rta(r->rtm_family, tb[FRA_SRC]),
-			        r->rtm_src_len);
+				rt_addr_n2a_rta(r->rtm_family, tb[FRA_SRC]),
+				r->rtm_src_len);
 		} else {
 			fprintf(fp, "from %s ",
-			        format_host_rta(r->rtm_family, tb[FRA_SRC]));
+				format_host_rta(r->rtm_family, tb[FRA_SRC]));
 		}
 	} else if (r->rtm_src_len) {
 		fprintf(fp, "from 0/%d ", r->rtm_src_len);
@@ -99,11 +101,11 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[FRA_DST]) {
 		if (r->rtm_dst_len != host_len) {
 			fprintf(fp, "to %s/%u ",
-			        rt_addr_n2a_rta(r->rtm_family, tb[FRA_DST]),
-			        r->rtm_dst_len);
+				rt_addr_n2a_rta(r->rtm_family, tb[FRA_DST]),
+				r->rtm_dst_len);
 		} else {
 			fprintf(fp, "to %s ",
-			        format_host_rta(r->rtm_family, tb[FRA_DST]));
+				format_host_rta(r->rtm_family, tb[FRA_DST]));
 		}
 	} else if (r->rtm_dst_len) {
 		fprintf(fp, "to 0/%d ", r->rtm_dst_len);
@@ -111,7 +113,8 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (r->rtm_tos) {
 		SPRINT_BUF(b1);
-		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
+		fprintf(fp, "tos %s ",
+			rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
 	}
 
 	if (tb[FRA_FWMARK] || tb[FRA_FWMASK]) {
@@ -139,23 +142,29 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			fprintf(fp, "[detached] ");
 	}
 
+	if (tb[FRA_L3MDEV]) {
+		if (rta_getattr_u8(tb[FRA_L3MDEV]))
+			fprintf(fp, "lookup [l3mdev-table] ");
+	}
+
 	table = rtm_get_table(r, tb);
 	if (table) {
-		fprintf(fp, "lookup %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
+		fprintf(fp, "lookup %s ",
+			rtnl_rttable_n2a(table, b1, sizeof(b1)));
 
 		if (tb[FRA_SUPPRESS_PREFIXLEN]) {
 			int pl = rta_getattr_u32(tb[FRA_SUPPRESS_PREFIXLEN]);
 
-			if (pl != -1) {
+			if (pl != -1)
 				fprintf(fp, "suppress_prefixlength %d ", pl);
-			}
 		}
 		if (tb[FRA_SUPPRESS_IFGROUP]) {
 			int group = rta_getattr_u32(tb[FRA_SUPPRESS_IFGROUP]);
 
 			if (group != -1) {
 				SPRINT_BUF(b1);
-				fprintf(fp, "suppress_ifgroup %s ", rtnl_group_n2a(group, b1, sizeof(b1)));
+				fprintf(fp, "suppress_ifgroup %s ",
+					rtnl_group_n2a(group, b1, sizeof(b1)));
 			}
 		}
 	}
@@ -176,8 +185,8 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (r->rtm_type == RTN_NAT) {
 		if (tb[RTA_GATEWAY]) {
 			fprintf(fp, "map-to %s ",
-			        format_host_rta(r->rtm_family,
-			                        tb[RTA_GATEWAY]));
+				format_host_rta(r->rtm_family,
+						tb[RTA_GATEWAY]));
 		} else
 			fprintf(fp, "masquerade");
 	} else if (r->rtm_type == FR_ACT_GOTO) {
@@ -191,7 +200,9 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	} else if (r->rtm_type == FR_ACT_NOP)
 		fprintf(fp, "nop");
 	else if (r->rtm_type != RTN_UNICAST)
-		fprintf(fp, "%s", rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
+		fprintf(fp, "%s",
+			rtnl_rtntype_n2a(r->rtm_type,
+					 b1, sizeof(b1)));
 
 	fprintf(fp, "\n");
 	fflush(fp);
@@ -218,7 +229,8 @@ static int save_rule_prep(void)
 	return 0;
 }
 
-static int save_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int save_rule(const struct sockaddr_nl *who,
+		     struct nlmsghdr *n, void *arg)
 {
 	int ret;
 
@@ -276,7 +288,8 @@ static int rule_dump_check_magic(void)
 
 	ret = fread(&magic, sizeof(magic), 1, stdin);
 	if (magic != rule_dump_magic) {
-		fprintf(stderr, "Magic mismatch (%d elems, %x magic)\n", ret, magic);
+		fprintf(stderr, "Magic mismatch (%d elems, %x magic)\n",
+			ret, magic);
 		return -1;
 	}
 
@@ -311,7 +324,9 @@ static int iprule_restore(void)
 
 static int iprule_modify(int cmd, int argc, char **argv)
 {
+	int l3mdev_rule = 0;
 	int table_ok = 0;
+	__u32 tid = 0;
 	struct {
 		struct nlmsghdr	n;
 		struct rtmsg		r;
@@ -340,14 +355,16 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			NEXT_ARG();
 			get_prefix(&dst, *argv, req.r.rtm_family);
 			req.r.rtm_src_len = dst.bitlen;
-			addattr_l(&req.n, sizeof(req), FRA_SRC, &dst.data, dst.bytelen);
+			addattr_l(&req.n, sizeof(req), FRA_SRC,
+				  &dst.data, dst.bytelen);
 		} else if (strcmp(*argv, "to") == 0) {
 			inet_prefix dst;
 
 			NEXT_ARG();
 			get_prefix(&dst, *argv, req.r.rtm_family);
 			req.r.rtm_dst_len = dst.bitlen;
-			addattr_l(&req.n, sizeof(req), FRA_DST, &dst.data, dst.bytelen);
+			addattr_l(&req.n, sizeof(req), FRA_DST,
+				  &dst.data, dst.bytelen);
 		} else if (matches(*argv, "preference") == 0 ||
 			   matches(*argv, "order") == 0 ||
 			   matches(*argv, "priority") == 0) {
@@ -370,15 +387,19 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			__u32 fwmark, fwmask;
 
 			NEXT_ARG();
-			if ((slash = strchr(*argv, '/')) != NULL)
+
+			slash = strchr(*argv, '/');
+			if (slash != NULL)
 				*slash = '\0';
 			if (get_u32(&fwmark, *argv, 0))
 				invarg("fwmark value is invalid\n", *argv);
 			addattr32(&req.n, sizeof(req), FRA_FWMARK, fwmark);
 			if (slash) {
 				if (get_u32(&fwmask, slash+1, 0))
-					invarg("fwmask value is invalid\n", slash+1);
-				addattr32(&req.n, sizeof(req), FRA_FWMASK, fwmask);
+					invarg("fwmask value is invalid\n",
+					       slash+1);
+				addattr32(&req.n, sizeof(req),
+					  FRA_FWMASK, fwmask);
 			}
 		} else if (matches(*argv, "realms") == 0) {
 			__u32 realm;
@@ -389,8 +410,6 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			addattr32(&req.n, sizeof(req), FRA_FLOW, realm);
 		} else if (matches(*argv, "table") == 0 ||
 			   strcmp(*argv, "lookup") == 0) {
-			__u32 tid;
-
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv))
 				invarg("invalid table ID\n", *argv);
@@ -407,35 +426,46 @@ static int iprule_modify(int cmd, int argc, char **argv)
 
 			NEXT_ARG();
 			if (get_s32(&pl, *argv, 0) || pl < 0)
-				invarg("suppress_prefixlength value is invalid\n", *argv);
-			addattr32(&req.n, sizeof(req), FRA_SUPPRESS_PREFIXLEN, pl);
+				invarg("suppress_prefixlength value is invalid\n",
+				       *argv);
+			addattr32(&req.n, sizeof(req),
+				  FRA_SUPPRESS_PREFIXLEN, pl);
 		} else if (matches(*argv, "suppress_ifgroup") == 0 ||
 			   strcmp(*argv, "sup_group") == 0) {
 			NEXT_ARG();
 			int group;
 
 			if (rtnl_group_a2n(&group, *argv))
-				invarg("Invalid \"suppress_ifgroup\" value\n", *argv);
-			addattr32(&req.n, sizeof(req), FRA_SUPPRESS_IFGROUP, group);
+				invarg("Invalid \"suppress_ifgroup\" value\n",
+				       *argv);
+			addattr32(&req.n, sizeof(req),
+				  FRA_SUPPRESS_IFGROUP, group);
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "iif") == 0) {
 			NEXT_ARG();
-			addattr_l(&req.n, sizeof(req), FRA_IFNAME, *argv, strlen(*argv)+1);
+			addattr_l(&req.n, sizeof(req), FRA_IFNAME,
+				  *argv, strlen(*argv)+1);
 		} else if (strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
-			addattr_l(&req.n, sizeof(req), FRA_OIFNAME, *argv, strlen(*argv)+1);
+			addattr_l(&req.n, sizeof(req), FRA_OIFNAME,
+				  *argv, strlen(*argv)+1);
+		} else if (strcmp(*argv, "l3mdev") == 0) {
+			addattr8(&req.n, sizeof(req), FRA_L3MDEV, 1);
+			table_ok = 1;
+			l3mdev_rule = 1;
 		} else if (strcmp(*argv, "nat") == 0 ||
 			   matches(*argv, "map-to") == 0) {
 			NEXT_ARG();
 			fprintf(stderr, "Warning: route NAT is deprecated\n");
-			addattr32(&req.n, sizeof(req), RTA_GATEWAY, get_addr32(*argv));
+			addattr32(&req.n, sizeof(req), RTA_GATEWAY,
+				  get_addr32(*argv));
 			req.r.rtm_type = RTN_NAT;
 		} else {
 			int type;
 
-			if (strcmp(*argv, "type") == 0) {
+			if (strcmp(*argv, "type") == 0)
 				NEXT_ARG();
-			}
+
 			if (matches(*argv, "help") == 0)
 				usage();
 			else if (matches(*argv, "goto") == 0) {
@@ -445,7 +475,8 @@ static int iprule_modify(int cmd, int argc, char **argv)
 				NEXT_ARG();
 				if (get_u32(&target, *argv, 0))
 					invarg("invalid target\n", *argv);
-				addattr32(&req.n, sizeof(req), FRA_GOTO, target);
+				addattr32(&req.n, sizeof(req),
+					  FRA_GOTO, target);
 			} else if (matches(*argv, "nop") == 0)
 				type = FR_ACT_NOP;
 			else if (rtnl_rtntype_a2n(&type, *argv))
@@ -455,6 +486,12 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		}
 		argc--;
 		argv++;
+	}
+
+	if (l3mdev_rule && tid != 0) {
+		fprintf(stderr,
+			"table can not be specified for l3mdev rules\n");
+		return -EINVAL;
 	}
 
 	if (req.r.rtm_family == AF_UNSPEC)
@@ -470,7 +507,8 @@ static int iprule_modify(int cmd, int argc, char **argv)
 }
 
 
-static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
+		      void *arg)
 {
 	struct rtnl_handle rth2;
 	struct rtmsg *r = NLMSG_DATA(n);
@@ -545,7 +583,8 @@ int do_iprule(int argc, char **argv)
 	} else if (matches(argv[0], "help") == 0)
 		usage();
 
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip rule help\".\n", *argv);
+	fprintf(stderr,
+		"Command \"%s\" is unknown, try \"ip rule help\".\n", *argv);
 	exit(-1);
 }
 
@@ -563,7 +602,8 @@ int do_multirule(int argc, char **argv)
 	case RTNL_FAMILY_IP6MR:
 		break;
 	default:
-		fprintf(stderr, "Multicast rules are only supported for IPv4/IPv6, was: %i\n",
+		fprintf(stderr,
+			"Multicast rules are only supported for IPv4/IPv6, was: %i\n",
 			preferred_family);
 		exit(-1);
 	}
