@@ -801,6 +801,16 @@ the following additional arguments are supported:
 .BI tos " TOS "
 ] [
 .BI flowlabel " FLOWLABEL "
+] [
+.BI dstport " PORT"
+] [
+.RB [ no ] external
+] [
+.RB [ no ] udpcsum
+] [
+.RB [ no ] udp6zerocsumtx
+] [
+.RB [ no ] udp6zerocsumrx
 ]
 
 .in +8
@@ -823,6 +833,32 @@ the following additional arguments are supported:
 .sp
 .BI flowlabel " FLOWLABEL"
 - specifies the flow label to use in outgoing packets.
+
+.sp
+.BI dstport " PORT"
+- select a destination port other than the default of 6081.
+
+.sp
+.RB [ no ] external
+- make this tunnel externally controlled (or not, which is the default). This
+flag is mutually exclusive with the
+.BR id ,
+.BR remote ,
+.BR ttl ,
+.BR tos " and " flowlabel
+options.
+
+.sp
+.RB [ no ] udpcsum
+- specifies if UDP checksum is calculated for transmitted packets over IPv4.
+
+.sp
+.RB [ no ] udp6zerocsumtx
+- skip UDP checksum calculation for transmitted packets over IPv6.
+
+.sp
+.RB [ no ] udp6zerocsumrx
+- allow incoming UDP packets over IPv6 with zero checksum field.
 
 .in -8
 
