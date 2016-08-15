@@ -22,6 +22,12 @@ struct cmdl {
 	char **argv;
 };
 
+struct tipc_sup_media {
+	char *media;
+	char *identifier;
+	void (*help)(struct cmdl *cmdl, char *media);
+};
+
 struct cmd {
 	const char *cmd;
 	int (*func)(struct nlmsghdr *nlh, const struct cmd *cmd,
