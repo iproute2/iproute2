@@ -149,8 +149,8 @@ static int do_list(int argc, char **argv)
 static int ila_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 			 bool adding)
 {
-	__u64 locator;
-	__u64 locator_match;
+	__u64 locator = 0;
+	__u64 locator_match = 0;
 	int ifindex = 0;
 	bool loc_set = false;
 	bool loc_match_set = false;
@@ -202,8 +202,11 @@ static int ila_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 		}
 	}
 
-	addattr64(n, 1024, ILA_ATTR_LOCATOR_MATCH, locator_match);
-	addattr64(n, 1024, ILA_ATTR_LOCATOR, locator);
+	if (loc_match_set)
+		addattr64(n, 1024, ILA_ATTR_LOCATOR_MATCH, locator_match);
+
+	if (loc_set)
+		addattr64(n, 1024, ILA_ATTR_LOCATOR, locator);
 
 	if (ifindex_set)
 		addattr32(n, 1024, ILA_ATTR_IFINDEX, ifindex);
