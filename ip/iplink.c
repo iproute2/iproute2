@@ -79,6 +79,8 @@ void iplink_usage(void)
 	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] ]\n");
 
 	fprintf(stderr, "				   [ rate TXRATE ]\n");
+	fprintf(stderr, "				   [ max_tx_rate TXRATE ]\n");
+	fprintf(stderr, "				   [ min_tx_rate TXRATE ]\n");
 
 	fprintf(stderr, "				   [ spoofchk { on | off} ]\n");
 	fprintf(stderr, "				   [ query_rss { on | off} ]\n");
