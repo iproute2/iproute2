@@ -240,11 +240,14 @@ static int do_del(int argc, char **argv)
 
 int do_ipila(int argc, char **argv)
 {
-	if (genl_init_handle(&genl_rth, ILA_GENL_NAME, &genl_family))
-		exit(1);
-
 	if (argc < 1)
 		usage();
+
+	if (matches(*argv, "help") == 0)
+		usage();
+
+	if (genl_init_handle(&genl_rth, ILA_GENL_NAME, &genl_family))
+		exit(1);
 
 	if (matches(*argv, "add") == 0)
 		return do_add(argc-1, argv+1);
@@ -252,8 +255,6 @@ int do_ipila(int argc, char **argv)
 		return do_del(argc-1, argv+1);
 	if (matches(*argv, "list") == 0)
 		return do_list(argc-1, argv+1);
-	if (matches(*argv, "help") == 0)
-		usage();
 
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip ila help\".\n",
 		*argv);
