@@ -986,14 +986,14 @@ static int do_show(int argc, char **argv)
 
 int do_ipmacsec(int argc, char **argv)
 {
-	if (genl_init_handle(&genl_rth, MACSEC_GENL_NAME, &genl_family))
-		exit(1);
-
 	if (argc < 1)
 		ipmacsec_usage();
 
 	if (matches(*argv, "help") == 0)
 		ipmacsec_usage();
+
+	if (genl_init_handle(&genl_rth, MACSEC_GENL_NAME, &genl_family))
+		exit(1);
 
 	if (matches(*argv, "show") == 0)
 		return do_show(argc-1, argv+1);
