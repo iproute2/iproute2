@@ -767,16 +767,8 @@ int do_ipl2tp(int argc, char **argv)
 	if (argc < 1 || !matches(*argv, "help"))
 		usage();
 
-	if (genl_family < 0) {
-		if (rtnl_open_byproto(&genl_rth, 0, NETLINK_GENERIC) < 0) {
-			fprintf(stderr, "Cannot open generic netlink socket\n");
-			exit(1);
-		}
-
-		genl_family = genl_resolve_family(&genl_rth, L2TP_GENL_NAME);
-		if (genl_family < 0)
-			exit(1);
-	}
+	if (genl_init_handle(&genl_rth, L2TP_GENL_NAME, &genl_family))
+		exit(1);
 
 	if (matches(*argv, "add") == 0)
 		return do_add(argc-1, argv+1);

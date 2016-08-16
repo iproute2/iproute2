@@ -398,17 +398,9 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 		ack = 0;
 	}
 
-	if (genl_family < 0) {
-		if (rtnl_open_byproto(&grth, 0, NETLINK_GENERIC) < 0) {
-			fprintf(stderr, "Cannot open generic netlink socket\n");
-			exit(1);
-		}
-		genl_family = genl_resolve_family(&grth,
-						  TCP_METRICS_GENL_NAME);
-		if (genl_family < 0)
-			exit(1);
-		req.n.nlmsg_type = genl_family;
-	}
+	if (genl_init_handle(&grth, TCP_METRICS_GENL_NAME, &genl_family))
+		exit(1);
+	req.n.nlmsg_type = genl_family;
 
 	if (!(cmd & CMD_FLUSH) && (atype >= 0 || (cmd & CMD_DEL))) {
 		if (ack)

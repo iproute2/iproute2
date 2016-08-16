@@ -136,16 +136,8 @@ static int do_del(int argc, char **argv)
 
 int do_ipfou(int argc, char **argv)
 {
-	if (genl_family < 0) {
-		if (rtnl_open_byproto(&genl_rth, 0, NETLINK_GENERIC) < 0) {
-			fprintf(stderr, "Cannot open generic netlink socket\n");
-			exit(1);
-		}
-
-		genl_family = genl_resolve_family(&genl_rth, FOU_GENL_NAME);
-		if (genl_family < 0)
-			exit(1);
-	}
+	if (genl_init_handle(&genl_rth, FOU_GENL_NAME, &genl_family))
+		exit(1);
 
 	if (argc < 1)
 		usage();

@@ -79,21 +79,6 @@ static int genl_family = -1;
 		     _cmd, _flags)
 
 
-static void init_genl(void)
-{
-	if (genl_family >= 0)
-		return;
-
-	if (rtnl_open_byproto(&genl_rth, 0, NETLINK_GENERIC) < 0) {
-		fprintf(stderr, "Cannot open generic netlink socket\n");
-		exit(1);
-	}
-
-	genl_family = genl_resolve_family(&genl_rth, MACSEC_GENL_NAME);
-	if (genl_family < 0)
-		exit(1);
-}
-
 static void ipmacsec_usage(void)
 {
 	fprintf(stderr, "Usage: ip macsec add DEV tx sa { 0..3 } [ OPTS ] key ID KEY\n");
@@ -1001,7 +986,8 @@ static int do_show(int argc, char **argv)
 
 int do_ipmacsec(int argc, char **argv)
 {
-	init_genl();
+	if (genl_init_handle(&genl_rth, MACSEC_GENL_NAME, &genl_family))
+		exit(1);
 
 	if (argc < 1)
 		ipmacsec_usage();
