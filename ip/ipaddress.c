@@ -901,6 +901,14 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			fprintf(fp, "numrxqueues %u ",
 				rta_getattr_u32(tb[IFLA_NUM_RX_QUEUES]));
 
+		if (tb[IFLA_GSO_MAX_SIZE])
+			fprintf(fp, "gso_max_size %u ",
+				rta_getattr_u32(tb[IFLA_GSO_MAX_SIZE]));
+
+		if (tb[IFLA_GSO_MAX_SEGS])
+			fprintf(fp, "gso_max_segs %u ",
+				rta_getattr_u32(tb[IFLA_GSO_MAX_SEGS]));
+
 		if (tb[IFLA_PHYS_PORT_NAME])
 			fprintf(fp, "portname %s ",
 				rta_getattr_str(tb[IFLA_PHYS_PORT_NAME]));
