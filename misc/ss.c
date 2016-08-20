@@ -26,6 +26,7 @@
 #include <fnmatch.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <limits.h>
 
 #include "utils.h"
 #include "rt_names.h"
