@@ -311,7 +311,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[RTA_MAX+1];
-	int host_len;
+	int host_len, family;
 	__u32 table;
 
 	SPRINT_BUF(b1);
@@ -363,13 +363,14 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "%s ", rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
 
 	if (tb[RTA_DST]) {
+		family = get_real_family(r->rtm_type, r->rtm_family);
 		if (r->rtm_dst_len != host_len) {
 			fprintf(fp, "%s/%u ",
-			        rt_addr_n2a_rta(r->rtm_family, tb[RTA_DST]),
+				rt_addr_n2a_rta(family, tb[RTA_DST]),
 			        r->rtm_dst_len);
 		} else {
 			fprintf(fp, "%s ",
-			        format_host_rta(r->rtm_family, tb[RTA_DST]));
+				format_host_rta(family, tb[RTA_DST]));
 		}
 	} else if (r->rtm_dst_len) {
 		fprintf(fp, "0/%d ", r->rtm_dst_len);
@@ -377,13 +378,14 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "default ");
 	}
 	if (tb[RTA_SRC]) {
+		family = get_real_family(r->rtm_type, r->rtm_family);
 		if (r->rtm_src_len != host_len) {
 			fprintf(fp, "from %s/%u ",
-			        rt_addr_n2a_rta(r->rtm_family, tb[RTA_SRC]),
+				rt_addr_n2a_rta(family, tb[RTA_SRC]),
 			        r->rtm_src_len);
 		} else {
 			fprintf(fp, "from %s ",
-			        format_host_rta(r->rtm_family, tb[RTA_SRC]));
+				format_host_rta(family, tb[RTA_SRC]));
 		}
 	} else if (r->rtm_src_len) {
 		fprintf(fp, "from 0/%u ", r->rtm_src_len);

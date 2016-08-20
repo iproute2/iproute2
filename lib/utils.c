@@ -1156,3 +1156,12 @@ int get_guid(__u64 *guid, const char *arg)
 
 	return 0;
 }
+
+/* This is a necessary workaround for multicast route dumps */
+int get_real_family(int rtm_type, int rtm_family)
+{
+	if (rtm_type != RTN_MULTICAST)
+		return rtm_family;
+
+	return rtm_family == RTNL_FAMILY_IPMR ? AF_INET : AF_INET6;
+}
