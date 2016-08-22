@@ -23,7 +23,7 @@ static void explain(void)
 }
 
 static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
-    char **argv, struct nlmsghdr *n)
+			     char **argv, struct nlmsghdr *n)
 {
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
@@ -49,7 +49,8 @@ static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
 				explain();
 				return -1;
 			}
-			addattr_l(n, 4096, TCA_TCINDEX_HASH, &hash, sizeof(hash));
+			addattr_l(n, 4096, TCA_TCINDEX_HASH, &hash,
+				  sizeof(hash));
 		} else if (!strcmp(*argv,"mask")) {
 			__u16 mask;
 
@@ -59,7 +60,8 @@ static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
 				explain();
 				return -1;
 			}
-			addattr_l(n, 4096, TCA_TCINDEX_MASK, &mask, sizeof(mask));
+			addattr_l(n, 4096, TCA_TCINDEX_MASK, &mask,
+				  sizeof(mask));
 		} else if (!strcmp(*argv,"shift")) {
 			int shift;
 
@@ -99,7 +101,7 @@ static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
 			continue;
 		} else if (!strcmp(*argv,"action")) {
 			NEXT_ARG();
-			if (parse_police(&argc, &argv, TCA_TCINDEX_ACT, n)) {
+			if (parse_action(&argc, &argv, TCA_TCINDEX_ACT, n)) {
 				fprintf(stderr, "Illegal \"action\"\n");
 				return -1;
 			}
@@ -117,7 +119,7 @@ static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,
 
 
 static int tcindex_print_opt(struct filter_util *qu, FILE *f,
-     struct rtattr *opt, __u32 handle)
+			     struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_TCINDEX_MAX+1];
 
@@ -171,7 +173,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 	}
 	if (tb[TCA_TCINDEX_ACT]) {
 		fprintf(f, "\n");
-		tc_print_police(f, tb[TCA_TCINDEX_ACT]);
+		tc_print_action(f, tb[TCA_TCINDEX_ACT]);
 	}
 	return 0;
 }
