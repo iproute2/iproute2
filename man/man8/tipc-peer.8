@@ -1,69 +1,34 @@
-.TH TIPC-MEDIA 8 "02 Jun 2015" "iproute2" "Linux"
+.TH TIPC-PEER 8 "04 Dec 2015" "iproute2" "Linux"
 
 .\" For consistency, please keep padding right aligned.
 .\" For example '.B "foo " bar' and not '.B foo " bar"'
 
 .SH NAME
-tipc-media \- list or modify media properties
+tipc-peer \- modify peer information
 
 .SH SYNOPSIS
 .ad l
 .in +8
 
 .ti -8
-
-.ti -8
-.B tipc media set
-.RB "{ " "priority "
-.IR PRIORITY
-.RB "| " tolerance
-.IR TOLERANCE
-.RB "| " window
-.IR "WINDOW " }
-.BI "media " MEDIA
-
-.ti -8
-.B tipc media get
-.RB "{ " "priority" " | " tolerance " | " window " } " media
-.I MEDIA
-
-.ti -8
-.B tipc media list
-.br
+.B tipc peer remove address
+.IR ADDRESS
 
 .SH OPTIONS
 Options (flags) that can be passed anywhere in the command chain.
 .TP
 .BR "\-h" , " --help"
 Show help about last valid command. For example
-.B tipc media --help
-will show media help and
+.B tipc peer --help
+will show peer help and
 .B tipc --help
 will show general help. The position of the option in the string is irrelevant.
 .SH DESCRIPTION
 
-.SS Media properties
-
-.TP
-.B priority
-.br
-Default link priority inherited by all bearers subsequently enabled on a
-media. For more info about link priority see
-.BR tipc-link (8)
-
-.TP
-.B tolerance
-.br
-Default link tolerance inherited by all bearers subsequently enabled on a
-media. For more info about link tolerance see
-.BR tipc-link (8)
-
-.TP
-.B window
-.br
-Default link window inherited by all bearers subsequently enabled on a
-media. For more info about link window see
-.BR tipc-link (8)
+.SS Peer remove
+Remove an offline peer node from the local data structures. The peer is
+identified by its
+.B address
 
 .SH EXIT STATUS
 Exit status is 0 if command was successful or a positive integer upon failure.
@@ -72,9 +37,9 @@ Exit status is 0 if command was successful or a positive integer upon failure.
 .BR tipc (8),
 .BR tipc-bearer (8),
 .BR tipc-link (8),
+.BR tipc-media (8),
 .BR tipc-nametable (8),
 .BR tipc-node (8),
-.BR tipc-peer (8),
 .BR tipc-socket (8)
 .br
 .SH REPORTING BUGS
