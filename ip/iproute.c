@@ -417,22 +417,22 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "dev %s ", ll_index_to_name(*(int *)RTA_DATA(tb[RTA_OIF])));
 
 	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
-		fprintf(fp, " table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
+		fprintf(fp, "table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
 	if (!(r->rtm_flags&RTM_F_CLONED)) {
 		if ((r->rtm_protocol != RTPROT_BOOT || show_details > 0) && filter.protocolmask != -1)
-			fprintf(fp, " proto %s ", rtnl_rtprot_n2a(r->rtm_protocol, b1, sizeof(b1)));
+			fprintf(fp, "proto %s ", rtnl_rtprot_n2a(r->rtm_protocol, b1, sizeof(b1)));
 		if ((r->rtm_scope != RT_SCOPE_UNIVERSE || show_details > 0) && filter.scopemask != -1)
-			fprintf(fp, " scope %s ", rtnl_rtscope_n2a(r->rtm_scope, b1, sizeof(b1)));
+			fprintf(fp, "scope %s ", rtnl_rtscope_n2a(r->rtm_scope, b1, sizeof(b1)));
 	}
 	if (tb[RTA_PREFSRC] && filter.rprefsrc.bitlen != host_len) {
 		/* Do not use format_host(). It is our local addr
 		   and symbolic name will not be useful.
 		 */
-		fprintf(fp, " src %s ",
+		fprintf(fp, "src %s ",
 			rt_addr_n2a_rta(r->rtm_family, tb[RTA_PREFSRC]));
 	}
 	if (tb[RTA_PRIORITY])
-		fprintf(fp, " metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));
+		fprintf(fp, "metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));
 	if (r->rtm_flags & RTNH_F_DEAD)
 		fprintf(fp, "dead ");
 	if (r->rtm_flags & RTNH_F_ONLINK)
@@ -450,9 +450,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 		if (mark) {
 			if (mark >= 16)
-				fprintf(fp, " mark 0x%x", mark);
+				fprintf(fp, "mark 0x%x ", mark);
 			else
-				fprintf(fp, " mark %u", mark);
+				fprintf(fp, "mark %u ", mark);
 		}
 	}
 
