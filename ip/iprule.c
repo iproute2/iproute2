@@ -346,6 +346,11 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		req.r.rtm_type = RTN_UNICAST;
 	}
 
+	if (cmd == RTM_DELRULE && argc == 0) {
+		fprintf(stderr, "\"ip rule del\" requires arguments.\n");
+		return -1;
+	}
+
 	while (argc > 0) {
 		if (strcmp(*argv, "not") == 0) {
 			req.r.rtm_flags |= FIB_RULE_INVERT;
