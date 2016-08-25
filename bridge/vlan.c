@@ -15,14 +15,16 @@
 #include "utils.h"
 
 static unsigned int filter_index, filter_vlan;
+static int last_ifidx = -1;
 
 json_writer_t *jw_global = NULL;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ pvid] [ untagged ]\n");
+	fprintf(stderr, "Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ pvid ] [ untagged ]\n");
 	fprintf(stderr, "                                                     [ self ] [ master ]\n");
 	fprintf(stderr, "       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n");
+	fprintf(stderr, "       bridge vlan { stats } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
 
@@ -298,6 +300,88 @@ static int print_vlan(const struct sockaddr_nl *who,
 	return 0;
 }
 
+static void print_one_vlan_stats(FILE *fp,
+				 const struct bridge_vlan_xstats *vstats,
+				 int ifindex)
+{
+	const char *ifname = "";
+
+	if (filter_vlan && filter_vlan != vstats->vid)
+		return;
+	/* skip pure port entries, they'll be dumped via the slave stats call */
+	if ((vstats->flags & BRIDGE_VLAN_INFO_MASTER) &&
+	    !(vstats->flags & BRIDGE_VLAN_INFO_BRENTRY))
+		return;
+
+	if (last_ifidx != ifindex) {
+		ifname = ll_index_to_name(ifindex);
+		last_ifidx = ifindex;
+	}
+	fprintf(fp, "%-16s  %hu", ifname, vstats->vid);
+	if (vstats->flags & BRIDGE_VLAN_INFO_PVID)
+		fprintf(fp, " PVID");
+	if (vstats->flags & BRIDGE_VLAN_INFO_UNTAGGED)
+		fprintf(fp, " Egress Untagged");
+	fprintf(fp, "\n");
+	fprintf(fp, "%-16s    RX: %llu bytes %llu packets\n",
+		"", vstats->rx_bytes, vstats->rx_packets);
+	fprintf(fp, "%-16s    TX: %llu bytes %llu packets\n",
+		"", vstats->tx_bytes, vstats->tx_packets);
+}
+
+static void print_vlan_stats_attr(FILE *fp, struct rtattr *attr, int ifindex)
+{
+	struct rtattr *brtb[LINK_XSTATS_TYPE_MAX+1];
+	struct rtattr *i, *list;
+	int rem;
+
+	parse_rtattr(brtb, LINK_XSTATS_TYPE_MAX, RTA_DATA(attr),
+		     RTA_PAYLOAD(attr));
+	if (!brtb[LINK_XSTATS_TYPE_BRIDGE])
+		return;
+
+	list = brtb[LINK_XSTATS_TYPE_BRIDGE];
+	rem = RTA_PAYLOAD(list);
+	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+		if (i->rta_type != BRIDGE_XSTATS_VLAN)
+			continue;
+		print_one_vlan_stats(fp, RTA_DATA(i), ifindex);
+	}
+}
+
+static int print_vlan_stats(const struct sockaddr_nl *who,
+			    struct nlmsghdr *n,
+			    void *arg)
+{
+	struct if_stats_msg *ifsm = NLMSG_DATA(n);
+	struct rtattr *tb[IFLA_STATS_MAX+1];
+	int len = n->nlmsg_len;
+	FILE *fp = arg;
+
+	len -= NLMSG_LENGTH(sizeof(*ifsm));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
+	}
+
+	if (filter_index && filter_index != ifsm->ifindex)
+		return 0;
+
+	parse_rtattr(tb, IFLA_STATS_MAX, IFLA_STATS_RTA(ifsm), len);
+
+	/* We have to check if any of the two attrs are usable */
+	if (tb[IFLA_STATS_LINK_XSTATS])
+		print_vlan_stats_attr(fp, tb[IFLA_STATS_LINK_XSTATS],
+				      ifsm->ifindex);
+
+	if (tb[IFLA_STATS_LINK_XSTATS_SLAVE])
+		print_vlan_stats_attr(fp, tb[IFLA_STATS_LINK_XSTATS_SLAVE],
+				      ifsm->ifindex);
+
+	fflush(fp);
+	return 0;
+}
+
 static int vlan_show(int argc, char **argv)
 {
 	char *filter_dev = NULL;
@@ -325,28 +409,58 @@ static int vlan_show(int argc, char **argv)
 		}
 	}
 
-	if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
-				    (compress_vlans ?
-				    RTEXT_FILTER_BRVLAN_COMPRESSED :
-				    RTEXT_FILTER_BRVLAN)) < 0) {
-		perror("Cannont send dump request");
-		exit(1);
-	}
-
-	if (json_output) {
-		jw_global = jsonw_new(stdout);
-		if (!jw_global) {
-			fprintf(stderr, "Error allocation json object\n");
+	if (!show_stats) {
+		if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
+					     (compress_vlans ?
+						RTEXT_FILTER_BRVLAN_COMPRESSED :
+						RTEXT_FILTER_BRVLAN)) < 0) {
+			perror("Cannont send dump request");
 			exit(1);
 		}
-		jsonw_start_object(jw_global);
-	} else {
-		printf("port\tvlan ids\n");
-	}
+		if (json_output) {
+			jw_global = jsonw_new(stdout);
+			if (!jw_global) {
+				fprintf(stderr, "Error allocation json object\n");
+				exit(1);
+			}
+			jsonw_start_object(jw_global);
+		} else {
+			printf("port\tvlan ids\n");
+		}
 
-	if (rtnl_dump_filter(&rth, print_vlan, stdout) < 0) {
-		fprintf(stderr, "Dump ternminated\n");
-		exit(1);
+		if (rtnl_dump_filter(&rth, print_vlan, stdout) < 0) {
+			fprintf(stderr, "Dump ternminated\n");
+			exit(1);
+		}
+	} else {
+		__u32 filt_mask;
+
+		filt_mask = IFLA_STATS_FILTER_BIT(IFLA_STATS_LINK_XSTATS);
+		if (rtnl_wilddump_stats_req_filter(&rth, AF_UNSPEC,
+						   RTM_GETSTATS,
+						   filt_mask) < 0) {
+			perror("Cannont send dump request");
+			exit(1);
+		}
+
+		printf("%-16s vlan id\n", "port");
+		if (rtnl_dump_filter(&rth, print_vlan_stats, stdout) < 0) {
+			fprintf(stderr, "Dump terminated\n");
+			exit(1);
+		}
+
+		filt_mask = IFLA_STATS_FILTER_BIT(IFLA_STATS_LINK_XSTATS_SLAVE);
+		if (rtnl_wilddump_stats_req_filter(&rth, AF_UNSPEC,
+						   RTM_GETSTATS,
+						   filt_mask) < 0) {
+			perror("Cannont send slave dump request");
+			exit(1);
+		}
+
+		if (rtnl_dump_filter(&rth, print_vlan_stats, stdout) < 0) {
+			fprintf(stderr, "Dump terminated\n");
+			exit(1);
+		}
 	}
 
 	if (jw_global) {
@@ -356,7 +470,6 @@ static int vlan_show(int argc, char **argv)
 
 	return 0;
 }
-
 
 int do_vlan(int argc, char **argv)
 {
@@ -373,8 +486,9 @@ int do_vlan(int argc, char **argv)
 			return vlan_show(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
-	} else
+	} else {
 		return vlan_show(0, NULL);
+	}
 
 	fprintf(stderr, "Command \"%s\" is unknown, try \"bridge vlan help\".\n", *argv);
 	exit(-1);
