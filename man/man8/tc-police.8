@@ -26,10 +26,10 @@ police - policing action
 
 .ti -8
 .IR CONTROL " :="
-.BI conform-exceed " EXCEEDACT\fR[\fB/\fIEXCEEDACT"
+.BI conform-exceed " EXCEEDACT\fR[\fB/\fINOTEXCEEDACT"
 
 .ti -8
-.IR EXCEEDACT " := { "
+.IR EXCEEDACT/NOTEXCEEDACT " := { "
 .BR pipe " | " ok " | " reclassify " | " drop " | " continue " }"
 .SH DESCRIPTION
 The
@@ -94,11 +94,9 @@ Fine-tune the in-kernel packet rate estimator.
 are time values and control the frequency in which samples are taken and over
 what timespan an average is built.
 .TP
-.BI conform-exceed " EXCEEDACT\fR[\fB/\fIEXCEEDACT\fR]"
-Define how to handle packets which exceed (and, if the second
-.I EXCEEDACT
-is given, also those who don't), the configured bandwidth limit. Possible values
-are:
+.BI conform-exceed " EXCEEDACT\fR[\fB/\fINOTEXCEEDACT\fR]"
+Define how to handle packets which exceed or conform the
+configured bandwidth limit. Possible values are:
 .RS
 .IP continue
 Don't do anything, just continue with the next action in line.
