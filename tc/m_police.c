@@ -322,7 +322,7 @@ int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	if (tb[TCA_POLICE_RESULT]) {
 		__u32 action = rta_getattr_u32(tb[TCA_POLICE_RESULT]);
 
-		fprintf(f, "/%s", action_n2a(action));
+		fprintf(f, "/%s ", action_n2a(action));
 	} else
 		fprintf(f, " ");
 
