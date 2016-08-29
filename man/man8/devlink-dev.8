@@ -25,6 +25,17 @@ devlink-dev \- devlink device configuration
 .ti -8
 .B devlink dev help
 
+.ti -8
+.BR "devlink dev eswitch set"
+.IR DEV
+.RI "[ "
+.BR mode " { " legacy " | " switchdev " } "
+.RI "]"
+
+.ti -8
+.BR "devlink dev eswitch show"
+.IR DEV
+
 .SH "DESCRIPTION"
 .SS devlink dev show - display devlink device attributes
 
@@ -38,6 +49,19 @@ Format is:
 .in +2
 BUS_NAME/BUS_ADDRESS
 
+.SS devlink dev eswitch show - display devlink device eswitch attributes
+.SS devlink dev eswitch set  - sets devlink device eswitch attributes
+
+.TP
+.BR mode " { " legacy " | " switchdev " } "
+set eswitch mode
+
+.I legacy
+- Legacy SRIOV
+
+.I switchdev
+- SRIOV switchdev offloads
+
 .SH "EXAMPLES"
 .PP
 devlink dev show
@@ -48,6 +72,16 @@ Shows the state of all devlink devices on the system.
 devlink dev show pci/0000:01:00.0
 .RS 4
 Shows the state of specified devlink device.
+.RE
+.PP
+devlink dev eswitch show pci/0000:01:00.0
+.RS 4
+Shows the eswitch mode of specified devlink device.
+.RE
+.PP
+devlink dev eswitch set pci/0000:01:00.0 mode switchdev
+.RS 4
+Sets the eswitch mode of specified devlink device to switchdev.
 
 .SH SEE ALSO
 .BR devlink (8),
