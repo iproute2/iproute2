@@ -36,11 +36,12 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ... police rate BPS burst BYTES[/BYTES] [ mtu BYTES[/BYTES] ]\n");
 	fprintf(stderr, "                [ peakrate BPS ] [ avrate BPS ] [ overhead BYTES ]\n");
-	fprintf(stderr, "                [ linklayer TYPE ] [ ACTIONTERM ]\n");
+	fprintf(stderr, "                [ linklayer TYPE ] [ CONTROL ]\n");
 
-	fprintf(stderr, "New Syntax ACTIONTERM := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT]\n");
-	fprintf(stderr, "Where: *EXCEEDACT := pipe | ok | reclassify | drop | continue\n");
-	fprintf(stderr, "Where:  pipe is only valid for new syntax\n");
+	fprintf(stderr, "Where: CONTROL := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT]\n");
+	fprintf(stderr, "                  Define how to handle packets which exceed (<EXCEEDACT>)\n");
+	fprintf(stderr, "                  or conform (<NOTEXCEEDACT>) the configured bandwidth limit.\n");
+	fprintf(stderr, "       EXCEEDACT/NOTEXCEEDACT := { pipe | ok | reclassify | drop | continue }\n");
 	exit(-1);
 }
 
@@ -322,7 +323,7 @@ int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	if (tb[TCA_POLICE_RESULT]) {
 		__u32 action = rta_getattr_u32(tb[TCA_POLICE_RESULT]);
 
-		fprintf(f, "/%s", action_n2a(action));
+		fprintf(f, "/%s ", action_n2a(action));
 	} else
 		fprintf(f, " ");
 
