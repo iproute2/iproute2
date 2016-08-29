@@ -669,7 +669,8 @@ static int threshold_type_get(const char *typestr,
 	return 0;
 }
 
-static int eswitch_mode_get(const char *typestr, enum devlink_eswitch_mode *p_mode)
+static int eswitch_mode_get(const char *typestr,
+			    enum devlink_eswitch_mode *p_mode)
 {
 	if (strcmp(typestr, ESWITCH_MODE_LEGACY) == 0) {
 		*p_mode = DEVLINK_ESWITCH_MODE_LEGACY;
@@ -794,6 +795,7 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 		} else if (dl_argv_match(dl, "mode") &&
 			   (o_all & DL_OPT_ESWITCH_MODE)) {
 			const char *typestr;
+
 			dl_arg_inc(dl);
 			err = dl_argv_str(dl, &typestr);
 			if (err)
@@ -856,7 +858,8 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 		return -EINVAL;
 	}
 
-	if ((o_required & DL_OPT_ESWITCH_MODE) && !(o_found & DL_OPT_ESWITCH_MODE)) {
+	if ((o_required & DL_OPT_ESWITCH_MODE) &&
+	    !(o_found & DL_OPT_ESWITCH_MODE)) {
 		pr_err("E-Switch mode option expected.\n");
 		return -EINVAL;
 	}
