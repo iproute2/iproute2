@@ -222,6 +222,129 @@ static int nl_add_bearer_name(struct nlmsghdr *nlh, const struct cmd *cmd,
 	return -EINVAL;
 }
 
+static void cmd_bearer_add_udp_help(struct cmdl *cmdl, char *media)
+{
+	fprintf(stderr, "Usage: %s bearer add media %s name NAME remoteip REMOTEIP\n\n",
+		cmdl->argv[0], media);
+}
+
+static void cmd_bearer_add_help(struct cmdl *cmdl)
+{
+	fprintf(stderr, "Usage: %s bearer add media udp name NAME remoteip REMOTEIP\n",
+		cmdl->argv[0]);
+}
+
+static int udp_bearer_add(struct nlmsghdr *nlh, struct opt *opts,
+			  struct cmdl *cmdl)
+{
+	int err;
+	struct opt *opt;
+	struct nlattr *opts_nest;
+	char *remport = "6118";
+
+	opts_nest = mnl_attr_nest_start(nlh, TIPC_NLA_BEARER_UDP_OPTS);
+
+	if ((opt = get_opt(opts, "remoteport")))
+		remport = opt->val;
+
+	if ((opt = get_opt(opts, "remoteip"))) {
+		char *ip = opt->val;
+		struct addrinfo *addr = NULL;
+		struct addrinfo hints = {
+			.ai_family = AF_UNSPEC,
+			.ai_socktype = SOCK_DGRAM
+		};
+
+		if ((err = getaddrinfo(ip, remport, &hints, &addr))) {
+			fprintf(stderr, "UDP address error: %s\n",
+					gai_strerror(err));
+			freeaddrinfo(addr);
+			return err;
+		}
+
+		mnl_attr_put(nlh, TIPC_NLA_UDP_REMOTE, addr->ai_addrlen,
+				addr->ai_addr);
+		freeaddrinfo(addr);
+	} else {
+		fprintf(stderr, "error, missing remoteip\n");
+		return -EINVAL;
+	}
+	mnl_attr_nest_end(nlh, opts_nest);
+
+	return 0;
+}
+
+static int cmd_bearer_add_media(struct nlmsghdr *nlh, const struct cmd *cmd,
+				struct cmdl *cmdl, void *data)
+{
+	int err;
+	char *media;
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct opt *opt;
+	struct nlattr *attrs;
+	struct opt opts[] = {
+		{ "remoteip",		NULL },
+		{ "remoteport",		NULL },
+		{ "name",		NULL },
+		{ "media",		NULL },
+		{ NULL }
+	};
+	struct tipc_sup_media sup_media[] = {
+		{ "udp",	"name",		cmd_bearer_add_udp_help},
+		{ NULL, },
+	};
+
+	/* Rewind optind to include media in the option list */
+	cmdl->optind--;
+	if (parse_opts(opts, cmdl) < 0)
+		return -EINVAL;
+
+	if (!(opt = get_opt(opts, "media"))) {
+		fprintf(stderr, "error, missing media value\n");
+		return -EINVAL;
+	}
+	media = opt->val;
+
+	if (strcmp(media, "udp") != 0) {
+		fprintf(stderr, "error, no \"%s\" media specific options available\n",
+			media);
+		return -EINVAL;
+	}
+	if (!(opt = get_opt(opts, "name"))) {
+		fprintf(stderr, "error, missing media name\n");
+		return -EINVAL;
+	}
+
+	if (!(nlh = msg_init(buf, TIPC_NL_BEARER_ADD))) {
+		fprintf(stderr, "error, message initialisation failed\n");
+		return -1;
+	}
+
+	attrs = mnl_attr_nest_start(nlh, TIPC_NLA_BEARER);
+	err = nl_add_bearer_name(nlh, cmd, cmdl, opts, sup_media);
+	if (err)
+		return err;
+
+	err = udp_bearer_add(nlh, opts, cmdl);
+	if (err)
+		return err;
+
+	mnl_attr_nest_end(nlh, attrs);
+
+	return msg_doit(nlh, NULL, NULL);
+}
+
+static int cmd_bearer_add(struct nlmsghdr *nlh, const struct cmd *cmd,
+			  struct cmdl *cmdl, void *data)
+{
+	const struct cmd cmds[] = {
+		{ "media",	cmd_bearer_add_media,	cmd_bearer_add_help },
+		{ NULL }
+	};
+
+	return run_cmd(nlh, cmd, cmds, cmdl, NULL);
+}
+
 static void cmd_bearer_enable_help(struct cmdl *cmdl)
 {
 	fprintf(stderr,
@@ -605,6 +728,7 @@ void cmd_bearer_help(struct cmdl *cmdl)
 		"Usage: %s bearer COMMAND [ARGS] ...\n"
 		"\n"
 		"COMMANDS\n"
+		" add			- Add data to existing bearer\n"
 		" enable                - Enable a bearer\n"
 		" disable               - Disable a bearer\n"
 		" set                   - Set various bearer properties\n"
@@ -616,6 +740,7 @@ int cmd_bearer(struct nlmsghdr *nlh, const struct cmd *cmd, struct cmdl *cmdl,
 	       void *data)
 {
 	const struct cmd cmds[] = {
+		{ "add",	cmd_bearer_add,		cmd_bearer_add_help },
 		{ "disable",	cmd_bearer_disable,	cmd_bearer_disable_help },
 		{ "enable",	cmd_bearer_enable,	cmd_bearer_enable_help },
 		{ "get",	cmd_bearer_get,		cmd_bearer_get_help },

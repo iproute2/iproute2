@@ -11,6 +11,11 @@ tipc-bearer \- show or modify TIPC bearers
 .in +8
 
 .ti -8
+.B tipc bearer add media udp name
+.IB "NAME " "remoteip " REMOTEIP
+.br
+
+.ti -8
 .B tipc bearer enable
 .RB "[ " domain
 .IR DOMAIN " ]"
@@ -195,6 +200,25 @@ The multicast IP address is generated based on the TIPC network ID. If a remote
 IP is specified the
 .B udp
 bearer runs in point-to-point mode.
+
+Multiple
+.B remoteip
+addresses can be added via the
+.B bearer add
+command. Adding one or more unicast
+.B remoteip
+addresses to an existing
+.B udp
+bearer puts the bearer in replicast mode where IP
+multicast is emulated by sending multiple unicast messages to each configured
+.B remoteip.
+When a peer sees a TIPC discovery message from an unknown peer the peer address
+is automatically added to the
+.B remoteip
+(replicast) list, thus only one side of
+a link needs to be manually configured. A
+.B remoteip
+address cannot be added to a multicast bearer.
 
 .TP
 .BI "remoteport " REMOTEPORT
