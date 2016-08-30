@@ -16,6 +16,11 @@
 
 extern int help_flag;
 
+enum {
+	OPT_KEY			= (1 << 0),
+	OPT_KEYVAL		= (1 << 1),
+};
+
 struct cmdl {
 	int optind;
 	int argc;
@@ -37,10 +42,12 @@ struct cmd {
 
 struct opt {
 	const char *key;
+	uint16_t flag;
 	char *val;
 };
 
 struct opt *get_opt(struct opt *opts, char *key);
+bool has_opt(struct opt *opts, char *key);
 int parse_opts(struct opt *opts, struct cmdl *cmdl);
 char *shift_cmdl(struct cmdl *cmdl);
 

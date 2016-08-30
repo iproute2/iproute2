@@ -93,7 +93,7 @@ static int cmd_media_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	struct nlattr *nest;
 	struct opt *opt;
 	struct opt opts[] = {
-		{ "media",		NULL },
+		{ "media",		OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
 
@@ -173,7 +173,7 @@ static int cmd_media_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	struct nlattr *attrs;
 	struct opt *opt;
 	struct opt opts[] = {
-		{ "media",		NULL },
+		{ "media",		OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
 

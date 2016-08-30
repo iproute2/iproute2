@@ -98,7 +98,7 @@ static int cmd_link_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct opt *opt;
 	struct opt opts[] = {
-		{ "link",		NULL },
+		{ "link",		OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
 
@@ -169,7 +169,7 @@ static int cmd_link_stat_reset(struct nlmsghdr *nlh, const struct cmd *cmd,
 	struct opt *opt;
 	struct nlattr *nest;
 	struct opt opts[] = {
-		{ "link",		NULL },
+		{ "link",		OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
 
@@ -365,7 +365,7 @@ static int cmd_link_stat_show(struct nlmsghdr *nlh, const struct cmd *cmd,
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct opt *opt;
 	struct opt opts[] = {
-		{ "link",		NULL },
+		{ "link",		OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
 
@@ -429,7 +429,7 @@ static int cmd_link_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	struct nlattr *attrs;
 	struct opt *opt;
 	struct opt opts[] = {
-		{ "link",	NULL },
+		{ "link",		OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
 

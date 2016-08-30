@@ -73,7 +73,7 @@ tipc-bearer \- show or modify TIPC bearers
 
 .ti -8
 .B tipc bearer get
-.RB "{ " "priority" " | " tolerance " | " window " } " media
+.RB "[ " "priority" " | " tolerance " | " window " ] " media
 .br
 .RB "{ { " eth " | " ib " } " device
 .IR "DEVICE" " }"
@@ -81,7 +81,8 @@ tipc-bearer \- show or modify TIPC bearers
 .br
 .RB "{ " udp
 .B name
-.IR NAME " }"
+.IR NAME
+.RB "[ " "localip " "| " "localport " "| " "remoteip " "| " "remoteport " "] }"
 .br
 
 .ti -8

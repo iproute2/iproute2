@@ -62,6 +62,11 @@ struct opt *get_opt(struct opt *opts, char *key)
 	return NULL;
 }
 
+bool has_opt(struct opt *opts, char *key)
+{
+	return get_opt(opts, key) ? true : false;
+}
+
 char *shift_cmdl(struct cmdl *cmdl)
 {
 	int next;
@@ -80,7 +85,7 @@ int parse_opts(struct opt *opts, struct cmdl *cmdl)
 	int i;
 	int cnt = 0;
 
-	for (i = cmdl->optind; i < cmdl->argc; i += 2) {
+	for (i = cmdl->optind; i < cmdl->argc; i++) {
 		struct opt *o;
 
 		o = find_opt(opts, cmdl->argv[i]);
@@ -89,9 +94,13 @@ int parse_opts(struct opt *opts, struct cmdl *cmdl)
 					cmdl->argv[i]);
 			return -EINVAL;
 		}
+		if (o->flag & OPT_KEYVAL) {
+			cmdl->optind++;
+			i++;
+		}
 		cnt++;
-		o->val = cmdl->argv[i + 1];
-		cmdl->optind += 2;
+		o->val = cmdl->argv[i];
+		cmdl->optind++;
 	}
 
 	return cnt;
