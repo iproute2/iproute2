@@ -952,7 +952,9 @@ For a link of type
 the following additional arguments are supported:
 
 .BI "ip link add link " DEVICE " name " NAME " type macsec"
-[
+[ [
+.BI address " <lladdr>"
+]
 .BI port " PORT"
 |
 .BI sci " SCI"
@@ -976,8 +978,14 @@ the following additional arguments are supported:
 
 .in +8
 .sp
-.BI  port " PORT "
-- sets the port number for this MACsec device.
+.BI address " <lladdr> "
+- sets the system identifier component of secure channel for this MACsec device.
+
+.sp
+.BI port " PORT "
+- sets the port number component of secure channel for this MACsec device, in a
+range from 1 to 65535 inclusive. Numbers with a leading " 0 " or " 0x " are
+interpreted as octal and hexadecimal, respectively.
 
 .sp
 .BI sci " SCI "

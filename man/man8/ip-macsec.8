@@ -3,10 +3,12 @@
 ip-macsec \- MACsec device configuration
 .SH "SYNOPSIS"
 .BI "ip link add link " DEVICE " name " NAME " type macsec "
-[
+[ [
+.BI address " <lladdr>"
+]
 .BI port " PORT"
 |
-.BI sci  " SCI"
+.BI sci " <u64>"
 ] [
 .BR cipher " { " default " | " gcm-aes-128 " } ] ["
 .BI icvlen " ICVLEN"
@@ -62,8 +64,12 @@ ip-macsec \- MACsec device configuration
 .IR SCI " := { "
 .B sci
 .IR <u64> " | "
-.BI port " <u16> " address " <lladdr> "
+.BI port
+.IR PORT
+.BI address " <lladdr> "
 }
+.br
+.IR PORT " := { " 1..2^16-1 " } "
 
 
 .SH DESCRIPTION

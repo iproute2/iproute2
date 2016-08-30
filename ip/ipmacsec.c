@@ -95,7 +95,7 @@ static void ipmacsec_usage(void)
 	fprintf(stderr, "where  OPTS := [ pn <u32> ] [ on | off ]\n");
 	fprintf(stderr, "       ID   := 128-bit hex string\n");
 	fprintf(stderr, "       KEY  := 128-bit hex string\n");
-	fprintf(stderr, "       SCI  := { sci <u64> | port <u16> address <lladdr> }\n");
+	fprintf(stderr, "       SCI  := { sci <u64> | port { 1..2^16-1 } address <lladdr> }\n");
 
 	exit(-1);
 }
@@ -139,7 +139,7 @@ static int get_sci(__u64 *sci, const char *arg)
 
 static int get_port(__be16 *port, const char *arg)
 {
-	return get_be16(port, arg, 10);
+	return get_be16(port, arg, 0);
 }
 
 #define _STR(a) #a
@@ -1069,7 +1069,7 @@ static bool check_txsc_flags(bool es, bool scb, bool sci)
 static void usage(FILE *f)
 {
 	fprintf(f,
-		"Usage: ... macsec [ port PORT | sci SCI ]\n"
+		"Usage: ... macsec [ [ address <lladdr> ] port { 1..2^16-1 } | sci <u64> ]\n"
 		"                  [ cipher { default | gcm-aes-128 } ]\n"
 		"                  [ icvlen { 8..16 } ]\n"
 		"                  [ encrypt { on | off } ]\n"
