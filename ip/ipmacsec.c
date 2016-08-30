@@ -134,7 +134,7 @@ static int get_an(__u8 *val, const char *arg)
 
 static int get_sci(__u64 *sci, const char *arg)
 {
-	return get_u64(sci, arg, 16);
+	return get_be64(sci, arg, 16);
 }
 
 static int get_port(__be16 *port, const char *arg)
@@ -776,7 +776,7 @@ static void print_tx_sc(const char *prefix, __u64 sci, __u8 encoding_sa,
 	struct rtattr *a;
 	int rem;
 
-	printf("%sTXSC: %016llx on SA %d\n", prefix, sci, encoding_sa);
+	printf("%sTXSC: %016llx on SA %d\n", prefix, ntohll(sci), encoding_sa);
 	print_secy_stats(prefix, secy_stats);
 	print_txsc_stats(prefix, txsc_stats);
 
@@ -845,7 +845,7 @@ static void print_rx_sc(const char *prefix, __u64 sci, __u8 active,
 	struct rtattr *a;
 	int rem;
 
-	printf("%sRXSC: %016llx, state %s\n", prefix, sci,
+	printf("%sRXSC: %016llx, state %s\n", prefix, ntohll(sci),
 	       values_on_off[!!active]);
 	print_rxsc_stats(prefix, rxsc_stats);
 
@@ -1018,7 +1018,7 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_MACSEC_SCI]) {
 		fprintf(f, "sci %016llx ",
-			rta_getattr_u64(tb[IFLA_MACSEC_SCI]));
+			ntohll(rta_getattr_u64(tb[IFLA_MACSEC_SCI])));
 	}
 
 	print_flag(f, tb, "protect", IFLA_MACSEC_PROTECT);

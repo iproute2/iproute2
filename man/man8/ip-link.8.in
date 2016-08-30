@@ -989,7 +989,9 @@ interpreted as octal and hexadecimal, respectively.
 
 .sp
 .BI sci " SCI "
-- sets the SCI for this MACsec device.
+- sets the secure channel identifier for this MACsec device.
+.I SCI
+is a 64bit wide number in hexadecimal format.
 
 .sp
 .BI cipher " CIPHER_SUITE "
