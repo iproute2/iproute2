@@ -12,6 +12,8 @@ vlan - vlan manipulation module
 .IR PUSH " := "
 .BR push " [ " protocol
 .IR VLANPROTO " ]"
+.BR " [ " priority
+.IR VLANPRIO " ] "
 .BI id " VLANID"
 
 .ti -8
@@ -54,6 +56,9 @@ for hexadecimal interpretation, etc.).
 .BI protocol " VLANPROTO"
 Choose the VLAN protocol to use. At the time of writing, the kernel accepts only
 .BR 802.1Q " or " 802.1ad .
+.TP
+.BI priority " VLANPRIO"
+Choose the VLAN priority to use. Decimal number in range of 0-7.
 .TP
 .I CONTROL
 How to continue after executing this action.

@@ -22,7 +22,7 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: vlan pop\n");
-	fprintf(stderr, "       vlan push [ protocol VLANPROTO ] id VLANID [CONTROL]\n");
+	fprintf(stderr, "       vlan push [ protocol VLANPROTO ] id VLANID [ priority VLANPRIO ] [CONTROL]\n");
 	fprintf(stderr, "       VLANPROTO is one of 802.1Q or 802.1AD\n");
 	fprintf(stderr, "            with default: 802.1Q\n");
 	fprintf(stderr, "       CONTROL := reclassify | pipe | drop | continue | pass\n");
@@ -45,6 +45,8 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 	int id_set = 0;
 	__u16 proto;
 	int proto_set = 0;
+	__u8 prio;
+	int prio_set = 0;
 	struct tc_vlan parm = { 0 };
 
 	if (matches(*argv, "vlan") != 0)
@@ -91,6 +93,17 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 			if (ll_proto_a2n(&proto, *argv))
 				invarg("protocol is invalid", *argv);
 			proto_set = 1;
+		} else if (matches(*argv, "priority") == 0) {
+			if (action != TCA_VLAN_ACT_PUSH) {
+				fprintf(stderr, "\"%s\" is only valid for push\n",
+					*argv);
+				explain();
+				return -1;
+			}
+			NEXT_ARG();
+			if (get_u8(&prio, *argv, 0) || (prio & ~0x7))
+				invarg("prio is invalid", *argv);
+			prio_set = 1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -138,6 +151,9 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 
 		addattr_l(n, MAX_MSG, TCA_VLAN_PUSH_VLAN_PROTOCOL, &proto, 2);
 	}
+	if (prio_set)
+		addattr8(n, MAX_MSG, TCA_VLAN_PUSH_VLAN_PRIORITY, prio);
+
 	tail->rta_len = (char *)NLMSG_TAIL(n) - (char *)tail;
 
 	*argc_p = argc;
@@ -179,6 +195,10 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 			fprintf(f, " protocol %s",
 				ll_proto_n2a(rta_getattr_u16(tb[TCA_VLAN_PUSH_VLAN_PROTOCOL]),
 					     b1, sizeof(b1)));
+		}
+		if (tb[TCA_VLAN_PUSH_VLAN_PRIORITY]) {
+			val = rta_getattr_u8(tb[TCA_VLAN_PUSH_VLAN_PRIORITY]);
+			fprintf(f, " priority %u", val);
 		}
 		break;
 	}
