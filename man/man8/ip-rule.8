@@ -93,7 +93,7 @@ Each policy routing rule consists of a
 .B selector
 and an
 .B action predicate.
-The RPDB is scanned in order of decreasing priority. The selector
+The RPDB is scanned in order of increasing priority. The selector
 of each rule is applied to {source address, destination address, incoming
 interface, tos, fwmark} and, if the selector matches the packet,
 the action is performed. The action predicate may return with success.

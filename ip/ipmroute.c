@@ -112,7 +112,7 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			return 0;
 	}
 
-	family = r->rtm_family == RTNL_FAMILY_IPMR ? AF_INET : AF_INET6;
+	family = get_real_family(r->rtm_type, r->rtm_family);
 
 	if (n->nlmsg_type == RTM_DELROUTE)
 		fprintf(fp, "Deleted ");

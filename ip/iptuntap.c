@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <glob.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -104,7 +105,8 @@ static int tap_del_ioctl(struct ifreq *ifr)
 	return ret;
 
 }
-static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_t *gid)
+static int parse_args(int argc, char **argv,
+		      struct ifreq *ifr, uid_t *uid, gid_t *gid)
 {
 	int count = 0;
 
@@ -273,6 +275,110 @@ static void print_flags(long flags)
 		printf(" UNKNOWN_FLAGS:%lx", flags);
 }
 
+static char *pid_name(pid_t pid)
+{
+	char *comm;
+	FILE *f;
+	int err;
+
+	err = asprintf(&comm, "/proc/%d/comm", pid);
+	if (err < 0)
+		return NULL;
+
+	f = fopen(comm, "r");
+	free(comm);
+	if (!f) {
+		perror("fopen");
+		return NULL;
+	}
+
+	if (fscanf(f, "%ms\n", &comm) != 1) {
+		perror("fscanf");
+		comm = NULL;
+	}
+
+
+	if (fclose(f))
+		perror("fclose");
+
+	return comm;
+}
+
+static void show_processes(const char *name)
+{
+	glob_t globbuf = { };
+	char **fd_path;
+	int err;
+
+	err = glob("/proc/[0-9]*/fd/[0-9]*", GLOB_NOSORT,
+		   NULL, &globbuf);
+	if (err)
+		return;
+
+	fd_path = globbuf.gl_pathv;
+	while (*fd_path) {
+		const char *dev_net_tun = "/dev/net/tun";
+		const size_t linkbuf_len = strlen(dev_net_tun) + 2;
+		char linkbuf[linkbuf_len], *fdinfo;
+		int pid, fd;
+		FILE *f;
+
+		if (sscanf(*fd_path, "/proc/%d/fd/%d", &pid, &fd) != 2)
+			goto next;
+
+		if (pid == getpid())
+			goto next;
+
+		err = readlink(*fd_path, linkbuf, linkbuf_len - 1);
+		if (err < 0) {
+			perror("readlink");
+			goto next;
+		}
+		linkbuf[err] = '\0';
+		if (strcmp(dev_net_tun, linkbuf))
+			goto next;
+
+		if (asprintf(&fdinfo, "/proc/%d/fdinfo/%d", pid, fd) < 0)
+			goto next;
+
+		f = fopen(fdinfo, "r");
+		free(fdinfo);
+		if (!f) {
+			perror("fopen");
+			goto next;
+		}
+
+		while (!feof(f)) {
+			char *key = NULL, *value = NULL;
+
+			err = fscanf(f, "%m[^:]: %ms\n", &key, &value);
+			if (err == EOF) {
+				if (ferror(f))
+					perror("fscanf");
+				break;
+			} else if (err == 2 &&
+				   !strcmp("iff", key) &&
+				   !strcmp(name, value)) {
+				char *pname = pid_name(pid);
+
+				printf(" %s(%d)", pname ? : "<NULL>", pid);
+				free(pname);
+			}
+
+			free(key);
+			free(value);
+		}
+		if (fclose(f))
+			perror("fclose");
+
+next:
+		++fd_path;
+	}
+
+	globfree(&globbuf);
+}
+
+
 static int do_show(int argc, char **argv)
 {
 	DIR *dir;
@@ -302,6 +408,11 @@ static int do_show(int argc, char **argv)
 		if (group != -1)
 			printf(" group %ld", group);
 		printf("\n");
+		if (show_details) {
+			printf("\tAttached to processes:");
+			show_processes(d->d_name);
+			printf("\n");
+		}
 	}
 	closedir(dir);
 	return 0;
