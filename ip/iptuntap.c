@@ -373,7 +373,6 @@ next:
 	}
 
 	globfree(&globbuf);
-	return;
 }
 
 

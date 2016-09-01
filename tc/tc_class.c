@@ -52,7 +52,6 @@ static void usage(void)
 	fprintf(stderr, "Where:\n");
 	fprintf(stderr, "QDISC_KIND := { prio | cbq | etc. }\n");
 	fprintf(stderr, "OPTIONS := ... try tc class add <desired QDISC_KIND> help\n");
-	return;
 }
 
 static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
