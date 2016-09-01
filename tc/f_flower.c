@@ -17,6 +17,7 @@
 #include <net/if.h>
 #include <linux/if_ether.h>
 #include <linux/ip.h>
+#include <linux/tc_act/tc_vlan.h>
 
 #include "utils.h"
 #include "tc_util.h"
@@ -30,6 +31,9 @@ static void explain(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: MATCH-LIST := [ MATCH-LIST ] MATCH\n");
 	fprintf(stderr, "       MATCH      := { indev DEV-NAME |\n");
+	fprintf(stderr, "                       vlan_id VID |\n");
+	fprintf(stderr, "                       vlan_prio PRIORITY |\n");
+	fprintf(stderr, "                       vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n");
 	fprintf(stderr, "                       dst_mac MAC-ADDR |\n");
 	fprintf(stderr, "                       src_mac MAC-ADDR |\n");
 	fprintf(stderr, "                       [ipv4 | ipv6 ] |\n");
@@ -58,6 +62,23 @@ static int flower_parse_eth_addr(char *str, int addr_type, int mask_type,
 	addattr_l(n, MAX_MSG, addr_type, addr, sizeof(addr));
 	memset(addr, 0xff, ETH_ALEN);
 	addattr_l(n, MAX_MSG, mask_type, addr, sizeof(addr));
+	return 0;
+}
+
+static int flower_parse_vlan_eth_type(char *str, __be16 eth_type, int type,
+				      __be16 *p_vlan_eth_type, struct nlmsghdr *n)
+{
+	__be16 vlan_eth_type;
+
+	if (eth_type != htons(ETH_P_8021Q)) {
+		fprintf(stderr, "Can't set \"vlan_ethtype\" if ethertype isn't 802.1Q\n");
+		return -1;
+	}
+
+	if (ll_proto_a2n(&vlan_eth_type, str))
+		invarg("invalid vlan_ethtype", str);
+	addattr16(n, MAX_MSG, type, vlan_eth_type);
+	*p_vlan_eth_type = vlan_eth_type;
 	return 0;
 }
 
@@ -167,6 +188,7 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
 	__be16 eth_type = TC_H_MIN(t->tcm_info);
+	__be16 vlan_ethtype = 0;
 	__u8 ip_proto = 0xff;
 	__u32 flags = 0;
 
@@ -208,6 +230,41 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			NEXT_ARG();
 			strncpy(ifname, *argv, sizeof(ifname) - 1);
 			addattrstrz(n, MAX_MSG, TCA_FLOWER_INDEV, ifname);
+		} else if (matches(*argv, "vlan_id") == 0) {
+			__u16 vid;
+
+			NEXT_ARG();
+			if (eth_type != htons(ETH_P_8021Q)) {
+				fprintf(stderr, "Can't set \"vlan_id\" if ethertype isn't 802.1Q\n");
+				return -1;
+			}
+			ret = get_u16(&vid, *argv, 10);
+			if (ret < 0 || vid & ~0xfff) {
+				fprintf(stderr, "Illegal \"vlan_id\"\n");
+				return -1;
+			}
+			addattr16(n, MAX_MSG, TCA_FLOWER_KEY_VLAN_ID, vid);
+		} else if (matches(*argv, "vlan_prio") == 0) {
+			__u8 vlan_prio;
+
+			NEXT_ARG();
+			if (eth_type != htons(ETH_P_8021Q)) {
+				fprintf(stderr, "Can't set \"vlan_prio\" if ethertype isn't 802.1Q\n");
+				return -1;
+			}
+			ret = get_u8(&vlan_prio, *argv, 10);
+			if (ret < 0 || vlan_prio & ~0x7) {
+				fprintf(stderr, "Illegal \"vlan_prio\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_KEY_VLAN_PRIO, vlan_prio);
+		} else if (matches(*argv, "vlan_ethtype") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_vlan_eth_type(*argv, eth_type,
+							 TCA_FLOWER_KEY_VLAN_ETH_TYPE,
+							 &vlan_ethtype, n);
+			if (ret < 0)
+				return -1;
 		} else if (matches(*argv, "dst_mac") == 0) {
 			NEXT_ARG();
 			ret = flower_parse_eth_addr(*argv,
@@ -230,7 +287,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			}
 		} else if (matches(*argv, "ip_proto") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_ip_proto(*argv, eth_type,
+			ret = flower_parse_ip_proto(*argv, vlan_ethtype ?
+						    vlan_ethtype : eth_type,
 						    TCA_FLOWER_KEY_IP_PROTO,
 						    &ip_proto, n);
 			if (ret < 0) {
@@ -239,7 +297,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			}
 		} else if (matches(*argv, "dst_ip") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_ip_addr(*argv, eth_type,
+			ret = flower_parse_ip_addr(*argv, vlan_ethtype ?
+						   vlan_ethtype : eth_type,
 						   TCA_FLOWER_KEY_IPV4_DST,
 						   TCA_FLOWER_KEY_IPV4_DST_MASK,
 						   TCA_FLOWER_KEY_IPV6_DST,
@@ -251,7 +310,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			}
 		} else if (matches(*argv, "src_ip") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_ip_addr(*argv, eth_type,
+			ret = flower_parse_ip_addr(*argv, vlan_ethtype ?
+						   vlan_ethtype : eth_type,
 						   TCA_FLOWER_KEY_IPV4_SRC,
 						   TCA_FLOWER_KEY_IPV4_SRC_MASK,
 						   TCA_FLOWER_KEY_IPV6_SRC,
@@ -475,6 +535,18 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 		struct rtattr *attr = tb[TCA_FLOWER_INDEV];
 
 		fprintf(f, "\n  indev %s", rta_getattr_str(attr));
+	}
+
+	if (tb[TCA_FLOWER_KEY_VLAN_ID]) {
+		struct rtattr *attr = tb[TCA_FLOWER_KEY_VLAN_ID];
+
+		fprintf(f, "\n  vlan_id %d", rta_getattr_u16(attr));
+	}
+
+	if (tb[TCA_FLOWER_KEY_VLAN_PRIO]) {
+		struct rtattr *attr = tb[TCA_FLOWER_KEY_VLAN_PRIO];
+
+		fprintf(f, "\n  vlan_prio %d", rta_getattr_u8(attr));
 	}
 
 	flower_print_eth_addr(f, "dst_mac", tb[TCA_FLOWER_KEY_ETH_DST],
