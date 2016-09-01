@@ -105,7 +105,8 @@ static int tap_del_ioctl(struct ifreq *ifr)
 	return ret;
 
 }
-static int parse_args(int argc, char **argv, struct ifreq *ifr, uid_t *uid, gid_t *gid)
+static int parse_args(int argc, char **argv,
+		      struct ifreq *ifr, uid_t *uid, gid_t *gid)
 {
 	int count = 0;
 
@@ -356,9 +357,11 @@ static void show_processes(const char *name)
 					perror("fscanf");
 				break;
 			} else if (err == 2 &&
-				   !strcmp("iff", key) && !strcmp(name, value)) {
+				   !strcmp("iff", key) &&
+				   !strcmp(name, value)) {
 				char *pname = pid_name(pid);
-				printf(" %s(%d)", pname ? pname : "<NULL>", pid);
+
+				printf(" %s(%d)", pname ? : "<NULL>", pid);
 				free(pname);
 			}
 
