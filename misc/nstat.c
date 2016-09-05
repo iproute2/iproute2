@@ -76,6 +76,11 @@ static int net_snmp6_open(void)
 	return generic_proc_open("PROC_NET_SNMP6", "net/snmp6");
 }
 
+static int net_sctp_snmp_open(void)
+{
+	return generic_proc_open("PROC_NET_SCTP_SNMP", "net/sctp/snmp");
+}
+
 struct nstat_ent {
 	struct nstat_ent *next;
 	char		 *id;
@@ -247,6 +252,16 @@ static void load_ugly_table(FILE *fp)
 	}
 }
 
+static void load_sctp_snmp(void)
+{
+	FILE *fp = fdopen(net_sctp_snmp_open(), "r");
+
+	if (fp) {
+		load_good_table(fp);
+		fclose(fp);
+	}
+}
+
 static void load_snmp(void)
 {
 	FILE *fp = fdopen(net_snmp_open(), "r");
@@ -391,6 +406,7 @@ static void update_db(int interval)
 	load_netstat();
 	load_snmp6();
 	load_snmp();
+	load_sctp_snmp();
 
 	h = kern_db;
 	kern_db = n;
@@ -450,6 +466,7 @@ static void server_loop(int fd)
 	load_netstat();
 	load_snmp6();
 	load_snmp();
+	load_sctp_snmp();
 
 	for (;;) {
 		int status;
@@ -706,6 +723,7 @@ int main(int argc, char *argv[])
 		load_netstat();
 		load_snmp6();
 		load_snmp();
+		load_sctp_snmp();
 		if (info_source[0] == 0)
 			strcpy(info_source, "kernel");
 	}
