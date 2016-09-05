@@ -266,6 +266,11 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		return -1;
 	}
 
+	if ((gaddr || !IN6_IS_ADDR_UNSPECIFIED(&gaddr6)) && !link) {
+		fprintf(stderr, "vxlan: 'group' requires 'dev' to be specified\n");
+		return -1;
+	}
+
 	if (!dst_port_set && gpe) {
 		dstport = 4790;
 	} else if (!dst_port_set) {
