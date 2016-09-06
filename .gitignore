@@ -10,6 +10,7 @@ Config
 # cscope
 cscope.*
 ncscope.*
+tags
 TAGS
 
 # git files that we don't want to ignore even it they are dot-files
