@@ -45,7 +45,7 @@ static void _print_bearer_opts(void)
 		" window                - Bearer link window\n");
 }
 
-static void _print_bearer_media(void)
+void print_bearer_media(void)
 {
 	fprintf(stderr,
 		"\nMEDIA\n"
@@ -192,14 +192,28 @@ static int nl_add_udp_enable_opts(struct nlmsghdr *nlh, struct opt *opts,
 }
 
 static int nl_add_bearer_name(struct nlmsghdr *nlh, const struct cmd *cmd,
-			   struct cmdl *cmdl, struct opt *opts,
-			   struct tipc_sup_media sup_media[])
+			      struct cmdl *cmdl, struct opt *opts,
+			      const struct tipc_sup_media *sup_media)
 {
-	char id[TIPC_MAX_BEARER_NAME];
+	char bname[TIPC_MAX_BEARER_NAME];
+	int err;
+
+	if ((err = cmd_get_unique_bearer_name(cmd, cmdl, opts, bname, sup_media)))
+		return err;
+
+	mnl_attr_put_strz(nlh, TIPC_NLA_BEARER_NAME, bname);
+	return 0;
+}
+
+int cmd_get_unique_bearer_name(const struct cmd *cmd, struct cmdl *cmdl,
+			       struct opt *opts, char *bname,
+			       const struct tipc_sup_media *sup_media)
+{
 	char *media;
 	char *identifier;
 	struct opt *opt;
-	struct tipc_sup_media *entry;
+	const struct tipc_sup_media *entry;
+
 
 	if (!(opt = get_opt(opts, "media"))) {
 		if (help_flag)
@@ -219,13 +233,12 @@ static int nl_add_bearer_name(struct nlmsghdr *nlh, const struct cmd *cmd,
 				(entry->help)(cmdl, media);
 			else
 				fprintf(stderr, "error, missing bearer %s\n",
-						entry->identifier);
+					entry->identifier);
 			return -EINVAL;
 		}
 
 		identifier = opt->val;
-		snprintf(id, sizeof(id), "%s:%s", media, identifier);
-		mnl_attr_put_strz(nlh, TIPC_NLA_BEARER_NAME, id);
+		snprintf(bname, TIPC_MAX_BEARER_NAME, "%s:%s", media, identifier);
 
 		return 0;
 	}
@@ -270,13 +283,13 @@ static int udp_bearer_add(struct nlmsghdr *nlh, struct opt *opts,
 
 		if ((err = getaddrinfo(ip, remport, &hints, &addr))) {
 			fprintf(stderr, "UDP address error: %s\n",
-					gai_strerror(err));
+				gai_strerror(err));
 			freeaddrinfo(addr);
 			return err;
 		}
 
 		mnl_attr_put(nlh, TIPC_NLA_UDP_REMOTE, addr->ai_addrlen,
-				addr->ai_addr);
+			     addr->ai_addr);
 		freeaddrinfo(addr);
 	} else {
 		fprintf(stderr, "error, missing remoteip\n");
@@ -302,7 +315,7 @@ static int cmd_bearer_add_media(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ "media",		OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
-	struct tipc_sup_media sup_media[] = {
+	const struct tipc_sup_media sup_media[] = {
 		{ "udp",	"name",		cmd_bearer_add_udp_help},
 		{ NULL, },
 	};
@@ -366,7 +379,7 @@ static void cmd_bearer_enable_help(struct cmdl *cmdl)
 		" domain DOMAIN         - Discovery domain\n"
 		" priority PRIORITY     - Bearer priority\n",
 		cmdl->argv[0]);
-	_print_bearer_media();
+	print_bearer_media();
 }
 
 static int cmd_bearer_enable(struct nlmsghdr *nlh, const struct cmd *cmd,
@@ -389,9 +402,9 @@ static int cmd_bearer_enable(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ NULL }
 	};
 	struct tipc_sup_media sup_media[] = {
-		{ "udp",	"name",		cmd_bearer_enable_udp_help},
-		{ "eth",	"device",	cmd_bearer_enable_l2_help },
-		{ "ib",		"device",	cmd_bearer_enable_l2_help },
+		{ "udp",        "name",         cmd_bearer_enable_udp_help},
+		{ "eth",        "device",       cmd_bearer_enable_l2_help },
+		{ "ib",         "device",       cmd_bearer_enable_l2_help },
 		{ NULL, },
 	};
 
@@ -449,7 +462,7 @@ static void cmd_bearer_disable_help(struct cmdl *cmdl)
 {
 	fprintf(stderr, "Usage: %s bearer disable media MEDIA ARGS...\n",
 		cmdl->argv[0]);
-	_print_bearer_media();
+	print_bearer_media();
 }
 
 static int cmd_bearer_disable(struct nlmsghdr *nlh, const struct cmd *cmd,
@@ -465,9 +478,9 @@ static int cmd_bearer_disable(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ NULL }
 	};
 	struct tipc_sup_media sup_media[] = {
-		{ "udp",	"name",		cmd_bearer_disable_udp_help},
-		{ "eth",	"device",	cmd_bearer_disable_l2_help },
-		{ "ib",		"device",	cmd_bearer_disable_l2_help },
+		{ "udp",        "name",         cmd_bearer_disable_udp_help},
+		{ "eth",        "device",       cmd_bearer_disable_l2_help },
+		{ "ib",         "device",       cmd_bearer_disable_l2_help },
 		{ NULL, },
 	};
 
@@ -497,7 +510,7 @@ static void cmd_bearer_set_help(struct cmdl *cmdl)
 	fprintf(stderr, "Usage: %s bearer set OPTION media MEDIA ARGS...\n",
 		cmdl->argv[0]);
 	_print_bearer_opts();
-	_print_bearer_media();
+	print_bearer_media();
 }
 
 static void cmd_bearer_set_udp_help(struct cmdl *cmdl, char *media)
@@ -516,7 +529,7 @@ static void cmd_bearer_set_l2_help(struct cmdl *cmdl, char *media)
 }
 
 static int cmd_bearer_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
-			 struct cmdl *cmdl, void *data)
+			       struct cmdl *cmdl, void *data)
 {
 	int err;
 	int val;
@@ -531,9 +544,9 @@ static int cmd_bearer_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ NULL }
 	};
 	struct tipc_sup_media sup_media[] = {
-		{ "udp",	"name",		cmd_bearer_set_udp_help},
-		{ "eth",	"device",	cmd_bearer_set_l2_help },
-		{ "ib",		"device",	cmd_bearer_set_l2_help },
+		{ "udp",        "name",         cmd_bearer_set_udp_help},
+		{ "eth",        "device",       cmd_bearer_set_l2_help },
+		{ "ib",         "device",       cmd_bearer_set_l2_help },
 		{ NULL, },
 	};
 
@@ -592,7 +605,7 @@ static void cmd_bearer_get_help(struct cmdl *cmdl)
 	fprintf(stderr, "Usage: %s bearer get [OPTION] media MEDIA ARGS...\n",
 		cmdl->argv[0]);
 	_print_bearer_opts();
-	_print_bearer_media();
+	print_bearer_media();
 }
 
 static void cmd_bearer_get_udp_help(struct cmdl *cmdl, char *media)
@@ -639,7 +652,7 @@ static int bearer_dump_udp_cb(const struct nlmsghdr *nlh, void *data)
 		struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *) addr;
 
 		if (!inet_ntop(AF_INET6, &ipv6->sin6_addr, straddr,
-					sizeof(straddr))) {
+			       sizeof(straddr))) {
 			fprintf(stderr, "error, parsing IPv6 addr\n");
 			return MNL_CB_ERROR;
 		}
@@ -705,7 +718,7 @@ static int bearer_get_udp_cb(const struct nlmsghdr *nlh, void *data)
 		switch (cb_data->prop) {
 		case UDP_PROP_IP:
 			if (!inet_ntop(AF_INET6, &ipv6->sin6_addr, straddr,
-						sizeof(straddr))) {
+				       sizeof(straddr))) {
 				fprintf(stderr, "error, parsing IPv6 addr\n");
 				return MNL_CB_ERROR;
 			}
@@ -769,7 +782,7 @@ static int cmd_bearer_get_media(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ NULL }
 	};
 	struct tipc_sup_media sup_media[] = {
-		{ "udp",	"name",		cmd_bearer_get_udp_help},
+		{ "udp",        "name",         cmd_bearer_get_udp_help},
 		{ NULL, },
 	};
 
@@ -844,9 +857,9 @@ static int cmd_bearer_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ NULL }
 	};
 	struct tipc_sup_media sup_media[] = {
-		{ "udp",	"name",		cmd_bearer_get_udp_help},
-		{ "eth",	"device",	cmd_bearer_get_l2_help },
-		{ "ib",		"device",	cmd_bearer_get_l2_help },
+		{ "udp",        "name",         cmd_bearer_get_udp_help},
+		{ "eth",        "device",       cmd_bearer_get_l2_help },
+		{ "ib",         "device",       cmd_bearer_get_l2_help },
 		{ NULL, },
 	};
 
