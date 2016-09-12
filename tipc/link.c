@@ -489,6 +489,71 @@ static int cmd_link_set(struct nlmsghdr *nlh, const struct cmd *cmd,
 	return run_cmd(nlh, cmd, cmds, cmdl, NULL);
 }
 
+static int cmd_link_mon_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
+				 struct cmdl *cmdl, void *data)
+{
+	int size;
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct nlattr *attrs;
+
+	if (cmdl->argc != cmdl->optind + 1) {
+		fprintf(stderr, "error, missing value\n");
+		return -EINVAL;
+	}
+	size = atoi(shift_cmdl(cmdl));
+
+	if (!(nlh = msg_init(buf, TIPC_NL_MON_SET))) {
+		fprintf(stderr, "error, message initialisation failed\n");
+		return -1;
+	}
+	attrs = mnl_attr_nest_start(nlh, TIPC_NLA_MON);
+
+	mnl_attr_put_u32(nlh, TIPC_NLA_MON_ACTIVATION_THRESHOLD, size);
+
+	mnl_attr_nest_end(nlh, attrs);
+
+	return msg_doit(nlh, NULL, NULL);
+}
+
+static void cmd_link_mon_set_help(struct cmdl *cmdl)
+{
+	fprintf(stderr, "Usage: %s monitor set PPROPERTY\n\n"
+		"PROPERTIES\n"
+		" threshold SIZE	- Set monitor activation threshold\n",
+		cmdl->argv[0]);
+}
+
+static int cmd_link_mon_set(struct nlmsghdr *nlh, const struct cmd *cmd,
+			    struct cmdl *cmdl, void *data)
+{
+	const struct cmd cmds[] = {
+		{ "threshold",	cmd_link_mon_set_prop,	NULL },
+		{ NULL }
+	};
+
+	return run_cmd(nlh, cmd, cmds, cmdl, NULL);
+}
+
+static void cmd_link_mon_help(struct cmdl *cmdl)
+{
+	fprintf(stderr,
+		"Usage: %s montior COMMAND [ARGS] ...\n\n"
+		"COMMANDS\n"
+		" set                  - Set monitor properties\n",
+		cmdl->argv[0]);
+}
+
+static int cmd_link_mon(struct nlmsghdr *nlh, const struct cmd *cmd, struct cmdl *cmdl,
+			void *data)
+{
+	const struct cmd cmds[] = {
+		{ "set",	cmd_link_mon_set,	cmd_link_mon_set_help },
+		{ NULL }
+	};
+
+	return run_cmd(nlh, cmd, cmds, cmdl, NULL);
+}
+
 void cmd_link_help(struct cmdl *cmdl)
 {
 	fprintf(stderr,
@@ -498,7 +563,8 @@ void cmd_link_help(struct cmdl *cmdl)
 		" list                  - List links\n"
 		" get                   - Get various link properties\n"
 		" set                   - Set various link properties\n"
-		" statistics            - Show or reset statistics\n",
+		" statistics            - Show or reset statistics\n"
+		" monitor               - Show or set link supervision\n",
 		cmdl->argv[0]);
 }
 
@@ -510,6 +576,7 @@ int cmd_link(struct nlmsghdr *nlh, const struct cmd *cmd, struct cmdl *cmdl,
 		{ "list",	cmd_link_list,	NULL },
 		{ "set",	cmd_link_set,	cmd_link_set_help },
 		{ "statistics", cmd_link_stat,	cmd_link_stat_help },
+		{ "monitor",	cmd_link_mon,	cmd_link_mon_help },
 		{ NULL }
 	};
 
