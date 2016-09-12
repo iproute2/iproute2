@@ -90,7 +90,6 @@ static int link_get_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_OK;
 }
 
-
 static int cmd_link_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 			     struct cmdl *cmdl, void *data)
 {
@@ -475,8 +474,6 @@ static int cmd_link_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	mnl_attr_nest_end(nlh, attrs);
 
 	return msg_doit(nlh, link_get_cb, &prop);
-
-	return 0;
 }
 
 static int cmd_link_set(struct nlmsghdr *nlh, const struct cmd *cmd,
