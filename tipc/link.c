@@ -534,12 +534,65 @@ static int cmd_link_mon_set(struct nlmsghdr *nlh, const struct cmd *cmd,
 	return run_cmd(nlh, cmd, cmds, cmdl, NULL);
 }
 
+static void cmd_link_mon_get_help(struct cmdl *cmdl)
+{
+	fprintf(stderr, "Usage: %s monitor get PPROPERTY \n\n"
+		"PROPERTIES\n"
+		" threshold 	- Get monitor activation threshold\n",
+		cmdl->argv[0]);
+}
+
+static int link_mon_get_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *info[TIPC_NLA_MAX + 1] = {};
+	struct nlattr *attrs[TIPC_NLA_MON_MAX + 1] = {};
+
+	mnl_attr_parse(nlh, sizeof(*genl), parse_attrs, info);
+	if (!info[TIPC_NLA_MON])
+		return MNL_CB_ERROR;
+
+	mnl_attr_parse_nested(info[TIPC_NLA_MON], parse_attrs, attrs);
+	if (!attrs[TIPC_NLA_MON_ACTIVATION_THRESHOLD])
+		return MNL_CB_ERROR;
+
+	printf("%u\n",
+	       mnl_attr_get_u32(attrs[TIPC_NLA_MON_ACTIVATION_THRESHOLD]));
+
+	return MNL_CB_OK;
+}
+
+static int cmd_link_mon_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
+				 struct cmdl *cmdl, void *data)
+{
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+
+	if (!(nlh = msg_init(buf, TIPC_NL_MON_GET))) {
+		fprintf(stderr, "error, message initialisation failed\n");
+		return -1;
+	}
+
+	return msg_doit(nlh,	link_mon_get_cb,	NULL);
+}
+
+static int cmd_link_mon_get(struct nlmsghdr *nlh, const struct cmd *cmd,
+			    struct cmdl *cmdl, void *data)
+{
+	const struct cmd cmds[] = {
+		{ "threshold",	cmd_link_mon_get_prop,	NULL},
+		{ NULL }
+	};
+
+	return run_cmd(nlh, cmd, cmds, cmdl, NULL);
+}
+
 static void cmd_link_mon_help(struct cmdl *cmdl)
 {
 	fprintf(stderr,
 		"Usage: %s montior COMMAND [ARGS] ...\n\n"
 		"COMMANDS\n"
-		" set                  - Set monitor properties\n",
+		" set			- Set monitor properties\n"
+		" get			- Get monitor properties\n",
 		cmdl->argv[0]);
 }
 
@@ -548,6 +601,7 @@ static int cmd_link_mon(struct nlmsghdr *nlh, const struct cmd *cmd, struct cmdl
 {
 	const struct cmd cmds[] = {
 		{ "set",	cmd_link_mon_set,	cmd_link_mon_set_help },
+		{ "get",	cmd_link_mon_get,	cmd_link_mon_get_help },
 		{ NULL }
 	};
 
