@@ -82,7 +82,7 @@ int get_qdisc_handle(__u32 *h, const char *str)
 	if (strcmp(str, "none") == 0)
 		goto ok;
 	maj = strtoul(str, &p, 16);
-	if (p == str)
+	if (p == str || maj >= (1 << 16))
 		return -1;
 	maj <<= 16;
 	if (*p != ':' && *p != 0)
