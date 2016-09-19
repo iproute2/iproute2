@@ -20,18 +20,7 @@
 
 static void ipvlan_explain(FILE *f)
 {
-	fprintf(f, "Usage: ... ipvlan [ mode { l2 | l3 } ]\n");
-}
-
-static void explain(void)
-{
-	ipvlan_explain(stderr);
-}
-
-static int mode_arg(void)
-{
-	fprintf(stderr, "Error: argument of \"mode\" must be either \"l2\", or \"l3\"\n");
-	return -1;
+	fprintf(f, "Usage: ... ipvlan [ mode { l2 | l3  | l3s } ]\n");
 }
 
 static int ipvlan_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -47,20 +36,24 @@ static int ipvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				mode = IPVLAN_MODE_L2;
 			else if (strcmp(*argv, "l3") == 0)
 				mode = IPVLAN_MODE_L3;
-			else
-				return mode_arg();
-
+			else if (strcmp(*argv, "l3s") == 0)
+				mode = IPVLAN_MODE_L3S;
+			else {
+				fprintf(stderr, "Error: argument of \"mode\" must be either \"l2\", \"l3\" or \"l3s\"\n");
+				return -1;
+			}
 			addattr16(n, 1024, IFLA_IPVLAN_MODE, mode);
 		} else if (matches(*argv, "help") == 0) {
-			explain();
+			ipvlan_explain(stderr);
 			return -1;
 		} else {
 			fprintf(stderr, "ipvlan: unknown option \"%s\"?\n",
 				*argv);
-			explain();
+			ipvlan_explain(stderr);
 			return -1;
 		}
-		argc--, argv++;
+		argc--;
+		argv++;
 	}
 
 	return 0;
@@ -78,7 +71,8 @@ static void ipvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 			fprintf(f, " mode %s ",
 				mode == IPVLAN_MODE_L2 ? "l2" :
-				mode == IPVLAN_MODE_L3 ? "l3" : "unknown");
+				mode == IPVLAN_MODE_L3 ? "l3" :
+				mode == IPVLAN_MODE_L3S ? "l3s" : "unknown");
 		}
 	}
 }
