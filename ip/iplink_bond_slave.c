@@ -130,10 +130,9 @@ static void bond_slave_print_help(struct link_util *lu, int argc, char **argv,
 }
 
 struct link_util bond_slave_link_util = {
-	.id		= "bond",
+	.id		= "bond_slave",
 	.maxattr	= IFLA_BOND_SLAVE_MAX,
 	.print_opt	= bond_slave_print_opt,
 	.parse_opt	= bond_slave_parse_opt,
 	.print_help	= bond_slave_print_help,
-	.slave		= true,
 };

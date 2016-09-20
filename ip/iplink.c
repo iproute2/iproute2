@@ -119,15 +119,14 @@ static int on_off(const char *msg, const char *realval)
 static void *BODY;		/* cached dlopen(NULL) handle */
 static struct link_util *linkutil_list;
 
-static struct link_util *__get_link_kind(const char *id, bool slave)
+struct link_util *get_link_kind(const char *id)
 {
 	void *dlh;
 	char buf[256];
 	struct link_util *l;
 
 	for (l = linkutil_list; l; l = l->next)
-		if (strcmp(l->id, id) == 0 &&
-		    l->slave == slave)
+		if (strcmp(l->id, id) == 0)
 			return l;
 
 	snprintf(buf, sizeof(buf), LIBDIR "/ip/link_%s.so", id);
@@ -142,10 +141,7 @@ static struct link_util *__get_link_kind(const char *id, bool slave)
 		}
 	}
 
-	if (slave)
-		snprintf(buf, sizeof(buf), "%s_slave_link_util", id);
-	else
-		snprintf(buf, sizeof(buf), "%s_link_util", id);
+	snprintf(buf, sizeof(buf), "%s_link_util", id);
 	l = dlsym(dlh, buf);
 	if (l == NULL)
 		return NULL;
@@ -153,16 +149,6 @@ static struct link_util *__get_link_kind(const char *id, bool slave)
 	l->next = linkutil_list;
 	linkutil_list = l;
 	return l;
-}
-
-struct link_util *get_link_kind(const char *id)
-{
-	return __get_link_kind(id, false);
-}
-
-struct link_util *get_link_slave_kind(const char *id)
-{
-	return __get_link_kind(id, true);
 }
 
 static int get_link_mode(const char *mode)
@@ -872,26 +858,18 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (type) {
 		struct rtattr *linkinfo;
-		char slavebuf[128], *ulinep = strchr(type, '_');
+		char *ulinep = strchr(type, '_');
 		int iflatype;
 
 		linkinfo = addattr_nest(&req.n, sizeof(req), IFLA_LINKINFO);
 		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, type,
 			 strlen(type));
 
-		if (ulinep && !strcmp(ulinep, "_slave")) {
-			strncpy(slavebuf, type, sizeof(slavebuf));
-			slavebuf[sizeof(slavebuf) - 1] = '\0';
-			ulinep = strchr(slavebuf, '_');
-			/* check in case it was after sizeof(slavebuf) - 1*/
-			if (ulinep)
-				*ulinep = '\0';
-			lu = get_link_slave_kind(slavebuf);
+		lu = get_link_kind(type);
+		if (ulinep && !strcmp(ulinep, "_slave"))
 			iflatype = IFLA_INFO_SLAVE_DATA;
-		} else {
-			lu = get_link_kind(type);
+		else
 			iflatype = IFLA_INFO_DATA;
-		}
 		if (lu && argc) {
 			struct rtattr *data = addattr_nest(&req.n,
 							   sizeof(req), iflatype);

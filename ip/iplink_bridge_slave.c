@@ -293,10 +293,9 @@ static void bridge_slave_print_help(struct link_util *lu, int argc, char **argv,
 }
 
 struct link_util bridge_slave_link_util = {
-	.id		= "bridge",
+	.id		= "bridge_slave",
 	.maxattr	= IFLA_BRPORT_MAX,
 	.print_opt	= bridge_slave_print_opt,
 	.parse_opt	= bridge_slave_parse_opt,
 	.print_help     = bridge_slave_print_help,
-	.slave		= true,
 };

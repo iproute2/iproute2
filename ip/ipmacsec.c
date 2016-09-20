@@ -1265,5 +1265,4 @@ struct link_util macsec_link_util = {
 	.parse_opt = macsec_parse_opt,
 	.print_help = macsec_print_help,
 	.print_opt = macsec_print_opt,
-	.slave = false,
 };
