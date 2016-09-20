@@ -31,6 +31,7 @@ int print_netconf(const struct sockaddr_nl *who,
 		  struct rtnl_ctrl_data *ctrl,
 		  struct nlmsghdr *n, void *arg);
 void netns_map_init(void);
+void netns_nsid_socket_init(void);
 int print_nsid(const struct sockaddr_nl *who,
 	       struct nlmsghdr *n, void *arg);
 int do_ipaddr(int argc, char **argv);

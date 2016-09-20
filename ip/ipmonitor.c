@@ -301,6 +301,7 @@ int do_ipmonitor(int argc, char **argv)
 		exit(1);
 
 	ll_init_map(&rth);
+	netns_nsid_socket_init();
 	netns_map_init();
 
 	if (rtnl_listen(&rth, accept_msg, stdout) < 0)
