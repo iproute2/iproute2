@@ -152,9 +152,9 @@ static void get_icvlen(__u8 *icvlen, char *arg)
 	if (ret)
 		invarg("expected ICV length", arg);
 
-	if (*icvlen < MACSEC_MIN_ICV_LEN || *icvlen > MACSEC_MAX_ICV_LEN)
+	if (*icvlen < MACSEC_MIN_ICV_LEN || *icvlen > MACSEC_STD_ICV_LEN)
 		invarg("ICV length must be in the range {"
-		       STR(MACSEC_MIN_ICV_LEN) ".." STR(MACSEC_MAX_ICV_LEN)
+		       STR(MACSEC_MIN_ICV_LEN) ".." STR(MACSEC_STD_ICV_LEN)
 		       "}", arg);
 }
 
