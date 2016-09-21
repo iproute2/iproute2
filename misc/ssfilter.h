@@ -9,6 +9,7 @@
 #define SSF_S_LE  8
 #define SSF_S_AUTO  9
 #define SSF_DEVCOND 10
+#define SSF_MARKMASK 11
 
 #include <stdbool.h>
 
@@ -22,3 +23,4 @@ struct ssfilter
 int ssfilter_parse(struct ssfilter **f, int argc, char **argv, FILE *fp);
 void *parse_hostcond(char *addr, bool is_port);
 void *parse_devcond(char *name);
+void *parse_markmask(const char *markmask);

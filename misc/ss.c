@@ -737,6 +737,7 @@ struct sockstat {
 	unsigned long long  sk;
 	char *name;
 	char *peer_name;
+	__u32		    mark;
 };
 
 struct dctcpstat {
@@ -808,6 +809,9 @@ static void sock_details_print(struct sockstat *s)
 
 	printf(" ino:%u", s->ino);
 	printf(" sk:%llx", s->sk);
+
+	if (s->mark)
+		printf(" fwmark:0x%x", s->mark);
 }
 
 static void sock_addr_print_width(int addr_len, const char *addr, char *delim,
@@ -1047,6 +1051,8 @@ struct aafilter {
 	inet_prefix	addr;
 	int		port;
 	unsigned int	iface;
+	__u32		mark;
+	__u32		mask;
 	struct aafilter *next;
 };
 
@@ -1166,6 +1172,12 @@ static int run_ssfilter(struct ssfilter *f, struct sockstat *s)
 		struct aafilter *a = (void *)f->pred;
 
 		return s->iface == a->iface;
+	}
+		case SSF_MARKMASK:
+	{
+		struct aafilter *a = (void *)f->pred;
+
+		return (s->mark & a->mask) == a->mark;
 	}
 		/* Yup. It is recursion. Sorry. */
 		case SSF_AND:
@@ -1341,6 +1353,23 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 	{
 		/* bytecompile for SSF_DEVCOND not supported yet */
 		return 0;
+	}
+		case SSF_MARKMASK:
+	{
+		struct aafilter *a = (void *)f->pred;
+		struct instr {
+			struct inet_diag_bc_op op;
+			struct inet_diag_markcond cond;
+		};
+		int inslen = sizeof(struct instr);
+
+		if (!(*bytecode = malloc(inslen))) abort();
+		((struct instr *)*bytecode)[0] = (struct instr) {
+			{ INET_DIAG_BC_MARK_COND, inslen, inslen + 4 },
+			{ a->mark, a->mask},
+		};
+
+		return inslen;
 	}
 		default:
 		abort();
@@ -1613,6 +1642,25 @@ out:
 		f->families = 0;
 		filter_af_set(f, fam);
 		filter_states_set(f, states);
+	}
+
+	res = malloc(sizeof(*res));
+	if (res)
+		memcpy(res, &a, sizeof(a));
+	return res;
+}
+
+void *parse_markmask(const char *markmask)
+{
+	struct aafilter a, *res;
+
+	if (strchr(markmask, '/')) {
+		if (sscanf(markmask, "%i/%i", &a.mark, &a.mask) != 2)
+			return NULL;
+	} else {
+		a.mask = 0xffffffff;
+		if (sscanf(markmask, "%i", &a.mark) != 1)
+			return NULL;
 	}
 
 	res = malloc(sizeof(*res));
@@ -2137,6 +2185,10 @@ static void parse_diag_msg(struct nlmsghdr *nlh, struct sockstat *s)
 	s->uid		= r->idiag_uid;
 	s->iface	= r->id.idiag_if;
 	s->sk		= cookie_sk_get(&r->id.idiag_cookie[0]);
+
+	s->mark = 0;
+	if (tb[INET_DIAG_MARK])
+		s->mark = *(__u32 *) RTA_DATA(tb[INET_DIAG_MARK]);
 
 	if (s->local.family == AF_INET)
 		s->local.bytelen = s->remote.bytelen = 4;

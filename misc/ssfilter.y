@@ -36,7 +36,7 @@ static void yyerror(char *s)
 
 %}
 
-%token HOSTCOND DCOND SCOND DPORT SPORT LEQ GEQ NEQ AUTOBOUND DEVCOND DEVNAME
+%token HOSTCOND DCOND SCOND DPORT SPORT LEQ GEQ NEQ AUTOBOUND DEVCOND DEVNAME MARKMASK FWMARK
 %left '|'
 %left '&'
 %nonassoc '!'
@@ -116,7 +116,14 @@ expr:	DCOND HOSTCOND
         {
 		$$ = alloc_node(SSF_NOT, alloc_node(SSF_DEVCOND, $3));
         }
-
+        | FWMARK '=' MARKMASK
+        {
+                $$ = alloc_node(SSF_MARKMASK, $3);
+        }
+        | FWMARK NEQ MARKMASK
+        {
+                $$ = alloc_node(SSF_NOT, alloc_node(SSF_MARKMASK, $3));
+        }
         | AUTOBOUND
         {
                 $$ = alloc_node(SSF_S_AUTO, NULL);
@@ -249,6 +256,10 @@ int yylex(void)
 		tok_type = DEVNAME;
 		return DEVNAME;
 	}
+	if (strcmp(curtok, "fwmark") == 0) {
+		tok_type = FWMARK;
+		return FWMARK;
+	}
 	if (strcmp(curtok, ">=") == 0 ||
 	    strcmp(curtok, "ge") == 0 ||
 	    strcmp(curtok, "geq") == 0)
@@ -282,6 +293,14 @@ int yylex(void)
 			exit(1);
 		}
 		return DEVCOND;
+	}
+	if (tok_type == FWMARK) {
+		yylval = (void*)parse_markmask(curtok);
+		if (yylval == NULL) {
+			fprintf(stderr, "Cannot parse mark %s.\n", curtok);
+			exit(1);
+		}
+		return MARKMASK;
 	}
 	yylval = (void*)parse_hostcond(curtok, tok_type == SPORT || tok_type == DPORT);
 	if (yylval == NULL) {
