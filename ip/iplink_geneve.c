@@ -150,7 +150,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 			return -1;
 		}
 
-		if (!daddr && memcmp(&daddr6, &in6addr_any, sizeof(daddr6)) == 0) {
+		if (!daddr && IN6_IS_ADDR_UNSPECIFIED(&daddr6)) {
 			fprintf(stderr, "geneve: remote link partner not specified\n");
 			return -1;
 		}
@@ -159,7 +159,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	addattr32(n, 1024, IFLA_GENEVE_ID, vni);
 	if (daddr)
 		addattr_l(n, 1024, IFLA_GENEVE_REMOTE, &daddr, 4);
-	if (memcmp(&daddr6, &in6addr_any, sizeof(daddr6)) != 0)
+	if (!IN6_IS_ADDR_UNSPECIFIED(&daddr6))
 		addattr_l(n, 1024, IFLA_GENEVE_REMOTE6, &daddr6, sizeof(struct in6_addr));
 	addattr32(n, 1024, IFLA_GENEVE_LABEL, label);
 	addattr8(n, 1024, IFLA_GENEVE_TTL, ttl);
@@ -203,7 +203,7 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		struct in6_addr addr;
 
 		memcpy(&addr, RTA_DATA(tb[IFLA_GENEVE_REMOTE6]), sizeof(struct in6_addr));
-		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&addr)) {
 			if (!IN6_IS_ADDR_MULTICAST(&addr))
 				fprintf(f, "remote %s ",
 					format_host(AF_INET6, sizeof(struct in6_addr), &addr));

@@ -1862,6 +1862,11 @@ static int iproute_restore(void)
 		exit(-1);
 
 	pos = ftell(stdin);
+	if (pos == -1) {
+		perror("Failed to restore: ftell");
+		exit(-1);
+	}
+
 	for (prio = 0; prio < 3; prio++) {
 		int err;
 
@@ -1869,7 +1874,10 @@ static int iproute_restore(void)
 		if (err)
 			exit(err);
 
-		fseek(stdin, pos, SEEK_SET);
+		if (fseek(stdin, pos, SEEK_SET) == -1) {
+			perror("Failed to restore: fseek");
+			exit(-1);
+		}
 	}
 
 	exit(0);

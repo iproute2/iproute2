@@ -72,8 +72,8 @@ static int ipnetns_have_nsid(void)
 	if (have_rtnl_getnsid < 0) {
 		fd = open("/proc/self/ns/net", O_RDONLY);
 		if (fd < 0) {
-			perror("open(\"/proc/self/ns/net\")");
-			exit(1);
+			have_rtnl_getnsid = 0;
+			return 0;
 		}
 
 		addattr32(&req.n, 1024, NETNSA_FD, fd);

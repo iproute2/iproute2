@@ -313,10 +313,10 @@ static int ip6_tnl_parm_match(const struct ip6_tnl_parm2 *p1,
 {
 	return ((!p1->link || p1->link == p2->link) &&
 		(!p1->name[0] || strcmp(p1->name, p2->name) == 0) &&
-		(memcmp(&p1->laddr, &in6addr_any, sizeof(p1->laddr)) == 0 ||
-		 memcmp(&p1->laddr, &p2->laddr, sizeof(p1->laddr)) == 0) &&
-		(memcmp(&p1->raddr, &in6addr_any, sizeof(p1->raddr)) == 0 ||
-		 memcmp(&p1->raddr, &p2->raddr, sizeof(p1->raddr)) == 0) &&
+		(IN6_IS_ADDR_UNSPECIFIED(&p1->laddr) ||
+		 IN6_ARE_ADDR_EQUAL(&p1->laddr, &p2->laddr)) &&
+		(IN6_IS_ADDR_UNSPECIFIED(&p1->raddr) ||
+		 IN6_ARE_ADDR_EQUAL(&p1->raddr, &p2->raddr)) &&
 		(!p1->proto || !p2->proto || p1->proto == p2->proto) &&
 		(!p1->encap_limit || p1->encap_limit == p2->encap_limit) &&
 		(!p1->hop_limit || p1->hop_limit == p2->hop_limit) &&

@@ -260,8 +260,8 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	}
 
 	if ((gaddr && daddr) ||
-		(memcmp(&gaddr6, &in6addr_any, sizeof(gaddr6)) &&
-		 memcmp(&daddr6, &in6addr_any, sizeof(daddr6)))) {
+	    (!IN6_IS_ADDR_UNSPECIFIED(&gaddr6) &&
+	     !IN6_IS_ADDR_UNSPECIFIED(&daddr6))) {
 		fprintf(stderr, "vxlan: both group and remote cannot be specified\n");
 		return -1;
 	}
@@ -286,14 +286,14 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
 	else if (daddr)
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &daddr, 4);
-	if (memcmp(&gaddr6, &in6addr_any, sizeof(gaddr6)) != 0)
+	if (!IN6_IS_ADDR_UNSPECIFIED(&gaddr6))
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &gaddr6, sizeof(struct in6_addr));
-	else if (memcmp(&daddr6, &in6addr_any, sizeof(daddr6)) != 0)
+	else if (!IN6_IS_ADDR_UNSPECIFIED(&daddr6))
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &daddr6, sizeof(struct in6_addr));
 
 	if (saddr)
 		addattr_l(n, 1024, IFLA_VXLAN_LOCAL, &saddr, 4);
-	else if (memcmp(&saddr6, &in6addr_any, sizeof(saddr6)) != 0)
+	else if (!IN6_IS_ADDR_UNSPECIFIED(&saddr6))
 		addattr_l(n, 1024, IFLA_VXLAN_LOCAL6, &saddr6, sizeof(struct in6_addr));
 
 	if (link)
@@ -370,7 +370,7 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		struct in6_addr addr;
 
 		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_GROUP6]), sizeof(struct in6_addr));
-		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&addr)) {
 			if (IN6_IS_ADDR_MULTICAST(&addr))
 				fprintf(f, "group %s ",
 					format_host(AF_INET6, sizeof(struct in6_addr), &addr));
@@ -390,7 +390,7 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		struct in6_addr addr;
 
 		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_LOCAL6]), sizeof(struct in6_addr));
-		if (memcmp(&addr, &in6addr_any, sizeof(addr)) != 0)
+		if (!IN6_IS_ADDR_UNSPECIFIED(&addr))
 			fprintf(f, "local %s ",
 				format_host(AF_INET6, sizeof(struct in6_addr), &addr));
 	}
