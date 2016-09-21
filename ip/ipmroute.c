@@ -169,6 +169,13 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			fprintf(fp, ", %"PRIu64" arrived on wrong iif.",
 				(uint64_t)mfcs->mfcs_wrong_if);
 	}
+	if (show_stats && tb[RTA_EXPIRES]) {
+		struct timeval tv;
+
+		__jiffies_to_tv(&tv, rta_getattr_u64(tb[RTA_EXPIRES]));
+		fprintf(fp, ", Age %4i.%.2i", (int)tv.tv_sec,
+			(int)tv.tv_usec/10000);
+	}
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
