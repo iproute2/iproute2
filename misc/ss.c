@@ -788,6 +788,7 @@ struct tcpstat {
 	bool		    has_fastopen_opt;
 	bool		    has_wscale_opt;
 	struct dctcpstat    *dctcp;
+	struct tcp_bbr_info *bbr_info;
 };
 
 static void sock_state_print(struct sockstat *s, const char *sock_name)
@@ -1783,6 +1784,25 @@ static void tcp_stats_print(struct tcpstat *s)
 		printf(" dctcp:fallback_mode");
 	}
 
+	if (s->bbr_info) {
+		__u64 bw;
+
+		bw = s->bbr_info->bbr_bw_hi;
+		bw <<= 32;
+		bw |= s->bbr_info->bbr_bw_lo;
+
+		printf(" bbr:(bw:%sbps,mrtt:%g",
+		       sprint_bw(b1, bw * 8.0),
+		       (double)s->bbr_info->bbr_min_rtt / 1000.0);
+		if (s->bbr_info->bbr_pacing_gain)
+			printf(",pacing_gain:%g",
+			       (double)s->bbr_info->bbr_pacing_gain / 256.0);
+		if (s->bbr_info->bbr_cwnd_gain)
+			printf(",cwnd_gain:%g",
+			       (double)s->bbr_info->bbr_cwnd_gain / 256.0);
+		printf(")");
+	}
+
 	if (s->send_bps)
 		printf(" send %sbps", sprint_bw(b1, s->send_bps));
 	if (s->lastsnd)
@@ -2061,6 +2081,16 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 			s.dctcp		= dctcp;
 		}
 
+		if (tb[INET_DIAG_BBRINFO]) {
+			const void *bbr_info = RTA_DATA(tb[INET_DIAG_BBRINFO]);
+			int len = min(RTA_PAYLOAD(tb[INET_DIAG_BBRINFO]),
+				      sizeof(*s.bbr_info));
+
+			s.bbr_info = calloc(1, sizeof(*s.bbr_info));
+			if (s.bbr_info && bbr_info)
+				memcpy(s.bbr_info, bbr_info, len);
+		}
+
 		if (rtt > 0 && info->tcpi_snd_mss && info->tcpi_snd_cwnd) {
 			s.send_bps = (double) info->tcpi_snd_cwnd *
 				(double)info->tcpi_snd_mss * 8000000. / rtt;
@@ -2085,6 +2115,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 			s.min_rtt = (double) info->tcpi_min_rtt / 1000;
 		tcp_stats_print(&s);
 		free(s.dctcp);
+		free(s.bbr_info);
 	}
 }
 
