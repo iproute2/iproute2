@@ -754,11 +754,12 @@ struct tcpstat {
 	int		    probes;
 	char		    cong_alg[16];
 	double		    rto, ato, rtt, rttvar;
-	int		    qack, cwnd, ssthresh, backoff;
+	int		    qack, ssthresh, backoff;
 	double		    send_bps;
 	int		    snd_wscale;
 	int		    rcv_wscale;
 	int		    mss;
+	unsigned int	    cwnd;
 	unsigned int	    lastsnd;
 	unsigned int	    lastrcv;
 	unsigned int	    lastack;
@@ -1756,7 +1757,7 @@ static void tcp_stats_print(struct tcpstat *s)
 	if (s->mss)
 		printf(" mss:%d", s->mss);
 	if (s->cwnd)
-		printf(" cwnd:%d", s->cwnd);
+		printf(" cwnd:%u", s->cwnd);
 	if (s->ssthresh)
 		printf(" ssthresh:%d", s->ssthresh);
 
@@ -1856,7 +1857,7 @@ static int tcp_show_line(char *line, const struct filter *f, int family)
 		return 0;
 
 	opt[0] = 0;
-	n = sscanf(data, "%x %x:%x %x:%x %x %d %d %u %d %llx %d %d %d %d %d %[^\n]\n",
+	n = sscanf(data, "%x %x:%x %x:%x %x %d %d %u %d %llx %d %d %d %u %d %[^\n]\n",
 		   &s.ss.state, &s.ss.wq, &s.ss.rq,
 		   &s.timer, &s.timeout, &s.retrans, &s.ss.uid, &s.probes,
 		   &s.ss.ino, &s.ss.refcnt, &s.ss.sk, &rto, &ato, &s.qack, &s.cwnd,
