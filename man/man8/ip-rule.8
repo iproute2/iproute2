@@ -15,7 +15,8 @@ ip-rule \- routing policy database management
 
 .ti -8
 .B  ip rule
-.RB "[ " list " ]"
+.RB "[ " list
+.RI "[ " SELECTOR " ]]"
 
 .ti -8
 .B  ip rule
@@ -42,7 +43,8 @@ ip-rule \- routing policy database management
 .B  oif
 .IR STRING " ] [ "
 .B  pref
-.IR NUMBER " ]"
+.IR NUMBER " ] [ "
+.BR l3mdev " ]"
 
 .ti -8
 .IR ACTION " := [ "
