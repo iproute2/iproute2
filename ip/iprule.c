@@ -27,6 +27,12 @@
 #include "utils.h"
 #include "ip_common.h"
 
+enum list_action {
+	IPRULE_LIST,
+	IPRULE_FLUSH,
+	IPRULE_SAVE,
+};
+
 extern struct rtnl_handle rth;
 
 static void usage(void) __attribute__((noreturn));
@@ -243,24 +249,61 @@ static int save_rule(const struct sockaddr_nl *who,
 	return ret == n->nlmsg_len ? 0 : ret;
 }
 
-static int iprule_list_or_save(int argc, char **argv, int save)
+static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
+		      void *arg)
 {
-	rtnl_filter_t filter = print_rule;
+	struct rtnl_handle rth2;
+	struct rtmsg *r = NLMSG_DATA(n);
+	int len = n->nlmsg_len;
+	struct rtattr *tb[FRA_MAX+1];
+
+	len -= NLMSG_LENGTH(sizeof(*r));
+	if (len < 0)
+		return -1;
+
+	parse_rtattr(tb, FRA_MAX, RTM_RTA(r), len);
+
+	if (tb[FRA_PRIORITY]) {
+		n->nlmsg_type = RTM_DELRULE;
+		n->nlmsg_flags = NLM_F_REQUEST;
+
+		if (rtnl_open(&rth2, 0) < 0)
+			return -1;
+
+		if (rtnl_talk(&rth2, n, NULL, 0) < 0)
+			return -2;
+
+		rtnl_close(&rth2);
+	}
+
+	return 0;
+}
+
+static int iprule_list_flush_or_save(int argc, char **argv, int action)
+{
+	rtnl_filter_t filter_fn;
 	int af = preferred_family;
 
 	if (af == AF_UNSPEC)
 		af = AF_INET;
 
 	if (argc > 0) {
-		fprintf(stderr, "\"ip rule %s\" does not take any arguments.\n",
-				save ? "save" : "show");
+		fprintf(stderr,
+			"\"ip rule list/flush/save\" does not take any arguments\n");
 		return -1;
 	}
 
-	if (save) {
+	switch (action) {
+	case IPRULE_SAVE:
 		if (save_rule_prep())
 			return -1;
-		filter = save_rule;
+		filter_fn = save_rule;
+		break;
+	case IPRULE_FLUSH:
+		filter_fn = flush_rule;
+		break;
+	default:
+		filter_fn = print_rule;
 	}
 
 	if (rtnl_wilddump_request(&rth, af, RTM_GETRULE) < 0) {
@@ -268,7 +311,7 @@ static int iprule_list_or_save(int argc, char **argv, int save)
 		return 1;
 	}
 
-	if (rtnl_dump_filter(&rth, filter, stdout) < 0) {
+	if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
@@ -511,72 +554,16 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	return 0;
 }
 
-
-static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		      void *arg)
-{
-	struct rtnl_handle rth2;
-	struct rtmsg *r = NLMSG_DATA(n);
-	int len = n->nlmsg_len;
-	struct rtattr *tb[FRA_MAX+1];
-
-	len -= NLMSG_LENGTH(sizeof(*r));
-	if (len < 0)
-		return -1;
-
-	parse_rtattr(tb, FRA_MAX, RTM_RTA(r), len);
-
-	if (tb[FRA_PRIORITY]) {
-		n->nlmsg_type = RTM_DELRULE;
-		n->nlmsg_flags = NLM_F_REQUEST;
-
-		if (rtnl_open(&rth2, 0) < 0)
-			return -1;
-
-		if (rtnl_talk(&rth2, n, NULL, 0) < 0)
-			return -2;
-
-		rtnl_close(&rth2);
-	}
-
-	return 0;
-}
-
-static int iprule_flush(int argc, char **argv)
-{
-	int af = preferred_family;
-
-	if (af == AF_UNSPEC)
-		af = AF_INET;
-
-	if (argc > 0) {
-		fprintf(stderr, "\"ip rule flush\" does not allow arguments\n");
-		return -1;
-	}
-
-	if (rtnl_wilddump_request(&rth, af, RTM_GETRULE) < 0) {
-		perror("Cannot send dump request");
-		return 1;
-	}
-
-	if (rtnl_dump_filter(&rth, flush_rule, NULL) < 0) {
-		fprintf(stderr, "Flush terminated\n");
-		return 1;
-	}
-
-	return 0;
-}
-
 int do_iprule(int argc, char **argv)
 {
 	if (argc < 1) {
-		return iprule_list_or_save(0, NULL, 0);
+		return iprule_list_flush_or_save(0, NULL, IPRULE_LIST);
 	} else if (matches(argv[0], "list") == 0 ||
 		   matches(argv[0], "lst") == 0 ||
 		   matches(argv[0], "show") == 0) {
-		return iprule_list_or_save(argc-1, argv+1, 0);
+		return iprule_list_flush_or_save(argc-1, argv+1, IPRULE_LIST);
 	} else if (matches(argv[0], "save") == 0) {
-		return iprule_list_or_save(argc-1, argv+1, 1);
+		return iprule_list_flush_or_save(argc-1, argv+1, IPRULE_SAVE);
 	} else if (matches(argv[0], "restore") == 0) {
 		return iprule_restore();
 	} else if (matches(argv[0], "add") == 0) {
@@ -584,7 +571,7 @@ int do_iprule(int argc, char **argv)
 	} else if (matches(argv[0], "delete") == 0) {
 		return iprule_modify(RTM_DELRULE, argc-1, argv+1);
 	} else if (matches(argv[0], "flush") == 0) {
-		return iprule_flush(argc-1, argv+1);
+		return iprule_list_flush_or_save(argc-1, argv+1, IPRULE_FLUSH);
 	} else if (matches(argv[0], "help") == 0)
 		usage();
 
