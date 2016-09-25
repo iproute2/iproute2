@@ -15,6 +15,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <linux/if_link.h>
+#include <linux/if_ether.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -29,7 +30,11 @@
 static void print_explain(struct link_util *lu, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... %s mode { private | vepa | bridge | passthru [nopromisc] }\n",
+		"Usage: ... %s mode MODE [flag MODE_FLAG] MODE_OPTS\n"
+		"MODE: private | vepa | bridge | passthru | source\n"
+		"MODE_FLAG: null | nopromisc | unicast | unicast_all\n"
+		"MODE_OPTS: for mode \"source\":\n"
+		"\tmacaddr { add <macaddr> | del <macaddr> | flush }\n",
 		lu->id
 	);
 }
@@ -41,7 +46,14 @@ static void explain(struct link_util *lu)
 
 static int mode_arg(const char *arg)
 {
-        fprintf(stderr, "Error: argument of \"mode\" must be \"private\", \"vepa\", \"bridge\" or \"passthru\", not \"%s\"\n",
+	fprintf(stderr, "Error: argument of \"mode\" must be \"private\", \"vepa\", \"bridge\", \"passthru\" or \"source\", not \"%s\"\n",
+		arg);
+	return -1;
+}
+
+static int flag_arg(const char *arg)
+{
+	fprintf(stderr, "Error: argument of \"flag\" must be \"nopromisc\", \"unicast\", \"unicast_all\" or \"null\", not \"%s\"\n",
 		arg);
 	return -1;
 }
@@ -51,6 +63,9 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 {
 	__u32 mode = 0;
 	__u16 flags = 0;
+	__u32 mac_mode = 0;
+	int len = 0;
+	char abuf[32];
 
 	while (argc > 0) {
 		if (matches(*argv, "mode") == 0) {
@@ -64,8 +79,45 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 				mode = MACVLAN_MODE_BRIDGE;
 			else if (strcmp(*argv, "passthru") == 0)
 				mode = MACVLAN_MODE_PASSTHRU;
+			else if (strcmp(*argv, "source") == 0)
+				mode = MACVLAN_MODE_SOURCE;
 			else
 				return mode_arg(*argv);
+		} else if (matches(*argv, "flag") == 0) {
+			NEXT_ARG();
+
+			if (strcmp(*argv, "nopromisc") == 0)
+				flags |= MACVLAN_FLAG_NOPROMISC;
+			else if (strcmp(*argv, "unicast") == 0)
+				flags |= MACVLAN_FLAG_UNICAST;
+			else if (strcmp(*argv, "unicast_all") == 0)
+				flags |= MACVLAN_FLAG_UNICAST_ALL;
+			else if (strcmp(*argv, "null") == 0)
+				flags |= 0;
+			else
+				return flag_arg(*argv);
+
+		} else if (matches(*argv, "macaddr") == 0) {
+			NEXT_ARG();
+
+			if (strcmp(*argv, "add") == 0) {
+				mac_mode = MACVLAN_MACADDR_ADD;
+			} else if (strcmp(*argv, "del") == 0) {
+				mac_mode = MACVLAN_MACADDR_DEL;
+			} else if (strcmp(*argv, "flush") == 0) {
+				mac_mode = MACVLAN_MACADDR_FLUSH;
+			} else {
+				explain(lu);
+				return -1;
+			}
+
+			if (mac_mode != MACVLAN_MACADDR_FLUSH) {
+				NEXT_ARG();
+
+				len = ll_addr_a2n(abuf, sizeof(abuf), *argv);
+				if (len < 0)
+					return -1;
+			}
 		} else if (matches(*argv, "nopromisc") == 0) {
 			flags |= MACVLAN_FLAG_NOPROMISC;
 		} else if (matches(*argv, "help") == 0) {
@@ -91,6 +143,12 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		}
 		addattr16(n, 1024, IFLA_MACVLAN_FLAGS, flags);
 	}
+
+	if (mac_mode) {
+		addattr32(n, 1024, IFLA_MACVLAN_MACADDR_MODE, mac_mode);
+		if (mac_mode != MACVLAN_MACADDR_FLUSH && len > 0)
+			addattr_l(n, 1024, IFLA_MACVLAN_MACADDR, abuf, len);
+	}
 	return 0;
 }
 
@@ -98,6 +156,10 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 {
 	__u32 mode;
 	__u16 flags;
+	__u32 count;
+	unsigned char *addr;
+	int len;
+	struct rtattr *rta;
 
 	if (!tb)
 		return;
@@ -112,15 +174,48 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 		: mode == MACVLAN_MODE_VEPA    ? "vepa"
 		: mode == MACVLAN_MODE_BRIDGE  ? "bridge"
 		: mode == MACVLAN_MODE_PASSTHRU  ? "passthru"
+		: mode == MACVLAN_MODE_SOURCE  ? "source"
 		:				 "unknown");
 
 	if (!tb[IFLA_MACVLAN_FLAGS] ||
 	    RTA_PAYLOAD(tb[IFLA_MACVLAN_FLAGS]) < sizeof(__u16))
-		return;
+		flags = 0;
+	else
+		flags = rta_getattr_u16(tb[IFLA_MACVLAN_FLAGS]);
 
-	flags = rta_getattr_u16(tb[IFLA_MACVLAN_FLAGS]);
 	if (flags & MACVLAN_FLAG_NOPROMISC)
 		fprintf(f, "nopromisc ");
+	if (flags & MACVLAN_FLAG_UNICAST)
+		fprintf(f, "flag unicast ");
+	if (flags & MACVLAN_FLAG_UNICAST_ALL)
+		fprintf(f, "flag unicast_all ");
+
+	/* in source mode, there are more options to print */
+
+	if (mode != MACVLAN_MODE_SOURCE)
+		return;
+
+	if (!tb[IFLA_MACVLAN_MACADDR_COUNT] ||
+	    RTA_PAYLOAD(tb[IFLA_MACVLAN_MACADDR_COUNT]) < sizeof(__u32))
+		return;
+
+	count = rta_getattr_u32(tb[IFLA_MACVLAN_MACADDR_COUNT]);
+	fprintf(f, " remotes (%d)", count);
+
+	if (!tb[IFLA_MACVLAN_MACADDR_DATA])
+		return;
+
+	rta = RTA_DATA(tb[IFLA_MACVLAN_MACADDR_DATA]);
+	len = RTA_PAYLOAD(tb[IFLA_MACVLAN_MACADDR_DATA]);
+
+	for (; RTA_OK(rta, len); rta = RTA_NEXT(rta, len)) {
+		if (rta->rta_type != IFLA_MACVLAN_MACADDR ||
+		    RTA_PAYLOAD(rta) < 6)
+			continue;
+		addr = RTA_DATA(rta);
+		fprintf(f, " %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", addr[0],
+			addr[1], addr[2], addr[3], addr[4], addr[5]);
+	}
 }
 
 static void macvlan_print_help(struct link_util *lu, int argc, char **argv,
