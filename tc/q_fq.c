@@ -312,6 +312,9 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 
 	fprintf(f, ", %llu throttled", st->throttled);
 
+	if (st->unthrottle_latency_ns)
+		fprintf(f, ", %u ns latency", st->unthrottle_latency_ns);
+
 	if (st->flows_plimit)
 		fprintf(f, ", %llu flows_plimit", st->flows_plimit);
 
