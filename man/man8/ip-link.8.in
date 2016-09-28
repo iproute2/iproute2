@@ -102,10 +102,7 @@ ip-link \- network device configuration
 .IR LLADDR " ]"
 .br
 .in +9
-.RB "[ " vlan
-.IR VLANID " [ "
-.B qos
-.IR VLAN-QOS " ] ]"
+.RI "[ " VFVLAN-LIST " ]"
 .br
 .RB "[ " rate
 .IR TXRATE " ]"
@@ -190,6 +187,18 @@ ip-link \- network device configuration
 .ti -8
 .IR ETYPE " := [ " TYPE " |"
 .BR bridge_slave " | " bond_slave " ]"
+
+.ti -8
+.IR VFVLAN-LIST " := [ "  VFVLAN-LIST " ] " VFVLAN
+
+.ti -8
+.IR VFVLAN " := "
+.RB "[ " vlan
+.IR VLANID " [ "
+.B qos
+.IR VLAN-QOS " ] ["
+.B proto
+.IR VLAN-PROTO " ] ]"
 
 .SH "DESCRIPTION"
 .SS ip link add - add virtual link
@@ -1236,6 +1245,19 @@ parameters must be specified. Setting both
 and
 .B qos
 as 0 disables VLAN tagging and filtering for the VF.
+
+.sp
+.BI proto " VLAN-PROTO"
+- assign VLAN PROTOCOL for the VLAN tag, either 802.1Q or 802.1ad.
+Setting to 802.1ad, all traffic sent from the VF will be tagged with VLAN S-Tag.
+Incoming traffic will have VLAN S-Tags stripped before being passed to the VF.
+Setting to 802.1ad also enables an option to concatenate another VLAN tag, so both
+S-TAG and C-TAG will be inserted/stripped for outgoing/incoming traffic, respectively.
+If not specified, the value is assumed to be 802.1Q. Both the
+.B vf
+and
+.B vlan
+parameters must be specified.
 
 .sp
 .BI rate " TXRATE"

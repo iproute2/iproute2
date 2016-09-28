@@ -321,7 +321,6 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats);
 static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
-	struct ifla_vf_vlan *vf_vlan;
 	struct ifla_vf_tx_rate *vf_tx_rate;
 	struct ifla_vf_spoofchk *vf_spoofchk;
 	struct ifla_vf_link_state *vf_linkstate;
@@ -338,7 +337,6 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	parse_rtattr_nested(vf, IFLA_VF_MAX, vfinfo);
 
 	vf_mac = RTA_DATA(vf[IFLA_VF_MAC]);
-	vf_vlan = RTA_DATA(vf[IFLA_VF_VLAN]);
 	vf_tx_rate = RTA_DATA(vf[IFLA_VF_TX_RATE]);
 
 	/* Check if the spoof checking vf info type is supported by
@@ -369,10 +367,35 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	fprintf(fp, "%s    vf %d MAC %s", _SL_, vf_mac->vf,
 		ll_addr_n2a((unsigned char *)&vf_mac->mac,
 			    ETH_ALEN, 0, b1, sizeof(b1)));
-	if (vf_vlan->vlan)
-		fprintf(fp, ", vlan %d", vf_vlan->vlan);
-	if (vf_vlan->qos)
-		fprintf(fp, ", qos %d", vf_vlan->qos);
+	if (vf[IFLA_VF_VLAN_LIST]) {
+		struct rtattr *i, *vfvlanlist = vf[IFLA_VF_VLAN_LIST];
+		int rem = RTA_PAYLOAD(vfvlanlist);
+
+		for (i = RTA_DATA(vfvlanlist);
+		      RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+			struct ifla_vf_vlan_info *vf_vlan_info =
+					RTA_DATA(i);
+			SPRINT_BUF(b2);
+
+			if (vf_vlan_info->vlan)
+				fprintf(fp, ", vlan %d", vf_vlan_info->vlan);
+			if (vf_vlan_info->qos)
+				fprintf(fp, ", qos %d", vf_vlan_info->qos);
+			if (vf_vlan_info->vlan_proto &&
+			    vf_vlan_info->vlan_proto != htons(ETH_P_8021Q))
+				fprintf(fp, ", vlan protocol %s",
+					ll_proto_n2a(vf_vlan_info->vlan_proto,
+						     b2, sizeof(b2)));
+
+		}
+	} else {
+		struct ifla_vf_vlan *vf_vlan = RTA_DATA(vf[IFLA_VF_VLAN]);
+
+		if (vf_vlan->vlan)
+			fprintf(fp, ", vlan %d", vf_vlan->vlan);
+		if (vf_vlan->qos)
+			fprintf(fp, ", qos %d", vf_vlan->qos);
+	}
 	if (vf_tx_rate->rate)
 		fprintf(fp, ", tx rate %d (Mbps)", vf_tx_rate->rate);
 

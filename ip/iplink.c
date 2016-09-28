@@ -76,7 +76,7 @@ void iplink_usage(void)
 	fprintf(stderr, "	                  [ link-netnsid ID ]\n");
 	fprintf(stderr, "			  [ alias NAME ]\n");
 	fprintf(stderr, "	                  [ vf NUM [ mac LLADDR ]\n");
-	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] ]\n");
+	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] [ proto VLAN-PROTO ] ]\n");
 
 	fprintf(stderr, "				   [ rate TXRATE ]\n");
 	fprintf(stderr, "				   [ max_tx_rate TXRATE ]\n");
@@ -255,6 +255,60 @@ static int nl_get_ll_addr_len(unsigned int dev_index)
 	return RTA_PAYLOAD(tb[IFLA_ADDRESS]);
 }
 
+static void iplink_parse_vf_vlan_info(int vf, int *argcp, char ***argvp,
+				      struct ifla_vf_vlan_info *ivvip)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+
+	NEXT_ARG();
+	if (get_unsigned(&ivvip->vlan, *argv, 0))
+		invarg("Invalid \"vlan\" value\n", *argv);
+
+	ivvip->vf = vf;
+	ivvip->qos = 0;
+	ivvip->vlan_proto = htons(ETH_P_8021Q);
+	if (NEXT_ARG_OK()) {
+		NEXT_ARG();
+		if (matches(*argv, "qos") == 0) {
+			NEXT_ARG();
+			if (get_unsigned(&ivvip->qos, *argv, 0))
+				invarg("Invalid \"qos\" value\n", *argv);
+		} else {
+			/* rewind arg */
+			PREV_ARG();
+		}
+	}
+	if (NEXT_ARG_OK()) {
+		NEXT_ARG();
+		if (matches(*argv, "proto") == 0) {
+			NEXT_ARG();
+			if (ll_proto_a2n(&ivvip->vlan_proto, *argv))
+				invarg("protocol is invalid\n", *argv);
+			if (ivvip->vlan_proto != htons(ETH_P_8021AD) &&
+			    ivvip->vlan_proto != htons(ETH_P_8021Q)) {
+				SPRINT_BUF(b1);
+				SPRINT_BUF(b2);
+				char msg[64 + sizeof(b1) + sizeof(b2)];
+
+				sprintf(msg, "Invalid \"vlan protocol\""
+					" value - supported %s, %s\n",
+					ll_proto_n2a(htons(ETH_P_8021Q),
+					     b1, sizeof(b1)),
+					ll_proto_n2a(htons(ETH_P_8021AD),
+					     b2, sizeof(b2)));
+				invarg(msg, *argv);
+			}
+		} else {
+			/* rewind arg */
+			PREV_ARG();
+		}
+	}
+
+	*argcp = argc;
+	*argvp = argv;
+}
+
 static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			   struct iplink_req *req, int dev_index)
 {
@@ -308,27 +362,41 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_MAC,
 				  &ivm, sizeof(ivm));
 		} else if (matches(*argv, "vlan") == 0) {
-			struct ifla_vf_vlan ivv;
+			struct ifla_vf_vlan_info ivvi;
 
-			NEXT_ARG();
-			if (get_unsigned(&ivv.vlan, *argv, 0))
-				invarg("Invalid \"vlan\" value\n", *argv);
+			iplink_parse_vf_vlan_info(vf, &argc, &argv, &ivvi);
+			/* support the old interface in case of older kernel*/
+			if (ivvi.vlan_proto == htons(ETH_P_8021Q)) {
+				struct ifla_vf_vlan ivv;
 
-			ivv.vf = vf;
-			ivv.qos = 0;
-			if (NEXT_ARG_OK()) {
-				NEXT_ARG();
-				if (matches(*argv, "qos") == 0) {
+				ivv.vf = ivvi.vf;
+				ivv.vlan = ivvi.vlan;
+				ivv.qos = ivvi.qos;
+				addattr_l(&req->n, sizeof(*req),
+					  IFLA_VF_VLAN, &ivv, sizeof(ivv));
+			} else {
+				struct rtattr *vfvlanlist;
+
+				vfvlanlist = addattr_nest(&req->n, sizeof(*req),
+							  IFLA_VF_VLAN_LIST);
+				addattr_l(&req->n, sizeof(*req),
+					  IFLA_VF_VLAN_INFO, &ivvi,
+					  sizeof(ivvi));
+
+				while (NEXT_ARG_OK()) {
 					NEXT_ARG();
-					if (get_unsigned(&ivv.qos, *argv, 0))
-						invarg("Invalid \"qos\" value\n", *argv);
-				} else {
-					/* rewind arg */
-					PREV_ARG();
+					if (matches(*argv, "vlan") != 0) {
+						PREV_ARG();
+						break;
+					}
+					iplink_parse_vf_vlan_info(vf, &argc,
+								  &argv, &ivvi);
+					addattr_l(&req->n, sizeof(*req),
+						  IFLA_VF_VLAN_INFO, &ivvi,
+						  sizeof(ivvi));
 				}
+				addattr_nest_end(&req->n, vfvlanlist);
 			}
-			addattr_l(&req->n, sizeof(*req), IFLA_VF_VLAN,
-				  &ivv, sizeof(ivv));
 		} else if (matches(*argv, "rate") == 0) {
 			struct ifla_vf_tx_rate ivt;
 
