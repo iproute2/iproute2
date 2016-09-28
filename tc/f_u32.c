@@ -1071,7 +1071,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "\"link\" must be a hash table.\n");
 				return -1;
 			}
-			addattr_l(n, MAX_MSG, TCA_U32_LINK, &handle, 4);
+			addattr_l(n, MAX_MSG, TCA_U32_LINK, &linkid, 4);
 		} else if (strcmp(*argv, "ht") == 0) {
 			unsigned int ht;
 
