@@ -90,7 +90,7 @@ int ll_remember_index(const struct sockaddr_nl *who,
 	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
 		return 0;
 
-	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(ifi)))
+	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*ifi)))
 		return -1;
 
 	im = ll_get_by_index(ifi->ifi_index);

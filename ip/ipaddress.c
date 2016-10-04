@@ -1218,7 +1218,7 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 		if (n->nlmsg_type != RTM_NEWADDR)
 			continue;
 
-		if (n->nlmsg_len < NLMSG_LENGTH(sizeof(ifa)))
+		if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*ifa)))
 			return -1;
 
 		if (ifa->ifa_index != ifi->ifi_index ||
