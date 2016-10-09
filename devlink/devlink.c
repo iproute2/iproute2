@@ -524,19 +524,18 @@ static int dl_argv_handle_port(struct dl *dl, char **p_bus_name,
 		return -EINVAL;
 	}
 	slash_count = strslashcount(str);
-	if (slash_count != 2 && slash_count != 0) {
+	switch (slash_count) {
+	case 0:
+		return __dl_argv_handle_port_ifname(dl, str, p_bus_name,
+						    p_dev_name, p_port_index);
+	case 2:
+		return __dl_argv_handle_port(str, p_bus_name,
+					     p_dev_name, p_port_index);
+	default:
 		pr_err("Wrong port identification string format.\n");
 		pr_err("Expected \"bus_name/dev_name/port_index\" or \"netdev_ifname\".\n");
 		return -EINVAL;
 	}
-	if (slash_count == 2) {
-		return __dl_argv_handle_port(str, p_bus_name,
-					     p_dev_name, p_port_index);
-	} else if (slash_count == 0) {
-		return __dl_argv_handle_port_ifname(dl, str, p_bus_name,
-						    p_dev_name, p_port_index);
-	}
-	return 0;
 }
 
 static int dl_argv_handle_both(struct dl *dl, char **p_bus_name,
