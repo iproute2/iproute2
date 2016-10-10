@@ -40,19 +40,20 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip rule { add | del } SELECTOR ACTION\n");
-	fprintf(stderr, "       ip rule { flush | save | restore }\n");
-	fprintf(stderr, "       ip rule [ list [ SELECTOR ]]\n");
-	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n");
-	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ l3mdev ]\n");
-	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
-	fprintf(stderr, "          [ nat ADDRESS ]\n");
-	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
-	fprintf(stderr, "          [ goto NUMBER ]\n");
-	fprintf(stderr, "          SUPPRESSOR\n");
-	fprintf(stderr, "SUPPRESSOR := [ suppress_prefixlength NUMBER ]\n");
-	fprintf(stderr, "              [ suppress_ifgroup DEVGROUP ]\n");
-	fprintf(stderr, "TABLE_ID := [ local | main | default | NUMBER ]\n");
+	fprintf(stderr,
+		"Usage: ip rule { add | del } SELECTOR ACTION\n"
+		"       ip rule { flush | save | restore }\n"
+		"       ip rule [ list [ SELECTOR ]]\n"
+		"SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n"
+		"            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ l3mdev ]\n"
+		"ACTION := [ table TABLE_ID ]\n"
+		"          [ nat ADDRESS ]\n"
+		"          [ realms [SRCREALM/]DSTREALM ]\n"
+		"          [ goto NUMBER ]\n"
+		"          SUPPRESSOR\n"
+		"SUPPRESSOR := [ suppress_prefixlength NUMBER ]\n"
+		"              [ suppress_ifgroup DEVGROUP ]\n"
+		"TABLE_ID := [ local | main | default | NUMBER ]\n");
 	exit(-1);
 }
 
@@ -114,6 +115,7 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 
 	if (filter.fwmark) {
 		__u32 mark = 0;
+
 		if (tb[FRA_FWMARK])
 			mark = rta_getattr_u32(tb[FRA_FWMARK]);
 		if (filter.fwmark ^ mark)
@@ -121,6 +123,7 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	}
 	if (filter.fwmask) {
 		__u32 mask = 0;
+
 		if (tb[FRA_FWMASK])
 			mask = rta_getattr_u32(tb[FRA_FWMASK]);
 		if (filter.fwmask ^ mask)
@@ -177,7 +180,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	host_len = af_bit_len(r->rtm_family);
 
-	if(!filter_nlmsg(n, tb, host_len))
+	if (!filter_nlmsg(n, tb, host_len))
 		return 0;
 
 	if (n->nlmsg_type == RTM_DELRULE)
@@ -416,6 +419,7 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 		    matches(*argv, "order") == 0 ||
 		    matches(*argv, "priority") == 0) {
 			__u32 pref;
+
 			NEXT_ARG();
 			if (get_u32(&pref, *argv, 0))
 				invarg("preference value is invalid\n", *argv);
@@ -425,6 +429,7 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 			filter.not = 1;
 		} else if (strcmp(*argv, "tos") == 0) {
 			__u32 tos;
+
 			NEXT_ARG();
 			if (rtnl_dsfield_a2n(&tos, *argv))
 				invarg("TOS value is invalid\n", *argv);
@@ -433,6 +438,7 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 		} else if (strcmp(*argv, "fwmark") == 0) {
 			char *slash;
 			__u32 fwmark, fwmask;
+
 			NEXT_ARG();
 			slash = strchr(*argv, '/');
 			if (slash != NULL)
@@ -458,8 +464,9 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 		} else if (strcmp(*argv, "l3mdev") == 0) {
 			filter.l3mdev = 1;
 		} else if (matches(*argv, "lookup") == 0 ||
-			   matches(*argv, "table") == 0 ) {
+			   matches(*argv, "table") == 0) {
 			__u32 tid;
+
 			NEXT_ARG();
 			if (rtnl_rttable_a2n(&tid, *argv))
 				invarg("table id value is invalid\n", *argv);
