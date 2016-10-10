@@ -45,60 +45,62 @@ static int iplink_have_newlink(void);
 void iplink_usage(void)
 {
 	if (iplink_have_newlink()) {
-		fprintf(stderr, "Usage: ip link add [link DEV] [ name ] NAME\n");
-		fprintf(stderr, "                   [ txqueuelen PACKETS ]\n");
-		fprintf(stderr, "                   [ address LLADDR ]\n");
-		fprintf(stderr, "                   [ broadcast LLADDR ]\n");
-		fprintf(stderr, "                   [ mtu MTU ] [index IDX ]\n");
-		fprintf(stderr, "                   [ numtxqueues QUEUE_COUNT ]\n");
-		fprintf(stderr, "                   [ numrxqueues QUEUE_COUNT ]\n");
-		fprintf(stderr, "                   type TYPE [ ARGS ]\n");
-		fprintf(stderr, "       ip link delete { DEVICE | dev DEVICE | group DEVGROUP } type TYPE [ ARGS ]\n");
-		fprintf(stderr, "\n");
-		fprintf(stderr, "       ip link set { DEVICE | dev DEVICE | group DEVGROUP }\n");
-		fprintf(stderr, "	                  [ { up | down } ]\n");
-		fprintf(stderr, "	                  [ type TYPE ARGS ]\n");
+		fprintf(stderr,
+			"Usage: ip link add [link DEV] [ name ] NAME\n"
+			"                   [ txqueuelen PACKETS ]\n"
+			"                   [ address LLADDR ]\n"
+			"                   [ broadcast LLADDR ]\n"
+			"                   [ mtu MTU ] [index IDX ]\n"
+			"                   [ numtxqueues QUEUE_COUNT ]\n"
+			"                   [ numrxqueues QUEUE_COUNT ]\n"
+			"                   type TYPE [ ARGS ]\n"
+			"       ip link delete { DEVICE | dev DEVICE | group DEVGROUP } type TYPE [ ARGS ]\n"
+			"\n"
+			"       ip link set { DEVICE | dev DEVICE | group DEVGROUP }\n"
+			"	                  [ { up | down } ]\n"
+			"	                  [ type TYPE ARGS ]\n");
 	} else
 		fprintf(stderr, "Usage: ip link set DEVICE [ { up | down } ]\n");
 
-	fprintf(stderr, "	                  [ arp { on | off } ]\n");
-	fprintf(stderr, "	                  [ dynamic { on | off } ]\n");
-	fprintf(stderr, "	                  [ multicast { on | off } ]\n");
-	fprintf(stderr, "	                  [ allmulticast { on | off } ]\n");
-	fprintf(stderr, "	                  [ promisc { on | off } ]\n");
-	fprintf(stderr, "	                  [ trailers { on | off } ]\n");
-	fprintf(stderr, "	                  [ txqueuelen PACKETS ]\n");
-	fprintf(stderr, "	                  [ name NEWNAME ]\n");
-	fprintf(stderr, "	                  [ address LLADDR ]\n");
-	fprintf(stderr, "	                  [ broadcast LLADDR ]\n");
-	fprintf(stderr, "	                  [ mtu MTU ]\n");
-	fprintf(stderr, "	                  [ netns { PID | NAME } ]\n");
-	fprintf(stderr, "	                  [ link-netnsid ID ]\n");
-	fprintf(stderr, "			  [ alias NAME ]\n");
-	fprintf(stderr, "	                  [ vf NUM [ mac LLADDR ]\n");
-	fprintf(stderr, "				   [ vlan VLANID [ qos VLAN-QOS ] [ proto VLAN-PROTO ] ]\n");
+	fprintf(stderr,
+		"	                  [ arp { on | off } ]\n"
+		"	                  [ dynamic { on | off } ]\n"
+		"	                  [ multicast { on | off } ]\n"
+		"	                  [ allmulticast { on | off } ]\n"
+		"	                  [ promisc { on | off } ]\n"
+		"	                  [ trailers { on | off } ]\n"
+		"	                  [ txqueuelen PACKETS ]\n"
+		"	                  [ name NEWNAME ]\n"
+		"	                  [ address LLADDR ]\n"
+		"	                  [ broadcast LLADDR ]\n"
+		"	                  [ mtu MTU ]\n"
+		"	                  [ netns { PID | NAME } ]\n"
+		"	                  [ link-netnsid ID ]\n"
+		"			  [ alias NAME ]\n"
+		"	                  [ vf NUM [ mac LLADDR ]\n"
+		"				   [ vlan VLANID [ qos VLAN-QOS ] [ proto VLAN-PROTO ] ]\n"
 
-	fprintf(stderr, "				   [ rate TXRATE ]\n");
-	fprintf(stderr, "				   [ max_tx_rate TXRATE ]\n");
-	fprintf(stderr, "				   [ min_tx_rate TXRATE ]\n");
+		"				   [ rate TXRATE ]\n"
+		"				   [ max_tx_rate TXRATE ]\n"
+		"				   [ min_tx_rate TXRATE ]\n"
 
-	fprintf(stderr, "				   [ spoofchk { on | off} ]\n");
-	fprintf(stderr, "				   [ query_rss { on | off} ]\n");
-	fprintf(stderr, "				   [ state { auto | enable | disable} ] ]\n");
-	fprintf(stderr, "				   [ trust { on | off} ] ]\n");
-	fprintf(stderr, "			  [ master DEVICE ][ vrf NAME ]\n");
-	fprintf(stderr, "			  [ nomaster ]\n");
-	fprintf(stderr, "			  [ addrgenmode { eui64 | none | stable_secret | random } ]\n");
-	fprintf(stderr, "	                  [ protodown { on | off } ]\n");
-	fprintf(stderr, "       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [vrf NAME] [type TYPE]\n");
+		"				   [ spoofchk { on | off} ]\n"
+		"				   [ query_rss { on | off} ]\n"
+		"				   [ state { auto | enable | disable} ] ]\n"
+		"				   [ trust { on | off} ] ]\n"
+		"			  [ master DEVICE ][ vrf NAME ]\n"
+		"			  [ nomaster ]\n"
+		"			  [ addrgenmode { eui64 | none | stable_secret | random } ]\n"
+		"	                  [ protodown { on | off } ]\n"
+		"       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [vrf NAME] [type TYPE]\n");
 
 	if (iplink_have_newlink()) {
-		fprintf(stderr, "       ip link help [ TYPE ]\n");
-		fprintf(stderr, "\n");
-		fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
-		fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n");
-		fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon |\n");
-		fprintf(stderr, "          bond_slave | ipvlan | geneve | bridge_slave | vrf | macsec }\n");
+		fprintf(stderr,
+			"       ip link help [ TYPE ]\n\n"
+			"TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n"
+			"          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n"
+			"          gre | gretap | ip6gre | ip6gretap | vti | nlmon |\n"
+			"          bond_slave | ipvlan | geneve | bridge_slave | vrf | macsec }\n");
 	}
 	exit(-1);
 }
@@ -291,8 +293,7 @@ static void iplink_parse_vf_vlan_info(int vf, int *argcp, char ***argvp,
 				SPRINT_BUF(b2);
 				char msg[64 + sizeof(b1) + sizeof(b2)];
 
-				sprintf(msg, "Invalid \"vlan protocol\""
-					" value - supported %s, %s\n",
+				sprintf(msg, "Invalid \"vlan protocol\" value - supported %s, %s\n",
 					ll_proto_n2a(htons(ETH_P_8021Q),
 					     b1, sizeof(b1)),
 					ll_proto_n2a(htons(ETH_P_8021AD),
@@ -859,8 +860,9 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 					&group, sizeof(group));
 		else {
 			if (argc) {
-				fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"ip link help\".\n",
-						*argv);
+				fprintf(stderr,
+					"Garbage instead of arguments \"%s ...\". Try \"ip link help\".\n",
+					*argv);
 				return -1;
 			}
 			if (flags & NLM_F_CREATE) {
@@ -950,8 +952,9 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		} else if (argc) {
 			if (matches(*argv, "help") == 0)
 				usage();
-			fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"ip link help\".\n",
-					*argv);
+			fprintf(stderr,
+				"Garbage instead of arguments \"%s ...\". Try \"ip link help\".\n",
+				*argv);
 			return -1;
 		}
 		addattr_nest_end(&req.n, linkinfo);
