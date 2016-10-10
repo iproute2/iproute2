@@ -100,11 +100,6 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (filter_index && filter_index != r->ndm_ifindex)
 		return 0;
 
-	if (jw_global) {
-		jsonw_pretty(jw_global, 1);
-		jsonw_start_object(jw_global);
-	}
-
 	parse_rtattr(tb, NDA_MAX, NDA_RTA(r),
 		     n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
@@ -113,6 +108,11 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (filter_vlan && filter_vlan != vid)
 		return 0;
+
+	if (jw_global) {
+		jsonw_pretty(jw_global, 1);
+		jsonw_start_object(jw_global);
+	}
 
 	if (n->nlmsg_type == RTM_DELNEIGH) {
 		if (jw_global)

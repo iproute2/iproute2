@@ -232,6 +232,7 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct link_util *lu;
 	struct link_util *slave_lu;
+	char slave[32];
 	char *kind;
 	char *slave_kind;
 
@@ -265,8 +266,9 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    %s_slave ", slave_kind);
+		snprintf(slave, sizeof(slave), "%s_slave", slave_kind);
 
-		slave_lu = get_link_slave_kind(slave_kind);
+		slave_lu = get_link_kind(slave);
 		if (slave_lu && slave_lu->print_opt) {
 			struct rtattr *attr[slave_lu->maxattr+1], **data = NULL;
 
@@ -1216,7 +1218,7 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 		if (n->nlmsg_type != RTM_NEWADDR)
 			continue;
 
-		if (n->nlmsg_len < NLMSG_LENGTH(sizeof(ifa)))
+		if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*ifa)))
 			return -1;
 
 		if (ifa->ifa_index != ifi->ifi_index ||

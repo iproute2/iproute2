@@ -91,10 +91,9 @@ struct link_util vrf_link_util = {
 };
 
 struct link_util vrf_slave_link_util = {
-	.id             = "vrf",
+	.id             = "vrf_slave",
 	.maxattr        = IFLA_VRF_PORT_MAX,
 	.print_opt	= vrf_slave_print_opt,
-	.slave          = true,
 };
 
 /* returns table id if name is a VRF device */

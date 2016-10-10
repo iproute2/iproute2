@@ -83,11 +83,9 @@ struct link_util {
 					     struct rtattr *);
 	void			(*print_help)(struct link_util *, int, char **,
 					     FILE *);
-	bool			slave;
 };
 
 struct link_util *get_link_kind(const char *kind);
-struct link_util *get_link_slave_kind(const char *slave_kind);
 
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
 
