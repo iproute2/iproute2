@@ -67,6 +67,8 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 	__u32 ife_prio_v = 0;
 	__u32 ife_mark = 0;
 	__u32 ife_mark_v = 0;
+	__u16 ife_tcindex = 0;
+	__u16 ife_tcindex_v = 0;
 	char *daddr = NULL;
 	char *saddr = NULL;
 
@@ -89,6 +91,8 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 				ife_mark = IFE_META_SKBMARK;
 			} else if (matches(*argv, "prio") == 0) {
 				ife_prio = IFE_META_PRIO;
+			} else if (matches(*argv, "tcindex") == 0) {
+				ife_prio = IFE_META_TCINDEX;
 			} else {
 				fprintf(stderr, "Illegal meta define <%s>\n",
 					*argv);
@@ -105,6 +109,11 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 				NEXT_ARG();
 				if (get_u32(&ife_prio_v, *argv, 0))
 					invarg("ife prio val is invalid",
+					       *argv);
+			} else if (matches(*argv, "tcindex") == 0) {
+				NEXT_ARG();
+				if (get_u16(&ife_tcindex_v, *argv, 0))
+					invarg("ife tcindex val is invalid",
 					       *argv);
 			} else {
 				fprintf(stderr, "Illegal meta use type <%s>\n",
@@ -196,6 +205,13 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 		else
 			addattr_l(n, MAX_MSG, IFE_META_PRIO, NULL, 0);
 	}
+	if (ife_tcindex || ife_tcindex_v) {
+		if (ife_tcindex_v)
+			addattr_l(n, MAX_MSG, IFE_META_TCINDEX, &ife_tcindex_v,
+				  2);
+		else
+			addattr_l(n, MAX_MSG, IFE_META_TCINDEX, NULL, 0);
+	}
 
 	tail2->rta_len = (void *)NLMSG_TAIL(n) - (void *)tail2;
 
@@ -213,7 +229,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_IFE_MAX + 1];
 	__u16 ife_type = 0;
 	__u32 mmark = 0;
-	__u32 mhash = 0;
+	__u16 mtcindex = 0;
 	__u32 mprio = 0;
 	int has_optional = 0;
 	SPRINT_BUF(b2);
@@ -258,13 +274,14 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 				fprintf(f, "allow mark ");
 		}
 
-		if (metalist[IFE_META_HASHID]) {
-			len = RTA_PAYLOAD(metalist[IFE_META_HASHID]);
+		if (metalist[IFE_META_TCINDEX]) {
+			len = RTA_PAYLOAD(metalist[IFE_META_TCINDEX]);
 			if (len) {
-				mhash = rta_getattr_u32(metalist[IFE_META_HASHID]);
-				fprintf(f, "use hash %u ", mhash);
+				mtcindex =
+					rta_getattr_u16(metalist[IFE_META_TCINDEX]);
+				fprintf(f, "use tcindex %d ", mtcindex);
 			} else
-				fprintf(f, "allow hash ");
+				fprintf(f, "allow tcindex ");
 		}
 
 		if (metalist[IFE_META_PRIO]) {
