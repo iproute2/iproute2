@@ -252,7 +252,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 			len = RTA_PAYLOAD(metalist[IFE_META_SKBMARK]);
 			if (len) {
 				mmark = rta_getattr_u32(metalist[IFE_META_SKBMARK]);
-				fprintf(f, "use mark %d ", mmark);
+				fprintf(f, "use mark %u ", mmark);
 			} else
 				fprintf(f, "allow mark ");
 		}
@@ -261,7 +261,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 			len = RTA_PAYLOAD(metalist[IFE_META_HASHID]);
 			if (len) {
 				mhash = rta_getattr_u32(metalist[IFE_META_HASHID]);
-				fprintf(f, "use hash %d ", mhash);
+				fprintf(f, "use hash %u ", mhash);
 			} else
 				fprintf(f, "allow hash ");
 		}
@@ -270,7 +270,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 			len = RTA_PAYLOAD(metalist[IFE_META_PRIO]);
 			if (len) {
 				mprio = rta_getattr_u32(metalist[IFE_META_PRIO]);
-				fprintf(f, "use prio %d ", mprio);
+				fprintf(f, "use prio %u ", mprio);
 			} else
 				fprintf(f, "allow prio ");
 		}
