@@ -152,7 +152,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
-			if (get_u32(&p.index, *argv, 10)) {
+			if (get_u32(&p.index, *argv, 0)) {
 				fprintf(stderr, "ife: Illegal \"index\"\n");
 				return -1;
 			}
