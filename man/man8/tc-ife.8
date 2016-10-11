@@ -5,8 +5,8 @@ IFE - encapsulate/decapsulate metadata
 .SH SYNOPSIS
 .in +8
 .ti -8
-.BR tc " ... " action ife"
-.I DIRECTION ACTION
+.BR tc " ... " " action ife"
+.IR DIRECTION " [ " ACTION " ] "
 .RB "[ " dst
 .IR DMAC " ] "
 .RB "[ " src
@@ -24,7 +24,13 @@ IFE - encapsulate/decapsulate metadata
 
 .ti -8
 .IR ACTION " := { "
-.BR allow " | " use " }"
+.BI allow " ATTR"
+.RB "| " use
+.IR "ATTR value" " }"
+
+.ti -8
+.IR ATTR " := { "
+.BR mark " | " prio " | " tcindex " }"
 
 .ti -8
 .IR CONTROL " := { "
@@ -49,6 +55,23 @@ Encode direction only. Allows encoding specified metadata.
 .TP
 .B use
 Encode direction only. Enforce static encoding of specified metadata.
+.TP
+.BR mark " [ "
+.IR u32_value " ]"
+The value to set for the skb mark. The u32 value is required only when
+.BR use " is specified."
+.TP
+.BR prio " [ "
+.IR u32_value " ]"
+The value to set for priority in the skb structure. The u32 value is required
+only when
+.BR use " is specified."
+.TP
+.BR tcindex " ["
+.IR u16_value " ]"
+Value to set for the traffic control index in the skb structure. The u16 value
+is required only when
+.BR use " is specified."
 .TP
 .BI dmac " DMAC"
 .TQ
