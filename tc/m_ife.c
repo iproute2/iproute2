@@ -29,12 +29,13 @@
 static void ife_explain(void)
 {
 	fprintf(stderr,
-		"Usage:... ife {decode|encode} {ALLOW|USE} [dst DMAC] [src SMAC] [type TYPE] [CONTROL] [index INDEX]\n");
+		"Usage:... ife {decode|encode} [{ALLOW|USE} ATTR] [dst DMAC] [src SMAC] [type TYPE] [CONTROL] [index INDEX]\n");
 	fprintf(stderr,
 		"\tALLOW := Encode direction. Allows encoding specified metadata\n"
 		"\t\t e.g \"allow mark\"\n"
 		"\tUSE := Encode direction. Enforce Static encoding of specified metadata\n"
 		"\t\t e.g \"use mark 0x12\"\n"
+		"\tATTR := mark (32-bit), prio (32-bit), tcindex (16-bit)\n"
 		"\tDMAC := 6 byte Destination MAC address to encode\n"
 		"\tSMAC := optional 6 byte Source MAC address to encode\n"
 		"\tTYPE := optional 16 bit ethertype to encode\n"
