@@ -29,11 +29,10 @@
 static void skbmod_explain(void)
 {
 	fprintf(stderr,
-		"Usage:... skbmod {[set <SETTABLE>] [swap <SWAPABLE>]} [CONTROL] [index INDEX]\n");
-	fprintf(stderr, "where SETTABLE is: [dmac DMAC] [smac SMAC] [etype ETYPE] \n");
-	fprintf(stderr, "where SWAPABLE is: \"mac\" to swap mac addresses\n");
-	fprintf(stderr, "note: \"swap mac\" is done after any outstanding D/SMAC change\n");
-	fprintf(stderr,
+		"Usage:... skbmod {[set <SETTABLE>] [swap <SWAPABLE>]} [CONTROL] [index INDEX]\n"
+		"where SETTABLE is: [dmac DMAC] [smac SMAC] [etype ETYPE]\n"
+		"where SWAPABLE is: \"mac\" to swap mac addresses\n"
+		"note: \"swap mac\" is done after any outstanding D/SMAC change\n"
 		"\tDMAC := 6 byte Destination MAC address\n"
 		"\tSMAC := optional 6 byte Source MAC address\n"
 		"\tETYPE := optional 16 bit ethertype\n"
