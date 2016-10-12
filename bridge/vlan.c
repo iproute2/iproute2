@@ -24,7 +24,6 @@ static void usage(void)
 	fprintf(stderr, "Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ pvid ] [ untagged ]\n");
 	fprintf(stderr, "                                                     [ self ] [ master ]\n");
 	fprintf(stderr, "       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n");
-	fprintf(stderr, "       bridge vlan { stats } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
 
