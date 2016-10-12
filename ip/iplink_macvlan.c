@@ -46,14 +46,16 @@ static void explain(struct link_util *lu)
 
 static int mode_arg(const char *arg)
 {
-	fprintf(stderr, "Error: argument of \"mode\" must be \"private\", \"vepa\", \"bridge\", \"passthru\" or \"source\", not \"%s\"\n",
+	fprintf(stderr,
+		"Error: argument of \"mode\" must be \"private\", \"vepa\", \"bridge\", \"passthru\" or \"source\", not \"%s\"\n",
 		arg);
 	return -1;
 }
 
 static int flag_arg(const char *arg)
 {
-	fprintf(stderr, "Error: argument of \"flag\" must be \"nopromisc\", \"unicast\", \"unicast_all\" or \"null\", not \"%s\"\n",
+	fprintf(stderr,
+		"Error: argument of \"flag\" must be \"nopromisc\", \"unicast\", \"unicast_all\" or \"null\", not \"%s\"\n",
 		arg);
 	return -1;
 }
