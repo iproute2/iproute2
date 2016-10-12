@@ -14,6 +14,10 @@ CLS_NAME ] [
 UDS_FILE ] [
 .B verbose
 ] [
+.B skip_hw
+|
+.B skip_sw
+] [
 .B police
 POLICE_SPEC ] [
 .B action
@@ -136,6 +140,16 @@ example, for monitoring purposes or to push down new policies.
 if set, it will dump the eBPF verifier output, even if loading the eBPF
 program was successful. By default, only on error, the verifier log is
 being emitted to the user.
+
+.SS skip_hw | skip_sw
+hardware offload control flags. By default TC will try to offload
+filters to hardware if possible.
+.B skip_hw
+explicitly disables the attempt to offload.
+.B skip_sw
+forces the offload and disables running the eBPF program in the kernel.
+If hardware offload is not possible and this flag was set kernel will
+report an error and filter will not be installed at all.
 
 .SS police
 is an optional parameter for an eBPF/cBPF classifier that specifies a
