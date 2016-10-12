@@ -28,18 +28,19 @@
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: tc filter [ add | del | change | replace | show ] dev STRING\n");
-	fprintf(stderr, "Usage: tc filter get dev STRING parent CLASSID protocol PROTO handle FILTERID pref PRIO FILTER_TYPE \n");
-	fprintf(stderr, "       [ pref PRIO ] protocol PROTO\n");
-	fprintf(stderr, "       [ estimator INTERVAL TIME_CONSTANT ]\n");
-	fprintf(stderr, "       [ root | ingress | egress | parent CLASSID ]\n");
-	fprintf(stderr, "       [ handle FILTERID ] [ [ FILTER_TYPE ] [ help | OPTIONS ] ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "       tc filter show [ dev STRING ] [ root | ingress | egress | parent CLASSID ]\n");
-	fprintf(stderr, "Where:\n");
-	fprintf(stderr, "FILTER_TYPE := { rsvp | u32 | bpf | fw | route | etc. }\n");
-	fprintf(stderr, "FILTERID := ... format depends on classifier, see there\n");
-	fprintf(stderr, "OPTIONS := ... try tc filter add <desired FILTER_KIND> help\n");
+	fprintf(stderr,
+		"Usage: tc filter [ add | del | change | replace | show ] dev STRING\n"
+		"Usage: tc filter get dev STRING parent CLASSID protocol PROTO handle FILTERID pref PRIO FILTER_TYPE\n"
+		"       [ pref PRIO ] protocol PROTO\n"
+		"       [ estimator INTERVAL TIME_CONSTANT ]\n"
+		"       [ root | ingress | egress | parent CLASSID ]\n"
+		"       [ handle FILTERID ] [ [ FILTER_TYPE ] [ help | OPTIONS ] ]\n"
+		"\n"
+		"       tc filter show [ dev STRING ] [ root | ingress | egress | parent CLASSID ]\n"
+		"Where:\n"
+		"FILTER_TYPE := { rsvp | u32 | bpf | fw | route | etc. }\n"
+		"FILTERID := ... format depends on classifier, see there\n"
+		"OPTIONS := ... try tc filter add <desired FILTER_KIND> help\n");
 }
 
 static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
@@ -74,20 +75,23 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 			strncpy(d, *argv, sizeof(d)-1);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
-				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"root\" is duplicate parent ID\n");
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "ingress") == 0) {
 			if (req.t.tcm_parent) {
-				fprintf(stderr, "Error: \"ingress\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"ingress\" is duplicate parent ID\n");
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_MAKE(TC_H_CLSACT,
 						     TC_H_MIN_INGRESS);
 		} else if (strcmp(*argv, "egress") == 0) {
 			if (req.t.tcm_parent) {
-				fprintf(stderr, "Error: \"egress\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"egress\" is duplicate parent ID\n");
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_MAKE(TC_H_CLSACT,
@@ -150,13 +154,16 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 			return 1;
 	} else {
 		if (fhandle) {
-			fprintf(stderr, "Must specify filter type when using \"handle\"\n");
+			fprintf(stderr,
+				"Must specify filter type when using \"handle\"\n");
 			return -1;
 		}
 		if (argc) {
 			if (matches(*argv, "help") == 0)
 				usage();
-			fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"tc filter help\".\n", *argv);
+			fprintf(stderr,
+				"Garbage instead of arguments \"%s ...\". Try \"tc filter help\".\n",
+				*argv);
 			return -1;
 		}
 	}
@@ -167,7 +174,8 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (d[0])  {
 		ll_init_map(&rth);
 
-		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
+		req.t.tcm_ifindex = ll_name_to_index(d);
+		if (req.t.tcm_ifindex == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			return 1;
 		}
@@ -306,20 +314,23 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 			strncpy(d, *argv, sizeof(d)-1);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
-				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"root\" is duplicate parent ID\n");
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "ingress") == 0) {
 			if (req.t.tcm_parent) {
-				fprintf(stderr, "Error: \"ingress\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"ingress\" is duplicate parent ID\n");
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_MAKE(TC_H_CLSACT,
 						     TC_H_MIN_INGRESS);
 		} else if (strcmp(*argv, "egress") == 0) {
 			if (req.t.tcm_parent) {
-				fprintf(stderr, "Error: \"egress\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"egress\" is duplicate parent ID\n");
 				return -1;
 			}
 			req.t.tcm_parent = TC_H_MAKE(TC_H_CLSACT,
@@ -404,7 +415,8 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 	if (argc) {
 		if (matches(*argv, "help") == 0)
 			usage();
-		fprintf(stderr, "Garbage instead of arguments \"%s ...\". Try \"tc filter help\".\n",
+		fprintf(stderr,
+			"Garbage instead of arguments \"%s ...\". Try \"tc filter help\".\n",
 			*argv);
 		return -1;
 	}
@@ -449,13 +461,15 @@ static int tc_filter_list(int argc, char **argv)
 			strncpy(d, *argv, sizeof(d)-1);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (t.tcm_parent) {
-				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"root\" is duplicate parent ID\n");
 				return -1;
 			}
 			filter_parent = t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "ingress") == 0) {
 			if (t.tcm_parent) {
-				fprintf(stderr, "Error: \"ingress\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"ingress\" is duplicate parent ID\n");
 				return -1;
 			}
 			filter_parent = TC_H_MAKE(TC_H_CLSACT,
@@ -463,7 +477,8 @@ static int tc_filter_list(int argc, char **argv)
 			t.tcm_parent = filter_parent;
 		} else if (strcmp(*argv, "egress") == 0) {
 			if (t.tcm_parent) {
-				fprintf(stderr, "Error: \"egress\" is duplicate parent ID\n");
+				fprintf(stderr,
+					"Error: \"egress\" is duplicate parent ID\n");
 				return -1;
 			}
 			filter_parent = TC_H_MAKE(TC_H_CLSACT,
@@ -504,7 +519,9 @@ static int tc_filter_list(int argc, char **argv)
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
-			fprintf(stderr, " What is \"%s\"? Try \"tc filter help\"\n", *argv);
+			fprintf(stderr,
+				" What is \"%s\"? Try \"tc filter help\"\n",
+				*argv);
 			return -1;
 		}
 
@@ -516,7 +533,8 @@ static int tc_filter_list(int argc, char **argv)
 	ll_init_map(&rth);
 
 	if (d[0]) {
-		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
+		t.tcm_ifindex = ll_name_to_index(d);
+		if (t.tcm_ifindex == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			return 1;
 		}
