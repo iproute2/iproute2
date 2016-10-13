@@ -1431,7 +1431,9 @@ the following additional arguments are supported:
 ] [
 .BI mcast_router " MULTICAST_ROUTER"
 ] [
-.BR mcast_fast_leave " { " on " | " off "} ]"
+.BR mcast_fast_leave " { " on " | " off "}"
+] [
+.BR mcast_flood " { " on " | " off " } ]"
 
 .in +8
 .sp
@@ -1499,6 +1501,9 @@ queries.
 - this is a synonym to the
 .B fastleave
 option above.
+
+.BR mcast_flood " { " on " | " off " }"
+- controls whether a given port will be flooded with multicast traffic for which there is no MDB entry.
 
 .in -8
 

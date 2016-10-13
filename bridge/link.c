@@ -195,6 +195,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				if (prtb[IFLA_BRPORT_UNICAST_FLOOD])
 					print_onoff(fp, "flood",
 						    rta_getattr_u8(prtb[IFLA_BRPORT_UNICAST_FLOOD]));
+				if (prtb[IFLA_BRPORT_MCAST_FLOOD])
+					print_onoff(fp, "mcast_flood",
+						    rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_FLOOD]));
 			}
 		} else
 			print_portstate(fp, rta_getattr_u8(tb[IFLA_PROTINFO]));
@@ -227,6 +230,7 @@ static void usage(void)
 	fprintf(stderr,	"                               [ learning {on | off} ]\n");
 	fprintf(stderr,	"                               [ learning_sync {on | off} ]\n");
 	fprintf(stderr,	"                               [ flood {on | off} ]\n");
+	fprintf(stderr,	"                               [ mcast_flood {on | off} ]\n");
 	fprintf(stderr, "                               [ hwmode {vepa | veb} ]\n");
 	fprintf(stderr, "                               [ self ] [ master ]\n");
 	fprintf(stderr, "       bridge link show [dev DEV]\n");
@@ -265,6 +269,7 @@ static int brlink_modify(int argc, char **argv)
 	__s8 learning = -1;
 	__s8 learning_sync = -1;
 	__s8 flood = -1;
+	__s8 mcast_flood = -1;
 	__s8 hairpin = -1;
 	__s8 bpdu_guard = -1;
 	__s8 fast_leave = -1;
@@ -307,6 +312,10 @@ static int brlink_modify(int argc, char **argv)
 		} else if (strcmp(*argv, "flood") == 0) {
 			NEXT_ARG();
 			if (!on_off("flood", &flood, *argv))
+				return -1;
+		} else if (strcmp(*argv, "mcast_flood") == 0) {
+			NEXT_ARG();
+			if (!on_off("mcast_flood", &mcast_flood, *argv))
 				return -1;
 		} else if (strcmp(*argv, "cost") == 0) {
 			NEXT_ARG();
@@ -380,6 +389,9 @@ static int brlink_modify(int argc, char **argv)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_PROTECT, root_block);
 	if (flood >= 0)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_UNICAST_FLOOD, flood);
+	if (mcast_flood >= 0)
+		addattr8(&req.n, sizeof(req), IFLA_BRPORT_MCAST_FLOOD,
+			 mcast_flood);
 	if (learning >= 0)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_LEARNING, learning);
 	if (learning_sync >= 0)
