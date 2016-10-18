@@ -57,6 +57,14 @@ EOF
     rm -f $TMPDIR/atmtest.c $TMPDIR/atmtest
 }
 
+check_xtables()
+{
+	if ! ${PKG_CONFIG} xtables --exists
+	then
+		echo "TC_CONFIG_NO_XT:=y" >>Config
+	fi
+}
+
 check_xt()
 {
     #check if we have xtables from iptables >= 1.4.5.
@@ -353,18 +361,25 @@ echo "TC schedulers"
 echo -n " ATM	"
 check_atm
 
-echo -n " IPT	"
-check_xt
-check_xt_old
-check_xt_old_internal_h
-check_ipt
+check_xtables
+if ! grep -q TC_CONFIG_NO_XT Config
+then
+	echo -n " IPT	"
+	check_xt
+	check_xt_old
+	check_xt_old_internal_h
+	check_ipt
 
-echo -n " IPSET  "
-check_ipset
+	echo -n " IPSET  "
+	check_ipset
+fi
 
 echo
-echo -n "iptables modules directory: "
-check_ipt_lib_dir
+if ! grep -q TC_CONFIG_NO_XT Config
+then
+	echo -n "iptables modules directory: "
+	check_ipt_lib_dir
+fi
 
 echo -n "libc has setns: "
 check_setns

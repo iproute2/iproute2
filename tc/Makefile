@@ -69,28 +69,27 @@ TCMODULES += q_clsact.o
 TCMODULES += e_bpf.o
 TCMODULES += f_matchall.o
 
-ifeq ($(TC_CONFIG_IPSET), y)
-  ifeq ($(TC_CONFIG_XT), y)
-    TCMODULES += em_ipset.o
-  endif
-endif
-
 TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)
   TCSO += q_atm.so
 endif
 
-ifeq ($(TC_CONFIG_XT),y)
-  TCSO += m_xt.so
-else
-  ifeq ($(TC_CONFIG_XT_OLD),y)
-    TCSO += m_xt_old.so
+ifneq ($(TC_CONFIG_NO_XT),y)
+  ifeq ($(TC_CONFIG_XT),y)
+    TCSO += m_xt.so
+    ifeq ($(TC_CONFIG_IPSET),y)
+      TCMODULES += em_ipset.o
+    endif
   else
-    ifeq ($(TC_CONFIG_XT_OLD_H),y)
-	CFLAGS += -DTC_CONFIG_XT_H
-	TCSO += m_xt_old.so
+    ifeq ($(TC_CONFIG_XT_OLD),y)
+      TCSO += m_xt_old.so
     else
-      TCMODULES += m_ipt.o
+      ifeq ($(TC_CONFIG_XT_OLD_H),y)
+        CFLAGS += -DTC_CONFIG_XT_H
+        TCSO += m_xt_old.so
+      else
+        TCMODULES += m_ipt.o
+      endif
     endif
   endif
 endif
