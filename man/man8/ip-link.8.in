@@ -135,9 +135,6 @@ ip-link \- network device configuration
 .IR NAME " ]"
 .br
 .RB "[ " addrgenmode " { " eui64 " | " none " | " stable_secret " | " random " } ]"
-.br
-.B macaddr " |"
-.IR "COMMAND MACADDR |"
 
 
 .ti -8
@@ -240,45 +237,7 @@ Link types:
 - IP over Infiniband device
 .sp
 .B macvlan
-.I MODE
 - Virtual interface base on link layer address (MAC)
-.sp
-Modes:
-.in +8
-.B private
-- The device never communicates with any other device on the same upper_dev.
-This even includes frames coming back from a reflective relay, where supported
-by the adjacent bridge.
-.sp
-.B vepa
-- we assume that the adjacent bridge returns all frames where both source and
-destination are local to the macvlan port, i.e. the bridge is set up as a
-reflective relay. Broadcast frames coming in from the upper_dev get flooded to
-all macvlan interfaces in VEPA mode. We never deliver any frames locally.
-.sp
-.B bridge
-- behave as simple bridge between different macvlan interfaces on the same
-port. Frames from one interface to another one get delivered directly and are
-not sent out externally. Broadcast frames get flooded to all other bridge
-ports and to the external interface, but when they come back from a reflective
-relay, we don't deliver them again. Since we know all the MAC addresses, the
-macvlan bridge mode does not require learning or STP like the bridge module
-does.
-.sp
-.B passthru
-- allows takeover of the underlying device and passing it to a guest using
-virtio with macvtap backend. Only one macvlan device is allowed in passthru
-mode and it inherits the mac address from the underlying device and sets it in
-promiscuous mode to receive and forward all the packets.
-.sp
-.B source
-- allows one to set a list of allowed mac address, which is used to match
-against source mac address from received frames on underlying interface. This
-allows creating mac based VLAN associations, instead of standard port or tag
-based. The feature is useful to deploy 802.1x mac based behavior,
-where drivers of underlying interfaces doesn't allows that.
-.sp
-.in -8
 .sp
 .B macvtap
 - Virtual interface based on link layer address (MAC) and TAP.
@@ -1123,22 +1082,6 @@ deleted since it is the default group.
 specifies the type of the device.
 
 .SS ip link set - change device attributes
-
-.TP
-.BI macaddr " COMMAND MACADDR"
-add or removes MACADDR from allowed list for source mode macvlan type link
-Commands:
-.in +8
-.B add
-- add MACADDR to allowed list
-.sp
-.B del
-- remove MACADDR from allowed list
-.sp
-.B flush
-- flush whole allowed list
-.sp
-.in -8
 
 .PP
 .B Warning:

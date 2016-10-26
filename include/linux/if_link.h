@@ -402,8 +402,6 @@ enum macvlan_macaddr_mode {
 };
 
 #define MACVLAN_FLAG_NOPROMISC	1
-#define MACVLAN_FLAG_UNICAST	2
-#define MACVLAN_FLAG_UNICAST_ALL	4
 
 /* VRF section */
 enum {
