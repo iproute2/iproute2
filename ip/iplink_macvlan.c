@@ -39,16 +39,8 @@ static void explain(struct link_util *lu)
 	print_explain(lu, stderr);
 }
 
-static int mode_arg(const char *arg)
-{
-<<<<<<< HEAD
-	fprintf(stderr,
-		"Error: argument of \"mode\" must be \"private\", \"vepa\", \"bridge\", \"passthru\" or \"source\", not \"%s\"\n",
-		arg);
-	return -1;
-}
 
-static int flag_arg(const char *arg)
+static int mode_arg(const char *arg)
 {
 	fprintf(stderr,
 		"Error: argument of \"mode\" must be \"private\", \"vepa\", \"bridge\" or \"passthru\", not \"%s\"\n",
