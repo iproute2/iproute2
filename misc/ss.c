@@ -2895,7 +2895,9 @@ static int unix_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
 		memcpy(name, RTA_DATA(tb[UNIX_DIAG_NAME]), len);
 		name[len] = '\0';
 		if (name[0] == '\0')
-			name[0] = '@';
+			for (int i = 0; i < len; i++)
+				if (name[i] == '\0')
+					name[i] = '@';
 		stat.name = &name[0];
 		memcpy(stat.local.data, &stat.name, sizeof(stat.name));
 	}
