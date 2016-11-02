@@ -319,6 +319,22 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 					dump_intr = 1;
 
 				if (h->nlmsg_type == NLMSG_DONE) {
+					if (rth->proto == NETLINK_SOCK_DIAG) {
+						if (h->nlmsg_len < NLMSG_LENGTH(sizeof(int))) {
+							fprintf(stderr, "DONE truncated\n");
+							return -1;
+						} else {
+							int len = *(int *)NLMSG_DATA(h);
+							if (len < 0) {
+								errno = -len;
+								if (errno == ENOENT ||
+								    errno == EOPNOTSUPP)
+									return -1;
+								perror("RTNETLINK answers");
+								return len;
+							}
+						}
+					}
 					found_done = 1;
 					break; /* process next filter */
 				}
