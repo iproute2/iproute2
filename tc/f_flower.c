@@ -36,7 +36,6 @@ static void explain(void)
 	fprintf(stderr, "                       vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n");
 	fprintf(stderr, "                       dst_mac MAC-ADDR |\n");
 	fprintf(stderr, "                       src_mac MAC-ADDR |\n");
-	fprintf(stderr, "                       [ipv4 | ipv6 ] |\n");
 	fprintf(stderr, "                       ip_proto [tcp | udp | IP-PROTO ] |\n");
 	fprintf(stderr, "                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n");
 	fprintf(stderr, "                       src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n");
@@ -45,7 +44,7 @@ static void explain(void)
 	fprintf(stderr,	"       FILTERID := X:Y:Z\n");
 	fprintf(stderr,	"       ACTION-SPEC := ... look at individual actions\n");
 	fprintf(stderr,	"\n");
-	fprintf(stderr,	"NOTE: CLASSID, ETH-TYPE, IP-PROTO are parsed as hexadecimal input.\n");
+	fprintf(stderr,	"NOTE: CLASSID, IP-PROTO are parsed as hexadecimal input.\n");
 	fprintf(stderr,	"NOTE: There can be only used one mask per one prio. If user needs\n");
 	fprintf(stderr,	"      to specify different mask, he has to use different prio.\n");
 }
