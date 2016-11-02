@@ -756,6 +756,7 @@ struct sockstat {
 	struct sockstat	   *next;
 	unsigned int	    type;
 	uint16_t	    prot;
+	uint16_t	    raw_prot;
 	inet_prefix	    local;
 	inet_prefix	    remote;
 	int		    lport;
@@ -2359,6 +2360,10 @@ static void parse_diag_msg(struct nlmsghdr *nlh, struct sockstat *s)
 	s->mark = 0;
 	if (tb[INET_DIAG_MARK])
 		s->mark = *(__u32 *) RTA_DATA(tb[INET_DIAG_MARK]);
+	if (tb[INET_DIAG_PROTOCOL])
+		s->raw_prot = *(__u8 *)RTA_DATA(tb[INET_DIAG_PROTOCOL]);
+	else
+		s->raw_prot = 0;
 
 	if (s->local.family == AF_INET)
 		s->local.bytelen = s->remote.bytelen = 4;
@@ -2560,7 +2565,7 @@ struct inet_diag_arg {
 	struct rtnl_handle *rth;
 };
 
-static int kill_inet_sock(struct nlmsghdr *h, void *arg)
+static int kill_inet_sock(struct nlmsghdr *h, void *arg, struct sockstat *s)
 {
 	struct inet_diag_msg *d = NLMSG_DATA(h);
 	struct inet_diag_arg *diag_arg = arg;
@@ -2574,6 +2579,13 @@ static int kill_inet_sock(struct nlmsghdr *h, void *arg)
 	req.r.sdiag_family = d->idiag_family;
 	req.r.sdiag_protocol = diag_arg->protocol;
 	req.r.id = d->id;
+
+	if (diag_arg->protocol == IPPROTO_RAW) {
+		struct inet_diag_req_raw *raw = (void *)&req.r;
+
+		BUILD_BUG_ON(sizeof(req.r) != sizeof(*raw));
+		raw->sdiag_raw_protocol = s->raw_prot;
+	}
 
 	return rtnl_talk(rth, &req.nlh, NULL, 0);
 }
@@ -2594,7 +2606,7 @@ static int show_one_inet_sock(const struct sockaddr_nl *addr,
 	if (diag_arg->f->f && run_ssfilter(diag_arg->f->f, &s) == 0)
 		return 0;
 
-	if (diag_arg->f->kill && kill_inet_sock(h, arg) != 0) {
+	if (diag_arg->f->kill && kill_inet_sock(h, arg, &s) != 0) {
 		if (errno == EOPNOTSUPP || errno == ENOENT) {
 			/* Socket can't be closed, or is already closed. */
 			return 0;
@@ -2901,6 +2913,10 @@ static int raw_show(struct filter *f)
 		return 0;
 
 	dg_proto = RAW_PROTO;
+
+	if (!getenv("PROC_NET_RAW") && !getenv("PROC_ROOT") &&
+	    inet_show_netlink(f, NULL, IPPROTO_RAW) == 0)
+		return 0;
 
 	if (f->families&(1<<AF_INET)) {
 		if ((fp = net_raw_open()) == NULL)
