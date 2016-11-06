@@ -46,6 +46,7 @@ static void usage(void)
 		"       ip rule [ list [ SELECTOR ]]\n"
 		"SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n"
 		"            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ l3mdev ]\n"
+		"            [ uidrange NUMBER-NUMBER ]\n"
 		"ACTION := [ table TABLE_ID ]\n"
 		"          [ nat ADDRESS ]\n"
 		"          [ realms [SRCREALM/]DSTREALM ]\n"
@@ -61,13 +62,14 @@ static struct
 {
 	int not;
 	int l3mdev;
-	int iifmask, oifmask;
+	int iifmask, oifmask, uidrange;
 	unsigned int tb;
 	unsigned int tos, tosmask;
 	unsigned int pref, prefmask;
 	unsigned int fwmark, fwmask;
 	char iif[IFNAMSIZ];
 	char oif[IFNAMSIZ];
+	struct fib_rule_uid_range range;
 	inet_prefix src;
 	inet_prefix dst;
 } filter;
@@ -150,6 +152,15 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 
 	if (filter.l3mdev && !(tb[FRA_L3MDEV] && rta_getattr_u8(tb[FRA_L3MDEV])))
 		return false;
+
+	if (filter.uidrange) {
+		struct fib_rule_uid_range *r = RTA_DATA(tb[FRA_UID_RANGE]);
+
+		if (!tb[FRA_UID_RANGE] ||
+		    r->start != filter.range.start ||
+		    r->end != filter.range.end)
+			return false;
+	}
 
 	table = rtm_get_table(r, tb);
 	if (filter.tb > 0 && filter.tb ^ table)
@@ -257,6 +268,12 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[FRA_L3MDEV]) {
 		if (rta_getattr_u8(tb[FRA_L3MDEV]))
 			fprintf(fp, "lookup [l3mdev-table] ");
+	}
+
+	if (tb[FRA_UID_RANGE]) {
+		struct fib_rule_uid_range *r = RTA_DATA(tb[FRA_UID_RANGE]);
+
+		fprintf(fp, "uidrange %u-%u ", r->start, r->end);
 	}
 
 	table = rtm_get_table(r, tb);
@@ -463,6 +480,14 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 			filter.oifmask = 1;
 		} else if (strcmp(*argv, "l3mdev") == 0) {
 			filter.l3mdev = 1;
+		} else if (strcmp(*argv, "uidrange") == 0) {
+			NEXT_ARG();
+			filter.uidrange = 1;
+			if (sscanf(*argv, "%u-%u",
+				   &filter.range.start,
+				   &filter.range.end) != 2)
+				invarg("invalid UID range\n", *argv);
+
 		} else if (matches(*argv, "lookup") == 0 ||
 			   matches(*argv, "table") == 0) {
 			__u32 tid;
@@ -680,6 +705,14 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			addattr8(&req.n, sizeof(req), FRA_L3MDEV, 1);
 			table_ok = 1;
 			l3mdev_rule = 1;
+		} else if (strcmp(*argv, "uidrange") == 0) {
+			struct fib_rule_uid_range r;
+
+			NEXT_ARG();
+			if (sscanf(*argv, "%u-%u", &r.start, &r.end) != 2)
+				invarg("invalid UID range\n", *argv);
+			addattr_l(&req.n, sizeof(req), FRA_UID_RANGE, &r,
+				  sizeof(r));
 		} else if (strcmp(*argv, "nat") == 0 ||
 			   matches(*argv, "map-to") == 0) {
 			NEXT_ARG();

@@ -68,6 +68,7 @@ static void usage(void)
 	fprintf(stderr, "       ip route get ADDRESS [ from ADDRESS iif STRING ]\n");
 	fprintf(stderr, "                            [ oif STRING ] [ tos TOS ]\n");
 	fprintf(stderr, "                            [ mark NUMBER ] [ vrf NAME ]\n");
+	fprintf(stderr, "                            [ uid NUMBER ]\n");
 	fprintf(stderr, "       ip route { add | del | change | append | replace } ROUTE\n");
 	fprintf(stderr, "SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n");
 	fprintf(stderr, "            [ table TABLE_ID ] [ vrf NAME ] [ proto RTPROTO ]\n");
@@ -471,6 +472,10 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "%s ",
 			rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
 	}
+
+	if (tb[RTA_UID])
+		fprintf(fp, "uid %u ", rta_getattr_u32(tb[RTA_UID]));
+
 	if ((r->rtm_flags&RTM_F_CLONED) && r->rtm_family == AF_INET) {
 		__u32 flags = r->rtm_flags&~0xFFFF;
 		int first = 1;
@@ -1684,6 +1689,13 @@ static int iproute_get(int argc, char **argv)
 			if (!name_is_vrf(*argv))
 				invarg("Invalid VRF\n", *argv);
 			odev = *argv;
+		} else if (matches(*argv, "uid") == 0) {
+			uid_t uid;
+
+			NEXT_ARG();
+			if (get_unsigned(&uid, *argv, 0))
+				invarg("invalid UID\n", *argv);
+			addattr32(&req.n, sizeof(req), RTA_UID, uid);
 		} else {
 			inet_prefix addr;
 
