@@ -322,10 +322,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
 	struct ifla_vf_tx_rate *vf_tx_rate;
-	struct ifla_vf_spoofchk *vf_spoofchk;
-	struct ifla_vf_link_state *vf_linkstate;
 	struct rtattr *vf[IFLA_VF_MAX + 1] = {};
-	struct rtattr *tmp;
 
 	SPRINT_BUF(b1);
 
@@ -338,31 +335,6 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 
 	vf_mac = RTA_DATA(vf[IFLA_VF_MAC]);
 	vf_tx_rate = RTA_DATA(vf[IFLA_VF_TX_RATE]);
-
-	/* Check if the spoof checking vf info type is supported by
-	 * this kernel.
-	 */
-	tmp = (struct rtattr *)((char *)vf[IFLA_VF_TX_RATE] +
-				vf[IFLA_VF_TX_RATE]->rta_len);
-
-	if (tmp->rta_type != IFLA_VF_SPOOFCHK)
-		vf_spoofchk = NULL;
-	else
-		vf_spoofchk = RTA_DATA(vf[IFLA_VF_SPOOFCHK]);
-
-	if (vf_spoofchk) {
-		/* Check if the link state vf info type is supported by
-		 * this kernel.
-		 */
-		tmp = (struct rtattr *)((char *)vf[IFLA_VF_SPOOFCHK] +
-					vf[IFLA_VF_SPOOFCHK]->rta_len);
-
-		if (tmp->rta_type != IFLA_VF_LINK_STATE)
-			vf_linkstate = NULL;
-		else
-			vf_linkstate = RTA_DATA(vf[IFLA_VF_LINK_STATE]);
-	} else
-		vf_linkstate = NULL;
 
 	fprintf(fp, "%s    vf %d MAC %s", _SL_, vf_mac->vf,
 		ll_addr_n2a((unsigned char *)&vf_mac->mac,
@@ -407,14 +379,18 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		if (vf_rate->min_tx_rate)
 			fprintf(fp, ", min_tx_rate %dMbps", vf_rate->min_tx_rate);
 	}
+	if (vf[IFLA_VF_SPOOFCHK]) {
+		struct ifla_vf_spoofchk *vf_spoofchk =
+			RTA_DATA(vf[IFLA_VF_SPOOFCHK]);
 
-	if (vf_spoofchk && vf_spoofchk->setting != -1) {
-		if (vf_spoofchk->setting)
-			fprintf(fp, ", spoof checking on");
-		else
-			fprintf(fp, ", spoof checking off");
+		if (vf_spoofchk->setting != -1)
+			fprintf(fp, ", spoof checking %s",
+			        vf_spoofchk->setting ? "on" : "off");
 	}
-	if (vf_linkstate) {
+	if (vf[IFLA_VF_LINK_STATE]) {
+		struct ifla_vf_link_state *vf_linkstate =
+			RTA_DATA(vf[IFLA_VF_LINK_STATE]);
+
 		if (vf_linkstate->link_state == IFLA_VF_LINK_STATE_AUTO)
 			fprintf(fp, ", link-state auto");
 		else if (vf_linkstate->link_state == IFLA_VF_LINK_STATE_ENABLE)
