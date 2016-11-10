@@ -107,9 +107,14 @@
 
 /** BPF helper functions for tc. Individual flags are in linux/bpf.h */
 
+#ifndef __BPF_FUNC
+# define __BPF_FUNC(NAME, ...)						\
+	(* NAME)(__VA_ARGS__) __maybe_unused
+#endif
+
 #ifndef BPF_FUNC
 # define BPF_FUNC(NAME, ...)						\
-	(* NAME)(__VA_ARGS__) __maybe_unused = (void *) BPF_FUNC_##NAME
+	__BPF_FUNC(NAME, __VA_ARGS__) = (void *) BPF_FUNC_##NAME
 #endif
 
 /* Map access/manipulation */
@@ -147,10 +152,15 @@ static void BPF_FUNC(tail_call, struct __sk_buff *skb, void *map,
 
 /* System helpers */
 static uint32_t BPF_FUNC(get_smp_processor_id);
+static uint32_t BPF_FUNC(get_numa_node_id);
 
 /* Packet misc meta data */
 static uint32_t BPF_FUNC(get_cgroup_classid, struct __sk_buff *skb);
+static int BPF_FUNC(skb_under_cgroup, void *map, uint32_t index);
+
 static uint32_t BPF_FUNC(get_route_realm, struct __sk_buff *skb);
+static uint32_t BPF_FUNC(get_hash_recalc, struct __sk_buff *skb);
+static uint32_t BPF_FUNC(set_hash_invalid, struct __sk_buff *skb);
 
 /* Packet redirection */
 static int BPF_FUNC(redirect, int ifindex, uint32_t flags);
@@ -169,6 +179,20 @@ static int BPF_FUNC(l4_csum_replace, struct __sk_buff *skb, uint32_t off,
 		    uint32_t from, uint32_t to, uint32_t flags);
 static int BPF_FUNC(csum_diff, const void *from, uint32_t from_size,
 		    const void *to, uint32_t to_size, uint32_t seed);
+static int BPF_FUNC(csum_update, struct __sk_buff *skb, uint32_t wsum);
+
+static int BPF_FUNC(skb_change_type, struct __sk_buff *skb, uint32_t type);
+static int BPF_FUNC(skb_change_proto, struct __sk_buff *skb, uint32_t proto,
+		    uint32_t flags);
+static int BPF_FUNC(skb_change_tail, struct __sk_buff *skb, uint32_t nlen,
+		    uint32_t flags);
+
+static int BPF_FUNC(skb_pull_data, struct __sk_buff *skb, uint32_t len);
+
+/* Event notification */
+static int __BPF_FUNC(skb_event_output, struct __sk_buff *skb, void *map,
+		      uint64_t index, const void *data, uint32_t size) =
+		      (void *) BPF_FUNC_perf_event_output;
 
 /* Packet vlan encap/decap */
 static int BPF_FUNC(skb_vlan_push, struct __sk_buff *skb, uint16_t proto,

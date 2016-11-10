@@ -1,5 +1,5 @@
 TCOBJ= tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o tc_monitor.o \
-       tc_exec.o tc_bpf.o m_police.o m_estimator.o m_action.o m_ematch.o \
+       tc_exec.o m_police.o m_estimator.o m_action.o m_ematch.o \
        emp_ematch.yacc.o emp_ematch.lex.o
 
 include ../Config
@@ -92,11 +92,6 @@ ifneq ($(TC_CONFIG_NO_XT),y)
       endif
     endif
   endif
-endif
-
-ifeq ($(TC_CONFIG_ELF),y)
-  CFLAGS += -DHAVE_ELF
-  LDLIBS += -lelf
 endif
 
 TCOBJ += $(TCMODULES)

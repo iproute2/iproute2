@@ -272,7 +272,7 @@ EOF
 
     if $CC -I$INCLUDE -o $TMPDIR/elftest $TMPDIR/elftest.c -lelf >/dev/null 2>&1
     then
-	echo "TC_CONFIG_ELF:=y" >>Config
+	echo "HAVE_ELF:=y" >>Config
 	echo "yes"
     else
 	echo "no"

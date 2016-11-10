@@ -6,7 +6,7 @@
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:	Daniel Borkmann <dborkman@redhat.com>
+ * Authors:	Daniel Borkmann <daniel@iogearbox.net>
  */
 
 #include <stdio.h>
@@ -15,17 +15,11 @@
 #include <linux/bpf.h>
 
 #include "utils.h"
+
 #include "tc_util.h"
-#include "tc_bpf.h"
+#include "bpf_util.h"
 
 static const enum bpf_prog_type bpf_type = BPF_PROG_TYPE_SCHED_CLS;
-
-static const int nla_tbl[BPF_NLA_MAX] = {
-	[BPF_NLA_OPS_LEN]	= TCA_BPF_OPS_LEN,
-	[BPF_NLA_OPS]		= TCA_BPF_OPS,
-	[BPF_NLA_FD]		= TCA_BPF_FD,
-	[BPF_NLA_NAME]		= TCA_BPF_NAME,
-};
 
 static void explain(void)
 {
@@ -52,7 +46,7 @@ static void explain(void)
 	fprintf(stderr, "pinned eBPF program.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where CLS_NAME refers to the section name containing the\n");
-	fprintf(stderr, "classifier (default \'%s\').\n", bpf_default_section(bpf_type));
+	fprintf(stderr, "classifier (default \'%s\').\n", bpf_prog_to_default_section(bpf_type));
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where UDS_FILE points to a unix domain socket file in order\n");
 	fprintf(stderr, "to hand off control of all created eBPF maps to an agent.\n");
@@ -61,6 +55,24 @@ static void explain(void)
 	fprintf(stderr, "NOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
+static void bpf_cbpf_cb(void *nl, const struct sock_filter *ops, int ops_len)
+{
+	addattr16(nl, MAX_MSG, TCA_BPF_OPS_LEN, ops_len);
+	addattr_l(nl, MAX_MSG, TCA_BPF_OPS, ops,
+		  ops_len * sizeof(struct sock_filter));
+}
+
+static void bpf_ebpf_cb(void *nl, int fd, const char *annotation)
+{
+	addattr32(nl, MAX_MSG, TCA_BPF_FD, fd);
+	addattrstrz(nl, MAX_MSG, TCA_BPF_NAME, annotation);
+}
+
+static const struct bpf_cfg_ops bpf_cb_ops = {
+	.cbpf_cb = bpf_cbpf_cb,
+	.ebpf_cb = bpf_ebpf_cb,
+};
+
 static int bpf_parse_opt(struct filter_util *qu, char *handle,
 			 int argc, char **argv, struct nlmsghdr *n)
 {
@@ -68,6 +80,7 @@ static int bpf_parse_opt(struct filter_util *qu, char *handle,
 	struct tcmsg *t = NLMSG_DATA(n);
 	unsigned int bpf_gen_flags = 0;
 	unsigned int bpf_flags = 0;
+	struct bpf_cfg_in cfg = {};
 	bool seen_run = false;
 	struct rtattr *tail;
 	int ret = 0;
@@ -90,11 +103,17 @@ static int bpf_parse_opt(struct filter_util *qu, char *handle,
 			NEXT_ARG();
 opt_bpf:
 			seen_run = true;
-			if (bpf_parse_common(&argc, &argv, nla_tbl, bpf_type,
-					     &bpf_obj, &bpf_uds_name, n)) {
-				fprintf(stderr, "Failed to retrieve (e)BPF data!\n");
+			cfg.argc = argc;
+			cfg.argv = argv;
+
+			if (bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, n))
 				return -1;
-			}
+
+			argc = cfg.argc;
+			argv = cfg.argv;
+
+			bpf_obj = cfg.object;
+			bpf_uds_name = cfg.uds;
 		} else if (matches(*argv, "classid") == 0 ||
 			   matches(*argv, "flowid") == 0) {
 			unsigned int handle;
@@ -143,7 +162,7 @@ opt_bpf:
 
 	if (bpf_gen_flags)
 		addattr32(n, MAX_MSG, TCA_BPF_FLAGS_GEN, bpf_gen_flags);
-	if (bpf_obj && bpf_flags)
+	if (bpf_flags)
 		addattr32(n, MAX_MSG, TCA_BPF_FLAGS, bpf_flags);
 
 	tail->rta_len = (((void *)n) + n->nlmsg_len) - (void *)tail;
@@ -175,8 +194,6 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 
 	if (tb[TCA_BPF_NAME])
 		fprintf(f, "%s ", rta_getattr_str(tb[TCA_BPF_NAME]));
-	else if (tb[TCA_BPF_FD])
-		fprintf(f, "pfd %u ", rta_getattr_u32(tb[TCA_BPF_FD]));
 
 	if (tb[TCA_BPF_FLAGS]) {
 		unsigned int flags = rta_getattr_u32(tb[TCA_BPF_FLAGS]);
@@ -195,20 +212,17 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 			fprintf(f, "skip_sw ");
 	}
 
-	if (tb[TCA_BPF_OPS] && tb[TCA_BPF_OPS_LEN]) {
+	if (tb[TCA_BPF_OPS] && tb[TCA_BPF_OPS_LEN])
 		bpf_print_ops(f, tb[TCA_BPF_OPS],
 			      rta_getattr_u16(tb[TCA_BPF_OPS_LEN]));
-		fprintf(f, "\n");
-	}
 
 	if (tb[TCA_BPF_POLICE]) {
 		fprintf(f, "\n");
 		tc_print_police(f, tb[TCA_BPF_POLICE]);
 	}
 
-	if (tb[TCA_BPF_ACT]) {
+	if (tb[TCA_BPF_ACT])
 		tc_print_action(f, tb[TCA_BPF_ACT]);
-	}
 
 	return 0;
 }

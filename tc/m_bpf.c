@@ -17,17 +17,11 @@
 #include <linux/tc_act/tc_bpf.h>
 
 #include "utils.h"
+
 #include "tc_util.h"
-#include "tc_bpf.h"
+#include "bpf_util.h"
 
 static const enum bpf_prog_type bpf_type = BPF_PROG_TYPE_SCHED_ACT;
-
-static const int nla_tbl[BPF_NLA_MAX] = {
-	[BPF_NLA_OPS_LEN]	= TCA_ACT_BPF_OPS_LEN,
-	[BPF_NLA_OPS]		= TCA_ACT_BPF_OPS,
-	[BPF_NLA_FD]		= TCA_ACT_BPF_FD,
-	[BPF_NLA_NAME]		= TCA_ACT_BPF_NAME,
-};
 
 static void explain(void)
 {
@@ -50,7 +44,7 @@ static void explain(void)
 	fprintf(stderr, "pinned eBPF program.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where ACT_NAME refers to the section name containing the\n");
-	fprintf(stderr, "action (default \'%s\').\n", bpf_default_section(bpf_type));
+	fprintf(stderr, "action (default \'%s\').\n", bpf_prog_to_default_section(bpf_type));
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where UDS_FILE points to a unix domain socket file in order\n");
 	fprintf(stderr, "to hand off control of all created eBPF maps to an agent.\n");
@@ -59,11 +53,30 @@ static void explain(void)
 	fprintf(stderr, "explicitly specifies an action index upon creation.\n");
 }
 
+static void bpf_cbpf_cb(void *nl, const struct sock_filter *ops, int ops_len)
+{
+	addattr16(nl, MAX_MSG, TCA_ACT_BPF_OPS_LEN, ops_len);
+	addattr_l(nl, MAX_MSG, TCA_ACT_BPF_OPS, ops,
+		  ops_len * sizeof(struct sock_filter));
+}
+
+static void bpf_ebpf_cb(void *nl, int fd, const char *annotation)
+{
+	addattr32(nl, MAX_MSG, TCA_ACT_BPF_FD, fd);
+	addattrstrz(nl, MAX_MSG, TCA_ACT_BPF_NAME, annotation);
+}
+
+static const struct bpf_cfg_ops bpf_cb_ops = {
+	.cbpf_cb = bpf_cbpf_cb,
+	.ebpf_cb = bpf_ebpf_cb,
+};
+
 static int bpf_parse_opt(struct action_util *a, int *ptr_argc, char ***ptr_argv,
 			 int tca_id, struct nlmsghdr *n)
 {
 	const char *bpf_obj = NULL, *bpf_uds_name = NULL;
 	struct tc_act_bpf parm = { .action = TC_ACT_PIPE };
+	struct bpf_cfg_in cfg = {};
 	bool seen_run = false;
 	struct rtattr *tail;
 	int argc, ret = 0;
@@ -85,11 +98,17 @@ static int bpf_parse_opt(struct action_util *a, int *ptr_argc, char ***ptr_argv,
 			NEXT_ARG();
 opt_bpf:
 			seen_run = true;
-			if (bpf_parse_common(&argc, &argv, nla_tbl, bpf_type,
-					     &bpf_obj, &bpf_uds_name, n)) {
-				fprintf(stderr, "Failed to retrieve (e)BPF data!\n");
+			cfg.argc = argc;
+			cfg.argv = argv;
+
+			if (bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, n))
 				return -1;
-			}
+
+			argc = cfg.argc;
+			argv = cfg.argv;
+
+			bpf_obj = cfg.object;
+			bpf_uds_name = cfg.uds;
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -151,8 +170,6 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	if (tb[TCA_ACT_BPF_NAME])
 		fprintf(f, "%s ", rta_getattr_str(tb[TCA_ACT_BPF_NAME]));
-	else if (tb[TCA_ACT_BPF_FD])
-		fprintf(f, "pfd %u ", rta_getattr_u32(tb[TCA_ACT_BPF_FD]));
 
 	if (tb[TCA_ACT_BPF_OPS] && tb[TCA_ACT_BPF_OPS_LEN]) {
 		bpf_print_ops(f, tb[TCA_ACT_BPF_OPS],

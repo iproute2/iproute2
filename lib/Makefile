@@ -8,7 +8,7 @@ CFLAGS += -fPIC
 
 UTILOBJ = utils.o rt_names.o ll_types.o ll_proto.o ll_addr.o \
 	inet_proto.o namespace.o json_writer.o \
-	names.o color.o
+	names.o color.o bpf.o
 
 NLOBJ=libgenl.o ll_map.o libnetlink.o
 

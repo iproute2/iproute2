@@ -1,34 +1,26 @@
 /*
- * tc_bpf.h	BPF common code
+ * bpf_util.h	BPF common code
  *
  *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  *
- * Authors:	Daniel Borkmann <dborkman@redhat.com>
+ * Authors:	Daniel Borkmann <daniel@iogearbox.net>
  *		Jiri Pirko <jiri@resnulli.us>
  */
 
-#ifndef _TC_BPF_H_
-#define _TC_BPF_H_ 1
+#ifndef __BPF_UTIL__
+#define __BPF_UTIL__
 
-#include <linux/netlink.h>
 #include <linux/bpf.h>
+#include <linux/filter.h>
 #include <linux/magic.h>
+#include <linux/elf-em.h>
+#include <linux/if_alg.h>
 
 #include "utils.h"
 #include "bpf_scm.h"
-
-enum {
-	BPF_NLA_OPS_LEN = 0,
-	BPF_NLA_OPS,
-	BPF_NLA_FD,
-	BPF_NLA_NAME,
-	__BPF_NLA_MAX,
-};
-
-#define BPF_NLA_MAX	__BPF_NLA_MAX
 
 #define BPF_ENV_UDS	"TC_BPF_UDS"
 #define BPF_ENV_MNT	"TC_BPF_MNT"
@@ -37,14 +29,13 @@ enum {
 # define BPF_MAX_LOG	4096
 #endif
 
+#define BPF_DIR_GLOBALS	"globals"
+
 #ifndef BPF_FS_MAGIC
 # define BPF_FS_MAGIC	0xcafe4a11
 #endif
 
 #define BPF_DIR_MNT	"/sys/fs/bpf"
-
-#define BPF_DIR_TC	"tc"
-#define BPF_DIR_GLOBALS	"globals"
 
 #ifndef TRACEFS_MAGIC
 # define TRACEFS_MAGIC	0x74726163
@@ -52,13 +43,35 @@ enum {
 
 #define TRACE_DIR_MNT	"/sys/kernel/tracing"
 
-int bpf_trace_pipe(void);
-const char *bpf_default_section(const enum bpf_prog_type type);
+#ifndef AF_ALG
+# define AF_ALG		38
+#endif
 
-int bpf_parse_common(int *ptr_argc, char ***ptr_argv, const int *nla_tbl,
-		     enum bpf_prog_type type, const char **ptr_object,
-		     const char **ptr_uds_name, struct nlmsghdr *n);
+#ifndef EM_BPF
+# define EM_BPF		247
+#endif
+
+struct bpf_cfg_ops {
+	void (*cbpf_cb)(void *nl, const struct sock_filter *ops, int ops_len);
+	void (*ebpf_cb)(void *nl, int fd, const char *annotation);
+};
+
+struct bpf_cfg_in {
+	const char *object;
+	const char *section;
+	const char *uds;
+	int argc;
+	char **argv;
+	struct sock_filter *ops;
+};
+
+int bpf_parse_common(enum bpf_prog_type type, struct bpf_cfg_in *cfg,
+		     const struct bpf_cfg_ops *ops, void *nl);
+
+const char *bpf_prog_to_default_section(enum bpf_prog_type type);
+
 int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv);
+int bpf_trace_pipe(void);
 
 void bpf_print_ops(FILE *f, struct rtattr *bpf_ops, __u16 len);
 
@@ -79,4 +92,4 @@ static inline int bpf_recv_map_fds(const char *path, int *fds,
 	return -1;
 }
 #endif /* HAVE_ELF */
-#endif /* _TC_BPF_H_ */
+#endif /* __BPF_UTIL__ */

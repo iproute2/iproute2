@@ -15,8 +15,8 @@
 #include "utils.h"
 
 #include "tc_util.h"
-#include "tc_bpf.h"
 
+#include "bpf_util.h"
 #include "bpf_elf.h"
 #include "bpf_scm.h"
 
