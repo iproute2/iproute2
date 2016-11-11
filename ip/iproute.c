@@ -320,7 +320,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type != RTM_NEWROUTE && n->nlmsg_type != RTM_DELROUTE) {
 		fprintf(stderr, "Not a route: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
-		return 0;
+		return -1;
 	}
 	if (filter.flushb && n->nlmsg_type != RTM_NEWROUTE)
 		return 0;
