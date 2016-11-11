@@ -1743,7 +1743,7 @@ static int iproute_get(int argc, char **argv)
 
 		if (print_route(NULL, &req.n, (void *)stdout) < 0) {
 			fprintf(stderr, "An error :-)\n");
-			exit(1);
+			return -1;
 		}
 
 		if (req.n.nlmsg_type != RTM_NEWROUTE) {
