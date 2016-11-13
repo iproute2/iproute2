@@ -136,7 +136,8 @@ enum {
 #define PACKET_DBM ((1<<PACKET_DG_DB)|(1<<PACKET_R_DB))
 #define UNIX_DBM ((1<<UNIX_DG_DB)|(1<<UNIX_ST_DB)|(1<<UNIX_SQ_DB))
 #define ALL_DB ((1<<MAX_DB)-1)
-#define INET_DBM ((1<<TCP_DB)|(1<<UDP_DB)|(1<<DCCP_DB)|(1<<RAW_DB)|(1<<SCTP_DB))
+#define INET_L4_DBM ((1<<TCP_DB)|(1<<UDP_DB)|(1<<DCCP_DB)|(1<<SCTP_DB))
+#define INET_DBM (INET_L4_DBM | (1<<RAW_DB))
 
 enum {
 	SS_UNKNOWN,
@@ -4045,7 +4046,8 @@ int main(int argc, char *argv[])
 	int ch;
 	int state_filter = 0;
 
-	while ((ch = getopt_long(argc, argv, "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KHS",
+	while ((ch = getopt_long(argc, argv,
+				 "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KHS",
 				 long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'n':
@@ -4285,9 +4287,8 @@ int main(int argc, char *argv[])
 	filter_merge_defaults(&current_filter);
 
 	if (resolve_services && resolve_hosts &&
-	    (current_filter.dbs&(UNIX_DBM|(1<<TCP_DB)|(1<<UDP_DB)|(1<<DCCP_DB)|(1<<SCTP_DB))))
+	    (current_filter.dbs & (UNIX_DBM|INET_L4_DBM)))
 		init_service_resolver();
-
 
 	if (current_filter.dbs == 0) {
 		fprintf(stderr, "ss: no socket tables to show with such filter.\n");
