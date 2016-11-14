@@ -405,6 +405,22 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 			fprintf(fp, ", trust %s",
 				vf_trust->setting ? "on" : "off");
 	}
+	if (vf[IFLA_VF_RSS_QUERY_EN]) {
+		struct ifla_vf_rss_query_en *rss_query =
+			RTA_DATA(vf[IFLA_VF_RSS_QUERY_EN]);
+
+		if (rss_query->setting != -1)
+			fprintf(fp, ", query_rss %s",
+			        rss_query->setting ? "on" : "off");
+	}
+	if (vf[IFLA_VF_RSS_QUERY_EN]) {
+		struct ifla_vf_rss_query_en *rss_query =
+			RTA_DATA(vf[IFLA_VF_RSS_QUERY_EN]);
+
+		if (rss_query->setting != -1)
+			fprintf(fp, ", query_rss %s",
+			        rss_query->setting ? "on" : "off");
+	}
 	if (vf[IFLA_VF_STATS] && show_stats)
 		print_vf_stats64(fp, vf[IFLA_VF_STATS]);
 }
