@@ -182,7 +182,8 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 		ll_init_map(&rth);
 
-		if ((idx = ll_name_to_index(d)) == 0) {
+		idx = ll_name_to_index(d);
+		if (idx == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			return 1;
 		}
@@ -198,8 +199,7 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 static int filter_ifindex;
 
 int print_qdisc(const struct sockaddr_nl *who,
-		       struct nlmsghdr *n,
-		       void *arg)
+		struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
@@ -241,18 +241,19 @@ int print_qdisc(const struct sockaddr_nl *who,
 
 	if (filter_ifindex == 0)
 		fprintf(fp, "dev %s ", ll_index_to_name(t->tcm_ifindex));
+
 	if (t->tcm_parent == TC_H_ROOT)
 		fprintf(fp, "root ");
 	else if (t->tcm_parent) {
 		print_tc_classid(abuf, sizeof(abuf), t->tcm_parent);
 		fprintf(fp, "parent %s ", abuf);
 	}
-	if (t->tcm_info != 1) {
-		fprintf(fp, "refcnt %d ", t->tcm_info);
-	}
-	/* pfifo_fast is generic enough to warrant the hardcoding --JHS */
 
-	if (0 == strcmp("pfifo_fast", RTA_DATA(tb[TCA_KIND])))
+	if (t->tcm_info != 1)
+		fprintf(fp, "refcnt %d ", t->tcm_info);
+
+	/* pfifo_fast is generic enough to warrant the hardcoding --JHS */
+	if (strcmp("pfifo_fast", RTA_DATA(tb[TCA_KIND])) == 0)
 		q = get_qdisc_kind("prio");
 	else
 		q = get_qdisc_kind(RTA_DATA(tb[TCA_KIND]));
@@ -264,10 +265,12 @@ int print_qdisc(const struct sockaddr_nl *who,
 			fprintf(fp, "[cannot parse qdisc parameters]");
 	}
 	fprintf(fp, "\n");
+
 	if (show_details && tb[TCA_STAB]) {
 		print_size_table(fp, " ", tb[TCA_STAB]);
 		fprintf(fp, "\n");
 	}
+
 	if (show_stats) {
 		struct rtattr *xstats = NULL;
 
@@ -296,11 +299,11 @@ static int tc_qdisc_list(int argc, char **argv)
 			strncpy(d, *argv, sizeof(d)-1);
 		} else if (strcmp(*argv, "ingress") == 0 ||
 			   strcmp(*argv, "clsact") == 0) {
-			     if (t.tcm_parent) {
-				     fprintf(stderr, "Duplicate parent ID\n");
-				     usage();
-			     }
-			     t.tcm_parent = TC_H_INGRESS;
+			if (t.tcm_parent) {
+				fprintf(stderr, "Duplicate parent ID\n");
+				usage();
+			}
+			t.tcm_parent = TC_H_INGRESS;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -314,7 +317,8 @@ static int tc_qdisc_list(int argc, char **argv)
 	ll_init_map(&rth);
 
 	if (d[0]) {
-		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
+		t.tcm_ifindex = ll_name_to_index(d);
+		if (t.tcm_ifindex == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			return 1;
 		}
