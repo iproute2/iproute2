@@ -51,6 +51,8 @@ ip-l2tp - L2TPv3 static unmanaged tunnel configuration
 .br
 .RB "[ " l2spec_type " { " none " | " default " } ]"
 .br
+.RB "[ " seq " { " none " | " send " | " recv " | " both " } ]"
+.br
 .RB "[ " offset
 .IR OFFSET
 .RB " ] [ " peer_offset
@@ -237,6 +239,19 @@ set the layer2specific header type of the session.
 .br
 Valid values are:
 .BR none ", " default "."
+.TP
+.BI seq " SEQ"
+controls sequence numbering to prevent or detect out of order packets.
+.B send
+puts a sequence number in the default layer2specific header of each
+outgoing packet.
+.B recv
+reorder packets if they are received out of order.
+Default is
+.BR none "."
+.br
+Valid values are:
+.BR none ", " send ", " recv ", " both "."
 .TP
 .BI offset " OFFSET"
 sets the byte offset from the L2TP header where user data starts in

@@ -246,6 +246,12 @@ static void print_session(struct l2tp_data *data)
 		printf("  reorder timeout: %u\n", p->reorder_timeout);
 	else
 		printf("\n");
+	if (p->send_seq || p->recv_seq) {
+		printf("  sequence numbering:");
+		if (p->send_seq) printf(" send");
+		if (p->recv_seq) printf(" recv");
+		printf("\n");
+	}
 }
 
 static int get_response(struct nlmsghdr *n, void *arg)
@@ -482,6 +488,7 @@ static void usage(void)
 	fprintf(stderr, "          session_id ID peer_session_id ID\n");
 	fprintf(stderr, "          [ cookie HEXSTR ] [ peer_cookie HEXSTR ]\n");
 	fprintf(stderr, "          [ offset OFFSET ] [ peer_offset OFFSET ]\n");
+	fprintf(stderr, "          [ seq { none | send | recv | both } ]\n");
 	fprintf(stderr, "          [ l2spec_type L2SPEC ]\n");
 	fprintf(stderr, "       ip l2tp del tunnel tunnel_id ID\n");
 	fprintf(stderr, "       ip l2tp del session tunnel_id ID session_id ID\n");
@@ -650,6 +657,22 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 				p->l2spec_len = 0;
 			} else {
 				fprintf(stderr, "Unknown layer2specific header type \"%s\"\n", *argv);
+				exit(-1);
+			}
+		} else if (strcmp(*argv, "seq") == 0) {
+			NEXT_ARG();
+			if (strcasecmp(*argv, "both") == 0) {
+				p->recv_seq = 1;
+				p->send_seq = 1;
+			} else if (strcasecmp(*argv, "recv") == 0) {
+				p->recv_seq = 1;
+			} else if (strcasecmp(*argv, "send") == 0) {
+				p->send_seq = 1;
+			} else if (strcasecmp(*argv, "none") == 0) {
+				p->recv_seq = 0;
+				p->send_seq = 0;
+			} else {
+				fprintf(stderr, "Unknown seq value \"%s\"\n", *argv);
 				exit(-1);
 			}
 		} else if (strcmp(*argv, "tunnel") == 0) {
