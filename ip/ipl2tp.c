@@ -56,15 +56,15 @@ struct l2tp_parm {
 
 	uint16_t pw_type;
 	uint16_t mtu;
-	int udp6_csum_tx:1;
-	int udp6_csum_rx:1;
-	int udp_csum:1;
-	int recv_seq:1;
-	int send_seq:1;
-	int lns_mode:1;
-	int data_seq:2;
-	int tunnel:1;
-	int session:1;
+	unsigned int udp6_csum_tx:1;
+	unsigned int udp6_csum_rx:1;
+	unsigned int udp_csum:1;
+	unsigned int recv_seq:1;
+	unsigned int send_seq:1;
+	unsigned int lns_mode:1;
+	unsigned int data_seq:2;
+	unsigned int tunnel:1;
+	unsigned int session:1;
 	int reorder_timeout;
 	const char *ifname;
 	uint8_t l2spec_type;
