@@ -30,6 +30,12 @@ ip-l2tp - L2TPv3 static unmanaged tunnel configuration
 .IR PORT
 .RB " ]"
 .br
+.RB "[ " udp_csum " { " on " | " off " } ]"
+.br
+.RB "[ " udp6_csum_tx " { " on " | " off " } ]"
+.br
+.RB "[ " udp6_csum_rx " { " on " | " off " } ]"
+.br
 .ti -8
 .BR "ip l2tp add session"
 .RB "[ " name
@@ -190,6 +196,33 @@ selected.
 set the UDP destination port to be used for the tunnel. Must be
 present when udp encapsulation is selected. Ignored when ip
 encapsulation is selected.
+.TP
+.BI udp_csum " STATE"
+(IPv4 only) control if IPv4 UDP checksums should be calculated and checked for the
+encapsulating UDP packets, when UDP encapsulating is selected.
+Default is
+.BR off "."
+.br
+Valid values are:
+.BR on ", " off "."
+.TP
+.BI udp6_csum_tx " STATE"
+(IPv6 only) control if IPv6 UDP checksums should be calculated for encapsulating
+UDP packets, when UDP encapsulating is selected.
+Default is
+.BR on "."
+.br
+Valid values are:
+.BR on ", " off "."
+.TP
+.BI udp6_csum_rx " STATE"
+(IPv6 only) control if IPv6 UDP checksums should be checked for the encapsulating
+UDP packets, when UDP encapsulating is selected.
+Default is
+.BR on "."
+.br
+Valid values are:
+.BR on ", " off "."
 .SS ip l2tp del tunnel - destroy a tunnel
 .TP
 .BI tunnel_id " ID"
