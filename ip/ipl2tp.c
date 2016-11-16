@@ -218,9 +218,24 @@ static void print_tunnel(const struct l2tp_data *data)
 	printf("  Peer tunnel %u\n",
 	       p->peer_tunnel_id);
 
-	if (p->encap == L2TP_ENCAPTYPE_UDP)
+	if (p->encap == L2TP_ENCAPTYPE_UDP) {
 		printf("  UDP source / dest ports: %hu/%hu\n",
 		       p->local_udp_port, p->peer_udp_port);
+
+		switch (p->local_ip.family) {
+		case AF_INET:
+			printf("  UDP checksum: %s\n",
+			       p->udp_csum ? "enabled" : "disabled");
+			break;
+		case AF_INET6:
+			printf("  UDP checksum: %s%s%s%s\n",
+			       p->udp6_csum_tx && p->udp6_csum_rx ? "enabled" : "",
+			       p->udp6_csum_tx && !p->udp6_csum_rx ? "tx" : "",
+			       !p->udp6_csum_tx && p->udp6_csum_rx ? "rx" : "",
+			       !p->udp6_csum_tx && !p->udp6_csum_rx ? "disabled" : "");
+			break;
+		}
+	}
 }
 
 static void print_session(struct l2tp_data *data)
