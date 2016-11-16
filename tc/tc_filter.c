@@ -226,6 +226,16 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type == RTM_DELTFILTER)
 		fprintf(fp, "deleted ");
 
+	if (n->nlmsg_type == RTM_NEWTFILTER &&
+			(n->nlmsg_flags & NLM_F_CREATE) &&
+			!(n->nlmsg_flags & NLM_F_EXCL))
+		fprintf(fp, "replaced ");
+
+	if (n->nlmsg_type == RTM_NEWTFILTER &&
+			(n->nlmsg_flags & NLM_F_CREATE) &&
+			(n->nlmsg_flags & NLM_F_EXCL))
+		fprintf(fp, "added ");
+
 	fprintf(fp, "filter ");
 	if (!filter_ifindex || filter_ifindex != t->tcm_ifindex)
 		fprintf(fp, "dev %s ", ll_index_to_name(t->tcm_ifindex));
