@@ -160,8 +160,8 @@ static int create_session(struct l2tp_parm *p)
 	addattr8(&req.n, 1024, L2TP_ATTR_L2SPEC_LEN, p->l2spec_len);
 
 	if (p->mtu)		addattr16(&req.n, 1024, L2TP_ATTR_MTU, p->mtu);
-	if (p->recv_seq)	addattr(&req.n, 1024, L2TP_ATTR_RECV_SEQ);
-	if (p->send_seq)	addattr(&req.n, 1024, L2TP_ATTR_SEND_SEQ);
+	if (p->recv_seq)	addattr8(&req.n, 1024, L2TP_ATTR_RECV_SEQ, 1);
+	if (p->send_seq)	addattr8(&req.n, 1024, L2TP_ATTR_SEND_SEQ, 1);
 	if (p->lns_mode)	addattr(&req.n, 1024, L2TP_ATTR_LNS_MODE);
 	if (p->data_seq)	addattr8(&req.n, 1024, L2TP_ATTR_DATA_SEQ, p->data_seq);
 	if (p->reorder_timeout) addattr64(&req.n, 1024, L2TP_ATTR_RECV_TIMEOUT,
@@ -304,8 +304,10 @@ static int get_response(struct nlmsghdr *n, void *arg)
 		memcpy(p->peer_cookie, RTA_DATA(attrs[L2TP_ATTR_PEER_COOKIE]),
 		       p->peer_cookie_len = RTA_PAYLOAD(attrs[L2TP_ATTR_PEER_COOKIE]));
 
-	p->recv_seq = !!attrs[L2TP_ATTR_RECV_SEQ];
-	p->send_seq = !!attrs[L2TP_ATTR_SEND_SEQ];
+	if (attrs[L2TP_ATTR_RECV_SEQ])
+		p->recv_seq = !!rta_getattr_u8(attrs[L2TP_ATTR_RECV_SEQ]);
+	if (attrs[L2TP_ATTR_SEND_SEQ])
+		p->send_seq = !!rta_getattr_u8(attrs[L2TP_ATTR_SEND_SEQ]);
 
 	if (attrs[L2TP_ATTR_RECV_TIMEOUT])
 		p->reorder_timeout = rta_getattr_u64(attrs[L2TP_ATTR_RECV_TIMEOUT]);
