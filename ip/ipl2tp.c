@@ -292,12 +292,9 @@ static int get_response(struct nlmsghdr *n, void *arg)
 	if (attrs[L2TP_ATTR_UDP_CSUM])
 		p->udp_csum = !!rta_getattr_u8(attrs[L2TP_ATTR_UDP_CSUM]);
 
-	/*
-	 * Not fetching from L2TP_ATTR_UDP_ZERO_CSUM6_{T,R}X because the
-	 * kernel doesn't send it so just leave it as default value.
-	 */
-	p->udp6_csum_tx = 1;
-	p->udp6_csum_rx = 1;
+	p->udp6_csum_tx = !attrs[L2TP_ATTR_UDP_ZERO_CSUM6_TX];
+	p->udp6_csum_rx = !attrs[L2TP_ATTR_UDP_ZERO_CSUM6_RX];
+
 	if (attrs[L2TP_ATTR_COOKIE])
 		memcpy(p->cookie, RTA_DATA(attrs[L2TP_ATTR_COOKIE]),
 		       p->cookie_len = RTA_PAYLOAD(attrs[L2TP_ATTR_COOKIE]));
