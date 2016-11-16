@@ -120,7 +120,7 @@ static int create_tunnel(struct l2tp_parm *p)
 		addattr16(&req.n, 1024, L2TP_ATTR_UDP_SPORT, p->local_udp_port);
 		addattr16(&req.n, 1024, L2TP_ATTR_UDP_DPORT, p->peer_udp_port);
 		if (p->udp_csum)
-			addattr(&req.n, 1024, L2TP_ATTR_UDP_CSUM);
+			addattr8(&req.n, 1024, L2TP_ATTR_UDP_CSUM, 1);
 		if (!p->udp6_csum_tx)
 			addattr(&req.n, 1024, L2TP_ATTR_UDP_ZERO_CSUM6_TX);
 		if (!p->udp6_csum_rx)
@@ -289,7 +289,9 @@ static int get_response(struct nlmsghdr *n, void *arg)
 	if (attrs[L2TP_ATTR_L2SPEC_LEN])
 		p->l2spec_len = rta_getattr_u8(attrs[L2TP_ATTR_L2SPEC_LEN]);
 
-	p->udp_csum = !!attrs[L2TP_ATTR_UDP_CSUM];
+	if (attrs[L2TP_ATTR_UDP_CSUM])
+		p->udp_csum = !!rta_getattr_u8(attrs[L2TP_ATTR_UDP_CSUM]);
+
 	/*
 	 * Not fetching from L2TP_ATTR_UDP_ZERO_CSUM6_{T,R}X because the
 	 * kernel doesn't send it so just leave it as default value.
