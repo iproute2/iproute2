@@ -135,7 +135,12 @@ ip-link \- network device configuration
 .IR NAME " ]"
 .br
 .RB "[ " addrgenmode " { " eui64 " | " none " | " stable_secret " | " random " } ]"
-
+.br
+.RB "[ " macaddr " { " flush " | { " add " | " del " } "
+.IR MACADDR " | set [ "
+.IR MACADDR " [ "
+.IR MACADDR " [ ... ] ] ] } ]"
+.br
 
 .ti -8
 .B ip link show
@@ -882,7 +887,7 @@ the following additional arguments are supported:
 .BI "ip link add link " DEVICE " name " NAME
 .BR type " { " macvlan " | " macvtap " } "
 .BR mode " { " private " | " vepa " | " bridge " | " passthru
-.RB " [ " nopromisc " ] } "
+.RB " [ " nopromisc " ] | " source " } "
 
 .in +8
 .sp
@@ -919,6 +924,13 @@ the interface or create vlan interfaces on top of it. By default, this mode
 forces the underlying interface into promiscuous mode. Passing the
 .BR nopromisc " flag prevents this, so the promisc flag may be controlled "
 using standard tools.
+
+.B mode source
+- allows one to set a list of allowed mac address, which is used to match
+against source mac address from received frames on underlying interface. This
+allows creating mac based VLAN associations, instead of standard port or tag
+based. The feature is useful to deploy 802.1x mac based behavior,
+where drivers of underlying interfaces doesn't allows that.
 .in -8
 
 .TP
@@ -1467,6 +1479,32 @@ the following additional arguments are supported:
 - set the slave's queue ID (a 16bit unsigned value).
 
 .in -8
+
+.TP
+MACVLAN and MACVTAP Support
+Modify list of allowed macaddr for link in source mode.
+
+.B "ip link set type { macvlan | macvap } "
+[
+.BI macaddr " " "" COMMAND " " MACADDR " ..."
+]
+
+Commands:
+.in +8
+.B add
+- add MACADDR to allowed list
+.sp
+.B set
+- replace allowed list
+.sp
+.B del
+- remove MACADDR from allowed list
+.sp
+.B flush
+- flush whole allowed list
+.sp
+.in -8
+
 
 .SS  ip link show - display device attributes
 
