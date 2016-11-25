@@ -98,8 +98,8 @@ void iplink_usage(void)
 		fprintf(stderr,
 			"       ip link help [ TYPE ]\n\n"
 			"TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n"
-			"          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |\n"
-			"          gre | gretap | ip6gre | ip6gretap | vti | nlmon |\n"
+			"          bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |\n"
+			"          gre | gretap | ip6gre | ip6gretap | vti | nlmon | team_slave |\n"
 			"          bond_slave | ipvlan | geneve | bridge_slave | vrf | macsec }\n");
 	}
 	exit(-1);
