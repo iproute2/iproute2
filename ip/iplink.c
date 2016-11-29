@@ -66,6 +66,7 @@ void iplink_usage(void)
 	fprintf(stderr, "	                  [ address LLADDR ]\n");
 	fprintf(stderr, "	                  [ broadcast LLADDR ]\n");
 	fprintf(stderr, "	                  [ mtu MTU ]\n");
+	fprintf(stderr, "	                  [ vrf VRFID ]\n");
 	fprintf(stderr, "	                  [ netns PID ]\n");
 	fprintf(stderr, "	                  [ netns NAME ]\n");
 	fprintf(stderr, "			  [ alias NAME ]\n");
@@ -179,6 +180,36 @@ struct iplink_req {
 	char			buf[1024];
 };
 
+static int set_vrf(char *dev, int vrf)
+{
+   struct rtnl_handle rth;
+   struct {
+       struct nlmsghdr     n;
+       struct ifinfomsg    r;
+       char            buf[16];
+   } req;
+
+   memset(&req, 0, sizeof(req));
+
+   req.n.nlmsg_type = RTM_SETLINK;
+   req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+   req.n.nlmsg_flags = NLM_F_REQUEST;
+
+   if (rtnl_open(&rth, 0) < 0)
+       return 1;
+
+   ll_init_map(&rth);
+
+   req.r.ifi_family = AF_UNSPEC;
+   req.r.ifi_index = ll_name_to_index(dev);
+   addattr32(&req.n, sizeof(req), IFLA_VRF, vrf);
+
+   if (rtnl_talk(&rth, &req.n, 0, 0, NULL, NULL, NULL) < 0)
+       return 2;
+
+   return (0);
+}
+
 int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			   struct iplink_req *req)
 {
@@ -227,7 +258,7 @@ int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			}
 			ivt.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_TX_RATE, &ivt, sizeof(ivt));
-		
+
 		} else {
 			/* rewind arg */
 			PREV_ARG();
@@ -253,6 +284,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	char abuf[32];
 	int qlen = -1;
 	int mtu = -1;
+	int vrf = -1;
 	int netns = -1;
 	int vf = -1;
 
@@ -311,7 +343,13 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_PID, &netns, 4);
 			else
                                 invarg("Invalid \"netns\" value\n", *argv);
-		} else if (strcmp(*argv, "multicast") == 0) {
+		} else if (strcmp(*argv, "vrf") == 0) {
+           NEXT_ARG();
+           if (vrf != -1)
+               duparg("vrf", *argv);
+           if (get_integer(&vrf, *argv, 0))
+               invarg("Invalid \"vrf\" value\n", *argv);
+        } else if (strcmp(*argv, "multicast") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_MULTICAST;
 			if (strcmp(*argv, "on") == 0) {
@@ -747,6 +785,7 @@ static int do_set(int argc, char **argv)
 	__u32 flags = 0;
 	int qlen = -1;
 	int mtu = -1;
+	int vrf = -1;
 	char *newaddr = NULL;
 	char *newbrd = NULL;
 	struct ifreq ifr0, ifr1;
@@ -784,6 +823,12 @@ static int do_set(int argc, char **argv)
 				duparg("mtu", *argv);
 			if (get_integer(&mtu, *argv, 0))
 				invarg("Invalid \"mtu\" value\n", *argv);
+		} else if (strcmp(*argv, "vrf") == 0) {
+			NEXT_ARG();
+			if (vrf != -1)
+				duparg("vrf", *argv);
+			if (get_integer(&vrf, *argv, 0))
+				invarg("Invalid \"vrf\" value\n", *argv);
 		} else if (strcmp(*argv, "multicast") == 0) {
 			NEXT_ARG();
 			mask |= IFF_MULTICAST;
@@ -883,6 +928,10 @@ static int do_set(int argc, char **argv)
 	}
 	if (mtu != -1) {
 		if (set_mtu(dev, mtu) < 0)
+			return -1;
+	}
+	if (vrf != -1) {
+		if (set_vrf(dev, vrf) < 0)
 			return -1;
 	}
 	if (newaddr || newbrd) {

@@ -34,7 +34,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ip rule [ list | add | del | flush ] SELECTOR ACTION\n");
 	fprintf(stderr, "SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n");
-	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ]\n");
+	fprintf(stderr, "            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ vrf VRFID ]\n");
 	fprintf(stderr, "ACTION := [ table TABLE_ID ]\n");
 	fprintf(stderr, "          [ prohibit | reject | unreachable ]\n");
 	fprintf(stderr, "          [ realms [SRCREALM/]DSTREALM ]\n");
@@ -79,6 +79,9 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "%u:\t", *(unsigned*)RTA_DATA(tb[FRA_PRIORITY]));
 	else
 		fprintf(fp, "0:\t");
+
+    if (tb[RTA_VRF])
+        fprintf(fp, "vrf %u ", *(int*)RTA_DATA(tb[RTA_VRF]));
 
 	if (r->rtm_flags & FIB_RULE_INVERT)
 		fprintf(fp, "not ");
@@ -317,6 +320,12 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		} else if (strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
 			addattr_l(&req.n, sizeof(req), FRA_OIFNAME, *argv, strlen(*argv)+1);
+       } else if (strcmp(*argv, "vrf") == 0) {
+           int vrf;
+           NEXT_ARG();
+                        if (get_u32(&vrf, *argv, 0))
+                                invarg("\"vrf\" value is invalid\n", *argv);
+           addattr32(&req.n, sizeof(req), RTA_VRF, vrf);
 		} else if (strcmp(*argv, "nat") == 0 ||
 			   matches(*argv, "map-to") == 0) {
 			NEXT_ARG();

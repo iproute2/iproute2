@@ -65,7 +65,7 @@ static void usage(void)
 	fprintf(stderr, "                            [ mark NUMBER ]\n");
 	fprintf(stderr, "       ip route { add | del | change | append | replace } ROUTE\n");
 	fprintf(stderr, "SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n");
-	fprintf(stderr, "            [ table TABLE_ID ] [ proto RTPROTO ]\n");
+	fprintf(stderr, "            [ table TABLE_ID ] [ proto RTPROTO ] [ vrf NUMBER ]\n");
 	fprintf(stderr, "            [ type TYPE ] [ scope SCOPE ]\n");
 	fprintf(stderr, "ROUTE := NODE_SPEC [ INFO_SPEC ]\n");
 	fprintf(stderr, "NODE_SPEC := [ TYPE ] PREFIX [ tos TOS ]\n");
@@ -435,6 +435,11 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "%s ",
 			rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
 	}
+
+	if (tb[RTA_VRF])
+		fprintf(fp, " vrf %u ",
+			(unsigned char)*(int*)RTA_DATA(tb[RTA_VRF]));
+
 	if ((r->rtm_flags&RTM_F_CLONED) && r->rtm_family == AF_INET) {
 		__u32 flags = r->rtm_flags&~0xFFFF;
 		int first = 1;
@@ -917,6 +922,12 @@ int iproute_modify(int cmd, unsigned flags, int argc, char **argv)
 			if (rtnl_rtprot_a2n(&prot, *argv))
 				invarg("\"protocol\" value is invalid\n", *argv);
 			req.r.rtm_protocol = prot;
+       } else if (matches(*argv, "vrf") == 0) {
+           int vrf;
+           NEXT_ARG();
+           if (get_unsigned(&vrf, *argv, 0))
+               invarg("\"vrf\" value is invalid\n", *argv);
+           addattr32(&req.n, sizeof(req), RTA_VRF, vrf);
 		} else if (matches(*argv, "table") == 0) {
 			__u32 tid;
 			NEXT_ARG();
