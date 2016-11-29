@@ -14,6 +14,17 @@
 #define RTNL_FAMILY_IP6MR		129
 #define RTNL_FAMILY_MAX			129
 
+struct vrfmsg
+{
+   unsigned char       va_family;
+   unsigned char       va_vrf; /* VRF id */
+        unsigned char           empty[2];
+};
+
+#define VRF_MAX 8
+#define VRA_MAX 0
+
+
 /****
  *		Routing/neighbour discovery messages.
  ****/
@@ -119,6 +130,9 @@ enum {
 #define RTM_GETDCB RTM_GETDCB
 	RTM_SETDCB,
 #define RTM_SETDCB RTM_SETDCB
+    RTM_NEWVRF,
+    RTM_DELVRF,
+    RTM_GETVRF,
 
 	__RTM_MAX,
 #define RTM_MAX		(((__RTM_MAX + 3) & ~3) - 1)
@@ -283,6 +297,7 @@ enum rtattr_type_t {
 	RTA_MP_ALGO, /* no longer used */
 	RTA_TABLE,
 	RTA_MARK,
+    RTA_VRF,
 	__RTA_MAX
 };
 
