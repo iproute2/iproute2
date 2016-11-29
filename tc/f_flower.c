@@ -25,29 +25,30 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... flower [ MATCH-LIST ]\n");
-	fprintf(stderr, "                  [ skip_sw | skip_hw ]\n");
-	fprintf(stderr, "                  [ action ACTION-SPEC ] [ classid CLASSID ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: MATCH-LIST := [ MATCH-LIST ] MATCH\n");
-	fprintf(stderr, "       MATCH      := { indev DEV-NAME |\n");
-	fprintf(stderr, "                       vlan_id VID |\n");
-	fprintf(stderr, "                       vlan_prio PRIORITY |\n");
-	fprintf(stderr, "                       vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n");
-	fprintf(stderr, "                       dst_mac MAC-ADDR |\n");
-	fprintf(stderr, "                       src_mac MAC-ADDR |\n");
-	fprintf(stderr, "                       [ipv4 | ipv6 ] |\n");
-	fprintf(stderr, "                       ip_proto [tcp | udp | IP-PROTO ] |\n");
-	fprintf(stderr, "                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n");
-	fprintf(stderr, "                       src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n");
-	fprintf(stderr, "                       dst_port PORT-NUMBER |\n");
-	fprintf(stderr, "                       src_port PORT-NUMBER }\n");
-	fprintf(stderr,	"       FILTERID := X:Y:Z\n");
-	fprintf(stderr,	"       ACTION-SPEC := ... look at individual actions\n");
-	fprintf(stderr,	"\n");
-	fprintf(stderr,	"NOTE: CLASSID, ETH-TYPE, IP-PROTO are parsed as hexadecimal input.\n");
-	fprintf(stderr,	"NOTE: There can be only used one mask per one prio. If user needs\n");
-	fprintf(stderr,	"      to specify different mask, he has to use different prio.\n");
+	fprintf(stderr,
+		"Usage: ... flower [ MATCH-LIST ]\n"
+		"                  [ skip_sw | skip_hw ]\n"
+		"                  [ action ACTION-SPEC ] [ classid CLASSID ]\n"
+		"\n"
+		"Where: MATCH-LIST := [ MATCH-LIST ] MATCH\n"
+		"       MATCH      := { indev DEV-NAME |\n"
+		"                       vlan_id VID |\n"
+		"                       vlan_prio PRIORITY |\n"
+		"                       vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n"
+		"                       dst_mac MAC-ADDR |\n"
+		"                       src_mac MAC-ADDR |\n"
+		"                       [ipv4 | ipv6 ] |\n"
+		"                       ip_proto [tcp | udp | IP-PROTO ] |\n"
+		"                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
+		"                       src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
+		"                       dst_port PORT-NUMBER |\n"
+		"                       src_port PORT-NUMBER }\n"
+		"       FILTERID := X:Y:Z\n"
+		"       ACTION-SPEC := ... look at individual actions\n"
+		"\n"
+		"NOTE: CLASSID, ETH-TYPE, IP-PROTO are parsed as hexadecimal input.\n"
+		"NOTE: There can be only used one mask per one prio. If user needs\n"
+		"      to specify different mask, he has to use different prio.\n");
 }
 
 static int flower_parse_eth_addr(char *str, int addr_type, int mask_type,
@@ -66,12 +67,14 @@ static int flower_parse_eth_addr(char *str, int addr_type, int mask_type,
 }
 
 static int flower_parse_vlan_eth_type(char *str, __be16 eth_type, int type,
-				      __be16 *p_vlan_eth_type, struct nlmsghdr *n)
+				      __be16 *p_vlan_eth_type,
+				      struct nlmsghdr *n)
 {
 	__be16 vlan_eth_type;
 
 	if (eth_type != htons(ETH_P_8021Q)) {
-		fprintf(stderr, "Can't set \"vlan_ethtype\" if ethertype isn't 802.1Q\n");
+		fprintf(stderr,
+			"Can't set \"vlan_ethtype\" if ethertype isn't 802.1Q\n");
 		return -1;
 	}
 
@@ -249,7 +252,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 
 			NEXT_ARG();
 			if (eth_type != htons(ETH_P_8021Q)) {
-				fprintf(stderr, "Can't set \"vlan_id\" if ethertype isn't 802.1Q\n");
+				fprintf(stderr,
+					"Can't set \"vlan_id\" if ethertype isn't 802.1Q\n");
 				return -1;
 			}
 			ret = get_u16(&vid, *argv, 10);
@@ -263,7 +267,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 
 			NEXT_ARG();
 			if (eth_type != htons(ETH_P_8021Q)) {
-				fprintf(stderr, "Can't set \"vlan_prio\" if ethertype isn't 802.1Q\n");
+				fprintf(stderr,
+					"Can't set \"vlan_prio\" if ethertype isn't 802.1Q\n");
 				return -1;
 			}
 			ret = get_u8(&vlan_prio, *argv, 10);
@@ -271,12 +276,13 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "Illegal \"vlan_prio\"\n");
 				return -1;
 			}
-			addattr8(n, MAX_MSG, TCA_FLOWER_KEY_VLAN_PRIO, vlan_prio);
+			addattr8(n, MAX_MSG,
+				 TCA_FLOWER_KEY_VLAN_PRIO, vlan_prio);
 		} else if (matches(*argv, "vlan_ethtype") == 0) {
 			NEXT_ARG();
 			ret = flower_parse_vlan_eth_type(*argv, eth_type,
-							 TCA_FLOWER_KEY_VLAN_ETH_TYPE,
-							 &vlan_ethtype, n);
+						 TCA_FLOWER_KEY_VLAN_ETH_TYPE,
+						 &vlan_ethtype, n);
 			if (ret < 0)
 				return -1;
 		} else if (matches(*argv, "dst_mac") == 0) {
@@ -574,7 +580,7 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	flower_print_port(f, "src_port",
 			  tb[flower_port_attr_type(ip_proto, true)]);
 
-	if (tb[TCA_FLOWER_FLAGS])  {
+	if (tb[TCA_FLOWER_FLAGS]) {
 		__u32 flags = rta_getattr_u32(tb[TCA_FLOWER_FLAGS]);
 
 		if (flags & TCA_CLS_FLAGS_SKIP_HW)
@@ -583,9 +589,8 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			fprintf(f, "\n  skip_sw");
 	}
 
-	if (tb[TCA_FLOWER_ACT]) {
+	if (tb[TCA_FLOWER_ACT])
 		tc_print_action(f, tb[TCA_FLOWER_ACT]);
-	}
 
 	return 0;
 }
