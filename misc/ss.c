@@ -817,6 +817,9 @@ struct tcpstat {
 	double		    rcv_rtt;
 	double		    min_rtt;
 	int		    rcv_space;
+	unsigned long long  busy_time;
+	unsigned long long  rwnd_limited;
+	unsigned long long  sndbuf_limited;
 	bool		    has_ts_opt;
 	bool		    has_sack_opt;
 	bool		    has_ecn_opt;
@@ -1980,6 +1983,18 @@ static void tcp_stats_print(struct tcpstat *s)
 	if (s->app_limited)
 		printf(" app_limited");
 
+	if (s->busy_time) {
+		printf(" busy:%llums", s->busy_time / 1000);
+		if (s->rwnd_limited)
+			printf(" rwnd_limited:%llums(%.1f%%)",
+			       s->rwnd_limited / 1000,
+			       100.0 * s->rwnd_limited / s->busy_time);
+		if (s->sndbuf_limited)
+			printf(" sndbuf_limited:%llums(%.1f%%)",
+			       s->sndbuf_limited / 1000,
+			       100.0 * s->sndbuf_limited / s->busy_time);
+	}
+
 	if (s->unacked)
 		printf(" unacked:%u", s->unacked);
 	if (s->retrans || s->retrans_total)
@@ -2283,6 +2298,9 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 			s.min_rtt = (double) info->tcpi_min_rtt / 1000;
 		s.delivery_rate = info->tcpi_delivery_rate * 8.;
 		s.app_limited = info->tcpi_delivery_rate_app_limited;
+		s.busy_time = info->tcpi_busy_time;
+		s.rwnd_limited = info->tcpi_rwnd_limited;
+		s.sndbuf_limited = info->tcpi_sndbuf_limited;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 		free(s.bbr_info);
