@@ -924,6 +924,12 @@ routes are left unchanged. Any routes specified in the data stream that
 already exist in the table will be ignored.
 .RE
 
+.SH NOTES
+Starting with Linux kernel version 3.6, there is no routing cache for IPv4
+anymore. Hence
+.B "ip route show cached"
+will never print any entries on systems with this or newer kernel versions.
+
 .SH EXAMPLES
 .PP
 ip ro
