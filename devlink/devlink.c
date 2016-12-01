@@ -28,6 +28,10 @@
 
 #define ESWITCH_MODE_LEGACY "legacy"
 #define ESWITCH_MODE_SWITCHDEV "switchdev"
+#define ESWITCH_INLINE_MODE_NONE "none"
+#define ESWITCH_INLINE_MODE_LINK "link"
+#define ESWITCH_INLINE_MODE_NETWORK "network"
+#define ESWITCH_INLINE_MODE_TRANSPORT "transport"
 
 #define pr_err(args...) fprintf(stderr, ##args)
 #define pr_out(args...) fprintf(stdout, ##args)
@@ -132,6 +136,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_SB_TH		BIT(9)
 #define DL_OPT_SB_TC		BIT(10)
 #define DL_OPT_ESWITCH_MODE	BIT(11)
+#define DL_OPT_ESWITCH_INLINE_MODE	BIT(12)
 
 struct dl_opts {
 	uint32_t present; /* flags of present items */
@@ -148,6 +153,7 @@ struct dl_opts {
 	uint32_t sb_threshold;
 	uint16_t sb_tc_index;
 	enum devlink_eswitch_mode eswitch_mode;
+	enum devlink_eswitch_inline_mode eswitch_inline_mode;
 };
 
 struct dl {
@@ -304,6 +310,9 @@ static int attr_cb(const struct nlattr *attr, void *data)
 		return MNL_CB_ERROR;
 	if (type == DEVLINK_ATTR_ESWITCH_MODE &&
 	    mnl_attr_validate(attr, MNL_TYPE_U16) < 0)
+		return MNL_CB_ERROR;
+	if (type == DEVLINK_ATTR_ESWITCH_INLINE_MODE &&
+	    mnl_attr_validate(attr, MNL_TYPE_U8) < 0)
 		return MNL_CB_ERROR;
 	tb[type] = attr;
 	return MNL_CB_OK;
@@ -682,6 +691,24 @@ static int eswitch_mode_get(const char *typestr,
 	return 0;
 }
 
+static int eswitch_inline_mode_get(const char *typestr,
+				   enum devlink_eswitch_inline_mode *p_mode)
+{
+	if (strcmp(typestr, ESWITCH_INLINE_MODE_NONE) == 0) {
+		*p_mode = DEVLINK_ESWITCH_INLINE_MODE_NONE;
+	} else if (strcmp(typestr, ESWITCH_INLINE_MODE_LINK) == 0) {
+		*p_mode = DEVLINK_ESWITCH_INLINE_MODE_LINK;
+	} else if (strcmp(typestr, ESWITCH_INLINE_MODE_NETWORK) == 0) {
+		*p_mode = DEVLINK_ESWITCH_INLINE_MODE_NETWORK;
+	} else if (strcmp(typestr, ESWITCH_INLINE_MODE_TRANSPORT) == 0) {
+		*p_mode = DEVLINK_ESWITCH_INLINE_MODE_TRANSPORT;
+	} else {
+		pr_err("Unknown eswitch inline mode \"%s\"\n", typestr);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 			 uint32_t o_optional)
 {
@@ -803,6 +830,19 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_ESWITCH_MODE;
+		} else if (dl_argv_match(dl, "inline-mode") &&
+			   (o_all & DL_OPT_ESWITCH_INLINE_MODE)) {
+			const char *typestr;
+
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &typestr);
+			if (err)
+				return err;
+			err = eswitch_inline_mode_get(
+				typestr, &opts->eswitch_inline_mode);
+			if (err)
+				return err;
+			o_found |= DL_OPT_ESWITCH_INLINE_MODE;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -863,6 +903,12 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 		return -EINVAL;
 	}
 
+	if ((o_required & DL_OPT_ESWITCH_INLINE_MODE) &&
+	    !(o_found & DL_OPT_ESWITCH_INLINE_MODE)) {
+		pr_err("E-Switch inline-mode option expected.\n");
+		return -EINVAL;
+	}
+
 	return 0;
 }
 
@@ -909,6 +955,9 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_ESWITCH_MODE)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_ESWITCH_MODE,
 				 opts->eswitch_mode);
+	if (opts->present & DL_OPT_ESWITCH_INLINE_MODE)
+		mnl_attr_put_u8(nlh, DEVLINK_ATTR_ESWITCH_INLINE_MODE,
+				opts->eswitch_inline_mode);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -963,6 +1012,9 @@ static bool dl_dump_filter(struct dl *dl, struct nlattr **tb)
 static void cmd_dev_help(void)
 {
 	pr_err("Usage: devlink dev show [ DEV ]\n");
+	pr_err("       devlink dev eswitch set DEV [ mode { legacy | switchdev } ]\n");
+	pr_err("                               [ inline-mode { none | link | network | transport } ]\n");
+	pr_err("       devlink dev eswitch show DEV\n");
 }
 
 static bool cmp_arr_last_handle(struct dl *dl, const char *bus_name,
@@ -1201,6 +1253,22 @@ static const char *eswitch_mode_name(uint32_t mode)
 	}
 }
 
+static const char *eswitch_inline_mode_name(uint32_t mode)
+{
+	switch (mode) {
+	case DEVLINK_ESWITCH_INLINE_MODE_NONE:
+		return ESWITCH_INLINE_MODE_NONE;
+	case DEVLINK_ESWITCH_INLINE_MODE_LINK:
+		return ESWITCH_INLINE_MODE_LINK;
+	case DEVLINK_ESWITCH_INLINE_MODE_NETWORK:
+		return ESWITCH_INLINE_MODE_NETWORK;
+	case DEVLINK_ESWITCH_INLINE_MODE_TRANSPORT:
+		return ESWITCH_INLINE_MODE_TRANSPORT;
+	default:
+		return "<unknown mode>";
+	}
+}
+
 static void pr_out_eswitch(struct dl *dl, struct nlattr **tb)
 {
 	__pr_out_handle_start(dl, tb, true, false);
@@ -1208,6 +1276,12 @@ static void pr_out_eswitch(struct dl *dl, struct nlattr **tb)
 	if (tb[DEVLINK_ATTR_ESWITCH_MODE])
 		pr_out_str(dl, "mode",
 			   eswitch_mode_name(mnl_attr_get_u16(tb[DEVLINK_ATTR_ESWITCH_MODE])));
+
+	if (tb[DEVLINK_ATTR_ESWITCH_INLINE_MODE])
+		pr_out_str(dl, "inline-mode",
+			   eswitch_inline_mode_name(mnl_attr_get_u8(
+				   tb[DEVLINK_ATTR_ESWITCH_INLINE_MODE])));
+
 	pr_out_handle_end(dl);
 }
 
@@ -1250,16 +1324,27 @@ static int cmd_dev_eswitch_set(struct dl *dl)
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_ESWITCH_MODE_SET,
 			       NLM_F_REQUEST | NLM_F_ACK);
 
-	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE | DL_OPT_ESWITCH_MODE, 0);
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE,
+				DL_OPT_ESWITCH_MODE |
+				DL_OPT_ESWITCH_INLINE_MODE);
+
 	if (err)
 		return err;
+
+	if (dl->opts.present == 1) {
+		pr_err("Need to set at least one option\n");
+		return -ENOENT;
+	}
 
 	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
 }
 
 static int cmd_dev_eswitch(struct dl *dl)
 {
-	if (dl_argv_match(dl, "set")) {
+	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
+		cmd_dev_help();
+		return 0;
+	} else if (dl_argv_match(dl, "set")) {
 		dl_arg_inc(dl);
 		return cmd_dev_eswitch_set(dl);
 	} else if (dl_argv_match(dl, "show")) {

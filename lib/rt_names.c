@@ -559,8 +559,12 @@ const char *rtnl_group_n2a(int id, char *buf, int len)
 
 	for (i = 0; i < 256; i++) {
 		entry = rtnl_group_hash[i];
-		if (entry && entry->id == id)
-			return entry->name;
+
+		while (entry) {
+			if (entry->id == id)
+				return entry->name;
+			entry = entry->next;
+		}
 	}
 
 	snprintf(buf, len, "%d", id);

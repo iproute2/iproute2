@@ -321,7 +321,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type != RTM_NEWROUTE && n->nlmsg_type != RTM_DELROUTE) {
 		fprintf(stderr, "Not a route: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
-		return 0;
+		return -1;
 	}
 	if (filter.flushb && n->nlmsg_type != RTM_NEWROUTE)
 		return 0;
@@ -1755,7 +1755,7 @@ static int iproute_get(int argc, char **argv)
 
 		if (print_route(NULL, &req.n, (void *)stdout) < 0) {
 			fprintf(stderr, "An error :-)\n");
-			exit(1);
+			return -1;
 		}
 
 		if (req.n.nlmsg_type != RTM_NEWROUTE) {

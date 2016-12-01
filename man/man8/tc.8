@@ -28,7 +28,7 @@ class-id ] qdisc
 
 .B tc
 .RI "[ " OPTIONS " ]"
-.B filter [ add | change | replace | delete ] dev
+.B filter [ add | change | replace | delete | get ] dev
 DEV
 .B [ parent
 qdisc-id
@@ -574,6 +574,14 @@ cannot move a node.
 replace
 Performs a nearly atomic remove/add on an existing node id. If the node does not exist yet
 it is created.
+
+.TP
+get
+Displays a single filter given the interface, parent ID, priority, protocol and handle ID.
+
+.TP
+show
+Displays all filters attached to the given interface. A valid parent ID must be passed.
 
 .TP
 link

@@ -23,8 +23,6 @@ flower \- flow based traffic control filter
 .R " | { "
 .BR dst_mac " | " src_mac " } "
 .IR mac_address " | "
-.BR eth_type " { " ipv4 " | " ipv6 " | " 802.1Q " | "
-.IR ETH_TYPE " } | "
 .B vlan_id
 .IR VID " | "
 .B vlan_prio
@@ -74,13 +72,6 @@ Do not process filter by hardware.
 .TQ
 .BI src_mac " mac_address"
 Match on source or destination MAC address.
-.TP
-.BI eth_type " ETH_TYPE"
-Match on the next protocol.
-.I ETH_TYPE
-may be either
-.BR ipv4 , ipv6 , 802.1Q ,
-or an unsigned 16bit value in hexadecimal format.
 .TP
 .BI vlan_id " VID"
 Match on vlan tag id.

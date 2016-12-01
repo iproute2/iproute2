@@ -662,18 +662,18 @@ static void usage(void)
 {
 	fprintf(stderr,
 "Usage: ifstat [OPTION] [ PATTERN [ PATTERN ] ]\n"
-"   -h, --help		this message\n"
-"   -a, --ignore	ignore history\n"
-"   -d, --scan=SECS	sample every statistics every SECS\n"
-"   -e, --errors	show errors\n"
-"   -j, --json          format output in JSON\n"
-"   -n, --nooutput	do history only\n"
-"   -p, --pretty        pretty print\n"
-"   -r, --reset		reset history\n"
-"   -s, --noupdate	don\'t update history\n"
-"   -t, --interval=SECS	report average over the last SECS\n"
-"   -V, --version	output version information\n"
-"   -z, --zeros		show entries with zero activity\n");
+"   -h, --help           this message\n"
+"   -a, --ignore         ignore history\n"
+"   -d, --scan=SECS      sample every statistics every SECS\n"
+"   -e, --errors         show errors\n"
+"   -j, --json           format output in JSON\n"
+"   -n, --nooutput       do history only\n"
+"   -p, --pretty         pretty print\n"
+"   -r, --reset          reset history\n"
+"   -s, --noupdate       don't update history\n"
+"   -t, --interval=SECS  report average over the last SECS\n"
+"   -V, --version        output version information\n"
+"   -z, --zeros          show entries with zero activity\n");
 
 	exit(-1);
 }

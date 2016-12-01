@@ -30,6 +30,12 @@ ip-l2tp - L2TPv3 static unmanaged tunnel configuration
 .IR PORT
 .RB " ]"
 .br
+.RB "[ " udp_csum " { " on " | " off " } ]"
+.br
+.RB "[ " udp6_csum_tx " { " on " | " off " } ]"
+.br
+.RB "[ " udp6_csum_rx " { " on " | " off " } ]"
+.br
 .ti -8
 .BR "ip l2tp add session"
 .RB "[ " name
@@ -50,6 +56,8 @@ ip-l2tp - L2TPv3 static unmanaged tunnel configuration
 .RB " ]"
 .br
 .RB "[ " l2spec_type " { " none " | " default " } ]"
+.br
+.RB "[ " seq " { " none " | " send " | " recv " | " both " } ]"
 .br
 .RB "[ " offset
 .IR OFFSET
@@ -154,9 +162,6 @@ tunnels and sessions to be established and provides for detecting and
 acting upon network failures.
 .SS ip l2tp add tunnel - add a new tunnel
 .TP
-.BI name " NAME "
-sets the session network interface name. Default is l2tpethN.
-.TP
 .BI tunnel_id " ID"
 set the tunnel id, which is a 32-bit integer value. Uniquely
 identifies the tunnel. The value used must match the peer_tunnel_id
@@ -191,6 +196,33 @@ selected.
 set the UDP destination port to be used for the tunnel. Must be
 present when udp encapsulation is selected. Ignored when ip
 encapsulation is selected.
+.TP
+.BI udp_csum " STATE"
+(IPv4 only) control if IPv4 UDP checksums should be calculated and checked for the
+encapsulating UDP packets, when UDP encapsulating is selected.
+Default is
+.BR off "."
+.br
+Valid values are:
+.BR on ", " off "."
+.TP
+.BI udp6_csum_tx " STATE"
+(IPv6 only) control if IPv6 UDP checksums should be calculated for encapsulating
+UDP packets, when UDP encapsulating is selected.
+Default is
+.BR on "."
+.br
+Valid values are:
+.BR on ", " off "."
+.TP
+.BI udp6_csum_rx " STATE"
+(IPv6 only) control if IPv6 UDP checksums should be checked for the encapsulating
+UDP packets, when UDP encapsulating is selected.
+Default is
+.BR on "."
+.br
+Valid values are:
+.BR on ", " off "."
 .SS ip l2tp del tunnel - destroy a tunnel
 .TP
 .BI tunnel_id " ID"
@@ -239,7 +271,20 @@ find in received L2TP packets. Default is to use no cookie.
 set the layer2specific header type of the session.
 .br
 Valid values are:
-.BR none ", " udp "."
+.BR none ", " default "."
+.TP
+.BI seq " SEQ"
+controls sequence numbering to prevent or detect out of order packets.
+.B send
+puts a sequence number in the default layer2specific header of each
+outgoing packet.
+.B recv
+reorder packets if they are received out of order.
+Default is
+.BR none "."
+.br
+Valid values are:
+.BR none ", " send ", " recv ", " both "."
 .TP
 .BI offset " OFFSET"
 sets the byte offset from the L2TP header where user data starts in

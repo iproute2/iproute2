@@ -37,7 +37,6 @@ static void explain(void)
 		"                       vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n"
 		"                       dst_mac MAC-ADDR |\n"
 		"                       src_mac MAC-ADDR |\n"
-		"                       [ipv4 | ipv6 ] |\n"
 		"                       ip_proto [tcp | udp | IP-PROTO ] |\n"
 		"                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
@@ -46,7 +45,7 @@ static void explain(void)
 		"       FILTERID := X:Y:Z\n"
 		"       ACTION-SPEC := ... look at individual actions\n"
 		"\n"
-		"NOTE: CLASSID, ETH-TYPE, IP-PROTO are parsed as hexadecimal input.\n"
+		"NOTE: CLASSID, IP-PROTO are parsed as hexadecimal input.\n"
 		"NOTE: There can be only used one mask per one prio. If user needs\n"
 		"      to specify different mask, he has to use different prio.\n");
 }

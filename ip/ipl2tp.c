@@ -56,15 +56,15 @@ struct l2tp_parm {
 
 	uint16_t pw_type;
 	uint16_t mtu;
-	int udp6_csum_tx:1;
-	int udp6_csum_rx:1;
-	int udp_csum:1;
-	int recv_seq:1;
-	int send_seq:1;
-	int lns_mode:1;
-	int data_seq:2;
-	int tunnel:1;
-	int session:1;
+	unsigned int udp6_csum_tx:1;
+	unsigned int udp6_csum_rx:1;
+	unsigned int udp_csum:1;
+	unsigned int recv_seq:1;
+	unsigned int send_seq:1;
+	unsigned int lns_mode:1;
+	unsigned int data_seq:2;
+	unsigned int tunnel:1;
+	unsigned int session:1;
 	int reorder_timeout;
 	const char *ifname;
 	uint8_t l2spec_type;
@@ -110,17 +110,19 @@ static int create_tunnel(struct l2tp_parm *p)
 
 	if (p->local_ip.family == AF_INET6)
 		local_attr = L2TP_ATTR_IP6_SADDR;
-	addattr_l(&req.n, 1024, local_attr, &p->local_ip.data, p->local_ip.bytelen);
+	addattr_l(&req.n, 1024, local_attr, &p->local_ip.data,
+		  p->local_ip.bytelen);
 
 	if (p->peer_ip.family == AF_INET6)
 		peer_attr = L2TP_ATTR_IP6_DADDR;
-	addattr_l(&req.n, 1024, peer_attr, &p->peer_ip.data, p->peer_ip.bytelen);
+	addattr_l(&req.n, 1024, peer_attr, &p->peer_ip.data,
+		  p->peer_ip.bytelen);
 
 	if (p->encap == L2TP_ENCAPTYPE_UDP) {
 		addattr16(&req.n, 1024, L2TP_ATTR_UDP_SPORT, p->local_udp_port);
 		addattr16(&req.n, 1024, L2TP_ATTR_UDP_DPORT, p->peer_udp_port);
 		if (p->udp_csum)
-			addattr(&req.n, 1024, L2TP_ATTR_UDP_CSUM);
+			addattr8(&req.n, 1024, L2TP_ATTR_UDP_CSUM, 1);
 		if (!p->udp6_csum_tx)
 			addattr(&req.n, 1024, L2TP_ATTR_UDP_ZERO_CSUM6_TX);
 		if (!p->udp6_csum_rx)
@@ -159,18 +161,27 @@ static int create_session(struct l2tp_parm *p)
 	addattr8(&req.n, 1024, L2TP_ATTR_L2SPEC_TYPE, p->l2spec_type);
 	addattr8(&req.n, 1024, L2TP_ATTR_L2SPEC_LEN, p->l2spec_len);
 
-	if (p->mtu)		addattr16(&req.n, 1024, L2TP_ATTR_MTU, p->mtu);
-	if (p->recv_seq)	addattr(&req.n, 1024, L2TP_ATTR_RECV_SEQ);
-	if (p->send_seq)	addattr(&req.n, 1024, L2TP_ATTR_SEND_SEQ);
-	if (p->lns_mode)	addattr(&req.n, 1024, L2TP_ATTR_LNS_MODE);
-	if (p->data_seq)	addattr8(&req.n, 1024, L2TP_ATTR_DATA_SEQ, p->data_seq);
-	if (p->reorder_timeout) addattr64(&req.n, 1024, L2TP_ATTR_RECV_TIMEOUT,
+	if (p->mtu)
+		addattr16(&req.n, 1024, L2TP_ATTR_MTU, p->mtu);
+	if (p->recv_seq)
+		addattr8(&req.n, 1024, L2TP_ATTR_RECV_SEQ, 1);
+	if (p->send_seq)
+		addattr8(&req.n, 1024, L2TP_ATTR_SEND_SEQ, 1);
+	if (p->lns_mode)
+		addattr(&req.n, 1024, L2TP_ATTR_LNS_MODE);
+	if (p->data_seq)
+		addattr8(&req.n, 1024, L2TP_ATTR_DATA_SEQ, p->data_seq);
+	if (p->reorder_timeout)
+		addattr64(&req.n, 1024, L2TP_ATTR_RECV_TIMEOUT,
 					  p->reorder_timeout);
-	if (p->offset)		addattr16(&req.n, 1024, L2TP_ATTR_OFFSET, p->offset);
-	if (p->cookie_len)	addattr_l(&req.n, 1024, L2TP_ATTR_COOKIE,
-					  p->cookie, p->cookie_len);
-	if (p->peer_cookie_len) addattr_l(&req.n, 1024, L2TP_ATTR_PEER_COOKIE,
-					  p->peer_cookie,  p->peer_cookie_len);
+	if (p->offset)
+		addattr16(&req.n, 1024, L2TP_ATTR_OFFSET, p->offset);
+	if (p->cookie_len)
+		addattr_l(&req.n, 1024, L2TP_ATTR_COOKIE,
+			  p->cookie, p->cookie_len);
+	if (p->peer_cookie_len)
+		addattr_l(&req.n, 1024, L2TP_ATTR_PEER_COOKIE,
+			  p->peer_cookie,  p->peer_cookie_len);
 	if (p->ifname && p->ifname[0])
 		addattrstrz(&req.n, 1024, L2TP_ATTR_IFNAME, p->ifname);
 
@@ -213,14 +224,37 @@ static void print_tunnel(const struct l2tp_data *data)
 	       p->tunnel_id,
 	       p->encap == L2TP_ENCAPTYPE_UDP ? "UDP" :
 	       p->encap == L2TP_ENCAPTYPE_IP ? "IP" : "??");
-	printf("  From %s ", inet_ntop(p->local_ip.family, p->local_ip.data, buf, sizeof(buf)));
-	printf("to %s\n", inet_ntop(p->peer_ip.family, p->peer_ip.data, buf, sizeof(buf)));
+	printf("  From %s ",
+	       inet_ntop(p->local_ip.family, p->local_ip.data,
+			 buf, sizeof(buf)));
+	printf("to %s\n",
+	       inet_ntop(p->peer_ip.family, p->peer_ip.data,
+			 buf, sizeof(buf)));
 	printf("  Peer tunnel %u\n",
 	       p->peer_tunnel_id);
 
-	if (p->encap == L2TP_ENCAPTYPE_UDP)
+	if (p->encap == L2TP_ENCAPTYPE_UDP) {
 		printf("  UDP source / dest ports: %hu/%hu\n",
 		       p->local_udp_port, p->peer_udp_port);
+
+		switch (p->local_ip.family) {
+		case AF_INET:
+			printf("  UDP checksum: %s\n",
+			       p->udp_csum ? "enabled" : "disabled");
+			break;
+		case AF_INET6:
+			printf("  UDP checksum: %s%s%s%s\n",
+			       p->udp6_csum_tx && p->udp6_csum_rx
+			       ? "enabled" : "",
+			       p->udp6_csum_tx && !p->udp6_csum_rx
+			       ? "tx" : "",
+			       !p->udp6_csum_tx && p->udp6_csum_rx
+			       ? "rx" : "",
+			       !p->udp6_csum_tx && !p->udp6_csum_rx
+			       ? "disabled" : "");
+			break;
+		}
+	}
 }
 
 static void print_session(struct l2tp_data *data)
@@ -232,9 +266,9 @@ static void print_session(struct l2tp_data *data)
 	printf("  Peer session %u, tunnel %u\n",
 	       p->peer_session_id, p->peer_tunnel_id);
 
-	if (p->ifname != NULL) {
+	if (p->ifname != NULL)
 		printf("  interface name: %s\n", p->ifname);
-	}
+
 	printf("  offset %u, peer offset %u\n",
 	       p->offset, p->peer_offset);
 	if (p->cookie_len > 0)
@@ -246,6 +280,14 @@ static void print_session(struct l2tp_data *data)
 		printf("  reorder timeout: %u\n", p->reorder_timeout);
 	else
 		printf("\n");
+	if (p->send_seq || p->recv_seq) {
+		printf("  sequence numbering:");
+		if (p->send_seq)
+			printf(" send");
+		if (p->recv_seq)
+			printf(" recv");
+		printf("\n");
+	}
 }
 
 static int get_response(struct nlmsghdr *n, void *arg)
@@ -289,13 +331,12 @@ static int get_response(struct nlmsghdr *n, void *arg)
 	if (attrs[L2TP_ATTR_L2SPEC_LEN])
 		p->l2spec_len = rta_getattr_u8(attrs[L2TP_ATTR_L2SPEC_LEN]);
 
-	p->udp_csum = !!attrs[L2TP_ATTR_UDP_CSUM];
-	/*
-	 * Not fetching from L2TP_ATTR_UDP_ZERO_CSUM6_{T,R}X because the
-	 * kernel doesn't send it so just leave it as default value.
-	 */
-	p->udp6_csum_tx = 1;
-	p->udp6_csum_rx = 1;
+	if (attrs[L2TP_ATTR_UDP_CSUM])
+		p->udp_csum = !!rta_getattr_u8(attrs[L2TP_ATTR_UDP_CSUM]);
+
+	p->udp6_csum_tx = !attrs[L2TP_ATTR_UDP_ZERO_CSUM6_TX];
+	p->udp6_csum_rx = !attrs[L2TP_ATTR_UDP_ZERO_CSUM6_RX];
+
 	if (attrs[L2TP_ATTR_COOKIE])
 		memcpy(p->cookie, RTA_DATA(attrs[L2TP_ATTR_COOKIE]),
 		       p->cookie_len = RTA_PAYLOAD(attrs[L2TP_ATTR_COOKIE]));
@@ -304,8 +345,10 @@ static int get_response(struct nlmsghdr *n, void *arg)
 		memcpy(p->peer_cookie, RTA_DATA(attrs[L2TP_ATTR_PEER_COOKIE]),
 		       p->peer_cookie_len = RTA_PAYLOAD(attrs[L2TP_ATTR_PEER_COOKIE]));
 
-	p->recv_seq = !!attrs[L2TP_ATTR_RECV_SEQ];
-	p->send_seq = !!attrs[L2TP_ATTR_SEND_SEQ];
+	if (attrs[L2TP_ATTR_RECV_SEQ])
+		p->recv_seq = !!rta_getattr_u8(attrs[L2TP_ATTR_RECV_SEQ]);
+	if (attrs[L2TP_ATTR_SEND_SEQ])
+		p->send_seq = !!rta_getattr_u8(attrs[L2TP_ATTR_SEND_SEQ]);
 
 	if (attrs[L2TP_ATTR_RECV_TIMEOUT])
 		p->reorder_timeout = rta_getattr_u64(attrs[L2TP_ATTR_RECV_TIMEOUT]);
@@ -369,7 +412,8 @@ static int get_response(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static int session_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int session_nlmsg(const struct sockaddr_nl *who,
+			 struct nlmsghdr *n, void *arg)
 {
 	int ret = get_response(n, arg);
 
@@ -389,7 +433,8 @@ static int get_session(struct l2tp_data *p)
 
 	if (p->config.tunnel_id && p->config.session_id) {
 		addattr32(&req.n, 128, L2TP_ATTR_CONN_ID, p->config.tunnel_id);
-		addattr32(&req.n, 128, L2TP_ATTR_SESSION_ID, p->config.session_id);
+		addattr32(&req.n, 128, L2TP_ATTR_SESSION_ID,
+			  p->config.session_id);
 	}
 
 	if (rtnl_send(&genl_rth, &req, req.n.nlmsg_len) < 0)
@@ -403,7 +448,8 @@ static int get_session(struct l2tp_data *p)
 	return 0;
 }
 
-static int tunnel_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int tunnel_nlmsg(const struct sockaddr_nl *who,
+			struct nlmsghdr *n, void *arg)
 {
 	int ret = get_response(n, arg);
 
@@ -468,31 +514,33 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip l2tp add tunnel\n");
-	fprintf(stderr, "          remote ADDR local ADDR\n");
-	fprintf(stderr, "          tunnel_id ID peer_tunnel_id ID\n");
-	fprintf(stderr, "          [ encap { ip | udp } ]\n");
-	fprintf(stderr, "          [ udp_sport PORT ] [ udp_dport PORT ]\n");
-	fprintf(stderr, "          [ udp_csum { on | off } ]\n");
-	fprintf(stderr, "          [ udp6_csum_tx { on | off } ]\n");
-	fprintf(stderr, "          [ udp6_csum_rx { on | off } ]\n");
-	fprintf(stderr, "Usage: ip l2tp add session [ name NAME ]\n");
-	fprintf(stderr, "          tunnel_id ID\n");
-	fprintf(stderr, "          session_id ID peer_session_id ID\n");
-	fprintf(stderr, "          [ cookie HEXSTR ] [ peer_cookie HEXSTR ]\n");
-	fprintf(stderr, "          [ offset OFFSET ] [ peer_offset OFFSET ]\n");
-	fprintf(stderr, "          [ l2spec_type L2SPEC ]\n");
-	fprintf(stderr, "       ip l2tp del tunnel tunnel_id ID\n");
-	fprintf(stderr, "       ip l2tp del session tunnel_id ID session_id ID\n");
-	fprintf(stderr, "       ip l2tp show tunnel [ tunnel_id ID ]\n");
-	fprintf(stderr, "       ip l2tp show session [ tunnel_id ID ] [ session_id ID ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: NAME   := STRING\n");
-	fprintf(stderr, "       ADDR   := { IP_ADDRESS | any }\n");
-	fprintf(stderr, "       PORT   := { 0..65535 }\n");
-	fprintf(stderr, "       ID     := { 1..4294967295 }\n");
-	fprintf(stderr, "       HEXSTR := { 8 or 16 hex digits (4 / 8 bytes) }\n");
-	fprintf(stderr, "       L2SPEC := { none | default }\n");
+	fprintf(stderr, "Usage: ip l2tp add tunnel\n"
+		"          remote ADDR local ADDR\n"
+		"          tunnel_id ID peer_tunnel_id ID\n"
+		"          [ encap { ip | udp } ]\n"
+		"          [ udp_sport PORT ] [ udp_dport PORT ]\n"
+		"          [ udp_csum { on | off } ]\n"
+		"          [ udp6_csum_tx { on | off } ]\n"
+		"          [ udp6_csum_rx { on | off } ]\n"
+		"Usage: ip l2tp add session [ name NAME ]\n"
+		"          tunnel_id ID\n"
+		"          session_id ID peer_session_id ID\n"
+		"          [ cookie HEXSTR ] [ peer_cookie HEXSTR ]\n"
+		"          [ offset OFFSET ] [ peer_offset OFFSET ]\n"
+		"          [ seq { none | send | recv | both } ]\n"
+		"          [ l2spec_type L2SPEC ]\n"
+		"       ip l2tp del tunnel tunnel_id ID\n"
+		"       ip l2tp del session tunnel_id ID session_id ID\n"
+		"       ip l2tp show tunnel [ tunnel_id ID ]\n"
+		"       ip l2tp show session [ tunnel_id ID ] [ session_id ID ]\n"
+		"\n"
+		"Where: NAME   := STRING\n"
+		"       ADDR   := { IP_ADDRESS | any }\n"
+		"       PORT   := { 0..65535 }\n"
+		"       ID     := { 1..4294967295 }\n"
+		"       HEXSTR := { 8 or 16 hex digits (4 / 8 bytes) }\n"
+		"       L2SPEC := { none | default }\n");
+
 	exit(-1);
 }
 
@@ -648,7 +696,26 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 				p->l2spec_type = L2TP_L2SPECTYPE_NONE;
 				p->l2spec_len = 0;
 			} else {
-				fprintf(stderr, "Unknown layer2specific header type \"%s\"\n", *argv);
+				fprintf(stderr,
+					"Unknown layer2specific header type \"%s\"\n",
+					*argv);
+				exit(-1);
+			}
+		} else if (strcmp(*argv, "seq") == 0) {
+			NEXT_ARG();
+			if (strcasecmp(*argv, "both") == 0) {
+				p->recv_seq = 1;
+				p->send_seq = 1;
+			} else if (strcasecmp(*argv, "recv") == 0) {
+				p->recv_seq = 1;
+			} else if (strcasecmp(*argv, "send") == 0) {
+				p->send_seq = 1;
+			} else if (strcasecmp(*argv, "none") == 0) {
+				p->recv_seq = 0;
+				p->send_seq = 0;
+			} else {
+				fprintf(stderr,
+					"Unknown seq value \"%s\"\n", *argv);
 				exit(-1);
 			}
 		} else if (strcmp(*argv, "tunnel") == 0) {
@@ -779,6 +846,7 @@ int do_ipl2tp(int argc, char **argv)
 	    matches(*argv, "list") == 0)
 		return do_show(argc-1, argv+1);
 
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip l2tp help\".\n", *argv);
+	fprintf(stderr,
+		"Command \"%s\" is unknown, try \"ip l2tp help\".\n", *argv);
 	exit(-1);
 }

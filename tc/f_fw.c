@@ -25,10 +25,19 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... fw [ classid CLASSID ] [ action ACTION_SPEC ]\n");
-	fprintf(stderr, "       ACTION_SPEC := ... look at individual actions\n");
-	fprintf(stderr, "       CLASSID := X:Y\n");
-	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
+	fprintf(stderr,
+		"Usage: ... fw [ classid CLASSID ] [ indev DEV ] [ action ACTION_SPEC ]\n");
+	fprintf(stderr,
+		"       CLASSID := Push matching packets to the class identified by CLASSID with format X:Y\n");
+	fprintf(stderr,
+		"                  CLASSID is parsed as hexadecimal input.\n");
+	fprintf(stderr,
+		"       DEV := specify device for incoming device classification.\n");
+	fprintf(stderr,
+		"       ACTION_SPEC := Apply an action on matching packets.\n");
+	fprintf(stderr,
+		"       NOTE: handle is represented as HANDLE[/FWMASK].\n");
+	fprintf(stderr, "             FWMASK is 0xffffffff by default.\n");
 }
 
 static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **argv, struct nlmsghdr *n)

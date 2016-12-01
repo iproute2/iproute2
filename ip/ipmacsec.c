@@ -634,10 +634,10 @@ static void print_one_stat(const char **names, struct rtattr **attr, int idx,
 }
 
 static const char *txsc_stats_names[NUM_MACSEC_TXSC_STATS_ATTR] = {
-	[MACSEC_TXSC_STATS_ATTR_OUT_PKTS_PROTECTED] = "OutOctetsProtected",
-	[MACSEC_TXSC_STATS_ATTR_OUT_PKTS_ENCRYPTED] = "OutOctetsEncrypted",
-	[MACSEC_TXSC_STATS_ATTR_OUT_OCTETS_PROTECTED] = "OutPktsProtected",
-	[MACSEC_TXSC_STATS_ATTR_OUT_OCTETS_ENCRYPTED] = "OutPktsEncrypted",
+	[MACSEC_TXSC_STATS_ATTR_OUT_PKTS_PROTECTED] = "OutPktsProtected",
+	[MACSEC_TXSC_STATS_ATTR_OUT_PKTS_ENCRYPTED] = "OutPktsEncrypted",
+	[MACSEC_TXSC_STATS_ATTR_OUT_OCTETS_PROTECTED] = "OutOctetsProtected",
+	[MACSEC_TXSC_STATS_ATTR_OUT_OCTETS_ENCRYPTED] = "OutOctetsEncrypted",
 };
 
 static void print_txsc_stats(const char *prefix, struct rtattr *attr)

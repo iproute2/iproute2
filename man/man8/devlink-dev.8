@@ -31,6 +31,9 @@ devlink-dev \- devlink device configuration
 .RI "[ "
 .BR mode " { " legacy " | " switchdev " } "
 .RI "]"
+.RI "[ "
+.BR inline-mode " { " none " | " link " | " network " | " transport " } "
+.RI "]"
 
 .ti -8
 .BR "devlink dev eswitch show"
@@ -54,13 +57,29 @@ BUS_NAME/BUS_ADDRESS
 
 .TP
 .BR mode " { " legacy " | " switchdev " } "
-set eswitch mode
+Set eswitch mode
 
 .I legacy
 - Legacy SRIOV
 
 .I switchdev
 - SRIOV switchdev offloads
+
+.TP
+.BR inline-mode " { " none " | " link " | " network " | " transport " } "
+Some HWs need the VF driver to put part of the packet headers on the TX descriptor so the e-switch can do proper matching and steering.
+
+.I none
+- None
+
+.I link
+- L2 mode
+
+.I network
+- L3 mode
+
+.I transport
+- L4 mode
 
 .SH "EXAMPLES"
 .PP

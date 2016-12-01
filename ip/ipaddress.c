@@ -148,11 +148,11 @@ static void print_operstate(FILE *f, __u8 state)
 		fprintf(f, "state %#x ", state);
 	} else if (brief) {
 		color_fprintf(f, oper_state_color(state),
-		              "%-14s ", oper_states[state]);
+			      "%-14s ", oper_states[state]);
 	} else {
 		fprintf(f, "state ");
 		color_fprintf(f, oper_state_color(state),
-		              "%s ", oper_states[state]);
+			      "%s ", oper_states[state]);
 	}
 }
 
@@ -322,10 +322,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 {
 	struct ifla_vf_mac *vf_mac;
 	struct ifla_vf_tx_rate *vf_tx_rate;
-	struct ifla_vf_spoofchk *vf_spoofchk;
-	struct ifla_vf_link_state *vf_linkstate;
 	struct rtattr *vf[IFLA_VF_MAX + 1] = {};
-	struct rtattr *tmp;
 
 	SPRINT_BUF(b1);
 
@@ -338,31 +335,6 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 
 	vf_mac = RTA_DATA(vf[IFLA_VF_MAC]);
 	vf_tx_rate = RTA_DATA(vf[IFLA_VF_TX_RATE]);
-
-	/* Check if the spoof checking vf info type is supported by
-	 * this kernel.
-	 */
-	tmp = (struct rtattr *)((char *)vf[IFLA_VF_TX_RATE] +
-				vf[IFLA_VF_TX_RATE]->rta_len);
-
-	if (tmp->rta_type != IFLA_VF_SPOOFCHK)
-		vf_spoofchk = NULL;
-	else
-		vf_spoofchk = RTA_DATA(vf[IFLA_VF_SPOOFCHK]);
-
-	if (vf_spoofchk) {
-		/* Check if the link state vf info type is supported by
-		 * this kernel.
-		 */
-		tmp = (struct rtattr *)((char *)vf[IFLA_VF_SPOOFCHK] +
-					vf[IFLA_VF_SPOOFCHK]->rta_len);
-
-		if (tmp->rta_type != IFLA_VF_LINK_STATE)
-			vf_linkstate = NULL;
-		else
-			vf_linkstate = RTA_DATA(vf[IFLA_VF_LINK_STATE]);
-	} else
-		vf_linkstate = NULL;
 
 	fprintf(fp, "%s    vf %d MAC %s", _SL_, vf_mac->vf,
 		ll_addr_n2a((unsigned char *)&vf_mac->mac,
@@ -407,14 +379,18 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		if (vf_rate->min_tx_rate)
 			fprintf(fp, ", min_tx_rate %dMbps", vf_rate->min_tx_rate);
 	}
+	if (vf[IFLA_VF_SPOOFCHK]) {
+		struct ifla_vf_spoofchk *vf_spoofchk =
+			RTA_DATA(vf[IFLA_VF_SPOOFCHK]);
 
-	if (vf_spoofchk && vf_spoofchk->setting != -1) {
-		if (vf_spoofchk->setting)
-			fprintf(fp, ", spoof checking on");
-		else
-			fprintf(fp, ", spoof checking off");
+		if (vf_spoofchk->setting != -1)
+			fprintf(fp, ", spoof checking %s",
+				vf_spoofchk->setting ? "on" : "off");
 	}
-	if (vf_linkstate) {
+	if (vf[IFLA_VF_LINK_STATE]) {
+		struct ifla_vf_link_state *vf_linkstate =
+			RTA_DATA(vf[IFLA_VF_LINK_STATE]);
+
 		if (vf_linkstate->link_state == IFLA_VF_LINK_STATE_AUTO)
 			fprintf(fp, ", link-state auto");
 		else if (vf_linkstate->link_state == IFLA_VF_LINK_STATE_ENABLE)
@@ -427,7 +403,23 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 
 		if (vf_trust->setting != -1)
 			fprintf(fp, ", trust %s",
-			        vf_trust->setting ? "on" : "off");
+				vf_trust->setting ? "on" : "off");
+	}
+	if (vf[IFLA_VF_RSS_QUERY_EN]) {
+		struct ifla_vf_rss_query_en *rss_query =
+			RTA_DATA(vf[IFLA_VF_RSS_QUERY_EN]);
+
+		if (rss_query->setting != -1)
+			fprintf(fp, ", query_rss %s",
+			        rss_query->setting ? "on" : "off");
+	}
+	if (vf[IFLA_VF_RSS_QUERY_EN]) {
+		struct ifla_vf_rss_query_en *rss_query =
+			RTA_DATA(vf[IFLA_VF_RSS_QUERY_EN]);
+
+		if (rss_query->setting != -1)
+			fprintf(fp, ", query_rss %s",
+			        rss_query->setting ? "on" : "off");
 	}
 	if (vf[IFLA_VF_STATS] && show_stats)
 		print_vf_stats64(fp, vf[IFLA_VF_STATS]);
@@ -448,7 +440,8 @@ static void print_num(FILE *fp, unsigned int width, uint64_t count)
 	}
 
 	/* increase value by a factor of 1000/1024 and print
-	 * if result is something a human can read */
+	 * if result is something a human can read
+	 */
 	for (;;) {
 		powi *= base;
 		if (count / base < powi)
@@ -691,9 +684,9 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		return -1;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL) {
+	if (tb[IFLA_IFNAME] == NULL)
 		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
-	}
+
 	if (filter.label &&
 	    (!filter.family || filter.family == AF_PACKET) &&
 	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
@@ -787,9 +780,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		return 0;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL) {
+	if (tb[IFLA_IFNAME] == NULL)
 		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
-	}
+
 	if (filter.label &&
 	    (!filter.family || filter.family == AF_PACKET) &&
 	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
@@ -1118,16 +1111,16 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	if (rta_tb[IFA_LOCAL]) {
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s",
-		              format_host_rta(ifa->ifa_family,
-		                              rta_tb[IFA_LOCAL]));
+			      format_host_rta(ifa->ifa_family,
+					      rta_tb[IFA_LOCAL]));
 		if (rta_tb[IFA_ADDRESS] &&
 		    memcmp(RTA_DATA(rta_tb[IFA_ADDRESS]),
-		           RTA_DATA(rta_tb[IFA_LOCAL]),
-		           ifa->ifa_family == AF_INET ? 4 : 16)) {
+			   RTA_DATA(rta_tb[IFA_LOCAL]),
+			   ifa->ifa_family == AF_INET ? 4 : 16)) {
 			fprintf(fp, " peer ");
 			color_fprintf(fp, ifa_family_color(ifa->ifa_family),
-			              "%s", format_host_rta(ifa->ifa_family,
-			              rta_tb[IFA_ADDRESS]));
+				      "%s", format_host_rta(ifa->ifa_family,
+				      rta_tb[IFA_ADDRESS]));
 		}
 		fprintf(fp, "/%d ", ifa->ifa_prefixlen);
 	}
@@ -1138,14 +1131,14 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (rta_tb[IFA_BROADCAST]) {
 		fprintf(fp, "brd ");
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
-		              format_host_rta(ifa->ifa_family,
-		                              rta_tb[IFA_BROADCAST]));
+			      format_host_rta(ifa->ifa_family,
+					      rta_tb[IFA_BROADCAST]));
 	}
 	if (rta_tb[IFA_ANYCAST]) {
 		fprintf(fp, "any ");
 		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
-		              format_host_rta(ifa->ifa_family,
-		                              rta_tb[IFA_ANYCAST]));
+			      format_host_rta(ifa->ifa_family,
+					      rta_tb[IFA_ANYCAST]));
 	}
 	fprintf(fp, "scope %s ", rtnl_rtscope_n2a(ifa->ifa_scope, b1, sizeof(b1)));
 	if (ifa_flags & IFA_F_SECONDARY) {
@@ -1184,9 +1177,9 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		ifa_flags &= ~IFA_F_MCAUTOJOIN;
 		fprintf(fp, "autojoin ");
 	}
-	if (!(ifa_flags & IFA_F_PERMANENT)) {
+	if (!(ifa_flags & IFA_F_PERMANENT))
 		fprintf(fp, "dynamic ");
-	} else
+	else
 		ifa_flags &= ~IFA_F_PERMANENT;
 	if (ifa_flags & IFA_F_DADFAILED) {
 		ifa_flags &= ~IFA_F_DADFAILED;
@@ -1672,9 +1665,9 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 				filter.kind = *argv;
 			}
 		} else {
-			if (strcmp(*argv, "dev") == 0) {
+			if (strcmp(*argv, "dev") == 0)
 				NEXT_ARG();
-			} else if (matches(*argv, "help") == 0)
+			else if (matches(*argv, "help") == 0)
 				usage();
 			if (filter_dev)
 				duparg2("dev", *argv);
@@ -1979,9 +1972,8 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "autojoin") == 0) {
 			ifa_flags |= IFA_F_MCAUTOJOIN;
 		} else {
-			if (strcmp(*argv, "local") == 0) {
+			if (strcmp(*argv, "local") == 0)
 				NEXT_ARG();
-			}
 			if (matches(*argv, "help") == 0)
 				usage();
 			if (local_len)
@@ -2012,9 +2004,9 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	if (peer_len == 0 && local_len) {
 		if (cmd == RTM_DELADDR && lcl.family == AF_INET && !(lcl.flags & PREFIXLEN_SPECIFIED)) {
 			fprintf(stderr,
-			    "Warning: Executing wildcard deletion to stay compatible with old scripts.\n" \
-			    "         Explicitly specify the prefix length (%s/%d) to avoid this warning.\n" \
-			    "         This special behaviour is likely to disappear in further releases,\n" \
+			    "Warning: Executing wildcard deletion to stay compatible with old scripts.\n"
+			    "         Explicitly specify the prefix length (%s/%d) to avoid this warning.\n"
+			    "         This special behaviour is likely to disappear in further releases,\n"
 			    "         fix your scripts!\n", lcl_arg, local_len*8);
 		} else {
 			peer = lcl;
