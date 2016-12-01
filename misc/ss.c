@@ -799,6 +799,7 @@ struct tcpstat {
 	unsigned int	    lastack;
 	double		    pacing_rate;
 	double		    pacing_rate_max;
+	double		    delivery_rate;
 	unsigned long long  bytes_acked;
 	unsigned long long  bytes_received;
 	unsigned int	    segs_out;
@@ -822,6 +823,7 @@ struct tcpstat {
 	bool		    has_ecnseen_opt;
 	bool		    has_fastopen_opt;
 	bool		    has_wscale_opt;
+	bool		    app_limited;
 	struct dctcpstat    *dctcp;
 	struct tcp_bbr_info *bbr_info;
 };
@@ -1973,6 +1975,11 @@ static void tcp_stats_print(struct tcpstat *s)
 							s->pacing_rate_max));
 	}
 
+	if (s->delivery_rate)
+		printf(" delivery_rate %sbps", sprint_bw(b1, s->delivery_rate));
+	if (s->app_limited)
+		printf(" app_limited");
+
 	if (s->unacked)
 		printf(" unacked:%u", s->unacked);
 	if (s->retrans || s->retrans_total)
@@ -2274,6 +2281,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.not_sent = info->tcpi_notsent_bytes;
 		if (info->tcpi_min_rtt && info->tcpi_min_rtt != ~0U)
 			s.min_rtt = (double) info->tcpi_min_rtt / 1000;
+		s.delivery_rate = info->tcpi_delivery_rate * 8.;
+		s.app_limited = info->tcpi_delivery_rate_app_limited;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 		free(s.bbr_info);
