@@ -888,15 +888,6 @@ static void sock_addr_print(const char *addr, char *delim, const char *port,
 	sock_addr_print_width(addr_width, addr, delim, serv_width, port, ifname);
 }
 
-static const char *tmr_name[] = {
-	"off",
-	"on",
-	"keepalive",
-	"timewait",
-	"persist",
-	"unknown"
-};
-
 static const char *print_ms_timer(int timeout)
 {
 	static char buf[64];
@@ -2006,6 +1997,15 @@ static void tcp_stats_print(struct tcpstat *s)
 
 static void tcp_timer_print(struct tcpstat *s)
 {
+	static const char * const tmr_name[] = {
+		"off",
+		"on",
+		"keepalive",
+		"timewait",
+		"persist",
+		"unknown"
+	};
+
 	if (s->timer) {
 		if (s->timer > 4)
 			s->timer = 5;
