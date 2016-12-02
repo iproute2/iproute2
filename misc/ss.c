@@ -3139,10 +3139,10 @@ static int unix_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
 
 	unix_stats_print(&stat, f);
 
-	if (show_mem) {
+	if (show_mem || show_details)
 		printf("\t");
+	if (show_mem)
 		print_skmeminfo(tb, UNIX_DIAG_MEMINFO);
-	}
 	if (show_details) {
 		if (tb[UNIX_DIAG_SHUTDOWN]) {
 			unsigned char mask;
