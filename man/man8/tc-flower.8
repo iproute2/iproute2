@@ -107,8 +107,8 @@ or an unsigned 8bit value in hexadecimal format.
 Match on source or destination IP address.
 .I ADDRESS
 must be a valid IPv4 or IPv6 address, depending on
-.BR ether_type ,
-which has to be specified in beforehand.
+.BR protocol
+option of tc filter.
 .TP
 .BI dst_port " NUMBER"
 .TQ
@@ -129,16 +129,15 @@ is a 32 bit tunnel key id (e.g. VNI for VXLAN tunnel).
 must be a valid IPv4 or IPv6 address.
 .SH NOTES
 As stated above where applicable, matches of a certain layer implicitly depend
-on the matches of the next lower layer. Precisely, layer one and two matches (
-.BR indev , dst_mac , src_mac " and " eth_type )
-have no dependency, layer three matches (
-.BR ip_proto , dst_ip " and " src_ip )
-require
-.B eth_type
-being set to either
-.BR ipv4 " or " ipv6 ,
-and finally layer four matches (
-.BR dst_port " and " src_port )
+on the matches of the next lower layer. Precisely, layer one and two matches
+(\fBindev\fR,  \fBdst_mac\fR and \fBsrc_mac\fR)
+have no dependency, layer three matches
+(\fBip_proto\fR, \fBdst_ip\fR and \fBsrc_ip\fR)
+depend on the
+.B protocol
+option of tc filter
+and finally layer four matches
+(\fBdst_port\fR and \fBsrc_port\fR)
 depend on
 .B ip_proto
 being set to either
