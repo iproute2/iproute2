@@ -105,10 +105,8 @@ int sctp_ino;
 
 int netid_width;
 int state_width;
-int addrp_width;
 int addr_width;
 int serv_width;
-int screen_width;
 
 static const char *TCP_PROTO = "tcp";
 static const char *SCTP_PROTO = "sctp";
@@ -4018,6 +4016,7 @@ int main(int argc, char *argv[])
 	FILE *filter_fp = NULL;
 	int ch;
 	int state_filter = 0;
+	int addrp_width, screen_width = 80;
 
 	while ((ch = getopt_long(argc, argv,
 				 "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KHS",
@@ -4307,7 +4306,6 @@ int main(int argc, char *argv[])
 	if (current_filter.states&(current_filter.states-1))
 		state_width = 10;
 
-	screen_width = 80;
 	if (isatty(STDOUT_FILENO)) {
 		struct winsize w;
 
