@@ -413,7 +413,7 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_VXLAN_PORT])
 		fprintf(f, "dstport %u ",
-			ntohs(rta_getattr_u16(tb[IFLA_VXLAN_PORT])));
+			rta_getattr_be16(tb[IFLA_VXLAN_PORT]));
 
 	if (tb[IFLA_VXLAN_LEARNING] &&
 	    !rta_getattr_u8(tb[IFLA_VXLAN_LEARNING]))

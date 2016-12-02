@@ -234,7 +234,7 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GENEVE_PORT])
 		fprintf(f, "dstport %u ",
-			ntohs(rta_getattr_u16(tb[IFLA_GENEVE_PORT])));
+			rta_getattr_be16(tb[IFLA_GENEVE_PORT]));
 
 	if (tb[IFLA_GENEVE_COLLECT_METADATA])
 		fputs("external ", f);

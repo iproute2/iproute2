@@ -511,7 +511,7 @@ static void flower_print_ip_addr(FILE *f, char *name, __be16 eth_type,
 
 static void flower_print_port(FILE *f, char *name, struct rtattr *attr)
 {
-	fprintf(f, "\n  %s %d", name, ntohs(rta_getattr_u16(attr)));
+	fprintf(f, "\n  %s %d", name, rta_getattr_be16(attr));
 }
 
 static int flower_print_opt(struct filter_util *qu, FILE *f,

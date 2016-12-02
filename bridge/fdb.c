@@ -168,10 +168,10 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[NDA_PORT]) {
 		if (jw_global)
 			jsonw_uint_field(jw_global, "port",
-					 ntohs(rta_getattr_u16(tb[NDA_PORT])));
+					 rta_getattr_be16(tb[NDA_PORT]));
 		else
 			fprintf(fp, "port %d ",
-				ntohs(rta_getattr_u16(tb[NDA_PORT])));
+				rta_getattr_be16(tb[NDA_PORT]));
 	}
 
 	if (tb[NDA_VNI]) {

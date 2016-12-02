@@ -10,6 +10,7 @@
 #include <linux/if_addr.h>
 #include <linux/neighbour.h>
 #include <linux/netconf.h>
+#include <arpa/inet.h>
 
 struct rtnl_handle {
 	int			fd;
@@ -140,9 +141,17 @@ static inline __u16 rta_getattr_u16(const struct rtattr *rta)
 {
 	return *(__u16 *)RTA_DATA(rta);
 }
+static inline __be16 rta_getattr_be16(const struct rtattr *rta)
+{
+	return ntohs(rta_getattr_u16(rta));
+}
 static inline __u32 rta_getattr_u32(const struct rtattr *rta)
 {
 	return *(__u32 *)RTA_DATA(rta);
+}
+static inline __be32 rta_getattr_be32(const struct rtattr *rta)
+{
+	return ntohl(rta_getattr_u32(rta));
 }
 static inline __u64 rta_getattr_u64(const struct rtattr *rta)
 {
