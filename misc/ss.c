@@ -601,21 +601,19 @@ struct slabstat {
 
 static struct slabstat slabstat;
 
-static const char *slabstat_ids[] = {
-
-	"sock",
-	"tcp_bind_bucket",
-	"tcp_tw_bucket",
-	"tcp_open_request",
-	"skbuff_head_cache",
-};
-
 static int get_slabstat(struct slabstat *s)
 {
 	char buf[256];
 	FILE *fp;
 	int cnt;
 	static int slabstat_valid;
+	static const char * const slabstat_ids[] = {
+		"sock",
+		"tcp_bind_bucket",
+		"tcp_tw_bucket",
+		"tcp_open_request",
+		"skbuff_head_cache",
+	};
 
 	if (slabstat_valid)
 		return 0;
