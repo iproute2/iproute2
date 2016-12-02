@@ -666,21 +666,6 @@ static const char *sctp_sstate_name[] = {
 	[SCTP_STATE_SHUTDOWN_ACK_SENT] = "ACK_SENT",
 };
 
-static const char *sstate_namel[] = {
-	"UNKNOWN",
-	[SS_ESTABLISHED] = "established",
-	[SS_SYN_SENT] = "syn-sent",
-	[SS_SYN_RECV] = "syn-recv",
-	[SS_FIN_WAIT1] = "fin-wait-1",
-	[SS_FIN_WAIT2] = "fin-wait-2",
-	[SS_TIME_WAIT] = "time-wait",
-	[SS_CLOSE] = "unconnected",
-	[SS_CLOSE_WAIT] = "close-wait",
-	[SS_LAST_ACK] = "last-ack",
-	[SS_LISTEN] =	"listening",
-	[SS_CLOSING] = "closing",
-};
-
 struct sockstat {
 	struct sockstat	   *next;
 	unsigned int	    type;
@@ -3931,6 +3916,20 @@ static void usage(void)
 
 static int scan_state(const char *state)
 {
+	static const char * const sstate_namel[] = {
+		"UNKNOWN",
+		[SS_ESTABLISHED] = "established",
+		[SS_SYN_SENT] = "syn-sent",
+		[SS_SYN_RECV] = "syn-recv",
+		[SS_FIN_WAIT1] = "fin-wait-1",
+		[SS_FIN_WAIT2] = "fin-wait-2",
+		[SS_TIME_WAIT] = "time-wait",
+		[SS_CLOSE] = "unconnected",
+		[SS_CLOSE_WAIT] = "close-wait",
+		[SS_LAST_ACK] = "last-ack",
+		[SS_LISTEN] =	"listening",
+		[SS_CLOSING] = "closing",
+	};
 	int i;
 
 	if (strcasecmp(state, "close") == 0 ||
