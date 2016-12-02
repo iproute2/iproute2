@@ -1779,14 +1779,9 @@ void *parse_markmask(const char *markmask)
 	return res;
 }
 
-static void inet_stats_print(struct sockstat *s)
+static void proc_ctx_print(struct sockstat *s)
 {
-	char *buf = NULL;
-
-	sock_state_print(s);
-
-	inet_addr_print(&s->local, s->lport, s->iface);
-	inet_addr_print(&s->remote, s->rport, 0);
+	char *buf;
 
 	if (show_proc_ctx || show_sock_ctx) {
 		if (find_entry(s->ino, &buf,
@@ -1801,6 +1796,16 @@ static void inet_stats_print(struct sockstat *s)
 			free(buf);
 		}
 	}
+}
+
+static void inet_stats_print(struct sockstat *s)
+{
+	sock_state_print(s);
+
+	inet_addr_print(&s->local, s->lport, s->iface);
+	inet_addr_print(&s->remote, s->rport, 0);
+
+	proc_ctx_print(s);
 }
 
 static int proc_parse_inet_addr(char *loc, char *rem, int family, struct
@@ -3044,7 +3049,6 @@ static void unix_stats_print(struct sockstat *list, struct filter *f)
 {
 	struct sockstat *s;
 	char *peer;
-	char *ctx_buf = NULL;
 	bool use_proc = unix_use_proc();
 	char port_name[30] = {};
 
@@ -3093,19 +3097,7 @@ static void unix_stats_print(struct sockstat *list, struct filter *f)
 		sock_addr_print(peer, " ", int_to_str(s->rport, port_name),
 				NULL);
 
-		if (show_proc_ctx || show_sock_ctx) {
-			if (find_entry(s->ino, &ctx_buf,
-					(show_proc_ctx & show_sock_ctx) ?
-					PROC_SOCK_CTX : PROC_CTX) > 0) {
-				printf(" users:(%s)", ctx_buf);
-				free(ctx_buf);
-			}
-		} else if (show_users) {
-			if (find_entry(s->ino, &ctx_buf, USERS) > 0) {
-				printf(" users:(%s)", ctx_buf);
-				free(ctx_buf);
-			}
-		}
+		proc_ctx_print(s);
 		printf("\n");
 	}
 }
@@ -3303,7 +3295,6 @@ static int unix_show(struct filter *f)
 
 static int packet_stats_print(struct sockstat *s, const struct filter *f)
 {
-	char *buf = NULL;
 	const char *addr, *port;
 	char ll_name[16];
 
@@ -3330,19 +3321,7 @@ static int packet_stats_print(struct sockstat *s, const struct filter *f)
 	sock_addr_print(addr, ":", port, NULL);
 	sock_addr_print("", "*", "", NULL);
 
-	if (show_proc_ctx || show_sock_ctx) {
-		if (find_entry(s->ino, &buf,
-					(show_proc_ctx & show_sock_ctx) ?
-					PROC_SOCK_CTX : PROC_CTX) > 0) {
-			printf(" users:(%s)", buf);
-			free(buf);
-		}
-	} else if (show_users) {
-		if (find_entry(s->ino, &buf, USERS) > 0) {
-			printf(" users:(%s)", buf);
-			free(buf);
-		}
-	}
+	proc_ctx_print(s);
 
 	if (show_details)
 		sock_details_print(s);
