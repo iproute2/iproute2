@@ -3109,8 +3109,6 @@ static int unix_show(struct filter *f)
 
 		if (!(u = calloc(1, sizeof(*u))))
 			break;
-		u->name = NULL;
-		u->peer_name = NULL;
 
 		if (sscanf(buf, "%x: %x %x %x %x %x %d %s",
 			   &u->rport, &u->rq, &u->wq, &flags, &u->type,
