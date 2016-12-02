@@ -2957,9 +2957,6 @@ outerr:
 	} while (0);
 }
 
-int unix_state_map[] = { SS_CLOSE, SS_SYN_SENT,
-			 SS_ESTABLISHED, SS_CLOSING };
-
 #define MAX_UNIX_REMEMBER (1024*1024/sizeof(struct sockstat))
 
 static void unix_list_drop_first(struct sockstat **list)
@@ -3101,6 +3098,8 @@ static int unix_show(struct filter *f)
 	int  newformat = 0;
 	int  cnt;
 	struct sockstat *list = NULL;
+	const int unix_state_map[] = { SS_CLOSE, SS_SYN_SENT,
+				       SS_ESTABLISHED, SS_CLOSING };
 
 	if (!filter_af_get(f, AF_UNIX))
 		return 0;
