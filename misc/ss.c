@@ -4266,6 +4266,7 @@ int main(int argc, char *argv[])
 			exit(0);
 		case 'z':
 			show_sock_ctx++;
+			/* fall through */
 		case 'Z':
 			if (is_selinux_enabled() <= 0) {
 				fprintf(stderr, "ss: SELinux is not enabled.\n");
