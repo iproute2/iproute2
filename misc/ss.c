@@ -655,21 +655,6 @@ static unsigned long long cookie_sk_get(const uint32_t *cookie)
 	return (((unsigned long long)cookie[1] << 31) << 1) | cookie[0];
 }
 
-static const char *sstate_name[] = {
-	"UNKNOWN",
-	[SS_ESTABLISHED] = "ESTAB",
-	[SS_SYN_SENT] = "SYN-SENT",
-	[SS_SYN_RECV] = "SYN-RECV",
-	[SS_FIN_WAIT1] = "FIN-WAIT-1",
-	[SS_FIN_WAIT2] = "FIN-WAIT-2",
-	[SS_TIME_WAIT] = "TIME-WAIT",
-	[SS_CLOSE] = "UNCONN",
-	[SS_CLOSE_WAIT] = "CLOSE-WAIT",
-	[SS_LAST_ACK] = "LAST-ACK",
-	[SS_LISTEN] =	"LISTEN",
-	[SS_CLOSING] = "CLOSING",
-};
-
 static const char *sctp_sstate_name[] = {
 	[SCTP_STATE_CLOSED] = "CLOSED",
 	[SCTP_STATE_COOKIE_WAIT] = "COOKIE_WAIT",
@@ -821,6 +806,20 @@ static const char *proto_name(int protocol)
 static void sock_state_print(struct sockstat *s)
 {
 	const char *sock_name;
+	static const char * const sstate_name[] = {
+		"UNKNOWN",
+		[SS_ESTABLISHED] = "ESTAB",
+		[SS_SYN_SENT] = "SYN-SENT",
+		[SS_SYN_RECV] = "SYN-RECV",
+		[SS_FIN_WAIT1] = "FIN-WAIT-1",
+		[SS_FIN_WAIT2] = "FIN-WAIT-2",
+		[SS_TIME_WAIT] = "TIME-WAIT",
+		[SS_CLOSE] = "UNCONN",
+		[SS_CLOSE_WAIT] = "CLOSE-WAIT",
+		[SS_LAST_ACK] = "LAST-ACK",
+		[SS_LISTEN] =	"LISTEN",
+		[SS_CLOSING] = "CLOSING",
+	};
 
 	switch (s->local.family) {
 	case AF_UNIX:
