@@ -3038,11 +3038,6 @@ static bool unix_type_skip(struct sockstat *s, struct filter *f)
 	return false;
 }
 
-static bool unix_use_proc(void)
-{
-	return getenv("PROC_NET_UNIX") || getenv("PROC_ROOT");
-}
-
 static void unix_stats_print(struct sockstat *s, struct filter *f)
 {
 	char port_name[30] = {};
@@ -3166,7 +3161,8 @@ static int unix_show(struct filter *f)
 	if (!filter_af_get(f, AF_UNIX))
 		return 0;
 
-	if (!unix_use_proc() && unix_show_netlink(f) == 0)
+	if (!getenv("PROC_NET_UNIX") && !getenv("PROC_ROOT")
+	    && unix_show_netlink(f) == 0)
 		return 0;
 
 	if ((fp = net_unix_open()) == NULL)
