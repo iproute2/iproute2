@@ -2444,7 +2444,7 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 		}
 	}
 
-	if (show_mem || show_tcpinfo) {
+	if (show_mem || (show_tcpinfo && protocol != IPPROTO_UDP)) {
 		printf("\n\t");
 		if (protocol == IPPROTO_SCTP)
 			sctp_show_info(nlh, r, tb);
