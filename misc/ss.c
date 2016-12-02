@@ -3675,7 +3675,7 @@ static int generic_show_sock(const struct sockaddr_nl *addr,
 
 static int handle_follow_request(struct filter *f)
 {
-	int ret = -1;
+	int ret = 0;
 	int groups = 0;
 	struct rtnl_handle rth;
 
@@ -3698,10 +3698,8 @@ static int handle_follow_request(struct filter *f)
 	rth.local.nl_pid = 0;
 
 	if (rtnl_dump_filter(&rth, generic_show_sock, f))
-		goto Exit;
+		ret = -1;
 
-	ret = 0;
-Exit:
 	rtnl_close(&rth);
 	return ret;
 }
