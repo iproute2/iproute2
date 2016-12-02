@@ -34,7 +34,11 @@ flower \- flow based traffic control filter
 .BR dst_ip " | " src_ip " } { "
 .IR ipv4_address " | " ipv6_address " } | { "
 .BR dst_port " | " src_port " } "
-.IR port_number " }"
+.IR port_number " } | "
+.B enc_key_id
+.IR KEY-ID " | {"
+.BR enc_dst_ip " | " enc_src_ip " } { "
+.IR ipv4_address " | " ipv6_address " } | "
 .SH DESCRIPTION
 The
 .B flower
@@ -112,6 +116,17 @@ which has to be specified in beforehand.
 Match on layer 4 protocol source or destination port number. Only available for
 .BR ip_proto " values " udp " and " tcp ,
 which has to be specified in beforehand.
+.TP
+.BI enc_key_id " NUMBER"
+.TQ
+.BI enc_dst_ip " ADDRESS"
+.TQ
+.BI enc_src_ip " ADDRESS"
+Match on IP tunnel metadata. Key id
+.I NUMBER
+is a 32 bit tunnel key id (e.g. VNI for VXLAN tunnel).
+.I ADDRESS
+must be a valid IPv4 or IPv6 address.
 .SH NOTES
 As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches (
