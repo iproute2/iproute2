@@ -50,6 +50,7 @@ TCMODULES += m_simple.o
 TCMODULES += m_vlan.o
 TCMODULES += m_connmark.o
 TCMODULES += m_bpf.o
+TCMODULES += m_tunnel_key.o
 TCMODULES += p_ip.o
 TCMODULES += p_icmp.o
 TCMODULES += p_tcp.o
