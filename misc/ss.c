@@ -100,8 +100,6 @@ int show_bpf;
 int show_proc_ctx;
 int show_sock_ctx;
 int show_header = 1;
-/* If show_users & show_proc_ctx only do user_ent_hash_build() once */
-int user_ent_hash_build_init;
 int follow_events;
 int sctp_ino;
 
@@ -421,6 +419,7 @@ static void user_ent_hash_build(void)
 	char *pid_context;
 	char *sock_context;
 	const char *no_ctx = "unavailable";
+	static int user_ent_hash_build_init;
 
 	/* If show_users & show_proc_ctx set only do this once */
 	if (user_ent_hash_build_init != 0)
