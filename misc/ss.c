@@ -3704,10 +3704,6 @@ static int handle_follow_request(struct filter *f)
 	return ret;
 }
 
-struct snmpstat {
-	int tcp_estab;
-};
-
 static int get_snmp_int(char *proto, char *key, int *result)
 {
 	char buf[1024];
@@ -3828,11 +3824,11 @@ static int get_sockstat(struct ssummary *s)
 static int print_summary(void)
 {
 	struct ssummary s;
-	struct snmpstat sn;
+	int tcp_estab;
 
 	if (get_sockstat(&s) < 0)
 		perror("ss: get_sockstat");
-	if (get_snmp_int("Tcp:", "CurrEstab", &sn.tcp_estab) < 0)
+	if (get_snmp_int("Tcp:", "CurrEstab", &tcp_estab) < 0)
 		perror("ss: get_snmpstat");
 
 	get_slabstat(&slabstat);
@@ -3841,7 +3837,7 @@ static int print_summary(void)
 
 	printf("TCP:   %d (estab %d, closed %d, orphaned %d, synrecv %d, timewait %d/%d), ports %d\n",
 	       s.tcp_total + slabstat.tcp_syns + s.tcp_tws,
-	       sn.tcp_estab,
+	       tcp_estab,
 	       s.tcp_total - (s.tcp4_hashed+s.tcp6_hashed-s.tcp_tws),
 	       s.tcp_orphans,
 	       slabstat.tcp_syns,
