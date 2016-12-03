@@ -168,19 +168,17 @@ static int flower_parse_ip_addr(char *str, __be16 eth_type,
 
 static int flower_port_attr_type(__u8 ip_proto, bool is_src)
 {
-	if (ip_proto == IPPROTO_TCP) {
+	if (ip_proto == IPPROTO_TCP)
 		return is_src ? TCA_FLOWER_KEY_TCP_SRC :
 			TCA_FLOWER_KEY_TCP_DST;
-	} else if (ip_proto == IPPROTO_UDP) {
+	else if (ip_proto == IPPROTO_UDP)
 		return is_src ? TCA_FLOWER_KEY_UDP_SRC :
 			TCA_FLOWER_KEY_UDP_DST;
-	} else if (ip_proto == IPPROTO_SCTP) {
+	else if (ip_proto == IPPROTO_SCTP)
 		return is_src ? TCA_FLOWER_KEY_SCTP_SRC :
 			TCA_FLOWER_KEY_SCTP_DST;
-	} else {
-		fprintf(stderr, "Illegal \"ip_proto\" for port\n");
+	else
 		return -1;
-	}
 }
 
 static int flower_parse_port(char *str, __u8 ip_proto, bool is_src,
@@ -561,7 +559,8 @@ static void flower_print_ip_addr(FILE *f, char *name, __be16 eth_type,
 
 static void flower_print_port(FILE *f, char *name, struct rtattr *attr)
 {
-	fprintf(f, "\n  %s %d", name, rta_getattr_be16(attr));
+	if (attr)
+		fprintf(f, "\n  %s %d", name, rta_getattr_be16(attr));
 }
 
 static void flower_print_key_id(FILE *f, const char *name,
@@ -577,6 +576,7 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	struct rtattr *tb[TCA_FLOWER_MAX + 1];
 	__be16 eth_type = 0;
 	__u8 ip_proto = 0xff;
+	int nl_type;
 
 	if (!opt)
 		return 0;
@@ -631,10 +631,12 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			     tb[TCA_FLOWER_KEY_IPV6_SRC],
 			     tb[TCA_FLOWER_KEY_IPV6_SRC_MASK]);
 
-	flower_print_port(f, "dst_port",
-			  tb[flower_port_attr_type(ip_proto, false)]);
-	flower_print_port(f, "src_port",
-			  tb[flower_port_attr_type(ip_proto, true)]);
+	nl_type = flower_port_attr_type(ip_proto, false);
+	if (nl_type >= 0)
+		flower_print_port(f, "dst_port", tb[nl_type]);
+	nl_type = flower_port_attr_type(ip_proto, true);
+	if (nl_type >= 0)
+		flower_print_port(f, "src_port", tb[nl_type]);
 
 	flower_print_ip_addr(f, "enc_dst_ip",
 			     tb[TCA_FLOWER_KEY_ENC_IPV4_DST_MASK] ?
