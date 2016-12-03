@@ -166,15 +166,15 @@ static int flower_parse_ip_addr(char *str, __be16 eth_type,
 	return 0;
 }
 
-static int flower_port_attr_type(__u8 ip_port, bool is_src)
+static int flower_port_attr_type(__u8 ip_proto, bool is_src)
 {
-	if (ip_port == IPPROTO_TCP) {
+	if (ip_proto == IPPROTO_TCP) {
 		return is_src ? TCA_FLOWER_KEY_TCP_SRC :
 			TCA_FLOWER_KEY_TCP_DST;
-	} else if (ip_port == IPPROTO_UDP) {
+	} else if (ip_proto == IPPROTO_UDP) {
 		return is_src ? TCA_FLOWER_KEY_UDP_SRC :
 			TCA_FLOWER_KEY_UDP_DST;
-	} else if (ip_port == IPPROTO_SCTP) {
+	} else if (ip_proto == IPPROTO_SCTP) {
 		return is_src ? TCA_FLOWER_KEY_SCTP_SRC :
 			TCA_FLOWER_KEY_SCTP_DST;
 	} else {
@@ -183,14 +183,14 @@ static int flower_port_attr_type(__u8 ip_port, bool is_src)
 	}
 }
 
-static int flower_parse_port(char *str, __u8 ip_port, bool is_src,
+static int flower_parse_port(char *str, __u8 ip_proto, bool is_src,
 			     struct nlmsghdr *n)
 {
 	int ret;
 	int type;
 	__be16 port;
 
-	type = flower_port_attr_type(ip_port, is_src);
+	type = flower_port_attr_type(ip_proto, is_src);
 	if (type < 0)
 		return -1;
 
