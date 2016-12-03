@@ -37,7 +37,7 @@ static void explain(void)
 		"                       vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n"
 		"                       dst_mac MAC-ADDR |\n"
 		"                       src_mac MAC-ADDR |\n"
-		"                       ip_proto [tcp | udp | IP-PROTO ] |\n"
+		"                       ip_proto [tcp | udp | sctp | IP-PROTO ] |\n"
 		"                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       dst_port PORT-NUMBER |\n"

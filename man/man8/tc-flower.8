@@ -29,7 +29,7 @@ flower \- flow based traffic control filter
 .IR PRIORITY " | "
 .BR vlan_eth_type " { " ipv4 " | " ipv6 " | "
 .IR ETH_TYPE " } | "
-.BR ip_proto " { " tcp " | " udp " | "
+.BR ip_proto " { " tcp " | " udp " | " sctp " | "
 .IR IP_PROTO " } | { "
 .BR dst_ip " | " src_ip " } { "
 .IR ipv4_address " | " ipv6_address " } | { "
@@ -97,8 +97,8 @@ or an unsigned 16bit value in hexadecimal format.
 .BI ip_proto " IP_PROTO"
 Match on layer four protocol.
 .I IP_PROTO
-may be either
-.BR tcp , udp
+may be
+.BR tcp ", " udp ", " sctp
 or an unsigned 8bit value in hexadecimal format.
 .TP
 .BI dst_ip " ADDRESS"
@@ -114,8 +114,8 @@ option of tc filter.
 .TQ
 .BI src_port " NUMBER"
 Match on layer 4 protocol source or destination port number. Only available for
-.BR ip_proto " values " udp " and " tcp ,
-which has to be specified in beforehand.
+.BR ip_proto " values " udp ", " tcp  " and " sctp
+which have to be specified in beforehand.
 .TP
 .BI enc_key_id " NUMBER"
 .TQ
@@ -140,8 +140,8 @@ and finally layer four matches
 (\fBdst_port\fR and \fBsrc_port\fR)
 depend on
 .B ip_proto
-being set to either
-.BR tcp " or " udp .
+being set to
+.BR tcp ", " udp " or " sctp.
 .P
 There can be only used one mask per one prio. If user needs to specify different
 mask, he has to use different prio.
