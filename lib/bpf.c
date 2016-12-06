@@ -273,11 +273,11 @@ static void bpf_map_pin_report(const struct bpf_elf_map *pin,
 }
 
 static int bpf_map_selfcheck_pinned(int fd, const struct bpf_elf_map *map,
-				    int length)
+				    int length, enum bpf_prog_type type)
 {
 	char file[PATH_MAX], buff[4096];
 	struct bpf_elf_map tmp = {}, zero = {};
-	unsigned int val;
+	unsigned int val, owner_type = 0;
 	FILE *fp;
 
 	snprintf(file, sizeof(file), "/proc/%d/fdinfo/%d", getpid(), fd);
@@ -299,9 +299,18 @@ static int bpf_map_selfcheck_pinned(int fd, const struct bpf_elf_map *map,
 			tmp.max_elem = val;
 		else if (sscanf(buff, "map_flags:\t%i", &val) == 1)
 			tmp.flags = val;
+		else if (sscanf(buff, "owner_prog_type:\t%i", &val) == 1)
+			owner_type = val;
 	}
 
 	fclose(fp);
+
+	/* The decision to reject this is on kernel side eventually, but
+	 * at least give the user a chance to know what's wrong.
+	 */
+	if (owner_type && owner_type != type)
+		fprintf(stderr, "Program array map owner types differ: %u (obj) != %u (pin)\n",
+			type, owner_type);
 
 	if (!memcmp(&tmp, map, length)) {
 		return 0;
@@ -818,7 +827,8 @@ int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
 	}
 
 	ret = bpf_map_selfcheck_pinned(map_fd, &test,
-				       offsetof(struct bpf_elf_map, max_elem));
+				       offsetof(struct bpf_elf_map, max_elem),
+				       type);
 	if (ret < 0) {
 		fprintf(stderr, "Map \'%s\' self-check failed!\n", map_path);
 		goto out_map;
@@ -1303,7 +1313,7 @@ static int bpf_map_attach(const char *name, const struct bpf_elf_map *map,
 	if (fd > 0) {
 		ret = bpf_map_selfcheck_pinned(fd, map,
 					       offsetof(struct bpf_elf_map,
-							id));
+							id), ctx->type);
 		if (ret < 0) {
 			close(fd);
 			fprintf(stderr, "Map \'%s\' self-check failed!\n",
