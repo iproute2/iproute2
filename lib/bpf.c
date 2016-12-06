@@ -55,6 +55,7 @@ struct bpf_prog_meta {
 static const enum bpf_prog_type __bpf_types[] = {
 	BPF_PROG_TYPE_SCHED_CLS,
 	BPF_PROG_TYPE_SCHED_ACT,
+	BPF_PROG_TYPE_XDP,
 };
 
 static const struct bpf_prog_meta __bpf_prog_meta[] = {
@@ -69,6 +70,11 @@ static const struct bpf_prog_meta __bpf_prog_meta[] = {
 		.subdir		= "tc",
 		.section	= ELF_SECTION_ACTION,
 		.may_uds_export	= true,
+	},
+	[BPF_PROG_TYPE_XDP] = {
+		.type		= "xdp",
+		.subdir		= "xdp",
+		.section	= ELF_SECTION_PROG,
 	},
 };
 

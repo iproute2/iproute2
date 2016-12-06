@@ -32,6 +32,7 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "xdp.h"
 #include "namespace.h"
 
 #define IPLINK_IOCTL_COMPAT	1
@@ -54,6 +55,7 @@ void iplink_usage(void)
 			"                   [ numtxqueues QUEUE_COUNT ]\n"
 			"                   [ numrxqueues QUEUE_COUNT ]\n"
 			"                   type TYPE [ ARGS ]\n"
+			"\n"
 			"       ip link delete { DEVICE | dev DEVICE | group DEVGROUP } type TYPE [ ARGS ]\n"
 			"\n"
 			"       ip link set { DEVICE | dev DEVICE | group DEVGROUP }\n"
@@ -79,24 +81,28 @@ void iplink_usage(void)
 		"			  [ alias NAME ]\n"
 		"	                  [ vf NUM [ mac LLADDR ]\n"
 		"				   [ vlan VLANID [ qos VLAN-QOS ] [ proto VLAN-PROTO ] ]\n"
-
 		"				   [ rate TXRATE ]\n"
 		"				   [ max_tx_rate TXRATE ]\n"
 		"				   [ min_tx_rate TXRATE ]\n"
-
 		"				   [ spoofchk { on | off} ]\n"
 		"				   [ query_rss { on | off} ]\n"
 		"				   [ state { auto | enable | disable} ] ]\n"
 		"				   [ trust { on | off} ] ]\n"
+		"			  [ xdp { off |\n"
+		"				  object FILE [ section NAME ] [ verbose ] |\n"
+		"				  pinned FILE } ]\n"
 		"			  [ master DEVICE ][ vrf NAME ]\n"
 		"			  [ nomaster ]\n"
 		"			  [ addrgenmode { eui64 | none | stable_secret | random } ]\n"
 		"	                  [ protodown { on | off } ]\n"
+		"\n"
 		"       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [vrf NAME] [type TYPE]\n");
 
 	if (iplink_have_newlink()) {
 		fprintf(stderr,
-			"       ip link help [ TYPE ]\n\n"
+			"\n"
+			"       ip link help [ TYPE ]\n"
+			"\n"
 			"TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n"
 			"          bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |\n"
 			"          gre | gretap | ip6gre | ip6gretap | vti | nlmon | team_slave |\n"
@@ -220,12 +226,6 @@ static int iplink_have_newlink(void)
 	return 1;
 }
 #endif /* ! IPLINK_IOCTL_COMPAT */
-
-struct iplink_req {
-	struct nlmsghdr		n;
-	struct ifinfomsg	i;
-	char			buf[1024];
-};
 
 static int nl_get_ll_addr_len(unsigned int dev_index)
 {
@@ -602,6 +602,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (get_integer(&mtu, *argv, 0))
 				invarg("Invalid \"mtu\" value\n", *argv);
 			addattr_l(&req->n, sizeof(*req), IFLA_MTU, &mtu, 4);
+		} else if (strcmp(*argv, "xdp") == 0) {
+			NEXT_ARG();
+			if (xdp_parse(&argc, &argv, req))
+				exit(-1);
 		} else if (strcmp(*argv, "netns") == 0) {
 			NEXT_ARG();
 			if (netns != -1)

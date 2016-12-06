@@ -72,6 +72,11 @@
 	__section(__stringify(ID) "/" __stringify(KEY))
 #endif
 
+#ifndef __section_xdp_entry
+# define __section_xdp_entry						\
+	__section(ELF_SECTION_PROG)
+#endif
+
 #ifndef __section_cls_entry
 # define __section_cls_entry						\
 	__section(ELF_SECTION_CLASSIFIER)
