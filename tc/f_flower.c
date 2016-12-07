@@ -28,6 +28,11 @@ enum flower_endpoint {
 	FLOWER_ENDPOINT_DST
 };
 
+enum flower_icmp_field {
+	FLOWER_ICMP_FIELD_TYPE,
+	FLOWER_ICMP_FIELD_CODE
+};
+
 static void explain(void)
 {
 	fprintf(stderr,
@@ -42,11 +47,13 @@ static void explain(void)
 		"                       vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n"
 		"                       dst_mac MAC-ADDR |\n"
 		"                       src_mac MAC-ADDR |\n"
-		"                       ip_proto [tcp | udp | sctp | IP-PROTO ] |\n"
+		"                       ip_proto [tcp | udp | sctp | icmp | icmpv6 | IP-PROTO ] |\n"
 		"                       dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       dst_port PORT-NUMBER |\n"
 		"                       src_port PORT-NUMBER |\n"
+		"                       type ICMP-TYPE |\n"
+		"                       code ICMP-CODE }\n"
 		"                       enc_dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_key_id [ KEY-ID ] }\n"
@@ -98,16 +105,23 @@ static int flower_parse_ip_proto(char *str, __be16 eth_type, int type,
 	int ret;
 	__u8 ip_proto;
 
-	if (eth_type != htons(ETH_P_IP) && eth_type != htons(ETH_P_IPV6)) {
-		fprintf(stderr, "Illegal \"eth_type\" for ip proto\n");
-		return -1;
-	}
+	if (eth_type != htons(ETH_P_IP) && eth_type != htons(ETH_P_IPV6))
+		goto err;
+
 	if (matches(str, "tcp") == 0) {
 		ip_proto = IPPROTO_TCP;
 	} else if (matches(str, "udp") == 0) {
 		ip_proto = IPPROTO_UDP;
 	} else if (matches(str, "sctp") == 0) {
 		ip_proto = IPPROTO_SCTP;
+	} else if (matches(str, "icmp") == 0) {
+		if (eth_type != htons(ETH_P_IP))
+			goto err;
+		ip_proto = IPPROTO_ICMP;
+	} else if (matches(str, "icmpv6") == 0) {
+		if (eth_type != htons(ETH_P_IPV6))
+			goto err;
+		ip_proto = IPPROTO_ICMPV6;
 	} else {
 		ret = get_u8(&ip_proto, str, 16);
 		if (ret)
@@ -116,6 +130,10 @@ static int flower_parse_ip_proto(char *str, __be16 eth_type, int type,
 	addattr8(n, MAX_MSG, type, ip_proto);
 	*p_ip_proto = ip_proto;
 	return 0;
+
+err:
+	fprintf(stderr, "Illegal \"eth_type\" for ip proto\n");
+	return -1;
 }
 
 static int flower_parse_ip_addr(char *str, __be16 eth_type,
@@ -167,6 +185,41 @@ static int flower_parse_ip_addr(char *str, __be16 eth_type,
 
 	addattr_l(n, MAX_MSG, addr.family == AF_INET ? mask4_type : mask6_type,
 		  addr.data, addr.bytelen);
+
+	return 0;
+}
+
+static int flower_icmp_attr_type(__be16 eth_type, __u8 ip_proto,
+				 enum flower_icmp_field field)
+{
+	if (eth_type == htons(ETH_P_IP) && ip_proto == IPPROTO_ICMP)
+		return field == FLOWER_ICMP_FIELD_CODE ?
+			TCA_FLOWER_KEY_ICMPV4_CODE :
+			TCA_FLOWER_KEY_ICMPV4_TYPE;
+	else if (eth_type == htons(ETH_P_IPV6) && ip_proto == IPPROTO_ICMPV6)
+		return field == FLOWER_ICMP_FIELD_CODE ?
+			TCA_FLOWER_KEY_ICMPV6_CODE :
+			TCA_FLOWER_KEY_ICMPV6_TYPE;
+
+	return -1;
+}
+
+static int flower_parse_icmp(char *str, __u16 eth_type, __u8 ip_proto,
+			     enum flower_icmp_field field, struct nlmsghdr *n)
+{
+	int ret;
+	int type;
+	uint8_t value;
+
+	type = flower_icmp_attr_type(eth_type, ip_proto, field);
+	if (type < 0)
+		return -1;
+
+	ret = get_u8(&value, str, 10);
+	if (ret)
+		return -1;
+
+	addattr8(n, MAX_MSG, type, value);
 
 	return 0;
 }
@@ -381,6 +434,22 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "Illegal \"src_port\"\n");
 				return -1;
 			}
+		} else if (matches(*argv, "type") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_icmp(*argv, eth_type, ip_proto,
+						FLOWER_ICMP_FIELD_TYPE, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"icmp type\"\n");
+				return -1;
+			}
+		} else if (matches(*argv, "code") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_icmp(*argv, eth_type, ip_proto,
+						FLOWER_ICMP_FIELD_CODE, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"icmp code\"\n");
+				return -1;
+			}
 		} else if (matches(*argv, "enc_dst_ip") == 0) {
 			NEXT_ARG();
 			ret = flower_parse_ip_addr(*argv, 0,
@@ -526,6 +595,10 @@ static void flower_print_ip_proto(FILE *f, __u8 *p_ip_proto,
 		fprintf(f, "udp");
 	else if (ip_proto == IPPROTO_SCTP)
 		fprintf(f, "sctp");
+	else if (ip_proto == IPPROTO_ICMP)
+		fprintf(f, "icmp");
+	else if (ip_proto == IPPROTO_ICMPV6)
+		fprintf(f, "icmpv6");
 	else
 		fprintf(f, "%02x", ip_proto);
 	*p_ip_proto = ip_proto;
@@ -579,6 +652,12 @@ static void flower_print_key_id(FILE *f, const char *name,
 {
 	if (attr)
 		fprintf(f, "\n  %s %d", name, rta_getattr_be32(attr));
+}
+
+static void flower_print_icmp(FILE *f, char *name, struct rtattr *attr)
+{
+	if (attr)
+		fprintf(f, "\n  %s %d", name, rta_getattr_u8(attr));
 }
 
 static int flower_print_opt(struct filter_util *qu, FILE *f,
@@ -648,6 +727,13 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	nl_type = flower_port_attr_type(ip_proto, true);
 	if (nl_type >= 0)
 		flower_print_port(f, "src_port", tb[nl_type]);
+
+	nl_type = flower_icmp_attr_type(eth_type, ip_proto, false);
+	if (nl_type >= 0)
+		flower_print_icmp(f, "icmp_type", tb[nl_type]);
+	nl_type = flower_icmp_attr_type(eth_type, ip_proto, true);
+	if (nl_type >= 0)
+		flower_print_icmp(f, "icmp_code", tb[nl_type]);
 
 	flower_print_ip_addr(f, "enc_dst_ip",
 			     tb[TCA_FLOWER_KEY_ENC_IPV4_DST_MASK] ?

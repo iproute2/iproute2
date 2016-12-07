@@ -29,7 +29,7 @@ flower \- flow based traffic control filter
 .IR PRIORITY " | "
 .BR vlan_eth_type " { " ipv4 " | " ipv6 " | "
 .IR ETH_TYPE " } | "
-.BR ip_proto " { " tcp " | " udp " | " sctp " | "
+.BR ip_proto " { " tcp " | " udp " | " sctp " | " icmp " | " icmpv6 " | "
 .IR IP_PROTO " } | { "
 .BR dst_ip " | " src_ip " } { "
 .IR ipv4_address " | " ipv6_address " } | { "
@@ -98,7 +98,7 @@ or an unsigned 16bit value in hexadecimal format.
 Match on layer four protocol.
 .I IP_PROTO
 may be
-.BR tcp ", " udp ", " sctp
+.BR tcp ", " udp ", " sctp ", " icmp ", " icmpv6
 or an unsigned 8bit value in hexadecimal format.
 .TP
 .BI dst_ip " ADDRESS"
@@ -115,6 +115,13 @@ option of tc filter.
 .BI src_port " NUMBER"
 Match on layer 4 protocol source or destination port number. Only available for
 .BR ip_proto " values " udp ", " tcp  " and " sctp
+which have to be specified in beforehand.
+.TP
+.BI type " NUMBER"
+.TQ
+.BI code " NUMBER"
+Match on ICMP type or code. Only available for
+.BR ip_proto " values " icmp  " and " icmpv6
 which have to be specified in beforehand.
 .TP
 .BI enc_key_id " NUMBER"
@@ -135,13 +142,16 @@ have no dependency, layer three matches
 (\fBip_proto\fR, \fBdst_ip\fR and \fBsrc_ip\fR)
 depend on the
 .B protocol
-option of tc filter
-and finally layer four matches
+option of tc filter, layer four port matches
 (\fBdst_port\fR and \fBsrc_port\fR)
 depend on
 .B ip_proto
 being set to
-.BR tcp ", " udp " or " sctp.
+.BR tcp ", " udp " or " sctp,
+and finally ICMP matches (\fBcode\fR and \fBtype\fR) depend on
+.B ip_proto
+being set to
+.BR icmp " or " icmpv6.
 .P
 There can be only used one mask per one prio. If user needs to specify different
 mask, he has to use different prio.
