@@ -23,6 +23,11 @@
 #include "tc_util.h"
 #include "rt_names.h"
 
+enum flower_endpoint {
+	FLOWER_ENDPOINT_SRC,
+	FLOWER_ENDPOINT_DST
+};
+
 static void explain(void)
 {
 	fprintf(stderr,
@@ -166,29 +171,33 @@ static int flower_parse_ip_addr(char *str, __be16 eth_type,
 	return 0;
 }
 
-static int flower_port_attr_type(__u8 ip_proto, bool is_src)
+static int flower_port_attr_type(__u8 ip_proto, enum flower_endpoint endpoint)
 {
 	if (ip_proto == IPPROTO_TCP)
-		return is_src ? TCA_FLOWER_KEY_TCP_SRC :
+		return endpoint == FLOWER_ENDPOINT_SRC ?
+			TCA_FLOWER_KEY_TCP_SRC :
 			TCA_FLOWER_KEY_TCP_DST;
 	else if (ip_proto == IPPROTO_UDP)
-		return is_src ? TCA_FLOWER_KEY_UDP_SRC :
+		return endpoint == FLOWER_ENDPOINT_SRC ?
+			TCA_FLOWER_KEY_UDP_SRC :
 			TCA_FLOWER_KEY_UDP_DST;
 	else if (ip_proto == IPPROTO_SCTP)
-		return is_src ? TCA_FLOWER_KEY_SCTP_SRC :
+		return endpoint == FLOWER_ENDPOINT_SRC ?
+			TCA_FLOWER_KEY_SCTP_SRC :
 			TCA_FLOWER_KEY_SCTP_DST;
 	else
 		return -1;
 }
 
-static int flower_parse_port(char *str, __u8 ip_proto, bool is_src,
+static int flower_parse_port(char *str, __u8 ip_proto,
+			     enum flower_endpoint endpoint,
 			     struct nlmsghdr *n)
 {
 	int ret;
 	int type;
 	__be16 port;
 
-	type = flower_port_attr_type(ip_proto, is_src);
+	type = flower_port_attr_type(ip_proto, endpoint);
 	if (type < 0)
 		return -1;
 
@@ -358,14 +367,16 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			}
 		} else if (matches(*argv, "dst_port") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_port(*argv, ip_proto, false, n);
+			ret = flower_parse_port(*argv, ip_proto,
+						FLOWER_ENDPOINT_DST, n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"dst_port\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "src_port") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_port(*argv, ip_proto, true, n);
+			ret = flower_parse_port(*argv, ip_proto,
+						FLOWER_ENDPOINT_SRC, n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"src_port\"\n");
 				return -1;
