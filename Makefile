@@ -3,7 +3,7 @@ ifneq ($(wildcard Config),)
 include Config
 endif
 
-ifndef VERBOSE
+ifeq ($(VERBOSE),0)
 MAKEFLAGS += --no-print-directory
 endif
 
