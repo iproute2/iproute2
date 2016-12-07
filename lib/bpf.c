@@ -912,15 +912,18 @@ bpf_dump_error(struct bpf_elf_ctx *ctx, const char *format, ...)
 
 static int bpf_log_realloc(struct bpf_elf_ctx *ctx)
 {
+	const size_t log_max = UINT_MAX >> 8;
 	size_t log_size = ctx->log_size;
 	void *ptr;
 
 	if (!ctx->log) {
 		log_size = 65536;
-	} else {
+	} else if (log_size < log_max) {
 		log_size <<= 1;
-		if (log_size > (UINT_MAX >> 8))
-			return -EINVAL;
+		if (log_size > log_max)
+			log_size = log_max;
+	} else {
+		return -EINVAL;
 	}
 
 	ptr = realloc(ctx->log, log_size);
@@ -1259,7 +1262,7 @@ retry:
 		 * log for the user, so enlarge it and re-fail.
 		 */
 		if (fd < 0 && (errno == ENOSPC || !ctx->log_size)) {
-			if (tries++ < 6 && !bpf_log_realloc(ctx))
+			if (tries++ < 10 && !bpf_log_realloc(ctx))
 				goto retry;
 
 			fprintf(stderr, "Log buffer too small to dump verifier log %zu bytes (%d tries)!\n",
