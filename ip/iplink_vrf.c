@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <linux/if_link.h>
+#include <errno.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -126,8 +127,14 @@ __u32 ipvrf_get_table(const char *name)
 
 	addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, strlen(name) + 1);
 
-	if (rtnl_talk(&rth, &req.n, &answer.n, sizeof(answer)) < 0)
-		return 0;
+	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n,
+					   &answer.n, sizeof(answer)) < 0) {
+		/* special case "default" vrf to be the main table */
+		if (errno == ENODEV && !strcmp(name, "default"))
+			rtnl_rttable_a2n(&tb_id, "main");
+
+		return tb_id;
+	}
 
 	ifi = NLMSG_DATA(&answer.n);
 	len = answer.n.nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
@@ -186,7 +193,8 @@ int name_is_vrf(const char *name)
 
 	addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, strlen(name) + 1);
 
-	if (rtnl_talk(&rth, &req.n, &answer.n, sizeof(answer)) < 0)
+	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n,
+					   &answer.n, sizeof(answer)) < 0)
 		return 0;
 
 	ifi = NLMSG_DATA(&answer.n);

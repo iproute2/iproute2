@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <fcntl.h>
@@ -397,8 +398,9 @@ int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 	return rtnl_dump_filter_l(rth, a);
 }
 
-int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-	      struct nlmsghdr *answer, size_t maxlen)
+static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+		       struct nlmsghdr *answer, size_t maxlen,
+		       bool show_rtnl_err)
 {
 	int status;
 	unsigned int seq;
@@ -485,7 +487,7 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 					return 0;
 				}
 
-				if (rtnl->proto != NETLINK_SOCK_DIAG)
+				if (rtnl->proto != NETLINK_SOCK_DIAG && show_rtnl_err)
 					fprintf(stderr,
 						"RTNETLINK answers: %s\n",
 						strerror(-err->error));
@@ -515,6 +517,18 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 			exit(1);
 		}
 	}
+}
+
+int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+	      struct nlmsghdr *answer, size_t maxlen)
+{
+	return __rtnl_talk(rtnl, n, answer, maxlen, true);
+}
+
+int rtnl_talk_suppress_rtnl_errmsg(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+				   struct nlmsghdr *answer, size_t maxlen)
+{
+	return __rtnl_talk(rtnl, n, answer, maxlen, false);
 }
 
 int rtnl_listen_all_nsid(struct rtnl_handle *rth)

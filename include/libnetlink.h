@@ -81,6 +81,9 @@ int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr *answer, size_t len)
 	__attribute__((warn_unused_result));
+int rtnl_talk_suppress_rtnl_errmsg(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+				   struct nlmsghdr *answer, size_t len)
+	__attribute__((warn_unused_result));
 int rtnl_send(struct rtnl_handle *rth, const void *buf, int)
 	__attribute__((warn_unused_result));
 int rtnl_send_check(struct rtnl_handle *rth, const void *buf, int)
