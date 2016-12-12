@@ -889,6 +889,26 @@ int bpf_prog_detach_fd(int target_fd, enum bpf_attach_type type)
 	return bpf(BPF_PROG_DETACH, &attr, sizeof(attr));
 }
 
+int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
+		  size_t size_insns, const char *license, char *log,
+		  size_t size_log)
+{
+	union bpf_attr attr = {};
+
+	attr.prog_type = type;
+	attr.insns = bpf_ptr_to_u64(insns);
+	attr.insn_cnt = size_insns / sizeof(struct bpf_insn);
+	attr.license = bpf_ptr_to_u64(license);
+
+	if (size_log > 0) {
+		attr.log_buf = bpf_ptr_to_u64(log);
+		attr.log_size = size_log;
+		attr.log_level = 1;
+	}
+
+	return bpf(BPF_PROG_LOAD, &attr, sizeof(attr));
+}
+
 #ifdef HAVE_ELF
 struct bpf_elf_prog {
 	enum bpf_prog_type	type;
@@ -1004,26 +1024,6 @@ static int bpf_map_create(enum bpf_map_type type, uint32_t size_key,
 	attr.map_flags = flags;
 
 	return bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
-}
-
-static int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
-			 size_t size_insns, const char *license, char *log,
-			 size_t size_log)
-{
-	union bpf_attr attr = {};
-
-	attr.prog_type = type;
-	attr.insns = bpf_ptr_to_u64(insns);
-	attr.insn_cnt = size_insns / sizeof(struct bpf_insn);
-	attr.license = bpf_ptr_to_u64(license);
-
-	if (size_log > 0) {
-		attr.log_buf = bpf_ptr_to_u64(log);
-		attr.log_size = size_log;
-		attr.log_level = 1;
-	}
-
-	return bpf(BPF_PROG_LOAD, &attr, sizeof(attr));
 }
 
 static int bpf_obj_pin(int fd, const char *pathname)
