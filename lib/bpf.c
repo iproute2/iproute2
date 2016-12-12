@@ -868,6 +868,27 @@ out_prog:
 	return ret;
 }
 
+int bpf_prog_attach_fd(int prog_fd, int target_fd, enum bpf_attach_type type)
+{
+	union bpf_attr attr = {};
+
+	attr.target_fd = target_fd;
+	attr.attach_bpf_fd = prog_fd;
+	attr.attach_type = type;
+
+	return bpf(BPF_PROG_ATTACH, &attr, sizeof(attr));
+}
+
+int bpf_prog_detach_fd(int target_fd, enum bpf_attach_type type)
+{
+	union bpf_attr attr = {};
+
+	attr.target_fd = target_fd;
+	attr.attach_type = type;
+
+	return bpf(BPF_PROG_DETACH, &attr, sizeof(attr));
+}
+
 #ifdef HAVE_ELF
 struct bpf_elf_prog {
 	enum bpf_prog_type	type;

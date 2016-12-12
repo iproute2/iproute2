@@ -75,6 +75,9 @@ int bpf_trace_pipe(void);
 
 void bpf_print_ops(FILE *f, struct rtattr *bpf_ops, __u16 len);
 
+int bpf_prog_attach_fd(int prog_fd, int target_fd, enum bpf_attach_type type);
+int bpf_prog_detach_fd(int target_fd, enum bpf_attach_type type);
+
 #ifdef HAVE_ELF
 int bpf_send_map_fds(const char *path, const char *obj);
 int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
