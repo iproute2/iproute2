@@ -83,7 +83,7 @@ static void print_encap_mpls(FILE *fp, struct rtattr *encap)
 
 	if (tb[MPLS_IPTUNNEL_DST])
 		fprintf(fp, " %s ",
-		        format_host_rta(AF_MPLS, tb[MPLS_IPTUNNEL_DST]));
+			format_host_rta(AF_MPLS, tb[MPLS_IPTUNNEL_DST]));
 }
 
 static void print_encap_ip(FILE *fp, struct rtattr *encap)
@@ -93,7 +93,8 @@ static void print_encap_ip(FILE *fp, struct rtattr *encap)
 	parse_rtattr_nested(tb, LWTUNNEL_IP_MAX, encap);
 
 	if (tb[LWTUNNEL_IP_ID])
-		fprintf(fp, "id %llu ", ntohll(rta_getattr_u64(tb[LWTUNNEL_IP_ID])));
+		fprintf(fp, "id %llu ",
+			ntohll(rta_getattr_u64(tb[LWTUNNEL_IP_ID])));
 
 	if (tb[LWTUNNEL_IP_SRC])
 		fprintf(fp, "src %s ",
@@ -162,7 +163,8 @@ static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 	parse_rtattr_nested(tb, LWTUNNEL_IP6_MAX, encap);
 
 	if (tb[LWTUNNEL_IP6_ID])
-		fprintf(fp, "id %llu ", ntohll(rta_getattr_u64(tb[LWTUNNEL_IP6_ID])));
+		fprintf(fp, "id %llu ",
+			ntohll(rta_getattr_u64(tb[LWTUNNEL_IP6_ID])));
 
 	if (tb[LWTUNNEL_IP6_SRC])
 		fprintf(fp, "src %s ",
@@ -173,7 +175,8 @@ static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 			rt_addr_n2a_rta(AF_INET6, tb[LWTUNNEL_IP6_DST]));
 
 	if (tb[LWTUNNEL_IP6_HOPLIMIT])
-		fprintf(fp, "hoplimit %d ", rta_getattr_u8(tb[LWTUNNEL_IP6_HOPLIMIT]));
+		fprintf(fp, "hoplimit %d ",
+			rta_getattr_u8(tb[LWTUNNEL_IP6_HOPLIMIT]));
 
 	if (tb[LWTUNNEL_IP6_TC])
 		fprintf(fp, "tc %d ", rta_getattr_u8(tb[LWTUNNEL_IP6_TC]));
@@ -238,14 +241,17 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 	}
 }
 
-static int parse_encap_mpls(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
+static int parse_encap_mpls(struct rtattr *rta, size_t len,
+			    int *argcp, char ***argvp)
 {
 	inet_prefix addr;
 	int argc = *argcp;
 	char **argv = *argvp;
 
 	if (get_addr(&addr, *argv, AF_MPLS)) {
-		fprintf(stderr, "Error: an inet address is expected rather than \"%s\".\n", *argv);
+		fprintf(stderr,
+			"Error: an inet address is expected rather than \"%s\".\n",
+			*argv);
 		exit(1);
 	}
 
@@ -258,7 +264,8 @@ static int parse_encap_mpls(struct rtattr *rta, size_t len, int *argcp, char ***
 	return 0;
 }
 
-static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
+static int parse_encap_ip(struct rtattr *rta, size_t len,
+			  int *argcp, char ***argvp)
 {
 	int id_ok = 0, dst_ok = 0, tos_ok = 0, ttl_ok = 0;
 	char **argv = *argvp;
@@ -281,7 +288,8 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 			if (dst_ok++)
 				duparg2("dst", *argv);
 			get_addr(&addr, *argv, AF_INET);
-			rta_addattr_l(rta, len, LWTUNNEL_IP_DST, &addr.data, addr.bytelen);
+			rta_addattr_l(rta, len, LWTUNNEL_IP_DST,
+				      &addr.data, addr.bytelen);
 		} else if (strcmp(*argv, "tos") == 0) {
 			__u32 tos;
 
@@ -308,7 +316,8 @@ static int parse_encap_ip(struct rtattr *rta, size_t len, int *argcp, char ***ar
 
 	/* argv is currently the first unparsed argument,
 	 * but the lwt_parse_encap() caller will move to the next,
-	 * so step back */
+	 * so step back
+	 */
 	*argcp = argc + 1;
 	*argvp = argv - 1;
 
@@ -339,7 +348,8 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 
 			csum_mode = ila_csum_name2mode(*argv);
 			if (csum_mode < 0)
-				invarg("\"csum-mode\" value is invalid\n", *argv);
+				invarg("\"csum-mode\" value is invalid\n",
+				       *argv);
 
 			rta_addattr8(rta, 1024, ILA_ATTR_CSUM_MODE, csum_mode);
 
@@ -359,7 +369,8 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 	return 0;
 }
 
-static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
+static int parse_encap_ip6(struct rtattr *rta, size_t len,
+			   int *argcp, char ***argvp)
 {
 	int id_ok = 0, dst_ok = 0, tos_ok = 0, ttl_ok = 0;
 	char **argv = *argvp;
@@ -382,7 +393,8 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***a
 			if (dst_ok++)
 				duparg2("dst", *argv);
 			get_addr(&addr, *argv, AF_INET6);
-			rta_addattr_l(rta, len, LWTUNNEL_IP6_DST, &addr.data, addr.bytelen);
+			rta_addattr_l(rta, len, LWTUNNEL_IP6_DST,
+				      &addr.data, addr.bytelen);
 		} else if (strcmp(*argv, "tc") == 0) {
 			__u32 tc;
 
@@ -399,7 +411,8 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***a
 			if (ttl_ok++)
 				duparg2("hoplimit", *argv);
 			if (get_u8(&hoplimit, *argv, 0))
-				invarg("\"hoplimit\" value is invalid\n", *argv);
+				invarg("\"hoplimit\" value is invalid\n",
+				       *argv);
 			rta_addattr8(rta, len, LWTUNNEL_IP6_HOPLIMIT, hoplimit);
 		} else {
 			break;
@@ -409,7 +422,8 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len, int *argcp, char ***a
 
 	/* argv is currently the first unparsed argument,
 	 * but the lwt_parse_encap() caller will move to the next,
-	 * so step back */
+	 * so step back
+	 */
 	*argcp = argc + 1;
 	*argvp = argv - 1;
 
@@ -434,7 +448,8 @@ static const struct bpf_cfg_ops bpf_cb_ops = {
 	.ebpf_cb = bpf_lwt_cb,
 };
 
-static int lwt_parse_bpf(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
+static int lwt_parse_bpf(struct rtattr *rta, size_t len,
+			 int *argcp, char ***argvp,
 			 int attr, const enum bpf_prog_type bpf_type)
 {
 	struct bpf_cfg_in cfg = {
@@ -451,7 +466,8 @@ static int lwt_parse_bpf(struct rtattr *rta, size_t len, int *argcp, char ***arg
 	nest = rta_nest(rta, len, attr);
 	err = bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, &x);
 	if (err < 0) {
-		fprintf(stderr, "Failed to parse eBPF program: %s\n", strerror(err));
+		fprintf(stderr, "Failed to parse eBPF program: %s\n",
+			strerror(err));
 		return -1;
 	}
 	rta_nest_end(rta, nest);
@@ -512,7 +528,8 @@ static int parse_encap_bpf(struct rtattr *rta, size_t len, int *argcp,
 
 	/* argv is currently the first unparsed argument,
 	 * but the lwt_parse_encap() caller will move to the next,
-	 * so step back */
+	 * so step back
+	 */
 	*argcp = argc + 1;
 	*argvp = argv - 1;
 
@@ -533,7 +550,8 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
 
 	NEXT_ARG();
 	if (argc <= 1) {
-		fprintf(stderr, "Error: unexpected end of line after \"encap\"\n");
+		fprintf(stderr,
+			"Error: unexpected end of line after \"encap\"\n");
 		exit(-1);
 	}
 
