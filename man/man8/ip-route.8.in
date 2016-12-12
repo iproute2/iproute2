@@ -174,7 +174,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 
 .ti -8
 .IR ENCAP " := [ "
-.IR MPLS " | " IP " ]"
+.IR MPLS " | " IP | " BPF " ] "
 
 .ti -8
 .IR ENCAP_MPLS " := "
@@ -192,6 +192,19 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR TOS " ] ["
 .B  ttl
 .IR TTL " ]"
+
+
+.ti -8
+.IR ENCAP_BPF " := "
+.BR bpf " [ "
+.B in
+.IR PROG " ] ["
+.B out
+.IR PROG " ] ["
+.B xmit
+.IR PROG " ] ["
+.B headroom
+.IR SIZE " ]"
 
 .SH DESCRIPTION
 .B ip route
@@ -636,6 +649,9 @@ is a string specifying the supported encapsulation type. Namely:
 .BI ip
 - IP encapsulation (Geneve, GRE, VXLAN, ...)
 .sp
+.BI bpf
+- Execution of BPF program
+.sp
 
 .in -8
 .I ENCAPHDR
@@ -661,6 +677,29 @@ is a set of encapsulation attributes specific to the
 .IR TOS " ] ["
 .B  ttl
 .IR TTL " ]"
+.in -2
+.sp
+
+.B bpf
+.in +2
+.B in
+.I PROG
+- BPF program to execute for incoming packets
+.sp
+
+.B out
+.I PROG
+- BPF program to execute for outgoing packets
+.sp
+
+.B xmit
+.I PROG
+- BPF program to execute for transmitted packets
+.sp
+
+.B headroom
+.I SIZE
+- Size of header BPF program will attach (xmit)
 .in -2
 .sp
 

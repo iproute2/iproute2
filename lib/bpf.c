@@ -56,6 +56,9 @@ static const enum bpf_prog_type __bpf_types[] = {
 	BPF_PROG_TYPE_SCHED_CLS,
 	BPF_PROG_TYPE_SCHED_ACT,
 	BPF_PROG_TYPE_XDP,
+	BPF_PROG_TYPE_LWT_IN,
+	BPF_PROG_TYPE_LWT_OUT,
+	BPF_PROG_TYPE_LWT_XMIT,
 };
 
 static const struct bpf_prog_meta __bpf_prog_meta[] = {
@@ -74,6 +77,21 @@ static const struct bpf_prog_meta __bpf_prog_meta[] = {
 	[BPF_PROG_TYPE_XDP] = {
 		.type		= "xdp",
 		.subdir		= "xdp",
+		.section	= ELF_SECTION_PROG,
+	},
+	[BPF_PROG_TYPE_LWT_IN] = {
+		.type		= "lwt_in",
+		.subdir		= "ip",
+		.section	= ELF_SECTION_PROG,
+	},
+	[BPF_PROG_TYPE_LWT_OUT] = {
+		.type		= "lwt_out",
+		.subdir		= "ip",
+		.section	= ELF_SECTION_PROG,
+	},
+	[BPF_PROG_TYPE_LWT_XMIT] = {
+		.type		= "lwt_xmit",
+		.subdir		= "ip",
 		.section	= ELF_SECTION_PROG,
 	},
 };

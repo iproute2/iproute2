@@ -87,6 +87,11 @@
 	__section(ELF_SECTION_ACTION)
 #endif
 
+#ifndef __section_lwt_entry
+# define __section_lwt_entry						\
+	__section(ELF_SECTION_PROG)
+#endif
+
 #ifndef __section_license
 # define __section_license						\
 	__section(ELF_SECTION_LICENSE)
