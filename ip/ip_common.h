@@ -57,6 +57,8 @@ extern int do_ipila(int argc, char **argv);
 int do_tcp_metrics(int argc, char **argv);
 int do_ipnetconf(int argc, char **argv);
 int do_iptoken(int argc, char **argv);
+int do_ipvrf(int argc, char **argv);
+
 int iplink_get(unsigned int flags, char *name, __u32 filt_mask);
 
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
