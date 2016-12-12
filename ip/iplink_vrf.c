@@ -159,7 +159,7 @@ __u32 ipvrf_get_table(const char *name)
 	return tb_id;
 }
 
-bool name_is_vrf(const char *name)
+int name_is_vrf(const char *name)
 {
 	struct {
 		struct nlmsghdr		n;
@@ -187,24 +187,27 @@ bool name_is_vrf(const char *name)
 	addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, strlen(name) + 1);
 
 	if (rtnl_talk(&rth, &req.n, &answer.n, sizeof(answer)) < 0)
-		return false;
+		return 0;
 
 	ifi = NLMSG_DATA(&answer.n);
 	len = answer.n.nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
 	if (len < 0) {
 		fprintf(stderr, "BUG: Invalid response to link query.\n");
-		return false;
+		return 0;
 	}
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 
 	if (!tb[IFLA_LINKINFO])
-		return false;
+		return 0;
 
 	parse_rtattr_nested(li, IFLA_INFO_MAX, tb[IFLA_LINKINFO]);
 
 	if (!li[IFLA_INFO_KIND])
-		return false;
+		return 0;
 
-	return strcmp(RTA_DATA(li[IFLA_INFO_KIND]), "vrf") == 0;
+	if (strcmp(RTA_DATA(li[IFLA_INFO_KIND]), "vrf"))
+		return 0;
+
+	return ifi->ifi_index;
 }

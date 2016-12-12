@@ -91,7 +91,7 @@ struct link_util *get_link_kind(const char *kind);
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
 
 __u32 ipvrf_get_table(const char *name);
-bool name_is_vrf(const char *name);
+int name_is_vrf(const char *name);
 
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
