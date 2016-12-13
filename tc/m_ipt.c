@@ -489,7 +489,7 @@ print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 			__u32 index;
 
 			index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
-			fprintf(f, "\n\tindex %d", index);
+			fprintf(f, "\n\tindex %u", index);
 		}
 
 		if (tb[TCA_IPT_CNT]) {

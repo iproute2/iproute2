@@ -237,7 +237,7 @@ static int print_skbmod(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (p->flags & SKBMOD_F_SWAPMAC)
 		fprintf(f, "swap mac ");
 
-	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt,
+	fprintf(f, "\n\t index %u ref %d bind %d", p->index, p->refcnt,
 		p->bindcnt);
 	if (show_stats) {
 		if (tb[TCA_SKBMOD_TM]) {

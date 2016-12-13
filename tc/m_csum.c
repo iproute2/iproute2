@@ -199,7 +199,8 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 		uflag_1, uflag_2, uflag_3,
 		uflag_4, uflag_5, uflag_6,
 		action_n2a(sel->action));
-	fprintf(f, "\tindex %d ref %d bind %d", sel->index, sel->refcnt, sel->bindcnt);
+	fprintf(f, "\tindex %u ref %d bind %d", sel->index, sel->refcnt,
+		sel->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_CSUM_TM]) {

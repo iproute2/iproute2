@@ -187,7 +187,7 @@ static int print_simple(struct action_util *au, FILE *f, struct rtattr *arg)
 	simpdata = RTA_DATA(tb[TCA_DEF_DATA]);
 
 	fprintf(f, "Simple <%s>\n", simpdata);
-	fprintf(f, "\t index %d ref %d bind %d", sel->index,
+	fprintf(f, "\t index %u ref %d bind %d", sel->index,
 		sel->refcnt, sel->bindcnt);
 
 	if (show_stats) {

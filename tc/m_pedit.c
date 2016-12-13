@@ -527,7 +527,7 @@ int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	fprintf(f, " pedit action %s keys %d\n ",
 		action_n2a(sel->action), sel->nkeys);
-	fprintf(f, "\t index %d ref %d bind %d", sel->index, sel->refcnt,
+	fprintf(f, "\t index %u ref %d bind %d", sel->index, sel->refcnt,
 		sel->bindcnt);
 
 	if (show_stats) {

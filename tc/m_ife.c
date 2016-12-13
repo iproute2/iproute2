@@ -312,7 +312,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 				    sizeof(b2)));
 	}
 
-	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt,
+	fprintf(f, "\n\t index %u ref %d bind %d", p->index, p->refcnt,
 		p->bindcnt);
 	if (show_stats) {
 		if (tb[TCA_IFE_TM]) {

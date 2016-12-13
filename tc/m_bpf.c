@@ -178,7 +178,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 
 	fprintf(f, "default-action %s\n", action_n2a(parm->action));
-	fprintf(f, "\tindex %d ref %d bind %d", parm->index, parm->refcnt,
+	fprintf(f, "\tindex %u ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);
 
 	if (show_stats) {

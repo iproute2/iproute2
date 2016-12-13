@@ -276,7 +276,8 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 		mirred_n2a(p->eaction), dev, action_n2a(p->action));
 
 	fprintf(f, "\n ");
-	fprintf(f, "\tindex %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
+	fprintf(f, "\tindex %u ref %d bind %d", p->index, p->refcnt,
+		p->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_MIRRED_TM]) {

@@ -224,7 +224,8 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 	fprintf(f, "\n\t random type %s %s val %d",
 		prob_n2a(pp->ptype), action_n2a(pp->paction), pp->pval);
 #endif
-	fprintf(f, "\n\t index %d ref %d bind %d", p->index, p->refcnt, p->bindcnt);
+	fprintf(f, "\n\t index %u ref %d bind %d", p->index, p->refcnt,
+		p->bindcnt);
 	if (show_stats) {
 		if (tb[TCA_GACT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_GACT_TM]);
