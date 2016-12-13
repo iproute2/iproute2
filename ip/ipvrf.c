@@ -117,7 +117,8 @@ static int ipvrf_pids(int argc, char **argv)
 		n = read(fd, buf, sizeof(buf) - 1);
 		if (n < 0) {
 			fprintf(stderr,
-				"Failed to read cgroups file: %s\n", strerror(errno));
+				"Failed to read cgroups file: %s\n",
+				strerror(errno));
 			break;
 		} else if (n == 0) {
 			rc = 0;
@@ -139,8 +140,10 @@ static int prog_load(int idx)
 	struct bpf_insn prog[] = {
 		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 		BPF_MOV64_IMM(BPF_REG_3, idx),
-		BPF_MOV64_IMM(BPF_REG_2, offsetof(struct bpf_sock, bound_dev_if)),
-		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3, offsetof(struct bpf_sock, bound_dev_if)),
+		BPF_MOV64_IMM(BPF_REG_2,
+			      offsetof(struct bpf_sock, bound_dev_if)),
+		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3,
+			    offsetof(struct bpf_sock, bound_dev_if)),
 		BPF_MOV64_IMM(BPF_REG_0, 1), /* r0 = verdict */
 		BPF_EXIT_INSN(),
 	};
@@ -155,7 +158,9 @@ static int vrf_configure_cgroup(const char *path, int ifindex)
 
 	cg_fd = open(path, O_DIRECTORY | O_RDONLY);
 	if (cg_fd < 0) {
-		fprintf(stderr, "Failed to open cgroup path: '%s'\n", strerror(errno));
+		fprintf(stderr,
+			"Failed to open cgroup path: '%s'\n",
+			strerror(errno));
 		goto out;
 	}
 
@@ -172,7 +177,7 @@ static int vrf_configure_cgroup(const char *path, int ifindex)
 	if (bpf_prog_attach_fd(prog_fd, cg_fd, BPF_CGROUP_INET_SOCK_CREATE)) {
 		fprintf(stderr, "Failed to attach prog to cgroup: '%s'\n",
 			strerror(errno));
-			fprintf(stderr, "Kernel compiled with CGROUP_BPF enabled?\n");
+		fprintf(stderr, "Kernel compiled with CGROUP_BPF enabled?\n");
 		goto out;
 	}
 
