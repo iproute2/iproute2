@@ -60,6 +60,20 @@ static int tunnel_key_parse_key_id(const char *str, int type,
 	return ret;
 }
 
+static int tunnel_key_parse_dst_port(char *str, int type, struct nlmsghdr *n)
+{
+	int ret;
+	__be16 dst_port;
+
+	ret = get_be16(&dst_port, str, 10);
+	if (ret)
+		return -1;
+
+	addattr16(n, MAX_MSG, type, dst_port);
+
+	return 0;
+}
+
 static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 			    int tca_id, struct nlmsghdr *n)
 {
@@ -128,6 +142,14 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 				return -1;
 			}
 			has_key_id = 1;
+		} else if (matches(*argv, "dst_port") == 0) {
+			NEXT_ARG();
+			ret = tunnel_key_parse_dst_port(*argv,
+							TCA_TUNNEL_KEY_ENC_DST_PORT, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"dst port\"\n");
+				return -1;
+			}
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -197,6 +219,14 @@ static void tunnel_key_print_key_id(FILE *f, const char *name,
 	fprintf(f, "\n\t%s %d", name, rta_getattr_be32(attr));
 }
 
+static void tunnel_key_print_dst_port(FILE *f, char *name,
+				      struct rtattr *attr)
+{
+	if (!attr)
+		return;
+	fprintf(f, "\n\t%s %d", name, rta_getattr_be16(attr));
+}
+
 static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_TUNNEL_KEY_MAX + 1];
@@ -231,6 +261,8 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 					 tb[TCA_TUNNEL_KEY_ENC_IPV6_DST]);
 		tunnel_key_print_key_id(f, "key_id",
 					tb[TCA_TUNNEL_KEY_ENC_KEY_ID]);
+		tunnel_key_print_dst_port(f, "dst_port",
+					  tb[TCA_TUNNEL_KEY_ENC_DST_PORT]);
 		break;
 	}
 	fprintf(f, " %s", action_n2a(parm->action));

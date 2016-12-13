@@ -15,6 +15,7 @@ tunnel_key - Tunnel metadata manipulation
 .BR dst_ip
 .IR ADDRESS
 .BI id " KEY_ID"
+.BI dst_port " UDP_PORT"
 
 .SH DESCRIPTION
 The
@@ -61,6 +62,8 @@ Set tunnel metadata to be used by the IP tunnel device. Requires
 and
 .B dst_ip
 options.
+.B dst_port
+is optional.
 .RS
 .TP
 .B id
@@ -71,6 +74,9 @@ Outer header source IP address (IPv4 or IPv6)
 .TP
 .B dst_ip
 Outer header destination IP address (IPv4 or IPv6)
+.TP
+.B dst_port
+Outer header destination UDP port
 .RE
 .SH EXAMPLES
 The following example encapsulates incoming ICMP packets on eth0 into a vxlan
