@@ -35,7 +35,7 @@
 #include "utils.h"
 #include "namespace.h"
 
-int timestamp_short = 0;
+int timestamp_short;
 
 int get_hex(char c)
 {
@@ -60,7 +60,7 @@ int get_integer(int *val, const char *arg, int base)
 	res = strtol(arg, &ptr, base);
 
 	/* If there were no digits at all, strtol()  stores
-         * the original value of nptr in *endptr (and returns 0).
+	 * the original value of nptr in *endptr (and returns 0).
 	 * In particular, if *nptr is not '\0' but **endptr is '\0' on return,
 	 * the entire string is valid.
 	 */
@@ -84,7 +84,7 @@ int get_integer(int *val, const char *arg, int base)
 
 int mask2bits(__u32 netmask)
 {
-	unsigned bits = 0;
+	unsigned int bits = 0;
 	__u32 mask = ntohl(netmask);
 	__u32 host = ~mask;
 
@@ -97,7 +97,7 @@ int mask2bits(__u32 netmask)
 	return bits;
 }
 
-static int get_netmask(unsigned *val, const char *arg, int base)
+static int get_netmask(unsigned int *val, const char *arg, int base)
 {
 	inet_prefix addr;
 
@@ -117,7 +117,7 @@ static int get_netmask(unsigned *val, const char *arg, int base)
 	return -1;
 }
 
-int get_unsigned(unsigned *val, const char *arg, int base)
+int get_unsigned(unsigned int *val, const char *arg, int base)
 {
 	unsigned long res;
 	char *ptr;
@@ -150,7 +150,7 @@ int get_unsigned(unsigned *val, const char *arg, int base)
  * pass milliseconds (standard unit for rtt values since 2.6.27), and
  * have a different assumption for the units of a "raw" number.
  */
-int get_time_rtt(unsigned *val, const char *arg, int *raw)
+int get_time_rtt(unsigned int *val, const char *arg, int *raw)
 {
 	double t;
 	unsigned long res;
@@ -188,23 +188,24 @@ int get_time_rtt(unsigned *val, const char *arg, int *raw)
 
 	if (*p) {
 		*raw = 0;
-                if (strcasecmp(p, "s") == 0 || strcasecmp(p, "sec")==0 ||
-                    strcasecmp(p, "secs")==0)
-                        t *= 1000;
-                else if (strcasecmp(p, "ms") == 0 || strcasecmp(p, "msec")==0 ||
-                         strcasecmp(p, "msecs") == 0)
+		if (strcasecmp(p, "s") == 0 ||
+		    strcasecmp(p, "sec") == 0 ||
+		    strcasecmp(p, "secs") == 0)
+			t *= 1000;
+		else if (strcasecmp(p, "ms") == 0 ||
+			 strcasecmp(p, "msec") == 0 ||
+			 strcasecmp(p, "msecs") == 0)
 			t *= 1.0; /* allow suffix, do nothing */
-                else
-                        return -1;
-        }
+		else
+			return -1;
+	}
 
 	/* emulate ceil() without having to bring-in -lm and always be >= 1 */
-
 	*val = t;
 	if (*val < t)
 		*val += 1;
 
-        return 0;
+	return 0;
 
 }
 
@@ -230,8 +231,8 @@ int get_u64(__u64 *val, const char *arg, int base)
 	if (res > 0xFFFFFFFFFFFFFFFFULL)
 		return -1;
 
- 	*val = res;
- 	return 0;
+	*val = res;
+	return 0;
 }
 
 int get_u32(__u32 *val, const char *arg, int base)
@@ -422,7 +423,7 @@ static int get_addr_ipv4(__u8 *ap, const char *cp)
 			break;
 
 		if (i == 3 || *endp != '.')
-			return -1; 	/* extra characters */
+			return -1;	/* extra characters */
 		cp = endp + 1;
 	}
 
@@ -481,7 +482,8 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 
 	if (family == AF_PACKET) {
 		int len;
-		len = ll_addr_a2n((char *)&addr->data, sizeof(addr->data), name);
+
+		len = ll_addr_a2n(&addr->data, sizeof(addr->data), name);
 		if (len < 0)
 			return -1;
 
@@ -504,6 +506,7 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 
 	if (family == AF_DECnet) {
 		struct dn_naddr dna;
+
 		addr->family = AF_DECnet;
 		if (dnet_pton(AF_DECnet, name, &dna) <= 0)
 			return -1;
@@ -515,6 +518,7 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 
 	if (family == AF_MPLS) {
 		int i;
+
 		addr->family = AF_MPLS;
 		if (mpls_pton(AF_MPLS, name, addr->data) <= 0)
 			return -1;
@@ -568,7 +572,7 @@ int af_byte_len(int af)
 int get_prefix_1(inet_prefix *dst, char *arg, int family)
 {
 	int err;
-	unsigned plen;
+	unsigned int plen;
 	char *slash;
 
 	memset(dst, 0, sizeof(*dst));
@@ -611,8 +615,9 @@ done:
 int get_addr(inet_prefix *dst, const char *arg, int family)
 {
 	if (get_addr_1(dst, arg, family)) {
-		fprintf(stderr, "Error: %s address is expected rather than \"%s\".\n",
-				family_name(dst->family) ,arg);
+		fprintf(stderr,
+			"Error: %s address is expected rather than \"%s\".\n",
+			family_name(dst->family), arg);
 		exit(1);
 	}
 	return 0;
@@ -621,13 +626,16 @@ int get_addr(inet_prefix *dst, const char *arg, int family)
 int get_prefix(inet_prefix *dst, char *arg, int family)
 {
 	if (family == AF_PACKET) {
-		fprintf(stderr, "Error: \"%s\" may be inet prefix, but it is not allowed in this context.\n", arg);
+		fprintf(stderr,
+			"Error: \"%s\" may be inet prefix, but it is not allowed in this context.\n",
+			arg);
 		exit(1);
 	}
 
 	if (get_prefix_1(dst, arg, family)) {
-		fprintf(stderr, "Error: %s prefix is expected rather than \"%s\".\n",
-				family_name(dst->family) ,arg);
+		fprintf(stderr,
+			"Error: %s prefix is expected rather than \"%s\".\n",
+			family_name(dst->family), arg);
 		exit(1);
 	}
 	return 0;
@@ -636,8 +644,11 @@ int get_prefix(inet_prefix *dst, char *arg, int family)
 __u32 get_addr32(const char *name)
 {
 	inet_prefix addr;
+
 	if (get_addr_1(&addr, name, AF_INET)) {
-		fprintf(stderr, "Error: an IP address is expected rather than \"%s\"\n", name);
+		fprintf(stderr,
+			"Error: an IP address is expected rather than \"%s\"\n",
+			name);
 		exit(1);
 	}
 	return addr.data[0];
@@ -663,19 +674,24 @@ void invarg(const char *msg, const char *arg)
 
 void duparg(const char *key, const char *arg)
 {
-	fprintf(stderr, "Error: duplicate \"%s\": \"%s\" is the second value.\n", key, arg);
+	fprintf(stderr,
+		"Error: duplicate \"%s\": \"%s\" is the second value.\n",
+		key, arg);
 	exit(-1);
 }
 
 void duparg2(const char *key, const char *arg)
 {
-	fprintf(stderr, "Error: either \"%s\" is duplicate, or \"%s\" is a garbage.\n", key, arg);
+	fprintf(stderr,
+		"Error: either \"%s\" is duplicate, or \"%s\" is a garbage.\n",
+		key, arg);
 	exit(-1);
 }
 
 int matches(const char *cmd, const char *pattern)
 {
 	int len = strlen(cmd);
+
 	if (len > strlen(pattern))
 		return -1;
 	return memcmp(pattern, cmd, len);
@@ -720,17 +736,20 @@ int __get_hz(void)
 	if (getenv("HZ"))
 		return atoi(getenv("HZ")) ? : HZ;
 
-	if (getenv("PROC_NET_PSCHED")) {
-		snprintf(name, sizeof(name)-1, "%s", getenv("PROC_NET_PSCHED"));
-	} else if (getenv("PROC_ROOT")) {
-		snprintf(name, sizeof(name)-1, "%s/net/psched", getenv("PROC_ROOT"));
-	} else {
+	if (getenv("PROC_NET_PSCHED"))
+		snprintf(name, sizeof(name)-1,
+			 "%s", getenv("PROC_NET_PSCHED"));
+	else if (getenv("PROC_ROOT"))
+		snprintf(name, sizeof(name)-1,
+			 "%s/net/psched", getenv("PROC_ROOT"));
+	else
 		strcpy(name, "/proc/net/psched");
-	}
+
 	fp = fopen(name, "r");
 
 	if (fp) {
-		unsigned nom, denom;
+		unsigned int nom, denom;
+
 		if (fscanf(fp, "%*08x%*08x%08x%08x", &nom, &denom) == 2)
 			if (nom == 1000000)
 				hz = denom;
@@ -748,7 +767,8 @@ int __get_user_hz(void)
 	return sysconf(_SC_CLK_TCK);
 }
 
-const char *rt_addr_n2a_r(int af, int len, const void *addr, char *buf, int buflen)
+const char *rt_addr_n2a_r(int af, int len,
+			  const void *addr, char *buf, int buflen)
 {
 	switch (af) {
 	case AF_INET:
@@ -760,7 +780,8 @@ const char *rt_addr_n2a_r(int af, int len, const void *addr, char *buf, int bufl
 		return ipx_ntop(af, addr, buf, buflen);
 	case AF_DECnet:
 	{
-		struct dn_naddr dna = { 2, { 0, 0, }};
+		struct dn_naddr dna = { 2, { 0, 0, } };
+
 		memcpy(dna.a_addr, addr, 2);
 		return dnet_ntop(af, &dna, buf, buflen);
 	}
@@ -781,6 +802,7 @@ const char *rt_addr_n2a(int af, int len, const void *addr)
 int read_family(const char *name)
 {
 	int family = AF_UNSPEC;
+
 	if (strcmp(name, "inet") == 0)
 		family = AF_INET;
 	else if (strcmp(name, "inet6") == 0)
@@ -818,8 +840,7 @@ const char *family_name(int family)
 }
 
 #ifdef RESOLVE_HOSTNAMES
-struct namerec
-{
+struct namerec {
 	struct namerec *next;
 	const char *name;
 	inet_prefix addr;
@@ -832,12 +853,12 @@ static const char *resolve_address(const void *addr, int len, int af)
 {
 	struct namerec *n;
 	struct hostent *h_ent;
-	unsigned hash;
+	unsigned int hash;
 	static int notfirst;
 
 
-	if (af == AF_INET6 && ((__u32*)addr)[0] == 0 &&
-	    ((__u32*)addr)[1] == 0 && ((__u32*)addr)[2] == htonl(0xffff)) {
+	if (af == AF_INET6 && ((__u32 *)addr)[0] == 0 &&
+	    ((__u32 *)addr)[1] == 0 && ((__u32 *)addr)[2] == htonl(0xffff)) {
 		af = AF_INET;
 		addr += 12;
 		len = 4;
@@ -851,7 +872,8 @@ static const char *resolve_address(const void *addr, int len, int af)
 		    memcmp(n->addr.data, addr, len) == 0)
 			return n->name;
 	}
-	if ((n = malloc(sizeof(*n))) == NULL)
+	n = malloc(sizeof(*n));
+	if (n == NULL)
 		return NULL;
 	n->addr.family = af;
 	n->addr.bytelen = len;
@@ -863,7 +885,8 @@ static const char *resolve_address(const void *addr, int len, int af)
 		sethostent(1);
 	fflush(stdout);
 
-	if ((h_ent = gethostbyaddr(addr, len, af)) != NULL)
+	h_ent = gethostbyaddr(addr, len, af);
+	if (h_ent != NULL)
 		n->name = strdup(h_ent->h_name);
 
 	/* Even if we fail, "negative" entry is remembered. */
@@ -901,7 +924,7 @@ char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen)
 	char *ptr = buf;
 	int i;
 
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		if (blen < 3)
 			break;
 		sprintf(ptr, "%02x", str[i]);
@@ -994,7 +1017,8 @@ ssize_t getcmdline(char **linep, size_t *lenp, FILE *in)
 	ssize_t cc;
 	char *cp;
 
-	if ((cc = getline(linep, lenp, in)) < 0)
+	cc = getline(linep, lenp, in);
+	if (cc < 0)
 		return cc;	/* eof or error */
 	++cmdlineno;
 
@@ -1007,7 +1031,8 @@ ssize_t getcmdline(char **linep, size_t *lenp, FILE *in)
 		size_t len1 = 0;
 		ssize_t cc1;
 
-		if ((cc1 = getline(&line1, &len1, in)) < 0) {
+		cc1 = getline(&line1, &len1, in);
+		if (cc1 < 0) {
 			fprintf(stderr, "Missing continuation line\n");
 			return cc1;
 		}
@@ -1082,8 +1107,9 @@ int inet_get_addr(const char *src, __u32 *dst, struct in6_addr *dst6)
 void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n)
 {
 	char *tstr;
-	time_t secs = ((__u32*)NLMSG_DATA(n))[0];
-	long usecs = ((__u32*)NLMSG_DATA(n))[1];
+	time_t secs = ((__u32 *)NLMSG_DATA(n))[0];
+	long usecs = ((__u32 *)NLMSG_DATA(n))[1];
+
 	tstr = asctime(localtime(&secs));
 	tstr[strlen(tstr)-1] = 0;
 	fprintf(fp, "Timestamp: %s %lu us\n", tstr, usecs);
