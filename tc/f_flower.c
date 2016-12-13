@@ -275,6 +275,20 @@ static int flower_parse_key_id(const char *str, int type, struct nlmsghdr *n)
 	return ret;
 }
 
+static int flower_parse_enc_port(char *str, int type, struct nlmsghdr *n)
+{
+	int ret;
+	__be16 port;
+
+	ret = get_be16(&port, str, 10);
+	if (ret)
+		return -1;
+
+	addattr16(n, MAX_MSG, type, port);
+
+	return 0;
+}
+
 static int flower_parse_opt(struct filter_util *qu, char *handle,
 			    int argc, char **argv, struct nlmsghdr *n)
 {
@@ -480,6 +494,14 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 						  TCA_FLOWER_KEY_ENC_KEY_ID, n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"enc_key_id\"\n");
+				return -1;
+			}
+		} else if (matches(*argv, "enc_dst_port") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_enc_port(*argv,
+						    TCA_FLOWER_KEY_ENC_UDP_DST_PORT, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"enc_dst_port\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "action") == 0) {
@@ -753,6 +775,9 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 
 	flower_print_key_id(f, "enc_key_id",
 			    tb[TCA_FLOWER_KEY_ENC_KEY_ID]);
+
+	flower_print_port(f, "enc_dst_port",
+			  tb[TCA_FLOWER_KEY_ENC_UDP_DST_PORT]);
 
 	if (tb[TCA_FLOWER_FLAGS]) {
 		__u32 flags = rta_getattr_u32(tb[TCA_FLOWER_FLAGS]);

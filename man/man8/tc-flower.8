@@ -39,6 +39,8 @@ flower \- flow based traffic control filter
 .IR KEY-ID " | {"
 .BR enc_dst_ip " | " enc_src_ip " } { "
 .IR ipv4_address " | " ipv6_address " } | "
+.B enc_dst_port
+.IR UDP-PORT " | "
 .SH DESCRIPTION
 The
 .B flower
@@ -129,11 +131,15 @@ which have to be specified in beforehand.
 .BI enc_dst_ip " ADDRESS"
 .TQ
 .BI enc_src_ip " ADDRESS"
+.TQ
+.BI enc_dst_port " NUMBER"
 Match on IP tunnel metadata. Key id
 .I NUMBER
 is a 32 bit tunnel key id (e.g. VNI for VXLAN tunnel).
 .I ADDRESS
-must be a valid IPv4 or IPv6 address.
+must be a valid IPv4 or IPv6 address. Dst port
+.I NUMBER
+is a 16 bit UDP dst port.
 .SH NOTES
 As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches
