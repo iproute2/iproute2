@@ -261,6 +261,48 @@ int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
 	return sendmsg(rth->fd, &msg, 0);
 }
 
+static int rtnl_dump_done(const struct rtnl_handle *rth,
+			  struct nlmsghdr *h)
+{
+	int len = *(int *)NLMSG_DATA(h);
+
+	if (rth->proto == NETLINK_SOCK_DIAG) {
+		if (h->nlmsg_len < NLMSG_LENGTH(sizeof(int))) {
+			fprintf(stderr, "DONE truncated\n");
+			return -1;
+		}
+
+
+		if (len < 0) {
+			errno = -len;
+			if (errno == ENOENT || errno == EOPNOTSUPP)
+				return -1;
+			perror("RTNETLINK answers");
+			return len;
+		}
+	}
+	return 0;
+}
+
+static void rtnl_dump_error(const struct rtnl_handle *rth,
+			    struct nlmsghdr *h)
+{
+
+	if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
+		fprintf(stderr, "ERROR truncated\n");
+	} else {
+		const struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(h);
+
+		errno = -err->error;
+		if (rth->proto == NETLINK_SOCK_DIAG &&
+		    (errno == ENOENT ||
+		     errno == EOPNOTSUPP))
+			return;
+
+		perror("RTNETLINK answers");
+	}
+}
+
 int rtnl_dump_filter_l(struct rtnl_handle *rth,
 		       const struct rtnl_dump_filter_arg *arg)
 {
@@ -320,40 +362,16 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 					dump_intr = 1;
 
 				if (h->nlmsg_type == NLMSG_DONE) {
-					if (rth->proto == NETLINK_SOCK_DIAG) {
-						if (h->nlmsg_len < NLMSG_LENGTH(sizeof(int))) {
-							fprintf(stderr, "DONE truncated\n");
-							return -1;
-						} else {
-							int len = *(int *)NLMSG_DATA(h);
-							if (len < 0) {
-								errno = -len;
-								if (errno == ENOENT ||
-								    errno == EOPNOTSUPP)
-									return -1;
-								perror("RTNETLINK answers");
-								return len;
-							}
-						}
-					}
+					err = rtnl_dump_done(rth, h);
+					if (err < 0)
+						return -1;
+
 					found_done = 1;
 					break; /* process next filter */
 				}
+
 				if (h->nlmsg_type == NLMSG_ERROR) {
-					struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(h);
-
-					if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
-						fprintf(stderr,
-							"ERROR truncated\n");
-					} else {
-						errno = -err->error;
-						if (rth->proto == NETLINK_SOCK_DIAG &&
-						    (errno == ENOENT ||
-						     errno == EOPNOTSUPP))
-							return -1;
-
-						perror("RTNETLINK answers");
-					}
+					rtnl_dump_error(rth, h);
 					return -1;
 				}
 
