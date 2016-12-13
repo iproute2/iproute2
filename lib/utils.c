@@ -483,7 +483,8 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	if (family == AF_PACKET) {
 		int len;
 
-		len = ll_addr_a2n(&addr->data, sizeof(addr->data), name);
+		len = ll_addr_a2n((char *) &addr->data, sizeof(addr->data),
+				  name);
 		if (len < 0)
 			return -1;
 
