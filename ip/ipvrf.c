@@ -170,14 +170,15 @@ static int vrf_configure_cgroup(const char *path, int ifindex)
 	 */
 	prog_fd = prog_load(ifindex);
 	if (prog_fd < 0) {
-		printf("Failed to load BPF prog: '%s'\n", strerror(errno));
+		fprintf(stderr, "Failed to load BPF prog: '%s'\n",
+			strerror(errno));
+		fprintf(stderr, "Kernel compiled with CGROUP_BPF enabled?\n");
 		goto out;
 	}
 
 	if (bpf_prog_attach_fd(prog_fd, cg_fd, BPF_CGROUP_INET_SOCK_CREATE)) {
 		fprintf(stderr, "Failed to attach prog to cgroup: '%s'\n",
 			strerror(errno));
-		fprintf(stderr, "Kernel compiled with CGROUP_BPF enabled?\n");
 		goto out;
 	}
 
