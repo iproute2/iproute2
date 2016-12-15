@@ -40,14 +40,43 @@ static void usage(void)
 	exit(-1);
 }
 
-static int ipvrf_identify(int argc, char **argv)
+static int vrf_identify(pid_t pid, char *name, size_t len)
 {
 	char path[PATH_MAX];
 	char buf[4096];
 	char *vrf, *end;
-	int fd, rc = -1;
+	FILE *fp;
+
+	snprintf(path, sizeof(path), "/proc/%d/cgroup", pid);
+	fp = fopen(path, "r");
+	if (!fp)
+		return -1;
+
+	memset(name, 0, len);
+
+	while (fgets(buf, sizeof(buf), fp)) {
+		vrf = strstr(buf, "::/vrf/");
+		if (vrf) {
+			vrf += 7;  /* skip past "::/vrf/" */
+			end = strchr(vrf, '\n');
+			if (end)
+				*end = '\0';
+
+			strncpy(name, vrf, len - 1);
+			break;
+		}
+	}
+
+	fclose(fp);
+
+	return 0;
+}
+
+static int ipvrf_identify(int argc, char **argv)
+{
+	char vrf[32];
+	int rc;
 	unsigned int pid;
-	ssize_t n;
 
 	if (argc < 1)
 		pid = getpid();
@@ -56,34 +85,14 @@ static int ipvrf_identify(int argc, char **argv)
 	else if (get_unsigned(&pid, argv[0], 10))
 		invarg("Invalid pid\n", argv[0]);
 
-	snprintf(path, sizeof(path), "/proc/%d/cgroup", pid);
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		fprintf(stderr,
-			"Failed to open cgroups file: %s\n", strerror(errno));
-		return -1;
+	rc = vrf_identify(pid, vrf, sizeof(vrf));
+	if (!rc) {
+		if (vrf[0] != '\0')
+			printf("%s\n", vrf);
+	} else {
+		fprintf(stderr, "Failed to lookup vrf association: %s\n",
+			strerror(errno));
 	}
-
-	n = read(fd, buf, sizeof(buf) - 1);
-	if (n < 0) {
-		fprintf(stderr,
-			"Failed to read cgroups file: %s\n", strerror(errno));
-		goto out;
-	}
-	buf[n] = '\0';
-	vrf = strstr(buf, "::/vrf/");
-	if (vrf) {
-		vrf += 7;  /* skip past "::/vrf/" */
-		end = strchr(vrf, '\n');
-		if (end)
-			*end = '\0';
-
-		printf("%s\n", vrf);
-	}
-
-	rc = 0;
-out:
-	close(fd);
 
 	return rc;
 }
