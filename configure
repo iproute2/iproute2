@@ -264,8 +264,8 @@ check_elf()
 #include <gelf.h>
 int main(void)
 {
-	Elf_Scn *scn;
-	GElf_Shdr shdr;
+	Elf_Scn *scn __attribute__((__unused__));
+	GElf_Shdr shdr  __attribute__((__unused__));;
 	return elf_version(EV_CURRENT);
 }
 EOF
