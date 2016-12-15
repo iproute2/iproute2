@@ -58,6 +58,7 @@ int do_tcp_metrics(int argc, char **argv);
 int do_ipnetconf(int argc, char **argv);
 int do_iptoken(int argc, char **argv);
 int do_ipvrf(int argc, char **argv);
+void vrf_reset(void);
 
 int iplink_get(unsigned int flags, char *name, __u32 filt_mask);
 

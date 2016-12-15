@@ -277,6 +277,20 @@ static int ipvrf_exec(int argc, char **argv)
 	return -cmd_exec(argv[1], argv + 1, !!batch_mode);
 }
 
+/* reset VRF association of current process to default VRF;
+ * used by netns_exec
+ */
+void vrf_reset(void)
+{
+	char vrf[32];
+
+	if (vrf_identify(getpid(), vrf, sizeof(vrf)) ||
+	    (vrf[0] == '\0'))
+		return;
+
+	vrf_switch("default");
+}
+
 int do_ipvrf(int argc, char **argv)
 {
 	if (argc == 0) {

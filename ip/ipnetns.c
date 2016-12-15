@@ -387,6 +387,11 @@ static int netns_exec(int argc, char **argv)
 	if (netns_switch(argv[0]))
 		return -1;
 
+	/* we just changed namespaces. clear any vrf association
+	 * with prior namespace before exec'ing command
+	 */
+	vrf_reset();
+
 	/* ip must return the status of the child,
 	 * but do_cmd() will add a minus to this,
 	 * so let's add another one here to cancel it.
