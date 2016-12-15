@@ -202,16 +202,15 @@ out:
 static int vrf_switch(const char *name)
 {
 	char path[PATH_MAX], *mnt, pid[16];
-	int ifindex = name_is_vrf(name);
-	bool default_vrf = false;
+	int ifindex = 0;
 	int rc = -1, len, fd = -1;
 
-	if (!ifindex) {
-		if (strcmp(name, "default")) {
+	if (strcmp(name, "default")) {
+		ifindex = name_is_vrf(name);
+		if (!ifindex) {
 			fprintf(stderr, "Invalid VRF name\n");
 			return -1;
 		}
-		default_vrf = true;
 	}
 
 	mnt = find_cgroup2_mount();
@@ -221,8 +220,8 @@ static int vrf_switch(const char *name)
 	/* path to cgroup; make sure buffer has room to cat "/cgroup.procs"
 	 * to the end of the path
 	 */
-	len = snprintf(path, sizeof(path) - sizeof(CGRP_PROC_FILE), "%s%s/%s",
-		       mnt, default_vrf ? "" : "/vrf", name);
+	len = snprintf(path, sizeof(path) - sizeof(CGRP_PROC_FILE), "%s/vrf/%s",
+		       mnt, ifindex ? name : "");
 	if (len > sizeof(path) - sizeof(CGRP_PROC_FILE)) {
 		fprintf(stderr, "Invalid path to cgroup2 mount\n");
 		goto out;
@@ -233,7 +232,7 @@ static int vrf_switch(const char *name)
 		goto out;
 	}
 
-	if (!default_vrf && vrf_configure_cgroup(path, ifindex))
+	if (ifindex && vrf_configure_cgroup(path, ifindex))
 		goto out;
 
 	/*
