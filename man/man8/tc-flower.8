@@ -31,8 +31,8 @@ flower \- flow based traffic control filter
 .IR ETH_TYPE " } | "
 .BR ip_proto " { " tcp " | " udp " | " sctp " | " icmp " | " icmpv6 " | "
 .IR IP_PROTO " } | { "
-.BR dst_ip " | " src_ip " } { "
-.IR ipv4_address " | " ipv6_address " } | { "
+.BR dst_ip " | " src_ip " } "
+.IR PREFIX " | { "
 .BR dst_port " | " src_port " } "
 .IR port_number " } | "
 .B enc_key_id
@@ -103,14 +103,14 @@ may be
 .BR tcp ", " udp ", " sctp ", " icmp ", " icmpv6
 or an unsigned 8bit value in hexadecimal format.
 .TP
-.BI dst_ip " ADDRESS"
+.BI dst_ip " PREFIX"
 .TQ
-.BI src_ip " ADDRESS"
+.BI src_ip " PREFIX"
 Match on source or destination IP address.
-.I ADDRESS
-must be a valid IPv4 or IPv6 address, depending on
-.BR protocol
-option of tc filter.
+.I PREFIX
+must be a valid IPv4 or IPv6 address, depending on the \fBprotocol\fR
+option to tc filter, optionally followed by a slash and the prefix length.
+If the prefix is missing, \fBtc\fR assumes a full-length host match.
 .TP
 .BI dst_port " NUMBER"
 .TQ
@@ -128,16 +128,16 @@ which have to be specified in beforehand.
 .TP
 .BI enc_key_id " NUMBER"
 .TQ
-.BI enc_dst_ip " ADDRESS"
+.BI enc_dst_ip " PREFIX"
 .TQ
-.BI enc_src_ip " ADDRESS"
-.TQ
-.BI enc_dst_port " NUMBER"
+.BI enc_src_ip " PREFIX"
 Match on IP tunnel metadata. Key id
 .I NUMBER
 is a 32 bit tunnel key id (e.g. VNI for VXLAN tunnel).
-.I ADDRESS
-must be a valid IPv4 or IPv6 address. Dst port
+.I PREFIX
+must be a valid IPv4 or IPv6 address optionally followed by a slash and the
+prefix length. If the prefix is missing, \fBtc\fR assumes a full-length
+host match.  Dst port
 .I NUMBER
 is a 16 bit UDP dst port.
 .SH NOTES
