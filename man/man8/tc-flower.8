@@ -22,7 +22,7 @@ flower \- flow based traffic control filter
 .BR skip_sw " | " skip_hw
 .R " | { "
 .BR dst_mac " | " src_mac " } "
-.IR mac_address " | "
+.IR MASKED_LLADDR " | "
 .B vlan_id
 .IR VID " | "
 .B vlan_prio
@@ -74,10 +74,15 @@ filter, or TC offload is not enabled for the interface, operation will fail.
 .BI skip_hw
 Do not process filter by hardware.
 .TP
-.BI dst_mac " mac_address"
+.BI dst_mac " MASKED_LLADDR"
 .TQ
-.BI src_mac " mac_address"
-Match on source or destination MAC address.
+.BI src_mac " MASKED_LLADDR"
+Match on source or destination MAC address.  A mask may be optionally
+provided to limit the bits of the address which are matched. A mask is
+provided by following the address with a slash and then the mask. It may be
+provided in LLADDR format, in which case it is a bitwise mask, or as a
+number of high bits to match. If the mask is missing then a match on all
+bits is assumed.
 .TP
 .BI vlan_id " VID"
 Match on vlan tag id.

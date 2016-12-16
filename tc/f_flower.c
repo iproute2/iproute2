@@ -45,8 +45,8 @@ static void explain(void)
 		"                       vlan_id VID |\n"
 		"                       vlan_prio PRIORITY |\n"
 		"                       vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n"
-		"                       dst_mac MAC-ADDR |\n"
-		"                       src_mac MAC-ADDR |\n"
+		"                       dst_mac MASKED-LLADDR |\n"
+		"                       src_mac MASKED-LLADDR |\n"
 		"                       ip_proto [tcp | udp | sctp | icmp | icmpv6 | IP-PROTO ] |\n"
 		"                       dst_ip PREFIX |\n"
 		"                       src_ip PREFIX |\n"
@@ -58,6 +58,7 @@ static void explain(void)
 		"                       enc_src_ip PREFIX |\n"
 		"                       enc_key_id [ KEY-ID ] }\n"
 		"       FILTERID := X:Y:Z\n"
+		"       MASKED_LLADDR := { LLADDR | LLADDR/MASK | LLADDR/BITS }\n"
 		"       ACTION-SPEC := ... look at individual actions\n"
 		"\n"
 		"NOTE: CLASSID, IP-PROTO are parsed as hexadecimal input.\n"
@@ -68,16 +69,44 @@ static void explain(void)
 static int flower_parse_eth_addr(char *str, int addr_type, int mask_type,
 				 struct nlmsghdr *n)
 {
-	int ret;
-	char addr[ETH_ALEN];
+	int ret, err = -1;
+	char addr[ETH_ALEN], *slash;
+
+	slash = strchr(str, '/');
+	if (slash)
+		*slash = '\0';
 
 	ret = ll_addr_a2n(addr, sizeof(addr), str);
 	if (ret < 0)
-		return -1;
+		goto err;
 	addattr_l(n, MAX_MSG, addr_type, addr, sizeof(addr));
-	memset(addr, 0xff, ETH_ALEN);
+
+	if (slash) {
+		unsigned bits;
+
+		if (!get_unsigned(&bits, slash + 1, 10)) {
+			uint64_t mask;
+
+			/* Extra 16 bit shift to push mac address into
+			 * high bits of uint64_t
+			 */
+			mask = htonll(0xffffffffffffULL << (16 + 48 - bits));
+			memcpy(addr, &mask, ETH_ALEN);
+		} else {
+			ret = ll_addr_a2n(addr, sizeof(addr), slash + 1);
+			if (ret < 0)
+				goto err;
+		}
+	} else {
+		memset(addr, 0xff, ETH_ALEN);
+	}
 	addattr_l(n, MAX_MSG, mask_type, addr, sizeof(addr));
-	return 0;
+
+	err = 0;
+err:
+	if (slash)
+		*slash = '/';
+	return err;
 }
 
 static int flower_parse_vlan_eth_type(char *str, __be16 eth_type, int type,
