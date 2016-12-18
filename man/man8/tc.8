@@ -5,58 +5,58 @@ tc \- show / manipulate traffic control settings
 .B tc
 .RI "[ " OPTIONS " ]"
 .B qdisc [ add | change | replace | link | delete ] dev
-DEV
+\fIDEV\fR
 .B
 [ parent
-qdisc-id
+\fIqdisc-id\fR
 .B | root ]
 .B [ handle
-qdisc-id ] qdisc
+\fIqdisc-id\fR ] qdisc
 [ qdisc specific parameters ]
 .P
 
 .B tc
 .RI "[ " OPTIONS " ]"
 .B class [ add | change | replace | delete ] dev
-DEV
+\fIDEV\fR
 .B parent
-qdisc-id
+\fIqdisc-id\fR
 .B [ classid
-class-id ] qdisc
+\fIclass-id\fR ] qdisc
 [ qdisc specific parameters ]
 .P
 
 .B tc
 .RI "[ " OPTIONS " ]"
 .B filter [ add | change | replace | delete | get ] dev
-DEV
+\fIDEV\fR
 .B [ parent
-qdisc-id
+\fIqdisc-id\fR
 .B | root ] protocol
-protocol
+\fIprotocol\fR
 .B prio
-priority filtertype
+\fIpriority\fR filtertype
 [ filtertype specific parameters ]
 .B flowid
-flow-id
+\fIflow-id\fR
 
 .B tc
 .RI "[ " OPTIONS " ]"
 .RI "[ " FORMAT " ]"
 .B qdisc show [ dev
-DEV
+\fIDEV\fR
 .B ]
 .P
 .B tc
 .RI "[ " OPTIONS " ]"
 .RI "[ " FORMAT " ]"
 .B class show dev
-DEV
+\fIDEV\fR
 .P
 .B tc
 .RI "[ " OPTIONS " ]"
 .B filter show dev
-DEV
+\fIDEV\fR
 
 .P
 .ti 8
@@ -294,14 +294,14 @@ In the absence of classful qdiscs, classless qdiscs can only be attached at
 the root of a device. Full syntax:
 .P
 .B tc qdisc add dev
-DEV
+\fIDEV\fR
 .B root
 QDISC QDISC-PARAMETERS
 
 To remove, issue
 .P
 .B tc qdisc del dev
-DEV
+\fIDEV\fR
 .B root
 
 The
@@ -386,7 +386,7 @@ Type of Service
 Some qdiscs have built in rules for classifying packets based on the TOS field.
 .TP
 skb->priority
-Userspace programs can encode a class-id in the 'skb->priority' field using
+Userspace programs can encode a \fIclass-id\fR in the 'skb->priority' field using
 the SO_PRIORITY option.
 .P
 Each node within the tree can have its own filters but higher level filters
@@ -554,7 +554,7 @@ must be passed, either by passing its ID or by attaching directly to the root of
 When creating a qdisc or a filter, it can be named with the
 .B handle
 parameter. A class is named with the
-.B classid
+.B \fBclassid\fR
 parameter.
 
 .TP
