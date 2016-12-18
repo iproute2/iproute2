@@ -32,7 +32,8 @@ tc \- show / manipulate traffic control settings
 \fIDEV\fR
 .B [ parent
 \fIqdisc-id\fR
-.B | root ] protocol
+.B | root ] [ handle \fIfilter-id\fR ]
+.B protocol
 \fIprotocol\fR
 .B prio
 \fIpriority\fR filtertype
@@ -577,7 +578,8 @@ it is created.
 
 .TP
 get
-Displays a single filter given the interface, parent ID, priority, protocol and handle ID.
+Displays a single filter given the interface \fIDEV\fR, \fIqdisc-id\fR,
+\fIpriority\fR, \fIprotocol\fR and \fIfilter-id\fR.
 
 .TP
 show
