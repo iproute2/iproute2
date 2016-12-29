@@ -57,6 +57,7 @@ static void explain(void)
 		"                       enc_dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_key_id [ KEY-ID ] |\n"
+		"                       matching_flags MATCHING-FLAGS | \n"
 		"                       enc_dst_port [ UDP-PORT ] }\n"
 		"       FILTERID := X:Y:Z\n"
 		"       MASKED_LLADDR := { LLADDR | LLADDR/MASK | LLADDR/BITS }\n"
@@ -126,6 +127,31 @@ static int flower_parse_vlan_eth_type(char *str, __be16 eth_type, int type,
 		invarg("invalid vlan_ethtype", str);
 	addattr16(n, MAX_MSG, type, vlan_eth_type);
 	*p_vlan_eth_type = vlan_eth_type;
+	return 0;
+}
+
+static int flower_parse_matching_flags(char *str, int type, int mask_type,
+				       struct nlmsghdr *n)
+{
+	__u32 mtf, mtf_mask;
+	char *c;
+
+	c = strchr(str, '/');
+	if (c)
+		*c = '\0';
+
+	if (get_u32(&mtf, str, 0))
+		return -1;
+
+	if (c) {
+		if (get_u32(&mtf_mask, ++c, 0))
+			return -1;
+	} else {
+		mtf_mask = 0xffffffff;
+	}
+
+	addattr32(n, MAX_MSG, type, htonl(mtf));
+	addattr32(n, MAX_MSG, mask_type, htonl(mtf_mask));
 	return 0;
 }
 
@@ -358,6 +384,16 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				return -1;
 			}
 			addattr_l(n, MAX_MSG, TCA_FLOWER_CLASSID, &handle, 4);
+		} else if (matches(*argv, "matching_flags") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_matching_flags(*argv,
+							  TCA_FLOWER_KEY_FLAGS,
+							  TCA_FLOWER_KEY_FLAGS_MASK,
+							  n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"matching_flags\"\n");
+				return -1;
+			}
 		} else if (matches(*argv, "skip_hw") == 0) {
 			flags |= TCA_CLS_FLAGS_SKIP_HW;
 		} else if (matches(*argv, "skip_sw") == 0) {
@@ -656,6 +692,17 @@ static void flower_print_ip_proto(FILE *f, __u8 *p_ip_proto,
 	*p_ip_proto = ip_proto;
 }
 
+static void flower_print_matching_flags(FILE *f, char *name,
+					struct rtattr *attr,
+					struct rtattr *mask_attr)
+{
+	if (!mask_attr || RTA_PAYLOAD(mask_attr) != 4)
+		return;
+
+	fprintf(f, "\n  %s 0x%08x/0x%08x", name, ntohl(rta_getattr_u32(attr)),
+		mask_attr ? ntohl(rta_getattr_u32(mask_attr)) : 0xffffffff);
+}
+
 static void flower_print_ip_addr(FILE *f, char *name, __be16 eth_type,
 				 struct rtattr *addr4_attr,
 				 struct rtattr *mask4_attr,
@@ -808,6 +855,10 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 
 	flower_print_port(f, "enc_dst_port",
 			  tb[TCA_FLOWER_KEY_ENC_UDP_DST_PORT]);
+
+	flower_print_matching_flags(f, "matching_flags",
+				    tb[TCA_FLOWER_KEY_FLAGS],
+				    tb[TCA_FLOWER_KEY_FLAGS_MASK]);
 
 	if (tb[TCA_FLOWER_FLAGS]) {
 		__u32 flags = rta_getattr_u32(tb[TCA_FLOWER_FLAGS]);
