@@ -2,6 +2,7 @@
 #define _TC_UTIL_H_ 1
 
 #define MAX_MSG 16384
+#include <limits.h>
 #include <linux/pkt_sched.h>
 #include <linux/pkt_cls.h>
 #include <linux/gen_stats.h>
