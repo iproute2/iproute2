@@ -58,7 +58,7 @@ static void explain(void)
 		"                       enc_src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_key_id [ KEY-ID ] |\n"
 		"                       matching_flags MATCHING-FLAGS | \n"
-		"                       enc_dst_port [ UDP-PORT ] }\n"
+		"                       enc_dst_port [ port_number ] }\n"
 		"       FILTERID := X:Y:Z\n"
 		"       MASKED_LLADDR := { LLADDR | LLADDR/MASK | LLADDR/BITS }\n"
 		"       ACTION-SPEC := ... look at individual actions\n"

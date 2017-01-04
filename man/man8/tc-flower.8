@@ -40,7 +40,7 @@ flower \- flow based traffic control filter
 .BR enc_dst_ip " | " enc_src_ip " } { "
 .IR ipv4_address " | " ipv6_address " } | "
 .B enc_dst_port
-.IR UDP-PORT " | "
+.IR port_number
 .SH DESCRIPTION
 The
 .B flower
@@ -136,6 +136,8 @@ which have to be specified in beforehand.
 .BI enc_dst_ip " PREFIX"
 .TQ
 .BI enc_src_ip " PREFIX"
+.TQ
+.BI enc_dst_port " NUMBER"
 Match on IP tunnel metadata. Key id
 .I NUMBER
 is a 32 bit tunnel key id (e.g. VNI for VXLAN tunnel).
