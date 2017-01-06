@@ -181,7 +181,11 @@ static int vrf_configure_cgroup(const char *path, int ifindex)
 	if (prog_fd < 0) {
 		fprintf(stderr, "Failed to load BPF prog: '%s'\n",
 			strerror(errno));
-		fprintf(stderr, "Kernel compiled with CGROUP_BPF enabled?\n");
+
+		if (errno != EPERM) {
+			fprintf(stderr,
+				"Kernel compiled with CGROUP_BPF enabled?\n");
+		}
 		goto out;
 	}
 
