@@ -121,7 +121,7 @@ int make_path(const char *path, mode_t mode)
 
 			if (mkdir(dir, mode) != 0) {
 				fprintf(stderr,
-					"mkdir failed for %s: %s",
+					"mkdir failed for %s: %s\n",
 					dir, strerror(errno));
 				goto out;
 			}
