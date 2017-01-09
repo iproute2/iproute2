@@ -96,7 +96,7 @@ ifneq ($(TC_CONFIG_NO_XT),y)
 endif
 
 TCOBJ += $(TCMODULES)
-LDLIBS += -L. -ltc -lm
+LDLIBS += -L. -lm
 
 ifeq ($(SHARED_LIBS),y)
 LDLIBS += -ldl
@@ -124,13 +124,13 @@ MODDESTDIR := $(DESTDIR)$(LIBDIR)/tc
 	$(QUIET_CC)$(CC) $(CFLAGS) $(LDFLAGS) -shared -fpic $< -o $@
 
 
-all: libtc.a tc $(TCSO)
+all: tc $(TCSO)
 
-tc: $(TCOBJ) $(TCLIB)
+tc: $(TCOBJ) libtc.a
 	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 libtc.a: $(TCLIB)
-	$(QUIET_AR)$(AR) rcs $@ $(TCLIB)
+	$(QUIET_AR)$(AR) rcs $@ $^
 
 install: all
 	mkdir -p $(MODDESTDIR)
