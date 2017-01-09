@@ -4,7 +4,6 @@
 #include <linux/types.h>
 #include <linux/pkt_sched.h>
 
-
 /* Action attributes */
 enum {
 	TCA_ACT_UNSPEC,
