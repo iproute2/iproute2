@@ -142,9 +142,36 @@ static int rtnl_rtprot_init;
 
 static void rtnl_rtprot_initialize(void)
 {
+	struct dirent *de;
+	DIR *d;
+
 	rtnl_rtprot_init = 1;
 	rtnl_tab_initialize(CONFDIR "/rt_protos",
 			    rtnl_rtprot_tab, 256);
+
+	d = opendir(CONFDIR "/rt_protos.d");
+	if (!d)
+		return;
+
+	while ((de = readdir(d)) != NULL) {
+		char path[PATH_MAX];
+		size_t len;
+
+		if (*de->d_name == '.')
+			continue;
+
+		/* only consider filenames ending in '.conf' */
+		len = strlen(de->d_name);
+		if (len <= 5)
+			continue;
+		if (strcmp(de->d_name + len - 5, ".conf"))
+			continue;
+
+		snprintf(path, sizeof(path), CONFDIR "/rt_protos.d/%s",
+			 de->d_name);
+		rtnl_tab_initialize(path, rtnl_rtprot_tab, 256);
+	}
+	closedir(d);
 }
 
 const char *rtnl_rtprot_n2a(int id, char *buf, int len)
