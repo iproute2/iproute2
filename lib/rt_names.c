@@ -431,7 +431,7 @@ int rtnl_rttable_a2n(__u32 *id, const char *arg)
 	static unsigned long res;
 	struct rtnl_hash_entry *entry;
 	char *end;
-	__u32 i;
+	unsigned long i;
 
 	if (cache && strcmp(cache, arg) == 0) {
 		*id = res;
