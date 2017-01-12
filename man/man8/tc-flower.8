@@ -34,7 +34,13 @@ flower \- flow based traffic control filter
 .BR dst_ip " | " src_ip " } "
 .IR PREFIX " | { "
 .BR dst_port " | " src_port " } "
-.IR port_number " } | "
+.IR port_number " } | { "
+.BR arp_tip " | " arp_sip " } "
+.IR PREFIX " | "
+.BR arp_op " { " request " | " reply " | "
+.IR OP " } | { "
+.BR arp_tha " | " arp_sha " } "
+.IR MASKED_LLADDR " | "
 .B enc_key_id
 .IR KEY-ID " | {"
 .BR enc_dst_ip " | " enc_src_ip " } { "
@@ -131,6 +137,36 @@ Match on ICMP type or code. Only available for
 .BR ip_proto " values " icmp  " and " icmpv6
 which have to be specified in beforehand.
 .TP
+.BI arp_tip " PREFIX"
+.TQ
+.BI arp_sip " PREFIX"
+Match on ARP or RARP sender or target IP address.
+.I PREFIX
+must be a valid IPv4 address optionally followed by a slash and the prefix
+length. If the prefix is missing, \fBtc\fR assumes a full-length host
+match.
+.TP
+.BI arp_op " ARP_OP"
+Match on ARP or RARP operation.
+.I ARP_OP
+may be
+.BR request ", " reply
+or an integer value 0, 1 or 2.  A mask may be optionally provided to limit
+the bits of the operation which are matched. A mask is provided by
+following the address with a slash and then the mask. It may be provided as
+an unsigned 8 bit value representing a bitwise mask. If the mask is missing
+then a match on all bits is assumed.
+.TP
+.BI arp_sha " MASKED_LLADDR"
+.TQ
+.BI arp_tha " MASKED_LLADDR"
+Match on ARP or RARP sender or target MAC address.  A mask may be optionally
+provided to limit the bits of the address which are matched. A mask is
+provided by following the address with a slash and then the mask. It may be
+provided in LLADDR format, in which case it is a bitwise mask, or as a
+number of high bits to match. If the mask is missing then a match on all
+bits is assumed.
+.TP
 .BI enc_key_id " NUMBER"
 .TQ
 .BI enc_dst_ip " PREFIX"
@@ -152,7 +188,8 @@ As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches
 (\fBindev\fR,  \fBdst_mac\fR and \fBsrc_mac\fR)
 have no dependency, layer three matches
-(\fBip_proto\fR, \fBdst_ip\fR and \fBsrc_ip\fR)
+(\fBip_proto\fR, \fBdst_ip\fR, \fBsrc_ip\fR, \fBarp_tip\fR, \fBarp_sip\fR,
+\fBarp_op\fR, \fBarp_tha\fR and \fBarp_sha\fR)
 depend on the
 .B protocol
 option of tc filter, layer four port matches
