@@ -29,7 +29,7 @@
 #include "rt_names.h"
 #include "utils.h"
 
-static unsigned int filter_index, filter_vlan;
+static unsigned int filter_index, filter_vlan, filter_state;
 
 json_writer_t *jw_global;
 
@@ -39,7 +39,7 @@ static void usage(void)
 			"              [ self ] [ master ] [ use ] [ router ]\n"
 			"              [ local | static | dynamic ] [ dst IPADDR ] [ vlan VID ]\n"
 			"              [ port PORT] [ vni VNI ] [ via DEV ]\n");
-	fprintf(stderr, "       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ] ]\n");
+	fprintf(stderr, "       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ] [ state STATE ] ]\n");
 	exit(-1);
 }
 
@@ -61,6 +61,24 @@ static const char *state_n2a(unsigned int s)
 
 	sprintf(buf, "state=%#x", s);
 	return buf;
+}
+
+static int state_a2n(unsigned int *s, const char *arg)
+{
+	if (matches(arg, "permanent") == 0)
+		*s = NUD_PERMANENT;
+	else if (matches(arg, "static") == 0 || matches(arg, "temp") == 0)
+		*s = NUD_NOARP;
+	else if (matches(arg, "stale") == 0)
+		*s = NUD_STALE;
+	else if (matches(arg, "reachable") == 0 || matches(arg, "dynamic") == 0)
+		*s = NUD_REACHABLE;
+	else if (strcmp(arg, "all") == 0)
+		*s = ~0;
+	else if (get_unsigned(s, arg, 0))
+		return -1;
+
+	return 0;
 }
 
 static void start_json_fdb_flags_array(bool *fdb_flags)
@@ -98,6 +116,9 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 
 	if (filter_index && filter_index != r->ndm_ifindex)
+		return 0;
+
+	if (filter_state && !(r->ndm_state & filter_state))
 		return 0;
 
 	parse_rtattr(tb, NDA_MAX, NDA_RTA(r),
@@ -310,6 +331,13 @@ static int fdb_show(int argc, char **argv)
 			if (filter_vlan)
 				duparg("vlan", *argv);
 			filter_vlan = atoi(*argv);
+		} else if (strcmp(*argv, "state") == 0) {
+			unsigned int state;
+
+			NEXT_ARG();
+			if (state_a2n(&state, *argv))
+				invarg("invalid state", *argv);
+			filter_state |= state;
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
