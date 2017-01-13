@@ -3,7 +3,7 @@ DISTDATA = normal.dist pareto.dist paretonormal.dist experimental.dist
 
 HOSTCC ?= $(CC)
 CCOPTS  = $(CBUILD_CFLAGS)
-LDLIBS += -lm 
+LDLIBS += -lm
 
 all: $(DISTGEN) $(DISTDATA)
 
