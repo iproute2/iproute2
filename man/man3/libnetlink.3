@@ -32,12 +32,12 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, pid_t peer,
 .br
 	      void *jarg)
 .sp
-int rtnl_listen(struct rtnl_handle *rtnl, 
+int rtnl_listen(struct rtnl_handle *rtnl,
 	      int (*handler)(struct sockaddr_nl *, struct rtnl_ctrl_data *,
 			     struct nlmsghdr *n, void *),
 	      void *jarg)
 .sp
-int rtnl_from_file(FILE *rtnl, 
+int rtnl_from_file(FILE *rtnl,
 	      int (*handler)(struct sockaddr_nl *,struct nlmsghdr *n, void *),
 	      void *jarg)
 .sp
@@ -49,35 +49,35 @@ int rta_addattr32(struct rtattr *rta, int maxlen, int type, __u32 data)
 .sp
 int rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data, int alen)
 .SH DESCRIPTION
-libnetlink provides a higher level interface to 
-.BR rtnetlink(7). 
+libnetlink provides a higher level interface to
+.BR rtnetlink(7).
 The read functions return 0 on success and a negative errno on failure.
 The send functions return the amount of data sent, or -1 on error.
-.TP 
+.TP
 rtnl_open
 Open a rtnetlink socket and save the state into the
 .B rth
-handle. This handle is passed to all subsequent calls. 
+handle. This handle is passed to all subsequent calls.
 .B subscriptions
 is a bitmap of the rtnetlink multicast groups the socket will be
 a member of.
 
 .TP
 rtnl_wilddump_request
-Request a full dump of the 
+Request a full dump of the
 .B type
 database for
 .B family
 addresses.
 .B type
-is a rtnetlink message type. 
+is a rtnetlink message type.
 .\" XXX
 
 .TP
 rtnl_dump_request
-Request a full dump of the 
-.B type 
-data buffer into 
+Request a full dump of the
+.B type
+data buffer into
 .B buf
 with maximum length of
 .B len.
@@ -91,12 +91,12 @@ The
 .B filter
 callback checks if the received message is wanted. It gets the source
 address of the message, the message itself and
-.B arg1 
+.B arg1
 as arguments. 0 as return means that the filter passed, a negative
 value is returned
 by
-.I rtnl_dump_filter 
-in case of error. NULL for 
+.I rtnl_dump_filter
+in case of error. NULL for
 .I filter
 means to not use a filter.
 .B junk
@@ -106,7 +106,7 @@ pending, this function does not block.
 
 .TP
 rtnl_listen
-Receive netlink data after a request and pass it to 
+Receive netlink data after a request and pass it to
 .I handler.
 .B handler
 is a callback that gets the message source address, anscillary data, the message
@@ -118,8 +118,8 @@ pending this function does not block.
 
 .TP
 rtnl_from_file
-Works like 
-.I rtnl_listen, 
+Works like
+.I rtnl_listen,
 but reads a netlink message bundle from the file
 .B file
 and passes the messages to
@@ -134,7 +134,7 @@ and
 .BR netlink(3)
 on how to generate a rtnetlink message. The following utility functions
 require a continuous buffer that already contains a netlink message header
-and a rtnetlink request. 
+and a rtnetlink request.
 
 .TP
 rtnl_send
@@ -168,7 +168,7 @@ length to netlink message
 .B n,
 which is part of a buffer of length
 .B maxlen.
-.B data 
+.B data
 is copied.
 
 .TP

@@ -12,7 +12,7 @@
 9   audit
 10  fiblookup
 11  connector
-12  nft 
+12  nft
 13  ip6fw
 14  dec-rt
 15  uevent
@@ -20,4 +20,4 @@
 18  scsi-trans
 19  ecryptfs
 20  rdma
-21  crypto 
+21  crypto

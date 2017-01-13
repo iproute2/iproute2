@@ -77,6 +77,9 @@ static struct xtables_globals tcipt_globals = {
 	.orig_opts = original_opts,
 	.opts = original_opts,
 	.exit_err = NULL,
+#if (XTABLES_VERSION_CODE >= 11)
+	.compat_rev = xtables_compatible_revision,
+#endif
 };
 
 /*

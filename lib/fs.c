@@ -80,13 +80,21 @@ char *find_cgroup2_mount(void)
 
 	if (mount("none", mnt, CGROUP2_FS_NAME, 0, NULL)) {
 		/* EBUSY means already mounted */
-		if (errno != EBUSY) {
+		if (errno == EBUSY)
+			goto out;
+
+		if (errno == ENODEV) {
 			fprintf(stderr,
 				"Failed to mount cgroup2. Are CGROUPS enabled in your kernel?\n");
-			free(mnt);
-			return NULL;
+		} else {
+			fprintf(stderr,
+				"Failed to mount cgroup2: %s\n",
+				strerror(errno));
 		}
+		free(mnt);
+		return NULL;
 	}
+out:
 	return mnt;
 }
 
@@ -121,7 +129,7 @@ int make_path(const char *path, mode_t mode)
 
 			if (mkdir(dir, mode) != 0) {
 				fprintf(stderr,
-					"mkdir failed for %s: %s",
+					"mkdir failed for %s: %s\n",
 					dir, strerror(errno));
 				goto out;
 			}

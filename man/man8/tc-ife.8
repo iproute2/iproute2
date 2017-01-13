@@ -99,7 +99,7 @@ classification so that it will match ICMP on the next rule, at prio 3:
 # tc filter add dev eth0 parent ffff: prio 2 protocol 0xdead \\
 	u32 match u32 0 0 flowid 1:1 \\
 	action ife decode reclassify
-# tc filter add dev eth0 parent ffff: priod 3 protocol ip \\
+# tc filter add dev eth0 parent ffff: prio 3 protocol ip \\
 	u32 match ip protocol 0xff flowid 1:1 \\
 	action continue
 .EE
