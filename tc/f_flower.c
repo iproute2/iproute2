@@ -744,10 +744,10 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			     tb[TCA_FLOWER_KEY_IPV6_SRC],
 			     tb[TCA_FLOWER_KEY_IPV6_SRC_MASK]);
 
-	nl_type = flower_port_attr_type(ip_proto, false);
+	nl_type = flower_port_attr_type(ip_proto, FLOWER_ENDPOINT_DST);
 	if (nl_type >= 0)
 		flower_print_port(f, "dst_port", tb[nl_type]);
-	nl_type = flower_port_attr_type(ip_proto, true);
+	nl_type = flower_port_attr_type(ip_proto, FLOWER_ENDPOINT_SRC);
 	if (nl_type >= 0)
 		flower_print_port(f, "src_port", tb[nl_type]);
 
