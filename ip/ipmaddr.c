@@ -136,13 +136,17 @@ static void read_igmp(struct ma_info **result_p)
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		struct ma_info *ma;
+		size_t len;
 
 		if (buf[0] != '\t') {
 			sscanf(buf, "%d%s", &m.index, m.name);
+			len = strlen(m.name);
+			if (m.name[len - 1] == ':')
+				len--;
 			continue;
 		}
 
-		if (filter.dev && strcmp(filter.dev, m.name))
+		if (filter.dev && strncmp(filter.dev, m.name, len))
 			continue;
 
 		sscanf(buf, "%08x%d", (__u32 *)&m.addr.data, &m.users);
