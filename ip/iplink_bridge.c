@@ -50,6 +50,7 @@ static void print_explain(FILE *f)
 		"                  [ mcast_query_response_interval QUERY_RESPONSE_INTERVAL ]\n"
 		"                  [ mcast_startup_query_interval STARTUP_QUERY_INTERVAL ]\n"
 		"                  [ mcast_stats_enabled MCAST_STATS_ENABLED ]\n"
+		"                  [ mcast_igmp_version IGMP_VERSION ]\n"
 		"                  [ nf_call_iptables NF_CALL_IPTABLES ]\n"
 		"                  [ nf_call_ip6tables NF_CALL_IP6TABLES ]\n"
 		"                  [ nf_call_arptables NF_CALL_ARPTABLES ]\n"
@@ -308,6 +309,14 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid mcast_stats_enabled", *argv);
 			addattr8(n, 1024, IFLA_BR_MCAST_STATS_ENABLED,
 				  mcast_stats_enabled);
+		} else if (matches(*argv, "mcast_igmp_version") == 0) {
+			__u8 igmp_version;
+
+			NEXT_ARG();
+			if (get_u8(&igmp_version, *argv, 0))
+				invarg("invalid mcast_igmp_version", *argv);
+			addattr8(n, 1024, IFLA_BR_MCAST_IGMP_VERSION,
+				  igmp_version);
 		} else if (matches(*argv, "nf_call_iptables") == 0) {
 			__u8 nf_call_ipt;
 
@@ -536,6 +545,10 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_MCAST_STATS_ENABLED])
 		fprintf(f, "mcast_stats_enabled %u ",
 			rta_getattr_u8(tb[IFLA_BR_MCAST_STATS_ENABLED]));
+
+	if (tb[IFLA_BR_MCAST_IGMP_VERSION])
+		fprintf(f, "mcast_igmp_version %u ",
+			rta_getattr_u8(tb[IFLA_BR_MCAST_IGMP_VERSION]));
 
 	if (tb[IFLA_BR_NF_CALL_IPTABLES])
 		fprintf(f, "nf_call_iptables %u ",
