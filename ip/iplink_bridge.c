@@ -22,7 +22,8 @@
 static void print_explain(FILE *f)
 {
 	fprintf(f,
-		"Usage: ... bridge [ forward_delay FORWARD_DELAY ]\n"
+		"Usage: ... bridge [ fdb_flush ]\n"
+		"                  [ forward_delay FORWARD_DELAY ]\n"
 		"                  [ hello_time HELLO_TIME ]\n"
 		"                  [ max_age MAX_AGE ]\n"
 		"                  [ ageing_time AGEING_TIME ]\n"
@@ -145,6 +146,8 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (len < 0)
 				return -1;
 			addattr_l(n, 1024, IFLA_BR_GROUP_ADDR, llabuf, len);
+		} else if (matches(*argv, "fdb_flush") == 0) {
+			addattr(n, 1024, IFLA_BR_FDB_FLUSH);
 		} else if (matches(*argv, "vlan_default_pvid") == 0) {
 			__u16 default_pvid;
 
