@@ -881,6 +881,10 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			inet_prefix addr;
 			int family;
 
+			if (gw_ok) {
+				invarg("use nexthop syntax to specify multiple via\n",
+				       *argv);
+			}
 			gw_ok = 1;
 			NEXT_ARG();
 			family = read_family(*argv);
