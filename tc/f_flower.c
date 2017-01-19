@@ -525,7 +525,9 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 	}
 
 parse_done:
-	addattr32(n, MAX_MSG, TCA_FLOWER_FLAGS, flags);
+	ret = addattr32(n, MAX_MSG, TCA_FLOWER_FLAGS, flags);
+	if (ret)
+		return ret;
 
 	ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, eth_type);
 	if (ret) {
