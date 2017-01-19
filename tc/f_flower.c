@@ -530,11 +530,8 @@ parse_done:
 		return ret;
 
 	ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, eth_type);
-	if (ret) {
-		fprintf(stderr, "Illegal \"eth_type\"(0x%x)\n",
-			ntohs(eth_type));
-		return -1;
-	}
+	if (ret)
+		return ret;
 
 	tail->rta_len = (((void *)n)+n->nlmsg_len) - (void *)tail;
 
