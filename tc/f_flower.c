@@ -529,9 +529,11 @@ parse_done:
 	if (ret)
 		return ret;
 
-	ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, eth_type);
-	if (ret)
-		return ret;
+	if (eth_type != htons(ETH_P_ALL)) {
+		ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, eth_type);
+		if (ret)
+			return ret;
+	}
 
 	tail->rta_len = (((void *)n)+n->nlmsg_len) - (void *)tail;
 
