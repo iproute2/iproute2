@@ -721,14 +721,13 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 	}
 
 parse_done:
-	addattr32(n, MAX_MSG, TCA_FLOWER_FLAGS, flags);
+	ret = addattr32(n, MAX_MSG, TCA_FLOWER_FLAGS, flags);
+	if (ret)
+		return ret;
 
 	ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, eth_type);
-	if (ret) {
-		fprintf(stderr, "Illegal \"eth_type\"(0x%x)\n",
-			ntohs(eth_type));
-		return -1;
-	}
+	if (ret)
+		return ret;
 
 	tail->rta_len = (((void *)n)+n->nlmsg_len) - (void *)tail;
 
@@ -987,10 +986,10 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			     tb[TCA_FLOWER_KEY_IPV6_SRC],
 			     tb[TCA_FLOWER_KEY_IPV6_SRC_MASK]);
 
-	nl_type = flower_port_attr_type(ip_proto, false);
+	nl_type = flower_port_attr_type(ip_proto, FLOWER_ENDPOINT_DST);
 	if (nl_type >= 0)
 		flower_print_port(f, "dst_port", tb[nl_type]);
-	nl_type = flower_port_attr_type(ip_proto, true);
+	nl_type = flower_port_attr_type(ip_proto, FLOWER_ENDPOINT_SRC);
 	if (nl_type >= 0)
 		flower_print_port(f, "src_port", tb[nl_type]);
 

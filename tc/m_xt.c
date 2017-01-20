@@ -77,7 +77,7 @@ static struct xtables_globals tcipt_globals = {
 	.orig_opts = original_opts,
 	.opts = original_opts,
 	.exit_err = NULL,
-#if (XTABLES_VERSION_CODE >= 11)
+#if XTABLES_VERSION_CODE >= 11
 	.compat_rev = xtables_compatible_revision,
 #endif
 };
@@ -126,7 +126,7 @@ static int get_xtables_target_opts(struct xtables_globals *globals,
 {
 	struct option *opts;
 
-#if (XTABLES_VERSION_CODE >= 6)
+#if XTABLES_VERSION_CODE >= 6
 	opts = xtables_options_xfrm(globals->orig_opts,
 				    globals->opts,
 				    m->x6_options,
@@ -204,7 +204,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 			break;
 
 		default:
-#if (XTABLES_VERSION_CODE >= 6)
+#if XTABLES_VERSION_CODE >= 6
 			if (m != NULL && m->x6_parse != NULL) {
 				xtables_option_tpcall(c, argv, 0, m, NULL);
 #else
@@ -242,7 +242,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	}
 
 	/* check that we passed the correct parameters to the target */
-#if (XTABLES_VERSION_CODE >= 6)
+#if XTABLES_VERSION_CODE >= 6
 	if (m)
 		xtables_option_tfcall(m);
 #else

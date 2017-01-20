@@ -732,10 +732,8 @@ static int xfrm_policy_keep(const struct sockaddr_nl *who,
 	if (!xfrm_policy_filter_match(xpinfo, ptype))
 		return 0;
 
-	if (xb->offset > xb->size) {
-		fprintf(stderr, "Policy buffer overflow\n");
-		return -1;
-	}
+	if (xb->offset + NLMSG_LENGTH(sizeof(*xpid)) > xb->size)
+		return 0;
 
 	new_n = (struct nlmsghdr *)(xb->buf + xb->offset);
 	new_n->nlmsg_len = NLMSG_LENGTH(sizeof(*xpid));

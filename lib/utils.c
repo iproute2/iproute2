@@ -962,6 +962,31 @@ __u8 *hexstring_a2n(const char *str, __u8 *buf, int blen, unsigned int *len)
 	return buf;
 }
 
+int hex2mem(const char *buf, uint8_t *mem, int count)
+{
+	int i, j;
+	int c;
+
+	for (i = 0, j = 0; i < count; i++, j += 2) {
+		c = get_hex(buf[j]);
+		if (c < 0)
+			goto err;
+
+		mem[i] = c << 4;
+
+		c = get_hex(buf[j + 1]);
+		if (c < 0)
+			goto err;
+
+		mem[i] |= c;
+	}
+
+	return 0;
+
+err:
+	return -1;
+}
+
 int addr64_n2a(__u64 addr, char *buff, size_t len)
 {
 	__u16 *words = (__u16 *)&addr;
