@@ -19,6 +19,7 @@ csum - checksum update action
 .BR tcp " |"
 .BR udp " |"
 .BR udplite " |"
+.BR sctp " |"
 .IR SWEETS " }"
 
 .ti -8
@@ -43,9 +44,11 @@ IGMP header
 TCP header
 .RB ( tcp ),
 UDP header
-.RB ( udp ") or"
+.RB ( udp ),
 UDPLite header
-.RB ( udplite ).
+.RB ( udplite ") or"
+SCTP header
+.RB ( sctp ).
 .TP
 .B SWEETS
 These are merely syntactic sugar and ignored internally.
