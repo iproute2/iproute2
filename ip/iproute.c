@@ -448,6 +448,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "notify ");
 	if (r->rtm_flags & RTNH_F_LINKDOWN)
 		fprintf(fp, "linkdown ");
+	if (r->rtm_flags & RTNH_F_UNRESOLVED)
+		fprintf(fp, "unresolved ");
 	if (tb[RTA_MARK]) {
 		unsigned int mark = *(unsigned int *)RTA_DATA(tb[RTA_MARK]);
 

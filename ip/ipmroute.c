@@ -159,6 +159,8 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			nh = RTNH_NEXT(nh);
 		}
 	}
+	fprintf(fp, " State: %s",
+		r->rtm_flags & RTNH_F_UNRESOLVED ? "unresolved" : "resolved");
 	if (show_stats && tb[RTA_MFC_STATS]) {
 		struct rta_mfc_stats *mfcs = RTA_DATA(tb[RTA_MFC_STATS]);
 
