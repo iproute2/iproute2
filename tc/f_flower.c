@@ -24,6 +24,10 @@
 #include "tc_util.h"
 #include "rt_names.h"
 
+enum flower_matching_flags {
+	FLOWER_IP_FLAGS,
+};
+
 enum flower_endpoint {
 	FLOWER_ENDPOINT_SRC,
 	FLOWER_ENDPOINT_DST
@@ -63,7 +67,7 @@ static void explain(void)
 		"                       enc_dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_key_id [ KEY-ID ] |\n"
-		"                       matching_flags MATCHING-FLAGS | \n"
+		"                       ip_flags IP-FLAGS | \n"
 		"                       enc_dst_port [ port_number ] }\n"
 		"       FILTERID := X:Y:Z\n"
 		"       MASKED_LLADDR := { LLADDR | LLADDR/MASK | LLADDR/BITS }\n"
@@ -136,28 +140,56 @@ static int flower_parse_vlan_eth_type(char *str, __be16 eth_type, int type,
 	return 0;
 }
 
-static int flower_parse_matching_flags(char *str, int type, int mask_type,
-				       struct nlmsghdr *n)
+struct flag_to_string {
+	int flag;
+	enum flower_matching_flags type;
+	char *string;
+};
+
+static struct flag_to_string flags_str[] = {
+	{ TCA_FLOWER_KEY_FLAGS_IS_FRAGMENT, FLOWER_IP_FLAGS, "frag" },
+};
+
+static int flower_parse_matching_flags(char *str,
+				       enum flower_matching_flags type,
+				       __u32 *mtf, __u32 *mtf_mask)
 {
-	__u32 mtf, mtf_mask;
-	char *c;
+	char *token;
+	bool no;
+	bool found;
+	int i;
 
-	c = strchr(str, '/');
-	if (c)
-		*c = '\0';
+	token = strtok(str, "/");
 
-	if (get_u32(&mtf, str, 0))
-		return -1;
+	while (token) {
+		if (!strncmp(token, "no", 2)) {
+			no = true;
+			token += 2;
+		} else
+			no = false;
 
-	if (c) {
-		if (get_u32(&mtf_mask, ++c, 0))
+		found = false;
+		for (i = 0; i < ARRAY_SIZE(flags_str); i++) {
+			if (type != flags_str[i].type)
+				continue;
+
+			if (!strcmp(token, flags_str[i].string)) {
+				if (no)
+					*mtf &= ~flags_str[i].flag;
+				else
+					*mtf |= flags_str[i].flag;
+
+				*mtf_mask |= flags_str[i].flag;
+				found = true;
+				break;
+			}
+		}
+		if (!found)
 			return -1;
-	} else {
-		mtf_mask = 0xffffffff;
+
+		token = strtok(NULL, "/");
 	}
 
-	addattr32(n, MAX_MSG, type, htonl(mtf));
-	addattr32(n, MAX_MSG, mask_type, htonl(mtf_mask));
 	return 0;
 }
 
@@ -433,6 +465,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 	__be16 vlan_ethtype = 0;
 	__u8 ip_proto = 0xff;
 	__u32 flags = 0;
+	__u32 mtf = 0;
+	__u32 mtf_mask = 0;
 
 	if (handle) {
 		ret = get_u32(&t->tcm_handle, handle, 0);
@@ -462,14 +496,14 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				return -1;
 			}
 			addattr_l(n, MAX_MSG, TCA_FLOWER_CLASSID, &handle, 4);
-		} else if (matches(*argv, "matching_flags") == 0) {
+		} else if (matches(*argv, "ip_flags") == 0) {
 			NEXT_ARG();
 			ret = flower_parse_matching_flags(*argv,
-							  TCA_FLOWER_KEY_FLAGS,
-							  TCA_FLOWER_KEY_FLAGS_MASK,
-							  n);
+							  FLOWER_IP_FLAGS,
+							  &mtf,
+							  &mtf_mask);
 			if (ret < 0) {
-				fprintf(stderr, "Illegal \"matching_flags\"\n");
+				fprintf(stderr, "Illegal \"ip_flags\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "skip_hw") == 0) {
@@ -725,6 +759,16 @@ parse_done:
 	if (ret)
 		return ret;
 
+	if (mtf_mask) {
+		ret = addattr32(n, MAX_MSG, TCA_FLOWER_KEY_FLAGS, htonl(mtf));
+		if (ret)
+			return ret;
+
+		ret = addattr32(n, MAX_MSG, TCA_FLOWER_KEY_FLAGS_MASK, htonl(mtf_mask));
+		if (ret)
+			return ret;
+	}
+
 	ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, eth_type);
 	if (ret)
 		return ret;
@@ -827,14 +871,36 @@ static void flower_print_ip_proto(FILE *f, __u8 *p_ip_proto,
 }
 
 static void flower_print_matching_flags(FILE *f, char *name,
+					enum flower_matching_flags type,
 					struct rtattr *attr,
 					struct rtattr *mask_attr)
 {
+	int i;
+	int count = 0;
+	__u32 mtf;
+	__u32 mtf_mask;
+
 	if (!mask_attr || RTA_PAYLOAD(mask_attr) != 4)
 		return;
 
-	fprintf(f, "\n  %s 0x%08x/0x%08x", name, ntohl(rta_getattr_u32(attr)),
-		mask_attr ? ntohl(rta_getattr_u32(mask_attr)) : 0xffffffff);
+	mtf = ntohl(rta_getattr_u32(attr));
+	mtf_mask = ntohl(rta_getattr_u32(mask_attr));
+
+	for (i = 0; i < ARRAY_SIZE(flags_str); i++) {
+		if (type != flags_str[i].type)
+			continue;
+		if (mtf_mask & flags_str[i].flag) {
+			if (++count == 1)
+				fprintf(f, "\n  %s ", name);
+			else
+				fprintf(f, "/");
+
+			if (mtf & flags_str[i].flag)
+				fprintf(f, "%s", flags_str[i].string);
+			else
+				fprintf(f, "no%s", flags_str[i].string);
+		}
+	}
 }
 
 static void flower_print_ip_addr(FILE *f, char *name, __be16 eth_type,
@@ -1033,7 +1099,8 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	flower_print_port(f, "enc_dst_port",
 			  tb[TCA_FLOWER_KEY_ENC_UDP_DST_PORT]);
 
-	flower_print_matching_flags(f, "matching_flags",
+	flower_print_matching_flags(f, "ip_flags",
+				    FLOWER_IP_FLAGS,
 				    tb[TCA_FLOWER_KEY_FLAGS],
 				    tb[TCA_FLOWER_KEY_FLAGS_MASK]);
 

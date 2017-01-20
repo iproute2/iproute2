@@ -46,7 +46,9 @@ flower \- flow based traffic control filter
 .BR enc_dst_ip " | " enc_src_ip " } { "
 .IR ipv4_address " | " ipv6_address " } | "
 .B enc_dst_port
-.IR port_number
+.IR port_number " | "
+.BR ip_flags
+.IR IP_FLAGS
 .SH DESCRIPTION
 The
 .B flower
@@ -183,13 +185,19 @@ prefix length. If the prefix is missing, \fBtc\fR assumes a full-length
 host match.  Dst port
 .I NUMBER
 is a 16 bit UDP dst port.
+.TP
+.BI ip_flags " IP_FLAGS"
+.I IP_FLAGS
+may be either
+.BR frag " or " nofrag
+to match on fragmented packets or not respectively.
 .SH NOTES
 As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches
 (\fBindev\fR,  \fBdst_mac\fR and \fBsrc_mac\fR)
 have no dependency, layer three matches
 (\fBip_proto\fR, \fBdst_ip\fR, \fBsrc_ip\fR, \fBarp_tip\fR, \fBarp_sip\fR,
-\fBarp_op\fR, \fBarp_tha\fR and \fBarp_sha\fR)
+\fBarp_op\fR, \fBarp_tha\fR, \fBarp_sha\fR and \fBip_flags\fR)
 depend on the
 .B protocol
 option of tc filter, layer four port matches
