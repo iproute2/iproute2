@@ -28,12 +28,12 @@
 #include <math.h>
 #include <getopt.h>
 
-#include <libnetlink.h>
-#include <json_writer.h>
 #include <linux/if.h>
 #include <linux/if_link.h>
 
-#include <SNAPSHOT.h>
+#include "libnetlink.h"
+#include "json_writer.h"
+#include "SNAPSHOT.h"
 
 int dump_zeros;
 int reset_history;
