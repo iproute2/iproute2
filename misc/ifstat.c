@@ -729,7 +729,8 @@ static int verify_forging(int fd)
 static void xstat_usage(void)
 {
 	fprintf(stderr,
-"Usage: ifstat supported xstats:\n");
+"Usage: ifstat supported xstats:\n"
+"       cpu_hits       Counts only packets that went via the CPU.\n");
 }
 
 struct extended_stats_options_t {
@@ -743,6 +744,7 @@ struct extended_stats_options_t {
  * Name length must be under 64 chars.
  */
 static const struct extended_stats_options_t extended_stats_options[] = {
+	{"cpu_hits",  IFLA_STATS_LINK_OFFLOAD_XSTATS, IFLA_OFFLOAD_XSTATS_CPU_HIT},
 };
 
 static const char *get_filter_type(const char *name)
