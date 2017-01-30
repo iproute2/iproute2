@@ -60,9 +60,9 @@ packets, both IP and UDP checksums have to be recalculated:
 .RS
 .EX
 # tc qdisc add dev eth0 ingress handle ffff:
-# tc filter add eth0 prio 1 protocol ip parent ffff: \\
-	u32 match ip src 192.168.1.100/32 flowid :1 \\
-	action pedit munge ip dst set 0x12345678 pipe \\
+# tc filter add dev eth0 prio 1 protocol ip parent ffff: \\
+	u32 match ip src 192.0.2.100/32 flowid :1 \\
+	action pedit munge ip dst set 198.51.100.1 pipe \\
 	csum ip and udp
 .EE
 .RE

@@ -365,12 +365,18 @@ int print_action(const struct sockaddr_nl *who,
 			fprintf(fp, "Flushed table ");
 			tab_flush = 1;
 		} else {
-			fprintf(fp, "deleted action ");
+			fprintf(fp, "Deleted action ");
 		}
 	}
 
-	if (n->nlmsg_type == RTM_NEWACTION)
-		fprintf(fp, "Added action ");
+	if (n->nlmsg_type == RTM_NEWACTION) {
+		if ((n->nlmsg_flags & NLM_F_CREATE) &&
+		    !(n->nlmsg_flags & NLM_F_REPLACE)) {
+			fprintf(fp, "Added action ");
+		} else if (n->nlmsg_flags & NLM_F_REPLACE) {
+			fprintf(fp, "Replaced action ");
+		}
+	}
 	tc_print_action(fp, tb[TCA_ACT_TAB]);
 
 	return 0;
