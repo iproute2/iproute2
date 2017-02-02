@@ -704,13 +704,13 @@ is a set of encapsulation attributes specific to the
 .sp
 
 .in -8
-.RE
 
 .TP
 .BI expires " TIME " "(4.4+ only)"
 the route will be deleted after the expires time.
 .B Only
 support IPv6 at present.
+.RE
 
 .TP
 ip route delete
