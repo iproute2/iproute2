@@ -71,6 +71,16 @@ that replaces the root qdisc on device
 where the second command attaches a matchall filters on it that mirrors the
 packets to device eth2.
 
+To sample one of every 100 packets flowing into interface eth0 to psample group
+12:
+.RS
+.EX
+
+tc qdisc add dev eth0 handle ffff: ingress
+tc filter add dev eth0 parent ffff: matchall \\
+     action sample rate 100 group 12
+.EE
+.RE
 
 .EE
 .SH SEE ALSO
