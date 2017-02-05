@@ -430,6 +430,12 @@ _tc_action_options()
             _tc_once_attr 'index dev'
             return 0
             ;;
+        sample)
+            _tc_once_attr 'rate'
+            _tc_once_attr 'trunc'
+            _tc_once_attr 'group'
+            return 0
+            ;;
         gact)
             _tc_one_of_list 'reclassify drop continue pass'
             _tc_once_attr 'random'
@@ -671,7 +677,7 @@ _tc()
         action)
             case $subcmd in
                 add|change|replace)
-                    local action acwd ACTION_KIND=' gact mirred bpf '
+                    local action acwd ACTION_KIND=' gact mirred bpf sample '
                     for ((acwd=$subcword; acwd < ${#words[@]}-1; acwd++)); do
                         if [[ $ACTION_KIND =~ ' '${words[acwd]}' ' ]]; then
                             action=${words[acwd]}
