@@ -707,6 +707,8 @@ struct tcpstat {
 	int		    snd_wscale;
 	int		    rcv_wscale;
 	int		    mss;
+	int		    rcv_mss;
+	int		    advmss;
 	unsigned int	    cwnd;
 	unsigned int	    lastsnd;
 	unsigned int	    lastrcv;
@@ -1872,6 +1874,10 @@ static void tcp_stats_print(struct tcpstat *s)
 
 	if (s->mss)
 		printf(" mss:%d", s->mss);
+	if (s->rcv_mss)
+		printf(" rcvmss:%d", s->rcv_mss);
+	if (s->advmss)
+		printf(" advmss:%d", s->advmss);
 	if (s->cwnd)
 		printf(" cwnd:%u", s->cwnd);
 	if (s->ssthresh)
@@ -2189,6 +2195,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.rttvar	 = (double)info->tcpi_rttvar / 1000;
 		s.ato		 = (double)info->tcpi_ato / 1000;
 		s.mss		 = info->tcpi_snd_mss;
+		s.rcv_mss	 = info->tcpi_rcv_mss;
+		s.advmss	 = info->tcpi_advmss;
 		s.rcv_space	 = info->tcpi_rcv_space;
 		s.rcv_rtt	 = (double)info->tcpi_rcv_rtt / 1000;
 		s.lastsnd	 = info->tcpi_last_data_sent;

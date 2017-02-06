@@ -14,7 +14,8 @@ ifstat \- handy utility to read network interface statistics
 The utility keeps records of the previous data displayed in history files and
 by default only shows difference between the last and the current call.
 Location of the history files defaults to /tmp/.ifstat.u$UID but may be
-overridden with the IFSTAT_HISTORY environment variable.
+overridden with the IFSTAT_HISTORY environment variable. Similarly, the default
+location for xstat (extended stats) is /tmp/.<xstat name>_ifstat.u$UID.
 .SH OPTIONS
 .TP
 .B \-h, \-\-help
@@ -46,6 +47,15 @@ Report average over the last SECS seconds.
 .TP
 .B \-z, \-\-zeros
 Show entries with zero activity.
+.TP
+.B \-x, \-\-extended=TYPE
+Show extended stats of TYPE. Supported types are:
+
+.in +8
+.B cpu_hits
+- Counts only packets that went via the CPU.
+.in -8
+
 .SH ENVIRONMENT
 .TP
 .B IFSTAT_HISTORY

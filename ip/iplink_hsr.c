@@ -144,7 +144,7 @@ static void hsr_print_help(struct link_util *lu, int argc, char **argv,
 
 struct link_util hsr_link_util = {
 	.id		= "hsr",
-	.maxattr	= IFLA_VLAN_MAX,
+	.maxattr	= IFLA_HSR_MAX,
 	.parse_opt	= hsr_parse_opt,
 	.print_opt	= hsr_print_opt,
 	.print_help	= hsr_print_help,
