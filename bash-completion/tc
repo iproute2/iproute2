@@ -386,11 +386,44 @@ _tc_bpf_options()
     return 0
 }
 
+# Complete with options names for filter actions.
+# This function is recursive, thus allowing multiple actions statement to be
+# parsed.
+# Returns 0 is completion should stop after running this function, 1 otherwise.
+_tc_filter_action_options()
+{
+    for ((acwd=$1; acwd < ${#words[@]}-1; acwd++));
+    do
+        if [[ action == ${words[acwd]} ]]; then
+            _tc_filter_action_options $((acwd+1)) && return 0
+        fi
+    done
+
+    local action acwd
+    for ((acwd=$1; acwd < ${#words[@]}-1; acwd++)); do
+        if [[ $ACTION_KIND =~ ' '${words[acwd]}' ' ]]; then
+            _tc_one_of_list_from $acwd action
+            _tc_action_options $acwd && return 0
+        fi
+    done
+    _tc_one_of_list_from $acwd $ACTION_KIND
+    return 0
+}
+
 # Complete with options names for filters.
 # Returns 0 is completion should stop after running this function, 1 otherwise.
 _tc_filter_options()
 {
-    case $1 in
+
+    for ((acwd=$1; acwd < ${#words[@]}-1; acwd++));
+    do
+        if [[ action == ${words[acwd]} ]]; then
+            _tc_filter_action_options $((acwd+1)) && return 0
+        fi
+    done
+
+    filter=${words[$1]}
+    case $filter in
         basic)
             _tc_once_attr 'match action classid'
             return 0
@@ -685,8 +718,7 @@ _tc()
                     for ((fltwd=$subcword; fltwd < ${#words[@]}-1; fltwd++));
                     do
                         if [[ $FILTER_KIND =~ ' '${words[fltwd]}' ' ]]; then
-                            filter=${words[fltwd]}
-                            _tc_filter_options $filter && return 0
+                            _tc_filter_options $fltwd && return 0
                         fi
                     done
                     _tc_one_of_list $FILTER_KIND
