@@ -2,6 +2,12 @@
 # Copyright 2016 6WIND S.A.
 # Copyright 2016 Quentin Monnet <quentin.monnet@6wind.com>
 
+QDISC_KIND=' choke codel bfifo pfifo pfifo_head_drop fq fq_codel gred hhf \
+            mqprio multiq netem pfifo_fast pie red rr sfb sfq tbf atm cbq drr \
+            dsmark hfsc htb prio qfq '
+FILTER_KIND=' basic bpf cgroup flow flower fw route rsvp tcindex u32 '
+ACTION_KIND=' gact mirred bpf sample '
+
 # Takes a list of words in argument; each one of them is added to COMPREPLY if
 # it is not already present on the command line. Returns no value.
 _tc_once_attr()
@@ -605,10 +611,7 @@ _tc()
                         COMPREPLY=( $( compgen -W 'dev' -- "$cur" ) )
                         return 0
                     fi
-                    local qdisc qdwd QDISC_KIND=' choke codel bfifo pfifo \
-                        pfifo_head_drop fq fq_codel gred hhf mqprio multiq \
-                        netem pfifo_fast pie red rr sfb sfq tbf atm cbq drr \
-                        dsmark hfsc htb prio qfq '
+                    local qdisc qdwd
                     for ((qdwd=$subcword; qdwd < ${#words[@]}-1; qdwd++)); do
                         if [[ $QDISC_KIND =~ ' '${words[qdwd]}' ' ]]; then
                             qdisc=${words[qdwd]}
@@ -643,10 +646,7 @@ _tc()
                         COMPREPLY=( $( compgen -W 'dev' -- "$cur" ) )
                         return 0
                     fi
-                    local qdisc qdwd QDISC_KIND=' choke codel bfifo pfifo \
-                        pfifo_head_drop fq fq_codel gred hhf mqprio multiq \
-                        netem pfifo_fast pie red rr sfb sfq tbf atm cbq drr \
-                        dsmark hfsc htb prio qfq '
+                    local qdisc qdwd
                     for ((qdwd=$subcword; qdwd < ${#words[@]}-1; qdwd++)); do
                         if [[ $QDISC_KIND =~ ' '${words[qdwd]}' ' ]]; then
                             qdisc=${words[qdwd]}
@@ -681,8 +681,7 @@ _tc()
                         COMPREPLY=( $( compgen -W 'dev' -- "$cur" ) )
                         return 0
                     fi
-                    local filter fltwd FILTER_KIND=' basic bpf cgroup flow \
-                        flower fw route rsvp tcindex u32 '
+                    local filter fltwd
                     for ((fltwd=$subcword; fltwd < ${#words[@]}-1; fltwd++));
                     do
                         if [[ $FILTER_KIND =~ ' '${words[fltwd]}' ' ]]; then
@@ -714,7 +713,7 @@ _tc()
         action)
             case $subcmd in
                 add|change|replace)
-                    local action acwd ACTION_KIND=' gact mirred bpf sample '
+                    local action acwd
                     for ((acwd=$subcword; acwd < ${#words[@]}-1; acwd++)); do
                         if [[ $ACTION_KIND =~ ' '${words[acwd]}' ' ]]; then
                             _tc_action_options $acwd && return 0
