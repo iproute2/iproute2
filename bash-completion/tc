@@ -454,26 +454,28 @@ _tc_filter_options()
 # Returns 0 is completion should stop after running this function, 1 otherwise.
 _tc_action_options()
 {
-    case $1 in
+    local from=$1
+    local action=${words[from]}
+    case $action in
         bpf)
             _tc_bpf_options
             return 0
             ;;
         mirred)
-            _tc_one_of_list 'ingress egress'
-            _tc_one_of_list 'mirror redirect'
-            _tc_once_attr 'index dev'
+            _tc_one_of_list_from $from 'ingress egress'
+            _tc_one_of_list_from $from 'mirror redirect'
+            _tc_once_attr_from $from 'index dev'
             return 0
             ;;
         sample)
-            _tc_once_attr 'rate'
-            _tc_once_attr 'trunc'
-            _tc_once_attr 'group'
+            _tc_once_attr_from $from 'rate'
+            _tc_once_attr_from $from 'trunc'
+            _tc_once_attr_from $from 'group'
             return 0
             ;;
         gact)
-            _tc_one_of_list 'reclassify drop continue pass'
-            _tc_once_attr 'random'
+            _tc_one_of_list_from $from 'reclassify drop continue pass'
+            _tc_once_attr_from $from 'random'
             return 0
             ;;
     esac
@@ -715,8 +717,7 @@ _tc()
                     local action acwd ACTION_KIND=' gact mirred bpf sample '
                     for ((acwd=$subcword; acwd < ${#words[@]}-1; acwd++)); do
                         if [[ $ACTION_KIND =~ ' '${words[acwd]}' ' ]]; then
-                            action=${words[acwd]}
-                            _tc_action_options $action && return 0
+                            _tc_action_options $acwd && return 0
                         fi
                     done
                     _tc_one_of_list $ACTION_KIND
