@@ -20,6 +20,26 @@ _tc_once_attr()
     done
 }
 
+# Takes a list of words in argument; each one of them is added to COMPREPLY if
+# it is not already present on the command line from the provided index. Returns
+# no value.
+_tc_once_attr_from()
+{
+    local w subcword found from=$1
+    shift
+    for w in $*; do
+        found=0
+        for (( subcword=$from; subcword < ${#words[@]}-1; subcword++ )); do
+            if [[ $w == ${words[subcword]} ]]; then
+                found=1
+                break
+            fi
+        done
+        [[ $found -eq 0 ]] && \
+            COMPREPLY+=( $( compgen -W "$w" -- "$cur" ) )
+    done
+}
+
 # Takes a list of words in argument; adds them all to COMPREPLY if none of them
 # is already present on the command line. Returns no value.
 _tc_one_of_list()
@@ -27,6 +47,21 @@ _tc_one_of_list()
     local w subcword
     for w in $*; do
         for (( subcword=3; subcword < ${#words[@]}-1; subcword++ )); do
+            [[ $w == ${words[subcword]} ]] && return 1
+        done
+    done
+    COMPREPLY+=( $( compgen -W "$*" -- "$cur" ) )
+}
+
+# Takes a list of words in argument; adds them all to COMPREPLY if none of them
+# is already present on the command line from the provided index. Returns no
+# value.
+_tc_one_of_list_from()
+{
+    local w subcword from=$1
+    shift
+    for w in $*; do
+        for (( subcword=$from; subcword < ${#words[@]}-1; subcword++ )); do
             [[ $w == ${words[subcword]} ]] && return 1
         done
     done
