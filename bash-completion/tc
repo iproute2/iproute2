@@ -5,7 +5,7 @@
 QDISC_KIND=' choke codel bfifo pfifo pfifo_head_drop fq fq_codel gred hhf \
             mqprio multiq netem pfifo_fast pie red rr sfb sfq tbf atm cbq drr \
             dsmark hfsc htb prio qfq '
-FILTER_KIND=' basic bpf cgroup flow flower fw route rsvp tcindex u32 '
+FILTER_KIND=' basic bpf cgroup flow flower fw route rsvp tcindex u32 matchall '
 ACTION_KIND=' gact mirred bpf sample '
 
 # Takes a list of words in argument; each one of them is added to COMPREPLY if
@@ -447,6 +447,10 @@ _tc_filter_options()
                 fi
             done
             _tc_once_attr 'map hash divisor baseclass match action'
+            return 0
+            ;;
+        matchall)
+            _tc_once_attr 'action skip_sw skip_hw'
             return 0
             ;;
         flower)
