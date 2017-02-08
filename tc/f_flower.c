@@ -1061,10 +1061,12 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	if (nl_type >= 0)
 		flower_print_port(f, "src_port", tb[nl_type]);
 
-	nl_type = flower_icmp_attr_type(eth_type, ip_proto, false);
+	nl_type = flower_icmp_attr_type(eth_type, ip_proto,
+					FLOWER_ICMP_FIELD_TYPE);
 	if (nl_type >= 0)
 		flower_print_icmp(f, "icmp_type", tb[nl_type]);
-	nl_type = flower_icmp_attr_type(eth_type, ip_proto, true);
+	nl_type = flower_icmp_attr_type(eth_type, ip_proto,
+					FLOWER_ICMP_FIELD_CODE);
 	if (nl_type >= 0)
 		flower_print_icmp(f, "icmp_code", tb[nl_type]);
 
