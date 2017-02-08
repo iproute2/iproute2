@@ -1429,6 +1429,8 @@ the following additional arguments are supported:
 
 .B "ip link set type bridge_slave"
 [
+.B fdb_flush
+] [
 .BI state " STATE"
 ] [
 .BI priority " PRIO"
@@ -1459,6 +1461,9 @@ the following additional arguments are supported:
 
 .in +8
 .sp
+.B fdb_flush
+- flush bridge slave's fdb dynamic entries
+
 .BI state " STATE"
 - Set port state.
 .I STATE
