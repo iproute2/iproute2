@@ -36,7 +36,7 @@ flower \- flow based traffic control filter
 .BR dst_port " | " src_port " } "
 .IR port_number " } | { "
 .BR arp_tip " | " arp_sip " } "
-.IR PREFIX " | "
+.IR IPV4_PREFIX " | "
 .BR arp_op " { " request " | " reply " | "
 .IR OP " } | { "
 .BR arp_tha " | " arp_sha " } "
@@ -139,11 +139,11 @@ Match on ICMP type or code. Only available for
 .BR ip_proto " values " icmp  " and " icmpv6
 which have to be specified in beforehand.
 .TP
-.BI arp_tip " PREFIX"
+.BI arp_tip " IPV4_PREFIX"
 .TQ
-.BI arp_sip " PREFIX"
+.BI arp_sip " IPV4_PREFIX"
 Match on ARP or RARP sender or target IP address.
-.I PREFIX
+.I IPV4_PREFIX
 must be a valid IPv4 address optionally followed by a slash and the prefix
 length. If the prefix is missing, \fBtc\fR assumes a full-length host
 match.
