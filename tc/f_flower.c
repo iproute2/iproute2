@@ -57,8 +57,8 @@ static void explain(void)
 		"                       src_ip PREFIX |\n"
 		"                       dst_port PORT-NUMBER |\n"
 		"                       src_port PORT-NUMBER |\n"
-		"                       type ICMP-TYPE |\n"
-		"                       code ICMP-CODE |\n"
+		"                       type MASKED-ICMP-TYPE |\n"
+		"                       code MASKED-ICMP-CODE |\n"
 		"                       arp_tip IPV4-PREFIX |\n"
 		"                       arp_sip IPV4-PREFIX |\n"
 		"                       arp_op [ request | reply | OP ] |\n"
@@ -407,24 +407,32 @@ static int flower_icmp_attr_type(__be16 eth_type, __u8 ip_proto,
 	return -1;
 }
 
+static int flower_icmp_attr_mask_type(__be16 eth_type, __u8 ip_proto,
+				      enum flower_icmp_field field)
+{
+	if (eth_type == htons(ETH_P_IP) && ip_proto == IPPROTO_ICMP)
+		return field == FLOWER_ICMP_FIELD_CODE ?
+			TCA_FLOWER_KEY_ICMPV4_CODE_MASK :
+			TCA_FLOWER_KEY_ICMPV4_TYPE_MASK;
+	else if (eth_type == htons(ETH_P_IPV6) && ip_proto == IPPROTO_ICMPV6)
+		return field == FLOWER_ICMP_FIELD_CODE ?
+			TCA_FLOWER_KEY_ICMPV6_CODE_MASK :
+			TCA_FLOWER_KEY_ICMPV6_TYPE_MASK;
+
+	return -1;
+}
+
 static int flower_parse_icmp(char *str, __u16 eth_type, __u8 ip_proto,
 			     enum flower_icmp_field field, struct nlmsghdr *n)
 {
-	int ret;
-	int type;
-	uint8_t value;
+	int value_type, mask_type;
 
-	type = flower_icmp_attr_type(eth_type, ip_proto, field);
-	if (type < 0)
+	value_type = flower_icmp_attr_type(eth_type, ip_proto, field);
+	mask_type = flower_icmp_attr_mask_type(eth_type, ip_proto, field);
+	if (value_type < 0 || mask_type < 0)
 		return -1;
 
-	ret = get_u8(&value, str, 10);
-	if (ret)
-		return -1;
-
-	addattr8(n, MAX_MSG, type, value);
-
-	return 0;
+	return flower_parse_u8(str, value_type, mask_type, NULL, NULL, n);
 }
 
 static int flower_port_attr_type(__u8 ip_proto, enum flower_endpoint endpoint)
@@ -999,12 +1007,6 @@ static void flower_print_key_id(FILE *f, const char *name,
 		fprintf(f, "\n  %s %d", name, rta_getattr_be32(attr));
 }
 
-static void flower_print_icmp(FILE *f, char *name, struct rtattr *attr)
-{
-	if (attr)
-		fprintf(f, "\n  %s %d", name, rta_getattr_u8(attr));
-}
-
 static void flower_print_masked_u8(FILE *f, const char *name,
 				   struct rtattr *attr,
 				   struct rtattr *mask_attr,
@@ -1044,9 +1046,9 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			    struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_FLOWER_MAX + 1];
+	int nl_type, nl_mask_type;
 	__be16 eth_type = 0;
 	__u8 ip_proto = 0xff;
-	int nl_type;
 
 	if (!opt)
 		return 0;
@@ -1110,12 +1112,19 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 
 	nl_type = flower_icmp_attr_type(eth_type, ip_proto,
 					FLOWER_ICMP_FIELD_TYPE);
-	if (nl_type >= 0)
-		flower_print_icmp(f, "icmp_type", tb[nl_type]);
+	nl_mask_type = flower_icmp_attr_mask_type(eth_type, ip_proto,
+						  FLOWER_ICMP_FIELD_TYPE);
+	if (nl_type >= 0 && nl_mask_type >= 0)
+		flower_print_masked_u8(f, "icmp_type", tb[nl_type],
+				       tb[nl_mask_type], NULL);
+
 	nl_type = flower_icmp_attr_type(eth_type, ip_proto,
 					FLOWER_ICMP_FIELD_CODE);
-	if (nl_type >= 0)
-		flower_print_icmp(f, "icmp_code", tb[nl_type]);
+	nl_mask_type = flower_icmp_attr_mask_type(eth_type, ip_proto,
+						  FLOWER_ICMP_FIELD_CODE);
+	if (nl_type >= 0 && nl_mask_type >= 0)
+		flower_print_masked_u8(f, "icmp_code", tb[nl_type],
+				       tb[nl_mask_type], NULL);
 
 	flower_print_ip4_addr(f, "arp_sip", tb[TCA_FLOWER_KEY_ARP_SIP],
 			     tb[TCA_FLOWER_KEY_ARP_SIP_MASK]);

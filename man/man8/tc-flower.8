@@ -34,7 +34,11 @@ flower \- flow based traffic control filter
 .BR dst_ip " | " src_ip " } "
 .IR PREFIX " | { "
 .BR dst_port " | " src_port " } "
-.IR port_number " } | { "
+.IR port_number " } | "
+.B type
+.IR MASKED_TYPE " | "
+.B code
+.IR MASKED_CODE " | { "
 .BR arp_tip " | " arp_sip " } "
 .IR IPV4_PREFIX " | "
 .BR arp_op " { " request " | " reply " | "
@@ -132,10 +136,14 @@ Match on layer 4 protocol source or destination port number. Only available for
 .BR ip_proto " values " udp ", " tcp  " and " sctp
 which have to be specified in beforehand.
 .TP
-.BI type " NUMBER"
+.BI type " MASKED_TYPE"
 .TQ
-.BI code " NUMBER"
-Match on ICMP type or code. Only available for
+.BI code " MASKED_CODE"
+Match on ICMP type or code. A mask may be optionally provided to limit the
+bits of the address which are matched. A mask is provided by following the
+address with a slash and then the mask. The mask must be as a number which
+represents a bitwise mask If the mask is missing then a match on all bits
+is assumed.  Only available for
 .BR ip_proto " values " icmp  " and " icmpv6
 which have to be specified in beforehand.
 .TP
