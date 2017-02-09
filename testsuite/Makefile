@@ -43,6 +43,8 @@ $(TESTS): clean
 ifeq (,$(HAVE_UNSHARED_UTIL))
 	$(error Please install util-linux tools to run tests in separated network namespace)
 endif
+	@./tools/generate_nlmsg
+
 	@mkdir -p $(RESULTS_DIR)
 	
 	@for d in $(TESTS_DIR); do \
