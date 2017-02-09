@@ -309,32 +309,29 @@ static int flower_parse_arp_ip_addr(char *str, __be16 eth_type,
 				      TCA_FLOWER_UNSPEC, TCA_FLOWER_UNSPEC, n);
 }
 
-static int flower_parse_arp_op(char *str, __be16 eth_type,
-			       int op_type, int mask_type,
-			       struct nlmsghdr *n)
+static int flower_parse_u8(char *str, int value_type, int mask_type,
+			   int (*value_from_name)(const char *str,
+						 __u8 *value),
+			   bool (*value_validate)(__u8 value),
+			   struct nlmsghdr *n)
 {
 	char *slash;
 	int ret, err = -1;
-	uint8_t value, mask;
+	__u8 value, mask;
 
 	slash = strchr(str, '/');
 	if (slash)
 		*slash = '\0';
 
-	if (!flower_eth_type_arp(eth_type))
-		goto err;
-
-	if (!strcmp(str, "request")) {
-		value = ARPOP_REQUEST;
-	} else if (!strcmp(str, "reply")) {
-		value = ARPOP_REPLY;
-	} else {
+	ret = value_from_name ? value_from_name(str, &value) : -1;
+	if (ret < 0) {
 		ret = get_u8(&value, str, 10);
 		if (ret)
 			goto err;
-		if (value && value != ARPOP_REQUEST && value != ARPOP_REPLY)
-			goto err;
 	}
+
+	if (value_validate && !value_validate(value))
+		goto err;
 
 	if (slash) {
 		ret = get_u8(&mask, slash + 1, 10);
@@ -345,7 +342,7 @@ static int flower_parse_arp_op(char *str, __be16 eth_type,
 		mask = UINT8_MAX;
 	}
 
-	addattr8(n, MAX_MSG, op_type, value);
+	addattr8(n, MAX_MSG, value_type, value);
 	addattr8(n, MAX_MSG, mask_type, mask);
 
 	err = 0;
@@ -353,6 +350,34 @@ err:
 	if (slash)
 		*slash = '/';
 	return err;
+}
+
+static int flower_arp_op_from_name(const char *name, __u8 *op)
+{
+	if (!strcmp(name, "request"))
+		*op = ARPOP_REQUEST;
+	else if (!strcmp(name, "reply"))
+		*op = ARPOP_REPLY;
+	else
+		return -1;
+
+	return 0;
+}
+
+static bool flow_arp_op_validate(__u8 op)
+{
+	return !op || op == ARPOP_REQUEST || op == ARPOP_REPLY;
+}
+
+static int flower_parse_arp_op(char *str, __be16 eth_type,
+			       int op_type, int mask_type,
+			       struct nlmsghdr *n)
+{
+	if (!flower_eth_type_arp(eth_type))
+		return -1;
+
+	return flower_parse_u8(str, op_type, mask_type, flower_arp_op_from_name,
+			       flow_arp_op_validate, n);
 }
 
 static int flower_icmp_attr_type(__be16 eth_type, __u8 ip_proto,
