@@ -352,6 +352,18 @@ err:
 	return err;
 }
 
+static const char *flower_print_arp_op_to_name(__u8 op)
+{
+	switch (op) {
+	case ARPOP_REQUEST:
+		return "request";
+	case ARPOP_REPLY:
+		return "reply";
+	default:
+		return NULL;
+	}
+}
+
 static int flower_arp_op_from_name(const char *name, __u8 *op)
 {
 	if (!strcmp(name, "request"))
@@ -993,29 +1005,39 @@ static void flower_print_icmp(FILE *f, char *name, struct rtattr *attr)
 		fprintf(f, "\n  %s %d", name, rta_getattr_u8(attr));
 }
 
-static void flower_print_arp_op(FILE *f, char *name,
-				struct rtattr *op_attr,
-				struct rtattr *mask_attr)
+static void flower_print_masked_u8(FILE *f, const char *name,
+				   struct rtattr *attr,
+				   struct rtattr *mask_attr,
+				   const char *(*value_to_str)(__u8 value))
 {
-	uint8_t op, mask;
+	const char *value_str = NULL;
+	__u8 value, mask;
 
-	if (!op_attr)
+	if (!attr)
 		return;
 
-	op = rta_getattr_u8(op_attr);
+	value = rta_getattr_u8(attr);
 	mask = mask_attr ? rta_getattr_u8(mask_attr) : UINT8_MAX;
+	if (mask == UINT8_MAX && value_to_str)
+		value_str = value_to_str(value);
 
 	fprintf(f, "\n  %s ", name);
 
-	if (mask == UINT8_MAX && op == ARPOP_REQUEST)
-		fprintf(f, "request");
-	else if (mask == UINT8_MAX && op == ARPOP_REPLY)
-		fprintf(f, "reply");
+	if (value_str)
+		fputs(value_str, f);
 	else
-		fprintf(f, "%d", op);
+		fprintf(f, "%d", value);
 
 	if (mask != UINT8_MAX)
 		fprintf(f, "/%d", mask);
+}
+
+static void flower_print_arp_op(FILE *f, const char *name,
+				struct rtattr *op_attr,
+				struct rtattr *mask_attr)
+{
+	flower_print_masked_u8(f, name, op_attr, mask_attr,
+			       flower_print_arp_op_to_name);
 }
 
 static int flower_print_opt(struct filter_util *qu, FILE *f,
