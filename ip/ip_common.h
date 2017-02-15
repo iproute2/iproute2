@@ -98,6 +98,9 @@ struct link_util {
 struct link_util *get_link_kind(const char *kind);
 
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
+int bridge_parse_xstats(struct link_util *lu, int argc, char **argv);
+int bridge_print_xstats(const struct sockaddr_nl *who,
+			struct nlmsghdr *n, void *arg);
 
 __u32 ipvrf_get_table(const char *name);
 int name_is_vrf(const char *name);

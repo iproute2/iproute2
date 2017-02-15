@@ -680,8 +680,8 @@ static void bridge_print_stats_attr(FILE *f, struct rtattr *attr, int ifindex)
 	}
 }
 
-static int bridge_print_xstats(const struct sockaddr_nl *who,
-			       struct nlmsghdr *n, void *arg)
+int bridge_print_xstats(const struct sockaddr_nl *who,
+			struct nlmsghdr *n, void *arg)
 {
 	struct if_stats_msg *ifsm = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_STATS_MAX+1];
@@ -708,7 +708,7 @@ static int bridge_print_xstats(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static int bridge_parse_xstats(struct link_util *lu, int argc, char **argv)
+int bridge_parse_xstats(struct link_util *lu, int argc, char **argv)
 {
 	while (argc > 0) {
 		if (strcmp(*argv, "igmp") == 0 || strcmp(*argv, "mcast") == 0) {

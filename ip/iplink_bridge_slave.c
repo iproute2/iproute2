@@ -312,4 +312,6 @@ struct link_util bridge_slave_link_util = {
 	.print_opt	= bridge_slave_print_opt,
 	.parse_opt	= bridge_slave_parse_opt,
 	.print_help     = bridge_slave_print_help,
+	.parse_ifla_xstats = bridge_parse_xstats,
+	.print_ifla_xstats = bridge_print_xstats,
 };
