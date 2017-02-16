@@ -134,8 +134,8 @@ static void read_cgroup_pids(const char *base_path, char *name)
 	close(fd);
 }
 
-/* recurse path looking for PATH/vrf/NAME */
-static int recurse_dir(char *base_path, char *name)
+/* recurse path looking for PATH[/NETNS]/vrf/NAME */
+static int recurse_dir(char *base_path, char *name, const char *netns)
 {
 	char path[PATH_MAX];
 	struct dirent *de;
@@ -152,7 +152,15 @@ static int recurse_dir(char *base_path, char *name)
 			continue;
 
 		if (!strcmp(de->d_name, "vrf")) {
-			read_cgroup_pids(base_path, name);
+			const char *pdir = strrchr(base_path, '/');
+
+			/* found a 'vrf' directory. if it is for the given
+			 * namespace then dump the cgroup pids
+			 */
+			if (*netns == '\0' ||
+			    (pdir && !strcmp(pdir+1, netns)))
+				read_cgroup_pids(base_path, name);
+
 			continue;
 		}
 
@@ -165,7 +173,7 @@ static int recurse_dir(char *base_path, char *name)
 			continue;
 
 		if (S_ISDIR(fstat.st_mode)) {
-			rc = recurse_dir(path, name);
+			rc = recurse_dir(path, name, netns);
 			if (rc != 0)
 				goto out;
 		}
@@ -178,10 +186,25 @@ out:
 	return rc;
 }
 
+static int ipvrf_get_netns(char *netns, int len)
+{
+	if (netns_identify_pid("self", netns, len-3)) {
+		fprintf(stderr, "Failed to get name of network namespace: %s\n",
+			strerror(errno));
+		return -1;
+	}
+
+	if (*netns != '\0')
+		strcat(netns, "-ns");
+
+	return 0;
+}
+
 static int ipvrf_pids(int argc, char **argv)
 {
 	char *mnt, *vrf;
-	int ret;
+	char netns[256];
+	int ret = -1;
 
 	if (argc != 1) {
 		fprintf(stderr, "Invalid arguments\n");
@@ -194,8 +217,12 @@ static int ipvrf_pids(int argc, char **argv)
 	if (!mnt)
 		return -1;
 
-	ret = recurse_dir(mnt, vrf);
+	if (ipvrf_get_netns(netns, sizeof(netns)) < 0)
+		goto out;
 
+	ret = recurse_dir(mnt, vrf, netns);
+
+out:
 	free(mnt);
 
 	return ret;
@@ -316,7 +343,7 @@ static int vrf_path(char *vpath, size_t len)
 static int vrf_switch(const char *name)
 {
 	char path[PATH_MAX], *mnt, pid[16];
-	char vpath[PATH_MAX];
+	char vpath[PATH_MAX], netns[256];
 	int ifindex = 0;
 	int rc = -1, len, fd = -1;
 
@@ -332,17 +359,37 @@ static int vrf_switch(const char *name)
 	if (!mnt)
 		return -1;
 
+	/* -1 on length to add '/' to the end */
+	if (ipvrf_get_netns(netns, sizeof(netns) - 1) < 0)
+		return -1;
+
 	if (vrf_path(vpath, sizeof(vpath)) < 0) {
 		fprintf(stderr, "Failed to get base cgroup path: %s\n",
 			strerror(errno));
 		return -1;
 	}
 
+	/* if path already ends in netns then don't add it again */
+	if (*netns != '\0') {
+		char *pdir = strrchr(vpath, '/');
+
+		if (!pdir)
+			pdir = vpath;
+		else
+			pdir++;
+
+		if (strcmp(pdir, netns) == 0)
+			*pdir = '\0';
+
+		strcat(netns, "/");
+	}
+
 	/* path to cgroup; make sure buffer has room to cat "/cgroup.procs"
 	 * to the end of the path
 	 */
 	len = snprintf(path, sizeof(path) - sizeof(CGRP_PROC_FILE),
-		       "%s%s/vrf/%s", mnt, vpath, ifindex ? name : "");
+		       "%s%s/%svrf/%s",
+		       mnt, vpath, netns, ifindex ? name : "");
 	if (len > sizeof(path) - sizeof(CGRP_PROC_FILE)) {
 		fprintf(stderr, "Invalid path to cgroup2 mount\n");
 		goto out;
