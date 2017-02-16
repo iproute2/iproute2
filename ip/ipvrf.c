@@ -212,6 +212,10 @@ static int ipvrf_pids(int argc, char **argv)
 	}
 
 	vrf = argv[0];
+	if (!name_is_vrf(vrf)) {
+		fprintf(stderr, "Invalid VRF name\n");
+		return -1;
+	}
 
 	mnt = find_cgroup2_mount();
 	if (!mnt)
