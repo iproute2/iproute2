@@ -15,6 +15,12 @@ IPVERS := $(filter-out iproute2/Makefile,$(wildcard iproute2/*))
 
 ifneq (,$(wildcard /proc/config.gz))
 	KENV := $(shell cat /proc/config.gz | gunzip | grep ^CONFIG)
+else
+KVER := $(shell uname -r)
+KCPATH := /lib/modules/${KVER}/config
+ifneq (,$(wildcard ${KCPATH}))
+	KENV := $(shell cat ${KCPATH} | grep ^CONFIG)
+endif
 endif
 
 .PHONY: compile listtests alltests configure $(TESTS)
@@ -43,6 +49,8 @@ $(TESTS): clean
 ifeq (,$(HAVE_UNSHARED_UTIL))
 	$(error Please install util-linux tools to run tests in separated network namespace)
 endif
+	@./tools/generate_nlmsg
+
 	@mkdir -p $(RESULTS_DIR)
 	
 	@for d in $(TESTS_DIR); do \
