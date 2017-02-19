@@ -1462,7 +1462,7 @@ the following additional arguments are supported:
 .in +8
 .sp
 .B fdb_flush
-- flush bridge slave's fdb dynamic entries
+- flush bridge slave's fdb dynamic entries.
 
 .BI state " STATE"
 - Set port state.
