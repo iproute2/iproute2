@@ -970,21 +970,18 @@ int hex2mem(const char *buf, uint8_t *mem, int count)
 	for (i = 0, j = 0; i < count; i++, j += 2) {
 		c = get_hex(buf[j]);
 		if (c < 0)
-			goto err;
+			return -1;
 
 		mem[i] = c << 4;
 
 		c = get_hex(buf[j + 1]);
 		if (c < 0)
-			goto err;
+			return -1;
 
 		mem[i] |= c;
 	}
 
 	return 0;
-
-err:
-	return -1;
 }
 
 int addr64_n2a(__u64 addr, char *buff, size_t len)
