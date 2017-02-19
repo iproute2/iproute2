@@ -2579,7 +2579,8 @@ int main(int argc, char **argv)
 		switch (opt) {
 		case 'V':
 			printf("devlink utility, iproute2-ss%s\n", SNAPSHOT);
-			return EXIT_SUCCESS;
+			ret = EXIT_SUCCESS;
+			goto dl_free;
 		case 'n':
 			dl->no_nice_names = true;
 			break;
@@ -2592,7 +2593,8 @@ int main(int argc, char **argv)
 		default:
 			pr_err("Unknown option.\n");
 			help();
-			return EXIT_FAILURE;
+			ret = EXIT_FAILURE;
+			goto dl_free;
 		}
 	}
 
