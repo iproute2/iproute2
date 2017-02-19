@@ -468,28 +468,15 @@ static int netns_pids(int argc, char **argv)
 
 }
 
-static int netns_identify(int argc, char **argv)
+int netns_identify_pid(const char *pidstr, char *name, int len)
 {
-	const char *pidstr;
 	char net_path[PATH_MAX];
 	int netns;
 	struct stat netst;
 	DIR *dir;
 	struct dirent *entry;
 
-	if (argc < 1) {
-		pidstr = "self";
-	} else if (argc > 1) {
-		fprintf(stderr, "extra arguments specified\n");
-		return -1;
-	} else {
-		pidstr = argv[0];
-		if (!is_pid(pidstr)) {
-			fprintf(stderr, "Specified string '%s' is not a pid\n",
-					pidstr);
-			return -1;
-		}
-	}
+	name[0] = '\0';
 
 	snprintf(net_path, sizeof(net_path), "/proc/%s/ns/net", pidstr);
 	netns = open(net_path, O_RDONLY);
@@ -531,12 +518,40 @@ static int netns_identify(int argc, char **argv)
 
 		if ((st.st_dev == netst.st_dev) &&
 		    (st.st_ino == netst.st_ino)) {
-			printf("%s\n", entry->d_name);
+			strncpy(name, entry->d_name, len - 1);
+			name[len - 1] = '\0';
 		}
 	}
 	closedir(dir);
 	return 0;
 
+}
+
+static int netns_identify(int argc, char **argv)
+{
+	const char *pidstr;
+	char name[256];
+	int rc;
+
+	if (argc < 1) {
+		pidstr = "self";
+	} else if (argc > 1) {
+		fprintf(stderr, "extra arguments specified\n");
+		return -1;
+	} else {
+		pidstr = argv[0];
+		if (!is_pid(pidstr)) {
+			fprintf(stderr, "Specified string '%s' is not a pid\n",
+					pidstr);
+			return -1;
+		}
+	}
+
+	rc = netns_identify_pid(pidstr, name, sizeof(name));
+	if (!rc)
+		printf("%s\n", name);
+
+	return rc;
 }
 
 static int on_netns_del(char *nsname, void *arg)

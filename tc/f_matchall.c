@@ -130,6 +130,15 @@ static int matchall_print_opt(struct filter_util *qu, FILE *f,
 			sprint_tc_classid(rta_getattr_u32(tb[TCA_MATCHALL_CLASSID]), b1));
 	}
 
+	if (tb[TCA_MATCHALL_FLAGS]) {
+		__u32 flags = rta_getattr_u32(tb[TCA_MATCHALL_FLAGS]);
+
+		if (flags & TCA_CLS_FLAGS_SKIP_HW)
+			fprintf(f, "\n  skip_hw");
+		if (flags & TCA_CLS_FLAGS_SKIP_SW)
+			fprintf(f, "\n  skip_sw");
+	}
+
 	if (tb[TCA_MATCHALL_ACT])
 		tc_print_action(f, tb[TCA_MATCHALL_ACT]);
 

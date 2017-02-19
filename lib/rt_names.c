@@ -119,7 +119,7 @@ static void rtnl_tab_initialize(const char *file, char **tab, int size)
 }
 
 static char *rtnl_rtprot_tab[256] = {
-	[RTPROT_UNSPEC]   = "none",
+	[RTPROT_UNSPEC]   = "unspec",
 	[RTPROT_REDIRECT] = "redirect",
 	[RTPROT_KERNEL]	  = "kernel",
 	[RTPROT_BOOT]	  = "boot",

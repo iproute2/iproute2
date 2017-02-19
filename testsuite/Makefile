@@ -17,8 +17,9 @@ ifneq (,$(wildcard /proc/config.gz))
 	KENV := $(shell cat /proc/config.gz | gunzip | grep ^CONFIG)
 else
 KVER := $(shell uname -r)
-KCPATH := /lib/modules/${KVER}/config
-ifneq (,$(wildcard ${KCPATH}))
+KCPATHS := /lib/modules/$(KVER)/config /boot/config-$(KVER)
+KCPATH := $(firstword $(wildcard $(KCPATHS)))
+ifneq (,$(KCPATH))
 	KENV := $(shell cat ${KCPATH} | grep ^CONFIG)
 endif
 endif

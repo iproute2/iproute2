@@ -59,6 +59,7 @@ int do_ipnetconf(int argc, char **argv);
 int do_iptoken(int argc, char **argv);
 int do_ipvrf(int argc, char **argv);
 void vrf_reset(void);
+int netns_identify_pid(const char *pidstr, char *name, int len);
 
 int iplink_get(unsigned int flags, char *name, __u32 filt_mask);
 
