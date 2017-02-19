@@ -169,6 +169,11 @@ ip-link \- network device configuration
 .IR NAME " ]"
 
 .ti -8
+.B ip link xstats
+.BI type " TYPE"
+.RI "[ " ARGS " ]"
+
+.ti -8
 .B ip link help
 .RI "[ " TYPE " ]"
 
@@ -1615,6 +1620,13 @@ instead it is sent as-is to the kernel. Later it is used to filter the returned
 interface list by comparing it with the relevant attribute in case the kernel
 didn't filter already. Therefore any string is accepted, but may lead to empty
 output.
+
+.SS  ip link xstats - display extended statistics
+
+.TP
+.BI type " TYPE "
+.I TYPE
+specifies the type of devices to display extended statistics for.
 
 .SS  ip link help - display help
 

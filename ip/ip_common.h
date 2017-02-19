@@ -62,6 +62,7 @@ void vrf_reset(void);
 int netns_identify_pid(const char *pidstr, char *name, int len);
 
 int iplink_get(unsigned int flags, char *name, __u32 filt_mask);
+int iplink_ifla_xstats(int argc, char **argv);
 
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 {
@@ -85,9 +86,13 @@ struct link_util {
 	void			(*print_opt)(struct link_util *, FILE *,
 					     struct rtattr *[]);
 	void			(*print_xstats)(struct link_util *, FILE *,
-					     struct rtattr *);
+						struct rtattr *);
 	void			(*print_help)(struct link_util *, int, char **,
-					     FILE *);
+					      FILE *);
+	int			(*parse_ifla_xstats)(struct link_util *,
+						     int, char **);
+	int			(*print_ifla_xstats)(const struct sockaddr_nl *,
+						     struct nlmsghdr *, void *);
 };
 
 struct link_util *get_link_kind(const char *kind);

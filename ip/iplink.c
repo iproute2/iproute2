@@ -98,6 +98,8 @@ void iplink_usage(void)
 		"\n"
 		"       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [vrf NAME] [type TYPE]\n");
 
+	fprintf(stderr, "\n       ip link xstats type TYPE [ ARGS ]\n");
+
 	if (iplink_have_newlink()) {
 		fprintf(stderr,
 			"\n"
@@ -1410,6 +1412,9 @@ int do_iplink(int argc, char **argv)
 	    matches(*argv, "lst") == 0 ||
 	    matches(*argv, "list") == 0)
 		return ipaddr_list_link(argc-1, argv+1);
+
+	if (matches(*argv, "xstats") == 0)
+		return iplink_ifla_xstats(argc-1, argv+1);
 
 	if (matches(*argv, "help") == 0) {
 		do_help(argc-1, argv+1);
