@@ -83,6 +83,9 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	case AF_INET6:
 		fprintf(fp, "ipv6 ");
 		break;
+	case AF_MPLS:
+		fprintf(fp, "mpls ");
+		break;
 	default:
 		fprintf(fp, "unknown ");
 		break;
@@ -130,6 +133,9 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	if (tb[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN])
 		print_onoff(fp, "ignore_routes_with_linkdown",
 		     rta_getattr_u32(tb[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN]));
+
+	if (tb[NETCONFA_INPUT])
+		print_onoff(fp, "input", rta_getattr_u32(tb[NETCONFA_INPUT]));
 
 	fprintf(fp, "\n");
 	fflush(fp);

@@ -176,6 +176,7 @@ int do_ipmonitor(int argc, char **argv)
 	groups |= nl_mgrp(RTNLGRP_IPV4_RULE);
 	groups |= nl_mgrp(RTNLGRP_IPV6_RULE);
 	groups |= nl_mgrp(RTNLGRP_NSID);
+	groups |= nl_mgrp(RTNLGRP_MPLS_NETCONF);
 
 	rtnl_close(&rth);
 
@@ -271,6 +272,8 @@ int do_ipmonitor(int argc, char **argv)
 			groups |= nl_mgrp(RTNLGRP_IPV4_NETCONF);
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_NETCONF);
+		if (!preferred_family || preferred_family == AF_MPLS)
+			groups |= nl_mgrp(RTNLGRP_MPLS_NETCONF);
 	}
 	if (lrule) {
 		if (!preferred_family || preferred_family == AF_INET)
