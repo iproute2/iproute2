@@ -289,8 +289,8 @@ static int flower_parse_ip_addr(char *str, __be16 eth_type,
 		return -1;
 	}
 
-	return __flower_parse_ip_addr(str, family, addr4_type, addr6_type,
-				      mask4_type, mask6_type, n);
+	return __flower_parse_ip_addr(str, family, addr4_type, mask4_type,
+				      addr6_type, mask6_type, n);
 }
 
 static bool flower_eth_type_arp(__be16 eth_type)
