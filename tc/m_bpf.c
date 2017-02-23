@@ -177,6 +177,15 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, " ");
 	}
 
+	if (tb[TCA_ACT_BPF_TAG]) {
+		SPRINT_BUF(b);
+
+		fprintf(f, "tag %s ",
+			hexstring_n2a(RTA_DATA(tb[TCA_ACT_BPF_TAG]),
+				      RTA_PAYLOAD(tb[TCA_ACT_BPF_TAG]),
+				      b, sizeof(b)));
+	}
+
 	fprintf(f, "default-action %s\n", action_n2a(parm->action));
 	fprintf(f, "\tindex %u ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);

@@ -216,6 +216,15 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 		bpf_print_ops(f, tb[TCA_BPF_OPS],
 			      rta_getattr_u16(tb[TCA_BPF_OPS_LEN]));
 
+	if (tb[TCA_BPF_TAG]) {
+		SPRINT_BUF(b);
+
+		fprintf(f, "tag %s ",
+			hexstring_n2a(RTA_DATA(tb[TCA_BPF_TAG]),
+				      RTA_PAYLOAD(tb[TCA_BPF_TAG]),
+				      b, sizeof(b)));
+	}
+
 	if (tb[TCA_BPF_POLICE]) {
 		fprintf(f, "\n");
 		tc_print_police(f, tb[TCA_BPF_POLICE]);
