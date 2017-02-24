@@ -127,7 +127,7 @@ MODDESTDIR := $(DESTDIR)$(LIBDIR)/tc
 
 all: tc $(TCSO)
 
-tc: $(TCOBJ) libtc.a
+tc: $(TCOBJ) $(LIBNETLINK) libtc.a
 	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 libtc.a: $(TCLIB)
