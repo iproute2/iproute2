@@ -256,7 +256,7 @@ out:
 
 void bpf_print_ops(FILE *f, struct rtattr *bpf_ops, __u16 len)
 {
-	struct sock_filter *ops = (struct sock_filter *) RTA_DATA(bpf_ops);
+	struct sock_filter *ops = RTA_DATA(bpf_ops);
 	int i;
 
 	if (len == 0)
