@@ -230,7 +230,7 @@ static int atm_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (RTA_PAYLOAD(tb[TCA_ATM_STATE]) < sizeof(state))
 			fprintf(stderr, "ATM: state field too short\n");
 		else {
-			state = *(int *) RTA_DATA(tb[TCA_ATM_STATE]);
+			state = rta_getattr_u32(tb[TCA_ATM_STATE]);
 			fprintf(f, "%s ", map[state]);
 		}
 	}

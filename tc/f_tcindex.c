@@ -150,7 +150,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_SHIFT]) < sizeof(shift))
 			return -1;
-		shift = *(int *) RTA_DATA(tb[TCA_TCINDEX_SHIFT]);
+		shift = rta_getattr_u32(tb[TCA_TCINDEX_SHIFT]);
 		fprintf(f, "shift %d ", shift);
 	}
 	if (tb[TCA_TCINDEX_FALL_THROUGH]) {
@@ -159,7 +159,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 		if (RTA_PAYLOAD(tb[TCA_TCINDEX_FALL_THROUGH]) <
 		    sizeof(fall_through))
 			return -1;
-		fall_through = *(int *) RTA_DATA(tb[TCA_TCINDEX_FALL_THROUGH]);
+		fall_through = rta_getattr_u32(tb[TCA_TCINDEX_FALL_THROUGH]);
 		fprintf(f, fall_through ? "fall_through " : "pass_on ");
 	}
 	if (tb[TCA_TCINDEX_CLASSID]) {
