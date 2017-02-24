@@ -2361,9 +2361,9 @@ static void parse_diag_msg(struct nlmsghdr *nlh, struct sockstat *s)
 
 	s->mark = 0;
 	if (tb[INET_DIAG_MARK])
-		s->mark = *(__u32 *) RTA_DATA(tb[INET_DIAG_MARK]);
+		s->mark = rta_getattr_u32(tb[INET_DIAG_MARK]);
 	if (tb[INET_DIAG_PROTOCOL])
-		s->raw_prot = *(__u8 *)RTA_DATA(tb[INET_DIAG_PROTOCOL]);
+		s->raw_prot = rta_getattr_u8(tb[INET_DIAG_PROTOCOL]);
 	else
 		s->raw_prot = 0;
 
@@ -2386,7 +2386,7 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
 	if (tb[INET_DIAG_PROTOCOL])
-		s->type = *(__u8 *)RTA_DATA(tb[INET_DIAG_PROTOCOL]);
+		s->type = rta_getattr_u8(tb[INET_DIAG_PROTOCOL]);
 
 	inet_stats_print(s);
 
@@ -2407,13 +2407,13 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 		if (s->local.family == AF_INET6 && tb[INET_DIAG_SKV6ONLY]) {
 			unsigned char v6only;
 
-			v6only = *(__u8 *)RTA_DATA(tb[INET_DIAG_SKV6ONLY]);
+			v6only = rta_getattr_u8(tb[INET_DIAG_SKV6ONLY]);
 			printf(" v6only:%u", v6only);
 		}
 		if (tb[INET_DIAG_SHUTDOWN]) {
 			unsigned char mask;
 
-			mask = *(__u8 *)RTA_DATA(tb[INET_DIAG_SHUTDOWN]);
+			mask = rta_getattr_u8(tb[INET_DIAG_SHUTDOWN]);
 			printf(" %c-%c", mask & 1 ? '-' : '<', mask & 2 ? '-' : '>');
 		}
 	}
@@ -3039,7 +3039,7 @@ static int unix_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
 		if (tb[UNIX_DIAG_SHUTDOWN]) {
 			unsigned char mask;
 
-			mask = *(__u8 *)RTA_DATA(tb[UNIX_DIAG_SHUTDOWN]);
+			mask = rta_getattr_u8(tb[UNIX_DIAG_SHUTDOWN]);
 			printf(" %c-%c", mask & 1 ? '-' : '<', mask & 2 ? '-' : '>');
 		}
 	}
@@ -3298,7 +3298,7 @@ static int packet_show_sock(const struct sockaddr_nl *addr,
 	}
 
 	if (tb[PACKET_DIAG_UID])
-		stat.uid = *(__u32 *)RTA_DATA(tb[PACKET_DIAG_UID]);
+		stat.uid = rta_getattr_u32(tb[PACKET_DIAG_UID]);
 
 	if (tb[PACKET_DIAG_RX_RING])
 		ring_rx = RTA_DATA(tb[PACKET_DIAG_RX_RING]);
@@ -3308,7 +3308,7 @@ static int packet_show_sock(const struct sockaddr_nl *addr,
 
 	if (tb[PACKET_DIAG_FANOUT]) {
 		has_fanout = true;
-		fanout = *(uint32_t *)RTA_DATA(tb[PACKET_DIAG_FANOUT]);
+		fanout = rta_getattr_u32(tb[PACKET_DIAG_FANOUT]);
 	}
 
 	if (packet_stats_print(&stat, f))

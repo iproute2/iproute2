@@ -84,9 +84,8 @@ int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "autoconf ");
 
 	if (tb[PREFIX_CACHEINFO]) {
-		struct prefix_cacheinfo *pc;
-
-		pc = (struct prefix_cacheinfo *)RTA_DATA(tb[PREFIX_CACHEINFO]);
+		const struct prefix_cacheinfo *pc
+			 = RTA_DATA(tb[PREFIX_CACHEINFO]);
 
 		fprintf(fp, "valid %u ", pc->valid_time);
 		fprintf(fp, "preferred %u ", pc->preferred_time);

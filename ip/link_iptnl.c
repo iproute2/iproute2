@@ -338,6 +338,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
+	__u16 prefixlen, type;
 
 	if (!tb)
 		return;
@@ -398,8 +399,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 	}
 
 	if (tb[IFLA_IPTUN_6RD_PREFIXLEN] &&
-	    *(__u16 *)RTA_DATA(tb[IFLA_IPTUN_6RD_PREFIXLEN])) {
-		__u16 prefixlen = rta_getattr_u16(tb[IFLA_IPTUN_6RD_PREFIXLEN]);
+	    (prefixlen = rta_getattr_u16(tb[IFLA_IPTUN_6RD_PREFIXLEN]))) {
 		__u16 relayprefixlen =
 			rta_getattr_u16(tb[IFLA_IPTUN_6RD_RELAY_PREFIXLEN]);
 		__u32 relayprefix =
@@ -417,8 +417,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 	}
 
 	if (tb[IFLA_IPTUN_ENCAP_TYPE] &&
-	    *(__u16 *)RTA_DATA(tb[IFLA_IPTUN_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {
-		__u16 type = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_TYPE]);
+	    (type = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_TYPE])) != TUNNEL_ENCAP_NONE) {
 		__u16 flags = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_FLAGS]);
 		__u16 sport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_SPORT]);
 		__u16 dport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_DPORT]);

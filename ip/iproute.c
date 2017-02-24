@@ -262,7 +262,7 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		int iif = 0;
 
 		if (tb[RTA_IIF])
-			iif = *(int *)RTA_DATA(tb[RTA_IIF]);
+			iif = rta_getattr_u32(tb[RTA_IIF]);
 		if ((iif^filter.iif)&filter.iifmask)
 			return 0;
 	}
@@ -270,7 +270,7 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		int oif = 0;
 
 		if (tb[RTA_OIF])
-			oif = *(int *)RTA_DATA(tb[RTA_OIF]);
+			oif = rta_getattr_u32(tb[RTA_OIF]);
 		if ((oif^filter.oif)&filter.oifmask)
 			return 0;
 	}
@@ -278,7 +278,7 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		int mark = 0;
 
 		if (tb[RTA_MARK])
-			mark = *(int *)RTA_DATA(tb[RTA_MARK]);
+			mark = rta_getattr_u32(tb[RTA_MARK]);
 		if ((mark ^ filter.mark) & filter.markmask)
 			return 0;
 	}
@@ -287,7 +287,7 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	    r->rtm_dst_len == 0 &&
 	    r->rtm_type == RTN_UNREACHABLE &&
 	    tb[RTA_PRIORITY] &&
-	    *(int *)RTA_DATA(tb[RTA_PRIORITY]) == -1)
+	    rta_getattr_u32(tb[RTA_PRIORITY]) == -1)
 		return 0;
 
 	return 1;
@@ -417,7 +417,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			format_host(via->rtvia_family, len, via->rtvia_addr));
 	}
 	if (tb[RTA_OIF] && filter.oifmask != -1)
-		fprintf(fp, "dev %s ", ll_index_to_name(*(int *)RTA_DATA(tb[RTA_OIF])));
+		fprintf(fp, "dev %s ", ll_index_to_name(rta_getattr_u32(tb[RTA_OIF])));
 
 	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
 		fprintf(fp, "table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
@@ -451,7 +451,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (r->rtm_flags & RTNH_F_UNRESOLVED)
 		fprintf(fp, "unresolved ");
 	if (tb[RTA_MARK]) {
-		unsigned int mark = *(unsigned int *)RTA_DATA(tb[RTA_MARK]);
+		unsigned int mark = rta_getattr_u32(tb[RTA_MARK]);
 
 		if (mark) {
 			if (mark >= 16)
@@ -563,7 +563,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(tb[RTA_METRICS]),
 			    RTA_PAYLOAD(tb[RTA_METRICS]));
 		if (mxrta[RTAX_LOCK])
-			mxlock = *(unsigned *)RTA_DATA(mxrta[RTAX_LOCK]);
+			mxlock = rta_getattr_u32(mxrta[RTAX_LOCK]);
 
 		for (i = 2; i <= RTAX_MAX; i++) {
 			__u32 val = 0U;
@@ -613,7 +613,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		}
 	}
 	if (tb[RTA_IIF] && filter.iifmask != -1) {
-		fprintf(fp, " iif %s", ll_index_to_name(*(int *)RTA_DATA(tb[RTA_IIF])));
+		fprintf(fp, " iif %s",
+			ll_index_to_name(rta_getattr_u32(tb[RTA_IIF])));
 	}
 	if (tb[RTA_MULTIPATH]) {
 		struct rtnexthop *nh = RTA_DATA(tb[RTA_MULTIPATH]);

@@ -95,19 +95,19 @@ get_failed:
 				    linkinfo[IFLA_INFO_DATA]);
 
 		if (vtiinfo[IFLA_VTI_IKEY])
-			ikey = *(__u32 *)RTA_DATA(vtiinfo[IFLA_VTI_IKEY]);
+			ikey = rta_getattr_u32(vtiinfo[IFLA_VTI_IKEY]);
 
 		if (vtiinfo[IFLA_VTI_OKEY])
-			okey = *(__u32 *)RTA_DATA(vtiinfo[IFLA_VTI_OKEY]);
+			okey = rta_getattr_u32(vtiinfo[IFLA_VTI_OKEY]);
 
 		if (vtiinfo[IFLA_VTI_LOCAL])
-			saddr = *(__u32 *)RTA_DATA(vtiinfo[IFLA_VTI_LOCAL]);
+			saddr = rta_getattr_u32(vtiinfo[IFLA_VTI_LOCAL]);
 
 		if (vtiinfo[IFLA_VTI_REMOTE])
-			daddr = *(__u32 *)RTA_DATA(vtiinfo[IFLA_VTI_REMOTE]);
+			daddr = rta_getattr_u32(vtiinfo[IFLA_VTI_REMOTE]);
 
 		if (vtiinfo[IFLA_VTI_LINK])
-			link = *(__u8 *)RTA_DATA(vtiinfo[IFLA_VTI_LINK]);
+			link = rta_getattr_u8(vtiinfo[IFLA_VTI_LINK]);
 	}
 
 	while (argc > 0) {
@@ -196,15 +196,16 @@ get_failed:
 
 static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
-	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
+	unsigned int link;
+	char s2[64];
 
 	if (!tb)
 		return;
 
 	if (tb[IFLA_VTI_REMOTE]) {
-		unsigned int addr = *(__u32 *)RTA_DATA(tb[IFLA_VTI_REMOTE]);
+		unsigned int addr = rta_getattr_u32(tb[IFLA_VTI_REMOTE]);
 
 		if (addr)
 			remote = format_host(AF_INET, 4, &addr);
@@ -213,7 +214,7 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	fprintf(f, "remote %s ", remote);
 
 	if (tb[IFLA_VTI_LOCAL]) {
-		unsigned int addr = *(__u32 *)RTA_DATA(tb[IFLA_VTI_LOCAL]);
+		unsigned int addr = rta_getattr_u32(tb[IFLA_VTI_LOCAL]);
 
 		if (addr)
 			local = format_host(AF_INET, 4, &addr);
@@ -221,8 +222,8 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	fprintf(f, "local %s ", local);
 
-	if (tb[IFLA_VTI_LINK] && *(__u32 *)RTA_DATA(tb[IFLA_VTI_LINK])) {
-		unsigned int link = *(__u32 *)RTA_DATA(tb[IFLA_VTI_LINK]);
+	if (tb[IFLA_VTI_LINK] &&
+	    (link = rta_getattr_u32(tb[IFLA_VTI_LINK]))) {
 		const char *n = if_indextoname(link, s2);
 
 		if (n)

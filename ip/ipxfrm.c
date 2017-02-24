@@ -709,7 +709,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_ALG_AEAD]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AEAD];
 
-		xfrm_aead_print((struct xfrm_algo_aead *)RTA_DATA(rta),
+		xfrm_aead_print(RTA_DATA(rta),
 				RTA_PAYLOAD(rta), fp, prefix);
 	}
 
@@ -769,14 +769,13 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	}
 
 	if (tb[XFRMA_COADDR]) {
-		xfrm_address_t *coa;
+		const xfrm_address_t *coa;
 
 		if (prefix)
 			fputs(prefix, fp);
 		fprintf(fp, "coa ");
 
-		coa = (xfrm_address_t *)RTA_DATA(tb[XFRMA_COADDR]);
-
+		coa = RTA_DATA(tb[XFRMA_COADDR]);
 		if (RTA_PAYLOAD(tb[XFRMA_COADDR]) < sizeof(*coa)) {
 			fprintf(fp, "(ERROR truncated)");
 			fprintf(fp, "%s", _SL_);
@@ -820,7 +819,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 			return;
 		}
 
-		replay = (struct xfrm_replay_state *)RTA_DATA(tb[XFRMA_REPLAY_VAL]);
+		replay = RTA_DATA(tb[XFRMA_REPLAY_VAL]);
 		fprintf(fp, "seq 0x%x, oseq 0x%x, bitmap 0x%08x",
 			replay->seq, replay->oseq, replay->bitmap);
 		fprintf(fp, "%s", _SL_);
@@ -841,7 +840,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		}
 		fprintf(fp, "%s", _SL_);
 
-		replay = (struct xfrm_replay_state_esn *)RTA_DATA(tb[XFRMA_REPLAY_ESN_VAL]);
+		replay = RTA_DATA(tb[XFRMA_REPLAY_ESN_VAL]);
 		if (prefix)
 			fputs(prefix, fp);
 		fprintf(fp, " seq-hi 0x%x, seq 0x%x, oseq-hi 0x%0x, oseq 0x%0x",
@@ -907,7 +906,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 			fprintf(fp, "%x", flags);
 	}
 	if (show_stats > 0 && tb[XFRMA_SA_EXTRA_FLAGS]) {
-		__u32 extra_flags = *(__u32 *)RTA_DATA(tb[XFRMA_SA_EXTRA_FLAGS]);
+		__u32 extra_flags = rta_getattr_u32(tb[XFRMA_SA_EXTRA_FLAGS]);
 
 		fprintf(fp, "extra_flag ");
 		XFRM_FLAG_PRINT(fp, extra_flags,
@@ -944,7 +943,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		if (RTA_PAYLOAD(tb[XFRMA_SEC_CTX]) < sizeof(*sctx))
 			fprintf(fp, "(ERROR truncated)");
 
-		sctx = (struct xfrm_user_sec_ctx *)RTA_DATA(tb[XFRMA_SEC_CTX]);
+		sctx = RTA_DATA(tb[XFRMA_SEC_CTX]);
 
 		fprintf(fp, "%s %s", (char *)(sctx + 1), _SL_);
 	}
@@ -967,7 +966,7 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 		if (RTA_PAYLOAD(tb[XFRMA_SEC_CTX]) < sizeof(*sctx))
 			fprintf(fp, "(ERROR truncated)");
 
-		sctx = (struct xfrm_user_sec_ctx *)RTA_DATA(tb[XFRMA_SEC_CTX]);
+		sctx = RTA_DATA(tb[XFRMA_SEC_CTX]);
 
 		fprintf(fp, "%s ", (char *)(sctx + 1));
 		fprintf(fp, "%s", _SL_);
@@ -1025,7 +1024,7 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 		if (RTA_PAYLOAD(tb[XFRMA_POLICY_TYPE]) < sizeof(*upt))
 			fprintf(fp, "(ERROR truncated)");
 
-		upt = (struct xfrm_userpolicy_type *)RTA_DATA(tb[XFRMA_POLICY_TYPE]);
+		upt = RTA_DATA(tb[XFRMA_POLICY_TYPE]);
 		fprintf(fp, "%s ", strxf_ptype(upt->type));
 	}
 

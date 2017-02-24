@@ -172,7 +172,7 @@ static void print_queuelen(FILE *f, struct rtattr *tb[IFLA_MAX + 1])
 	int qlen;
 
 	if (tb[IFLA_TXQLEN])
-		qlen = *(int *)RTA_DATA(tb[IFLA_TXQLEN]);
+		qlen = rta_getattr_u32(tb[IFLA_TXQLEN]);
 	else {
 		struct ifreq ifr = {};
 		int s = socket(AF_INET, SOCK_STREAM, 0);
@@ -234,13 +234,12 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 	struct link_util *lu;
 	struct link_util *slave_lu;
 	char slave[32];
-	char *kind;
-	char *slave_kind;
 
 	parse_rtattr_nested(linkinfo, IFLA_INFO_MAX, tb);
 
 	if (linkinfo[IFLA_INFO_KIND]) {
-		kind = RTA_DATA(linkinfo[IFLA_INFO_KIND]);
+		const char *kind
+			= rta_getattr_str(linkinfo[IFLA_INFO_KIND]);
 
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    %s ", kind);
@@ -263,7 +262,8 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 	}
 
 	if (linkinfo[IFLA_INFO_SLAVE_KIND]) {
-		slave_kind = RTA_DATA(linkinfo[IFLA_INFO_SLAVE_KIND]);
+		const char *slave_kind
+			= rta_getattr_str(linkinfo[IFLA_INFO_SLAVE_KIND]);
 
 		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    %s_slave ", slave_kind);
@@ -474,18 +474,18 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 	fprintf(fp, "    RX: bytes  packets  mcast   bcast %s", _SL_);
 	fprintf(fp, "    ");
 
-	print_num(fp, 10, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_RX_BYTES]));
-	print_num(fp, 8, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_RX_PACKETS]));
-	print_num(fp, 7, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_MULTICAST]));
-	print_num(fp, 7, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_BROADCAST]));
+	print_num(fp, 10,  rta_getattr_u64(vf[IFLA_VF_STATS_RX_BYTES]));
+	print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_RX_PACKETS]));
+	print_num(fp, 7, rta_getattr_u64(vf[IFLA_VF_STATS_MULTICAST]));
+	print_num(fp, 7, rta_getattr_u64(vf[IFLA_VF_STATS_BROADCAST]));
 
 	/* TX stats */
 	fprintf(fp, "%s", _SL_);
 	fprintf(fp, "    TX: bytes  packets %s", _SL_);
 	fprintf(fp, "    ");
 
-	print_num(fp, 10, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_TX_BYTES]));
-	print_num(fp, 8, *(__u64 *)RTA_DATA(vf[IFLA_VF_STATS_TX_PACKETS]));
+	print_num(fp, 10, rta_getattr_u64(vf[IFLA_VF_STATS_TX_BYTES]));
+	print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_TX_PACKETS]));
 }
 
 static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
@@ -551,7 +551,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 		print_num(fp, 7, s->tx_window_errors);
 		print_num(fp, 7, s->tx_heartbeat_errors);
 		if (carrier_changes)
-			print_num(fp, 7, *(uint32_t *)RTA_DATA(carrier_changes));
+			print_num(fp, 7, rta_getattr_u32(carrier_changes));
 	}
 }
 
@@ -617,7 +617,7 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 		print_num(fp, 7, s->tx_window_errors);
 		print_num(fp, 7, s->tx_heartbeat_errors);
 		if (carrier_changes)
-			print_num(fp, 7, *(uint32_t *)RTA_DATA(carrier_changes));
+			print_num(fp, 7, rta_getattr_u32(carrier_changes));
 	}
 }
 
@@ -660,7 +660,7 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
 	int len = n->nlmsg_len;
-	char *name;
+	const char *name;
 	char buf[32] = { 0, };
 	unsigned int m_flag = 0;
 
@@ -677,8 +677,12 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		return -1;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL)
+	if (tb[IFLA_IFNAME] == NULL) {
 		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
+		name = "<nil>";
+	} else {
+		name = rta_getattr_str(tb[IFLA_IFNAME]);
+	}
 
 	if (filter.label &&
 	    (!filter.family || filter.family == AF_PACKET) &&
@@ -686,14 +690,14 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		return -1;
 
 	if (tb[IFLA_GROUP]) {
-		int group = *(int *)RTA_DATA(tb[IFLA_GROUP]);
+		int group = rta_getattr_u32(tb[IFLA_GROUP]);
 
 		if (filter.group != -1 && group != filter.group)
 			return -1;
 	}
 
 	if (tb[IFLA_MASTER]) {
-		int master = *(int *)RTA_DATA(tb[IFLA_MASTER]);
+		int master = rta_getattr_u32(tb[IFLA_MASTER]);
 
 		if (filter.master > 0 && master != filter.master)
 			return -1;
@@ -709,11 +713,9 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == RTM_DELLINK)
 		fprintf(fp, "Deleted ");
 
-	name = (char *)(tb[IFLA_IFNAME] ? rta_getattr_str(tb[IFLA_IFNAME]) : "<nil>");
-
 	if (tb[IFLA_LINK]) {
 		SPRINT_BUF(b1);
-		int iflink = *(int *)RTA_DATA(tb[IFLA_LINK]);
+		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
 
 		if (iflink == 0)
 			snprintf(buf, sizeof(buf), "%s@NONE", name);
@@ -782,14 +784,14 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		return 0;
 
 	if (tb[IFLA_GROUP]) {
-		int group = *(int *)RTA_DATA(tb[IFLA_GROUP]);
+		int group = rta_getattr_u32(tb[IFLA_GROUP]);
 
 		if (filter.group != -1 && group != filter.group)
 			return -1;
 	}
 
 	if (tb[IFLA_MASTER]) {
-		int master = *(int *)RTA_DATA(tb[IFLA_MASTER]);
+		int master = rta_getattr_u32(tb[IFLA_MASTER]);
 
 		if (filter.master > 0 && master != filter.master)
 			return -1;
@@ -811,7 +813,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_LINK]) {
 		SPRINT_BUF(b1);
-		int iflink = *(int *)RTA_DATA(tb[IFLA_LINK]);
+		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
 
 		if (iflink == 0)
 			fprintf(fp, "@NONE: ");
@@ -830,14 +832,14 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	print_link_flags(fp, ifi->ifi_flags, m_flag);
 
 	if (tb[IFLA_MTU])
-		fprintf(fp, "mtu %u ", *(int *)RTA_DATA(tb[IFLA_MTU]));
+		fprintf(fp, "mtu %u ", rta_getattr_u32(tb[IFLA_MTU]));
 	if (tb[IFLA_XDP])
 		xdp_dump(fp, tb[IFLA_XDP]);
 	if (tb[IFLA_QDISC])
 		fprintf(fp, "qdisc %s ", rta_getattr_str(tb[IFLA_QDISC]));
 	if (tb[IFLA_MASTER]) {
 		SPRINT_BUF(b1);
-		fprintf(fp, "master %s ", ll_idx_n2a(*(int *)RTA_DATA(tb[IFLA_MASTER]), b1));
+		fprintf(fp, "master %s ", ll_idx_n2a(rta_getattr_u32(tb[IFLA_MASTER]), b1));
 	}
 
 	if (tb[IFLA_OPERSTATE])
@@ -848,7 +850,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_GROUP]) {
 		SPRINT_BUF(b1);
-		int group = *(int *)RTA_DATA(tb[IFLA_GROUP]);
+		int group = rta_getattr_u32(tb[IFLA_GROUP]);
 
 		fprintf(fp, "group %s ", rtnl_group_n2a(group, b1, sizeof(b1)));
 	}
@@ -882,7 +884,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	}
 
 	if (tb[IFLA_LINK_NETNSID]) {
-		int id = *(int *)RTA_DATA(tb[IFLA_LINK_NETNSID]);
+		int id = rta_getattr_u32(tb[IFLA_LINK_NETNSID]);
 
 		if (id >= 0)
 			fprintf(fp, " link-netnsid %d", id);
@@ -898,7 +900,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (show_details) {
 		if (tb[IFLA_PROMISCUITY])
 			fprintf(fp, " promiscuity %u ",
-				*(int *)RTA_DATA(tb[IFLA_PROMISCUITY]));
+				rta_getattr_u32(tb[IFLA_PROMISCUITY]));
 
 		if (tb[IFLA_LINKINFO])
 			print_linktype(fp, tb[IFLA_LINKINFO]);

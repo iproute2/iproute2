@@ -195,11 +195,12 @@ get_failed:
 
 static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
-	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
 	struct in6_addr saddr;
 	struct in6_addr daddr;
+	unsigned int link;
+	char s2[64];
 
 	if (!tb)
 		return;
@@ -220,8 +221,7 @@ static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	fprintf(f, "local %s ", local);
 
-	if (tb[IFLA_VTI_LINK] && *(__u32 *)RTA_DATA(tb[IFLA_VTI_LINK])) {
-		unsigned int link = *(__u32 *)RTA_DATA(tb[IFLA_VTI_LINK]);
+	if (tb[IFLA_VTI_LINK] && (link = rta_getattr_u32(tb[IFLA_VTI_LINK]))) {
 		const char *n = if_indextoname(link, s2);
 
 		if (n)

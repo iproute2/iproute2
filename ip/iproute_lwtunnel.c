@@ -146,7 +146,7 @@ static void print_encap_ila(FILE *fp, struct rtattr *encap)
 	if (tb[ILA_ATTR_LOCATOR]) {
 		char abuf[ADDR64_BUF_SIZE];
 
-		addr64_n2a(*(__u64 *)RTA_DATA(tb[ILA_ATTR_LOCATOR]),
+		addr64_n2a(rta_getattr_u64(tb[ILA_ATTR_LOCATOR]),
 			   abuf, sizeof(abuf));
 		fprintf(fp, " %s ", abuf);
 	}

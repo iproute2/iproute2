@@ -160,7 +160,7 @@ static int xfrm_policy_flush_print(const struct sockaddr_nl *who,
 		if (RTA_PAYLOAD(tb[XFRMA_POLICY_TYPE]) < sizeof(*upt))
 			fprintf(fp, "(ERROR truncated)");
 
-		upt = (struct xfrm_userpolicy_type *)RTA_DATA(tb[XFRMA_POLICY_TYPE]);
+		upt = RTA_DATA(tb[XFRMA_POLICY_TYPE]);
 		fprintf(fp, "%s ", strxf_ptype(upt->type));
 	}
 

@@ -1216,8 +1216,6 @@ static int print_sadinfo(struct nlmsghdr *n, void *arg)
 	__u32 *f = NLMSG_DATA(n);
 	struct rtattr *tb[XFRMA_SAD_MAX+1];
 	struct rtattr *rta;
-	__u32 *cnt;
-
 	int len = n->nlmsg_len;
 
 	len -= NLMSG_LENGTH(sizeof(__u32));
@@ -1230,9 +1228,11 @@ static int print_sadinfo(struct nlmsghdr *n, void *arg)
 	parse_rtattr(tb, XFRMA_SAD_MAX, rta, len);
 
 	if (tb[XFRMA_SAD_CNT]) {
+		__u32 cnt;
+
 		fprintf(fp, "\t SAD");
-		cnt = (__u32 *)RTA_DATA(tb[XFRMA_SAD_CNT]);
-		fprintf(fp, " count %d", *cnt);
+		cnt = rta_getattr_u32(tb[XFRMA_SAD_CNT]);
+		fprintf(fp, " count %u", cnt);
 	} else {
 		fprintf(fp, "BAD SAD info returned\n");
 		return -1;

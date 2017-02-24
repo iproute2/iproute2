@@ -89,7 +89,7 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 
 	if (tb[RTA_IIF])
-		iif = *(int *)RTA_DATA(tb[RTA_IIF]);
+		iif = rta_getattr_u32(tb[RTA_IIF]);
 	if (filter.iif && filter.iif != iif)
 		return 0;
 
