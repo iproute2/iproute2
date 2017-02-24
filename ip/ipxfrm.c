@@ -686,7 +686,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 {
 	if (tb[XFRMA_MARK]) {
 		struct rtattr *rta = tb[XFRMA_MARK];
-		struct xfrm_mark *m = (struct xfrm_mark *) RTA_DATA(rta);
+		struct xfrm_mark *m = RTA_DATA(rta);
 
 		fprintf(fp, "\tmark %#x/%#x", m->v, m->m);
 		fprintf(fp, "%s", _SL_);
@@ -695,14 +695,14 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_ALG_AUTH] && !tb[XFRMA_ALG_AUTH_TRUNC]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH];
 
-		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
+		xfrm_algo_print(RTA_DATA(rta),
 				XFRMA_ALG_AUTH, RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_AUTH_TRUNC]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH_TRUNC];
 
-		xfrm_auth_trunc_print((struct xfrm_algo_auth *) RTA_DATA(rta),
+		xfrm_auth_trunc_print(RTA_DATA(rta),
 				      RTA_PAYLOAD(rta), fp, prefix);
 	}
 
@@ -716,14 +716,14 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_ALG_CRYPT]) {
 		struct rtattr *rta = tb[XFRMA_ALG_CRYPT];
 
-		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
+		xfrm_algo_print(RTA_DATA(rta),
 				XFRMA_ALG_CRYPT, RTA_PAYLOAD(rta), fp, prefix);
 	}
 
 	if (tb[XFRMA_ALG_COMP]) {
 		struct rtattr *rta = tb[XFRMA_ALG_COMP];
 
-		xfrm_algo_print((struct xfrm_algo *) RTA_DATA(rta),
+		xfrm_algo_print(RTA_DATA(rta),
 				XFRMA_ALG_COMP, RTA_PAYLOAD(rta), fp, prefix);
 	}
 
@@ -739,7 +739,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 			fprintf(fp, "%s", _SL_);
 			return;
 		}
-		e = (struct xfrm_encap_tmpl *) RTA_DATA(tb[XFRMA_ENCAP]);
+		e = RTA_DATA(tb[XFRMA_ENCAP]);
 
 		fprintf(fp, "type ");
 		switch (e->encap_type) {
@@ -764,7 +764,7 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_TMPL]) {
 		struct rtattr *rta = tb[XFRMA_TMPL];
 
-		xfrm_tmpl_print((struct xfrm_user_tmpl *) RTA_DATA(rta),
+		xfrm_tmpl_print(RTA_DATA(rta),
 				RTA_PAYLOAD(rta), fp, prefix);
 	}
 
