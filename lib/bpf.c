@@ -596,7 +596,7 @@ static const char *bpf_get_work_dir(enum bpf_prog_type type)
 	if (bpf_mnt_cached) {
 		const char *out = mnt;
 
-		if (out) {
+		if (out && type) {
 			snprintf(bpf_tmp, sizeof(bpf_tmp), "%s%s/",
 				 out, bpf_prog_to_subdir(type));
 			out = bpf_tmp;
