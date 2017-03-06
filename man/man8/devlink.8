@@ -20,18 +20,28 @@ devlink \- Devlink tool
 .IR OPTIONS " := { "
 \fB\-V\fR[\fIersion\fR] |
 \fB\-n\fR[\fIno-nice-names\fR] }
+\fB\-j\fR[\fIjson\fR] }
+\fB\-p\fR[\fIpretty\fR] }
 
 .SH OPTIONS
 
 .TP
-.BR "\-V" , " -Version"
+.BR "\-V" , " --Version"
 Print the version of the
 .B devlink
 utility and exit.
 
 .TP
-.BR "\-n" , " -no-nice-names"
+.BR "\-n" , " --no-nice-names"
 Turn off printing out nice names, for example netdevice ifnames instead of devlink port identification.
+
+.TP
+.BR "\-j" , " --json"
+Generate JSON output.
+
+.TP
+.BR "\-p" , " --pretty"
+When combined with -j generate a pretty JSON output.
 
 .SS
 .I OBJECT

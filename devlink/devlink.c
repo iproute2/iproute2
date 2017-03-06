@@ -2470,7 +2470,7 @@ static void help(void)
 {
 	pr_err("Usage: devlink [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "where  OBJECT := { dev | port | sb | monitor }\n"
-	       "       OPTIONS := { -V[ersion] | -n[no-nice-names] }\n");
+	       "       OPTIONS := { -V[ersion] | -n[no-nice-names] | -j[json] | -p[pretty] }\n");
 }
 
 static int dl_cmd(struct dl *dl)
