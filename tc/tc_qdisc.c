@@ -34,7 +34,7 @@ static int usage(void)
 	fprintf(stderr, "       [ stab [ help | STAB_OPTIONS] ]\n");
 	fprintf(stderr, "       [ [ QDISC_KIND ] [ help | OPTIONS ] ]\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "       tc qdisc show [ dev STRING ] [ ingress | clsact ]\n");
+	fprintf(stderr, "       tc qdisc show [ dev STRING ] [ ingress | clsact ] [ invisible ]\n");
 	fprintf(stderr, "Where:\n");
 	fprintf(stderr, "QDISC_KIND := { [p|b]fifo | tbf | prio | cbq | red | etc. }\n");
 	fprintf(stderr, "OPTIONS := ... try tc qdisc add <desired QDISC_KIND> help\n");
@@ -292,6 +292,7 @@ static int tc_qdisc_list(int argc, char **argv)
 {
 	struct tcmsg t = { .tcm_family = AF_UNSPEC };
 	char d[16] = {};
+	bool dump_invisible = false;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -306,6 +307,8 @@ static int tc_qdisc_list(int argc, char **argv)
 			t.tcm_parent = TC_H_INGRESS;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
+		} else if (strcmp(*argv, "invisible") == 0) {
+			dump_invisible = true;
 		} else {
 			fprintf(stderr, "What is \"%s\"? Try \"tc qdisc help\".\n", *argv);
 			return -1;
@@ -325,7 +328,25 @@ static int tc_qdisc_list(int argc, char **argv)
 		filter_ifindex = t.tcm_ifindex;
 	}
 
-	if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
+	if (dump_invisible) {
+		struct {
+			struct nlmsghdr n;
+			struct tcmsg t;
+			char buf[256];
+		} req = {
+			.n.nlmsg_type = RTM_GETQDISC,
+			.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
+		};
+
+		req.t.tcm_family = AF_UNSPEC;
+
+		addattr(&req.n, 256, TCA_DUMP_INVISIBLE);
+		if (rtnl_dump_request_n(&rth, &req.n) < 0) {
+			perror("Cannot send dump request");
+			return 1;
+		}
+
+	} else if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
