@@ -28,6 +28,7 @@
 #include <sys/ioctl.h>
 #include <linux/sockios.h>
 #include <stdbool.h>
+#include <linux/mpls.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -99,6 +100,7 @@ void iplink_usage(void)
 		"       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [vrf NAME] [type TYPE]\n");
 
 	fprintf(stderr, "\n       ip link xstats type TYPE [ ARGS ]\n");
+	fprintf(stderr, "\n       ip link afstats [ dev DEVICE ]\n");
 
 	if (iplink_have_newlink()) {
 		fprintf(stderr,
@@ -1364,6 +1366,150 @@ static int do_set(int argc, char **argv)
 }
 #endif /* IPLINK_IOCTL_COMPAT */
 
+static void print_mpls_stats(FILE *fp, struct rtattr *attr)
+{
+	struct rtattr *mrtb[MPLS_STATS_MAX+1];
+	struct mpls_link_stats *stats;
+
+	parse_rtattr(mrtb, MPLS_STATS_MAX, RTA_DATA(attr),
+		     RTA_PAYLOAD(attr));
+	if (!mrtb[MPLS_STATS_LINK])
+		return;
+
+	stats = RTA_DATA(mrtb[MPLS_STATS_LINK]);
+
+	fprintf(fp, "    mpls:\n");
+	fprintf(fp, "        RX: bytes  packets  errors  dropped  noroute\n");
+	fprintf(fp, "        ");
+	print_num(fp, 10, stats->rx_bytes);
+	print_num(fp, 8, stats->rx_packets);
+	print_num(fp, 7, stats->rx_errors);
+	print_num(fp, 8, stats->rx_dropped);
+	print_num(fp, 7, stats->rx_noroute);
+	fprintf(fp, "\n");
+	fprintf(fp, "        TX: bytes  packets  errors  dropped\n");
+	fprintf(fp, "        ");
+	print_num(fp, 10, stats->tx_bytes);
+	print_num(fp, 8, stats->tx_packets);
+	print_num(fp, 7, stats->tx_errors);
+	print_num(fp, 7, stats->tx_dropped);
+	fprintf(fp, "\n");
+}
+
+static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)
+{
+	bool if_printed = false;
+	struct rtattr *i;
+	int rem;
+
+	rem = RTA_PAYLOAD(attr);
+	for (i = RTA_DATA(attr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+		if (preferred_family != AF_UNSPEC &&
+		    i->rta_type != preferred_family)
+			continue;
+
+		if (!if_printed) {
+			fprintf(fp, "%u: %s\n", ifindex,
+				ll_index_to_name(ifindex));
+			if_printed = true;
+		}
+
+		switch (i->rta_type) {
+		case AF_MPLS:
+			print_mpls_stats(fp, i);
+			break;
+		default:
+			fprintf(fp, "    unknown af(%d)\n", i->rta_type);
+			break;
+		}
+	}
+}
+
+struct af_stats_ctx {
+	FILE *fp;
+	int ifindex;
+};
+
+static int print_af_stats(const struct sockaddr_nl *who,
+			  struct nlmsghdr *n,
+			  void *arg)
+{
+	struct if_stats_msg *ifsm = NLMSG_DATA(n);
+	struct rtattr *tb[IFLA_STATS_MAX+1];
+	int len = n->nlmsg_len;
+	struct af_stats_ctx *ctx = arg;
+	FILE *fp = ctx->fp;
+
+	len -= NLMSG_LENGTH(sizeof(*ifsm));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
+	}
+
+	if (ctx->ifindex && ifsm->ifindex != ctx->ifindex)
+		return 0;
+
+	parse_rtattr(tb, IFLA_STATS_MAX, IFLA_STATS_RTA(ifsm), len);
+
+	if (tb[IFLA_STATS_AF_SPEC])
+		print_af_stats_attr(fp, ifsm->ifindex, tb[IFLA_STATS_AF_SPEC]);
+
+	fflush(fp);
+	return 0;
+}
+
+static int iplink_afstats(int argc, char **argv)
+{
+	__u32 filt_mask = IFLA_STATS_FILTER_BIT(IFLA_STATS_AF_SPEC);
+	const char *filter_dev = NULL;
+	struct af_stats_ctx ctx = {
+		.fp = stdout,
+		.ifindex = 0,
+	};
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			if (filter_dev)
+				duparg2("dev", *argv);
+			filter_dev = *argv;
+		} else if (matches(*argv, "help") == 0) {
+			usage();
+		} else {
+			fprintf(stderr,
+				"Command \"%s\" is unknown, try \"ip link help\".\n",
+				*argv);
+			exit(-1);
+		}
+
+		argv++; argc--;
+	}
+
+	if (filter_dev) {
+		ctx.ifindex = ll_name_to_index(filter_dev);
+		if (ctx.ifindex <= 0) {
+			fprintf(stderr,
+				"Device \"%s\" does not exist.\n",
+				filter_dev);
+			return -1;
+		}
+	}
+
+	if (rtnl_wilddump_stats_req_filter(&rth, AF_UNSPEC,
+					   RTM_GETSTATS,
+					   filt_mask) < 0) {
+		perror("Cannont send dump request");
+		return 1;
+	}
+
+	if (rtnl_dump_filter(&rth, print_af_stats, &ctx) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		return 1;
+	}
+
+	return 0;
+}
+
 static void do_help(int argc, char **argv)
 {
 	struct link_util *lu = NULL;
@@ -1415,6 +1561,11 @@ int do_iplink(int argc, char **argv)
 
 	if (matches(*argv, "xstats") == 0)
 		return iplink_ifla_xstats(argc-1, argv+1);
+
+	if (matches(*argv, "afstats") == 0) {
+		iplink_afstats(argc-1, argv+1);
+		return 0;
+	}
 
 	if (matches(*argv, "help") == 0) {
 		do_help(argc-1, argv+1);

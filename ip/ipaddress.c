@@ -418,7 +418,7 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 		print_vf_stats64(fp, vf[IFLA_VF_STATS]);
 }
 
-static void print_num(FILE *fp, unsigned int width, uint64_t count)
+void print_num(FILE *fp, unsigned int width, uint64_t count)
 {
 	const char *prefix = "kMGTPE";
 	const unsigned int base = use_iec ? 1024 : 1000;

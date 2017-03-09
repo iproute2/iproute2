@@ -112,3 +112,5 @@ int name_is_vrf(const char *name);
 #ifndef LABEL_MAX_MASK
 #define     LABEL_MAX_MASK          0xFFFFFU
 #endif
+
+void print_num(FILE *fp, unsigned int width, uint64_t count);
