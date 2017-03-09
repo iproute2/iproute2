@@ -286,9 +286,13 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
 	else if (daddr)
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &daddr, 4);
-	if (!IN6_IS_ADDR_UNSPECIFIED(&gaddr6))
+	else if (!IN6_IS_ADDR_UNSPECIFIED(&gaddr6))
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &gaddr6, sizeof(struct in6_addr));
 	else if (!IN6_IS_ADDR_UNSPECIFIED(&daddr6))
+		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &daddr6, sizeof(struct in6_addr));
+	else if (preferred_family == AF_INET)
+		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &daddr, 4);
+	else if (preferred_family == AF_INET6)
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &daddr6, sizeof(struct in6_addr));
 
 	if (saddr)
