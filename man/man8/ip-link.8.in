@@ -164,7 +164,7 @@ ip-link \- network device configuration
 .B master
 .IR DEVICE " ] ["
 .B type
-.IR ETYPE " ]"
+.IR ETYPE " ] ["
 .B vrf
 .IR NAME " ]"
 
