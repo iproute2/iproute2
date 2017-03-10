@@ -37,9 +37,7 @@ static void explain(void)
 }
 
 #define ALPHA_MAX 32
-#define ALPHA_MIN 0
 #define BETA_MAX 32
-#define BETA_MIN 0
 
 static int pie_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n)
@@ -75,14 +73,14 @@ static int pie_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		} else if (strcmp(*argv, "alpha") == 0) {
 			NEXT_ARG();
 			if (get_unsigned(&alpha, *argv, 0) ||
-			    (alpha > ALPHA_MAX) || (alpha < ALPHA_MIN)) {
+			    (alpha > ALPHA_MAX)) {
 				fprintf(stderr, "Illegal \"alpha\"\n");
 				return -1;
 			}
 		} else if (strcmp(*argv, "beta") == 0) {
 			NEXT_ARG();
 			if (get_unsigned(&beta, *argv, 0) ||
-			    (beta > BETA_MAX) || (beta < BETA_MIN)) {
+			    (beta > BETA_MAX)) {
 				fprintf(stderr, "Illegal \"beta\"\n");
 				return -1;
 			}
