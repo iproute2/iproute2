@@ -24,6 +24,8 @@
 #include <linux/socket.h>		/* for "struct sockaddr" et al	*/
 		/* for "__user" et al           */
 
+#include <sys/socket.h>			/* for struct sockaddr.		*/
+
 #if __UAPI_DEF_IF_IFNAMSIZ
 #define	IFNAMSIZ	16
 #endif /* __UAPI_DEF_IF_IFNAMSIZ */
