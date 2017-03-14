@@ -319,6 +319,34 @@ or, if the objects of this class cannot be listed,
 Exit status is 0 if command was successful, and 1 if there is a syntax error.
 If an error was reported by the kernel exit status is 2.
 
+.SH "EXAMPLES"
+.PP
+ip addr
+.RS 4
+Shows addresses assigned to all network interfaces.
+.RE
+.PP
+ip neigh
+.RS 4
+Shows the current neighbour table in kernel.
+.RE
+.PP
+ip link set x up
+.RS 4
+Bring up interface x.
+.RE
+.PP
+ip link set x down
+.RE
+.RS 4
+Bring down interface x.
+.RE
+.PP
+ip route
+.RS 4
+Show table routes.
+.RE
+
 .SH HISTORY
 .B ip
 was written by Alexey N. Kuznetsov and added in Linux 2.2.
