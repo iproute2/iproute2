@@ -655,7 +655,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 					size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
 					struct rtvia *via = RTA_DATA(tb[RTA_VIA]);
 
-					fprintf(fp, "via %s %s ",
+					fprintf(fp, " via %s %s ",
 						family_name(via->rtvia_family),
 						format_host(via->rtvia_family, len, via->rtvia_addr));
 				}
