@@ -214,6 +214,8 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 			fprintf(f, " ptype %d", *ptype);
 	}
 
+	fprintf(f, " %s", action_n2a(p->action));
+
 	fprintf(f, "\n\t index %u ref %d bind %d",
 		p->index, p->refcnt, p->bindcnt);
 
