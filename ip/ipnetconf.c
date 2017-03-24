@@ -19,6 +19,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <errno.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -197,16 +198,26 @@ static int do_show(int argc, char **argv)
 		}
 		rtnl_listen(&rth, print_netconf, stdout);
 	} else {
+		rth.flags = RTNL_HANDLE_F_SUPPRESS_NLERR;
 dump:
 		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETNETCONF) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
 		if (rtnl_dump_filter(&rth, print_netconf2, stdout) < 0) {
+			/* kernel does not support netconf dump on AF_UNSPEC;
+			 * fall back to requesting by family
+			 */
+			if (errno == EOPNOTSUPP &&
+			    filter.family == AF_UNSPEC) {
+				filter.family = AF_INET;
+				goto dump;
+			}
+			perror("RTNETLINK answers");
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
-		if (preferred_family == AF_UNSPEC) {
+		if (preferred_family == AF_UNSPEC && filter.family == AF_INET) {
 			preferred_family = AF_INET6;
 			filter.family = AF_INET6;
 			goto dump;
