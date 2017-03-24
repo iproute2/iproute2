@@ -299,7 +299,8 @@ static void rtnl_dump_error(const struct rtnl_handle *rth,
 		     errno == EOPNOTSUPP))
 			return;
 
-		perror("RTNETLINK answers");
+		if (!(rth->flags & RTNL_HANDLE_F_SUPPRESS_NLERR))
+			perror("RTNETLINK answers");
 	}
 }
 
