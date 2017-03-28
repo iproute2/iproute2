@@ -31,6 +31,7 @@ static void print_explain(struct link_util *lu, FILE *f)
 {
 	fprintf(f,
 		"Usage: ... %s mode MODE [flag MODE_FLAG] MODE_OPTS\n"
+		"\n"
 		"MODE: private | vepa | bridge | passthru | source\n"
 		"MODE_FLAG: null | nopromisc\n"
 		"MODE_OPTS: for mode \"source\":\n"
