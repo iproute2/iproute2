@@ -31,25 +31,33 @@
 
 static void print_usage(FILE *f)
 {
-	fprintf(f, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(f, "          [ mode { ip6ip6 | ipip6 | any } ]\n");
-	fprintf(f, "          type ip6tnl [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(f, "          [ dev PHYS_DEV ] [ encaplimit ELIM ]\n");
-	fprintf(f, "          [ hoplimit HLIM ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
-	fprintf(f, "          [ dscp inherit ] [ fwmark inherit ]\n");
-	fprintf(f, "          [ noencap ] [ encap { fou | gue | none } ]\n");
-	fprintf(f, "          [ encap-sport PORT ] [ encap-dport PORT ]\n");
-	fprintf(f, "          [ [no]encap-csum ] [ [no]encap-csum6 ] [ [no]encap-remcsum ]\n");
-	fprintf(f, "          [ external ]\n");
-	fprintf(f, "\n");
-	fprintf(f, "Where: NAME      := STRING\n");
-	fprintf(f, "       ADDR      := IPV6_ADDRESS\n");
-	fprintf(f, "       ELIM      := { none | 0..255 }(default=%d)\n",
-		IPV6_DEFAULT_TNL_ENCAP_LIMIT);
-	fprintf(f, "       HLIM      := 0..255 (default=%d)\n",
-		DEFAULT_TNL_HOP_LIMIT);
-	fprintf(f, "       TCLASS    := { 0x0..0xff | inherit }\n");
-	fprintf(f, "       FLOWLABEL := { 0x0..0xfffff | inherit }\n");
+	fprintf(f,
+		"Usage: ... ip6tnl [ mode { ip6ip6 | ipip6 | any } ]\n"
+		"                  [ remote ADDR ]\n"
+		"                  [ local ADDR ]\n"
+		"                  [ dev PHYS_DEV ]\n"
+		"                  [ encaplimit ELIM ]\n"
+		"                  [ hoplimit HLIM ]\n"
+		"                  [ tclass TCLASS ]\n"
+		"                  [ flowlabel FLOWLABEL ]\n"
+		"                  [ dscp inherit ]\n"
+		"                  [ fwmark inherit ]\n"
+		"                  [ noencap ]\n"
+		"                  [ encap { fou | gue | none } ]\n"
+		"                  [ encap-sport PORT ]\n"
+		"                  [ encap-dport PORT ]\n"
+		"                  [ [no]encap-csum ]\n"
+		"                  [ [no]encap-csum6 ]\n"
+		"                  [ [no]encap-remcsum ]\n"
+		"                  [ external ]\n"
+		"\n"
+		"Where: ADDR      := IPV6_ADDRESS\n"
+		"       ELIM      := { none | 0..255 }(default=%d)\n"
+		"       HLIM      := 0..255 (default=%d)\n"
+		"       TCLASS    := { 0x0..0xff | inherit }\n"
+		"       FLOWLABEL := { 0x0..0xfffff | inherit }\n",
+		IPV6_DEFAULT_TNL_ENCAP_LIMIT, DEFAULT_TNL_HOP_LIMIT
+	);
 }
 
 static void usage(void) __attribute__((noreturn));

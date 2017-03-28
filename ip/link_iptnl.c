@@ -25,21 +25,35 @@
 
 static void print_usage(FILE *f, int sit)
 {
-	fprintf(f, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(f, "          type { ipip | sit } [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(f, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
-	fprintf(f, "          [ 6rd-prefix ADDR ] [ 6rd-relay_prefix ADDR ] [ 6rd-reset ]\n");
-	fprintf(f, "          [ noencap ] [ encap { fou | gue | none } ]\n");
-	fprintf(f, "          [ encap-sport PORT ] [ encap-dport PORT ]\n");
-	fprintf(f, "          [ [no]encap-csum ] [ [no]encap-csum6 ] [ [no]encap-remcsum ]\n");
+	const char *type = sit ? "sit " : "ipip";
+
+	fprintf(f,
+		"Usage: ... %s [ remote ADDR ]\n"
+		"                [ local ADDR ]\n"
+		"                [ ttl TTL ]\n"
+		"                [ tos TOS ]\n"
+		"                [ [no]pmtudisc ]\n"
+		"                [ dev PHYS_DEV ]\n"
+		"                [ 6rd-prefix ADDR ]\n"
+		"                [ 6rd-relay_prefix ADDR ]\n"
+		"                [ 6rd-reset ]\n"
+		"                [ noencap ]\n"
+		"                [ encap { fou | gue | none } ]\n"
+		"                [ encap-sport PORT ]\n"
+		"                [ encap-dport PORT ]\n"
+		"                [ [no]encap-csum ]\n"
+		"                [ [no]encap-csum6 ]\n"
+		"                [ [no]encap-remcsum ]\n",
+		type
+	);
 	if (sit) {
-		fprintf(f, "          [ mode { ip6ip | ipip | any } ]\n");
-		fprintf(f, "          [ isatap ]\n");
+		fprintf(f,
+			"                [ mode { ip6ip | ipip | any } ]\n"
+			"                [ isatap ]\n");
 	}
-	fprintf(f, "          [ external ]\n");
+	fprintf(f, "                [ external ]\n");
 	fprintf(f, "\n");
-	fprintf(f, "Where: NAME := STRING\n");
-	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
+	fprintf(f, "Where: ADDR := { IP_ADDRESS | any }\n");
 	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
 	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
 }
