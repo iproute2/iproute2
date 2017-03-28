@@ -133,7 +133,7 @@ static void print_explain(FILE *f)
 		"                [ min_links MIN_LINKS ]\n"
 		"                [ lp_interval LP_INTERVAL ]\n"
 		"                [ packets_per_slave PACKETS_PER_SLAVE ]\n"
-		"		 [ tlb_dynamic_lb TLB_DYNAMIC_LB ]\n"
+		"                [ tlb_dynamic_lb TLB_DYNAMIC_LB ]\n"
 		"                [ lacp_rate LACP_RATE ]\n"
 		"                [ ad_select AD_SELECT ]\n"
 		"                [ ad_user_port_key PORTKEY ]\n"
