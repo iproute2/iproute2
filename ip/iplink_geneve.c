@@ -17,16 +17,24 @@
 
 static void print_explain(FILE *f)
 {
-	fprintf(f, "Usage: ... geneve id VNI remote ADDR\n");
-	fprintf(f, "                 [ ttl TTL ] [ tos TOS ] [ flowlabel LABEL ]\n");
-	fprintf(f, "                 [ dstport PORT ] [ [no]external ]\n");
-	fprintf(f, "                 [ [no]udpcsum ] [ [no]udp6zerocsumtx ] [ [no]udp6zerocsumrx ]\n");
-	fprintf(f, "\n");
-	fprintf(f, "Where: VNI   := 0-16777215\n");
-	fprintf(f, "       ADDR  := IP_ADDRESS\n");
-	fprintf(f, "       TOS   := { NUMBER | inherit }\n");
-	fprintf(f, "       TTL   := { 1..255 | inherit }\n");
-	fprintf(f, "       LABEL := 0-1048575\n");
+	fprintf(f,
+		"Usage: ... geneve id VNI\n"
+		"                  remote ADDR\n"
+		"                  [ ttl TTL ]\n"
+		"                  [ tos TOS ]\n"
+		"                  [ flowlabel LABEL ]\n"
+		"                  [ dstport PORT ]\n"
+		"                  [ [no]external ]\n"
+		"                  [ [no]udpcsum ]\n"
+		"                  [ [no]udp6zerocsumtx ]\n"
+		"                  [ [no]udp6zerocsumrx ]\n"
+		"\n"
+		"Where: VNI   := 0-16777215\n"
+		"       ADDR  := IP_ADDRESS\n"
+		"       TOS   := { NUMBER | inherit }\n"
+		"       TTL   := { 1..255 | inherit }\n"
+		"       LABEL := 0-1048575\n"
+	);
 }
 
 static void explain(void)

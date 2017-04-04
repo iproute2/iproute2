@@ -23,21 +23,35 @@
 
 static void print_explain(FILE *f)
 {
-	fprintf(f, "Usage: ... vxlan id VNI [ { group | remote } IP_ADDRESS ] [ local ADDR ]\n");
-	fprintf(f, "                 [ ttl TTL ] [ tos TOS ] [ flowlabel LABEL ] [ dev PHYS_DEV ]\n");
-	fprintf(f, "                 [ dstport PORT ] [ srcport MIN MAX ]\n");
-	fprintf(f, "                 [ [no]learning ] [ [no]proxy ] [ [no]rsc ]\n");
-	fprintf(f, "                 [ [no]l2miss ] [ [no]l3miss ]\n");
-	fprintf(f, "                 [ ageing SECONDS ] [ maxaddress NUMBER ]\n");
-	fprintf(f, "                 [ [no]udpcsum ] [ [no]udp6zerocsumtx ] [ [no]udp6zerocsumrx ]\n");
-	fprintf(f, "                 [ [no]remcsumtx ] [ [no]remcsumrx ]\n");
-	fprintf(f, "                 [ [no]external ] [ gbp ] [ gpe ]\n");
-	fprintf(f, "\n");
-	fprintf(f, "Where: VNI   := 0-16777215\n");
-	fprintf(f, "       ADDR  := { IP_ADDRESS | any }\n");
-	fprintf(f, "       TOS   := { NUMBER | inherit }\n");
-	fprintf(f, "       TTL   := { 1..255 | inherit }\n");
-	fprintf(f, "       LABEL := 0-1048575\n");
+	fprintf(f,
+		"Usage: ... vxlan id VNI\n"
+		"                 [ { group | remote } IP_ADDRESS ]\n"
+		"                 [ local ADDR ]\n"
+		"                 [ ttl TTL ]\n"
+		"                 [ tos TOS ]\n"
+		"                 [ flowlabel LABEL ]\n"
+		"                 [ dev PHYS_DEV ]\n"
+		"                 [ dstport PORT ]\n"
+		"                 [ srcport MIN MAX ]\n"
+		"                 [ [no]learning ]\n"
+		"                 [ [no]proxy ]\n"
+		"                 [ [no]rsc ]\n"
+		"                 [ [no]l2miss ]\n"
+		"                 [ [no]l3miss ]\n"
+		"                 [ ageing SECONDS ]\n"
+		"                 [ maxaddress NUMBER ]\n"
+		"                 [ [no]udpcsum ]\n"
+		"                 [ [no]udp6zerocsumtx ]\n"
+		"                 [ [no]udp6zerocsumrx ]\n"
+		"                 [ [no]remcsumtx ] [ [no]remcsumrx ]\n"
+		"                 [ [no]external ] [ gbp ] [ gpe ]\n"
+		"\n"
+		"Where: VNI   := 0-16777215\n"
+		"       ADDR  := { IP_ADDRESS | any }\n"
+		"       TOS   := { NUMBER | inherit }\n"
+		"       TTL   := { 1..255 | inherit }\n"
+		"       LABEL := 0-1048575\n"
+	);
 }
 
 static void explain(void)

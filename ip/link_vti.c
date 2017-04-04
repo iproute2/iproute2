@@ -26,14 +26,15 @@
 
 static void print_usage(FILE *f)
 {
-	fprintf(f, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(f, "          type { vti } [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(f, "          [ [i|o]key KEY ]\n");
-	fprintf(f, "          [ dev PHYS_DEV ]\n");
-	fprintf(f, "\n");
-	fprintf(f, "Where: NAME := STRING\n");
-	fprintf(f, "       ADDR := { IP_ADDRESS }\n");
-	fprintf(f, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
+	fprintf(f,
+		"Usage: ... vti [ remote ADDR ]\n"
+		"               [ local ADDR ]\n"
+		"               [ [i|o]key KEY ]\n"
+		"               [ dev PHYS_DEV ]\n"
+		"\n"
+		"Where: ADDR := { IP_ADDRESS }\n"
+		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
+	);
 }
 
 static void usage(void) __attribute__((noreturn));

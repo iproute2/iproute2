@@ -25,19 +25,29 @@
 
 static void print_usage(FILE *f)
 {
-	fprintf(f, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(f, "          type { gre | gretap } [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(f, "          [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n");
-	fprintf(f, "          [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n");
-	fprintf(f, "          [ noencap ] [ encap { fou | gue | none } ]\n");
-	fprintf(f, "          [ encap-sport PORT ] [ encap-dport PORT ]\n");
-	fprintf(f, "          [ [no]encap-csum ] [ [no]encap-csum6 ] [ [no]encap-remcsum ]\n");
-	fprintf(f, "\n");
-	fprintf(f, "Where: NAME := STRING\n");
-	fprintf(f, "       ADDR := { IP_ADDRESS | any }\n");
-	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
-	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
-	fprintf(f, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
+	fprintf(f,
+		"Usage: ... { gre | gretap } [ remote ADDR ]\n"
+		"                            [ local ADDR ]\n"
+		"                            [ [i|o]seq ]\n"
+		"                            [ [i|o]key KEY ]\n"
+		"                            [ [i|o]csum ]\n"
+		"                            [ ttl TTL ]\n"
+		"                            [ tos TOS ]\n"
+		"                            [ [no]pmtudisc ]\n"
+		"                            [ dev PHYS_DEV ]\n"
+		"                            [ noencap ]\n"
+		"                            [ encap { fou | gue | none } ]\n"
+		"                            [ encap-sport PORT ]\n"
+		"                            [ encap-dport PORT ]\n"
+		"                            [ [no]encap-csum ]\n"
+		"                            [ [no]encap-csum6 ]\n"
+		"                            [ [no]encap-remcsum ]\n"
+		"\n"
+		"Where: ADDR := { IP_ADDRESS | any }\n"
+		"       TOS  := { NUMBER | inherit }\n"
+		"       TTL  := { 1..255 | inherit }\n"
+		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
+	);
 }
 
 static void usage(void) __attribute__((noreturn));
