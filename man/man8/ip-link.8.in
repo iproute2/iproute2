@@ -1714,10 +1714,10 @@ is a number representing the following states:
 .BR 4 " (blocking)."
 
 .BI priority " PRIO"
-- set port priority (a 16bit unsigned value).
+- set port priority (allowed values are between 0 and 63, inclusively).
 
 .BI cost " COST"
-- set port cost (a 32bit unsigned value).
+- set port cost (allowed values are between 1 and 65535, inclusively).
 
 .BR guard " { " on " | " off " }"
 - block incoming BPDU packets on this port.
