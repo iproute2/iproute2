@@ -75,7 +75,9 @@ replace " } "
 .B  scope
 .IR SCOPE " ] [ "
 .B  metric
-.IR METRIC " ]"
+.IR METRIC " ] [ "
+.B  ttl-propagate
+.RB "{ " enabled " | " disabled " } ]"
 
 .ti -8
 .IR INFO_SPEC " := " "NH OPTIONS FLAGS" " ["
@@ -710,6 +712,12 @@ is a set of encapsulation attributes specific to the
 the route will be deleted after the expires time.
 .B Only
 support IPv6 at present.
+
+.TP
+.BR ttl-propagate " { " enabled " | " disabled " } "
+Control whether TTL should be propagated from any encap into the
+un-encapsulated packet, overriding any global configuration. Only
+supported for MPLS at present.
 .RE
 
 .TP

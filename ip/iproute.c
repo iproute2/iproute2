@@ -77,6 +77,7 @@ static void usage(void)
 	fprintf(stderr, "NODE_SPEC := [ TYPE ] PREFIX [ tos TOS ]\n");
 	fprintf(stderr, "             [ table TABLE_ID ] [ proto RTPROTO ]\n");
 	fprintf(stderr, "             [ scope SCOPE ] [ metric METRIC ]\n");
+	fprintf(stderr, "             [ ttl-propagate { enabled | disabled } ]\n");
 	fprintf(stderr, "INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n");
 	fprintf(stderr, "NH := [ encap ENCAPTYPE ENCAPHDR ] [ via [ FAMILY ] ADDRESS ]\n");
 	fprintf(stderr, "	    [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
@@ -715,6 +716,13 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			fprintf(fp, "%u", pref);
 		}
 	}
+	if (tb[RTA_TTL_PROPAGATE]) {
+		fprintf(fp, "ttl-propagate ");
+		if (rta_getattr_u8(tb[RTA_TTL_PROPAGATE]))
+			fprintf(fp, "enabled");
+		else
+			fprintf(fp, "disabled");
+	}
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
@@ -1185,6 +1193,20 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 			if (rta->rta_len > RTA_LENGTH(0))
 				addraw_l(&req.n, 1024, RTA_DATA(rta), RTA_PAYLOAD(rta));
+		} else if (strcmp(*argv, "ttl-propagate") == 0) {
+			__u8 ttl_prop;
+
+			NEXT_ARG();
+			if (matches(*argv, "enabled") == 0)
+				ttl_prop = 1;
+			else if (matches(*argv, "disabled") == 0)
+				ttl_prop = 0;
+			else
+				invarg("\"ttl-propagate\" value is invalid\n",
+				       *argv);
+
+			addattr8(&req.n, sizeof(req), RTA_TTL_PROPAGATE,
+				 ttl_prop);
 		} else {
 			int type;
 			inet_prefix dst;
