@@ -181,7 +181,9 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .ti -8
 .IR ENCAP_MPLS " := "
 .BR mpls " [ "
-.IR LABEL " ]"
+.IR LABEL " ] ["
+.B  ttl
+.IR TTL " ]"
 
 .ti -8
 .IR ENCAP_IP " := "
@@ -666,6 +668,11 @@ is a set of encapsulation attributes specific to the
 .I MPLSLABEL
 - mpls label stack with labels separated by
 .I "/"
+.sp
+
+.B ttl
+.I TTL
+- TTL to use for MPLS header or 0 to inherit from IP header
 .in -2
 .sp
 

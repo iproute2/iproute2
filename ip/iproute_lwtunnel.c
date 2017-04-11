@@ -84,6 +84,9 @@ static void print_encap_mpls(FILE *fp, struct rtattr *encap)
 	if (tb[MPLS_IPTUNNEL_DST])
 		fprintf(fp, " %s ",
 			format_host_rta(AF_MPLS, tb[MPLS_IPTUNNEL_DST]));
+	if (tb[MPLS_IPTUNNEL_TTL])
+		fprintf(fp, "ttl %u ",
+			rta_getattr_u8(tb[MPLS_IPTUNNEL_TTL]));
 }
 
 static void print_encap_ip(FILE *fp, struct rtattr *encap)
@@ -247,6 +250,7 @@ static int parse_encap_mpls(struct rtattr *rta, size_t len,
 	inet_prefix addr;
 	int argc = *argcp;
 	char **argv = *argvp;
+	int ttl_ok = 0;
 
 	if (get_addr(&addr, *argv, AF_MPLS)) {
 		fprintf(stderr,
@@ -258,8 +262,31 @@ static int parse_encap_mpls(struct rtattr *rta, size_t len,
 	rta_addattr_l(rta, len, MPLS_IPTUNNEL_DST, &addr.data,
 		      addr.bytelen);
 
-	*argcp = argc;
-	*argvp = argv;
+	argc--;
+	argv++;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "ttl") == 0) {
+			__u8 ttl;
+
+			NEXT_ARG();
+			if (ttl_ok++)
+				duparg2("ttl", *argv);
+			if (get_u8(&ttl, *argv, 0))
+				invarg("\"ttl\" value is invalid\n", *argv);
+			rta_addattr8(rta, len, MPLS_IPTUNNEL_TTL, ttl);
+		} else {
+			break;
+		}
+		argc--; argv++;
+	}
+
+	/* argv is currently the first unparsed argument,
+	 * but the lwt_parse_encap() caller will move to the next,
+	 * so step back
+	 */
+	*argcp = argc + 1;
+	*argvp = argv - 1;
 
 	return 0;
 }
