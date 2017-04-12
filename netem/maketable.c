@@ -149,6 +149,8 @@ inverttable(int *table, int inversesize, int tablesize, int cumulative)
 		inversevalue = (int)rint(findex*TABLEFACTOR);
 		if (inversevalue <= MINSHORT) inversevalue = MINSHORT+1;
 		if (inversevalue > MAXSHORT) inversevalue = MAXSHORT;
+		if (inverseindex >= inversesize) inverseindex = inversesize- 1;
+
 		inverse[inverseindex] = inversevalue;
 	}
 	return inverse;
