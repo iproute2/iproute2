@@ -260,5 +260,6 @@ int get_real_family(int rtm_type, int rtm_family);
 int cmd_exec(const char *cmd, char **argv, bool do_fork);
 int make_path(const char *path, mode_t mode);
 char *find_cgroup2_mount(void);
+int get_command_name(const char *pid, char *comm, size_t len);
 
 #endif /* __UTILS_H__ */
