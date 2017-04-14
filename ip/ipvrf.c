@@ -111,27 +111,31 @@ static void read_cgroup_pids(const char *base_path, char *name)
 {
 	char path[PATH_MAX];
 	char buf[4096];
-	ssize_t n;
-	int fd;
+	FILE *fp;
 
 	if (snprintf(path, sizeof(path), "%s/vrf/%s%s",
 		     base_path, name, CGRP_PROC_FILE) >= sizeof(path))
 		return;
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
+	fp = fopen(path, "r");
+	if (!fp)
 		return; /* no cgroup file, nothing to show */
 
 	/* dump contents (pids) of cgroup.procs */
-	while (1) {
-		n = read(fd, buf, sizeof(buf) - 1);
-		if (n <= 0)
-			break;
+	while (fgets(buf, sizeof(buf), fp)) {
+		char *nl, comm[32];
 
-		printf("%s", buf);
+		nl = strchr(buf, '\n');
+		if (nl)
+			*nl = '\0';
+
+		if (get_command_name(buf, comm, sizeof(comm)))
+			strcpy(comm, "<terminated?>");
+
+		printf("%5s  %s\n", buf, comm);
 	}
 
-	close(fd);
+	fclose(fp);
 }
 
 /* recurse path looking for PATH[/NETNS]/vrf/NAME */

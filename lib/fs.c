@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,4 +149,45 @@ out:
 	free(dir);
 
 	return rc;
+}
+
+int get_command_name(const char *pid, char *comm, size_t len)
+{
+	char path[PATH_MAX];
+	char line[128];
+	FILE *fp;
+
+	if (snprintf(path, sizeof(path),
+		     "/proc/%s/status", pid) >= sizeof(path)) {
+		return -1;
+	}
+
+	fp = fopen(path, "r");
+	if (!fp)
+		return -1;
+
+	comm[0] = '\0';
+	while (fgets(line, sizeof(line), fp)) {
+		char *nl, *name;
+
+		name = strstr(line, "Name:");
+		if (!name)
+			continue;
+
+		name += 5;
+		while (isspace(*name))
+			name++;
+
+		nl = strchr(name, '\n');
+		if (nl)
+			*nl = '\0';
+
+		strncpy(comm, name, len - 1);
+		comm[len - 1] = '\0';
+		break;
+	}
+
+	fclose(fp);
+
+	return 0;
 }
