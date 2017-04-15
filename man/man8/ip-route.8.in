@@ -176,7 +176,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 
 .ti -8
 .IR ENCAP " := [ "
-.IR MPLS " | " IP | " BPF " ] "
+.IR MPLS " | " IP " | " BPF " | " SEG6 " ] "
 
 .ti -8
 .IR ENCAP_MPLS " := "
@@ -197,7 +197,6 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .B  ttl
 .IR TTL " ]"
 
-
 .ti -8
 .IR ENCAP_BPF " := "
 .BR bpf " [ "
@@ -209,6 +208,16 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR PROG " ] ["
 .B headroom
 .IR SIZE " ]"
+
+.ti -8
+.IR ENCAP_SEG6 " := "
+.B seg6
+.BR mode " [ "
+.BR encap " | " inline " ] "
+.B segs
+.IR SEGMENTS " [ "
+.B hmac
+.IR KEYID " ]"
 
 .SH DESCRIPTION
 .B ip route
@@ -656,6 +665,8 @@ is a string specifying the supported encapsulation type. Namely:
 .BI bpf
 - Execution of BPF program
 .sp
+.BI seg6
+- encapsulation type IPv6 Segment Routing
 
 .in -8
 .I ENCAPHDR
@@ -709,6 +720,25 @@ is a set of encapsulation attributes specific to the
 .B headroom
 .I SIZE
 - Size of header BPF program will attach (xmit)
+.in -2
+.sp
+
+.B seg6
+.in +2
+.B mode inline
+- Directly insert Segment Routing Header after IPv6 header
+.sp
+
+.B mode encap
+- Encapsulate packet in an outer IPv6 header with SRH
+.sp
+
+.I SEGMENTS
+- List of comma-separated IPv6 addresses
+.sp
+
+.I KEYID
+- Numerical value in decimal representation. See \fBip-sr\fR(8).
 .in -2
 .sp
 
@@ -1000,6 +1030,11 @@ be reached on device eth0.
 ip route add 10.1.1.0/30 encap mpls 200/300 via 10.1.1.1 dev eth0
 .RS 4
 Adds an ipv4 route with mpls encapsulation attributes attached to it.
+.RE
+.PP
+ip -6 route add 2001:db8:1::/64 encap seg6 mode encap segs 2001:db8:42::1,2001:db8:ffff::2 dev eth0
+.RS 4
+Adds an IPv6 route with SRv6 encapsulation and two segments attached.
 .RE
 .SH SEE ALSO
 .br
