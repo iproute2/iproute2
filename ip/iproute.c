@@ -99,8 +99,10 @@ static void usage(void)
 	fprintf(stderr, "TIME := NUMBER[s|ms]\n");
 	fprintf(stderr, "BOOL := [1|0]\n");
 	fprintf(stderr, "FEATURES := ecn\n");
-	fprintf(stderr, "ENCAPTYPE := [ mpls | ip | ip6 ]\n");
-	fprintf(stderr, "ENCAPHDR := [ MPLSLABEL ]\n");
+	fprintf(stderr, "ENCAPTYPE := [ mpls | ip | ip6 | seg6 ]\n");
+	fprintf(stderr, "ENCAPHDR := [ MPLSLABEL | SEG6HDR ]\n");
+	fprintf(stderr, "SEG6HDR := [ mode SEGMODE ] segs ADDR1,ADDRi,ADDRn [hmac HMACKEYID] [cleanup]\n");
+	fprintf(stderr, "SEGMODE := [ encap | inline ]\n");
 	exit(-1);
 }
 

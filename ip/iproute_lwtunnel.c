@@ -19,6 +19,13 @@
 #include <linux/ila.h>
 #include <linux/lwtunnel.h>
 #include <linux/mpls_iptunnel.h>
+
+#ifndef __USE_KERNEL_IPV6_DEFS
+#define __USE_KERNEL_IPV6_DEFS
+#endif
+#include <linux/seg6.h>
+#include <linux/seg6_iptunnel.h>
+#include <linux/seg6_hmac.h>
 #include <errno.h>
 
 #include "rt_names.h"
@@ -39,6 +46,8 @@ static const char *format_encap_type(int type)
 		return "ila";
 	case LWTUNNEL_ENCAP_BPF:
 		return "bpf";
+	case LWTUNNEL_ENCAP_SEG6:
+		return "seg6";
 	default:
 		return "unknown";
 	}
@@ -69,10 +78,47 @@ static int read_encap_type(const char *name)
 		return LWTUNNEL_ENCAP_ILA;
 	else if (strcmp(name, "bpf") == 0)
 		return LWTUNNEL_ENCAP_BPF;
+	else if (strcmp(name, "seg6") == 0)
+		return LWTUNNEL_ENCAP_SEG6;
 	else if (strcmp(name, "help") == 0)
 		encap_type_usage();
 
 	return LWTUNNEL_ENCAP_NONE;
+}
+
+static void print_encap_seg6(FILE *fp, struct rtattr *encap)
+{
+	struct rtattr *tb[SEG6_IPTUNNEL_MAX+1];
+	struct seg6_iptunnel_encap *tuninfo;
+	struct ipv6_sr_hdr *srh;
+	int i;
+
+	parse_rtattr_nested(tb, SEG6_IPTUNNEL_MAX, encap);
+
+	if (!tb[SEG6_IPTUNNEL_SRH])
+		return;
+
+	tuninfo = RTA_DATA(tb[SEG6_IPTUNNEL_SRH]);
+	fprintf(fp, "mode %s ",
+		(tuninfo->mode == SEG6_IPTUN_MODE_ENCAP) ? "encap" : "inline");
+
+	srh = tuninfo->srh;
+
+	fprintf(fp, "segs %d [ ", srh->first_segment + 1);
+
+	for (i = srh->first_segment; i >= 0; i--)
+		fprintf(fp, "%s ",
+			rt_addr_n2a(AF_INET6, 16, &srh->segments[i]));
+
+	fprintf(fp, "] ");
+
+	if (sr_has_hmac(srh)) {
+		unsigned int offset = ((srh->hdrlen + 1) << 3) - 40;
+		struct sr6_tlv_hmac *tlv;
+
+		tlv = (struct sr6_tlv_hmac *)((char *)srh + offset);
+		fprintf(fp, "hmac 0x%X ", ntohl(tlv->hmackeyid));
+	}
 }
 
 static void print_encap_mpls(FILE *fp, struct rtattr *encap)
@@ -241,7 +287,112 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 	case LWTUNNEL_ENCAP_BPF:
 		print_encap_bpf(fp, encap);
 		break;
+	case LWTUNNEL_ENCAP_SEG6:
+		print_encap_seg6(fp, encap);
+		break;
 	}
+}
+
+static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
+			    char ***argvp)
+{
+	int mode_ok = 0, segs_ok = 0, hmac_ok = 0;
+	struct seg6_iptunnel_encap *tuninfo;
+	struct ipv6_sr_hdr *srh;
+	char **argv = *argvp;
+	char segbuf[1024];
+	int argc = *argcp;
+	int encap = -1;
+	__u32 hmac = 0;
+	int nsegs = 0;
+	int srhlen;
+	char *s;
+	int i;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "mode") == 0) {
+			NEXT_ARG();
+			if (mode_ok++)
+				duparg2("mode", *argv);
+			if (strcmp(*argv, "encap") == 0)
+				encap = 1;
+			else if (strcmp(*argv, "inline") == 0)
+				encap = 0;
+			else
+				invarg("\"mode\" value is invalid\n", *argv);
+		} else if (strcmp(*argv, "segs") == 0) {
+			NEXT_ARG();
+			if (segs_ok++)
+				duparg2("segs", *argv);
+			if (encap == -1)
+				invarg("\"segs\" provided before \"mode\"\n",
+				       *argv);
+
+			strncpy(segbuf, *argv, 1024);
+			segbuf[1023] = 0;
+		} else if (strcmp(*argv, "hmac") == 0) {
+			NEXT_ARG();
+			if (hmac_ok++)
+				duparg2("hmac", *argv);
+			get_u32(&hmac, *argv, 0);
+		} else {
+			break;
+		}
+		argc--; argv++;
+	}
+
+	s = segbuf;
+	for (i = 0; *s; *s++ == ',' ? i++ : *s);
+	nsegs = i + 1;
+
+	if (!encap)
+		nsegs++;
+
+	srhlen = 8 + 16*nsegs;
+
+	if (hmac)
+		srhlen += 40;
+
+	tuninfo = malloc(sizeof(*tuninfo) + srhlen);
+	memset(tuninfo, 0, sizeof(*tuninfo) + srhlen);
+
+	if (encap)
+		tuninfo->mode = SEG6_IPTUN_MODE_ENCAP;
+	else
+		tuninfo->mode = SEG6_IPTUN_MODE_INLINE;
+
+	srh = tuninfo->srh;
+	srh->hdrlen = (srhlen >> 3) - 1;
+	srh->type = 4;
+	srh->segments_left = nsegs - 1;
+	srh->first_segment = nsegs - 1;
+
+	if (hmac)
+		srh->flags |= SR6_FLAG1_HMAC;
+
+	i = srh->first_segment;
+	for (s = strtok(segbuf, ","); s; s = strtok(NULL, ",")) {
+		inet_get_addr(s, NULL, &srh->segments[i]);
+		i--;
+	}
+
+	if (hmac) {
+		struct sr6_tlv_hmac *tlv;
+
+		tlv = (struct sr6_tlv_hmac *)((char *)srh + srhlen - 40);
+		tlv->tlvhdr.type = SR6_TLV_HMAC;
+		tlv->tlvhdr.len = 38;
+		tlv->hmackeyid = htonl(hmac);
+	}
+
+	rta_addattr_l(rta, len, SEG6_IPTUNNEL_SRH, tuninfo,
+		      sizeof(*tuninfo) + srhlen);
+	free(tuninfo);
+
+	*argcp = argc + 1;
+	*argvp = argv - 1;
+
+	return 0;
 }
 
 static int parse_encap_mpls(struct rtattr *rta, size_t len,
@@ -599,6 +750,9 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
 	case LWTUNNEL_ENCAP_BPF:
 		if (parse_encap_bpf(rta, len, &argc, &argv) < 0)
 			exit(-1);
+		break;
+	case LWTUNNEL_ENCAP_SEG6:
+		parse_encap_seg6(rta, len, &argc, &argv);
 		break;
 	default:
 		fprintf(stderr, "Error: unsupported encap type\n");
