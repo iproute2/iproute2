@@ -41,7 +41,7 @@ static void explain(void)
 		"\t\tATC:= at <atval> offmask <maskval> shift <shiftval>\n"
 		"\t\tNOTE: offval is byte offset, must be multiple of 4\n"
 		"\t\tNOTE: maskval is a 32 bit hex number\n \t\tNOTE: shiftval is a shift value\n"
-		"\t\tCMD:= clear | invert | set <setval>| retain\n"
+		"\t\tCMD:= clear | invert | set <setval>| add <addval> | retain\n"
 		"\t<LAYERED>:= ip <ipdata> | ip6 <ip6data>\n"
 		" \t\t| udp <udpdata> | tcp <tcpdata> | icmp <icmpdata>\n"
 		"\tCONTROL:= reclassify | pipe | drop | continue | pass\n"
@@ -276,7 +276,16 @@ int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 
 	if (matches(*argv, "invert") == 0) {
 		val = mask = o;
-	} else if (matches(*argv, "set") == 0) {
+	} else if (matches(*argv, "set") == 0 ||
+		   matches(*argv, "add") == 0) {
+		if (matches(*argv, "add") == 0)
+			tkey->cmd = TCA_PEDIT_KEY_EX_CMD_ADD;
+
+		if (!sel->extended && tkey->cmd) {
+			fprintf(stderr, "Non extended mode. only 'set' command is supported\n");
+			return -1;
+		}
+
 		NEXT_ARG();
 		if (parse_val(&argc, &argv, &val, type))
 			return -1;
@@ -690,9 +699,11 @@ int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		for (i = 0; i < sel->nkeys; i++, key++) {
 			enum pedit_header_type htype =
 				TCA_PEDIT_KEY_EX_HDR_TYPE_NETWORK;
+			enum pedit_cmd cmd = TCA_PEDIT_KEY_EX_CMD_SET;
 
 			if (keys_ex) {
 				htype = key_ex->htype;
+				cmd = key_ex->cmd;
 
 				key_ex++;
 			}
@@ -703,7 +714,8 @@ int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 
 			print_pedit_location(f, htype, key->off);
 
-			fprintf(f, ": val %08x mask %08x",
+			fprintf(f, ": %s %08x mask %08x",
+				cmd ? "add" : "val",
 				(unsigned int)ntohl(key->val),
 				(unsigned int)ntohl(key->mask));
 		}

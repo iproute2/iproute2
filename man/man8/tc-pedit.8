@@ -43,6 +43,8 @@ pedit - generic packet editor action
 .IR CMD_SPEC " := {"
 .BR clear " | " invert " | " set
 .IR VAL " | "
+.BR add
+.IR VAL " | "
 .BR preserve " } [ " retain
 .IR RVAL " ]"
 
@@ -63,7 +65,9 @@ only for IPv4 headers.
 .B ex
 Use extended pedit.
 .I EXTENDED_LAYERED_OP
-is allowed only in this mode.
+and the add
+.I CMD_SPEC
+are allowed only in this mode.
 .TP
 .BI offset " OFFSET " "\fR{ \fBu32 \fR| \fBu16 \fR| \fBu8 \fR}"
 Specify the offset at which to change data.
@@ -172,6 +176,13 @@ keywords in
 .IR RAW_OP ,
 or the size of the addressed header field in
 .IR LAYERED_OP .
+.TP
+.BI add " VAL"
+Add the addressed data by a specific value. The size of
+.I VAL
+is defined by the size of the addressed header field in
+.IR EXTENDED_LAYERED_OP .
+This operation is supported only for extended layered op.
 .TP
 .B preserve
 Keep the addressed data as is.
