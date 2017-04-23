@@ -28,6 +28,8 @@ pedit - generic packet editor action
 .ti -8
 .IR EXTENDED_LAYERED_OP " := { "
 .BI ip " IPHDR_FIELD"
+|
+.BI ip " EX_IPHDR_FIELD"
 .RI } " CMD_SPEC"
 
 .ti -8
@@ -38,6 +40,10 @@ pedit - generic packet editor action
 .ti -8
 .IR BEYOND_IPHDR_FIELD " := { "
 .BR dport " | " sport " | " icmp_type " | " icmp_code " }"
+
+.ti -8
+.IR EX_IPHDR_FIELD " := { "
+.BR ttl " }"
 
 .ti -8
 .IR CMD_SPEC " := {"
@@ -159,6 +165,17 @@ Again, this allows to change data past the actual IP header itself. It assumes
 an ICMP header is present immediately following the (minimal sized) IP header.
 If it is not or the latter is bigger than the minimum of 20 bytes, this will do
 unexpected things. These fields are eight-bit values.
+.RE
+.TP
+.BI ip " EX_IPHDR_FIELD"
+Supported only when
+.I ex
+is used. The supported keywords for
+.I EX_IPHDR_FIELD
+are:
+.RS
+.TP
+.B ttl
 .RE
 .TP
 .B clear
