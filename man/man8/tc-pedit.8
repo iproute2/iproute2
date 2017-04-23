@@ -5,8 +5,8 @@ pedit - generic packet editor action
 .SH SYNOPSIS
 .in +8
 .ti -8
-.BR tc " ... " "action pedit munge " {
-.IR RAW_OP " | " LAYERED_OP " } [ " CONTROL " ]"
+.BR tc " ... " "action pedit [ex] munge " {
+.IR RAW_OP " | " LAYERED_OP " | " EXTENDED_LAYERED_OP " } [ " CONTROL " ]"
 
 .ti -8
 .IR RAW_OP " := "
@@ -22,20 +22,22 @@ pedit - generic packet editor action
 .IR LAYERED_OP " := { "
 .BI ip " IPHDR_FIELD"
 |
-.BI ip6 " IP6HDR_FIELD"
-|
-.BI udp " UDPHDR_FIELD"
-|
-.BI tcp " TCPHDR_FIELD"
-|
-.BI icmp " ICMPHDR_FIELD"
+.BI ip " BEYOND_IPHDR_FIELD"
+.RI } " CMD_SPEC"
+
+.ti -8
+.IR EXTENDED_LAYERED_OP " := { "
+.BI ip " IPHDR_FIELD"
 .RI } " CMD_SPEC"
 
 .ti -8
 .IR IPHDR_FIELD " := { "
 .BR src " | " dst " | " tos " | " dsfield " | " ihl " | " protocol " |"
-.BR precedence " | " nofrag " | " firstfrag " | " ce " | " df " |"
-.BR mf " | " dport " | " sport " | " icmp_type " | " icmp_code " }"
+.BR precedence " | " nofrag " | " firstfrag " | " ce " | " df " }"
+
+.ti -8
+.IR BEYOND_IPHDR_FIELD " := { "
+.BR dport " | " sport " | " icmp_type " | " icmp_code " }"
 
 .ti -8
 .IR CMD_SPEC " := {"
@@ -57,6 +59,11 @@ or for header values by naming the header and field to edit the size is then
 chosen automatically based on the header field size. Currently this is supported
 only for IPv4 headers.
 .SH OPTIONS
+.TP
+.B ex
+Use extended pedit.
+.I EXTENDED_LAYERED_OP
+is allowed only in this mode.
 .TP
 .BI offset " OFFSET " "\fR{ \fBu32 \fR| \fBu16 \fR| \fBu8 \fR}"
 Specify the offset at which to change data.
@@ -123,6 +130,15 @@ Change IP header flags. Note that the value to pass to the
 .B set
 command is not just a bit value, but the full byte including the flags field.
 Though only the relevant bits of that value are respected, the rest ignored.
+.RE
+.TP
+.BI ip " BEYOND_IPHDR_FIELD"
+Supported only for non-extended layered op. It is passed to the kernel as
+offsets relative to the beginning of the IP header and assumes the IP header is
+of minimum size (20 bytes). The supported keywords for
+.I BEYOND_IPHDR_FIELD
+are:
+.RS
 .TP
 .B dport
 .TQ
@@ -222,6 +238,9 @@ tc filter add dev eth0 parent 1: u32 \\
 tc filter add dev eth0 parent ffff: u32 \\
 	match ip sport 22 0xffff \\
 	action pedit pedit munge ip sport set 23
+tc filter add dev eth0 parent ffff: u32 \\
+	match ip sport 22 0xffff \\
+	action pedit ex munge ip dst set 192.168.1.199
 .EE
 .RE
 .SH SEE ALSO
