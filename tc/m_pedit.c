@@ -28,6 +28,7 @@
 #include "utils.h"
 #include "tc_util.h"
 #include "m_pedit.h"
+#include "rt_names.h"
 
 static struct m_pedit_util *pedit_list;
 static int pedit_debug;
@@ -223,6 +224,38 @@ int pack_key8(__u32 retain, struct m_pedit_sel *sel, struct m_pedit_key *tkey)
 	return pack_key(sel, tkey);
 }
 
+static int pack_mac(struct m_pedit_sel *sel, struct m_pedit_key *tkey,
+		    __u8 *mac)
+{
+	int ret = 0;
+
+	if (!(tkey->off & 0x3)) {
+		tkey->mask = 0;
+		tkey->val = ntohl(*((__u32 *)mac));
+		ret |= pack_key32(~0, sel, tkey);
+
+		tkey->off += 4;
+		tkey->mask = 0;
+		tkey->val = ntohs(*((__u16 *)&mac[4]));
+		ret |= pack_key16(~0, sel, tkey);
+	} else if (!(tkey->off & 0x1)) {
+		tkey->mask = 0;
+		tkey->val = ntohs(*((__u16 *)mac));
+		ret |= pack_key16(~0, sel, tkey);
+
+		tkey->off += 4;
+		tkey->mask = 0;
+		tkey->val = ntohl(*((__u32 *)(mac + 2)));
+		ret |= pack_key32(~0, sel, tkey);
+	} else {
+		fprintf(stderr,
+			"pack_mac: mac offsets must begin in 32bit or 16bit boundaries\n");
+		return -1;
+	}
+
+	return ret;
+}
+
 int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
 {
 	int argc = *argc_p;
@@ -249,6 +282,14 @@ int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
 
 	if (type == TIPV6)
 		return -1; /* not implemented yet */
+
+	if (type == TMAC) {
+#define MAC_ALEN 6
+		int ret = ll_addr_a2n((char *)val, MAC_ALEN, *argv);
+
+		if (ret == MAC_ALEN)
+			return 0;
+	}
 
 	return -1;
 }
@@ -308,6 +349,11 @@ int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 			return -1;
 		argc--;
 		argv++;
+	}
+
+	if (type == TMAC) {
+		res = pack_mac(sel, tkey, (__u8 *)val);
+		goto done;
 	}
 
 	tkey->val = *v;

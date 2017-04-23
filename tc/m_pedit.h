@@ -32,6 +32,7 @@
 #define TIPV6 2
 #define TINT 3
 #define TU32 4
+#define TMAC 5
 
 #define RU32 0xFFFFFFFF
 #define RU16 0xFFFF

@@ -27,10 +27,16 @@ pedit - generic packet editor action
 
 .ti -8
 .IR EXTENDED_LAYERED_OP " := { "
+.BI eth " ETHHDR_FIELD"
+|
 .BI ip " IPHDR_FIELD"
 |
 .BI ip " EX_IPHDR_FIELD"
 .RI } " CMD_SPEC"
+
+.ti -8
+.IR ETHHDR_FIELD " := { "
+.BR src " | " dst " | " type " }"
 
 .ti -8
 .IR IPHDR_FIELD " := { "
@@ -102,6 +108,21 @@ and right-shifted by
 .I SHIFT
 before adding it to
 .IR OFFSET .
+.TP
+.BI eth " ETHHDR_FIELD"
+Change an ETH header field. The supported keywords for
+.I ETHHDR_FIELD
+are:
+.RS
+.TP
+.B src
+.TQ
+.B dst
+Source or destination MAC address in the standard format: XX:XX:XX:XX:XX:XX
+.TP
+.B type
+Ether-type in numeric value
+.RE
 .TP
 .BI ip " IPHDR_FIELD"
 Change an IPv4 header field. The supported keywords for
@@ -269,6 +290,9 @@ tc filter add dev eth0 parent ffff: u32 \\
 tc filter add dev eth0 parent ffff: u32 \\
 	match ip sport 22 0xffff \\
 	action pedit ex munge ip dst set 192.168.1.199
+tc filter add dev eth0 parent ffff: u32 \\
+	match ip sport 22 0xffff \\
+	action pedit ex munge eth dst set 11:22:33:44:55:66
 .EE
 .RE
 .SH SEE ALSO
