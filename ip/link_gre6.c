@@ -355,7 +355,7 @@ get_failed:
 	addattr_l(n, 1024, IFLA_GRE_TTL, &hop_limit, 1);
 	addattr_l(n, 1024, IFLA_GRE_ENCAP_LIMIT, &encap_limit, 1);
 	addattr_l(n, 1024, IFLA_GRE_FLOWINFO, &flowinfo, 4);
-	addattr_l(n, 1024, IFLA_GRE_FLAGS, &flowinfo, 4);
+	addattr32(n, 1024, IFLA_GRE_FLAGS, flags);
 
 	addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
 	addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
@@ -383,7 +383,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		flags = rta_getattr_u32(tb[IFLA_GRE_FLAGS]);
 
 	if (tb[IFLA_GRE_FLOWINFO])
-		flags = rta_getattr_u32(tb[IFLA_GRE_FLOWINFO]);
+		flowinfo = rta_getattr_u32(tb[IFLA_GRE_FLOWINFO]);
 
 	if (tb[IFLA_GRE_REMOTE]) {
 		struct in6_addr addr;
