@@ -256,7 +256,10 @@ int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
 int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 	      struct m_pedit_sel *sel, struct m_pedit_key *tkey)
 {
-	__u32 mask = 0, val = 0;
+	__u32 mask[4] = { 0 };
+	__u32 val[4] = { 0 };
+	__u32 *m = &mask[0];
+	__u32 *v = &val[0];
 	__u32 o = 0xFF;
 	int res = -1;
 	int argc = *argc_p;
@@ -275,7 +278,7 @@ int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 		o = 0xFFFFFFFF;
 
 	if (matches(*argv, "invert") == 0) {
-		val = mask = o;
+		*v = *m = o;
 	} else if (matches(*argv, "set") == 0 ||
 		   matches(*argv, "add") == 0) {
 		if (matches(*argv, "add") == 0)
@@ -287,7 +290,7 @@ int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 		}
 
 		NEXT_ARG();
-		if (parse_val(&argc, &argv, &val, type))
+		if (parse_val(&argc, &argv, val, type))
 			return -1;
 	} else if (matches(*argv, "preserve") == 0) {
 		retain = 0;
@@ -307,8 +310,8 @@ int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 		argv++;
 	}
 
-	tkey->val = val;
-	tkey->mask = mask;
+	tkey->val = *v;
+	tkey->mask = *m;
 
 	if (type == TIPV4)
 		tkey->val = ntohl(tkey->val);
