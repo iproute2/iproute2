@@ -32,6 +32,8 @@ pedit - generic packet editor action
 .BI ip " IPHDR_FIELD"
 |
 .BI ip " EX_IPHDR_FIELD"
+|
+.BI tcp " TCPHDR_FIELD"
 .RI } " CMD_SPEC"
 
 .ti -8
@@ -50,6 +52,10 @@ pedit - generic packet editor action
 .ti -8
 .IR EX_IPHDR_FIELD " := { "
 .BR ttl " }"
+
+.ti -8
+.IR TCPHDR_FIELD " := { "
+.BR sport " | " dport " | " flags " }"
 
 .ti -8
 .IR CMD_SPEC " := {"
@@ -199,6 +205,20 @@ are:
 .B ttl
 .RE
 .TP
+.BI tcp " TCPHDR_FIELD"
+The supported keywords for
+.I TCPHDR_FIELD
+are:
+.RS
+.TP
+.B sport
+.TQ
+.B dport
+Source or destination TCP port number, a 16-bit value.
+.TP
+.B flags
+.RE
+.TP
 .B clear
 Clear the addressed data (i.e., set it to zero).
 .TP
@@ -293,6 +313,9 @@ tc filter add dev eth0 parent ffff: u32 \\
 tc filter add dev eth0 parent ffff: u32 \\
 	match ip sport 22 0xffff \\
 	action pedit ex munge eth dst set 11:22:33:44:55:66
+tc filter add dev eth0 parent ffff: u32 \\
+	match ip dport 23 0xffff \\
+	action pedit ex munge tcp dport set 22
 .EE
 .RE
 .SH SEE ALSO
