@@ -34,6 +34,8 @@ pedit - generic packet editor action
 .BI ip " EX_IPHDR_FIELD"
 |
 .BI tcp " TCPHDR_FIELD"
+|
+.BI udp " UDPHDR_FIELD"
 .RI } " CMD_SPEC"
 
 .ti -8
@@ -56,6 +58,10 @@ pedit - generic packet editor action
 .ti -8
 .IR TCPHDR_FIELD " := { "
 .BR sport " | " dport " | " flags " }"
+
+.ti -8
+.IR UDPHDR_FIELD " := { "
+.BR sport " | " dport " }"
 
 .ti -8
 .IR CMD_SPEC " := {"
@@ -217,6 +223,18 @@ are:
 Source or destination TCP port number, a 16-bit value.
 .TP
 .B flags
+.RE
+.TP
+.BI udp " UDPHDR_FIELD"
+The supported keywords for
+.I UDPHDR_FIELD
+are:
+.RS
+.TP
+.B sport
+.TQ
+.B dport
+Source or destination TCP port number, a 16-bit value.
 .RE
 .TP
 .B clear
