@@ -72,6 +72,7 @@ void iplink_usage(void)
 		"	                  [ allmulticast { on | off } ]\n"
 		"	                  [ promisc { on | off } ]\n"
 		"	                  [ trailers { on | off } ]\n"
+		"	                  [ carrier { on | off } ]\n"
 		"	                  [ txqueuelen PACKETS ]\n"
 		"	                  [ name NEWNAME ]\n"
 		"	                  [ address LLADDR ]\n"
@@ -673,6 +674,17 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				req->i.ifi_flags |= IFF_NOARP;
 			else
 				return on_off("arp", *argv);
+		} else if (strcmp(*argv, "carrier") == 0) {
+			int carrier;
+			NEXT_ARG();
+			if (strcmp(*argv, "on") == 0)
+				carrier = 1;
+			else if (strcmp(*argv, "off") == 0)
+				carrier = 0;
+			else
+				return on_off("carrier", *argv);
+
+			addattr8(&req->n, sizeof(*req), IFLA_CARRIER, carrier);
 		} else if (strcmp(*argv, "vf") == 0) {
 			struct rtattr *vflist;
 
