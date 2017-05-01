@@ -145,7 +145,8 @@ int pack_key(struct m_pedit_sel *_sel, struct m_pedit_key *tkey)
 	} else {
 		if (tkey->htype != TCA_PEDIT_KEY_EX_HDR_TYPE_NETWORK ||
 		    tkey->cmd != TCA_PEDIT_KEY_EX_CMD_SET) {
-			fprintf(stderr, "Munge parameters not supported. Use 'munge ex'.\n");
+			fprintf(stderr,
+				"Munge parameters not supported. Use 'munge ex'.\n");
 			return -1;
 		}
 	}
@@ -326,7 +327,8 @@ int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 			tkey->cmd = TCA_PEDIT_KEY_EX_CMD_ADD;
 
 		if (!sel->extended && tkey->cmd) {
-			fprintf(stderr, "Non extended mode. only 'set' command is supported\n");
+			fprintf(stderr,
+				"Non extended mode. only 'set' command is supported\n");
 			return -1;
 		}
 
@@ -584,7 +586,8 @@ int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 
 			if (matches(*argv, "ex") == 0) {
 				if (ok > 1) {
-					fprintf(stderr, "'ex' must be before first 'munge'\n");
+					fprintf(stderr,
+						"'ex' must be before first 'munge'\n");
 					explain();
 					return -1;
 				}
