@@ -54,6 +54,7 @@ TCMODULES += m_tunnel_key.o
 TCMODULES += m_sample.o
 TCMODULES += p_ip.o
 TCMODULES += p_icmp.o
+TCMODULES += p_eth.o
 TCMODULES += p_tcp.o
 TCMODULES += p_udp.o
 TCMODULES += em_nbyte.o

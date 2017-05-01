@@ -32,6 +32,7 @@
 #define TIPV6 2
 #define TINT 3
 #define TU32 4
+#define TMAC 5
 
 #define RU32 0xFFFFFFFF
 #define RU16 0xFFFF
@@ -39,24 +40,55 @@
 
 #define PEDITKINDSIZ 16
 
-struct m_pedit_util
-{
-	struct m_pedit_util *next;
-	char    id[PEDITKINDSIZ];
-	int     (*parse_peopt)(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
+struct m_pedit_key {
+	__u32           mask;  /* AND */
+	__u32           val;   /*XOR */
+	__u32           off;  /*offset */
+	__u32           at;
+	__u32           offmask;
+	__u32           shift;
+
+	enum pedit_header_type htype;
+	enum pedit_cmd cmd;
 };
 
+struct m_pedit_key_ex {
+	enum pedit_header_type htype;
+	enum pedit_cmd cmd;
+};
 
-extern int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type,__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
-extern int pack_key(struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
-extern int pack_key32(__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
-extern int pack_key16(__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
-extern int pack_key8(__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
-extern int parse_val(int *argc_p, char ***argv_p, __u32 * val, int type);
-extern int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type,__u32 retain,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
-extern int parse_offset(int *argc_p, char ***argv_p,struct tc_pedit_sel *sel,struct tc_pedit_key *tkey);
-int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
-extern int print_pedit(struct action_util *au,FILE * f, struct rtattr *arg);
-extern int pedit_print_xstats(struct action_util *au, FILE *f, struct rtattr *xstats);
+struct m_pedit_sel {
+	struct tc_pedit_sel sel;
+	struct tc_pedit_key keys[MAX_OFFS];
+	struct m_pedit_key_ex keys_ex[MAX_OFFS];
+	bool extended;
+};
+
+struct m_pedit_util {
+	struct m_pedit_util *next;
+	char    id[PEDITKINDSIZ];
+	int     (*parse_peopt)(int *argc_p, char ***argv_p,
+			       struct m_pedit_sel *sel,
+			       struct m_pedit_key *tkey);
+};
+
+extern int pack_key(struct m_pedit_sel *sel, struct m_pedit_key *tkey);
+extern int pack_key32(__u32 retain, struct m_pedit_sel *sel,
+		      struct m_pedit_key *tkey);
+extern int pack_key16(__u32 retain, struct m_pedit_sel *sel,
+		      struct m_pedit_key *tkey);
+extern int pack_key8(__u32 retain, struct m_pedit_sel *sel,
+		     struct m_pedit_key *tkey);
+extern int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type);
+extern int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type,
+		     __u32 retain,
+		     struct m_pedit_sel *sel, struct m_pedit_key *tkey);
+extern int parse_offset(int *argc_p, char ***argv_p,
+			struct m_pedit_sel *sel, struct m_pedit_key *tkey);
+int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p,
+		int tca_id, struct nlmsghdr *n);
+extern int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg);
+extern int pedit_print_xstats(struct action_util *au, FILE *f,
+			      struct rtattr *xstats);
 
 #endif

@@ -24,9 +24,37 @@
 #include "m_pedit.h"
 
 static int
-parse_udp(int *argc_p, char ***argv_p, struct tc_pedit_sel *sel, struct tc_pedit_key *tkey)
+parse_udp(int *argc_p, char ***argv_p,
+	  struct m_pedit_sel *sel, struct m_pedit_key *tkey)
 {
 	int res = -1;
+	int argc = *argc_p;
+	char **argv = *argv_p;
+
+	if (argc < 2)
+		return -1;
+
+	tkey->htype = TCA_PEDIT_KEY_EX_HDR_TYPE_UDP;
+
+	if (strcmp(*argv, "sport") == 0) {
+		NEXT_ARG();
+		tkey->off = 0;
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
+		goto done;
+	}
+
+	if (strcmp(*argv, "dport") == 0) {
+		NEXT_ARG();
+		tkey->off = 2;
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
+		goto done;
+	}
+
+	return -1;
+
+done:
+	*argc_p = argc;
+	*argv_p = argv;
 	return res;
 }
 

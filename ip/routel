@@ -32,10 +32,22 @@ ip route list table "$@" |
     esac
     while test $# != 0
     do
-       key=$1
-       val=$2
-       eval "$key=$val"
-       shift 2
+       case "$1" in
+          proto|via|dev|scope|src|table)
+             key=$1
+             val=$2
+             eval "$key='$val'"
+             shift 2
+             ;;
+          dead|onlink|pervasive|offload|notify|linkdown|unresolved)
+             shift
+             ;;
+          *)
+             # avoid infinite loop on unknown keyword without value at line end
+             shift
+             shift
+             ;;
+       esac
     done
     echo "$network	$via	$src	$proto	$scope	$dev	$table"
  done | awk -F '	' '

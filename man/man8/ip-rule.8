@@ -95,7 +95,10 @@ Each policy routing rule consists of a
 .B selector
 and an
 .B action predicate.
-The RPDB is scanned in order of decreasing priority. The selector
+The RPDB is scanned in order of decreasing priority (note that lower number
+means higher priority, see the description of
+.I PREFERENCE
+below). The selector
 of each rule is applied to {source address, destination address, incoming
 interface, tos, fwmark} and, if the selector matches the packet,
 the action is performed. The action predicate may return with success.
@@ -225,7 +228,8 @@ value to match.
 .BI priority " PREFERENCE"
 the priority of this rule.
 .I PREFERENCE
-is an unsigned integer value, higher number means lower priority.  Each rule
+is an unsigned integer value, higher number means lower priority, and rules get
+processed in order of increasing number. Each rule
 should have an explicitly set
 .I unique
 priority value.
