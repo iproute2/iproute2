@@ -48,7 +48,8 @@ ip \- show / manipulate routing, devices, policy routing and tunnels
 \fB\-ts\fR[\fIhort\fR] |
 \fB\-n\fR[\fIetns\fR] name |
 \fB\-a\fR[\fIll\fR] |
-\fB\-c\fR[\fIolor\fR] }
+\fB\-c\fR[\fIolor\fR]
+\fB\-br\fR[\fIief\fR] }
 
 
 .SH OPTIONS
@@ -205,6 +206,11 @@ Set the netlink socket receive buffer size, defaults to 1MB.
 .TP
 .BR "\-iec"
 print human readable rates in IEC units (e.g. 1Ki = 1024).
+
+.TP
+.BR "\-br" , "\-brief"
+Print only basic information in a tabular format for better readability. This option is currently only supported by
+.BR "ip addr show " and " ip link show " commands.
 
 .SH IP - COMMAND SYNTAX
 
