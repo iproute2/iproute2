@@ -42,11 +42,13 @@ static void print_usage(FILE *f)
 		"                            [ [no]encap-csum ]\n"
 		"                            [ [no]encap-csum6 ]\n"
 		"                            [ [no]encap-remcsum ]\n"
+		"                            [ fwmark MARK ]\n"
 		"\n"
 		"Where: ADDR := { IP_ADDRESS | any }\n"
 		"       TOS  := { NUMBER | inherit }\n"
 		"       TTL  := { 1..255 | inherit }\n"
 		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
+		"       MARK := { 0x0..0xffffffff }\n"
 	);
 }
 
@@ -91,6 +93,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u16 encapsport = 0;
 	__u16 encapdport = 0;
 	__u8 metadata = 0;
+	__u32 fwmark = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0) {
@@ -160,6 +163,9 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_COLLECT_METADATA])
 			metadata = 1;
+
+		if (greinfo[IFLA_GRE_FWMARK])
+			fwmark = rta_getattr_u32(greinfo[IFLA_GRE_FWMARK]);
 	}
 
 	while (argc > 0) {
@@ -305,6 +311,10 @@ get_failed:
 			encapflags |= ~TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "external") == 0) {
 			metadata = 1;
+		} else if (strcmp(*argv, "fwmark") == 0) {
+			NEXT_ARG();
+			if (get_u32(&fwmark, *argv, 0))
+				invarg("invalid fwmark\n", *argv);
 		} else
 			usage();
 		argc--; argv++;
@@ -335,6 +345,7 @@ get_failed:
 			addattr32(n, 1024, IFLA_GRE_LINK, link);
 		addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
 		addattr_l(n, 1024, IFLA_GRE_TOS, &tos, 1);
+		addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
 	} else {
 		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
 	}
@@ -426,6 +437,11 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 		fputs("icsum ", f);
 	if (oflags & GRE_CSUM)
 		fputs("ocsum ", f);
+
+	if (tb[IFLA_GRE_FWMARK] && rta_getattr_u32(tb[IFLA_GRE_FWMARK])) {
+		fprintf(f, "fwmark 0x%x ",
+			rta_getattr_u32(tb[IFLA_GRE_FWMARK]));
+	}
 }
 
 static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])

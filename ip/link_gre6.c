@@ -43,6 +43,7 @@ static void print_usage(FILE *f)
 		"                                  [ tclass TCLASS ]\n"
 		"                                  [ flowlabel FLOWLABEL ]\n"
 		"                                  [ dscp inherit ]\n"
+		"                                  [ fwmark MARK ]\n"
 		"                                  [ dev PHYS_DEV ]\n"
 		"                                  [ noencap ]\n"
 		"                                  [ encap { fou | gue | none } ]\n"
@@ -57,7 +58,8 @@ static void print_usage(FILE *f)
 		"       KEY       := { DOTTED_QUAD | NUMBER }\n"
 		"       ELIM      := { none | 0..255 }(default=%d)\n"
 		"       TCLASS    := { 0x0..0xff | inherit }\n"
-		"       FLOWLABEL := { 0x0..0xfffff | inherit }\n",
+		"       FLOWLABEL := { 0x0..0xfffff | inherit }\n"
+		"       MARK      := { 0x0..0xffffffff | inherit }\n",
 		DEFAULT_TNL_HOP_LIMIT, IPV6_DEFAULT_TNL_ENCAP_LIMIT
 	);
 }
@@ -103,6 +105,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u16 encapsport = 0;
 	__u16 encapdport = 0;
 	int len;
+	__u32 fwmark = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0) {
@@ -174,6 +177,9 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_ENCAP_DPORT])
 			encapdport = rta_getattr_u16(greinfo[IFLA_GRE_ENCAP_DPORT]);
+
+		if (greinfo[IFLA_GRE_FWMARK])
+			fwmark = rta_getattr_u32(greinfo[IFLA_GRE_FWMARK]);
 	}
 
 	while (argc > 0) {
@@ -339,6 +345,16 @@ get_failed:
 			encapflags |= TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "noencap-remcsum") == 0) {
 			encapflags &= ~TUNNEL_ENCAP_FLAG_REMCSUM;
+		} else if (strcmp(*argv, "fwmark") == 0) {
+			NEXT_ARG();
+			if (strcmp(*argv, "inherit") == 0) {
+				flags |= IP6_TNL_F_USE_ORIG_FWMARK;
+				fwmark = 0;
+			} else {
+				if (get_u32(&fwmark, *argv, 0))
+					invarg("invalid fwmark\n", *argv);
+				flags &= ~IP6_TNL_F_USE_ORIG_FWMARK;
+			}
 		} else
 			usage();
 		argc--; argv++;
@@ -356,6 +372,7 @@ get_failed:
 	addattr_l(n, 1024, IFLA_GRE_ENCAP_LIMIT, &encap_limit, 1);
 	addattr_l(n, 1024, IFLA_GRE_FLOWINFO, &flowinfo, 4);
 	addattr32(n, 1024, IFLA_GRE_FLAGS, flags);
+	addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
 
 	addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
 	addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
@@ -460,6 +477,11 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		fputs("icsum ", f);
 	if (oflags & GRE_CSUM)
 		fputs("ocsum ", f);
+
+	if (flags & IP6_TNL_F_USE_ORIG_FWMARK)
+		fprintf(f, "fwmark inherit ");
+	else if (tb[IFLA_GRE_FWMARK] && rta_getattr_u32(tb[IFLA_GRE_FWMARK]))
+		fprintf(f, "fwmark 0x%x ", rta_getattr_u32(tb[IFLA_GRE_FWMARK]));
 
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&
 	    rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {

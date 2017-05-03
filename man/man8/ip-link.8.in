@@ -126,7 +126,7 @@ ip-link \- network device configuration
 .RB "[ " port_guid " eui64 ] ]"
 .br
 .in -9
-.RB "[ " xdp  " { " off " | "
+.RB "[ { " xdp " | " xdpgeneric  " } { " off " | "
 .br
 .in +8
 .BR object
@@ -1572,8 +1572,23 @@ which may impact security and/or performance. (e.g. VF multicast promiscuous mod
 
 .TP
 .B xdp object "|" pinned "|" off
-set (or unset) a XDP ("express data path") BPF program to run on every
+set (or unset) a XDP ("eXpress Data Path") BPF program to run on every
 packet at driver level.
+.B ip link
+output will indicate a
+.B xdp
+flag for the networking device. If the driver does not have native XDP
+support, the kernel will fall back to a slower, driver-independent "generic"
+XDP variant. The
+.B ip link
+output will in that case indicate
+.B xdpgeneric
+instead of
+.B xdp
+only. If the driver does have native XDP support, but the program is
+loaded under
+.B xdpgeneric object "|" pinned
+then the kernel will use the generic XDP variant instead of the native one.
 
 .B off
 (or

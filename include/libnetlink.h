@@ -21,6 +21,7 @@ struct rtnl_handle {
 	int			proto;
 	FILE		       *dump_fp;
 #define RTNL_HANDLE_F_LISTEN_ALL_NSID		0x01
+#define RTNL_HANDLE_F_SUPPRESS_NLERR		0x02
 	int			flags;
 };
 

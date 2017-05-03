@@ -19,6 +19,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <errno.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -55,6 +56,7 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	struct netconfmsg *ncm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[NETCONFA_MAX+1];
+	int ifindex = 0;
 
 	if (n->nlmsg_type == NLMSG_ERROR)
 		return -1;
@@ -76,6 +78,12 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	parse_rtattr(tb, NETCONFA_MAX, netconf_rta(ncm),
 		     NLMSG_PAYLOAD(n, sizeof(*ncm)));
 
+	if (tb[NETCONFA_IFINDEX])
+		ifindex = rta_getattr_u32(tb[NETCONFA_IFINDEX]);
+
+	if (filter.ifindex && filter.ifindex != ifindex)
+		return 0;
+
 	switch (ncm->ncm_family) {
 	case AF_INET:
 		fprintf(fp, "ipv4 ");
@@ -92,9 +100,7 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	}
 
 	if (tb[NETCONFA_IFINDEX]) {
-		int *ifindex = (int *)rta_getattr_str(tb[NETCONFA_IFINDEX]);
-
-		switch (*ifindex) {
+		switch (ifindex) {
 		case NETCONFA_IFINDEX_ALL:
 			fprintf(fp, "all ");
 			break;
@@ -102,7 +108,7 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 			fprintf(fp, "default ");
 			break;
 		default:
-			fprintf(fp, "dev %s ", ll_index_to_name(*ifindex));
+			fprintf(fp, "dev %s ", ll_index_to_name(ifindex));
 			break;
 		}
 	}
@@ -168,8 +174,6 @@ static int do_show(int argc, char **argv)
 
 	ipnetconf_reset_filter(0);
 	filter.family = preferred_family;
-	if (filter.family == AF_UNSPEC)
-		filter.family = AF_INET;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -185,11 +189,11 @@ static int do_show(int argc, char **argv)
 	}
 
 	ll_init_map(&rth);
-	if (filter.ifindex) {
+
+	if (filter.ifindex && filter.family != AF_UNSPEC) {
 		req.ncm.ncm_family = filter.family;
-		if (filter.ifindex)
-			addattr_l(&req.n, sizeof(req), NETCONFA_IFINDEX,
-				  &filter.ifindex, sizeof(filter.ifindex));
+		addattr_l(&req.n, sizeof(req), NETCONFA_IFINDEX,
+			  &filter.ifindex, sizeof(filter.ifindex));
 
 		if (rtnl_send(&rth, &req.n, req.n.nlmsg_len) < 0) {
 			perror("Can not send request");
@@ -197,16 +201,26 @@ static int do_show(int argc, char **argv)
 		}
 		rtnl_listen(&rth, print_netconf, stdout);
 	} else {
+		rth.flags = RTNL_HANDLE_F_SUPPRESS_NLERR;
 dump:
 		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETNETCONF) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
 		if (rtnl_dump_filter(&rth, print_netconf2, stdout) < 0) {
+			/* kernel does not support netconf dump on AF_UNSPEC;
+			 * fall back to requesting by family
+			 */
+			if (errno == EOPNOTSUPP &&
+			    filter.family == AF_UNSPEC) {
+				filter.family = AF_INET;
+				goto dump;
+			}
+			perror("RTNETLINK answers");
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
-		if (preferred_family == AF_UNSPEC) {
+		if (preferred_family == AF_UNSPEC && filter.family == AF_INET) {
 			preferred_family = AF_INET6;
 			filter.family = AF_INET6;
 			goto dump;

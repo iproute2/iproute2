@@ -52,10 +52,12 @@ static void print_usage(FILE *f, int sit)
 			"                [ isatap ]\n");
 	}
 	fprintf(f, "                [ external ]\n");
+	fprintf(f, "                [ fwmark MARK ]\n");
 	fprintf(f, "\n");
 	fprintf(f, "Where: ADDR := { IP_ADDRESS | any }\n");
 	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
 	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
+	fprintf(f, "       MARK := { 0x0..0xffffffff }\n");
 }
 
 static void usage(int sit) __attribute__((noreturn));
@@ -101,6 +103,7 @@ static int iptunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u16 encapsport = 0;
 	__u16 encapdport = 0;
 	__u8 metadata = 0;
+	__u32 fwmark = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0) {
@@ -179,6 +182,10 @@ get_failed:
 				rta_getattr_u16(iptuninfo[IFLA_IPTUN_6RD_RELAY_PREFIXLEN]);
 		if (iptuninfo[IFLA_IPTUN_COLLECT_METADATA])
 			metadata = 1;
+
+		if (iptuninfo[IFLA_IPTUN_FWMARK])
+			fwmark = rta_getattr_u32(iptuninfo[IFLA_IPTUN_FWMARK]);
+
 	}
 
 	while (argc > 0) {
@@ -301,6 +308,10 @@ get_failed:
 			ip6rdprefixlen = 16;
 			ip6rdrelayprefix = 0;
 			ip6rdrelayprefixlen = 0;
+		} else if (strcmp(*argv, "fwmark") == 0) {
+			NEXT_ARG();
+			if (get_u32(&fwmark, *argv, 0))
+				invarg("invalid fwmark\n", *argv);
 		} else
 			usage(strcmp(lu->id, "sit") == 0);
 		argc--, argv++;
@@ -322,6 +333,7 @@ get_failed:
 	addattr8(n, 1024, IFLA_IPTUN_TTL, ttl);
 	addattr8(n, 1024, IFLA_IPTUN_TOS, tos);
 	addattr8(n, 1024, IFLA_IPTUN_PMTUDISC, pmtudisc);
+	addattr32(n, 1024, IFLA_IPTUN_FWMARK, fwmark);
 
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_TYPE, encaptype);
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_FLAGS, encapflags);
@@ -471,6 +483,10 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		else
 			fputs("noencap-remcsum ", f);
 	}
+
+	if (tb[IFLA_IPTUN_FWMARK] && rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]))
+		fprintf(f, "fwmark 0x%x ",
+			rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]));
 }
 
 static void iptunnel_print_help(struct link_util *lu, int argc, char **argv,

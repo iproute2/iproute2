@@ -862,6 +862,25 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		}
 		fprintf(fp, "%s", _SL_);
 	}
+	if (tb[XFRMA_OFFLOAD_DEV]) {
+		struct xfrm_user_offload *xuo;
+
+		if (prefix)
+			fputs(prefix, fp);
+		fprintf(fp, "crypto offload parameters: ");
+
+		if (RTA_PAYLOAD(tb[XFRMA_OFFLOAD_DEV]) < sizeof(*xuo)) {
+			fprintf(fp, "(ERROR truncated)");
+			fprintf(fp, "%s", _SL_);
+			return;
+		}
+
+		xuo = (struct xfrm_user_offload *)
+			RTA_DATA(tb[XFRMA_OFFLOAD_DEV]);
+		fprintf(fp, "dev %s dir %s", ll_index_to_name(xuo->ifindex),
+			(xuo->flags & XFRM_OFFLOAD_INBOUND) ? "in" : "out");
+		fprintf(fp, "%s", _SL_);
+	}
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)
