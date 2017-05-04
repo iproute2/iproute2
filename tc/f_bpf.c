@@ -210,6 +210,11 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 			fprintf(f, "skip_hw ");
 		if (flags & TCA_CLS_FLAGS_SKIP_SW)
 			fprintf(f, "skip_sw ");
+
+		if (flags & TCA_CLS_FLAGS_IN_HW)
+			fprintf(f, "in_hw ");
+		else if (flags & TCA_CLS_FLAGS_NOT_IN_HW)
+			fprintf(f, "not_in_hw ");
 	}
 
 	if (tb[TCA_BPF_OPS] && tb[TCA_BPF_OPS_LEN])

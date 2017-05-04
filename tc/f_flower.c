@@ -1171,6 +1171,11 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			fprintf(f, "\n  skip_hw");
 		if (flags & TCA_CLS_FLAGS_SKIP_SW)
 			fprintf(f, "\n  skip_sw");
+
+		if (flags & TCA_CLS_FLAGS_IN_HW)
+			fprintf(f, "\n  in_hw");
+		else if (flags & TCA_CLS_FLAGS_NOT_IN_HW)
+			fprintf(f, "\n  not_in_hw");
 	}
 
 	if (tb[TCA_FLOWER_ACT])
