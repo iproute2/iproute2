@@ -10,17 +10,19 @@ static const char *mpls_ntop1(const struct mpls_label *addr, char *buf, size_t b
 {
 	size_t destlen = buflen;
 	char *dest = buf;
-	int count;
+	int count = 0;
 
-	for (count = 0; count < MPLS_MAX_LABELS; count++) {
-		uint32_t entry = ntohl(addr[count].entry);
+	while (1) {
+		uint32_t entry = ntohl(addr[count++].entry);
 		uint32_t label = (entry & MPLS_LS_LABEL_MASK) >> MPLS_LS_LABEL_SHIFT;
 		int len = snprintf(dest, destlen, "%u", label);
+
+		if (len >= destlen)
+			break;
 
 		/* Is this the end? */
 		if (entry & MPLS_LS_S_MASK)
 			return buf;
-
 
 		dest += len;
 		destlen -= len;
