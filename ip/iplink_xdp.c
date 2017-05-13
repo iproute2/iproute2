@@ -79,17 +79,20 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic)
 void xdp_dump(FILE *fp, struct rtattr *xdp)
 {
 	struct rtattr *tb[IFLA_XDP_MAX + 1];
-	__u32 flags = 0;
+	__u8 mode;
 
 	parse_rtattr_nested(tb, IFLA_XDP_MAX, xdp);
 
-	if (!tb[IFLA_XDP_ATTACHED] ||
-	    !rta_getattr_u8(tb[IFLA_XDP_ATTACHED]))
+	if (!tb[IFLA_XDP_ATTACHED])
 		return;
 
-	if (tb[IFLA_XDP_FLAGS])
-		flags = rta_getattr_u32(tb[IFLA_XDP_FLAGS]);
-
-	fprintf(fp, "xdp%s ",
-		flags & XDP_FLAGS_SKB_MODE ? "generic" : "");
+	mode = rta_getattr_u8(tb[IFLA_XDP_ATTACHED]);
+	if (mode == XDP_ATTACHED_NONE)
+		return;
+	else if (mode == XDP_ATTACHED_DRV)
+		fprintf(fp, "xdp ");
+	else if (mode == XDP_ATTACHED_SKB)
+		fprintf(fp, "xdpgeneric ");
+	else
+		fprintf(fp, "xdp[%u] ", mode);
 }
