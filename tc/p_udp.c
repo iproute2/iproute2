@@ -34,6 +34,9 @@ parse_udp(int *argc_p, char ***argv_p,
 	if (argc < 2)
 		return -1;
 
+	if (!sel->extended)
+		return -1;
+
 	tkey->htype = TCA_PEDIT_KEY_EX_HDR_TYPE_UDP;
 
 	if (strcmp(*argv, "sport") == 0) {
