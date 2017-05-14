@@ -146,7 +146,7 @@ int pack_key(struct m_pedit_sel *_sel, struct m_pedit_key *tkey)
 		if (tkey->htype != TCA_PEDIT_KEY_EX_HDR_TYPE_NETWORK ||
 		    tkey->cmd != TCA_PEDIT_KEY_EX_CMD_SET) {
 			fprintf(stderr,
-				"Munge parameters not supported. Use 'munge ex'.\n");
+				"Munge parameters not supported. Use 'pedit ex munge ...'.\n");
 			return -1;
 		}
 	}
