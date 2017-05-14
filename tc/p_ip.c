@@ -1,5 +1,5 @@
 /*
- * m_pedit.c		packet editor: IPV4/6 header
+ * p_ip.c		packet editor: IPV4 header
  *
  *		This program is free software; you can distribute it and/or
  *		modify it under the terms of the GNU General Public License
@@ -156,23 +156,8 @@ done:
 	return res;
 }
 
-static int
-parse_ip6(int *argc_p, char ***argv_p,
-	  struct m_pedit_sel *sel, struct m_pedit_key *tkey)
-{
-	int res = -1;
-	return res;
-}
-
 struct m_pedit_util p_pedit_ip = {
 	NULL,
 	"ip",
 	parse_ip,
-};
-
-
-struct m_pedit_util p_pedit_ip6 = {
-	NULL,
-	"ip6",
-	parse_ip6,
 };

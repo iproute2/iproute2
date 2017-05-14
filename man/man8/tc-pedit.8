@@ -33,6 +33,8 @@ pedit - generic packet editor action
 |
 .BI ip " EX_IPHDR_FIELD"
 |
+.BI ip6 " IP6HDR_FIELD"
+|
 .BI tcp " TCPHDR_FIELD"
 |
 .BI udp " UDPHDR_FIELD"
@@ -54,6 +56,12 @@ pedit - generic packet editor action
 .ti -8
 .IR EX_IPHDR_FIELD " := { "
 .BR ttl " }"
+
+
+.ti -8
+.IR IP6HDR_FIELD " := { "
+.BR src " | " dst " | " flow_lbl " | " payload_len " | " nexthdr " |"
+.BR hoplimit " }"
 
 .ti -8
 .IR TCPHDR_FIELD " := { "
@@ -211,6 +219,25 @@ are:
 .B ttl
 .RE
 .TP
+.BI ip6 " IP6HDR_FIELD"
+The supported keywords for
+.I IP6HDR_FIELD
+are:
+.RS
+.TP
+.B src
+.TQ
+.B dst
+.TQ
+.B flow_lbl
+.TQ
+.B payload_len
+.TQ
+.B nexthdr
+.TQ
+.B hoplimit
+.RE
+.TP
 .BI tcp " TCPHDR_FIELD"
 The supported keywords for
 .I TCPHDR_FIELD
@@ -329,6 +356,9 @@ tc filter add dev eth0 parent ffff: u32 \\
 tc filter add dev eth0 parent ffff: u32 \\
 	match ip sport 22 0xffff \\
 	action pedit ex munge ip dst set 192.168.1.199
+tc filter add dev eth0 parent ffff: u32 \\
+	match ip sport 22 0xffff \\
+	action pedit ex munge ip6 dst set fe80::dacb:8aff:fec7:320e
 tc filter add dev eth0 parent ffff: u32 \\
 	match ip sport 22 0xffff \\
 	action pedit ex munge eth dst set 11:22:33:44:55:66

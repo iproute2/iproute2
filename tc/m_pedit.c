@@ -257,6 +257,32 @@ static int pack_mac(struct m_pedit_sel *sel, struct m_pedit_key *tkey,
 	return ret;
 }
 
+static int pack_ipv6(struct m_pedit_sel *sel, struct m_pedit_key *tkey,
+		     __u32 *ipv6)
+{
+	int ret = 0;
+	int i;
+
+	if (tkey->off & 0x3) {
+		fprintf(stderr,
+			"pack_ipv6: IPv6 offsets must begin in 32bit boundaries\n");
+		return -1;
+	}
+
+	for (i = 0; i < 4; i++) {
+		tkey->mask = 0;
+		tkey->val = ntohl(ipv6[i]);
+
+		ret = pack_key32(~0, sel, tkey);
+		if (ret)
+			return ret;
+
+		tkey->off += 4;
+	}
+
+	return 0;
+}
+
 int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
 {
 	int argc = *argc_p;
@@ -281,8 +307,16 @@ int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
 		return 0;
 	}
 
-	if (type == TIPV6)
-		return -1; /* not implemented yet */
+	if (type == TIPV6) {
+		inet_prefix addr;
+
+		if (get_prefix_1(&addr, *argv, AF_INET6))
+			return -1;
+
+		memcpy(val, addr.data, addr.bytelen);
+
+		return 0;
+	}
 
 	if (type == TMAC) {
 #define MAC_ALEN 6
@@ -361,6 +395,11 @@ int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 
 	if (type == TMAC) {
 		res = pack_mac(sel, tkey, (__u8 *)val);
+		goto done;
+	}
+
+	if (type == TIPV6) {
+		res = pack_ipv6(sel, tkey, val);
 		goto done;
 	}
 
