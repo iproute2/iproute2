@@ -61,7 +61,7 @@ typedef struct
 	__s16 bitlen;
 	/* These next two fields match rtvia */
 	__u16 family;
-	__u32 data[8];
+	__u32 data[64];
 } inet_prefix;
 
 #define PREFIXLEN_SPECIFIED 1
@@ -87,9 +87,6 @@ struct ipx_addr {
 #ifndef AF_MPLS
 # define AF_MPLS 28
 #endif
-
-/* Maximum number of labels the mpls helpers support */
-#define MPLS_MAX_LABELS 8
 
 __u32 get_addr32(const char *name);
 int get_addr_1(inet_prefix *dst, const char *arg, int family);
@@ -155,7 +152,7 @@ const char *ipx_ntop(int af, const void *addr, char *str, size_t len);
 int ipx_pton(int af, const char *src, void *addr);
 
 const char *mpls_ntop(int af, const void *addr, char *str, size_t len);
-int mpls_pton(int af, const char *src, void *addr);
+int mpls_pton(int af, const char *src, void *addr, size_t alen);
 
 extern int __iproute2_hz_internal;
 int __get_hz(void);

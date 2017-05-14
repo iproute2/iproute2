@@ -7,12 +7,13 @@
 #include "utils.h"
 
 
-static int mpls_pton1(const char *name, struct mpls_label *addr)
+static int mpls_pton1(const char *name, struct mpls_label *addr,
+		      unsigned int maxlabels)
 {
 	char *endp;
 	unsigned count;
 
-	for (count = 0; count < MPLS_MAX_LABELS; count++) {
+	for (count = 0; count < maxlabels; count++) {
 		unsigned long label;
 
 		label = strtoul(name, &endp, 0);
@@ -37,17 +38,19 @@ static int mpls_pton1(const char *name, struct mpls_label *addr)
 		addr += 1;
 	}
 	/* The address was too long */
+	fprintf(stderr, "Error: too many labels.\n");
 	return 0;
 }
 
-int mpls_pton(int af, const char *src, void *addr)
+int mpls_pton(int af, const char *src, void *addr, size_t alen)
 {
+	unsigned int maxlabels = alen / sizeof(struct mpls_label);
 	int err;
 
 	switch(af) {
 	case AF_MPLS:
 		errno = 0;
-		err = mpls_pton1(src, (struct mpls_label *)addr);
+		err = mpls_pton1(src, (struct mpls_label *)addr, maxlabels);
 		break;
 	default:
 		errno = EAFNOSUPPORT;

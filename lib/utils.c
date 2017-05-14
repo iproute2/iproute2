@@ -518,15 +518,18 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	}
 
 	if (family == AF_MPLS) {
+		unsigned int maxlabels;
 		int i;
 
 		addr->family = AF_MPLS;
-		if (mpls_pton(AF_MPLS, name, addr->data) <= 0)
+		if (mpls_pton(AF_MPLS, name, addr->data,
+			      sizeof(addr->data)) <= 0)
 			return -1;
 		addr->bytelen = 4;
 		addr->bitlen = 20;
 		/* How many bytes do I need? */
-		for (i = 0; i < 8; i++) {
+		maxlabels = sizeof(addr->data) / sizeof(struct mpls_label);
+		for (i = 0; i < maxlabels; i++) {
 			if (ntohl(addr->data[i]) & MPLS_LS_S_MASK) {
 				addr->bytelen = (i + 1)*4;
 				break;
