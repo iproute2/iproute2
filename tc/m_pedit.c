@@ -353,6 +353,12 @@ int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
 		argv++;
 	}
 
+	if (len > 4 && retain != ~0) {
+		fprintf(stderr,
+			"retain is not supported for fields longer the 32 bits\n");
+		return -1;
+	}
+
 	if (type == TMAC) {
 		res = pack_mac(sel, tkey, (__u8 *)val);
 		goto done;
