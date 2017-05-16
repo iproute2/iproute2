@@ -57,7 +57,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ok = 0;
-	struct tc_ife p = { .action = TC_ACT_PIPE };	/* good default */
+	struct tc_ife p = { 0 };
 	struct rtattr *tail;
 	struct rtattr *tail2;
 	char dbuf[ETH_ALEN];
@@ -156,8 +156,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 		argv++;
 	}
 
-	if (argc && !action_a2n(*argv, &p.action, false))
-		NEXT_ARG_FWD();
+	parse_action_control_dflt(&argc, &argv, &p.action, false, TC_ACT_PIPE);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -245,9 +244,8 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_IFE_PARMS]);
 
-	fprintf(f, "ife %s action %s ",
-		(p->flags & IFE_ENCODE) ? "encode" : "decode",
-		action_n2a(p->action));
+	fprintf(f, "ife %s ", p->flags & IFE_ENCODE ? "encode" : "decode");
+	print_action_control(f, "action ", p->action, " ");
 
 	if (tb[TCA_IFE_TYPE]) {
 		ife_type = rta_getattr_u16(tb[TCA_IFE_TYPE]);

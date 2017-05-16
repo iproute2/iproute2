@@ -411,7 +411,7 @@ char *sprint_qdisc_handle(__u32 h, char *buf)
 	return buf;
 }
 
-const char *action_n2a(int action)
+static const char *action_n2a(int action)
 {
 	static char buf[64];
 
@@ -444,7 +444,7 @@ const char *action_n2a(int action)
  *
  * In error case, returns -1 and does not touch @result. Otherwise returns 0.
  */
-int action_a2n(char *arg, int *result, bool allow_num)
+static int action_a2n(char *arg, int *result, bool allow_num)
 {
 	int n;
 	char dummy;
@@ -473,6 +473,139 @@ int action_a2n(char *arg, int *result, bool allow_num)
 
 	*result = n;
 	return 0;
+}
+
+/* Parse action control including possible options.
+ *
+ * Parameters:
+ * @argc_p - pointer to argc to parse
+ * @argv_p - pointer to argv to parse
+ * @result_p - pointer to output variable
+ * @allow_num - whether action may be in numeric format already
+ *
+ * In error case, returns -1 and does not touch @result_1p. Otherwise returns 0.
+ */
+int parse_action_control(int *argc_p, char ***argv_p,
+			 int *result_p, bool allow_num)
+{
+	int argc = *argc_p;
+	char **argv = *argv_p;
+	int result;
+
+	if (!argc)
+		return -1;
+	if (action_a2n(*argv, &result, allow_num) == -1) {
+		fprintf(stderr, "Bad action type %s\n", *argv);
+		return -1;
+	}
+	NEXT_ARG_FWD();
+	*argc_p = argc;
+	*argv_p = argv;
+	*result_p = result;
+	return 0;
+}
+
+/* Parse action control including possible options.
+ *
+ * Parameters:
+ * @argc_p - pointer to argc to parse
+ * @argv_p - pointer to argv to parse
+ * @result_p - pointer to output variable
+ * @allow_num - whether action may be in numeric format already
+ * @default_result - set as a result in case of parsing error
+ *
+ * In case there is an error during parsing, the default result is used.
+ */
+void parse_action_control_dflt(int *argc_p, char ***argv_p,
+			       int *result_p, bool allow_num,
+			       int default_result)
+{
+	if (parse_action_control(argc_p, argv_p, result_p, allow_num))
+		*result_p = default_result;
+}
+
+static int parse_action_control_slash_spaces(int *argc_p, char ***argv_p,
+					     int *result1_p, int *result2_p,
+					     bool allow_num)
+{
+	int argc = *argc_p;
+	char **argv = *argv_p;
+	int result1, result2;
+	int *result_p = &result1;
+	int ok = 0;
+	int ret;
+
+	while (argc > 0) {
+		switch (ok) {
+		case 1:
+			if (strcmp(*argv, "/") != 0)
+				goto out;
+			result_p = &result2;
+			NEXT_ARG();
+			/* fall-through */
+		case 0: /* fall-through */
+		case 2:
+			ret = parse_action_control(&argc, &argv,
+						   result_p, allow_num);
+			if (ret)
+				return ret;
+			ok++;
+			break;
+		default:
+			goto out;
+		}
+	}
+out:
+	*result1_p = result1;
+	if (ok == 2)
+		*result2_p = result2;
+	*argc_p = argc;
+	*argv_p = argv;
+	return 0;
+}
+
+/* Parse action control with slash including possible options.
+ *
+ * Parameters:
+ * @argc_p - pointer to argc to parse
+ * @argv_p - pointer to argv to parse
+ * @result1_p - pointer to the first (before slash) output variable
+ * @result2_p - pointer to the second (after slash) output variable
+ * @allow_num - whether action may be in numeric format already
+ *
+ * In error case, returns -1 and does not touch @result*. Otherwise returns 0.
+ */
+int parse_action_control_slash(int *argc_p, char ***argv_p,
+			       int *result1_p, int *result2_p, bool allow_num)
+{
+	char **argv = *argv_p;
+	int result1, result2;
+	char *p = strchr(*argv, '/');
+
+	if (!p)
+		return parse_action_control_slash_spaces(argc_p, argv_p,
+							 result1_p, result2_p,
+							 allow_num);
+	*p = 0;
+	if (action_a2n(*argv, &result1, allow_num)) {
+		if (p)
+			*p = '/';
+		return -1;
+	}
+
+	*p = '/';
+	if (action_a2n(p + 1, &result2, allow_num))
+		return -1;
+
+	*result1_p = result1;
+	*result2_p = result2;
+	return 0;
+}
+
+void print_action_control(FILE *f, const char *prefix,
+			  int action, const char *suffix)
+{
+	fprintf(f, "%s%s%s", prefix, action_n2a(action), suffix);
 }
 
 int get_linklayer(unsigned int *val, const char *arg)

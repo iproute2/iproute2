@@ -120,9 +120,6 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		}
 	}
 
-	if (argc && !action_a2n(*argv, &sel.action, false))
-		NEXT_ARG_FWD();
-
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();

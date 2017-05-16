@@ -80,9 +80,7 @@ parse_connmark(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		}
 	}
 
-	sel.action = TC_ACT_PIPE;
-	if (argc && !action_a2n(*argv, &sel.action, false))
-		NEXT_ARG_FWD();
+	parse_action_control_dflt(&argc, &argv, &sel.action, false, TC_ACT_PIPE);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {

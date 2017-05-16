@@ -75,7 +75,7 @@ static int bpf_parse_opt(struct action_util *a, int *ptr_argc, char ***ptr_argv,
 			 int tca_id, struct nlmsghdr *n)
 {
 	const char *bpf_obj = NULL, *bpf_uds_name = NULL;
-	struct tc_act_bpf parm = { .action = TC_ACT_PIPE };
+	struct tc_act_bpf parm = {};
 	struct bpf_cfg_in cfg = {};
 	bool seen_run = false;
 	struct rtattr *tail;
@@ -123,8 +123,8 @@ opt_bpf:
 		NEXT_ARG_FWD();
 	}
 
-	if (argc && !action_a2n(*argv, &parm.action, false))
-		NEXT_ARG_FWD();
+	parse_action_control_dflt(&argc, &argv, &parm.action,
+				  false, TC_ACT_PIPE);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -186,7 +186,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 				      b, sizeof(b)));
 	}
 
-	fprintf(f, "default-action %s\n", action_n2a(parm->action));
+	print_action_control(f, "default-action ", parm->action, "\n");
 	fprintf(f, "\tindex %u ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);
 

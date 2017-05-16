@@ -61,7 +61,6 @@ static int parse_skbmod(struct action_util *a, int *argc_p, char ***argv_p,
 	char *saddr = NULL;
 
 	memset(&p, 0, sizeof(p));
-	p.action = TC_ACT_PIPE;	/* good default */
 
 	if (argc <= 0)
 		return -1;
@@ -123,31 +122,7 @@ static int parse_skbmod(struct action_util *a, int *argc_p, char ***argv_p,
 		argv++;
 	}
 
-	if (argc) {
-		if (matches(*argv, "reclassify") == 0) {
-			p.action = TC_ACT_RECLASSIFY;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "pipe") == 0) {
-			p.action = TC_ACT_PIPE;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "drop") == 0 ||
-			   matches(*argv, "shot") == 0) {
-			p.action = TC_ACT_SHOT;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "continue") == 0) {
-			p.action = TC_ACT_UNSPEC;
-			argc--;
-			argv++;
-		} else if (matches(*argv, "pass") == 0 ||
-			   matches(*argv, "ok") == 0) {
-			p.action = TC_ACT_OK;
-			argc--;
-			argv++;
-		}
-	}
+	parse_action_control_dflt(&argc, &argv, &p.action, false, TC_ACT_PIPE);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -206,7 +181,8 @@ static int print_skbmod(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	p = RTA_DATA(tb[TCA_SKBMOD_PARMS]);
 
-	fprintf(f, "skbmod action %s ", action_n2a(p->action));
+	fprintf(f, "skbmod ");
+	print_action_control(f, "", p->action, " ");
 
 	if (tb[TCA_SKBMOD_ETYPE]) {
 		skbmod_etype = rta_getattr_u16(tb[TCA_SKBMOD_ETYPE]);

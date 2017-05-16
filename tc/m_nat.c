@@ -115,8 +115,7 @@ parse_nat(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct
 		return -1;
 	}
 
-	if (argc && !action_a2n(*argv, &sel.action, false))
-		NEXT_ARG_FWD();
+	parse_action_control_dflt(&argc, &argv, &sel.action, false, TC_ACT_OK);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -164,12 +163,12 @@ print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
 	len = ffs(sel->mask);
 	len = len ? 33 - len : 0;
 
-	fprintf(f, " nat %s %s/%d %s %s", sel->flags & TCA_NAT_FLAG_EGRESS ?
-					  "egress" : "ingress",
+	fprintf(f, " nat %s %s/%d %s", sel->flags & TCA_NAT_FLAG_EGRESS ?
+				       "egress" : "ingress",
 		format_host_r(AF_INET, 4, &sel->old_addr, buf1, sizeof(buf1)),
 		len,
-		format_host_r(AF_INET, 4, &sel->new_addr, buf2, sizeof(buf2)),
-		action_n2a(sel->action));
+		format_host_r(AF_INET, 4, &sel->new_addr, buf2, sizeof(buf2)));
+	print_action_control(f, " ", sel->action, "");
 
 	if (show_stats) {
 		if (tb[TCA_NAT_TM]) {

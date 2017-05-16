@@ -98,9 +98,7 @@ static int parse_sample(struct action_util *a, int *argc_p, char ***argv_p,
 		NEXT_ARG_FWD();
 	}
 
-	p.action = TC_ACT_PIPE;
-	if (argc && !action_a2n(*argv, &p.action, false))
-		NEXT_ARG_FWD();
+	parse_action_control_dflt(&argc, &argv, &p.action, false, TC_ACT_PIPE);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {

@@ -123,8 +123,7 @@ parse_csum(struct action_util *a, int *argc_p,
 		return -1;
 	}
 
-	if (argc && !action_a2n(*argv, &sel.action, false))
-		NEXT_ARG_FWD();
+	parse_action_control_dflt(&argc, &argv, &sel.action, false, TC_ACT_OK);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -200,10 +199,10 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 		uflag_1 = "?empty";
 	}
 
-	fprintf(f, "csum (%s%s%s%s%s%s%s) action %s\n",
+	fprintf(f, "csum (%s%s%s%s%s%s%s) ",
 		uflag_1, uflag_2, uflag_3,
-		uflag_4, uflag_5, uflag_6, uflag_7,
-		action_n2a(sel->action));
+		uflag_4, uflag_5, uflag_6, uflag_7);
+	print_action_control(f, "action ", sel->action, "\n");
 	fprintf(f, "\tindex %u ref %d bind %d", sel->index, sel->refcnt,
 		sel->bindcnt);
 

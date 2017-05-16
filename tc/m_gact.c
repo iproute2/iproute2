@@ -69,26 +69,13 @@ usage(void)
 }
 
 static int
-get_act(char ***argv_p)
-{
-	int n;
-
-	if (action_a2n(**argv_p, &n, false)) {
-		fprintf(stderr, "bad action type %s\n", **argv_p);
-		return -10;
-	}
-	return n;
-}
-
-static int
 parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 	   int tca_id, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	int ok = 0;
-	int action = TC_POLICE_RECLASSIFY;
-	struct tc_gact p = { .action = TC_POLICE_RECLASSIFY };
+	struct tc_gact p = { 0 };
 #ifdef CONFIG_GACT_PROB
 	int rd = 0;
 	struct tc_gact_p pp;
@@ -102,14 +89,9 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 	if (matches(*argv, "gact") == 0) {
 		ok++;
 	} else {
-		action = get_act(&argv);
-		if (action != -10) {
-			p.action = action;
-			ok++;
-		} else {
-			explain();
-			return action;
-		}
+		if (parse_action_control(&argc, &argv, &p.action, false) == -1)
+			usage();
+		ok++;
 	}
 
 	if (ok) {
@@ -133,13 +115,9 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 				return -1;
 			}
 
-			action = get_act(&argv);
-			if (action != -10) { /* FIXME */
-				pp.paction = action;
-			} else {
-				explain();
-				return -1;
-			}
+			if (parse_action_control(&argc, &argv,
+						 &pp.paction, false) == -1)
+				usage();
 			argc--;
 			argv++;
 			if (get_u16(&pp.pval, *argv, 10)) {
@@ -212,7 +190,8 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_GACT_PARMS]);
 
-	fprintf(f, "gact action %s", action_n2a(p->action));
+	fprintf(f, "gact ");
+	print_action_control(f, "action ", p->action, "");
 #ifdef CONFIG_GACT_PROB
 	if (tb[TCA_GACT_PROB] != NULL) {
 		pp = RTA_DATA(tb[TCA_GACT_PROB]);
@@ -221,8 +200,9 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 		memset(&pp_dummy, 0, sizeof(pp_dummy));
 		pp = &pp_dummy;
 	}
-	fprintf(f, "\n\t random type %s %s val %d",
-		prob_n2a(pp->ptype), action_n2a(pp->paction), pp->pval);
+	fprintf(f, "\n\t random type %s", prob_n2a(pp->ptype));
+	print_action_control(f, " ", pp->paction, " ");
+	fprintf(f, "val %d", pp->pval);
 #endif
 	fprintf(f, "\n\t index %u ref %d bind %d", p->index, p->refcnt,
 		p->bindcnt);

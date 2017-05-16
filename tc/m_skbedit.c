@@ -120,9 +120,8 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		argv++;
 	}
 
-	sel.action = TC_ACT_PIPE;
-	if (argc && !action_a2n(*argv, &sel.action, false))
-		NEXT_ARG();
+	parse_action_control_dflt(&argc, &argv, &sel.action,
+				  false, TC_ACT_PIPE);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -214,7 +213,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 			fprintf(f, " ptype %d", *ptype);
 	}
 
-	fprintf(f, " %s", action_n2a(p->action));
+	print_action_control(f, " ", p->action, "");
 
 	fprintf(f, "\n\t index %u ref %d bind %d",
 		p->index, p->refcnt, p->bindcnt);

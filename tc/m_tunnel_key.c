@@ -77,7 +77,7 @@ static int tunnel_key_parse_dst_port(char *str, int type, struct nlmsghdr *n)
 static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 			    int tca_id, struct nlmsghdr *n)
 {
-	struct tc_tunnel_key parm = { .action = TC_ACT_PIPE };
+	struct tc_tunnel_key parm = {};
 	char **argv = *argv_p;
 	int argc = *argc_p;
 	struct rtattr *tail;
@@ -158,8 +158,8 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 		NEXT_ARG_FWD();
 	}
 
-	if (argc && !action_a2n(*argv, &parm.action, false))
-		NEXT_ARG_FWD();
+	parse_action_control_dflt(&argc, &argv, &parm.action,
+				  false, TC_ACT_PIPE);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -265,7 +265,7 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 					  tb[TCA_TUNNEL_KEY_ENC_DST_PORT]);
 		break;
 	}
-	fprintf(f, " %s", action_n2a(parm->action));
+	print_action_control(f, " ", parm->action, "");
 
 	fprintf(f, "\n\tindex %d ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);

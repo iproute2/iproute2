@@ -670,8 +670,7 @@ int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		return -1;
 	}
 
-	if (argc && !action_a2n(*argv, &sel.sel.action, false))
-		NEXT_ARG();
+	parse_action_control_dflt(&argc, &argv, &sel.sel.action, false, TC_ACT_OK);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -776,8 +775,9 @@ int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	fprintf(f, " pedit action %s keys %d\n ",
-		action_n2a(sel->action), sel->nkeys);
+	fprintf(f, " pedit ");
+	print_action_control(f, "action ", sel->action, " ");
+	fprintf(f,"keys %d\n ", sel->nkeys);
 	fprintf(f, "\t index %u ref %d bind %d", sel->index, sel->refcnt,
 		sel->bindcnt);
 

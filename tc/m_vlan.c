@@ -59,7 +59,7 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 	int proto_set = 0;
 	__u8 prio;
 	int prio_set = 0;
-	struct tc_vlan parm = { 0 };
+	struct tc_vlan parm = {};
 
 	if (matches(*argv, "vlan") != 0)
 		return -1;
@@ -133,9 +133,8 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 		argv++;
 	}
 
-	parm.action = TC_ACT_PIPE;
-	if (argc && !action_a2n(*argv, &parm.action, false))
-		NEXT_ARG_FWD();
+	parse_action_control_dflt(&argc, &argv, &parm.action,
+				  false, TC_ACT_PIPE);
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
@@ -224,7 +223,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 		break;
 	}
-	fprintf(f, " %s", action_n2a(parm->action));
+	print_action_control(f, " ", parm->action, "");
 
 	fprintf(f, "\n\t index %u ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);

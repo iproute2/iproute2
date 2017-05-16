@@ -170,10 +170,8 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 	}
 
 
-	if (argc &&
-	    (p.eaction == TCA_EGRESS_MIRROR || p.eaction == TCA_INGRESS_MIRROR)
-	    && !action_a2n(*argv, &p.action, false))
-		NEXT_ARG();
+	if (p.eaction == TCA_EGRESS_MIRROR || p.eaction == TCA_INGRESS_MIRROR)
+		parse_action_control(&argc, &argv, &p.action, false);
 
 	if (argc) {
 		if (iok && matches(*argv, "index") == 0) {
@@ -272,8 +270,8 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 		return -1;
 	}
 
-	fprintf(f, "mirred (%s to device %s) %s",
-		mirred_n2a(p->eaction), dev, action_n2a(p->action));
+	fprintf(f, "mirred (%s to device %s)", mirred_n2a(p->eaction), dev);
+	print_action_control(f, " ", p->action, "");
 
 	fprintf(f, "\n ");
 	fprintf(f, "\tindex %u ref %d bind %d", p->index, p->refcnt,
