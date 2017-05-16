@@ -30,7 +30,8 @@ explain(void)
 	fprintf(stderr, "Usage: ... connmark [zone ZONE] [CONTROL] [index <INDEX>]\n");
 	fprintf(stderr, "where :\n"
 		"\tZONE is the conntrack zone\n"
-		"\tCONTROL := reclassify|pipe|drop|continue|ok\n");
+		"\tCONTROL := reclassify | pipe | drop | continue | ok |\n"
+		"\t           goto chain <CHAIN_INDEX>\n");
 }
 
 static void

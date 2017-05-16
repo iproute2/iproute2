@@ -36,7 +36,8 @@ static void skbmod_explain(void)
 		"\tDMAC := 6 byte Destination MAC address\n"
 		"\tSMAC := optional 6 byte Source MAC address\n"
 		"\tETYPE := optional 16 bit ethertype\n"
-		"\tCONTROL := reclassify|pipe|drop|continue|ok\n"
+		"\tCONTROL := reclassify | pipe | drop | continue | ok |\n"
+		"\t           goto chain <CHAIN_INDEX>\n"
 		"\tINDEX := skbmod index value to use\n");
 }
 

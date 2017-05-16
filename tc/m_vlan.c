@@ -32,7 +32,8 @@ static void explain(void)
 	fprintf(stderr, "       vlan modify [ protocol VLANPROTO ] id VLANID [ priority VLANPRIO ] [CONTROL]\n");
 	fprintf(stderr, "       VLANPROTO is one of 802.1Q or 802.1AD\n");
 	fprintf(stderr, "            with default: 802.1Q\n");
-	fprintf(stderr, "       CONTROL := reclassify | pipe | drop | continue | pass\n");
+	fprintf(stderr, "       CONTROL := reclassify | pipe | drop | continue | pass |\n");
+	fprintf(stderr, "                  goto chain <CHAIN_INDEX>\n");
 }
 
 static void usage(void)

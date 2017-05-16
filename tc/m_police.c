@@ -41,7 +41,8 @@ static void usage(void)
 	fprintf(stderr, "Where: CONTROL := conform-exceed <EXCEEDACT>[/NOTEXCEEDACT]\n");
 	fprintf(stderr, "                  Define how to handle packets which exceed (<EXCEEDACT>)\n");
 	fprintf(stderr, "                  or conform (<NOTEXCEEDACT>) the configured bandwidth limit.\n");
-	fprintf(stderr, "       EXCEEDACT/NOTEXCEEDACT := { pipe | ok | reclassify | drop | continue }\n");
+	fprintf(stderr, "       EXCEEDACT/NOTEXCEEDACT := { pipe | ok | reclassify | drop | continue |\n");
+	fprintf(stderr, "                                   goto chain <CHAIN_INDEX> }\n");
 	exit(-1);
 }
 
@@ -150,7 +151,8 @@ int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 			   matches(*argv, "shot") == 0 ||
 			   matches(*argv, "continue") == 0 ||
 			   matches(*argv, "pass") == 0 ||
-			   matches(*argv, "pipe") == 0) {
+			   matches(*argv, "pipe") == 0 ||
+			   matches(*argv, "goto") == 0) {
 			if (parse_action_control(&argc, &argv, &p.action, false))
 				return -1;
 		} else if (strcmp(*argv, "conform-exceed") == 0) {

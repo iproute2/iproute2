@@ -45,7 +45,8 @@ explain(void)
 #ifdef CONFIG_GACT_PROB
 	fprintf(stderr, "Usage: ... gact <ACTION> [RAND] [INDEX]\n");
 	fprintf(stderr,
-		"Where: \tACTION := reclassify | drop | continue | pass | pipe\n"
+		"Where: \tACTION := reclassify | drop | continue | pass | pipe |\n"
+		"       \t          goto chain <CHAIN_INDEX>\n"
 			"\tRAND := random <RANDTYPE> <ACTION> <VAL>\n"
 			"\tRANDTYPE := netrand | determ\n"
 			"\tVAL : = value not exceeding 10000\n"
@@ -54,7 +55,8 @@ explain(void)
 #else
 	fprintf(stderr, "Usage: ... gact <ACTION> [INDEX]\n");
 	fprintf(stderr,
-		"Where: \tACTION := reclassify | drop | continue | pass | pipe\n"
+		"Where: \tACTION := reclassify | drop | continue | pass | pipe |\n"
+		"       \t          goto chain <CHAIN_INDEX>\n"
 		"\tINDEX := index value used\n"
 		"\n");
 #endif

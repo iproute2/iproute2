@@ -415,6 +415,8 @@ static const char *action_n2a(int action)
 {
 	static char buf[64];
 
+	if (TC_ACT_EXT_CMP(action, TC_ACT_GOTO_CHAIN))
+		return "goto";
 	switch (action) {
 	case TC_ACT_UNSPEC:
 		return "continue";
@@ -459,6 +461,7 @@ static int action_a2n(char *arg, int *result, bool allow_num)
 		{"ok", TC_ACT_OK},
 		{"reclassify", TC_ACT_RECLASSIFY},
 		{"pipe", TC_ACT_PIPE},
+		{"goto", TC_ACT_GOTO_CHAIN},
 		{ NULL },
 	}, *iter;
 
@@ -497,6 +500,22 @@ int parse_action_control(int *argc_p, char ***argv_p,
 	if (action_a2n(*argv, &result, allow_num) == -1) {
 		fprintf(stderr, "Bad action type %s\n", *argv);
 		return -1;
+	}
+	if (result == TC_ACT_GOTO_CHAIN) {
+		__u32 chain_index;
+
+		NEXT_ARG();
+		if (matches(*argv, "chain") != 0) {
+			fprintf(stderr, "\"chain index\" expected\n");
+			return -1;
+		}
+		NEXT_ARG();
+		if (get_u32(&chain_index, *argv, 10) ||
+		    chain_index > TC_ACT_EXT_VAL_MASK) {
+			fprintf(stderr, "Illegal \"chain index\"\n");
+			return -1;
+		}
+		result |= chain_index;
 	}
 	NEXT_ARG_FWD();
 	*argc_p = argc;
@@ -605,7 +624,10 @@ int parse_action_control_slash(int *argc_p, char ***argv_p,
 void print_action_control(FILE *f, const char *prefix,
 			  int action, const char *suffix)
 {
-	fprintf(f, "%s%s%s", prefix, action_n2a(action), suffix);
+	fprintf(f, "%s%s", prefix, action_n2a(action));
+	if (TC_ACT_EXT_CMP(action, TC_ACT_GOTO_CHAIN))
+		fprintf(f, " chain %u", action & TC_ACT_EXT_VAL_MASK);
+	fprintf(f, "%s", suffix);
 }
 
 int get_linklayer(unsigned int *val, const char *arg)

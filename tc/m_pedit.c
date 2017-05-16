@@ -45,7 +45,8 @@ static void explain(void)
 		"\t\tCMD:= clear | invert | set <setval>| add <addval> | retain\n"
 		"\t<LAYERED>:= ip <ipdata> | ip6 <ip6data>\n"
 		" \t\t| udp <udpdata> | tcp <tcpdata> | icmp <icmpdata>\n"
-		"\tCONTROL:= reclassify | pipe | drop | continue | pass\n"
+		"\tCONTROL:= reclassify | pipe | drop | continue | pass |\n"
+		"\t          goto chain <CHAIN_INDEX>\n"
 		"\tNOTE: if 'ex' is set, extended functionality will be supported (kernel >= 4.11)\n"
 		"For Example usage look at the examples directory\n");
 
