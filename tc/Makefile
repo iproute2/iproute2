@@ -45,6 +45,7 @@ TCMODULES += m_nat.o
 TCMODULES += m_pedit.o
 TCMODULES += m_ife.o
 TCMODULES += m_skbedit.o
+TCMODULES += m_skbmod.o
 TCMODULES += m_csum.o
 TCMODULES += m_simple.o
 TCMODULES += m_vlan.o
