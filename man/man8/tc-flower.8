@@ -35,6 +35,8 @@ flower \- flow based traffic control filter
 .IR PREFIX " | { "
 .BR dst_port " | " src_port " } "
 .IR port_number " } | "
+.B tcp_flags
+.IR MASKED_TCP_FLAGS " | "
 .B type
 .IR MASKED_TYPE " | "
 .B code
@@ -135,6 +137,12 @@ If the prefix is missing, \fBtc\fR assumes a full-length host match.
 Match on layer 4 protocol source or destination port number. Only available for
 .BR ip_proto " values " udp ", " tcp  " and " sctp
 which have to be specified in beforehand.
+.TP
+.BI tcp_flags " MASKED_TCP_FLAGS"
+Match on TCP flags represented as 12bit bitfield in in hexadecimal format.
+A mask may be optionally provided to limit the bits which are matched. A mask
+is provided by following the value with a slash and then the mask. If the mask
+is missing then a match on all bits is assumed.
 .TP
 .BI type " MASKED_TYPE"
 .TQ

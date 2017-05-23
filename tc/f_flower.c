@@ -57,6 +57,7 @@ static void explain(void)
 		"                       src_ip PREFIX |\n"
 		"                       dst_port PORT-NUMBER |\n"
 		"                       src_port PORT-NUMBER |\n"
+		"                       tcp_flags MASKED-TCP_FLAGS |\n"
 		"                       type MASKED-ICMP-TYPE |\n"
 		"                       code MASKED-ICMP-CODE |\n"
 		"                       arp_tip IPV4-PREFIX |\n"
@@ -474,6 +475,41 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 	return 0;
 }
 
+#define TCP_FLAGS_MAX_MASK 0xfff
+
+static int flower_parse_tcp_flags(char *str, int flags_type, int mask_type,
+				  struct nlmsghdr *n)
+{
+	char *slash;
+	int ret, err = -1;
+	__u16 flags;
+
+	slash = strchr(str, '/');
+	if (slash)
+		*slash = '\0';
+
+	ret = get_u16(&flags, str, 16);
+	if (ret < 0 || flags & ~TCP_FLAGS_MAX_MASK)
+		goto err;
+
+	addattr16(n, MAX_MSG, flags_type, htons(flags));
+
+	if (slash) {
+		ret = get_u16(&flags, slash + 1, 16);
+		if (ret < 0 || flags & ~TCP_FLAGS_MAX_MASK)
+			goto err;
+	} else {
+		flags = TCP_FLAGS_MAX_MASK;
+	}
+	addattr16(n, MAX_MSG, mask_type, htons(flags));
+
+	err = 0;
+err:
+	if (slash)
+		*slash = '/';
+	return err;
+}
+
 static int flower_parse_key_id(const char *str, int type, struct nlmsghdr *n)
 {
 	int ret;
@@ -669,6 +705,16 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 						FLOWER_ENDPOINT_SRC, n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"src_port\"\n");
+				return -1;
+			}
+		} else if (matches(*argv, "tcp_flags") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_tcp_flags(*argv,
+						     TCA_FLOWER_KEY_TCP_FLAGS,
+						     TCA_FLOWER_KEY_TCP_FLAGS_MASK,
+						     n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"tcp_flags\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "type") == 0) {
@@ -1000,6 +1046,19 @@ static void flower_print_port(FILE *f, char *name, struct rtattr *attr)
 		fprintf(f, "\n  %s %d", name, rta_getattr_be16(attr));
 }
 
+static void flower_print_tcp_flags(FILE *f, char *name,
+				  struct rtattr *flags_attr,
+				  struct rtattr *mask_attr)
+{
+	if (!flags_attr)
+		return;
+	fprintf(f, "\n  %s %x", name, rta_getattr_be16(flags_attr));
+	if (!mask_attr)
+		return;
+	fprintf(f, "/%x", rta_getattr_be16(mask_attr));
+}
+
+
 static void flower_print_key_id(FILE *f, const char *name,
 				struct rtattr *attr)
 {
@@ -1109,6 +1168,9 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	nl_type = flower_port_attr_type(ip_proto, FLOWER_ENDPOINT_SRC);
 	if (nl_type >= 0)
 		flower_print_port(f, "src_port", tb[nl_type]);
+
+	flower_print_tcp_flags(f, "tcp_flags", tb[TCA_FLOWER_KEY_TCP_FLAGS],
+			       tb[TCA_FLOWER_KEY_TCP_FLAGS_MASK]);
 
 	nl_type = flower_icmp_attr_type(eth_type, ip_proto,
 					FLOWER_ICMP_FIELD_TYPE);
