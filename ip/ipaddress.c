@@ -1211,16 +1211,6 @@ brief_exit:
 	return 0;
 }
 
-struct nlmsg_list {
-	struct nlmsg_list *next;
-	struct nlmsghdr	  h;
-};
-
-struct nlmsg_chain {
-	struct nlmsg_list *head;
-	struct nlmsg_list *tail;
-};
-
 static int print_selected_addrinfo(struct ifinfomsg *ifi,
 				   struct nlmsg_list *ainfo, FILE *fp)
 {
@@ -1371,7 +1361,7 @@ static int ipaddr_restore(void)
 	exit(rtnl_from_file(stdin, &restore_handler, NULL));
 }
 
-static void free_nlmsg_chain(struct nlmsg_chain *info)
+void free_nlmsg_chain(struct nlmsg_chain *info)
 {
 	struct nlmsg_list *l, *n;
 
@@ -1534,10 +1524,43 @@ static int iplink_filter_req(struct nlmsghdr *nlh, int reqlen)
 	return 0;
 }
 
+/* fills in linfo with link data and optionally ainfo with address info
+ * caller can walk lists as desired and must call free_nlmsg_chain for
+ * both when done
+ */
+int ip_linkaddr_list(int family, req_filter_fn_t filter_fn,
+		     struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
+{
+	if (rtnl_wilddump_req_filter_fn(&rth, preferred_family, RTM_GETLINK,
+					filter_fn) < 0) {
+		perror("Cannot send dump request");
+		return 1;
+	}
+
+	if (rtnl_dump_filter(&rth, store_nlmsg, linfo) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		return 1;
+	}
+
+	if (ainfo) {
+		if (rtnl_wilddump_request(&rth, family, RTM_GETADDR) < 0) {
+			perror("Cannot send dump request");
+			return 1;
+		}
+
+		if (rtnl_dump_filter(&rth, store_nlmsg, ainfo) < 0) {
+			fprintf(stderr, "Dump terminated\n");
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 {
 	struct nlmsg_chain linfo = { NULL, NULL};
-	struct nlmsg_chain ainfo = { NULL, NULL};
+	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = NULL;
 	struct nlmsg_list *l;
 	char *filter_dev = NULL;
 	int no_link = 0;
@@ -1714,33 +1737,19 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		exit(0);
 	}
 
-	if (rtnl_wilddump_req_filter_fn(&rth, preferred_family, RTM_GETLINK,
-					iplink_filter_req) < 0) {
-		perror("Cannot send dump request");
-		exit(1);
-	}
-
-	if (rtnl_dump_filter(&rth, store_nlmsg, &linfo) < 0) {
-		fprintf(stderr, "Dump terminated\n");
-		exit(1);
-	}
-
 	if (filter.family != AF_PACKET) {
+		ainfo = &_ainfo;
+
 		if (filter.oneline)
 			no_link = 1;
-
-		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
-			perror("Cannot send dump request");
-			exit(1);
-		}
-
-		if (rtnl_dump_filter(&rth, store_nlmsg, &ainfo) < 0) {
-			fprintf(stderr, "Dump terminated\n");
-			exit(1);
-		}
-
-		ipaddr_filter(&linfo, &ainfo);
 	}
+
+	if (ip_linkaddr_list(filter.family, iplink_filter_req,
+			     &linfo, ainfo) != 0)
+		goto out;
+
+	if (filter.family != AF_PACKET)
+		ipaddr_filter(&linfo, ainfo);
 
 	for (l = linfo.head; l; l = l->next) {
 		int res = 0;
@@ -1750,20 +1759,22 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			if (print_linkinfo_brief(NULL, &l->h, stdout) == 0)
 				if (filter.family != AF_PACKET)
 					print_selected_addrinfo(ifi,
-								ainfo.head,
+								ainfo->head,
 								stdout);
 		} else if (no_link ||
-			 (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
+			  (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
 			if (filter.family != AF_PACKET)
 				print_selected_addrinfo(ifi,
-							ainfo.head, stdout);
+							ainfo->head, stdout);
 			if (res > 0 && !do_link && show_stats)
 				print_link_stats(stdout, &l->h);
 		}
 	}
 	fflush(stdout);
 
-	free_nlmsg_chain(&ainfo);
+out:
+	if (ainfo)
+		free_nlmsg_chain(ainfo);
 	free_nlmsg_chain(&linfo);
 
 	return 0;

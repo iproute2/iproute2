@@ -25,6 +25,16 @@ struct rtnl_handle {
 	int			flags;
 };
 
+struct nlmsg_list {
+	struct nlmsg_list *next;
+	struct nlmsghdr   h;
+};
+
+struct nlmsg_chain {
+	struct nlmsg_list *head;
+	struct nlmsg_list *tail;
+};
+
 extern int rcvbuf;
 
 int rtnl_open(struct rtnl_handle *rth, unsigned int subscriptions)
