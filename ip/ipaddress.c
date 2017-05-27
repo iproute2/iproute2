@@ -44,27 +44,7 @@ enum {
 	IPADD_SAVE,
 };
 
-static struct
-{
-	int ifindex;
-	int family;
-	int oneline;
-	int showqueue;
-	inet_prefix pfx;
-	int scope, scopemask;
-	int flags, flagmask;
-	int up;
-	char *label;
-	int flushed;
-	char *flushb;
-	int flushp;
-	int flushe;
-	int group;
-	int master;
-	char *kind;
-	char *slave_kind;
-} filter;
-
+static struct link_filter filter;
 static int do_link;
 
 static void usage(void) __attribute__((noreturn));

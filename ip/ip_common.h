@@ -1,3 +1,23 @@
+struct link_filter {
+	int ifindex;
+	int family;
+	int oneline;
+	int showqueue;
+	inet_prefix pfx;
+	int scope, scopemask;
+	int flags, flagmask;
+	int up;
+	char *label;
+	int flushed;
+	char *flushb;
+	int flushp;
+	int flushe;
+	int group;
+	int master;
+	char *kind;
+	char *slave_kind;
+};
+
 int get_operstate(const char *name);
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg);
