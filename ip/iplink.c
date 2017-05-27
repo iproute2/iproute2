@@ -1036,7 +1036,7 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 		return -2;
 
 	if (brief)
-		print_linkinfo_brief(NULL, &answer.n, stdout);
+		print_linkinfo_brief(NULL, &answer.n, stdout, NULL);
 	else
 		print_linkinfo(NULL, &answer.n, stdout);
 

@@ -634,7 +634,8 @@ static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 }
 
 int print_linkinfo_brief(const struct sockaddr_nl *who,
-				struct nlmsghdr *n, void *arg)
+			 struct nlmsghdr *n, void *arg,
+			 struct link_filter *pfilter)
 {
 	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
@@ -651,9 +652,12 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	if (len < 0)
 		return -1;
 
-	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
+	if (!pfilter)
+		pfilter = &filter;
+
+	if (pfilter->ifindex && ifi->ifi_index != pfilter->ifindex)
 		return -1;
-	if (filter.up && !(ifi->ifi_flags&IFF_UP))
+	if (pfilter->up && !(ifi->ifi_flags&IFF_UP))
 		return -1;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
@@ -664,30 +668,30 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		name = rta_getattr_str(tb[IFLA_IFNAME]);
 	}
 
-	if (filter.label &&
-	    (!filter.family || filter.family == AF_PACKET) &&
-	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
+	if (pfilter->label &&
+	    (!pfilter->family || pfilter->family == AF_PACKET) &&
+	    fnmatch(pfilter->label, RTA_DATA(tb[IFLA_IFNAME]), 0))
 		return -1;
 
 	if (tb[IFLA_GROUP]) {
 		int group = rta_getattr_u32(tb[IFLA_GROUP]);
 
-		if (filter.group != -1 && group != filter.group)
+		if (pfilter->group != -1 && group != pfilter->group)
 			return -1;
 	}
 
 	if (tb[IFLA_MASTER]) {
 		int master = rta_getattr_u32(tb[IFLA_MASTER]);
 
-		if (filter.master > 0 && master != filter.master)
+		if (pfilter->master > 0 && master != pfilter->master)
 			return -1;
-	} else if (filter.master > 0)
+	} else if (pfilter->master > 0)
 		return -1;
 
-	if (filter.kind && match_link_kind(tb, filter.kind, 0))
+	if (pfilter->kind && match_link_kind(tb, pfilter->kind, 0))
 		return -1;
 
-	if (filter.slave_kind && match_link_kind(tb, filter.slave_kind, 1))
+	if (pfilter->slave_kind && match_link_kind(tb, pfilter->slave_kind, 1))
 		return -1;
 
 	if (n->nlmsg_type == RTM_DELLINK)
@@ -713,7 +717,7 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
 
-	if (filter.family == AF_PACKET) {
+	if (pfilter->family == AF_PACKET) {
 		SPRINT_BUF(b1);
 		if (tb[IFLA_ADDRESS]) {
 			color_fprintf(fp, COLOR_MAC, "%s ",
@@ -724,10 +728,10 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		}
 	}
 
-	if (filter.family == AF_PACKET)
+	if (pfilter->family == AF_PACKET)
 		print_link_flags(fp, ifi->ifi_flags, m_flag);
 
-	if (filter.family == AF_PACKET)
+	if (pfilter->family == AF_PACKET)
 		fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
@@ -1736,7 +1740,8 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 
 		if (brief) {
-			if (print_linkinfo_brief(NULL, &l->h, stdout) == 0)
+			if (print_linkinfo_brief(NULL, &l->h,
+						 stdout, NULL) == 0)
 				if (filter.family != AF_PACKET)
 					print_selected_addrinfo(ifi,
 								ainfo->head,
