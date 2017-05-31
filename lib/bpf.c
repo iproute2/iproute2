@@ -648,6 +648,16 @@ static int bpf_obj_get(const char *pathname, enum bpf_prog_type type)
 	return bpf(BPF_OBJ_GET, &attr, sizeof(attr));
 }
 
+static int bpf_obj_pinned(const char *pathname, enum bpf_prog_type type)
+{
+	int prog_fd = bpf_obj_get(pathname, type);
+
+	if (prog_fd < 0)
+		fprintf(stderr, "Couldn\'t retrieve pinned program \'%s\': %s\n",
+			pathname, strerror(errno));
+	return prog_fd;
+}
+
 enum bpf_mode {
 	CBPF_BYTECODE,
 	CBPF_FILE,
@@ -750,7 +760,7 @@ static int bpf_parse(enum bpf_prog_type *type, enum bpf_mode *mode,
 	else if (*mode == EBPF_OBJECT)
 		ret = bpf_obj_open(file, *type, section, verbose);
 	else if (*mode == EBPF_PINNED)
-		ret = bpf_obj_get(file, *type);
+		ret = bpf_obj_pinned(file, *type);
 	else
 		return -1;
 
