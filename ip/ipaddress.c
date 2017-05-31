@@ -44,27 +44,7 @@ enum {
 	IPADD_SAVE,
 };
 
-static struct
-{
-	int ifindex;
-	int family;
-	int oneline;
-	int showqueue;
-	inet_prefix pfx;
-	int scope, scopemask;
-	int flags, flagmask;
-	int up;
-	char *label;
-	int flushed;
-	char *flushb;
-	int flushp;
-	int flushe;
-	int group;
-	int master;
-	char *kind;
-	char *slave_kind;
-} filter;
-
+static struct link_filter filter;
 static int do_link;
 
 static void usage(void) __attribute__((noreturn));
@@ -654,7 +634,8 @@ static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 }
 
 int print_linkinfo_brief(const struct sockaddr_nl *who,
-				struct nlmsghdr *n, void *arg)
+			 struct nlmsghdr *n, void *arg,
+			 struct link_filter *pfilter)
 {
 	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
@@ -671,9 +652,12 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	if (len < 0)
 		return -1;
 
-	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
+	if (!pfilter)
+		pfilter = &filter;
+
+	if (pfilter->ifindex && ifi->ifi_index != pfilter->ifindex)
 		return -1;
-	if (filter.up && !(ifi->ifi_flags&IFF_UP))
+	if (pfilter->up && !(ifi->ifi_flags&IFF_UP))
 		return -1;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
@@ -684,30 +668,30 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		name = rta_getattr_str(tb[IFLA_IFNAME]);
 	}
 
-	if (filter.label &&
-	    (!filter.family || filter.family == AF_PACKET) &&
-	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
+	if (pfilter->label &&
+	    (!pfilter->family || pfilter->family == AF_PACKET) &&
+	    fnmatch(pfilter->label, RTA_DATA(tb[IFLA_IFNAME]), 0))
 		return -1;
 
 	if (tb[IFLA_GROUP]) {
 		int group = rta_getattr_u32(tb[IFLA_GROUP]);
 
-		if (filter.group != -1 && group != filter.group)
+		if (pfilter->group != -1 && group != pfilter->group)
 			return -1;
 	}
 
 	if (tb[IFLA_MASTER]) {
 		int master = rta_getattr_u32(tb[IFLA_MASTER]);
 
-		if (filter.master > 0 && master != filter.master)
+		if (pfilter->master > 0 && master != pfilter->master)
 			return -1;
-	} else if (filter.master > 0)
+	} else if (pfilter->master > 0)
 		return -1;
 
-	if (filter.kind && match_link_kind(tb, filter.kind, 0))
+	if (pfilter->kind && match_link_kind(tb, pfilter->kind, 0))
 		return -1;
 
-	if (filter.slave_kind && match_link_kind(tb, filter.slave_kind, 1))
+	if (pfilter->slave_kind && match_link_kind(tb, pfilter->slave_kind, 1))
 		return -1;
 
 	if (n->nlmsg_type == RTM_DELLINK)
@@ -733,7 +717,7 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
 
-	if (filter.family == AF_PACKET) {
+	if (pfilter->family == AF_PACKET) {
 		SPRINT_BUF(b1);
 		if (tb[IFLA_ADDRESS]) {
 			color_fprintf(fp, COLOR_MAC, "%s ",
@@ -744,10 +728,10 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		}
 	}
 
-	if (filter.family == AF_PACKET)
+	if (pfilter->family == AF_PACKET)
 		print_link_flags(fp, ifi->ifi_flags, m_flag);
 
-	if (filter.family == AF_PACKET)
+	if (pfilter->family == AF_PACKET)
 		fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
@@ -1211,16 +1195,6 @@ brief_exit:
 	return 0;
 }
 
-struct nlmsg_list {
-	struct nlmsg_list *next;
-	struct nlmsghdr	  h;
-};
-
-struct nlmsg_chain {
-	struct nlmsg_list *head;
-	struct nlmsg_list *tail;
-};
-
 static int print_selected_addrinfo(struct ifinfomsg *ifi,
 				   struct nlmsg_list *ainfo, FILE *fp)
 {
@@ -1371,7 +1345,7 @@ static int ipaddr_restore(void)
 	exit(rtnl_from_file(stdin, &restore_handler, NULL));
 }
 
-static void free_nlmsg_chain(struct nlmsg_chain *info)
+void free_nlmsg_chain(struct nlmsg_chain *info)
 {
 	struct nlmsg_list *l, *n;
 
@@ -1534,10 +1508,43 @@ static int iplink_filter_req(struct nlmsghdr *nlh, int reqlen)
 	return 0;
 }
 
+/* fills in linfo with link data and optionally ainfo with address info
+ * caller can walk lists as desired and must call free_nlmsg_chain for
+ * both when done
+ */
+int ip_linkaddr_list(int family, req_filter_fn_t filter_fn,
+		     struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
+{
+	if (rtnl_wilddump_req_filter_fn(&rth, preferred_family, RTM_GETLINK,
+					filter_fn) < 0) {
+		perror("Cannot send dump request");
+		return 1;
+	}
+
+	if (rtnl_dump_filter(&rth, store_nlmsg, linfo) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		return 1;
+	}
+
+	if (ainfo) {
+		if (rtnl_wilddump_request(&rth, family, RTM_GETADDR) < 0) {
+			perror("Cannot send dump request");
+			return 1;
+		}
+
+		if (rtnl_dump_filter(&rth, store_nlmsg, ainfo) < 0) {
+			fprintf(stderr, "Dump terminated\n");
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 {
 	struct nlmsg_chain linfo = { NULL, NULL};
-	struct nlmsg_chain ainfo = { NULL, NULL};
+	struct nlmsg_chain _ainfo = { NULL, NULL}, *ainfo = NULL;
 	struct nlmsg_list *l;
 	char *filter_dev = NULL;
 	int no_link = 0;
@@ -1714,56 +1721,45 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		exit(0);
 	}
 
-	if (rtnl_wilddump_req_filter_fn(&rth, preferred_family, RTM_GETLINK,
-					iplink_filter_req) < 0) {
-		perror("Cannot send dump request");
-		exit(1);
-	}
-
-	if (rtnl_dump_filter(&rth, store_nlmsg, &linfo) < 0) {
-		fprintf(stderr, "Dump terminated\n");
-		exit(1);
-	}
-
 	if (filter.family != AF_PACKET) {
+		ainfo = &_ainfo;
+
 		if (filter.oneline)
 			no_link = 1;
-
-		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
-			perror("Cannot send dump request");
-			exit(1);
-		}
-
-		if (rtnl_dump_filter(&rth, store_nlmsg, &ainfo) < 0) {
-			fprintf(stderr, "Dump terminated\n");
-			exit(1);
-		}
-
-		ipaddr_filter(&linfo, &ainfo);
 	}
+
+	if (ip_linkaddr_list(filter.family, iplink_filter_req,
+			     &linfo, ainfo) != 0)
+		goto out;
+
+	if (filter.family != AF_PACKET)
+		ipaddr_filter(&linfo, ainfo);
 
 	for (l = linfo.head; l; l = l->next) {
 		int res = 0;
 		struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 
 		if (brief) {
-			if (print_linkinfo_brief(NULL, &l->h, stdout) == 0)
+			if (print_linkinfo_brief(NULL, &l->h,
+						 stdout, NULL) == 0)
 				if (filter.family != AF_PACKET)
 					print_selected_addrinfo(ifi,
-								ainfo.head,
+								ainfo->head,
 								stdout);
 		} else if (no_link ||
-			 (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
+			  (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
 			if (filter.family != AF_PACKET)
 				print_selected_addrinfo(ifi,
-							ainfo.head, stdout);
+							ainfo->head, stdout);
 			if (res > 0 && !do_link && show_stats)
 				print_link_stats(stdout, &l->h);
 		}
 	}
 	fflush(stdout);
 
-	free_nlmsg_chain(&ainfo);
+out:
+	if (ainfo)
+		free_nlmsg_chain(ainfo);
 	free_nlmsg_chain(&linfo);
 
 	return 0;

@@ -1,8 +1,29 @@
+struct link_filter {
+	int ifindex;
+	int family;
+	int oneline;
+	int showqueue;
+	inet_prefix pfx;
+	int scope, scopemask;
+	int flags, flagmask;
+	int up;
+	char *label;
+	int flushed;
+	char *flushb;
+	int flushp;
+	int flushe;
+	int group;
+	int master;
+	char *kind;
+	char *slave_kind;
+};
+
 int get_operstate(const char *name);
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg);
 int print_linkinfo_brief(const struct sockaddr_nl *who,
-			 struct nlmsghdr *n, void *arg);
+			 struct nlmsghdr *n, void *arg,
+			 struct link_filter *filter);
 int print_addrinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg);
 int print_addrlabel(const struct sockaddr_nl *who,
@@ -64,6 +85,10 @@ int do_seg6(int argc, char **argv);
 
 int iplink_get(unsigned int flags, char *name, __u32 filt_mask);
 int iplink_ifla_xstats(int argc, char **argv);
+
+int ip_linkaddr_list(int family, req_filter_fn_t filter_fn,
+		     struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo);
+void free_nlmsg_chain(struct nlmsg_chain *info);
 
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 {

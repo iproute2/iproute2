@@ -13,6 +13,10 @@ ip-vrf \- run a command against a vrf
 .sp
 
 .ti -8
+.BR "ip vrf show"
+.RI "[ " NAME " ]"
+
+.ti -8
 .BR "ip vrf identify"
 .RI "[ " PID " ]"
 
@@ -43,6 +47,13 @@ implicitly using a helper to set SO_BINDTODEVICE for all IPv4 and IPv6
 sockets (AF_INET and AF_INET6) when the socket is created. This ip-vrf command
 is a helper to run a command against a specific VRF with the VRF association
 inherited parent to child.
+
+.TP
+.B ip vrf show [ NAME ] - Show all configured VRF
+.sp
+This command lists all VRF and their corresponding table ids. If NAME is
+given, then only that VRF and table id is shown. The latter command is
+useful for scripting where the table id for a VRF is needed.
 
 .TP
 .B ip vrf exec [ NAME ] cmd ... - Run cmd against the named VRF
