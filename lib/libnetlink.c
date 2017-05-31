@@ -266,21 +266,27 @@ static int rtnl_dump_done(const struct rtnl_handle *rth,
 {
 	int len = *(int *)NLMSG_DATA(h);
 
-	if (rth->proto == NETLINK_SOCK_DIAG) {
-		if (h->nlmsg_len < NLMSG_LENGTH(sizeof(int))) {
-			fprintf(stderr, "DONE truncated\n");
-			return -1;
-		}
-
-
-		if (len < 0) {
-			errno = -len;
-			if (errno == ENOENT || errno == EOPNOTSUPP)
-				return -1;
-			perror("RTNETLINK answers");
-			return len;
-		}
+	if (h->nlmsg_len < NLMSG_LENGTH(sizeof(int))) {
+		fprintf(stderr, "DONE truncated\n");
+		return -1;
 	}
+
+	if (len < 0) {
+		errno = -len;
+		switch (errno) {
+		case ENOENT:
+		case EOPNOTSUPP:
+			return -1;
+		case EMSGSIZE:
+			fprintf(stderr,
+				"Error: Buffer too small for object.\n");
+			break;
+		default:
+			perror("RTNETLINK answers");
+		}
+		return len;
+	}
+
 	return 0;
 }
 
