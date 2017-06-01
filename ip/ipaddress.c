@@ -737,6 +737,26 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	return 0;
 }
 
+static const char *link_events[] = {
+	[IFLA_EVENT_NONE] = "NONE",
+	[IFLA_EVENT_REBOOT] = "REBOOT",
+	[IFLA_EVENT_FEATURES] = "FEATURE CHANGE",
+	[IFLA_EVENT_BONDING_FAILOVER] = "BONDING FAILOVER",
+	[IFLA_EVENT_NOTIFY_PEERS] = "NOTIFY PEERS",
+	[IFLA_EVENT_IGMP_RESEND] = "RESEND IGMP",
+	[IFLA_EVENT_BONDING_OPTIONS] = "BONDING OPTION"
+};
+
+static void print_link_event(FILE *f, __u32 event)
+{
+	if (event >= ARRAY_SIZE(link_events))
+		fprintf(f, "event %d ", event);
+	else {
+		if (event)
+			fprintf(f, "event %s ", link_events[event]);
+	}
+}
+
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg)
 {
@@ -841,6 +861,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (filter.showqueue)
 		print_queuelen(fp, tb);
+
+	if (tb[IFLA_EVENT])
+		print_link_event(fp, rta_getattr_u32(tb[IFLA_EVENT]));
 
 	if (!filter.family || filter.family == AF_PACKET || show_details) {
 		SPRINT_BUF(b1);
