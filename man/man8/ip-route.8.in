@@ -28,6 +28,7 @@ ip-route \- routing table management
 
 .ti -8
 .B  ip route get
+.I ROUTE_GET_FLAGS
 .IR ADDRESS " [ "
 .BI from " ADDRESS " iif " STRING"
 .RB " ] [ " oif
@@ -218,6 +219,12 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR SEGMENTS " [ "
 .B hmac
 .IR KEYID " ]"
+
+.ti -8
+.IR ROUTE_GET_FLAGS " := "
+.BR " [ "
+.BR fibmatch
+.BR " ] "
 
 .SH DESCRIPTION
 .B ip route
@@ -928,6 +935,11 @@ get a single route
 .RS
 this command gets a single route to a destination and prints its
 contents exactly as the kernel sees it.
+
+.TP
+.BI fibmatch
+Return full fib lookup matched route. Default is to return the resolved
+dst entry
 
 .TP
 .BI to " ADDRESS " (default)

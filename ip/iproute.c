@@ -65,7 +65,8 @@ static void usage(void)
 	fprintf(stderr, "       ip route save SELECTOR\n");
 	fprintf(stderr, "       ip route restore\n");
 	fprintf(stderr, "       ip route showdump\n");
-	fprintf(stderr, "       ip route get ADDRESS [ from ADDRESS iif STRING ]\n");
+	fprintf(stderr, "       ip route get [ ROUTE_GET_FLAGS ] ADDRESS\n");
+	fprintf(stderr, "                            [ from ADDRESS iif STRING ]\n");
 	fprintf(stderr, "                            [ oif STRING ] [ tos TOS ]\n");
 	fprintf(stderr, "                            [ mark NUMBER ] [ vrf NAME ]\n");
 	fprintf(stderr, "                            [ uid NUMBER ]\n");
@@ -103,6 +104,7 @@ static void usage(void)
 	fprintf(stderr, "ENCAPHDR := [ MPLSLABEL | SEG6HDR ]\n");
 	fprintf(stderr, "SEG6HDR := [ mode SEGMODE ] segs ADDR1,ADDRi,ADDRn [hmac HMACKEYID] [cleanup]\n");
 	fprintf(stderr, "SEGMODE := [ encap | inline ]\n");
+	fprintf(stderr, "ROUTE_GET_FLAGS := [ fibmatch ]\n");
 	exit(-1);
 }
 
@@ -1674,6 +1676,7 @@ static int iproute_get(int argc, char **argv)
 	char  *idev = NULL;
 	char  *odev = NULL;
 	int connected = 0;
+	int fib_match = 0;
 	int from_ok = 0;
 	unsigned int mark = 0;
 
@@ -1728,6 +1731,8 @@ static int iproute_get(int argc, char **argv)
 			if (get_unsigned(&uid, *argv, 0))
 				invarg("invalid UID\n", *argv);
 			addattr32(&req.n, sizeof(req), RTA_UID, uid);
+		} else if (matches(*argv, "fibmatch") == 0) {
+			fib_match = 1;
 		} else {
 			inet_prefix addr;
 
@@ -1776,6 +1781,8 @@ static int iproute_get(int argc, char **argv)
 		req.r.rtm_family = AF_INET;
 
 	req.r.rtm_flags |= RTM_F_LOOKUP_TABLE;
+	if (fib_match)
+		req.r.rtm_flags |= RTM_F_FIB_MATCH;
 
 	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
 		return -2;
