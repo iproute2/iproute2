@@ -1564,10 +1564,10 @@ sent by the VF.
 which may impact security and/or performance. (e.g. VF multicast promiscuous mode)
 .sp
 .BI node_guid " eui64"
-- configure node GUID for the VF.
+- configure node GUID for Infiniband VFs.
 .sp
 .BI port_guid " eui64"
-- configure port GUID for the VF.
+- configure port GUID for Infiniband VFs.
 .in -8
 
 .TP
