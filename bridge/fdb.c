@@ -262,6 +262,10 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		}
 		if (r->ndm_flags & NTF_EXT_LEARNED) {
 			start_json_fdb_flags_array(&fdb_flags);
+			jsonw_string(jw_global, "extern_learn");
+		}
+		if (r->ndm_flags & NTF_OFFLOADED) {
+			start_json_fdb_flags_array(&fdb_flags);
 			jsonw_string(jw_global, "offload");
 		}
 		if (r->ndm_flags & NTF_MASTER)
@@ -280,6 +284,8 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (r->ndm_flags & NTF_ROUTER)
 			fprintf(fp, "router ");
 		if (r->ndm_flags & NTF_EXT_LEARNED)
+			fprintf(fp, "extern_learn ");
+		if (r->ndm_flags & NTF_OFFLOADED)
 			fprintf(fp, "offload ");
 		if (tb[NDA_MASTER]) {
 			fprintf(fp, "master %s ",
