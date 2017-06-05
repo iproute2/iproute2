@@ -430,6 +430,8 @@ static const char *action_n2a(int action)
 		return "pipe";
 	case TC_ACT_STOLEN:
 		return "stolen";
+	case TC_ACT_TRAP:
+		return "trap";
 	default:
 		snprintf(buf, 64, "%d", action);
 		buf[63] = '\0';
@@ -462,6 +464,7 @@ static int action_a2n(char *arg, int *result, bool allow_num)
 		{"reclassify", TC_ACT_RECLASSIFY},
 		{"pipe", TC_ACT_PIPE},
 		{"goto", TC_ACT_GOTO_CHAIN},
+		{"trap", TC_ACT_TRAP},
 		{ NULL },
 	}, *iter;
 
