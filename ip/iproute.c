@@ -1241,16 +1241,14 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (!dst_ok)
 		usage();
 
-	if (d || nhs_ok)  {
+	if (d) {
 		int idx;
 
-		if (d) {
-			if ((idx = ll_name_to_index(d)) == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n", d);
-				return -1;
-			}
-			addattr32(&req.n, sizeof(req), RTA_OIF, idx);
+		if ((idx = ll_name_to_index(d)) == 0) {
+			fprintf(stderr, "Cannot find device \"%s\"\n", d);
+			return -1;
 		}
+		addattr32(&req.n, sizeof(req), RTA_OIF, idx);
 	}
 
 	if (mxrta->rta_len > RTA_LENGTH(0)) {
