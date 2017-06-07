@@ -53,6 +53,8 @@ static void explain(void)
 		"                       dst_mac MASKED-LLADDR |\n"
 		"                       src_mac MASKED-LLADDR |\n"
 		"                       ip_proto [tcp | udp | sctp | icmp | icmpv6 | IP-PROTO ] |\n"
+		"                       ip_tos MASKED-IP_TOS |\n"
+		"                       ip_ttl MASKED-IP_TTL |\n"
 		"                       dst_ip PREFIX |\n"
 		"                       src_ip PREFIX |\n"
 		"                       dst_port PORT-NUMBER |\n"
@@ -510,6 +512,41 @@ err:
 	return err;
 }
 
+static int flower_parse_ip_tos_ttl(char *str, int key_type, int mask_type,
+				   struct nlmsghdr *n)
+{
+	char *slash;
+	int ret, err = -1;
+	__u8 tos_ttl;
+
+	slash = strchr(str, '/');
+	if (slash)
+		*slash = '\0';
+
+	ret = get_u8(&tos_ttl, str, 10);
+	if (ret < 0)
+		ret = get_u8(&tos_ttl, str, 16);
+	if (ret < 0)
+		goto err;
+
+	addattr8(n, MAX_MSG, key_type, tos_ttl);
+
+	if (slash) {
+		ret = get_u8(&tos_ttl, slash + 1, 16);
+		if (ret < 0)
+			goto err;
+	} else {
+		tos_ttl = 0xff;
+	}
+	addattr8(n, MAX_MSG, mask_type, tos_ttl);
+
+	err = 0;
+err:
+	if (slash)
+		*slash = '/';
+	return err;
+}
+
 static int flower_parse_key_id(const char *str, int type, struct nlmsghdr *n)
 {
 	int ret;
@@ -663,6 +700,26 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 						    &ip_proto, n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"ip_proto\"\n");
+				return -1;
+			}
+		} else if (matches(*argv, "ip_tos") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_ip_tos_ttl(*argv,
+						      TCA_FLOWER_KEY_IP_TOS,
+						      TCA_FLOWER_KEY_IP_TOS_MASK,
+						      n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"ip_tos\"\n");
+				return -1;
+			}
+		} else if (matches(*argv, "ip_ttl") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_ip_tos_ttl(*argv,
+						      TCA_FLOWER_KEY_IP_TTL,
+						      TCA_FLOWER_KEY_IP_TTL_MASK,
+						      n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"ip_ttl\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "dst_ip") == 0) {
@@ -963,6 +1020,19 @@ static void flower_print_ip_proto(FILE *f, __u8 *p_ip_proto,
 	*p_ip_proto = ip_proto;
 }
 
+static void flower_print_ip_attr(FILE *f, char *name,
+				 struct rtattr *key_attr,
+				 struct rtattr *mask_attr)
+{
+	if (!key_attr)
+		return;
+
+	fprintf(f, "\n  %s %x", name, rta_getattr_u8(key_attr));
+	if (!mask_attr)
+		return;
+	fprintf(f, "/%x", rta_getattr_u8(mask_attr));
+}
+
 static void flower_print_matching_flags(FILE *f, char *name,
 					enum flower_matching_flags type,
 					struct rtattr *attr,
@@ -1149,6 +1219,11 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 
 	flower_print_eth_type(f, &eth_type, tb[TCA_FLOWER_KEY_ETH_TYPE]);
 	flower_print_ip_proto(f, &ip_proto, tb[TCA_FLOWER_KEY_IP_PROTO]);
+
+	flower_print_ip_attr(f, "ip_tos", tb[TCA_FLOWER_KEY_IP_TOS],
+			    tb[TCA_FLOWER_KEY_IP_TOS_MASK]);
+	flower_print_ip_attr(f, "ip_ttl", tb[TCA_FLOWER_KEY_IP_TTL],
+			    tb[TCA_FLOWER_KEY_IP_TTL_MASK]);
 
 	flower_print_ip_addr(f, "dst_ip", eth_type,
 			     tb[TCA_FLOWER_KEY_IPV4_DST],

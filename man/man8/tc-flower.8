@@ -30,7 +30,11 @@ flower \- flow based traffic control filter
 .BR vlan_ethtype " { " ipv4 " | " ipv6 " | "
 .IR ETH_TYPE " } | "
 .BR ip_proto " { " tcp " | " udp " | " sctp " | " icmp " | " icmpv6 " | "
-.IR IP_PROTO " } | { "
+.IR IP_PROTO " } | "
+.B ip_tos
+.IR MASKED_IP_TOS " | "
+.B ip_ttl
+.IR MASKED_IP_TTL " | { "
 .BR dst_ip " | " src_ip " } "
 .IR PREFIX " | { "
 .BR dst_port " | " src_port " } "
@@ -121,6 +125,17 @@ Match on layer four protocol.
 may be
 .BR tcp ", " udp ", " sctp ", " icmp ", " icmpv6
 or an unsigned 8bit value in hexadecimal format.
+.TP
+.BI ip_tos " MASKED_IP_TOS"
+Match on ipv4 TOS or ipv6 traffic-class - eight bits in hexadecimal format.
+A mask may be optionally provided to limit the bits which are matched. A mask
+is provided by following the value with a slash and then the mask. If the mask
+is missing then a match on all bits is assumed.
+.TP
+.BI ip_ttl " MASKED_IP_TTL"
+Match on ipv4 TTL or ipv6 hop-limit  - eight bits value in decimal or hexadecimal format.
+A mask may be optionally provided to limit the bits which are matched. Same
+logic is used for the mask as with matching on ip_tos.
 .TP
 .BI dst_ip " PREFIX"
 .TQ
