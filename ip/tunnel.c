@@ -54,6 +54,9 @@ const char *tnl_strproto(__u8 proto)
 	case IPPROTO_ESP:
 		strcpy(buf, "esp");
 		break;
+	case IPPROTO_MPLS:
+		strcpy(buf, "mpls");
+		break;
 	case 0:
 		strcpy(buf, "any");
 		break;

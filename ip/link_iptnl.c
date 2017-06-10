@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include <linux/in.h>
 #include <linux/ip.h>
 #include <linux/if_tunnel.h>
 #include "rt_names.h"
@@ -47,9 +48,8 @@ static void print_usage(FILE *f, int sit)
 		type
 	);
 	if (sit) {
-		fprintf(f,
-			"                [ mode { ip6ip | ipip | any } ]\n"
-			"                [ isatap ]\n");
+		fprintf(f, "          [ mode { ip6ip | ipip | mplsip | any } ]\n");
+		fprintf(f, "          [ isatap ]\n");
 	}
 	fprintf(f, "                [ external ]\n");
 	fprintf(f, "                [ fwmark MARK ]\n");
@@ -243,6 +243,9 @@ get_failed:
 				 strcmp(*argv, "ipip") == 0 ||
 				 strcmp(*argv, "ip4ip4") == 0)
 				proto = IPPROTO_IPIP;
+			else if (strcmp(*argv, "mpls/ipv4") == 0 ||
+				   strcmp(*argv, "mplsip") == 0)
+				proto = IPPROTO_MPLS;
 			else if (strcmp(*argv, "any/ipv4") == 0 ||
 				 strcmp(*argv, "any") == 0)
 				proto = 0;

@@ -662,7 +662,7 @@ the following additional arguments are supported:
 ] [
 .I " [no]encap-remcsum "
 ] [
-.I " mode " { ip6ip | ipip | any } "
+.I " mode " { ip6ip | ipip | mplsip | any } "
 ]
 
 .in +8
@@ -700,10 +700,11 @@ encapsulation.
 applicable for Generic UDP Encapsulation.
 
 .sp
-.BI mode " { ip6ip | ipip | any } "
+.BI mode " { ip6ip | ipip | mplsip | any } "
 - specifies mode in which device should run. "ip6ip" indicates
-IPv6-Over-IPv4, "ipip" indicates "IPv4-Over-IPv4", "any" indicates either
-IPv6 or IPv4 Over IPv4. Only supported for SIT where the default is "ip6ip".
+IPv6-Over-IPv4, "ipip" indicates "IPv4-Over-IPv4", "mplsip" indicates
+MPLS-Over-IPv4, "any" indicates IPv6, IPv4 or MPLS Over IPv4. Only
+supported for SIT where the default is "ip6ip".
 
 .in -8
 
