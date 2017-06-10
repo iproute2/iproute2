@@ -50,6 +50,8 @@ static void print_usage(FILE *f, int sit)
 	if (sit) {
 		fprintf(f, "          [ mode { ip6ip | ipip | mplsip | any } ]\n");
 		fprintf(f, "          [ isatap ]\n");
+	} else {
+		fprintf(f, "          [ mode { ipip | mplsip | any } ]\n");
 	}
 	fprintf(f, "                [ external ]\n");
 	fprintf(f, "                [ fwmark MARK ]\n");
@@ -251,6 +253,21 @@ get_failed:
 				proto = 0;
 			else
 				invarg("Cannot guess tunnel mode.", *argv);
+		} else if (strcmp(lu->id, "ipip") == 0 &&
+			   strcmp(*argv, "mode") == 0) {
+			NEXT_ARG();
+			if (strcmp(*argv, "ipv4/ipv4") == 0 ||
+				 strcmp(*argv, "ipip") == 0 ||
+				 strcmp(*argv, "ip4ip4") == 0)
+				proto = IPPROTO_IPIP;
+			else if (strcmp(*argv, "mpls/ipv4") == 0 ||
+				   strcmp(*argv, "mplsip") == 0)
+				proto = IPPROTO_MPLS;
+			else if (strcmp(*argv, "any/ipv4") == 0 ||
+				 strcmp(*argv, "any") == 0)
+				proto = 0;
+			else
+				invarg("Cannot guess tunnel mode.", *argv);
 		} else if (strcmp(*argv, "noencap") == 0) {
 			encaptype = TUNNEL_ENCAP_NONE;
 		} else if (strcmp(*argv, "encap") == 0) {
@@ -343,9 +360,11 @@ get_failed:
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_SPORT, htons(encapsport));
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_DPORT, htons(encapdport));
 
+	if (strcmp(lu->id, "ipip") == 0 || strcmp(lu->id, "sit") == 0)
+		addattr8(n, 1024, IFLA_IPTUN_PROTO, proto);
+
 	if (strcmp(lu->id, "sit") == 0) {
 		addattr16(n, 1024, IFLA_IPTUN_FLAGS, iflags);
-		addattr8(n, 1024, IFLA_IPTUN_PROTO, proto);
 		if (ip6rdprefixlen) {
 			addattr_l(n, 1024, IFLA_IPTUN_6RD_PREFIX,
 				  &ip6rdprefix, sizeof(ip6rdprefix));
