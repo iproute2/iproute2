@@ -22,7 +22,13 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: tunnel_key unset\n");
-	fprintf(stderr, "       tunnel_key set id TUNNELID src_ip IP dst_ip IP dst_port UDP_PORT\n");
+	fprintf(stderr, "       tunnel_key set <TUNNEL_KEY>\n");
+	fprintf(stderr,
+		"Where TUNNEL_KEY is a combination of:\n"
+		"id <TUNNELID> (mandatory)\n"
+		"src_ip <IP> (mandatory)\n"
+		"dst_ip <IP> (mandatory)\n"
+		"dst_port <UDP_PORT>\n");
 }
 
 static void usage(void)
