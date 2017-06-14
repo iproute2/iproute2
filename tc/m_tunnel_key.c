@@ -28,7 +28,8 @@ static void explain(void)
 		"id <TUNNELID> (mandatory)\n"
 		"src_ip <IP> (mandatory)\n"
 		"dst_ip <IP> (mandatory)\n"
-		"dst_port <UDP_PORT>\n");
+		"dst_port <UDP_PORT>\n"
+		"csum | nocsum (default is \"csum\")\n");
 }
 
 static void usage(void)
@@ -92,6 +93,7 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 	int has_src_ip = 0;
 	int has_dst_ip = 0;
 	int has_key_id = 0;
+	int csum = 1;
 
 	if (matches(*argv, "tunnel_key") != 0)
 		return -1;
@@ -156,6 +158,10 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 				fprintf(stderr, "Illegal \"dst port\"\n");
 				return -1;
 			}
+		} else if (matches(*argv, "csum") == 0) {
+			csum = 1;
+		} else if (matches(*argv, "nocsum") == 0) {
+			csum = 0;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -163,6 +169,8 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 		}
 		NEXT_ARG_FWD();
 	}
+
+	addattr8(n, MAX_MSG, TCA_TUNNEL_KEY_NO_CSUM, !csum);
 
 	parse_action_control_dflt(&argc, &argv, &parm.action,
 				  false, TC_ACT_PIPE);
@@ -233,6 +241,15 @@ static void tunnel_key_print_dst_port(FILE *f, char *name,
 	fprintf(f, "\n\t%s %d", name, rta_getattr_be16(attr));
 }
 
+static void tunnel_key_print_flag(FILE *f, const char *name_on,
+				  const char *name_off,
+				  struct rtattr *attr)
+{
+	if (!attr)
+		return;
+	fprintf(f, "\n\t%s", rta_getattr_u8(attr) ? name_on : name_off);
+}
+
 static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_TUNNEL_KEY_MAX + 1];
@@ -269,6 +286,8 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 					tb[TCA_TUNNEL_KEY_ENC_KEY_ID]);
 		tunnel_key_print_dst_port(f, "dst_port",
 					  tb[TCA_TUNNEL_KEY_ENC_DST_PORT]);
+		tunnel_key_print_flag(f, "nocsum", "csum",
+				      tb[TCA_TUNNEL_KEY_NO_CSUM]);
 		break;
 	}
 	print_action_control(f, " ", parm->action, "");

@@ -16,6 +16,7 @@ tunnel_key - Tunnel metadata manipulation
 .IR ADDRESS
 .BI id " KEY_ID"
 .BI dst_port " UDP_PORT"
+.RB "[ " csum " | " nocsum " ]"
 
 .SH DESCRIPTION
 The
@@ -77,6 +78,23 @@ Outer header destination IP address (IPv4 or IPv6)
 .TP
 .B dst_port
 Outer header destination UDP port
+.TP
+.RB [ no ] csum
+Controlls outer UDP checksum. When set to
+.B csum
+(which is default), the outer UDP checksum is calculated and included in the
+packets. When set to
+.BR nocsum ,
+outer UDP checksum is zero. Note that when using zero UDP checksums with
+IPv6, the other tunnel endpoint must be configured to accept such packets.
+In Linux, this would be the
+.B udp6zerocsumrx
+option for the VXLAN tunnel interface.
+.IP
+If using
+.B nocsum
+with IPv6, be sure you know what you are doing. Zero UDP checksums provide
+weaker protection against corrupted packets. See RFC6935 for details.
 .RE
 .SH EXAMPLES
 The following example encapsulates incoming ICMP packets on eth0 into a vxlan
