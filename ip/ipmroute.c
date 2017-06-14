@@ -178,6 +178,11 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, ", Age %4i.%.2i", (int)tv.tv_sec,
 			(int)tv.tv_usec/10000);
 	}
+
+	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
+		fprintf(fp, " Table: %s",
+			rtnl_rttable_n2a(table, b1, sizeof(b1)));
+
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
