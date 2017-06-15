@@ -26,17 +26,9 @@
 
 #include <stdio.h>
 #include <sys/socket.h>
+#include <linux/in.h>
 #include <linux/xfrm.h>
-
-#ifndef IPPROTO_SCTP
-# define IPPROTO_SCTP	132
-#endif
-#ifndef IPPROTO_DCCP
-# define IPPROTO_DCCP	33
-#endif
-#ifndef IPPROTO_MH
-# define IPPROTO_MH	135
-#endif
+#include <linux/ipsec.h>
 
 #define XFRMS_RTA(x)  ((struct rtattr*)(((char*)(x)) + NLMSG_ALIGN(sizeof(struct xfrm_usersa_info))))
 #define XFRMS_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct xfrm_usersa_info))

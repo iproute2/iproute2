@@ -27,19 +27,6 @@ extern int max_flush_loops;
 extern int batch_mode;
 extern bool do_all;
 
-#ifndef IPPROTO_ESP
-#define IPPROTO_ESP	50
-#endif
-#ifndef IPPROTO_AH
-#define IPPROTO_AH	51
-#endif
-#ifndef IPPROTO_COMP
-#define IPPROTO_COMP	108
-#endif
-#ifndef IPSEC_PROTO_ANY
-#define IPSEC_PROTO_ANY	255
-#endif
-
 #ifndef CONFDIR
 #define CONFDIR		"/etc/iproute2"
 #endif

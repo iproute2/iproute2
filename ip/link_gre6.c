@@ -355,6 +355,18 @@ get_failed:
 					invarg("invalid fwmark\n", *argv);
 				flags &= ~IP6_TNL_F_USE_ORIG_FWMARK;
 			}
+		} else if (strcmp(*argv, "encaplimit") == 0) {
+			NEXT_ARG();
+			if (strcmp(*argv, "none") == 0) {
+				flags |= IP6_TNL_F_IGN_ENCAP_LIMIT;
+			} else {
+				__u8 uval;
+
+				if (get_u8(&uval, *argv, 0) < -1)
+					invarg("invalid ELIM", *argv);
+				encap_limit = uval;
+				flags &= ~IP6_TNL_F_IGN_ENCAP_LIMIT;
+			}
 		} else
 			usage();
 		argc--; argv++;
