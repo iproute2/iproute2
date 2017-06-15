@@ -481,18 +481,8 @@ static int action_a2n(char *arg, int *result, bool allow_num)
 	return 0;
 }
 
-/* Parse action control including possible options.
- *
- * Parameters:
- * @argc_p - pointer to argc to parse
- * @argv_p - pointer to argv to parse
- * @result_p - pointer to output variable
- * @allow_num - whether action may be in numeric format already
- *
- * In error case, returns -1 and does not touch @result_1p. Otherwise returns 0.
- */
-int parse_action_control(int *argc_p, char ***argv_p,
-			 int *result_p, bool allow_num)
+static int __parse_action_control(int *argc_p, char ***argv_p, int *result_p,
+				  bool allow_num, bool ignore_a2n_miss)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -501,7 +491,8 @@ int parse_action_control(int *argc_p, char ***argv_p,
 	if (!argc)
 		return -1;
 	if (action_a2n(*argv, &result, allow_num) == -1) {
-		fprintf(stderr, "Bad action type %s\n", *argv);
+		if (!ignore_a2n_miss)
+			fprintf(stderr, "Bad action type %s\n", *argv);
 		return -1;
 	}
 	if (result == TC_ACT_GOTO_CHAIN) {
@@ -534,6 +525,23 @@ int parse_action_control(int *argc_p, char ***argv_p,
  * @argv_p - pointer to argv to parse
  * @result_p - pointer to output variable
  * @allow_num - whether action may be in numeric format already
+ *
+ * In error case, returns -1 and does not touch @result_1p. Otherwise returns 0.
+ */
+int parse_action_control(int *argc_p, char ***argv_p,
+			 int *result_p, bool allow_num)
+{
+	return __parse_action_control(argc_p, argv_p, result_p,
+				      allow_num, false);
+}
+
+/* Parse action control including possible options.
+ *
+ * Parameters:
+ * @argc_p - pointer to argc to parse
+ * @argv_p - pointer to argv to parse
+ * @result_p - pointer to output variable
+ * @allow_num - whether action may be in numeric format already
  * @default_result - set as a result in case of parsing error
  *
  * In case there is an error during parsing, the default result is used.
@@ -542,7 +550,7 @@ void parse_action_control_dflt(int *argc_p, char ***argv_p,
 			       int *result_p, bool allow_num,
 			       int default_result)
 {
-	if (parse_action_control(argc_p, argv_p, result_p, allow_num))
+	if (__parse_action_control(argc_p, argv_p, result_p, allow_num, true))
 		*result_p = default_result;
 }
 
