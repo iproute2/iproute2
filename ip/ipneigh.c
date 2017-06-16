@@ -445,7 +445,6 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 		filter.flushb = flushb;
 		filter.flushp = 0;
 		filter.flushe = sizeof(flushb);
-		filter.state &= ~NUD_FAILED;
 
 		while (round < MAX_ROUNDS) {
 			if (rtnl_dump_request_n(&rth, &req.n) < 0) {
@@ -474,6 +473,7 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 				printf("\n*** Round %d, deleting %d entries ***\n", round, filter.flushed);
 				fflush(stdout);
 			}
+			filter.state &= ~NUD_FAILED;
 		}
 		printf("*** Flush not complete bailing out after %d rounds\n",
 			MAX_ROUNDS);
