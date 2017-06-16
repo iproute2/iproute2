@@ -19,19 +19,16 @@
 #include <linux/ila.h>
 #include <linux/lwtunnel.h>
 #include <linux/mpls_iptunnel.h>
-
-#ifndef __USE_KERNEL_IPV6_DEFS
-#define __USE_KERNEL_IPV6_DEFS
-#endif
-#include <linux/seg6.h>
-#include <linux/seg6_iptunnel.h>
-#include <linux/seg6_hmac.h>
 #include <errno.h>
 
 #include "rt_names.h"
 #include "utils.h"
 #include "iproute_lwtunnel.h"
 #include "bpf_util.h"
+
+#include <linux/seg6.h>
+#include <linux/seg6_iptunnel.h>
+#include <linux/seg6_hmac.h>
 
 static const char *format_encap_type(int type)
 {
