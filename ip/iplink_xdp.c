@@ -90,9 +90,15 @@ void xdp_dump(FILE *fp, struct rtattr *xdp)
 	if (mode == XDP_ATTACHED_NONE)
 		return;
 	else if (mode == XDP_ATTACHED_DRV)
-		fprintf(fp, "xdp ");
+		fprintf(fp, "xdp");
 	else if (mode == XDP_ATTACHED_SKB)
-		fprintf(fp, "xdpgeneric ");
+		fprintf(fp, "xdpgeneric");
 	else
-		fprintf(fp, "xdp[%u] ", mode);
+		fprintf(fp, "xdp[%u]", mode);
+
+	if (tb[IFLA_XDP_PROG_ID])
+		fprintf(fp, "/id:%u",
+			rta_getattr_u32(tb[IFLA_XDP_PROG_ID]));
+
+	fprintf(fp, " ");
 }
