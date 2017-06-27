@@ -126,7 +126,7 @@ ip-link \- network device configuration
 .RB "[ " port_guid " eui64 ] ]"
 .br
 .in -9
-.RB "[ { " xdp " | " xdpgeneric  " } { " off " | "
+.RB "[ { " xdp " | " xdpgeneric  " | " xdpdrv " } { " off " | "
 .br
 .in +8
 .BR object
@@ -1589,6 +1589,12 @@ only. If the driver does have native XDP support, but the program is
 loaded under
 .B xdpgeneric object "|" pinned
 then the kernel will use the generic XDP variant instead of the native one.
+.B xdpdrv
+has the opposite effect of requestsing that the automatic fallback to the
+generic XDP variant be disabled and in case driver is not XDP-capable error
+should be returned.
+.B xdpdrv
+also disables hardware offloads.
 
 .B off
 (or
