@@ -4,7 +4,7 @@
 #include "utils.h"
 
 int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
-	      bool drv);
+	      bool drv, bool offload);
 void xdp_dump(FILE *fp, struct rtattr *tb);
 
 #endif /* __XDP__ */

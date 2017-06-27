@@ -48,7 +48,7 @@ static int xdp_delete(struct xdp_req *xdp)
 }
 
 int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
-	      bool drv)
+	      bool drv, bool offload)
 {
 	struct bpf_cfg_in cfg = {
 		.argc = *argc,
@@ -64,6 +64,8 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
 		xdp.flags |= XDP_FLAGS_SKB_MODE;
 	if (drv)
 		xdp.flags |= XDP_FLAGS_DRV_MODE;
+	if (offload)
+		xdp.flags |= XDP_FLAGS_HW_MODE;
 
 	if (*argc == 1) {
 		if (strcmp(**argv, "none") == 0 ||

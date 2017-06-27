@@ -616,12 +616,15 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			addattr_l(&req->n, sizeof(*req), IFLA_MTU, &mtu, 4);
 		} else if (strcmp(*argv, "xdpgeneric") == 0 ||
 			   strcmp(*argv, "xdpdrv") == 0 ||
+			   strcmp(*argv, "xdpoffload") == 0 ||
 			   strcmp(*argv, "xdp") == 0) {
 			bool generic = strcmp(*argv, "xdpgeneric") == 0;
 			bool drv = strcmp(*argv, "xdpdrv") == 0;
+			bool offload = strcmp(*argv, "xdpoffload") == 0;
 
 			NEXT_ARG();
-			if (xdp_parse(&argc, &argv, req, generic, drv))
+			if (xdp_parse(&argc, &argv, req, generic, drv,
+				      offload))
 				exit(-1);
 		} else if (strcmp(*argv, "netns") == 0) {
 			NEXT_ARG();

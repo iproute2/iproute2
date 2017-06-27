@@ -126,7 +126,7 @@ ip-link \- network device configuration
 .RB "[ " port_guid " eui64 ] ]"
 .br
 .in -9
-.RB "[ { " xdp " | " xdpgeneric  " | " xdpdrv " } { " off " | "
+.RB "[ { " xdp " | " xdpgeneric  " | " xdpdrv " | " xdpoffload " } { " off " | "
 .br
 .in +8
 .BR object
@@ -1595,6 +1595,11 @@ generic XDP variant be disabled and in case driver is not XDP-capable error
 should be returned.
 .B xdpdrv
 also disables hardware offloads.
+.B xdpoffload
+in ip link output indicates that the program has been offloaded to hardware
+and can also be used to request the "offload" mode, much like
+.B xdpgeneric
+it forces program to be installed specifically in HW/FW of the apater.
 
 .B off
 (or
