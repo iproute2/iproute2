@@ -93,6 +93,8 @@ void xdp_dump(FILE *fp, struct rtattr *xdp)
 		fprintf(fp, "xdp");
 	else if (mode == XDP_ATTACHED_SKB)
 		fprintf(fp, "xdpgeneric");
+	else if (mode == XDP_ATTACHED_HW)
+		fprintf(fp, "xdpoffload");
 	else
 		fprintf(fp, "xdp[%u]", mode);
 
