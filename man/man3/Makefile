@@ -1,4 +1,4 @@
-MAN3PAGES=libnetlink.3
+MAN3PAGES = $(wildcard *.3)
 
 all:
 
