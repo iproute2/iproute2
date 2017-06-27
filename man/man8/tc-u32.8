@@ -29,6 +29,10 @@ u32 \- universal 32bit traffic control filter
 .IR HANDLE " ] [ "
 .B indev
 .IR ifname " ] [ "
+.B skip_hw
+.R  "|"
+.B skip_sw
+.R " ] [ "
 .BR help " ]"
 
 .ti -8
@@ -330,6 +334,13 @@ option.
 .BI indev " ifname"
 Filter on the incoming interface of the packet. Obviously works only for
 forwarded traffic.
+.TP
+.BI skip_sw
+Do not process filter by software. If hardware has no offload support for this
+filter, or TC offload is not enabled for the interface, operation will fail.
+.TP
+.BI skip_hw
+Do not process filter by hardware.
 .TP
 .BI help
 Print a brief help text about possible options.

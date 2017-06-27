@@ -1795,8 +1795,10 @@ static int bpf_fetch_prog_relo(struct bpf_elf_ctx *ctx, const char *section,
 		*sseen = true;
 
 		ret = bpf_apply_relo_data(ctx, &data_relo, &data_insn);
-		if (ret < 0)
+		if (ret < 0) {
+			*lderr = true;
 			return ret;
+		}
 
 		memset(&prog, 0, sizeof(prog));
 		prog.type    = ctx->type;

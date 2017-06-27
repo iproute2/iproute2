@@ -387,7 +387,7 @@ from
 .BI preference " NUMBER"
 the preference value of the route.
 .I NUMBER
-is an arbitrary 32bit number.
+is an arbitrary 32bit number, where routes with lower values are preferred.
 
 .TP
 .BI table " TABLEID"

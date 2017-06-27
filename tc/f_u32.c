@@ -34,7 +34,7 @@ static void explain(void)
 		"Usage: ... u32 [ match SELECTOR ... ] [ link HTID ] [ classid CLASSID ]\n"
 		"               [ action ACTION_SPEC ] [ offset OFFSET_SPEC ]\n"
 		"               [ ht HTID ] [ hashkey HASHKEY_SPEC ]\n"
-		"               [ sample SAMPLE ] [skip-hw | skip-sw]\n"
+		"               [ sample SAMPLE ] [skip_hw | skip_sw]\n"
 		"or         u32 divisor DIVISOR\n"
 		"\n"
 		"Where: SELECTOR := SAMPLE SAMPLE ...\n"

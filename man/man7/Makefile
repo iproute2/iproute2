@@ -1,4 +1,4 @@
-MAN7PAGES = tc-hfsc.7
+MAN7PAGES = $(wildcard *.7)
 
 all:
 
