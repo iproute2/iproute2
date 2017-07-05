@@ -74,6 +74,9 @@ struct ipx_addr {
 #ifndef AF_MPLS
 # define AF_MPLS 28
 #endif
+#ifndef IPPROTO_MPLS
+#define IPPROTO_MPLS	137
+#endif
 
 __u32 get_addr32(const char *name);
 int get_addr_1(inet_prefix *dst, const char *arg, int family);

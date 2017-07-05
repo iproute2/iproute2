@@ -59,7 +59,10 @@ Encode direction only. Enforce static encoding of specified metadata.
 .BR mark " [ "
 .IR u32_value " ]"
 The value to set for the skb mark. The u32 value is required only when
-.BR use " is specified."
+.BR use " is specified. If
+.BR mark " value is zero, it will not be encoded, instead
+"overlimits" statistics increment and
+.BR CONTROL " action is taken.
 .TP
 .BR prio " [ "
 .IR u32_value " ]"

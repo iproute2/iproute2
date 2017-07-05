@@ -660,7 +660,9 @@ the following additional arguments are supported:
 ] [
 .RB [ no ] encap-csum
 ] [
-.RB [ no ] encap-remcsum
+.I " [no]encap-remcsum "
+] [
+.I " mode " { ip6ip | ipip | mplsip | any } "
 ]
 
 .in +8
@@ -696,6 +698,14 @@ encapsulation.
 .RB [ no ] encap-remcsum
 - specifies if Remote Checksum Offload is enabled. This is only
 applicable for Generic UDP Encapsulation.
+
+.sp
+.BI mode " { ip6ip | ipip | mplsip | any } "
+- specifies mode in which device should run. "ip6ip" indicates
+IPv6-Over-IPv4, "ipip" indicates "IPv4-Over-IPv4", "mplsip" indicates
+MPLS-Over-IPv4, "any" indicates IPv6, IPv4 or MPLS Over IPv4. Supported for
+SIT where the default is "ip6ip" and IPIP where the default is "ipip".
+IPv6-Over-IPv4 is not supported for IPIP.
 
 .in -8
 
