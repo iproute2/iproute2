@@ -26,7 +26,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <linux/sockios.h>
 #include <stdbool.h>
 #include <linux/mpls.h>
 
