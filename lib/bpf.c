@@ -152,6 +152,54 @@ static int bpf_map_update(int fd, const void *key, const void *value,
 	return bpf(BPF_MAP_UPDATE_ELEM, &attr, sizeof(attr));
 }
 
+static int bpf_prog_fd_by_id(uint32_t id)
+{
+	union bpf_attr attr = {};
+
+	attr.prog_id = id;
+
+	return bpf(BPF_PROG_GET_FD_BY_ID, &attr, sizeof(attr));
+}
+
+static int bpf_prog_info_by_fd(int fd, struct bpf_prog_info *info,
+			       uint32_t *info_len)
+{
+	union bpf_attr attr = {};
+	int ret;
+
+	attr.info.bpf_fd = fd;
+	attr.info.info = bpf_ptr_to_u64(info);
+	attr.info.info_len = *info_len;
+
+	*info_len = 0;
+	ret = bpf(BPF_OBJ_GET_INFO_BY_FD, &attr, sizeof(attr));
+	if (!ret)
+		*info_len = attr.info.info_len;
+
+	return ret;
+}
+
+void bpf_dump_prog_info(FILE *f, uint32_t id)
+{
+	struct bpf_prog_info info = {};
+	uint32_t len = sizeof(info);
+	int fd, ret;
+
+	fprintf(f, "id %u ", id);
+
+	fd = bpf_prog_fd_by_id(id);
+	if (fd < 0)
+		return;
+
+	ret = bpf_prog_info_by_fd(fd, &info, &len);
+	if (!ret && len) {
+		if (info.jited_prog_len)
+			fprintf(f, "jited ");
+	}
+
+	close(fd);
+}
+
 static int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
 			    char **bpf_string, bool *need_release,
 			    const char separator)
