@@ -29,9 +29,9 @@ csum - checksum update action
 The
 .B csum
 action triggers checksum recalculation of specified packet headers. It is
-commonly used after packet editing using the
+commonly used to fix incorrect checksums after the
 .B pedit
-action to fix for then incorrect checksums.
+action has modified the packet content.
 .SH OPTIONS
 .TP
 .I TARGET

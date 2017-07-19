@@ -1731,6 +1731,16 @@ static int iproute_get(int argc, char **argv)
 			addattr32(&req.n, sizeof(req), RTA_UID, uid);
 		} else if (matches(*argv, "fibmatch") == 0) {
 			fib_match = 1;
+		} else if (strcmp(*argv, "as") == 0) {
+			inet_prefix addr;
+
+			NEXT_ARG();
+			if (strcmp(*argv, "to") == 0)
+				NEXT_ARG();
+			get_addr(&addr, *argv, req.r.rtm_family);
+			if (req.r.rtm_family == AF_UNSPEC)
+				req.r.rtm_family = addr.family;
+			addattr_l(&req.n, sizeof(req), RTA_NEWDST, &addr.data, addr.bytelen);
 		} else {
 			inet_prefix addr;
 

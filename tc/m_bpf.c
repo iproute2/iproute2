@@ -186,6 +186,9 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 				      b, sizeof(b)));
 	}
 
+        if (tb[TCA_ACT_BPF_ID])
+                bpf_dump_prog_info(f, rta_getattr_u32(tb[TCA_ACT_BPF_ID]));
+
 	print_action_control(f, "default-action ", parm->action, "\n");
 	fprintf(f, "\tindex %u ref %d bind %d", parm->index, parm->refcnt,
 		parm->bindcnt);

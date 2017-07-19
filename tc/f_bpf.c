@@ -230,6 +230,9 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 				      b, sizeof(b)));
 	}
 
+	if (tb[TCA_BPF_ID])
+		bpf_dump_prog_info(f, rta_getattr_u32(tb[TCA_BPF_ID]));
+
 	if (tb[TCA_BPF_POLICE]) {
 		fprintf(f, "\n");
 		tc_print_police(f, tb[TCA_BPF_POLICE]);
