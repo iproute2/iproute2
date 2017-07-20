@@ -2524,6 +2524,13 @@ It must be an address on another interface of this host.
 	It is enabled by default. Note that a fixed ttl is incompatible
 	with this option: tunnelling with a fixed ttl always makes pmtu discovery.
 
+\item \verb|ignore-df|
+
+--- (only GRE tunnels) enable IPv4 DF flag suppression on this tunnel.
+	If is disabled by default. Enabling this option will cause IPv4
+	payloads to be handled like any other GRE payload,
+	regardless of the DF flag.
+
 \item \verb|key K|, \verb|ikey K|, \verb|okey K|
 
 --- (only GRE tunnels) use keyed GRE with key \verb|K|. \verb|K| is
