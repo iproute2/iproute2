@@ -459,6 +459,24 @@ static int bpf_mnt_fs(const char *target)
 	return 0;
 }
 
+static int bpf_mnt_check_target(const char *target)
+{
+	struct stat sb = {};
+	int ret;
+
+	ret = stat(target, &sb);
+	if (ret) {
+		ret = mkdir(target, S_IRWXU);
+		if (ret) {
+			fprintf(stderr, "mkdir %s failed: %s\n", target,
+				strerror(errno));
+			return ret;
+		}
+	}
+
+	return 0;
+}
+
 static int bpf_valid_mntpt(const char *mnt, unsigned long magic)
 {
 	struct statfs st_fs;
@@ -469,6 +487,21 @@ static int bpf_valid_mntpt(const char *mnt, unsigned long magic)
 		return -ENOENT;
 
 	return 0;
+}
+
+static const char *bpf_find_mntpt_single(unsigned long magic, char *mnt,
+					 int len, const char *mntpt)
+{
+	int ret;
+
+	ret = bpf_valid_mntpt(mntpt, magic);
+	if (!ret) {
+		strncpy(mnt, mntpt, len - 1);
+		mnt[len - 1] = 0;
+		return mnt;
+	}
+
+	return NULL;
 }
 
 static const char *bpf_find_mntpt(const char *fstype, unsigned long magic,
@@ -482,11 +515,8 @@ static const char *bpf_find_mntpt(const char *fstype, unsigned long magic,
 	if (known_mnts) {
 		ptr = known_mnts;
 		while (*ptr) {
-			if (bpf_valid_mntpt(*ptr, magic) == 0) {
-				strncpy(mnt, *ptr, len - 1);
-				mnt[len - 1] = 0;
+			if (bpf_find_mntpt_single(magic, mnt, len, *ptr))
 				return mnt;
-			}
 			ptr++;
 		}
 	}
@@ -664,6 +694,7 @@ static const char *bpf_get_work_dir(enum bpf_prog_type type)
 	static char bpf_wrk_dir[PATH_MAX];
 	static const char *mnt;
 	static bool bpf_mnt_cached;
+	const char *mnt_env = getenv(BPF_ENV_MNT);
 	static const char * const bpf_known_mnts[] = {
 		BPF_DIR_MNT,
 		"/bpf",
@@ -682,13 +713,17 @@ static const char *bpf_get_work_dir(enum bpf_prog_type type)
 		return out;
 	}
 
-	mnt = bpf_find_mntpt("bpf", BPF_FS_MAGIC, bpf_tmp, sizeof(bpf_tmp),
-			     bpf_known_mnts);
+	if (mnt_env)
+		mnt = bpf_find_mntpt_single(BPF_FS_MAGIC, bpf_tmp,
+					    sizeof(bpf_tmp), mnt_env);
+	else
+		mnt = bpf_find_mntpt("bpf", BPF_FS_MAGIC, bpf_tmp,
+				     sizeof(bpf_tmp), bpf_known_mnts);
 	if (!mnt) {
-		mnt = getenv(BPF_ENV_MNT);
-		if (!mnt)
-			mnt = BPF_DIR_MNT;
-		ret = bpf_mnt_fs(mnt);
+		mnt = mnt_env ? : BPF_DIR_MNT;
+		ret = bpf_mnt_check_target(mnt);
+		if (!ret)
+			ret = bpf_mnt_fs(mnt);
 		if (ret) {
 			mnt = NULL;
 			goto out;
