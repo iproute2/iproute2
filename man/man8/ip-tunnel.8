@@ -49,6 +49,7 @@ ip-tunnel - tunnel configuration
 .BR 6rd-reset " ]"
 .br
 .RB "[ [" no "]" pmtudisc " ]"
+.RB "[ [" no "]" ignore-df " ]"
 .RB "[ " dev
 .IR PHYS_DEV " ]"
 
@@ -174,6 +175,14 @@ disable Path MTU Discovery on this tunnel.
 It is enabled by default. Note that a fixed ttl is incompatible
 with this option: tunneling with a fixed ttl always makes pmtu
 discovery.
+
+.TP
+.B ignore-df
+enable IPv4 DF suppression on this tunnel.
+Normally datagrams that exceed the MTU will be fragmented; the presence
+of the DF flag inhibits this, resulting instead in an ICMP Unreachable
+(Fragmentation Required) message.  Enabling this attribute casues the
+DF flag to be ignored.
 
 .TP
 .BI key " K"

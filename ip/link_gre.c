@@ -34,6 +34,7 @@ static void print_usage(FILE *f)
 		"                            [ ttl TTL ]\n"
 		"                            [ tos TOS ]\n"
 		"                            [ [no]pmtudisc ]\n"
+		"                            [ [no]ignore-df ]\n"
 		"                            [ dev PHYS_DEV ]\n"
 		"                            [ noencap ]\n"
 		"                            [ encap { fou | gue | none } ]\n"
@@ -93,6 +94,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u16 encapsport = 0;
 	__u16 encapdport = 0;
 	__u8 metadata = 0;
+	__u8 ignore_df = 0;
 	__u32 fwmark = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
@@ -163,6 +165,10 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_COLLECT_METADATA])
 			metadata = 1;
+
+		if (greinfo[IFLA_GRE_IGNORE_DF])
+			ignore_df =
+				!!rta_getattr_u8(greinfo[IFLA_GRE_IGNORE_DF]);
 
 		if (greinfo[IFLA_GRE_FWMARK])
 			fwmark = rta_getattr_u32(greinfo[IFLA_GRE_FWMARK]);
@@ -311,6 +317,13 @@ get_failed:
 			encapflags |= ~TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "external") == 0) {
 			metadata = 1;
+		} else if (strcmp(*argv, "ignore-df") == 0) {
+			ignore_df = 1;
+		} else if (strcmp(*argv, "noignore-df") == 0) {
+			/*
+			 *only the lsb is significant, use 2 for presence
+			 */
+			ignore_df = 2;
 		} else if (strcmp(*argv, "fwmark") == 0) {
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))
@@ -354,6 +367,9 @@ get_failed:
 	addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
 	addattr16(n, 1024, IFLA_GRE_ENCAP_SPORT, htons(encapsport));
 	addattr16(n, 1024, IFLA_GRE_ENCAP_DPORT, htons(encapdport));
+
+	if (ignore_df)
+		addattr8(n, 1024, IFLA_GRE_IGNORE_DF, ignore_df & 1);
 
 	return 0;
 }
@@ -453,6 +469,9 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		gre_print_direct_opt(f, tb);
 	else
 		fputs("external ", f);
+
+	if (tb[IFLA_GRE_IGNORE_DF] && rta_getattr_u8(tb[IFLA_GRE_IGNORE_DF]))
+		fputs("ignore-df ", f);
 
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&
 	    rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {

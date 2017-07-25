@@ -766,6 +766,11 @@ static int netns_monitor(int argc, char **argv)
 	return 0;
 }
 
+static int invalid_name(const char *name)
+{
+	return strchr(name, '/') || !strcmp(name, ".") || !strcmp(name, "..");
+}
+
 int do_netns(int argc, char **argv)
 {
 	netns_nsid_socket_init();
@@ -773,6 +778,11 @@ int do_netns(int argc, char **argv)
 	if (argc < 1) {
 		netns_map_init();
 		return netns_list(0, NULL);
+	}
+
+	if (argc > 1 && invalid_name(argv[1])) {
+		fprintf(stderr, "Invalid netns name \"%s\"\n", argv[1]);
+		exit(-1);
 	}
 
 	if ((matches(*argv, "list") == 0) || (matches(*argv, "show") == 0) ||
