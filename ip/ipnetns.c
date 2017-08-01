@@ -768,7 +768,8 @@ static int netns_monitor(int argc, char **argv)
 
 static int invalid_name(const char *name)
 {
-	return strchr(name, '/') || !strcmp(name, ".") || !strcmp(name, "..");
+	return !*name || strlen(name) > NAME_MAX ||
+		strchr(name, '/') || !strcmp(name, ".") || !strcmp(name, "..");
 }
 
 int do_netns(int argc, char **argv)

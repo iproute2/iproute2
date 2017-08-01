@@ -1215,5 +1215,11 @@ int get_real_family(int rtm_type, int rtm_family)
 	if (rtm_type != RTN_MULTICAST)
 		return rtm_family;
 
-	return rtm_family == RTNL_FAMILY_IPMR ? AF_INET : AF_INET6;
+	if (rtm_family == RTNL_FAMILY_IPMR)
+		return AF_INET;
+
+	if (rtm_family == RTNL_FAMILY_IP6MR)
+		return AF_INET6;
+
+	return rtm_family;
 }
