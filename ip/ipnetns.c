@@ -636,7 +636,7 @@ static int netns_add(int argc, char **argv)
 		}
 
 		/* Upgrade NETNS_RUN_DIR to a mount point */
-		if (mount(NETNS_RUN_DIR, NETNS_RUN_DIR, "none", MS_BIND, NULL)) {
+		if (mount(NETNS_RUN_DIR, NETNS_RUN_DIR, "none", MS_BIND | MS_REC, NULL)) {
 			fprintf(stderr, "mount --bind %s %s failed: %s\n",
 				NETNS_RUN_DIR, NETNS_RUN_DIR, strerror(errno));
 			return -1;
