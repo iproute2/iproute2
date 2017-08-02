@@ -1,4 +1,4 @@
-.TH "actions in tc" 8 "4 Jul 2017" "iproute2" "Linux"
+.TH "actions in tc" 8 "1 Aug 2017" "iproute2" "Linux"
 
 .SH NAME
 actions \- independently defined actions in tc
@@ -33,6 +33,9 @@ actions \- independently defined actions in tc
 .B actions
 .BR ls " | " list
 .I ACTNAMESPEC
+[
+.I ACTFILTER
+]
 
 .in +8
 .I ACTSPEC
@@ -60,6 +63,10 @@ ACTNAME
 :=
 .BI index " INDEX"
 
+.I ACTFILTER
+:=
+.BI since " MSTIME"
+
 .I COOKIESPEC
 :=
 .BI cookie " COOKIE"
@@ -71,9 +78,8 @@ ACTNAME
 .I ACTNAME
 may be any valid action type: gact, mirred, bpf, connmark, csum, police, etc.
 
-.I ACTPARAMS
-are the action-specific parameters; see the man page for the specific action
-type to be used for details.
+.I MSTIME
+Time since last update.
 
 .I CONTROL
 := {
@@ -132,6 +138,10 @@ List all the actions in the specified table. When combined with the
 option for
 .BR tc ","
 display the statistics for all actions in the specified table.
+When combined with the option
+.B since
+allows doing a millisecond time-filter since the last time an
+action was used in the datapath.
 .TP
 .B flush
 Delete all actions stored in the specified table.
@@ -175,6 +185,19 @@ is a 128-bit value that will not be interpreted by the kernel whatsoever.
 As such, it can be used as a correlating value for maintaining user state.
 The value to be stored is completely arbitrary and does not require a specific
 format. It is stored inside the action structure itself.
+
+.TP
+.BI since " MSTIME"
+When dumping large number of actions, a millisecond time-filter can be
+specified
+.IR MSTIME "."
+The
+.I MSTIME
+is a millisecond count since last time a packet hit the action.
+As an example specifying "since 20000" implies to dump all actions
+that have seen packets in the last 20 seconds. This option is useful
+when the kernel has a large number of actions and you are only interested
+in recently used actions.
 
 .TP
 .I CONTROL
