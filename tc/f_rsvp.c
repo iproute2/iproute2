@@ -402,7 +402,7 @@ static int rsvp_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, _
 	}
 
 	if (tb[TCA_RSVP_ACT]) {
-		tc_print_action(f, tb[TCA_RSVP_ACT]);
+		tc_print_action(f, tb[TCA_RSVP_ACT], 0);
 	}
 	if (tb[TCA_RSVP_POLICE])
 		tc_print_police(f, tb[TCA_RSVP_POLICE]);

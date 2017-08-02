@@ -168,7 +168,7 @@ static int route_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, 
 	if (tb[TCA_ROUTE4_POLICE])
 		tc_print_police(f, tb[TCA_ROUTE4_POLICE]);
 	if (tb[TCA_ROUTE4_ACT])
-		tc_print_action(f, tb[TCA_ROUTE4_ACT]);
+		tc_print_action(f, tb[TCA_ROUTE4_ACT], 0);
 	return 0;
 }
 

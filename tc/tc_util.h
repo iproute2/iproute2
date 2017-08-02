@@ -113,7 +113,7 @@ int act_parse_police(struct action_util *a, int *argc_p,
 		     char ***argv_p, int tca_id, struct nlmsghdr *n);
 int print_police(struct action_util *a, FILE *f, struct rtattr *tb);
 int police_print_xstats(struct action_util *a, FILE *f, struct rtattr *tb);
-int tc_print_action(FILE *f, const struct rtattr *tb);
+int tc_print_action(FILE *f, const struct rtattr *tb, unsigned short tot_acts);
 int tc_print_ipt(FILE *f, const struct rtattr *tb);
 int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
 void print_tm(FILE *f, const struct tcf_t *tm);

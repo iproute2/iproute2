@@ -1316,7 +1316,7 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	}
 
 	if (tb[TCA_FLOWER_ACT])
-		tc_print_action(f, tb[TCA_FLOWER_ACT]);
+		tc_print_action(f, tb[TCA_FLOWER_ACT], 0);
 
 	return 0;
 }

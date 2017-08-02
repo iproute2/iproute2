@@ -160,7 +160,7 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 
 	if (tb[TCA_FW_ACT]) {
 		fprintf(f, "\n");
-		tc_print_action(f, tb[TCA_FW_ACT]);
+		tc_print_action(f, tb[TCA_FW_ACT], 0);
 	}
 	return 0;
 }
