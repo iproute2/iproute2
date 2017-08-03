@@ -6,15 +6,37 @@ simple - basic example action
 .in +8
 .ti -8
 .BR tc " ... " "action simple"
-.I STRING
+[
+.BI sdata " STRING"
+] [
+.BI index " INDEX"
+] [
+.I CONTROL
+]
+
+.ti -8
+.IR CONTROL " := {"
+.BR reclassify " | " pipe " | " drop " | " continue " | " ok " }"
+
 .SH DESCRIPTION
 This is a pedagogical example rather than an actually useful action. Upon every access, it prints the given
 .I STRING
 which may be of arbitrary length.
 .SH OPTIONS
 .TP
-.I STRING
+.BI sdata " STRING"
 The actual string to print.
+.TP
+.BI index " INDEX"
+Optional action index value.
+.TP
+.I CONTROL
+Indicate how
+.B tc
+should proceed after executing the action. For a description of the possible
+.I CONTROL
+values, see
+.BR tc-actions (8).
 .SH EXAMPLES
 The following example makes the kernel yell "Incoming ICMP!" every time it sees
 an incoming ICMP on eth0. Steps are:
@@ -36,7 +58,7 @@ display stats again and observe increment by 1
 .EX
   hadi@noma1:$ tc qdisc add dev eth0 ingress
   hadi@noma1:$tc filter add dev eth0 parent ffff: protocol ip prio 5 \\
-	 u32 match ip protocol 1 0xff flowid 1:1 action simple "Incoming ICMP"
+	 u32 match ip protocol 1 0xff flowid 1:1 action simple sdata "Incoming ICMP"
 
   hadi@noma1:$ sudo tc -s filter ls  dev eth0 parent ffff:
    filter protocol ip pref 5 u32
@@ -74,3 +96,4 @@ display stats again and observe increment by 1
 .EE
 .SH SEE ALSO
 .BR tc (8)
+.BR tc-actions (8)

@@ -81,10 +81,10 @@
 #endif
 static void explain(void)
 {
-	fprintf(stderr, "Usage:... simple [sdata STRING] [CONTROL] [index INDEX]\n");
+	fprintf(stderr, "Usage:... simple [sdata STRING] [index INDEX] [CONTROL]\n");
 	fprintf(stderr, "\tSTRING being an arbitrary string\n"
-		"\tCONTROL := reclassify|pipe|drop|continue|ok\n"
 		"\tINDEX := optional index value used\n");
+		"\tCONTROL := reclassify|pipe|drop|continue|ok\n"
 }
 
 static void usage(void)
