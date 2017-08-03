@@ -696,6 +696,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				fprintf(fp, "onlink ");
 			if (nh->rtnh_flags & RTNH_F_PERVASIVE)
 				fprintf(fp, "pervasive ");
+			if (nh->rtnh_flags & RTNH_F_OFFLOAD)
+				fprintf(fp, "offload ");
 			if (nh->rtnh_flags & RTNH_F_LINKDOWN)
 				fprintf(fp, "linkdown ");
 			len -= NLMSG_ALIGN(nh->rtnh_len);
