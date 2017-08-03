@@ -616,12 +616,19 @@ done:
 	return err;
 }
 
+static const char *family_name_verbose(int family)
+{
+	if (family == AF_UNSPEC)
+		return "any valid";
+	return family_name(family);
+}
+
 int get_addr(inet_prefix *dst, const char *arg, int family)
 {
 	if (get_addr_1(dst, arg, family)) {
 		fprintf(stderr,
 			"Error: %s address is expected rather than \"%s\".\n",
-			family_name(dst->family), arg);
+			family_name_verbose(family), arg);
 		exit(1);
 	}
 	return 0;
@@ -639,7 +646,7 @@ int get_prefix(inet_prefix *dst, char *arg, int family)
 	if (get_prefix_1(dst, arg, family)) {
 		fprintf(stderr,
 			"Error: %s prefix is expected rather than \"%s\".\n",
-			family_name(dst->family), arg);
+			family_name_verbose(family), arg);
 		exit(1);
 	}
 	return 0;

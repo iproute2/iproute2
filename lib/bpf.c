@@ -208,11 +208,11 @@ static int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
 
 	if (from_file) {
 		size_t tmp_len, op_len = sizeof("65535 255 255 4294967295,");
-		char *tmp_string, *last;
+		char *tmp_string, *pos, c, c_prev = ' ';
 		FILE *fp;
 
 		tmp_len = sizeof("4096,") + BPF_MAXINSNS * op_len;
-		tmp_string = calloc(1, tmp_len);
+		tmp_string = pos = calloc(1, tmp_len);
 		if (tmp_string == NULL)
 			return -ENOMEM;
 
@@ -223,17 +223,33 @@ static int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
 			return -ENOENT;
 		}
 
-		if (!fgets(tmp_string, tmp_len, fp)) {
+		while ((c = fgetc(fp)) != EOF) {
+			switch (c) {
+			case '\n':
+				if (c_prev != ',')
+					*(pos++) = ',';
+				break;
+			case ' ':
+			case '\t':
+				if (c_prev != ' ')
+					*(pos++) = c;
+				break;
+			default:
+				*(pos++) = c;
+			}
+			if (pos - tmp_string == tmp_len)
+				break;
+			c_prev = c;
+		}
+
+		if (!feof(fp)) {
 			free(tmp_string);
 			fclose(fp);
-			return -EIO;
+			return -E2BIG;
 		}
 
 		fclose(fp);
-
-		last = &tmp_string[strlen(tmp_string) - 1];
-		if (*last == '\n')
-			*last = 0;
+		*pos = 0;
 
 		*need_release = true;
 		*bpf_string = tmp_string;
