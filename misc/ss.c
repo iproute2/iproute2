@@ -1059,12 +1059,25 @@ static void inet_addr_print(const inet_prefix *a, int port, unsigned int ifindex
 			ap = format_host(AF_INET, 4, a->data);
 		}
 	} else {
-		ap = format_host(a->family, 16, a->data);
-		est_len = strlen(ap);
-		if (est_len <= addr_width)
-			est_len = addr_width;
-		else
-			est_len = addr_width + ((est_len-addr_width+3)/4)*4;
+		if (!memcmp(a->data, &in6addr_any, sizeof(in6addr_any))) {
+			buf[0] = '*';
+			buf[1] = 0;
+		} else {
+			ap = format_host(a->family, 16, a->data);
+
+			/* Numeric IPv6 addresses should be bracketed */
+			if (strchr(ap, ':')) {
+				snprintf(buf, sizeof(buf),
+					 "[%s]", ap);
+				ap = buf;
+			}
+
+			est_len = strlen(ap);
+			if (est_len <= addr_width)
+				est_len = addr_width;
+			else
+				est_len = addr_width + ((est_len-addr_width+3)/4)*4;
+		}
 	}
 
 	if (ifindex) {
