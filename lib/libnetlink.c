@@ -36,6 +36,79 @@
 
 int rcvbuf = 1024 * 1024;
 
+#ifdef HAVE_LIBMNL
+#include <libmnl/libmnl.h>
+
+static const enum mnl_attr_data_type extack_policy[NLMSGERR_ATTR_MAX + 1] = {
+	[NLMSGERR_ATTR_MSG]	= MNL_TYPE_NUL_STRING,
+	[NLMSGERR_ATTR_OFFS]	= MNL_TYPE_U32,
+};
+
+static int err_attr_cb(const struct nlattr *attr, void *data)
+{
+	const struct nlattr **tb = data;
+	uint16_t type;
+
+	if (mnl_attr_type_valid(attr, NLMSGERR_ATTR_MAX) < 0)
+		return MNL_CB_ERROR;
+
+	type = mnl_attr_get_type(attr);
+	if (mnl_attr_validate(attr, extack_policy[type]) < 0)
+		return MNL_CB_ERROR;
+
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+
+/* dump netlink extended ack error message */
+static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
+{
+	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1];
+	const struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
+	const struct nlmsghdr *err_nlh = NULL;
+	unsigned int hlen = sizeof(*err);
+	const char *errmsg = NULL;
+	uint32_t off = 0;
+
+	if (!errfn)
+		return 0;
+
+	/* no TLVs, nothing to do here */
+	if (!(nlh->nlmsg_flags & NLM_F_ACK_TLVS))
+		return 0;
+
+	/* if NLM_F_CAPPED is set then the inner err msg was capped */
+	if (!(nlh->nlmsg_flags & NLM_F_CAPPED))
+		hlen += mnl_nlmsg_get_payload_len(&err->msg);
+
+	mnl_attr_parse(nlh, hlen, err_attr_cb, tb);
+
+	if (tb[NLMSGERR_ATTR_MSG])
+		errmsg = mnl_attr_get_str(tb[NLMSGERR_ATTR_MSG]);
+
+	if (tb[NLMSGERR_ATTR_OFFS]) {
+		off = mnl_attr_get_u32(tb[NLMSGERR_ATTR_OFFS]);
+
+		if (off > nlh->nlmsg_len) {
+			fprintf(stderr,
+				"Invalid offset for NLMSGERR_ATTR_OFFS\n");
+			off = 0;
+		} else if (!(nlh->nlmsg_flags & NLM_F_CAPPED))
+			err_nlh = &err->msg;
+	}
+
+	return errfn(errmsg, off, err_nlh);
+}
+#else
+/* No extended error ack without libmnl */
+static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
+{
+	return 0;
+}
+#endif
+
 void rtnl_close(struct rtnl_handle *rth)
 {
 	if (rth->fd >= 0) {
@@ -49,6 +122,7 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 {
 	socklen_t addr_len;
 	int sndbuf = 32768;
+	int one = 1;
 
 	memset(rth, 0, sizeof(*rth));
 
@@ -70,6 +144,10 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 		perror("SO_RCVBUF");
 		return -1;
 	}
+
+	/* Older kernels may no support extended ACK reporting */
+	setsockopt(rth->fd, SOL_NETLINK, NETLINK_EXT_ACK,
+		   &one, sizeof(one));
 
 	memset(&rth->local, 0, sizeof(rth->local));
 	rth->local.nl_family = AF_NETLINK;
@@ -423,9 +501,19 @@ int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 	return rtnl_dump_filter_l(rth, a);
 }
 
+static void rtnl_talk_error(struct nlmsghdr *h, struct nlmsgerr *err,
+			    nl_ext_ack_fn_t errfn)
+{
+	if (nl_dump_ext_err(h, errfn))
+		return;
+
+	fprintf(stderr, "RTNETLINK answers: %s\n",
+		strerror(-err->error));
+}
+
 static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 		       struct nlmsghdr *answer, size_t maxlen,
-		       bool show_rtnl_err)
+		       bool show_rtnl_err, nl_ext_ack_fn_t errfn)
 {
 	int status;
 	unsigned int seq;
@@ -512,10 +600,10 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 					return 0;
 				}
 
-				if (rtnl->proto != NETLINK_SOCK_DIAG && show_rtnl_err)
-					fprintf(stderr,
-						"RTNETLINK answers: %s\n",
-						strerror(-err->error));
+				if (rtnl->proto != NETLINK_SOCK_DIAG &&
+				    show_rtnl_err)
+					rtnl_talk_error(h, err, errfn);
+
 				errno = -err->error;
 				return -1;
 			}
@@ -547,13 +635,20 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr *answer, size_t maxlen)
 {
-	return __rtnl_talk(rtnl, n, answer, maxlen, true);
+	return __rtnl_talk(rtnl, n, answer, maxlen, true, NULL);
+}
+
+int rtnl_talk_extack(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+		     struct nlmsghdr *answer, size_t maxlen,
+		     nl_ext_ack_fn_t errfn)
+{
+	return __rtnl_talk(rtnl, n, answer, maxlen, true, errfn);
 }
 
 int rtnl_talk_suppress_rtnl_errmsg(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 				   struct nlmsghdr *answer, size_t maxlen)
 {
-	return __rtnl_talk(rtnl, n, answer, maxlen, false);
+	return __rtnl_talk(rtnl, n, answer, maxlen, false, NULL);
 }
 
 int rtnl_listen_all_nsid(struct rtnl_handle *rth)
