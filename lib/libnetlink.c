@@ -102,6 +102,8 @@ static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	return errfn(errmsg, off, err_nlh);
 }
 #else
+#warning "libmnl required for error support"
+
 /* No extended error ack without libmnl */
 static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 {
