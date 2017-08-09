@@ -6,6 +6,11 @@ ifeq ($(IP_CONFIG_SETNS),y)
 	CFLAGS += -DHAVE_SETNS
 endif
 
+ifeq ($(HAVE_MNL),y)
+	CFLAGS += -DHAVE_LIBMNL $(shell $(PKG_CONFIG) libmnl --cflags)
+	LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
+endif
+
 all: bridge
 
 bridge: $(BROBJ) $(LIBNETLINK)

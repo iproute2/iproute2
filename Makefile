@@ -1,7 +1,4 @@
-# Include "Config" if already generated
-ifneq ($(wildcard Config),)
-include Config
-endif
+# Top level Makefile for iproute2
 
 ifeq ($(VERBOSE),0)
 MAKEFLAGS += --no-print-directory
@@ -56,16 +53,6 @@ SUBDIRS=lib ip tc bridge misc netem genl tipc devlink man
 
 LIBNETLINK=../lib/libnetlink.a ../lib/libutil.a
 LDLIBS += $(LIBNETLINK)
-
-ifeq ($(HAVE_ELF),y)
-	CFLAGS += -DHAVE_ELF
-	LDLIBS += -lelf
-endif
-
-ifeq ($(HAVE_MNL),y)
-	CFLAGS += -DHAVE_LIBMNL $(shell $(PKG_CONFIG) libmnl --cflags)
-	LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
-endif
 
 all: Config
 	@set -e; \
