@@ -17,6 +17,11 @@ LDFLAGS += -Wl,-export-dynamic
 LDLIBS  += -lm -ldl
 endif
 
+ifeq ($(HAVE_MNL),y)
+	CFLAGS += -DHAVE_LIBMNL $(shell $(PKG_CONFIG) libmnl --cflags)
+	LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
+endif
+
 all: genl
 
 genl: $(GENLOBJ) $(LIBNETLINK) $(LIBUTIL) $(GENLLIB)
