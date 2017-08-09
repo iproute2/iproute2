@@ -1,13 +1,8 @@
 eBPF toy code examples (running in kernel) to familiarize yourself
 with syntax and features:
 
- - bpf_prog.c		-> Classifier examples with using maps
  - bpf_shared.c		-> Ingress/egress map sharing example
  - bpf_tailcall.c	-> Using tail call chains
  - bpf_cyclic.c		-> Simple cycle as tail calls
  - bpf_graft.c		-> Demo on altering runtime behaviour
-
-User space code example:
-
- - bpf_agent.c		-> Counterpart to bpf_prog.c for user
-                           space to transfer/read out map data
+ - bpf_map_in_map.c     -> Using map in map example
