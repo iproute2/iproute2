@@ -210,8 +210,9 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	const char *local = "any";
 	const char *remote = "any";
+	__u32 key;
 	unsigned int link;
-	char s2[64];
+	char s2[IFNAMSIZ];
 
 	if (!tb)
 		return;
@@ -244,15 +245,14 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			fprintf(f, "dev %u ", link);
 	}
 
-	if (tb[IFLA_VTI_IKEY]) {
-		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_VTI_IKEY]), s2, sizeof(s2));
-		fprintf(f, "ikey %s ", s2);
-	}
+	if (tb[IFLA_VTI_IKEY] &&
+	    (key = rta_getattr_u32(tb[IFLA_VTI_IKEY])))
+		fprintf(f, "ikey %#x ", ntohl(key));
 
-	if (tb[IFLA_VTI_OKEY]) {
-		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_VTI_OKEY]), s2, sizeof(s2));
-		fprintf(f, "okey %s ", s2);
-	}
+
+	if (tb[IFLA_VTI_OKEY] &&
+	    (key = rta_getattr_u32(tb[IFLA_VTI_OKEY])))
+		fprintf(f, "okey %#x ", ntohl(key));
 
 	if (tb[IFLA_VTI_FWMARK] && rta_getattr_u32(tb[IFLA_VTI_FWMARK])) {
 		fprintf(f, "fwmark 0x%x ",
