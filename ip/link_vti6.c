@@ -59,8 +59,8 @@ static int vti6_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *vtiinfo[IFLA_VTI_MAX + 1];
-	struct in6_addr saddr;
-	struct in6_addr daddr;
+	struct in6_addr saddr = IN6ADDR_ANY_INIT;
+	struct in6_addr daddr = IN6ADDR_ANY_INIT;
 	unsigned int ikey = 0;
 	unsigned int okey = 0;
 	unsigned int link = 0;
@@ -195,8 +195,11 @@ get_failed:
 
 	addattr32(n, 1024, IFLA_VTI_IKEY, ikey);
 	addattr32(n, 1024, IFLA_VTI_OKEY, okey);
-	addattr_l(n, 1024, IFLA_VTI_LOCAL, &saddr, sizeof(saddr));
-	addattr_l(n, 1024, IFLA_VTI_REMOTE, &daddr, sizeof(daddr));
+
+	if (memcmp(&saddr, &in6addr_any, sizeof(in6addr_any)))
+	    addattr_l(n, 1024, IFLA_VTI_LOCAL, &saddr, sizeof(saddr));
+	if (memcmp(&daddr, &in6addr_any, sizeof(in6addr_any)))
+	    addattr_l(n, 1024, IFLA_VTI_REMOTE, &daddr, sizeof(daddr));
 	addattr32(n, 1024, IFLA_VTI_FWMARK, fwmark);
 	if (link)
 		addattr32(n, 1024, IFLA_VTI_LINK, link);
