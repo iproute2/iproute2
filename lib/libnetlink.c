@@ -61,7 +61,6 @@ static int err_attr_cb(const struct nlattr *attr, void *data)
 	return MNL_CB_OK;
 }
 
-
 /* dump netlink extended ack error message */
 static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 {
@@ -71,9 +70,6 @@ static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	unsigned int hlen = sizeof(*err);
 	const char *errmsg = NULL;
 	uint32_t off = 0;
-
-	if (!errfn)
-		return 0;
 
 	/* no TLVs, nothing to do here */
 	if (!(nlh->nlmsg_flags & NLM_F_ACK_TLVS))
@@ -99,7 +95,19 @@ static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 			err_nlh = &err->msg;
 	}
 
-	return errfn(errmsg, off, err_nlh);
+	if (errfn)
+		return errfn(errmsg, off, err_nlh);
+
+	if (errmsg && *errmsg != '\0') {
+		fprintf(stderr, "Error: %s", errmsg);
+		if (errmsg[strlen(errmsg) - 1] != '.')
+			fprintf(stderr, ".");
+		fprintf(stderr, "\n");
+
+		return 1;
+	}
+
+	return 0;
 }
 #else
 #warning "libmnl required for error support"
