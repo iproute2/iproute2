@@ -102,6 +102,10 @@ endif
 TCOBJ += $(TCMODULES)
 LDLIBS += -L. -lm
 
+ifeq ($(HAVE_ELF),y)
+	CFLAGS += -DHAVE_ELF
+	LDLIBS += -lelf
+endif
 ifeq ($(HAVE_MNL),y)
 	CFLAGS += -DHAVE_LIBMNL $(shell $(PKG_CONFIG) libmnl --cflags)
 	LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
