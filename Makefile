@@ -54,12 +54,12 @@ SUBDIRS=lib ip tc bridge misc netem genl tipc devlink rdma man
 LIBNETLINK=../lib/libnetlink.a ../lib/libutil.a
 LDLIBS += $(LIBNETLINK)
 
-all: Config
+all: config.mk
 	@set -e; \
 	for i in $(SUBDIRS); \
 	do echo; echo $$i; $(MAKE) $(MFLAGS) -C $$i; done
 
-Config:
+config.mk:
 	sh configure $(KERNEL_INCLUDE)
 
 install: all
@@ -88,9 +88,9 @@ clean:
 	do $(MAKE) $(MFLAGS) -C $$i clean; done
 
 clobber:
-	touch Config
+	touch config.mk
 	$(MAKE) $(MFLAGS) clean
-	rm -f Config cscope.*
+	rm -f config.mk cscope.*
 
 distclean: clobber
 

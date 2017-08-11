@@ -1,4 +1,4 @@
-include ../Config
+include ../config.mk
 
 DISTGEN = maketable normal pareto paretonormal
 DISTDATA = normal.dist pareto.dist paretonormal.dist experimental.dist
@@ -6,11 +6,6 @@ DISTDATA = normal.dist pareto.dist paretonormal.dist experimental.dist
 HOSTCC ?= $(CC)
 CCOPTS  = $(CBUILD_CFLAGS)
 LDLIBS += -lm
-
-ifeq ($(HAVE_MNL),y)
-	CFLAGS += -DHAVE_LIBMNL $(shell $(PKG_CONFIG) libmnl --cflags)
-	LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
-endif
 
 all: $(DISTGEN) $(DISTDATA)
 

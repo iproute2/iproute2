@@ -3,6 +3,9 @@
 #
 INCLUDE=${1:-"$PWD/include"}
 
+# Output file which is input to Makefile
+CONFIG=config.mk
+
 # Make a temp directory in build tree.
 TMPDIR=$(mktemp -d config.XXXXXX)
 trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
@@ -10,7 +13,7 @@ trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
 check_prog()
 {
     echo -n "$2"
-    command -v $1 >/dev/null 2>&1 && (echo "$3:=y" >> Config; echo "yes") || (echo "no"; return 1)
+    command -v $1 >/dev/null 2>&1 && (echo "$3:=y" >> $CONFIG; echo "yes") || (echo "no"; return 1)
 }
 
 check_docs()
@@ -30,9 +33,9 @@ check_toolchain()
     : ${PKG_CONFIG:=pkg-config}
     : ${AR=ar}
     : ${CC=gcc}
-    echo "PKG_CONFIG:=${PKG_CONFIG}" >>Config
-    echo "AR:=${AR}" >>Config
-    echo "CC:=${CC}" >>Config
+    echo "PKG_CONFIG:=${PKG_CONFIG}" >>$CONFIG
+    echo "AR:=${AR}" >>$CONFIG
+    echo "CC:=${CC}" >>$CONFIG
 }
 
 check_atm()
@@ -49,7 +52,7 @@ EOF
     $CC -I$INCLUDE -o $TMPDIR/atmtest $TMPDIR/atmtest.c -latm >/dev/null 2>&1
     if [ $? -eq 0 ]
     then
-	echo "TC_CONFIG_ATM:=y" >>Config
+	echo "TC_CONFIG_ATM:=y" >>$CONFIG
 	echo yes
     else
 	echo no
@@ -61,7 +64,7 @@ check_xtables()
 {
 	if ! ${PKG_CONFIG} xtables --exists
 	then
-		echo "TC_CONFIG_NO_XT:=y" >>Config
+		echo "TC_CONFIG_NO_XT:=y" >>$CONFIG
 	fi
 }
 
@@ -90,7 +93,7 @@ EOF
     if $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL \
 	$(${PKG_CONFIG} xtables --cflags --libs) -ldl >/dev/null 2>&1
     then
-	echo "TC_CONFIG_XT:=y" >>Config
+	echo "TC_CONFIG_XT:=y" >>$CONFIG
 	echo "using xtables"
     fi
     rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
@@ -99,7 +102,7 @@ EOF
 check_xt_old()
 {
     # bail if previous XT checks has already succeded.
-    if grep -q TC_CONFIG_XT Config
+    if grep -q TC_CONFIG_XT $CONFIG
     then
 	return
     fi
@@ -129,7 +132,7 @@ EOF
     $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
     if [ $? -eq 0 ]
     then
-	echo "TC_CONFIG_XT_OLD:=y" >>Config
+	echo "TC_CONFIG_XT_OLD:=y" >>$CONFIG
 	echo "using old xtables (no need for xt-internal.h)"
     fi
     rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
@@ -138,7 +141,7 @@ EOF
 check_xt_old_internal_h()
 {
     # bail if previous XT checks has already succeded.
-    if grep -q TC_CONFIG_XT Config
+    if grep -q TC_CONFIG_XT $CONFIG
     then
 	return
     fi
@@ -170,14 +173,14 @@ EOF
 	if [ $? -eq 0 ]
 	then
 	    echo "using old xtables with xt-internal.h"
-	    echo "TC_CONFIG_XT_OLD_H:=y" >>Config
+	    echo "TC_CONFIG_XT_OLD_H:=y" >>$CONFIG
 	fi
 	rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
 }
 
 check_ipt()
 {
-	if ! grep TC_CONFIG_XT Config > /dev/null
+	if ! grep TC_CONFIG_XT $CONFIG > /dev/null
 	then
 		echo "using iptables"
 	fi
@@ -188,7 +191,7 @@ check_ipt_lib_dir()
 	IPT_LIB_DIR=$(${PKG_CONFIG} --variable=xtlibdir xtables)
 	if [ -n "$IPT_LIB_DIR" ]; then
 		echo $IPT_LIB_DIR
-		echo "IPT_LIB_DIR:=$IPT_LIB_DIR" >> Config
+		echo "IPT_LIB_DIR:=$IPT_LIB_DIR" >> $CONFIG
 		return
 	fi
 
@@ -197,7 +200,7 @@ check_ipt_lib_dir()
 		for file in $dir/{xtables,iptables}/lib*t_*so ; do
 			if [ -f $file ]; then
 				echo ${file%/*}
-				echo "IPT_LIB_DIR:=${file%/*}" >> Config
+				echo "IPT_LIB_DIR:=${file%/*}" >> $CONFIG
 				return
 			fi
 		done
@@ -218,8 +221,9 @@ EOF
     $CC -I$INCLUDE -o $TMPDIR/setnstest $TMPDIR/setnstest.c >/dev/null 2>&1
     if [ $? -eq 0 ]
     then
-	echo "IP_CONFIG_SETNS:=y" >>Config
+	echo "IP_CONFIG_SETNS:=y" >>$CONFIG
 	echo "yes"
+	echo "CFLAGS += -DHAVE_SETNS" >>$CONFIG
     else
 	echo "no"
     fi
@@ -249,7 +253,7 @@ EOF
 
     if $CC -I$INCLUDE -o $TMPDIR/ipsettest $TMPDIR/ipsettest.c >/dev/null 2>&1
     then
-	echo "TC_CONFIG_IPSET:=y" >>Config
+	echo "TC_CONFIG_IPSET:=y" >>$CONFIG
 	echo "yes"
     else
 	echo "no"
@@ -259,25 +263,16 @@ EOF
 
 check_elf()
 {
-    cat >$TMPDIR/elftest.c <<EOF
-#include <libelf.h>
-#include <gelf.h>
-int main(void)
-{
-	Elf_Scn *scn __attribute__((__unused__));
-	GElf_Shdr shdr  __attribute__((__unused__));;
-	return elf_version(EV_CURRENT);
-}
-EOF
-
-    if $CC -I$INCLUDE -o $TMPDIR/elftest $TMPDIR/elftest.c -lelf >/dev/null 2>&1
+    if ${PKG_CONFIG} libelf --exists
     then
-	echo "HAVE_ELF:=y" >>Config
+	echo "HAVE_ELF:=y" >>$CONFIG
 	echo "yes"
+
+	echo 'CFLAGS += -DHAVE_ELF' `${PKG_CONFIG} libelf --cflags` >> $CONFIG
+	echo 'LDLIBS += ' `${PKG_CONFIG} libelf --libs` >>$CONFIG
     else
 	echo "no"
     fi
-    rm -f $TMPDIR/elftest.c $TMPDIR/elftest
 }
 
 check_selinux()
@@ -285,8 +280,11 @@ check_selinux()
 {
 	if ${PKG_CONFIG} libselinux --exists
 	then
-		echo "HAVE_SELINUX:=y" >>Config
+		echo "HAVE_SELINUX:=y" >>$CONFIG
 		echo "yes"
+
+		echo 'LDLIBS +=' `${PKG_CONFIG} --libs libselinux` >>$CONFIG
+		echo 'CFLAGS += -DHAVE_SELINUX' `${PKG_CONFIG} --cflags libselinux` >>$CONFIG
 	else
 		echo "no"
 	fi
@@ -296,8 +294,11 @@ check_mnl()
 {
 	if ${PKG_CONFIG} libmnl --exists
 	then
-		echo "HAVE_MNL:=y" >>Config
+		echo "HAVE_MNL:=y" >>$CONFIG
 		echo "yes"
+
+		echo 'CFLAGS += -DHAVE_LIBMNL' `${PKG_CONFIG} libmnl --cflags` >>$CONFIG
+		echo 'LDLIBS +=' `${PKG_CONFIG} libmnl --libs` >> $CONFIG
 	else
 		echo "no"
 	fi
@@ -317,7 +318,7 @@ EOF
     $CC -I$INCLUDE -o $TMPDIR/dbtest $TMPDIR/dbtest.c -ldb >/dev/null 2>&1
     if [ $? -eq 0 ]
     then
-	echo "HAVE_BERKELEY_DB:=y" >>Config
+	echo "HAVE_BERKELEY_DB:=y" >>$CONFIG
 	echo "yes"
     else
 	echo "no"
@@ -351,8 +352,8 @@ endif
 EOF
 }
 
-echo "# Generated config based on" $INCLUDE >Config
-quiet_config >> Config
+echo "# Generated config based on" $INCLUDE >$CONFIG
+quiet_config >> $CONFIG
 
 check_toolchain
 
@@ -362,7 +363,7 @@ echo -n " ATM	"
 check_atm
 
 check_xtables
-if ! grep -q TC_CONFIG_NO_XT Config
+if ! grep -q TC_CONFIG_NO_XT $CONFIG
 then
 	echo -n " IPT	"
 	check_xt
@@ -375,7 +376,7 @@ then
 fi
 
 echo
-if ! grep -q TC_CONFIG_NO_XT Config
+if ! grep -q TC_CONFIG_NO_XT $CONFIG
 then
 	echo -n "iptables modules directory: "
 	check_ipt_lib_dir
@@ -401,6 +402,6 @@ echo -n "docs:"
 check_docs
 echo
 
-echo >> Config
-echo "%.o: %.c" >> Config
-echo '	$(QUIET_CC)$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -c -o $@ $<' >> Config
+echo >> $CONFIG
+echo "%.o: %.c" >> $CONFIG
+echo '	$(QUIET_CC)$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -c -o $@ $<' >> $CONFIG
