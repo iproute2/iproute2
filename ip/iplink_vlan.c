@@ -164,37 +164,51 @@ static int vlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	return 0;
 }
 
-static void vlan_print_map(FILE *f, char *name, struct rtattr *attr)
+static void vlan_print_map(FILE *f,
+			   const char *name_json,
+			   const char *name_fp,
+			   struct rtattr *attr)
 {
 	struct ifla_vlan_qos_mapping *m;
 	struct rtattr *i;
 	int rem;
 
-	fprintf(f, "\n      %s { ", name);
+	open_json_array(PRINT_JSON, name_json);
+	print_string(PRINT_FP, NULL, "\n      %s { ", name_fp);
 
 	rem = RTA_PAYLOAD(attr);
 	for (i = RTA_DATA(attr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		m = RTA_DATA(i);
-		fprintf(f, "%u:%u ", m->from, m->to);
+
+		if (is_json_context()) {
+			open_json_object(NULL);
+			print_uint(PRINT_JSON, "from", NULL, m->from);
+			print_uint(PRINT_JSON, "to", NULL, m->to);
+			close_json_object();
+		} else {
+			fprintf(f, "%u:%u ", m->from, m->to);
+		}
 	}
-	fprintf(f, "} ");
+
+	close_json_array(PRINT_JSON, NULL);
+	print_string(PRINT_FP, NULL, "%s ", "}");
 }
 
 static void vlan_print_flags(FILE *fp, __u32 flags)
 {
-	fprintf(fp, "<");
-#define _PF(f)	if (flags & VLAN_FLAG_##f) { \
-			flags &= ~VLAN_FLAG_##f; \
-			fprintf(fp, #f "%s", flags ? "," : ""); \
-		}
+	open_json_array(PRINT_ANY, is_json_context() ? "flags" : "<");
+#define _PF(f)	if (flags & VLAN_FLAG_##f) {				\
+		flags &= ~VLAN_FLAG_##f;				\
+		print_string(PRINT_ANY, NULL, flags ? "%s," : "%s", #f); \
+	}
 	_PF(REORDER_HDR);
 	_PF(GVRP);
 	_PF(MVRP);
 	_PF(LOOSE_BINDING);
 #undef _PF
 	if (flags)
-		fprintf(fp, "%x", flags);
-	fprintf(fp, "> ");
+		print_hex(PRINT_ANY, NULL, "%x", flags);
+	close_json_array(PRINT_ANY, "> ");
 }
 
 static void vlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
@@ -214,13 +228,19 @@ static void vlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		return;
 
 	if (tb[IFLA_VLAN_PROTOCOL])
-		fprintf(f, "protocol %s ",
-			ll_proto_n2a(rta_getattr_u16(tb[IFLA_VLAN_PROTOCOL]),
+		print_string(PRINT_ANY,
+			     "protocol",
+			     "protocol %s ",
+			     ll_proto_n2a(
+				     rta_getattr_u16(tb[IFLA_VLAN_PROTOCOL]),
 				     b1, sizeof(b1)));
 	else
-		fprintf(f, "protocol 802.1q ");
+		print_string(PRINT_ANY, "protocol", "protocol %s ", "802.1q");
 
-	fprintf(f, "id %u ", rta_getattr_u16(tb[IFLA_VLAN_ID]));
+	print_uint(PRINT_ANY,
+		   "id",
+		   "id %u ",
+		   rta_getattr_u16(tb[IFLA_VLAN_ID]));
 
 	if (tb[IFLA_VLAN_FLAGS]) {
 		if (RTA_PAYLOAD(tb[IFLA_VLAN_FLAGS]) < sizeof(*flags))
@@ -229,13 +249,19 @@ static void vlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		vlan_print_flags(f, flags->flags);
 	}
 	if (tb[IFLA_VLAN_INGRESS_QOS])
-		vlan_print_map(f, "ingress-qos-map", tb[IFLA_VLAN_INGRESS_QOS]);
+		vlan_print_map(f,
+			       "ingress_qos",
+			       "ingress-qos-map",
+			       tb[IFLA_VLAN_INGRESS_QOS]);
 	if (tb[IFLA_VLAN_EGRESS_QOS])
-		vlan_print_map(f, "egress-qos-map", tb[IFLA_VLAN_EGRESS_QOS]);
+		vlan_print_map(f,
+			       "egress_qos",
+			       "egress-qos-map",
+			       tb[IFLA_VLAN_EGRESS_QOS]);
 }
 
 static void vlan_print_help(struct link_util *lu, int argc, char **argv,
-	FILE *f)
+			    FILE *f)
 {
 	print_explain(f);
 }
