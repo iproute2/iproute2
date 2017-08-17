@@ -398,7 +398,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 			remote = format_host(AF_INET, 4, &addr);
 	}
 
-	fprintf(f, "remote %s ", remote);
+	print_string(PRINT_ANY, "remote", "remote %s ", remote);
 
 	if (tb[IFLA_IPTUN_LOCAL]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_LOCAL]);
@@ -407,43 +407,55 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 			local = format_host(AF_INET, 4, &addr);
 	}
 
-	fprintf(f, "local %s ", local);
+	print_string(PRINT_ANY, "local", "local %s ", local);
 
 	if (tb[IFLA_IPTUN_LINK] && rta_getattr_u32(tb[IFLA_IPTUN_LINK])) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
 		const char *n = if_indextoname(link, s2);
 
 		if (n)
-			fprintf(f, "dev %s ", n);
+			print_string(PRINT_ANY, "link", "dev %s ", n);
 		else
-			fprintf(f, "dev %u ", link);
+			print_int(PRINT_ANY, "link_index", "dev %u ", link);
 	}
 
-	if (tb[IFLA_IPTUN_TTL] && rta_getattr_u8(tb[IFLA_IPTUN_TTL]))
-		fprintf(f, "ttl %d ", rta_getattr_u8(tb[IFLA_IPTUN_TTL]));
-	else
-		fprintf(f, "ttl inherit ");
+	if (tb[IFLA_IPTUN_TTL]) {
+		__u8 ttl = rta_getattr_u8(tb[IFLA_IPTUN_TTL]);
 
-	if (tb[IFLA_IPTUN_TOS] && rta_getattr_u8(tb[IFLA_IPTUN_TOS])) {
+		if (ttl)
+			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
+		else
+			print_int(PRINT_JSON, "ttl", NULL, ttl);
+	} else {
+		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
+	}
+
+	if (tb[IFLA_IPTUN_TOS]) {
 		int tos = rta_getattr_u8(tb[IFLA_IPTUN_TOS]);
 
-		fputs("tos ", f);
-		if (tos == 1)
-			fputs("inherit ", f);
-		else
-			fprintf(f, "0x%x ", tos);
+		if (tos) {
+			if (is_json_context()) {
+				print_0xhex(PRINT_JSON, "tos", "%#x", tos);
+			} else {
+				fputs("tos ", f);
+				if (tos == 1)
+					fputs("inherit ", f);
+				else
+					fprintf(f, "0x%x ", tos);
+			}
+		}
 	}
 
 	if (tb[IFLA_IPTUN_PMTUDISC] && rta_getattr_u8(tb[IFLA_IPTUN_PMTUDISC]))
-		fprintf(f, "pmtudisc ");
+		print_bool(PRINT_ANY, "pmtudisc", "pmtudisc ", true);
 	else
-		fprintf(f, "nopmtudisc ");
+		print_bool(PRINT_ANY, "pmtudisc", "nopmtudisc ", false);
 
 	if (tb[IFLA_IPTUN_FLAGS]) {
 		__u16 iflags = rta_getattr_u16(tb[IFLA_IPTUN_FLAGS]);
 
 		if (iflags & SIT_ISATAP)
-			fprintf(f, "isatap ");
+			print_bool(PRINT_ANY, "isatap", "isatap ", true);
 	}
 
 	if (tb[IFLA_IPTUN_6RD_PREFIXLEN] &&
@@ -453,14 +465,32 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		__u32 relayprefix =
 			rta_getattr_u32(tb[IFLA_IPTUN_6RD_RELAY_PREFIX]);
 
-		printf("6rd-prefix %s/%u ",
-		       inet_ntop(AF_INET6, RTA_DATA(tb[IFLA_IPTUN_6RD_PREFIX]),
-				 s1, sizeof(s1)),
-		       prefixlen);
-		if (relayprefix) {
-			printf("6rd-relay_prefix %s/%u ",
-			       format_host(AF_INET, 4, &relayprefix),
-			       relayprefixlen);
+		const char *prefix = inet_ntop(AF_INET6,
+					       RTA_DATA(tb[IFLA_IPTUN_6RD_PREFIX]),
+					       s1, sizeof(s1));
+
+		if (is_json_context()) {
+			print_string(PRINT_JSON, "prefix", NULL, prefix);
+			print_int(PRINT_JSON, "prefixlen", NULL, prefixlen);
+			if (relayprefix) {
+				print_string(PRINT_JSON,
+					     "relay_prefix",
+					     NULL,
+					     format_host(AF_INET,
+							 4,
+							 &relayprefix));
+				print_int(PRINT_JSON,
+					  "relay_prefixlen",
+					  NULL,
+					  relayprefixlen);
+			}
+		} else {
+			printf("6rd-prefix %s/%u ", prefix, prefixlen);
+			if (relayprefix) {
+				printf("6rd-relay_prefix %s/%u ",
+				       format_host(AF_INET, 4, &relayprefix),
+				       relayprefixlen);
+			}
 		}
 	}
 
@@ -470,45 +500,72 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		__u16 sport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_SPORT]);
 		__u16 dport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_DPORT]);
 
-		fputs("encap ", f);
+		print_string(PRINT_FP, NULL, "encap ", NULL);
 		switch (type) {
 		case TUNNEL_ENCAP_FOU:
-			fputs("fou ", f);
+			print_string(PRINT_ANY, "type", "%s ", "fou");
 			break;
 		case TUNNEL_ENCAP_GUE:
-			fputs("gue ", f);
+			print_string(PRINT_ANY, "type", "%s ", "gue");
 			break;
 		default:
-			fputs("unknown ", f);
+			print_null(PRINT_ANY, "type", "unknown ", NULL);
 			break;
 		}
 
-		if (sport == 0)
-			fputs("encap-sport auto ", f);
-		else
-			fprintf(f, "encap-sport %u", ntohs(sport));
+		if (is_json_context()) {
+			print_uint(PRINT_JSON,
+				   "sport",
+				   NULL,
+				   sport ? ntohs(sport) : 0);
+			print_uint(PRINT_JSON, "dport", NULL, ntohs(dport));
+			print_bool(PRINT_JSON,
+				   "csum",
+				   NULL,
+				   flags & TUNNEL_ENCAP_FLAG_CSUM);
+			print_bool(PRINT_JSON,
+				   "csum6",
+				   NULL,
+				   flags & TUNNEL_ENCAP_FLAG_CSUM6);
+			print_bool(PRINT_JSON,
+				   "remcsum",
+				   NULL,
+				   flags & TUNNEL_ENCAP_FLAG_REMCSUM);
+			close_json_object();
+		} else {
+			if (sport == 0)
+				fputs("encap-sport auto ", f);
+			else
+				fprintf(f, "encap-sport %u", ntohs(sport));
 
-		fprintf(f, "encap-dport %u ", ntohs(dport));
+			fprintf(f, "encap-dport %u ", ntohs(dport));
 
-		if (flags & TUNNEL_ENCAP_FLAG_CSUM)
-			fputs("encap-csum ", f);
-		else
-			fputs("noencap-csum ", f);
+			if (flags & TUNNEL_ENCAP_FLAG_CSUM)
+				fputs("encap-csum ", f);
+			else
+				fputs("noencap-csum ", f);
 
-		if (flags & TUNNEL_ENCAP_FLAG_CSUM6)
-			fputs("encap-csum6 ", f);
-		else
-			fputs("noencap-csum6 ", f);
+			if (flags & TUNNEL_ENCAP_FLAG_CSUM6)
+				fputs("encap-csum6 ", f);
+			else
+				fputs("noencap-csum6 ", f);
 
-		if (flags & TUNNEL_ENCAP_FLAG_REMCSUM)
-			fputs("encap-remcsum ", f);
-		else
-			fputs("noencap-remcsum ", f);
+			if (flags & TUNNEL_ENCAP_FLAG_REMCSUM)
+				fputs("encap-remcsum ", f);
+			else
+				fputs("noencap-remcsum ", f);
+		}
 	}
 
-	if (tb[IFLA_IPTUN_FWMARK] && rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]))
-		fprintf(f, "fwmark 0x%x ",
-			rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]));
+	if (tb[IFLA_IPTUN_FWMARK]) {
+		__u32 fwmark = rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]);
+
+		if (fwmark) {
+			snprintf(s2, sizeof(s2), "0x%x", fwmark);
+
+			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+		}
+	}
 }
 
 static void iptunnel_print_help(struct link_util *lu, int argc, char **argv,
