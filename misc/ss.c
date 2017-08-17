@@ -3170,8 +3170,10 @@ static int unix_show(struct filter *f)
 
 		if (name[0]) {
 			u->name = strdup(name);
-			if (!u->name)
+			if (!u->name) {
+				free(u);
 				break;
+			}
 		}
 
 		if (u->rport) {
