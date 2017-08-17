@@ -1440,7 +1440,6 @@ static int remember_he(struct aafilter *a, struct hostent *he)
 			if ((b = malloc(sizeof(*b))) == NULL)
 				return cnt;
 			*b = *a;
-			b->next = a->next;
 			a->next = b;
 		}
 		memcpy(b->addr.data, *ptr, len);
