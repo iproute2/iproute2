@@ -642,7 +642,7 @@ static int lwt_parse_bpf(struct rtattr *rta, size_t len,
 	err = bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, &x);
 	if (err < 0) {
 		fprintf(stderr, "Failed to parse eBPF program: %s\n",
-			strerror(err));
+			strerror(-err));
 		return -1;
 	}
 	rta_nest_end(rta, nest);
