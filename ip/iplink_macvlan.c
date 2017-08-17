@@ -193,13 +193,15 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 		return;
 
 	mode = rta_getattr_u32(tb[IFLA_MACVLAN_MODE]);
-	fprintf(f, "mode %s ",
-		  mode == MACVLAN_MODE_PRIVATE ? "private"
-		: mode == MACVLAN_MODE_VEPA    ? "vepa"
-		: mode == MACVLAN_MODE_BRIDGE  ? "bridge"
-		: mode == MACVLAN_MODE_PASSTHRU  ? "passthru"
-		: mode == MACVLAN_MODE_SOURCE  ? "source"
-		:				 "unknown");
+	print_string(PRINT_ANY,
+		     "mode",
+		     "mode %s ",
+		     mode == MACVLAN_MODE_PRIVATE ? "private"
+		     : mode == MACVLAN_MODE_VEPA    ? "vepa"
+		     : mode == MACVLAN_MODE_BRIDGE  ? "bridge"
+		     : mode == MACVLAN_MODE_PASSTHRU  ? "passthru"
+		     : mode == MACVLAN_MODE_SOURCE  ? "source"
+		     :				 "unknown");
 
 	if (!tb[IFLA_MACVLAN_FLAGS] ||
 	    RTA_PAYLOAD(tb[IFLA_MACVLAN_FLAGS]) < sizeof(__u16))
@@ -208,7 +210,7 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 		flags = rta_getattr_u16(tb[IFLA_MACVLAN_FLAGS]);
 
 	if (flags & MACVLAN_FLAG_NOPROMISC)
-		fprintf(f, "nopromisc ");
+		print_bool(PRINT_ANY, "nopromisc", "nopromisc ", true);
 
 	/* in source mode, there are more options to print */
 
@@ -220,7 +222,7 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 		return;
 
 	count = rta_getattr_u32(tb[IFLA_MACVLAN_MACADDR_COUNT]);
-	fprintf(f, "remotes (%d) ", count);
+	print_int(PRINT_ANY, "macaddr_count", "remotes (%d) ", count);
 
 	if (!tb[IFLA_MACVLAN_MACADDR_DATA])
 		return;
@@ -228,18 +230,29 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 	rta = RTA_DATA(tb[IFLA_MACVLAN_MACADDR_DATA]);
 	len = RTA_PAYLOAD(tb[IFLA_MACVLAN_MACADDR_DATA]);
 
+	open_json_array(PRINT_JSON, "macaddr_data");
 	for (; RTA_OK(rta, len); rta = RTA_NEXT(rta, len)) {
 		if (rta->rta_type != IFLA_MACVLAN_MACADDR ||
 		    RTA_PAYLOAD(rta) < 6)
 			continue;
 		addr = RTA_DATA(rta);
-		fprintf(f, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x ", addr[0],
-			addr[1], addr[2], addr[3], addr[4], addr[5]);
+		if (is_json_context()) {
+			SPRINT_BUF(b1);
+
+			snprintf(b1, sizeof(b1),
+				 "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", addr[0],
+				 addr[1], addr[2], addr[3], addr[4], addr[5]);
+			print_string(PRINT_JSON, NULL, NULL, b1);
+		} else {
+			fprintf(f, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x ", addr[0],
+				addr[1], addr[2], addr[3], addr[4], addr[5]);
+		}
 	}
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static void macvlan_print_help(struct link_util *lu, int argc, char **argv,
-	FILE *f)
+			       FILE *f)
 {
 	print_explain(lu, f);
 }
