@@ -1671,7 +1671,7 @@ void *parse_hostcond(char *addr, bool is_port)
 			}
 		}
 	}
-	if (!is_port && addr && *addr && *addr != '*') {
+	if (!is_port && *addr && *addr != '*') {
 		if (get_prefix_1(&a.addr, addr, fam)) {
 			if (get_dns_host(&a, addr, fam)) {
 				fprintf(stderr, "Error: an inet prefix is expected rather than \"%s\".\n", addr);
