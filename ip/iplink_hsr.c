@@ -110,30 +110,36 @@ static void hsr_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	    RTA_PAYLOAD(tb[IFLA_HSR_SUPERVISION_ADDR]) < ETH_ALEN)
 		return;
 
-	fprintf(f, "slave1 ");
 	if (tb[IFLA_HSR_SLAVE1])
-		fprintf(f, "%s ",
-			ll_index_to_name(rta_getattr_u32(tb[IFLA_HSR_SLAVE1])));
+		print_string(PRINT_ANY,
+			     "slave1",
+			     "slave1 %s ",
+			     ll_index_to_name(rta_getattr_u32(tb[IFLA_HSR_SLAVE1])));
 	else
-		fprintf(f, "<none> ");
+		print_null(PRINT_ANY, "slave1", "slave1 %s ", "<none>");
 
-	fprintf(f, "slave2 ");
 	if (tb[IFLA_HSR_SLAVE2])
-		fprintf(f, "%s ",
-			ll_index_to_name(rta_getattr_u32(tb[IFLA_HSR_SLAVE2])));
+		print_string(PRINT_ANY,
+			     "slave2",
+			     "slave2 %s ",
+			     ll_index_to_name(rta_getattr_u32(tb[IFLA_HSR_SLAVE2])));
 	else
-		fprintf(f, "<none> ");
+		print_null(PRINT_ANY, "slave2", "slave2 %s ", "<none>");
 
 	if (tb[IFLA_HSR_SEQ_NR])
-		fprintf(f, "sequence %d ",
-			rta_getattr_u16(tb[IFLA_HSR_SEQ_NR]));
+		print_int(PRINT_ANY,
+			  "seq_nr",
+			  "sequence %d ",
+			  rta_getattr_u16(tb[IFLA_HSR_SEQ_NR]));
 
 	if (tb[IFLA_HSR_SUPERVISION_ADDR])
-		fprintf(f, "supervision %s ",
-			ll_addr_n2a(RTA_DATA(tb[IFLA_HSR_SUPERVISION_ADDR]),
-				    RTA_PAYLOAD(tb[IFLA_HSR_SUPERVISION_ADDR]),
-				    ARPHRD_VOID,
-				    b1, sizeof(b1)));
+		print_string(PRINT_ANY,
+			     "supervision_addr",
+			     "supervision %s ",
+			     ll_addr_n2a(RTA_DATA(tb[IFLA_HSR_SUPERVISION_ADDR]),
+					 RTA_PAYLOAD(tb[IFLA_HSR_SUPERVISION_ADDR]),
+					 ARPHRD_VOID,
+					 b1, sizeof(b1)));
 }
 
 static void hsr_print_help(struct link_util *lu, int argc, char **argv,
