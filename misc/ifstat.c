@@ -143,8 +143,10 @@ static int get_nlmsg_extended(const struct sockaddr_nl *who,
 		struct rtattr *attr;
 
 		attr = parse_rtattr_one_nested(sub_type, tb[filter_type]);
-		if (attr == NULL)
+		if (attr == NULL) {
+			free(n);
 			return 0;
+		}
 		memcpy(&n->val, RTA_DATA(attr), sizeof(n->val));
 	}
 	memset(&n->rate, 0, sizeof(n->rate));
