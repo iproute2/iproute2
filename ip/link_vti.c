@@ -224,7 +224,7 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			remote = format_host(AF_INET, 4, &addr);
 	}
 
-	fprintf(f, "remote %s ", remote);
+	print_string(PRINT_ANY, "remote", "remote %s ", remote);
 
 	if (tb[IFLA_VTI_LOCAL]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_VTI_LOCAL]);
@@ -233,30 +233,36 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			local = format_host(AF_INET, 4, &addr);
 	}
 
-	fprintf(f, "local %s ", local);
+	print_string(PRINT_ANY, "local", "local %s ", local);
 
 	if (tb[IFLA_VTI_LINK] &&
 	    (link = rta_getattr_u32(tb[IFLA_VTI_LINK]))) {
 		const char *n = if_indextoname(link, s2);
 
 		if (n)
-			fprintf(f, "dev %s ", n);
+			print_string(PRINT_ANY, "link", "dev %s ", n);
 		else
-			fprintf(f, "dev %u ", link);
+			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
 	}
 
 	if (tb[IFLA_VTI_IKEY] &&
 	    (key = rta_getattr_u32(tb[IFLA_VTI_IKEY])))
-		fprintf(f, "ikey %#x ", ntohl(key));
+		print_0xhex(PRINT_ANY, "ikey", "ikey %#x ", ntohl(key));
 
 
 	if (tb[IFLA_VTI_OKEY] &&
 	    (key = rta_getattr_u32(tb[IFLA_VTI_OKEY])))
-		fprintf(f, "okey %#x ", ntohl(key));
+		print_0xhex(PRINT_ANY, "okey", "okey %#x ", ntohl(key));
 
-	if (tb[IFLA_VTI_FWMARK] && rta_getattr_u32(tb[IFLA_VTI_FWMARK])) {
-		fprintf(f, "fwmark 0x%x ",
-			rta_getattr_u32(tb[IFLA_VTI_FWMARK]));
+	if (tb[IFLA_VTI_FWMARK]) {
+		__u32 fwmark = rta_getattr_u32(tb[IFLA_VTI_FWMARK]);
+
+		if (fwmark) {
+			SPRINT_BUF(b1);
+
+			snprintf(b1, sizeof(b1), "0x%x", fwmark);
+			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+		}
 	}
 }
 
