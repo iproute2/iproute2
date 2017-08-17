@@ -372,12 +372,12 @@ static int vrf_switch(const char *name)
 
 	/* -1 on length to add '/' to the end */
 	if (ipvrf_get_netns(netns, sizeof(netns) - 1) < 0)
-		return -1;
+		goto out;
 
 	if (vrf_path(vpath, sizeof(vpath)) < 0) {
 		fprintf(stderr, "Failed to get base cgroup path: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 
 	/* if path already ends in netns then don't add it again */
@@ -428,13 +428,14 @@ static int vrf_switch(const char *name)
 	snprintf(pid, sizeof(pid), "%d", getpid());
 	if (write(fd, pid, strlen(pid)) < 0) {
 		fprintf(stderr, "Failed to join cgroup\n");
-		goto out;
+		goto out2;
 	}
 
 	rc = 0;
+out2:
+	close(fd);
 out:
 	free(mnt);
-	close(fd);
 
 	return rc;
 }
