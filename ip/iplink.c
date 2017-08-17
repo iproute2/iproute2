@@ -1041,10 +1041,12 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 	if (rtnl_talk(&rth, &req.n, &answer.n, sizeof(answer)) < 0)
 		return -2;
 
+	open_json_object(NULL);
 	if (brief)
 		print_linkinfo_brief(NULL, &answer.n, stdout, NULL);
 	else
 		print_linkinfo(NULL, &answer.n, stdout);
+	close_json_object();
 
 	return 0;
 }
