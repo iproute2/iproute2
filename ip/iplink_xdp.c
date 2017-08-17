@@ -16,6 +16,7 @@
 
 #include "xdp.h"
 #include "bpf_util.h"
+#include "ip_common.h"
 
 extern int force;
 
@@ -92,20 +93,24 @@ void xdp_dump(FILE *fp, struct rtattr *xdp)
 		return;
 
 	mode = rta_getattr_u8(tb[IFLA_XDP_ATTACHED]);
-	if (mode == XDP_ATTACHED_NONE)
-		return;
-	else if (mode == XDP_ATTACHED_DRV)
-		fprintf(fp, "xdp");
-	else if (mode == XDP_ATTACHED_SKB)
-		fprintf(fp, "xdpgeneric");
-	else if (mode == XDP_ATTACHED_HW)
-		fprintf(fp, "xdpoffload");
-	else
-		fprintf(fp, "xdp[%u]", mode);
+	if (is_json_context()) {
+		print_uint(PRINT_JSON, "attached", NULL, mode);
+	} else {
+		if (mode == XDP_ATTACHED_NONE)
+			return;
+		else if (mode == XDP_ATTACHED_DRV)
+			fprintf(fp, "xdp");
+		else if (mode == XDP_ATTACHED_SKB)
+			fprintf(fp, "xdpgeneric");
+		else if (mode == XDP_ATTACHED_HW)
+			fprintf(fp, "xdpoffload");
+		else
+			fprintf(fp, "xdp[%u]", mode);
+	}
 
 	if (tb[IFLA_XDP_PROG_ID])
-		fprintf(fp, "/id:%u",
-			rta_getattr_u32(tb[IFLA_XDP_PROG_ID]));
+		print_uint(PRINT_ANY, "prog_id", "/id:%u",
+				   rta_getattr_u32(tb[IFLA_XDP_PROG_ID]));
 
-	fprintf(fp, " ");
+	print_string(PRINT_FP, NULL, "%c", " ");
 }
