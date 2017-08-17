@@ -624,7 +624,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 	if (tb[RTA_MULTIPATH]) {
 		struct rtnexthop *nh = RTA_DATA(tb[RTA_MULTIPATH]);
-		int first = 0;
+		int first = 1;
 
 		len = RTA_PAYLOAD(tb[RTA_MULTIPATH]);
 
@@ -634,10 +634,12 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			if (nh->rtnh_len > len)
 				break;
 			if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
-				if (first)
+				if (first) {
 					fprintf(fp, "Oifs: ");
-				else
+					first = 0;
+				} else {
 					fprintf(fp, " ");
+				}
 			} else
 				fprintf(fp, "%s\tnexthop ", _SL_);
 			if (nh->rtnh_len > sizeof(*nh)) {
