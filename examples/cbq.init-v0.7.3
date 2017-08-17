@@ -532,7 +532,7 @@ cbq_off () {
 
 ### Prefixed message
 cbq_message () {
-	echo -e "**CBQ: $@"
+	echo -e "**CBQ: $*"
 } # cbq_message
 
 ### Failure message
@@ -560,15 +560,15 @@ cbq_time2abs () {
 ### Display CBQ setup
 cbq_show () {
 	for dev in `cbq_device_list`; do
-		[ `tc qdisc show dev $dev| wc -l` -eq 0 ] && continue
+		[ "`tc qdisc show dev $dev| wc -l`" -eq 0 ] && continue
 		echo -e "### $dev: queueing disciplines\n"
 		tc $1 qdisc show dev $dev; echo
 
-		[ `tc class show dev $dev| wc -l` -eq 0 ] && continue
+		[ "`tc class show dev $dev| wc -l`" -eq 0 ] && continue
 		echo -e "### $dev: traffic classes\n"
 		tc $1 class show dev $dev; echo
 
-		[ `tc filter show dev $dev| wc -l` -eq 0 ] && continue
+		[ "`tc filter show dev $dev| wc -l`" -eq 0 ] && continue
 		echo -e "### $dev: filtering rules\n"
 		tc $1 filter show dev $dev; echo
 	done
@@ -585,7 +585,7 @@ cbq_init () {
 
 	### Gather all DEVICE fields from $1/cbq-*
 	DEVFIELDS=`find $1 -maxdepth 1 \( -type f -or -type l \) -name 'cbq-*' \
-		  -not -name '*~' | xargs sed -n 's/#.*//; \
+		  -not -name '*~' -print0 | xargs -0 sed -n 's/#.*//; \
 		  s/[[:space:]]//g; /^DEVICE=[^,]*,[^,]*\(,[^,]*\)\?/ \
 		  { s/.*=//; p; }'| sort -u`
 	[ -z "$DEVFIELDS" ] &&
@@ -593,7 +593,7 @@ cbq_init () {
 
 	### Check for different DEVICE fields for the same device
 	DEVICES=`echo "$DEVFIELDS"| sed 's/,.*//'| sort -u`
-	[ `echo "$DEVICES"| wc -l` -ne `echo "$DEVFIELDS"| wc -l` ] &&
+	[ "`echo "$DEVICES"| wc -l`" -ne "`echo "$DEVFIELDS"| wc -l`" ] &&
 		cbq_failure "different DEVICE fields for single device!\n$DEVFIELDS"
 } # cbq_init
 
@@ -618,7 +618,7 @@ cbq_load_class () {
 	PRIO_MARK=$PRIO_MARK_DEFAULT
 	PRIO_REALM=$PRIO_REALM_DEFAULT
 
-	eval `echo "$CFILE"| grep -E "^($CBQ_WORDS)="`
+	eval "`echo "$CFILE"| grep -E "^($CBQ_WORDS)="`"
 
 	### Require RATE/WEIGHT
 	[ -z "$RATE" -o -z "$WEIGHT" ] &&
@@ -661,7 +661,7 @@ if [ "$1" = "compile" ]; then
 
 	### echo-only version of "tc" command
 	tc () {
-		echo "$TC $@"
+		echo "$TC $*"
 	} # tc
 
 elif [ -n "$CBQ_DEBUG" ]; then
@@ -669,13 +669,13 @@ elif [ -n "$CBQ_DEBUG" ]; then
 
 	### Logging version of "ip" command
 	ip () {
-		echo -e "\n# ip $@" >> $CBQ_DEBUG
+		echo -e "\n# ip $*" >> $CBQ_DEBUG
 		$IP "$@" 2>&1 | tee -a $CBQ_DEBUG
 	} # ip
 
 	### Logging version of "tc" command
 	tc () {
-		echo -e "\n# tc $@" >> $CBQ_DEBUG
+		echo -e "\n# tc $*" >> $CBQ_DEBUG
 		$TC "$@" 2>&1 | tee -a $CBQ_DEBUG
 	} # tc
 else
@@ -711,8 +711,8 @@ if [ "$1" != "compile" -a "$2" != "nocache" -a -z "$CBQ_DEBUG" ]; then
 	### validate the cache
 	[ "$2" = "invalidate" -o ! -f $CBQ_CACHE ] && VALID=0
 	if [ $VALID -eq 1 ]; then
-		[ `find $CBQ_PATH -maxdepth 1 -newer $CBQ_CACHE| \
-		  wc -l` -gt 0 ] && VALID=0
+		[ "`find $CBQ_PATH -maxdepth 1 -newer $CBQ_CACHE| \
+		  wc -l`" -gt 0 ] && VALID=0
 	fi
 
 	### compile the config if the cache is invalid
