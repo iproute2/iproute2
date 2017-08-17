@@ -779,7 +779,7 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 	int err;
 
 	if (o_required & DL_OPT_HANDLE && o_required & DL_OPT_HANDLEP) {
-		uint32_t handle_bit = handle_bit;
+		uint32_t handle_bit;
 
 		err = dl_argv_handle_both(dl, &opts->bus_name, &opts->dev_name,
 					  &opts->port_index, &handle_bit);
