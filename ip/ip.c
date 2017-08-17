@@ -33,6 +33,7 @@ int show_details;
 int resolve_hosts;
 int oneline;
 int brief;
+int json;
 int timestamp;
 const char *_SL_;
 int force;
@@ -258,6 +259,8 @@ int main(int argc, char **argv)
 			batch_file = argv[1];
 		} else if (matches(opt, "-brief") == 0) {
 			++brief;
+		} else if (matches(opt, "-json") == 0) {
+			++json;
 		} else if (matches(opt, "-rcvbuf") == 0) {
 			unsigned int size;
 
@@ -291,6 +294,9 @@ int main(int argc, char **argv)
 	}
 
 	_SL_ = oneline ? "\\" : "\n";
+
+	if (json)
+		check_if_color_enabled();
 
 	if (batch_file)
 		return batch(batch_file);
