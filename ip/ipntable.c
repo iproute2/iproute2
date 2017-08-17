@@ -202,8 +202,6 @@ static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 			if (get_u32(&queue, *argv, 0))
 				invarg("\"queue\" value is invalid", *argv);
 
-			if (!parms_rta)
-				parms_rta = (struct rtattr *)&parms_buf;
 			rta_addattr32(parms_rta, sizeof(parms_buf),
 				      NDTPA_QUEUE_LEN, queue);
 			parms_change = 1;
