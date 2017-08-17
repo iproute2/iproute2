@@ -237,22 +237,28 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		return;
 
 	vni = rta_getattr_u32(tb[IFLA_GENEVE_ID]);
-	fprintf(f, "id %u ", vni);
+	print_uint(PRINT_ANY, "id", "id %u ", vni);
 
 	if (tb[IFLA_GENEVE_REMOTE]) {
 		__be32 addr = rta_getattr_u32(tb[IFLA_GENEVE_REMOTE]);
 
 		if (addr)
-			fprintf(f, "remote %s ",
-				format_host(AF_INET, 4, &addr));
+			print_string(PRINT_ANY,
+				     "remote",
+				     "remote %s ",
+				     format_host(AF_INET, 4, &addr));
 	} else if (tb[IFLA_GENEVE_REMOTE6]) {
 		struct in6_addr addr;
 
 		memcpy(&addr, RTA_DATA(tb[IFLA_GENEVE_REMOTE6]), sizeof(struct in6_addr));
 		if (!IN6_IS_ADDR_UNSPECIFIED(&addr)) {
 			if (!IN6_IS_ADDR_MULTICAST(&addr))
-				fprintf(f, "remote %s ",
-					format_host(AF_INET6, sizeof(struct in6_addr), &addr));
+				print_string(PRINT_ANY,
+					     "remote6",
+					     "remote %s ",
+					     format_host(AF_INET6,
+							 sizeof(struct in6_addr),
+							 &addr));
 		}
 	}
 
@@ -260,47 +266,81 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		__u8 ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
 
 		if (ttl)
-			fprintf(f, "ttl %d ", ttl);
+			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
 	}
 
 	if (tb[IFLA_GENEVE_TOS] &&
 	    (tos = rta_getattr_u8(tb[IFLA_GENEVE_TOS]))) {
-		if (tos == 1)
-			fprintf(f, "tos inherit ");
-		else
-			fprintf(f, "tos %#x ", tos);
+		if (is_json_context()) {
+			print_0xhex(PRINT_JSON, "tos", "%#x", tos);
+		} else {
+			if (tos == 1) {
+				print_string(PRINT_FP,
+					     "tos",
+					     "tos %s ",
+					     "inherit");
+			} else {
+				fprintf(f, "tos %#x ", tos);
+			}
+		}
 	}
 
 	if (tb[IFLA_GENEVE_LABEL]) {
 		__u32 label = rta_getattr_u32(tb[IFLA_GENEVE_LABEL]);
 
 		if (label)
-			fprintf(f, "flowlabel %#x ", ntohl(label));
+			print_0xhex(PRINT_ANY,
+				    "label",
+				    "flowlabel %#x ",
+				    ntohl(label));
 	}
 
 	if (tb[IFLA_GENEVE_PORT])
-		fprintf(f, "dstport %u ",
-			rta_getattr_be16(tb[IFLA_GENEVE_PORT]));
+		print_uint(PRINT_ANY,
+			   "port",
+			   "dstport %u ",
+			   rta_getattr_be16(tb[IFLA_GENEVE_PORT]));
 
 	if (tb[IFLA_GENEVE_COLLECT_METADATA])
-		fputs("external ", f);
+		print_bool(PRINT_ANY, "collect_metadata", "external ", true);
 
 	if (tb[IFLA_GENEVE_UDP_CSUM]) {
-		if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_CSUM]))
-			fputs("no", f);
-		fputs("udpcsum ", f);
+		if (is_json_context()) {
+			print_bool(PRINT_JSON,
+				   "udp_csum",
+				   NULL,
+				   rta_getattr_u8(tb[IFLA_GENEVE_UDP_CSUM]));
+		} else {
+			if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_CSUM]))
+				fputs("no", f);
+			fputs("udpcsum ", f);
+		}
 	}
 
 	if (tb[IFLA_GENEVE_UDP_ZERO_CSUM6_TX]) {
-		if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_ZERO_CSUM6_TX]))
-			fputs("no", f);
-		fputs("udp6zerocsumtx ", f);
+		if (is_json_context()) {
+			print_bool(PRINT_JSON,
+				   "udp_zero_csum6_tx",
+				   NULL,
+				   rta_getattr_u8(tb[IFLA_GENEVE_UDP_ZERO_CSUM6_TX]));
+		} else {
+			if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_ZERO_CSUM6_TX]))
+				fputs("no", f);
+			fputs("udp6zerocsumtx ", f);
+		}
 	}
 
 	if (tb[IFLA_GENEVE_UDP_ZERO_CSUM6_RX]) {
-		if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_ZERO_CSUM6_RX]))
-			fputs("no", f);
-		fputs("udp6zerocsumrx ", f);
+		if (is_json_context()) {
+			print_bool(PRINT_JSON,
+				   "udp_zero_csum6_rx",
+				   NULL,
+				   rta_getattr_u8(tb[IFLA_GENEVE_UDP_ZERO_CSUM6_RX]));
+		} else {
+			if (!rta_getattr_u8(tb[IFLA_GENEVE_UDP_ZERO_CSUM6_RX]))
+				fputs("no", f);
+			fputs("udp6zerocsumrx ", f);
+		}
 	}
 }
 
