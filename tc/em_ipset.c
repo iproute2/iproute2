@@ -84,6 +84,7 @@ static int get_version(unsigned int *version)
 	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, &req_version, &size);
 	if (res != 0) {
 		perror("xt_set getsockopt");
+		close(sockfd);
 		return -1;
 	}
 

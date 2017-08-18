@@ -109,7 +109,8 @@ static int cmd_node_get_addr(struct nlmsghdr *nlh, const struct cmd *cmd,
 	socklen_t sz = sizeof(struct sockaddr_tipc);
 	struct sockaddr_tipc addr;
 
-	if (!(sk = socket(AF_TIPC, SOCK_RDM, 0))) {
+	sk = socket(AF_TIPC, SOCK_RDM, 0);
+	if (sk < 0) {
 		fprintf(stderr, "opening TIPC socket: %s\n", strerror(errno));
 		return -1;
 	}

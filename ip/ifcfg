@@ -131,7 +131,7 @@ noarp=$?
 
 ip route add unreachable 224.0.0.0/24 >& /dev/null
 ip route add unreachable 255.255.255.255 >& /dev/null
-if [ `ip link ls $dev | grep -c MULTICAST` -ge 1 ]; then
+if [ "`ip link ls $dev | grep -c MULTICAST`" -ge 1 ]; then
   ip route add 224.0.0.0/4 dev $dev scope global >& /dev/null
 fi
 

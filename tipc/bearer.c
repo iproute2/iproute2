@@ -163,6 +163,7 @@ static int nl_add_udp_enable_opts(struct nlmsghdr *nlh, struct opt *opts,
 	if (!remip) {
 		if (generate_multicast(loc->ai_family, buf, sizeof(buf))) {
 			fprintf(stderr, "Failed to generate multicast address\n");
+			freeaddrinfo(loc);
 			return -EINVAL;
 		}
 		remip = buf;
@@ -177,6 +178,8 @@ static int nl_add_udp_enable_opts(struct nlmsghdr *nlh, struct opt *opts,
 
 	if (rem->ai_family != loc->ai_family) {
 		fprintf(stderr, "UDP local and remote AF mismatch\n");
+		freeaddrinfo(rem);
+		freeaddrinfo(loc);
 		return -EINVAL;
 	}
 

@@ -49,13 +49,17 @@ static int err_attr_cb(const struct nlattr *attr, void *data)
 	const struct nlattr **tb = data;
 	uint16_t type;
 
-	if (mnl_attr_type_valid(attr, NLMSGERR_ATTR_MAX) < 0)
+	if (mnl_attr_type_valid(attr, NLMSGERR_ATTR_MAX) < 0) {
+		fprintf(stderr, "Invalid extack attribute\n");
 		return MNL_CB_ERROR;
+	}
 
 	type = mnl_attr_get_type(attr);
-	if (mnl_attr_validate(attr, extack_policy[type]) < 0)
+	if (mnl_attr_validate(attr, extack_policy[type]) < 0) {
+		fprintf(stderr, "extack attribute %d failed validation\n",
+			type);
 		return MNL_CB_ERROR;
-
+	}
 
 	tb[type] = attr;
 	return MNL_CB_OK;
@@ -64,7 +68,7 @@ static int err_attr_cb(const struct nlattr *attr, void *data)
 /* dump netlink extended ack error message */
 static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 {
-	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1];
+	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};
 	const struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
 	const struct nlmsghdr *err_nlh = NULL;
 	unsigned int hlen = sizeof(*err);
@@ -79,7 +83,8 @@ static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	if (!(nlh->nlmsg_flags & NLM_F_CAPPED))
 		hlen += mnl_nlmsg_get_payload_len(&err->msg);
 
-	mnl_attr_parse(nlh, hlen, err_attr_cb, tb);
+	if (mnl_attr_parse(nlh, hlen, err_attr_cb, tb) != MNL_CB_OK)
+		return 0;
 
 	if (tb[NLMSGERR_ATTR_MSG])
 		errmsg = mnl_attr_get_str(tb[NLMSGERR_ATTR_MSG]);

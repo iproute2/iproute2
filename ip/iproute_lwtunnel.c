@@ -268,7 +268,7 @@ static char *ila_csum_mode2name(__u8 csum_mode)
 	}
 }
 
-static __u8 ila_csum_name2mode(char *name)
+static int ila_csum_name2mode(char *name)
 {
 	if (strcmp(name, "adj-transport") == 0)
 		return ILA_CSUM_ADJUST_TRANSPORT;
@@ -742,7 +742,7 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 
 	while (argc > 0) {
 		if (strcmp(*argv, "csum-mode") == 0) {
-			__u8 csum_mode;
+			int csum_mode;
 
 			NEXT_ARG();
 
@@ -751,7 +751,8 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 				invarg("\"csum-mode\" value is invalid\n",
 				       *argv);
 
-			rta_addattr8(rta, 1024, ILA_ATTR_CSUM_MODE, csum_mode);
+			rta_addattr8(rta, 1024, ILA_ATTR_CSUM_MODE,
+				     (__u8)csum_mode);
 
 			argc--; argv++;
 		} else {
@@ -867,7 +868,7 @@ static int lwt_parse_bpf(struct rtattr *rta, size_t len,
 	err = bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, &x);
 	if (err < 0) {
 		fprintf(stderr, "Failed to parse eBPF program: %s\n",
-			strerror(err));
+			strerror(-err));
 		return -1;
 	}
 	rta_nest_end(rta, nest);
