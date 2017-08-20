@@ -195,6 +195,8 @@ static inline void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies)
 int print_timestamp(FILE *fp);
 void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 
+#define BIT(nr)                 (1UL << (nr))
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 #define BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
