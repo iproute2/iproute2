@@ -59,14 +59,6 @@ uint32_t get_port_from_argv(struct rd *rd)
 	return slash ? atoi(slash + 1) : 0;
 }
 
-void rd_print_u64(char *name, uint64_t val)
-{
-	uint16_t vp[4];
-
-	memcpy(vp, &val, sizeof(uint64_t));
-	pr_out("%s %04x:%04x:%04x:%04x ", name, vp[3], vp[2], vp[1], vp[0]);
-}
-
 static struct dev_map *dev_map_alloc(const char *dev_name)
 {
 	struct dev_map *dev_map;

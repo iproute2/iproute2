@@ -66,7 +66,6 @@ void rd_arg_inc(struct rd *rd);
 char *rd_argv(struct rd *rd);
 uint32_t get_port_from_argv(struct rd *rd);
 
-void rd_print_u64(char *name, uint64_t val);
 /*
  * Commands interface
  */
