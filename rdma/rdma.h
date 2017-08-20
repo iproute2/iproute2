@@ -21,6 +21,7 @@
 
 #include "list.h"
 #include "utils.h"
+#include "json_writer.h"
 
 #define pr_err(args...) fprintf(stderr, ##args)
 #define pr_out(args...) fprintf(stdout, ##args)
@@ -46,6 +47,9 @@ struct rd {
 	struct mnl_socket *nl;
 	struct nlmsghdr *nlh;
 	char *buff;
+	json_writer_t *jw;
+	bool json_output;
+	bool pretty_output;
 };
 
 struct rd_cmd {

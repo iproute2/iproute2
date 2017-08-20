@@ -16,7 +16,7 @@ static void help(char *name)
 {
 	pr_out("Usage: %s [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "where  OBJECT := { dev | link | help }\n"
-	       "       OPTIONS := { -V[ersion] | -d[etails]}\n", name);
+	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty]}\n", name);
 }
 
 static int cmd_help(struct rd *rd)
@@ -47,6 +47,16 @@ static int rd_init(struct rd *rd, int argc, char **argv, char *filename)
 	rd->argc = argc;
 	rd->argv = argv;
 	INIT_LIST_HEAD(&rd->dev_map_list);
+
+	if (rd->json_output) {
+		rd->jw = jsonw_new(stdout);
+		if (!rd->jw) {
+			pr_err("Failed to create JSON writer\n");
+			return -ENOMEM;
+		}
+		jsonw_pretty(rd->jw, rd->pretty_output);
+	}
+
 	rd->buff = malloc(MNL_SOCKET_BUFFER_SIZE);
 	if (!rd->buff)
 		return -ENOMEM;
@@ -62,6 +72,8 @@ static int rd_init(struct rd *rd, int argc, char **argv, char *filename)
 
 static void rd_free(struct rd *rd)
 {
+	if (rd->json_output)
+		jsonw_destroy(&rd->jw);
 	free(rd->buff);
 	rd_free_devmap(rd);
 }
@@ -71,10 +83,14 @@ int main(int argc, char **argv)
 	static const struct option long_options[] = {
 		{ "version",		no_argument,		NULL, 'V' },
 		{ "help",		no_argument,		NULL, 'h' },
+		{ "json",		no_argument,		NULL, 'j' },
+		{ "pretty",		no_argument,		NULL, 'p' },
 		{ "details",		no_argument,		NULL, 'd' },
 		{ NULL, 0, NULL, 0 }
 	};
+	bool pretty_output = false;
 	bool show_details = false;
+	bool json_output = false;
 	char *filename;
 	struct rd rd;
 	int opt;
@@ -82,15 +98,21 @@ int main(int argc, char **argv)
 
 	filename = basename(argv[0]);
 
-	while ((opt = getopt_long(argc, argv, "Vhd",
+	while ((opt = getopt_long(argc, argv, "Vhdpj",
 				  long_options, NULL)) >= 0) {
 		switch (opt) {
 		case 'V':
 			printf("%s utility, iproute2-ss%s\n",
 			       filename, SNAPSHOT);
 			return EXIT_SUCCESS;
+		case 'p':
+			pretty_output = true;
+			break;
 		case 'd':
 			show_details = true;
+			break;
+		case 'j':
+			json_output = true;
 			break;
 		case 'h':
 			help(filename);
@@ -105,11 +127,14 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	rd.show_details = show_details;
+	rd.json_output = json_output;
+	rd.pretty_output = pretty_output;
+
 	err = rd_init(&rd, argc, argv, filename);
 	if (err)
 		goto out;
 
-	rd.show_details = show_details;
 	err = rd_cmd(&rd);
 out:
 	/* Always cleanup */
