@@ -20,9 +20,13 @@
 #include <time.h>
 
 #include "list.h"
+#include "utils.h"
 
 #define pr_err(args...) fprintf(stderr, ##args)
 #define pr_out(args...) fprintf(stdout, ##args)
+
+#define RDMA_BITMAP_ENUM(name, bit_no) RDMA_BITMAP_##name = BIT(bit_no),
+#define RDMA_BITMAP_NAMES(name, bit_no) [bit_no] = #name,
 
 struct dev_map {
 	struct list_head list;
@@ -37,6 +41,8 @@ struct rd {
 	char *filename;
 	bool show_details;
 	struct list_head dev_map_list;
+	uint32_t dev_idx;
+	uint32_t port_idx;
 	struct mnl_socket *nl;
 	struct nlmsghdr *nlh;
 	char *buff;
@@ -53,12 +59,23 @@ struct rd_cmd {
 bool rd_no_arg(struct rd *rd);
 void rd_arg_inc(struct rd *rd);
 
+char *rd_argv(struct rd *rd);
+uint32_t get_port_from_argv(struct rd *rd);
+
+void rd_print_u64(char *name, uint64_t val);
+/*
+ * Commands interface
+ */
+int cmd_dev(struct rd *rd);
+int cmd_link(struct rd *rd);
 int rd_exec_cmd(struct rd *rd, const struct rd_cmd *c, const char *str);
 
 /*
  * Device manipulation
  */
 void rd_free_devmap(struct rd *rd);
+struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index);
+struct dev_map *_dev_map_lookup(struct rd *rd, const char *dev_name);
 
 /*
  * Netlink

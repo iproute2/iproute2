@@ -16,7 +16,7 @@ static int rd_argc(struct rd *rd)
 	return rd->argc;
 }
 
-static char *rd_argv(struct rd *rd)
+char *rd_argv(struct rd *rd)
 {
 	if (!rd_argc(rd))
 		return NULL;
@@ -48,6 +48,23 @@ void rd_arg_inc(struct rd *rd)
 bool rd_no_arg(struct rd *rd)
 {
 	return rd_argc(rd) == 0;
+}
+
+uint32_t get_port_from_argv(struct rd *rd)
+{
+	char *slash;
+
+	slash = strchr(rd_argv(rd), '/');
+	/* if no port found, return 0 */
+	return slash ? atoi(slash + 1) : 0;
+}
+
+void rd_print_u64(char *name, uint64_t val)
+{
+	uint16_t vp[4];
+
+	memcpy(vp, &val, sizeof(uint64_t));
+	pr_out("%s %04x:%04x:%04x:%04x ", name, vp[3], vp[2], vp[1], vp[0]);
 }
 
 static struct dev_map *dev_map_alloc(const char *dev_name)
@@ -83,8 +100,14 @@ static void dev_map_cleanup(struct rd *rd)
 }
 
 static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
+	[RDMA_NLDEV_ATTR_DEV_INDEX] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_DEV_NAME] = MNL_TYPE_NUL_STRING,
 	[RDMA_NLDEV_ATTR_PORT_INDEX] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_CAP_FLAGS] = MNL_TYPE_U64,
+	[RDMA_NLDEV_ATTR_FW_VERSION] = MNL_TYPE_NUL_STRING,
+	[RDMA_NLDEV_ATTR_NODE_GUID] = MNL_TYPE_U64,
+	[RDMA_NLDEV_ATTR_SYS_IMAGE_GUID] = MNL_TYPE_U64,
+	[RDMA_NLDEV_ATTR_DEV_NODE_TYPE] = MNL_TYPE_U8,
 };
 
 int rd_attr_cb(const struct nlattr *attr, void *data)
@@ -214,4 +237,33 @@ int rd_recv_msg(struct rd *rd, mnl_cb_t callback, void *data, unsigned int seq)
 
 	mnl_socket_close(rd->nl);
 	return ret;
+}
+
+struct dev_map *_dev_map_lookup(struct rd *rd, const char *dev_name)
+{
+	struct dev_map *dev_map;
+
+	list_for_each_entry(dev_map, &rd->dev_map_list, list)
+		if (strcmp(dev_name, dev_map->dev_name) == 0)
+			return dev_map;
+
+	return NULL;
+}
+
+struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index)
+{
+	struct dev_map *dev_map;
+	char *dev_name;
+	char *slash;
+
+	dev_name = strdup(rd_argv(rd));
+	if (allow_port_index) {
+		slash = strrchr(dev_name, '/');
+		if (slash)
+			*slash = '\0';
+	}
+
+	dev_map = _dev_map_lookup(rd, dev_name);
+	free(dev_name);
+	return dev_map;
 }
