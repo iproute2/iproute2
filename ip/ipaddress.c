@@ -1888,7 +1888,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	char  *lcl_arg = NULL;
 	char  *valid_lftp = NULL;
 	char  *preferred_lftp = NULL;
-	inet_prefix lcl;
+	inet_prefix lcl = {};
 	inet_prefix peer;
 	int local_len = 0;
 	int peer_len = 0;
