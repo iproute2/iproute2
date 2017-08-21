@@ -537,8 +537,11 @@ static const char *bpf_find_mntpt(const char *fstype, unsigned long magic,
 		}
 	}
 
+	if (len != PATH_MAX)
+		return NULL;
+
 	fp = fopen("/proc/mounts", "r");
-	if (fp == NULL || len != PATH_MAX)
+	if (fp == NULL)
 		return NULL;
 
 	while (fscanf(fp, "%*s %" textify(PATH_MAX) "s %99s %*s %*d %*d\n",
