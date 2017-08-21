@@ -251,7 +251,7 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 	return 0;
 }
 
-static const char *can_state_names[] = {
+static const char *can_state_names[CAN_STATE_MAX] = {
 	[CAN_STATE_ERROR_ACTIVE] = "ERROR-ACTIVE",
 	[CAN_STATE_ERROR_WARNING] = "ERROR-WARNING",
 	[CAN_STATE_ERROR_PASSIVE] = "ERROR-PASSIVE",
@@ -275,7 +275,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_CAN_STATE]) {
 		uint32_t state = rta_getattr_u32(tb[IFLA_CAN_STATE]);
 
-		fprintf(f, "state %s ", state <= CAN_STATE_MAX ?
+		fprintf(f, "state %s ", state < CAN_STATE_MAX ?
 			can_state_names[state] : "UNKNOWN");
 	}
 
