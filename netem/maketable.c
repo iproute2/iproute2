@@ -24,8 +24,8 @@ readdoubles(FILE *fp, int *number)
 	int limit;
 	int n=0, i;
 
-	fstat(fileno(fp), &info);
-	if (info.st_size > 0) {
+	if (!fstat(fileno(fp), &info) &&
+	    info.st_size > 0) {
 		limit = 2*info.st_size/sizeof(double);	/* @@ approximate */
 	} else {
 		limit = 10000;
