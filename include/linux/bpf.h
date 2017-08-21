@@ -110,6 +110,7 @@ enum bpf_map_type {
 	BPF_MAP_TYPE_ARRAY_OF_MAPS,
 	BPF_MAP_TYPE_HASH_OF_MAPS,
 	BPF_MAP_TYPE_DEVMAP,
+	BPF_MAP_TYPE_SOCKMAP,
 };
 
 enum bpf_prog_type {
@@ -127,6 +128,7 @@ enum bpf_prog_type {
 	BPF_PROG_TYPE_LWT_OUT,
 	BPF_PROG_TYPE_LWT_XMIT,
 	BPF_PROG_TYPE_SOCK_OPS,
+	BPF_PROG_TYPE_SK_SKB,
 };
 
 enum bpf_attach_type {
@@ -134,10 +136,14 @@ enum bpf_attach_type {
 	BPF_CGROUP_INET_EGRESS,
 	BPF_CGROUP_INET_SOCK_CREATE,
 	BPF_CGROUP_SOCK_OPS,
+	BPF_CGROUP_SMAP_INGRESS,
 	__MAX_BPF_ATTACH_TYPE
 };
 
 #define MAX_BPF_ATTACH_TYPE __MAX_BPF_ATTACH_TYPE
+
+/* If BPF_SOCKMAP_STRPARSER is used sockmap will use strparser on receive */
+#define BPF_SOCKMAP_STRPARSER	(1U << 0)
 
 /* If BPF_F_ALLOW_OVERRIDE flag is used in BPF_PROG_ATTACH command
  * to the given target_fd cgroup the descendent cgroup will be able to
@@ -159,6 +165,7 @@ enum bpf_attach_type {
 #define BPF_NOEXIST	1 /* create new element if it didn't exist */
 #define BPF_EXIST	2 /* update existing element */
 
+/* flags for BPF_MAP_CREATE command */
 #define BPF_F_NO_PREALLOC	(1U << 0)
 /* Instead of having one common LRU list in the
  * BPF_MAP_TYPE_LRU_[PERCPU_]HASH map, use a percpu LRU list
@@ -167,6 +174,8 @@ enum bpf_attach_type {
  * across different LRU lists.
  */
 #define BPF_F_NO_COMMON_LRU	(1U << 1)
+/* Specify numa node during map creation */
+#define BPF_F_NUMA_NODE		(1U << 2)
 
 union bpf_attr {
 	struct { /* anonymous struct used by BPF_MAP_CREATE command */
@@ -174,8 +183,13 @@ union bpf_attr {
 		__u32	key_size;	/* size of key in bytes */
 		__u32	value_size;	/* size of value in bytes */
 		__u32	max_entries;	/* max number of entries in a map */
-		__u32	map_flags;	/* prealloc or not */
+		__u32	map_flags;	/* BPF_MAP_CREATE related
+					 * flags defined above.
+					 */
 		__u32	inner_map_fd;	/* fd pointing to the inner map */
+		__u32	numa_node;	/* numa node (effective only if
+					 * BPF_F_NUMA_NODE is set).
+					 */
 	};
 
 	struct { /* anonymous struct used by BPF_MAP_*_ELEM commands */
@@ -210,6 +224,7 @@ union bpf_attr {
 		__u32		attach_bpf_fd;	/* eBPF program to attach */
 		__u32		attach_type;
 		__u32		attach_flags;
+		__u32		attach_bpf_fd2;
 	};
 
 	struct { /* anonymous struct used by BPF_PROG_TEST_RUN command */
@@ -556,6 +571,23 @@ union bpf_attr {
  *     @mode: operation mode (enum bpf_adj_room_mode)
  *     @flags: reserved for future use
  *     Return: 0 on success or negative error code
+ *
+ * int bpf_sk_redirect_map(map, key, flags)
+ *     Redirect skb to a sock in map using key as a lookup key for the
+ *     sock in map.
+ *     @map: pointer to sockmap
+ *     @key: key to lookup sock in map
+ *     @flags: reserved for future use
+ *     Return: SK_REDIRECT
+ *
+ * int bpf_sock_map_update(skops, map, key, flags, map_flags)
+ *	@skops: pointer to bpf_sock_ops
+ *	@map: pointer to sockmap to update
+ *	@key: key to insert/update sock in map
+ *	@flags: same flags as map update elem
+ *	@map_flags: sock map specific flags
+ *	   bit 1: Enable strparser
+ *	   other bits: reserved
  */
 #define __BPF_FUNC_MAPPER(FN)		\
 	FN(unspec),			\
@@ -609,7 +641,9 @@ union bpf_attr {
 	FN(set_hash),			\
 	FN(setsockopt),			\
 	FN(skb_adjust_room),		\
-	FN(redirect_map),
+	FN(redirect_map),		\
+	FN(sk_redirect_map),		\
+	FN(sock_map_update),		\
 
 /* integer value in 'imm' field of BPF_CALL instruction selects which helper
  * function eBPF program intends to call
@@ -686,6 +720,15 @@ struct __sk_buff {
 	__u32 data;
 	__u32 data_end;
 	__u32 napi_id;
+
+	/* accessed by BPF_PROG_TYPE_sk_skb types */
+	__u32 family;
+	__u32 remote_ip4;	/* Stored in network byte order */
+	__u32 local_ip4;	/* Stored in network byte order */
+	__u32 remote_ip6[4];	/* Stored in network byte order */
+	__u32 local_ip6[4];	/* Stored in network byte order */
+	__u32 remote_port;	/* Stored in network byte order */
+	__u32 local_port;	/* stored in host byte order */
 };
 
 struct bpf_tunnel_key {
@@ -744,6 +787,12 @@ enum xdp_action {
 struct xdp_md {
 	__u32 data;
 	__u32 data_end;
+};
+
+enum sk_action {
+	SK_ABORTED = 0,
+	SK_DROP,
+	SK_REDIRECT,
 };
 
 #define BPF_TAG_SIZE	8
