@@ -76,7 +76,6 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
-	int ok = 0;
 	struct tc_gact p = { 0 };
 #ifdef CONFIG_GACT_PROB
 	int rd = 0;
@@ -89,17 +88,14 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 
 
 	if (matches(*argv, "gact") == 0) {
-		ok++;
 		argc--;
 		argv++;
-	} else {
-		if (parse_action_control(&argc, &argv, &p.action, false) == -1)
-			usage();
-		ok++;
+	} else if (parse_action_control(&argc, &argv, &p.action, false) == -1) {
+		usage();	/* does not return */
 	}
 
 #ifdef CONFIG_GACT_PROB
-	if (ok && argc > 0) {
+	if (argc > 0) {
 		if (matches(*argv, "random") == 0) {
 			rd = 1;
 			NEXT_ARG();
@@ -142,14 +138,10 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 			}
 			argc--;
 			argv++;
-			ok++;
 		} else if (matches(*argv, "help") == 0) {
 				usage();
 		}
 	}
-
-	if (!ok)
-		return -1;
 
 	tail = NLMSG_TAIL(n);
 	addattr_l(n, MAX_MSG, tca_id, NULL, 0);

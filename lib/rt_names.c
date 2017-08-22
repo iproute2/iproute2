@@ -410,10 +410,6 @@ const char *rtnl_rttable_n2a(__u32 id, char *buf, int len)
 {
 	struct rtnl_hash_entry *entry;
 
-	if (id > RT_TABLE_MAX) {
-		snprintf(buf, len, "%u", id);
-		return buf;
-	}
 	if (!rtnl_rttable_init)
 		rtnl_rttable_initialize();
 	entry = rtnl_rttable_hash[id & 255];

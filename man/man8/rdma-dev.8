@@ -1,0 +1,55 @@
+.TH RDMA\-DEV 8 "06 Jul 2017" "iproute2" "Linux"
+.SH NAME
+rdmak-dev \- RDMA device configuration
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B rdma
+.RI "[ " OPTIONS " ]"
+.B dev
+.RI  " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+\fB\-d\fR[\fIetails\fR] }
+
+.ti -8
+.B rdma dev show
+.RI "[ " DEV " ]"
+
+.ti -8
+.B rdma dev help
+
+.SH "DESCRIPTION"
+.SS rdma dev show - display rdma device attributes
+
+.PP
+.I "DEV"
+- specifies the RDMA device to show.
+If this argument is omitted all devices are listed.
+
+.SH "EXAMPLES"
+.PP
+rdma dev
+.RS 4
+Shows the state of all RDMA devices on the system.
+.RE
+.PP
+rdma dev show mlx5_3
+.RS 4
+Shows the state of specified RDMA device.
+.RE
+.PP
+
+.SH SEE ALSO
+.BR rdma (8),
+.BR rdma-link (8),
+.br
+
+.SH AUTHOR
+Leon Romanovsky <leonro@mellanox.com>

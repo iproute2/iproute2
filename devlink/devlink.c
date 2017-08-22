@@ -25,6 +25,7 @@
 #include "list.h"
 #include "mnlg.h"
 #include "json_writer.h"
+#include "utils.h"
 
 #define ESWITCH_MODE_LEGACY "legacy"
 #define ESWITCH_MODE_SWITCHDEV "switchdev"
@@ -160,7 +161,6 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 	free(ifname_map);
 }
 
-#define BIT(nr)                 (1UL << (nr))
 #define DL_OPT_HANDLE		BIT(0)
 #define DL_OPT_HANDLEP		BIT(1)
 #define DL_OPT_PORT_TYPE	BIT(2)
@@ -779,7 +779,7 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 	int err;
 
 	if (o_required & DL_OPT_HANDLE && o_required & DL_OPT_HANDLEP) {
-		uint32_t handle_bit = handle_bit;
+		uint32_t handle_bit;
 
 		err = dl_argv_handle_both(dl, &opts->bus_name, &opts->dev_name,
 					  &opts->port_index, &handle_bit);

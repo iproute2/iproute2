@@ -1,0 +1,55 @@
+.TH RDMA\-LINK 8 "06 Jul 2017" "iproute2" "Linux"
+.SH NAME
+rdma-link \- rdma link configuration
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B devlink
+.RI "[ " OPTIONS " ]"
+.B link
+.RI  " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+\fB\-d\fR[\fIetails\fR] }
+
+.ti -8
+.B rdma link show
+.RI "[ " DEV/PORT_INDEX " ]"
+
+.ti -8
+.B rdma link help
+
+.SH "DESCRIPTION"
+.SS rdma link show - display rdma link attributes
+
+.PP
+.I "DEV/PORT_INDEX"
+- specifies the RDMa link to show.
+If this argument is omitted all links are listed.
+
+.SH "EXAMPLES"
+.PP
+rdma link show
+.RS 4
+Shows the state of all rdma links on the system.
+.RE
+.PP
+rdma link show mlx5_2/1
+.RS 4
+Shows the state of specified rdma link.
+.RE
+.PP
+
+.SH SEE ALSO
+.BR rdma (8),
+.BR rdma-dev (8),
+.br
+
+.SH AUTHOR
+Leon Romanovsky <leonro@mellanox.com>
