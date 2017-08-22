@@ -526,18 +526,26 @@ static int __dl_argv_handle_port(char *str,
 				 char **p_bus_name, char **p_dev_name,
 				 uint32_t *p_port_index)
 {
-	char *handlestr = handlestr;
-	char *portstr = portstr;
+	char *handlestr;
+	char *portstr;
 	int err;
 
-	strslashrsplit(str, &handlestr, &portstr);
+	err = strslashrsplit(str, &handlestr, &portstr);
+	if (err) {
+		pr_err("Port identification \"%s\" is invalid\n", str);
+		return err;
+	}
 	err = strtouint32_t(portstr, p_port_index);
 	if (err) {
 		pr_err("Port index \"%s\" is not a number or not within range\n",
 		       portstr);
 		return err;
 	}
-	strslashrsplit(handlestr, p_bus_name, p_dev_name);
+	err = strslashrsplit(handlestr, p_bus_name, p_dev_name);
+	if (err) {
+		pr_err("Port identification \"%s\" is invalid\n", str);
+		return err;
+	}
 	return 0;
 }
 

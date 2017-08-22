@@ -136,7 +136,7 @@ static void read_igmp(struct ma_info **result_p)
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		struct ma_info *ma;
-		size_t len;
+		size_t len = 0;
 
 		if (buf[0] != '\t') {
 			sscanf(buf, "%d%s", &m.index, m.name);

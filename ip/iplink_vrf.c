@@ -136,7 +136,9 @@ __u32 ipvrf_get_table(const char *name)
 					   &answer.n, sizeof(answer)) < 0) {
 		/* special case "default" vrf to be the main table */
 		if (errno == ENODEV && !strcmp(name, "default"))
-			rtnl_rttable_a2n(&tb_id, "main");
+			if (rtnl_rttable_a2n(&tb_id, "main"))
+				fprintf(stderr,
+					"BUG: RTTable \"main\" not found.\n");
 
 		return tb_id;
 	}

@@ -3479,16 +3479,17 @@ static int netlink_show_one(struct filter *f,
 				int rq, int wq,
 				unsigned long long sk, unsigned long long cb)
 {
-	struct sockstat st;
+	struct sockstat st = {
+		.state		= SS_CLOSE,
+		.rq		= rq,
+		.wq		= wq,
+		.local.family	= AF_NETLINK,
+		.remote.family	= AF_NETLINK,
+	};
 
 	SPRINT_BUF(prot_buf) = {};
 	const char *prot_name;
 	char procname[64] = {};
-
-	st.state = SS_CLOSE;
-	st.rq	 = rq;
-	st.wq	 = wq;
-	st.local.family = st.remote.family = AF_NETLINK;
 
 	if (f->f) {
 		st.rport = -1;

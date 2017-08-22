@@ -1497,7 +1497,8 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			id = *argv;
 		} else if (strcmp(*argv, "mark") == 0) {
 			NEXT_ARG();
-			get_unsigned(&mark, *argv, 0);
+			if (get_unsigned(&mark, *argv, 0))
+				invarg("invalid mark value", *argv);
 			filter.markmask = -1;
 		} else if (strcmp(*argv, "via") == 0) {
 			int family;
@@ -1714,7 +1715,8 @@ static int iproute_get(int argc, char **argv)
 			idev = *argv;
 		} else if (matches(*argv, "mark") == 0) {
 			NEXT_ARG();
-			get_unsigned(&mark, *argv, 0);
+			if (get_unsigned(&mark, *argv, 0))
+				invarg("invalid mark value", *argv);
 		} else if (matches(*argv, "oif") == 0 ||
 			   strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
