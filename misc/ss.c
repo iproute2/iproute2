@@ -3922,11 +3922,11 @@ static void _usage(FILE *dest)
 "   -F, --filter=FILE   read filter information from FILE\n"
 "       FILTER := [ state STATE-FILTER ] [ EXPRESSION ]\n"
 "       STATE-FILTER := {all|connected|synchronized|bucket|big|TCP-STATES}\n"
-"         TCP-STATES := {established|syn-sent|syn-recv|fin-wait-{1,2}|time-wait|closed|close-wait|last-ack|listen|closing}\n"
+"         TCP-STATES := {established|syn-sent|syn-recv|fin-wait-{1,2}|time-wait|closed|close-wait|last-ack|listening|closing}\n"
 "          connected := {established|syn-sent|syn-recv|fin-wait-{1,2}|time-wait|close-wait|last-ack|closing}\n"
 "       synchronized := {established|syn-recv|fin-wait-{1,2}|time-wait|close-wait|last-ack|closing}\n"
 "             bucket := {syn-recv|time-wait}\n"
-"                big := {established|syn-sent|fin-wait-{1,2}|closed|close-wait|last-ack|listen|closing}\n"
+"                big := {established|syn-sent|fin-wait-{1,2}|closed|close-wait|last-ack|listening|closing}\n"
 		);
 }
 
