@@ -26,7 +26,7 @@
 static void print_usage(FILE *f)
 {
 	fprintf(f,
-		"Usage: ... { gre | gretap } [ remote ADDR ]\n"
+		"Usage: ... { gre | gretap | erspan } [ remote ADDR ]\n"
 		"                            [ local ADDR ]\n"
 		"                            [ [i|o]seq ]\n"
 		"                            [ [i|o]key KEY ]\n"
@@ -44,6 +44,7 @@ static void print_usage(FILE *f)
 		"                            [ [no]encap-csum6 ]\n"
 		"                            [ [no]encap-remcsum ]\n"
 		"                            [ fwmark MARK ]\n"
+		"                            [ erspan IDX ]\n"
 		"\n"
 		"Where: ADDR := { IP_ADDRESS | any }\n"
 		"       TOS  := { NUMBER | inherit }\n"
@@ -96,6 +97,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 metadata = 0;
 	__u8 ignore_df = 0;
 	__u32 fwmark = 0;
+	__u32 erspan_idx = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0) {
@@ -172,6 +174,9 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_FWMARK])
 			fwmark = rta_getattr_u32(greinfo[IFLA_GRE_FWMARK]);
+
+		if (greinfo[IFLA_GRE_ERSPAN_INDEX])
+			erspan_idx = rta_getattr_u32(greinfo[IFLA_GRE_ERSPAN_INDEX]);
 	}
 
 	while (argc > 0) {
@@ -328,6 +333,12 @@ get_failed:
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))
 				invarg("invalid fwmark\n", *argv);
+		} else if (strcmp(*argv, "erspan") == 0) {
+			NEXT_ARG();
+			if (get_u32(&erspan_idx, *argv, 0))
+				invarg("invalid erspan index\n", *argv);
+			if (erspan_idx & ~((1<<20) - 1) || erspan_idx == 0)
+				invarg("erspan index must be > 0 and <= 20-bit\n", *argv);
 		} else
 			usage();
 		argc--; argv++;
@@ -359,6 +370,8 @@ get_failed:
 		addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
 		addattr_l(n, 1024, IFLA_GRE_TOS, &tos, 1);
 		addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
+		if (erspan_idx != 0)
+			addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
 	} else {
 		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
 	}
@@ -494,6 +507,12 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_GRE_IGNORE_DF] && rta_getattr_u8(tb[IFLA_GRE_IGNORE_DF]))
 		print_bool(PRINT_ANY, "ignore_df", "ignore-df ", true);
 
+	if (tb[IFLA_GRE_ERSPAN_INDEX]) {
+		__u32 erspan_idx = rta_getattr_u32(tb[IFLA_GRE_ERSPAN_INDEX]);
+
+		fprintf(f, "erspan_index %u ", erspan_idx);
+	}
+
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&
 	    rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {
 		__u16 type = rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]);
@@ -582,6 +601,14 @@ struct link_util gre_link_util = {
 
 struct link_util gretap_link_util = {
 	.id = "gretap",
+	.maxattr = IFLA_GRE_MAX,
+	.parse_opt = gre_parse_opt,
+	.print_opt = gre_print_opt,
+	.print_help = gre_print_help,
+};
+
+struct link_util erspan_link_util = {
+	.id = "erspan",
 	.maxattr = IFLA_GRE_MAX,
 	.parse_opt = gre_parse_opt,
 	.print_opt = gre_print_opt,

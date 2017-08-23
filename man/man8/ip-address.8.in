@@ -120,6 +120,7 @@ ip-address \- protocol address management
 .BR sit " |"
 .BR gre " |"
 .BR gretap " |"
+.BR erspan " |"
 .BR ip6gre " |"
 .BR ip6gretap " |"
 .BR vti " |"
