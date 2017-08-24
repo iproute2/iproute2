@@ -354,8 +354,7 @@ int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
 	return sendmsg(rth->fd, &msg, 0);
 }
 
-static int rtnl_dump_done(const struct rtnl_handle *rth,
-			  struct nlmsghdr *h)
+static int rtnl_dump_done(struct nlmsghdr *h)
 {
 	int len = *(int *)NLMSG_DATA(h);
 
@@ -462,7 +461,7 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 					dump_intr = 1;
 
 				if (h->nlmsg_type == NLMSG_DONE) {
-					err = rtnl_dump_done(rth, h);
+					err = rtnl_dump_done(h);
 					if (err < 0)
 						return -1;
 
