@@ -870,7 +870,8 @@ int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data,
 	rta = NLMSG_TAIL(n);
 	rta->rta_type = type;
 	rta->rta_len = len;
-	memcpy(RTA_DATA(rta), data, alen);
+	if (alen)
+		memcpy(RTA_DATA(rta), data, alen);
 	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
 	return 0;
 }
@@ -957,7 +958,8 @@ int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 	subrta = (struct rtattr *)(((char *)rta) + RTA_ALIGN(rta->rta_len));
 	subrta->rta_type = type;
 	subrta->rta_len = len;
-	memcpy(RTA_DATA(subrta), data, alen);
+	if (alen)
+		memcpy(RTA_DATA(subrta), data, alen);
 	rta->rta_len = NLMSG_ALIGN(rta->rta_len) + RTA_ALIGN(len);
 	return 0;
 }
