@@ -45,7 +45,7 @@ static char *find_fs_mount(const char *fs_to_find)
 		return NULL;
 	}
 
-	while (fscanf(fp, "%*s %4096s %127s %*s %*d %*d\n",
+	while (fscanf(fp, "%*s %4095s %127s %*s %*d %*d\n",
 		      path, fstype) == 2) {
 		if (strcmp(fstype, fs_to_find) == 0) {
 			mnt = strdup(path);
