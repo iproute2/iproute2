@@ -992,12 +992,18 @@ int main(int argc, char *argv[])
 	    && verify_forging(fd) == 0) {
 		FILE *sfp = fdopen(fd, "r");
 
-		load_raw_table(sfp);
-		if (hist_db && source_mismatch) {
-			fprintf(stderr, "ifstat: history is stale, ignoring it.\n");
-			hist_db = NULL;
+		if (!sfp) {
+			fprintf(stderr, "ifstat: fdopen failed: %s\n",
+				strerror(errno));
+			close(fd);
+		} else  {
+			load_raw_table(sfp);
+			if (hist_db && source_mismatch) {
+				fprintf(stderr, "ifstat: history is stale, ignoring it.\n");
+				hist_db = NULL;
+			}
+			fclose(sfp);
 		}
-		fclose(sfp);
 	} else {
 		if (fd >= 0)
 			close(fd);
