@@ -591,7 +591,8 @@ int bpf_trace_pipe(void)
 
 		ret = read(fd, buff, sizeof(buff) - 1);
 		if (ret > 0) {
-			write(2, buff, ret);
+			if (write(STDERR_FILENO, buff, ret) != ret)
+				return -1;
 			fflush(stderr);
 		}
 	}
@@ -1516,7 +1517,7 @@ static int bpf_find_map_id(const struct bpf_elf_ctx *ctx, uint32_t id)
 	return -ENOENT;
 }
 
-static void bpf_report_map_in_map(int outer_fd, int inner_fd, uint32_t idx)
+static void bpf_report_map_in_map(int outer_fd, uint32_t idx)
 {
 	struct bpf_elf_map outer_map;
 	int ret;
@@ -1683,7 +1684,7 @@ static int bpf_maps_attach_all(struct bpf_elf_ctx *ctx)
 					     &inner_fd, BPF_ANY);
 			if (ret < 0) {
 				bpf_report_map_in_map(ctx->map_fds[j],
-						      inner_fd, inner_idx);
+						      inner_idx);
 				return ret;
 			}
 		}

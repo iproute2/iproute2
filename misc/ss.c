@@ -697,8 +697,8 @@ struct dctcpstat {
 
 struct tcpstat {
 	struct sockstat	    ss;
-	int		    timer;
-	int		    timeout;
+	unsigned int	    timer;
+	unsigned int	    timeout;
 	int		    probes;
 	char		    cong_alg[16];
 	double		    rto, ato, rtt, rttvar;
@@ -869,13 +869,11 @@ static void sock_addr_print(const char *addr, char *delim, const char *port,
 	sock_addr_print_width(addr_width, addr, delim, serv_width, port, ifname);
 }
 
-static const char *print_ms_timer(int timeout)
+static const char *print_ms_timer(unsigned int timeout)
 {
 	static char buf[64];
 	int secs, msecs, minutes;
 
-	if (timeout < 0)
-		timeout = 0;
 	secs = timeout/1000;
 	minutes = secs/60;
 	secs = secs%60;
@@ -3150,7 +3148,8 @@ static int unix_show(struct filter *f)
 
 		if (flags & (1 << 16)) {
 			u->state = SS_LISTEN;
-		} else {
+		} else if (u->state > 0 &&
+			   u->state <= ARRAY_SIZE(unix_state_map)) {
 			u->state = unix_state_map[u->state-1];
 			if (u->type == SOCK_DGRAM && u->state == SS_CLOSE && u->rport)
 				u->state = SS_ESTABLISHED;
@@ -3922,11 +3921,11 @@ static void _usage(FILE *dest)
 "   -F, --filter=FILE   read filter information from FILE\n"
 "       FILTER := [ state STATE-FILTER ] [ EXPRESSION ]\n"
 "       STATE-FILTER := {all|connected|synchronized|bucket|big|TCP-STATES}\n"
-"         TCP-STATES := {established|syn-sent|syn-recv|fin-wait-{1,2}|time-wait|closed|close-wait|last-ack|listen|closing}\n"
+"         TCP-STATES := {established|syn-sent|syn-recv|fin-wait-{1,2}|time-wait|closed|close-wait|last-ack|listening|closing}\n"
 "          connected := {established|syn-sent|syn-recv|fin-wait-{1,2}|time-wait|close-wait|last-ack|closing}\n"
 "       synchronized := {established|syn-recv|fin-wait-{1,2}|time-wait|close-wait|last-ack|closing}\n"
 "             bucket := {syn-recv|time-wait}\n"
-"                big := {established|syn-sent|fin-wait-{1,2}|closed|close-wait|last-ack|listen|closing}\n"
+"                big := {established|syn-sent|fin-wait-{1,2}|closed|close-wait|last-ack|listening|closing}\n"
 		);
 }
 

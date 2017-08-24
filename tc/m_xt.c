@@ -95,7 +95,8 @@ build_st(struct xtables_target *target, struct xt_entry_target *t)
 	if (t == NULL) {
 		target->t = xtables_calloc(1, size);
 		target->t->u.target_size = size;
-		strcpy(target->t->u.user.name, target->name);
+		strncpy(target->t->u.user.name, target->name,
+			sizeof(target->t->u.user.name) - 1);
 		target->t->u.user.revision = target->revision;
 
 		if (target->init != NULL)
@@ -277,8 +278,8 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	}
 	fprintf(stdout, " index %d\n", index);
 
-	if (strlen(tname) > 16) {
-		size = 16;
+	if (strlen(tname) >= 16) {
+		size = 15;
 		k[15] = 0;
 	} else {
 		size = 1 + strlen(tname);

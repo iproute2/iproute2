@@ -45,7 +45,7 @@ static char *find_fs_mount(const char *fs_to_find)
 		return NULL;
 	}
 
-	while (fscanf(fp, "%*s %4096s %127s %*s %*d %*d\n",
+	while (fscanf(fp, "%*s %4095s %127s %*s %*d %*d\n",
 		      path, fstype) == 2) {
 		if (strcmp(fstype, fs_to_find) == 0) {
 			mnt = strdup(path);
@@ -102,7 +102,6 @@ out:
 int make_path(const char *path, mode_t mode)
 {
 	char *dir, *delim;
-	struct stat sbuf;
 	int rc = -1;
 
 	delim = dir = strdup(path);
@@ -120,20 +119,11 @@ int make_path(const char *path, mode_t mode)
 		if (delim)
 			*delim = '\0';
 
-		if (stat(dir, &sbuf) != 0) {
-			if (errno != ENOENT) {
-				fprintf(stderr,
-					"stat failed for %s: %s\n",
-					dir, strerror(errno));
-				goto out;
-			}
-
-			if (mkdir(dir, mode) != 0) {
-				fprintf(stderr,
-					"mkdir failed for %s: %s\n",
-					dir, strerror(errno));
-				goto out;
-			}
+		rc = mkdir(dir, mode);
+		if (mkdir(dir, mode) != 0 && errno != EEXIST) {
+			fprintf(stderr, "mkdir failed for %s: %s\n",
+				dir, strerror(errno));
+			goto out;
 		}
 
 		if (delim == NULL)

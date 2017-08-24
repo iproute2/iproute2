@@ -30,7 +30,7 @@ struct ll_cache {
 	unsigned	flags;
 	unsigned 	index;
 	unsigned short	type;
-	char		name[IFNAMSIZ];
+	char		name[];
 };
 
 #define IDXMAP_SIZE	1024
@@ -120,7 +120,7 @@ int ll_remember_index(const struct sockaddr_nl *who,
 		return 0;
 	}
 
-	im = malloc(sizeof(*im));
+	im = malloc(sizeof(*im) + strlen(ifname) + 1);
 	if (im == NULL)
 		return 0;
 	im->index = ifi->ifi_index;

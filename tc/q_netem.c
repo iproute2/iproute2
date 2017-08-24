@@ -538,7 +538,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	int *ecn = NULL;
 	struct tc_netem_qopt qopt;
 	const struct tc_netem_rate *rate = NULL;
-	int len = RTA_PAYLOAD(opt) - sizeof(qopt);
+	int len;
 	__u64 rate64 = 0;
 
 	SPRINT_BUF(b1);
@@ -546,6 +546,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (opt == NULL)
 		return 0;
 
+	len = RTA_PAYLOAD(opt) - sizeof(qopt);
 	if (len < 0) {
 		fprintf(stderr, "options size error\n");
 		return -1;

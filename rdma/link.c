@@ -42,7 +42,7 @@ static const char *caps_to_str(uint32_t idx)
 	x(CAP_MASK_NOTICE, 22) \
 	x(BOOT_MGMT, 23) \
 	x(LINK_LATENCY, 24) \
-	x(CLIENT_REG, 23) \
+	x(CLIENT_REG, 25) \
 	x(IP_BASED_GIDS, 26)
 
 	enum { RDMA_PORT_FLAGS(RDMA_BITMAP_ENUM) };

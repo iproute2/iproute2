@@ -34,10 +34,12 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 {
 	int idx;
 	struct tc_mqprio_qopt opt = {
-				     8,
-				     {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 1, 1, 3, 3, 3, 3},
-				     1,
-				    };
+		.num_tc = 8,
+		.prio_tc_map = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 1, 1, 3, 3, 3, 3 },
+		.hw = 1,
+		.count = { },
+		.offset = { },
+	};
 
 	while (argc > 0) {
 		idx = 0;

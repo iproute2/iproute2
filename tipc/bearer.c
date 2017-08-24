@@ -439,7 +439,7 @@ static int cmd_bearer_enable(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return err;
 
 	opt = get_opt(opts, "media");
-	if (strcmp(opt->val, "udp") == 0) {
+	if (opt && strcmp(opt->val, "udp") == 0) {
 		err = nl_add_udp_enable_opts(nlh, opts, cmdl);
 		if (err)
 			return err;

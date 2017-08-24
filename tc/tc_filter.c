@@ -412,6 +412,9 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 			usage();
 			return 0;
 		} else {
+			if (!**argv)
+				invarg("invalid filter name", *argv);
+
 			strncpy(k, *argv, sizeof(k)-1);
 
 			q = get_filter_kind(k);
