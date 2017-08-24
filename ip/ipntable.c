@@ -37,7 +37,7 @@ static struct
 	int family;
 	int index;
 #define NONE_DEV	(-1)
-	char name[1024];
+	const char *name;
 } filter;
 
 static void usage(void) __attribute__((noreturn));
@@ -367,7 +367,7 @@ static int print_ntable(const struct sockaddr_nl *who, struct nlmsghdr *n, void 
 	if (tb[NDTA_NAME]) {
 		const char *name = rta_getattr_str(tb[NDTA_NAME]);
 
-		if (strlen(filter.name) > 0 && strcmp(filter.name, name))
+		if (filter.name && strcmp(filter.name, name))
 			return 0;
 	}
 	if (tb[NDTA_PARMS]) {
@@ -631,7 +631,7 @@ static int ipntable_show(int argc, char **argv)
 		} else if (strcmp(*argv, "name") == 0) {
 			NEXT_ARG();
 
-			strncpy(filter.name, *argv, sizeof(filter.name));
+			filter.name = *argv;
 		} else
 			invarg("unknown", *argv);
 
