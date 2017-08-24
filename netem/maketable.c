@@ -38,8 +38,8 @@ readdoubles(FILE *fp, int *number)
 	}
 
 	for (i=0; i<limit; ++i){
-		fscanf(fp, "%lf", &x[i]);
-		if (feof(fp))
+		if (fscanf(fp, "%lf", &x[i]) != 1 ||
+		    feof(fp))
 			break;
 		++n;
 	}
