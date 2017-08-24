@@ -25,7 +25,7 @@
 
 const char *inet_proto_n2a(int proto, char *buf, int len)
 {
-	static char ncache[16];
+	static char *ncache;
 	static int icache = -1;
 	struct protoent *pe;
 
@@ -34,9 +34,12 @@ const char *inet_proto_n2a(int proto, char *buf, int len)
 
 	pe = getprotobynumber(proto);
 	if (pe) {
+		if (icache != -1)
+			free(ncache);
 		icache = proto;
-		strncpy(ncache, pe->p_name, 16);
-		strncpy(buf, pe->p_name, len);
+		ncache = strdup(pe->p_name);
+		strncpy(buf, pe->p_name, len - 1);
+		buf[len - 1] = '\0';
 		return buf;
 	}
 	snprintf(buf, len, "ipproto-%d", proto);
@@ -45,24 +48,23 @@ const char *inet_proto_n2a(int proto, char *buf, int len)
 
 int inet_proto_a2n(const char *buf)
 {
-	static char ncache[16];
+	static char *ncache;
 	static int icache = -1;
 	struct protoent *pe;
+	__u8 ret;
 
-	if (icache>=0 && strcmp(ncache, buf) == 0)
+	if (icache != -1 && strcmp(ncache, buf) == 0)
 		return icache;
 
-	if (buf[0] >= '0' && buf[0] <= '9') {
-		__u8 ret;
-		if (get_u8(&ret, buf, 10))
-			return -1;
+	if (!get_u8(&ret, buf, 10))
 		return ret;
-	}
 
 	pe = getprotobyname(buf);
 	if (pe) {
+		if (icache != -1)
+			free(ncache);
 		icache = pe->p_proto;
-		strncpy(ncache, pe->p_name, 16);
+		ncache = strdup(pe->p_name);
 		return pe->p_proto;
 	}
 	return -1;
