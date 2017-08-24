@@ -697,8 +697,8 @@ struct dctcpstat {
 
 struct tcpstat {
 	struct sockstat	    ss;
-	int		    timer;
-	int		    timeout;
+	unsigned int	    timer;
+	unsigned int	    timeout;
 	int		    probes;
 	char		    cong_alg[16];
 	double		    rto, ato, rtt, rttvar;
@@ -869,13 +869,11 @@ static void sock_addr_print(const char *addr, char *delim, const char *port,
 	sock_addr_print_width(addr_width, addr, delim, serv_width, port, ifname);
 }
 
-static const char *print_ms_timer(int timeout)
+static const char *print_ms_timer(unsigned int timeout)
 {
 	static char buf[64];
 	int secs, msecs, minutes;
 
-	if (timeout < 0)
-		timeout = 0;
 	secs = timeout/1000;
 	minutes = secs/60;
 	secs = secs%60;
