@@ -63,6 +63,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 	char dbuf[ETH_ALEN];
 	char sbuf[ETH_ALEN];
 	__u16 ife_type = 0;
+	int user_type = 0;
 	__u32 ife_prio = 0;
 	__u32 ife_prio_v = 0;
 	__u32 ife_mark = 0;
@@ -125,6 +126,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 			if (get_u16(&ife_type, *argv, 0))
 				invarg("ife type is invalid", *argv);
 			fprintf(stderr, "IFE type 0x%x\n", ife_type);
+			user_type = 1;
 		} else if (matches(*argv, "dst") == 0) {
 			NEXT_ARG();
 			daddr = *argv;
@@ -185,7 +187,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 
 	if (daddr)
 		addattr_l(n, MAX_MSG, TCA_IFE_DMAC, dbuf, ETH_ALEN);
-	if (ife_type)
+	if (user_type)
 		addattr_l(n, MAX_MSG, TCA_IFE_TYPE, &ife_type, 2);
 	if (saddr)
 		addattr_l(n, MAX_MSG, TCA_IFE_SMAC, sbuf, ETH_ALEN);
