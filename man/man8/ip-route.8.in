@@ -214,7 +214,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR ENCAP_SEG6 " := "
 .B seg6
 .BR mode " [ "
-.BR encap " | " inline " ] "
+.BR encap " | " inline " | " l2encap " ] "
 .B segs
 .IR SEGMENTS " [ "
 .B hmac
@@ -748,6 +748,10 @@ is a set of encapsulation attributes specific to the
 
 .B mode encap
 - Encapsulate packet in an outer IPv6 header with SRH
+.sp
+
+.B mode l2encap
+- Encapsulate ingress L2 frame within an outer IPv6 header and SRH
 .sp
 
 .I SEGMENTS
