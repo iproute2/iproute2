@@ -2753,7 +2753,7 @@ static int tcp_show_netlink_file(struct filter *f)
 	return err;
 }
 
-static int tcp_show(struct filter *f, int socktype)
+static int tcp_show(struct filter *f)
 {
 	FILE *fp = NULL;
 	char *buf = NULL;
@@ -2768,7 +2768,7 @@ static int tcp_show(struct filter *f, int socktype)
 		return tcp_show_netlink_file(f);
 
 	if (!getenv("PROC_NET_TCP") && !getenv("PROC_ROOT")
-	    && inet_show_netlink(f, NULL, socktype) == 0)
+	    && inet_show_netlink(f, NULL, IPPROTO_TCP) == 0)
 		return 0;
 
 	/* Sigh... We have to parse /proc/net/tcp... */
@@ -2834,6 +2834,18 @@ outerr:
 		errno = saved_errno;
 		return -1;
 	} while (0);
+}
+
+static int dccp_show(struct filter *f)
+{
+	if (!filter_af_get(f, AF_INET) && !filter_af_get(f, AF_INET6))
+		return 0;
+
+	if (!getenv("PROC_NET_DCCP") && !getenv("PROC_ROOT")
+	    && inet_show_netlink(f, NULL, IPPROTO_DCCP) == 0)
+		return 0;
+
+	return 0;
 }
 
 static int sctp_show(struct filter *f)
@@ -4390,9 +4402,9 @@ int main(int argc, char *argv[])
 	if (current_filter.dbs & (1<<UDP_DB))
 		udp_show(&current_filter);
 	if (current_filter.dbs & (1<<TCP_DB))
-		tcp_show(&current_filter, IPPROTO_TCP);
+		tcp_show(&current_filter);
 	if (current_filter.dbs & (1<<DCCP_DB))
-		tcp_show(&current_filter, IPPROTO_DCCP);
+		dccp_show(&current_filter);
 	if (current_filter.dbs & (1<<SCTP_DB))
 		sctp_show(&current_filter);
 
