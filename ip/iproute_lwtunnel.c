@@ -110,6 +110,32 @@ static void print_srh(FILE *fp, struct ipv6_sr_hdr *srh)
 	}
 }
 
+static const char *seg6_mode_types[] = {
+	[SEG6_IPTUN_MODE_INLINE]	= "inline",
+	[SEG6_IPTUN_MODE_ENCAP]		= "encap",
+	[SEG6_IPTUN_MODE_L2ENCAP]	= "l2encap",
+};
+
+static const char *format_seg6mode_type(int mode)
+{
+	if (mode < 0 || mode > ARRAY_SIZE(seg6_mode_types))
+		return "<unknown>";
+
+	return seg6_mode_types[mode];
+}
+
+static int read_seg6mode_type(const char *mode)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(seg6_mode_types); i++) {
+		if (strcmp(mode, seg6_mode_types[i]) == 0)
+			return i;
+	}
+
+	return -1;
+}
+
 static void print_encap_seg6(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[SEG6_IPTUNNEL_MAX+1];
@@ -121,8 +147,7 @@ static void print_encap_seg6(FILE *fp, struct rtattr *encap)
 		return;
 
 	tuninfo = RTA_DATA(tb[SEG6_IPTUNNEL_SRH]);
-	fprintf(fp, "mode %s ",
-		(tuninfo->mode == SEG6_IPTUN_MODE_ENCAP) ? "encap" : "inline");
+	fprintf(fp, "mode %s ", format_seg6mode_type(tuninfo->mode));
 
 	print_srh(fp, tuninfo->srh);
 }
@@ -457,11 +482,8 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 			NEXT_ARG();
 			if (mode_ok++)
 				duparg2("mode", *argv);
-			if (strcmp(*argv, "encap") == 0)
-				encap = 1;
-			else if (strcmp(*argv, "inline") == 0)
-				encap = 0;
-			else
+			encap = read_seg6mode_type(*argv);
+			if (encap < 0)
 				invarg("\"mode\" value is invalid\n", *argv);
 		} else if (strcmp(*argv, "segs") == 0) {
 			NEXT_ARG();
@@ -490,10 +512,7 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	tuninfo = malloc(sizeof(*tuninfo) + srhlen);
 	memset(tuninfo, 0, sizeof(*tuninfo) + srhlen);
 
-	if (encap)
-		tuninfo->mode = SEG6_IPTUN_MODE_ENCAP;
-	else
-		tuninfo->mode = SEG6_IPTUN_MODE_INLINE;
+	tuninfo->mode = encap;
 
 	memcpy(tuninfo->srh, srh, srhlen);
 
