@@ -189,6 +189,8 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 		addattr_l(n, MAX_MSG, TCA_IFE_DMAC, dbuf, ETH_ALEN);
 	if (user_type)
 		addattr_l(n, MAX_MSG, TCA_IFE_TYPE, &ife_type, 2);
+	else
+		fprintf(stderr, "IFE type 0x%04X\n", ETH_P_IFE);
 	if (saddr)
 		addattr_l(n, MAX_MSG, TCA_IFE_SMAC, sbuf, ETH_ALEN);
 
