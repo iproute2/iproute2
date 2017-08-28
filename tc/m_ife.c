@@ -125,7 +125,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 			NEXT_ARG();
 			if (get_u16(&ife_type, *argv, 0))
 				invarg("ife type is invalid", *argv);
-			fprintf(stderr, "IFE type 0x%x\n", ife_type);
+			fprintf(stderr, "IFE type 0x%04X\n", ife_type);
 			user_type = 1;
 		} else if (matches(*argv, "dst") == 0) {
 			NEXT_ARG();
