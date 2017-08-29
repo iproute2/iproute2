@@ -208,8 +208,9 @@ static int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
 
 	if (from_file) {
 		size_t tmp_len, op_len = sizeof("65535 255 255 4294967295,");
-		char *tmp_string, *pos, c, c_prev = ' ';
+		char *tmp_string, *pos, c_prev = ' ';
 		FILE *fp;
+		int c;
 
 		tmp_len = sizeof("4096,") + BPF_MAXINSNS * op_len;
 		tmp_string = pos = calloc(1, tmp_len);
@@ -228,18 +229,20 @@ static int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,
 			case '\n':
 				if (c_prev != ',')
 					*(pos++) = ',';
+				c_prev = ',';
 				break;
 			case ' ':
 			case '\t':
 				if (c_prev != ' ')
 					*(pos++) = c;
+				c_prev = ' ';
 				break;
 			default:
 				*(pos++) = c;
+				c_prev = c;
 			}
 			if (pos - tmp_string == tmp_len)
 				break;
-			c_prev = c;
 		}
 
 		if (!feof(fp)) {
