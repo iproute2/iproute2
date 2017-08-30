@@ -33,6 +33,7 @@ struct seg6_iptunnel_encap {
 enum {
 	SEG6_IPTUN_MODE_INLINE,
 	SEG6_IPTUN_MODE_ENCAP,
+	SEG6_IPTUN_MODE_L2ENCAP,
 };
 
 
