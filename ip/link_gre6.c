@@ -462,7 +462,14 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (flags & IP6_TNL_F_USE_ORIG_FLOWLABEL)
 		fprintf(f, "flowlabel inherit ");
 	else
-		fprintf(f, "flowlabel 0x%05x ", ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL));
+		fprintf(f, "flowlabel 0x%05x ",
+			ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL));
+
+	if (flags & IP6_TNL_F_USE_ORIG_TCLASS)
+		fprintf(f, "tclass inherit ");
+	else
+		fprintf(f, "tclass 0x%02x ",
+			ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
 
 	if (flags & IP6_TNL_F_RCV_DSCP_COPY)
 		fprintf(f, "dscp inherit ");
