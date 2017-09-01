@@ -40,17 +40,6 @@
 #include "ip_common.h"
 
 #define STRBUF_SIZE	(128)
-#define STRBUF_CAT(buf, str) \
-	do { \
-		int rest = sizeof(buf) - 1 - strlen(buf); \
-		if (rest > 0) { \
-			int len = strlen(str); \
-			if (len > rest) \
-				len = rest; \
-			strncat(buf, str, len); \
-			buf[sizeof(buf) - 1] = '\0'; \
-		} \
-	} while (0);
 
 struct xfrm_filter filter;
 
@@ -902,8 +891,8 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 			   prefix, title);
 
 	if (prefix)
-		STRBUF_CAT(buf, prefix);
-	STRBUF_CAT(buf, "\t");
+		strlcat(buf, prefix, sizeof(buf));
+	strlcat(buf, "\t", sizeof(buf));
 
 	fputs(buf, fp);
 	fprintf(fp, "replay-window %u ", xsinfo->replay_window);
@@ -944,7 +933,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		char sbuf[STRBUF_SIZE];
 
 		memcpy(sbuf, buf, sizeof(sbuf));
-		STRBUF_CAT(sbuf, "sel ");
+		strlcat(sbuf, "sel ", sizeof(sbuf));
 
 		xfrm_selector_print(&xsinfo->sel, xsinfo->family, fp, sbuf);
 	}
@@ -992,8 +981,8 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 	}
 
 	if (prefix)
-		STRBUF_CAT(buf, prefix);
-	STRBUF_CAT(buf, "\t");
+		strlcat(buf, prefix, sizeof(buf));
+	strlcat(buf, "\t", sizeof(buf));
 
 	fputs(buf, fp);
 	if (xpinfo->dir >= XFRM_POLICY_MAX) {

@@ -425,8 +425,7 @@ static void user_ent_hash_build(void)
 
 	user_ent_hash_build_init = 1;
 
-	strncpy(name, root, sizeof(name)-1);
-	name[sizeof(name)-1] = 0;
+	strlcpy(name, root, sizeof(name));
 
 	if (strlen(name) == 0 || name[strlen(name)-1] != '/')
 		strcat(name, "/");

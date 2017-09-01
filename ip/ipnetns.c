@@ -518,8 +518,7 @@ int netns_identify_pid(const char *pidstr, char *name, int len)
 
 		if ((st.st_dev == netst.st_dev) &&
 		    (st.st_ino == netst.st_ino)) {
-			strncpy(name, entry->d_name, len - 1);
-			name[len - 1] = '\0';
+			strlcpy(name, entry->d_name, len);
 		}
 	}
 	closedir(dir);

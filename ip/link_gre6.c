@@ -288,6 +288,7 @@ get_failed:
 			else {
 				if (get_u8(&uval, *argv, 16))
 					invarg("invalid TClass", *argv);
+				flowinfo &= ~IP6_FLOWINFO_TCLASS;
 				flowinfo |= htonl((__u32)uval << 20) & IP6_FLOWINFO_TCLASS;
 				flags &= ~IP6_TNL_F_USE_ORIG_TCLASS;
 			}
@@ -303,6 +304,7 @@ get_failed:
 					invarg("invalid Flowlabel", *argv);
 				if (uval > 0xFFFFF)
 					invarg("invalid Flowlabel", *argv);
+				flowinfo &= ~IP6_FLOWINFO_FLOWLABEL;
 				flowinfo |= htonl(uval) & IP6_FLOWINFO_FLOWLABEL;
 				flags &= ~IP6_TNL_F_USE_ORIG_FLOWLABEL;
 			}
@@ -485,6 +487,24 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		} else {
 			fprintf(f, "flowlabel 0x%05x ",
 				ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL));
+		}
+	}
+
+	if (flags & IP6_TNL_F_USE_ORIG_TCLASS) {
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_use_orig_tclass",
+			   "tclass inherit ",
+			   true);
+	} else {
+		if (is_json_context()) {
+			SPRINT_BUF(b1);
+
+			snprintf(b1, sizeof(b1), "0x%05x",
+				 ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
+			print_string(PRINT_JSON, "tclass", NULL, b1);
+		} else {
+			fprintf(f, "tclass 0x%02x ",
+				 ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
 		}
 	}
 

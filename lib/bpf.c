@@ -512,8 +512,7 @@ static const char *bpf_find_mntpt_single(unsigned long magic, char *mnt,
 
 	ret = bpf_valid_mntpt(mntpt, magic);
 	if (!ret) {
-		strncpy(mnt, mntpt, len - 1);
-		mnt[len - 1] = 0;
+		strlcpy(mnt, mntpt, len);
 		return mnt;
 	}
 
