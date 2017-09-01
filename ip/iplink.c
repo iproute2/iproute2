@@ -1024,7 +1024,7 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 	};
 	struct {
 		struct nlmsghdr n;
-		char buf[16384];
+		char buf[32768];
 	} answer;
 
 	if (name) {
