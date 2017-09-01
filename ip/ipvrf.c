@@ -336,8 +336,7 @@ static int vrf_path(char *vpath, size_t len)
 		if (vrf)
 			*vrf = '\0';
 
-		strncpy(vpath, start, len - 1);
-		vpath[len - 1] = '\0';
+		strlcpy(vpath, start, len);
 
 		/* if vrf path is just / then return nothing */
 		if (!strcmp(vpath, "/"))

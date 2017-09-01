@@ -145,8 +145,7 @@ get_set_byname(const char *setname, struct xt_set_info *info)
 	int res;
 
 	req.op = IP_SET_OP_GET_BYNAME;
-	strncpy(req.set.name, setname, IPSET_MAXNAMELEN);
-	req.set.name[IPSET_MAXNAMELEN - 1] = '\0';
+	strlcpy(req.set.name, setname, IPSET_MAXNAMELEN);
 	res = do_getsockopt(&req);
 	if (res != 0)
 		return -1;

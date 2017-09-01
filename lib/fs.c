@@ -172,8 +172,7 @@ int get_command_name(const char *pid, char *comm, size_t len)
 		if (nl)
 			*nl = '\0';
 
-		strncpy(comm, name, len - 1);
-		comm[len - 1] = '\0';
+		strlcpy(comm, name, len);
 		break;
 	}
 

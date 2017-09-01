@@ -325,8 +325,7 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 				invarg("\"segs\" provided before \"mode\"\n",
 				       *argv);
 
-			strncpy(segbuf, *argv, 1024);
-			segbuf[1023] = 0;
+			strlcpy(segbuf, *argv, 1024);
 		} else if (strcmp(*argv, "hmac") == 0) {
 			NEXT_ARG();
 			if (hmac_ok++)

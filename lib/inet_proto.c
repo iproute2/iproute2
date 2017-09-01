@@ -38,8 +38,7 @@ const char *inet_proto_n2a(int proto, char *buf, int len)
 			free(ncache);
 		icache = proto;
 		ncache = strdup(pe->p_name);
-		strncpy(buf, pe->p_name, len - 1);
-		buf[len - 1] = '\0';
+		strlcpy(buf, pe->p_name, len);
 		return buf;
 	}
 	snprintf(buf, len, "ipproto-%d", proto);
