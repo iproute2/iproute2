@@ -288,6 +288,7 @@ get_failed:
 			else {
 				if (get_u8(&uval, *argv, 16))
 					invarg("invalid TClass", *argv);
+				flowinfo &= ~IP6_FLOWINFO_TCLASS;
 				flowinfo |= htonl((__u32)uval << 20) & IP6_FLOWINFO_TCLASS;
 				flags &= ~IP6_TNL_F_USE_ORIG_TCLASS;
 			}
@@ -303,6 +304,7 @@ get_failed:
 					invarg("invalid Flowlabel", *argv);
 				if (uval > 0xFFFFF)
 					invarg("invalid Flowlabel", *argv);
+				flowinfo &= ~IP6_FLOWINFO_FLOWLABEL;
 				flowinfo |= htonl(uval) & IP6_FLOWINFO_FLOWLABEL;
 				flags &= ~IP6_TNL_F_USE_ORIG_FLOWLABEL;
 			}
