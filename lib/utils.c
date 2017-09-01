@@ -1230,3 +1230,22 @@ int get_real_family(int rtm_type, int rtm_family)
 
 	return rtm_family;
 }
+
+size_t strlcpy(char *dst, const char *src, size_t size)
+{
+	if (size) {
+		strncpy(dst, src, size - 1);
+		dst[size - 1] = '\0';
+	}
+	return strlen(src);
+}
+
+size_t strlcat(char *dst, const char *src, size_t size)
+{
+	size_t dlen = strlen(dst);
+
+	if (dlen > size)
+		return dlen + strlen(src);
+
+	return dlen + strlcpy(dst + dlen, src, size - dlen);
+}
