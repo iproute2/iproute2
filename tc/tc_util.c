@@ -434,7 +434,6 @@ static const char *action_n2a(int action)
 		return "trap";
 	default:
 		snprintf(buf, 64, "%d", action);
-		buf[63] = '\0';
 		return buf;
 	}
 }
