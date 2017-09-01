@@ -74,7 +74,7 @@ static int vrf_identify(pid_t pid, char *name, size_t len)
 			if (end)
 				*end = '\0';
 
-			strncpy(name, vrf, len - 1);
+			strlcpy(name, vrf, len);
 			break;
 		}
 	}

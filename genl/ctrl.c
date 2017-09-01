@@ -313,7 +313,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 
 		if (matches(*argv, "name") == 0) {
 			NEXT_ARG();
-			strncpy(d, *argv, sizeof (d) - 1);
+			strlcpy(d, *argv, sizeof(d));
 			addattr_l(nlh, 128, CTRL_ATTR_FAMILY_NAME,
 				  d, strlen(d) + 1);
 		} else if (matches(*argv, "id") == 0) {
