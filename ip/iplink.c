@@ -1040,6 +1040,11 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 
 	if (rtnl_talk(&rth, &req.n, &answer.n, sizeof(answer)) < 0)
 		return -2;
+	if (answer.n.nlmsg_len > sizeof(answer.buf)) {
+		fprintf(stderr, "Message truncated from %u to %lu\n",
+			answer.n.nlmsg_len, sizeof(answer.buf));
+		return -2;
+	}
 
 	if (brief)
 		print_linkinfo_brief(NULL, &answer.n, stdout, NULL);
