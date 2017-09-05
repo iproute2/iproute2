@@ -82,9 +82,10 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
 	return 0;
 }
 
-void xdp_dump(FILE *fp, struct rtattr *xdp)
+void xdp_dump(FILE *fp, struct rtattr *xdp, bool link, bool details)
 {
 	struct rtattr *tb[IFLA_XDP_MAX + 1];
+	__u32 prog_id = 0;
 	__u8 mode;
 
 	parse_rtattr_nested(tb, IFLA_XDP_MAX, xdp);
@@ -98,6 +99,8 @@ void xdp_dump(FILE *fp, struct rtattr *xdp)
 	} else {
 		if (mode == XDP_ATTACHED_NONE)
 			return;
+		else if (details && link)
+			fprintf(fp, "%s    prog/xdp", _SL_);
 		else if (mode == XDP_ATTACHED_DRV)
 			fprintf(fp, "xdp");
 		else if (mode == XDP_ATTACHED_SKB)
@@ -106,11 +109,19 @@ void xdp_dump(FILE *fp, struct rtattr *xdp)
 			fprintf(fp, "xdpoffload");
 		else
 			fprintf(fp, "xdp[%u]", mode);
+
+		if (tb[IFLA_XDP_PROG_ID])
+			prog_id = rta_getattr_u32(tb[IFLA_XDP_PROG_ID]);
+		if (!details) {
+			if (prog_id && !link)
+				fprintf(fp, "/id:%u", prog_id);
+			fprintf(fp, " ");
+			return;
+		}
+
+		if (prog_id) {
+			fprintf(fp, " ");
+			bpf_dump_prog_info(fp, prog_id);
+		}
 	}
-
-	if (tb[IFLA_XDP_PROG_ID])
-		print_uint(PRINT_ANY, "prog_id", "/id:%u",
-				   rta_getattr_u32(tb[IFLA_XDP_PROG_ID]));
-
-	print_string(PRINT_FP, NULL, "%c", " ");
 }

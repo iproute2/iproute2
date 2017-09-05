@@ -1146,7 +1146,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			  "mtu", "mtu %u ",
 			  rta_getattr_u32(tb[IFLA_MTU]));
 	if (tb[IFLA_XDP])
-		xdp_dump(fp, tb[IFLA_XDP]);
+		xdp_dump(fp, tb[IFLA_XDP], do_link, false);
 	if (tb[IFLA_QDISC])
 		print_string(PRINT_ANY,
 			     "qdisc",
@@ -1306,7 +1306,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		}
 	}
 
-
 	if ((do_link || show_details) && tb[IFLA_IFALIAS]) {
 		print_string(PRINT_FP, NULL, "%s    ", _SL_);
 		print_string(PRINT_ANY,
@@ -1314,6 +1313,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			     "alias %s",
 			     rta_getattr_str(tb[IFLA_IFALIAS]));
 	}
+
+	if ((do_link || show_details) && tb[IFLA_XDP])
+		xdp_dump(fp, tb[IFLA_XDP], true, true);
 
 	if (do_link && show_stats) {
 		print_string(PRINT_FP, NULL, "%s", _SL_);
