@@ -179,25 +179,31 @@ static int bpf_prog_info_by_fd(int fd, struct bpf_prog_info *info,
 	return ret;
 }
 
-void bpf_dump_prog_info(FILE *f, uint32_t id)
+int bpf_dump_prog_info(FILE *f, uint32_t id)
 {
 	struct bpf_prog_info info = {};
 	uint32_t len = sizeof(info);
-	int fd, ret;
+	int fd, ret, dump_ok = 0;
+	SPRINT_BUF(tmp);
 
 	fprintf(f, "id %u ", id);
 
 	fd = bpf_prog_fd_by_id(id);
 	if (fd < 0)
-		return;
+		return dump_ok;
 
 	ret = bpf_prog_info_by_fd(fd, &info, &len);
 	if (!ret && len) {
+		fprintf(f, "tag %s ",
+			hexstring_n2a(info.tag, sizeof(info.tag),
+				      tmp, sizeof(tmp)));
 		if (info.jited_prog_len)
 			fprintf(f, "jited ");
+		dump_ok = 1;
 	}
 
 	close(fd);
+	return dump_ok;
 }
 
 static int bpf_parse_string(char *arg, bool from_file, __u16 *bpf_len,

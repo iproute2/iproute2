@@ -177,6 +177,7 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 			 struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_BPF_MAX + 1];
+	int dump_ok = 0;
 
 	if (opt == NULL)
 		return 0;
@@ -221,7 +222,9 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 		bpf_print_ops(f, tb[TCA_BPF_OPS],
 			      rta_getattr_u16(tb[TCA_BPF_OPS_LEN]));
 
-	if (tb[TCA_BPF_TAG]) {
+	if (tb[TCA_BPF_ID])
+		dump_ok = bpf_dump_prog_info(f, rta_getattr_u32(tb[TCA_BPF_ID]));
+	if (!dump_ok && tb[TCA_BPF_TAG]) {
 		SPRINT_BUF(b);
 
 		fprintf(f, "tag %s ",
@@ -229,9 +232,6 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 				      RTA_PAYLOAD(tb[TCA_BPF_TAG]),
 				      b, sizeof(b)));
 	}
-
-	if (tb[TCA_BPF_ID])
-		bpf_dump_prog_info(f, rta_getattr_u32(tb[TCA_BPF_ID]));
 
 	if (tb[TCA_BPF_POLICE]) {
 		fprintf(f, "\n");

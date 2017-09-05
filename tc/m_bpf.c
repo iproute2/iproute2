@@ -154,6 +154,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_ACT_BPF_MAX + 1];
 	struct tc_act_bpf *parm;
+	int dump_ok = 0;
 
 	if (arg == NULL)
 		return -1;
@@ -177,7 +178,9 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, " ");
 	}
 
-	if (tb[TCA_ACT_BPF_TAG]) {
+	if (tb[TCA_ACT_BPF_ID])
+		dump_ok = bpf_dump_prog_info(f, rta_getattr_u32(tb[TCA_ACT_BPF_ID]));
+	if (!dump_ok && tb[TCA_ACT_BPF_TAG]) {
 		SPRINT_BUF(b);
 
 		fprintf(f, "tag %s ",
@@ -185,9 +188,6 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 				      RTA_PAYLOAD(tb[TCA_ACT_BPF_TAG]),
 				      b, sizeof(b)));
 	}
-
-        if (tb[TCA_ACT_BPF_ID])
-                bpf_dump_prog_info(f, rta_getattr_u32(tb[TCA_ACT_BPF_ID]));
 
 	print_action_control(f, "default-action ", parm->action, "\n");
 	fprintf(f, "\tindex %u ref %d bind %d", parm->index, parm->refcnt,
