@@ -177,7 +177,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 
 .ti -8
 .IR ENCAP " := [ "
-.IR MPLS " | " IP " | " BPF " | " SEG6 " ] "
+.IR MPLS " | " IP " | " BPF " | " SEG6 " | " SEG6LOCAL " ] "
 
 .ti -8
 .IR ENCAP_MPLS " := "
@@ -214,11 +214,18 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR ENCAP_SEG6 " := "
 .B seg6
 .BR mode " [ "
-.BR encap " | " inline " ] "
+.BR encap " | " inline " | " l2encap " ] "
 .B segs
 .IR SEGMENTS " [ "
 .B hmac
 .IR KEYID " ]"
+
+.ti -8
+.IR ENCAP_SEG6LOCAL " := "
+.B seg6local
+.BR action
+.IR SEG6_ACTION " [ "
+.IR SEG6_ACTION_PARAM " ] "
 
 .ti -8
 .IR ROUTE_GET_FLAGS " := "
@@ -674,6 +681,9 @@ is a string specifying the supported encapsulation type. Namely:
 .sp
 .BI seg6
 - encapsulation type IPv6 Segment Routing
+.sp
+.BI seg6local
+- local SRv6 segment processing
 
 .in -8
 .I ENCAPHDR
@@ -740,6 +750,10 @@ is a set of encapsulation attributes specific to the
 - Encapsulate packet in an outer IPv6 header with SRH
 .sp
 
+.B mode l2encap
+- Encapsulate ingress L2 frame within an outer IPv6 header and SRH
+.sp
+
 .I SEGMENTS
 - List of comma-separated IPv6 addresses
 .sp
@@ -748,6 +762,56 @@ is a set of encapsulation attributes specific to the
 - Numerical value in decimal representation. See \fBip-sr\fR(8).
 .in -2
 .sp
+
+.B seg6local
+.in +2
+.IR SEG6_ACTION " [ "
+.IR SEG6_ACTION_PARAM " ] "
+- Operation to perform on matching packets.
+The following actions are currently supported (\fB4.14+ only\fR).
+.in +2
+
+.B End
+- Regular SRv6 processing as intermediate segment endpoint.
+This action only accepts packets with a non-zero Segments Left
+value. Other matching packets are dropped.
+
+.B End.X nh6
+.I NEXTHOP
+- Regular SRv6 processing as intermediate segment endpoint.
+Additionally, forward processed packets to given next-hop.
+This action only accepts packets with a non-zero Segments Left
+value. Other matching packets are dropped.
+
+.B End.DX6 nh6
+.I NEXTHOP
+- Decapsulate inner IPv6 packet and forward it to the
+specified next-hop. If the argument is set to ::, then
+the next-hop is selected according to the local selection
+rules. This action only accepts packets with either a zero Segments
+Left value or no SRH at all, and an inner IPv6 packet. Other
+matching packets are dropped.
+
+.B End.B6 srh segs
+.IR SEGMENTS " [ "
+.B hmac
+.IR KEYID " ] "
+- Insert the specified SRH immediately after the IPv6 header,
+update the DA with the first segment of the newly inserted SRH,
+then forward the resulting packet. The original SRH is not
+modified. This action only accepts packets with a non-zero
+Segments Left value. Other matching packets are dropped.
+
+.B End.B6.Encaps srh segs
+.IR SEGMENTS " [ "
+.B hmac
+.IR KEYID " ] "
+- Regular SRv6 processing as intermediate segment endpoint.
+Additionally, encapsulate the matching packet within an outer IPv6 header
+followed by the specified SRH. The destination address of the outer IPv6
+header is set to the first segment of the new SRH. The source
+address is set as described in \fBip-sr\fR(8).
+.in -4
 
 .in -8
 

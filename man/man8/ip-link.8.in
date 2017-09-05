@@ -202,6 +202,7 @@ ip-link \- network device configuration
 .BR sit " |"
 .BR gre " |"
 .BR gretap " |"
+.BR erspan " |"
 .BR ip6gre " |"
 .BR ip6gretap " |"
 .BR vti " |"
@@ -296,6 +297,9 @@ Link types:
 .sp
 .BR gretap
 - Virtual L2 tunnel interface GRE over IPv4
+.sp
+.BR erspan
+- Encapsulated Remote SPAN over GRE and IPv4
 .sp
 .BR ip6gre
 - Virtual tunnel interface GRE over IPv6
@@ -643,13 +647,13 @@ keyword.
 .in -8
 
 .TP
-GRE, IPIP, SIT Type Support
+GRE, IPIP, SIT, ERSPAN Type Support
 For a link of types
-.I GRE/IPIP/SIT
+.I GRE/IPIP/SIT/ERSPAN
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BR type " { " gre " | " ipip " | " sit " }"
+.BR type " { " gre " | " ipip " | " sit " | " erspan " }"
 .BI " remote " ADDR " local " ADDR
 [
 .BR encap " { " fou " | " gue " | " none " }"
@@ -663,6 +667,8 @@ the following additional arguments are supported:
 .I " [no]encap-remcsum "
 ] [
 .I " mode " { ip6ip | ipip | mplsip | any } "
+] [
+.BR erspan " \fIIDX "
 ]
 
 .in +8
@@ -706,6 +712,13 @@ IPv6-Over-IPv4, "ipip" indicates "IPv4-Over-IPv4", "mplsip" indicates
 MPLS-Over-IPv4, "any" indicates IPv6, IPv4 or MPLS Over IPv4. Supported for
 SIT where the default is "ip6ip" and IPIP where the default is "ipip".
 IPv6-Over-IPv4 is not supported for IPIP.
+
+.sp
+.BR erspan " \fIIDX "
+- specifies the ERSPAN index field.
+.IR IDX
+indicates a 20 bit index/port number associated with the ERSPAN
+traffic's source port and direction.
 
 .in -8
 

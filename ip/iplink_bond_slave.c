@@ -37,9 +37,12 @@ static void print_slave_state(FILE *f, struct rtattr *tb)
 	unsigned int state = rta_getattr_u8(tb);
 
 	if (state >= ARRAY_SIZE(slave_states))
-		fprintf(f, "state %d ", state);
+		print_int(PRINT_ANY, "state_index", "state %d ", state);
 	else
-		fprintf(f, "state %s ", slave_states[state]);
+		print_string(PRINT_ANY,
+			     "state",
+			     "state %s ",
+			     slave_states[state]);
 }
 
 static const char *slave_mii_status[] = {
@@ -54,9 +57,15 @@ static void print_slave_mii_status(FILE *f, struct rtattr *tb)
 	unsigned int status = rta_getattr_u8(tb);
 
 	if (status >= ARRAY_SIZE(slave_mii_status))
-		fprintf(f, "mii_status %d ", status);
+		print_int(PRINT_ANY,
+			  "mii_status_index",
+			  "mii_status %d ",
+			  status);
 	else
-		fprintf(f, "mii_status %s ", slave_mii_status[status]);
+		print_string(PRINT_ANY,
+			     "mii_status",
+			     "mii_status %s ",
+			     slave_mii_status[status]);
 }
 
 static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
@@ -72,30 +81,42 @@ static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *t
 		print_slave_mii_status(f, tb[IFLA_BOND_SLAVE_MII_STATUS]);
 
 	if (tb[IFLA_BOND_SLAVE_LINK_FAILURE_COUNT])
-		fprintf(f, "link_failure_count %d ",
-			rta_getattr_u32(tb[IFLA_BOND_SLAVE_LINK_FAILURE_COUNT]));
+		print_int(PRINT_ANY,
+			  "link_failure_count",
+			  "link_failure_count %d ",
+			  rta_getattr_u32(tb[IFLA_BOND_SLAVE_LINK_FAILURE_COUNT]));
 
 	if (tb[IFLA_BOND_SLAVE_PERM_HWADDR])
-		fprintf(f, "perm_hwaddr %s ",
-			ll_addr_n2a(RTA_DATA(tb[IFLA_BOND_SLAVE_PERM_HWADDR]),
-				    RTA_PAYLOAD(tb[IFLA_BOND_SLAVE_PERM_HWADDR]),
-				    0, b1, sizeof(b1)));
+		print_string(PRINT_ANY,
+			     "perm_hwaddr",
+			     "perm_hwaddr %s ",
+			     ll_addr_n2a(RTA_DATA(tb[IFLA_BOND_SLAVE_PERM_HWADDR]),
+					 RTA_PAYLOAD(tb[IFLA_BOND_SLAVE_PERM_HWADDR]),
+					 0, b1, sizeof(b1)));
 
 	if (tb[IFLA_BOND_SLAVE_QUEUE_ID])
-		fprintf(f, "queue_id %d ",
-			rta_getattr_u16(tb[IFLA_BOND_SLAVE_QUEUE_ID]));
+		print_int(PRINT_ANY,
+			  "queue_id",
+			  "queue_id %d ",
+			  rta_getattr_u16(tb[IFLA_BOND_SLAVE_QUEUE_ID]));
 
 	if (tb[IFLA_BOND_SLAVE_AD_AGGREGATOR_ID])
-		fprintf(f, "ad_aggregator_id %d ",
-			rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_AGGREGATOR_ID]));
+		print_int(PRINT_ANY,
+			  "ad_aggregator_id",
+			  "ad_aggregator_id %d ",
+			  rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_AGGREGATOR_ID]));
 
 	if (tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE])
-		fprintf(f, "ad_actor_oper_port_state %d ",
-			rta_getattr_u8(tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE]));
+		print_int(PRINT_ANY,
+			  "ad_actor_oper_port_state",
+			  "ad_actor_oper_port_state %d ",
+			  rta_getattr_u8(tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE]));
 
 	if (tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE])
-		fprintf(f, "ad_partner_oper_port_state %d ",
-			rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE]));
+		print_int(PRINT_ANY,
+			  "ad_partner_oper_port_state",
+			  "ad_partner_oper_port_state %d ",
+			  rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE]));
 }
 
 static int bond_slave_parse_opt(struct link_util *lu, int argc, char **argv,

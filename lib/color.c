@@ -89,6 +89,14 @@ void set_color_palette(void)
 		is_dark_bg = 1;
 }
 
+void check_if_color_enabled(void)
+{
+	if (color_is_enabled) {
+		fprintf(stderr, "Option \"-json\" conflicts with \"-color\".\n");
+		exit(1);
+	}
+}
+
 int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...)
 {
 	int ret = 0;
@@ -96,13 +104,13 @@ int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...)
 
 	va_start(args, fmt);
 
-	if (!color_is_enabled) {
+	if (!color_is_enabled || attr == COLOR_NONE) {
 		ret = vfprintf(fp, fmt, args);
 		goto end;
 	}
 
 	ret += fprintf(fp, "%s",
-		       color_codes[attr_colors[is_dark_bg ? attr + 7 : attr]]);
+		       color_codes[attr_colors[is_dark_bg ? attr + 8 : attr]]);
 	ret += vfprintf(fp, fmt, args);
 	ret += fprintf(fp, "%s", color_codes[C_CLEAR]);
 

@@ -145,7 +145,7 @@ static int matchall_print_opt(struct filter_util *qu, FILE *f,
 	}
 
 	if (tb[TCA_MATCHALL_ACT])
-		tc_print_action(f, tb[TCA_MATCHALL_ACT]);
+		tc_print_action(f, tb[TCA_MATCHALL_ACT], 0);
 
 	return 0;
 }

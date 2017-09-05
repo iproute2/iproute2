@@ -173,7 +173,7 @@ static int tcindex_print_opt(struct filter_util *qu, FILE *f,
 	}
 	if (tb[TCA_TCINDEX_ACT]) {
 		fprintf(f, "\n");
-		tc_print_action(f, tb[TCA_TCINDEX_ACT]);
+		tc_print_action(f, tb[TCA_TCINDEX_ACT], 0);
 	}
 	return 0;
 }

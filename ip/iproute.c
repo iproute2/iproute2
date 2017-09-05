@@ -100,7 +100,7 @@ static void usage(void)
 	fprintf(stderr, "TIME := NUMBER[s|ms]\n");
 	fprintf(stderr, "BOOL := [1|0]\n");
 	fprintf(stderr, "FEATURES := ecn\n");
-	fprintf(stderr, "ENCAPTYPE := [ mpls | ip | ip6 | seg6 ]\n");
+	fprintf(stderr, "ENCAPTYPE := [ mpls | ip | ip6 | seg6 | seg6local ]\n");
 	fprintf(stderr, "ENCAPHDR := [ MPLSLABEL | SEG6HDR ]\n");
 	fprintf(stderr, "SEG6HDR := [ mode SEGMODE ] segs ADDR1,ADDRi,ADDRn [hmac HMACKEYID] [cleanup]\n");
 	fprintf(stderr, "SEGMODE := [ encap | inline ]\n");
@@ -698,6 +698,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				fprintf(fp, "onlink ");
 			if (nh->rtnh_flags & RTNH_F_PERVASIVE)
 				fprintf(fp, "pervasive ");
+			if (nh->rtnh_flags & RTNH_F_OFFLOAD)
+				fprintf(fp, "offload ");
 			if (nh->rtnh_flags & RTNH_F_LINKDOWN)
 				fprintf(fp, "linkdown ");
 			len -= NLMSG_ALIGN(nh->rtnh_len);

@@ -425,7 +425,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			remote = format_host(AF_INET6, sizeof(addr), &addr);
 	}
 
-	fprintf(f, "remote %s ", remote);
+	print_string(PRINT_ANY, "remote", "remote %s ", remote);
 
 	if (tb[IFLA_GRE_LOCAL]) {
 		struct in6_addr addr;
@@ -436,43 +436,83 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			local = format_host(AF_INET6, sizeof(addr), &addr);
 	}
 
-	fprintf(f, "local %s ", local);
+	print_string(PRINT_ANY, "local", "local %s ", local);
 
 	if (tb[IFLA_GRE_LINK] && rta_getattr_u32(tb[IFLA_GRE_LINK])) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
 		const char *n = if_indextoname(link, s2);
 
 		if (n)
-			fprintf(f, "dev %s ", n);
+			print_string(PRINT_ANY, "link", "dev %s ", n);
 		else
-			fprintf(f, "dev %u ", link);
+			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
 	}
 
-	if (tb[IFLA_GRE_TTL] && rta_getattr_u8(tb[IFLA_GRE_TTL]))
-		fprintf(f, "hoplimit %d ", rta_getattr_u8(tb[IFLA_GRE_TTL]));
+	if (tb[IFLA_GRE_TTL]) {
+		__u8 ttl = rta_getattr_u8(tb[IFLA_GRE_TTL]);
+
+		if (ttl)
+			print_int(PRINT_ANY, "ttl", "hoplimit %d ", ttl);
+		else
+			print_int(PRINT_JSON, "ttl", NULL, ttl);
+	}
 
 	if (flags & IP6_TNL_F_IGN_ENCAP_LIMIT)
-		fprintf(f, "encaplimit none ");
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_ign_encap_limit",
+			   "encaplimit none ",
+			   true);
 	else if (tb[IFLA_GRE_ENCAP_LIMIT]) {
 		int encap_limit = rta_getattr_u8(tb[IFLA_GRE_ENCAP_LIMIT]);
 
-		fprintf(f, "encaplimit %d ", encap_limit);
+		print_int(PRINT_ANY,
+			  "encap_limit",
+			  "encaplimit %d ",
+			  encap_limit);
 	}
 
-	if (flags & IP6_TNL_F_USE_ORIG_FLOWLABEL)
-		fprintf(f, "flowlabel inherit ");
-	else
-		fprintf(f, "flowlabel 0x%05x ",
-			ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL));
+	if (flags & IP6_TNL_F_USE_ORIG_FLOWLABEL) {
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_use_orig_flowlabel",
+			   "flowlabel inherit ",
+			   true);
+	} else {
+		if (is_json_context()) {
+			SPRINT_BUF(b1);
 
-	if (flags & IP6_TNL_F_USE_ORIG_TCLASS)
-		fprintf(f, "tclass inherit ");
-	else
-		fprintf(f, "tclass 0x%02x ",
-			ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
+			snprintf(b1, sizeof(b1), "0x%05x",
+				 ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL));
+			print_string(PRINT_JSON, "flowlabel", NULL, b1);
+
+		} else {
+			fprintf(f, "flowlabel 0x%05x ",
+				ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL));
+		}
+	}
+
+	if (flags & IP6_TNL_F_USE_ORIG_TCLASS) {
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_use_orig_tclass",
+			   "tclass inherit ",
+			   true);
+	} else {
+		if (is_json_context()) {
+			SPRINT_BUF(b1);
+
+			snprintf(b1, sizeof(b1), "0x%05x",
+				 ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
+			print_string(PRINT_JSON, "tclass", NULL, b1);
+		} else {
+			fprintf(f, "tclass 0x%02x ",
+				 ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
+		}
+	}
 
 	if (flags & IP6_TNL_F_RCV_DSCP_COPY)
-		fprintf(f, "dscp inherit ");
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_rcv_dscp_copy",
+			   "dscp inherit ",
+			   true);
 
 	if (tb[IFLA_GRE_IFLAGS])
 		iflags = rta_getattr_u16(tb[IFLA_GRE_IFLAGS]);
@@ -482,27 +522,37 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if ((iflags & GRE_KEY) && tb[IFLA_GRE_IKEY]) {
 		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_GRE_IKEY]), s2, sizeof(s2));
-		fprintf(f, "ikey %s ", s2);
+		print_string(PRINT_ANY, "ikey", "ikey %s ", s2);
 	}
 
 	if ((oflags & GRE_KEY) && tb[IFLA_GRE_OKEY]) {
 		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_GRE_OKEY]), s2, sizeof(s2));
-		fprintf(f, "okey %s ", s2);
+		print_string(PRINT_ANY, "okey", "okey %s ", s2);
 	}
 
 	if (iflags & GRE_SEQ)
-		fputs("iseq ", f);
+		print_bool(PRINT_ANY, "iseq", "iseq ", true);
 	if (oflags & GRE_SEQ)
-		fputs("oseq ", f);
+		print_bool(PRINT_ANY, "oseq", "oseq ", true);
 	if (iflags & GRE_CSUM)
-		fputs("icsum ", f);
+		print_bool(PRINT_ANY, "icsum", "icsum ", true);
 	if (oflags & GRE_CSUM)
-		fputs("ocsum ", f);
+		print_bool(PRINT_ANY, "ocsum", "ocsum ", true);
 
 	if (flags & IP6_TNL_F_USE_ORIG_FWMARK)
-		fprintf(f, "fwmark inherit ");
-	else if (tb[IFLA_GRE_FWMARK] && rta_getattr_u32(tb[IFLA_GRE_FWMARK]))
-		fprintf(f, "fwmark 0x%x ", rta_getattr_u32(tb[IFLA_GRE_FWMARK]));
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_use_orig_fwmark",
+			   "fwmark inherit ",
+			   true);
+	else if (tb[IFLA_GRE_FWMARK]) {
+		__u32 fwmark = rta_getattr_u32(tb[IFLA_GRE_FWMARK]);
+
+		if (fwmark) {
+			snprintf(s2, sizeof(s2), "0x%x", fwmark);
+
+			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+		}
+	}
 
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&
 	    rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {
@@ -511,40 +561,57 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		__u16 sport = rta_getattr_u16(tb[IFLA_GRE_ENCAP_SPORT]);
 		__u16 dport = rta_getattr_u16(tb[IFLA_GRE_ENCAP_DPORT]);
 
-		fputs("encap ", f);
+		open_json_object("encap");
+
+		print_string(PRINT_FP, NULL, "encap ", NULL);
 		switch (type) {
 		case TUNNEL_ENCAP_FOU:
-			fputs("fou ", f);
+			print_string(PRINT_ANY, "type", "%s ", "fou");
 			break;
 		case TUNNEL_ENCAP_GUE:
-			fputs("gue ", f);
+			print_string(PRINT_ANY, "type", "%s ", "gue");
 			break;
 		default:
-			fputs("unknown ", f);
+			print_null(PRINT_ANY, "type", "unknown ", NULL);
 			break;
 		}
 
-		if (sport == 0)
-			fputs("encap-sport auto ", f);
-		else
-			fprintf(f, "encap-sport %u", ntohs(sport));
+		if (is_json_context()) {
+			print_uint(PRINT_JSON,
+				   "sport",
+				   NULL,
+				   sport ? ntohs(sport) : 0);
+			print_uint(PRINT_JSON, "dport", NULL, ntohs(dport));
+			print_bool(PRINT_JSON, "csum", NULL,
+					   flags & TUNNEL_ENCAP_FLAG_CSUM);
+			print_bool(PRINT_JSON, "csum6", NULL,
+					   flags & TUNNEL_ENCAP_FLAG_CSUM6);
+			print_bool(PRINT_JSON, "remcsum", NULL,
+					   flags & TUNNEL_ENCAP_FLAG_REMCSUM);
+			close_json_object();
+		} else {
+			if (sport == 0)
+				fputs("encap-sport auto ", f);
+			else
+				fprintf(f, "encap-sport %u", ntohs(sport));
 
-		fprintf(f, "encap-dport %u ", ntohs(dport));
+			fprintf(f, "encap-dport %u ", ntohs(dport));
 
-		if (flags & TUNNEL_ENCAP_FLAG_CSUM)
-			fputs("encap-csum ", f);
-		else
-			fputs("noencap-csum ", f);
+			if (flags & TUNNEL_ENCAP_FLAG_CSUM)
+				fputs("encap-csum ", f);
+			else
+				fputs("noencap-csum ", f);
 
-		if (flags & TUNNEL_ENCAP_FLAG_CSUM6)
-			fputs("encap-csum6 ", f);
-		else
-			fputs("noencap-csum6 ", f);
+			if (flags & TUNNEL_ENCAP_FLAG_CSUM6)
+				fputs("encap-csum6 ", f);
+			else
+				fputs("noencap-csum6 ", f);
 
-		if (flags & TUNNEL_ENCAP_FLAG_REMCSUM)
-			fputs("encap-remcsum ", f);
-		else
-			fputs("noencap-remcsum ", f);
+			if (flags & TUNNEL_ENCAP_FLAG_REMCSUM)
+				fputs("encap-remcsum ", f);
+			else
+				fputs("noencap-remcsum ", f);
+		}
 	}
 }
 

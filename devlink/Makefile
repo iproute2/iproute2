@@ -1,4 +1,5 @@
-include ../Config
+include ../config.mk
+
 ifeq ($(HAVE_MNL),y)
 
 DEVLINKOBJ = devlink.o mnlg.o

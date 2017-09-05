@@ -62,7 +62,10 @@ static void vrf_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		return;
 
 	if (tb[IFLA_VRF_TABLE])
-		fprintf(f, "table %u ", rta_getattr_u32(tb[IFLA_VRF_TABLE]));
+		print_uint(PRINT_ANY,
+			   "table",
+			   "table %u ",
+			   rta_getattr_u32(tb[IFLA_VRF_TABLE]));
 }
 
 static void vrf_slave_print_opt(struct link_util *lu, FILE *f,
@@ -72,13 +75,15 @@ static void vrf_slave_print_opt(struct link_util *lu, FILE *f,
 		return;
 
 	if (tb[IFLA_VRF_PORT_TABLE]) {
-		fprintf(f, "table %u ",
-			rta_getattr_u32(tb[IFLA_VRF_PORT_TABLE]));
+		print_uint(PRINT_ANY,
+			   "table",
+			   "table %u ",
+			   rta_getattr_u32(tb[IFLA_VRF_PORT_TABLE]));
 	}
 }
 
 static void vrf_print_help(struct link_util *lu, int argc, char **argv,
-			      FILE *f)
+			   FILE *f)
 {
 	vrf_explain(f);
 }

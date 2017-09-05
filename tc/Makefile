@@ -2,11 +2,7 @@ TCOBJ= tc.o tc_qdisc.o tc_class.o tc_filter.o tc_util.o tc_monitor.o \
        tc_exec.o m_police.o m_estimator.o m_action.o m_ematch.o \
        emp_ematch.yacc.o emp_ematch.lex.o
 
-include ../Config
-
-ifeq ($(IP_CONFIG_SETNS),y)
-	CFLAGS += -DHAVE_SETNS
-endif
+include ../config.mk
 
 SHARED_LIBS ?= y
 
@@ -101,15 +97,6 @@ endif
 
 TCOBJ += $(TCMODULES)
 LDLIBS += -L. -lm
-
-ifeq ($(HAVE_ELF),y)
-	CFLAGS += -DHAVE_ELF
-	LDLIBS += -lelf
-endif
-ifeq ($(HAVE_MNL),y)
-	CFLAGS += -DHAVE_LIBMNL $(shell $(PKG_CONFIG) libmnl --cflags)
-	LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
-endif
 
 ifeq ($(SHARED_LIBS),y)
 LDLIBS += -ldl

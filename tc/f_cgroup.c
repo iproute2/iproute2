@@ -102,7 +102,7 @@ static int cgroup_print_opt(struct filter_util *qu, FILE *f,
 	}
 
 	if (tb[TCA_CGROUP_ACT])
-		tc_print_action(f, tb[TCA_CGROUP_ACT]);
+		tc_print_action(f, tb[TCA_CGROUP_ACT], 0);
 
 	return 0;
 }

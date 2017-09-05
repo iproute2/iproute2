@@ -91,23 +91,43 @@ static void ipoib_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	    RTA_PAYLOAD(tb[IFLA_IPOIB_PKEY]) < sizeof(__u16))
 		return;
 
-	fprintf(f, "pkey  %#.4x ", rta_getattr_u16(tb[IFLA_IPOIB_PKEY]));
+	__u16 pkey = rta_getattr_u16(tb[IFLA_IPOIB_PKEY]);
+
+	if (is_json_context()) {
+		SPRINT_BUF(b1);
+
+		snprintf(b1, sizeof(b1), "%#.4x", pkey);
+		print_string(PRINT_JSON, "key", NULL, b1);
+	} else {
+		fprintf(f, "pkey  %#.4x ", pkey);
+	}
 
 	if (!tb[IFLA_IPOIB_MODE] ||
 	    RTA_PAYLOAD(tb[IFLA_IPOIB_MODE]) < sizeof(__u16))
 		return;
 
 	mode = rta_getattr_u16(tb[IFLA_IPOIB_MODE]);
-	fprintf(f, "mode  %s ",
+
+	const char *mode_str =
 		mode == IPOIB_MODE_DATAGRAM ? "datagram" :
-		mode == IPOIB_MODE_CONNECTED ? "connected" :
-		"unknown");
+		mode == IPOIB_MODE_CONNECTED ? "connected" : "unknown";
+
+	print_string(PRINT_ANY, "mode", "mode  %s ", mode_str);
 
 	if (!tb[IFLA_IPOIB_UMCAST] ||
 	    RTA_PAYLOAD(tb[IFLA_IPOIB_UMCAST]) < sizeof(__u16))
 		return;
 
-	fprintf(f, "umcast  %.4x ", rta_getattr_u16(tb[IFLA_IPOIB_UMCAST]));
+	__u16 umcast = rta_getattr_u16(tb[IFLA_IPOIB_UMCAST]);
+
+	if (is_json_context()) {
+		SPRINT_BUF(b1);
+
+		snprintf(b1, sizeof(b1), "%.4x", umcast);
+		print_string(PRINT_JSON, "umcast", NULL, b1);
+	} else {
+		fprintf(f, "umcast  %.4x ", umcast);
+	}
 }
 
 static void ipoib_print_help(struct link_util *lu, int argc, char **argv,

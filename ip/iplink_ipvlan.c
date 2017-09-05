@@ -68,11 +68,11 @@ static void ipvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_IPVLAN_MODE]) {
 		if (RTA_PAYLOAD(tb[IFLA_IPVLAN_MODE]) == sizeof(__u16)) {
 			__u16 mode = rta_getattr_u16(tb[IFLA_IPVLAN_MODE]);
-
-			fprintf(f, " mode %s ",
-				mode == IPVLAN_MODE_L2 ? "l2" :
+			const char *mode_str = mode == IPVLAN_MODE_L2 ? "l2" :
 				mode == IPVLAN_MODE_L3 ? "l3" :
-				mode == IPVLAN_MODE_L3S ? "l3s" : "unknown");
+				mode == IPVLAN_MODE_L3S ? "l3s" : "unknown";
+
+			print_string(PRINT_ANY, "mode", " mode %s ", mode_str);
 		}
 	}
 }

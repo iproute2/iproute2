@@ -376,8 +376,8 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_BOND_MODE]) {
 		const char *mode = get_name(mode_tbl,
-			rta_getattr_u8(tb[IFLA_BOND_MODE]));
-		fprintf(f, "mode %s ", mode);
+					    rta_getattr_u8(tb[IFLA_BOND_MODE]));
+		print_string(PRINT_ANY, "mode", "mode %s ", mode);
 	}
 
 	if (tb[IFLA_BOND_ACTIVE_SLAVE] &&
@@ -386,61 +386,97 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		const char *n = if_indextoname(ifindex, buf);
 
 		if (n)
-			fprintf(f, "active_slave %s ", n);
+			print_string(PRINT_ANY,
+				     "active_slave",
+				     "active_slave %s ",
+				     n);
 		else
-			fprintf(f, "active_slave %u ", ifindex);
+			print_uint(PRINT_ANY,
+				   "active_slave_index",
+				   "active_slave %u ",
+				   ifindex);
 	}
 
 	if (tb[IFLA_BOND_MIIMON])
-		fprintf(f, "miimon %u ", rta_getattr_u32(tb[IFLA_BOND_MIIMON]));
+		print_uint(PRINT_ANY,
+			   "miimon",
+			   "miimon %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_MIIMON]));
 
 	if (tb[IFLA_BOND_UPDELAY])
-		fprintf(f, "updelay %u ", rta_getattr_u32(tb[IFLA_BOND_UPDELAY]));
+		print_uint(PRINT_ANY,
+			   "updelay",
+			   "updelay %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_UPDELAY]));
 
 	if (tb[IFLA_BOND_DOWNDELAY])
-		fprintf(f, "downdelay %u ",
-			rta_getattr_u32(tb[IFLA_BOND_DOWNDELAY]));
+		print_uint(PRINT_ANY,
+			   "downdelay",
+			   "downdelay %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_DOWNDELAY]));
 
 	if (tb[IFLA_BOND_USE_CARRIER])
-		fprintf(f, "use_carrier %u ",
-			rta_getattr_u8(tb[IFLA_BOND_USE_CARRIER]));
+		print_uint(PRINT_ANY,
+			   "use_carrier",
+			   "use_carrier %u ",
+			   rta_getattr_u8(tb[IFLA_BOND_USE_CARRIER]));
 
 	if (tb[IFLA_BOND_ARP_INTERVAL])
-		fprintf(f, "arp_interval %u ",
-			rta_getattr_u32(tb[IFLA_BOND_ARP_INTERVAL]));
+		print_uint(PRINT_ANY,
+			   "arp_interval",
+			   "arp_interval %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_ARP_INTERVAL]));
 
 	if (tb[IFLA_BOND_ARP_IP_TARGET]) {
 		struct rtattr *iptb[BOND_MAX_ARP_TARGETS + 1];
 		int i;
 
 		parse_rtattr_nested(iptb, BOND_MAX_ARP_TARGETS,
-			tb[IFLA_BOND_ARP_IP_TARGET]);
+				    tb[IFLA_BOND_ARP_IP_TARGET]);
 
-		if (iptb[0])
-			fprintf(f, "arp_ip_target ");
+		if (iptb[0]) {
+			open_json_array(PRINT_JSON, "arp_ip_target");
+			print_string(PRINT_FP, NULL, "arp_ip_target ", NULL);
+		}
 
 		for (i = 0; i < BOND_MAX_ARP_TARGETS; i++) {
 			if (iptb[i])
-				fprintf(f, "%s",
-					rt_addr_n2a_rta(AF_INET, iptb[i]));
-			if (i < BOND_MAX_ARP_TARGETS-1 && iptb[i+1])
+				print_string(PRINT_ANY,
+					     NULL,
+					     "%s",
+					     rt_addr_n2a_rta(AF_INET, iptb[i]));
+			if (!is_json_context()
+			    && i < BOND_MAX_ARP_TARGETS-1
+			    && iptb[i+1])
 				fprintf(f, ",");
 		}
 
-		if (iptb[0])
-			fprintf(f, " ");
+		if (iptb[0]) {
+			print_string(PRINT_FP, NULL, " ", NULL);
+			close_json_array(PRINT_JSON, NULL);
+		}
 	}
 
 	if (tb[IFLA_BOND_ARP_VALIDATE]) {
-		const char *arp_validate = get_name(arp_validate_tbl,
-			rta_getattr_u32(tb[IFLA_BOND_ARP_VALIDATE]));
-		fprintf(f, "arp_validate %s ", arp_validate);
+		__u32 arp_v = rta_getattr_u32(tb[IFLA_BOND_ARP_VALIDATE]);
+		const char *arp_validate = get_name(arp_validate_tbl, arp_v);
+
+		if (!arp_v && is_json_context())
+			print_null(PRINT_JSON, "arp_validate", NULL, NULL);
+		else
+			print_string(PRINT_ANY,
+				     "arp_validate",
+				     "arp_validate %s ",
+				     arp_validate);
 	}
 
 	if (tb[IFLA_BOND_ARP_ALL_TARGETS]) {
 		const char *arp_all_targets = get_name(arp_all_targets_tbl,
-			rta_getattr_u32(tb[IFLA_BOND_ARP_ALL_TARGETS]));
-		fprintf(f, "arp_all_targets %s ", arp_all_targets);
+						       rta_getattr_u32(tb[IFLA_BOND_ARP_ALL_TARGETS]));
+		print_string(PRINT_ANY,
+			     "arp_all_targets",
+			     "arp_all_targets %s ",
+			     arp_all_targets);
 	}
 
 	if (tb[IFLA_BOND_PRIMARY] &&
@@ -449,123 +485,176 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		const char *n = if_indextoname(ifindex, buf);
 
 		if (n)
-			fprintf(f, "primary %s ", n);
+			print_string(PRINT_ANY, "primary", "primary %s ", n);
 		else
-			fprintf(f, "primary %u ", ifindex);
+			print_uint(PRINT_ANY,
+				   "primary_index",
+				   "primary %u ",
+				   ifindex);
 	}
 
 	if (tb[IFLA_BOND_PRIMARY_RESELECT]) {
 		const char *primary_reselect = get_name(primary_reselect_tbl,
-			rta_getattr_u8(tb[IFLA_BOND_PRIMARY_RESELECT]));
-		fprintf(f, "primary_reselect %s ", primary_reselect);
+							rta_getattr_u8(tb[IFLA_BOND_PRIMARY_RESELECT]));
+		print_string(PRINT_ANY,
+			     "primary_reselect",
+			     "primary_reselect %s ",
+			     primary_reselect);
 	}
 
 	if (tb[IFLA_BOND_FAIL_OVER_MAC]) {
 		const char *fail_over_mac = get_name(fail_over_mac_tbl,
-			rta_getattr_u8(tb[IFLA_BOND_FAIL_OVER_MAC]));
-		fprintf(f, "fail_over_mac %s ", fail_over_mac);
+						     rta_getattr_u8(tb[IFLA_BOND_FAIL_OVER_MAC]));
+		print_string(PRINT_ANY,
+			     "fail_over_mac",
+			     "fail_over_mac %s ",
+			     fail_over_mac);
 	}
 
 	if (tb[IFLA_BOND_XMIT_HASH_POLICY]) {
 		const char *xmit_hash_policy = get_name(xmit_hash_policy_tbl,
-			rta_getattr_u8(tb[IFLA_BOND_XMIT_HASH_POLICY]));
-		fprintf(f, "xmit_hash_policy %s ", xmit_hash_policy);
+							rta_getattr_u8(tb[IFLA_BOND_XMIT_HASH_POLICY]));
+		print_string(PRINT_ANY,
+			     "xmit_hash_policy",
+			     "xmit_hash_policy %s ",
+			     xmit_hash_policy);
 	}
 
 	if (tb[IFLA_BOND_RESEND_IGMP])
-		fprintf(f, "resend_igmp %u ",
-			rta_getattr_u32(tb[IFLA_BOND_RESEND_IGMP]));
+		print_uint(PRINT_ANY,
+			   "resend_igmp",
+			   "resend_igmp %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_RESEND_IGMP]));
 
 	if (tb[IFLA_BOND_NUM_PEER_NOTIF])
-		fprintf(f, "num_grat_arp %u ",
-			rta_getattr_u8(tb[IFLA_BOND_NUM_PEER_NOTIF]));
+		print_uint(PRINT_ANY,
+			   "num_peer_notif",
+			   "num_grat_arp %u ",
+			   rta_getattr_u8(tb[IFLA_BOND_NUM_PEER_NOTIF]));
 
 	if (tb[IFLA_BOND_ALL_SLAVES_ACTIVE])
-		fprintf(f, "all_slaves_active %u ",
-			rta_getattr_u8(tb[IFLA_BOND_ALL_SLAVES_ACTIVE]));
+		print_uint(PRINT_ANY,
+			   "all_slaves_active",
+			   "all_slaves_active %u ",
+			   rta_getattr_u8(tb[IFLA_BOND_ALL_SLAVES_ACTIVE]));
 
 	if (tb[IFLA_BOND_MIN_LINKS])
-		fprintf(f, "min_links %u ",
-			rta_getattr_u32(tb[IFLA_BOND_MIN_LINKS]));
+		print_uint(PRINT_ANY,
+			   "min_links",
+			   "min_links %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_MIN_LINKS]));
 
 	if (tb[IFLA_BOND_LP_INTERVAL])
-		fprintf(f, "lp_interval %u ",
-			rta_getattr_u32(tb[IFLA_BOND_LP_INTERVAL]));
+		print_uint(PRINT_ANY,
+			   "lp_interval",
+			   "lp_interval %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_LP_INTERVAL]));
 
 	if (tb[IFLA_BOND_PACKETS_PER_SLAVE])
-		fprintf(f, "packets_per_slave %u ",
-			rta_getattr_u32(tb[IFLA_BOND_PACKETS_PER_SLAVE]));
+		print_uint(PRINT_ANY,
+			   "packets_per_slave",
+			   "packets_per_slave %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_PACKETS_PER_SLAVE]));
 
 	if (tb[IFLA_BOND_AD_LACP_RATE]) {
 		const char *lacp_rate = get_name(lacp_rate_tbl,
-			rta_getattr_u8(tb[IFLA_BOND_AD_LACP_RATE]));
-		fprintf(f, "lacp_rate %s ", lacp_rate);
+						 rta_getattr_u8(tb[IFLA_BOND_AD_LACP_RATE]));
+		print_string(PRINT_ANY,
+			     "ad_lacp_rate",
+			     "lacp_rate %s ",
+			     lacp_rate);
 	}
 
 	if (tb[IFLA_BOND_AD_SELECT]) {
 		const char *ad_select = get_name(ad_select_tbl,
-			rta_getattr_u8(tb[IFLA_BOND_AD_SELECT]));
-		fprintf(f, "ad_select %s ", ad_select);
+						 rta_getattr_u8(tb[IFLA_BOND_AD_SELECT]));
+		print_string(PRINT_ANY,
+			     "ad_select",
+			     "ad_select %s ",
+			     ad_select);
 	}
 
 	if (tb[IFLA_BOND_AD_INFO]) {
 		struct rtattr *adtb[IFLA_BOND_AD_INFO_MAX + 1];
 
 		parse_rtattr_nested(adtb, IFLA_BOND_AD_INFO_MAX,
-			tb[IFLA_BOND_AD_INFO]);
+				    tb[IFLA_BOND_AD_INFO]);
+
+		open_json_object("ad_info");
 
 		if (adtb[IFLA_BOND_AD_INFO_AGGREGATOR])
-			fprintf(f, "ad_aggregator %d ",
-			  rta_getattr_u16(adtb[IFLA_BOND_AD_INFO_AGGREGATOR]));
+			print_int(PRINT_ANY,
+				  "aggregator",
+				  "ad_aggregator %d ",
+				  rta_getattr_u16(adtb[IFLA_BOND_AD_INFO_AGGREGATOR]));
 
 		if (adtb[IFLA_BOND_AD_INFO_NUM_PORTS])
-			fprintf(f, "ad_num_ports %d ",
-			  rta_getattr_u16(adtb[IFLA_BOND_AD_INFO_NUM_PORTS]));
+			print_int(PRINT_ANY,
+				  "num_ports",
+				  "ad_num_ports %d ",
+				  rta_getattr_u16(adtb[IFLA_BOND_AD_INFO_NUM_PORTS]));
 
 		if (adtb[IFLA_BOND_AD_INFO_ACTOR_KEY])
-			fprintf(f, "ad_actor_key %d ",
-			  rta_getattr_u16(adtb[IFLA_BOND_AD_INFO_ACTOR_KEY]));
+			print_int(PRINT_ANY,
+				  "actor_key",
+				  "ad_actor_key %d ",
+				  rta_getattr_u16(adtb[IFLA_BOND_AD_INFO_ACTOR_KEY]));
 
 		if (adtb[IFLA_BOND_AD_INFO_PARTNER_KEY])
-			fprintf(f, "ad_partner_key %d ",
-			  rta_getattr_u16(adtb[IFLA_BOND_AD_INFO_PARTNER_KEY]));
+			print_int(PRINT_ANY,
+				  "partner_key",
+				  "ad_partner_key %d ",
+				  rta_getattr_u16(adtb[IFLA_BOND_AD_INFO_PARTNER_KEY]));
 
 		if (adtb[IFLA_BOND_AD_INFO_PARTNER_MAC]) {
 			unsigned char *p =
 				RTA_DATA(adtb[IFLA_BOND_AD_INFO_PARTNER_MAC]);
 			SPRINT_BUF(b);
-			fprintf(f, "ad_partner_mac %s ",
-				ll_addr_n2a(p, ETH_ALEN, 0, b, sizeof(b)));
+			print_string(PRINT_ANY,
+				     "partner_mac",
+				     "ad_partner_mac %s ",
+				     ll_addr_n2a(p, ETH_ALEN, 0, b, sizeof(b)));
 		}
+
+		close_json_object();
 	}
 
 	if (tb[IFLA_BOND_AD_ACTOR_SYS_PRIO]) {
-		fprintf(f, "ad_actor_sys_prio %u ",
-			rta_getattr_u16(tb[IFLA_BOND_AD_ACTOR_SYS_PRIO]));
+		print_uint(PRINT_ANY,
+			   "ad_actor_sys_prio",
+			   "ad_actor_sys_prio %u ",
+			   rta_getattr_u16(tb[IFLA_BOND_AD_ACTOR_SYS_PRIO]));
 	}
 
 	if (tb[IFLA_BOND_AD_USER_PORT_KEY]) {
-		fprintf(f, "ad_user_port_key %u ",
-			rta_getattr_u16(tb[IFLA_BOND_AD_USER_PORT_KEY]));
+		print_uint(PRINT_ANY,
+			   "ad_user_port_key",
+			   "ad_user_port_key %u ",
+			   rta_getattr_u16(tb[IFLA_BOND_AD_USER_PORT_KEY]));
 	}
 
 	if (tb[IFLA_BOND_AD_ACTOR_SYSTEM]) {
 		/* We assume the l2 address is an Ethernet MAC address */
 		SPRINT_BUF(b1);
-		fprintf(f, "ad_actor_system %s ",
-			ll_addr_n2a(RTA_DATA(tb[IFLA_BOND_AD_ACTOR_SYSTEM]),
-				    RTA_PAYLOAD(tb[IFLA_BOND_AD_ACTOR_SYSTEM]),
-				    1 /*ARPHDR_ETHER*/, b1, sizeof(b1)));
+
+		print_string(PRINT_ANY,
+			     "ad_actor_system",
+			     "ad_actor_system %s ",
+			     ll_addr_n2a(RTA_DATA(tb[IFLA_BOND_AD_ACTOR_SYSTEM]),
+					 RTA_PAYLOAD(tb[IFLA_BOND_AD_ACTOR_SYSTEM]),
+					 1 /*ARPHDR_ETHER*/, b1, sizeof(b1)));
 	}
 
 	if (tb[IFLA_BOND_TLB_DYNAMIC_LB]) {
-		fprintf(f, "tlb_dynamic_lb %u ",
-			rta_getattr_u8(tb[IFLA_BOND_TLB_DYNAMIC_LB]));
+		print_uint(PRINT_ANY,
+			   "tlb_dynamic_lb",
+			   "tlb_dynamic_lb %u ",
+			   rta_getattr_u8(tb[IFLA_BOND_TLB_DYNAMIC_LB]));
 	}
 }
 
 static void bond_print_help(struct link_util *lu, int argc, char **argv,
-	FILE *f)
+			    FILE *f)
 {
 	print_explain(f);
 }

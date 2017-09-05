@@ -1,6 +1,6 @@
 GENLOBJ=genl.o
 
-include ../Config
+include ../config.mk
 SHARED_LIBS ?= y
 
 CFLAGS += -fno-strict-aliasing
@@ -15,11 +15,6 @@ GENLLIB :=
 ifeq ($(SHARED_LIBS),y)
 LDFLAGS += -Wl,-export-dynamic
 LDLIBS  += -lm -ldl
-endif
-
-ifeq ($(HAVE_MNL),y)
-	CFLAGS += -DHAVE_LIBMNL $(shell $(PKG_CONFIG) libmnl --cflags)
-	LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
 endif
 
 all: genl

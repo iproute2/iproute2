@@ -239,7 +239,7 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 	}
 
 	if (tb[TCA_BPF_ACT])
-		tc_print_action(f, tb[TCA_BPF_ACT]);
+		tc_print_action(f, tb[TCA_BPF_ACT], 0);
 
 	return 0;
 }

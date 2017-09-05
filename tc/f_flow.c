@@ -347,7 +347,7 @@ static int flow_print_opt(struct filter_util *fu, FILE *f, struct rtattr *opt,
 		tc_print_police(f, tb[TCA_FLOW_POLICE]);
 	if (tb[TCA_FLOW_ACT]) {
 		fprintf(f, "\n");
-		tc_print_action(f, tb[TCA_FLOW_ACT]);
+		tc_print_action(f, tb[TCA_FLOW_ACT], 0);
 	}
 	return 0;
 }

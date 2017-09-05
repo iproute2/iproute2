@@ -112,8 +112,9 @@ void iplink_usage(void)
 			"\n"
 			"TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n"
 			"          bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |\n"
-			"          gre | gretap | ip6gre | ip6gretap | vti | nlmon | team_slave |\n"
-			"          bond_slave | ipvlan | geneve | bridge_slave | vrf | macsec }\n");
+			"          gre | gretap | erspan | ip6gre | ip6gretap | vti | nlmon |\n"
+			"          team_slave | bond_slave | ipvlan | geneve | bridge_slave |\n"
+			"          vrf | macsec }\n");
 	}
 	exit(-1);
 }
@@ -1046,10 +1047,12 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 		return -2;
 	}
 
+	open_json_object(NULL);
 	if (brief)
 		print_linkinfo_brief(NULL, &answer.n, stdout, NULL);
 	else
 		print_linkinfo(NULL, &answer.n, stdout);
+	close_json_object();
 
 	return 0;
 }

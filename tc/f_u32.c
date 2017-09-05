@@ -1337,7 +1337,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	}
 
 	if (tb[TCA_U32_ACT])
-		tc_print_action(f, tb[TCA_U32_ACT]);
+		tc_print_action(f, tb[TCA_U32_ACT], 0);
 
 	return 0;
 }

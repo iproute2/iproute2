@@ -156,7 +156,7 @@ void jsonw_name(json_writer_t *self, const char *name)
 		putc(' ', self->out);
 }
 
-static void jsonw_printf(json_writer_t *self, const char *fmt, ...)
+void jsonw_printf(json_writer_t *self, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -199,21 +199,36 @@ void jsonw_bool(json_writer_t *self, bool val)
 	jsonw_printf(self, "%s", val ? "true" : "false");
 }
 
-#ifdef notused
 void jsonw_null(json_writer_t *self)
 {
 	jsonw_printf(self, "null");
 }
 
+void jsonw_float_fmt(json_writer_t *self, const char *fmt, double num)
+{
+	jsonw_printf(self, fmt, num);
+}
+
+#ifdef notused
 void jsonw_float(json_writer_t *self, double num)
 {
 	jsonw_printf(self, "%g", num);
 }
 #endif
 
+void jsonw_hu(json_writer_t *self, unsigned short num)
+{
+	jsonw_printf(self, "%hu", num);
+}
+
 void jsonw_uint(json_writer_t *self, uint64_t num)
 {
 	jsonw_printf(self, "%"PRIu64, num);
+}
+
+void jsonw_lluint(json_writer_t *self, unsigned long long int num)
+{
+	jsonw_printf(self, "%llu", num);
 }
 
 void jsonw_int(json_writer_t *self, int64_t num)
@@ -242,10 +257,33 @@ void jsonw_float_field(json_writer_t *self, const char *prop, double val)
 }
 #endif
 
+void jsonw_float_field_fmt(json_writer_t *self,
+			   const char *prop,
+			   const char *fmt,
+			   double val)
+{
+	jsonw_name(self, prop);
+	jsonw_float_fmt(self, fmt, val);
+}
+
 void jsonw_uint_field(json_writer_t *self, const char *prop, uint64_t num)
 {
 	jsonw_name(self, prop);
 	jsonw_uint(self, num);
+}
+
+void jsonw_hu_field(json_writer_t *self, const char *prop, unsigned short num)
+{
+	jsonw_name(self, prop);
+	jsonw_hu(self, num);
+}
+
+void jsonw_lluint_field(json_writer_t *self,
+			const char *prop,
+			unsigned long long int num)
+{
+	jsonw_name(self, prop);
+	jsonw_lluint(self, num);
 }
 
 void jsonw_int_field(json_writer_t *self, const char *prop, int64_t num)
@@ -254,13 +292,11 @@ void jsonw_int_field(json_writer_t *self, const char *prop, int64_t num)
 	jsonw_int(self, num);
 }
 
-#ifdef notused
 void jsonw_null_field(json_writer_t *self, const char *prop)
 {
 	jsonw_name(self, prop);
 	jsonw_null(self);
 }
-#endif
 
 #ifdef TEST
 int main(int argc, char **argv)

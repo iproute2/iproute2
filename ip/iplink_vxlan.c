@@ -406,18 +406,22 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		return;
 
 	vni = rta_getattr_u32(tb[IFLA_VXLAN_ID]);
-	fprintf(f, "id %u ", vni);
+	print_uint(PRINT_ANY, "id", "id %u ", vni);
 
 	if (tb[IFLA_VXLAN_GROUP]) {
 		__be32 addr = rta_getattr_u32(tb[IFLA_VXLAN_GROUP]);
 
 		if (addr) {
 			if (IN_MULTICAST(ntohl(addr)))
-				fprintf(f, "group %s ",
-					format_host(AF_INET, 4, &addr));
+				print_string(PRINT_ANY,
+					     "group",
+					     "group %s ",
+					     format_host(AF_INET, 4, &addr));
 			else
-				fprintf(f, "remote %s ",
-					format_host(AF_INET, 4, &addr));
+				print_string(PRINT_ANY,
+					     "remote",
+					     "remote %s ",
+					     format_host(AF_INET, 4, &addr));
 		}
 	} else if (tb[IFLA_VXLAN_GROUP6]) {
 		struct in6_addr addr;
@@ -425,11 +429,19 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_GROUP6]), sizeof(struct in6_addr));
 		if (!IN6_IS_ADDR_UNSPECIFIED(&addr)) {
 			if (IN6_IS_ADDR_MULTICAST(&addr))
-				fprintf(f, "group %s ",
-					format_host(AF_INET6, sizeof(struct in6_addr), &addr));
+				print_string(PRINT_ANY,
+					     "group6",
+					     "group %s ",
+					     format_host(AF_INET6,
+							 sizeof(struct in6_addr),
+							 &addr));
 			else
-				fprintf(f, "remote %s ",
-					format_host(AF_INET6, sizeof(struct in6_addr), &addr));
+				print_string(PRINT_ANY,
+					     "remote6",
+					     "remote %s ",
+					     format_host(AF_INET6,
+							 sizeof(struct in6_addr),
+							 &addr));
 		}
 	}
 
@@ -437,15 +449,21 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		__be32 addr = rta_getattr_u32(tb[IFLA_VXLAN_LOCAL]);
 
 		if (addr)
-			fprintf(f, "local %s ",
-				format_host(AF_INET, 4, &addr));
+			print_string(PRINT_ANY,
+				     "local",
+				     "local %s ",
+				     format_host(AF_INET, 4, &addr));
 	} else if (tb[IFLA_VXLAN_LOCAL6]) {
 		struct in6_addr addr;
 
 		memcpy(&addr, RTA_DATA(tb[IFLA_VXLAN_LOCAL6]), sizeof(struct in6_addr));
 		if (!IN6_IS_ADDR_UNSPECIFIED(&addr))
-			fprintf(f, "local %s ",
-				format_host(AF_INET6, sizeof(struct in6_addr), &addr));
+			print_string(PRINT_ANY,
+				     "local6",
+				     "local %s ",
+				     format_host(AF_INET6,
+						 sizeof(struct in6_addr),
+						 &addr));
 	}
 
 	if (tb[IFLA_VXLAN_LINK] &&
@@ -453,110 +471,155 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		const char *n = if_indextoname(link, s2);
 
 		if (n)
-			fprintf(f, "dev %s ", n);
+			print_string(PRINT_ANY, "link", "dev %s ", n);
 		else
-			fprintf(f, "dev %u ", link);
+			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
 	}
 
 	if (tb[IFLA_VXLAN_PORT_RANGE]) {
 		const struct ifla_vxlan_port_range *r
 			= RTA_DATA(tb[IFLA_VXLAN_PORT_RANGE]);
-		fprintf(f, "srcport %u %u ", ntohs(r->low), ntohs(r->high));
+		if (is_json_context()) {
+			open_json_object("port_range");
+			print_uint(PRINT_JSON, "low", NULL, ntohs(r->low));
+			print_uint(PRINT_JSON, "high", NULL, ntohs(r->high));
+			close_json_object();
+		} else {
+			fprintf(f, "srcport %u %u ",
+				ntohs(r->low), ntohs(r->high));
+		}
 	}
 
 	if (tb[IFLA_VXLAN_PORT])
-		fprintf(f, "dstport %u ",
-			rta_getattr_be16(tb[IFLA_VXLAN_PORT]));
+		print_uint(PRINT_ANY,
+			   "port",
+			   "dstport %u ",
+			   rta_getattr_be16(tb[IFLA_VXLAN_PORT]));
 
-	if (tb[IFLA_VXLAN_LEARNING] &&
-	    !rta_getattr_u8(tb[IFLA_VXLAN_LEARNING]))
-		fputs("nolearning ", f);
+	if (tb[IFLA_VXLAN_LEARNING]) {
+		__u8 learning = rta_getattr_u8(tb[IFLA_VXLAN_LEARNING]);
+
+		print_bool(PRINT_JSON, "learning", NULL, learning);
+		if (!learning)
+			print_bool(PRINT_FP, NULL, "nolearning ", true);
+	}
 
 	if (tb[IFLA_VXLAN_PROXY] && rta_getattr_u8(tb[IFLA_VXLAN_PROXY]))
-		fputs("proxy ", f);
+		print_bool(PRINT_ANY, "proxy", "proxy ", true);
 
 	if (tb[IFLA_VXLAN_RSC] && rta_getattr_u8(tb[IFLA_VXLAN_RSC]))
-		fputs("rsc ", f);
+		print_bool(PRINT_ANY, "rsc", "rsc ", true);
 
 	if (tb[IFLA_VXLAN_L2MISS] && rta_getattr_u8(tb[IFLA_VXLAN_L2MISS]))
-		fputs("l2miss ", f);
+		print_bool(PRINT_ANY, "l2miss", "l2miss ", true);
 
 	if (tb[IFLA_VXLAN_L3MISS] && rta_getattr_u8(tb[IFLA_VXLAN_L3MISS]))
-		fputs("l3miss ", f);
+		print_bool(PRINT_ANY, "l3miss", "l3miss ", true);
 
 	if (tb[IFLA_VXLAN_TOS] &&
 	    (tos = rta_getattr_u8(tb[IFLA_VXLAN_TOS]))) {
-		if (tos == 1)
-			fprintf(f, "tos inherit ");
-		else
-			fprintf(f, "tos %#x ", tos);
+		if (is_json_context()) {
+			print_0xhex(PRINT_JSON, "tos", "%#x", tos);
+		} else {
+			if (tos == 1)
+				fprintf(f, "tos %s ", "inherit");
+			else
+				fprintf(f, "tos %#x ", tos);
+		}
 	}
 
 	if (tb[IFLA_VXLAN_TTL]) {
 		__u8 ttl = rta_getattr_u8(tb[IFLA_VXLAN_TTL]);
 
 		if (ttl)
-			fprintf(f, "ttl %d ", ttl);
+			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
+		else
+			print_int(PRINT_JSON, "ttl", NULL, ttl);
 	}
 
 	if (tb[IFLA_VXLAN_LABEL]) {
 		__u32 label = rta_getattr_u32(tb[IFLA_VXLAN_LABEL]);
 
 		if (label)
-			fprintf(f, "flowlabel %#x ", ntohl(label));
+			print_0xhex(PRINT_ANY,
+				    "label",
+				    "flowlabel %#x ",
+				    ntohl(label));
 	}
 
 	if (tb[IFLA_VXLAN_AGEING]) {
 		__u32 age = rta_getattr_u32(tb[IFLA_VXLAN_AGEING]);
 
 		if (age == 0)
-			fprintf(f, "ageing none ");
+			print_uint(PRINT_ANY, "ageing", "ageing none ", 0);
 		else
-			fprintf(f, "ageing %u ", age);
+			print_uint(PRINT_ANY, "ageing", "ageing %u ", age);
 	}
 
 	if (tb[IFLA_VXLAN_LIMIT] &&
 	    ((maxaddr = rta_getattr_u32(tb[IFLA_VXLAN_LIMIT])) != 0))
-		    fprintf(f, "maxaddr %u ", maxaddr);
+		print_uint(PRINT_ANY, "limit", "maxaddr %u ", maxaddr);
 
 	if (tb[IFLA_VXLAN_UDP_CSUM]) {
-		if (!rta_getattr_u8(tb[IFLA_VXLAN_UDP_CSUM]))
-			fputs("no", f);
-		fputs("udpcsum ", f);
+		__u8 udp_csum = rta_getattr_u8(tb[IFLA_VXLAN_UDP_CSUM]);
+
+		if (is_json_context()) {
+			print_bool(PRINT_ANY, "udp_csum", NULL, udp_csum);
+		} else {
+			if (!udp_csum)
+				fputs("no", f);
+			fputs("udpcsum ", f);
+		}
 	}
 
 	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX]) {
-		if (!rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX]))
-			fputs("no", f);
-		fputs("udp6zerocsumtx ", f);
+		__u8 csum6 = rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX]);
+
+		if (is_json_context()) {
+			print_bool(PRINT_ANY,
+				   "udp_zero_csum6_tx", NULL, csum6);
+		} else {
+			if (!csum6)
+				fputs("no", f);
+			fputs("udp6zerocsumtx ", f);
+		}
 	}
 
 	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]) {
-		if (!rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]))
-			fputs("no", f);
-		fputs("udp6zerocsumrx ", f);
+		__u8 csum6 = rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]);
+
+		if (is_json_context()) {
+			print_bool(PRINT_ANY,
+				   "udp_zero_csum6_rx",
+				   NULL,
+				   csum6);
+		} else {
+			if (!csum6)
+				fputs("no", f);
+			fputs("udp6zerocsumrx ", f);
+		}
 	}
 
 	if (tb[IFLA_VXLAN_REMCSUM_TX] &&
 	    rta_getattr_u8(tb[IFLA_VXLAN_REMCSUM_TX]))
-		fputs("remcsumtx ", f);
+		print_bool(PRINT_ANY, "remcsum_tx", "remcsumtx ", true);
 
 	if (tb[IFLA_VXLAN_REMCSUM_RX] &&
 	    rta_getattr_u8(tb[IFLA_VXLAN_REMCSUM_RX]))
-		fputs("remcsumrx ", f);
+		print_bool(PRINT_ANY, "remcsum_rx", "remcsumrx ", true);
 
 	if (tb[IFLA_VXLAN_COLLECT_METADATA] &&
 	    rta_getattr_u8(tb[IFLA_VXLAN_COLLECT_METADATA]))
-		fputs("external ", f);
+		print_bool(PRINT_ANY, "collect_metadata", "external ", true);
 
 	if (tb[IFLA_VXLAN_GBP])
-		fputs("gbp ", f);
+		print_bool(PRINT_ANY, "gbp", "gbp ", true);
 	if (tb[IFLA_VXLAN_GPE])
-		fputs("gpe ", f);
+		print_bool(PRINT_ANY, "gpe", "gpe ", true);
 }
 
 static void vxlan_print_help(struct link_util *lu, int argc, char **argv,
-	FILE *f)
+			     FILE *f)
 {
 	print_explain(f);
 }

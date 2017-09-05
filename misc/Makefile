@@ -3,24 +3,10 @@ LNSTATOBJ=lnstat.o lnstat_util.o
 
 TARGETS=ss nstat ifstat rtacct lnstat
 
-include ../Config
+include ../config.mk
 
 ifeq ($(HAVE_BERKELEY_DB),y)
 	TARGETS += arpd
-endif
-
-ifeq ($(HAVE_SELINUX),y)
-	LDLIBS += $(shell $(PKG_CONFIG) --libs libselinux)
-	CFLAGS += $(shell $(PKG_CONFIG) --cflags libselinux) -DHAVE_SELINUX
-endif
-
-ifeq ($(IP_CONFIG_SETNS),y)
-	CFLAGS += -DHAVE_SETNS
-endif
-
-ifeq ($(HAVE_MNL),y)
-	CFLAGS += -DHAVE_LIBMNL $(shell $(PKG_CONFIG) libmnl --cflags)
-	LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
 endif
 
 all: $(TARGETS)

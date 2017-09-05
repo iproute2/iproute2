@@ -26,7 +26,7 @@
 static void print_usage(FILE *f)
 {
 	fprintf(f,
-		"Usage: ... { gre | gretap } [ remote ADDR ]\n"
+		"Usage: ... { gre | gretap | erspan } [ remote ADDR ]\n"
 		"                            [ local ADDR ]\n"
 		"                            [ [i|o]seq ]\n"
 		"                            [ [i|o]key KEY ]\n"
@@ -44,6 +44,7 @@ static void print_usage(FILE *f)
 		"                            [ [no]encap-csum6 ]\n"
 		"                            [ [no]encap-remcsum ]\n"
 		"                            [ fwmark MARK ]\n"
+		"                            [ erspan IDX ]\n"
 		"\n"
 		"Where: ADDR := { IP_ADDRESS | any }\n"
 		"       TOS  := { NUMBER | inherit }\n"
@@ -96,6 +97,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 metadata = 0;
 	__u8 ignore_df = 0;
 	__u32 fwmark = 0;
+	__u32 erspan_idx = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0) {
@@ -172,6 +174,9 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_FWMARK])
 			fwmark = rta_getattr_u32(greinfo[IFLA_GRE_FWMARK]);
+
+		if (greinfo[IFLA_GRE_ERSPAN_INDEX])
+			erspan_idx = rta_getattr_u32(greinfo[IFLA_GRE_ERSPAN_INDEX]);
 	}
 
 	while (argc > 0) {
@@ -328,6 +333,12 @@ get_failed:
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))
 				invarg("invalid fwmark\n", *argv);
+		} else if (strcmp(*argv, "erspan") == 0) {
+			NEXT_ARG();
+			if (get_u32(&erspan_idx, *argv, 0))
+				invarg("invalid erspan index\n", *argv);
+			if (erspan_idx & ~((1<<20) - 1) || erspan_idx == 0)
+				invarg("erspan index must be > 0 and <= 20-bit\n", *argv);
 		} else
 			usage();
 		argc--; argv++;
@@ -359,6 +370,8 @@ get_failed:
 		addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
 		addattr_l(n, 1024, IFLA_GRE_TOS, &tos, 1);
 		addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
+		if (erspan_idx != 0)
+			addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
 	} else {
 		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
 	}
@@ -389,7 +402,7 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 			remote = format_host(AF_INET, 4, &addr);
 	}
 
-	fprintf(f, "remote %s ", remote);
+	print_string(PRINT_ANY, "remote", "remote %s ", remote);
 
 	if (tb[IFLA_GRE_LOCAL]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_LOCAL]);
@@ -398,36 +411,52 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 			local = format_host(AF_INET, 4, &addr);
 	}
 
-	fprintf(f, "local %s ", local);
+	print_string(PRINT_ANY, "local", "local %s ", local);
 
 	if (tb[IFLA_GRE_LINK] && rta_getattr_u32(tb[IFLA_GRE_LINK])) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
 		const char *n = if_indextoname(link, s2);
 
 		if (n)
-			fprintf(f, "dev %s ", n);
+			print_string(PRINT_ANY, "link", "dev %s ", n);
 		else
-			fprintf(f, "dev %u ", link);
+			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
 	}
 
-	if (tb[IFLA_GRE_TTL] && rta_getattr_u8(tb[IFLA_GRE_TTL]))
-		fprintf(f, "ttl %d ", rta_getattr_u8(tb[IFLA_GRE_TTL]));
-	else
-		fprintf(f, "ttl inherit ");
+	if (tb[IFLA_GRE_TTL]) {
+		__u8 ttl = rta_getattr_u8(tb[IFLA_GRE_TTL]);
+
+		if (ttl)
+			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
+		else
+			print_int(PRINT_JSON, "ttl", NULL, ttl);
+	} else {
+		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
+	}
 
 	if (tb[IFLA_GRE_TOS] && rta_getattr_u8(tb[IFLA_GRE_TOS])) {
 		int tos = rta_getattr_u8(tb[IFLA_GRE_TOS]);
 
-		fputs("tos ", f);
-		if (tos == 1)
-			fputs("inherit ", f);
-		else
-			fprintf(f, "0x%x ", tos);
+		if (is_json_context()) {
+			SPRINT_BUF(b1);
+
+			snprintf(b1, sizeof(b1), "0x%x", tos);
+			print_string(PRINT_JSON, "tos", NULL, b1);
+		} else {
+			fputs("tos ", f);
+			if (tos == 1)
+				fputs("inherit ", f);
+			else
+				fprintf(f, "0x%x ", tos);
+		}
 	}
 
-	if (tb[IFLA_GRE_PMTUDISC] &&
-	    !rta_getattr_u8(tb[IFLA_GRE_PMTUDISC]))
-		fputs("nopmtudisc ", f);
+	if (tb[IFLA_GRE_PMTUDISC]) {
+		if (!rta_getattr_u8(tb[IFLA_GRE_PMTUDISC]))
+			print_bool(PRINT_ANY, "pmtudisc", "nopmtudisc ", false);
+		else
+			print_bool(PRINT_JSON, "pmtudisc", NULL, true);
+	}
 
 	if (tb[IFLA_GRE_IFLAGS])
 		iflags = rta_getattr_u16(tb[IFLA_GRE_IFLAGS]);
@@ -437,26 +466,31 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 
 	if ((iflags & GRE_KEY) && tb[IFLA_GRE_IKEY]) {
 		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_GRE_IKEY]), s2, sizeof(s2));
-		fprintf(f, "ikey %s ", s2);
+		print_string(PRINT_ANY, "ikey", "ikey %s ", s2);
 	}
 
 	if ((oflags & GRE_KEY) && tb[IFLA_GRE_OKEY]) {
 		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_GRE_OKEY]), s2, sizeof(s2));
-		fprintf(f, "okey %s ", s2);
+		print_string(PRINT_ANY, "okey", "okey %s ", s2);
 	}
 
 	if (iflags & GRE_SEQ)
-		fputs("iseq ", f);
+		print_bool(PRINT_ANY, "iseq", "iseq ", true);
 	if (oflags & GRE_SEQ)
-		fputs("oseq ", f);
+		print_bool(PRINT_ANY, "oseq", "oseq ", true);
 	if (iflags & GRE_CSUM)
-		fputs("icsum ", f);
+		print_bool(PRINT_ANY, "icsum", "icsum ", true);
 	if (oflags & GRE_CSUM)
-		fputs("ocsum ", f);
+		print_bool(PRINT_ANY, "ocsum", "ocsum ", true);
 
-	if (tb[IFLA_GRE_FWMARK] && rta_getattr_u32(tb[IFLA_GRE_FWMARK])) {
-		fprintf(f, "fwmark 0x%x ",
-			rta_getattr_u32(tb[IFLA_GRE_FWMARK]));
+	if (tb[IFLA_GRE_FWMARK]) {
+		__u32 fwmark = rta_getattr_u32(tb[IFLA_GRE_FWMARK]);
+
+		if (fwmark) {
+			snprintf(s2, sizeof(s2), "0x%x", fwmark);
+
+			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+		}
 	}
 }
 
@@ -468,10 +502,16 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (!tb[IFLA_GRE_COLLECT_METADATA])
 		gre_print_direct_opt(f, tb);
 	else
-		fputs("external ", f);
+		print_bool(PRINT_ANY, "external", "external ", true);
 
 	if (tb[IFLA_GRE_IGNORE_DF] && rta_getattr_u8(tb[IFLA_GRE_IGNORE_DF]))
-		fputs("ignore-df ", f);
+		print_bool(PRINT_ANY, "ignore_df", "ignore-df ", true);
+
+	if (tb[IFLA_GRE_ERSPAN_INDEX]) {
+		__u32 erspan_idx = rta_getattr_u32(tb[IFLA_GRE_ERSPAN_INDEX]);
+
+		fprintf(f, "erspan_index %u ", erspan_idx);
+	}
 
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&
 	    rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {
@@ -480,45 +520,73 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		__u16 sport = rta_getattr_u16(tb[IFLA_GRE_ENCAP_SPORT]);
 		__u16 dport = rta_getattr_u16(tb[IFLA_GRE_ENCAP_DPORT]);
 
-		fputs("encap ", f);
+
+		open_json_object("encap");
+		print_string(PRINT_FP, NULL, "encap ", NULL);
+
 		switch (type) {
 		case TUNNEL_ENCAP_FOU:
-			fputs("fou ", f);
+			print_string(PRINT_ANY, "type", "%s ", "fou");
 			break;
 		case TUNNEL_ENCAP_GUE:
-			fputs("gue ", f);
+			print_string(PRINT_ANY, "type", "%s ", "gue");
 			break;
 		default:
-			fputs("unknown ", f);
+			print_null(PRINT_ANY, "type", "%s ", "unknown");
 			break;
 		}
 
-		if (sport == 0)
-			fputs("encap-sport auto ", f);
-		else
-			fprintf(f, "encap-sport %u", ntohs(sport));
+		if (is_json_context()) {
+			print_uint(PRINT_JSON,
+				   "sport",
+				   NULL,
+				   sport ? ntohs(sport) : 0);
+			print_uint(PRINT_JSON, "dport", NULL, ntohs(dport));
 
-		fprintf(f, "encap-dport %u ", ntohs(dport));
+			print_bool(PRINT_JSON,
+				   "csum",
+				   NULL,
+				   flags & TUNNEL_ENCAP_FLAG_CSUM);
 
-		if (flags & TUNNEL_ENCAP_FLAG_CSUM)
-			fputs("encap-csum ", f);
-		else
-			fputs("noencap-csum ", f);
+			print_bool(PRINT_JSON,
+				   "csum6",
+				   NULL,
+				   flags & TUNNEL_ENCAP_FLAG_CSUM6);
 
-		if (flags & TUNNEL_ENCAP_FLAG_CSUM6)
-			fputs("encap-csum6 ", f);
-		else
-			fputs("noencap-csum6 ", f);
+			print_bool(PRINT_JSON,
+				   "remcsum",
+				   NULL,
+				   flags & TUNNEL_ENCAP_FLAG_REMCSUM);
 
-		if (flags & TUNNEL_ENCAP_FLAG_REMCSUM)
-			fputs("encap-remcsum ", f);
-		else
-			fputs("noencap-remcsum ", f);
+			close_json_object();
+		} else {
+			if (sport == 0)
+				fputs("encap-sport auto ", f);
+			else
+				fprintf(f, "encap-sport %u", ntohs(sport));
+
+			fprintf(f, "encap-dport %u ", ntohs(dport));
+
+			if (flags & TUNNEL_ENCAP_FLAG_CSUM)
+				fputs("encap-csum ", f);
+			else
+				fputs("noencap-csum ", f);
+
+			if (flags & TUNNEL_ENCAP_FLAG_CSUM6)
+				fputs("encap-csum6 ", f);
+			else
+				fputs("noencap-csum6 ", f);
+
+			if (flags & TUNNEL_ENCAP_FLAG_REMCSUM)
+				fputs("encap-remcsum ", f);
+			else
+				fputs("noencap-remcsum ", f);
+		}
 	}
 }
 
 static void gre_print_help(struct link_util *lu, int argc, char **argv,
-	FILE *f)
+			   FILE *f)
 {
 	print_usage(f);
 }
@@ -533,6 +601,14 @@ struct link_util gre_link_util = {
 
 struct link_util gretap_link_util = {
 	.id = "gretap",
+	.maxattr = IFLA_GRE_MAX,
+	.parse_opt = gre_parse_opt,
+	.print_opt = gre_print_opt,
+	.print_help = gre_print_help,
+};
+
+struct link_util erspan_link_util = {
+	.id = "erspan",
 	.maxattr = IFLA_GRE_MAX,
 	.parse_opt = gre_parse_opt,
 	.print_opt = gre_print_opt,

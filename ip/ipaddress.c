@@ -30,6 +30,7 @@
 #include <linux/sockios.h>
 #include <linux/net_namespace.h>
 
+#include "utils.h"
 #include "rt_names.h"
 #include "utils.h"
 #include "ll_map.h"
@@ -76,7 +77,7 @@ static void usage(void)
 	fprintf(stderr, "LFT := forever | SECONDS\n");
 	fprintf(stderr, "TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n");
 	fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan | lowpan |\n");
-	fprintf(stderr, "          gre | gretap | ip6gre | ip6gretap | vti | nlmon | can |\n");
+	fprintf(stderr, "          gre | gretap | erspan | ip6gre | ip6gretap | vti | nlmon | can |\n");
 	fprintf(stderr, "          bond_slave | ipvlan | geneve | bridge_slave | vrf | hsr | macsec }\n");
 
 	exit(-1);
@@ -84,13 +85,14 @@ static void usage(void)
 
 static void print_link_flags(FILE *fp, unsigned int flags, unsigned int mdown)
 {
-	fprintf(fp, "<");
+	open_json_array(PRINT_ANY, is_json_context() ? "flags" : "<");
 	if (flags & IFF_UP && !(flags & IFF_RUNNING))
-		fprintf(fp, "NO-CARRIER%s", flags ? "," : "");
+		print_string(PRINT_ANY, NULL,
+			     flags ? "%s," : "%s", "NO-CARRIER");
 	flags &= ~IFF_RUNNING;
-#define _PF(f) if (flags&IFF_##f) { \
-		  flags &= ~IFF_##f ; \
-		  fprintf(fp, #f "%s", flags ? "," : ""); }
+#define _PF(f) if (flags&IFF_##f) {					\
+		flags &= ~IFF_##f ;					\
+		print_string(PRINT_ANY, NULL, flags ? "%s," : "%s", #f); }
 	_PF(LOOPBACK);
 	_PF(BROADCAST);
 	_PF(POINTOPOINT);
@@ -111,10 +113,10 @@ static void print_link_flags(FILE *fp, unsigned int flags, unsigned int mdown)
 	_PF(ECHO);
 #undef _PF
 	if (flags)
-		fprintf(fp, "%x", flags);
+		print_hex(PRINT_ANY, NULL, "%x", flags);
 	if (mdown)
-		fprintf(fp, ",M-DOWN");
-	fprintf(fp, "> ");
+		print_string(PRINT_ANY, NULL, ",%s", "M-DOWN");
+	close_json_array(PRINT_ANY, "> ");
 }
 
 static const char *oper_states[] = {
@@ -125,14 +127,26 @@ static const char *oper_states[] = {
 static void print_operstate(FILE *f, __u8 state)
 {
 	if (state >= ARRAY_SIZE(oper_states)) {
-		fprintf(f, "state %#x ", state);
+		if (is_json_context())
+			print_uint(PRINT_JSON, "operstate_index", NULL, state);
+		else
+			print_0xhex(PRINT_FP, NULL, "state %#x", state);
 	} else if (brief) {
-		color_fprintf(f, oper_state_color(state),
-			      "%-14s ", oper_states[state]);
+		print_color_string(PRINT_ANY,
+				   oper_state_color(state),
+				   "operstate",
+				   "%-14s ",
+				   oper_states[state]);
 	} else {
-		fprintf(f, "state ");
-		color_fprintf(f, oper_state_color(state),
-			      "%s ", oper_states[state]);
+		if (is_json_context())
+			print_string(PRINT_JSON,
+				     "operstate",
+				     NULL, oper_states[state]);
+		else {
+			fprintf(f, "state ");
+			color_fprintf(f, oper_state_color(state),
+				      "%s ", oper_states[state]);
+		}
 	}
 }
 
@@ -169,7 +183,7 @@ static void print_queuelen(FILE *f, struct rtattr *tb[IFLA_MAX + 1])
 		qlen = ifr.ifr_qlen;
 	}
 	if (qlen)
-		fprintf(f, "qlen %d", qlen);
+		print_int(PRINT_ANY, "txqlen", "qlen %d", qlen);
 }
 
 static const char *link_modes[] = {
@@ -181,9 +195,15 @@ static void print_linkmode(FILE *f, struct rtattr *tb)
 	unsigned int mode = rta_getattr_u8(tb);
 
 	if (mode >= ARRAY_SIZE(link_modes))
-		fprintf(f, "mode %d ", mode);
+		print_int(PRINT_ANY,
+			  "linkmode_index",
+			  "mode %d ",
+			  mode);
 	else
-		fprintf(f, "mode %s ", link_modes[mode]);
+		print_string(PRINT_ANY,
+			     "linkmode",
+			     "mode %s "
+			     , link_modes[mode]);
 }
 
 static char *parse_link_kind(struct rtattr *tb, bool slave)
@@ -215,13 +235,14 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 	char slave[32];
 
 	parse_rtattr_nested(linkinfo, IFLA_INFO_MAX, tb);
+	open_json_object("linkinfo");
 
 	if (linkinfo[IFLA_INFO_KIND]) {
 		const char *kind
 			= rta_getattr_str(linkinfo[IFLA_INFO_KIND]);
 
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    %s ", kind);
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_string(PRINT_ANY, "info_kind", "    %s ", kind);
 
 		lu = get_link_kind(kind);
 		if (lu && lu->print_opt) {
@@ -232,11 +253,16 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 						    linkinfo[IFLA_INFO_DATA]);
 				data = attr;
 			}
+			open_json_object("info_data");
 			lu->print_opt(lu, fp, data);
+			close_json_object();
 
 			if (linkinfo[IFLA_INFO_XSTATS] && show_stats &&
-			    lu->print_xstats)
+			    lu->print_xstats) {
+				open_json_object("info_xstats");
 				lu->print_xstats(lu, fp, linkinfo[IFLA_INFO_XSTATS]);
+				close_json_object();
+			}
 		}
 	}
 
@@ -244,8 +270,12 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 		const char *slave_kind
 			= rta_getattr_str(linkinfo[IFLA_INFO_SLAVE_KIND]);
 
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    %s_slave ", slave_kind);
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_string(PRINT_ANY,
+			     "info_slave_kind",
+			     "    %s_slave ",
+			     slave_kind);
+
 		snprintf(slave, sizeof(slave), "%s_slave", slave_kind);
 
 		slave_lu = get_link_kind(slave);
@@ -257,9 +287,12 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 						    linkinfo[IFLA_INFO_SLAVE_DATA]);
 				data = attr;
 			}
+			open_json_object("info_slave_data");
 			slave_lu->print_opt(slave_lu, fp, data);
+			close_json_object();
 		}
 	}
+	close_json_object();
 }
 
 static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
@@ -275,22 +308,39 @@ static void print_af_spec(FILE *fp, struct rtattr *af_spec_attr)
 
 	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
 		__u8 mode = rta_getattr_u8(tb[IFLA_INET6_ADDR_GEN_MODE]);
+		SPRINT_BUF(b1);
 
 		switch (mode) {
 		case IN6_ADDR_GEN_MODE_EUI64:
-			fprintf(fp, "addrgenmode eui64 ");
+			print_string(PRINT_ANY,
+				     "inet6_addr_gen_mode",
+				     "addrgenmode %s ",
+				     "eui64");
 			break;
 		case IN6_ADDR_GEN_MODE_NONE:
-			fprintf(fp, "addrgenmode none ");
+			print_string(PRINT_ANY,
+				     "inet6_addr_gen_mode",
+				     "addrgenmode %s ",
+				     "none");
 			break;
 		case IN6_ADDR_GEN_MODE_STABLE_PRIVACY:
-			fprintf(fp, "addrgenmode stable_secret ");
+			print_string(PRINT_ANY,
+				     "inet6_addr_gen_mode",
+				     "addrgenmode %s ",
+				     "stable_secret");
 			break;
 		case IN6_ADDR_GEN_MODE_RANDOM:
-			fprintf(fp, "addrgenmode random ");
+			print_string(PRINT_ANY,
+				     "inet6_addr_gen_mode",
+				     "addrgenmode %s ",
+				     "random");
 			break;
 		default:
-			fprintf(fp, "addrgenmode %#.2hhx ", mode);
+			snprintf(b1, sizeof(b1), "%#.2hhx", mode);
+			print_string(PRINT_ANY,
+				     "inet6_addr_gen_mode",
+				     "addrgenmode %s ",
+				     b1);
 			break;
 		}
 	}
@@ -316,83 +366,135 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	vf_mac = RTA_DATA(vf[IFLA_VF_MAC]);
 	vf_tx_rate = RTA_DATA(vf[IFLA_VF_TX_RATE]);
 
-	fprintf(fp, "%s    vf %d MAC %s", _SL_, vf_mac->vf,
-		ll_addr_n2a((unsigned char *)&vf_mac->mac,
-			    ETH_ALEN, 0, b1, sizeof(b1)));
+	print_string(PRINT_FP, NULL, "%s    ", _SL_);
+	print_int(PRINT_ANY, "vf", "vf %d ", vf_mac->vf);
+	print_string(PRINT_ANY, "mac", "MAC %s",
+		     ll_addr_n2a((unsigned char *) &vf_mac->mac,
+				 ETH_ALEN, 0, b1, sizeof(b1)));
+
 	if (vf[IFLA_VF_VLAN_LIST]) {
 		struct rtattr *i, *vfvlanlist = vf[IFLA_VF_VLAN_LIST];
 		int rem = RTA_PAYLOAD(vfvlanlist);
 
+		open_json_array(PRINT_JSON, "vlan_list");
 		for (i = RTA_DATA(vfvlanlist);
-		      RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
-			struct ifla_vf_vlan_info *vf_vlan_info =
-					RTA_DATA(i);
+		     RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+			struct ifla_vf_vlan_info *vf_vlan_info = RTA_DATA(i);
 			SPRINT_BUF(b2);
 
+			open_json_object(NULL);
 			if (vf_vlan_info->vlan)
-				fprintf(fp, ", vlan %d", vf_vlan_info->vlan);
+				print_int(PRINT_ANY,
+					  "vlan",
+					  ", vlan %d",
+					  vf_vlan_info->vlan);
 			if (vf_vlan_info->qos)
-				fprintf(fp, ", qos %d", vf_vlan_info->qos);
+				print_int(PRINT_ANY,
+					  "qos",
+					  ", qos %d",
+					  vf_vlan_info->qos);
 			if (vf_vlan_info->vlan_proto &&
 			    vf_vlan_info->vlan_proto != htons(ETH_P_8021Q))
-				fprintf(fp, ", vlan protocol %s",
-					ll_proto_n2a(vf_vlan_info->vlan_proto,
+				print_string(PRINT_ANY,
+					     "protocol",
+					     ", vlan protocol %s",
+					     ll_proto_n2a(
+						     vf_vlan_info->vlan_proto,
 						     b2, sizeof(b2)));
-
+			close_json_object();
 		}
+		close_json_array(PRINT_JSON, NULL);
 	} else {
 		struct ifla_vf_vlan *vf_vlan = RTA_DATA(vf[IFLA_VF_VLAN]);
 
 		if (vf_vlan->vlan)
-			fprintf(fp, ", vlan %d", vf_vlan->vlan);
+			print_int(PRINT_ANY,
+				  "vlan",
+				  ", vlan %d",
+				  vf_vlan->vlan);
 		if (vf_vlan->qos)
-			fprintf(fp, ", qos %d", vf_vlan->qos);
+			print_int(PRINT_ANY, "qos", ", qos %d", vf_vlan->qos);
 	}
+
 	if (vf_tx_rate->rate)
-		fprintf(fp, ", tx rate %d (Mbps)", vf_tx_rate->rate);
+		print_int(PRINT_ANY,
+			  "tx_rate",
+			  ", tx rate %d (Mbps)",
+			  vf_tx_rate->rate);
 
 	if (vf[IFLA_VF_RATE]) {
 		struct ifla_vf_rate *vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
+		int max_tx = vf_rate->max_tx_rate;
+		int min_tx = vf_rate->min_tx_rate;
 
-		if (vf_rate->max_tx_rate)
-			fprintf(fp, ", max_tx_rate %dMbps", vf_rate->max_tx_rate);
-		if (vf_rate->min_tx_rate)
-			fprintf(fp, ", min_tx_rate %dMbps", vf_rate->min_tx_rate);
+		if (is_json_context()) {
+			open_json_object("rate");
+			print_int(PRINT_JSON, "max_tx", NULL, max_tx);
+			print_int(PRINT_ANY, "min_tx", NULL, min_tx);
+			close_json_object();
+		} else {
+			if (max_tx)
+				fprintf(fp, ", max_tx_rate %dMbps", max_tx);
+			if (min_tx)
+				fprintf(fp, ", min_tx_rate %dMbps", min_tx);
+		}
 	}
+
 	if (vf[IFLA_VF_SPOOFCHK]) {
 		struct ifla_vf_spoofchk *vf_spoofchk =
 			RTA_DATA(vf[IFLA_VF_SPOOFCHK]);
 
 		if (vf_spoofchk->setting != -1)
-			fprintf(fp, ", spoof checking %s",
-				vf_spoofchk->setting ? "on" : "off");
+			print_bool(PRINT_ANY,
+				   "spoofchk",
+				   vf_spoofchk->setting ?
+				   ", spoof checking on" : ", spoof checking off",
+				   vf_spoofchk->setting);
 	}
+
 	if (vf[IFLA_VF_LINK_STATE]) {
 		struct ifla_vf_link_state *vf_linkstate =
 			RTA_DATA(vf[IFLA_VF_LINK_STATE]);
 
 		if (vf_linkstate->link_state == IFLA_VF_LINK_STATE_AUTO)
-			fprintf(fp, ", link-state auto");
+			print_string(PRINT_ANY,
+				     "link_state",
+				     ", link-state %s",
+				     "auto");
 		else if (vf_linkstate->link_state == IFLA_VF_LINK_STATE_ENABLE)
-			fprintf(fp, ", link-state enable");
+			print_string(PRINT_ANY,
+				     "link_state",
+				     ", link-state %s",
+				     "enable");
 		else
-			fprintf(fp, ", link-state disable");
+			print_string(PRINT_ANY,
+				     "link_state",
+				     ", link-state %s",
+				     "disable");
 	}
+
 	if (vf[IFLA_VF_TRUST]) {
 		struct ifla_vf_trust *vf_trust = RTA_DATA(vf[IFLA_VF_TRUST]);
 
 		if (vf_trust->setting != -1)
-			fprintf(fp, ", trust %s",
-				vf_trust->setting ? "on" : "off");
+			print_bool(PRINT_ANY,
+				   "trust",
+				   vf_trust->setting ? ", trust on" : ", trust off",
+				   vf_trust->setting);
 	}
+
 	if (vf[IFLA_VF_RSS_QUERY_EN]) {
 		struct ifla_vf_rss_query_en *rss_query =
 			RTA_DATA(vf[IFLA_VF_RSS_QUERY_EN]);
 
 		if (rss_query->setting != -1)
-			fprintf(fp, ", query_rss %s",
-			        rss_query->setting ? "on" : "off");
+			print_bool(PRINT_ANY,
+				   "query_rss_en",
+				   rss_query->setting ? ", query_rss on"
+				   : ", query_rss off",
+				   rss_query->setting);
 	}
+
 	if (vf[IFLA_VF_STATS] && show_stats)
 		print_vf_stats64(fp, vf[IFLA_VF_STATS]);
 }
@@ -432,7 +534,7 @@ void print_num(FILE *fp, unsigned int width, uint64_t count)
 	}
 
 	snprintf(buf, sizeof(buf), "%.*f%c%s", precision,
-		(double) count / powi, *prefix, use_iec ? "i" : "");
+		 (double) count / powi, *prefix, use_iec ? "i" : "");
 
 	fprintf(fp, "%-*s ", width, buf);
 }
@@ -448,155 +550,339 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 
 	parse_rtattr_nested(vf, IFLA_VF_MAX, vfstats);
 
-	/* RX stats */
-	fprintf(fp, "%s", _SL_);
-	fprintf(fp, "    RX: bytes  packets  mcast   bcast %s", _SL_);
-	fprintf(fp, "    ");
+	if (is_json_context()) {
+		open_json_object("stats");
 
-	print_num(fp, 10,  rta_getattr_u64(vf[IFLA_VF_STATS_RX_BYTES]));
-	print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_RX_PACKETS]));
-	print_num(fp, 7, rta_getattr_u64(vf[IFLA_VF_STATS_MULTICAST]));
-	print_num(fp, 7, rta_getattr_u64(vf[IFLA_VF_STATS_BROADCAST]));
+		/* RX stats */
+		open_json_object("rx");
+		print_uint(PRINT_JSON, "bytes", NULL,
+			   rta_getattr_u64(vf[IFLA_VF_STATS_RX_BYTES]));
+		print_uint(PRINT_JSON, "packets", NULL,
+			   rta_getattr_u64(vf[IFLA_VF_STATS_RX_PACKETS]));
+		print_uint(PRINT_JSON, "multicast", NULL,
+			   rta_getattr_u64(vf[IFLA_VF_STATS_MULTICAST]));
+		print_uint(PRINT_JSON, "broadcast", NULL,
+			   rta_getattr_u64(vf[IFLA_VF_STATS_BROADCAST]));
+		close_json_object();
 
-	/* TX stats */
-	fprintf(fp, "%s", _SL_);
-	fprintf(fp, "    TX: bytes  packets %s", _SL_);
-	fprintf(fp, "    ");
+		/* TX stats */
+		open_json_object("tx");
+		print_uint(PRINT_JSON, "tx_bytes", NULL,
+			   rta_getattr_u64(vf[IFLA_VF_STATS_TX_BYTES]));
+		print_uint(PRINT_JSON, "tx_packets", NULL,
+			   rta_getattr_u64(vf[IFLA_VF_STATS_TX_PACKETS]));
+		close_json_object();
+		close_json_object();
+	} else {
+		/* RX stats */
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    RX: bytes  packets  mcast   bcast %s", _SL_);
+		fprintf(fp, "    ");
 
-	print_num(fp, 10, rta_getattr_u64(vf[IFLA_VF_STATS_TX_BYTES]));
-	print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_TX_PACKETS]));
+		print_num(fp, 10, rta_getattr_u64(vf[IFLA_VF_STATS_RX_BYTES]));
+		print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_RX_PACKETS]));
+		print_num(fp, 7, rta_getattr_u64(vf[IFLA_VF_STATS_MULTICAST]));
+		print_num(fp, 7, rta_getattr_u64(vf[IFLA_VF_STATS_BROADCAST]));
+
+		/* TX stats */
+		fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    TX: bytes  packets %s", _SL_);
+		fprintf(fp, "    ");
+
+		print_num(fp, 10, rta_getattr_u64(vf[IFLA_VF_STATS_TX_BYTES]));
+		print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_TX_PACKETS]));
+	}
 }
 
 static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 			       const struct rtattr *carrier_changes)
 {
-	/* RX stats */
-	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
-		s->rx_compressed ? "compressed" : "", _SL_);
+	if (is_json_context()) {
+		open_json_object("stats644");
 
-	fprintf(fp, "    ");
-	print_num(fp, 10, s->rx_bytes);
-	print_num(fp, 8, s->rx_packets);
-	print_num(fp, 7, s->rx_errors);
-	print_num(fp, 7, s->rx_dropped);
-	print_num(fp, 7, s->rx_over_errors);
-	print_num(fp, 7, s->multicast);
-	if (s->rx_compressed)
-		print_num(fp, 7, s->rx_compressed);
+		/* RX stats */
+		open_json_object("rx");
+		print_uint(PRINT_JSON, "bytes", NULL, s->rx_bytes);
+		print_uint(PRINT_JSON, "packets", NULL, s->rx_packets);
+		print_uint(PRINT_JSON, "errors", NULL, s->rx_errors);
+		print_uint(PRINT_JSON, "dropped", NULL, s->rx_dropped);
+		print_uint(PRINT_JSON, "over_errors", NULL, s->rx_over_errors);
+		print_uint(PRINT_JSON, "multicast", NULL, s->multicast);
+		if (s->rx_compressed)
+			print_uint(PRINT_JSON,
+				   "compressed",
+				   NULL, s->rx_compressed);
 
-	/* RX error stats */
-	if (show_stats > 1) {
+		/* RX error stats */
+		if (show_stats > 1) {
+			print_uint(PRINT_JSON,
+				   "length_errors",
+				   NULL, s->rx_length_errors);
+			print_uint(PRINT_JSON,
+				   "crc_errors",
+				   NULL, s->rx_crc_errors);
+			print_uint(PRINT_JSON,
+				   "frame_errors",
+				   NULL, s->rx_frame_errors);
+			print_uint(PRINT_JSON,
+				   "fifo_errors",
+				   NULL, s->rx_fifo_errors);
+			print_uint(PRINT_JSON,
+				   "missed_errors",
+				   NULL, s->rx_missed_errors);
+			if (s->rx_nohandler)
+				print_uint(PRINT_JSON,
+					   "nohandler", NULL, s->rx_nohandler);
+		}
+		close_json_object();
+
+		/* TX stats */
+		open_json_object("tx");
+		print_uint(PRINT_JSON, "bytes", NULL, s->tx_bytes);
+		print_uint(PRINT_JSON, "packets", NULL, s->tx_packets);
+		print_uint(PRINT_JSON, "errors", NULL, s->tx_errors);
+		print_uint(PRINT_JSON, "dropped", NULL, s->tx_dropped);
+		print_uint(PRINT_JSON,
+			   "carrier_errors",
+			   NULL, s->tx_carrier_errors);
+		print_uint(PRINT_JSON, "collisions", NULL, s->collisions);
+		if (s->tx_compressed)
+			print_uint(PRINT_JSON,
+				   "compressed",
+				   NULL, s->tx_compressed);
+
+		/* TX error stats */
+		if (show_stats > 1) {
+			print_uint(PRINT_JSON,
+				   "aborted_errors",
+				   NULL, s->tx_aborted_errors);
+			print_uint(PRINT_JSON,
+				   "fifo_errors",
+				   NULL, s->tx_fifo_errors);
+			print_uint(PRINT_JSON,
+				   "window_errors",
+				   NULL, s->tx_window_errors);
+			print_uint(PRINT_JSON,
+				   "heartbeat_errors",
+				   NULL, s->tx_heartbeat_errors);
+			if (carrier_changes)
+				print_uint(PRINT_JSON, "carrier_changes", NULL,
+					   rta_getattr_u32(carrier_changes));
+		}
+		close_json_object();
+		close_json_object();
+
+	} else {
+		/* RX stats */
+		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
+			s->rx_compressed ? "compressed" : "", _SL_);
+
+		fprintf(fp, "    ");
+		print_num(fp, 10, s->rx_bytes);
+		print_num(fp, 8, s->rx_packets);
+		print_num(fp, 7, s->rx_errors);
+		print_num(fp, 7, s->rx_dropped);
+		print_num(fp, 7, s->rx_over_errors);
+		print_num(fp, 7, s->multicast);
+		if (s->rx_compressed)
+			print_num(fp, 7, s->rx_compressed);
+
+		/* RX error stats */
+		if (show_stats > 1) {
+			fprintf(fp, "%s", _SL_);
+			fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
+				s->rx_nohandler ? "   nohandler" : "", _SL_);
+
+			fprintf(fp, "               ");
+			print_num(fp, 8, s->rx_length_errors);
+			print_num(fp, 7, s->rx_crc_errors);
+			print_num(fp, 7, s->rx_frame_errors);
+			print_num(fp, 7, s->rx_fifo_errors);
+			print_num(fp, 7, s->rx_missed_errors);
+			if (s->rx_nohandler)
+				print_num(fp, 7, s->rx_nohandler);
+
+		}
 		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
-			s->rx_nohandler ? "   nohandler" : "",  _SL_);
 
-		fprintf(fp, "               ");
-		print_num(fp, 8, s->rx_length_errors);
-		print_num(fp, 7, s->rx_crc_errors);
-		print_num(fp, 7, s->rx_frame_errors);
-		print_num(fp, 7, s->rx_fifo_errors);
-		print_num(fp, 7, s->rx_missed_errors);
-		if (s->rx_nohandler)
-			print_num(fp, 7, s->rx_nohandler);
+		/* TX stats */
+		fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
+			s->tx_compressed ? "compressed" : "", _SL_);
 
-	}
-	fprintf(fp, "%s", _SL_);
+		fprintf(fp, "    ");
+		print_num(fp, 10, s->tx_bytes);
+		print_num(fp, 8, s->tx_packets);
+		print_num(fp, 7, s->tx_errors);
+		print_num(fp, 7, s->tx_dropped);
+		print_num(fp, 7, s->tx_carrier_errors);
+		print_num(fp, 7, s->collisions);
+		if (s->tx_compressed)
+			print_num(fp, 7, s->tx_compressed);
 
-	/* TX stats */
-	fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
-		s->tx_compressed ? "compressed" : "", _SL_);
+		/* TX error stats */
+		if (show_stats > 1) {
+			fprintf(fp, "%s", _SL_);
+			fprintf(fp, "    TX errors: aborted  fifo   window heartbeat");
+			if (carrier_changes)
+				fprintf(fp, " transns");
+			fprintf(fp, "%s", _SL_);
 
-	fprintf(fp, "    ");
-	print_num(fp, 10, s->tx_bytes);
-	print_num(fp, 8, s->tx_packets);
-	print_num(fp, 7, s->tx_errors);
-	print_num(fp, 7, s->tx_dropped);
-	print_num(fp, 7, s->tx_carrier_errors);
-	print_num(fp, 7, s->collisions);
-	if (s->tx_compressed)
-		print_num(fp, 7, s->tx_compressed);
-
-	/* TX error stats */
-	if (show_stats > 1) {
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    TX errors: aborted  fifo   window heartbeat");
-		if (carrier_changes)
-			fprintf(fp, " transns");
-		fprintf(fp, "%s", _SL_);
-
-		fprintf(fp, "               ");
-		print_num(fp, 8, s->tx_aborted_errors);
-		print_num(fp, 7, s->tx_fifo_errors);
-		print_num(fp, 7, s->tx_window_errors);
-		print_num(fp, 7, s->tx_heartbeat_errors);
-		if (carrier_changes)
-			print_num(fp, 7, rta_getattr_u32(carrier_changes));
+			fprintf(fp, "               ");
+			print_num(fp, 8, s->tx_aborted_errors);
+			print_num(fp, 7, s->tx_fifo_errors);
+			print_num(fp, 7, s->tx_window_errors);
+			print_num(fp, 7, s->tx_heartbeat_errors);
+			if (carrier_changes)
+				print_num(fp, 7,
+					  rta_getattr_u32(carrier_changes));
+		}
 	}
 }
 
 static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 			       const struct rtattr *carrier_changes)
 {
-	/* RX stats */
-	fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
-		s->rx_compressed ? "compressed" : "", _SL_);
+	if (is_json_context()) {
+		open_json_object("stats");
+
+		/* RX stats */
+		open_json_object("rx");
+		print_uint(PRINT_JSON, "bytes", NULL, s->rx_bytes);
+		print_uint(PRINT_JSON, "packets", NULL, s->rx_packets);
+		print_uint(PRINT_JSON, "errors", NULL, s->rx_errors);
+		print_uint(PRINT_JSON, "dropped", NULL, s->rx_dropped);
+		print_uint(PRINT_JSON, "over_errors", NULL, s->rx_over_errors);
+		print_uint(PRINT_JSON, "multicast", NULL, s->multicast);
+		if (s->rx_compressed)
+			print_int(PRINT_JSON,
+				  "compressed",
+				  NULL, s->rx_compressed);
+
+		/* RX error stats */
+		if (show_stats > 1) {
+			print_uint(PRINT_JSON,
+				   "length_errors",
+				   NULL, s->rx_length_errors);
+			print_uint(PRINT_JSON,
+				   "crc_errors",
+				   NULL, s->rx_crc_errors);
+			print_uint(PRINT_JSON,
+				   "frame_errors",
+				   NULL, s->rx_frame_errors);
+			print_uint(PRINT_JSON,
+				   "fifo_errors",
+				   NULL, s->rx_fifo_errors);
+			print_uint(PRINT_JSON,
+				   "missed_errors",
+				   NULL, s->rx_missed_errors);
+			if (s->rx_nohandler)
+				print_int(PRINT_JSON,
+					  "nohandler",
+					  NULL, s->rx_nohandler);
+		}
+		close_json_object();
+
+		/* TX stats */
+		open_json_object("tx");
+		print_uint(PRINT_JSON, "bytes", NULL, s->tx_bytes);
+		print_uint(PRINT_JSON, "packets", NULL, s->tx_packets);
+		print_uint(PRINT_JSON, "errors", NULL, s->tx_errors);
+		print_uint(PRINT_JSON, "dropped", NULL, s->tx_dropped);
+		print_uint(PRINT_JSON,
+			   "carrier_errors",
+			   NULL, s->tx_carrier_errors);
+		print_uint(PRINT_JSON, "collisions", NULL, s->collisions);
+		if (s->tx_compressed)
+			print_int(PRINT_JSON,
+				  "compressed",
+				  NULL, s->tx_compressed);
+
+		/* TX error stats */
+		if (show_stats > 1) {
+			print_uint(PRINT_JSON,
+				   "aborted_errors",
+				   NULL, s->tx_aborted_errors);
+			print_uint(PRINT_JSON,
+				   "fifo_errors",
+				   NULL, s->tx_fifo_errors);
+			print_uint(PRINT_JSON,
+				   "window_errors",
+				   NULL, s->tx_window_errors);
+			print_uint(PRINT_JSON,
+				   "heartbeat_errors",
+				   NULL, s->tx_heartbeat_errors);
+			if (carrier_changes)
+				print_uint(PRINT_JSON,
+					   "carrier_changes",
+					   NULL,
+					   rta_getattr_u32(carrier_changes));
+		}
+
+		close_json_object();
+		close_json_object();
+	} else {
+		/* RX stats */
+		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
+			s->rx_compressed ? "compressed" : "", _SL_);
 
 
-	fprintf(fp, "    ");
-	print_num(fp, 10, s->rx_bytes);
-	print_num(fp, 8, s->rx_packets);
-	print_num(fp, 7, s->rx_errors);
-	print_num(fp, 7, s->rx_dropped);
-	print_num(fp, 7, s->rx_over_errors);
-	print_num(fp, 7, s->multicast);
-	if (s->rx_compressed)
-		print_num(fp, 7, s->rx_compressed);
+		fprintf(fp, "    ");
+		print_num(fp, 10, s->rx_bytes);
+		print_num(fp, 8, s->rx_packets);
+		print_num(fp, 7, s->rx_errors);
+		print_num(fp, 7, s->rx_dropped);
+		print_num(fp, 7, s->rx_over_errors);
+		print_num(fp, 7, s->multicast);
+		if (s->rx_compressed)
+			print_num(fp, 7, s->rx_compressed);
 
-	/* RX error stats */
-	if (show_stats > 1) {
+		/* RX error stats */
+		if (show_stats > 1) {
+			fprintf(fp, "%s", _SL_);
+			fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
+				s->rx_nohandler ? "   nohandler" : "", _SL_);
+			fprintf(fp, "               ");
+			print_num(fp, 8, s->rx_length_errors);
+			print_num(fp, 7, s->rx_crc_errors);
+			print_num(fp, 7, s->rx_frame_errors);
+			print_num(fp, 7, s->rx_fifo_errors);
+			print_num(fp, 7, s->rx_missed_errors);
+			if (s->rx_nohandler)
+				print_num(fp, 7, s->rx_nohandler);
+		}
 		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
-			s->rx_nohandler ? "   nohandler" : "",  _SL_);
-		fprintf(fp, "               ");
-		print_num(fp, 8, s->rx_length_errors);
-		print_num(fp, 7, s->rx_crc_errors);
-		print_num(fp, 7, s->rx_frame_errors);
-		print_num(fp, 7, s->rx_fifo_errors);
-		print_num(fp, 7, s->rx_missed_errors);
-		if (s->rx_nohandler)
-			print_num(fp, 7, s->rx_nohandler);
-	}
-	fprintf(fp, "%s", _SL_);
 
-	/* TX stats */
-	fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
-		s->tx_compressed ? "compressed" : "", _SL_);
+		/* TX stats */
+		fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
+			s->tx_compressed ? "compressed" : "", _SL_);
 
-	fprintf(fp, "    ");
-	print_num(fp, 10, s->tx_bytes);
-	print_num(fp, 8, s->tx_packets);
-	print_num(fp, 7, s->tx_errors);
-	print_num(fp, 7, s->tx_dropped);
-	print_num(fp, 7, s->tx_carrier_errors);
-	print_num(fp, 7, s->collisions);
-	if (s->tx_compressed)
-		print_num(fp, 7, s->tx_compressed);
+		fprintf(fp, "    ");
+		print_num(fp, 10, s->tx_bytes);
+		print_num(fp, 8, s->tx_packets);
+		print_num(fp, 7, s->tx_errors);
+		print_num(fp, 7, s->tx_dropped);
+		print_num(fp, 7, s->tx_carrier_errors);
+		print_num(fp, 7, s->collisions);
+		if (s->tx_compressed)
+			print_num(fp, 7, s->tx_compressed);
 
-	/* TX error stats */
-	if (show_stats > 1) {
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    TX errors: aborted  fifo   window heartbeat");
-		if (carrier_changes)
-			fprintf(fp, " transns");
-		fprintf(fp, "%s", _SL_);
+		/* TX error stats */
+		if (show_stats > 1) {
+			fprintf(fp, "%s", _SL_);
+			fprintf(fp, "    TX errors: aborted  fifo   window heartbeat");
+			if (carrier_changes)
+				fprintf(fp, " transns");
+			fprintf(fp, "%s", _SL_);
 
-		fprintf(fp, "               ");
-		print_num(fp, 8, s->tx_aborted_errors);
-		print_num(fp, 7, s->tx_fifo_errors);
-		print_num(fp, 7, s->tx_window_errors);
-		print_num(fp, 7, s->tx_heartbeat_errors);
-		if (carrier_changes)
-			print_num(fp, 7, rta_getattr_u32(carrier_changes));
+			fprintf(fp, "               ");
+			print_num(fp, 8, s->tx_aborted_errors);
+			print_num(fp, 7, s->tx_fifo_errors);
+			print_num(fp, 7, s->tx_window_errors);
+			print_num(fp, 7, s->tx_heartbeat_errors);
+			if (carrier_changes)
+				print_num(fp, 7,
+					  rta_getattr_u32(carrier_changes));
+		}
 	}
 }
 
@@ -694,44 +980,50 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		return -1;
 
 	if (n->nlmsg_type == RTM_DELLINK)
-		fprintf(fp, "Deleted ");
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (tb[IFLA_LINK]) {
 		SPRINT_BUF(b1);
 		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
 
-		if (iflink == 0)
+		if (iflink == 0) {
 			snprintf(buf, sizeof(buf), "%s@NONE", name);
-		else {
-			snprintf(buf, sizeof(buf),
-				 "%s@%s", name, ll_idx_n2a(iflink, b1));
+			print_null(PRINT_JSON, "link", NULL, NULL);
+		} else {
+			const char *link = ll_idx_n2a(iflink, b1);
+
+			print_string(PRINT_JSON, "link", NULL, link);
+			snprintf(buf, sizeof(buf), "%s@%s", name, link);
 			m_flag = ll_index_to_flags(iflink);
 			m_flag = !(m_flag & IFF_UP);
 		}
 	} else
 		snprintf(buf, sizeof(buf), "%s", name);
 
-	fprintf(fp, "%-16s ", buf);
+	print_string(PRINT_FP, NULL, "%-16s ", buf);
+	print_string(PRINT_JSON, "ifname", NULL, name);
 
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
 
 	if (pfilter->family == AF_PACKET) {
 		SPRINT_BUF(b1);
+
 		if (tb[IFLA_ADDRESS]) {
-			color_fprintf(fp, COLOR_MAC, "%s ",
-					ll_addr_n2a(RTA_DATA(tb[IFLA_ADDRESS]),
-						RTA_PAYLOAD(tb[IFLA_ADDRESS]),
-						ifi->ifi_type,
-						b1, sizeof(b1)));
+			print_color_string(PRINT_ANY, COLOR_MAC,
+					   "address", "%s ",
+					   ll_addr_n2a(
+						   RTA_DATA(tb[IFLA_ADDRESS]),
+						   RTA_PAYLOAD(tb[IFLA_ADDRESS]),
+						   ifi->ifi_type,
+						   b1, sizeof(b1)));
 		}
 	}
 
-	if (pfilter->family == AF_PACKET)
+	if (pfilter->family == AF_PACKET) {
 		print_link_flags(fp, ifi->ifi_flags, m_flag);
-
-	if (pfilter->family == AF_PACKET)
-		fprintf(fp, "\n");
+		print_string(PRINT_FP, NULL, "%s", "\n");
+	}
 	fflush(fp);
 	return 0;
 }
@@ -749,10 +1041,12 @@ static const char *link_events[] = {
 static void print_link_event(FILE *f, __u32 event)
 {
 	if (event >= ARRAY_SIZE(link_events))
-		fprintf(f, "event %d ", event);
+		print_int(PRINT_ANY, "event", "event %d ", event);
 	else {
 		if (event)
-			fprintf(f, "event %s ", link_events[event]);
+			print_string(PRINT_ANY,
+				     "event", "event %s ",
+				     link_events[event]);
 	}
 }
 
@@ -808,41 +1102,63 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		return -1;
 
 	if (n->nlmsg_type == RTM_DELLINK)
-		fprintf(fp, "Deleted ");
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
-	fprintf(fp, "%d: ", ifi->ifi_index);
-	color_fprintf(fp, COLOR_IFNAME, "%s",
-		      tb[IFLA_IFNAME] ? rta_getattr_str(tb[IFLA_IFNAME]) : "<nil>");
+	print_int(PRINT_ANY, "ifindex", "%d: ", ifi->ifi_index);
+	if (tb[IFLA_IFNAME]) {
+		print_color_string(PRINT_ANY,
+				   COLOR_IFNAME,
+				   "ifname", "%s",
+				   rta_getattr_str(tb[IFLA_IFNAME]));
+	} else {
+		print_null(PRINT_JSON, "ifname", NULL, NULL);
+		print_color_null(PRINT_FP, COLOR_IFNAME,
+				 "ifname", "%s", "<nil>");
+	}
 
 	if (tb[IFLA_LINK]) {
-		SPRINT_BUF(b1);
 		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
 
 		if (iflink == 0)
-			fprintf(fp, "@NONE: ");
+			print_null(PRINT_ANY, "link", "@%s: ", "NONE");
 		else {
 			if (tb[IFLA_LINK_NETNSID])
-				fprintf(fp, "@if%d: ", iflink);
+				print_int(PRINT_ANY,
+					  "link_index", "@if%d: ", iflink);
 			else {
-				fprintf(fp, "@%s: ", ll_idx_n2a(iflink, b1));
+				SPRINT_BUF(b1);
+
+				print_string(PRINT_ANY,
+					     "link",
+					     "@%s: ",
+					     ll_idx_n2a(iflink, b1));
 				m_flag = ll_index_to_flags(iflink);
 				m_flag = !(m_flag & IFF_UP);
 			}
 		}
 	} else {
-		fprintf(fp, ": ");
+		print_string(PRINT_FP, NULL, ": ", NULL);
 	}
 	print_link_flags(fp, ifi->ifi_flags, m_flag);
 
 	if (tb[IFLA_MTU])
-		fprintf(fp, "mtu %u ", rta_getattr_u32(tb[IFLA_MTU]));
+		print_int(PRINT_ANY,
+			  "mtu", "mtu %u ",
+			  rta_getattr_u32(tb[IFLA_MTU]));
 	if (tb[IFLA_XDP])
 		xdp_dump(fp, tb[IFLA_XDP], do_link, false);
 	if (tb[IFLA_QDISC])
-		fprintf(fp, "qdisc %s ", rta_getattr_str(tb[IFLA_QDISC]));
+		print_string(PRINT_ANY,
+			     "qdisc",
+			     "qdisc %s ",
+			     rta_getattr_str(tb[IFLA_QDISC]));
 	if (tb[IFLA_MASTER]) {
 		SPRINT_BUF(b1);
-		fprintf(fp, "master %s ", ll_idx_n2a(rta_getattr_u32(tb[IFLA_MASTER]), b1));
+
+		print_string(PRINT_ANY,
+			     "master",
+			     "master %s ",
+			     ll_idx_n2a(rta_getattr_u32(tb[IFLA_MASTER]), b1));
 	}
 
 	if (tb[IFLA_OPERSTATE])
@@ -855,7 +1171,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		SPRINT_BUF(b1);
 		int group = rta_getattr_u32(tb[IFLA_GROUP]);
 
-		fprintf(fp, "group %s ", rtnl_group_n2a(group, b1, sizeof(b1)));
+		print_string(PRINT_ANY,
+			     "group",
+			     "group %s ",
+			     rtnl_group_n2a(group, b1, sizeof(b1)));
 	}
 
 	if (filter.showqueue)
@@ -866,47 +1185,68 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (!filter.family || filter.family == AF_PACKET || show_details) {
 		SPRINT_BUF(b1);
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    link/%s ", ll_type_n2a(ifi->ifi_type, b1, sizeof(b1)));
 
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_string(PRINT_ANY,
+			     "link_type",
+			     "    link/%s ",
+			     ll_type_n2a(ifi->ifi_type, b1, sizeof(b1)));
 		if (tb[IFLA_ADDRESS]) {
-			color_fprintf(fp, COLOR_MAC, "%s",
-				      ll_addr_n2a(RTA_DATA(tb[IFLA_ADDRESS]),
-						  RTA_PAYLOAD(tb[IFLA_ADDRESS]),
-						  ifi->ifi_type,
-						  b1, sizeof(b1)));
+			print_color_string(PRINT_ANY,
+					   COLOR_MAC,
+					   "address",
+					   "%s",
+					   ll_addr_n2a(RTA_DATA(tb[IFLA_ADDRESS]),
+						       RTA_PAYLOAD(tb[IFLA_ADDRESS]),
+						       ifi->ifi_type,
+						       b1, sizeof(b1)));
 		}
 		if (tb[IFLA_BROADCAST]) {
-			if (ifi->ifi_flags&IFF_POINTOPOINT)
-				fprintf(fp, " peer ");
-			else
-				fprintf(fp, " brd ");
-			color_fprintf(fp, COLOR_MAC, "%s",
-				      ll_addr_n2a(RTA_DATA(tb[IFLA_BROADCAST]),
-						  RTA_PAYLOAD(tb[IFLA_BROADCAST]),
-						  ifi->ifi_type,
-						  b1, sizeof(b1)));
+			if (ifi->ifi_flags&IFF_POINTOPOINT) {
+				print_string(PRINT_FP, NULL, " peer ", NULL);
+				print_bool(PRINT_JSON,
+					   "link_pointtopoint", NULL, true);
+			} else {
+				print_string(PRINT_FP, NULL, " brd ", NULL);
+			}
+			print_color_string(PRINT_ANY,
+					   COLOR_MAC,
+					   "broadcast",
+					   "%s",
+					   ll_addr_n2a(RTA_DATA(tb[IFLA_BROADCAST]),
+						       RTA_PAYLOAD(tb[IFLA_BROADCAST]),
+						       ifi->ifi_type,
+						       b1, sizeof(b1)));
 		}
 	}
 
 	if (tb[IFLA_LINK_NETNSID]) {
 		int id = rta_getattr_u32(tb[IFLA_LINK_NETNSID]);
 
-		if (id >= 0)
-			fprintf(fp, " link-netnsid %d", id);
-		else
-			fprintf(fp, " link-netnsid unknown");
+		if (is_json_context()) {
+			print_int(PRINT_JSON, "link_netnsid", NULL, id);
+		} else {
+			if (id >= 0)
+				print_int(PRINT_FP, NULL,
+					  " link-netnsid %d", id);
+			else
+				print_string(PRINT_FP, NULL,
+					     " link-netnsid %s", "unknown");
+		}
 	}
 
 	if (tb[IFLA_PROTO_DOWN]) {
 		if (rta_getattr_u8(tb[IFLA_PROTO_DOWN]))
-			fprintf(fp, " protodown on ");
+			print_bool(PRINT_ANY,
+				   "proto_down", " protodown on ", true);
 	}
 
 	if (show_details) {
 		if (tb[IFLA_PROMISCUITY])
-			fprintf(fp, " promiscuity %u ",
-				rta_getattr_u32(tb[IFLA_PROMISCUITY]));
+			print_uint(PRINT_ANY,
+				   "promiscuity",
+				   " promiscuity %u ",
+				   rta_getattr_u32(tb[IFLA_PROMISCUITY]));
 
 		if (tb[IFLA_LINKINFO])
 			print_linktype(fp, tb[IFLA_LINKINFO]);
@@ -915,52 +1255,70 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			print_af_spec(fp, tb[IFLA_AF_SPEC]);
 
 		if (tb[IFLA_NUM_TX_QUEUES])
-			fprintf(fp, "numtxqueues %u ",
-				rta_getattr_u32(tb[IFLA_NUM_TX_QUEUES]));
+			print_uint(PRINT_ANY,
+				   "num_tx_queues",
+				   "numtxqueues %u ",
+				   rta_getattr_u32(tb[IFLA_NUM_TX_QUEUES]));
 
 		if (tb[IFLA_NUM_RX_QUEUES])
-			fprintf(fp, "numrxqueues %u ",
-				rta_getattr_u32(tb[IFLA_NUM_RX_QUEUES]));
+			print_uint(PRINT_ANY,
+				   "num_rx_queues",
+				   "numrxqueues %u ",
+				   rta_getattr_u32(tb[IFLA_NUM_RX_QUEUES]));
 
 		if (tb[IFLA_GSO_MAX_SIZE])
-			fprintf(fp, "gso_max_size %u ",
-				rta_getattr_u32(tb[IFLA_GSO_MAX_SIZE]));
+			print_uint(PRINT_ANY,
+				   "gso_max_size",
+				   "gso_max_size %u ",
+				   rta_getattr_u32(tb[IFLA_GSO_MAX_SIZE]));
 
 		if (tb[IFLA_GSO_MAX_SEGS])
-			fprintf(fp, "gso_max_segs %u ",
-				rta_getattr_u32(tb[IFLA_GSO_MAX_SEGS]));
+			print_uint(PRINT_ANY,
+				   "gso_max_segs",
+				   "gso_max_segs %u ",
+				   rta_getattr_u32(tb[IFLA_GSO_MAX_SEGS]));
 
 		if (tb[IFLA_PHYS_PORT_NAME])
-			fprintf(fp, "portname %s ",
-				rta_getattr_str(tb[IFLA_PHYS_PORT_NAME]));
+			print_string(PRINT_ANY,
+				     "phys_port_name",
+				     "portname %s ",
+				     rta_getattr_str(tb[IFLA_PHYS_PORT_NAME]));
 
 		if (tb[IFLA_PHYS_PORT_ID]) {
 			SPRINT_BUF(b1);
-			fprintf(fp, "portid %s ",
-				hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_PORT_ID]),
-					      RTA_PAYLOAD(tb[IFLA_PHYS_PORT_ID]),
-					      b1, sizeof(b1)));
+			print_string(PRINT_ANY,
+				     "phys_port_id",
+				     "portid %s ",
+				     hexstring_n2a(
+					     RTA_DATA(tb[IFLA_PHYS_PORT_ID]),
+					     RTA_PAYLOAD(tb[IFLA_PHYS_PORT_ID]),
+					     b1, sizeof(b1)));
 		}
 
 		if (tb[IFLA_PHYS_SWITCH_ID]) {
 			SPRINT_BUF(b1);
-			fprintf(fp, "switchid %s ",
-				hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_SWITCH_ID]),
-					      RTA_PAYLOAD(tb[IFLA_PHYS_SWITCH_ID]),
-					      b1, sizeof(b1)));
+			print_string(PRINT_ANY,
+				     "phys_switch_id",
+				     "switchid %s ",
+				     hexstring_n2a(RTA_DATA(tb[IFLA_PHYS_SWITCH_ID]),
+						   RTA_PAYLOAD(tb[IFLA_PHYS_SWITCH_ID]),
+						   b1, sizeof(b1)));
 		}
 	}
 
 	if ((do_link || show_details) && tb[IFLA_IFALIAS]) {
-		fprintf(fp, "%s    alias %s", _SL_,
-			rta_getattr_str(tb[IFLA_IFALIAS]));
+		print_string(PRINT_FP, NULL, "%s    ", _SL_);
+		print_string(PRINT_ANY,
+			     "ifalias",
+			     "alias %s",
+			     rta_getattr_str(tb[IFLA_IFALIAS]));
 	}
 
 	if ((do_link || show_details) && tb[IFLA_XDP])
 		xdp_dump(fp, tb[IFLA_XDP], true, true);
 
 	if (do_link && show_stats) {
-		fprintf(fp, "%s", _SL_);
+		print_string(PRINT_FP, NULL, "%s", _SL_);
 		__print_link_stats(fp, tb);
 	}
 
@@ -968,11 +1326,16 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		struct rtattr *i, *vflist = tb[IFLA_VFINFO_LIST];
 		int rem = RTA_PAYLOAD(vflist);
 
-		for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem))
+		open_json_array(PRINT_JSON, "vfinfo_list");
+		for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+			open_json_object(NULL);
 			print_vfinfo(fp, i);
+			close_json_object();
+		}
+		close_json_array(PRINT_JSON, NULL);
 	}
 
-	fprintf(fp, "\n");
+	print_string(PRINT_FP, NULL, "\n", NULL);
 	fflush(fp);
 	return 1;
 }
@@ -1011,7 +1374,7 @@ static unsigned int get_ifa_flags(struct ifaddrmsg *ifa,
 				  struct rtattr *ifa_flags_attr)
 {
 	return ifa_flags_attr ? rta_getattr_u32(ifa_flags_attr) :
-				ifa->ifa_flags;
+		ifa->ifa_flags;
 }
 
 /* Mapping from argument to address flag mask */
@@ -1044,20 +1407,34 @@ static void print_ifa_flags(FILE *fp, const struct ifaddrmsg *ifa,
 
 		if (mask == IFA_F_PERMANENT) {
 			if (!(flags & mask))
-				fprintf(fp, "dynamic ");
+				print_bool(PRINT_ANY,
+					   "dynamic", "dynamic ", true);
 		} else if (flags & mask) {
 			if (mask == IFA_F_SECONDARY &&
-			    ifa->ifa_family == AF_INET6)
-				fprintf(fp, "temporary ");
-			else
-				fprintf(fp, "%s ", ifa_flag_names[i].name);
+			    ifa->ifa_family == AF_INET6) {
+				print_bool(PRINT_ANY,
+					   "temporary", "temporary ", true);
+			} else {
+				print_string(PRINT_FP, NULL,
+					     "%s ", ifa_flag_names[i].name);
+				print_bool(PRINT_JSON,
+					   ifa_flag_names[i].name, NULL, true);
+			}
 		}
 
 		flags &= ~mask;
 	}
 
-	if (flags)
-		fprintf(fp, "flags %02x ", flags);
+	if (flags) {
+		if (is_json_context()) {
+			SPRINT_BUF(b1);
+
+			snprintf(b1, sizeof(b1), "%02x", flags);
+			print_string(PRINT_JSON, "ifa_flags", NULL, b1);
+		} else {
+			fprintf(fp, "flags %02x ", flags);
+		}
+	}
 
 }
 
@@ -1178,80 +1555,130 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	}
 
 	if (n->nlmsg_type == RTM_DELADDR)
-		fprintf(fp, "Deleted ");
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (!brief) {
-		if (filter.oneline || filter.flushb)
-			fprintf(fp, "%u: %s", ifa->ifa_index, ll_index_to_name(ifa->ifa_index));
+		if (filter.oneline || filter.flushb) {
+			const char *dev = ll_index_to_name(ifa->ifa_index);
+
+			if (is_json_context()) {
+				print_int(PRINT_JSON,
+					  "index", NULL, ifa->ifa_index);
+				print_string(PRINT_JSON, "dev", NULL, dev);
+			} else {
+				fprintf(fp, "%u: %s", ifa->ifa_index, dev);
+			}
+		}
+
+		int family = ifa->ifa_family;
+
 		if (ifa->ifa_family == AF_INET)
-			fprintf(fp, "    inet ");
+			print_string(PRINT_ANY, "family", "    %s ", "inet");
 		else if (ifa->ifa_family == AF_INET6)
-			fprintf(fp, "    inet6 ");
+			print_string(PRINT_ANY, "family", "    %s ", "inet6");
 		else if (ifa->ifa_family == AF_DECnet)
-			fprintf(fp, "    dnet ");
+			print_string(PRINT_ANY, "family", "    %s ", "dnet");
 		else if (ifa->ifa_family == AF_IPX)
-			fprintf(fp, "     ipx ");
+			print_string(PRINT_ANY, "family", "     %s ", "ipx");
 		else
-			fprintf(fp, "    family %d ", ifa->ifa_family);
+			print_int(PRINT_ANY,
+				  "family_index",
+				  "    family %d ", family);
 	}
 
 	if (rta_tb[IFA_LOCAL]) {
-		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s",
-			      format_host_rta(ifa->ifa_family,
-					      rta_tb[IFA_LOCAL]));
+		print_color_string(PRINT_ANY,
+				   ifa_family_color(ifa->ifa_family),
+				   "local", "%s",
+				   format_host_rta(ifa->ifa_family,
+						   rta_tb[IFA_LOCAL]));
 		if (rta_tb[IFA_ADDRESS] &&
 		    memcmp(RTA_DATA(rta_tb[IFA_ADDRESS]),
 			   RTA_DATA(rta_tb[IFA_LOCAL]),
 			   ifa->ifa_family == AF_INET ? 4 : 16)) {
-			fprintf(fp, " peer ");
-			color_fprintf(fp, ifa_family_color(ifa->ifa_family),
-				      "%s", format_host_rta(ifa->ifa_family,
-				      rta_tb[IFA_ADDRESS]));
+			print_string(PRINT_FP, NULL, " %s ", "peer");
+			print_color_string(PRINT_ANY,
+					   ifa_family_color(ifa->ifa_family),
+					   "address",
+					   "%s",
+					   format_host_rta(ifa->ifa_family,
+							   rta_tb[IFA_ADDRESS]));
 		}
-		fprintf(fp, "/%d ", ifa->ifa_prefixlen);
+		print_int(PRINT_ANY, "prefixlen", "/%d", ifa->ifa_prefixlen);
 	}
 
 	if (brief)
 		goto brief_exit;
 
 	if (rta_tb[IFA_BROADCAST]) {
-		fprintf(fp, "brd ");
-		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
-			      format_host_rta(ifa->ifa_family,
-					      rta_tb[IFA_BROADCAST]));
+		print_string(PRINT_FP, NULL, "%s ", "brd");
+		print_color_string(PRINT_ANY,
+				   ifa_family_color(ifa->ifa_family),
+				   "broadcast",
+				   "%s ",
+				   format_host_rta(ifa->ifa_family,
+						   rta_tb[IFA_BROADCAST]));
 	}
+
 	if (rta_tb[IFA_ANYCAST]) {
-		fprintf(fp, "any ");
-		color_fprintf(fp, ifa_family_color(ifa->ifa_family), "%s ",
-			      format_host_rta(ifa->ifa_family,
-					      rta_tb[IFA_ANYCAST]));
+		print_string(PRINT_FP, NULL, "%s ", "any");
+		print_color_string(PRINT_ANY,
+				   ifa_family_color(ifa->ifa_family),
+				   "anycast",
+				   "%s ",
+				   format_host_rta(ifa->ifa_family,
+						   rta_tb[IFA_ANYCAST]));
 	}
-	fprintf(fp, "scope %s ", rtnl_rtscope_n2a(ifa->ifa_scope, b1, sizeof(b1)));
+
+	print_string(PRINT_ANY,
+		     "scope",
+		     "scope %s ",
+		     rtnl_rtscope_n2a(ifa->ifa_scope, b1, sizeof(b1)));
 
 	print_ifa_flags(fp, ifa, ifa_flags);
 
 	if (rta_tb[IFA_LABEL])
-		fprintf(fp, "%s", rta_getattr_str(rta_tb[IFA_LABEL]));
+		print_string(PRINT_ANY,
+			     "label",
+			     "%s",
+			     rta_getattr_str(rta_tb[IFA_LABEL]));
+
 	if (rta_tb[IFA_CACHEINFO]) {
 		struct ifa_cacheinfo *ci = RTA_DATA(rta_tb[IFA_CACHEINFO]);
 
-		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "       valid_lft ");
-		if (ci->ifa_valid == INFINITY_LIFE_TIME)
-			fprintf(fp, "forever");
-		else
-			fprintf(fp, "%usec", ci->ifa_valid);
-		fprintf(fp, " preferred_lft ");
-		if (ci->ifa_prefered == INFINITY_LIFE_TIME)
-			fprintf(fp, "forever");
-		else {
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_string(PRINT_FP, NULL, "       valid_lft ", NULL);
+
+		if (ci->ifa_valid == INFINITY_LIFE_TIME) {
+			print_uint(PRINT_JSON,
+				   "valid_life_time",
+				   NULL, INFINITY_LIFE_TIME);
+			print_string(PRINT_FP, NULL, "%s", "forever");
+		} else {
+			print_uint(PRINT_ANY,
+				   "valid_life_time", "%usec", ci->ifa_valid);
+		}
+
+		print_string(PRINT_FP, NULL, " preferred_lft ", NULL);
+		if (ci->ifa_prefered == INFINITY_LIFE_TIME) {
+			print_uint(PRINT_JSON,
+				   "preferred_life_time",
+				   NULL, INFINITY_LIFE_TIME);
+			print_string(PRINT_FP, NULL, "%s", "forever");
+		} else {
 			if (ifa_flags & IFA_F_DEPRECATED)
-				fprintf(fp, "%dsec", ci->ifa_prefered);
+				print_int(PRINT_ANY,
+					  "preferred_life_time",
+					  "%dsec",
+					  ci->ifa_prefered);
 			else
-				fprintf(fp, "%usec", ci->ifa_prefered);
+				print_uint(PRINT_ANY,
+					   "preferred_life_time",
+					   "%usec",
+					   ci->ifa_prefered);
 		}
 	}
-	fprintf(fp, "\n");
+	print_string(PRINT_FP, NULL, "%s", "\n");
 brief_exit:
 	fflush(fp);
 	return 0;
@@ -1260,6 +1687,7 @@ brief_exit:
 static int print_selected_addrinfo(struct ifinfomsg *ifi,
 				   struct nlmsg_list *ainfo, FILE *fp)
 {
+	open_json_array(PRINT_JSON, "addr_info");
 	for ( ; ainfo ;  ainfo = ainfo->next) {
 		struct nlmsghdr *n = &ainfo->h;
 		struct ifaddrmsg *ifa = NLMSG_DATA(n);
@@ -1277,10 +1705,14 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 		if (filter.up && !(ifi->ifi_flags&IFF_UP))
 			continue;
 
+		open_json_object(NULL);
 		print_addrinfo(NULL, n, fp);
+		close_json_object();
 	}
+	close_json_array(PRINT_JSON, NULL);
+
 	if (brief) {
-		fprintf(fp, "\n");
+		print_string(PRINT_FP, NULL, "%s", "\n");
 		fflush(fp);
 	}
 	return 0;
@@ -1727,6 +2159,12 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	}
 
 	/*
+	 * Initialize a json_writer and open an array object
+	 * if -json was specified.
+	 */
+	new_json_obj(json, stdout);
+
+	/*
 	 * If only filter_dev present and none of the other
 	 * link filters are present, use RTM_GETLINK to get
 	 * the link device
@@ -1734,8 +2172,10 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	if (filter_dev && filter.group == -1 && do_link == 1) {
 		if (iplink_get(0, filter_dev, RTEXT_FILTER_VF) < 0) {
 			perror("Cannot send link get request");
+			delete_json_obj();
 			exit(1);
 		}
+		delete_json_obj();
 		exit(0);
 	}
 
@@ -1757,6 +2197,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		int res = 0;
 		struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 
+		open_json_object(NULL);
 		if (brief) {
 			if (print_linkinfo_brief(NULL, &l->h,
 						 stdout, NULL) == 0)
@@ -1765,13 +2206,14 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 								ainfo->head,
 								stdout);
 		} else if (no_link ||
-			  (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
+			   (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
 			if (filter.family != AF_PACKET)
 				print_selected_addrinfo(ifi,
 							ainfo->head, stdout);
 			if (res > 0 && !do_link && show_stats)
 				print_link_stats(stdout, &l->h);
 		}
+		close_json_object();
 	}
 	fflush(stdout);
 
@@ -1779,7 +2221,7 @@ out:
 	if (ainfo)
 		free_nlmsg_chain(ainfo);
 	free_nlmsg_chain(&linfo);
-
+	delete_json_obj();
 	return 0;
 }
 

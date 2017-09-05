@@ -21,8 +21,9 @@ database routines.  Often this is in the db-devel package.
 
 2. make
 
-The makefile will automatically build a Config file which
-contains whether or not ATM is available, etc.
+The makefile will automatically build a config.mk file which
+contains definitions of libraries that may or may not be available
+on the system such as: ATM, ELF, MNL, and SELINUX.
 
 3. To make documentation, cd to doc/ directory , then
    look at start of Makefile and set correct values for
