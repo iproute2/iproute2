@@ -242,7 +242,7 @@ done0:
 					invarg("cookie must be a hex string\n",
 					       *argv);
 
-				act_ck_len = slen;
+				act_ck_len = slen / 2;
 				argc--;
 				argv++;
 			}
@@ -307,7 +307,7 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 		print_tcstats2_attr(f, tb[TCA_ACT_STATS], "\t", NULL);
 		if (tb[TCA_ACT_COOKIE]) {
 			int strsz = RTA_PAYLOAD(tb[TCA_ACT_COOKIE]);
-			char b1[strsz+1];
+			char b1[strsz * 2 + 1];
 
 			fprintf(f, "\n\tcookie len %d %s ", strsz,
 				hexstring_n2a(RTA_DATA(tb[TCA_ACT_COOKIE]),
