@@ -1233,18 +1233,22 @@ int get_real_family(int rtm_type, int rtm_family)
 
 size_t strlcpy(char *dst, const char *src, size_t size)
 {
+	size_t srclen = strlen(src);
+
 	if (size) {
-		strncpy(dst, src, size - 1);
-		dst[size - 1] = '\0';
+		size_t minlen = min(srclen, size - 1);
+
+		memcpy(dst, src, minlen);
+		dst[minlen] = '\0';
 	}
-	return strlen(src);
+	return srclen;
 }
 
 size_t strlcat(char *dst, const char *src, size_t size)
 {
 	size_t dlen = strlen(dst);
 
-	if (dlen > size)
+	if (dlen >= size)
 		return dlen + strlen(src);
 
 	return dlen + strlcpy(dst + dlen, src, size - dlen);
