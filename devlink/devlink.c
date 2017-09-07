@@ -20,6 +20,7 @@
 #include <linux/genetlink.h>
 #include <linux/devlink.h>
 #include <libmnl/libmnl.h>
+#include <netinet/ether.h>
 
 #include "SNAPSHOT.h"
 #include "list.h"
@@ -3401,7 +3402,79 @@ struct dpipe_header_printer {
 	unsigned int header_id;
 };
 
-static struct dpipe_header_printer *dpipe_header_printers[] = {};
+static void dpipe_field_printer_ipv4_addr(struct dpipe_ctx *ctx,
+					  enum dpipe_value_type type,
+					  void *value)
+{
+	struct in_addr ip_addr;
+
+	ip_addr.s_addr = htonl(*(uint32_t *)value);
+	pr_out_str(ctx->dl, dpipe_value_type_e2s(type), inet_ntoa(ip_addr));
+}
+
+static void
+dpipe_field_printer_ethernet_addr(struct dpipe_ctx *ctx,
+				  enum dpipe_value_type type,
+				  void *value)
+{
+	pr_out_str(ctx->dl, dpipe_value_type_e2s(type),
+		   ether_ntoa((struct ether_addr *)value));
+}
+
+static void dpipe_field_printer_ipv6_addr(struct dpipe_ctx *ctx,
+					  enum dpipe_value_type type,
+					  void *value)
+{
+	char str[INET6_ADDRSTRLEN];
+
+	inet_ntop(AF_INET6, value, str, INET6_ADDRSTRLEN);
+	pr_out_str(ctx->dl, dpipe_value_type_e2s(type), str);
+}
+
+static struct dpipe_field_printer dpipe_field_printers_ipv4[] = {
+	{
+		.printer = dpipe_field_printer_ipv4_addr,
+		.field_id = DEVLINK_DPIPE_FIELD_IPV4_DST_IP,
+	}
+};
+
+static struct dpipe_header_printer dpipe_header_printer_ipv4  = {
+	.printers = dpipe_field_printers_ipv4,
+	.printers_count = ARRAY_SIZE(dpipe_field_printers_ipv4),
+	.header_id = DEVLINK_DPIPE_HEADER_IPV4,
+};
+
+static struct dpipe_field_printer dpipe_field_printers_ethernet[] = {
+	{
+		.printer = dpipe_field_printer_ethernet_addr,
+		.field_id = DEVLINK_DPIPE_FIELD_ETHERNET_DST_MAC,
+	},
+};
+
+static struct dpipe_header_printer dpipe_header_printer_ethernet = {
+	.printers = dpipe_field_printers_ethernet,
+	.printers_count = ARRAY_SIZE(dpipe_field_printers_ethernet),
+	.header_id = DEVLINK_DPIPE_HEADER_ETHERNET,
+};
+
+static struct dpipe_field_printer dpipe_field_printers_ipv6[] = {
+	{
+		.printer = dpipe_field_printer_ipv6_addr,
+		.field_id = DEVLINK_DPIPE_FIELD_IPV6_DST_IP,
+	}
+};
+
+static struct dpipe_header_printer dpipe_header_printer_ipv6 = {
+	.printers = dpipe_field_printers_ipv6,
+	.printers_count = ARRAY_SIZE(dpipe_field_printers_ipv6),
+	.header_id = DEVLINK_DPIPE_HEADER_IPV6,
+};
+
+static struct dpipe_header_printer *dpipe_header_printers[] = {
+	&dpipe_header_printer_ipv4,
+	&dpipe_header_printer_ethernet,
+	&dpipe_header_printer_ipv6,
+};
 
 static int dpipe_print_prot_header(struct dpipe_ctx *ctx,
 				   struct dpipe_op_info *info,
