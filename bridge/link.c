@@ -461,9 +461,19 @@ static int brlink_show(int argc, char **argv)
 		}
 	}
 
-	if (rtnl_wilddump_request(&rth, PF_BRIDGE, RTM_GETLINK) < 0) {
-		perror("Cannon send dump request");
-		exit(1);
+	if (show_details) {
+		if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
+					     (compress_vlans ?
+					      RTEXT_FILTER_BRVLAN_COMPRESSED :
+					      RTEXT_FILTER_BRVLAN)) < 0) {
+			perror("Cannon send dump request");
+			exit(1);
+		}
+	} else {
+		if (rtnl_wilddump_request(&rth, PF_BRIDGE, RTM_GETLINK) < 0) {
+			perror("Cannon send dump request");
+			exit(1);
+		}
 	}
 
 	if (rtnl_dump_filter(&rth, print_linkinfo, stdout) < 0) {
