@@ -213,6 +213,13 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 		if (aftb[IFLA_BRIDGE_MODE])
 			print_hwmode(fp, rta_getattr_u16(aftb[IFLA_BRIDGE_MODE]));
+		if (show_details) {
+			if (aftb[IFLA_BRIDGE_VLAN_INFO]) {
+				fprintf(fp, "\n");
+				print_vlan_info(fp, tb[IFLA_AF_SPEC],
+						ifi->ifi_index);
+			}
+		}
 	}
 
 	fprintf(fp, "\n");
