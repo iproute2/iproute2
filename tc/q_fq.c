@@ -55,6 +55,7 @@ static void explain(void)
 	fprintf(stderr, "              [ quantum BYTES ] [ initial_quantum BYTES ]\n");
 	fprintf(stderr, "              [ maxrate RATE  ] [ buckets NUMBER ]\n");
 	fprintf(stderr, "              [ [no]pacing ] [ refill_delay TIME ]\n");
+	fprintf(stderr, "              [ low_rate_threshold RATE ]\n");
 	fprintf(stderr, "              [ orphan_mask MASK]\n");
 }
 
@@ -79,6 +80,7 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	unsigned int initial_quantum;
 	unsigned int buckets = 0;
 	unsigned int maxrate;
+	unsigned int low_rate_threshold;
 	unsigned int defrate;
 	unsigned int refill_delay;
 	unsigned int orphan_mask;
@@ -90,6 +92,7 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	bool set_defrate = false;
 	bool set_refill_delay = false;
 	bool set_orphan_mask = false;
+	bool set_low_rate_threshold = false;
 	int pacing = -1;
 	struct rtattr *tail;
 
@@ -121,6 +124,13 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 			set_maxrate = true;
+		} else if (strcmp(*argv, "low_rate_threshold") == 0) {
+			NEXT_ARG();
+			if (get_rate(&low_rate_threshold, *argv)) {
+				fprintf(stderr, "Illegal \"low_rate_threshold\"\n");
+				return -1;
+			}
+			set_low_rate_threshold = true;
 		} else if (strcmp(*argv, "defrate") == 0) {
 			NEXT_ARG();
 			if (get_rate(&defrate, *argv)) {
@@ -196,6 +206,9 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (set_maxrate)
 		addattr_l(n, 1024, TCA_FQ_FLOW_MAX_RATE,
 			  &maxrate, sizeof(maxrate));
+	if (set_low_rate_threshold)
+		addattr_l(n, 1024, TCA_FQ_LOW_RATE_THRESHOLD,
+			  &low_rate_threshold, sizeof(low_rate_threshold));
 	if (set_defrate)
 		addattr_l(n, 1024, TCA_FQ_FLOW_DEFAULT_RATE,
 			  &defrate, sizeof(defrate));
@@ -275,6 +288,13 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 		if (rate != 0)
 			fprintf(f, "defrate %s ", sprint_rate(rate, b1));
+	}
+	if (tb[TCA_FQ_LOW_RATE_THRESHOLD] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_LOW_RATE_THRESHOLD]) >= sizeof(__u32)) {
+		rate = rta_getattr_u32(tb[TCA_FQ_LOW_RATE_THRESHOLD]);
+
+		if (rate != 0)
+			fprintf(f, "low_rate_threshold %s ", sprint_rate(rate, b1));
 	}
 	if (tb[TCA_FQ_FLOW_REFILL_DELAY] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_REFILL_DELAY]) >= sizeof(__u32)) {
