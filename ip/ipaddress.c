@@ -1801,17 +1801,31 @@ static int show_handler(const struct sockaddr_nl *nl,
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
-	printf("if%d:\n", ifa->ifa_index);
+	open_json_object(NULL);
+	print_int(PRINT_ANY, "index", "if%d:\n", ifa->ifa_index);
 	print_addrinfo(NULL, n, stdout);
+	close_json_object();
 	return 0;
 }
 
 static int ipaddr_showdump(void)
 {
+	int err;
+
 	if (ipadd_dump_check_magic())
 		exit(-1);
 
-	exit(rtnl_from_file(stdin, &show_handler, NULL));
+	new_json_obj(json, stdout);
+	open_json_object(NULL);
+	open_json_array(PRINT_JSON, "addr_info");
+
+	err = rtnl_from_file(stdin, &show_handler, NULL);
+
+	close_json_array(PRINT_JSON, NULL);
+	close_json_object();
+	delete_json_obj();
+
+	exit(err);
 }
 
 static int restore_handler(const struct sockaddr_nl *nl,
