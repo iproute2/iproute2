@@ -19,6 +19,7 @@
 #include <linux/if_ether.h>
 #include <linux/ip.h>
 #include <linux/tc_act/tc_vlan.h>
+#include <linux/mpls.h>
 
 #include "utils.h"
 #include "tc_util.h"
@@ -55,6 +56,10 @@ static void explain(void)
 		"                       ip_proto [tcp | udp | sctp | icmp | icmpv6 | IP-PROTO ] |\n"
 		"                       ip_tos MASKED-IP_TOS |\n"
 		"                       ip_ttl MASKED-IP_TTL |\n"
+		"                       mpls_label LABEL |\n"
+		"                       mpls_tc TC |\n"
+		"                       mpls_bos BOS |\n"
+		"                       mpls_ttl TTL |\n"
 		"                       dst_ip PREFIX |\n"
 		"                       src_ip PREFIX |\n"
 		"                       dst_port PORT-NUMBER |\n"
@@ -672,6 +677,70 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 						 &vlan_ethtype, n);
 			if (ret < 0)
 				return -1;
+		} else if (matches(*argv, "mpls_label") == 0) {
+			__u32 label;
+
+			NEXT_ARG();
+			if (eth_type != htons(ETH_P_MPLS_UC) &&
+			    eth_type != htons(ETH_P_MPLS_MC)) {
+				fprintf(stderr,
+					"Can't set \"mpls_label\" if ethertype isn't MPLS\n");
+				return -1;
+			}
+			ret = get_u32(&label, *argv, 10);
+			if (ret < 0 || label & ~(MPLS_LS_LABEL_MASK >> MPLS_LS_LABEL_SHIFT)) {
+				fprintf(stderr, "Illegal \"mpls_label\"\n");
+				return -1;
+			}
+			addattr32(n, MAX_MSG, TCA_FLOWER_KEY_MPLS_LABEL, label);
+		} else if (matches(*argv, "mpls_tc") == 0) {
+			__u8 tc;
+
+			NEXT_ARG();
+			if (eth_type != htons(ETH_P_MPLS_UC) &&
+			    eth_type != htons(ETH_P_MPLS_MC)) {
+				fprintf(stderr,
+					"Can't set \"mpls_tc\" if ethertype isn't MPLS\n");
+				return -1;
+			}
+			ret = get_u8(&tc, *argv, 10);
+			if (ret < 0 || tc & ~(MPLS_LS_TC_MASK >> MPLS_LS_TC_SHIFT)) {
+				fprintf(stderr, "Illegal \"mpls_tc\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_KEY_MPLS_TC, tc);
+		} else if (matches(*argv, "mpls_bos") == 0) {
+			__u8 bos;
+
+			NEXT_ARG();
+			if (eth_type != htons(ETH_P_MPLS_UC) &&
+			    eth_type != htons(ETH_P_MPLS_MC)) {
+				fprintf(stderr,
+					"Can't set \"mpls_bos\" if ethertype isn't MPLS\n");
+				return -1;
+			}
+			ret = get_u8(&bos, *argv, 10);
+			if (ret < 0 || bos & ~(MPLS_LS_S_MASK >> MPLS_LS_S_SHIFT)) {
+				fprintf(stderr, "Illegal \"mpls_bos\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_KEY_MPLS_BOS, bos);
+		} else if (matches(*argv, "mpls_ttl") == 0) {
+			__u8 ttl;
+
+			NEXT_ARG();
+			if (eth_type != htons(ETH_P_MPLS_UC) &&
+			    eth_type != htons(ETH_P_MPLS_MC)) {
+				fprintf(stderr,
+					"Can't set \"mpls_ttl\" if ethertype isn't MPLS\n");
+				return -1;
+			}
+			ret = get_u8(&ttl, *argv, 10);
+			if (ret < 0 || ttl & ~(MPLS_LS_TTL_MASK >> MPLS_LS_TTL_SHIFT)) {
+				fprintf(stderr, "Illegal \"mpls_ttl\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_KEY_MPLS_TTL, ttl);
 		} else if (matches(*argv, "dst_mac") == 0) {
 			NEXT_ARG();
 			ret = flower_parse_eth_addr(*argv,
@@ -1163,6 +1232,24 @@ static void flower_print_masked_u8(FILE *f, const char *name,
 		fprintf(f, "/%d", mask);
 }
 
+static void flower_print_u8(FILE *f, const char *name, struct rtattr *attr)
+{
+	flower_print_masked_u8(f, name, attr, NULL, NULL);
+}
+
+static void flower_print_u32(FILE *f, const char *name, struct rtattr *attr)
+{
+	const char *value_str = NULL;
+	__u32 value;
+
+	if (!attr)
+		return;
+
+	value = rta_getattr_u32(attr);
+
+	fprintf(f, "\n  %s %d", name, value);
+}
+
 static void flower_print_arp_op(FILE *f, const char *name,
 				struct rtattr *op_attr,
 				struct rtattr *mask_attr)
@@ -1224,6 +1311,11 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			    tb[TCA_FLOWER_KEY_IP_TOS_MASK]);
 	flower_print_ip_attr(f, "ip_ttl", tb[TCA_FLOWER_KEY_IP_TTL],
 			    tb[TCA_FLOWER_KEY_IP_TTL_MASK]);
+
+	flower_print_u32(f, "mpls_label", tb[TCA_FLOWER_KEY_MPLS_LABEL]);
+	flower_print_u8(f, "mpls_tc", tb[TCA_FLOWER_KEY_MPLS_TC]);
+	flower_print_u8(f, "mpls_bos", tb[TCA_FLOWER_KEY_MPLS_BOS]);
+	flower_print_u8(f, "mpls_ttl", tb[TCA_FLOWER_KEY_MPLS_TTL]);
 
 	flower_print_ip_addr(f, "dst_ip", eth_type,
 			     tb[TCA_FLOWER_KEY_IPV4_DST],

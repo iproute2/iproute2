@@ -29,6 +29,14 @@ flower \- flow based traffic control filter
 .IR PRIORITY " | "
 .BR vlan_ethtype " { " ipv4 " | " ipv6 " | "
 .IR ETH_TYPE " } | "
+.B mpls_label
+.IR LABEL " | "
+.B mpls_tc
+.IR TC " | "
+.B mpls_bos
+.IR BOS " | "
+.B mpls_ttl
+.IR TTL " | "
 .BR ip_proto " { " tcp " | " udp " | " sctp " | " icmp " | " icmpv6 " | "
 .IR IP_PROTO " } | "
 .B ip_tos
@@ -118,6 +126,29 @@ Match on layer three protocol.
 may be either
 .BR ipv4 ", " ipv6
 or an unsigned 16bit value in hexadecimal format.
+.TP
+.BI mpls_label " LABEL"
+Match the label id in the outermost MPLS label stack entry.
+.I LABEL
+is an unsigned 20 bit value in decimal format.
+.TP
+.BI mpls_tc " TC"
+Match on the MPLS TC field, which is typically used for packet priority,
+in the outermost MPLS label stack entry.
+.I TC
+is an unsigned 3 bit value in decimal format.
+.TP
+.BI mpls_bos " BOS"
+Match on the MPLS Bottom Of Stack field in the outermost MPLS label stack
+entry.
+.I BOS
+is a 1 bit value in decimal format.
+.TP
+.BI mpls_ttl " TTL"
+Match on the MPLS Time To Live field in the outermost MPLS label stack
+entry.
+.I TTL
+is an unsigned 8 bit value in decimal format.
 .TP
 .BI ip_proto " IP_PROTO"
 Match on layer four protocol.
@@ -226,8 +257,10 @@ to match on fragmented packets or not respectively.
 As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches
 (\fBindev\fR,  \fBdst_mac\fR and \fBsrc_mac\fR)
-have no dependency, layer three matches
-(\fBip_proto\fR, \fBdst_ip\fR, \fBsrc_ip\fR, \fBarp_tip\fR, \fBarp_sip\fR,
+have no dependency,
+MPLS and layer three matches
+(\fBmpls_label\fR, \fBmpls_tc\fR, \fBmpls_bos\fR, \fBmpls_ttl\fR,
+\fBip_proto\fR, \fBdst_ip\fR, \fBsrc_ip\fR, \fBarp_tip\fR, \fBarp_sip\fR,
 \fBarp_op\fR, \fBarp_tha\fR, \fBarp_sha\fR and \fBip_flags\fR)
 depend on the
 .B protocol
