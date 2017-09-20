@@ -1604,7 +1604,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 					   format_host_rta(ifa->ifa_family,
 							   rta_tb[IFA_ADDRESS]));
 		}
-		print_int(PRINT_ANY, "prefixlen", "/%d", ifa->ifa_prefixlen);
+		print_int(PRINT_ANY, "prefixlen", "/%d ", ifa->ifa_prefixlen);
 	}
 
 	if (brief)
