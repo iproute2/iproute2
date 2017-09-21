@@ -1239,7 +1239,6 @@ static void flower_print_u8(FILE *f, const char *name, struct rtattr *attr)
 
 static void flower_print_u32(FILE *f, const char *name, struct rtattr *attr)
 {
-	const char *value_str = NULL;
 	__u32 value;
 
 	if (!attr)
