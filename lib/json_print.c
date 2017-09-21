@@ -1,5 +1,5 @@
 /*
- * ip_print.c          "ip print regular or json output".
+ * json_print.c		"print regular or json output, based on json_writer".
  *
  *             This program is free software; you can redistribute it and/or
  *             modify it under the terms of the GNU General Public License
@@ -7,15 +7,13 @@
  *             2 of the License, or (at your option) any later version.
  *
  * Authors:    Julien Fortin, <julien@cumulusnetworks.com>
- *
  */
 
 #include <stdarg.h>
 #include <stdio.h>
 
 #include "utils.h"
-#include "ip_common.h"
-#include "json_writer.h"
+#include "json_print.h"
 
 static json_writer_t *_jw;
 static FILE *_fp;

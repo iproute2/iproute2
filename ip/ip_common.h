@@ -1,3 +1,10 @@
+#ifndef _IP_COMMON_H_
+#define _IP_COMMON_H_
+
+#include <stdbool.h>
+
+#include "json_print.h"
+
 struct link_filter {
 	int ifindex;
 	int family;
@@ -101,8 +108,6 @@ static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 
 extern struct rtnl_handle rth;
 
-#include <stdbool.h>
-
 struct link_util {
 	struct link_util	*next;
 	const char		*id;
@@ -141,58 +146,4 @@ int name_is_vrf(const char *name);
 
 void print_num(FILE *fp, unsigned int width, uint64_t count);
 
-#include "json_writer.h"
-
-json_writer_t   *get_json_writer(void);
-/*
- * use:
- *      - PRINT_ANY for context based output
- *      - PRINT_FP for non json specific output
- *      - PRINT_JSON for json specific output
- */
-enum output_type {
-	PRINT_FP = 1,
-	PRINT_JSON = 2,
-	PRINT_ANY = 4,
-};
-
-void new_json_obj(int json, FILE *fp);
-void delete_json_obj(void);
-
-bool is_json_context(void);
-
-void set_current_fp(FILE *fp);
-
-void fflush_fp(void);
-
-void open_json_object(const char *str);
-void close_json_object(void);
-void open_json_array(enum output_type type, const char *delim);
-void close_json_array(enum output_type type, const char *delim);
-
-#include "color.h"
-
-#define _PRINT_FUNC(type_name, type)					\
-	void print_color_##type_name(enum output_type t,		\
-				     enum color_attr color,		\
-				     const char *key,			\
-				     const char *fmt,			\
-				     type value);			\
-									\
-	static inline void print_##type_name(enum output_type t,	\
-					     const char *key,		\
-					     const char *fmt,		\
-					     type value)		\
-	{								\
-		print_color_##type_name(t, -1, key, fmt, value);	\
-	}
-_PRINT_FUNC(int, int);
-_PRINT_FUNC(bool, bool);
-_PRINT_FUNC(null, const char*);
-_PRINT_FUNC(string, const char*);
-_PRINT_FUNC(uint, uint64_t);
-_PRINT_FUNC(hu, unsigned short);
-_PRINT_FUNC(hex, unsigned int);
-_PRINT_FUNC(0xhex, unsigned int);
-_PRINT_FUNC(lluint, unsigned long long int);
-#undef _PRINT_FUNC
+#endif /* _IP_COMMON_H_ */
