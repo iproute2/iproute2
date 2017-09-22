@@ -14,9 +14,9 @@
 
 #include <linux/bpf.h>
 
+#include "json_print.h"
 #include "xdp.h"
 #include "bpf_util.h"
-#include "ip_common.h"
 
 extern int force;
 
@@ -82,6 +82,22 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
 	return 0;
 }
 
+static void xdp_dump_json(struct rtattr *tb[IFLA_XDP_MAX + 1])
+{
+	__u32 prog_id = 0;
+	__u8 mode;
+
+	mode = rta_getattr_u8(tb[IFLA_XDP_ATTACHED]);
+	if (tb[IFLA_XDP_PROG_ID])
+		prog_id = rta_getattr_u32(tb[IFLA_XDP_PROG_ID]);
+
+	open_json_object("xdp");
+	print_uint(PRINT_JSON, "mode", NULL, mode);
+	if (prog_id)
+		bpf_dump_prog_info(NULL, prog_id);
+	close_json_object();
+}
+
 void xdp_dump(FILE *fp, struct rtattr *xdp, bool link, bool details)
 {
 	struct rtattr *tb[IFLA_XDP_MAX + 1];
@@ -94,34 +110,32 @@ void xdp_dump(FILE *fp, struct rtattr *xdp, bool link, bool details)
 		return;
 
 	mode = rta_getattr_u8(tb[IFLA_XDP_ATTACHED]);
-	if (is_json_context()) {
-		print_uint(PRINT_JSON, "attached", NULL, mode);
-	} else {
-		if (mode == XDP_ATTACHED_NONE)
-			return;
-		else if (details && link)
-			fprintf(fp, "%s    prog/xdp", _SL_);
-		else if (mode == XDP_ATTACHED_DRV)
-			fprintf(fp, "xdp");
-		else if (mode == XDP_ATTACHED_SKB)
-			fprintf(fp, "xdpgeneric");
-		else if (mode == XDP_ATTACHED_HW)
-			fprintf(fp, "xdpoffload");
-		else
-			fprintf(fp, "xdp[%u]", mode);
+	if (mode == XDP_ATTACHED_NONE)
+		return;
+	else if (is_json_context())
+		return details ? (void)0 : xdp_dump_json(tb);
+	else if (details && link)
+		fprintf(fp, "%s    prog/xdp", _SL_);
+	else if (mode == XDP_ATTACHED_DRV)
+		fprintf(fp, "xdp");
+	else if (mode == XDP_ATTACHED_SKB)
+		fprintf(fp, "xdpgeneric");
+	else if (mode == XDP_ATTACHED_HW)
+		fprintf(fp, "xdpoffload");
+	else
+		fprintf(fp, "xdp[%u]", mode);
 
-		if (tb[IFLA_XDP_PROG_ID])
-			prog_id = rta_getattr_u32(tb[IFLA_XDP_PROG_ID]);
-		if (!details) {
-			if (prog_id && !link)
-				fprintf(fp, "/id:%u", prog_id);
-			fprintf(fp, " ");
-			return;
-		}
+	if (tb[IFLA_XDP_PROG_ID])
+		prog_id = rta_getattr_u32(tb[IFLA_XDP_PROG_ID]);
+	if (!details) {
+		if (prog_id && !link)
+			fprintf(fp, "/id:%u", prog_id);
+		fprintf(fp, " ");
+		return;
+	}
 
-		if (prog_id) {
-			fprintf(fp, " ");
-			bpf_dump_prog_info(fp, prog_id);
-		}
+	if (prog_id) {
+		fprintf(fp, " ");
+		bpf_dump_prog_info(fp, prog_id);
 	}
 }

@@ -40,6 +40,7 @@
 #include <arpa/inet.h>
 
 #include "utils.h"
+#include "json_print.h"
 
 #include "bpf_util.h"
 #include "bpf_elf.h"
@@ -186,23 +187,29 @@ int bpf_dump_prog_info(FILE *f, uint32_t id)
 	int fd, ret, dump_ok = 0;
 	SPRINT_BUF(tmp);
 
-	fprintf(f, "id %u ", id);
+	open_json_object("prog");
+	print_uint(PRINT_ANY, "id", "id %u ", id);
 
 	fd = bpf_prog_fd_by_id(id);
 	if (fd < 0)
-		return dump_ok;
+		goto out;
 
 	ret = bpf_prog_info_by_fd(fd, &info, &len);
 	if (!ret && len) {
-		fprintf(f, "tag %s ",
-			hexstring_n2a(info.tag, sizeof(info.tag),
-				      tmp, sizeof(tmp)));
-		if (info.jited_prog_len)
+		int jited = !!info.jited_prog_len;
+
+		print_string(PRINT_ANY, "tag", "tag %s ",
+			     hexstring_n2a(info.tag, sizeof(info.tag),
+					   tmp, sizeof(tmp)));
+		print_uint(PRINT_JSON, "jited", NULL, jited);
+		if (jited && !is_json_context())
 			fprintf(f, "jited ");
 		dump_ok = 1;
 	}
 
 	close(fd);
+out:
+	close_json_object();
 	return dump_ok;
 }
 
