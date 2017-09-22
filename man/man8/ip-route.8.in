@@ -322,7 +322,7 @@ normal routing tables.
 .P
 .B Route tables:
 Linux-2.x can pack routes into several routing tables identified
-by a number in the range from 1 to 2^31 or by name from the file
+by a number in the range from 1 to 2^32-1 or by name from the file
 .B @SYSCONFDIR@/rt_tables
 By default all normal routes are inserted into the
 .B main
