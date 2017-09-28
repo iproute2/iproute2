@@ -574,10 +574,10 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		for (i = 2; i <= RTAX_MAX; i++) {
 			__u32 val = 0U;
 
-			if (mxrta[i] == NULL)
+			if (mxrta[i] == NULL && !(mxlock & (1 << i)))
 				continue;
 
-			if (i != RTAX_CC_ALGO)
+			if (mxrta[i] != NULL && i != RTAX_CC_ALGO)
 				val = rta_getattr_u32(mxrta[i]);
 
 			if (i == RTAX_HOPLIMIT && (int)val == -1)
