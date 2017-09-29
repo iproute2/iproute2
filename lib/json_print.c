@@ -16,15 +16,14 @@
 #include "json_print.h"
 
 static json_writer_t *_jw;
-static FILE *_fp;
 
 #define _IS_JSON_CONTEXT(type) ((type & PRINT_JSON || type & PRINT_ANY) && _jw)
 #define _IS_FP_CONTEXT(type) (!_jw && (type & PRINT_FP || type & PRINT_ANY))
 
-void new_json_obj(int json, FILE *fp)
+void new_json_obj(int json)
 {
 	if (json) {
-		_jw = jsonw_new(fp);
+		_jw = jsonw_new(stdout);
 		if (!_jw) {
 			perror("json object");
 			exit(1);
@@ -32,7 +31,6 @@ void new_json_obj(int json, FILE *fp)
 		jsonw_pretty(_jw, true);
 		jsonw_start_array(_jw);
 	}
-	set_current_fp(fp);
 }
 
 void delete_json_obj(void)
@@ -46,15 +44,6 @@ void delete_json_obj(void)
 bool is_json_context(void)
 {
 	return _jw != NULL;
-}
-
-void set_current_fp(FILE *fp)
-{
-	if (!fp) {
-		fprintf(stderr, "Error: invalid file pointer.\n");
-		exit(1);
-	}
-	_fp = fp;
 }
 
 json_writer_t *get_json_writer(void)
@@ -89,7 +78,7 @@ void open_json_array(enum output_type type, const char *str)
 			jsonw_name(_jw, str);
 		jsonw_start_array(_jw);
 	} else if (_IS_FP_CONTEXT(type)) {
-		fprintf(_fp, "%s", str);
+		printf("%s", str);
 	}
 }
 
@@ -103,7 +92,7 @@ void close_json_array(enum output_type type, const char *str)
 		jsonw_end_array(_jw);
 		jsonw_pretty(_jw, true);
 	} else if (_IS_FP_CONTEXT(type)) {
-		fprintf(_fp, "%s", str);
+		printf("%s", str);
 	}
 }
 
@@ -124,7 +113,7 @@ void close_json_array(enum output_type type, const char *str)
 			else						\
 				jsonw_##type_name##_field(_jw, key, value); \
 		} else if (_IS_FP_CONTEXT(t)) {				\
-			color_fprintf(_fp, color, fmt, value);          \
+			color_fprintf(stdout, color, fmt, value);          \
 		}							\
 	}
 _PRINT_FUNC(int, int);
@@ -147,7 +136,7 @@ void print_color_string(enum output_type type,
 		else
 			jsonw_string_field(_jw, key, value);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(_fp, color, fmt, value);
+		color_fprintf(stdout, color, fmt, value);
 	}
 }
 
@@ -168,7 +157,7 @@ void print_color_bool(enum output_type type,
 		else
 			jsonw_bool(_jw, value);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(_fp, color, fmt, value ? "true" : "false");
+		color_fprintf(stdout, color, fmt, value ? "true" : "false");
 	}
 }
 
@@ -187,7 +176,7 @@ void print_color_0xhex(enum output_type type,
 		snprintf(b1, sizeof(b1), "%#x", hex);
 		print_string(PRINT_JSON, key, NULL, b1);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(_fp, color, fmt, hex);
+		color_fprintf(stdout, color, fmt, hex);
 	}
 }
 
@@ -206,7 +195,7 @@ void print_color_hex(enum output_type type,
 		else
 			jsonw_string(_jw, b1);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(_fp, color, fmt, hex);
+		color_fprintf(stdout, color, fmt, hex);
 	}
 }
 
@@ -226,6 +215,6 @@ void print_color_null(enum output_type type,
 		else
 			jsonw_null(_jw);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(_fp, color, fmt, value);
+		color_fprintf(stdout, color, fmt, value);
 	}
 }

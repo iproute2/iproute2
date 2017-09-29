@@ -1815,7 +1815,7 @@ static int ipaddr_showdump(void)
 	if (ipadd_dump_check_magic())
 		exit(-1);
 
-	new_json_obj(json, stdout);
+	new_json_obj(json);
 	open_json_object(NULL);
 	open_json_array(PRINT_JSON, "addr_info");
 
@@ -2176,7 +2176,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	 * Initialize a json_writer and open an array object
 	 * if -json was specified.
 	 */
-	new_json_obj(json, stdout);
+	new_json_obj(json);
 
 	/*
 	 * If only filter_dev present and none of the other

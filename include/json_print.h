@@ -29,12 +29,10 @@ enum output_type {
 	PRINT_ANY = 4,
 };
 
-void new_json_obj(int json, FILE *fp);
+void new_json_obj(int json);
 void delete_json_obj(void);
 
 bool is_json_context(void);
-
-void set_current_fp(FILE *fp);
 
 void fflush_fp(void);
 
