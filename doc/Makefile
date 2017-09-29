@@ -1,4 +1,4 @@
-PSFILES=ip-cref.ps api-ip6-flowlabels.ps nstat.ps rtstat.ps tc-filters.ps
+PSFILES=ip-cref.ps api-ip6-flowlabels.ps tc-filters.ps
 # tc-cref.ps
 # api-rtnl.tex api-pmtudisc.tex api-news.tex
 # iki-netdev.ps iki-neighdst.ps
