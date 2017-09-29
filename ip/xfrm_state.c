@@ -539,7 +539,7 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 				xfrm_algo_parse((void *)&alg, type, name, key,
 						buf, sizeof(alg.buf));
-				len += alg.u.alg.alg_key_len;
+				len += alg.u.alg.alg_key_len / 8;
 
 				addattr_l(&req.n, sizeof(req.buf), type,
 					  (void *)&alg, len);
