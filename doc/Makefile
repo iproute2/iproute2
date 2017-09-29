@@ -1,8 +1,4 @@
-PSFILES=ip-cref.ps api-ip6-flowlabels.ps tc-filters.ps
-# tc-cref.ps
-# api-rtnl.tex api-pmtudisc.tex api-news.tex
-# iki-netdev.ps iki-neighdst.ps
-
+PSFILES=ip-cref.ps 
 
 LATEX=latex
 DVIPS=dvips
