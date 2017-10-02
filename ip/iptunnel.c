@@ -178,7 +178,8 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 
 			if (p->name[0])
 				duparg2("name", *argv);
-			strncpy(p->name, *argv, IFNAMSIZ - 1);
+			if (get_ifname(p->name, *argv))
+				invarg("\"name\" not a valid ifname", *argv);
 			if (cmd == SIOCCHGTUNNEL && count == 0) {
 				struct ip_tunnel_parm old_p = {};
 
@@ -487,6 +488,8 @@ static int do_prl(int argc, char **argv)
 			count++;
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
+			if (check_ifname(*argv))
+				invarg("\"dev\" not a valid ifname", *argv);
 			medium = *argv;
 		} else {
 			fprintf(stderr,
@@ -534,6 +537,8 @@ static int do_6rd(int argc, char **argv)
 			cmd = SIOCDEL6RD;
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
+			if (check_ifname(*argv))
+				invarg("\"dev\" not a valid ifname", *argv);
 			medium = *argv;
 		} else {
 			fprintf(stderr,

@@ -284,7 +284,8 @@ static int multiaddr_modify(int cmd, int argc, char **argv)
 			NEXT_ARG();
 			if (ifr.ifr_name[0])
 				duparg("dev", *argv);
-			strncpy(ifr.ifr_name, *argv, IFNAMSIZ);
+			if (get_ifname(ifr.ifr_name, *argv))
+				invarg("\"dev\" not a valid ifname", *argv);
 		} else {
 			if (matches(*argv, "address") == 0) {
 				NEXT_ARG();
