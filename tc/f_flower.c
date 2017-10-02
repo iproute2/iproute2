@@ -629,11 +629,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 		} else if (matches(*argv, "skip_sw") == 0) {
 			flags |= TCA_CLS_FLAGS_SKIP_SW;
 		} else if (matches(*argv, "indev") == 0) {
-			char ifname[IFNAMSIZ] = {};
-
 			NEXT_ARG();
-			strncpy(ifname, *argv, sizeof(ifname) - 1);
-			addattrstrz(n, MAX_MSG, TCA_FLOWER_INDEV, ifname);
+			addattrstrz(n, MAX_MSG, TCA_FLOWER_INDEV, *argv);
 		} else if (matches(*argv, "vlan_id") == 0) {
 			__u16 vid;
 
