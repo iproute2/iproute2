@@ -176,7 +176,8 @@ static int parse_args(int argc, char **argv,
 			ifr->ifr_flags |= IFF_MULTI_QUEUE;
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
-			strncpy(ifr->ifr_name, *argv, IFNAMSIZ-1);
+			if (get_ifname(ifr->ifr_name, *argv))
+				invarg("\"dev\" not a valid ifname", *argv);
 		} else {
 			if (matches(*argv, "name") == 0) {
 				NEXT_ARG();
@@ -184,7 +185,8 @@ static int parse_args(int argc, char **argv,
 				usage();
 			if (ifr->ifr_name[0])
 				duparg2("name", *argv);
-			strncpy(ifr->ifr_name, *argv, IFNAMSIZ);
+			if (get_ifname(ifr->ifr_name, *argv))
+				invarg("\"name\" not a valid ifname", *argv);
 		}
 		count++;
 		argc--; argv++;

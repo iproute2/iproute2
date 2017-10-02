@@ -385,8 +385,7 @@ static int parse_ip6_addr(int *argc_p, char ***argv_p,
 
 	plen = addr.bitlen;
 	for (i = 0; i < plen; i += 32) {
-		/* if (((i + 31) & ~0x1F) <= plen) { */
-		if (i + 31 <= plen) {
+		if (i + 31 < plen) {
 			res = pack_key(sel, addr.data[i / 32],
 				       0xFFFFFFFF, off + 4 * (i / 32), offmask);
 			if (res < 0)

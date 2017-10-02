@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <ctype.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <asm/types.h>
@@ -697,6 +698,34 @@ void duparg2(const char *key, const char *arg)
 		"Error: either \"%s\" is duplicate, or \"%s\" is a garbage.\n",
 		key, arg);
 	exit(-1);
+}
+
+int check_ifname(const char *name)
+{
+	/* These checks mimic kernel checks in dev_valid_name */
+	if (*name == '\0')
+		return -1;
+	if (strlen(name) >= IFNAMSIZ)
+		return -1;
+
+	while (*name) {
+		if (*name == '/' || isspace(*name))
+			return -1;
+		++name;
+	}
+	return 0;
+}
+
+/* buf is assumed to be IFNAMSIZ */
+int get_ifname(char *buf, const char *name)
+{
+	int ret;
+
+	ret = check_ifname(name);
+	if (ret == 0)
+		strncpy(buf, name, IFNAMSIZ);
+
+	return ret;
 }
 
 int matches(const char *cmd, const char *pattern)

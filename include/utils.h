@@ -133,6 +133,8 @@ void missarg(const char *) __attribute__((noreturn));
 void invarg(const char *, const char *) __attribute__((noreturn));
 void duparg(const char *, const char *) __attribute__((noreturn));
 void duparg2(const char *, const char *) __attribute__((noreturn));
+int check_ifname(const char *);
+int get_ifname(char *, const char *);
 int matches(const char *arg, const char *pattern);
 int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits);
 
