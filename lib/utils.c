@@ -31,6 +31,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -1045,6 +1046,20 @@ int addr64_n2a(__u64 addr, char *buff, size_t len)
 	}
 
 	return written;
+}
+
+/* Print buffer and escape bytes that are !isprint or among 'escape' */
+void print_escape_buf(const __u8 *buf, size_t len, const char *escape)
+{
+	size_t i;
+
+	for (i = 0; i < len; ++i) {
+		if (isprint(buf[i]) && buf[i] != '\\' &&
+		    !strchr(escape, buf[i]))
+			printf("%c", buf[i]);
+		else
+			printf("\\%03o", buf[i]);
+	}
 }
 
 int print_timestamp(FILE *fp)
