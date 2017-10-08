@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source lib/generic.sh
+. lib/generic.sh
 
 TUNNEL_NAME="tunnel_test_ip"
 
