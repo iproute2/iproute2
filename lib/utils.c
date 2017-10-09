@@ -1260,6 +1260,7 @@ int get_real_family(int rtm_type, int rtm_family)
 	return rtm_family;
 }
 
+#ifdef NEED_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t size)
 {
 	size_t srclen = strlen(src);
@@ -1282,3 +1283,4 @@ size_t strlcat(char *dst, const char *src, size_t size)
 
 	return dlen + strlcpy(dst + dlen, src, size - dlen);
 }
+#endif
