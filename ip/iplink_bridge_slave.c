@@ -238,6 +238,10 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_MCAST_FLOOD])
 		_print_onoff(f, "mcast_flood", "mcast_flood",
 			     rta_getattr_u8(tb[IFLA_BRPORT_MCAST_FLOOD]));
+
+	if (tb[IFLA_BRPORT_NEIGH_SUPPRESS])
+		_print_onoff(f, "neigh_suppress", "neigh_suppress",
+			     rta_getattr_u8(tb[IFLA_BRPORT_NEIGH_SUPPRESS]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -328,6 +332,10 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("mcast_fast_leave", *argv, n,
 						  IFLA_BRPORT_FAST_LEAVE);
+		} else if (matches(*argv, "neigh_suppress") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("neigh_suppress", *argv, n,
+						  IFLA_BRPORT_NEIGH_SUPPRESS);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;

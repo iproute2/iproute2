@@ -198,6 +198,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				if (prtb[IFLA_BRPORT_MCAST_FLOOD])
 					print_onoff(fp, "mcast_flood",
 						    rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_FLOOD]));
+				if (prtb[IFLA_BRPORT_NEIGH_SUPPRESS])
+					print_onoff(fp, "neigh_suppress",
+						    rta_getattr_u8(prtb[IFLA_BRPORT_NEIGH_SUPPRESS]));
 			}
 		} else
 			print_portstate(fp, rta_getattr_u8(tb[IFLA_PROTINFO]));
@@ -266,6 +269,7 @@ static int brlink_modify(int argc, char **argv)
 		.ifm.ifi_family = PF_BRIDGE,
 	};
 	char *d = NULL;
+	__s8 neigh_suppress = -1;
 	__s8 learning = -1;
 	__s8 learning_sync = -1;
 	__s8 flood = -1;
@@ -355,6 +359,11 @@ static int brlink_modify(int argc, char **argv)
 			flags |= BRIDGE_FLAGS_SELF;
 		} else if (strcmp(*argv, "master") == 0) {
 			flags |= BRIDGE_FLAGS_MASTER;
+		} else if (strcmp(*argv, "neigh_suppress") == 0) {
+			NEXT_ARG();
+			if (!on_off("neigh_suppress", &neigh_suppress,
+				    *argv))
+				return -1;
 		} else {
 			usage();
 		}
@@ -406,6 +415,10 @@ static int brlink_modify(int argc, char **argv)
 
 	if (state >= 0)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_STATE, state);
+
+	if (neigh_suppress != -1)
+		addattr8(&req.n, sizeof(req), IFLA_BRPORT_NEIGH_SUPPRESS,
+			 neigh_suppress);
 
 	addattr_nest_end(&req.n, nest);
 
