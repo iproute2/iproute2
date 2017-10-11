@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-source lib/generic.sh
+. lib/generic.sh
 
 ts_log "[Testing add default route]"
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: ft=sh
 
-source lib/generic.sh
+. lib/generic.sh
 
 QDISCS="cbq htb dsmark"
 

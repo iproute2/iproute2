@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: ft=sh
 
-source lib/generic.sh
+. lib/generic.sh
 
 ts_qdisc_available "dsmark"
 if [ $? -eq 0 ]; then

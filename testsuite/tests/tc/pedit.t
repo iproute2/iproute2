@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source lib/generic.sh
+. lib/generic.sh
 
 DEV="$(rand_dev)"
 ts_ip "$0" "Add $DEV dummy interface" link add dev $DEV type dummy

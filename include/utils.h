@@ -195,6 +195,8 @@ static inline void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies)
 	tv->tv_usec = tvusec - 1000000 * tv->tv_sec;
 }
 
+void print_escape_buf(const __u8 *buf, size_t len, const char *escape);
+
 int print_timestamp(FILE *fp);
 void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 

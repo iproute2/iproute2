@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source lib/generic.sh
+. lib/generic.sh
 
 ts_log "[Testing netns nsid in batch mode]"
 
