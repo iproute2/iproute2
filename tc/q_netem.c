@@ -231,7 +231,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 
 			if (!strcmp(*argv, "random")) {
 				NEXT_ARG();
-random_loss_model:
+			random_loss_model:
 				if (get_percent(&opt.loss, *argv)) {
 					explain1("loss percent");
 					return -1;
@@ -338,7 +338,7 @@ random_loss_model:
 				return -1;
 			}
 		} else if (matches(*argv, "ecn") == 0) {
-				present[TCA_NETEM_ECN] = 1;
+			present[TCA_NETEM_ECN] = 1;
 		} else if (matches(*argv, "reorder") == 0) {
 			NEXT_ARG();
 			present[TCA_NETEM_REORDER] = 1;
@@ -469,7 +469,7 @@ random_loss_model:
 
 	if (present[TCA_NETEM_CORR] &&
 	    addattr_l(n, 1024, TCA_NETEM_CORR, &cor, sizeof(cor)) < 0)
-			return -1;
+		return -1;
 
 	if (present[TCA_NETEM_REORDER] &&
 	    addattr_l(n, 1024, TCA_NETEM_REORDER, &reorder, sizeof(reorder)) < 0)
@@ -478,7 +478,7 @@ random_loss_model:
 	if (present[TCA_NETEM_ECN] &&
 	    addattr_l(n, 1024, TCA_NETEM_ECN, &present[TCA_NETEM_ECN],
 		      sizeof(present[TCA_NETEM_ECN])) < 0)
-			return -1;
+		return -1;
 
 	if (present[TCA_NETEM_CORRUPT] &&
 	    addattr_l(n, 1024, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
@@ -491,11 +491,11 @@ random_loss_model:
 		if (loss_type == NETEM_LOSS_GI) {
 			if (addattr_l(n, 1024, NETEM_LOSS_GI,
 				      &gimodel, sizeof(gimodel)) < 0)
-			    return -1;
+				return -1;
 		} else if (loss_type == NETEM_LOSS_GE) {
 			if (addattr_l(n, 1024, NETEM_LOSS_GE,
 				      &gemodel, sizeof(gemodel)) < 0)
-			    return -1;
+				return -1;
 		} else {
 			fprintf(stderr, "loss in the weeds!\n");
 			return -1;
