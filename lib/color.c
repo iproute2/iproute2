@@ -106,7 +106,7 @@ int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...)
 
 	va_start(args, fmt);
 
-	if (!color_is_enabled || attr == COLOR_CLEAR) {
+	if (!color_is_enabled || attr == COLOR_NONE) {
 		ret = vfprintf(fp, fmt, args);
 		goto end;
 	}
@@ -130,7 +130,7 @@ enum color_attr ifa_family_color(__u8 ifa_family)
 	case AF_INET6:
 		return COLOR_INET6;
 	default:
-		return COLOR_CLEAR;
+		return COLOR_NONE;
 	}
 }
 
@@ -142,6 +142,6 @@ enum color_attr oper_state_color(__u8 state)
 	case IF_OPER_DOWN:
 		return COLOR_OPERSTATE_DOWN;
 	default:
-		return COLOR_CLEAR;
+		return COLOR_NONE;
 	}
 }

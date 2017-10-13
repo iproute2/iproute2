@@ -8,7 +8,7 @@ enum color_attr {
 	COLOR_INET6,
 	COLOR_OPERSTATE_UP,
 	COLOR_OPERSTATE_DOWN,
-	COLOR_CLEAR
+	COLOR_NONE
 };
 
 void enable_color(void);

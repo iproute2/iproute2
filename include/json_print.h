@@ -53,7 +53,7 @@ void close_json_array(enum output_type type, const char *delim);
 					     const char *fmt,		\
 					     type value)		\
 	{								\
-		print_color_##type_name(t, COLOR_CLEAR, key, fmt, value);	\
+		print_color_##type_name(t, COLOR_NONE, key, fmt, value);	\
 	}
 _PRINT_FUNC(int, int);
 _PRINT_FUNC(bool, bool);
