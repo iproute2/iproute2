@@ -37,6 +37,7 @@ static void print_explain(FILE *f)
 		"                        [ mcast_router MULTICAST_ROUTER ]\n"
 		"                        [ mcast_fast_leave {on | off} ]\n"
 		"                        [ mcast_flood {on | off} ]\n"
+		"                        [ group_fwd_mask MASK ]\n"
 	);
 }
 
@@ -51,6 +52,12 @@ static const char *port_states[] = {
 	[BR_STATE_LEARNING] = "learning",
 	[BR_STATE_FORWARDING] = "forwarding",
 	[BR_STATE_BLOCKING] = "blocking",
+};
+
+static const char *fwd_mask_tbl[16] = {
+	[0]	= "stp",
+	[2]	= "lacp",
+	[14]	= "lldp"
 };
 
 static void print_portstate(FILE *f, __u8 state)
@@ -102,6 +109,28 @@ static void _print_timer(FILE *f, const char *attr, struct rtattr *timer)
 		fprintf(f, "%s %4i.%.2i ", attr, (int)tv.tv_sec,
 			(int)tv.tv_usec / 10000);
 	}
+}
+
+static void _bitmask2str(__u16 bitmask, char *dst, size_t dst_size,
+			 const char **tbl)
+{
+	int len, i;
+
+	for (i = 0, len = 0; bitmask; i++, bitmask >>= 1) {
+		if (bitmask & 0x1) {
+			if (tbl[i])
+				len += snprintf(dst + len, dst_size - len, "%s,",
+						tbl[i]);
+			else
+				len += snprintf(dst + len, dst_size - len, "0x%x,",
+						(1 << i));
+		}
+	}
+
+	if (!len)
+		snprintf(dst, dst_size, "0x0");
+	else
+		dst[len - 1] = 0;
 }
 
 static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
@@ -242,6 +271,17 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_NEIGH_SUPPRESS])
 		_print_onoff(f, "neigh_suppress", "neigh_suppress",
 			     rta_getattr_u8(tb[IFLA_BRPORT_NEIGH_SUPPRESS]));
+
+	if (tb[IFLA_BRPORT_GROUP_FWD_MASK]) {
+		char convbuf[256];
+		__u16 fwd_mask;
+
+		fwd_mask = rta_getattr_u16(tb[IFLA_BRPORT_GROUP_FWD_MASK]);
+		_print_hex(f, "group_fwd_mask", "group_fwd_mask", fwd_mask);
+		_bitmask2str(fwd_mask, convbuf, sizeof(convbuf), fwd_mask_tbl);
+		print_string(PRINT_ANY, "group_fwd_mask_str",
+			     "group_fwd_mask_str %s ", convbuf);
+	}
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -336,6 +376,13 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("neigh_suppress", *argv, n,
 						  IFLA_BRPORT_NEIGH_SUPPRESS);
+		} else if (matches(*argv, "group_fwd_mask") == 0) {
+			__u16 mask;
+
+			NEXT_ARG();
+			if (get_u16(&mask, *argv, 0))
+				invarg("invalid group_fwd_mask", *argv);
+			addattr16(n, 1024, IFLA_BRPORT_GROUP_FWD_MASK, mask);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
