@@ -104,13 +104,13 @@ int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...)
 
 	va_start(args, fmt);
 
-	if (!color_is_enabled || attr == COLOR_NONE) {
+	if (!color_is_enabled || attr == COLOR_CLEAR) {
 		ret = vfprintf(fp, fmt, args);
 		goto end;
 	}
 
 	ret += fprintf(fp, "%s",
-		       color_codes[attr_colors[is_dark_bg ? attr + 8 : attr]]);
+		       color_codes[attr_colors[is_dark_bg ? attr + 7 : attr]]);
 	ret += vfprintf(fp, fmt, args);
 	ret += fprintf(fp, "%s", color_codes[C_CLEAR]);
 

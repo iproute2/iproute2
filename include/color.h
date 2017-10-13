@@ -2,7 +2,6 @@
 #define __COLOR_H__ 1
 
 enum color_attr {
-	COLOR_NONE,
 	COLOR_IFNAME,
 	COLOR_MAC,
 	COLOR_INET,
