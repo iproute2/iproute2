@@ -45,8 +45,8 @@ static const char * const color_codes[] = {
 	NULL,
 };
 
-static enum color attr_colors[] = {
-	/* light background */
+/* light background */
+static enum color attr_colors_light[] = {
 	C_CYAN,
 	C_YELLOW,
 	C_MAGENTA,
@@ -54,8 +54,10 @@ static enum color attr_colors[] = {
 	C_GREEN,
 	C_RED,
 	C_CLEAR,
+};
 
-	/* dark background */
+/* dark background */
+static enum color attr_colors_dark[] = {
 	C_BOLD_CYAN,
 	C_BOLD_YELLOW,
 	C_BOLD_MAGENTA,
@@ -109,8 +111,9 @@ int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...)
 		goto end;
 	}
 
-	ret += fprintf(fp, "%s",
-		       color_codes[attr_colors[is_dark_bg ? attr + 8 : attr]]);
+	ret += fprintf(fp, "%s", color_codes[is_dark_bg ?
+		attr_colors_dark[attr] : attr_colors_light[attr]]);
+
 	ret += vfprintf(fp, fmt, args);
 	ret += fprintf(fp, "%s", color_codes[C_CLEAR]);
 
@@ -127,7 +130,7 @@ enum color_attr ifa_family_color(__u8 ifa_family)
 	case AF_INET6:
 		return COLOR_INET6;
 	default:
-		return COLOR_CLEAR;
+		return COLOR_NONE;
 	}
 }
 
@@ -139,6 +142,6 @@ enum color_attr oper_state_color(__u8 state)
 	case IF_OPER_DOWN:
 		return COLOR_OPERSTATE_DOWN;
 	default:
-		return COLOR_CLEAR;
+		return COLOR_NONE;
 	}
 }
