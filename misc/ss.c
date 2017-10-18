@@ -784,6 +784,8 @@ static const char *proto_name(int protocol)
 		return "sctp";
 	case IPPROTO_DCCP:
 		return "dccp";
+	case IPPROTO_ICMPV6:
+		return "icmp6";
 	}
 
 	return "???";
