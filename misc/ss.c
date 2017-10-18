@@ -2225,6 +2225,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.retrans_total  = info->tcpi_total_retrans;
 		s.lost		 = info->tcpi_lost;
 		s.sacked	 = info->tcpi_sacked;
+		s.fackets	 = info->tcpi_fackets;
 		s.reordering	 = info->tcpi_reordering;
 		s.rcv_space	 = info->tcpi_rcv_space;
 		s.cwnd		 = info->tcpi_snd_cwnd;
