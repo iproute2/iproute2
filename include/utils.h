@@ -133,6 +133,8 @@ void missarg(const char *) __attribute__((noreturn));
 void invarg(const char *, const char *) __attribute__((noreturn));
 void duparg(const char *, const char *) __attribute__((noreturn));
 void duparg2(const char *, const char *) __attribute__((noreturn));
+int check_ifname(const char *);
+int get_ifname(char *, const char *);
 int matches(const char *arg, const char *pattern);
 int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits);
 
@@ -192,6 +194,8 @@ static inline void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies)
 	tv->tv_sec = tvusec/1000000;
 	tv->tv_usec = tvusec - 1000000 * tv->tv_sec;
 }
+
+void print_escape_buf(const __u8 *buf, size_t len, const char *escape);
 
 int print_timestamp(FILE *fp);
 void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);

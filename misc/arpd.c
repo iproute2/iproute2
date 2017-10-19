@@ -664,7 +664,8 @@ int main(int argc, char **argv)
 		struct ifreq ifr = {};
 
 		for (i = 0; i < ifnum; i++) {
-			strncpy(ifr.ifr_name, ifnames[i], IFNAMSIZ);
+			if (get_ifname(ifr.ifr_name, ifnames[i]))
+				invarg("not a valid ifname", ifnames[i]);
 			if (ioctl(udp_sock, SIOCGIFINDEX, &ifr)) {
 				perror("ioctl(SIOCGIFINDEX)");
 				exit(-1);

@@ -1,5 +1,5 @@
-#ifndef _UAPI_RDMA_NETLINK_H
-#define _UAPI_RDMA_NETLINK_H
+#ifndef _RDMA_NETLINK_H
+#define _RDMA_NETLINK_H
 
 #include <linux/types.h>
 
@@ -304,4 +304,4 @@ enum rdma_nldev_attr {
 
 	RDMA_NLDEV_ATTR_MAX
 };
-#endif /* _UAPI_RDMA_NETLINK_H */
+#endif /* _RDMA_NETLINK_H */

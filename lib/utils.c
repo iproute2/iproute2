@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <ctype.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <asm/types.h>
@@ -30,6 +31,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -699,6 +701,34 @@ void duparg2(const char *key, const char *arg)
 	exit(-1);
 }
 
+int check_ifname(const char *name)
+{
+	/* These checks mimic kernel checks in dev_valid_name */
+	if (*name == '\0')
+		return -1;
+	if (strlen(name) >= IFNAMSIZ)
+		return -1;
+
+	while (*name) {
+		if (*name == '/' || isspace(*name))
+			return -1;
+		++name;
+	}
+	return 0;
+}
+
+/* buf is assumed to be IFNAMSIZ */
+int get_ifname(char *buf, const char *name)
+{
+	int ret;
+
+	ret = check_ifname(name);
+	if (ret == 0)
+		strncpy(buf, name, IFNAMSIZ);
+
+	return ret;
+}
+
 int matches(const char *cmd, const char *pattern)
 {
 	int len = strlen(cmd);
@@ -1018,6 +1048,20 @@ int addr64_n2a(__u64 addr, char *buff, size_t len)
 	return written;
 }
 
+/* Print buffer and escape bytes that are !isprint or among 'escape' */
+void print_escape_buf(const __u8 *buf, size_t len, const char *escape)
+{
+	size_t i;
+
+	for (i = 0; i < len; ++i) {
+		if (isprint(buf[i]) && buf[i] != '\\' &&
+		    !strchr(escape, buf[i]))
+			printf("%c", buf[i]);
+		else
+			printf("\\%03o", buf[i]);
+	}
+}
+
 int print_timestamp(FILE *fp)
 {
 	struct timeval tv;
@@ -1231,6 +1275,7 @@ int get_real_family(int rtm_type, int rtm_family)
 	return rtm_family;
 }
 
+#ifdef NEED_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t size)
 {
 	size_t srclen = strlen(src);
@@ -1253,3 +1298,4 @@ size_t strlcat(char *dst, const char *src, size_t size)
 
 	return dlen + strlcpy(dst + dlen, src, size - dlen);
 }
+#endif

@@ -326,6 +326,27 @@ EOF
     rm -f $TMPDIR/dbtest.c $TMPDIR/dbtest
 }
 
+check_strlcpy()
+{
+    cat >$TMPDIR/strtest.c <<EOF
+#include <string.h>
+int main(int argc, char **argv) {
+	char dst[10];
+	strlcpy(dst, "test", sizeof(dst));
+	return 0;
+}
+EOF
+    $CC -I$INCLUDE -o $TMPDIR/strtest $TMPDIR/strtest.c >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
+	echo "no"
+    else
+	echo 'CFLAGS += -DNEED_STRLCPY' >>$CONFIG
+	echo "yes"
+    fi
+    rm -f $TMPDIR/strtest.c $TMPDIR/strtest
+}
+
 quiet_config()
 {
 	cat <<EOF
@@ -396,6 +417,9 @@ check_mnl
 
 echo -n "Berkeley DB: "
 check_berkeley_db
+
+echo -n "need for strlcpy: "
+check_strlcpy
 
 echo
 echo -n "docs:"

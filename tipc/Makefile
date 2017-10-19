@@ -10,8 +10,6 @@ TIPCOBJ=bearer.o \
     peer.o tipc.o
 
 TARGETS=tipc
-CFLAGS += $(shell $(PKG_CONFIG) libmnl --cflags)
-LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
 
 endif
 

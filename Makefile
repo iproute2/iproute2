@@ -46,7 +46,7 @@ CCOPTS = -O2
 WFLAGS := -Wall -Wstrict-prototypes  -Wmissing-prototypes
 WFLAGS += -Wmissing-declarations -Wold-style-definition -Wformat=2
 
-CFLAGS := $(WFLAGS) $(CCOPTS) -I../include $(DEFINES) $(CFLAGS)
+CFLAGS := $(WFLAGS) $(CCOPTS) -I../include -I../include/uapi $(DEFINES) $(CFLAGS)
 YACCFLAGS = -d -t -v
 
 SUBDIRS=lib ip tc bridge misc netem genl tipc devlink rdma man
@@ -73,7 +73,7 @@ install: all
 		$(DESTDIR)$(DOCDIR)/examples
 	install -m 0644 $(shell find examples/diffserv -maxdepth 1 -type f) \
 		$(DESTDIR)$(DOCDIR)/examples/diffserv
-	@for i in $(SUBDIRS) doc; do $(MAKE) -C $$i install; done
+	@for i in $(SUBDIRS);  do $(MAKE) -C $$i install; done
 	install -m 0644 $(shell find etc/iproute2 -maxdepth 1 -type f) $(DESTDIR)$(CONFDIR)
 	install -m 0755 -d $(DESTDIR)$(BASH_COMPDIR)
 	install -m 0644 bash-completion/tc $(DESTDIR)$(BASH_COMPDIR)
@@ -84,7 +84,7 @@ snapshot:
 		> include/SNAPSHOT.h
 
 clean:
-	@for i in $(SUBDIRS) doc; \
+	@for i in $(SUBDIRS); \
 	do $(MAKE) $(MFLAGS) -C $$i clean; done
 
 clobber:

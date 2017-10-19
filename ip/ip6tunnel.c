@@ -136,7 +136,7 @@ static void print_tunnel(struct ip6_tnl_parm2 *p)
 static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 {
 	int count = 0;
-	char medium[IFNAMSIZ] = {};
+	const char *medium = NULL;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "mode") == 0) {
@@ -180,7 +180,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 			memcpy(&p->laddr, &laddr.data, sizeof(p->laddr));
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
-			strncpy(medium, *argv, IFNAMSIZ - 1);
+			medium = *argv;
 		} else if (strcmp(*argv, "encaplimit") == 0) {
 			NEXT_ARG();
 			if (strcmp(*argv, "none") == 0) {
@@ -273,7 +273,8 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 				usage();
 			if (p->name[0])
 				duparg2("name", *argv);
-			strncpy(p->name, *argv, IFNAMSIZ - 1);
+			if (get_ifname(p->name, *argv))
+				invarg("\"name\" not a valid ifname", *argv);
 			if (cmd == SIOCCHGTUNNEL && count == 0) {
 				struct ip6_tnl_parm2 old_p = {};
 
@@ -285,7 +286,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 		count++;
 		argc--; argv++;
 	}
-	if (medium[0]) {
+	if (medium) {
 		p->link = ll_name_to_index(medium);
 		if (p->link == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", medium);

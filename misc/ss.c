@@ -2153,6 +2153,16 @@ static void print_skmeminfo(struct rtattr *tb[], int attrtype)
 	printf(")");
 }
 
+static void print_md5sig(struct tcp_diag_md5sig *sig)
+{
+	printf("%s/%d=",
+	       format_host(sig->tcpm_family,
+			   sig->tcpm_family == AF_INET6 ? 16 : 4,
+			   &sig->tcpm_addr),
+	       sig->tcpm_prefixlen);
+	print_escape_buf(sig->tcpm_key, sig->tcpm_keylen, " ,");
+}
+
 #define TCPI_HAS_OPT(info, opt) !!(info->tcpi_options & (opt))
 
 static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
@@ -2288,6 +2298,17 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		tcp_stats_print(&s);
 		free(s.dctcp);
 		free(s.bbr_info);
+	}
+	if (tb[INET_DIAG_MD5SIG]) {
+		struct tcp_diag_md5sig *sig = RTA_DATA(tb[INET_DIAG_MD5SIG]);
+		int len = RTA_PAYLOAD(tb[INET_DIAG_MD5SIG]);
+
+		printf(" md5keys:");
+		print_md5sig(sig++);
+		for (len -= sizeof(*sig); len > 0; len -= sizeof(*sig)) {
+			printf(",");
+			print_md5sig(sig++);
+		}
 	}
 }
 

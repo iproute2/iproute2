@@ -472,11 +472,13 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "iif") == 0) {
 			NEXT_ARG();
-			strncpy(filter.iif, *argv, IFNAMSIZ);
+			if (get_ifname(filter.iif, *argv))
+				invarg("\"iif\"/\"dev\" not a valid ifname", *argv);
 			filter.iifmask = 1;
 		} else if (strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
-			strncpy(filter.oif, *argv, IFNAMSIZ);
+			if (get_ifname(filter.oif, *argv))
+				invarg("\"oif\" not a valid ifname", *argv);
 			filter.oifmask = 1;
 		} else if (strcmp(*argv, "l3mdev") == 0) {
 			filter.l3mdev = 1;
@@ -695,10 +697,14 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		} else if (strcmp(*argv, "dev") == 0 ||
 			   strcmp(*argv, "iif") == 0) {
 			NEXT_ARG();
+			if (check_ifname(*argv))
+				invarg("\"iif\"/\"dev\" not a valid ifname", *argv);
 			addattr_l(&req.n, sizeof(req), FRA_IFNAME,
 				  *argv, strlen(*argv)+1);
 		} else if (strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
+			if (check_ifname(*argv))
+				invarg("\"oif\" not a valid ifname", *argv);
 			addattr_l(&req.n, sizeof(req), FRA_OIFNAME,
 				  *argv, strlen(*argv)+1);
 		} else if (strcmp(*argv, "l3mdev") == 0) {

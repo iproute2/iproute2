@@ -2,14 +2,13 @@
 #define __COLOR_H__ 1
 
 enum color_attr {
-	COLOR_NONE,
 	COLOR_IFNAME,
 	COLOR_MAC,
 	COLOR_INET,
 	COLOR_INET6,
 	COLOR_OPERSTATE_UP,
 	COLOR_OPERSTATE_DOWN,
-	COLOR_CLEAR
+	COLOR_NONE
 };
 
 void enable_color(void);
