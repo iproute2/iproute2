@@ -46,18 +46,20 @@ explain(void)
 	fprintf(stderr, "Usage: ... gact <ACTION> [RAND] [INDEX]\n");
 	fprintf(stderr,
 		"Where: \tACTION := reclassify | drop | continue | pass | pipe |\n"
-		"       \t          goto chain <CHAIN_INDEX>\n"
+		"       \t          goto chain <CHAIN_INDEX> | jump <JUMP_COUNT>\n"
 			"\tRAND := random <RANDTYPE> <ACTION> <VAL>\n"
 			"\tRANDTYPE := netrand | determ\n"
 			"\tVAL : = value not exceeding 10000\n"
+			"\tJUMP_COUNT := Absolute jump from start of action list\n"
 			"\tINDEX := index value used\n"
 			"\n");
 #else
 	fprintf(stderr, "Usage: ... gact <ACTION> [INDEX]\n");
 	fprintf(stderr,
 		"Where: \tACTION := reclassify | drop | continue | pass | pipe |\n"
-		"       \t          goto chain <CHAIN_INDEX>\n"
+		"       \t          goto chain <CHAIN_INDEX> | jump <JUMP_COUNT>\n"
 		"\tINDEX := index value used\n"
+		"\tJUMP_COUNT := Absolute jump from start of action list\n"
 		"\n");
 #endif
 }
