@@ -804,6 +804,8 @@ static const char *proto_name(int protocol)
 		return "sctp";
 	case IPPROTO_DCCP:
 		return "dccp";
+	case IPPROTO_ICMPV6:
+		return "icmp6";
 	}
 
 	return "???";
@@ -1076,7 +1078,8 @@ do_numeric:
 	return buf;
 }
 
-static void inet_addr_print(const inet_prefix *a, int port, unsigned int ifindex)
+static void inet_addr_print(const inet_prefix *a, int port,
+			    unsigned int ifindex, bool v6only)
 {
 	char buf[1024];
 	const char *ap = buf;
@@ -1084,14 +1087,10 @@ static void inet_addr_print(const inet_prefix *a, int port, unsigned int ifindex
 	const char *ifname = NULL;
 
 	if (a->family == AF_INET) {
-		if (a->data[0] == 0) {
-			buf[0] = '*';
-			buf[1] = 0;
-		} else {
-			ap = format_host(AF_INET, 4, a->data);
-		}
+		ap = format_host(AF_INET, 4, a->data);
 	} else {
-		if (!memcmp(a->data, &in6addr_any, sizeof(in6addr_any))) {
+		if (!v6only &&
+		    !memcmp(a->data, &in6addr_any, sizeof(in6addr_any))) {
 			buf[0] = '*';
 			buf[1] = 0;
 		} else {
@@ -1805,12 +1804,12 @@ static void proc_ctx_print(struct sockstat *s)
 	}
 }
 
-static void inet_stats_print(struct sockstat *s)
+static void inet_stats_print(struct sockstat *s, bool v6only)
 {
 	sock_state_print(s);
 
-	inet_addr_print(&s->local, s->lport, s->iface);
-	inet_addr_print(&s->remote, s->rport, 0);
+	inet_addr_print(&s->local, s->lport, s->iface, v6only);
+	inet_addr_print(&s->remote, s->rport, 0, v6only);
 
 	proc_ctx_print(s);
 }
@@ -2142,7 +2141,7 @@ static int tcp_show_line(char *line, const struct filter *f, int family)
 	s.rto	    = s.rto != 3 * hz  ? s.rto / hz : 0;
 	s.ss.type   = IPPROTO_TCP;
 
-	inet_stats_print(&s.ss);
+	inet_stats_print(&s.ss, false);
 
 	if (show_options)
 		tcp_timer_print(&s);
@@ -2303,6 +2302,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.retrans_total  = info->tcpi_total_retrans;
 		s.lost		 = info->tcpi_lost;
 		s.sacked	 = info->tcpi_sacked;
+		s.fackets	 = info->tcpi_fackets;
 		s.reordering	 = info->tcpi_reordering;
 		s.rcv_space	 = info->tcpi_rcv_space;
 		s.cwnd		 = info->tcpi_snd_cwnd;
@@ -2488,6 +2488,7 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 {
 	struct rtattr *tb[INET_DIAG_MAX+1];
 	struct inet_diag_msg *r = NLMSG_DATA(nlh);
+	unsigned char v6only = 0;
 
 	parse_rtattr(tb, INET_DIAG_MAX, (struct rtattr *)(r+1),
 		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
@@ -2495,7 +2496,10 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 	if (tb[INET_DIAG_PROTOCOL])
 		s->type = rta_getattr_u8(tb[INET_DIAG_PROTOCOL]);
 
-	inet_stats_print(s);
+	if (s->local.family == AF_INET6 && tb[INET_DIAG_SKV6ONLY])
+		v6only = rta_getattr_u8(tb[INET_DIAG_SKV6ONLY]);
+
+	inet_stats_print(s, v6only);
 
 	if (show_options) {
 		struct tcpstat t = {};
@@ -2511,12 +2515,9 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 
 	if (show_details) {
 		sock_details_print(s);
-		if (s->local.family == AF_INET6 && tb[INET_DIAG_SKV6ONLY]) {
-			unsigned char v6only;
-
-			v6only = rta_getattr_u8(tb[INET_DIAG_SKV6ONLY]);
+		if (s->local.family == AF_INET6 && tb[INET_DIAG_SKV6ONLY])
 			printf(" v6only:%u", v6only);
-		}
+
 		if (tb[INET_DIAG_SHUTDOWN]) {
 			unsigned char mask;
 
@@ -2987,7 +2988,7 @@ static int dgram_show_line(char *line, const struct filter *f, int family)
 		opt[0] = 0;
 
 	s.type = dg_proto == UDP_PROTO ? IPPROTO_UDP : 0;
-	inet_stats_print(&s);
+	inet_stats_print(&s, false);
 
 	if (show_details && opt[0])
 		printf(" opt:\"%s\"", opt);
