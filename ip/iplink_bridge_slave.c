@@ -38,6 +38,7 @@ static void print_explain(FILE *f)
 		"                        [ mcast_fast_leave {on | off} ]\n"
 		"                        [ mcast_flood {on | off} ]\n"
 		"                        [ group_fwd_mask MASK ]\n"
+		"                        [ neigh_suppress {on | off} ]\n"
 	);
 }
 

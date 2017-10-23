@@ -1747,7 +1747,9 @@ the following additional arguments are supported:
 ] [
 .BR mcast_flood " { " on " | " off " }"
 ] [
-.BR group_fwd_mask " MASK ]"
+.BR group_fwd_mask " MASK"
+] [
+.BR neigh_suppress " { " on " | " off " } ]"
 
 .in +8
 .sp
@@ -1824,6 +1826,9 @@ option above.
 
 .BI group_fwd_mask " MASK "
 - set the group forward mask. This is the bitmask that is applied to decide whether to forward incoming frames destined to link-local addresses, ie addresses of the form 01:80:C2:00:00:0X (defaults to 0, ie the bridge does not forward any link-local frames coming on this port).
+
+.BR neigh_suppress " { " on " | " off " }"
+- controls whether neigh discovery (arp and nd) proxy and suppression is enabled on the port. By default this flag is off.
 
 .in -8
 
