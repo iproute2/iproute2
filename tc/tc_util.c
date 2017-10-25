@@ -417,6 +417,8 @@ static const char *action_n2a(int action)
 
 	if (TC_ACT_EXT_CMP(action, TC_ACT_GOTO_CHAIN))
 		return "goto";
+	if (TC_ACT_EXT_CMP(action, TC_ACT_JUMP))
+		return "jump";
 	switch (action) {
 	case TC_ACT_UNSPEC:
 		return "continue";
@@ -463,6 +465,7 @@ static int action_a2n(char *arg, int *result, bool allow_num)
 		{"reclassify", TC_ACT_RECLASSIFY},
 		{"pipe", TC_ACT_PIPE},
 		{"goto", TC_ACT_GOTO_CHAIN},
+		{"jump", TC_ACT_JUMP},
 		{"trap", TC_ACT_TRAP},
 		{ NULL },
 	}, *iter;
@@ -509,6 +512,17 @@ static int __parse_action_control(int *argc_p, char ***argv_p, int *result_p,
 			return -1;
 		}
 		result |= chain_index;
+	}
+	if (result == TC_ACT_JUMP) {
+		__u32 jump_cnt = 0;
+
+		NEXT_ARG();
+		if (get_u32(&jump_cnt, *argv, 10) ||
+		    jump_cnt > TC_ACT_EXT_VAL_MASK) {
+			fprintf(stderr, "Invalid \"jump count\" (%s)\n", *argv);
+			return -1;
+		}
+		result |= jump_cnt;
 	}
 	NEXT_ARG_FWD();
 	*argc_p = argc;
@@ -637,6 +651,8 @@ void print_action_control(FILE *f, const char *prefix,
 	fprintf(f, "%s%s", prefix, action_n2a(action));
 	if (TC_ACT_EXT_CMP(action, TC_ACT_GOTO_CHAIN))
 		fprintf(f, " chain %u", action & TC_ACT_EXT_VAL_MASK);
+	if (TC_ACT_EXT_CMP(action, TC_ACT_JUMP))
+		fprintf(f, " %u", action & TC_ACT_EXT_VAL_MASK);
 	fprintf(f, "%s", suffix);
 }
 
