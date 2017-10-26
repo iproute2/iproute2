@@ -1300,7 +1300,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (!type_ok && req.r.rtm_family == AF_MPLS)
 		req.r.rtm_type = RTN_UNICAST;
 
-	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -2;
 
 	return 0;
@@ -1680,6 +1680,7 @@ static int iproute_get(int argc, char **argv)
 	};
 	char  *idev = NULL;
 	char  *odev = NULL;
+	struct nlmsghdr *answer;
 	int connected = 0;
 	int fib_match = 0;
 	int from_ok = 0;
@@ -1800,26 +1801,29 @@ static int iproute_get(int argc, char **argv)
 	if (fib_match)
 		req.r.rtm_flags |= RTM_F_FIB_MATCH;
 
-	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
+	if (rtnl_talk(&rth, &req.n, &answer) < 0)
 		return -2;
 
 	if (connected && !from_ok) {
-		struct rtmsg *r = NLMSG_DATA(&req.n);
-		int len = req.n.nlmsg_len;
+		struct rtmsg *r = NLMSG_DATA(answer);
+		int len = answer->nlmsg_len;
 		struct rtattr *tb[RTA_MAX+1];
 
-		if (print_route(NULL, &req.n, (void *)stdout) < 0) {
+		if (print_route(NULL, answer, (void *)stdout) < 0) {
 			fprintf(stderr, "An error :-)\n");
+			free(answer);
 			return -1;
 		}
 
-		if (req.n.nlmsg_type != RTM_NEWROUTE) {
+		if (answer->nlmsg_type != RTM_NEWROUTE) {
 			fprintf(stderr, "Not a route?\n");
+			free(answer);
 			return -1;
 		}
 		len -= NLMSG_LENGTH(sizeof(*r));
 		if (len < 0) {
 			fprintf(stderr, "Wrong len %d\n", len);
+			free(answer);
 			return -1;
 		}
 
@@ -1830,6 +1834,7 @@ static int iproute_get(int argc, char **argv)
 			r->rtm_src_len = 8*RTA_PAYLOAD(tb[RTA_PREFSRC]);
 		} else if (!tb[RTA_SRC]) {
 			fprintf(stderr, "Failed to connect the route\n");
+			free(answer);
 			return -1;
 		}
 		if (!odev && tb[RTA_OIF])
@@ -1843,15 +1848,18 @@ static int iproute_get(int argc, char **argv)
 		req.n.nlmsg_flags = NLM_F_REQUEST;
 		req.n.nlmsg_type = RTM_GETROUTE;
 
-		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
+		free(answer);
+		if (rtnl_talk(&rth, &req.n, &answer) < 0)
 			return -2;
 	}
 
-	if (print_route(NULL, &req.n, (void *)stdout) < 0) {
+	if (print_route(NULL, answer, (void *)stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
+		free(answer);
 		return -1;
 	}
 
+	free(answer);
 	return 0;
 }
 
@@ -1895,7 +1903,7 @@ restore:
 
 	ll_init_map(&rth);
 
-	ret = rtnl_talk(&rth, n, n, sizeof(*n));
+	ret = rtnl_talk(&rth, n, NULL);
 	if ((ret < 0) && (errno == EEXIST))
 		ret = 0;
 

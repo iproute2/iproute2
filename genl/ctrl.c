@@ -55,6 +55,7 @@ int genl_ctrl_resolve_family(const char *family)
 	};
 	struct nlmsghdr *nlh = &req.n;
 	struct genlmsghdr *ghdr = &req.g;
+	struct nlmsghdr *answer = NULL;
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_GENERIC) < 0) {
 		fprintf(stderr, "Cannot open generic netlink socket\n");
@@ -63,19 +64,19 @@ int genl_ctrl_resolve_family(const char *family)
 
 	addattr_l(nlh, 128, CTRL_ATTR_FAMILY_NAME, family, strlen(family) + 1);
 
-	if (rtnl_talk(&rth, nlh, nlh, sizeof(req)) < 0) {
+	if (rtnl_talk(&rth, nlh, &answer) < 0) {
 		fprintf(stderr, "Error talking to the kernel\n");
 		goto errout;
 	}
 
 	{
 		struct rtattr *tb[CTRL_ATTR_MAX + 1];
-		int len = nlh->nlmsg_len;
+		int len = answer->nlmsg_len;
 		struct rtattr *attrs;
 
-		if (nlh->nlmsg_type !=  GENL_ID_CTRL) {
+		if (answer->nlmsg_type !=  GENL_ID_CTRL) {
 			fprintf(stderr, "Not a controller message, nlmsg_len=%d "
-				"nlmsg_type=0x%x\n", nlh->nlmsg_len, nlh->nlmsg_type);
+				"nlmsg_type=0x%x\n", answer->nlmsg_len, answer->nlmsg_type);
 			goto errout;
 		}
 
@@ -88,10 +89,11 @@ int genl_ctrl_resolve_family(const char *family)
 
 		if (len < 0) {
 			fprintf(stderr, "wrong controller message len %d\n", len);
+			free(answer);
 			return -1;
 		}
 
-		attrs = (struct rtattr *) ((char *) ghdr + GENL_HDRLEN);
+		attrs = (struct rtattr *) ((char *) answer + NLMSG_LENGTH(GENL_HDRLEN));
 		parse_rtattr(tb, CTRL_ATTR_MAX, attrs, len);
 
 		if (tb[CTRL_ATTR_FAMILY_ID] == NULL) {
@@ -103,6 +105,7 @@ int genl_ctrl_resolve_family(const char *family)
 	}
 
 errout:
+	free(answer);
 	rtnl_close(&rth);
 	return ret;
 }
@@ -299,6 +302,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 		.g.cmd = CTRL_CMD_GETFAMILY,
 	};
 	struct nlmsghdr *nlh = &req.n;
+	struct nlmsghdr *answer = NULL;
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_GENERIC) < 0) {
 		fprintf(stderr, "Cannot open generic netlink socket\n");
@@ -331,12 +335,12 @@ static int ctrl_list(int cmd, int argc, char **argv)
 			goto ctrl_done;
 		}
 
-		if (rtnl_talk(&rth, nlh, nlh, sizeof(req)) < 0) {
+		if (rtnl_talk(&rth, nlh, &answer) < 0) {
 			fprintf(stderr, "Error talking to the kernel\n");
 			goto ctrl_done;
 		}
 
-		if (print_ctrl2(NULL, nlh, (void *) stdout) < 0) {
+		if (print_ctrl2(NULL, answer, (void *) stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			goto ctrl_done;
 		}
@@ -358,6 +362,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 
 	ret = 0;
 ctrl_done:
+	free(answer);
 	rtnl_close(&rth);
 	return ret;
 }

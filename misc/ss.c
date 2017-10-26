@@ -2696,7 +2696,7 @@ static int kill_inet_sock(struct nlmsghdr *h, void *arg, struct sockstat *s)
 		raw->sdiag_raw_protocol = s->raw_prot;
 	}
 
-	return rtnl_talk(rth, &req.nlh, NULL, 0);
+	return rtnl_talk(rth, &req.nlh, NULL);
 }
 
 static int show_one_inet_sock(const struct sockaddr_nl *addr,

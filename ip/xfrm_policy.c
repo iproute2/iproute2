@@ -386,7 +386,7 @@ static int xfrm_policy_modify(int cmd, unsigned int flags, int argc, char **argv
 	if (req.xpinfo.sel.family == AF_UNSPEC)
 		req.xpinfo.sel.family = AF_INET;
 
-	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -548,7 +548,7 @@ int xfrm_policy_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 }
 
 static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
-				     void *res_nlbuf, size_t res_size)
+				     struct nlmsghdr **answer)
 {
 	struct rtnl_handle rth;
 	struct {
@@ -659,7 +659,7 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 			  (void *)&ctx, ctx.sctx.len);
 	}
 
-	if (rtnl_talk(&rth, &req.n, res_nlbuf, res_size) < 0)
+	if (rtnl_talk(&rth, &req.n, answer) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -669,21 +669,21 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 
 static int xfrm_policy_delete(int argc, char **argv)
 {
-	return xfrm_policy_get_or_delete(argc, argv, 1, NULL, 0);
+	return xfrm_policy_get_or_delete(argc, argv, 1, NULL);
 }
 
 static int xfrm_policy_get(int argc, char **argv)
 {
-	char buf[NLMSG_BUF_SIZE] = {};
-	struct nlmsghdr *n = (struct nlmsghdr *)buf;
+	struct nlmsghdr *n = NULL;
 
-	xfrm_policy_get_or_delete(argc, argv, 0, n, sizeof(buf));
+	xfrm_policy_get_or_delete(argc, argv, 0, &n);
 
 	if (xfrm_policy_print(NULL, n, (void *)stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
 		exit(1);
 	}
 
+	free(n);
 	return 0;
 }
 
@@ -1049,7 +1049,7 @@ static int xfrm_spd_setinfo(int argc, char **argv)
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
-	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		exit(2);
 
 	rtnl_close(&rth);
@@ -1063,22 +1063,23 @@ static int xfrm_spd_getinfo(int argc, char **argv)
 	struct {
 		struct nlmsghdr			n;
 		__u32				flags;
-		char				ans[128];
 	} req = {
 		.n.nlmsg_len = NLMSG_LENGTH(sizeof(__u32)),
 		.n.nlmsg_flags = NLM_F_REQUEST,
 		.n.nlmsg_type = XFRM_MSG_GETSPDINFO,
 		.flags = 0XFFFFFFFF,
 	};
+	struct nlmsghdr *answer;
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
-	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
+	if (rtnl_talk(&rth, &req.n, &answer) < 0)
 		exit(2);
 
-	print_spdinfo(&req.n, (void *)stdout);
+	print_spdinfo(answer, (void *)stdout);
 
+	free(answer);
 	rtnl_close(&rth);
 
 	return 0;
@@ -1123,7 +1124,7 @@ static int xfrm_policy_flush(int argc, char **argv)
 	if (show_stats > 1)
 		fprintf(stderr, "Flush policy\n");
 
-	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		exit(2);
 
 	rtnl_close(&rth);

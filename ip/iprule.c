@@ -393,7 +393,7 @@ static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		if (rtnl_open(&rth2, 0) < 0)
 			return -1;
 
-		if (rtnl_talk(&rth2, n, NULL, 0) < 0)
+		if (rtnl_talk(&rth2, n, NULL) < 0)
 			return -2;
 
 		rtnl_close(&rth2);
@@ -555,7 +555,7 @@ static int restore_handler(const struct sockaddr_nl *nl,
 
 	ll_init_map(&rth);
 
-	ret = rtnl_talk(&rth, n, n, sizeof(*n));
+	ret = rtnl_talk(&rth, n, NULL);
 	if ((ret < 0) && (errno == EEXIST))
 		ret = 0;
 
@@ -766,7 +766,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	if (!table_ok && cmd == RTM_NEWRULE)
 		req.r.rtm_table = RT_TABLE_MAIN;
 
-	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -2;
 
 	return 0;

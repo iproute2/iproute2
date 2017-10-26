@@ -49,16 +49,21 @@ int genl_resolve_family(struct rtnl_handle *grth, const char *family)
 {
 	GENL_REQUEST(req, 1024, GENL_ID_CTRL, 0, 0, CTRL_CMD_GETFAMILY,
 		     NLM_F_REQUEST);
+	struct nlmsghdr *answer;
+	int fnum;
 
 	addattr_l(&req.n, sizeof(req), CTRL_ATTR_FAMILY_NAME,
 		  family, strlen(family) + 1);
 
-	if (rtnl_talk(grth, &req.n, &req.n, sizeof(req)) < 0) {
+	if (rtnl_talk(grth, &req.n, &answer) < 0) {
 		fprintf(stderr, "Error talking to the kernel\n");
 		return -2;
 	}
 
-	return genl_parse_getfamily(&req.n);
+	fnum = genl_parse_getfamily(answer);
+	free(answer);
+
+	return fnum;
 }
 
 int genl_init_handle(struct rtnl_handle *grth, const char *family,

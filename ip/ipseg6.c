@@ -125,6 +125,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 static int seg6_do_cmd(void)
 {
 	SEG6_REQUEST(req, 1024, opts.cmd, NLM_F_REQUEST);
+	struct nlmsghdr *answer;
 	int repl = 0, dump = 0;
 
 	if (genl_family < 0) {
@@ -163,15 +164,16 @@ static int seg6_do_cmd(void)
 	}
 
 	if (!repl && !dump) {
-		if (rtnl_talk(&grth, &req.n, NULL, 0) < 0)
+		if (rtnl_talk(&grth, &req.n, NULL) < 0)
 			return -1;
 	} else if (repl) {
-		if (rtnl_talk(&grth, &req.n, &req.n, sizeof(req)) < 0)
+		if (rtnl_talk(&grth, &req.n, &answer) < 0)
 			return -2;
-		if (process_msg(NULL, &req.n, stdout) < 0) {
+		if (process_msg(NULL, answer, stdout) < 0) {
 			fprintf(stderr, "Error parsing reply\n");
 			exit(1);
 		}
+		free(answer);
 	} else {
 		req.n.nlmsg_flags |= NLM_F_DUMP;
 		req.n.nlmsg_seq = grth.dump = ++grth.seq;

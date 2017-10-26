@@ -421,7 +421,7 @@ static int do_modify_nl(enum cmd c, enum macsec_nl_commands cmd, int ifindex,
 	addattr_nest_end(&req.n, attr_sa);
 
 talk:
-	if (rtnl_talk(&genl_rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&genl_rth, &req.n, NULL) < 0)
 		return -2;
 
 	return 0;

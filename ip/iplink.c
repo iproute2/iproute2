@@ -249,19 +249,26 @@ static int nl_get_ll_addr_len(unsigned int dev_index)
 			.ifi_index = dev_index,
 		}
 	};
+	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX+1];
 
-	if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0)
+	if (rtnl_talk(&rth, &req.n, &answer) < 0)
 		return -1;
 
-	len = req.n.nlmsg_len - NLMSG_LENGTH(sizeof(req.i));
-	if (len < 0)
+	len = answer->nlmsg_len - NLMSG_LENGTH(sizeof(struct ifinfomsg));
+	if (len < 0) {
+		free(answer);
 		return -1;
+	}
 
-	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(&req.i), len, NLA_F_NESTED);
-	if (!tb[IFLA_ADDRESS])
+	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(NLMSG_DATA(answer)),
+			   len, NLA_F_NESTED);
+	if (!tb[IFLA_ADDRESS]) {
+		free(answer);
 		return -1;
+	}
 
+	free(answer);
 	return RTA_PAYLOAD(tb[IFLA_ADDRESS]);
 }
 
@@ -916,7 +923,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 			req.i.ifi_index = 0;
 			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
-			if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+			if (rtnl_talk(&rth, &req.n, NULL) < 0)
 				return -2;
 			return 0;
 		}
@@ -1006,7 +1013,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -2;
 
 	return 0;
@@ -1020,10 +1027,7 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 		.n.nlmsg_type = RTM_GETLINK,
 		.i.ifi_family = preferred_family,
 	};
-	struct {
-		struct nlmsghdr n;
-		char buf[32768];
-	} answer;
+	struct nlmsghdr *answer;
 
 	if (name) {
 		addattr_l(&req.n, sizeof(req),
@@ -1031,21 +1035,17 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 	}
 	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
 
-	if (rtnl_talk(&rth, &req.n, &answer.n, sizeof(answer)) < 0)
+	if (rtnl_talk(&rth, &req.n, &answer) < 0)
 		return -2;
-	if (answer.n.nlmsg_len > sizeof(answer.buf)) {
-		fprintf(stderr, "Message truncated from %u to %lu\n",
-			answer.n.nlmsg_len, sizeof(answer.buf));
-		return -2;
-	}
 
 	open_json_object(NULL);
 	if (brief)
-		print_linkinfo_brief(NULL, &answer.n, stdout, NULL);
+		print_linkinfo_brief(NULL, answer, stdout, NULL);
 	else
-		print_linkinfo(NULL, &answer.n, stdout);
+		print_linkinfo(NULL, answer, stdout);
 	close_json_object();
 
+	free(answer);
 	return 0;
 }
 

@@ -439,7 +439,7 @@ static int brlink_modify(int argc, char **argv)
 		addattr_nest_end(&req.n, nest);
 	}
 
-	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;
 
 	return 0;

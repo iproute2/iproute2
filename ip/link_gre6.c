@@ -78,7 +78,6 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct {
 		struct nlmsghdr n;
 		struct ifinfomsg i;
-		char buf[1024];
 	} req = {
 		.n.nlmsg_len = NLMSG_LENGTH(sizeof(*ifi)),
 		.n.nlmsg_flags = NLM_F_REQUEST,
@@ -86,6 +85,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 		.i.ifi_family = preferred_family,
 		.i.ifi_index = ifi->ifi_index,
 	};
+	struct nlmsghdr *answer = NULL;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *greinfo[IFLA_GRE_MAX + 1];
@@ -108,19 +108,20 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u32 fwmark = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
-		if (rtnl_talk(&rth, &req.n, &req.n, sizeof(req)) < 0) {
+		if (rtnl_talk(&rth, &req.n, &answer) < 0) {
 get_failed:
 			fprintf(stderr,
 				"Failed to get existing tunnel info.\n");
+			free(answer);
 			return -1;
 		}
 
-		len = req.n.nlmsg_len;
+		len = answer->nlmsg_len;
 		len -= NLMSG_LENGTH(sizeof(*ifi));
 		if (len < 0)
 			goto get_failed;
 
-		parse_rtattr(tb, IFLA_MAX, IFLA_RTA(&req.i), len);
+		parse_rtattr(tb, IFLA_MAX, IFLA_RTA(NLMSG_DATA(answer)), len);
 
 		if (!tb[IFLA_LINKINFO])
 			goto get_failed;
@@ -180,6 +181,8 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_FWMARK])
 			fwmark = rta_getattr_u32(greinfo[IFLA_GRE_FWMARK]);
+
+		free(answer);
 	}
 
 	while (argc > 0) {

@@ -577,7 +577,7 @@ static void rtnl_talk_error(struct nlmsghdr *h, struct nlmsgerr *err,
 }
 
 static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-		       struct nlmsghdr *answer, size_t maxlen,
+		       struct nlmsghdr **answer,
 		       bool show_rtnl_err, nl_ext_ack_fn_t errfn)
 {
 	int status;
@@ -651,9 +651,9 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 					fprintf(stderr, "ERROR truncated\n");
 				} else if (!err->error) {
 					if (answer)
-						memcpy(answer, h,
-						       MIN(maxlen, h->nlmsg_len));
-					free(buf);
+						*answer = (struct nlmsghdr *)buf;
+					else
+						free(buf);
 					return 0;
 				}
 
@@ -667,9 +667,7 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 			}
 
 			if (answer) {
-				memcpy(answer, h,
-				       MIN(maxlen, h->nlmsg_len));
-				free(buf);
+				*answer = (struct nlmsghdr *)buf;
 				return 0;
 			}
 
@@ -693,22 +691,22 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 }
 
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-	      struct nlmsghdr *answer, size_t maxlen)
+	      struct nlmsghdr **answer)
 {
-	return __rtnl_talk(rtnl, n, answer, maxlen, true, NULL);
+	return __rtnl_talk(rtnl, n, answer, true, NULL);
 }
 
 int rtnl_talk_extack(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-		     struct nlmsghdr *answer, size_t maxlen,
+		     struct nlmsghdr **answer,
 		     nl_ext_ack_fn_t errfn)
 {
-	return __rtnl_talk(rtnl, n, answer, maxlen, true, errfn);
+	return __rtnl_talk(rtnl, n, answer, true, errfn);
 }
 
 int rtnl_talk_suppress_rtnl_errmsg(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-				   struct nlmsghdr *answer, size_t maxlen)
+				   struct nlmsghdr **answer)
 {
-	return __rtnl_talk(rtnl, n, answer, maxlen, false, NULL);
+	return __rtnl_talk(rtnl, n, answer, false, NULL);
 }
 
 int rtnl_listen_all_nsid(struct rtnl_handle *rth)

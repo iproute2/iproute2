@@ -119,10 +119,7 @@ __u32 ipvrf_get_table(const char *name)
 			.ifi_family  = preferred_family,
 		},
 	};
-	struct {
-		struct nlmsghdr n;
-		char buf[8192];
-	} answer;
+	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX+1];
 	struct rtattr *li[IFLA_INFO_MAX+1];
 	struct rtattr *vrf_attr[IFLA_VRF_MAX + 1];
@@ -132,8 +129,7 @@ __u32 ipvrf_get_table(const char *name)
 
 	addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, strlen(name) + 1);
 
-	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n,
-					   &answer.n, sizeof(answer)) < 0) {
+	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n, &answer) < 0) {
 		/* special case "default" vrf to be the main table */
 		if (errno == ENODEV && !strcmp(name, "default"))
 			if (rtnl_rttable_a2n(&tb_id, "main"))
@@ -143,25 +139,25 @@ __u32 ipvrf_get_table(const char *name)
 		return tb_id;
 	}
 
-	ifi = NLMSG_DATA(&answer.n);
-	len = answer.n.nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
+	ifi = NLMSG_DATA(answer);
+	len = answer->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
 	if (len < 0) {
 		fprintf(stderr, "BUG: Invalid response to link query.\n");
-		return 0;
+		goto out;
 	}
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 
 	if (!tb[IFLA_LINKINFO])
-		return 0;
+		goto out;
 
 	parse_rtattr_nested(li, IFLA_INFO_MAX, tb[IFLA_LINKINFO]);
 
 	if (!li[IFLA_INFO_KIND] || !li[IFLA_INFO_DATA])
-		return 0;
+		goto out;
 
 	if (strcmp(RTA_DATA(li[IFLA_INFO_KIND]), "vrf"))
-		return 0;
+		goto out;
 
 	parse_rtattr_nested(vrf_attr, IFLA_VRF_MAX, li[IFLA_INFO_DATA]);
 	if (vrf_attr[IFLA_VRF_TABLE])
@@ -170,6 +166,8 @@ __u32 ipvrf_get_table(const char *name)
 	if (!tb_id)
 		fprintf(stderr, "BUG: VRF %s is missing table id\n", name);
 
+out:
+	free(answer);
 	return tb_id;
 }
 
@@ -189,10 +187,7 @@ int name_is_vrf(const char *name)
 			.ifi_family  = preferred_family,
 		},
 	};
-	struct {
-		struct nlmsghdr n;
-		char buf[8192];
-	} answer;
+	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX+1];
 	struct rtattr *li[IFLA_INFO_MAX+1];
 	struct ifinfomsg *ifi;
@@ -200,29 +195,30 @@ int name_is_vrf(const char *name)
 
 	addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, strlen(name) + 1);
 
-	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n,
-					   &answer.n, sizeof(answer)) < 0)
+	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n, &answer) < 0)
 		return 0;
 
-	ifi = NLMSG_DATA(&answer.n);
-	len = answer.n.nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
+	ifi = NLMSG_DATA(answer);
+	len = answer->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
 	if (len < 0) {
 		fprintf(stderr, "BUG: Invalid response to link query.\n");
-		return 0;
+		goto out;
 	}
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 
 	if (!tb[IFLA_LINKINFO])
-		return 0;
+		goto out;
 
 	parse_rtattr_nested(li, IFLA_INFO_MAX, tb[IFLA_LINKINFO]);
 
 	if (!li[IFLA_INFO_KIND])
-		return 0;
+		goto out;
 
 	if (strcmp(RTA_DATA(li[IFLA_INFO_KIND]), "vrf"))
-		return 0;
+		goto out;
 
+out:
+	free(answer);
 	return ifi->ifi_index;
 }

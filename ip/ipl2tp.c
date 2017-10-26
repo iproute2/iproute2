@@ -129,7 +129,7 @@ static int create_tunnel(struct l2tp_parm *p)
 			addattr(&req.n, 1024, L2TP_ATTR_UDP_ZERO_CSUM6_RX);
 	}
 
-	if (rtnl_talk(&genl_rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&genl_rth, &req.n, NULL) < 0)
 		return -2;
 
 	return 0;
@@ -142,7 +142,7 @@ static int delete_tunnel(struct l2tp_parm *p)
 
 	addattr32(&req.n, 128, L2TP_ATTR_CONN_ID, p->tunnel_id);
 
-	if (rtnl_talk(&genl_rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&genl_rth, &req.n, NULL) < 0)
 		return -2;
 
 	return 0;
@@ -185,7 +185,7 @@ static int create_session(struct l2tp_parm *p)
 	if (p->ifname)
 		addattrstrz(&req.n, 1024, L2TP_ATTR_IFNAME, p->ifname);
 
-	if (rtnl_talk(&genl_rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&genl_rth, &req.n, NULL) < 0)
 		return -2;
 
 	return 0;
@@ -198,7 +198,7 @@ static int delete_session(struct l2tp_parm *p)
 
 	addattr32(&req.n, 1024, L2TP_ATTR_CONN_ID, p->tunnel_id);
 	addattr32(&req.n, 1024, L2TP_ATTR_SESSION_ID, p->session_id);
-	if (rtnl_talk(&genl_rth, &req.n, NULL, 0) < 0)
+	if (rtnl_talk(&genl_rth, &req.n, NULL) < 0)
 		return -2;
 
 	return 0;

@@ -306,6 +306,7 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 static int tcpm_do_cmd(int cmd, int argc, char **argv)
 {
 	TCPM_REQUEST(req, 1024, TCP_METRICS_CMD_GET, NLM_F_REQUEST);
+	struct nlmsghdr *answer;
 	int atype = -1, stype = -1;
 	int ack;
 
@@ -457,15 +458,16 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 	}
 
 	if (ack) {
-		if (rtnl_talk(&grth, &req.n, NULL, 0) < 0)
+		if (rtnl_talk(&grth, &req.n, NULL) < 0)
 			return -2;
 	} else if (atype >= 0) {
-		if (rtnl_talk(&grth, &req.n, &req.n, sizeof(req)) < 0)
+		if (rtnl_talk(&grth, &req.n, &answer) < 0)
 			return -2;
-		if (process_msg(NULL, &req.n, stdout) < 0) {
+		if (process_msg(NULL, answer, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
+		free(answer);
 	} else {
 		req.n.nlmsg_seq = grth.dump = ++grth.seq;
 		if (rtnl_send(&grth, &req, req.n.nlmsg_len) < 0) {

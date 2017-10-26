@@ -194,7 +194,7 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 		}
 	}
 
-	if (rtnl_talk(&rth, &req.n, NULL, 0) < 0) {
+	if (rtnl_talk(&rth, &req.n, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 2;
 	}
@@ -331,6 +331,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		.t.tcm_parent = TC_H_UNSPEC,
 		.t.tcm_family = AF_UNSPEC,
 	};
+	struct nlmsghdr *answer;
 	struct filter_util *q = NULL;
 	__u32 prio = 0;
 	__u32 protocol = 0;
@@ -484,13 +485,14 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, &req.n, MAX_MSG) < 0) {
+	if (rtnl_talk(&rth, &req.n, &answer) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 2;
 	}
 
-	print_filter(NULL, &req.n, (void *)stdout);
+	print_filter(NULL, answer, (void *)stdout);
 
+	free(answer);
 	return 0;
 }
 
