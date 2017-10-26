@@ -205,6 +205,15 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				rta_getattr_u32(tb[NDA_VNI]));
 	}
 
+	if (tb[NDA_SRC_VNI]) {
+		if (jw_global)
+			jsonw_uint_field(jw_global, "src_vni",
+					 rta_getattr_u32(tb[NDA_SRC_VNI]));
+		else
+			fprintf(fp, "src_vni %d ",
+				rta_getattr_u32(tb[NDA_SRC_VNI]));
+	}
+
 	if (tb[NDA_IFINDEX]) {
 		unsigned int ifindex = rta_getattr_u32(tb[NDA_IFINDEX]);
 
