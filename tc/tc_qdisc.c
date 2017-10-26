@@ -231,6 +231,16 @@ int print_qdisc(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == RTM_DELQDISC)
 		fprintf(fp, "deleted ");
 
+	if (n->nlmsg_type == RTM_NEWQDISC &&
+			(n->nlmsg_flags & NLM_F_CREATE) &&
+			(n->nlmsg_flags & NLM_F_REPLACE))
+		fprintf(fp, "replaced ");
+
+	if (n->nlmsg_type == RTM_NEWQDISC &&
+			(n->nlmsg_flags & NLM_F_CREATE) &&
+			(n->nlmsg_flags & NLM_F_EXCL))
+		fprintf(fp, "added ");
+
 	if (show_raw)
 		fprintf(fp, "qdisc %s %x:[%08x]  ",
 			rta_getattr_str(tb[TCA_KIND]),
