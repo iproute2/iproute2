@@ -69,6 +69,7 @@ TCMODULES += q_hhf.o
 TCMODULES += q_clsact.o
 TCMODULES += e_bpf.o
 TCMODULES += f_matchall.o
+TCMODULES += q_cbs.o
 
 TCSO :=
 ifeq ($(TC_CONFIG_ATM),y)
