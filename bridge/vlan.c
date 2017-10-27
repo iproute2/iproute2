@@ -17,13 +17,14 @@
 static unsigned int filter_index, filter_vlan;
 static int last_ifidx = -1;
 
-json_writer_t *jw_global = NULL;
+json_writer_t *jw_global;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ pvid ] [ untagged ]\n");
-	fprintf(stderr, "                                                     [ self ] [ master ]\n");
-	fprintf(stderr, "       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n");
+	fprintf(stderr,
+		"Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ pvid ] [ untagged ]\n"
+		"                                                     [ self ] [ master ]\n"
+		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
 
@@ -73,9 +74,8 @@ static int vlan_modify(int cmd, int argc, char **argv)
 		} else if (strcmp(*argv, "untagged") == 0) {
 			vinfo.flags |= BRIDGE_VLAN_INFO_UNTAGGED;
 		} else {
-			if (matches(*argv, "help") == 0) {
+			if (matches(*argv, "help") == 0)
 				NEXT_ARG();
-			}
 		}
 		argc--; argv++;
 	}
@@ -216,9 +216,9 @@ static int print_vlan(const struct sockaddr_nl *who,
 			fprintf(fp, "%s\tNone\n",
 				ll_index_to_name(ifm->ifi_index));
 		return 0;
-	} else {
-		print_vlan_info(fp, tb[IFLA_AF_SPEC], ifm->ifi_index);
 	}
+
+	print_vlan_info(fp, tb[IFLA_AF_SPEC], ifm->ifi_index);
 	if (!filter_vlan) {
 		if (jw_global)
 			jsonw_end_array(jw_global);
@@ -332,9 +332,10 @@ static int vlan_show(int argc, char **argv)
 	}
 
 	if (filter_dev) {
-		if ((filter_index = if_nametoindex(filter_dev)) == 0) {
+		filter_index = if_nametoindex(filter_dev);
+		if (filter_index == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n",
-			       filter_dev);
+				filter_dev);
 			return -1;
 		}
 	}

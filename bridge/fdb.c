@@ -35,11 +35,12 @@ json_writer_t *jw_global;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge fdb { add | append | del | replace } ADDR dev DEV\n"
-			"              [ self ] [ master ] [ use ] [ router ]\n"
-			"              [ local | static | dynamic ] [ dst IPADDR ] [ vlan VID ]\n"
-			"              [ port PORT] [ vni VNI ] [ via DEV ]\n");
-	fprintf(stderr, "       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ] [ state STATE ] ]\n");
+	fprintf(stderr,
+		"Usage: bridge fdb { add | append | del | replace } ADDR dev DEV\n"
+		"              [ self ] [ master ] [ use ] [ router ]\n"
+		"              [ local | static | dynamic ] [ dst IPADDR ] [ vlan VID ]\n"
+		"              [ port PORT] [ vni VNI ] [ via DEV ]\n"
+		"       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ] [ state STATE ] ]\n");
 	exit(-1);
 }
 
@@ -479,9 +480,9 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (matches(*argv, "use") == 0) {
 			req.ndm.ndm_flags |= NTF_USE;
 		} else {
-			if (strcmp(*argv, "to") == 0) {
+			if (strcmp(*argv, "to") == 0)
 				NEXT_ARG();
-			}
+
 			if (matches(*argv, "help") == 0)
 				usage();
 			if (addr)
