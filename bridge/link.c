@@ -216,6 +216,13 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 		if (aftb[IFLA_BRIDGE_MODE])
 			print_hwmode(fp, rta_getattr_u16(aftb[IFLA_BRIDGE_MODE]));
+		if (show_details) {
+			if (aftb[IFLA_BRIDGE_VLAN_INFO]) {
+				fprintf(fp, "\n");
+				print_vlan_info(fp, tb[IFLA_AF_SPEC],
+						ifi->ifi_index);
+			}
+		}
 	}
 
 	fprintf(fp, "\n");
@@ -467,9 +474,19 @@ static int brlink_show(int argc, char **argv)
 		}
 	}
 
-	if (rtnl_wilddump_request(&rth, PF_BRIDGE, RTM_GETLINK) < 0) {
-		perror("Cannon send dump request");
-		exit(1);
+	if (show_details) {
+		if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
+					     (compress_vlans ?
+					      RTEXT_FILTER_BRVLAN_COMPRESSED :
+					      RTEXT_FILTER_BRVLAN)) < 0) {
+			perror("Cannon send dump request");
+			exit(1);
+		}
+	} else {
+		if (rtnl_wilddump_request(&rth, PF_BRIDGE, RTM_GETLINK) < 0) {
+			perror("Cannon send dump request");
+			exit(1);
+		}
 	}
 
 	if (rtnl_dump_filter(&rth, print_linkinfo, stdout) < 0) {
