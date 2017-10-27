@@ -61,50 +61,51 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip route { list | flush } SELECTOR\n");
-	fprintf(stderr, "       ip route save SELECTOR\n");
-	fprintf(stderr, "       ip route restore\n");
-	fprintf(stderr, "       ip route showdump\n");
-	fprintf(stderr, "       ip route get [ ROUTE_GET_FLAGS ] ADDRESS\n");
-	fprintf(stderr, "                            [ from ADDRESS iif STRING ]\n");
-	fprintf(stderr, "                            [ oif STRING ] [ tos TOS ]\n");
-	fprintf(stderr, "                            [ mark NUMBER ] [ vrf NAME ]\n");
-	fprintf(stderr, "                            [ uid NUMBER ]\n");
-	fprintf(stderr, "       ip route { add | del | change | append | replace } ROUTE\n");
-	fprintf(stderr, "SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n");
-	fprintf(stderr, "            [ table TABLE_ID ] [ vrf NAME ] [ proto RTPROTO ]\n");
-	fprintf(stderr, "            [ type TYPE ] [ scope SCOPE ]\n");
-	fprintf(stderr, "ROUTE := NODE_SPEC [ INFO_SPEC ]\n");
-	fprintf(stderr, "NODE_SPEC := [ TYPE ] PREFIX [ tos TOS ]\n");
-	fprintf(stderr, "             [ table TABLE_ID ] [ proto RTPROTO ]\n");
-	fprintf(stderr, "             [ scope SCOPE ] [ metric METRIC ]\n");
-	fprintf(stderr, "             [ ttl-propagate { enabled | disabled } ]\n");
-	fprintf(stderr, "INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n");
-	fprintf(stderr, "NH := [ encap ENCAPTYPE ENCAPHDR ] [ via [ FAMILY ] ADDRESS ]\n");
-	fprintf(stderr, "	    [ dev STRING ] [ weight NUMBER ] NHFLAGS\n");
-	fprintf(stderr, "FAMILY := [ inet | inet6 | ipx | dnet | mpls | bridge | link ]\n");
-	fprintf(stderr, "OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ] [ as [ to ] ADDRESS ]\n");
-	fprintf(stderr, "           [ rtt TIME ] [ rttvar TIME ] [ reordering NUMBER ]\n");
-	fprintf(stderr, "           [ window NUMBER ] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n");
-	fprintf(stderr, "           [ ssthresh NUMBER ] [ realms REALM ] [ src ADDRESS ]\n");
-	fprintf(stderr, "           [ rto_min TIME ] [ hoplimit NUMBER ] [ initrwnd NUMBER ]\n");
-	fprintf(stderr, "           [ features FEATURES ] [ quickack BOOL ] [ congctl NAME ]\n");
-	fprintf(stderr, "           [ pref PREF ] [ expires TIME ]\n");
-	fprintf(stderr, "TYPE := { unicast | local | broadcast | multicast | throw |\n");
-	fprintf(stderr, "          unreachable | prohibit | blackhole | nat }\n");
-	fprintf(stderr, "TABLE_ID := [ local | main | default | all | NUMBER ]\n");
-	fprintf(stderr, "SCOPE := [ host | link | global | NUMBER ]\n");
-	fprintf(stderr, "NHFLAGS := [ onlink | pervasive ]\n");
-	fprintf(stderr, "RTPROTO := [ kernel | boot | static | NUMBER ]\n");
-	fprintf(stderr, "PREF := [ low | medium | high ]\n");
-	fprintf(stderr, "TIME := NUMBER[s|ms]\n");
-	fprintf(stderr, "BOOL := [1|0]\n");
-	fprintf(stderr, "FEATURES := ecn\n");
-	fprintf(stderr, "ENCAPTYPE := [ mpls | ip | ip6 | seg6 | seg6local ]\n");
-	fprintf(stderr, "ENCAPHDR := [ MPLSLABEL | SEG6HDR ]\n");
-	fprintf(stderr, "SEG6HDR := [ mode SEGMODE ] segs ADDR1,ADDRi,ADDRn [hmac HMACKEYID] [cleanup]\n");
-	fprintf(stderr, "SEGMODE := [ encap | inline ]\n");
-	fprintf(stderr, "ROUTE_GET_FLAGS := [ fibmatch ]\n");
+	fprintf(stderr,
+		"Usage: ip route { list | flush } SELECTOR\n"
+		"       ip route save SELECTOR\n"
+		"       ip route restore\n"
+		"       ip route showdump\n"
+		"       ip route get [ ROUTE_GET_FLAGS ] ADDRESS\n"
+		"                            [ from ADDRESS iif STRING ]\n"
+		"                            [ oif STRING ] [ tos TOS ]\n"
+		"                            [ mark NUMBER ] [ vrf NAME ]\n"
+		"                            [ uid NUMBER ]\n"
+		"       ip route { add | del | change | append | replace } ROUTE\n"
+		"SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n"
+		"            [ table TABLE_ID ] [ vrf NAME ] [ proto RTPROTO ]\n"
+		"            [ type TYPE ] [ scope SCOPE ]\n"
+		"ROUTE := NODE_SPEC [ INFO_SPEC ]\n"
+		"NODE_SPEC := [ TYPE ] PREFIX [ tos TOS ]\n"
+		"             [ table TABLE_ID ] [ proto RTPROTO ]\n"
+		"             [ scope SCOPE ] [ metric METRIC ]\n"
+		"             [ ttl-propagate { enabled | disabled } ]\n"
+		"INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n"
+		"NH := [ encap ENCAPTYPE ENCAPHDR ] [ via [ FAMILY ] ADDRESS ]\n"
+		"	    [ dev STRING ] [ weight NUMBER ] NHFLAGS\n"
+		"FAMILY := [ inet | inet6 | ipx | dnet | mpls | bridge | link ]\n"
+		"OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ] [ as [ to ] ADDRESS ]\n"
+		"           [ rtt TIME ] [ rttvar TIME ] [ reordering NUMBER ]\n"
+		"           [ window NUMBER ] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n"
+		"           [ ssthresh NUMBER ] [ realms REALM ] [ src ADDRESS ]\n"
+		"           [ rto_min TIME ] [ hoplimit NUMBER ] [ initrwnd NUMBER ]\n"
+		"           [ features FEATURES ] [ quickack BOOL ] [ congctl NAME ]\n"
+		"           [ pref PREF ] [ expires TIME ]\n"
+		"TYPE := { unicast | local | broadcast | multicast | throw |\n"
+		"          unreachable | prohibit | blackhole | nat }\n"
+		"TABLE_ID := [ local | main | default | all | NUMBER ]\n"
+		"SCOPE := [ host | link | global | NUMBER ]\n"
+		"NHFLAGS := [ onlink | pervasive ]\n"
+		"RTPROTO := [ kernel | boot | static | NUMBER ]\n"
+		"PREF := [ low | medium | high ]\n"
+		"TIME := NUMBER[s|ms]\n"
+		"BOOL := [1|0]\n"
+		"FEATURES := ecn\n"
+		"ENCAPTYPE := [ mpls | ip | ip6 | seg6 | seg6local ]\n"
+		"ENCAPHDR := [ MPLSLABEL | SEG6HDR ]\n"
+		"SEG6HDR := [ mode SEGMODE ] segs ADDR1,ADDRi,ADDRn [hmac HMACKEYID] [cleanup]\n"
+		"SEGMODE := [ encap | inline ]\n"
+		"ROUTE_GET_FLAGS := [ fibmatch ]\n");
 	exit(-1);
 }
 
@@ -886,7 +887,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			get_addr(&addr, *argv, req.r.rtm_family);
 			if (req.r.rtm_family == AF_UNSPEC)
 				req.r.rtm_family = addr.family;
-			addattr_l(&req.n, sizeof(req), RTA_PREFSRC, &addr.data, addr.bytelen);
+			addattr_l(&req.n, sizeof(req),
+				  RTA_PREFSRC, &addr.data, addr.bytelen);
 		} else if (strcmp(*argv, "as") == 0) {
 			inet_prefix addr;
 
@@ -897,7 +899,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			get_addr(&addr, *argv, req.r.rtm_family);
 			if (req.r.rtm_family == AF_UNSPEC)
 				req.r.rtm_family = addr.family;
-			addattr_l(&req.n, sizeof(req), RTA_NEWDST, &addr.data, addr.bytelen);
+			addattr_l(&req.n, sizeof(req),
+				  RTA_NEWDST, &addr.data, addr.bytelen);
 		} else if (strcmp(*argv, "via") == 0) {
 			inet_prefix addr;
 			int family;
@@ -1062,7 +1065,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			}
 			if (get_unsigned(&win, *argv, 0))
 				invarg("\"initcwnd\" value is invalid\n", *argv);
-			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_INITCWND, win);
+			rta_addattr32(mxrta, sizeof(mxbuf),
+				      RTAX_INITCWND, win);
 		} else if (matches(*argv, "initrwnd") == 0) {
 			unsigned int win;
 
@@ -1073,7 +1077,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			}
 			if (get_unsigned(&win, *argv, 0))
 				invarg("\"initrwnd\" value is invalid\n", *argv);
-			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_INITRWND, win);
+			rta_addattr32(mxrta, sizeof(mxbuf),
+				      RTAX_INITRWND, win);
 		} else if (matches(*argv, "features") == 0) {
 			unsigned int features = 0;
 
@@ -1087,7 +1092,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 				break;
 			}
 
-			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_FEATURES, features);
+			rta_addattr32(mxrta, sizeof(mxbuf),
+				      RTAX_FEATURES, features);
 		} else if (matches(*argv, "quickack") == 0) {
 			unsigned int quickack;
 
@@ -1096,7 +1102,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 				invarg("\"quickack\" value is invalid\n", *argv);
 			if (quickack != 1 && quickack != 0)
 				invarg("\"quickack\" value should be 0 or 1\n", *argv);
-			rta_addattr32(mxrta, sizeof(mxbuf), RTAX_QUICKACK, quickack);
+			rta_addattr32(mxrta, sizeof(mxbuf),
+				      RTAX_QUICKACK, quickack);
 		} else if (matches(*argv, "congctl") == 0) {
 			NEXT_ARG();
 			if (strcmp(*argv, "lock") == 0) {
@@ -1201,7 +1208,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			lwt_parse_encap(rta, sizeof(buf), &argc, &argv);
 
 			if (rta->rta_len > RTA_LENGTH(0))
-				addraw_l(&req.n, 1024, RTA_DATA(rta), RTA_PAYLOAD(rta));
+				addraw_l(&req.n, 1024
+					 , RTA_DATA(rta), RTA_PAYLOAD(rta));
 		} else if (strcmp(*argv, "ttl-propagate") == 0) {
 			__u8 ttl_prop;
 
@@ -1240,7 +1248,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			req.r.rtm_dst_len = dst.bitlen;
 			dst_ok = 1;
 			if (dst.bytelen)
-				addattr_l(&req.n, sizeof(req), RTA_DST, &dst.data, dst.bytelen);
+				addattr_l(&req.n, sizeof(req),
+					  RTA_DST, &dst.data, dst.bytelen);
 		}
 		argc--; argv++;
 	}
@@ -1709,7 +1718,8 @@ static int iproute_get(int argc, char **argv)
 			if (req.r.rtm_family == AF_UNSPEC)
 				req.r.rtm_family = addr.family;
 			if (addr.bytelen)
-				addattr_l(&req.n, sizeof(req), RTA_SRC, &addr.data, addr.bytelen);
+				addattr_l(&req.n, sizeof(req), RTA_SRC,
+					  &addr.data, addr.bytelen);
 			req.r.rtm_src_len = addr.bitlen;
 		} else if (matches(*argv, "iif") == 0) {
 			NEXT_ARG();
@@ -1749,7 +1759,8 @@ static int iproute_get(int argc, char **argv)
 			get_addr(&addr, *argv, req.r.rtm_family);
 			if (req.r.rtm_family == AF_UNSPEC)
 				req.r.rtm_family = addr.family;
-			addattr_l(&req.n, sizeof(req), RTA_NEWDST, &addr.data, addr.bytelen);
+			addattr_l(&req.n, sizeof(req), RTA_NEWDST,
+				  &addr.data, addr.bytelen);
 		} else {
 			inet_prefix addr;
 
@@ -1762,7 +1773,8 @@ static int iproute_get(int argc, char **argv)
 			if (req.r.rtm_family == AF_UNSPEC)
 				req.r.rtm_family = addr.family;
 			if (addr.bytelen)
-				addattr_l(&req.n, sizeof(req), RTA_DST, &addr.data, addr.bytelen);
+				addattr_l(&req.n, sizeof(req),
+					  RTA_DST, &addr.data, addr.bytelen);
 			req.r.rtm_dst_len = addr.bitlen;
 		}
 		argc--; argv++;
