@@ -44,6 +44,8 @@ bridge \- show / manipulate bridge addresses and devices
 .BR flood " { " on " | " off " } ] [ "
 .BR hwmode " { " vepa " | " veb " } ] [ "
 .BR mcast_flood " { " on " | " off " } ] [ "
+.BR neigh_suppress " { " on " | " off " } ] [ "
+.BR vlan_tunnel " { " on " | " off " } ] [ "
 .BR self " ] [ " master " ]"
 
 .ti -8
@@ -325,6 +327,10 @@ Controls whether a given port will be flooded with multicast traffic for which t
 .TP
 .BR "neigh_suppress on " or " neigh_suppress off "
 Controls whether neigh discovery (arp and nd) proxy and suppression is enabled on the port. By default this flag is off.
+
+.TP
+.BR "vlan_tunnel on " or " vlan_tunnel off "
+Controls whether vlan to tunnel mapping is enabled on the port. By default this flag is off.
 
 .TP
 .BI self

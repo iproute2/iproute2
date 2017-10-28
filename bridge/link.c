@@ -201,6 +201,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				if (prtb[IFLA_BRPORT_NEIGH_SUPPRESS])
 					print_onoff(fp, "neigh_suppress",
 						    rta_getattr_u8(prtb[IFLA_BRPORT_NEIGH_SUPPRESS]));
+				if (prtb[IFLA_BRPORT_VLAN_TUNNEL])
+					print_onoff(fp, "vlan_tunnel",
+						    rta_getattr_u8(prtb[IFLA_BRPORT_VLAN_TUNNEL]));
 			}
 		} else
 			print_portstate(fp, rta_getattr_u8(tb[IFLA_PROTINFO]));
@@ -241,6 +244,8 @@ static void usage(void)
 	fprintf(stderr,	"                               [ learning_sync {on | off} ]\n");
 	fprintf(stderr,	"                               [ flood {on | off} ]\n");
 	fprintf(stderr,	"                               [ mcast_flood {on | off} ]\n");
+	fprintf(stderr,	"                               [ neigh_suppress {on | off} ]\n");
+	fprintf(stderr,	"                               [ vlan_tunnel {on | off} ]\n");
 	fprintf(stderr, "                               [ hwmode {vepa | veb} ]\n");
 	fprintf(stderr, "                               [ self ] [ master ]\n");
 	fprintf(stderr, "       bridge link show [dev DEV]\n");
@@ -280,6 +285,7 @@ static int brlink_modify(int argc, char **argv)
 	__s8 learning = -1;
 	__s8 learning_sync = -1;
 	__s8 flood = -1;
+	__s8 vlan_tunnel = -1;
 	__s8 mcast_flood = -1;
 	__s8 hairpin = -1;
 	__s8 bpdu_guard = -1;
@@ -371,6 +377,11 @@ static int brlink_modify(int argc, char **argv)
 			if (!on_off("neigh_suppress", &neigh_suppress,
 				    *argv))
 				return -1;
+		} else if (strcmp(*argv, "vlan_tunnel") == 0) {
+			NEXT_ARG();
+			if (!on_off("vlan_tunnel", &vlan_tunnel,
+				    *argv))
+				return -1;
 		} else {
 			usage();
 		}
@@ -426,6 +437,9 @@ static int brlink_modify(int argc, char **argv)
 	if (neigh_suppress != -1)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_NEIGH_SUPPRESS,
 			 neigh_suppress);
+	if (vlan_tunnel != -1)
+		addattr8(&req.n, sizeof(req), IFLA_BRPORT_VLAN_TUNNEL,
+			 vlan_tunnel);
 
 	addattr_nest_end(&req.n, nest);
 

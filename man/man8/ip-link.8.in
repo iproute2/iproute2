@@ -1751,6 +1751,8 @@ the following additional arguments are supported:
 .BR group_fwd_mask " MASK"
 ] [
 .BR neigh_suppress " { " on " | " off " } ]"
+] [
+.BR vlan_tunnel " { " on " | " off " } ]"
 
 .in +8
 .sp
@@ -1830,6 +1832,9 @@ option above.
 
 .BR neigh_suppress " { " on " | " off " }"
 - controls whether neigh discovery (arp and nd) proxy and suppression is enabled on the port. By default this flag is off.
+
+.BR vlan_tunnel " { " on " | " off " }"
+- Controls whether vlan to tunnel mapping is enabled on the port. By default this flag is off.
 
 .in -8
 

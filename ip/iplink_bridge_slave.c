@@ -39,6 +39,7 @@ static void print_explain(FILE *f)
 		"                        [ mcast_flood {on | off} ]\n"
 		"                        [ group_fwd_mask MASK ]\n"
 		"                        [ neigh_suppress {on | off} ]\n"
+		"                        [ vlan_tunnel {on | off} ]\n"
 	);
 }
 
@@ -283,6 +284,10 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 		print_string(PRINT_ANY, "group_fwd_mask_str",
 			     "group_fwd_mask_str %s ", convbuf);
 	}
+
+	if (tb[IFLA_BRPORT_VLAN_TUNNEL])
+		_print_onoff(f, "vlan_tunnel", "vlan_tunnel",
+			     rta_getattr_u8(tb[IFLA_BRPORT_VLAN_TUNNEL]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -384,6 +389,10 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (get_u16(&mask, *argv, 0))
 				invarg("invalid group_fwd_mask", *argv);
 			addattr16(n, 1024, IFLA_BRPORT_GROUP_FWD_MASK, mask);
+		} else if (matches(*argv, "vlan_tunnel") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("vlan_tunnel", *argv, n,
+						  IFLA_BRPORT_VLAN_TUNNEL);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
