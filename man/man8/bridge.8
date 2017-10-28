@@ -105,11 +105,13 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV
 .B vid
 .IR VID " [ "
+.BR tunnel_info
+.IR TUNNEL_ID " ] [ "
 .BR pvid " ] [ " untagged " ] [ "
 .BR self " ] [ " master " ] "
 
 .ti -8
-.BR "bridge vlan" " [ " show " ] [ "
+.BR "bridge vlan" " [ " show " | " tunnelshow " ] [ "
 .B dev
 .IR DEV " ]"
 
@@ -562,6 +564,12 @@ the interface with which this vlan is associated.
 the VLAN ID that identifies the vlan.
 
 .TP
+.BI tunnel_info " TUNNEL_ID"
+the TUNNEL ID that maps to this vlan. The tunnel id is set in dst_metadata for
+every packet that belongs to this vlan (applicable to bridge ports with vlan_tunnel
+flag set).
+
+.TP
 .BI pvid
 the vlan specified is to be considered a PVID at ingress.
 Any untagged frames will be assigned to this VLAN.
@@ -597,6 +605,10 @@ This command displays the current VLAN filter table.
 With the
 .B -statistics
 option, the command displays per-vlan traffic statistics.
+
+.SS bridge vlan tunnelshow - list vlan tunnel mapping.
+
+This command displays the current vlan tunnel info mapping.
 
 .SH bridge monitor - state monitoring
 

@@ -16,16 +16,112 @@
 
 static unsigned int filter_index, filter_vlan;
 static int last_ifidx = -1;
+static int show_vlan_tunnel_info = 0;
 
 json_writer_t *jw_global;
 
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ pvid ] [ untagged ]\n"
+		"Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ tunnel_info id TUNNEL_ID ]\n"
+		"                                                     [ pvid ] [ untagged ]\n"
 		"                                                     [ self ] [ master ]\n"
-		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n");
+		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
+		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
+}
+
+static int parse_tunnel_info(int *argcp, char ***argvp, __u32 *tun_id_start,
+			     __u32 *tun_id_end)
+{
+	char **argv = *argvp;
+	int argc = *argcp;
+	char *t;
+
+	NEXT_ARG();
+	if (!matches(*argv, "id")) {
+		NEXT_ARG();
+		t = strchr(*argv, '-');
+		if (t) {
+			*t = '\0';
+			if (get_u32(tun_id_start, *argv, 0) ||
+				    *tun_id_start >= 1u << 24)
+				invarg("invalid tun id", *argv);
+			if (get_u32(tun_id_end, t + 1, 0) ||
+				    *tun_id_end >= 1u << 24)
+				invarg("invalid tun id", *argv);
+
+		} else {
+			if (get_u32(tun_id_start, *argv, 0) ||
+				    *tun_id_start >= 1u << 24)
+				invarg("invalid tun id", *argv);
+		}
+	} else {
+		invarg("tunnel id expected", *argv);
+	}
+
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
+static int add_tunnel_info(struct nlmsghdr *n, int reqsize,
+			   __u16 vid, __u32 tun_id, __u16 flags)
+{
+	struct rtattr *tinfo;
+
+	tinfo = addattr_nest(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_INFO);
+	addattr32(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_ID, tun_id);
+	addattr32(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_VID, vid);
+	addattr32(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_FLAGS, flags);
+
+	addattr_nest_end(n, tinfo);
+
+	return 0;
+}
+
+static int add_tunnel_info_range(struct nlmsghdr *n, int reqsize,
+				 __u16 vid_start, int16_t vid_end,
+				 __u32 tun_id_start, __u32 tun_id_end)
+{
+	if (vid_end != -1 && (vid_end - vid_start) > 0) {
+		add_tunnel_info(n, reqsize, vid_start, tun_id_start,
+				BRIDGE_VLAN_INFO_RANGE_BEGIN);
+
+		add_tunnel_info(n, reqsize, vid_end, tun_id_end,
+				BRIDGE_VLAN_INFO_RANGE_END);
+	} else {
+		add_tunnel_info(n, reqsize, vid_start, tun_id_start, 0);
+	}
+
+	return 0;
+}
+
+static int add_vlan_info_range(struct nlmsghdr *n, int reqsize, __u16 vid_start,
+			       int16_t vid_end, __u16 flags)
+{
+	struct bridge_vlan_info vinfo = {};
+
+	vinfo.flags = flags;
+	vinfo.vid = vid_start;
+	if (vid_end != -1) {
+		/* send vlan range start */
+		addattr_l(n, reqsize, IFLA_BRIDGE_VLAN_INFO, &vinfo,
+			  sizeof(vinfo));
+		vinfo.flags &= ~BRIDGE_VLAN_INFO_RANGE_BEGIN;
+
+		/* Now send the vlan range end */
+		vinfo.flags |= BRIDGE_VLAN_INFO_RANGE_END;
+		vinfo.vid = vid_end;
+		addattr_l(n, reqsize, IFLA_BRIDGE_VLAN_INFO, &vinfo,
+			  sizeof(vinfo));
+	} else {
+		addattr_l(n, reqsize, IFLA_BRIDGE_VLAN_INFO, &vinfo,
+			  sizeof(vinfo));
+	}
+
+	return 0;
 }
 
 static int vlan_modify(int cmd, int argc, char **argv)
@@ -45,7 +141,10 @@ static int vlan_modify(int cmd, int argc, char **argv)
 	short vid_end = -1;
 	struct rtattr *afspec;
 	struct bridge_vlan_info vinfo = {};
+	bool tunnel_info_set = false;
 	unsigned short flags = 0;
+	__u32 tun_id_start = 0;
+	__u32 tun_id_end = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -73,6 +172,12 @@ static int vlan_modify(int cmd, int argc, char **argv)
 			vinfo.flags |= BRIDGE_VLAN_INFO_PVID;
 		} else if (strcmp(*argv, "untagged") == 0) {
 			vinfo.flags |= BRIDGE_VLAN_INFO_UNTAGGED;
+		} else if (strcmp(*argv, "tunnel_info") == 0) {
+				if (parse_tunnel_info(&argc, &argv,
+						      &tun_id_start,
+						      &tun_id_end))
+					return -1;
+				tunnel_info_set = true;
 		} else {
 			if (matches(*argv, "help") == 0)
 				NEXT_ARG();
@@ -114,22 +219,12 @@ static int vlan_modify(int cmd, int argc, char **argv)
 	if (flags)
 		addattr16(&req.n, sizeof(req), IFLA_BRIDGE_FLAGS, flags);
 
-	vinfo.vid = vid;
-	if (vid_end != -1) {
-		/* send vlan range start */
-		addattr_l(&req.n, sizeof(req), IFLA_BRIDGE_VLAN_INFO, &vinfo,
-			  sizeof(vinfo));
-		vinfo.flags &= ~BRIDGE_VLAN_INFO_RANGE_BEGIN;
-
-		/* Now send the vlan range end */
-		vinfo.flags |= BRIDGE_VLAN_INFO_RANGE_END;
-		vinfo.vid = vid_end;
-		addattr_l(&req.n, sizeof(req), IFLA_BRIDGE_VLAN_INFO, &vinfo,
-			  sizeof(vinfo));
-	} else {
-		addattr_l(&req.n, sizeof(req), IFLA_BRIDGE_VLAN_INFO, &vinfo,
-			  sizeof(vinfo));
-	}
+	if (tunnel_info_set)
+		add_tunnel_info_range(&req.n, sizeof(req), vid, vid_end,
+				      tun_id_start, tun_id_end);
+	else
+		add_vlan_info_range(&req.n, sizeof(req), vid, vid_end,
+				    vinfo.flags);
 
 	addattr_nest_end(&req.n, afspec);
 
@@ -146,14 +241,14 @@ static int vlan_modify(int cmd, int argc, char **argv)
  *             which are less than filter_vlan)
  * return  1 - print the entry and continue
  */
-static int filter_vlan_check(struct bridge_vlan_info *vinfo)
+static int filter_vlan_check(__u16 vid, __u16 flags)
 {
 	/* if we're filtering we should stop on the first greater entry */
-	if (filter_vlan && vinfo->vid > filter_vlan &&
-	    !(vinfo->flags & BRIDGE_VLAN_INFO_RANGE_END))
+	if (filter_vlan && vid > filter_vlan &&
+	    !(flags & BRIDGE_VLAN_INFO_RANGE_END))
 		return -1;
-	if ((vinfo->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) ||
-	    vinfo->vid < filter_vlan)
+	if ((flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) ||
+	    vid < filter_vlan)
 		return 0;
 
 	return 1;
@@ -179,6 +274,150 @@ static void start_json_vlan_flags_array(bool *vlan_flags)
 	jsonw_name(jw_global, "flags");
 	jsonw_start_array(jw_global);
 	*vlan_flags = true;
+}
+
+static void print_vlan_tunnel_info(FILE *fp, struct rtattr *tb, int ifindex)
+{
+	bool jsonw_end_parray = false;
+	struct rtattr *i, *list = tb;
+	int rem = RTA_PAYLOAD(list);
+	__u16 last_vid_start = 0;
+	__u32 last_tunid_start = 0;
+
+	if (!filter_vlan) {
+		print_vlan_port(fp, ifindex);
+		jsonw_end_parray = 1;
+	}
+
+	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+		struct rtattr *ttb[IFLA_BRIDGE_VLAN_TUNNEL_MAX+1];
+		__u32 tunnel_id = 0;
+		__u16 tunnel_vid = 0;
+		__u16 tunnel_flags = 0;
+		int vcheck_ret;
+
+		if (i->rta_type != IFLA_BRIDGE_VLAN_TUNNEL_INFO)
+			continue;
+
+		parse_rtattr(ttb, IFLA_BRIDGE_VLAN_TUNNEL_MAX,
+			     RTA_DATA(i), RTA_PAYLOAD(i));
+
+		if (ttb[IFLA_BRIDGE_VLAN_TUNNEL_VID])
+			tunnel_vid =
+				rta_getattr_u32(ttb[IFLA_BRIDGE_VLAN_TUNNEL_VID]);
+		else
+			continue;
+
+		if (ttb[IFLA_BRIDGE_VLAN_TUNNEL_ID])
+			tunnel_id =
+				rta_getattr_u32(ttb[IFLA_BRIDGE_VLAN_TUNNEL_ID]);
+
+		if (ttb[IFLA_BRIDGE_VLAN_TUNNEL_FLAGS])
+			tunnel_flags =
+				rta_getattr_u32(ttb[IFLA_BRIDGE_VLAN_TUNNEL_FLAGS]);
+
+		if (!(tunnel_flags & BRIDGE_VLAN_INFO_RANGE_END)) {
+			last_vid_start = tunnel_vid;
+			last_tunid_start = tunnel_id;
+		}
+		vcheck_ret = filter_vlan_check(tunnel_vid, tunnel_flags);
+		if (vcheck_ret == -1)
+			break;
+		else if (vcheck_ret == 0)
+			continue;
+
+		if (tunnel_flags & BRIDGE_VLAN_INFO_RANGE_BEGIN)
+			continue;
+
+		if (filter_vlan) {
+			print_vlan_port(fp, ifindex);
+			jsonw_end_parray = 1;
+		}
+
+		if (jw_global) {
+			jsonw_start_object(jw_global);
+			jsonw_uint_field(jw_global, "vlan",
+					 last_vid_start);
+		} else {
+			fprintf(fp, "\t %hu", last_vid_start);
+		}
+		if (last_vid_start != tunnel_vid) {
+			if (jw_global)
+				jsonw_uint_field(jw_global, "vlanEnd",
+						 tunnel_vid);
+			else
+				fprintf(fp, "-%hu", tunnel_vid);
+		}
+
+		if (jw_global) {
+			jsonw_uint_field(jw_global, "tunid",
+					 last_tunid_start);
+		} else {
+			fprintf(fp, "\t %hu", last_tunid_start);
+		}
+		if (last_vid_start != tunnel_vid) {
+			if (jw_global)
+				jsonw_uint_field(jw_global, "tunidEnd",
+						 tunnel_id);
+			else
+				fprintf(fp, "-%hu", tunnel_id);
+		}
+
+		if (jw_global)
+			jsonw_end_object(jw_global);
+		else
+			fprintf(fp, "\n");
+	}
+
+	if (jsonw_end_parray) {
+		if (jw_global)
+			jsonw_end_array(jw_global);
+		else
+			fprintf(fp, "\n");
+	}
+}
+
+static int print_vlan_tunnel(const struct sockaddr_nl *who,
+			     struct nlmsghdr *n,
+			     void *arg)
+{
+	struct ifinfomsg *ifm = NLMSG_DATA(n);
+	struct rtattr *tb[IFLA_MAX+1];
+	int len = n->nlmsg_len;
+	FILE *fp = arg;
+
+	if (n->nlmsg_type != RTM_NEWLINK) {
+		fprintf(stderr, "Not RTM_NEWLINK: %08x %08x %08x\n",
+			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
+		return 0;
+	}
+
+	len -= NLMSG_LENGTH(sizeof(*ifm));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
+	}
+
+	if (ifm->ifi_family != AF_BRIDGE)
+		return 0;
+
+	if (filter_index && filter_index != ifm->ifi_index)
+		return 0;
+
+	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifm), len);
+
+	/* if AF_SPEC isn't there, vlan table is not preset for this port */
+	if (!tb[IFLA_AF_SPEC]) {
+		if (!filter_vlan && !jw_global)
+			fprintf(fp, "%s\tNone\n",
+				ll_index_to_name(ifm->ifi_index));
+		return 0;
+	}
+
+	print_vlan_tunnel_info(fp, tb[IFLA_AF_SPEC], ifm->ifi_index);
+
+	fflush(fp);
+	return 0;
 }
 
 static int print_vlan(const struct sockaddr_nl *who,
@@ -219,13 +458,7 @@ static int print_vlan(const struct sockaddr_nl *who,
 	}
 
 	print_vlan_info(fp, tb[IFLA_AF_SPEC], ifm->ifi_index);
-	if (!filter_vlan) {
-		if (jw_global)
-			jsonw_end_array(jw_global);
-		else
-			fprintf(fp, "\n");
 
-	}
 	fflush(fp);
 	return 0;
 }
@@ -315,6 +548,7 @@ static int print_vlan_stats(const struct sockaddr_nl *who,
 static int vlan_show(int argc, char **argv)
 {
 	char *filter_dev = NULL;
+	int ret = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -356,10 +590,19 @@ static int vlan_show(int argc, char **argv)
 			}
 			jsonw_start_object(jw_global);
 		} else {
-			printf("port\tvlan ids\n");
+			if (show_vlan_tunnel_info)
+				printf("port\tvlan ids\ttunnel id\n");
+			else
+				printf("port\tvlan ids\n");
 		}
 
-		if (rtnl_dump_filter(&rth, print_vlan, stdout) < 0) {
+		if (show_vlan_tunnel_info)
+			ret = rtnl_dump_filter(&rth, print_vlan_tunnel,
+					       stdout);
+		else
+			ret = rtnl_dump_filter(&rth, print_vlan, stdout);
+
+		if (ret < 0) {
 			fprintf(stderr, "Dump ternminated\n");
 			exit(1);
 		}
@@ -408,9 +651,12 @@ void print_vlan_info(FILE *fp, struct rtattr *tb, int ifindex)
 	int rem = RTA_PAYLOAD(list);
 	__u16 last_vid_start = 0;
 	bool vlan_flags = false;
+	bool jsonw_end_parray = false;
 
-	if (!filter_vlan)
+	if (!filter_vlan) {
 		print_vlan_port(fp, ifindex);
+		jsonw_end_parray = true;
+	}
 
 	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		struct bridge_vlan_info *vinfo;
@@ -423,14 +669,16 @@ void print_vlan_info(FILE *fp, struct rtattr *tb, int ifindex)
 
 		if (!(vinfo->flags & BRIDGE_VLAN_INFO_RANGE_END))
 			last_vid_start = vinfo->vid;
-		vcheck_ret = filter_vlan_check(vinfo);
+		vcheck_ret = filter_vlan_check(vinfo->vid, vinfo->flags);
 		if (vcheck_ret == -1)
 			break;
 		else if (vcheck_ret == 0)
 			continue;
 
-		if (filter_vlan)
+		if (filter_vlan) {
 			print_vlan_port(fp, ifindex);
+			jsonw_end_parray = true;
+		}
 		if (jw_global) {
 			jsonw_start_object(jw_global);
 			jsonw_uint_field(jw_global, "vlan",
@@ -474,6 +722,14 @@ void print_vlan_info(FILE *fp, struct rtattr *tb, int ifindex)
 		else
 			fprintf(fp, "\n");
 	}
+
+	if (jsonw_end_parray) {
+		if (jw_global)
+			jsonw_end_array(jw_global);
+		else
+			fprintf(fp, "\n");
+
+	}
 }
 
 int do_vlan(int argc, char **argv)
@@ -489,6 +745,10 @@ int do_vlan(int argc, char **argv)
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
 			return vlan_show(argc-1, argv+1);
+		if (matches(*argv, "tunnelshow") == 0) {
+			show_vlan_tunnel_info = 1;
+			return vlan_show(argc-1, argv+1);
+		}
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else {
