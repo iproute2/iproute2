@@ -42,6 +42,7 @@ static void print_usage(FILE *f)
 		"                  [ flowlabel FLOWLABEL ]\n"
 		"                  [ dscp inherit ]\n"
 		"                  [ fwmark MARK ]\n"
+		"                  [ [no]allow-localremote ]\n"
 		"                  [ noencap ]\n"
 		"                  [ encap { fou | gue | none } ]\n"
 		"                  [ encap-sport PORT ]\n"
@@ -268,6 +269,10 @@ get_failed:
 					invarg("invalid fwmark\n", *argv);
 				flags &= ~IP6_TNL_F_USE_ORIG_FWMARK;
 			}
+		} else if (strcmp(*argv, "allow-localremote") == 0) {
+			flags |= IP6_TNL_F_ALLOW_LOCAL_REMOTE;
+		} else if (strcmp(*argv, "noallow-localremote") == 0) {
+			flags &= ~IP6_TNL_F_ALLOW_LOCAL_REMOTE;
 		} else if (strcmp(*argv, "noencap") == 0) {
 			encaptype = TUNNEL_ENCAP_NONE;
 		} else if (strcmp(*argv, "encap") == 0) {
@@ -471,6 +476,12 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 			print_string(PRINT_ANY, "fwmark", "fwmark %s ", b1);
 		}
 	}
+
+	if (flags & IP6_TNL_F_ALLOW_LOCAL_REMOTE)
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_allow_local_remote",
+			   "allow-localremote ",
+			   true);
 
 	if (tb[IFLA_IPTUN_ENCAP_TYPE] &&
 	    rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {

@@ -52,6 +52,7 @@ static void usage(void)
 	fprintf(stderr, "          [ encaplimit ELIM ]\n");
 	fprintf(stderr, "          [ hoplimit TTL ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
 	fprintf(stderr, "          [ dscp inherit ]\n");
+	fprintf(stderr, "          [ [no]allow-localremote ]\n");
 	fprintf(stderr, "          [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where: NAME      := STRING\n");
@@ -110,6 +111,9 @@ static void print_tunnel(struct ip6_tnl_parm2 *p)
 
 	if (p->flags & IP6_TNL_F_RCV_DSCP_COPY)
 		printf(" dscp inherit");
+
+	if (p->flags & IP6_TNL_F_ALLOW_LOCAL_REMOTE)
+		printf(" allow-localremote");
 
 	if ((p->i_flags & GRE_KEY) && (p->o_flags & GRE_KEY) &&
 	    p->o_key == p->i_key)
@@ -239,6 +243,10 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 			if (strcmp(*argv, "inherit") != 0)
 				invarg("not inherit", *argv);
 			p->flags |= IP6_TNL_F_RCV_DSCP_COPY;
+		} else if (strcmp(*argv, "allow-localremote") == 0) {
+			p->flags |= IP6_TNL_F_ALLOW_LOCAL_REMOTE;
+		} else if (strcmp(*argv, "noallow-localremote") == 0) {
+			p->flags &= ~IP6_TNL_F_ALLOW_LOCAL_REMOTE;
 		} else if (strcmp(*argv, "key") == 0) {
 			NEXT_ARG();
 			p->i_flags |= GRE_KEY;
