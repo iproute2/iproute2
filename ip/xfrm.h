@@ -90,6 +90,7 @@ struct xfrm_filter {
 	__u8 action_mask;
 	__u32 priority_mask;
 	__u8 policy_flags_mask;
+	__u8 filter_socket;
 
 	__u8 ptype;
 	__u8 ptype_mask;

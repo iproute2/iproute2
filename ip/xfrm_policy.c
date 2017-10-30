@@ -58,7 +58,7 @@ static void usage(void)
 	fprintf(stderr, "        [ LIMIT-LIST ] [ TMPL-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy { delete | get } { SELECTOR | index INDEX } dir DIR\n");
 	fprintf(stderr, "        [ ctx CTX ] [ mark MARK [ mask MASK ] ] [ ptype PTYPE ]\n");
-	fprintf(stderr, "Usage: ip xfrm policy { deleteall | list } [ SELECTOR ] [ dir DIR ]\n");
+	fprintf(stderr, "Usage: ip xfrm policy { deleteall | list } [ nosock ] [ SELECTOR ] [ dir DIR ]\n");
 	fprintf(stderr, "        [ index INDEX ] [ ptype PTYPE ] [ action ACTION ] [ priority PRIORITY ]\n");
 	fprintf(stderr, "        [ flag FLAG-LIST ]\n");
 	fprintf(stderr, "Usage: ip xfrm policy flush [ ptype PTYPE ]\n");
@@ -401,6 +401,9 @@ static int xfrm_policy_filter_match(struct xfrm_userpolicy_info *xpinfo,
 		return 1;
 
 	if ((xpinfo->dir^filter.xpinfo.dir)&filter.dir_mask)
+		return 0;
+
+	if (filter.filter_socket && (xpinfo->dir >= XFRM_POLICY_MAX))
 		return 0;
 
 	if ((ptype^filter.ptype)&filter.ptype_mask)
@@ -806,6 +809,9 @@ static int xfrm_policy_list_or_deleteall(int argc, char **argv, int deleteall)
 
 			filter.policy_flags_mask = XFRM_FILTER_MASK_FULL;
 
+		} else if (strcmp(*argv, "nosock") == 0) {
+			/* filter all socket-based policies */
+			filter.filter_socket = 1;
 		} else {
 			if (selp)
 				invarg("unknown", *argv);
