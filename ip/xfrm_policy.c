@@ -735,6 +735,10 @@ static int xfrm_policy_keep(const struct sockaddr_nl *who,
 	if (!xfrm_policy_filter_match(xpinfo, ptype))
 		return 0;
 
+	/* can't delete socket policies */
+	if (xpinfo->dir >= XFRM_POLICY_MAX)
+		return 0;
+
 	if (xb->offset + NLMSG_LENGTH(sizeof(*xpid)) > xb->size)
 		return 0;
 
