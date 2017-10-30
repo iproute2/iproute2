@@ -753,6 +753,15 @@ static int xfrm_policy_keep(const struct sockaddr_nl *who,
 	xpid->dir = xpinfo->dir;
 	xpid->index = xpinfo->index;
 
+	if (tb[XFRMA_MARK]) {
+		int r = addattr_l(new_n, xb->size, XFRMA_MARK,
+				(void *)RTA_DATA(tb[XFRMA_MARK]), tb[XFRMA_MARK]->rta_len);
+		if (r < 0) {
+			fprintf(stderr, "%s: XFRMA_MARK failed\n", __func__);
+			exit(1);
+		}
+	}
+
 	xb->offset += new_n->nlmsg_len;
 	xb->nlmsg_count++;
 

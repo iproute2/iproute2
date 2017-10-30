@@ -1080,6 +1080,7 @@ static int xfrm_state_keep(const struct sockaddr_nl *who,
 	int len = n->nlmsg_len;
 	struct nlmsghdr *new_n;
 	struct xfrm_usersa_id *xsid;
+	struct rtattr *tb[XFRMA_MAX+1];
 
 	if (n->nlmsg_type != XFRM_MSG_NEWSA) {
 		fprintf(stderr, "Not a state: %08x %08x %08x\n",
@@ -1115,6 +1116,17 @@ static int xfrm_state_keep(const struct sockaddr_nl *who,
 
 	addattr_l(new_n, xb->size, XFRMA_SRCADDR, &xsinfo->saddr,
 		  sizeof(xsid->daddr));
+
+	parse_rtattr(tb, XFRMA_MAX, XFRMS_RTA(xsinfo), len);
+
+	if (tb[XFRMA_MARK]) {
+		int r = addattr_l(new_n, xb->size, XFRMA_MARK,
+				(void *)RTA_DATA(tb[XFRMA_MARK]), tb[XFRMA_MARK]->rta_len);
+		if (r < 0) {
+			fprintf(stderr, "%s: XFRMA_MARK failed\n", __func__);
+			exit(1);
+		}
+	}
 
 	xb->offset += new_n->nlmsg_len;
 	xb->nlmsg_count++;
