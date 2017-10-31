@@ -3593,12 +3593,8 @@ static int netlink_show_one(struct filter *f,
 		else if (pid > 0)
 			getpidcon(pid, &pid_context);
 
-		if (pid_context != NULL) {
-			printf(" proc_ctx=%s", pid_context);
-			free(pid_context);
-		} else {
-			printf(" proc_ctx=unavailable");
-		}
+		printf(" proc_ctx=%s", pid_context ? : "unavailable");
+		free(pid_context);
 	}
 
 	if (show_details) {
