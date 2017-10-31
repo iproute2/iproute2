@@ -141,7 +141,9 @@ replace " } "
 .B  pref
 .IR PREF " ] [ "
 .B  expires
-.IR TIME " ]"
+.IR TIME " ] ["
+.B  fastopen_no_cookie
+.IR BOOL " ]"
 
 .ti -8
 .IR TYPE " := [ "
@@ -523,6 +525,10 @@ sysctl is set to 0.
 .TP
 .BI quickack " BOOL " "(3.11+ only)"
 Enable or disable quick ack for connections to this destination.
+
+.TP
+.BI fastopen_no_cookie " BOOL " "(4.15+ only)"
+Enable TCP Fastopen without a cookie for connections to this destination.
 
 .TP
 .BI congctl " NAME " "(3.20+ only)"
