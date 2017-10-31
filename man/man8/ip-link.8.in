@@ -250,6 +250,7 @@ Link types:
 .sp
 .B bond
 - Bonding device
+.sp
 .B can
 - Controller Area Network interface
 .sp

@@ -93,7 +93,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 			} else if (matches(*argv, "prio") == 0) {
 				ife_prio = IFE_META_PRIO;
 			} else if (matches(*argv, "tcindex") == 0) {
-				ife_prio = IFE_META_TCINDEX;
+				ife_tcindex = IFE_META_TCINDEX;
 			} else {
 				fprintf(stderr, "Illegal meta define <%s>\n",
 					*argv);
