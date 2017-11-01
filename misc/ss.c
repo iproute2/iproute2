@@ -108,6 +108,7 @@ int netid_width;
 int state_width;
 int addr_width;
 int serv_width;
+char *odd_width_pad = "";
 
 static const char *TCP_PROTO = "tcp";
 static const char *SCTP_PROTO = "sctp";
@@ -873,7 +874,7 @@ static void sock_state_print(struct sockstat *s)
 			printf("%-*s ", state_width, sstate_name[s->state]);
 	}
 
-	printf("%-6d %-6d ", s->rq, s->wq);
+	printf("%-6d %-6d %s", s->rq, s->wq, odd_width_pad);
 }
 
 static void sock_details_print(struct sockstat *s)
@@ -3670,12 +3671,8 @@ static int netlink_show_one(struct filter *f,
 		else if (pid > 0)
 			getpidcon(pid, &pid_context);
 
-		if (pid_context != NULL) {
-			printf("proc_ctx=%-*s ", serv_width, pid_context);
-			free(pid_context);
-		} else {
-			printf("proc_ctx=%-*s ", serv_width, "unavailable");
-		}
+		printf(" proc_ctx=%s", pid_context ? : "unavailable");
+		free(pid_context);
 	}
 
 	if (show_details) {
@@ -4548,8 +4545,10 @@ int main(int argc, char *argv[])
 	}
 
 	addrp_width = screen_width;
-	addrp_width -= netid_width+1;
-	addrp_width -= state_width+1;
+	if (netid_width)
+		addrp_width -= netid_width + 1;
+	if (state_width)
+		addrp_width -= state_width + 1;
 	addrp_width -= 14;
 
 	if (addrp_width&1) {
@@ -4557,6 +4556,8 @@ int main(int argc, char *argv[])
 			netid_width++;
 		else if (state_width)
 			state_width++;
+		else
+			odd_width_pad = " ";
 	}
 
 	addrp_width /= 2;
@@ -4574,7 +4575,7 @@ int main(int argc, char *argv[])
 			printf("%-*s ", netid_width, "Netid");
 		if (state_width)
 			printf("%-*s ", state_width, "State");
-		printf("%-6s %-6s ", "Recv-Q", "Send-Q");
+		printf("%-6s %-6s %s", "Recv-Q", "Send-Q", odd_width_pad);
 	}
 
 	/* Make enough space for the local/remote port field */
