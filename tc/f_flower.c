@@ -619,6 +619,25 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				return -1;
 			}
 			addattr_l(n, MAX_MSG, TCA_FLOWER_CLASSID, &handle, 4);
+		} else if (matches(*argv, "hw_tc") == 0) {
+			unsigned int handle;
+			__u32 tc;
+			char *end;
+
+			NEXT_ARG();
+			tc = strtoul(*argv, &end, 0);
+			if (*end) {
+				fprintf(stderr, "Illegal TC index\n");
+				return -1;
+			}
+			if (tc >= TC_QOPT_MAX_QUEUE) {
+				fprintf(stderr, "TC index exceeds max range\n");
+				return -1;
+			}
+			handle = TC_H_MAKE(TC_H_MAJ(t->tcm_parent),
+					   TC_H_MIN(tc + TC_H_MIN_PRIORITY));
+			addattr_l(n, MAX_MSG, TCA_FLOWER_CLASSID, &handle,
+				  sizeof(handle));
 		} else if (matches(*argv, "ip_flags") == 0) {
 			NEXT_ARG();
 			ret = flower_parse_matching_flags(*argv,
@@ -1273,10 +1292,16 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 		fprintf(f, "handle 0x%x ", handle);
 
 	if (tb[TCA_FLOWER_CLASSID]) {
-		SPRINT_BUF(b1);
-		fprintf(f, "classid %s ",
-			sprint_tc_classid(rta_getattr_u32(tb[TCA_FLOWER_CLASSID]),
-					  b1));
+		__u32 h = rta_getattr_u32(tb[TCA_FLOWER_CLASSID]);
+
+		if (TC_H_MIN(h) < TC_H_MIN_PRIORITY ||
+		    TC_H_MIN(h) > (TC_H_MIN_PRIORITY + TC_QOPT_MAX_QUEUE - 1)) {
+			SPRINT_BUF(b1);
+			fprintf(f, "classid %s ", sprint_tc_classid(h, b1));
+		} else {
+			fprintf(f, "hw_tc %u ",
+				TC_H_MIN(h) - TC_H_MIN_PRIORITY);
+		}
 	}
 
 	if (tb[TCA_FLOWER_INDEV]) {
