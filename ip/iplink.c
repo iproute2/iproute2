@@ -112,9 +112,9 @@ void iplink_usage(void)
 			"\n"
 			"TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n"
 			"          bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |\n"
-			"          gre | gretap | erspan | ip6gre | ip6gretap | vti | nlmon |\n"
-			"          team_slave | bond_slave | ipvlan | geneve | bridge_slave |\n"
-			"          vrf | macsec }\n");
+			"          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan |\n"
+			"          vti | nlmon | team_slave | bond_slave | ipvlan | geneve |\n"
+			"          bridge_slave | vrf | macsec }\n");
 	}
 	exit(-1);
 }

@@ -123,6 +123,7 @@ ip-address \- protocol address management
 .BR erspan " |"
 .BR ip6gre " |"
 .BR ip6gretap " |"
+.BR ip6erspan " |"
 .BR vti " |"
 .BR vrf " |"
 .BR nlmon " |"

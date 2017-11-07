@@ -33,7 +33,7 @@
 static void print_usage(FILE *f)
 {
 	fprintf(f,
-		"Usage: ... { ip6gre | ip6gretap } [ remote ADDR ]\n"
+		"Usage: ... { ip6gre | ip6gretap | ip6erspan} [ remote ADDR ]\n"
 		"                                  [ local ADDR ]\n"
 		"                                  [ [i|o]seq ]\n"
 		"                                  [ [i|o]key KEY ]\n"
@@ -52,6 +52,7 @@ static void print_usage(FILE *f)
 		"                                  [ [no]encap-csum ]\n"
 		"                                  [ [no]encap-csum6 ]\n"
 		"                                  [ [no]encap-remcsum ]\n"
+		"                                  [ erspan IDX ]\n"
 		"\n"
 		"Where: ADDR      := IPV6_ADDRESS\n"
 		"       TTL       := { 0..255 } (default=%d)\n"
@@ -106,6 +107,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u16 encapdport = 0;
 	int len;
 	__u32 fwmark = 0;
+	__u32 erspan_idx = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 		if (rtnl_talk(&rth, &req.n, &answer) < 0) {
@@ -181,6 +183,9 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_FWMARK])
 			fwmark = rta_getattr_u32(greinfo[IFLA_GRE_FWMARK]);
+
+		if (greinfo[IFLA_GRE_ERSPAN_INDEX])
+			erspan_idx = rta_getattr_u32(greinfo[IFLA_GRE_ERSPAN_INDEX]);
 
 		free(answer);
 	}
@@ -372,6 +377,12 @@ get_failed:
 				encap_limit = uval;
 				flags &= ~IP6_TNL_F_IGN_ENCAP_LIMIT;
 			}
+		} else if (strcmp(*argv, "erspan") == 0) {
+			NEXT_ARG();
+			if (get_u32(&erspan_idx, *argv, 0))
+				invarg("invalid erspan index\n", *argv);
+			if (erspan_idx & ~((1<<20) - 1) || erspan_idx == 0)
+				invarg("erspan index must be > 0 and <= 20-bit\n", *argv);
 		} else
 			usage();
 		argc--; argv++;
@@ -390,6 +401,8 @@ get_failed:
 	addattr_l(n, 1024, IFLA_GRE_FLOWINFO, &flowinfo, 4);
 	addattr32(n, 1024, IFLA_GRE_FLAGS, flags);
 	addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
+	if (erspan_idx != 0)
+		addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
 
 	addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
 	addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
@@ -557,6 +570,11 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 	}
 
+	if (tb[IFLA_GRE_ERSPAN_INDEX]) {
+		__u32 erspan_idx = rta_getattr_u32(tb[IFLA_GRE_ERSPAN_INDEX]);
+		fprintf(f, "erspan_index %u ", erspan_idx);
+	}
+
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&
 	    rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {
 		__u16 type = rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]);
@@ -634,6 +652,14 @@ struct link_util ip6gre_link_util = {
 
 struct link_util ip6gretap_link_util = {
 	.id = "ip6gretap",
+	.maxattr = IFLA_GRE_MAX,
+	.parse_opt = gre_parse_opt,
+	.print_opt = gre_print_opt,
+	.print_help = gre_print_help,
+};
+
+struct link_util ip6erspan_link_util = {
+	.id = "ip6erspan",
 	.maxattr = IFLA_GRE_MAX,
 	.parse_opt = gre_parse_opt,
 	.print_opt = gre_print_opt,

@@ -205,6 +205,7 @@ ip-link \- network device configuration
 .BR erspan " |"
 .BR ip6gre " |"
 .BR ip6gretap " |"
+.BR ip6erspan " |"
 .BR vti " |"
 .BR nlmon " |"
 .BR ipvlan " |"
@@ -307,6 +308,9 @@ Link types:
 .sp
 .BR ip6gretap
 - Virtual L2 tunnel interface GRE over IPv6
+.sp
+.BR ip6erspan
+- Encapsulated Remote SPAN over GRE and IPv6
 .sp
 .BR vti
 - Virtual tunnel interface
