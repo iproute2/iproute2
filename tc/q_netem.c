@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -53,14 +54,11 @@ static void explain1(const char *arg)
  */
 #define MAX_DIST	(16*1024)
 
-static const double max_percent_value = 0xffffffff;
-
 /* scaled value used to percent of maximum. */
 static void set_percent(__u32 *percent, double per)
 {
-	*percent = (unsigned int) rint(per * max_percent_value);
+	*percent = rint(per * UINT32_MAX);
 }
-
 
 /* Parse either a fraction '.3' or percent '30%
  * return: 0 = ok, -1 = error, 1 = out of range
@@ -89,7 +87,7 @@ static int get_percent(__u32 *percent, const char *str)
 
 static void print_percent(char *buf, int len, __u32 per)
 {
-	snprintf(buf, len, "%g%%", 100. * (double) per / max_percent_value);
+	snprintf(buf, len, "%g%%", (100. * per) / UINT32_MAX);
 }
 
 static char *sprint_percent(__u32 per, char *buf)
@@ -323,7 +321,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				/* netem option is "1-h" but kernel
 				 * expects "h".
 				 */
-				gemodel.h = max_percent_value - gemodel.h;
+				gemodel.h = UINT32_MAX - gemodel.h;
 
 				if (!NEXT_IS_NUMBER())
 					continue;
@@ -630,7 +628,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		fprintf(f, " loss gemodel p %s",
 			sprint_percent(gemodel->p, b1));
 		fprintf(f, " r %s", sprint_percent(gemodel->r, b1));
-		fprintf(f, " 1-h %s", sprint_percent(max_percent_value -
+		fprintf(f, " 1-h %s", sprint_percent(UINT32_MAX -
 						     gemodel->h, b1));
 		fprintf(f, " 1-k %s", sprint_percent(gemodel->k1, b1));
 	}
