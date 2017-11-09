@@ -66,13 +66,13 @@ static int err_attr_cb(const struct nlattr *attr, void *data)
 }
 
 /* dump netlink extended ack error message */
-static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
+static int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 {
 	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};
 	const struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
 	const struct nlmsghdr *err_nlh = NULL;
 	unsigned int hlen = sizeof(*err);
-	const char *errmsg = NULL;
+	const char *msg = NULL;
 	uint32_t off = 0;
 
 	/* no TLVs, nothing to do here */
@@ -87,7 +87,7 @@ static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 		return 0;
 
 	if (tb[NLMSGERR_ATTR_MSG])
-		errmsg = mnl_attr_get_str(tb[NLMSGERR_ATTR_MSG]);
+		msg = mnl_attr_get_str(tb[NLMSGERR_ATTR_MSG]);
 
 	if (tb[NLMSGERR_ATTR_OFFS]) {
 		off = mnl_attr_get_u32(tb[NLMSGERR_ATTR_OFFS]);
@@ -101,15 +101,18 @@ static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	}
 
 	if (errfn)
-		return errfn(errmsg, off, err_nlh);
+		return errfn(msg, off, err_nlh);
 
-	if (errmsg && *errmsg != '\0') {
-		fprintf(stderr, "Error: %s", errmsg);
-		if (errmsg[strlen(errmsg) - 1] != '.')
+	if (msg && *msg != '\0') {
+		bool is_err = !!err->error;
+
+		fprintf(stderr, "%s: %s",
+			is_err ? "Error" : "Warning", msg);
+		if (msg[strlen(msg) - 1] != '.')
 			fprintf(stderr, ".");
 		fprintf(stderr, "\n");
 
-		return 1;
+		return is_err ? 1 : 0;
 	}
 
 	return 0;
@@ -118,7 +121,7 @@ static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 #warning "libmnl required for error support"
 
 /* No extended error ack without libmnl */
-static int nl_dump_ext_err(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
+static int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 {
 	return 0;
 }
@@ -379,6 +382,9 @@ static int rtnl_dump_done(struct nlmsghdr *h)
 		return len;
 	}
 
+	/* check for any messages returned from kernel */
+	nl_dump_ext_ack(h, NULL);
+
 	return 0;
 }
 
@@ -569,7 +575,7 @@ int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 static void rtnl_talk_error(struct nlmsghdr *h, struct nlmsgerr *err,
 			    nl_ext_ack_fn_t errfn)
 {
-	if (nl_dump_ext_err(h, errfn))
+	if (nl_dump_ext_ack(h, errfn))
 		return;
 
 	fprintf(stderr, "RTNETLINK answers: %s\n",
@@ -650,6 +656,9 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 				if (l < sizeof(struct nlmsgerr)) {
 					fprintf(stderr, "ERROR truncated\n");
 				} else if (!err->error) {
+					/* check messages from kernel */
+					nl_dump_ext_ack(h, errfn);
+
 					if (answer)
 						*answer = (struct nlmsghdr *)buf;
 					else
