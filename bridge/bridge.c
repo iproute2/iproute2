@@ -18,7 +18,6 @@
 
 struct rtnl_handle rth = { .fd = -1 };
 int preferred_family = AF_UNSPEC;
-int resolve_hosts;
 int oneline;
 int show_stats;
 int show_details;

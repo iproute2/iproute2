@@ -25,7 +25,6 @@
 #include "utils.h"
 #include "libnetlink.h"
 
-int resolve_hosts;
 static int init_phase = 1;
 
 static void write_stamp(FILE *fp)

@@ -30,7 +30,6 @@ int human_readable;
 int use_iec;
 int show_stats;
 int show_details;
-int resolve_hosts;
 int oneline;
 int brief;
 int json;

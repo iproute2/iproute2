@@ -88,7 +88,6 @@ static int security_get_initial_context(char *name,  char **context)
 }
 #endif
 
-int resolve_hosts;
 int resolve_services = 1;
 int preferred_family = AF_UNSPEC;
 int show_options;
