@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 #ifndef _LWTUNNEL_H_
 #define _LWTUNNEL_H_
 
