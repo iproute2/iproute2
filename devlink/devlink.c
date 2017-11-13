@@ -3803,12 +3803,16 @@ static int cmd_dpipe(struct dl *dl)
 static void help(void)
 {
 	pr_err("Usage: devlink [ OPTIONS ] OBJECT { COMMAND | help }\n"
+	       "       devlink [ -f[orce] ] -b[atch] filename\n"
 	       "where  OBJECT := { dev | port | sb | monitor | dpipe }\n"
 	       "       OPTIONS := { -V[ersion] | -n[no-nice-names] | -j[json] | -p[pretty] | -v[verbose] }\n");
 }
 
-static int dl_cmd(struct dl *dl)
+static int dl_cmd(struct dl *dl, int argc, char **argv)
 {
+	dl->argc = argc;
+	dl->argv = argv;
+
 	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
 		help();
 		return 0;
@@ -3832,12 +3836,9 @@ static int dl_cmd(struct dl *dl)
 	return -ENOENT;
 }
 
-static int dl_init(struct dl *dl, int argc, char **argv)
+static int dl_init(struct dl *dl)
 {
 	int err;
-
-	dl->argc = argc;
-	dl->argv = argv;
 
 	dl->nlg = mnlg_socket_open(DEVLINK_GENL_NAME, DEVLINK_GENL_VERSION);
 	if (!dl->nlg) {
@@ -3890,16 +3891,59 @@ static void dl_free(struct dl *dl)
 	free(dl);
 }
 
+static int dl_batch(struct dl *dl, const char *name, bool force)
+{
+	char *line = NULL;
+	size_t len = 0;
+	int ret = EXIT_SUCCESS;
+
+	if (name && strcmp(name, "-") != 0) {
+		if (freopen(name, "r", stdin) == NULL) {
+			fprintf(stderr,
+				"Cannot open file \"%s\" for reading: %s\n",
+				name, strerror(errno));
+			return EXIT_FAILURE;
+		}
+	}
+
+	cmdlineno = 0;
+	while (getcmdline(&line, &len, stdin) != -1) {
+		char *largv[100];
+		int largc;
+
+		largc = makeargs(line, largv, 100);
+		if (!largc)
+			continue;	/* blank line */
+
+		if (dl_cmd(dl, largc, largv)) {
+			fprintf(stderr, "Command failed %s:%d\n",
+				name, cmdlineno);
+			ret = EXIT_FAILURE;
+			if (!force)
+				break;
+		}
+	}
+
+	if (line)
+		free(line);
+
+	return ret;
+}
+
 int main(int argc, char **argv)
 {
 	static const struct option long_options[] = {
 		{ "Version",		no_argument,		NULL, 'V' },
+		{ "force",		no_argument,		NULL, 'f' },
+		{ "batch",		required_argument,	NULL, 'b' },
 		{ "no-nice-names",	no_argument,		NULL, 'n' },
 		{ "json",		no_argument,		NULL, 'j' },
 		{ "pretty",		no_argument,		NULL, 'p' },
 		{ "verbose",		no_argument,		NULL, 'v' },
 		{ NULL, 0, NULL, 0 }
 	};
+	const char *batch_file = NULL;
+	bool force = false;
 	struct dl *dl;
 	int opt;
 	int err;
@@ -3911,7 +3955,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	while ((opt = getopt_long(argc, argv, "Vnjpv",
+	while ((opt = getopt_long(argc, argv, "Vfb:njpv",
 				  long_options, NULL)) >= 0) {
 
 		switch (opt) {
@@ -3919,6 +3963,12 @@ int main(int argc, char **argv)
 			printf("devlink utility, iproute2-ss%s\n", SNAPSHOT);
 			ret = EXIT_SUCCESS;
 			goto dl_free;
+		case 'f':
+			force = true;
+			break;
+		case 'b':
+			batch_file = optarg;
+			break;
 		case 'n':
 			dl->no_nice_names = true;
 			break;
@@ -3942,13 +3992,17 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	err = dl_init(dl, argc, argv);
+	err = dl_init(dl);
 	if (err) {
 		ret = EXIT_FAILURE;
 		goto dl_free;
 	}
 
-	err = dl_cmd(dl);
+	if (batch_file)
+		err = dl_batch(dl, batch_file, force);
+	else
+		err = dl_cmd(dl, argc, argv);
+
 	if (err) {
 		ret = EXIT_FAILURE;
 		goto dl_fini;

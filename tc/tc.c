@@ -39,7 +39,6 @@ int show_graph;
 int timestamp;
 
 int batch_mode;
-int resolve_hosts;
 int use_iec;
 int force;
 bool use_names;

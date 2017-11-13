@@ -30,7 +30,6 @@
 int show_stats = 0;
 int show_details = 0;
 int show_raw = 0;
-int resolve_hosts = 0;
 
 static void *BODY;
 static struct genl_util * genl_list;

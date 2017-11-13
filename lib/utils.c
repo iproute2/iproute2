@@ -37,6 +37,7 @@
 #include "utils.h"
 #include "namespace.h"
 
+int resolve_hosts;
 int timestamp_short;
 
 int get_hex(char c)

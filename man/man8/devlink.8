@@ -12,6 +12,12 @@ devlink \- Devlink tool
 .sp
 
 .ti -8
+.B devlink
+.RB "[ " -force " ] "
+.BI "-batch " filename
+.sp
+
+.ti -8
 .IR OBJECT " := { "
 .BR dev " | " port " | " monitor " }"
 .sp
@@ -30,6 +36,16 @@ devlink \- Devlink tool
 Print the version of the
 .B devlink
 utility and exit.
+
+.TP
+.BR "\-b", " \-batch " <FILENAME>
+Read commands from provided file or standard input and invoke them.
+First failure will cause termination of devlink.
+
+.TP
+.BR "\-force"
+Don't terminate devlink on errors in batch mode.
+If there were any errors during execution of the commands, the application return code will be non zero.
 
 .TP
 .BR "\-n" , " --no-nice-names"

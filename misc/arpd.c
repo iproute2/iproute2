@@ -38,8 +38,6 @@
 #include "utils.h"
 #include "rt_names.h"
 
-int resolve_hosts;
-
 DB	*dbase;
 char	*dbname = "/var/lib/arpd/arpd.db";
 
