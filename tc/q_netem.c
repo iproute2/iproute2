@@ -15,7 +15,6 @@
 #include <math.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <sys/socket.h>

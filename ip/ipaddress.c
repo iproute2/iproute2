@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <inttypes.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>

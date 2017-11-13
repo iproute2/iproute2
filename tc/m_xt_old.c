@@ -13,7 +13,6 @@
 /*XXX: in the future (xtables 1.4.3?) get rid of everything tagged
  * as TC_CONFIG_XT_H */
 
-#include <syslog.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

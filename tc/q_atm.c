@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <syslog.h>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

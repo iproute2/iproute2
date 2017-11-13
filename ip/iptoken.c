@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/socket.h>

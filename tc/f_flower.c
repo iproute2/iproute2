@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <string.h>
 #include <net/if.h>
 #include <linux/if_arp.h>
