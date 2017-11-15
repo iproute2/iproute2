@@ -630,8 +630,7 @@ int parse_action_control_slash(int *argc_p, char ***argv_p,
 							 allow_num);
 	*p = 0;
 	if (action_a2n(*argv, &result1, allow_num)) {
-		if (p)
-			*p = '/';
+		*p = '/';
 		return -1;
 	}
 
