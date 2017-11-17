@@ -16,7 +16,17 @@ P0 P1 P2...
 count1@offset1 count2@offset2 ...
 .B ] [ hw
 1|0
-.B ]
+.B ] [ mode
+dcb|channel]
+.B ] [ shaper
+dcb|
+.B [ bw_rlimit
+.B min_rate
+min_rate1 min_rate2 ...
+.B max_rate
+max_rate1 max_rate2 ...
+.B ]]
+
 
 .SH DESCRIPTION
 The MQPRIO qdisc is a simple queuing discipline that allows mapping
@@ -36,14 +46,16 @@ and
 By default these parameters are configured by the hardware
 driver to match the hardware QOS structures.
 
-Enabled hardware can provide hardware QOS with the ability to steer
-traffic flows to designated traffic classes provided by this qdisc.
-Configuring the hardware based QOS mechanism is outside the scope of
-this qdisc. Tools such as
-.B lldpad
-and
-.B ethtool
-exist to provide this functionality. Also further qdiscs may be added
+.B Channel
+mode supports full offload of the mqprio options, the traffic classes, the queue
+configurations and QOS attributes to the hardware. Enabled hardware can provide
+hardware QOS with the ability to steer traffic flows to designated traffic
+classes provided by this qdisc. Hardware based QOS is configured using the
+.B shaper
+parameter.
+.B bw_rlimit
+with minimum and maximum bandwidth rates can be used for setting
+transmission rates on each traffic class. Also further qdiscs may be added
 to the classes of MQPRIO to create more complex configurations.
 
 .SH ALGORITHM
@@ -104,9 +116,35 @@ contiguous range of queues.
 hw
 Set to
 .B 1
-to use hardware QOS defaults. Set to
+to support hardware offload. Set to
 .B 0
-to override hardware defaults with user specified values.
+to configure user specified values in software only.
+
+.TP
+mode
+Set to
+.B channel
+for full use of the mqprio options. Use
+.B dcb
+to offload only TC values and use hardware QOS defaults. Supported with 'hw'
+set to 1 only.
+
+.TP
+shaper
+Use
+.B bw_rlimit
+to set bandwidth rate limits for a traffic class. Use
+.B dcb
+for hardware QOS defaults. Supported with 'hw' set to 1 only.
+
+.TP
+min_rate
+Minimum value of bandwidth rate limit for a traffic class.
+
+.TP
+max_rate
+Maximum value of bandwidth rate limit for a traffic class.
+
 
 .SH AUTHORS
 John Fastabend, <john.r.fastabend@intel.com>
