@@ -10,7 +10,10 @@ flower \- flow based traffic control filter
 .B action
 .IR ACTION_SPEC " ] [ "
 .B classid
-.IR CLASSID " ]"
+.IR CLASSID " ] [ "
+.B hw_tc
+.IR TCID " ]"
+
 
 .ti -8
 .IR MATCH_LIST " := [ " MATCH_LIST " ] " MATCH
@@ -84,6 +87,10 @@ Specify a class to pass matching packets on to.
 is in the form
 .BR X : Y ", while " X " and " Y
 are interpreted as numbers in hexadecimal format.
+.TP
+.BI hw_tc " TCID"
+Specify a hardware traffic class to pass matching packets on to. TCID is in the
+range 0 through 15.
 .TP
 .BI indev " ifname"
 Match on incoming interface name. Obviously this makes sense only for forwarded
