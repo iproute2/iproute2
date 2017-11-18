@@ -33,6 +33,8 @@ ip-route \- routing table management
 .BI from " ADDRESS " iif " STRING"
 .RB " ] [ " oif
 .IR STRING " ] [ "
+.B  mark
+.IR MARK " ] [ "
 .B  tos
 .IR TOS " ] [ "
 .B  vrf
@@ -1032,6 +1034,11 @@ the device from which this packet is expected to arrive.
 .TP
 .BI oif " NAME"
 force the output device on which this packet will be routed.
+
+.TP
+.BI mark " MARK"
+the firewall mark
+.RB ( "fwmark" )
 
 .TP
 .BI vrf " NAME"
