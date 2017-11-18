@@ -245,6 +245,7 @@ ip-xfrm \- transform configuration
 
 .ti -8
 .BR "ip xfrm policy" " { " deleteall " | " list " }"
+.RB "[ " nosock " ]"
 .RI "[ " SELECTOR " ]"
 .RB "[ " dir
 .IR DIR " ]"
@@ -548,6 +549,10 @@ ip xfrm policy deleteall	delete all existing xfrm policies
 ip xfrm policy list	print out the list of xfrm policies
 ip xfrm policy flush	flush policies
 .TE
+
+.TP
+.BR nosock
+filter (remove) all socket policies from the output.
 
 .TP
 .IR SELECTOR
