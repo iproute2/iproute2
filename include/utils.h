@@ -6,6 +6,7 @@
 #include <resolv.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "libnetlink.h"
 #include "ll_map.h"
@@ -256,7 +257,9 @@ int make_path(const char *path, mode_t mode);
 char *find_cgroup2_mount(void);
 int get_command_name(const char *pid, char *comm, size_t len);
 
+#ifdef NEED_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t size);
 size_t strlcat(char *dst, const char *src, size_t size);
+#endif
 
 #endif /* __UTILS_H__ */
