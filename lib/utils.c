@@ -38,6 +38,74 @@
 int resolve_hosts;
 int timestamp_short;
 
+int read_prop(const char *dev, char *prop, long *value)
+{
+	char fname[128], buf[80], *endp, *nl;
+	FILE *fp;
+	long result;
+	int ret;
+
+	ret = snprintf(fname, sizeof(fname), "/sys/class/net/%s/%s",
+			dev, prop);
+
+	if (ret <= 0 || ret >= sizeof(fname)) {
+		fprintf(stderr, "could not build pathname for property\n");
+		return -1;
+	}
+
+	fp = fopen(fname, "r");
+	if (fp == NULL) {
+		fprintf(stderr, "fopen %s: %s\n", fname, strerror(errno));
+		return -1;
+	}
+
+	if (!fgets(buf, sizeof(buf), fp)) {
+		fprintf(stderr, "property \"%s\" in file %s is currently unknown\n", prop, fname);
+		fclose(fp);
+		goto out;
+	}
+
+	nl = strchr(buf, '\n');
+	if (nl)
+		*nl = '\0';
+
+	fclose(fp);
+	result = strtol(buf, &endp, 0);
+
+	if (*endp || buf == endp) {
+		fprintf(stderr, "value \"%s\" in file %s is not a number\n",
+			buf, fname);
+		goto out;
+	}
+
+	if ((result == LONG_MAX || result == LONG_MIN) && errno == ERANGE) {
+		fprintf(stderr, "strtol %s: %s", fname, strerror(errno));
+		goto out;
+	}
+
+	*value = result;
+	return 0;
+out:
+	fprintf(stderr, "Failed to parse %s\n", fname);
+	return -1;
+}
+
+/* Parse a percent e.g: '30%'
+ * return: 0 = ok, -1 = error, 1 = out of range
+ */
+int parse_percent(double *val, const char *str)
+{
+	char *p;
+
+	*val = strtod(str, &p) / 100.;
+	if (*val == HUGE_VALF || *val == HUGE_VALL)
+		return 1;
+	if (*val == 0.0 || (*p && strcmp(p, "%")))
+		return -1;
+
+	return 0;
+}
+
 int get_hex(char c)
 {
 	if (c >= 'A' && c <= 'F')

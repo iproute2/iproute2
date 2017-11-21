@@ -128,7 +128,7 @@ static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
 			fprintf(stderr, "Error: Qdisc \"%s\" is classless.\n", k);
 			return 1;
 		}
-		if (q->parse_copt(q, argc, argv, &req.n))
+		if (q->parse_copt(q, argc, argv, &req.n, d))
 			return 1;
 	} else {
 		if (argc) {

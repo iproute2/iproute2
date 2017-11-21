@@ -33,7 +33,7 @@ static void explain2(void)
 }
 
 
-static int drr_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
+static int drr_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
 	while (argc) {
 		if (strcmp(*argv, "help") == 0) {
@@ -49,7 +49,7 @@ static int drr_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 }
 
 static int drr_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
-			       struct nlmsghdr *n)
+			       struct nlmsghdr *n, const char *dev)
 {
 	struct rtattr *tail;
 	__u32 tmp;

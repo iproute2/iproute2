@@ -56,7 +56,7 @@ static void explain(void)
 }
 
 static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
-			      struct nlmsghdr *n)
+			      struct nlmsghdr *n, const char *dev)
 {
 	unsigned int limit = 0;
 	unsigned int flows = 0;

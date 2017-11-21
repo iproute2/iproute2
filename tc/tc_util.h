@@ -29,14 +29,14 @@ struct qdisc_util {
 	struct  qdisc_util *next;
 	const char *id;
 	int (*parse_qopt)(struct qdisc_util *qu, int argc,
-			  char **argv, struct nlmsghdr *n);
+			  char **argv, struct nlmsghdr *n, const char *dev);
 	int (*print_qopt)(struct qdisc_util *qu,
 			  FILE *f, struct rtattr *opt);
 	int (*print_xstats)(struct qdisc_util *qu,
 			    FILE *f, struct rtattr *xstats);
 
 	int (*parse_copt)(struct qdisc_util *qu, int argc,
-			  char **argv, struct nlmsghdr *n);
+			  char **argv, struct nlmsghdr *n, const char *dev);
 	int (*print_copt)(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 };
 
@@ -71,9 +71,12 @@ const char *get_tc_lib(void);
 struct qdisc_util *get_qdisc_kind(const char *str);
 struct filter_util *get_filter_kind(const char *str);
 
+int parse_percent_rate(char *rate, const char *str, const char *dev);
 int get_qdisc_handle(__u32 *h, const char *str);
 int get_rate(unsigned int *rate, const char *str);
+int get_percent_rate(unsigned int *rate, const char *str, const char *dev);
 int get_rate64(__u64 *rate, const char *str);
+int get_percent_rate64(__u64 *rate, const char *str, const char *dev);
 int get_size(unsigned int *size, const char *str);
 int get_size_and_cell(unsigned int *size, int *cell_log, char *str);
 int get_time(unsigned int *time, const char *str);

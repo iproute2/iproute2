@@ -140,7 +140,7 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (q) {
 		if (q->parse_qopt) {
-			if (q->parse_qopt(q, argc, argv, &req.n))
+			if (q->parse_qopt(q, argc, argv, &req.n, d))
 				return 1;
 		} else if (argc) {
 			fprintf(stderr, "qdisc '%s' does not support option parsing\n", k);

@@ -21,7 +21,7 @@ static void explain(void)
 }
 
 static int ingress_parse_opt(struct qdisc_util *qu, int argc, char **argv,
-			     struct nlmsghdr *n)
+			     struct nlmsghdr *n, const char *dev)
 {
 	while (argc > 0) {
 		if (strcmp(*argv, "handle") == 0) {

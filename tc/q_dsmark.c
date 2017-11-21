@@ -25,7 +25,7 @@ static void explain(void)
 
 
 static int dsmark_parse_opt(struct qdisc_util *qu, int argc, char **argv,
-    struct nlmsghdr *n)
+	struct nlmsghdr *n, const char *dev)
 {
 	struct rtattr *tail;
 	__u16 ind;
@@ -84,7 +84,7 @@ static void explain_class(void)
 
 
 static int dsmark_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
-   struct nlmsghdr *n)
+	struct nlmsghdr *n, const char *dev)
 {
 	struct rtattr *tail;
 	__u8 tmp;

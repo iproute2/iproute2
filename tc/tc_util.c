@@ -190,6 +190,69 @@ static const struct rate_suffix {
 	{ NULL }
 };
 
+int parse_percent_rate(char *rate, const char *str, const char *dev)
+{
+	long dev_mbit;
+	int ret;
+	double perc, rate_mbit;
+	char *str_perc;
+
+	if (!dev[0]) {
+		fprintf(stderr, "No device specified; specify device to rate limit by percentage\n");
+		return -1;
+	}
+
+	if (read_prop(dev, "speed", &dev_mbit))
+		return -1;
+
+	ret = sscanf(str, "%m[0-9.%]", &str_perc);
+	if (ret != 1)
+		goto malf;
+
+	if (parse_percent(&perc, str_perc))
+		goto malf;
+
+	free(str_perc);
+
+	if (perc > 1.0 || perc < 0.0) {
+		fprintf(stderr, "Invalid rate specified; should be between [0,100]%% but is %s\n", str);
+		return -1;
+	}
+
+	rate_mbit = perc * dev_mbit;
+
+	ret = snprintf(rate, 20, "%lf", rate_mbit);
+	if (ret <= 0 || ret >= 20) {
+		fprintf(stderr, "Unable to parse calculated rate\n");
+		return -1;
+	}
+
+	return 0;
+
+malf:
+	fprintf(stderr, "Specified rate value could not be read or is malformed\n");
+	return -1;
+}
+
+int get_percent_rate(unsigned int *rate, const char *str, const char *dev)
+{
+	char r_str[20];
+
+	if (parse_percent_rate(r_str, str, dev))
+		return -1;
+
+	return get_rate(rate, r_str);
+}
+
+int get_percent_rate64(__u64 *rate, const char *str, const char *dev)
+{
+	char r_str[20];
+
+	if (parse_percent_rate(r_str, str, dev))
+		return -1;
+
+	return get_rate64(rate, r_str);
+}
 
 int get_rate(unsigned int *rate, const char *str)
 {

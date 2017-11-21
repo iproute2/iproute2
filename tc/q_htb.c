@@ -59,7 +59,7 @@ static void explain1(char *arg)
 }
 
 
-static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
+static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
 	unsigned int direct_qlen = ~0U;
 	struct tc_htb_glob opt = {
@@ -108,7 +108,7 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	return 0;
 }
 
-static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
+static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
 	int ok = 0;
 	struct tc_htb_opt opt = {};
@@ -178,7 +178,12 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 				fprintf(stderr, "Double \"ceil\" spec\n");
 				return -1;
 			}
-			if (get_rate64(&ceil64, *argv)) {
+			if (strchr(*argv, '%')) {
+				if (get_percent_rate64(&ceil64, *argv, dev)) {
+					explain1("ceil");
+					return -1;
+				}
+			} else if (get_rate64(&ceil64, *argv)) {
 				explain1("ceil");
 				return -1;
 			}
@@ -189,7 +194,12 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 				fprintf(stderr, "Double \"rate\" spec\n");
 				return -1;
 			}
-			if (get_rate64(&rate64, *argv)) {
+			if (strchr(*argv, '%')) {
+				if (get_percent_rate64(&rate64, *argv, dev)) {
+					explain1("rate");
+					return -1;
+				}
+			} else if (get_rate64(&rate64, *argv)) {
 				explain1("rate");
 				return -1;
 			}

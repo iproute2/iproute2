@@ -223,38 +223,6 @@ static int do_del(int argc, char **argv)
 	return tap_del_ioctl(&ifr);
 }
 
-static int read_prop(char *dev, char *prop, long *value)
-{
-	char fname[IFNAMSIZ+25], buf[80], *endp;
-	ssize_t len;
-	int fd;
-	long result;
-
-	sprintf(fname, "/sys/class/net/%s/%s", dev, prop);
-	fd = open(fname, O_RDONLY);
-	if (fd < 0) {
-		if (strcmp(prop, "tun_flags"))
-			fprintf(stderr, "open %s: %s\n", fname,
-				strerror(errno));
-		return -1;
-	}
-	len = read(fd, buf, sizeof(buf)-1);
-	close(fd);
-	if (len < 0) {
-		fprintf(stderr, "read %s: %s", fname, strerror(errno));
-		return -1;
-	}
-
-	buf[len] = 0;
-	result = strtol(buf, &endp, 0);
-	if (*endp != '\n') {
-		fprintf(stderr, "Failed to parse %s\n", fname);
-		return -1;
-	}
-	*value = result;
-	return 0;
-}
-
 static void print_flags(long flags)
 {
 	if (flags & IFF_TUN)

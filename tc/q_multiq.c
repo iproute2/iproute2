@@ -40,7 +40,7 @@ static void explain(void)
 }
 
 static int multiq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
-			    struct nlmsghdr *n)
+			    struct nlmsghdr *n, const char *dev)
 {
 	struct tc_multiq_qopt opt = {};
 
