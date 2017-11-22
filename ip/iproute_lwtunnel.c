@@ -309,6 +309,72 @@ static int ila_csum_name2mode(char *name)
 		return -1;
 }
 
+static char *ila_ident_type2name(__u8 ident_type)
+{
+	switch (ident_type) {
+	case ILA_ATYPE_IID:
+		return "iid";
+	case ILA_ATYPE_LUID:
+		return "luid";
+	case ILA_ATYPE_VIRT_V4:
+		return "virt-v4";
+	case ILA_ATYPE_VIRT_UNI_V6:
+		return "virt-uni-v6";
+	case ILA_ATYPE_VIRT_MULTI_V6:
+		return "virt-multi-v6";
+	case ILA_ATYPE_NONLOCAL_ADDR:
+		return "nonlocal-addr";
+	case ILA_ATYPE_USE_FORMAT:
+		return "use-format";
+	default:
+		return "unknown";
+	}
+}
+
+static int ila_ident_name2type(char *name)
+{
+	if (!strcmp(name, "luid"))
+		return ILA_ATYPE_LUID;
+	else if (!strcmp(name, "use-format"))
+		return ILA_ATYPE_USE_FORMAT;
+#if 0 /* No kernel support for configuring these yet */
+	else if (!strcmp(name, "iid"))
+		return ILA_ATYPE_IID;
+	else if (!strcmp(name, "virt-v4"))
+		return ILA_ATYPE_VIRT_V4;
+	else if (!strcmp(name, "virt-uni-v6"))
+		return ILA_ATYPE_VIRT_UNI_V6;
+	else if (!strcmp(name, "virt-multi-v6"))
+		return ILA_ATYPE_VIRT_MULTI_V6;
+	else if (!strcmp(name, "nonlocal-addr"))
+		return ILA_ATYPE_NONLOCAL_ADDR;
+#endif
+	else
+		return -1;
+}
+
+static char *ila_hook_type2name(__u8 hook_type)
+{
+	switch (hook_type) {
+	case ILA_HOOK_ROUTE_OUTPUT:
+		return "output";
+	case ILA_HOOK_ROUTE_INPUT:
+		return "input";
+	default:
+		return "unknown";
+	}
+}
+
+static int ila_hook_name2type(char *name)
+{
+	if (!strcmp(name, "output"))
+		return ILA_HOOK_ROUTE_OUTPUT;
+	else if (!strcmp(name, "input"))
+		return ILA_HOOK_ROUTE_INPUT;
+	else
+		return -1;
+}
+
 static void print_encap_ila(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[ILA_ATTR_MAX+1];
@@ -325,7 +391,18 @@ static void print_encap_ila(FILE *fp, struct rtattr *encap)
 
 	if (tb[ILA_ATTR_CSUM_MODE])
 		fprintf(fp, " csum-mode %s ",
-			ila_csum_mode2name(rta_getattr_u8(tb[ILA_ATTR_CSUM_MODE])));
+			ila_csum_mode2name(rta_getattr_u8(
+						tb[ILA_ATTR_CSUM_MODE])));
+
+	if (tb[ILA_ATTR_IDENT_TYPE])
+		fprintf(fp, " ident-type %s ",
+			ila_ident_type2name(rta_getattr_u8(
+						tb[ILA_ATTR_IDENT_TYPE])));
+
+	if (tb[ILA_ATTR_HOOK_TYPE])
+		fprintf(fp, " hook-type %s ",
+			ila_hook_type2name(rta_getattr_u8(
+						tb[ILA_ATTR_HOOK_TYPE])));
 }
 
 static void print_encap_ip6(FILE *fp, struct rtattr *encap)
@@ -775,6 +852,34 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 
 			rta_addattr8(rta, 1024, ILA_ATTR_CSUM_MODE,
 				     (__u8)csum_mode);
+
+			argc--; argv++;
+		} else if (strcmp(*argv, "ident-type") == 0) {
+			int ident_type;
+
+			NEXT_ARG();
+
+			ident_type = ila_ident_name2type(*argv);
+			if (ident_type < 0)
+				invarg("\"ident-type\" value is invalid\n",
+				       *argv);
+
+			rta_addattr8(rta, 1024, ILA_ATTR_IDENT_TYPE,
+				     (__u8)ident_type);
+
+			argc--; argv++;
+		} else if (strcmp(*argv, "hook-type") == 0) {
+			int hook_type;
+
+			NEXT_ARG();
+
+			hook_type = ila_hook_name2type(*argv);
+			if (hook_type < 0)
+				invarg("\"hook-type\" value is invalid\n",
+				       *argv);
+
+			rta_addattr8(rta, 1024, ILA_ATTR_HOOK_TYPE,
+				     (__u8)hook_type);
 
 			argc--; argv++;
 		} else {

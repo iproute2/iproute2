@@ -28,7 +28,8 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip ila add loc_match LOCATOR_MATCH "
 		"loc LOCATOR [ dev DEV ] "
 		"[ csum-mode { adj-transport | neutral-map | "
-		"neutral-map-auto | no-action } ]\n");
+		"neutral-map-auto | no-action } ] "
+		"[ ident-type { luid | use-format } ]\n");
 	fprintf(stderr, "       ip ila del loc_match LOCATOR_MATCH "
 		"[ loc LOCATOR ] [ dev DEV ]\n");
 	fprintf(stderr, "       ip ila list\n");
@@ -74,6 +75,54 @@ static int ila_csum_name2mode(char *name)
 		return ILA_CSUM_NEUTRAL_MAP;
 	else if (strcmp(name, "neutral-map-auto") == 0)
 		return ILA_CSUM_NEUTRAL_MAP_AUTO;
+	else if (strcmp(name, "no-action") == 0)
+		return ILA_CSUM_NO_ACTION;
+	else if (strcmp(name, "neutral-map-auto") == 0)
+		return ILA_CSUM_NEUTRAL_MAP_AUTO;
+	else
+		return -1;
+}
+
+static char *ila_ident_type2name(__u8 ident_type)
+{
+	switch (ident_type) {
+	case ILA_ATYPE_IID:
+		return "iid";
+	case ILA_ATYPE_LUID:
+		return "luid";
+	case ILA_ATYPE_VIRT_V4:
+		return "virt-v4";
+	case ILA_ATYPE_VIRT_UNI_V6:
+		return "virt-uni-v6";
+	case ILA_ATYPE_VIRT_MULTI_V6:
+		return "virt-multi-v6";
+	case ILA_ATYPE_NONLOCAL_ADDR:
+		return "nonlocal-addr";
+	case ILA_ATYPE_USE_FORMAT:
+		return "use-format";
+	default:
+		return "unknown";
+	}
+}
+
+static int ila_ident_name2type(char *name)
+{
+	if (!strcmp(name, "luid"))
+		return ILA_ATYPE_LUID;
+	else if (!strcmp(name, "use-format"))
+		return ILA_ATYPE_USE_FORMAT;
+#if 0 /* No kernel support for configuring these yet */
+	else if (!strcmp(name, "iid"))
+		return ILA_ATYPE_IID;
+	else if (!strcmp(name, "virt-v4"))
+		return ILA_ATYPE_VIRT_V4;
+	else if (!strcmp(name, "virt-uni-v6"))
+		return ILA_ATYPE_VIRT_UNI_V6;
+	else if (!strcmp(name, "virt-multi-v6"))
+		return ILA_ATYPE_VIRT_MULTI_V6;
+	else if (!strcmp(name, "nonlocal-addr"))
+		return ILA_ATYPE_NONLOCAL_ADDR;
+#endif
 	else
 		return -1;
 }
@@ -147,12 +196,19 @@ static int print_ila_mapping(const struct sockaddr_nl *who,
 			ll_index_to_name(rta_getattr_u32(
 						tb[ILA_ATTR_IFINDEX])));
 	else
-		fprintf(fp, "%-16s", "-");
+		fprintf(fp, "%-10s ", "-");
 
 	if (tb[ILA_ATTR_CSUM_MODE])
 		fprintf(fp, "%s",
 			ila_csum_mode2name(rta_getattr_u8(
 						tb[ILA_ATTR_CSUM_MODE])));
+	else
+		fprintf(fp, "%-10s ", "-");
+
+	if (tb[ILA_ATTR_IDENT_TYPE])
+		fprintf(fp, "%s",
+			ila_ident_type2name(rta_getattr_u8(
+						tb[ILA_ATTR_IDENT_TYPE])));
 	else
 		fprintf(fp, "-");
 
@@ -193,10 +249,12 @@ static int ila_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 	__u64 locator_match = 0;
 	int ifindex = 0;
 	int csum_mode = 0;
+	int ident_type = 0;
 	bool loc_set = false;
 	bool loc_match_set = false;
 	bool ifindex_set = false;
 	bool csum_mode_set = false;
+	bool ident_type_set = false;
 
 	while (argc > 0) {
 		if (!matches(*argv, "loc")) {
@@ -226,6 +284,16 @@ static int ila_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 				return -1;
 			}
 			csum_mode_set = true;
+		} else if (!matches(*argv, "ident-type")) {
+			NEXT_ARG();
+
+			ident_type = ila_ident_name2type(*argv);
+			if (ident_type < 0) {
+				fprintf(stderr, "Bad ident-type: %s\n",
+					*argv);
+				return -1;
+			}
+			ident_type_set = true;
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 
@@ -265,6 +333,9 @@ static int ila_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 
 	if (csum_mode_set)
 		addattr8(n, 1024, ILA_ATTR_CSUM_MODE, csum_mode);
+
+	if (ident_type_set)
+		addattr8(n, 1024, ILA_ATTR_IDENT_TYPE, ident_type);
 
 	return 0;
 }
