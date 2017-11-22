@@ -28,7 +28,7 @@ static void usage(void)
 	fprintf(stderr, "Usage: ip ila add loc_match LOCATOR_MATCH "
 		"loc LOCATOR [ dev DEV ] "
 		"[ csum-mode { adj-transport | neutral-map | "
-		"no-action } ]\n");
+		"neutral-map-auto | no-action } ]\n");
 	fprintf(stderr, "       ip ila del loc_match LOCATOR_MATCH "
 		"[ loc LOCATOR ] [ dev DEV ]\n");
 	fprintf(stderr, "       ip ila list\n");
@@ -59,6 +59,8 @@ static char *ila_csum_mode2name(__u8 csum_mode)
 		return "neutral-map";
 	case ILA_CSUM_NO_ACTION:
 		return "no-action";
+	case ILA_CSUM_NEUTRAL_MAP_AUTO:
+		return "neutral-map-auto";
 	default:
 		return "unknown";
 	}
@@ -70,8 +72,8 @@ static int ila_csum_name2mode(char *name)
 		return ILA_CSUM_ADJUST_TRANSPORT;
 	else if (strcmp(name, "neutral-map") == 0)
 		return ILA_CSUM_NEUTRAL_MAP;
-	else if (strcmp(name, "no-action") == 0)
-		return ILA_CSUM_NO_ACTION;
+	else if (strcmp(name, "neutral-map-auto") == 0)
+		return ILA_CSUM_NEUTRAL_MAP_AUTO;
 	else
 		return -1;
 }

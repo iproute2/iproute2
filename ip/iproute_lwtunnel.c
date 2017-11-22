@@ -288,6 +288,8 @@ static char *ila_csum_mode2name(__u8 csum_mode)
 		return "neutral-map";
 	case ILA_CSUM_NO_ACTION:
 		return "no-action";
+	case ILA_CSUM_NEUTRAL_MAP_AUTO:
+		return "neutral-map-auto";
 	default:
 		return "unknown";
 	}
@@ -301,6 +303,8 @@ static int ila_csum_name2mode(char *name)
 		return ILA_CSUM_NEUTRAL_MAP;
 	else if (strcmp(name, "no-action") == 0)
 		return ILA_CSUM_NO_ACTION;
+	else if (strcmp(name, "neutral-map-auto") == 0)
+		return ILA_CSUM_NEUTRAL_MAP_AUTO;
 	else
 		return -1;
 }
