@@ -79,7 +79,7 @@ static void print_ila_locid(FILE *fp, int attr, struct rtattr *tb[], int space)
 	int i;
 
 	if (tb[attr]) {
-		blen = print_addr64(rta_getattr_u32(tb[attr]),
+		blen = print_addr64(rta_getattr_u64(tb[attr]),
 				    abuf, sizeof(abuf));
 		fprintf(fp, "%s", abuf);
 	} else {
