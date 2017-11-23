@@ -1153,7 +1153,7 @@ static int bpf_log_realloc(struct bpf_elf_ctx *ctx)
 {
 	const size_t log_max = UINT_MAX >> 8;
 	size_t log_size = ctx->log_size;
-	void *ptr;
+	char *ptr;
 
 	if (!ctx->log) {
 		log_size = 65536;
@@ -1169,6 +1169,7 @@ static int bpf_log_realloc(struct bpf_elf_ctx *ctx)
 	if (!ptr)
 		return -ENOMEM;
 
+	ptr[0] = 0;
 	ctx->log = ptr;
 	ctx->log_size = log_size;
 
