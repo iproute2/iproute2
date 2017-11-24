@@ -926,16 +926,11 @@ static int bpf_do_load(struct bpf_cfg_in *cfg)
 	return 0;
 }
 
-static int bpf_parse_opt_tbl(struct bpf_cfg_in *cfg,
-			     const struct bpf_cfg_ops *ops, void *nl,
-			     const bool *opt_tbl)
+int bpf_load_common(struct bpf_cfg_in *cfg, const struct bpf_cfg_ops *ops,
+		    void *nl)
 {
 	char annotation[256];
 	int ret;
-
-	ret = bpf_do_parse(cfg, opt_tbl);
-	if (ret < 0)
-		return ret;
 
 	ret = bpf_do_load(cfg);
 	if (ret < 0)
@@ -953,8 +948,7 @@ static int bpf_parse_opt_tbl(struct bpf_cfg_in *cfg,
 	return 0;
 }
 
-int bpf_parse_and_load_common(struct bpf_cfg_in *cfg,
-			      const struct bpf_cfg_ops *ops, void *nl)
+int bpf_parse_common(struct bpf_cfg_in *cfg, const struct bpf_cfg_ops *ops)
 {
 	bool opt_tbl[BPF_MODE_MAX] = {};
 
@@ -968,7 +962,19 @@ int bpf_parse_and_load_common(struct bpf_cfg_in *cfg,
 		opt_tbl[EBPF_PINNED]   = true;
 	}
 
-	return bpf_parse_opt_tbl(cfg, ops, nl, opt_tbl);
+	return bpf_do_parse(cfg, opt_tbl);
+}
+
+int bpf_parse_and_load_common(struct bpf_cfg_in *cfg,
+			      const struct bpf_cfg_ops *ops, void *nl)
+{
+	int ret;
+
+	ret = bpf_parse_common(cfg, ops);
+	if (ret < 0)
+		return ret;
+
+	return bpf_load_common(cfg, ops, nl);
 }
 
 int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
