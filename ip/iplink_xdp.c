@@ -52,6 +52,7 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
 	      bool drv, bool offload)
 {
 	struct bpf_cfg_in cfg = {
+		.type = BPF_PROG_TYPE_XDP,
 		.argc = *argc,
 		.argv = *argv,
 	};
@@ -74,7 +75,7 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
 			return xdp_delete(&xdp);
 	}
 
-	if (bpf_parse_common(BPF_PROG_TYPE_XDP, &cfg, &bpf_cb_ops, &xdp))
+	if (bpf_parse_common(&cfg, &bpf_cb_ops, &xdp))
 		return -1;
 
 	*argc = cfg.argc;

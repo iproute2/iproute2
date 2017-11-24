@@ -813,8 +813,8 @@ enum bpf_mode {
 	BPF_MODE_MAX,
 };
 
-static int bpf_parse(enum bpf_prog_type *type, enum bpf_mode *mode,
-		     struct bpf_cfg_in *cfg, const bool *opt_tbl)
+static int bpf_parse(enum bpf_mode *mode, struct bpf_cfg_in *cfg,
+		     const bool *opt_tbl)
 {
 	const char *file, *section, *uds_name;
 	bool verbose = false;
@@ -852,7 +852,7 @@ static int bpf_parse(enum bpf_prog_type *type, enum bpf_mode *mode,
 		file = *argv;
 		NEXT_ARG_FWD();
 
-		if (*type == BPF_PROG_TYPE_UNSPEC) {
+		if (cfg->type == BPF_PROG_TYPE_UNSPEC) {
 			if (argc > 0 && matches(*argv, "type") == 0) {
 				NEXT_ARG();
 				for (i = 0; i < ARRAY_SIZE(__bpf_prog_meta);
@@ -861,30 +861,30 @@ static int bpf_parse(enum bpf_prog_type *type, enum bpf_mode *mode,
 						continue;
 					if (!matches(*argv,
 						     __bpf_prog_meta[i].type)) {
-						*type = i;
+						cfg->type = i;
 						break;
 					}
 				}
 
-				if (*type == BPF_PROG_TYPE_UNSPEC) {
+				if (cfg->type == BPF_PROG_TYPE_UNSPEC) {
 					fprintf(stderr, "What type is \"%s\"?\n",
 						*argv);
 					return -1;
 				}
 				NEXT_ARG_FWD();
 			} else {
-				*type = BPF_PROG_TYPE_SCHED_CLS;
+				cfg->type = BPF_PROG_TYPE_SCHED_CLS;
 			}
 		}
 
-		section = bpf_prog_to_default_section(*type);
+		section = bpf_prog_to_default_section(cfg->type);
 		if (argc > 0 && matches(*argv, "section") == 0) {
 			NEXT_ARG();
 			section = *argv;
 			NEXT_ARG_FWD();
 		}
 
-		if (__bpf_prog_meta[*type].may_uds_export) {
+		if (__bpf_prog_meta[cfg->type].may_uds_export) {
 			uds_name = getenv(BPF_ENV_UDS);
 			if (argc > 0 && !uds_name &&
 			    matches(*argv, "export") == 0) {
@@ -905,9 +905,9 @@ static int bpf_parse(enum bpf_prog_type *type, enum bpf_mode *mode,
 	if (*mode == CBPF_BYTECODE || *mode == CBPF_FILE)
 		ret = bpf_ops_parse(argc, argv, cfg->ops, *mode == CBPF_FILE);
 	else if (*mode == EBPF_OBJECT)
-		ret = bpf_obj_open(file, *type, section, verbose);
+		ret = bpf_obj_open(file, cfg->type, section, verbose);
 	else if (*mode == EBPF_PINNED)
-		ret = bpf_obj_pinned(file, *type);
+		ret = bpf_obj_pinned(file, cfg->type);
 	else
 		return -1;
 
@@ -920,7 +920,7 @@ static int bpf_parse(enum bpf_prog_type *type, enum bpf_mode *mode,
 	return ret;
 }
 
-static int bpf_parse_opt_tbl(enum bpf_prog_type type, struct bpf_cfg_in *cfg,
+static int bpf_parse_opt_tbl(struct bpf_cfg_in *cfg,
 			     const struct bpf_cfg_ops *ops, void *nl,
 			     const bool *opt_tbl)
 {
@@ -930,7 +930,7 @@ static int bpf_parse_opt_tbl(enum bpf_prog_type type, struct bpf_cfg_in *cfg,
 	int ret;
 
 	cfg->ops = opcodes;
-	ret = bpf_parse(&type, &mode, cfg, opt_tbl);
+	ret = bpf_parse(&mode, cfg, opt_tbl);
 	cfg->ops = NULL;
 	if (ret < 0)
 		return ret;
@@ -947,8 +947,8 @@ static int bpf_parse_opt_tbl(enum bpf_prog_type type, struct bpf_cfg_in *cfg,
 	return 0;
 }
 
-int bpf_parse_common(enum bpf_prog_type type, struct bpf_cfg_in *cfg,
-		     const struct bpf_cfg_ops *ops, void *nl)
+int bpf_parse_common(struct bpf_cfg_in *cfg, const struct bpf_cfg_ops *ops,
+		     void *nl)
 {
 	bool opt_tbl[BPF_MODE_MAX] = {};
 
@@ -962,12 +962,11 @@ int bpf_parse_common(enum bpf_prog_type type, struct bpf_cfg_in *cfg,
 		opt_tbl[EBPF_PINNED]   = true;
 	}
 
-	return bpf_parse_opt_tbl(type, cfg, ops, nl, opt_tbl);
+	return bpf_parse_opt_tbl(cfg, ops, nl, opt_tbl);
 }
 
 int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
 {
-	enum bpf_prog_type type = BPF_PROG_TYPE_UNSPEC;
 	const bool opt_tbl[BPF_MODE_MAX] = {
 		[EBPF_OBJECT]	= true,
 		[EBPF_PINNED]	= true,
@@ -978,6 +977,7 @@ int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
 		.size_value	= sizeof(int),
 	};
 	struct bpf_cfg_in cfg = {
+		.type		= BPF_PROG_TYPE_UNSPEC,
 		.argc		= argc,
 		.argv		= argv,
 	};
@@ -986,7 +986,7 @@ int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
 	enum bpf_mode mode;
 	uint32_t map_key;
 
-	prog_fd = bpf_parse(&type, &mode, &cfg, opt_tbl);
+	prog_fd = bpf_parse(&mode, &cfg, opt_tbl);
 	if (prog_fd < 0)
 		return prog_fd;
 	if (key) {
@@ -1000,7 +1000,7 @@ int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
 		}
 	}
 
-	map_fd = bpf_obj_get(map_path, type);
+	map_fd = bpf_obj_get(map_path, cfg.type);
 	if (map_fd < 0) {
 		fprintf(stderr, "Couldn\'t retrieve pinned map \'%s\': %s\n",
 			map_path, strerror(errno));
@@ -1010,7 +1010,7 @@ int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
 
 	ret = bpf_map_selfcheck_pinned(map_fd, &test, &ext,
 				       offsetof(struct bpf_elf_map, max_elem),
-				       type);
+				       cfg.type);
 	if (ret < 0) {
 		fprintf(stderr, "Map \'%s\' self-check failed!\n", map_path);
 		goto out_map;

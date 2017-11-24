@@ -103,10 +103,11 @@ static int bpf_parse_opt(struct filter_util *qu, char *handle,
 			NEXT_ARG();
 opt_bpf:
 			seen_run = true;
+			cfg.type = bpf_type;
 			cfg.argc = argc;
 			cfg.argv = argv;
 
-			if (bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, n))
+			if (bpf_parse_common(&cfg, &bpf_cb_ops, n))
 				return -1;
 
 			argc = cfg.argc;
