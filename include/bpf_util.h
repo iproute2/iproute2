@@ -259,8 +259,8 @@ struct bpf_cfg_in {
 		.off   = 0,					\
 		.imm   = 0 })
 
-int bpf_parse_common(struct bpf_cfg_in *cfg, const struct bpf_cfg_ops *ops,
-		     void *nl);
+int bpf_parse_and_load_common(struct bpf_cfg_in *cfg,
+			      const struct bpf_cfg_ops *ops, void *nl);
 
 const char *bpf_prog_to_default_section(enum bpf_prog_type type);
 

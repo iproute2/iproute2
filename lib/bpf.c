@@ -953,8 +953,8 @@ static int bpf_parse_opt_tbl(struct bpf_cfg_in *cfg,
 	return 0;
 }
 
-int bpf_parse_common(struct bpf_cfg_in *cfg, const struct bpf_cfg_ops *ops,
-		     void *nl)
+int bpf_parse_and_load_common(struct bpf_cfg_in *cfg,
+			      const struct bpf_cfg_ops *ops, void *nl)
 {
 	bool opt_tbl[BPF_MODE_MAX] = {};
 

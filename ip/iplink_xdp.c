@@ -75,7 +75,7 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
 			return xdp_delete(&xdp);
 	}
 
-	if (bpf_parse_common(&cfg, &bpf_cb_ops, &xdp))
+	if (bpf_parse_and_load_common(&cfg, &bpf_cb_ops, &xdp))
 		return -1;
 
 	*argc = cfg.argc;

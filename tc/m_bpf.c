@@ -102,7 +102,7 @@ opt_bpf:
 			cfg.argc = argc;
 			cfg.argv = argv;
 
-			if (bpf_parse_common(&cfg, &bpf_cb_ops, n))
+			if (bpf_parse_and_load_common(&cfg, &bpf_cb_ops, n))
 				return -1;
 
 			argc = cfg.argc;
