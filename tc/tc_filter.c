@@ -160,6 +160,16 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (k[0])
 		addattr_l(&req.n, sizeof(req), TCA_KIND, k, strlen(k)+1);
 
+	if (d[0])  {
+		ll_init_map(&rth);
+
+		req.t.tcm_ifindex = ll_name_to_index(d);
+		if (req.t.tcm_ifindex == 0) {
+			fprintf(stderr, "Cannot find device \"%s\"\n", d);
+			return 1;
+		}
+	}
+
 	if (q) {
 		if (q->parse_fopt(q, fhandle, argc, argv, &req.n))
 			return 1;
@@ -181,17 +191,6 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (est.ewma_log)
 		addattr_l(&req.n, sizeof(req), TCA_RATE, &est, sizeof(est));
-
-
-	if (d[0])  {
-		ll_init_map(&rth);
-
-		req.t.tcm_ifindex = ll_name_to_index(d);
-		if (req.t.tcm_ifindex == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
-	}
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
@@ -452,9 +451,22 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		return -1;
 	}
 
+	if (d[0])  {
+		ll_init_map(&rth);
+
+		req.t.tcm_ifindex = ll_name_to_index(d);
+		if (req.t.tcm_ifindex  == 0) {
+			fprintf(stderr, "Cannot find device \"%s\"\n", d);
+			return 1;
+		}
+		filter_ifindex = req.t.tcm_ifindex;
+	} else {
+		fprintf(stderr, "Must specify netdevice \"dev\"\n");
+		return -1;
+	}
+
 	if (q->parse_fopt(q, fhandle, argc, argv, &req.n))
 		return 1;
-
 
 	if (!fhandle) {
 		fprintf(stderr, "Must specify filter \"handle\"\n");
@@ -467,20 +479,6 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		fprintf(stderr,
 			"Garbage instead of arguments \"%s ...\". Try \"tc filter help\".\n",
 			*argv);
-		return -1;
-	}
-
-	if (d[0])  {
-		ll_init_map(&rth);
-
-		req.t.tcm_ifindex = ll_name_to_index(d);
-		if (req.t.tcm_ifindex  == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
-		filter_ifindex = req.t.tcm_ifindex;
-	} else {
-		fprintf(stderr, "Must specify netdevice \"dev\"\n");
 		return -1;
 	}
 
