@@ -154,7 +154,7 @@ int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	int argc = *argc_p;
 	char **argv = *argv_p;
 	struct rtattr *tail, *tail2;
-	char k[16];
+	char k[FILTER_NAMESZ];
 	int act_ck_len = 0;
 	int ok = 0;
 	int eap = 0; /* expect action parameters */
@@ -431,7 +431,7 @@ int print_action(const struct sockaddr_nl *who,
 
 static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p)
 {
-	char k[16];
+	char k[FILTER_NAMESZ];
 	struct action_util *a = NULL;
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -581,7 +581,7 @@ static int tc_act_list_or_flush(int *argc_p, char ***argv_p, int event)
 	char **argv = *argv_p;
 	__u32 msec_since = 0;
 	int argc = *argc_p;
-	char k[16];
+	char k[FILTER_NAMESZ];
 	struct {
 		struct nlmsghdr         n;
 		struct tcamsg           t;

@@ -70,7 +70,7 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 	int ok = 0, iok = 0, mirror = 0, redir = 0, ingress = 0, egress = 0;
 	struct tc_mirred p = {};
 	struct rtattr *tail;
-	char d[16] = {};
+	char d[IFNAMSIZ] = {};
 
 	while (argc > 0) {
 

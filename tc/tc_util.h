@@ -3,9 +3,12 @@
 
 #define MAX_MSG 16384
 #include <limits.h>
+#include <linux/if.h>
+
 #include <linux/pkt_sched.h>
 #include <linux/pkt_cls.h>
 #include <linux/gen_stats.h>
+
 #include "tc_core.h"
 
 /* This is the deprecated multiqueue interface */
@@ -19,6 +22,8 @@ enum
 
 #define TCA_PRIO_MAX    (__TCA_PRIO_MAX - 1)
 #endif
+
+#define FILTER_NAMESZ	16
 
 struct qdisc_util {
 	struct  qdisc_util *next;
@@ -38,7 +43,7 @@ struct qdisc_util {
 extern __u16 f_proto;
 struct filter_util {
 	struct filter_util *next;
-	char id[16];
+	char id[FILTER_NAMESZ];
 	int (*parse_fopt)(struct filter_util *qu, char *fhandle,
 			  int argc, char **argv, struct nlmsghdr *n);
 	int (*print_fopt)(struct filter_util *qu,
@@ -47,7 +52,7 @@ struct filter_util {
 
 struct action_util {
 	struct action_util *next;
-	char id[16];
+	char id[FILTER_NAMESZ];
 	int (*parse_aopt)(struct action_util *a, int *argc,
 			  char ***argv, int code, struct nlmsghdr *n);
 	int (*print_aopt)(struct action_util *au, FILE *f, struct rtattr *opt);
@@ -57,7 +62,7 @@ struct action_util {
 
 struct exec_util {
 	struct exec_util *next;
-	char id[16];
+	char id[FILTER_NAMESZ];
 	int (*parse_eopt)(struct exec_util *eu, int argc, char **argv);
 };
 

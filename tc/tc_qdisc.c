@@ -49,8 +49,8 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 		struct tc_sizespec	szopts;
 		__u16			*data;
 	} stab = {};
-	char  d[16] = {};
-	char  k[16] = {};
+	char  d[IFNAMSIZ] = {};
+	char  k[FILTER_NAMESZ] = {};
 	struct {
 		struct nlmsghdr	n;
 		struct tcmsg		t;
@@ -300,7 +300,7 @@ int print_qdisc(const struct sockaddr_nl *who,
 static int tc_qdisc_list(int argc, char **argv)
 {
 	struct tcmsg t = { .tcm_family = AF_UNSPEC };
-	char d[16] = {};
+	char d[IFNAMSIZ] = {};
 	bool dump_invisible = false;
 
 	while (argc > 0) {

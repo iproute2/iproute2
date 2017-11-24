@@ -61,8 +61,8 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 	__u32 chain_index;
 	int chain_index_set = 0;
 	char *fhandle = NULL;
-	char  d[16] = {};
-	char  k[16] = {};
+	char  d[IFNAMSIZ] = {};
+	char  k[FILTER_NAMESZ] = {};
 	struct tc_estimator est = {};
 
 	if (cmd == RTM_NEWTFILTER && flags & NLM_F_CREATE)
@@ -339,8 +339,8 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 	int chain_index_set = 0;
 	__u32 parent_handle = 0;
 	char *fhandle = NULL;
-	char  d[16] = {};
-	char  k[16] = {};
+	char  d[IFNAMSIZ] = {};
+	char  k[FILTER_NAMESZ] = {};
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -507,7 +507,7 @@ static int tc_filter_list(int argc, char **argv)
 		.t.tcm_parent = TC_H_UNSPEC,
 		.t.tcm_family = AF_UNSPEC,
 	};
-	char d[16] = {};
+	char d[IFNAMSIZ] = {};
 	__u32 prio = 0;
 	__u32 protocol = 0;
 	__u32 chain_index;

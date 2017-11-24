@@ -524,7 +524,7 @@ static int parse_munge(int *argc_p, char ***argv_p, struct m_pedit_sel *sel)
 		res = parse_offset(&argc, &argv, sel, &tkey);
 		goto done;
 	} else {
-		char k[16];
+		char k[FILTER_NAMESZ];
 		struct m_pedit_util *p = NULL;
 
 		strncpy(k, *argv, sizeof(k) - 1);

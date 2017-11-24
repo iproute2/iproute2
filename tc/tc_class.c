@@ -67,8 +67,8 @@ static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
 	};
 	struct qdisc_util *q = NULL;
 	struct tc_estimator est = {};
-	char  d[16] = {};
-	char  k[16] = {};
+	char  d[IFNAMSIZ] = {};
+	char  k[FILTER_NAMESZ] = {};
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -388,7 +388,7 @@ int print_class(const struct sockaddr_nl *who,
 static int tc_class_list(int argc, char **argv)
 {
 	struct tcmsg t = { .tcm_family = AF_UNSPEC };
-	char d[16] = {};
+	char d[IFNAMSIZ] = {};
 	char buf[1024] = {0};
 
 	filter_qdisc = 0;

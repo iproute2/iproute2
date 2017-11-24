@@ -84,7 +84,7 @@ noexist:
 int do_exec(int argc, char **argv)
 {
 	struct exec_util *eu;
-	char kind[16] = {};
+	char kind[FILTER_NAMESZ] = {};
 
 	if (argc < 1) {
 		fprintf(stderr, "No command given, try \"tc exec help\".\n");
