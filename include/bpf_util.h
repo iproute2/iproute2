@@ -70,6 +70,7 @@ struct bpf_cfg_in {
 	const char *uds;
 	enum bpf_prog_type type;
 	enum bpf_mode mode;
+	__u32 ifindex;
 	bool verbose;
 	int argc;
 	char **argv;

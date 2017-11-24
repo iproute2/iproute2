@@ -113,10 +113,10 @@ const char *bpf_prog_to_default_section(enum bpf_prog_type type)
 
 #ifdef HAVE_ELF
 static int bpf_obj_open(const char *path, enum bpf_prog_type type,
-			const char *sec, bool verbose);
+			const char *sec, __u32 ifindex, bool verbose);
 #else
 static int bpf_obj_open(const char *path, enum bpf_prog_type type,
-			const char *sec, bool verbose)
+			const char *sec, __u32 ifindex, bool verbose)
 {
 	fprintf(stderr, "No ELF library support compiled in.\n");
 	errno = ENOSYS;
@@ -920,7 +920,8 @@ static int bpf_do_load(struct bpf_cfg_in *cfg)
 {
 	if (cfg->mode == EBPF_OBJECT) {
 		cfg->prog_fd = bpf_obj_open(cfg->object, cfg->type,
-					    cfg->section, cfg->verbose);
+					    cfg->section, cfg->ifindex,
+					    cfg->verbose);
 		return cfg->prog_fd;
 	}
 	return 0;
@@ -1065,9 +1066,10 @@ int bpf_prog_detach_fd(int target_fd, enum bpf_attach_type type)
 	return bpf(BPF_PROG_DETACH, &attr, sizeof(attr));
 }
 
-int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
-		  size_t size_insns, const char *license, char *log,
-		  size_t size_log)
+static int bpf_prog_load_dev(enum bpf_prog_type type,
+			     const struct bpf_insn *insns, size_t size_insns,
+			     const char *license, __u32 ifindex,
+			     char *log, size_t size_log)
 {
 	union bpf_attr attr = {};
 
@@ -1075,6 +1077,7 @@ int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
 	attr.insns = bpf_ptr_to_u64(insns);
 	attr.insn_cnt = size_insns / sizeof(struct bpf_insn);
 	attr.license = bpf_ptr_to_u64(license);
+	attr.prog_ifindex = ifindex;
 
 	if (size_log > 0) {
 		attr.log_buf = bpf_ptr_to_u64(log);
@@ -1083,6 +1086,14 @@ int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
 	}
 
 	return bpf(BPF_PROG_LOAD, &attr, sizeof(attr));
+}
+
+int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
+		  size_t size_insns, const char *license, char *log,
+		  size_t size_log)
+{
+	return bpf_prog_load_dev(type, insns, size_insns, license, 0,
+				 log, size_log);
 }
 
 #ifdef HAVE_ELF
@@ -1120,6 +1131,7 @@ struct bpf_elf_ctx {
 	int			sec_maps;
 	char			license[ELF_MAX_LICENSE_LEN];
 	enum bpf_prog_type	type;
+	__u32			ifindex;
 	bool			verbose;
 	struct bpf_elf_st	stat;
 	struct bpf_hash_entry	*ht[256];
@@ -1492,8 +1504,9 @@ static int bpf_prog_attach(const char *section,
 	int tries = 0, fd;
 retry:
 	errno = 0;
-	fd = bpf_prog_load(prog->type, prog->insns, prog->size,
-			   prog->license, ctx->log, ctx->log_size);
+	fd = bpf_prog_load_dev(prog->type, prog->insns, prog->size,
+			       prog->license, ctx->ifindex,
+			       ctx->log, ctx->log_size);
 	if (fd < 0 || ctx->verbose) {
 		/* The verifier log is pretty chatty, sometimes so chatty
 		 * on larger programs, that we could fail to dump everything
@@ -2421,7 +2434,8 @@ static void bpf_get_cfg(struct bpf_elf_ctx *ctx)
 }
 
 static int bpf_elf_ctx_init(struct bpf_elf_ctx *ctx, const char *pathname,
-			    enum bpf_prog_type type, bool verbose)
+			    enum bpf_prog_type type, __u32 ifindex,
+			    bool verbose)
 {
 	int ret = -EINVAL;
 
@@ -2433,6 +2447,7 @@ static int bpf_elf_ctx_init(struct bpf_elf_ctx *ctx, const char *pathname,
 	bpf_get_cfg(ctx);
 	ctx->verbose = verbose;
 	ctx->type    = type;
+	ctx->ifindex = ifindex;
 
 	ctx->obj_fd = open(pathname, O_RDONLY);
 	if (ctx->obj_fd < 0)
@@ -2524,12 +2539,12 @@ static void bpf_elf_ctx_destroy(struct bpf_elf_ctx *ctx, bool failure)
 static struct bpf_elf_ctx __ctx;
 
 static int bpf_obj_open(const char *pathname, enum bpf_prog_type type,
-			const char *section, bool verbose)
+			const char *section, __u32 ifindex, bool verbose)
 {
 	struct bpf_elf_ctx *ctx = &__ctx;
 	int fd = 0, ret;
 
-	ret = bpf_elf_ctx_init(ctx, pathname, type, verbose);
+	ret = bpf_elf_ctx_init(ctx, pathname, type, ifindex, verbose);
 	if (ret < 0) {
 		fprintf(stderr, "Cannot initialize ELF context!\n");
 		return ret;
