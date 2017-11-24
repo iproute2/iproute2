@@ -56,11 +56,20 @@ struct bpf_cfg_ops {
 	void (*ebpf_cb)(void *nl, int fd, const char *annotation);
 };
 
+enum bpf_mode {
+	CBPF_BYTECODE,
+	CBPF_FILE,
+	EBPF_OBJECT,
+	EBPF_PINNED,
+	BPF_MODE_MAX,
+};
+
 struct bpf_cfg_in {
 	const char *object;
 	const char *section;
 	const char *uds;
 	enum bpf_prog_type type;
+	enum bpf_mode mode;
 	int argc;
 	char **argv;
 	struct sock_filter *ops;
