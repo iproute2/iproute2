@@ -805,7 +805,7 @@ static int bpf_obj_pinned(const char *pathname, enum bpf_prog_type type)
 	return prog_fd;
 }
 
-static int bpf_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
+static int bpf_do_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
 {
 	const char *file, *section, *uds_name;
 	bool verbose = false;
@@ -893,23 +893,37 @@ static int bpf_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
 		PREV_ARG();
 	}
 
-	if (cfg->mode == CBPF_BYTECODE || cfg->mode == CBPF_FILE)
+	if (cfg->mode == CBPF_BYTECODE || cfg->mode == CBPF_FILE) {
 		ret = bpf_ops_parse(argc, argv, cfg->opcodes,
 				    cfg->mode == CBPF_FILE);
-	else if (cfg->mode == EBPF_OBJECT)
-		ret = bpf_obj_open(file, cfg->type, section, verbose);
-	else if (cfg->mode == EBPF_PINNED)
+		cfg->n_opcodes = ret;
+	} else if (cfg->mode == EBPF_OBJECT) {
+		ret = 0; /* program will be loaded by load stage */
+	} else if (cfg->mode == EBPF_PINNED) {
 		ret = bpf_obj_pinned(file, cfg->type);
-	else
+		cfg->prog_fd = ret;
+	} else {
 		return -1;
+	}
 
 	cfg->object  = file;
 	cfg->section = section;
 	cfg->uds     = uds_name;
 	cfg->argc    = argc;
 	cfg->argv    = argv;
+	cfg->verbose = verbose;
 
 	return ret;
+}
+
+static int bpf_do_load(struct bpf_cfg_in *cfg)
+{
+	if (cfg->mode == EBPF_OBJECT) {
+		cfg->prog_fd = bpf_obj_open(cfg->object, cfg->type,
+					    cfg->section, cfg->verbose);
+		return cfg->prog_fd;
+	}
+	return 0;
 }
 
 static int bpf_parse_opt_tbl(struct bpf_cfg_in *cfg,
@@ -919,17 +933,21 @@ static int bpf_parse_opt_tbl(struct bpf_cfg_in *cfg,
 	char annotation[256];
 	int ret;
 
-	ret = bpf_parse(cfg, opt_tbl);
+	ret = bpf_do_parse(cfg, opt_tbl);
+	if (ret < 0)
+		return ret;
+
+	ret = bpf_do_load(cfg);
 	if (ret < 0)
 		return ret;
 
 	if (cfg->mode == CBPF_BYTECODE || cfg->mode == CBPF_FILE)
-		ops->cbpf_cb(nl, cfg->opcodes, ret);
+		ops->cbpf_cb(nl, cfg->opcodes, cfg->n_opcodes);
 	if (cfg->mode == EBPF_OBJECT || cfg->mode == EBPF_PINNED) {
 		snprintf(annotation, sizeof(annotation), "%s:[%s]",
 			 basename(cfg->object), cfg->mode == EBPF_PINNED ?
 			 "*fsobj" : cfg->section);
-		ops->ebpf_cb(nl, ret, annotation);
+		ops->ebpf_cb(nl, cfg->prog_fd, annotation);
 	}
 
 	return 0;
@@ -973,9 +991,16 @@ int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv)
 	int ret, prog_fd, map_fd;
 	uint32_t map_key;
 
-	prog_fd = bpf_parse(&cfg, opt_tbl);
-	if (prog_fd < 0)
-		return prog_fd;
+	ret = bpf_do_parse(&cfg, opt_tbl);
+	if (ret < 0)
+		return ret;
+
+	ret = bpf_do_load(&cfg);
+	if (ret < 0)
+		return ret;
+
+	prog_fd = cfg.prog_fd;
+
 	if (key) {
 		map_key = *key;
 	} else {
