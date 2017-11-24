@@ -26,15 +26,12 @@
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip ila add loc_match LOCATOR_MATCH "
-		"loc LOCATOR [ dev DEV ] "
-		"[ csum-mode { adj-transport | neutral-map | "
-		"neutral-map-auto | no-action } ] "
-		"[ ident-type { luid | use-format } ]\n");
-	fprintf(stderr, "       ip ila del loc_match LOCATOR_MATCH "
-		"[ loc LOCATOR ] [ dev DEV ]\n");
-	fprintf(stderr, "       ip ila list\n");
-	fprintf(stderr, "\n");
+	fprintf(stderr,
+"Usage: ip ila add loc_match LOCATOR_MATCH loc LOCATOR [ dev DEV ] OPTIONS\n"
+"       ip ila del loc_match LOCATOR_MATCH [ loc LOCATOR ] [ dev DEV ]\n"
+"       ip ila list\n"
+"OPTIONS := [ csum-mode { adj-transport | neutral-map | neutral-map-auto | no-action } ]\n"
+"           [ ident-type { luid | use-format } ]\n");
 
 	exit(-1);
 }
