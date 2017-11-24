@@ -631,8 +631,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			bool offload = strcmp(*argv, "xdpoffload") == 0;
 
 			NEXT_ARG();
-			if (xdp_parse(&argc, &argv, req, generic, drv,
-				      offload))
+			if (xdp_parse(&argc, &argv, req, dev_index,
+				      generic, drv, offload))
 				exit(-1);
 		} else if (strcmp(*argv, "netns") == 0) {
 			NEXT_ARG();
