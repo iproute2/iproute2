@@ -72,7 +72,7 @@ struct bpf_cfg_in {
 	enum bpf_mode mode;
 	int argc;
 	char **argv;
-	struct sock_filter *ops;
+	struct sock_filter opcodes[BPF_MAXINSNS];
 };
 
 /* ALU ops on registers, bpf_add|sub|...: dst_reg += src_reg */

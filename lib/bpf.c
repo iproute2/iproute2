@@ -894,7 +894,7 @@ static int bpf_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
 	}
 
 	if (cfg->mode == CBPF_BYTECODE || cfg->mode == CBPF_FILE)
-		ret = bpf_ops_parse(argc, argv, cfg->ops,
+		ret = bpf_ops_parse(argc, argv, cfg->opcodes,
 				    cfg->mode == CBPF_FILE);
 	else if (cfg->mode == EBPF_OBJECT)
 		ret = bpf_obj_open(file, cfg->type, section, verbose);
@@ -916,18 +916,15 @@ static int bpf_parse_opt_tbl(struct bpf_cfg_in *cfg,
 			     const struct bpf_cfg_ops *ops, void *nl,
 			     const bool *opt_tbl)
 {
-	struct sock_filter opcodes[BPF_MAXINSNS];
 	char annotation[256];
 	int ret;
 
-	cfg->ops = opcodes;
 	ret = bpf_parse(cfg, opt_tbl);
-	cfg->ops = NULL;
 	if (ret < 0)
 		return ret;
 
 	if (cfg->mode == CBPF_BYTECODE || cfg->mode == CBPF_FILE)
-		ops->cbpf_cb(nl, opcodes, ret);
+		ops->cbpf_cb(nl, cfg->opcodes, ret);
 	if (cfg->mode == EBPF_OBJECT || cfg->mode == EBPF_PINNED) {
 		snprintf(annotation, sizeof(annotation), "%s:[%s]",
 			 basename(cfg->object), cfg->mode == EBPF_PINNED ?
