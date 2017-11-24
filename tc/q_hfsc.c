@@ -23,8 +23,8 @@
 #include "utils.h"
 #include "tc_util.h"
 
-static int hfsc_get_sc(int *, char ***, struct tc_service_curve *, const char *);
-
+static int hfsc_get_sc(int *, char ***,
+		       struct tc_service_curve *, const char *);
 
 static void
 explain_qdisc(void)
@@ -70,7 +70,8 @@ explain1(char *arg)
 }
 
 static int
-hfsc_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
+hfsc_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+	       struct nlmsghdr *n, const char *dev)
 {
 	struct tc_hfsc_qopt qopt = {};
 
@@ -281,7 +282,8 @@ struct qdisc_util hfsc_qdisc_util = {
 };
 
 static int
-hfsc_get_sc1(int *argcp, char ***argvp, struct tc_service_curve *sc, const char *dev)
+hfsc_get_sc1(int *argcp, char ***argvp,
+	     struct tc_service_curve *sc, const char *dev)
 {
 	char **argv = *argvp;
 	int argc = *argcp;

@@ -26,7 +26,8 @@
 #define MAX_HDR_LEN 64
 
 
-static int atm_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
+static int atm_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+			 struct nlmsghdr *n, const char *dev)
 {
 	if (argc) {
 		fprintf(stderr, "Usage: atm\n");

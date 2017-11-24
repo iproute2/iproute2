@@ -32,7 +32,8 @@ static void explain(void)
 	fprintf(stderr, "               [ecn] [harddrop]\n");
 }
 
-static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
+static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+			 struct nlmsghdr *n, const char *dev)
 {
 	struct tc_red_qopt opt = {};
 	unsigned int burst = 0;

@@ -35,7 +35,8 @@ static void explain1(const char *arg, const char *val)
 }
 
 
-static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
+static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+			 struct nlmsghdr *n, const char *dev)
 {
 	int ok = 0;
 	struct tc_tbf_qopt opt = {};

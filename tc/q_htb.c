@@ -58,8 +58,8 @@ static void explain1(char *arg)
     explain();
 }
 
-
-static int htb_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
+static int htb_parse_opt(struct qdisc_util *qu, int argc,
+			 char **argv, struct nlmsghdr *n, const char *dev)
 {
 	unsigned int direct_qlen = ~0U;
 	struct tc_htb_glob opt = {

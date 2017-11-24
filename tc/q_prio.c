@@ -27,7 +27,8 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... prio bands NUMBER priomap P1 P2...[multiqueue]\n");
 }
 
-static int prio_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
+static int prio_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+			  struct nlmsghdr *n, const char *dev)
 {
 	int pmap_mode = 0;
 	int idx = 0;
