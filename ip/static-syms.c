@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This file creates a dummy version of dynamic loading
  * for environments where dynamic linking

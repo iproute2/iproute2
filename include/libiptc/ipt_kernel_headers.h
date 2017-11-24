@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /* This is the userspace/kernel interface for Generic IP Chains,
    required for libc6. */
 #ifndef _FWCHAINS_KERNEL_HEADERS_H

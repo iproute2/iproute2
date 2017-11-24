@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 SSOBJ=ss.o ssfilter.o
 LNSTATOBJ=lnstat.o lnstat_util.o
 

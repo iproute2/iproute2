@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _TC_RED_H_
 #define _TC_RED_H_ 1
 

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _TC_CBQ_H_
 #define _TC_CBQ_H_ 1
 

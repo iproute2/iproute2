@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _ILA_COMMON_H_
 #define _ILA_COMMON_H_
 

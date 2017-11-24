@@ -1,4 +1,5 @@
 #! /bin/sh
+# SPDX-License-Identifier: GPL-2.0
 
 if [ -z "$*" ] ; then
 	exec ip -4 ro flush  scope global  type unicast

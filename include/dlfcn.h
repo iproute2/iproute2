@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Stub dlfcn implementation for systems that lack shared library support
  * but obviously can still reference compiled-in symbols.

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef IPTABLES_INTERNAL_H
 #define IPTABLES_INTERNAL_H 1
 

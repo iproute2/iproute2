@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __TC_EMATCH_H_
 #define __TC_EMATCH_H_
 

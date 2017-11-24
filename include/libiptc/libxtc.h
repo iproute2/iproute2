@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _LIBXTC_H
 #define _LIBXTC_H
 /* Library which manipulates filtering rules. */

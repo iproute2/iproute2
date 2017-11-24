@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * q_dsmark.c		Differentiated Services field marking.
  *

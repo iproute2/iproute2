@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #define _ATFILE_SOURCE
 #include <sys/types.h>
 #include <sys/stat.h>

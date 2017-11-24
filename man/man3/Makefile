@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 MAN3PAGES = $(wildcard *.3)
 
 all:

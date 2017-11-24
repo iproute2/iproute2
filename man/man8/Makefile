@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 TARGETS = ip-address.8 ip-link.8 ip-route.8
 
 MAN8PAGES = $(TARGETS) $(filter-out $(TARGETS),$(wildcard *.8))

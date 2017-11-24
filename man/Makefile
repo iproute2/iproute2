@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 INSTALL=install
 INSTALLDIR=install -m 0755 -d
 INSTALLMAN=install -m 0644

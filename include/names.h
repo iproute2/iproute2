@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef DB_NAMES_H_
 #define DB_NAMES_H_ 1
 

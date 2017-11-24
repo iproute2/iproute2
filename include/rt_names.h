@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef RT_NAMES_H_
 #define RT_NAMES_H_ 1
 

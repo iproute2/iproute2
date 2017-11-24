@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _XTABLES_INTERNAL_H
 #define _XTABLES_INTERNAL_H 1
 

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _IPTABLES_USER_H
 #define _IPTABLES_USER_H
 

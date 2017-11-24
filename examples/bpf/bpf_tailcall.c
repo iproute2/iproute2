@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #include "../../include/bpf_api.h"
 
 #define ENTRY_INIT	3

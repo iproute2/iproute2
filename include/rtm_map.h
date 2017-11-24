@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __RTM_MAP_H__
 #define __RTM_MAP_H__ 1
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 MAN7PAGES = $(wildcard *.7)
 
 all:
