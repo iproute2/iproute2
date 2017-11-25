@@ -309,7 +309,7 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 		int strsz = RTA_PAYLOAD(tb[TCA_ACT_COOKIE]);
 		char b1[strsz * 2 + 1];
 
-		fprintf(f, "\tcookie len %d %s\n", strsz,
+		fprintf(f, "\tcookie %s\n",
 			hexstring_n2a(RTA_DATA(tb[TCA_ACT_COOKIE]),
 				      strsz, b1, sizeof(b1)));
 	}
