@@ -175,12 +175,12 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_GACT_MAX, arg);
 
 	if (tb[TCA_GACT_PARMS] == NULL) {
-		fprintf(f, "[NULL gact parameters]");
+		print_string(PRINT_FP, NULL, "%s", "[NULL gact parameters]");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_GACT_PARMS]);
 
-	fprintf(f, "gact ");
+	print_string(PRINT_ANY, "kind", "%s ", "gact");
 	print_action_control(f, "action ", p->action, "");
 #ifdef CONFIG_GACT_PROB
 	if (tb[TCA_GACT_PROB] != NULL) {
@@ -190,12 +190,16 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 		memset(&pp_dummy, 0, sizeof(pp_dummy));
 		pp = &pp_dummy;
 	}
-	fprintf(f, "\n\t random type %s", prob_n2a(pp->ptype));
+	open_json_object("prob");
+	print_string(PRINT_ANY, "random_type", "\n\t random type %s",
+		     prob_n2a(pp->ptype));
 	print_action_control(f, " ", pp->paction, " ");
-	fprintf(f, "val %d", pp->pval);
+	print_int(PRINT_ANY, "val", "val %d", pp->pval);
+	close_json_object();
 #endif
-	fprintf(f, "\n\t index %u ref %d bind %d", p->index, p->refcnt,
-		p->bindcnt);
+	print_uint(PRINT_ANY, "index", "\n\t index %u", p->index);
+	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
 	if (show_stats) {
 		if (tb[TCA_GACT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_GACT_TM]);
@@ -203,7 +207,7 @@ print_gact(struct action_util *au, FILE * f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	fprintf(f, "\n ");
+	print_string(PRINT_FP, NULL, "%s", "\n");
 	return 0;
 }
 
