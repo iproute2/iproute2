@@ -11,6 +11,7 @@
 #include <linux/gen_stats.h>
 
 #include "tc_core.h"
+#include "json_print.h"
 
 /* This is the deprecated multiqueue interface */
 #ifndef TCA_PRIO_MAX

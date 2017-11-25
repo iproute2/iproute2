@@ -41,6 +41,7 @@ int batch_mode;
 int use_iec;
 int force;
 bool use_names;
+int json;
 
 static char *conf_file;
 
@@ -189,7 +190,7 @@ static void usage(void)
 			"       tc [-force] -batch filename\n"
 			"where  OBJECT := { qdisc | class | filter | action | monitor | exec }\n"
 	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] | -n[etns] name |\n"
-			"                    -nm | -nam[es] | { -cf | -conf } path }\n");
+			"                    -nm | -nam[es] | { -cf | -conf } path } | -j[son]\n");
 }
 
 static int do_cmd(int argc, char **argv)
@@ -312,6 +313,8 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-tshort") == 0) {
 			++timestamp;
 			++timestamp_short;
+		} else if (matches(argv[1], "-json") == 0) {
+			++json;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;
