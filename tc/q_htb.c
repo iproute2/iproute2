@@ -293,9 +293,10 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (RTA_PAYLOAD(tb[TCA_HTB_PARMS])  < sizeof(*hopt)) return -1;
 
 		if (!hopt->level) {
-			fprintf(f, "prio %d ", (int)hopt->prio);
+			print_int(PRINT_ANY, "prio", "prio ", (int)hopt->prio);
 			if (show_details)
-				fprintf(f, "quantum %d ", (int)hopt->quantum);
+				print_int(PRINT_ANY, "quantum", "quantum ",
+					  (int)hopt->quantum);
 		}
 
 		rate64 = hopt->rate.rate;
@@ -341,16 +342,21 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		gopt = RTA_DATA(tb[TCA_HTB_INIT]);
 		if (RTA_PAYLOAD(tb[TCA_HTB_INIT])  < sizeof(*gopt)) return -1;
 
-		fprintf(f, "r2q %d default %x direct_packets_stat %u",
-			gopt->rate2quantum, gopt->defcls, gopt->direct_pkts);
-		if (show_details)
-			fprintf(f, " ver %d.%d", gopt->version >> 16, gopt->version & 0xffff);
+		print_int(PRINT_ANY, "r2q", "r2q %d", gopt->rate2quantum);
+		print_uint(PRINT_ANY, "default", " default %u", gopt->defcls);
+		print_uint(PRINT_ANY, "direct_packets_stat",
+			   " direct_packets_stat %u", gopt->direct_pkts);
+		if (show_details) {
+			sprintf(b1, "%d.%d", gopt->version >> 16, gopt->version & 0xffff);
+			print_string(PRINT_ANY, "ver", " ver %s", b1);
+		}
 	}
 	if (tb[TCA_HTB_DIRECT_QLEN] &&
 	    RTA_PAYLOAD(tb[TCA_HTB_DIRECT_QLEN]) >= sizeof(__u32)) {
 		__u32 direct_qlen = rta_getattr_u32(tb[TCA_HTB_DIRECT_QLEN]);
 
-		fprintf(f, " direct_qlen %u", direct_qlen);
+		print_uint(PRINT_ANY, "direct_qlen", " direct_qlen %u",
+			   direct_qlen);
 	}
 	return 0;
 }
