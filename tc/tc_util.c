@@ -709,12 +709,17 @@ int parse_action_control_slash(int *argc_p, char ***argv_p,
 void print_action_control(FILE *f, const char *prefix,
 			  int action, const char *suffix)
 {
-	fprintf(f, "%s%s", prefix, action_n2a(action));
+	print_string(PRINT_FP, NULL, "%s", prefix);
+	open_json_object("control_action");
+	print_string(PRINT_ANY, "type", "%s", action_n2a(action));
 	if (TC_ACT_EXT_CMP(action, TC_ACT_GOTO_CHAIN))
-		fprintf(f, " chain %u", action & TC_ACT_EXT_VAL_MASK);
+		print_uint(PRINT_ANY, "chain", " chain %u",
+			   action & TC_ACT_EXT_VAL_MASK);
 	if (TC_ACT_EXT_CMP(action, TC_ACT_JUMP))
-		fprintf(f, " %u", action & TC_ACT_EXT_VAL_MASK);
-	fprintf(f, "%s", suffix);
+		print_uint(PRINT_ANY, "jump", " %u",
+			   action & TC_ACT_EXT_VAL_MASK);
+	close_json_object();
+	print_string(PRINT_FP, NULL, "%s", suffix);
 }
 
 int get_linklayer(unsigned int *val, const char *arg)
@@ -762,12 +767,21 @@ void print_tm(FILE *f, const struct tcf_t *tm)
 {
 	int hz = get_user_hz();
 
-	if (tm->install != 0)
-		fprintf(f, " installed %u sec", (unsigned int)(tm->install/hz));
-	if (tm->lastuse != 0)
-		fprintf(f, " used %u sec", (unsigned int)(tm->lastuse/hz));
-	if (tm->expires != 0)
-		fprintf(f, " expires %u sec", (unsigned int)(tm->expires/hz));
+	if (tm->install != 0) {
+		print_uint(PRINT_JSON, "installed", NULL, tm->install);
+		print_uint(PRINT_FP, NULL, " installed %u sec",
+			   (unsigned int)(tm->install/hz));
+	}
+	if (tm->lastuse != 0) {
+		print_uint(PRINT_JSON, "last_used", NULL, tm->lastuse);
+		print_uint(PRINT_FP, NULL, " used %u sec",
+			   (unsigned int)(tm->lastuse/hz));
+	}
+	if (tm->expires != 0) {
+		print_uint(PRINT_JSON, "expires", NULL, tm->expires);
+		print_uint(PRINT_FP, NULL, " expires %u sec",
+			   (unsigned int)(tm->expires/hz));
+	}
 }
 
 void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats)

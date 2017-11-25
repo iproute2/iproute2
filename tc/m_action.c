@@ -301,17 +301,19 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 		return err;
 
 	if (show_stats && tb[TCA_ACT_STATS]) {
-		fprintf(f, "\tAction statistics:\n");
+		print_string(PRINT_FP, NULL, "\tAction statistics:\n", NULL);
+		open_json_object("stats");
 		print_tcstats2_attr(f, tb[TCA_ACT_STATS], "\t", NULL);
-		fprintf(f, "\n");
+		close_json_object();
+		print_string(PRINT_FP, NULL, "\n", NULL);
 	}
 	if (tb[TCA_ACT_COOKIE]) {
 		int strsz = RTA_PAYLOAD(tb[TCA_ACT_COOKIE]);
 		char b1[strsz * 2 + 1];
 
-		fprintf(f, "\tcookie %s\n",
-			hexstring_n2a(RTA_DATA(tb[TCA_ACT_COOKIE]),
-				      strsz, b1, sizeof(b1)));
+		print_string(PRINT_ANY, "cookie", "\tcookie %s\n",
+			     hexstring_n2a(RTA_DATA(tb[TCA_ACT_COOKIE]),
+					   strsz, b1, sizeof(b1)));
 	}
 
 	return 0;
@@ -362,15 +364,21 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 	if (tab_flush && NULL != tb[0]  && NULL == tb[1])
 		return tc_print_action_flush(f, tb[0]);
 
+	open_json_array(PRINT_JSON, "actions");
 	for (i = 0; i < tot_acts; i++) {
 		if (tb[i]) {
-			fprintf(f, "\n\taction order %d: ", i);
+			open_json_object(NULL);
+			print_uint(PRINT_ANY, "order",
+				   "\n\taction order %u: ", i);
 			if (tc_print_one_action(f, tb[i]) < 0) {
-				fprintf(f, "Error printing action\n");
+				print_string(PRINT_FP, NULL,
+					     "Error printing action\n", NULL);
 			}
+			close_json_object();
 		}
 
 	}
+	close_json_object();
 
 	return 0;
 }
