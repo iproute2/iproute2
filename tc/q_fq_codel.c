@@ -173,44 +173,51 @@ static int fq_codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt
 	if (tb[TCA_FQ_CODEL_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_LIMIT]) >= sizeof(__u32)) {
 		limit = rta_getattr_u32(tb[TCA_FQ_CODEL_LIMIT]);
-		fprintf(f, "limit %up ", limit);
+		print_uint(PRINT_ANY, "limit", "limit %up ", limit);
 	}
 	if (tb[TCA_FQ_CODEL_FLOWS] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_FLOWS]) >= sizeof(__u32)) {
 		flows = rta_getattr_u32(tb[TCA_FQ_CODEL_FLOWS]);
-		fprintf(f, "flows %u ", flows);
+		print_uint(PRINT_ANY, "flows", "flows %u ", flows);
 	}
 	if (tb[TCA_FQ_CODEL_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_FQ_CODEL_QUANTUM]);
-		fprintf(f, "quantum %u ", quantum);
+		print_uint(PRINT_ANY, "quantum", "quantum %u ", quantum);
 	}
 	if (tb[TCA_FQ_CODEL_TARGET] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_TARGET]) >= sizeof(__u32)) {
 		target = rta_getattr_u32(tb[TCA_FQ_CODEL_TARGET]);
-		fprintf(f, "target %s ", sprint_time(target, b1));
+		print_uint(PRINT_JSON, "target", NULL, target);
+		print_string(PRINT_FP, NULL, "target %s ",
+			     sprint_time(target, b1));
 	}
 	if (tb[TCA_FQ_CODEL_CE_THRESHOLD] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_CE_THRESHOLD]) >= sizeof(__u32)) {
 		ce_threshold = rta_getattr_u32(tb[TCA_FQ_CODEL_CE_THRESHOLD]);
-		fprintf(f, "ce_threshold %s ", sprint_time(ce_threshold, b1));
+		print_uint(PRINT_JSON, "ce_threshold", NULL, ce_threshold);
+		print_string(PRINT_FP, NULL, "ce_threshold %s ",
+			     sprint_time(ce_threshold, b1));
 	}
 	if (tb[TCA_FQ_CODEL_INTERVAL] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_INTERVAL]) >= sizeof(__u32)) {
 		interval = rta_getattr_u32(tb[TCA_FQ_CODEL_INTERVAL]);
-		fprintf(f, "interval %s ", sprint_time(interval, b1));
+		print_uint(PRINT_JSON, "interval", NULL, interval);
+		print_string(PRINT_FP, NULL, "interval %s ",
+			     sprint_time(interval, b1));
 	}
 	if (tb[TCA_FQ_CODEL_MEMORY_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_MEMORY_LIMIT]) >= sizeof(__u32)) {
 		memory_limit = rta_getattr_u32(tb[TCA_FQ_CODEL_MEMORY_LIMIT]);
-
-		fprintf(f, "memory_limit %s ", sprint_size(memory_limit, b1));
+		print_uint(PRINT_JSON, "memory_limit", NULL, memory_limit);
+		print_string(PRINT_FP, NULL, "memory_limit %s ",
+			     sprint_size(memory_limit, b1));
 	}
 	if (tb[TCA_FQ_CODEL_ECN] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_ECN]) >= sizeof(__u32)) {
 		ecn = rta_getattr_u32(tb[TCA_FQ_CODEL_ECN]);
 		if (ecn)
-			fprintf(f, "ecn ");
+			print_bool(PRINT_ANY, "ecn", "ecn ", true);
 	}
 
 	return 0;
