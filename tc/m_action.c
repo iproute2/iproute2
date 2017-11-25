@@ -301,18 +301,17 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 		return err;
 
 	if (show_stats && tb[TCA_ACT_STATS]) {
-
 		fprintf(f, "\tAction statistics:\n");
 		print_tcstats2_attr(f, tb[TCA_ACT_STATS], "\t", NULL);
-		if (tb[TCA_ACT_COOKIE]) {
-			int strsz = RTA_PAYLOAD(tb[TCA_ACT_COOKIE]);
-			char b1[strsz * 2 + 1];
-
-			fprintf(f, "\n\tcookie len %d %s ", strsz,
-				hexstring_n2a(RTA_DATA(tb[TCA_ACT_COOKIE]),
-					      strsz, b1, sizeof(b1)));
-		}
 		fprintf(f, "\n");
+	}
+	if (tb[TCA_ACT_COOKIE]) {
+		int strsz = RTA_PAYLOAD(tb[TCA_ACT_COOKIE]);
+		char b1[strsz * 2 + 1];
+
+		fprintf(f, "\tcookie len %d %s\n", strsz,
+			hexstring_n2a(RTA_DATA(tb[TCA_ACT_COOKIE]),
+				      strsz, b1, sizeof(b1)));
 	}
 
 	return 0;
