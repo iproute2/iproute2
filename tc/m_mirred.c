@@ -60,6 +60,34 @@ static const char *mirred_n2a(int action)
 	}
 }
 
+static const char *mirred_direction(int action)
+{
+	switch (action) {
+	case TCA_EGRESS_REDIR:
+	case TCA_EGRESS_MIRROR:
+		return "egress";
+	case TCA_INGRESS_REDIR:
+	case TCA_INGRESS_MIRROR:
+		return "ingress";
+	default:
+		return "unknown";
+	}
+}
+
+static const char *mirred_action(int action)
+{
+	switch (action) {
+	case TCA_EGRESS_REDIR:
+	case TCA_INGRESS_REDIR:
+		return "redirect";
+	case TCA_EGRESS_MIRROR:
+	case TCA_INGRESS_MIRROR:
+		return "mirror";
+	default:
+		return "unknown";
+	}
+}
+
 static int
 parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 		int tca_id, struct nlmsghdr *n)
@@ -254,7 +282,7 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_MIRRED_MAX, arg);
 
 	if (tb[TCA_MIRRED_PARMS] == NULL) {
-		fprintf(f, "[NULL mirred parameters]");
+		print_string(PRINT_FP, NULL, "%s", "[NULL mirred parameters]");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_MIRRED_PARMS]);
@@ -269,12 +297,18 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 		return -1;
 	}
 
-	fprintf(f, "mirred (%s to device %s)", mirred_n2a(p->eaction), dev);
+	print_string(PRINT_ANY, "kind", "%s ", "mirred");
+	print_string(PRINT_FP, NULL, "(%s", mirred_n2a(p->eaction));
+	print_string(PRINT_JSON, "mirred_action", NULL,
+		     mirred_action(p->eaction));
+	print_string(PRINT_JSON, "direction", NULL,
+		     mirred_direction(p->eaction));
+	print_string(PRINT_ANY, "to_dev", " to device %s)", dev);
 	print_action_control(f, " ", p->action, "");
 
-	fprintf(f, "\n ");
-	fprintf(f, "\tindex %u ref %d bind %d", p->index, p->refcnt,
-		p->bindcnt);
+	print_uint(PRINT_ANY, "index", "\n \tindex %u", p->index);
+	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_MIRRED_TM]) {
@@ -283,7 +317,7 @@ print_mirred(struct action_util *au, FILE * f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	fprintf(f, "\n ");
+	print_string(PRINT_FP, NULL, "%s", "\n ");
 	return 0;
 }
 
