@@ -195,39 +195,37 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_VLAN_MAX, arg);
 
 	if (!tb[TCA_VLAN_PARMS]) {
-		fprintf(f, "[NULL vlan parameters]");
+		print_string(PRINT_FP, NULL, "%s", "[NULL vlan parameters]");
 		return -1;
 	}
 	parm = RTA_DATA(tb[TCA_VLAN_PARMS]);
 
-	fprintf(f, " vlan");
+	print_string(PRINT_ANY, "kind", "%s ", "vlan");
+	print_string(PRINT_ANY, "vlan_action", " %s", action_names[parm->v_action]);
 
 	switch (parm->v_action) {
-	case TCA_VLAN_ACT_POP:
-		fprintf(f, " pop");
-		break;
 	case TCA_VLAN_ACT_PUSH:
 	case TCA_VLAN_ACT_MODIFY:
-		fprintf(f, " %s", action_names[parm->v_action]);
 		if (tb[TCA_VLAN_PUSH_VLAN_ID]) {
 			val = rta_getattr_u16(tb[TCA_VLAN_PUSH_VLAN_ID]);
-			fprintf(f, " id %u", val);
+			print_uint(PRINT_ANY, "id", " id %u", val);
 		}
 		if (tb[TCA_VLAN_PUSH_VLAN_PROTOCOL]) {
-			fprintf(f, " protocol %s",
-				ll_proto_n2a(rta_getattr_u16(tb[TCA_VLAN_PUSH_VLAN_PROTOCOL]),
-					     b1, sizeof(b1)));
+			print_string(PRINT_ANY, "protocol", " protocol %s",
+				     ll_proto_n2a(rta_getattr_u16(tb[TCA_VLAN_PUSH_VLAN_PROTOCOL]),
+						  b1, sizeof(b1)));
 		}
 		if (tb[TCA_VLAN_PUSH_VLAN_PRIORITY]) {
 			val = rta_getattr_u8(tb[TCA_VLAN_PUSH_VLAN_PRIORITY]);
-			fprintf(f, " priority %u", val);
+			print_uint(PRINT_ANY, "priority", " priority %u", val);
 		}
 		break;
 	}
 	print_action_control(f, " ", parm->action, "");
 
-	fprintf(f, "\n\t index %u ref %d bind %d", parm->index, parm->refcnt,
-		parm->bindcnt);
+	print_uint(PRINT_ANY, "index", "\n\t index %u", parm->index);
+	print_int(PRINT_ANY, "ref", " ref %d", parm->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", parm->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_VLAN_TM]) {
@@ -237,7 +235,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	fprintf(f, "\n ");
+	print_string(PRINT_FP, NULL, "%s", "\n");
 
 	return 0;
 }
