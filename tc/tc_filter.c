@@ -236,33 +236,36 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return -1;
 	}
 
+	open_json_object(NULL);
+
 	if (n->nlmsg_type == RTM_DELTFILTER)
-		fprintf(fp, "deleted ");
+		print_bool(PRINT_ANY, "deleted", "deleted ", true);
 
 	if (n->nlmsg_type == RTM_NEWTFILTER &&
 			(n->nlmsg_flags & NLM_F_CREATE) &&
 			!(n->nlmsg_flags & NLM_F_EXCL))
-		fprintf(fp, "replaced ");
+		print_bool(PRINT_ANY, "replaced", "replaced ", true);
 
 	if (n->nlmsg_type == RTM_NEWTFILTER &&
 			(n->nlmsg_flags & NLM_F_CREATE) &&
 			(n->nlmsg_flags & NLM_F_EXCL))
-		fprintf(fp, "added ");
+		print_bool(PRINT_ANY, "added", "added ", true);
 
-	fprintf(fp, "filter ");
+	print_string(PRINT_FP, NULL, "filter ", NULL);
 	if (!filter_ifindex || filter_ifindex != t->tcm_ifindex)
-		fprintf(fp, "dev %s ", ll_index_to_name(t->tcm_ifindex));
+		print_string(PRINT_ANY, "dev", "dev %s ",
+			     ll_index_to_name(t->tcm_ifindex));
 
 	if (!filter_parent || filter_parent != t->tcm_parent) {
 		if (t->tcm_parent == TC_H_ROOT)
-			fprintf(fp, "root ");
+			print_bool(PRINT_ANY, "root", "root ", true);
 		else if (t->tcm_parent == TC_H_MAKE(TC_H_CLSACT, TC_H_MIN_INGRESS))
-			fprintf(fp, "ingress ");
+			print_bool(PRINT_ANY, "ingress", "ingress ", true);
 		else if (t->tcm_parent == TC_H_MAKE(TC_H_CLSACT, TC_H_MIN_EGRESS))
-			fprintf(fp, "egress ");
+			print_bool(PRINT_ANY, "egress", "egress ", true);
 		else {
 			print_tc_classid(abuf, sizeof(abuf), t->tcm_parent);
-			fprintf(fp, "parent %s ", abuf);
+			print_string(PRINT_ANY, "parent", "parent %s ", abuf);
 		}
 	}
 
@@ -273,39 +276,45 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (!filter_protocol || filter_protocol != f_proto) {
 			if (f_proto) {
 				SPRINT_BUF(b1);
-				fprintf(fp, "protocol %s ",
-					ll_proto_n2a(f_proto, b1, sizeof(b1)));
+				print_string(PRINT_JSON, "protocol",
+					     "protocol %s ",
+					     ll_proto_n2a(f_proto, b1, sizeof(b1)));
 			}
 		}
 		if (!filter_prio || filter_prio != prio) {
 			if (prio)
-				fprintf(fp, "pref %u ", prio);
+				print_uint(PRINT_ANY, "pref", "pref %u ", prio);
 		}
 	}
-	fprintf(fp, "%s ", rta_getattr_str(tb[TCA_KIND]));
+	print_string(PRINT_ANY, "kind", "%s ", rta_getattr_str(tb[TCA_KIND]));
 
 	if (tb[TCA_CHAIN]) {
 		__u32 chain_index = rta_getattr_u32(tb[TCA_CHAIN]);
 
 		if (!filter_chain_index_set ||
 		    filter_chain_index != chain_index)
-			fprintf(fp, "chain %u ", chain_index);
+			print_uint(PRINT_ANY, "chain", "chain %u ",
+				   chain_index);
 	}
 
 	q = get_filter_kind(RTA_DATA(tb[TCA_KIND]));
 	if (tb[TCA_OPTIONS]) {
+		open_json_object("options");
 		if (q)
 			q->print_fopt(q, fp, tb[TCA_OPTIONS], t->tcm_handle);
 		else
-			fprintf(fp, "[cannot parse parameters]");
+			print_string(PRINT_FP, NULL,
+				     "[cannot parse parameters]", NULL);
+		close_json_object();
 	}
-	fprintf(fp, "\n");
+	print_string(PRINT_FP, NULL, "\n", NULL);
 
 	if (show_stats && (tb[TCA_STATS] || tb[TCA_STATS2])) {
 		print_tcstats_attr(fp, tb, " ", NULL);
-		fprintf(fp, "\n");
+		print_string(PRINT_FP, NULL, "\n", NULL);
 	}
 
+	close_json_object();
 	fflush(fp);
 	return 0;
 }
@@ -487,7 +496,9 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		return 2;
 	}
 
+	new_json_obj(json);
 	print_filter(NULL, answer, (void *)stdout);
+	delete_json_obj();
 
 	free(answer);
 	return 0;
@@ -615,10 +626,12 @@ static int tc_filter_list(int argc, char **argv)
 		return 1;
 	}
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, print_filter, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
+	delete_json_obj();
 
 	return 0;
 }
