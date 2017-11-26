@@ -11,10 +11,11 @@
  * TODO:
  * - parse to be passed a filedescriptor for logging purposes
  *
-*/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -41,7 +42,7 @@ static void act_usage(void)
 	 * with any action .so from the old days. But if someone really
 	 * does that, they would know how to fix this ..
 	 *
-	*/
+	 */
 	fprintf(stderr, "usage: tc actions <ACTSPECOP>*\n");
 	fprintf(stderr,
 		"Where: \tACTSPECOP := ACR | GD | FL\n"
@@ -68,16 +69,19 @@ static int print_noaopt(struct action_util *au, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int parse_noaopt(struct action_util *au, int *argc_p, char ***argv_p, int code, struct nlmsghdr *n)
+static int parse_noaopt(struct action_util *au, int *argc_p,
+			char ***argv_p, int code, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
 
-	if (argc) {
-		fprintf(stderr, "Unknown action \"%s\", hence option \"%s\" is unparsable\n", au->id, *argv);
-	} else {
+	if (argc)
+		fprintf(stderr,
+			"Unknown action \"%s\", hence option \"%s\" is unparsable\n",
+			au->id, *argv);
+	else
 		fprintf(stderr, "Unknown action \"%s\"\n", au->id);
-	}
+
 	return -1;
 }
 
@@ -135,18 +139,14 @@ noexist:
 	return a;
 }
 
-static int
+static bool
 new_cmd(char **argv)
 {
-	if ((matches(*argv, "change") == 0) ||
+	return (matches(*argv, "change") == 0) ||
 		(matches(*argv, "replace") == 0) ||
 		(matches(*argv, "delete") == 0) ||
 		(matches(*argv, "get") == 0) ||
-		(matches(*argv, "add") == 0))
-			return 1;
-
-	return 0;
-
+		(matches(*argv, "add") == 0);
 }
 
 int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
@@ -179,9 +179,8 @@ int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 			argv++;
 			eap = 1;
 #ifdef CONFIG_GACT
-			if (!gact_ld) {
+			if (!gact_ld)
 				get_action_kind("gact");
-			}
 #endif
 			continue;
 		} else if (strcmp(*argv, "flowid") == 0) {
@@ -207,9 +206,9 @@ done0:
 					goto done;
 			}
 
-			if (a == NULL) {
+			if (a == NULL)
 				goto bad_val;
-			}
+
 
 			tail = NLMSG_TAIL(n);
 			addattr_l(n, MAX_MSG, ++prio, NULL, 0);
@@ -268,7 +267,8 @@ done:
 	return 0;
 bad_val:
 	/* no need to undo things, returning from here should
-	 * cause enough pain */
+	 * cause enough pain
+	 */
 	fprintf(stderr, "parse_action: bad value (%d:%s)!\n", argc, *argv);
 	return -1;
 }
@@ -436,7 +436,8 @@ int print_action(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p)
+static int tc_action_gd(int cmd, unsigned int flags,
+			int *argc_p, char ***argv_p)
 {
 	char k[FILTER_NAMESZ];
 	struct action_util *a = NULL;
@@ -492,7 +493,8 @@ static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p
 		argc -= 1;
 		argv += 1;
 		if (argc <= 0) {
-			fprintf(stderr, "Error: no index specified action: %s\n", k);
+			fprintf(stderr,
+				"Error: no index specified action: %s\n", k);
 			ret = -1;
 			goto bad_val;
 		}
@@ -507,7 +509,8 @@ static int tc_action_gd(int cmd, unsigned int flags, int *argc_p, char ***argv_p
 			argc -= 1;
 			argv += 1;
 		} else {
-			fprintf(stderr, "Error: no index specified action: %s\n", k);
+			fprintf(stderr,
+				"Error: no index specified action: %s\n", k);
 			ret = -1;
 			goto bad_val;
 		}
@@ -543,7 +546,8 @@ bad_val:
 	return ret;
 }
 
-static int tc_action_modify(int cmd, unsigned int flags, int *argc_p, char ***argv_p)
+static int tc_action_modify(int cmd, unsigned int flags,
+			    int *argc_p, char ***argv_p)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -604,9 +608,9 @@ static int tc_act_list_or_flush(int *argc_p, char ***argv_p, int event)
 
 	strncpy(k, *argv, sizeof(k) - 1);
 #ifdef CONFIG_GACT
-	if (!gact_ld) {
+	if (!gact_ld)
 		get_action_kind("gact");
-	}
+
 #endif
 	a = get_action_kind(k);
 	if (a == NULL) {
@@ -644,10 +648,12 @@ static int tc_act_list_or_flush(int *argc_p, char ***argv_p, int event)
 		addattr32(&req.n, MAX_MSG, TCA_ROOT_TIME_DELTA, msec_since);
 		tail4->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail4;
 	}
-	msg_size = NLMSG_ALIGN(req.n.nlmsg_len) - NLMSG_ALIGN(sizeof(struct nlmsghdr));
+	msg_size = NLMSG_ALIGN(req.n.nlmsg_len)
+		- NLMSG_ALIGN(sizeof(struct nlmsghdr));
 
 	if (event == RTM_GETACTION) {
-		if (rtnl_dump_request(&rth, event, (void *)&req.t, msg_size) < 0) {
+		if (rtnl_dump_request(&rth, event,
+				      (void *)&req.t, msg_size) < 0) {
 			perror("Cannot send dump request");
 			return 1;
 		}
@@ -681,10 +687,14 @@ int do_action(int argc, char **argv)
 	while (argc > 0) {
 
 		if (matches(*argv, "add") == 0) {
-			ret =  tc_action_modify(RTM_NEWACTION, NLM_F_EXCL|NLM_F_CREATE, &argc, &argv);
+			ret =  tc_action_modify(RTM_NEWACTION,
+						NLM_F_EXCL | NLM_F_CREATE,
+						&argc, &argv);
 		} else if (matches(*argv, "change") == 0 ||
 			  matches(*argv, "replace") == 0) {
-			ret = tc_action_modify(RTM_NEWACTION, NLM_F_CREATE|NLM_F_REPLACE, &argc, &argv);
+			ret = tc_action_modify(RTM_NEWACTION,
+					       NLM_F_CREATE | NLM_F_REPLACE,
+					       &argc, &argv);
 		} else if (matches(*argv, "delete") == 0) {
 			argc -= 1;
 			argv += 1;
@@ -693,8 +703,9 @@ int do_action(int argc, char **argv)
 			argc -= 1;
 			argv += 1;
 			ret = tc_action_gd(RTM_GETACTION, 0,  &argc, &argv);
-		} else if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0
-						|| matches(*argv, "lst") == 0) {
+		} else if (matches(*argv, "list") == 0 ||
+			   matches(*argv, "show") == 0 ||
+			   matches(*argv, "lst") == 0) {
 			if (argc <= 2) {
 				act_usage();
 				return -1;
@@ -718,7 +729,9 @@ int do_action(int argc, char **argv)
 			act_usage();
 			return -1;
 		} else {
-			fprintf(stderr, "Command \"%s\" is unknown, try \"tc actions help\".\n", *argv);
+			fprintf(stderr,
+				"Command \"%s\" is unknown, try \"tc actions help\".\n",
+				*argv);
 			return -1;
 		}
 
