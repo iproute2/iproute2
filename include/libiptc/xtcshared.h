@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _LIBXTC_SHARED_H
 #define _LIBXTC_SHARED_H 1
 

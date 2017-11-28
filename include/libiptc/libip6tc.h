@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _LIBIP6TC_H
 #define _LIBIP6TC_H
 /* Library which manipulates firewall rules. Version 0.2. */

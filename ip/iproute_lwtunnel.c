@@ -886,6 +886,7 @@ static int lwt_parse_bpf(struct rtattr *rta, size_t len,
 			 int attr, const enum bpf_prog_type bpf_type)
 {
 	struct bpf_cfg_in cfg = {
+		.type = bpf_type,
 		.argc = *argcp,
 		.argv = *argvp,
 	};
@@ -897,7 +898,7 @@ static int lwt_parse_bpf(struct rtattr *rta, size_t len,
 	int err;
 
 	nest = rta_nest(rta, len, attr);
-	err = bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, &x);
+	err = bpf_parse_and_load_common(&cfg, &bpf_cb_ops, &x);
 	if (err < 0) {
 		fprintf(stderr, "Failed to parse eBPF program: %s\n",
 			strerror(-err));

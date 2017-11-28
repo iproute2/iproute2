@@ -46,7 +46,7 @@ static void explain1(char *arg)
 }
 
 
-static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
+static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
 	struct tc_ratespec r = {};
 	struct tc_cbq_lssopt lss = {};
@@ -62,7 +62,12 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 		if (matches(*argv, "bandwidth") == 0 ||
 		    matches(*argv, "rate") == 0) {
 			NEXT_ARG();
-			if (get_rate(&r.rate, *argv)) {
+			if (strchr(*argv, '%')) {
+				if (get_percent_rate(&r.rate, *argv, dev)) {
+					explain1("bandwidth");
+					return -1;
+				}
+			} else if (get_rate(&r.rate, *argv)) {
 				explain1("bandwidth");
 				return -1;
 			}
@@ -176,7 +181,7 @@ static int cbq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	return 0;
 }
 
-static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
+static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
 	int wrr_ok = 0, fopt_ok = 0;
 	struct tc_ratespec r = {};
@@ -196,13 +201,23 @@ static int cbq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	while (argc > 0) {
 		if (matches(*argv, "rate") == 0) {
 			NEXT_ARG();
-			if (get_rate(&r.rate, *argv)) {
+			if (strchr(*argv, '%')) {
+				if (get_percent_rate(&r.rate, *argv, dev)) {
+					explain1("rate");
+					return -1;
+				}
+			} else if (get_rate(&r.rate, *argv)) {
 				explain1("rate");
 				return -1;
 			}
 		} else if (matches(*argv, "bandwidth") == 0) {
 			NEXT_ARG();
-			if (get_rate(&bndw, *argv)) {
+			if (strchr(*argv, '%')) {
+				if (get_percent_rate(&bndw, *argv, dev)) {
+					explain1("bandwidth");
+					return -1;
+				}
+			} else if (get_rate(&bndw, *argv)) {
 				explain1("bandwidth");
 				return -1;
 			}

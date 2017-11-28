@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 # Top level Makefile for iproute2
 
 ifeq ($(VERBOSE),0)

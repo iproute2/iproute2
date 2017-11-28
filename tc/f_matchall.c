@@ -121,11 +121,11 @@ static int matchall_print_opt(struct filter_util *qu, FILE *f,
 	parse_rtattr_nested(tb, TCA_MATCHALL_MAX, opt);
 
 	if (handle)
-		fprintf(f, "handle 0x%x ", handle);
+		print_uint(PRINT_ANY, "handle", "handle 0x%x ", handle);
 
 	if (tb[TCA_MATCHALL_CLASSID]) {
 		SPRINT_BUF(b1);
-		fprintf(f, "flowid %s ",
+		print_string(PRINT_ANY, "flowid", "flowid %s ",
 			sprint_tc_classid(rta_getattr_u32(tb[TCA_MATCHALL_CLASSID]), b1));
 	}
 
@@ -133,14 +133,14 @@ static int matchall_print_opt(struct filter_util *qu, FILE *f,
 		__u32 flags = rta_getattr_u32(tb[TCA_MATCHALL_FLAGS]);
 
 		if (flags & TCA_CLS_FLAGS_SKIP_HW)
-			fprintf(f, "\n  skip_hw");
+			print_bool(PRINT_ANY, "skip_hw", "\n  skip_hw", true);
 		if (flags & TCA_CLS_FLAGS_SKIP_SW)
-			fprintf(f, "\n  skip_sw");
+			print_bool(PRINT_ANY, "skip_sw", "\n  skip_sw", true);
 
 		if (flags & TCA_CLS_FLAGS_IN_HW)
-			fprintf(f, "\n  in_hw");
+			print_bool(PRINT_ANY, "in_hw", "\n  in_hw", true);
 		else if (flags & TCA_CLS_FLAGS_NOT_IN_HW)
-			fprintf(f, "\n  not_in_hw");
+			print_bool(PRINT_ANY, "not_in_hw", "\n  not_in_hw", true);
 	}
 
 	if (tb[TCA_MATCHALL_ACT])

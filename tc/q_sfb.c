@@ -48,7 +48,7 @@ static int get_prob(__u32 *val, const char *arg)
 }
 
 static int sfb_parse_opt(struct qdisc_util *qu, int argc, char **argv,
-			 struct nlmsghdr *n)
+			 struct nlmsghdr *n, const char *dev)
 {
 	struct tc_sfb_qopt opt = {
 		.rehash_interval = 600*1000,

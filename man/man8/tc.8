@@ -74,7 +74,8 @@ tc \- show / manipulate traffic control settings
 \fB\-r\fR[\fIaw\fR] |
 \fB\-p\fR[\fIretty\fR] |
 \fB\-i\fR[\fIec\fR] |
-\fB\-g\fR[\fIraph\fR] }
+\fB\-g\fR[\fIraph\fR] |
+\fB\-j\fR[\fIjson\fR] }
 
 .SH DESCRIPTION
 .B Tc
@@ -443,7 +444,10 @@ see the man pages for individual qdiscs.
 RATES
 Bandwidths or rates.
 These parameters accept a floating point number, possibly followed by
-a unit (both SI and IEC units supported).
+either a unit (both SI and IEC units supported), or a float followed by a '%'
+character to specify the rate as a percentage of the device's speed
+(e.g. 5%, 99.5%). Warning: specifying the rate as a percentage means a fraction
+of the current speed; if the speed changes, the value will not be recalculated.
 .RS
 .TP
 bit or a bare number
@@ -657,6 +661,10 @@ shows classes as ASCII graph. Prints generic stats info under each class if
 option was specified. Classes can be filtered only by
 .BR "dev"
 option.
+
+.TP
+.BR "\-j", " \-json"
+Display results in JSON format.
 
 .TP
 .BR "\-nm" , " \-name"

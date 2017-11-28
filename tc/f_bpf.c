@@ -82,6 +82,7 @@ static int bpf_parse_opt(struct filter_util *qu, char *handle,
 	unsigned int bpf_flags = 0;
 	struct bpf_cfg_in cfg = {};
 	bool seen_run = false;
+	bool skip_sw = false;
 	struct rtattr *tail;
 	int ret = 0;
 
@@ -101,13 +102,20 @@ static int bpf_parse_opt(struct filter_util *qu, char *handle,
 	while (argc > 0) {
 		if (matches(*argv, "run") == 0) {
 			NEXT_ARG();
+
+			if (seen_run)
+				duparg("run", *argv);
 opt_bpf:
 			seen_run = true;
+			cfg.type = bpf_type;
 			cfg.argc = argc;
 			cfg.argv = argv;
 
-			if (bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, n))
+			if (bpf_parse_common(&cfg, &bpf_cb_ops) < 0) {
+				fprintf(stderr,
+					"Unable to parse bpf command line\n");
 				return -1;
+			}
 
 			argc = cfg.argc;
 			argv = cfg.argv;
@@ -131,6 +139,7 @@ opt_bpf:
 			bpf_gen_flags |= TCA_CLS_FLAGS_SKIP_HW;
 		} else if (matches(*argv, "skip_sw") == 0) {
 			bpf_gen_flags |= TCA_CLS_FLAGS_SKIP_SW;
+			skip_sw = true;
 		} else if (matches(*argv, "action") == 0) {
 			NEXT_ARG();
 			if (parse_action(&argc, &argv, TCA_BPF_ACT, n)) {
@@ -158,6 +167,13 @@ opt_bpf:
 		}
 
 		NEXT_ARG_FWD();
+	}
+
+	if (skip_sw)
+		cfg.ifindex = t->tcm_ifindex;
+	if (bpf_load_common(&cfg, &bpf_cb_ops, n) < 0) {
+		fprintf(stderr, "Unable to load program\n");
+		return -1;
 	}
 
 	if (bpf_gen_flags)

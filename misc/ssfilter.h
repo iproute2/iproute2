@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #define SSF_DCOND 0
 #define SSF_SCOND 1
 #define SSF_OR	  2

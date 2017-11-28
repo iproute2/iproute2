@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 SUBDIRS := $(filter-out Makefile,$(wildcard *))
 .PHONY: all configure clean distclean show $(SUBDIRS)
 

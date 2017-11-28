@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * f_tcindex.c		Traffic control index filter
  *

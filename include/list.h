@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __LIST_H__
 #define __LIST_H__ 1
 /* List and hash list stuff from kernel */

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0
 ## -- Config --
 DEV := lo
 PREFIX := sudo -E unshare -n

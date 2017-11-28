@@ -48,16 +48,23 @@ static int xdp_delete(struct xdp_req *xdp)
 	return 0;
 }
 
-int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
-	      bool drv, bool offload)
+int xdp_parse(int *argc, char ***argv, struct iplink_req *req, __u32 ifindex,
+	      bool generic, bool drv, bool offload)
 {
 	struct bpf_cfg_in cfg = {
+		.type = BPF_PROG_TYPE_XDP,
 		.argc = *argc,
 		.argv = *argv,
 	};
 	struct xdp_req xdp = {
 		.req = req,
 	};
+
+	if (offload) {
+		if (!ifindex)
+			incomplete_command();
+		cfg.ifindex = ifindex;
+	}
 
 	if (!force)
 		xdp.flags |= XDP_FLAGS_UPDATE_IF_NOEXIST;
@@ -74,7 +81,7 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req, bool generic,
 			return xdp_delete(&xdp);
 	}
 
-	if (bpf_parse_common(BPF_PROG_TYPE_XDP, &cfg, &bpf_cb_ops, &xdp))
+	if (bpf_parse_and_load_common(&cfg, &bpf_cb_ops, &xdp))
 		return -1;
 
 	*argc = cfg.argc;

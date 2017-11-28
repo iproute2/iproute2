@@ -154,7 +154,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	int c;
 	char **argv = *argv_p;
 	int argc;
-	char k[16];
+	char k[FILTER_NAMESZ];
 	int size = 0;
 	int iok = 0, ok = 0;
 	__u32 hook = 0, index = 0;

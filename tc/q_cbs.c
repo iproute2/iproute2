@@ -34,7 +34,8 @@ static void explain1(const char *arg, const char *val)
 	fprintf(stderr, "cbs: illegal value for \"%s\": \"%s\"\n", arg, val);
 }
 
-static int cbs_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
+static int cbs_parse_opt(struct qdisc_util *qu, int argc,
+			 char **argv, struct nlmsghdr *n, const char *dev)
 {
 	struct tc_cbs_qopt opt = {};
 	struct rtattr *tail;

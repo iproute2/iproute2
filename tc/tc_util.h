@@ -1,12 +1,17 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _TC_UTIL_H_
 #define _TC_UTIL_H_ 1
 
 #define MAX_MSG 16384
 #include <limits.h>
+#include <linux/if.h>
+
 #include <linux/pkt_sched.h>
 #include <linux/pkt_cls.h>
 #include <linux/gen_stats.h>
+
 #include "tc_core.h"
+#include "json_print.h"
 
 /* This is the deprecated multiqueue interface */
 #ifndef TCA_PRIO_MAX
@@ -20,25 +25,27 @@ enum
 #define TCA_PRIO_MAX    (__TCA_PRIO_MAX - 1)
 #endif
 
+#define FILTER_NAMESZ	16
+
 struct qdisc_util {
 	struct  qdisc_util *next;
 	const char *id;
 	int (*parse_qopt)(struct qdisc_util *qu, int argc,
-			  char **argv, struct nlmsghdr *n);
+			  char **argv, struct nlmsghdr *n, const char *dev);
 	int (*print_qopt)(struct qdisc_util *qu,
 			  FILE *f, struct rtattr *opt);
 	int (*print_xstats)(struct qdisc_util *qu,
 			    FILE *f, struct rtattr *xstats);
 
 	int (*parse_copt)(struct qdisc_util *qu, int argc,
-			  char **argv, struct nlmsghdr *n);
+			  char **argv, struct nlmsghdr *n, const char *dev);
 	int (*print_copt)(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 };
 
 extern __u16 f_proto;
 struct filter_util {
 	struct filter_util *next;
-	char id[16];
+	char id[FILTER_NAMESZ];
 	int (*parse_fopt)(struct filter_util *qu, char *fhandle,
 			  int argc, char **argv, struct nlmsghdr *n);
 	int (*print_fopt)(struct filter_util *qu,
@@ -47,7 +54,7 @@ struct filter_util {
 
 struct action_util {
 	struct action_util *next;
-	char id[16];
+	char id[FILTER_NAMESZ];
 	int (*parse_aopt)(struct action_util *a, int *argc,
 			  char ***argv, int code, struct nlmsghdr *n);
 	int (*print_aopt)(struct action_util *au, FILE *f, struct rtattr *opt);
@@ -57,7 +64,7 @@ struct action_util {
 
 struct exec_util {
 	struct exec_util *next;
-	char id[16];
+	char id[FILTER_NAMESZ];
 	int (*parse_eopt)(struct exec_util *eu, int argc, char **argv);
 };
 
@@ -66,9 +73,12 @@ const char *get_tc_lib(void);
 struct qdisc_util *get_qdisc_kind(const char *str);
 struct filter_util *get_filter_kind(const char *str);
 
+int parse_percent_rate(char *rate, const char *str, const char *dev);
 int get_qdisc_handle(__u32 *h, const char *str);
 int get_rate(unsigned int *rate, const char *str);
+int get_percent_rate(unsigned int *rate, const char *str, const char *dev);
 int get_rate64(__u64 *rate, const char *str);
+int get_percent_rate64(__u64 *rate, const char *str, const char *dev);
 int get_size(unsigned int *size, const char *str);
 int get_size_and_cell(unsigned int *size, int *cell_log, char *str);
 int get_time(unsigned int *time, const char *str);

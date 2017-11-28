@@ -56,13 +56,29 @@ struct bpf_cfg_ops {
 	void (*ebpf_cb)(void *nl, int fd, const char *annotation);
 };
 
+enum bpf_mode {
+	CBPF_BYTECODE,
+	CBPF_FILE,
+	EBPF_OBJECT,
+	EBPF_PINNED,
+	BPF_MODE_MAX,
+};
+
 struct bpf_cfg_in {
 	const char *object;
 	const char *section;
 	const char *uds;
+	enum bpf_prog_type type;
+	enum bpf_mode mode;
+	__u32 ifindex;
+	bool verbose;
 	int argc;
 	char **argv;
-	struct sock_filter *ops;
+	struct sock_filter opcodes[BPF_MAXINSNS];
+	union {
+		int n_opcodes;
+		int prog_fd;
+	};
 };
 
 /* ALU ops on registers, bpf_add|sub|...: dst_reg += src_reg */
@@ -244,8 +260,11 @@ struct bpf_cfg_in {
 		.off   = 0,					\
 		.imm   = 0 })
 
-int bpf_parse_common(enum bpf_prog_type type, struct bpf_cfg_in *cfg,
-		     const struct bpf_cfg_ops *ops, void *nl);
+int bpf_parse_common(struct bpf_cfg_in *cfg, const struct bpf_cfg_ops *ops);
+int bpf_load_common(struct bpf_cfg_in *cfg, const struct bpf_cfg_ops *ops,
+		    void *nl);
+int bpf_parse_and_load_common(struct bpf_cfg_in *cfg,
+			      const struct bpf_cfg_ops *ops, void *nl);
 
 const char *bpf_prog_to_default_section(enum bpf_prog_type type);
 

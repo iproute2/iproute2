@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #include <stdio.h>
 #include <string.h>
 
@@ -10,7 +11,7 @@ static void explain(void)
 }
 
 static int clsact_parse_opt(struct qdisc_util *qu, int argc, char **argv,
-			    struct nlmsghdr *n)
+			    struct nlmsghdr *n, const char *dev)
 {
 	if (argc > 0) {
 		fprintf(stderr, "What is \"%s\"?\n", *argv);

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * q_atm.c		ATM.
  *
@@ -26,7 +27,8 @@
 #define MAX_HDR_LEN 64
 
 
-static int atm_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n)
+static int atm_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+			 struct nlmsghdr *n, const char *dev)
 {
 	if (argc) {
 		fprintf(stderr, "Usage: atm\n");
@@ -44,7 +46,7 @@ static void explain(void)
 
 
 static int atm_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
-   struct nlmsghdr *n)
+	struct nlmsghdr *n, const char *dev)
 {
 	struct sockaddr_atmsvc addr = {};
 	struct atm_qos qos;

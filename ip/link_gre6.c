@@ -372,7 +372,7 @@ get_failed:
 			} else {
 				__u8 uval;
 
-				if (get_u8(&uval, *argv, 0) < -1)
+				if (get_u8(&uval, *argv, 0))
 					invarg("invalid ELIM", *argv);
 				encap_limit = uval;
 				flags &= ~IP6_TNL_F_IGN_ENCAP_LIMIT;

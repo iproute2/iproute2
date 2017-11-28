@@ -49,8 +49,8 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 		struct tc_sizespec	szopts;
 		__u16			*data;
 	} stab = {};
-	char  d[16] = {};
-	char  k[16] = {};
+	char  d[IFNAMSIZ] = {};
+	char  k[FILTER_NAMESZ] = {};
 	struct {
 		struct nlmsghdr	n;
 		struct tcmsg		t;
@@ -140,7 +140,7 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (q) {
 		if (q->parse_qopt) {
-			if (q->parse_qopt(q, argc, argv, &req.n))
+			if (q->parse_qopt(q, argc, argv, &req.n, d))
 				return 1;
 		} else if (argc) {
 			fprintf(stderr, "qdisc '%s' does not support option parsing\n", k);
@@ -227,39 +227,44 @@ int print_qdisc(const struct sockaddr_nl *who,
 		return -1;
 	}
 
+	open_json_object(NULL);
+
 	if (n->nlmsg_type == RTM_DELQDISC)
-		fprintf(fp, "deleted ");
+		print_bool(PRINT_ANY, "deleted", "deleted ", true);
 
 	if (n->nlmsg_type == RTM_NEWQDISC &&
 			(n->nlmsg_flags & NLM_F_CREATE) &&
 			(n->nlmsg_flags & NLM_F_REPLACE))
-		fprintf(fp, "replaced ");
+		print_bool(PRINT_ANY, "replaced", "replaced ", true);
 
 	if (n->nlmsg_type == RTM_NEWQDISC &&
 			(n->nlmsg_flags & NLM_F_CREATE) &&
 			(n->nlmsg_flags & NLM_F_EXCL))
-		fprintf(fp, "added ");
+		print_bool(PRINT_ANY, "added", "added ", true);
 
-	if (show_raw)
-		fprintf(fp, "qdisc %s %x:[%08x]  ",
-			rta_getattr_str(tb[TCA_KIND]),
-			t->tcm_handle >> 16, t->tcm_handle);
-	else
-		fprintf(fp, "qdisc %s %x: ", rta_getattr_str(tb[TCA_KIND]),
-			t->tcm_handle >> 16);
+	print_string(PRINT_ANY, "kind", "qdisc %s",
+		     rta_getattr_str(tb[TCA_KIND]));
+	sprintf(abuf, "%x:", t->tcm_handle >> 16);
+	print_string(PRINT_ANY, "handle", " %s", abuf);
+	if (show_raw) {
+		sprintf(abuf, "[%08x]", t->tcm_handle);
+		print_string(PRINT_FP, NULL, "%s", abuf);
+	}
+	print_string(PRINT_FP, NULL, " ", NULL);
 
 	if (filter_ifindex == 0)
-		fprintf(fp, "dev %s ", ll_index_to_name(t->tcm_ifindex));
+		print_string(PRINT_ANY, "dev", "dev %s ",
+			     ll_index_to_name(t->tcm_ifindex));
 
 	if (t->tcm_parent == TC_H_ROOT)
-		fprintf(fp, "root ");
+		print_bool(PRINT_ANY, "root", "root ", true);
 	else if (t->tcm_parent) {
 		print_tc_classid(abuf, sizeof(abuf), t->tcm_parent);
-		fprintf(fp, "parent %s ", abuf);
+		print_string(PRINT_ANY, "parent", "parent %s ", abuf);
 	}
 
 	if (t->tcm_info != 1)
-		fprintf(fp, "refcnt %d ", t->tcm_info);
+		print_uint(PRINT_ANY, "refcnt", "refcnt %u ", t->tcm_info);
 
 	/* pfifo_fast is generic enough to warrant the hardcoding --JHS */
 	if (strcmp("pfifo_fast", RTA_DATA(tb[TCA_KIND])) == 0)
@@ -267,17 +272,21 @@ int print_qdisc(const struct sockaddr_nl *who,
 	else
 		q = get_qdisc_kind(RTA_DATA(tb[TCA_KIND]));
 
+	open_json_object("options");
 	if (tb[TCA_OPTIONS]) {
 		if (q)
 			q->print_qopt(q, fp, tb[TCA_OPTIONS]);
 		else
-			fprintf(fp, "[cannot parse qdisc parameters]");
+			print_string(PRINT_FP, NULL,
+				     "[cannot parse qdisc parameters]", NULL);
 	}
-	fprintf(fp, "\n");
+	close_json_object();
+
+	print_string(PRINT_FP, NULL, "\n", NULL);
 
 	if (show_details && tb[TCA_STAB]) {
 		print_size_table(fp, " ", tb[TCA_STAB]);
-		fprintf(fp, "\n");
+		print_string(PRINT_FP, NULL, "\n", NULL);
 	}
 
 	if (show_stats) {
@@ -285,14 +294,15 @@ int print_qdisc(const struct sockaddr_nl *who,
 
 		if (tb[TCA_STATS] || tb[TCA_STATS2] || tb[TCA_XSTATS]) {
 			print_tcstats_attr(fp, tb, " ", &xstats);
-			fprintf(fp, "\n");
+			print_string(PRINT_FP, NULL, "\n", NULL);
 		}
 
 		if (q && xstats && q->print_xstats) {
 			q->print_xstats(q, fp, xstats);
-			fprintf(fp, "\n");
+			print_string(PRINT_FP, NULL, "\n", NULL);
 		}
 	}
+	close_json_object();
 	fflush(fp);
 	return 0;
 }
@@ -300,7 +310,7 @@ int print_qdisc(const struct sockaddr_nl *who,
 static int tc_qdisc_list(int argc, char **argv)
 {
 	struct tcmsg t = { .tcm_family = AF_UNSPEC };
-	char d[16] = {};
+	char d[IFNAMSIZ] = {};
 	bool dump_invisible = false;
 
 	while (argc > 0) {
@@ -360,10 +370,12 @@ static int tc_qdisc_list(int argc, char **argv)
 		return 1;
 	}
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, print_qdisc, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
+	delete_json_obj();
 
 	return 0;
 }

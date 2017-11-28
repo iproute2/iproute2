@@ -59,20 +59,6 @@ static void set_percent(__u32 *percent, double per)
 	*percent = rint(per * UINT32_MAX);
 }
 
-/* Parse either a fraction '.3' or percent '30%
- * return: 0 = ok, -1 = error, 1 = out of range
- */
-static int parse_percent(double *val, const char *str)
-{
-	char *p;
-
-	*val = strtod(str, &p) / 100.;
-	if (*p && strcmp(p, "%"))
-		return -1;
-
-	return 0;
-}
-
 static int get_percent(__u32 *percent, const char *str)
 {
 	double per;
@@ -167,7 +153,7 @@ static int get_ticks(__u32 *ticks, const char *str)
 }
 
 static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
-			   struct nlmsghdr *n)
+			   struct nlmsghdr *n, const char *dev)
 {
 	int dist_size = 0;
 	struct rtattr *tail;
@@ -396,7 +382,12 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		} else if (matches(*argv, "rate") == 0) {
 			++present[TCA_NETEM_RATE];
 			NEXT_ARG();
-			if (get_rate64(&rate64, *argv)) {
+			if (strchr(*argv, '%')) {
+				if (get_percent_rate64(&rate64, *argv, dev)) {
+					explain1("rate");
+					return -1;
+				}
+			} else if (get_rate64(&rate64, *argv)) {
 				explain1("rate");
 				return -1;
 			}

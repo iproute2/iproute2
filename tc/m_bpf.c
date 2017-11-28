@@ -96,12 +96,16 @@ static int bpf_parse_opt(struct action_util *a, int *ptr_argc, char ***ptr_argv,
 	while (argc > 0) {
 		if (matches(*argv, "run") == 0) {
 			NEXT_ARG();
+
+			if (seen_run)
+				duparg("run", *argv);
 opt_bpf:
 			seen_run = true;
+			cfg.type = bpf_type;
 			cfg.argc = argc;
 			cfg.argv = argv;
 
-			if (bpf_parse_common(bpf_type, &cfg, &bpf_cb_ops, n))
+			if (bpf_parse_and_load_common(&cfg, &bpf_cb_ops, n))
 				return -1;
 
 			argc = cfg.argc;
