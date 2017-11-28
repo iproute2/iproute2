@@ -276,7 +276,8 @@ get_failed:
 				if (uval > 255)
 					invarg("TTL must be <= 255\n", *argv);
 				ttl = uval;
-			}
+			} else
+				ttl = 0;
 		} else if (!matches(*argv, "tos") ||
 			   !matches(*argv, "tclass") ||
 			   !matches(*argv, "dsfield")) {
