@@ -345,7 +345,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		return -1;
 	}
 
-	if (!metadata && !VXLAN_ATTRSET(attrs, IFLA_VXLAN_ID)) {
+	if (!metadata && !VXLAN_ATTRSET(attrs, IFLA_VXLAN_ID) && !set_op) {
 		fprintf(stderr, "vxlan: missing virtual network identifier\n");
 		return -1;
 	}
@@ -367,7 +367,8 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			"Use 'dstport 0' to get default and quiet this message\n");
 	}
 
-	addattr32(n, 1024, IFLA_VXLAN_ID, vni);
+	if (VXLAN_ATTRSET(attrs, IFLA_VXLAN_ID))
+		addattr32(n, 1024, IFLA_VXLAN_ID, vni);
 	if (gaddr)
 		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
 	else if (daddr)
