@@ -97,7 +97,8 @@ void iplink_usage(void)
 		"			  [ master DEVICE ][ vrf NAME ]\n"
 		"			  [ nomaster ]\n"
 		"			  [ addrgenmode { eui64 | none | stable_secret | random } ]\n"
-		"	                  [ protodown { on | off } ]\n"
+		"			  [ protodown { on | off } ]\n"
+		"			  [ gso_max_size BYTES ] | [ gso_max_segs PACKETS ]\n"
 		"\n"
 		"       ip link show [ DEVICE | group GROUP ] [up] [master DEV] [vrf NAME] [type TYPE]\n");
 
@@ -848,6 +849,22 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				return on_off("protodown", *argv);
 			addattr8(&req->n, sizeof(*req), IFLA_PROTO_DOWN,
 				 proto_down);
+		} else if (strcmp(*argv, "gso_max_size") == 0) {
+			unsigned int max_size;
+
+			NEXT_ARG();
+			if (get_unsigned(&max_size, *argv, 0) || max_size > UINT16_MAX)
+				invarg("Invalid \"gso_max_size\" value\n",
+				       *argv);
+			addattr32(&req->n, sizeof(*req), IFLA_GSO_MAX_SIZE, max_size);
+		} else if (strcmp(*argv, "gso_max_segs") == 0) {
+			unsigned int max_segs;
+
+			NEXT_ARG();
+			if (get_unsigned(&max_segs, *argv, 0) || max_segs > UINT16_MAX)
+				invarg("Invalid \"gso_max_segs\" value\n",
+				       *argv);
+			addattr32(&req->n, sizeof(*req), IFLA_GSO_MAX_SEGS, max_segs);
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();

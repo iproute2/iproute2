@@ -36,6 +36,11 @@ ip-link \- network device configuration
 .RB "[ " numrxqueues
 .IR QUEUE_COUNT " ]"
 .br
+.BR "[" gso_max_size
+.IR BYTES " ]"
+.RB "[ " gso_max_segs
+.IR SEGMENTS " ]"
+.br
 .BI type " TYPE"
 .RI "[ " ARGS " ]"
 
@@ -341,6 +346,14 @@ specifies the number of transmit queues for new device.
 .TP
 .BI numrxqueues " QUEUE_COUNT "
 specifies the number of receive queues for new device.
+
+.TP
+.BI gso_max_size " BYTES "
+specifies the recommended maximum size of a Generic Segment Offload packet the new device should accept.
+
+.TP
+.BI gso_max_segs " SEGMENTS "
+specifies the recommended maximum number of a Generic Segment Offload segments the new device should accept.
 
 .TP
 .BI index " IDX "
