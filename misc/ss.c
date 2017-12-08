@@ -751,6 +751,7 @@ struct tcpstat {
 	double		    rcv_rtt;
 	double		    min_rtt;
 	int		    rcv_space;
+	unsigned int        rcv_ssthresh;
 	unsigned long long  busy_time;
 	unsigned long long  rwnd_limited;
 	unsigned long long  sndbuf_limited;
@@ -2058,6 +2059,8 @@ static void tcp_stats_print(struct tcpstat *s)
 		printf(" rcv_rtt:%g", s->rcv_rtt);
 	if (s->rcv_space)
 		printf(" rcv_space:%d", s->rcv_space);
+	if (s->rcv_ssthresh)
+		printf(" rcv_ssthresh:%u", s->rcv_ssthresh);
 	if (s->not_sent)
 		printf(" notsent:%u", s->not_sent);
 	if (s->min_rtt)
@@ -2304,6 +2307,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.fackets	 = info->tcpi_fackets;
 		s.reordering	 = info->tcpi_reordering;
 		s.rcv_space	 = info->tcpi_rcv_space;
+		s.rcv_ssthresh   = info->tcpi_rcv_ssthresh;
 		s.cwnd		 = info->tcpi_snd_cwnd;
 
 		if (info->tcpi_snd_ssthresh < 0xFFFF)
