@@ -586,7 +586,6 @@ static int __parse_action_control(int *argc_p, char ***argv_p, int *result_p,
 		}
 		result |= jump_cnt;
 	}
-	NEXT_ARG_FWD();
 	*argc_p = argc;
 	*argv_p = argv;
 	*result_p = result;
