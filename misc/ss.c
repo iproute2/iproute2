@@ -47,6 +47,8 @@
 #include <linux/vm_sockets_diag.h>
 
 #define MAGIC_SEQ 123456
+#define BUF_CHUNK (1024 * 1024)
+#define LEN_ALIGN(x) (((x) + 1) & ~1)
 
 #define DIAG_REQUEST(_req, _r)						    \
 	struct {							    \
@@ -127,24 +129,45 @@ struct column {
 	const char *header;
 	const char *ldelim;
 	int width;	/* Including delimiter. -1: fit to content, 0: hide */
-	int stored;	/* Characters buffered */
-	int printed;	/* Characters printed so far */
 };
 
 static struct column columns[] = {
-	{ ALIGN_LEFT,	"Netid",		"",	0,	0,	0 },
-	{ ALIGN_LEFT,	"State",		" ",	0,	0,	0 },
-	{ ALIGN_LEFT,	"Recv-Q",		" ",	7,	0,	0 },
-	{ ALIGN_LEFT,	"Send-Q",		" ",	7,	0,	0 },
-	{ ALIGN_RIGHT,	"Local Address:",	" ",	0,	0,	0 },
-	{ ALIGN_LEFT,	"Port",			"",	0,	0,	0 },
-	{ ALIGN_RIGHT,	"Peer Address:",	" ",	0,	0,	0 },
-	{ ALIGN_LEFT,	"Port",			"",	0,	0,	0 },
-	{ ALIGN_LEFT,	"",			"",	-1,	0,	0 },
+	{ ALIGN_LEFT,	"Netid",		"",	0 },
+	{ ALIGN_LEFT,	"State",		" ",	0 },
+	{ ALIGN_LEFT,	"Recv-Q",		" ",	7 },
+	{ ALIGN_LEFT,	"Send-Q",		" ",	7 },
+	{ ALIGN_RIGHT,	"Local Address:",	" ",	0 },
+	{ ALIGN_LEFT,	"Port",			"",	0 },
+	{ ALIGN_RIGHT,	"Peer Address:",	" ",	0 },
+	{ ALIGN_LEFT,	"Port",			"",	0 },
+	{ ALIGN_LEFT,	"",			"",	-1 },
 };
 
 static struct column *current_field = columns;
-static char field_buf[BUFSIZ];
+
+/* Output buffer: chained chunks of BUF_CHUNK bytes. Each field is written to
+ * the buffer as a variable size token. A token consists of a 16 bits length
+ * field, followed by a string which is not NULL-terminated.
+ *
+ * A new chunk is allocated and linked when the current chunk doesn't have
+ * enough room to store the current token as a whole.
+ */
+struct buf_chunk {
+	struct buf_chunk *next;	/* Next chained chunk */
+	char *end;		/* Current end of content */
+	char data[0];
+};
+
+struct buf_token {
+	uint16_t len;		/* Data length, excluding length descriptor */
+	char data[0];
+};
+
+static struct {
+	struct buf_token *cur;	/* Position of current token in chunk */
+	struct buf_chunk *head;	/* First chunk */
+	struct buf_chunk *tail;	/* Current chunk */
+} buffer;
 
 static const char *TCP_PROTO = "tcp";
 static const char *SCTP_PROTO = "sctp";
@@ -861,25 +884,109 @@ static const char *vsock_netid_name(int type)
 	}
 }
 
+/* Allocate and initialize a new buffer chunk */
+static struct buf_chunk *buf_chunk_new(void)
+{
+	struct buf_chunk *new = malloc(BUF_CHUNK);
+
+	if (!new)
+		abort();
+
+	new->next = NULL;
+
+	/* This is also the last block */
+	buffer.tail = new;
+
+	/* Next token will be stored at the beginning of chunk data area, and
+	 * its initial length is zero.
+	 */
+	buffer.cur = (struct buf_token *)new->data;
+	buffer.cur->len = 0;
+
+	new->end = buffer.cur->data;
+
+	return new;
+}
+
+/* Return available tail room in given chunk */
+static int buf_chunk_avail(struct buf_chunk *chunk)
+{
+	return BUF_CHUNK - offsetof(struct buf_chunk, data) -
+	       (chunk->end - chunk->data);
+}
+
+/* Update end pointer and token length, link new chunk if we hit the end of the
+ * current one. Return -EAGAIN if we got a new chunk, caller has to print again.
+ */
+static int buf_update(int len)
+{
+	struct buf_chunk *chunk = buffer.tail;
+	struct buf_token *t = buffer.cur;
+
+	/* Claim success if new content fits in the current chunk, and anyway
+	 * if this is the first token in the chunk: in the latter case,
+	 * allocating a new chunk won't help, so we'll just cut the output.
+	 */
+	if ((len < buf_chunk_avail(chunk) && len != -1 /* glibc < 2.0.6 */) ||
+	    t == (struct buf_token *)chunk->data) {
+		len = min(len, buf_chunk_avail(chunk));
+
+		/* Total field length can't exceed 2^16 bytes, cut as needed */
+		len = min(len, USHRT_MAX - t->len);
+
+		chunk->end += len;
+		t->len += len;
+		return 0;
+	}
+
+	/* Content truncated, time to allocate more */
+	chunk->next = buf_chunk_new();
+
+	/* Copy current token over to new chunk, including length descriptor */
+	memcpy(chunk->next->data, t, sizeof(t->len) + t->len);
+	chunk->next->end += t->len;
+
+	/* Discard partially written field in old chunk */
+	chunk->end -= t->len + sizeof(t->len);
+
+	return -EAGAIN;
+}
+
+/* Append content to buffer as part of the current field */
 static void out(const char *fmt, ...)
 {
 	struct column *f = current_field;
 	va_list args;
+	char *pos;
+	int len;
 
+	if (!f->width)
+		return;
+
+	if (!buffer.head)
+		buffer.head = buf_chunk_new();
+
+again:	/* Append to buffer: if we have a new chunk, print again */
+
+	pos = buffer.cur->data + buffer.cur->len;
 	va_start(args, fmt);
-	f->stored += vsnprintf(field_buf + f->stored, BUFSIZ - f->stored,
-			       fmt, args);
+
+	/* Limit to tail room. If we hit the limit, buf_update() will tell us */
+	len = vsnprintf(pos, buf_chunk_avail(buffer.tail), fmt, args);
 	va_end(args);
+
+	if (buf_update(len))
+		goto again;
 }
 
-static int print_left_spacing(struct column *f)
+static int print_left_spacing(struct column *f, int stored, int printed)
 {
 	int s;
 
 	if (f->width < 0 || f->align == ALIGN_LEFT)
 		return 0;
 
-	s = f->width - f->stored - f->printed;
+	s = f->width - stored - printed;
 	if (f->align == ALIGN_CENTER)
 		/* If count of total spacing is odd, shift right by one */
 		s = (s + 1) / 2;
@@ -890,14 +997,14 @@ static int print_left_spacing(struct column *f)
 	return 0;
 }
 
-static void print_right_spacing(struct column *f)
+static void print_right_spacing(struct column *f, int printed)
 {
 	int s;
 
 	if (f->width < 0 || f->align == ALIGN_RIGHT)
 		return;
 
-	s = f->width - f->printed;
+	s = f->width - printed;
 	if (f->align == ALIGN_CENTER)
 		s /= 2;
 
@@ -905,35 +1012,29 @@ static void print_right_spacing(struct column *f)
 		printf("%*c", s, ' ');
 }
 
-static int field_needs_delimiter(struct column *f)
-{
-	if (!f->stored)
-		return 0;
-
-	/* Was another field already printed on this line? */
-	for (f--; f >= columns; f--)
-		if (f->width)
-			return 1;
-
-	return 0;
-}
-
-/* Flush given field to screen together with delimiter and spacing */
+/* Done with field: update buffer pointer, start new token after current one */
 static void field_flush(struct column *f)
 {
+	struct buf_chunk *chunk = buffer.tail;
+	unsigned int pad = buffer.cur->len % 2;
+
 	if (!f->width)
 		return;
 
-	if (field_needs_delimiter(f))
-		f->printed = printf("%s", f->ldelim);
+	/* We need a new chunk if we can't store the next length descriptor.
+	 * Mind the gap between end of previous token and next aligned position
+	 * for length descriptor.
+	 */
+	if (buf_chunk_avail(chunk) - pad < sizeof(buffer.cur->len)) {
+		chunk->end += pad;
+		chunk->next = buf_chunk_new();
+		return;
+	}
 
-	f->printed += print_left_spacing(f);
-	f->printed += printf("%s", field_buf);
-	print_right_spacing(f);
-
-	*field_buf = 0;
-	f->printed = 0;
-	f->stored = 0;
+	buffer.cur = (struct buf_token *)(buffer.cur->data +
+					  LEN_ALIGN(buffer.cur->len));
+	buffer.cur->len = 0;
+	buffer.tail->end = buffer.cur->data;
 }
 
 static int field_is_last(struct column *f)
@@ -945,12 +1046,10 @@ static void field_next(void)
 {
 	field_flush(current_field);
 
-	if (field_is_last(current_field)) {
-		printf("\n");
+	if (field_is_last(current_field))
 		current_field = columns;
-	} else {
+	else
 		current_field++;
-	}
 }
 
 /* Walk through fields and flush them until we reach the desired one */
@@ -968,6 +1067,86 @@ static void print_header(void)
 			out(current_field->header);
 		field_next();
 	}
+}
+
+/* Get the next available token in the buffer starting from the current token */
+static struct buf_token *buf_token_next(struct buf_token *cur)
+{
+	struct buf_chunk *chunk = buffer.tail;
+
+	/* If we reached the end of chunk contents, get token from next chunk */
+	if (cur->data + LEN_ALIGN(cur->len) == chunk->end) {
+		buffer.tail = chunk = chunk->next;
+		return chunk ? (struct buf_token *)chunk->data : NULL;
+	}
+
+	return (struct buf_token *)(cur->data + LEN_ALIGN(cur->len));
+}
+
+/* Free up all allocated buffer chunks */
+static void buf_free_all(void)
+{
+	struct buf_chunk *tmp;
+
+	for (buffer.tail = buffer.head; buffer.tail; ) {
+		tmp = buffer.tail;
+		buffer.tail = buffer.tail->next;
+		free(tmp);
+	}
+	buffer.head = NULL;
+}
+
+/* Render buffered output with spacing and delimiters, then free up buffers */
+static void render(void)
+{
+	struct buf_token *token = (struct buf_token *)buffer.head->data;
+	int printed, line_started = 0, need_newline = 0;
+	struct column *f;
+
+	/* Ensure end alignment of last token, it wasn't necessarily flushed */
+	buffer.tail->end += buffer.cur->len % 2;
+
+	/* Rewind and replay */
+	buffer.tail = buffer.head;
+
+	f = columns;
+	while (!f->width)
+		f++;
+
+	while (token) {
+		/* Print left delimiter only if we already started a line */
+		if (line_started++)
+			printed = printf("%s", current_field->ldelim);
+		else
+			printed = 0;
+
+		/* Print field content from token data with spacing */
+		printed += print_left_spacing(f, token->len, printed);
+		printed += fwrite(token->data, 1, token->len, stdout);
+		print_right_spacing(f, printed);
+
+		/* Variable field size or overflow, won't align to screen */
+		if (printed > f->width)
+			need_newline = 1;
+
+		/* Go to next non-empty field, deal with end-of-line */
+		do {
+			if (field_is_last(f)) {
+				if (need_newline) {
+					printf("\n");
+					need_newline = 0;
+				}
+				f = columns;
+				line_started = 0;
+			} else {
+				f++;
+			}
+		} while (!f->width);
+
+		token = buf_token_next(token);
+	}
+
+	buf_free_all();
 }
 
 static void sock_state_print(struct sockstat *s)
@@ -4730,7 +4909,7 @@ int main(int argc, char *argv[])
 	if (show_users || show_proc_ctx || show_sock_ctx)
 		user_ent_destroy();
 
-	field_next();
+	render();
 
 	return 0;
 }
