@@ -128,19 +128,21 @@ struct column {
 	const enum col_align align;
 	const char *header;
 	const char *ldelim;
-	int width;	/* Including delimiter. -1: fit to content, 0: hide */
+	int disabled;
+	int width;	/* Calculated, including additional layout spacing */
+	int max_len;	/* Measured maximum field length in this column */
 };
 
 static struct column columns[] = {
-	{ ALIGN_LEFT,	"Netid",		"",	0 },
-	{ ALIGN_LEFT,	"State",		" ",	0 },
-	{ ALIGN_LEFT,	"Recv-Q",		" ",	7 },
-	{ ALIGN_LEFT,	"Send-Q",		" ",	7 },
-	{ ALIGN_RIGHT,	"Local Address:",	" ",	0 },
-	{ ALIGN_LEFT,	"Port",			"",	0 },
-	{ ALIGN_RIGHT,	"Peer Address:",	" ",	0 },
-	{ ALIGN_LEFT,	"Port",			"",	0 },
-	{ ALIGN_LEFT,	"",			"",	-1 },
+	{ ALIGN_LEFT,	"Netid",		"",	0, 0, 0 },
+	{ ALIGN_LEFT,	"State",		" ",	0, 0, 0 },
+	{ ALIGN_LEFT,	"Recv-Q",		" ",	0, 0, 0 },
+	{ ALIGN_LEFT,	"Send-Q",		" ",	0, 0, 0 },
+	{ ALIGN_RIGHT,	"Local Address:",	" ",	0, 0, 0 },
+	{ ALIGN_LEFT,	"Port",			"",	0, 0, 0 },
+	{ ALIGN_RIGHT,	"Peer Address:",	" ",	0, 0, 0 },
+	{ ALIGN_LEFT,	"Port",			"",	0, 0, 0 },
+	{ ALIGN_LEFT,	"",			"",	0, 0, 0 },
 };
 
 static struct column *current_field = columns;
@@ -960,7 +962,7 @@ static void out(const char *fmt, ...)
 	char *pos;
 	int len;
 
-	if (!f->width)
+	if (f->disabled)
 		return;
 
 	if (!buffer.head)
@@ -983,7 +985,7 @@ static int print_left_spacing(struct column *f, int stored, int printed)
 {
 	int s;
 
-	if (f->width < 0 || f->align == ALIGN_LEFT)
+	if (!f->width || f->align == ALIGN_LEFT)
 		return 0;
 
 	s = f->width - stored - printed;
@@ -1001,7 +1003,7 @@ static void print_right_spacing(struct column *f, int printed)
 {
 	int s;
 
-	if (f->width < 0 || f->align == ALIGN_RIGHT)
+	if (!f->width || f->align == ALIGN_RIGHT)
 		return;
 
 	s = f->width - printed;
@@ -1018,8 +1020,11 @@ static void field_flush(struct column *f)
 	struct buf_chunk *chunk = buffer.tail;
 	unsigned int pad = buffer.cur->len % 2;
 
-	if (!f->width)
+	if (f->disabled)
 		return;
+
+	if (buffer.cur->len > f->max_len)
+		f->max_len = buffer.cur->len;
 
 	/* We need a new chunk if we can't store the next length descriptor.
 	 * Mind the gap between end of previous token and next aligned position
@@ -1063,7 +1068,7 @@ static void field_set(enum col_id id)
 static void print_header(void)
 {
 	while (!field_is_last(current_field)) {
-		if (current_field->width)
+		if (!current_field->disabled)
 			out(current_field->header);
 		field_next();
 	}
@@ -1096,15 +1101,105 @@ static void buf_free_all(void)
 	buffer.head = NULL;
 }
 
+/* Calculate column width from contents length. If columns don't fit on one
+ * line, break them into the least possible amount of lines and keep them
+ * aligned across lines. Available screen space is equally spread between fields
+ * as additional spacing.
+ */
+static void render_calc_width(int screen_width)
+{
+	int first, len = 0, linecols = 0;
+	struct column *c, *eol = columns - 1;
+
+	/* First pass: set width for each column to measured content length */
+	for (first = 1, c = columns; c - columns < COL_MAX; c++) {
+		if (c->disabled)
+			continue;
+
+		if (!first && c->max_len)
+			c->width = c->max_len + strlen(c->ldelim);
+		else
+			c->width = c->max_len;
+
+		/* But don't exceed screen size. If we exceed the screen size
+		 * for even a single field, it will just start on a line of its
+		 * own and then naturally wrap.
+		 */
+		c->width = min(c->width, screen_width);
+
+		if (c->width)
+			first = 0;
+	}
+
+	/* Second pass: find out newlines and distribute available spacing */
+	for (c = columns; c - columns < COL_MAX; c++) {
+		int pad, spacing, rem, last;
+		struct column *tmp;
+
+		if (!c->width)
+			continue;
+
+		linecols++;
+		len += c->width;
+
+		for (last = 1, tmp = c + 1; tmp - columns < COL_MAX; tmp++) {
+			if (tmp->width) {
+				last = 0;
+				break;
+			}
+		}
+
+		if (!last && len < screen_width) {
+			/* Columns fit on screen so far, nothing to do yet */
+			continue;
+		}
+
+		if (len == screen_width) {
+			/* Exact fit, just start with new line */
+			goto newline;
+		}
+
+		if (len > screen_width) {
+			/* Screen width exceeded: go back one column */
+			len -= c->width;
+			c--;
+			linecols--;
+		}
+
+		/* Distribute remaining space to columns on this line */
+		pad = screen_width - len;
+		spacing = pad / linecols;
+		rem = pad % linecols;
+		for (tmp = c; tmp > eol; tmp--) {
+			if (!tmp->width)
+				continue;
+
+			tmp->width += spacing;
+			if (rem) {
+				tmp->width++;
+				rem--;
+			}
+		}
+
+newline:
+		/* Line break: reset line counters, mark end-of-line */
+		eol = c;
+		len = 0;
+		linecols = 0;
+	}
+}
+
 /* Render buffered output with spacing and delimiters, then free up buffers */
-static void render(void)
+static void render(int screen_width)
 {
 	struct buf_token *token = (struct buf_token *)buffer.head->data;
-	int printed, line_started = 0, need_newline = 0;
+	int printed, line_started = 0;
 	struct column *f;
 
 	/* Ensure end alignment of last token, it wasn't necessarily flushed */
 	buffer.tail->end += buffer.cur->len % 2;
+
+	render_calc_width(screen_width);
 
 	/* Rewind and replay */
 	buffer.tail = buffer.head;
@@ -1125,23 +1220,16 @@ static void render(void)
 		printed += fwrite(token->data, 1, token->len, stdout);
 		print_right_spacing(f, printed);
 
-		/* Variable field size or overflow, won't align to screen */
-		if (printed > f->width)
-			need_newline = 1;
-
 		/* Go to next non-empty field, deal with end-of-line */
 		do {
 			if (field_is_last(f)) {
-				if (need_newline) {
-					printf("\n");
-					need_newline = 0;
-				}
+				printf("\n");
 				f = columns;
 				line_started = 0;
 			} else {
 				f++;
 			}
-		} while (!f->width);
+		} while (f->disabled);
 
 		token = buf_token_next(token);
 	}
@@ -4532,7 +4620,7 @@ int main(int argc, char *argv[])
 	FILE *filter_fp = NULL;
 	int ch;
 	int state_filter = 0;
-	int addrp_width, screen_width = 80;
+	int screen_width = 80;
 
 	while ((ch = getopt_long(argc, argv,
 				 "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KHS",
@@ -4828,17 +4916,11 @@ int main(int argc, char *argv[])
 	if (ssfilter_parse(&current_filter.f, argc, argv, filter_fp))
 		usage();
 
-	if (current_filter.dbs&(current_filter.dbs-1))
-		columns[COL_NETID].width = 6;
+	if (!(current_filter.dbs & (current_filter.dbs - 1)))
+		columns[COL_NETID].disabled = 1;
 
-	if (current_filter.states&(current_filter.states-1))
-		columns[COL_STATE].width = 10;
-
-	/* If Netid or State are hidden, no delimiter before next column */
-	if (!columns[COL_NETID].width)
-		columns[COL_STATE].width--;
-	else if (!columns[COL_STATE].width)
-		columns[COL_RECVQ].width--;
+	if (!(current_filter.states & (current_filter.states - 1)))
+		columns[COL_STATE].disabled = 1;
 
 	if (isatty(STDOUT_FILENO)) {
 		struct winsize w;
@@ -4848,36 +4930,6 @@ int main(int argc, char *argv[])
 				screen_width = w.ws_col;
 		}
 	}
-
-	addrp_width = screen_width -
-		      columns[COL_NETID].width -
-		      columns[COL_STATE].width -
-		      columns[COL_RECVQ].width -
-		      columns[COL_SENDQ].width;
-
-	if (addrp_width&1) {
-		if (columns[COL_NETID].width)
-			columns[COL_NETID].width++;
-		else if (columns[COL_STATE].width)
-			columns[COL_STATE].width++;
-		else
-			columns[COL_SENDQ].width++;
-	}
-
-	addrp_width /= 2;
-
-	columns[COL_SERV].width = resolve_services ? 8 : 6;
-	if (addrp_width < 15 + columns[COL_SERV].width)
-		addrp_width = 15 + columns[COL_SERV].width;
-
-	columns[COL_ADDR].width = addrp_width - columns[COL_SERV].width;
-
-	/* Make enough space for the local/remote port field */
-	columns[COL_ADDR].width -= 13;
-	columns[COL_SERV].width += 13;
-
-	columns[COL_RADDR].width = columns[COL_ADDR].width;
-	columns[COL_RSERV].width = columns[COL_SERV].width;
 
 	if (show_header)
 		print_header();
@@ -4909,7 +4961,7 @@ int main(int argc, char *argv[])
 	if (show_users || show_proc_ctx || show_sock_ctx)
 		user_ent_destroy();
 
-	render();
+	render(screen_width);
 
 	return 0;
 }
