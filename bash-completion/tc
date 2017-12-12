@@ -450,7 +450,7 @@ _tc_filter_options()
             return 0
             ;;
         matchall)
-            _tc_once_attr 'action skip_sw skip_hw'
+            _tc_once_attr 'action classid skip_sw skip_hw'
             return 0
             ;;
         flower)
