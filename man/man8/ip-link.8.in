@@ -36,7 +36,7 @@ ip-link \- network device configuration
 .RB "[ " numrxqueues
 .IR QUEUE_COUNT " ]"
 .br
-.BR "[" gso_max_size
+.BR "[ " gso_max_size
 .IR BYTES " ]"
 .RB "[ " gso_max_segs
 .IR SEGMENTS " ]"
