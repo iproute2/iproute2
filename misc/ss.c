@@ -103,11 +103,48 @@ int show_header = 1;
 int follow_events;
 int sctp_ino;
 
-int netid_width;
-int state_width;
-int addr_width;
-int serv_width;
-char *odd_width_pad = "";
+enum col_id {
+	COL_NETID,
+	COL_STATE,
+	COL_RECVQ,
+	COL_SENDQ,
+	COL_ADDR,
+	COL_SERV,
+	COL_RADDR,
+	COL_RSERV,
+	COL_EXT,
+	COL_MAX
+};
+
+enum col_align {
+	ALIGN_LEFT,
+	ALIGN_CENTER,
+	ALIGN_RIGHT
+};
+
+struct column {
+	const enum col_align align;
+	const char *header;
+	const char *ldelim;
+	int width;	/* Including delimiter. -1: fit to content, 0: hide */
+	int stored;	/* Characters buffered */
+	int printed;	/* Characters printed so far */
+};
+
+static struct column columns[] = {
+	{ ALIGN_LEFT,	"Netid",		"",	0,	0,	0 },
+	{ ALIGN_LEFT,	"State",		" ",	0,	0,	0 },
+	{ ALIGN_LEFT,	"Recv-Q",		" ",	7,	0,	0 },
+	{ ALIGN_LEFT,	"Send-Q",		" ",	7,	0,	0 },
+	{ ALIGN_RIGHT,	"Local Address:",	" ",	0,	0,	0 },
+	{ ALIGN_LEFT,	"Port",			"",	0,	0,	0 },
+	{ ALIGN_RIGHT,	"Peer Address:",	" ",	0,	0,	0 },
+	{ ALIGN_LEFT,	"Port",			"",	0,	0,	0 },
+	{ ALIGN_LEFT,	"",			"",	-1,	0,	0 },
+};
+
+static struct column *current_field = columns;
+static char field_buf[BUFSIZ];
 
 static const char *TCP_PROTO = "tcp";
 static const char *SCTP_PROTO = "sctp";
@@ -826,11 +863,111 @@ static const char *vsock_netid_name(int type)
 
 static void out(const char *fmt, ...)
 {
+	struct column *f = current_field;
 	va_list args;
 
 	va_start(args, fmt);
-	vfprintf(stdout, fmt, args);
+	f->stored += vsnprintf(field_buf + f->stored, BUFSIZ - f->stored,
+			       fmt, args);
 	va_end(args);
+}
+
+static int print_left_spacing(struct column *f)
+{
+	int s;
+
+	if (f->width < 0 || f->align == ALIGN_LEFT)
+		return 0;
+
+	s = f->width - f->stored - f->printed;
+	if (f->align == ALIGN_CENTER)
+		/* If count of total spacing is odd, shift right by one */
+		s = (s + 1) / 2;
+
+	if (s > 0)
+		return printf("%*c", s, ' ');
+
+	return 0;
+}
+
+static void print_right_spacing(struct column *f)
+{
+	int s;
+
+	if (f->width < 0 || f->align == ALIGN_RIGHT)
+		return;
+
+	s = f->width - f->printed;
+	if (f->align == ALIGN_CENTER)
+		s /= 2;
+
+	if (s > 0)
+		printf("%*c", s, ' ');
+}
+
+static int field_needs_delimiter(struct column *f)
+{
+	if (!f->stored)
+		return 0;
+
+	/* Was another field already printed on this line? */
+	for (f--; f >= columns; f--)
+		if (f->width)
+			return 1;
+
+	return 0;
+}
+
+/* Flush given field to screen together with delimiter and spacing */
+static void field_flush(struct column *f)
+{
+	if (!f->width)
+		return;
+
+	if (field_needs_delimiter(f))
+		f->printed = printf("%s", f->ldelim);
+
+	f->printed += print_left_spacing(f);
+	f->printed += printf("%s", field_buf);
+	print_right_spacing(f);
+
+	*field_buf = 0;
+	f->printed = 0;
+	f->stored = 0;
+}
+
+static int field_is_last(struct column *f)
+{
+	return f - columns == COL_MAX - 1;
+}
+
+static void field_next(void)
+{
+	field_flush(current_field);
+
+	if (field_is_last(current_field)) {
+		printf("\n");
+		current_field = columns;
+	} else {
+		current_field++;
+	}
+}
+
+/* Walk through fields and flush them until we reach the desired one */
+static void field_set(enum col_id id)
+{
+	while (id != current_field - columns)
+		field_next();
+}
+
+/* Print header for all non-empty columns */
+static void print_header(void)
+{
+	while (!field_is_last(current_field)) {
+		if (current_field->width)
+			out(current_field->header);
+		field_next();
+	}
 }
 
 static void sock_state_print(struct sockstat *s)
@@ -872,18 +1009,21 @@ static void sock_state_print(struct sockstat *s)
 		sock_name = "unknown";
 	}
 
-	if (netid_width)
-		out("%-*s ", netid_width,
-		    is_sctp_assoc(s, sock_name) ? "" : sock_name);
-	if (state_width) {
-		if (is_sctp_assoc(s, sock_name))
-			out("`- %-*s ", state_width - 3,
-			    sctp_sstate_name[s->state]);
-		else
-			out("%-*s ", state_width, sstate_name[s->state]);
+	if (is_sctp_assoc(s, sock_name)) {
+		field_set(COL_STATE);		/* Empty Netid field */
+		out("`- %s", sctp_sstate_name[s->state]);
+	} else {
+		field_set(COL_NETID);
+		out("%s", sock_name);
+		field_set(COL_STATE);
+		out("%s", sstate_name[s->state]);
 	}
 
-	out("%-6d %-6d %s", s->rq, s->wq, odd_width_pad);
+	field_set(COL_RECVQ);
+	out("%-6d", s->rq);
+	field_set(COL_SENDQ);
+	out("%-6d", s->wq);
+	field_set(COL_ADDR);
 }
 
 static void sock_details_print(struct sockstat *s)
@@ -898,21 +1038,17 @@ static void sock_details_print(struct sockstat *s)
 		out(" fwmark:0x%x", s->mark);
 }
 
-static void sock_addr_print_width(int addr_len, const char *addr, char *delim,
-		int port_len, const char *port, const char *ifname)
-{
-	if (ifname) {
-		out("%*s%%%s%s%-*s ", addr_len, addr, ifname, delim,
-		    port_len, port);
-	} else {
-		out("%*s%s%-*s ", addr_len, addr, delim, port_len, port);
-	}
-}
-
 static void sock_addr_print(const char *addr, char *delim, const char *port,
 		const char *ifname)
 {
-	sock_addr_print_width(addr_width, addr, delim, serv_width, port, ifname);
+	if (ifname)
+		out("%s" "%%" "%s%s", addr, ifname, delim);
+	else
+		out("%s%s", addr, delim);
+
+	field_next();
+	out("%s", port);
+	field_next();
 }
 
 static const char *print_ms_timer(unsigned int timeout)
@@ -1093,7 +1229,6 @@ static void inet_addr_print(const inet_prefix *a, int port,
 {
 	char buf[1024];
 	const char *ap = buf;
-	int est_len = addr_width;
 	const char *ifname = NULL;
 
 	if (a->family == AF_INET) {
@@ -1112,24 +1247,13 @@ static void inet_addr_print(const inet_prefix *a, int port,
 					 "[%s]", ap);
 				ap = buf;
 			}
-
-			est_len = strlen(ap);
-			if (est_len <= addr_width)
-				est_len = addr_width;
-			else
-				est_len = addr_width + ((est_len-addr_width+3)/4)*4;
 		}
 	}
 
-	if (ifindex) {
-		ifname   = ll_index_to_name(ifindex);
-		est_len -= strlen(ifname) + 1;  /* +1 for percent char */
-		if (est_len < 0)
-			est_len = 0;
-	}
+	if (ifindex)
+		ifname = ll_index_to_name(ifindex);
 
-	sock_addr_print_width(est_len, ap, ":", serv_width, resolve_service(port),
-			ifname);
+	sock_addr_print(ap, ":", resolve_service(port), ifname);
 }
 
 struct aafilter {
@@ -2166,7 +2290,6 @@ static int tcp_show_line(char *line, const struct filter *f, int family)
 	if (show_tcpinfo)
 		tcp_stats_print(&s);
 
-	out("\n");
 	return 0;
 }
 
@@ -2547,7 +2670,6 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 	}
 	sctp_ino = s->ino;
 
-	out("\n");
 	return 0;
 }
 
@@ -3005,7 +3127,6 @@ static int dgram_show_line(char *line, const struct filter *f, int family)
 	if (show_details && opt[0])
 		out(" opt:\"%s\"", opt);
 
-	out("\n");
 	return 0;
 }
 
@@ -3184,7 +3305,6 @@ static int unix_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
 			    mask & 1 ? '-' : '<', mask & 2 ? '-' : '>');
 		}
 	}
-	out("\n");
 
 	return 0;
 }
@@ -3341,8 +3461,6 @@ static int unix_show(struct filter *f)
 		if (++cnt > MAX_UNIX_REMEMBER) {
 			while (list) {
 				unix_stats_print(list, f);
-				out("\n");
-
 				unix_list_drop_first(&list);
 			}
 			cnt = 0;
@@ -3351,8 +3469,6 @@ static int unix_show(struct filter *f)
 	fclose(fp);
 	while (list) {
 		unix_stats_print(list, f);
-		out("\n");
-
 		unix_list_drop_first(&list);
 	}
 
@@ -3527,7 +3643,6 @@ static int packet_show_sock(const struct sockaddr_nl *addr,
 			fil++;
 		}
 	}
-	out("\n");
 	return 0;
 }
 
@@ -3570,7 +3685,6 @@ static int packet_show_line(char *buf, const struct filter *f, int fam)
 	if (packet_stats_print(&stat, f))
 		return 0;
 
-	out("\n");
 	return 0;
 }
 
@@ -3690,7 +3804,6 @@ static int netlink_show_one(struct filter *f,
 	if (show_details) {
 		out(" sk=%llx cb=%llx groups=0x%08x", sk, cb, groups);
 	}
-	out("\n");
 
 	return 0;
 }
@@ -3728,7 +3841,6 @@ static int netlink_show_sock(const struct sockaddr_nl *addr,
 	if (show_mem) {
 		out("\t");
 		print_skmeminfo(tb, NETLINK_DIAG_MEMINFO);
-		out("\n");
 	}
 
 	return 0;
@@ -3818,8 +3930,6 @@ static void vsock_stats_print(struct sockstat *s, struct filter *f)
 	vsock_addr_print(&s->remote, s->rport);
 
 	proc_ctx_print(s);
-
-	out("\n");
 }
 
 static int vsock_show_sock(const struct sockaddr_nl *addr,
@@ -4539,13 +4649,17 @@ int main(int argc, char *argv[])
 	if (ssfilter_parse(&current_filter.f, argc, argv, filter_fp))
 		usage();
 
-	netid_width = 0;
 	if (current_filter.dbs&(current_filter.dbs-1))
-		netid_width = 5;
+		columns[COL_NETID].width = 6;
 
-	state_width = 0;
 	if (current_filter.states&(current_filter.states-1))
-		state_width = 10;
+		columns[COL_STATE].width = 10;
+
+	/* If Netid or State are hidden, no delimiter before next column */
+	if (!columns[COL_NETID].width)
+		columns[COL_STATE].width--;
+	else if (!columns[COL_STATE].width)
+		columns[COL_RECVQ].width--;
 
 	if (isatty(STDOUT_FILENO)) {
 		struct winsize w;
@@ -4556,49 +4670,38 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	addrp_width = screen_width;
-	if (netid_width)
-		addrp_width -= netid_width + 1;
-	if (state_width)
-		addrp_width -= state_width + 1;
-	addrp_width -= 14;
+	addrp_width = screen_width -
+		      columns[COL_NETID].width -
+		      columns[COL_STATE].width -
+		      columns[COL_RECVQ].width -
+		      columns[COL_SENDQ].width;
 
 	if (addrp_width&1) {
-		if (netid_width)
-			netid_width++;
-		else if (state_width)
-			state_width++;
+		if (columns[COL_NETID].width)
+			columns[COL_NETID].width++;
+		else if (columns[COL_STATE].width)
+			columns[COL_STATE].width++;
 		else
-			odd_width_pad = " ";
+			columns[COL_SENDQ].width++;
 	}
 
 	addrp_width /= 2;
-	addrp_width--;
 
-	serv_width = resolve_services ? 7 : 5;
+	columns[COL_SERV].width = resolve_services ? 8 : 6;
+	if (addrp_width < 15 + columns[COL_SERV].width)
+		addrp_width = 15 + columns[COL_SERV].width;
 
-	if (addrp_width < 15+serv_width+1)
-		addrp_width = 15+serv_width+1;
-
-	addr_width = addrp_width - serv_width - 1;
-
-	if (show_header) {
-		if (netid_width)
-			out("%-*s ", netid_width, "Netid");
-		if (state_width)
-			out("%-*s ", state_width, "State");
-		out("%-6s %-6s %s", "Recv-Q", "Send-Q", odd_width_pad);
-	}
+	columns[COL_ADDR].width = addrp_width - columns[COL_SERV].width;
 
 	/* Make enough space for the local/remote port field */
-	addr_width -= 13;
-	serv_width += 13;
+	columns[COL_ADDR].width -= 13;
+	columns[COL_SERV].width += 13;
 
-	if (show_header) {
-		out("%*s:%-*s %*s:%-*s\n",
-		    addr_width, "Local Address", serv_width, "Port",
-		    addr_width, "Peer Address", serv_width, "Port");
-	}
+	columns[COL_RADDR].width = columns[COL_ADDR].width;
+	columns[COL_RSERV].width = columns[COL_SERV].width;
+
+	if (show_header)
+		print_header();
 
 	fflush(stdout);
 
@@ -4626,6 +4729,8 @@ int main(int argc, char *argv[])
 
 	if (show_users || show_proc_ctx || show_sock_ctx)
 		user_ent_destroy();
+
+	field_next();
 
 	return 0;
 }
