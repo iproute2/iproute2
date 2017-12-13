@@ -768,6 +768,8 @@ the following additional arguments are supported:
 .BI "dscp inherit"
 ] [
 .BI dev " PHYS_DEV "
+] [
+.RB external
 ]
 
 .in +8
@@ -845,6 +847,21 @@ will set the field to
 or
 .IR 00 ".." ff
 when tunneling non-IP packets. The default value is 00.
+
+.sp
+.RB external
+- make this tunnel externally controlled (or not, which is the default).
+In the kernel, this is referred to as collect metadata mode.  This flag is
+mutually exclusive with the
+.BR remote ,
+.BR local ,
+.BR seq ,
+.BR key,
+.BR csum,
+.BR hoplimit,
+.BR encaplimit,
+.BR flowlabel " and " tclass
+options.
 
 .in -8
 
