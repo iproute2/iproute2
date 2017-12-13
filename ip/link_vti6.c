@@ -164,14 +164,14 @@ get_failed:
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, AF_INET6);
-			memcpy(&daddr, addr.data, addr.bytelen);
+			get_addr(&addr, *argv, AF_INET6);
+			memcpy(&daddr, addr.data, sizeof(daddr));
 		} else if (!matches(*argv, "local")) {
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, AF_INET6);
-			memcpy(&saddr, addr.data, addr.bytelen);
+			get_addr(&addr, *argv, AF_INET6);
+			memcpy(&saddr, addr.data, sizeof(saddr));
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);

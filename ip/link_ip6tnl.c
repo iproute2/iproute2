@@ -184,18 +184,14 @@ get_failed:
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, preferred_family);
-			if (addr.family == AF_UNSPEC)
-				invarg("\"remote\" address family is AF_UNSPEC", *argv);
-			memcpy(&raddr, addr.data, addr.bytelen);
+			get_addr(&addr, *argv, AF_INET6);
+			memcpy(&raddr, addr.data, sizeof(raddr));
 		} else if (strcmp(*argv, "local") == 0) {
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, preferred_family);
-			if (addr.family == AF_UNSPEC)
-				invarg("\"local\" address family is AF_UNSPEC", *argv);
-			memcpy(&laddr, addr.data, addr.bytelen);
+			get_addr(&addr, *argv, AF_INET6);
+			memcpy(&laddr, addr.data, sizeof(laddr));
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);

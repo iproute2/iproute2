@@ -257,17 +257,13 @@ get_failed:
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, preferred_family);
-			if (addr.family == AF_UNSPEC)
-				invarg("\"remote\" address family is AF_UNSPEC", *argv);
+			get_addr(&addr, *argv, AF_INET6);
 			memcpy(&raddr, &addr.data, sizeof(raddr));
 		} else if (!matches(*argv, "local")) {
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, preferred_family);
-			if (addr.family == AF_UNSPEC)
-				invarg("\"local\" address family is AF_UNSPEC", *argv);
+			get_addr(&addr, *argv, AF_INET6);
 			memcpy(&laddr, &addr.data, sizeof(laddr));
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
