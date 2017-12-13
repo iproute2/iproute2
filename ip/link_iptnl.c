@@ -195,16 +195,10 @@ get_failed:
 	while (argc > 0) {
 		if (strcmp(*argv, "remote") == 0) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				raddr = get_addr32(*argv);
-			else
-				raddr = 0;
+			raddr = get_addr32(*argv);
 		} else if (strcmp(*argv, "local") == 0) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				laddr = get_addr32(*argv);
-			else
-				laddr = 0;
+			laddr = get_addr32(*argv);
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);

@@ -127,16 +127,10 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 			p->iph.frag_off = htons(IP_DF);
 		} else if (strcmp(*argv, "remote") == 0) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				p->iph.daddr = get_addr32(*argv);
-			else
-				p->iph.daddr = htonl(INADDR_ANY);
+			p->iph.daddr = get_addr32(*argv);
 		} else if (strcmp(*argv, "local") == 0) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				p->iph.saddr = get_addr32(*argv);
-			else
-				p->iph.saddr = htonl(INADDR_ANY);
+			p->iph.saddr = get_addr32(*argv);
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			medium = *argv;

@@ -167,20 +167,10 @@ get_failed:
 			okey = uval;
 		} else if (!matches(*argv, "remote")) {
 			NEXT_ARG();
-			if (!strcmp(*argv, "any")) {
-				fprintf(stderr, "invalid value for \"remote\": \"%s\"\n", *argv);
-				exit(-1);
-			} else {
-				daddr = get_addr32(*argv);
-			}
+			daddr = get_addr32(*argv);
 		} else if (!matches(*argv, "local")) {
 			NEXT_ARG();
-			if (!strcmp(*argv, "any")) {
-				fprintf(stderr, "invalid value for \"local\": \"%s\"\n", *argv);
-				exit(-1);
-			} else {
-				saddr = get_addr32(*argv);
-			}
+			saddr = get_addr32(*argv);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);

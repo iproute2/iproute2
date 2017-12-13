@@ -251,12 +251,10 @@ get_failed:
 			pmtudisc = 1;
 		} else if (!matches(*argv, "remote")) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				daddr = get_addr32(*argv);
+			daddr = get_addr32(*argv);
 		} else if (!matches(*argv, "local")) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				saddr = get_addr32(*argv);
+			saddr = get_addr32(*argv);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);

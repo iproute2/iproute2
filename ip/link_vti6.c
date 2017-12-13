@@ -161,27 +161,17 @@ get_failed:
 			}
 			okey = uval;
 		} else if (!matches(*argv, "remote")) {
-			NEXT_ARG();
-			if (!strcmp(*argv, "any")) {
-				fprintf(stderr, "invalid value for \"remote\": \"%s\"\n", *argv);
-				exit(-1);
-			} else {
-				inet_prefix addr;
+			inet_prefix addr;
 
-				get_prefix(&addr, *argv, AF_INET6);
-				memcpy(&daddr, addr.data, addr.bytelen);
-			}
+			NEXT_ARG();
+			get_prefix(&addr, *argv, AF_INET6);
+			memcpy(&daddr, addr.data, addr.bytelen);
 		} else if (!matches(*argv, "local")) {
-			NEXT_ARG();
-			if (!strcmp(*argv, "any")) {
-				fprintf(stderr, "invalid value for \"local\": \"%s\"\n", *argv);
-				exit(-1);
-			} else {
-				inet_prefix addr;
+			inet_prefix addr;
 
-				get_prefix(&addr, *argv, AF_INET6);
-				memcpy(&saddr, addr.data, addr.bytelen);
-			}
+			NEXT_ARG();
+			get_prefix(&addr, *argv, AF_INET6);
+			memcpy(&saddr, addr.data, addr.bytelen);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);
