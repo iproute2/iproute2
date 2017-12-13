@@ -378,7 +378,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 		}
 
 	}
-	close_json_object();
+	close_json_array(PRINT_JSON, NULL);
 
 	return 0;
 }
