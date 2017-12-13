@@ -155,7 +155,7 @@ get_failed:
 			tos = rta_getattr_u8(greinfo[IFLA_GRE_TOS]);
 
 		if (greinfo[IFLA_GRE_LINK])
-			link = rta_getattr_u8(greinfo[IFLA_GRE_LINK]);
+			link = rta_getattr_u32(greinfo[IFLA_GRE_LINK]);
 
 		if (greinfo[IFLA_GRE_ENCAP_TYPE])
 			encaptype = rta_getattr_u16(greinfo[IFLA_GRE_ENCAP_TYPE]);
