@@ -528,7 +528,7 @@ static int tc_action_gd(int cmd, unsigned int flags,
 
 	req.n.nlmsg_seq = rth.dump = ++rth.seq;
 
-	if (rtnl_talk(&rth, &req.n, &ans) < 0) {
+	if (rtnl_talk(&rth, &req.n, cmd == RTM_DELACTION ? NULL : &ans) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 1;
 	}
