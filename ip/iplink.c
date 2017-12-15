@@ -39,6 +39,14 @@
 #define LIBDIR "/usr/lib"
 #endif
 
+#ifndef GSO_MAX_SIZE
+#define GSO_MAX_SIZE		65536
+#endif
+#ifndef GSO_MAX_SEGS
+#define GSO_MAX_SEGS		65535
+#endif
+
+
 static void usage(void) __attribute__((noreturn));
 static int iplink_have_newlink(void);
 
@@ -854,18 +862,21 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 
 			NEXT_ARG();
 			if (get_unsigned(&max_size, *argv, 0) ||
-				max_size > UINT16_MAX + 1)
+			    max_size > GSO_MAX_SIZE)
 				invarg("Invalid \"gso_max_size\" value\n",
 				       *argv);
-			addattr32(&req->n, sizeof(*req), IFLA_GSO_MAX_SIZE, max_size);
+			addattr32(&req->n, sizeof(*req),
+				  IFLA_GSO_MAX_SIZE, max_size);
 		} else if (strcmp(*argv, "gso_max_segs") == 0) {
 			unsigned int max_segs;
 
 			NEXT_ARG();
-			if (get_unsigned(&max_segs, *argv, 0) || max_segs > UINT16_MAX)
+			if (get_unsigned(&max_segs, *argv, 0) ||
+			    max_segs > GSO_MAX_SEGS)
 				invarg("Invalid \"gso_max_segs\" value\n",
 				       *argv);
-			addattr32(&req->n, sizeof(*req), IFLA_GSO_MAX_SEGS, max_segs);
+			addattr32(&req->n, sizeof(*req),
+				  IFLA_GSO_MAX_SEGS, max_segs);
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
