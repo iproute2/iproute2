@@ -276,11 +276,13 @@ static void iplink_parse_vf_vlan_info(int vf, int *argcp, char ***argvp,
 {
 	int argc = *argcp;
 	char **argv = *argvp;
+	unsigned int vci;
 
 	NEXT_ARG();
-	if (get_unsigned(&ivvip->vlan, *argv, 0))
+	if (get_unsigned(&vci, *argv, 0) || vci > 4095)
 		invarg("Invalid \"vlan\" value\n", *argv);
 
+	ivvip->vlan = vci;
 	ivvip->vf = vf;
 	ivvip->qos = 0;
 	ivvip->vlan_proto = htons(ETH_P_8021Q);
