@@ -118,7 +118,7 @@ void iplink_usage(void)
 			"\n"
 			"       ip link help [ TYPE ]\n"
 			"\n"
-			"TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |\n"
+			"TYPE := { vlan | veth | vcan | vxcan | dummy | ifb | macvlan | macvtap |\n"
 			"          bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |\n"
 			"          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan |\n"
 			"          vti | nlmon | team_slave | bond_slave | ipvlan | geneve |\n"

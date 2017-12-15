@@ -378,7 +378,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 		}
 
 	}
-	close_json_object();
+	close_json_array(PRINT_JSON, NULL);
 
 	return 0;
 }
@@ -528,7 +528,7 @@ static int tc_action_gd(int cmd, unsigned int flags,
 
 	req.n.nlmsg_seq = rth.dump = ++rth.seq;
 
-	if (rtnl_talk(&rth, &req.n, &ans) < 0) {
+	if (rtnl_talk(&rth, &req.n, cmd == RTM_DELACTION ? NULL : &ans) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 1;
 	}
