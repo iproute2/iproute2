@@ -194,6 +194,7 @@ ip-link \- network device configuration
 .BR macvlan  " | "
 .BR macvtap  " | "
 .BR vcan " | "
+.BR vxcan " | "
 .BR veth " | "
 .BR vlan " | "
 .BR vxlan " |"
@@ -252,9 +253,6 @@ Link types:
 .B bond
 - Bonding device
 .sp
-.B can
-- Controller Area Network interface
-.sp
 .B dummy
 - Dummy network interface
 .sp
@@ -275,6 +273,9 @@ Link types:
 .sp
 .B vcan
 - Virtual Controller Area Network interface
+.sp
+.B vxcan
+- Virtual Controller Area Network tunnel interface
 .sp
 .B veth
 - Virtual ethernet interface
@@ -648,6 +649,29 @@ Example:
 only supported together with the
 .B external
 keyword.
+
+.in -8
+
+.TP
+VETH, VXCAN Type Support
+For a link of types
+.I VETH/VXCAN
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BR type " { " veth " | " vxcan " }"
+[
+.BR peer
+.BI "name " NAME
+]
+
+.in +8
+.sp
+.BR peer
+.BI "name " NAME
+- specifies the virtual pair device name of the
+.I VETH/VXCAN
+tunnel.
 
 .in -8
 
