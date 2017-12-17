@@ -126,6 +126,7 @@ static struct
 	int oif, oifmask;
 	int mark, markmask;
 	int realm, realmmask;
+	__u32 metric, metricmask;
 	inet_prefix rprefsrc;
 	inet_prefix rvia;
 	inet_prefix rdst;
@@ -288,6 +289,14 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		if ((mark ^ filter.mark) & filter.markmask)
 			return 0;
 	}
+	if (filter.metricmask) {
+		__u32 metric = 0;
+
+		if (tb[RTA_PRIORITY])
+			metric = rta_getattr_u32(tb[RTA_PRIORITY]);
+		if ((metric ^ filter.metric) & filter.metricmask)
+			return 0;
+	}
 	if (filter.flushb &&
 	    r->rtm_family == AF_INET6 &&
 	    r->rtm_dst_len == 0 &&
@@ -441,7 +450,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "src %s ",
 			rt_addr_n2a_rta(r->rtm_family, tb[RTA_PREFSRC]));
 	}
-	if (tb[RTA_PRIORITY])
+	if (tb[RTA_PRIORITY] && filter.metricmask != -1)
 		fprintf(fp, "metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));
 	if (r->rtm_flags & RTNH_F_DEAD)
 		fprintf(fp, "dead ");
@@ -1518,6 +1527,16 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			if (get_unsigned(&mark, *argv, 0))
 				invarg("invalid mark value", *argv);
 			filter.markmask = -1;
+		} else if (matches(*argv, "metric") == 0 ||
+		           matches(*argv, "priority") == 0 ||
+		           strcmp(*argv, "preference") == 0) {
+			__u32 metric;
+
+			NEXT_ARG();
+			if (get_u32(&metric, *argv, 0))
+				invarg("\"metric\" value is invalid\n", *argv);
+			filter.metric = metric;
+			filter.metricmask = -1;
 		} else if (strcmp(*argv, "via") == 0) {
 			int family;
 
