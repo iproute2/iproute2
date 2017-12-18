@@ -88,8 +88,8 @@ static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *iptuninfo[IFLA_IPTUN_MAX + 1];
 	int len;
-	struct in6_addr laddr = {};
-	struct in6_addr raddr = {};
+	struct in6_addr laddr = IN6ADDR_ANY_INIT;
+	struct in6_addr raddr = IN6ADDR_ANY_INIT;
 	__u8 hop_limit = DEFAULT_TNL_HOP_LIMIT;
 	__u8 encap_limit = IPV6_DEFAULT_TNL_ENCAP_LIMIT;
 	__u32 flowinfo = 0;
