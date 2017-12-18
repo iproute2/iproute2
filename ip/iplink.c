@@ -770,11 +770,12 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			argc--; argv++;
 			break;
 		} else if (matches(*argv, "alias") == 0) {
+			len = strlen(*argv);
+			if (len >= IFALIASZ)
+				invarg("alias too long\n", *argv);
 			NEXT_ARG();
 			addattr_l(&req->n, sizeof(*req), IFLA_IFALIAS,
-				  *argv, strlen(*argv));
-			argc--; argv++;
-			break;
+				  *argv, len);
 		} else if (strcmp(*argv, "group") == 0) {
 			NEXT_ARG();
 			if (*group != -1)
