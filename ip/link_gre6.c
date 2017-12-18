@@ -92,8 +92,8 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *greinfo[IFLA_GRE_MAX + 1];
 	__u16 iflags = 0;
 	__u16 oflags = 0;
-	unsigned int ikey = 0;
-	unsigned int okey = 0;
+	__be32 ikey = 0;
+	__be32 okey = 0;
 	struct in6_addr raddr = IN6ADDR_ANY_INIT;
 	struct in6_addr laddr = IN6ADDR_ANY_INIT;
 	unsigned int link = 0;
@@ -192,53 +192,18 @@ get_failed:
 
 	while (argc > 0) {
 		if (!matches(*argv, "key")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			iflags |= GRE_KEY;
 			oflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr,
-						"Invalid value for \"key\"\n");
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-
-			ikey = okey = uval;
+			ikey = okey = tnl_parse_key("key", *argv);
 		} else if (!matches(*argv, "ikey")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			iflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value of \"ikey\"\n");
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-			ikey = uval;
+			ikey = tnl_parse_key("ikey", *argv);
 		} else if (!matches(*argv, "okey")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			oflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value of \"okey\"\n");
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-			okey = uval;
+			okey = tnl_parse_key("okey", *argv);
 		} else if (!matches(*argv, "seq")) {
 			iflags |= GRE_SEQ;
 			oflags |= GRE_SEQ;
