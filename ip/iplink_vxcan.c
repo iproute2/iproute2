@@ -38,7 +38,7 @@ static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 	char *link = NULL;
 	char *type = NULL;
 	int index = 0;
-	int err, len;
+	int err;
 	struct rtattr *data;
 	int group;
 	struct ifinfomsg *ifm, *peer_ifm;
@@ -66,10 +66,8 @@ static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 		return err;
 
 	if (name) {
-		len = strlen(name) + 1;
-		if (len > IFNAMSIZ)
-			invarg("\"name\" too long\n", *argv);
-		addattr_l(hdr, 1024, IFLA_IFNAME, name, len);
+		addattr_l(hdr, 1024,
+			  IFLA_IFNAME, name, strlen(name) + 1);
 	}
 
 	peer_ifm = RTA_DATA(data);
