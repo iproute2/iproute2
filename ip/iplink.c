@@ -586,8 +586,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			*name = *argv;
 		} else if (strcmp(*argv, "index") == 0) {
 			NEXT_ARG();
+			if (*index)
+				duparg("index", *argv);
 			*index = atoi(*argv);
-			if (*index < 0)
+			if (*index <= 0)
 				invarg("Invalid \"index\" value", *argv);
 		} else if (matches(*argv, "link") == 0) {
 			NEXT_ARG();
@@ -886,7 +888,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	char *name = NULL;
 	char *link = NULL;
 	char *type = NULL;
-	int index = -1;
+	int index = 0;
 	int group;
 	struct link_util *lu = NULL;
 	struct iplink_req req = {
@@ -922,7 +924,6 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 				return -1;
 			}
 
-			req.i.ifi_index = 0;
 			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
 			if (rtnl_talk(&rth, &req.n, NULL) < 0)
 				return -2;
@@ -936,7 +937,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 				"Not enough information: \"dev\" argument is required.\n");
 			exit(-1);
 		}
-		if (cmd == RTM_NEWLINK && index != -1) {
+		if (cmd == RTM_NEWLINK && index) {
 			fprintf(stderr,
 				"index can be used only when creating devices.\n");
 			exit(-1);
@@ -964,10 +965,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), IFLA_LINK, &ifindex, 4);
 		}
 
-		if (index == -1)
-			req.i.ifi_index = 0;
-		else
-			req.i.ifi_index = index;
+		req.i.ifi_index = index;
 	}
 
 	if (name) {
