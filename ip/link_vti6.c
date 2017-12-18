@@ -154,10 +154,8 @@ get_failed:
 	addattr32(n, 1024, IFLA_VTI_IKEY, ikey);
 	addattr32(n, 1024, IFLA_VTI_OKEY, okey);
 
-	if (memcmp(&saddr, &in6addr_any, sizeof(in6addr_any)))
-	    addattr_l(n, 1024, IFLA_VTI_LOCAL, &saddr, sizeof(saddr));
-	if (memcmp(&daddr, &in6addr_any, sizeof(in6addr_any)))
-	    addattr_l(n, 1024, IFLA_VTI_REMOTE, &daddr, sizeof(daddr));
+	addattr_l(n, 1024, IFLA_VTI_LOCAL, &saddr, sizeof(saddr));
+	addattr_l(n, 1024, IFLA_VTI_REMOTE, &daddr, sizeof(daddr));
 	addattr32(n, 1024, IFLA_VTI_FWMARK, fwmark);
 	if (link)
 		addattr32(n, 1024, IFLA_VTI_LINK, link);
