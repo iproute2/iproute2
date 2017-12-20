@@ -98,6 +98,9 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 ignore_df = 0;
 	__u32 fwmark = 0;
 	__u32 erspan_idx = 0;
+	__u8 erspan_ver = 0;
+	__u8 erspan_dir = 0;
+	__u16 erspan_hwid = 0;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 		if (rtnl_talk(&rth, &req.n, &answer) < 0) {
@@ -178,6 +181,15 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_ERSPAN_INDEX])
 			erspan_idx = rta_getattr_u32(greinfo[IFLA_GRE_ERSPAN_INDEX]);
+
+		if (greinfo[IFLA_GRE_ERSPAN_VER])
+			erspan_ver = rta_getattr_u8(greinfo[IFLA_GRE_ERSPAN_VER]);
+
+		if (greinfo[IFLA_GRE_ERSPAN_DIR])
+			erspan_dir = rta_getattr_u8(greinfo[IFLA_GRE_ERSPAN_DIR]);
+
+		if (greinfo[IFLA_GRE_ERSPAN_HWID])
+			erspan_hwid = rta_getattr_u16(greinfo[IFLA_GRE_ERSPAN_HWID]);
 
 		free(answer);
 	}
@@ -343,6 +355,24 @@ get_failed:
 				invarg("invalid erspan index\n", *argv);
 			if (erspan_idx & ~((1<<20) - 1) || erspan_idx == 0)
 				invarg("erspan index must be > 0 and <= 20-bit\n", *argv);
+		} else if (strcmp(*argv, "erspan_ver") == 0) {
+			NEXT_ARG();
+			if (get_u8(&erspan_ver, *argv, 0))
+				invarg("invalid erspan version\n", *argv);
+			if (erspan_ver != 1 && erspan_ver != 2)
+				invarg("erspan version must be 1 or 2\n", *argv);
+		} else if (strcmp(*argv, "erspan_dir") == 0) {
+			NEXT_ARG();
+			if (matches(*argv, "ingress") == 0)
+				erspan_dir = 0;
+			else if (matches(*argv, "egress") == 0)
+				erspan_dir = 1;
+			else
+				invarg("Invalid erspan direction.", *argv);
+		} else if (strcmp(*argv, "erspan_hwid") == 0) {
+			NEXT_ARG();
+			if (get_u16(&erspan_hwid, *argv, 0))
+				invarg("invalid erspan hwid\n", *argv);
 		} else
 			usage();
 		argc--; argv++;
@@ -374,8 +404,15 @@ get_failed:
 		addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
 		addattr_l(n, 1024, IFLA_GRE_TOS, &tos, 1);
 		addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
-		if (erspan_idx != 0)
-			addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
+		if (erspan_ver) {
+			addattr8(n, 1024, IFLA_GRE_ERSPAN_VER, erspan_ver);
+			if (erspan_ver == 1 && erspan_idx != 0) {
+				addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
+			} else if (erspan_ver == 2) {
+				addattr8(n, 1024, IFLA_GRE_ERSPAN_DIR, erspan_dir);
+				addattr16(n, 1024, IFLA_GRE_ERSPAN_HWID, erspan_hwid);
+			}
+		}
 	} else {
 		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
 	}
@@ -514,7 +551,30 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_GRE_ERSPAN_INDEX]) {
 		__u32 erspan_idx = rta_getattr_u32(tb[IFLA_GRE_ERSPAN_INDEX]);
 
-		fprintf(f, "erspan_index %u ", erspan_idx);
+		print_uint(PRINT_ANY, "erspan_index", "erspan_index %u ", erspan_idx);
+	}
+
+	if (tb[IFLA_GRE_ERSPAN_VER]) {
+		__u8 erspan_ver = rta_getattr_u8(tb[IFLA_GRE_ERSPAN_VER]);
+
+		print_uint(PRINT_ANY, "erspan_ver", "erspan_ver %u ", erspan_ver);
+	}
+
+	if (tb[IFLA_GRE_ERSPAN_DIR]) {
+		__u8 erspan_dir = rta_getattr_u8(tb[IFLA_GRE_ERSPAN_DIR]);
+
+		if (erspan_dir == 0)
+			print_string(PRINT_ANY, "erspan_dir",
+				     "erspan_dir ingress ", NULL);
+		else
+			print_string(PRINT_ANY, "erspan_dir",
+				     "erspan_dir egress ", NULL);
+	}
+
+	if (tb[IFLA_GRE_ERSPAN_HWID]) {
+		__u16 erspan_hwid = rta_getattr_u16(tb[IFLA_GRE_ERSPAN_HWID]);
+
+		print_hex(PRINT_ANY, "erspan_hwid", "erspan_hwid 0x%x ", erspan_hwid);
 	}
 
 	if (tb[IFLA_GRE_ENCAP_TYPE] &&

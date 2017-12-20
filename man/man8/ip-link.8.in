@@ -665,13 +665,13 @@ keyword.
 .in -8
 
 .TP
-GRE, IPIP, SIT, ERSPAN Type Support
+GRE, IPIP, SIT Type Support
 For a link of types
-.I GRE/IPIP/SIT/ERSPAN
+.I GRE/IPIP/SIT
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BR type " { " gre " | " ipip " | " sit " | " erspan " }"
+.BR type " { " gre " | " ipip " | " sit " }"
 .BI " remote " ADDR " local " ADDR
 [
 .BR encap " { " fou " | " gue " | " none " }"
@@ -685,8 +685,6 @@ the following additional arguments are supported:
 .I " [no]encap-remcsum "
 ] [
 .I " mode " { ip6ip | ipip | mplsip | any } "
-] [
-.BR erspan " \fIIDX "
 ]
 
 .in +8
@@ -730,13 +728,6 @@ IPv6-Over-IPv4, "ipip" indicates "IPv4-Over-IPv4", "mplsip" indicates
 MPLS-Over-IPv4, "any" indicates IPv6, IPv4 or MPLS Over IPv4. Supported for
 SIT where the default is "ip6ip" and IPIP where the default is "ipip".
 IPv6-Over-IPv4 is not supported for IPIP.
-
-.sp
-.BR erspan " \fIIDX "
-- specifies the ERSPAN index field.
-.IR IDX
-indicates a 20 bit index/port number associated with the ERSPAN
-traffic's source port and direction.
 
 .in -8
 
@@ -881,6 +872,76 @@ the following additional arguments are supported:
 
 .BI  mode " MODE "
 - specifies the mode (datagram or connected) to use.
+
+.TP
+ERSPAN Type Support
+For a link of type
+.I ERSPAN/IP6ERSPAN
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BR type " { " erspan " | " ip6erspan " }"
+.BI remote " ADDR " local " ADDR " seq
+.RB key
+.I KEY
+.BR erspan_ver " \fIversion "
+[
+.BR erspan " \fIIDX "
+] [
+.BR erspan_dir " { " \fIingress " | " \fIegress " }"
+] [
+.BR erspan_hwid " \fIhwid "
+] [
+.RB external
+]
+
+.in +8
+.sp
+.BI  remote " ADDR "
+- specifies the remote address of the tunnel.
+
+.sp
+.BI  local " ADDR "
+- specifies the fixed local address for tunneled packets.
+It must be an address on another interface on this host.
+
+.sp
+.BR erspan_ver " \fIversion "
+- specifies the ERSPAN version number.
+.IR version
+indicates the ERSPAN version to be created: 1 for version 1 (type II)
+or 2 for version 2 (type III).
+
+.sp
+.BR erspan " \fIIDX "
+- specifies the ERSPAN v1 index field.
+.IR IDX
+indicates a 20 bit index/port number associated with the ERSPAN
+traffic's source port and direction.
+
+.sp
+.BR erspan_dir " { " \fIingress " | " \fIegress " }"
+- specifies the ERSPAN v2 mirrored traffic's direction.
+
+.sp
+.BR erspan_hwid " \fIhwid "
+- an unique identifier of an ERSPAN v2 engine within a system.
+.IR hwid
+is a 6-bit value for users to configure.
+
+.sp
+.BR external
+- make this tunnel externally controlled (or not, which is the default).
+In the kernel, this is referred to as collect metadata mode.  This flag is
+mutually exclusive with the
+.BR remote ,
+.BR local ,
+.BR erspan_ver ,
+.BR erspan ,
+.BR erspan_dir " and " erspan_hwid
+options.
+
+.in -8
 
 .TP
 GENEVE Type Support
@@ -2061,6 +2122,13 @@ ip link add link wpan0 lowpan0 type lowpan
 .RS 4
 Creates a 6LoWPAN interface named lowpan0 on the underlying
 IEEE 802.15.4 device wpan0.
+.RE
+.PP
+ip link add dev ip6erspan11 type ip6erspan seq key 102
+local fc00:100::2 remote fc00:100::1
+erspan_ver 2 erspan_dir ingress erspan_hwid 17
+.RS 4
+Creates a IP6ERSPAN version 2 interface named ip6erspan00.
 .RE
 
 .SH SEE ALSO
