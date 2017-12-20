@@ -36,7 +36,8 @@ const char *ll_addr_n2a(const unsigned char *addr, int alen, int type, char *buf
 	    (type == ARPHRD_TUNNEL || type == ARPHRD_SIT || type == ARPHRD_IPGRE)) {
 		return inet_ntop(AF_INET, addr, buf, blen);
 	}
-	if (alen == 16 && type == ARPHRD_TUNNEL6) {
+	if (alen == 16 &&
+	    (type == ARPHRD_TUNNEL6 || type == ARPHRD_IP6GRE)) {
 		return inet_ntop(AF_INET6, addr, buf, blen);
 	}
 	snprintf(buf, blen, "%02x", addr[0]);
