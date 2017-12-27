@@ -281,11 +281,11 @@ get_failed:
 		} else if (strcmp(*argv, "encap-udp6-csum") == 0) {
 			encapflags |= TUNNEL_ENCAP_FLAG_CSUM6;
 		} else if (strcmp(*argv, "noencap-udp6-csum") == 0) {
-			encapflags |= ~TUNNEL_ENCAP_FLAG_CSUM6;
+			encapflags &= ~TUNNEL_ENCAP_FLAG_CSUM6;
 		} else if (strcmp(*argv, "encap-remcsum") == 0) {
 			encapflags |= TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "noencap-remcsum") == 0) {
-			encapflags |= ~TUNNEL_ENCAP_FLAG_REMCSUM;
+			encapflags &= ~TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "external") == 0) {
 			metadata = 1;
 		} else if (strcmp(*argv, "ignore-df") == 0) {
