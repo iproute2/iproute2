@@ -73,11 +73,11 @@ int cmd_dev(struct rd *rd);
 int cmd_link(struct rd *rd);
 int rd_exec_cmd(struct rd *rd, const struct rd_cmd *c, const char *str);
 int rd_exec_dev(struct rd *rd, int (*cb)(struct rd *rd));
+void rd_free(struct rd *rd);
 
 /*
  * Device manipulation
  */
-void rd_free_devmap(struct rd *rd);
 struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index);
 
 /*

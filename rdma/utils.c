@@ -144,10 +144,11 @@ int rd_dev_init_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_OK;
 }
 
-void rd_free_devmap(struct rd *rd)
+void rd_free(struct rd *rd)
 {
 	if (!rd)
 		return;
+	free(rd->buff);
 	dev_map_cleanup(rd);
 }
 

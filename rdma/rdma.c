@@ -74,8 +74,7 @@ static void rd_cleanup(struct rd *rd)
 {
 	if (rd->json_output)
 		jsonw_destroy(&rd->jw);
-	free(rd->buff);
-	rd_free_devmap(rd);
+	rd_free(rd);
 }
 
 int main(int argc, char **argv)
