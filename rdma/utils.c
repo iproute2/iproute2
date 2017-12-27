@@ -236,7 +236,7 @@ int rd_recv_msg(struct rd *rd, mnl_cb_t callback, void *data, unsigned int seq)
 	return ret;
 }
 
-struct dev_map *_dev_map_lookup(struct rd *rd, const char *dev_name)
+static struct dev_map *_dev_map_lookup(struct rd *rd, const char *dev_name)
 {
 	struct dev_map *dev_map;
 

@@ -78,7 +78,6 @@ int rd_exec_cmd(struct rd *rd, const struct rd_cmd *c, const char *str);
  */
 void rd_free_devmap(struct rd *rd);
 struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index);
-struct dev_map *_dev_map_lookup(struct rd *rd, const char *dev_name);
 
 /*
  * Netlink
