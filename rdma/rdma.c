@@ -70,7 +70,7 @@ static int rd_init(struct rd *rd, int argc, char **argv, char *filename)
 	return rd_recv_msg(rd, rd_dev_init_cb, rd, seq);
 }
 
-static void rd_free(struct rd *rd)
+static void rd_cleanup(struct rd *rd)
 {
 	if (rd->json_output)
 		jsonw_destroy(&rd->jw);
@@ -138,6 +138,6 @@ int main(int argc, char **argv)
 	err = rd_cmd(&rd);
 out:
 	/* Always cleanup */
-	rd_free(&rd);
+	rd_cleanup(&rd);
 	return err ? EXIT_FAILURE : EXIT_SUCCESS;
 }
