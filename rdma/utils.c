@@ -176,7 +176,7 @@ int rd_exec_dev(struct rd *rd, int (*cb)(struct rd *rd))
 	} else {
 		dev_map = dev_map_lookup(rd, false);
 		if (!dev_map) {
-			pr_err("Wrong device name\n");
+			pr_err("Wrong device name - %s\n", rd_argv(rd));
 			ret = -ENOENT;
 			goto out;
 		}
