@@ -30,7 +30,7 @@ static const char *caps_to_str(uint32_t idx)
 	x(PKEY_NVRAM, 8) \
 	x(LED_INFO, 9) \
 	x(SM_DISABLED, 10) \
-	x(SYS_IMAGE_GUIG, 11) \
+	x(SYS_IMAGE_GUID, 11) \
 	x(PKEY_SW_EXT_PORT_TRAP, 12) \
 	x(EXTENDED_SPEEDS, 14) \
 	x(CM, 16) \
