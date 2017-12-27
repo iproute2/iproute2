@@ -277,6 +277,9 @@ static int link_one_show(struct rd *rd)
 		{ 0 }
 	};
 
+	if (!rd->port_idx)
+		return 0;
+
 	return rd_exec_cmd(rd, cmds, "parameter");
 }
 
