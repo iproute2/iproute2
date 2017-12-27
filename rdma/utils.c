@@ -159,6 +159,37 @@ void rd_free_devmap(struct rd *rd)
 	dev_map_cleanup(rd);
 }
 
+int rd_exec_dev(struct rd *rd, int (*cb)(struct rd *rd))
+{
+	struct dev_map *dev_map;
+	int ret = 0;
+
+	if (rd->json_output)
+		jsonw_start_array(rd->jw);
+	if (rd_no_arg(rd)) {
+		list_for_each_entry(dev_map, &rd->dev_map_list, list) {
+			rd->dev_idx = dev_map->idx;
+			ret = cb(rd);
+			if (ret)
+				goto out;
+		}
+	} else {
+		dev_map = dev_map_lookup(rd, false);
+		if (!dev_map) {
+			pr_err("Wrong device name\n");
+			ret = -ENOENT;
+			goto out;
+		}
+		rd_arg_inc(rd);
+		rd->dev_idx = dev_map->idx;
+		ret = cb(rd);
+	}
+out:
+	if (rd->json_output)
+		jsonw_end_array(rd->jw);
+	return ret;
+}
+
 int rd_exec_cmd(struct rd *rd, const struct rd_cmd *cmds, const char *str)
 {
 	const struct rd_cmd *c;
