@@ -71,15 +71,6 @@ static struct dev_map *dev_map_alloc(const char *dev_name)
 	return dev_map;
 }
 
-static void dev_map_free(struct dev_map *dev_map)
-{
-	if (!dev_map)
-		return;
-
-	free(dev_map->dev_name);
-	free(dev_map);
-}
-
 static void dev_map_cleanup(struct rd *rd)
 {
 	struct dev_map *dev_map, *tmp;
@@ -87,7 +78,8 @@ static void dev_map_cleanup(struct rd *rd)
 	list_for_each_entry_safe(dev_map, tmp,
 				 &rd->dev_map_list, list) {
 		list_del(&dev_map->list);
-		dev_map_free(dev_map);
+		free(dev_map->dev_name);
+		free(dev_map);
 	}
 }
 
