@@ -253,6 +253,9 @@ struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index)
 	char *dev_name;
 	char *slash;
 
+	if (rd_no_arg(rd))
+		return NULL;
+
 	dev_name = strdup(rd_argv(rd));
 	if (allow_port_index) {
 		slash = strrchr(dev_name, '/');
