@@ -43,6 +43,7 @@ static void print_usage(FILE *f)
 		"                            [ [no]encap-csum ]\n"
 		"                            [ [no]encap-csum6 ]\n"
 		"                            [ [no]encap-remcsum ]\n"
+		"                            [ external ]\n"
 		"                            [ fwmark MARK ]\n"
 		"                            [ erspan IDX ]\n"
 		"\n"

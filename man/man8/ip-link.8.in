@@ -698,6 +698,8 @@ the following additional arguments are supported:
 .I " mode " { ip6ip | ipip | mplsip | any } "
 ] [
 .BR erspan " \fIIDX "
+] [
+.BR external
 ]
 
 .in +8
@@ -748,6 +750,11 @@ IPv6-Over-IPv4 is not supported for IPIP.
 .IR IDX
 indicates a 20 bit index/port number associated with the ERSPAN
 traffic's source port and direction.
+
+.sp
+.BR external
+- make this tunnel externally controlled
+.RB "(e.g. " "ip route encap" ).
 
 .in -8
 
