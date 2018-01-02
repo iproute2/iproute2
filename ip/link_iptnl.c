@@ -230,28 +230,13 @@ get_failed:
 		} else if (strcmp(lu->id, "sit") == 0 &&
 			   strcmp(*argv, "isatap") == 0) {
 			iflags |= SIT_ISATAP;
-		} else if (strcmp(lu->id, "sit") == 0 &&
-			   strcmp(*argv, "mode") == 0) {
+		} else if (strcmp(*argv, "mode") == 0) {
 			NEXT_ARG();
-			if (strcmp(*argv, "ipv6/ipv4") == 0 ||
-			    strcmp(*argv, "ip6ip") == 0)
+			if (strcmp(lu->id, "sit") == 0 &&
+			    (strcmp(*argv, "ipv6/ipv4") == 0 ||
+			     strcmp(*argv, "ip6ip") == 0))
 				proto = IPPROTO_IPV6;
 			else if (strcmp(*argv, "ipv4/ipv4") == 0 ||
-				 strcmp(*argv, "ipip") == 0 ||
-				 strcmp(*argv, "ip4ip4") == 0)
-				proto = IPPROTO_IPIP;
-			else if (strcmp(*argv, "mpls/ipv4") == 0 ||
-				   strcmp(*argv, "mplsip") == 0)
-				proto = IPPROTO_MPLS;
-			else if (strcmp(*argv, "any/ipv4") == 0 ||
-				 strcmp(*argv, "any") == 0)
-				proto = 0;
-			else
-				invarg("Cannot guess tunnel mode.", *argv);
-		} else if (strcmp(lu->id, "ipip") == 0 &&
-			   strcmp(*argv, "mode") == 0) {
-			NEXT_ARG();
-			if (strcmp(*argv, "ipv4/ipv4") == 0 ||
 				 strcmp(*argv, "ipip") == 0 ||
 				 strcmp(*argv, "ip4ip4") == 0)
 				proto = IPPROTO_IPIP;
@@ -337,6 +322,7 @@ get_failed:
 		exit(-1);
 	}
 
+	addattr8(n, 1024, IFLA_IPTUN_PROTO, proto);
 	if (metadata) {
 		addattr_l(n, 1024, IFLA_IPTUN_COLLECT_METADATA, NULL, 0);
 		return 0;
@@ -354,9 +340,6 @@ get_failed:
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_FLAGS, encapflags);
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_SPORT, htons(encapsport));
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_DPORT, htons(encapdport));
-
-	if (strcmp(lu->id, "ipip") == 0 || strcmp(lu->id, "sit") == 0)
-		addattr8(n, 1024, IFLA_IPTUN_PROTO, proto);
 
 	if (strcmp(lu->id, "sit") == 0) {
 		addattr16(n, 1024, IFLA_IPTUN_FLAGS, iflags);
