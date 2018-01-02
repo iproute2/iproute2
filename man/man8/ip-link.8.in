@@ -1275,7 +1275,7 @@ or disable
 arptables hooks on the bridge.
 
 
-.in-8
+.in -8
 
 .TP
 MACsec Type Support
