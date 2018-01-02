@@ -372,6 +372,23 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 	if (tb[IFLA_IPTUN_COLLECT_METADATA])
 		print_bool(PRINT_ANY, "external", "external ", true);
 
+	if (tb[IFLA_IPTUN_PROTO]) {
+		switch (rta_getattr_u8(tb[IFLA_IPTUN_PROTO])) {
+		case IPPROTO_IPIP:
+			print_string(PRINT_ANY, "proto", "%s ", "ipip");
+			break;
+		case IPPROTO_IPV6:
+			print_string(PRINT_ANY, "proto", "%s ", "ip6ip");
+			break;
+		case IPPROTO_MPLS:
+			print_string(PRINT_ANY, "proto", "%s ", "mplsip");
+			break;
+		case 0:
+			print_string(PRINT_ANY, "proto", "%s ", "any");
+			break;
+		}
+	}
+
 	if (tb[IFLA_IPTUN_REMOTE]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_REMOTE]);
 
