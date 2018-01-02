@@ -498,6 +498,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		__u16 sport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_SPORT]);
 		__u16 dport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_DPORT]);
 
+		open_json_object("encap");
 		print_string(PRINT_FP, NULL, "encap ", NULL);
 		switch (type) {
 		case TUNNEL_ENCAP_FOU:
