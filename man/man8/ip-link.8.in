@@ -217,7 +217,8 @@ ip-link \- network device configuration
 .BR lowpan " |"
 .BR geneve " |"
 .BR vrf " |"
-.BR macsec " ]"
+.BR macsec " |"
+.BR netdevsim " ]"
 
 .ti -8
 .IR ETYPE " := [ " TYPE " |"
@@ -337,6 +338,9 @@ Link types:
 .sp
 .BR vrf
 - Interface for L3 VRF domains
+.sp
+.BR netdevsim
+- Interface for netdev API tests
 .in -8
 
 .TP

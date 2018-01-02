@@ -78,7 +78,7 @@ static void usage(void)
 	fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan | lowpan |\n");
 	fprintf(stderr, "          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan | vti |\n");
 	fprintf(stderr, "          nlmon | can | bond_slave | ipvlan | geneve | bridge_slave |\n");
-	fprintf(stderr, "          hsr | macsec\n");
+	fprintf(stderr, "          hsr | macsec | netdevsim\n");
 
 	exit(-1);
 }
