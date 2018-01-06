@@ -3711,7 +3711,10 @@ static int unix_show(struct filter *f)
 			};
 
 			memcpy(st.local.data, &u->name, sizeof(u->name));
-			if (strcmp(u->peer_name, "*"))
+			/* when parsing the old format rport is set to 0 and
+			 * therefore peer_name remains NULL
+			 */
+			if (u->peer_name && strcmp(u->peer_name, "*"))
 				memcpy(st.remote.data, &u->peer_name,
 				       sizeof(u->peer_name));
 			if (run_ssfilter(f->f, &st) == 0) {
