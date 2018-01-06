@@ -1018,11 +1018,14 @@ static void print_right_spacing(struct column *f, int printed)
 /* Done with field: update buffer pointer, start new token after current one */
 static void field_flush(struct column *f)
 {
-	struct buf_chunk *chunk = buffer.tail;
-	unsigned int pad = buffer.cur->len % 2;
+	struct buf_chunk *chunk;
+	unsigned int pad;
 
 	if (f->disabled)
 		return;
+
+	chunk = buffer.tail;
+	pad = buffer.cur->len % 2;
 
 	if (buffer.cur->len > f->max_len)
 		f->max_len = buffer.cur->len;
