@@ -276,7 +276,7 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (!filter_protocol || filter_protocol != f_proto) {
 			if (f_proto) {
 				SPRINT_BUF(b1);
-				print_string(PRINT_JSON, "protocol",
+				print_string(PRINT_ANY, "protocol",
 					     "protocol %s ",
 					     ll_proto_n2a(f_proto, b1, sizeof(b1)));
 			}
