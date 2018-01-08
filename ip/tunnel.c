@@ -192,8 +192,9 @@ __be32 tnl_parse_key(const char *name, const char *key)
 		return get_addr32(key);
 
 	if (get_unsigned(&uval, key, 0) < 0) {
-		fprintf(stderr, "invalid value for \"%s\": \"%s\";", name, key);
-		fprintf(stderr, " it should be an unsigned integer\n");
+		fprintf(stderr,
+			"invalid value for \"%s\": \"%s\"; it should be an unsigned integer\n",
+			name, key);
 		exit(-1);
 	}
 	return htonl(uval);

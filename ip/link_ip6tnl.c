@@ -83,13 +83,13 @@ static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 		.i.ifi_family = preferred_family,
 		.i.ifi_index = ifi->ifi_index,
 	};
-	struct nlmsghdr *answer = NULL;
+	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *iptuninfo[IFLA_IPTUN_MAX + 1];
 	int len;
-	struct in6_addr laddr = {};
-	struct in6_addr raddr = {};
+	struct in6_addr laddr = IN6ADDR_ANY_INIT;
+	struct in6_addr raddr = IN6ADDR_ANY_INIT;
 	__u8 hop_limit = DEFAULT_TNL_HOP_LIMIT;
 	__u8 encap_limit = IPV6_DEFAULT_TNL_ENCAP_LIMIT;
 	__u32 flowinfo = 0;
@@ -108,7 +108,6 @@ static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 get_failed:
 			fprintf(stderr,
 				"Failed to get existing tunnel info.\n");
-			free(answer);
 			return -1;
 		}
 
@@ -184,18 +183,14 @@ get_failed:
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, preferred_family);
-			if (addr.family == AF_UNSPEC)
-				invarg("\"remote\" address family is AF_UNSPEC", *argv);
-			memcpy(&raddr, addr.data, addr.bytelen);
+			get_addr(&addr, *argv, AF_INET6);
+			memcpy(&raddr, addr.data, sizeof(raddr));
 		} else if (strcmp(*argv, "local") == 0) {
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, preferred_family);
-			if (addr.family == AF_UNSPEC)
-				invarg("\"local\" address family is AF_UNSPEC", *argv);
-			memcpy(&laddr, addr.data, addr.bytelen);
+			get_addr(&addr, *argv, AF_INET6);
+			memcpy(&laddr, addr.data, sizeof(laddr));
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);
@@ -306,7 +301,7 @@ get_failed:
 		} else if (strcmp(*argv, "encap-remcsum") == 0) {
 			encapflags |= TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "noencap-remcsum") == 0) {
-			encapflags |= ~TUNNEL_ENCAP_FLAG_REMCSUM;
+			encapflags &= ~TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "external") == 0) {
 			metadata = 1;
 		} else

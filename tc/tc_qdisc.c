@@ -266,6 +266,10 @@ int print_qdisc(const struct sockaddr_nl *who,
 	if (t->tcm_info != 1)
 		print_uint(PRINT_ANY, "refcnt", "refcnt %u ", t->tcm_info);
 
+	if (tb[TCA_HW_OFFLOAD] &&
+	    (rta_getattr_u8(tb[TCA_HW_OFFLOAD])))
+		print_bool(PRINT_ANY, "offloaded", "offloaded ", true);
+
 	/* pfifo_fast is generic enough to warrant the hardcoding --JHS */
 	if (strcmp("pfifo_fast", RTA_DATA(tb[TCA_KIND])) == 0)
 		q = get_qdisc_kind("prio");

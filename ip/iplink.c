@@ -285,11 +285,13 @@ static void iplink_parse_vf_vlan_info(int vf, int *argcp, char ***argvp,
 {
 	int argc = *argcp;
 	char **argv = *argvp;
+	unsigned int vci;
 
 	NEXT_ARG();
-	if (get_unsigned(&ivvip->vlan, *argv, 0))
+	if (get_unsigned(&vci, *argv, 0) || vci > 4095)
 		invarg("Invalid \"vlan\" value\n", *argv);
 
+	ivvip->vlan = vci;
 	ivvip->vf = vf;
 	ivvip->qos = 0;
 	ivvip->vlan_proto = htons(ETH_P_8021Q);
@@ -593,8 +595,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			*name = *argv;
 		} else if (strcmp(*argv, "index") == 0) {
 			NEXT_ARG();
+			if (*index)
+				duparg("index", *argv);
 			*index = atoi(*argv);
-			if (*index < 0)
+			if (*index <= 0)
 				invarg("Invalid \"index\" value", *argv);
 		} else if (matches(*argv, "link") == 0) {
 			NEXT_ARG();
@@ -775,11 +779,12 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			argc--; argv++;
 			break;
 		} else if (matches(*argv, "alias") == 0) {
+			len = strlen(*argv);
+			if (len >= IFALIASZ)
+				invarg("alias too long\n", *argv);
 			NEXT_ARG();
 			addattr_l(&req->n, sizeof(*req), IFLA_IFALIAS,
-				  *argv, strlen(*argv));
-			argc--; argv++;
-			break;
+				  *argv, len);
 		} else if (strcmp(*argv, "group") == 0) {
 			NEXT_ARG();
 			if (*group != -1)
@@ -913,7 +918,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	char *name = NULL;
 	char *link = NULL;
 	char *type = NULL;
-	int index = -1;
+	int index = 0;
 	int group;
 	struct link_util *lu = NULL;
 	struct iplink_req req = {
@@ -949,7 +954,6 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 				return -1;
 			}
 
-			req.i.ifi_index = 0;
 			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
 			if (rtnl_talk(&rth, &req.n, NULL) < 0)
 				return -2;
@@ -963,7 +967,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 				"Not enough information: \"dev\" argument is required.\n");
 			exit(-1);
 		}
-		if (cmd == RTM_NEWLINK && index != -1) {
+		if (cmd == RTM_NEWLINK && index) {
 			fprintf(stderr,
 				"index can be used only when creating devices.\n");
 			exit(-1);
@@ -991,10 +995,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), IFLA_LINK, &ifindex, 4);
 		}
 
-		if (index == -1)
-			req.i.ifi_index = 0;
-		else
-			req.i.ifi_index = index;
+		req.i.ifi_index = index;
 	}
 
 	if (name) {

@@ -60,12 +60,12 @@ static int vti_parse_opt(struct link_util *lu, int argc, char **argv,
 		.i.ifi_family = preferred_family,
 		.i.ifi_index = ifi->ifi_index,
 	};
-	struct nlmsghdr *answer = NULL;
+	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *vtiinfo[IFLA_VTI_MAX + 1];
-	unsigned int ikey = 0;
-	unsigned int okey = 0;
+	__be32 ikey = 0;
+	__be32 okey = 0;
 	unsigned int saddr = 0;
 	unsigned int daddr = 0;
 	unsigned int link = 0;
@@ -77,7 +77,6 @@ static int vti_parse_opt(struct link_util *lu, int argc, char **argv,
 get_failed:
 			fprintf(stderr,
 				"Failed to get existing tunnel info.\n");
-			free(answer);
 			return -1;
 		}
 
@@ -122,65 +121,20 @@ get_failed:
 
 	while (argc > 0) {
 		if (!matches(*argv, "key")) {
-			unsigned int uval;
-
 			NEXT_ARG();
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr,
-						"Invalid value for \"key\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-
-			ikey = okey = uval;
+			ikey = okey = tnl_parse_key("key", *argv);
 		} else if (!matches(*argv, "ikey")) {
-			unsigned int uval;
-
 			NEXT_ARG();
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value for \"ikey\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-			ikey = uval;
+			ikey = tnl_parse_key("ikey", *argv);
 		} else if (!matches(*argv, "okey")) {
-			unsigned int uval;
-
 			NEXT_ARG();
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value for \"okey\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-			okey = uval;
+			okey = tnl_parse_key("okey", *argv);
 		} else if (!matches(*argv, "remote")) {
 			NEXT_ARG();
-			if (!strcmp(*argv, "any")) {
-				fprintf(stderr, "invalid value for \"remote\": \"%s\"\n", *argv);
-				exit(-1);
-			} else {
-				daddr = get_addr32(*argv);
-			}
+			daddr = get_addr32(*argv);
 		} else if (!matches(*argv, "local")) {
 			NEXT_ARG();
-			if (!strcmp(*argv, "any")) {
-				fprintf(stderr, "invalid value for \"local\": \"%s\"\n", *argv);
-				exit(-1);
-			} else {
-				saddr = get_addr32(*argv);
-			}
+			saddr = get_addr32(*argv);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);

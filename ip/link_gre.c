@@ -43,6 +43,7 @@ static void print_usage(FILE *f)
 		"                            [ [no]encap-csum ]\n"
 		"                            [ [no]encap-csum6 ]\n"
 		"                            [ [no]encap-remcsum ]\n"
+		"                            [ external ]\n"
 		"                            [ fwmark MARK ]\n"
 		"                            [ erspan_ver version ]\n"
 		"                            [ erspan IDX ]\n"
@@ -79,14 +80,14 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 		.i.ifi_family = preferred_family,
 		.i.ifi_index = ifi->ifi_index,
 	};
-	struct nlmsghdr *answer = NULL;
+	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *greinfo[IFLA_GRE_MAX + 1];
 	__u16 iflags = 0;
 	__u16 oflags = 0;
-	unsigned int ikey = 0;
-	unsigned int okey = 0;
+	__be32 ikey = 0;
+	__be32 okey = 0;
 	unsigned int saddr = 0;
 	unsigned int daddr = 0;
 	unsigned int link = 0;
@@ -111,7 +112,6 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 get_failed:
 			fprintf(stderr,
 				"Failed to get existing tunnel info.\n");
-			free(answer);
 			return -1;
 		}
 
@@ -162,7 +162,7 @@ get_failed:
 			tos = rta_getattr_u8(greinfo[IFLA_GRE_TOS]);
 
 		if (greinfo[IFLA_GRE_LINK])
-			link = rta_getattr_u8(greinfo[IFLA_GRE_LINK]);
+			link = rta_getattr_u32(greinfo[IFLA_GRE_LINK]);
 
 		if (greinfo[IFLA_GRE_ENCAP_TYPE])
 			encaptype = rta_getattr_u16(greinfo[IFLA_GRE_ENCAP_TYPE]);
@@ -200,53 +200,18 @@ get_failed:
 
 	while (argc > 0) {
 		if (!matches(*argv, "key")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			iflags |= GRE_KEY;
 			oflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr,
-						"Invalid value for \"key\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-
-			ikey = okey = uval;
+			ikey = okey = tnl_parse_key("key", *argv);
 		} else if (!matches(*argv, "ikey")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			iflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value for \"ikey\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-			ikey = uval;
+			ikey = tnl_parse_key("ikey", *argv);
 		} else if (!matches(*argv, "okey")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			oflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value for \"okey\": \"%s\"; it should be an unsigned integer\n", *argv);
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-			okey = uval;
+			okey = tnl_parse_key("okey", *argv);
 		} else if (!matches(*argv, "seq")) {
 			iflags |= GRE_SEQ;
 			oflags |= GRE_SEQ;
@@ -267,12 +232,10 @@ get_failed:
 			pmtudisc = 1;
 		} else if (!matches(*argv, "remote")) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				daddr = get_addr32(*argv);
+			daddr = get_addr32(*argv);
 		} else if (!matches(*argv, "local")) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				saddr = get_addr32(*argv);
+			saddr = get_addr32(*argv);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);
@@ -335,11 +298,11 @@ get_failed:
 		} else if (strcmp(*argv, "encap-udp6-csum") == 0) {
 			encapflags |= TUNNEL_ENCAP_FLAG_CSUM6;
 		} else if (strcmp(*argv, "noencap-udp6-csum") == 0) {
-			encapflags |= ~TUNNEL_ENCAP_FLAG_CSUM6;
+			encapflags &= ~TUNNEL_ENCAP_FLAG_CSUM6;
 		} else if (strcmp(*argv, "encap-remcsum") == 0) {
 			encapflags |= TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "noencap-remcsum") == 0) {
-			encapflags |= ~TUNNEL_ENCAP_FLAG_REMCSUM;
+			encapflags &= ~TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "external") == 0) {
 			metadata = 1;
 		} else if (strcmp(*argv, "ignore-df") == 0) {

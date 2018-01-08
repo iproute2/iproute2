@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: GPL-2.0
 include ../config.mk
 
+TARGETS :=
+
 ifeq ($(HAVE_MNL),y)
 
 RDMA_OBJ = rdma.o utils.o dev.o link.o
 
-TARGETS=rdma
+TARGETS += rdma
 endif
 
 all:	$(TARGETS) $(LIBS)

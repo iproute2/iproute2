@@ -658,6 +658,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 		dst->family = family;
 		dst->bytelen = 0;
 		dst->bitlen = 0;
+		dst->flags |= PREFIXLEN_SPECIFIED;
 		return 0;
 	}
 
@@ -1206,10 +1207,16 @@ ssize_t getcmdline(char **linep, size_t *lenp, FILE *in)
 int makeargs(char *line, char *argv[], int maxargs)
 {
 	static const char ws[] = " \t\r\n";
-	char *cp;
+	char *cp = line;
 	int argc = 0;
 
-	for (cp = line + strspn(line, ws); *cp; cp += strspn(cp, ws)) {
+	while (*cp) {
+		/* skip leading whitespace */
+		cp += strspn(cp, ws);
+
+		if (*cp == '\0')
+			break;
+
 		if (argc >= (maxargs - 1)) {
 			fprintf(stderr, "Too many arguments to command\n");
 			exit(1);
@@ -1226,13 +1233,16 @@ int makeargs(char *line, char *argv[], int maxargs)
 				fprintf(stderr, "Unterminated quoted string\n");
 				exit(1);
 			}
-			*cp++ = 0;
-			continue;
+		} else {
+			argv[argc++] = cp;
+
+			/* find end of word */
+			cp += strcspn(cp, ws);
+			if (*cp == '\0')
+				break;
 		}
 
-		argv[argc++] = cp;
-		/* find end of word */
-		cp += strcspn(cp, ws);
+		/* seperate words */
 		*cp++ = 0;
 	}
 	argv[argc] = NULL;

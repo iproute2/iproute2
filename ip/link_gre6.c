@@ -90,14 +90,14 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 		.i.ifi_family = preferred_family,
 		.i.ifi_index = ifi->ifi_index,
 	};
-	struct nlmsghdr *answer = NULL;
+	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *greinfo[IFLA_GRE_MAX + 1];
 	__u16 iflags = 0;
 	__u16 oflags = 0;
-	unsigned int ikey = 0;
-	unsigned int okey = 0;
+	__be32 ikey = 0;
+	__be32 okey = 0;
 	struct in6_addr raddr = IN6ADDR_ANY_INIT;
 	struct in6_addr laddr = IN6ADDR_ANY_INIT;
 	unsigned int link = 0;
@@ -122,7 +122,6 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 get_failed:
 			fprintf(stderr,
 				"Failed to get existing tunnel info.\n");
-			free(answer);
 			return -1;
 		}
 
@@ -212,53 +211,18 @@ get_failed:
 
 	while (argc > 0) {
 		if (!matches(*argv, "key")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			iflags |= GRE_KEY;
 			oflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr,
-						"Invalid value for \"key\"\n");
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-
-			ikey = okey = uval;
+			ikey = okey = tnl_parse_key("key", *argv);
 		} else if (!matches(*argv, "ikey")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			iflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value of \"ikey\"\n");
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-			ikey = uval;
+			ikey = tnl_parse_key("ikey", *argv);
 		} else if (!matches(*argv, "okey")) {
-			unsigned int uval;
-
 			NEXT_ARG();
 			oflags |= GRE_KEY;
-			if (strchr(*argv, '.'))
-				uval = get_addr32(*argv);
-			else {
-				if (get_unsigned(&uval, *argv, 0) < 0) {
-					fprintf(stderr, "invalid value of \"okey\"\n");
-					exit(-1);
-				}
-				uval = htonl(uval);
-			}
-			okey = uval;
+			okey = tnl_parse_key("okey", *argv);
 		} else if (!matches(*argv, "seq")) {
 			iflags |= GRE_SEQ;
 			oflags |= GRE_SEQ;
@@ -277,17 +241,13 @@ get_failed:
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, preferred_family);
-			if (addr.family == AF_UNSPEC)
-				invarg("\"remote\" address family is AF_UNSPEC", *argv);
+			get_addr(&addr, *argv, AF_INET6);
 			memcpy(&raddr, &addr.data, sizeof(raddr));
 		} else if (!matches(*argv, "local")) {
 			inet_prefix addr;
 
 			NEXT_ARG();
-			get_prefix(&addr, *argv, preferred_family);
-			if (addr.family == AF_UNSPEC)
-				invarg("\"local\" address family is AF_UNSPEC", *argv);
+			get_addr(&addr, *argv, AF_INET6);
 			memcpy(&laddr, &addr.data, sizeof(laddr));
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
@@ -311,12 +271,12 @@ get_failed:
 			__u8 uval;
 
 			NEXT_ARG();
+			flowinfo &= ~IP6_FLOWINFO_TCLASS;
 			if (strcmp(*argv, "inherit") == 0)
 				flags |= IP6_TNL_F_USE_ORIG_TCLASS;
 			else {
 				if (get_u8(&uval, *argv, 16))
 					invarg("invalid TClass", *argv);
-				flowinfo &= ~IP6_FLOWINFO_TCLASS;
 				flowinfo |= htonl((__u32)uval << 20) & IP6_FLOWINFO_TCLASS;
 				flags &= ~IP6_TNL_F_USE_ORIG_TCLASS;
 			}
@@ -325,6 +285,7 @@ get_failed:
 			__u32 uval;
 
 			NEXT_ARG();
+			flowinfo &= ~IP6_FLOWINFO_FLOWLABEL;
 			if (strcmp(*argv, "inherit") == 0)
 				flags |= IP6_TNL_F_USE_ORIG_FLOWLABEL;
 			else {
@@ -332,7 +293,6 @@ get_failed:
 					invarg("invalid Flowlabel", *argv);
 				if (uval > 0xFFFFF)
 					invarg("invalid Flowlabel", *argv);
-				flowinfo &= ~IP6_FLOWINFO_FLOWLABEL;
 				flowinfo |= htonl(uval) & IP6_FLOWINFO_FLOWLABEL;
 				flags &= ~IP6_TNL_F_USE_ORIG_FLOWLABEL;
 			}

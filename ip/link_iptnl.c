@@ -83,7 +83,7 @@ static int iptunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 		.i.ifi_family = preferred_family,
 		.i.ifi_index = ifi->ifi_index,
 	};
-	struct nlmsghdr *answer = NULL;
+	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *iptuninfo[IFLA_IPTUN_MAX + 1];
@@ -112,7 +112,6 @@ static int iptunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 get_failed:
 			fprintf(stderr,
 				"Failed to get existing tunnel info.\n");
-			free(answer);
 			return -1;
 		}
 
@@ -195,16 +194,10 @@ get_failed:
 	while (argc > 0) {
 		if (strcmp(*argv, "remote") == 0) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				raddr = get_addr32(*argv);
-			else
-				raddr = 0;
+			raddr = get_addr32(*argv);
 		} else if (strcmp(*argv, "local") == 0) {
 			NEXT_ARG();
-			if (strcmp(*argv, "any"))
-				laddr = get_addr32(*argv);
-			else
-				laddr = 0;
+			laddr = get_addr32(*argv);
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);
@@ -237,28 +230,13 @@ get_failed:
 		} else if (strcmp(lu->id, "sit") == 0 &&
 			   strcmp(*argv, "isatap") == 0) {
 			iflags |= SIT_ISATAP;
-		} else if (strcmp(lu->id, "sit") == 0 &&
-			   strcmp(*argv, "mode") == 0) {
+		} else if (strcmp(*argv, "mode") == 0) {
 			NEXT_ARG();
-			if (strcmp(*argv, "ipv6/ipv4") == 0 ||
-			    strcmp(*argv, "ip6ip") == 0)
+			if (strcmp(lu->id, "sit") == 0 &&
+			    (strcmp(*argv, "ipv6/ipv4") == 0 ||
+			     strcmp(*argv, "ip6ip") == 0))
 				proto = IPPROTO_IPV6;
 			else if (strcmp(*argv, "ipv4/ipv4") == 0 ||
-				 strcmp(*argv, "ipip") == 0 ||
-				 strcmp(*argv, "ip4ip4") == 0)
-				proto = IPPROTO_IPIP;
-			else if (strcmp(*argv, "mpls/ipv4") == 0 ||
-				   strcmp(*argv, "mplsip") == 0)
-				proto = IPPROTO_MPLS;
-			else if (strcmp(*argv, "any/ipv4") == 0 ||
-				 strcmp(*argv, "any") == 0)
-				proto = 0;
-			else
-				invarg("Cannot guess tunnel mode.", *argv);
-		} else if (strcmp(lu->id, "ipip") == 0 &&
-			   strcmp(*argv, "mode") == 0) {
-			NEXT_ARG();
-			if (strcmp(*argv, "ipv4/ipv4") == 0 ||
 				 strcmp(*argv, "ipip") == 0 ||
 				 strcmp(*argv, "ip4ip4") == 0)
 				proto = IPPROTO_IPIP;
@@ -344,6 +322,7 @@ get_failed:
 		exit(-1);
 	}
 
+	addattr8(n, 1024, IFLA_IPTUN_PROTO, proto);
 	if (metadata) {
 		addattr_l(n, 1024, IFLA_IPTUN_COLLECT_METADATA, NULL, 0);
 		return 0;
@@ -361,9 +340,6 @@ get_failed:
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_FLAGS, encapflags);
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_SPORT, htons(encapsport));
 	addattr16(n, 1024, IFLA_IPTUN_ENCAP_DPORT, htons(encapdport));
-
-	if (strcmp(lu->id, "ipip") == 0 || strcmp(lu->id, "sit") == 0)
-		addattr8(n, 1024, IFLA_IPTUN_PROTO, proto);
 
 	if (strcmp(lu->id, "sit") == 0) {
 		addattr16(n, 1024, IFLA_IPTUN_FLAGS, iflags);
@@ -395,6 +371,23 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 
 	if (tb[IFLA_IPTUN_COLLECT_METADATA])
 		print_bool(PRINT_ANY, "external", "external ", true);
+
+	if (tb[IFLA_IPTUN_PROTO]) {
+		switch (rta_getattr_u8(tb[IFLA_IPTUN_PROTO])) {
+		case IPPROTO_IPIP:
+			print_string(PRINT_ANY, "proto", "%s ", "ipip");
+			break;
+		case IPPROTO_IPV6:
+			print_string(PRINT_ANY, "proto", "%s ", "ip6ip");
+			break;
+		case IPPROTO_MPLS:
+			print_string(PRINT_ANY, "proto", "%s ", "mplsip");
+			break;
+		case 0:
+			print_string(PRINT_ANY, "proto", "%s ", "any");
+			break;
+		}
+	}
 
 	if (tb[IFLA_IPTUN_REMOTE]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_REMOTE]);
@@ -505,6 +498,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		__u16 sport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_SPORT]);
 		__u16 dport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_DPORT]);
 
+		open_json_object("encap");
 		print_string(PRINT_FP, NULL, "encap ", NULL);
 		switch (type) {
 		case TUNNEL_ENCAP_FOU:

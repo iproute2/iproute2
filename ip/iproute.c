@@ -126,6 +126,7 @@ static struct
 	int oif, oifmask;
 	int mark, markmask;
 	int realm, realmmask;
+	__u32 metric, metricmask;
 	inet_prefix rprefsrc;
 	inet_prefix rvia;
 	inet_prefix rdst;
@@ -190,20 +191,42 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		return 0;
 	if ((filter.tos^r->rtm_tos)&filter.tosmask)
 		return 0;
-	if (filter.rdst.family &&
-	    (r->rtm_family != filter.rdst.family || filter.rdst.bitlen > r->rtm_dst_len))
-		return 0;
-	if (filter.mdst.family &&
-	    (r->rtm_family != filter.mdst.family ||
-	     (filter.mdst.bitlen >= 0 && filter.mdst.bitlen < r->rtm_dst_len)))
-		return 0;
-	if (filter.rsrc.family &&
-	    (r->rtm_family != filter.rsrc.family || filter.rsrc.bitlen > r->rtm_src_len))
-		return 0;
-	if (filter.msrc.family &&
-	    (r->rtm_family != filter.msrc.family ||
-	     (filter.msrc.bitlen >= 0 && filter.msrc.bitlen < r->rtm_src_len)))
-		return 0;
+	if (filter.rdst.family) {
+		if (r->rtm_family != filter.rdst.family ||
+		    filter.rdst.bitlen > r->rtm_dst_len)
+			return 0;
+	} else if (filter.rdst.flags & PREFIXLEN_SPECIFIED) {
+		if (filter.rdst.bitlen > r->rtm_dst_len)
+			return 0;
+	}
+	if (filter.mdst.family) {
+		if (r->rtm_family != filter.mdst.family ||
+		    (filter.mdst.bitlen >= 0 &&
+		     filter.mdst.bitlen < r->rtm_dst_len))
+			return 0;
+	} else if (filter.mdst.flags & PREFIXLEN_SPECIFIED) {
+		if (filter.mdst.bitlen >= 0 &&
+		    filter.mdst.bitlen < r->rtm_dst_len)
+			return 0;
+	}
+	if (filter.rsrc.family) {
+		if (r->rtm_family != filter.rsrc.family ||
+		    filter.rsrc.bitlen > r->rtm_src_len)
+			return 0;
+	} else if (filter.rsrc.flags & PREFIXLEN_SPECIFIED) {
+		if (filter.rsrc.bitlen > r->rtm_src_len)
+			return 0;
+	}
+	if (filter.msrc.family) {
+		if (r->rtm_family != filter.msrc.family ||
+		    (filter.msrc.bitlen >= 0 &&
+		     filter.msrc.bitlen < r->rtm_src_len))
+			return 0;
+	} else if (filter.msrc.flags & PREFIXLEN_SPECIFIED) {
+		if (filter.msrc.bitlen >= 0 &&
+		    filter.msrc.bitlen < r->rtm_src_len)
+			return 0;
+	}
 	if (filter.rvia.family) {
 		int family = r->rtm_family;
 
@@ -220,7 +243,9 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 
 	if (tb[RTA_DST])
 		memcpy(&dst.data, RTA_DATA(tb[RTA_DST]), (r->rtm_dst_len+7)/8);
-	if (filter.rsrc.family || filter.msrc.family) {
+	if (filter.rsrc.family || filter.msrc.family ||
+	    filter.rsrc.flags & PREFIXLEN_SPECIFIED ||
+	    filter.msrc.flags & PREFIXLEN_SPECIFIED) {
 		if (tb[RTA_SRC])
 			memcpy(&src.data, RTA_DATA(tb[RTA_SRC]), (r->rtm_src_len+7)/8);
 	}
@@ -240,15 +265,18 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 			memcpy(&prefsrc.data, RTA_DATA(tb[RTA_PREFSRC]), host_len/8);
 	}
 
-	if (filter.rdst.family && inet_addr_match(&dst, &filter.rdst, filter.rdst.bitlen))
+	if ((filter.rdst.family || filter.rdst.flags & PREFIXLEN_SPECIFIED) &&
+	    inet_addr_match(&dst, &filter.rdst, filter.rdst.bitlen))
 		return 0;
-	if (filter.mdst.family && filter.mdst.bitlen >= 0 &&
+	if ((filter.mdst.family || filter.mdst.flags & PREFIXLEN_SPECIFIED) &&
 	    inet_addr_match(&dst, &filter.mdst, r->rtm_dst_len))
 		return 0;
 
-	if (filter.rsrc.family && inet_addr_match(&src, &filter.rsrc, filter.rsrc.bitlen))
+	if ((filter.rsrc.family || filter.rsrc.flags & PREFIXLEN_SPECIFIED) &&
+	    inet_addr_match(&src, &filter.rsrc, filter.rsrc.bitlen))
 		return 0;
-	if (filter.msrc.family && filter.msrc.bitlen >= 0 &&
+	if ((filter.msrc.family || filter.msrc.flags & PREFIXLEN_SPECIFIED) &&
+	    filter.msrc.bitlen >= 0 &&
 	    inet_addr_match(&src, &filter.msrc, r->rtm_src_len))
 		return 0;
 
@@ -286,6 +314,14 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		if (tb[RTA_MARK])
 			mark = rta_getattr_u32(tb[RTA_MARK]);
 		if ((mark ^ filter.mark) & filter.markmask)
+			return 0;
+	}
+	if (filter.metricmask) {
+		__u32 metric = 0;
+
+		if (tb[RTA_PRIORITY])
+			metric = rta_getattr_u32(tb[RTA_PRIORITY]);
+		if ((metric ^ filter.metric) & filter.metricmask)
 			return 0;
 	}
 	if (filter.flushb &&
@@ -441,7 +477,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "src %s ",
 			rt_addr_n2a_rta(r->rtm_family, tb[RTA_PREFSRC]));
 	}
-	if (tb[RTA_PRIORITY])
+	if (tb[RTA_PRIORITY] && filter.metricmask != -1)
 		fprintf(fp, "metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));
 	if (r->rtm_flags & RTNH_F_DEAD)
 		fprintf(fp, "dead ");
@@ -1518,6 +1554,16 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			if (get_unsigned(&mark, *argv, 0))
 				invarg("invalid mark value", *argv);
 			filter.markmask = -1;
+		} else if (matches(*argv, "metric") == 0 ||
+		           matches(*argv, "priority") == 0 ||
+		           strcmp(*argv, "preference") == 0) {
+			__u32 metric;
+
+			NEXT_ARG();
+			if (get_u32(&metric, *argv, 0))
+				invarg("\"metric\" value is invalid\n", *argv);
+			filter.metric = metric;
+			filter.metricmask = -1;
 		} else if (strcmp(*argv, "via") == 0) {
 			int family;
 

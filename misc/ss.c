@@ -790,6 +790,7 @@ struct tcpstat {
 	int		    mss;
 	int		    rcv_mss;
 	int		    advmss;
+	unsigned int	    pmtu;
 	unsigned int	    cwnd;
 	unsigned int	    lastsnd;
 	unsigned int	    lastrcv;
@@ -2360,6 +2361,8 @@ static void tcp_stats_print(struct tcpstat *s)
 
 	if (s->mss)
 		out(" mss:%d", s->mss);
+	if (s->pmtu)
+		out(" pmtu:%u", s->pmtu);
 	if (s->rcv_mss)
 		out(" rcvmss:%d", s->rcv_mss);
 	if (s->advmss)
@@ -2707,6 +2710,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.reordering	 = info->tcpi_reordering;
 		s.rcv_ssthresh   = info->tcpi_rcv_ssthresh;
 		s.cwnd		 = info->tcpi_snd_cwnd;
+		s.pmtu		 = info->tcpi_pmtu;
 
 		if (info->tcpi_snd_ssthresh < 0xFFFF)
 			s.ssthresh = info->tcpi_snd_ssthresh;
