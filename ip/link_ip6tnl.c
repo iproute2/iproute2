@@ -416,7 +416,7 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 			SPRINT_BUF(b1);
 
 			snprintf(b1, sizeof(b1), "0x%02x", (__u8)(val >> 20));
-			print_string(PRINT_JSON, "flowinfo_tclass", NULL, b1);
+			print_string(PRINT_JSON, "tclass", NULL, b1);
 		} else {
 			printf("tclass 0x%02x ", (__u8)(val >> 20));
 		}

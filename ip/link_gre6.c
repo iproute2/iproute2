@@ -475,7 +475,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		if (is_json_context()) {
 			SPRINT_BUF(b1);
 
-			snprintf(b1, sizeof(b1), "0x%05x",
+			snprintf(b1, sizeof(b1), "0x%02x",
 				 ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
 			print_string(PRINT_JSON, "tclass", NULL, b1);
 		} else {
