@@ -452,18 +452,11 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "ip6_tnl_f_use_orig_flowlabel",
 			   "flowlabel inherit ",
 			   true);
-	} else {
-		if (is_json_context()) {
-			SPRINT_BUF(b1);
+	} else if (tb[IFLA_GRE_FLOWINFO]) {
+		__u32 val = ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL);
 
-			snprintf(b1, sizeof(b1), "0x%05x",
-				 ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL));
-			print_string(PRINT_JSON, "flowlabel", NULL, b1);
-
-		} else {
-			fprintf(f, "flowlabel 0x%05x ",
-				ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL));
-		}
+		snprintf(s2, sizeof(s2), "0x%05x", val);
+		print_string(PRINT_ANY, "flowlabel", "flowlabel %s ", s2);
 	}
 
 	if (flags & IP6_TNL_F_USE_ORIG_TCLASS) {
