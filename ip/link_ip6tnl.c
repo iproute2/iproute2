@@ -440,16 +440,6 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 		}
 	}
 
-	if (is_json_context()) {
-		SPRINT_BUF(flwinfo);
-
-		snprintf(flwinfo, sizeof(flwinfo), "0x%08x", ntohl(flowinfo));
-		print_string(PRINT_JSON, "flowinfo", NULL, flwinfo);
-	} else {
-		printf("(flowinfo 0x%08x) ", ntohl(flowinfo));
-
-	}
-
 	if (flags & IP6_TNL_F_RCV_DSCP_COPY)
 		print_bool(PRINT_ANY,
 			   "ip6_tnl_f_rcv_dscp_copy",
