@@ -404,22 +404,16 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 			   "hoplimit %u ",
 			   rta_getattr_u8(tb[IFLA_IPTUN_TTL]));
 
-	if (flags & IP6_TNL_F_USE_ORIG_TCLASS)
+	if (flags & IP6_TNL_F_USE_ORIG_TCLASS) {
 		print_bool(PRINT_ANY,
 			   "ip6_tnl_f_use_orig_tclass",
 			   "tclass inherit ",
 			   true);
-	else if (tb[IFLA_IPTUN_FLOWINFO]) {
-		__u32 val = ntohl(flowinfo & IP6_FLOWINFO_TCLASS);
+	} else if (tb[IFLA_IPTUN_FLOWINFO]) {
+		__u32 val = ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20;
 
-		if (is_json_context()) {
-			SPRINT_BUF(b1);
-
-			snprintf(b1, sizeof(b1), "0x%02x", (__u8)(val >> 20));
-			print_string(PRINT_JSON, "tclass", NULL, b1);
-		} else {
-			printf("tclass 0x%02x ", (__u8)(val >> 20));
-		}
+		snprintf(s2, sizeof(s2), "0x%02x", val);
+		print_string(PRINT_ANY, "tclass", "tclass %s ", s2);
 	}
 
 	if (flags & IP6_TNL_F_USE_ORIG_FLOWLABEL) {

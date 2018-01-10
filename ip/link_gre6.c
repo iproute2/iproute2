@@ -380,7 +380,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	unsigned int iflags = 0;
 	unsigned int oflags = 0;
 	unsigned int flags = 0;
-	unsigned int flowinfo = 0;
+	__u32 flowinfo = 0;
 	struct in6_addr in6_addr_any = IN6ADDR_ANY_INIT;
 
 	if (!tb)
@@ -471,17 +471,11 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "ip6_tnl_f_use_orig_tclass",
 			   "tclass inherit ",
 			   true);
-	} else {
-		if (is_json_context()) {
-			SPRINT_BUF(b1);
+	} else if (tb[IFLA_GRE_FLOWINFO]) {
+		__u32 val = ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20;
 
-			snprintf(b1, sizeof(b1), "0x%02x",
-				 ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
-			print_string(PRINT_JSON, "tclass", NULL, b1);
-		} else {
-			fprintf(f, "tclass 0x%02x ",
-				 ntohl(flowinfo & IP6_FLOWINFO_TCLASS) >> 20);
-		}
+		snprintf(s2, sizeof(s2), "0x%02x", val);
+		print_string(PRINT_ANY, "tclass", "tclass %s ", s2);
 	}
 
 	if (flags & IP6_TNL_F_RCV_DSCP_COPY)
