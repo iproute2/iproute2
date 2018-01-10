@@ -387,16 +387,16 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
 	}
 
-	if (flags & IP6_TNL_F_IGN_ENCAP_LIMIT)
+	if (flags & IP6_TNL_F_IGN_ENCAP_LIMIT) {
 		print_bool(PRINT_ANY,
 			   "ip6_tnl_f_ign_encap_limit",
 			   "encaplimit none ",
 			   true);
-	else if (tb[IFLA_IPTUN_ENCAP_LIMIT])
-		print_uint(PRINT_ANY,
-			   "encap_limit",
-			   "encaplimit %u ",
-			   rta_getattr_u8(tb[IFLA_IPTUN_ENCAP_LIMIT]));
+	} else if (tb[IFLA_IPTUN_ENCAP_LIMIT]) {
+		__u8 val = rta_getattr_u8(tb[IFLA_IPTUN_ENCAP_LIMIT]);
+
+		print_uint(PRINT_ANY, "encap_limit", "encaplimit %u ", val);
+	}
 
 	if (tb[IFLA_IPTUN_TTL])
 		print_uint(PRINT_ANY,
