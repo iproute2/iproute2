@@ -444,18 +444,6 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_uint(PRINT_ANY, "encap_limit", "encaplimit %u ", val);
 	}
 
-	if (flags & IP6_TNL_F_USE_ORIG_FLOWLABEL) {
-		print_bool(PRINT_ANY,
-			   "ip6_tnl_f_use_orig_flowlabel",
-			   "flowlabel inherit ",
-			   true);
-	} else if (tb[IFLA_GRE_FLOWINFO]) {
-		__u32 val = ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL);
-
-		snprintf(s2, sizeof(s2), "0x%05x", val);
-		print_string(PRINT_ANY, "flowlabel", "flowlabel %s ", s2);
-	}
-
 	if (flags & IP6_TNL_F_USE_ORIG_TCLASS) {
 		print_bool(PRINT_ANY,
 			   "ip6_tnl_f_use_orig_tclass",
@@ -466,6 +454,18 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		snprintf(s2, sizeof(s2), "0x%02x", val);
 		print_string(PRINT_ANY, "tclass", "tclass %s ", s2);
+	}
+
+	if (flags & IP6_TNL_F_USE_ORIG_FLOWLABEL) {
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_use_orig_flowlabel",
+			   "flowlabel inherit ",
+			   true);
+	} else if (tb[IFLA_GRE_FLOWINFO]) {
+		__u32 val = ntohl(flowinfo & IP6_FLOWINFO_FLOWLABEL);
+
+		snprintf(s2, sizeof(s2), "0x%05x", val);
+		print_string(PRINT_ANY, "flowlabel", "flowlabel %s ", s2);
 	}
 
 	if (flags & IP6_TNL_F_RCV_DSCP_COPY)
