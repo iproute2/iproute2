@@ -1558,6 +1558,8 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (!brief) {
+		const char *name;
+
 		if (filter.oneline || filter.flushb) {
 			const char *dev = ll_index_to_name(ifa->ifa_index);
 
@@ -1570,20 +1572,13 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			}
 		}
 
-		int family = ifa->ifa_family;
-
-		if (ifa->ifa_family == AF_INET)
-			print_string(PRINT_ANY, "family", "    %s ", "inet");
-		else if (ifa->ifa_family == AF_INET6)
-			print_string(PRINT_ANY, "family", "    %s ", "inet6");
-		else if (ifa->ifa_family == AF_DECnet)
-			print_string(PRINT_ANY, "family", "    %s ", "dnet");
-		else if (ifa->ifa_family == AF_IPX)
-			print_string(PRINT_ANY, "family", "     %s ", "ipx");
-		else
-			print_int(PRINT_ANY,
-				  "family_index",
-				  "    family %d ", family);
+		name = family_name(ifa->ifa_family);
+		if (*name != '?') {
+			print_string(PRINT_ANY, "family", "    %s ", name);
+		} else {
+			print_int(PRINT_ANY, "family_index", "    family %d ",
+				  ifa->ifa_family);
+		}
 	}
 
 	if (rta_tb[IFA_LOCAL]) {
