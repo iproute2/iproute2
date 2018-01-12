@@ -96,6 +96,9 @@ int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr **answer)
 	__attribute__((warn_unused_result));
+int rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iovec, size_t iovlen,
+		  struct nlmsghdr **answer)
+	__attribute__((warn_unused_result));
 int rtnl_talk_extack(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr **answer, nl_ext_ack_fn_t errfn)
 	__attribute__((warn_unused_result));

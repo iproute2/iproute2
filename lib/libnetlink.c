@@ -581,30 +581,30 @@ static void rtnl_talk_error(struct nlmsghdr *h, struct nlmsgerr *err,
 		strerror(-err->error));
 }
 
-static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-		       struct nlmsghdr **answer,
-		       bool show_rtnl_err, nl_ext_ack_fn_t errfn)
+
+static int __rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iov,
+			   size_t iovlen, struct nlmsghdr **answer,
+			   bool show_rtnl_err, nl_ext_ack_fn_t errfn)
 {
-	int status;
-	unsigned int seq;
-	struct nlmsghdr *h;
 	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
-	struct iovec iov = {
-		.iov_base = n,
-		.iov_len = n->nlmsg_len
-	};
+	struct iovec riov;
 	struct msghdr msg = {
 		.msg_name = &nladdr,
 		.msg_namelen = sizeof(nladdr),
-		.msg_iov = &iov,
-		.msg_iovlen = 1,
+		.msg_iov = iov,
+		.msg_iovlen = iovlen,
 	};
+	unsigned int seq = 0;
+	struct nlmsghdr *h;
+	int i, status;
 	char *buf;
 
-	n->nlmsg_seq = seq = ++rtnl->seq;
-
-	if (answer == NULL)
-		n->nlmsg_flags |= NLM_F_ACK;
+	for (i = 0; i < iovlen; i++) {
+		h = iov[i].iov_base;
+		h->nlmsg_seq = seq = ++rtnl->seq;
+		if (answer == NULL)
+			h->nlmsg_flags |= NLM_F_ACK;
+	}
 
 	status = sendmsg(rtnl->fd, &msg, 0);
 	if (status < 0) {
@@ -612,8 +612,14 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 		return -1;
 	}
 
+	/* change msg to use the response iov */
+	msg.msg_iov = &riov;
+	msg.msg_iovlen = 1;
+	i = 0;
 	while (1) {
+next:
 		status = rtnl_recvmsg(rtnl->fd, &msg, &buf);
+		++i;
 
 		if (status < 0)
 			return status;
@@ -642,7 +648,7 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 
 			if (nladdr.nl_pid != 0 ||
 			    h->nlmsg_pid != rtnl->local.nl_pid ||
-			    h->nlmsg_seq != seq) {
+			    h->nlmsg_seq > seq || h->nlmsg_seq < seq - iovlen) {
 				/* Don't forget to skip that message. */
 				status -= NLMSG_ALIGN(len);
 				h = (struct nlmsghdr *)((char *)h + NLMSG_ALIGN(len));
@@ -662,7 +668,10 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 						*answer = (struct nlmsghdr *)buf;
 					else
 						free(buf);
-					return 0;
+					if (h->nlmsg_seq == seq)
+						return 0;
+					else
+						goto next;
 				}
 
 				if (rtnl->proto != NETLINK_SOCK_DIAG &&
@@ -671,7 +680,7 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 
 				errno = -err->error;
 				free(buf);
-				return -1;
+				return -i;
 			}
 
 			if (answer) {
@@ -698,10 +707,28 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	}
 }
 
+static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
+		       struct nlmsghdr **answer,
+		       bool show_rtnl_err, nl_ext_ack_fn_t errfn)
+{
+	struct iovec iov = {
+		.iov_base = n,
+		.iov_len = n->nlmsg_len
+	};
+
+	return __rtnl_talk_iov(rtnl, &iov, 1, answer, show_rtnl_err, errfn);
+}
+
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr **answer)
 {
 	return __rtnl_talk(rtnl, n, answer, true, NULL);
+}
+
+int rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iovec, size_t iovlen,
+		  struct nlmsghdr **answer)
+{
+	return __rtnl_talk_iov(rtnl, iovec, iovlen, answer, true, NULL);
 }
 
 int rtnl_talk_extack(struct rtnl_handle *rtnl, struct nlmsghdr *n,
