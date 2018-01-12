@@ -511,7 +511,7 @@ static const char *action_n2a(int action)
  *
  * In error case, returns -1 and does not touch @result. Otherwise returns 0.
  */
-static int action_a2n(char *arg, int *result, bool allow_num)
+int action_a2n(char *arg, int *result, bool allow_num)
 {
 	int n;
 	char dummy;
@@ -535,13 +535,15 @@ static int action_a2n(char *arg, int *result, bool allow_num)
 	for (iter = a2n; iter->a; iter++) {
 		if (matches(arg, iter->a) != 0)
 			continue;
-		*result = iter->n;
-		return 0;
+		n = iter->n;
+		goto out_ok;
 	}
 	if (!allow_num || sscanf(arg, "%d%c", &n, &dummy) != 1)
 		return -1;
 
-	*result = n;
+out_ok:
+	if (result)
+		*result = n;
 	return 0;
 }
 
