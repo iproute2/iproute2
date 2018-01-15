@@ -1,13 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
 #define TCA_BUF_MAX	(64*1024)
+#define MSG_IOV_MAX	128
 
 extern struct rtnl_handle rth;
 
 extern int do_qdisc(int argc, char **argv);
 extern int do_class(int argc, char **argv);
-extern int do_filter(int argc, char **argv);
-extern int do_action(int argc, char **argv);
+extern int do_filter(int argc, char **argv, void *buf, size_t buflen);
+extern int do_action(int argc, char **argv, void *buf, size_t buflen);
 extern int do_tcmonitor(int argc, char **argv);
 extern int do_exec(int argc, char **argv);
 
