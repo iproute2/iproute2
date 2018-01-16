@@ -1595,6 +1595,7 @@ option instead.
 .sp
 .BI max_tx_rate " TXRATE"
 - change the allowed maximum transmit bandwidth, in Mbps, for the specified VF.
+Setting this parameter to 0 disables rate limiting.
 .B vf
 parameter must be specified.
 
@@ -1602,6 +1603,7 @@ parameter must be specified.
 .BI min_tx_rate " TXRATE"
 - change the allowed minimum transmit bandwidth, in Mbps, for the specified VF.
 Minimum TXRATE should be always <= Maximum TXRATE.
+Setting this parameter to 0 disables rate limiting.
 .B vf
 parameter must be specified.
 
