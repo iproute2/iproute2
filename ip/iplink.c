@@ -539,6 +539,14 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			if (tivt.max_tx_rate == -1)
 				tivt.max_tx_rate = tmax;
 		}
+
+		if (tivt.max_tx_rate && tivt.min_tx_rate > tivt.max_tx_rate) {
+			fprintf(stderr,
+				"Invalid min_tx_rate %d - must be <= max_tx_rate %d\n",
+				tivt.min_tx_rate, tivt.max_tx_rate);
+			return -1;
+		}
+
 		addattr_l(&req->n, sizeof(*req), IFLA_VF_RATE, &tivt,
 			  sizeof(tivt));
 	}
