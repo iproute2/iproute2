@@ -30,7 +30,9 @@ int tc_red_eval_P(unsigned int qmin, unsigned int qmax, double prob)
 {
 	int i = qmax - qmin;
 
-	if (i <= 0)
+	if (!i)
+		return 0;
+	if (i < 0)
 		return -1;
 
 	prob /= i;
