@@ -2246,6 +2246,12 @@ ipaddr_loop_each_vf(struct rtattr *tb[], int vfnum, int *min, int *max)
 
 	for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		parse_rtattr_nested(vf, IFLA_VF_MAX, i);
+
+		if (!vf[IFLA_VF_RATE]) {
+			fprintf(stderr, "VF min/max rate API not supported\n");
+			exit(1);
+		}
+
 		vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
 		if (vf_rate->vf == vfnum) {
 			*min = vf_rate->min_tx_rate;
