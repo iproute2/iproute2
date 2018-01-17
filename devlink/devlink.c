@@ -343,7 +343,7 @@ static int attr_cb(const struct nlattr *attr, void *data)
 	int type;
 
 	if (mnl_attr_type_valid(attr, DEVLINK_ATTR_MAX) < 0)
-		return MNL_CB_ERROR;
+		return MNL_CB_OK;
 
 	type = mnl_attr_get_type(attr);
 	if (mnl_attr_validate(attr, devlink_policy[type]) < 0)
