@@ -1208,7 +1208,7 @@ static int bpf_log_realloc(struct bpf_elf_ctx *ctx)
 
 static int bpf_map_create(enum bpf_map_type type, uint32_t size_key,
 			  uint32_t size_value, uint32_t max_elem,
-			  uint32_t flags, int inner_fd)
+			  uint32_t flags, int inner_fd, uint32_t ifindex)
 {
 	union bpf_attr attr = {};
 
@@ -1218,6 +1218,7 @@ static int bpf_map_create(enum bpf_map_type type, uint32_t size_key,
 	attr.max_entries = max_elem;
 	attr.map_flags = flags;
 	attr.inner_map_fd = inner_fd;
+	attr.map_ifindex = ifindex;
 
 	return bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
 }
@@ -1632,7 +1633,9 @@ static int bpf_map_attach(const char *name, struct bpf_elf_ctx *ctx,
 
 	errno = 0;
 	fd = bpf_map_create(map->type, map->size_key, map->size_value,
-			    map->max_elem, map->flags, map_inner_fd);
+			    map->max_elem, map->flags, map_inner_fd,
+			    ctx->ifindex);
+
 	if (fd < 0 || ctx->verbose) {
 		bpf_map_report(fd, name, map, ctx, map_inner_fd);
 		if (fd < 0)
