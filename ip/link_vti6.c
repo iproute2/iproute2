@@ -24,20 +24,25 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
+static void print_usage(FILE *f)
+{
+	fprintf(f,
+		"Usage: ... vti6 [ remote ADDR ]\n"
+		"                [ local ADDR ]\n"
+		"                [ [i|o]key KEY ]\n"
+		"                [ dev PHYS_DEV ]\n"
+		"                [ fwmark MARK ]\n"
+		"\n"
+		"Where: ADDR := { IPV6_ADDRESS }\n"
+		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
+		"       MARK := { 0x0..0xffffffff }\n"
+	);
+}
 
 static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(stderr, "          type { vti6 } [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(stderr, "          [ [i|o]key KEY ]\n");
-	fprintf(stderr, "          [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "          [ fwmark MARK ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: NAME := STRING\n");
-	fprintf(stderr, "       ADDR := { IPV6_ADDRESS }\n");
-	fprintf(stderr, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
-	fprintf(stderr, "       MARK := { 0x0..0xffffffff }\n");
+	print_usage(stderr);
 	exit(-1);
 }
 
@@ -224,9 +229,16 @@ static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	}
 }
 
+static void vti6_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f);
+}
+
 struct link_util vti6_link_util = {
 	.id = "vti6",
 	.maxattr = IFLA_VTI_MAX,
 	.parse_opt = vti6_parse_opt,
 	.print_opt = vti6_print_opt,
+	.print_help = vti6_print_help,
 };
