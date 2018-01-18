@@ -54,7 +54,40 @@ typedef struct
 	__u32 data[64];
 } inet_prefix;
 
-#define PREFIXLEN_SPECIFIED 1
+enum {
+	PREFIXLEN_SPECIFIED	= (1 << 0),
+	ADDRTYPE_INET		= (1 << 1),
+	ADDRTYPE_UNSPEC		= (1 << 2),
+	ADDRTYPE_MULTI		= (1 << 3),
+
+	ADDRTYPE_INET_UNSPEC	= ADDRTYPE_INET | ADDRTYPE_UNSPEC,
+	ADDRTYPE_INET_MULTI	= ADDRTYPE_INET | ADDRTYPE_MULTI
+};
+
+static inline bool is_addrtype_inet(const inet_prefix *p)
+{
+	return p->flags & ADDRTYPE_INET;
+}
+
+static inline bool is_addrtype_inet_unspec(const inet_prefix *p)
+{
+	return (p->flags & ADDRTYPE_INET_UNSPEC) == ADDRTYPE_INET_UNSPEC;
+}
+
+static inline bool is_addrtype_inet_multi(const inet_prefix *p)
+{
+	return (p->flags & ADDRTYPE_INET_MULTI) == ADDRTYPE_INET_MULTI;
+}
+
+static inline bool is_addrtype_inet_not_unspec(const inet_prefix *p)
+{
+	return (p->flags & ADDRTYPE_INET_UNSPEC) == ADDRTYPE_INET;
+}
+
+static inline bool is_addrtype_inet_not_multi(const inet_prefix *p)
+{
+	return (p->flags & ADDRTYPE_INET_MULTI) == ADDRTYPE_INET;
+}
 
 #define DN_MAXADDL 20
 #ifndef AF_DECnet

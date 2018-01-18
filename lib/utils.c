@@ -534,7 +534,7 @@ int get_addr64(__u64 *ap, const char *cp)
 	return 1;
 }
 
-int get_addr_1(inet_prefix *addr, const char *name, int family)
+static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 {
 	memset(addr, 0, sizeof(*addr));
 
@@ -616,6 +616,36 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 
 	addr->bytelen = 4;
 	addr->bitlen = -1;
+	return 0;
+}
+
+int get_addr_1(inet_prefix *addr, const char *name, int family)
+{
+	int ret;
+
+	ret = __get_addr_1(addr, name, family);
+	if (ret)
+		return ret;
+
+	switch (addr->family) {
+	case AF_INET:
+		if (!addr->data[0])
+			addr->flags |= ADDRTYPE_INET_UNSPEC;
+		else if (IN_MULTICAST(ntohl(addr->data[0])))
+			addr->flags |= ADDRTYPE_INET_MULTI;
+		else
+			addr->flags |= ADDRTYPE_INET;
+		break;
+	case AF_INET6:
+		if (IN6_IS_ADDR_UNSPECIFIED(addr->data))
+			addr->flags |= ADDRTYPE_INET_UNSPEC;
+		else if (IN6_IS_ADDR_MULTICAST(addr->data))
+			addr->flags |= ADDRTYPE_INET_MULTI;
+		else
+			addr->flags |= ADDRTYPE_INET;
+		break;
+	}
+
 	return 0;
 }
 
