@@ -543,8 +543,8 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	    strcmp(name, "any") == 0) {
 		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
-		addr->family = family;
-		addr->bytelen = (family == AF_INET6 ? 16 : 4);
+		addr->family = (family != AF_UNSPEC) ? family : AF_INET;
+		addr->bytelen = af_byte_len(addr->family);
 		addr->bitlen = -1;
 		return 0;
 	}
