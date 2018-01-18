@@ -213,10 +213,8 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		__u32 fwmark = rta_getattr_u32(tb[IFLA_VTI_FWMARK]);
 
 		if (fwmark) {
-			SPRINT_BUF(b1);
-
-			snprintf(b1, sizeof(b1), "0x%x", fwmark);
-			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+			print_0xhex(PRINT_ANY,
+				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
 }

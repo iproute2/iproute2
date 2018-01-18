@@ -443,9 +443,8 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 		__u32 fwmark = rta_getattr_u32(tb[IFLA_GRE_FWMARK]);
 
 		if (fwmark) {
-			snprintf(s2, sizeof(s2), "0x%x", fwmark);
-
-			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+			print_0xhex(PRINT_ANY,
+				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
 }

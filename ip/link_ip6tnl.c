@@ -438,6 +438,12 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 	if (flags & IP6_TNL_F_MIP6_DEV)
 		print_bool(PRINT_ANY, "ip6_tnl_f_mip6_dev", "mip6 ", true);
 
+	if (flags & IP6_TNL_F_ALLOW_LOCAL_REMOTE)
+		print_bool(PRINT_ANY,
+			   "ip6_tnl_f_allow_local_remote",
+			   "allow-localremote ",
+			   true);
+
 	if (flags & IP6_TNL_F_USE_ORIG_FWMARK) {
 		print_bool(PRINT_ANY,
 			   "ip6_tnl_f_use_orig_fwmark",
@@ -447,18 +453,10 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 		__u32 fwmark = rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]);
 
 		if (fwmark) {
-			SPRINT_BUF(b1);
-
-			snprintf(b1, sizeof(b1), "0x%x", fwmark);
-			print_string(PRINT_ANY, "fwmark", "fwmark %s ", b1);
+			print_0xhex(PRINT_ANY,
+				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
-
-	if (flags & IP6_TNL_F_ALLOW_LOCAL_REMOTE)
-		print_bool(PRINT_ANY,
-			   "ip6_tnl_f_allow_local_remote",
-			   "allow-localremote ",
-			   true);
 
 	if (tb[IFLA_IPTUN_ENCAP_TYPE] &&
 	    rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {

@@ -497,18 +497,17 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (oflags & GRE_CSUM)
 		print_bool(PRINT_ANY, "ocsum", "ocsum ", true);
 
-	if (flags & IP6_TNL_F_USE_ORIG_FWMARK)
+	if (flags & IP6_TNL_F_USE_ORIG_FWMARK) {
 		print_bool(PRINT_ANY,
 			   "ip6_tnl_f_use_orig_fwmark",
 			   "fwmark inherit ",
 			   true);
-	else if (tb[IFLA_GRE_FWMARK]) {
+	} else if (tb[IFLA_GRE_FWMARK]) {
 		__u32 fwmark = rta_getattr_u32(tb[IFLA_GRE_FWMARK]);
 
 		if (fwmark) {
-			snprintf(s2, sizeof(s2), "0x%x", fwmark);
-
-			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+			print_0xhex(PRINT_ANY,
+				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
 

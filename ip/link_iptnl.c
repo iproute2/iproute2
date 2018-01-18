@@ -360,7 +360,6 @@ get_failed:
 
 static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
-	char s1[1024];
 	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
@@ -455,7 +454,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 
 		const char *prefix = inet_ntop(AF_INET6,
 					       RTA_DATA(tb[IFLA_IPTUN_6RD_PREFIX]),
-					       s1, sizeof(s1));
+					       s2, sizeof(s2));
 
 		if (is_json_context()) {
 			print_string(PRINT_JSON, "prefix", NULL, prefix);
@@ -479,6 +478,15 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 				       format_host(AF_INET, 4, &relayprefix),
 				       relayprefixlen);
 			}
+		}
+	}
+
+	if (tb[IFLA_IPTUN_FWMARK]) {
+		__u32 fwmark = rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]);
+
+		if (fwmark) {
+			print_0xhex(PRINT_ANY,
+				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
 
@@ -543,16 +551,6 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 				fputs("encap-remcsum ", f);
 			else
 				fputs("noencap-remcsum ", f);
-		}
-	}
-
-	if (tb[IFLA_IPTUN_FWMARK]) {
-		__u32 fwmark = rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]);
-
-		if (fwmark) {
-			snprintf(s2, sizeof(s2), "0x%x", fwmark);
-
-			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
 		}
 	}
 }
