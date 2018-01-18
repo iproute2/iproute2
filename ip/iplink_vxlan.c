@@ -395,7 +395,7 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	__u32 vni;
 	__u8 ttl = 0;
-	__u8 tos;
+	__u8 tos = 0;
 	__u32 maxaddr;
 
 	if (!tb)
@@ -515,16 +515,13 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VXLAN_L3MISS] && rta_getattr_u8(tb[IFLA_VXLAN_L3MISS]))
 		print_bool(PRINT_ANY, "l3miss", "l3miss ", true);
 
-	if (tb[IFLA_VXLAN_TOS] &&
-	    (tos = rta_getattr_u8(tb[IFLA_VXLAN_TOS]))) {
-		if (is_json_context()) {
-			print_0xhex(PRINT_JSON, "tos", "%#x", tos);
-		} else {
-			if (tos == 1)
-				fprintf(f, "tos %s ", "inherit");
-			else
-				fprintf(f, "tos %#x ", tos);
-		}
+	if (tb[IFLA_VXLAN_TOS])
+		tos = rta_getattr_u8(tb[IFLA_VXLAN_TOS]);
+	if (tos) {
+		if (is_json_context() || tos != 1)
+			print_0xhex(PRINT_ANY, "tos", "tos 0x%x ", tos);
+		else
+			print_string(PRINT_FP, NULL, "tos %s ", "inherit");
 	}
 
 	if (tb[IFLA_VXLAN_TTL])
