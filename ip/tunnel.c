@@ -36,6 +36,7 @@
 
 #include "utils.h"
 #include "tunnel.h"
+#include "json_print.h"
 
 const char *tnl_strproto(__u8 proto)
 {
@@ -198,6 +199,96 @@ __be32 tnl_parse_key(const char *name, const char *key)
 		exit(-1);
 	}
 	return htonl(uval);
+}
+
+static const char *tnl_encap_str(const char *name, int enabled, int port)
+{
+	static const char ne[][sizeof("no")] = {
+		[0] = "no",
+		[1] = "",
+	};
+	static char buf[32];
+	char b1[16];
+	const char *val;
+
+	if (!port) {
+		val = "auto";
+	} else if (port < 0) {
+		val = "";
+	} else {
+		snprintf(b1, sizeof(b1), "%u", port - 1);
+		val = b1;
+	}
+
+	snprintf(buf, sizeof(buf), "%sencap-%s %s", ne[!!enabled], name, val);
+	return buf;
+}
+
+void tnl_print_encap(struct rtattr *tb[],
+		     int encap_type, int encap_flags,
+		     int encap_sport, int encap_dport)
+{
+	__u16 type, flags, sport, dport;
+
+	if (!tb[encap_type])
+		return;
+
+	type = rta_getattr_u16(tb[encap_type]);
+	if (type == TUNNEL_ENCAP_NONE)
+		return;
+
+	flags = rta_getattr_u16(tb[encap_flags]);
+	sport = rta_getattr_u16(tb[encap_sport]);
+	dport = rta_getattr_u16(tb[encap_dport]);
+
+	open_json_object("encap");
+	print_string(PRINT_FP, NULL, "encap ", NULL);
+
+	switch (type) {
+	case TUNNEL_ENCAP_FOU:
+		print_string(PRINT_ANY, "type", "%s ", "fou");
+		break;
+	case TUNNEL_ENCAP_GUE:
+		print_string(PRINT_ANY, "type", "%s ", "gue");
+		break;
+	default:
+		print_null(PRINT_ANY, "type", "%s ", "unknown");
+		break;
+	}
+
+	if (is_json_context()) {
+		print_uint(PRINT_JSON, "sport", NULL, ntohs(sport));
+		print_uint(PRINT_JSON, "dport", NULL, ntohs(dport));
+		print_bool(PRINT_JSON, "csum", NULL,
+			   flags & TUNNEL_ENCAP_FLAG_CSUM);
+		print_bool(PRINT_JSON, "csum6", NULL,
+			   flags & TUNNEL_ENCAP_FLAG_CSUM6);
+		print_bool(PRINT_JSON, "remcsum", NULL,
+			   flags & TUNNEL_ENCAP_FLAG_REMCSUM);
+		close_json_object();
+	} else {
+		int t;
+
+		t = sport ? ntohs(sport) + 1 : 0;
+		print_string(PRINT_FP, NULL, "%s",
+			     tnl_encap_str("sport", 1, t));
+
+		t = ntohs(dport) + 1;
+		print_string(PRINT_FP, NULL, "%s",
+			     tnl_encap_str("dport", 1, t));
+
+		t = flags & TUNNEL_ENCAP_FLAG_CSUM;
+		print_string(PRINT_FP, NULL, "%s",
+			     tnl_encap_str("csum", t, -1));
+
+		t = flags & TUNNEL_ENCAP_FLAG_CSUM6;
+		print_string(PRINT_FP, NULL, "%s",
+			     tnl_encap_str("csum6", t, -1));
+
+		t = flags & TUNNEL_ENCAP_FLAG_REMCSUM;
+		print_string(PRINT_FP, NULL, "%s",
+			     tnl_encap_str("remcsum", t, -1));
+	}
 }
 
 /* tnl_print_stats - print tunnel statistics
