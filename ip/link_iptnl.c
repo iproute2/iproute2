@@ -365,6 +365,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 	const char *local = "any";
 	const char *remote = "any";
 	__u16 prefixlen, type;
+	__u8 ttl = 0;
 
 	if (!tb)
 		return;
@@ -416,16 +417,12 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		}
 	}
 
-	if (tb[IFLA_IPTUN_TTL]) {
-		__u8 ttl = rta_getattr_u8(tb[IFLA_IPTUN_TTL]);
-
-		if (ttl)
-			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
-		else
-			print_int(PRINT_JSON, "ttl", NULL, ttl);
-	} else {
+	if (tb[IFLA_IPTUN_TTL])
+		ttl = rta_getattr_u8(tb[IFLA_IPTUN_TTL]);
+	if (is_json_context() || ttl)
+		print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
+	else
 		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
-	}
 
 	if (tb[IFLA_IPTUN_TOS]) {
 		int tos = rta_getattr_u8(tb[IFLA_IPTUN_TOS]);

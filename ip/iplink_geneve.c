@@ -227,6 +227,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	__u32 vni;
+	__u8 ttl = 0;
 	__u8 tos;
 
 	if (!tb)
@@ -262,12 +263,12 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 	}
 
-	if (tb[IFLA_GENEVE_TTL]) {
-		__u8 ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
-
-		if (ttl)
-			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
-	}
+	if (tb[IFLA_GENEVE_TTL])
+		ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
+	if (is_json_context() || ttl)
+		print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
+	else
+		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
 
 	if (tb[IFLA_GENEVE_TOS] &&
 	    (tos = rta_getattr_u8(tb[IFLA_GENEVE_TOS]))) {

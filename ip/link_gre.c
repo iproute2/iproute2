@@ -361,6 +361,7 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 	const char *remote = "any";
 	unsigned int iflags = 0;
 	unsigned int oflags = 0;
+	__u8 ttl = 0;
 
 	if (tb[IFLA_GRE_REMOTE]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
@@ -389,16 +390,12 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 		}
 	}
 
-	if (tb[IFLA_GRE_TTL]) {
-		__u8 ttl = rta_getattr_u8(tb[IFLA_GRE_TTL]);
-
-		if (ttl)
-			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
-		else
-			print_int(PRINT_JSON, "ttl", NULL, ttl);
-	} else {
+	if (tb[IFLA_GRE_TTL])
+		ttl = rta_getattr_u8(tb[IFLA_GRE_TTL]);
+	if (is_json_context() || ttl)
+		print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
+	else
 		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
-	}
 
 	if (tb[IFLA_GRE_TOS] && rta_getattr_u8(tb[IFLA_GRE_TOS])) {
 		int tos = rta_getattr_u8(tb[IFLA_GRE_TOS]);

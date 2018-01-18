@@ -382,6 +382,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	unsigned int flags = 0;
 	__u32 flowinfo = 0;
 	struct in6_addr in6_addr_any = IN6ADDR_ANY_INIT;
+	__u8 ttl = 0;
 
 	if (!tb)
 		return;
@@ -423,14 +424,12 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 	}
 
-	if (tb[IFLA_GRE_TTL]) {
-		__u8 ttl = rta_getattr_u8(tb[IFLA_GRE_TTL]);
-
-		if (ttl)
-			print_int(PRINT_ANY, "ttl", "hoplimit %d ", ttl);
-		else
-			print_int(PRINT_JSON, "ttl", NULL, ttl);
-	}
+	if (tb[IFLA_GRE_TTL])
+		ttl = rta_getattr_u8(tb[IFLA_GRE_TTL]);
+	if (is_json_context() || ttl)
+		print_uint(PRINT_ANY, "ttl", "hoplimit %u ", ttl);
+	else
+		print_string(PRINT_FP, NULL, "hoplimit %s ", "inherit");
 
 	if (flags & IP6_TNL_F_IGN_ENCAP_LIMIT) {
 		print_bool(PRINT_ANY,
