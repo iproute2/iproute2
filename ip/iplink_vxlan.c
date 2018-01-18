@@ -74,17 +74,18 @@ static void check_duparg(__u64 *attrs, int type, const char *key,
 static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			  struct nlmsghdr *n)
 {
+	inet_prefix saddr;
+	inet_prefix daddr;
 	__u32 vni = 0;
-	__u32 gaddr = 0;
-	__u32 daddr = 0;
-	struct in6_addr gaddr6 = IN6ADDR_ANY_INIT;
-	struct in6_addr daddr6 = IN6ADDR_ANY_INIT;
 	__u8 learning = 1;
 	__u16 dstport = 0;
 	__u8 metadata = 0;
 	__u64 attrs = 0;
 	bool set_op = (n->nlmsg_type == RTM_NEWLINK &&
 		       !(n->nlmsg_flags & NLM_F_CREATE));
+
+	saddr.family = daddr.family = AF_UNSPEC;
+	saddr.flags = daddr.flags = 0;
 
 	while (argc > 0) {
 		if (!matches(*argv, "id") ||
@@ -98,54 +99,33 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			    vni >= 1u << 24)
 				invarg("invalid id", *argv);
 		} else if (!matches(*argv, "group")) {
-			if (daddr || !IN6_IS_ADDR_UNSPECIFIED(&daddr6)) {
+			if (is_addrtype_inet_not_multi(&daddr)) {
 				fprintf(stderr, "vxlan: both group and remote");
 				fprintf(stderr, " cannot be specified\n");
 				return -1;
 			}
 			NEXT_ARG();
 			check_duparg(&attrs, IFLA_VXLAN_GROUP, "group", *argv);
-			if (!inet_get_addr(*argv, &gaddr, &gaddr6)) {
-				fprintf(stderr, "Invalid address \"%s\"\n", *argv);
-				return -1;
-			}
-			if (!IN6_IS_ADDR_MULTICAST(&gaddr6) && !IN_MULTICAST(ntohl(gaddr)))
+			get_addr(&daddr, *argv, saddr.family);
+			if (!is_addrtype_inet_multi(&daddr))
 				invarg("invalid group address", *argv);
 		} else if (!matches(*argv, "remote")) {
-			if (gaddr || !IN6_IS_ADDR_UNSPECIFIED(&gaddr6)) {
+			if (is_addrtype_inet_multi(&daddr)) {
 				fprintf(stderr, "vxlan: both group and remote");
 				fprintf(stderr, " cannot be specified\n");
 				return -1;
 			}
 			NEXT_ARG();
 			check_duparg(&attrs, IFLA_VXLAN_GROUP, "remote", *argv);
-			if (!inet_get_addr(*argv, &daddr, &daddr6)) {
-				fprintf(stderr, "Invalid address \"%s\"\n", *argv);
-				return -1;
-			}
-			if (IN6_IS_ADDR_MULTICAST(&daddr6) || IN_MULTICAST(ntohl(daddr)))
+			get_addr(&daddr, *argv, saddr.family);
+			if (!is_addrtype_inet_not_multi(&daddr))
 				invarg("invalid remote address", *argv);
 		} else if (!matches(*argv, "local")) {
-			__u32 saddr = 0;
-			struct in6_addr saddr6 = IN6ADDR_ANY_INIT;
-
 			NEXT_ARG();
 			check_duparg(&attrs, IFLA_VXLAN_LOCAL, "local", *argv);
-			if (strcmp(*argv, "any")) {
-				if (!inet_get_addr(*argv, &saddr, &saddr6)) {
-					fprintf(stderr, "Invalid address \"%s\"\n", *argv);
-					return -1;
-				}
-			}
-
-			if (IN_MULTICAST(ntohl(saddr)) || IN6_IS_ADDR_MULTICAST(&saddr6))
+			get_addr(&saddr, *argv, daddr.family);
+			if (!is_addrtype_inet_not_multi(&saddr))
 				invarg("invalid local address", *argv);
-
-			if (saddr)
-				addattr_l(n, 1024, IFLA_VXLAN_LOCAL, &saddr, 4);
-			else if (!IN6_IS_ADDR_UNSPECIFIED(&saddr6))
-				addattr_l(n, 1024, IFLA_VXLAN_LOCAL6, &saddr6,
-					  sizeof(struct in6_addr));
 		} else if (!matches(*argv, "dev")) {
 			unsigned int link;
 
@@ -350,7 +330,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		return -1;
 	}
 
-	if ((gaddr || !IN6_IS_ADDR_UNSPECIFIED(&gaddr6)) &&
+	if (is_addrtype_inet_multi(&daddr) &&
 	    !VXLAN_ATTRSET(attrs, IFLA_VXLAN_LINK)) {
 		fprintf(stderr, "vxlan: 'group' requires 'dev' to be specified\n");
 		return -1;
@@ -369,18 +349,18 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 
 	if (VXLAN_ATTRSET(attrs, IFLA_VXLAN_ID))
 		addattr32(n, 1024, IFLA_VXLAN_ID, vni);
-	if (gaddr)
-		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &gaddr, 4);
-	else if (daddr)
-		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &daddr, 4);
-	else if (!IN6_IS_ADDR_UNSPECIFIED(&gaddr6))
-		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &gaddr6, sizeof(struct in6_addr));
-	else if (!IN6_IS_ADDR_UNSPECIFIED(&daddr6))
-		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &daddr6, sizeof(struct in6_addr));
-	else if (preferred_family == AF_INET)
-		addattr_l(n, 1024, IFLA_VXLAN_GROUP, &daddr, 4);
-	else if (preferred_family == AF_INET6)
-		addattr_l(n, 1024, IFLA_VXLAN_GROUP6, &daddr6, sizeof(struct in6_addr));
+
+	if (is_addrtype_inet(&saddr)) {
+		int type = (saddr.family == AF_INET) ? IFLA_VXLAN_LOCAL
+						     : IFLA_VXLAN_LOCAL6;
+		addattr_l(n, 1024, type, saddr.data, saddr.bytelen);
+	}
+
+	if (is_addrtype_inet(&daddr)) {
+		int type = (daddr.family == AF_INET) ? IFLA_VXLAN_GROUP
+						     : IFLA_VXLAN_GROUP6;
+		addattr_l(n, 1024, type, daddr.data, daddr.bytelen);
+	}
 
 	if (!set_op || VXLAN_ATTRSET(attrs, IFLA_VXLAN_LEARNING))
 		addattr8(n, 1024, IFLA_VXLAN_LEARNING, learning);
