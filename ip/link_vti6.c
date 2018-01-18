@@ -199,13 +199,19 @@ static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	}
 
 	if (tb[IFLA_VTI_IKEY]) {
-		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_VTI_IKEY]), s2, sizeof(s2));
-		print_string(PRINT_ANY, "ikey", "ikey %s ", s2);
+		struct rtattr *rta = tb[IFLA_VTI_IKEY];
+		__u32 key = rta_getattr_u32(rta);
+
+		if (key && inet_ntop(AF_INET, RTA_DATA(rta), s2, sizeof(s2)))
+			print_string(PRINT_ANY, "ikey", "ikey %s ", s2);
 	}
 
 	if (tb[IFLA_VTI_OKEY]) {
-		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_VTI_OKEY]), s2, sizeof(s2));
-		print_string(PRINT_ANY, "okey", "okey %s ", s2);
+		struct rtattr *rta = tb[IFLA_VTI_OKEY];
+		__u32 key = rta_getattr_u32(rta);
+
+		if (key && inet_ntop(AF_INET, RTA_DATA(rta), s2, sizeof(s2)))
+			print_string(PRINT_ANY, "okey", "okey %s ", s2);
 	}
 
 	if (tb[IFLA_VTI_FWMARK]) {

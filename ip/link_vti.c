@@ -167,8 +167,7 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	const char *local = "any";
 	const char *remote = "any";
-	__u32 key;
-	char s2[IFNAMSIZ];
+	char s2[64];
 
 	if (!tb)
 		return;
@@ -200,14 +199,21 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 	}
 
-	if (tb[IFLA_VTI_IKEY] &&
-	    (key = rta_getattr_u32(tb[IFLA_VTI_IKEY])))
-		print_0xhex(PRINT_ANY, "ikey", "ikey %#x ", ntohl(key));
+	if (tb[IFLA_VTI_IKEY]) {
+		struct rtattr *rta = tb[IFLA_VTI_IKEY];
+		__u32 key = rta_getattr_u32(rta);
 
+		if (key && inet_ntop(AF_INET, RTA_DATA(rta), s2, sizeof(s2)))
+			print_string(PRINT_ANY, "ikey", "ikey %s ", s2);
+	}
 
-	if (tb[IFLA_VTI_OKEY] &&
-	    (key = rta_getattr_u32(tb[IFLA_VTI_OKEY])))
-		print_0xhex(PRINT_ANY, "okey", "okey %#x ", ntohl(key));
+	if (tb[IFLA_VTI_OKEY]) {
+		struct rtattr *rta = tb[IFLA_VTI_OKEY];
+		__u32 key = rta_getattr_u32(rta);
+
+		if (key && inet_ntop(AF_INET, RTA_DATA(rta), s2, sizeof(s2)))
+			print_string(PRINT_ANY, "okey", "okey %s ", s2);
+	}
 
 	if (tb[IFLA_VTI_FWMARK]) {
 		__u32 fwmark = rta_getattr_u32(tb[IFLA_VTI_FWMARK]);
