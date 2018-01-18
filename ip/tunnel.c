@@ -40,33 +40,22 @@
 
 const char *tnl_strproto(__u8 proto)
 {
-	static char buf[16];
-
 	switch (proto) {
 	case IPPROTO_IPIP:
-		strcpy(buf, "ip");
-		break;
+		return "ip";
 	case IPPROTO_GRE:
-		strcpy(buf, "gre");
-		break;
+		return "gre";
 	case IPPROTO_IPV6:
-		strcpy(buf, "ipv6");
-		break;
+		return "ipv6";
 	case IPPROTO_ESP:
-		strcpy(buf, "esp");
-		break;
+		return "esp";
 	case IPPROTO_MPLS:
-		strcpy(buf, "mpls");
-		break;
+		return "mpls";
 	case 0:
-		strcpy(buf, "any");
-		break;
+		return "any";
 	default:
-		strcpy(buf, "unknown");
-		break;
+		return "unknown";
 	}
-
-	return buf;
 }
 
 int tnl_get_ioctl(const char *basedev, void *p)
