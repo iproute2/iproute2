@@ -377,14 +377,13 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 			     rt_addr_n2a_rta(AF_INET6, tb[IFLA_IPTUN_LOCAL]));
 	}
 
-	if (tb[IFLA_IPTUN_LINK] && rta_getattr_u32(tb[IFLA_IPTUN_LINK])) {
+	if (tb[IFLA_IPTUN_LINK]) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
-		const char *n = if_indextoname(link, s2);
 
-		if (n)
-			print_string(PRINT_ANY, "link", "dev %s ", n);
-		else
-			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
+		if (link) {
+			print_string(PRINT_ANY, "link", "dev %s ",
+				     ll_index_to_name(link));
+		}
 	}
 
 	if (tb[IFLA_IPTUN_TTL]) {

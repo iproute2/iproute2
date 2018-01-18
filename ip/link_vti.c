@@ -168,7 +168,6 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	const char *local = "any";
 	const char *remote = "any";
 	__u32 key;
-	unsigned int link;
 	char s2[IFNAMSIZ];
 
 	if (!tb)
@@ -192,14 +191,13 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	print_string(PRINT_ANY, "local", "local %s ", local);
 
-	if (tb[IFLA_VTI_LINK] &&
-	    (link = rta_getattr_u32(tb[IFLA_VTI_LINK]))) {
-		const char *n = if_indextoname(link, s2);
+	if (tb[IFLA_VTI_LINK]) {
+		unsigned int link = rta_getattr_u32(tb[IFLA_VTI_LINK]);
 
-		if (n)
-			print_string(PRINT_ANY, "link", "dev %s ", n);
-		else
-			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
+		if (link) {
+			print_string(PRINT_ANY, "link", "dev %s ",
+				     ll_index_to_name(link));
+		}
 	}
 
 	if (tb[IFLA_VTI_IKEY] &&

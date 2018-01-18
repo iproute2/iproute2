@@ -219,10 +219,9 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		unsigned int ifindex = rta_getattr_u32(tb[NDA_IFINDEX]);
 
 		if (ifindex) {
-			char ifname[IF_NAMESIZE];
+			if (!tb[NDA_LINK_NETNSID]) {
+				const char *ifname = ll_index_to_name(ifindex);
 
-			if (!tb[NDA_LINK_NETNSID] &&
-			    if_indextoname(ifindex, ifname)) {
 				if (jw_global)
 					jsonw_string_field(jw_global, "viaIf",
 							   ifname);

@@ -196,7 +196,6 @@ static int read_action_type(const char *name)
 static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[SEG6_LOCAL_MAX + 1];
-	char ifbuf[IFNAMSIZ];
 	int action;
 
 	parse_rtattr_nested(tb, SEG6_LOCAL_MAX, encap);
@@ -229,15 +228,13 @@ static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 	if (tb[SEG6_LOCAL_IIF]) {
 		int iif = rta_getattr_u32(tb[SEG6_LOCAL_IIF]);
 
-		fprintf(fp, "iif %s ",
-			if_indextoname(iif, ifbuf) ?: "<unknown>");
+		fprintf(fp, "iif %s ", ll_index_to_name(iif));
 	}
 
 	if (tb[SEG6_LOCAL_OIF]) {
 		int oif = rta_getattr_u32(tb[SEG6_LOCAL_OIF]);
 
-		fprintf(fp, "oif %s ",
-			if_indextoname(oif, ifbuf) ?: "<unknown>");
+		fprintf(fp, "oif %s ", ll_index_to_name(oif));
 	}
 }
 

@@ -394,10 +394,8 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	__u32 vni;
-	unsigned int link;
 	__u8 tos;
 	__u32 maxaddr;
-	char s2[64];
 
 	if (!tb)
 		return;
@@ -467,14 +465,13 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 						 &addr));
 	}
 
-	if (tb[IFLA_VXLAN_LINK] &&
-	    (link = rta_getattr_u32(tb[IFLA_VXLAN_LINK]))) {
-		const char *n = if_indextoname(link, s2);
+	if (tb[IFLA_VXLAN_LINK]) {
+		unsigned int link = rta_getattr_u32(tb[IFLA_VXLAN_LINK]);
 
-		if (n)
-			print_string(PRINT_ANY, "link", "dev %s ", n);
-		else
-			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
+		if (link) {
+			print_string(PRINT_ANY, "link", "dev %s ",
+				     ll_index_to_name(link));
+		}
 	}
 
 	if (tb[IFLA_VXLAN_PORT_RANGE]) {
