@@ -431,7 +431,10 @@ static struct ipv6_sr_hdr *parse_srh(char *segbuf, int hmac, bool encap)
 
 	i = srh->first_segment;
 	for (s = strtok(segbuf, ","); s; s = strtok(NULL, ",")) {
-		inet_get_addr(s, NULL, &srh->segments[i]);
+		inet_prefix addr;
+
+		get_addr(&addr, s, AF_INET6);
+		memcpy(&srh->segments[i], addr.data, sizeof(struct in6_addr));
 		i--;
 	}
 

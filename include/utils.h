@@ -269,7 +269,6 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 extern int cmdlineno;
 ssize_t getcmdline(char **line, size_t *len, FILE *in);
 int makeargs(char *line, char *argv[], int maxargs);
-int inet_get_addr(const char *src, __u32 *dst, struct in6_addr *dst6);
 
 struct iplink_req {
 	struct nlmsghdr		n;
