@@ -69,7 +69,7 @@ static int vti_parse_opt(struct link_util *lu, int argc, char **argv,
 	unsigned int saddr = 0;
 	unsigned int daddr = 0;
 	unsigned int link = 0;
-	unsigned int fwmark = 0;
+	__u32 fwmark = 0;
 	int len;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {

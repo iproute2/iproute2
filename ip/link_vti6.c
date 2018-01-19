@@ -144,8 +144,11 @@ get_failed:
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = if_nametoindex(*argv);
-			if (link == 0)
+			if (link == 0) {
+				fprintf(stderr, "Cannot find device \"%s\"\n",
+					*argv);
 				exit(-1);
+			}
 		} else if (strcmp(*argv, "fwmark") == 0) {
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))
@@ -157,7 +160,6 @@ get_failed:
 
 	addattr32(n, 1024, IFLA_VTI_IKEY, ikey);
 	addattr32(n, 1024, IFLA_VTI_OKEY, okey);
-
 	addattr_l(n, 1024, IFLA_VTI_LOCAL, &saddr, sizeof(saddr));
 	addattr_l(n, 1024, IFLA_VTI_REMOTE, &daddr, sizeof(daddr));
 	addattr32(n, 1024, IFLA_VTI_FWMARK, fwmark);
