@@ -792,7 +792,7 @@ int bridge_parse_xstats(struct link_util *lu, int argc, char **argv)
 			xstats_print_attr = BRIDGE_XSTATS_MCAST;
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
-			filter_index = if_nametoindex(*argv);
+			filter_index = ll_name_to_index(*argv);
 			if (filter_index == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n",
 					*argv);

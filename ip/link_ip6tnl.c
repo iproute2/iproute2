@@ -193,7 +193,7 @@ get_failed:
 			memcpy(&laddr, addr.data, sizeof(laddr));
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
-			link = if_nametoindex(*argv);
+			link = ll_name_to_index(*argv);
 			if (link == 0)
 				invarg("\"dev\" is invalid", *argv);
 		} else if (strcmp(*argv, "ttl") == 0 ||

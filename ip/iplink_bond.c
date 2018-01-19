@@ -177,7 +177,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 			addattr8(n, 1024, IFLA_BOND_MODE, mode);
 		} else if (matches(*argv, "active_slave") == 0) {
 			NEXT_ARG();
-			ifindex = if_nametoindex(*argv);
+			ifindex = ll_name_to_index(*argv);
 			if (!ifindex)
 				return -1;
 			addattr32(n, 1024, IFLA_BOND_ACTIVE_SLAVE, ifindex);
@@ -240,7 +240,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 			addattr32(n, 1024, IFLA_BOND_ARP_ALL_TARGETS, arp_all_targets);
 		} else if (matches(*argv, "primary") == 0) {
 			NEXT_ARG();
-			ifindex = if_nametoindex(*argv);
+			ifindex = ll_name_to_index(*argv);
 			if (!ifindex)
 				return -1;
 			addattr32(n, 1024, IFLA_BOND_PRIMARY, ifindex);

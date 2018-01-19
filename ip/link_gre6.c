@@ -231,7 +231,7 @@ get_failed:
 			memcpy(&laddr, &addr.data, sizeof(laddr));
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
-			link = if_nametoindex(*argv);
+			link = ll_name_to_index(*argv);
 			if (link == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n",
 					*argv);
