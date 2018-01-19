@@ -204,7 +204,8 @@ get_failed:
 			if (link == 0)
 				invarg("\"dev\" is invalid", *argv);
 		} else if (strcmp(*argv, "ttl") == 0 ||
-			   strcmp(*argv, "hoplimit") == 0) {
+			   strcmp(*argv, "hoplimit") == 0 ||
+			   strcmp(*argv, "hlim") == 0) {
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
 				if (get_u8(&ttl, *argv, 0))

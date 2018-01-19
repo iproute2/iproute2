@@ -196,15 +196,15 @@ get_failed:
 			link = if_nametoindex(*argv);
 			if (link == 0)
 				invarg("\"dev\" is invalid", *argv);
-		} else if (strcmp(*argv, "hoplimit") == 0 ||
-			   strcmp(*argv, "ttl") == 0 ||
+		} else if (strcmp(*argv, "ttl") == 0 ||
+			   strcmp(*argv, "hoplimit") == 0 ||
 			   strcmp(*argv, "hlim") == 0) {
-			__u8 uval;
-
 			NEXT_ARG();
-			if (get_u8(&uval, *argv, 0))
-				invarg("invalid HLIM", *argv);
-			hop_limit = uval;
+			if (strcmp(*argv, "inherit") != 0) {
+				if (get_u8(&hop_limit, *argv, 0))
+					invarg("invalid HLIM\n", *argv);
+			} else
+				hop_limit = 0;
 		} else if (strcmp(*argv, "encaplimit") == 0) {
 			NEXT_ARG();
 			if (strcmp(*argv, "none") == 0) {

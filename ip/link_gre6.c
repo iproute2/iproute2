@@ -238,13 +238,14 @@ get_failed:
 				exit(-1);
 			}
 		} else if (!matches(*argv, "ttl") ||
-			   !matches(*argv, "hoplimit")) {
-			__u8 uval;
-
+			   !matches(*argv, "hoplimit") ||
+			   !matches(*argv, "hlim")) {
 			NEXT_ARG();
-			if (get_u8(&uval, *argv, 0))
-				invarg("invalid TTL", *argv);
-			hop_limit = uval;
+			if (strcmp(*argv, "inherit") != 0) {
+				if (get_u8(&hop_limit, *argv, 0))
+					invarg("invalid HLIM\n", *argv);
+			} else
+				hop_limit = 0;
 		} else if (!matches(*argv, "tos") ||
 			   !matches(*argv, "tclass") ||
 			   !matches(*argv, "dsfield")) {

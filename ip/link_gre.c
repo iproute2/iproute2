@@ -229,16 +229,12 @@ get_failed:
 				exit(-1);
 			}
 		} else if (!matches(*argv, "ttl") ||
-			   !matches(*argv, "hoplimit")) {
-			unsigned int uval;
-
+			   !matches(*argv, "hoplimit") ||
+			   !matches(*argv, "hlim")) {
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
-				if (get_unsigned(&uval, *argv, 0))
+				if (get_u8(&ttl, *argv, 0))
 					invarg("invalid TTL\n", *argv);
-				if (uval > 255)
-					invarg("TTL must be <= 255\n", *argv);
-				ttl = uval;
 			} else
 				ttl = 0;
 		} else if (!matches(*argv, "tos") ||
