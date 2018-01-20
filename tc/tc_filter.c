@@ -28,14 +28,17 @@
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: tc filter [ add | del | change | replace | show ] dev STRING\n"
-		"Usage: tc filter get dev STRING parent CLASSID protocol PROTO handle FILTERID pref PRIO FILTER_TYPE\n"
+		"Usage: tc filter [ add | del | change | replace | show ] [ dev STRING ]\n"
+		"       tc filter [ add | del | change | replace | show ] [ block BLOCK_INDEX ]\n"
+		"       tc filter get dev STRING parent CLASSID protocol PROTO handle FILTERID pref PRIO FILTER_TYPE\n"
+		"       tc filter get block BLOCK_INDEX protocol PROTO handle FILTERID pref PRIO FILTER_TYPE\n"
 		"       [ pref PRIO ] protocol PROTO [ chain CHAIN_INDEX ]\n"
 		"       [ estimator INTERVAL TIME_CONSTANT ]\n"
 		"       [ root | ingress | egress | parent CLASSID ]\n"
 		"       [ handle FILTERID ] [ [ FILTER_TYPE ] [ help | OPTIONS ] ]\n"
 		"\n"
 		"       tc filter show [ dev STRING ] [ root | ingress | egress | parent CLASSID ]\n"
+		"       tc filter show [ block BLOCK_INDEX ]\n"
 		"Where:\n"
 		"FILTER_TYPE := { rsvp | u32 | bpf | fw | route | etc. }\n"
 		"FILTERID := ... format depends on classifier, see there\n"
@@ -58,6 +61,7 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv,
 	int chain_index_set = 0;
 	char d[IFNAMSIZ] = {};
 	int protocol_set = 0;
+	__u32 block_index = 0;
 	char *fhandle = NULL;
 	__u32 protocol = 0;
 	__u32 chain_index;
@@ -89,7 +93,21 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv,
 			NEXT_ARG();
 			if (d[0])
 				duparg("dev", *argv);
+			if (block_index) {
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exlusive\n");
+				return -1;
+			}
 			strncpy(d, *argv, sizeof(d)-1);
+		} else if (matches(*argv, "block") == 0) {
+			NEXT_ARG();
+			if (block_index)
+				duparg("block", *argv);
+			if (d[0]) {
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exlusive\n");
+				return -1;
+			}
+			if (get_u32(&block_index, *argv, 0) || !block_index)
+				invarg("invalid block index value", *argv);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req->t.tcm_parent) {
 				fprintf(stderr,
@@ -184,6 +202,9 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv,
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			return 1;
 		}
+	} else if (block_index) {
+		req->t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
+		req->t.tcm_block_index = block_index;
 	}
 
 	if (q) {
@@ -228,6 +249,7 @@ static __u32 filter_prio;
 static __u32 filter_protocol;
 static __u32 filter_chain_index;
 static int filter_chain_index_set;
+static __u32 filter_block_index;
 __u16 f_proto;
 
 int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
@@ -274,20 +296,27 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		print_bool(PRINT_ANY, "added", "added ", true);
 
 	print_string(PRINT_FP, NULL, "filter ", NULL);
-	if (!filter_ifindex || filter_ifindex != t->tcm_ifindex)
-		print_string(PRINT_ANY, "dev", "dev %s ",
-			     ll_index_to_name(t->tcm_ifindex));
+	if (t->tcm_ifindex == TCM_IFINDEX_MAGIC_BLOCK) {
+		if (!filter_block_index ||
+		    filter_block_index != t->tcm_block_index)
+			print_uint(PRINT_ANY, "block", "block %u ",
+				   t->tcm_block_index);
+	} else {
+		if (!filter_ifindex || filter_ifindex != t->tcm_ifindex)
+			print_string(PRINT_ANY, "dev", "dev %s ",
+				     ll_index_to_name(t->tcm_ifindex));
 
-	if (!filter_parent || filter_parent != t->tcm_parent) {
-		if (t->tcm_parent == TC_H_ROOT)
-			print_bool(PRINT_ANY, "root", "root ", true);
-		else if (t->tcm_parent == TC_H_MAKE(TC_H_CLSACT, TC_H_MIN_INGRESS))
-			print_bool(PRINT_ANY, "ingress", "ingress ", true);
-		else if (t->tcm_parent == TC_H_MAKE(TC_H_CLSACT, TC_H_MIN_EGRESS))
-			print_bool(PRINT_ANY, "egress", "egress ", true);
-		else {
-			print_tc_classid(abuf, sizeof(abuf), t->tcm_parent);
-			print_string(PRINT_ANY, "parent", "parent %s ", abuf);
+		if (!filter_parent || filter_parent != t->tcm_parent) {
+			if (t->tcm_parent == TC_H_ROOT)
+				print_bool(PRINT_ANY, "root", "root ", true);
+			else if (t->tcm_parent == TC_H_MAKE(TC_H_CLSACT, TC_H_MIN_INGRESS))
+				print_bool(PRINT_ANY, "ingress", "ingress ", true);
+			else if (t->tcm_parent == TC_H_MAKE(TC_H_CLSACT, TC_H_MIN_EGRESS))
+				print_bool(PRINT_ANY, "egress", "egress ", true);
+			else {
+				print_tc_classid(abuf, sizeof(abuf), t->tcm_parent);
+				print_string(PRINT_ANY, "parent", "parent %s ", abuf);
+			}
 		}
 	}
 
@@ -367,6 +396,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 	int protocol_set = 0;
 	__u32 chain_index;
 	int chain_index_set = 0;
+	__u32 block_index = 0;
 	__u32 parent_handle = 0;
 	char *fhandle = NULL;
 	char  d[IFNAMSIZ] = {};
@@ -377,7 +407,21 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 			NEXT_ARG();
 			if (d[0])
 				duparg("dev", *argv);
+			if (block_index) {
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exlusive\n");
+				return -1;
+			}
 			strncpy(d, *argv, sizeof(d)-1);
+		} else if (matches(*argv, "block") == 0) {
+			NEXT_ARG();
+			if (block_index)
+				duparg("block", *argv);
+			if (d[0]) {
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exlusive\n");
+				return -1;
+			}
+			if (get_u32(&block_index, *argv, 0) || !block_index)
+				invarg("invalid block index value", *argv);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr,
@@ -491,8 +535,12 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 			return 1;
 		}
 		filter_ifindex = req.t.tcm_ifindex;
+	} else if (block_index) {
+		req.t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
+		req.t.tcm_block_index = block_index;
+		filter_block_index = block_index;
 	} else {
-		fprintf(stderr, "Must specify netdevice \"dev\"\n");
+		fprintf(stderr, "Must specify netdevice \"dev\" or block index \"block\"\n");
 		return -1;
 	}
 
@@ -542,6 +590,7 @@ static int tc_filter_list(int argc, char **argv)
 	__u32 prio = 0;
 	__u32 protocol = 0;
 	__u32 chain_index;
+	__u32 block_index = 0;
 	char *fhandle = NULL;
 
 	while (argc > 0) {
@@ -549,7 +598,21 @@ static int tc_filter_list(int argc, char **argv)
 			NEXT_ARG();
 			if (d[0])
 				duparg("dev", *argv);
+			if (block_index) {
+				fprintf(stderr, "Error: \"dev\" cannot be used in the same time as \"block\"\n");
+				return -1;
+			}
 			strncpy(d, *argv, sizeof(d)-1);
+		} else if (matches(*argv, "block") == 0) {
+			NEXT_ARG();
+			if (block_index)
+				duparg("block", *argv);
+			if (d[0]) {
+				fprintf(stderr, "Error: \"block\" cannot be used in the same time as \"dev\"\n");
+				return -1;
+			}
+			if (get_u32(&block_index, *argv, 0) || !block_index)
+				invarg("invalid block index value", *argv);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr,
@@ -638,6 +701,14 @@ static int tc_filter_list(int argc, char **argv)
 			return 1;
 		}
 		filter_ifindex = req.t.tcm_ifindex;
+	} else if (block_index) {
+		if (!tc_qdisc_block_exists(block_index)) {
+			fprintf(stderr, "Cannot find block \"%u\"\n", block_index);
+			return 1;
+		}
+		req.t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
+		req.t.tcm_block_index = block_index;
+		filter_block_index = block_index;
 	}
 
 	if (filter_chain_index_set)
