@@ -412,3 +412,64 @@ int do_qdisc(int argc, char **argv)
 	fprintf(stderr, "Command \"%s\" is unknown, try \"tc qdisc help\".\n", *argv);
 	return -1;
 }
+
+struct tc_qdisc_block_exists_ctx {
+	__u32 block_index;
+	bool found;
+};
+
+static int tc_qdisc_block_exists_cb(const struct sockaddr_nl *who,
+				    struct nlmsghdr *n, void *arg)
+{
+	struct tc_qdisc_block_exists_ctx *ctx = arg;
+	struct tcmsg *t = NLMSG_DATA(n);
+	struct rtattr *tb[TCA_MAX+1];
+	int len = n->nlmsg_len;
+
+	if (n->nlmsg_type != RTM_NEWQDISC)
+		return 0;
+
+	len -= NLMSG_LENGTH(sizeof(*t));
+	if (len < 0)
+		return -1;
+
+	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+
+	if (tb[TCA_KIND] == NULL)
+		return -1;
+
+	if (tb[TCA_INGRESS_BLOCK] &&
+	    RTA_PAYLOAD(tb[TCA_INGRESS_BLOCK]) >= sizeof(__u32)) {
+		__u32 block = rta_getattr_u32(tb[TCA_INGRESS_BLOCK]);
+
+		if (block == ctx->block_index)
+			ctx->found = true;
+	}
+
+	if (tb[TCA_EGRESS_BLOCK] &&
+	    RTA_PAYLOAD(tb[TCA_EGRESS_BLOCK]) >= sizeof(__u32)) {
+		__u32 block = rta_getattr_u32(tb[TCA_EGRESS_BLOCK]);
+
+		if (block == ctx->block_index)
+			ctx->found = true;
+	}
+	return 0;
+}
+
+bool tc_qdisc_block_exists(__u32 block_index)
+{
+	struct tc_qdisc_block_exists_ctx ctx = { .block_index = block_index };
+	struct tcmsg t = { .tcm_family = AF_UNSPEC };
+
+	if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
+		perror("Cannot send dump request");
+		return false;
+	}
+
+	if (rtnl_dump_filter(&rth, tc_qdisc_block_exists_cb, &ctx) < 0) {
+		perror("Dump terminated\n");
+		return false;
+	}
+
+	return ctx.found;
+}
