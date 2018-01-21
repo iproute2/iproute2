@@ -54,7 +54,40 @@ typedef struct
 	__u32 data[64];
 } inet_prefix;
 
-#define PREFIXLEN_SPECIFIED 1
+enum {
+	PREFIXLEN_SPECIFIED	= (1 << 0),
+	ADDRTYPE_INET		= (1 << 1),
+	ADDRTYPE_UNSPEC		= (1 << 2),
+	ADDRTYPE_MULTI		= (1 << 3),
+
+	ADDRTYPE_INET_UNSPEC	= ADDRTYPE_INET | ADDRTYPE_UNSPEC,
+	ADDRTYPE_INET_MULTI	= ADDRTYPE_INET | ADDRTYPE_MULTI
+};
+
+static inline bool is_addrtype_inet(const inet_prefix *p)
+{
+	return p->flags & ADDRTYPE_INET;
+}
+
+static inline bool is_addrtype_inet_unspec(const inet_prefix *p)
+{
+	return (p->flags & ADDRTYPE_INET_UNSPEC) == ADDRTYPE_INET_UNSPEC;
+}
+
+static inline bool is_addrtype_inet_multi(const inet_prefix *p)
+{
+	return (p->flags & ADDRTYPE_INET_MULTI) == ADDRTYPE_INET_MULTI;
+}
+
+static inline bool is_addrtype_inet_not_unspec(const inet_prefix *p)
+{
+	return (p->flags & ADDRTYPE_INET_UNSPEC) == ADDRTYPE_INET;
+}
+
+static inline bool is_addrtype_inet_not_multi(const inet_prefix *p)
+{
+	return (p->flags & ADDRTYPE_INET_MULTI) == ADDRTYPE_INET;
+}
 
 #define DN_MAXADDL 20
 #ifndef AF_DECnet
@@ -236,7 +269,6 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 extern int cmdlineno;
 ssize_t getcmdline(char **line, size_t *len, FILE *in);
 int makeargs(char *line, char *argv[], int maxargs);
-int inet_get_addr(const char *src, __u32 *dst, struct in6_addr *dst6);
 
 struct iplink_req {
 	struct nlmsghdr		n;

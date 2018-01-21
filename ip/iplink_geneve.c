@@ -57,9 +57,8 @@ static void check_duparg(__u64 *attrs, int type, const char *key,
 static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 			  struct nlmsghdr *n)
 {
+	inet_prefix daddr;
 	__u32 vni = 0;
-	__u32 daddr = 0;
-	struct in6_addr daddr6 = IN6ADDR_ANY_INIT;
 	__u32 label = 0;
 	__u8 ttl = 0;
 	__u8 tos = 0;
@@ -71,6 +70,8 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u64 attrs = 0;
 	bool set_op = (n->nlmsg_type == RTM_NEWLINK &&
 		       !(n->nlmsg_flags & NLM_F_CREATE));
+
+	daddr.flags = 0;
 
 	while (argc > 0) {
 		if (!matches(*argv, "id") ||
@@ -84,11 +85,8 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			check_duparg(&attrs, IFLA_GENEVE_REMOTE, "remote",
 				     *argv);
-			if (!inet_get_addr(*argv, &daddr, &daddr6)) {
-				fprintf(stderr, "Invalid address \"%s\"\n", *argv);
-				return -1;
-			}
-			if (IN6_IS_ADDR_MULTICAST(&daddr6) || IN_MULTICAST(ntohl(daddr)))
+			get_addr(&daddr, *argv, AF_UNSPEC);
+			if (!is_addrtype_inet_not_multi(&daddr))
 				invarg("invalid remote address", *argv);
 		} else if (!matches(*argv, "ttl") ||
 			   !matches(*argv, "hoplimit")) {
@@ -191,18 +189,17 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 		 * ID (VNI) to identify the geneve device, and we do not need
 		 * the remote IP.
 		 */
-		if (!set_op && !daddr && IN6_IS_ADDR_UNSPECIFIED(&daddr6)) {
+		if (!set_op && !is_addrtype_inet(&daddr)) {
 			fprintf(stderr, "geneve: remote link partner not specified\n");
 			return -1;
 		}
 	}
 
 	addattr32(n, 1024, IFLA_GENEVE_ID, vni);
-	if (daddr)
-		addattr_l(n, 1024, IFLA_GENEVE_REMOTE, &daddr, 4);
-	if (!IN6_IS_ADDR_UNSPECIFIED(&daddr6)) {
-		addattr_l(n, 1024, IFLA_GENEVE_REMOTE6, &daddr6,
-			  sizeof(struct in6_addr));
+	if (is_addrtype_inet(&daddr)) {
+		int type = (daddr.family == AF_INET) ? IFLA_GENEVE_REMOTE :
+						       IFLA_GENEVE_REMOTE6;
+		addattr_l(n, sizeof(1024), type, daddr.data, daddr.bytelen);
 	}
 	if (!set_op || GENEVE_ATTRSET(attrs, IFLA_GENEVE_LABEL))
 		addattr32(n, 1024, IFLA_GENEVE_LABEL, label);

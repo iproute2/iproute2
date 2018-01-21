@@ -534,7 +534,7 @@ int get_addr64(__u64 *ap, const char *cp)
 	return 1;
 }
 
-int get_addr_1(inet_prefix *addr, const char *name, int family)
+static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 {
 	memset(addr, 0, sizeof(*addr));
 
@@ -543,9 +543,9 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	    strcmp(name, "any") == 0) {
 		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
-		addr->family = family;
-		addr->bytelen = (family == AF_INET6 ? 16 : 4);
-		addr->bitlen = -1;
+		addr->family = (family != AF_UNSPEC) ? family : AF_INET;
+		addr->bytelen = af_byte_len(addr->family);
+		addr->bitlen = -2;
 		return 0;
 	}
 
@@ -619,6 +619,36 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	return 0;
 }
 
+int get_addr_1(inet_prefix *addr, const char *name, int family)
+{
+	int ret;
+
+	ret = __get_addr_1(addr, name, family);
+	if (ret)
+		return ret;
+
+	switch (addr->family) {
+	case AF_INET:
+		if (!addr->data[0])
+			addr->flags |= ADDRTYPE_INET_UNSPEC;
+		else if (IN_MULTICAST(ntohl(addr->data[0])))
+			addr->flags |= ADDRTYPE_INET_MULTI;
+		else
+			addr->flags |= ADDRTYPE_INET;
+		break;
+	case AF_INET6:
+		if (IN6_IS_ADDR_UNSPECIFIED(addr->data))
+			addr->flags |= ADDRTYPE_INET_UNSPEC;
+		else if (IN6_IS_ADDR_MULTICAST(addr->data))
+			addr->flags |= ADDRTYPE_INET_MULTI;
+		else
+			addr->flags |= ADDRTYPE_INET;
+		break;
+	}
+
+	return 0;
+}
+
 int af_bit_len(int af)
 {
 	switch (af) {
@@ -644,46 +674,46 @@ int af_byte_len(int af)
 
 int get_prefix_1(inet_prefix *dst, char *arg, int family)
 {
-	int err;
-	unsigned int plen;
 	char *slash;
-
-	memset(dst, 0, sizeof(*dst));
-
-	if (strcmp(arg, "default") == 0 ||
-	    strcmp(arg, "any") == 0 ||
-	    strcmp(arg, "all") == 0) {
-		if ((family == AF_DECnet) || (family == AF_MPLS))
-			return -1;
-		dst->family = family;
-		dst->bytelen = 0;
-		dst->bitlen = 0;
-		dst->flags |= PREFIXLEN_SPECIFIED;
-		return 0;
-	}
+	int err, bitlen, flags;
 
 	slash = strchr(arg, '/');
 	if (slash)
 		*slash = 0;
 
 	err = get_addr_1(dst, arg, family);
-	if (err == 0) {
-		dst->bitlen = af_bit_len(dst->family);
 
-		if (slash) {
-			if (get_netmask(&plen, slash+1, 0)
-			    || plen > dst->bitlen) {
-				err = -1;
-				goto done;
-			}
-			dst->flags |= PREFIXLEN_SPECIFIED;
-			dst->bitlen = plen;
-		}
-	}
-done:
 	if (slash)
 		*slash = '/';
-	return err;
+
+	if (err)
+		return err;
+
+	bitlen = af_bit_len(dst->family);
+
+	flags = PREFIXLEN_SPECIFIED;
+	if (slash) {
+		unsigned int plen;
+
+		if (dst->bitlen == -2)
+			return -1;
+		if (get_netmask(&plen, slash + 1, 0))
+			return -1;
+		if (plen > bitlen)
+			return -1;
+
+		bitlen = plen;
+	} else {
+		if (dst->bitlen == -2)
+			bitlen = 0;
+		else
+			flags = 0;
+	}
+
+	dst->flags |= flags;
+	dst->bitlen = bitlen;
+
+	return 0;
 }
 
 static const char *family_name_verbose(int family)
@@ -1248,14 +1278,6 @@ int makeargs(char *line, char *argv[], int maxargs)
 	argv[argc] = NULL;
 
 	return argc;
-}
-
-int inet_get_addr(const char *src, __u32 *dst, struct in6_addr *dst6)
-{
-	if (strchr(src, ':'))
-		return inet_pton(AF_INET6, src, dst6);
-	else
-		return inet_pton(AF_INET, src, dst);
 }
 
 void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n)

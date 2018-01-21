@@ -49,7 +49,7 @@ static int genl_family = -1;
 
 static struct {
 	unsigned int cmd;
-	struct in6_addr addr;
+	inet_prefix addr;
 	__u32 keyid;
 	const char *pass;
 	__u8 alg_id;
@@ -152,7 +152,7 @@ static int seg6_do_cmd(void)
 		break;
 	}
 	case SEG6_CMD_SET_TUNSRC:
-		addattr_l(&req.n, sizeof(req), SEG6_ATTR_DST, &opts.addr,
+		addattr_l(&req.n, sizeof(req), SEG6_ATTR_DST, opts.addr.data,
 			  sizeof(struct in6_addr));
 		break;
 	case SEG6_CMD_DUMPHMAC:
@@ -226,9 +226,7 @@ int do_seg6(int argc, char **argv)
 		} else if (matches(*argv, "set") == 0) {
 			NEXT_ARG();
 			opts.cmd = SEG6_CMD_SET_TUNSRC;
-			if (!inet_get_addr(*argv, NULL, &opts.addr))
-				invarg("tunsrc ADDRESS value is invalid",
-				       *argv);
+			get_addr(&opts.addr, *argv, AF_INET6);
 		} else {
 			invarg("unknown", *argv);
 		}
