@@ -227,7 +227,8 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	__u32 vni;
-	__u8 tos;
+	__u8 ttl = 0;
+	__u8 tos = 0;
 
 	if (!tb)
 		return;
@@ -262,27 +263,20 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 	}
 
-	if (tb[IFLA_GENEVE_TTL]) {
-		__u8 ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
+	if (tb[IFLA_GENEVE_TTL])
+		ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
+	if (is_json_context() || ttl)
+		print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
+	else
+		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
 
-		if (ttl)
-			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
-	}
-
-	if (tb[IFLA_GENEVE_TOS] &&
-	    (tos = rta_getattr_u8(tb[IFLA_GENEVE_TOS]))) {
-		if (is_json_context()) {
-			print_0xhex(PRINT_JSON, "tos", "%#x", tos);
-		} else {
-			if (tos == 1) {
-				print_string(PRINT_FP,
-					     "tos",
-					     "tos %s ",
-					     "inherit");
-			} else {
-				fprintf(f, "tos %#x ", tos);
-			}
-		}
+	if (tb[IFLA_GENEVE_TOS])
+		tos = rta_getattr_u8(tb[IFLA_GENEVE_TOS]);
+	if (tos) {
+		if (is_json_context() || tos != 1)
+			print_0xhex(PRINT_ANY, "tos", "tos 0x%x ", tos);
+		else
+			print_string(PRINT_FP, NULL, "tos %s ", "inherit");
 	}
 
 	if (tb[IFLA_GENEVE_LABEL]) {

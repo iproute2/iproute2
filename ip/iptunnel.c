@@ -326,7 +326,7 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 	}
 
 	if (p->iph.ttl)
-		printf(" ttl %d", p->iph.ttl);
+		printf(" ttl %u", p->iph.ttl);
 	else
 		printf(" ttl inherit");
 

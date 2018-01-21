@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 # SPDX-License-Identifier: GPL-2.0
 
 CheckForwarding () {
@@ -7,7 +7,7 @@ CheckForwarding () {
   fwd=0
   if [ -d $sbase ]; then
     for dir in $sbase/*/forwarding; do
-      fwd=$[$fwd + `cat $dir`]
+      fwd=$(( fwd + $(cat "$dir") ))
     done
   else
     fwd=2
@@ -128,12 +128,12 @@ fi
 arping -q -A -c 1 -I $dev $ipaddr
 noarp=$?
 ( sleep 2 ;
-  arping -q -U -c 1 -I $dev $ipaddr ) >& /dev/null </dev/null &
+  arping -q -U -c 1 -I $dev $ipaddr ) >/dev/null 2>&1 </dev/null &
 
-ip route add unreachable 224.0.0.0/24 >& /dev/null
-ip route add unreachable 255.255.255.255 >& /dev/null
+ip route add unreachable 224.0.0.0/24 >/dev/null 2>&1
+ip route add unreachable 255.255.255.255 >/dev/null 2>&1
 if [ "`ip link ls $dev | grep -c MULTICAST`" -ge 1 ]; then
-  ip route add 224.0.0.0/4 dev $dev scope global >& /dev/null
+  ip route add 224.0.0.0/4 dev $dev scope global >/dev/null 2>&1
 fi
 
 if [ $fwd -eq 0 ]; then

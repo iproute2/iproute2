@@ -132,4 +132,6 @@ int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 int cls_names_init(char *path);
 void cls_names_uninit(void);
 
+int action_a2n(char *arg, int *result, bool allow_num);
+
 #endif

@@ -87,7 +87,11 @@ ts_qdisc_available()
 
 rand_dev()
 {
-    echo "dev-$(tr -dc "[:alpha:]" < /dev/urandom | head -c 6)"
+    rnd=""
+    while [ ${#rnd} -ne 6 ]; do
+        rnd="$(head -c 250 /dev/urandom | tr -dc '[:alpha:]' | head -c 6)"
+    done
+    echo "dev-$rnd"
 }
 
 pr_failed()

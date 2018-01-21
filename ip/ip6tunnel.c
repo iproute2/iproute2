@@ -92,7 +92,10 @@ static void print_tunnel(struct ip6_tnl_parm2 *p)
 	else
 		printf(" encaplimit %u", p->encap_limit);
 
-	printf(" hoplimit %u", p->hop_limit);
+	if (p->hop_limit)
+		printf(" hoplimit %u", p->hop_limit);
+	else
+		printf(" hoplimit inherit");
 
 	if (p->flags & IP6_TNL_F_USE_ORIG_TCLASS)
 		printf(" tclass inherit");

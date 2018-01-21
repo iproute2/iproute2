@@ -23,6 +23,8 @@
 
 #include <linux/types.h>
 
+struct rtattr;
+
 const char *tnl_strproto(__u8 proto);
 
 int tnl_get_ioctl(const char *basedev, void *p);
@@ -32,6 +34,9 @@ int tnl_prl_ioctl(int cmd, const char *name, void *p);
 int tnl_6rd_ioctl(int cmd, const char *name, void *p);
 int tnl_ioctl_get_6rd(const char *name, void *p);
 __be32 tnl_parse_key(const char *name, const char *key);
+void tnl_print_encap(struct rtattr *tb[],
+		     int encap_type, int encap_flags,
+		     int encap_sport, int encap_dport);
 void tnl_print_stats(const char *buf);
 
 #endif

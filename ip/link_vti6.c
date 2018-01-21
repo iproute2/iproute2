@@ -24,20 +24,25 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
+static void print_usage(FILE *f)
+{
+	fprintf(f,
+		"Usage: ... vti6 [ remote ADDR ]\n"
+		"                [ local ADDR ]\n"
+		"                [ [i|o]key KEY ]\n"
+		"                [ dev PHYS_DEV ]\n"
+		"                [ fwmark MARK ]\n"
+		"\n"
+		"Where: ADDR := { IPV6_ADDRESS }\n"
+		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
+		"       MARK := { 0x0..0xffffffff }\n"
+	);
+}
 
 static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip link { add | set | change | replace | del } NAME\n");
-	fprintf(stderr, "          type { vti6 } [ remote ADDR ] [ local ADDR ]\n");
-	fprintf(stderr, "          [ [i|o]key KEY ]\n");
-	fprintf(stderr, "          [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "          [ fwmark MARK ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: NAME := STRING\n");
-	fprintf(stderr, "       ADDR := { IPV6_ADDRESS }\n");
-	fprintf(stderr, "       KEY  := { DOTTED_QUAD | NUMBER }\n");
-	fprintf(stderr, "       MARK := { 0x0..0xffffffff }\n");
+	print_usage(stderr);
 	exit(-1);
 }
 
@@ -168,7 +173,6 @@ static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	const char *remote = "any";
 	struct in6_addr saddr;
 	struct in6_addr daddr;
-	unsigned int link;
 	char s2[64];
 
 	if (!tb)
@@ -190,34 +194,45 @@ static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	print_string(PRINT_ANY, "local", "local %s ", local);
 
-	if (tb[IFLA_VTI_LINK] && (link = rta_getattr_u32(tb[IFLA_VTI_LINK]))) {
-		const char *n = if_indextoname(link, s2);
+	if (tb[IFLA_VTI_LINK]) {
+		unsigned int link = rta_getattr_u32(tb[IFLA_VTI_LINK]);
 
-		if (n)
-			print_string(PRINT_ANY, "link", "dev %s ", n);
-		else
-			print_uint(PRINT_ANY, "link_index", "dev %u ", link);
+		if (link) {
+			print_string(PRINT_ANY, "link", "dev %s ",
+				     ll_index_to_name(link));
+		}
 	}
 
 	if (tb[IFLA_VTI_IKEY]) {
-		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_VTI_IKEY]), s2, sizeof(s2));
-		print_string(PRINT_ANY, "ikey", "ikey %s ", s2);
+		struct rtattr *rta = tb[IFLA_VTI_IKEY];
+		__u32 key = rta_getattr_u32(rta);
+
+		if (key && inet_ntop(AF_INET, RTA_DATA(rta), s2, sizeof(s2)))
+			print_string(PRINT_ANY, "ikey", "ikey %s ", s2);
 	}
 
 	if (tb[IFLA_VTI_OKEY]) {
-		inet_ntop(AF_INET, RTA_DATA(tb[IFLA_VTI_OKEY]), s2, sizeof(s2));
-		print_string(PRINT_ANY, "okey", "okey %s ", s2);
+		struct rtattr *rta = tb[IFLA_VTI_OKEY];
+		__u32 key = rta_getattr_u32(rta);
+
+		if (key && inet_ntop(AF_INET, RTA_DATA(rta), s2, sizeof(s2)))
+			print_string(PRINT_ANY, "okey", "okey %s ", s2);
 	}
 
 	if (tb[IFLA_VTI_FWMARK]) {
 		__u32 fwmark = rta_getattr_u32(tb[IFLA_VTI_FWMARK]);
 
 		if (fwmark) {
-			snprintf(s2, sizeof(s2), "0x%x", fwmark);
-
-			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+			print_0xhex(PRINT_ANY,
+				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
+}
+
+static void vti6_print_help(struct link_util *lu, int argc, char **argv,
+	FILE *f)
+{
+	print_usage(f);
 }
 
 struct link_util vti6_link_util = {
@@ -225,4 +240,5 @@ struct link_util vti6_link_util = {
 	.maxattr = IFLA_VTI_MAX,
 	.parse_opt = vti6_parse_opt,
 	.print_opt = vti6_print_opt,
+	.print_help = vti6_print_help,
 };

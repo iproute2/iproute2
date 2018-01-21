@@ -194,7 +194,10 @@ int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 		} else {
 			struct action_util *a = NULL;
 
-			strncpy(k, *argv, sizeof(k) - 1);
+			if (!action_a2n(*argv, NULL, false))
+				strncpy(k, "gact", sizeof(k) - 1);
+			else
+				strncpy(k, *argv, sizeof(k) - 1);
 			eap = 0;
 			if (argc > 0) {
 				a = get_action_kind(k);

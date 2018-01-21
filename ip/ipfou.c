@@ -52,7 +52,7 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 	__u8 ipproto, type;
 	bool gue_set = false;
 	int ipproto_set = 0;
-	unsigned short family = AF_INET;
+	__u8 family = AF_INET;
 
 	while (argc > 0) {
 		if (!matches(*argv, "port")) {
@@ -103,7 +103,7 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 
 	addattr16(n, 1024, FOU_ATTR_PORT, port);
 	addattr8(n, 1024, FOU_ATTR_TYPE, type);
-	addattr16(n, 1024, FOU_ATTR_AF, family);
+	addattr8(n, 1024, FOU_ATTR_AF, family);
 
 	if (ipproto_set)
 		addattr8(n, 1024, FOU_ATTR_IPPROTO, ipproto);

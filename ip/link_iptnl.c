@@ -360,11 +360,12 @@ get_failed:
 
 static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
-	char s1[1024];
 	char s2[64];
 	const char *local = "any";
 	const char *remote = "any";
-	__u16 prefixlen, type;
+	__u16 prefixlen;
+	__u8 ttl = 0;
+	__u8 tos = 0;
 
 	if (!tb)
 		return;
@@ -407,41 +408,29 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 
 	print_string(PRINT_ANY, "local", "local %s ", local);
 
-	if (tb[IFLA_IPTUN_LINK] && rta_getattr_u32(tb[IFLA_IPTUN_LINK])) {
+	if (tb[IFLA_IPTUN_LINK]) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
-		const char *n = if_indextoname(link, s2);
 
-		if (n)
-			print_string(PRINT_ANY, "link", "dev %s ", n);
-		else
-			print_int(PRINT_ANY, "link_index", "dev %u ", link);
-	}
-
-	if (tb[IFLA_IPTUN_TTL]) {
-		__u8 ttl = rta_getattr_u8(tb[IFLA_IPTUN_TTL]);
-
-		if (ttl)
-			print_int(PRINT_ANY, "ttl", "ttl %d ", ttl);
-		else
-			print_int(PRINT_JSON, "ttl", NULL, ttl);
-	} else {
-		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
-	}
-
-	if (tb[IFLA_IPTUN_TOS]) {
-		int tos = rta_getattr_u8(tb[IFLA_IPTUN_TOS]);
-
-		if (tos) {
-			if (is_json_context()) {
-				print_0xhex(PRINT_JSON, "tos", "%#x", tos);
-			} else {
-				fputs("tos ", f);
-				if (tos == 1)
-					fputs("inherit ", f);
-				else
-					fprintf(f, "0x%x ", tos);
-			}
+		if (link) {
+			print_string(PRINT_ANY, "link", "dev %s ",
+				     ll_index_to_name(link));
 		}
+	}
+
+	if (tb[IFLA_IPTUN_TTL])
+		ttl = rta_getattr_u8(tb[IFLA_IPTUN_TTL]);
+	if (is_json_context() || ttl)
+		print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
+	else
+		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
+
+	if (tb[IFLA_IPTUN_TOS])
+		tos = rta_getattr_u8(tb[IFLA_IPTUN_TOS]);
+	if (tos) {
+		if (is_json_context() || tos != 1)
+			print_0xhex(PRINT_ANY, "tos", "tos 0x%x ", tos);
+		else
+			print_string(PRINT_FP, NULL, "tos %s ", "inherit");
 	}
 
 	if (tb[IFLA_IPTUN_PMTUDISC] && rta_getattr_u8(tb[IFLA_IPTUN_PMTUDISC]))
@@ -465,7 +454,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 
 		const char *prefix = inet_ntop(AF_INET6,
 					       RTA_DATA(tb[IFLA_IPTUN_6RD_PREFIX]),
-					       s1, sizeof(s1));
+					       s2, sizeof(s2));
 
 		if (is_json_context()) {
 			print_string(PRINT_JSON, "prefix", NULL, prefix);
@@ -492,79 +481,20 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		}
 	}
 
-	if (tb[IFLA_IPTUN_ENCAP_TYPE] &&
-	    (type = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_TYPE])) != TUNNEL_ENCAP_NONE) {
-		__u16 flags = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_FLAGS]);
-		__u16 sport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_SPORT]);
-		__u16 dport = rta_getattr_u16(tb[IFLA_IPTUN_ENCAP_DPORT]);
-
-		open_json_object("encap");
-		print_string(PRINT_FP, NULL, "encap ", NULL);
-		switch (type) {
-		case TUNNEL_ENCAP_FOU:
-			print_string(PRINT_ANY, "type", "%s ", "fou");
-			break;
-		case TUNNEL_ENCAP_GUE:
-			print_string(PRINT_ANY, "type", "%s ", "gue");
-			break;
-		default:
-			print_null(PRINT_ANY, "type", "unknown ", NULL);
-			break;
-		}
-
-		if (is_json_context()) {
-			print_uint(PRINT_JSON,
-				   "sport",
-				   NULL,
-				   sport ? ntohs(sport) : 0);
-			print_uint(PRINT_JSON, "dport", NULL, ntohs(dport));
-			print_bool(PRINT_JSON,
-				   "csum",
-				   NULL,
-				   flags & TUNNEL_ENCAP_FLAG_CSUM);
-			print_bool(PRINT_JSON,
-				   "csum6",
-				   NULL,
-				   flags & TUNNEL_ENCAP_FLAG_CSUM6);
-			print_bool(PRINT_JSON,
-				   "remcsum",
-				   NULL,
-				   flags & TUNNEL_ENCAP_FLAG_REMCSUM);
-			close_json_object();
-		} else {
-			if (sport == 0)
-				fputs("encap-sport auto ", f);
-			else
-				fprintf(f, "encap-sport %u", ntohs(sport));
-
-			fprintf(f, "encap-dport %u ", ntohs(dport));
-
-			if (flags & TUNNEL_ENCAP_FLAG_CSUM)
-				fputs("encap-csum ", f);
-			else
-				fputs("noencap-csum ", f);
-
-			if (flags & TUNNEL_ENCAP_FLAG_CSUM6)
-				fputs("encap-csum6 ", f);
-			else
-				fputs("noencap-csum6 ", f);
-
-			if (flags & TUNNEL_ENCAP_FLAG_REMCSUM)
-				fputs("encap-remcsum ", f);
-			else
-				fputs("noencap-remcsum ", f);
-		}
-	}
-
 	if (tb[IFLA_IPTUN_FWMARK]) {
 		__u32 fwmark = rta_getattr_u32(tb[IFLA_IPTUN_FWMARK]);
 
 		if (fwmark) {
-			snprintf(s2, sizeof(s2), "0x%x", fwmark);
-
-			print_string(PRINT_ANY, "fwmark", "fwmark %s ", s2);
+			print_0xhex(PRINT_ANY,
+				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
+
+	tnl_print_encap(tb,
+			IFLA_IPTUN_ENCAP_TYPE,
+			IFLA_IPTUN_ENCAP_FLAGS,
+			IFLA_IPTUN_ENCAP_SPORT,
+			IFLA_IPTUN_ENCAP_DPORT);
 }
 
 static void iptunnel_print_help(struct link_util *lu, int argc, char **argv,

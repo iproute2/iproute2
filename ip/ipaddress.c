@@ -1558,6 +1558,8 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (!brief) {
+		const char *name;
+
 		if (filter.oneline || filter.flushb) {
 			const char *dev = ll_index_to_name(ifa->ifa_index);
 
@@ -1570,20 +1572,13 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			}
 		}
 
-		int family = ifa->ifa_family;
-
-		if (ifa->ifa_family == AF_INET)
-			print_string(PRINT_ANY, "family", "    %s ", "inet");
-		else if (ifa->ifa_family == AF_INET6)
-			print_string(PRINT_ANY, "family", "    %s ", "inet6");
-		else if (ifa->ifa_family == AF_DECnet)
-			print_string(PRINT_ANY, "family", "    %s ", "dnet");
-		else if (ifa->ifa_family == AF_IPX)
-			print_string(PRINT_ANY, "family", "     %s ", "ipx");
-		else
-			print_int(PRINT_ANY,
-				  "family_index",
-				  "    family %d ", family);
+		name = family_name(ifa->ifa_family);
+		if (*name != '?') {
+			print_string(PRINT_ANY, "family", "    %s ", name);
+		} else {
+			print_int(PRINT_ANY, "family_index", "    family %d ",
+				  ifa->ifa_family);
+		}
 	}
 
 	if (rta_tb[IFA_LOCAL]) {
@@ -2251,6 +2246,12 @@ ipaddr_loop_each_vf(struct rtattr *tb[], int vfnum, int *min, int *max)
 
 	for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		parse_rtattr_nested(vf, IFLA_VF_MAX, i);
+
+		if (!vf[IFLA_VF_RATE]) {
+			fprintf(stderr, "VF min/max rate API not supported\n");
+			exit(1);
+		}
+
 		vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
 		if (vf_rate->vf == vfnum) {
 			*min = vf_rate->min_tx_rate;

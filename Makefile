@@ -1,6 +1,13 @@
 # SPDX-License-Identifier: GPL-2.0
 # Top level Makefile for iproute2
 
+ifeq ("$(origin V)", "command line")
+VERBOSE = $(V)
+endif
+ifndef VERBOSE
+VERBOSE = 0
+endif
+
 ifeq ($(VERBOSE),0)
 MAKEFLAGS += --no-print-directory
 endif

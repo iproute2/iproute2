@@ -26,8 +26,6 @@ static const char *port_states[] = {
 	[BR_STATE_BLOCKING] = "blocking",
 };
 
-extern char *if_indextoname(unsigned int __ifindex, char *__ifname);
-
 static void print_link_flags(FILE *fp, unsigned int flags)
 {
 	fprintf(fp, "<");
@@ -104,7 +102,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	int len = n->nlmsg_len;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
-	char b1[IFNAMSIZ];
 
 	len -= NLMSG_LENGTH(sizeof(*ifi));
 	if (len < 0) {
@@ -135,14 +132,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
 
 	if (tb[IFLA_LINK]) {
-		SPRINT_BUF(b1);
 		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
 
-		if (iflink == 0)
-			fprintf(fp, "@NONE: ");
-		else
-			fprintf(fp, "@%s: ",
-				if_indextoname(iflink, b1));
+		fprintf(fp, "@%s: ",
+			iflink ? ll_index_to_name(iflink) : "NONE");
 	} else
 		fprintf(fp, ": ");
 
@@ -151,9 +144,11 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (tb[IFLA_MTU])
 		fprintf(fp, "mtu %u ", rta_getattr_u32(tb[IFLA_MTU]));
 
-	if (tb[IFLA_MASTER])
-		fprintf(fp, "master %s ",
-			if_indextoname(rta_getattr_u32(tb[IFLA_MASTER]), b1));
+	if (tb[IFLA_MASTER]) {
+		int master = rta_getattr_u32(tb[IFLA_MASTER]);
+
+		fprintf(fp, "master %s ", ll_index_to_name(master));
+	}
 
 	if (tb[IFLA_PROTINFO]) {
 		if (tb[IFLA_PROTINFO]->rta_type & NLA_F_NESTED) {
