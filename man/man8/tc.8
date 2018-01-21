@@ -11,7 +11,11 @@ tc \- show / manipulate traffic control settings
 \fIqdisc-id\fR
 .B | root ]
 .B [ handle
-\fIqdisc-id\fR ] qdisc
+\fIqdisc-id\fR ]
+.B [ ingress_block
+\fIBLOCK_INDEX\fR ]
+.B [ egress_block
+\fIBLOCK_INDEX\fR ] qdisc
 [ qdisc specific parameters ]
 .P
 
@@ -43,6 +47,19 @@ tc \- show / manipulate traffic control settings
 
 .B tc
 .RI "[ " OPTIONS " ]"
+.B filter [ add | change | replace | delete | get ] block
+\fIBLOCK_INDEX\fR
+.B [ handle \fIfilter-id\fR ]
+.B protocol
+\fIprotocol\fR
+.B prio
+\fIpriority\fR filtertype
+[ filtertype specific parameters ]
+.B flowid
+\fIflow-id\fR
+
+.B tc
+.RI "[ " OPTIONS " ]"
 .RI "[ " FORMAT " ]"
 .B qdisc show [ dev
 \fIDEV\fR
@@ -58,6 +75,11 @@ tc \- show / manipulate traffic control settings
 .RI "[ " OPTIONS " ]"
 .B filter show dev
 \fIDEV\fR
+.P
+.B tc
+.RI "[ " OPTIONS " ]"
+.B filter show block
+\fIBLOCK_INDEX\fR
 
 .P
 .ti 8

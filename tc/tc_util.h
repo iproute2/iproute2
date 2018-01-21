@@ -134,4 +134,6 @@ void cls_names_uninit(void);
 
 int action_a2n(char *arg, int *result, bool allow_num);
 
+bool tc_qdisc_block_exists(__u32 block_index);
+
 #endif

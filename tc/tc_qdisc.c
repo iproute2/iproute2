@@ -31,6 +31,7 @@ static int usage(void)
 	fprintf(stderr, "       [ handle QHANDLE ] [ root | ingress | clsact | parent CLASSID ]\n");
 	fprintf(stderr, "       [ estimator INTERVAL TIME_CONSTANT ]\n");
 	fprintf(stderr, "       [ stab [ help | STAB_OPTIONS] ]\n");
+	fprintf(stderr, "       [ ingress_block BLOCK_INDEX ] [ egress_block BLOCK_INDEX ]\n");
 	fprintf(stderr, "       [ [ QDISC_KIND ] [ help | OPTIONS ] ]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "       tc qdisc show [ dev STRING ] [ ingress | clsact ] [ invisible ]\n");
@@ -61,6 +62,8 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.t.tcm_family = AF_UNSPEC,
 	};
+	__u32 ingress_block = 0;
+	__u32 egress_block = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -121,6 +124,14 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 			if (parse_size_table(&argc, &argv, &stab.szopts) < 0)
 				return -1;
 			continue;
+		} else if (matches(*argv, "ingress_block") == 0) {
+			NEXT_ARG();
+			if (get_u32(&ingress_block, *argv, 0) || !ingress_block)
+				invarg("invalid ingress block index value", *argv);
+		} else if (matches(*argv, "egress_block") == 0) {
+			NEXT_ARG();
+			if (get_u32(&egress_block, *argv, 0) || !egress_block)
+				invarg("invalid egress block index value", *argv);
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -137,6 +148,13 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 		addattr_l(&req.n, sizeof(req), TCA_KIND, k, strlen(k)+1);
 	if (est.ewma_log)
 		addattr_l(&req.n, sizeof(req), TCA_RATE, &est, sizeof(est));
+
+	if (ingress_block)
+		addattr32(&req.n, sizeof(req),
+			  TCA_INGRESS_BLOCK, ingress_block);
+	if (egress_block)
+		addattr32(&req.n, sizeof(req),
+			  TCA_EGRESS_BLOCK, egress_block);
 
 	if (q) {
 		if (q->parse_qopt) {
@@ -269,6 +287,24 @@ int print_qdisc(const struct sockaddr_nl *who,
 	if (tb[TCA_HW_OFFLOAD] &&
 	    (rta_getattr_u8(tb[TCA_HW_OFFLOAD])))
 		print_bool(PRINT_ANY, "offloaded", "offloaded ", true);
+
+	if (tb[TCA_INGRESS_BLOCK] &&
+	    RTA_PAYLOAD(tb[TCA_INGRESS_BLOCK]) >= sizeof(__u32)) {
+		__u32 block = rta_getattr_u32(tb[TCA_INGRESS_BLOCK]);
+
+		if (block)
+			print_uint(PRINT_ANY, "ingress_block",
+				   "ingress_block %u ", block);
+	}
+
+	if (tb[TCA_EGRESS_BLOCK] &&
+	    RTA_PAYLOAD(tb[TCA_EGRESS_BLOCK]) >= sizeof(__u32)) {
+		__u32 block = rta_getattr_u32(tb[TCA_EGRESS_BLOCK]);
+
+		if (block)
+			print_uint(PRINT_ANY, "egress_block",
+				   "egress_block %u ", block);
+	}
 
 	/* pfifo_fast is generic enough to warrant the hardcoding --JHS */
 	if (strcmp("pfifo_fast", RTA_DATA(tb[TCA_KIND])) == 0)
@@ -411,4 +447,65 @@ int do_qdisc(int argc, char **argv)
 	}
 	fprintf(stderr, "Command \"%s\" is unknown, try \"tc qdisc help\".\n", *argv);
 	return -1;
+}
+
+struct tc_qdisc_block_exists_ctx {
+	__u32 block_index;
+	bool found;
+};
+
+static int tc_qdisc_block_exists_cb(const struct sockaddr_nl *who,
+				    struct nlmsghdr *n, void *arg)
+{
+	struct tc_qdisc_block_exists_ctx *ctx = arg;
+	struct tcmsg *t = NLMSG_DATA(n);
+	struct rtattr *tb[TCA_MAX+1];
+	int len = n->nlmsg_len;
+
+	if (n->nlmsg_type != RTM_NEWQDISC)
+		return 0;
+
+	len -= NLMSG_LENGTH(sizeof(*t));
+	if (len < 0)
+		return -1;
+
+	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+
+	if (tb[TCA_KIND] == NULL)
+		return -1;
+
+	if (tb[TCA_INGRESS_BLOCK] &&
+	    RTA_PAYLOAD(tb[TCA_INGRESS_BLOCK]) >= sizeof(__u32)) {
+		__u32 block = rta_getattr_u32(tb[TCA_INGRESS_BLOCK]);
+
+		if (block == ctx->block_index)
+			ctx->found = true;
+	}
+
+	if (tb[TCA_EGRESS_BLOCK] &&
+	    RTA_PAYLOAD(tb[TCA_EGRESS_BLOCK]) >= sizeof(__u32)) {
+		__u32 block = rta_getattr_u32(tb[TCA_EGRESS_BLOCK]);
+
+		if (block == ctx->block_index)
+			ctx->found = true;
+	}
+	return 0;
+}
+
+bool tc_qdisc_block_exists(__u32 block_index)
+{
+	struct tc_qdisc_block_exists_ctx ctx = { .block_index = block_index };
+	struct tcmsg t = { .tcm_family = AF_UNSPEC };
+
+	if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
+		perror("Cannot send dump request");
+		return false;
+	}
+
+	if (rtnl_dump_filter(&rth, tc_qdisc_block_exists_cb, &ctx) < 0) {
+		perror("Dump terminated\n");
+		return false;
+	}
+
+	return ctx.found;
 }
