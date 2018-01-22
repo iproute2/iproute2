@@ -381,6 +381,12 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (!tb)
 		return;
 
+	if (tb[IFLA_VXLAN_COLLECT_METADATA] &&
+	    rta_getattr_u8(tb[IFLA_VXLAN_COLLECT_METADATA])) {
+		print_bool(PRINT_ANY, "external", "external", true);
+		return;
+	}
+
 	if (!tb[IFLA_VXLAN_ID] ||
 	    RTA_PAYLOAD(tb[IFLA_VXLAN_ID]) < sizeof(__u32))
 		return;
@@ -581,10 +587,6 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VXLAN_REMCSUM_RX] &&
 	    rta_getattr_u8(tb[IFLA_VXLAN_REMCSUM_RX]))
 		print_bool(PRINT_ANY, "remcsum_rx", "remcsumrx ", true);
-
-	if (tb[IFLA_VXLAN_COLLECT_METADATA] &&
-	    rta_getattr_u8(tb[IFLA_VXLAN_COLLECT_METADATA]))
-		print_bool(PRINT_ANY, "collect_metadata", "external ", true);
 
 	if (tb[IFLA_VXLAN_GBP])
 		print_bool(PRINT_ANY, "gbp", "gbp ", true);

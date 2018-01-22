@@ -341,8 +341,10 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 	if (!tb)
 		return;
 
-	if (tb[IFLA_IPTUN_COLLECT_METADATA])
-		print_bool(PRINT_ANY, "external", "external ", true);
+	if (tb[IFLA_IPTUN_COLLECT_METADATA]) {
+		print_bool(PRINT_ANY, "external", "external", true);
+		return;
+	}
 
 	if (tb[IFLA_IPTUN_FLAGS])
 		flags = rta_getattr_u32(tb[IFLA_IPTUN_FLAGS]);

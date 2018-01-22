@@ -391,7 +391,7 @@ get_failed:
 	return 0;
 }
 
-static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
+static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
 	const char *local = "any";
@@ -400,6 +400,14 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 	unsigned int oflags = 0;
 	__u8 ttl = 0;
 	__u8 tos = 0;
+
+	if (!tb)
+		return;
+
+	if (tb[IFLA_GRE_COLLECT_METADATA]) {
+		print_bool(PRINT_ANY, "external", "external", true);
+		return;
+	}
 
 	if (tb[IFLA_GRE_REMOTE]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
@@ -451,6 +459,9 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 			print_bool(PRINT_JSON, "pmtudisc", NULL, true);
 	}
 
+	if (tb[IFLA_GRE_IGNORE_DF] && rta_getattr_u8(tb[IFLA_GRE_IGNORE_DF]))
+		print_bool(PRINT_ANY, "ignore_df", "ignore-df ", true);
+
 	if (tb[IFLA_GRE_IFLAGS])
 		iflags = rta_getattr_u16(tb[IFLA_GRE_IFLAGS]);
 
@@ -484,20 +495,6 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
-}
-
-static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
-{
-	if (!tb)
-		return;
-
-	if (!tb[IFLA_GRE_COLLECT_METADATA])
-		gre_print_direct_opt(f, tb);
-	else
-		print_bool(PRINT_ANY, "external", "external ", true);
-
-	if (tb[IFLA_GRE_IGNORE_DF] && rta_getattr_u8(tb[IFLA_GRE_IGNORE_DF]))
-		print_bool(PRINT_ANY, "ignore_df", "ignore-df ", true);
 
 	if (tb[IFLA_GRE_ERSPAN_INDEX]) {
 		__u32 erspan_idx = rta_getattr_u32(tb[IFLA_GRE_ERSPAN_INDEX]);

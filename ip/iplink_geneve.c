@@ -230,6 +230,11 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (!tb)
 		return;
 
+	if (tb[IFLA_GENEVE_COLLECT_METADATA]) {
+		print_bool(PRINT_ANY, "external", "external", true);
+		return;
+	}
+
 	if (!tb[IFLA_GENEVE_ID] ||
 	    RTA_PAYLOAD(tb[IFLA_GENEVE_ID]) < sizeof(__u32))
 		return;
@@ -291,9 +296,6 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "port",
 			   "dstport %u ",
 			   rta_getattr_be16(tb[IFLA_GENEVE_PORT]));
-
-	if (tb[IFLA_GENEVE_COLLECT_METADATA])
-		print_bool(PRINT_ANY, "collect_metadata", "external ", true);
 
 	if (tb[IFLA_GENEVE_UDP_CSUM]) {
 		if (is_json_context()) {
