@@ -506,7 +506,8 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_GRE_ERSPAN_INDEX]) {
 		__u32 erspan_idx = rta_getattr_u32(tb[IFLA_GRE_ERSPAN_INDEX]);
 
-		print_uint(PRINT_ANY, "erspan_index", "erspan_index %u ", erspan_idx);
+		print_uint(PRINT_ANY,
+			   "erspan_index", "erspan_index %u ", erspan_idx);
 	}
 
 	if (tb[IFLA_GRE_ERSPAN_VER]) {

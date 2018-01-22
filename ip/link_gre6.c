@@ -568,7 +568,8 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GRE_ERSPAN_INDEX]) {
 		__u32 erspan_idx = rta_getattr_u32(tb[IFLA_GRE_ERSPAN_INDEX]);
-		print_uint(PRINT_ANY, "erspan_index", "erspan_index %u ", erspan_idx);
+		print_uint(PRINT_ANY,
+			   "erspan_index", "erspan_index %u ", erspan_idx);
 	}
 
 	if (tb[IFLA_GRE_ERSPAN_VER]) {
@@ -592,49 +593,6 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		__u16 erspan_hwid = rta_getattr_u16(tb[IFLA_GRE_ERSPAN_HWID]);
 
 		print_hex(PRINT_ANY, "erspan_hwid", "erspan_hwid 0x%x ", erspan_hwid);
-	}
-
-	if (tb[IFLA_GRE_ENCAP_TYPE] &&
-	    rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE) {
-		__u16 type = rta_getattr_u16(tb[IFLA_GRE_ENCAP_TYPE]);
-		__u16 flags = rta_getattr_u16(tb[IFLA_GRE_ENCAP_FLAGS]);
-		__u16 sport = rta_getattr_u16(tb[IFLA_GRE_ENCAP_SPORT]);
-		__u16 dport = rta_getattr_u16(tb[IFLA_GRE_ENCAP_DPORT]);
-
-		open_json_object("encap");
-
-		print_string(PRINT_FP, NULL, "encap ", NULL);
-		switch (type) {
-		case TUNNEL_ENCAP_FOU:
-			print_string(PRINT_ANY, "type", "%s ", "fou");
-			break;
-		case TUNNEL_ENCAP_GUE:
-			print_string(PRINT_ANY, "type", "%s ", "gue");
-			break;
-		default:
-			print_null(PRINT_ANY, "type", "unknown ", NULL);
-			break;
-		}
-
-		if (is_json_context()) {
-			print_uint(PRINT_JSON,
-				   "sport",
-				   NULL,
-				   sport ? ntohs(sport) : 0);
-			print_uint(PRINT_JSON, "dport", NULL, ntohs(dport));
-			print_bool(PRINT_JSON, "csum", NULL,
-					   flags & TUNNEL_ENCAP_FLAG_CSUM);
-			print_bool(PRINT_JSON, "csum6", NULL,
-					   flags & TUNNEL_ENCAP_FLAG_CSUM6);
-			print_bool(PRINT_JSON, "remcsum", NULL,
-					   flags & TUNNEL_ENCAP_FLAG_REMCSUM);
-			close_json_object();
-		} else {
-			if (sport == 0)
-				fputs("encap-sport auto ", f);
-			else
-				fprintf(f, "encap-sport %u", ntohs(sport));
-		}
 	}
 
 	tnl_print_encap(tb,
