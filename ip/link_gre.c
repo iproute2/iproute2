@@ -362,6 +362,8 @@ get_failed:
 		addattr_l(n, 1024, IFLA_GRE_LOCAL, &saddr, 4);
 		addattr_l(n, 1024, IFLA_GRE_REMOTE, &daddr, 4);
 		addattr_l(n, 1024, IFLA_GRE_PMTUDISC, &pmtudisc, 1);
+		if (ignore_df)
+			addattr8(n, 1024, IFLA_GRE_IGNORE_DF, ignore_df & 1);
 		if (link)
 			addattr32(n, 1024, IFLA_GRE_LINK, link);
 		addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
@@ -370,23 +372,22 @@ get_failed:
 		if (erspan_ver) {
 			addattr8(n, 1024, IFLA_GRE_ERSPAN_VER, erspan_ver);
 			if (erspan_ver == 1 && erspan_idx != 0) {
-				addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
+				addattr32(n, 1024,
+					  IFLA_GRE_ERSPAN_INDEX, erspan_idx);
 			} else if (erspan_ver == 2) {
-				addattr8(n, 1024, IFLA_GRE_ERSPAN_DIR, erspan_dir);
-				addattr16(n, 1024, IFLA_GRE_ERSPAN_HWID, erspan_hwid);
+				addattr8(n, 1024,
+					 IFLA_GRE_ERSPAN_DIR, erspan_dir);
+				addattr16(n, 1024,
+					  IFLA_GRE_ERSPAN_HWID, erspan_hwid);
 			}
 		}
+		addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
+		addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
+		addattr16(n, 1024, IFLA_GRE_ENCAP_SPORT, htons(encapsport));
+		addattr16(n, 1024, IFLA_GRE_ENCAP_DPORT, htons(encapdport));
 	} else {
 		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
 	}
-
-	addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
-	addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
-	addattr16(n, 1024, IFLA_GRE_ENCAP_SPORT, htons(encapsport));
-	addattr16(n, 1024, IFLA_GRE_ENCAP_DPORT, htons(encapdport));
-
-	if (ignore_df)
-		addattr8(n, 1024, IFLA_GRE_IGNORE_DF, ignore_df & 1);
 
 	return 0;
 }
