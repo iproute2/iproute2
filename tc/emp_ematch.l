@@ -137,7 +137,7 @@
 ")"					{
 						return yylval.i = *yytext;
 					}
-[^ \t\r\n()]+				{
+[^" \t\r\n()][^ \t\r\n()]*		{
 						yylval.b = bstr_alloc(yytext);
 						if (yylval.b == NULL)
 							return ERROR;
