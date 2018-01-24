@@ -406,10 +406,13 @@ get_failed:
 		if (erspan_ver) {
 			addattr8(n, 1024, IFLA_GRE_ERSPAN_VER, erspan_ver);
 			if (erspan_ver == 1 && erspan_idx != 0) {
-				addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
-			} else {
-				addattr8(n, 1024, IFLA_GRE_ERSPAN_DIR, erspan_dir);
-				addattr16(n, 1024, IFLA_GRE_ERSPAN_HWID, erspan_hwid);
+				addattr32(n, 1024,
+					  IFLA_GRE_ERSPAN_INDEX, erspan_idx);
+			} else if (erspan_ver == 2) {
+				addattr8(n, 1024,
+					 IFLA_GRE_ERSPAN_DIR, erspan_dir);
+				addattr16(n, 1024,
+					  IFLA_GRE_ERSPAN_HWID, erspan_hwid);
 			}
 		}
 		addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
@@ -439,7 +442,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		return;
 
 	if (tb[IFLA_GRE_COLLECT_METADATA]) {
-		print_bool(PRINT_ANY, "collect_metadata", "external", true);
+		print_bool(PRINT_ANY, "external", "external", true);
 		return;
 	}
 
@@ -604,7 +607,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 }
 
 static void gre_print_help(struct link_util *lu, int argc, char **argv,
-	FILE *f)
+			   FILE *f)
 {
 	print_usage(f);
 }

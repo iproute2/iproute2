@@ -362,6 +362,8 @@ get_failed:
 		addattr_l(n, 1024, IFLA_GRE_LOCAL, &saddr, 4);
 		addattr_l(n, 1024, IFLA_GRE_REMOTE, &daddr, 4);
 		addattr_l(n, 1024, IFLA_GRE_PMTUDISC, &pmtudisc, 1);
+		if (ignore_df)
+			addattr8(n, 1024, IFLA_GRE_IGNORE_DF, ignore_df & 1);
 		if (link)
 			addattr32(n, 1024, IFLA_GRE_LINK, link);
 		addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
@@ -370,28 +372,27 @@ get_failed:
 		if (erspan_ver) {
 			addattr8(n, 1024, IFLA_GRE_ERSPAN_VER, erspan_ver);
 			if (erspan_ver == 1 && erspan_idx != 0) {
-				addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
+				addattr32(n, 1024,
+					  IFLA_GRE_ERSPAN_INDEX, erspan_idx);
 			} else if (erspan_ver == 2) {
-				addattr8(n, 1024, IFLA_GRE_ERSPAN_DIR, erspan_dir);
-				addattr16(n, 1024, IFLA_GRE_ERSPAN_HWID, erspan_hwid);
+				addattr8(n, 1024,
+					 IFLA_GRE_ERSPAN_DIR, erspan_dir);
+				addattr16(n, 1024,
+					  IFLA_GRE_ERSPAN_HWID, erspan_hwid);
 			}
 		}
+		addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
+		addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
+		addattr16(n, 1024, IFLA_GRE_ENCAP_SPORT, htons(encapsport));
+		addattr16(n, 1024, IFLA_GRE_ENCAP_DPORT, htons(encapdport));
 	} else {
 		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
 	}
 
-	addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
-	addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
-	addattr16(n, 1024, IFLA_GRE_ENCAP_SPORT, htons(encapsport));
-	addattr16(n, 1024, IFLA_GRE_ENCAP_DPORT, htons(encapdport));
-
-	if (ignore_df)
-		addattr8(n, 1024, IFLA_GRE_IGNORE_DF, ignore_df & 1);
-
 	return 0;
 }
 
-static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
+static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
 	const char *local = "any";
@@ -400,6 +401,14 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 	unsigned int oflags = 0;
 	__u8 ttl = 0;
 	__u8 tos = 0;
+
+	if (!tb)
+		return;
+
+	if (tb[IFLA_GRE_COLLECT_METADATA]) {
+		print_bool(PRINT_ANY, "external", "external", true);
+		return;
+	}
 
 	if (tb[IFLA_GRE_REMOTE]) {
 		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
@@ -451,6 +460,9 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 			print_bool(PRINT_JSON, "pmtudisc", NULL, true);
 	}
 
+	if (tb[IFLA_GRE_IGNORE_DF] && rta_getattr_u8(tb[IFLA_GRE_IGNORE_DF]))
+		print_bool(PRINT_ANY, "ignore_df", "ignore-df ", true);
+
 	if (tb[IFLA_GRE_IFLAGS])
 		iflags = rta_getattr_u16(tb[IFLA_GRE_IFLAGS]);
 
@@ -484,20 +496,6 @@ static void gre_print_direct_opt(FILE *f, struct rtattr *tb[])
 				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
-}
-
-static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
-{
-	if (!tb)
-		return;
-
-	if (!tb[IFLA_GRE_COLLECT_METADATA])
-		gre_print_direct_opt(f, tb);
-	else
-		print_bool(PRINT_ANY, "external", "external ", true);
-
-	if (tb[IFLA_GRE_IGNORE_DF] && rta_getattr_u8(tb[IFLA_GRE_IGNORE_DF]))
-		print_bool(PRINT_ANY, "ignore_df", "ignore-df ", true);
 
 	if (tb[IFLA_GRE_ERSPAN_INDEX]) {
 		__u32 erspan_idx = rta_getattr_u32(tb[IFLA_GRE_ERSPAN_INDEX]);
