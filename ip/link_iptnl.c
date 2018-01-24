@@ -362,8 +362,6 @@ get_failed:
 static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
-	const char *local = "any";
-	const char *remote = "any";
 	__u16 prefixlen;
 	__u8 ttl = 0;
 	__u8 tos = 0;
@@ -393,23 +391,8 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		}
 	}
 
-	if (tb[IFLA_IPTUN_REMOTE]) {
-		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_REMOTE]);
-
-		if (addr)
-			remote = format_host(AF_INET, 4, &addr);
-	}
-
-	print_string(PRINT_ANY, "remote", "remote %s ", remote);
-
-	if (tb[IFLA_IPTUN_LOCAL]) {
-		unsigned int addr = rta_getattr_u32(tb[IFLA_IPTUN_LOCAL]);
-
-		if (addr)
-			local = format_host(AF_INET, 4, &addr);
-	}
-
-	print_string(PRINT_ANY, "local", "local %s ", local);
+	tnl_print_endpoint("remote", tb[IFLA_IPTUN_REMOTE], AF_INET);
+	tnl_print_endpoint("local", tb[IFLA_IPTUN_LOCAL], AF_INET);
 
 	if (tb[IFLA_IPTUN_LINK]) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);

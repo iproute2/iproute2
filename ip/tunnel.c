@@ -280,6 +280,33 @@ void tnl_print_encap(struct rtattr *tb[],
 	}
 }
 
+void tnl_print_endpoint(const char *name, const struct rtattr *rta, int family)
+{
+	const char *value;
+	inet_prefix dst;
+
+	if (!rta) {
+		value = "any";
+	} else if (get_addr_rta(&dst, rta, family)) {
+		value = "unknown";
+	} else if (dst.flags & ADDRTYPE_UNSPEC) {
+		value = "any";
+	} else {
+		value = format_host(family, dst.bytelen, dst.data);
+		if (!value)
+			value = "unknown";
+	}
+
+	if (is_json_context()) {
+		print_string(PRINT_JSON, name, NULL, value);
+	} else {
+		SPRINT_BUF(b1);
+
+		snprintf(b1, sizeof(b1), "%s %%s ", name);
+		print_string(PRINT_FP, NULL, b1, value);
+	}
+}
+
 /* tnl_print_stats - print tunnel statistics
  *
  * @buf - tunnel interface's line in /proc/net/dev,

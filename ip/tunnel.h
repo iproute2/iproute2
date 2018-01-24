@@ -37,6 +37,8 @@ __be32 tnl_parse_key(const char *name, const char *key);
 void tnl_print_encap(struct rtattr *tb[],
 		     int encap_type, int encap_flags,
 		     int encap_sport, int encap_dport);
+void tnl_print_endpoint(const char *name,
+			const struct rtattr *rta, int family);
 void tnl_print_stats(const char *buf);
 
 #endif
