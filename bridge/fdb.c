@@ -374,7 +374,7 @@ static int fdb_show(int argc, char **argv)
 
 	/*we'll keep around filter_dev for older kernels */
 	if (filter_dev) {
-		filter_index = if_nametoindex(filter_dev);
+		filter_index = ll_name_to_index(filter_dev);
 		if (filter_index == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n",
 				filter_dev);
@@ -463,7 +463,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 				invarg("invalid VNI\n", *argv);
 		} else if (strcmp(*argv, "via") == 0) {
 			NEXT_ARG();
-			via = if_nametoindex(*argv);
+			via = ll_name_to_index(*argv);
 			if (via == 0)
 				invarg("invalid device\n", *argv);
 		} else if (strcmp(*argv, "self") == 0) {

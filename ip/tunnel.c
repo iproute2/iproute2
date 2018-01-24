@@ -201,11 +201,11 @@ static const char *tnl_encap_str(const char *name, int enabled, int port)
 	const char *val;
 
 	if (!port) {
-		val = "auto";
+		val = "auto ";
 	} else if (port < 0) {
 		val = "";
 	} else {
-		snprintf(b1, sizeof(b1), "%u", port - 1);
+		snprintf(b1, sizeof(b1), "%u ", port - 1);
 		val = b1;
 	}
 

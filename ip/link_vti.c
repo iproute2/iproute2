@@ -69,7 +69,7 @@ static int vti_parse_opt(struct link_util *lu, int argc, char **argv,
 	unsigned int saddr = 0;
 	unsigned int daddr = 0;
 	unsigned int link = 0;
-	unsigned int fwmark = 0;
+	__u32 fwmark = 0;
 	int len;
 
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
@@ -137,7 +137,7 @@ get_failed:
 			saddr = get_addr32(*argv);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
-			link = if_nametoindex(*argv);
+			link = ll_name_to_index(*argv);
 			if (link == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n",
 					*argv);

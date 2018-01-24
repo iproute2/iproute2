@@ -238,23 +238,19 @@ get_failed:
 			saddr = get_addr32(*argv);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
-			link = if_nametoindex(*argv);
+			link = ll_name_to_index(*argv);
 			if (link == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n",
 					*argv);
 				exit(-1);
 			}
 		} else if (!matches(*argv, "ttl") ||
-			   !matches(*argv, "hoplimit")) {
-			unsigned int uval;
-
+			   !matches(*argv, "hoplimit") ||
+			   !matches(*argv, "hlim")) {
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
-				if (get_unsigned(&uval, *argv, 0))
+				if (get_u8(&ttl, *argv, 0))
 					invarg("invalid TTL\n", *argv);
-				if (uval > 255)
-					invarg("TTL must be <= 255\n", *argv);
-				ttl = uval;
 			} else
 				ttl = 0;
 		} else if (!matches(*argv, "tos") ||

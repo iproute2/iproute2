@@ -200,11 +200,12 @@ get_failed:
 			laddr = get_addr32(*argv);
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
-			link = if_nametoindex(*argv);
+			link = ll_name_to_index(*argv);
 			if (link == 0)
 				invarg("\"dev\" is invalid", *argv);
 		} else if (strcmp(*argv, "ttl") == 0 ||
-			   strcmp(*argv, "hoplimit") == 0) {
+			   strcmp(*argv, "hoplimit") == 0 ||
+			   strcmp(*argv, "hlim") == 0) {
 			NEXT_ARG();
 			if (strcmp(*argv, "inherit") != 0) {
 				if (get_u8(&ttl, *argv, 0))
