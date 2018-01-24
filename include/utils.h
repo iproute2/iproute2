@@ -120,6 +120,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family);
 int get_addr(inet_prefix *dst, const char *arg, int family);
 int get_prefix(inet_prefix *dst, char *arg, int family);
 int mask2bits(__u32 netmask);
+int get_addr_rta(inet_prefix *dst, const struct rtattr *rta, int family);
 int get_addr_ila(__u64 *val, const char *arg);
 
 int read_prop(const char *dev, char *prop, long *value);
@@ -174,6 +175,7 @@ int check_ifname(const char *);
 int get_ifname(char *, const char *);
 int matches(const char *arg, const char *pattern);
 int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits);
+int inet_addr_match_rta(const inet_prefix *m, const struct rtattr *rta);
 
 const char *dnet_ntop(int af, const void *addr, char *str, size_t len);
 int dnet_pton(int af, const char *src, void *addr);

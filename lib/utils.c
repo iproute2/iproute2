@@ -534,6 +534,28 @@ int get_addr64(__u64 *ap, const char *cp)
 	return 1;
 }
 
+static void set_address_type(inet_prefix *addr)
+{
+	switch (addr->family) {
+	case AF_INET:
+		if (!addr->data[0])
+			addr->flags |= ADDRTYPE_INET_UNSPEC;
+		else if (IN_MULTICAST(ntohl(addr->data[0])))
+			addr->flags |= ADDRTYPE_INET_MULTI;
+		else
+			addr->flags |= ADDRTYPE_INET;
+		break;
+	case AF_INET6:
+		if (IN6_IS_ADDR_UNSPECIFIED(addr->data))
+			addr->flags |= ADDRTYPE_INET_UNSPEC;
+		else if (IN6_IS_ADDR_MULTICAST(addr->data))
+			addr->flags |= ADDRTYPE_INET_MULTI;
+		else
+			addr->flags |= ADDRTYPE_INET;
+		break;
+	}
+}
+
 static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 {
 	memset(addr, 0, sizeof(*addr));
@@ -627,25 +649,7 @@ int get_addr_1(inet_prefix *addr, const char *name, int family)
 	if (ret)
 		return ret;
 
-	switch (addr->family) {
-	case AF_INET:
-		if (!addr->data[0])
-			addr->flags |= ADDRTYPE_INET_UNSPEC;
-		else if (IN_MULTICAST(ntohl(addr->data[0])))
-			addr->flags |= ADDRTYPE_INET_MULTI;
-		else
-			addr->flags |= ADDRTYPE_INET;
-		break;
-	case AF_INET6:
-		if (IN6_IS_ADDR_UNSPECIFIED(addr->data))
-			addr->flags |= ADDRTYPE_INET_UNSPEC;
-		else if (IN6_IS_ADDR_MULTICAST(addr->data))
-			addr->flags |= ADDRTYPE_INET_MULTI;
-		else
-			addr->flags |= ADDRTYPE_INET;
-		break;
-	}
-
+	set_address_type(addr);
 	return 0;
 }
 
@@ -731,6 +735,46 @@ int get_addr(inet_prefix *dst, const char *arg, int family)
 			family_name_verbose(family), arg);
 		exit(1);
 	}
+	return 0;
+}
+
+int get_addr_rta(inet_prefix *dst, const struct rtattr *rta, int family)
+{
+	const int len = RTA_PAYLOAD(rta);
+	const void *data = RTA_DATA(rta);
+
+	switch (len) {
+	case 4:
+		dst->family = AF_INET;
+		dst->bytelen = 4;
+		memcpy(dst->data, data, 4);
+		break;
+	case 16:
+		dst->family = AF_INET6;
+		dst->bytelen = 16;
+		memcpy(dst->data, data, 16);
+		break;
+	case 2:
+		dst->family = AF_DECnet;
+		dst->bytelen = 2;
+		memcpy(dst->data, data, 2);
+		break;
+	case 10:
+		dst->family = AF_IPX;
+		dst->bytelen = 10;
+		memcpy(dst->data, data, 10);
+		break;
+	default:
+		return -1;
+	}
+
+	if (family != AF_UNSPEC && family != dst->family)
+		return -2;
+
+	dst->bitlen = -1;
+	dst->flags = 0;
+
+	set_address_type(dst);
 	return 0;
 }
 
@@ -862,6 +906,19 @@ int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits)
 	}
 
 	return 0;
+}
+
+int inet_addr_match_rta(const inet_prefix *m, const struct rtattr *rta)
+{
+	inet_prefix dst;
+
+	if (!rta || m->family == AF_UNSPEC || m->bitlen <= 0)
+		return 0;
+
+	if (get_addr_rta(&dst, rta, m->family))
+		return -1;
+
+	return inet_addr_match(&dst, m, m->bitlen);
 }
 
 int __iproute2_hz_internal;
