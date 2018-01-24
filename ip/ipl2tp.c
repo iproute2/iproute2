@@ -296,7 +296,7 @@ static int get_response(struct nlmsghdr *n, void *arg)
 	struct l2tp_data *data = arg;
 	struct l2tp_parm *p = &data->config;
 	struct rtattr *attrs[L2TP_ATTR_MAX + 1];
-	struct rtattr *nla_stats;
+	struct rtattr *nla_stats, *rta;
 	int len;
 
 	/* Validate message and parse attributes */
@@ -352,30 +352,25 @@ static int get_response(struct nlmsghdr *n, void *arg)
 
 	if (attrs[L2TP_ATTR_RECV_TIMEOUT])
 		p->reorder_timeout = rta_getattr_u64(attrs[L2TP_ATTR_RECV_TIMEOUT]);
-	if (attrs[L2TP_ATTR_IP_SADDR]) {
-		p->local_ip.family = AF_INET;
-		p->local_ip.data[0] = rta_getattr_u32(attrs[L2TP_ATTR_IP_SADDR]);
-		p->local_ip.bytelen = 4;
-		p->local_ip.bitlen = -1;
-	}
-	if (attrs[L2TP_ATTR_IP_DADDR]) {
-		p->peer_ip.family = AF_INET;
-		p->peer_ip.data[0] = rta_getattr_u32(attrs[L2TP_ATTR_IP_DADDR]);
-		p->peer_ip.bytelen = 4;
-		p->peer_ip.bitlen = -1;
-	}
-	if (attrs[L2TP_ATTR_IP6_SADDR]) {
+
+	rta = attrs[L2TP_ATTR_IP_SADDR];
+	p->local_ip.family = AF_INET;
+	if (!rta) {
+		rta = attrs[L2TP_ATTR_IP6_SADDR];
 		p->local_ip.family = AF_INET6;
-		memcpy(&p->local_ip.data, RTA_DATA(attrs[L2TP_ATTR_IP6_SADDR]),
-			p->local_ip.bytelen = 16);
-		p->local_ip.bitlen = -1;
 	}
-	if (attrs[L2TP_ATTR_IP6_DADDR]) {
+	if (rta && get_addr_rta(&p->local_ip, rta, p->local_ip.family))
+		return -1;
+
+	rta = attrs[L2TP_ATTR_IP_DADDR];
+	p->peer_ip.family = AF_INET;
+	if (!rta) {
+		rta = attrs[L2TP_ATTR_IP6_DADDR];
 		p->peer_ip.family = AF_INET6;
-		memcpy(&p->peer_ip.data, RTA_DATA(attrs[L2TP_ATTR_IP6_DADDR]),
-			p->peer_ip.bytelen = 16);
-		p->peer_ip.bitlen = -1;
 	}
+	if (rta && get_addr_rta(&p->peer_ip, rta, p->peer_ip.family))
+		return -1;
+
 	if (attrs[L2TP_ATTR_UDP_SPORT])
 		p->local_udp_port = rta_getattr_u16(attrs[L2TP_ATTR_UDP_SPORT]);
 	if (attrs[L2TP_ATTR_UDP_DPORT])
