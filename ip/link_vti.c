@@ -165,30 +165,13 @@ get_failed:
 
 static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
-	const char *local = "any";
-	const char *remote = "any";
 	char s2[64];
 
 	if (!tb)
 		return;
 
-	if (tb[IFLA_VTI_REMOTE]) {
-		unsigned int addr = rta_getattr_u32(tb[IFLA_VTI_REMOTE]);
-
-		if (addr)
-			remote = format_host(AF_INET, 4, &addr);
-	}
-
-	print_string(PRINT_ANY, "remote", "remote %s ", remote);
-
-	if (tb[IFLA_VTI_LOCAL]) {
-		unsigned int addr = rta_getattr_u32(tb[IFLA_VTI_LOCAL]);
-
-		if (addr)
-			local = format_host(AF_INET, 4, &addr);
-	}
-
-	print_string(PRINT_ANY, "local", "local %s ", local);
+	tnl_print_endpoint("remote", tb[IFLA_VTI_REMOTE], AF_INET);
+	tnl_print_endpoint("local", tb[IFLA_VTI_LOCAL], AF_INET);
 
 	if (tb[IFLA_VTI_LINK]) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_VTI_LINK]);

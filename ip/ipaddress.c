@@ -1523,17 +1523,11 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		if (fnmatch(filter.label, label, 0) != 0)
 			return 0;
 	}
-	if (filter.pfx.family) {
-		if (rta_tb[IFA_LOCAL]) {
-			inet_prefix dst = { .family = ifa->ifa_family };
-
-			memcpy(&dst.data, RTA_DATA(rta_tb[IFA_LOCAL]), RTA_PAYLOAD(rta_tb[IFA_LOCAL]));
-			if (inet_addr_match(&dst, &filter.pfx, filter.pfx.bitlen))
-				return 0;
-		}
-	}
 
 	if (filter.family && filter.family != ifa->ifa_family)
+		return 0;
+
+	if (inet_addr_match_rta(&filter.pfx, rta_tb[IFA_LOCAL]))
 		return 0;
 
 	if (filter.flushb) {
@@ -1889,18 +1883,12 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 			if ((filter.flags ^ ifa_flags) & filter.flagmask)
 				continue;
 			if (filter.pfx.family || filter.label) {
-				if (!tb[IFA_LOCAL])
-					tb[IFA_LOCAL] = tb[IFA_ADDRESS];
+				struct rtattr *rta =
+					tb[IFA_LOCAL] ? : tb[IFA_ADDRESS];
 
-				if (filter.pfx.family && tb[IFA_LOCAL]) {
-					inet_prefix dst = {
-						.family = ifa->ifa_family
-					};
+				if (inet_addr_match_rta(&filter.pfx, rta))
+					continue;
 
-					memcpy(&dst.data, RTA_DATA(tb[IFA_LOCAL]), RTA_PAYLOAD(tb[IFA_LOCAL]));
-					if (inet_addr_match(&dst, &filter.pfx, filter.pfx.bitlen))
-						continue;
-				}
 				if (filter.label) {
 					SPRINT_BUF(b1);
 					const char *label;
@@ -2072,7 +2060,8 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	while (argc > 0) {
 		if (strcmp(*argv, "to") == 0) {
 			NEXT_ARG();
-			get_prefix(&filter.pfx, *argv, filter.family);
+			if (get_prefix(&filter.pfx, *argv, filter.family))
+				invarg("invalid \"to\"\n", *argv);
 			if (filter.family == AF_UNSPEC)
 				filter.family = filter.pfx.family;
 		} else if (strcmp(*argv, "scope") == 0) {

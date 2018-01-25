@@ -395,8 +395,6 @@ get_failed:
 static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
-	const char *local = "any";
-	const char *remote = "any";
 	unsigned int iflags = 0;
 	unsigned int oflags = 0;
 	__u8 ttl = 0;
@@ -410,23 +408,8 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		return;
 	}
 
-	if (tb[IFLA_GRE_REMOTE]) {
-		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_REMOTE]);
-
-		if (addr)
-			remote = format_host(AF_INET, 4, &addr);
-	}
-
-	print_string(PRINT_ANY, "remote", "remote %s ", remote);
-
-	if (tb[IFLA_GRE_LOCAL]) {
-		unsigned int addr = rta_getattr_u32(tb[IFLA_GRE_LOCAL]);
-
-		if (addr)
-			local = format_host(AF_INET, 4, &addr);
-	}
-
-	print_string(PRINT_ANY, "local", "local %s ", local);
+	tnl_print_endpoint("remote", tb[IFLA_GRE_REMOTE], AF_INET);
+	tnl_print_endpoint("local", tb[IFLA_GRE_LOCAL], AF_INET);
 
 	if (tb[IFLA_GRE_LINK]) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_GRE_LINK]);

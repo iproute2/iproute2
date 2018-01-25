@@ -95,21 +95,11 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (filter.af && filter.af != r->rtm_family)
 		return 0;
 
-	if (tb[RTA_DST] && filter.mdst.bitlen > 0) {
-		inet_prefix dst = { .family = r->rtm_family };
+	if (inet_addr_match_rta(&filter.mdst, tb[RTA_DST]))
+		return 0;
 
-		memcpy(&dst.data, RTA_DATA(tb[RTA_DST]), RTA_PAYLOAD(tb[RTA_DST]));
-		if (inet_addr_match(&dst, &filter.mdst, filter.mdst.bitlen))
-			return 0;
-	}
-
-	if (tb[RTA_SRC] && filter.msrc.bitlen > 0) {
-		inet_prefix src = { .family = r->rtm_family };
-
-		memcpy(&src.data, RTA_DATA(tb[RTA_SRC]), RTA_PAYLOAD(tb[RTA_SRC]));
-		if (inet_addr_match(&src, &filter.msrc, filter.msrc.bitlen))
-			return 0;
-	}
+	if (inet_addr_match_rta(&filter.msrc, tb[RTA_SRC]))
+		return 0;
 
 	family = get_real_family(r->rtm_type, r->rtm_family);
 
@@ -213,6 +203,8 @@ static int mroute_list(int argc, char **argv)
 	} else
 		filter.af = RTNL_FAMILY_IP6MR;
 
+	filter.msrc.family = filter.mdst.family = family;
+
 	while (argc > 0) {
 		if (matches(*argv, "table") == 0) {
 			__u32 tid;
@@ -233,14 +225,16 @@ static int mroute_list(int argc, char **argv)
 			id = *argv;
 		} else if (matches(*argv, "from") == 0) {
 			NEXT_ARG();
-			get_prefix(&filter.msrc, *argv, family);
+			if (get_prefix(&filter.msrc, *argv, family))
+				invarg("from value is invalid\n", *argv);
 		} else {
 			if (strcmp(*argv, "to") == 0) {
 				NEXT_ARG();
 			}
 			if (matches(*argv, "help") == 0)
 				usage();
-			get_prefix(&filter.mdst, *argv, family);
+			if (get_prefix(&filter.mdst, *argv, family))
+				invarg("to value is invalid\n", *argv);
 		}
 		argc--; argv++;
 	}

@@ -234,15 +234,9 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	parse_rtattr(tb, NDA_MAX, NDA_RTA(r), n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
-	if (tb[NDA_DST]) {
-		if (filter.pfx.family) {
-			inet_prefix dst = { .family = r->ndm_family };
+	if (inet_addr_match_rta(&filter.pfx, tb[NDA_DST]))
+		return 0;
 
-			memcpy(&dst.data, RTA_DATA(tb[NDA_DST]), RTA_PAYLOAD(tb[NDA_DST]));
-			if (inet_addr_match(&dst, &filter.pfx, filter.pfx.bitlen))
-				return 0;
-		}
-	}
 	if (filter.unused_only && tb[NDA_CACHEINFO]) {
 		struct nda_cacheinfo *ci = RTA_DATA(tb[NDA_CACHEINFO]);
 
@@ -418,7 +412,8 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 			}
 			if (matches(*argv, "help") == 0)
 				usage();
-			get_prefix(&filter.pfx, *argv, filter.family);
+			if (get_prefix(&filter.pfx, *argv, filter.family))
+				invarg("to value is invalid\n", *argv);
 			if (filter.family == AF_UNSPEC)
 				filter.family = filter.pfx.family;
 		}

@@ -429,13 +429,10 @@ get_failed:
 static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
-	const char *local = "any";
-	const char *remote = "any";
 	unsigned int iflags = 0;
 	unsigned int oflags = 0;
 	unsigned int flags = 0;
 	__u32 flowinfo = 0;
-	struct in6_addr in6_addr_any = IN6ADDR_ANY_INIT;
 	__u8 ttl = 0;
 
 	if (!tb)
@@ -452,27 +449,8 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_GRE_FLOWINFO])
 		flowinfo = rta_getattr_u32(tb[IFLA_GRE_FLOWINFO]);
 
-	if (tb[IFLA_GRE_REMOTE]) {
-		struct in6_addr addr;
-
-		memcpy(&addr, RTA_DATA(tb[IFLA_GRE_REMOTE]), sizeof(addr));
-
-		if (memcmp(&addr, &in6_addr_any, sizeof(addr)))
-			remote = format_host(AF_INET6, sizeof(addr), &addr);
-	}
-
-	print_string(PRINT_ANY, "remote", "remote %s ", remote);
-
-	if (tb[IFLA_GRE_LOCAL]) {
-		struct in6_addr addr;
-
-		memcpy(&addr, RTA_DATA(tb[IFLA_GRE_LOCAL]), sizeof(addr));
-
-		if (memcmp(&addr, &in6_addr_any, sizeof(addr)))
-			local = format_host(AF_INET6, sizeof(addr), &addr);
-	}
-
-	print_string(PRINT_ANY, "local", "local %s ", local);
+	tnl_print_endpoint("remote", tb[IFLA_GRE_REMOTE], AF_INET6);
+	tnl_print_endpoint("local", tb[IFLA_GRE_LOCAL], AF_INET6);
 
 	if (tb[IFLA_GRE_LINK]) {
 		unsigned int link = rta_getattr_u32(tb[IFLA_GRE_LINK]);

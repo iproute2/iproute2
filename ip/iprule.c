@@ -76,8 +76,6 @@ static struct
 static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 {
 	struct rtmsg *r = NLMSG_DATA(n);
-	inet_prefix src = { .family = r->rtm_family };
-	inet_prefix dst = { .family = r->rtm_family };
 	__u32 table;
 
 	if (preferred_family != AF_UNSPEC && r->rtm_family != preferred_family)
@@ -90,24 +88,24 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		return false;
 
 	if (filter.src.family) {
-		if (tb[FRA_SRC]) {
-			memcpy(&src.data, RTA_DATA(tb[FRA_SRC]),
-			       (r->rtm_src_len + 7) / 8);
-		}
-		if (filter.src.family != r->rtm_family ||
-		    filter.src.bitlen > r->rtm_src_len ||
-		    inet_addr_match(&src, &filter.src, filter.src.bitlen))
+		inet_prefix *f_src = &filter.src;
+
+		if (f_src->family != r->rtm_family ||
+		    f_src->bitlen > r->rtm_src_len)
+			return false;
+
+		if (inet_addr_match_rta(f_src, tb[FRA_SRC]))
 			return false;
 	}
 
 	if (filter.dst.family) {
-		if (tb[FRA_DST]) {
-			memcpy(&dst.data, RTA_DATA(tb[FRA_DST]),
-			       (r->rtm_dst_len + 7) / 8);
-		}
-		if (filter.dst.family != r->rtm_family ||
-		    filter.dst.bitlen > r->rtm_dst_len ||
-		    inet_addr_match(&dst, &filter.dst, filter.dst.bitlen))
+		inet_prefix *f_dst = &filter.dst;
+
+		if (f_dst->family != r->rtm_family ||
+		    f_dst->bitlen > r->rtm_dst_len)
+			return false;
+
+		if (inet_addr_match_rta(f_dst, tb[FRA_DST]))
 			return false;
 	}
 
@@ -500,13 +498,15 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 		} else if (matches(*argv, "from") == 0 ||
 			   matches(*argv, "src") == 0) {
 			NEXT_ARG();
-			get_prefix(&filter.src, *argv, af);
+			if (get_prefix(&filter.src, *argv, af))
+				invarg("from value is invalid\n", *argv);
 		} else {
 			if (matches(*argv, "dst") == 0 ||
 			    matches(*argv, "to") == 0) {
 				NEXT_ARG();
 			}
-			get_prefix(&filter.dst, *argv, af);
+			if (get_prefix(&filter.dst, *argv, af))
+				invarg("to value is invalid\n", *argv);
 		}
 		argc--; argv++;
 	}
