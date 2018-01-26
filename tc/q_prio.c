@@ -107,13 +107,17 @@ int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 					sizeof(*qopt)))
 		return -1;
 
-	fprintf(f, "bands %u priomap ", qopt->bands);
+	print_uint(PRINT_ANY, "bands", "bands %u ", qopt->bands);
+	open_json_array(PRINT_ANY, "priomap ");
 	for (i = 0; i <= TC_PRIO_MAX; i++)
-		fprintf(f, " %d", qopt->priomap[i]);
+		print_uint(PRINT_ANY, NULL, " %d", qopt->priomap[i]);
+	close_json_array(PRINT_ANY, "");
 
 	if (tb[TCA_PRIO_MQ])
-		fprintf(f, " multiqueue: %s ",
-			rta_getattr_u8(tb[TCA_PRIO_MQ]) ? "on" : "off");
+		print_string(PRINT_FP, NULL, " multiqueue: %s ",
+			     rta_getattr_u8(tb[TCA_PRIO_MQ]) ? "on" : "off");
+	print_bool(PRINT_JSON, "multiqueue", NULL,
+		   tb[TCA_PRIO_MQ] && rta_getattr_u8(tb[TCA_PRIO_MQ]));
 
 	return 0;
 }
