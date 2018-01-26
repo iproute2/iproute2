@@ -598,7 +598,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 			       const struct rtattr *carrier_changes)
 {
 	if (is_json_context()) {
-		open_json_object("stats644");
+		open_json_object("stats64");
 
 		/* RX stats */
 		open_json_object("rx");
