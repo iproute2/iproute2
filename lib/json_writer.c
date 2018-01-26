@@ -209,12 +209,10 @@ void jsonw_float_fmt(json_writer_t *self, const char *fmt, double num)
 	jsonw_printf(self, fmt, num);
 }
 
-#ifdef notused
 void jsonw_float(json_writer_t *self, double num)
 {
 	jsonw_printf(self, "%g", num);
 }
-#endif
 
 void jsonw_hu(json_writer_t *self, unsigned short num)
 {
@@ -249,13 +247,11 @@ void jsonw_bool_field(json_writer_t *self, const char *prop, bool val)
 	jsonw_bool(self, val);
 }
 
-#ifdef notused
 void jsonw_float_field(json_writer_t *self, const char *prop, double val)
 {
 	jsonw_name(self, prop);
 	jsonw_float(self, val);
 }
-#endif
 
 void jsonw_float_field_fmt(json_writer_t *self,
 			   const char *prop,

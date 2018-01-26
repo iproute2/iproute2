@@ -120,6 +120,7 @@ _PRINT_FUNC(int, int);
 _PRINT_FUNC(hu, unsigned short);
 _PRINT_FUNC(uint, uint64_t);
 _PRINT_FUNC(lluint, unsigned long long int);
+_PRINT_FUNC(float, double);
 #undef _PRINT_FUNC
 
 void print_color_string(enum output_type type,
