@@ -846,7 +846,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		print_string(PRINT_FP, NULL, "backlog %s",
 			     sprint_size(q.backlog, b1));
 		print_uint(PRINT_ANY, "qlen", " %up", q.qlen);
-		print_uint(PRINT_ANY, "requeues", " requeues %u", q.qlen);
+		print_uint(PRINT_FP, NULL, " requeues %u", q.requeues);
 	}
 
 	if (xstats)
