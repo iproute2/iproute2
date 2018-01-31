@@ -47,6 +47,7 @@ static int rd_init(struct rd *rd, int argc, char **argv, char *filename)
 	rd->argc = argc;
 	rd->argv = argv;
 	INIT_LIST_HEAD(&rd->dev_map_list);
+	INIT_LIST_HEAD(&rd->filter_list);
 
 	if (rd->json_output) {
 		rd->jw = jsonw_new(stdout);

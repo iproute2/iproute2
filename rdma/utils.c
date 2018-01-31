@@ -114,6 +114,234 @@ static void dev_map_cleanup(struct rd *rd)
 	}
 }
 
+static int add_filter(struct rd *rd, char *key, char *value,
+		      const struct filters valid_filters[])
+{
+	char cset[] = "1234567890,-";
+	struct filter_entry *fe;
+	bool key_found = false;
+	int idx = 0;
+	int ret;
+
+	fe = calloc(1, sizeof(*fe));
+	if (!fe)
+		return -ENOMEM;
+
+	while (idx < MAX_NUMBER_OF_FILTERS && valid_filters[idx].name) {
+		if (!strcmpx(key, valid_filters[idx].name)) {
+			key_found = true;
+			break;
+		}
+		idx++;
+	}
+	if (!key_found) {
+		pr_err("Unsupported filter option: %s\n", key);
+		ret = -EINVAL;
+		goto err;
+	}
+
+	/*
+	 * Check the filter validity, not optimal, but works
+	 *
+	 * Actually, there are three types of filters
+	 *  numeric - for example PID or QPN
+	 *  string  - for example states
+	 *  link    - user requested to filter on specific link
+	 *            e.g. mlx5_1/1, mlx5_1/-, mlx5_1 ...
+	 */
+	if (valid_filters[idx].is_number &&
+	    strspn(value, cset) != strlen(value)) {
+		pr_err("%s filter accepts \"%s\" characters only\n", key, cset);
+		ret = -EINVAL;
+		goto err;
+	}
+
+	fe->key = strdup(key);
+	fe->value = strdup(value);
+	if (!fe->key || !fe->value) {
+		ret = -ENOMEM;
+		goto err_alloc;
+	}
+
+	for (idx = 0; idx < strlen(fe->value); idx++)
+		fe->value[idx] = tolower(fe->value[idx]);
+
+	list_add_tail(&fe->list, &rd->filter_list);
+	return 0;
+
+err_alloc:
+	free(fe->value);
+	free(fe->key);
+err:
+	free(fe);
+	return ret;
+}
+
+int rd_build_filter(struct rd *rd, const struct filters valid_filters[])
+{
+	int ret = 0;
+	int idx = 0;
+
+	if (!valid_filters || !rd_argc(rd))
+		goto out;
+
+	if (rd_argc(rd) == 1) {
+		pr_err("No filter data was supplied to filter option %s\n", rd_argv(rd));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (rd_argc(rd) % 2) {
+		pr_err("There is filter option without data\n");
+		ret = -EINVAL;
+		goto out;
+	}
+
+	while (idx != rd_argc(rd)) {
+		/*
+		 * We can do micro-optimization and skip "dev"
+		 * and "link" filters, but it is not worth of it.
+		 */
+		ret = add_filter(rd, *(rd->argv + idx),
+				 *(rd->argv + idx + 1), valid_filters);
+		if (ret)
+			goto out;
+		idx += 2;
+	}
+
+out:
+	return ret;
+}
+
+bool rd_check_is_key_exist(struct rd *rd, const char *key)
+{
+	struct filter_entry *fe;
+
+	list_for_each_entry(fe, &rd->filter_list, list) {
+		if (!strcmpx(fe->key, key))
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Check if string entry is filtered:
+ *  * key doesn't exist -> user didn't request -> not filtered
+ */
+bool rd_check_is_string_filtered(struct rd *rd,
+				 const char *key, const char *val)
+{
+	bool key_is_filtered = false;
+	struct filter_entry *fe;
+	char *p = NULL;
+	char *str;
+
+	list_for_each_entry(fe, &rd->filter_list, list) {
+		if (!strcmpx(fe->key, key)) {
+			/* We found the key */
+			p = strdup(fe->value);
+			key_is_filtered = true;
+			if (!p) {
+				/*
+				 * Something extremely wrong if we fail
+				 * to allocate small amount of bytes.
+				 */
+				pr_err("Found key, but failed to allocate memory to store value\n");
+				return key_is_filtered;
+			}
+
+			/*
+			 * Need to check if value in range
+			 * It can come in the following formats
+			 * and their permutations:
+			 * str
+			 * str1,str2
+			 */
+			str = strtok(p, ",");
+			while (str) {
+				if (strlen(str) == strlen(val) &&
+				    !strcasecmp(str, val)) {
+					key_is_filtered = false;
+					goto out;
+				}
+				str = strtok(NULL, ",");
+			}
+			goto out;
+		}
+	}
+
+out:
+	free(p);
+	return key_is_filtered;
+}
+
+/*
+ * Check if key is filtered:
+ * key doesn't exist -> user didn't request -> not filtered
+ */
+bool rd_check_is_filtered(struct rd *rd, const char *key, uint32_t val)
+{
+	bool key_is_filtered = false;
+	struct filter_entry *fe;
+
+	list_for_each_entry(fe, &rd->filter_list, list) {
+		uint32_t left_val = 0, fe_value = 0;
+		bool range_check = false;
+		char *p = fe->value;
+
+		if (!strcmpx(fe->key, key)) {
+			/* We found the key */
+			key_is_filtered = true;
+			/*
+			 * Need to check if value in range
+			 * It can come in the following formats
+			 * (and their permutations):
+			 * numb
+			 * numb1,numb2
+			 * ,numb1,numb2
+			 * numb1-numb2
+			 * numb1,numb2-numb3,numb4-numb5
+			 */
+			while (*p) {
+				if (isdigit(*p)) {
+					fe_value = strtol(p, &p, 10);
+					if (fe_value == val ||
+					    (range_check && left_val < val &&
+					     val < fe_value)) {
+						key_is_filtered = false;
+						goto out;
+					}
+					range_check = false;
+				} else {
+					if (*p == '-') {
+						left_val = fe_value;
+						range_check = true;
+					}
+					p++;
+				}
+			}
+			goto out;
+		}
+	}
+
+out:
+	return key_is_filtered;
+}
+
+static void filters_cleanup(struct rd *rd)
+{
+	struct filter_entry *fe, *tmp;
+
+	list_for_each_entry_safe(fe, tmp,
+				 &rd->filter_list, list) {
+		list_del(&fe->list);
+		free(fe->key);
+		free(fe->value);
+		free(fe);
+	}
+}
+
 static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_DEV_INDEX] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_DEV_NAME] = MNL_TYPE_NUL_STRING,
@@ -181,6 +409,7 @@ void rd_free(struct rd *rd)
 		return;
 	free(rd->buff);
 	dev_map_cleanup(rd);
+	filters_cleanup(rd);
 }
 
 int rd_exec_link(struct rd *rd, int (*cb)(struct rd *rd), bool strict_port)

@@ -29,6 +29,18 @@
 #define RDMA_BITMAP_ENUM(name, bit_no) RDMA_BITMAP_##name = BIT(bit_no),
 #define RDMA_BITMAP_NAMES(name, bit_no) [bit_no] = #name,
 
+#define MAX_NUMBER_OF_FILTERS 64
+struct filters {
+	char name[32];
+	bool is_number;
+};
+
+struct filter_entry {
+	struct list_head list;
+	char *key;
+	char *value;
+};
+
 struct dev_map {
 	struct list_head list;
 	char *dev_name;
@@ -50,6 +62,7 @@ struct rd {
 	json_writer_t *jw;
 	bool json_output;
 	bool pretty_output;
+	struct list_head filter_list;
 };
 
 struct rd_cmd {
@@ -81,6 +94,13 @@ int rd_argc(struct rd *rd);
  */
 struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index);
 
+/*
+ * Filter manipulation
+ */
+int rd_build_filter(struct rd *rd, const struct filters valid_filters[]);
+bool rd_check_is_filtered(struct rd *rd, const char *key, uint32_t val);
+bool rd_check_is_string_filtered(struct rd *rd, const char *key, const char *val);
+bool rd_check_is_key_exist(struct rd *rd, const char *key);
 /*
  * Netlink
  */
