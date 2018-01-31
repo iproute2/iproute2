@@ -412,6 +412,25 @@ void rd_free(struct rd *rd)
 	filters_cleanup(rd);
 }
 
+int rd_set_arg_to_devname(struct rd *rd)
+{
+	int ret = 0;
+
+	while (!rd_no_arg(rd)) {
+		if (rd_argv_match(rd, "dev") || rd_argv_match(rd, "link")) {
+			rd_arg_inc(rd);
+			if (rd_no_arg(rd)) {
+				pr_err("No device name was supplied\n");
+				ret = -EINVAL;
+			}
+			goto out;
+		}
+		rd_arg_inc(rd);
+	}
+out:
+	return ret;
+}
+
 int rd_exec_link(struct rd *rd, int (*cb)(struct rd *rd), bool strict_port)
 {
 	struct dev_map *dev_map;
