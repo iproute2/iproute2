@@ -15,7 +15,7 @@
 static void help(char *name)
 {
 	pr_out("Usage: %s [ OPTIONS ] OBJECT { COMMAND | help }\n"
-	       "where  OBJECT := { dev | link | help }\n"
+	       "where  OBJECT := { dev | link | resource | help }\n"
 	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty]}\n", name);
 }
 
@@ -32,6 +32,7 @@ static int rd_cmd(struct rd *rd)
 		{ "help",	cmd_help },
 		{ "dev",	cmd_dev },
 		{ "link",	cmd_link },
+		{ "resource",	cmd_res },
 		{ 0 }
 	};
 
