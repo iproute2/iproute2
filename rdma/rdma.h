@@ -90,6 +90,8 @@ void rd_free(struct rd *rd);
 int rd_set_arg_to_devname(struct rd *rd);
 int rd_argc(struct rd *rd);
 
+int strcmpx(const char *str1, const char *str2);
+
 /*
  * Device manipulation
  */
