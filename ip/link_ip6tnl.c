@@ -72,7 +72,7 @@ static void usage(void)
 static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 			       struct nlmsghdr *n)
 {
-	struct ifinfomsg *ifi = (struct ifinfomsg *)(n + 1);
+	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct {
 		struct nlmsghdr n;
 		struct ifinfomsg i;

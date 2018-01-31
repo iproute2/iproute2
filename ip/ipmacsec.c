@@ -1132,7 +1132,7 @@ static void usage(FILE *f)
 }
 
 static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
-			    struct nlmsghdr *hdr)
+			    struct nlmsghdr *n)
 {
 	int ret;
 	__u8 encoding_sa = 0xff;
@@ -1151,10 +1151,10 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 
 	if (ret > 0) {
 		if (sci.sci)
-			addattr_l(hdr, MACSEC_BUFLEN, IFLA_MACSEC_SCI,
+			addattr_l(n, MACSEC_BUFLEN, IFLA_MACSEC_SCI,
 				  &sci.sci, sizeof(sci.sci));
 		else
-			addattr_l(hdr, MACSEC_BUFLEN, IFLA_MACSEC_PORT,
+			addattr_l(n, MACSEC_BUFLEN, IFLA_MACSEC_PORT,
 				  &sci.port, sizeof(sci.port));
 	}
 
@@ -1183,7 +1183,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 				     ARRAY_SIZE(values_on_off), &i);
 			if (ret != 0)
 				return ret;
-			addattr8(hdr, MACSEC_BUFLEN, IFLA_MACSEC_ENCRYPT, i);
+			addattr8(n, MACSEC_BUFLEN, IFLA_MACSEC_ENCRYPT, i);
 		} else if (strcmp(*argv, "send_sci") == 0) {
 			NEXT_ARG();
 			int i;
@@ -1193,7 +1193,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (ret != 0)
 				return ret;
 			send_sci = i;
-			addattr8(hdr, MACSEC_BUFLEN,
+			addattr8(n, MACSEC_BUFLEN,
 				 IFLA_MACSEC_INC_SCI, send_sci);
 		} else if (strcmp(*argv, "end_station") == 0) {
 			NEXT_ARG();
@@ -1204,7 +1204,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (ret != 0)
 				return ret;
 			es = i;
-			addattr8(hdr, MACSEC_BUFLEN, IFLA_MACSEC_ES, es);
+			addattr8(n, MACSEC_BUFLEN, IFLA_MACSEC_ES, es);
 		} else if (strcmp(*argv, "scb") == 0) {
 			NEXT_ARG();
 			int i;
@@ -1214,7 +1214,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (ret != 0)
 				return ret;
 			scb = i;
-			addattr8(hdr, MACSEC_BUFLEN, IFLA_MACSEC_SCB, scb);
+			addattr8(n, MACSEC_BUFLEN, IFLA_MACSEC_SCB, scb);
 		} else if (strcmp(*argv, "protect") == 0) {
 			NEXT_ARG();
 			int i;
@@ -1223,7 +1223,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 				     ARRAY_SIZE(values_on_off), &i);
 			if (ret != 0)
 				return ret;
-			addattr8(hdr, MACSEC_BUFLEN, IFLA_MACSEC_PROTECT, i);
+			addattr8(n, MACSEC_BUFLEN, IFLA_MACSEC_PROTECT, i);
 		} else if (strcmp(*argv, "replay") == 0) {
 			NEXT_ARG();
 			int i;
@@ -1245,7 +1245,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 				     (int *)&validate);
 			if (ret != 0)
 				return ret;
-			addattr8(hdr, MACSEC_BUFLEN,
+			addattr8(n, MACSEC_BUFLEN,
 				 IFLA_MACSEC_VALIDATION, validate);
 		} else if (strcmp(*argv, "encodingsa") == 0) {
 			if (encoding_sa != 0xff)
@@ -1281,20 +1281,20 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 	}
 
 	if (cipher.id)
-		addattr_l(hdr, MACSEC_BUFLEN, IFLA_MACSEC_CIPHER_SUITE,
+		addattr_l(n, MACSEC_BUFLEN, IFLA_MACSEC_CIPHER_SUITE,
 			  &cipher.id, sizeof(cipher.id));
 	if (cipher.icv_len)
-		addattr_l(hdr, MACSEC_BUFLEN, IFLA_MACSEC_ICV_LEN,
+		addattr_l(n, MACSEC_BUFLEN, IFLA_MACSEC_ICV_LEN,
 			  &cipher.icv_len, sizeof(cipher.icv_len));
 
 	if (replay_protect != -1) {
-		addattr32(hdr, MACSEC_BUFLEN, IFLA_MACSEC_WINDOW, window);
-		addattr8(hdr, MACSEC_BUFLEN, IFLA_MACSEC_REPLAY_PROTECT,
+		addattr32(n, MACSEC_BUFLEN, IFLA_MACSEC_WINDOW, window);
+		addattr8(n, MACSEC_BUFLEN, IFLA_MACSEC_REPLAY_PROTECT,
 			 replay_protect);
 	}
 
 	if (encoding_sa != 0xff) {
-		addattr_l(hdr, MACSEC_BUFLEN, IFLA_MACSEC_ENCODING_SA,
+		addattr_l(n, MACSEC_BUFLEN, IFLA_MACSEC_ENCODING_SA,
 			  &encoding_sa, sizeof(encoding_sa));
 	}
 

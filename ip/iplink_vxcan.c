@@ -31,7 +31,7 @@ static void usage(void)
 }
 
 static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
-			  struct nlmsghdr *hdr)
+			  struct nlmsghdr *n)
 {
 	char *dev = NULL;
 	char *name = NULL;
@@ -49,18 +49,18 @@ static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 		return -1;
 	}
 
-	ifm = NLMSG_DATA(hdr);
+	ifm = NLMSG_DATA(n);
 	ifi_flags = ifm->ifi_flags;
 	ifi_change = ifm->ifi_change;
 	ifm->ifi_flags = 0;
 	ifm->ifi_change = 0;
 
-	data = NLMSG_TAIL(hdr);
-	addattr_l(hdr, 1024, VXCAN_INFO_PEER, NULL, 0);
+	data = NLMSG_TAIL(n);
+	addattr_l(n, 1024, VXCAN_INFO_PEER, NULL, 0);
 
-	hdr->nlmsg_len += sizeof(struct ifinfomsg);
+	n->nlmsg_len += sizeof(struct ifinfomsg);
 
-	err = iplink_parse(argc - 1, argv + 1, (struct iplink_req *)hdr,
+	err = iplink_parse(argc - 1, argv + 1, (struct iplink_req *)n,
 			   &name, &type, &link, &dev, &group, &index);
 	if (err < 0)
 		return err;
@@ -69,7 +69,7 @@ static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 		duparg("type", argv[err]);
 
 	if (name) {
-		addattr_l(hdr, 1024,
+		addattr_l(n, 1024,
 			  IFLA_IFNAME, name, strlen(name) + 1);
 	}
 
@@ -81,9 +81,9 @@ static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 	ifm->ifi_change = ifi_change;
 
 	if (group != -1)
-		addattr32(hdr, 1024, IFLA_GROUP, group);
+		addattr32(n, 1024, IFLA_GROUP, group);
 
-	data->rta_len = (void *)NLMSG_TAIL(hdr) - (void *)data;
+	data->rta_len = (void *)NLMSG_TAIL(n) - (void *)data;
 	return argc - 1 - err;
 }
 
