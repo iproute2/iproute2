@@ -98,6 +98,10 @@ static struct dev_map *dev_map_alloc(const char *dev_name)
 	if (!dev_map)
 		return NULL;
 	dev_map->dev_name = strdup(dev_name);
+	if (!dev_map->dev_name) {
+		free(dev_map);
+		return NULL;
+	}
 
 	return dev_map;
 }
