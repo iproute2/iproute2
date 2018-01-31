@@ -12,7 +12,7 @@
 #include "rdma.h"
 #include <ctype.h>
 
-static int rd_argc(struct rd *rd)
+int rd_argc(struct rd *rd)
 {
 	return rd->argc;
 }
