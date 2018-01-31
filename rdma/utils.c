@@ -10,6 +10,7 @@
  */
 
 #include "rdma.h"
+#include <ctype.h>
 
 static int rd_argc(struct rd *rd)
 {
@@ -50,13 +51,43 @@ bool rd_no_arg(struct rd *rd)
 	return rd_argc(rd) == 0;
 }
 
-uint32_t get_port_from_argv(struct rd *rd)
+/*
+ * Possible input:output
+ * dev/port    | first port | is_dump_all
+ * mlx5_1      | 0          | true
+ * mlx5_1/     | 0          | true
+ * mlx5_1/0    | 0          | false
+ * mlx5_1/1    | 1          | false
+ * mlx5_1/-    | 0          | false
+ *
+ * In strict mode, /- will return error.
+ */
+static int get_port_from_argv(struct rd *rd, uint32_t *port,
+			      bool *is_dump_all, bool strict_port)
 {
 	char *slash;
 
+	*port = 0;
+	*is_dump_all = true;
+
 	slash = strchr(rd_argv(rd), '/');
 	/* if no port found, return 0 */
-	return slash ? atoi(slash + 1) : 0;
+	if (slash++) {
+		if (*slash == '-') {
+			if (strict_port)
+				return -EINVAL;
+			*is_dump_all = false;
+			return 0;
+		}
+
+		if (isdigit(*slash)) {
+			*is_dump_all = false;
+			*port = atoi(slash);
+		}
+		if (!*port && strlen(slash))
+			return -EINVAL;
+	}
+	return 0;
 }
 
 static struct dev_map *dev_map_alloc(const char *dev_name)
@@ -152,7 +183,7 @@ void rd_free(struct rd *rd)
 	dev_map_cleanup(rd);
 }
 
-int rd_exec_link(struct rd *rd, int (*cb)(struct rd *rd))
+int rd_exec_link(struct rd *rd, int (*cb)(struct rd *rd), bool strict_port)
 {
 	struct dev_map *dev_map;
 	uint32_t port;
@@ -163,7 +194,8 @@ int rd_exec_link(struct rd *rd, int (*cb)(struct rd *rd))
 	if (rd_no_arg(rd)) {
 		list_for_each_entry(dev_map, &rd->dev_map_list, list) {
 			rd->dev_idx = dev_map->idx;
-			for (port = 1; port < dev_map->num_ports + 1; port++) {
+			port = (strict_port) ? 1 : 0;
+			for (; port < dev_map->num_ports + 1; port++) {
 				rd->port_idx = port;
 				ret = cb(rd);
 				if (ret)
@@ -172,21 +204,23 @@ int rd_exec_link(struct rd *rd, int (*cb)(struct rd *rd))
 		}
 
 	} else {
+		bool is_dump_all;
+
 		dev_map = dev_map_lookup(rd, true);
-		port = get_port_from_argv(rd);
-		if (!dev_map || port > dev_map->num_ports) {
+		ret = get_port_from_argv(rd, &port, &is_dump_all, strict_port);
+		if (!dev_map || port > dev_map->num_ports || (!port && ret)) {
 			pr_err("Wrong device name\n");
 			ret = -ENOENT;
 			goto out;
 		}
 		rd_arg_inc(rd);
 		rd->dev_idx = dev_map->idx;
-		rd->port_idx = port ? : 1;
+		rd->port_idx = port;
 		for (; rd->port_idx < dev_map->num_ports + 1; rd->port_idx++) {
 			ret = cb(rd);
 			if (ret)
 				goto out;
-			if (port)
+			if (!is_dump_all)
 				/*
 				 * We got request to show link for devname
 				 * with port index.

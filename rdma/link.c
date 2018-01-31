@@ -285,7 +285,7 @@ static int link_one_show(struct rd *rd)
 
 static int link_show(struct rd *rd)
 {
-	return rd_exec_link(rd, link_one_show);
+	return rd_exec_link(rd, link_one_show, true);
 }
 
 int cmd_link(struct rd *rd)
