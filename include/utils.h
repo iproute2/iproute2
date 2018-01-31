@@ -272,16 +272,6 @@ extern int cmdlineno;
 ssize_t getcmdline(char **line, size_t *len, FILE *in);
 int makeargs(char *line, char *argv[], int maxargs);
 
-struct iplink_req {
-	struct nlmsghdr		n;
-	struct ifinfomsg	i;
-	char			buf[1024];
-};
-
-int iplink_parse(int argc, char **argv, struct iplink_req *req,
-		char **name, char **type, char **link, char **dev,
-		int *group, int *index);
-
 int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
 		bool show_label);
 

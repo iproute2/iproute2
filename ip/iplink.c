@@ -31,7 +31,6 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
-#include "xdp.h"
 #include "namespace.h"
 
 #define IPLINK_IOCTL_COMPAT	1

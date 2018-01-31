@@ -108,6 +108,12 @@ static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb)
 
 extern struct rtnl_handle rth;
 
+struct iplink_req {
+	struct nlmsghdr		n;
+	struct ifinfomsg	i;
+	char			buf[1024];
+};
+
 struct link_util {
 	struct link_util	*next;
 	const char		*id;
@@ -128,11 +134,26 @@ struct link_util {
 
 struct link_util *get_link_kind(const char *kind);
 
+int iplink_parse(int argc, char **argv, struct iplink_req *req,
+		 char **name, char **type, char **link, char **dev,
+		 int *group, int *index);
+
+/* iplink_bridge.c */
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
 int bridge_parse_xstats(struct link_util *lu, int argc, char **argv);
 int bridge_print_xstats(const struct sockaddr_nl *who,
 			struct nlmsghdr *n, void *arg);
 
+/* iproute_lwtunnel.c */
+int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp);
+void lwt_print_encap(FILE *fp, struct rtattr *encap_type, struct rtattr *encap);
+
+/* iplink_xdp.c */
+int xdp_parse(int *argc, char ***argv, struct iplink_req *req, __u32 ifindex,
+	      bool generic, bool drv, bool offload);
+void xdp_dump(FILE *fp, struct rtattr *tb, bool link, bool details);
+
+/* iplink_vrf.c */
 __u32 ipvrf_get_table(const char *name);
 int name_is_vrf(const char *name);
 

@@ -28,7 +28,6 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
-#include "iproute_lwtunnel.h"
 
 #ifndef RTAX_RTTVAR
 #define RTAX_RTTVAR RTAX_HOPS

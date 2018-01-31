@@ -14,9 +14,9 @@
 
 #include <linux/bpf.h>
 
-#include "json_print.h"
-#include "xdp.h"
 #include "bpf_util.h"
+#include "utils.h"
+#include "ip_common.h"
 
 extern int force;
 

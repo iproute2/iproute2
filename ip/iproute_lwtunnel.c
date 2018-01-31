@@ -22,9 +22,9 @@
 #include <errno.h>
 
 #include "rt_names.h"
-#include "utils.h"
-#include "iproute_lwtunnel.h"
 #include "bpf_util.h"
+#include "utils.h"
+#include "ip_common.h"
 #include "ila_common.h"
 
 #include <linux/seg6.h>

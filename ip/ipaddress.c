@@ -34,7 +34,6 @@
 #include "utils.h"
 #include "ll_map.h"
 #include "ip_common.h"
-#include "xdp.h"
 #include "color.h"
 
 enum {
