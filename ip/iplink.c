@@ -1025,9 +1025,9 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		else
 			iflatype = IFLA_INFO_DATA;
 		if (lu && argc) {
-			struct rtattr *data
-				= addattr_nest(&req.n,
-					       sizeof(req), iflatype);
+			struct rtattr *data;
+
+			data = addattr_nest(&req.n, sizeof(req), iflatype);
 
 			if (lu->parse_opt &&
 			    lu->parse_opt(lu, argc, argv, &req.n))

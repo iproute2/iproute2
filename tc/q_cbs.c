@@ -102,10 +102,9 @@ static int cbs_parse_opt(struct qdisc_util *qu, int argc,
 		argc--; argv++;
 	}
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
+	tail = addattr_nest(n, 1024, TCA_OPTIONS);
 	addattr_l(n, 2024, TCA_CBS_PARMS, &opt, sizeof(opt));
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	addattr_nest_end(n, tail);
 	return 0;
 }
 

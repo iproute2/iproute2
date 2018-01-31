@@ -264,8 +264,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		}
 	}
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, tca_id);
 	fprintf(stdout, "tablename: %s hook: %s\n ", tname, ipthooks[hook]);
 	fprintf(stdout, "\ttarget: ");
 
@@ -290,7 +289,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	addattr_l(n, MAX_MSG, TCA_IPT_INDEX, &index, 4);
 	if (m)
 		addattr_l(n, MAX_MSG, TCA_IPT_TARG, m->t, m->t->u.target_size);
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	addattr_nest_end(n, tail);
 
 	argv += optind;
 	*argc_p -= argc;

@@ -126,8 +126,7 @@ static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		argc--; argv++;
 	}
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
+	tail = addattr_nest(n, 1024, TCA_OPTIONS);
 	if (limit)
 		addattr_l(n, 1024, TCA_FQ_CODEL_LIMIT, &limit, sizeof(limit));
 	if (flows)
@@ -147,7 +146,7 @@ static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		addattr_l(n, 1024, TCA_FQ_CODEL_MEMORY_LIMIT,
 			  &memory, sizeof(memory));
 
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	addattr_nest_end(n, tail);
 	return 0;
 }
 

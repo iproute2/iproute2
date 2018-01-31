@@ -148,14 +148,13 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 		}
 	}
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_GACT_PARMS, &p, sizeof(p));
 #ifdef CONFIG_GACT_PROB
 	if (rd)
 		addattr_l(n, MAX_MSG, TCA_GACT_PROB, &pp, sizeof(pp));
 #endif
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	addattr_nest_end(n, tail);
 
 	*argc_p = argc;
 	*argv_p = argv;

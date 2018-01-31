@@ -166,9 +166,7 @@ int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	if (argc <= 0)
 		return -1;
 
-	tail = tail2 = NLMSG_TAIL(n);
-
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail2 = addattr_nest(n, MAX_MSG, tca_id);
 
 	while (argc > 0) {
 
@@ -213,8 +211,7 @@ done0:
 				goto bad_val;
 
 
-			tail = NLMSG_TAIL(n);
-			addattr_l(n, MAX_MSG, ++prio, NULL, 0);
+			tail = addattr_nest(n, MAX_MSG, ++prio);
 			addattr_l(n, MAX_MSG, TCA_ACT_KIND, k, strlen(k) + 1);
 
 			ret = a->parse_aopt(a, &argc, &argv, TCA_ACT_OPTIONS,
@@ -252,7 +249,7 @@ done0:
 				addattr_l(n, MAX_MSG, TCA_ACT_COOKIE,
 					  &act_ck, act_ck_len);
 
-			tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+			addattr_nest_end(n, tail);
 			ok++;
 		}
 	}
@@ -262,7 +259,7 @@ done0:
 		goto bad_val;
 	}
 
-	tail2->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail2;
+	addattr_nest_end(n, tail2);
 
 done:
 	*argc_p = argc;
@@ -468,8 +465,7 @@ static int tc_action_gd(int cmd, unsigned int flags,
 	argv += 1;
 
 
-	tail = NLMSG_TAIL(&req.n);
-	addattr_l(&req.n, MAX_MSG, TCA_ACT_TAB, NULL, 0);
+	tail = addattr_nest(&req.n, MAX_MSG, TCA_ACT_TAB);
 
 	while (argc > 0) {
 		if (strcmp(*argv, "action") == 0) {
@@ -518,16 +514,15 @@ static int tc_action_gd(int cmd, unsigned int flags,
 			goto bad_val;
 		}
 
-		tail2 = NLMSG_TAIL(&req.n);
-		addattr_l(&req.n, MAX_MSG, ++prio, NULL, 0);
+		tail2 = addattr_nest(&req.n, MAX_MSG, ++prio);
 		addattr_l(&req.n, MAX_MSG, TCA_ACT_KIND, k, strlen(k) + 1);
 		if (i > 0)
 			addattr32(&req.n, MAX_MSG, TCA_ACT_INDEX, i);
-		tail2->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail2;
+		addattr_nest_end(&req.n, tail2);
 
 	}
 
-	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
+	addattr_nest_end(&req.n, tail);
 
 	req.n.nlmsg_seq = rth.dump = ++rth.seq;
 
@@ -626,8 +621,7 @@ static int tc_act_list_or_flush(int *argc_p, char ***argv_p, int event)
 		.t.tca_family = AF_UNSPEC,
 	};
 
-	tail = NLMSG_TAIL(&req.n);
-	addattr_l(&req.n, MAX_MSG, TCA_ACT_TAB, NULL, 0);
+	tail = addattr_nest(&req.n, MAX_MSG, TCA_ACT_TAB);
 	tail2 = NLMSG_TAIL(&req.n);
 
 	strncpy(k, *argv, sizeof(k) - 1);
@@ -659,7 +653,7 @@ static int tc_act_list_or_flush(int *argc_p, char ***argv_p, int event)
 	addattr_l(&req.n, MAX_MSG, ++prio, NULL, 0);
 	addattr_l(&req.n, MAX_MSG, TCA_ACT_KIND, k, strlen(k) + 1);
 	tail2->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail2;
-	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
+	addattr_nest_end(&req.n, tail);
 
 	tail3 = NLMSG_TAIL(&req.n);
 	flag_select.value |= TCA_FLAG_LARGE_DUMP_ON;

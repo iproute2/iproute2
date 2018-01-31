@@ -228,8 +228,7 @@ int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 		}
 	}
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_POLICE_TBF, &p, sizeof(p));
 	if (p.rate.rate)
 		addattr_l(n, MAX_MSG, TCA_POLICE_RATE, rtab, 1024);
@@ -240,7 +239,7 @@ int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 	if (presult)
 		addattr32(n, MAX_MSG, TCA_POLICE_RESULT, presult);
 
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	addattr_nest_end(n, tail);
 	res = 0;
 
 	*argc_p = argc;

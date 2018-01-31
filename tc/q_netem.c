@@ -422,8 +422,6 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		}
 	}
 
-	tail = NLMSG_TAIL(n);
-
 	if (reorder.probability) {
 		if (opt.latency == 0) {
 			fprintf(stderr, "reordering not possible without specifying some delay\n");
@@ -452,8 +450,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		return -1;
 	}
 
-	if (addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt)) < 0)
-		return -1;
+	tail = addattr_nest_compat(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
 
 	if (present[TCA_NETEM_CORR] &&
 	    addattr_l(n, 1024, TCA_NETEM_CORR, &cor, sizeof(cor)) < 0)
@@ -512,7 +509,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			return -1;
 		free(dist_data);
 	}
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	addattr_nest_compat_end(n, tail);
 	return 0;
 }
 

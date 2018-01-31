@@ -143,8 +143,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	}
 
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_SKBEDIT_PARMS, &sel, sizeof(sel));
 	if (flags & SKBEDIT_F_QUEUE_MAPPING)
 		addattr_l(n, MAX_MSG, TCA_SKBEDIT_QUEUE_MAPPING,
@@ -158,7 +157,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	if (flags & SKBEDIT_F_PTYPE)
 		addattr_l(n, MAX_MSG, TCA_SKBEDIT_PTYPE,
 			  &ptype, sizeof(ptype));
-	tail->rta_len = (char *)NLMSG_TAIL(n) - (char *)tail;
+	addattr_nest_end(n, tail);
 
 	*argc_p = argc;
 	*argv_p = argv;

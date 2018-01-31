@@ -55,8 +55,7 @@ static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 	ifm->ifi_flags = 0;
 	ifm->ifi_change = 0;
 
-	data = NLMSG_TAIL(n);
-	addattr_l(n, 1024, VXCAN_INFO_PEER, NULL, 0);
+	data = addattr_nest(n, 1024, VXCAN_INFO_PEER);
 
 	n->nlmsg_len += sizeof(struct ifinfomsg);
 
@@ -83,7 +82,7 @@ static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 	if (group != -1)
 		addattr32(n, 1024, IFLA_GROUP, group);
 
-	data->rta_len = (void *)NLMSG_TAIL(n) - (void *)data;
+	addattr_nest_end(n, data);
 	return argc - 1 - err;
 }
 

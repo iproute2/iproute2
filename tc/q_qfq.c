@@ -53,8 +53,7 @@ static int qfq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 	struct rtattr *tail;
 	__u32 tmp;
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 4096, TCA_OPTIONS, NULL, 0);
+	tail = addattr_nest(n, 4096, TCA_OPTIONS);
 
 	while (argc > 0) {
 		if (matches(*argv, "weight") == 0) {
@@ -80,7 +79,7 @@ static int qfq_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 		argc--; argv++;
 	}
 
-	tail->rta_len = (void *)NLMSG_TAIL(n) - (void *)tail;
+	addattr_nest_end(n, tail);
 
 	return 0;
 }

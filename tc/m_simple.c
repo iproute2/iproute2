@@ -146,12 +146,11 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 
 	sel.action = TC_ACT_PIPE;
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_DEF_PARMS, &sel, sizeof(sel));
 	if (simpdata)
 		addattr_l(n, MAX_MSG, TCA_DEF_DATA, simpdata, SIMP_MAX_DATA);
-	tail->rta_len = (char *)NLMSG_TAIL(n) - (char *)tail;
+	addattr_nest_end(n, tail);
 
 	*argc_p = argc;
 	*argv_p = argv;

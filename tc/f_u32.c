@@ -1003,8 +1003,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	if (argc == 0)
 		return 0;
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, TCA_OPTIONS, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, TCA_OPTIONS);
 
 	while (argc > 0) {
 		if (matches(*argv, "match") == 0) {
@@ -1197,7 +1196,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 		addattr_l(n, MAX_MSG, TCA_U32_FLAGS, &flags, 4);
 	}
 
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	addattr_nest_end(n, tail);
 	return 0;
 }
 

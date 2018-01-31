@@ -56,8 +56,7 @@ static int vlan_parse_qos_map(int *argcp, char ***argvp, struct nlmsghdr *n,
 	struct ifla_vlan_qos_mapping m;
 	struct rtattr *tail;
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 1024, attrtype, NULL, 0);
+	tail = addattr_nest(n, 1024, attrtype);
 
 	while (argc > 0) {
 		char *colon = strchr(*argv, ':');
@@ -75,7 +74,7 @@ static int vlan_parse_qos_map(int *argcp, char ***argvp, struct nlmsghdr *n,
 		addattr_l(n, 1024, IFLA_VLAN_QOS_MAPPING, &m, sizeof(m));
 	}
 
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *)tail;
+	addattr_nest_end(n, tail);
 
 	*argcp = argc;
 	*argvp = argv;

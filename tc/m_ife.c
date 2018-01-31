@@ -178,8 +178,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 		ife_usage();
 	}
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_IFE_PARMS, &p, sizeof(p));
 
 	if (!(p.flags & IFE_ENCODE))
@@ -194,8 +193,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 	if (saddr)
 		addattr_l(n, MAX_MSG, TCA_IFE_SMAC, sbuf, ETH_ALEN);
 
-	tail2 = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, TCA_IFE_METALST, NULL, 0);
+	tail2 = addattr_nest(n, MAX_MSG, TCA_IFE_METALST);
 	if (ife_mark || ife_mark_v) {
 		if (ife_mark_v)
 			addattr_l(n, MAX_MSG, IFE_META_SKBMARK, &ife_mark_v, 4);
@@ -216,10 +214,10 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 			addattr_l(n, MAX_MSG, IFE_META_TCINDEX, NULL, 0);
 	}
 
-	tail2->rta_len = (void *)NLMSG_TAIL(n) - (void *)tail2;
+	addattr_nest_end(n, tail2);
 
 skip_encode:
-	tail->rta_len = (void *)NLMSG_TAIL(n) - (void *)tail;
+	addattr_nest_end(n, tail);
 
 	*argc_p = argc;
 	*argv_p = argv;

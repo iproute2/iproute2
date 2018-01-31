@@ -122,8 +122,7 @@ static int parse_sample(struct action_util *a, int *argc_p, char ***argv_p,
 		usage();
 	}
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_SAMPLE_PARMS, &p, sizeof(p));
 	if (rate_set)
 		addattr32(n, MAX_MSG, TCA_SAMPLE_RATE, rate);
@@ -132,7 +131,7 @@ static int parse_sample(struct action_util *a, int *argc_p, char ***argv_p,
 	if (trunc_set)
 		addattr32(n, MAX_MSG, TCA_SAMPLE_TRUNC_SIZE, trunc);
 
-	tail->rta_len = (char *)NLMSG_TAIL(n) - (char *)tail;
+	addattr_nest_end(n, tail);
 
 	*argc_p = argc;
 	*argv_p = argv;

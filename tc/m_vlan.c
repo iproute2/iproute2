@@ -152,8 +152,7 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 	}
 
 	parm.v_action = action;
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, MAX_MSG, tca_id, NULL, 0);
+	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_VLAN_PARMS, &parm, sizeof(parm));
 	if (id_set)
 		addattr_l(n, MAX_MSG, TCA_VLAN_PUSH_VLAN_ID, &id, 2);
@@ -170,7 +169,7 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 	if (prio_set)
 		addattr8(n, MAX_MSG, TCA_VLAN_PUSH_VLAN_PRIORITY, prio);
 
-	tail->rta_len = (char *)NLMSG_TAIL(n) - (char *)tail;
+	addattr_nest_end(n, tail);
 
 	*argc_p = argc;
 	*argv_p = argv;

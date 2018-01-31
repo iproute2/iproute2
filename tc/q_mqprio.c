@@ -173,8 +173,7 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 		argc--; argv++;
 	}
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
+	tail = addattr_nest_compat(n, 1024, TCA_OPTIONS, &opt, sizeof(opt));
 
 	if (flags & TC_MQPRIO_F_MODE)
 		addattr_l(n, 1024, TCA_MQPRIO_MODE,
@@ -209,7 +208,7 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 		addattr_nest_end(n, start);
 	}
 
-	tail->rta_len = (void *)NLMSG_TAIL(n) - (void *)tail;
+	addattr_nest_compat_end(n, tail);
 
 	return 0;
 }

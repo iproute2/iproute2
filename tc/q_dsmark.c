@@ -64,16 +64,16 @@ static int dsmark_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		explain();
 		return -1;
 	}
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
+	tail = addattr_nest(n, 1024, TCA_OPTIONS);
 	addattr_l(n, 1024, TCA_DSMARK_INDICES, &ind, sizeof(ind));
 	if (dflt != -1) {
 	    __u16 tmp = dflt;
 
 	    addattr_l(n, 1024, TCA_DSMARK_DEFAULT_INDEX, &tmp, sizeof(tmp));
 	}
-	if (set_tc_index) addattr_l(n, 1024, TCA_DSMARK_SET_TC_INDEX, NULL, 0);
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	if (set_tc_index)
+		addattr_l(n, 1024, TCA_DSMARK_SET_TC_INDEX, NULL, 0);
+	addattr_nest_end(n, tail);
 	return 0;
 }
 
@@ -91,8 +91,7 @@ static int dsmark_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 	__u8 tmp;
 	char *end;
 
-	tail = NLMSG_TAIL(n);
-	addattr_l(n, 1024, TCA_OPTIONS, NULL, 0);
+	tail = addattr_nest(n, 1024, TCA_OPTIONS);
 	while (argc > 0) {
 		if (!strcmp(*argv, "mask")) {
 			NEXT_ARG();
@@ -117,7 +116,7 @@ static int dsmark_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
 		argc--;
 		argv++;
 	}
-	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
+	addattr_nest_end(n, tail);
 	return 0;
 }
 
