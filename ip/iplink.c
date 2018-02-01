@@ -1077,7 +1077,7 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 
 	open_json_object(NULL);
 	if (brief)
-		print_linkinfo_brief(NULL, answer, stdout, NULL);
+		print_linkinfo_brief(NULL, answer, stdout);
 	else
 		print_linkinfo(NULL, answer, stdout);
 	close_json_object();

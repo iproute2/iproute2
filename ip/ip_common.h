@@ -30,8 +30,7 @@ int get_operstate(const char *name);
 int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg);
 int print_linkinfo_brief(const struct sockaddr_nl *who,
-			 struct nlmsghdr *n, void *arg,
-			 struct link_filter *filter);
+			 struct nlmsghdr *n, void *arg);
 int print_addrinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg);
 int print_addrlabel(const struct sockaddr_nl *who,
