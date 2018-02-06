@@ -137,6 +137,7 @@ $ ip netns del net0
 .sp
 This command assigns a id to a peer network namespace. This id is valid
 only in the current network namespace.
+If the keyword "auto" is specified an available nsid will be chosen.
 This id will be used by the kernel in some netlink messages. If no id is
 assigned when the kernel needs it, it will be automatically assigned by
 the kernel.
