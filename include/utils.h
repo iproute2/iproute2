@@ -284,6 +284,9 @@ int make_path(const char *path, mode_t mode);
 char *find_cgroup2_mount(void);
 int get_command_name(const char *pid, char *comm, size_t len);
 
+int get_rtnl_link_stats_rta(struct rtnl_link_stats64 *stats64,
+			    struct rtattr *tb[]);
+
 #ifdef NEED_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t size);
 size_t strlcat(char *dst, const char *src, size_t size);
