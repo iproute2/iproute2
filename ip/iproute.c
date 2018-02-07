@@ -444,6 +444,22 @@ static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
 			ci->rta_ts, ci->rta_tsage);
 }
 
+static void print_rta_flow(FILE *fp, const struct rtattr *rta)
+{
+	__u32 to = rta_getattr_u32(rta);
+	__u32 from = to >> 16;
+	SPRINT_BUF(b1);
+
+	to &= 0xFFFF;
+	fprintf(fp, "realm%s ", from ? "s" : "");
+	if (from) {
+		fprintf(fp, "%s/",
+			rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
+	}
+	fprintf(fp, "%s ",
+		rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
+}
+
 static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
 {
 	struct rtattr *mxrta[RTAX_MAX+1];
@@ -647,19 +663,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		}
 	}
 
-	if (tb[RTA_FLOW] && filter.realmmask != ~0U) {
-		__u32 to = rta_getattr_u32(tb[RTA_FLOW]);
-		__u32 from = to>>16;
-
-		to &= 0xFFFF;
-		fprintf(fp, "realm%s ", from ? "s" : "");
-		if (from) {
-			fprintf(fp, "%s/",
-				rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
-		}
-		fprintf(fp, "%s ",
-			rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
-	}
+	if (tb[RTA_FLOW] && filter.realmmask != ~0U)
+		print_rta_flow(fp, tb[RTA_FLOW]);
 
 	if (tb[RTA_UID])
 		fprintf(fp, "uid %u ", rta_getattr_u32(tb[RTA_UID]));
@@ -731,19 +736,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 						family_name(via->rtvia_family),
 						format_host(via->rtvia_family, len, via->rtvia_addr));
 				}
-				if (tb[RTA_FLOW]) {
-					__u32 to = rta_getattr_u32(tb[RTA_FLOW]);
-					__u32 from = to>>16;
-
-					to &= 0xFFFF;
-					fprintf(fp, "realm%s ", from ? "s" : "");
-					if (from) {
-						fprintf(fp, "%s/",
-							rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
-					}
-					fprintf(fp, "%s ",
-						rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
-				}
+				if (tb[RTA_FLOW])
+					print_rta_flow(fp, tb[RTA_FLOW]);
 			}
 			if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
 				fprintf(fp, "%s", ll_index_to_name(nh->rtnh_ifindex));
