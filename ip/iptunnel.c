@@ -373,6 +373,20 @@ static void print_tunnel(struct ip_tunnel_parm *p)
 		printf("%s  Checksum output packets.", _SL_);
 }
 
+/*
+ * @p1: user specified parameter
+ * @p2: database entry
+ */
+static int ip_tunnel_parm_match(const struct ip_tunnel_parm *p1,
+				const struct ip_tunnel_parm *p2)
+{
+	return ((!p1->link || p1->link == p2->link) &&
+		(!p1->name[0] || strcmp(p1->name, p2->name) == 0) &&
+		(!p1->iph.daddr || p1->iph.daddr == p2->iph.daddr) &&
+		(!p1->iph.saddr || p1->iph.saddr == p2->iph.saddr) &&
+		(!p1->i_key || p1->i_key == p2->i_key));
+}
+
 static int do_tunnels_list(struct ip_tunnel_parm *p)
 {
 	char buf[512];
@@ -384,7 +398,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		return -1;
 	}
 
-	/* skip header lines */
+	/* skip two lines at the begenning of the file */
 	if (!fgets(buf, sizeof(buf), fp) ||
 	    !fgets(buf, sizeof(buf), fp)) {
 		fprintf(stderr, "/proc/net/dev read error\n");
@@ -394,10 +408,10 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char name[IFNAMSIZ];
 		int index, type;
-		struct ip_tunnel_parm p1 = {};
+		struct ip_tunnel_parm p1;
 		char *ptr;
 
-		buf[sizeof(buf) - 1] = 0;
+		buf[sizeof(buf) - 1] = '\0';
 		ptr = strchr(buf, ':');
 		if (ptr == NULL ||
 		    (*ptr++ = 0, sscanf(buf, "%s", name) != 1)) {
@@ -414,15 +428,18 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 			fprintf(stderr, "Failed to get type of \"%s\"\n", name);
 			continue;
 		}
-		if (type != ARPHRD_TUNNEL && type != ARPHRD_IPGRE && type != ARPHRD_SIT)
+		switch (type) {
+		case ARPHRD_TUNNEL:
+		case ARPHRD_IPGRE:
+		case ARPHRD_SIT:
+			break;
+		default:
 			continue;
+		}
+		memset(&p1, 0, sizeof(p1));
 		if (tnl_get_ioctl(name, &p1))
 			continue;
-		if ((p->link && p1.link != p->link) ||
-		    (p->name[0] && strcmp(p1.name, p->name)) ||
-		    (p->iph.daddr && p1.iph.daddr != p->iph.daddr) ||
-		    (p->iph.saddr && p1.iph.saddr != p->iph.saddr) ||
-		    (p->i_key && p1.i_key != p->i_key))
+		if (!ip_tunnel_parm_match(p, &p1))
 			continue;
 		print_tunnel(&p1);
 		if (show_stats) {
@@ -431,7 +448,7 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 			if (!tnl_get_stats(ptr, &s))
 				tnl_print_stats(&s);
 		}
-		printf("\n");
+		fputc('\n', stdout);
 	}
 	err = 0;
  end:
@@ -456,7 +473,7 @@ static int do_show(int argc, char **argv)
 		return -1;
 
 	print_tunnel(&p);
-	printf("\n");
+	fputc('\n', stdout);
 	return 0;
 }
 

@@ -357,11 +357,12 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char name[IFNAMSIZ];
 		int index, type;
-		struct ip6_tnl_parm2 p1 = {};
+		struct ip6_tnl_parm2 p1;
 		char *ptr;
 
 		buf[sizeof(buf) - 1] = '\0';
-		if ((ptr = strchr(buf, ':')) == NULL ||
+		ptr = strchr(buf, ':');
+		if (ptr == NULL ||
 		    (*ptr++ = 0, sscanf(buf, "%s", name) != 1)) {
 			fprintf(stderr, "Wrong format for /proc/net/dev. Giving up.\n");
 			goto end;
@@ -376,16 +377,19 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 			fprintf(stderr, "Failed to get type of \"%s\"\n", name);
 			continue;
 		}
-		if (type != ARPHRD_TUNNEL6 && type != ARPHRD_IP6GRE)
+		switch (type) {
+		case ARPHRD_TUNNEL6:
+		case ARPHRD_IP6GRE:
+			break;
+		default:
 			continue;
+		}
 		ip6_tnl_parm_init(&p1, 0);
 		if (type == ARPHRD_IP6GRE)
 			p1.proto = IPPROTO_GRE;
+		p1.link = index;
 		strcpy(p1.name, name);
-		p1.link = ll_name_to_index(p1.name);
-		if (p1.link == 0)
-			continue;
-		if (tnl_get_ioctl(p1.name, &p1))
+		if (tnl_get_ioctl(name, &p1))
 			continue;
 		if (!ip6_tnl_parm_match(p, &p1))
 			continue;
@@ -396,7 +400,7 @@ static int do_tunnels_list(struct ip6_tnl_parm2 *p)
 			if (!tnl_get_stats(ptr, &s))
 				tnl_print_stats(&s);
 		}
-		printf("\n");
+		fputc('\n', stdout);
 	}
 	err = 0;
  end:
@@ -416,14 +420,13 @@ static int do_show(int argc, char **argv)
 		return -1;
 
 	if (!p.name[0] || show_stats)
-		do_tunnels_list(&p);
-	else {
-		if (tnl_get_ioctl(p.name, &p))
-			return -1;
-		print_tunnel(&p);
-		printf("\n");
-	}
+		return do_tunnels_list(&p);
 
+	if (tnl_get_ioctl(p.name, &p))
+		return -1;
+
+	print_tunnel(&p);
+	fputc('\n', stdout);
 	return 0;
 }
 
