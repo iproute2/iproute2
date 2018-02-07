@@ -24,6 +24,7 @@
 #include <linux/types.h>
 
 struct rtattr;
+struct rtnl_link_stats64;
 
 const char *tnl_strproto(__u8 proto);
 
@@ -39,6 +40,8 @@ void tnl_print_encap(struct rtattr *tb[],
 		     int encap_sport, int encap_dport);
 void tnl_print_endpoint(const char *name,
 			const struct rtattr *rta, int family);
-void tnl_print_stats(const char *buf);
+void tnl_print_stats(const struct rtnl_link_stats64 *s);
+
+int tnl_get_stats(const char *buf, struct rtnl_link_stats64 *s);
 
 #endif

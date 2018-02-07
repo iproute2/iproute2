@@ -307,30 +307,45 @@ void tnl_print_endpoint(const char *name, const struct rtattr *rta, int family)
 	}
 }
 
-/* tnl_print_stats - print tunnel statistics
- *
- * @buf - tunnel interface's line in /proc/net/dev,
- *        starting past the interface name and following colon
- */
-void tnl_print_stats(const char *buf)
+int tnl_get_stats(const char *buf, struct rtnl_link_stats64 *s)
 {
-	unsigned long rx_bytes, rx_packets, rx_errs, rx_drops,
-		      rx_fifo, rx_frame,
-		      tx_bytes, tx_packets, tx_errs, tx_drops,
-		      tx_fifo, tx_colls, tx_carrier, rx_multi;
+	/* rx */
+	__u64 *rx_bytes   = &s->rx_bytes;
+	__u64 *rx_packets = &s->rx_packets;
+	__u64 *rx_errs    = &s->rx_errors;
+	__u64 *rx_drops   = &s->rx_dropped;
+	__u64 *rx_fifo    = &s->rx_fifo_errors;
+	__u64 *rx_frame   = &s->rx_frame_errors;
+	__u64 *rx_multi   = &s->multicast;
+	/* tx */
+	__u64 *tx_bytes   = &s->tx_bytes;
+	__u64 *tx_packets = &s->tx_packets;
+	__u64 *tx_errs    = &s->tx_errors;
+	__u64 *tx_drops   = &s->tx_dropped;
+	__u64 *tx_fifo    = &s->tx_fifo_errors;
+	__u64 *tx_carrier = &s->tx_carrier_errors;
+	__u64 *tx_colls   = &s->collisions;
 
-	if (sscanf(buf, "%lu%lu%lu%lu%lu%lu%lu%*d%lu%lu%lu%lu%lu%lu%lu",
-		   &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
-		   &rx_fifo, &rx_frame, &rx_multi,
-		   &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
-		   &tx_fifo, &tx_colls, &tx_carrier) != 14)
-		return;
+	if (sscanf(buf,
+		   "%llu%llu%llu%llu%llu%llu%llu%*d%llu%llu%llu%llu%llu%llu%llu",
+		   rx_bytes, rx_packets, rx_errs, rx_drops,
+		   rx_fifo, rx_frame, rx_multi,
+		   tx_bytes, tx_packets, tx_errs, tx_drops,
+		   tx_fifo, tx_colls, tx_carrier) != 14)
+		return -1;
 
+	return 0;
+}
+
+void tnl_print_stats(const struct rtnl_link_stats64 *s)
+{
 	printf("%s", _SL_);
 	printf("RX: Packets    Bytes        Errors CsumErrs OutOfSeq Mcasts%s", _SL_);
-	printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-8ld%s",
-	       rx_packets, rx_bytes, rx_errs, rx_frame, rx_fifo, rx_multi, _SL_);
+	printf("    %-10lld %-12lld %-6lld %-8lld %-8lld %-8lld%s",
+	       s->rx_packets, s->rx_bytes, s->rx_errors, s->rx_frame_errors,
+	       s->rx_fifo_errors, s->multicast, _SL_);
 	printf("TX: Packets    Bytes        Errors DeadLoop NoRoute  NoBufs%s", _SL_);
-	printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-6ld",
-	       tx_packets, tx_bytes, tx_errs, tx_colls, tx_carrier, tx_drops);
+	printf("    %-10lld %-12lld %-6lld %-8lld %-8lld %-6lld",
+	       s->tx_packets, s->tx_bytes, s->tx_errors, s->collisions,
+	       s->tx_carrier_errors, s->tx_dropped);
 }

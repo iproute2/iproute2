@@ -425,8 +425,12 @@ static int do_tunnels_list(struct ip_tunnel_parm *p)
 		    (p->i_key && p1.i_key != p->i_key))
 			continue;
 		print_tunnel(&p1);
-		if (show_stats)
-			tnl_print_stats(ptr);
+		if (show_stats) {
+			struct rtnl_link_stats64 s;
+
+			if (!tnl_get_stats(ptr, &s))
+				tnl_print_stats(&s);
+		}
 		printf("\n");
 	}
 	err = 0;
