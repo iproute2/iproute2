@@ -382,6 +382,14 @@ static void print_rt_pref(FILE *fp, unsigned int pref)
 	}
 }
 
+static void print_rta_if(FILE *fp, const struct rtattr *rta,
+			 const char *prefix)
+{
+	const char *ifname = ll_index_to_name(rta_getattr_u32(rta));
+
+	fprintf(fp, "%s %s ", prefix, ifname);
+}
+
 static void print_cache_flags(FILE *fp, __u32 flags)
 {
 	flags &= ~0xFFFF;
@@ -710,7 +718,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		print_rta_via(fp, tb[RTA_VIA]);
 
 	if (tb[RTA_OIF] && filter.oifmask != -1)
-		fprintf(fp, "dev %s ", ll_index_to_name(rta_getattr_u32(tb[RTA_OIF])));
+		print_rta_if(fp,  tb[RTA_OIF], "dev");
 
 	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
 		fprintf(fp, "table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
@@ -767,10 +775,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (tb[RTA_METRICS])
 		print_rta_metrics(fp, tb[RTA_METRICS]);
 
-	if (tb[RTA_IIF] && filter.iifmask != -1) {
-		fprintf(fp, "iif %s ",
-			ll_index_to_name(rta_getattr_u32(tb[RTA_IIF])));
-	}
+	if (tb[RTA_IIF] && filter.iifmask != -1)
+		print_rta_if(fp, tb[RTA_IIF], "iif");
 
 	if (tb[RTA_MULTIPATH])
 		print_rta_multipath(fp, r, tb[RTA_MULTIPATH]);
