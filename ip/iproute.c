@@ -444,6 +444,65 @@ static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
 			ci->rta_ts, ci->rta_tsage);
 }
 
+static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
+{
+	struct rtattr *mxrta[RTAX_MAX+1];
+	unsigned int mxlock = 0;
+	int i;
+
+	parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(rta), RTA_PAYLOAD(rta));
+
+	if (mxrta[RTAX_LOCK])
+		mxlock = rta_getattr_u32(mxrta[RTAX_LOCK]);
+
+	for (i = 2; i <= RTAX_MAX; i++) {
+		__u32 val = 0U;
+
+		if (mxrta[i] == NULL && !(mxlock & (1 << i)))
+			continue;
+
+		if (mxrta[i] != NULL && i != RTAX_CC_ALGO)
+			val = rta_getattr_u32(mxrta[i]);
+
+		if (i == RTAX_HOPLIMIT && (int)val == -1)
+			continue;
+
+		if (i < sizeof(mx_names)/sizeof(char *) && mx_names[i])
+			fprintf(fp, "%s ", mx_names[i]);
+		else
+			fprintf(fp, "metric %d ", i);
+
+		if (mxlock & (1<<i))
+			fprintf(fp, "lock ");
+
+		switch (i) {
+		case RTAX_FEATURES:
+			print_rtax_features(fp, val);
+			break;
+		default:
+			fprintf(fp, "%u ", val);
+			break;
+
+		case RTAX_RTT:
+		case RTAX_RTTVAR:
+		case RTAX_RTO_MIN:
+			if (i == RTAX_RTT)
+				val /= 8;
+			else if (i == RTAX_RTTVAR)
+				val /= 4;
+
+			if (val >= 1000)
+				fprintf(fp, "%gs ", val/1e3);
+			else
+				fprintf(fp, "%ums ", val);
+			break;
+		case RTAX_CC_ALGO:
+			fprintf(fp, "%s ", rta_getattr_str(mxrta[i]));
+			break;
+		}
+	}
+}
+
 int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -620,63 +679,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
 	}
 
-	if (tb[RTA_METRICS]) {
-		int i;
-		unsigned int mxlock = 0;
-		struct rtattr *mxrta[RTAX_MAX+1];
+	if (tb[RTA_METRICS])
+		print_rta_metrics(fp, tb[RTA_METRICS]);
 
-		parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(tb[RTA_METRICS]),
-			    RTA_PAYLOAD(tb[RTA_METRICS]));
-		if (mxrta[RTAX_LOCK])
-			mxlock = rta_getattr_u32(mxrta[RTAX_LOCK]);
-
-		for (i = 2; i <= RTAX_MAX; i++) {
-			__u32 val = 0U;
-
-			if (mxrta[i] == NULL && !(mxlock & (1 << i)))
-				continue;
-
-			if (mxrta[i] != NULL && i != RTAX_CC_ALGO)
-				val = rta_getattr_u32(mxrta[i]);
-
-			if (i == RTAX_HOPLIMIT && (int)val == -1)
-				continue;
-
-			if (i < sizeof(mx_names)/sizeof(char *) && mx_names[i])
-				fprintf(fp, "%s ", mx_names[i]);
-			else
-				fprintf(fp, "metric %d ", i);
-
-			if (mxlock & (1<<i))
-				fprintf(fp, "lock ");
-
-			switch (i) {
-			case RTAX_FEATURES:
-				print_rtax_features(fp, val);
-				break;
-			default:
-				fprintf(fp, "%u ", val);
-				break;
-
-			case RTAX_RTT:
-			case RTAX_RTTVAR:
-			case RTAX_RTO_MIN:
-				if (i == RTAX_RTT)
-					val /= 8;
-				else if (i == RTAX_RTTVAR)
-					val /= 4;
-
-				if (val >= 1000)
-					fprintf(fp, "%gs ", val/1e3);
-				else
-					fprintf(fp, "%ums ", val);
-				break;
-			case RTAX_CC_ALGO:
-				fprintf(fp, "%s ", rta_getattr_str(mxrta[i]));
-				break;
-			}
-		}
-	}
 	if (tb[RTA_IIF] && filter.iifmask != -1) {
 		fprintf(fp, "iif %s ",
 			ll_index_to_name(rta_getattr_u32(tb[RTA_IIF])));
