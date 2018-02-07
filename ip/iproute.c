@@ -460,6 +460,32 @@ static void print_rta_flow(FILE *fp, const struct rtattr *rta)
 		rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
 }
 
+static void print_rta_newdst(FILE *fp, const struct rtmsg *r,
+			     const struct rtattr *rta)
+{
+	const char *newdst = format_host_rta(r->rtm_family, rta);
+
+	fprintf(fp, "as to %s ", newdst);
+}
+
+static void print_rta_gateway(FILE *fp, const struct rtmsg *r,
+			      const struct rtattr *rta)
+{
+	const char *gateway = format_host_rta(r->rtm_family, rta);
+
+	fprintf(fp, "via %s ", gateway);
+}
+
+static void print_rta_via(FILE *fp, const struct rtattr *rta)
+{
+	const struct rtvia *via = RTA_DATA(rta);
+	size_t len = RTA_PAYLOAD(rta);
+
+	fprintf(fp, "via %s %s ",
+		family_name(via->rtvia_family),
+		format_host(via->rtvia_family, len, via->rtvia_addr));
+}
+
 static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
 {
 	struct rtattr *mxrta[RTAX_MAX+1];
@@ -604,10 +630,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	} else if (r->rtm_src_len) {
 		fprintf(fp, "from 0/%u ", r->rtm_src_len);
 	}
-	if (tb[RTA_NEWDST]) {
-		fprintf(fp, "as to %s ",
-		        format_host_rta(r->rtm_family, tb[RTA_NEWDST]));
-	}
+
+	if (tb[RTA_NEWDST])
+		print_rta_newdst(fp, r, tb[RTA_NEWDST]);
 
 	if (tb[RTA_ENCAP])
 		lwt_print_encap(fp, tb[RTA_ENCAP_TYPE], tb[RTA_ENCAP]);
@@ -617,18 +642,12 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
 	}
 
-	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len) {
-		fprintf(fp, "via %s ",
-		        format_host_rta(r->rtm_family, tb[RTA_GATEWAY]));
-	}
-	if (tb[RTA_VIA]) {
-		size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
-		struct rtvia *via = RTA_DATA(tb[RTA_VIA]);
+	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len)
+		print_rta_gateway(fp, r, tb[RTA_GATEWAY]);
 
-		fprintf(fp, "via %s %s ",
-			family_name(via->rtvia_family),
-			format_host(via->rtvia_family, len, via->rtvia_addr));
-	}
+	if (tb[RTA_VIA])
+		print_rta_via(fp, tb[RTA_VIA]);
+
 	if (tb[RTA_OIF] && filter.oifmask != -1)
 		fprintf(fp, "dev %s ", ll_index_to_name(rta_getattr_u32(tb[RTA_OIF])));
 
@@ -718,24 +737,12 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 					lwt_print_encap(fp,
 							tb[RTA_ENCAP_TYPE],
 							tb[RTA_ENCAP]);
-				if (tb[RTA_NEWDST]) {
-					fprintf(fp, "as to %s ",
-						format_host_rta(r->rtm_family,
-								tb[RTA_NEWDST]));
-				}
-				if (tb[RTA_GATEWAY]) {
-					fprintf(fp, "via %s ",
-						format_host_rta(r->rtm_family,
-								tb[RTA_GATEWAY]));
-				}
-				if (tb[RTA_VIA]) {
-					size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
-					struct rtvia *via = RTA_DATA(tb[RTA_VIA]);
-
-					fprintf(fp, "via %s %s ",
-						family_name(via->rtvia_family),
-						format_host(via->rtvia_family, len, via->rtvia_addr));
-				}
+				if (tb[RTA_NEWDST])
+					print_rta_newdst(fp, r, tb[RTA_NEWDST]);
+				if (tb[RTA_GATEWAY])
+					print_rta_gateway(fp, r, tb[RTA_GATEWAY]);
+				if (tb[RTA_VIA])
+					print_rta_via(fp, tb[RTA_VIA]);
 				if (tb[RTA_FLOW])
 					print_rta_flow(fp, tb[RTA_FLOW]);
 			}
