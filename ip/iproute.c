@@ -419,6 +419,31 @@ static void print_cache_flags(FILE *fp, __u32 flags)
 		fprintf(fp, "%#x> ", flags);
 }
 
+static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
+{
+	static int hz;
+
+	if (!hz)
+		hz = get_user_hz();
+	if (ci->rta_expires != 0)
+		fprintf(fp, "expires %dsec ", ci->rta_expires/hz);
+	if (ci->rta_error != 0)
+		fprintf(fp, "error %d ", ci->rta_error);
+	if (show_stats) {
+		if (ci->rta_clntref)
+			fprintf(fp, "users %d ", ci->rta_clntref);
+		if (ci->rta_used != 0)
+			fprintf(fp, "used %d ", ci->rta_used);
+		if (ci->rta_lastuse != 0)
+			fprintf(fp, "age %dsec ", ci->rta_lastuse/hz);
+	}
+	if (ci->rta_id)
+		fprintf(fp, "ipid 0x%04x ", ci->rta_id);
+	if (ci->rta_ts || ci->rta_tsage)
+		fprintf(fp, "ts 0x%x tsage %dsec ",
+			ci->rta_ts, ci->rta_tsage);
+}
+
 int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -430,7 +455,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	int ret;
 
 	SPRINT_BUF(b1);
-	static int hz;
 
 	if (n->nlmsg_type != RTM_NEWROUTE && n->nlmsg_type != RTM_DELROUTE) {
 		fprintf(stderr, "Not a route: %08x %08x %08x\n",
@@ -584,56 +608,18 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if ((r->rtm_flags & RTM_F_CLONED) && r->rtm_family == AF_INET) {
 		print_cache_flags(fp, r->rtm_flags);
 
-		if (tb[RTA_CACHEINFO]) {
-			struct rta_cacheinfo *ci = RTA_DATA(tb[RTA_CACHEINFO]);
+		if (tb[RTA_CACHEINFO])
+			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
 
-			if (!hz)
-				hz = get_user_hz();
-			if (ci->rta_expires != 0)
-				fprintf(fp, "expires %dsec ", ci->rta_expires/hz);
-			if (ci->rta_error != 0)
-				fprintf(fp, "error %d ", ci->rta_error);
-			if (show_stats) {
-				if (ci->rta_clntref)
-					fprintf(fp, "users %d ", ci->rta_clntref);
-				if (ci->rta_used != 0)
-					fprintf(fp, "used %d ", ci->rta_used);
-				if (ci->rta_lastuse != 0)
-					fprintf(fp, "age %dsec ", ci->rta_lastuse/hz);
-			}
-			if (ci->rta_id)
-				fprintf(fp, "ipid 0x%04x ", ci->rta_id);
-			if (ci->rta_ts || ci->rta_tsage)
-				fprintf(fp, "ts 0x%x tsage %dsec ",
-					ci->rta_ts, ci->rta_tsage);
-		}
 	} else if (r->rtm_family == AF_INET6) {
-		struct rta_cacheinfo *ci = NULL;
+
+		if (r->rtm_flags & RTM_F_CLONED)
+			fprintf(fp, "%s    cache ", _SL_);
 
 		if (tb[RTA_CACHEINFO])
-			ci = RTA_DATA(tb[RTA_CACHEINFO]);
-		if ((r->rtm_flags & RTM_F_CLONED) || (ci && ci->rta_expires)) {
-			if (!hz)
-				hz = get_user_hz();
-			if (r->rtm_flags & RTM_F_CLONED)
-				fprintf(fp, "%s    cache ", _SL_);
-			if (ci->rta_expires)
-				fprintf(fp, "expires %dsec ", ci->rta_expires/hz);
-			if (ci->rta_error != 0)
-				fprintf(fp, "error %d ", ci->rta_error);
-			if (show_stats) {
-				if (ci->rta_clntref)
-					fprintf(fp, "users %d ", ci->rta_clntref);
-				if (ci->rta_used != 0)
-					fprintf(fp, "used %d ", ci->rta_used);
-				if (ci->rta_lastuse != 0)
-					fprintf(fp, "age %dsec ", ci->rta_lastuse/hz);
-			}
-		} else if (ci) {
-			if (ci->rta_error != 0)
-				fprintf(fp, "error %d ", ci->rta_error);
-		}
+			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
 	}
+
 	if (tb[RTA_METRICS]) {
 		int i;
 		unsigned int mxlock = 0;
