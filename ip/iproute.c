@@ -347,6 +347,22 @@ static void print_rtax_features(FILE *fp, unsigned int features)
 		fprintf(fp, "0x%x ", of);
 }
 
+static void print_rt_flags(FILE *fp, unsigned int flags)
+{
+	if (flags & RTNH_F_DEAD)
+		fprintf(fp, "dead ");
+	if (flags & RTNH_F_ONLINK)
+		fprintf(fp, "onlink ");
+	if (flags & RTNH_F_PERVASIVE)
+		fprintf(fp, "pervasive ");
+	if (flags & RTNH_F_OFFLOAD)
+		fprintf(fp, "offload ");
+	if (flags & RTNH_F_LINKDOWN)
+		fprintf(fp, "linkdown ");
+	if (flags & RTNH_F_UNRESOLVED)
+		fprintf(fp, "unresolved ");
+}
+
 int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -478,20 +494,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 	if (tb[RTA_PRIORITY] && filter.metricmask != -1)
 		fprintf(fp, "metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));
-	if (r->rtm_flags & RTNH_F_DEAD)
-		fprintf(fp, "dead ");
-	if (r->rtm_flags & RTNH_F_ONLINK)
-		fprintf(fp, "onlink ");
-	if (r->rtm_flags & RTNH_F_PERVASIVE)
-		fprintf(fp, "pervasive ");
-	if (r->rtm_flags & RTNH_F_OFFLOAD)
-		fprintf(fp, "offload ");
-	if (r->rtm_flags & RTM_F_NOTIFY)
-		fprintf(fp, "notify ");
-	if (r->rtm_flags & RTNH_F_LINKDOWN)
-		fprintf(fp, "linkdown ");
-	if (r->rtm_flags & RTNH_F_UNRESOLVED)
-		fprintf(fp, "unresolved ");
+
+	print_rt_flags(fp, r->rtm_flags);
+
 	if (tb[RTA_MARK]) {
 		unsigned int mark = rta_getattr_u32(tb[RTA_MARK]);
 
@@ -728,16 +733,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 					fprintf(fp, "weight %d ",
 						nh->rtnh_hops+1);
 			}
-			if (nh->rtnh_flags & RTNH_F_DEAD)
-				fprintf(fp, "dead ");
-			if (nh->rtnh_flags & RTNH_F_ONLINK)
-				fprintf(fp, "onlink ");
-			if (nh->rtnh_flags & RTNH_F_PERVASIVE)
-				fprintf(fp, "pervasive ");
-			if (nh->rtnh_flags & RTNH_F_OFFLOAD)
-				fprintf(fp, "offload ");
-			if (nh->rtnh_flags & RTNH_F_LINKDOWN)
-				fprintf(fp, "linkdown ");
+
+			print_rt_flags(fp, nh->rtnh_flags);
+
 			len -= NLMSG_ALIGN(nh->rtnh_len);
 			nh = RTNH_NEXT(nh);
 		}
