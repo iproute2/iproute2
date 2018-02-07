@@ -363,6 +363,25 @@ static void print_rt_flags(FILE *fp, unsigned int flags)
 		fprintf(fp, "unresolved ");
 }
 
+static void print_rt_pref(FILE *fp, unsigned int pref)
+{
+	fprintf(fp, "pref ");
+
+	switch (pref) {
+	case ICMPV6_ROUTER_PREF_LOW:
+		fprintf(fp, "low");
+		break;
+	case ICMPV6_ROUTER_PREF_MEDIUM:
+		fprintf(fp, "medium");
+		break;
+	case ICMPV6_ROUTER_PREF_HIGH:
+		fprintf(fp, "high");
+		break;
+	default:
+		fprintf(fp, "%u", pref);
+	}
+}
+
 int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -740,25 +759,10 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			nh = RTNH_NEXT(nh);
 		}
 	}
-	if (tb[RTA_PREF]) {
-		unsigned int pref = rta_getattr_u8(tb[RTA_PREF]);
 
-		fprintf(fp, "pref ");
+	if (tb[RTA_PREF])
+		print_rt_pref(fp, rta_getattr_u8(tb[RTA_PREF]));
 
-		switch (pref) {
-		case ICMPV6_ROUTER_PREF_LOW:
-			fprintf(fp, "low");
-			break;
-		case ICMPV6_ROUTER_PREF_MEDIUM:
-			fprintf(fp, "medium");
-			break;
-		case ICMPV6_ROUTER_PREF_HIGH:
-			fprintf(fp, "high");
-			break;
-		default:
-			fprintf(fp, "%u", pref);
-		}
-	}
 	if (tb[RTA_TTL_PROPAGATE]) {
 		fprintf(fp, "ttl-propagate ");
 		if (rta_getattr_u8(tb[RTA_TTL_PROPAGATE]))
