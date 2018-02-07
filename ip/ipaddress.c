@@ -609,8 +609,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 		print_uint(PRINT_JSON, "multicast", NULL, s->multicast);
 		if (s->rx_compressed)
 			print_uint(PRINT_JSON,
-				   "compressed",
-				   NULL, s->rx_compressed);
+				   "compressed", NULL, s->rx_compressed);
 
 		/* RX error stats */
 		if (show_stats > 1) {
@@ -647,8 +646,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 		print_uint(PRINT_JSON, "collisions", NULL, s->collisions);
 		if (s->tx_compressed)
 			print_uint(PRINT_JSON,
-				   "compressed",
-				   NULL, s->tx_compressed);
+				   "compressed", NULL, s->tx_compressed);
 
 		/* TX error stats */
 		if (show_stats > 1) {
@@ -668,9 +666,9 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 				print_uint(PRINT_JSON, "carrier_changes", NULL,
 					   rta_getattr_u32(carrier_changes));
 		}
-		close_json_object();
-		close_json_object();
 
+		close_json_object();
+		close_json_object();
 	} else {
 		/* RX stats */
 		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
@@ -691,7 +689,6 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 			fprintf(fp, "%s", _SL_);
 			fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
 				s->rx_nohandler ? "   nohandler" : "", _SL_);
-
 			fprintf(fp, "               ");
 			print_num(fp, 8, s->rx_length_errors);
 			print_num(fp, 7, s->rx_crc_errors);
@@ -700,7 +697,6 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 			print_num(fp, 7, s->rx_missed_errors);
 			if (s->rx_nohandler)
 				print_num(fp, 7, s->rx_nohandler);
-
 		}
 		fprintf(fp, "%s", _SL_);
 
@@ -753,9 +749,8 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 		print_uint(PRINT_JSON, "over_errors", NULL, s->rx_over_errors);
 		print_uint(PRINT_JSON, "multicast", NULL, s->multicast);
 		if (s->rx_compressed)
-			print_int(PRINT_JSON,
-				  "compressed",
-				  NULL, s->rx_compressed);
+			print_uint(PRINT_JSON,
+				   "compressed", NULL, s->rx_compressed);
 
 		/* RX error stats */
 		if (show_stats > 1) {
@@ -775,9 +770,8 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 				   "missed_errors",
 				   NULL, s->rx_missed_errors);
 			if (s->rx_nohandler)
-				print_int(PRINT_JSON,
-					  "nohandler",
-					  NULL, s->rx_nohandler);
+				print_uint(PRINT_JSON,
+					   "nohandler", NULL, s->rx_nohandler);
 		}
 		close_json_object();
 
@@ -792,9 +786,8 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 			   NULL, s->tx_carrier_errors);
 		print_uint(PRINT_JSON, "collisions", NULL, s->collisions);
 		if (s->tx_compressed)
-			print_int(PRINT_JSON,
-				  "compressed",
-				  NULL, s->tx_compressed);
+			print_uint(PRINT_JSON,
+				   "compressed", NULL, s->tx_compressed);
 
 		/* TX error stats */
 		if (show_stats > 1) {
@@ -811,9 +804,7 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 				   "heartbeat_errors",
 				   NULL, s->tx_heartbeat_errors);
 			if (carrier_changes)
-				print_uint(PRINT_JSON,
-					   "carrier_changes",
-					   NULL,
+				print_uint(PRINT_JSON, "carrier_changes", NULL,
 					   rta_getattr_u32(carrier_changes));
 		}
 
@@ -823,7 +814,6 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 		/* RX stats */
 		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
 			s->rx_compressed ? "compressed" : "", _SL_);
-
 
 		fprintf(fp, "    ");
 		print_num(fp, 10, s->rx_bytes);
