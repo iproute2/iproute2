@@ -54,12 +54,12 @@ static void usage(void)
 "                   netns | l2tp | fou | macsec | tcp_metrics | token | netconf | ila |\n"
 "                   vrf | sr }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
-"                    -h[uman-readable] | -iec |\n"
+"                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | mpls | bridge | link } |\n"
 "                    -4 | -6 | -I | -D | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } | -br[ief] |\n"
 "                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
-"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] | -c[olor]}\n");
+"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] | -c[olor]}\n");
 	exit(-1);
 }
 
