@@ -347,6 +347,273 @@ static void print_rtax_features(FILE *fp, unsigned int features)
 		fprintf(fp, "0x%x ", of);
 }
 
+static void print_rt_flags(FILE *fp, unsigned int flags)
+{
+	if (flags & RTNH_F_DEAD)
+		fprintf(fp, "dead ");
+	if (flags & RTNH_F_ONLINK)
+		fprintf(fp, "onlink ");
+	if (flags & RTNH_F_PERVASIVE)
+		fprintf(fp, "pervasive ");
+	if (flags & RTNH_F_OFFLOAD)
+		fprintf(fp, "offload ");
+	if (flags & RTNH_F_LINKDOWN)
+		fprintf(fp, "linkdown ");
+	if (flags & RTNH_F_UNRESOLVED)
+		fprintf(fp, "unresolved ");
+}
+
+static void print_rt_pref(FILE *fp, unsigned int pref)
+{
+	fprintf(fp, "pref ");
+
+	switch (pref) {
+	case ICMPV6_ROUTER_PREF_LOW:
+		fprintf(fp, "low");
+		break;
+	case ICMPV6_ROUTER_PREF_MEDIUM:
+		fprintf(fp, "medium");
+		break;
+	case ICMPV6_ROUTER_PREF_HIGH:
+		fprintf(fp, "high");
+		break;
+	default:
+		fprintf(fp, "%u", pref);
+	}
+}
+
+static void print_rta_if(FILE *fp, const struct rtattr *rta,
+			 const char *prefix)
+{
+	const char *ifname = ll_index_to_name(rta_getattr_u32(rta));
+
+	fprintf(fp, "%s %s ", prefix, ifname);
+}
+
+static void print_cache_flags(FILE *fp, __u32 flags)
+{
+	flags &= ~0xFFFF;
+
+	fprintf(fp, "%s    cache ", _SL_);
+
+	if (flags == 0)
+		return;
+
+	putc('<', fp);
+
+#define PRTFL(fl, flname)						\
+	if (flags & RTCF_##fl) {					\
+		flags &= ~RTCF_##fl;					\
+		fprintf(fp, "%s%s", flname, flags ? "," : "> ");	\
+	}
+
+	PRTFL(LOCAL, "local");
+	PRTFL(REJECT, "reject");
+	PRTFL(MULTICAST, "mc");
+	PRTFL(BROADCAST, "brd");
+	PRTFL(DNAT, "dst-nat");
+	PRTFL(SNAT, "src-nat");
+	PRTFL(MASQ, "masq");
+	PRTFL(DIRECTDST, "dst-direct");
+	PRTFL(DIRECTSRC, "src-direct");
+	PRTFL(REDIRECTED, "redirected");
+	PRTFL(DOREDIRECT, "redirect");
+	PRTFL(FAST, "fastroute");
+	PRTFL(NOTIFY, "notify");
+	PRTFL(TPROXY, "proxy");
+#undef PRTFL
+
+	if (flags)
+		fprintf(fp, "%#x> ", flags);
+}
+
+static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
+{
+	static int hz;
+
+	if (!hz)
+		hz = get_user_hz();
+	if (ci->rta_expires != 0)
+		fprintf(fp, "expires %dsec ", ci->rta_expires/hz);
+	if (ci->rta_error != 0)
+		fprintf(fp, "error %d ", ci->rta_error);
+	if (show_stats) {
+		if (ci->rta_clntref)
+			fprintf(fp, "users %d ", ci->rta_clntref);
+		if (ci->rta_used != 0)
+			fprintf(fp, "used %d ", ci->rta_used);
+		if (ci->rta_lastuse != 0)
+			fprintf(fp, "age %dsec ", ci->rta_lastuse/hz);
+	}
+	if (ci->rta_id)
+		fprintf(fp, "ipid 0x%04x ", ci->rta_id);
+	if (ci->rta_ts || ci->rta_tsage)
+		fprintf(fp, "ts 0x%x tsage %dsec ",
+			ci->rta_ts, ci->rta_tsage);
+}
+
+static void print_rta_flow(FILE *fp, const struct rtattr *rta)
+{
+	__u32 to = rta_getattr_u32(rta);
+	__u32 from = to >> 16;
+	SPRINT_BUF(b1);
+
+	to &= 0xFFFF;
+	fprintf(fp, "realm%s ", from ? "s" : "");
+	if (from) {
+		fprintf(fp, "%s/",
+			rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
+	}
+	fprintf(fp, "%s ",
+		rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
+}
+
+static void print_rta_newdst(FILE *fp, const struct rtmsg *r,
+			     const struct rtattr *rta)
+{
+	const char *newdst = format_host_rta(r->rtm_family, rta);
+
+	fprintf(fp, "as to %s ", newdst);
+}
+
+static void print_rta_gateway(FILE *fp, const struct rtmsg *r,
+			      const struct rtattr *rta)
+{
+	const char *gateway = format_host_rta(r->rtm_family, rta);
+
+	fprintf(fp, "via %s ", gateway);
+}
+
+static void print_rta_via(FILE *fp, const struct rtattr *rta)
+{
+	const struct rtvia *via = RTA_DATA(rta);
+	size_t len = RTA_PAYLOAD(rta);
+
+	fprintf(fp, "via %s %s ",
+		family_name(via->rtvia_family),
+		format_host(via->rtvia_family, len, via->rtvia_addr));
+}
+
+static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
+{
+	struct rtattr *mxrta[RTAX_MAX+1];
+	unsigned int mxlock = 0;
+	int i;
+
+	parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(rta), RTA_PAYLOAD(rta));
+
+	if (mxrta[RTAX_LOCK])
+		mxlock = rta_getattr_u32(mxrta[RTAX_LOCK]);
+
+	for (i = 2; i <= RTAX_MAX; i++) {
+		__u32 val = 0U;
+
+		if (mxrta[i] == NULL && !(mxlock & (1 << i)))
+			continue;
+
+		if (mxrta[i] != NULL && i != RTAX_CC_ALGO)
+			val = rta_getattr_u32(mxrta[i]);
+
+		if (i == RTAX_HOPLIMIT && (int)val == -1)
+			continue;
+
+		if (i < sizeof(mx_names)/sizeof(char *) && mx_names[i])
+			fprintf(fp, "%s ", mx_names[i]);
+		else
+			fprintf(fp, "metric %d ", i);
+
+		if (mxlock & (1<<i))
+			fprintf(fp, "lock ");
+
+		switch (i) {
+		case RTAX_FEATURES:
+			print_rtax_features(fp, val);
+			break;
+		default:
+			fprintf(fp, "%u ", val);
+			break;
+
+		case RTAX_RTT:
+		case RTAX_RTTVAR:
+		case RTAX_RTO_MIN:
+			if (i == RTAX_RTT)
+				val /= 8;
+			else if (i == RTAX_RTTVAR)
+				val /= 4;
+
+			if (val >= 1000)
+				fprintf(fp, "%gs ", val/1e3);
+			else
+				fprintf(fp, "%ums ", val);
+			break;
+		case RTAX_CC_ALGO:
+			fprintf(fp, "%s ", rta_getattr_str(mxrta[i]));
+			break;
+		}
+	}
+}
+
+static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
+				struct rtattr *rta)
+{
+	const struct rtnexthop *nh = RTA_DATA(rta);
+	int len = RTA_PAYLOAD(rta);
+	int first = 1;
+
+	while (len > sizeof(*nh)) {
+		struct rtattr *tb[RTA_MAX + 1];
+
+		if (nh->rtnh_len > len)
+			break;
+
+		if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
+			if (first) {
+				fprintf(fp, "Oifs: ");
+				first = 0;
+			} else {
+				fprintf(fp, " ");
+			}
+		} else
+			fprintf(fp, "%s\tnexthop ", _SL_);
+
+		if (nh->rtnh_len > sizeof(*nh)) {
+			parse_rtattr(tb, RTA_MAX, RTNH_DATA(nh),
+				     nh->rtnh_len - sizeof(*nh));
+
+			if (tb[RTA_ENCAP])
+				lwt_print_encap(fp,
+						tb[RTA_ENCAP_TYPE],
+						tb[RTA_ENCAP]);
+			if (tb[RTA_NEWDST])
+				print_rta_newdst(fp, r, tb[RTA_NEWDST]);
+			if (tb[RTA_GATEWAY])
+				print_rta_gateway(fp, r, tb[RTA_GATEWAY]);
+			if (tb[RTA_VIA])
+				print_rta_via(fp, tb[RTA_VIA]);
+			if (tb[RTA_FLOW])
+				print_rta_flow(fp, tb[RTA_FLOW]);
+		}
+
+		if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
+			fprintf(fp, "%s", ll_index_to_name(nh->rtnh_ifindex));
+			if (nh->rtnh_hops != 1)
+				fprintf(fp, "(ttl>%d)", nh->rtnh_hops);
+			fprintf(fp, " ");
+		} else {
+			fprintf(fp, "dev %s ",
+				ll_index_to_name(nh->rtnh_ifindex));
+			if (r->rtm_family != AF_MPLS)
+				fprintf(fp, "weight %d ",
+					nh->rtnh_hops+1);
+		}
+
+		print_rt_flags(fp, nh->rtnh_flags);
+
+		len -= NLMSG_ALIGN(nh->rtnh_len);
+		nh = RTNH_NEXT(nh);
+	}
+}
+
 int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -358,7 +625,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	int ret;
 
 	SPRINT_BUF(b1);
-	static int hz;
 
 	if (n->nlmsg_type != RTM_NEWROUTE && n->nlmsg_type != RTM_DELROUTE) {
 		fprintf(stderr, "Not a route: %08x %08x %08x\n",
@@ -433,10 +699,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	} else if (r->rtm_src_len) {
 		fprintf(fp, "from 0/%u ", r->rtm_src_len);
 	}
-	if (tb[RTA_NEWDST]) {
-		fprintf(fp, "as to %s ",
-		        format_host_rta(r->rtm_family, tb[RTA_NEWDST]));
-	}
+
+	if (tb[RTA_NEWDST])
+		print_rta_newdst(fp, r, tb[RTA_NEWDST]);
 
 	if (tb[RTA_ENCAP])
 		lwt_print_encap(fp, tb[RTA_ENCAP_TYPE], tb[RTA_ENCAP]);
@@ -446,20 +711,14 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
 	}
 
-	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len) {
-		fprintf(fp, "via %s ",
-		        format_host_rta(r->rtm_family, tb[RTA_GATEWAY]));
-	}
-	if (tb[RTA_VIA]) {
-		size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
-		struct rtvia *via = RTA_DATA(tb[RTA_VIA]);
+	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len)
+		print_rta_gateway(fp, r, tb[RTA_GATEWAY]);
 
-		fprintf(fp, "via %s %s ",
-			family_name(via->rtvia_family),
-			format_host(via->rtvia_family, len, via->rtvia_addr));
-	}
+	if (tb[RTA_VIA])
+		print_rta_via(fp, tb[RTA_VIA]);
+
 	if (tb[RTA_OIF] && filter.oifmask != -1)
-		fprintf(fp, "dev %s ", ll_index_to_name(rta_getattr_u32(tb[RTA_OIF])));
+		print_rta_if(fp,  tb[RTA_OIF], "dev");
 
 	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
 		fprintf(fp, "table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
@@ -478,20 +737,9 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	}
 	if (tb[RTA_PRIORITY] && filter.metricmask != -1)
 		fprintf(fp, "metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));
-	if (r->rtm_flags & RTNH_F_DEAD)
-		fprintf(fp, "dead ");
-	if (r->rtm_flags & RTNH_F_ONLINK)
-		fprintf(fp, "onlink ");
-	if (r->rtm_flags & RTNH_F_PERVASIVE)
-		fprintf(fp, "pervasive ");
-	if (r->rtm_flags & RTNH_F_OFFLOAD)
-		fprintf(fp, "offload ");
-	if (r->rtm_flags & RTM_F_NOTIFY)
-		fprintf(fp, "notify ");
-	if (r->rtm_flags & RTNH_F_LINKDOWN)
-		fprintf(fp, "linkdown ");
-	if (r->rtm_flags & RTNH_F_UNRESOLVED)
-		fprintf(fp, "unresolved ");
+
+	print_rt_flags(fp, r->rtm_flags);
+
 	if (tb[RTA_MARK]) {
 		unsigned int mark = rta_getattr_u32(tb[RTA_MARK]);
 
@@ -503,264 +751,39 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		}
 	}
 
-	if (tb[RTA_FLOW] && filter.realmmask != ~0U) {
-		__u32 to = rta_getattr_u32(tb[RTA_FLOW]);
-		__u32 from = to>>16;
-
-		to &= 0xFFFF;
-		fprintf(fp, "realm%s ", from ? "s" : "");
-		if (from) {
-			fprintf(fp, "%s/",
-				rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
-		}
-		fprintf(fp, "%s ",
-			rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
-	}
+	if (tb[RTA_FLOW] && filter.realmmask != ~0U)
+		print_rta_flow(fp, tb[RTA_FLOW]);
 
 	if (tb[RTA_UID])
 		fprintf(fp, "uid %u ", rta_getattr_u32(tb[RTA_UID]));
 
-	if ((r->rtm_flags&RTM_F_CLONED) && r->rtm_family == AF_INET) {
-		__u32 flags = r->rtm_flags&~0xFFFF;
-		int first = 1;
-
-		fprintf(fp, "%s    cache ", _SL_);
-
-#define PRTFL(fl, flname) if (flags&RTCF_##fl) { \
-  flags &= ~RTCF_##fl; \
-  fprintf(fp, "%s" flname "%s", first ? "<" : "", flags ? "," : "> "); \
-  first = 0; }
-		PRTFL(LOCAL, "local");
-		PRTFL(REJECT, "reject");
-		PRTFL(MULTICAST, "mc");
-		PRTFL(BROADCAST, "brd");
-		PRTFL(DNAT, "dst-nat");
-		PRTFL(SNAT, "src-nat");
-		PRTFL(MASQ, "masq");
-		PRTFL(DIRECTDST, "dst-direct");
-		PRTFL(DIRECTSRC, "src-direct");
-		PRTFL(REDIRECTED, "redirected");
-		PRTFL(DOREDIRECT, "redirect");
-		PRTFL(FAST, "fastroute");
-		PRTFL(NOTIFY, "notify");
-		PRTFL(TPROXY, "proxy");
-
-		if (flags)
-			fprintf(fp, "%s%x> ", first ? "<" : "", flags);
-		if (tb[RTA_CACHEINFO]) {
-			struct rta_cacheinfo *ci = RTA_DATA(tb[RTA_CACHEINFO]);
-
-			if (!hz)
-				hz = get_user_hz();
-			if (ci->rta_expires != 0)
-				fprintf(fp, "expires %dsec ", ci->rta_expires/hz);
-			if (ci->rta_error != 0)
-				fprintf(fp, "error %d ", ci->rta_error);
-			if (show_stats) {
-				if (ci->rta_clntref)
-					fprintf(fp, "users %d ", ci->rta_clntref);
-				if (ci->rta_used != 0)
-					fprintf(fp, "used %d ", ci->rta_used);
-				if (ci->rta_lastuse != 0)
-					fprintf(fp, "age %dsec ", ci->rta_lastuse/hz);
-			}
-			if (ci->rta_id)
-				fprintf(fp, "ipid 0x%04x ", ci->rta_id);
-			if (ci->rta_ts || ci->rta_tsage)
-				fprintf(fp, "ts 0x%x tsage %dsec ",
-					ci->rta_ts, ci->rta_tsage);
-		}
-	} else if (r->rtm_family == AF_INET6) {
-		struct rta_cacheinfo *ci = NULL;
+	if ((r->rtm_flags & RTM_F_CLONED) && r->rtm_family == AF_INET) {
+		print_cache_flags(fp, r->rtm_flags);
 
 		if (tb[RTA_CACHEINFO])
-			ci = RTA_DATA(tb[RTA_CACHEINFO]);
-		if ((r->rtm_flags & RTM_F_CLONED) || (ci && ci->rta_expires)) {
-			if (!hz)
-				hz = get_user_hz();
-			if (r->rtm_flags & RTM_F_CLONED)
-				fprintf(fp, "%s    cache ", _SL_);
-			if (ci->rta_expires)
-				fprintf(fp, "expires %dsec ", ci->rta_expires/hz);
-			if (ci->rta_error != 0)
-				fprintf(fp, "error %d ", ci->rta_error);
-			if (show_stats) {
-				if (ci->rta_clntref)
-					fprintf(fp, "users %d ", ci->rta_clntref);
-				if (ci->rta_used != 0)
-					fprintf(fp, "used %d ", ci->rta_used);
-				if (ci->rta_lastuse != 0)
-					fprintf(fp, "age %dsec ", ci->rta_lastuse/hz);
-			}
-		} else if (ci) {
-			if (ci->rta_error != 0)
-				fprintf(fp, "error %d ", ci->rta_error);
-		}
+			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
+
+	} else if (r->rtm_family == AF_INET6) {
+
+		if (r->rtm_flags & RTM_F_CLONED)
+			fprintf(fp, "%s    cache ", _SL_);
+
+		if (tb[RTA_CACHEINFO])
+			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
 	}
-	if (tb[RTA_METRICS]) {
-		int i;
-		unsigned int mxlock = 0;
-		struct rtattr *mxrta[RTAX_MAX+1];
 
-		parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(tb[RTA_METRICS]),
-			    RTA_PAYLOAD(tb[RTA_METRICS]));
-		if (mxrta[RTAX_LOCK])
-			mxlock = rta_getattr_u32(mxrta[RTAX_LOCK]);
+	if (tb[RTA_METRICS])
+		print_rta_metrics(fp, tb[RTA_METRICS]);
 
-		for (i = 2; i <= RTAX_MAX; i++) {
-			__u32 val = 0U;
+	if (tb[RTA_IIF] && filter.iifmask != -1)
+		print_rta_if(fp, tb[RTA_IIF], "iif");
 
-			if (mxrta[i] == NULL && !(mxlock & (1 << i)))
-				continue;
+	if (tb[RTA_MULTIPATH])
+		print_rta_multipath(fp, r, tb[RTA_MULTIPATH]);
 
-			if (mxrta[i] != NULL && i != RTAX_CC_ALGO)
-				val = rta_getattr_u32(mxrta[i]);
+	if (tb[RTA_PREF])
+		print_rt_pref(fp, rta_getattr_u8(tb[RTA_PREF]));
 
-			if (i == RTAX_HOPLIMIT && (int)val == -1)
-				continue;
-
-			if (i < sizeof(mx_names)/sizeof(char *) && mx_names[i])
-				fprintf(fp, "%s ", mx_names[i]);
-			else
-				fprintf(fp, "metric %d ", i);
-
-			if (mxlock & (1<<i))
-				fprintf(fp, "lock ");
-
-			switch (i) {
-			case RTAX_FEATURES:
-				print_rtax_features(fp, val);
-				break;
-			default:
-				fprintf(fp, "%u ", val);
-				break;
-
-			case RTAX_RTT:
-			case RTAX_RTTVAR:
-			case RTAX_RTO_MIN:
-				if (i == RTAX_RTT)
-					val /= 8;
-				else if (i == RTAX_RTTVAR)
-					val /= 4;
-
-				if (val >= 1000)
-					fprintf(fp, "%gs ", val/1e3);
-				else
-					fprintf(fp, "%ums ", val);
-				break;
-			case RTAX_CC_ALGO:
-				fprintf(fp, "%s ", rta_getattr_str(mxrta[i]));
-				break;
-			}
-		}
-	}
-	if (tb[RTA_IIF] && filter.iifmask != -1) {
-		fprintf(fp, "iif %s ",
-			ll_index_to_name(rta_getattr_u32(tb[RTA_IIF])));
-	}
-	if (tb[RTA_MULTIPATH]) {
-		struct rtnexthop *nh = RTA_DATA(tb[RTA_MULTIPATH]);
-		int first = 1;
-
-		len = RTA_PAYLOAD(tb[RTA_MULTIPATH]);
-
-		for (;;) {
-			if (len < sizeof(*nh))
-				break;
-			if (nh->rtnh_len > len)
-				break;
-			if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
-				if (first) {
-					fprintf(fp, "Oifs: ");
-					first = 0;
-				} else {
-					fprintf(fp, " ");
-				}
-			} else
-				fprintf(fp, "%s\tnexthop ", _SL_);
-			if (nh->rtnh_len > sizeof(*nh)) {
-				parse_rtattr(tb, RTA_MAX, RTNH_DATA(nh), nh->rtnh_len - sizeof(*nh));
-
-				if (tb[RTA_ENCAP])
-					lwt_print_encap(fp,
-							tb[RTA_ENCAP_TYPE],
-							tb[RTA_ENCAP]);
-				if (tb[RTA_NEWDST]) {
-					fprintf(fp, "as to %s ",
-						format_host_rta(r->rtm_family,
-								tb[RTA_NEWDST]));
-				}
-				if (tb[RTA_GATEWAY]) {
-					fprintf(fp, "via %s ",
-						format_host_rta(r->rtm_family,
-								tb[RTA_GATEWAY]));
-				}
-				if (tb[RTA_VIA]) {
-					size_t len = RTA_PAYLOAD(tb[RTA_VIA]) - 2;
-					struct rtvia *via = RTA_DATA(tb[RTA_VIA]);
-
-					fprintf(fp, "via %s %s ",
-						family_name(via->rtvia_family),
-						format_host(via->rtvia_family, len, via->rtvia_addr));
-				}
-				if (tb[RTA_FLOW]) {
-					__u32 to = rta_getattr_u32(tb[RTA_FLOW]);
-					__u32 from = to>>16;
-
-					to &= 0xFFFF;
-					fprintf(fp, "realm%s ", from ? "s" : "");
-					if (from) {
-						fprintf(fp, "%s/",
-							rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
-					}
-					fprintf(fp, "%s ",
-						rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
-				}
-			}
-			if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
-				fprintf(fp, "%s", ll_index_to_name(nh->rtnh_ifindex));
-				if (nh->rtnh_hops != 1)
-					fprintf(fp, "(ttl>%d)", nh->rtnh_hops);
-				fprintf(fp, " ");
-			} else {
-				fprintf(fp, "dev %s ", ll_index_to_name(nh->rtnh_ifindex));
-				if (r->rtm_family != AF_MPLS)
-					fprintf(fp, "weight %d ",
-						nh->rtnh_hops+1);
-			}
-			if (nh->rtnh_flags & RTNH_F_DEAD)
-				fprintf(fp, "dead ");
-			if (nh->rtnh_flags & RTNH_F_ONLINK)
-				fprintf(fp, "onlink ");
-			if (nh->rtnh_flags & RTNH_F_PERVASIVE)
-				fprintf(fp, "pervasive ");
-			if (nh->rtnh_flags & RTNH_F_OFFLOAD)
-				fprintf(fp, "offload ");
-			if (nh->rtnh_flags & RTNH_F_LINKDOWN)
-				fprintf(fp, "linkdown ");
-			len -= NLMSG_ALIGN(nh->rtnh_len);
-			nh = RTNH_NEXT(nh);
-		}
-	}
-	if (tb[RTA_PREF]) {
-		unsigned int pref = rta_getattr_u8(tb[RTA_PREF]);
-
-		fprintf(fp, "pref ");
-
-		switch (pref) {
-		case ICMPV6_ROUTER_PREF_LOW:
-			fprintf(fp, "low");
-			break;
-		case ICMPV6_ROUTER_PREF_MEDIUM:
-			fprintf(fp, "medium");
-			break;
-		case ICMPV6_ROUTER_PREF_HIGH:
-			fprintf(fp, "high");
-			break;
-		default:
-			fprintf(fp, "%u", pref);
-		}
-	}
 	if (tb[RTA_TTL_PROPAGATE]) {
 		fprintf(fp, "ttl-propagate ");
 		if (rta_getattr_u8(tb[RTA_TTL_PROPAGATE]))
