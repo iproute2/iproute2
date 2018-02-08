@@ -162,7 +162,7 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	if (r->rtm_family == AF_INET6 && table != RT_TABLE_MAIN)
 		ip6_multiple_tables = 1;
 
-	if (filter.cloned == !(r->rtm_flags&RTM_F_CLONED))
+	if (filter.cloned == !(r->rtm_flags & RTM_F_CLONED))
 		return 0;
 
 	if (r->rtm_family == AF_INET6 && !ip6_multiple_tables) {
@@ -566,7 +566,8 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 		if (nh->rtnh_len > len)
 			break;
 
-		if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
+		if ((r->rtm_flags & RTM_F_CLONED) &&
+		    r->rtm_type == RTN_MULTICAST) {
 			if (first) {
 				fprintf(fp, "Oifs: ");
 				first = 0;
@@ -594,7 +595,8 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 				print_rta_flow(fp, tb[RTA_FLOW]);
 		}
 
-		if (r->rtm_flags&RTM_F_CLONED && r->rtm_type == RTN_MULTICAST) {
+		if ((r->rtm_flags & RTM_F_CLONED) &&
+		    r->rtm_type == RTN_MULTICAST) {
 			fprintf(fp, "%s", ll_index_to_name(nh->rtnh_ifindex));
 			if (nh->rtnh_hops != 1)
 				fprintf(fp, "(ttl>%d)", nh->rtnh_hops);
@@ -676,7 +678,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (r->rtm_dst_len != host_len) {
 			fprintf(fp, "%s/%u ",
 				rt_addr_n2a_rta(family, tb[RTA_DST]),
-			        r->rtm_dst_len);
+				r->rtm_dst_len);
 		} else {
 			fprintf(fp, "%s ",
 				format_host_rta(family, tb[RTA_DST]));
@@ -691,7 +693,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (r->rtm_src_len != host_len) {
 			fprintf(fp, "from %s/%u ",
 				rt_addr_n2a_rta(family, tb[RTA_SRC]),
-			        r->rtm_src_len);
+				r->rtm_src_len);
 		} else {
 			fprintf(fp, "from %s ",
 				format_host_rta(family, tb[RTA_SRC]));
@@ -722,7 +724,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
 		fprintf(fp, "table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
-	if (!(r->rtm_flags&RTM_F_CLONED)) {
+	if (!(r->rtm_flags & RTM_F_CLONED)) {
 		if ((r->rtm_protocol != RTPROT_BOOT || show_details > 0) && filter.protocolmask != -1)
 			fprintf(fp, "proto %s ", rtnl_rtprot_n2a(r->rtm_protocol, b1, sizeof(b1)));
 		if ((r->rtm_scope != RT_SCOPE_UNIVERSE || show_details > 0) && filter.scopemask != -1)
@@ -764,7 +766,6 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
 
 	} else if (r->rtm_family == AF_INET6) {
-
 		if (r->rtm_flags & RTM_F_CLONED)
 			fprintf(fp, "%s    cache ", _SL_);
 
@@ -1577,8 +1578,8 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 				invarg("invalid mark value", *argv);
 			filter.markmask = -1;
 		} else if (matches(*argv, "metric") == 0 ||
-		           matches(*argv, "priority") == 0 ||
-		           strcmp(*argv, "preference") == 0) {
+			   matches(*argv, "priority") == 0 ||
+			   strcmp(*argv, "preference") == 0) {
 			__u32 metric;
 
 			NEXT_ARG();
@@ -2117,6 +2118,8 @@ int do_iproute(int argc, char **argv)
 		return iproute_showdump();
 	if (matches(*argv, "help") == 0)
 		usage();
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip route help\".\n", *argv);
+
+	fprintf(stderr,
+		"Command \"%s\" is unknown, try \"ip route help\".\n", *argv);
 	exit(-1);
 }
