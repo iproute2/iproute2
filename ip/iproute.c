@@ -653,7 +653,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		struct nlmsghdr *fn;
 
 		if (NLMSG_ALIGN(filter.flushp) + n->nlmsg_len > filter.flushe) {
-			if ((ret = flush_update()) < 0)
+			ret = flush_update();
+			if (ret < 0)
 				return ret;
 		}
 		fn = (struct nlmsghdr *)(filter.flushb + NLMSG_ALIGN(filter.flushp));
@@ -827,7 +828,8 @@ static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
 			}
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
-			if ((rtnh->rtnh_ifindex = ll_name_to_index(*argv)) == 0) {
+			rtnh->rtnh_ifindex = ll_name_to_index(*argv);
+			if (rtnh->rtnh_ifindex == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n", *argv);
 				return -1;
 			}
@@ -1326,9 +1328,9 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 		usage();
 
 	if (d) {
-		int idx;
+		int idx = ll_name_to_index(d);
 
-		if ((idx = ll_name_to_index(d)) == 0) {
+		if (idx == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			return -1;
 		}
@@ -1658,7 +1660,8 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 		int idx;
 
 		if (id) {
-			if ((idx = ll_name_to_index(id)) == 0) {
+			idx = ll_name_to_index(id);
+			if (idx == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n", id);
 				return -1;
 			}
@@ -1666,7 +1669,8 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			filter.iifmask = -1;
 		}
 		if (od) {
-			if ((idx = ll_name_to_index(od)) == 0) {
+			idx = ll_name_to_index(od);
+			if (idx == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n", od);
 				return -1;
 			}
@@ -1716,7 +1720,8 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 				return 0;
 			}
 			round++;
-			if ((ret = flush_update()) < 0)
+			ret = flush_update();
+			if (ret < 0)
 				return ret;
 
 			if (time(0) - start > 30) {
@@ -1867,14 +1872,16 @@ static int iproute_get(int argc, char **argv)
 		int idx;
 
 		if (idev) {
-			if ((idx = ll_name_to_index(idev)) == 0) {
+			idx = ll_name_to_index(idev);
+			if (idx == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n", idev);
 				return -1;
 			}
 			addattr32(&req.n, sizeof(req), RTA_IIF, idx);
 		}
 		if (odev) {
-			if ((idx = ll_name_to_index(odev)) == 0) {
+			idx = ll_name_to_index(odev);
+			if (idx == 0) {
 				fprintf(stderr, "Cannot find device \"%s\"\n", odev);
 				return -1;
 			}
