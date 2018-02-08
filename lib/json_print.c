@@ -89,9 +89,7 @@ void open_json_array(enum output_type type, const char *str)
 void close_json_array(enum output_type type, const char *str)
 {
 	if (_IS_JSON_CONTEXT(type)) {
-		jsonw_pretty(_jw, false);
 		jsonw_end_array(_jw);
-		jsonw_pretty(_jw, true);
 	} else if (_IS_FP_CONTEXT(type)) {
 		printf("%s", str);
 	}
