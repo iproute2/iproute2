@@ -81,21 +81,6 @@ static void _print_onoff(FILE *f, char *json_flag, char *flag, __u8 val)
 		fprintf(f, "%s %s ", flag, val ? "on" : "off");
 }
 
-static void _print_hex(FILE *f,
-		       const char *json_attr,
-		       const char *attr,
-		       __u16 val)
-{
-	if (is_json_context()) {
-		SPRINT_BUF(b1);
-
-		snprintf(b1, sizeof(b1), "0x%x", val);
-		print_string(PRINT_JSON, json_attr, NULL, b1);
-	} else {
-		fprintf(f, "%s 0x%x ", attr, val);
-	}
-}
-
 static void _print_timer(FILE *f, const char *attr, struct rtattr *timer)
 {
 	struct timeval tv;
@@ -181,11 +166,11 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 			     rta_getattr_u8(tb[IFLA_BRPORT_UNICAST_FLOOD]));
 
 	if (tb[IFLA_BRPORT_ID])
-		_print_hex(f, "id", "port_id",
-			   rta_getattr_u16(tb[IFLA_BRPORT_ID]));
+		print_0xhex(PRINT_ANY, "id", "port_id 0x%x ",
+			    rta_getattr_u16(tb[IFLA_BRPORT_ID]));
 
 	if (tb[IFLA_BRPORT_NO])
-		_print_hex(f, "no", "port_no",
+		print_0xhex(PRINT_ANY, "no", "port_no 0x%x ",
 			   rta_getattr_u16(tb[IFLA_BRPORT_NO]));
 
 	if (tb[IFLA_BRPORT_DESIGNATED_PORT])
@@ -279,7 +264,8 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 		__u16 fwd_mask;
 
 		fwd_mask = rta_getattr_u16(tb[IFLA_BRPORT_GROUP_FWD_MASK]);
-		_print_hex(f, "group_fwd_mask", "group_fwd_mask", fwd_mask);
+		print_0xhex(PRINT_ANY, "group_fwd_mask",
+			    "group_fwd_mask 0x%x ", fwd_mask);
 		_bitmask2str(fwd_mask, convbuf, sizeof(convbuf), fwd_mask_tbl);
 		print_string(PRINT_ANY, "group_fwd_mask_str",
 			     "group_fwd_mask_str %s ", convbuf);

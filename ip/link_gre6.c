@@ -556,7 +556,8 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_GRE_ERSPAN_VER]) {
 		__u8 erspan_ver = rta_getattr_u8(tb[IFLA_GRE_ERSPAN_VER]);
 
-		print_uint(PRINT_ANY, "erspan_ver", "erspan_ver %u ", erspan_ver);
+		print_uint(PRINT_ANY,
+			   "erspan_ver", "erspan_ver %u ", erspan_ver);
 	}
 
 	if (tb[IFLA_GRE_ERSPAN_DIR]) {
@@ -573,7 +574,8 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_GRE_ERSPAN_HWID]) {
 		__u16 erspan_hwid = rta_getattr_u16(tb[IFLA_GRE_ERSPAN_HWID]);
 
-		print_hex(PRINT_ANY, "erspan_hwid", "erspan_hwid 0x%x ", erspan_hwid);
+		print_0xhex(PRINT_ANY,
+			    "erspan_hwid", "erspan_hwid 0x%x ", erspan_hwid);
 	}
 
 	tnl_print_encap(tb,
