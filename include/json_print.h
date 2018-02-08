@@ -15,6 +15,8 @@
 #include "json_writer.h"
 #include "color.h"
 
+extern int show_pretty;
+
 json_writer_t *get_json_writer(void);
 
 /*

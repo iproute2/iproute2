@@ -28,7 +28,8 @@ void new_json_obj(int json)
 			perror("json object");
 			exit(1);
 		}
-		jsonw_pretty(_jw, true);
+		if (show_pretty)
+			jsonw_pretty(_jw, true);
 		jsonw_start_array(_jw);
 	}
 }
