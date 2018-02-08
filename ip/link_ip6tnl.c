@@ -99,8 +99,8 @@ static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 encap_limit = IPV6_DEFAULT_TNL_ENCAP_LIMIT;
 	__u32 flowinfo = 0;
 	__u32 flags = 0;
-	__u32 link = 0;
 	__u8 proto = 0;
+	__u32 link = 0;
 	__u16 encaptype = 0;
 	__u16 encapflags = TUNNEL_ENCAP_FLAG_CSUM6;
 	__u16 encapsport = 0;
@@ -169,7 +169,7 @@ get_failed:
 	}
 
 	while (argc > 0) {
-		if (matches(*argv, "mode") == 0) {
+		if (strcmp(*argv, "mode") == 0) {
 			NEXT_ARG();
 			if (strcmp(*argv, "ipv6/ipv6") == 0 ||
 			    strcmp(*argv, "ip6ip6") == 0)
@@ -222,9 +222,9 @@ get_failed:
 				encap_limit = uval;
 				flags &= ~IP6_TNL_F_IGN_ENCAP_LIMIT;
 			}
-		} else if (strcmp(*argv, "tclass") == 0 ||
+		} else if (strcmp(*argv, "tos") == 0 ||
+			   strcmp(*argv, "tclass") == 0 ||
 			   strcmp(*argv, "tc") == 0 ||
-			   strcmp(*argv, "tos") == 0 ||
 			   matches(*argv, "dsfield") == 0) {
 			__u8 uval;
 
@@ -321,6 +321,7 @@ get_failed:
 		addattr_l(n, 1024, IFLA_IPTUN_COLLECT_METADATA, NULL, 0);
 		return 0;
 	}
+
 	addattr_l(n, 1024, IFLA_IPTUN_LOCAL, &laddr, sizeof(laddr));
 	addattr_l(n, 1024, IFLA_IPTUN_REMOTE, &raddr, sizeof(raddr));
 	addattr8(n, 1024, IFLA_IPTUN_TTL, hop_limit);
@@ -341,7 +342,7 @@ get_failed:
 static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
-	int flags = 0;
+	__u32 flags = 0;
 	__u32 flowinfo = 0;
 	__u8 ttl = 0;
 
@@ -377,7 +378,7 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 	tnl_print_endpoint("local", tb[IFLA_IPTUN_LOCAL], AF_INET6);
 
 	if (tb[IFLA_IPTUN_LINK]) {
-		unsigned int link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
+		__u32 link = rta_getattr_u32(tb[IFLA_IPTUN_LINK]);
 
 		if (link) {
 			print_string(PRINT_ANY, "link", "dev %s ",

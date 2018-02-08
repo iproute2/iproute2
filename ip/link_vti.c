@@ -174,7 +174,7 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	tnl_print_endpoint("local", tb[IFLA_VTI_LOCAL], AF_INET);
 
 	if (tb[IFLA_VTI_LINK]) {
-		unsigned int link = rta_getattr_u32(tb[IFLA_VTI_LINK]);
+		__u32 link = rta_getattr_u32(tb[IFLA_VTI_LINK]);
 
 		if (link) {
 			print_string(PRINT_ANY, "link", "dev %s ",

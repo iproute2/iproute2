@@ -81,23 +81,23 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *greinfo[IFLA_GRE_MAX + 1];
+	int len;
 	__u16 iflags = 0;
 	__u16 oflags = 0;
 	__be32 ikey = 0;
 	__be32 okey = 0;
 	unsigned int saddr = 0;
 	unsigned int daddr = 0;
-	unsigned int link = 0;
 	__u8 pmtudisc = 1;
-	__u8 ttl = 0;
+	__u8 ignore_df = 0;
 	__u8 tos = 0;
-	int len;
+	__u8 ttl = 0;
+	__u32 link = 0;
 	__u16 encaptype = 0;
 	__u16 encapflags = 0;
 	__u16 encapsport = 0;
 	__u16 encapdport = 0;
 	__u8 metadata = 0;
-	__u8 ignore_df = 0;
 	__u32 fwmark = 0;
 	__u32 erspan_idx = 0;
 	__u8 erspan_ver = 0;
@@ -152,30 +152,33 @@ get_failed:
 			pmtudisc = rta_getattr_u8(
 				greinfo[IFLA_GRE_PMTUDISC]);
 
-		if (greinfo[IFLA_GRE_TTL])
-			ttl = rta_getattr_u8(greinfo[IFLA_GRE_TTL]);
+		if (greinfo[IFLA_GRE_IGNORE_DF])
+			ignore_df =
+				!!rta_getattr_u8(greinfo[IFLA_GRE_IGNORE_DF]);
 
 		if (greinfo[IFLA_GRE_TOS])
 			tos = rta_getattr_u8(greinfo[IFLA_GRE_TOS]);
+
+		if (greinfo[IFLA_GRE_TTL])
+			ttl = rta_getattr_u8(greinfo[IFLA_GRE_TTL]);
 
 		if (greinfo[IFLA_GRE_LINK])
 			link = rta_getattr_u32(greinfo[IFLA_GRE_LINK]);
 
 		if (greinfo[IFLA_GRE_ENCAP_TYPE])
 			encaptype = rta_getattr_u16(greinfo[IFLA_GRE_ENCAP_TYPE]);
+
 		if (greinfo[IFLA_GRE_ENCAP_FLAGS])
 			encapflags = rta_getattr_u16(greinfo[IFLA_GRE_ENCAP_FLAGS]);
+
 		if (greinfo[IFLA_GRE_ENCAP_SPORT])
 			encapsport = rta_getattr_u16(greinfo[IFLA_GRE_ENCAP_SPORT]);
+
 		if (greinfo[IFLA_GRE_ENCAP_DPORT])
 			encapdport = rta_getattr_u16(greinfo[IFLA_GRE_ENCAP_DPORT]);
 
 		if (greinfo[IFLA_GRE_COLLECT_METADATA])
 			metadata = 1;
-
-		if (greinfo[IFLA_GRE_IGNORE_DF])
-			ignore_df =
-				!!rta_getattr_u8(greinfo[IFLA_GRE_IGNORE_DF]);
 
 		if (greinfo[IFLA_GRE_FWMARK])
 			fwmark = rta_getattr_u32(greinfo[IFLA_GRE_FWMARK]);
@@ -353,40 +356,38 @@ get_failed:
 		return -1;
 	}
 
-	if (!metadata) {
-		addattr32(n, 1024, IFLA_GRE_IKEY, ikey);
-		addattr32(n, 1024, IFLA_GRE_OKEY, okey);
-		addattr_l(n, 1024, IFLA_GRE_IFLAGS, &iflags, 2);
-		addattr_l(n, 1024, IFLA_GRE_OFLAGS, &oflags, 2);
-		addattr_l(n, 1024, IFLA_GRE_LOCAL, &saddr, 4);
-		addattr_l(n, 1024, IFLA_GRE_REMOTE, &daddr, 4);
-		addattr_l(n, 1024, IFLA_GRE_PMTUDISC, &pmtudisc, 1);
-		if (ignore_df)
-			addattr8(n, 1024, IFLA_GRE_IGNORE_DF, ignore_df & 1);
-		if (link)
-			addattr32(n, 1024, IFLA_GRE_LINK, link);
-		addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
-		addattr_l(n, 1024, IFLA_GRE_TOS, &tos, 1);
-		addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
-		if (erspan_ver) {
-			addattr8(n, 1024, IFLA_GRE_ERSPAN_VER, erspan_ver);
-			if (erspan_ver == 1 && erspan_idx != 0) {
-				addattr32(n, 1024,
-					  IFLA_GRE_ERSPAN_INDEX, erspan_idx);
-			} else if (erspan_ver == 2) {
-				addattr8(n, 1024,
-					 IFLA_GRE_ERSPAN_DIR, erspan_dir);
-				addattr16(n, 1024,
-					  IFLA_GRE_ERSPAN_HWID, erspan_hwid);
-			}
-		}
-		addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
-		addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
-		addattr16(n, 1024, IFLA_GRE_ENCAP_SPORT, htons(encapsport));
-		addattr16(n, 1024, IFLA_GRE_ENCAP_DPORT, htons(encapdport));
-	} else {
+	if (metadata) {
 		addattr_l(n, 1024, IFLA_GRE_COLLECT_METADATA, NULL, 0);
+		return 0;
 	}
+
+	addattr32(n, 1024, IFLA_GRE_IKEY, ikey);
+	addattr32(n, 1024, IFLA_GRE_OKEY, okey);
+	addattr_l(n, 1024, IFLA_GRE_IFLAGS, &iflags, 2);
+	addattr_l(n, 1024, IFLA_GRE_OFLAGS, &oflags, 2);
+	addattr_l(n, 1024, IFLA_GRE_LOCAL, &saddr, 4);
+	addattr_l(n, 1024, IFLA_GRE_REMOTE, &daddr, 4);
+	addattr_l(n, 1024, IFLA_GRE_PMTUDISC, &pmtudisc, 1);
+	if (ignore_df)
+		addattr8(n, 1024, IFLA_GRE_IGNORE_DF, ignore_df & 1);
+	addattr_l(n, 1024, IFLA_GRE_TOS, &tos, 1);
+	if (link)
+		addattr32(n, 1024, IFLA_GRE_LINK, link);
+	addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
+	addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
+	if (erspan_ver) {
+		addattr8(n, 1024, IFLA_GRE_ERSPAN_VER, erspan_ver);
+		if (erspan_ver == 1 && erspan_idx != 0) {
+			addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
+		} else if (erspan_ver == 2) {
+			addattr8(n, 1024, IFLA_GRE_ERSPAN_DIR, erspan_dir);
+			addattr16(n, 1024, IFLA_GRE_ERSPAN_HWID, erspan_hwid);
+		}
+	}
+	addattr16(n, 1024, IFLA_GRE_ENCAP_TYPE, encaptype);
+	addattr16(n, 1024, IFLA_GRE_ENCAP_FLAGS, encapflags);
+	addattr16(n, 1024, IFLA_GRE_ENCAP_SPORT, htons(encapsport));
+	addattr16(n, 1024, IFLA_GRE_ENCAP_DPORT, htons(encapdport));
 
 	return 0;
 }
@@ -394,8 +395,8 @@ get_failed:
 static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	char s2[64];
-	unsigned int iflags = 0;
-	unsigned int oflags = 0;
+	__u16 iflags = 0;
+	__u16 oflags = 0;
 	__u8 ttl = 0;
 	__u8 tos = 0;
 
@@ -411,7 +412,7 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	tnl_print_endpoint("local", tb[IFLA_GRE_LOCAL], AF_INET);
 
 	if (tb[IFLA_GRE_LINK]) {
-		unsigned int link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
+		__u32 link = rta_getattr_u32(tb[IFLA_GRE_LINK]);
 
 		if (link) {
 			print_string(PRINT_ANY, "link", "dev %s ",
