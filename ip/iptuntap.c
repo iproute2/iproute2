@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 #include <linux/if_tun.h>
+#include <linux/if_arp.h>
 #include <pwd.h>
 #include <grp.h>
 #include <fcntl.h>
@@ -30,6 +31,8 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+
+static const char drv_name[] = "tun";
 
 #define TUNDEV "/dev/net/tun"
 
@@ -348,43 +351,101 @@ next:
 	globfree(&globbuf);
 }
 
+static int tuntap_filter_req(struct nlmsghdr *nlh, int reqlen)
+{
+	struct rtattr *linkinfo;
+	int err;
+
+	linkinfo = addattr_nest(nlh, reqlen, IFLA_LINKINFO);
+
+	err = addattr_l(nlh, reqlen, IFLA_INFO_KIND,
+			drv_name, sizeof(drv_name) - 1);
+	if (err)
+		return err;
+
+	addattr_nest_end(nlh, linkinfo);
+
+	return 0;
+}
+
+static int print_tuntap(const struct sockaddr_nl *who,
+			struct nlmsghdr *n, void *arg)
+{
+	struct ifinfomsg *ifi = NLMSG_DATA(n);
+	struct rtattr *tb[IFLA_MAX+1];
+	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
+	const char *name, *kind;
+	long flags, owner = -1, group = -1;
+
+	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
+		return 0;
+
+	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*ifi)))
+		return -1;
+
+	switch (ifi->ifi_type) {
+	case ARPHRD_NONE:
+	case ARPHRD_ETHER:
+		break;
+	default:
+		return 0;
+	}
+
+	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), IFLA_PAYLOAD(n));
+
+	if (!tb[IFLA_IFNAME])
+		return 0;
+
+	if (!tb[IFLA_LINKINFO])
+		return 0;
+
+	parse_rtattr_nested(linkinfo, IFLA_INFO_MAX, tb[IFLA_LINKINFO]);
+
+	if (!linkinfo[IFLA_INFO_KIND])
+		return 0;
+
+	kind = rta_getattr_str(linkinfo[IFLA_INFO_KIND]);
+	if (strcmp(kind, drv_name))
+		return 0;
+
+	name = rta_getattr_str(tb[IFLA_IFNAME]);
+
+	if (read_prop(name, "tun_flags", &flags))
+		return 0;
+	if (read_prop(name, "owner", &owner))
+		return 0;
+	if (read_prop(name, "group", &group))
+		return 0;
+
+	printf("%s:", name);
+	print_flags(flags);
+	if (owner != -1)
+		printf(" user %ld", owner);
+	if (group != -1)
+		printf(" group %ld", group);
+	fputc('\n', stdout);
+	if (show_details) {
+		printf("\tAttached to processes:");
+		show_processes(name);
+		fputc('\n', stdout);
+	}
+
+	return 0;
+}
 
 static int do_show(int argc, char **argv)
 {
-	DIR *dir;
-	struct dirent *d;
-	long flags, owner = -1, group = -1;
-
-	dir = opendir("/sys/class/net");
-	if (!dir) {
-		perror("opendir");
+	if (rtnl_wilddump_req_filter_fn(&rth, AF_UNSPEC, RTM_GETLINK,
+					tuntap_filter_req) < 0) {
+		perror("Cannot send dump request\n");
 		return -1;
 	}
-	while ((d = readdir(dir))) {
-		if (d->d_name[0] == '.' &&
-		    (d->d_name[1] == 0 || d->d_name[1] == '.'))
-			continue;
 
-		if (read_prop(d->d_name, "tun_flags", &flags))
-			continue;
-
-		read_prop(d->d_name, "owner", &owner);
-		read_prop(d->d_name, "group", &group);
-
-		printf("%s:", d->d_name);
-		print_flags(flags);
-		if (owner != -1)
-			printf(" user %ld", owner);
-		if (group != -1)
-			printf(" group %ld", group);
-		printf("\n");
-		if (show_details) {
-			printf("\tAttached to processes:");
-			show_processes(d->d_name);
-			printf("\n");
-		}
+	if (rtnl_dump_filter(&rth, print_tuntap, NULL) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		return -1;
 	}
-	closedir(dir);
+
 	return 0;
 }
 

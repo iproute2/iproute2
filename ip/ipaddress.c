@@ -593,11 +593,18 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 	}
 }
 
-static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
-			       const struct rtattr *carrier_changes)
+static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 {
+	const struct rtattr *carrier_changes = tb[IFLA_CARRIER_CHANGES];
+	struct rtnl_link_stats64 _s, *s = &_s;
+	int ret;
+
+	ret = get_rtnl_link_stats_rta(s, tb);
+	if (ret < 0)
+		return;
+
 	if (is_json_context()) {
-		open_json_object("stats64");
+		open_json_object((ret == sizeof(*s)) ? "stats64" : "stats");
 
 		/* RX stats */
 		open_json_object("rx");
@@ -609,8 +616,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 		print_uint(PRINT_JSON, "multicast", NULL, s->multicast);
 		if (s->rx_compressed)
 			print_uint(PRINT_JSON,
-				   "compressed",
-				   NULL, s->rx_compressed);
+				   "compressed", NULL, s->rx_compressed);
 
 		/* RX error stats */
 		if (show_stats > 1) {
@@ -647,8 +653,7 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 		print_uint(PRINT_JSON, "collisions", NULL, s->collisions);
 		if (s->tx_compressed)
 			print_uint(PRINT_JSON,
-				   "compressed",
-				   NULL, s->tx_compressed);
+				   "compressed", NULL, s->tx_compressed);
 
 		/* TX error stats */
 		if (show_stats > 1) {
@@ -668,154 +673,6 @@ static void print_link_stats64(FILE *fp, const struct rtnl_link_stats64 *s,
 				print_uint(PRINT_JSON, "carrier_changes", NULL,
 					   rta_getattr_u32(carrier_changes));
 		}
-		close_json_object();
-		close_json_object();
-
-	} else {
-		/* RX stats */
-		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
-			s->rx_compressed ? "compressed" : "", _SL_);
-
-		fprintf(fp, "    ");
-		print_num(fp, 10, s->rx_bytes);
-		print_num(fp, 8, s->rx_packets);
-		print_num(fp, 7, s->rx_errors);
-		print_num(fp, 7, s->rx_dropped);
-		print_num(fp, 7, s->rx_over_errors);
-		print_num(fp, 7, s->multicast);
-		if (s->rx_compressed)
-			print_num(fp, 7, s->rx_compressed);
-
-		/* RX error stats */
-		if (show_stats > 1) {
-			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
-				s->rx_nohandler ? "   nohandler" : "", _SL_);
-
-			fprintf(fp, "               ");
-			print_num(fp, 8, s->rx_length_errors);
-			print_num(fp, 7, s->rx_crc_errors);
-			print_num(fp, 7, s->rx_frame_errors);
-			print_num(fp, 7, s->rx_fifo_errors);
-			print_num(fp, 7, s->rx_missed_errors);
-			if (s->rx_nohandler)
-				print_num(fp, 7, s->rx_nohandler);
-
-		}
-		fprintf(fp, "%s", _SL_);
-
-		/* TX stats */
-		fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
-			s->tx_compressed ? "compressed" : "", _SL_);
-
-		fprintf(fp, "    ");
-		print_num(fp, 10, s->tx_bytes);
-		print_num(fp, 8, s->tx_packets);
-		print_num(fp, 7, s->tx_errors);
-		print_num(fp, 7, s->tx_dropped);
-		print_num(fp, 7, s->tx_carrier_errors);
-		print_num(fp, 7, s->collisions);
-		if (s->tx_compressed)
-			print_num(fp, 7, s->tx_compressed);
-
-		/* TX error stats */
-		if (show_stats > 1) {
-			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    TX errors: aborted  fifo   window heartbeat");
-			if (carrier_changes)
-				fprintf(fp, " transns");
-			fprintf(fp, "%s", _SL_);
-
-			fprintf(fp, "               ");
-			print_num(fp, 8, s->tx_aborted_errors);
-			print_num(fp, 7, s->tx_fifo_errors);
-			print_num(fp, 7, s->tx_window_errors);
-			print_num(fp, 7, s->tx_heartbeat_errors);
-			if (carrier_changes)
-				print_num(fp, 7,
-					  rta_getattr_u32(carrier_changes));
-		}
-	}
-}
-
-static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
-			       const struct rtattr *carrier_changes)
-{
-	if (is_json_context()) {
-		open_json_object("stats");
-
-		/* RX stats */
-		open_json_object("rx");
-		print_uint(PRINT_JSON, "bytes", NULL, s->rx_bytes);
-		print_uint(PRINT_JSON, "packets", NULL, s->rx_packets);
-		print_uint(PRINT_JSON, "errors", NULL, s->rx_errors);
-		print_uint(PRINT_JSON, "dropped", NULL, s->rx_dropped);
-		print_uint(PRINT_JSON, "over_errors", NULL, s->rx_over_errors);
-		print_uint(PRINT_JSON, "multicast", NULL, s->multicast);
-		if (s->rx_compressed)
-			print_int(PRINT_JSON,
-				  "compressed",
-				  NULL, s->rx_compressed);
-
-		/* RX error stats */
-		if (show_stats > 1) {
-			print_uint(PRINT_JSON,
-				   "length_errors",
-				   NULL, s->rx_length_errors);
-			print_uint(PRINT_JSON,
-				   "crc_errors",
-				   NULL, s->rx_crc_errors);
-			print_uint(PRINT_JSON,
-				   "frame_errors",
-				   NULL, s->rx_frame_errors);
-			print_uint(PRINT_JSON,
-				   "fifo_errors",
-				   NULL, s->rx_fifo_errors);
-			print_uint(PRINT_JSON,
-				   "missed_errors",
-				   NULL, s->rx_missed_errors);
-			if (s->rx_nohandler)
-				print_int(PRINT_JSON,
-					  "nohandler",
-					  NULL, s->rx_nohandler);
-		}
-		close_json_object();
-
-		/* TX stats */
-		open_json_object("tx");
-		print_uint(PRINT_JSON, "bytes", NULL, s->tx_bytes);
-		print_uint(PRINT_JSON, "packets", NULL, s->tx_packets);
-		print_uint(PRINT_JSON, "errors", NULL, s->tx_errors);
-		print_uint(PRINT_JSON, "dropped", NULL, s->tx_dropped);
-		print_uint(PRINT_JSON,
-			   "carrier_errors",
-			   NULL, s->tx_carrier_errors);
-		print_uint(PRINT_JSON, "collisions", NULL, s->collisions);
-		if (s->tx_compressed)
-			print_int(PRINT_JSON,
-				  "compressed",
-				  NULL, s->tx_compressed);
-
-		/* TX error stats */
-		if (show_stats > 1) {
-			print_uint(PRINT_JSON,
-				   "aborted_errors",
-				   NULL, s->tx_aborted_errors);
-			print_uint(PRINT_JSON,
-				   "fifo_errors",
-				   NULL, s->tx_fifo_errors);
-			print_uint(PRINT_JSON,
-				   "window_errors",
-				   NULL, s->tx_window_errors);
-			print_uint(PRINT_JSON,
-				   "heartbeat_errors",
-				   NULL, s->tx_heartbeat_errors);
-			if (carrier_changes)
-				print_uint(PRINT_JSON,
-					   "carrier_changes",
-					   NULL,
-					   rta_getattr_u32(carrier_changes));
-		}
 
 		close_json_object();
 		close_json_object();
@@ -823,7 +680,6 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 		/* RX stats */
 		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
 			s->rx_compressed ? "compressed" : "", _SL_);
-
 
 		fprintf(fp, "    ");
 		print_num(fp, 10, s->rx_bytes);
@@ -882,27 +738,6 @@ static void print_link_stats32(FILE *fp, const struct rtnl_link_stats *s,
 				print_num(fp, 7,
 					  rta_getattr_u32(carrier_changes));
 		}
-	}
-}
-
-static void __print_link_stats(FILE *fp, struct rtattr **tb)
-{
-	const struct rtattr *carrier_changes = tb[IFLA_CARRIER_CHANGES];
-
-	if (tb[IFLA_STATS64]) {
-		struct rtnl_link_stats64 stats = { 0 };
-
-		memcpy(&stats, RTA_DATA(tb[IFLA_STATS64]),
-		       MIN(RTA_PAYLOAD(tb[IFLA_STATS64]), sizeof(stats)));
-
-		print_link_stats64(fp, &stats, carrier_changes);
-	} else if (tb[IFLA_STATS]) {
-		struct rtnl_link_stats stats = { 0 };
-
-		memcpy(&stats, RTA_DATA(tb[IFLA_STATS]),
-		       MIN(RTA_PAYLOAD(tb[IFLA_STATS]), sizeof(stats)));
-
-		print_link_stats32(fp, &stats, carrier_changes);
 	}
 }
 

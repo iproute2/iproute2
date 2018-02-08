@@ -1431,6 +1431,51 @@ int get_real_family(int rtm_type, int rtm_family)
 	return rtm_family;
 }
 
+/* Based on copy_rtnl_link_stats() from kernel at net/core/rtnetlink.c */
+static void copy_rtnl_link_stats64(struct rtnl_link_stats64 *stats64,
+				   const struct rtnl_link_stats *stats)
+{
+	__u64 *a = (__u64 *)stats64;
+	const __u32 *b = (const __u32 *)stats;
+	const __u32 *e = b + sizeof(*stats) / sizeof(*b);
+
+	while (b < e)
+		*a++ = *b++;
+}
+
+int get_rtnl_link_stats_rta(struct rtnl_link_stats64 *stats64,
+			    struct rtattr *tb[])
+{
+	struct rtnl_link_stats stats;
+	void *s;
+	struct rtattr *rta;
+	int size, len;
+
+	if (tb[IFLA_STATS64]) {
+		rta = tb[IFLA_STATS64];
+		size = sizeof(struct rtnl_link_stats64);
+		s = stats64;
+	} else if (tb[IFLA_STATS]) {
+		rta = tb[IFLA_STATS];
+		size = sizeof(struct rtnl_link_stats);
+		s = &stats;
+	} else {
+		return -1;
+	}
+
+	len = RTA_PAYLOAD(rta);
+	if (len < size)
+		memset(s + len, 0, size - len);
+	else
+		len = size;
+
+	memcpy(s, RTA_DATA(rta), len);
+
+	if (s != stats64)
+		copy_rtnl_link_stats64(stats64, s);
+	return size;
+}
+
 #ifdef NEED_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t size)
 {

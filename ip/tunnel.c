@@ -33,6 +33,7 @@
 #include <linux/if.h>
 #include <linux/ip.h>
 #include <linux/if_tunnel.h>
+#include <linux/if_arp.h>
 
 #include "utils.h"
 #include "tunnel.h"
@@ -307,30 +308,99 @@ void tnl_print_endpoint(const char *name, const struct rtattr *rta, int family)
 	}
 }
 
-/* tnl_print_stats - print tunnel statistics
- *
- * @buf - tunnel interface's line in /proc/net/dev,
- *        starting past the interface name and following colon
- */
-void tnl_print_stats(const char *buf)
+static void tnl_print_stats(const struct rtnl_link_stats64 *s)
 {
-	unsigned long rx_bytes, rx_packets, rx_errs, rx_drops,
-		      rx_fifo, rx_frame,
-		      tx_bytes, tx_packets, tx_errs, tx_drops,
-		      tx_fifo, tx_colls, tx_carrier, rx_multi;
-
-	if (sscanf(buf, "%lu%lu%lu%lu%lu%lu%lu%*d%lu%lu%lu%lu%lu%lu%lu",
-		   &rx_bytes, &rx_packets, &rx_errs, &rx_drops,
-		   &rx_fifo, &rx_frame, &rx_multi,
-		   &tx_bytes, &tx_packets, &tx_errs, &tx_drops,
-		   &tx_fifo, &tx_colls, &tx_carrier) != 14)
-		return;
-
 	printf("%s", _SL_);
 	printf("RX: Packets    Bytes        Errors CsumErrs OutOfSeq Mcasts%s", _SL_);
-	printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-8ld%s",
-	       rx_packets, rx_bytes, rx_errs, rx_frame, rx_fifo, rx_multi, _SL_);
+	printf("    %-10lld %-12lld %-6lld %-8lld %-8lld %-8lld%s",
+	       s->rx_packets, s->rx_bytes, s->rx_errors, s->rx_frame_errors,
+	       s->rx_fifo_errors, s->multicast, _SL_);
 	printf("TX: Packets    Bytes        Errors DeadLoop NoRoute  NoBufs%s", _SL_);
-	printf("    %-10ld %-12ld %-6ld %-8ld %-8ld %-6ld",
-	       tx_packets, tx_bytes, tx_errs, tx_colls, tx_carrier, tx_drops);
+	printf("    %-10lld %-12lld %-6lld %-8lld %-8lld %-6lld",
+	       s->tx_packets, s->tx_bytes, s->tx_errors, s->collisions,
+	       s->tx_carrier_errors, s->tx_dropped);
+}
+
+static int print_nlmsg_tunnel(const struct sockaddr_nl *who,
+			      struct nlmsghdr *n, void *arg)
+{
+	struct tnl_print_nlmsg_info *info = arg;
+	struct ifinfomsg *ifi = NLMSG_DATA(n);
+	struct rtattr *tb[IFLA_MAX+1];
+	const char *name, *n1;
+
+	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
+		return 0;
+
+	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*ifi)))
+		return -1;
+
+	if (preferred_family == AF_INET) {
+		switch (ifi->ifi_type) {
+		case ARPHRD_TUNNEL:
+		case ARPHRD_IPGRE:
+		case ARPHRD_SIT:
+			break;
+		default:
+			return 0;
+		}
+	} else {
+		switch (ifi->ifi_type) {
+		case ARPHRD_TUNNEL6:
+		case ARPHRD_IP6GRE:
+			break;
+		default:
+			return 0;
+		}
+	}
+
+	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), IFLA_PAYLOAD(n));
+
+	if (!tb[IFLA_IFNAME])
+		return 0;
+
+	name = rta_getattr_str(tb[IFLA_IFNAME]);
+
+	/* Assume p1->name[IFNAMSIZ] is first field of structure */
+	n1 = info->p1;
+	if (n1[0] && strcmp(n1, name))
+		return 0;
+
+	info->ifi = ifi;
+	info->init(info);
+
+	/* TODO: parse netlink attributes */
+	if (tnl_get_ioctl(name, info->p2))
+		return 0;
+
+	if (!info->match(info))
+		return 0;
+
+	info->print(info->p2);
+	if (show_stats) {
+		struct rtnl_link_stats64 s;
+
+		if (get_rtnl_link_stats_rta(&s, tb) <= 0)
+			return -1;
+
+		tnl_print_stats(&s);
+	}
+	fputc('\n', stdout);
+
+	return 0;
+}
+
+int do_tunnels_list(struct tnl_print_nlmsg_info *info)
+{
+	if (rtnl_wilddump_request(&rth, preferred_family, RTM_GETLINK) < 0) {
+		perror("Cannot send dump request\n");
+		return -1;
+	}
+
+	if (rtnl_dump_filter(&rth, print_nlmsg_tunnel, info) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		return -1;
+	}
+
+	return 0;
 }
