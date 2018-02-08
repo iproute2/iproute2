@@ -1473,6 +1473,68 @@ static int save_route_prep(void)
 	return 0;
 }
 
+static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
+{
+	time_t start = time(0);
+	char flushb[4096-512];
+	int round = 0;
+	int ret;
+
+	if (filter.cloned) {
+		if (do_ipv6 != AF_INET6) {
+			iproute_flush_cache();
+			if (show_stats)
+				printf("*** IPv4 routing cache is flushed.\n");
+		}
+		if (do_ipv6 == AF_INET)
+			return 0;
+	}
+
+	filter.flushb = flushb;
+	filter.flushp = 0;
+	filter.flushe = sizeof(flushb);
+
+	for (;;) {
+		if (rtnl_wilddump_request(&rth, do_ipv6, RTM_GETROUTE) < 0) {
+			perror("Cannot send dump request");
+			return -2;
+		}
+		filter.flushed = 0;
+		if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
+			fprintf(stderr, "Flush terminated\n");
+			return -2;
+		}
+		if (filter.flushed == 0) {
+			if (show_stats) {
+				if (round == 0 &&
+				    (!filter.cloned || do_ipv6 == AF_INET6))
+					printf("Nothing to flush.\n");
+				else
+					printf("*** Flush is complete after %d round%s ***\n",
+					       round, round > 1 ? "s" : "");
+			}
+			fflush(stdout);
+			return 0;
+		}
+		round++;
+		ret = flush_update();
+		if (ret < 0)
+			return ret;
+
+		if (time(0) - start > 30) {
+			printf("\n*** Flush not completed after %ld seconds, %d entries remain ***\n",
+			       (long)(time(0) - start), filter.flushed);
+			return -1;
+		}
+
+		if (show_stats) {
+			printf("\n*** Round %d, deleting %d entries ***\n",
+			       round, filter.flushed);
+			fflush(stdout);
+		}
+	}
+}
+
 static int iproute_list_flush_or_save(int argc, char **argv, int action)
 {
 	int do_ipv6 = preferred_family;
@@ -1480,7 +1542,6 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 	char *od = NULL;
 	unsigned int mark = 0;
 	rtnl_filter_t filter_fn;
-	int ret;
 
 	if (action == IPROUTE_SAVE) {
 		if (save_route_prep())
@@ -1680,62 +1741,8 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 	}
 	filter.mark = mark;
 
-	if (action == IPROUTE_FLUSH) {
-		int round = 0;
-		char flushb[4096-512];
-		time_t start = time(0);
-
-		if (filter.cloned) {
-			if (do_ipv6 != AF_INET6) {
-				iproute_flush_cache();
-				if (show_stats)
-					printf("*** IPv4 routing cache is flushed.\n");
-			}
-			if (do_ipv6 == AF_INET)
-				return 0;
-		}
-
-		filter.flushb = flushb;
-		filter.flushp = 0;
-		filter.flushe = sizeof(flushb);
-
-		for (;;) {
-			if (rtnl_wilddump_request(&rth, do_ipv6, RTM_GETROUTE) < 0) {
-				perror("Cannot send dump request");
-				return -2;
-			}
-			filter.flushed = 0;
-			if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
-				fprintf(stderr, "Flush terminated\n");
-				return -2;
-			}
-			if (filter.flushed == 0) {
-				if (show_stats) {
-					if (round == 0 && (!filter.cloned || do_ipv6 == AF_INET6))
-						printf("Nothing to flush.\n");
-					else
-						printf("*** Flush is complete after %d round%s ***\n", round, round > 1?"s":"");
-				}
-				fflush(stdout);
-				return 0;
-			}
-			round++;
-			ret = flush_update();
-			if (ret < 0)
-				return ret;
-
-			if (time(0) - start > 30) {
-				printf("\n*** Flush not completed after %ld seconds, %d entries remain ***\n",
-				       (long)(time(0) - start), filter.flushed);
-				return -1;
-			}
-
-			if (show_stats) {
-				printf("\n*** Round %d, deleting %d entries ***\n", round, filter.flushed);
-				fflush(stdout);
-			}
-		}
-	}
+	if (action == IPROUTE_FLUSH)
+		return iproute_flush(do_ipv6, filter_fn);
 
 	if (!filter.cloned) {
 		if (rtnl_wilddump_request(&rth, do_ipv6, RTM_GETROUTE) < 0) {
