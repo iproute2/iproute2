@@ -339,72 +339,95 @@ static void print_rtax_features(FILE *fp, unsigned int features)
 	unsigned int of = features;
 
 	if (features & RTAX_FEATURE_ECN) {
-		fprintf(fp, "ecn ");
+		print_null(PRINT_ANY, "ecn", "ecn ", NULL);
 		features &= ~RTAX_FEATURE_ECN;
 	}
 
 	if (features)
-		fprintf(fp, "0x%x ", of);
+		print_0xhex(PRINT_ANY,
+			    "features", "0x%x ", of);
 }
 
 static void print_rt_flags(FILE *fp, unsigned int flags)
 {
+	open_json_array(PRINT_JSON,
+			is_json_context() ?  "flags" : "");
+
 	if (flags & RTNH_F_DEAD)
-		fprintf(fp, "dead ");
+		print_string(PRINT_ANY, NULL, "%s ", "dead");
 	if (flags & RTNH_F_ONLINK)
-		fprintf(fp, "onlink ");
+		print_string(PRINT_ANY, NULL, "%s ", "onlink");
 	if (flags & RTNH_F_PERVASIVE)
-		fprintf(fp, "pervasive ");
+		print_string(PRINT_ANY, NULL, "%s ", "pervasive");
 	if (flags & RTNH_F_OFFLOAD)
-		fprintf(fp, "offload ");
+		print_string(PRINT_ANY, NULL, "%s ", "offload");
+	if (flags & RTM_F_NOTIFY)
+		print_string(PRINT_ANY, NULL, "%s ", "notify");
 	if (flags & RTNH_F_LINKDOWN)
-		fprintf(fp, "linkdown ");
+		print_string(PRINT_ANY, NULL, "%s ", "linkdown");
 	if (flags & RTNH_F_UNRESOLVED)
-		fprintf(fp, "unresolved ");
+		print_string(PRINT_ANY, NULL, "%s ", "unresolved");
+
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static void print_rt_pref(FILE *fp, unsigned int pref)
 {
-	fprintf(fp, "pref ");
 
 	switch (pref) {
 	case ICMPV6_ROUTER_PREF_LOW:
-		fprintf(fp, "low");
+		print_string(PRINT_ANY,
+			     "pref", "pref %s", "low");
 		break;
 	case ICMPV6_ROUTER_PREF_MEDIUM:
-		fprintf(fp, "medium");
+		print_string(PRINT_ANY,
+			     "pref", "pref %s", "medium");
 		break;
 	case ICMPV6_ROUTER_PREF_HIGH:
-		fprintf(fp, "high");
+		print_string(PRINT_ANY,
+			     "pref", "pref %s", "high");
 		break;
 	default:
-		fprintf(fp, "%u", pref);
+		print_uint(PRINT_ANY,
+			   "pref", "%u", pref);
 	}
 }
 
 static void print_rta_if(FILE *fp, const struct rtattr *rta,
-			 const char *prefix)
+			const char *prefix)
 {
 	const char *ifname = ll_index_to_name(rta_getattr_u32(rta));
 
-	fprintf(fp, "%s %s ", prefix, ifname);
+	if (is_json_context())
+		print_string(PRINT_JSON, prefix, NULL, ifname);
+	else {
+		fprintf(fp, "%s ", prefix);
+		color_fprintf(fp, COLOR_IFNAME, "%s ", ifname);
+	}
 }
 
 static void print_cache_flags(FILE *fp, __u32 flags)
 {
+	json_writer_t *jw = get_json_writer();
 	flags &= ~0xFFFF;
 
-	fprintf(fp, "%s    cache ", _SL_);
-
-	if (flags == 0)
-		return;
-
-	putc('<', fp);
+	if (jw) {
+		jsonw_name(jw, "cache");
+		jsonw_start_array(jw);
+	} else {
+		fprintf(fp, "%s    cache ", _SL_);
+		if (flags == 0)
+			return;
+		putc('<', fp);
+	}
 
 #define PRTFL(fl, flname)						\
 	if (flags & RTCF_##fl) {					\
 		flags &= ~RTCF_##fl;					\
-		fprintf(fp, "%s%s", flname, flags ? "," : "> ");	\
+		if (jw)							\
+			jsonw_string(jw, flname);			\
+		else							\
+			fprintf(fp, "%s%s", flname, flags ? "," : "> "); \
 	}
 
 	PRTFL(LOCAL, "local");
@@ -424,7 +447,12 @@ static void print_cache_flags(FILE *fp, __u32 flags)
 #undef PRTFL
 
 	if (flags)
-		fprintf(fp, "%#x> ", flags);
+		print_hex(PRINT_ANY, "flags", "%x>", flags);
+
+	if (jw) {
+		jsonw_end_array(jw);
+		jsonw_destroy(&jw);
+	}
 }
 
 static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
@@ -433,23 +461,34 @@ static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
 
 	if (!hz)
 		hz = get_user_hz();
+
 	if (ci->rta_expires != 0)
-		fprintf(fp, "expires %dsec ", ci->rta_expires/hz);
+		print_uint(PRINT_ANY, "expires",
+			   "expires %usec ", ci->rta_expires/hz);
 	if (ci->rta_error != 0)
-		fprintf(fp, "error %d ", ci->rta_error);
+		print_uint(PRINT_ANY, "error",
+			   "error %u ", ci->rta_error);
+
 	if (show_stats) {
 		if (ci->rta_clntref)
-			fprintf(fp, "users %d ", ci->rta_clntref);
+			print_uint(PRINT_ANY, "users",
+				   "users %u ", ci->rta_clntref);
 		if (ci->rta_used != 0)
-			fprintf(fp, "used %d ", ci->rta_used);
+			print_uint(PRINT_ANY, "used",
+				   "used %u ", ci->rta_used);
 		if (ci->rta_lastuse != 0)
-			fprintf(fp, "age %dsec ", ci->rta_lastuse/hz);
+			print_uint(PRINT_ANY, "age",
+				   "age %usec ", ci->rta_lastuse/hz);
 	}
 	if (ci->rta_id)
-		fprintf(fp, "ipid 0x%04x ", ci->rta_id);
-	if (ci->rta_ts || ci->rta_tsage)
-		fprintf(fp, "ts 0x%x tsage %dsec ",
-			ci->rta_ts, ci->rta_tsage);
+		print_0xhex(PRINT_ANY, "ipid",
+			    "ipid 0x%04x ", ci->rta_id);
+	if (ci->rta_ts || ci->rta_tsage) {
+		print_0xhex(PRINT_ANY, "ts",
+			    "ts 0x%x", ci->rta_ts);
+		print_uint(PRINT_ANY, "tsage",
+			   "tsage %usec ", ci->rta_tsage);
+	}
 }
 
 static void print_rta_flow(FILE *fp, const struct rtattr *rta)
@@ -459,13 +498,24 @@ static void print_rta_flow(FILE *fp, const struct rtattr *rta)
 	SPRINT_BUF(b1);
 
 	to &= 0xFFFF;
-	fprintf(fp, "realm%s ", from ? "s" : "");
-	if (from) {
-		fprintf(fp, "%s/",
-			rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
+	if (is_json_context()) {
+		open_json_object("flow");
+
+		if (from)
+			print_string(PRINT_JSON, "from", NULL,
+				     rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
+		print_string(PRINT_JSON, "to", NULL,
+			     rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
+		close_json_object();
+	} else {
+		fprintf(fp, "realm%s ", from ? "s" : "");
+
+		if (from)
+			print_string(PRINT_FP, NULL, "%s/",
+				     rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
+		print_string(PRINT_FP, NULL, "%s ",
+			     rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
 	}
-	fprintf(fp, "%s ",
-		rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
 }
 
 static void print_rta_newdst(FILE *fp, const struct rtmsg *r,
@@ -473,7 +523,14 @@ static void print_rta_newdst(FILE *fp, const struct rtmsg *r,
 {
 	const char *newdst = format_host_rta(r->rtm_family, rta);
 
-	fprintf(fp, "as to %s ", newdst);
+	if (is_json_context())
+		print_string(PRINT_JSON, "to", NULL, newdst);
+	else {
+		fprintf(fp, "as to ");
+		print_color_string(PRINT_FP,
+				   ifa_family_color(r->rtm_family),
+				   NULL, "%s ", newdst);
+	}
 }
 
 static void print_rta_gateway(FILE *fp, const struct rtmsg *r,
@@ -481,17 +538,38 @@ static void print_rta_gateway(FILE *fp, const struct rtmsg *r,
 {
 	const char *gateway = format_host_rta(r->rtm_family, rta);
 
-	fprintf(fp, "via %s ", gateway);
+	if (is_json_context())
+		print_string(PRINT_JSON, "gateway", NULL, gateway);
+	else {
+		fprintf(fp, "via ");
+		print_color_string(PRINT_FP,
+				   ifa_family_color(r->rtm_family),
+				   NULL, "%s ", gateway);
+	}
 }
 
 static void print_rta_via(FILE *fp, const struct rtattr *rta)
 {
+	size_t len = RTA_PAYLOAD(rta) - 2;
 	const struct rtvia *via = RTA_DATA(rta);
-	size_t len = RTA_PAYLOAD(rta);
 
-	fprintf(fp, "via %s %s ",
-		family_name(via->rtvia_family),
-		format_host(via->rtvia_family, len, via->rtvia_addr));
+	if (is_json_context()) {
+		open_json_object("via");
+		print_string(PRINT_JSON, "family", NULL,
+			     family_name(via->rtvia_family));
+		print_string(PRINT_JSON, "host", NULL,
+			     format_host(via->rtvia_family, len,
+					 via->rtvia_addr));
+		close_json_object();
+	} else {
+		print_string(PRINT_FP, NULL, "via %s ",
+			     family_name(via->rtvia_family));
+		print_color_string(PRINT_FP,
+				   ifa_family_color(via->rtvia_family),
+				   NULL, "%s ",
+				   format_host(via->rtvia_family,
+					       len, via->rtvia_addr));
+	}
 }
 
 static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
@@ -499,6 +577,8 @@ static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
 	struct rtattr *mxrta[RTAX_MAX+1];
 	unsigned int mxlock = 0;
 	int i;
+
+	open_json_array(PRINT_JSON, "metrics");
 
 	parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(rta), RTA_PAYLOAD(rta));
 
@@ -517,13 +597,15 @@ static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
 		if (i == RTAX_HOPLIMIT && (int)val == -1)
 			continue;
 
-		if (i < sizeof(mx_names)/sizeof(char *) && mx_names[i])
-			fprintf(fp, "%s ", mx_names[i]);
-		else
-			fprintf(fp, "metric %d ", i);
+		if (!is_json_context()) {
+			if (i < sizeof(mx_names)/sizeof(char *) && mx_names[i])
+				fprintf(fp, "%s ", mx_names[i]);
+			else
+				fprintf(fp, "metric %d ", i);
 
-		if (mxlock & (1<<i))
-			fprintf(fp, "lock ");
+			if (mxlock & (1<<i))
+				fprintf(fp, "lock ");
+		}
 
 		switch (i) {
 		case RTAX_FEATURES:
@@ -541,16 +623,24 @@ static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
 			else if (i == RTAX_RTTVAR)
 				val /= 4;
 
-			if (val >= 1000)
-				fprintf(fp, "%gs ", val/1e3);
-			else
-				fprintf(fp, "%ums ", val);
+			if (is_json_context())
+				print_uint(PRINT_JSON, mx_names[i],
+					   NULL, val);
+			else {
+				if (val >= 1000)
+					fprintf(fp, "%gs ", val/1e3);
+				else
+					fprintf(fp, "%ums ", val);
+			}
 			break;
 		case RTAX_CC_ALGO:
-			fprintf(fp, "%s ", rta_getattr_str(mxrta[i]));
+			print_string(PRINT_ANY, "congestion",
+				     "%s ", rta_getattr_str(mxrta[i]));
 			break;
 		}
 	}
+
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
@@ -566,16 +656,18 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 		if (nh->rtnh_len > len)
 			break;
 
-		if ((r->rtm_flags & RTM_F_CLONED) &&
-		    r->rtm_type == RTN_MULTICAST) {
-			if (first) {
-				fprintf(fp, "Oifs: ");
-				first = 0;
-			} else {
-				fprintf(fp, " ");
-			}
-		} else
-			fprintf(fp, "%s\tnexthop ", _SL_);
+		if (!is_json_context()) {
+			if ((r->rtm_flags & RTM_F_CLONED) &&
+			    r->rtm_type == RTN_MULTICAST) {
+				if (first) {
+					fprintf(fp, "Oifs: ");
+					first = 0;
+				} else {
+					fprintf(fp, " ");
+				}
+			} else
+				fprintf(fp, "%s\tnexthop ", _SL_);
+		}
 
 		if (nh->rtnh_len > sizeof(*nh)) {
 			parse_rtattr(tb, RTA_MAX, RTNH_DATA(nh),
@@ -602,8 +694,7 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 				fprintf(fp, "(ttl>%d)", nh->rtnh_hops);
 			fprintf(fp, " ");
 		} else {
-			fprintf(fp, "dev %s ",
-				ll_index_to_name(nh->rtnh_ifindex));
+			fprintf(fp, "dev %s ", ll_index_to_name(nh->rtnh_ifindex));
 			if (r->rtm_family != AF_MPLS)
 				fprintf(fp, "weight %d ",
 					nh->rtnh_hops+1);
@@ -622,7 +713,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[RTA_MAX+1];
-	int host_len, family;
+	int family, color, host_len;
 	__u32 table;
 	int ret;
 
@@ -668,39 +759,56 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			return 0;
 	}
 
+	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELROUTE)
-		fprintf(fp, "Deleted ");
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
+
 	if ((r->rtm_type != RTN_UNICAST || show_details > 0) &&
 	    (!filter.typemask || (filter.typemask & (1 << r->rtm_type))))
-		fprintf(fp, "%s ", rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
+		print_string(PRINT_ANY, NULL, "%s ",
+			     rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
 
+	color = COLOR_NONE;
 	if (tb[RTA_DST]) {
 		family = get_real_family(r->rtm_type, r->rtm_family);
+		color = ifa_family_color(family);
+
 		if (r->rtm_dst_len != host_len) {
-			fprintf(fp, "%s/%u ",
-				rt_addr_n2a_rta(family, tb[RTA_DST]),
-				r->rtm_dst_len);
+			snprintf(b1, sizeof(b1),
+				 "%s/%u", rt_addr_n2a_rta(family, tb[RTA_DST]),
+				 r->rtm_dst_len);
 		} else {
-			fprintf(fp, "%s ",
-				format_host_rta(family, tb[RTA_DST]));
+			format_host_rta_r(family, tb[RTA_DST],
+					  b1, sizeof(b1));
+
 		}
 	} else if (r->rtm_dst_len) {
-		fprintf(fp, "0/%d ", r->rtm_dst_len);
+		snprintf(b1, sizeof(b1), "0/%d ", r->rtm_dst_len);
 	} else {
-		fprintf(fp, "default ");
+		strncpy(b1, "default", sizeof(b1));
 	}
+	print_color_string(PRINT_ANY, color,
+			   "dst", "%s ", b1);
+
 	if (tb[RTA_SRC]) {
 		family = get_real_family(r->rtm_type, r->rtm_family);
+		color = ifa_family_color(family);
+
 		if (r->rtm_src_len != host_len) {
-			fprintf(fp, "from %s/%u ",
-				rt_addr_n2a_rta(family, tb[RTA_SRC]),
-				r->rtm_src_len);
+			snprintf(b1, sizeof(b1),
+				 "%s/%u",
+				 rt_addr_n2a_rta(family, tb[RTA_SRC]),
+				 r->rtm_src_len);
 		} else {
-			fprintf(fp, "from %s ",
-				format_host_rta(family, tb[RTA_SRC]));
+			format_host_rta_r(family, tb[RTA_SRC],
+					  b1, sizeof(b1));
 		}
+		print_color_string(PRINT_ANY, color,
+				   "from", "from %s ", b1);
 	} else if (r->rtm_src_len) {
-		fprintf(fp, "from 0/%u ", r->rtm_src_len);
+		snprintf(b1, sizeof(b1), "0/%u", r->rtm_src_len);
+
+		print_string(PRINT_ANY, "src", "from %s ", b1);
 	}
 
 	if (tb[RTA_NEWDST])
@@ -710,8 +818,8 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		lwt_print_encap(fp, tb[RTA_ENCAP_TYPE], tb[RTA_ENCAP]);
 
 	if (r->rtm_tos && filter.tosmask != -1) {
-		SPRINT_BUF(b1);
-		fprintf(fp, "tos %s ", rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
+		print_string(PRINT_ANY, "tos", "tos %s ",
+			     rtnl_dsfield_n2a(r->rtm_tos, b1, sizeof(b1)));
 	}
 
 	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len)
@@ -721,25 +829,50 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		print_rta_via(fp, tb[RTA_VIA]);
 
 	if (tb[RTA_OIF] && filter.oifmask != -1)
-		print_rta_if(fp,  tb[RTA_OIF], "dev");
+		print_rta_if(fp, tb[RTA_OIF], "dev");
 
 	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
-		fprintf(fp, "table %s ", rtnl_rttable_n2a(table, b1, sizeof(b1)));
+		print_string(PRINT_ANY,
+			     "table", "table %s ",
+			     rtnl_rttable_n2a(table, b1, sizeof(b1)));
+
 	if (!(r->rtm_flags & RTM_F_CLONED)) {
-		if ((r->rtm_protocol != RTPROT_BOOT || show_details > 0) && filter.protocolmask != -1)
-			fprintf(fp, "proto %s ", rtnl_rtprot_n2a(r->rtm_protocol, b1, sizeof(b1)));
-		if ((r->rtm_scope != RT_SCOPE_UNIVERSE || show_details > 0) && filter.scopemask != -1)
-			fprintf(fp, "scope %s ", rtnl_rtscope_n2a(r->rtm_scope, b1, sizeof(b1)));
+		if ((r->rtm_protocol != RTPROT_BOOT || show_details > 0) &&
+		    filter.protocolmask != -1)
+			print_string(PRINT_ANY,
+				     "protocol", "proto %s ",
+				     rtnl_rtprot_n2a(r->rtm_protocol,
+						     b1, sizeof(b1)));
+
+		if ((r->rtm_scope != RT_SCOPE_UNIVERSE || show_details > 0) &&
+		    filter.scopemask != -1)
+			print_string(PRINT_ANY,
+				     "scope", "scope %s ",
+				     rtnl_rtscope_n2a(r->rtm_scope,
+						      b1, sizeof(b1)));
 	}
+
 	if (tb[RTA_PREFSRC] && filter.rprefsrc.bitlen != host_len) {
+		const char *psrc
+			= rt_addr_n2a_rta(r->rtm_family, tb[RTA_PREFSRC]);
+
 		/* Do not use format_host(). It is our local addr
 		   and symbolic name will not be useful.
-		 */
-		fprintf(fp, "src %s ",
-			rt_addr_n2a_rta(r->rtm_family, tb[RTA_PREFSRC]));
+		*/
+		if (is_json_context())
+			print_string(PRINT_JSON, "prefsrc", NULL, psrc);
+		else {
+			fprintf(fp, "src ");
+			print_color_string(PRINT_FP,
+					   ifa_family_color(r->rtm_family),
+					   NULL, "%s ", psrc);
+		}
+
 	}
+
 	if (tb[RTA_PRIORITY] && filter.metricmask != -1)
-		fprintf(fp, "metric %u ", rta_getattr_u32(tb[RTA_PRIORITY]));
+		print_uint(PRINT_ANY, "metric", "metric %u ",
+			   rta_getattr_u32(tb[RTA_PRIORITY]));
 
 	print_rt_flags(fp, r->rtm_flags);
 
@@ -747,10 +880,14 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		unsigned int mark = rta_getattr_u32(tb[RTA_MARK]);
 
 		if (mark) {
-			if (mark >= 16)
-				fprintf(fp, "mark 0x%x ", mark);
+			if (is_json_context())
+				print_uint(PRINT_JSON, "mark", NULL, mark);
+			else if (mark >= 16)
+				print_0xhex(PRINT_FP, NULL,
+					    "mark 0x%x ", mark);
 			else
-				fprintf(fp, "mark %u ", mark);
+				print_uint(PRINT_FP, NULL,
+					   "mark %u ", mark);
 		}
 	}
 
@@ -758,20 +895,21 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		print_rta_flow(fp, tb[RTA_FLOW]);
 
 	if (tb[RTA_UID])
-		fprintf(fp, "uid %u ", rta_getattr_u32(tb[RTA_UID]));
+		print_uint(PRINT_ANY, "uid", "uid %u ",
+			   rta_getattr_u32(tb[RTA_UID]));
 
-	if ((r->rtm_flags & RTM_F_CLONED) && r->rtm_family == AF_INET) {
-		print_cache_flags(fp, r->rtm_flags);
+	if (r->rtm_family == AF_INET) {
+		if (r->rtm_flags & RTM_F_CLONED) {
+			print_cache_flags(fp, r->rtm_flags);
 
-		if (tb[RTA_CACHEINFO])
-			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
-
+			if (tb[RTA_CACHEINFO])
+				print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
+		}
 	} else if (r->rtm_family == AF_INET6) {
-		if (r->rtm_flags & RTM_F_CLONED)
-			fprintf(fp, "%s    cache ", _SL_);
-
-		if (tb[RTA_CACHEINFO])
-			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
+		if (r->rtm_flags & RTM_F_CLONED) {
+			if (tb[RTA_CACHEINFO])
+				print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
+		}
 	}
 
 	if (tb[RTA_METRICS])
@@ -787,13 +925,19 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		print_rt_pref(fp, rta_getattr_u8(tb[RTA_PREF]));
 
 	if (tb[RTA_TTL_PROPAGATE]) {
-		fprintf(fp, "ttl-propagate ");
-		if (rta_getattr_u8(tb[RTA_TTL_PROPAGATE]))
-			fprintf(fp, "enabled");
+		bool propogate = rta_getattr_u8(tb[RTA_TTL_PROPAGATE]);
+
+		if (is_json_context())
+			print_bool(PRINT_JSON, "ttl-propogate", NULL,
+				   propogate);
 		else
-			fprintf(fp, "disabled");
+			print_string(PRINT_FP, NULL,
+				     "ttl-propogate %s",
+				     propogate ? "enabled" : "disabled");
 	}
-	fprintf(fp, "\n");
+
+	print_string(PRINT_FP, NULL, "\n", NULL);
+	close_json_object();
 	fflush(fp);
 	return 0;
 }
@@ -1756,11 +1900,15 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 		}
 	}
 
+	new_json_obj(json);
+
 	if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return -2;
 	}
 
+	delete_json_obj();
+	fflush(stdout);
 	return 0;
 }
 
