@@ -23,47 +23,44 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
-static void print_usage(FILE *f)
+static void gre_print_help(struct link_util *lu, int argc, char **argv, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... { gre | gretap | erspan } [ remote ADDR ]\n"
-		"                            [ local ADDR ]\n"
-		"                            [ [i|o]seq ]\n"
-		"                            [ [i|o]key KEY ]\n"
-		"                            [ [i|o]csum ]\n"
-		"                            [ ttl TTL ]\n"
-		"                            [ tos TOS ]\n"
-		"                            [ [no]pmtudisc ]\n"
-		"                            [ [no]ignore-df ]\n"
-		"                            [ dev PHYS_DEV ]\n"
-		"                            [ noencap ]\n"
-		"                            [ encap { fou | gue | none } ]\n"
-		"                            [ encap-sport PORT ]\n"
-		"                            [ encap-dport PORT ]\n"
-		"                            [ [no]encap-csum ]\n"
-		"                            [ [no]encap-csum6 ]\n"
-		"                            [ [no]encap-remcsum ]\n"
-		"                            [ external ]\n"
-		"                            [ fwmark MARK ]\n"
-		"                            [ erspan_ver version ]\n"
-		"                            [ erspan IDX ]\n"
-		"                            [ erspan_dir { ingress | egress } ]\n"
-		"                            [ erspan_hwid hwid ]\n"
-		"                            [ external ]\n"
+		"Usage: ... %-9s [ remote ADDR ]\n",
+		lu->id
+	);
+	fprintf(f,
+		"                     [ local ADDR ]\n"
+		"                     [ [i|o]seq ]\n"
+		"                     [ [i|o]key KEY ]\n"
+		"                     [ [i|o]csum ]\n"
+		"                     [ ttl TTL ]\n"
+		"                     [ tos TOS ]\n"
+		"                     [ [no]pmtudisc ]\n"
+		"                     [ [no]ignore-df ]\n"
+		"                     [ dev PHYS_DEV ]\n"
+		"                     [ fwmark MARK ]\n"
+		"                     [ external ]\n"
+		"                     [ noencap ]\n"
+		"                     [ encap { fou | gue | none } ]\n"
+		"                     [ encap-sport PORT ]\n"
+		"                     [ encap-dport PORT ]\n"
+		"                     [ [no]encap-csum ]\n"
+		"                     [ [no]encap-csum6 ]\n"
+		"                     [ [no]encap-remcsum ]\n"
+		"                     [ erspan_ver version ]\n"
+		"                     [ erspan IDX ]\n"
+		"                     [ erspan_dir { ingress | egress } ]\n"
+		"                     [ erspan_hwid hwid ]\n"
 		"\n"
+	);
+	fprintf(f,
 		"Where: ADDR := { IP_ADDRESS | any }\n"
 		"       TOS  := { NUMBER | inherit }\n"
 		"       TTL  := { 1..255 | inherit }\n"
 		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
 		"       MARK := { 0x0..0xffffffff }\n"
 	);
-}
-
-static void usage(void) __attribute__((noreturn));
-static void usage(void)
-{
-	print_usage(stderr);
-	exit(-1);
 }
 
 static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -336,8 +333,10 @@ get_failed:
 			NEXT_ARG();
 			if (get_u16(&erspan_hwid, *argv, 0))
 				invarg("invalid erspan hwid\n", *argv);
-		} else
-			usage();
+		} else {
+			gre_print_help(lu, argc, argv, stderr);
+			return -1;
+		}
 		argc--; argv++;
 	}
 
@@ -515,12 +514,6 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			IFLA_GRE_ENCAP_FLAGS,
 			IFLA_GRE_ENCAP_SPORT,
 			IFLA_GRE_ENCAP_DPORT);
-}
-
-static void gre_print_help(struct link_util *lu, int argc, char **argv,
-			   FILE *f)
-{
-	print_usage(f);
 }
 
 struct link_util gre_link_util = {

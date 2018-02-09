@@ -30,34 +30,39 @@
 
 #define DEFAULT_TNL_HOP_LIMIT	(64)
 
-static void print_usage(FILE *f)
+static void gre_print_help(struct link_util *lu, int argc, char **argv, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... { ip6gre | ip6gretap | ip6erspan} [ remote ADDR ]\n"
-		"                                  [ local ADDR ]\n"
-		"                                  [ [i|o]seq ]\n"
-		"                                  [ [i|o]key KEY ]\n"
-		"                                  [ [i|o]csum ]\n"
-		"                                  [ hoplimit TTL ]\n"
-		"                                  [ encaplimit ELIM ]\n"
-		"                                  [ tclass TCLASS ]\n"
-		"                                  [ flowlabel FLOWLABEL ]\n"
-		"                                  [ dscp inherit ]\n"
-		"                                  [ fwmark MARK ]\n"
-		"                                  [ dev PHYS_DEV ]\n"
-		"                                  [ noencap ]\n"
-		"                                  [ encap { fou | gue | none } ]\n"
-		"                                  [ encap-sport PORT ]\n"
-		"                                  [ encap-dport PORT ]\n"
-		"                                  [ [no]encap-csum ]\n"
-		"                                  [ [no]encap-csum6 ]\n"
-		"                                  [ [no]encap-remcsum ]\n"
-		"                                  [ erspan_ver version ]\n"
-		"                                  [ erspan IDX ]\n"
-		"                                  [ erspan_dir { ingress | egress } ]\n"
-		"                                  [ erspan_hwid hwid ]\n"
-		"                                  [ external ]\n"
+		"Usage: ... %-9s [ remote ADDR ]\n",
+		lu->id
+	);
+	fprintf(f,
+		"                     [ local ADDR ]\n"
+		"                     [ [i|o]seq ]\n"
+		"                     [ [i|o]key KEY ]\n"
+		"                     [ [i|o]csum ]\n"
+		"                     [ hoplimit TTL ]\n"
+		"                     [ encaplimit ELIM ]\n"
+		"                     [ tclass TCLASS ]\n"
+		"                     [ flowlabel FLOWLABEL ]\n"
+		"                     [ dscp inherit ]\n"
+		"                     [ dev PHYS_DEV ]\n"
+		"                     [ fwmark MARK ]\n"
+		"                     [ external ]\n"
+		"                     [ noencap ]\n"
+		"                     [ encap { fou | gue | none } ]\n"
+		"                     [ encap-sport PORT ]\n"
+		"                     [ encap-dport PORT ]\n"
+		"                     [ [no]encap-csum ]\n"
+		"                     [ [no]encap-csum6 ]\n"
+		"                     [ [no]encap-remcsum ]\n"
+		"                     [ erspan_ver version ]\n"
+		"                     [ erspan IDX ]\n"
+		"                     [ erspan_dir { ingress | egress } ]\n"
+		"                     [ erspan_hwid hwid ]\n"
 		"\n"
+	);
+	fprintf(f,
 		"Where: ADDR      := IPV6_ADDRESS\n"
 		"       TTL       := { 0..255 } (default=%d)\n"
 		"       KEY       := { DOTTED_QUAD | NUMBER }\n"
@@ -67,13 +72,6 @@ static void print_usage(FILE *f)
 		"       MARK      := { 0x0..0xffffffff | inherit }\n",
 		DEFAULT_TNL_HOP_LIMIT, IPV6_DEFAULT_TNL_ENCAP_LIMIT
 	);
-}
-
-static void usage(void) __attribute__((noreturn));
-static void usage(void)
-{
-	print_usage(stderr);
-	exit(-1);
 }
 
 static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -384,8 +382,10 @@ get_failed:
 			NEXT_ARG();
 			if (get_u16(&erspan_hwid, *argv, 0))
 				invarg("invalid erspan hwid\n", *argv);
-		} else
-			usage();
+		} else {
+			gre_print_help(lu, argc, argv, stderr);
+			return -1;
+		}
 		argc--; argv++;
 	}
 
@@ -582,12 +582,6 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			IFLA_GRE_ENCAP_FLAGS,
 			IFLA_GRE_ENCAP_SPORT,
 			IFLA_GRE_ENCAP_DPORT);
-}
-
-static void gre_print_help(struct link_util *lu, int argc, char **argv,
-			   FILE *f)
-{
-	print_usage(f);
 }
 
 struct link_util ip6gre_link_util = {
