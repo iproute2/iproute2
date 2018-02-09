@@ -24,49 +24,51 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
-static void print_usage(FILE *f, int sit)
+static void iptunnel_print_help(struct link_util *lu, int argc, char **argv,
+				FILE *f)
 {
-	const char *type = sit ? "sit " : "ipip";
+	const char *mode;
 
 	fprintf(f,
-		"Usage: ... %s [ remote ADDR ]\n"
-		"                [ local ADDR ]\n"
-		"                [ ttl TTL ]\n"
-		"                [ tos TOS ]\n"
-		"                [ [no]pmtudisc ]\n"
-		"                [ dev PHYS_DEV ]\n"
-		"                [ 6rd-prefix ADDR ]\n"
-		"                [ 6rd-relay_prefix ADDR ]\n"
-		"                [ 6rd-reset ]\n"
-		"                [ noencap ]\n"
-		"                [ encap { fou | gue | none } ]\n"
-		"                [ encap-sport PORT ]\n"
-		"                [ encap-dport PORT ]\n"
-		"                [ [no]encap-csum ]\n"
-		"                [ [no]encap-csum6 ]\n"
-		"                [ [no]encap-remcsum ]\n",
-		type
+		"Usage: ... %-6s [ remote ADDR ]\n",
+		lu->id
 	);
-	if (sit) {
-		fprintf(f, "          [ mode { ip6ip | ipip | mplsip | any } ]\n");
-		fprintf(f, "          [ isatap ]\n");
+	fprintf(f,
+		"                  [ local ADDR ]\n"
+		"                  [ ttl TTL ]\n"
+		"                  [ tos TOS ]\n"
+		"                  [ [no]pmtudisc ]\n"
+		"                  [ 6rd-prefix ADDR ]\n"
+		"                  [ 6rd-relay_prefix ADDR ]\n"
+		"                  [ 6rd-reset ]\n"
+		"                  [ dev PHYS_DEV ]\n"
+		"                  [ fwmark MARK ]\n"
+		"                  [ external ]\n"
+		"                  [ noencap ]\n"
+		"                  [ encap { fou | gue | none } ]\n"
+		"                  [ encap-sport PORT ]\n"
+		"                  [ encap-dport PORT ]\n"
+		"                  [ [no]encap-csum ]\n"
+		"                  [ [no]encap-csum6 ]\n"
+		"                  [ [no]encap-remcsum ]\n"
+	);
+	if (strcmp(lu->id, "sit") == 0) {
+		mode = "{ ip6ip | ipip | mplsip | any } ]\n"
+		"                  [ isatap";
 	} else {
-		fprintf(f, "          [ mode { ipip | mplsip | any } ]\n");
+		mode = "{ ipip | mplsip | any }";
 	}
-	fprintf(f, "                [ external ]\n");
-	fprintf(f, "                [ fwmark MARK ]\n");
-	fprintf(f, "\n");
-	fprintf(f, "Where: ADDR := { IP_ADDRESS | any }\n");
-	fprintf(f, "       TOS  := { NUMBER | inherit }\n");
-	fprintf(f, "       TTL  := { 1..255 | inherit }\n");
-	fprintf(f, "       MARK := { 0x0..0xffffffff }\n");
-}
-
-static void usage(int sit) __attribute__((noreturn));
-static void usage(int sit)
-{
-	print_usage(stderr, sit);
-	exit(-1);
+	fprintf(f,
+		"                  [ mode %s ]\n"
+		"\n",
+		mode
+	);
+	fprintf(f,
+		"Where: ADDR := { IP_ADDRESS | any }\n"
+		"       TOS  := { NUMBER | inherit }\n"
+		"       TTL  := { 1..255 | inherit }\n"
+		"       MARK := { 0x0..0xffffffff }\n"
+	);
 }
 
 static int iptunnel_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -313,8 +315,10 @@ get_failed:
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))
 				invarg("invalid fwmark\n", *argv);
-		} else
-			usage(strcmp(lu->id, "sit") == 0);
+		} else {
+			iptunnel_print_help(lu, argc, argv, stderr);
+			return -1;
+		}
 		argc--, argv++;
 	}
 
@@ -481,12 +485,6 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 			IFLA_IPTUN_ENCAP_FLAGS,
 			IFLA_IPTUN_ENCAP_SPORT,
 			IFLA_IPTUN_ENCAP_DPORT);
-}
-
-static void iptunnel_print_help(struct link_util *lu, int argc, char **argv,
-	FILE *f)
-{
-	print_usage(f, strcmp(lu->id, "sit") == 0);
 }
 
 struct link_util ipip_link_util = {

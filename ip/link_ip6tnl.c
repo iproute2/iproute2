@@ -29,20 +29,26 @@
 
 #define DEFAULT_TNL_HOP_LIMIT	(64)
 
-static void print_usage(FILE *f)
+static void ip6tunnel_print_help(struct link_util *lu, int argc, char **argv,
+				 FILE *f)
 {
+	const char *mode;
+
 	fprintf(f,
-		"Usage: ... ip6tnl [ mode { ip6ip6 | ipip6 | any } ]\n"
-		"                  [ remote ADDR ]\n"
+		"Usage: ... %-6s [ remote ADDR ]\n",
+		lu->id
+	);
+	fprintf(f,
 		"                  [ local ADDR ]\n"
-		"                  [ dev PHYS_DEV ]\n"
 		"                  [ encaplimit ELIM ]\n"
 		"                  [ hoplimit HLIM ]\n"
 		"                  [ tclass TCLASS ]\n"
 		"                  [ flowlabel FLOWLABEL ]\n"
 		"                  [ dscp inherit ]\n"
-		"                  [ fwmark MARK ]\n"
 		"                  [ [no]allow-localremote ]\n"
+		"                  [ dev PHYS_DEV ]\n"
+		"                  [ fwmark MARK ]\n"
+		"                  [ external ]\n"
 		"                  [ noencap ]\n"
 		"                  [ encap { fou | gue | none } ]\n"
 		"                  [ encap-sport PORT ]\n"
@@ -50,8 +56,14 @@ static void print_usage(FILE *f)
 		"                  [ [no]encap-csum ]\n"
 		"                  [ [no]encap-csum6 ]\n"
 		"                  [ [no]encap-remcsum ]\n"
-		"                  [ external ]\n"
-		"\n"
+	);
+	mode = "{ ip6ip6 | ipip6 | any }";
+	fprintf(f,
+		"                  [ mode %s ]\n"
+		"\n",
+		mode
+	);
+	fprintf(f,
 		"Where: ADDR      := IPV6_ADDRESS\n"
 		"       ELIM      := { none | 0..255 }(default=%d)\n"
 		"       HLIM      := 0..255 (default=%d)\n"
@@ -60,13 +72,6 @@ static void print_usage(FILE *f)
 		"       MARK      := { 0x0..0xffffffff | inherit }\n",
 		IPV6_DEFAULT_TNL_ENCAP_LIMIT, DEFAULT_TNL_HOP_LIMIT
 	);
-}
-
-static void usage(void) __attribute__((noreturn));
-static void usage(void)
-{
-	print_usage(stderr);
-	exit(-1);
 }
 
 static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -304,8 +309,10 @@ get_failed:
 			encapflags &= ~TUNNEL_ENCAP_FLAG_REMCSUM;
 		} else if (strcmp(*argv, "external") == 0) {
 			metadata = 1;
-		} else
-			usage();
+		} else {
+			ip6tunnel_print_help(lu, argc, argv, stderr);
+			return -1;
+		}
 		argc--, argv++;
 	}
 
@@ -454,12 +461,6 @@ static void ip6tunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb
 			IFLA_IPTUN_ENCAP_FLAGS,
 			IFLA_IPTUN_ENCAP_SPORT,
 			IFLA_IPTUN_ENCAP_DPORT);
-}
-
-static void ip6tunnel_print_help(struct link_util *lu, int argc, char **argv,
-				 FILE *f)
-{
-	print_usage(f);
 }
 
 struct link_util ip6tnl_link_util = {
