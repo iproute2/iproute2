@@ -1,13 +1,13 @@
 This is a set of utilities for Linux networking.
 
-Information:
-    http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2
-
 Download:
     http://www.kernel.org/pub/linux/utils/net/iproute2/
 
-Repository:
-    git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
+Stable version repository:
+    git://git.kernel.org/pub/scm/network/iproute2/iproute2.git
+
+Development repository:
+    git://git.kernel.org/pub/scm/network/iproute2/iproute2-next.git
 
 How to compile this.
 --------------------
