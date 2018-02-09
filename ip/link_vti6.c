@@ -24,26 +24,26 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
-static void print_usage(FILE *f)
+static void vti6_print_help(struct link_util *lu, int argc, char **argv,
+			    FILE *f)
 {
 	fprintf(f,
-		"Usage: ... vti6 [ remote ADDR ]\n"
+		"Usage: ... %-4s [ remote ADDR ]\n",
+		lu->id
+	);
+	fprintf(f,
 		"                [ local ADDR ]\n"
 		"                [ [i|o]key KEY ]\n"
 		"                [ dev PHYS_DEV ]\n"
 		"                [ fwmark MARK ]\n"
 		"\n"
-		"Where: ADDR := { IPV6_ADDRESS }\n"
-		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
-		"       MARK := { 0x0..0xffffffff }\n"
 	);
-}
-
-static void usage(void) __attribute__((noreturn));
-static void usage(void)
-{
-	print_usage(stderr);
-	exit(-1);
+	fprintf(f,
+		"Where: ADDR := { IP%s_ADDRESS }\n"
+		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
+		"       MARK := { 0x0..0xffffffff }\n",
+		"V6"
+	);
 }
 
 static int vti6_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -153,8 +153,10 @@ get_failed:
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))
 				invarg("invalid fwmark\n", *argv);
-		} else
-			usage();
+		} else {
+			vti6_print_help(lu, argc, argv, stderr);
+			return -1;
+		}
 		argc--; argv++;
 	}
 
@@ -212,12 +214,6 @@ static void vti6_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				    "fwmark", "fwmark 0x%x ", fwmark);
 		}
 	}
-}
-
-static void vti6_print_help(struct link_util *lu, int argc, char **argv,
-	FILE *f)
-{
-	print_usage(f);
 }
 
 struct link_util vti6_link_util = {
