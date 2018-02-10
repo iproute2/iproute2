@@ -42,6 +42,7 @@ int use_iec;
 int force;
 bool use_names;
 int json;
+int pretty;
 
 static char *conf_file;
 
@@ -484,6 +485,8 @@ int main(int argc, char **argv)
 			++timestamp_short;
 		} else if (matches(argv[1], "-json") == 0) {
 			++json;
+		} else if (matches(argv[1], "-pretty") == 0) {
+			++pretty;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;

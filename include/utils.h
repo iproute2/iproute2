@@ -23,6 +23,7 @@ extern int resolve_hosts;
 extern int oneline;
 extern int brief;
 extern int json;
+extern int pretty;
 extern int timestamp;
 extern int timestamp_short;
 extern const char * _SL_;
@@ -155,6 +156,10 @@ int af_byte_len(int af);
 
 const char *format_host_r(int af, int len, const void *addr,
 			       char *buf, int buflen);
+#define format_host_rta_r(af, rta, buf, buflen)	\
+	format_host_r(af, RTA_PAYLOAD(rta), RTA_DATA(rta), \
+		      buf, buflen)
+
 const char *format_host(int af, int lne, const void *addr);
 #define format_host_rta(af, rta) \
 	format_host(af, RTA_PAYLOAD(rta), RTA_DATA(rta))

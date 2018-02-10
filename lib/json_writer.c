@@ -180,10 +180,15 @@ void jsonw_end_object(json_writer_t *self)
 void jsonw_start_array(json_writer_t *self)
 {
 	jsonw_begin(self, '[');
+	if (self->pretty)
+		putc(' ', self->out);
 }
 
 void jsonw_end_array(json_writer_t *self)
 {
+	if (self->pretty && self->sep)
+		putc(' ', self->out);
+	self->sep = '\0';
 	jsonw_end(self, ']');
 }
 
