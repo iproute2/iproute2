@@ -64,13 +64,17 @@ static int vti_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *vtiinfo[IFLA_VTI_MAX + 1];
 	__be32 ikey = 0;
 	__be32 okey = 0;
-	unsigned int saddr = 0;
-	unsigned int daddr = 0;
+	inet_prefix saddr, daddr;
 	unsigned int link = 0;
 	__u32 fwmark = 0;
 	int len;
 
+	inet_prefix_reset(&saddr);
+	inet_prefix_reset(&daddr);
+
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
+		const struct rtattr *rta;
+
 		if (rtnl_talk(&rth, &req.n, &answer) < 0) {
 get_failed:
 			fprintf(stderr,
@@ -96,17 +100,19 @@ get_failed:
 		parse_rtattr_nested(vtiinfo, IFLA_VTI_MAX,
 				    linkinfo[IFLA_INFO_DATA]);
 
+		rta = vtiinfo[IFLA_VTI_LOCAL];
+		if (rta && get_addr_rta(&saddr, rta, AF_INET))
+			goto get_failed;
+
+		rta = vtiinfo[IFLA_VTI_REMOTE];
+		if (rta && get_addr_rta(&daddr, rta, AF_INET))
+			goto get_failed;
+
 		if (vtiinfo[IFLA_VTI_IKEY])
 			ikey = rta_getattr_u32(vtiinfo[IFLA_VTI_IKEY]);
 
 		if (vtiinfo[IFLA_VTI_OKEY])
 			okey = rta_getattr_u32(vtiinfo[IFLA_VTI_OKEY]);
-
-		if (vtiinfo[IFLA_VTI_LOCAL])
-			saddr = rta_getattr_u32(vtiinfo[IFLA_VTI_LOCAL]);
-
-		if (vtiinfo[IFLA_VTI_REMOTE])
-			daddr = rta_getattr_u32(vtiinfo[IFLA_VTI_REMOTE]);
 
 		if (vtiinfo[IFLA_VTI_LINK])
 			link = rta_getattr_u8(vtiinfo[IFLA_VTI_LINK]);
@@ -129,10 +135,10 @@ get_failed:
 			okey = tnl_parse_key("okey", *argv);
 		} else if (!matches(*argv, "remote")) {
 			NEXT_ARG();
-			daddr = get_addr32(*argv);
+			get_addr(&daddr, *argv, AF_INET);
 		} else if (!matches(*argv, "local")) {
 			NEXT_ARG();
-			saddr = get_addr32(*argv);
+			get_addr(&saddr, *argv, AF_INET);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = ll_name_to_index(*argv);
@@ -154,8 +160,10 @@ get_failed:
 
 	addattr32(n, 1024, IFLA_VTI_IKEY, ikey);
 	addattr32(n, 1024, IFLA_VTI_OKEY, okey);
-	addattr_l(n, 1024, IFLA_VTI_LOCAL, &saddr, 4);
-	addattr_l(n, 1024, IFLA_VTI_REMOTE, &daddr, 4);
+	if (is_addrtype_inet(&saddr))
+		addattr_l(n, 1024, IFLA_VTI_LOCAL, saddr.data, saddr.bytelen);
+	if (is_addrtype_inet(&daddr))
+		addattr_l(n, 1024, IFLA_VTI_REMOTE, daddr.data, daddr.bytelen);
 	addattr32(n, 1024, IFLA_VTI_FWMARK, fwmark);
 	if (link)
 		addattr32(n, 1024, IFLA_VTI_LINK, link);
