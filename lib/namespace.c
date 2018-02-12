@@ -7,6 +7,7 @@
  *		2 of the License, or (at your option) any later version.
  */
 
+#include <sys/statvfs.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <limits.h>
@@ -46,6 +47,8 @@ int netns_switch(char *name)
 {
 	char net_path[PATH_MAX];
 	int netns;
+	unsigned long mountflags = 0;
+	struct statvfs fsstat;
 
 	snprintf(net_path, sizeof(net_path), "%s/%s", NETNS_RUN_DIR, name);
 	netns = open(net_path, O_RDONLY | O_CLOEXEC);
@@ -73,12 +76,25 @@ int netns_switch(char *name)
 			strerror(errno));
 		return -1;
 	}
+
 	/* Mount a version of /sys that describes the network namespace */
-	if (umount2("/sys", MNT_DETACH) < 0) {
-		fprintf(stderr, "umount of /sys failed: %s\n", strerror(errno));
+
+	if (statvfs("/sys", &fsstat) < 0) {
+		fprintf(stderr, "could not stat /sys (not mounted?): %s\n",strerror(errno));
 		return -1;
 	}
-	if (mount(name, "/sys", "sysfs", 0, NULL) < 0) {
+	if (fsstat.f_flag & ST_RDONLY) {
+		/* If /sys is not writable (e.g. in a container), we can't
+		 * unmount the old /sys instance, but we can still mount a new
+		 * read-only instance over it. */
+		mountflags = MS_RDONLY;
+	} else {
+		if (umount2("/sys", MNT_DETACH) < 0) {
+			fprintf(stderr, "umount of /sys failed: %s\n", strerror(errno));
+			return -1;
+		}
+	}
+	if (mount(name, "/sys", "sysfs", mountflags, NULL) < 0) {
 		fprintf(stderr, "mount of /sys failed: %s\n",strerror(errno));
 		return -1;
 	}
