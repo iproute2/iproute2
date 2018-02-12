@@ -97,8 +97,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u16 oflags = 0;
 	__be32 ikey = 0;
 	__be32 okey = 0;
-	struct in6_addr raddr = IN6ADDR_ANY_INIT;
-	struct in6_addr laddr = IN6ADDR_ANY_INIT;
+	inet_prefix saddr, daddr;
 	__u8 hop_limit = DEFAULT_TNL_HOP_LIMIT;
 	__u8 encap_limit = IPV6_DEFAULT_TNL_ENCAP_LIMIT;
 	__u32 flowinfo = 0;
@@ -115,7 +114,12 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 erspan_dir = 0;
 	__u16 erspan_hwid = 0;
 
+	inet_prefix_reset(&saddr);
+	inet_prefix_reset(&daddr);
+
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
+		const struct rtattr *rta;
+
 		if (rtnl_talk(&rth, &req.n, &answer) < 0) {
 get_failed:
 			fprintf(stderr,
@@ -141,6 +145,14 @@ get_failed:
 		parse_rtattr_nested(greinfo, IFLA_GRE_MAX,
 				    linkinfo[IFLA_INFO_DATA]);
 
+		rta = greinfo[IFLA_GRE_LOCAL];
+		if (rta && get_addr_rta(&saddr, rta, AF_INET6))
+			goto get_failed;
+
+		rta = greinfo[IFLA_GRE_REMOTE];
+		if (rta && get_addr_rta(&daddr, rta, AF_INET6))
+			goto get_failed;
+
 		if (greinfo[IFLA_GRE_IKEY])
 			ikey = rta_getattr_u32(greinfo[IFLA_GRE_IKEY]);
 
@@ -152,12 +164,6 @@ get_failed:
 
 		if (greinfo[IFLA_GRE_OFLAGS])
 			oflags = rta_getattr_u16(greinfo[IFLA_GRE_OFLAGS]);
-
-		if (greinfo[IFLA_GRE_LOCAL])
-			memcpy(&laddr, RTA_DATA(greinfo[IFLA_GRE_LOCAL]), sizeof(laddr));
-
-		if (greinfo[IFLA_GRE_REMOTE])
-			memcpy(&raddr, RTA_DATA(greinfo[IFLA_GRE_REMOTE]), sizeof(raddr));
 
 		if (greinfo[IFLA_GRE_TTL])
 			hop_limit = rta_getattr_u8(greinfo[IFLA_GRE_TTL]);
@@ -236,17 +242,11 @@ get_failed:
 		} else if (!matches(*argv, "ocsum")) {
 			oflags |= GRE_CSUM;
 		} else if (!matches(*argv, "remote")) {
-			inet_prefix addr;
-
 			NEXT_ARG();
-			get_addr(&addr, *argv, AF_INET6);
-			memcpy(&raddr, &addr.data, sizeof(raddr));
+			get_addr(&daddr, *argv, AF_INET6);
 		} else if (!matches(*argv, "local")) {
-			inet_prefix addr;
-
 			NEXT_ARG();
-			get_addr(&addr, *argv, AF_INET6);
-			memcpy(&laddr, &addr.data, sizeof(laddr));
+			get_addr(&saddr, *argv, AF_INET6);
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = ll_name_to_index(*argv);
@@ -398,8 +398,10 @@ get_failed:
 	addattr32(n, 1024, IFLA_GRE_OKEY, okey);
 	addattr_l(n, 1024, IFLA_GRE_IFLAGS, &iflags, 2);
 	addattr_l(n, 1024, IFLA_GRE_OFLAGS, &oflags, 2);
-	addattr_l(n, 1024, IFLA_GRE_LOCAL, &laddr, sizeof(laddr));
-	addattr_l(n, 1024, IFLA_GRE_REMOTE, &raddr, sizeof(raddr));
+	if (is_addrtype_inet(&saddr))
+		addattr_l(n, 1024, IFLA_GRE_LOCAL, saddr.data, saddr.bytelen);
+	if (is_addrtype_inet(&daddr))
+		addattr_l(n, 1024, IFLA_GRE_REMOTE, daddr.data, daddr.bytelen);
 	if (link)
 		addattr32(n, 1024, IFLA_GRE_LINK, link);
 	addattr_l(n, 1024, IFLA_GRE_TTL, &hop_limit, 1);
