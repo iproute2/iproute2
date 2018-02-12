@@ -71,7 +71,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	bool set_op = (n->nlmsg_type == RTM_NEWLINK &&
 		       !(n->nlmsg_flags & NLM_F_CREATE));
 
-	daddr.flags = 0;
+	inet_prefix_reset(&daddr);
 
 	while (argc > 0) {
 		if (!matches(*argv, "id") ||
