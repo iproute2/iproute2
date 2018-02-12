@@ -93,8 +93,7 @@ static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *iptuninfo[IFLA_IPTUN_MAX + 1];
 	int len;
-	struct in6_addr laddr = IN6ADDR_ANY_INIT;
-	struct in6_addr raddr = IN6ADDR_ANY_INIT;
+	inet_prefix saddr, daddr;
 	__u8 hop_limit = DEFAULT_TNL_HOP_LIMIT;
 	__u8 encap_limit = IPV6_DEFAULT_TNL_ENCAP_LIMIT;
 	__u32 flowinfo = 0;
@@ -108,7 +107,12 @@ static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 metadata = 0;
 	__u32 fwmark = 0;
 
+	inet_prefix_reset(&saddr);
+	inet_prefix_reset(&daddr);
+
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
+		const struct rtattr *rta;
+
 		if (rtnl_talk(&rth, &req.n, &answer) < 0) {
 get_failed:
 			fprintf(stderr,
@@ -134,13 +138,13 @@ get_failed:
 		parse_rtattr_nested(iptuninfo, IFLA_IPTUN_MAX,
 				    linkinfo[IFLA_INFO_DATA]);
 
-		if (iptuninfo[IFLA_IPTUN_LOCAL])
-			memcpy(&laddr, RTA_DATA(iptuninfo[IFLA_IPTUN_LOCAL]),
-			       sizeof(laddr));
+		rta = iptuninfo[IFLA_IPTUN_LOCAL];
+		if (rta && get_addr_rta(&saddr, rta, AF_INET6))
+			goto get_failed;
 
-		if (iptuninfo[IFLA_IPTUN_REMOTE])
-			memcpy(&raddr, RTA_DATA(iptuninfo[IFLA_IPTUN_REMOTE]),
-			       sizeof(raddr));
+		rta = iptuninfo[IFLA_IPTUN_REMOTE];
+		if (rta && get_addr_rta(&daddr, rta, AF_INET6))
+			goto get_failed;
 
 		if (iptuninfo[IFLA_IPTUN_TTL])
 			hop_limit = rta_getattr_u8(iptuninfo[IFLA_IPTUN_TTL]);
@@ -185,17 +189,11 @@ get_failed:
 			else
 				invarg("Cannot guess tunnel mode.", *argv);
 		} else if (strcmp(*argv, "remote") == 0) {
-			inet_prefix addr;
-
 			NEXT_ARG();
-			get_addr(&addr, *argv, AF_INET6);
-			memcpy(&raddr, addr.data, sizeof(raddr));
+			get_addr(&daddr, *argv, AF_INET6);
 		} else if (strcmp(*argv, "local") == 0) {
-			inet_prefix addr;
-
 			NEXT_ARG();
-			get_addr(&addr, *argv, AF_INET6);
-			memcpy(&laddr, addr.data, sizeof(laddr));
+			get_addr(&saddr, *argv, AF_INET6);
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			link = ll_name_to_index(*argv);
@@ -322,8 +320,14 @@ get_failed:
 		return 0;
 	}
 
-	addattr_l(n, 1024, IFLA_IPTUN_LOCAL, &laddr, sizeof(laddr));
-	addattr_l(n, 1024, IFLA_IPTUN_REMOTE, &raddr, sizeof(raddr));
+	if (is_addrtype_inet(&saddr)) {
+		addattr_l(n, 1024, IFLA_IPTUN_LOCAL,
+			  saddr.data, saddr.bytelen);
+	}
+	if (is_addrtype_inet(&daddr)) {
+		addattr_l(n, 1024, IFLA_IPTUN_REMOTE,
+			  daddr.data, daddr.bytelen);
+	}
 	addattr8(n, 1024, IFLA_IPTUN_TTL, hop_limit);
 	addattr8(n, 1024, IFLA_IPTUN_ENCAP_LIMIT, encap_limit);
 	addattr32(n, 1024, IFLA_IPTUN_FLOWINFO, flowinfo);
