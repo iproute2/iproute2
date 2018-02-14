@@ -2882,25 +2882,15 @@ static void dpipe_header_del(struct dpipe_header *header)
 	list_del(&header->list);
 }
 
-static struct dpipe_ctx *dpipe_ctx_alloc(struct dl *dl)
+static int dpipe_ctx_init(struct dpipe_ctx *ctx, struct dl *dl)
 {
-	struct dpipe_ctx *ctx;
-
-	ctx = calloc(1, sizeof(struct dpipe_ctx));
-	if (!ctx)
-		return NULL;
 	ctx->dl = dl;
 	INIT_LIST_HEAD(&ctx->global_headers);
 	INIT_LIST_HEAD(&ctx->local_headers);
-	return ctx;
+	return 0;
 }
 
-static void dpipe_ctx_free(struct dpipe_ctx *ctx)
-{
-	free(ctx);
-}
-
-static void dpipe_ctx_clear(struct dpipe_ctx *ctx)
+static void dpipe_ctx_fini(struct dpipe_ctx *ctx)
 {
 	struct dpipe_header *header, *tmp;
 
@@ -3171,7 +3161,7 @@ static int cmd_dpipe_header_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_dpipe_headers_show(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
-	struct dpipe_ctx *ctx;
+	struct dpipe_ctx ctx = {};
 	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
 	int err;
 
@@ -3181,20 +3171,19 @@ static int cmd_dpipe_headers_show(struct dl *dl)
 	if (err)
 		return err;
 
-	ctx = dpipe_ctx_alloc(dl);
-	if (!ctx)
-		return -ENOMEM;
+	err = dpipe_ctx_init(&ctx, dl);
+	if (err)
+		return err;
 
-	ctx->print_headers = true;
+	ctx.print_headers = true;
 
 	pr_out_section_start(dl, "header");
-	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, ctx);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, &ctx);
 	if (err)
-		pr_err("error get headers %s\n", strerror(ctx->err));
+		pr_err("error get headers %s\n", strerror(ctx.err));
 	pr_out_section_end(dl);
 
-	dpipe_ctx_clear(ctx);
-	dpipe_ctx_free(ctx);
+	dpipe_ctx_fini(&ctx);
 	return err;
 }
 
@@ -3532,13 +3521,13 @@ static int cmd_dpipe_table_show_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_dpipe_table_show(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
-	struct dpipe_ctx *ctx;
+	struct dpipe_ctx ctx = {};
 	uint16_t flags = NLM_F_REQUEST;
 	int err;
 
-	ctx = dpipe_ctx_alloc(dl);
-	if (!ctx)
-		return -ENOMEM;
+	err = dpipe_ctx_init(&ctx, dl);
+	if (err)
+		return err;
 
 	err = dl_argv_parse(dl, DL_OPT_HANDLE, DL_OPT_DPIPE_TABLE_NAME);
 	if (err)
@@ -3546,9 +3535,9 @@ static int cmd_dpipe_table_show(struct dl *dl)
 
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_DPIPE_HEADERS_GET, flags);
 	dl_opts_put(nlh, dl);
-	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, ctx);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, &ctx);
 	if (err) {
-		pr_err("error get headers %s\n", strerror(ctx->err));
+		pr_err("error get headers %s\n", strerror(ctx.err));
 		goto out;
 	}
 
@@ -3557,11 +3546,10 @@ static int cmd_dpipe_table_show(struct dl *dl)
 	dl_opts_put(nlh, dl);
 
 	pr_out_section_start(dl, "table");
-	_mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_show_cb, ctx);
+	_mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_show_cb, &ctx);
 	pr_out_section_end(dl);
 out:
-	dpipe_ctx_clear(ctx);
-	dpipe_ctx_free(ctx);
+	dpipe_ctx_fini(&ctx);
 	return err;
 }
 
@@ -3929,13 +3917,13 @@ static int cmd_dpipe_table_entry_dump_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_dpipe_table_dump(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
-	struct dpipe_ctx *ctx;
+	struct dpipe_ctx ctx = {};
 	uint16_t flags = NLM_F_REQUEST;
 	int err;
 
-	ctx = dpipe_ctx_alloc(dl);
-	if (!ctx)
-		return -ENOMEM;
+	err = dpipe_ctx_init(&ctx, dl);
+	if (err)
+		return err;
 
 	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_DPIPE_TABLE_NAME, 0);
 	if (err)
@@ -3943,9 +3931,9 @@ static int cmd_dpipe_table_dump(struct dl *dl)
 
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_DPIPE_HEADERS_GET, flags);
 	dl_opts_put(nlh, dl);
-	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, ctx);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, &ctx);
 	if (err) {
-		pr_err("error get headers %s\n", strerror(ctx->err));
+		pr_err("error get headers %s\n", strerror(ctx.err));
 		goto out;
 	}
 
@@ -3954,11 +3942,10 @@ static int cmd_dpipe_table_dump(struct dl *dl)
 	dl_opts_put(nlh, dl);
 
 	pr_out_section_start(dl, "table_entry");
-	_mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_entry_dump_cb, ctx);
+	_mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_entry_dump_cb, &ctx);
 	pr_out_section_end(dl);
 out:
-	dpipe_ctx_clear(ctx);
-	dpipe_ctx_free(ctx);
+	dpipe_ctx_fini(&ctx);
 	return err;
 }
 
