@@ -35,6 +35,8 @@
 #define ESWITCH_INLINE_MODE_NETWORK "network"
 #define ESWITCH_INLINE_MODE_TRANSPORT "transport"
 
+static int g_new_line_count;
+
 #define pr_err(args...) fprintf(stderr, ##args)
 #define pr_out(args...)						\
 	do {							\
@@ -43,6 +45,7 @@
 			g_indent_newline = false;		\
 		}						\
 		fprintf(stdout, ##args);			\
+		g_new_line_count = 0;				\
 	} while (0)
 
 #define pr_out_sp(num, args...)					\
@@ -50,6 +53,7 @@
 		int ret = fprintf(stdout, ##args);		\
 		if (ret < num)					\
 			fprintf(stdout, "%*s", num - ret, "");	\
+		g_new_line_count = 0;				\
 	} while (0)
 
 static int g_indent_level;
@@ -77,8 +81,11 @@ static void __pr_out_indent_dec(void)
 
 static void __pr_out_newline(void)
 {
-	pr_out("\n");
-	g_indent_newline = true;
+	if (g_new_line_count < 1) {
+		pr_out("\n");
+		g_indent_newline = true;
+	}
+	g_new_line_count++;
 }
 
 static int _mnlg_socket_recv_run(struct mnlg_socket *nlg,
@@ -1401,20 +1408,22 @@ static void pr_out_array_start(struct dl *dl, const char *name)
 		jsonw_name(dl->jw, name);
 		jsonw_start_array(dl->jw);
 	} else {
-		if (!g_indent_newline)
-			__pr_out_newline();
-		pr_out("%s:", name);
-		__pr_out_newline();
 		__pr_out_indent_inc();
+		__pr_out_newline();
+		pr_out("%s:", name);
+		__pr_out_indent_inc();
+		__pr_out_newline();
 	}
 }
 
 static void pr_out_array_end(struct dl *dl)
 {
-	if (dl->json_output)
+	if (dl->json_output) {
 		jsonw_end_array(dl->jw);
-	else
+	} else {
 		__pr_out_indent_dec();
+		__pr_out_indent_dec();
+	}
 }
 
 static void pr_out_entry_start(struct dl *dl)
