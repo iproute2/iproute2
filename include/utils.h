@@ -65,6 +65,11 @@ enum {
 	ADDRTYPE_INET_MULTI	= ADDRTYPE_INET | ADDRTYPE_MULTI
 };
 
+static inline void inet_prefix_reset(inet_prefix *p)
+{
+	p->flags = 0;
+}
+
 static inline bool is_addrtype_inet(const inet_prefix *p)
 {
 	return p->flags & ADDRTYPE_INET;

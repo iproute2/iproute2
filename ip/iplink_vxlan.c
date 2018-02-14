@@ -74,8 +74,7 @@ static void check_duparg(__u64 *attrs, int type, const char *key,
 static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			  struct nlmsghdr *n)
 {
-	inet_prefix saddr;
-	inet_prefix daddr;
+	inet_prefix saddr, daddr;
 	__u32 vni = 0;
 	__u8 learning = 1;
 	__u16 dstport = 0;
@@ -85,7 +84,9 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		       !(n->nlmsg_flags & NLM_F_CREATE));
 
 	saddr.family = daddr.family = AF_UNSPEC;
-	saddr.flags = daddr.flags = 0;
+
+	inet_prefix_reset(&saddr);
+	inet_prefix_reset(&daddr);
 
 	while (argc > 0) {
 		if (!matches(*argv, "id") ||

@@ -90,16 +90,11 @@ static int iptunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 	struct rtattr *linkinfo[IFLA_INFO_MAX+1];
 	struct rtattr *iptuninfo[IFLA_IPTUN_MAX + 1];
 	int len;
-	__u32 laddr = 0;
-	__u32 raddr = 0;
+	inet_prefix saddr, daddr, ip6rdprefix, ip6rdrelayprefix;
 	__u8 pmtudisc = 1;
 	__u8 tos = 0;
 	__u16 iflags = 0;
 	__u8 ttl = 0;
-	struct in6_addr ip6rdprefix = {};
-	__u16 ip6rdprefixlen = 0;
-	__u32 ip6rdrelayprefix = 0;
-	__u16 ip6rdrelayprefixlen = 0;
 	__u8 proto = 0;
 	__u32 link = 0;
 	__u16 encaptype = 0;
@@ -109,7 +104,15 @@ static int iptunnel_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 metadata = 0;
 	__u32 fwmark = 0;
 
+	inet_prefix_reset(&saddr);
+	inet_prefix_reset(&daddr);
+
+	inet_prefix_reset(&ip6rdprefix);
+	inet_prefix_reset(&ip6rdrelayprefix);
+
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
+		const struct rtattr *rta;
+
 		if (rtnl_talk(&rth, &req.n, &answer) < 0) {
 get_failed:
 			fprintf(stderr,
@@ -135,11 +138,27 @@ get_failed:
 		parse_rtattr_nested(iptuninfo, IFLA_IPTUN_MAX,
 				    linkinfo[IFLA_INFO_DATA]);
 
-		if (iptuninfo[IFLA_IPTUN_LOCAL])
-			laddr = rta_getattr_u32(iptuninfo[IFLA_IPTUN_LOCAL]);
+		rta = iptuninfo[IFLA_IPTUN_LOCAL];
+		if (rta && get_addr_rta(&saddr, rta, AF_INET))
+			goto get_failed;
 
-		if (iptuninfo[IFLA_IPTUN_REMOTE])
-			raddr = rta_getattr_u32(iptuninfo[IFLA_IPTUN_REMOTE]);
+		rta = iptuninfo[IFLA_IPTUN_REMOTE];
+		if (rta && get_addr_rta(&daddr, rta, AF_INET))
+			goto get_failed;
+
+		rta = iptuninfo[IFLA_IPTUN_6RD_PREFIX];
+		if (rta && get_addr_rta(&ip6rdprefix, rta, AF_INET6))
+			goto get_failed;
+
+		rta = iptuninfo[IFLA_IPTUN_6RD_RELAY_PREFIX];
+		if (rta && get_addr_rta(&ip6rdrelayprefix, rta, AF_INET))
+			goto get_failed;
+
+		rta = iptuninfo[IFLA_IPTUN_6RD_PREFIXLEN];
+		ip6rdprefix.bitlen = rta ? rta_getattr_u16(rta) : 0;
+
+		rta = iptuninfo[IFLA_IPTUN_6RD_RELAY_PREFIXLEN];
+		ip6rdrelayprefix.bitlen = rta ? rta_getattr_u16(rta) : 0;
 
 		if (iptuninfo[IFLA_IPTUN_TTL])
 			ttl = rta_getattr_u8(iptuninfo[IFLA_IPTUN_TTL]);
@@ -168,22 +187,7 @@ get_failed:
 			encapsport = rta_getattr_u16(iptuninfo[IFLA_IPTUN_ENCAP_SPORT]);
 		if (iptuninfo[IFLA_IPTUN_ENCAP_DPORT])
 			encapdport = rta_getattr_u16(iptuninfo[IFLA_IPTUN_ENCAP_DPORT]);
-		if (iptuninfo[IFLA_IPTUN_6RD_PREFIX])
-			memcpy(&ip6rdprefix,
-			       RTA_DATA(iptuninfo[IFLA_IPTUN_6RD_PREFIX]),
-			       sizeof(laddr));
 
-		if (iptuninfo[IFLA_IPTUN_6RD_PREFIXLEN])
-			ip6rdprefixlen =
-				rta_getattr_u16(iptuninfo[IFLA_IPTUN_6RD_PREFIXLEN]);
-
-		if (iptuninfo[IFLA_IPTUN_6RD_RELAY_PREFIX])
-			ip6rdrelayprefix =
-				rta_getattr_u32(iptuninfo[IFLA_IPTUN_6RD_RELAY_PREFIX]);
-
-		if (iptuninfo[IFLA_IPTUN_6RD_RELAY_PREFIXLEN])
-			ip6rdrelayprefixlen =
-				rta_getattr_u16(iptuninfo[IFLA_IPTUN_6RD_RELAY_PREFIXLEN]);
 		if (iptuninfo[IFLA_IPTUN_COLLECT_METADATA])
 			metadata = 1;
 
@@ -214,10 +218,10 @@ get_failed:
 				invarg("Cannot guess tunnel mode.", *argv);
 		} else if (strcmp(*argv, "remote") == 0) {
 			NEXT_ARG();
-			raddr = get_addr32(*argv);
+			get_addr(&daddr, *argv, AF_INET);
 		} else if (strcmp(*argv, "local") == 0) {
 			NEXT_ARG();
-			laddr = get_addr32(*argv);
+			get_addr(&saddr, *argv, AF_INET);
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			link = ll_name_to_index(*argv);
@@ -289,29 +293,16 @@ get_failed:
 		} else if (strcmp(*argv, "external") == 0) {
 			metadata = 1;
 		} else if (strcmp(*argv, "6rd-prefix") == 0) {
-			inet_prefix prefix;
-
 			NEXT_ARG();
-			if (get_prefix(&prefix, *argv, AF_INET6))
+			if (get_prefix(&ip6rdprefix, *argv, AF_INET6))
 				invarg("invalid 6rd_prefix\n", *argv);
-			memcpy(&ip6rdprefix, prefix.data, 16);
-			ip6rdprefixlen = prefix.bitlen;
 		} else if (strcmp(*argv, "6rd-relay_prefix") == 0) {
-			inet_prefix prefix;
-
 			NEXT_ARG();
-			if (get_prefix(&prefix, *argv, AF_INET))
+			if (get_prefix(&ip6rdrelayprefix, *argv, AF_INET))
 				invarg("invalid 6rd-relay_prefix\n", *argv);
-			memcpy(&ip6rdrelayprefix, prefix.data, 4);
-			ip6rdrelayprefixlen = prefix.bitlen;
 		} else if (strcmp(*argv, "6rd-reset") == 0) {
-			inet_prefix prefix;
-
-			get_prefix(&prefix, "2002::", AF_INET6);
-			memcpy(&ip6rdprefix, prefix.data, 16);
-			ip6rdprefixlen = 16;
-			ip6rdrelayprefix = 0;
-			ip6rdrelayprefixlen = 0;
+			get_prefix(&ip6rdprefix, "2002::/16", AF_INET6);
+			inet_prefix_reset(&ip6rdrelayprefix);
 		} else if (strcmp(*argv, "fwmark") == 0) {
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))
@@ -334,8 +325,14 @@ get_failed:
 		return 0;
 	}
 
-	addattr32(n, 1024, IFLA_IPTUN_LOCAL, laddr);
-	addattr32(n, 1024, IFLA_IPTUN_REMOTE, raddr);
+	if (is_addrtype_inet(&saddr)) {
+		addattr_l(n, 1024, IFLA_IPTUN_LOCAL,
+			  saddr.data, saddr.bytelen);
+	}
+	if (is_addrtype_inet(&daddr)) {
+		addattr_l(n, 1024, IFLA_IPTUN_REMOTE,
+			  daddr.data, daddr.bytelen);
+	}
 	addattr8(n, 1024, IFLA_IPTUN_PMTUDISC, pmtudisc);
 	addattr8(n, 1024, IFLA_IPTUN_TOS, tos);
 	addattr8(n, 1024, IFLA_IPTUN_TTL, ttl);
@@ -349,15 +346,17 @@ get_failed:
 
 	if (strcmp(lu->id, "sit") == 0) {
 		addattr16(n, 1024, IFLA_IPTUN_FLAGS, iflags);
-		if (ip6rdprefixlen) {
+		if (is_addrtype_inet(&ip6rdprefix)) {
 			addattr_l(n, 1024, IFLA_IPTUN_6RD_PREFIX,
-				  &ip6rdprefix, sizeof(ip6rdprefix));
+				  ip6rdprefix.data, ip6rdprefix.bytelen);
 			addattr16(n, 1024, IFLA_IPTUN_6RD_PREFIXLEN,
-				  ip6rdprefixlen);
+				  ip6rdprefix.bitlen);
+		}
+		if (is_addrtype_inet(&ip6rdrelayprefix)) {
 			addattr32(n, 1024, IFLA_IPTUN_6RD_RELAY_PREFIX,
-				  ip6rdrelayprefix);
+				  ip6rdrelayprefix.data[0]);
 			addattr16(n, 1024, IFLA_IPTUN_6RD_RELAY_PREFIXLEN,
-				  ip6rdrelayprefixlen);
+				  ip6rdrelayprefix.bitlen);
 		}
 	}
 
