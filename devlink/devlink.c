@@ -1179,6 +1179,7 @@ static void cmd_dev_help(void)
 	pr_err("                               [ inline-mode { none | link | network | transport } ]\n");
 	pr_err("                               [ encap { disable | enable } ]\n");
 	pr_err("       devlink dev eswitch show DEV\n");
+	pr_err("       devlink dev reload DEV\n");
 }
 
 static bool cmp_arr_last_handle(struct dl *dl, const char *bus_name,
@@ -1620,6 +1621,31 @@ static int cmd_dev_show(struct dl *dl)
 	return err;
 }
 
+static void cmd_dev_reload_help(void)
+{
+	pr_err("Usage: devlink dev reload [ DEV ]\n");
+}
+
+static int cmd_dev_reload(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
+		cmd_dev_reload_help();
+		return 0;
+	}
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_RELOAD,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE, 0);
+	if (err)
+		return err;
+
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
 static int cmd_dev(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help")) {
@@ -1632,6 +1658,9 @@ static int cmd_dev(struct dl *dl)
 	} else if (dl_argv_match(dl, "eswitch")) {
 		dl_arg_inc(dl);
 		return cmd_dev_eswitch(dl);
+	} else if (dl_argv_match(dl, "reload")) {
+		dl_arg_inc(dl);
+		return cmd_dev_reload(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
