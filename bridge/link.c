@@ -99,9 +99,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		   struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
-	int len = n->nlmsg_len;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
+	int len = n->nlmsg_len;
+	const char *name;
 
 	len -= NLMSG_LENGTH(sizeof(*ifi));
 	if (len < 0) {
@@ -117,10 +118,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
 
-	if (tb[IFLA_IFNAME] == NULL) {
-		fprintf(stderr, "BUG: nil ifname\n");
+	name = get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
+	if (!name)
 		return -1;
-	}
 
 	if (n->nlmsg_type == RTM_DELLINK)
 		fprintf(fp, "Deleted ");

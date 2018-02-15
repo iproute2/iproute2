@@ -872,6 +872,25 @@ int get_ifname(char *buf, const char *name)
 	return ret;
 }
 
+const char *get_ifname_rta(int ifindex, const struct rtattr *rta)
+{
+	const char *name;
+
+	if (rta) {
+		name = rta_getattr_str(rta);
+	} else {
+		fprintf(stderr,
+			"BUG: device with ifindex %d has nil ifname\n",
+			ifindex);
+		name = ll_idx_n2a(ifindex);
+	}
+
+	if (check_ifname(name))
+		return NULL;
+
+	return name;
+}
+
 int matches(const char *cmd, const char *pattern)
 {
 	int len = strlen(cmd);

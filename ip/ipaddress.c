@@ -776,12 +776,10 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		return -1;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL) {
-		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
-		name = ll_idx_n2a(ifi->ifi_index);
-	} else {
-		name = rta_getattr_str(tb[IFLA_IFNAME]);
-	}
+
+	name = get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
+	if (!name)
+		return -1;
 
 	if (filter.label &&
 	    (!filter.family || filter.family == AF_PACKET) &&
@@ -903,12 +901,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		return -1;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL) {
-		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
-		name = ll_idx_n2a(ifi->ifi_index);
-	} else {
-		name = rta_getattr_str(tb[IFLA_IFNAME]);
-	}
+
+	name = get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
+	if (!name)
+		return -1;
 
 	if (filter.label &&
 	    (!filter.family || filter.family == AF_PACKET) &&
