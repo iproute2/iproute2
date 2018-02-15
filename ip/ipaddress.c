@@ -778,14 +778,14 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
 	if (tb[IFLA_IFNAME] == NULL) {
 		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
-		name = "<nil>";
+		name = ll_idx_n2a(ifi->ifi_index);
 	} else {
 		name = rta_getattr_str(tb[IFLA_IFNAME]);
 	}
 
 	if (filter.label &&
 	    (!filter.family || filter.family == AF_PACKET) &&
-	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
+	    fnmatch(filter.label, name, 0))
 		return -1;
 
 	if (tb[IFLA_GROUP]) {
@@ -887,6 +887,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
 	int len = n->nlmsg_len;
+	const char *name;
 	unsigned int m_flag = 0;
 
 	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
@@ -897,18 +898,22 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		return -1;
 
 	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
-		return 0;
+		return -1;
 	if (filter.up && !(ifi->ifi_flags&IFF_UP))
-		return 0;
+		return -1;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL)
+	if (tb[IFLA_IFNAME] == NULL) {
 		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
+		name = ll_idx_n2a(ifi->ifi_index);
+	} else {
+		name = rta_getattr_str(tb[IFLA_IFNAME]);
+	}
 
 	if (filter.label &&
 	    (!filter.family || filter.family == AF_PACKET) &&
-	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
-		return 0;
+	    fnmatch(filter.label, name, 0))
+		return -1;
 
 	if (tb[IFLA_GROUP]) {
 		int group = rta_getattr_u32(tb[IFLA_GROUP]);
@@ -935,16 +940,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	print_int(PRINT_ANY, "ifindex", "%d: ", ifi->ifi_index);
-	if (tb[IFLA_IFNAME]) {
-		print_color_string(PRINT_ANY,
-				   COLOR_IFNAME,
-				   "ifname", "%s",
-				   rta_getattr_str(tb[IFLA_IFNAME]));
-	} else {
-		print_null(PRINT_JSON, "ifname", NULL, NULL);
-		print_color_null(PRINT_FP, COLOR_IFNAME,
-				 "ifname", "%s", "<nil>");
-	}
+	print_color_string(PRINT_ANY, COLOR_IFNAME, "ifname", "%s", name);
 
 	if (tb[IFLA_LINK]) {
 		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
