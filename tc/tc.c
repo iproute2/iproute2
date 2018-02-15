@@ -33,7 +33,6 @@
 int show_stats;
 int show_details;
 int show_raw;
-int show_pretty;
 int show_graph;
 int timestamp;
 
@@ -42,7 +41,6 @@ int use_iec;
 int force;
 bool use_names;
 int json;
-int pretty;
 
 static char *conf_file;
 
@@ -449,7 +447,7 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-raw") == 0) {
 			++show_raw;
 		} else if (matches(argv[1], "-pretty") == 0) {
-			++show_pretty;
+			++pretty;
 		} else if (matches(argv[1], "-graph") == 0) {
 			show_graph = 1;
 		} else if (matches(argv[1], "-Version") == 0) {
@@ -485,8 +483,6 @@ int main(int argc, char **argv)
 			++timestamp_short;
 		} else if (matches(argv[1], "-json") == 0) {
 			++json;
-		} else if (matches(argv[1], "-pretty") == 0) {
-			++pretty;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;

@@ -31,7 +31,6 @@ int show_stats;
 int show_details;
 int oneline;
 int brief;
-int show_pretty;
 int json;
 int timestamp;
 const char *_SL_;
@@ -261,7 +260,7 @@ int main(int argc, char **argv)
 		} else if (matches(opt, "-json") == 0) {
 			++json;
 		} else if (matches(opt, "-pretty") == 0) {
-			++show_pretty;
+			++pretty;
 		} else if (matches(opt, "-rcvbuf") == 0) {
 			unsigned int size;
 

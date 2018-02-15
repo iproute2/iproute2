@@ -37,6 +37,7 @@
 
 int resolve_hosts;
 int timestamp_short;
+int pretty;
 
 int read_prop(const char *dev, char *prop, long *value)
 {

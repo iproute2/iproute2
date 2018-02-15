@@ -45,7 +45,6 @@ int no_update;
 int scan_interval;
 int time_constant;
 int show_errors;
-int pretty;
 double W;
 char **patterns;
 int npatterns;

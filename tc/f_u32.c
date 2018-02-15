@@ -25,8 +25,6 @@
 #include "utils.h"
 #include "tc_util.h"
 
-extern int show_pretty;
-
 static void explain(void)
 {
 	fprintf(stderr,
@@ -965,7 +963,7 @@ static void show_keys(FILE *f, const struct tc_u32_key *key)
 {
 	int i = 0;
 
-	if (!show_pretty)
+	if (!pretty)
 		goto show_k;
 
 	for (i = 0; i < ARRAY_SIZE(u32_pprinters); i++) {

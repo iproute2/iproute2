@@ -37,7 +37,6 @@ int reset_history;
 int ignore_history;
 int no_output;
 int json_output;
-int pretty;
 int no_update;
 int scan_interval;
 int time_constant;
