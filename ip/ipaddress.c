@@ -813,14 +813,13 @@ int print_linkinfo_brief(const struct sockaddr_nl *who,
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (tb[IFLA_LINK]) {
-		SPRINT_BUF(b1);
 		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
 
 		if (iflink == 0) {
 			snprintf(buf, sizeof(buf), "%s@NONE", name);
 			print_null(PRINT_JSON, "link", NULL, NULL);
 		} else {
-			const char *link = ll_idx_n2a(iflink, b1);
+			const char *link = ll_index_to_name(iflink);
 
 			print_string(PRINT_JSON, "link", NULL, link);
 			snprintf(buf, sizeof(buf), "%s@%s", name, link);
@@ -957,12 +956,10 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				print_int(PRINT_ANY,
 					  "link_index", "@if%d: ", iflink);
 			else {
-				SPRINT_BUF(b1);
-
 				print_string(PRINT_ANY,
 					     "link",
 					     "@%s: ",
-					     ll_idx_n2a(iflink, b1));
+					     ll_index_to_name(iflink));
 				m_flag = ll_index_to_flags(iflink);
 				m_flag = !(m_flag & IFF_UP);
 			}
@@ -984,12 +981,13 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			     "qdisc %s ",
 			     rta_getattr_str(tb[IFLA_QDISC]));
 	if (tb[IFLA_MASTER]) {
-		SPRINT_BUF(b1);
+		int master = rta_getattr_u32(tb[IFLA_MASTER]);
 
-		print_string(PRINT_ANY,
-			     "master",
-			     "master %s ",
-			     ll_idx_n2a(rta_getattr_u32(tb[IFLA_MASTER]), b1));
+		print_color_string(PRINT_ANY,
+				   COLOR_IFNAME,
+				   "master",
+				   "master %s ",
+				   ll_index_to_name(master));
 	}
 
 	if (tb[IFLA_OPERSTATE])
@@ -1308,7 +1306,6 @@ static int get_filter(const char *arg)
 static int ifa_label_match_rta(int ifindex, const struct rtattr *rta)
 {
 	const char *label;
-	SPRINT_BUF(b1);
 
 	if (!filter.label)
 		return 0;
@@ -1316,7 +1313,7 @@ static int ifa_label_match_rta(int ifindex, const struct rtattr *rta)
 	if (rta)
 		label = RTA_DATA(rta);
 	else
-		label = ll_idx_n2a(ifindex, b1);
+		label = ll_index_to_name(ifindex);
 
 	return fnmatch(filter.label, label, 0);
 }
