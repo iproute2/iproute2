@@ -752,62 +752,11 @@ static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 	fprintf(fp, "%s", _SL_);
 }
 
-int print_linkinfo_brief(const struct sockaddr_nl *who,
-			 struct nlmsghdr *n, void *arg)
+static int print_linkinfo_brief(FILE *fp, const char *name,
+				const struct ifinfomsg *ifi,
+				struct rtattr *tb[])
 {
-	FILE *fp = (FILE *)arg;
-	struct ifinfomsg *ifi = NLMSG_DATA(n);
-	struct rtattr *tb[IFLA_MAX+1];
-	int len = n->nlmsg_len;
-	const char *name;
 	unsigned int m_flag = 0;
-
-	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
-		return -1;
-
-	len -= NLMSG_LENGTH(sizeof(*ifi));
-	if (len < 0)
-		return -1;
-
-	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
-		return -1;
-	if (filter.up && !(ifi->ifi_flags&IFF_UP))
-		return -1;
-
-	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-
-	name = get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
-	if (!name)
-		return -1;
-
-	if (filter.label &&
-	    (!filter.family || filter.family == AF_PACKET) &&
-	    fnmatch(filter.label, name, 0))
-		return -1;
-
-	if (tb[IFLA_GROUP]) {
-		int group = rta_getattr_u32(tb[IFLA_GROUP]);
-
-		if (filter.group != -1 && group != filter.group)
-			return -1;
-	}
-
-	if (tb[IFLA_MASTER]) {
-		int master = rta_getattr_u32(tb[IFLA_MASTER]);
-
-		if (filter.master > 0 && master != filter.master)
-			return -1;
-	} else if (filter.master > 0)
-		return -1;
-
-	if (filter.kind && match_link_kind(tb, filter.kind, 0))
-		return -1;
-
-	if (filter.slave_kind && match_link_kind(tb, filter.slave_kind, 1))
-		return -1;
-
-	if (n->nlmsg_type == RTM_DELLINK)
-		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	m_flag = print_name_and_link("%-16s ", COLOR_NONE, name, tb);
 
@@ -868,6 +817,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	int len = n->nlmsg_len;
 	const char *name;
 	unsigned int m_flag = 0;
+	SPRINT_BUF(b1);
 
 	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
 		return 0;
@@ -916,6 +866,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == RTM_DELLINK)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
+	if (brief)
+		return print_linkinfo_brief(fp, name, ifi, tb);
+
 	print_int(PRINT_ANY, "ifindex", "%d: ", ifi->ifi_index);
 
 	m_flag = print_name_and_link("%s: ", COLOR_IFNAME, name, tb);
@@ -949,7 +902,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_linkmode(fp, tb[IFLA_LINKMODE]);
 
 	if (tb[IFLA_GROUP]) {
-		SPRINT_BUF(b1);
 		int group = rta_getattr_u32(tb[IFLA_GROUP]);
 
 		print_string(PRINT_ANY,
@@ -965,8 +917,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_link_event(fp, rta_getattr_u32(tb[IFLA_EVENT]));
 
 	if (!filter.family || filter.family == AF_PACKET || show_details) {
-		SPRINT_BUF(b1);
-
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 		print_string(PRINT_ANY,
 			     "link_type",
@@ -1066,7 +1016,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				     rta_getattr_str(tb[IFLA_PHYS_PORT_NAME]));
 
 		if (tb[IFLA_PHYS_PORT_ID]) {
-			SPRINT_BUF(b1);
 			print_string(PRINT_ANY,
 				     "phys_port_id",
 				     "portid %s ",
@@ -1077,7 +1026,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		}
 
 		if (tb[IFLA_PHYS_SWITCH_ID]) {
-			SPRINT_BUF(b1);
 			print_string(PRINT_ANY,
 				     "phys_switch_id",
 				     "switchid %s ",
@@ -1116,7 +1064,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		close_json_array(PRINT_JSON, NULL);
 	}
 
-	print_string(PRINT_FP, NULL, "\n", NULL);
+	print_string(PRINT_FP, NULL, "%s", "\n");
 	fflush(fp);
 	return 1;
 }
@@ -1971,14 +1919,10 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	for (l = linfo.head; l; l = l->next) {
 		struct nlmsghdr *n = &l->h;
 		struct ifinfomsg *ifi = NLMSG_DATA(n);
-		int res;
+		int res = 0;
 
 		open_json_object(NULL);
-		if (brief)
-			res = print_linkinfo_brief(NULL, n, stdout);
-		else if (no_link)
-			res = 0;
-		else
+		if (brief || !no_link)
 			res = print_linkinfo(NULL, n, stdout);
 		if (res >= 0 && filter.family != AF_PACKET)
 			print_selected_addrinfo(ifi, ainfo->head, stdout);
