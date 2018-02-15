@@ -753,7 +753,7 @@ static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 }
 
 int print_linkinfo_brief(const struct sockaddr_nl *who,
-				struct nlmsghdr *n, void *arg)
+			 struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
@@ -2013,24 +2013,21 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		ipaddr_filter(&linfo, ainfo);
 
 	for (l = linfo.head; l; l = l->next) {
-		int res = 0;
-		struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
+		struct nlmsghdr *n = &l->h;
+		struct ifinfomsg *ifi = NLMSG_DATA(n);
+		int res;
 
 		open_json_object(NULL);
-		if (brief) {
-			if (print_linkinfo_brief(NULL, &l->h, stdout) == 0)
-				if (filter.family != AF_PACKET)
-					print_selected_addrinfo(ifi,
-								ainfo->head,
-								stdout);
-		} else if (no_link ||
-			   (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
-			if (filter.family != AF_PACKET)
-				print_selected_addrinfo(ifi,
-							ainfo->head, stdout);
-			if (res > 0 && !do_link && show_stats)
-				print_link_stats(stdout, &l->h);
-		}
+		if (brief)
+			res = print_linkinfo_brief(NULL, n, stdout);
+		else if (no_link)
+			res = 0;
+		else
+			res = print_linkinfo(NULL, n, stdout);
+		if (res >= 0 && filter.family != AF_PACKET)
+			print_selected_addrinfo(ifi, ainfo->head, stdout);
+		if (res > 0 && !do_link && show_stats)
+			print_link_stats(stdout, n);
 		close_json_object();
 	}
 	fflush(stdout);
