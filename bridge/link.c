@@ -125,19 +125,12 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == RTM_DELLINK)
 		fprintf(fp, "Deleted ");
 
-	fprintf(fp, "%d: %s ", ifi->ifi_index,
-		tb[IFLA_IFNAME] ? rta_getattr_str(tb[IFLA_IFNAME]) : "<nil>");
+	fprintf(fp, "%d: ", ifi->ifi_index);
+
+	print_name_and_link("%s: ", COLOR_NONE, name, tb);
 
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
-
-	if (tb[IFLA_LINK]) {
-		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
-
-		fprintf(fp, "@%s: ",
-			iflink ? ll_index_to_name(iflink) : "NONE");
-	} else
-		fprintf(fp, ": ");
 
 	print_link_flags(fp, ifi->ifi_flags);
 

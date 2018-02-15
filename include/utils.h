@@ -12,6 +12,7 @@
 #include "libnetlink.h"
 #include "ll_map.h"
 #include "rtm_map.h"
+#include "json_print.h"
 
 extern int preferred_family;
 extern int human_readable;
@@ -249,6 +250,9 @@ void print_escape_buf(const __u8 *buf, size_t len, const char *escape);
 
 int print_timestamp(FILE *fp);
 void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
+
+unsigned int print_name_and_link(const char *fmt, enum color_attr color,
+				 const char *name, struct rtattr *tb[]);
 
 #define BIT(nr)                 (1UL << (nr))
 
