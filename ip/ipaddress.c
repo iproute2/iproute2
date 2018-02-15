@@ -1305,6 +1305,22 @@ static int get_filter(const char *arg)
 	return 0;
 }
 
+static int ifa_label_match_rta(int ifindex, const struct rtattr *rta)
+{
+	const char *label;
+	SPRINT_BUF(b1);
+
+	if (!filter.label)
+		return 0;
+
+	if (rta)
+		label = RTA_DATA(rta);
+	else
+		label = ll_idx_n2a(ifindex, b1);
+
+	return fnmatch(filter.label, label, 0);
+}
+
 int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		   void *arg)
 {
@@ -1343,19 +1359,11 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		return 0;
 	if ((filter.flags ^ ifa_flags) & filter.flagmask)
 		return 0;
-	if (filter.label) {
-		SPRINT_BUF(b1);
-		const char *label;
-
-		if (rta_tb[IFA_LABEL])
-			label = RTA_DATA(rta_tb[IFA_LABEL]);
-		else
-			label = ll_idx_n2a(ifa->ifa_index, b1);
-		if (fnmatch(filter.label, label, 0) != 0)
-			return 0;
-	}
 
 	if (filter.family && filter.family != ifa->ifa_family)
+		return 0;
+
+	if (ifa_label_match_rta(ifa->ifa_index, rta_tb[IFA_LABEL]))
 		return 0;
 
 	if (inet_addr_match_rta(&filter.pfx, rta_tb[IFA_LOCAL]))
@@ -1713,25 +1721,14 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 
 			if ((filter.flags ^ ifa_flags) & filter.flagmask)
 				continue;
-			if (filter.pfx.family || filter.label) {
-				struct rtattr *rta =
-					tb[IFA_LOCAL] ? : tb[IFA_ADDRESS];
 
-				if (inet_addr_match_rta(&filter.pfx, rta))
-					continue;
+			if (ifa_label_match_rta(ifa->ifa_index, tb[IFA_LABEL]))
+				continue;
 
-				if (filter.label) {
-					SPRINT_BUF(b1);
-					const char *label;
-
-					if (tb[IFA_LABEL])
-						label = RTA_DATA(tb[IFA_LABEL]);
-					else
-						label = ll_idx_n2a(ifa->ifa_index, b1);
-					if (fnmatch(filter.label, label, 0) != 0)
-						continue;
-				}
-			}
+			if (!tb[IFA_LOCAL])
+				tb[IFA_LOCAL] = tb[IFA_ADDRESS];
+			if (inet_addr_match_rta(&filter.pfx, tb[IFA_LOCAL]))
+				continue;
 
 			ok = 1;
 			break;
