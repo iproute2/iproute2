@@ -752,86 +752,13 @@ static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 	fprintf(fp, "%s", _SL_);
 }
 
-int print_linkinfo_brief(const struct sockaddr_nl *who,
-				struct nlmsghdr *n, void *arg)
+static int print_linkinfo_brief(FILE *fp, const char *name,
+				const struct ifinfomsg *ifi,
+				struct rtattr *tb[])
 {
-	FILE *fp = (FILE *)arg;
-	struct ifinfomsg *ifi = NLMSG_DATA(n);
-	struct rtattr *tb[IFLA_MAX+1];
-	int len = n->nlmsg_len;
-	const char *name;
-	char buf[32] = { 0, };
 	unsigned int m_flag = 0;
 
-	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
-		return -1;
-
-	len -= NLMSG_LENGTH(sizeof(*ifi));
-	if (len < 0)
-		return -1;
-
-	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
-		return -1;
-	if (filter.up && !(ifi->ifi_flags&IFF_UP))
-		return -1;
-
-	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL) {
-		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
-		name = "<nil>";
-	} else {
-		name = rta_getattr_str(tb[IFLA_IFNAME]);
-	}
-
-	if (filter.label &&
-	    (!filter.family || filter.family == AF_PACKET) &&
-	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
-		return -1;
-
-	if (tb[IFLA_GROUP]) {
-		int group = rta_getattr_u32(tb[IFLA_GROUP]);
-
-		if (filter.group != -1 && group != filter.group)
-			return -1;
-	}
-
-	if (tb[IFLA_MASTER]) {
-		int master = rta_getattr_u32(tb[IFLA_MASTER]);
-
-		if (filter.master > 0 && master != filter.master)
-			return -1;
-	} else if (filter.master > 0)
-		return -1;
-
-	if (filter.kind && match_link_kind(tb, filter.kind, 0))
-		return -1;
-
-	if (filter.slave_kind && match_link_kind(tb, filter.slave_kind, 1))
-		return -1;
-
-	if (n->nlmsg_type == RTM_DELLINK)
-		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
-
-	if (tb[IFLA_LINK]) {
-		SPRINT_BUF(b1);
-		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
-
-		if (iflink == 0) {
-			snprintf(buf, sizeof(buf), "%s@NONE", name);
-			print_null(PRINT_JSON, "link", NULL, NULL);
-		} else {
-			const char *link = ll_idx_n2a(iflink, b1);
-
-			print_string(PRINT_JSON, "link", NULL, link);
-			snprintf(buf, sizeof(buf), "%s@%s", name, link);
-			m_flag = ll_index_to_flags(iflink);
-			m_flag = !(m_flag & IFF_UP);
-		}
-	} else
-		snprintf(buf, sizeof(buf), "%s", name);
-
-	print_string(PRINT_FP, NULL, "%-16s ", buf);
-	print_string(PRINT_JSON, "ifname", NULL, name);
+	m_flag = print_name_and_link("%-16s ", COLOR_NONE, name, tb);
 
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
@@ -888,7 +815,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
 	int len = n->nlmsg_len;
+	const char *name;
 	unsigned int m_flag = 0;
+	SPRINT_BUF(b1);
 
 	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
 		return 0;
@@ -898,18 +827,20 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		return -1;
 
 	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
-		return 0;
+		return -1;
 	if (filter.up && !(ifi->ifi_flags&IFF_UP))
-		return 0;
+		return -1;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL)
-		fprintf(stderr, "BUG: device with ifindex %d has nil ifname\n", ifi->ifi_index);
+
+	name = get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
+	if (!name)
+		return -1;
 
 	if (filter.label &&
 	    (!filter.family || filter.family == AF_PACKET) &&
-	    fnmatch(filter.label, RTA_DATA(tb[IFLA_IFNAME]), 0))
-		return 0;
+	    fnmatch(filter.label, name, 0))
+		return -1;
 
 	if (tb[IFLA_GROUP]) {
 		int group = rta_getattr_u32(tb[IFLA_GROUP]);
@@ -935,41 +866,12 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (n->nlmsg_type == RTM_DELLINK)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
+	if (brief)
+		return print_linkinfo_brief(fp, name, ifi, tb);
+
 	print_int(PRINT_ANY, "ifindex", "%d: ", ifi->ifi_index);
-	if (tb[IFLA_IFNAME]) {
-		print_color_string(PRINT_ANY,
-				   COLOR_IFNAME,
-				   "ifname", "%s",
-				   rta_getattr_str(tb[IFLA_IFNAME]));
-	} else {
-		print_null(PRINT_JSON, "ifname", NULL, NULL);
-		print_color_null(PRINT_FP, COLOR_IFNAME,
-				 "ifname", "%s", "<nil>");
-	}
 
-	if (tb[IFLA_LINK]) {
-		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
-
-		if (iflink == 0)
-			print_null(PRINT_ANY, "link", "@%s: ", "NONE");
-		else {
-			if (tb[IFLA_LINK_NETNSID])
-				print_int(PRINT_ANY,
-					  "link_index", "@if%d: ", iflink);
-			else {
-				SPRINT_BUF(b1);
-
-				print_string(PRINT_ANY,
-					     "link",
-					     "@%s: ",
-					     ll_idx_n2a(iflink, b1));
-				m_flag = ll_index_to_flags(iflink);
-				m_flag = !(m_flag & IFF_UP);
-			}
-		}
-	} else {
-		print_string(PRINT_FP, NULL, ": ", NULL);
-	}
+	m_flag = print_name_and_link("%s: ", COLOR_IFNAME, name, tb);
 	print_link_flags(fp, ifi->ifi_flags, m_flag);
 
 	if (tb[IFLA_MTU])
@@ -984,12 +886,13 @@ int print_linkinfo(const struct sockaddr_nl *who,
 			     "qdisc %s ",
 			     rta_getattr_str(tb[IFLA_QDISC]));
 	if (tb[IFLA_MASTER]) {
-		SPRINT_BUF(b1);
+		int master = rta_getattr_u32(tb[IFLA_MASTER]);
 
-		print_string(PRINT_ANY,
-			     "master",
-			     "master %s ",
-			     ll_idx_n2a(rta_getattr_u32(tb[IFLA_MASTER]), b1));
+		print_color_string(PRINT_ANY,
+				   COLOR_IFNAME,
+				   "master",
+				   "master %s ",
+				   ll_index_to_name(master));
 	}
 
 	if (tb[IFLA_OPERSTATE])
@@ -999,7 +902,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_linkmode(fp, tb[IFLA_LINKMODE]);
 
 	if (tb[IFLA_GROUP]) {
-		SPRINT_BUF(b1);
 		int group = rta_getattr_u32(tb[IFLA_GROUP]);
 
 		print_string(PRINT_ANY,
@@ -1015,8 +917,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_link_event(fp, rta_getattr_u32(tb[IFLA_EVENT]));
 
 	if (!filter.family || filter.family == AF_PACKET || show_details) {
-		SPRINT_BUF(b1);
-
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 		print_string(PRINT_ANY,
 			     "link_type",
@@ -1116,7 +1016,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				     rta_getattr_str(tb[IFLA_PHYS_PORT_NAME]));
 
 		if (tb[IFLA_PHYS_PORT_ID]) {
-			SPRINT_BUF(b1);
 			print_string(PRINT_ANY,
 				     "phys_port_id",
 				     "portid %s ",
@@ -1127,7 +1026,6 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		}
 
 		if (tb[IFLA_PHYS_SWITCH_ID]) {
-			SPRINT_BUF(b1);
 			print_string(PRINT_ANY,
 				     "phys_switch_id",
 				     "switchid %s ",
@@ -1166,7 +1064,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		close_json_array(PRINT_JSON, NULL);
 	}
 
-	print_string(PRINT_FP, NULL, "\n", NULL);
+	print_string(PRINT_FP, NULL, "%s", "\n");
 	fflush(fp);
 	return 1;
 }
@@ -1305,6 +1203,21 @@ static int get_filter(const char *arg)
 	return 0;
 }
 
+static int ifa_label_match_rta(int ifindex, const struct rtattr *rta)
+{
+	const char *label;
+
+	if (!filter.label)
+		return 0;
+
+	if (rta)
+		label = RTA_DATA(rta);
+	else
+		label = ll_index_to_name(ifindex);
+
+	return fnmatch(filter.label, label, 0);
+}
+
 int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		   void *arg)
 {
@@ -1343,19 +1256,11 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		return 0;
 	if ((filter.flags ^ ifa_flags) & filter.flagmask)
 		return 0;
-	if (filter.label) {
-		SPRINT_BUF(b1);
-		const char *label;
-
-		if (rta_tb[IFA_LABEL])
-			label = RTA_DATA(rta_tb[IFA_LABEL]);
-		else
-			label = ll_idx_n2a(ifa->ifa_index, b1);
-		if (fnmatch(filter.label, label, 0) != 0)
-			return 0;
-	}
 
 	if (filter.family && filter.family != ifa->ifa_family)
+		return 0;
+
+	if (ifa_label_match_rta(ifa->ifa_index, rta_tb[IFA_LABEL]))
 		return 0;
 
 	if (inet_addr_match_rta(&filter.pfx, rta_tb[IFA_LOCAL]))
@@ -1713,25 +1618,14 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 
 			if ((filter.flags ^ ifa_flags) & filter.flagmask)
 				continue;
-			if (filter.pfx.family || filter.label) {
-				struct rtattr *rta =
-					tb[IFA_LOCAL] ? : tb[IFA_ADDRESS];
 
-				if (inet_addr_match_rta(&filter.pfx, rta))
-					continue;
+			if (ifa_label_match_rta(ifa->ifa_index, tb[IFA_LABEL]))
+				continue;
 
-				if (filter.label) {
-					SPRINT_BUF(b1);
-					const char *label;
-
-					if (tb[IFA_LABEL])
-						label = RTA_DATA(tb[IFA_LABEL]);
-					else
-						label = ll_idx_n2a(ifa->ifa_index, b1);
-					if (fnmatch(filter.label, label, 0) != 0)
-						continue;
-				}
-			}
+			if (!tb[IFA_LOCAL])
+				tb[IFA_LOCAL] = tb[IFA_ADDRESS];
+			if (inet_addr_match_rta(&filter.pfx, tb[IFA_LOCAL]))
+				continue;
 
 			ok = 1;
 			break;
@@ -2023,24 +1917,17 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		ipaddr_filter(&linfo, ainfo);
 
 	for (l = linfo.head; l; l = l->next) {
+		struct nlmsghdr *n = &l->h;
+		struct ifinfomsg *ifi = NLMSG_DATA(n);
 		int res = 0;
-		struct ifinfomsg *ifi = NLMSG_DATA(&l->h);
 
 		open_json_object(NULL);
-		if (brief) {
-			if (print_linkinfo_brief(NULL, &l->h, stdout) == 0)
-				if (filter.family != AF_PACKET)
-					print_selected_addrinfo(ifi,
-								ainfo->head,
-								stdout);
-		} else if (no_link ||
-			   (res = print_linkinfo(NULL, &l->h, stdout)) >= 0) {
-			if (filter.family != AF_PACKET)
-				print_selected_addrinfo(ifi,
-							ainfo->head, stdout);
-			if (res > 0 && !do_link && show_stats)
-				print_link_stats(stdout, &l->h);
-		}
+		if (brief || !no_link)
+			res = print_linkinfo(NULL, n, stdout);
+		if (res >= 0 && filter.family != AF_PACKET)
+			print_selected_addrinfo(ifi, ainfo->head, stdout);
+		if (res > 0 && !do_link && show_stats)
+			print_link_stats(stdout, n);
 		close_json_object();
 	}
 	fflush(stdout);

@@ -136,8 +136,26 @@ int ll_remember_index(const struct sockaddr_nl *who,
 	return 0;
 }
 
-const char *ll_idx_n2a(unsigned idx, char *buf)
+const char *ll_idx_n2a(unsigned int idx)
 {
+	static char buf[IFNAMSIZ];
+
+	snprintf(buf, sizeof(buf), "if%u", idx);
+	return buf;
+}
+
+unsigned int ll_idx_a2n(const char *name)
+{
+	unsigned int idx;
+
+	if (sscanf(name, "if%u", &idx) != 1)
+		return 0;
+	return idx;
+}
+
+const char *ll_index_to_name(unsigned int idx)
+{
+	static char buf[IFNAMSIZ];
 	const struct ll_cache *im;
 
 	if (idx == 0)
@@ -148,16 +166,9 @@ const char *ll_idx_n2a(unsigned idx, char *buf)
 		return im->name;
 
 	if (if_indextoname(idx, buf) == NULL)
-		snprintf(buf, IFNAMSIZ, "if%d", idx);
+		snprintf(buf, IFNAMSIZ, "if%u", idx);
 
 	return buf;
-}
-
-const char *ll_index_to_name(unsigned idx)
-{
-	static char nbuf[IFNAMSIZ];
-
-	return ll_idx_n2a(idx, nbuf);
 }
 
 int ll_index_to_type(unsigned idx)
@@ -196,7 +207,7 @@ unsigned ll_name_to_index(const char *name)
 
 	idx = if_nametoindex(name);
 	if (idx == 0)
-		sscanf(name, "if%u", &idx);
+		idx = ll_idx_a2n(name);
 	return idx;
 }
 

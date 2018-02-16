@@ -33,6 +33,7 @@
 
 #include "rt_names.h"
 #include "utils.h"
+#include "ll_map.h"
 #include "namespace.h"
 
 int resolve_hosts;
@@ -872,6 +873,25 @@ int get_ifname(char *buf, const char *name)
 	return ret;
 }
 
+const char *get_ifname_rta(int ifindex, const struct rtattr *rta)
+{
+	const char *name;
+
+	if (rta) {
+		name = rta_getattr_str(rta);
+	} else {
+		fprintf(stderr,
+			"BUG: device with ifindex %d has nil ifname\n",
+			ifindex);
+		name = ll_idx_n2a(ifindex);
+	}
+
+	if (check_ifname(name))
+		return NULL;
+
+	return name;
+}
+
 int matches(const char *cmd, const char *pattern)
 {
 	int len = strlen(cmd);
@@ -1240,6 +1260,54 @@ int print_timestamp(FILE *fp)
 	}
 
 	return 0;
+}
+
+unsigned int print_name_and_link(const char *fmt, enum color_attr color,
+				 const char *name, struct rtattr *tb[])
+{
+	const char *link = NULL;
+	unsigned int m_flag = 0;
+	SPRINT_BUF(b1);
+
+	if (tb[IFLA_LINK]) {
+		int iflink = rta_getattr_u32(tb[IFLA_LINK]);
+
+		if (iflink) {
+			if (tb[IFLA_LINK_NETNSID]) {
+				if (is_json_context()) {
+					print_int(PRINT_JSON,
+						  "link_index", NULL, iflink);
+				} else {
+					link = ll_idx_n2a(iflink);
+				}
+			} else {
+				link = ll_index_to_name(iflink);
+
+				if (is_json_context()) {
+					print_string(PRINT_JSON,
+						     "link", NULL, link);
+					link = NULL;
+				}
+
+				m_flag = ll_index_to_flags(iflink);
+				m_flag = !(m_flag & IFF_UP);
+			}
+		} else {
+			if (is_json_context())
+				print_null(PRINT_JSON, "link", NULL, NULL);
+			else
+				link = "NONE";
+		}
+
+		if (link) {
+			snprintf(b1, sizeof(b1), "%s@%s", name, link);
+			name = b1;
+		}
+	}
+
+	print_color_string(PRINT_ANY, color, "ifname", fmt, name);
+
+	return m_flag;
 }
 
 int cmdlineno;
