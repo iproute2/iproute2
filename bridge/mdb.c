@@ -166,12 +166,12 @@ static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e,
 		if (mdb_flags)
 			jsonw_end_array(jw_global);
 	} else{
-		fprintf(f, "dev %s port %s grp %s %s %s",
+		fprintf(f, "dev %s port %s grp %s %s%s",
 			ll_index_to_name(ifindex),
 			ll_index_to_name(e->ifindex),
 			inet_ntop(af, src, abuf, sizeof(abuf)),
 			(e->state & MDB_PERMANENT) ? "permanent" : "temp",
-			(e->flags & MDB_FLAGS_OFFLOAD) ? "offload" : "");
+			(e->flags & MDB_FLAGS_OFFLOAD) ? " offload" : "");
 	}
 	if (e->vid) {
 		if (jw_global)
