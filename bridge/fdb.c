@@ -132,10 +132,8 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (filter_vlan && filter_vlan != vid)
 		return 0;
 
-	if (jw_global) {
-		jsonw_pretty(jw_global, 1);
+	if (jw_global)
 		jsonw_start_object(jw_global);
-	}
 
 	if (n->nlmsg_type == RTM_DELNEIGH) {
 		if (jw_global)
@@ -388,14 +386,18 @@ static int fdb_show(int argc, char **argv)
 		exit(1);
 	}
 
-	if (json_output) {
+	if (json) {
 		jw_global = jsonw_new(stdout);
 		if (!jw_global) {
 			fprintf(stderr, "Error allocation json object\n");
 			exit(1);
 		}
+		if (pretty)
+			jsonw_pretty(jw_global, 1);
+
 		jsonw_start_array(jw_global);
 	}
+
 	if (rtnl_dump_filter(&rth, print_fdb, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);

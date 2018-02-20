@@ -258,7 +258,6 @@ static int filter_vlan_check(__u16 vid, __u16 flags)
 static void print_vlan_port(FILE *fp, int ifi_index)
 {
 	if (jw_global) {
-		jsonw_pretty(jw_global, 1);
 		jsonw_name(jw_global,
 			   ll_index_to_name(ifi_index));
 		jsonw_start_array(jw_global);
@@ -578,17 +577,21 @@ static int vlan_show(int argc, char **argv)
 	if (!show_stats) {
 		if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
 					     (compress_vlans ?
-						RTEXT_FILTER_BRVLAN_COMPRESSED :
-						RTEXT_FILTER_BRVLAN)) < 0) {
+					      RTEXT_FILTER_BRVLAN_COMPRESSED :
+					      RTEXT_FILTER_BRVLAN)) < 0) {
 			perror("Cannont send dump request");
 			exit(1);
 		}
-		if (json_output) {
+
+		if (json) {
 			jw_global = jsonw_new(stdout);
 			if (!jw_global) {
 				fprintf(stderr, "Error allocation json object\n");
 				exit(1);
 			}
+			if (pretty)
+				jsonw_pretty(jw_global, 1);
+
 			jsonw_start_object(jw_global);
 		} else {
 			if (show_vlan_tunnel_info)

@@ -23,7 +23,7 @@ int oneline;
 int show_stats;
 int show_details;
 int compress_vlans;
-int json_output;
+int json;
 int timestamp;
 char *batch_file;
 int force;
@@ -39,7 +39,7 @@ static void usage(void)
 "where	OBJECT := { link | fdb | mdb | vlan | monitor }\n"
 "	OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] |\n"
 "		     -o[neline] | -t[imestamp] | -n[etns] name |\n"
-"		     -c[ompressvlans] -j{son} }\n");
+"		     -c[ompressvlans] -p[retty] -j{son} }\n");
 	exit(-1);
 }
 
@@ -175,7 +175,9 @@ main(int argc, char **argv)
 		} else if (matches(opt, "-force") == 0) {
 			++force;
 		} else if (matches(opt, "-json") == 0) {
-			++json_output;
+			++json;
+		} else if (matches(opt, "-pretty") == 0) {
+			++pretty;
 		} else if (matches(opt, "-batch") == 0) {
 			argc--;
 			argv++;

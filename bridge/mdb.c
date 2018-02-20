@@ -325,7 +325,7 @@ static int mdb_show(int argc, char **argv)
 		return -1;
 	}
 
-	if (!json_output) {
+	if (!json) {
 		/* Normal output */
 		if (rtnl_dump_filter(&rth, print_mdb, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
@@ -333,9 +333,17 @@ static int mdb_show(int argc, char **argv)
 		}
 		return 0;
 	}
+
 	/* Json output */
 	jw_global = jsonw_new(stdout);
-	jsonw_pretty(jw_global, 1);
+	if (!jw_global) {
+		fprintf(stderr, "Error allocation json object\n");
+		exit(1);
+	}
+
+	if (pretty)
+		jsonw_pretty(jw_global, 1);
+
 	jsonw_start_object(jw_global);
 	jsonw_name(jw_global, "mdb");
 	jsonw_start_array(jw_global);
