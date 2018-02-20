@@ -1262,7 +1262,7 @@ int print_timestamp(FILE *fp)
 	return 0;
 }
 
-unsigned int print_name_and_link(const char *fmt, enum color_attr color,
+unsigned int print_name_and_link(const char *fmt,
 				 const char *name, struct rtattr *tb[])
 {
 	const char *link = NULL;
@@ -1305,7 +1305,7 @@ unsigned int print_name_and_link(const char *fmt, enum color_attr color,
 		}
 	}
 
-	print_color_string(PRINT_ANY, color, "ifname", fmt, name);
+	print_color_string(PRINT_ANY, COLOR_IFNAME, "ifname", fmt, name);
 
 	return m_flag;
 }

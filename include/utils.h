@@ -251,7 +251,7 @@ void print_escape_buf(const __u8 *buf, size_t len, const char *escape);
 int print_timestamp(FILE *fp);
 void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 
-unsigned int print_name_and_link(const char *fmt, enum color_attr color,
+unsigned int print_name_and_link(const char *fmt,
 				 const char *name, struct rtattr *tb[]);
 
 #define BIT(nr)                 (1UL << (nr))
