@@ -395,8 +395,10 @@ static int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data)
 			comm = get_task_name(pid);
 		}
 
-		if (rd_check_is_filtered(rd, "pid", pid))
+		if (rd_check_is_filtered(rd, "pid", pid)) {
+			free(comm);
 			continue;
+		}
 
 		if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])
 			/* discard const from mnl_attr_get_str */
