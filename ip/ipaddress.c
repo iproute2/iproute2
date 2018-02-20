@@ -888,11 +888,9 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (tb[IFLA_MASTER]) {
 		int master = rta_getattr_u32(tb[IFLA_MASTER]);
 
-		print_color_string(PRINT_ANY,
-				   COLOR_IFNAME,
-				   "master",
-				   "master %s ",
-				   ll_index_to_name(master));
+		print_string(PRINT_ANY,
+			     "master", "master %s ",
+			     ll_index_to_name(master));
 	}
 
 	if (tb[IFLA_OPERSTATE])
