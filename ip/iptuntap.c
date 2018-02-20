@@ -469,3 +469,89 @@ int do_iptuntap(int argc, char **argv)
 		*argv);
 	exit(-1);
 }
+
+static void print_owner(FILE *f, uid_t uid)
+{
+	struct passwd *pw = getpwuid(uid);
+
+	if (pw)
+		fprintf(f, "user %s ", pw->pw_name);
+	else
+		fprintf(f, "user %u ", uid);
+}
+
+static void print_group(FILE *f, gid_t gid)
+{
+	struct group *group = getgrgid(gid);
+
+	if (group)
+		fprintf(f, "group %s ", group->gr_name);
+	else
+		fprintf(f, "group %u ", gid);
+}
+
+static void print_mq(FILE *f, struct rtattr *tb[])
+{
+	if (!tb[IFLA_TUN_MULTI_QUEUE] ||
+	    !rta_getattr_u8(tb[IFLA_TUN_MULTI_QUEUE]))
+		return;
+
+	fprintf(f, "multi_queue ");
+
+	if (tb[IFLA_TUN_NUM_QUEUES]) {
+		fprintf(f, "numqueues %u ",
+			rta_getattr_u32(tb[IFLA_TUN_NUM_QUEUES]));
+	}
+
+	if (tb[IFLA_TUN_NUM_DISABLED_QUEUES]) {
+		fprintf(f, "numdisabled %u ",
+			rta_getattr_u32(tb[IFLA_TUN_NUM_DISABLED_QUEUES]));
+	}
+}
+
+static void print_onoff(FILE *f, const char *flag, __u8 val)
+{
+	fprintf(f, "%s %s ", flag, val ? "on" : "off");
+}
+
+static void tun_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
+{
+	if (!tb)
+		return;
+
+	if (tb[IFLA_TUN_TYPE]) {
+		__u8 type = rta_getattr_u8(tb[IFLA_TUN_TYPE]);
+
+		if (type == IFF_TUN)
+			fprintf(f, "type tun ");
+		else if (type == IFF_TAP)
+			fprintf(f, "type tap ");
+		else
+			fprintf(f, "type UNKNOWN:%hhu ", type);
+	}
+
+	if (tb[IFLA_TUN_PI])
+		print_onoff(f, "pi", rta_getattr_u8(tb[IFLA_TUN_PI]));
+
+	if (tb[IFLA_TUN_VNET_HDR]) {
+		print_onoff(f, "vnet_hdr",
+			    rta_getattr_u8(tb[IFLA_TUN_VNET_HDR]));
+	}
+
+	print_mq(f, tb);
+
+	if (tb[IFLA_TUN_PERSIST])
+		print_onoff(f, "persist", rta_getattr_u8(tb[IFLA_TUN_PERSIST]));
+
+	if (tb[IFLA_TUN_OWNER])
+		print_owner(f, rta_getattr_u32(tb[IFLA_TUN_OWNER]));
+
+	if (tb[IFLA_TUN_GROUP])
+		print_group(f, rta_getattr_u32(tb[IFLA_TUN_GROUP]));
+}
+
+struct link_util tun_link_util = {
+	.id = "tun",
+	.maxattr = IFLA_TUN_MAX,
+	.print_opt = tun_print_opt,
+};
