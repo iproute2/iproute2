@@ -16,12 +16,15 @@
 #include "utils.h"
 #include "br_common.h"
 #include "namespace.h"
+#include "color.h"
 
 struct rtnl_handle rth = { .fd = -1 };
 int preferred_family = AF_UNSPEC;
 int oneline;
 int show_stats;
 int show_details;
+int show_pretty;
+int color;
 int compress_vlans;
 int json;
 int timestamp;
@@ -39,7 +42,7 @@ static void usage(void)
 "where	OBJECT := { link | fdb | mdb | vlan | monitor }\n"
 "	OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] |\n"
 "		     -o[neline] | -t[imestamp] | -n[etns] name |\n"
-"		     -c[ompressvlans] -p[retty] -j{son} }\n");
+"		     -c[ompressvlans] -color -p[retty] -j{son} }\n");
 	exit(-1);
 }
 
@@ -170,6 +173,8 @@ main(int argc, char **argv)
 			NEXT_ARG();
 			if (netns_switch(argv[1]))
 				exit(-1);
+		} else if (matches(opt, "-color") == 0) {
+			enable_color();
 		} else if (matches(opt, "-compressvlans") == 0) {
 			++compress_vlans;
 		} else if (matches(opt, "-force") == 0) {
@@ -194,6 +199,9 @@ main(int argc, char **argv)
 	}
 
 	_SL_ = oneline ? "\\" : "\n";
+
+	if (json)
+		check_if_color_enabled();
 
 	if (batch_file)
 		return batch(batch_file);
