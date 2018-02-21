@@ -240,10 +240,6 @@ int main(int argc, char **argv)
 		} else if (matches(opt, "-tshort") == 0) {
 			++timestamp;
 			++timestamp_short;
-#if 0
-		} else if (matches(opt, "-numeric") == 0) {
-			rtnl_names_numeric++;
-#endif
 		} else if (matches(opt, "-Version") == 0) {
 			printf("ip utility, iproute2-ss%s\n", SNAPSHOT);
 			exit(0);
