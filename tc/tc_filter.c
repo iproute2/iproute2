@@ -303,8 +303,7 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				   t->tcm_block_index);
 	} else {
 		if (!filter_ifindex || filter_ifindex != t->tcm_ifindex)
-			print_string(PRINT_ANY, "dev", "dev %s ",
-				     ll_index_to_name(t->tcm_ifindex));
+			print_devname(PRINT_ANY, t->tcm_ifindex);
 
 		if (!filter_parent || filter_parent != t->tcm_parent) {
 			if (t->tcm_parent == TC_H_ROOT)

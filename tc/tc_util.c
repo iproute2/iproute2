@@ -444,6 +444,17 @@ int get_size_and_cell(unsigned int *size, int *cell_log, char *str)
 	return 0;
 }
 
+void print_devname(enum output_type type, int ifindex)
+{
+	const char *ifname = ll_index_to_name(ifindex);
+
+	if (!is_json_context())
+		printf("dev ");
+
+	print_color_string(type, COLOR_IFNAME,
+			   "dev", "%s ", ifname);
+}
+
 void print_size(char *buf, int len, __u32 sz)
 {
 	double tmp = sz;

@@ -270,8 +270,7 @@ int print_qdisc(const struct sockaddr_nl *who,
 	print_string(PRINT_FP, NULL, " ", NULL);
 
 	if (filter_ifindex == 0)
-		print_string(PRINT_ANY, "dev", "dev %s ",
-			     ll_index_to_name(t->tcm_ifindex));
+		print_devname(PRINT_ANY, t->tcm_ifindex);
 
 	if (t->tcm_parent == TC_H_ROOT)
 		print_bool(PRINT_ANY, "root", "root ", true);

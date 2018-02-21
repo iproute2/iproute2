@@ -94,10 +94,11 @@ tc \- show / manipulate traffic control settings
 \fB\-s\fR[\fItatistics\fR] |
 \fB\-d\fR[\fIetails\fR] |
 \fB\-r\fR[\fIaw\fR] |
-\fB\-p\fR[\fIretty\fR] |
 \fB\-i\fR[\fIec\fR] |
 \fB\-g\fR[\fIraph\fR] |
-\fB\-j\fR[\fIjson\fR] }
+\fB\-j\fR[\fIjson\fR] |
+\fB\-p\fR[\fIretty\fR] |
+\fB\-col\fR[\fIor\fR] }
 
 .SH DESCRIPTION
 .B Tc
@@ -684,6 +685,10 @@ shows classes as ASCII graph. Prints generic stats info under each class if
 option was specified. Classes can be filtered only by
 .BR "dev"
 option.
+
+.TP
+.BR "\ -color"
+Use color output.
 
 .TP
 .BR "\-j", " \-json"

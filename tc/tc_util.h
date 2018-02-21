@@ -89,6 +89,7 @@ void print_size(char *buf, int len, __u32 size);
 void print_qdisc_handle(char *buf, int len, __u32 h);
 void print_time(char *buf, int len, __u32 time);
 void print_linklayer(char *buf, int len, unsigned int linklayer);
+void print_devname(enum output_type type, int ifindex);
 
 char *sprint_rate(__u64 rate, char *buf);
 char *sprint_size(__u32 size, char *buf);

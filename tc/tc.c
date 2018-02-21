@@ -41,6 +41,7 @@ int use_iec;
 int force;
 bool use_names;
 int json;
+int color;
 
 static char *conf_file;
 
@@ -186,10 +187,11 @@ noexist:
 static void usage(void)
 {
 	fprintf(stderr, "Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
-			"       tc [-force] -batch filename\n"
-			"where  OBJECT := { qdisc | class | filter | action | monitor | exec }\n"
-	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] | -n[etns] name |\n"
-			"                    -nm | -nam[es] | { -cf | -conf } path } | -j[son]\n");
+		"       tc [-force] -batch filename\n"
+		"where  OBJECT := { qdisc | class | filter | action | monitor | exec }\n"
+		"       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] [filename] | -n[etns] name |\n"
+		"                    -nm | -nam[es] | { -cf | -conf } path } |\n"
+		"                    -j[son] -p[retty] -c[olor]\n");
 }
 
 static int do_cmd(int argc, char **argv, void *buf, size_t buflen)
@@ -476,6 +478,8 @@ int main(int argc, char **argv)
 				matches(argv[1], "-conf") == 0) {
 			NEXT_ARG();
 			conf_file = argv[1];
+		} else if (matches(argv[1], "-color") == 0) {
+			++color;
 		} else if (matches(argv[1], "-timestamp") == 0) {
 			timestamp++;
 		} else if (matches(argv[1], "-tshort") == 0) {
@@ -489,6 +493,9 @@ int main(int argc, char **argv)
 		}
 		argc--;	argv++;
 	}
+
+	if (color & !json)
+		enable_color();
 
 	if (batch_file)
 		return batch(batch_file);
