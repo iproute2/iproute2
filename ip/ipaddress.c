@@ -758,7 +758,7 @@ static int print_linkinfo_brief(FILE *fp, const char *name,
 {
 	unsigned int m_flag = 0;
 
-	m_flag = print_name_and_link("%-16s ", COLOR_NONE, name, tb);
+	m_flag = print_name_and_link("%-16s ", name, tb);
 
 	if (tb[IFLA_OPERSTATE])
 		print_operstate(fp, rta_getattr_u8(tb[IFLA_OPERSTATE]));
@@ -871,7 +871,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	print_int(PRINT_ANY, "ifindex", "%d: ", ifi->ifi_index);
 
-	m_flag = print_name_and_link("%s: ", COLOR_IFNAME, name, tb);
+	m_flag = print_name_and_link("%s: ", name, tb);
 	print_link_flags(fp, ifi->ifi_flags, m_flag);
 
 	if (tb[IFLA_MTU])

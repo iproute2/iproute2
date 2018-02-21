@@ -22,6 +22,8 @@ bridge \- show / manipulate bridge addresses and devices
 \fB\-s\fR[\fItatistics\fR] |
 \fB\-n\fR[\fIetns\fR] name |
 \fB\-b\fR[\fIatch\fR] filename |
+\fB\-c\fR[\folor\fR] |
+\fB\-p\fR[\fIretty\fR] |
 \fB\-j\fR[\fIson\fR] }
 
 .ti -8
@@ -168,8 +170,17 @@ If there were any errors during execution of the commands, the application
 return code will be non zero.
 
 .TP
-.BR "\-json"
-Display results in JSON format. Currently available for vlan and fdb.
+.BR "\-c" , " -color"
+Use color output.
+
+.TP
+.BR "\-j", " \-json"
+Output results in JavaScript Object Notation (JSON).
+
+.TP
+.BR "\-p", " \-pretty"
+When combined with -j generate a pretty JSON output.
+
 
 .SH BRIDGE - COMMAND SYNTAX
 
