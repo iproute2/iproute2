@@ -793,6 +793,8 @@ the following additional arguments are supported:
 ] [
 .BI "dscp inherit"
 ] [
+.BI "[no]allow-localremote"
+] [
 .BI dev " PHYS_DEV "
 ] [
 .RB external
@@ -855,6 +857,11 @@ flag is equivalent to the combination
 .sp
 .BI  flowlabel " FLOWLABEL"
 - specifies a fixed flowlabel.
+
+.sp
+.BI  [no]allow-localremote
+- specifies whether to allow remote endpoint to have an address configured on
+local host.
 
 .sp
 .BI  tclass " TCLASS"
@@ -927,6 +934,8 @@ the following additional arguments are supported:
 ] [
 .BR erspan_hwid " \fIhwid "
 ] [
+.BI "[no]allow-localremote"
+] [
 .RB external
 ]
 
@@ -963,6 +972,11 @@ traffic's source port and direction.
 - an unique identifier of an ERSPAN v2 engine within a system.
 .IR hwid
 is a 6-bit value for users to configure.
+
+.sp
+.BI  [no]allow-localremote
+- specifies whether to allow remote endpoint to have an address configured on
+local host.
 
 .sp
 .BR external
