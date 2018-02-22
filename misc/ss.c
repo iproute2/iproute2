@@ -3920,6 +3920,9 @@ static int packet_show_sock(const struct sockaddr_nl *addr,
 			fil++;
 		}
 	}
+
+	if (show_mem)
+		print_skmeminfo(tb, PACKET_DIAG_MEMINFO);
 	return 0;
 }
 
