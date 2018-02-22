@@ -5,7 +5,7 @@ TARGETS :=
 
 ifeq ($(HAVE_MNL),y)
 
-RDMA_OBJ = rdma.o utils.o dev.o link.o
+RDMA_OBJ = rdma.o utils.o dev.o link.o res.o
 
 TARGETS += rdma
 endif

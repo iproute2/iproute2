@@ -17,18 +17,6 @@ check_prog()
     command -v $1 >/dev/null 2>&1 && (echo "$3:=y" >> $CONFIG; echo "yes") || (echo "no"; return 1)
 }
 
-check_docs()
-{
-    if check_prog latex " latex: " HAVE_LATEX; then
-        check_prog pdflatex " pdflatex: " HAVE_PDFLATEX || echo " WARNING: no PDF docs can be built from LaTeX files"
-        check_prog sgml2latex " sgml2latex: " HAVE_SGML2LATEX || echo " WARNING: no LaTeX files can be build from SGML files"
-    else
-        echo " WARNING: no docs can be built from LaTeX files"
-    fi
-
-    check_prog sgml2html " sgml2html: " HAVE_SGML2HTML || echo " WARNING: no HTML docs can be built from SGML"
-}
-
 check_toolchain()
 {
     : ${PKG_CONFIG:=pkg-config}
@@ -421,11 +409,6 @@ check_berkeley_db
 
 echo -n "need for strlcpy: "
 check_strlcpy
-
-echo
-echo -n "docs:"
-check_docs
-echo
 
 echo >> $CONFIG
 echo "%.o: %.c" >> $CONFIG

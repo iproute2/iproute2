@@ -718,7 +718,10 @@ static int netns_set(int argc, char **argv)
 		return -1;
 	}
 	name = argv[0];
-	if (get_unsigned(&nsid, argv[1], 0))
+	/* If a negative nsid is specified the kernel will select the nsid. */
+	if (strcmp(argv[1], "auto") == 0)
+		nsid = -1;
+	else if (get_unsigned(&nsid, argv[1], 0))
 		invarg("Invalid \"netnsid\" value\n", argv[1]);
 
 	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
