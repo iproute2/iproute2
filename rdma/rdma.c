@@ -15,8 +15,9 @@
 static void help(char *name)
 {
 	pr_out("Usage: %s [ OPTIONS ] OBJECT { COMMAND | help }\n"
+	       "       %s [ -f[orce] ] -b[atch] filename\n"
 	       "where  OBJECT := { dev | link | resource | help }\n"
-	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty]}\n", name);
+	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty]}\n", name, name);
 }
 
 static int cmd_help(struct rd *rd)
@@ -25,7 +26,7 @@ static int cmd_help(struct rd *rd)
 	return 0;
 }
 
-static int rd_cmd(struct rd *rd)
+static int rd_cmd(struct rd *rd, int argc, char **argv)
 {
 	const struct rd_cmd cmds[] = {
 		{ NULL,		cmd_help },
@@ -36,17 +37,54 @@ static int rd_cmd(struct rd *rd)
 		{ 0 }
 	};
 
+	rd->argc = argc;
+	rd->argv = argv;
+
 	return rd_exec_cmd(rd, cmds, "object");
 }
 
-static int rd_init(struct rd *rd, int argc, char **argv, char *filename)
+static int rd_batch(struct rd *rd, const char *name, bool force)
+{
+	char *line = NULL;
+	size_t len = 0;
+	int ret = 0;
+
+	if (name && strcmp(name, "-") != 0) {
+		if (!freopen(name, "r", stdin)) {
+			pr_err("Cannot open file \"%s\" for reading: %s\n",
+			       name, strerror(errno));
+			return errno;
+		}
+	}
+
+	cmdlineno = 0;
+	while (getcmdline(&line, &len, stdin) != -1) {
+		char *largv[512];
+		int largc;
+
+		largc = makeargs(line, largv, ARRAY_SIZE(largv));
+		if (!largc)
+			continue;	/* blank line */
+
+		ret = rd_cmd(rd, largc, largv);
+		if (ret) {
+			pr_err("Command failed %s:%d\n", name, cmdlineno);
+			if (!force)
+				break;
+		}
+	}
+
+	free(line);
+
+	return ret;
+}
+
+static int rd_init(struct rd *rd, char *filename)
 {
 	uint32_t seq;
 	int ret;
 
 	rd->filename = filename;
-	rd->argc = argc;
-	rd->argv = argv;
 	INIT_LIST_HEAD(&rd->dev_map_list);
 	INIT_LIST_HEAD(&rd->filter_list);
 
@@ -87,11 +125,15 @@ int main(int argc, char **argv)
 		{ "json",		no_argument,		NULL, 'j' },
 		{ "pretty",		no_argument,		NULL, 'p' },
 		{ "details",		no_argument,		NULL, 'd' },
+		{ "force",		no_argument,		NULL, 'f' },
+		{ "batch",		required_argument,	NULL, 'b' },
 		{ NULL, 0, NULL, 0 }
 	};
+	const char *batch_file = NULL;
 	bool pretty_output = false;
 	bool show_details = false;
 	bool json_output = false;
+	bool force = false;
 	char *filename;
 	struct rd rd;
 	int opt;
@@ -99,7 +141,7 @@ int main(int argc, char **argv)
 
 	filename = basename(argv[0]);
 
-	while ((opt = getopt_long(argc, argv, "Vhdpj",
+	while ((opt = getopt_long(argc, argv, ":Vhdpjfb:",
 				  long_options, NULL)) >= 0) {
 		switch (opt) {
 		case 'V':
@@ -115,9 +157,18 @@ int main(int argc, char **argv)
 		case 'j':
 			json_output = true;
 			break;
+		case 'f':
+			force = true;
+			break;
+		case 'b':
+			batch_file = optarg;
+			break;
 		case 'h':
 			help(filename);
 			return EXIT_SUCCESS;
+		case ':':
+			pr_err("-%c option requires an argument\n", optopt);
+			return EXIT_FAILURE;
 		default:
 			pr_err("Unknown option.\n");
 			help(filename);
@@ -132,11 +183,14 @@ int main(int argc, char **argv)
 	rd.json_output = json_output;
 	rd.pretty_output = pretty_output;
 
-	err = rd_init(&rd, argc, argv, filename);
+	err = rd_init(&rd, filename);
 	if (err)
 		goto out;
 
-	err = rd_cmd(&rd);
+	if (batch_file)
+		err = rd_batch(&rd, batch_file, force);
+	else
+		err = rd_cmd(&rd, argc, argv);
 out:
 	/* Always cleanup */
 	rd_cleanup(&rd);

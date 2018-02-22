@@ -12,6 +12,12 @@ rdma \- RDMA tool
 .sp
 
 .ti -8
+.B rdma
+.RB "[ " -force " ] "
+.BI "-batch " filename
+.sp
+
+.ti -8
 .IR OBJECT " := { "
 .BR dev " | " link " }"
 .sp
@@ -30,6 +36,16 @@ rdma \- RDMA tool
 Print the version of the
 .B rdma
 tool and exit.
+
+.TP
+.BR "\-b", " \-batch " <FILENAME>
+Read commands from provided file or standard input and invoke them.
+First failure will cause termination of rdma.
+
+.TP
+.BR "\-force"
+Don't terminate rdma on errors in batch mode.
+If there were any errors during execution of the commands, the application return code will be non zero.
 
 .TP
 .BR "\-d" , " --details"
