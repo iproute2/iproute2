@@ -983,6 +983,25 @@ const char *rt_addr_n2a_r(int af, int len,
 	}
 	case AF_PACKET:
 		return ll_addr_n2a(addr, len, ARPHRD_VOID, buf, buflen);
+	case AF_BRIDGE:
+	{
+		const union {
+			struct sockaddr sa;
+			struct sockaddr_in sin;
+			struct sockaddr_in6 sin6;
+		} *sa = addr;
+
+		switch (sa->sa.sa_family) {
+		case AF_INET:
+			return inet_ntop(AF_INET, &sa->sin.sin_addr,
+					 buf, buflen);
+		case AF_INET6:
+			return inet_ntop(AF_INET6, &sa->sin6.sin6_addr,
+					 buf, buflen);
+		}
+
+		/* fallthrough */
+	}
 	default:
 		return "???";
 	}
