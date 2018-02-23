@@ -169,6 +169,31 @@ static struct ematch_util *get_ematch_kind_num(__u16 kind)
 	return get_ematch_kind(name);
 }
 
+static int em_parse_call(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
+			 struct ematch_util *e, struct ematch *t)
+{
+	if (e->parse_eopt_argv) {
+		int argc = 0, i = 0, ret;
+		struct bstr *args;
+		char **argv;
+
+		for (args = t->args; args; args = bstr_next(args))
+			argc++;
+		argv = calloc(argc, sizeof(char *));
+		if (!argv)
+			return -1;
+		for (args = t->args; args; args = bstr_next(args))
+			argv[i++] = args->data;
+
+		ret = e->parse_eopt_argv(n, hdr, argc, argv);
+
+		free(argv);
+		return ret;
+	}
+
+	return e->parse_eopt(n, hdr, t->args->next);
+}
+
 static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 {
 	int index = 1;
@@ -212,7 +237,7 @@ static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 			}
 
 			hdr.kind = num;
-			if (e->parse_eopt(n, &hdr, t->args->next) < 0)
+			if (em_parse_call(n, &hdr, e, t) < 0)
 				return -1;
 		}
 
