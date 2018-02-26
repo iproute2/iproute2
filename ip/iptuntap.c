@@ -475,9 +475,9 @@ static void print_owner(FILE *f, uid_t uid)
 	struct passwd *pw = getpwuid(uid);
 
 	if (pw)
-		fprintf(f, "user %s ", pw->pw_name);
+		print_string(PRINT_ANY, "user", "user %s ", pw->pw_name);
 	else
-		fprintf(f, "user %u ", uid);
+		print_uint(PRINT_ANY, "user", "user %u ", uid);
 }
 
 static void print_group(FILE *f, gid_t gid)
@@ -485,33 +485,54 @@ static void print_group(FILE *f, gid_t gid)
 	struct group *group = getgrgid(gid);
 
 	if (group)
-		fprintf(f, "group %s ", group->gr_name);
+		print_string(PRINT_ANY, "group", "group %s ", group->gr_name);
 	else
-		fprintf(f, "group %u ", gid);
+		print_uint(PRINT_ANY, "group", "group %u ", gid);
 }
 
 static void print_mq(FILE *f, struct rtattr *tb[])
 {
 	if (!tb[IFLA_TUN_MULTI_QUEUE] ||
-	    !rta_getattr_u8(tb[IFLA_TUN_MULTI_QUEUE]))
+	    !rta_getattr_u8(tb[IFLA_TUN_MULTI_QUEUE])) {
+		if (is_json_context())
+			print_bool(PRINT_JSON, "multi_queue", NULL, false);
 		return;
+	}
 
-	fprintf(f, "multi_queue ");
+	print_bool(PRINT_ANY, "multi_queue", "multi_queue ", true);
 
 	if (tb[IFLA_TUN_NUM_QUEUES]) {
-		fprintf(f, "numqueues %u ",
-			rta_getattr_u32(tb[IFLA_TUN_NUM_QUEUES]));
+		print_uint(PRINT_ANY, "numqueues", "numqueues %u ",
+			   rta_getattr_u32(tb[IFLA_TUN_NUM_QUEUES]));
 	}
 
 	if (tb[IFLA_TUN_NUM_DISABLED_QUEUES]) {
-		fprintf(f, "numdisabled %u ",
-			rta_getattr_u32(tb[IFLA_TUN_NUM_DISABLED_QUEUES]));
+		print_uint(PRINT_ANY, "numdisabled", "numdisabled %u ",
+			   rta_getattr_u32(tb[IFLA_TUN_NUM_DISABLED_QUEUES]));
 	}
 }
 
 static void print_onoff(FILE *f, const char *flag, __u8 val)
 {
-	fprintf(f, "%s %s ", flag, val ? "on" : "off");
+	if (is_json_context())
+		print_bool(PRINT_JSON, flag, NULL, !!val);
+	else
+		fprintf(f, "%s %s ", flag, val ? "on" : "off");
+}
+
+static void print_type(FILE *f, __u8 type)
+{
+	SPRINT_BUF(buf);
+	const char *str = buf;
+
+	if (type == IFF_TUN)
+		str = "tun";
+	else if (type == IFF_TAP)
+		str = "tap";
+	else
+		snprintf(buf, sizeof(buf), "UNKNOWN:%hhu", type);
+
+	print_string(PRINT_ANY, "type", "type %s ", str);
 }
 
 static void tun_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
@@ -519,16 +540,8 @@ static void tun_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (!tb)
 		return;
 
-	if (tb[IFLA_TUN_TYPE]) {
-		__u8 type = rta_getattr_u8(tb[IFLA_TUN_TYPE]);
-
-		if (type == IFF_TUN)
-			fprintf(f, "type tun ");
-		else if (type == IFF_TAP)
-			fprintf(f, "type tap ");
-		else
-			fprintf(f, "type UNKNOWN:%hhu ", type);
-	}
+	if (tb[IFLA_TUN_TYPE])
+		print_type(f, rta_getattr_u8(tb[IFLA_TUN_TYPE]));
 
 	if (tb[IFLA_TUN_PI])
 		print_onoff(f, "pi", rta_getattr_u8(tb[IFLA_TUN_PI]));
