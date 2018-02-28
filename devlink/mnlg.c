@@ -71,14 +71,14 @@ static int mnlg_cb_error(const struct nlmsghdr *nlh, void *data)
 {
 	const struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
 
-	if (nl_dump_ext_ack(nlh, NULL))
-		return MNL_CB_STOP;
-
 	/* Netlink subsystems returns the errno value with different signess */
 	if (err->error < 0)
 		errno = -err->error;
 	else
 		errno = err->error;
+
+	if (nl_dump_ext_ack(nlh, NULL))
+		return MNL_CB_ERROR;
 
 	return err->error == 0 ? MNL_CB_STOP : MNL_CB_ERROR;
 }
