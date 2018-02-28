@@ -2039,6 +2039,7 @@ static int bpf_apply_relo_data(struct bpf_elf_ctx *ctx,
 		    insns[ioff].code != (BPF_LD | BPF_IMM | BPF_DW)) {
 			fprintf(stderr, "ELF contains relo data for non ld64 instruction at offset %u! Compiler bug?!\n",
 				ioff);
+			fprintf(stderr, " - Current section: %s\n", data_relo->sec_name);
 			if (ioff < num_insns &&
 			    insns[ioff].code == (BPF_JMP | BPF_CALL))
 				fprintf(stderr, " - Try to annotate functions with always_inline attribute!\n");
