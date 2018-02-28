@@ -697,6 +697,13 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			if (get_rt_realms_or_raw(&realm, *argv))
 				invarg("invalid realms\n", *argv);
 			addattr32(&req.n, sizeof(req), FRA_FLOW, realm);
+		} else if (matches(*argv, "protocol") == 0) {
+			__u32 proto;
+
+			NEXT_ARG();
+			if (rtnl_rtprot_a2n(&proto, *argv))
+				invarg("\"protocol\" value is invalid\n", *argv);
+			addattr8(&req.n, sizeof(req), FRA_PROTOCOL, proto);
 		} else if (matches(*argv, "table") == 0 ||
 			   strcmp(*argv, "lookup") == 0) {
 			NEXT_ARG();
