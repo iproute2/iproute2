@@ -47,6 +47,7 @@ static void usage(void)
 		"            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ l3mdev ]\n"
 		"            [ uidrange NUMBER-NUMBER ]\n"
 		"ACTION := [ table TABLE_ID ]\n"
+		"          [ protocol PROTO ]\n"
 		"          [ nat ADDRESS ]\n"
 		"          [ realms [SRCREALM/]DSTREALM ]\n"
 		"          [ goto NUMBER ]\n"
@@ -71,6 +72,8 @@ static struct
 	struct fib_rule_uid_range range;
 	inet_prefix src;
 	inet_prefix dst;
+	int protocol;
+	int protocolmask;
 } filter;
 
 static inline int frh_get_table(struct fib_rule_hdr *frh, struct rtattr **tb)
@@ -338,6 +341,16 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			rtnl_rtntype_n2a(frh->action,
 					 b1, sizeof(b1)));
 
+	if (tb[FRA_PROTOCOL]) {
+		__u8 protocol = rta_getattr_u8(tb[FRA_PROTOCOL]);
+
+		if ((protocol && protocol != RTPROT_KERNEL) ||
+		    show_details > 0) {
+			fprintf(fp, " proto %s ",
+				rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
+		}
+	}
+
 	fprintf(fp, "\n");
 	fflush(fp);
 	return 0;
@@ -391,6 +404,13 @@ static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	parse_rtattr(tb, FRA_MAX, RTM_RTA(frh), len);
 
+	if (tb[FRA_PROTOCOL]) {
+		__u8 protocol = rta_getattr_u8(tb[FRA_PROTOCOL]);
+
+		if ((filter.protocol ^ protocol) & filter.protocolmask)
+			return 0;
+	}
+
 	if (tb[FRA_PRIORITY]) {
 		n->nlmsg_type = RTM_DELRULE;
 		n->nlmsg_flags = NLM_F_REQUEST;
@@ -415,9 +435,8 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 	if (af == AF_UNSPEC)
 		af = AF_INET;
 
-	if (action != IPRULE_LIST && argc > 0) {
-		fprintf(stderr, "\"ip rule %s\" does not take any arguments.\n",
-				action == IPRULE_SAVE ? "save" : "flush");
+	if (action == IPRULE_SAVE && argc > 0) {
+		fprintf(stderr, "\"ip rule save\" does not take any arguments.\n");
 		return -1;
 	}
 
@@ -508,7 +527,18 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 			NEXT_ARG();
 			if (get_prefix(&filter.src, *argv, af))
 				invarg("from value is invalid\n", *argv);
-		} else {
+		} else if (matches(*argv, "protocol") == 0) {
+			__u32 prot;
+			NEXT_ARG();
+			filter.protocolmask = -1;
+			if (rtnl_rtprot_a2n(&prot, *argv)) {
+				if (strcmp(*argv, "all") != 0)
+					invarg("invalid \"protocol\"\n", *argv);
+				prot = 0;
+				filter.protocolmask = 0;
+			}
+			filter.protocol = prot;
+		} else{
 			if (matches(*argv, "dst") == 0 ||
 			    matches(*argv, "to") == 0) {
 				NEXT_ARG();

@@ -50,6 +50,8 @@ ip-rule \- routing policy database management
 .IR ACTION " := [ "
 .B  table
 .IR TABLE_ID " ] [ "
+.B  protocol
+.IR PROTO " ] [ "
 .B  nat
 .IR ADDRESS " ] [ "
 .B realms
@@ -241,6 +243,10 @@ the routing table identifier to lookup if the rule selector matches.
 It is also possible to use lookup instead of table.
 
 .TP
+.BI protocol " PROTO"
+the routing protocol who installed the rule in question.  As an example when zebra installs a rule it would get RTPROT_ZEBRA as the installing protocol.
+
+.TP
 .BI suppress_prefixlength " NUMBER"
 reject routing decisions that have a prefix length of NUMBER or less.
 
@@ -275,7 +281,11 @@ updates, it flushes the routing cache with
 .RE
 .TP
 .B ip rule flush - also dumps all the deleted rules.
-This command has no arguments.
+.RS
+.TP
+.BI protocol " PROTO"
+Select the originating protocol.
+.RE
 .TP
 .B ip rule show - list rules
 This command has no arguments.
@@ -283,6 +293,12 @@ The options list or lst are synonyms with show.
 
 .TP
 .B ip rule save
+.RS
+.TP
+.BI protocol " PROTO"
+Select the originating protocol.
+.RE
+.TP
 save rules table information to stdout
 .RS
 This command behaves like
