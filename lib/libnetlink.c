@@ -670,8 +670,9 @@ next:
 						free(buf);
 					if (h->nlmsg_seq == seq)
 						return 0;
-					else
+					else if (i < iovlen)
 						goto next;
+					return 0;
 				}
 
 				if (rtnl->proto != NETLINK_SOCK_DIAG &&
