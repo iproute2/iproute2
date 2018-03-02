@@ -123,7 +123,6 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	parse_action_control_dflt(&argc, &argv, &sel.action,
 				  false, TC_ACT_PIPE);
 
-	NEXT_ARG_FWD();
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();

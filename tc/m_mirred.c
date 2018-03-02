@@ -103,6 +103,7 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 	while (argc > 0) {
 
 		if (matches(*argv, "action") == 0) {
+			NEXT_ARG();
 			break;
 		} else if (!egress && matches(*argv, "egress") == 0) {
 			egress = 1;
@@ -202,10 +203,8 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 	}
 
 
-	if (p.eaction == TCA_EGRESS_MIRROR || p.eaction == TCA_INGRESS_MIRROR) {
+	if (p.eaction == TCA_EGRESS_MIRROR || p.eaction == TCA_INGRESS_MIRROR)
 		parse_action_control(&argc, &argv, &p.action, false);
-		NEXT_ARG_FWD();
-	}
 
 	if (argc) {
 		if (iok && matches(*argv, "index") == 0) {
