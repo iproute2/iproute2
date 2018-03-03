@@ -1197,9 +1197,14 @@ newline:
 /* Render buffered output with spacing and delimiters, then free up buffers */
 static void render(int screen_width)
 {
-	struct buf_token *token = (struct buf_token *)buffer.head->data;
+	struct buf_token *token;
 	int printed, line_started = 0;
 	struct column *f;
+
+	if (!buffer.head)
+		return;
+
+	token = (struct buf_token *)buffer.head->data;
 
 	/* Ensure end alignment of last token, it wasn't necessarily flushed */
 	buffer.tail->end += buffer.cur->len % 2;
