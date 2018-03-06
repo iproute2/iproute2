@@ -26,6 +26,7 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "json_print.h"
 
 enum list_action {
 	IPRULE_LIST,
@@ -179,13 +180,12 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 
 int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE *)arg;
+	FILE *fp = arg;
 	struct fib_rule_hdr *frh = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	int host_len = -1;
-	__u32 table;
+	__u32 table, prio = 0;
 	struct rtattr *tb[FRA_MAX+1];
-
 	SPRINT_BUF(b1);
 
 	if (n->nlmsg_type != RTM_NEWRULE && n->nlmsg_type != RTM_DELRULE)
@@ -202,50 +202,54 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (!filter_nlmsg(n, tb, host_len))
 		return 0;
 
+	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELRULE)
-		fprintf(fp, "Deleted ");
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (tb[FRA_PRIORITY])
-		fprintf(fp, "%u:\t",
-			rta_getattr_u32(tb[FRA_PRIORITY]));
-	else
-		fprintf(fp, "0:\t");
+		prio = rta_getattr_u32(tb[FRA_PRIORITY]);
+
+	print_uint(PRINT_ANY, "priority", "%u:\t", prio);
 
 	if (frh->flags & FIB_RULE_INVERT)
-		fprintf(fp, "not ");
+		print_null(PRINT_ANY, "not", "not ", NULL);
 
 	if (tb[FRA_SRC]) {
-		if (frh->src_len != host_len) {
-			fprintf(fp, "from %s/%u ",
-				rt_addr_n2a_rta(frh->family, tb[FRA_SRC]),
-				frh->src_len);
-		} else {
-			fprintf(fp, "from %s ",
-				format_host_rta(frh->family, tb[FRA_SRC]));
-		}
+		const char *src = rt_addr_n2a_rta(frh->family, tb[FRA_SRC]);
+
+		print_string(PRINT_FP, NULL, "from ", NULL);
+		print_color_string(PRINT_ANY, ifa_family_color(frh->family),
+				   "src", "%s", src);
+		if (frh->src_len != host_len)
+			print_uint(PRINT_ANY, "srclen", "/%u ", frh->src_len);
+		else
+			print_string(PRINT_FP, NULL, " ", NULL);
 	} else if (frh->src_len) {
-		fprintf(fp, "from 0/%d ", frh->src_len);
+		print_string(PRINT_ANY, "src", "from %s", "0");
+		print_uint(PRINT_ANY, "srclen", "/%u ", frh->src_len);
 	} else {
-		fprintf(fp, "from all ");
+		print_string(PRINT_ANY, "src", "from %s ", "all");
 	}
 
 	if (tb[FRA_DST]) {
-		if (frh->dst_len != host_len) {
-			fprintf(fp, "to %s/%u ",
-				rt_addr_n2a_rta(frh->family, tb[FRA_DST]),
-				frh->dst_len);
-		} else {
-			fprintf(fp, "to %s ",
-				format_host_rta(frh->family, tb[FRA_DST]));
-		}
+		const char *dst = rt_addr_n2a_rta(frh->family, tb[FRA_DST]);
+
+		print_string(PRINT_FP, NULL, "to ", NULL);
+		print_color_string(PRINT_ANY, ifa_family_color(frh->family),
+				   "dst", "%s ", dst);
+		if (frh->dst_len != host_len)
+			print_uint(PRINT_ANY, "dstlen", "/%u ", frh->dst_len);
+		else
+			print_string(PRINT_FP, NULL, " ", NULL);
 	} else if (frh->dst_len) {
-		fprintf(fp, "to 0/%d ", frh->dst_len);
+		print_string(PRINT_ANY, "dst", "to %s", "0");
+		print_uint(PRINT_ANY, "dstlen", "/%u ", frh->dst_len);
 	}
 
 	if (frh->tos) {
-		SPRINT_BUF(b1);
-		fprintf(fp, "tos %s ",
-			rtnl_dsfield_n2a(frh->tos, b1, sizeof(b1)));
+		print_string(PRINT_ANY, "tos",
+			     "tos %s ",
+			     rtnl_dsfield_n2a(frh->tos, b1, sizeof(b1)));
 	}
 
 	if (tb[FRA_FWMARK] || tb[FRA_FWMASK]) {
@@ -255,53 +259,76 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			mark = rta_getattr_u32(tb[FRA_FWMARK]);
 
 		if (tb[FRA_FWMASK] &&
-		    (mask = rta_getattr_u32(tb[FRA_FWMASK])) != 0xFFFFFFFF)
-			fprintf(fp, "fwmark 0x%x/0x%x ", mark, mask);
-		else
-			fprintf(fp, "fwmark 0x%x ", mark);
+		    (mask = rta_getattr_u32(tb[FRA_FWMASK])) != 0xFFFFFFFF) {
+			print_0xhex(PRINT_ANY, "fwmark", "fwmark 0x%x", mark);
+			print_0xhex(PRINT_ANY, "fwmask", "/0x%x ", mask);
+		} else {
+			print_0xhex(PRINT_ANY, "fwmark", "fwmark 0x%x ", mark);
+		}
 	}
 
 	if (tb[FRA_IFNAME]) {
-		fprintf(fp, "iif %s ", rta_getattr_str(tb[FRA_IFNAME]));
+		if (!is_json_context())
+			fprintf(fp, "iif ");
+		print_color_string(PRINT_ANY, COLOR_IFNAME,
+				   "iif", "%s ",
+				   rta_getattr_str(tb[FRA_IFNAME]));
+
 		if (frh->flags & FIB_RULE_IIF_DETACHED)
-			fprintf(fp, "[detached] ");
+			print_null(PRINT_ANY, "iif_detached", "[detached] ",
+				   NULL);
 	}
 
 	if (tb[FRA_OIFNAME]) {
-		fprintf(fp, "oif %s ", rta_getattr_str(tb[FRA_OIFNAME]));
+		if (!is_json_context())
+			fprintf(fp, "oif ");
+
+		print_color_string(PRINT_ANY, COLOR_IFNAME, "oif", "%s ",
+				   rta_getattr_str(tb[FRA_OIFNAME]));
+
 		if (frh->flags & FIB_RULE_OIF_DETACHED)
-			fprintf(fp, "[detached] ");
+			print_null(PRINT_ANY, "oif_detached", "[detached] ",
+				   NULL);
 	}
 
 	if (tb[FRA_L3MDEV]) {
-		if (rta_getattr_u8(tb[FRA_L3MDEV]))
-			fprintf(fp, "lookup [l3mdev-table] ");
+		__u8 mdev = rta_getattr_u8(tb[FRA_L3MDEV]);
+
+		if (mdev)
+			print_null(PRINT_ANY, "l3mdev",
+				   "lookup [l3mdev-table] ", NULL);
 	}
 
 	if (tb[FRA_UID_RANGE]) {
 		struct fib_rule_uid_range *r = RTA_DATA(tb[FRA_UID_RANGE]);
 
-		fprintf(fp, "uidrange %u-%u ", r->start, r->end);
+		print_uint(PRINT_ANY, "uid_start", "uidrange %u", r->start);
+		print_uint(PRINT_ANY, "uid_end", "-%u ", r->end);
 	}
 
 	table = frh_get_table(frh, tb);
 	if (table) {
-		fprintf(fp, "lookup %s ",
-			rtnl_rttable_n2a(table, b1, sizeof(b1)));
+		print_string(PRINT_ANY, "table",
+			     "lookup %s ",
+			     rtnl_rttable_n2a(table, b1, sizeof(b1)));
 
 		if (tb[FRA_SUPPRESS_PREFIXLEN]) {
 			int pl = rta_getattr_u32(tb[FRA_SUPPRESS_PREFIXLEN]);
 
 			if (pl != -1)
-				fprintf(fp, "suppress_prefixlength %d ", pl);
+				print_int(PRINT_ANY, "suppress_prefixlen",
+					  "suppress_prefixlength %d ", pl);
 		}
+
 		if (tb[FRA_SUPPRESS_IFGROUP]) {
 			int group = rta_getattr_u32(tb[FRA_SUPPRESS_IFGROUP]);
 
 			if (group != -1) {
-				SPRINT_BUF(b1);
-				fprintf(fp, "suppress_ifgroup %s ",
-					rtnl_group_n2a(group, b1, sizeof(b1)));
+				const char *grname
+					= rtnl_group_n2a(group, b1, sizeof(b1));
+
+				print_string(PRINT_ANY, "suppress_ifgroup",
+					     "suppress_ifgroup %s ", grname);
 			}
 		}
 	}
@@ -311,47 +338,52 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		__u32 from = to>>16;
 
 		to &= 0xFFFF;
-		if (from) {
-			fprintf(fp, "realms %s/",
-				rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
-		}
-		fprintf(fp, "%s ",
-			rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
+		if (from)
+			print_string(PRINT_ANY,
+				     "flow_from", "realms %s/",
+				     rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
+
+		print_string(PRINT_ANY, "flow_to", "%s ",
+			     rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
 	}
 
 	if (frh->action == RTN_NAT) {
 		if (tb[RTA_GATEWAY]) {
-			fprintf(fp, "map-to %s ",
-				format_host_rta(frh->family,
-						tb[RTA_GATEWAY]));
-		} else
-			fprintf(fp, "masquerade");
+			const char *gateway;
+
+			gateway = format_host_rta(frh->family, tb[RTA_GATEWAY]);
+
+			print_string(PRINT_ANY, "nat_gateway",
+				     "map-to %s ", gateway);
+		} else {
+			print_null(PRINT_ANY, "masquerade", "masquerade", NULL);
+		}
 	} else if (frh->action == FR_ACT_GOTO) {
-		fprintf(fp, "goto ");
 		if (tb[FRA_GOTO])
-			fprintf(fp, "%u", rta_getattr_u32(tb[FRA_GOTO]));
+			print_uint(PRINT_ANY, "goto", "goto %u",
+				   rta_getattr_u32(tb[FRA_GOTO]));
 		else
-			fprintf(fp, "none");
+			print_string(PRINT_ANY, "goto", "goto %s", "none");
+
 		if (frh->flags & FIB_RULE_UNRESOLVED)
-			fprintf(fp, " [unresolved]");
-	} else if (frh->action == FR_ACT_NOP)
-		fprintf(fp, "nop");
-	else if (frh->action != FR_ACT_TO_TBL)
-		fprintf(fp, "%s",
-			rtnl_rtntype_n2a(frh->action,
-					 b1, sizeof(b1)));
+			print_null(PRINT_ANY, "unresolved", "unresolved", NULL);
+	} else if (frh->action == FR_ACT_NOP) {
+		print_null(PRINT_ANY, "nop", "nop", NULL);
+	} else if (frh->action != FR_ACT_TO_TBL) {
+		print_string(PRINT_ANY, "to_tbl", "%s",
+			     rtnl_rtntype_n2a(frh->action, b1, sizeof(b1)));
+	}
 
 	if (tb[FRA_PROTOCOL]) {
 		__u8 protocol = rta_getattr_u8(tb[FRA_PROTOCOL]);
 
-		if ((protocol && protocol != RTPROT_KERNEL) ||
-		    show_details > 0) {
-			fprintf(fp, " proto %s ",
-				rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
+		if ((protocol && protocol != RTPROT_KERNEL) || show_details > 0) {
+			print_string(PRINT_ANY, "protocol", " proto %s ",
+				     rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
 		}
 	}
-
-	fprintf(fp, "\n");
+	print_string(PRINT_FP, NULL, "\n", "");
+	close_json_object();
 	fflush(fp);
 	return 0;
 }
@@ -554,10 +586,12 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 		return 1;
 	}
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
+	delete_json_obj();
 
 	return 0;
 }
