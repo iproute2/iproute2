@@ -23,9 +23,9 @@
 #include "ll_map.h"
 #include "libgenl.h"
 
-static const char *values_on_off[] = { "off", "on" };
+static const char * const values_on_off[] = { "off", "on" };
 
-static const char *VALIDATE_STR[] = {
+static const char * const validate_str[] = {
 	[MACSEC_VALIDATE_DISABLED] = "disabled",
 	[MACSEC_VALIDATE_CHECK] = "check",
 	[MACSEC_VALIDATE_STRICT] = "strict",
@@ -81,26 +81,27 @@ static int genl_family = -1;
 
 static void ipmacsec_usage(void)
 {
-	fprintf(stderr, "Usage: ip macsec add DEV tx sa { 0..3 } [ OPTS ] key ID KEY\n");
-	fprintf(stderr, "       ip macsec set DEV tx sa { 0..3 } [ OPTS ]\n");
-	fprintf(stderr, "       ip macsec del DEV tx sa { 0..3 }\n");
-	fprintf(stderr, "       ip macsec add DEV rx SCI [ on | off ]\n");
-	fprintf(stderr, "       ip macsec set DEV rx SCI [ on | off ]\n");
-	fprintf(stderr, "       ip macsec del DEV rx SCI\n");
-	fprintf(stderr, "       ip macsec add DEV rx SCI sa { 0..3 } [ OPTS ] key ID KEY\n");
-	fprintf(stderr, "       ip macsec set DEV rx SCI sa { 0..3 } [ OPTS ]\n");
-	fprintf(stderr, "       ip macsec del DEV rx SCI sa { 0..3 }\n");
-	fprintf(stderr, "       ip macsec show\n");
-	fprintf(stderr, "       ip macsec show DEV\n");
-	fprintf(stderr, "where  OPTS := [ pn <u32> ] [ on | off ]\n");
-	fprintf(stderr, "       ID   := 128-bit hex string\n");
-	fprintf(stderr, "       KEY  := 128-bit hex string\n");
-	fprintf(stderr, "       SCI  := { sci <u64> | port { 1..2^16-1 } address <lladdr> }\n");
+	fprintf(stderr,
+		"Usage: ip macsec add DEV tx sa { 0..3 } [ OPTS ] key ID KEY\n"
+		"       ip macsec set DEV tx sa { 0..3 } [ OPTS ]\n"
+		"       ip macsec del DEV tx sa { 0..3 }\n"
+		"       ip macsec add DEV rx SCI [ on | off ]\n"
+		"       ip macsec set DEV rx SCI [ on | off ]\n"
+		"       ip macsec del DEV rx SCI\n"
+		"       ip macsec add DEV rx SCI sa { 0..3 } [ OPTS ] key ID KEY\n"
+		"       ip macsec set DEV rx SCI sa { 0..3 } [ OPTS ]\n"
+		"       ip macsec del DEV rx SCI sa { 0..3 }\n"
+		"       ip macsec show\n"
+		"       ip macsec show DEV\n"
+		"where  OPTS := [ pn <u32> ] [ on | off ]\n"
+		"       ID   := 128-bit hex string\n"
+		"       KEY  := 128-bit hex string\n"
+		"       SCI  := { sci <u64> | port { 1..2^16-1 } address <lladdr> }\n");
 
 	exit(-1);
 }
 
-static int one_of(const char *msg, const char *realval, const char **list,
+static int one_of(const char *msg, const char *realval, const char * const *list,
 		  size_t len, int *index)
 {
 	int i;
@@ -597,7 +598,7 @@ static void print_attrs(const char *prefix, struct rtattr *attrs[])
 	if (attrs[MACSEC_SECY_ATTR_VALIDATE]) {
 		__u8 val = rta_getattr_u8(attrs[MACSEC_SECY_ATTR_VALIDATE]);
 
-		printf("validate %s ", VALIDATE_STR[val]);
+		printf("validate %s ", validate_str[val]);
 	}
 
 	print_flag(stdout, attrs, "sc", MACSEC_RXSC_ATTR_ACTIVE);
@@ -1077,7 +1078,7 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_string(PRINT_ANY,
 			     "validation",
 			     "validate %s ",
-			     VALIDATE_STR[val]);
+			     validate_str[val]);
 	}
 
 	const char *inc_sci, *es, *replay;
@@ -1241,7 +1242,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 		} else if (strcmp(*argv, "validate") == 0) {
 			NEXT_ARG();
 			ret = one_of("validate", *argv,
-				     VALIDATE_STR, ARRAY_SIZE(VALIDATE_STR),
+				     validate_str, ARRAY_SIZE(validate_str),
 				     (int *)&validate);
 			if (ret != 0)
 				return ret;
@@ -1265,7 +1266,8 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 	}
 
 	if (!check_txsc_flags(es, scb, send_sci)) {
-		fprintf(stderr, "invalid combination of send_sci/end_station/scb\n");
+		fprintf(stderr,
+			"invalid combination of send_sci/end_station/scb\n");
 		return -1;
 	}
 
