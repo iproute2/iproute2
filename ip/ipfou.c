@@ -25,13 +25,13 @@
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip fou add port PORT "
-		"{ ipproto PROTO  | gue } [ -6 ]\n");
-	fprintf(stderr, "       ip fou del port PORT [ -6 ]\n");
-	fprintf(stderr, "       ip fou show\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: PROTO { ipproto-name | 1..255 }\n");
-	fprintf(stderr, "       PORT { 1..65535 }\n");
+	fprintf(stderr,
+		"Usage: ip fou add port PORT { ipproto PROTO  | gue } [ -6 ]\n"
+		"       ip fou del port PORT [ -6 ]\n"
+		"       ip fou show\n"
+		"\n"
+		"Where: PROTO { ipproto-name | 1..255 }\n"
+		"       PORT { 1..65535 }\n");
 
 	exit(-1);
 }
@@ -77,7 +77,8 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 		} else if (!matches(*argv, "-6")) {
 			family = AF_INET6;
 		} else {
-			fprintf(stderr, "fou: unknown command \"%s\"?\n", *argv);
+			fprintf(stderr
+				, "fou: unknown command \"%s\"?\n", *argv);
 			usage();
 			return -1;
 		}
@@ -142,7 +143,7 @@ static int print_fou_mapping(const struct sockaddr_nl *who,
 	struct genlmsghdr *ghdr;
 	struct rtattr *tb[FOU_ATTR_MAX + 1];
 	int len = n->nlmsg_len;
-	unsigned family;
+	unsigned int family;
 
 	if (n->nlmsg_type != genl_family)
 		return 0;
@@ -175,7 +176,8 @@ static int do_show(int argc, char **argv)
 	FOU_REQUEST(req, 4096, FOU_CMD_GET, NLM_F_REQUEST | NLM_F_DUMP);
 
 	if (argc > 0) {
-		fprintf(stderr, "\"ip fou show\" does not take any arguments.\n");
+		fprintf(stderr,
+			"\"ip fou show\" does not take any arguments.\n");
 		return -1;
 	}
 
@@ -209,6 +211,8 @@ int do_ipfou(int argc, char **argv)
 		return do_del(argc-1, argv+1);
 	if (matches(*argv, "show") == 0)
 		return do_show(argc-1, argv+1);
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip fou help\".\n", *argv);
+
+	fprintf(stderr,
+		"Command \"%s\" is unknown, try \"ip fou help\".\n", *argv);
 	exit(-1);
 }
