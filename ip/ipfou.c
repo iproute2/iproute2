@@ -22,6 +22,7 @@
 #include "libgenl.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "json_print.h"
 
 static void usage(void)
 {
@@ -139,11 +140,9 @@ static int do_del(int argc, char **argv)
 static int print_fou_mapping(const struct sockaddr_nl *who,
 				 struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE *)arg;
 	struct genlmsghdr *ghdr;
 	struct rtattr *tb[FOU_ATTR_MAX + 1];
 	int len = n->nlmsg_len;
-	unsigned int family;
 
 	if (n->nlmsg_type != genl_family)
 		return 0;
@@ -155,18 +154,30 @@ static int print_fou_mapping(const struct sockaddr_nl *who,
 	ghdr = NLMSG_DATA(n);
 	parse_rtattr(tb, FOU_ATTR_MAX, (void *) ghdr + GENL_HDRLEN, len);
 
+	open_json_object(NULL);
 	if (tb[FOU_ATTR_PORT])
-		fprintf(fp, "port %u", ntohs(rta_getattr_u16(tb[FOU_ATTR_PORT])));
-	if (tb[FOU_ATTR_TYPE] && rta_getattr_u8(tb[FOU_ATTR_TYPE]) == FOU_ENCAP_GUE)
-		fprintf(fp, " gue");
+		print_uint(PRINT_ANY, "port", "port %u",
+			   ntohs(rta_getattr_u16(tb[FOU_ATTR_PORT])));
+
+	if (tb[FOU_ATTR_TYPE] &&
+	    rta_getattr_u8(tb[FOU_ATTR_TYPE]) == FOU_ENCAP_GUE)
+		print_null(PRINT_ANY, "gue", " gue", NULL);
 	else if (tb[FOU_ATTR_IPPROTO])
-		fprintf(fp, " ipproto %u", rta_getattr_u8(tb[FOU_ATTR_IPPROTO]));
+		print_uint(PRINT_ANY, "ipproto",
+			   " ipproto %u", rta_getattr_u8(tb[FOU_ATTR_IPPROTO]));
+
 	if (tb[FOU_ATTR_AF]) {
-		family = rta_getattr_u8(tb[FOU_ATTR_AF]);
+		__u8 family = rta_getattr_u8(tb[FOU_ATTR_AF]);
+
+		print_string(PRINT_JSON, "family", NULL,
+			     family_name(family));
+
 		if (family == AF_INET6)
-			fprintf(fp, " -6");
+			print_string(PRINT_FP, NULL,
+				     " -6", NULL);
 	}
-	fprintf(fp, "\n");
+	print_string(PRINT_FP, NULL, "\n", NULL);
+	close_json_object();
 
 	return 0;
 }
@@ -186,10 +197,13 @@ static int do_show(int argc, char **argv)
 		exit(1);
 	}
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&genl_rth, print_fou_mapping, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
+	delete_json_obj();
+	fflush(stdout);
 
 	return 0;
 }
