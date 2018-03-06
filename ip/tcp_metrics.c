@@ -38,6 +38,7 @@ static void usage(void)
 /* netlink socket */
 static struct rtnl_handle grth = { .fd = -1 };
 static int genl_family = -1;
+static const double usec_per_sec = 1000000.;
 
 #define TCPM_REQUEST(_req, _bufsiz, _cmd, _flags) \
 	GENL_REQUEST(_req, _bufsiz, genl_family, 0, \
@@ -47,8 +48,8 @@ static int genl_family = -1;
 #define CMD_DEL		0x0002	/* delete, remove		*/
 #define CMD_FLUSH	0x0004	/* flush			*/
 
-static struct {
-	char	*name;
+static const struct {
+	const char *name;
 	int	code;
 } cmds[] = {
 	{	"list",		CMD_LIST	},
@@ -59,7 +60,7 @@ static struct {
 	{	"flush",	CMD_FLUSH	},
 };
 
-static char *metric_name[TCP_METRIC_MAX + 1] = {
+static const char *metric_name[TCP_METRIC_MAX + 1] = {
 	[TCP_METRIC_RTT]		= "rtt",
 	[TCP_METRIC_RTTVAR]		= "rttvar",
 	[TCP_METRIC_SSTHRESH]		= "ssthresh",
@@ -67,8 +68,7 @@ static char *metric_name[TCP_METRIC_MAX + 1] = {
 	[TCP_METRIC_REORDERING]		= "reordering",
 };
 
-static struct
-{
+static struct {
 	int flushed;
 	char *flushb;
 	int flushp;
@@ -88,15 +88,84 @@ static int flush_update(void)
 	return 0;
 }
 
+static void print_tcp_metrics(struct rtattr *a)
+{
+	struct rtattr *m[TCP_METRIC_MAX + 1 + 1];
+	unsigned long rtt = 0, rttvar = 0;
+	int i;
+
+	parse_rtattr_nested(m, TCP_METRIC_MAX + 1, a);
+
+	for (i = 0; i < TCP_METRIC_MAX + 1; i++) {
+		const char *name;
+		__u32 val;
+		SPRINT_BUF(b1);
+
+		a = m[i + 1];
+		if (!a)
+			continue;
+
+		val = rta_getattr_u32(a);
+
+		switch (i) {
+		case TCP_METRIC_RTT:
+			if (!rtt)
+				rtt = (val * 1000UL) >> 3;
+			continue;
+		case TCP_METRIC_RTTVAR:
+			if (!rttvar)
+				rttvar = (val * 1000UL) >> 2;
+			continue;
+		case TCP_METRIC_RTT_US:
+			rtt = val >> 3;
+			continue;
+
+		case TCP_METRIC_RTTVAR_US:
+			rttvar = val >> 2;
+			continue;
+
+		case TCP_METRIC_SSTHRESH:
+		case TCP_METRIC_CWND:
+		case TCP_METRIC_REORDERING:
+			name = metric_name[i];
+			break;
+
+		default:
+			snprintf(b1, sizeof(b1),
+				 " metric_%d ", i);
+			name = b1;
+		}
+
+
+		print_uint(PRINT_JSON, name, NULL, val);
+		print_string(PRINT_FP, NULL, " %s ", name);
+		print_uint(PRINT_FP, NULL, "%lu", val);
+	}
+
+	if (rtt) {
+		print_float(PRINT_JSON, "rtt", NULL,
+			    (double)rtt / usec_per_sec);
+		print_uint(PRINT_FP, NULL,
+			   " rtt %luus", rtt);
+	}
+	if (rttvar) {
+		print_float(PRINT_JSON, "rttvar", NULL,
+			    (double) rttvar / usec_per_sec);
+		print_uint(PRINT_FP, NULL,
+			   " rttvar %luus", rttvar);
+	}
+}
+
 static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		       void *arg)
 {
 	FILE *fp = (FILE *) arg;
 	struct genlmsghdr *ghdr;
 	struct rtattr *attrs[TCP_METRICS_ATTR_MAX + 1], *a;
+	const char *h;
 	int len = n->nlmsg_len;
 	inet_prefix daddr, saddr;
-	int i, atype, stype;
+	int atype, stype;
 
 	if (n->nlmsg_type != genl_family)
 		return -1;
@@ -186,96 +255,60 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			return 0;
 	}
 
+	open_json_object(NULL);
 	if (f.cmd & (CMD_DEL | CMD_FLUSH))
-		fprintf(fp, "Deleted ");
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
-	fprintf(fp, "%s",
-		format_host(daddr.family, daddr.bytelen, daddr.data));
+	h = format_host(daddr.family, daddr.bytelen, daddr.data);
+	print_color_string(PRINT_ANY,
+			   ifa_family_color(daddr.family),
+			   "dst", "%s", h);
 
 	a = attrs[TCP_METRICS_ATTR_AGE];
 	if (a) {
-		unsigned long long val = rta_getattr_u64(a);
+		__u64 val = rta_getattr_u64(a);
+		double age = val / 1000.;
 
-		fprintf(fp, " age %llu.%03llusec",
-			val / 1000, val % 1000);
+		print_float(PRINT_ANY, "age",
+			     " age %.03fsec", age);
 	}
 
 	a = attrs[TCP_METRICS_ATTR_TW_TS_STAMP];
 	if (a) {
 		__s32 val = (__s32) rta_getattr_u32(a);
 		__u32 tsval;
+		char tw_ts[64];
 
 		a = attrs[TCP_METRICS_ATTR_TW_TSVAL];
 		tsval = a ? rta_getattr_u32(a) : 0;
-		fprintf(fp, " tw_ts %u/%dsec ago", tsval, val);
+		snprintf(tw_ts, sizeof(tw_ts),
+			 "%u/%d", tsval, val);
+		print_string(PRINT_ANY, "tw_ts_stamp",
+		     " tw_ts %s ago", tw_ts);
 	}
 
-	a = attrs[TCP_METRICS_ATTR_VALS];
-	if (a) {
-		struct rtattr *m[TCP_METRIC_MAX + 1 + 1];
-		unsigned long rtt = 0, rttvar = 0;
-
-		parse_rtattr_nested(m, TCP_METRIC_MAX + 1, a);
-
-		for (i = 0; i < TCP_METRIC_MAX + 1; i++) {
-			unsigned long val;
-
-			a = m[i + 1];
-			if (!a)
-				continue;
-			if (i != TCP_METRIC_RTT &&
-			    i != TCP_METRIC_RTT_US &&
-			    i != TCP_METRIC_RTTVAR &&
-			    i != TCP_METRIC_RTTVAR_US) {
-				if (metric_name[i])
-					fprintf(fp, " %s ", metric_name[i]);
-				else
-					fprintf(fp, " metric_%d ", i);
-			}
-			val = rta_getattr_u32(a);
-			switch (i) {
-			case TCP_METRIC_RTT:
-				if (!rtt)
-					rtt = (val * 1000UL) >> 3;
-				break;
-			case TCP_METRIC_RTTVAR:
-				if (!rttvar)
-					rttvar = (val * 1000UL) >> 2;
-				break;
-			case TCP_METRIC_RTT_US:
-				rtt = val >> 3;
-				break;
-			case TCP_METRIC_RTTVAR_US:
-				rttvar = val >> 2;
-				break;
-			case TCP_METRIC_SSTHRESH:
-			case TCP_METRIC_CWND:
-			case TCP_METRIC_REORDERING:
-			default:
-				fprintf(fp, "%lu", val);
-				break;
-			}
-		}
-		if (rtt)
-			fprintf(fp, " rtt %luus", rtt);
-		if (rttvar)
-			fprintf(fp, " rttvar %luus", rttvar);
-	}
+	if (attrs[TCP_METRICS_ATTR_VALS])
+		print_tcp_metrics(attrs[TCP_METRICS_ATTR_VALS]);
 
 	a = attrs[TCP_METRICS_ATTR_FOPEN_MSS];
-	if (a)
-		fprintf(fp, " fo_mss %u", rta_getattr_u16(a));
+	if (a) {
+		print_uint(PRINT_ANY, "fopen_miss", " fo_mss %u",
+			   rta_getattr_u16(a));
+	}
 
 	a = attrs[TCP_METRICS_ATTR_FOPEN_SYN_DROPS];
 	if (a) {
 		__u16 syn_loss = rta_getattr_u16(a);
-		unsigned long long ts;
+		double ts;
 
 		a = attrs[TCP_METRICS_ATTR_FOPEN_SYN_DROP_TS];
 		ts = a ? rta_getattr_u64(a) : 0;
 
-		fprintf(fp, " fo_syn_drops %u/%llu.%03llusec ago",
-			syn_loss, ts / 1000, ts % 1000);
+		print_uint(PRINT_ANY, "fopen_syn_drops",
+			   " fo_syn_drops %u", syn_loss);
+		print_float(PRINT_ANY, "fopen_syn_drop_ts",
+			     "/%.03fusec ago",
+			     ts / 1000000.);
 	}
 
 	a = attrs[TCP_METRICS_ATTR_FOPEN_COOKIE];
@@ -289,16 +322,21 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		cookie[0] = 0;
 		for (i = 0; i < max; i++)
 			sprintf(cookie + i + i, "%02x", ptr[i]);
-		fprintf(fp, " fo_cookie %s", cookie);
+
+		print_string(PRINT_ANY, "fo_cookie",
+			     " fo_cookie %s", cookie);
 	}
 
 	if (saddr.family) {
-		fprintf(fp, " source %s",
-			format_host(saddr.family, saddr.bytelen, saddr.data));
+		const char *src;
+
+		src = format_host(saddr.family, saddr.bytelen, saddr.data);
+		print_string(PRINT_ANY, "source",
+			     " source %s", src);
 	}
 
-	fprintf(fp, "\n");
-
+	print_string(PRINT_FP, NULL, "\n", "");
+	close_json_object();
 	fflush(fp);
 	return 0;
 }
@@ -475,10 +513,12 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 			exit(1);
 		}
 
+		new_json_obj(json);
 		if (rtnl_dump_filter(&grth, process_msg, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
+		delete_json_obj();
 	}
 	return 0;
 }

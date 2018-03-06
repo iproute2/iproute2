@@ -25,6 +25,7 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "json_print.h"
 
 extern struct rtnl_handle rth;
 
@@ -77,9 +78,17 @@ static int print_token(const struct sockaddr_nl *who, struct nlmsghdr *n, void *
 		return -1;
 	}
 
-	fprintf(fp, "token %s dev %s\n",
-	        format_host_rta(ifi->ifi_family, ltb[IFLA_INET6_TOKEN]),
-	        ll_index_to_name(ifi->ifi_index));
+	open_json_object(NULL);
+	print_string(PRINT_FP, NULL, "token ", NULL);
+	print_color_string(PRINT_ANY,
+			   ifa_family_color(ifi->ifi_family),
+			   "token", "%s",
+			   format_host_rta(ifi->ifi_family, ltb[IFLA_INET6_TOKEN]));
+	print_string(PRINT_FP, NULL, " dev ", NULL);
+	print_color_string(PRINT_ANY, COLOR_IFNAME,
+			   "ifname", "%s\n",
+			   ll_index_to_name(ifi->ifi_index));
+	close_json_object();
 	fflush(fp);
 
 	return 0;
@@ -105,10 +114,13 @@ static int iptoken_list(int argc, char **argv)
 		return -1;
 	}
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, print_token, &da) < 0) {
+		delete_json_obj();
 		fprintf(stderr, "Dump terminated\n");
 		return -1;
 	}
+	delete_json_obj();
 
 	return 0;
 }

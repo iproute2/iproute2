@@ -26,6 +26,7 @@
 #include "utils.h"
 #include "ip_common.h"
 #include "libgenl.h"
+#include "json_print.h"
 
 #define HMAC_KEY_PROMPT "Enter secret for HMAC key ID (blank to delete): "
 
@@ -55,12 +56,54 @@ static struct {
 	__u8 alg_id;
 } opts;
 
+static void print_dumphmac(struct rtattr *attrs[])
+{
+	char secret[64];
+	char *algstr;
+	__u8 slen = rta_getattr_u8(attrs[SEG6_ATTR_SECRETLEN]);
+	__u8 alg_id = rta_getattr_u8(attrs[SEG6_ATTR_ALGID]);
+
+	memset(secret, 0, 64);
+
+	if (slen > 63) {
+		fprintf(stderr, "HMAC secret length %d > 63, truncated\n", slen);
+		slen = 63;
+	}
+
+	memcpy(secret, RTA_DATA(attrs[SEG6_ATTR_SECRET]), slen);
+
+	switch (alg_id) {
+	case SEG6_HMAC_ALGO_SHA1:
+		algstr = "sha1";
+		break;
+	case SEG6_HMAC_ALGO_SHA256:
+		algstr = "sha256";
+		break;
+	default:
+		algstr = "<unknown>";
+	}
+
+	print_uint(PRINT_ANY, "hmac", "hmac %u ",
+		   rta_getattr_u32(attrs[SEG6_ATTR_HMACKEYID]));
+	print_string(PRINT_ANY, "algo", "algo %s ", algstr);
+	print_string(PRINT_ANY, "secret", "secret \"%s\"\n", secret);
+}
+
+static void print_tunsrc(struct rtattr *attrs[])
+{
+	const char *dst
+		= rt_addr_n2a(AF_INET6, 16,
+			      RTA_DATA(attrs[SEG6_ATTR_DST]));
+
+	print_string(PRINT_ANY, "tunsrc",
+		     "tunsrc addr %s\n", dst);
+}
+
 static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		       void *arg)
 {
 	struct rtattr *attrs[SEG6_ATTR_MAX + 1];
 	struct genlmsghdr *ghdr;
-	FILE *fp = (FILE *)arg;
 	int len = n->nlmsg_len;
 
 	if (n->nlmsg_type != genl_family)
@@ -74,50 +117,17 @@ static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	parse_rtattr(attrs, SEG6_ATTR_MAX, (void *)ghdr + GENL_HDRLEN, len);
 
+	open_json_object(NULL);
 	switch (ghdr->cmd) {
 	case SEG6_CMD_DUMPHMAC:
-	{
-		char secret[64];
-		char *algstr;
-		__u8 slen = rta_getattr_u8(attrs[SEG6_ATTR_SECRETLEN]);
-		__u8 alg_id = rta_getattr_u8(attrs[SEG6_ATTR_ALGID]);
-
-		memset(secret, 0, 64);
-
-		if (slen > 63) {
-			fprintf(stderr, "HMAC secret length %d > 63, "
-					"truncated\n", slen);
-			slen = 63;
-		}
-		memcpy(secret, RTA_DATA(attrs[SEG6_ATTR_SECRET]), slen);
-
-		switch (alg_id) {
-		case SEG6_HMAC_ALGO_SHA1:
-			algstr = "sha1";
-			break;
-		case SEG6_HMAC_ALGO_SHA256:
-			algstr = "sha256";
-			break;
-		default:
-			algstr = "<unknown>";
-		}
-
-		fprintf(fp, "hmac %u ",
-			rta_getattr_u32(attrs[SEG6_ATTR_HMACKEYID]));
-		fprintf(fp, "algo %s ", algstr);
-		fprintf(fp, "secret \"%s\" ", secret);
-
-		fprintf(fp, "\n");
+		print_dumphmac(attrs);
 		break;
-	}
+
 	case SEG6_CMD_GET_TUNSRC:
-	{
-		fprintf(fp, "tunsrc addr %s\n",
-			rt_addr_n2a(AF_INET6, 16,
-				    RTA_DATA(attrs[SEG6_ATTR_DST])));
+		print_tunsrc(attrs);
 		break;
 	}
-	}
+	close_json_object();
 
 	return 0;
 }
@@ -169,10 +179,12 @@ static int seg6_do_cmd(void)
 	} else if (repl) {
 		if (rtnl_talk(&grth, &req.n, &answer) < 0)
 			return -2;
+		new_json_obj(json);
 		if (process_msg(NULL, answer, stdout) < 0) {
 			fprintf(stderr, "Error parsing reply\n");
 			exit(1);
 		}
+		delete_json_obj();
 		free(answer);
 	} else {
 		req.n.nlmsg_flags |= NLM_F_DUMP;
@@ -182,10 +194,13 @@ static int seg6_do_cmd(void)
 			exit(1);
 		}
 
+		new_json_obj(json);
 		if (rtnl_dump_filter(&grth, process_msg, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
+		delete_json_obj();
+		fflush(stdout);
 	}
 
 	return 0;

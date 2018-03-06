@@ -29,6 +29,10 @@ static struct {
 	int ifindex;
 } filter;
 
+static const char * const rp_filter_names[] = {
+	"off", "strict", "loose"
+};
+
 static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
@@ -37,9 +41,12 @@ static void usage(void)
 	exit(-1);
 }
 
-static void print_onoff(FILE *f, const char *flag, __u32 val)
+static void print_onoff(FILE *fp, const char *flag, __u32 val)
 {
-	fprintf(f, "%s %s ", flag, val ? "on" : "off");
+	if (is_json_context())
+		print_bool(PRINT_JSON, flag, NULL, val);
+	else
+		fprintf(fp, "%s %s ", flag, val ? "on" : "off");
 }
 
 static struct rtattr *netconf_rta(struct netconfmsg *ncm)
@@ -83,50 +90,44 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	if (filter.ifindex && filter.ifindex != ifindex)
 		return 0;
 
-	switch (ncm->ncm_family) {
-	case AF_INET:
-		fprintf(fp, "ipv4 ");
-		break;
-	case AF_INET6:
-		fprintf(fp, "ipv6 ");
-		break;
-	case AF_MPLS:
-		fprintf(fp, "mpls ");
-		break;
-	default:
-		fprintf(fp, "unknown ");
-		break;
-	}
+	open_json_object(NULL);
+	print_string(PRINT_ANY, "family",
+		     "%s ", family_name(ncm->ncm_family));
 
 	if (tb[NETCONFA_IFINDEX]) {
+		const char *dev;
+
 		switch (ifindex) {
 		case NETCONFA_IFINDEX_ALL:
-			fprintf(fp, "all ");
+			dev = "all";
 			break;
 		case NETCONFA_IFINDEX_DEFAULT:
-			fprintf(fp, "default ");
+			dev = "default";
 			break;
 		default:
-			fprintf(fp, "dev %s ", ll_index_to_name(ifindex));
+			dev = ll_index_to_name(ifindex);
 			break;
 		}
+		print_color_string(PRINT_ANY, COLOR_IFNAME,
+				   "interface", "%s ", dev);
 	}
 
 	if (tb[NETCONFA_FORWARDING])
 		print_onoff(fp, "forwarding",
 				rta_getattr_u32(tb[NETCONFA_FORWARDING]));
+
 	if (tb[NETCONFA_RP_FILTER]) {
 		__u32 rp_filter = rta_getattr_u32(tb[NETCONFA_RP_FILTER]);
 
-		if (rp_filter == 0)
-			fprintf(fp, "rp_filter off ");
-		else if (rp_filter == 1)
-			fprintf(fp, "rp_filter strict ");
-		else if (rp_filter == 2)
-			fprintf(fp, "rp_filter loose ");
+		if (rp_filter < ARRAY_SIZE(rp_filter_names))
+			print_string(PRINT_ANY, "rp_filter",
+				     "rp_filter %s ",
+				     rp_filter_names[rp_filter]);
 		else
-			fprintf(fp, "rp_filter unknown mode ");
+			print_uint(PRINT_ANY, "rp_filter",
+				   "rp_filter %u ", rp_filter);
 	}
+
 	if (tb[NETCONFA_MC_FORWARDING])
 		print_onoff(fp, "mc_forwarding",
 				rta_getattr_u32(tb[NETCONFA_MC_FORWARDING]));
@@ -142,7 +143,8 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	if (tb[NETCONFA_INPUT])
 		print_onoff(fp, "input", rta_getattr_u32(tb[NETCONFA_INPUT]));
 
-	fprintf(fp, "\n");
+	close_json_object();
+	print_string(PRINT_FP, NULL, "\n", NULL);
 	fflush(fp);
 	return 0;
 }
@@ -179,7 +181,8 @@ static int do_show(int argc, char **argv)
 			NEXT_ARG();
 			filter.ifindex = ll_name_to_index(*argv);
 			if (filter.ifindex <= 0) {
-				fprintf(stderr, "Device \"%s\" does not exist.\n",
+				fprintf(stderr,
+					"Device \"%s\" does not exist.\n",
 					*argv);
 				return -1;
 			}
@@ -202,10 +205,13 @@ static int do_show(int argc, char **argv)
 	} else {
 		rth.flags = RTNL_HANDLE_F_SUPPRESS_NLERR;
 dump:
-		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETNETCONF) < 0) {
+		if (rtnl_wilddump_request(&rth, filter.family,
+					  RTM_GETNETCONF) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
+
+		new_json_obj(json);
 		if (rtnl_dump_filter(&rth, print_netconf2, stdout) < 0) {
 			/* kernel does not support netconf dump on AF_UNSPEC;
 			 * fall back to requesting by family
@@ -219,6 +225,7 @@ dump:
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
+		delete_json_obj();
 		if (preferred_family == AF_UNSPEC && filter.family == AF_INET) {
 			preferred_family = AF_INET6;
 			filter.family = AF_INET6;
@@ -240,6 +247,8 @@ int do_ipnetconf(int argc, char **argv)
 	} else
 		return do_show(0, NULL);
 
-	fprintf(stderr, "Command \"%s\" is unknown, try \"ip netconf help\".\n", *argv);
+	fprintf(stderr,
+		"Command \"%s\" is unknown, try \"ip netconf help\".\n",
+		*argv);
 	exit(-1);
 }
