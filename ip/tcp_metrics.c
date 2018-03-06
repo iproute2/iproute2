@@ -47,8 +47,8 @@ static int genl_family = -1;
 #define CMD_DEL		0x0002	/* delete, remove		*/
 #define CMD_FLUSH	0x0004	/* flush			*/
 
-static struct {
-	char	*name;
+static const struct {
+	const char *name;
 	int	code;
 } cmds[] = {
 	{	"list",		CMD_LIST	},
@@ -59,7 +59,7 @@ static struct {
 	{	"flush",	CMD_FLUSH	},
 };
 
-static char *metric_name[TCP_METRIC_MAX + 1] = {
+static const char *metric_name[TCP_METRIC_MAX + 1] = {
 	[TCP_METRIC_RTT]		= "rtt",
 	[TCP_METRIC_RTTVAR]		= "rttvar",
 	[TCP_METRIC_SSTHRESH]		= "ssthresh",
@@ -67,8 +67,7 @@ static char *metric_name[TCP_METRIC_MAX + 1] = {
 	[TCP_METRIC_REORDERING]		= "reordering",
 };
 
-static struct
-{
+static struct {
 	int flushed;
 	char *flushb;
 	int flushp;
