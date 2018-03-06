@@ -624,19 +624,52 @@ static void print_attrs(const char *prefix, struct rtattr *attrs[])
 
 }
 
-static void print_one_stat(const char **names, struct rtattr **attr, int idx,
-			   bool long_stat)
+static __u64 getattr_uint(struct rtattr *stat)
 {
-	int pad = strlen(names[idx]) + 1;
-
-	if (attr[idx]) {
-		if (long_stat)
-			printf("%*llu", pad, rta_getattr_u64(attr[idx]));
-		else
-			printf("%*u", pad, rta_getattr_u32(attr[idx]));
-	} else {
-		printf("%*c", pad, '-');
+	switch (RTA_PAYLOAD(stat)) {
+	case sizeof(__u64):
+		return rta_getattr_u64(stat);
+	case sizeof(__u32):
+		return rta_getattr_u32(stat);
+	case sizeof(__u16):
+		return rta_getattr_u16(stat);
+	case sizeof(__u8):
+		return rta_getattr_u8(stat);
+	default:
+		fprintf(stderr, "invalid attribute length %lu\n",
+			RTA_PAYLOAD(stat));
+		exit(-1);
 	}
+}
+
+static void print_stats(const char *prefix,
+			const char *names[], unsigned int num,
+			struct rtattr *stats[])
+{
+	unsigned int i;
+	int pad;
+
+	printf("%sstats:", prefix);
+
+	for (i = 1; i < num; i++) {
+		if (!names[i])
+			continue;
+		printf(" %s", names[i]);
+	}
+
+	printf("\n%s      ", prefix);
+
+	for (i = 1; i < num; i++) {
+		if (!names[i])
+			continue;
+
+		pad = strlen(names[i]) + 1;
+		if (stats[i])
+			printf("%*llu", pad, getattr_uint(stats[i]));
+		else
+			printf("%*c", pad, '-');
+	}
+	printf("\n");
 }
 
 static const char *txsc_stats_names[NUM_MACSEC_TXSC_STATS_ATTR] = {
@@ -649,29 +682,14 @@ static const char *txsc_stats_names[NUM_MACSEC_TXSC_STATS_ATTR] = {
 static void print_txsc_stats(const char *prefix, struct rtattr *attr)
 {
 	struct rtattr *stats[MACSEC_TXSC_STATS_ATTR_MAX + 1];
-	int i;
 
 	if (!attr || show_stats == 0)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_TXSC_STATS_ATTR_MAX + 1, attr);
-	printf("%sstats:", prefix);
 
-	for (i = 1; i < NUM_MACSEC_TXSC_STATS_ATTR; i++) {
-		if (!txsc_stats_names[i])
-			continue;
-		printf(" %s", txsc_stats_names[i]);
-	}
-
-	printf("\n%s      ", prefix);
-
-	for (i = 1; i < NUM_MACSEC_TXSC_STATS_ATTR; i++) {
-		if (!txsc_stats_names[i])
-			continue;
-		print_one_stat(txsc_stats_names, stats, i, true);
-	}
-
-	printf("\n");
+	print_stats(prefix, txsc_stats_names, NUM_MACSEC_TXSC_STATS_ATTR,
+		    stats);
 }
 
 static const char *secy_stats_names[NUM_MACSEC_SECY_STATS_ATTR] = {
@@ -688,29 +706,14 @@ static const char *secy_stats_names[NUM_MACSEC_SECY_STATS_ATTR] = {
 static void print_secy_stats(const char *prefix, struct rtattr *attr)
 {
 	struct rtattr *stats[MACSEC_SECY_STATS_ATTR_MAX + 1];
-	int i;
 
 	if (!attr || show_stats == 0)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_SECY_STATS_ATTR_MAX + 1, attr);
-	printf("%sstats:", prefix);
 
-	for (i = 1; i < NUM_MACSEC_SECY_STATS_ATTR; i++) {
-		if (!secy_stats_names[i])
-			continue;
-		printf(" %s", secy_stats_names[i]);
-	}
-
-	printf("\n%s      ", prefix);
-
-	for (i = 1; i < NUM_MACSEC_SECY_STATS_ATTR; i++) {
-		if (!secy_stats_names[i])
-			continue;
-		print_one_stat(secy_stats_names, stats, i, true);
-	}
-
-	printf("\n");
+	print_stats(prefix, secy_stats_names,
+		    NUM_MACSEC_SECY_STATS_ATTR, stats);
 }
 
 static const char *rxsa_stats_names[NUM_MACSEC_SA_STATS_ATTR] = {
@@ -724,29 +727,13 @@ static const char *rxsa_stats_names[NUM_MACSEC_SA_STATS_ATTR] = {
 static void print_rxsa_stats(const char *prefix, struct rtattr *attr)
 {
 	struct rtattr *stats[MACSEC_SA_STATS_ATTR_MAX + 1];
-	int i;
 
 	if (!attr || show_stats == 0)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_SA_STATS_ATTR_MAX + 1, attr);
-	printf("%s%s  ", prefix, prefix);
 
-	for (i = 1; i < NUM_MACSEC_SA_STATS_ATTR; i++) {
-		if (!rxsa_stats_names[i])
-			continue;
-		printf(" %s", rxsa_stats_names[i]);
-	}
-
-	printf("\n%s%s  ", prefix, prefix);
-
-	for (i = 1; i < NUM_MACSEC_SA_STATS_ATTR; i++) {
-		if (!rxsa_stats_names[i])
-			continue;
-		print_one_stat(rxsa_stats_names, stats, i, false);
-	}
-
-	printf("\n");
+	print_stats(prefix, rxsa_stats_names, NUM_MACSEC_SA_STATS_ATTR, stats);
 }
 
 static const char *txsa_stats_names[NUM_MACSEC_SA_STATS_ATTR] = {
@@ -762,16 +749,8 @@ static void print_txsa_stats(const char *prefix, struct rtattr *attr)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_SA_STATS_ATTR_MAX + 1, attr);
-	printf("%s%s   %s %s\n", prefix, prefix,
-	       txsa_stats_names[MACSEC_SA_STATS_ATTR_OUT_PKTS_PROTECTED],
-	       txsa_stats_names[MACSEC_SA_STATS_ATTR_OUT_PKTS_ENCRYPTED]);
-	printf("%s%s  ", prefix, prefix);
 
-	print_one_stat(txsa_stats_names, stats,
-		       MACSEC_SA_STATS_ATTR_OUT_PKTS_PROTECTED, false);
-	print_one_stat(txsa_stats_names, stats,
-		       MACSEC_SA_STATS_ATTR_OUT_PKTS_ENCRYPTED, false);
-	printf("\n");
+	print_stats(prefix, txsa_stats_names, NUM_MACSEC_SA_STATS_ATTR, stats);
 }
 
 static void print_tx_sc(const char *prefix, __u64 sci, __u8 encoding_sa,
@@ -820,28 +799,14 @@ static const char *rxsc_stats_names[NUM_MACSEC_RXSC_STATS_ATTR] = {
 static void print_rxsc_stats(const char *prefix, struct rtattr *attr)
 {
 	struct rtattr *stats[MACSEC_RXSC_STATS_ATTR_MAX + 1];
-	int i;
 
 	if (!attr || show_stats == 0)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_RXSC_STATS_ATTR_MAX + 1, attr);
-	printf("%sstats:", prefix);
-	for (i = 1; i < NUM_MACSEC_RXSC_STATS_ATTR; i++) {
-		if (!rxsc_stats_names[i])
-			continue;
-		printf(" %s", rxsc_stats_names[i]);
-	}
 
-	printf("\n%s      ", prefix);
-
-	for (i = 1; i < NUM_MACSEC_RXSC_STATS_ATTR; i++) {
-		if (!rxsc_stats_names[i])
-			continue;
-		print_one_stat(rxsc_stats_names, stats, i, true);
-	}
-
-	printf("\n");
+	print_stats(prefix, rxsc_stats_names,
+		    NUM_MACSEC_RXSC_STATS_ATTR, stats);
 }
 
 static void print_rx_sc(const char *prefix, __u64 sci, __u8 active,
