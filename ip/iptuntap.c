@@ -228,24 +228,35 @@ static int do_del(int argc, char **argv)
 
 static void print_flags(long flags)
 {
+	open_json_array(PRINT_JSON, "flags");
+
 	if (flags & IFF_TUN)
-		printf(" tun");
+		print_string(PRINT_ANY, NULL, " %s", "tun");
 
 	if (flags & IFF_TAP)
-		printf(" tap");
+		print_string(PRINT_ANY, NULL, " %s", "tap");
 
 	if (!(flags & IFF_NO_PI))
-		printf(" pi");
+		print_string(PRINT_ANY, NULL, " %s", "pi");
 
 	if (flags & IFF_ONE_QUEUE)
-		printf(" one_queue");
+		print_string(PRINT_ANY, NULL, " %s", "one_queue");
 
 	if (flags & IFF_VNET_HDR)
-		printf(" vnet_hdr");
+		print_string(PRINT_ANY, NULL, " %s", "vnet_hdr");
 
-	flags &= ~(IFF_TUN|IFF_TAP|IFF_NO_PI|IFF_ONE_QUEUE|IFF_VNET_HDR);
+	if (flags & IFF_PERSIST)
+		print_string(PRINT_ANY, NULL, " %s", "persist");
+
+	if (!(flags & IFF_NOFILTER))
+		print_string(PRINT_ANY, NULL, " %s", "filter");
+
+	flags &= ~(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
+		   IFF_VNET_HDR | IFF_PERSIST | IFF_NOFILTER);
 	if (flags)
-		printf(" UNKNOWN_FLAGS:%lx", flags);
+		print_0xhex(PRINT_ANY, NULL, "%#x", flags);
+
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static char *pid_name(pid_t pid)
@@ -287,6 +298,8 @@ static void show_processes(const char *name)
 		   NULL, &globbuf);
 	if (err)
 		return;
+
+	open_json_array(PRINT_JSON, "processes");
 
 	fd_path = globbuf.gl_pathv;
 	while (*fd_path) {
@@ -334,7 +347,11 @@ static void show_processes(const char *name)
 				   !strcmp(name, value)) {
 				char *pname = pid_name(pid);
 
-				printf(" %s(%d)", pname ? : "<NULL>", pid);
+				print_string(PRINT_ANY, "name",
+					     "%s", pname ? : "<NULL>");
+
+				print_uint(PRINT_ANY, "pid",
+					   "(%d)", pid);
 				free(pname);
 			}
 
@@ -347,6 +364,7 @@ static void show_processes(const char *name)
 next:
 		++fd_path;
 	}
+	close_json_array(PRINT_JSON, NULL);
 
 	globfree(&globbuf);
 }
@@ -417,18 +435,24 @@ static int print_tuntap(const struct sockaddr_nl *who,
 	if (read_prop(name, "group", &group))
 		return 0;
 
-	printf("%s:", name);
+	open_json_object(NULL);
+	print_color_string(PRINT_ANY, COLOR_IFNAME,
+			   "ifname", "%s:", name);
 	print_flags(flags);
 	if (owner != -1)
-		printf(" user %ld", owner);
+		print_uint(PRINT_ANY, "user",
+			   " user %ld", owner);
 	if (group != -1)
-		printf(" group %ld", group);
-	fputc('\n', stdout);
+		print_uint(PRINT_ANY, "group",
+			   " group %ld", group);
+
 	if (show_details) {
-		printf("\tAttached to processes:");
+		print_string(PRINT_FP, NULL,
+			     "%s\tAttached to processes:", _SL_);
 		show_processes(name);
-		fputc('\n', stdout);
 	}
+	close_json_object();
+	print_string(PRINT_FP, NULL, "%s", "\n");
 
 	return 0;
 }
@@ -441,10 +465,15 @@ static int do_show(int argc, char **argv)
 		return -1;
 	}
 
+	new_json_obj(json);
+
 	if (rtnl_dump_filter(&rth, print_tuntap, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return -1;
 	}
+
+	delete_json_obj();
+	fflush(stdout);
 
 	return 0;
 }
