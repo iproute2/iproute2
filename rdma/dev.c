@@ -53,7 +53,8 @@ static const char *dev_caps_to_str(uint32_t idx)
 	x(SG_GAPS_REG, 32) \
 	x(VIRTUAL_FUNCTION, 33) \
 	x(RAW_SCATTER_FCS, 34) \
-	x(RDMA_NETDEV_OPA_VNIC, 35)
+	x(RDMA_NETDEV_OPA_VNIC, 35) \
+	x(PCI_WRITE_END_PADDING, 36)
 
 	enum { RDMA_DEV_FLAGS(RDMA_BITMAP_ENUM) };
 
