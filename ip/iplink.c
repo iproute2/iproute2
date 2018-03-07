@@ -597,9 +597,15 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			req->i.ifi_flags &= ~IFF_UP;
 		} else if (strcmp(*argv, "name") == 0) {
 			NEXT_ARG();
+			if (*name)
+				duparg("name", *argv);
 			if (check_ifname(*argv))
 				invarg("\"name\" not a valid ifname", *argv);
 			*name = *argv;
+			if (!*dev) {
+				*dev = *name;
+				dev_index = ll_name_to_index(*dev);
+			}
 		} else if (strcmp(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (*index)
@@ -654,6 +660,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (xdp_parse(&argc, &argv, req, dev_index,
 				      generic, drv, offload))
 				exit(-1);
+
+			if (offload && *name == *dev)
+				*dev = NULL;
 		} else if (strcmp(*argv, "netns") == 0) {
 			NEXT_ARG();
 			if (netns != -1)
@@ -745,6 +754,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (len < 0)
 				return -1;
 			addattr_nest_end(&req->n, vflist);
+
+			if (*name == *dev)
+				*dev = NULL;
 		} else if (matches(*argv, "master") == 0) {
 			int ifindex;
 
@@ -895,7 +907,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 
 			if (strcmp(*argv, "dev") == 0)
 				NEXT_ARG();
-			if (*dev)
+			if (*dev != *name)
 				duparg2("dev", *argv);
 			if (check_ifname(*argv))
 				invarg("\"dev\" not a valid ifname", *argv);
@@ -904,6 +916,14 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		}
 		argc--; argv++;
 	}
+
+	/* Allow "ip link add dev" and "ip link add name" */
+	if (!*name)
+		*name = *dev;
+	else if (!*dev)
+		*dev = *name;
+	else if (!strcmp(*name, *dev))
+		*name = *dev;
 
 	if (dev_index && addr_len) {
 		int halen = nl_get_ll_addr_len(dev_index);
@@ -983,10 +1003,16 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		req.i.ifi_index = ll_name_to_index(dev);
 		if (!req.i.ifi_index)
 			return nodev(dev);
+
+		/* Not renaming to the same name */
+		if (name == dev)
+			name = NULL;
 	} else {
-		/* Allow "ip link add dev" and "ip link add name" */
-		if (!name)
-			name = dev;
+		if (name != dev) {
+			fprintf(stderr,
+				"both \"name\" and \"dev\" cannot be used when creating devices.\n");
+			exit(-1);
+		}
 
 		if (link) {
 			int ifindex;
