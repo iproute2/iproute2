@@ -179,9 +179,10 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 
 	ll_init_map(&rth);
 
-	if (dev && (req.ndm.ndm_ifindex = ll_name_to_index(dev)) == 0) {
-		fprintf(stderr, "Cannot find device \"%s\"\n", dev);
-		return -1;
+	if (dev) {
+		req.ndm.ndm_ifindex = ll_name_to_index(dev);
+		if (!req.ndm.ndm_ifindex)
+			return nodev(dev);
 	}
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
@@ -467,10 +468,9 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 	ll_init_map(&rth);
 
 	if (filter_dev) {
-		if ((filter.index = ll_name_to_index(filter_dev)) == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", filter_dev);
-			return -1;
-		}
+		filter.index = ll_name_to_index(filter_dev);
+		if (!filter.index)
+			return nodev(filter_dev);
 		addattr32(&req.n, sizeof(req), NDA_IFINDEX, filter.index);
 	}
 

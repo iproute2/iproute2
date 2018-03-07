@@ -140,10 +140,8 @@ static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 
 			NEXT_ARG();
 			ifindex = ll_name_to_index(*argv);
-			if (ifindex == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n", *argv);
-				return -1;
-			}
+			if (!ifindex)
+				return nodev(*argv);
 
 			rta_addattr32(parms_rta, sizeof(parms_buf),
 				      NDTPA_IFINDEX, ifindex);

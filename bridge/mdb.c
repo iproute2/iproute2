@@ -287,11 +287,8 @@ static int mdb_show(int argc, char **argv)
 
 	if (filter_dev) {
 		filter_index = ll_name_to_index(filter_dev);
-		if (filter_index == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n",
-				filter_dev);
-			return -1;
-		}
+		if (!filter_index)
+			return nodev(filter_dev);
 	}
 
 	new_json_obj(json);
@@ -360,16 +357,12 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	}
 
 	req.bpm.ifindex = ll_name_to_index(d);
-	if (req.bpm.ifindex == 0) {
-		fprintf(stderr, "Cannot find device \"%s\"\n", d);
-		return -1;
-	}
+	if (!req.bpm.ifindex)
+		return nodev(d);
 
 	entry.ifindex = ll_name_to_index(p);
-	if (entry.ifindex == 0) {
-		fprintf(stderr, "Cannot find device \"%s\"\n", p);
-		return -1;
-	}
+	if (!entry.ifindex)
+		return nodev(p);
 
 	if (!inet_pton(AF_INET, grp, &entry.addr.u.ip4)) {
 		if (!inet_pton(AF_INET6, grp, &entry.addr.u.ip6)) {

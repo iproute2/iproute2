@@ -981,10 +981,8 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		}
 
 		req.i.ifi_index = ll_name_to_index(dev);
-		if (req.i.ifi_index == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", dev);
-			return -1;
-		}
+		if (!req.i.ifi_index)
+			return nodev(dev);
 	} else {
 		/* Allow "ip link add dev" and "ip link add name" */
 		if (!name)
@@ -994,11 +992,8 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			int ifindex;
 
 			ifindex = ll_name_to_index(link);
-			if (ifindex == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n",
-					link);
-				return -1;
-			}
+			if (!ifindex)
+				return nodev(link);
 			addattr_l(&req.n, sizeof(req), IFLA_LINK, &ifindex, 4);
 		}
 

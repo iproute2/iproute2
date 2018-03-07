@@ -594,7 +594,7 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				duparg2("iif", *argv);
 			iif = ll_name_to_index(*argv);
 			if (!iif)
-				invarg("\"iif\" interface not found\n", *argv);
+				exit(nodev(*argv));
 			rta_addattr32(rta, len, SEG6_LOCAL_IIF, iif);
 		} else if (strcmp(*argv, "oif") == 0) {
 			NEXT_ARG();
@@ -602,7 +602,7 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				duparg2("oif", *argv);
 			oif = ll_name_to_index(*argv);
 			if (!oif)
-				invarg("\"oif\" interface not found\n", *argv);
+				exit(nodev(*argv));
 			rta_addattr32(rta, len, SEG6_LOCAL_OIF, oif);
 		} else if (strcmp(*argv, "srh") == 0) {
 			NEXT_ARG();

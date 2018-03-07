@@ -245,11 +245,8 @@ get_failed:
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = ll_name_to_index(*argv);
-			if (link == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n",
-					*argv);
-				exit(-1);
-			}
+			if (!link)
+				exit(nodev(*argv));
 		} else if (!matches(*argv, "ttl") ||
 			   !matches(*argv, "hoplimit") ||
 			   !matches(*argv, "hlim")) {

@@ -133,11 +133,8 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			check_duparg(&attrs, IFLA_VXLAN_LINK, "dev", *argv);
 			link = ll_name_to_index(*argv);
-			if (link == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n",
-					*argv);
-				exit(-1);
-			}
+			if (!link)
+				exit(nodev(*argv));
 			addattr32(n, 1024, IFLA_VXLAN_LINK, link);
 		} else if (!matches(*argv, "ttl") ||
 			   !matches(*argv, "hoplimit")) {

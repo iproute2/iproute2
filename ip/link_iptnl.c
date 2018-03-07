@@ -225,8 +225,8 @@ get_failed:
 		} else if (matches(*argv, "dev") == 0) {
 			NEXT_ARG();
 			link = ll_name_to_index(*argv);
-			if (link == 0)
-				invarg("\"dev\" is invalid", *argv);
+			if (!link)
+				exit(nodev(*argv));
 		} else if (strcmp(*argv, "ttl") == 0 ||
 			   strcmp(*argv, "hoplimit") == 0 ||
 			   strcmp(*argv, "hlim") == 0) {
