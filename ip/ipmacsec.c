@@ -23,9 +23,9 @@
 #include "ll_map.h"
 #include "libgenl.h"
 
-static const char *values_on_off[] = { "off", "on" };
+static const char * const values_on_off[] = { "off", "on" };
 
-static const char *VALIDATE_STR[] = {
+static const char * const validate_str[] = {
 	[MACSEC_VALIDATE_DISABLED] = "disabled",
 	[MACSEC_VALIDATE_CHECK] = "check",
 	[MACSEC_VALIDATE_STRICT] = "strict",
@@ -81,26 +81,27 @@ static int genl_family = -1;
 
 static void ipmacsec_usage(void)
 {
-	fprintf(stderr, "Usage: ip macsec add DEV tx sa { 0..3 } [ OPTS ] key ID KEY\n");
-	fprintf(stderr, "       ip macsec set DEV tx sa { 0..3 } [ OPTS ]\n");
-	fprintf(stderr, "       ip macsec del DEV tx sa { 0..3 }\n");
-	fprintf(stderr, "       ip macsec add DEV rx SCI [ on | off ]\n");
-	fprintf(stderr, "       ip macsec set DEV rx SCI [ on | off ]\n");
-	fprintf(stderr, "       ip macsec del DEV rx SCI\n");
-	fprintf(stderr, "       ip macsec add DEV rx SCI sa { 0..3 } [ OPTS ] key ID KEY\n");
-	fprintf(stderr, "       ip macsec set DEV rx SCI sa { 0..3 } [ OPTS ]\n");
-	fprintf(stderr, "       ip macsec del DEV rx SCI sa { 0..3 }\n");
-	fprintf(stderr, "       ip macsec show\n");
-	fprintf(stderr, "       ip macsec show DEV\n");
-	fprintf(stderr, "where  OPTS := [ pn <u32> ] [ on | off ]\n");
-	fprintf(stderr, "       ID   := 128-bit hex string\n");
-	fprintf(stderr, "       KEY  := 128-bit hex string\n");
-	fprintf(stderr, "       SCI  := { sci <u64> | port { 1..2^16-1 } address <lladdr> }\n");
+	fprintf(stderr,
+		"Usage: ip macsec add DEV tx sa { 0..3 } [ OPTS ] key ID KEY\n"
+		"       ip macsec set DEV tx sa { 0..3 } [ OPTS ]\n"
+		"       ip macsec del DEV tx sa { 0..3 }\n"
+		"       ip macsec add DEV rx SCI [ on | off ]\n"
+		"       ip macsec set DEV rx SCI [ on | off ]\n"
+		"       ip macsec del DEV rx SCI\n"
+		"       ip macsec add DEV rx SCI sa { 0..3 } [ OPTS ] key ID KEY\n"
+		"       ip macsec set DEV rx SCI sa { 0..3 } [ OPTS ]\n"
+		"       ip macsec del DEV rx SCI sa { 0..3 }\n"
+		"       ip macsec show\n"
+		"       ip macsec show DEV\n"
+		"where  OPTS := [ pn <u32> ] [ on | off ]\n"
+		"       ID   := 128-bit hex string\n"
+		"       KEY  := 128-bit hex string\n"
+		"       SCI  := { sci <u64> | port { 1..2^16-1 } address <lladdr> }\n");
 
 	exit(-1);
 }
 
-static int one_of(const char *msg, const char *realval, const char **list,
+static int one_of(const char *msg, const char *realval, const char * const *list,
 		  size_t len, int *index)
 {
 	int i;
@@ -558,17 +559,31 @@ static int validate_secy_dump(struct rtattr **attrs)
 	       attrs[MACSEC_SECY_ATTR_SCB];
 }
 
-static void print_flag(FILE *f, struct rtattr *attrs[], const char *desc,
+static void print_flag(struct rtattr *attrs[], const char *desc,
 		       int field)
 {
-	if (attrs[field]) {
-		const char *v = values_on_off[!!rta_getattr_u8(attrs[field])];
+	__u8 flag;
 
-		if (is_json_context())
-			print_string(PRINT_JSON, desc, NULL, v);
-		else
-			fprintf(f, "%s %s ", desc, v);
+	if (!attrs[field])
+		return;
+
+	flag = rta_getattr_u8(attrs[field]);
+	if (is_json_context())
+		print_bool(PRINT_JSON, desc, NULL, flag);
+	else {
+		print_string(PRINT_FP, NULL, "%s ", desc);
+		print_string(PRINT_FP, NULL, "%s ",
+			     flag ? "on" : "off");
 	}
+}
+
+static void print_key(struct rtattr *key)
+{
+	SPRINT_BUF(keyid);
+
+	print_string(PRINT_ANY, "key", " key %s\n",
+		     hexstring_n2a(RTA_DATA(key), RTA_PAYLOAD(key),
+				   keyid, sizeof(keyid)));
 }
 
 #define DEFAULT_CIPHER_NAME "GCM-AES-128"
@@ -584,58 +599,118 @@ static const char *cs_id_to_name(__u64 cid)
 	}
 }
 
-static void print_cipher_suite(const char *prefix, __u64 cid, __u8 icv_len)
+static void print_attrs(struct rtattr *attrs[])
 {
-	printf("%scipher suite: %s, using ICV length %d\n", prefix,
-	       cs_id_to_name(cid), icv_len);
-}
-
-static void print_attrs(const char *prefix, struct rtattr *attrs[])
-{
-	print_flag(stdout, attrs, "protect", MACSEC_SECY_ATTR_PROTECT);
+	print_flag(attrs, "protect", MACSEC_SECY_ATTR_PROTECT);
 
 	if (attrs[MACSEC_SECY_ATTR_VALIDATE]) {
 		__u8 val = rta_getattr_u8(attrs[MACSEC_SECY_ATTR_VALIDATE]);
 
-		printf("validate %s ", VALIDATE_STR[val]);
+		print_string(PRINT_ANY, "validate",
+			     "validate %s ", validate_str[val]);
 	}
 
-	print_flag(stdout, attrs, "sc", MACSEC_RXSC_ATTR_ACTIVE);
-	print_flag(stdout, attrs, "sa", MACSEC_SA_ATTR_ACTIVE);
-	print_flag(stdout, attrs, "encrypt", MACSEC_SECY_ATTR_ENCRYPT);
-	print_flag(stdout, attrs, "send_sci", MACSEC_SECY_ATTR_INC_SCI);
-	print_flag(stdout, attrs, "end_station", MACSEC_SECY_ATTR_ES);
-	print_flag(stdout, attrs, "scb", MACSEC_SECY_ATTR_SCB);
+	print_flag(attrs, "sc", MACSEC_RXSC_ATTR_ACTIVE);
+	print_flag(attrs, "sa", MACSEC_SA_ATTR_ACTIVE);
+	print_flag(attrs, "encrypt", MACSEC_SECY_ATTR_ENCRYPT);
+	print_flag(attrs, "send_sci", MACSEC_SECY_ATTR_INC_SCI);
+	print_flag(attrs, "end_station", MACSEC_SECY_ATTR_ES);
+	print_flag(attrs, "scb", MACSEC_SECY_ATTR_SCB);
+	print_flag(attrs, "replay", MACSEC_SECY_ATTR_REPLAY);
 
-	print_flag(stdout, attrs, "replay", MACSEC_SECY_ATTR_REPLAY);
 	if (attrs[MACSEC_SECY_ATTR_WINDOW]) {
-		printf("window %d ",
-		       rta_getattr_u32(attrs[MACSEC_SECY_ATTR_WINDOW]));
+		__u32 win = rta_getattr_u32(attrs[MACSEC_SECY_ATTR_WINDOW]);
+
+		print_uint(PRINT_ANY, "window", "window %u ", win);
 	}
 
-	if (attrs[MACSEC_SECY_ATTR_CIPHER_SUITE] &&
-	    attrs[MACSEC_SECY_ATTR_ICV_LEN]) {
-		printf("\n");
-		print_cipher_suite(prefix,
-			rta_getattr_u64(attrs[MACSEC_SECY_ATTR_CIPHER_SUITE]),
-			rta_getattr_u8(attrs[MACSEC_SECY_ATTR_ICV_LEN]));
+	if (attrs[MACSEC_SECY_ATTR_CIPHER_SUITE]) {
+		__u64 cid = rta_getattr_u64(attrs[MACSEC_SECY_ATTR_CIPHER_SUITE]);
+
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_string(PRINT_ANY, "cipher_suite",
+			     "    cipher suite: %s,", cs_id_to_name(cid));
 	}
 
+	if (attrs[MACSEC_SECY_ATTR_ICV_LEN]) {
+		__u8 icv_len = rta_getattr_u8(attrs[MACSEC_SECY_ATTR_ICV_LEN]);
+
+		print_uint(PRINT_ANY, "icv_length",
+		     " using ICV length %u\n", icv_len);
+	}
 }
 
-static void print_one_stat(const char **names, struct rtattr **attr, int idx,
-			   bool long_stat)
+static __u64 getattr_uint(struct rtattr *stat)
 {
-	int pad = strlen(names[idx]) + 1;
-
-	if (attr[idx]) {
-		if (long_stat)
-			printf("%*llu", pad, rta_getattr_u64(attr[idx]));
-		else
-			printf("%*u", pad, rta_getattr_u32(attr[idx]));
-	} else {
-		printf("%*c", pad, '-');
+	switch (RTA_PAYLOAD(stat)) {
+	case sizeof(__u64):
+		return rta_getattr_u64(stat);
+	case sizeof(__u32):
+		return rta_getattr_u32(stat);
+	case sizeof(__u16):
+		return rta_getattr_u16(stat);
+	case sizeof(__u8):
+		return rta_getattr_u8(stat);
+	default:
+		fprintf(stderr, "invalid attribute length %lu\n",
+			RTA_PAYLOAD(stat));
+		exit(-1);
 	}
+}
+
+static void print_fp_stats(const char *prefix,
+			   const char *names[], unsigned int num,
+			   struct rtattr *stats[])
+{
+	unsigned int i;
+	int pad;
+
+	printf("%sstats:", prefix);
+
+	for (i = 1; i < num; i++) {
+		if (!names[i])
+			continue;
+		printf(" %s", names[i]);
+	}
+
+	printf("\n%s      ", prefix);
+
+	for (i = 1; i < num; i++) {
+		if (!names[i])
+			continue;
+
+		pad = strlen(names[i]) + 1;
+		if (stats[i])
+			printf("%*llu", pad, getattr_uint(stats[i]));
+		else
+			printf("%*c", pad, '-');
+	}
+	printf("\n");
+}
+
+static void print_json_stats(const char *names[], unsigned int num,
+			     struct rtattr *stats[])
+{
+	unsigned int i;
+
+	for (i = 1; i < num; i++) {
+		if (!names[i] || !stats[i])
+			continue;
+
+		print_uint(PRINT_JSON, names[i],
+			   NULL, getattr_uint(stats[i]));
+	}
+}
+
+static void print_stats(const char *prefix,
+			const char *names[], unsigned int num,
+			struct rtattr *stats[])
+{
+
+	if (is_json_context())
+		print_json_stats(names, num, stats);
+	else
+		print_fp_stats(prefix, names, num, stats);
 }
 
 static const char *txsc_stats_names[NUM_MACSEC_TXSC_STATS_ATTR] = {
@@ -648,29 +723,14 @@ static const char *txsc_stats_names[NUM_MACSEC_TXSC_STATS_ATTR] = {
 static void print_txsc_stats(const char *prefix, struct rtattr *attr)
 {
 	struct rtattr *stats[MACSEC_TXSC_STATS_ATTR_MAX + 1];
-	int i;
 
 	if (!attr || show_stats == 0)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_TXSC_STATS_ATTR_MAX + 1, attr);
-	printf("%sstats:", prefix);
 
-	for (i = 1; i < NUM_MACSEC_TXSC_STATS_ATTR; i++) {
-		if (!txsc_stats_names[i])
-			continue;
-		printf(" %s", txsc_stats_names[i]);
-	}
-
-	printf("\n%s      ", prefix);
-
-	for (i = 1; i < NUM_MACSEC_TXSC_STATS_ATTR; i++) {
-		if (!txsc_stats_names[i])
-			continue;
-		print_one_stat(txsc_stats_names, stats, i, true);
-	}
-
-	printf("\n");
+	print_stats(prefix, txsc_stats_names, NUM_MACSEC_TXSC_STATS_ATTR,
+		    stats);
 }
 
 static const char *secy_stats_names[NUM_MACSEC_SECY_STATS_ATTR] = {
@@ -687,29 +747,14 @@ static const char *secy_stats_names[NUM_MACSEC_SECY_STATS_ATTR] = {
 static void print_secy_stats(const char *prefix, struct rtattr *attr)
 {
 	struct rtattr *stats[MACSEC_SECY_STATS_ATTR_MAX + 1];
-	int i;
 
 	if (!attr || show_stats == 0)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_SECY_STATS_ATTR_MAX + 1, attr);
-	printf("%sstats:", prefix);
 
-	for (i = 1; i < NUM_MACSEC_SECY_STATS_ATTR; i++) {
-		if (!secy_stats_names[i])
-			continue;
-		printf(" %s", secy_stats_names[i]);
-	}
-
-	printf("\n%s      ", prefix);
-
-	for (i = 1; i < NUM_MACSEC_SECY_STATS_ATTR; i++) {
-		if (!secy_stats_names[i])
-			continue;
-		print_one_stat(secy_stats_names, stats, i, true);
-	}
-
-	printf("\n");
+	print_stats(prefix, secy_stats_names,
+		    NUM_MACSEC_SECY_STATS_ATTR, stats);
 }
 
 static const char *rxsa_stats_names[NUM_MACSEC_SA_STATS_ATTR] = {
@@ -723,29 +768,13 @@ static const char *rxsa_stats_names[NUM_MACSEC_SA_STATS_ATTR] = {
 static void print_rxsa_stats(const char *prefix, struct rtattr *attr)
 {
 	struct rtattr *stats[MACSEC_SA_STATS_ATTR_MAX + 1];
-	int i;
 
 	if (!attr || show_stats == 0)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_SA_STATS_ATTR_MAX + 1, attr);
-	printf("%s%s  ", prefix, prefix);
 
-	for (i = 1; i < NUM_MACSEC_SA_STATS_ATTR; i++) {
-		if (!rxsa_stats_names[i])
-			continue;
-		printf(" %s", rxsa_stats_names[i]);
-	}
-
-	printf("\n%s%s  ", prefix, prefix);
-
-	for (i = 1; i < NUM_MACSEC_SA_STATS_ATTR; i++) {
-		if (!rxsa_stats_names[i])
-			continue;
-		print_one_stat(rxsa_stats_names, stats, i, false);
-	}
-
-	printf("\n");
+	print_stats(prefix, rxsa_stats_names, NUM_MACSEC_SA_STATS_ATTR, stats);
 }
 
 static const char *txsa_stats_names[NUM_MACSEC_SA_STATS_ATTR] = {
@@ -761,16 +790,8 @@ static void print_txsa_stats(const char *prefix, struct rtattr *attr)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_SA_STATS_ATTR_MAX + 1, attr);
-	printf("%s%s   %s %s\n", prefix, prefix,
-	       txsa_stats_names[MACSEC_SA_STATS_ATTR_OUT_PKTS_PROTECTED],
-	       txsa_stats_names[MACSEC_SA_STATS_ATTR_OUT_PKTS_ENCRYPTED]);
-	printf("%s%s  ", prefix, prefix);
 
-	print_one_stat(txsa_stats_names, stats,
-		       MACSEC_SA_STATS_ATTR_OUT_PKTS_PROTECTED, false);
-	print_one_stat(txsa_stats_names, stats,
-		       MACSEC_SA_STATS_ATTR_OUT_PKTS_ENCRYPTED, false);
-	printf("\n");
+	print_stats(prefix, txsa_stats_names, NUM_MACSEC_SA_STATS_ATTR, stats);
 }
 
 static void print_tx_sc(const char *prefix, __u64 sci, __u8 encoding_sa,
@@ -781,26 +802,40 @@ static void print_tx_sc(const char *prefix, __u64 sci, __u8 encoding_sa,
 	struct rtattr *a;
 	int rem;
 
-	printf("%sTXSC: %016llx on SA %d\n", prefix, ntohll(sci), encoding_sa);
+	print_string(PRINT_FP, NULL, "%s", prefix);
+	print_0xhex(PRINT_ANY, "sci",
+		    "TXSC: %016llx", ntohll(sci));
+	print_uint(PRINT_ANY, "encoding_sa",
+		   " on SA %d\n", encoding_sa);
+
 	print_secy_stats(prefix, secy_stats);
 	print_txsc_stats(prefix, txsc_stats);
 
+	open_json_array(PRINT_JSON, "sa_list");
 	rem = RTA_PAYLOAD(sa);
 	for (a = RTA_DATA(sa); RTA_OK(a, rem); a = RTA_NEXT(a, rem)) {
-		SPRINT_BUF(keyid);
 		bool state;
 
+		open_json_object(NULL);
 		parse_rtattr_nested(sa_attr, MACSEC_SA_ATTR_MAX + 1, a);
 		state = rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_ACTIVE]);
-		printf("%s%s%d: PN %u, state %s, key %s\n", prefix, prefix,
-		       rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_AN]),
-		       rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_PN]),
-		       values_on_off[state],
-		       hexstring_n2a(RTA_DATA(sa_attr[MACSEC_SA_ATTR_KEYID]),
-				     RTA_PAYLOAD(sa_attr[MACSEC_SA_ATTR_KEYID]),
-				     keyid, sizeof(keyid)));
+
+		print_string(PRINT_FP, NULL, "%s", prefix);
+		print_string(PRINT_FP, NULL, "%s", prefix);
+		print_uint(PRINT_ANY, "an", "%d:",
+			   rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_AN]));
+		print_uint(PRINT_ANY, "pn", " PN %u,",
+			   rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_PN]));
+
+		print_bool(PRINT_JSON, "active", NULL, state);
+		print_string(PRINT_FP, NULL,
+			     " state %s,", state ? "on" : "off");
+		print_key(sa_attr[MACSEC_SA_ATTR_KEYID]);
+
 		print_txsa_stats(prefix, sa_attr[MACSEC_SA_ATTR_STATS]);
+		close_json_object();
 	}
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static const char *rxsc_stats_names[NUM_MACSEC_RXSC_STATS_ATTR] = {
@@ -819,70 +854,91 @@ static const char *rxsc_stats_names[NUM_MACSEC_RXSC_STATS_ATTR] = {
 static void print_rxsc_stats(const char *prefix, struct rtattr *attr)
 {
 	struct rtattr *stats[MACSEC_RXSC_STATS_ATTR_MAX + 1];
-	int i;
 
 	if (!attr || show_stats == 0)
 		return;
 
 	parse_rtattr_nested(stats, MACSEC_RXSC_STATS_ATTR_MAX + 1, attr);
-	printf("%sstats:", prefix);
-	for (i = 1; i < NUM_MACSEC_RXSC_STATS_ATTR; i++) {
-		if (!rxsc_stats_names[i])
-			continue;
-		printf(" %s", rxsc_stats_names[i]);
-	}
 
-	printf("\n%s      ", prefix);
-
-	for (i = 1; i < NUM_MACSEC_RXSC_STATS_ATTR; i++) {
-		if (!rxsc_stats_names[i])
-			continue;
-		print_one_stat(rxsc_stats_names, stats, i, true);
-	}
-
-	printf("\n");
+	print_stats(prefix, rxsc_stats_names,
+		    NUM_MACSEC_RXSC_STATS_ATTR, stats);
 }
 
-static void print_rx_sc(const char *prefix, __u64 sci, __u8 active,
+static void print_rx_sc(const char *prefix, __be64 sci, __u8 active,
 			struct rtattr *rxsc_stats, struct rtattr *sa)
 {
 	struct rtattr *sa_attr[MACSEC_SA_ATTR_MAX + 1];
 	struct rtattr *a;
 	int rem;
 
-	printf("%sRXSC: %016llx, state %s\n", prefix, ntohll(sci),
-	       values_on_off[!!active]);
+	print_string(PRINT_FP, NULL, "%s", prefix);
+	print_0xhex(PRINT_ANY, "sci",
+		    "RXSC: %016llx,", ntohll(sci));
+	print_bool(PRINT_JSON, "active", NULL, active);
+	print_string(PRINT_FP, NULL,
+		     " state %s\n", active ? "on" : "off");
 	print_rxsc_stats(prefix, rxsc_stats);
 
+	open_json_array(PRINT_JSON, "sa_list");
 	rem = RTA_PAYLOAD(sa);
 	for (a = RTA_DATA(sa); RTA_OK(a, rem); a = RTA_NEXT(a, rem)) {
-		SPRINT_BUF(keyid);
 		bool state;
 
+		open_json_object(NULL);
 		parse_rtattr_nested(sa_attr, MACSEC_SA_ATTR_MAX + 1, a);
 		state = rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_ACTIVE]);
-		printf("%s%s%d: PN %u, state %s, key %s\n", prefix, prefix,
-		       rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_AN]),
-		       rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_PN]),
-		       values_on_off[state],
-		       hexstring_n2a(RTA_DATA(sa_attr[MACSEC_SA_ATTR_KEYID]),
-				     RTA_PAYLOAD(sa_attr[MACSEC_SA_ATTR_KEYID]),
-				     keyid, sizeof(keyid)));
+
+		print_string(PRINT_FP, NULL, "%s", prefix);
+		print_string(PRINT_FP, NULL, "%s", prefix);
+		print_uint(PRINT_ANY, "an", "%u:",
+			   rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_AN]));
+		print_uint(PRINT_ANY, "pn", " PN %u,",
+			   rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_PN]));
+
+		print_bool(PRINT_JSON, "active", NULL, state);
+		print_string(PRINT_FP, NULL, " state %s,",
+			     state ? "on" : "off");
+
+		print_key(sa_attr[MACSEC_SA_ATTR_KEYID]);
+
 		print_rxsa_stats(prefix, sa_attr[MACSEC_SA_ATTR_STATS]);
+		close_json_object();
 	}
+	close_json_array(PRINT_JSON, NULL);
+}
+
+static void print_rxsc_list(struct rtattr *sc)
+{
+	int rem = RTA_PAYLOAD(sc);
+	struct rtattr *c;
+
+	open_json_array(PRINT_JSON, "rx_sc");
+	for (c = RTA_DATA(sc); RTA_OK(c, rem); c = RTA_NEXT(c, rem)) {
+		struct rtattr *sc_attr[MACSEC_RXSC_ATTR_MAX + 1];
+
+		open_json_object(NULL);
+
+		parse_rtattr_nested(sc_attr, MACSEC_RXSC_ATTR_MAX + 1, c);
+		print_rx_sc("    ",
+			    rta_getattr_u64(sc_attr[MACSEC_RXSC_ATTR_SCI]),
+			    rta_getattr_u32(sc_attr[MACSEC_RXSC_ATTR_ACTIVE]),
+			    sc_attr[MACSEC_RXSC_ATTR_STATS],
+			    sc_attr[MACSEC_RXSC_ATTR_SA_LIST]);
+		close_json_object();
+	}
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static int process(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		   void *arg)
 {
 	struct genlmsghdr *ghdr;
-	struct rtattr *attrs[MACSEC_ATTR_MAX + 1], *sc, *c;
+	struct rtattr *attrs[MACSEC_ATTR_MAX + 1];
 	struct rtattr *attrs_secy[MACSEC_SECY_ATTR_MAX + 1];
 	int len = n->nlmsg_len;
 	int ifindex;
 	__u64 sci;
 	__u8 encoding_sa;
-	int rem;
 
 	if (n->nlmsg_type != genl_family)
 		return -1;
@@ -897,7 +953,7 @@ static int process(const struct sockaddr_nl *who, struct nlmsghdr *n,
 
 	parse_rtattr(attrs, MACSEC_ATTR_MAX, (void *) ghdr + GENL_HDRLEN, len);
 	if (!validate_dump(attrs)) {
-		printf("incomplete dump message\n");
+		fprintf(stderr, "incomplete dump message\n");
 		return -1;
 	}
 
@@ -906,7 +962,7 @@ static int process(const struct sockaddr_nl *who, struct nlmsghdr *n,
 			    attrs[MACSEC_ATTR_SECY]);
 
 	if (!validate_secy_dump(attrs_secy)) {
-		printf("incomplete dump message\n");
+		fprintf(stderr, "incomplete dump message\n");
 		return -1;
 	}
 
@@ -919,29 +975,22 @@ static int process(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (filter.sci && sci != filter.sci)
 		return 0;
 
-	printf("%d: %s: ", ifindex, ll_index_to_name(ifindex));
-	print_attrs("    ", attrs_secy);
+	open_json_object(NULL);
+	print_uint(PRINT_ANY, "ifindex", "%u: ", ifindex);
+	print_color_string(PRINT_ANY, COLOR_IFNAME, "ifname",
+			   "%s: ", ll_index_to_name(ifindex));
+
+	print_attrs(attrs_secy);
 
 	print_tx_sc("    ", sci, encoding_sa,
 		    attrs[MACSEC_ATTR_TXSC_STATS],
 		    attrs[MACSEC_ATTR_SECY_STATS],
 		    attrs[MACSEC_ATTR_TXSA_LIST]);
 
-	if (!attrs[MACSEC_ATTR_RXSC_LIST])
-		return 0;
+	if (attrs[MACSEC_ATTR_RXSC_LIST])
+		print_rxsc_list(attrs[MACSEC_ATTR_RXSC_LIST]);
 
-	sc = attrs[MACSEC_ATTR_RXSC_LIST];
-	rem = RTA_PAYLOAD(sc);
-	for (c = RTA_DATA(sc); RTA_OK(c, rem); c = RTA_NEXT(c, rem)) {
-		struct rtattr *sc_attr[MACSEC_RXSC_ATTR_MAX + 1];
-
-		parse_rtattr_nested(sc_attr, MACSEC_RXSC_ATTR_MAX + 1, c);
-		print_rx_sc("    ",
-			    rta_getattr_u64(sc_attr[MACSEC_RXSC_ATTR_SCI]),
-			    rta_getattr_u32(sc_attr[MACSEC_RXSC_ATTR_ACTIVE]),
-			    sc_attr[MACSEC_RXSC_ATTR_STATS],
-			    sc_attr[MACSEC_RXSC_ATTR_SA_LIST]);
-	}
+	close_json_object();
 
 	return 0;
 }
@@ -960,10 +1009,13 @@ static int do_dump(int ifindex)
 		exit(1);
 	}
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&genl_rth, process, stdout) < 0) {
+		delete_json_obj();
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
+	delete_json_obj();
 
 	return 0;
 }
@@ -1034,10 +1086,11 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 	}
 
-	print_flag(f, tb, "protect", IFLA_MACSEC_PROTECT);
+	print_flag(tb, "protect", IFLA_MACSEC_PROTECT);
 
 	if (tb[IFLA_MACSEC_CIPHER_SUITE]) {
-		__u64 csid = rta_getattr_u64(tb[IFLA_MACSEC_CIPHER_SUITE]);
+		__u64 csid
+			= rta_getattr_u64(tb[IFLA_MACSEC_CIPHER_SUITE]);
 
 		print_string(PRINT_ANY,
 			     "cipher_suite",
@@ -1077,7 +1130,7 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_string(PRINT_ANY,
 			     "validation",
 			     "validate %s ",
-			     VALIDATE_STR[val]);
+			     validate_str[val]);
 	}
 
 	const char *inc_sci, *es, *replay;
@@ -1092,11 +1145,11 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		replay = "replay";
 	}
 
-	print_flag(f, tb, "encrypt", IFLA_MACSEC_ENCRYPT);
-	print_flag(f, tb, inc_sci, IFLA_MACSEC_INC_SCI);
-	print_flag(f, tb, es, IFLA_MACSEC_ES);
-	print_flag(f, tb, "scb", IFLA_MACSEC_SCB);
-	print_flag(f, tb, replay, IFLA_MACSEC_REPLAY_PROTECT);
+	print_flag(tb, "encrypt", IFLA_MACSEC_ENCRYPT);
+	print_flag(tb, inc_sci, IFLA_MACSEC_INC_SCI);
+	print_flag(tb, es, IFLA_MACSEC_ES);
+	print_flag(tb, "scb", IFLA_MACSEC_SCB);
+	print_flag(tb, replay, IFLA_MACSEC_REPLAY_PROTECT);
 
 	if (tb[IFLA_MACSEC_WINDOW])
 		print_int(PRINT_ANY,
@@ -1241,7 +1294,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 		} else if (strcmp(*argv, "validate") == 0) {
 			NEXT_ARG();
 			ret = one_of("validate", *argv,
-				     VALIDATE_STR, ARRAY_SIZE(VALIDATE_STR),
+				     validate_str, ARRAY_SIZE(validate_str),
 				     (int *)&validate);
 			if (ret != 0)
 				return ret;
@@ -1265,7 +1318,8 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 	}
 
 	if (!check_txsc_flags(es, scb, send_sci)) {
-		fprintf(stderr, "invalid combination of send_sci/end_station/scb\n");
+		fprintf(stderr,
+			"invalid combination of send_sci/end_station/scb\n");
 		return -1;
 	}
 
