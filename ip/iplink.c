@@ -964,6 +964,12 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	argc -= ret;
 	argv += ret;
 
+	if (!(flags & NLM_F_CREATE) && index) {
+		fprintf(stderr,
+			"index can be used only when creating devices.\n");
+		exit(-1);
+	}
+
 	if (group != -1) {
 		if (dev)
 			addattr_l(&req.n, sizeof(req), IFLA_GROUP,
@@ -992,11 +998,6 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		if (!dev) {
 			fprintf(stderr,
 				"Not enough information: \"dev\" argument is required.\n");
-			exit(-1);
-		}
-		if (cmd == RTM_NEWLINK && index) {
-			fprintf(stderr,
-				"index can be used only when creating devices.\n");
 			exit(-1);
 		}
 
