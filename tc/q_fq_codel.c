@@ -239,35 +239,50 @@ static int fq_codel_print_xstats(struct qdisc_util *qu, FILE *f,
 		st = &_st;
 	}
 	if (st->type == TCA_FQ_CODEL_XSTATS_QDISC) {
-		fprintf(f, "  maxpacket %u drop_overlimit %u new_flow_count %u ecn_mark %u",
-			st->qdisc_stats.maxpacket,
-			st->qdisc_stats.drop_overlimit,
-			st->qdisc_stats.new_flow_count,
+		print_uint(PRINT_ANY, "maxpacket", "  maxpacket %u",
+			st->qdisc_stats.maxpacket);
+		print_uint(PRINT_ANY, "drop_overlimit", " drop_overlimit %u",
+			st->qdisc_stats.drop_overlimit);
+		print_uint(PRINT_ANY, "new_flow_count", " new_flow_count %u",
+			st->qdisc_stats.new_flow_count);
+		print_uint(PRINT_ANY, "ecn_mark", " ecn_mark %u",
 			st->qdisc_stats.ecn_mark);
 		if (st->qdisc_stats.ce_mark)
-			fprintf(f, " ce_mark %u", st->qdisc_stats.ce_mark);
+			print_uint(PRINT_ANY, "ce_mark", " ce_mark %u",
+				st->qdisc_stats.ce_mark);
 		if (st->qdisc_stats.memory_usage)
-			fprintf(f, " memory_used %u", st->qdisc_stats.memory_usage);
+			print_uint(PRINT_ANY, "memory_used", " memory_used %u",
+				st->qdisc_stats.memory_usage);
 		if (st->qdisc_stats.drop_overmemory)
-			fprintf(f, " drop_overmemory %u", st->qdisc_stats.drop_overmemory);
-		fprintf(f, "\n  new_flows_len %u old_flows_len %u",
-			st->qdisc_stats.new_flows_len,
+			print_uint(PRINT_ANY, "drop_overmemory", " drop_overmemory %u",
+				st->qdisc_stats.drop_overmemory);
+		print_uint(PRINT_ANY, "new_flows_len", "\n  new_flows_len %u",
+			st->qdisc_stats.new_flows_len);
+		print_uint(PRINT_ANY, "old_flows_len", " old_flows_len %u",
 			st->qdisc_stats.old_flows_len);
 	}
 	if (st->type == TCA_FQ_CODEL_XSTATS_CLASS) {
-		fprintf(f, "  deficit %d count %u lastcount %u ldelay %s",
-			st->class_stats.deficit,
-			st->class_stats.count,
-			st->class_stats.lastcount,
+		print_uint(PRINT_ANY, "deficit", "  deficit %u",
+			st->class_stats.deficit);
+		print_uint(PRINT_ANY, "count", " count %u",
+			st->class_stats.count);
+		print_uint(PRINT_ANY, "lastcount", " lastcount %u",
+			st->class_stats.lastcount);
+		print_uint(PRINT_JSON, "ldelay", NULL,
+			st->class_stats.ldelay);
+		print_string(PRINT_FP, NULL, " ldelay %s",
 			sprint_time(st->class_stats.ldelay, b1));
 		if (st->class_stats.dropping) {
-			fprintf(f, " dropping");
+			print_bool(PRINT_ANY, "dropping", " dropping", true);
 			if (st->class_stats.drop_next < 0)
-				fprintf(f, " drop_next -%s",
+				print_string(PRINT_FP, NULL, " drop_next -%s",
 					sprint_time(-st->class_stats.drop_next, b1));
-			else
-				fprintf(f, " drop_next %s",
+			else {
+				print_uint(PRINT_JSON, "drop_next", NULL,
+					st->class_stats.drop_next);
+				print_string(PRINT_FP, NULL, " drop_next %s",
 					sprint_time(st->class_stats.drop_next, b1));
+			}
 		}
 	}
 	return 0;
