@@ -22,6 +22,7 @@
 #include "list.h"
 #include "ip_common.h"
 #include "namespace.h"
+#include "json_print.h"
 
 static int usage(void)
 {
@@ -293,26 +294,30 @@ int print_nsid(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return -1;
 	}
 
+	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELNSID)
-		fprintf(fp, "Deleted ");
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	nsid = rta_getattr_u32(tb[NETNSA_NSID]);
-	fprintf(fp, "nsid %u ", nsid);
+	print_uint(PRINT_ANY, "nsid", "nsid %u ", nsid);
 
 	c = netns_map_get_by_nsid(nsid);
 	if (c != NULL) {
-		fprintf(fp, "(iproute2 netns name: %s)", c->name);
+		print_string(PRINT_ANY, "name",
+			     "(iproute2 netns name: %s)", c->name);
 		netns_map_del(c);
 	}
 
 	/* During 'ip monitor nsid', no chance to have new nsid in cache. */
 	if (c == NULL && n->nlmsg_type == RTM_NEWNSID)
 		if (netns_get_name(nsid, name) == 0) {
-			fprintf(fp, "(iproute2 netns name: %s)", name);
+			print_string(PRINT_ANY, "name",
+				     "(iproute2 netns name: %s)", name);
 			netns_map_add(nsid, name);
 		}
 
-	fprintf(fp, "\n");
+	print_string(PRINT_FP, NULL, "\n", NULL);
+	close_json_object();
 	fflush(fp);
 	return 0;
 }
@@ -329,10 +334,14 @@ static int netns_list_id(int argc, char **argv)
 		perror("Cannot send dump request");
 		exit(1);
 	}
+
+	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, print_nsid, stdout) < 0) {
+		delete_json_obj();
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
+	delete_json_obj();
 	return 0;
 }
 
@@ -346,20 +355,27 @@ static int netns_list(int argc, char **argv)
 	if (!dir)
 		return 0;
 
+	new_json_obj(json);
 	while ((entry = readdir(dir)) != NULL) {
 		if (strcmp(entry->d_name, ".") == 0)
 			continue;
 		if (strcmp(entry->d_name, "..") == 0)
 			continue;
-		printf("%s", entry->d_name);
+
+		open_json_object(NULL);
+		print_string(PRINT_ANY, "name",
+			     "%s", entry->d_name);
 		if (ipnetns_have_nsid()) {
 			id = get_netnsid_from_name(entry->d_name);
 			if (id >= 0)
-				printf(" (id: %d)", id);
+				print_uint(PRINT_ANY, "id",
+					   " (id: %d)", id);
 		}
-		printf("\n");
+		print_string(PRINT_FP, NULL, "\n", NULL);
+		close_json_object();
 	}
 	closedir(dir);
+	delete_json_obj();
 	return 0;
 }
 
