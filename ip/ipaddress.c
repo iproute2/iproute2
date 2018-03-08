@@ -417,10 +417,10 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 	}
 
 	if (vf_tx_rate->rate)
-		print_int(PRINT_ANY,
-			  "tx_rate",
-			  ", tx rate %d (Mbps)",
-			  vf_tx_rate->rate);
+		print_uint(PRINT_ANY,
+			   "tx_rate",
+			   ", tx rate %u (Mbps)",
+			   vf_tx_rate->rate);
 
 	if (vf[IFLA_VF_RATE]) {
 		struct ifla_vf_rate *vf_rate = RTA_DATA(vf[IFLA_VF_RATE]);
@@ -429,14 +429,14 @@ static void print_vfinfo(FILE *fp, struct rtattr *vfinfo)
 
 		if (is_json_context()) {
 			open_json_object("rate");
-			print_int(PRINT_JSON, "max_tx", NULL, max_tx);
-			print_int(PRINT_ANY, "min_tx", NULL, min_tx);
+			print_uint(PRINT_JSON, "max_tx", NULL, max_tx);
+			print_uint(PRINT_ANY, "min_tx", NULL, min_tx);
 			close_json_object();
 		} else {
 			if (max_tx)
-				fprintf(fp, ", max_tx_rate %dMbps", max_tx);
+				fprintf(fp, ", max_tx_rate %uMbps", max_tx);
 			if (min_tx)
-				fprintf(fp, ", min_tx_rate %dMbps", min_tx);
+				fprintf(fp, ", min_tx_rate %uMbps", min_tx);
 		}
 	}
 
