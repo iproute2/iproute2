@@ -44,7 +44,19 @@ ip-rule \- routing policy database management
 .IR STRING " ] [ "
 .B  pref
 .IR NUMBER " ] [ "
-.BR l3mdev " ]"
+.IR l3mdev " ] [ "
+.B uidrange
+.IR NUMBER "-" NUMBER " ] [ "
+.B ipproto
+.IR PROTOCOL " ] [ "
+.BR sport " [ "
+.IR NUMBER " | "
+.IR NUMBER "-" NUMBER " ] ] [ "
+.BR dport " [ "
+.IR NUMBER " | "
+.IR NUMBER "-" NUMBER " ] ]"
+.BR
+
 
 .ti -8
 .IR ACTION " := [ "
@@ -225,6 +237,24 @@ select the TOS value to match.
 select the
 .B fwmark
 value to match.
+
+.TP
+.BI uidrange " NUMBER-NUMBER"
+select the
+.B uid
+value to match.
+
+.TP
+.BI ipproto " PROTOCOL"
+select the ip protocol value to match.
+
+.TP
+.BI sport " NUMBER | NUMBER-NUMBER"
+select the source port value to match. supports port range.
+
+.TP
+.BI dport " NUMBER | NUMBER-NUMBER"
+select the destination port value to match. supports port range.
 
 .TP
 .BI priority " PREFERENCE"

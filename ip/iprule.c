@@ -47,6 +47,9 @@ static void usage(void)
 		"SELECTOR := [ not ] [ from PREFIX ] [ to PREFIX ] [ tos TOS ] [ fwmark FWMARK[/MASK] ]\n"
 		"            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ l3mdev ]\n"
 		"            [ uidrange NUMBER-NUMBER ]\n"
+		"            [ ipproto PROTOCOL ]\n"
+		"            [ sport [ NUMBER | NUMBER-NUMBER ]\n"
+		"            [ dport [ NUMBER | NUMBER-NUMBER ] ]\n"
 		"ACTION := [ table TABLE_ID ]\n"
 		"          [ protocol PROTO ]\n"
 		"          [ nat ADDRESS ]\n"
@@ -304,6 +307,37 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 		print_uint(PRINT_ANY, "uid_start", "uidrange %u", r->start);
 		print_uint(PRINT_ANY, "uid_end", "-%u ", r->end);
+	}
+
+	if (tb[FRA_IP_PROTO]) {
+		SPRINT_BUF(pbuf);
+		print_string(PRINT_ANY, "ipproto", "ipproto %s ",
+			     inet_proto_n2a(rta_getattr_u8(tb[FRA_IP_PROTO]),
+					    pbuf, sizeof(pbuf)));
+	}
+
+	if (tb[FRA_SPORT_RANGE]) {
+		struct fib_rule_port_range *r = RTA_DATA(tb[FRA_SPORT_RANGE]);
+
+		if (r->start == r->end) {
+			print_uint(PRINT_ANY, "sport", "sport %u ", r->start);
+		} else {
+			print_uint(PRINT_ANY, "sport_start", "sport %u",
+				   r->start);
+			print_uint(PRINT_ANY, "sport_end", "-%u ", r->end);
+		}
+	}
+
+	if (tb[FRA_DPORT_RANGE]) {
+		struct fib_rule_port_range *r = RTA_DATA(tb[FRA_DPORT_RANGE]);
+
+		if (r->start == r->end) {
+			print_uint(PRINT_ANY, "dport", "dport %u ", r->start);
+		} else {
+			print_uint(PRINT_ANY, "dport_start", "dport %u",
+				   r->start);
+			print_uint(PRINT_ANY, "dport_end", "-%u ", r->end);
+		}
 	}
 
 	table = frh_get_table(frh, tb);
@@ -802,6 +836,39 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			addattr32(&req.n, sizeof(req), RTA_GATEWAY,
 				  get_addr32(*argv));
 			req.frh.action = RTN_NAT;
+		} else if (strcmp(*argv, "ipproto") == 0) {
+			int ipproto;
+
+			NEXT_ARG();
+			ipproto = inet_proto_a2n(*argv);
+			if (ipproto < 0)
+				invarg("Invalid \"ipproto\" value\n",
+				       *argv);
+			addattr8(&req.n, sizeof(req), FRA_IP_PROTO, ipproto);
+		} else if (strcmp(*argv, "sport") == 0) {
+			struct fib_rule_port_range r;
+			int ret = 0;
+
+			NEXT_ARG();
+			ret = sscanf(*argv, "%hu-%hu", &r.start, &r.end);
+			if (ret == 1)
+				r.end = r.start;
+			else if (ret != 2)
+				invarg("invalid port range\n", *argv);
+			addattr_l(&req.n, sizeof(req), FRA_SPORT_RANGE, &r,
+				  sizeof(r));
+		} else if (strcmp(*argv, "dport") == 0) {
+			struct fib_rule_port_range r;
+			int ret = 0;
+
+			NEXT_ARG();
+			ret = sscanf(*argv, "%hu-%hu", &r.start, &r.end);
+			if (ret == 1)
+				r.end = r.start;
+			else if (ret != 2)
+				invarg("invalid dport range\n", *argv);
+			addattr_l(&req.n, sizeof(req), FRA_DPORT_RANGE, &r,
+				  sizeof(r));
 		} else {
 			int type;
 
