@@ -17,7 +17,11 @@ BYTES ] [
 .B ecn
 |
 .B noecn
-]
+] [
+.B ce_threshold
+TIME ] [
+.B memory_limit
+BYTES ]
 
 .SH DESCRIPTION
 FQ_Codel (Fair Queuing Controlled Delay) is queuing discipline that combines Fair
@@ -34,6 +38,13 @@ has the same semantics as
 and is the hard limit on the real queue size.
 When this limit is reached, incoming packets are dropped. Default is 10240
 packets.
+
+.SS memory_limit
+sets a limit on the total number of bytes that can be queued in this FQ-CoDel
+instance. The lower of the packet limit of the
+.B limit
+parameter and the memory limit will be enforced. Default is 32 MB.
+
 
 .SS flows
 is the number of flows into which the incoming packets are classified. Due to
@@ -72,6 +83,11 @@ has been enabled,
 can be used to turn it off and vice-a-versa. Unlike
 .B codel, ecn
 is turned on by default.
+
+.SS ce_threshold
+sets a threshold above which all packets are marked with ECN Congestion
+Experienced. This is useful for DCTCP-style congestion control algorithms that
+require marking at very shallow queueing thresholds.
 
 .SH EXAMPLES
 #tc qdisc add   dev eth0 root fq_codel

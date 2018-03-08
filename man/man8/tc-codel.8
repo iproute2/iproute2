@@ -13,7 +13,9 @@ TIME ] [
 .B ecn
 |
 .B noecn
-]
+] [
+.B ce_threshold
+TIME ]
 
 .SH DESCRIPTION
 CoDel (pronounced "coddle") is an adaptive "no-knobs" active queue management
@@ -79,6 +81,12 @@ has been enabled,
 can be used to turn it off and vice-a-versa. By default,
 .B ecn
 is turned off.
+
+.SS ce_threshold
+sets a threshold above which all packets are marked with ECN Congestion
+Experienced. This is useful for DCTCP-style congestion control algorithms that
+require marking at very shallow queueing thresholds.
+
 
 .SH EXAMPLES
  # tc qdisc add dev eth0 root codel
