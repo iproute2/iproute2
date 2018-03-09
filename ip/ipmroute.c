@@ -75,10 +75,11 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
 		return -1;
 	}
+
 	if (r->rtm_type != RTN_MULTICAST) {
-		fprintf(stderr, "Not a multicast route (type: %s)\n",
-			rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
-		return 0;
+		fprintf(stderr,
+			"Non multicast route received, kernel does support IP multicast?\n");
+		return -1;
 	}
 
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
