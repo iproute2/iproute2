@@ -28,6 +28,7 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "json_print.h"
 
 static struct {
 	char *dev;
@@ -193,50 +194,66 @@ static void read_igmp6(struct ma_info **result_p)
 
 static void print_maddr(FILE *fp, struct ma_info *list)
 {
-	fprintf(fp, "\t");
+	print_string(PRINT_FP, NULL, "\t", NULL);
 
+	open_json_object(NULL);
 	if (list->addr.family == AF_PACKET) {
 		SPRINT_BUF(b1);
-		fprintf(fp, "link  %s", ll_addr_n2a((unsigned char *)list->addr.data,
-						    list->addr.bytelen, 0,
-						    b1, sizeof(b1)));
+
+		print_string(PRINT_FP, NULL, "link  ", NULL);
+		print_color_string(PRINT_ANY, COLOR_MAC, "link", "%s",
+				   ll_addr_n2a((void *)list->addr.data, list->addr.bytelen,
+					       0, b1, sizeof(b1)));
 	} else {
-		switch (list->addr.family) {
-		case AF_INET:
-			fprintf(fp, "inet  ");
-			break;
-		case AF_INET6:
-			fprintf(fp, "inet6 ");
-			break;
-		default:
-			fprintf(fp, "family %d ", list->addr.family);
-			break;
-		}
-		fprintf(fp, "%s",
-			format_host(list->addr.family,
-				    -1, list->addr.data));
+		print_string(PRINT_ANY, "family", "%-5s ",
+			     family_name(list->addr.family));
+		print_color_string(PRINT_ANY, ifa_family_color(list->addr.family),
+				   "address", "%s",
+				   format_host(list->addr.family,
+					       -1, list->addr.data));
 	}
+
 	if (list->users != 1)
-		fprintf(fp, " users %d", list->users);
+		print_uint(PRINT_ANY, "users", " users %u", list->users);
+
 	if (list->features)
-		fprintf(fp, " %s", list->features);
-	fprintf(fp, "\n");
+		print_string(PRINT_ANY, "features", " %s", list->features);
+
+	print_string(PRINT_FP, NULL, "\n", NULL);
+	close_json_object();
 }
 
 static void print_mlist(FILE *fp, struct ma_info *list)
 {
 	int cur_index = 0;
 
+	new_json_obj(json);
 	for (; list; list = list->next) {
-		if (oneline) {
+
+		if (list->index != cur_index || oneline) {
+			if (cur_index) {
+				close_json_array(PRINT_JSON, NULL);
+				close_json_object();
+			}
+			open_json_object(NULL);
+
+			print_uint(PRINT_ANY, "ifindex", "%d:", list->index);
+			print_color_string(PRINT_ANY, COLOR_IFNAME,
+					   "ifname", "\t%s", list->name);
+			print_string(PRINT_FP, NULL, "%s", _SL_);
 			cur_index = list->index;
-			fprintf(fp, "%d:\t%s%s", cur_index, list->name, _SL_);
-		} else if (cur_index != list->index) {
-			cur_index = list->index;
-			fprintf(fp, "%d:\t%s\n", cur_index, list->name);
+
+			open_json_array(PRINT_JSON, "maddr");
 		}
+
 		print_maddr(fp, list);
 	}
+	if (cur_index) {
+		close_json_array(PRINT_JSON, NULL);
+		close_json_object();
+	}
+
+	delete_json_obj();
 }
 
 static int multiaddr_list(int argc, char **argv)
