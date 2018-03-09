@@ -258,8 +258,12 @@ is a 16 bit UDP dst port.
 .BI ip_flags " IP_FLAGS"
 .I IP_FLAGS
 may be either
-.BR frag " or " nofrag
-to match on fragmented packets or not respectively.
+.BR frag ", " nofrag ", " firstfrag " or " nofirstfrag
+where frag and nofrag could be used to match on fragmented packets or not,
+respectively. firstfrag and nofirstfrag can be used to further distinguish
+fragmented packet. firstfrag can be used to indicate the first fragmented
+packet. nofirstfrag can be used to indicates subsequent fragmented packets
+or non-fragmented packets.
 .SH NOTES
 As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches
