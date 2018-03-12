@@ -569,10 +569,11 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 	return 0;
 }
 
-int iplink_parse(int argc, char **argv, struct iplink_req *req,
-		 char **name, char **type, char **link, char **dev,
-		 int *group, int *index)
+int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 {
+	char *name = NULL;
+	char *dev = NULL;
+	char *link = NULL;
 	int ret, len;
 	char abuf[32];
 	int qlen = -1;
@@ -583,9 +584,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 	int numrxqueues = -1;
 	int dev_index = 0;
 	int link_netnsid = -1;
+	int index = 0;
+	int group = -1;
 	int addr_len = 0;
 
-	*group = -1;
 	ret = argc;
 
 	while (argc > 0) {
@@ -597,19 +599,25 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			req->i.ifi_flags &= ~IFF_UP;
 		} else if (strcmp(*argv, "name") == 0) {
 			NEXT_ARG();
+			if (name)
+				duparg("name", *argv);
 			if (check_ifname(*argv))
 				invarg("\"name\" not a valid ifname", *argv);
-			*name = *argv;
+			name = *argv;
+			if (!dev) {
+				dev = name;
+				dev_index = ll_name_to_index(dev);
+			}
 		} else if (strcmp(*argv, "index") == 0) {
 			NEXT_ARG();
-			if (*index)
+			if (index)
 				duparg("index", *argv);
-			*index = atoi(*argv);
-			if (*index <= 0)
+			index = atoi(*argv);
+			if (index <= 0)
 				invarg("Invalid \"index\" value", *argv);
 		} else if (matches(*argv, "link") == 0) {
 			NEXT_ARG();
-			*link = *argv;
+			link = *argv;
 		} else if (matches(*argv, "address") == 0) {
 			NEXT_ARG();
 			addr_len = ll_addr_a2n(abuf, sizeof(abuf), *argv);
@@ -654,6 +662,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (xdp_parse(&argc, &argv, req, dev_index,
 				      generic, drv, offload))
 				exit(-1);
+
+			if (offload && name == dev)
+				dev = NULL;
 		} else if (strcmp(*argv, "netns") == 0) {
 			NEXT_ARG();
 			if (netns != -1)
@@ -745,6 +756,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 			if (len < 0)
 				return -1;
 			addattr_nest_end(&req->n, vflist);
+
+			if (name == dev)
+				dev = NULL;
 		} else if (matches(*argv, "master") == 0) {
 			int ifindex;
 
@@ -794,10 +808,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 				  *argv, len);
 		} else if (strcmp(*argv, "group") == 0) {
 			NEXT_ARG();
-			if (*group != -1)
+			if (group != -1)
 				duparg("group", *argv);
-			if (rtnl_group_a2n(group, *argv))
+			if (rtnl_group_a2n(&group, *argv))
 				invarg("Invalid \"group\" value\n", *argv);
+			addattr32(&req->n, sizeof(*req), IFLA_GROUP, group);
 		} else if (strcmp(*argv, "mode") == 0) {
 			int mode;
 
@@ -895,15 +910,25 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 
 			if (strcmp(*argv, "dev") == 0)
 				NEXT_ARG();
-			if (*dev)
+			if (dev != name)
 				duparg2("dev", *argv);
 			if (check_ifname(*argv))
 				invarg("\"dev\" not a valid ifname", *argv);
-			*dev = *argv;
-			dev_index = ll_name_to_index(*dev);
+			dev = *argv;
+			dev_index = ll_name_to_index(dev);
 		}
 		argc--; argv++;
 	}
+
+	ret -= argc;
+
+	/* Allow "ip link add dev" and "ip link add name" */
+	if (!name)
+		name = dev;
+	else if (!dev)
+		dev = name;
+	else if (!strcmp(name, dev))
+		name = dev;
 
 	if (dev_index && addr_len) {
 		int halen = nl_get_ll_addr_len(dev_index);
@@ -916,18 +941,75 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req,
 		}
 	}
 
-	return ret - argc;
+	if (!(req->n.nlmsg_flags & NLM_F_CREATE) && index) {
+		fprintf(stderr,
+			"index can be used only when creating devices.\n");
+		exit(-1);
+	}
+
+	if (group != -1) {
+		if (!dev) {
+			if (argc) {
+				fprintf(stderr,
+					"Garbage instead of arguments \"%s ...\". Try \"ip link help\".\n",
+					*argv);
+				exit(-1);
+			}
+			if (req->n.nlmsg_flags & NLM_F_CREATE) {
+				fprintf(stderr,
+					"group cannot be used when creating devices.\n");
+				exit(-1);
+			}
+
+			*type = NULL;
+			return ret;
+		}
+	}
+
+	if (!(req->n.nlmsg_flags & NLM_F_CREATE)) {
+		if (!dev) {
+			fprintf(stderr,
+				"Not enough information: \"dev\" argument is required.\n");
+			exit(-1);
+		}
+
+		req->i.ifi_index = ll_name_to_index(dev);
+		if (!req->i.ifi_index)
+			return nodev(dev);
+
+		/* Not renaming to the same name */
+		if (name == dev)
+			name = NULL;
+	} else {
+		if (name != dev) {
+			fprintf(stderr,
+				"both \"name\" and \"dev\" cannot be used when creating devices.\n");
+			exit(-1);
+		}
+
+		if (link) {
+			int ifindex;
+
+			ifindex = ll_name_to_index(link);
+			if (!ifindex)
+				return nodev(link);
+			addattr32(&req->n, sizeof(*req), IFLA_LINK, ifindex);
+		}
+
+		req->i.ifi_index = index;
+	}
+
+	if (name) {
+		addattr_l(&req->n, sizeof(*req),
+			  IFLA_IFNAME, name, strlen(name) + 1);
+	}
+
+	return ret;
 }
 
 static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 {
-	char *dev = NULL;
-	char *name = NULL;
-	char *link = NULL;
 	char *type = NULL;
-	int index = 0;
-	int group;
-	struct link_util *lu = NULL;
 	struct iplink_req req = {
 		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
 		.n.nlmsg_flags = NLM_F_REQUEST | flags,
@@ -936,81 +1018,12 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	};
 	int ret;
 
-	ret = iplink_parse(argc, argv,
-			   &req, &name, &type, &link, &dev, &group, &index);
+	ret = iplink_parse(argc, argv, &req, &type);
 	if (ret < 0)
 		return ret;
 
-	argc -= ret;
-	argv += ret;
-
-	if (group != -1) {
-		if (dev)
-			addattr_l(&req.n, sizeof(req), IFLA_GROUP,
-					&group, sizeof(group));
-		else {
-			if (argc) {
-				fprintf(stderr,
-					"Garbage instead of arguments \"%s ...\". Try \"ip link help\".\n",
-					*argv);
-				return -1;
-			}
-			if (flags & NLM_F_CREATE) {
-				fprintf(stderr,
-					"group cannot be used when creating devices.\n");
-				return -1;
-			}
-
-			addattr32(&req.n, sizeof(req), IFLA_GROUP, group);
-			if (rtnl_talk(&rth, &req.n, NULL) < 0)
-				return -2;
-			return 0;
-		}
-	}
-
-	if (!(flags & NLM_F_CREATE)) {
-		if (!dev) {
-			fprintf(stderr,
-				"Not enough information: \"dev\" argument is required.\n");
-			exit(-1);
-		}
-		if (cmd == RTM_NEWLINK && index) {
-			fprintf(stderr,
-				"index can be used only when creating devices.\n");
-			exit(-1);
-		}
-
-		req.i.ifi_index = ll_name_to_index(dev);
-		if (req.i.ifi_index == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", dev);
-			return -1;
-		}
-	} else {
-		/* Allow "ip link add dev" and "ip link add name" */
-		if (!name)
-			name = dev;
-
-		if (link) {
-			int ifindex;
-
-			ifindex = ll_name_to_index(link);
-			if (ifindex == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n",
-					link);
-				return -1;
-			}
-			addattr_l(&req.n, sizeof(req), IFLA_LINK, &ifindex, 4);
-		}
-
-		req.i.ifi_index = index;
-	}
-
-	if (name) {
-		addattr_l(&req.n, sizeof(req),
-			  IFLA_IFNAME, name, strlen(name) + 1);
-	}
-
 	if (type) {
+		struct link_util *lu;
 		struct rtattr *linkinfo;
 		char *ulinep = strchr(type, '_');
 		int iflatype;
@@ -1024,6 +1037,10 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 			iflatype = IFLA_INFO_SLAVE_DATA;
 		else
 			iflatype = IFLA_INFO_DATA;
+
+		argc -= ret;
+		argv += ret;
+
 		if (lu && argc) {
 			struct rtattr *data;
 

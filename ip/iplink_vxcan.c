@@ -33,16 +33,11 @@ static void usage(void)
 static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 			  struct nlmsghdr *n)
 {
-	char *dev = NULL;
-	char *name = NULL;
-	char *link = NULL;
 	char *type = NULL;
-	int index = 0;
 	int err;
 	struct rtattr *data;
-	int group;
 	struct ifinfomsg *ifm, *peer_ifm;
-	unsigned int ifi_flags, ifi_change;
+	unsigned int ifi_flags, ifi_change, ifi_index;
 
 	if (strcmp(argv[0], "peer") != 0) {
 		usage();
@@ -52,35 +47,29 @@ static int vxcan_parse_opt(struct link_util *lu, int argc, char **argv,
 	ifm = NLMSG_DATA(n);
 	ifi_flags = ifm->ifi_flags;
 	ifi_change = ifm->ifi_change;
+	ifi_index = ifm->ifi_index;
 	ifm->ifi_flags = 0;
 	ifm->ifi_change = 0;
+	ifm->ifi_index = 0;
 
 	data = addattr_nest(n, 1024, VXCAN_INFO_PEER);
 
 	n->nlmsg_len += sizeof(struct ifinfomsg);
 
-	err = iplink_parse(argc - 1, argv + 1, (struct iplink_req *)n,
-			   &name, &type, &link, &dev, &group, &index);
+	err = iplink_parse(argc - 1, argv + 1, (struct iplink_req *)n, &type);
 	if (err < 0)
 		return err;
 
 	if (type)
 		duparg("type", argv[err]);
 
-	if (name) {
-		addattr_l(n, 1024,
-			  IFLA_IFNAME, name, strlen(name) + 1);
-	}
-
 	peer_ifm = RTA_DATA(data);
-	peer_ifm->ifi_index = index;
+	peer_ifm->ifi_index = ifm->ifi_index;
 	peer_ifm->ifi_flags = ifm->ifi_flags;
 	peer_ifm->ifi_change = ifm->ifi_change;
 	ifm->ifi_flags = ifi_flags;
 	ifm->ifi_change = ifi_change;
-
-	if (group != -1)
-		addattr32(n, 1024, IFLA_GROUP, group);
+	ifm->ifi_index = ifi_index;
 
 	addattr_nest_end(n, data);
 	return argc - 1 - err;

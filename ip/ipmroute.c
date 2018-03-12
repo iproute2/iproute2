@@ -244,10 +244,9 @@ static int mroute_list(int argc, char **argv)
 	if (id)  {
 		int idx;
 
-		if ((idx = ll_name_to_index(id)) == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", id);
-			return -1;
-		}
+		idx = ll_name_to_index(id);
+		if (!idx)
+			return nodev(id);
 		filter.iif = idx;
 	}
 

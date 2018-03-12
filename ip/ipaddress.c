@@ -2211,10 +2211,9 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	if (!scoped && cmd != RTM_DELADDR)
 		req.ifa.ifa_scope = default_scope(&lcl);
 
-	if ((req.ifa.ifa_index = ll_name_to_index(d)) == 0) {
-		fprintf(stderr, "Cannot find device \"%s\"\n", d);
-		return -1;
-	}
+	req.ifa.ifa_index = ll_name_to_index(d);
+	if (!req.ifa.ifa_index)
+		return nodev(d);
 
 	if (valid_lftp || preferred_lftp) {
 		struct ifa_cacheinfo cinfo = {};

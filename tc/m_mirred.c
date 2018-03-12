@@ -193,10 +193,8 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 		ll_init_map(&rth);
 
 		idx = ll_name_to_index(d);
-		if (idx == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return -1;
-		}
+		if (!idx)
+			return nodev(d);
 
 		p.ifindex = idx;
 	}

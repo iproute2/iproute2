@@ -199,10 +199,8 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 		ll_init_map(&rth);
 
 		idx = ll_name_to_index(d);
-		if (idx == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
+		if (!idx)
+			return -nodev(d);
 		req.t.tcm_ifindex = idx;
 	}
 
@@ -378,10 +376,8 @@ static int tc_qdisc_list(int argc, char **argv)
 
 	if (d[0]) {
 		t.tcm_ifindex = ll_name_to_index(d);
-		if (t.tcm_ifindex == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
+		if (!t.tcm_ifindex)
+			return -nodev(d);
 		filter_ifindex = t.tcm_ifindex;
 	}
 

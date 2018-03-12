@@ -554,11 +554,8 @@ static int vlan_show(int argc, char **argv)
 
 	if (filter_dev) {
 		filter_index = ll_name_to_index(filter_dev);
-		if (filter_index == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n",
-				filter_dev);
-			return -1;
-		}
+		if (!filter_index)
+			return nodev(filter_dev);
 	}
 
 	new_json_obj(json);

@@ -311,11 +311,8 @@ static int fdb_show(int argc, char **argv)
 	/*we'll keep around filter_dev for older kernels */
 	if (filter_dev) {
 		filter_index = ll_name_to_index(filter_dev);
-		if (filter_index == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n",
-				filter_dev);
-			return -1;
-		}
+		if (!filter_index)
+			return nodev(filter_dev);
 		req.ifm.ifi_index = filter_index;
 	}
 
@@ -391,8 +388,8 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "via") == 0) {
 			NEXT_ARG();
 			via = ll_name_to_index(*argv);
-			if (via == 0)
-				invarg("invalid device\n", *argv);
+			if (!via)
+				exit(nodev(*argv));
 		} else if (strcmp(*argv, "self") == 0) {
 			req.ndm.ndm_flags |= NTF_SELF;
 		} else if (matches(*argv, "master") == 0) {
@@ -467,10 +464,8 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		addattr32(&req.n, sizeof(req), NDA_IFINDEX, via);
 
 	req.ndm.ndm_ifindex = ll_name_to_index(d);
-	if (req.ndm.ndm_ifindex == 0) {
-		fprintf(stderr, "Cannot find device \"%s\"\n", d);
-		return -1;
-	}
+	if (!req.ndm.ndm_ifindex)
+		return nodev(d);
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;

@@ -973,10 +973,8 @@ static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			rtnh->rtnh_ifindex = ll_name_to_index(*argv);
-			if (rtnh->rtnh_ifindex == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n", *argv);
-				return -1;
-			}
+			if (!rtnh->rtnh_ifindex)
+				return nodev(*argv);
 		} else if (strcmp(*argv, "weight") == 0) {
 			unsigned int w;
 
@@ -1474,10 +1472,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (d) {
 		int idx = ll_name_to_index(d);
 
-		if (idx == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return -1;
-		}
+		if (!idx)
+			return nodev(d);
 		addattr32(&req.n, sizeof(req), RTA_OIF, idx);
 	}
 
@@ -1866,19 +1862,15 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 
 		if (id) {
 			idx = ll_name_to_index(id);
-			if (idx == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n", id);
-				return -1;
-			}
+			if (!idx)
+				return nodev(id);
 			filter.iif = idx;
 			filter.iifmask = -1;
 		}
 		if (od) {
 			idx = ll_name_to_index(od);
-			if (idx == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n", od);
-				return -1;
-			}
+			if (!idx)
+				return nodev(od);
 			filter.oif = idx;
 			filter.oifmask = -1;
 		}
@@ -2028,18 +2020,14 @@ static int iproute_get(int argc, char **argv)
 
 		if (idev) {
 			idx = ll_name_to_index(idev);
-			if (idx == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n", idev);
-				return -1;
-			}
+			if (!idx)
+				return nodev(idev);
 			addattr32(&req.n, sizeof(req), RTA_IIF, idx);
 		}
 		if (odev) {
 			idx = ll_name_to_index(odev);
-			if (idx == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n", odev);
-				return -1;
-			}
+			if (!idx)
+				return nodev(odev);
 			addattr32(&req.n, sizeof(req), RTA_OIF, idx);
 		}
 	}

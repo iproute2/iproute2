@@ -142,10 +142,9 @@ static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (d[0])  {
 		ll_init_map(&rth);
 
-		if ((req.t.tcm_ifindex = ll_name_to_index(d)) == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
+		req.t.tcm_ifindex = ll_name_to_index(d);
+		if (!req.t.tcm_ifindex)
+			return -nodev(d);
 	}
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
@@ -440,10 +439,9 @@ static int tc_class_list(int argc, char **argv)
 	ll_init_map(&rth);
 
 	if (d[0]) {
-		if ((t.tcm_ifindex = ll_name_to_index(d)) == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
+		t.tcm_ifindex = ll_name_to_index(d);
+		if (!t.tcm_ifindex)
+			return -nodev(d);
 		filter_ifindex = t.tcm_ifindex;
 	}
 

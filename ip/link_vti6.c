@@ -144,11 +144,8 @@ get_failed:
 		} else if (!matches(*argv, "dev")) {
 			NEXT_ARG();
 			link = ll_name_to_index(*argv);
-			if (link == 0) {
-				fprintf(stderr, "Cannot find device \"%s\"\n",
-					*argv);
-				exit(-1);
-			}
+			if (!link)
+				exit(nodev(*argv));
 		} else if (strcmp(*argv, "fwmark") == 0) {
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))

@@ -179,7 +179,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			ifindex = ll_name_to_index(*argv);
 			if (!ifindex)
-				return -1;
+				return nodev(*argv);
 			addattr32(n, 1024, IFLA_BOND_ACTIVE_SLAVE, ifindex);
 		} else if (matches(*argv, "clear_active_slave") == 0) {
 			addattr32(n, 1024, IFLA_BOND_ACTIVE_SLAVE, 0);
@@ -242,7 +242,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			ifindex = ll_name_to_index(*argv);
 			if (!ifindex)
-				return -1;
+				return nodev(*argv);
 			addattr32(n, 1024, IFLA_BOND_PRIMARY, ifindex);
 		} else if (matches(*argv, "primary_reselect") == 0) {
 			NEXT_ARG();

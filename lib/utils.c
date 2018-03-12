@@ -845,6 +845,12 @@ void duparg2(const char *key, const char *arg)
 	exit(-1);
 }
 
+int nodev(const char *dev)
+{
+	fprintf(stderr, "Cannot find device \"%s\"\n", dev);
+	return -1;
+}
+
 int check_ifname(const char *name)
 {
 	/* These checks mimic kernel checks in dev_valid_name */

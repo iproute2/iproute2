@@ -198,10 +198,8 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv,
 		ll_init_map(&rth);
 
 		req->t.tcm_ifindex = ll_name_to_index(d);
-		if (req->t.tcm_ifindex == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
+		if (!req->t.tcm_ifindex)
+			return -nodev(d);
 	} else if (block_index) {
 		req->t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
 		req->t.tcm_block_index = block_index;
@@ -529,10 +527,8 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		ll_init_map(&rth);
 
 		req.t.tcm_ifindex = ll_name_to_index(d);
-		if (req.t.tcm_ifindex  == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
+		if (!req.t.tcm_ifindex)
+			return -nodev(d);
 		filter_ifindex = req.t.tcm_ifindex;
 	} else if (block_index) {
 		req.t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
@@ -695,10 +691,8 @@ static int tc_filter_list(int argc, char **argv)
 
 	if (d[0]) {
 		req.t.tcm_ifindex = ll_name_to_index(d);
-		if (req.t.tcm_ifindex == 0) {
-			fprintf(stderr, "Cannot find device \"%s\"\n", d);
-			return 1;
-		}
+		if (!req.t.tcm_ifindex)
+			return -nodev(d);
 		filter_ifindex = req.t.tcm_ifindex;
 	} else if (block_index) {
 		if (!tc_qdisc_block_exists(block_index)) {

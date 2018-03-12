@@ -132,9 +132,7 @@ struct link_util {
 
 struct link_util *get_link_kind(const char *kind);
 
-int iplink_parse(int argc, char **argv, struct iplink_req *req,
-		 char **name, char **type, char **link, char **dev,
-		 int *group, int *index);
+int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type);
 
 /* iplink_bridge.c */
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
