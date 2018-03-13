@@ -163,6 +163,8 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 		fprintf(f, " trunc_size %d",
 			rta_getattr_u32(tb[TCA_SAMPLE_TRUNC_SIZE]));
 
+	print_action_control(f, " ", p->action, "");
+
 	fprintf(f, "\n\tindex %d ref %d bind %d", p->index, p->refcnt,
 		p->bindcnt);
 
