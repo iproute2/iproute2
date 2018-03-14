@@ -35,6 +35,8 @@
 #define ESWITCH_INLINE_MODE_NETWORK "network"
 #define ESWITCH_INLINE_MODE_TRANSPORT "transport"
 
+static int g_new_line_count;
+
 #define pr_err(args...) fprintf(stderr, ##args)
 #define pr_out(args...)						\
 	do {							\
@@ -43,6 +45,7 @@
 			g_indent_newline = false;		\
 		}						\
 		fprintf(stdout, ##args);			\
+		g_new_line_count = 0;				\
 	} while (0)
 
 #define pr_out_sp(num, args...)					\
@@ -50,6 +53,7 @@
 		int ret = fprintf(stdout, ##args);		\
 		if (ret < num)					\
 			fprintf(stdout, "%*s", num - ret, "");	\
+		g_new_line_count = 0;				\
 	} while (0)
 
 static int g_indent_level;
@@ -77,8 +81,11 @@ static void __pr_out_indent_dec(void)
 
 static void __pr_out_newline(void)
 {
-	pr_out("\n");
-	g_indent_newline = true;
+	if (g_new_line_count < 1) {
+		pr_out("\n");
+		g_indent_newline = true;
+	}
+	g_new_line_count++;
 }
 
 static int _mnlg_socket_recv_run(struct mnlg_socket *nlg,
@@ -178,6 +185,8 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_DPIPE_TABLE_NAME	BIT(13)
 #define DL_OPT_DPIPE_TABLE_COUNTERS	BIT(14)
 #define DL_OPT_ESWITCH_ENCAP_MODE	BIT(15)
+#define DL_OPT_RESOURCE_PATH	BIT(16)
+#define DL_OPT_RESOURCE_SIZE	BIT(17)
 
 struct dl_opts {
 	uint32_t present; /* flags of present items */
@@ -198,6 +207,10 @@ struct dl_opts {
 	const char *dpipe_table_name;
 	bool dpipe_counters_enable;
 	bool eswitch_encap_mode;
+	const char *resource_path;
+	uint32_t resource_size;
+	uint32_t resource_id;
+	bool resource_id_valid;
 };
 
 struct dl {
@@ -946,6 +959,20 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_ESWITCH_ENCAP_MODE;
+		} else if (dl_argv_match(dl, "path") &&
+			   (o_all & DL_OPT_RESOURCE_PATH)) {
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &opts->resource_path);
+			if (err)
+				return err;
+			o_found |= DL_OPT_RESOURCE_PATH;
+		} else if (dl_argv_match(dl, "size") &&
+			   (o_all & DL_OPT_RESOURCE_SIZE)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint32_t(dl, &opts->resource_size);
+			if (err)
+				return err;
+			o_found |= DL_OPT_RESOURCE_SIZE;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -1088,6 +1115,12 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_ESWITCH_ENCAP_MODE)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_ESWITCH_ENCAP_MODE,
 				opts->eswitch_encap_mode);
+	if ((opts->present & DL_OPT_RESOURCE_PATH) && opts->resource_id_valid)
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_RESOURCE_ID,
+				 opts->resource_id);
+	if (opts->present & DL_OPT_RESOURCE_SIZE)
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_RESOURCE_SIZE,
+				 opts->resource_size);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -1146,6 +1179,7 @@ static void cmd_dev_help(void)
 	pr_err("                               [ inline-mode { none | link | network | transport } ]\n");
 	pr_err("                               [ encap { disable | enable } ]\n");
 	pr_err("       devlink dev eswitch show DEV\n");
+	pr_err("       devlink dev reload DEV\n");
 }
 
 static bool cmp_arr_last_handle(struct dl *dl, const char *bus_name,
@@ -1401,20 +1435,22 @@ static void pr_out_array_start(struct dl *dl, const char *name)
 		jsonw_name(dl->jw, name);
 		jsonw_start_array(dl->jw);
 	} else {
-		if (!g_indent_newline)
-			__pr_out_newline();
-		pr_out("%s:", name);
-		__pr_out_newline();
 		__pr_out_indent_inc();
+		__pr_out_newline();
+		pr_out("%s:", name);
+		__pr_out_indent_inc();
+		__pr_out_newline();
 	}
 }
 
 static void pr_out_array_end(struct dl *dl)
 {
-	if (dl->json_output)
+	if (dl->json_output) {
 		jsonw_end_array(dl->jw);
-	else
+	} else {
 		__pr_out_indent_dec();
+		__pr_out_indent_dec();
+	}
 }
 
 static void pr_out_entry_start(struct dl *dl)
@@ -1585,6 +1621,31 @@ static int cmd_dev_show(struct dl *dl)
 	return err;
 }
 
+static void cmd_dev_reload_help(void)
+{
+	pr_err("Usage: devlink dev reload [ DEV ]\n");
+}
+
+static int cmd_dev_reload(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
+		cmd_dev_reload_help();
+		return 0;
+	}
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_RELOAD,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE, 0);
+	if (err)
+		return err;
+
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
 static int cmd_dev(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help")) {
@@ -1597,6 +1658,9 @@ static int cmd_dev(struct dl *dl)
 	} else if (dl_argv_match(dl, "eswitch")) {
 		dl_arg_inc(dl);
 		return cmd_dev_eswitch(dl);
+	} else if (dl_argv_match(dl, "reload")) {
+		dl_arg_inc(dl);
+		return cmd_dev_reload(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
@@ -2675,12 +2739,112 @@ struct dpipe_header {
 	unsigned int fields_count;
 };
 
+struct dpipe_table {
+	struct list_head list;
+	char *name;
+	unsigned int resource_id;
+	bool resource_valid;
+};
+
+struct dpipe_tables {
+	struct list_head table_list;
+};
+
+struct resource {
+	char *name;
+	uint64_t size;
+	uint64_t size_new;
+	uint64_t size_min;
+	uint64_t size_max;
+	uint64_t size_gran;
+	enum devlink_resource_unit unit;
+	bool size_valid;
+	uint64_t size_occ;
+	bool occ_valid;
+	uint64_t id;
+	struct list_head list;
+	struct list_head resource_list;
+	struct resource *parent;
+};
+
+struct resources {
+	struct list_head resource_list;
+};
+
+struct resource_ctx {
+	struct dl *dl;
+	int err;
+	struct resources *resources;
+	struct dpipe_tables *tables;
+	bool print_resources;
+	bool pending_change;
+};
+
+static struct resource *resource_alloc(void)
+{
+	struct resource *resource;
+
+	resource = calloc(1, sizeof(struct resource));
+	if (!resource)
+		return NULL;
+	INIT_LIST_HEAD(&resource->resource_list);
+	return resource;
+}
+
+static void resource_free(struct resource *resource)
+{
+	struct resource *child_resource, *tmp;
+
+	list_for_each_entry_safe(child_resource, tmp, &resource->resource_list,
+				 list) {
+		free(child_resource->name);
+		resource_free(child_resource);
+	}
+	free(resource);
+}
+
+static struct resources *resources_alloc(void)
+{
+	struct resources *resources;
+
+	resources = calloc(1, sizeof(struct resources));
+	if (!resources)
+		return NULL;
+	INIT_LIST_HEAD(&resources->resource_list);
+	return resources;
+}
+
+static void resources_free(struct resources *resources)
+{
+	struct resource *resource, *tmp;
+
+	list_for_each_entry_safe(resource, tmp, &resources->resource_list, list)
+		resource_free(resource);
+}
+
+static int resource_ctx_init(struct resource_ctx *ctx, struct dl *dl)
+{
+	ctx->resources = resources_alloc();
+	if (!ctx->resources)
+		return -ENOMEM;
+	ctx->dl = dl;
+	return 0;
+}
+
+static void resource_ctx_fini(struct resource_ctx *ctx)
+{
+	resources_free(ctx->resources);
+}
+
 struct dpipe_ctx {
 	struct dl *dl;
 	int err;
 	struct list_head global_headers;
 	struct list_head local_headers;
+	struct dpipe_tables *tables;
+	struct resources *resources;
 	bool print_headers;
+	bool print_tables;
 };
 
 static struct dpipe_header *dpipe_header_alloc(unsigned int fields_count)
@@ -2733,25 +2897,49 @@ static void dpipe_header_del(struct dpipe_header *header)
 	list_del(&header->list);
 }
 
-static struct dpipe_ctx *dpipe_ctx_alloc(struct dl *dl)
+static struct dpipe_table *dpipe_table_alloc(void)
 {
-	struct dpipe_ctx *ctx;
+	return calloc(1, sizeof(struct dpipe_table));
+}
 
-	ctx = calloc(1, sizeof(struct dpipe_ctx));
-	if (!ctx)
+static void dpipe_table_free(struct dpipe_table *table)
+{
+	free(table);
+}
+
+static struct dpipe_tables *dpipe_tables_alloc(void)
+{
+	struct dpipe_tables *tables;
+
+	tables = calloc(1, sizeof(struct dpipe_tables));
+	if (!tables)
 		return NULL;
+	INIT_LIST_HEAD(&tables->table_list);
+	return tables;
+}
+
+static void dpipe_tables_free(struct dpipe_tables *tables)
+{
+	struct dpipe_table *table, *tmp;
+
+	list_for_each_entry_safe(table, tmp, &tables->table_list, list)
+		dpipe_table_free(table);
+	free(tables);
+}
+
+static int dpipe_ctx_init(struct dpipe_ctx *ctx, struct dl *dl)
+{
+	ctx->tables = dpipe_tables_alloc();
+	if (!ctx->tables)
+		return -ENOMEM;
+
 	ctx->dl = dl;
 	INIT_LIST_HEAD(&ctx->global_headers);
 	INIT_LIST_HEAD(&ctx->local_headers);
-	return ctx;
+	return 0;
 }
 
-static void dpipe_ctx_free(struct dpipe_ctx *ctx)
-{
-	free(ctx);
-}
-
-static void dpipe_ctx_clear(struct dpipe_ctx *ctx)
+static void dpipe_ctx_fini(struct dpipe_ctx *ctx)
 {
 	struct dpipe_header *header, *tmp;
 
@@ -2767,6 +2955,7 @@ static void dpipe_ctx_clear(struct dpipe_ctx *ctx)
 		dpipe_header_clear(header);
 		dpipe_header_free(header);
 	}
+	dpipe_tables_free(ctx->tables);
 }
 
 static const char *dpipe_header_id2s(struct dpipe_ctx *ctx,
@@ -3022,7 +3211,7 @@ static int cmd_dpipe_header_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_dpipe_headers_show(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
-	struct dpipe_ctx *ctx;
+	struct dpipe_ctx ctx = {};
 	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
 	int err;
 
@@ -3032,20 +3221,19 @@ static int cmd_dpipe_headers_show(struct dl *dl)
 	if (err)
 		return err;
 
-	ctx = dpipe_ctx_alloc(dl);
-	if (!ctx)
-		return -ENOMEM;
+	err = dpipe_ctx_init(&ctx, dl);
+	if (err)
+		return err;
 
-	ctx->print_headers = true;
+	ctx.print_headers = true;
 
 	pr_out_section_start(dl, "header");
-	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, ctx);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, &ctx);
 	if (err)
-		pr_err("error get headers %s\n", strerror(ctx->err));
+		pr_err("error get headers %s\n", strerror(ctx.err));
 	pr_out_section_end(dl);
 
-	dpipe_ctx_clear(ctx);
-	dpipe_ctx_free(ctx);
+	dpipe_ctx_fini(&ctx);
 	return err;
 }
 
@@ -3239,11 +3427,73 @@ err_match_parse:
 	return -EINVAL;
 }
 
+static struct resource *
+resource_find(struct resources *resources, struct resource *resource,
+	      uint64_t resource_id)
+{
+	struct list_head *list_head;
+
+	if (!resource)
+		list_head = &resources->resource_list;
+	else
+		list_head = &resource->resource_list;
+
+	list_for_each_entry(resource, list_head, list) {
+		struct resource *child_resource;
+
+		if (resource->id == resource_id)
+			return resource;
+
+		child_resource = resource_find(resources, resource,
+					       resource_id);
+		if (child_resource)
+			return child_resource;
+	}
+	return NULL;
+}
+
+static void
+resource_path_print(struct dl *dl, struct resources *resources,
+		    uint64_t resource_id)
+{
+	struct resource *resource, *parent_resource;
+	const char del[] = "/";
+	int path_len = 0;
+	char *path;
+
+	resource = resource_find(resources, NULL, resource_id);
+	if (!resource)
+		return;
+
+	for (parent_resource = resource; parent_resource;
+	     parent_resource = parent_resource->parent)
+		path_len += strlen(parent_resource->name) + 1;
+
+	path_len++;
+	path = calloc(1, path_len);
+	if (!path)
+		return;
+
+	path += path_len - 1;
+	for (parent_resource = resource; parent_resource;
+		parent_resource = parent_resource->parent) {
+		path -= strlen(parent_resource->name);
+		memcpy(path, parent_resource->name,
+		       strlen(parent_resource->name));
+		path -= strlen(del);
+		memcpy(path, del, strlen(del));
+	}
+	pr_out_str(dl, "resource_path", path);
+	free(path);
+}
+
 static int dpipe_table_show(struct dpipe_ctx *ctx, struct nlattr *nl)
 {
 	struct nlattr *nla_table[DEVLINK_ATTR_MAX + 1] = {};
+	struct dpipe_table *table;
+	uint32_t resource_units;
 	bool counters_enabled;
-	const char *name;
+	bool resource_valid;
 	uint32_t size;
 	int err;
 
@@ -3259,14 +3509,35 @@ static int dpipe_table_show(struct dpipe_ctx *ctx, struct nlattr *nl)
 		return -EINVAL;
 	}
 
-	name = mnl_attr_get_str(nla_table[DEVLINK_ATTR_DPIPE_TABLE_NAME]);
+	table = dpipe_table_alloc();
+	if (!table)
+		return -ENOMEM;
+
+	table->name = strdup(mnl_attr_get_str(nla_table[DEVLINK_ATTR_DPIPE_TABLE_NAME]));
 	size = mnl_attr_get_u32(nla_table[DEVLINK_ATTR_DPIPE_TABLE_SIZE]);
 	counters_enabled = !!mnl_attr_get_u8(nla_table[DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED]);
 
-	pr_out_str(ctx->dl, "name", name);
+	resource_valid = !!nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID];
+	if (resource_valid) {
+		table->resource_id = mnl_attr_get_u64(nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID]);
+		table->resource_valid = true;
+	}
+
+	list_add_tail(&table->list, &ctx->tables->table_list);
+	if (!ctx->print_tables)
+		return 0;
+
+	pr_out_str(ctx->dl, "name", table->name);
 	pr_out_uint(ctx->dl, "size", size);
 	pr_out_str(ctx->dl, "counters_enabled",
 		   counters_enabled ? "true" : "false");
+
+	if (resource_valid) {
+		resource_units = mnl_attr_get_u32(nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_UNITS]);
+		resource_path_print(ctx->dl, ctx->resources,
+				    table->resource_id);
+		pr_out_uint(ctx->dl, "resource_units", resource_units);
+	}
 
 	pr_out_array_start(ctx->dl, "match");
 	if (dpipe_table_matches_show(ctx, nla_table[DEVLINK_ATTR_DPIPE_TABLE_MATCHES]))
@@ -3292,15 +3563,18 @@ static int dpipe_tables_show(struct dpipe_ctx *ctx, struct nlattr **tb)
 	struct nlattr *nla_table;
 
 	mnl_attr_for_each_nested(nla_table, nla_tables) {
-		pr_out_handle_start_arr(ctx->dl, tb);
+		if (ctx->print_tables)
+			pr_out_handle_start_arr(ctx->dl, tb);
 		if (dpipe_table_show(ctx, nla_table))
 			goto err_table_show;
-		pr_out_handle_end(ctx->dl);
+		if (ctx->print_tables)
+			pr_out_handle_end(ctx->dl);
 	}
 	return 0;
 
 err_table_show:
-	pr_out_handle_end(ctx->dl);
+	if (ctx->print_tables)
+		pr_out_handle_end(ctx->dl);
 	return -EINVAL;
 }
 
@@ -3320,39 +3594,68 @@ static int cmd_dpipe_table_show_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_OK;
 }
 
+static int cmd_resource_dump_cb(const struct nlmsghdr *nlh, void *data);
+
 static int cmd_dpipe_table_show(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
-	struct dpipe_ctx *ctx;
+	struct dpipe_ctx dpipe_ctx = {};
+	struct resource_ctx resource_ctx = {};
 	uint16_t flags = NLM_F_REQUEST;
 	int err;
 
-	ctx = dpipe_ctx_alloc(dl);
-	if (!ctx)
-		return -ENOMEM;
-
 	err = dl_argv_parse(dl, DL_OPT_HANDLE, DL_OPT_DPIPE_TABLE_NAME);
 	if (err)
-		goto out;
+		return err;
 
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_DPIPE_HEADERS_GET, flags);
+
+	err = dpipe_ctx_init(&dpipe_ctx, dl);
+	if (err)
+		return err;
+
+	dpipe_ctx.print_tables = true;
+
 	dl_opts_put(nlh, dl);
-	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, ctx);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb,
+				  &dpipe_ctx);
 	if (err) {
-		pr_err("error get headers %s\n", strerror(ctx->err));
-		goto out;
+		pr_err("error get headers %s\n", strerror(dpipe_ctx.err));
+		goto err_headers_get;
 	}
 
+	err = resource_ctx_init(&resource_ctx, dl);
+	if (err)
+		goto err_resource_ctx_init;
+
+	resource_ctx.print_resources = false;
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_RESOURCE_DUMP, flags);
+	dl_opts_put(nlh, dl);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_resource_dump_cb,
+				  &resource_ctx);
+	if (err) {
+		pr_err("error get resources %s\n", strerror(resource_ctx.err));
+		goto err_resource_dump;
+	}
+
+	dpipe_ctx.resources = resource_ctx.resources;
 	flags = NLM_F_REQUEST | NLM_F_ACK;
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_DPIPE_TABLE_GET, flags);
 	dl_opts_put(nlh, dl);
 
 	pr_out_section_start(dl, "table");
-	_mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_show_cb, ctx);
+	_mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_show_cb, &dpipe_ctx);
 	pr_out_section_end(dl);
-out:
-	dpipe_ctx_clear(ctx);
-	dpipe_ctx_free(ctx);
+
+	resource_ctx_fini(&resource_ctx);
+	dpipe_ctx_fini(&dpipe_ctx);
+	return 0;
+
+err_resource_dump:
+	resource_ctx_fini(&resource_ctx);
+err_resource_ctx_init:
+err_headers_get:
+	dpipe_ctx_fini(&dpipe_ctx);
 	return err;
 }
 
@@ -3720,13 +4023,13 @@ static int cmd_dpipe_table_entry_dump_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_dpipe_table_dump(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
-	struct dpipe_ctx *ctx;
+	struct dpipe_ctx ctx = {};
 	uint16_t flags = NLM_F_REQUEST;
 	int err;
 
-	ctx = dpipe_ctx_alloc(dl);
-	if (!ctx)
-		return -ENOMEM;
+	err = dpipe_ctx_init(&ctx, dl);
+	if (err)
+		return err;
 
 	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_DPIPE_TABLE_NAME, 0);
 	if (err)
@@ -3734,9 +4037,9 @@ static int cmd_dpipe_table_dump(struct dl *dl)
 
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_DPIPE_HEADERS_GET, flags);
 	dl_opts_put(nlh, dl);
-	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, ctx);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_header_cb, &ctx);
 	if (err) {
-		pr_err("error get headers %s\n", strerror(ctx->err));
+		pr_err("error get headers %s\n", strerror(ctx.err));
 		goto out;
 	}
 
@@ -3745,11 +4048,10 @@ static int cmd_dpipe_table_dump(struct dl *dl)
 	dl_opts_put(nlh, dl);
 
 	pr_out_section_start(dl, "table_entry");
-	_mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_entry_dump_cb, ctx);
+	_mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_entry_dump_cb, &ctx);
 	pr_out_section_end(dl);
 out:
-	dpipe_ctx_clear(ctx);
-	dpipe_ctx_free(ctx);
+	dpipe_ctx_fini(&ctx);
 	return err;
 }
 
@@ -3800,11 +4102,368 @@ static int cmd_dpipe(struct dl *dl)
 	return -ENOENT;
 }
 
+static int
+resource_parse(struct resource_ctx *ctx, struct resource *resource,
+	       struct nlattr **nla_resource)
+{
+	if (!nla_resource[DEVLINK_ATTR_RESOURCE_NAME] ||
+	    !nla_resource[DEVLINK_ATTR_RESOURCE_SIZE] ||
+	    !nla_resource[DEVLINK_ATTR_RESOURCE_ID] ||
+	    !nla_resource[DEVLINK_ATTR_RESOURCE_UNIT] ||
+	    !nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_MIN] ||
+	    !nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_MAX] ||
+	    !nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_GRAN]) {
+		return -EINVAL;
+	}
+
+	resource->name = strdup(mnl_attr_get_str(nla_resource[DEVLINK_ATTR_RESOURCE_NAME]));
+	resource->size = mnl_attr_get_u64(nla_resource[DEVLINK_ATTR_RESOURCE_SIZE]);
+	resource->id = mnl_attr_get_u64(nla_resource[DEVLINK_ATTR_RESOURCE_ID]);
+	resource->unit = mnl_attr_get_u8(nla_resource[DEVLINK_ATTR_RESOURCE_UNIT]);
+	resource->size_min = mnl_attr_get_u64(nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_MIN]);
+	resource->size_max = mnl_attr_get_u64(nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_MAX]);
+	resource->size_gran = mnl_attr_get_u64(nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_GRAN]);
+
+	if (nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_NEW])
+		resource->size_new = mnl_attr_get_u64(nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_NEW]);
+	else
+		resource->size_new = resource->size;
+
+	if (nla_resource[DEVLINK_ATTR_RESOURCE_OCC]) {
+		resource->size_occ = mnl_attr_get_u64(nla_resource[DEVLINK_ATTR_RESOURCE_OCC]);
+		resource->occ_valid = true;
+	}
+
+	if (resource->size_new != resource->size)
+		ctx->pending_change = true;
+
+	return 0;
+}
+
+static int
+resource_get(struct resource_ctx *ctx, struct resource *resource,
+	     struct resource *parent_resource, struct nlattr *nl)
+{
+	struct nlattr *nla_resource[DEVLINK_ATTR_MAX + 1] = {};
+	struct nlattr *nla_child_resource;
+	struct nlattr *nla_resources;
+	bool top = false;
+	int err;
+
+	if (!resource) {
+		nla_resources = nl;
+		top = true;
+		goto out;
+	}
+
+	err = mnl_attr_parse_nested(nl, attr_cb, nla_resource);
+	if (err != MNL_CB_OK)
+		return -EINVAL;
+
+	err = resource_parse(ctx, resource, nla_resource);
+	if (err)
+		return err;
+
+	resource->parent = parent_resource;
+	if (!nla_resource[DEVLINK_ATTR_RESOURCE_LIST])
+		return 0;
+
+	resource->size_valid = !!mnl_attr_get_u8(nla_resource[DEVLINK_ATTR_RESOURCE_SIZE_VALID]);
+	nla_resources = nla_resource[DEVLINK_ATTR_RESOURCE_LIST];
+out:
+	mnl_attr_for_each_nested(nla_child_resource, nla_resources) {
+		struct resource *child_resource;
+		struct list_head *list;
+
+		child_resource = resource_alloc();
+		if (!child_resource)
+			return -ENOMEM;
+
+		if (top)
+			list = &ctx->resources->resource_list;
+		else
+			list = &resource->resource_list;
+
+		list_add_tail(&child_resource->list, list);
+		err = resource_get(ctx, child_resource, resource,
+				   nla_child_resource);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
+static const char *resource_unit_str_get(enum devlink_resource_unit unit)
+{
+	switch (unit) {
+	case DEVLINK_RESOURCE_UNIT_ENTRY: return "entry";
+	default: return "<unknown unit>";
+	}
+}
+
+static void resource_show(struct resource *resource,
+			  struct resource_ctx *ctx)
+{
+	struct resource *child_resource;
+	struct dpipe_table *table;
+	struct dl *dl = ctx->dl;
+	bool array = false;
+
+	pr_out_str(dl, "name", resource->name);
+	if (dl->verbose)
+		resource_path_print(dl, ctx->resources, resource->id);
+	pr_out_uint(dl, "size", resource->size);
+	if (resource->size != resource->size_new)
+		pr_out_uint(dl, "size_new", resource->size_new);
+	if (resource->occ_valid)
+		pr_out_uint(dl, "occ", resource->size_occ);
+	pr_out_str(dl, "unit", resource_unit_str_get(resource->unit));
+
+	if (resource->size_min != resource->size_max) {
+		pr_out_uint(dl, "size_min", resource->size_min);
+		pr_out_uint(dl, "size_max", resource->size_max);
+		pr_out_uint(dl, "size_gran", resource->size_gran);
+	}
+
+	list_for_each_entry(table, &ctx->tables->table_list, list)
+		if (table->resource_id == resource->id &&
+		    table->resource_valid)
+			array = true;
+
+	if (array)
+		pr_out_array_start(dl, "dpipe_tables");
+	else
+		pr_out_str(dl, "dpipe_tables", "none");
+
+	list_for_each_entry(table, &ctx->tables->table_list, list) {
+		if (table->resource_id != resource->id ||
+		    !table->resource_valid)
+			continue;
+		pr_out_entry_start(dl);
+		pr_out_str(dl, "table_name", table->name);
+		pr_out_entry_end(dl);
+	}
+	if (array)
+		pr_out_array_end(dl);
+
+	if (list_empty(&resource->resource_list))
+		return;
+
+	if (ctx->pending_change)
+		pr_out_str(dl, "size_valid", resource->size_valid ?
+			   "true" : "false");
+	pr_out_array_start(dl, "resources");
+	list_for_each_entry(child_resource, &resource->resource_list, list) {
+		pr_out_entry_start(dl);
+		resource_show(child_resource, ctx);
+		pr_out_entry_end(dl);
+	}
+	pr_out_array_end(dl);
+}
+
+static void
+resources_show(struct resource_ctx *ctx, struct nlattr **tb)
+{
+	struct resources *resources = ctx->resources;
+	struct resource *resource;
+
+	list_for_each_entry(resource, &resources->resource_list, list) {
+		pr_out_handle_start_arr(ctx->dl, tb);
+		resource_show(resource, ctx);
+		pr_out_handle_end(ctx->dl);
+	}
+}
+
+static int resources_get(struct resource_ctx *ctx, struct nlattr **tb)
+{
+	return resource_get(ctx, NULL, NULL, tb[DEVLINK_ATTR_RESOURCE_LIST]);
+}
+
+static int cmd_resource_dump_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct resource_ctx *ctx = data;
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	int err;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_RESOURCE_LIST])
+		return MNL_CB_ERROR;
+
+	err = resources_get(ctx, tb);
+	if (err) {
+		ctx->err = err;
+		return MNL_CB_ERROR;
+	}
+
+	if (ctx->print_resources)
+		resources_show(ctx, tb);
+
+	return MNL_CB_OK;
+}
+
+static int cmd_resource_show(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	struct dpipe_ctx dpipe_ctx = {};
+	struct resource_ctx resource_ctx = {};
+	int err;
+
+	err = dl_argv_parse(dl, DL_OPT_HANDLE, 0);
+	if (err)
+		return err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_DPIPE_TABLE_GET,
+			       NLM_F_REQUEST);
+	dl_opts_put(nlh, dl);
+
+	err = dpipe_ctx_init(&dpipe_ctx, dl);
+	if (err)
+		return err;
+
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dpipe_table_show_cb,
+				  &dpipe_ctx);
+	if (err) {
+		pr_err("error get tables %s\n", strerror(dpipe_ctx.err));
+		goto out;
+	}
+
+	err = resource_ctx_init(&resource_ctx, dl);
+	if (err)
+		goto out;
+
+	resource_ctx.print_resources = true;
+	resource_ctx.tables = dpipe_ctx.tables;
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_RESOURCE_DUMP,
+			       NLM_F_REQUEST | NLM_F_ACK);
+	dl_opts_put(nlh, dl);
+	pr_out_section_start(dl, "resources");
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_resource_dump_cb,
+				  &resource_ctx);
+	pr_out_section_end(dl);
+	resource_ctx_fini(&resource_ctx);
+out:
+	dpipe_ctx_fini(&dpipe_ctx);
+	return err;
+}
+
+static void cmd_resource_help(void)
+{
+	pr_err("Usage: devlink resource show DEV\n"
+	       "       devlink resource set DEV path PATH size SIZE\n");
+}
+
+static struct resource *
+resource_find_by_name(struct list_head *list, char *name)
+{
+	struct resource *resource;
+
+	list_for_each_entry(resource, list, list) {
+		if (!strcmp(resource->name, name))
+			return resource;
+	}
+	return NULL;
+}
+
+static int
+resource_path_parse(struct resource_ctx *ctx, const char *resource_path,
+		    uint32_t *p_resource_id, bool *p_resource_valid)
+{
+	struct resource *resource;
+	uint32_t resource_id = 0;
+	char *resource_path_dup;
+	struct list_head *list;
+	const char del[] = "/";
+	char *resource_name;
+
+	resource_path_dup = strdup(resource_path);
+	list = &ctx->resources->resource_list;
+	resource_name = strtok(resource_path_dup, del);
+	while (resource_name != NULL) {
+		resource = resource_find_by_name(list, resource_name);
+		if (!resource)
+			goto err_resource_lookup;
+
+		list = &resource->resource_list;
+		resource_name = strtok(NULL, del);
+		resource_id = resource->id;
+	}
+	free(resource_path_dup);
+	*p_resource_valid = true;
+	*p_resource_id = resource_id;
+	return 0;
+
+err_resource_lookup:
+	free(resource_path_dup);
+	return -EINVAL;
+}
+
+static int cmd_resource_set(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	struct resource_ctx ctx = {};
+	int err;
+
+	err = resource_ctx_init(&ctx, dl);
+	if (err)
+		return err;
+
+	ctx.print_resources = false;
+	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_RESOURCE_PATH |
+			    DL_OPT_RESOURCE_SIZE, 0);
+	if (err)
+		goto out;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_RESOURCE_DUMP,
+			       NLM_F_REQUEST);
+	dl_opts_put(nlh, dl);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_resource_dump_cb, &ctx);
+	if (err) {
+		pr_err("error getting resources %s\n", strerror(ctx.err));
+		goto out;
+	}
+
+	err = resource_path_parse(&ctx, dl->opts.resource_path,
+				  &dl->opts.resource_id,
+				  &dl->opts.resource_id_valid);
+	if (err) {
+		pr_err("error parsing resource path %s\n", strerror(err));
+		goto out;
+	}
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_RESOURCE_SET,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	dl_opts_put(nlh, dl);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+out:
+	resource_ctx_fini(&ctx);
+	return err;
+}
+
+static int cmd_resource(struct dl *dl)
+{
+	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
+		cmd_resource_help();
+		return 0;
+	} else if (dl_argv_match(dl, "show")) {
+		dl_arg_inc(dl);
+		return cmd_resource_show(dl);
+	} else if (dl_argv_match(dl, "set")) {
+		dl_arg_inc(dl);
+		return cmd_resource_set(dl);
+	}
+	pr_err("Command \"%s\" not found\n", dl_argv(dl));
+	return -ENOENT;
+}
+
 static void help(void)
 {
 	pr_err("Usage: devlink [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "       devlink [ -f[orce] ] -b[atch] filename\n"
-	       "where  OBJECT := { dev | port | sb | monitor | dpipe }\n"
+	       "where  OBJECT := { dev | port | sb | monitor | dpipe | resource }\n"
 	       "       OPTIONS := { -V[ersion] | -n[no-nice-names] | -j[json] | -p[pretty] | -v[verbose] }\n");
 }
 
@@ -3831,6 +4490,9 @@ static int dl_cmd(struct dl *dl, int argc, char **argv)
 	} else if (dl_argv_match(dl, "dpipe")) {
 		dl_arg_inc(dl);
 		return cmd_dpipe(dl);
+	} else if (dl_argv_match(dl, "resource")) {
+		dl_arg_inc(dl);
+		return cmd_resource(dl);
 	}
 	pr_err("Object \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;

@@ -599,6 +599,7 @@ static int __parse_action_control(int *argc_p, char ***argv_p, int *result_p,
 		}
 		result |= jump_cnt;
 	}
+	NEXT_ARG_FWD();
 	*argc_p = argc;
 	*argv_p = argv;
 	*result_p = result;
@@ -695,8 +696,8 @@ out:
 int parse_action_control_slash(int *argc_p, char ***argv_p,
 			       int *result1_p, int *result2_p, bool allow_num)
 {
+	int result1, result2, argc = *argc_p;
 	char **argv = *argv_p;
-	int result1, result2;
 	char *p = strchr(*argv, '/');
 
 	if (!p)
@@ -715,6 +716,9 @@ int parse_action_control_slash(int *argc_p, char ***argv_p,
 
 	*result1_p = result1;
 	*result2_p = result2;
+	NEXT_ARG_FWD();
+	*argc_p = argc;
+	*argv_p = argv;
 	return 0;
 }
 

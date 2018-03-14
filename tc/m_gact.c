@@ -87,12 +87,10 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 	if (argc < 0)
 		return -1;
 
-	if (matches(*argv, "gact") != 0 &&
-		parse_action_control(&argc, &argv, &p.action, false) == -1) {
+	if (!matches(*argv, "gact"))
+		NEXT_ARG_FWD();
+	if (parse_action_control(&argc, &argv, &p.action, false))
 		usage();	/* does not return */
-	}
-
-	NEXT_ARG_FWD();
 
 #ifdef CONFIG_GACT_PROB
 	if (argc > 0) {
@@ -113,7 +111,6 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 			if (parse_action_control(&argc, &argv,
 						 &pp.paction, false) == -1)
 				usage();
-			NEXT_ARG_FWD();
 			if (get_u16(&pp.pval, *argv, 10)) {
 				fprintf(stderr,
 					"Illegal probability val 0x%x\n",

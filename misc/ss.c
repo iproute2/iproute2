@@ -239,6 +239,7 @@ struct filter {
 	uint64_t families;
 	struct ssfilter *f;
 	bool kill;
+	struct rtnl_handle *rth_for_killing;
 };
 
 #define FAMILY_MASK(family) ((uint64_t)1 << (family))
@@ -1196,9 +1197,14 @@ newline:
 /* Render buffered output with spacing and delimiters, then free up buffers */
 static void render(int screen_width)
 {
-	struct buf_token *token = (struct buf_token *)buffer.head->data;
+	struct buf_token *token;
 	int printed, line_started = 0;
 	struct column *f;
+
+	if (!buffer.head)
+		return;
+
+	token = (struct buf_token *)buffer.head->data;
 
 	/* Ensure end alignment of last token, it wasn't necessarily flushed */
 	buffer.tail->end += buffer.cur->len % 2;
@@ -4265,6 +4271,7 @@ static int generic_show_sock(const struct sockaddr_nl *addr,
 	switch (r->sdiag_family) {
 	case AF_INET:
 	case AF_INET6:
+		inet_arg.rth = inet_arg.f->rth_for_killing;
 		return show_one_inet_sock(addr, nlh, &inet_arg);
 	case AF_UNIX:
 		return unix_show_sock(addr, nlh, arg);
@@ -4283,7 +4290,7 @@ static int handle_follow_request(struct filter *f)
 {
 	int ret = 0;
 	int groups = 0;
-	struct rtnl_handle rth;
+	struct rtnl_handle rth, rth2;
 
 	if (f->families & FAMILY_MASK(AF_INET) && f->dbs & (1 << TCP_DB))
 		groups |= 1 << (SKNLGRP_INET_TCP_DESTROY - 1);
@@ -4303,10 +4310,20 @@ static int handle_follow_request(struct filter *f)
 	rth.dump = 0;
 	rth.local.nl_pid = 0;
 
+	if (f->kill) {
+		if (rtnl_open_byproto(&rth2, groups, NETLINK_SOCK_DIAG)) {
+			rtnl_close(&rth);
+			return -1;
+		}
+		f->rth_for_killing = &rth2;
+	}
+
 	if (rtnl_dump_filter(&rth, generic_show_sock, f))
 		ret = -1;
 
 	rtnl_close(&rth);
+	if (f->rth_for_killing)
+		rtnl_close(f->rth_for_killing);
 	return ret;
 }
 

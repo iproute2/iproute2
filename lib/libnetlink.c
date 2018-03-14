@@ -65,7 +65,7 @@ static int err_attr_cb(const struct nlattr *attr, void *data)
 }
 
 /* dump netlink extended ack error message */
-static int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
+int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 {
 	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};
 	const struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
@@ -120,7 +120,7 @@ static int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 #warning "libmnl required for error support"
 
 /* No extended error ack without libmnl */
-static int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
+int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 {
 	return 0;
 }
@@ -670,8 +670,9 @@ next:
 						free(buf);
 					if (h->nlmsg_seq == seq)
 						return 0;
-					else
+					else if (i < iovlen)
 						goto next;
+					return 0;
 				}
 
 				if (rtnl->proto != NETLINK_SOCK_DIAG &&

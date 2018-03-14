@@ -42,6 +42,10 @@ devlink-dev \- devlink device configuration
 .BR "devlink dev eswitch show"
 .IR DEV
 
+.ti -8
+.BR "devlink dev reload"
+.IR DEV
+
 .SH "DESCRIPTION"
 .SS devlink dev show - display devlink device attributes
 
@@ -94,6 +98,12 @@ Set eswitch encapsulation support
 .I enable
 - Enable encapsulation support
 
+.SS devlink dev reload - perform hot reload of the driver.
+
+.PP
+.I "DEV"
+- Specifies the devlink device to reload.
+
 .SH "EXAMPLES"
 .PP
 devlink dev show
@@ -114,6 +124,11 @@ Shows the eswitch mode of specified devlink device.
 devlink dev eswitch set pci/0000:01:00.0 mode switchdev
 .RS 4
 Sets the eswitch mode of specified devlink device to switchdev.
+.RE
+.PP
+devlink dev reload pci/0000:01:00.0
+.RS 4
+Performs hot reload of specified devlink device.
 
 .SH SEE ALSO
 .BR devlink (8),

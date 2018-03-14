@@ -275,8 +275,9 @@ static int nl_get_ll_addr_len(unsigned int dev_index)
 		return -1;
 	}
 
+	len = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
 	free(answer);
-	return RTA_PAYLOAD(tb[IFLA_ADDRESS]);
+	return len;
 }
 
 static void iplink_parse_vf_vlan_info(int vf, int *argcp, char ***argvp,

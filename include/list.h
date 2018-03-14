@@ -108,6 +108,11 @@ static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 	n->pprev = &h->first;
 }
 
+static inline int list_empty(const struct list_head *head)
+{
+	return head->next == head;
+}
+
 #define hlist_for_each(pos, head) \
 	for (pos = (head)->first; pos ; pos = pos->next)
 

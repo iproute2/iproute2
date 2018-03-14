@@ -174,7 +174,6 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 	parse_action_control_dflt(&argc, &argv, &parm.action,
 				  false, TC_ACT_PIPE);
 
-	NEXT_ARG_FWD();
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();

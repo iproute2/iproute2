@@ -172,6 +172,7 @@ int main(int argc, char **argv)
 {
 	char *basename;
 	char *batch_file = NULL;
+	int color = 0;
 
 	basename = strrchr(argv[0], '/');
 	if (basename == NULL)
@@ -271,7 +272,7 @@ int main(int argc, char **argv)
 			}
 			rcvbuf = size;
 		} else if (matches(opt, "-color") == 0) {
-			enable_color();
+			++color;
 		} else if (matches(opt, "-help") == 0) {
 			usage();
 		} else if (matches(opt, "-netns") == 0) {
@@ -291,8 +292,8 @@ int main(int argc, char **argv)
 
 	_SL_ = oneline ? "\\" : "\n";
 
-	if (json)
-		check_if_color_enabled();
+	if (color && !json)
+		enable_color();
 
 	if (batch_file)
 		return batch(batch_file);

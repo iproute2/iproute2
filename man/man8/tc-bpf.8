@@ -14,6 +14,10 @@ CLS_NAME ] [
 UDS_FILE ] [
 .B verbose
 ] [
+.B direct-action
+|
+.B da
+] [
 .B skip_hw
 |
 .B skip_sw
@@ -140,6 +144,11 @@ example, for monitoring purposes or to push down new policies.
 if set, it will dump the eBPF verifier output, even if loading the eBPF
 program was successful. By default, only on error, the verifier log is
 being emitted to the user.
+
+.SS direct-action | da
+instructs eBPF classifier to not invoke external TC actions, instead use the
+TC actions return codes (\fBTC_ACT_OK\fR, \fBTC_ACT_SHOT\fR etc.) for
+classifiers.
 
 .SS skip_hw | skip_sw
 hardware offload control flags. By default TC will try to offload

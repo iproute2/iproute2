@@ -365,7 +365,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 		return tc_print_action_flush(f, tb[0]);
 
 	open_json_array(PRINT_JSON, "actions");
-	for (i = 0; i < tot_acts; i++) {
+	for (i = 0; i <= tot_acts; i++) {
 		if (tb[i]) {
 			open_json_object(NULL);
 			print_uint(PRINT_ANY, "order",
