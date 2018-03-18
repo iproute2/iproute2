@@ -560,13 +560,22 @@ static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 {
 	memset(addr, 0, sizeof(*addr));
 
-	if (strcmp(name, "default") == 0 ||
-	    strcmp(name, "all") == 0 ||
-	    strcmp(name, "any") == 0) {
+	if (strcmp(name, "default") == 0) {
 		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
 		addr->family = (family != AF_UNSPEC) ? family : AF_INET;
 		addr->bytelen = af_byte_len(addr->family);
+		addr->bitlen = -2;
+		addr->flags |= PREFIXLEN_SPECIFIED;
+		return 0;
+	}
+
+	if (strcmp(name, "all") == 0 ||
+	    strcmp(name, "any") == 0) {
+		if ((family == AF_DECnet) || (family == AF_MPLS))
+			return -1;
+		addr->family = AF_UNSPEC;
+		addr->bytelen = 0;
 		addr->bitlen = -2;
 		return 0;
 	}
@@ -708,7 +717,7 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 
 	bitlen = af_bit_len(dst->family);
 
-	flags = PREFIXLEN_SPECIFIED;
+	flags = 0;
 	if (slash) {
 		unsigned int plen;
 
@@ -719,12 +728,11 @@ int get_prefix_1(inet_prefix *dst, char *arg, int family)
 		if (plen > bitlen)
 			return -1;
 
+		flags |= PREFIXLEN_SPECIFIED;
 		bitlen = plen;
 	} else {
 		if (dst->bitlen == -2)
 			bitlen = 0;
-		else
-			flags = 0;
 	}
 
 	dst->flags |= flags;
