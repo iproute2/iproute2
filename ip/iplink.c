@@ -1114,7 +1114,7 @@ static int do_chflags(const char *dev, __u32 flags, __u32 mask)
 	int fd;
 	int err;
 
-	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+	strlcpy(ifr.ifr_name, dev, IFNAMSIZ);
 	fd = get_ctl_fd();
 	if (fd < 0)
 		return -1;
@@ -1141,8 +1141,8 @@ static int do_changename(const char *dev, const char *newdev)
 	int fd;
 	int err;
 
-	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
-	strncpy(ifr.ifr_newname, newdev, IFNAMSIZ);
+	strlcpy(ifr.ifr_name, dev, IFNAMSIZ);
+	strlcpy(ifr.ifr_newname, newdev, IFNAMSIZ);
 	fd = get_ctl_fd();
 	if (fd < 0)
 		return -1;
@@ -1165,7 +1165,7 @@ static int set_qlen(const char *dev, int qlen)
 	if (s < 0)
 		return -1;
 
-	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+	strlcpy(ifr.ifr_name, dev, IFNAMSIZ);
 	if (ioctl(s, SIOCSIFTXQLEN, &ifr) < 0) {
 		perror("SIOCSIFXQLEN");
 		close(s);
@@ -1185,7 +1185,7 @@ static int set_mtu(const char *dev, int mtu)
 	if (s < 0)
 		return -1;
 
-	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+	strlcpy(ifr.ifr_name, dev, IFNAMSIZ);
 	if (ioctl(s, SIOCSIFMTU, &ifr) < 0) {
 		perror("SIOCSIFMTU");
 		close(s);
@@ -1212,7 +1212,7 @@ static int get_address(const char *dev, int *htype)
 		return -1;
 	}
 
-	strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+	strlcpy(ifr.ifr_name, dev, IFNAMSIZ);
 	if (ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
 		perror("SIOCGIFINDEX");
 		close(s);
@@ -1243,7 +1243,7 @@ static int parse_address(const char *dev, int hatype, int halen,
 	int alen;
 
 	memset(ifr, 0, sizeof(*ifr));
-	strncpy(ifr->ifr_name, dev, IFNAMSIZ);
+	strlcpy(ifr->ifr_name, dev, IFNAMSIZ);
 	ifr->ifr_hwaddr.sa_family = hatype;
 	alen = ll_addr_a2n(ifr->ifr_hwaddr.sa_data, 14, lla);
 	if (alen < 0)
