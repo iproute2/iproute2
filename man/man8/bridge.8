@@ -61,7 +61,7 @@ bridge \- show / manipulate bridge addresses and devices
 .B dev
 .IR DEV " { "
 .BR local " | " static " | " dynamic " } [ "
-.BR self " ] [ " master " ] [ " router " ] [ " use " ] [ "
+.BR self " ] [ " master " ] [ " router " ] [ " use " ] [ " extern_learn " ] [ "
 .B dst
 .IR IPADDR " ] [ "
 .B vni
@@ -412,6 +412,12 @@ route shortcircuit enabled.
 .B use
 - the address is in use. User space can use this option to
 indicate to the kernel that the fdb entry is in use.
+.sp
+
+.B extern_learn
+- this entry was learned externally. This option can be used to
+indicate to the kernel that an entry was hardware or user-space
+controller learnt dynamic entry. Kernel will not age such an entry.
 .sp
 
 .in -8
