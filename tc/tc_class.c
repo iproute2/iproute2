@@ -219,7 +219,7 @@ static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
 	char cls_id_str[256] = {};
 	struct rtattr *tb[TCA_MAX + 1];
 	struct qdisc_util *q;
-	char str[100] = {};
+	char str[300] = {};
 
 	hlist_for_each_safe(n, tmp_cls, root_list) {
 		struct hlist_node *c, *tmp_chld;
@@ -242,7 +242,8 @@ static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
 		graph_indent(buf, cls, 0, 0);
 
 		print_tc_classid(cls_id_str, sizeof(cls_id_str), cls->id);
-		sprintf(str, "+---(%s)", cls_id_str);
+		snprintf(str, sizeof(str),
+			 "+---(%s)", cls_id_str);
 		strcat(buf, str);
 
 		parse_rtattr(tb, TCA_MAX, (struct rtattr *)cls->data,
