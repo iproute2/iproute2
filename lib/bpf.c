@@ -2593,7 +2593,7 @@ bpf_map_set_send(int fd, struct sockaddr_un *addr, unsigned int addr_len,
 	char *amsg_buf;
 	int i;
 
-	strncpy(msg.aux.obj_name, aux->obj, sizeof(msg.aux.obj_name));
+	strlcpy(msg.aux.obj_name, aux->obj, sizeof(msg.aux.obj_name));
 	memcpy(&msg.aux.obj_st, aux->st, sizeof(msg.aux.obj_st));
 
 	cmsg_buf = bpf_map_set_init(&msg, addr, addr_len);
@@ -2682,7 +2682,7 @@ int bpf_send_map_fds(const char *path, const char *obj)
 		return -1;
 	}
 
-	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+	strlcpy(addr.sun_path, path, sizeof(addr.sun_path));
 
 	ret = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (ret < 0) {
@@ -2715,7 +2715,7 @@ int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
 		return -1;
 	}
 
-	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+	strlcpy(addr.sun_path, path, sizeof(addr.sun_path));
 
 	ret = bind(fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (ret < 0) {
