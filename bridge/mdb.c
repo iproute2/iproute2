@@ -55,7 +55,7 @@ static void __print_router_port_stats(FILE *f, struct rtattr *pattr)
 		__jiffies_to_tv(&tv,
 				rta_getattr_u32(tb[MDBA_ROUTER_PATTR_TIMER]));
 		if (jw_global) {
-			char formatted_time[9];
+			char formatted_time[32];
 
 			snprintf(formatted_time, sizeof(formatted_time),
 				 "%4i.%.2i", (int)tv.tv_sec,
@@ -184,7 +184,7 @@ static void print_mdb_entry(FILE *f, int ifindex, struct br_mdb_entry *e,
 
 		__jiffies_to_tv(&tv, rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]));
 		if (jw_global) {
-			char formatted_time[9];
+			char formatted_time[32];
 
 			snprintf(formatted_time, sizeof(formatted_time),
 				 "%4i.%.2i", (int)tv.tv_sec,
