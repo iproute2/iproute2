@@ -4093,7 +4093,7 @@ static int netlink_show_one(struct filter *f,
 
 		if (!pid) {
 			done = 1;
-			strncpy(procname, "kernel", 6);
+			strncpy(procname, "kernel", 7);
 		} else if (pid > 0) {
 			FILE *fp;
 
