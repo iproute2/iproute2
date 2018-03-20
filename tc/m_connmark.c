@@ -121,7 +121,8 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	ci = RTA_DATA(tb[TCA_CONNMARK_PARMS]);
 
-	fprintf(f, " connmark zone %d\n", ci->zone);
+	fprintf(f, " connmark zone %d", ci->zone);
+	print_action_control(f, " ", ci->action, "\n");
 	fprintf(f, "\t index %u ref %d bind %d", ci->index,
 		ci->refcnt, ci->bindcnt);
 
