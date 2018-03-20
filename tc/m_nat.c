@@ -169,6 +169,9 @@ print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
 		format_host_r(AF_INET, 4, &sel->new_addr, buf2, sizeof(buf2)));
 	print_action_control(f, " ", sel->action, "");
 
+	fprintf(f, "\n\t index %u ref %d bind %d",
+		sel->index, sel->refcnt, sel->bindcnt);
+
 	if (show_stats) {
 		if (tb[TCA_NAT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_NAT_TM]);
@@ -176,6 +179,8 @@ print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
+
+	fprintf(f, "\n");
 
 	return 0;
 }
