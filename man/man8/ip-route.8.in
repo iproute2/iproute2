@@ -125,7 +125,7 @@ replace " } "
 .B  cwnd
 .IR NUMBER " ] [ "
 .B  ssthresh
-.IR REALM " ] [ "
+.IR NUMBER " ] [ "
 .B  realms
 .IR REALM " ] [ "
 .B  rto_min
