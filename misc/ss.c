@@ -1106,15 +1106,33 @@ static void buf_free_all(void)
 	buffer.head = NULL;
 }
 
+/* Get current screen width, default to 80 columns if TIOCGWINSZ fails */
+static int render_screen_width(void)
+{
+	int width = 80;
+
+	if (isatty(STDOUT_FILENO)) {
+		struct winsize w;
+
+		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1) {
+			if (w.ws_col > 0)
+				width = w.ws_col;
+		}
+	}
+
+	return width;
+}
+
 /* Calculate column width from contents length. If columns don't fit on one
  * line, break them into the least possible amount of lines and keep them
  * aligned across lines. Available screen space is equally spread between fields
  * as additional spacing.
  */
-static void render_calc_width(int screen_width)
+static void render_calc_width(void)
 {
-	int first, len = 0, linecols = 0;
+	int screen_width = render_screen_width();
 	struct column *c, *eol = columns - 1;
+	int first, len = 0, linecols = 0;
 
 	/* First pass: set width for each column to measured content length */
 	for (first = 1, c = columns; c - columns < COL_MAX; c++) {
@@ -1195,7 +1213,7 @@ newline:
 }
 
 /* Render buffered output with spacing and delimiters, then free up buffers */
-static void render(int screen_width)
+static void render(void)
 {
 	struct buf_token *token;
 	int printed, line_started = 0;
@@ -1209,7 +1227,7 @@ static void render(int screen_width)
 	/* Ensure end alignment of last token, it wasn't necessarily flushed */
 	buffer.tail->end += buffer.cur->len % 2;
 
-	render_calc_width(screen_width);
+	render_calc_width();
 
 	/* Rewind and replay */
 	buffer.tail = buffer.head;
@@ -1245,6 +1263,7 @@ static void render(int screen_width)
 	}
 
 	buf_free_all();
+	current_field = columns;
 }
 
 static void sock_state_print(struct sockstat *s)
@@ -4264,23 +4283,33 @@ static int generic_show_sock(const struct sockaddr_nl *addr,
 {
 	struct sock_diag_msg *r = NLMSG_DATA(nlh);
 	struct inet_diag_arg inet_arg = { .f = arg, .protocol = IPPROTO_MAX };
+	int ret;
 
 	switch (r->sdiag_family) {
 	case AF_INET:
 	case AF_INET6:
 		inet_arg.rth = inet_arg.f->rth_for_killing;
-		return show_one_inet_sock(addr, nlh, &inet_arg);
+		ret = show_one_inet_sock(addr, nlh, &inet_arg);
+		break;
 	case AF_UNIX:
-		return unix_show_sock(addr, nlh, arg);
+		ret = unix_show_sock(addr, nlh, arg);
+		break;
 	case AF_PACKET:
-		return packet_show_sock(addr, nlh, arg);
+		ret = packet_show_sock(addr, nlh, arg);
+		break;
 	case AF_NETLINK:
-		return netlink_show_sock(addr, nlh, arg);
+		ret = netlink_show_sock(addr, nlh, arg);
+		break;
 	case AF_VSOCK:
-		return vsock_show_sock(addr, nlh, arg);
+		ret = vsock_show_sock(addr, nlh, arg);
+		break;
 	default:
-		return -1;
+		ret = -1;
 	}
+
+	render();
+
+	return ret;
 }
 
 static int handle_follow_request(struct filter *f)
@@ -4647,7 +4676,6 @@ int main(int argc, char *argv[])
 	FILE *filter_fp = NULL;
 	int ch;
 	int state_filter = 0;
-	int screen_width = 80;
 
 	while ((ch = getopt_long(argc, argv,
 				 "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KHS",
@@ -4949,15 +4977,6 @@ int main(int argc, char *argv[])
 	if (!(current_filter.states & (current_filter.states - 1)))
 		columns[COL_STATE].disabled = 1;
 
-	if (isatty(STDOUT_FILENO)) {
-		struct winsize w;
-
-		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1) {
-			if (w.ws_col > 0)
-				screen_width = w.ws_col;
-		}
-	}
-
 	if (show_header)
 		print_header();
 
@@ -4988,7 +5007,7 @@ int main(int argc, char *argv[])
 	if (show_users || show_proc_ctx || show_sock_ctx)
 		user_ent_destroy();
 
-	render(screen_width);
+	render();
 
 	return 0;
 }
