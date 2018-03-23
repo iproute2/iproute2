@@ -45,6 +45,10 @@
 #include <linux/netlink_diag.h>
 #include <linux/sctp.h>
 #include <linux/vm_sockets_diag.h>
+#include <linux/net.h>
+#include <linux/tipc.h>
+#include <linux/tipc_netlink.h>
+#include <linux/tipc_sockets_diag.h>
 
 #define MAGIC_SEQ 123456
 #define BUF_CHUNK (1024 * 1024)
@@ -104,6 +108,7 @@ int show_sock_ctx;
 int show_header = 1;
 int follow_events;
 int sctp_ino;
+int show_tipcinfo;
 
 enum col_id {
 	COL_NETID,
@@ -191,6 +196,7 @@ enum {
 	SCTP_DB,
 	VSOCK_ST_DB,
 	VSOCK_DG_DB,
+	TIPC_DB,
 	MAX_DB
 };
 
@@ -230,6 +236,7 @@ enum {
 
 #define SS_ALL ((1 << SS_MAX) - 1)
 #define SS_CONN (SS_ALL & ~((1<<SS_LISTEN)|(1<<SS_CLOSE)|(1<<SS_TIME_WAIT)|(1<<SS_SYN_RECV)))
+#define TIPC_SS_CONN ((1<<SS_ESTABLISHED)|(1<<SS_LISTEN)|(1<<SS_CLOSE))
 
 #include "ssfilter.h"
 
@@ -297,6 +304,10 @@ static const struct filter default_dbs[MAX_DB] = {
 		.states   = SS_CONN,
 		.families = FAMILY_MASK(AF_VSOCK),
 	},
+	[TIPC_DB] = {
+		.states   = TIPC_SS_CONN,
+		.families = FAMILY_MASK(AF_TIPC),
+	},
 };
 
 static const struct filter default_afs[AF_MAX] = {
@@ -323,6 +334,10 @@ static const struct filter default_afs[AF_MAX] = {
 	[AF_VSOCK] = {
 		.dbs    = VSOCK_DBM,
 		.states = SS_CONN,
+	},
+	[AF_TIPC] = {
+		.dbs    = (1 << TIPC_DB),
+		.states = TIPC_SS_CONN,
 	},
 };
 
@@ -364,6 +379,7 @@ static void filter_default_dbs(struct filter *f)
 	filter_db_set(f, SCTP_DB);
 	filter_db_set(f, VSOCK_ST_DB);
 	filter_db_set(f, VSOCK_DG_DB);
+	filter_db_set(f, TIPC_DB);
 }
 
 static void filter_states_set(struct filter *f, int states)
@@ -748,6 +764,14 @@ static const char *sctp_sstate_name[] = {
 	[SCTP_STATE_SHUTDOWN_ACK_SENT] = "ACK_SENT",
 };
 
+static const char * const stype_nameg[] = {
+	"UNKNOWN",
+	[SOCK_STREAM] = "STREAM",
+	[SOCK_DGRAM] = "DGRAM",
+	[SOCK_RDM] = "RDM",
+	[SOCK_SEQPACKET] = "SEQPACKET",
+};
+
 struct sockstat {
 	struct sockstat	   *next;
 	unsigned int	    type;
@@ -883,6 +907,22 @@ static const char *vsock_netid_name(int type)
 		return "v_str";
 	case SOCK_DGRAM:
 		return "v_dgr";
+	default:
+		return "???";
+	}
+}
+
+static const char *tipc_netid_name(int type)
+{
+	switch (type) {
+	case SOCK_STREAM:
+		return "ti_st";
+	case SOCK_DGRAM:
+		return "ti_dg";
+	case SOCK_RDM:
+		return "ti_rd";
+	case SOCK_SEQPACKET:
+		return "ti_sq";
 	default:
 		return "???";
 	}
@@ -1297,6 +1337,9 @@ static void sock_state_print(struct sockstat *s)
 		break;
 	case AF_NETLINK:
 		sock_name = "nl";
+		break;
+	case AF_TIPC:
+		sock_name = tipc_netid_name(s->type);
 		break;
 	case AF_VSOCK:
 		sock_name = vsock_netid_name(s->type);
@@ -4277,6 +4320,105 @@ static int vsock_show(struct filter *f)
 	return handle_netlink_request(f, &req.nlh, sizeof(req), vsock_show_sock);
 }
 
+static void tipc_sock_addr_print(struct rtattr *net_addr, struct rtattr *id)
+{
+	uint32_t node = rta_getattr_u32(net_addr);
+	uint32_t identity = rta_getattr_u32(id);
+
+	SPRINT_BUF(addr) = {};
+	SPRINT_BUF(port) = {};
+
+	sprintf(addr, "%u", node);
+	sprintf(port, "%u", identity);
+	sock_addr_print(addr, ":", port, NULL);
+
+}
+
+static int tipc_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
+			  void *arg)
+{
+	struct rtattr *stat[TIPC_NLA_SOCK_STAT_MAX + 1] = {};
+	struct rtattr *attrs[TIPC_NLA_SOCK_MAX + 1] = {};
+	struct rtattr *con[TIPC_NLA_CON_MAX + 1] = {};
+	struct rtattr *info[TIPC_NLA_MAX + 1] = {};
+	struct rtattr *msg_ref;
+	struct sockstat ss = {};
+
+	parse_rtattr(info, TIPC_NLA_MAX, NLMSG_DATA(nlh),
+		     NLMSG_PAYLOAD(nlh, 0));
+
+	if (!info[TIPC_NLA_SOCK])
+		return 0;
+
+	msg_ref = info[TIPC_NLA_SOCK];
+	parse_rtattr(attrs, TIPC_NLA_SOCK_MAX, RTA_DATA(msg_ref),
+		     RTA_PAYLOAD(msg_ref));
+
+	msg_ref = attrs[TIPC_NLA_SOCK_STAT];
+	parse_rtattr(stat, TIPC_NLA_SOCK_STAT_MAX,
+		     RTA_DATA(msg_ref), RTA_PAYLOAD(msg_ref));
+
+
+	ss.local.family = AF_TIPC;
+	ss.type = rta_getattr_u32(attrs[TIPC_NLA_SOCK_TYPE]);
+	ss.state = rta_getattr_u32(attrs[TIPC_NLA_SOCK_TIPC_STATE]);
+	ss.uid = rta_getattr_u32(attrs[TIPC_NLA_SOCK_UID]);
+	ss.ino = rta_getattr_u32(attrs[TIPC_NLA_SOCK_INO]);
+	ss.rq = rta_getattr_u32(stat[TIPC_NLA_SOCK_STAT_RCVQ]);
+	ss.wq = rta_getattr_u32(stat[TIPC_NLA_SOCK_STAT_SENDQ]);
+	ss.sk = rta_getattr_u64(attrs[TIPC_NLA_SOCK_COOKIE]);
+
+	sock_state_print (&ss);
+
+	tipc_sock_addr_print(attrs[TIPC_NLA_SOCK_ADDR],
+			     attrs[TIPC_NLA_SOCK_REF]);
+
+	msg_ref = attrs[TIPC_NLA_SOCK_CON];
+	if (msg_ref) {
+		parse_rtattr(con, TIPC_NLA_CON_MAX,
+			     RTA_DATA(msg_ref), RTA_PAYLOAD(msg_ref));
+
+		tipc_sock_addr_print(con[TIPC_NLA_CON_NODE],
+				     con[TIPC_NLA_CON_SOCK]);
+	} else
+		sock_addr_print("", "-", "", NULL);
+
+	if (show_details)
+		sock_details_print(&ss);
+
+	proc_ctx_print(&ss);
+
+	if (show_tipcinfo) {
+		out("\n type:%s", stype_nameg[ss.type]);
+		out(" cong:%s ",
+		       stat[TIPC_NLA_SOCK_STAT_LINK_CONG] ? "link" :
+		       stat[TIPC_NLA_SOCK_STAT_CONN_CONG] ? "conn" : "none");
+		out(" drop:%d ",
+		       rta_getattr_u32(stat[TIPC_NLA_SOCK_STAT_DROP]));
+
+		if (attrs[TIPC_NLA_SOCK_HAS_PUBL])
+			out(" publ");
+
+		if (con[TIPC_NLA_CON_FLAG])
+			out(" via {%u,%u} ",
+			       rta_getattr_u32(con[TIPC_NLA_CON_TYPE]),
+			       rta_getattr_u32(con[TIPC_NLA_CON_INST]));
+	}
+
+	return 0;
+}
+
+static int tipc_show(struct filter *f)
+{
+	DIAG_REQUEST(req, struct tipc_sock_diag_req r);
+
+	memset(&req.r, 0, sizeof(req.r));
+	req.r.sdiag_family = AF_TIPC;
+	req.r.tidiag_states = f->states;
+
+	return handle_netlink_request(f, &req.nlh, sizeof(req), tipc_show_sock);
+}
+
 struct sock_diag_msg {
 	__u8 sdiag_family;
 };
@@ -4531,6 +4673,7 @@ static void _usage(FILE *dest)
 "   -m, --memory        show socket memory usage\n"
 "   -p, --processes     show process using socket\n"
 "   -i, --info          show internal TCP information\n"
+"       --tipcinfo      show internal tipc socket information\n"
 "   -s, --summary       show socket usage summary\n"
 "   -b, --bpf           show bpf filter socket information\n"
 "   -E, --events        continually display sockets as they are destroyed\n"
@@ -4547,15 +4690,16 @@ static void _usage(FILE *dest)
 "   -d, --dccp          display only DCCP sockets\n"
 "   -w, --raw           display only RAW sockets\n"
 "   -x, --unix          display only Unix domain sockets\n"
+"       --tipc          display only TIPC sockets\n"
 "       --vsock         display only vsock sockets\n"
 "   -f, --family=FAMILY display sockets of type FAMILY\n"
-"       FAMILY := {inet|inet6|link|unix|netlink|vsock|help}\n"
+"       FAMILY := {inet|inet6|link|unix|netlink|vsock|tipc|help}\n"
 "\n"
 "   -K, --kill          forcibly close sockets, display what was closed\n"
 "   -H, --no-header     Suppress header line\n"
 "\n"
 "   -A, --query=QUERY, --socket=QUERY\n"
-"       QUERY := {all|inet|tcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|netlink|vsock_stream|vsock_dgram}[,QUERY]\n"
+"       QUERY := {all|inet|tcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|netlink|vsock_stream|vsock_dgram|tipc}[,QUERY]\n"
 "\n"
 "   -D, --diag=FILE     Dump raw information about TCP sockets to FILE\n"
 "   -F, --filter=FILE   read filter information from FILE\n"
@@ -4631,6 +4775,10 @@ static int scan_state(const char *state)
 /* Values 'v' and 'V' are already used so a non-character is used */
 #define OPT_VSOCK 256
 
+/* Values of 't' are already used so a non-character is used */
+#define OPT_TIPCSOCK 257
+#define OPT_TIPCINFO 258
+
 static const struct option long_opts[] = {
 	{ "numeric", 0, 0, 'n' },
 	{ "resolve", 0, 0, 'r' },
@@ -4647,6 +4795,7 @@ static const struct option long_opts[] = {
 	{ "udp", 0, 0, 'u' },
 	{ "raw", 0, 0, 'w' },
 	{ "unix", 0, 0, 'x' },
+	{ "tipc", 0, 0, OPT_TIPCSOCK},
 	{ "vsock", 0, 0, OPT_VSOCK },
 	{ "all", 0, 0, 'a' },
 	{ "listening", 0, 0, 'l' },
@@ -4664,6 +4813,7 @@ static const struct option long_opts[] = {
 	{ "context", 0, 0, 'Z' },
 	{ "contexts", 0, 0, 'z' },
 	{ "net", 1, 0, 'N' },
+	{ "tipcinfo", 0, 0, OPT_TIPCINFO},
 	{ "kill", 0, 0, 'K' },
 	{ "no-header", 0, 0, 'H' },
 	{ 0 }
@@ -4735,6 +4885,9 @@ int main(int argc, char *argv[])
 		case OPT_VSOCK:
 			filter_af_set(&current_filter, AF_VSOCK);
 			break;
+		case OPT_TIPCSOCK:
+			filter_af_set(&current_filter, AF_TIPC);
+			break;
 		case 'a':
 			state_filter = SS_ALL;
 			break;
@@ -4761,6 +4914,8 @@ int main(int argc, char *argv[])
 				filter_af_set(&current_filter, AF_UNIX);
 			else if (strcmp(optarg, "netlink") == 0)
 				filter_af_set(&current_filter, AF_NETLINK);
+			else if (strcmp(optarg, "tipc") == 0)
+				filter_af_set(&current_filter, AF_TIPC);
 			else if (strcmp(optarg, "vsock") == 0)
 				filter_af_set(&current_filter, AF_VSOCK);
 			else if (strcmp(optarg, "help") == 0)
@@ -4837,6 +4992,8 @@ int main(int argc, char *argv[])
 				} else if (strcmp(p, "vsock_dgram") == 0 ||
 					   strcmp(p, "v_dgr") == 0) {
 					filter_db_set(&current_filter, VSOCK_DG_DB);
+				} else if (strcmp(optarg, "tipc") == 0) {
+					filter_db_set(&current_filter, TIPC_DB);
 				} else {
 					fprintf(stderr, "ss: \"%s\" is illegal socket table id\n", p);
 					usage();
@@ -4883,6 +5040,9 @@ int main(int argc, char *argv[])
 		case 'N':
 			if (netns_switch(optarg))
 				exit(1);
+			break;
+		case OPT_TIPCINFO:
+			show_tipcinfo = 1;
 			break;
 		case 'K':
 			current_filter.kill = 1;
@@ -5006,6 +5166,8 @@ int main(int argc, char *argv[])
 		sctp_show(&current_filter);
 	if (current_filter.dbs & VSOCK_DBM)
 		vsock_show(&current_filter);
+	if (current_filter.dbs & (1<<TIPC_DB))
+		tipc_show(&current_filter);
 
 	if (show_users || show_proc_ctx || show_sock_ctx)
 		user_ent_destroy();
