@@ -329,10 +329,14 @@ static const struct filter default_afs[AF_MAX] = {
 static int do_default = 1;
 static struct filter current_filter;
 
-static void filter_db_set(struct filter *f, int db)
+static void filter_db_set(struct filter *f, int db, bool enable)
 {
-	f->states   |= default_dbs[db].states;
-	f->dbs	    |= 1 << db;
+	if (enable) {
+		f->states   |= default_dbs[db].states;
+		f->dbs	    |= 1 << db;
+	} else {
+		f->dbs &= ~(1 << db);
+	}
 	do_default   = 0;
 }
 
@@ -349,21 +353,21 @@ static int filter_af_get(struct filter *f, int af)
 	return !!(f->families & FAMILY_MASK(af));
 }
 
-static void filter_default_dbs(struct filter *f)
+static void filter_default_dbs(struct filter *f, bool enable)
 {
-	filter_db_set(f, UDP_DB);
-	filter_db_set(f, DCCP_DB);
-	filter_db_set(f, TCP_DB);
-	filter_db_set(f, RAW_DB);
-	filter_db_set(f, UNIX_ST_DB);
-	filter_db_set(f, UNIX_DG_DB);
-	filter_db_set(f, UNIX_SQ_DB);
-	filter_db_set(f, PACKET_R_DB);
-	filter_db_set(f, PACKET_DG_DB);
-	filter_db_set(f, NETLINK_DB);
-	filter_db_set(f, SCTP_DB);
-	filter_db_set(f, VSOCK_ST_DB);
-	filter_db_set(f, VSOCK_DG_DB);
+	filter_db_set(f, UDP_DB, enable);
+	filter_db_set(f, DCCP_DB, enable);
+	filter_db_set(f, TCP_DB, enable);
+	filter_db_set(f, RAW_DB, enable);
+	filter_db_set(f, UNIX_ST_DB, enable);
+	filter_db_set(f, UNIX_DG_DB, enable);
+	filter_db_set(f, UNIX_SQ_DB, enable);
+	filter_db_set(f, PACKET_R_DB, enable);
+	filter_db_set(f, PACKET_DG_DB, enable);
+	filter_db_set(f, NETLINK_DB, enable);
+	filter_db_set(f, SCTP_DB, enable);
+	filter_db_set(f, VSOCK_ST_DB, enable);
+	filter_db_set(f, VSOCK_DG_DB, enable);
 }
 
 static void filter_states_set(struct filter *f, int states)
@@ -4712,19 +4716,19 @@ int main(int argc, char *argv[])
 			follow_events = 1;
 			break;
 		case 'd':
-			filter_db_set(&current_filter, DCCP_DB);
+			filter_db_set(&current_filter, DCCP_DB, true);
 			break;
 		case 't':
-			filter_db_set(&current_filter, TCP_DB);
+			filter_db_set(&current_filter, TCP_DB, true);
 			break;
 		case 'S':
-			filter_db_set(&current_filter, SCTP_DB);
+			filter_db_set(&current_filter, SCTP_DB, true);
 			break;
 		case 'u':
-			filter_db_set(&current_filter, UDP_DB);
+			filter_db_set(&current_filter, UDP_DB, true);
 			break;
 		case 'w':
-			filter_db_set(&current_filter, RAW_DB);
+			filter_db_set(&current_filter, RAW_DB, true);
 			break;
 		case 'x':
 			filter_af_set(&current_filter, AF_UNIX);
@@ -4781,59 +4785,65 @@ int main(int argc, char *argv[])
 			}
 			p = p1 = optarg;
 			do {
+				bool enable = true;
+
 				if ((p1 = strchr(p, ',')) != NULL)
 					*p1 = 0;
+				if (p[0] == '!') {
+					enable = false;
+					p++;
+				}
 				if (strcmp(p, "all") == 0) {
-					filter_default_dbs(&current_filter);
+					filter_default_dbs(&current_filter, enable);
 				} else if (strcmp(p, "inet") == 0) {
-					filter_db_set(&current_filter, UDP_DB);
-					filter_db_set(&current_filter, DCCP_DB);
-					filter_db_set(&current_filter, TCP_DB);
-					filter_db_set(&current_filter, SCTP_DB);
-					filter_db_set(&current_filter, RAW_DB);
+					filter_db_set(&current_filter, UDP_DB, enable);
+					filter_db_set(&current_filter, DCCP_DB, enable);
+					filter_db_set(&current_filter, TCP_DB, enable);
+					filter_db_set(&current_filter, SCTP_DB, enable);
+					filter_db_set(&current_filter, RAW_DB, enable);
 				} else if (strcmp(p, "udp") == 0) {
-					filter_db_set(&current_filter, UDP_DB);
+					filter_db_set(&current_filter, UDP_DB, enable);
 				} else if (strcmp(p, "dccp") == 0) {
-					filter_db_set(&current_filter, DCCP_DB);
+					filter_db_set(&current_filter, DCCP_DB, enable);
 				} else if (strcmp(p, "tcp") == 0) {
-					filter_db_set(&current_filter, TCP_DB);
+					filter_db_set(&current_filter, TCP_DB, enable);
 				} else if (strcmp(p, "sctp") == 0) {
-					filter_db_set(&current_filter, SCTP_DB);
+					filter_db_set(&current_filter, SCTP_DB, enable);
 				} else if (strcmp(p, "raw") == 0) {
-					filter_db_set(&current_filter, RAW_DB);
+					filter_db_set(&current_filter, RAW_DB, enable);
 				} else if (strcmp(p, "unix") == 0) {
-					filter_db_set(&current_filter, UNIX_ST_DB);
-					filter_db_set(&current_filter, UNIX_DG_DB);
-					filter_db_set(&current_filter, UNIX_SQ_DB);
+					filter_db_set(&current_filter, UNIX_ST_DB, enable);
+					filter_db_set(&current_filter, UNIX_DG_DB, enable);
+					filter_db_set(&current_filter, UNIX_SQ_DB, enable);
 				} else if (strcasecmp(p, "unix_stream") == 0 ||
 					   strcmp(p, "u_str") == 0) {
-					filter_db_set(&current_filter, UNIX_ST_DB);
+					filter_db_set(&current_filter, UNIX_ST_DB, enable);
 				} else if (strcasecmp(p, "unix_dgram") == 0 ||
 					   strcmp(p, "u_dgr") == 0) {
-					filter_db_set(&current_filter, UNIX_DG_DB);
+					filter_db_set(&current_filter, UNIX_DG_DB, enable);
 				} else if (strcasecmp(p, "unix_seqpacket") == 0 ||
 					   strcmp(p, "u_seq") == 0) {
-					filter_db_set(&current_filter, UNIX_SQ_DB);
+					filter_db_set(&current_filter, UNIX_SQ_DB, enable);
 				} else if (strcmp(p, "packet") == 0) {
-					filter_db_set(&current_filter, PACKET_R_DB);
-					filter_db_set(&current_filter, PACKET_DG_DB);
+					filter_db_set(&current_filter, PACKET_R_DB, enable);
+					filter_db_set(&current_filter, PACKET_DG_DB, enable);
 				} else if (strcmp(p, "packet_raw") == 0 ||
 					   strcmp(p, "p_raw") == 0) {
-					filter_db_set(&current_filter, PACKET_R_DB);
+					filter_db_set(&current_filter, PACKET_R_DB, enable);
 				} else if (strcmp(p, "packet_dgram") == 0 ||
 					   strcmp(p, "p_dgr") == 0) {
-					filter_db_set(&current_filter, PACKET_DG_DB);
+					filter_db_set(&current_filter, PACKET_DG_DB, enable);
 				} else if (strcmp(p, "netlink") == 0) {
-					filter_db_set(&current_filter, NETLINK_DB);
+					filter_db_set(&current_filter, NETLINK_DB, enable);
 				} else if (strcmp(p, "vsock") == 0) {
-					filter_db_set(&current_filter, VSOCK_ST_DB);
-					filter_db_set(&current_filter, VSOCK_DG_DB);
+					filter_db_set(&current_filter, VSOCK_ST_DB, enable);
+					filter_db_set(&current_filter, VSOCK_DG_DB, enable);
 				} else if (strcmp(p, "vsock_stream") == 0 ||
 					   strcmp(p, "v_str") == 0) {
-					filter_db_set(&current_filter, VSOCK_ST_DB);
+					filter_db_set(&current_filter, VSOCK_ST_DB, enable);
 				} else if (strcmp(p, "vsock_dgram") == 0 ||
 					   strcmp(p, "v_dgr") == 0) {
-					filter_db_set(&current_filter, VSOCK_DG_DB);
+					filter_db_set(&current_filter, VSOCK_DG_DB, enable);
 				} else {
 					fprintf(stderr, "ss: \"%s\" is illegal socket table id\n", p);
 					usage();
@@ -4926,7 +4936,7 @@ int main(int argc, char *argv[])
 
 	if (do_default) {
 		state_filter = state_filter ? state_filter : SS_CONN;
-		filter_default_dbs(&current_filter);
+		filter_default_dbs(&current_filter, true);
 	}
 
 	filter_states_set(&current_filter, state_filter);

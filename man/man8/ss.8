@@ -317,7 +317,10 @@ Currently the following families are supported: unix, inet, inet6, link, netlink
 List of socket tables to dump, separated by commas. The following identifiers
 are understood: all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram,
 unix_stream, unix_seqpacket, packet_raw, packet_dgram, dccp, sctp,
-vsock_stream, vsock_dgram.
+vsock_stream, vsock_dgram. Any item in the list may optionally be prefixed by
+an exclamation mark
+.RB ( ! )
+to exclude that socket table from being dumped.
 .TP
 .B \-D FILE, \-\-diag=FILE
 Do not display anything, just dump raw information about TCP sockets to FILE after applying filters. If FILE is - stdout is used.
@@ -380,6 +383,9 @@ Find all local processes connected to X server.
 .TP
 .B ss -o state fin-wait-1 '( sport = :http or sport = :https )' dst 193.233.7/24
 List all the tcp sockets in state FIN-WAIT-1 for our apache to network 193.233.7/24 and look at their timers.
+.TP
+.B ss -a -A 'all,!tcp'
+List sockets in all states from all socket tables but TCP.
 .SH SEE ALSO
 .BR ip (8),
 .br
