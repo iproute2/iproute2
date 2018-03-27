@@ -408,23 +408,6 @@ static int filter_af_get(struct filter *f, int af)
 	return !!(f->families & FAMILY_MASK(af));
 }
 
-static void filter_default_dbs(struct filter *f, bool enable)
-{
-	filter_db_set(f, UDP_DB, enable);
-	filter_db_set(f, DCCP_DB, enable);
-	filter_db_set(f, TCP_DB, enable);
-	filter_db_set(f, RAW_DB, enable);
-	filter_db_set(f, UNIX_ST_DB, enable);
-	filter_db_set(f, UNIX_DG_DB, enable);
-	filter_db_set(f, UNIX_SQ_DB, enable);
-	filter_db_set(f, PACKET_R_DB, enable);
-	filter_db_set(f, PACKET_DG_DB, enable);
-	filter_db_set(f, NETLINK_DB, enable);
-	filter_db_set(f, SCTP_DB, enable);
-	filter_db_set(f, VSOCK_ST_DB, enable);
-	filter_db_set(f, VSOCK_DG_DB, enable);
-}
-
 static void filter_states_set(struct filter *f, int states)
 {
 	if (states)
@@ -4934,7 +4917,7 @@ int main(int argc, char *argv[])
 
 	if (do_default) {
 		state_filter = state_filter ? state_filter : SS_CONN;
-		filter_default_dbs(&current_filter, true);
+		filter_db_parse(&current_filter, "all");
 	}
 
 	filter_states_set(&current_filter, state_filter);
