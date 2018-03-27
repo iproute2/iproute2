@@ -2602,7 +2602,7 @@ static const char *cmd_name(uint8_t cmd)
 	case DEVLINK_CMD_DEL: return "del";
 	case DEVLINK_CMD_PORT_GET: return "get";
 	case DEVLINK_CMD_PORT_SET: return "set";
-	case DEVLINK_CMD_PORT_NEW: return "net";
+	case DEVLINK_CMD_PORT_NEW: return "new";
 	case DEVLINK_CMD_PORT_DEL: return "del";
 	default: return "<unknown cmd>";
 	}

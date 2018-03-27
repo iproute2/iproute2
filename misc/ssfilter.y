@@ -42,7 +42,7 @@ static void yyerror(char *s)
 %nonassoc '!'
 
 %%
-applet: null expr
+applet: null exprlist
         {
                 *yy_ret = $2;
                 $$ = $2;
@@ -51,6 +51,32 @@ applet: null expr
         ;
 null:   /* NOTHING */ { $$ = NULL; }
         ;
+exprlist: expr
+        | '!' expr
+        {
+                $$ = alloc_node(SSF_NOT, $2);
+        }
+        | '(' exprlist ')'
+        {
+                $$ = $2;
+        }
+        | exprlist '|' expr
+        {
+                $$ = alloc_node(SSF_OR, $1);
+                $$->post = $3;
+        }
+        | exprlist '&' expr
+        {
+                $$ = alloc_node(SSF_AND, $1);
+                $$->post = $3;
+        }
+        | exprlist expr
+        {
+                $$ = alloc_node(SSF_AND, $1);
+                $$->post = $2;
+        }
+        ;
+
 expr:	DCOND HOSTCOND
         {
 		$$ = alloc_node(SSF_DCOND, $2);
@@ -127,30 +153,6 @@ expr:	DCOND HOSTCOND
         | AUTOBOUND
         {
                 $$ = alloc_node(SSF_S_AUTO, NULL);
-        }
-        | expr '|' expr
-        {
-                $$ = alloc_node(SSF_OR, $1);
-	        $$->post = $3;
-        }
-        | expr expr
-        {
-                $$ = alloc_node(SSF_AND, $1);
-	        $$->post = $2;
-        }
-        | expr '&' expr
-
-        {
-                $$ = alloc_node(SSF_AND, $1);
-	        $$->post = $3;
-        }
-        | '!' expr
-        {
-                $$ = alloc_node(SSF_NOT, $2);
-        }
-        | '(' expr ')'
-        {
-                $$ = $2;
         }
 ;
 %%

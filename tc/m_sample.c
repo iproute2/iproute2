@@ -65,7 +65,7 @@ static int parse_sample(struct action_util *a, int *argc_p, char ***argv_p,
 	while (argc > 0) {
 		if (matches(*argv, "rate") == 0) {
 			NEXT_ARG();
-			if (get_unsigned(&rate, *argv, 10) != 0) {
+			if (get_u32(&rate, *argv, 10) != 0) {
 				fprintf(stderr, "Illegal rate %s\n", *argv);
 				usage();
 				return -1;
@@ -73,7 +73,7 @@ static int parse_sample(struct action_util *a, int *argc_p, char ***argv_p,
 			rate_set = true;
 		} else if (matches(*argv, "group") == 0) {
 			NEXT_ARG();
-			if (get_unsigned(&group, *argv, 10) != 0) {
+			if (get_u32(&group, *argv, 10) != 0) {
 				fprintf(stderr, "Illegal group num %s\n",
 					*argv);
 				usage();
@@ -82,7 +82,7 @@ static int parse_sample(struct action_util *a, int *argc_p, char ***argv_p,
 			group_set = true;
 		} else if (matches(*argv, "trunc") == 0) {
 			NEXT_ARG();
-			if (get_unsigned(&trunc, *argv, 10) != 0) {
+			if (get_u32(&trunc, *argv, 10) != 0) {
 				fprintf(stderr, "Illegal truncation size %s\n",
 					*argv);
 				usage();
@@ -161,6 +161,8 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (tb[TCA_SAMPLE_TRUNC_SIZE])
 		fprintf(f, " trunc_size %d",
 			rta_getattr_u32(tb[TCA_SAMPLE_TRUNC_SIZE]));
+
+	print_action_control(f, " ", p->action, "");
 
 	fprintf(f, "\n\tindex %d ref %d bind %d", p->index, p->refcnt,
 		p->bindcnt);

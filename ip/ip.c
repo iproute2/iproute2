@@ -174,6 +174,18 @@ int main(int argc, char **argv)
 	char *batch_file = NULL;
 	int color = 0;
 
+	/* to run vrf exec without root, capabilities might be set, drop them
+	 * if not needed as the first thing.
+	 * execv will drop them for the child command.
+	 * vrf exec requires:
+	 * - cap_dac_override to create the cgroup subdir in /sys
+	 * - cap_sys_admin to load the BPF program
+	 * - cap_net_admin to set the socket into the cgroup
+	 */
+	if (argc < 3 || strcmp(argv[1], "vrf") != 0 ||
+			strcmp(argv[2], "exec") != 0)
+		drop_cap();
+
 	basename = strrchr(argv[0], '/');
 	if (basename == NULL)
 		basename = argv[0];

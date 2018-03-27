@@ -336,6 +336,20 @@ EOF
     rm -f $TMPDIR/strtest.c $TMPDIR/strtest
 }
 
+check_cap()
+{
+	if ${PKG_CONFIG} libcap --exists
+	then
+		echo "HAVE_CAP:=y" >>$CONFIG
+		echo "yes"
+
+		echo 'CFLAGS += -DHAVE_LIBCAP' `${PKG_CONFIG} libcap --cflags` >>$CONFIG
+		echo 'LDLIBS +=' `${PKG_CONFIG} libcap --libs` >> $CONFIG
+	else
+		echo "no"
+	fi
+}
+
 quiet_config()
 {
 	cat <<EOF
@@ -409,6 +423,9 @@ check_berkeley_db
 
 echo -n "need for strlcpy: "
 check_strlcpy
+
+echo -n "libcap support: "
+check_cap
 
 echo >> $CONFIG
 echo "%.o: %.c" >> $CONFIG

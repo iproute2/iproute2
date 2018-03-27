@@ -436,6 +436,8 @@ out2:
 out:
 	free(mnt);
 
+	drop_cap();
+
 	return rc;
 }
 
