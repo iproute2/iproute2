@@ -299,4 +299,6 @@ size_t strlcpy(char *dst, const char *src, size_t size);
 size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
+void drop_cap(void);
+
 #endif /* __UTILS_H__ */

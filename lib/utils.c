@@ -30,6 +30,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
+#ifdef HAVE_LIBCAP
+#include <sys/capability.h>
+#endif
 
 #include "rt_names.h"
 #include "utils.h"
@@ -1495,3 +1498,22 @@ size_t strlcat(char *dst, const char *src, size_t size)
 	return dlen + strlcpy(dst + dlen, src, size - dlen);
 }
 #endif
+
+void drop_cap(void)
+{
+#ifdef HAVE_LIBCAP
+	/* don't harmstring root/sudo */
+	if (getuid() != 0 && geteuid() != 0) {
+		cap_t capabilities;
+
+		capabilities = cap_get_proc();
+		if (!capabilities)
+			exit(EXIT_FAILURE);
+		if (cap_clear(capabilities) != 0)
+			exit(EXIT_FAILURE);
+		if (cap_set_proc(capabilities) != 0)
+			exit(EXIT_FAILURE);
+		cap_free(capabilities);
+	}
+#endif
+}

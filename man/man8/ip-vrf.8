@@ -63,6 +63,14 @@ a VRF other than the default VRF (main table). A command can be run against
 the default VRF by passing the "default" as the VRF name. This is useful if
 the current shell is associated with another VRF (e.g, Management VRF).
 
+This command requires the system to be booted with cgroup v2 (e.g. with systemd,
+add systemd.unified_cgroup_hierarchy=1 to the kernel command line).
+
+This command also requires to be ran as root or with the CAP_SYS_ADMIN,
+CAP_NET_ADMIN and CAP_DAC_OVERRIDE capabilities. If built with libcap and if
+capabilities are added to the ip binary program via setcap, the program will
+drop them as the first thing when invoked, unless the command is vrf exec.
+
 .TP
 .B ip vrf identify [PID] - Report VRF association for process
 .sp
