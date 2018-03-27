@@ -41,7 +41,9 @@ static struct xtables_globals em_tc_ipt_globals = {
 	.program_version = "0.1",
 	.orig_opts = original_opts,
 	.opts = original_opts,
+#if (XTABLES_VERSION_CODE >= 11)
 	.compat_rev = xtables_compatible_revision,
+#endif
 };
 
 static struct xt_entry_match *fake_xt_entry_match(int data_size, void *data)
