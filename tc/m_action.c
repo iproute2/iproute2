@@ -364,6 +364,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 	if (tab_flush && NULL != tb[0]  && NULL == tb[1])
 		return tc_print_action_flush(f, tb[0]);
 
+	open_json_object(NULL);
 	open_json_array(PRINT_JSON, "actions");
 	for (i = 0; i <= tot_acts; i++) {
 		if (tb[i]) {
@@ -379,6 +380,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 
 	}
 	close_json_array(PRINT_JSON, NULL);
+	close_json_object();
 
 	return 0;
 }
@@ -405,7 +407,10 @@ int print_action(const struct sockaddr_nl *who,
 	if (tb[TCA_ROOT_COUNT])
 		tot_acts = RTA_DATA(tb[TCA_ROOT_COUNT]);
 
-	fprintf(fp, "total acts %d\n", tot_acts ? *tot_acts:0);
+	open_json_object(NULL);
+	print_uint(PRINT_ANY, "total acts", "total acts %u",
+		   tot_acts ? *tot_acts : 0);
+	close_json_object();
 	if (tb[TCA_ACT_TAB] == NULL) {
 		if (n->nlmsg_type != RTM_GETACTION)
 			fprintf(stderr, "print_action: NULL kind\n");
@@ -531,10 +536,16 @@ static int tc_action_gd(int cmd, unsigned int flags,
 		return 1;
 	}
 
-	if (cmd == RTM_GETACTION && print_action(NULL, ans, stdout) < 0) {
-		fprintf(stderr, "Dump terminated\n");
-		free(ans);
-		return 1;
+	if (cmd == RTM_GETACTION) {
+		new_json_obj(json);
+		ret = print_action(NULL, ans, stdout);
+		if (ret < 0) {
+			fprintf(stderr, "Dump terminated\n");
+			free(ans);
+			delete_json_obj();
+			return 1;
+		}
+		delete_json_obj();
 	}
 	free(ans);
 
@@ -675,7 +686,9 @@ static int tc_act_list_or_flush(int *argc_p, char ***argv_p, int event)
 			perror("Cannot send dump request");
 			return 1;
 		}
+		new_json_obj(json);
 		ret = rtnl_dump_filter(&rth, print_action, stdout);
+		delete_json_obj();
 	}
 
 	if (event == RTM_DELACTION) {
