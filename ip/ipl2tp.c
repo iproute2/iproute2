@@ -204,15 +204,22 @@ static int delete_session(struct l2tp_parm *p)
 	return 0;
 }
 
-static void print_cookie(char *name, const uint8_t *cookie, int len)
+static void print_cookie(const char *name, const char *fmt,
+			 const uint8_t *cookie, int len)
 {
-	printf("  %s %02x%02x%02x%02x", name,
-	       cookie[0], cookie[1],
-	       cookie[2], cookie[3]);
+	char abuf[32];
+	size_t n;
+
+	n = snprintf(abuf, sizeof(abuf),
+		     "%02x%02x%02x%02x",
+		     cookie[0], cookie[1], cookie[2], cookie[3]);
 	if (len == 8)
-		printf("%02x%02x%02x%02x",
-		       cookie[4], cookie[5],
-		       cookie[6], cookie[7]);
+		snprintf(abuf + n, sizeof(abuf) - n,
+			 "%02x%02x%02x%02x",
+			 cookie[4], cookie[5],
+			 cookie[6], cookie[7]);
+
+	print_string(PRINT_ANY, name, fmt, abuf);
 }
 
 static void print_tunnel(const struct l2tp_data *data)
@@ -220,74 +227,115 @@ static void print_tunnel(const struct l2tp_data *data)
 	const struct l2tp_parm *p = &data->config;
 	char buf[INET6_ADDRSTRLEN];
 
-	printf("Tunnel %u, encap %s\n",
-	       p->tunnel_id,
-	       p->encap == L2TP_ENCAPTYPE_UDP ? "UDP" :
-	       p->encap == L2TP_ENCAPTYPE_IP ? "IP" : "??");
-	printf("  From %s ",
-	       inet_ntop(p->local_ip.family, p->local_ip.data,
-			 buf, sizeof(buf)));
-	printf("to %s\n",
-	       inet_ntop(p->peer_ip.family, p->peer_ip.data,
-			 buf, sizeof(buf)));
-	printf("  Peer tunnel %u\n",
-	       p->peer_tunnel_id);
+	open_json_object(NULL);
+	print_uint(PRINT_ANY, "tunnel_id", "Tunnel %u,", p->tunnel_id);
+	print_string(PRINT_ANY, "encap", " encap %s",
+		     p->encap == L2TP_ENCAPTYPE_UDP ? "UDP" :
+		     p->encap == L2TP_ENCAPTYPE_IP ? "IP" : "??");
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+
+	print_string(PRINT_ANY, "local", "  From %s ",
+		     inet_ntop(p->local_ip.family, p->local_ip.data,
+			       buf, sizeof(buf)));
+	print_string(PRINT_ANY, "peer", "to %s",
+		     inet_ntop(p->peer_ip.family, p->peer_ip.data,
+			       buf, sizeof(buf)));
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+
+	print_uint(PRINT_ANY, "peer_tunnel", "  Peer tunnel %u",
+		   p->peer_tunnel_id);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 
 	if (p->encap == L2TP_ENCAPTYPE_UDP) {
-		printf("  UDP source / dest ports: %hu/%hu\n",
-		       p->local_udp_port, p->peer_udp_port);
+		print_string(PRINT_FP, NULL,
+			     "  UDP source / dest ports:", NULL);
+
+		print_uint(PRINT_ANY, "local_port", " %hu",
+			   p->local_udp_port);
+		print_uint(PRINT_ANY, "peer_port", "/%hu",
+			   p->peer_udp_port);
+		print_string(PRINT_FP, NULL, "%s", _SL_);
 
 		switch (p->local_ip.family) {
 		case AF_INET:
-			printf("  UDP checksum: %s\n",
-			       p->udp_csum ? "enabled" : "disabled");
+			print_bool(PRINT_JSON, "checksum",
+				   NULL, p->udp_csum);
+			print_string(PRINT_FP, NULL,
+				     "  UDP checksum: %s\n",
+				     p->udp_csum ? "enabled" : "disabled");
 			break;
 		case AF_INET6:
-			printf("  UDP checksum: %s%s%s%s\n",
-			       p->udp6_csum_tx && p->udp6_csum_rx
-			       ? "enabled" : "",
-			       p->udp6_csum_tx && !p->udp6_csum_rx
-			       ? "tx" : "",
-			       !p->udp6_csum_tx && p->udp6_csum_rx
-			       ? "rx" : "",
-			       !p->udp6_csum_tx && !p->udp6_csum_rx
-			       ? "disabled" : "");
+			if (is_json_context()) {
+				print_bool(PRINT_JSON, "checksum_tx",
+					   NULL, p->udp6_csum_tx);
+
+				print_bool(PRINT_JSON, "checksum_rx",
+					   NULL, p->udp6_csum_tx);
+			} else {
+				printf("  UDP checksum: %s%s%s%s\n",
+				       p->udp6_csum_tx && p->udp6_csum_rx
+				       ? "enabled" : "",
+				       p->udp6_csum_tx && !p->udp6_csum_rx
+				       ? "tx" : "",
+				       !p->udp6_csum_tx && p->udp6_csum_rx
+				       ? "rx" : "",
+				       !p->udp6_csum_tx && !p->udp6_csum_rx
+				       ? "disabled" : "");
+			}
 			break;
 		}
 	}
+	close_json_object();
 }
 
 static void print_session(struct l2tp_data *data)
 {
 	struct l2tp_parm *p = &data->config;
 
-	printf("Session %u in tunnel %u\n",
-	       p->session_id, p->tunnel_id);
-	printf("  Peer session %u, tunnel %u\n",
-	       p->peer_session_id, p->peer_tunnel_id);
+	open_json_object(NULL);
 
-	if (p->ifname != NULL)
-		printf("  interface name: %s\n", p->ifname);
+	print_uint(PRINT_ANY, "session_id", "Session %u", p->session_id);
+	print_uint(PRINT_ANY, "tunnel_id",  " in tunnel %u", p->tunnel_id);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 
-	printf("  offset %u, peer offset %u\n",
-	       p->offset, p->peer_offset);
+	print_uint(PRINT_ANY, "peer_session_id",
+		     "  Peer session %u,", p->peer_session_id);
+	print_uint(PRINT_ANY, "peer_tunnel_id",
+		     " tunnel %u",  p->peer_tunnel_id);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+
+	if (p->ifname != NULL) {
+		print_color_string(PRINT_ANY, COLOR_IFNAME,
+				   "interface", "  interface name: %s" , p->ifname);
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+	}
+
+	print_uint(PRINT_ANY, "offset", "  offset %u,", p->offset);
+	print_uint(PRINT_ANY, "peer_offset", " peer offset %u\n", p->peer_offset);
+
 	if (p->cookie_len > 0)
-		print_cookie("cookie", p->cookie, p->cookie_len);
+		print_cookie("cookie", "cookie",
+			     p->cookie, p->cookie_len);
 	if (p->peer_cookie_len > 0)
-		print_cookie("peer cookie", p->peer_cookie, p->peer_cookie_len);
+		print_cookie("peer_cookie", "peer cookie",
+			     p->peer_cookie, p->peer_cookie_len);
 
 	if (p->reorder_timeout != 0)
-		printf("  reorder timeout: %u\n", p->reorder_timeout);
-	else
-		printf("\n");
+		print_uint(PRINT_ANY, "reorder_timeout",
+			   "  reorder timeout: %u", p->reorder_timeout);
+
+
 	if (p->send_seq || p->recv_seq) {
-		printf("  sequence numbering:");
+		print_string(PRINT_FP, NULL, "%s  sequence numbering:", _SL_);
+
 		if (p->send_seq)
-			printf(" send");
+			print_null(PRINT_ANY, "send_seq", " send", NULL);
 		if (p->recv_seq)
-			printf(" recv");
-		printf("\n");
+			print_null(PRINT_ANY, "recv_seq", " recv", NULL);
+
 	}
+	print_string(PRINT_FP, NULL, "\n", NULL);
+	close_json_object();
 }
 
 static int get_response(struct nlmsghdr *n, void *arg)
@@ -435,10 +483,13 @@ static int get_session(struct l2tp_data *p)
 	if (rtnl_send(&genl_rth, &req, req.n.nlmsg_len) < 0)
 		return -2;
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&genl_rth, session_nlmsg, p) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
+	delete_json_obj();
+	fflush(stdout);
 
 	return 0;
 }
@@ -468,10 +519,13 @@ static int get_tunnel(struct l2tp_data *p)
 	if (rtnl_send(&genl_rth, &req, req.n.nlmsg_len) < 0)
 		return -2;
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&genl_rth, tunnel_nlmsg, p) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		exit(1);
 	}
+	delete_json_obj();
+	fflush(stdout);
 
 	return 0;
 }
