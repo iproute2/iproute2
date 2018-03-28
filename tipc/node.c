@@ -40,10 +40,7 @@ static int node_list_cb(const struct nlmsghdr *nlh, void *data)
 		return MNL_CB_ERROR;
 
 	addr = mnl_attr_get_u32(attrs[TIPC_NLA_NODE_ADDR]);
-	printf("<%u.%u.%u>: ",
-		tipc_zone(addr),
-		tipc_cluster(addr),
-		tipc_node(addr));
+	printf("%x: ", addr);
 
 	if (attrs[TIPC_NLA_NODE_UP])
 		printf("up\n");
@@ -123,11 +120,7 @@ static int cmd_node_get_addr(struct nlmsghdr *nlh, const struct cmd *cmd,
 	}
 	close(sk);
 
-	printf("<%u.%u.%u>\n",
-		tipc_zone(addr.addr.id.node),
-		tipc_cluster(addr.addr.id.node),
-		tipc_node(addr.addr.id.node));
-
+	printf("%x\n", addr.addr.id.node);
 	return 0;
 }
 
