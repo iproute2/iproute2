@@ -42,6 +42,8 @@ int force;
 bool use_names;
 int json;
 int color;
+int oneline;
+const char *_SL_;
 
 static char *conf_file;
 
@@ -191,7 +193,7 @@ static void usage(void)
 		"where  OBJECT := { qdisc | class | filter | action | monitor | exec }\n"
 		"       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -b[atch] [filename] | -n[etns] name |\n"
 		"                    -nm | -nam[es] | { -cf | -conf } path } |\n"
-		"                    -j[son] -p[retty] -c[olor]\n");
+		"                    -o[neline] -j[son] -p[retty] -c[olor]\n");
 }
 
 static int do_cmd(int argc, char **argv, void *buf, size_t buflen)
@@ -487,12 +489,16 @@ int main(int argc, char **argv)
 			++timestamp_short;
 		} else if (matches(argv[1], "-json") == 0) {
 			++json;
+		} else if (matches(argv[1], "-oneline") == 0) {
+			++oneline;
 		} else {
 			fprintf(stderr, "Option \"%s\" is unknown, try \"tc -help\".\n", argv[1]);
 			return -1;
 		}
 		argc--;	argv++;
 	}
+
+	_SL_ = oneline ? "\\" : "\n";
 
 	if (color & !json)
 		enable_color();

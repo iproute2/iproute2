@@ -95,7 +95,8 @@ tc \- show / manipulate traffic control settings
 \fB[ \fB-n\fR[\fIetns\fR] name \fB] \fR|
 \fB[ \fB-nm \fR| \fB-nam\fR[\fIes\fR] \fB] \fR|
 \fB[ \fR{ \fB-cf \fR| \fB-c\fR[\fIonf\fR] \fR} \fB[ filename ] \fB] \fR
-\fB[ -t\fR[imestamp\fR] \fB\] \fR| \fB[ -t\fR[short\fR] \fB]\fR }
+\fB[ -t\fR[imestamp\fR] \fB\] \fR| \fB[ -t\fR[short\fR] \fR| \fB[
+-o\fR[neline\fR] \fB]\fR }
 
 .ti 8
 .IR FORMAT " := {"
@@ -647,6 +648,18 @@ First failure will cause termination of tc.
 .BR "\-force"
 don't terminate tc on errors in batch mode.
 If there were any errors during execution of the commands, the application return code will be non zero.
+
+.TP
+.BR "\-o" , " \-oneline"
+output each record on a single line, replacing line feeds
+with the
+.B '\e'
+character. This is convenient when you want to count records
+with
+.BR wc (1)
+or to
+.BR grep (1)
+the output.
 
 .TP
 .BR "\-n" , " \-net" , " \-netns " <NETNS>
