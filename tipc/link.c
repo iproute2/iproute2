@@ -616,8 +616,7 @@ static void link_mon_print_non_applied(uint16_t applied, uint16_t member_cnt,
 		if (i != applied)
 			printf(",");
 
-		sprintf(addr_str, "%u.%u.%u:", tipc_zone(members[i]),
-			tipc_cluster(members[i]), tipc_node(members[i]));
+		sprintf(addr_str, "%x:", members[i]);
 		state = map_get(up_map, i) ? 'U' : 'D';
 		printf("%s%c", addr_str, state);
 	}

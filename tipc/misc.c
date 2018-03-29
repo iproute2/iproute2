@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <linux/tipc.h>
-
+#include <string.h>
 #include "misc.h"
 
 #define IN_RANGE(val, low, high) ((val) <= (high) && (val) >= (low))
@@ -32,4 +32,80 @@ uint32_t str2addr(char *str)
 
 	fprintf(stderr, "invalid network address \"%s\"\n", str);
 	return 0;
+}
+
+static int is_hex(char *arr, int last)
+{
+	int i;
+
+	while (!arr[last])
+		last--;
+
+	for (i = 0; i <= last; i++) {
+		if (!IN_RANGE(arr[i], '0', '9') &&
+		    !IN_RANGE(arr[i], 'a', 'f') &&
+		    !IN_RANGE(arr[i], 'A', 'F'))
+			return 0;
+	}
+	return 1;
+}
+
+static int is_name(char *arr, int last)
+{
+	int i;
+	char c;
+
+	while (!arr[last])
+		last--;
+
+	if (last > 15)
+		return 0;
+
+	for (i = 0; i <= last; i++) {
+		c = arr[i];
+		if (!IN_RANGE(c, '0', '9') && !IN_RANGE(c, 'a', 'z') &&
+		    !IN_RANGE(c, 'A', 'Z') && c != '-' && c != '_' &&
+		    c != '.' && c != ':' && c != '@')
+			return 0;
+	}
+	return 1;
+}
+
+int str2nodeid(char *str, uint8_t *id)
+{
+	int len = strlen(str);
+	int i;
+
+	if (len > 32)
+		return -1;
+
+	if (is_name(str, len - 1)) {
+		memcpy(id, str, len);
+		return 0;
+	}
+	if (!is_hex(str, len - 1))
+		return -1;
+
+	str[len] = '0';
+	for (i = 0; i < 16; i++) {
+		if (sscanf(&str[2 * i], "%2hhx", &id[i]) != 1)
+			break;
+	}
+	return 0;
+}
+
+void nodeid2str(uint8_t *id, char *str)
+{
+	int i;
+
+	if (is_name((char *)id, 15)) {
+		memcpy(str, id, 16);
+		return;
+	}
+
+	for (i = 0; i < 16; i++)
+		sprintf(&str[2 * i], "%02x", id[i]);
+
+	for (i = 31; str[i] == '0'; i--)
+		str[i] = 0;
 }
