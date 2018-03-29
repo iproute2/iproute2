@@ -17,11 +17,14 @@
 
 static void bind_etc(const char *name)
 {
-	char etc_netns_path[PATH_MAX];
+	char etc_netns_path[sizeof(NETNS_ETC_DIR) + NAME_MAX];
 	char netns_name[PATH_MAX];
 	char etc_name[PATH_MAX];
 	struct dirent *entry;
 	DIR *dir;
+
+	if (strlen(name) >= NAME_MAX)
+		return;
 
 	snprintf(etc_netns_path, sizeof(etc_netns_path), "%s/%s", NETNS_ETC_DIR, name);
 	dir = opendir(etc_netns_path);
