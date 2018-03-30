@@ -1405,6 +1405,14 @@ static void pr_out_uint(struct dl *dl, const char *name, unsigned int val)
 	}
 }
 
+static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
+{
+	if (val == (uint64_t) -1)
+		return pr_out_str(dl, name, "unlimited");
+
+	return pr_out_uint(dl, name, val);
+}
+
 static void pr_out_dev(struct dl *dl, struct nlattr **tb)
 {
 	pr_out_handle(dl, tb);
@@ -4213,16 +4221,16 @@ static void resource_show(struct resource *resource,
 	pr_out_str(dl, "name", resource->name);
 	if (dl->verbose)
 		resource_path_print(dl, ctx->resources, resource->id);
-	pr_out_uint(dl, "size", resource->size);
+	pr_out_u64(dl, "size", resource->size);
 	if (resource->size != resource->size_new)
-		pr_out_uint(dl, "size_new", resource->size_new);
+		pr_out_u64(dl, "size_new", resource->size_new);
 	if (resource->occ_valid)
 		pr_out_uint(dl, "occ", resource->size_occ);
 	pr_out_str(dl, "unit", resource_unit_str_get(resource->unit));
 
 	if (resource->size_min != resource->size_max) {
 		pr_out_uint(dl, "size_min", resource->size_min);
-		pr_out_uint(dl, "size_max", resource->size_max);
+		pr_out_u64(dl, "size_max", resource->size_max);
 		pr_out_uint(dl, "size_gran", resource->size_gran);
 	}
 
