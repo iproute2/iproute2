@@ -149,23 +149,27 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	if (!tb[TCA_SAMPLE_PARMS] || !tb[TCA_SAMPLE_RATE] ||
 	    !tb[TCA_SAMPLE_PSAMPLE_GROUP]) {
-		fprintf(f, "[NULL sample parameters]");
+		print_string(PRINT_FP, NULL, "%s", "[NULL sample parameters]");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_SAMPLE_PARMS]);
 
-	fprintf(f, "sample rate 1/%d group %d",
-		rta_getattr_u32(tb[TCA_SAMPLE_RATE]),
-		rta_getattr_u32(tb[TCA_SAMPLE_PSAMPLE_GROUP]));
+	print_string(PRINT_ANY, "kind", "%s ", "sample");
+	print_uint(PRINT_ANY, "rate", "rate 1/%u ",
+		   rta_getattr_u32(tb[TCA_SAMPLE_RATE]));
+	print_uint(PRINT_ANY, "group", "group %u",
+		   rta_getattr_u32(tb[TCA_SAMPLE_PSAMPLE_GROUP]));
 
 	if (tb[TCA_SAMPLE_TRUNC_SIZE])
-		fprintf(f, " trunc_size %d",
-			rta_getattr_u32(tb[TCA_SAMPLE_TRUNC_SIZE]));
+		print_uint(PRINT_ANY, "trunc_size", " trunc_size %u",
+			   rta_getattr_u32(tb[TCA_SAMPLE_TRUNC_SIZE]));
 
 	print_action_control(f, " ", p->action, "");
 
-	fprintf(f, "\n\tindex %d ref %d bind %d", p->index, p->refcnt,
-		p->bindcnt);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_uint(PRINT_ANY, "index", "\t index %u", p->index);
+	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_SAMPLE_TM]) {
@@ -174,7 +178,7 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	fprintf(f, "\n");
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 	return 0;
 }
 
