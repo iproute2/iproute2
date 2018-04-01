@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 	bool json_output = false;
 	bool force = false;
 	char *filename;
-	struct rd rd;
+	struct rd rd = {};
 	int opt;
 	int err;
 
