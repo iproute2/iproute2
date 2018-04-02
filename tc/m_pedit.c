@@ -111,7 +111,7 @@ reg:
 noexist:
 	p = calloc(1, sizeof(*p));
 	if (p) {
-		strncpy(p->id, str, sizeof(p->id) - 1);
+		strlcpy(p->id, str, sizeof(p->id));
 		p->parse_peopt = pedit_parse_nopopt;
 		goto reg;
 	}

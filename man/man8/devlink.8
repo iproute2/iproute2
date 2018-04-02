@@ -19,7 +19,7 @@ devlink \- Devlink tool
 
 .ti -8
 .IR OBJECT " := { "
-.BR dev " | " port " | " monitor " }"
+.BR dev " | " port " | " monitor " | " sb " | " resource " }"
 .sp
 
 .ti -8
@@ -73,6 +73,14 @@ When combined with -j generate a pretty JSON output.
 .TP
 .B monitor
 - watch for netlink messages.
+
+.TP
+.B sb
+- devlink shared buffer configuration.
+
+.TP
+.B resource
+- devlink device resource configuration.
 
 .SS
 .I COMMAND

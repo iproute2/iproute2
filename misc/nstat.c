@@ -177,12 +177,12 @@ static int count_spaces(const char *line)
 
 static void load_ugly_table(FILE *fp)
 {
-	char buf[4096];
+	char buf[2048];
 	struct nstat_ent *db = NULL;
 	struct nstat_ent *n;
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		char idbuf[sizeof(buf)];
+		char idbuf[4096];
 		int  off;
 		char *p;
 		int count1, count2, skip = 0;

@@ -65,7 +65,7 @@ int tnl_get_ioctl(const char *basedev, void *p)
 	int fd;
 	int err;
 
-	strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
+	strlcpy(ifr.ifr_name, basedev, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = (void *)p;
 
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
@@ -90,9 +90,9 @@ int tnl_add_ioctl(int cmd, const char *basedev, const char *name, void *p)
 	int err;
 
 	if (cmd == SIOCCHGTUNNEL && name[0])
-		strncpy(ifr.ifr_name, name, IFNAMSIZ);
+		strlcpy(ifr.ifr_name, name, IFNAMSIZ);
 	else
-		strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
+		strlcpy(ifr.ifr_name, basedev, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = p;
 
 	fd = socket(preferred_family, SOCK_DGRAM, 0);
@@ -116,9 +116,9 @@ int tnl_del_ioctl(const char *basedev, const char *name, void *p)
 	int err;
 
 	if (name[0])
-		strncpy(ifr.ifr_name, name, IFNAMSIZ);
+		strlcpy(ifr.ifr_name, name, IFNAMSIZ);
 	else
-		strncpy(ifr.ifr_name, basedev, IFNAMSIZ);
+		strlcpy(ifr.ifr_name, basedev, IFNAMSIZ);
 
 	ifr.ifr_ifru.ifru_data = p;
 
@@ -143,7 +143,7 @@ static int tnl_gen_ioctl(int cmd, const char *name,
 	int fd;
 	int err;
 
-	strncpy(ifr.ifr_name, name, IFNAMSIZ);
+	strlcpy(ifr.ifr_name, name, IFNAMSIZ);
 	ifr.ifr_ifru.ifru_data = p;
 
 	fd = socket(preferred_family, SOCK_DGRAM, 0);

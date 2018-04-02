@@ -161,7 +161,7 @@ static struct ematch_util *get_ematch_kind(char *kind)
 
 static struct ematch_util *get_ematch_kind_num(__u16 kind)
 {
-	char name[32];
+	char name[513];
 
 	if (lookup_map(kind, name, sizeof(name), EMATCH_MAP) < 0)
 		return NULL;
