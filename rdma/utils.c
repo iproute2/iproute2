@@ -399,7 +399,8 @@ int rd_attr_cb(const struct nlattr *attr, void *data)
 	int type;
 
 	if (mnl_attr_type_valid(attr, RDMA_NLDEV_ATTR_MAX) < 0)
-		return MNL_CB_ERROR;
+		/* We received uknown attribute */
+		return MNL_CB_OK;
 
 	type = mnl_attr_get_type(attr);
 
