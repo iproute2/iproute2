@@ -391,6 +391,8 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_RES_LKEY] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_RES_IOVA] = MNL_TYPE_U64,
 	[RDMA_NLDEV_ATTR_RES_MRLEN] = MNL_TYPE_U64,
+	[RDMA_NLDEV_ATTR_NDEV_INDEX]		= MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_NDEV_NAME]		= MNL_TYPE_NUL_STRING,
 };
 
 int rd_attr_cb(const struct nlattr *attr, void *data)

@@ -388,6 +388,10 @@ enum rdma_nldev_attr {
 	RDMA_NLDEV_ATTR_RES_LOCAL_DMA_LKEY,	/* u32 */
 	RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY,	/* u32 */
 
+	/* Netdev information for relevant protocols, like RoCE and iWARP */
+	RDMA_NLDEV_ATTR_NDEV_INDEX,		/* u32 */
+	RDMA_NLDEV_ATTR_NDEV_NAME,		/* string */
+
 	RDMA_NLDEV_ATTR_MAX
 };
 #endif /* _RDMA_NETLINK_H */
