@@ -59,12 +59,6 @@ ip-l2tp - L2TPv3 static unmanaged tunnel configuration
 .br
 .RB "[ " seq " { " none " | " send " | " recv " | " both " } ]"
 .br
-.RB "[ " offset
-.IR OFFSET
-.RB " ] [ " peer_offset
-.IR OFFSET
-.RB " ]"
-.br
 .ti -8
 .BR "ip l2tp del tunnel"
 .B tunnel_id
@@ -285,16 +279,6 @@ Default is
 .br
 Valid values are:
 .BR none ", " send ", " recv ", " both "."
-.TP
-.BI offset " OFFSET"
-sets the byte offset from the L2TP header where user data starts in
-transmitted L2TP data packets. This is hardly ever used. If set, the
-value must match the peer_offset value used at the peer. Default is 0.
-.TP
-.BI peer_offset " OFFSET"
-sets the byte offset from the L2TP header where user data starts in
-received L2TP data packets. This is hardly ever used. If set, the
-value must match the offset value used at the peer. Default is 0.
 .SS ip l2tp del session - destroy a session
 .TP
 .BI tunnel_id " ID"
