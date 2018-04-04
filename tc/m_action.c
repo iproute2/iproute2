@@ -366,7 +366,6 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 	if (tab_flush && NULL != tb[0]  && NULL == tb[1])
 		return tc_print_action_flush(f, tb[0]);
 
-	open_json_object(NULL);
 	open_json_array(PRINT_JSON, "actions");
 	for (i = 0; i <= tot_acts; i++) {
 		if (tb[i]) {
@@ -383,7 +382,6 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 
 	}
 	close_json_array(PRINT_JSON, NULL);
-	close_json_object();
 
 	return 0;
 }
@@ -439,8 +437,9 @@ int print_action(const struct sockaddr_nl *who,
 		}
 	}
 
-
+	open_json_object(NULL);
 	tc_print_action(fp, tb[TCA_ACT_TAB], tot_acts ? *tot_acts:0);
+	close_json_object();
 
 	return 0;
 }
