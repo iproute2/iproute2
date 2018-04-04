@@ -221,7 +221,13 @@ static void tunnel_key_print_ip_addr(FILE *f, const char *name,
 	else
 		return;
 
-	fprintf(f, "\n\t%s %s", name, rt_addr_n2a_rta(family, attr));
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	if (matches(name, "src_ip") == 0)
+		print_string(PRINT_ANY, "src_ip", "\tsrc_ip %s",
+			     rt_addr_n2a_rta(family, attr));
+	else if (matches(name, "dst_ip") == 0)
+		print_string(PRINT_ANY, "dst_ip", "\tdst_ip %s",
+			     rt_addr_n2a_rta(family, attr));
 }
 
 static void tunnel_key_print_key_id(FILE *f, const char *name,
@@ -229,7 +235,8 @@ static void tunnel_key_print_key_id(FILE *f, const char *name,
 {
 	if (!attr)
 		return;
-	fprintf(f, "\n\t%s %d", name, rta_getattr_be32(attr));
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_uint(PRINT_ANY, "key_id", "\tkey_id %u", rta_getattr_be32(attr));
 }
 
 static void tunnel_key_print_dst_port(FILE *f, char *name,
@@ -237,7 +244,9 @@ static void tunnel_key_print_dst_port(FILE *f, char *name,
 {
 	if (!attr)
 		return;
-	fprintf(f, "\n\t%s %d", name, rta_getattr_be16(attr));
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_uint(PRINT_ANY, "dst_port", "\tdst_port %u",
+		   rta_getattr_be16(attr));
 }
 
 static void tunnel_key_print_flag(FILE *f, const char *name_on,
@@ -246,7 +255,9 @@ static void tunnel_key_print_flag(FILE *f, const char *name_on,
 {
 	if (!attr)
 		return;
-	fprintf(f, "\n\t%s", rta_getattr_u8(attr) ? name_on : name_off);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_string(PRINT_ANY, "flag", "\t%s",
+		     rta_getattr_u8(attr) ? name_on : name_off);
 }
 
 static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
@@ -260,19 +271,20 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_TUNNEL_KEY_MAX, arg);
 
 	if (!tb[TCA_TUNNEL_KEY_PARMS]) {
-		fprintf(f, "[NULL tunnel_key parameters]");
+		print_string(PRINT_FP, NULL, "%s",
+			     "[NULL tunnel_key parameters]");
 		return -1;
 	}
 	parm = RTA_DATA(tb[TCA_TUNNEL_KEY_PARMS]);
 
-	fprintf(f, "tunnel_key");
+	print_string(PRINT_ANY, "kind", "%s ", "tunnel_key");
 
 	switch (parm->t_action) {
 	case TCA_TUNNEL_KEY_ACT_RELEASE:
-		fprintf(f, " unset");
+		print_string(PRINT_ANY, "mode", " %s", "unset");
 		break;
 	case TCA_TUNNEL_KEY_ACT_SET:
-		fprintf(f, " set");
+		print_string(PRINT_ANY, "mode", " %s", "set");
 		tunnel_key_print_ip_addr(f, "src_ip",
 					 tb[TCA_TUNNEL_KEY_ENC_IPV4_SRC]);
 		tunnel_key_print_ip_addr(f, "dst_ip",
@@ -291,8 +303,10 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 	print_action_control(f, " ", parm->action, "");
 
-	fprintf(f, "\n\tindex %d ref %d bind %d", parm->index, parm->refcnt,
-		parm->bindcnt);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_uint(PRINT_ANY, "index", "\t index %u", parm->index);
+	print_int(PRINT_ANY, "ref", " ref %d", parm->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", parm->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_TUNNEL_KEY_TM]) {
@@ -302,7 +316,7 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	fprintf(f, "\n ");
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 
 	return 0;
 }
