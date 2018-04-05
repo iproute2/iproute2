@@ -306,8 +306,9 @@ static void print_session(struct l2tp_data *data)
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 	}
 
-	print_uint(PRINT_ANY, "offset", "  offset %u,", 0);
-	print_uint(PRINT_ANY, "peer_offset", " peer offset %u\n", 0);
+	/* Show offsets only for plain console output (for legacy scripts) */
+	print_uint(PRINT_FP, "offset", "  offset %u,", 0);
+	print_uint(PRINT_FP, "peer_offset", " peer offset %u\n", 0);
 
 	if (p->cookie_len > 0)
 		print_cookie("cookie", "cookie",
