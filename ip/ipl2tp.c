@@ -42,8 +42,6 @@ struct l2tp_parm {
 	uint32_t peer_tunnel_id;
 	uint32_t session_id;
 	uint32_t peer_session_id;
-	uint32_t offset;
-	uint32_t peer_offset;
 	enum l2tp_encap_type encap;
 	uint16_t local_udp_port;
 	uint16_t peer_udp_port;
@@ -174,8 +172,6 @@ static int create_session(struct l2tp_parm *p)
 	if (p->reorder_timeout)
 		addattr64(&req.n, 1024, L2TP_ATTR_RECV_TIMEOUT,
 					  p->reorder_timeout);
-	if (p->offset)
-		addattr16(&req.n, 1024, L2TP_ATTR_OFFSET, p->offset);
 	if (p->cookie_len)
 		addattr_l(&req.n, 1024, L2TP_ATTR_COOKIE,
 			  p->cookie, p->cookie_len);
@@ -310,8 +306,9 @@ static void print_session(struct l2tp_data *data)
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 	}
 
-	print_uint(PRINT_ANY, "offset", "  offset %u,", p->offset);
-	print_uint(PRINT_ANY, "peer_offset", " peer offset %u\n", p->peer_offset);
+	/* Show offsets only for plain console output (for legacy scripts) */
+	print_uint(PRINT_FP, "offset", "  offset %u,", 0);
+	print_uint(PRINT_FP, "peer_offset", " peer offset %u\n", 0);
 
 	if (p->cookie_len > 0)
 		print_cookie("cookie", "cookie",
@@ -362,8 +359,6 @@ static int get_response(struct nlmsghdr *n, void *arg)
 		p->pw_type = rta_getattr_u16(attrs[L2TP_ATTR_PW_TYPE]);
 	if (attrs[L2TP_ATTR_ENCAP_TYPE])
 		p->encap = rta_getattr_u16(attrs[L2TP_ATTR_ENCAP_TYPE]);
-	if (attrs[L2TP_ATTR_OFFSET])
-		p->offset = rta_getattr_u16(attrs[L2TP_ATTR_OFFSET]);
 	if (attrs[L2TP_ATTR_DATA_SEQ])
 		p->data_seq = rta_getattr_u16(attrs[L2TP_ATTR_DATA_SEQ]);
 	if (attrs[L2TP_ATTR_CONN_ID])
@@ -550,7 +545,6 @@ static void usage(void)
 		"          tunnel_id ID\n"
 		"          session_id ID peer_session_id ID\n"
 		"          [ cookie HEXSTR ] [ peer_cookie HEXSTR ]\n"
-		"          [ offset OFFSET ] [ peer_offset OFFSET ]\n"
 		"          [ seq { none | send | recv | both } ]\n"
 		"          [ l2spec_type L2SPEC ]\n"
 		"       ip l2tp del tunnel tunnel_id ID\n"
@@ -678,19 +672,11 @@ static int parse_args(int argc, char **argv, int cmd, struct l2tp_parm *p)
 				invarg("invalid option for udp6_csum_tx\n"
 						, *argv);
 		} else if (strcmp(*argv, "offset") == 0) {
-			__u8 uval;
-
+			fprintf(stderr, "Ignoring option \"offset\"\n");
 			NEXT_ARG();
-			if (get_u8(&uval, *argv, 0))
-				invarg("invalid offset\n", *argv);
-			p->offset = uval;
 		} else if (strcmp(*argv, "peer_offset") == 0) {
-			__u8 uval;
-
+			fprintf(stderr, "Ignoring option \"peer_offset\"\n");
 			NEXT_ARG();
-			if (get_u8(&uval, *argv, 0))
-				invarg("invalid offset\n", *argv);
-			p->peer_offset = uval;
 		} else if (strcmp(*argv, "cookie") == 0) {
 			int slen;
 
