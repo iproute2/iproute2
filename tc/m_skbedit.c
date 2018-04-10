@@ -168,9 +168,8 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_SKBEDIT_MAX + 1];
 
 	SPRINT_BUF(b1);
-	__u32 *priority;
-	__u32 *mark;
-	__u16 *queue_mapping, *ptype;
+	__u32 priority;
+	__u16 ptype;
 	struct tc_skbedit *p = NULL;
 
 	if (arg == NULL)
@@ -179,43 +178,49 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_SKBEDIT_MAX, arg);
 
 	if (tb[TCA_SKBEDIT_PARMS] == NULL) {
-		fprintf(f, "[NULL skbedit parameters]");
+		print_string(PRINT_FP, NULL, "%s", "[NULL skbedit parameters]");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_SKBEDIT_PARMS]);
 
-	fprintf(f, " skbedit");
+	print_string(PRINT_ANY, "kind", "%s ", "skbedit");
 
 	if (tb[TCA_SKBEDIT_QUEUE_MAPPING] != NULL) {
-		queue_mapping = RTA_DATA(tb[TCA_SKBEDIT_QUEUE_MAPPING]);
-		fprintf(f, " queue_mapping %u", *queue_mapping);
+		print_uint(PRINT_ANY, "queue_mapping", "queue_mapping %u",
+			   rta_getattr_u16(tb[TCA_SKBEDIT_QUEUE_MAPPING]));
 	}
 	if (tb[TCA_SKBEDIT_PRIORITY] != NULL) {
-		priority = RTA_DATA(tb[TCA_SKBEDIT_PRIORITY]);
-		fprintf(f, " priority %s", sprint_tc_classid(*priority, b1));
+		priority = rta_getattr_u32(tb[TCA_SKBEDIT_PRIORITY]);
+		print_string(PRINT_ANY, "priority", " priority %s",
+			     sprint_tc_classid(priority, b1));
 	}
 	if (tb[TCA_SKBEDIT_MARK] != NULL) {
-		mark = RTA_DATA(tb[TCA_SKBEDIT_MARK]);
-		fprintf(f, " mark %d", *mark);
+		print_uint(PRINT_ANY, "mark", " mark %u",
+			   rta_getattr_u32(tb[TCA_SKBEDIT_MARK]));
 	}
 	if (tb[TCA_SKBEDIT_PTYPE] != NULL) {
-		ptype = RTA_DATA(tb[TCA_SKBEDIT_PTYPE]);
-		if (*ptype == PACKET_HOST)
-			fprintf(f, " ptype host");
-		else if (*ptype == PACKET_BROADCAST)
-			fprintf(f, " ptype broadcast");
-		else if (*ptype == PACKET_MULTICAST)
-			fprintf(f, " ptype multicast");
-		else if (*ptype == PACKET_OTHERHOST)
-			fprintf(f, " ptype otherhost");
+		ptype = rta_getattr_u16(tb[TCA_SKBEDIT_PTYPE]);
+		if (ptype == PACKET_HOST)
+			print_string(PRINT_ANY, "ptype", " ptype %s", "host");
+		else if (ptype == PACKET_BROADCAST)
+			print_string(PRINT_ANY, "ptype", " ptype %s",
+				     "broadcast");
+		else if (ptype == PACKET_MULTICAST)
+			print_string(PRINT_ANY, "ptype", " ptype %s",
+				     "multicast");
+		else if (ptype == PACKET_OTHERHOST)
+			print_string(PRINT_ANY, "ptype", " ptype %s",
+				     "otherhost");
 		else
-			fprintf(f, " ptype %d", *ptype);
+			print_uint(PRINT_ANY, "ptype", " ptype %u", ptype);
 	}
 
 	print_action_control(f, " ", p->action, "");
 
-	fprintf(f, "\n\t index %u ref %d bind %d",
-		p->index, p->refcnt, p->bindcnt);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_uint(PRINT_ANY, "index", "\t index %u", p->index);
+	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_SKBEDIT_TM]) {
@@ -225,7 +230,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	fprintf(f, "\n ");
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 
 	return 0;
 }
