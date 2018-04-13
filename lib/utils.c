@@ -568,7 +568,7 @@ static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 	if (strcmp(name, "default") == 0) {
 		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
-		addr->family = (family != AF_UNSPEC) ? family : AF_INET;
+		addr->family = family;
 		addr->bytelen = af_byte_len(addr->family);
 		addr->bitlen = -2;
 		addr->flags |= PREFIXLEN_SPECIFIED;
@@ -579,7 +579,7 @@ static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 	    strcmp(name, "any") == 0) {
 		if ((family == AF_DECnet) || (family == AF_MPLS))
 			return -1;
-		addr->family = AF_UNSPEC;
+		addr->family = family;
 		addr->bytelen = 0;
 		addr->bitlen = -2;
 		return 0;
