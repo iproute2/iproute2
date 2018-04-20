@@ -634,7 +634,7 @@ static int bpf_gen_global(const char *bpf_sub_dir)
 
 static int bpf_gen_master(const char *base, const char *name)
 {
-	char bpf_sub_dir[PATH_MAX];
+	char bpf_sub_dir[PATH_MAX + NAME_MAX + 1];
 	int ret;
 
 	snprintf(bpf_sub_dir, sizeof(bpf_sub_dir), "%s%s/", base, name);
@@ -675,8 +675,8 @@ static int bpf_slave_via_bind_mnt(const char *full_name,
 static int bpf_gen_slave(const char *base, const char *name,
 			 const char *link)
 {
-	char bpf_lnk_dir[PATH_MAX];
-	char bpf_sub_dir[PATH_MAX];
+	char bpf_lnk_dir[PATH_MAX + NAME_MAX + 1];
+	char bpf_sub_dir[PATH_MAX + NAME_MAX];
 	struct stat sb = {};
 	int ret;
 
