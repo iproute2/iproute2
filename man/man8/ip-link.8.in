@@ -775,12 +775,14 @@ the following additional arguments are supported:
 .BR type " { " gre " | " gretap " }"
 .BI " remote " ADDR " local " ADDR
 [
-.RB [ i | o ] seq
+.RB [ no ] "" [ i | o ] seq
 ] [
 .RB [ i | o ] key
 .I KEY
+|
+.BR no [ i | o ] key
 ] [
-.RB [ i | o ] csum
+.RB [ no ] "" [ i | o ] csum
 ] [
 .BI ttl " TTL "
 ] [
@@ -816,7 +818,7 @@ the following additional arguments are supported:
 It must be an address on another interface on this host.
 
 .sp
-.RB [ i | o ] seq
+.RB  [ no ] "" [ i | o ] seq
 - serialize packets.
 The
 .B oseq
@@ -828,6 +830,8 @@ flag requires that all input packets are serialized.
 .sp
 .RB [ i | o ] key
 .I KEY
+|
+.BR no [ i | o ] key
 - use keyed GRE with key
 .IR KEY ". "KEY
 is either a number or an IPv4 address-like dotted quad.
@@ -839,7 +843,7 @@ The
 parameters specify different keys for input and output.
 
 .sp
-.RB  [ i | o ] csum
+.RB  [ no ] "" [ i | o ] csum
 - generate/require checksums for tunneled packets.
 The
 .B ocsum
@@ -920,12 +924,14 @@ the following additional arguments are supported:
 .BR type " { " ip6gre " | " ip6gretap " }"
 .BI remote " ADDR " local " ADDR"
 [
-.RB [ i | o ] seq
+.RB [ no ] "" [ i | o ] seq
 ] [
 .RB [ i | o ] key
 .I KEY
+|
+.BR no [ i | o ] key
 ] [
-.RB [ i | o ] csum
+.RB [ no ] "" [ i | o ] csum
 ] [
 .BI hoplimit " TTL "
 ] [
@@ -955,7 +961,7 @@ the following additional arguments are supported:
 It must be an address on another interface on this host.
 
 .sp
-.RB  [ i | o ] seq
+.RB  [ no ] "" [ i | o ] seq
 - serialize packets.
 The
 .B oseq
@@ -965,7 +971,10 @@ The
 flag requires that all input packets are serialized.
 
 .sp
-.RB  [ i | o ] key " \fIKEY"
+.RB [ i | o ] key
+.I KEY
+|
+.BR no [ i | o ] key
 - use keyed GRE with key
 .IR KEY ". "KEY
 is either a number or an IPv4 address-like dotted quad.
@@ -977,7 +986,7 @@ The
 parameters specify different keys for input and output.
 
 .sp
-.RB  [ i | o ] csum
+.RB  [ no ] "" [ i | o ] csum
 - generate/require checksums for tunneled packets.
 The
 .B ocsum

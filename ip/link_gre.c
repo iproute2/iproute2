@@ -31,9 +31,9 @@ static void gre_print_help(struct link_util *lu, int argc, char **argv, FILE *f)
 	);
 	fprintf(f,
 		"                     [ local ADDR ]\n"
-		"                     [ [i|o]seq ]\n"
-		"                     [ [i|o]key KEY ]\n"
-		"                     [ [i|o]csum ]\n"
+		"                     [ [no][i|o]seq ]\n"
+		"                     [ [i|o]key KEY | no[i|o]key ]\n"
+		"                     [ [no][i|o]csum ]\n"
 		"                     [ ttl TTL ]\n"
 		"                     [ tos TOS ]\n"
 		"                     [ [no]pmtudisc ]\n"
@@ -210,28 +210,52 @@ get_failed:
 			iflags |= GRE_KEY;
 			oflags |= GRE_KEY;
 			ikey = okey = tnl_parse_key("key", *argv);
+		} else if (!matches(*argv, "nokey")) {
+			iflags &= ~GRE_KEY;
+			oflags &= ~GRE_KEY;
+			ikey = okey = 0;
 		} else if (!matches(*argv, "ikey")) {
 			NEXT_ARG();
 			iflags |= GRE_KEY;
 			ikey = tnl_parse_key("ikey", *argv);
+		} else if (!matches(*argv, "noikey")) {
+			iflags &= ~GRE_KEY;
+			ikey = 0;
 		} else if (!matches(*argv, "okey")) {
 			NEXT_ARG();
 			oflags |= GRE_KEY;
 			okey = tnl_parse_key("okey", *argv);
+		} else if (!matches(*argv, "nookey")) {
+			oflags &= ~GRE_KEY;
+			okey = 0;
 		} else if (!matches(*argv, "seq")) {
 			iflags |= GRE_SEQ;
 			oflags |= GRE_SEQ;
+		} else if (!matches(*argv, "noseq")) {
+			iflags &= ~GRE_SEQ;
+			oflags &= ~GRE_SEQ;
 		} else if (!matches(*argv, "iseq")) {
 			iflags |= GRE_SEQ;
+		} else if (!matches(*argv, "noiseq")) {
+			iflags &= ~GRE_SEQ;
 		} else if (!matches(*argv, "oseq")) {
 			oflags |= GRE_SEQ;
+		} else if (!matches(*argv, "nooseq")) {
+			oflags &= ~GRE_SEQ;
 		} else if (!matches(*argv, "csum")) {
 			iflags |= GRE_CSUM;
 			oflags |= GRE_CSUM;
+		} else if (!matches(*argv, "nocsum")) {
+			iflags &= ~GRE_CSUM;
+			oflags &= ~GRE_CSUM;
 		} else if (!matches(*argv, "icsum")) {
 			iflags |= GRE_CSUM;
+		} else if (!matches(*argv, "noicsum")) {
+			iflags &= ~GRE_CSUM;
 		} else if (!matches(*argv, "ocsum")) {
 			oflags |= GRE_CSUM;
+		} else if (!matches(*argv, "noocsum")) {
+			oflags &= ~GRE_CSUM;
 		} else if (!matches(*argv, "nopmtudisc")) {
 			pmtudisc = 0;
 		} else if (!matches(*argv, "pmtudisc")) {
