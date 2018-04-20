@@ -204,7 +204,7 @@ static void print_cacheinfo(const struct nda_cacheinfo *ci)
 
 	print_uint(PRINT_ANY, "used", " used %u", ci->ndm_used / hz);
 	print_uint(PRINT_ANY, "confirmed", "/%u", ci->ndm_confirmed / hz);
-	print_uint(PRINT_ANY, "updated", "/u", ci->ndm_updated / hz);
+	print_uint(PRINT_ANY, "updated", "/%u", ci->ndm_updated / hz);
 }
 
 static void print_neigh_state(unsigned int nud)
