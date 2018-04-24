@@ -1234,7 +1234,7 @@ static void flower_print_port(char *name, struct rtattr *attr)
 		return;
 
 	sprintf(namefrm,"\n  %s %%u", name);
-	print_uint(PRINT_ANY, name, namefrm, rta_getattr_be16(attr));
+	print_hu(PRINT_ANY, name, namefrm, rta_getattr_be16(attr));
 }
 
 static void flower_print_tcp_flags(char *name, struct rtattr *flags_attr,

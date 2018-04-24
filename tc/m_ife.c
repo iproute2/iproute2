@@ -94,9 +94,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 			} else if (matches(*argv, "tcindex") == 0) {
 				ife_tcindex = IFE_META_TCINDEX;
 			} else {
-				fprintf(stderr, "Illegal meta define <%s>\n",
-					*argv);
-				return -1;
+				invarg("Illegal meta define", *argv);
 			}
 		} else if (matches(*argv, "use") == 0) {
 			NEXT_ARG();
@@ -116,9 +114,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 					invarg("ife tcindex val is invalid",
 					       *argv);
 			} else {
-				fprintf(stderr, "Illegal meta use type <%s>\n",
-					*argv);
-				return -1;
+				invarg("Illegal meta use type", *argv);
 			}
 		} else if (matches(*argv, "type") == 0) {
 			NEXT_ARG();
@@ -132,8 +128,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 			if (sscanf(daddr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
 				   dbuf, dbuf + 1, dbuf + 2,
 				   dbuf + 3, dbuf + 4, dbuf + 5) != 6) {
-				fprintf(stderr, "Invalid mac address %s\n",
-					daddr);
+				invarg("Invalid mac address", *argv);
 			}
 			fprintf(stderr, "dst MAC address <%s>\n", daddr);
 
@@ -143,8 +138,7 @@ static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
 			if (sscanf(saddr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
 				   sbuf, sbuf + 1, sbuf + 2,
 				   sbuf + 3, sbuf + 4, sbuf + 5) != 6) {
-				fprintf(stderr, "Invalid mac address %s\n",
-					saddr);
+				invarg("Invalid mac address", *argv);
 			}
 			fprintf(stderr, "src MAC address <%s>\n", saddr);
 		} else if (matches(*argv, "help") == 0) {

@@ -199,7 +199,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	if (is_addrtype_inet(&daddr)) {
 		int type = (daddr.family == AF_INET) ? IFLA_GENEVE_REMOTE :
 						       IFLA_GENEVE_REMOTE6;
-		addattr_l(n, sizeof(1024), type, daddr.data, daddr.bytelen);
+		addattr_l(n, 1024, type, daddr.data, daddr.bytelen);
 	}
 	if (!set_op || GENEVE_ATTRSET(attrs, IFLA_GENEVE_LABEL))
 		addattr32(n, 1024, IFLA_GENEVE_LABEL, label);

@@ -312,7 +312,7 @@ static int brlink_modify(int argc, char **argv)
 				return -1;
 		} else if (strcmp(*argv, "hairpin") == 0) {
 			NEXT_ARG();
-			if (!on_off("hairping", &hairpin, *argv))
+			if (!on_off("hairpin", &hairpin, *argv))
 				return -1;
 		} else if (strcmp(*argv, "fastleave") == 0) {
 			NEXT_ARG();

@@ -1038,7 +1038,10 @@ static int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r,
 		memset(rtnh, 0, sizeof(*rtnh));
 		rtnh->rtnh_len = sizeof(*rtnh);
 		rta->rta_len += rtnh->rtnh_len;
-		parse_one_nh(n, r, rta, rtnh, &argc, &argv);
+		if (parse_one_nh(n, r, rta, rtnh, &argc, &argv)) {
+			fprintf(stderr, "Error: cannot parse nexthop\n");
+			exit(-1);
+		}
 		rtnh = RTNH_NEXT(rtnh);
 	}
 
