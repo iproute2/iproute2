@@ -51,7 +51,7 @@ static void print_explain(FILE *f)
 		"Where: VNI   := 0-16777215\n"
 		"       ADDR  := { IP_ADDRESS | any }\n"
 		"       TOS   := { NUMBER | inherit }\n"
-		"       TTL   := { 1..255 | inherit }\n"
+		"       TTL   := { 1..255 | auto | inherit }\n"
 		"       LABEL := 0-1048575\n"
 	);
 }
