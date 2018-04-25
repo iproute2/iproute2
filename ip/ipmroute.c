@@ -182,12 +182,12 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		struct rta_mfc_stats *mfcs = RTA_DATA(tb[RTA_MFC_STATS]);
 
 		print_string(PRINT_FP, NULL, "%s", _SL_);
-		print_uint(PRINT_ANY, "packets", "  %"PRIu64" packets,",
+		print_u64(PRINT_ANY, "packets", "  %"PRIu64" packets,",
 			   mfcs->mfcs_packets);
-		print_uint(PRINT_ANY, "bytes", " %"PRIu64" bytes", mfcs->mfcs_bytes);
+		print_u64(PRINT_ANY, "bytes", " %"PRIu64" bytes", mfcs->mfcs_bytes);
 
 		if (mfcs->mfcs_wrong_if)
-			print_uint(PRINT_ANY, "wrong_if",
+			print_u64(PRINT_ANY, "wrong_if",
 				   ", %"PRIu64" arrived on wrong iif.",
 				   mfcs->mfcs_wrong_if);
 	}

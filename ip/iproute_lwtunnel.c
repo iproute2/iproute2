@@ -273,7 +273,7 @@ static void print_encap_ip(FILE *fp, struct rtattr *encap)
 	parse_rtattr_nested(tb, LWTUNNEL_IP_MAX, encap);
 
 	if (tb[LWTUNNEL_IP_ID])
-		print_uint(PRINT_ANY, "id", "id %llu ",
+		print_u64(PRINT_ANY, "id", "id %llu ",
 			   ntohll(rta_getattr_u64(tb[LWTUNNEL_IP_ID])));
 
 	if (tb[LWTUNNEL_IP_SRC])
@@ -333,7 +333,7 @@ static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 	parse_rtattr_nested(tb, LWTUNNEL_IP6_MAX, encap);
 
 	if (tb[LWTUNNEL_IP6_ID])
-		print_uint(PRINT_ANY, "id", "id %llu ",
+		print_u64(PRINT_ANY, "id", "id %llu ",
 			    ntohll(rta_getattr_u64(tb[LWTUNNEL_IP6_ID])));
 
 	if (tb[LWTUNNEL_IP6_SRC])
@@ -347,7 +347,7 @@ static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 				   rt_addr_n2a_rta(AF_INET6, tb[LWTUNNEL_IP6_DST]));
 
 	if (tb[LWTUNNEL_IP6_HOPLIMIT])
-		print_uint(PRINT_ANY, "hoplimit",
+		print_u64(PRINT_ANY, "hoplimit",
 			   "hoplimit %u ",
 			   rta_getattr_u8(tb[LWTUNNEL_IP6_HOPLIMIT]));
 

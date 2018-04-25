@@ -56,13 +56,16 @@ void close_json_array(enum output_type type, const char *delim);
 		print_color_##type_name(t, COLOR_NONE, key, fmt, value);	\
 	}
 _PRINT_FUNC(int, int);
+_PRINT_FUNC(s64, int64_t);
 _PRINT_FUNC(bool, bool);
 _PRINT_FUNC(null, const char*);
 _PRINT_FUNC(string, const char*);
-_PRINT_FUNC(uint, uint64_t);
+_PRINT_FUNC(uint, unsigned int);
+_PRINT_FUNC(u64, uint64_t);
 _PRINT_FUNC(hu, unsigned short);
 _PRINT_FUNC(hex, unsigned int);
 _PRINT_FUNC(0xhex, unsigned int);
+_PRINT_FUNC(luint, unsigned long int);
 _PRINT_FUNC(lluint, unsigned long long int);
 _PRINT_FUNC(float, double);
 #undef _PRINT_FUNC

@@ -139,19 +139,19 @@ static void print_tcp_metrics(struct rtattr *a)
 
 		print_uint(PRINT_JSON, name, NULL, val);
 		print_string(PRINT_FP, NULL, " %s ", name);
-		print_uint(PRINT_FP, NULL, "%lu", val);
+		print_uint(PRINT_FP, NULL, "%u", val);
 	}
 
 	if (rtt) {
 		print_float(PRINT_JSON, "rtt", NULL,
 			    (double)rtt / usec_per_sec);
-		print_uint(PRINT_FP, NULL,
+		print_u64(PRINT_FP, NULL,
 			   " rtt %luus", rtt);
 	}
 	if (rttvar) {
 		print_float(PRINT_JSON, "rttvar", NULL,
 			    (double) rttvar / usec_per_sec);
-		print_uint(PRINT_FP, NULL,
+		print_u64(PRINT_FP, NULL,
 			   " rttvar %luus", rttvar);
 	}
 }
