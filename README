@@ -16,8 +16,8 @@ How to compile this.
 --------------------
 1. libdbm
 
-arpd needs to have the db4 development libraries. For Debian
-users this is the package with a name like libdb4.x-dev.
+arpd needs to have the berkeleydb development libraries. For Debian
+users this is the package with a name like libdbX.X-dev.
 DBM_INCLUDE points to the directory with db_185.h which
 is the include file used by arpd to get to the old format Berkeley
 database routines.  Often this is in the db-devel package.
