@@ -440,10 +440,10 @@ static int print_tuntap(const struct sockaddr_nl *who,
 			   "ifname", "%s:", name);
 	print_flags(flags);
 	if (owner != -1)
-		print_uint(PRINT_ANY, "user",
+		print_u64(PRINT_ANY, "user",
 			   " user %ld", owner);
 	if (group != -1)
-		print_uint(PRINT_ANY, "group",
+		print_u64(PRINT_ANY, "group",
 			   " group %ld", group);
 
 	if (show_details) {

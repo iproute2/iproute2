@@ -650,7 +650,7 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 	int len = RTA_PAYLOAD(rta);
 	int first = 1;
 
-	while (len > sizeof(*nh)) {
+	while (len >= sizeof(*nh)) {
 		struct rtattr *tb[RTA_MAX + 1];
 
 		if (nh->rtnh_len > len)

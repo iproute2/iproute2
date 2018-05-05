@@ -640,7 +640,7 @@ static void print_attrs(struct rtattr *attrs[])
 	}
 }
 
-static __u64 getattr_uint(struct rtattr *stat)
+static __u64 getattr_u64(struct rtattr *stat)
 {
 	switch (RTA_PAYLOAD(stat)) {
 	case sizeof(__u64):
@@ -681,7 +681,7 @@ static void print_fp_stats(const char *prefix,
 
 		pad = strlen(names[i]) + 1;
 		if (stats[i])
-			printf("%*llu", pad, getattr_uint(stats[i]));
+			printf("%*llu", pad, getattr_u64(stats[i]));
 		else
 			printf("%*c", pad, '-');
 	}
@@ -697,8 +697,8 @@ static void print_json_stats(const char *names[], unsigned int num,
 		if (!names[i] || !stats[i])
 			continue;
 
-		print_uint(PRINT_JSON, names[i],
-			   NULL, getattr_uint(stats[i]));
+		print_u64(PRINT_JSON, names[i],
+			   NULL, getattr_u64(stats[i]));
 	}
 }
 

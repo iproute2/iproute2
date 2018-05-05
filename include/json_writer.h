@@ -34,22 +34,29 @@ void jsonw_string(json_writer_t *self, const char *value);
 void jsonw_bool(json_writer_t *self, bool value);
 void jsonw_float(json_writer_t *self, double number);
 void jsonw_float_fmt(json_writer_t *self, const char *fmt, double num);
-void jsonw_uint(json_writer_t *self, uint64_t number);
+void jsonw_uint(json_writer_t *self, unsigned int number);
+void jsonw_u64(json_writer_t *self, uint64_t number);
 void jsonw_xint(json_writer_t *self, uint64_t number);
 void jsonw_hu(json_writer_t *self, unsigned short number);
-void jsonw_int(json_writer_t *self, int64_t number);
+void jsonw_int(json_writer_t *self, int number);
+void jsonw_s64(json_writer_t *self, int64_t number);
 void jsonw_null(json_writer_t *self);
+void jsonw_luint(json_writer_t *self, unsigned long int num);
 void jsonw_lluint(json_writer_t *self, unsigned long long int num);
 
 /* Useful Combinations of name and value */
 void jsonw_string_field(json_writer_t *self, const char *prop, const char *val);
 void jsonw_bool_field(json_writer_t *self, const char *prop, bool value);
 void jsonw_float_field(json_writer_t *self, const char *prop, double num);
-void jsonw_uint_field(json_writer_t *self, const char *prop, uint64_t num);
+void jsonw_uint_field(json_writer_t *self, const char *prop, unsigned int num);
+void jsonw_u64_field(json_writer_t *self, const char *prop, uint64_t num);
 void jsonw_xint_field(json_writer_t *self, const char *prop, uint64_t num);
 void jsonw_hu_field(json_writer_t *self, const char *prop, unsigned short num);
-void jsonw_int_field(json_writer_t *self, const char *prop, int64_t num);
+void jsonw_int_field(json_writer_t *self, const char *prop, int num);
+void jsonw_s64_field(json_writer_t *self, const char *prop, int64_t num);
 void jsonw_null_field(json_writer_t *self, const char *prop);
+void jsonw_luint_field(json_writer_t *self, const char *prop,
+			unsigned long int num);
 void jsonw_lluint_field(json_writer_t *self, const char *prop,
 			unsigned long long int num);
 void jsonw_float_field_fmt(json_writer_t *self, const char *prop,

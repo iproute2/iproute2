@@ -554,21 +554,21 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 
 		/* RX stats */
 		open_json_object("rx");
-		print_uint(PRINT_JSON, "bytes", NULL,
+		print_u64(PRINT_JSON, "bytes", NULL,
 			   rta_getattr_u64(vf[IFLA_VF_STATS_RX_BYTES]));
-		print_uint(PRINT_JSON, "packets", NULL,
+		print_u64(PRINT_JSON, "packets", NULL,
 			   rta_getattr_u64(vf[IFLA_VF_STATS_RX_PACKETS]));
-		print_uint(PRINT_JSON, "multicast", NULL,
+		print_u64(PRINT_JSON, "multicast", NULL,
 			   rta_getattr_u64(vf[IFLA_VF_STATS_MULTICAST]));
-		print_uint(PRINT_JSON, "broadcast", NULL,
+		print_u64(PRINT_JSON, "broadcast", NULL,
 			   rta_getattr_u64(vf[IFLA_VF_STATS_BROADCAST]));
 		close_json_object();
 
 		/* TX stats */
 		open_json_object("tx");
-		print_uint(PRINT_JSON, "tx_bytes", NULL,
+		print_u64(PRINT_JSON, "tx_bytes", NULL,
 			   rta_getattr_u64(vf[IFLA_VF_STATS_TX_BYTES]));
-		print_uint(PRINT_JSON, "tx_packets", NULL,
+		print_u64(PRINT_JSON, "tx_packets", NULL,
 			   rta_getattr_u64(vf[IFLA_VF_STATS_TX_PACKETS]));
 		close_json_object();
 		close_json_object();
@@ -608,69 +608,69 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 
 		/* RX stats */
 		open_json_object("rx");
-		print_uint(PRINT_JSON, "bytes", NULL, s->rx_bytes);
-		print_uint(PRINT_JSON, "packets", NULL, s->rx_packets);
-		print_uint(PRINT_JSON, "errors", NULL, s->rx_errors);
-		print_uint(PRINT_JSON, "dropped", NULL, s->rx_dropped);
-		print_uint(PRINT_JSON, "over_errors", NULL, s->rx_over_errors);
-		print_uint(PRINT_JSON, "multicast", NULL, s->multicast);
+		print_u64(PRINT_JSON, "bytes", NULL, s->rx_bytes);
+		print_u64(PRINT_JSON, "packets", NULL, s->rx_packets);
+		print_u64(PRINT_JSON, "errors", NULL, s->rx_errors);
+		print_u64(PRINT_JSON, "dropped", NULL, s->rx_dropped);
+		print_u64(PRINT_JSON, "over_errors", NULL, s->rx_over_errors);
+		print_u64(PRINT_JSON, "multicast", NULL, s->multicast);
 		if (s->rx_compressed)
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "compressed", NULL, s->rx_compressed);
 
 		/* RX error stats */
 		if (show_stats > 1) {
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "length_errors",
 				   NULL, s->rx_length_errors);
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "crc_errors",
 				   NULL, s->rx_crc_errors);
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "frame_errors",
 				   NULL, s->rx_frame_errors);
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "fifo_errors",
 				   NULL, s->rx_fifo_errors);
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "missed_errors",
 				   NULL, s->rx_missed_errors);
 			if (s->rx_nohandler)
-				print_uint(PRINT_JSON,
+				print_u64(PRINT_JSON,
 					   "nohandler", NULL, s->rx_nohandler);
 		}
 		close_json_object();
 
 		/* TX stats */
 		open_json_object("tx");
-		print_uint(PRINT_JSON, "bytes", NULL, s->tx_bytes);
-		print_uint(PRINT_JSON, "packets", NULL, s->tx_packets);
-		print_uint(PRINT_JSON, "errors", NULL, s->tx_errors);
-		print_uint(PRINT_JSON, "dropped", NULL, s->tx_dropped);
-		print_uint(PRINT_JSON,
+		print_u64(PRINT_JSON, "bytes", NULL, s->tx_bytes);
+		print_u64(PRINT_JSON, "packets", NULL, s->tx_packets);
+		print_u64(PRINT_JSON, "errors", NULL, s->tx_errors);
+		print_u64(PRINT_JSON, "dropped", NULL, s->tx_dropped);
+		print_u64(PRINT_JSON,
 			   "carrier_errors",
 			   NULL, s->tx_carrier_errors);
-		print_uint(PRINT_JSON, "collisions", NULL, s->collisions);
+		print_u64(PRINT_JSON, "collisions", NULL, s->collisions);
 		if (s->tx_compressed)
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "compressed", NULL, s->tx_compressed);
 
 		/* TX error stats */
 		if (show_stats > 1) {
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "aborted_errors",
 				   NULL, s->tx_aborted_errors);
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "fifo_errors",
 				   NULL, s->tx_fifo_errors);
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "window_errors",
 				   NULL, s->tx_window_errors);
-			print_uint(PRINT_JSON,
+			print_u64(PRINT_JSON,
 				   "heartbeat_errors",
 				   NULL, s->tx_heartbeat_errors);
 			if (carrier_changes)
-				print_uint(PRINT_JSON, "carrier_changes", NULL,
+				print_u64(PRINT_JSON, "carrier_changes", NULL,
 					   rta_getattr_u32(carrier_changes));
 		}
 

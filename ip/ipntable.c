@@ -392,7 +392,7 @@ static void print_ndtparams(struct rtattr *tpb[])
 	if (tpb[NDTPA_REACHABLE_TIME]) {
 		__u64 reachable = rta_getattr_u64(tpb[NDTPA_REACHABLE_TIME]);
 
-		print_uint(PRINT_ANY, "reachable",
+		print_u64(PRINT_ANY, "reachable",
 			   "reachable %llu ", reachable);
 	}
 
@@ -400,14 +400,14 @@ static void print_ndtparams(struct rtattr *tpb[])
 		__u64 breachable
 			= rta_getattr_u64(tpb[NDTPA_BASE_REACHABLE_TIME]);
 
-		print_uint(PRINT_ANY, "base_reachable",
+		print_u64(PRINT_ANY, "base_reachable",
 			   "base_reachable %llu ", breachable);
 	}
 
 	if (tpb[NDTPA_RETRANS_TIME]) {
 		__u64 retrans = rta_getattr_u64(tpb[NDTPA_RETRANS_TIME]);
 
-		print_uint(PRINT_ANY, "retrans", "retrans %llu ", retrans);
+		print_u64(PRINT_ANY, "retrans", "retrans %llu ", retrans);
 	}
 
 	print_string(PRINT_FP, NULL, "%s    ", _SL_);
@@ -415,14 +415,14 @@ static void print_ndtparams(struct rtattr *tpb[])
 	if (tpb[NDTPA_GC_STALETIME]) {
 		__u64 gc_stale = rta_getattr_u64(tpb[NDTPA_GC_STALETIME]);
 
-		print_uint(PRINT_ANY, "gc_stale", "gc_stale %llu ", gc_stale);
+		print_u64(PRINT_ANY, "gc_stale", "gc_stale %llu ", gc_stale);
 	}
 
 	if (tpb[NDTPA_DELAY_PROBE_TIME]) {
 		__u64 delay_probe
 			= rta_getattr_u64(tpb[NDTPA_DELAY_PROBE_TIME]);
 
-		print_uint(PRINT_ANY, "delay_probe",
+		print_u64(PRINT_ANY, "delay_probe",
 			   "delay_probe %llu ", delay_probe);
 	}
 
@@ -459,14 +459,14 @@ static void print_ndtparams(struct rtattr *tpb[])
 	if (tpb[NDTPA_ANYCAST_DELAY]) {
 		__u64 anycast_delay = rta_getattr_u64(tpb[NDTPA_ANYCAST_DELAY]);
 
-		print_uint(PRINT_ANY, "anycast_delay",
+		print_u64(PRINT_ANY, "anycast_delay",
 			   "anycast_delay %llu ", anycast_delay);
 	}
 
 	if (tpb[NDTPA_PROXY_DELAY]) {
 		__u64 proxy_delay = rta_getattr_u64(tpb[NDTPA_PROXY_DELAY]);
 
-		print_uint(PRINT_ANY, "proxy_delay",
+		print_u64(PRINT_ANY, "proxy_delay",
 			   "proxy_delay %llu ", proxy_delay);
 	}
 
@@ -479,7 +479,7 @@ static void print_ndtparams(struct rtattr *tpb[])
 	if (tpb[NDTPA_LOCKTIME]) {
 		__u64 locktime = rta_getattr_u64(tpb[NDTPA_LOCKTIME]);
 
-		print_uint(PRINT_ANY, "locktime", "locktime %llu ", locktime);
+		print_u64(PRINT_ANY, "locktime", "locktime %llu ", locktime);
 	}
 
 	print_string(PRINT_FP, NULL, "%s", _SL_);
@@ -490,31 +490,31 @@ static void print_ndtstats(const struct ndt_stats *ndts)
 
 	print_string(PRINT_FP, NULL, "    stats ", NULL);
 
-	print_uint(PRINT_ANY, "allocs", "allocs %llu ", ndts->ndts_allocs);
-	print_uint(PRINT_ANY, "destroys", "destroys %llu ",
+	print_u64(PRINT_ANY, "allocs", "allocs %llu ", ndts->ndts_allocs);
+	print_u64(PRINT_ANY, "destroys", "destroys %llu ",
 		   ndts->ndts_destroys);
-	print_uint(PRINT_ANY, "hash_grows", "hash_grows %llu ",
+	print_u64(PRINT_ANY, "hash_grows", "hash_grows %llu ",
 		   ndts->ndts_hash_grows);
 
 	print_string(PRINT_FP, NULL, "%s    ", _SL_);
 
-	print_uint(PRINT_ANY, "res_failed", "res_failed %llu ",
+	print_u64(PRINT_ANY, "res_failed", "res_failed %llu ",
 		   ndts->ndts_res_failed);
-	print_uint(PRINT_ANY, "lookups", "lookups %llu ", ndts->ndts_lookups);
-	print_uint(PRINT_ANY, "hits", "hits %llu ", ndts->ndts_hits);
+	print_u64(PRINT_ANY, "lookups", "lookups %llu ", ndts->ndts_lookups);
+	print_u64(PRINT_ANY, "hits", "hits %llu ", ndts->ndts_hits);
 
 	print_string(PRINT_FP, NULL, "%s    ", _SL_);
 
-	print_uint(PRINT_ANY, "rcv_probes_mcast", "rcv_probes_mcast %llu ",
+	print_u64(PRINT_ANY, "rcv_probes_mcast", "rcv_probes_mcast %llu ",
 		   ndts->ndts_rcv_probes_mcast);
-	print_uint(PRINT_ANY, "rcv_probes_ucast", "rcv_probes_ucast %llu ",
+	print_u64(PRINT_ANY, "rcv_probes_ucast", "rcv_probes_ucast %llu ",
 		   ndts->ndts_rcv_probes_ucast);
 
 	print_string(PRINT_FP, NULL, "%s    ", _SL_);
 
-	print_uint(PRINT_ANY, "periodic_gc_runs", "periodic_gc_runs %llu ",
+	print_u64(PRINT_ANY, "periodic_gc_runs", "periodic_gc_runs %llu ",
 		   ndts->ndts_periodic_gc_runs);
-	print_uint(PRINT_ANY, "forced_gc_runs", "forced_gc_runs %llu ",
+	print_u64(PRINT_ANY, "forced_gc_runs", "forced_gc_runs %llu ",
 		   ndts->ndts_forced_gc_runs);
 
 	print_string(PRINT_FP, NULL, "%s", _SL_);
@@ -607,7 +607,7 @@ static int print_ntable(const struct sockaddr_nl *who,
 	if (tb[NDTA_GC_INTERVAL]) {
 		__u64 gc_int = rta_getattr_u64(tb[NDTA_GC_INTERVAL]);
 
-		print_uint(PRINT_ANY, "gc_interval", "gc_int %llu ", gc_int);
+		print_u64(PRINT_ANY, "gc_interval", "gc_int %llu ", gc_int);
 	}
 
 	if (ret)
