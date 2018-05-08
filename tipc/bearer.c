@@ -42,7 +42,8 @@ static void _print_bearer_opts(void)
 		"OPTIONS\n"
 		" priority              - Bearer link priority\n"
 		" tolerance             - Bearer link tolerance\n"
-		" window                - Bearer link window\n");
+		" window                - Bearer link window\n"
+		" mtu                   - Bearer link mtu\n");
 }
 
 void print_bearer_media(void)
@@ -194,6 +195,21 @@ static int nl_add_udp_enable_opts(struct nlmsghdr *nlh, struct opt *opts,
 	return 0;
 }
 
+static char *cmd_get_media_type(const struct cmd *cmd, struct cmdl *cmdl,
+				struct opt *opts)
+{
+	struct opt *opt = get_opt(opts, "media");
+
+	if (!opt) {
+		if (help_flag)
+			(cmd->help)(cmdl);
+		else
+			fprintf(stderr, "error, missing bearer media\n");
+		return NULL;
+	}
+	return opt->val;
+}
+
 static int nl_add_bearer_name(struct nlmsghdr *nlh, const struct cmd *cmd,
 			      struct cmdl *cmdl, struct opt *opts,
 			      const struct tipc_sup_media *sup_media)
@@ -217,15 +233,8 @@ int cmd_get_unique_bearer_name(const struct cmd *cmd, struct cmdl *cmdl,
 	struct opt *opt;
 	const struct tipc_sup_media *entry;
 
-
-	if (!(opt = get_opt(opts, "media"))) {
-		if (help_flag)
-			(cmd->help)(cmdl);
-		else
-			fprintf(stderr, "error, missing bearer media\n");
+	if (!(media = cmd_get_media_type(cmd, cmdl, opts)))
 		return -EINVAL;
-	}
-	media = opt->val;
 
 	for (entry = sup_media; entry->media; entry++) {
 		if (strcmp(entry->media, media))
@@ -559,6 +568,8 @@ static int cmd_bearer_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		prop = TIPC_NLA_PROP_TOL;
 	else if ((strcmp(cmd->cmd, "window") == 0))
 		prop = TIPC_NLA_PROP_WIN;
+	else if ((strcmp(cmd->cmd, "mtu") == 0))
+		prop = TIPC_NLA_PROP_MTU;
 	else
 		return -EINVAL;
 
@@ -570,6 +581,17 @@ static int cmd_bearer_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 
 	if (parse_opts(opts, cmdl) < 0)
 		return -EINVAL;
+
+	if (prop == TIPC_NLA_PROP_MTU) {
+		char *media = cmd_get_media_type(cmd, cmdl, opts);
+
+		if (!media)
+			return -EINVAL;
+		else if (strcmp(media, "udp")) {
+			fprintf(stderr, "error, not supported for media\n");
+			return -EINVAL;
+		}
+	}
 
 	if (!(nlh = msg_init(buf, TIPC_NL_BEARER_SET))) {
 		fprintf(stderr, "error, message initialisation failed\n");
@@ -597,6 +619,7 @@ static int cmd_bearer_set(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ "priority",	cmd_bearer_set_prop,	cmd_bearer_set_help },
 		{ "tolerance",	cmd_bearer_set_prop,	cmd_bearer_set_help },
 		{ "window",	cmd_bearer_set_prop,	cmd_bearer_set_help },
+		{ "mtu",	cmd_bearer_set_prop,	cmd_bearer_set_help },
 		{ NULL }
 	};
 
@@ -877,11 +900,24 @@ static int cmd_bearer_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		prop = TIPC_NLA_PROP_TOL;
 	else if ((strcmp(cmd->cmd, "window") == 0))
 		prop = TIPC_NLA_PROP_WIN;
+	else if ((strcmp(cmd->cmd, "mtu") == 0))
+		prop = TIPC_NLA_PROP_MTU;
 	else
 		return -EINVAL;
 
 	if (parse_opts(opts, cmdl) < 0)
 		return -EINVAL;
+
+	if (prop == TIPC_NLA_PROP_MTU) {
+		char *media = cmd_get_media_type(cmd, cmdl, opts);
+
+		if (!media)
+			return -EINVAL;
+		else if (strcmp(media, "udp")) {
+			fprintf(stderr, "error, not supported for media\n");
+			return -EINVAL;
+		}
+	}
 
 	if (!(nlh = msg_init(buf, TIPC_NL_BEARER_GET))) {
 		fprintf(stderr, "error, message initialisation failed\n");
@@ -904,6 +940,7 @@ static int cmd_bearer_get(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ "priority",	cmd_bearer_get_prop,	cmd_bearer_get_help },
 		{ "tolerance",	cmd_bearer_get_prop,	cmd_bearer_get_help },
 		{ "window",	cmd_bearer_get_prop,	cmd_bearer_get_help },
+		{ "mtu",	cmd_bearer_get_prop,	cmd_bearer_get_help },
 		{ "media",	cmd_bearer_get_media,	cmd_bearer_get_help },
 		{ NULL }
 	};
