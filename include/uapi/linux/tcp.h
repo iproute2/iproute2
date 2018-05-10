@@ -122,6 +122,10 @@ enum {
 #define TCP_MD5SIG_EXT		32	/* TCP MD5 Signature with extensions */
 #define TCP_FASTOPEN_KEY	33	/* Set the key for Fast Open (cookie) */
 #define TCP_FASTOPEN_NO_COOKIE	34	/* Enable TFO without a TFO cookie */
+#define TCP_ZEROCOPY_RECEIVE	35
+#define TCP_INQ			36	/* Notify bytes available to read as a cmsg on read */
+
+#define TCP_CM_INQ		TCP_INQ
 
 struct tcp_repair_opt {
 	__u32	opt_code;
@@ -276,4 +280,11 @@ struct tcp_diag_md5sig {
 	__u8	tcpm_key[TCP_MD5SIG_MAXKEYLEN];
 };
 
+/* setsockopt(fd, IPPROTO_TCP, TCP_ZEROCOPY_RECEIVE, ...) */
+
+struct tcp_zerocopy_receive {
+	__u64 address;		/* in: address of mapping */
+	__u32 length;		/* in/out: number of bytes to map/mapped */
+	__u32 recv_skip_hint;	/* out: amount of bytes to skip */
+};
 #endif /* _LINUX_TCP_H */
