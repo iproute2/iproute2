@@ -41,7 +41,7 @@ enum flower_icmp_field {
 static void explain(void)
 {
 	fprintf(stderr,
-		"Usage: ... flower [ MATCH-LIST ]\n"
+		"Usage: ... flower [ MATCH-LIST ] [ verbose ]\n"
 		"                  [ skip_sw | skip_hw ]\n"
 		"                  [ action ACTION-SPEC ] [ classid CLASSID ]\n"
 		"\n"
@@ -648,6 +648,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "Illegal \"ip_flags\"\n");
 				return -1;
 			}
+		} else if (matches(*argv, "verbose") == 0) {
+			flags |= TCA_CLS_FLAGS_VERBOSE;
 		} else if (matches(*argv, "skip_hw") == 0) {
 			flags |= TCA_CLS_FLAGS_SKIP_HW;
 		} else if (matches(*argv, "skip_sw") == 0) {
