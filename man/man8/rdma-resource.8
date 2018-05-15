@@ -7,10 +7,13 @@ rdma-resource \- rdma resource configuration
 .in +8
 .ti -8
 .B rdma
-.RI "[ " OPTIONS " ]"
-.B resource
-.RI  " { " COMMAND " | "
+.RI "[ " OPTIONS " ] " RESOURCE " { " COMMAND " | "
 .BR help " }"
+.sp
+
+.ti -8
+.IR RESOURCE " := { "
+.BR cm_id " | " cq " | " mr " | " pd " | " qp " }"
 .sp
 
 .ti -8
@@ -70,9 +73,29 @@ rdma res show qp link mlx5_4/- -d
 Detailed view.
 .RE
 .PP
+rdma res show qp link mlx5_4/- -dd
+.RS 4
+Detailed view including driver-specific details.
+.RE
+.PP
 rdma res show qp link mlx5_4/1 lqpn 0-6
 .RS 4
 Limit to specific Local QPNs.
+.RE
+.PP
+rdma resource show cm_id dst-port 7174
+.RS 4
+Show CM_IDs with destination ip port of 7174.
+.RE
+.PP
+rdma resource show cm_id src-addr 172.16.0.100
+.RS 4
+Show CM_IDs bound to local ip address 172.16.0.100
+.RE
+.PP
+rdma resource show cq pid 30489
+.RS 4
+Show CQs belonging to pid 30489
 .RE
 .PP
 
