@@ -474,7 +474,6 @@ static FILE *generic_proc_open(const char *env, const char *name)
 							"net/packet")
 #define net_netlink_open()	generic_proc_open("PROC_NET_NETLINK", \
 							"net/netlink")
-#define slabinfo_open()		generic_proc_open("PROC_SLABINFO", "slabinfo")
 #define net_sockstat_open()	generic_proc_open("PROC_NET_SOCKSTAT", \
 							"net/sockstat")
 #define net_sockstat6_open()	generic_proc_open("PROC_NET_SOCKSTAT6", \
@@ -726,67 +725,6 @@ next:
 		ptr[-1] = '\0';
 	}
 	return cnt;
-}
-
-/* Get stats from slab */
-
-struct slabstat {
-	int socks;
-	int tcp_ports;
-	int tcp_tws;
-	int tcp_syns;
-	int skbs;
-};
-
-static struct slabstat slabstat;
-
-static int get_slabstat(struct slabstat *s)
-{
-	char buf[256];
-	FILE *fp;
-	int cnt;
-	static int slabstat_valid;
-	static const char * const slabstat_ids[] = {
-		"sock",
-		"tcp_bind_bucket",
-		"tcp_tw_bucket",
-		"tcp_open_request",
-		"skbuff_head_cache",
-	};
-
-	if (slabstat_valid)
-		return 0;
-
-	memset(s, 0, sizeof(*s));
-
-	fp = slabinfo_open();
-	if (!fp)
-		return -1;
-
-	cnt = sizeof(*s)/sizeof(int);
-
-	if (!fgets(buf, sizeof(buf), fp)) {
-		fclose(fp);
-		return -1;
-	}
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		int i;
-
-		for (i = 0; i < ARRAY_SIZE(slabstat_ids); i++) {
-			if (memcmp(buf, slabstat_ids[i], strlen(slabstat_ids[i])) == 0) {
-				sscanf(buf, "%*s%d", ((int *)s) + i);
-				cnt--;
-				break;
-			}
-		}
-		if (cnt <= 0)
-			break;
-	}
-
-	slabstat_valid = 1;
-
-	fclose(fp);
-	return 0;
 }
 
 static unsigned long long cookie_sk_get(const uint32_t *cookie)
@@ -3372,7 +3310,7 @@ static int tcp_show(struct filter *f)
 {
 	FILE *fp = NULL;
 	char *buf = NULL;
-	int bufsize = 64*1024;
+	int bufsize = 1024*1024;
 
 	if (!filter_af_get(f, AF_INET) && !filter_af_get(f, AF_INET6))
 		return 0;
@@ -3387,27 +3325,6 @@ static int tcp_show(struct filter *f)
 		return 0;
 
 	/* Sigh... We have to parse /proc/net/tcp... */
-
-
-	/* Estimate amount of sockets and try to allocate
-	 * huge buffer to read all the table at one read.
-	 * Limit it by 16MB though. The assumption is: as soon as
-	 * kernel was able to hold information about N connections,
-	 * it is able to give us some memory for snapshot.
-	 */
-	if (1) {
-		get_slabstat(&slabstat);
-
-		int guess = slabstat.socks+slabstat.tcp_syns;
-
-		if (f->states&(1<<SS_TIME_WAIT))
-			guess += slabstat.tcp_tws;
-		if (guess > (16*1024*1024)/128)
-			guess = (16*1024*1024)/128;
-		guess *= 128;
-		if (guess > bufsize)
-			bufsize = guess;
-	}
 	while (bufsize >= 64*1024) {
 		if ((buf = malloc(bufsize)) != NULL)
 			break;
@@ -4666,23 +4583,15 @@ static int print_summary(void)
 	if (get_snmp_int("Tcp:", "CurrEstab", &tcp_estab) < 0)
 		perror("ss: get_snmpstat");
 
-	get_slabstat(&slabstat);
+	printf("Total: %d\n", s.socks);
 
-	printf("Total: %d (kernel %d)\n", s.socks, slabstat.socks);
-
-	printf("TCP:   %d (estab %d, closed %d, orphaned %d, synrecv %d, timewait %d/%d), ports %d\n",
-	       s.tcp_total + slabstat.tcp_syns + s.tcp_tws,
-	       tcp_estab,
-	       s.tcp_total - (s.tcp4_hashed+s.tcp6_hashed-s.tcp_tws),
-	       s.tcp_orphans,
-	       slabstat.tcp_syns,
-	       s.tcp_tws, slabstat.tcp_tws,
-	       slabstat.tcp_ports
-	       );
+	printf("TCP:   %d (estab %d, closed %d, orphaned %d, timewait %d)\n",
+	       s.tcp_total + s.tcp_tws, tcp_estab,
+	       s.tcp_total - (s.tcp4_hashed + s.tcp6_hashed - s.tcp_tws),
+	       s.tcp_orphans, s.tcp_tws);
 
 	printf("\n");
 	printf("Transport Total     IP        IPv6\n");
-	printf("*	  %-9d %-9s %-9s\n", slabstat.socks, "-", "-");
 	printf("RAW	  %-9d %-9d %-9d\n", s.raw4+s.raw6, s.raw4, s.raw6);
 	printf("UDP	  %-9d %-9d %-9d\n", s.udp4+s.udp6, s.udp4, s.udp6);
 	printf("TCP	  %-9d %-9d %-9d\n", s.tcp4_hashed+s.tcp6_hashed, s.tcp4_hashed, s.tcp6_hashed);

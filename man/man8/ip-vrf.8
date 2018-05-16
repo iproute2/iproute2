@@ -70,6 +70,10 @@ This command also requires to be ran as root or with the CAP_SYS_ADMIN,
 CAP_NET_ADMIN and CAP_DAC_OVERRIDE capabilities. If built with libcap and if
 capabilities are added to the ip binary program via setcap, the program will
 drop them as the first thing when invoked, unless the command is vrf exec.
+.br
+NOTE: capabilities will NOT be dropped if CAP_NET_ADMIN is set to INHERITABLE
+to avoid breaking programs with ambient capabilities that call ip.
+Do not set the INHERITABLE flag on the ip binary itself.
 
 .TP
 .B ip vrf identify [PID] - Report VRF association for process
