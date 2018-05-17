@@ -105,7 +105,7 @@ int parse_percent(double *val, const char *str)
 	*val = strtod(str, &p) / 100.;
 	if (*val == HUGE_VALF || *val == HUGE_VALL)
 		return 1;
-	if (*val == 0.0 || (*p && strcmp(p, "%")))
+	if (*p && strcmp(p, "%"))
 		return -1;
 
 	return 0;
