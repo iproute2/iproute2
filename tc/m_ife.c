@@ -240,7 +240,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	p = RTA_DATA(tb[TCA_IFE_PARMS]);
 
 	print_string(PRINT_ANY, "kind", "%s ", "ife");
-	print_string(PRINT_ANY, "mode", "%s",
+	print_string(PRINT_ANY, "mode", "%s ",
 		     p->flags & IFE_ENCODE ? "encode" : "decode");
 	print_action_control(f, "action ", p->action, " ");
 
