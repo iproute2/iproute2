@@ -20,6 +20,7 @@
 #include "cmdl.h"
 #include "msg.h"
 #include "nametable.h"
+#include "misc.h"
 
 #define PORTID_STR_LEN 45 /* Four u32 and five delimiter chars */
 
@@ -31,6 +32,7 @@ static int nametable_show_cb(const struct nlmsghdr *nlh, void *data)
 	struct nlattr *attrs[TIPC_NLA_NAME_TABLE_MAX + 1] = {};
 	struct nlattr *publ[TIPC_NLA_PUBL_MAX + 1] = {};
 	const char *scope[] = { "", "zone", "cluster", "node" };
+	char str[33] = {0,};
 
 	mnl_attr_parse(nlh, sizeof(*genl), parse_attrs, info);
 	if (!info[TIPC_NLA_NAME_TABLE])
@@ -45,20 +47,20 @@ static int nametable_show_cb(const struct nlmsghdr *nlh, void *data)
 		return MNL_CB_ERROR;
 
 	if (!*iteration)
-		printf("%-10s %-10s %-10s %-10s %-10s %-10s\n",
-		       "Type", "Lower", "Upper", "Node", "Port",
-		       "Publication Scope");
+		printf("%-10s %-10s %-10s %-8s %-10s %-33s\n",
+		       "Type", "Lower", "Upper", "Scope", "Port",
+		       "Node");
 	(*iteration)++;
 
-	printf("%-10u %-10u %-10u %-10x %-10u %-12u",
+	hash2nodestr(mnl_attr_get_u32(publ[TIPC_NLA_PUBL_NODE]), str);
+
+	printf("%-10u %-10u %-10u %-8s %-10u %s\n",
 	       mnl_attr_get_u32(publ[TIPC_NLA_PUBL_TYPE]),
 	       mnl_attr_get_u32(publ[TIPC_NLA_PUBL_LOWER]),
 	       mnl_attr_get_u32(publ[TIPC_NLA_PUBL_UPPER]),
-	       mnl_attr_get_u32(publ[TIPC_NLA_PUBL_NODE]),
+	       scope[mnl_attr_get_u32(publ[TIPC_NLA_PUBL_SCOPE])],
 	       mnl_attr_get_u32(publ[TIPC_NLA_PUBL_REF]),
-	       mnl_attr_get_u32(publ[TIPC_NLA_PUBL_KEY]));
-
-	printf("%s\n", scope[mnl_attr_get_u32(publ[TIPC_NLA_PUBL_SCOPE])]);
+	       str);
 
 	return MNL_CB_OK;
 }
