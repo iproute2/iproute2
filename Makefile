@@ -16,6 +16,8 @@ PREFIX?=/usr
 LIBDIR?=$(PREFIX)/lib
 SBINDIR?=/sbin
 CONFDIR?=/etc/iproute2
+NETNS_RUN_DIR?=/var/run/netns
+NETNS_ETC_DIR?=/etc/netns
 DATADIR?=$(PREFIX)/share
 HDRDIR?=$(PREFIX)/include/iproute2
 DOCDIR?=$(DATADIR)/doc/iproute2
@@ -34,7 +36,9 @@ ifneq ($(SHARED_LIBS),y)
 DEFINES+= -DNO_SHARED_LIBS
 endif
 
-DEFINES+=-DCONFDIR=\"$(CONFDIR)\"
+DEFINES+=-DCONFDIR=\"$(CONFDIR)\" \
+         -DNETNS_RUN_DIR=\"$(NETNS_RUN_DIR)\" \
+         -DNETNS_ETC_DIR=\"$(NETNS_ETC_DIR)\"
 
 #options for decnet
 ADDLIB+=dnet_ntop.o dnet_pton.o
