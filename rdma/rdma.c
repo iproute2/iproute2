@@ -129,13 +129,14 @@ int main(int argc, char **argv)
 		{ "batch",		required_argument,	NULL, 'b' },
 		{ NULL, 0, NULL, 0 }
 	};
+	bool show_driver_details = false;
 	const char *batch_file = NULL;
 	bool pretty_output = false;
 	bool show_details = false;
 	bool json_output = false;
 	bool force = false;
-	char *filename;
 	struct rd rd = {};
+	char *filename;
 	int opt;
 	int err;
 
@@ -152,7 +153,10 @@ int main(int argc, char **argv)
 			pretty_output = true;
 			break;
 		case 'd':
-			show_details = true;
+			if (show_details)
+				show_driver_details = true;
+			else
+				show_details = true;
 			break;
 		case 'j':
 			json_output = true;
@@ -180,6 +184,7 @@ int main(int argc, char **argv)
 	argv += optind;
 
 	rd.show_details = show_details;
+	rd.show_driver_details = show_driver_details;
 	rd.json_output = json_output;
 	rd.pretty_output = pretty_output;
 
