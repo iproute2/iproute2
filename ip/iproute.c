@@ -463,8 +463,8 @@ static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
 		hz = get_user_hz();
 
 	if (ci->rta_expires != 0)
-		print_uint(PRINT_ANY, "expires",
-			   "expires %usec ", ci->rta_expires/hz);
+		print_int(PRINT_ANY, "expires",
+			   "expires %dsec ", ci->rta_expires/hz);
 	if (ci->rta_error != 0)
 		print_uint(PRINT_ANY, "error",
 			   "error %u ", ci->rta_error);
