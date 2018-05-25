@@ -1967,14 +1967,20 @@ ipaddr_loop_each_vf(struct rtattr *tb[], int vfnum, int *min, int *max)
 	exit(1);
 }
 
-void ipaddr_get_vf_rate(int vfnum, int *min, int *max, int idx)
+void ipaddr_get_vf_rate(int vfnum, int *min, int *max, const char *dev)
 {
 	struct nlmsg_chain linfo = { NULL, NULL};
 	struct rtattr *tb[IFLA_MAX+1];
 	struct ifinfomsg *ifi;
 	struct nlmsg_list *l;
 	struct nlmsghdr *n;
-	int len;
+	int idx, len;
+
+	idx = ll_name_to_index(dev);
+	if (idx == 0) {
+		fprintf(stderr, "Device %s does not exist\n", dev);
+		exit(1);
+	}
 
 	if (rtnl_wilddump_request(&rth, AF_UNSPEC, RTM_GETLINK) < 0) {
 		perror("Cannot send dump request");

@@ -242,9 +242,10 @@ static int iplink_have_newlink(void)
 }
 #endif /* ! IPLINK_IOCTL_COMPAT */
 
-static int nl_get_ll_addr_len(unsigned int dev_index)
+static int nl_get_ll_addr_len(const char *ifname)
 {
 	int len;
+	int dev_index = ll_name_to_index(ifname);
 	struct iplink_req req = {
 		.n = {
 			.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
@@ -258,6 +259,9 @@ static int nl_get_ll_addr_len(unsigned int dev_index)
 	};
 	struct nlmsghdr *answer;
 	struct rtattr *tb[IFLA_MAX+1];
+
+	if (dev_index == 0)
+		return -1;
 
 	if (rtnl_talk(&rth, &req.n, &answer) < 0)
 		return -1;
@@ -337,7 +341,7 @@ static void iplink_parse_vf_vlan_info(int vf, int *argcp, char ***argvp,
 }
 
 static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
-			   struct iplink_req *req, int dev_index)
+			   struct iplink_req *req, const char *dev)
 {
 	char new_rate_api = 0, count = 0, override_legacy_rate = 0;
 	struct ifla_vf_rate tivt;
@@ -373,7 +377,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 		NEXT_ARG();
 		if (matches(*argv, "mac") == 0) {
 			struct ifla_vf_mac ivm = { 0 };
-			int halen = nl_get_ll_addr_len(dev_index);
+			int halen = nl_get_ll_addr_len(dev);
 
 			NEXT_ARG();
 			ivm.vf = vf;
@@ -542,7 +546,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 		int tmin, tmax;
 
 		if (tivt.min_tx_rate == -1 || tivt.max_tx_rate == -1) {
-			ipaddr_get_vf_rate(tivt.vf, &tmin, &tmax, dev_index);
+			ipaddr_get_vf_rate(tivt.vf, &tmin, &tmax, dev);
 			if (tivt.min_tx_rate == -1)
 				tivt.min_tx_rate = tmin;
 			if (tivt.max_tx_rate == -1)
@@ -583,7 +587,6 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 	int vf = -1;
 	int numtxqueues = -1;
 	int numrxqueues = -1;
-	int dev_index = 0;
 	int link_netnsid = -1;
 	int index = 0;
 	int group = -1;
@@ -605,10 +608,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			if (check_ifname(*argv))
 				invarg("\"name\" not a valid ifname", *argv);
 			name = *argv;
-			if (!dev) {
+			if (!dev)
 				dev = name;
-				dev_index = ll_name_to_index(dev);
-			}
 		} else if (strcmp(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (index)
@@ -660,7 +661,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			bool offload = strcmp(*argv, "xdpoffload") == 0;
 
 			NEXT_ARG();
-			if (xdp_parse(&argc, &argv, req, dev_index,
+			if (xdp_parse(&argc, &argv, req, dev,
 				      generic, drv, offload))
 				exit(-1);
 
@@ -750,10 +751,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 
 			vflist = addattr_nest(&req->n, sizeof(*req),
 					      IFLA_VFINFO_LIST);
-			if (dev_index == 0)
+			if (!dev)
 				missarg("dev");
 
-			len = iplink_parse_vf(vf, &argc, &argv, req, dev_index);
+			len = iplink_parse_vf(vf, &argc, &argv, req, dev);
 			if (len < 0)
 				return -1;
 			addattr_nest_end(&req->n, vflist);
@@ -916,7 +917,6 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			if (check_ifname(*argv))
 				invarg("\"dev\" not a valid ifname", *argv);
 			dev = *argv;
-			dev_index = ll_name_to_index(dev);
 		}
 		argc--; argv++;
 	}
@@ -931,8 +931,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 	else if (!strcmp(name, dev))
 		name = dev;
 
-	if (dev_index && addr_len) {
-		int halen = nl_get_ll_addr_len(dev_index);
+	if (dev && addr_len) {
+		int halen = nl_get_ll_addr_len(dev);
 
 		if (halen >= 0 && halen != addr_len) {
 			fprintf(stderr,
