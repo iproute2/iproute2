@@ -27,6 +27,8 @@ ip-address \- protocol address management
 .IR IFNAME " ] [ "
 .B  scope
 .IR SCOPE-ID " ] [ "
+.B  metric
+.IR METRIC " ] [ "
 .B  to
 .IR PREFIX " ] [ " FLAG-LIST " ] [ "
 .B  label
@@ -213,6 +215,10 @@ valid inside this site.
 .B host
 - the address is valid only inside this host.
 .in -8
+
+.TP
+.BI metric " NUMBER"
+priority of prefix route associated with address.
 
 .TP
 .BI valid_lft " LFT"
