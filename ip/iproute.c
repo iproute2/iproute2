@@ -69,7 +69,8 @@ static void usage(void)
 		"                            [ from ADDRESS iif STRING ]\n"
 		"                            [ oif STRING ] [ tos TOS ]\n"
 		"                            [ mark NUMBER ] [ vrf NAME ]\n"
-		"                            [ uid NUMBER ]\n"
+		"                            [ uid NUMBER ] [ ipproto PROTOCOL ]\n"
+		"                            [ sport NUMBER ] [ dport NUMBER ]\n"
 		"       ip route { add | del | change | append | replace } ROUTE\n"
 		"SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n"
 		"            [ table TABLE_ID ] [ vrf NAME ] [ proto RTPROTO ]\n"
@@ -1991,6 +1992,29 @@ static int iproute_get(int argc, char **argv)
 				req.r.rtm_family = addr.family;
 			addattr_l(&req.n, sizeof(req), RTA_NEWDST,
 				  &addr.data, addr.bytelen);
+		} else if (matches(*argv, "sport") == 0) {
+			__be16 sport;
+
+			NEXT_ARG();
+			if (get_be16(&sport, *argv, 0))
+				invarg("invalid sport\n", *argv);
+			addattr16(&req.n, sizeof(req), RTA_SPORT, sport);
+		} else if (matches(*argv, "dport") == 0) {
+			__be16 dport;
+
+			NEXT_ARG();
+			if (get_be16(&dport, *argv, 0))
+				invarg("invalid dport\n", *argv);
+			addattr16(&req.n, sizeof(req), RTA_DPORT, dport);
+		} else if (matches(*argv, "ipproto") == 0) {
+			int ipproto;
+
+			NEXT_ARG();
+			ipproto = inet_proto_a2n(*argv);
+			if (ipproto < 0)
+				invarg("Invalid \"ipproto\" value\n",
+				       *argv);
+			addattr8(&req.n, sizeof(req), RTA_IP_PROTO, ipproto);
 		} else {
 			inet_prefix addr;
 
