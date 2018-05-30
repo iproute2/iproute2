@@ -899,17 +899,14 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 			   rta_getattr_u32(tb[RTA_UID]));
 
 	if (r->rtm_family == AF_INET) {
-		if (r->rtm_flags & RTM_F_CLONED) {
+		if (r->rtm_flags & RTM_F_CLONED)
 			print_cache_flags(fp, r->rtm_flags);
 
-			if (tb[RTA_CACHEINFO])
-				print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
-		}
+		if (tb[RTA_CACHEINFO])
+			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
 	} else if (r->rtm_family == AF_INET6) {
-		if (r->rtm_flags & RTM_F_CLONED) {
-			if (tb[RTA_CACHEINFO])
-				print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
-		}
+		if (tb[RTA_CACHEINFO])
+			print_rta_cacheinfo(fp, RTA_DATA(tb[RTA_CACHEINFO]));
 	}
 
 	if (tb[RTA_METRICS])
