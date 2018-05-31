@@ -964,6 +964,17 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		}
 	}
 
+	if (tb[IFLA_NEW_NETNSID]) {
+		int id = rta_getattr_u32(tb[IFLA_NEW_NETNSID]);
+
+		print_int(PRINT_FP, NULL, " new-nsid %d", id);
+	}
+	if (tb[IFLA_NEW_IFINDEX]) {
+		int id = rta_getattr_u32(tb[IFLA_NEW_IFINDEX]);
+
+		print_int(PRINT_FP, NULL, " new-ifindex %d", id);
+	}
+
 	if (tb[IFLA_PROTO_DOWN]) {
 		if (rta_getattr_u8(tb[IFLA_PROTO_DOWN]))
 			print_bool(PRINT_ANY,
