@@ -271,15 +271,9 @@ struct mnlg_socket *mnlg_socket_open(const char *family_name, uint8_t version)
 	if (!nlg->nl)
 		goto err_mnl_socket_open;
 
-	err = mnl_socket_setsockopt(nlg->nl, NETLINK_CAP_ACK, &one,
-				    sizeof(one));
-	if (err)
-		goto err_mnl_set_ack;
-
-	err = mnl_socket_setsockopt(nlg->nl, NETLINK_EXT_ACK, &one,
-				    sizeof(one));
-	if (err)
-		goto err_mnl_set_ext_ack;
+	/* Older kernels may no support capped/extended ACK reporting */
+	mnl_socket_setsockopt(nlg->nl, NETLINK_CAP_ACK, &one, sizeof(one));
+	mnl_socket_setsockopt(nlg->nl, NETLINK_EXT_ACK, &one, sizeof(one));
 
 	err = mnl_socket_bind(nlg->nl, 0, MNL_SOCKET_AUTOPID);
 	if (err < 0)
@@ -305,8 +299,6 @@ struct mnlg_socket *mnlg_socket_open(const char *family_name, uint8_t version)
 err_mnlg_socket_recv_run:
 err_mnlg_socket_send:
 err_mnl_socket_bind:
-err_mnl_set_ext_ack:
-err_mnl_set_ack:
 	mnl_socket_close(nlg->nl);
 err_mnl_socket_open:
 	free(nlg->buf);
