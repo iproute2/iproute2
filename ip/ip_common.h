@@ -36,7 +36,7 @@ int print_addrlabel(const struct sockaddr_nl *who,
 int print_neigh(const struct sockaddr_nl *who,
 		struct nlmsghdr *n, void *arg);
 int ipaddr_list_link(int argc, char **argv);
-void ipaddr_get_vf_rate(int, int *, int *, int);
+void ipaddr_get_vf_rate(int, int *, int *, const char *);
 void iplink_usage(void) __attribute__((noreturn));
 
 void iproute_reset_filter(int ifindex);
@@ -145,7 +145,7 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp);
 void lwt_print_encap(FILE *fp, struct rtattr *encap_type, struct rtattr *encap);
 
 /* iplink_xdp.c */
-int xdp_parse(int *argc, char ***argv, struct iplink_req *req, __u32 ifindex,
+int xdp_parse(int *argc, char ***argv, struct iplink_req *req, const char *ifname,
 	      bool generic, bool drv, bool offload);
 void xdp_dump(FILE *fp, struct rtattr *tb, bool link, bool details);
 

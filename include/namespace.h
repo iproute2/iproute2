@@ -8,8 +8,13 @@
 #include <sys/syscall.h>
 #include <errno.h>
 
+#ifndef NETNS_RUN_DIR
 #define NETNS_RUN_DIR "/var/run/netns"
+#endif
+
+#ifndef NETNS_ETC_DIR
 #define NETNS_ETC_DIR "/etc/netns"
+#endif
 
 #ifndef CLONE_NEWNET
 #define CLONE_NEWNET 0x40000000	/* New network namespace (lo, device, names sockets, etc) */
