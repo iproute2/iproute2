@@ -191,6 +191,7 @@ int name_is_vrf(const char *name)
 	struct rtattr *tb[IFLA_MAX+1];
 	struct rtattr *li[IFLA_INFO_MAX+1];
 	struct ifinfomsg *ifi;
+	int ifindex = 0;
 	int len;
 
 	addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name, strlen(name) + 1);
@@ -218,7 +219,8 @@ int name_is_vrf(const char *name)
 	if (strcmp(RTA_DATA(li[IFLA_INFO_KIND]), "vrf"))
 		goto out;
 
+	ifindex = ifi->ifi_index;
 out:
 	free(answer);
-	return ifi->ifi_index;
+	return ifindex;
 }

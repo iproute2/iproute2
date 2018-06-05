@@ -359,6 +359,8 @@ int do_xfrm_monitor(int argc, char **argv)
 		if (matches(*argv, "file") == 0) {
 			NEXT_ARG();
 			file = *argv;
+		} else if (strcmp(*argv, "all") == 0) {
+			/* fall out */
 		} else if (matches(*argv, "all-nsid") == 0) {
 			listen_all_nsid = 1;
 		} else if (matches(*argv, "acquire") == 0) {
@@ -381,7 +383,7 @@ int do_xfrm_monitor(int argc, char **argv)
 			groups = 0;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
-		} else if (strcmp(*argv, "all")) {
+		} else {
 			fprintf(stderr, "Argument \"%s\" is unknown, try \"ip xfrm monitor help\".\n", *argv);
 			exit(-1);
 		}
