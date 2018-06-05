@@ -162,6 +162,7 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 	char *uflag_5 = "";
 	char *uflag_6 = "";
 	char *uflag_7 = "";
+	SPRINT_BUF(buf);
 
 	int uflag_count = 0;
 
@@ -198,12 +199,15 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 		uflag_1 = "?empty";
 	}
 
-	fprintf(f, "csum (%s%s%s%s%s%s%s) ",
-		uflag_1, uflag_2, uflag_3,
-		uflag_4, uflag_5, uflag_6, uflag_7);
+	snprintf(buf, sizeof(buf), "%s%s%s%s%s%s%s",
+		 uflag_1, uflag_2, uflag_3,
+		 uflag_4, uflag_5, uflag_6, uflag_7);
+	print_string(PRINT_ANY, "csum", "csum (%s) ", buf);
+
 	print_action_control(f, "action ", sel->action, "\n");
-	fprintf(f, "\tindex %u ref %d bind %d", sel->index, sel->refcnt,
-		sel->bindcnt);
+	print_uint(PRINT_ANY, "index", "\tindex %u", sel->index);
+	print_int(PRINT_ANY, "ref", " ref %d", sel->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", sel->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_CSUM_TM]) {
@@ -212,7 +216,7 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	fprintf(f, "\n");
+	print_string(PRINT_FP, NULL, "%s", "\n");
 
 	return 0;
 }
