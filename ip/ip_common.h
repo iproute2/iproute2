@@ -60,6 +60,7 @@ void netns_map_init(void);
 void netns_nsid_socket_init(void);
 int print_nsid(const struct sockaddr_nl *who,
 	       struct nlmsghdr *n, void *arg);
+char *get_name_from_nsid(int nsid);
 int do_ipaddr(int argc, char **argv);
 int do_ipaddrlabel(int argc, char **argv);
 int do_iproute(int argc, char **argv);
