@@ -13,6 +13,10 @@
 #include <stdint.h>
 #include <linux/tipc.h>
 #include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <errno.h>
 #include "misc.h"
 
 #define IN_RANGE(val, low, high) ((val) <= (high) && (val) >= (low))
@@ -108,4 +112,20 @@ void nodeid2str(uint8_t *id, char *str)
 
 	for (i = 31; str[i] == '0'; i--)
 		str[i] = 0;
+}
+
+void hash2nodestr(uint32_t hash, char *str)
+{
+	struct tipc_sioc_nodeid_req nr = {};
+	int sd;
+
+	sd = socket(AF_TIPC, SOCK_RDM, 0);
+	if (sd < 0) {
+		fprintf(stderr, "opening TIPC socket: %s\n", strerror(errno));
+		return;
+	}
+	nr.peer = hash;
+	if (!ioctl(sd, SIOCGETNODEID, &nr))
+		nodeid2str((uint8_t *)nr.node_id, str);
+	close(sd);
 }

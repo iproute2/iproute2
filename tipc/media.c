@@ -103,6 +103,8 @@ static int cmd_media_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		prop = TIPC_NLA_PROP_TOL;
 	else if ((strcmp(cmd->cmd, "window") == 0))
 		prop = TIPC_NLA_PROP_WIN;
+	else if ((strcmp(cmd->cmd, "mtu") == 0))
+		prop = TIPC_NLA_PROP_MTU;
 	else
 		return -EINVAL;
 
@@ -123,6 +125,12 @@ static int cmd_media_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		fprintf(stderr, "error, missing media\n");
 		return -EINVAL;
 	}
+
+	if ((prop == TIPC_NLA_PROP_MTU) &&
+	    (strcmp(opt->val, "udp"))) {
+		fprintf(stderr, "error, not supported for media\n");
+		return -EINVAL;
+	}
 	nest = mnl_attr_nest_start(nlh, TIPC_NLA_MEDIA);
 	mnl_attr_put_strz(nlh, TIPC_NLA_MEDIA_NAME, opt->val);
 	mnl_attr_nest_end(nlh, nest);
@@ -136,7 +144,8 @@ static void cmd_media_get_help(struct cmdl *cmdl)
 		"PROPERTIES\n"
 		" tolerance             - Get media tolerance\n"
 		" priority              - Get media priority\n"
-		" window                - Get media window\n",
+		" window                - Get media window\n"
+		" mtu                   - Get media mtu\n",
 		cmdl->argv[0]);
 }
 
@@ -147,6 +156,7 @@ static int cmd_media_get(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ "priority",	cmd_media_get_prop,	cmd_media_get_help },
 		{ "tolerance",	cmd_media_get_prop,	cmd_media_get_help },
 		{ "window",	cmd_media_get_prop,	cmd_media_get_help },
+		{ "mtu",	cmd_media_get_prop,	cmd_media_get_help },
 		{ NULL }
 	};
 
@@ -159,7 +169,8 @@ static void cmd_media_set_help(struct cmdl *cmdl)
 		"PROPERTIES\n"
 		" tolerance TOLERANCE   - Set media tolerance\n"
 		" priority PRIORITY     - Set media priority\n"
-		" window WINDOW         - Set media window\n",
+		" window WINDOW         - Set media window\n"
+		" mtu MTU               - Set media mtu\n",
 		cmdl->argv[0]);
 }
 
@@ -183,6 +194,8 @@ static int cmd_media_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		prop = TIPC_NLA_PROP_TOL;
 	else if ((strcmp(cmd->cmd, "window") == 0))
 		prop = TIPC_NLA_PROP_WIN;
+	else if ((strcmp(cmd->cmd, "mtu") == 0))
+		prop = TIPC_NLA_PROP_MTU;
 	else
 		return -EINVAL;
 
@@ -210,6 +223,12 @@ static int cmd_media_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		fprintf(stderr, "error, missing media\n");
 		return -EINVAL;
 	}
+
+	if ((prop == TIPC_NLA_PROP_MTU) &&
+	    (strcmp(opt->val, "udp"))) {
+		fprintf(stderr, "error, not supported for media\n");
+		return -EINVAL;
+	}
 	mnl_attr_put_strz(nlh, TIPC_NLA_MEDIA_NAME, opt->val);
 
 	props = mnl_attr_nest_start(nlh, TIPC_NLA_MEDIA_PROP);
@@ -228,6 +247,7 @@ static int cmd_media_set(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ "priority",	cmd_media_set_prop,	cmd_media_set_help },
 		{ "tolerance",	cmd_media_set_prop,	cmd_media_set_help },
 		{ "window",	cmd_media_set_prop,	cmd_media_set_help },
+		{ "mtu",	cmd_media_set_prop,	cmd_media_set_help },
 		{ NULL }
 	};
 

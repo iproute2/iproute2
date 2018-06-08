@@ -63,7 +63,7 @@ static void usage(void)
 	fprintf(stderr, "       ip address {showdump|restore}\n");
 	fprintf(stderr, "IFADDR := PREFIX | ADDR peer PREFIX\n");
 	fprintf(stderr, "          [ broadcast ADDR ] [ anycast ADDR ]\n");
-	fprintf(stderr, "          [ label IFNAME ] [ scope SCOPE-ID ]\n");
+	fprintf(stderr, "          [ label IFNAME ] [ scope SCOPE-ID ] [ metric METRIC ]\n");
 	fprintf(stderr, "SCOPE-ID := [ host | link | global | NUMBER ]\n");
 	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
 	fprintf(stderr, "FLAG  := [ permanent | dynamic | secondary | primary |\n");
@@ -1349,6 +1349,10 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 							   rta_tb[IFA_ADDRESS]));
 		}
 		print_int(PRINT_ANY, "prefixlen", "/%d ", ifa->ifa_prefixlen);
+
+		if (rta_tb[IFA_RT_PRIORITY])
+			print_uint(PRINT_ANY, "metric", "metric %u ",
+				   rta_getattr_u32(rta_tb[IFA_RT_PRIORITY]));
 	}
 
 	if (brief)
@@ -2146,6 +2150,15 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			NEXT_ARG();
 			l = *argv;
 			addattr_l(&req.n, sizeof(req), IFA_LABEL, l, strlen(l)+1);
+		} else if (matches(*argv, "metric") == 0 ||
+			   matches(*argv, "priority") == 0 ||
+			   matches(*argv, "preference") == 0) {
+			__u32 metric;
+
+			NEXT_ARG();
+			if (get_u32(&metric, *argv, 0))
+				invarg("\"metric\" value is invalid\n", *argv);
+			addattr32(&req.n, sizeof(req), IFA_RT_PRIORITY, metric);
 		} else if (matches(*argv, "valid_lft") == 0) {
 			if (valid_lftp)
 				duparg("valid_lft", *argv);

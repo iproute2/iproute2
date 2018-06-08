@@ -26,10 +26,11 @@
 
 static int node_list_cb(const struct nlmsghdr *nlh, void *data)
 {
-	uint32_t addr;
 	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
 	struct nlattr *info[TIPC_NLA_MAX + 1] = {};
 	struct nlattr *attrs[TIPC_NLA_NODE_MAX + 1] = {};
+	char str[33] = {};
+	uint32_t addr;
 
 	mnl_attr_parse(nlh, sizeof(*genl), parse_attrs, info);
 	if (!info[TIPC_NLA_NODE])
@@ -40,13 +41,12 @@ static int node_list_cb(const struct nlmsghdr *nlh, void *data)
 		return MNL_CB_ERROR;
 
 	addr = mnl_attr_get_u32(attrs[TIPC_NLA_NODE_ADDR]);
-	printf("%x: ", addr);
-
+	hash2nodestr(addr, str);
+	printf("%-32s %08x ", str, addr);
 	if (attrs[TIPC_NLA_NODE_UP])
 		printf("up\n");
 	else
 		printf("down\n");
-
 	return MNL_CB_OK;
 }
 
@@ -64,7 +64,7 @@ static int cmd_node_list(struct nlmsghdr *nlh, const struct cmd *cmd,
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
 	}
-
+	printf("Node Identity                    Hash     State\n");
 	return msg_dumpit(nlh, node_list_cb, NULL);
 }
 
@@ -120,7 +120,7 @@ static int cmd_node_get_addr(struct nlmsghdr *nlh, const struct cmd *cmd,
 	}
 	close(sk);
 
-	printf("%x\n", addr.addr.id.node);
+	printf("%08x\n", addr.addr.id.node);
 	return 0;
 }
 
@@ -167,7 +167,6 @@ static int nodeid_get_cb(const struct nlmsghdr *nlh, void *data)
 	uint8_t id[16] = {0,};
 	uint64_t *w0 = (uint64_t *) &id[0];
 	uint64_t *w1 = (uint64_t *) &id[8];
-	int i;
 
 	mnl_attr_parse(nlh, sizeof(*genl), parse_attrs, info);
 	if (!info[TIPC_NLA_NET])
@@ -180,10 +179,8 @@ static int nodeid_get_cb(const struct nlmsghdr *nlh, void *data)
 	*w0 = mnl_attr_get_u64(attrs[TIPC_NLA_NET_NODEID]);
 	*w1 = mnl_attr_get_u64(attrs[TIPC_NLA_NET_NODEID_W1]);
 	nodeid2str(id, str);
-	printf("Node Identity                     Hash\n");
-	printf("%s", str);
-	for (i = strlen(str); i <= 33; i++)
-		printf(" ");
+	printf("Node Identity                    Hash\n");
+	printf("%-33s", str);
 	cmd_node_get_addr(NULL, NULL, NULL, NULL);
 	return MNL_CB_OK;
 }

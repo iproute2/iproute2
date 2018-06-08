@@ -97,6 +97,11 @@ static const struct bpf_prog_meta __bpf_prog_meta[] = {
 	},
 };
 
+static bool bpf_map_offload_neutral(enum bpf_map_type type)
+{
+	return type == BPF_MAP_TYPE_PERF_EVENT_ARRAY;
+}
+
 static const char *bpf_prog_to_subdir(enum bpf_prog_type type)
 {
 	assert(type < ARRAY_SIZE(__bpf_prog_meta) &&
@@ -1594,7 +1599,7 @@ static int bpf_map_attach(const char *name, struct bpf_elf_ctx *ctx,
 			  const struct bpf_elf_map *map, struct bpf_map_ext *ext,
 			  int *have_map_in_map)
 {
-	int fd, ret, map_inner_fd = 0;
+	int fd, ifindex, ret, map_inner_fd = 0;
 
 	fd = bpf_probe_pinned(name, ctx, map->pinning);
 	if (fd > 0) {
@@ -1631,10 +1636,10 @@ static int bpf_map_attach(const char *name, struct bpf_elf_ctx *ctx,
 		}
 	}
 
+	ifindex = bpf_map_offload_neutral(map->type) ? 0 : ctx->ifindex;
 	errno = 0;
 	fd = bpf_map_create(map->type, map->size_key, map->size_value,
-			    map->max_elem, map->flags, map_inner_fd,
-			    ctx->ifindex);
+			    map->max_elem, map->flags, map_inner_fd, ifindex);
 
 	if (fd < 0 || ctx->verbose) {
 		bpf_map_report(fd, name, map, ctx, map_inner_fd);

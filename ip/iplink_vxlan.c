@@ -51,7 +51,7 @@ static void print_explain(FILE *f)
 		"Where: VNI   := 0-16777215\n"
 		"       ADDR  := { IP_ADDRESS | any }\n"
 		"       TOS   := { NUMBER | inherit }\n"
-		"       TTL   := { 1..255 | inherit }\n"
+		"       TTL   := { 1..255 | auto | inherit }\n"
 		"       LABEL := 0-1048575\n"
 	);
 }
@@ -143,14 +143,18 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			NEXT_ARG();
 			check_duparg(&attrs, IFLA_VXLAN_TTL, "ttl", *argv);
-			if (strcmp(*argv, "inherit") != 0) {
+			if (strcmp(*argv, "inherit") == 0) {
+				addattr_l(n, 1024, IFLA_VXLAN_TTL_INHERIT, NULL, 0);
+			} else if (strcmp(*argv, "auto") == 0) {
+				addattr8(n, 1024, IFLA_VXLAN_TTL, ttl);
+			} else {
 				if (get_unsigned(&uval, *argv, 0))
 					invarg("invalid TTL", *argv);
 				if (uval > 255)
 					invarg("TTL must be <= 255", *argv);
 				ttl = uval;
+				addattr8(n, 1024, IFLA_VXLAN_TTL, ttl);
 			}
-			addattr8(n, 1024, IFLA_VXLAN_TTL, ttl);
 		} else if (!matches(*argv, "tos") ||
 			   !matches(*argv, "dsfield")) {
 			__u32 uval;

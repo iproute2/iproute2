@@ -22,6 +22,8 @@ flower \- flow based traffic control filter
 .IR MATCH " := { "
 .B indev
 .IR ifname " | "
+.BR verbose
+.RI " | "
 .BR skip_sw " | " skip_hw
 .RI " | { "
 .BR dst_mac " | " src_mac " } "
@@ -99,6 +101,11 @@ flows.
 is the name of an interface which must exist at the time of
 .B tc
 invocation.
+.TP
+.BI verbose
+Enable verbose logging, including offloading errors when not using
+.B skip_sw
+flag.
 .TP
 .BI skip_sw
 Do not process filter by software. If hardware has no offload support for this

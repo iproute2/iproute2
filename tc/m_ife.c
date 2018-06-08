@@ -234,22 +234,24 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_IFE_MAX, arg);
 
 	if (tb[TCA_IFE_PARMS] == NULL) {
-		fprintf(f, "[NULL ife parameters]");
+		print_string(PRINT_FP, NULL, "%s", "[NULL ife parameters]");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_IFE_PARMS]);
 
-	fprintf(f, "ife %s ", p->flags & IFE_ENCODE ? "encode" : "decode");
+	print_string(PRINT_ANY, "kind", "%s ", "ife");
+	print_string(PRINT_ANY, "mode", "%s ",
+		     p->flags & IFE_ENCODE ? "encode" : "decode");
 	print_action_control(f, "action ", p->action, " ");
 
 	if (tb[TCA_IFE_TYPE]) {
 		ife_type = rta_getattr_u16(tb[TCA_IFE_TYPE]);
 		has_optional = 1;
-		fprintf(f, "type 0x%X ", ife_type);
+		print_0xhex(PRINT_ANY, "type", "type 0x%X ", ife_type);
 	}
 
 	if (has_optional)
-		fprintf(f, "\n\t ");
+		print_string(PRINT_FP, NULL, "%s\t", _SL_);
 
 	if (tb[TCA_IFE_METALST]) {
 		struct rtattr *metalist[IFE_META_MAX + 1];
@@ -262,9 +264,11 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 			len = RTA_PAYLOAD(metalist[IFE_META_SKBMARK]);
 			if (len) {
 				mmark = rta_getattr_u32(metalist[IFE_META_SKBMARK]);
-				fprintf(f, "use mark %u ", mmark);
+				print_uint(PRINT_ANY, "mark", "use mark %u ",
+					   mmark);
 			} else
-				fprintf(f, "allow mark ");
+				print_string(PRINT_ANY, "mark", "%s mark ",
+					     "allow");
 		}
 
 		if (metalist[IFE_META_TCINDEX]) {
@@ -272,41 +276,47 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 			if (len) {
 				mtcindex =
 					rta_getattr_u16(metalist[IFE_META_TCINDEX]);
-				fprintf(f, "use tcindex %d ", mtcindex);
+				print_uint(PRINT_ANY, "tcindex",
+					   "use tcindex %u ", mtcindex);
 			} else
-				fprintf(f, "allow tcindex ");
+				print_string(PRINT_ANY, "tcindex",
+					     "%s tcindex ", "allow");
 		}
 
 		if (metalist[IFE_META_PRIO]) {
 			len = RTA_PAYLOAD(metalist[IFE_META_PRIO]);
 			if (len) {
 				mprio = rta_getattr_u32(metalist[IFE_META_PRIO]);
-				fprintf(f, "use prio %u ", mprio);
+				print_uint(PRINT_ANY, "prio", "use prio %u ",
+					   mprio);
 			} else
-				fprintf(f, "allow prio ");
+				print_string(PRINT_ANY, "prio", "%s prio ",
+					     "allow");
 		}
 
 	}
 
 	if (tb[TCA_IFE_DMAC]) {
 		has_optional = 1;
-		fprintf(f, "dst %s ",
-			ll_addr_n2a(RTA_DATA(tb[TCA_IFE_DMAC]),
-				    RTA_PAYLOAD(tb[TCA_IFE_DMAC]), 0, b2,
-				    sizeof(b2)));
-
+		print_string(PRINT_ANY, "dst", "dst %s ",
+			     ll_addr_n2a(RTA_DATA(tb[TCA_IFE_DMAC]),
+					 RTA_PAYLOAD(tb[TCA_IFE_DMAC]), 0, b2,
+					 sizeof(b2)));
 	}
 
 	if (tb[TCA_IFE_SMAC]) {
 		has_optional = 1;
-		fprintf(f, "src %s ",
-			ll_addr_n2a(RTA_DATA(tb[TCA_IFE_SMAC]),
-				    RTA_PAYLOAD(tb[TCA_IFE_SMAC]), 0, b2,
-				    sizeof(b2)));
+		print_string(PRINT_ANY, "src", "src %s ",
+			     ll_addr_n2a(RTA_DATA(tb[TCA_IFE_SMAC]),
+					 RTA_PAYLOAD(tb[TCA_IFE_SMAC]), 0, b2,
+					 sizeof(b2)));
 	}
 
-	fprintf(f, "\n\t index %u ref %d bind %d", p->index, p->refcnt,
-		p->bindcnt);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_uint(PRINT_ANY, "index", "\t index %u", p->index);
+	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
+
 	if (show_stats) {
 		if (tb[TCA_IFE_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_IFE_TM]);
@@ -315,7 +325,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	fprintf(f, "\n");
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 
 	return 0;
 }

@@ -38,7 +38,13 @@ ip-route \- routing table management
 .B  tos
 .IR TOS " ] [ "
 .B  vrf
-.IR NAME " ] "
+.IR NAME " ] [ "
+.B  ipproto
+.IR PROTOCOL " ] [ "
+.B  sport
+.IR NUMBER " ] [ "
+.B  dport
+.IR NUMBER " ] "
 
 .ti -8
 .BR "ip route" " { " add " | " del " | " change " | " append " | "\
@@ -1043,6 +1049,18 @@ the firewall mark
 .TP
 .BI vrf " NAME"
 force the vrf device on which this packet will be routed.
+
+.TP
+.BI ipproto " PROTOCOL"
+ip protocol as seen by the route lookup
+
+.TP
+.BI sport " NUMBER"
+source port as seen by the route lookup
+
+.TP
+.BI dport " NUMBER"
+destination port as seen by the route lookup
 
 .TP
 .B connected

@@ -114,16 +114,20 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	parse_rtattr_nested(tb, TCA_CONNMARK_MAX, arg);
 	if (tb[TCA_CONNMARK_PARMS] == NULL) {
-		fprintf(f, "[NULL connmark parameters]");
+		print_string(PRINT_FP, NULL, "%s", "[NULL connmark parameters]");
 		return -1;
 	}
 
 	ci = RTA_DATA(tb[TCA_CONNMARK_PARMS]);
 
-	fprintf(f, " connmark zone %d", ci->zone);
-	print_action_control(f, " ", ci->action, "\n");
-	fprintf(f, "\t index %u ref %d bind %d", ci->index,
-		ci->refcnt, ci->bindcnt);
+	print_string(PRINT_ANY, "kind", "%s ", "connmark");
+	print_uint(PRINT_ANY, "zone", "zone %u", ci->zone);
+	print_action_control(f, " ", ci->action, "");
+
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_uint(PRINT_ANY, "index", "\t index %u", ci->index);
+	print_int(PRINT_ANY, "ref", " ref %d", ci->refcnt);
+	print_int(PRINT_ANY, "bind", " bind %d", ci->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_CONNMARK_TM]) {
@@ -132,7 +136,7 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	fprintf(f, "\n");
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 
 	return 0;
 }

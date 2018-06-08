@@ -693,13 +693,13 @@ tunnel.
 .in -8
 
 .TP
-GRE, IPIP, SIT Type Support
-For a link of types
-.I GRE/IPIP/SIT
+IPIP, SIT Type Support
+For a link of type
+.IR IPIP or SIT
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BR type " { " gre " | " ipip " | " sit " }"
+.BR type " { " ipip " | " sit " }"
 .BI " remote " ADDR " local " ADDR
 [
 .BR encap " { " fou " | " gue " | " none " }"
@@ -765,6 +765,154 @@ IPv6-Over-IPv4 is not supported for IPIP.
 .RB "(e.g. " "ip route encap" ).
 
 .in -8
+.TP
+GRE Type Support
+For a link of type
+.IR GRE " or " GRETAP
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BR type " { " gre " | " gretap " }"
+.BI " remote " ADDR " local " ADDR
+[
+.RB [ no ] "" [ i | o ] seq
+] [
+.RB [ i | o ] key
+.I KEY
+|
+.BR no [ i | o ] key
+] [
+.RB [ no ] "" [ i | o ] csum
+] [
+.BI ttl " TTL "
+] [
+.BI tos " TOS "
+] [
+.RB [ no ] pmtudisc
+] [
+.RB [ no ] ignore-df
+] [
+.BI dev " PHYS_DEV "
+] [
+.BR encap " { " fou " | " gue " | " none " }"
+] [
+.BR encap-sport " { " \fIPORT " | " auto " }"
+] [
+.BI "encap-dport " PORT
+] [
+.RB [ no ] encap-csum
+] [
+.RB [ no ] encap-remcsum
+] [
+.BR external
+]
+
+.in +8
+.sp
+.BI  remote " ADDR "
+- specifies the remote address of the tunnel.
+
+.sp
+.BI  local " ADDR "
+- specifies the fixed local address for tunneled packets.
+It must be an address on another interface on this host.
+
+.sp
+.RB  [ no ] "" [ i | o ] seq
+- serialize packets.
+The
+.B oseq
+flag enables sequencing of outgoing packets.
+The
+.B iseq
+flag requires that all input packets are serialized.
+
+.sp
+.RB [ i | o ] key
+.I KEY
+|
+.BR no [ i | o ] key
+- use keyed GRE with key
+.IR KEY ". "KEY
+is either a number or an IPv4 address-like dotted quad.
+The
+.B key
+parameter specifies the same key to use in both directions.
+The
+.BR ikey " and " okey
+parameters specify different keys for input and output.
+
+.sp
+.RB  [ no ] "" [ i | o ] csum
+- generate/require checksums for tunneled packets.
+The
+.B ocsum
+flag calculates checksums for outgoing packets.
+The
+.B icsum
+flag requires that all input packets have the correct
+checksum. The
+.B csum
+flag is equivalent to the combination
+.B "icsum ocsum" .
+
+.sp
+.BI ttl " TTL"
+- specifies the TTL value to use in outgoing packets.
+
+.sp
+.BI tos " TOS"
+- specifies the TOS value to use in outgoing packets.
+
+.sp
+.RB [ no ] pmtudisc
+- enables/disables Path MTU Discovery on this tunnel.
+It is enabled by default. Note that a fixed ttl is incompatible
+with this option: tunneling with a fixed ttl always makes pmtu
+discovery.
+
+.sp
+.RB [ no ] ignore-df
+- enables/disables IPv4 DF suppression on this tunnel.
+Normally datagrams that exceed the MTU will be fragmented; the presence
+of the DF flag inhibits this, resulting instead in an ICMP Unreachable
+(Fragmentation Required) message.  Enabling this attribute casues the
+DF flag to be ignored.
+
+.sp
+.BI dev " PHYS_DEV"
+- specifies the physical device to use for tunnel endpoint communication.
+
+.sp
+.BR encap " { " fou " | " gue " | " none " }"
+- specifies type of secondary UDP encapsulation. "fou" indicates
+Foo-Over-UDP, "gue" indicates Generic UDP Encapsulation.
+
+.sp
+.BR encap-sport " { " \fIPORT " | " auto " }"
+- specifies the source port in UDP encapsulation.
+.IR PORT
+indicates the port by number, "auto"
+indicates that the port number should be chosen automatically
+(the kernel picks a flow based on the flow hash of the
+encapsulated packet).
+
+.sp
+.RB [ no ] encap-csum
+- specifies if UDP checksums are enabled in the secondary
+encapsulation.
+
+.sp
+.RB [ no ] encap-remcsum
+- specifies if Remote Checksum Offload is enabled. This is only
+applicable for Generic UDP Encapsulation.
+
+.sp
+.BR external
+- make this tunnel externally controlled
+.RB "(e.g. " "ip route encap" ).
+
+.in -8
 
 .TP
 IP6GRE/IP6GRETAP Type Support
@@ -776,12 +924,14 @@ the following additional arguments are supported:
 .BR type " { " ip6gre " | " ip6gretap " }"
 .BI remote " ADDR " local " ADDR"
 [
-.RB [ i | o ] seq
+.RB [ no ] "" [ i | o ] seq
 ] [
 .RB [ i | o ] key
 .I KEY
+|
+.BR no [ i | o ] key
 ] [
-.RB [ i | o ] csum
+.RB [ no ] "" [ i | o ] csum
 ] [
 .BI hoplimit " TTL "
 ] [
@@ -811,7 +961,7 @@ the following additional arguments are supported:
 It must be an address on another interface on this host.
 
 .sp
-.RB  [ i | o ] seq
+.RB  [ no ] "" [ i | o ] seq
 - serialize packets.
 The
 .B oseq
@@ -821,7 +971,10 @@ The
 flag requires that all input packets are serialized.
 
 .sp
-.RB  [ i | o ] key " \fIKEY"
+.RB [ i | o ] key
+.I KEY
+|
+.BR no [ i | o ] key
 - use keyed GRE with key
 .IR KEY ". "KEY
 is either a number or an IPv4 address-like dotted quad.
@@ -833,7 +986,7 @@ The
 parameters specify different keys for input and output.
 
 .sp
-.RB  [ i | o ] csum
+.RB  [ no ] "" [ i | o ] csum
 - generate/require checksums for tunneled packets.
 The
 .B ocsum

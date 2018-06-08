@@ -205,6 +205,26 @@ static void link_print_phys_state(struct rd *rd, struct nlattr **tb)
 		pr_out("physical_state %s ", phys_state_to_str(phys_state));
 }
 
+static void link_print_netdev(struct rd *rd, struct nlattr **tb)
+{
+	const char *netdev_name;
+	uint32_t idx;
+
+	if (!tb[RDMA_NLDEV_ATTR_NDEV_NAME] || !tb[RDMA_NLDEV_ATTR_NDEV_INDEX])
+		return;
+
+	netdev_name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_NDEV_NAME]);
+	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_NDEV_INDEX]);
+	if (rd->json_output) {
+		jsonw_string_field(rd->jw, "netdev", netdev_name);
+		jsonw_uint_field(rd->jw, "netdev_index", idx);
+	} else {
+		pr_out("netdev %s ", netdev_name);
+		if (rd->show_details)
+			pr_out("netdev_index %u ", idx);
+	}
+}
+
 static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
@@ -241,6 +261,7 @@ static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
 	link_print_lmc(rd, tb);
 	link_print_state(rd, tb);
 	link_print_phys_state(rd, tb);
+	link_print_netdev(rd, tb);
 	if (rd->show_details)
 		link_print_caps(rd, tb);
 

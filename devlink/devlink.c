@@ -1693,6 +1693,20 @@ static const char *port_type_name(uint32_t type)
 	}
 }
 
+static const char *port_flavour_name(uint16_t flavour)
+{
+	switch (flavour) {
+	case DEVLINK_PORT_FLAVOUR_PHYSICAL:
+		return "physical";
+	case DEVLINK_PORT_FLAVOUR_CPU:
+		return "cpu";
+	case DEVLINK_PORT_FLAVOUR_DSA:
+		return "dsa";
+	default:
+		return "<unknown flavour>";
+	}
+}
+
 static void pr_out_port(struct dl *dl, struct nlattr **tb)
 {
 	struct nlattr *pt_attr = tb[DEVLINK_ATTR_PORT_TYPE];
@@ -1717,6 +1731,12 @@ static void pr_out_port(struct dl *dl, struct nlattr **tb)
 	if (tb[DEVLINK_ATTR_PORT_IBDEV_NAME])
 		pr_out_str(dl, "ibdev",
 			   mnl_attr_get_str(tb[DEVLINK_ATTR_PORT_IBDEV_NAME]));
+	if (tb[DEVLINK_ATTR_PORT_FLAVOUR]) {
+		uint16_t port_flavour =
+				mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_FLAVOUR]);
+
+		pr_out_str(dl, "flavour", port_flavour_name(port_flavour));
+	}
 	if (tb[DEVLINK_ATTR_PORT_SPLIT_GROUP])
 		pr_out_uint(dl, "split_group",
 			    mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_SPLIT_GROUP]));

@@ -11,6 +11,7 @@
 
 #include "rdma.h"
 #include <ctype.h>
+#include <inttypes.h>
 
 int rd_argc(struct rd *rd)
 {
@@ -391,7 +392,33 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_RES_LKEY] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_RES_IOVA] = MNL_TYPE_U64,
 	[RDMA_NLDEV_ATTR_RES_MRLEN] = MNL_TYPE_U64,
+	[RDMA_NLDEV_ATTR_NDEV_INDEX]		= MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_NDEV_NAME]		= MNL_TYPE_NUL_STRING,
+	[RDMA_NLDEV_ATTR_DRIVER] = MNL_TYPE_NESTED,
+	[RDMA_NLDEV_ATTR_DRIVER_ENTRY] = MNL_TYPE_NESTED,
+	[RDMA_NLDEV_ATTR_DRIVER_STRING] = MNL_TYPE_NUL_STRING,
+	[RDMA_NLDEV_ATTR_DRIVER_PRINT_TYPE] = MNL_TYPE_U8,
+	[RDMA_NLDEV_ATTR_DRIVER_S32] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_DRIVER_U32] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_DRIVER_S64] = MNL_TYPE_U64,
+	[RDMA_NLDEV_ATTR_DRIVER_U64] = MNL_TYPE_U64,
 };
+
+int rd_attr_check(const struct nlattr *attr, int *typep)
+{
+	int type;
+
+	if (mnl_attr_type_valid(attr, RDMA_NLDEV_ATTR_MAX) < 0)
+		return MNL_CB_ERROR;
+
+	type = mnl_attr_get_type(attr);
+
+	if (mnl_attr_validate(attr, nldev_policy[type]) < 0)
+		return MNL_CB_ERROR;
+
+	*typep = nldev_policy[type];
+	return MNL_CB_OK;
+}
 
 int rd_attr_cb(const struct nlattr *attr, void *data)
 {
@@ -657,4 +684,175 @@ struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index)
 	dev_map = _dev_map_lookup(rd, dev_name);
 	free(dev_name);
 	return dev_map;
+}
+
+#define nla_type(attr) ((attr)->nla_type & NLA_TYPE_MASK)
+
+void newline(struct rd *rd)
+{
+	if (rd->json_output)
+		jsonw_end_array(rd->jw);
+	else
+		pr_out("\n");
+}
+
+void newline_indent(struct rd *rd)
+{
+	newline(rd);
+	if (!rd->json_output)
+		pr_out("    ");
+}
+
+static int print_driver_string(struct rd *rd, const char *key_str,
+				 const char *val_str)
+{
+	if (rd->json_output) {
+		jsonw_string_field(rd->jw, key_str, val_str);
+		return 0;
+	} else {
+		return pr_out("%s %s ", key_str, val_str);
+	}
+}
+
+static int print_driver_s32(struct rd *rd, const char *key_str, int32_t val,
+			      enum rdma_nldev_print_type print_type)
+{
+	if (rd->json_output) {
+		jsonw_int_field(rd->jw, key_str, val);
+		return 0;
+	}
+	switch (print_type) {
+	case RDMA_NLDEV_PRINT_TYPE_UNSPEC:
+		return pr_out("%s %d ", key_str, val);
+	case RDMA_NLDEV_PRINT_TYPE_HEX:
+		return pr_out("%s 0x%x ", key_str, val);
+	default:
+		return -EINVAL;
+	}
+}
+
+static int print_driver_u32(struct rd *rd, const char *key_str, uint32_t val,
+			      enum rdma_nldev_print_type print_type)
+{
+	if (rd->json_output) {
+		jsonw_int_field(rd->jw, key_str, val);
+		return 0;
+	}
+	switch (print_type) {
+	case RDMA_NLDEV_PRINT_TYPE_UNSPEC:
+		return pr_out("%s %u ", key_str, val);
+	case RDMA_NLDEV_PRINT_TYPE_HEX:
+		return pr_out("%s 0x%x ", key_str, val);
+	default:
+		return -EINVAL;
+	}
+}
+
+static int print_driver_s64(struct rd *rd, const char *key_str, int64_t val,
+			      enum rdma_nldev_print_type print_type)
+{
+	if (rd->json_output) {
+		jsonw_int_field(rd->jw, key_str, val);
+		return 0;
+	}
+	switch (print_type) {
+	case RDMA_NLDEV_PRINT_TYPE_UNSPEC:
+		return pr_out("%s %" PRId64 " ", key_str, val);
+	case RDMA_NLDEV_PRINT_TYPE_HEX:
+		return pr_out("%s 0x%" PRIx64 " ", key_str, val);
+	default:
+		return -EINVAL;
+	}
+}
+
+static int print_driver_u64(struct rd *rd, const char *key_str, uint64_t val,
+			      enum rdma_nldev_print_type print_type)
+{
+	if (rd->json_output) {
+		jsonw_int_field(rd->jw, key_str, val);
+		return 0;
+	}
+	switch (print_type) {
+	case RDMA_NLDEV_PRINT_TYPE_UNSPEC:
+		return pr_out("%s %" PRIu64 " ", key_str, val);
+	case RDMA_NLDEV_PRINT_TYPE_HEX:
+		return pr_out("%s 0x%" PRIx64 " ", key_str, val);
+	default:
+		return -EINVAL;
+	}
+}
+
+static int print_driver_entry(struct rd *rd, struct nlattr *key_attr,
+				struct nlattr *val_attr,
+				enum rdma_nldev_print_type print_type)
+{
+	const char *key_str = mnl_attr_get_str(key_attr);
+	int attr_type = nla_type(val_attr);
+
+	switch (attr_type) {
+	case RDMA_NLDEV_ATTR_DRIVER_STRING:
+		return print_driver_string(rd, key_str,
+				mnl_attr_get_str(val_attr));
+	case RDMA_NLDEV_ATTR_DRIVER_S32:
+		return print_driver_s32(rd, key_str,
+				mnl_attr_get_u32(val_attr), print_type);
+	case RDMA_NLDEV_ATTR_DRIVER_U32:
+		return print_driver_u32(rd, key_str,
+				mnl_attr_get_u32(val_attr), print_type);
+	case RDMA_NLDEV_ATTR_DRIVER_S64:
+		return print_driver_s64(rd, key_str,
+				mnl_attr_get_u64(val_attr), print_type);
+	case RDMA_NLDEV_ATTR_DRIVER_U64:
+		return print_driver_u64(rd, key_str,
+				mnl_attr_get_u64(val_attr), print_type);
+	}
+	return -EINVAL;
+}
+
+void print_driver_table(struct rd *rd, struct nlattr *tb)
+{
+	int print_type = RDMA_NLDEV_PRINT_TYPE_UNSPEC;
+	struct nlattr *tb_entry, *key = NULL, *val;
+	int type, cc = 0;
+	int ret;
+
+	if (!rd->show_driver_details || !tb)
+		return;
+
+	if (rd->pretty_output)
+		newline_indent(rd);
+
+	/*
+	 * Driver attrs are tuples of {key, [print-type], value}.
+	 * The key must be a string.  If print-type is present, it
+	 * defines an alternate printf format type vs the native format
+	 * for the attribute.  And the value can be any available
+	 * driver type.
+	 */
+	mnl_attr_for_each_nested(tb_entry, tb) {
+
+		if (cc > MAX_LINE_LENGTH) {
+			if (rd->pretty_output)
+				newline_indent(rd);
+			cc = 0;
+		}
+		if (rd_attr_check(tb_entry, &type) != MNL_CB_OK)
+			return;
+		if (!key) {
+			if (type != MNL_TYPE_NUL_STRING)
+				return;
+			key = tb_entry;
+		} else if (type == MNL_TYPE_U8) {
+			print_type = mnl_attr_get_u8(tb_entry);
+		} else {
+			val = tb_entry;
+			ret = print_driver_entry(rd, key, val, print_type);
+			if (ret < 0)
+				return;
+			cc += ret;
+			print_type = RDMA_NLDEV_PRINT_TYPE_UNSPEC;
+			key = NULL;
+		}
+	}
+	return;
 }
