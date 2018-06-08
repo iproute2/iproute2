@@ -16,3 +16,8 @@
 15	ntk
 16      dhcp
 42	babel
+186	bgp
+187	isis
+188	ospf
+189	rip
+192	eigrp

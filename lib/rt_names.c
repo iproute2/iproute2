@@ -134,6 +134,11 @@ static char *rtnl_rtprot_tab[256] = {
 	[RTPROT_XORP]	  = "xorp",
 	[RTPROT_NTK]	  = "ntk",
 	[RTPROT_DHCP]	  = "dhcp",
+	[RTPROT_BGP]	  = "bgp",
+	[RTPROT_ISIS]	  = "isis",
+	[RTPROT_OSPF]	  = "ospf",
+	[RTPROT_RIP]	  = "rip",
+	[RTPROT_EIGRP]	  = "eigrp",
 };
 
 
