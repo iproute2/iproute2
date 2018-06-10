@@ -955,10 +955,16 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		if (is_json_context()) {
 			print_int(PRINT_JSON, "link_netnsid", NULL, id);
 		} else {
-			if (id >= 0)
-				print_int(PRINT_FP, NULL,
-					  " link-netnsid %d", id);
-			else
+			if (id >= 0) {
+				char *name = get_name_from_nsid(id);
+
+				if (name)
+					print_string(PRINT_FP, NULL,
+						     " link-netns %s", name);
+				else
+					print_int(PRINT_FP, NULL,
+						  " link-netnsid %d", id);
+			} else
 				print_string(PRINT_FP, NULL,
 					     " link-netnsid %s", "unknown");
 		}
@@ -966,8 +972,12 @@ int print_linkinfo(const struct sockaddr_nl *who,
 
 	if (tb[IFLA_NEW_NETNSID]) {
 		int id = rta_getattr_u32(tb[IFLA_NEW_NETNSID]);
+		char *name = get_name_from_nsid(id);
 
-		print_int(PRINT_FP, NULL, " new-nsid %d", id);
+		if (name)
+			print_string(PRINT_FP, NULL, " new-netns %s", name);
+		else
+			print_int(PRINT_FP, NULL, " new-netnsid %d", id);
 	}
 	if (tb[IFLA_NEW_IFINDEX]) {
 		int id = rta_getattr_u32(tb[IFLA_NEW_IFINDEX]);

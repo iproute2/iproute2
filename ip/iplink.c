@@ -85,7 +85,7 @@ void iplink_usage(void)
 		"	                  [ broadcast LLADDR ]\n"
 		"	                  [ mtu MTU ]\n"
 		"	                  [ netns { PID | NAME } ]\n"
-		"	                  [ link-netnsid ID ]\n"
+		"	                  [ link-netns NAME | link-netnsid ID ]\n"
 		"			  [ alias NAME ]\n"
 		"	                  [ vf NUM [ mac LLADDR ]\n"
 		"				   [ vlan VLANID [ qos VLAN-QOS ] [ proto VLAN-PROTO ] ]\n"
@@ -865,10 +865,24 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 				 IFLA_INET6_ADDR_GEN_MODE, mode);
 			addattr_nest_end(&req->n, afs6);
 			addattr_nest_end(&req->n, afs);
+		} else if (matches(*argv, "link-netns") == 0) {
+			NEXT_ARG();
+			if (link_netnsid != -1)
+				duparg("link-netns/link-netnsid", *argv);
+			link_netnsid = get_netnsid_from_name(*argv);
+			/* No nsid? Try to assign one. */
+			if (link_netnsid < 0)
+				set_netnsid_from_name(*argv, -1);
+			link_netnsid = get_netnsid_from_name(*argv);
+			if (link_netnsid < 0)
+				invarg("Invalid \"link-netns\" value\n",
+				       *argv);
+			addattr32(&req->n, sizeof(*req), IFLA_LINK_NETNSID,
+				  link_netnsid);
 		} else if (matches(*argv, "link-netnsid") == 0) {
 			NEXT_ARG();
 			if (link_netnsid != -1)
-				duparg("link-netnsid", *argv);
+				duparg("link-netns/link-netnsid", *argv);
 			if (get_integer(&link_netnsid, *argv, 0))
 				invarg("Invalid \"link-netnsid\" value\n",
 				       *argv);

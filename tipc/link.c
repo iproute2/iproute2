@@ -97,6 +97,7 @@ static int cmd_link_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 {
 	int prop;
 	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct nlattr *attrs;
 	struct opt *opt;
 	struct opt opts[] = {
 		{ "link",		OPT_KEYVAL,	NULL },
@@ -131,7 +132,9 @@ static int cmd_link_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 		fprintf(stderr, "error, missing link\n");
 		return -EINVAL;
 	}
+	attrs = mnl_attr_nest_start(nlh, TIPC_NLA_LINK);
 	mnl_attr_put_strz(nlh, TIPC_NLA_LINK_NAME, opt->val);
+	mnl_attr_nest_end(nlh, attrs);
 
 	return msg_doit(nlh, link_get_cb, &prop);
 }

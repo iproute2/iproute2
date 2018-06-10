@@ -91,7 +91,7 @@ static int ipnetns_have_nsid(void)
 	return have_rtnl_getnsid;
 }
 
-static int get_netnsid_from_name(const char *name)
+int get_netnsid_from_name(const char *name)
 {
 	struct {
 		struct nlmsghdr n;
@@ -107,6 +107,8 @@ static int get_netnsid_from_name(const char *name)
 	struct rtattr *tb[NETNSA_MAX + 1];
 	struct rtgenmsg *rthdr;
 	int len, fd;
+
+	netns_nsid_socket_init();
 
 	fd = netns_get_fd(name);
 	if (fd < 0)
@@ -165,6 +167,20 @@ static struct nsid_cache *netns_map_get_by_nsid(int nsid)
 		if (c->nsid == nsid)
 			return c;
 	}
+
+	return NULL;
+}
+
+char *get_name_from_nsid(int nsid)
+{
+	struct nsid_cache *c;
+
+	netns_nsid_socket_init();
+	netns_map_init();
+
+	c = netns_map_get_by_nsid(nsid);
+	if (c)
+		return c->name;
 
 	return NULL;
 }
@@ -691,7 +707,7 @@ out_delete:
 	return -1;
 }
 
-static int set_netnsid_from_name(const char *name, int nsid)
+int set_netnsid_from_name(const char *name, int nsid)
 {
 	struct {
 		struct nlmsghdr n;
@@ -704,6 +720,8 @@ static int set_netnsid_from_name(const char *name, int nsid)
 		.g.rtgen_family = AF_UNSPEC,
 	};
 	int fd, err = 0;
+
+	netns_nsid_socket_init();
 
 	fd = netns_get_fd(name);
 	if (fd < 0)
