@@ -2065,6 +2065,16 @@ static bool ipaddr_is_multicast(inet_prefix *a)
 		return false;
 }
 
+static bool is_valid_label(const char *dev, const char *label)
+{
+	size_t len = strlen(dev);
+
+	if (strncmp(label, dev, len) != 0)
+		return false;
+
+	return label[len] == '\0' || label[len] == ':';
+}
+
 static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -2208,8 +2218,10 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		fprintf(stderr, "Not enough information: \"dev\" argument is required.\n");
 		return -1;
 	}
-	if (l && matches(d, l) != 0) {
-		fprintf(stderr, "\"dev\" (%s) must match \"label\" (%s).\n", d, l);
+	if (l && !is_valid_label(d, l)) {
+		fprintf(stderr,
+			"\"label\" (%s) must match \"dev\" (%s) or be prefixed by \"dev\" with a colon.\n",
+			l, d);
 		return -1;
 	}
 
