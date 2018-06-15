@@ -121,7 +121,7 @@ void iplink_usage(void)
 			"          bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |\n"
 			"          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan |\n"
 			"          vti | nlmon | team_slave | bond_slave | ipvlan | geneve |\n"
-			"          bridge_slave | vrf | macsec | netdevsim }\n");
+			"          bridge_slave | vrf | macsec | netdevsim | rmnet }\n");
 	}
 	exit(-1);
 }
