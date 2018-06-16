@@ -61,6 +61,7 @@ static void usage(void)
 	fprintf(stderr, "        [ flag FLAG-LIST ] [ sel SELECTOR ] [ LIMIT-LIST ] [ encap ENCAP ]\n");
 	fprintf(stderr, "        [ coa ADDR[/PLEN] ] [ ctx CTX ] [ extra-flag EXTRA-FLAG-LIST ]\n");
 	fprintf(stderr, "        [ offload [dev DEV] dir DIR ]\n");
+	fprintf(stderr, "        [ output-mark OUTPUT-MARK ]\n");
 	fprintf(stderr, "Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n");
 	fprintf(stderr, "        [ reqid REQID ] [ seq SEQ ] [ min SPI max SPI ]\n");
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID [ mark MARK [ mask MASK ] ]\n");
@@ -322,6 +323,7 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 		struct xfrm_user_sec_ctx sctx;
 		char    str[CTX_BUF_SIZE];
 	} ctx = {};
+	__u32 output_mark = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "mode") == 0) {
@@ -437,6 +439,10 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 				invarg("value after \"offload dir\" is invalid", *argv);
 				is_offload = false;
 			}
+		} else if (strcmp(*argv, "output-mark") == 0) {
+			NEXT_ARG();
+			if (get_u32(&output_mark, *argv, 0))
+				invarg("value after \"output-mark\" is invalid", *argv);
 		} else {
 			/* try to assume ALGO */
 			int type = xfrm_algotype_getbyname(*argv);
@@ -719,6 +725,9 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 			exit(1);
 		}
 	}
+
+	if (output_mark)
+		addattr32(&req.n, sizeof(req.buf), XFRMA_OUTPUT_MARK, output_mark);
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);

@@ -637,6 +637,13 @@ static void xfrm_tmpl_print(struct xfrm_user_tmpl *tmpls, int len,
 	}
 }
 
+static void xfrm_output_mark_print(struct rtattr *tb[], FILE *fp)
+{
+	__u32 output_mark = rta_getattr_u32(tb[XFRMA_OUTPUT_MARK]);
+
+	fprintf(fp, "output-mark 0x%x", output_mark);
+}
+
 int xfrm_parse_mark(struct xfrm_mark *mark, int *argcp, char ***argvp)
 {
 	int argc = *argcp;
@@ -677,7 +684,15 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		struct rtattr *rta = tb[XFRMA_MARK];
 		struct xfrm_mark *m = RTA_DATA(rta);
 
-		fprintf(fp, "\tmark %#x/%#x", m->v, m->m);
+		fprintf(fp, "\tmark %#x/%#x ", m->v, m->m);
+
+		if (tb[XFRMA_OUTPUT_MARK])
+			xfrm_output_mark_print(tb, fp);
+		fprintf(fp, "%s", _SL_);
+	} else if (tb[XFRMA_OUTPUT_MARK]) {
+		fprintf(fp, "\t");
+
+		xfrm_output_mark_print(tb, fp);
 		fprintf(fp, "%s", _SL_);
 	}
 
