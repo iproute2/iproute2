@@ -331,6 +331,7 @@ static int batch(const char *name)
 	int batchsize = 0;
 	size_t len = 0;
 	int ret = 0;
+	int err;
 	bool send;
 
 	batch_mode = 1;
@@ -399,9 +400,9 @@ static int batch(const char *name)
 			continue;	/* blank line */
 		}
 
-		ret = do_cmd(largc, largv, tail == NULL ? NULL : tail->buf,
+		err = do_cmd(largc, largv, tail == NULL ? NULL : tail->buf,
 			     tail == NULL ? 0 : sizeof(tail->buf));
-		if (ret != 0) {
+		if (err != 0) {
 			fprintf(stderr, "Command failed %s:%d\n", name,
 				cmdlineno - 1);
 			ret = 1;
@@ -423,15 +424,17 @@ static int batch(const char *name)
 				iov->iov_len = n->nlmsg_len;
 			}
 
-			ret = rtnl_talk_iov(&rth, iovs, batchsize, NULL);
-			if (ret < 0) {
-				fprintf(stderr, "Command failed %s:%d\n", name,
-					cmdlineno - (batchsize + ret) - 1);
-				return 2;
-			}
+			err = rtnl_talk_iov(&rth, iovs, batchsize, NULL);
 			put_batch_bufs(&buf_pool, &head, &tail);
-			batchsize = 0;
 			free(iovs);
+			if (err < 0) {
+				fprintf(stderr, "Command failed %s:%d\n", name,
+					cmdlineno - (batchsize + err) - 1);
+				ret = 1;
+				if (!force)
+					break;
+			}
+			batchsize = 0;
 		}
 	} while (!lastline);
 
