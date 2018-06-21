@@ -219,7 +219,8 @@ ip-link \- network device configuration
 .BR geneve " |"
 .BR vrf " |"
 .BR macsec " |"
-.BR netdevsim " ]"
+.BR netdevsim " |"
+.BR rmnet " ]"
 
 .ti -8
 .IR ETYPE " := [ " TYPE " |"
@@ -342,6 +343,9 @@ Link types:
 .sp
 .BR netdevsim
 - Interface for netdev API tests
+.sp
+.BR rmnet
+- Qualcomm rmnet device
 .in -8
 
 .TP
@@ -1648,6 +1652,21 @@ the following additional arguments are supported:
 .in +8
 .sp
 .BR table " table id associated with VRF device"
+
+.in -8
+
+.TP
+RMNET Type Support
+For a link of type
+.I RMNET
+the following additional arguments are supported:
+
+.BI "ip link add link " DEVICE " name " NAME " type rmnet mux_id " MUXID
+
+.in +8
+.sp
+.BI mux_id " MUXID "
+- specifies the mux identifier for the rmnet device, possible values 1-254.
 
 .in -8
 
