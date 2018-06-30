@@ -34,6 +34,12 @@ flower \- flow based traffic control filter
 .IR PRIORITY " | "
 .BR vlan_ethtype " { " ipv4 " | " ipv6 " | "
 .IR ETH_TYPE " } | "
+.B cvlan_id
+.IR VID " | "
+.B cvlan_prio
+.IR PRIORITY " | "
+.BR cvlan_ethtype " { " ipv4 " | " ipv6 " | "
+.IR ETH_TYPE " } | "
 .B mpls_label
 .IR LABEL " | "
 .B mpls_tc
@@ -136,6 +142,23 @@ is an unsigned 3bit value in decimal format.
 .TP
 .BI vlan_ethtype " VLAN_ETH_TYPE"
 Match on layer three protocol.
+.I VLAN_ETH_TYPE
+may be either
+.BR ipv4 ", " ipv6
+or an unsigned 16bit value in hexadecimal format. To match on QinQ packet, it must be 802.1Q or 802.1AD.
+.TP
+.BI cvlan_id " VID"
+Match on QinQ inner vlan tag id.
+.I VID
+is an unsigned 12bit value in decimal format.
+.TP
+.BI cvlan_prio " PRIORITY"
+Match on QinQ inner vlan tag priority.
+.I PRIORITY
+is an unsigned 3bit value in decimal format.
+.TP
+.BI cvlan_ethtype " VLAN_ETH_TYPE"
+Match on QinQ layer three protocol.
 .I VLAN_ETH_TYPE
 may be either
 .BR ipv4 ", " ipv6
