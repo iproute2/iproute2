@@ -1134,7 +1134,7 @@ static void flower_print_ip_attr(char *name, struct rtattr *key_attr,
 	if (mask_attr)
 		sprintf(out + done, "/%x", rta_getattr_u8(mask_attr));
 
-	sprintf(namefrm, "\n  %s %%x", name);
+	sprintf(namefrm, "\n  %s %%s", name);
 	print_string(PRINT_ANY, name, namefrm, out);
 }
 
