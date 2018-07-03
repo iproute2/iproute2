@@ -48,6 +48,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR mcast_flood " { " on " | " off " } ] [ "
 .BR neigh_suppress " { " on " | " off " } ] [ "
 .BR vlan_tunnel " { " on " | " off " } ] [ "
+.BR isolated " { " on " | " off " } ] [ "
 .BR self " ] [ " master " ]"
 
 .ti -8
@@ -344,6 +345,11 @@ Controls whether neigh discovery (arp and nd) proxy and suppression is enabled o
 .TP
 .BR "vlan_tunnel on " or " vlan_tunnel off "
 Controls whether vlan to tunnel mapping is enabled on the port. By default this flag is off.
+
+.TP
+.BR "isolated on " or " isolated off "
+Controls whether a given port will be isolated, which means it will be able to communicate with non-isolated ports only.
+By default this flag is off.
 
 .TP
 .BI self

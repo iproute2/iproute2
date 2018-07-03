@@ -40,6 +40,7 @@ static void print_explain(FILE *f)
 		"                        [ group_fwd_mask MASK ]\n"
 		"                        [ neigh_suppress {on | off} ]\n"
 		"                        [ vlan_tunnel {on | off} ]\n"
+		"                        [ isolated {on | off} ]\n"
 	);
 }
 
@@ -274,6 +275,10 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_VLAN_TUNNEL])
 		_print_onoff(f, "vlan_tunnel", "vlan_tunnel",
 			     rta_getattr_u8(tb[IFLA_BRPORT_VLAN_TUNNEL]));
+
+	if (tb[IFLA_BRPORT_ISOLATED])
+		_print_onoff(f, "isolated", "isolated",
+			     rta_getattr_u8(tb[IFLA_BRPORT_ISOLATED]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -379,6 +384,10 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("vlan_tunnel", *argv, n,
 						  IFLA_BRPORT_VLAN_TUNNEL);
+		} else if (matches(*argv, "isolated") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("isolated", *argv, n,
+						  IFLA_BRPORT_ISOLATED);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
