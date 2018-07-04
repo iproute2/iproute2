@@ -43,6 +43,23 @@ devlink-dev \- devlink device configuration
 .IR DEV
 
 .ti -8
+.BR "devlink dev param set"
+.IR DEV
+.BR name
+.IR PARAMETER
+.BR value
+.IR VALUE
+.BR cmode " { " runtime " | " driverinit " | " permanent " } "
+
+.ti -8
+.BR "devlink dev param show"
+.RI "[ "
+.IR DEV
+.BR name
+.IR PARAMETER
+.RI "]"
+
+.ti -8
 .BR "devlink dev reload"
 .IR DEV
 
@@ -98,6 +115,36 @@ Set eswitch encapsulation support
 .I enable
 - Enable encapsulation support
 
+.SS devlink dev param set  - set new value to devlink device configuration parameter
+
+.TP
+.BI name " PARAMETER"
+Specify parameter name to set.
+
+.TP
+.BI value " VALUE"
+New value to set.
+
+.TP
+.BR cmode " { " runtime " | " driverinit " | " permanent " } "
+Configuration mode in which the new value is set.
+
+.I runtime
+- Set new value while driver is running. This configuration mode doesn't require any reset to apply the new value.
+
+.I driverinit
+- Set new value which will be applied during driver initialization. This configuration mode requires restart driver by devlink reload command to apply the new value.
+
+.I permanent
+- New value is written to device's non-volatile memory. This configuration mode requires hard reset to apply the new value.
+
+.SS devlink dev param show - display devlink device supported configuration parameters attributes
+
+.BR name
+.IR PARAMETER
+Specify parameter name to show.
+If this argument is omitted all parameters supported by devlink devices are listed.
+
 .SS devlink dev reload - perform hot reload of the driver.
 
 .PP
@@ -124,6 +171,16 @@ Shows the eswitch mode of specified devlink device.
 devlink dev eswitch set pci/0000:01:00.0 mode switchdev
 .RS 4
 Sets the eswitch mode of specified devlink device to switchdev.
+.RE
+.PP
+devlink dev param show pci/0000:01:00.0 name max_macs
+.RS 4
+Shows the parameter max_macs attributes.
+.RE
+.PP
+devlink dev param set pci/0000:01:00.0 name internal_error_reset value true cmode runtime
+.RS 4
+Sets the parameter internal_error_reset of specified devlink device to true.
 .RE
 .PP
 devlink dev reload pci/0000:01:00.0
