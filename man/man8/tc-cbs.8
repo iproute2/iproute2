@@ -28,7 +28,7 @@ defined rate limiting method to the traffic.
 This queueing discipline is intended to be used by TSN (Time Sensitive
 Networking) applications, the CBS parameters are derived directly by
 what is described by the Annex L of the IEEE 802.1Q-2014
-Sepcification. The algorithm and how it affects the latency are
+Specification. The algorithm and how it affects the latency are
 detailed there.
 
 CBS is meant to be installed under another qdisc that maps packet
@@ -60,7 +60,7 @@ packet size, which is then used for calculating the idleslope.
 sendslope
 Sendslope is the rate of credits that is depleted (it should be a
 negative number of kilobits per second) when a transmission is
-ocurring. It can be calculated as follows, (IEEE 802.1Q-2014 Section
+occurring. It can be calculated as follows, (IEEE 802.1Q-2014 Section
 8.6.8.2 item g):
 
 sendslope = idleslope - port_transmit_rate
