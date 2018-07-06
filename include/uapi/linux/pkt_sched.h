@@ -539,6 +539,7 @@ enum {
 	TCA_NETEM_LATENCY64,
 	TCA_NETEM_JITTER64,
 	TCA_NETEM_SLOT,
+	TCA_NETEM_SLOT_DIST,
 	__TCA_NETEM_MAX,
 };
 
@@ -581,6 +582,8 @@ struct tc_netem_slot {
 	__s64   max_delay;
 	__s32   max_packets;
 	__s32   max_bytes;
+	__s64	dist_delay; /* nsec */
+	__s64	dist_jitter; /* nsec */
 };
 
 enum {
@@ -933,5 +936,23 @@ enum {
 };
 
 #define TCA_CBS_MAX (__TCA_CBS_MAX - 1)
+
+
+/* ETF */
+struct tc_etf_qopt {
+	__s32 delta;
+	__s32 clockid;
+	__u32 flags;
+#define TC_ETF_DEADLINE_MODE_ON	BIT(0)
+#define TC_ETF_OFFLOAD_ON	BIT(1)
+};
+
+enum {
+	TCA_ETF_UNSPEC,
+	TCA_ETF_PARMS,
+	__TCA_ETF_MAX,
+};
+
+#define TCA_ETF_MAX (__TCA_ETF_MAX - 1)
 
 #endif
