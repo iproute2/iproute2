@@ -64,7 +64,9 @@ and
 .B dst_ip
 options.
 .B dst_port
-is optional.
+and
+.B geneve_opts
+are optional.
 .RS
 .TP
 .B id
@@ -78,6 +80,14 @@ Outer header destination IP address (IPv4 or IPv6)
 .TP
 .B dst_port
 Outer header destination UDP port
+.TP
+.B geneve_opts
+Geneve variable length options.
+.B geneve_opts
+is specified in the form CLASS:TYPE:DATA, where CLASS is represented as a
+16bit hexadecimal value, TYPE as an 8bit hexadecimal value and DATA as a
+variable length hexadecimal value. Additionally multiple options may be
+listed using a comma delimiter.
 .TP
 .RB [ no ] csum
 Controlls outer UDP checksum. When set to
