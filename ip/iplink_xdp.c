@@ -91,6 +91,18 @@ int xdp_parse(int *argc, char ***argv, struct iplink_req *req,
 	return 0;
 }
 
+static void xdp_dump_json_one(struct rtattr *tb[IFLA_XDP_MAX + 1], __u32 attr,
+			      __u8 mode)
+{
+	if (!tb[attr])
+		return;
+
+	open_json_object(NULL);
+	print_uint(PRINT_JSON, "mode", NULL, mode);
+	bpf_dump_prog_info(NULL, rta_getattr_u32(tb[attr]));
+	close_json_object();
+}
+
 static void xdp_dump_json(struct rtattr *tb[IFLA_XDP_MAX + 1])
 {
 	__u32 prog_id = 0;
@@ -104,13 +116,48 @@ static void xdp_dump_json(struct rtattr *tb[IFLA_XDP_MAX + 1])
 	print_uint(PRINT_JSON, "mode", NULL, mode);
 	if (prog_id)
 		bpf_dump_prog_info(NULL, prog_id);
+
+	open_json_array(PRINT_JSON, "attached");
+	if (tb[IFLA_XDP_SKB_PROG_ID] ||
+	    tb[IFLA_XDP_DRV_PROG_ID] ||
+	    tb[IFLA_XDP_HW_PROG_ID]) {
+		xdp_dump_json_one(tb, IFLA_XDP_SKB_PROG_ID, XDP_ATTACHED_SKB);
+		xdp_dump_json_one(tb, IFLA_XDP_DRV_PROG_ID, XDP_ATTACHED_DRV);
+		xdp_dump_json_one(tb, IFLA_XDP_HW_PROG_ID, XDP_ATTACHED_HW);
+	} else if (tb[IFLA_XDP_PROG_ID]) {
+		/* Older kernel - use IFLA_XDP_PROG_ID */
+		xdp_dump_json_one(tb, IFLA_XDP_PROG_ID, mode);
+	}
+	close_json_array(PRINT_JSON, NULL);
+
 	close_json_object();
+}
+
+static void xdp_dump_prog_one(FILE *fp, struct rtattr *tb[IFLA_XDP_MAX + 1],
+			      __u32 attr, bool link, bool details,
+			      const char *pfx)
+{
+	__u32 prog_id;
+
+	if (!tb[attr])
+		return;
+
+	prog_id = rta_getattr_u32(tb[attr]);
+	if (!details) {
+		if (prog_id && !link && attr == IFLA_XDP_PROG_ID)
+			fprintf(fp, "/id:%u", prog_id);
+		return;
+	}
+
+	if (prog_id) {
+		fprintf(fp, "%s    prog/xdp%s ", _SL_, pfx);
+		bpf_dump_prog_info(fp, prog_id);
+	}
 }
 
 void xdp_dump(FILE *fp, struct rtattr *xdp, bool link, bool details)
 {
 	struct rtattr *tb[IFLA_XDP_MAX + 1];
-	__u32 prog_id = 0;
 	__u8 mode;
 
 	parse_rtattr_nested(tb, IFLA_XDP_MAX, xdp);
@@ -124,27 +171,29 @@ void xdp_dump(FILE *fp, struct rtattr *xdp, bool link, bool details)
 	else if (is_json_context())
 		return details ? (void)0 : xdp_dump_json(tb);
 	else if (details && link)
-		fprintf(fp, "%s    prog/xdp", _SL_);
+		/* don't print mode */;
 	else if (mode == XDP_ATTACHED_DRV)
 		fprintf(fp, "xdp");
 	else if (mode == XDP_ATTACHED_SKB)
 		fprintf(fp, "xdpgeneric");
 	else if (mode == XDP_ATTACHED_HW)
 		fprintf(fp, "xdpoffload");
+	else if (mode == XDP_ATTACHED_MULTI)
+		fprintf(fp, "xdpmulti");
 	else
 		fprintf(fp, "xdp[%u]", mode);
 
-	if (tb[IFLA_XDP_PROG_ID])
-		prog_id = rta_getattr_u32(tb[IFLA_XDP_PROG_ID]);
-	if (!details) {
-		if (prog_id && !link)
-			fprintf(fp, "/id:%u", prog_id);
-		fprintf(fp, " ");
-		return;
+	xdp_dump_prog_one(fp, tb, IFLA_XDP_PROG_ID, link, details, "");
+
+	if (mode == XDP_ATTACHED_MULTI) {
+		xdp_dump_prog_one(fp, tb, IFLA_XDP_SKB_PROG_ID, link, details,
+				  "generic");
+		xdp_dump_prog_one(fp, tb, IFLA_XDP_DRV_PROG_ID, link, details,
+				  "drv");
+		xdp_dump_prog_one(fp, tb, IFLA_XDP_HW_PROG_ID, link, details,
+				  "offload");
 	}
 
-	if (prog_id) {
+	if (!details || !link)
 		fprintf(fp, " ");
-		bpf_dump_prog_info(fp, prog_id);
-	}
 }
