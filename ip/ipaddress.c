@@ -837,10 +837,8 @@ int print_linkinfo(const struct sockaddr_nl *who,
 	if (!name)
 		return -1;
 
-	if (filter.label &&
-	    (!filter.family || filter.family == AF_PACKET) &&
-	    fnmatch(filter.label, name, 0))
-		return -1;
+	if (filter.label)
+		return 0;
 
 	if (tb[IFLA_GROUP]) {
 		int group = rta_getattr_u32(tb[IFLA_GROUP]);
