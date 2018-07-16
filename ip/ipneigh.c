@@ -262,6 +262,7 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		return 0;
 	if (!(filter.state&r->ndm_state) &&
 	    !(r->ndm_flags & NTF_PROXY) &&
+	    !(r->ndm_flags & NTF_EXT_LEARNED) &&
 	    (r->ndm_state || !(filter.state&0x100)) &&
 	    (r->ndm_family != AF_DECnet))
 		return 0;
