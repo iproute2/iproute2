@@ -1893,9 +1893,9 @@ static int bpf_fetch_maps_end(struct bpf_elf_ctx *ctx)
 	}
 
 	memcpy(ctx->maps, fixup, sizeof(fixup));
-
-	printf("Note: %zu bytes struct bpf_elf_map fixup performed due to size mismatch!\n",
-	       sizeof(struct bpf_elf_map) - ctx->map_len);
+	if (ctx->verbose)
+		printf("%zu bytes struct bpf_elf_map fixup performed due to size mismatch!\n",
+		       sizeof(struct bpf_elf_map) - ctx->map_len);
 	return 0;
 }
 
