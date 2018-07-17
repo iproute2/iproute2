@@ -1104,7 +1104,8 @@ int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
 #ifdef HAVE_ELF
 struct bpf_elf_prog {
 	enum bpf_prog_type	type;
-	const struct bpf_insn	*insns;
+	struct bpf_insn		*insns;
+	unsigned int		insns_num;
 	size_t			size;
 	const char		*license;
 };
@@ -1130,11 +1131,13 @@ struct bpf_elf_ctx {
 	int			map_fds[ELF_MAX_MAPS];
 	struct bpf_elf_map	maps[ELF_MAX_MAPS];
 	struct bpf_map_ext	maps_ext[ELF_MAX_MAPS];
+	struct bpf_elf_prog	prog_text;
 	int			sym_num;
 	int			map_num;
 	int			map_len;
 	bool			*sec_done;
 	int			sec_maps;
+	int			sec_text;
 	char			license[ELF_MAX_LICENSE_LEN];
 	enum bpf_prog_type	type;
 	__u32			ifindex;
@@ -1899,12 +1902,25 @@ static int bpf_fetch_strtab(struct bpf_elf_ctx *ctx, int section,
 	return 0;
 }
 
+static int bpf_fetch_text(struct bpf_elf_ctx *ctx, int section,
+			  struct bpf_elf_sec_data *data)
+{
+	ctx->sec_text = section;
+	ctx->sec_done[section] = true;
+	return 0;
+}
+
 static bool bpf_has_map_data(const struct bpf_elf_ctx *ctx)
 {
 	return ctx->sym_tab && ctx->str_tab && ctx->sec_maps;
 }
 
-static int bpf_fetch_ancillary(struct bpf_elf_ctx *ctx)
+static bool bpf_has_call_data(const struct bpf_elf_ctx *ctx)
+{
+	return ctx->sec_text;
+}
+
+static int bpf_fetch_ancillary(struct bpf_elf_ctx *ctx, bool check_text_sec)
 {
 	struct bpf_elf_sec_data data;
 	int i, ret = -1;
@@ -1920,6 +1936,11 @@ static int bpf_fetch_ancillary(struct bpf_elf_ctx *ctx)
 		else if (data.sec_hdr.sh_type == SHT_PROGBITS &&
 			 !strcmp(data.sec_name, ELF_SECTION_LICENSE))
 			ret = bpf_fetch_license(ctx, i, &data);
+		else if (data.sec_hdr.sh_type == SHT_PROGBITS &&
+			 (data.sec_hdr.sh_flags & SHF_EXECINSTR) &&
+			 !strcmp(data.sec_name, ".text") &&
+			 check_text_sec)
+			ret = bpf_fetch_text(ctx, i, &data);
 		else if (data.sec_hdr.sh_type == SHT_SYMTAB &&
 			 !strcmp(data.sec_name, ".symtab"))
 			ret = bpf_fetch_symtab(ctx, i, &data);
@@ -1964,17 +1985,18 @@ static int bpf_fetch_prog(struct bpf_elf_ctx *ctx, const char *section,
 		ret = bpf_fill_section_data(ctx, i, &data);
 		if (ret < 0 ||
 		    !(data.sec_hdr.sh_type == SHT_PROGBITS &&
-		      data.sec_hdr.sh_flags & SHF_EXECINSTR &&
+		      (data.sec_hdr.sh_flags & SHF_EXECINSTR) &&
 		      !strcmp(data.sec_name, section)))
 			continue;
 
 		*sseen = true;
 
 		memset(&prog, 0, sizeof(prog));
-		prog.type    = ctx->type;
-		prog.insns   = data.sec_data->d_buf;
-		prog.size    = data.sec_data->d_size;
-		prog.license = ctx->license;
+		prog.type      = ctx->type;
+		prog.license   = ctx->license;
+		prog.size      = data.sec_data->d_size;
+		prog.insns_num = prog.size / sizeof(struct bpf_insn);
+		prog.insns     = data.sec_data->d_buf;
 
 		fd = bpf_prog_attach(section, &prog, ctx);
 		if (fd < 0)
@@ -1987,84 +2009,120 @@ static int bpf_fetch_prog(struct bpf_elf_ctx *ctx, const char *section,
 	return fd;
 }
 
-struct bpf_tail_call_props {
-	unsigned int total;
-	unsigned int jited;
+struct bpf_relo_props {
+	struct bpf_tail_call {
+		unsigned int total;
+		unsigned int jited;
+	} tc;
+	int main_num;
 };
+
+static int bpf_apply_relo_map(struct bpf_elf_ctx *ctx, struct bpf_elf_prog *prog,
+			      GElf_Rel *relo, GElf_Sym *sym,
+			      struct bpf_relo_props *props)
+{
+	unsigned int insn_off = relo->r_offset / sizeof(struct bpf_insn);
+	unsigned int map_idx = sym->st_value / ctx->map_len;
+
+	if (insn_off >= prog->insns_num)
+		return -EINVAL;
+	if (prog->insns[insn_off].code != (BPF_LD | BPF_IMM | BPF_DW)) {
+		fprintf(stderr, "ELF contains relo data for non ld64 instruction at offset %u! Compiler bug?!\n",
+			insn_off);
+		return -EINVAL;
+	}
+
+	if (map_idx >= ARRAY_SIZE(ctx->map_fds))
+		return -EINVAL;
+	if (!ctx->map_fds[map_idx])
+		return -EINVAL;
+	if (ctx->maps[map_idx].type == BPF_MAP_TYPE_PROG_ARRAY) {
+		props->tc.total++;
+		if (ctx->maps_ext[map_idx].owner.jited ||
+		    (ctx->maps_ext[map_idx].owner.type == 0 &&
+		     ctx->cfg.jit_enabled))
+			props->tc.jited++;
+	}
+
+	prog->insns[insn_off].src_reg = BPF_PSEUDO_MAP_FD;
+	prog->insns[insn_off].imm = ctx->map_fds[map_idx];
+	return 0;
+}
+
+static int bpf_apply_relo_call(struct bpf_elf_ctx *ctx, struct bpf_elf_prog *prog,
+			       GElf_Rel *relo, GElf_Sym *sym,
+			       struct bpf_relo_props *props)
+{
+	unsigned int insn_off = relo->r_offset / sizeof(struct bpf_insn);
+	struct bpf_elf_prog *prog_text = &ctx->prog_text;
+
+	if (insn_off >= prog->insns_num)
+		return -EINVAL;
+	if (prog->insns[insn_off].code != (BPF_JMP | BPF_CALL) &&
+	    prog->insns[insn_off].src_reg != BPF_PSEUDO_CALL) {
+		fprintf(stderr, "ELF contains relo data for non call instruction at offset %u! Compiler bug?!\n",
+			insn_off);
+		return -EINVAL;
+	}
+
+	if (!props->main_num) {
+		struct bpf_insn *insns = realloc(prog->insns,
+						 prog->size + prog_text->size);
+		if (!insns)
+			return -ENOMEM;
+
+		memcpy(insns + prog->insns_num, prog_text->insns,
+		       prog_text->size);
+		props->main_num = prog->insns_num;
+		prog->insns = insns;
+		prog->insns_num += prog_text->insns_num;
+		prog->size += prog_text->size;
+	}
+
+	prog->insns[insn_off].imm += props->main_num - insn_off;
+	return 0;
+}
 
 static int bpf_apply_relo_data(struct bpf_elf_ctx *ctx,
 			       struct bpf_elf_sec_data *data_relo,
-			       struct bpf_elf_sec_data *data_insn,
-			       struct bpf_tail_call_props *props)
+			       struct bpf_elf_prog *prog,
+			       struct bpf_relo_props *props)
 {
-	Elf_Data *idata = data_insn->sec_data;
 	GElf_Shdr *rhdr = &data_relo->sec_hdr;
 	int relo_ent, relo_num = rhdr->sh_size / rhdr->sh_entsize;
-	struct bpf_insn *insns = idata->d_buf;
-	unsigned int num_insns = idata->d_size / sizeof(*insns);
 
 	for (relo_ent = 0; relo_ent < relo_num; relo_ent++) {
-		unsigned int ioff, rmap;
 		GElf_Rel relo;
 		GElf_Sym sym;
+		int ret = -EIO;
 
 		if (gelf_getrel(data_relo->sec_data, relo_ent, &relo) != &relo)
 			return -EIO;
-
-		ioff = relo.r_offset / sizeof(struct bpf_insn);
-		if (ioff >= num_insns ||
-		    insns[ioff].code != (BPF_LD | BPF_IMM | BPF_DW)) {
-			fprintf(stderr, "ELF contains relo data for non ld64 instruction at offset %u! Compiler bug?!\n",
-				ioff);
-			fprintf(stderr, " - Current section: %s\n", data_relo->sec_name);
-			if (ioff < num_insns &&
-			    insns[ioff].code == (BPF_JMP | BPF_CALL))
-				fprintf(stderr, " - Try to annotate functions with always_inline attribute!\n");
-			return -EINVAL;
-		}
-
 		if (gelf_getsym(ctx->sym_tab, GELF_R_SYM(relo.r_info), &sym) != &sym)
 			return -EIO;
-		if (sym.st_shndx != ctx->sec_maps) {
-			fprintf(stderr, "ELF contains non-map related relo data in entry %u pointing to section %u! Compiler bug?!\n",
+
+		if (sym.st_shndx == ctx->sec_maps)
+			ret = bpf_apply_relo_map(ctx, prog, &relo, &sym, props);
+		else if (sym.st_shndx == ctx->sec_text)
+			ret = bpf_apply_relo_call(ctx, prog, &relo, &sym, props);
+		else
+			fprintf(stderr, "ELF contains non-{map,call} related relo data in entry %u pointing to section %u! Compiler bug?!\n",
 				relo_ent, sym.st_shndx);
-			return -EIO;
-		}
-
-		rmap = sym.st_value / ctx->map_len;
-		if (rmap >= ARRAY_SIZE(ctx->map_fds))
-			return -EINVAL;
-		if (!ctx->map_fds[rmap])
-			return -EINVAL;
-		if (ctx->maps[rmap].type == BPF_MAP_TYPE_PROG_ARRAY) {
-			props->total++;
-			if (ctx->maps_ext[rmap].owner.jited ||
-			    (ctx->maps_ext[rmap].owner.type == 0 &&
-			     ctx->cfg.jit_enabled))
-				props->jited++;
-		}
-
-		if (ctx->verbose)
-			fprintf(stderr, "Map \'%s\' (%d) injected into prog section \'%s\' at offset %u!\n",
-				bpf_str_tab_name(ctx, &sym), ctx->map_fds[rmap],
-				data_insn->sec_name, ioff);
-
-		insns[ioff].src_reg = BPF_PSEUDO_MAP_FD;
-		insns[ioff].imm     = ctx->map_fds[rmap];
+		if (ret < 0)
+			return ret;
 	}
 
 	return 0;
 }
 
 static int bpf_fetch_prog_relo(struct bpf_elf_ctx *ctx, const char *section,
-			       bool *lderr, bool *sseen)
+			       bool *lderr, bool *sseen, struct bpf_elf_prog *prog)
 {
 	struct bpf_elf_sec_data data_relo, data_insn;
-	struct bpf_elf_prog prog;
 	int ret, idx, i, fd = -1;
 
 	for (i = 1; i < ctx->elf_hdr.e_shnum; i++) {
-		struct bpf_tail_call_props props = {};
+		struct bpf_relo_props props = {};
 
 		ret = bpf_fill_section_data(ctx, i, &data_relo);
 		if (ret < 0 || data_relo.sec_hdr.sh_type != SHT_REL)
@@ -2075,40 +2133,54 @@ static int bpf_fetch_prog_relo(struct bpf_elf_ctx *ctx, const char *section,
 		ret = bpf_fill_section_data(ctx, idx, &data_insn);
 		if (ret < 0 ||
 		    !(data_insn.sec_hdr.sh_type == SHT_PROGBITS &&
-		      data_insn.sec_hdr.sh_flags & SHF_EXECINSTR &&
+		      (data_insn.sec_hdr.sh_flags & SHF_EXECINSTR) &&
 		      !strcmp(data_insn.sec_name, section)))
 			continue;
+		if (sseen)
+			*sseen = true;
 
-		*sseen = true;
-
-		ret = bpf_apply_relo_data(ctx, &data_relo, &data_insn, &props);
-		if (ret < 0) {
+		memset(prog, 0, sizeof(*prog));
+		prog->type = ctx->type;
+		prog->license = ctx->license;
+		prog->size = data_insn.sec_data->d_size;
+		prog->insns_num = prog->size / sizeof(struct bpf_insn);
+		prog->insns = malloc(prog->size);
+		if (!prog->insns) {
 			*lderr = true;
-			return ret;
+			return -ENOMEM;
 		}
 
-		memset(&prog, 0, sizeof(prog));
-		prog.type    = ctx->type;
-		prog.insns   = data_insn.sec_data->d_buf;
-		prog.size    = data_insn.sec_data->d_size;
-		prog.license = ctx->license;
+		memcpy(prog->insns, data_insn.sec_data->d_buf, prog->size);
 
-		fd = bpf_prog_attach(section, &prog, ctx);
+		ret = bpf_apply_relo_data(ctx, &data_relo, prog, &props);
+		if (ret < 0) {
+			*lderr = true;
+			if (ctx->sec_text != idx)
+				free(prog->insns);
+			return ret;
+		}
+		if (ctx->sec_text == idx) {
+			fd = 0;
+			goto out;
+		}
+
+		fd = bpf_prog_attach(section, prog, ctx);
+		free(prog->insns);
 		if (fd < 0) {
 			*lderr = true;
-			if (props.total) {
+			if (props.tc.total) {
 				if (ctx->cfg.jit_enabled &&
-				    props.total != props.jited)
+				    props.tc.total != props.tc.jited)
 					fprintf(stderr, "JIT enabled, but only %u/%u tail call maps in the program have JITed owner!\n",
-						props.jited, props.total);
+						props.tc.jited, props.tc.total);
 				if (!ctx->cfg.jit_enabled &&
-				    props.jited)
+				    props.tc.jited)
 					fprintf(stderr, "JIT disabled, but %u/%u tail call maps in the program have JITed owner!\n",
-						props.jited, props.total);
+						props.tc.jited, props.tc.total);
 			}
 			return fd;
 		}
-
+out:
 		ctx->sec_done[i]   = true;
 		ctx->sec_done[idx] = true;
 		break;
@@ -2120,10 +2192,18 @@ static int bpf_fetch_prog_relo(struct bpf_elf_ctx *ctx, const char *section,
 static int bpf_fetch_prog_sec(struct bpf_elf_ctx *ctx, const char *section)
 {
 	bool lderr = false, sseen = false;
+	struct bpf_elf_prog prog;
 	int ret = -1;
 
-	if (bpf_has_map_data(ctx))
-		ret = bpf_fetch_prog_relo(ctx, section, &lderr, &sseen);
+	if (bpf_has_call_data(ctx)) {
+		ret = bpf_fetch_prog_relo(ctx, ".text", &lderr, NULL,
+					  &ctx->prog_text);
+		if (ret < 0)
+			return ret;
+	}
+
+	if (bpf_has_map_data(ctx) || bpf_has_call_data(ctx))
+		ret = bpf_fetch_prog_relo(ctx, section, &lderr, &sseen, &prog);
 	if (ret < 0 && !lderr)
 		ret = bpf_fetch_prog(ctx, section, &sseen);
 	if (ret < 0 && !sseen)
@@ -2520,6 +2600,7 @@ static void bpf_elf_ctx_destroy(struct bpf_elf_ctx *ctx, bool failure)
 
 	bpf_hash_destroy(ctx);
 
+	free(ctx->prog_text.insns);
 	free(ctx->sec_done);
 	free(ctx->log);
 
@@ -2541,7 +2622,7 @@ static int bpf_obj_open(const char *pathname, enum bpf_prog_type type,
 		return ret;
 	}
 
-	ret = bpf_fetch_ancillary(ctx);
+	ret = bpf_fetch_ancillary(ctx, strcmp(section, ".text"));
 	if (ret < 0) {
 		fprintf(stderr, "Error fetching ELF ancillary data!\n");
 		goto out;
