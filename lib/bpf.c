@@ -1125,6 +1125,7 @@ struct bpf_elf_ctx {
 	GElf_Ehdr		elf_hdr;
 	Elf_Data		*sym_tab;
 	Elf_Data		*str_tab;
+	char			obj_uid[64];
 	int			obj_fd;
 	int			map_fds[ELF_MAX_MAPS];
 	struct bpf_elf_map	maps[ELF_MAX_MAPS];
@@ -1138,6 +1139,7 @@ struct bpf_elf_ctx {
 	enum bpf_prog_type	type;
 	__u32			ifindex;
 	bool			verbose;
+	bool			noafalg;
 	struct bpf_elf_st	stat;
 	struct bpf_hash_entry	*ht[256];
 	char			*log;
@@ -1253,22 +1255,15 @@ static int bpf_obj_hash(const char *object, uint8_t *out, size_t len)
 		return -EINVAL;
 
 	cfd = socket(AF_ALG, SOCK_SEQPACKET, 0);
-	if (cfd < 0) {
-		fprintf(stderr, "Cannot get AF_ALG socket: %s\n",
-			strerror(errno));
+	if (cfd < 0)
 		return cfd;
-	}
 
 	ret = bind(cfd, (struct sockaddr *)&alg, sizeof(alg));
-	if (ret < 0) {
-		fprintf(stderr, "Error binding socket: %s\n", strerror(errno));
+	if (ret < 0)
 		goto out_cfd;
-	}
 
 	ofd = accept(cfd, NULL, 0);
 	if (ofd < 0) {
-		fprintf(stderr, "Error accepting socket: %s\n",
-			strerror(errno));
 		ret = ofd;
 		goto out_cfd;
 	}
@@ -1313,29 +1308,7 @@ out_cfd:
 	return ret;
 }
 
-static const char *bpf_get_obj_uid(const char *pathname)
-{
-	static bool bpf_uid_cached;
-	static char bpf_uid[64];
-	uint8_t tmp[20];
-	int ret;
-
-	if (bpf_uid_cached)
-		goto done;
-
-	ret = bpf_obj_hash(pathname, tmp, sizeof(tmp));
-	if (ret) {
-		fprintf(stderr, "Object hashing failed!\n");
-		return NULL;
-	}
-
-	hexstring_n2a(tmp, sizeof(tmp), bpf_uid, sizeof(bpf_uid));
-	bpf_uid_cached = true;
-done:
-	return bpf_uid;
-}
-
-static int bpf_init_env(const char *pathname)
+static void bpf_init_env(void)
 {
 	struct rlimit limit = {
 		.rlim_cur = RLIM_INFINITY,
@@ -1345,15 +1318,8 @@ static int bpf_init_env(const char *pathname)
 	/* Don't bother in case we fail! */
 	setrlimit(RLIMIT_MEMLOCK, &limit);
 
-	if (!bpf_get_work_dir(BPF_PROG_TYPE_UNSPEC)) {
+	if (!bpf_get_work_dir(BPF_PROG_TYPE_UNSPEC))
 		fprintf(stderr, "Continuing without mounted eBPF fs. Too old kernel?\n");
-		return 0;
-	}
-
-	if (!bpf_get_obj_uid(pathname))
-		return -1;
-
-	return 0;
 }
 
 static const char *bpf_custom_pinning(const struct bpf_elf_ctx *ctx,
@@ -1389,7 +1355,7 @@ static void bpf_make_pathname(char *pathname, size_t len, const char *name,
 	case PIN_OBJECT_NS:
 		snprintf(pathname, len, "%s/%s/%s",
 			 bpf_get_work_dir(ctx->type),
-			 bpf_get_obj_uid(NULL), name);
+			 ctx->obj_uid, name);
 		break;
 	case PIN_GLOBAL_NS:
 		snprintf(pathname, len, "%s/%s/%s",
@@ -1422,7 +1388,7 @@ static int bpf_make_obj_path(const struct bpf_elf_ctx *ctx)
 	int ret;
 
 	snprintf(tmp, sizeof(tmp), "%s/%s", bpf_get_work_dir(ctx->type),
-		 bpf_get_obj_uid(NULL));
+		 ctx->obj_uid);
 
 	ret = mkdir(tmp, S_IRWXU);
 	if (ret && errno != EEXIST) {
@@ -1691,6 +1657,12 @@ static int bpf_maps_attach_all(struct bpf_elf_ctx *ctx)
 	const char *map_name;
 
 	for (i = 0; i < ctx->map_num; i++) {
+		if (ctx->maps[i].pinning == PIN_OBJECT_NS &&
+		    ctx->noafalg) {
+			fprintf(stderr, "Missing kernel AF_ALG support for PIN_OBJECT_NS!\n");
+			return -ENOTSUP;
+		}
+
 		map_name = bpf_map_fetch_name(ctx, i);
 		if (!map_name)
 			return -EIO;
@@ -2446,14 +2418,24 @@ static int bpf_elf_ctx_init(struct bpf_elf_ctx *ctx, const char *pathname,
 			    enum bpf_prog_type type, __u32 ifindex,
 			    bool verbose)
 {
-	int ret = -EINVAL;
+	uint8_t tmp[20];
+	int ret;
 
-	if (elf_version(EV_CURRENT) == EV_NONE ||
-	    bpf_init_env(pathname))
-		return ret;
+	if (elf_version(EV_CURRENT) == EV_NONE)
+		return -EINVAL;
+
+	bpf_init_env();
 
 	memset(ctx, 0, sizeof(*ctx));
 	bpf_get_cfg(ctx);
+
+	ret = bpf_obj_hash(pathname, tmp, sizeof(tmp));
+	if (ret)
+		ctx->noafalg = true;
+	else
+		hexstring_n2a(tmp, sizeof(tmp), ctx->obj_uid,
+			      sizeof(ctx->obj_uid));
+
 	ctx->verbose = verbose;
 	ctx->type    = type;
 	ctx->ifindex = ifindex;
