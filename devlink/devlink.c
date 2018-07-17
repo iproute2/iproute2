@@ -17,6 +17,7 @@
 #include <getopt.h>
 #include <limits.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <linux/genetlink.h>
 #include <linux/devlink.h>
 #include <libmnl/libmnl.h>
@@ -194,6 +195,10 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_PARAM_NAME	BIT(18)
 #define DL_OPT_PARAM_VALUE	BIT(19)
 #define DL_OPT_PARAM_CMODE	BIT(20)
+#define DL_OPT_HANDLE_REGION		BIT(21)
+#define DL_OPT_REGION_SNAPSHOT_ID	BIT(22)
+#define DL_OPT_REGION_ADDRESS		BIT(23)
+#define DL_OPT_REGION_LENGTH		BIT(24)
 
 struct dl_opts {
 	uint32_t present; /* flags of present items */
@@ -221,6 +226,10 @@ struct dl_opts {
 	const char *param_name;
 	const char *param_value;
 	enum devlink_param_cmode cmode;
+	char *region_name;
+	uint32_t region_snapshot_id;
+	uint64_t region_address;
+	uint64_t region_length;
 };
 
 struct dl {
@@ -364,6 +373,16 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_PARAM_VALUES_LIST] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_PARAM_VALUE] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_PARAM_VALUE_CMODE] = MNL_TYPE_U8,
+	[DEVLINK_ATTR_REGION_NAME] = MNL_TYPE_STRING,
+	[DEVLINK_ATTR_REGION_SIZE] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_REGION_SNAPSHOTS] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_REGION_SNAPSHOT] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_REGION_SNAPSHOT_ID] = MNL_TYPE_U32,
+	[DEVLINK_ATTR_REGION_CHUNKS] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_REGION_CHUNK] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_REGION_CHUNK_DATA] = MNL_TYPE_BINARY,
+	[DEVLINK_ATTR_REGION_CHUNK_ADDR] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_REGION_CHUNK_LEN] = MNL_TYPE_U64,
 };
 
 static int attr_cb(const struct nlattr *attr, void *data)
@@ -499,6 +518,20 @@ static int strslashrsplit(char *str, char **before, char **after)
 	*slash = '\0';
 	*before = str;
 	*after = slash + 1;
+	return 0;
+}
+
+static int strtouint64_t(const char *str, uint64_t *p_val)
+{
+	char *endptr;
+	unsigned long long int val;
+
+	val = strtoull(str, &endptr, 10);
+	if (endptr == str || *endptr != '\0')
+		return -EINVAL;
+	if (val > ULONG_MAX)
+		return -ERANGE;
+	*p_val = val;
 	return 0;
 }
 
@@ -683,6 +716,64 @@ static int dl_argv_handle_both(struct dl *dl, char **p_bus_name,
 		pr_err("Wrong port identification string format.\n");
 		pr_err("Expected \"bus_name/dev_name\" or \"bus_name/dev_name/port_index\" or \"netdev_ifname\".\n");
 		return -EINVAL;
+	}
+	return 0;
+}
+
+static int __dl_argv_handle_region(char *str, char **p_bus_name,
+				   char **p_dev_name, char **p_region)
+{
+	char *handlestr;
+	int err;
+
+	err = strslashrsplit(str, &handlestr, p_region);
+	if (err) {
+		pr_err("Region identification \"%s\" is invalid\n", str);
+		return err;
+	}
+	err = strslashrsplit(handlestr, p_bus_name, p_dev_name);
+	if (err) {
+		pr_err("Region identification \"%s\" is invalid\n", str);
+		return err;
+	}
+	return 0;
+}
+
+static int dl_argv_handle_region(struct dl *dl, char **p_bus_name,
+					char **p_dev_name, char **p_region)
+{
+	char *str = dl_argv_next(dl);
+	unsigned int slash_count;
+
+	if (!str) {
+		pr_err("Expected \"bus_name/dev_name/region\" identification.\n");
+		return -EINVAL;
+	}
+
+	slash_count = strslashcount(str);
+	if (slash_count != 2) {
+		pr_err("Wrong region identification string format.\n");
+		pr_err("Expected \"bus_name/dev_name/region\" identification.\n"".\n");
+		return -EINVAL;
+	}
+
+	return __dl_argv_handle_region(str, p_bus_name, p_dev_name, p_region);
+}
+
+static int dl_argv_uint64_t(struct dl *dl, uint64_t *p_val)
+{
+	char *str = dl_argv_next(dl);
+	int err;
+
+	if (!str) {
+		pr_err("Unsigned number argument expected\n");
+		return -EINVAL;
+	}
+
+	err = strtouint64_t(str, p_val);
+	if (err) {
+		pr_err("\"%s\" is not a number or not within range\n", str);
+		return err;
 	}
 	return 0;
 }
@@ -879,6 +970,13 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 		if (err)
 			return err;
 		o_found |= DL_OPT_HANDLEP;
+	} else if (o_required & DL_OPT_HANDLE_REGION) {
+		err = dl_argv_handle_region(dl, &opts->bus_name,
+					    &opts->dev_name,
+					    &opts->region_name);
+		if (err)
+			return err;
+		o_found |= DL_OPT_HANDLE_REGION;
 	}
 
 	while (dl_argc(dl)) {
@@ -1059,6 +1157,27 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_PARAM_CMODE;
+		} else if (dl_argv_match(dl, "snapshot") &&
+			   (o_all & DL_OPT_REGION_SNAPSHOT_ID)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint32_t(dl, &opts->region_snapshot_id);
+			if (err)
+				return err;
+			o_found |= DL_OPT_REGION_SNAPSHOT_ID;
+		} else if (dl_argv_match(dl, "address") &&
+			   (o_all & DL_OPT_REGION_ADDRESS)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint64_t(dl, &opts->region_address);
+			if (err)
+				return err;
+			o_found |= DL_OPT_REGION_ADDRESS;
+		} else if (dl_argv_match(dl, "length") &&
+			   (o_all & DL_OPT_REGION_LENGTH)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint64_t(dl, &opts->region_length);
+			if (err)
+				return err;
+			o_found |= DL_OPT_REGION_LENGTH;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -1161,6 +1280,24 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 		return -EINVAL;
 	}
 
+	if ((o_required & DL_OPT_REGION_SNAPSHOT_ID) &&
+	    !(o_found & DL_OPT_REGION_SNAPSHOT_ID)) {
+		pr_err("Region snapshot id expected.\n");
+		return -EINVAL;
+	}
+
+	if ((o_required & DL_OPT_REGION_ADDRESS) &&
+	    !(o_found & DL_OPT_REGION_ADDRESS)) {
+		pr_err("Region address value expected.\n");
+		return -EINVAL;
+	}
+
+	if ((o_required & DL_OPT_REGION_LENGTH) &&
+	    !(o_found & DL_OPT_REGION_LENGTH)) {
+		pr_err("Region length value expected.\n");
+		return -EINVAL;
+	}
+
 	return 0;
 }
 
@@ -1176,6 +1313,11 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 		mnl_attr_put_strz(nlh, DEVLINK_ATTR_DEV_NAME, opts->dev_name);
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_PORT_INDEX,
 				 opts->port_index);
+	} else if (opts->present & DL_OPT_HANDLE_REGION) {
+		mnl_attr_put_strz(nlh, DEVLINK_ATTR_BUS_NAME, opts->bus_name);
+		mnl_attr_put_strz(nlh, DEVLINK_ATTR_DEV_NAME, opts->dev_name);
+		mnl_attr_put_strz(nlh, DEVLINK_ATTR_REGION_NAME,
+				  opts->region_name);
 	}
 	if (opts->present & DL_OPT_PORT_TYPE)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PORT_TYPE,
@@ -1231,6 +1373,15 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_PARAM_CMODE)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_PARAM_VALUE_CMODE,
 				opts->cmode);
+	if (opts->present & DL_OPT_REGION_SNAPSHOT_ID)
+		mnl_attr_put_u32(nlh, DEVLINK_ATTR_REGION_SNAPSHOT_ID,
+				 opts->region_snapshot_id);
+	if (opts->present & DL_OPT_REGION_ADDRESS)
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_REGION_CHUNK_ADDR,
+				 opts->region_address);
+	if (opts->present & DL_OPT_REGION_LENGTH)
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_REGION_CHUNK_LEN,
+				 opts->region_length);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -1531,6 +1682,49 @@ static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
 		return pr_out_str(dl, name, "unlimited");
 
 	return pr_out_uint(dl, name, val);
+}
+
+static void pr_out_region_chunk_start(struct dl *dl, uint64_t addr)
+{
+	if (dl->json_output) {
+		jsonw_name(dl->jw, "address");
+		jsonw_uint(dl->jw, addr);
+		jsonw_name(dl->jw, "data");
+		jsonw_start_array(dl->jw);
+	}
+}
+
+static void pr_out_region_chunk_end(struct dl *dl)
+{
+	if (dl->json_output)
+		jsonw_end_array(dl->jw);
+}
+
+static void pr_out_region_chunk(struct dl *dl, uint8_t *data, uint32_t len,
+				uint64_t addr)
+{
+	static uint64_t align_val;
+	uint32_t i = 0;
+
+	pr_out_region_chunk_start(dl, addr);
+	while (i < len) {
+		if (!dl->json_output)
+			if (!(align_val % 16))
+				pr_out("%s%016"PRIx64" ",
+				       align_val ? "\n" : "",
+				       addr);
+
+		align_val++;
+
+		if (dl->json_output)
+			jsonw_printf(dl->jw, "%d", data[i]);
+		else
+			pr_out("%02x ", data[i]);
+
+		addr++;
+		i++;
+	}
+	pr_out_region_chunk_end(dl);
 }
 
 static void pr_out_dev(struct dl *dl, struct nlattr **tb)
@@ -3070,6 +3264,10 @@ static const char *cmd_name(uint8_t cmd)
 	case DEVLINK_CMD_PARAM_SET: return "set";
 	case DEVLINK_CMD_PARAM_NEW: return "new";
 	case DEVLINK_CMD_PARAM_DEL: return "del";
+	case DEVLINK_CMD_REGION_GET: return "get";
+	case DEVLINK_CMD_REGION_SET: return "set";
+	case DEVLINK_CMD_REGION_NEW: return "new";
+	case DEVLINK_CMD_REGION_DEL: return "del";
 	default: return "<unknown cmd>";
 	}
 }
@@ -3093,6 +3291,11 @@ static const char *cmd_obj(uint8_t cmd)
 	case DEVLINK_CMD_PARAM_NEW:
 	case DEVLINK_CMD_PARAM_DEL:
 		return "param";
+	case DEVLINK_CMD_REGION_GET:
+	case DEVLINK_CMD_REGION_SET:
+	case DEVLINK_CMD_REGION_NEW:
+	case DEVLINK_CMD_REGION_DEL:
+		return "region";
 	default: return "<unknown obj>";
 	}
 }
@@ -3116,6 +3319,8 @@ static bool cmd_filter_check(struct dl *dl, uint8_t cmd)
 	}
 	return false;
 }
+
+static void pr_out_region(struct dl *dl, struct nlattr **tb);
 
 static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 {
@@ -3159,6 +3364,17 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_param(dl, tb, false);
+		break;
+	case DEVLINK_CMD_REGION_GET: /* fall through */
+	case DEVLINK_CMD_REGION_SET: /* fall through */
+	case DEVLINK_CMD_REGION_NEW: /* fall through */
+	case DEVLINK_CMD_REGION_DEL:
+		mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+		if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+		    !tb[DEVLINK_ATTR_REGION_NAME])
+			return MNL_CB_ERROR;
+		pr_out_mon_header(genl->cmd);
+		pr_out_region(dl, tb);
 		break;
 	}
 	return MNL_CB_OK;
@@ -4941,11 +5157,275 @@ static int cmd_resource(struct dl *dl)
 	return -ENOENT;
 }
 
+static void pr_out_region_handle_start(struct dl *dl, struct nlattr **tb)
+{
+	const char *bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
+	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
+	const char *region_name = mnl_attr_get_str(tb[DEVLINK_ATTR_REGION_NAME]);
+	char buf[256];
+
+	sprintf(buf, "%s/%s/%s", bus_name, dev_name, region_name);
+	if (dl->json_output) {
+		jsonw_name(dl->jw, buf);
+		jsonw_start_object(dl->jw);
+	} else {
+		pr_out("%s:", buf);
+	}
+}
+
+static void pr_out_region_handle_end(struct dl *dl)
+{
+	if (dl->json_output)
+		jsonw_end_object(dl->jw);
+	else
+		pr_out("\n");
+}
+
+static void pr_out_region_snapshots_start(struct dl *dl, bool array)
+{
+	if (dl->json_output) {
+		jsonw_name(dl->jw, "snapshot");
+		jsonw_start_array(dl->jw);
+	} else {
+		if (g_indent_newline)
+			pr_out("snapshot %s", array ? "[" : "");
+		else
+			pr_out(" snapshot %s", array ? "[" : "");
+	}
+}
+
+static void pr_out_region_snapshots_end(struct dl *dl, bool array)
+{
+	if (dl->json_output)
+		jsonw_end_array(dl->jw);
+	else if (array)
+		pr_out("]");
+}
+
+static void pr_out_region_snapshots_id(struct dl *dl, struct nlattr **tb, int index)
+{
+	uint32_t snapshot_id;
+
+	if (!tb[DEVLINK_ATTR_REGION_SNAPSHOT_ID])
+		return;
+
+	snapshot_id = mnl_attr_get_u32(tb[DEVLINK_ATTR_REGION_SNAPSHOT_ID]);
+
+	if (dl->json_output)
+		jsonw_uint(dl->jw, snapshot_id);
+	else
+		pr_out("%s%u", index ? " " : "", snapshot_id);
+}
+
+static void pr_out_snapshots(struct dl *dl, struct nlattr **tb)
+{
+	struct nlattr *tb_snapshot[DEVLINK_ATTR_MAX + 1] = {};
+	struct nlattr *nla_sanpshot;
+	int err, index = 0;
+
+	pr_out_region_snapshots_start(dl, true);
+	mnl_attr_for_each_nested(nla_sanpshot, tb[DEVLINK_ATTR_REGION_SNAPSHOTS]) {
+		err = mnl_attr_parse_nested(nla_sanpshot, attr_cb, tb_snapshot);
+		if (err != MNL_CB_OK)
+			return;
+		pr_out_region_snapshots_id(dl, tb_snapshot, index++);
+	}
+	pr_out_region_snapshots_end(dl, true);
+}
+
+static void pr_out_snapshot(struct dl *dl, struct nlattr **tb)
+{
+	pr_out_region_snapshots_start(dl, false);
+	pr_out_region_snapshots_id(dl, tb, 0);
+	pr_out_region_snapshots_end(dl, false);
+}
+
+static void pr_out_region(struct dl *dl, struct nlattr **tb)
+{
+	pr_out_region_handle_start(dl, tb);
+
+	if (tb[DEVLINK_ATTR_REGION_SIZE])
+		pr_out_u64(dl, "size",
+			   mnl_attr_get_u64(tb[DEVLINK_ATTR_REGION_SIZE]));
+
+	if (tb[DEVLINK_ATTR_REGION_SNAPSHOTS])
+		pr_out_snapshots(dl, tb);
+
+	if (tb[DEVLINK_ATTR_REGION_SNAPSHOT_ID])
+		pr_out_snapshot(dl, tb);
+
+	pr_out_region_handle_end(dl);
+}
+
+static int cmd_region_show_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct dl *dl = data;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_REGION_NAME] || !tb[DEVLINK_ATTR_REGION_SIZE])
+		return MNL_CB_ERROR;
+
+	pr_out_region(dl, tb);
+
+	return MNL_CB_OK;
+}
+
+static int cmd_region_show(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	int err;
+
+	if (dl_argc(dl) == 0)
+		flags |= NLM_F_DUMP;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_REGION_GET, flags);
+
+	if (dl_argc(dl) > 0) {
+		err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE_REGION, 0);
+		if (err)
+			return err;
+	}
+
+	pr_out_section_start(dl, "regions");
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_region_show_cb, dl);
+	pr_out_section_end(dl);
+	return err;
+}
+
+static int cmd_region_snapshot_del(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_REGION_DEL,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE_REGION |
+				DL_OPT_REGION_SNAPSHOT_ID, 0);
+	if (err)
+		return err;
+
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
+static int cmd_region_read_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct nlattr *nla_entry, *nla_chunk_data, *nla_chunk_addr;
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb_field[DEVLINK_ATTR_MAX + 1] = {};
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct dl *dl = data;
+	int err;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_REGION_CHUNKS])
+		return MNL_CB_ERROR;
+
+	mnl_attr_for_each_nested(nla_entry, tb[DEVLINK_ATTR_REGION_CHUNKS]) {
+		err = mnl_attr_parse_nested(nla_entry, attr_cb, tb_field);
+		if (err != MNL_CB_OK)
+			return MNL_CB_ERROR;
+
+		nla_chunk_data = tb_field[DEVLINK_ATTR_REGION_CHUNK_DATA];
+		if (!nla_chunk_data)
+			continue;
+
+		nla_chunk_addr = tb_field[DEVLINK_ATTR_REGION_CHUNK_ADDR];
+		if (!nla_chunk_addr)
+			continue;
+
+		pr_out_region_chunk(dl, mnl_attr_get_payload(nla_chunk_data),
+				    mnl_attr_get_payload_len(nla_chunk_data),
+				    mnl_attr_get_u64(nla_chunk_addr));
+	}
+	return MNL_CB_OK;
+}
+
+static int cmd_region_dump(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_REGION_READ,
+			       NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE_REGION |
+				DL_OPT_REGION_SNAPSHOT_ID, 0);
+	if (err)
+		return err;
+
+	pr_out_section_start(dl, "dump");
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_region_read_cb, dl);
+	pr_out_section_end(dl);
+	if (!dl->json_output)
+		pr_out("\n");
+	return err;
+}
+
+static int cmd_region_read(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_REGION_READ,
+			       NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE_REGION |
+				DL_OPT_REGION_ADDRESS | DL_OPT_REGION_LENGTH |
+				DL_OPT_REGION_SNAPSHOT_ID, 0);
+	if (err)
+		return err;
+
+	pr_out_section_start(dl, "read");
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_region_read_cb, dl);
+	pr_out_section_end(dl);
+	if (!dl->json_output)
+		pr_out("\n");
+	return err;
+}
+
+static void cmd_region_help(void)
+{
+	pr_err("Usage: devlink region show [ DEV/REGION ]\n");
+	pr_err("       devlink region del DEV/REGION snapshot SNAPSHOT_ID\n");
+	pr_err("       devlink region dump DEV/REGION [ snapshot SNAPSHOT_ID ]\n");
+	pr_err("       devlink region read DEV/REGION [ snapshot SNAPSHOT_ID ] address ADDRESS length LENGTH\n");
+}
+
+static int cmd_region(struct dl *dl)
+{
+	if (dl_no_arg(dl)) {
+		return cmd_region_show(dl);
+	} else if (dl_argv_match(dl, "help")) {
+		cmd_region_help();
+		return 0;
+	} else if (dl_argv_match(dl, "show")) {
+		dl_arg_inc(dl);
+		return cmd_region_show(dl);
+	} else if (dl_argv_match(dl, "del")) {
+		dl_arg_inc(dl);
+		return cmd_region_snapshot_del(dl);
+	} else if (dl_argv_match(dl, "dump")) {
+		dl_arg_inc(dl);
+		return cmd_region_dump(dl);
+	} else if (dl_argv_match(dl, "read")) {
+		dl_arg_inc(dl);
+		return cmd_region_read(dl);
+	}
+	pr_err("Command \"%s\" not found\n", dl_argv(dl));
+	return -ENOENT;
+}
+
 static void help(void)
 {
 	pr_err("Usage: devlink [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "       devlink [ -f[orce] ] -b[atch] filename\n"
-	       "where  OBJECT := { dev | port | sb | monitor | dpipe | resource }\n"
+	       "where  OBJECT := { dev | port | sb | monitor | dpipe | resource | region }\n"
 	       "       OPTIONS := { -V[ersion] | -n[no-nice-names] | -j[json] | -p[pretty] | -v[verbose] }\n");
 }
 
@@ -4975,6 +5455,9 @@ static int dl_cmd(struct dl *dl, int argc, char **argv)
 	} else if (dl_argv_match(dl, "resource")) {
 		dl_arg_inc(dl);
 		return cmd_resource(dl);
+	} else if (dl_argv_match(dl, "region")) {
+		dl_arg_inc(dl);
+		return cmd_region(dl);
 	}
 	pr_err("Object \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
