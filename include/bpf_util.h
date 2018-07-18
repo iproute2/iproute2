@@ -14,6 +14,7 @@
 #define __BPF_UTIL__
 
 #include <linux/bpf.h>
+#include <linux/btf.h>
 #include <linux/filter.h>
 #include <linux/magic.h>
 #include <linux/elf-em.h>
