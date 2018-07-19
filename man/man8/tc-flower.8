@@ -76,6 +76,10 @@ flower \- flow based traffic control filter
 .IR ipv4_address " | " ipv6_address " } | "
 .B enc_dst_port
 .IR port_number " | "
+.B enc_tos
+.IR TOS " | "
+.B enc_ttl
+.IR TTL " | "
 .BR ip_flags
 .IR IP_FLAGS
 .SH DESCRIPTION
@@ -275,6 +279,10 @@ bits is assumed.
 .BI enc_src_ip " PREFIX"
 .TQ
 .BI enc_dst_port " NUMBER"
+.TQ
+.BI enc_tos " NUMBER"
+.TQ
+.BI enc_ttl " NUMBER"
 Match on IP tunnel metadata. Key id
 .I NUMBER
 is a 32 bit tunnel key id (e.g. VNI for VXLAN tunnel).
@@ -283,7 +291,11 @@ must be a valid IPv4 or IPv6 address optionally followed by a slash and the
 prefix length. If the prefix is missing, \fBtc\fR assumes a full-length
 host match.  Dst port
 .I NUMBER
-is a 16 bit UDP dst port.
+is a 16 bit UDP dst port. Tos
+.I NUMBER
+is an 8 bit tos (dscp+ecn) value, ttl
+.I NUMBER
+is an 8 bit time-to-live value.
 .TP
 .BI ip_flags " IP_FLAGS"
 .I IP_FLAGS
