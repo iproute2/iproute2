@@ -16,6 +16,8 @@ tunnel_key - Tunnel metadata manipulation
 .IR ADDRESS
 .BI id " KEY_ID"
 .BI dst_port " UDP_PORT"
+.BI tos " TOS"
+.BI ttl " TTL"
 .RB "[ " csum " | " nocsum " ]"
 
 .SH DESCRIPTION
@@ -88,6 +90,12 @@ is specified in the form CLASS:TYPE:DATA, where CLASS is represented as a
 16bit hexadecimal value, TYPE as an 8bit hexadecimal value and DATA as a
 variable length hexadecimal value. Additionally multiple options may be
 listed using a comma delimiter.
+.TP
+.B tos
+Outer header TOS
+.TP
+.B ttl
+Outer header TTL
 .TP
 .RB [ no ] csum
 Controlls outer UDP checksum. When set to
