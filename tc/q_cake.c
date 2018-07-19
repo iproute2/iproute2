@@ -71,7 +71,7 @@ static struct cake_preset *find_preset(char *argv)
 static void explain(void)
 {
 	fprintf(stderr,
-"Usage: ... cake [ bandwidth RATE | unlimited* | autorate_ingress ]\n"
+"Usage: ... cake [ bandwidth RATE | unlimited* | autorate-ingress ]\n"
 "                [ rtt TIME | datacentre | lan | metro | regional |\n"
 "                  internet* | oceanic | satellite | interplanetary ]\n"
 "                [ besteffort | diffserv8 | diffserv4 | diffserv3* ]\n"
@@ -122,7 +122,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			bandwidth = 0;
 			unlimited = 1;
 			autorate = 0;
-		} else if (strcmp(*argv, "autorate_ingress") == 0) {
+		} else if (strcmp(*argv, "autorate-ingress") == 0) {
 			autorate = 1;
 		} else if (strcmp(*argv, "rtt") == 0) {
 			NEXT_ARG();
@@ -435,8 +435,8 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		RTA_PAYLOAD(tb[TCA_CAKE_AUTORATE]) >= sizeof(__u32)) {
 		autorate = rta_getattr_u32(tb[TCA_CAKE_AUTORATE]);
 		if (autorate == 1)
-			print_string(PRINT_ANY, "autorate", "autorate_%s ",
-				     "ingress");
+			print_string(PRINT_ANY, "autorate", "%s ",
+				     "autorate-ingress");
 		else if (autorate)
 			print_string(PRINT_ANY, "autorate", "(?autorate?) ",
 				     "unknown");
