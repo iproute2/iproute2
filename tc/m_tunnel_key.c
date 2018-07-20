@@ -190,6 +190,22 @@ static int tunnel_key_parse_geneve_opts(char *str, struct nlmsghdr *n)
 	return 0;
 }
 
+static int tunnel_key_parse_tos_ttl(char *str, int type, struct nlmsghdr *n)
+{
+	int ret;
+	__u8 val;
+
+	ret = get_u8(&val, str, 10);
+	if (ret)
+		ret = get_u8(&val, str, 16);
+	if (ret)
+		return -1;
+
+	addattr8(n, MAX_MSG, type, val);
+
+	return 0;
+}
+
 static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 			    int tca_id, struct nlmsghdr *n)
 {
@@ -271,6 +287,22 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 
 			if (tunnel_key_parse_geneve_opts(*argv, n)) {
 				fprintf(stderr, "Illegal \"geneve_opts\"\n");
+				return -1;
+			}
+		} else if (matches(*argv, "tos") == 0) {
+			NEXT_ARG();
+			ret = tunnel_key_parse_tos_ttl(*argv,
+							TCA_TUNNEL_KEY_ENC_TOS, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"tos\"\n");
+				return -1;
+			}
+		} else if (matches(*argv, "ttl") == 0) {
+			NEXT_ARG();
+			ret = tunnel_key_parse_tos_ttl(*argv,
+							TCA_TUNNEL_KEY_ENC_TTL, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"ttl\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "csum") == 0) {
@@ -435,6 +467,23 @@ static void tunnel_key_print_key_opt(const char *name, struct rtattr *attr)
 					tb[TCA_TUNNEL_KEY_ENC_OPTS_GENEVE]);
 }
 
+static void tunnel_key_print_tos_ttl(FILE *f, char *name,
+				     struct rtattr *attr)
+{
+	if (!attr)
+		return;
+
+	if (matches(name, "tos") == 0 && rta_getattr_u8(attr) != 0) {
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_uint(PRINT_ANY, "tos", "\ttos 0x%x",
+			   rta_getattr_u8(attr));
+	} else if (matches(name, "ttl") == 0 && rta_getattr_u8(attr) != 0) {
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_uint(PRINT_ANY, "ttl", "\tttl %u",
+			   rta_getattr_u8(attr));
+	}
+}
+
 static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_TUNNEL_KEY_MAX + 1];
@@ -476,6 +525,10 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 					 tb[TCA_TUNNEL_KEY_ENC_OPTS]);
 		tunnel_key_print_flag(f, "nocsum", "csum",
 				      tb[TCA_TUNNEL_KEY_NO_CSUM]);
+		tunnel_key_print_tos_ttl(f, "tos",
+					  tb[TCA_TUNNEL_KEY_ENC_TOS]);
+		tunnel_key_print_tos_ttl(f, "ttl",
+					  tb[TCA_TUNNEL_KEY_ENC_TTL]);
 		break;
 	}
 	print_action_control(f, " ", parm->action, "");

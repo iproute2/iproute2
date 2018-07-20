@@ -77,6 +77,8 @@ static void explain(void)
 		"                       enc_dst_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_src_ip [ IPV4-ADDR | IPV6-ADDR ] |\n"
 		"                       enc_key_id [ KEY-ID ] |\n"
+		"                       enc_tos MASKED-IP_TOS |\n"
+		"                       enc_ttl MASKED-IP_TTL |\n"
 		"                       ip_flags IP-FLAGS | \n"
 		"                       enc_dst_port [ port_number ] }\n"
 		"       FILTERID := X:Y:Z\n"
@@ -1019,6 +1021,26 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "Illegal \"enc_dst_port\"\n");
 				return -1;
 			}
+		} else if (matches(*argv, "enc_tos") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_ip_tos_ttl(*argv,
+						      TCA_FLOWER_KEY_ENC_IP_TOS,
+						      TCA_FLOWER_KEY_ENC_IP_TOS_MASK,
+						      n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"enc_tos\"\n");
+				return -1;
+			}
+		} else if (matches(*argv, "enc_ttl") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_ip_tos_ttl(*argv,
+						      TCA_FLOWER_KEY_ENC_IP_TTL,
+						      TCA_FLOWER_KEY_ENC_IP_TTL_MASK,
+						      n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"enc_ttl\"\n");
+				return -1;
+			}
 		} else if (matches(*argv, "action") == 0) {
 			NEXT_ARG();
 			ret = parse_action(&argc, &argv, TCA_FLOWER_ACT, n);
@@ -1541,6 +1563,11 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	flower_print_key_id("enc_key_id", tb[TCA_FLOWER_KEY_ENC_KEY_ID]);
 
 	flower_print_port("enc_dst_port", tb[TCA_FLOWER_KEY_ENC_UDP_DST_PORT]);
+
+	flower_print_ip_attr("enc_tos", tb[TCA_FLOWER_KEY_ENC_IP_TOS],
+			    tb[TCA_FLOWER_KEY_ENC_IP_TOS_MASK]);
+	flower_print_ip_attr("enc_ttl", tb[TCA_FLOWER_KEY_ENC_IP_TTL],
+			    tb[TCA_FLOWER_KEY_ENC_IP_TTL_MASK]);
 
 	flower_print_matching_flags("ip_flags", FLOWER_IP_FLAGS,
 				    tb[TCA_FLOWER_KEY_FLAGS],
