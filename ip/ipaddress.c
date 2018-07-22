@@ -562,6 +562,9 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 			   rta_getattr_u64(vf[IFLA_VF_STATS_MULTICAST]));
 		print_u64(PRINT_JSON, "broadcast", NULL,
 			   rta_getattr_u64(vf[IFLA_VF_STATS_BROADCAST]));
+		if (vf[IFLA_VF_STATS_RX_DROPPED])
+			print_u64(PRINT_JSON, "dropped", NULL,
+				  rta_getattr_u64(vf[IFLA_VF_STATS_RX_DROPPED]));
 		close_json_object();
 
 		/* TX stats */
@@ -570,26 +573,39 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 			   rta_getattr_u64(vf[IFLA_VF_STATS_TX_BYTES]));
 		print_u64(PRINT_JSON, "tx_packets", NULL,
 			   rta_getattr_u64(vf[IFLA_VF_STATS_TX_PACKETS]));
+		if (vf[IFLA_VF_STATS_TX_DROPPED])
+			print_u64(PRINT_JSON, "dropped", NULL,
+				  rta_getattr_u64(vf[IFLA_VF_STATS_TX_DROPPED]));
 		close_json_object();
 		close_json_object();
 	} else {
 		/* RX stats */
 		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    RX: bytes  packets  mcast   bcast %s", _SL_);
+		fprintf(fp, "    RX: bytes  packets  mcast   bcast ");
+		if (vf[IFLA_VF_STATS_RX_DROPPED])
+			fprintf(fp, "  dropped ");
+		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    ");
 
 		print_num(fp, 10, rta_getattr_u64(vf[IFLA_VF_STATS_RX_BYTES]));
 		print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_RX_PACKETS]));
 		print_num(fp, 7, rta_getattr_u64(vf[IFLA_VF_STATS_MULTICAST]));
 		print_num(fp, 7, rta_getattr_u64(vf[IFLA_VF_STATS_BROADCAST]));
+		if (vf[IFLA_VF_STATS_RX_DROPPED])
+			print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_RX_DROPPED]));
 
 		/* TX stats */
 		fprintf(fp, "%s", _SL_);
-		fprintf(fp, "    TX: bytes  packets %s", _SL_);
+		fprintf(fp, "    TX: bytes  packets ");
+		if (vf[IFLA_VF_STATS_TX_DROPPED])
+			fprintf(fp, "  dropped ");
+		fprintf(fp, "%s", _SL_);
 		fprintf(fp, "    ");
 
 		print_num(fp, 10, rta_getattr_u64(vf[IFLA_VF_STATS_TX_BYTES]));
 		print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_TX_PACKETS]));
+		if (vf[IFLA_VF_STATS_TX_DROPPED])
+			print_num(fp, 8, rta_getattr_u64(vf[IFLA_VF_STATS_TX_DROPPED]));
 	}
 }
 
