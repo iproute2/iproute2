@@ -45,6 +45,13 @@ static void usage(void)
 		"OPTIONS := ... try tc filter add <desired FILTER_KIND> help\n");
 }
 
+static void chain_usage(void)
+{
+	fprintf(stderr,
+		"Usage: tc chain [ add | del | get | show ] [ dev STRING ]\n"
+		"       tc chain [ add | del | get | show ] [ block BLOCK_INDEX ] ]\n");
+}
+
 struct tc_filter_req {
 	struct nlmsghdr		n;
 	struct tcmsg		t;
@@ -85,7 +92,8 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv,
 	req->n.nlmsg_type = cmd;
 	req->t.tcm_family = AF_UNSPEC;
 
-	if (cmd == RTM_NEWTFILTER && flags & NLM_F_CREATE)
+	if ((cmd == RTM_NEWTFILTER || cmd == RTM_NEWCHAIN) &&
+	    flags & NLM_F_CREATE)
 		protocol = htons(ETH_P_ALL);
 
 	while (argc > 0) {
@@ -261,7 +269,10 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (n->nlmsg_type != RTM_NEWTFILTER &&
 	    n->nlmsg_type != RTM_GETTFILTER &&
-	    n->nlmsg_type != RTM_DELTFILTER) {
+	    n->nlmsg_type != RTM_DELTFILTER &&
+	    n->nlmsg_type != RTM_NEWCHAIN &&
+	    n->nlmsg_type != RTM_GETCHAIN &&
+	    n->nlmsg_type != RTM_DELCHAIN) {
 		fprintf(stderr, "Not a filter(cmd %d)\n", n->nlmsg_type);
 		return 0;
 	}
@@ -273,27 +284,36 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
 
-	if (tb[TCA_KIND] == NULL) {
+	if (tb[TCA_KIND] == NULL && (n->nlmsg_type == RTM_NEWTFILTER ||
+				     n->nlmsg_type == RTM_GETTFILTER ||
+				     n->nlmsg_type == RTM_DELTFILTER)) {
 		fprintf(stderr, "print_filter: NULL kind\n");
 		return -1;
 	}
 
 	open_json_object(NULL);
 
-	if (n->nlmsg_type == RTM_DELTFILTER)
+	if (n->nlmsg_type == RTM_DELTFILTER || n->nlmsg_type == RTM_DELCHAIN)
 		print_bool(PRINT_ANY, "deleted", "deleted ", true);
 
-	if (n->nlmsg_type == RTM_NEWTFILTER &&
+	if ((n->nlmsg_type == RTM_NEWTFILTER ||
+	     n->nlmsg_type == RTM_NEWCHAIN) &&
 			(n->nlmsg_flags & NLM_F_CREATE) &&
 			!(n->nlmsg_flags & NLM_F_EXCL))
 		print_bool(PRINT_ANY, "replaced", "replaced ", true);
 
-	if (n->nlmsg_type == RTM_NEWTFILTER &&
+	if ((n->nlmsg_type == RTM_NEWTFILTER ||
+	     n->nlmsg_type == RTM_NEWCHAIN) &&
 			(n->nlmsg_flags & NLM_F_CREATE) &&
 			(n->nlmsg_flags & NLM_F_EXCL))
 		print_bool(PRINT_ANY, "added", "added ", true);
 
-	print_string(PRINT_FP, NULL, "filter ", NULL);
+	if (n->nlmsg_type == RTM_NEWTFILTER ||
+	    n->nlmsg_type == RTM_GETTFILTER ||
+	    n->nlmsg_type == RTM_DELTFILTER)
+		print_string(PRINT_FP, NULL, "filter ", NULL);
+	else
+		print_string(PRINT_FP, NULL, "chain ", NULL);
 	if (t->tcm_ifindex == TCM_IFINDEX_MAGIC_BLOCK) {
 		if (!filter_block_index ||
 		    filter_block_index != t->tcm_block_index)
@@ -317,7 +337,9 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		}
 	}
 
-	if (t->tcm_info) {
+	if (t->tcm_info && (n->nlmsg_type == RTM_NEWTFILTER ||
+			    n->nlmsg_type == RTM_DELTFILTER ||
+			    n->nlmsg_type == RTM_GETTFILTER)) {
 		f_proto = TC_H_MIN(t->tcm_info);
 		__u32 prio = TC_H_MAJ(t->tcm_info)>>16;
 
@@ -334,7 +356,8 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				print_uint(PRINT_ANY, "pref", "pref %u ", prio);
 		}
 	}
-	print_string(PRINT_ANY, "kind", "%s ", rta_getattr_str(tb[TCA_KIND]));
+	if (tb[TCA_KIND])
+		print_string(PRINT_ANY, "kind", "%s ", rta_getattr_str(tb[TCA_KIND]));
 
 	if (tb[TCA_CHAIN]) {
 		__u32 chain_index = rta_getattr_u32(tb[TCA_CHAIN]);
@@ -345,15 +368,17 @@ int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 				   chain_index);
 	}
 
-	q = get_filter_kind(RTA_DATA(tb[TCA_KIND]));
-	if (tb[TCA_OPTIONS]) {
-		open_json_object("options");
-		if (q)
-			q->print_fopt(q, fp, tb[TCA_OPTIONS], t->tcm_handle);
-		else
-			print_string(PRINT_FP, NULL,
-				     "[cannot parse parameters]", NULL);
-		close_json_object();
+	if (tb[TCA_KIND]) {
+		q = get_filter_kind(RTA_DATA(tb[TCA_KIND]));
+		if (tb[TCA_OPTIONS]) {
+			open_json_object("options");
+			if (q)
+				q->print_fopt(q, fp, tb[TCA_OPTIONS], t->tcm_handle);
+			else
+				print_string(PRINT_FP, NULL,
+					     "[cannot parse parameters]", NULL);
+			close_json_object();
+		}
 	}
 	print_string(PRINT_FP, NULL, "\n", NULL);
 
@@ -496,17 +521,19 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		argc--; argv++;
 	}
 
-	if (!protocol_set) {
-		fprintf(stderr, "Must specify filter protocol\n");
-		return -1;
-	}
+	if (cmd == RTM_GETTFILTER) {
+		if (!protocol_set) {
+			fprintf(stderr, "Must specify filter protocol\n");
+			return -1;
+		}
 
-	if (!prio) {
-		fprintf(stderr, "Must specify filter priority\n");
-		return -1;
-	}
+		if (!prio) {
+			fprintf(stderr, "Must specify filter priority\n");
+			return -1;
+		}
 
-	req.t.tcm_info = TC_H_MAKE(prio<<16, protocol);
+		req.t.tcm_info = TC_H_MAKE(prio<<16, protocol);
+	}
 
 	if (chain_index_set)
 		addattr32(&req.n, sizeof(req), TCA_CHAIN, chain_index);
@@ -516,11 +543,13 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (k[0])
-		addattr_l(&req.n, sizeof(req), TCA_KIND, k, strlen(k)+1);
-	else {
-		fprintf(stderr, "Must specify filter type\n");
-		return -1;
+	if (cmd == RTM_GETTFILTER) {
+		if (k[0])
+			addattr_l(&req.n, sizeof(req), TCA_KIND, k, strlen(k)+1);
+		else {
+			fprintf(stderr, "Must specify filter type\n");
+			return -1;
+		}
 	}
 
 	if (d[0])  {
@@ -539,10 +568,11 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (q->parse_fopt(q, fhandle, argc, argv, &req.n))
+	if (cmd == RTM_GETTFILTER &&
+	    q->parse_fopt(q, fhandle, argc, argv, &req.n))
 		return 1;
 
-	if (!fhandle) {
+	if (!fhandle && cmd == RTM_GETTFILTER) {
 		fprintf(stderr, "Must specify filter \"handle\"\n");
 		return -1;
 	}
@@ -569,7 +599,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 	return 0;
 }
 
-static int tc_filter_list(int argc, char **argv)
+static int tc_filter_list(int cmd, int argc, char **argv)
 {
 	struct {
 		struct nlmsghdr n;
@@ -577,7 +607,7 @@ static int tc_filter_list(int argc, char **argv)
 		char buf[MAX_MSG];
 	} req = {
 		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
-		.n.nlmsg_type = RTM_GETTFILTER,
+		.n.nlmsg_type = cmd,
 		.t.tcm_parent = TC_H_UNSPEC,
 		.t.tcm_family = AF_UNSPEC,
 	};
@@ -725,7 +755,7 @@ static int tc_filter_list(int argc, char **argv)
 int do_filter(int argc, char **argv, void *buf, size_t buflen)
 {
 	if (argc < 1)
-		return tc_filter_list(0, NULL);
+		return tc_filter_list(RTM_GETTFILTER, 0, NULL);
 	if (matches(*argv, "add") == 0)
 		return tc_filter_modify(RTM_NEWTFILTER, NLM_F_EXCL|NLM_F_CREATE,
 					argc-1, argv+1, buf, buflen);
@@ -742,12 +772,37 @@ int do_filter(int argc, char **argv, void *buf, size_t buflen)
 		return tc_filter_get(RTM_GETTFILTER, 0,  argc-1, argv+1);
 	if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0
 	    || matches(*argv, "lst") == 0)
-		return tc_filter_list(argc-1, argv+1);
+		return tc_filter_list(RTM_GETTFILTER, argc-1, argv+1);
 	if (matches(*argv, "help") == 0) {
 		usage();
 		return 0;
 	}
 	fprintf(stderr, "Command \"%s\" is unknown, try \"tc filter help\".\n",
+		*argv);
+	return -1;
+}
+
+int do_chain(int argc, char **argv, void *buf, size_t buflen)
+{
+	if (argc < 1)
+		return tc_filter_list(RTM_GETCHAIN, 0, NULL);
+	if (matches(*argv, "add") == 0) {
+		return tc_filter_modify(RTM_NEWCHAIN, NLM_F_EXCL | NLM_F_CREATE,
+					argc - 1, argv + 1, buf, buflen);
+	} else if (matches(*argv, "delete") == 0) {
+		return tc_filter_modify(RTM_DELCHAIN, 0,
+					argc - 1, argv + 1, buf, buflen);
+	} else if (matches(*argv, "get") == 0) {
+		return tc_filter_get(RTM_GETCHAIN, 0,
+				     argc - 1, argv + 1);
+	} else if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0 ||
+		   matches(*argv, "lst") == 0) {
+		return tc_filter_list(RTM_GETCHAIN, argc - 1, argv + 1);
+	} else if (matches(*argv, "help") == 0) {
+		chain_usage();
+		return 0;
+	}
+	fprintf(stderr, "Command \"%s\" is unknown, try \"tc chain help\".\n",
 		*argv);
 	return -1;
 }

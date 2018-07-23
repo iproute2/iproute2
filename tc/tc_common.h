@@ -8,6 +8,7 @@ extern struct rtnl_handle rth;
 extern int do_qdisc(int argc, char **argv);
 extern int do_class(int argc, char **argv);
 extern int do_filter(int argc, char **argv, void *buf, size_t buflen);
+extern int do_chain(int argc, char **argv, void *buf, size_t buflen);
 extern int do_action(int argc, char **argv, void *buf, size_t buflen);
 extern int do_tcmonitor(int argc, char **argv);
 extern int do_exec(int argc, char **argv);

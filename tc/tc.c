@@ -197,7 +197,8 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
 		"       tc [-force] -batch filename\n"
-		"where  OBJECT := { qdisc | class | filter | action | monitor | exec }\n"
+		"where  OBJECT := { qdisc | class | filter | chain |\n"
+		"                   action | monitor | exec }\n"
 		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[aw] |\n"
 		"                    -o[neline] | -j[son] | -p[retty] | -c[olor]\n"
 		"                    -b[atch] [filename] | -n[etns] name |\n"
@@ -212,6 +213,8 @@ static int do_cmd(int argc, char **argv, void *buf, size_t buflen)
 		return do_class(argc-1, argv+1);
 	if (matches(*argv, "filter") == 0)
 		return do_filter(argc-1, argv+1, buf, buflen);
+	if (matches(*argv, "chain") == 0)
+		return do_chain(argc-1, argv+1, buf, buflen);
 	if (matches(*argv, "actions") == 0)
 		return do_action(argc-1, argv+1, buf, buflen);
 	if (matches(*argv, "monitor") == 0)

@@ -60,6 +60,22 @@ tc \- show / manipulate traffic control settings
 
 .B tc
 .RI "[ " OPTIONS " ]"
+.B chain [ add | delete | get ] dev
+\fIDEV\fR
+.B [ parent
+\fIqdisc-id\fR
+.B | root ]\fR filtertype
+[ filtertype specific parameters ]
+
+.B tc
+.RI "[ " OPTIONS " ]"
+.B chain [ add | delete | get ] block
+\fIBLOCK_INDEX\fR filtertype
+[ filtertype specific parameters ]
+
+
+.B tc
+.RI "[ " OPTIONS " ]"
 .RI "[ " FORMAT " ]"
 .B qdisc show [ dev
 \fIDEV\fR
@@ -79,6 +95,16 @@ tc \- show / manipulate traffic control settings
 .B tc
 .RI "[ " OPTIONS " ]"
 .B filter show block
+\fIBLOCK_INDEX\fR
+.P
+.B tc
+.RI "[ " OPTIONS " ]"
+.B chain show dev
+\fIDEV\fR
+.P
+.B tc
+.RI "[ " OPTIONS " ]"
+.B chain show block
 \fIBLOCK_INDEX\fR
 
 .P
