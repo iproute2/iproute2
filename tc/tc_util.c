@@ -842,8 +842,6 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 
 		memcpy(&re, RTA_DATA(tbs[TCA_STATS_RATE_EST]),
 		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_RATE_EST]), sizeof(re)));
-		fprintf(fp, "\n%srate %s %upps ",
-			prefix, sprint_rate(re.bps, b1), re.pps);
 		print_string(PRINT_FP, NULL, "\n%s", prefix);
 		print_uint(PRINT_JSON, "rate", NULL, re.bps);
 		print_string(PRINT_FP, NULL, "rate %s",

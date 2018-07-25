@@ -177,6 +177,7 @@ static const char *seg6_action_names[SEG6_LOCAL_ACTION_MAX + 1] = {
 	[SEG6_LOCAL_ACTION_END_S]		= "End.S",
 	[SEG6_LOCAL_ACTION_END_AS]		= "End.AS",
 	[SEG6_LOCAL_ACTION_END_AM]		= "End.AM",
+	[SEG6_LOCAL_ACTION_END_BPF]		= "End.BPF",
 };
 
 static const char *format_action_type(int action)
@@ -200,6 +201,27 @@ static int read_action_type(const char *name)
 	}
 
 	return SEG6_LOCAL_ACTION_UNSPEC;
+}
+
+static void print_encap_bpf_prog(FILE *fp, struct rtattr *encap,
+				 const char *str)
+{
+	struct rtattr *tb[LWT_BPF_PROG_MAX+1];
+	const char *progname = NULL;
+
+	parse_rtattr_nested(tb, LWT_BPF_PROG_MAX, encap);
+
+	if (tb[LWT_BPF_PROG_NAME])
+		progname = rta_getattr_str(tb[LWT_BPF_PROG_NAME]);
+
+	if (is_json_context())
+		print_string(PRINT_JSON, str, NULL,
+			     progname ? : "<unknown>");
+	else {
+		fprintf(fp, "%s ", str);
+		if (progname)
+			fprintf(fp, "%s ", progname);
+	}
 }
 
 static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
@@ -250,6 +272,9 @@ static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 		print_string(PRINT_ANY, "oif",
 			     "oif %s ", ll_index_to_name(oif));
 	}
+
+	if (tb[SEG6_LOCAL_BPF])
+		print_encap_bpf_prog(fp, tb[SEG6_LOCAL_BPF], "endpoint");
 }
 
 static void print_encap_mpls(FILE *fp, struct rtattr *encap)
@@ -354,27 +379,6 @@ static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 	if (tb[LWTUNNEL_IP6_TC])
 		print_uint(PRINT_ANY, "tc",
 			   "tc %u ", rta_getattr_u8(tb[LWTUNNEL_IP6_TC]));
-}
-
-static void print_encap_bpf_prog(FILE *fp, struct rtattr *encap,
-				 const char *str)
-{
-	struct rtattr *tb[LWT_BPF_PROG_MAX+1];
-	const char *progname = NULL;
-
-	parse_rtattr_nested(tb, LWT_BPF_PROG_MAX, encap);
-
-	if (tb[LWT_BPF_PROG_NAME])
-		progname = rta_getattr_str(tb[LWT_BPF_PROG_NAME]);
-
-	if (is_json_context())
-		print_string(PRINT_JSON, str, NULL,
-			     progname ? : "<unknown>");
-	else {
-		fprintf(fp, "%s ", str);
-		if (progname)
-			fprintf(fp, "%s ", progname);
-	}
 }
 
 static void print_encap_bpf(FILE *fp, struct rtattr *encap)
@@ -546,11 +550,60 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	return 0;
 }
 
+struct lwt_x {
+	struct rtattr *rta;
+	size_t len;
+};
+
+static void bpf_lwt_cb(void *lwt_ptr, int fd, const char *annotation)
+{
+	struct lwt_x *x = lwt_ptr;
+
+	rta_addattr32(x->rta, x->len, LWT_BPF_PROG_FD, fd);
+	rta_addattr_l(x->rta, x->len, LWT_BPF_PROG_NAME, annotation,
+		      strlen(annotation) + 1);
+}
+
+static const struct bpf_cfg_ops bpf_cb_ops = {
+	.ebpf_cb = bpf_lwt_cb,
+};
+
+static int lwt_parse_bpf(struct rtattr *rta, size_t len,
+			 int *argcp, char ***argvp,
+			 int attr, const enum bpf_prog_type bpf_type)
+{
+	struct bpf_cfg_in cfg = {
+		.type = bpf_type,
+		.argc = *argcp,
+		.argv = *argvp,
+	};
+	struct lwt_x x = {
+		.rta = rta,
+		.len = len,
+	};
+	struct rtattr *nest;
+	int err;
+
+	nest = rta_nest(rta, len, attr);
+	err = bpf_parse_and_load_common(&cfg, &bpf_cb_ops, &x);
+	if (err < 0) {
+		fprintf(stderr, "Failed to parse eBPF program: %s\n",
+			strerror(-err));
+		return -1;
+	}
+	rta_nest_end(rta, nest);
+
+	*argcp = cfg.argc;
+	*argvp = cfg.argv;
+
+	return 0;
+}
+
 static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				 char ***argvp)
 {
 	int segs_ok = 0, hmac_ok = 0, table_ok = 0, nh4_ok = 0, nh6_ok = 0;
-	int iif_ok = 0, oif_ok = 0, action_ok = 0, srh_ok = 0;
+	int iif_ok = 0, oif_ok = 0, action_ok = 0, srh_ok = 0, bpf_ok = 0;
 	__u32 action = 0, table, iif, oif;
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
@@ -627,6 +680,14 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 			} else {
 				continue;
 			}
+		} else if (strcmp(*argv, "endpoint") == 0) {
+			NEXT_ARG();
+			if (bpf_ok++)
+				duparg2("endpoint", *argv);
+
+			if (lwt_parse_bpf(rta, len, &argc, &argv, SEG6_LOCAL_BPF,
+			    BPF_PROG_TYPE_LWT_SEG6LOCAL) < 0)
+				exit(-1);
 		} else {
 			break;
 		}
@@ -892,55 +953,6 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len,
 	 */
 	*argcp = argc + 1;
 	*argvp = argv - 1;
-
-	return 0;
-}
-
-struct lwt_x {
-	struct rtattr *rta;
-	size_t len;
-};
-
-static void bpf_lwt_cb(void *lwt_ptr, int fd, const char *annotation)
-{
-	struct lwt_x *x = lwt_ptr;
-
-	rta_addattr32(x->rta, x->len, LWT_BPF_PROG_FD, fd);
-	rta_addattr_l(x->rta, x->len, LWT_BPF_PROG_NAME, annotation,
-		      strlen(annotation) + 1);
-}
-
-static const struct bpf_cfg_ops bpf_cb_ops = {
-	.ebpf_cb = bpf_lwt_cb,
-};
-
-static int lwt_parse_bpf(struct rtattr *rta, size_t len,
-			 int *argcp, char ***argvp,
-			 int attr, const enum bpf_prog_type bpf_type)
-{
-	struct bpf_cfg_in cfg = {
-		.type = bpf_type,
-		.argc = *argcp,
-		.argv = *argvp,
-	};
-	struct lwt_x x = {
-		.rta = rta,
-		.len = len,
-	};
-	struct rtattr *nest;
-	int err;
-
-	nest = rta_nest(rta, len, attr);
-	err = bpf_parse_and_load_common(&cfg, &bpf_cb_ops, &x);
-	if (err < 0) {
-		fprintf(stderr, "Failed to parse eBPF program: %s\n",
-			strerror(-err));
-		return -1;
-	}
-	rta_nest_end(rta, nest);
-
-	*argcp = cfg.argc;
-	*argvp = cfg.argv;
 
 	return 0;
 }

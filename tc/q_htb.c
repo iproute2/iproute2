@@ -291,9 +291,9 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (RTA_PAYLOAD(tb[TCA_HTB_PARMS])  < sizeof(*hopt)) return -1;
 
 		if (!hopt->level) {
-			print_int(PRINT_ANY, "prio", "prio ", (int)hopt->prio);
+			print_int(PRINT_ANY, "prio", "prio %d ", (int)hopt->prio);
 			if (show_details)
-				print_int(PRINT_ANY, "quantum", "quantum ",
+				print_int(PRINT_ANY, "quantum", "quantum %d ",
 					  (int)hopt->quantum);
 		}
 

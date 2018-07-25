@@ -7,7 +7,7 @@ devlink \- Devlink tool
 .in +8
 .ti -8
 .B devlink
-.RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.RI "[ " OPTIONS " ] { " dev | port | monitor | sb | resource " } { " COMMAND " | "
 .BR help " }"
 .sp
 
@@ -16,18 +16,6 @@ devlink \- Devlink tool
 .RB "[ " -force " ] "
 .BI "-batch " filename
 .sp
-
-.ti -8
-.IR OBJECT " := { "
-.BR dev " | " port " | " monitor " | " sb " | " resource " }"
-.sp
-
-.ti -8
-.IR OPTIONS " := { "
-\fB\-V\fR[\fIersion\fR] |
-\fB\-n\fR[\fIno-nice-names\fR] }
-\fB\-j\fR[\fIjson\fR] }
-\fB\-p\fR[\fIpretty\fR] }
 
 .SH OPTIONS
 

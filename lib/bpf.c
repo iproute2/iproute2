@@ -95,6 +95,11 @@ static const struct bpf_prog_meta __bpf_prog_meta[] = {
 		.subdir		= "ip",
 		.section	= ELF_SECTION_PROG,
 	},
+	[BPF_PROG_TYPE_LWT_SEG6LOCAL] = {
+		.type		= "lwt_seg6local",
+		.subdir		= "ip",
+		.section	= ELF_SECTION_PROG,
+	},
 };
 
 static bool bpf_map_offload_neutral(enum bpf_map_type type)
