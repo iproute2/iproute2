@@ -58,7 +58,6 @@ struct l2tp_parm {
 	unsigned int udp_csum:1;
 	unsigned int recv_seq:1;
 	unsigned int send_seq:1;
-	unsigned int lns_mode:1;
 	unsigned int tunnel:1;
 	unsigned int session:1;
 	int reorder_timeout;
@@ -161,8 +160,6 @@ static int create_session(struct l2tp_parm *p)
 		addattr8(&req.n, 1024, L2TP_ATTR_RECV_SEQ, 1);
 	if (p->send_seq)
 		addattr8(&req.n, 1024, L2TP_ATTR_SEND_SEQ, 1);
-	if (p->lns_mode)
-		addattr(&req.n, 1024, L2TP_ATTR_LNS_MODE);
 	if (p->reorder_timeout)
 		addattr64(&req.n, 1024, L2TP_ATTR_RECV_TIMEOUT,
 					  p->reorder_timeout);
