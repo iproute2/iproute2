@@ -1012,6 +1012,16 @@ int print_linkinfo(const struct sockaddr_nl *who,
 				   " promiscuity %u ",
 				   rta_getattr_u32(tb[IFLA_PROMISCUITY]));
 
+		if (tb[IFLA_MIN_MTU])
+			print_uint(PRINT_ANY,
+				   "min_mtu", "minmtu %u ",
+				   rta_getattr_u32(tb[IFLA_MIN_MTU]));
+
+		if (tb[IFLA_MAX_MTU])
+			print_uint(PRINT_ANY,
+				   "max_mtu", "maxmtu %u ",
+				   rta_getattr_u32(tb[IFLA_MAX_MTU]));
+
 		if (tb[IFLA_LINKINFO])
 			print_linktype(fp, tb[IFLA_LINKINFO]);
 
