@@ -49,9 +49,9 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	if (do_link) {
+	if (do_link)
 		iplink_usage();
-	}
+
 	fprintf(stderr, "Usage: ip address {add|change|replace} IFADDR dev IFNAME [ LIFETIME ]\n");
 	fprintf(stderr, "                                                      [ CONFFLAG-LIST ]\n");
 	fprintf(stderr, "       ip address del IFADDR dev IFNAME [mngtmpaddr]\n");
@@ -77,7 +77,7 @@ static void usage(void)
 	fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan | lowpan |\n");
 	fprintf(stderr, "          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan | vti |\n");
 	fprintf(stderr, "          nlmon | can | bond_slave | ipvlan | geneve | bridge_slave |\n");
-	fprintf(stderr, "          hsr | macsec | netdevsim\n");
+	fprintf(stderr, "          hsr | macsec | netdevsim }\n");
 
 	exit(-1);
 }
