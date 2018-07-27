@@ -60,7 +60,6 @@ struct l2tp_parm {
 	unsigned int recv_seq:1;
 	unsigned int send_seq:1;
 	unsigned int lns_mode:1;
-	unsigned int data_seq:2;
 	unsigned int tunnel:1;
 	unsigned int session:1;
 	int reorder_timeout;
@@ -167,8 +166,6 @@ static int create_session(struct l2tp_parm *p)
 		addattr8(&req.n, 1024, L2TP_ATTR_SEND_SEQ, 1);
 	if (p->lns_mode)
 		addattr(&req.n, 1024, L2TP_ATTR_LNS_MODE);
-	if (p->data_seq)
-		addattr8(&req.n, 1024, L2TP_ATTR_DATA_SEQ, p->data_seq);
 	if (p->reorder_timeout)
 		addattr64(&req.n, 1024, L2TP_ATTR_RECV_TIMEOUT,
 					  p->reorder_timeout);
@@ -359,8 +356,6 @@ static int get_response(struct nlmsghdr *n, void *arg)
 		p->pw_type = rta_getattr_u16(attrs[L2TP_ATTR_PW_TYPE]);
 	if (attrs[L2TP_ATTR_ENCAP_TYPE])
 		p->encap = rta_getattr_u16(attrs[L2TP_ATTR_ENCAP_TYPE]);
-	if (attrs[L2TP_ATTR_DATA_SEQ])
-		p->data_seq = rta_getattr_u16(attrs[L2TP_ATTR_DATA_SEQ]);
 	if (attrs[L2TP_ATTR_CONN_ID])
 		p->tunnel_id = rta_getattr_u32(attrs[L2TP_ATTR_CONN_ID]);
 	if (attrs[L2TP_ATTR_PEER_CONN_ID])
