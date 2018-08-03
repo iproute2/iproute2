@@ -1920,7 +1920,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			exit(1);
 		}
 		delete_json_obj();
-		exit(0);
+		goto out;
 	}
 
 	if (filter.family != AF_PACKET) {
