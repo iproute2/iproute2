@@ -402,6 +402,7 @@ static int batch(const char *name)
 
 		err = do_cmd(largc, largv, tail == NULL ? NULL : tail->buf,
 			     tail == NULL ? 0 : sizeof(tail->buf));
+		fflush(stdout);
 		if (err != 0) {
 			fprintf(stderr, "Command failed %s:%d\n", name,
 				cmdlineno - 1);
