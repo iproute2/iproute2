@@ -79,10 +79,39 @@ In Linux, it's generally considered that eBPF is the successor of cBPF.
 The kernel internally transforms cBPF expressions into eBPF expressions and
 executes the latter. Execution of them can be performed in an interpreter
 or at setup time, they can be just-in-time compiled (JIT'ed) to run as
-native machine code. Currently, x86_64, ARM64, s390, ppc64 and sparc64
-architectures have eBPF JIT support, whereas PPC, SPARC, ARM and MIPS have
-cBPF, but did not (yet) switch to eBPF JIT support.
-
+native machine code.
+.PP
+Currently, the eBPF JIT compiler is available for the following architectures:
+.IP * 4
+x86_64 (since Linux 3.18)
+.PD 0
+.IP *
+arm64 (since Linux 3.18)
+.IP *
+s390 (since Linux 4.1)
+.IP *
+ppc64 (since Linux 4.8)
+.IP *
+sparc64 (since Linux 4.12)
+.IP *
+mips64 (since Linux 4.13)
+.IP *
+arm32 (since Linux 4.14)
+.IP *
+x86_32 (since Linux 4.18)
+.PD
+.PP
+Whereas the following architectures have cBPF, but did not (yet) switch to eBPF
+JIT support:
+.IP * 4
+ppc32
+.PD 0
+.IP *
+sparc32
+.IP *
+mips32
+.PD
+.PP
 eBPF's instruction set has similar underlying principles as the cBPF
 instruction set, it however is modelled closer to the underlying
 architecture to better mimic native instruction sets with the aim to
