@@ -164,6 +164,8 @@ enum {
 	IFLA_CARRIER_UP_COUNT,
 	IFLA_CARRIER_DOWN_COUNT,
 	IFLA_NEW_IFINDEX,
+	IFLA_MIN_MTU,
+	IFLA_MAX_MTU,
 	__IFLA_MAX
 };
 
@@ -457,6 +459,16 @@ enum {
 };
 
 #define IFLA_MACSEC_MAX (__IFLA_MACSEC_MAX - 1)
+
+/* XFRM section */
+enum {
+	IFLA_XFRM_UNSPEC,
+	IFLA_XFRM_LINK,
+	IFLA_XFRM_IF_ID,
+	__IFLA_XFRM_MAX
+};
+
+#define IFLA_XFRM_MAX (__IFLA_XFRM_MAX - 1)
 
 enum macsec_validation_type {
 	MACSEC_VALIDATE_DISABLED = 0,
