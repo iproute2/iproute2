@@ -82,19 +82,13 @@ int netns_switch(char *name)
 
 	/* Mount a version of /sys that describes the network namespace */
 
-	if (statvfs("/sys", &fsstat) < 0) {
-		fprintf(stderr, "could not stat /sys (not mounted?): %s\n",strerror(errno));
-		return -1;
-	}
-	if (fsstat.f_flag & ST_RDONLY) {
-		/* If /sys is not writable (e.g. in a container), we can't
-		 * unmount the old /sys instance, but we can still mount a new
-		 * read-only instance over it. */
-		mountflags = MS_RDONLY;
-	} else {
-		if (umount2("/sys", MNT_DETACH) < 0) {
-			fprintf(stderr, "umount of /sys failed: %s\n", strerror(errno));
-			return -1;
+	if (umount2("/sys", MNT_DETACH) < 0) {
+		/* If this fails, perhaps there wasn't a sysfs instance mounted. Good. */
+		if (statvfs("/sys", &fsstat) == 0) {
+			/* We couldn't umount the sysfs, we'll attempt to overlay it.
+			 * A read-only instance can't be shadowed with a read-write one. */
+			if (fsstat.f_flag & ST_RDONLY)
+				mountflags = MS_RDONLY;
 		}
 	}
 	if (mount(name, "/sys", "sysfs", mountflags, NULL) < 0) {
