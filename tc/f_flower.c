@@ -1189,7 +1189,7 @@ static void flower_print_ip_proto(__u8 *p_ip_proto,
 	*p_ip_proto = ip_proto;
 }
 
-static void flower_print_ip_attr(char *name, struct rtattr *key_attr,
+static void flower_print_ip_attr(const char *name, struct rtattr *key_attr,
 				 struct rtattr *mask_attr)
 {
 	SPRINT_BUF(namefrm);
@@ -1199,11 +1199,12 @@ static void flower_print_ip_attr(char *name, struct rtattr *key_attr,
 	if (!key_attr)
 		return;
 
-	done = sprintf(out, "%x", rta_getattr_u8(key_attr));
+	done = sprintf(out, "0x%x", rta_getattr_u8(key_attr));
 	if (mask_attr)
 		sprintf(out + done, "/%x", rta_getattr_u8(mask_attr));
 
-	sprintf(namefrm, "\n  %s %%s", name);
+	print_string(PRINT_FP, NULL, "%s  ", _SL_);
+	sprintf(namefrm, "%s %%s", name);
 	print_string(PRINT_ANY, name, namefrm, out);
 }
 
@@ -1308,7 +1309,7 @@ static void flower_print_port(char *name, struct rtattr *attr)
 	print_hu(PRINT_ANY, name, namefrm, rta_getattr_be16(attr));
 }
 
-static void flower_print_tcp_flags(char *name, struct rtattr *flags_attr,
+static void flower_print_tcp_flags(const char *name, struct rtattr *flags_attr,
 				   struct rtattr *mask_attr)
 {
 	SPRINT_BUF(namefrm);
@@ -1318,11 +1319,12 @@ static void flower_print_tcp_flags(char *name, struct rtattr *flags_attr,
 	if (!flags_attr)
 		return;
 
-	done = sprintf(out, "%x", rta_getattr_be16(flags_attr));
+	done = sprintf(out, "0x%x", rta_getattr_be16(flags_attr));
 	if (mask_attr)
-		sprintf(out + done, "%x", rta_getattr_be16(flags_attr));
+		sprintf(out + done, "/%x", rta_getattr_be16(mask_attr));
 
-	sprintf(namefrm, "\n  %s %%s", name);
+	print_string(PRINT_FP, NULL, "%s  ", _SL_);
+	sprintf(namefrm, "%s %%s", name);
 	print_string(PRINT_ANY, name, namefrm, out);
 }
 

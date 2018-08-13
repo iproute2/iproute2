@@ -53,14 +53,11 @@ struct l2tp_parm {
 	inet_prefix peer_ip;
 
 	uint16_t pw_type;
-	uint16_t mtu;
 	unsigned int udp6_csum_tx:1;
 	unsigned int udp6_csum_rx:1;
 	unsigned int udp_csum:1;
 	unsigned int recv_seq:1;
 	unsigned int send_seq:1;
-	unsigned int lns_mode:1;
-	unsigned int data_seq:2;
 	unsigned int tunnel:1;
 	unsigned int session:1;
 	int reorder_timeout;
@@ -159,16 +156,10 @@ static int create_session(struct l2tp_parm *p)
 	addattr8(&req.n, 1024, L2TP_ATTR_L2SPEC_TYPE, p->l2spec_type);
 	addattr8(&req.n, 1024, L2TP_ATTR_L2SPEC_LEN, p->l2spec_len);
 
-	if (p->mtu)
-		addattr16(&req.n, 1024, L2TP_ATTR_MTU, p->mtu);
 	if (p->recv_seq)
 		addattr8(&req.n, 1024, L2TP_ATTR_RECV_SEQ, 1);
 	if (p->send_seq)
 		addattr8(&req.n, 1024, L2TP_ATTR_SEND_SEQ, 1);
-	if (p->lns_mode)
-		addattr(&req.n, 1024, L2TP_ATTR_LNS_MODE);
-	if (p->data_seq)
-		addattr8(&req.n, 1024, L2TP_ATTR_DATA_SEQ, p->data_seq);
 	if (p->reorder_timeout)
 		addattr64(&req.n, 1024, L2TP_ATTR_RECV_TIMEOUT,
 					  p->reorder_timeout);
@@ -359,8 +350,6 @@ static int get_response(struct nlmsghdr *n, void *arg)
 		p->pw_type = rta_getattr_u16(attrs[L2TP_ATTR_PW_TYPE]);
 	if (attrs[L2TP_ATTR_ENCAP_TYPE])
 		p->encap = rta_getattr_u16(attrs[L2TP_ATTR_ENCAP_TYPE]);
-	if (attrs[L2TP_ATTR_DATA_SEQ])
-		p->data_seq = rta_getattr_u16(attrs[L2TP_ATTR_DATA_SEQ]);
 	if (attrs[L2TP_ATTR_CONN_ID])
 		p->tunnel_id = rta_getattr_u32(attrs[L2TP_ATTR_CONN_ID]);
 	if (attrs[L2TP_ATTR_PEER_CONN_ID])
@@ -418,8 +407,6 @@ static int get_response(struct nlmsghdr *n, void *arg)
 		p->local_udp_port = rta_getattr_u16(attrs[L2TP_ATTR_UDP_SPORT]);
 	if (attrs[L2TP_ATTR_UDP_DPORT])
 		p->peer_udp_port = rta_getattr_u16(attrs[L2TP_ATTR_UDP_DPORT]);
-	if (attrs[L2TP_ATTR_MTU])
-		p->mtu = rta_getattr_u16(attrs[L2TP_ATTR_MTU]);
 	if (attrs[L2TP_ATTR_IFNAME])
 		p->ifname = rta_getattr_str(attrs[L2TP_ATTR_IFNAME]);
 

@@ -73,6 +73,12 @@ TIME |
 ]
 .br
 [
+.BR split-gso*
+|
+.BR no-split-gso
+]
+.br
+[
 .BR ack-filter
 |
 .BR ack-filter-aggressive
@@ -545,6 +551,23 @@ priority queuing has taken place.
 If you are shaping inbound, and cannot trust the diffserv markings (as is the
 case for Comcast Cable, among others), it is best to use a single queue
 "besteffort" mode with wash.
+
+.PP
+.B split-gso
+
+.br
+	This option controls whether CAKE will split General Segmentation
+Offload (GSO) super-packets into their on-the-wire components and
+dequeue them individually.
+
+.br
+Super-packets are created by the networking stack to improve efficiency.
+However, because they are larger they take longer to dequeue, which
+translates to higher latency for competing flows, especially at lower
+bandwidths. CAKE defaults to splitting GSO packets to achieve the lowest
+possible latency. At link speeds higher than 10 Gbps, setting the
+no-split-gso parameter can increase the maximum achievable throughput by
+retaining the full GSO packets.
 
 .SH EXAMPLES
 # tc qdisc delete root dev eth0

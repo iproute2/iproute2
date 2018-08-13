@@ -79,6 +79,7 @@ static void explain(void)
 "                  dual-srchost | dual-dsthost | triple-isolate* ]\n"
 "                [ nat | nonat* ]\n"
 "                [ wash | nowash* ]\n"
+"                [ split-gso* | no-split-gso ]\n"
 "                [ ack-filter | ack-filter-aggressive | no-ack-filter* ]\n"
 "                [ memlimit LIMIT ]\n"
 "                [ ptm | atm | noatm* ] [ overhead N | conservative | raw* ]\n"
@@ -99,6 +100,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	__u64 bandwidth = 0;
 	int ack_filter = -1;
 	struct rtattr *tail;
+	int split_gso = -1;
 	int unlimited = 0;
 	int flowmode = -1;
 	int autorate = -1;
@@ -155,6 +157,10 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			wash = 0;
 		} else if (strcmp(*argv, "wash") == 0) {
 			wash = 1;
+		} else if (strcmp(*argv, "split-gso") == 0) {
+			split_gso = 1;
+		} else if (strcmp(*argv, "no-split-gso") == 0) {
+			split_gso = 0;
 		} else if (strcmp(*argv, "flowblind") == 0) {
 			flowmode = CAKE_FLOW_NONE;
 		} else if (strcmp(*argv, "srchost") == 0) {
@@ -374,6 +380,9 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 		addattr_l(n, 1024, TCA_CAKE_NAT, &nat, sizeof(nat));
 	if (wash != -1)
 		addattr_l(n, 1024, TCA_CAKE_WASH, &wash, sizeof(wash));
+	if (split_gso != -1)
+		addattr_l(n, 1024, TCA_CAKE_SPLIT_GSO, &split_gso,
+			  sizeof(split_gso));
 	if (ingress != -1)
 		addattr_l(n, 1024, TCA_CAKE_INGRESS, &ingress, sizeof(ingress));
 	if (ack_filter != -1)
