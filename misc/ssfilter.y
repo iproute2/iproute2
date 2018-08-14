@@ -42,23 +42,21 @@ static void yyerror(char *s)
 %nonassoc '!'
 
 %%
-applet: null exprlist
+applet: exprlist
         {
-                *yy_ret = $2;
-                $$ = $2;
+                *yy_ret = $1;
+                $$ = $1;
         }
         | null
         ;
+
 null:   /* NOTHING */ { $$ = NULL; }
         ;
+
 exprlist: expr
         | '!' expr
         {
                 $$ = alloc_node(SSF_NOT, $2);
-        }
-        | '(' exprlist ')'
-        {
-                $$ = $2;
         }
         | exprlist '|' expr
         {
@@ -77,13 +75,21 @@ exprlist: expr
         }
         ;
 
-expr:	DCOND HOSTCOND
+eq:	'='
+	| /* nothing */
+	;
+
+expr:	'(' exprlist ')'
+	{
+		$$ = $2;
+	}
+	| DCOND eq HOSTCOND
         {
-		$$ = alloc_node(SSF_DCOND, $2);
+		$$ = alloc_node(SSF_DCOND, $3);
         }
-        | SCOND HOSTCOND
+        | SCOND eq HOSTCOND
         {
-		$$ = alloc_node(SSF_SCOND, $2);
+		$$ = alloc_node(SSF_SCOND, $3);
         }
         | DPORT GEQ HOSTCOND
         {
@@ -101,7 +107,7 @@ expr:	DCOND HOSTCOND
         {
                 $$ = alloc_node(SSF_NOT, alloc_node(SSF_D_GE, $3));
         }
-        | DPORT '=' HOSTCOND
+        | DPORT eq HOSTCOND
         {
 		$$ = alloc_node(SSF_DCOND, $3);
         }
@@ -126,7 +132,7 @@ expr:	DCOND HOSTCOND
         {
                 $$ = alloc_node(SSF_NOT, alloc_node(SSF_S_GE, $3));
         }
-        | SPORT '=' HOSTCOND
+        | SPORT eq HOSTCOND
         {
 		$$ = alloc_node(SSF_SCOND, $3);
         }
@@ -134,7 +140,7 @@ expr:	DCOND HOSTCOND
         {
 		$$ = alloc_node(SSF_NOT, alloc_node(SSF_SCOND, $3));
         }
-        | DEVNAME '=' DEVCOND
+        | DEVNAME eq DEVCOND
         {
 		$$ = alloc_node(SSF_DEVCOND, $3);
         }
@@ -142,7 +148,7 @@ expr:	DCOND HOSTCOND
         {
 		$$ = alloc_node(SSF_NOT, alloc_node(SSF_DEVCOND, $3));
         }
-        | FWMARK '=' MARKMASK
+        | FWMARK eq MARKMASK
         {
                 $$ = alloc_node(SSF_MARKMASK, $3);
         }
