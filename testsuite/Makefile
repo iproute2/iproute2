@@ -65,7 +65,7 @@ endif
 		TMP_ERR=`mktemp /tmp/tc_testsuite.XXXXXX`; \
 		TMP_OUT=`mktemp /tmp/tc_testsuite.XXXXXX`; \
 		STD_ERR="$$TMP_ERR" STD_OUT="$$TMP_OUT" \
-		TC="$$i/tc/tc" IP="$$i/ip/ip" DEV="$(DEV)" IPVER="$@" SNAME="$$i" \
+		TC="$$i/tc/tc" IP="$$i/ip/ip" SS=$$i/misc/ss DEV="$(DEV)" IPVER="$@" SNAME="$$i" \
 		ERRF="$(RESULTS_DIR)/$@.$$o.err" $(KENV) $(PREFIX) tests/$@ > $(RESULTS_DIR)/$@.$$o.out; \
 		if [ "$$?" = "127" ]; then \
 			echo "SKIPPED"; \
