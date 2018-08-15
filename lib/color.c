@@ -77,6 +77,15 @@ void enable_color(void)
 	set_color_palette();
 }
 
+int check_enable_color(int color, int json)
+{
+	if (color && !json) {
+		enable_color();
+		return 0;
+	}
+	return 1;
+}
+
 void set_color_palette(void)
 {
 	char *p = getenv("COLORFGBG");

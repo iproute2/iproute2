@@ -200,8 +200,7 @@ main(int argc, char **argv)
 
 	_SL_ = oneline ? "\\" : "\n";
 
-	if (color && !json)
-		enable_color();
+	check_enable_color(color, json);
 
 	if (batch_file)
 		return batch(batch_file);

@@ -13,6 +13,7 @@ enum color_attr {
 };
 
 void enable_color(void);
+int check_enable_color(int color, int json);
 void set_color_palette(void);
 int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...);
 enum color_attr ifa_family_color(__u8 ifa_family);
