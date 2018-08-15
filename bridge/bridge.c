@@ -174,7 +174,7 @@ main(int argc, char **argv)
 			if (netns_switch(argv[1]))
 				exit(-1);
 		} else if (matches(opt, "-color") == 0) {
-			enable_color();
+			++color;
 		} else if (matches(opt, "-compressvlans") == 0) {
 			++compress_vlans;
 		} else if (matches(opt, "-force") == 0) {
@@ -200,8 +200,7 @@ main(int argc, char **argv)
 
 	_SL_ = oneline ? "\\" : "\n";
 
-	if (color && !json)
-		enable_color();
+	check_enable_color(color, json);
 
 	if (batch_file)
 		return batch(batch_file);
