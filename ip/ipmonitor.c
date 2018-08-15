@@ -133,6 +133,7 @@ static int accept_msg(const struct sockaddr_nl *who,
 		return 0;
 
 	case RTM_NEWNETCONF:
+	case RTM_DELNETCONF:
 		print_headers(fp, "[NETCONF]", ctrl);
 		print_netconf(who, ctrl, n, arg);
 		return 0;

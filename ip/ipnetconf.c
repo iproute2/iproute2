@@ -66,8 +66,10 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 
 	if (n->nlmsg_type == NLMSG_ERROR)
 		return -1;
-	if (n->nlmsg_type != RTM_NEWNETCONF) {
-		fprintf(stderr, "Not RTM_NEWNETCONF: %08x %08x %08x\n",
+
+	if (n->nlmsg_type != RTM_NEWNETCONF &&
+	    n->nlmsg_type != RTM_DELNETCONF) {
+		fprintf(stderr, "Not a netconf message: %08x %08x %08x\n",
 			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
 
 		return -1;
@@ -91,6 +93,9 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 		return 0;
 
 	open_json_object(NULL);
+	if (n->nlmsg_type == RTM_DELNETCONF)
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
+
 	print_string(PRINT_ANY, "family",
 		     "%s ", family_name(ncm->ncm_family));
 
