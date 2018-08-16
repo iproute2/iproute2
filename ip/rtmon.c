@@ -63,7 +63,9 @@ static int dump_msg2(const struct sockaddr_nl *who,
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: rtmon file FILE [ all | LISTofOBJECTS]\n");
+	fprintf(stderr, "Usage: rtmon [ OPTIONS ] file FILE [ all | LISTofOBJECTS ]\n");
+	fprintf(stderr, "OPTIONS := { -f[amily] { inet | inet6 | link | help } |\n"
+			"             -4 | -6 | -0 | -V[ersion] }\n");
 	fprintf(stderr, "LISTofOBJECTS := [ link ] [ address ] [ route ]\n");
 	exit(-1);
 }
