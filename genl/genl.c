@@ -98,9 +98,9 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: genl [ OPTIONS ] OBJECT | help }\n"
+	fprintf(stderr, "Usage: genl [ OPTIONS ] OBJECT [help] }\n"
 	                "where  OBJECT := { ctrl etc }\n"
-	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] }\n");
+	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -V[ersion] | -h[elp] }\n");
 	exit(-1);
 }
 
