@@ -58,7 +58,9 @@ static int accept_msg(const struct sockaddr_nl *who,
 {
 	FILE *fp = (FILE *)arg;
 
-	if (n->nlmsg_type == RTM_NEWROUTE || n->nlmsg_type == RTM_DELROUTE) {
+	switch (n->nlmsg_type) {
+	case RTM_NEWROUTE:
+	case RTM_DELROUTE: {
 		struct rtmsg *r = NLMSG_DATA(n);
 		int len = n->nlmsg_len - NLMSG_LENGTH(sizeof(*r));
 
@@ -82,24 +84,28 @@ static int accept_msg(const struct sockaddr_nl *who,
 		}
 	}
 
-	if (n->nlmsg_type == RTM_NEWLINK || n->nlmsg_type == RTM_DELLINK) {
+	case RTM_NEWLINK:
+	case RTM_DELLINK:
 		ll_remember_index(who, n, NULL);
 		print_headers(fp, "[LINK]", ctrl);
 		print_linkinfo(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == RTM_NEWADDR || n->nlmsg_type == RTM_DELADDR) {
+
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
 		print_headers(fp, "[ADDR]", ctrl);
 		print_addrinfo(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == RTM_NEWADDRLABEL || n->nlmsg_type == RTM_DELADDRLABEL) {
+
+	case RTM_NEWADDRLABEL:
+	case RTM_DELADDRLABEL:
 		print_headers(fp, "[ADDRLABEL]", ctrl);
 		print_addrlabel(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == RTM_NEWNEIGH || n->nlmsg_type == RTM_DELNEIGH ||
-	    n->nlmsg_type == RTM_GETNEIGH) {
+
+	case RTM_NEWNEIGH:
+	case RTM_DELNEIGH:
+	case RTM_GETNEIGH:
 		if (preferred_family) {
 			struct ndmsg *r = NLMSG_DATA(n);
 
@@ -110,34 +116,42 @@ static int accept_msg(const struct sockaddr_nl *who,
 		print_headers(fp, "[NEIGH]", ctrl);
 		print_neigh(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == RTM_NEWPREFIX) {
+
+	case RTM_NEWPREFIX:
 		print_headers(fp, "[PREFIX]", ctrl);
 		print_prefix(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == RTM_NEWRULE || n->nlmsg_type == RTM_DELRULE) {
+
+	case RTM_NEWRULE:
+	case RTM_DELRULE:
 		print_headers(fp, "[RULE]", ctrl);
 		print_rule(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == RTM_NEWNETCONF) {
+
+	case NLMSG_TSTAMP:
+		print_nlmsg_timestamp(fp, n);
+		return 0;
+
+	case RTM_NEWNETCONF:
+	case RTM_DELNETCONF:
 		print_headers(fp, "[NETCONF]", ctrl);
 		print_netconf(who, ctrl, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type == NLMSG_TSTAMP) {
-		print_nlmsg_timestamp(fp, n);
-		return 0;
-	}
-	if (n->nlmsg_type == RTM_NEWNSID || n->nlmsg_type == RTM_DELNSID) {
+
+	case RTM_DELNSID:
+	case RTM_NEWNSID:
 		print_headers(fp, "[NSID]", ctrl);
 		print_nsid(who, n, arg);
 		return 0;
-	}
-	if (n->nlmsg_type != NLMSG_ERROR && n->nlmsg_type != NLMSG_NOOP &&
-	    n->nlmsg_type != NLMSG_DONE) {
-		fprintf(fp, "Unknown message: type=0x%08x(%d) flags=0x%08x(%d)len=0x%08x(%d)\n",
+
+	case NLMSG_ERROR:
+	case NLMSG_NOOP:
+	case NLMSG_DONE:
+		break;	/* ignore */
+
+	default:
+		fprintf(stderr,
+			"Unknown message: type=0x%08x(%d) flags=0x%08x(%d) len=0x%08x(%d)\n",
 			n->nlmsg_type, n->nlmsg_type,
 			n->nlmsg_flags, n->nlmsg_flags, n->nlmsg_len,
 			n->nlmsg_len);
