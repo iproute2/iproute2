@@ -24,7 +24,8 @@ bridge \- show / manipulate bridge addresses and devices
 \fB\-b\fR[\fIatch\fR] filename |
 \fB\-c\fR[\folor\fR] |
 \fB\-p\fR[\fIretty\fR] |
-\fB\-j\fR[\fIson\fR] }
+\fB\-j\fR[\fIson\fR] |
+\fB\-o\fR[\fIneline\fr] }
 
 .ti -8
 .BR "bridge link set"
@@ -181,6 +182,18 @@ Output results in JavaScript Object Notation (JSON).
 .TP
 .BR "\-p", " \-pretty"
 When combined with -j generate a pretty JSON output.
+
+.TP
+.BR "\-o", " \-oneline"
+output each record on a single line, replacing line feeds
+with the
+.B '\e'
+character. This is convenient when you want to count records
+with
+.BR wc (1)
+or to
+.BR grep (1)
+the output.
 
 
 .SH BRIDGE - COMMAND SYNTAX
