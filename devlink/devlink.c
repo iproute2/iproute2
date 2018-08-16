@@ -5426,7 +5426,7 @@ static void help(void)
 	pr_err("Usage: devlink [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "       devlink [ -f[orce] ] -b[atch] filename\n"
 	       "where  OBJECT := { dev | port | sb | monitor | dpipe | resource | region }\n"
-	       "       OPTIONS := { -V[ersion] | -n[no-nice-names] | -j[json] | -p[pretty] | -v[verbose] }\n");
+	       "       OPTIONS := { -V[ersion] | -n[o-nice-names] | -j[son] | -p[retty] | -v[erbose] }\n");
 }
 
 static int dl_cmd(struct dl *dl, int argc, char **argv)
