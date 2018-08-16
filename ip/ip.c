@@ -55,7 +55,7 @@ static void usage(void)
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
 "                    -f[amily] { inet | inet6 | ipx | dnet | mpls | bridge | link } |\n"
-"                    -4 | -6 | -I | -D | -B | -0 |\n"
+"                    -4 | -6 | -I | -D | -M | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } | -br[ief] |\n"
 "                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
 "                    -rc[vbuf] [size] | -n[etns] name | -a[ll] | -c[olor]}\n");
