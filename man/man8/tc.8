@@ -755,8 +755,17 @@ option was specified. Classes can be filtered only by
 option.
 
 .TP
-.BR "\ -color"
-Use color output.
+.BR \-c [ color ][ = { always | auto | never }
+Configure color output. If parameter is omitted or
+.BR always ,
+color output is enabled regardless of stdout state. If parameter is
+.BR auto ,
+stdout is checked to be a terminal before enabling color output. If parameter is
+.BR never ,
+color output is disabled. If specified multiple times, the last one takes
+precedence. This flag is ignored if
+.B \-json
+is also given.
 
 .TP
 .BR "\-j", " \-json"

@@ -283,8 +283,7 @@ int main(int argc, char **argv)
 				exit(-1);
 			}
 			rcvbuf = size;
-		} else if (matches(opt, "-color") == 0) {
-			++color;
+		} else if (matches_color(opt, &color)) {
 		} else if (matches(opt, "-help") == 0) {
 			usage();
 		} else if (matches(opt, "-netns") == 0) {

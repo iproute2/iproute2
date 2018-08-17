@@ -173,8 +173,7 @@ main(int argc, char **argv)
 			NEXT_ARG();
 			if (netns_switch(argv[1]))
 				exit(-1);
-		} else if (matches(opt, "-color") == 0) {
-			++color;
+		} else if (matches_color(opt, &color)) {
 		} else if (matches(opt, "-compressvlans") == 0) {
 			++compress_vlans;
 		} else if (matches(opt, "-force") == 0) {

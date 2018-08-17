@@ -3,11 +3,13 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <linux/if.h>
 
 #include "color.h"
+#include "utils.h"
 
 enum color {
 	C_RED,
@@ -79,11 +81,40 @@ void enable_color(void)
 
 int check_enable_color(int color, int json)
 {
-	if (color && !json) {
+	if (json || color == COLOR_OPT_NEVER)
+		return 1;
+
+	if (color == COLOR_OPT_ALWAYS || isatty(fileno(stdout))) {
 		enable_color();
 		return 0;
 	}
 	return 1;
+}
+
+bool matches_color(const char *arg, int *val)
+{
+	char *dup, *p;
+
+	if (!val)
+		return false;
+
+	dup = strdupa(arg);
+	p = strchrnul(dup, '=');
+	if (*p)
+		*(p++) = '\0';
+
+	if (matches(dup, "-color"))
+		return false;
+
+	if (*p == '\0' || !strcmp(p, "always"))
+		*val = COLOR_OPT_ALWAYS;
+	else if (!strcmp(p, "auto"))
+		*val = COLOR_OPT_AUTO;
+	else if (!strcmp(p, "never"))
+		*val = COLOR_OPT_NEVER;
+	else
+		return false;
+	return true;
 }
 
 void set_color_palette(void)
