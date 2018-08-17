@@ -79,16 +79,16 @@ void enable_color(void)
 	set_color_palette();
 }
 
-int check_enable_color(int color, int json)
+bool check_enable_color(int color, int json)
 {
 	if (json || color == COLOR_OPT_NEVER)
-		return 1;
+		return false;
 
 	if (color == COLOR_OPT_ALWAYS || isatty(fileno(stdout))) {
 		enable_color();
-		return 0;
+		return true;
 	}
-	return 1;
+	return false;
 }
 
 bool matches_color(const char *arg, int *val)

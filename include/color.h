@@ -21,7 +21,7 @@ enum color_opt {
 };
 
 void enable_color(void);
-int check_enable_color(int color, int json);
+bool check_enable_color(int color, int json);
 bool matches_color(const char *arg, int *val);
 void set_color_palette(void);
 int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...);
