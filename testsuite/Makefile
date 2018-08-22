@@ -85,5 +85,5 @@ endif
 			echo "PASS"; \
 		fi; \
 		rm "$$TMP_ERR" "$$TMP_OUT"; \
-		dmesg > $(RESULTS_DIR)/$@.$$o.dmesg; \
+		sudo dmesg > $(RESULTS_DIR)/$@.$$o.dmesg; \
 	done
