@@ -41,6 +41,9 @@ alltests: $(TESTS)
 clean:
 	@echo "Removing $(RESULTS_DIR) dir ..."
 	@rm -rf $(RESULTS_DIR)
+	@rm -f iproute2/iproute2-this
+	@rm -f tests/ip/link/dev_wo_vf_rate.nl
+	$(MAKE) -C tools clean
 
 distclean: clean
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) distclean && cd ..;

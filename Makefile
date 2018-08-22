@@ -96,7 +96,7 @@ snapshot:
 		> include/SNAPSHOT.h
 
 clean:
-	@for i in $(SUBDIRS); \
+	@for i in $(SUBDIRS) testsuite; \
 	do $(MAKE) $(MFLAGS) -C $$i clean; done
 
 clobber:
