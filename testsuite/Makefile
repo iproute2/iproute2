@@ -30,6 +30,7 @@ configure:
 
 compile: configure
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) && cd ..;
+	$(MAKE) -C tools
 
 listtests:
 	@for t in $(TESTS); do \
