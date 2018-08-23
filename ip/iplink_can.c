@@ -316,11 +316,14 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		struct can_bittiming *bt = RTA_DATA(tb[IFLA_CAN_BITTIMING]);
 
 		if (is_json_context()) {
+			json_writer_t *jw;
+
 			open_json_object("bittiming");
 			print_int(PRINT_ANY, "bitrate", NULL, bt->bitrate);
-			jsonw_float_field_fmt(get_json_writer(),
-					      "sample_point", "%.3f",
-					      (float) bt->sample_point / 1000.);
+			jw = get_json_writer();
+			jsonw_name(jw, "sample_point");
+			jsonw_printf(jw, "%.3f",
+				     (float) bt->sample_point / 1000);
 			print_int(PRINT_ANY, "tq", NULL, bt->tq);
 			print_int(PRINT_ANY, "prop_seg", NULL, bt->prop_seg);
 			print_int(PRINT_ANY, "phase_seg1",
@@ -415,12 +418,14 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			RTA_DATA(tb[IFLA_CAN_DATA_BITTIMING]);
 
 		if (is_json_context()) {
+			json_writer_t *jw;
+
 			open_json_object("data_bittiming");
 			print_int(PRINT_JSON, "bitrate", NULL, dbt->bitrate);
-			jsonw_float_field_fmt(get_json_writer(),
-					      "sample_point",
-					      "%.3f",
-					      (float) dbt->sample_point / 1000.);
+			jw = get_json_writer();
+			jsonw_name(jw, "sample_point");
+			jsonw_printf(jw, "%.3f",
+				     (float) dbt->sample_point / 1000.);
 			print_int(PRINT_JSON, "tq", NULL, dbt->tq);
 			print_int(PRINT_JSON, "prop_seg", NULL, dbt->prop_seg);
 			print_int(PRINT_JSON, "phase_seg1",

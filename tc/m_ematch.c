@@ -277,6 +277,7 @@ static int flatten_tree(struct ematch *head, struct ematch *tree)
 	return count;
 }
 
+__attribute__((format(printf, 5, 6)))
 int em_parse_error(int err, struct bstr *args, struct bstr *carg,
 		   struct ematch_util *e, char *fmt, ...)
 {

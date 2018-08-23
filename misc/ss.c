@@ -977,6 +977,7 @@ static int buf_update(int len)
 }
 
 /* Append content to buffer as part of the current field */
+__attribute__((format(printf, 1, 2)))
 static void out(const char *fmt, ...)
 {
 	struct column *f = current_field;
@@ -1094,7 +1095,7 @@ static void print_header(void)
 {
 	while (!field_is_last(current_field)) {
 		if (!current_field->disabled)
-			out(current_field->header);
+			out("%s", current_field->header);
 		field_next();
 	}
 }

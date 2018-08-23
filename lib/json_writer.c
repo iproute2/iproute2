@@ -152,6 +152,7 @@ void jsonw_name(json_writer_t *self, const char *name)
 		putc(' ', self->out);
 }
 
+__attribute__((format(printf, 2, 3)))
 void jsonw_printf(json_writer_t *self, const char *fmt, ...)
 {
 	va_list ap;
@@ -203,11 +204,6 @@ void jsonw_bool(json_writer_t *self, bool val)
 void jsonw_null(json_writer_t *self)
 {
 	jsonw_printf(self, "null");
-}
-
-void jsonw_float_fmt(json_writer_t *self, const char *fmt, double num)
-{
-	jsonw_printf(self, fmt, num);
 }
 
 void jsonw_float(json_writer_t *self, double num)
@@ -272,15 +268,6 @@ void jsonw_float_field(json_writer_t *self, const char *prop, double val)
 {
 	jsonw_name(self, prop);
 	jsonw_float(self, val);
-}
-
-void jsonw_float_field_fmt(json_writer_t *self,
-			   const char *prop,
-			   const char *fmt,
-			   double val)
-{
-	jsonw_name(self, prop);
-	jsonw_float_fmt(self, fmt, val);
 }
 
 void jsonw_uint_field(json_writer_t *self, const char *prop, unsigned int num)

@@ -102,6 +102,7 @@ static inline int parse_layer(const struct bstr *b)
 		return INT_MAX;
 }
 
+__attribute__((format(printf, 5, 6)))
 int em_parse_error(int err, struct bstr *args, struct bstr *carg,
 		   struct ematch_util *, char *fmt, ...);
 int print_ematch(FILE *, const struct rtattr *);

@@ -132,6 +132,7 @@ void set_color_palette(void)
 		is_dark_bg = 1;
 }
 
+__attribute__((format(printf, 3, 4)))
 int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...)
 {
 	int ret = 0;
