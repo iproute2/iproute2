@@ -53,9 +53,13 @@ NetEm \- Network Emulator
 .IR RATE " [ " PACKETOVERHEAD " [ " CELLSIZE " [ " CELLOVERHEAD " ]]]]"
 
 .IR SLOT " := "
-.BR slot
-.IR MIN_DELAY " [ " MAX_DELAY " ] ["
-.BR packets
+.BR slot " { "
+.IR MIN_DELAY " [ " MAX_DELAY " ] |"
+.br
+.RB "               " distribution " { "uniform " | " normal " | " pareto " | " paretonormal " | "
+.IR FILE " } " DELAY " " JITTER " } "
+.br
+.RB "             [ " packets
 .IR PACKETS " ] [ "
 .BR bytes
 .IR BYTES " ]"
@@ -172,9 +176,13 @@ an artificial packet compression (bursts). Another influence factor are network
 adapter buffers which can also add artificial delay.
 
 .SS slot
-defer delivering accumulated packets to within a slot, with each available slot
-configured with a minimum delay to acquire, and an optional maximum delay.  Slot
-delays can be specified in nanoseconds, microseconds, milliseconds or seconds
+defer delivering accumulated packets to within a slot. Each available slot can be
+configured with a minimum delay to acquire, and an optional maximum delay.
+Alternatively it can be configured with the distribution similar to
+.BR distribution
+for
+.BR delay
+option. Slot delays can be specified in nanoseconds, microseconds, milliseconds or seconds
 (e.g. 800us). Values for the optional parameters
 .I BYTES
 will limit the number of bytes delivered per slot, and/or

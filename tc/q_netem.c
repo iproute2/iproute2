@@ -43,7 +43,9 @@ static void explain(void)
 "                 [ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n" \
 "                 [ slot MIN_DELAY [MAX_DELAY] [packets MAX_PACKETS]" \
 " [bytes MAX_BYTES]]\n" \
-		);
+"                 [ slot distribution" \
+" {uniform|normal|pareto|paretonormal|custom} DELAY JITTER" \
+" [packets MAX_PACKETS] [bytes MAX_BYTES]]\n");
 }
 
 static void explain1(const char *arg)
@@ -159,6 +161,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n, const char *dev)
 {
 	int dist_size = 0;
+	int slot_dist_size = 0;
 	struct rtattr *tail;
 	struct tc_netem_qopt opt = { .limit = 1000 };
 	struct tc_netem_corr cor = {};
@@ -169,6 +172,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	struct tc_netem_rate rate = {};
 	struct tc_netem_slot slot = {};
 	__s16 *dist_data = NULL;
+	__s16 *slot_dist_data = NULL;
 	__u16 loss_type = NETEM_LOSS_UNSPEC;
 	int present[__TCA_NETEM_MAX] = {};
 	__u64 rate64 = 0;
@@ -417,21 +421,55 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				}
 			}
 		} else if (matches(*argv, "slot") == 0) {
-			NEXT_ARG();
-			present[TCA_NETEM_SLOT] = 1;
-			if (get_time64(&slot.min_delay, *argv)) {
-				explain1("slot min_delay");
-				return -1;
-			}
 			if (NEXT_IS_NUMBER()) {
 				NEXT_ARG();
-				if (get_time64(&slot.max_delay, *argv) ||
-				    slot.max_delay < slot.min_delay) {
-					explain1("slot max_delay");
+				present[TCA_NETEM_SLOT] = 1;
+				if (get_time64(&slot.min_delay, *argv)) {
+					explain1("slot min_delay");
 					return -1;
 				}
+				if (NEXT_IS_NUMBER()) {
+					NEXT_ARG();
+					if (get_time64(&slot.max_delay, *argv) ||
+					    slot.max_delay < slot.min_delay) {
+						explain1("slot max_delay");
+						return -1;
+					}
+				} else {
+					slot.max_delay = slot.min_delay;
+				}
 			} else {
-				slot.max_delay = slot.min_delay;
+				NEXT_ARG();
+				if (strcmp(*argv, "distribution") == 0) {
+					present[TCA_NETEM_SLOT] = 1;
+					NEXT_ARG();
+					slot_dist_data = calloc(sizeof(slot_dist_data[0]), MAX_DIST);
+					if (!slot_dist_data)
+						return -1;
+					slot_dist_size = get_distribution(*argv, slot_dist_data, MAX_DIST);
+					if (slot_dist_size <= 0) {
+						free(slot_dist_data);
+						return -1;
+					}
+					NEXT_ARG();
+					if (get_time64(&slot.dist_delay, *argv)) {
+						explain1("slot delay");
+						return -1;
+					}
+					NEXT_ARG();
+					if (get_time64(&slot.dist_jitter, *argv)) {
+						explain1("slot jitter");
+						return -1;
+					}
+					if (slot.dist_jitter <= 0) {
+						fprintf(stderr, "Non-positive jitter\n");
+						return -1;
+					}
+				} else {
+					fprintf(stderr, "Unknown slot parameter: %s\n",
+						*argv);
+					return -1;
+				}
 			}
 			if (NEXT_ARG_OK() &&
 			    matches(*(argv+1), "packets") == 0) {
@@ -558,6 +596,14 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			      dist_data, dist_size * sizeof(dist_data[0])) < 0)
 			return -1;
 		free(dist_data);
+	}
+
+	if (slot_dist_data) {
+		if (addattr_l(n, MAX_DIST * sizeof(slot_dist_data[0]),
+			      TCA_NETEM_SLOT_DIST,
+			      slot_dist_data, slot_dist_size * sizeof(slot_dist_data[0])) < 0)
+			return -1;
+		free(slot_dist_data);
 	}
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 	return 0;
@@ -713,8 +759,13 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	}
 
 	if (slot) {
-		fprintf(f, " slot %s", sprint_time64(slot->min_delay, b1));
-		fprintf(f, " %s", sprint_time64(slot->max_delay, b1));
+		if (slot->dist_jitter > 0) {
+		    fprintf(f, " slot distribution %s", sprint_time64(slot->dist_delay, b1));
+		    fprintf(f, " %s", sprint_time64(slot->dist_jitter, b1));
+		} else {
+		    fprintf(f, " slot %s", sprint_time64(slot->min_delay, b1));
+		    fprintf(f, " %s", sprint_time64(slot->max_delay, b1));
+		}
 		if (slot->max_packets)
 			fprintf(f, " packets %d", slot->max_packets);
 		if (slot->max_bytes)
