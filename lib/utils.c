@@ -1633,3 +1633,104 @@ void drop_cap(void)
 	}
 #endif
 }
+
+int get_time(unsigned int *time, const char *str)
+{
+	double t;
+	char *p;
+
+	t = strtod(str, &p);
+	if (p == str)
+		return -1;
+
+	if (*p) {
+		if (strcasecmp(p, "s") == 0 || strcasecmp(p, "sec") == 0 ||
+		    strcasecmp(p, "secs") == 0)
+			t *= TIME_UNITS_PER_SEC;
+		else if (strcasecmp(p, "ms") == 0 || strcasecmp(p, "msec") == 0 ||
+			 strcasecmp(p, "msecs") == 0)
+			t *= TIME_UNITS_PER_SEC/1000;
+		else if (strcasecmp(p, "us") == 0 || strcasecmp(p, "usec") == 0 ||
+			 strcasecmp(p, "usecs") == 0)
+			t *= TIME_UNITS_PER_SEC/1000000;
+		else
+			return -1;
+	}
+
+	*time = t;
+	return 0;
+}
+
+
+void print_time(char *buf, int len, __u32 time)
+{
+	double tmp = time;
+
+	if (tmp >= TIME_UNITS_PER_SEC)
+		snprintf(buf, len, "%.1fs", tmp/TIME_UNITS_PER_SEC);
+	else if (tmp >= TIME_UNITS_PER_SEC/1000)
+		snprintf(buf, len, "%.1fms", tmp/(TIME_UNITS_PER_SEC/1000));
+	else
+		snprintf(buf, len, "%uus", time);
+}
+
+char *sprint_time(__u32 time, char *buf)
+{
+	print_time(buf, SPRINT_BSIZE-1, time);
+	return buf;
+}
+
+/* 64 bit times are represented internally in nanoseconds */
+int get_time64(__s64 *time, const char *str)
+{
+	double nsec;
+	char *p;
+
+	nsec = strtod(str, &p);
+	if (p == str)
+		return -1;
+
+	if (*p) {
+		if (strcasecmp(p, "s") == 0 ||
+		    strcasecmp(p, "sec") == 0 ||
+		    strcasecmp(p, "secs") == 0)
+			nsec *= NSEC_PER_SEC;
+		else if (strcasecmp(p, "ms") == 0 ||
+			 strcasecmp(p, "msec") == 0 ||
+			 strcasecmp(p, "msecs") == 0)
+			nsec *= NSEC_PER_MSEC;
+		else if (strcasecmp(p, "us") == 0 ||
+			 strcasecmp(p, "usec") == 0 ||
+			 strcasecmp(p, "usecs") == 0)
+			nsec *= NSEC_PER_USEC;
+		else if (strcasecmp(p, "ns") == 0 ||
+			 strcasecmp(p, "nsec") == 0 ||
+			 strcasecmp(p, "nsecs") == 0)
+			nsec *= 1;
+		else
+			return -1;
+	}
+
+	*time = nsec;
+	return 0;
+}
+
+void print_time64(char *buf, int len, __s64 time)
+{
+	double nsec = time;
+
+	if (time >= NSEC_PER_SEC)
+		snprintf(buf, len, "%.3fs", nsec/NSEC_PER_SEC);
+	else if (time >= NSEC_PER_MSEC)
+		snprintf(buf, len, "%.3fms", nsec/NSEC_PER_MSEC);
+	else if (time >= NSEC_PER_USEC)
+		snprintf(buf, len, "%.3fus", nsec/NSEC_PER_USEC);
+	else
+		snprintf(buf, len, "%lldns", time);
+}
+
+char *sprint_time64(__s64 time, char *buf)
+{
+	print_time64(buf, SPRINT_BSIZE-1, time);
+	return buf;
+}

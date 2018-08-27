@@ -20,6 +20,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#include "utils.h"
 #include "tc_core.h"
 #include "tc_cbq.h"
 
