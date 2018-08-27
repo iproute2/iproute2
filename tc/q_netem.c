@@ -40,7 +40,10 @@ static void explain(void)
 "                 [ loss gemodel PERCENT [R [1-H [1-K]]]\n" \
 "                 [ ecn ]\n" \
 "                 [ reorder PRECENT [CORRELATION] [ gap DISTANCE ]]\n" \
-"                 [ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n");
+"                 [ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n" \
+"                 [ slot MIN_DELAY [MAX_DELAY] [packets MAX_PACKETS]" \
+" [bytes MAX_BYTES]]\n" \
+		);
 }
 
 static void explain1(const char *arg)
@@ -164,6 +167,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	struct tc_netem_gimodel gimodel;
 	struct tc_netem_gemodel gemodel;
 	struct tc_netem_rate rate = {};
+	struct tc_netem_slot slot = {};
 	__s16 *dist_data = NULL;
 	__u16 loss_type = NETEM_LOSS_UNSPEC;
 	int present[__TCA_NETEM_MAX] = {};
@@ -412,6 +416,45 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 					return -1;
 				}
 			}
+		} else if (matches(*argv, "slot") == 0) {
+			NEXT_ARG();
+			present[TCA_NETEM_SLOT] = 1;
+			if (get_time64(&slot.min_delay, *argv)) {
+				explain1("slot min_delay");
+				return -1;
+			}
+			if (NEXT_IS_NUMBER()) {
+				NEXT_ARG();
+				if (get_time64(&slot.max_delay, *argv) ||
+				    slot.max_delay < slot.min_delay) {
+					explain1("slot max_delay");
+					return -1;
+				}
+			} else {
+				slot.max_delay = slot.min_delay;
+			}
+			if (NEXT_ARG_OK() &&
+			    matches(*(argv+1), "packets") == 0) {
+				NEXT_ARG();
+				if (!NEXT_ARG_OK() ||
+				    get_s32(&slot.max_packets, *(argv+1), 0)) {
+					explain1("slot packets");
+					return -1;
+				}
+				NEXT_ARG();
+			}
+			if (NEXT_ARG_OK() &&
+			    matches(*(argv+1), "bytes") == 0) {
+				unsigned int max_bytes;
+				NEXT_ARG();
+				if (!NEXT_ARG_OK() ||
+				    get_size(&max_bytes, *(argv+1))) {
+					explain1("slot bytes");
+					return -1;
+				}
+				slot.max_bytes = (int) max_bytes;
+				NEXT_ARG();
+			}
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -472,6 +515,10 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	    addattr_l(n, 1024, TCA_NETEM_CORRUPT, &corrupt, sizeof(corrupt)) < 0)
 		return -1;
 
+	if (present[TCA_NETEM_SLOT] &&
+	    addattr_l(n, 1024, TCA_NETEM_SLOT, &slot, sizeof(slot)) < 0)
+		return -1;
+
 	if (loss_type != NETEM_LOSS_UNSPEC) {
 		struct rtattr *start;
 
@@ -526,6 +573,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	int *ecn = NULL;
 	struct tc_netem_qopt qopt;
 	const struct tc_netem_rate *rate = NULL;
+	const struct tc_netem_slot *slot = NULL;
 	int len;
 	__u64 rate64 = 0;
 
@@ -585,6 +633,11 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			if (RTA_PAYLOAD(tb[TCA_NETEM_RATE64]) < sizeof(rate64))
 				return -1;
 			rate64 = rta_getattr_u64(tb[TCA_NETEM_RATE64]);
+		}
+		if (tb[TCA_NETEM_SLOT]) {
+			if (RTA_PAYLOAD(tb[TCA_NETEM_SLOT]) < sizeof(*slot))
+				return -1;
+			slot = RTA_DATA(tb[TCA_NETEM_SLOT]);
 		}
 	}
 
@@ -657,6 +710,15 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			fprintf(f, " cellsize %u", rate->cell_size);
 		if (rate->cell_overhead)
 			fprintf(f, " celloverhead %d", rate->cell_overhead);
+	}
+
+	if (slot) {
+		fprintf(f, " slot %s", sprint_time64(slot->min_delay, b1));
+		fprintf(f, " %s", sprint_time64(slot->max_delay, b1));
+		if (slot->max_packets)
+			fprintf(f, " packets %d", slot->max_packets);
+		if (slot->max_bytes)
+			fprintf(f, " bytes %d", slot->max_bytes);
 	}
 
 	if (ecn)
