@@ -239,7 +239,7 @@ int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 		print_string(PRINT_FP, NULL, "to ", NULL);
 		print_color_string(PRINT_ANY, ifa_family_color(frh->family),
-				   "dst", "%s ", dst);
+				   "dst", "%s", dst);
 		if (frh->dst_len != host_len)
 			print_uint(PRINT_ANY, "dstlen", "/%u ", frh->dst_len);
 		else
