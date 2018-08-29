@@ -16,6 +16,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <sys/sysmacros.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <errno.h>
@@ -3604,6 +3605,21 @@ static int unix_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
 			out(" %c-%c",
 			    mask & 1 ? '-' : '<', mask & 2 ? '-' : '>');
 		}
+		if (tb[UNIX_DIAG_VFS]) {
+			struct unix_diag_vfs *uv = RTA_DATA(tb[UNIX_DIAG_VFS]);
+
+			out(" ino:%u dev:%u/%u", uv->udiag_vfs_ino, major(uv->udiag_vfs_dev),
+						 minor(uv->udiag_vfs_dev));
+		}
+		if (tb[UNIX_DIAG_ICONS]) {
+			int len = RTA_PAYLOAD(tb[UNIX_DIAG_ICONS]);
+			__u32 *peers = RTA_DATA(tb[UNIX_DIAG_ICONS]);
+			int i;
+
+			out(" peers:");
+			for (i = 0; i < len / sizeof(__u32); i++)
+				out(" %u", peers[i]);
+		}
 	}
 
 	return 0;
@@ -3641,6 +3657,8 @@ static int unix_show_netlink(struct filter *f)
 	req.r.udiag_show = UDIAG_SHOW_NAME | UDIAG_SHOW_PEER | UDIAG_SHOW_RQLEN;
 	if (show_mem)
 		req.r.udiag_show |= UDIAG_SHOW_MEMINFO;
+	if (show_details)
+		req.r.udiag_show |= UDIAG_SHOW_VFS | UDIAG_SHOW_ICONS;
 
 	return handle_netlink_request(f, &req.nlh, sizeof(req), unix_show_sock);
 }
