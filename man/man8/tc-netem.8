@@ -8,7 +8,8 @@ NetEm \- Network Emulator
 .I OPTIONS
 
 .IR OPTIONS " := [ " LIMIT " ] [ " DELAY " ] [ " LOSS \
-" ] [ " CORRUPT " ] [ " DUPLICATION " ] [ " REORDERING " ][ " RATE " ]"
+" ] [ " CORRUPT " ] [ " DUPLICATION " ] [ " REORDERING " ] [ " RATE \
+" ] [ " SLOT " ]"
 
 .IR LIMIT " := "
 .B limit
@@ -50,6 +51,18 @@ NetEm \- Network Emulator
 .IR RATE " := "
 .B rate
 .IR RATE " [ " PACKETOVERHEAD " [ " CELLSIZE " [ " CELLOVERHEAD " ]]]]"
+
+.IR SLOT " := "
+.BR slot " { "
+.IR MIN_DELAY " [ " MAX_DELAY " ] |"
+.br
+.RB "               " distribution " { "uniform " | " normal " | " pareto " | " paretonormal " | "
+.IR FILE " } " DELAY " " JITTER " } "
+.br
+.RB "             [ " packets
+.IR PACKETS " ] [ "
+.BR bytes
+.IR BYTES " ]"
 
 
 .SH DESCRIPTION
@@ -161,6 +174,31 @@ Note that rate throttling is limited by several factors: the kernel clock
 granularity avoid a perfect shaping at a specific level. This will show up in
 an artificial packet compression (bursts). Another influence factor are network
 adapter buffers which can also add artificial delay.
+
+.SS slot
+defer delivering accumulated packets to within a slot. Each available slot can be
+configured with a minimum delay to acquire, and an optional maximum delay.
+Alternatively it can be configured with the distribution similar to
+.BR distribution
+for
+.BR delay
+option. Slot delays can be specified in nanoseconds, microseconds, milliseconds or seconds
+(e.g. 800us). Values for the optional parameters
+.I BYTES
+will limit the number of bytes delivered per slot, and/or
+.I PACKETS
+will limit the number of packets delivered per slot.
+
+These slot options can provide a crude approximation of bursty MACs such as
+DOCSIS, WiFi, and LTE.
+
+Note that slotting is limited by several factors: the kernel clock granularity,
+as with a rate, and attempts to deliver many packets within a slot will be
+smeared by the timer resolution, and by the underlying native bandwidth also.
+
+It is possible to combine slotting with a rate, in which case complex behaviors
+where either the rate, or the slot limits on bytes or packets per slot, govern
+the actual delivered rate.
 
 .SH LIMITATIONS
 The main known limitation of Netem are related to timer granularity, since

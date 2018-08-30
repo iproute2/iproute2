@@ -46,6 +46,11 @@ void incomplete_command(void) __attribute__((noreturn));
 #define NEXT_ARG_FWD() do { argv++; argc--; } while(0)
 #define PREV_ARG() do { argv--; argc++; } while(0)
 
+#define TIME_UNITS_PER_SEC	1000000
+#define NSEC_PER_USEC 1000
+#define NSEC_PER_MSEC 1000000
+#define NSEC_PER_SEC 1000000000LL
+
 typedef struct
 {
 	__u16 flags;
@@ -309,5 +314,12 @@ size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
 void drop_cap(void);
+
+int get_time(unsigned int *time, const char *str);
+int get_time64(__s64 *time, const char *str);
+void print_time(char *buf, int len, __u32 time);
+void print_time64(char *buf, int len, __s64 time);
+char *sprint_time(__u32 time, char *buf);
+char *sprint_time64(__s64 time, char *buf);
 
 #endif /* __UTILS_H__ */

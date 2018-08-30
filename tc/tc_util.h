@@ -81,13 +81,11 @@ int get_rate64(__u64 *rate, const char *str);
 int get_percent_rate64(__u64 *rate, const char *str, const char *dev);
 int get_size(unsigned int *size, const char *str);
 int get_size_and_cell(unsigned int *size, int *cell_log, char *str);
-int get_time(unsigned int *time, const char *str);
 int get_linklayer(unsigned int *val, const char *arg);
 
 void print_rate(char *buf, int len, __u64 rate);
 void print_size(char *buf, int len, __u32 size);
 void print_qdisc_handle(char *buf, int len, __u32 h);
-void print_time(char *buf, int len, __u32 time);
 void print_linklayer(char *buf, int len, unsigned int linklayer);
 void print_devname(enum output_type type, int ifindex);
 
@@ -95,7 +93,6 @@ char *sprint_rate(__u64 rate, char *buf);
 char *sprint_size(__u32 size, char *buf);
 char *sprint_qdisc_handle(__u32 h, char *buf);
 char *sprint_tc_classid(__u32 h, char *buf);
-char *sprint_time(__u32 time, char *buf);
 char *sprint_ticks(__u32 ticks, char *buf);
 char *sprint_linklayer(unsigned int linklayer, char *buf);
 
