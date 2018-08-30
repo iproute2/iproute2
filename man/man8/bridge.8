@@ -24,7 +24,8 @@ bridge \- show / manipulate bridge addresses and devices
 \fB\-b\fR[\fIatch\fR] filename |
 \fB\-c\fR[\folor\fR] |
 \fB\-p\fR[\fIretty\fR] |
-\fB\-j\fR[\fIson\fR] }
+\fB\-j\fR[\fIson\fR] |
+\fB\-o\fR[\fIneline\fr] }
 
 .ti -8
 .BR "bridge link set"
@@ -171,8 +172,17 @@ If there were any errors during execution of the commands, the application
 return code will be non zero.
 
 .TP
-.BR "\-c" , " -color"
-Use color output.
+.BR \-c [ color ][ = { always | auto | never }
+Configure color output. If parameter is omitted or
+.BR always ,
+color output is enabled regardless of stdout state. If parameter is
+.BR auto ,
+stdout is checked to be a terminal before enabling color output. If parameter is
+.BR never ,
+color output is disabled. If specified multiple times, the last one takes
+precedence. This flag is ignored if
+.B \-json
+is also given.
 
 .TP
 .BR "\-j", " \-json"
@@ -181,6 +191,18 @@ Output results in JavaScript Object Notation (JSON).
 .TP
 .BR "\-p", " \-pretty"
 When combined with -j generate a pretty JSON output.
+
+.TP
+.BR "\-o", " \-oneline"
+output each record on a single line, replacing line feeds
+with the
+.B '\e'
+character. This is convenient when you want to count records
+with
+.BR wc (1)
+or to
+.BR grep (1)
+the output.
 
 
 .SH BRIDGE - COMMAND SYNTAX

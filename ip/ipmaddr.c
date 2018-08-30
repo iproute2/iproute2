@@ -289,6 +289,7 @@ static int multiaddr_list(int argc, char **argv)
 static int multiaddr_modify(int cmd, int argc, char **argv)
 {
 	struct ifreq ifr = {};
+	int family;
 	int fd;
 
 	if (cmd == RTM_NEWADDR)
@@ -324,7 +325,17 @@ static int multiaddr_modify(int cmd, int argc, char **argv)
 		exit(-1);
 	}
 
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	switch (preferred_family) {
+	case AF_INET6:
+	case AF_PACKET:
+	case AF_INET:
+		family = preferred_family;
+		break;
+	default:
+		family = AF_INET;
+	}
+
+	fd = socket(family, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		perror("Cannot create socket");
 		exit(1);

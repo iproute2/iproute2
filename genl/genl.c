@@ -26,12 +26,12 @@
 #include "utils.h"
 #include "genl_utils.h"
 
-int show_stats = 0;
-int show_details = 0;
-int show_raw = 0;
+int show_stats;
+int show_details;
+int show_raw;
 
 static void *BODY;
-static struct genl_util * genl_list;
+static struct genl_util *genl_list;
 
 
 static int print_nofopt(const struct sockaddr_nl *who, struct nlmsghdr *n,
@@ -44,8 +44,9 @@ static int print_nofopt(const struct sockaddr_nl *who, struct nlmsghdr *n,
 static int parse_nofopt(struct genl_util *f, int argc, char **argv)
 {
 	if (argc) {
-		fprintf(stderr, "Unknown genl \"%s\", hence option \"%s\" "
-			"is unparsable\n", f->name, *argv);
+		fprintf(stderr,
+			"Unknown genl \"%s\", hence option \"%s\" is unparsable\n",
+			f->name, *argv);
 		return -1;
 	}
 
@@ -98,9 +99,10 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: genl [ OPTIONS ] OBJECT | help }\n"
-	                "where  OBJECT := { ctrl etc }\n"
-	                "       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] }\n");
+	fprintf(stderr,
+		"Usage: genl [ OPTIONS ] OBJECT [help] }\n"
+		"where  OBJECT := { ctrl etc }\n"
+		"       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -V[ersion] | -h[elp] }\n");
 	exit(-1);
 }
 
@@ -122,19 +124,21 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-help") == 0) {
 			usage();
 		} else {
-			fprintf(stderr, "Option \"%s\" is unknown, try "
-				"\"genl -help\".\n", argv[1]);
+			fprintf(stderr,
+				"Option \"%s\" is unknown, try \"genl -help\".\n",
+				argv[1]);
 			exit(-1);
 		}
 		argc--;	argv++;
 	}
 
 	if (argc > 1) {
+		struct genl_util *a;
 		int ret;
-		struct genl_util *a = NULL;
+
 		a = get_genl_kind(argv[1]);
 		if (!a) {
-			fprintf(stderr,"bad genl %s\n", argv[1]);
+			fprintf(stderr, "bad genl %s\n", argv[1]);
 			exit(-1);
 		}
 

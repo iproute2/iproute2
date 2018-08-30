@@ -14,15 +14,13 @@ TESTS_DIR := $(dir $(TESTS))
 
 IPVERS := $(filter-out iproute2/Makefile,$(wildcard iproute2/*))
 
+KENVFN := $(shell mktemp /tmp/tc_testkenv.XXXXXX)
 ifneq (,$(wildcard /proc/config.gz))
-	KENV := $(shell cat /proc/config.gz | gunzip | grep ^CONFIG)
+	KCPATH := /proc/config.gz
 else
 KVER := $(shell uname -r)
 KCPATHS := /lib/modules/$(KVER)/config /boot/config-$(KVER)
 KCPATH := $(firstword $(wildcard $(KCPATHS)))
-ifneq (,$(KCPATH))
-	KENV := $(shell cat ${KCPATH} | grep ^CONFIG)
-endif
 endif
 
 .PHONY: compile listtests alltests configure $(TESTS)
@@ -32,6 +30,7 @@ configure:
 
 compile: configure
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) && cd ..;
+	$(MAKE) -C tools
 
 listtests:
 	@for t in $(TESTS); do \
@@ -43,6 +42,9 @@ alltests: $(TESTS)
 clean:
 	@echo "Removing $(RESULTS_DIR) dir ..."
 	@rm -rf $(RESULTS_DIR)
+	@rm -f iproute2/iproute2-this
+	@rm -f tests/ip/link/dev_wo_vf_rate.nl
+	$(MAKE) -C tools clean
 
 distclean: clean
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) distclean && cd ..;
@@ -59,14 +61,22 @@ endif
 	    mkdir -p $(RESULTS_DIR)/$$d; \
 	done
 	
+	@if [ "$(KCPATH)" = "/proc/config.gz" ]; then \
+		gunzip -c $(KCPATH) >$(KENVFN); \
+	elif [ "$(KCPATH)" != "" ]; then \
+               cat $(KCPATH) >$(KENVFN); \
+	fi
+	@sed -i -e 's/^CONFIG_/export CONFIG_/' $(KENVFN)
+
 	@for i in $(IPVERS); do \
 		o=`echo $$i | sed -e 's/iproute2\///'`; \
 		echo -n "Running $@ [$$o/`uname -r`]: "; \
 		TMP_ERR=`mktemp /tmp/tc_testsuite.XXXXXX`; \
 		TMP_OUT=`mktemp /tmp/tc_testsuite.XXXXXX`; \
+		. $(KENVFN); \
 		STD_ERR="$$TMP_ERR" STD_OUT="$$TMP_OUT" \
 		TC="$$i/tc/tc" IP="$$i/ip/ip" SS=$$i/misc/ss DEV="$(DEV)" IPVER="$@" SNAME="$$i" \
-		ERRF="$(RESULTS_DIR)/$@.$$o.err" $(KENV) $(PREFIX) tests/$@ > $(RESULTS_DIR)/$@.$$o.out; \
+		ERRF="$(RESULTS_DIR)/$@.$$o.err" $(PREFIX) tests/$@ > $(RESULTS_DIR)/$@.$$o.out; \
 		if [ "$$?" = "127" ]; then \
 			echo "SKIPPED"; \
 		elif [ -e "$(RESULTS_DIR)/$@.$$o.err" ]; then \
@@ -75,5 +85,5 @@ endif
 			echo "PASS"; \
 		fi; \
 		rm "$$TMP_ERR" "$$TMP_OUT"; \
-		dmesg > $(RESULTS_DIR)/$@.$$o.dmesg; \
+		sudo dmesg > $(RESULTS_DIR)/$@.$$o.dmesg; \
 	done

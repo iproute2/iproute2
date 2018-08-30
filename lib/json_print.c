@@ -100,6 +100,7 @@ void close_json_array(enum output_type type, const char *str)
  * functions handling different types
  */
 #define _PRINT_FUNC(type_name, type)					\
+	__attribute__((format(printf, 4, 0)))				\
 	void print_color_##type_name(enum output_type t,		\
 				     enum color_attr color,		\
 				     const char *key,			\

@@ -4,7 +4,7 @@
 nstat, rtacct - network statistics tools.
 
 .SH SYNOPSIS
-Usage: nstat [ -h?vVzrnasd:t: ] [ PATTERN [ PATTERN ] ]
+Usage: nstat [ -h?vVzrnasd:t:jp ] [ PATTERN [ PATTERN ] ]
 .br
 Usage: rtacct [ -h?vVzrnasd:t: ] [ ListOfRealms ]
 
@@ -21,7 +21,7 @@ Print help
 .B \-V, \-\-version
 Print version
 .TP
-.B \-z, \-\-zero
+.B \-z, \-\-zeros
 Dump zero counters too. By default they are not shown.
 .TP
 .B \-r, \-\-reset
@@ -39,12 +39,16 @@ Do not update history, so that the next time you will see counters including val
 .B \-j, \-\-json
 Display results in JSON format.
 .TP
-.B \-d, \-\-interval <INTERVAL>
+.B \-p, \-\-pretty
+When combined with
+.BR \-\-json ,
+pretty print the output.
+.TP
+.B \-d, \-\-scan <INTERVAL>
 Run in daemon mode collecting statistics. <INTERVAL> is interval between measurements in seconds.
 .TP
-
+.B \-t, \-\-interval <INTERVAL>
 Time interval to average rates. Default value is 60 seconds.
-.TP
 
 .SH SEE ALSO
 lnstat(8)

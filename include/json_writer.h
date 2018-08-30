@@ -29,6 +29,7 @@ void jsonw_pretty(json_writer_t *self, bool on);
 void jsonw_name(json_writer_t *self, const char *name);
 
 /* Add value  */
+__attribute__((format(printf, 2, 3)))
 void jsonw_printf(json_writer_t *self, const char *fmt, ...);
 void jsonw_string(json_writer_t *self, const char *value);
 void jsonw_bool(json_writer_t *self, bool value);
@@ -59,8 +60,6 @@ void jsonw_luint_field(json_writer_t *self, const char *prop,
 			unsigned long int num);
 void jsonw_lluint_field(json_writer_t *self, const char *prop,
 			unsigned long long int num);
-void jsonw_float_field_fmt(json_writer_t *self, const char *prop,
-			   const char *fmt, double val);
 
 /* Collections */
 void jsonw_start_object(json_writer_t *self);

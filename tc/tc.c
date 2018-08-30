@@ -496,8 +496,7 @@ int main(int argc, char **argv)
 				matches(argv[1], "-conf") == 0) {
 			NEXT_ARG();
 			conf_file = argv[1];
-		} else if (matches(argv[1], "-color") == 0) {
-			++color;
+		} else if (matches_color(argv[1], &color)) {
 		} else if (matches(argv[1], "-timestamp") == 0) {
 			timestamp++;
 		} else if (matches(argv[1], "-tshort") == 0) {
