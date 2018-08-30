@@ -109,7 +109,6 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc,
 
 static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
-	int ok = 0;
 	struct tc_htb_opt opt = {};
 	__u32 rtab[256], ctab[256];
 	unsigned buffer = 0, cbuffer = 0;
@@ -127,7 +126,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 			if (get_u32(&opt.prio, *argv, 10)) {
 				explain1("prio"); return -1;
 			}
-			ok++;
 		} else if (matches(*argv, "mtu") == 0) {
 			NEXT_ARG();
 			if (get_u32(&mtu, *argv, 10)) {
@@ -161,7 +159,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 				explain1("buffer");
 				return -1;
 			}
-			ok++;
 		} else if (matches(*argv, "cburst") == 0 ||
 			   strcmp(*argv, "cbuffer") == 0 ||
 			   strcmp(*argv, "cmaxburst") == 0) {
@@ -170,7 +167,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 				explain1("cbuffer");
 				return -1;
 			}
-			ok++;
 		} else if (strcmp(*argv, "ceil") == 0) {
 			NEXT_ARG();
 			if (ceil64) {
@@ -186,7 +182,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 				explain1("ceil");
 				return -1;
 			}
-			ok++;
 		} else if (strcmp(*argv, "rate") == 0) {
 			NEXT_ARG();
 			if (rate64) {
@@ -202,7 +197,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 				explain1("rate");
 				return -1;
 			}
-			ok++;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -213,9 +207,6 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 		}
 		argc--; argv++;
 	}
-
-	/*	if (!ok)
-		return 0;*/
 
 	if (!rate64) {
 		fprintf(stderr, "\"rate\" is required.\n");
