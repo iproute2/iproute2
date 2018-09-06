@@ -208,19 +208,19 @@ static void print_router_entries(FILE *fp, struct nlmsghdr *n,
 	} else {
 		struct rtattr *i = RTA_DATA(router);
 		uint32_t *port_ifindex = RTA_DATA(i);
+		const char *port_name = ll_index_to_name(*port_ifindex);
 
 		if (is_json_context()) {
 			open_json_array(PRINT_JSON, brifname);
 			open_json_object(NULL);
 
 			print_string(PRINT_JSON, "port", NULL,
-				     ll_index_to_name(*port_ifindex));
+				     port_name);
 			close_json_object();
 			close_json_array(PRINT_JSON, NULL);
 		} else {
 			fprintf(fp, "router port dev %s master %s\n",
-				ll_index_to_name(*port_ifindex),
-				brifname);
+				port_name, brifname);
 		}
 	}
 	close_json_array(PRINT_JSON, NULL);
