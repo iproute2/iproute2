@@ -131,15 +131,8 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 	if (n->nlmsg_type == RTM_DELMDB)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
-
-	if (is_json_context()) {
-		print_int(PRINT_JSON, "index", NULL, ifindex);
-		print_string(PRINT_JSON, "dev", NULL, dev);
-	} else {
-		fprintf(f, "%u: ", ifindex);
-		color_fprintf(f, COLOR_IFNAME, "%s ", dev);
-	}
-
+	print_int(PRINT_ANY, "index", "%u: ", ifindex);
+	print_color_string(PRINT_ANY, COLOR_IFNAME, "dev", "%s ", dev);
 	print_string(PRINT_ANY, "port", " %s ",
 		     ll_index_to_name(e->ifindex));
 
