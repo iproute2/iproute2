@@ -164,7 +164,7 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
  * This is reported by HW devices that have some bridging
  * capabilities.
  */
-static void print_af_spec(FILE *fp, struct rtattr *attr)
+static void print_af_spec(struct rtattr *attr, int ifindex)
 {
 	struct rtattr *aftb[IFLA_BRIDGE_MAX+1];
 
@@ -177,7 +177,7 @@ static void print_af_spec(FILE *fp, struct rtattr *attr)
 		return;
 
 	if (aftb[IFLA_BRIDGE_VLAN_INFO])
-		print_vlan_info(fp, aftb[IFLA_BRIDGE_VLAN_INFO]);
+		print_vlan_info(aftb[IFLA_BRIDGE_VLAN_INFO], ifindex);
 }
 
 int print_linkinfo(const struct sockaddr_nl *who,
@@ -232,7 +232,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_protinfo(fp, tb[IFLA_PROTINFO]);
 
 	if (tb[IFLA_AF_SPEC])
-		print_af_spec(fp, tb[IFLA_AF_SPEC]);
+		print_af_spec(tb[IFLA_AF_SPEC], ifi->ifi_index);
 
 	print_string(PRINT_FP, NULL, "%s", "\n");
 	close_json_object();
