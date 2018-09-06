@@ -941,7 +941,7 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 }
 
 static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
-			struct rtattr *rta, struct rtnexthop *rtnh,
+			struct rtattr *rta, size_t len, struct rtnexthop *rtnh,
 			int *argcp, char ***argvp)
 {
 	int argc = *argcp;
@@ -962,11 +962,16 @@ static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
 			if (r->rtm_family == AF_UNSPEC)
 				r->rtm_family = addr.family;
 			if (addr.family == r->rtm_family) {
-				rta_addattr_l(rta, 4096, RTA_GATEWAY, &addr.data, addr.bytelen);
-				rtnh->rtnh_len += sizeof(struct rtattr) + addr.bytelen;
+				if (rta_addattr_l(rta, len, RTA_GATEWAY,
+						  &addr.data, addr.bytelen))
+					return -1;
+				rtnh->rtnh_len += sizeof(struct rtattr)
+						  + addr.bytelen;
 			} else {
-				rta_addattr_l(rta, 4096, RTA_VIA, &addr.family, addr.bytelen+2);
-				rtnh->rtnh_len += RTA_SPACE(addr.bytelen+2);
+				if (rta_addattr_l(rta, len, RTA_VIA,
+						  &addr.family, addr.bytelen + 2))
+					return -1;
+				rtnh->rtnh_len += RTA_SPACE(addr.bytelen + 2);
 			}
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
@@ -988,13 +993,15 @@ static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
 			NEXT_ARG();
 			if (get_rt_realms_or_raw(&realm, *argv))
 				invarg("\"realm\" value is invalid\n", *argv);
-			rta_addattr32(rta, 4096, RTA_FLOW, realm);
+			if (rta_addattr32(rta, len, RTA_FLOW, realm))
+				return -1;
 			rtnh->rtnh_len += sizeof(struct rtattr) + 4;
 		} else if (strcmp(*argv, "encap") == 0) {
-			int len = rta->rta_len;
+			int old_len = rta->rta_len;
 
-			lwt_parse_encap(rta, 4096, &argc, &argv);
-			rtnh->rtnh_len += rta->rta_len - len;
+			if (lwt_parse_encap(rta, len, &argc, &argv))
+				return -1;
+			rtnh->rtnh_len += rta->rta_len - old_len;
 		} else if (strcmp(*argv, "as") == 0) {
 			inet_prefix addr;
 
@@ -1002,8 +1009,9 @@ static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
 			if (strcmp(*argv, "to") == 0)
 				NEXT_ARG();
 			get_addr(&addr, *argv, r->rtm_family);
-			rta_addattr_l(rta, 4096, RTA_NEWDST, &addr.data,
-				      addr.bytelen);
+			if (rta_addattr_l(rta, len, RTA_NEWDST,
+					  &addr.data, addr.bytelen))
+				return -1;
 			rtnh->rtnh_len += sizeof(struct rtattr) + addr.bytelen;
 		} else
 			break;
@@ -1016,7 +1024,7 @@ static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
 static int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r,
 			  int argc, char **argv)
 {
-	char buf[1024];
+	char buf[4096];
 	struct rtattr *rta = (void *)buf;
 	struct rtnexthop *rtnh;
 
@@ -1036,7 +1044,7 @@ static int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r,
 		memset(rtnh, 0, sizeof(*rtnh));
 		rtnh->rtnh_len = sizeof(*rtnh);
 		rta->rta_len += rtnh->rtnh_len;
-		if (parse_one_nh(n, r, rta, rtnh, &argc, &argv)) {
+		if (parse_one_nh(n, r, rta, 4096, rtnh, &argc, &argv)) {
 			fprintf(stderr, "Error: cannot parse nexthop\n");
 			exit(-1);
 		}
@@ -1044,7 +1052,8 @@ static int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r,
 	}
 
 	if (rta->rta_len > RTA_LENGTH(0))
-		addattr_l(n, 1024, RTA_MULTIPATH, RTA_DATA(rta), RTA_PAYLOAD(rta));
+		return addattr_l(n, 4096, RTA_MULTIPATH,
+				 RTA_DATA(rta), RTA_PAYLOAD(rta));
 	return 0;
 }
 
@@ -1053,7 +1062,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	struct {
 		struct nlmsghdr	n;
 		struct rtmsg		r;
-		char			buf[1024];
+		char			buf[4096];
 	} req = {
 		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg)),
 		.n.nlmsg_flags = NLM_F_REQUEST | flags,
@@ -1484,8 +1493,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 		addattr_l(&req.n, sizeof(req), RTA_METRICS, RTA_DATA(mxrta), RTA_PAYLOAD(mxrta));
 	}
 
-	if (nhs_ok)
-		parse_nexthops(&req.n, &req.r, argc, argv);
+	if (nhs_ok && parse_nexthops(&req.n, &req.r, argc, argv))
+		return -1;
 
 	if (req.r.rtm_family == AF_UNSPEC)
 		req.r.rtm_family = AF_INET;
