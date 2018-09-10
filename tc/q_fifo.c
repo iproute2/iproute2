@@ -94,7 +94,6 @@ struct qdisc_util pfifo_head_drop_qdisc_util = {
 	.print_qopt = fifo_print_opt,
 };
 
-extern int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 struct qdisc_util pfifo_fast_qdisc_util = {
 	.id = "pfifo_fast",
 	.print_qopt = prio_print_opt,
