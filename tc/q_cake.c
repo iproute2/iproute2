@@ -524,6 +524,8 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (split_gso)
 		print_string(PRINT_FP, NULL, "split-gso ", NULL);
+	else
+		print_string(PRINT_FP, NULL, "no-split-gso ", NULL);
 	print_bool(PRINT_JSON, "split_gso", NULL, split_gso);
 
 	if (interval)
