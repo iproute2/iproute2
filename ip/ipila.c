@@ -128,7 +128,7 @@ static int print_ila_mapping(const struct sockaddr_nl *who,
 	else
 		print_string(PRINT_FP, NULL, "%s", "-");
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	close_json_object();
 
 	return 0;

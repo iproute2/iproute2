@@ -181,7 +181,7 @@ int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 	if (show_stats && tb[RTA_MFC_STATS]) {
 		struct rta_mfc_stats *mfcs = RTA_DATA(tb[RTA_MFC_STATS]);
 
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		print_u64(PRINT_ANY, "packets", "  %"PRIu64" packets,",
 			   mfcs->mfcs_packets);
 		print_u64(PRINT_ANY, "bytes", " %"PRIu64" bytes", mfcs->mfcs_bytes);

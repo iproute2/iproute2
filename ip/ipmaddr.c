@@ -240,7 +240,7 @@ static void print_mlist(FILE *fp, struct ma_info *list)
 			print_uint(PRINT_ANY, "ifindex", "%d:", list->index);
 			print_color_string(PRINT_ANY, COLOR_IFNAME,
 					   "ifname", "\t%s", list->name);
-			print_string(PRINT_FP, NULL, "%s", _SL_);
+			print_nl();
 			cur_index = list->index;
 
 			open_json_array(PRINT_JSON, "maddr");

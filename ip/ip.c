@@ -33,7 +33,6 @@ int oneline;
 int brief;
 int json;
 int timestamp;
-const char *_SL_;
 int force;
 int max_flush_loops = 10;
 int batch_mode;
