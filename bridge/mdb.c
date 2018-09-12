@@ -107,6 +107,10 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr,
 			fprintf(f, "%s ", port_ifname);
 		}
 	}
+
+	if (!show_stats)
+		print_nl();
+
 	close_json_array(PRINT_JSON, NULL);
 }
 
@@ -157,6 +161,8 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 		print_string(PRINT_ANY, "timer", " %s",
 			     format_timer(timer));
 	}
+
+	print_nl();
 	close_json_object();
 }
 
