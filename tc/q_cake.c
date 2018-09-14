@@ -468,6 +468,8 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (nat)
 		print_string(PRINT_FP, NULL, "nat ", NULL);
+	else
+		print_string(PRINT_FP, NULL, "nonat ", NULL);
 	print_bool(PRINT_JSON, "nat", NULL, nat);
 
 	if (tb[TCA_CAKE_WASH] &&
@@ -508,6 +510,8 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (wash)
 		print_string(PRINT_FP, NULL, "wash ", NULL);
+	else
+		print_string(PRINT_FP, NULL, "nowash ", NULL);
 	print_bool(PRINT_JSON, "wash", NULL, wash);
 
 	if (ingress)
@@ -520,7 +524,7 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	else if (ack_filter == CAKE_ACK_FILTER)
 		print_string(PRINT_ANY, "ack-filter", "ack-filter ", "enabled");
 	else
-		print_string(PRINT_JSON, "ack-filter", NULL, "disabled");
+		print_string(PRINT_ANY, "ack-filter", "no-ack-filter ", "disabled");
 
 	if (split_gso)
 		print_string(PRINT_FP, NULL, "split-gso ", NULL);
