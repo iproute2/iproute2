@@ -20,6 +20,7 @@ static int link_help(struct rd *rd)
 static const char *caps_to_str(uint32_t idx)
 {
 #define RDMA_PORT_FLAGS(x) \
+	x(RESERVED, 0) \
 	x(SM, 1) \
 	x(NOTICE, 2) \
 	x(TRAP, 3) \
@@ -32,7 +33,9 @@ static const char *caps_to_str(uint32_t idx)
 	x(SM_DISABLED, 10) \
 	x(SYS_IMAGE_GUID, 11) \
 	x(PKEY_SW_EXT_PORT_TRAP, 12) \
+	x(CABLE_INFO, 13) \
 	x(EXTENDED_SPEEDS, 14) \
+	x(CAP_MASK2, 15) \
 	x(CM, 16) \
 	x(SNMP_TUNNEL, 17) \
 	x(REINIT, 18) \
@@ -43,7 +46,12 @@ static const char *caps_to_str(uint32_t idx)
 	x(BOOT_MGMT, 23) \
 	x(LINK_LATENCY, 24) \
 	x(CLIENT_REG, 25) \
-	x(IP_BASED_GIDS, 26)
+	x(OTHER_LOCAL_CHANGES, 26) \
+	x(LINK_SPPED_WIDTH, 27) \
+	x(VENDOR_SPECIFIC_MADS, 28) \
+	x(MULT_PKER_TRAP, 29) \
+	x(MULT_FDB, 30) \
+	x(HIERARCHY_INFO, 31)
 
 	enum { RDMA_PORT_FLAGS(RDMA_BITMAP_ENUM) };
 
@@ -51,9 +59,7 @@ static const char *caps_to_str(uint32_t idx)
 		rdma_port_names[] = { RDMA_PORT_FLAGS(RDMA_BITMAP_NAMES) };
 	#undef RDMA_PORT_FLAGS
 
-	if (idx < ARRAY_SIZE(rdma_port_names) && rdma_port_names[idx])
-		return rdma_port_names[idx];
-	return "UNKNOWN";
+	return rdma_port_names[idx];
 }
 
 static void link_print_caps(struct rd *rd, struct nlattr **tb)
