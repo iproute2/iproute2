@@ -424,9 +424,9 @@ get_failed:
 	addattr32(n, 1024, IFLA_GRE_OKEY, okey);
 	addattr_l(n, 1024, IFLA_GRE_IFLAGS, &iflags, 2);
 	addattr_l(n, 1024, IFLA_GRE_OFLAGS, &oflags, 2);
-	if (is_addrtype_inet(&saddr))
+	if (is_addrtype_inet_not_unspec(&saddr))
 		addattr_l(n, 1024, IFLA_GRE_LOCAL, saddr.data, saddr.bytelen);
-	if (is_addrtype_inet(&daddr))
+	if (is_addrtype_inet_not_unspec(&daddr))
 		addattr_l(n, 1024, IFLA_GRE_REMOTE, daddr.data, daddr.bytelen);
 	if (link)
 		addattr32(n, 1024, IFLA_GRE_LINK, link);
