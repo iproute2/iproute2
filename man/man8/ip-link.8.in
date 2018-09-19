@@ -215,6 +215,7 @@ ip-link \- network device configuration
 .BR vti " |"
 .BR nlmon " |"
 .BR ipvlan " |"
+.BR ipvtap " |"
 .BR lowpan " |"
 .BR geneve " |"
 .BR vrf " |"
@@ -328,6 +329,9 @@ Link types:
 .sp
 .BR ipvlan
 - Interface for L3 (IPv6/IPv4) based VLANs
+.sp
+.BR ipvtap
+- Interface for L3 (IPv6/IPv4) based VLANs and TAP
 .sp
 .BR lowpan
 - Interface for 6LoWPAN (IPv6) over IEEE 802.15.4 / Bluetooth

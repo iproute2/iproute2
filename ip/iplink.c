@@ -120,8 +120,8 @@ void iplink_usage(void)
 			"TYPE := { vlan | veth | vcan | vxcan | dummy | ifb | macvlan | macvtap |\n"
 			"          bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |\n"
 			"          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan |\n"
-			"          vti | nlmon | team_slave | bond_slave | ipvlan | geneve |\n"
-			"          bridge_slave | vrf | macsec | netdevsim | rmnet }\n");
+			"          vti | nlmon | team_slave | bond_slave | bridge_slave |\n"
+			"          ipvlan | ipvtap | geneve | vrf | macsec | netdevsim | rmnet }\n");
 	}
 	exit(-1);
 }

@@ -1,4 +1,4 @@
-/* iplink_ipvlan.c	IPVLAN device support
+/* iplink_ipvlan.c	IPVLAN/IPVTAP device support
  *
  *              This program is free software; you can redistribute it and/or
  *              modify it under the terms of the GNU General Public License
@@ -18,15 +18,15 @@
 #include "utils.h"
 #include "ip_common.h"
 
-static void ipvlan_explain(FILE *f)
+static void print_explain(struct link_util *lu, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... ipvlan [ mode MODE ] [ FLAGS ]\n"
+		"Usage: ... %s [ mode MODE ] [ FLAGS ]\n"
 		"\n"
 		"MODE: l3 | l3s | l2\n"
 		"FLAGS: bridge | private | vepa\n"
-		"(first values are the defaults if nothing is specified).\n"
-		);
+		"(first values are the defaults if nothing is specified).\n",
+		lu->id);
 }
 
 static int ipvlan_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -61,12 +61,12 @@ static int ipvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		} else if (matches(*argv, "bridge") == 0 && !mflag_given) {
 			mflag_given = true;
 		} else if (matches(*argv, "help") == 0) {
-			ipvlan_explain(stderr);
+			print_explain(lu, stderr);
 			return -1;
 		} else {
-			fprintf(stderr, "ipvlan: unknown option \"%s\"?\n",
-				*argv);
-			ipvlan_explain(stderr);
+			fprintf(stderr, "%s: unknown option \"%s\"?\n",
+				lu->id, *argv);
+			print_explain(lu, stderr);
 			return -1;
 		}
 		argc--;
@@ -113,11 +113,19 @@ static void ipvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 static void ipvlan_print_help(struct link_util *lu, int argc, char **argv,
 			      FILE *f)
 {
-	ipvlan_explain(f);
+	print_explain(lu, f);
 }
 
 struct link_util ipvlan_link_util = {
 	.id		= "ipvlan",
+	.maxattr	= IFLA_IPVLAN_MAX,
+	.parse_opt	= ipvlan_parse_opt,
+	.print_opt	= ipvlan_print_opt,
+	.print_help	= ipvlan_print_help,
+};
+
+struct link_util ipvtap_link_util = {
+	.id		= "ipvtap",
 	.maxattr	= IFLA_IPVLAN_MAX,
 	.parse_opt	= ipvlan_parse_opt,
 	.print_opt	= ipvlan_print_opt,
