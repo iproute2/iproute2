@@ -30,7 +30,6 @@ configure:
 
 compile: configure
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) && cd ..;
-	$(MAKE) -C tools
 
 listtests:
 	@for t in $(TESTS); do \
@@ -39,9 +38,11 @@ listtests:
 
 alltests: $(TESTS)
 
-clean:
+testclean:
 	@echo "Removing $(RESULTS_DIR) dir ..."
 	@rm -rf $(RESULTS_DIR)
+
+clean: testclean
 	@rm -f iproute2/iproute2-this
 	@rm -f tests/ip/link/dev_wo_vf_rate.nl
 	$(MAKE) -C tools clean
@@ -49,18 +50,18 @@ clean:
 distclean: clean
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) distclean && cd ..;
 
-$(TESTS): clean
+$(TESTS): testclean
 ifeq (,$(HAVE_UNSHARED_UTIL))
 	$(error Please install util-linux tools to run tests in separated network namespace)
 endif
 	@./tools/generate_nlmsg
 
 	@mkdir -p $(RESULTS_DIR)
-	
+
 	@for d in $(TESTS_DIR); do \
 	    mkdir -p $(RESULTS_DIR)/$$d; \
 	done
-	
+
 	@if [ "$(KCPATH)" = "/proc/config.gz" ]; then \
 		gunzip -c $(KCPATH) >$(KENVFN); \
 	elif [ "$(KCPATH)" != "" ]; then \
