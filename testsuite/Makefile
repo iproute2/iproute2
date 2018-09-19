@@ -28,7 +28,7 @@ endif
 configure:
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) configure && cd ..;
 
-compile: configure
+compile: configure generate_nlmsg
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) && cd ..;
 
 listtests:
@@ -36,7 +36,10 @@ listtests:
 		echo "$$t"; \
 	done
 
-alltests: $(TESTS)
+generate_nlmsg:
+	$(MAKE) -C tools
+
+alltests: generate_nlmsg $(TESTS)
 
 testclean:
 	@echo "Removing $(RESULTS_DIR) dir ..."
