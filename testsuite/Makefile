@@ -54,6 +54,9 @@ distclean: clean
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) distclean && cd ..;
 
 $(TESTS): testclean
+ifeq (,$(IPVERS))
+	$(error Please run make first)
+endif
 ifeq (,$(HAVE_UNSHARED_UTIL))
 	$(error Please install util-linux tools to run tests in separated network namespace)
 endif
