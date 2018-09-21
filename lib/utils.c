@@ -42,6 +42,7 @@
 int resolve_hosts;
 int timestamp_short;
 int pretty;
+const char *_SL_ = "\n";
 
 int read_prop(const char *dev, char *prop, long *value)
 {

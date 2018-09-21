@@ -252,10 +252,18 @@ static int filter_vlan_check(__u16 vid, __u16 flags)
 	return 1;
 }
 
-static void print_vlan_port(FILE *fp, int ifi_index)
+static void open_vlan_port(int ifi_index)
 {
-	print_string(PRINT_ANY, NULL, "%s",
+	open_json_object(NULL);
+	print_string(PRINT_ANY, "ifname", "%s",
 		     ll_index_to_name(ifi_index));
+	open_json_array(PRINT_JSON, "vlans");
+}
+
+static void close_vlan_port(void)
+{
+	close_json_array(PRINT_JSON, NULL);
+	close_json_object();
 }
 
 static void print_range(const char *name, __u16 start, __u16 id)
@@ -278,7 +286,7 @@ static void print_vlan_tunnel_info(FILE *fp, struct rtattr *tb, int ifindex)
 	__u32 last_tunid_start = 0;
 
 	if (!filter_vlan)
-		print_vlan_port(fp, ifindex);
+		open_vlan_port(ifindex);
 
 	open_json_array(PRINT_JSON, "tunnel");
 	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
@@ -323,18 +331,20 @@ static void print_vlan_tunnel_info(FILE *fp, struct rtattr *tb, int ifindex)
 			continue;
 
 		if (filter_vlan)
-			print_vlan_port(fp, ifindex);
+			open_vlan_port(ifindex);
 
 		open_json_object(NULL);
 		print_range("vlan", last_vid_start, tunnel_vid);
 		print_range("tunid", last_tunid_start, tunnel_id);
 		close_json_object();
 
-		if (!is_json_context())
-			fprintf(fp, "\n");
-
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+		if (filter_vlan)
+			close_vlan_port();
 	}
-	close_json_array(PRINT_JSON, NULL);
+
+	if (!filter_vlan)
+		close_vlan_port();
 }
 
 static int print_vlan_tunnel(const struct sockaddr_nl *who,
@@ -421,8 +431,8 @@ static int print_vlan(const struct sockaddr_nl *who,
 		return 0;
 	}
 
-	print_vlan_port(fp, ifm->ifi_index);
-	print_vlan_info(fp, tb[IFLA_AF_SPEC]);
+	print_vlan_info(tb[IFLA_AF_SPEC], ifm->ifi_index);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 
 	fflush(fp);
 	return 0;
@@ -430,11 +440,16 @@ static int print_vlan(const struct sockaddr_nl *who,
 
 static void print_vlan_flags(__u16 flags)
 {
+	if (flags == 0)
+		return;
+
+	open_json_array(PRINT_JSON, "flags");
 	if (flags & BRIDGE_VLAN_INFO_PVID)
-		print_null(PRINT_ANY, "pvid", " %s", "PVID");
+		print_string(PRINT_ANY, NULL, " %s", "PVID");
 
 	if (flags & BRIDGE_VLAN_INFO_UNTAGGED)
-		print_null(PRINT_ANY, "untagged", " %s", "untagged");
+		print_string(PRINT_ANY, NULL, " %s", "Egress Untagged");
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static void print_one_vlan_stats(const struct bridge_vlan_xstats *vstats)
@@ -461,6 +476,7 @@ static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 {
 	struct rtattr *brtb[LINK_XSTATS_TYPE_MAX+1];
 	struct rtattr *i, *list;
+	const char *ifname;
 	int rem;
 
 	parse_rtattr(brtb, LINK_XSTATS_TYPE_MAX, RTA_DATA(attr),
@@ -471,13 +487,12 @@ static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 	list = brtb[LINK_XSTATS_TYPE_BRIDGE];
 	rem = RTA_PAYLOAD(list);
 
-	open_json_object(NULL);
+	ifname = ll_index_to_name(ifindex);
+	open_json_object(ifname);
 
-	print_color_string(PRINT_ANY, COLOR_IFNAME,
-			   "dev", "%-16s",
-			   ll_index_to_name(ifindex));
+	print_color_string(PRINT_FP, COLOR_IFNAME,
+			   NULL, "%-16s", ifname);
 
-	open_json_array(PRINT_JSON, "xstats");
 	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		const struct bridge_vlan_xstats *vstats = RTA_DATA(i);
 
@@ -494,7 +509,6 @@ static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 
 		print_one_vlan_stats(vstats);
 	}
-	close_json_array(PRINT_ANY, "\n");
 	close_json_object();
 
 }
@@ -623,16 +637,13 @@ static int vlan_show(int argc, char **argv)
 	return 0;
 }
 
-void print_vlan_info(FILE *fp, struct rtattr *tb)
+void print_vlan_info(struct rtattr *tb, int ifindex)
 {
 	struct rtattr *i, *list = tb;
 	int rem = RTA_PAYLOAD(list);
 	__u16 last_vid_start = 0;
 
-	if (!is_json_context())
-		fprintf(fp, "%s", _SL_);
-
-	open_json_array(PRINT_JSON, "vlan");
+	open_vlan_port(ifindex);
 
 	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		struct bridge_vlan_info *vinfo;
@@ -656,9 +667,9 @@ void print_vlan_info(FILE *fp, struct rtattr *tb)
 
 		print_vlan_flags(vinfo->flags);
 		close_json_object();
+		print_string(PRINT_FP, NULL, "%s", _SL_);
 	}
-
-	close_json_array(PRINT_ANY, "\n");
+	close_vlan_port();
 }
 
 int do_vlan(int argc, char **argv)

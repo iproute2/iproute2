@@ -627,7 +627,7 @@ static void print_attrs(struct rtattr *attrs[])
 	if (attrs[MACSEC_SECY_ATTR_CIPHER_SUITE]) {
 		__u64 cid = rta_getattr_u64(attrs[MACSEC_SECY_ATTR_CIPHER_SUITE]);
 
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		print_string(PRINT_ANY, "cipher_suite",
 			     "    cipher suite: %s,", cs_id_to_name(cid));
 	}

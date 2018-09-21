@@ -107,6 +107,10 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr,
 			fprintf(f, "%s ", port_ifname);
 		}
 	}
+
+	if (!show_stats)
+		print_nl();
+
 	close_json_array(PRINT_JSON, NULL);
 }
 
@@ -131,15 +135,8 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 	if (n->nlmsg_type == RTM_DELMDB)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
-
-	if (is_json_context()) {
-		print_int(PRINT_JSON, "index", NULL, ifindex);
-		print_string(PRINT_JSON, "dev", NULL, dev);
-	} else {
-		fprintf(f, "%u: ", ifindex);
-		color_fprintf(f, COLOR_IFNAME, "%s ", dev);
-	}
-
+	print_int(PRINT_ANY, "index", "%u: ", ifindex);
+	print_color_string(PRINT_ANY, COLOR_IFNAME, "dev", "%s ", dev);
 	print_string(PRINT_ANY, "port", " %s ",
 		     ll_index_to_name(e->ifindex));
 
@@ -164,6 +161,8 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 		print_string(PRINT_ANY, "timer", " %s",
 			     format_timer(timer));
 	}
+
+	print_nl();
 	close_json_object();
 }
 
@@ -208,19 +207,19 @@ static void print_router_entries(FILE *fp, struct nlmsghdr *n,
 	} else {
 		struct rtattr *i = RTA_DATA(router);
 		uint32_t *port_ifindex = RTA_DATA(i);
+		const char *port_name = ll_index_to_name(*port_ifindex);
 
 		if (is_json_context()) {
 			open_json_array(PRINT_JSON, brifname);
 			open_json_object(NULL);
 
 			print_string(PRINT_JSON, "port", NULL,
-				     ll_index_to_name(*port_ifindex));
+				     port_name);
 			close_json_object();
 			close_json_array(PRINT_JSON, NULL);
 		} else {
 			fprintf(fp, "router port dev %s master %s\n",
-				ll_index_to_name(*port_ifindex),
-				brifname);
+				port_name, brifname);
 		}
 	}
 	close_json_array(PRINT_JSON, NULL);

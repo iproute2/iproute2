@@ -240,7 +240,7 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 		const char *kind
 			= rta_getattr_str(linkinfo[IFLA_INFO_KIND]);
 
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		print_string(PRINT_ANY, "info_kind", "    %s ", kind);
 
 		lu = get_link_kind(kind);
@@ -269,7 +269,7 @@ static void print_linktype(FILE *fp, struct rtattr *tb)
 		const char *slave_kind
 			= rta_getattr_str(linkinfo[IFLA_INFO_SLAVE_KIND]);
 
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		print_string(PRINT_ANY,
 			     "info_slave_kind",
 			     "    %s_slave ",
@@ -765,7 +765,7 @@ static void print_link_stats(FILE *fp, struct nlmsghdr *n)
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi),
 		     n->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi)));
 	__print_link_stats(fp, tb);
-	fprintf(fp, "%s", _SL_);
+	print_nl();
 }
 
 static int print_linkinfo_brief(FILE *fp, const char *name,
@@ -929,7 +929,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		print_link_event(fp, rta_getattr_u32(tb[IFLA_EVENT]));
 
 	if (!filter.family || filter.family == AF_PACKET || show_details) {
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		print_string(PRINT_ANY,
 			     "link_type",
 			     "    link/%s ",
@@ -1090,7 +1090,7 @@ int print_linkinfo(const struct sockaddr_nl *who,
 		xdp_dump(fp, tb[IFLA_XDP], true, true);
 
 	if (do_link && show_stats) {
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		__print_link_stats(fp, tb);
 	}
 
@@ -1418,7 +1418,7 @@ int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	if (rta_tb[IFA_CACHEINFO]) {
 		struct ifa_cacheinfo *ci = RTA_DATA(rta_tb[IFA_CACHEINFO]);
 
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		print_string(PRINT_FP, NULL, "       valid_lft ", NULL);
 
 		if (ci->ifa_valid == INFINITY_LIFE_TIME) {

@@ -30,7 +30,6 @@ int json;
 int timestamp;
 char *batch_file;
 int force;
-const char *_SL_;
 
 static void usage(void) __attribute__((noreturn));
 

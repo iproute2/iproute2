@@ -6,10 +6,9 @@
 #define MDB_RTR_RTA(r) \
 		((struct rtattr *)(((char *)(r)) + RTA_ALIGN(sizeof(__u32))))
 
-void print_vlan_info(FILE *fp, struct rtattr *tb);
+void print_vlan_info(struct rtattr *tb, int ifindex);
 int print_linkinfo(const struct sockaddr_nl *who,
-			  struct nlmsghdr *n,
-			  void *arg);
+		   struct nlmsghdr *n, void *arg);
 int print_fdb(const struct sockaddr_nl *who,
 		     struct nlmsghdr *n, void *arg);
 int print_mdb(const struct sockaddr_nl *who,

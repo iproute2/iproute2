@@ -43,7 +43,6 @@ bool use_names;
 int json;
 int color;
 int oneline;
-const char *_SL_;
 
 static char *conf_file;
 

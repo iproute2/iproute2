@@ -167,8 +167,7 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 			explain();
 			return -1;
 		} else {
-			fprintf(stderr, "Unknown argument\n");
-			return -1;
+			invarg("unknown argument", *argv);
 		}
 		argc--; argv++;
 	}

@@ -41,6 +41,8 @@ void close_json_object(void);
 void open_json_array(enum output_type type, const char *delim);
 void close_json_array(enum output_type type, const char *delim);
 
+void print_nl(void);
+
 #define _PRINT_FUNC(type_name, type)					\
 	void print_color_##type_name(enum output_type t,		\
 				     enum color_attr color,		\
