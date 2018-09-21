@@ -77,6 +77,7 @@ help:
 	@echo " clean               - remove products of build"
 	@echo " distclean           - remove configuration and build"
 	@echo " install             - install binaries on local machine"
+	@echo " check               - run tests"
 	@echo " cscope              - build cscope database"
 	@echo " snapshot            - generate version number header"
 	@echo ""
@@ -117,6 +118,9 @@ clobber:
 	rm -f config.mk cscope.*
 
 distclean: clobber
+
+check:
+	cd testsuite && $(MAKE) && $(MAKE) alltests
 
 cscope:
 	cscope -b -q -R -Iinclude -sip -slib -smisc -snetem -stc
