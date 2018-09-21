@@ -82,6 +82,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u64 attrs = 0;
 	bool set_op = (n->nlmsg_type == RTM_NEWLINK &&
 		       !(n->nlmsg_flags & NLM_F_CREATE));
+	bool selected_family = false;
 
 	saddr.family = daddr.family = AF_UNSPEC;
 
@@ -356,12 +357,26 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		int type = (saddr.family == AF_INET) ? IFLA_VXLAN_LOCAL
 						     : IFLA_VXLAN_LOCAL6;
 		addattr_l(n, 1024, type, saddr.data, saddr.bytelen);
+		selected_family = true;
 	}
 
 	if (is_addrtype_inet(&daddr)) {
 		int type = (daddr.family == AF_INET) ? IFLA_VXLAN_GROUP
 						     : IFLA_VXLAN_GROUP6;
 		addattr_l(n, 1024, type, daddr.data, daddr.bytelen);
+		selected_family = true;
+	}
+
+	if (!selected_family) {
+		if (preferred_family == AF_INET) {
+			get_addr(&daddr, "default", AF_INET);
+			addattr_l(n, 1024, IFLA_VXLAN_GROUP,
+				  daddr.data, daddr.bytelen);
+		} else if (preferred_family == AF_INET6) {
+			get_addr(&daddr, "default", AF_INET6);
+			addattr_l(n, 1024, IFLA_VXLAN_GROUP6,
+				  daddr.data, daddr.bytelen);
+		}
 	}
 
 	if (!set_op || VXLAN_ATTRSET(attrs, IFLA_VXLAN_LEARNING))
