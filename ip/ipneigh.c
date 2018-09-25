@@ -139,6 +139,8 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 			dst_ok = 1;
 			dev_ok = 1;
 			req.ndm.ndm_flags |= NTF_PROXY;
+		} else if (strcmp(*argv, "router") == 0) {
+			req.ndm.ndm_flags |= NTF_ROUTER;
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			dev = *argv;
