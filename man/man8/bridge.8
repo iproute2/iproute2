@@ -63,7 +63,7 @@ bridge \- show / manipulate bridge addresses and devices
 .B dev
 .IR DEV " { "
 .BR local " | " static " | " dynamic " } [ "
-.BR self " ] [ " master " ] [ " router " ] [ " use " ] [ " extern_learn " ] [ "
+.BR self " ] [ " master " ] [ " router " ] [ " use " ] [ " extern_learn " ] [ " sticky " ] [ "
 .B dst
 .IR IPADDR " ] [ "
 .B vni
@@ -446,6 +446,10 @@ indicate to the kernel that the fdb entry is in use.
 - this entry was learned externally. This option can be used to
 indicate to the kernel that an entry was hardware or user-space
 controller learnt dynamic entry. Kernel will not age such an entry.
+.sp
+
+.B sticky
+- this entry will not change its port due to learning.
 .sp
 
 .in -8
