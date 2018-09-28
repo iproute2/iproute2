@@ -80,6 +80,8 @@ flower \- flow based traffic control filter
 .IR TOS " | "
 .B enc_ttl
 .IR TTL " | "
+.B geneve_opts
+.IR OPTIONS " | "
 .BR ip_flags
 .IR IP_FLAGS
 .SH DESCRIPTION
@@ -283,6 +285,8 @@ bits is assumed.
 .BI enc_tos " NUMBER"
 .TQ
 .BI enc_ttl " NUMBER"
+.TQ
+.BI geneve_opts " OPTIONS"
 Match on IP tunnel metadata. Key id
 .I NUMBER
 is a 32 bit tunnel key id (e.g. VNI for VXLAN tunnel).
@@ -295,7 +299,14 @@ is a 16 bit UDP dst port. Tos
 .I NUMBER
 is an 8 bit tos (dscp+ecn) value, ttl
 .I NUMBER
-is an 8 bit time-to-live value.
+is an 8 bit time-to-live value. geneve_opts
+.I OPTIONS
+must be a valid list of comma-separated geneve options where each option
+consists of a key optionally followed by a slash and corresponding mask. If
+the masks is missing, \fBtc\fR assumes a full-length match. The options can
+be described in the form CLASS:TYPE:DATA/CLASS_MASK:TYPE_MASK:DATA_MASK,
+where CLASS is represented as a 16bit hexadecimal value, TYPE as an 8bit
+hexadecimal value and DATA as a variable length hexadecimal value.
 .TP
 .BI ip_flags " IP_FLAGS"
 .I IP_FLAGS

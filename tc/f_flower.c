@@ -79,6 +79,7 @@ static void explain(void)
 		"                       enc_key_id [ KEY-ID ] |\n"
 		"                       enc_tos MASKED-IP_TOS |\n"
 		"                       enc_ttl MASKED-IP_TTL |\n"
+		"                       geneve_opts MASKED-OPTIONS |\n"
 		"                       ip_flags IP-FLAGS | \n"
 		"                       enc_dst_port [ port_number ] }\n"
 		"       FILTERID := X:Y:Z\n"
@@ -589,6 +590,179 @@ static int flower_parse_enc_port(char *str, int type, struct nlmsghdr *n)
 	return 0;
 }
 
+static int flower_parse_geneve_opts(char *str, struct nlmsghdr *n)
+{
+	struct rtattr *nest;
+	char *token;
+	int i, err;
+
+	nest = addattr_nest(n, MAX_MSG, TCA_FLOWER_KEY_ENC_OPTS_GENEVE);
+
+	i = 1;
+	token = strsep(&str, ":");
+	while (token) {
+		switch (i) {
+		case TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS:
+		{
+			__be16 opt_class;
+
+			if (!strlen(token))
+				break;
+			err = get_be16(&opt_class, token, 16);
+			if (err)
+				return err;
+
+			addattr16(n, MAX_MSG, i, opt_class);
+			break;
+		}
+		case TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE:
+		{
+			__u8 opt_type;
+
+			if (!strlen(token))
+				break;
+			err = get_u8(&opt_type, token, 16);
+			if (err)
+				return err;
+
+			addattr8(n, MAX_MSG, i, opt_type);
+			break;
+		}
+		case TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA:
+		{
+			size_t token_len = strlen(token);
+			__u8 *opts;
+
+			if (!token_len)
+				break;
+			opts = malloc(token_len / 2);
+			if (!opts)
+				return -1;
+			if (hex2mem(token, opts, token_len / 2) < 0) {
+				free(opts);
+				return -1;
+			}
+			addattr_l(n, MAX_MSG, i, opts, token_len / 2);
+			free(opts);
+
+			break;
+		}
+		default:
+			fprintf(stderr, "Unknown \"geneve_opts\" type\n");
+			return -1;
+		}
+
+		token = strsep(&str, ":");
+		i++;
+	}
+	addattr_nest_end(n, nest);
+
+	return 0;
+}
+
+static int flower_parse_enc_opt_part(char *str, struct nlmsghdr *n)
+{
+	char *token;
+	int err;
+
+	token = strsep(&str, ",");
+	while (token) {
+		err = flower_parse_geneve_opts(token, n);
+		if (err)
+			return err;
+
+		token = strsep(&str, ",");
+	}
+
+	return 0;
+}
+
+static int flower_check_enc_opt_key(char *key)
+{
+	int key_len, col_cnt = 0;
+
+	key_len = strlen(key);
+	while ((key = strchr(key, ':'))) {
+		if (strlen(key) == key_len)
+			return -1;
+
+		key_len = strlen(key) - 1;
+		col_cnt++;
+		key++;
+	}
+
+	if (col_cnt != 2 || !key_len)
+		return -1;
+
+	return 0;
+}
+
+static int flower_parse_enc_opts(char *str, struct nlmsghdr *n)
+{
+	char key[XATTR_SIZE_MAX], mask[XATTR_SIZE_MAX];
+	int data_len, key_len, mask_len, err;
+	char *token, *slash;
+	struct rtattr *nest;
+
+	key_len = 0;
+	mask_len = 0;
+	token = strsep(&str, ",");
+	while (token) {
+		slash = strchr(token, '/');
+		if (slash)
+			*slash = '\0';
+
+		if ((key_len + strlen(token) > XATTR_SIZE_MAX) ||
+		    flower_check_enc_opt_key(token))
+			return -1;
+
+		strcpy(&key[key_len], token);
+		key_len += strlen(token) + 1;
+		key[key_len - 1] = ',';
+
+		if (!slash) {
+			/* Pad out mask when not provided */
+			if (mask_len + strlen(token) > XATTR_SIZE_MAX)
+				return -1;
+
+			data_len = strlen(rindex(token, ':'));
+			sprintf(&mask[mask_len], "ffff:ff:");
+			mask_len += 8;
+			memset(&mask[mask_len], 'f', data_len - 1);
+			mask_len += data_len;
+			mask[mask_len - 1] = ',';
+			token = strsep(&str, ",");
+			continue;
+		}
+
+		if (mask_len + strlen(slash + 1) > XATTR_SIZE_MAX)
+			return -1;
+
+		strcpy(&mask[mask_len], slash + 1);
+		mask_len += strlen(slash + 1) + 1;
+		mask[mask_len - 1] = ',';
+
+		*slash = '/';
+		token = strsep(&str, ",");
+	}
+	key[key_len - 1] = '\0';
+	mask[mask_len - 1] = '\0';
+
+	nest = addattr_nest(n, MAX_MSG, TCA_FLOWER_KEY_ENC_OPTS);
+	err = flower_parse_enc_opt_part(key, n);
+	if (err)
+		return err;
+	addattr_nest_end(n, nest);
+
+	nest = addattr_nest(n, MAX_MSG, TCA_FLOWER_KEY_ENC_OPTS_MASK);
+	err = flower_parse_enc_opt_part(mask, n);
+	if (err)
+		return err;
+	addattr_nest_end(n, nest);
+
+	return 0;
+}
+
 static int flower_parse_opt(struct filter_util *qu, char *handle,
 			    int argc, char **argv, struct nlmsghdr *n)
 {
@@ -1041,6 +1215,13 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "Illegal \"enc_ttl\"\n");
 				return -1;
 			}
+		} else if (matches(*argv, "geneve_opts") == 0) {
+			NEXT_ARG();
+			ret = flower_parse_enc_opts(*argv, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"geneve_opts\"\n");
+				return -1;
+			}
 		} else if (matches(*argv, "action") == 0) {
 			NEXT_ARG();
 			ret = parse_action(&argc, &argv, TCA_FLOWER_ACT, n);
@@ -1340,6 +1521,105 @@ static void flower_print_key_id(const char *name, struct rtattr *attr)
 	print_uint(PRINT_ANY, name, namefrm, rta_getattr_be32(attr));
 }
 
+static void flower_print_geneve_opts(const char *name, struct rtattr *attr,
+				     char *strbuf)
+{
+	struct rtattr *tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX + 1];
+	int ii, data_len, offset = 0, slen = 0;
+	struct rtattr *i = RTA_DATA(attr);
+	int rem = RTA_PAYLOAD(attr);
+	__u8 type, data_r[rem];
+	char data[rem * 2 + 1];
+	__u16 class;
+
+	open_json_array(PRINT_JSON, name);
+	while (rem) {
+		parse_rtattr(tb, TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX, i, rem);
+		class = rta_getattr_be16(tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS]);
+		type = rta_getattr_u8(tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE]);
+		data_len = RTA_PAYLOAD(tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA]);
+		hexstring_n2a(RTA_DATA(tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA]),
+			      data_len, data, sizeof(data));
+		hex2mem(data, data_r, data_len);
+		offset += data_len + 20;
+		rem -= data_len + 20;
+		i = RTA_DATA(attr) + offset;
+
+		open_json_object(NULL);
+		print_uint(PRINT_JSON, "class", NULL, class);
+		print_uint(PRINT_JSON, "type", NULL, type);
+		open_json_array(PRINT_JSON, "data");
+		for (ii = 0; ii < data_len; ii++)
+			print_uint(PRINT_JSON, NULL, NULL, data_r[ii]);
+		close_json_array(PRINT_JSON, "data");
+		close_json_object();
+
+		slen += sprintf(strbuf + slen, "%04x:%02x:%s",
+				class, type, data);
+		if (rem)
+			slen += sprintf(strbuf + slen, ",");
+	}
+	close_json_array(PRINT_JSON, name);
+}
+
+static void flower_print_geneve_parts(const char *name, struct rtattr *attr,
+				      char *key, char *mask)
+{
+	char *namefrm = "\n  geneve_opt %s";
+	char *key_token, *mask_token, *out;
+	int len;
+
+	out = malloc(RTA_PAYLOAD(attr) * 4 + 3);
+	if (!out)
+		return;
+
+	len = 0;
+	key_token = strsep(&key, ",");
+	mask_token = strsep(&mask, ",");
+	while (key_token) {
+		len += sprintf(&out[len], "%s/%s,", key_token, mask_token);
+		mask_token = strsep(&mask, ",");
+		key_token = strsep(&key, ",");
+	}
+
+	out[len - 1] = '\0';
+	print_string(PRINT_FP, name, namefrm, out);
+	free(out);
+}
+
+static void flower_print_enc_opts(const char *name, struct rtattr *attr,
+				  struct rtattr *mask_attr)
+{
+	struct rtattr *key_tb[TCA_FLOWER_KEY_ENC_OPTS_MAX + 1];
+	struct rtattr *msk_tb[TCA_FLOWER_KEY_ENC_OPTS_MAX + 1];
+	char *key, *msk;
+
+	if (!attr)
+		return;
+
+	key = malloc(RTA_PAYLOAD(attr) * 2 + 1);
+	if (!key)
+		return;
+
+	msk = malloc(RTA_PAYLOAD(attr) * 2 + 1);
+	if (!msk)
+		goto err_key_free;
+
+	parse_rtattr_nested(key_tb, TCA_FLOWER_KEY_ENC_OPTS_MAX, attr);
+	flower_print_geneve_opts("geneve_opt_key",
+				 key_tb[TCA_FLOWER_KEY_ENC_OPTS_GENEVE], key);
+
+	parse_rtattr_nested(msk_tb, TCA_FLOWER_KEY_ENC_OPTS_MAX, mask_attr);
+	flower_print_geneve_opts("geneve_opt_mask",
+				 msk_tb[TCA_FLOWER_KEY_ENC_OPTS_GENEVE], msk);
+
+	flower_print_geneve_parts(name, attr, key, msk);
+
+	free(msk);
+err_key_free:
+	free(key);
+}
+
 static void flower_print_masked_u8(const char *name, struct rtattr *attr,
 				   struct rtattr *mask_attr,
 				   const char *(*value_to_str)(__u8 value))
@@ -1570,6 +1850,8 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			    tb[TCA_FLOWER_KEY_ENC_IP_TOS_MASK]);
 	flower_print_ip_attr("enc_ttl", tb[TCA_FLOWER_KEY_ENC_IP_TTL],
 			    tb[TCA_FLOWER_KEY_ENC_IP_TTL_MASK]);
+	flower_print_enc_opts("enc_opt", tb[TCA_FLOWER_KEY_ENC_OPTS],
+			      tb[TCA_FLOWER_KEY_ENC_OPTS_MASK]);
 
 	flower_print_matching_flags("ip_flags", FLOWER_IP_FLAGS,
 				    tb[TCA_FLOWER_KEY_FLAGS],
