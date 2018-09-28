@@ -159,9 +159,9 @@ get_failed:
 
 	addattr32(n, 1024, IFLA_VTI_IKEY, ikey);
 	addattr32(n, 1024, IFLA_VTI_OKEY, okey);
-	if (is_addrtype_inet(&saddr))
+	if (is_addrtype_inet_not_unspec(&saddr))
 		addattr_l(n, 1024, IFLA_VTI_LOCAL, saddr.data, saddr.bytelen);
-	if (is_addrtype_inet(&daddr))
+	if (is_addrtype_inet_not_unspec(&daddr))
 		addattr_l(n, 1024, IFLA_VTI_REMOTE, daddr.data, daddr.bytelen);
 	addattr32(n, 1024, IFLA_VTI_FWMARK, fwmark);
 	if (link)

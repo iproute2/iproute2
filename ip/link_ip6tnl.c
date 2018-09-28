@@ -320,11 +320,11 @@ get_failed:
 		return 0;
 	}
 
-	if (is_addrtype_inet(&saddr)) {
+	if (is_addrtype_inet_not_unspec(&saddr)) {
 		addattr_l(n, 1024, IFLA_IPTUN_LOCAL,
 			  saddr.data, saddr.bytelen);
 	}
-	if (is_addrtype_inet(&daddr)) {
+	if (is_addrtype_inet_not_unspec(&daddr)) {
 		addattr_l(n, 1024, IFLA_IPTUN_REMOTE,
 			  daddr.data, daddr.bytelen);
 	}

@@ -71,6 +71,19 @@ all: config.mk
 	for i in $(SUBDIRS); \
 	do echo; echo $$i; $(MAKE) $(MFLAGS) -C $$i; done
 
+help:
+	@echo "Make Targets:"
+	@echo " all                 - build binaries"
+	@echo " clean               - remove products of build"
+	@echo " distclean           - remove configuration and build"
+	@echo " install             - install binaries on local machine"
+	@echo " check               - run tests"
+	@echo " cscope              - build cscope database"
+	@echo " snapshot            - generate version number header"
+	@echo ""
+	@echo "Make Arguments:"
+	@echo " V=[0|1]             - set build verbosity level"
+
 config.mk:
 	sh configure $(KERNEL_INCLUDE)
 
@@ -105,6 +118,9 @@ clobber:
 	rm -f config.mk cscope.*
 
 distclean: clobber
+
+check:
+	cd testsuite && $(MAKE) && $(MAKE) alltests
 
 cscope:
 	cscope -b -q -R -Iinclude -sip -slib -smisc -snetem -stc

@@ -666,17 +666,20 @@ static int __rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iov,
 				if (!err->error)
 					/* check messages from kernel */
 					nl_dump_ext_ack(h, errfn);
+				else {
+					errno = -err->error;
 
-				if (rtnl->proto != NETLINK_SOCK_DIAG &&
-				    show_rtnl_err)
-					rtnl_talk_error(h, err, errfn);
+					if (rtnl->proto != NETLINK_SOCK_DIAG &&
+					    show_rtnl_err)
+						rtnl_talk_error(h, err, errfn);
+				}
 
-				errno = -err->error;
 				if (answer)
 					*answer = (struct nlmsghdr *)buf;
 				else
 					free(buf);
-				return -i;
+
+				return err->error ? -i : 0;
 			}
 
 			if (answer) {
