@@ -49,6 +49,8 @@ void rtnl_close(struct rtnl_handle *rth);
 
 int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
+int rtnl_addrlbldump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
 int rtnl_routedump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
 

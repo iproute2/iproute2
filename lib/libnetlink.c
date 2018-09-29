@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/uio.h>
+#include <linux/if_addrlabel.h>
 
 #include "libnetlink.h"
 
@@ -210,6 +211,22 @@ int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
 		.ifm.ifa_family = family,
+	};
+
+	return send(rth->fd, &req, sizeof(req), 0);
+}
+
+int rtnl_addrlbldump_req(struct rtnl_handle *rth, int family)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct ifaddrlblmsg ifal;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_type = RTM_GETADDRLABEL,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.ifal.ifal_family = family,
 	};
 
 	return send(rth->fd, &req, sizeof(req), 0);
