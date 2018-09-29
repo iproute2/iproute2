@@ -218,7 +218,7 @@ void ll_init_map(struct rtnl_handle *rth)
 	if (initialized)
 		return;
 
-	if (rtnl_wilddump_request(rth, AF_UNSPEC, RTM_GETLINK) < 0) {
+	if (rtnl_linkdump_req(rth, AF_UNSPEC) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}

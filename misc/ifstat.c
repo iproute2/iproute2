@@ -214,7 +214,7 @@ static void load_info(void)
 			exit(1);
 		}
 	} else {
-		if (rtnl_wilddump_request(&rth, AF_INET, RTM_GETLINK) < 0) {
+		if (rtnl_linkdump_req(&rth, AF_INET) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}

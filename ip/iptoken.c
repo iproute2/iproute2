@@ -109,7 +109,7 @@ static int iptoken_list(int argc, char **argv)
 		argc--; argv++;
 	}
 
-	if (rtnl_wilddump_request(&rth, af, RTM_GETLINK) < 0) {
+	if (rtnl_linkdump_req(&rth, af) < 0) {
 		perror("Cannot send dump request");
 		return -1;
 	}

@@ -575,7 +575,7 @@ static int vlan_show(int argc, char **argv)
 	new_json_obj(json);
 
 	if (!show_stats) {
-		if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
+		if (rtnl_linkdump_req_filter(&rth, PF_BRIDGE,
 					     (compress_vlans ?
 					      RTEXT_FILTER_BRVLAN_COMPRESSED :
 					      RTEXT_FILTER_BRVLAN)) < 0) {

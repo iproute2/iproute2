@@ -346,12 +346,12 @@ int rtnl_nsiddump_req(struct rtnl_handle *rth, int family)
 	return send(rth->fd, &req, sizeof(req), 0);
 }
 
-int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
+int rtnl_linkdump_req(struct rtnl_handle *rth, int family)
 {
-	return rtnl_wilddump_req_filter(rth, family, type, RTEXT_FILTER_VF);
+	return rtnl_linkdump_req_filter(rth, family, RTEXT_FILTER_VF);
 }
 
-int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int family, int type,
+int rtnl_linkdump_req_filter(struct rtnl_handle *rth, int family,
 			    __u32 filt_mask)
 {
 	struct {
@@ -362,7 +362,7 @@ int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int family, int type,
 		__u32 ext_filter_mask;
 	} req = {
 		.nlh.nlmsg_len = sizeof(req),
-		.nlh.nlmsg_type = type,
+		.nlh.nlmsg_type = RTM_GETLINK,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
 		.ifm.ifi_family = family,
@@ -374,7 +374,7 @@ int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int family, int type,
 	return send(rth->fd, &req, sizeof(req), 0);
 }
 
-int rtnl_wilddump_req_filter_fn(struct rtnl_handle *rth, int family, int type,
+int rtnl_linkdump_req_filter_fn(struct rtnl_handle *rth, int family,
 				req_filter_fn_t filter_fn)
 {
 	struct {
@@ -383,7 +383,7 @@ int rtnl_wilddump_req_filter_fn(struct rtnl_handle *rth, int family, int type,
 		char buf[1024];
 	} req = {
 		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
-		.nlh.nlmsg_type = type,
+		.nlh.nlmsg_type = RTM_GETLINK,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
 		.ifm.ifi_family = family,

@@ -502,7 +502,7 @@ static int brlink_show(int argc, char **argv)
 	}
 
 	if (show_details) {
-		if (rtnl_wilddump_req_filter(&rth, PF_BRIDGE, RTM_GETLINK,
+		if (rtnl_linkdump_req_filter(&rth, PF_BRIDGE,
 					     (compress_vlans ?
 					      RTEXT_FILTER_BRVLAN_COMPRESSED :
 					      RTEXT_FILTER_BRVLAN)) < 0) {
@@ -510,7 +510,7 @@ static int brlink_show(int argc, char **argv)
 			exit(1);
 		}
 	} else {
-		if (rtnl_wilddump_request(&rth, PF_BRIDGE, RTM_GETLINK) < 0) {
+		if (rtnl_linkdump_req(&rth, PF_BRIDGE) < 0) {
 			perror("Cannon send dump request");
 			exit(1);
 		}

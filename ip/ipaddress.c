@@ -1778,7 +1778,7 @@ static int iplink_filter_req(struct nlmsghdr *nlh, int reqlen)
 int ip_linkaddr_list(int family, req_filter_fn_t filter_fn,
 		     struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 {
-	if (rtnl_wilddump_req_filter_fn(&rth, preferred_family, RTM_GETLINK,
+	if (rtnl_linkdump_req_filter_fn(&rth, preferred_family,
 					filter_fn) < 0) {
 		perror("Cannot send dump request");
 		return 1;
@@ -2031,7 +2031,7 @@ void ipaddr_get_vf_rate(int vfnum, int *min, int *max, const char *dev)
 		exit(1);
 	}
 
-	if (rtnl_wilddump_request(&rth, AF_UNSPEC, RTM_GETLINK) < 0) {
+	if (rtnl_linkdump_req(&rth, AF_UNSPEC) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
