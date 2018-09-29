@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/uio.h>
+#include <linux/fib_rules.h>
 #include <linux/if_addrlabel.h>
 #include <linux/if_bridge.h>
 
@@ -244,6 +245,22 @@ int rtnl_routedump_req(struct rtnl_handle *rth, int family)
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
 		.rtm.rtm_family = family,
+	};
+
+	return send(rth->fd, &req, sizeof(req), 0);
+}
+
+int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct fib_rule_hdr frh;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_type = RTM_GETRULE,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.frh.family = family
 	};
 
 	return send(rth->fd, &req, sizeof(req), 0);

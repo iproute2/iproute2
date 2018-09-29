@@ -615,7 +615,7 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 		argc--; argv++;
 	}
 
-	if (rtnl_wilddump_request(&rth, af, RTM_GETRULE) < 0) {
+	if (rtnl_ruledump_req(&rth, af) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
