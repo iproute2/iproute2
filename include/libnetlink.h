@@ -57,6 +57,8 @@ int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
 int rtnl_neighdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
+int rtnl_neightbldump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
 int rtnl_mdbdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
 int rtnl_netconfdump_req(struct rtnl_handle *rth, int family)
