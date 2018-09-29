@@ -1601,9 +1601,7 @@ static int iplink_afstats(int argc, char **argv)
 		}
 	}
 
-	if (rtnl_wilddump_stats_req_filter(&rth, AF_UNSPEC,
-					   RTM_GETSTATS,
-					   filt_mask) < 0) {
+	if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask) < 0) {
 		perror("Cannont send dump request");
 		return 1;
 	}
