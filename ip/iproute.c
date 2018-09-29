@@ -1645,7 +1645,7 @@ static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
 	filter.flushe = sizeof(flushb);
 
 	for (;;) {
-		if (rtnl_wilddump_request(&rth, do_ipv6, RTM_GETROUTE) < 0) {
+		if (rtnl_routedump_req(&rth, do_ipv6) < 0) {
 			perror("Cannot send dump request");
 			return -2;
 		}
@@ -1891,7 +1891,7 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 		return iproute_flush(do_ipv6, filter_fn);
 
 	if (!filter.cloned) {
-		if (rtnl_wilddump_request(&rth, do_ipv6, RTM_GETROUTE) < 0) {
+		if (rtnl_routedump_req(&rth, do_ipv6) < 0) {
 			perror("Cannot send dump request");
 			return -2;
 		}

@@ -283,7 +283,7 @@ static int mroute_list(int argc, char **argv)
 		filter.iif = idx;
 	}
 
-	if (rtnl_wilddump_request(&rth, filter.af, RTM_GETROUTE) < 0) {
+	if (rtnl_routedump_req(&rth, filter.af) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
