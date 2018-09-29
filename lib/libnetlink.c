@@ -199,6 +199,22 @@ int rtnl_open(struct rtnl_handle *rth, unsigned int subscriptions)
 	return rtnl_open_byproto(rth, subscriptions, NETLINK_ROUTE);
 }
 
+int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct ifaddrmsg ifm;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_type = RTM_GETADDR,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.ifm.ifa_family = family,
+	};
+
+	return send(rth->fd, &req, sizeof(req), 0);
+}
+
 int rtnl_wilddump_request(struct rtnl_handle *rth, int family, int type)
 {
 	return rtnl_wilddump_req_filter(rth, family, type, RTEXT_FILTER_VF);

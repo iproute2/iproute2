@@ -46,6 +46,10 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 	__attribute__((warn_unused_result));
 
 void rtnl_close(struct rtnl_handle *rth);
+
+int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+
 int rtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type)
 	__attribute__((warn_unused_result));
 int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int fam, int type,
