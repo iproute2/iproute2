@@ -293,7 +293,7 @@ static int mdb_show(int argc, char **argv)
 	new_json_obj(json);
 
 	/* get mdb entries*/
-	if (rtnl_wilddump_request(&rth, PF_BRIDGE, RTM_GETMDB) < 0) {
+	if (rtnl_mdbdump_req(&rth, PF_BRIDGE) < 0) {
 		perror("Cannot send dump request");
 		return -1;
 	}

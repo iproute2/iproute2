@@ -23,6 +23,7 @@
 #include <time.h>
 #include <sys/uio.h>
 #include <linux/if_addrlabel.h>
+#include <linux/if_bridge.h>
 
 #include "libnetlink.h"
 
@@ -243,6 +244,22 @@ int rtnl_routedump_req(struct rtnl_handle *rth, int family)
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
 		.rtm.rtm_family = family,
+	};
+
+	return send(rth->fd, &req, sizeof(req), 0);
+}
+
+int rtnl_mdbdump_req(struct rtnl_handle *rth, int family)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct br_port_msg bpm;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_type = RTM_GETMDB,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.bpm.family = family,
 	};
 
 	return send(rth->fd, &req, sizeof(req), 0);

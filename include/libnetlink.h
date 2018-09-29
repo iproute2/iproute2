@@ -53,6 +53,8 @@ int rtnl_addrlbldump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
 int rtnl_routedump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
+int rtnl_mdbdump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
 
 int rtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type)
 	__attribute__((warn_unused_result));
