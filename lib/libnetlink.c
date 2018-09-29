@@ -266,6 +266,22 @@ int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
 	return send(rth->fd, &req, sizeof(req), 0);
 }
 
+int rtnl_neighdump_req(struct rtnl_handle *rth, int family)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct ndmsg ndm;
+	} req = {
+		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_type = RTM_GETNEIGH,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.ndm.ndm_family = family,
+	};
+
+	return send(rth->fd, &req, sizeof(req), 0);
+}
+
 int rtnl_mdbdump_req(struct rtnl_handle *rth, int family)
 {
 	struct {
