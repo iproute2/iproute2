@@ -23,7 +23,8 @@ ip-neighbour \- neighbour/arp tables management.
 .B proxy
 .IR ADDR " } [ "
 .B  dev
-.IR DEV " ]"
+.IR DEV " ] [ "
+.BR router " ] "
 
 .ti -8
 .BR "ip neigh" " { " show " | " flush " } [ " proxy " ] [ " to
@@ -74,6 +75,14 @@ the protocol address of the neighbour. It is either an IPv4 or IPv6 address.
 .TP
 .BI dev " NAME"
 the interface to which this neighbour is attached.
+
+.TP
+.BI proxy
+indicates whether we are proxying for this neigbour entry
+
+.TP
+.BI router
+indicates whether neigbour is a router
 
 .TP
 .BI lladdr " LLADDRESS"
