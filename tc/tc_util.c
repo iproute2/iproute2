@@ -754,6 +754,44 @@ void print_tm(FILE *f, const struct tcf_t *tm)
 	}
 }
 
+static void print_tcstats_basic_hw(struct rtattr **tbs, char *prefix)
+{
+	struct gnet_stats_basic bs_hw;
+
+	if (!tbs[TCA_STATS_BASIC_HW])
+		return;
+
+	memcpy(&bs_hw, RTA_DATA(tbs[TCA_STATS_BASIC_HW]),
+	       MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC_HW]), sizeof(bs_hw)));
+
+	if (bs_hw.bytes == 0 && bs_hw.packets == 0)
+		return;
+
+	if (tbs[TCA_STATS_BASIC]) {
+		struct gnet_stats_basic bs;
+
+		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]),
+		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]),
+			   sizeof(bs)));
+
+		if (bs.bytes >= bs_hw.bytes && bs.packets >= bs_hw.packets) {
+			print_string(PRINT_FP, NULL, "%s", _SL_);
+			print_string(PRINT_FP, NULL, "%s", prefix);
+			print_lluint(PRINT_ANY, "sw_bytes",
+				     "Sent software %llu bytes",
+				     bs.bytes - bs_hw.bytes);
+			print_uint(PRINT_ANY, "sw_packets", " %u pkt",
+				   bs.packets - bs_hw.packets);
+		}
+	}
+
+	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_string(PRINT_FP, NULL, "%s", prefix);
+	print_lluint(PRINT_ANY, "hw_bytes", "Sent hardware %llu bytes",
+		     bs_hw.bytes);
+	print_uint(PRINT_ANY, "hw_packets", " %u pkt", bs_hw.packets);
+}
+
 void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats)
 {
 	SPRINT_BUF(b1);
@@ -779,6 +817,9 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 			   q.overlimits);
 		print_uint(PRINT_ANY, "requeues", " requeues %u) ", q.requeues);
 	}
+
+	if (tbs[TCA_STATS_BASIC_HW])
+		print_tcstats_basic_hw(tbs, prefix);
 
 	if (tbs[TCA_STATS_RATE_EST64]) {
 		struct gnet_stats_rate_est64 re = {0};
