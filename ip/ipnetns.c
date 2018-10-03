@@ -346,7 +346,7 @@ static int netns_list_id(int argc, char **argv)
 		return -ENOTSUP;
 	}
 
-	if (rtnl_wilddump_request(&rth, AF_UNSPEC, RTM_GETNSID) < 0) {
+	if (rtnl_nsiddump_req(&rth, AF_UNSPEC) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}

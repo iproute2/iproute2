@@ -459,7 +459,7 @@ static int print_tuntap(const struct sockaddr_nl *who,
 
 static int do_show(int argc, char **argv)
 {
-	if (rtnl_wilddump_req_filter_fn(&rth, AF_UNSPEC, RTM_GETLINK,
+	if (rtnl_linkdump_req_filter_fn(&rth, AF_UNSPEC,
 					tuntap_filter_req) < 0) {
 		perror("Cannot send dump request\n");
 		return -1;

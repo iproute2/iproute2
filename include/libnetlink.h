@@ -46,19 +46,37 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 	__attribute__((warn_unused_result));
 
 void rtnl_close(struct rtnl_handle *rth);
-int rtnl_wilddump_request(struct rtnl_handle *rth, int fam, int type)
+
+int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
-int rtnl_wilddump_req_filter(struct rtnl_handle *rth, int fam, int type,
-				    __u32 filt_mask)
+int rtnl_addrlbldump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+int rtnl_routedump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+int rtnl_neighdump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+int rtnl_neightbldump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+int rtnl_mdbdump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+int rtnl_netconfdump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+int rtnl_nsiddump_req(struct rtnl_handle *rth, int family)
+	__attribute__((warn_unused_result));
+
+int rtnl_linkdump_req(struct rtnl_handle *rth, int fam)
+	__attribute__((warn_unused_result));
+int rtnl_linkdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 	__attribute__((warn_unused_result));
 
 typedef int (*req_filter_fn_t)(struct nlmsghdr *nlh, int reqlen);
 
-int rtnl_wilddump_req_filter_fn(struct rtnl_handle *rth, int fam, int type,
+int rtnl_linkdump_req_filter_fn(struct rtnl_handle *rth, int fam,
 				req_filter_fn_t fn)
 	__attribute__((warn_unused_result));
-int rtnl_wilddump_stats_req_filter(struct rtnl_handle *rth, int fam, int type,
-				   __u32 filt_mask)
+int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 	__attribute__((warn_unused_result));
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)

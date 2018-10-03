@@ -203,8 +203,8 @@ static void load_info(void)
 	if (is_extended) {
 		ll_init_map(&rth);
 		filter_mask = IFLA_STATS_FILTER_BIT(filter_type);
-		if (rtnl_wilddump_stats_req_filter(&rth, AF_UNSPEC, RTM_GETSTATS,
-						   filter_mask) < 0) {
+		if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC,
+					      filter_mask) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
@@ -214,7 +214,7 @@ static void load_info(void)
 			exit(1);
 		}
 	} else {
-		if (rtnl_wilddump_request(&rth, AF_INET, RTM_GETLINK) < 0) {
+		if (rtnl_linkdump_req(&rth, AF_INET) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}

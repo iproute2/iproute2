@@ -163,7 +163,7 @@ main(int argc, char **argv)
 	if (rtnl_open(&rth, groups) < 0)
 		exit(1);
 
-	if (rtnl_wilddump_request(&rth, AF_UNSPEC, RTM_GETLINK) < 0) {
+	if (rtnl_linkdump_req(&rth, AF_UNSPEC) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}

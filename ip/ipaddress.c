@@ -1698,7 +1698,7 @@ static int ipaddr_flush(void)
 	filter.flushe = sizeof(flushb);
 
 	while ((max_flush_loops == 0) || (round < max_flush_loops)) {
-		if (rtnl_wilddump_request(&rth, filter.family, RTM_GETADDR) < 0) {
+		if (rtnl_addrdump_req(&rth, filter.family) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
@@ -1778,7 +1778,7 @@ static int iplink_filter_req(struct nlmsghdr *nlh, int reqlen)
 int ip_linkaddr_list(int family, req_filter_fn_t filter_fn,
 		     struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 {
-	if (rtnl_wilddump_req_filter_fn(&rth, preferred_family, RTM_GETLINK,
+	if (rtnl_linkdump_req_filter_fn(&rth, preferred_family,
 					filter_fn) < 0) {
 		perror("Cannot send dump request");
 		return 1;
@@ -1790,7 +1790,7 @@ int ip_linkaddr_list(int family, req_filter_fn_t filter_fn,
 	}
 
 	if (ainfo) {
-		if (rtnl_wilddump_request(&rth, family, RTM_GETADDR) < 0) {
+		if (rtnl_addrdump_req(&rth, family) < 0) {
 			perror("Cannot send dump request");
 			return 1;
 		}
@@ -1915,7 +1915,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		if (ipadd_save_prep())
 			exit(1);
 
-		if (rtnl_wilddump_request(&rth, preferred_family, RTM_GETADDR) < 0) {
+		if (rtnl_addrdump_req(&rth, preferred_family) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
@@ -2031,7 +2031,7 @@ void ipaddr_get_vf_rate(int vfnum, int *min, int *max, const char *dev)
 		exit(1);
 	}
 
-	if (rtnl_wilddump_request(&rth, AF_UNSPEC, RTM_GETLINK) < 0) {
+	if (rtnl_linkdump_req(&rth, AF_UNSPEC) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}

@@ -658,7 +658,7 @@ static int ipntable_show(int argc, char **argv)
 		argc--; argv++;
 	}
 
-	if (rtnl_wilddump_request(&rth, preferred_family, RTM_GETNEIGHTBL) < 0) {
+	if (rtnl_neightbldump_req(&rth, preferred_family) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}

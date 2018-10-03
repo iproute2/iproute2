@@ -392,7 +392,7 @@ static int print_nlmsg_tunnel(const struct sockaddr_nl *who,
 
 int do_tunnels_list(struct tnl_print_nlmsg_info *info)
 {
-	if (rtnl_wilddump_request(&rth, preferred_family, RTM_GETLINK) < 0) {
+	if (rtnl_linkdump_req(&rth, preferred_family) < 0) {
 		perror("Cannot send dump request\n");
 		return -1;
 	}

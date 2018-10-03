@@ -210,8 +210,7 @@ static int do_show(int argc, char **argv)
 	} else {
 		rth.flags = RTNL_HANDLE_F_SUPPRESS_NLERR;
 dump:
-		if (rtnl_wilddump_request(&rth, filter.family,
-					  RTM_GETNETCONF) < 0) {
+		if (rtnl_netconfdump_req(&rth, filter.family) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
