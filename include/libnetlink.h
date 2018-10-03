@@ -47,11 +47,14 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 
 void rtnl_close(struct rtnl_handle *rth);
 
+typedef int (*req_filter_fn_t)(struct nlmsghdr *nlh, int reqlen);
+
 int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
 int rtnl_addrlbldump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
-int rtnl_routedump_req(struct rtnl_handle *rth, int family)
+int rtnl_routedump_req(struct rtnl_handle *rth, int family,
+		       req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
@@ -70,8 +73,6 @@ int rtnl_linkdump_req(struct rtnl_handle *rth, int fam)
 	__attribute__((warn_unused_result));
 int rtnl_linkdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 	__attribute__((warn_unused_result));
-
-typedef int (*req_filter_fn_t)(struct nlmsghdr *nlh, int reqlen);
 
 int rtnl_linkdump_req_filter_fn(struct rtnl_handle *rth, int fam,
 				req_filter_fn_t fn)

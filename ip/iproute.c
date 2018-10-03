@@ -1535,24 +1535,6 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	return 0;
 }
 
-static int rtnl_rtcache_request(struct rtnl_handle *rth, int family)
-{
-	struct {
-		struct nlmsghdr nlh;
-		struct rtmsg rtm;
-	} req = {
-		.nlh.nlmsg_len = sizeof(req),
-		.nlh.nlmsg_type = RTM_GETROUTE,
-		.nlh.nlmsg_flags = NLM_F_ROOT | NLM_F_REQUEST,
-		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
-		.rtm.rtm_family = family,
-		.rtm.rtm_flags = RTM_F_CLONED,
-	};
-	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
-
-	return sendto(rth->fd, (void *)&req, sizeof(req), 0, (struct sockaddr *)&nladdr, sizeof(nladdr));
-}
-
 static int iproute_flush_cache(void)
 {
 #define ROUTE_FLUSH_PATH "/proc/sys/net/ipv4/route/flush"
@@ -1644,7 +1626,7 @@ static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
 	filter.flushe = sizeof(flushb);
 
 	for (;;) {
-		if (rtnl_routedump_req(&rth, do_ipv6) < 0) {
+		if (rtnl_routedump_req(&rth, do_ipv6, NULL) < 0) {
 			perror("Cannot send dump request");
 			return -2;
 		}
@@ -1682,6 +1664,16 @@ static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
 			fflush(stdout);
 		}
 	}
+}
+
+static int iproute_dump_filter(struct nlmsghdr *nlh, int reqlen)
+{
+	struct rtmsg *rtm = NLMSG_DATA(nlh);
+
+	if (filter.cloned)
+		rtm->rtm_flags |= RTM_F_CLONED;
+
+	return 0;
 }
 
 static int iproute_list_flush_or_save(int argc, char **argv, int action)
@@ -1889,16 +1881,9 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 	if (action == IPROUTE_FLUSH)
 		return iproute_flush(do_ipv6, filter_fn);
 
-	if (!filter.cloned) {
-		if (rtnl_routedump_req(&rth, do_ipv6) < 0) {
-			perror("Cannot send dump request");
-			return -2;
-		}
-	} else {
-		if (rtnl_rtcache_request(&rth, do_ipv6) < 0) {
-			perror("Cannot send dump request");
-			return -2;
-		}
+	if (rtnl_routedump_req(&rth, do_ipv6, iproute_dump_filter) < 0) {
+		perror("Cannot send dump request");
+		return -2;
 	}
 
 	new_json_obj(json);
