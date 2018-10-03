@@ -1867,8 +1867,16 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 		if (flags & TCA_CLS_FLAGS_SKIP_SW)
 			print_bool(PRINT_ANY, "skip_sw", "\n  skip_sw", true);
 
-		if (flags & TCA_CLS_FLAGS_IN_HW)
+		if (flags & TCA_CLS_FLAGS_IN_HW) {
 			print_bool(PRINT_ANY, "in_hw", "\n  in_hw", true);
+
+			if (tb[TCA_FLOWER_IN_HW_COUNT]) {
+				__u32 count = rta_getattr_u32(tb[TCA_FLOWER_IN_HW_COUNT]);
+
+				print_uint(PRINT_ANY, "in_hw_count",
+					   " in_hw_count %u", count);
+			}
+		}
 		else if (flags & TCA_CLS_FLAGS_NOT_IN_HW)
 			print_bool(PRINT_ANY, "not_in_hw", "\n  not_in_hw", true);
 	}
