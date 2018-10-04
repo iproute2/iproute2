@@ -67,6 +67,14 @@ static int err_attr_cb(const struct nlattr *attr, void *data)
 	return MNL_CB_OK;
 }
 
+static void print_ext_ack_msg(bool is_err, const char *msg)
+{
+	fprintf(stderr, "%s: %s", is_err ? "Error" : "Warning", msg);
+	if (msg[strlen(msg) - 1] != '.')
+		fprintf(stderr, ".");
+	fprintf(stderr, "\n");
+}
+
 /* dump netlink extended ack error message */
 int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 {
@@ -108,12 +116,29 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	if (msg && *msg != '\0') {
 		bool is_err = !!err->error;
 
-		fprintf(stderr, "%s: %s",
-			is_err ? "Error" : "Warning", msg);
-		if (msg[strlen(msg) - 1] != '.')
-			fprintf(stderr, ".");
-		fprintf(stderr, "\n");
+		print_ext_ack_msg(is_err, msg);
+		return is_err ? 1 : 0;
+	}
 
+	return 0;
+}
+
+static int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
+{
+	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};
+	unsigned int hlen = sizeof(int);
+	const char *msg = NULL;
+
+	if (mnl_attr_parse(nlh, hlen, err_attr_cb, tb) != MNL_CB_OK)
+		return 0;
+
+	if (tb[NLMSGERR_ATTR_MSG])
+		msg = mnl_attr_get_str(tb[NLMSGERR_ATTR_MSG]);
+
+	if (msg && *msg != '\0') {
+		bool is_err = !!error;
+
+		print_ext_ack_msg(is_err, msg);
 		return is_err ? 1 : 0;
 	}
 
@@ -124,6 +149,11 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 
 /* No extended error ack without libmnl */
 int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
+{
+	return 0;
+}
+
+static int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
 {
 	return 0;
 }
@@ -512,6 +542,10 @@ static int rtnl_dump_done(struct nlmsghdr *h)
 	}
 
 	if (len < 0) {
+		/* check for any messages returned from kernel */
+		if (nl_dump_ext_ack_done(h, len))
+			return len;
+
 		errno = -len;
 		switch (errno) {
 		case ENOENT:
