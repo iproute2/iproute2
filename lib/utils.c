@@ -383,6 +383,27 @@ int get_u8(__u8 *val, const char *arg, int base)
 	return 0;
 }
 
+int get_s64(__s64 *val, const char *arg, int base)
+{
+	long res;
+	char *ptr;
+
+	errno = 0;
+
+	if (!arg || !*arg)
+		return -1;
+	res = strtoll(arg, &ptr, base);
+	if (!ptr || ptr == arg || *ptr)
+		return -1;
+	if ((res == LLONG_MIN || res == LLONG_MAX) && errno == ERANGE)
+		return -1;
+	if (res > INT64_MAX || res < INT64_MIN)
+		return -1;
+
+	*val = res;
+	return 0;
+}
+
 int get_s32(__s32 *val, const char *arg, int base)
 {
 	long res;
