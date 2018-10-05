@@ -161,6 +161,15 @@ static int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
 }
 #endif
 
+/* Older kernels may not support strict dump and filtering */
+void rtnl_set_strict_dump(struct rtnl_handle *rth)
+{
+	int one = 1;
+
+	setsockopt(rth->fd, SOL_NETLINK, NETLINK_GET_STRICT_CHK,
+		   &one, sizeof(one));
+}
+
 void rtnl_close(struct rtnl_handle *rth)
 {
 	if (rth->fd >= 0) {

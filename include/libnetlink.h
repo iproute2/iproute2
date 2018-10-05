@@ -46,6 +46,7 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 	__attribute__((warn_unused_result));
 
 void rtnl_close(struct rtnl_handle *rth);
+void rtnl_set_strict_dump(struct rtnl_handle *rth);
 
 typedef int (*req_filter_fn_t)(struct nlmsghdr *nlh, int reqlen);
 
