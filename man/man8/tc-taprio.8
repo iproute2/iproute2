@@ -1,0 +1,142 @@
+.TH TAPRIO 8 "25 Sept 2018" "iproute2" "Linux"
+.SH NAME
+TAPRIO \- Time Aware Priority Shaper
+.SH SYNOPSIS
+.B tc qdisc ... dev
+dev
+.B parent
+classid
+.B [ handle
+major:
+.B ] taprio num_tc
+tcs
+.ti +8
+.B map
+P0 P1 P2 ...
+.B queues
+count1@offset1 count2@offset2 ...
+.ti +8
+.B base-time
+base-time
+.B clockid
+clockid
+.ti +8
+.B sched-entry
+<command 1> <gate mask 1> <interval 1>
+.ti +8
+.B sched-entry
+<command 2> <gate mask 2> <interval 2>
+.ti +8
+.B sched-entry
+<command 3> <gate mask 3> <interval 3>
+.ti +8
+.B sched-entry
+<command N> <gate mask N> <interval N>
+
+.SH DESCRIPTION
+The TAPRIO qdisc implements a simplified version of the scheduling
+state machine defined by IEEE 802.1Q-2018 Section 8.6.9, which allows
+configuration of a sequence of gate states, where each gate state
+allows outgoing traffic for a subset (potentially empty) of traffic
+classes.
+
+How traffic is mapped to different hardware queues is similar to
+.BR mqprio(8)
+and so the
+.B map
+and
+.Q queues
+parameters have the same meaning.
+
+The other parameters specify the schedule, and at what point in time
+it should start (it can behave as the schedule started in the past).
+
+.SH PARAMETERS
+.TP
+num_tc
+.BR
+Number of traffic classes to use. Up to 16 classes supported.
+
+.TP
+map
+.br
+The priority to traffic class map. Maps priorities 0..15 to a specified
+traffic class. See
+.BR mqprio(8)
+for more details.
+
+.TP
+queues
+.br
+Provide count and offset of queue range for each traffic class. In the
+format,
+.B count@offset.
+Queue ranges for each traffic classes cannot overlap and must be a
+contiguous range of queues.
+
+.TP
+base-time
+.br
+Specifies the instant in nanoseconds, using the reference of
+.B clockid,
+defining the time when the schedule starts. If 'base-time' is a time
+in the past, the schedule will start at
+
+base-time + (N * cycle-time)
+
+where N is the smallest integer so the resulting time is greater than
+"now", and "cycle-time" is the sum of all the intervals of the entries
+in the schedule;
+
+.TP
+clockid
+.br
+Specifies the clock to be used by qdisc's internal timer for measuring
+time and scheduling events.
+
+.TP
+sched-entry
+.br
+There may multiple
+.B sched-entry
+parameters in a single schedule. Each one has the
+
+sched-entry <command> <gatemask> <interval>
+
+format. The only supported <command> is "S", which
+means "SetGateStates", following the IEEE 802.1Q-2018 definition
+(Table 8-7). <gate mask> is a bitmask where each bit is a associated
+with a traffic class, so bit 0 (the least significant bit) being "on"
+means that traffic class 0 is "active" for that schedule entry.
+<interval> is a time duration, in nanoseconds, that specifies for how
+long that state defined by <command> and <gate mask> should be held
+before moving to the next entry.
+
+.SH EXAMPLES
+
+The following example shows how an traffic schedule with three traffic
+classes ("num_tc 3"), which are separated different traffic classes,
+we are going to call these TC 0, TC 1 and TC 2. We could read the
+"map" parameter below as: traffic with priority 3 is classified as TC
+0, priority 2 is classified as TC 1 and the rest is classified as TC
+2.
+
+The schedule will start at instant 1528743495910289987 using the
+reference CLOCK_TAI. The schedule is composed of three entries each of
+300us duration.
+
+.EX
+# tc qdisc replace dev eth0 parent root handle 100 taprio \\
+              num_tc 3 \\
+              map 2 2 1 0 2 2 2 2 2 2 2 2 2 2 2 2 \\
+              queues 1@0 1@1 2@2 \\
+              base-time 1528743495910289987 \\
+              sched-entry S 01 300000 \\
+              sched-entry S 02 300000 \\
+              sched-entry S 04 300000 \\
+              clockid CLOCK_TAI
+.EE
+
+
+.SH AUTHORS
+Vinicius Costa Gomes <vinicius.gomes@intel.com>
