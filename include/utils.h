@@ -144,6 +144,7 @@ int get_time_rtt(unsigned *val, const char *arg, int *raw);
 #define get_byte get_u8
 #define get_ushort get_u16
 #define get_short get_s16
+int get_s64(__s64 *val, const char *arg, int base);
 int get_u64(__u64 *val, const char *arg, int base);
 int get_u32(__u32 *val, const char *arg, int base);
 int get_s32(__s32 *val, const char *arg, int base);
