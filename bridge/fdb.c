@@ -182,7 +182,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		if (!is_json_context())
 			fprintf(fp, "dev ");
 		print_color_string(PRINT_ANY, COLOR_IFNAME,
-				   "ifname", "%s ",
+				   "ifname", "dev %s ",
 				   ll_index_to_name(r->ndm_ifindex));
 	}
 
@@ -199,7 +199,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 		print_color_string(PRINT_ANY,
 				   ifa_family_color(family),
-				    "dst", "%s ", dst);
+				    "dst", "dst %s ", dst);
 	}
 
 	if (vid)
@@ -246,7 +246,7 @@ int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 
 	if (tb[NDA_MASTER])
-		print_string(PRINT_ANY, "master", "%s ",
+		print_string(PRINT_ANY, "master", "master %s ",
 			     ll_index_to_name(rta_getattr_u32(tb[NDA_MASTER])));
 
 	print_string(PRINT_ANY, "state", "%s\n",
