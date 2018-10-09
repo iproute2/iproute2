@@ -664,11 +664,11 @@ static int __rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iov,
 					return -1;
 				}
 
-				if (!err->error)
+				if (!error) {
 					/* check messages from kernel */
 					nl_dump_ext_ack(h, errfn);
-				else {
-					errno = -err->error;
+				} else {
+					errno = -error;
 
 					if (rtnl->proto != NETLINK_SOCK_DIAG &&
 					    show_rtnl_err)
