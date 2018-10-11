@@ -48,7 +48,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ip neigh { add | del | change | replace }\n"
 			"                { ADDR [ lladdr LLADDR ] [ nud STATE ] | proxy ADDR } [ dev DEV ]\n");
-	fprintf(stderr, "                                 [ router ]\n\n");
+	fprintf(stderr, "                                 [ router ] [ extern_learn ]\n\n");
 	fprintf(stderr, "       ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n");
 	fprintf(stderr, "                                 [ vrf NAME ]\n\n");
 	fprintf(stderr, "STATE := { permanent | noarp | stale | reachable | none |\n"
@@ -142,6 +142,8 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_flags |= NTF_PROXY;
 		} else if (strcmp(*argv, "router") == 0) {
 			req.ndm.ndm_flags |= NTF_ROUTER;
+		} else if (matches(*argv, "extern_learn") == 0) {
+			req.ndm.ndm_flags |= NTF_EXT_LEARNED;
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			dev = *argv;
@@ -353,6 +355,9 @@ int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 
 	if (r->ndm_flags & NTF_PROXY)
 		print_null(PRINT_ANY, "proxy", " %s", "proxy");
+
+	if (r->ndm_flags & NTF_EXT_LEARNED)
+		print_null(PRINT_ANY, "extern_learn", " %s ", "extern_learn");
 
 	if (show_stats) {
 		if (tb[NDA_CACHEINFO])

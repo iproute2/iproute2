@@ -24,7 +24,8 @@ ip-neighbour \- neighbour/arp tables management.
 .IR ADDR " } [ "
 .B  dev
 .IR DEV " ] [ "
-.BR router " ] "
+.BR router " ] [ "
+.BR extern_learn " ]"
 
 .ti -8
 .BR "ip neigh" " { " show " | " flush " } [ " proxy " ] [ " to
@@ -83,6 +84,12 @@ indicates whether we are proxying for this neigbour entry
 .TP
 .BI router
 indicates whether neigbour is a router
+
+.TP
+.BI extern_learn
+this neigh entry was learned externally. This option can be used to
+indicate to the kernel that this is a controller learnt dynamic entry.
+Kernel will not gc such an entry.
 
 .TP
 .BI lladdr " LLADDRESS"
