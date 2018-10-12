@@ -2076,7 +2076,11 @@ the following additional arguments are supported:
 ] [
 .BR vlan_tunnel " { " on " | " off " }"
 ] [
-.BR isolated " { " on " | " off " } ]"
+.BR isolated " { " on " | " off " }"
+] [
+.BR backup_port " DEVICE"
+] [
+.BR nobackup_port " ]"
 
 .in +8
 .sp
@@ -2158,7 +2162,13 @@ option above.
 - controls whether neigh discovery (arp and nd) proxy and suppression is enabled on the port. By default this flag is off.
 
 .BR vlan_tunnel " { " on " | " off " }"
-- Controls whether vlan to tunnel mapping is enabled on the port. By default this flag is off.
+- controls whether vlan to tunnel mapping is enabled on the port. By default this flag is off.
+
+.BI backup_port " DEVICE"
+- if the port loses carrier all traffic will be redirected to the configured backup port
+
+.BR nobackup_port
+- removes the currently configured backup port
 
 .in -8
 

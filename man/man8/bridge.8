@@ -37,7 +37,7 @@ bridge \- show / manipulate bridge addresses and devices
 .B priority
 .IR PRIO " ] [ "
 .B state
-.IR STATE "] ["
+.IR STATE " ] [ "
 .BR guard " { " on " | " off " } ] [ "
 .BR hairpin " { " on " | " off " } ] [ "
 .BR fastleave " { " on " | " off " } ] [ "
@@ -50,6 +50,9 @@ bridge \- show / manipulate bridge addresses and devices
 .BR neigh_suppress " { " on " | " off " } ] [ "
 .BR vlan_tunnel " { " on " | " off " } ] [ "
 .BR isolated " { " on " | " off " } ] [ "
+.B backup_port
+.IR  DEVICE " ] ["
+.BR nobackup_port " ] [ "
 .BR self " ] [ " master " ]"
 
 .ti -8
@@ -372,6 +375,14 @@ Controls whether vlan to tunnel mapping is enabled on the port. By default this 
 .BR "isolated on " or " isolated off "
 Controls whether a given port will be isolated, which means it will be able to communicate with non-isolated ports only.
 By default this flag is off.
+
+.TP
+.BI backup_port " DEVICE"
+If the port loses carrier all traffic will be redirected to the configured backup port
+
+.TP
+.BR nobackup_port
+Removes the currently configured backup port
 
 .TP
 .BI self

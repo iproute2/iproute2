@@ -41,6 +41,7 @@ static void print_explain(FILE *f)
 		"                        [ neigh_suppress {on | off} ]\n"
 		"                        [ vlan_tunnel {on | off} ]\n"
 		"                        [ isolated {on | off} ]\n"
+		"                        [ backup_port DEVICE ] [ nobackup_port ]\n"
 	);
 }
 
@@ -279,6 +280,13 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	if (tb[IFLA_BRPORT_ISOLATED])
 		_print_onoff(f, "isolated", "isolated",
 			     rta_getattr_u8(tb[IFLA_BRPORT_ISOLATED]));
+
+	if (tb[IFLA_BRPORT_BACKUP_PORT]) {
+		int backup_p = rta_getattr_u32(tb[IFLA_BRPORT_BACKUP_PORT]);
+
+		print_string(PRINT_ANY, "backup_port", "backup_port %s ",
+			     ll_index_to_name(backup_p));
+	}
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -388,6 +396,16 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("isolated", *argv, n,
 						  IFLA_BRPORT_ISOLATED);
+		} else if (matches(*argv, "backup_port") == 0) {
+			int ifindex;
+
+			NEXT_ARG();
+			ifindex = ll_name_to_index(*argv);
+			if (!ifindex)
+				invarg("Device does not exist\n", *argv);
+			addattr32(n, 1024, IFLA_BRPORT_BACKUP_PORT, ifindex);
+		} else if (matches(*argv, "nobackup_port") == 0) {
+			addattr32(n, 1024, IFLA_BRPORT_BACKUP_PORT, 0);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;

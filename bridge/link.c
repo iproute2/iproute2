@@ -152,6 +152,16 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 		if (prtb[IFLA_BRPORT_VLAN_TUNNEL])
 			print_onoff(fp, "vlan_tunnel",
 				    rta_getattr_u8(prtb[IFLA_BRPORT_VLAN_TUNNEL]));
+
+		if (prtb[IFLA_BRPORT_BACKUP_PORT]) {
+			int ifidx;
+
+			ifidx = rta_getattr_u32(prtb[IFLA_BRPORT_BACKUP_PORT]);
+			print_string(PRINT_ANY,
+				     "backup_port", "backup_port %s ",
+				     ll_index_to_name(ifidx));
+		}
+
 		if (prtb[IFLA_BRPORT_ISOLATED])
 			print_onoff(fp, "isolated",
 				    rta_getattr_u8(prtb[IFLA_BRPORT_ISOLATED]));
@@ -255,6 +265,7 @@ static void usage(void)
 	fprintf(stderr,	"                               [ vlan_tunnel {on | off} ]\n");
 	fprintf(stderr,	"                               [ isolated {on | off} ]\n");
 	fprintf(stderr, "                               [ hwmode {vepa | veb} ]\n");
+	fprintf(stderr,	"                               [ backup_port DEVICE ] [ nobackup_port ]\n");
 	fprintf(stderr, "                               [ self ] [ master ]\n");
 	fprintf(stderr, "       bridge link show [dev DEV]\n");
 	exit(-1);
@@ -289,6 +300,7 @@ static int brlink_modify(int argc, char **argv)
 		.ifm.ifi_family = PF_BRIDGE,
 	};
 	char *d = NULL;
+	int backup_port_idx = -1;
 	__s8 neigh_suppress = -1;
 	__s8 learning = -1;
 	__s8 learning_sync = -1;
@@ -395,6 +407,16 @@ static int brlink_modify(int argc, char **argv)
 			NEXT_ARG();
 			if (!on_off("isolated", &isolated, *argv))
 				return -1;
+		} else if (strcmp(*argv, "backup_port") == 0) {
+			NEXT_ARG();
+			backup_port_idx = ll_name_to_index(*argv);
+			if (!backup_port_idx) {
+				fprintf(stderr, "Error: device %s does not exist\n",
+					*argv);
+				return -1;
+			}
+		} else if (strcmp(*argv, "nobackup_port") == 0) {
+			backup_port_idx = 0;
 		} else {
 			usage();
 		}
@@ -455,6 +477,10 @@ static int brlink_modify(int argc, char **argv)
 			 vlan_tunnel);
 	if (isolated != -1)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_ISOLATED, isolated);
+
+	if (backup_port_idx != -1)
+		addattr32(&req.n, sizeof(req), IFLA_BRPORT_BACKUP_PORT,
+			  backup_port_idx);
 
 	addattr_nest_end(&req.n, nest);
 
