@@ -727,7 +727,7 @@ static void print_txsc_stats(const char *prefix, struct rtattr *attr)
 	if (!attr || show_stats == 0)
 		return;
 
-	parse_rtattr_nested(stats, MACSEC_TXSC_STATS_ATTR_MAX + 1, attr);
+	parse_rtattr_nested(stats, MACSEC_TXSC_STATS_ATTR_MAX, attr);
 
 	print_stats(prefix, txsc_stats_names, NUM_MACSEC_TXSC_STATS_ATTR,
 		    stats);
@@ -751,7 +751,7 @@ static void print_secy_stats(const char *prefix, struct rtattr *attr)
 	if (!attr || show_stats == 0)
 		return;
 
-	parse_rtattr_nested(stats, MACSEC_SECY_STATS_ATTR_MAX + 1, attr);
+	parse_rtattr_nested(stats, MACSEC_SECY_STATS_ATTR_MAX, attr);
 
 	print_stats(prefix, secy_stats_names,
 		    NUM_MACSEC_SECY_STATS_ATTR, stats);
@@ -772,7 +772,7 @@ static void print_rxsa_stats(const char *prefix, struct rtattr *attr)
 	if (!attr || show_stats == 0)
 		return;
 
-	parse_rtattr_nested(stats, MACSEC_SA_STATS_ATTR_MAX + 1, attr);
+	parse_rtattr_nested(stats, MACSEC_SA_STATS_ATTR_MAX, attr);
 
 	print_stats(prefix, rxsa_stats_names, NUM_MACSEC_SA_STATS_ATTR, stats);
 }
@@ -789,7 +789,7 @@ static void print_txsa_stats(const char *prefix, struct rtattr *attr)
 	if (!attr || show_stats == 0)
 		return;
 
-	parse_rtattr_nested(stats, MACSEC_SA_STATS_ATTR_MAX + 1, attr);
+	parse_rtattr_nested(stats, MACSEC_SA_STATS_ATTR_MAX, attr);
 
 	print_stats(prefix, txsa_stats_names, NUM_MACSEC_SA_STATS_ATTR, stats);
 }
@@ -817,7 +817,7 @@ static void print_tx_sc(const char *prefix, __u64 sci, __u8 encoding_sa,
 		bool state;
 
 		open_json_object(NULL);
-		parse_rtattr_nested(sa_attr, MACSEC_SA_ATTR_MAX + 1, a);
+		parse_rtattr_nested(sa_attr, MACSEC_SA_ATTR_MAX, a);
 		state = rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_ACTIVE]);
 
 		print_string(PRINT_FP, NULL, "%s", prefix);
@@ -858,7 +858,7 @@ static void print_rxsc_stats(const char *prefix, struct rtattr *attr)
 	if (!attr || show_stats == 0)
 		return;
 
-	parse_rtattr_nested(stats, MACSEC_RXSC_STATS_ATTR_MAX + 1, attr);
+	parse_rtattr_nested(stats, MACSEC_RXSC_STATS_ATTR_MAX, attr);
 
 	print_stats(prefix, rxsc_stats_names,
 		    NUM_MACSEC_RXSC_STATS_ATTR, stats);
@@ -885,7 +885,7 @@ static void print_rx_sc(const char *prefix, __be64 sci, __u8 active,
 		bool state;
 
 		open_json_object(NULL);
-		parse_rtattr_nested(sa_attr, MACSEC_SA_ATTR_MAX + 1, a);
+		parse_rtattr_nested(sa_attr, MACSEC_SA_ATTR_MAX, a);
 		state = rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_ACTIVE]);
 
 		print_string(PRINT_FP, NULL, "%s", prefix);
@@ -918,7 +918,7 @@ static void print_rxsc_list(struct rtattr *sc)
 
 		open_json_object(NULL);
 
-		parse_rtattr_nested(sc_attr, MACSEC_RXSC_ATTR_MAX + 1, c);
+		parse_rtattr_nested(sc_attr, MACSEC_RXSC_ATTR_MAX, c);
 		print_rx_sc("    ",
 			    rta_getattr_u64(sc_attr[MACSEC_RXSC_ATTR_SCI]),
 			    rta_getattr_u32(sc_attr[MACSEC_RXSC_ATTR_ACTIVE]),
@@ -958,7 +958,7 @@ static int process(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	}
 
 	ifindex = rta_getattr_u32(attrs[MACSEC_ATTR_IFINDEX]);
-	parse_rtattr_nested(attrs_secy, MACSEC_SECY_ATTR_MAX + 1,
+	parse_rtattr_nested(attrs_secy, MACSEC_SECY_ATTR_MAX,
 			    attrs[MACSEC_ATTR_SECY]);
 
 	if (!validate_secy_dump(attrs_secy)) {
