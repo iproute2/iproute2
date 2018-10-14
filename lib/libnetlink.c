@@ -802,6 +802,7 @@ static int __rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iov,
 
 			if (h->nlmsg_type == NLMSG_ERROR) {
 				struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(h);
+				int error = err->error;
 
 				if (l < sizeof(struct nlmsgerr)) {
 					fprintf(stderr, "ERROR truncated\n");
@@ -809,11 +810,11 @@ static int __rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iov,
 					return -1;
 				}
 
-				if (!err->error)
+				if (!error) {
 					/* check messages from kernel */
 					nl_dump_ext_ack(h, errfn);
-				else {
-					errno = -err->error;
+				} else {
+					errno = -error;
 
 					if (rtnl->proto != NETLINK_SOCK_DIAG &&
 					    show_rtnl_err)
@@ -825,7 +826,7 @@ static int __rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iov,
 				else
 					free(buf);
 
-				return err->error ? -i : 0;
+				return error ? -i : 0;
 			}
 
 			if (answer) {

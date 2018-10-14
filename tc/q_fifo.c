@@ -69,9 +69,12 @@ static int fifo_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	qopt = RTA_DATA(opt);
 	if (strcmp(qu->id, "bfifo") == 0) {
 		SPRINT_BUF(b1);
-		fprintf(f, "limit %s", sprint_size(qopt->limit, b1));
-	} else
-		fprintf(f, "limit %up", qopt->limit);
+		print_uint(PRINT_JSON, "limit", NULL, qopt->limit);
+		print_string(PRINT_FP, NULL, "limit %s",
+			     sprint_size(qopt->limit, b1));
+	} else {
+		print_uint(PRINT_ANY, "limit", "limit %up", qopt->limit);
+	}
 	return 0;
 }
 

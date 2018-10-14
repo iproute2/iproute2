@@ -145,7 +145,7 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			check_duparg(&attrs, IFLA_VXLAN_TTL, "ttl", *argv);
 			if (strcmp(*argv, "inherit") == 0) {
-				addattr_l(n, 1024, IFLA_VXLAN_TTL_INHERIT, NULL, 0);
+				addattr(n, 1024, IFLA_VXLAN_TTL_INHERIT);
 			} else if (strcmp(*argv, "auto") == 0) {
 				addattr8(n, 1024, IFLA_VXLAN_TTL, ttl);
 			} else {
@@ -527,12 +527,16 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			print_string(PRINT_FP, NULL, "tos %s ", "inherit");
 	}
 
-	if (tb[IFLA_VXLAN_TTL])
-		ttl = rta_getattr_u8(tb[IFLA_VXLAN_TTL]);
-	if (is_json_context() || ttl)
-		print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
-	else
+	if (tb[IFLA_VXLAN_TTL_INHERIT] &&
+	    rta_getattr_u8(tb[IFLA_VXLAN_TTL_INHERIT])) {
 		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
+	} else if (tb[IFLA_VXLAN_TTL]) {
+		ttl = rta_getattr_u8(tb[IFLA_VXLAN_TTL]);
+		if (is_json_context() || ttl)
+			print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
+		else
+			print_string(PRINT_FP, NULL, "ttl %s ", "auto");
+	}
 
 	if (tb[IFLA_VXLAN_LABEL]) {
 		__u32 label = rta_getattr_u32(tb[IFLA_VXLAN_LABEL]);
