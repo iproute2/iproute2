@@ -220,6 +220,19 @@ void ipmroute_reset_filter(int ifindex)
 	filter.iif = ifindex;
 }
 
+static int iproute_dump_filter(struct nlmsghdr *nlh, int reqlen)
+{
+	int err;
+
+	if (filter.tb) {
+		err = addattr32(nlh, reqlen, RTA_TABLE, filter.tb);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
 static int mroute_list(int argc, char **argv)
 {
 	char *id = NULL;
@@ -285,7 +298,7 @@ static int mroute_list(int argc, char **argv)
 		filter.iif = idx;
 	}
 
-	if (rtnl_routedump_req(&rth, filter.af, NULL) < 0) {
+	if (rtnl_routedump_req(&rth, filter.af, iproute_dump_filter) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
