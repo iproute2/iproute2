@@ -26,13 +26,12 @@
 
 static int node_list_cb(const struct nlmsghdr *nlh, void *data)
 {
-	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
 	struct nlattr *info[TIPC_NLA_MAX + 1] = {};
 	struct nlattr *attrs[TIPC_NLA_NODE_MAX + 1] = {};
 	char str[33] = {};
 	uint32_t addr;
 
-	mnl_attr_parse(nlh, sizeof(*genl), parse_attrs, info);
+	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), parse_attrs, info);
 	if (!info[TIPC_NLA_NODE])
 		return MNL_CB_ERROR;
 
@@ -160,7 +159,6 @@ static int cmd_node_set_nodeid(struct nlmsghdr *nlh, const struct cmd *cmd,
 
 static int nodeid_get_cb(const struct nlmsghdr *nlh, void *data)
 {
-	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
 	struct nlattr *info[TIPC_NLA_MAX + 1] = {};
 	struct nlattr *attrs[TIPC_NLA_NET_MAX + 1] = {};
 	char str[33] = {0,};
@@ -168,7 +166,7 @@ static int nodeid_get_cb(const struct nlmsghdr *nlh, void *data)
 	uint64_t *w0 = (uint64_t *) &id[0];
 	uint64_t *w1 = (uint64_t *) &id[8];
 
-	mnl_attr_parse(nlh, sizeof(*genl), parse_attrs, info);
+	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), parse_attrs, info);
 	if (!info[TIPC_NLA_NET])
 		return MNL_CB_ERROR;
 
@@ -207,11 +205,10 @@ static int cmd_node_get_nodeid(struct nlmsghdr *nlh, const struct cmd *cmd,
 
 static int netid_get_cb(const struct nlmsghdr *nlh, void *data)
 {
-	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
 	struct nlattr *info[TIPC_NLA_MAX + 1] = {};
 	struct nlattr *attrs[TIPC_NLA_NET_MAX + 1] = {};
 
-	mnl_attr_parse(nlh, sizeof(*genl), parse_attrs, info);
+	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), parse_attrs, info);
 	if (!info[TIPC_NLA_NET])
 		return MNL_CB_ERROR;
 
