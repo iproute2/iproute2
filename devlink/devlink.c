@@ -5127,7 +5127,7 @@ static int cmd_resource_set(struct dl *dl)
 				  &dl->opts.resource_id,
 				  &dl->opts.resource_id_valid);
 	if (err) {
-		pr_err("error parsing resource path %s\n", strerror(err));
+		pr_err("error parsing resource path %s\n", strerror(-err));
 		goto out;
 	}
 
