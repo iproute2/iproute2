@@ -325,11 +325,11 @@ static int batch(const char *name)
 	struct batch_buf *head = NULL, *tail = NULL, *buf_pool = NULL;
 	char *largv[100], *largv_next[100];
 	char *line, *line_next = NULL;
-	bool bs_enabled_next = false;
 	bool bs_enabled = false;
 	bool lastline = false;
 	int largc, largc_next;
 	bool bs_enabled_saved;
+	bool bs_enabled_next;
 	int batchsize = 0;
 	size_t len = 0;
 	int ret = 0;
@@ -358,7 +358,6 @@ static int batch(const char *name)
 		goto Exit;
 	largc = makeargs(line, largv, 100);
 	bs_enabled = batchsize_enabled(largc, largv);
-	bs_enabled_saved = bs_enabled;
 	do {
 		if (getcmdline(&line_next, &len, stdin) == -1)
 			lastline = true;
@@ -394,7 +393,6 @@ static int batch(const char *name)
 		len = 0;
 		bs_enabled_saved = bs_enabled;
 		bs_enabled = bs_enabled_next;
-		bs_enabled_next = false;
 
 		if (largc == 0) {
 			largc = largc_next;
