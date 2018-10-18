@@ -90,13 +90,13 @@ EOF
 
 check_xt_old()
 {
-    # bail if previous XT checks has already succeded.
+    # bail if previous XT checks has already succeeded.
     if grep -q TC_CONFIG_XT $CONFIG
     then
 	return
     fi
 
-    #check if we dont need our internal header ..
+    #check if we don't need our internal header ..
     cat >$TMPDIR/ipttest.c <<EOF
 #include <xtables.h>
 char *lib_dir;
@@ -129,7 +129,7 @@ EOF
 
 check_xt_old_internal_h()
 {
-    # bail if previous XT checks has already succeded.
+    # bail if previous XT checks has already succeeded.
     if grep -q TC_CONFIG_XT $CONFIG
     then
 	return
