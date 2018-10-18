@@ -709,7 +709,7 @@ static void link_mon_print_applied(uint16_t applied, uint64_t up_map)
 	close_json_array(PRINT_JSON, "applied_node_status");
 }
 
-/* print the non applied members, since we dont know
+/* print the non applied members, since we don't know
  * the members, we print them along with the state
  */
 static void link_mon_print_non_applied(uint16_t applied, uint16_t member_cnt,
