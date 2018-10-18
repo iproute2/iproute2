@@ -494,7 +494,7 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	struct seg6_iptunnel_encap *tuninfo;
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
-	char segbuf[1024];
+	char segbuf[1024] = "";
 	int argc = *argcp;
 	int encap = -1;
 	__u32 hmac = 0;
