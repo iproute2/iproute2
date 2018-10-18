@@ -923,15 +923,15 @@ int print_route(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
 		print_rt_pref(fp, rta_getattr_u8(tb[RTA_PREF]));
 
 	if (tb[RTA_TTL_PROPAGATE]) {
-		bool propogate = rta_getattr_u8(tb[RTA_TTL_PROPAGATE]);
+		bool propagate = rta_getattr_u8(tb[RTA_TTL_PROPAGATE]);
 
 		if (is_json_context())
 			print_bool(PRINT_JSON, "ttl-propogate", NULL,
-				   propogate);
+				   propagate);
 		else
 			print_string(PRINT_FP, NULL,
 				     "ttl-propogate %s",
-				     propogate ? "enabled" : "disabled");
+				     propagate ? "enabled" : "disabled");
 	}
 
 	print_string(PRINT_FP, NULL, "\n", NULL);

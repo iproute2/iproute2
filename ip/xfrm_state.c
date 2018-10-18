@@ -929,7 +929,7 @@ int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	}
 
 	if (n->nlmsg_type == XFRM_MSG_DELSA) {
-		/* Dont blame me for this .. Herbert made me do it */
+		/* Don't blame me for this .. Herbert made me do it */
 		xsid = NLMSG_DATA(n);
 		len -= NLMSG_SPACE(sizeof(*xsid));
 	} else if (n->nlmsg_type == XFRM_MSG_EXPIRE) {
