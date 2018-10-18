@@ -50,7 +50,7 @@ $TC qdisc add dev $INDEV handle ffff: ingress
 # NOTE: tcindex 1 maps to AF41, 2->AF42, 3->AF43, 4->BE
 # 
 #anything from subnet 10.2.0.2/24 is passed on with a tcindex value 1
-#if it doesnt exceed its CIR/CBS + PIR/EBS
+#if it doesn't exceed its CIR/CBS + PIR/EBS
 # 
 $TC filter add dev $INDEV parent ffff: protocol ip prio 1 u32 \
 match ip src 10.2.0.0/24 $meter1 \
@@ -82,7 +82,7 @@ drop flowid :3
 #
 #
 # Anything else (not from the subnet 10.2.0.24/24) gets discarded if it 
-# exceeds 1Mbps and by default goes to BE if it doesnt
+# exceeds 1Mbps and by default goes to BE if it doesn't
 #
 $TC filter add dev $INDEV parent ffff: protocol ip prio 7 u32 \
 match ip src 0/0 $meter5 \
