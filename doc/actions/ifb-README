@@ -17,26 +17,26 @@ dropping. I am not aware of any study that shows policing is
 worse than shaping in achieving the end goal of rate control.
 I would be interested if anyone is experimenting.
 
-3) Very interesting use: if you are serving p2p you may wanna give 
-preference to your own localy originated traffic (when responses come back)
+3) Very interesting use: if you are serving p2p you may want to give 
+preference to your own locally originated traffic (when responses come back)
 vs someone using your system to do bittorent. So QoSing based on state
-comes in as the solution. What people did to achive this was stick
+comes in as the solution. What people did to achieve this was stick
 the IMQ somewhere prelocal hook.
 I think this is a pretty neat feature to have in Linux in general.
 (i.e not just for IMQ).
-But i wont go back to putting netfilter hooks in the device to satisfy
-this.  I also dont think its worth it hacking ifb some more to be 
+But i won't go back to putting netfilter hooks in the device to satisfy
+this.  I also don't think its worth it hacking ifb some more to be 
 aware of say L3 info and play ip rule tricks to achieve this.
---> Instead the plan is to have a contrack related action. This action will
-selectively either query/create contrack state on incoming packets. 
+--> Instead the plan is to have a conntrack related action. This action will
+selectively either query/create conntrack state on incoming packets. 
 Packets could then be redirected to ifb based on what happens -> eg 
 on incoming packets; if we find they are of known state we could send to 
-a different queue than one which didnt have existing state. This
+a different queue than one which didn't have existing state. This
 all however is dependent on whatever rules the admin enters.
 
 At the moment this 3rd function does not exist yet. I have decided that
 instead of sitting on the patch for another year, to release it and then 
-if theres pressure i will add this feature.
+if there is pressure i will add this feature.
 
 An example, to provide functionality that most people use IMQ for below:
 

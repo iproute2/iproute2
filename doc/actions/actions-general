@@ -21,7 +21,7 @@ we execute a policing action which rate limits its bandwidth utilization
 to 1.5Mbps".
 
 The new extensions allow for more than just policing actions to be added.
-They are also fully backward compatible. If you have a kernel that doesnt
+They are also fully backward compatible. If you have a kernel that doesn't
 understand them, then the effect is null i.e if you have a newer tc
 but older kernel, the actions are not installed. Likewise if you
 have a newer kernel but older tc, obviously the tc will use current
@@ -31,7 +31,7 @@ right tc ;->
 
 A side effect is that we can now get stateless firewalling to work with tc. 
 Essentially this is now an alternative to iptables.
-I wont go into details of my dislike for iptables at times, but 
+I won't go into details of my dislike for iptables at times, but 
 scalability is one of the main issues; however, if you need stateful
 classification - use netfilter (for now).
 
@@ -77,7 +77,7 @@ iptable target. I have only tested with mangler targets up to now.
 In terms of hooks:
 *ingress is mapped to pre-routing hook
 *egress is mapped to post-routing hook
-I dont see much value in the other hooks, if you see it and email me good
+I don't see much value in the other hooks, if you see it and email me good
 reasons, the addition is trivial.
 
 Example syntax for iptables targets usage becomes:
@@ -111,12 +111,12 @@ The script below does the following:
 - an incoming packet from 10.0.0.21 is first given a firewall mark of 1. 
 
 - It is then metered to make sure it does not exceed its allocated rate of 
-1Kbps. If it doesnt exceed rate, this is where we terminate action execution.
+1Kbps. If it doesn't exceed rate, this is where we terminate action execution.
 
 - If it does exceed its rate, its "color" changes to a mark of 2 and it is 
 then passed through a second meter.
 
--The second meter is shared across all flows on that device [i am suprised 
+-The second meter is shared across all flows on that device [i am surpised 
 that this seems to be not a well know feature of the policer; Bert was telling 
 me that someone was writing a qdisc just to do sharing across multiple devices;
 it must be the summer heat again; weve had someone doing that every year around
@@ -145,7 +145,7 @@ u32 match ip src 10.0.0.21/32 flowid 1:15 \
 action ipt -j mark --set-mark 1 index 2 \
 #
 # then pass it through a policer which allows 1kbps; if the flow
-# doesnt exceed that rate, this is where we stop, if it exceeds we
+# doesn't exceed that rate, this is where we stop, if it exceeds we
 # pipe the packet to the next action
 action police rate 1kbit burst 9k pipe \
 #
@@ -241,7 +241,7 @@ filter protocol ip pref 1 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:1
 Neat, eh?
 
 
-Wanna write an action module?
+Want to  write an action module?
 ------------------------------
 Its easy. Either look at the code or send me email. I will document at
 some point; will also accept documentation.
