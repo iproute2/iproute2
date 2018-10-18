@@ -1165,7 +1165,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 		argc--; argv++;
 	}
 
-	/* We dont necessarily need class/flowids */
+	/* We don't necessarily need class/flowids */
 	if (terminal_ok)
 		sel.sel.flags |= TC_U32_TERMINAL;
 
