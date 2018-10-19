@@ -1669,9 +1669,23 @@ static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
 static int iproute_dump_filter(struct nlmsghdr *nlh, int reqlen)
 {
 	struct rtmsg *rtm = NLMSG_DATA(nlh);
+	int err;
 
+	rtm->rtm_protocol = filter.protocol;
 	if (filter.cloned)
 		rtm->rtm_flags |= RTM_F_CLONED;
+
+	if (filter.tb) {
+		err = addattr32(nlh, reqlen, RTA_TABLE, filter.tb);
+		if (err)
+			return err;
+	}
+
+	if (filter.oif) {
+		err = addattr32(nlh, reqlen, RTA_OIF, filter.oif);
+		if (err)
+			return err;
+	}
 
 	return 0;
 }
