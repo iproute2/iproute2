@@ -28,6 +28,8 @@
 
 #include "libnetlink.h"
 
+#define __aligned(x)		__attribute__((aligned(x)))
+
 #ifndef SOL_NETLINK
 #define SOL_NETLINK 270
 #endif
@@ -238,7 +240,7 @@ int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
 		struct nlmsghdr nlh;
 		struct ifaddrmsg ifm;
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg)),
 		.nlh.nlmsg_type = RTM_GETADDR,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -254,7 +256,7 @@ int rtnl_addrlbldump_req(struct rtnl_handle *rth, int family)
 		struct nlmsghdr nlh;
 		struct ifaddrlblmsg ifal;
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrlblmsg)),
 		.nlh.nlmsg_type = RTM_GETADDRLABEL,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -270,7 +272,7 @@ int rtnl_routedump_req(struct rtnl_handle *rth, int family)
 		struct nlmsghdr nlh;
 		struct rtmsg rtm;
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg)),
 		.nlh.nlmsg_type = RTM_GETROUTE,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -286,7 +288,7 @@ int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
 		struct nlmsghdr nlh;
 		struct fib_rule_hdr frh;
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct fib_rule_hdr)),
 		.nlh.nlmsg_type = RTM_GETRULE,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -302,7 +304,7 @@ int rtnl_neighdump_req(struct rtnl_handle *rth, int family)
 		struct nlmsghdr nlh;
 		struct ndmsg ndm;
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
 		.nlh.nlmsg_type = RTM_GETNEIGH,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -318,7 +320,7 @@ int rtnl_neightbldump_req(struct rtnl_handle *rth, int family)
 		struct nlmsghdr nlh;
 		struct ndtmsg ndtmsg;
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndtmsg)),
 		.nlh.nlmsg_type = RTM_GETNEIGHTBL,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -334,7 +336,7 @@ int rtnl_mdbdump_req(struct rtnl_handle *rth, int family)
 		struct nlmsghdr nlh;
 		struct br_port_msg bpm;
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_port_msg)),
 		.nlh.nlmsg_type = RTM_GETMDB,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -349,8 +351,9 @@ int rtnl_netconfdump_req(struct rtnl_handle *rth, int family)
 	struct {
 		struct nlmsghdr nlh;
 		struct netconfmsg ncm;
+		char buf[0] __aligned(NLMSG_ALIGNTO);
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(NLMSG_ALIGN(sizeof(struct netconfmsg))),
 		.nlh.nlmsg_type = RTM_GETNETCONF,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -365,8 +368,9 @@ int rtnl_nsiddump_req(struct rtnl_handle *rth, int family)
 	struct {
 		struct nlmsghdr nlh;
 		struct rtgenmsg rtm;
+		char buf[0] __aligned(NLMSG_ALIGNTO);
 	} req = {
-		.nlh.nlmsg_len = sizeof(req),
+		.nlh.nlmsg_len = NLMSG_LENGTH(NLMSG_ALIGN(sizeof(struct rtgenmsg))),
 		.nlh.nlmsg_type = RTM_GETNSID,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
@@ -388,7 +392,7 @@ int rtnl_linkdump_req_filter(struct rtnl_handle *rth, int family,
 		struct nlmsghdr nlh;
 		struct ifinfomsg ifm;
 		/* attribute has to be NLMSG aligned */
-		struct rtattr ext_req __attribute__ ((aligned(NLMSG_ALIGNTO)));
+		struct rtattr ext_req __aligned(NLMSG_ALIGNTO);
 		__u32 ext_filter_mask;
 	} req = {
 		.nlh.nlmsg_len = sizeof(req),
