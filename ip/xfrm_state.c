@@ -869,7 +869,7 @@ static int xfrm_state_allocspi(int argc, char **argv)
 	if (rtnl_talk(&rth, &req.n, &answer) < 0)
 		exit(2);
 
-	if (xfrm_state_print(NULL, answer, (void *)stdout) < 0) {
+	if (xfrm_state_print(answer, (void *)stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
 		exit(1);
 	}
@@ -908,8 +908,7 @@ static int xfrm_state_filter_match(struct xfrm_usersa_info *xsinfo)
 	return 1;
 }
 
-int xfrm_state_print(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		     void *arg)
+int xfrm_state_print(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct rtattr *tb[XFRMA_MAX+1];
@@ -1063,7 +1062,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
 		if (rtnl_talk(&rth, &req.n, &answer) < 0)
 			exit(2);
 
-		if (xfrm_state_print(NULL, answer, (void *)stdout) < 0) {
+		if (xfrm_state_print(answer, (void *)stdout) < 0) {
 			fprintf(stderr, "An error :-)\n");
 			exit(1);
 		}
@@ -1080,9 +1079,7 @@ static int xfrm_state_get_or_delete(int argc, char **argv, int delete)
  * With an existing state of nlmsg, make new nlmsg for deleting the state
  * and store it to buffer.
  */
-static int xfrm_state_keep(const struct sockaddr_nl *who,
-			   struct nlmsghdr *n,
-			   void *arg)
+static int xfrm_state_keep(struct nlmsghdr *n, void *arg)
 {
 	struct xfrm_buffer *xb = (struct xfrm_buffer *)arg;
 	struct rtnl_handle *rth = xb->rth;

@@ -77,8 +77,7 @@ static struct ll_cache *ll_get_by_name(const char *name)
 	return NULL;
 }
 
-int ll_remember_index(const struct sockaddr_nl *who,
-		      struct nlmsghdr *n, void *arg)
+int ll_remember_index(struct nlmsghdr *n, void *arg)
 {
 	unsigned int h;
 	const char *ifname;

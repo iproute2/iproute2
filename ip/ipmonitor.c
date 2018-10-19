@@ -52,8 +52,7 @@ static void print_headers(FILE *fp, char *label, struct rtnl_ctrl_data *ctrl)
 		fprintf(fp, "%s", label);
 }
 
-static int accept_msg(const struct sockaddr_nl *who,
-		      struct rtnl_ctrl_data *ctrl,
+static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		      struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -75,32 +74,32 @@ static int accept_msg(const struct sockaddr_nl *who,
 		if (r->rtm_family == RTNL_FAMILY_IPMR ||
 		    r->rtm_family == RTNL_FAMILY_IP6MR) {
 			print_headers(fp, "[MROUTE]", ctrl);
-			print_mroute(who, n, arg);
+			print_mroute(n, arg);
 			return 0;
 		} else {
 			print_headers(fp, "[ROUTE]", ctrl);
-			print_route(who, n, arg);
+			print_route(n, arg);
 			return 0;
 		}
 	}
 
 	case RTM_NEWLINK:
 	case RTM_DELLINK:
-		ll_remember_index(who, n, NULL);
+		ll_remember_index(n, NULL);
 		print_headers(fp, "[LINK]", ctrl);
-		print_linkinfo(who, n, arg);
+		print_linkinfo(n, arg);
 		return 0;
 
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
 		print_headers(fp, "[ADDR]", ctrl);
-		print_addrinfo(who, n, arg);
+		print_addrinfo(n, arg);
 		return 0;
 
 	case RTM_NEWADDRLABEL:
 	case RTM_DELADDRLABEL:
 		print_headers(fp, "[ADDRLABEL]", ctrl);
-		print_addrlabel(who, n, arg);
+		print_addrlabel(n, arg);
 		return 0;
 
 	case RTM_NEWNEIGH:
@@ -114,18 +113,18 @@ static int accept_msg(const struct sockaddr_nl *who,
 		}
 
 		print_headers(fp, "[NEIGH]", ctrl);
-		print_neigh(who, n, arg);
+		print_neigh(n, arg);
 		return 0;
 
 	case RTM_NEWPREFIX:
 		print_headers(fp, "[PREFIX]", ctrl);
-		print_prefix(who, n, arg);
+		print_prefix(n, arg);
 		return 0;
 
 	case RTM_NEWRULE:
 	case RTM_DELRULE:
 		print_headers(fp, "[RULE]", ctrl);
-		print_rule(who, n, arg);
+		print_rule(n, arg);
 		return 0;
 
 	case NLMSG_TSTAMP:
@@ -135,13 +134,13 @@ static int accept_msg(const struct sockaddr_nl *who,
 	case RTM_NEWNETCONF:
 	case RTM_DELNETCONF:
 		print_headers(fp, "[NETCONF]", ctrl);
-		print_netconf(who, ctrl, n, arg);
+		print_netconf(ctrl, n, arg);
 		return 0;
 
 	case RTM_DELNSID:
 	case RTM_NEWNSID:
 		print_headers(fp, "[NSID]", ctrl);
-		print_nsid(who, n, arg);
+		print_nsid(n, arg);
 		return 0;
 
 	case NLMSG_ERROR:

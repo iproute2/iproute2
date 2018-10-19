@@ -190,8 +190,7 @@ static void print_af_spec(struct rtattr *attr, int ifindex)
 		print_vlan_info(aftb[IFLA_BRIDGE_VLAN_INFO], ifindex);
 }
 
-int print_linkinfo(const struct sockaddr_nl *who,
-		   struct nlmsghdr *n, void *arg)
+int print_linkinfo(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);

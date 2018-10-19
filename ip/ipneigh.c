@@ -237,7 +237,7 @@ static void print_neigh_state(unsigned int nud)
 	close_json_array(PRINT_JSON, NULL);
 }
 
-int print_neigh(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_neigh(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct ndmsg *r = NLMSG_DATA(n);

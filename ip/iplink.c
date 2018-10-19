@@ -199,8 +199,7 @@ static int get_addr_gen_mode(const char *mode)
 #if IPLINK_IOCTL_COMPAT
 static int have_rtnl_newlink = -1;
 
-static int accept_msg(const struct sockaddr_nl *who,
-		      struct rtnl_ctrl_data *ctrl,
+static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		      struct nlmsghdr *n, void *arg)
 {
 	struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(n);
@@ -1107,7 +1106,7 @@ int iplink_get(unsigned int flags, char *name, __u32 filt_mask)
 		return -2;
 
 	open_json_object(NULL);
-	print_linkinfo(NULL, answer, stdout);
+	print_linkinfo(answer, stdout);
 	close_json_object();
 
 	free(answer);
@@ -1536,9 +1535,7 @@ struct af_stats_ctx {
 	int ifindex;
 };
 
-static int print_af_stats(const struct sockaddr_nl *who,
-			  struct nlmsghdr *n,
-			  void *arg)
+static int print_af_stats(struct nlmsghdr *n, void *arg)
 {
 	struct if_stats_msg *ifsm = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_STATS_MAX+1];

@@ -42,7 +42,7 @@ static void usage(void)
 	exit(-1);
 }
 
-static int print_token(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+static int print_token(struct nlmsghdr *n, void *arg)
 {
 	struct rtnl_dump_args *args = arg;
 	FILE *fp = args->fp;

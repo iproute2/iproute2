@@ -34,8 +34,7 @@ static void *BODY;
 static struct genl_util *genl_list;
 
 
-static int print_nofopt(const struct sockaddr_nl *who, struct nlmsghdr *n,
-			void *arg)
+static int print_nofopt(struct nlmsghdr *n, void *arg)
 {
 	fprintf((FILE *) arg, "unknown genl type ..\n");
 	return 0;

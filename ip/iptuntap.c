@@ -386,8 +386,7 @@ static int tuntap_filter_req(struct nlmsghdr *nlh, int reqlen)
 	return 0;
 }
 
-static int print_tuntap(const struct sockaddr_nl *who,
-			struct nlmsghdr *n, void *arg)
+static int print_tuntap(struct nlmsghdr *n, void *arg)
 {
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];

@@ -13,10 +13,10 @@ int do_action(int argc, char **argv, void *buf, size_t buflen);
 int do_tcmonitor(int argc, char **argv);
 int do_exec(int argc, char **argv);
 
-int print_action(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg);
-int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg);
-int print_qdisc(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg);
-int print_class(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg);
+int print_action(struct nlmsghdr *n, void *arg);
+int print_filter(struct nlmsghdr *n, void *arg);
+int print_qdisc(struct nlmsghdr *n, void *arg);
+int print_class(struct nlmsghdr *n, void *arg);
 void print_size_table(FILE *fp, const char *prefix, struct rtattr *rta);
 
 struct tc_estimator;

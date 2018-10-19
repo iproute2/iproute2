@@ -43,7 +43,7 @@ static void write_stamp(FILE *fp)
 	fwrite((void *)n1, 1, NLMSG_ALIGN(n1->nlmsg_len), fp);
 }
 
-static int dump_msg(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
+static int dump_msg(struct rtnl_ctrl_data *ctrl,
 		    struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -55,10 +55,9 @@ static int dump_msg(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	return 0;
 }
 
-static int dump_msg2(const struct sockaddr_nl *who,
-		     struct nlmsghdr *n, void *arg)
+static int dump_msg2(struct nlmsghdr *n, void *arg)
 {
-	return dump_msg(who, NULL, n, arg);
+	return dump_msg(NULL, n, arg);
 }
 
 static void usage(void)

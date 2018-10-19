@@ -126,7 +126,7 @@ static void fdb_print_stats(FILE *fp, const struct nda_cacheinfo *ci)
 	}
 }
 
-int print_fdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_fdb(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
 	struct ndmsg *r = NLMSG_DATA(n);

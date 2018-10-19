@@ -225,7 +225,7 @@ static void print_router_entries(FILE *fp, struct nlmsghdr *n,
 	close_json_array(PRINT_JSON, NULL);
 }
 
-int print_mdb(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_mdb(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
 	struct br_port_msg *r = NLMSG_DATA(n);

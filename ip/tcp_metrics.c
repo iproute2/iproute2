@@ -156,8 +156,7 @@ static void print_tcp_metrics(struct rtattr *a)
 	}
 }
 
-static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		       void *arg)
+static int process_msg(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *) arg;
 	struct genlmsghdr *ghdr;
@@ -501,7 +500,7 @@ static int tcpm_do_cmd(int cmd, int argc, char **argv)
 	} else if (atype >= 0) {
 		if (rtnl_talk(&grth, &req.n, &answer) < 0)
 			return -2;
-		if (process_msg(NULL, answer, stdout) < 0) {
+		if (process_msg(answer, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}

@@ -321,8 +321,7 @@ static void tnl_print_stats(const struct rtnl_link_stats64 *s)
 	       s->tx_carrier_errors, s->tx_dropped);
 }
 
-static int print_nlmsg_tunnel(const struct sockaddr_nl *who,
-			      struct nlmsghdr *n, void *arg)
+static int print_nlmsg_tunnel(struct nlmsghdr *n, void *arg)
 {
 	struct tnl_print_nlmsg_info *info = arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);

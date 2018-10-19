@@ -674,7 +674,7 @@ int rtnl_dump_filter_l(struct rtnl_handle *rth,
 				}
 
 				if (!rth->dump_fp) {
-					err = a->filter(&nladdr, h, a->arg1);
+					err = a->filter(h, a->arg1);
 					if (err < 0) {
 						free(buf);
 						return err;
@@ -983,7 +983,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 				exit(1);
 			}
 
-			err = handler(&nladdr, &ctrl, h, jarg);
+			err = handler(&ctrl, h, jarg);
 			if (err < 0)
 				return err;
 
@@ -1005,7 +1005,6 @@ int rtnl_from_file(FILE *rtnl, rtnl_listen_filter_t handler,
 		   void *jarg)
 {
 	int status;
-	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	char buf[16384];
 	struct nlmsghdr *h = (struct nlmsghdr *)buf;
 
@@ -1044,7 +1043,7 @@ int rtnl_from_file(FILE *rtnl, rtnl_listen_filter_t handler,
 			return -1;
 		}
 
-		err = handler(&nladdr, NULL, h, jarg);
+		err = handler(NULL, h, jarg);
 		if (err < 0)
 			return err;
 	}

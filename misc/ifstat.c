@@ -110,8 +110,7 @@ static int match(const char *id)
 	return 0;
 }
 
-static int get_nlmsg_extended(const struct sockaddr_nl *who,
-			      struct nlmsghdr *m, void *arg)
+static int get_nlmsg_extended(struct nlmsghdr *m, void *arg)
 {
 	struct if_stats_msg *ifsm = NLMSG_DATA(m);
 	struct rtattr *tb[IFLA_STATS_MAX+1];
@@ -154,8 +153,7 @@ static int get_nlmsg_extended(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static int get_nlmsg(const struct sockaddr_nl *who,
-		     struct nlmsghdr *m, void *arg)
+static int get_nlmsg(struct nlmsghdr *m, void *arg)
 {
 	struct ifinfomsg *ifi = NLMSG_DATA(m);
 	struct rtattr *tb[IFLA_MAX+1];

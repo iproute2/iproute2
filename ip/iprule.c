@@ -181,7 +181,7 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	return true;
 }
 
-int print_rule(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_rule(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
 	struct fib_rule_hdr *frh = NLMSG_DATA(n);
@@ -442,8 +442,7 @@ static int save_rule_prep(void)
 	return 0;
 }
 
-static int save_rule(const struct sockaddr_nl *who,
-		     struct nlmsghdr *n, void *arg)
+static int save_rule(struct nlmsghdr *n, void *arg)
 {
 	int ret;
 
@@ -456,8 +455,7 @@ static int save_rule(const struct sockaddr_nl *who,
 	return ret == n->nlmsg_len ? 0 : ret;
 }
 
-static int flush_rule(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		      void *arg)
+static int flush_rule(struct nlmsghdr *n, void *arg)
 {
 	struct rtnl_handle rth2;
 	struct fib_rule_hdr *frh = NLMSG_DATA(n);
@@ -650,8 +648,7 @@ static int rule_dump_check_magic(void)
 	return 0;
 }
 
-static int restore_handler(const struct sockaddr_nl *nl,
-			   struct rtnl_ctrl_data *ctrl,
+static int restore_handler(struct rtnl_ctrl_data *ctrl,
 			   struct nlmsghdr *n, void *arg)
 {
 	int ret;

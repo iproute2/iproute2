@@ -55,8 +55,7 @@ static struct rtattr *netconf_rta(struct netconfmsg *ncm)
 				 + NLMSG_ALIGN(sizeof(struct netconfmsg)));
 }
 
-int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
-		  struct nlmsghdr *n, void *arg)
+int print_netconf(struct rtnl_ctrl_data *ctrl, struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct netconfmsg *ncm = NLMSG_DATA(n);
@@ -154,10 +153,9 @@ int print_netconf(const struct sockaddr_nl *who, struct rtnl_ctrl_data *ctrl,
 	return 0;
 }
 
-static int print_netconf2(const struct sockaddr_nl *who,
-			  struct nlmsghdr *n, void *arg)
+static int print_netconf2(struct nlmsghdr *n, void *arg)
 {
-	return print_netconf(who, NULL, n, arg);
+	return print_netconf(NULL, n, arg);
 }
 
 void ipnetconf_reset_filter(int ifindex)

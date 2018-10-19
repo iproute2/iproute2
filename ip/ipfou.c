@@ -137,8 +137,7 @@ static int do_del(int argc, char **argv)
 	return 0;
 }
 
-static int print_fou_mapping(const struct sockaddr_nl *who,
-				 struct nlmsghdr *n, void *arg)
+static int print_fou_mapping(struct nlmsghdr *n, void *arg)
 {
 	struct genlmsghdr *ghdr;
 	struct rtattr *tb[FOU_ATTR_MAX + 1];

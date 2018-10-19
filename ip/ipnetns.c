@@ -43,8 +43,7 @@ static struct rtnl_handle rtnsh = { .fd = -1 };
 
 static int have_rtnl_getnsid = -1;
 
-static int ipnetns_accept_msg(const struct sockaddr_nl *who,
-			      struct rtnl_ctrl_data *ctrl,
+static int ipnetns_accept_msg(struct rtnl_ctrl_data *ctrl,
 			      struct nlmsghdr *n, void *arg)
 {
 	struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(n);
@@ -284,7 +283,7 @@ static int netns_get_name(int nsid, char *name)
 	return -ENOENT;
 }
 
-int print_nsid(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_nsid(struct nlmsghdr *n, void *arg)
 {
 	struct rtgenmsg *rthdr = NLMSG_DATA(n);
 	struct rtattr *tb[NETNSA_MAX+1];

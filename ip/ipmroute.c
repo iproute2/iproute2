@@ -52,7 +52,7 @@ struct rtfilter {
 	inet_prefix msrc;
 } filter;
 
-int print_mroute(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_mroute(struct nlmsghdr *n, void *arg)
 {
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;

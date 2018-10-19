@@ -824,8 +824,7 @@ static void print_link_event(FILE *f, __u32 event)
 	}
 }
 
-int print_linkinfo(const struct sockaddr_nl *who,
-		   struct nlmsghdr *n, void *arg)
+int print_linkinfo(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
@@ -1261,8 +1260,7 @@ static int ifa_label_match_rta(int ifindex, const struct rtattr *rta)
 	return fnmatch(filter.label, label, 0);
 }
 
-int print_addrinfo(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		   void *arg)
+int print_addrinfo(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
@@ -1478,7 +1476,7 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 			continue;
 
 		open_json_object(NULL);
-		print_addrinfo(NULL, n, fp);
+		print_addrinfo(n, fp);
 		close_json_object();
 	}
 	close_json_array(PRINT_JSON, NULL);
@@ -1491,8 +1489,7 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 }
 
 
-static int store_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		       void *arg)
+static int store_nlmsg(struct nlmsghdr *n, void *arg)
 {
 	struct nlmsg_chain *lchain = (struct nlmsg_chain *)arg;
 	struct nlmsg_list *h;
@@ -1510,7 +1507,7 @@ static int store_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 		lchain->head = h;
 	lchain->tail = h;
 
-	ll_remember_index(who, n, NULL);
+	ll_remember_index(n, NULL);
 	return 0;
 }
 
@@ -1553,8 +1550,7 @@ static int ipadd_dump_check_magic(void)
 	return 0;
 }
 
-static int save_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		       void *arg)
+static int save_nlmsg(struct nlmsghdr *n, void *arg)
 {
 	int ret;
 
@@ -1567,15 +1563,14 @@ static int save_nlmsg(const struct sockaddr_nl *who, struct nlmsghdr *n,
 	return ret == n->nlmsg_len ? 0 : ret;
 }
 
-static int show_handler(const struct sockaddr_nl *nl,
-			struct rtnl_ctrl_data *ctrl,
+static int show_handler(struct rtnl_ctrl_data *ctrl,
 			struct nlmsghdr *n, void *arg)
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
 	open_json_object(NULL);
 	print_int(PRINT_ANY, "index", "if%d:\n", ifa->ifa_index);
-	print_addrinfo(NULL, n, stdout);
+	print_addrinfo(n, stdout);
 	close_json_object();
 	return 0;
 }
@@ -1600,8 +1595,7 @@ static int ipaddr_showdump(void)
 	exit(err);
 }
 
-static int restore_handler(const struct sockaddr_nl *nl,
-			   struct rtnl_ctrl_data *ctrl,
+static int restore_handler(struct rtnl_ctrl_data *ctrl,
 			   struct nlmsghdr *n, void *arg)
 {
 	int ret;
@@ -1970,7 +1964,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 
 		open_json_object(NULL);
 		if (brief || !no_link)
-			res = print_linkinfo(NULL, n, stdout);
+			res = print_linkinfo(n, stdout);
 		if (res >= 0 && filter.family != AF_PACKET)
 			print_selected_addrinfo(ifi, ainfo->head, stdout);
 		if (res > 0 && !do_link && show_stats)

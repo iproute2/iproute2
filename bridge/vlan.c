@@ -347,9 +347,7 @@ static void print_vlan_tunnel_info(FILE *fp, struct rtattr *tb, int ifindex)
 		close_vlan_port();
 }
 
-static int print_vlan_tunnel(const struct sockaddr_nl *who,
-			     struct nlmsghdr *n,
-			     void *arg)
+static int print_vlan_tunnel(struct nlmsghdr *n, void *arg)
 {
 	struct ifinfomsg *ifm = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
@@ -392,9 +390,7 @@ static int print_vlan_tunnel(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static int print_vlan(const struct sockaddr_nl *who,
-		      struct nlmsghdr *n,
-		      void *arg)
+static int print_vlan(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
 	struct ifinfomsg *ifm = NLMSG_DATA(n);
@@ -513,9 +509,7 @@ static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 
 }
 
-static int print_vlan_stats(const struct sockaddr_nl *who,
-			    struct nlmsghdr *n,
-			    void *arg)
+static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 {
 	struct if_stats_msg *ifsm = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_STATS_MAX+1];

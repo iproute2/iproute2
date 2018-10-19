@@ -258,7 +258,7 @@ static int filter_chain_index_set;
 static __u32 filter_block_index;
 __u16 f_proto;
 
-int print_filter(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_filter(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
@@ -592,7 +592,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 	}
 
 	new_json_obj(json);
-	print_filter(NULL, answer, (void *)stdout);
+	print_filter(answer, (void *)stdout);
 	delete_json_obj();
 
 	free(answer);

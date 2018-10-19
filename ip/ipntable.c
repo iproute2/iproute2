@@ -520,8 +520,7 @@ static void print_ndtstats(const struct ndt_stats *ndts)
 	print_nl();
 }
 
-static int print_ntable(const struct sockaddr_nl *who,
-			struct nlmsghdr *n, void *arg)
+static int print_ntable(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct ndtmsg *ndtm = NLMSG_DATA(n);

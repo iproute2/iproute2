@@ -99,8 +99,7 @@ static void print_tunsrc(struct rtattr *attrs[])
 		     "tunsrc addr %s\n", dst);
 }
 
-static int process_msg(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		       void *arg)
+static int process_msg(struct nlmsghdr *n, void *arg)
 {
 	struct rtattr *attrs[SEG6_ATTR_MAX + 1];
 	struct genlmsghdr *ghdr;
@@ -180,7 +179,7 @@ static int seg6_do_cmd(void)
 		if (rtnl_talk(&grth, &req.n, &answer) < 0)
 			return -2;
 		new_json_obj(json);
-		if (process_msg(NULL, answer, stdout) < 0) {
+		if (process_msg(answer, stdout) < 0) {
 			fprintf(stderr, "Error parsing reply\n");
 			exit(1);
 		}

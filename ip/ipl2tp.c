@@ -437,8 +437,7 @@ static int get_response(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static int session_nlmsg(const struct sockaddr_nl *who,
-			 struct nlmsghdr *n, void *arg)
+static int session_nlmsg(struct nlmsghdr *n, void *arg)
 {
 	int ret = get_response(n, arg);
 
@@ -476,8 +475,7 @@ static int get_session(struct l2tp_data *p)
 	return 0;
 }
 
-static int tunnel_nlmsg(const struct sockaddr_nl *who,
-			struct nlmsghdr *n, void *arg)
+static int tunnel_nlmsg(struct nlmsghdr *n, void *arg)
 {
 	int ret = get_response(n, arg);
 

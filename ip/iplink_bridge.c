@@ -757,8 +757,7 @@ static void bridge_print_stats_attr(FILE *f, struct rtattr *attr, int ifindex)
 	}
 }
 
-int bridge_print_xstats(const struct sockaddr_nl *who,
-			struct nlmsghdr *n, void *arg)
+int bridge_print_xstats(struct nlmsghdr *n, void *arg)
 {
 	struct if_stats_msg *ifsm = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_STATS_MAX+1];

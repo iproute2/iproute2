@@ -212,8 +212,7 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 static int filter_ifindex;
 
-int print_qdisc(const struct sockaddr_nl *who,
-		struct nlmsghdr *n, void *arg)
+int print_qdisc(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct tcmsg *t = NLMSG_DATA(n);
@@ -448,8 +447,7 @@ struct tc_qdisc_block_exists_ctx {
 	bool found;
 };
 
-static int tc_qdisc_block_exists_cb(const struct sockaddr_nl *who,
-				    struct nlmsghdr *n, void *arg)
+static int tc_qdisc_block_exists_cb(struct nlmsghdr *n, void *arg)
 {
 	struct tc_qdisc_block_exists_ctx *ctx = arg;
 	struct tcmsg *t = NLMSG_DATA(n);

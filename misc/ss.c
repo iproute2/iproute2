@@ -3156,8 +3156,7 @@ static int kill_inet_sock(struct nlmsghdr *h, void *arg, struct sockstat *s)
 	return rtnl_talk(rth, &req.nlh, NULL);
 }
 
-static int show_one_inet_sock(const struct sockaddr_nl *addr,
-		struct nlmsghdr *h, void *arg)
+static int show_one_inet_sock(struct nlmsghdr *h, void *arg)
 {
 	int err;
 	struct inet_diag_arg *diag_arg = arg;
@@ -3548,8 +3547,7 @@ static void unix_stats_print(struct sockstat *s, struct filter *f)
 	proc_ctx_print(s);
 }
 
-static int unix_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
-		void *arg)
+static int unix_show_sock(struct nlmsghdr *nlh, void *arg)
 {
 	struct filter *f = (struct filter *)arg;
 	struct unix_diag_msg *r = NLMSG_DATA(nlh);
@@ -3843,8 +3841,7 @@ static void packet_show_ring(struct packet_diag_ring *ring)
 	out(",features:0x%x", ring->pdr_features);
 }
 
-static int packet_show_sock(const struct sockaddr_nl *addr,
-		struct nlmsghdr *nlh, void *arg)
+static int packet_show_sock(struct nlmsghdr *nlh, void *arg)
 {
 	const struct filter *f = arg;
 	struct packet_diag_msg *r = NLMSG_DATA(nlh);
@@ -4133,8 +4130,7 @@ static int netlink_show_one(struct filter *f,
 	return 0;
 }
 
-static int netlink_show_sock(const struct sockaddr_nl *addr,
-		struct nlmsghdr *nlh, void *arg)
+static int netlink_show_sock(struct nlmsghdr *nlh, void *arg)
 {
 	struct filter *f = (struct filter *)arg;
 	struct netlink_diag_msg *r = NLMSG_DATA(nlh);
@@ -4257,8 +4253,7 @@ static void vsock_stats_print(struct sockstat *s, struct filter *f)
 	proc_ctx_print(s);
 }
 
-static int vsock_show_sock(const struct sockaddr_nl *addr,
-			   struct nlmsghdr *nlh, void *arg)
+static int vsock_show_sock(struct nlmsghdr *nlh, void *arg)
 {
 	struct filter *f = (struct filter *)arg;
 	struct vsock_diag_msg *r = NLMSG_DATA(nlh);
@@ -4311,8 +4306,7 @@ static void tipc_sock_addr_print(struct rtattr *net_addr, struct rtattr *id)
 
 }
 
-static int tipc_show_sock(const struct sockaddr_nl *addr, struct nlmsghdr *nlh,
-			  void *arg)
+static int tipc_show_sock(struct nlmsghdr *nlh, void *arg)
 {
 	struct rtattr *stat[TIPC_NLA_SOCK_STAT_MAX + 1] = {};
 	struct rtattr *attrs[TIPC_NLA_SOCK_MAX + 1] = {};
@@ -4400,8 +4394,7 @@ struct sock_diag_msg {
 	__u8 sdiag_family;
 };
 
-static int generic_show_sock(const struct sockaddr_nl *addr,
-		struct nlmsghdr *nlh, void *arg)
+static int generic_show_sock(struct nlmsghdr *nlh, void *arg)
 {
 	struct sock_diag_msg *r = NLMSG_DATA(nlh);
 	struct inet_diag_arg inet_arg = { .f = arg, .protocol = IPPROTO_MAX };
@@ -4411,19 +4404,19 @@ static int generic_show_sock(const struct sockaddr_nl *addr,
 	case AF_INET:
 	case AF_INET6:
 		inet_arg.rth = inet_arg.f->rth_for_killing;
-		ret = show_one_inet_sock(addr, nlh, &inet_arg);
+		ret = show_one_inet_sock(nlh, &inet_arg);
 		break;
 	case AF_UNIX:
-		ret = unix_show_sock(addr, nlh, arg);
+		ret = unix_show_sock(nlh, arg);
 		break;
 	case AF_PACKET:
-		ret = packet_show_sock(addr, nlh, arg);
+		ret = packet_show_sock(nlh, arg);
 		break;
 	case AF_NETLINK:
-		ret = netlink_show_sock(addr, nlh, arg);
+		ret = netlink_show_sock(nlh, arg);
 		break;
 	case AF_VSOCK:
-		ret = vsock_show_sock(addr, nlh, arg);
+		ret = vsock_show_sock(nlh, arg);
 		break;
 	default:
 		ret = -1;

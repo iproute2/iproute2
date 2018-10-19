@@ -929,8 +929,7 @@ static void print_rxsc_list(struct rtattr *sc)
 	close_json_array(PRINT_JSON, NULL);
 }
 
-static int process(const struct sockaddr_nl *who, struct nlmsghdr *n,
-		   void *arg)
+static int process(struct nlmsghdr *n, void *arg)
 {
 	struct genlmsghdr *ghdr;
 	struct rtattr *attrs[MACSEC_ATTR_MAX + 1];

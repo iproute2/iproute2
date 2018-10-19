@@ -296,8 +296,7 @@ static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
 	}
 }
 
-int print_class(const struct sockaddr_nl *who,
-		       struct nlmsghdr *n, void *arg)
+int print_class(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct tcmsg *t = NLMSG_DATA(n);

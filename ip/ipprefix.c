@@ -35,7 +35,7 @@
 #define IF_PREFIX_ONLINK	0x01
 #define IF_PREFIX_AUTOCONF	0x02
 
-int print_prefix(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg)
+int print_prefix(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct prefixmsg *prefix = NLMSG_DATA(n);

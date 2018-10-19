@@ -386,9 +386,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 	return 0;
 }
 
-int print_action(const struct sockaddr_nl *who,
-			   struct nlmsghdr *n,
-			   void *arg)
+int print_action(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct tcamsg *t = NLMSG_DATA(n);
@@ -541,7 +539,7 @@ static int tc_action_gd(int cmd, unsigned int flags,
 
 	if (cmd == RTM_GETACTION) {
 		new_json_obj(json);
-		ret = print_action(NULL, ans, stdout);
+		ret = print_action(ans, stdout);
 		if (ret < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			free(ans);

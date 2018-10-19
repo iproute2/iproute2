@@ -88,11 +88,9 @@ struct rtnl_ctrl_data {
 	int	nsid;
 };
 
-typedef int (*rtnl_filter_t)(const struct sockaddr_nl *,
-			     struct nlmsghdr *n, void *);
+typedef int (*rtnl_filter_t)(struct nlmsghdr *n, void *);
 
-typedef int (*rtnl_listen_filter_t)(const struct sockaddr_nl *,
-				    struct rtnl_ctrl_data *,
+typedef int (*rtnl_listen_filter_t)(struct rtnl_ctrl_data *,
 				    struct nlmsghdr *n, void *);
 
 typedef int (*nl_ext_ack_fn_t)(const char *errmsg, uint32_t off,

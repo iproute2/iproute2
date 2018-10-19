@@ -174,8 +174,7 @@ static int print_ctrl_grp(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
 /*
  * The controller sends one nlmsg per family
 */
-static int print_ctrl(const struct sockaddr_nl *who,
-		      struct rtnl_ctrl_data *ctrl,
+static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 		      struct nlmsghdr *n, void *arg)
 {
 	struct rtattr *tb[CTRL_ATTR_MAX + 1];
@@ -279,10 +278,9 @@ static int print_ctrl(const struct sockaddr_nl *who,
 	return 0;
 }
 
-static int print_ctrl2(const struct sockaddr_nl *who,
-		      struct nlmsghdr *n, void *arg)
+static int print_ctrl2(struct nlmsghdr *n, void *arg)
 {
-	return print_ctrl(who, NULL, n, arg);
+	return print_ctrl(NULL, n, arg);
 }
 
 static int ctrl_list(int cmd, int argc, char **argv)
@@ -339,7 +337,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 			goto ctrl_done;
 		}
 
-		if (print_ctrl2(NULL, answer, (void *) stdout) < 0) {
+		if (print_ctrl2(answer, (void *) stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			goto ctrl_done;
 		}
