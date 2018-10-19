@@ -1934,7 +1934,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 	 * the link device
 	 */
 	if (filter_dev && filter.group == -1 && do_link == 1) {
-		if (iplink_get(0, filter_dev, RTEXT_FILTER_VF) < 0) {
+		if (iplink_get(filter_dev, RTEXT_FILTER_VF) < 0) {
 			perror("Cannot send link get request");
 			delete_json_obj();
 			exit(1);
