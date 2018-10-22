@@ -1190,7 +1190,9 @@ the following additional arguments are supported:
 
 .sp
 .BI ttl " TTL"
-- specifies the TTL value to use in outgoing packets.
+- specifies the TTL value to use in outgoing packets. "0" or "auto" means
+use whatever default value, "inherit" means inherit the inner protocol's
+ttl. Default option is "0".
 
 .sp
 .BI tos " TOS"

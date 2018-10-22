@@ -34,7 +34,7 @@ static void print_explain(FILE *f)
 		"Where: VNI   := 0-16777215\n"
 		"       ADDR  := IP_ADDRESS\n"
 		"       TOS   := { NUMBER | inherit }\n"
-		"       TTL   := { 1..255 | inherit }\n"
+		"       TTL   := { 1..255 | auto | inherit }\n"
 		"       LABEL := 0-1048575\n"
 	);
 }
@@ -94,7 +94,9 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			NEXT_ARG();
 			check_duparg(&attrs, IFLA_GENEVE_TTL, "ttl", *argv);
-			if (strcmp(*argv, "inherit") != 0) {
+			if (strcmp(*argv, "inherit") == 0) {
+				addattr8(n, 1024, IFLA_GENEVE_TTL_INHERIT, 1);
+			} else if (strcmp(*argv, "auto") != 0) {
 				if (get_unsigned(&uval, *argv, 0))
 					invarg("invalid TTL", *argv);
 				if (uval > 255)
@@ -265,12 +267,16 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 	}
 
-	if (tb[IFLA_GENEVE_TTL])
-		ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
-	if (is_json_context() || ttl)
-		print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
-	else
+	if (tb[IFLA_GENEVE_TTL_INHERIT] &&
+	    rta_getattr_u8(tb[IFLA_GENEVE_TTL_INHERIT])) {
 		print_string(PRINT_FP, NULL, "ttl %s ", "inherit");
+	} else if (tb[IFLA_GENEVE_TTL]) {
+		ttl = rta_getattr_u8(tb[IFLA_GENEVE_TTL]);
+		if (is_json_context() || ttl)
+			print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
+		else
+			print_string(PRINT_FP, NULL, "ttl %s ", "auto");
+	}
 
 	if (tb[IFLA_GENEVE_TOS])
 		tos = rta_getattr_u8(tb[IFLA_GENEVE_TOS]);
