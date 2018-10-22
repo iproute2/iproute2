@@ -95,7 +95,7 @@ int print_addrlabel(const struct sockaddr_nl *who, struct nlmsghdr *n, void *arg
 	}
 
 	if (tb[IFAL_LABEL] && RTA_PAYLOAD(tb[IFAL_LABEL]) == sizeof(uint32_t)) {
-		uint32_t label = rta_getattr_u32(RTA_DATA(tb[IFAL_LABEL]));
+		uint32_t label = rta_getattr_u32(tb[IFAL_LABEL]);
 
 		print_uint(PRINT_ANY,
 			   "label", "label %u ", label);

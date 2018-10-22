@@ -27,6 +27,7 @@
 #include <linux/param.h>
 #include <linux/if_arp.h>
 #include <linux/mpls.h>
+#include <linux/snmp.h>
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
@@ -1570,6 +1571,24 @@ static void copy_rtnl_link_stats64(struct rtnl_link_stats64 *stats64,
 		*a++ = *b++;
 }
 
+#define IPSTATS_MIB_MAX_LEN	(__IPSTATS_MIB_MAX * sizeof(__u64))
+static void get_snmp_counters(struct rtnl_link_stats64 *stats64,
+			      struct rtattr *s)
+{
+	__u64 *mib = (__u64 *)RTA_DATA(s);
+
+	memset(stats64, 0, sizeof(*stats64));
+
+	stats64->rx_packets = mib[IPSTATS_MIB_INPKTS];
+	stats64->rx_bytes = mib[IPSTATS_MIB_INOCTETS];
+	stats64->tx_packets = mib[IPSTATS_MIB_OUTPKTS];
+	stats64->tx_bytes = mib[IPSTATS_MIB_OUTOCTETS];
+	stats64->rx_errors = mib[IPSTATS_MIB_INDISCARDS];
+	stats64->tx_errors = mib[IPSTATS_MIB_OUTDISCARDS];
+	stats64->multicast = mib[IPSTATS_MIB_INMCASTPKTS];
+	stats64->rx_frame_errors = mib[IPSTATS_MIB_CSUMERRORS];
+}
+
 int get_rtnl_link_stats_rta(struct rtnl_link_stats64 *stats64,
 			    struct rtattr *tb[])
 {
@@ -1586,6 +1605,14 @@ int get_rtnl_link_stats_rta(struct rtnl_link_stats64 *stats64,
 		rta = tb[IFLA_STATS];
 		size = sizeof(struct rtnl_link_stats);
 		s = &stats;
+	} else if (tb[IFLA_PROTINFO]) {
+		struct rtattr *ptb[IPSTATS_MIB_MAX_LEN + 1];
+
+		parse_rtattr_nested(ptb, IPSTATS_MIB_MAX_LEN,
+				    tb[IFLA_PROTINFO]);
+		if (ptb[IFLA_INET6_STATS])
+			get_snmp_counters(stats64, ptb[IFLA_INET6_STATS]);
+		return sizeof(*stats64);
 	} else {
 		return -1;
 	}

@@ -172,12 +172,12 @@ void print_color_0xhex(enum output_type type,
 		       enum color_attr color,
 		       const char *key,
 		       const char *fmt,
-		       unsigned int hex)
+		       unsigned long long hex)
 {
 	if (_IS_JSON_CONTEXT(type)) {
 		SPRINT_BUF(b1);
 
-		snprintf(b1, sizeof(b1), "%#x", hex);
+		snprintf(b1, sizeof(b1), "%#llx", hex);
 		print_string(PRINT_JSON, key, NULL, b1);
 	} else if (_IS_FP_CONTEXT(type)) {
 		color_fprintf(stdout, color, fmt, hex);
