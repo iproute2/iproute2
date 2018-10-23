@@ -1457,7 +1457,7 @@ int makeargs(char *line, char *argv[], int maxargs)
 				break;
 		}
 
-		/* seperate words */
+		/* separate words */
 		*cp++ = 0;
 	}
 	argv[argc] = NULL;

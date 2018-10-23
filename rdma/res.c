@@ -621,6 +621,8 @@ static int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data)
 			if (rd_check_is_string_filtered(rd, "src-addr",
 							src_addr_str))
 				continue;
+			if (rd_check_is_filtered(rd, "src-port", src_port))
+				continue;
 		}
 
 		if (nla_line[RDMA_NLDEV_ATTR_RES_DST_ADDR]) {
@@ -630,13 +632,9 @@ static int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data)
 			if (rd_check_is_string_filtered(rd, "dst-addr",
 							dst_addr_str))
 				continue;
+			if (rd_check_is_filtered(rd, "dst-port", dst_port))
+				continue;
 		}
-
-		if (rd_check_is_filtered(rd, "src-port", src_port))
-			continue;
-
-		if (rd_check_is_filtered(rd, "dst-port", dst_port))
-			continue;
 
 		if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
 			pid = mnl_attr_get_u32(

@@ -51,7 +51,7 @@ $TC qdisc add dev $INDEV handle ffff: ingress
 #
 # *********************** AF41 *************************** 
 #AF41 (DSCP 0x22) from is passed on with a tcindex value 1
-#if it doesnt exceed its CIR/CBS + PIR/EBS
+#if it doesn't exceed its CIR/CBS + PIR/EBS
 #policer 1  is used.
 #
 $TC filter add dev $INDEV parent ffff: protocol ip prio 1 u32 \
@@ -90,7 +90,7 @@ drop flowid :3
 #
 # *********************** AF42 *************************** 
 #AF42 (DSCP 0x24) from is passed on with a tcindex value 2
-#if it doesnt exceed its CIR/CBS + PIR/EBS
+#if it doesn't exceed its CIR/CBS + PIR/EBS
 #policer 2 is used. Note that this is shared with the AF41
 #
 #
@@ -119,7 +119,7 @@ drop flowid :3
 # *********************** AF43 *************************** 
 #
 #AF43 (DSCP 0x26) from is passed on with a tcindex value 3
-#if it doesnt exceed its CIR/CBS + PIR/EBS
+#if it doesn't exceed its CIR/CBS + PIR/EBS
 #policer 3 is used. Note that this is shared with the AF41 and AF42
 #
 $TC filter add dev $INDEV parent ffff: protocol ip prio 13 u32 \
@@ -134,7 +134,7 @@ drop flowid :3
 ## *********************** BE *************************** 
 ##
 ## Anything else (not from the AF4*) gets discarded if it 
-## exceeds 1Mbps and by default goes to BE if it doesnt
+## exceeds 1Mbps and by default goes to BE if it doesn't
 ## Note that the BE class is also used by the AF4* in the worst
 ## case
 ##

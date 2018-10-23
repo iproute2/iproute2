@@ -494,10 +494,11 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	struct seg6_iptunnel_encap *tuninfo;
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
-	char segbuf[1024];
+	char segbuf[1024] = "";
 	int argc = *argcp;
 	int encap = -1;
 	__u32 hmac = 0;
+	int ret = 0;
 	int srhlen;
 
 	while (argc > 0) {
@@ -539,16 +540,19 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	memcpy(tuninfo->srh, srh, srhlen);
 
 	if (rta_addattr_l(rta, len, SEG6_IPTUNNEL_SRH, tuninfo,
-			  sizeof(*tuninfo) + srhlen))
-		return -1;
-
-	free(tuninfo);
-	free(srh);
+			  sizeof(*tuninfo) + srhlen)) {
+		ret = -1;
+		goto out;
+	}
 
 	*argcp = argc + 1;
 	*argvp = argv - 1;
 
-	return 0;
+out:
+	free(tuninfo);
+	free(srh);
+
+	return ret;
 }
 
 struct lwt_x {

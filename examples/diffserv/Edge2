@@ -36,7 +36,7 @@ $TC qdisc add dev $INDEV handle ffff: ingress
 # by ipchains to tag value 3 (The rest of the subnet packets -- not
 # tag 1 or 2) to not go beyond 1.5Mbps
 # Allow up to at least 60 packets to burst (assuming maximum packet 
-# size of # 1.5 KB) in the long run and upto about 6 packets in the
+# size of # 1.5 KB) in the long run and up to about 6 packets in the
 # shot run
 
 ############################################################ 

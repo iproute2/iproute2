@@ -256,7 +256,7 @@
 #	class. By default, TBF is used. Note that attaching TBF to CBQ class
 #	shapes the traffic to conform to TBF parameters and prevents the class
 #	from borrowing bandwidth from its parent even if you have BOUNDED set
-#	to "no". To allow the class to borrow bandwith (provided it is not
+#	to "no". To allow the class to borrow bandwidth (provided it is not
 #	bounded), you must set LEAF to "none" or "sfq".
 #
 #	If you want to ensure (approximately) fair sharing of bandwidth among
@@ -271,7 +271,7 @@
 #
 # Note:	Don't forget to set LEAF to "none" or "sfq", otherwise the class will
 #	have TBF attached to itself and will not be able to borrow unused
-#	bandwith from its parent.
+#	bandwidth from its parent.
 #
 # ISOLATED=yes|no				optional, default "no"
 #
@@ -392,7 +392,7 @@
 # MARK=<mark>
 #
 #	These parameters make up "fw" filter rules that select traffic for
-#	each of the classes accoring to firewall "mark". Mark is a decimal
+#	each of the classes according to firewall "mark". Mark is a decimal
 #	number packets are tagged with if firewall rules say so. You can
 #	use multiple MARK fields per config.
 #

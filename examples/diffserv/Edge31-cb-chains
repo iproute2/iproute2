@@ -47,7 +47,7 @@ $TC qdisc add dev $INDEV handle ffff: ingress
 ############################################################ 
 # 
 # anything with fw tag of 1 is passed on with a tcindex value 1
-#if it doesnt exceed its allocated rate (CIR/CBS)
+#if it doesn't exceed its allocated rate (CIR/CBS)
 # 
 $TC filter add dev $INDEV parent ffff: protocol ip prio 4 handle 1 fw \
 $meter1 \
@@ -68,7 +68,7 @@ $meter3 \
 drop flowid 4:3
 #
 # Anything else (not from the subnet 10.2.0.24/24) gets discarded if it 
-# exceeds 1Mbps and by default goes to BE if it doesnt
+# exceeds 1Mbps and by default goes to BE if it doesn't
 #
 $TC filter add dev $INDEV parent ffff: protocol ip prio 6 handle 2 fw \
 $meter5 \

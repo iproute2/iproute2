@@ -928,7 +928,7 @@ int xfrm_state_print(struct nlmsghdr *n, void *arg)
 	}
 
 	if (n->nlmsg_type == XFRM_MSG_DELSA) {
-		/* Dont blame me for this .. Herbert made me do it */
+		/* Don't blame me for this .. Herbert made me do it */
 		xsid = NLMSG_DATA(n);
 		len -= NLMSG_SPACE(sizeof(*xsid));
 	} else if (n->nlmsg_type == XFRM_MSG_EXPIRE) {

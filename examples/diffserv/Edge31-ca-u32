@@ -47,7 +47,7 @@ meter5=" police index 5 rate $CIR1 burst $CBS2 "
 
 # *********************** AF41 *************************** 
 #AF41 (DSCP 0x22) is passed on with a tcindex value 1
-#if it doesnt exceed its CIR/CBS 
+#if it doesn't exceed its CIR/CBS 
 #policer 1  is used.
 #
 $TC filter add dev $INDEV parent ffff: protocol ip prio 4 u32 \
@@ -75,7 +75,7 @@ drop flowid :3
 
 # *********************** AF42 *************************** 
 #AF42 (DSCP 0x24) from is passed on with a tcindex value 2
-#if it doesnt exceed its CIR/CBS 
+#if it doesn't exceed its CIR/CBS 
 #policer 2 is used. Note that this is shared with the AF41
 #
 #
@@ -95,7 +95,7 @@ drop flowid :3
 # *********************** AF43 *************************** 
 #
 #AF43 (DSCP 0x26) from is passed on with a tcindex value 3
-#if it doesnt exceed its CIR/CBS
+#if it doesn't exceed its CIR/CBS
 #policer 3 is used. Note that this is shared with the AF41 and AF42
 #
 $TC filter add dev $INDEV parent ffff: protocol ip prio 6 u32 \
@@ -106,7 +106,7 @@ drop flowid :3
 # *********************** BE *************************** 
 #
 # Anything else (not from the AF4*) gets discarded if it 
-# exceeds 1Mbps and by default goes to BE if it doesnt
+# exceeds 1Mbps and by default goes to BE if it doesn't
 # Note that the BE class is also used by the AF4* in the worst
 # case
 #

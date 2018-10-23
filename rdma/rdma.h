@@ -34,7 +34,7 @@
 
 #define MAX_NUMBER_OF_FILTERS 64
 struct filters {
-	char name[32];
+	const char *name;
 	bool is_number;
 };
 

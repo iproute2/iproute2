@@ -26,13 +26,13 @@ dev ("port" in ethernet switch/bridging terminology)
 - redirect
 steals the packet and redirects to specified destination dev.
 
-What NOT to do if you dont want your machine to crash:
+What NOT to do if you don't want your machine to crash:
 ------------------------------------------------------
 
 Do not create loops! 
 Loops are not hard to create in the egress qdiscs.
 
-Here are simple rules to follow if you dont want to get
+Here are simple rules to follow if you don't want to get
 hurt:
 A) Do not have the same packet go to same netdevice twice
 in a single graph of policies. Your machine will just hang!
@@ -129,7 +129,7 @@ so you could tcpdump them (dummy by defaults drops all packets it sees).
 This is a very useful debug feature.
 
 Lets say you are policing packets from alias 192.168.200.200/32
-you dont want those to exceed 100kbps going out.
+you don't want those to exceed 100kbps going out.
 
 ---
 tc qdisc add dev eth0 handle 1:0 root prio
