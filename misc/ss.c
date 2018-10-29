@@ -1260,7 +1260,7 @@ static void render(void)
 	while (token) {
 		/* Print left delimiter only if we already started a line */
 		if (line_started++)
-			printed = printf("%s", current_field->ldelim);
+			printed = printf("%s", f->ldelim);
 		else
 			printed = 0;
 
