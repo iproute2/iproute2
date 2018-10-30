@@ -696,6 +696,11 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	};
 
 	if (cmd == RTM_NEWRULE) {
+		if (argc == 0) {
+			fprintf(stderr,
+				"\"ip rule add\" requires arguments.\n");
+			return -1;
+		}
 		req.n.nlmsg_flags |= NLM_F_CREATE|NLM_F_EXCL;
 		req.frh.action = FR_ACT_TO_TBL;
 	}
