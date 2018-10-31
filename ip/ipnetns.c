@@ -8,6 +8,9 @@
 #include <sys/syscall.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_LIBBSD
+#include <bsd/string.h>
+#endif
 #include <sched.h>
 #include <fcntl.h>
 #include <dirent.h>

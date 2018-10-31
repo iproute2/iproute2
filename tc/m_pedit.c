@@ -23,6 +23,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#ifdef HAVE_LIBBSD
+#include <bsd/string.h>
+#endif
 #include <dlfcn.h>
 #include "utils.h"
 #include "tc_util.h"

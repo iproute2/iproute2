@@ -24,6 +24,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#ifdef HAVE_LIBBSD
+#include <bsd/string.h>
+#endif
 #include <sys/ioctl.h>
 #include <stdbool.h>
 #include <linux/mpls.h>
