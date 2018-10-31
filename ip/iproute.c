@@ -1604,7 +1604,7 @@ static int save_route_prep(void)
 	return 0;
 }
 
-static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
+static int iproute_flush(int family, rtnl_filter_t filter_fn)
 {
 	time_t start = time(0);
 	char flushb[4096-512];
@@ -1612,12 +1612,12 @@ static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
 	int ret;
 
 	if (filter.cloned) {
-		if (do_ipv6 != AF_INET6) {
+		if (family != AF_INET6) {
 			iproute_flush_cache();
 			if (show_stats)
 				printf("*** IPv4 routing cache is flushed.\n");
 		}
-		if (do_ipv6 == AF_INET)
+		if (family == AF_INET)
 			return 0;
 	}
 
@@ -1626,7 +1626,7 @@ static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
 	filter.flushe = sizeof(flushb);
 
 	for (;;) {
-		if (rtnl_routedump_req(&rth, do_ipv6, NULL) < 0) {
+		if (rtnl_routedump_req(&rth, family, NULL) < 0) {
 			perror("Cannot send dump request");
 			return -2;
 		}
@@ -1638,7 +1638,7 @@ static int iproute_flush(int do_ipv6, rtnl_filter_t filter_fn)
 		if (filter.flushed == 0) {
 			if (show_stats) {
 				if (round == 0 &&
-				    (!filter.cloned || do_ipv6 == AF_INET6))
+				    (!filter.cloned || family == AF_INET6))
 					printf("Nothing to flush.\n");
 				else
 					printf("*** Flush is complete after %d round%s ***\n",
@@ -1692,7 +1692,7 @@ static int iproute_dump_filter(struct nlmsghdr *nlh, int reqlen)
 
 static int iproute_list_flush_or_save(int argc, char **argv, int action)
 {
-	int do_ipv6 = preferred_family;
+	int dump_family = preferred_family;
 	char *id = NULL;
 	char *od = NULL;
 	unsigned int mark = 0;
@@ -1811,13 +1811,13 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			NEXT_ARG();
 			family = read_family(*argv);
 			if (family == AF_UNSPEC)
-				family = do_ipv6;
+				family = dump_family;
 			else
 				NEXT_ARG();
 			get_prefix(&filter.rvia, *argv, family);
 		} else if (strcmp(*argv, "src") == 0) {
 			NEXT_ARG();
-			get_prefix(&filter.rprefsrc, *argv, do_ipv6);
+			get_prefix(&filter.rprefsrc, *argv, dump_family);
 		} else if (matches(*argv, "realms") == 0) {
 			__u32 realm;
 
@@ -1837,15 +1837,15 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			NEXT_ARG();
 			if (matches(*argv, "root") == 0) {
 				NEXT_ARG();
-				get_prefix(&filter.rsrc, *argv, do_ipv6);
+				get_prefix(&filter.rsrc, *argv, dump_family);
 			} else if (matches(*argv, "match") == 0) {
 				NEXT_ARG();
-				get_prefix(&filter.msrc, *argv, do_ipv6);
+				get_prefix(&filter.msrc, *argv, dump_family);
 			} else {
 				if (matches(*argv, "exact") == 0) {
 					NEXT_ARG();
 				}
-				get_prefix(&filter.msrc, *argv, do_ipv6);
+				get_prefix(&filter.msrc, *argv, dump_family);
 				filter.rsrc = filter.msrc;
 			}
 		} else {
@@ -1854,23 +1854,23 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 			}
 			if (matches(*argv, "root") == 0) {
 				NEXT_ARG();
-				get_prefix(&filter.rdst, *argv, do_ipv6);
+				get_prefix(&filter.rdst, *argv, dump_family);
 			} else if (matches(*argv, "match") == 0) {
 				NEXT_ARG();
-				get_prefix(&filter.mdst, *argv, do_ipv6);
+				get_prefix(&filter.mdst, *argv, dump_family);
 			} else {
 				if (matches(*argv, "exact") == 0) {
 					NEXT_ARG();
 				}
-				get_prefix(&filter.mdst, *argv, do_ipv6);
+				get_prefix(&filter.mdst, *argv, dump_family);
 				filter.rdst = filter.mdst;
 			}
 		}
 		argc--; argv++;
 	}
 
-	if (do_ipv6 == AF_UNSPEC && filter.tb)
-		do_ipv6 = AF_INET;
+	if (dump_family == AF_UNSPEC && filter.tb)
+		dump_family = AF_INET;
 
 	if (id || od)  {
 		int idx;
@@ -1893,9 +1893,9 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 	filter.mark = mark;
 
 	if (action == IPROUTE_FLUSH)
-		return iproute_flush(do_ipv6, filter_fn);
+		return iproute_flush(dump_family, filter_fn);
 
-	if (rtnl_routedump_req(&rth, do_ipv6, iproute_dump_filter) < 0) {
+	if (rtnl_routedump_req(&rth, dump_family, iproute_dump_filter) < 0) {
 		perror("Cannot send dump request");
 		return -2;
 	}
