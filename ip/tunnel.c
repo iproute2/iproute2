@@ -24,9 +24,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_LIBBSD
-#include <bsd/string.h>
-#endif
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>

@@ -18,9 +18,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
-#ifdef HAVE_LIBBSD
-#include <bsd/string.h>
-#endif
 
 #include "utils.h"
 #include "genl_utils.h"

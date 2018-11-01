@@ -16,9 +16,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#ifdef HAVE_LIBBSD
-#include <bsd/string.h>
-#endif
 #include <linux/ila.h>
 #include <linux/lwtunnel.h>
 #include <linux/mpls_iptunnel.h>

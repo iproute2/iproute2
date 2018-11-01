@@ -20,9 +20,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
-#ifdef HAVE_LIBBSD
-#include <bsd/string.h>
-#endif
 #include <stdlib.h>
 #include <getopt.h>
 

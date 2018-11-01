@@ -18,9 +18,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
-#ifdef HAVE_LIBBSD
-#include <bsd/string.h>
-#endif
 
 #include "rt_names.h"
 #include "utils.h"
