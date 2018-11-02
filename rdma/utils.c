@@ -577,6 +577,16 @@ out:
 	return ret;
 }
 
+int rd_exec_require_dev(struct rd *rd, int (*cb)(struct rd *rd))
+{
+	if (rd_no_arg(rd)) {
+		pr_err("Please provide device name.\n");
+		return -EINVAL;
+	}
+
+	return rd_exec_dev(rd, cb);
+}
+
 int rd_exec_cmd(struct rd *rd, const struct rd_cmd *cmds, const char *str)
 {
 	const struct rd_cmd *c;
