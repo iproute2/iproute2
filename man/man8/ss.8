@@ -89,7 +89,13 @@ an uuid of the socket
 Show socket memory usage. The output format is:
 .RS
 .P
-skmem:(r<rmem_alloc>,rb<rcv_buf>,t<wmem_alloc>,tb<snd_buf>,f<fwd_alloc>,w<wmem_queued>,o<opt_mem>,bl<back_log>)
+skmem:(r<rmem_alloc>,rb<rcv_buf>,t<wmem_alloc>,tb<snd_buf>,f<fwd_alloc>,
+.br
+.RS
+.RS
+w<wmem_queued>,o<opt_mem>,bl<back_log>)
+.RE
+.RE
 .P
 .TP
 .B <rmem_alloc>
