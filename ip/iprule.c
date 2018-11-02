@@ -461,12 +461,17 @@ static int flush_rule(struct nlmsghdr *n, void *arg)
 	struct fib_rule_hdr *frh = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[FRA_MAX+1];
+	int host_len = -1;
 
 	len -= NLMSG_LENGTH(sizeof(*frh));
 	if (len < 0)
 		return -1;
 
 	parse_rtattr(tb, FRA_MAX, RTM_RTA(frh), len);
+
+	host_len = af_bit_len(frh->family);
+	if (!filter_nlmsg(n, tb, host_len))
+		return 0;
 
 	if (tb[FRA_PROTOCOL]) {
 		__u8 protocol = rta_getattr_u8(tb[FRA_PROTOCOL]);
@@ -691,6 +696,11 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	};
 
 	if (cmd == RTM_NEWRULE) {
+		if (argc == 0) {
+			fprintf(stderr,
+				"\"ip rule add\" requires arguments.\n");
+			return -1;
+		}
 		req.n.nlmsg_flags |= NLM_F_CREATE|NLM_F_EXCL;
 		req.frh.action = FR_ACT_TO_TBL;
 	}

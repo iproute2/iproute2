@@ -126,6 +126,10 @@ struct ipx_addr {
 #define IPPROTO_MPLS	137
 #endif
 
+#ifndef CLOCK_TAI
+# define CLOCK_TAI 11
+#endif
+
 __u32 get_addr32(const char *name);
 int get_addr_1(inet_prefix *dst, const char *arg, int family);
 int get_prefix_1(inet_prefix *dst, char *arg, int family);

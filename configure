@@ -330,8 +330,15 @@ EOF
     then
 	echo "no"
     else
-	echo 'CFLAGS += -DNEED_STRLCPY' >>$CONFIG
-	echo "yes"
+	if ${PKG_CONFIG} libbsd --exists
+	then
+		echo 'CFLAGS += -DHAVE_LIBBSD' `${PKG_CONFIG} libbsd --cflags` >>$CONFIG
+		echo 'LDLIBS +=' `${PKG_CONFIG} libbsd --libs` >> $CONFIG
+		echo "no"
+	else
+		echo 'CFLAGS += -DNEED_STRLCPY' >>$CONFIG
+		echo "yes"
+	fi
     fi
     rm -f $TMPDIR/strtest.c $TMPDIR/strtest
 }

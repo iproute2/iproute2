@@ -484,7 +484,7 @@ static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 	rem = RTA_PAYLOAD(list);
 
 	ifname = ll_index_to_name(ifindex);
-	open_json_object(ifname);
+	open_vlan_port(ifindex);
 
 	print_color_string(PRINT_FP, COLOR_IFNAME,
 			   NULL, "%-16s", ifname);
@@ -505,8 +505,7 @@ static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 
 		print_one_vlan_stats(vstats);
 	}
-	close_json_object();
-
+	close_vlan_port();
 }
 
 static int print_vlan_stats(struct nlmsghdr *n, void *arg)

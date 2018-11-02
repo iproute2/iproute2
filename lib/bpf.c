@@ -15,6 +15,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#ifdef HAVE_LIBBSD
+#include <bsd/string.h>
+#endif
 #include <stdbool.h>
 #include <stdint.h>
 #include <errno.h>
@@ -1758,11 +1761,13 @@ static const char *bpf_map_fetch_name(struct bpf_elf_ctx *ctx, int which)
 	int i;
 
 	for (i = 0; i < ctx->sym_num; i++) {
+		int type = GELF_ST_TYPE(sym.st_info);
+
 		if (gelf_getsym(ctx->sym_tab, i, &sym) != &sym)
 			continue;
 
 		if (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
-		    GELF_ST_TYPE(sym.st_info) != STT_NOTYPE ||
+		    (type != STT_NOTYPE && type != STT_OBJECT) ||
 		    sym.st_shndx != ctx->sec_maps ||
 		    sym.st_value / ctx->map_len != which)
 			continue;
@@ -1849,11 +1854,13 @@ static int bpf_map_num_sym(struct bpf_elf_ctx *ctx)
 	GElf_Sym sym;
 
 	for (i = 0; i < ctx->sym_num; i++) {
+		int type = GELF_ST_TYPE(sym.st_info);
+
 		if (gelf_getsym(ctx->sym_tab, i, &sym) != &sym)
 			continue;
 
 		if (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
-		    GELF_ST_TYPE(sym.st_info) != STT_NOTYPE ||
+		    (type != STT_NOTYPE && type != STT_OBJECT) ||
 		    sym.st_shndx != ctx->sec_maps)
 			continue;
 		num++;
@@ -1927,10 +1934,12 @@ static int bpf_map_verify_all_offs(struct bpf_elf_ctx *ctx, int end)
 		 * the table again.
 		 */
 		for (i = 0; i < ctx->sym_num; i++) {
+			int type = GELF_ST_TYPE(sym.st_info);
+
 			if (gelf_getsym(ctx->sym_tab, i, &sym) != &sym)
 				continue;
 			if (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
-			    GELF_ST_TYPE(sym.st_info) != STT_NOTYPE ||
+			    (type != STT_NOTYPE && type != STT_OBJECT) ||
 			    sym.st_shndx != ctx->sec_maps)
 				continue;
 			if (sym.st_value == off)

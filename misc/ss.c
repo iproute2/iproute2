@@ -19,6 +19,9 @@
 #include <sys/sysmacros.h>
 #include <netinet/in.h>
 #include <string.h>
+#ifdef HAVE_LIBBSD
+#include <bsd/string.h>
+#endif
 #include <errno.h>
 #include <netdb.h>
 #include <arpa/inet.h>
@@ -1260,7 +1263,7 @@ static void render(void)
 	while (token) {
 		/* Print left delimiter only if we already started a line */
 		if (line_started++)
-			printed = printf("%s", current_field->ldelim);
+			printed = printf("%s", f->ldelim);
 		else
 			printed = 0;
 
