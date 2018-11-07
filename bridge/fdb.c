@@ -181,13 +181,10 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 				   "mac", "%s ", lladdr);
 	}
 
-	if (!filter_index && r->ndm_ifindex) {
-		if (!is_json_context())
-			fprintf(fp, "dev ");
+	if (!filter_index && r->ndm_ifindex)
 		print_color_string(PRINT_ANY, COLOR_IFNAME,
 				   "ifname", "dev %s ",
 				   ll_index_to_name(r->ndm_ifindex));
-	}
 
 	if (tb[NDA_DST]) {
 		int family = AF_INET;
