@@ -31,6 +31,7 @@ static void print_explain(FILE *f)
 		"                 [ local ADDR ]\n"
 		"                 [ ttl TTL ]\n"
 		"                 [ tos TOS ]\n"
+		"                 [ df DF ]\n"
 		"                 [ flowlabel LABEL ]\n"
 		"                 [ dev PHYS_DEV ]\n"
 		"                 [ dstport PORT ]\n"
@@ -52,6 +53,7 @@ static void print_explain(FILE *f)
 		"       ADDR  := { IP_ADDRESS | any }\n"
 		"       TOS   := { NUMBER | inherit }\n"
 		"       TTL   := { 1..255 | auto | inherit }\n"
+		"       DF    := { unset | set | inherit }\n"
 		"       LABEL := 0-1048575\n"
 	);
 }
@@ -170,6 +172,22 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			} else
 				tos = 1;
 			addattr8(n, 1024, IFLA_VXLAN_TOS, tos);
+		} else if (!matches(*argv, "df")) {
+			enum ifla_vxlan_df df;
+
+			NEXT_ARG();
+			check_duparg(&attrs, IFLA_VXLAN_DF, "df", *argv);
+			if (strcmp(*argv, "unset") == 0)
+				df = VXLAN_DF_UNSET;
+			else if (strcmp(*argv, "set") == 0)
+				df = VXLAN_DF_SET;
+			else if (strcmp(*argv, "inherit") == 0)
+				df = VXLAN_DF_INHERIT;
+			else
+				invarg("DF must be 'unset', 'set' or 'inherit'",
+				       *argv);
+
+			addattr8(n, 1024, IFLA_VXLAN_DF, df);
 		} else if (!matches(*argv, "label") ||
 			   !matches(*argv, "flowlabel")) {
 			__u32 uval;
@@ -536,6 +554,17 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			print_uint(PRINT_ANY, "ttl", "ttl %u ", ttl);
 		else
 			print_string(PRINT_FP, NULL, "ttl %s ", "auto");
+	}
+
+	if (tb[IFLA_VXLAN_DF]) {
+		enum ifla_vxlan_df df = rta_getattr_u8(tb[IFLA_VXLAN_DF]);
+
+		if (df == VXLAN_DF_UNSET)
+			print_string(PRINT_JSON, "df", "df %s ", "unset");
+		else if (df == VXLAN_DF_SET)
+			print_string(PRINT_ANY, "df", "df %s ", "set");
+		else if (df == VXLAN_DF_INHERIT)
+			print_string(PRINT_ANY, "df", "df %s ", "inherit");
 	}
 
 	if (tb[IFLA_VXLAN_LABEL]) {

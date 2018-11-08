@@ -496,6 +496,8 @@ the following additional arguments are supported:
 ] [
 .BI tos " TOS "
 ] [
+.BI df " DF "
+] [
 .BI flowlabel " FLOWLABEL "
 ] [
 .BI dstport " PORT "
@@ -564,6 +566,18 @@ parameter.
 .sp
 .BI tos " TOS"
 - specifies the TOS value to use in outgoing packets.
+
+.sp
+.BI df " DF"
+- specifies the usage of the Don't Fragment flag (DF) bit in outgoing packets
+with IPv4 headers. The value
+.B inherit
+causes the bit to be copied from the original IP header. The values
+.B unset
+and
+.B set
+cause the bit to be always unset or always set, respectively. By default, the
+bit is not set.
 
 .sp
 .BI flowlabel " FLOWLABEL"
