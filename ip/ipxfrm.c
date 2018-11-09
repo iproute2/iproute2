@@ -28,9 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_LIBBSD
-#include <bsd/string.h>
-#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <time.h>

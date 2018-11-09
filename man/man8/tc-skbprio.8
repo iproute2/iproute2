@@ -29,8 +29,8 @@ While SKB Priority Queue is agnostic to how
 .B skb->priority
 is assigned. A typical use case is to copy
 the 6-bit DS field of IPv4 and IPv6 packets using
-.BR tc-skbedit (8)
-. If
+.BR tc-skbedit (8).
+If
 .B skb->priority
 is greater or equal to 64, the priority is assumed to be 63.
 Priorities less than 64 are taken at face value.

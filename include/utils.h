@@ -9,6 +9,10 @@
 #include <stdbool.h>
 #include <time.h>
 
+#ifdef HAVE_LIBBSD
+#include <bsd/string.h>
+#endif
+
 #include "libnetlink.h"
 #include "ll_map.h"
 #include "rtm_map.h"

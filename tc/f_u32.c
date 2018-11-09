@@ -1147,13 +1147,9 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 			terminal_ok++;
 			continue;
 		} else if (strcmp(*argv, "skip_hw") == 0) {
-			NEXT_ARG();
 			flags |= TCA_CLS_FLAGS_SKIP_HW;
-			continue;
 		} else if (strcmp(*argv, "skip_sw") == 0) {
-			NEXT_ARG();
 			flags |= TCA_CLS_FLAGS_SKIP_SW;
-			continue;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
