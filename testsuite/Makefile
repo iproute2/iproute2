@@ -85,11 +85,11 @@ endif
 		TC="$$i/tc/tc" IP="$$i/ip/ip" SS=$$i/misc/ss DEV="$(DEV)" IPVER="$@" SNAME="$$i" \
 		ERRF="$(RESULTS_DIR)/$@.$$o.err" $(PREFIX) tests/$@ > $(RESULTS_DIR)/$@.$$o.out; \
 		if [ "$$?" = "127" ]; then \
-			echo "SKIPPED"; \
+			echo "\e[1;35mSKIPPED\e[0m"; \
 		elif [ -e "$(RESULTS_DIR)/$@.$$o.err" ]; then \
-			echo "FAILED"; \
+			echo "\e[0;31mFAILED\e[0m"; \
 		else \
-			echo "PASS"; \
+			echo "\e[0;32mPASS\e[0m"; \
 		fi; \
 		rm "$$TMP_ERR" "$$TMP_OUT"; \
 		sudo dmesg > $(RESULTS_DIR)/$@.$$o.dmesg; \
