@@ -589,6 +589,15 @@ argument lists:
 route reflecting its relative bandwidth or quality.
 .in -8
 
+The internal buffer used in iproute2 limits the maximum number of nexthops that
+may be specified in one go. If only
+.I ADDRESS
+is given, the current buffer size allows for 144 IPv6 nexthops and 253 IPv4
+ones. For IPv4, this effectively limits the number of nexthops possible per
+route. With IPv6, further nexthops may be appended to the same route via
+.B "ip route append"
+command.
+
 .TP
 .BI scope " SCOPE_VAL"
 the scope of the destinations covered by the route prefix.
