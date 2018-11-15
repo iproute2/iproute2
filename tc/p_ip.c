@@ -156,7 +156,6 @@ done:
 }
 
 struct m_pedit_util p_pedit_ip = {
-	NULL,
-	"ip",
-	parse_ip,
+	.id = "ip",
+	.parse_peopt = parse_ip,
 };
