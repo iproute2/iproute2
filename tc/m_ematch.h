@@ -51,7 +51,6 @@ static inline struct bstr *bstr_next(struct bstr *b)
 }
 
 unsigned long bstrtoul(const struct bstr *b);
-void bstr_print(FILE *fd, const struct bstr *b, int ascii);
 
 struct ematch {
 	struct bstr	*args;
