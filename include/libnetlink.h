@@ -102,8 +102,6 @@ struct rtnl_dump_filter_arg {
 	__u16 nc_flags;
 };
 
-int rtnl_dump_filter_l(struct rtnl_handle *rth,
-			      const struct rtnl_dump_filter_arg *arg);
 int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 			rtnl_filter_t filter,
 			void *arg, __u16 nc_flags);
@@ -114,9 +112,6 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	__attribute__((warn_unused_result));
 int rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iovec, size_t iovlen,
 		  struct nlmsghdr **answer)
-	__attribute__((warn_unused_result));
-int rtnl_talk_extack(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-	      struct nlmsghdr **answer, nl_ext_ack_fn_t errfn)
 	__attribute__((warn_unused_result));
 int rtnl_talk_suppress_rtnl_errmsg(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 				   struct nlmsghdr **answer)
@@ -152,8 +147,6 @@ int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 int parse_rtattr_flags(struct rtattr *tb[], int max, struct rtattr *rta,
 			      int len, unsigned short flags);
-int parse_rtattr_byindex(struct rtattr *tb[], int max,
-			 struct rtattr *rta, int len);
 struct rtattr *parse_rtattr_one(int type, struct rtattr *rta, int len);
 int __parse_rtattr_nested_compat(struct rtattr *tb[], int max, struct rtattr *rta, int len);
 
