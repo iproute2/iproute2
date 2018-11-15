@@ -118,7 +118,7 @@ noexist:
 	return p;
 }
 
-int pack_key(struct m_pedit_sel *_sel, struct m_pedit_key *tkey)
+static int pack_key(struct m_pedit_sel *_sel, struct m_pedit_key *tkey)
 {
 	struct tc_pedit_sel *sel = &_sel->sel;
 	struct m_pedit_key_ex *keys_ex = _sel->keys_ex;
@@ -155,8 +155,8 @@ int pack_key(struct m_pedit_sel *_sel, struct m_pedit_key *tkey)
 	return 0;
 }
 
-int pack_key32(__u32 retain, struct m_pedit_sel *sel,
-	       struct m_pedit_key *tkey)
+static int pack_key32(__u32 retain, struct m_pedit_sel *sel,
+		      struct m_pedit_key *tkey)
 {
 	if (tkey->off > (tkey->off & ~3)) {
 		fprintf(stderr,
@@ -169,8 +169,8 @@ int pack_key32(__u32 retain, struct m_pedit_sel *sel,
 	return pack_key(sel, tkey);
 }
 
-int pack_key16(__u32 retain, struct m_pedit_sel *sel,
-	       struct m_pedit_key *tkey)
+static int pack_key16(__u32 retain, struct m_pedit_sel *sel,
+		      struct m_pedit_key *tkey)
 {
 	int ind, stride;
 	__u32 m[4] = { 0x0000FFFF, 0xFF0000FF, 0xFFFF0000 };
@@ -197,10 +197,10 @@ int pack_key16(__u32 retain, struct m_pedit_sel *sel,
 		printf("pack_key16: Final val %08x mask %08x\n",
 		       tkey->val, tkey->mask);
 	return pack_key(sel, tkey);
-
 }
 
-int pack_key8(__u32 retain, struct m_pedit_sel *sel, struct m_pedit_key *tkey)
+static int pack_key8(__u32 retain, struct m_pedit_sel *sel,
+		     struct m_pedit_key *tkey)
 {
 	int ind, stride;
 	__u32 m[4] = { 0x00FFFFFF, 0xFF00FFFF, 0xFFFF00FF, 0xFFFFFF00 };
@@ -283,7 +283,7 @@ static int pack_ipv6(struct m_pedit_sel *sel, struct m_pedit_key *tkey,
 	return 0;
 }
 
-int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
+static int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
@@ -433,8 +433,8 @@ done:
 
 }
 
-int parse_offset(int *argc_p, char ***argv_p, struct m_pedit_sel *sel,
-		 struct m_pedit_key *tkey)
+static int parse_offset(int *argc_p, char ***argv_p, struct m_pedit_sel *sel,
+			struct m_pedit_key *tkey)
 {
 	int off;
 	__u32 len, retain;
@@ -612,8 +612,8 @@ static int pedit_keys_ex_addattr(struct m_pedit_sel *sel, struct nlmsghdr *n)
 	return 0;
 }
 
-int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
-		struct nlmsghdr *n)
+static int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p,
+		       int tca_id, struct nlmsghdr *n)
 {
 	struct m_pedit_sel sel = {};
 
@@ -705,7 +705,7 @@ int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	return 0;
 }
 
-const char *pedit_htype_str[] = {
+static const char * const pedit_htype_str[] = {
 	[TCA_PEDIT_KEY_EX_HDR_TYPE_NETWORK] = "",
 	[TCA_PEDIT_KEY_EX_HDR_TYPE_ETH] = "eth",
 	[TCA_PEDIT_KEY_EX_HDR_TYPE_IP4] = "ipv4",
@@ -730,7 +730,7 @@ static void print_pedit_location(FILE *f,
 	fprintf(f, "%c%d", (int)off  >= 0 ? '+' : '-', abs((int)off));
 }
 
-int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_pedit_sel *sel;
 	struct rtattr *tb[TCA_PEDIT_MAX + 1];
@@ -823,11 +823,6 @@ int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	fprintf(f, "\n ");
 
 	free(keys_ex);
-	return 0;
-}
-
-int pedit_print_xstats(struct action_util *au, FILE *f, struct rtattr *xstats)
-{
 	return 0;
 }
 
