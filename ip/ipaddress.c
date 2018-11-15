@@ -1149,7 +1149,7 @@ static unsigned int get_ifa_flags(struct ifaddrmsg *ifa,
 }
 
 /* Mapping from argument to address flag mask */
-struct {
+static const struct {
 	const char *name;
 	unsigned long value;
 } ifa_flag_names[] = {
