@@ -54,6 +54,4 @@ char *shift_cmdl(struct cmdl *cmdl);
 int run_cmd(struct nlmsghdr *nlh, const struct cmd *caller,
 	    const struct cmd *cmds, struct cmdl *cmdl, void *data);
 
-const struct cmd *find_cmd(const struct cmd *cmds, char *str);
-
 #endif
