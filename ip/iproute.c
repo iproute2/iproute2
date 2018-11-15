@@ -83,7 +83,7 @@ static void usage(void)
 		"INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n"
 		"NH := [ encap ENCAPTYPE ENCAPHDR ] [ via [ FAMILY ] ADDRESS ]\n"
 		"	    [ dev STRING ] [ weight NUMBER ] NHFLAGS\n"
-		"FAMILY := [ inet | inet6 | ipx | dnet | mpls | bridge | link ]\n"
+		"FAMILY := [ inet | inet6 | dnet | mpls | bridge | link ]\n"
 		"OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ] [ as [ to ] ADDRESS ]\n"
 		"           [ rtt TIME ] [ rttvar TIME ] [ reordering NUMBER ]\n"
 		"           [ window NUMBER ] [ cwnd NUMBER ] [ initcwnd NUMBER ]\n"

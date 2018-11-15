@@ -1000,8 +1000,6 @@ const char *rt_addr_n2a_r(int af, int len,
 		return inet_ntop(af, addr, buf, buflen);
 	case AF_MPLS:
 		return mpls_ntop(af, addr, buf, buflen);
-	case AF_IPX:
-		return ipx_ntop(af, addr, buf, buflen);
 	case AF_DECnet:
 	{
 		struct dn_naddr dna = { 2, { 0, 0, } };
