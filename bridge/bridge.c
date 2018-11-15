@@ -23,12 +23,11 @@ int preferred_family = AF_UNSPEC;
 int oneline;
 int show_stats;
 int show_details;
-int show_pretty;
-int color;
+static int color;
 int compress_vlans;
 int json;
 int timestamp;
-char *batch_file;
+static const char *batch_file;
 int force;
 
 static void usage(void) __attribute__((noreturn));
