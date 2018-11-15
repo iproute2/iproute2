@@ -38,7 +38,7 @@ static void meta_print_usage(FILE *fd)
 	    "For a list of meta identifiers, use meta(list).\n");
 }
 
-struct meta_entry {
+static const struct meta_entry {
 	int		id;
 	char *kind;
 	char *mask;
@@ -121,7 +121,7 @@ static inline int map_type(char k)
 	return INT_MAX;
 }
 
-static struct meta_entry *lookup_meta_entry(struct bstr *kind)
+static const struct meta_entry *lookup_meta_entry(struct bstr *kind)
 {
 	int i;
 
@@ -133,7 +133,7 @@ static struct meta_entry *lookup_meta_entry(struct bstr *kind)
 	return NULL;
 }
 
-static struct meta_entry *lookup_meta_entry_byid(int id)
+static const struct meta_entry *lookup_meta_entry_byid(int id)
 {
 	int i;
 
@@ -168,8 +168,8 @@ static inline void dump_value(struct nlmsghdr *n, int tlv, unsigned long val,
 static inline int is_compatible(struct tcf_meta_val *what,
 				struct tcf_meta_val *needed)
 {
+	const struct meta_entry *entry;
 	char *p;
-	struct meta_entry *entry;
 
 	entry = lookup_meta_entry_byid(TCF_META_ID(what->kind));
 
@@ -249,7 +249,7 @@ static inline struct bstr *
 parse_object(struct bstr *args, struct bstr *arg, struct tcf_meta_val *obj,
 	     unsigned long *dst, struct tcf_meta_val *left)
 {
-	struct meta_entry *entry;
+	const struct meta_entry *entry;
 	unsigned long num;
 	struct bstr *a;
 
@@ -461,7 +461,7 @@ static int print_object(FILE *fd, struct tcf_meta_val *obj, struct rtattr *rta)
 {
 	int id = TCF_META_ID(obj->kind);
 	int type = TCF_META_TYPE(obj->kind);
-	struct meta_entry *entry;
+	const struct meta_entry *entry;
 
 	if (id == TCF_META_ID_VALUE)
 		return print_value(fd, type, rta);
