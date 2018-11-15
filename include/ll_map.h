@@ -12,6 +12,5 @@ int ll_index_to_flags(unsigned idx);
 unsigned namehash(const char *str);
 
 const char *ll_idx_n2a(unsigned int idx);
-unsigned int ll_idx_a2n(const char *name);
 
 #endif /* __LL_MAP_H__ */

@@ -143,7 +143,7 @@ const char *ll_idx_n2a(unsigned int idx)
 	return buf;
 }
 
-unsigned int ll_idx_a2n(const char *name)
+static unsigned int ll_idx_a2n(const char *name)
 {
 	unsigned int idx;
 
