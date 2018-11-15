@@ -150,31 +150,3 @@ char *id_to_name(struct db_names *db, int id, char *name)
 	snprintf(name, IDNAME_MAX, "%d", id);
 	return NULL;
 }
-
-int name_to_id(struct db_names *db, int *id, const char *name)
-{
-	struct db_entry *entry;
-	int i;
-
-	if (!db)
-		return -1;
-
-	if (db->cached && strcmp(db->cached->name, name) == 0) {
-		*id = db->cached->id;
-		return 0;
-	}
-
-	for (i = 0; i < db->size; i++) {
-		entry = db->hash[i];
-		while (entry && strcmp(entry->name, name))
-			entry = entry->next;
-
-		if (entry) {
-			db->cached = entry;
-			*id = entry->id;
-			return 0;
-		}
-	}
-
-	return -1;
-}
