@@ -13,6 +13,4 @@ struct genl_util
 	int	(*print_genlopt)(struct nlmsghdr *n, void *arg);
 };
 
-int genl_ctrl_resolve_family(const char *family);
-
 #endif
