@@ -1211,38 +1211,35 @@ static void print_ifa_flags(FILE *fp, const struct ifaddrmsg *ifa,
 
 static int get_filter(const char *arg)
 {
+	bool inv = false;
 	unsigned int i;
+
+	if (arg[0] == '-') {
+		inv = true;
+		arg++;
+	}
 
 	/* Special cases */
 	if (strcmp(arg, "dynamic") == 0) {
-		filter.flags &= ~IFA_F_PERMANENT;
-		filter.flagmask |= IFA_F_PERMANENT;
+		inv = !inv;
+		arg = "permanent";
 	} else if (strcmp(arg, "primary") == 0) {
-		filter.flags &= ~IFA_F_SECONDARY;
-		filter.flagmask |= IFA_F_SECONDARY;
-	} else if (*arg == '-') {
-		for (i = 0; i < ARRAY_SIZE(ifa_flag_names); i++) {
-			if (strcmp(arg + 1, ifa_flag_names[i].name))
-				continue;
-
-			filter.flags &= ifa_flag_names[i].value;
-			filter.flagmask |= ifa_flag_names[i].value;
-			return 0;
-		}
-
-		return -1;
-	} else {
-		for (i = 0; i < ARRAY_SIZE(ifa_flag_names); i++) {
-			if (strcmp(arg, ifa_flag_names[i].name))
-				continue;
-			filter.flags |= ifa_flag_names[i].value;
-			filter.flagmask |= ifa_flag_names[i].value;
-			return 0;
-		}
-		return -1;
+		inv = !inv;
+		arg = "secondary";
 	}
 
-	return 0;
+	for (i = 0; i < ARRAY_SIZE(ifa_flag_names); i++) {
+		if (strcmp(arg, ifa_flag_names[i].name))
+			continue;
+
+		if (inv)
+			filter.flags &= ~ifa_flag_names[i].value;
+		else
+			filter.flags |= ifa_flag_names[i].value;
+		filter.flagmask |= ifa_flag_names[i].value;
+		return 0;
+	}
+	return -1;
 }
 
 static int ifa_label_match_rta(int ifindex, const struct rtattr *rta)
