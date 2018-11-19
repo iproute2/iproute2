@@ -118,6 +118,7 @@ void close_json_array(enum output_type type, const char *str)
 	}
 _PRINT_FUNC(int, int);
 _PRINT_FUNC(s64, int64_t);
+_PRINT_FUNC(hhu, unsigned char);
 _PRINT_FUNC(hu, unsigned short);
 _PRINT_FUNC(uint, unsigned int);
 _PRINT_FUNC(u64, uint64_t);
