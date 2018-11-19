@@ -265,6 +265,38 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 	return 0;
 }
 
+static void gred_print_stats(struct tc_gred_qopt *qopt)
+{
+	SPRINT_BUF(b1);
+
+	if (!is_json_context())
+		printf("\n  Queue size: ");
+
+	print_uint(PRINT_JSON, "qave", NULL, qopt->qave);
+	print_string(PRINT_FP, NULL, "average %s ",
+		     sprint_size(qopt->qave, b1));
+
+	print_uint(PRINT_JSON, "backlog", NULL, qopt->backlog);
+	print_string(PRINT_FP, NULL, "current %s ",
+		     sprint_size(qopt->backlog, b1));
+
+	if (!is_json_context())
+		printf("\n  Dropped packets: ");
+
+	print_uint(PRINT_ANY, "forced_drop", "forced %u ", qopt->forced);
+	print_uint(PRINT_ANY, "prob_drop", "early %u ", qopt->early);
+	print_uint(PRINT_ANY, "pdrop", "pdrop %u ", qopt->pdrop);
+	print_uint(PRINT_ANY, "other", "other %u ", qopt->other);
+
+	if (!is_json_context())
+		printf("\n  Total packets: ");
+
+	print_uint(PRINT_ANY, "packets", "%u ", qopt->packets);
+
+	print_uint(PRINT_JSON, "bytes", NULL, qopt->bytesin);
+	print_string(PRINT_FP, NULL, "(%s) ", sprint_size(qopt->bytesin, b1));
+}
+
 static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_GRED_MAX + 1];
@@ -348,39 +380,8 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			print_uint(PRINT_ANY, "Scell_log", "Scell_log %u ",
 				   qopt->Scell_log);
 		}
-		if (show_stats) {
-			if (!is_json_context())
-				printf("\n  Queue size: ");
-
-			print_uint(PRINT_JSON, "qave", NULL, qopt->qave);
-			print_string(PRINT_FP, NULL, "average %s ",
-				     sprint_size(qopt->qave, b1));
-
-			print_uint(PRINT_JSON, "backlog", NULL, qopt->backlog);
-			print_string(PRINT_FP, NULL, "current %s ",
-				     sprint_size(qopt->backlog, b1));
-
-			if (!is_json_context())
-				printf("\n  Dropped packets: ");
-
-			print_uint(PRINT_ANY, "forced_drop", "forced %u ",
-				   qopt->forced);
-			print_uint(PRINT_ANY, "prob_drop", "early %u ",
-				   qopt->early);
-			print_uint(PRINT_ANY, "pdrop", "pdrop %u ",
-				   qopt->pdrop);
-			print_uint(PRINT_ANY, "other", "other %u ",
-				   qopt->other);
-
-			if (!is_json_context())
-				printf("\n  Total packets: ");
-
-			print_uint(PRINT_ANY, "packets", "%u ", qopt->packets);
-
-			print_uint(PRINT_JSON, "bytes", NULL, qopt->bytesin);
-			print_string(PRINT_FP, NULL, "(%s) ",
-				     sprint_size(qopt->bytesin, b1));
-		}
+		if (show_stats)
+			gred_print_stats(qopt);
 		close_json_object();
 	}
 	close_json_array(PRINT_JSON, "vqs");
