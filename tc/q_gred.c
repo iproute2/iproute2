@@ -40,7 +40,7 @@ static void explain(void)
 	fprintf(stderr, "           default DEFAULT_VQ [ grio ] [ limit BYTES ] [ecn] [harddrop]\n");
 	fprintf(stderr, "       tc qdisc change ... gred vq VQ [ prio VALUE ] limit BYTES\n");
 	fprintf(stderr, "           min BYTES max BYTES avpkt BYTES [ burst PACKETS ]\n");
-	fprintf(stderr, "           [ probability PROBABILITY ] [ bandwidth KBPS ]\n");
+	fprintf(stderr, "           [ probability PROBABILITY ] [ bandwidth KBPS ] [ecn] [harddrop]\n");
 }
 
 static int init_gred(struct qdisc_util *qu, int argc, char **argv,
@@ -121,15 +121,16 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 */
 static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
+	struct rtattr *tail, *entry, *vqs;
 	int ok = 0;
 	struct tc_gred_qopt opt = { 0 };
 	unsigned int burst = 0;
 	unsigned int avpkt = 0;
+	unsigned int flags = 0;
 	double probability = 0.02;
 	unsigned int rate = 0;
 	int parm;
 	__u8 sbuf[256];
-	struct rtattr *tail;
 	__u32 max_P;
 
 	opt.DP = MAX_DPs;
@@ -212,6 +213,10 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				return -1;
 			}
 			ok++;
+		} else if (strcmp(*argv, "ecn") == 0) {
+			flags |= TC_RED_ECN;
+		} else if (strcmp(*argv, "harddrop") == 0) {
+			flags |= TC_RED_HARDDROP;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -265,11 +270,20 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 	addattr_l(n, 1024, TCA_GRED_STAB, sbuf, 256);
 	max_P = probability * pow(2, 32);
 	addattr32(n, 1024, TCA_GRED_MAX_P, max_P);
+
+	vqs = addattr_nest(n, 1024, TCA_GRED_VQ_LIST);
+	entry = addattr_nest(n, 1024, TCA_GRED_VQ_ENTRY);
+	addattr32(n, 1024, TCA_GRED_VQ_DP, opt.DP);
+	addattr32(n, 1024, TCA_GRED_VQ_FLAGS, flags);
+	addattr_nest_end(n, entry);
+	addattr_nest_end(n, vqs);
+
 	addattr_nest_end(n, tail);
 	return 0;
 }
 
 struct tc_gred_info {
+	bool	flags_present;
 	__u64	bytes;
 	__u32	packets;
 	__u32	backlog;
@@ -279,6 +293,7 @@ struct tc_gred_info {
 	__u32	forced_mark;
 	__u32	pdrop;
 	__u32	other;
+	__u32	flags;
 };
 
 static void
@@ -345,6 +360,10 @@ gred_parse_vqs(struct tc_gred_info *info, struct rtattr *vqs)
 		if (tb[TCA_GRED_VQ_STAT_OTHER])
 			info[dp].other =
 				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_OTHER]);
+		info[dp].flags_present = !!tb[TCA_GRED_VQ_FLAGS];
+		if (tb[TCA_GRED_VQ_FLAGS])
+			info[dp].flags =
+				rta_getattr_u32(tb[TCA_GRED_VQ_FLAGS]);
 	}
 }
 
@@ -437,7 +456,7 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		return -1;
 	}
 
-	if (tb[TCA_GRED_VQ_LIST] && show_stats) {
+	if (tb[TCA_GRED_VQ_LIST]) {
 		gred_parse_vqs(infos, tb[TCA_GRED_VQ_LIST]);
 		vq_info = true;
 	}
@@ -479,6 +498,9 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		print_uint(PRINT_JSON, "max", NULL, qopt->qth_max);
 		print_string(PRINT_FP, NULL, "max %s ",
 			     sprint_size(qopt->qth_max, b1));
+
+		if (infos[i].flags_present)
+			tc_red_print_flags(infos[i].flags);
 
 		if (show_details) {
 			print_uint(PRINT_ANY, "ewma", "ewma %u ", qopt->Wlog);
