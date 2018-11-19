@@ -265,8 +265,90 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 	return 0;
 }
 
-static void gred_print_stats(struct tc_gred_qopt *qopt)
+struct tc_gred_info {
+	__u64	bytes;
+	__u32	packets;
+	__u32	backlog;
+	__u32	prob_drop;
+	__u32	prob_mark;
+	__u32	forced_drop;
+	__u32	forced_mark;
+	__u32	pdrop;
+	__u32	other;
+};
+
+static void
+gred_parse_vqs(struct tc_gred_info *info, struct rtattr *vqs)
 {
+	int rem = RTA_PAYLOAD(vqs);
+	unsigned int offset = 0;
+
+	while (rem > offset) {
+		struct rtattr *tb_entry[TCA_GRED_VQ_ENTRY_MAX + 1] = {};
+		struct rtattr *tb[TCA_GRED_VQ_MAX + 1] = {};
+		struct rtattr *entry;
+		unsigned int len;
+		unsigned int dp;
+
+		entry = RTA_DATA(vqs) + offset;
+
+		parse_rtattr(tb_entry, TCA_GRED_VQ_ENTRY_MAX, entry,
+			     rem - offset);
+		len = RTA_LENGTH(RTA_PAYLOAD(entry));
+		offset += len;
+
+		if (!tb_entry[TCA_GRED_VQ_ENTRY]) {
+			fprintf(stderr,
+				"ERROR: Failed to parse Virtual Queue entry\n");
+			continue;
+		}
+
+		parse_rtattr_nested(tb, TCA_GRED_VQ_MAX,
+				    tb_entry[TCA_GRED_VQ_ENTRY]);
+
+		if (!tb[TCA_GRED_VQ_DP]) {
+			fprintf(stderr,
+				"ERROR: Virtual Queue without DP attribute\n");
+			continue;
+		}
+
+		dp = rta_getattr_u32(tb[TCA_GRED_VQ_DP]);
+
+		if (tb[TCA_GRED_VQ_STAT_BYTES])
+			info[dp].bytes =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_BYTES]);
+		if (tb[TCA_GRED_VQ_STAT_PACKETS])
+			info[dp].packets =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_PACKETS]);
+		if (tb[TCA_GRED_VQ_STAT_BACKLOG])
+			info[dp].backlog =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_BACKLOG]);
+		if (tb[TCA_GRED_VQ_STAT_PROB_DROP])
+			info[dp].prob_drop =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_PROB_DROP]);
+		if (tb[TCA_GRED_VQ_STAT_PROB_MARK])
+			info[dp].prob_mark =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_PROB_MARK]);
+		if (tb[TCA_GRED_VQ_STAT_FORCED_DROP])
+			info[dp].forced_drop =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_FORCED_DROP]);
+		if (tb[TCA_GRED_VQ_STAT_FORCED_MARK])
+			info[dp].forced_mark =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_FORCED_MARK]);
+		if (tb[TCA_GRED_VQ_STAT_PDROP])
+			info[dp].pdrop =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_PDROP]);
+		if (tb[TCA_GRED_VQ_STAT_OTHER])
+			info[dp].other =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_OTHER]);
+	}
+}
+
+static void
+gred_print_stats(struct tc_gred_info *info, struct tc_gred_qopt *qopt)
+{
+	__u64 bytes = info ? info->bytes : qopt->bytesin;
+
 	SPRINT_BUF(b1);
 
 	if (!is_json_context())
@@ -283,25 +365,44 @@ static void gred_print_stats(struct tc_gred_qopt *qopt)
 	if (!is_json_context())
 		printf("\n  Dropped packets: ");
 
-	print_uint(PRINT_ANY, "forced_drop", "forced %u ", qopt->forced);
-	print_uint(PRINT_ANY, "prob_drop", "early %u ", qopt->early);
-	print_uint(PRINT_ANY, "pdrop", "pdrop %u ", qopt->pdrop);
-	print_uint(PRINT_ANY, "other", "other %u ", qopt->other);
+	if (info) {
+		print_uint(PRINT_ANY, "forced_drop", "forced %u ",
+			   info->forced_drop);
+		print_uint(PRINT_ANY, "prob_drop", "early %u ",
+			   info->prob_drop);
+		print_uint(PRINT_ANY, "pdrop", "pdrop %u ", info->pdrop);
+		print_uint(PRINT_ANY, "other", "other %u ", info->other);
+
+		if (!is_json_context())
+			printf("\n  Marked packets: ");
+		print_uint(PRINT_ANY, "forced_mark", "forced %u ",
+			   info->forced_mark);
+		print_uint(PRINT_ANY, "prob_mark", "early %u ",
+			   info->prob_mark);
+	} else {
+		print_uint(PRINT_ANY, "forced_drop", "forced %u ",
+			   qopt->forced);
+		print_uint(PRINT_ANY, "prob_drop", "early %u ", qopt->early);
+		print_uint(PRINT_ANY, "pdrop", "pdrop %u ", qopt->pdrop);
+		print_uint(PRINT_ANY, "other", "other %u ", qopt->other);
+	}
 
 	if (!is_json_context())
 		printf("\n  Total packets: ");
 
 	print_uint(PRINT_ANY, "packets", "%u ", qopt->packets);
 
-	print_uint(PRINT_JSON, "bytes", NULL, qopt->bytesin);
-	print_string(PRINT_FP, NULL, "(%s) ", sprint_size(qopt->bytesin, b1));
+	print_uint(PRINT_JSON, "bytes", NULL, bytes);
+	print_string(PRINT_FP, NULL, "(%s) ", sprint_size(bytes, b1));
 }
 
 static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
+	struct tc_gred_info infos[MAX_DPs] = {};
 	struct rtattr *tb[TCA_GRED_MAX + 1];
 	struct tc_gred_sopt *sopt;
 	struct tc_gred_qopt *qopt;
+	bool vq_info = false;
 	__u32 *max_p = NULL;
 	__u32 *limit = NULL;
 	unsigned int i;
@@ -330,6 +431,11 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	    RTA_PAYLOAD(tb[TCA_GRED_PARMS]) < sizeof(*qopt)*MAX_DPs) {
 		fprintf(f, "\n GRED received message smaller than expected\n");
 		return -1;
+	}
+
+	if (tb[TCA_GRED_VQ_LIST] && show_stats) {
+		gred_parse_vqs(infos, tb[TCA_GRED_VQ_LIST]);
+		vq_info = true;
 	}
 
 	print_uint(PRINT_ANY, "dp_cnt", "vqs %u ", sopt->DPs);
@@ -381,7 +487,7 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 				   qopt->Scell_log);
 		}
 		if (show_stats)
-			gred_print_stats(qopt);
+			gred_print_stats(vq_info ? &infos[i] : NULL, qopt);
 		close_json_object();
 	}
 	close_json_array(PRINT_JSON, "vqs");
