@@ -275,8 +275,6 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	unsigned int i;
 
 	SPRINT_BUF(b1);
-	SPRINT_BUF(b2);
-	SPRINT_BUF(b3);
 
 	if (opt == NULL)
 		return 0;
@@ -302,45 +300,90 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		return -1;
 	}
 
-	fprintf(f, "vqs %u default %u %s",
-		sopt->DPs,
-		sopt->def_DP,
-		sopt->grio ? "grio " : "");
+	print_uint(PRINT_ANY, "dp_cnt", "vqs %u ", sopt->DPs);
+	print_uint(PRINT_ANY, "dp_default", "default %u ", sopt->def_DP);
 
-	if (limit)
-		fprintf(f, "limit %s ",
-			sprint_size(*limit, b1));
+	if (sopt->grio)
+		print_bool(PRINT_ANY, "grio", "grio ", true);
+	else
+		print_bool(PRINT_ANY, "grio", NULL, false);
 
+	if (limit) {
+		print_uint(PRINT_JSON, "limit", NULL, *limit);
+		print_string(PRINT_FP, NULL, "limit %s ",
+			     sprint_size(*limit, b1));
+	}
+
+	open_json_array(PRINT_JSON, "vqs");
 	for (i = 0; i < MAX_DPs; i++, qopt++) {
-		if (qopt->DP >= MAX_DPs) continue;
-		fprintf(f, "\n vq %u prio %hhu limit %s min %s max %s ",
-			qopt->DP,
-			qopt->prio,
-			sprint_size(qopt->limit, b1),
-			sprint_size(qopt->qth_min, b2),
-			sprint_size(qopt->qth_max, b3));
+		if (qopt->DP >= MAX_DPs)
+			continue;
+
+		open_json_object(NULL);
+
+		print_uint(PRINT_ANY, "vq", "\n vq %u ", qopt->DP);
+		print_hhu(PRINT_ANY, "prio", "prio %hhu ", qopt->prio);
+
+		print_uint(PRINT_JSON, "limit", NULL, qopt->limit);
+		print_string(PRINT_FP, NULL, "limit %s ",
+			     sprint_size(qopt->limit, b1));
+
+		print_uint(PRINT_JSON, "min", NULL, qopt->qth_min);
+		print_string(PRINT_FP, NULL, "min %s ",
+			     sprint_size(qopt->qth_min, b1));
+
+		print_uint(PRINT_JSON, "max", NULL, qopt->qth_max);
+		print_string(PRINT_FP, NULL, "max %s ",
+			     sprint_size(qopt->qth_max, b1));
+
 		if (show_details) {
-			fprintf(f, "ewma %u ", qopt->Wlog);
+			print_uint(PRINT_ANY, "ewma", "ewma %u ", qopt->Wlog);
 			if (max_p)
-				fprintf(f, "probability %lg ", max_p[i] / pow(2, 32));
+				print_float(PRINT_ANY, "probability",
+					    "probability %lg ",
+					    max_p[i] / pow(2, 32));
 			else
-				fprintf(f, "Plog %u ", qopt->Plog);
-			fprintf(f, "Scell_log %u ", qopt->Scell_log);
+				print_uint(PRINT_ANY, "Plog", "Plog %u ",
+					   qopt->Plog);
+			print_uint(PRINT_ANY, "Scell_log", "Scell_log %u ",
+				   qopt->Scell_log);
 		}
 		if (show_stats) {
-			fprintf(f, "\n  Queue size: average %s current %s ",
-				sprint_size(qopt->qave, b1),
-				sprint_size(qopt->backlog, b2));
-			fprintf(f, "\n  Dropped packets: forced %u early %u pdrop %u other %u ",
-				qopt->forced,
-				qopt->early,
-				qopt->pdrop,
-				qopt->other);
-			fprintf(f, "\n  Total packets: %u (%s) ",
-				qopt->packets,
-				sprint_size(qopt->bytesin, b1));
+			if (!is_json_context())
+				printf("\n  Queue size: ");
+
+			print_uint(PRINT_JSON, "qave", NULL, qopt->qave);
+			print_string(PRINT_FP, NULL, "average %s ",
+				     sprint_size(qopt->qave, b1));
+
+			print_uint(PRINT_JSON, "backlog", NULL, qopt->backlog);
+			print_string(PRINT_FP, NULL, "current %s ",
+				     sprint_size(qopt->backlog, b1));
+
+			if (!is_json_context())
+				printf("\n  Dropped packets: ");
+
+			print_uint(PRINT_ANY, "forced_drop", "forced %u ",
+				   qopt->forced);
+			print_uint(PRINT_ANY, "prob_drop", "early %u ",
+				   qopt->early);
+			print_uint(PRINT_ANY, "pdrop", "pdrop %u ",
+				   qopt->pdrop);
+			print_uint(PRINT_ANY, "other", "other %u ",
+				   qopt->other);
+
+			if (!is_json_context())
+				printf("\n  Total packets: ");
+
+			print_uint(PRINT_ANY, "packets", "%u ", qopt->packets);
+
+			print_uint(PRINT_JSON, "bytes", NULL, qopt->bytesin);
+			print_string(PRINT_FP, NULL, "(%s) ",
+				     sprint_size(qopt->bytesin, b1));
 		}
+		close_json_object();
 	}
+	close_json_array(PRINT_JSON, "vqs");
 	return 0;
 }
 
