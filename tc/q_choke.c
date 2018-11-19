@@ -188,8 +188,7 @@ static int choke_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	fprintf(f, "limit %up min %up max %up ",
 		qopt->limit, qopt->qth_min, qopt->qth_max);
 
-	if (qopt->flags & TC_RED_ECN)
-		fprintf(f, "ecn ");
+	tc_red_print_flags(qopt->flags);
 
 	if (show_details) {
 		fprintf(f, "ewma %u ", qopt->Wlog);

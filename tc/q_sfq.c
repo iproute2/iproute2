@@ -235,8 +235,7 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			sprint_size(qopt_ext->qth_min, b2),
 			sprint_size(qopt_ext->qth_max, b3),
 			qopt_ext->max_P / pow(2, 32));
-		if (qopt_ext->flags & TC_RED_ECN)
-			fprintf(f, "ecn ");
+		tc_red_print_flags(qopt_ext->flags);
 		if (show_stats) {
 			fprintf(f, "\n prob_mark %u prob_mark_head %u prob_drop %u",
 				qopt_ext->stats.prob_mark,
