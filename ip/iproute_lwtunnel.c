@@ -860,7 +860,7 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 
 	argc--; argv++;
 
-	if (rta_addattr64(rta, 1024, ILA_ATTR_LOCATOR, locator))
+	if (rta_addattr64(rta, len, ILA_ATTR_LOCATOR, locator))
 		return -1;
 
 	while (argc > 0) {
@@ -874,7 +874,7 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 				invarg("\"csum-mode\" value is invalid\n",
 				       *argv);
 
-			ret = rta_addattr8(rta, 1024, ILA_ATTR_CSUM_MODE,
+			ret = rta_addattr8(rta, len, ILA_ATTR_CSUM_MODE,
 					   (__u8)csum_mode);
 
 			argc--; argv++;
@@ -888,7 +888,7 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 				invarg("\"ident-type\" value is invalid\n",
 				       *argv);
 
-			ret = rta_addattr8(rta, 1024, ILA_ATTR_IDENT_TYPE,
+			ret = rta_addattr8(rta, len, ILA_ATTR_IDENT_TYPE,
 					   (__u8)ident_type);
 
 			argc--; argv++;
@@ -902,7 +902,7 @@ static int parse_encap_ila(struct rtattr *rta, size_t len,
 				invarg("\"hook-type\" value is invalid\n",
 				       *argv);
 
-			ret = rta_addattr8(rta, 1024, ILA_ATTR_HOOK_TYPE,
+			ret = rta_addattr8(rta, len, ILA_ATTR_HOOK_TYPE,
 					   (__u8)hook_type);
 
 			argc--; argv++;
@@ -1034,7 +1034,7 @@ static int parse_encap_bpf(struct rtattr *rta, size_t len, int *argcp,
 			if (get_unsigned(&headroom, *argv, 0) || headroom == 0)
 				invarg("headroom is invalid\n", *argv);
 			if (!headroom_set)
-				rta_addattr32(rta, 1024, LWT_BPF_XMIT_HEADROOM,
+				rta_addattr32(rta, len, LWT_BPF_XMIT_HEADROOM,
 					      headroom);
 			headroom_set = 1;
 		} else if (strcmp(*argv, "help") == 0) {
@@ -1075,7 +1075,7 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
 		exit(-1);
 	}
 
-	nest = rta_nest(rta, 1024, RTA_ENCAP);
+	nest = rta_nest(rta, len, RTA_ENCAP);
 	switch (type) {
 	case LWTUNNEL_ENCAP_MPLS:
 		ret = parse_encap_mpls(rta, len, &argc, &argv);
@@ -1108,7 +1108,7 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
 
 	rta_nest_end(rta, nest);
 
-	ret = rta_addattr16(rta, 1024, RTA_ENCAP_TYPE, type);
+	ret = rta_addattr16(rta, len, RTA_ENCAP_TYPE, type);
 
 	*argcp = argc;
 	*argvp = argv;
