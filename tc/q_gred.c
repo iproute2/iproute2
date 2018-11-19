@@ -302,8 +302,6 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		return -1;
 	}
 
-/* Bad hack! should really return a proper message as shown above*/
-
 	fprintf(f, "vqs %u default %u %s",
 		sopt->DPs,
 		sopt->def_DP,
