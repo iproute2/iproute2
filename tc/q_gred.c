@@ -37,7 +37,7 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: tc qdisc { add | replace | change } ... gred setup vqs NUMBER\n");
-	fprintf(stderr, "           default DEFAULT_VQ [ grio ] [ limit BYTES ]\n");
+	fprintf(stderr, "           default DEFAULT_VQ [ grio ] [ limit BYTES ] [ecn] [harddrop]\n");
 	fprintf(stderr, "       tc qdisc change ... gred vq VQ [ prio VALUE ] limit BYTES\n");
 	fprintf(stderr, "           min BYTES max BYTES avpkt BYTES [ burst PACKETS ]\n");
 	fprintf(stderr, "           [ probability PROBABILITY ] [ bandwidth KBPS ]\n");
@@ -87,6 +87,10 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 				fprintf(stderr, "Illegal \"limit\"\n");
 				return -1;
 			}
+		} else if (strcmp(*argv, "ecn") == 0) {
+			opt.flags |= TC_RED_ECN;
+		} else if (strcmp(*argv, "harddrop") == 0) {
+			opt.flags |= TC_RED_HARDDROP;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -451,6 +455,8 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		print_string(PRINT_FP, NULL, "limit %s ",
 			     sprint_size(*limit, b1));
 	}
+
+	tc_red_print_flags(sopt->flags);
 
 	open_json_array(PRINT_JSON, "vqs");
 	for (i = 0; i < MAX_DPs; i++, qopt++) {

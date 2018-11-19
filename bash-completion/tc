@@ -302,7 +302,7 @@ _tc_qdisc_options()
             ;;
         gred)
             _tc_once_attr 'setup vqs default grio vq prio limit min max avpkt \
-                burst probability bandwidth'
+                burst probability bandwidth ecn harddrop'
             return 0
             ;;
         hhf)
