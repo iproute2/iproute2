@@ -35,6 +35,7 @@ static int usage(void)
 	fprintf(stderr, "       ip [-all] netns exec [NAME] cmd ...\n");
 	fprintf(stderr, "       ip netns monitor\n");
 	fprintf(stderr, "       ip netns list-id\n");
+	fprintf(stderr, "NETNSID := auto | POSITIVE-INT\n");
 	exit(-1);
 }
 
@@ -739,8 +740,7 @@ static int netns_set(int argc, char **argv)
 {
 	char netns_path[PATH_MAX];
 	const char *name;
-	unsigned int nsid;
-	int netns;
+	int netns, nsid;
 
 	if (argc < 1) {
 		fprintf(stderr, "No netns name specified\n");
@@ -754,8 +754,10 @@ static int netns_set(int argc, char **argv)
 	/* If a negative nsid is specified the kernel will select the nsid. */
 	if (strcmp(argv[1], "auto") == 0)
 		nsid = -1;
-	else if (get_unsigned(&nsid, argv[1], 0))
+	else if (get_integer(&nsid, argv[1], 0))
 		invarg("Invalid \"netnsid\" value\n", argv[1]);
+	else if (nsid < 0)
+		invarg("\"netnsid\" value should be >= 0\n", argv[1]);
 
 	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
 	netns = open(netns_path, O_RDONLY | O_CLOEXEC);
