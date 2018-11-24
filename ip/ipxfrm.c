@@ -186,7 +186,7 @@ const char *strxf_algotype(int type)
 	return str;
 }
 
-const char *strxf_mask8(__u8 mask)
+static const char *strxf_mask8(__u8 mask)
 {
 	static char str[16];
 	const int sn = sizeof(mask) * 8 - 1;
@@ -209,7 +209,7 @@ const char *strxf_mask32(__u32 mask)
 	return str;
 }
 
-const char *strxf_share(__u8 share)
+static const char *strxf_share(__u8 share)
 {
 	static char str[32];
 
@@ -270,7 +270,7 @@ const char *strxf_ptype(__u8 ptype)
 	return str;
 }
 
-void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
+static void xfrm_id_info_print(xfrm_address_t *saddr, struct xfrm_id *id,
 			__u8 mode, __u32 reqid, __u16 family, int force_spi,
 			FILE *fp, const char *prefix, const char *title)
 {
@@ -337,7 +337,8 @@ static const char *strxf_limit(__u64 limit)
 	return str;
 }
 
-void xfrm_stats_print(struct xfrm_stats *s, FILE *fp, const char *prefix)
+static void xfrm_stats_print(struct xfrm_stats *s, FILE *fp,
+			     const char *prefix)
 {
 	if (prefix)
 		fputs(prefix, fp);
@@ -371,7 +372,7 @@ static const char *strxf_time(__u64 time)
 	return str;
 }
 
-void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
+static void xfrm_lifetime_print(struct xfrm_lifetime_cfg *cfg,
 			 struct xfrm_lifetime_cur *cur,
 			 FILE *fp, const char *prefix)
 {

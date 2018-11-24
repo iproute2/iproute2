@@ -45,6 +45,10 @@ int timestamp_short;
 int pretty;
 const char *_SL_ = "\n";
 
+static int af_byte_len(int af);
+static void print_time(char *buf, int len, __u32 time);
+static void print_time64(char *buf, int len, __s64 time);
+
 int read_prop(const char *dev, char *prop, long *value)
 {
 	char fname[128], buf[80], *endp, *nl;
@@ -426,43 +430,6 @@ int get_s32(__s32 *val, const char *arg, int base)
 	return 0;
 }
 
-int get_s16(__s16 *val, const char *arg, int base)
-{
-	long res;
-	char *ptr;
-
-	if (!arg || !*arg)
-		return -1;
-	res = strtol(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr)
-		return -1;
-	if ((res == LONG_MIN || res == LONG_MAX) && errno == ERANGE)
-		return -1;
-	if (res > 0x7FFF || res < -0x8000)
-		return -1;
-
-	*val = res;
-	return 0;
-}
-
-int get_s8(__s8 *val, const char *arg, int base)
-{
-	long res;
-	char *ptr;
-
-	if (!arg || !*arg)
-		return -1;
-	res = strtol(arg, &ptr, base);
-	if (!ptr || ptr == arg || *ptr)
-		return -1;
-	if ((res == LONG_MIN || res == LONG_MAX) && errno == ERANGE)
-		return -1;
-	if (res > 0x7F || res < -0x80)
-		return -1;
-	*val = res;
-	return 0;
-}
-
 int get_be64(__be64 *val, const char *arg, int base)
 {
 	__u64 v;
@@ -708,7 +675,7 @@ int af_bit_len(int af)
 	return 0;
 }
 
-int af_byte_len(int af)
+static int af_byte_len(int af)
 {
 	return af_bit_len(af) / 8;
 }
@@ -1710,8 +1677,7 @@ int get_time(unsigned int *time, const char *str)
 	return 0;
 }
 
-
-void print_time(char *buf, int len, __u32 time)
+static void print_time(char *buf, int len, __u32 time)
 {
 	double tmp = time;
 
@@ -1764,7 +1730,7 @@ int get_time64(__s64 *time, const char *str)
 	return 0;
 }
 
-void print_time64(char *buf, int len, __s64 time)
+static void print_time64(char *buf, int len, __s64 time)
 {
 	double nsec = time;
 

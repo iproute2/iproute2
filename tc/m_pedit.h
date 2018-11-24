@@ -71,22 +71,7 @@ struct m_pedit_util {
 			       struct m_pedit_key *tkey);
 };
 
-int pack_key(struct m_pedit_sel *sel, struct m_pedit_key *tkey);
-int pack_key32(__u32 retain, struct m_pedit_sel *sel,
-	       struct m_pedit_key *tkey);
-int pack_key16(__u32 retain, struct m_pedit_sel *sel,
-	       struct m_pedit_key *tkey);
-int pack_key8(__u32 retain, struct m_pedit_sel *sel,
-		     struct m_pedit_key *tkey);
-int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type);
 int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type,
 	      __u32 retain,
 	      struct m_pedit_sel *sel, struct m_pedit_key *tkey);
-int parse_offset(int *argc_p, char ***argv_p,
-		 struct m_pedit_sel *sel, struct m_pedit_key *tkey);
-int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p,
-		int tca_id, struct nlmsghdr *n);
-int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg);
-int pedit_print_xstats(struct action_util *au, FILE *f,
-		       struct rtattr *xstats);
 #endif

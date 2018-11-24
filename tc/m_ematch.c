@@ -38,6 +38,8 @@ struct ematch *ematch_root;
 static int begin_argc;
 static char **begin_argv;
 
+static void bstr_print(FILE *fd, const struct bstr *b, int ascii);
+
 static inline void map_warning(int num, char *kind)
 {
 	fprintf(stderr,
@@ -548,7 +550,7 @@ unsigned long bstrtoul(const struct bstr *b)
 	return l;
 }
 
-void bstr_print(FILE *fd, const struct bstr *b, int ascii)
+static void bstr_print(FILE *fd, const struct bstr *b, int ascii)
 {
 	int i;
 	char *s = b->data;
@@ -563,31 +565,5 @@ void bstr_print(FILE *fd, const struct bstr *b, int ascii)
 		for (i = 0; i < b->len; i++)
 		    fprintf(fd, "%c", isprint(s[i]) ? s[i] : '.');
 		fprintf(fd, "\"");
-	}
-}
-
-void print_ematch_tree(const struct ematch *tree)
-{
-	const struct ematch *t;
-
-	for (t = tree; t; t = t->next) {
-		if (t->inverted)
-			printf("NOT ");
-
-		if (t->child) {
-			printf("(");
-			print_ematch_tree(t->child);
-			printf(")");
-		} else {
-			struct bstr *b;
-
-			for (b = t->args; b; b = b->next)
-				printf("%s%s", b->data, b->next ? " " : "");
-		}
-
-		if (t->relation == TCF_EM_REL_AND)
-			printf(" AND ");
-		else if (t->relation == TCF_EM_REL_OR)
-			printf(" OR ");
 	}
 }

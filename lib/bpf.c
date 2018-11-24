@@ -1758,11 +1758,12 @@ static const char *bpf_map_fetch_name(struct bpf_elf_ctx *ctx, int which)
 	int i;
 
 	for (i = 0; i < ctx->sym_num; i++) {
-		int type = GELF_ST_TYPE(sym.st_info);
+		int type;
 
 		if (gelf_getsym(ctx->sym_tab, i, &sym) != &sym)
 			continue;
 
+		type = GELF_ST_TYPE(sym.st_info);
 		if (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
 		    (type != STT_NOTYPE && type != STT_OBJECT) ||
 		    sym.st_shndx != ctx->sec_maps ||
@@ -1851,11 +1852,12 @@ static int bpf_map_num_sym(struct bpf_elf_ctx *ctx)
 	GElf_Sym sym;
 
 	for (i = 0; i < ctx->sym_num; i++) {
-		int type = GELF_ST_TYPE(sym.st_info);
+		int type;
 
 		if (gelf_getsym(ctx->sym_tab, i, &sym) != &sym)
 			continue;
 
+		type = GELF_ST_TYPE(sym.st_info);
 		if (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
 		    (type != STT_NOTYPE && type != STT_OBJECT) ||
 		    sym.st_shndx != ctx->sec_maps)
@@ -1931,10 +1933,12 @@ static int bpf_map_verify_all_offs(struct bpf_elf_ctx *ctx, int end)
 		 * the table again.
 		 */
 		for (i = 0; i < ctx->sym_num; i++) {
-			int type = GELF_ST_TYPE(sym.st_info);
+			int type;
 
 			if (gelf_getsym(ctx->sym_tab, i, &sym) != &sym)
 				continue;
+
+			type = GELF_ST_TYPE(sym.st_info);
 			if (GELF_ST_BIND(sym.st_info) != STB_GLOBAL ||
 			    (type != STT_NOTYPE && type != STT_OBJECT) ||
 			    sym.st_shndx != ctx->sec_maps)

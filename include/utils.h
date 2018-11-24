@@ -157,9 +157,7 @@ int get_u64(__u64 *val, const char *arg, int base);
 int get_u32(__u32 *val, const char *arg, int base);
 int get_s32(__s32 *val, const char *arg, int base);
 int get_u16(__u16 *val, const char *arg, int base);
-int get_s16(__s16 *val, const char *arg, int base);
 int get_u8(__u8 *val, const char *arg, int base);
-int get_s8(__s8 *val, const char *arg, int base);
 int get_be64(__be64 *val, const char *arg, int base);
 int get_be32(__be32 *val, const char *arg, int base);
 int get_be16(__be16 *val, const char *arg, int base);
@@ -172,7 +170,6 @@ __u8 *hexstring_a2n(const char *str, __u8 *buf, int blen, unsigned int *len);
 int addr64_n2a(__u64 addr, char *buff, size_t len);
 
 int af_bit_len(int af);
-int af_byte_len(int af);
 
 const char *format_host_r(int af, int len, const void *addr,
 			       char *buf, int buflen);
@@ -326,8 +323,6 @@ void drop_cap(void);
 
 int get_time(unsigned int *time, const char *str);
 int get_time64(__s64 *time, const char *str);
-void print_time(char *buf, int len, __u32 time);
-void print_time64(char *buf, int len, __s64 time);
 char *sprint_time(__u32 time, char *buf);
 char *sprint_time64(__s64 time, char *buf);
 

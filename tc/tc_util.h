@@ -73,7 +73,6 @@ const char *get_tc_lib(void);
 struct qdisc_util *get_qdisc_kind(const char *str);
 struct filter_util *get_filter_kind(const char *str);
 
-int parse_percent_rate(char *rate, const char *str, const char *dev);
 int get_qdisc_handle(__u32 *h, const char *str);
 int get_rate(unsigned int *rate, const char *str);
 int get_percent_rate(unsigned int *rate, const char *str, const char *dev);
@@ -84,14 +83,10 @@ int get_size_and_cell(unsigned int *size, int *cell_log, char *str);
 int get_linklayer(unsigned int *val, const char *arg);
 
 void print_rate(char *buf, int len, __u64 rate);
-void print_size(char *buf, int len, __u32 size);
-void print_qdisc_handle(char *buf, int len, __u32 h);
-void print_linklayer(char *buf, int len, unsigned int linklayer);
 void print_devname(enum output_type type, int ifindex);
 
 char *sprint_rate(__u64 rate, char *buf);
 char *sprint_size(__u32 size, char *buf);
-char *sprint_qdisc_handle(__u32 h, char *buf);
 char *sprint_tc_classid(__u32 h, char *buf);
 char *sprint_ticks(__u32 ticks, char *buf);
 char *sprint_linklayer(unsigned int linklayer, char *buf);
@@ -117,9 +112,6 @@ int parse_action_control_slash(int *argc_p, char ***argv_p,
 			       int *result1_p, int *result2_p, bool allow_num);
 void print_action_control(FILE *f, const char *prefix,
 			  int action, const char *suffix);
-int act_parse_police(struct action_util *a, int *argc_p,
-		     char ***argv_p, int tca_id, struct nlmsghdr *n);
-int print_police(struct action_util *a, FILE *f, struct rtattr *tb);
 int police_print_xstats(struct action_util *a, FILE *f, struct rtattr *tb);
 int tc_print_action(FILE *f, const struct rtattr *tb, unsigned short tot_acts);
 int tc_print_ipt(FILE *f, const struct rtattr *tb);

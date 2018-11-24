@@ -153,9 +153,9 @@ static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
 	return 0;
 }
 
-int filter_ifindex;
-__u32 filter_qdisc;
-__u32 filter_classid;
+static int filter_ifindex;
+static __u32 filter_qdisc;
+static __u32 filter_classid;
 
 static void graph_node_add(__u32 parent_id, __u32 id, void *data,
 		int len)

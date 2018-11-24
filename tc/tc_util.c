@@ -190,7 +190,7 @@ static const struct rate_suffix {
 	{ NULL }
 };
 
-int parse_percent_rate(char *rate, const char *str, const char *dev)
+static int parse_percent_rate(char *rate, const char *str, const char *dev)
 {
 	long dev_mbit;
 	int ret;
@@ -409,7 +409,7 @@ void print_devname(enum output_type type, int ifindex)
 			   "dev", "%s ", ifname);
 }
 
-void print_size(char *buf, int len, __u32 sz)
+static void print_size(char *buf, int len, __u32 sz)
 {
 	double tmp = sz;
 
@@ -424,17 +424,6 @@ void print_size(char *buf, int len, __u32 sz)
 char *sprint_size(__u32 size, char *buf)
 {
 	print_size(buf, SPRINT_BSIZE-1, size);
-	return buf;
-}
-
-void print_qdisc_handle(char *buf, int len, __u32 h)
-{
-	snprintf(buf, len, "%x:", TC_H_MAJ(h)>>16);
-}
-
-char *sprint_qdisc_handle(__u32 h, char *buf)
-{
-	print_qdisc_handle(buf, SPRINT_BSIZE-1, h);
 	return buf;
 }
 
@@ -709,7 +698,7 @@ int get_linklayer(unsigned int *val, const char *arg)
 	return 0;
 }
 
-void print_linklayer(char *buf, int len, unsigned int linklayer)
+static void print_linklayer(char *buf, int len, unsigned int linklayer)
 {
 	switch (linklayer) {
 	case LINKLAYER_UNSPEC:

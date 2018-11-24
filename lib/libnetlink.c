@@ -611,8 +611,8 @@ static int rtnl_recvmsg(int fd, struct msghdr *msg, char **answer)
 	return len;
 }
 
-int rtnl_dump_filter_l(struct rtnl_handle *rth,
-		       const struct rtnl_dump_filter_arg *arg)
+static int rtnl_dump_filter_l(struct rtnl_handle *rth,
+			      const struct rtnl_dump_filter_arg *arg)
 {
 	struct sockaddr_nl nladdr;
 	struct iovec iov;
@@ -875,13 +875,6 @@ int rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iovec, size_t iovlen,
 		  struct nlmsghdr **answer)
 {
 	return __rtnl_talk_iov(rtnl, iovec, iovlen, answer, true, NULL);
-}
-
-int rtnl_talk_extack(struct rtnl_handle *rtnl, struct nlmsghdr *n,
-		     struct nlmsghdr **answer,
-		     nl_ext_ack_fn_t errfn)
-{
-	return __rtnl_talk(rtnl, n, answer, true, errfn);
 }
 
 int rtnl_talk_suppress_rtnl_errmsg(struct rtnl_handle *rtnl, struct nlmsghdr *n,
@@ -1240,23 +1233,6 @@ int parse_rtattr_flags(struct rtattr *tb[], int max, struct rtattr *rta,
 		fprintf(stderr, "!!!Deficit %d, rta_len=%d\n",
 			len, rta->rta_len);
 	return 0;
-}
-
-int parse_rtattr_byindex(struct rtattr *tb[], int max,
-			 struct rtattr *rta, int len)
-{
-	int i = 0;
-
-	memset(tb, 0, sizeof(struct rtattr *) * max);
-	while (RTA_OK(rta, len)) {
-		if (rta->rta_type <= max && i < max)
-			tb[i++] = rta;
-		rta = RTA_NEXT(rta, len);
-	}
-	if (len)
-		fprintf(stderr, "!!!Deficit %d, rta_len=%d\n",
-			len, rta->rta_len);
-	return i;
 }
 
 struct rtattr *parse_rtattr_one(int type, struct rtattr *rta, int len)

@@ -76,10 +76,15 @@ ip-address \- protocol address management
 .IR FLAG-LIST " := [ "  FLAG-LIST " ] " FLAG
 
 .ti -8
-.IR FLAG " := "
-.RB "[ " permanent " | " dynamic " | " secondary " | " primary " |"
-.RB [ - ] tentative " | [" - ] deprecated " | [" - ] dadfailed " |"
-.BR temporary " |"
+.IR FLAG " := ["
+.RB [ - ] permanent " |"
+.RB [ - ] dynamic " |"
+.RB [ - ] secondary " |"
+.RB [ - ] primary " |"
+.RB [ - ] tentative " |"
+.RB [ - ] deprecated " |"
+.RB [ - ] dadfailed " |"
+.RB [ - ] temporary " |"
 .IR CONFFLAG-LIST " ]"
 
 .ti -8
@@ -334,7 +339,9 @@ only list running interfaces.
 .BR dynamic " and " permanent
 (IPv6 only) only list addresses installed due to stateless
 address configuration or only list permanent (not dynamic)
-addresses.
+addresses. These two flags are inverses of each other, so
+.BR -dynamic " is equal to " permanent " and "
+.BR -permanent " is equal to " dynamic .
 
 .TP
 .B tentative
@@ -365,12 +372,26 @@ address detection.
 address detection.
 
 .TP
-.B temporary
-(IPv6 only) only list temporary addresses.
+.BR temporary " or " secondary
+List temporary IPv6 or secondary IPv4 addresses only. The Linux kernel shares a
+single bit for those, so they are actually aliases for each other although the
+meaning differs depending on address family.
 
 .TP
-.BR primary " and " secondary
-only list primary (or secondary) addresses.
+.BR -temporary " or " -secondary
+These flags are aliases for
+.BR primary .
+
+.TP
+.B primary
+List only primary addresses, in IPv6 exclude temporary ones. This flag is the
+inverse of
+.BR temporary " and " secondary .
+
+.TP
+.B -primary
+This is an alias for
+.BR temporary " or " secondary .
 
 .SS ip address flush - flush protocol addresses
 This command flushes the protocol addresses selected by some criteria.

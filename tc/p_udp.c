@@ -61,7 +61,6 @@ done:
 }
 
 struct m_pedit_util p_pedit_udp = {
-	NULL,
-	"udp",
-	parse_udp,
+	.id = "udp",
+	.parse_peopt = parse_udp,
 };

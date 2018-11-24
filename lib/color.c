@@ -11,6 +11,8 @@
 #include "color.h"
 #include "utils.h"
 
+static void set_color_palette(void);
+
 enum color {
 	C_RED,
 	C_GREEN,
@@ -73,7 +75,7 @@ static enum color attr_colors_dark[] = {
 static int is_dark_bg;
 static int color_is_enabled;
 
-void enable_color(void)
+static void enable_color(void)
 {
 	color_is_enabled = 1;
 	set_color_palette();
@@ -117,7 +119,7 @@ bool matches_color(const char *arg, int *val)
 	return true;
 }
 
-void set_color_palette(void)
+static void set_color_palette(void)
 {
 	char *p = getenv("COLORFGBG");
 

@@ -18,14 +18,14 @@ int rd_argc(struct rd *rd)
 	return rd->argc;
 }
 
-char *rd_argv(struct rd *rd)
+static char *rd_argv(struct rd *rd)
 {
 	if (!rd_argc(rd))
 		return NULL;
 	return *rd->argv;
 }
 
-int strcmpx(const char *str1, const char *str2)
+static int strcmpx(const char *str1, const char *str2)
 {
 	if (strlen(str1) > strlen(str2))
 		return -1;
@@ -39,7 +39,7 @@ static bool rd_argv_match(struct rd *rd, const char *pattern)
 	return strcmpx(rd_argv(rd), pattern) == 0;
 }
 
-void rd_arg_inc(struct rd *rd)
+static void rd_arg_inc(struct rd *rd)
 {
 	if (!rd_argc(rd))
 		return;
@@ -47,7 +47,7 @@ void rd_arg_inc(struct rd *rd)
 	rd->argv++;
 }
 
-bool rd_no_arg(struct rd *rd)
+static bool rd_no_arg(struct rd *rd)
 {
 	return rd_argc(rd) == 0;
 }
@@ -404,7 +404,7 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_DRIVER_U64] = MNL_TYPE_U64,
 };
 
-int rd_attr_check(const struct nlattr *attr, int *typep)
+static int rd_attr_check(const struct nlattr *attr, int *typep)
 {
 	int type;
 
@@ -706,7 +706,7 @@ void newline(struct rd *rd)
 		pr_out("\n");
 }
 
-void newline_indent(struct rd *rd)
+static void newline_indent(struct rd *rd)
 {
 	newline(rd);
 	if (!rd->json_output)

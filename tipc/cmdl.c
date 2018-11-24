@@ -17,7 +17,7 @@
 
 #include "cmdl.h"
 
-const struct cmd *find_cmd(const struct cmd *cmds, char *str)
+static const struct cmd *find_cmd(const struct cmd *cmds, char *str)
 {
 	const struct cmd *c;
 	const struct cmd *match = NULL;

@@ -27,7 +27,7 @@
 
 
 static void usage(void) __attribute__((noreturn));
-int prefix_banner;
+static int prefix_banner;
 
 static void usage(void)
 {

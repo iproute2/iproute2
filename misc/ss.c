@@ -96,20 +96,20 @@ static int security_get_initial_context(char *name,  char **context)
 }
 #endif
 
-int resolve_services = 1;
+static int resolve_services = 1;
 int preferred_family = AF_UNSPEC;
-int show_options;
+static int show_options;
 int show_details;
-int show_users;
-int show_mem;
-int show_tcpinfo;
-int show_bpf;
-int show_proc_ctx;
-int show_sock_ctx;
-int show_header = 1;
-int follow_events;
-int sctp_ino;
-int show_tipcinfo;
+static int show_users;
+static int show_mem;
+static int show_tcpinfo;
+static int show_bpf;
+static int show_proc_ctx;
+static int show_sock_ctx;
+static int show_header = 1;
+static int follow_events;
+static int sctp_ino;
+static int show_tipcinfo;
 
 enum col_id {
 	COL_NETID,
@@ -494,7 +494,7 @@ struct user_ent {
 };
 
 #define USER_ENT_HASH_SIZE	256
-struct user_ent *user_ent_hash[USER_ENT_HASH_SIZE];
+static struct user_ent *user_ent_hash[USER_ENT_HASH_SIZE];
 
 static int user_ent_hashfn(unsigned int ino)
 {
@@ -1404,7 +1404,7 @@ struct scache {
 	const char *proto;
 };
 
-struct scache *rlist;
+static struct scache *rlist;
 
 static void init_service_resolver(void)
 {

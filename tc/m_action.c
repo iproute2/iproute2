@@ -30,9 +30,9 @@
 
 static struct action_util *action_list;
 #ifdef CONFIG_GACT
-int gact_ld; /* f*ckin backward compatibility */
+static int gact_ld; /* f*ckin backward compatibility */
 #endif
-int tab_flush;
+static int tab_flush;
 
 static void act_usage(void)
 {

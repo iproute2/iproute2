@@ -34,7 +34,7 @@
 #include "ip_common.h"
 
 static void usage(void) __attribute__((noreturn));
-int listen_all_nsid;
+static int listen_all_nsid;
 
 static void usage(void)
 {
