@@ -15,23 +15,28 @@ BYTES ] [
 .B maxrate
 RATE ] [
 .B buckets
-NUMBER ]  [
+NUMBER ] [
+.B orphan_mask
+NUMBER ] [
 .B pacing
 |
 .B nopacing
-]
+] [
+.B ce_threshold
+TIME ]
 
 .SH DESCRIPTION
 FQ (Fair Queue) is a classless packet scheduler meant to be mostly
 used for locally generated traffic.  It is designed to achieve per flow pacing.
 FQ does flow separation, and is able to respect pacing requirements set by TCP stack.
 All packets belonging to a socket are considered as a 'flow'.
-For non local packets (router workload), packet rxhash is used as fallback.
+For non local packets (router workload), packet hash is used as fallback.
 
 An application can specify a maximum pacing rate using the
 .B SO_MAX_PACING_RATE
 setsockopt call.  This packet scheduler adds delay between packets to
-respect rate limitation set by TCP stack.
+respect rate limitation set on each socket. Note that after linux-4.20, linux adopted EDT (Earliest Departure Time)
+and TCP directly sets the appropriate Departure Time for each skb.
 
 Dequeueing happens in a round-robin fashion.
 A special FIFO queue is reserved for high priority packets (
@@ -72,18 +77,28 @@ is ignored only if it is larger than this value.
 The size of the hash table used for flow lookups. Each bucket is assigned a
 red-black tree for efficient collision sorting.
 Default: 1024.
+.SS orphan_mask
+For packets not owned by a socket, fq is able to mask a part of skb->hash
+and reduce number of buckets associated with the traffic. This is a DDOS
+prevention mechanism, and the default is 1023 (meaning no more than 1024 flows
+are allocated for these packets)
 .SS [no]pacing
 Enable or disable flow pacing. Default is enabled.
+.SS ce_threshold
+sets a threshold above which all packets are marked with ECN Congestion
+Experienced. This is useful for DCTCP-style congestion control algorithms that
+require marking at very shallow queueing thresholds.
+
 .SH EXAMPLES
-#tc qdisc add dev eth0 root fq
+#tc qdisc add dev eth0 root est 1sec 4sec fq ce_threshold 4ms
 .br
-#tc -s -d qdisc
+#tc -s -d qdisc sh dev eth0
 .br
-qdisc fq 8003: dev eth0 root refcnt 2 limit 10000p flow_limit 100p buckets 1024 quantum 3028 initial_quantum 15140
- Sent 503727981 bytes 1146972 pkt (dropped 0, overlimits 0 requeues 54452)
- backlog 0b 0p requeues 54452
-  1289 flows (1289 inactive, 0 throttled)
-  0 gc, 31 highprio, 27411 throttled
+qdisc fq 800e: root refcnt 9 limit 10000p flow_limit 1000p buckets 1024 orphan_mask 1023 quantum 3028 initial_quantum 15140 low_rate_threshold 550Kbit refill_delay 40.0ms ce_threshold 4.0ms
+ Sent 533368436185 bytes 352296695 pkt (dropped 0, overlimits 0 requeues 1339864)
+ rate 39220Mbit 3238202pps backlog 12417828b 358p requeues 1339864
+  1052 flows (852 inactive, 0 throttled)
+  112 gc, 0 highprio, 212 throttled, 21501 ns latency, 470241 ce_mark
 .br
 .SH SEE ALSO
 .BR tc (8),
