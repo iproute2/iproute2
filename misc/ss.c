@@ -817,6 +817,8 @@ struct tcpstat {
 	unsigned int	    fackets;
 	unsigned int	    reordering;
 	unsigned int	    not_sent;
+	unsigned int	    delivered;
+	unsigned int	    delivered_ce;
 	double		    rcv_rtt;
 	double		    min_rtt;
 	int		    rcv_space;
@@ -2483,6 +2485,10 @@ static void tcp_stats_print(struct tcpstat *s)
 
 	if (s->delivery_rate)
 		out(" delivery_rate %sbps", sprint_bw(b1, s->delivery_rate));
+	if (s->delivered)
+		out(" delivered:%u", s->delivered);
+	if (s->delivered_ce)
+		out(" delivered_ce:%u", s->delivered_ce);
 	if (s->app_limited)
 		out(" app_limited");
 
@@ -2829,6 +2835,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.busy_time = info->tcpi_busy_time;
 		s.rwnd_limited = info->tcpi_rwnd_limited;
 		s.sndbuf_limited = info->tcpi_sndbuf_limited;
+		s.delivered = info->tcpi_delivered;
+		s.delivered_ce = info->tcpi_delivered_ce;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 		free(s.bbr_info);
