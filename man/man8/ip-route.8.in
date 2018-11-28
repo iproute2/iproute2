@@ -187,7 +187,8 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 
 .ti -8
 .IR ENCAP " := [ "
-.IR MPLS " | " IP " | " BPF " | " SEG6 " | " SEG6LOCAL " ] "
+.IR ENCAP_MPLS " | " ENCAP_IP " | " ENCAP_BPF " | "
+.IR ENCAP_SEG6 " | " ENCAP_SEG6LOCAL " ] "
 
 .ti -8
 .IR ENCAP_MPLS " := "
