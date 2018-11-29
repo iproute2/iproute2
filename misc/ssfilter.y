@@ -54,10 +54,6 @@ null:   /* NOTHING */ { $$ = NULL; }
         ;
 
 exprlist: expr
-        | '!' expr
-        {
-                $$ = alloc_node(SSF_NOT, $2);
-        }
         | exprlist '|' expr
         {
                 $$ = alloc_node(SSF_OR, $1);
@@ -82,6 +78,10 @@ eq:	'='
 expr:	'(' exprlist ')'
 	{
 		$$ = $2;
+	}
+	| '!' expr
+	{
+		$$ = alloc_node(SSF_NOT, $2);
 	}
 	| DCOND eq HOSTCOND
         {
