@@ -302,10 +302,11 @@ static void print_session(struct l2tp_data *data)
 	print_uint(PRINT_FP, "peer_offset", " peer offset %u\n", 0);
 
 	if (p->cookie_len > 0)
-		print_cookie("cookie", "cookie",
+		print_cookie("cookie", "  cookie %s",
 			     p->cookie, p->cookie_len);
+
 	if (p->peer_cookie_len > 0)
-		print_cookie("peer_cookie", "peer cookie",
+		print_cookie("peer_cookie", "  peer cookie %s",
 			     p->peer_cookie, p->peer_cookie_len);
 
 	if (p->reorder_timeout != 0)
