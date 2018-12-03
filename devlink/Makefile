@@ -16,7 +16,9 @@ devlink: $(DEVLINKOBJ)
 	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 install: all
-	install -m 0755 $(TARGETS) $(DESTDIR)$(SBINDIR)
+	for i in $(TARGETS); \
+	do install -m 0755 $$i $(DESTDIR)$(SBINDIR); \
+	done
 
 clean:
 	rm -f $(DEVLINKOBJ) $(TARGETS)
