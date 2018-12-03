@@ -817,6 +817,10 @@ struct tcpstat {
 	unsigned int	    fackets;
 	unsigned int	    reordering;
 	unsigned int	    not_sent;
+	unsigned int	    delivered;
+	unsigned int	    delivered_ce;
+	unsigned int	    dsack_dups;
+	unsigned int	    reord_seen;
 	double		    rcv_rtt;
 	double		    min_rtt;
 	int		    rcv_space;
@@ -824,6 +828,8 @@ struct tcpstat {
 	unsigned long long  busy_time;
 	unsigned long long  rwnd_limited;
 	unsigned long long  sndbuf_limited;
+	unsigned long long  bytes_sent;
+	unsigned long long  bytes_retrans;
 	bool		    has_ts_opt;
 	bool		    has_sack_opt;
 	bool		    has_ecn_opt;
@@ -2424,6 +2430,10 @@ static void tcp_stats_print(struct tcpstat *s)
 	if (s->ssthresh)
 		out(" ssthresh:%d", s->ssthresh);
 
+	if (s->bytes_sent)
+		out(" bytes_sent:%llu", s->bytes_sent);
+	if (s->bytes_retrans)
+		out(" bytes_retrans:%llu", s->bytes_retrans);
 	if (s->bytes_acked)
 		out(" bytes_acked:%llu", s->bytes_acked);
 	if (s->bytes_received)
@@ -2483,6 +2493,10 @@ static void tcp_stats_print(struct tcpstat *s)
 
 	if (s->delivery_rate)
 		out(" delivery_rate %sbps", sprint_bw(b1, s->delivery_rate));
+	if (s->delivered)
+		out(" delivered:%u", s->delivered);
+	if (s->delivered_ce)
+		out(" delivered_ce:%u", s->delivered_ce);
 	if (s->app_limited)
 		out(" app_limited");
 
@@ -2506,10 +2520,14 @@ static void tcp_stats_print(struct tcpstat *s)
 		out(" lost:%u", s->lost);
 	if (s->sacked && s->ss.state != SS_LISTEN)
 		out(" sacked:%u", s->sacked);
+	if (s->dsack_dups)
+		out(" dsack_dups:%u", s->dsack_dups);
 	if (s->fackets)
 		out(" fackets:%u", s->fackets);
 	if (s->reordering != 3)
 		out(" reordering:%d", s->reordering);
+	if (s->reord_seen)
+		out(" reord_seen:%d", s->reord_seen);
 	if (s->rcv_rtt)
 		out(" rcv_rtt:%g", s->rcv_rtt);
 	if (s->rcv_space)
@@ -2829,6 +2847,12 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.busy_time = info->tcpi_busy_time;
 		s.rwnd_limited = info->tcpi_rwnd_limited;
 		s.sndbuf_limited = info->tcpi_sndbuf_limited;
+		s.delivered = info->tcpi_delivered;
+		s.delivered_ce = info->tcpi_delivered_ce;
+		s.dsack_dups = info->tcpi_dsack_dups;
+		s.reord_seen = info->tcpi_reord_seen;
+		s.bytes_sent = info->tcpi_bytes_sent;
+		s.bytes_retrans = info->tcpi_bytes_retrans;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 		free(s.bbr_info);
