@@ -8,9 +8,6 @@ ifeq ($(HAVE_MNL),y)
 DEVLINKOBJ = devlink.o mnlg.o
 TARGETS += devlink
 
-CFLAGS += $(shell $(PKG_CONFIG) libmnl --cflags)
-LDLIBS += $(shell $(PKG_CONFIG) libmnl --libs)
-
 endif
 
 all: $(TARGETS) $(LIBS)
