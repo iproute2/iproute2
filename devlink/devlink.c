@@ -1920,10 +1920,69 @@ static int cmd_dev_eswitch(struct dl *dl)
 	return -ENOENT;
 }
 
-static void pr_out_param_value(struct dl *dl, int nla_type, struct nlattr *nl)
+struct param_val_conv {
+	const char *name;
+	const char *vstr;
+	uint32_t vuint;
+};
+
+static bool param_val_conv_exists(const struct param_val_conv *param_val_conv,
+				  uint32_t len, const char *name)
+{
+	uint32_t i;
+
+	for (i = 0; i < len; i++)
+		if (!strcmp(param_val_conv[i].name, name))
+			return true;
+
+	return false;
+}
+
+static int
+param_val_conv_uint_get(const struct param_val_conv *param_val_conv,
+			uint32_t len, const char *name, const char *vstr,
+			uint32_t *vuint)
+{
+	uint32_t i;
+
+	for (i = 0; i < len; i++)
+		if (!strcmp(param_val_conv[i].name, name) &&
+		    !strcmp(param_val_conv[i].vstr, vstr)) {
+			*vuint = param_val_conv[i].vuint;
+			return 0;
+		}
+
+	return -ENOENT;
+}
+
+static int
+param_val_conv_str_get(const struct param_val_conv *param_val_conv,
+		       uint32_t len, const char *name, uint32_t vuint,
+		       const char **vstr)
+{
+	uint32_t i;
+
+	for (i = 0; i < len; i++)
+		if (!strcmp(param_val_conv[i].name, name) &&
+		    param_val_conv[i].vuint == vuint) {
+			*vstr = param_val_conv[i].vstr;
+			return 0;
+		}
+
+	return -ENOENT;
+}
+
+static const struct param_val_conv param_val_conv[] = {};
+
+#define PARAM_VAL_CONV_LEN ARRAY_SIZE(param_val_conv)
+
+static void pr_out_param_value(struct dl *dl, const char *nla_name,
+			       int nla_type, struct nlattr *nl)
 {
 	struct nlattr *nla_value[DEVLINK_ATTR_MAX + 1] = {};
 	struct nlattr *val_attr;
+	const char *vstr;
+	bool conv_exists;
 	int err;
 
 	err = mnl_attr_parse_nested(nl, attr_cb, nla_value);
@@ -1939,15 +1998,51 @@ static void pr_out_param_value(struct dl *dl, int nla_type, struct nlattr *nl)
 		   param_cmode_name(mnl_attr_get_u8(nla_value[DEVLINK_ATTR_PARAM_VALUE_CMODE])));
 	val_attr = nla_value[DEVLINK_ATTR_PARAM_VALUE_DATA];
 
+	conv_exists = param_val_conv_exists(param_val_conv, PARAM_VAL_CONV_LEN,
+					    nla_name);
+
 	switch (nla_type) {
 	case MNL_TYPE_U8:
-		pr_out_uint(dl, "value", mnl_attr_get_u8(val_attr));
+		if (conv_exists) {
+			err = param_val_conv_str_get(param_val_conv,
+						     PARAM_VAL_CONV_LEN,
+						     nla_name,
+						     mnl_attr_get_u8(val_attr),
+						     &vstr);
+			if (err)
+				return;
+			pr_out_str(dl, "value", vstr);
+		} else {
+			pr_out_uint(dl, "value", mnl_attr_get_u8(val_attr));
+		}
 		break;
 	case MNL_TYPE_U16:
-		pr_out_uint(dl, "value", mnl_attr_get_u16(val_attr));
+		if (conv_exists) {
+			err = param_val_conv_str_get(param_val_conv,
+						     PARAM_VAL_CONV_LEN,
+						     nla_name,
+						     mnl_attr_get_u16(val_attr),
+						     &vstr);
+			if (err)
+				return;
+			pr_out_str(dl, "value", vstr);
+		} else {
+			pr_out_uint(dl, "value", mnl_attr_get_u16(val_attr));
+		}
 		break;
 	case MNL_TYPE_U32:
-		pr_out_uint(dl, "value", mnl_attr_get_u32(val_attr));
+		if (conv_exists) {
+			err = param_val_conv_str_get(param_val_conv,
+						     PARAM_VAL_CONV_LEN,
+						     nla_name,
+						     mnl_attr_get_u32(val_attr),
+						     &vstr);
+			if (err)
+				return;
+			pr_out_str(dl, "value", vstr);
+		} else {
+			pr_out_uint(dl, "value", mnl_attr_get_u32(val_attr));
+		}
 		break;
 	case MNL_TYPE_STRING:
 		pr_out_str(dl, "value", mnl_attr_get_str(val_attr));
@@ -1962,6 +2057,7 @@ static void pr_out_param(struct dl *dl, struct nlattr **tb, bool array)
 {
 	struct nlattr *nla_param[DEVLINK_ATTR_MAX + 1] = {};
 	struct nlattr *param_value_attr;
+	const char *nla_name;
 	int nla_type;
 	int err;
 
@@ -1980,8 +2076,8 @@ static void pr_out_param(struct dl *dl, struct nlattr **tb, bool array)
 
 	nla_type = mnl_attr_get_u8(nla_param[DEVLINK_ATTR_PARAM_TYPE]);
 
-	pr_out_str(dl, "name",
-		   mnl_attr_get_str(nla_param[DEVLINK_ATTR_PARAM_NAME]));
+	nla_name = mnl_attr_get_str(nla_param[DEVLINK_ATTR_PARAM_NAME]);
+	pr_out_str(dl, "name", nla_name);
 
 	if (!nla_param[DEVLINK_ATTR_PARAM_GENERIC])
 		pr_out_str(dl, "type", "driver-specific");
@@ -1992,7 +2088,7 @@ static void pr_out_param(struct dl *dl, struct nlattr **tb, bool array)
 	mnl_attr_for_each_nested(param_value_attr,
 				 nla_param[DEVLINK_ATTR_PARAM_VALUES_LIST]) {
 		pr_out_entry_start(dl);
-		pr_out_param_value(dl, nla_type, param_value_attr);
+		pr_out_param_value(dl, nla_name, nla_type, param_value_attr);
 		pr_out_entry_end(dl);
 	}
 	pr_out_array_end(dl);
@@ -2097,6 +2193,7 @@ static int cmd_dev_param_set(struct dl *dl)
 {
 	struct param_ctx ctx = {};
 	struct nlmsghdr *nlh;
+	bool conv_exists;
 	uint32_t val_u32;
 	uint16_t val_u16;
 	uint8_t val_u8;
@@ -2124,10 +2221,22 @@ static int cmd_dev_param_set(struct dl *dl)
 			       NLM_F_REQUEST | NLM_F_ACK);
 	dl_opts_put(nlh, dl);
 
+	conv_exists = param_val_conv_exists(param_val_conv, PARAM_VAL_CONV_LEN,
+					    dl->opts.param_name);
+
 	mnl_attr_put_u8(nlh, DEVLINK_ATTR_PARAM_TYPE, ctx.nla_type);
 	switch (ctx.nla_type) {
 	case MNL_TYPE_U8:
-		err = strtouint8_t(dl->opts.param_value, &val_u8);
+		if (conv_exists) {
+			err = param_val_conv_uint_get(param_val_conv,
+						      PARAM_VAL_CONV_LEN,
+						      dl->opts.param_name,
+						      dl->opts.param_value,
+						      &val_u32);
+			val_u8 = val_u32;
+		} else {
+			err = strtouint8_t(dl->opts.param_value, &val_u8);
+		}
 		if (err)
 			goto err_param_value_parse;
 		if (val_u8 == ctx.value.vu8)
@@ -2135,7 +2244,16 @@ static int cmd_dev_param_set(struct dl *dl)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u8);
 		break;
 	case MNL_TYPE_U16:
-		err = strtouint16_t(dl->opts.param_value, &val_u16);
+		if (conv_exists) {
+			err = param_val_conv_uint_get(param_val_conv,
+						      PARAM_VAL_CONV_LEN,
+						      dl->opts.param_name,
+						      dl->opts.param_value,
+						      &val_u32);
+			val_u16 = val_u32;
+		} else {
+			err = strtouint16_t(dl->opts.param_value, &val_u16);
+		}
 		if (err)
 			goto err_param_value_parse;
 		if (val_u16 == ctx.value.vu16)
@@ -2143,7 +2261,14 @@ static int cmd_dev_param_set(struct dl *dl)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u16);
 		break;
 	case MNL_TYPE_U32:
-		err = strtouint32_t(dl->opts.param_value, &val_u32);
+		if (conv_exists)
+			err = param_val_conv_uint_get(param_val_conv,
+						      PARAM_VAL_CONV_LEN,
+						      dl->opts.param_name,
+						      dl->opts.param_value,
+						      &val_u32);
+		else
+			err = strtouint32_t(dl->opts.param_value, &val_u32);
 		if (err)
 			goto err_param_value_parse;
 		if (val_u32 == ctx.value.vu32)
