@@ -763,6 +763,7 @@ static int __rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iov,
 	msg.msg_iovlen = 1;
 	i = 0;
 	while (1) {
+next:
 		status = rtnl_recvmsg(rtnl->fd, &msg, &buf);
 		++i;
 
@@ -826,6 +827,8 @@ static int __rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iov,
 				else
 					free(buf);
 
+				if (i < iovlen)
+					goto next;
 				return error ? -i : 0;
 			}
 
