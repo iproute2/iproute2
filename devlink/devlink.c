@@ -1972,7 +1972,18 @@ param_val_conv_str_get(const struct param_val_conv *param_val_conv,
 	return -ENOENT;
 }
 
-static const struct param_val_conv param_val_conv[] = {};
+static const struct param_val_conv param_val_conv[] = {
+	{
+		.name = "fw_load_policy",
+		.vstr = "driver",
+		.vuint = DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_DRIVER,
+	},
+	{
+		.name = "fw_load_policy",
+		.vstr = "flash",
+		.vuint = DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_FLASH,
+	},
+};
 
 #define PARAM_VAL_CONV_LEN ARRAY_SIZE(param_val_conv)
 
