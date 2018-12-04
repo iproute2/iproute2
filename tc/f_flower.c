@@ -494,68 +494,6 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 	return 0;
 }
 
-static int flower_port_range_attr_type(__u8 ip_proto, enum flower_endpoint type,
-				       __be16 *min_port_type,
-				       __be16 *max_port_type)
-{
-	if (ip_proto == IPPROTO_TCP || ip_proto == IPPROTO_UDP ||
-	    ip_proto == IPPROTO_SCTP) {
-		if (type == FLOWER_ENDPOINT_SRC) {
-			*min_port_type = TCA_FLOWER_KEY_PORT_SRC_MIN;
-			*max_port_type = TCA_FLOWER_KEY_PORT_SRC_MAX;
-		} else {
-			*min_port_type = TCA_FLOWER_KEY_PORT_DST_MIN;
-			*max_port_type = TCA_FLOWER_KEY_PORT_DST_MAX;
-		}
-	} else {
-		return -1;
-	}
-
-	return 0;
-}
-
-static int flower_parse_port_range(__be16 *min, __be16 *max, __u8 ip_proto,
-				   enum flower_endpoint endpoint,
-				   struct nlmsghdr *n)
-{
-	__be16 min_port_type, max_port_type;
-
-	if (flower_port_range_attr_type(ip_proto, endpoint, &min_port_type,
-					&max_port_type))
-		return -1;
-
-	addattr16(n, MAX_MSG, min_port_type, *min);
-	addattr16(n, MAX_MSG, max_port_type, *max);
-
-	return 0;
-}
-
-static int get_range(__be16 *min, __be16 *max, char *argv)
-{
-	char *r;
-
-	r = strchr(argv, '-');
-	if (r) {
-		*r = '\0';
-		if (get_be16(min, argv, 10)) {
-			fprintf(stderr, "invalid min range\n");
-			return -1;
-		}
-		if (get_be16(max, r + 1, 10)) {
-			fprintf(stderr, "invalid max range\n");
-			return -1;
-		}
-		if (htons(*max) <= htons(*min)) {
-			fprintf(stderr, "max value should be greater than min value\n");
-			return -1;
-		}
-	} else {
-		fprintf(stderr, "Illegal range format\n");
-		return -1;
-	}
-	return 0;
-}
-
 #define TCP_FLAGS_MAX_MASK 0xfff
 
 static int flower_parse_tcp_flags(char *str, int flags_type, int mask_type,
@@ -1123,54 +1061,20 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				return -1;
 			}
 		} else if (matches(*argv, "dst_port") == 0) {
-			__be16 min, max;
-
 			NEXT_ARG();
-			if (matches(*argv, "range") == 0) {
-				NEXT_ARG();
-				ret = get_range(&min, &max, *argv);
-				if (ret < 0)
-					return -1;
-				ret = flower_parse_port_range(&min, &max,
-							      ip_proto,
-							      FLOWER_ENDPOINT_DST,
-							      n);
-				if (ret < 0) {
-					fprintf(stderr, "Illegal \"dst_port range\"\n");
-					return -1;
-				}
-			} else {
-				ret = flower_parse_port(*argv, ip_proto,
-							FLOWER_ENDPOINT_DST, n);
-				if (ret < 0) {
-					fprintf(stderr, "Illegal \"dst_port\"\n");
-					return -1;
-				}
+			ret = flower_parse_port(*argv, ip_proto,
+						FLOWER_ENDPOINT_DST, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"dst_port\"\n");
+				return -1;
 			}
 		} else if (matches(*argv, "src_port") == 0) {
-			__be16 min, max;
-
 			NEXT_ARG();
-			if (matches(*argv, "range") == 0) {
-				NEXT_ARG();
-				ret = get_range(&min, &max, *argv);
-				if (ret < 0)
-					return -1;
-				ret = flower_parse_port_range(&min, &max,
-							      ip_proto,
-							      FLOWER_ENDPOINT_SRC,
-							      n);
-				if (ret < 0) {
-					fprintf(stderr, "Illegal \"src_port range\"\n");
-					return -1;
-				}
-			} else {
-				ret = flower_parse_port(*argv, ip_proto,
-							FLOWER_ENDPOINT_SRC, n);
-				if (ret < 0) {
-					fprintf(stderr, "Illegal \"src_port\"\n");
-					return -1;
-				}
+			ret = flower_parse_port(*argv, ip_proto,
+						FLOWER_ENDPOINT_SRC, n);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"src_port\"\n");
+				return -1;
 			}
 		} else if (matches(*argv, "tcp_flags") == 0) {
 			NEXT_ARG();
@@ -1586,22 +1490,6 @@ static void flower_print_port(char *name, struct rtattr *attr)
 	print_hu(PRINT_ANY, name, namefrm, rta_getattr_be16(attr));
 }
 
-static void flower_print_port_range(char *name, struct rtattr *min_attr,
-				    struct rtattr *max_attr)
-{
-	SPRINT_BUF(namefrm);
-	SPRINT_BUF(out);
-	size_t done;
-
-	if (!min_attr || !max_attr)
-		return;
-
-	done = sprintf(out, "%u", rta_getattr_be16(min_attr));
-	sprintf(out + done, "-%u", rta_getattr_be16(max_attr));
-	sprintf(namefrm, "\n  %s %%s", name);
-	print_string(PRINT_ANY, name, namefrm, out);
-}
-
 static void flower_print_tcp_flags(const char *name, struct rtattr *flags_attr,
 				   struct rtattr *mask_attr)
 {
@@ -1790,7 +1678,6 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			    struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_FLOWER_MAX + 1];
-	__be16 min_port_type, max_port_type;
 	int nl_type, nl_mask_type;
 	__be16 eth_type = 0;
 	__u8 ip_proto = 0xff;
@@ -1908,16 +1795,6 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	nl_type = flower_port_attr_type(ip_proto, FLOWER_ENDPOINT_SRC);
 	if (nl_type >= 0)
 		flower_print_port("src_port", tb[nl_type]);
-
-	if (!flower_port_range_attr_type(ip_proto, FLOWER_ENDPOINT_DST,
-					 &min_port_type, &max_port_type))
-		flower_print_port_range("dst_port range",
-					tb[min_port_type], tb[max_port_type]);
-
-	if (!flower_port_range_attr_type(ip_proto, FLOWER_ENDPOINT_SRC,
-					 &min_port_type, &max_port_type))
-		flower_print_port_range("src_port range",
-					tb[min_port_type], tb[max_port_type]);
 
 	flower_print_tcp_flags("tcp_flags", tb[TCA_FLOWER_KEY_TCP_FLAGS],
 			       tb[TCA_FLOWER_KEY_TCP_FLAGS_MASK]);
