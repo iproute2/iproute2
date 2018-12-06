@@ -58,14 +58,19 @@ static int nametable_show_cb(const struct nlmsghdr *nlh, void *data)
 	open_json_object(NULL);
 	print_uint(PRINT_ANY, "type", "%-10u",
 			   mnl_attr_get_u32(publ[TIPC_NLA_PUBL_TYPE]));
+	print_string(PRINT_FP, NULL, " ", "");
 	print_uint(PRINT_ANY, "lower", "%-10u",
 			   mnl_attr_get_u32(publ[TIPC_NLA_PUBL_LOWER]));
+	print_string(PRINT_FP, NULL, " ", "");
 	print_uint(PRINT_ANY, "upper", "%-10u",
 			   mnl_attr_get_u32(publ[TIPC_NLA_PUBL_UPPER]));
+	print_string(PRINT_FP, NULL, " ", "");
 	print_string(PRINT_ANY, "scope", "%-8s",
 			     scope[mnl_attr_get_u32(publ[TIPC_NLA_PUBL_SCOPE])]);
+	print_string(PRINT_FP, NULL, " ", "");
 	print_uint(PRINT_ANY, "port", "%-10u",
 			   mnl_attr_get_u32(publ[TIPC_NLA_PUBL_REF]));
+	print_string(PRINT_FP, NULL, " ", "");
 	print_string(PRINT_ANY, "node", "%s", str);
 	print_string(PRINT_FP, NULL, "\n", "");
 	close_json_object();
