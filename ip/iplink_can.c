@@ -283,7 +283,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_CAN_STATE]) {
 		uint32_t state = rta_getattr_u32(tb[IFLA_CAN_STATE]);
 
-		fprintf(f, "state %s ", state < CAN_STATE_MAX ?
+		print_string(PRINT_ANY, "state", "state %s ", state < CAN_STATE_MAX ?
 			can_state_names[state] : "UNKNOWN");
 	}
 
