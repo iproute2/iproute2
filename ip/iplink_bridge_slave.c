@@ -168,11 +168,11 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 			     rta_getattr_u8(tb[IFLA_BRPORT_UNICAST_FLOOD]));
 
 	if (tb[IFLA_BRPORT_ID])
-		print_0xhex(PRINT_ANY, "id", "port_id 0x%x ",
+		print_0xhex(PRINT_ANY, "id", "port_id %#llx ",
 			    rta_getattr_u16(tb[IFLA_BRPORT_ID]));
 
 	if (tb[IFLA_BRPORT_NO])
-		print_0xhex(PRINT_ANY, "no", "port_no 0x%x ",
+		print_0xhex(PRINT_ANY, "no", "port_no %#llx ",
 			   rta_getattr_u16(tb[IFLA_BRPORT_NO]));
 
 	if (tb[IFLA_BRPORT_DESIGNATED_PORT])
@@ -267,7 +267,7 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 
 		fwd_mask = rta_getattr_u16(tb[IFLA_BRPORT_GROUP_FWD_MASK]);
 		print_0xhex(PRINT_ANY, "group_fwd_mask",
-			    "group_fwd_mask 0x%x ", fwd_mask);
+			    "group_fwd_mask %#llx ", fwd_mask);
 		_bitmask2str(fwd_mask, convbuf, sizeof(convbuf), fwd_mask_tbl);
 		print_string(PRINT_ANY, "group_fwd_mask_str",
 			     "group_fwd_mask_str %s ", convbuf);

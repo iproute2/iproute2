@@ -328,7 +328,7 @@ static int print_sched_list(FILE *f, struct rtattr *list)
 		open_json_object(NULL);
 		print_uint(PRINT_ANY, "index", "\tindex %u", index);
 		print_string(PRINT_ANY, "cmd", " cmd %s", entry_cmd_to_str(command));
-		print_0xhex(PRINT_ANY, "gatemask", " gatemask %#x", gatemask);
+		print_0xhex(PRINT_ANY, "gatemask", " gatemask %#llx", gatemask);
 		print_uint(PRINT_ANY, "interval", " interval %u", interval);
 		close_json_object();
 

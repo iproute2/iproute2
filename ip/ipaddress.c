@@ -129,7 +129,7 @@ static void print_operstate(FILE *f, __u8 state)
 		if (is_json_context())
 			print_uint(PRINT_JSON, "operstate_index", NULL, state);
 		else
-			print_0xhex(PRINT_FP, NULL, "state %#x", state);
+			print_0xhex(PRINT_FP, NULL, "state %#llx", state);
 	} else if (brief) {
 		print_color_string(PRINT_ANY,
 				   oper_state_color(state),

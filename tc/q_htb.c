@@ -332,7 +332,7 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		if (RTA_PAYLOAD(tb[TCA_HTB_INIT])  < sizeof(*gopt)) return -1;
 
 		print_int(PRINT_ANY, "r2q", "r2q %d", gopt->rate2quantum);
-		print_0xhex(PRINT_ANY, "default", " default %x", gopt->defcls);
+		print_0xhex(PRINT_ANY, "default", " default %#llx", gopt->defcls);
 		print_uint(PRINT_ANY, "direct_packets_stat",
 			   " direct_packets_stat %u", gopt->direct_pkts);
 		if (show_details) {

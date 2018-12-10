@@ -247,7 +247,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (tb[TCA_IFE_TYPE]) {
 		ife_type = rta_getattr_u16(tb[TCA_IFE_TYPE]);
 		has_optional = 1;
-		print_0xhex(PRINT_ANY, "type", "type 0x%X ", ife_type);
+		print_0xhex(PRINT_ANY, "type", "type %#llX ", ife_type);
 	}
 
 	if (has_optional)

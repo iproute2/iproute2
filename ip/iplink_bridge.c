@@ -524,7 +524,7 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_GROUP_FWD_MASK])
 		print_0xhex(PRINT_ANY,
 			    "group_fwd_mask",
-			    "group_fwd_mask %#x ",
+			    "group_fwd_mask %#llx ",
 			    rta_getattr_u16(tb[IFLA_BR_GROUP_FWD_MASK]));
 
 	if (tb[IFLA_BR_GROUP_ADDR]) {

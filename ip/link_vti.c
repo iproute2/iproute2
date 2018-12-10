@@ -208,7 +208,7 @@ static void vti_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		if (fwmark) {
 			print_0xhex(PRINT_ANY,
-				    "fwmark", "fwmark 0x%x ", fwmark);
+				    "fwmark", "fwmark %#llx ", fwmark);
 		}
 	}
 }

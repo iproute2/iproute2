@@ -263,10 +263,10 @@ int print_rule(struct nlmsghdr *n, void *arg)
 
 		if (tb[FRA_FWMASK] &&
 		    (mask = rta_getattr_u32(tb[FRA_FWMASK])) != 0xFFFFFFFF) {
-			print_0xhex(PRINT_ANY, "fwmark", "fwmark 0x%x", mark);
-			print_0xhex(PRINT_ANY, "fwmask", "/0x%x ", mask);
+			print_0xhex(PRINT_ANY, "fwmark", "fwmark %#llx", mark);
+			print_0xhex(PRINT_ANY, "fwmask", "/%#llx ", mask);
 		} else {
-			print_0xhex(PRINT_ANY, "fwmark", "fwmark 0x%x ", mark);
+			print_0xhex(PRINT_ANY, "fwmark", "fwmark %#llx ", mark);
 		}
 	}
 
