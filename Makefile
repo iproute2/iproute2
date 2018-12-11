@@ -40,9 +40,6 @@ DEFINES+=-DCONFDIR=\"$(CONFDIR)\" \
          -DNETNS_RUN_DIR=\"$(NETNS_RUN_DIR)\" \
          -DNETNS_ETC_DIR=\"$(NETNS_ETC_DIR)\"
 
-#options for decnet
-ADDLIB+=dnet_ntop.o dnet_pton.o
-
 #options for mpls
 ADDLIB+=mpls_ntop.o mpls_pton.o
 

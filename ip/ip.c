@@ -53,7 +53,7 @@ static void usage(void)
 "                   vrf | sr }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 "                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
-"                    -f[amily] { inet | inet6 | dnet | mpls | bridge | link } |\n"
+"                    -f[amily] { inet | inet6 | mpls | bridge | link } |\n"
 "                    -4 | -6 | -I | -D | -M | -B | -0 |\n"
 "                    -l[oops] { maximum-addr-flush-attempts } | -br[ief] |\n"
 "                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"

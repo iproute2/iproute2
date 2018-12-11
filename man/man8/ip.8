@@ -34,7 +34,7 @@ ip \- show / manipulate routing, network devices, interfaces and tunnels
 \fB\-r\fR[\fIesolve\fR] |
 \fB\-iec\fR |
 \fB\-f\fR[\fIamily\fR] {
-.BR inet " | " inet6 " | " dnet " | " link " } | "
+.BR inet " | " inet6 " | " link " } | "
 \fB-4\fR |
 \fB-6\fR |
 \fB-I\fR |
@@ -94,7 +94,7 @@ Zero (0) means loop until all addresses are removed.
 .TP
 .BR "\-f" , " \-family " <FAMILY>
 Specifies the protocol family to use. The protocol family identifier can be one of
-.BR "inet" , " inet6" , " bridge" ,  " dnet" , " mpls"
+.BR "inet" , " inet6" , " bridge" ,  " mpls"
 or
 .BR link .
 If this option is not present,
@@ -124,11 +124,6 @@ shortcut for
 .B \-B
 shortcut for
 .BR "\-family bridge" .
-
-.TP
-.B \-D
-shortcut for
-.BR "\-family decnet" .
 
 .TP
 .B \-M

@@ -9,7 +9,7 @@ In addition to routing cache statistics, it supports any kind of statistics
 the linux kernel exports via a file in /proc/net/stat.  In a stock 2.6.9
 kernel, this is 
 	per-protocol neighbour cache statistics 
-		(ipv4, ipv6, atm, decnet)
+		(ipv4, ipv6, atm)
 	routing cache statistics
 		(ipv4)
 	connection tracking statistics

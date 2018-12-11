@@ -194,9 +194,6 @@ int matches(const char *arg, const char *pattern);
 int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits);
 int inet_addr_match_rta(const inet_prefix *m, const struct rtattr *rta);
 
-const char *dnet_ntop(int af, const void *addr, char *str, size_t len);
-int dnet_pton(int af, const char *src, void *addr);
-
 const char *mpls_ntop(int af, const void *addr, char *str, size_t len);
 int mpls_pton(int af, const char *src, void *addr, size_t alen);
 
