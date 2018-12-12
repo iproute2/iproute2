@@ -171,7 +171,7 @@ em_ipset.o: CFLAGS += $$($(PKG_CONFIG) xtables --cflags)
 em_ipt.o: CFLAGS += $$($(PKG_CONFIG) xtables --cflags)
 
 ifeq ($(TC_CONFIG_XT),y)
-  LDFLAGS += $$($(PKG_CONFIG) xtables --libs)
+  LDLIBS += $$($(PKG_CONFIG) xtables --libs)
 endif
 
 %.yacc.c: %.y
