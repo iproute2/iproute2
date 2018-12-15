@@ -11,12 +11,6 @@ CONFIG=config.mk
 TMPDIR=$(mktemp -d config.XXXXXX)
 trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
 
-check_prog()
-{
-    echo -n "$2"
-    command -v $1 >/dev/null 2>&1 && (echo "$3:=y" >> $CONFIG; echo "yes") || (echo "no"; return 1)
-}
-
 check_toolchain()
 {
     : ${PKG_CONFIG:=pkg-config}
