@@ -53,7 +53,7 @@ clean: testclean
 distclean: clean
 	echo "Entering iproute2" && cd iproute2 && $(MAKE) distclean && cd ..;
 
-$(TESTS): testclean
+$(TESTS): generate_nlmsg testclean
 ifeq (,$(IPVERS))
 	$(error Please run make first)
 endif
