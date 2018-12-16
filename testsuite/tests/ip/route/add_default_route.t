@@ -31,3 +31,5 @@ ts_ip "$0" "Add another IPv6 route dst cafe:babe::/64" -6 route add cafe:babe::/
 ts_ip "$0" "Show IPv6 default route" -6 route show default
 test_on "default via dead:beef::2 dev $DEV"
 test_lines_count 1
+
+ts_ip "$0" "Del $DEV dummy interface"  link del dev $DEV
