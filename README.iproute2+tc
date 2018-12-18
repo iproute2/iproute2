@@ -42,7 +42,7 @@ in rsvp/cbqinit.eth1.
 
 
 Terminology and advices about setting CBQ parameters may be found in Sally Floyd
-papers. 
+papers.
 
 
 Pairs X:Y are class handles, X:0 are qdisc handles.
