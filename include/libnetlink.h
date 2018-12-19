@@ -49,7 +49,8 @@ void rtnl_close(struct rtnl_handle *rth);
 
 typedef int (*req_filter_fn_t)(struct nlmsghdr *nlh, int reqlen);
 
-int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
+int rtnl_addrdump_req(struct rtnl_handle *rth, int family,
+		      req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 int rtnl_addrlbldump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
