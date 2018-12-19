@@ -122,8 +122,8 @@ _PRINT_FUNC(hhu, unsigned char);
 _PRINT_FUNC(hu, unsigned short);
 _PRINT_FUNC(uint, unsigned int);
 _PRINT_FUNC(u64, uint64_t);
-_PRINT_FUNC(luint, unsigned long int);
-_PRINT_FUNC(lluint, unsigned long long int);
+_PRINT_FUNC(luint, unsigned long);
+_PRINT_FUNC(lluint, unsigned long long);
 _PRINT_FUNC(float, double);
 #undef _PRINT_FUNC
 

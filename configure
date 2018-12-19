@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 # SPDX-License-Identifier: GPL-2.0
 # This is not an autoconf generated configure
 #
@@ -10,12 +10,6 @@ CONFIG=config.mk
 # Make a temp directory in build tree.
 TMPDIR=$(mktemp -d config.XXXXXX)
 trap 'status=$?; rm -rf $TMPDIR; exit $status' EXIT HUP INT QUIT TERM
-
-check_prog()
-{
-    echo -n "$2"
-    command -v $1 >/dev/null 2>&1 && (echo "$3:=y" >> $CONFIG; echo "yes") || (echo "no"; return 1)
-}
 
 check_toolchain()
 {
@@ -38,9 +32,7 @@ int main(int argc, char **argv) {
 }
 EOF
 
-    $CC -I$INCLUDE -o $TMPDIR/atmtest $TMPDIR/atmtest.c -latm >/dev/null 2>&1
-    if [ $? -eq 0 ]
-    then
+    if $CC -I$INCLUDE -o $TMPDIR/atmtest $TMPDIR/atmtest.c -latm >/dev/null 2>&1; then
 	echo "TC_CONFIG_ATM:=y" >>$CONFIG
 	echo yes
     else
@@ -51,8 +43,7 @@ EOF
 
 check_xtables()
 {
-	if ! ${PKG_CONFIG} xtables --exists
-	then
+	if ! ${PKG_CONFIG} xtables --exists; then
 		echo "TC_CONFIG_NO_XT:=y" >>$CONFIG
 	fi
 }
@@ -80,8 +71,7 @@ int main(int argc, char **argv)
 EOF
 
     if $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL \
-	$(${PKG_CONFIG} xtables --cflags --libs) -ldl >/dev/null 2>&1
-    then
+	$(${PKG_CONFIG} xtables --cflags --libs) -ldl >/dev/null 2>&1; then
 	echo "TC_CONFIG_XT:=y" >>$CONFIG
 	echo "using xtables"
     fi
@@ -91,10 +81,7 @@ EOF
 check_xt_old()
 {
     # bail if previous XT checks has already succeeded.
-    if grep -q TC_CONFIG_XT $CONFIG
-    then
-	return
-    fi
+    grep -q TC_CONFIG_XT $CONFIG && return
 
     #check if we don't need our internal header ..
     cat >$TMPDIR/ipttest.c <<EOF
@@ -118,9 +105,7 @@ int main(int argc, char **argv) {
 
 EOF
 
-    $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
-    if [ $? -eq 0 ]
-    then
+    if $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1; then
 	echo "TC_CONFIG_XT_OLD:=y" >>$CONFIG
 	echo "using old xtables (no need for xt-internal.h)"
     fi
@@ -130,10 +115,7 @@ EOF
 check_xt_old_internal_h()
 {
     # bail if previous XT checks has already succeeded.
-    if grep -q TC_CONFIG_XT $CONFIG
-    then
-	return
-    fi
+    grep -q if grep -q TC_CONFIG_XT $CONFIG && return
 
     #check if we need our own internal.h
     cat >$TMPDIR/ipttest.c <<EOF
@@ -157,10 +139,7 @@ int main(int argc, char **argv) {
 }
 
 EOF
-	$CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1
-
-	if [ $? -eq 0 ]
-	then
+	if $CC -I$INCLUDE $IPTC -o $TMPDIR/ipttest $TMPDIR/ipttest.c $IPTL -ldl >/dev/null 2>&1; then
 	    echo "using old xtables with xt-internal.h"
 	    echo "TC_CONFIG_XT_OLD_H:=y" >>$CONFIG
 	fi
@@ -169,8 +148,7 @@ EOF
 
 check_ipt()
 {
-	if ! grep TC_CONFIG_XT $CONFIG > /dev/null
-	then
+	if ! grep TC_CONFIG_XT $CONFIG > /dev/null; then
 		echo "using iptables"
 	fi
 }
@@ -184,9 +162,9 @@ check_ipt_lib_dir()
 		return
 	fi
 
-	for dir in /lib /usr/lib /usr/local/lib
-	do
-		for file in $dir/{xtables,iptables}/lib*t_*so ; do
+	for dir in /lib /usr/lib /usr/local/lib; do
+		for file in "xtables" "iptables"; do
+			file="$dir/$file/lib*t_*so"
 			if [ -f $file ]; then
 				echo ${file%/*}
 				echo "IPT_LIB_DIR:=${file%/*}" >> $CONFIG
@@ -207,9 +185,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 EOF
-    $CC -I$INCLUDE -o $TMPDIR/setnstest $TMPDIR/setnstest.c >/dev/null 2>&1
-    if [ $? -eq 0 ]
-    then
+    if $CC -I$INCLUDE -o $TMPDIR/setnstest $TMPDIR/setnstest.c >/dev/null 2>&1; then
 	echo "IP_CONFIG_SETNS:=y" >>$CONFIG
 	echo "yes"
 	echo "CFLAGS += -DHAVE_SETNS" >>$CONFIG
@@ -240,8 +216,7 @@ int main(void)
 #endif
 EOF
 
-    if $CC -I$INCLUDE -o $TMPDIR/ipsettest $TMPDIR/ipsettest.c >/dev/null 2>&1
-    then
+    if $CC -I$INCLUDE -o $TMPDIR/ipsettest $TMPDIR/ipsettest.c >/dev/null 2>&1; then
 	echo "TC_CONFIG_IPSET:=y" >>$CONFIG
 	echo "yes"
     else
@@ -252,8 +227,7 @@ EOF
 
 check_elf()
 {
-    if ${PKG_CONFIG} libelf --exists
-    then
+    if ${PKG_CONFIG} libelf --exists; then
 	echo "HAVE_ELF:=y" >>$CONFIG
 	echo "yes"
 
@@ -267,8 +241,7 @@ check_elf()
 check_selinux()
 # SELinux is a compile time option in the ss utility
 {
-	if ${PKG_CONFIG} libselinux --exists
-	then
+	if ${PKG_CONFIG} libselinux --exists; then
 		echo "HAVE_SELINUX:=y" >>$CONFIG
 		echo "yes"
 
@@ -281,8 +254,7 @@ check_selinux()
 
 check_mnl()
 {
-	if ${PKG_CONFIG} libmnl --exists
-	then
+	if ${PKG_CONFIG} libmnl --exists; then
 		echo "HAVE_MNL:=y" >>$CONFIG
 		echo "yes"
 
@@ -304,9 +276,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 EOF
-    $CC -I$INCLUDE -o $TMPDIR/dbtest $TMPDIR/dbtest.c -ldb >/dev/null 2>&1
-    if [ $? -eq 0 ]
-    then
+    if $CC -I$INCLUDE -o $TMPDIR/dbtest $TMPDIR/dbtest.c -ldb >/dev/null 2>&1; then
 	echo "HAVE_BERKELEY_DB:=y" >>$CONFIG
 	echo "yes"
     else
@@ -325,13 +295,10 @@ int main(int argc, char **argv) {
 	return 0;
 }
 EOF
-    $CC -I$INCLUDE -o $TMPDIR/strtest $TMPDIR/strtest.c >/dev/null 2>&1
-    if [ $? -eq 0 ]
-    then
+    if $CC -I$INCLUDE -o $TMPDIR/strtest $TMPDIR/strtest.c >/dev/null 2>&1; then
 	echo "no"
     else
-	if ${PKG_CONFIG} libbsd --exists
-	then
+	if ${PKG_CONFIG} libbsd --exists; then
 		echo 'CFLAGS += -DHAVE_LIBBSD' `${PKG_CONFIG} libbsd --cflags` >>$CONFIG
 		echo 'LDLIBS +=' `${PKG_CONFIG} libbsd --libs` >> $CONFIG
 		echo "no"
@@ -345,8 +312,7 @@ EOF
 
 check_cap()
 {
-	if ${PKG_CONFIG} libcap --exists
-	then
+	if ${PKG_CONFIG} libcap --exists; then
 		echo "HAVE_CAP:=y" >>$CONFIG
 		echo "yes"
 
@@ -394,8 +360,7 @@ echo -n " ATM	"
 check_atm
 
 check_xtables
-if ! grep -q TC_CONFIG_NO_XT $CONFIG
-then
+if ! grep -q TC_CONFIG_NO_XT $CONFIG; then
 	echo -n " IPT	"
 	check_xt
 	check_xt_old
@@ -407,8 +372,7 @@ then
 fi
 
 echo
-if ! grep -q TC_CONFIG_NO_XT $CONFIG
-then
+if ! grep -q TC_CONFIG_NO_XT $CONFIG; then
 	echo -n "iptables modules directory: "
 	check_ipt_lib_dir
 fi

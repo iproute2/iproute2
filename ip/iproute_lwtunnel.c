@@ -115,7 +115,7 @@ static void print_srh(FILE *fp, struct ipv6_sr_hdr *srh)
 
 		tlv = (struct sr6_tlv_hmac *)((char *)srh + offset);
 		print_0xhex(PRINT_ANY, "hmac",
-			    "hmac 0x%X ", ntohl(tlv->hmackeyid));
+			    "hmac %llX ", ntohl(tlv->hmackeyid));
 	}
 }
 

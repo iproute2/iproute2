@@ -1453,7 +1453,7 @@ char *int_to_str(int val, char *buf)
 
 int get_guid(__u64 *guid, const char *arg)
 {
-	unsigned long int tmp;
+	unsigned long tmp;
 	char *endptr;
 	int i;
 

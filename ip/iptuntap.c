@@ -254,7 +254,7 @@ static void print_flags(long flags)
 	flags &= ~(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
 		   IFF_VNET_HDR | IFF_PERSIST | IFF_NOFILTER);
 	if (flags)
-		print_0xhex(PRINT_ANY, NULL, "%#x", flags);
+		print_0xhex(PRINT_ANY, NULL, "%#llx", flags);
 
 	close_json_array(PRINT_JSON, NULL);
 }

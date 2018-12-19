@@ -418,7 +418,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 		tos = rta_getattr_u8(tb[IFLA_IPTUN_TOS]);
 	if (tos) {
 		if (is_json_context() || tos != 1)
-			print_0xhex(PRINT_ANY, "tos", "tos 0x%x ", tos);
+			print_0xhex(PRINT_ANY, "tos", "tos %#llx ", tos);
 		else
 			print_string(PRINT_FP, NULL, "tos %s ", "inherit");
 	}
@@ -476,7 +476,7 @@ static void iptunnel_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[
 
 		if (fwmark) {
 			print_0xhex(PRINT_ANY,
-				    "fwmark", "fwmark 0x%x ", fwmark);
+				    "fwmark", "fwmark %#llx ", fwmark);
 		}
 	}
 

@@ -346,7 +346,7 @@ static void print_rtax_features(FILE *fp, unsigned int features)
 
 	if (features)
 		print_0xhex(PRINT_ANY,
-			    "features", "0x%x ", of);
+			    "features", "%#llx ", of);
 }
 
 static void print_rt_flags(FILE *fp, unsigned int flags)
@@ -483,10 +483,10 @@ static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
 	}
 	if (ci->rta_id)
 		print_0xhex(PRINT_ANY, "ipid",
-			    "ipid 0x%04x ", ci->rta_id);
+			    "ipid 0x%04llx ", ci->rta_id);
 	if (ci->rta_ts || ci->rta_tsage) {
 		print_0xhex(PRINT_ANY, "ts",
-			    "ts 0x%x", ci->rta_ts);
+			    "ts 0x%llx", ci->rta_ts);
 		print_uint(PRINT_ANY, "tsage",
 			   "tsage %usec ", ci->rta_tsage);
 	}
@@ -885,7 +885,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 				print_uint(PRINT_JSON, "mark", NULL, mark);
 			else if (mark >= 16)
 				print_0xhex(PRINT_FP, NULL,
-					    "mark 0x%x ", mark);
+					    "mark 0x%llx ", mark);
 			else
 				print_uint(PRINT_FP, NULL,
 					   "mark %u ", mark);

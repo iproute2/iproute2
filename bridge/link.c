@@ -90,7 +90,7 @@ static void print_hwmode(__u16 mode)
 {
 	if (mode >= ARRAY_SIZE(hw_mode))
 		print_0xhex(PRINT_ANY, "hwmode",
-			    "hwmode %#hx ", mode);
+			    "hwmode %#llx ", mode);
 	else
 		print_string(PRINT_ANY, "hwmode",
 			     "hwmode %s ", hw_mode[mode]);

@@ -102,11 +102,6 @@ static const struct bpf_prog_meta __bpf_prog_meta[] = {
 	},
 };
 
-static bool bpf_map_offload_neutral(enum bpf_map_type type)
-{
-	return type == BPF_MAP_TYPE_PERF_EVENT_ARRAY;
-}
-
 static const char *bpf_prog_to_subdir(enum bpf_prog_type type)
 {
 	assert(type < ARRAY_SIZE(__bpf_prog_meta) &&
@@ -1608,6 +1603,11 @@ static bool bpf_is_map_in_map_type(const struct bpf_elf_map *map)
 {
 	return map->type == BPF_MAP_TYPE_ARRAY_OF_MAPS ||
 	       map->type == BPF_MAP_TYPE_HASH_OF_MAPS;
+}
+
+static bool bpf_map_offload_neutral(enum bpf_map_type type)
+{
+	return type == BPF_MAP_TYPE_PERF_EVENT_ARRAY;
 }
 
 static int bpf_map_attach(const char *name, struct bpf_elf_ctx *ctx,

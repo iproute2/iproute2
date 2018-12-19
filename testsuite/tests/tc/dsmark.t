@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # vim: ft=sh
 
 . lib/generic.sh

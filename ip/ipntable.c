@@ -360,7 +360,7 @@ static void print_ndtconfig(const struct ndt_config *ndtc)
 	print_uint(PRINT_ANY, "hash_rnd",
 		   "        hash_rnd %u ", ndtc->ndtc_hash_rnd);
 	print_0xhex(PRINT_ANY, "hash_mask",
-		    "hash_mask %08x ", ndtc->ndtc_hash_mask);
+		    "hash_mask %08llx ", ndtc->ndtc_hash_mask);
 
 	print_uint(PRINT_ANY, "hash_chain_gc",
 		   "hash_chain_gc %u ", ndtc->ndtc_hash_chain_gc);

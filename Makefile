@@ -113,7 +113,7 @@ clobber:
 
 distclean: clobber
 
-check:
+check: all
 	cd testsuite && $(MAKE) && $(MAKE) alltests
 
 cscope:
