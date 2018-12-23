@@ -19,7 +19,7 @@ static int link_help(struct rd *rd)
 
 static const char *caps_to_str(uint32_t idx)
 {
-#define RDMA_PORT_FLAGS(x) \
+#define RDMA_PORT_FLAGS_LOW(x) \
 	x(RESERVED, 0) \
 	x(SM, 1) \
 	x(NOTICE, 2) \
@@ -53,13 +53,39 @@ static const char *caps_to_str(uint32_t idx)
 	x(MULT_FDB, 30) \
 	x(HIERARCHY_INFO, 31)
 
-	enum { RDMA_PORT_FLAGS(RDMA_BITMAP_ENUM) };
+#define RDMA_PORT_FLAGS_HIGH(x) \
+	x(SET_NODE_DESC, 0) \
+	x(EXT_INFO, 1) \
+	x(VIRT, 2) \
+	x(SWITCH_POR_STATE_TABLE, 3) \
+	x(LINK_WIDTH_2X, 4) \
+	x(LINK_SPEED_HDR, 5)
+
+	/*
+	 * Separation below is needed to allow compilation of rdmatool
+	 * on 32bits systems. On such systems, C-enum is limited to be
+	 * int and can't hold more than 32 bits.
+	 */
+	enum { RDMA_PORT_FLAGS_LOW(RDMA_BITMAP_ENUM) };
+	enum { RDMA_PORT_FLAGS_HIGH(RDMA_BITMAP_ENUM) };
 
 	static const char * const
-		rdma_port_names[] = { RDMA_PORT_FLAGS(RDMA_BITMAP_NAMES) };
-	#undef RDMA_PORT_FLAGS
+		rdma_port_names_low[] = { RDMA_PORT_FLAGS_LOW(RDMA_BITMAP_NAMES) };
+	static const char * const
+		rdma_port_names_high[] = { RDMA_PORT_FLAGS_HIGH(RDMA_BITMAP_NAMES) };
+	uint32_t high_idx;
+	#undef RDMA_PORT_FLAGS_LOW
+	#undef RDMA_PORT_FLAGS_HIGH
 
-	return rdma_port_names[idx];
+	if (idx < ARRAY_SIZE(rdma_port_names_low) && rdma_port_names_low[idx])
+		return rdma_port_names_low[idx];
+
+	high_idx = idx - ARRAY_SIZE(rdma_port_names_low);
+	if (high_idx < ARRAY_SIZE(rdma_port_names_high) &&
+	    rdma_port_names_high[high_idx])
+		return rdma_port_names_high[high_idx];
+
+	return "UNKNOWN";
 }
 
 static void link_print_caps(struct rd *rd, struct nlattr **tb)
