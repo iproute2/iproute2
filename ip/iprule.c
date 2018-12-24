@@ -71,6 +71,7 @@ static struct
 	unsigned int tos, tosmask;
 	unsigned int pref, prefmask;
 	unsigned int fwmark, fwmask;
+	uint64_t tun_id;
 	char iif[IFNAMSIZ];
 	char oif[IFNAMSIZ];
 	struct fib_rule_uid_range range;
@@ -172,6 +173,18 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		    r->start != filter.range.start ||
 		    r->end != filter.range.end)
 			return false;
+	}
+
+	if (filter.tun_id) {
+		__u64 tun_id = 0;
+
+		if (tb[FRA_TUN_ID]) {
+			tun_id = ntohll(rta_getattr_u64(tb[FRA_TUN_ID]));
+			if (filter.tun_id != tun_id)
+				return false;
+		} else {
+			return false;
+		}
 	}
 
 	table = frh_get_table(frh, tb);
@@ -338,6 +351,12 @@ int print_rule(struct nlmsghdr *n, void *arg)
 				   r->start);
 			print_uint(PRINT_ANY, "dport_end", "-%u ", r->end);
 		}
+	}
+
+	if (tb[FRA_TUN_ID]) {
+		__u64 tun_id = ntohll(rta_getattr_u64(tb[FRA_TUN_ID]));
+
+		print_u64(PRINT_ANY, "tun_id", "tun_id %llu ", tun_id);
 	}
 
 	table = frh_get_table(frh, tb);
@@ -583,6 +602,13 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 				   &filter.range.end) != 2)
 				invarg("invalid UID range\n", *argv);
 
+		} else if (matches(*argv, "tun_id") == 0) {
+			__u64 tun_id;
+
+			NEXT_ARG();
+			if (get_u64(&tun_id, *argv, 0))
+				invarg("\"tun_id\" value is invalid\n", *argv);
+			filter.tun_id = tun_id;
 		} else if (matches(*argv, "lookup") == 0 ||
 			   matches(*argv, "table") == 0) {
 			__u32 tid;
@@ -779,6 +805,13 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			if (rtnl_rtprot_a2n(&proto, *argv))
 				invarg("\"protocol\" value is invalid\n", *argv);
 			addattr8(&req.n, sizeof(req), FRA_PROTOCOL, proto);
+		} else if (matches(*argv, "tun_id") == 0) {
+			__u64 tun_id;
+
+			NEXT_ARG();
+			if (get_be64(&tun_id, *argv, 0))
+				invarg("\"tun_id\" value is invalid\n", *argv);
+			addattr64(&req.n, sizeof(req), FRA_TUN_ID, tun_id);
 		} else if (matches(*argv, "table") == 0 ||
 			   strcmp(*argv, "lookup") == 0) {
 			NEXT_ARG();
