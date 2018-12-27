@@ -220,21 +220,36 @@ void ipmroute_reset_filter(int ifindex)
 	filter.iif = ifindex;
 }
 
+static int iproute_dump_filter(struct nlmsghdr *nlh, int reqlen)
+{
+	int err;
+
+	if (filter.tb) {
+		err = addattr32(nlh, reqlen, RTA_TABLE, filter.tb);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
 static int mroute_list(int argc, char **argv)
 {
 	char *id = NULL;
-	int family;
+	int family = preferred_family;
 
 	ipmroute_reset_filter(0);
-	if (preferred_family == AF_UNSPEC)
-		family = AF_INET;
-	else
-		family = AF_INET6;
-	if (family == AF_INET) {
+	if (family == AF_INET || family == AF_UNSPEC) {
+		family = RTNL_FAMILY_IPMR;
 		filter.af = RTNL_FAMILY_IPMR;
 		filter.tb = RT_TABLE_DEFAULT;  /* for backward compatibility */
-	} else
+	} else if (family == AF_INET6) {
+		family = RTNL_FAMILY_IP6MR;
 		filter.af = RTNL_FAMILY_IP6MR;
+	} else {
+		/* family does not have multicast routing */
+		return 0;
+	}
 
 	filter.msrc.family = filter.mdst.family = family;
 
@@ -283,7 +298,7 @@ static int mroute_list(int argc, char **argv)
 		filter.iif = idx;
 	}
 
-	if (rtnl_routedump_req(&rth, filter.af) < 0) {
+	if (rtnl_routedump_req(&rth, filter.af, iproute_dump_filter) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}

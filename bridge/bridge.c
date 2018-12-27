@@ -97,6 +97,8 @@ static int batch(const char *name)
 		return EXIT_FAILURE;
 	}
 
+	rtnl_set_strict_dump(&rth);
+
 	cmdlineno = 0;
 	while (getcmdline(&line, &len, stdin) != -1) {
 		char *largv[100];
@@ -204,6 +206,8 @@ main(int argc, char **argv)
 
 	if (rtnl_open(&rth, 0) < 0)
 		exit(1);
+
+	rtnl_set_strict_dump(&rth);
 
 	if (argc > 1)
 		return do_cmd(argv[1], argc-1, argv+1);

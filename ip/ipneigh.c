@@ -40,6 +40,7 @@ static struct
 	int flushp;
 	int flushe;
 	int master;
+	int protocol;
 } filter;
 
 static void usage(void) __attribute__((noreturn));
@@ -48,7 +49,7 @@ static void usage(void)
 {
 	fprintf(stderr, "Usage: ip neigh { add | del | change | replace }\n"
 			"                { ADDR [ lladdr LLADDR ] [ nud STATE ] | proxy ADDR } [ dev DEV ]\n");
-	fprintf(stderr, "                                 [ router ] [ extern_learn ]\n\n");
+	fprintf(stderr, "                [ router ] [ extern_learn ] [ protocol PROTO ]\n\n");
 	fprintf(stderr, "       ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n");
 	fprintf(stderr, "                                 [ vrf NAME ]\n\n");
 	fprintf(stderr, "STATE := { permanent | noarp | stale | reachable | none |\n"
@@ -148,6 +149,14 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 			NEXT_ARG();
 			dev = *argv;
 			dev_ok = 1;
+		} else if (matches(*argv, "protocol") == 0) {
+			__u32 proto;
+
+			NEXT_ARG();
+			if (rtnl_rtprot_a2n(&proto, *argv))
+				invarg("\"protocol\" value is invalid\n", *argv);
+			if (addattr8(&req.n, sizeof(req), NDA_PROTOCOL, proto))
+				return -1;
 		} else {
 			if (strcmp(*argv, "to") == 0) {
 				NEXT_ARG();
@@ -244,6 +253,7 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	int len = n->nlmsg_len;
 	struct rtattr *tb[NDA_MAX+1];
 	static int logit = 1;
+	__u8 protocol = 0;
 
 	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH &&
 	    n->nlmsg_type != RTM_GETNEIGH) {
@@ -283,6 +293,12 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	parse_rtattr(tb, NDA_MAX, NDA_RTA(r), n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
 
 	if (inet_addr_match_rta(&filter.pfx, tb[NDA_DST]))
+		return 0;
+
+	if (tb[NDA_PROTOCOL])
+		protocol = rta_getattr_u8(tb[NDA_PROTOCOL]);
+
+	if (filter.protocol && filter.protocol != protocol)
 		return 0;
 
 	if (filter.unused_only && tb[NDA_CACHEINFO]) {
@@ -371,6 +387,13 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	if (r->ndm_state)
 		print_neigh_state(r->ndm_state);
 
+	if (protocol) {
+		SPRINT_BUF(b1);
+
+		print_string(PRINT_ANY, "protocol", " proto %s ",
+			     rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
+	}
+
 	print_string(PRINT_FP, NULL, "\n", "");
 	close_json_object();
 	fflush(stdout);
@@ -458,9 +481,19 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 			if (state == 0)
 				state = 0x100;
 			filter.state |= state;
-		} else if (strcmp(*argv, "proxy") == 0)
+		} else if (strcmp(*argv, "proxy") == 0) {
 			req.ndm.ndm_flags = NTF_PROXY;
-		else {
+		} else if (matches(*argv, "protocol") == 0) {
+			__u32 prot;
+
+			NEXT_ARG();
+			if (rtnl_rtprot_a2n(&prot, *argv)) {
+				if (strcmp(*argv, "all"))
+					invarg("invalid \"protocol\"\n", *argv);
+				prot = 0;
+			}
+			filter.protocol = prot;
+		} else {
 			if (strcmp(*argv, "to") == 0) {
 				NEXT_ARG();
 			}

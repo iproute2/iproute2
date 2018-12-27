@@ -589,7 +589,7 @@ static int ipvrf_show(int argc, char **argv)
 		return 0;
 	}
 
-	if (ip_linkaddr_list(0, ipvrf_filter_req, &linfo, NULL) == 0) {
+	if (ip_link_list(ipvrf_filter_req, &linfo) == 0) {
 		struct nlmsg_list *l;
 		unsigned nvrf = 0;
 		int n;

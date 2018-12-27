@@ -308,6 +308,8 @@ int main(int argc, char **argv)
 	if (rtnl_open(&rth, 0) < 0)
 		exit(1);
 
+	rtnl_set_strict_dump(&rth);
+
 	if (strlen(basename) > 2)
 		return do_cmd(basename+2, argc, argv);
 
