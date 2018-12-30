@@ -260,16 +260,16 @@ static int fdb_show(int argc, char **argv)
 {
 	struct {
 		struct nlmsghdr	n;
-		struct ifinfomsg	ifm;
+		struct ndmsg		ndm;
 		char			buf[256];
 	} req = {
-		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
-		.ifm.ifi_family = PF_BRIDGE,
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
+		.ndm.ndm_family = PF_BRIDGE,
 	};
 
 	char *filter_dev = NULL;
 	char *br = NULL;
-	int msg_size = sizeof(struct ifinfomsg);
+	int msg_size = sizeof(struct ndmsg);
 
 	while (argc > 0) {
 		if ((strcmp(*argv, "brport") == 0) || strcmp(*argv, "dev") == 0) {
@@ -313,10 +313,10 @@ static int fdb_show(int argc, char **argv)
 		filter_index = ll_name_to_index(filter_dev);
 		if (!filter_index)
 			return nodev(filter_dev);
-		req.ifm.ifi_index = filter_index;
+		req.ndm.ndm_ifindex = filter_index;
 	}
 
-	if (rtnl_dump_request(&rth, RTM_GETNEIGH, &req.ifm, msg_size) < 0) {
+	if (rtnl_dump_request(&rth, RTM_GETNEIGH, &req.ndm, msg_size) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
