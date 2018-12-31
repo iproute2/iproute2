@@ -30,7 +30,7 @@
 #include "rt_names.h"
 #include "utils.h"
 
-static unsigned int filter_index, filter_vlan, filter_state;
+static unsigned int filter_index, filter_vlan, filter_state, filter_master;
 
 static void usage(void)
 {
@@ -256,20 +256,29 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static int fdb_dump_filter(struct nlmsghdr *nlh, int reqlen)
+{
+	int err;
+
+	if (filter_index) {
+		struct ndmsg *ndm = NLMSG_DATA(nlh);
+
+		ndm->ndm_ifindex = filter_index;
+	}
+
+	if (filter_master) {
+		err = addattr32(nlh, reqlen, NDA_MASTER, filter_master);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
 static int fdb_show(int argc, char **argv)
 {
-	struct {
-		struct nlmsghdr	n;
-		struct ndmsg		ndm;
-		char			buf[256];
-	} req = {
-		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
-		.ndm.ndm_family = PF_BRIDGE,
-	};
-
 	char *filter_dev = NULL;
 	char *br = NULL;
-	int msg_size = sizeof(struct ndmsg);
 
 	while (argc > 0) {
 		if ((strcmp(*argv, "brport") == 0) || strcmp(*argv, "dev") == 0) {
@@ -304,8 +313,7 @@ static int fdb_show(int argc, char **argv)
 			fprintf(stderr, "Cannot find bridge device \"%s\"\n", br);
 			return -1;
 		}
-		addattr32(&req.n, sizeof(req), IFLA_MASTER, br_ifindex);
-		msg_size += RTA_LENGTH(4);
+		filter_master = br_ifindex;
 	}
 
 	/*we'll keep around filter_dev for older kernels */
@@ -313,10 +321,9 @@ static int fdb_show(int argc, char **argv)
 		filter_index = ll_name_to_index(filter_dev);
 		if (!filter_index)
 			return nodev(filter_dev);
-		req.ndm.ndm_ifindex = filter_index;
 	}
 
-	if (rtnl_dump_request(&rth, RTM_GETNEIGH, &req.ndm, msg_size) < 0) {
+	if (rtnl_neighdump_req(&rth, PF_BRIDGE, fdb_dump_filter) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
