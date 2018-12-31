@@ -41,6 +41,7 @@ static struct
 	int flushe;
 	int master;
 	int protocol;
+	__u8 ndm_flags;
 } filter;
 
 static void usage(void) __attribute__((noreturn));
@@ -408,16 +409,29 @@ void ipneigh_reset_filter(int ifindex)
 	filter.index = ifindex;
 }
 
+static int ipneigh_dump_filter(struct nlmsghdr *nlh, int reqlen)
+{
+	struct ndmsg *ndm = NLMSG_DATA(nlh);
+	int err;
+
+	ndm->ndm_flags = filter.ndm_flags;
+
+	if (filter.index) {
+		err = addattr32(nlh, reqlen, NDA_IFINDEX, filter.index);
+		if (err)
+			return err;
+	}
+	if (filter.master) {
+		err = addattr32(nlh, reqlen, NDA_MASTER, filter.master);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
 static int do_show_or_flush(int argc, char **argv, int flush)
 {
-	struct {
-		struct nlmsghdr	n;
-		struct ndmsg		ndm;
-		char			buf[256];
-	} req = {
-		.n.nlmsg_type = RTM_GETNEIGH,
-		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
-	};
 	char *filter_dev = NULL;
 	int state_given = 0;
 
@@ -448,7 +462,6 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 			ifindex = ll_name_to_index(*argv);
 			if (!ifindex)
 				invarg("Device does not exist\n", *argv);
-			addattr32(&req.n, sizeof(req), NDA_MASTER, ifindex);
 			filter.master = ifindex;
 		} else if (strcmp(*argv, "vrf") == 0) {
 			int ifindex;
@@ -459,7 +472,6 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 				invarg("Not a valid VRF name\n", *argv);
 			if (!name_is_vrf(*argv))
 				invarg("Not a valid VRF name\n", *argv);
-			addattr32(&req.n, sizeof(req), NDA_MASTER, ifindex);
 			filter.master = ifindex;
 		} else if (strcmp(*argv, "unused") == 0) {
 			filter.unused_only = 1;
@@ -482,7 +494,7 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 				state = 0x100;
 			filter.state |= state;
 		} else if (strcmp(*argv, "proxy") == 0) {
-			req.ndm.ndm_flags = NTF_PROXY;
+			filter.ndm_flags = NTF_PROXY;
 		} else if (matches(*argv, "protocol") == 0) {
 			__u32 prot;
 
@@ -513,10 +525,7 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 		filter.index = ll_name_to_index(filter_dev);
 		if (!filter.index)
 			return nodev(filter_dev);
-		addattr32(&req.n, sizeof(req), NDA_IFINDEX, filter.index);
 	}
-
-	req.ndm.ndm_family = filter.family;
 
 	if (flush) {
 		int round = 0;
@@ -527,7 +536,8 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 		filter.flushe = sizeof(flushb);
 
 		while (round < MAX_ROUNDS) {
-			if (rtnl_dump_request_n(&rth, &req.n) < 0) {
+			if (rtnl_neighdump_req(&rth, filter.family,
+					       ipneigh_dump_filter) < 0) {
 				perror("Cannot send dump request");
 				exit(1);
 			}
@@ -560,7 +570,7 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 		return 1;
 	}
 
-	if (rtnl_dump_request_n(&rth, &req.n) < 0) {
+	if (rtnl_neighdump_req(&rth, filter.family, ipneigh_dump_filter) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
