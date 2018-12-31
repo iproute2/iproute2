@@ -327,11 +327,13 @@ int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
 	return send(rth->fd, &req, sizeof(req), 0);
 }
 
-int rtnl_neighdump_req(struct rtnl_handle *rth, int family)
+int rtnl_neighdump_req(struct rtnl_handle *rth, int family,
+		       req_filter_fn_t filter_fn)
 {
 	struct {
 		struct nlmsghdr nlh;
 		struct ndmsg ndm;
+		char buf[256];
 	} req = {
 		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
 		.nlh.nlmsg_type = RTM_GETNEIGH,
@@ -339,6 +341,14 @@ int rtnl_neighdump_req(struct rtnl_handle *rth, int family)
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
 		.ndm.ndm_family = family,
 	};
+
+	if (filter_fn) {
+		int err;
+
+		err = filter_fn(&req.nlh, sizeof(req));
+		if (err)
+			return err;
+	}
 
 	return send(rth->fd, &req, sizeof(req), 0);
 }
