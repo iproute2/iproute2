@@ -166,8 +166,11 @@ void rtnl_set_strict_dump(struct rtnl_handle *rth)
 {
 	int one = 1;
 
-	setsockopt(rth->fd, SOL_NETLINK, NETLINK_GET_STRICT_CHK,
-		   &one, sizeof(one));
+	if (setsockopt(rth->fd, SOL_NETLINK, NETLINK_GET_STRICT_CHK,
+		       &one, sizeof(one)) < 0)
+		return;
+
+	rth->flags |= RTNL_HANDLE_F_STRICT_CHK;
 }
 
 void rtnl_close(struct rtnl_handle *rth)
