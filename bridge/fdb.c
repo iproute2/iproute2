@@ -256,6 +256,25 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static int fdb_linkdump_filter(struct nlmsghdr *nlh, int reqlen)
+{
+	int err;
+
+	if (filter_index) {
+		struct ifinfomsg *ifm = NLMSG_DATA(nlh);
+
+		ifm->ifi_index = filter_index;
+	}
+
+	if (filter_master) {
+		err = addattr32(nlh, reqlen, IFLA_MASTER, filter_master);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
 static int fdb_dump_filter(struct nlmsghdr *nlh, int reqlen)
 {
 	int err;
@@ -279,6 +298,7 @@ static int fdb_show(int argc, char **argv)
 {
 	char *filter_dev = NULL;
 	char *br = NULL;
+	int rc;
 
 	while (argc > 0) {
 		if ((strcmp(*argv, "brport") == 0) || strcmp(*argv, "dev") == 0) {
@@ -323,7 +343,12 @@ static int fdb_show(int argc, char **argv)
 			return nodev(filter_dev);
 	}
 
-	if (rtnl_neighdump_req(&rth, PF_BRIDGE, fdb_dump_filter) < 0) {
+	if (rth.flags & RTNL_HANDLE_F_STRICT_CHK)
+		rc = rtnl_neighdump_req(&rth, PF_BRIDGE, fdb_dump_filter);
+	else
+		rc = rtnl_linkdump_req_filter_fn(&rth, PF_BRIDGE,
+						 fdb_linkdump_filter);
+	if (rc < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
