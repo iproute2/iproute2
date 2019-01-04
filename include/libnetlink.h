@@ -23,6 +23,7 @@ struct rtnl_handle {
 	FILE		       *dump_fp;
 #define RTNL_HANDLE_F_LISTEN_ALL_NSID		0x01
 #define RTNL_HANDLE_F_SUPPRESS_NLERR		0x02
+#define RTNL_HANDLE_F_STRICT_CHK		0x04
 	int			flags;
 };
 
@@ -60,7 +61,8 @@ int rtnl_routedump_req(struct rtnl_handle *rth, int family,
 	__attribute__((warn_unused_result));
 int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
-int rtnl_neighdump_req(struct rtnl_handle *rth, int family)
+int rtnl_neighdump_req(struct rtnl_handle *rth, int family,
+		       req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 int rtnl_neightbldump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
