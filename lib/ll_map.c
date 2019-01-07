@@ -210,6 +210,20 @@ unsigned ll_name_to_index(const char *name)
 	return idx;
 }
 
+void ll_drop_by_index(unsigned index)
+{
+	struct ll_cache *im;
+
+	im = ll_get_by_index(index);
+	if (!im)
+		return;
+
+	hlist_del(&im->idx_hash);
+	hlist_del(&im->name_hash);
+
+	free(im);
+}
+
 void ll_init_map(struct rtnl_handle *rth)
 {
 	static int initialized;

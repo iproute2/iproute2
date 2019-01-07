@@ -9,6 +9,7 @@ unsigned ll_name_to_index(const char *name);
 const char *ll_index_to_name(unsigned idx);
 int ll_index_to_type(unsigned idx);
 int ll_index_to_flags(unsigned idx);
+void ll_drop_by_index(unsigned index);
 unsigned namehash(const char *str);
 
 const char *ll_idx_n2a(unsigned int idx);
