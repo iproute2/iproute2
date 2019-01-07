@@ -449,7 +449,7 @@ int rtnl_linkdump_req(struct rtnl_handle *rth, int family)
 int rtnl_linkdump_req_filter(struct rtnl_handle *rth, int family,
 			    __u32 filt_mask)
 {
-	if (family == AF_UNSPEC) {
+	if (family == AF_UNSPEC || family == AF_BRIDGE) {
 		struct {
 			struct nlmsghdr nlh;
 			struct ifinfomsg ifm;
