@@ -1,6 +1,6 @@
 .TH RDMA\-DEV 8 "06 Jul 2017" "iproute2" "Linux"
 .SH NAME
-rdmak-dev \- RDMA device configuration
+rdma-dev \- RDMA device configuration
 .SH SYNOPSIS
 .sp
 .ad l
@@ -23,9 +23,17 @@ rdmak-dev \- RDMA device configuration
 .RI "[ " DEV " ]"
 
 .ti -8
+.B rdma dev set
+.RI "[ " DEV " ]"
+.BR name
+.BR NEWNAME
+
+.ti -8
 .B rdma dev help
 
 .SH "DESCRIPTION"
+.SS rdma dev set - rename rdma device
+
 .SS rdma dev show - display rdma device attributes
 
 .PP
@@ -43,6 +51,11 @@ Shows the state of all RDMA devices on the system.
 rdma dev show mlx5_3
 .RS 4
 Shows the state of specified RDMA device.
+.RE
+.PP
+rdma dev set mlx5_3 name rdma_0
+.RS 4
+Renames the mlx5_3 device to rdma_0.
 .RE
 .PP
 

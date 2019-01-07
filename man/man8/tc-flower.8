@@ -56,8 +56,9 @@ flower \- flow based traffic control filter
 .IR MASKED_IP_TTL " | { "
 .BR dst_ip " | " src_ip " } "
 .IR PREFIX " | { "
-.BR dst_port " | " src_port " } "
-.IR port_number " } | "
+.BR dst_port " | " src_port " } { "
+.IR port_number " | "
+.IR min_port_number-max_port_number " } | "
 .B tcp_flags
 .IR MASKED_TCP_FLAGS " | "
 .B type
@@ -220,10 +221,12 @@ must be a valid IPv4 or IPv6 address, depending on the \fBprotocol\fR
 option to tc filter, optionally followed by a slash and the prefix length.
 If the prefix is missing, \fBtc\fR assumes a full-length host match.
 .TP
-.BI dst_port " NUMBER"
+.IR \fBdst_port " { "  NUMBER " | " " MIN_VALUE-MAX_VALUE "  }
 .TQ
-.BI src_port " NUMBER"
-Match on layer 4 protocol source or destination port number. Only available for
+.IR \fBsrc_port " { "  NUMBER " | " " MIN_VALUE-MAX_VALUE "  }
+Match on layer 4 protocol source or destination port number. Alternatively, the
+mininum and maximum values can be specified to match on a range of layer 4
+protocol source or destination port numbers. Only available for
 .BR ip_proto " values " udp ", " tcp  " and " sctp
 which have to be specified in beforehand.
 .TP

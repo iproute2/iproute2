@@ -6,8 +6,8 @@ What is it?
 -----------
 
 An extension to the filtering/classification architecture of Linux Traffic
-Control. 
-Up to 2.6.8 the only action that could be "attached" to a filter was policing. 
+Control.
+Up to 2.6.8 the only action that could be "attached" to a filter was policing.
 i.e you could say something like:
 
 -----
@@ -17,7 +17,7 @@ tc filter add dev lo parent ffff: protocol ip prio 10 u32 match ip src \
 
 which implies "if a packet is seen on the ingress of the lo device with
 a source IP address of 127.0.0.1/32 we give it a classification id  of 1:1 and
-we execute a policing action which rate limits its bandwidth utilization 
+we execute a policing action which rate limits its bandwidth utilization
 to 1.5Mbps".
 
 The new extensions allow for more than just policing actions to be added.
@@ -29,9 +29,9 @@ syntax which will work fine. Of course to get the required effect you need
 both newer tc and kernel. If you are reading this you have the
 right tc ;->
 
-A side effect is that we can now get stateless firewalling to work with tc. 
+A side effect is that we can now get stateless firewalling to work with tc.
 Essentially this is now an alternative to iptables.
-I won't go into details of my dislike for iptables at times, but 
+I won't go into details of my dislike for iptables at times, but
 scalability is one of the main issues; however, if you need stateful
 classification - use netfilter (for now).
 
@@ -61,7 +61,7 @@ tc filter add dev lo parent 1:0 protocol ip prio 10 u32 \
 match ip src 127.0.0.1/32 flowid 1:1 \
 action police mtu 4000 rate 1500kbit burst 90k
 
-" generic Actions" (gact) at the moment are: 
+" generic Actions" (gact) at the moment are:
 { drop, pass, reclassify, continue}
 (If you have others, no listed here give me a reason and we will add them)
 +drop says to drop the packet
@@ -93,43 +93,43 @@ decimal 12, then use flowid 1:c.
 
 3) A feature i call pipe
 The motivation is derived from Unix pipe mechanism but applied to packets.
-Essentially take a matching packet and pass it through 
+Essentially take a matching packet and pass it through
 action1 | action2 | action3 etc.
 You could do something similar to this with the tc policer and the "continue"
-operator but this rather restricts it to just the policer and requires 
-multiple rules (and lookups, hence quiet inefficient); 
+operator but this rather restricts it to just the policer and requires
+multiple rules (and lookups, hence quiet inefficient);
 
-as an example -- and please note that this is just an example _not_ The 
+as an example -- and please note that this is just an example _not_ The
 Word Youve Been Waiting For (yes i have had problems giving examples
 which ended becoming dogma in documents and people modifying them a little
-to look clever); 
+to look clever);
 
-i selected the metering rates to be small so that i can show better how 
+i selected the metering rates to be small so that i can show better how
 things work.
- 
-The script below does the following: 
-- an incoming packet from 10.0.0.21 is first given a firewall mark of 1. 
 
-- It is then metered to make sure it does not exceed its allocated rate of 
+The script below does the following:
+- an incoming packet from 10.0.0.21 is first given a firewall mark of 1.
+
+- It is then metered to make sure it does not exceed its allocated rate of
 1Kbps. If it doesn't exceed rate, this is where we terminate action execution.
 
-- If it does exceed its rate, its "color" changes to a mark of 2 and it is 
+- If it does exceed its rate, its "color" changes to a mark of 2 and it is
 then passed through a second meter.
 
--The second meter is shared across all flows on that device [i am surpised 
-that this seems to be not a well know feature of the policer; Bert was telling 
+-The second meter is shared across all flows on that device [i am surpised
+that this seems to be not a well know feature of the policer; Bert was telling
 me that someone was writing a qdisc just to do sharing across multiple devices;
 it must be the summer heat again; weve had someone doing that every year around
-summer  -- the key to sharing is to use a operator "index" in your policer 
-rules (example "index 20"). All your rules have to use the same index to 
+summer  -- the key to sharing is to use a operator "index" in your policer
+rules (example "index 20"). All your rules have to use the same index to
 share.]
- 
+
 -If the second meter is exceeded the color of the flow changes further to 3.
 
 -We then pass the packet to another meter which is shared across all devices
 in the system. If this meter is exceeded we drop the packet.
 
-Note the mark can be used further up the system to do things like policy 
+Note the mark can be used further up the system to do things like policy
 or more interesting things on the egress.
 
 ------------------ cut here -------------------------------
@@ -161,31 +161,31 @@ action ipt -j mark --set-mark 3 \
 # and then attempt to borrow from a meter used by all devices in the
 # system. Should this be exceeded, drop the packet on the floor.
 action police index 20 mtu 5000 rate 1kbit burst 90k drop
---------------------------------- 
+---------------------------------
 
-Now lets see the actions installed with 
+Now lets see the actions installed with
 "tc filter show parent ffff: dev eth0"
 
 -------- output -----------
 jroot# tc filter show parent ffff: dev eth0
-filter protocol ip pref 1 u32 
-filter protocol ip pref 1 u32 fh 800: ht divisor 1 
-filter protocol ip pref 1 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:15 
+filter protocol ip pref 1 u32
+filter protocol ip pref 1 u32 fh 800: ht divisor 1
+filter protocol ip pref 1 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:15
 
-   action order 1: tablename: mangle  hook: NF_IP_PRE_ROUTING 
+   action order 1: tablename: mangle  hook: NF_IP_PRE_ROUTING
         target MARK set 0x1  index 2
 
-   action order 2: police 1 action pipe rate 1Kbit burst 9Kb mtu 2Kb 
+   action order 2: police 1 action pipe rate 1Kbit burst 9Kb mtu 2Kb
 
-   action order 3: tablename: mangle  hook: NF_IP_PRE_ROUTING 
+   action order 3: tablename: mangle  hook: NF_IP_PRE_ROUTING
         target MARK set 0x2  index 1
 
-   action order 4: police 30 action pipe rate 1Kbit burst 10Kb mtu 5000b 
+   action order 4: police 30 action pipe rate 1Kbit burst 10Kb mtu 5000b
 
-   action order 5: tablename: mangle  hook: NF_IP_PRE_ROUTING 
+   action order 5: tablename: mangle  hook: NF_IP_PRE_ROUTING
         target MARK set 0x3  index 3
 
-   action order 6: police 20 action drop rate 1Kbit burst 90Kb mtu 5000b 
+   action order 6: police 20 action drop rate 1Kbit burst 90Kb mtu 5000b
 
   match 0a000015/ffffffff at 12
 -------------------------------
@@ -209,31 +209,31 @@ Now lets take a look at the stats with "tc -s filter show parent ffff: dev eth0"
 
 --------------
 jroot# tc -s filter show parent ffff: dev eth0
-filter protocol ip pref 1 u32 
-filter protocol ip pref 1 u32 fh 800: ht divisor 1 
+filter protocol ip pref 1 u32
+filter protocol ip pref 1 u32 fh 800: ht divisor 1
 filter protocol ip pref 1 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:1
-5 
+5
 
-   action order 1: tablename: mangle  hook: NF_IP_PRE_ROUTING 
+   action order 1: tablename: mangle  hook: NF_IP_PRE_ROUTING
         target MARK set 0x1  index 2
-         Sent 188832 bytes 2248 pkts (dropped 0, overlimits 0) 
+         Sent 188832 bytes 2248 pkts (dropped 0, overlimits 0)
 
-   action order 2: police 1 action pipe rate 1Kbit burst 9Kb mtu 2Kb 
-         Sent 188832 bytes 2248 pkts (dropped 0, overlimits 2122) 
+   action order 2: police 1 action pipe rate 1Kbit burst 9Kb mtu 2Kb
+         Sent 188832 bytes 2248 pkts (dropped 0, overlimits 2122)
 
-   action order 3: tablename: mangle  hook: NF_IP_PRE_ROUTING 
+   action order 3: tablename: mangle  hook: NF_IP_PRE_ROUTING
         target MARK set 0x2  index 1
-         Sent 178248 bytes 2122 pkts (dropped 0, overlimits 0) 
+         Sent 178248 bytes 2122 pkts (dropped 0, overlimits 0)
 
-   action order 4: police 30 action pipe rate 1Kbit burst 10Kb mtu 5000b 
-         Sent 178248 bytes 2122 pkts (dropped 0, overlimits 1945) 
+   action order 4: police 30 action pipe rate 1Kbit burst 10Kb mtu 5000b
+         Sent 178248 bytes 2122 pkts (dropped 0, overlimits 1945)
 
-   action order 5: tablename: mangle  hook: NF_IP_PRE_ROUTING 
+   action order 5: tablename: mangle  hook: NF_IP_PRE_ROUTING
         target MARK set 0x3  index 3
-         Sent 163380 bytes 1945 pkts (dropped 0, overlimits 0) 
+         Sent 163380 bytes 1945 pkts (dropped 0, overlimits 0)
 
-   action order 6: police 20 action drop rate 1Kbit burst 90Kb mtu 5000b 
-         Sent 163380 bytes 1945 pkts (dropped 0, overlimits 437) 
+   action order 6: police 20 action drop rate 1Kbit burst 90Kb mtu 5000b
+         Sent 163380 bytes 1945 pkts (dropped 0, overlimits 437)
 
   match 0a000015/ffffffff at 12
 -------------------------------
@@ -254,4 +254,3 @@ At the moment the focus has been on getting the architecture in place.
 Expect new things in the spurious time i have to work on this
 (particularly around end of year when i have typically get time off
 from work).
-

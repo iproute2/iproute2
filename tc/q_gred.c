@@ -37,10 +37,10 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: tc qdisc { add | replace | change } ... gred setup vqs NUMBER\n");
-	fprintf(stderr, "           default DEFAULT_VQ [ grio ] [ limit BYTES ]\n");
+	fprintf(stderr, "           default DEFAULT_VQ [ grio ] [ limit BYTES ] [ecn] [harddrop]\n");
 	fprintf(stderr, "       tc qdisc change ... gred vq VQ [ prio VALUE ] limit BYTES\n");
 	fprintf(stderr, "           min BYTES max BYTES avpkt BYTES [ burst PACKETS ]\n");
-	fprintf(stderr, "           [ probability PROBABILITY ] [ bandwidth KBPS ]\n");
+	fprintf(stderr, "           [ probability PROBABILITY ] [ bandwidth KBPS ] [ecn] [harddrop]\n");
 }
 
 static int init_gred(struct qdisc_util *qu, int argc, char **argv,
@@ -87,6 +87,10 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 				fprintf(stderr, "Illegal \"limit\"\n");
 				return -1;
 			}
+		} else if (strcmp(*argv, "ecn") == 0) {
+			opt.flags |= TC_RED_ECN;
+		} else if (strcmp(*argv, "harddrop") == 0) {
+			opt.flags |= TC_RED_HARDDROP;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -117,15 +121,16 @@ static int init_gred(struct qdisc_util *qu, int argc, char **argv,
 */
 static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
+	struct rtattr *tail, *entry, *vqs;
 	int ok = 0;
 	struct tc_gred_qopt opt = { 0 };
 	unsigned int burst = 0;
 	unsigned int avpkt = 0;
+	unsigned int flags = 0;
 	double probability = 0.02;
 	unsigned int rate = 0;
 	int parm;
 	__u8 sbuf[256];
-	struct rtattr *tail;
 	__u32 max_P;
 
 	opt.DP = MAX_DPs;
@@ -208,6 +213,10 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 				return -1;
 			}
 			ok++;
+		} else if (strcmp(*argv, "ecn") == 0) {
+			flags |= TC_RED_ECN;
+		} else if (strcmp(*argv, "harddrop") == 0) {
+			flags |= TC_RED_HARDDROP;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -261,22 +270,167 @@ static int gred_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct n
 	addattr_l(n, 1024, TCA_GRED_STAB, sbuf, 256);
 	max_P = probability * pow(2, 32);
 	addattr32(n, 1024, TCA_GRED_MAX_P, max_P);
+
+	vqs = addattr_nest(n, 1024, TCA_GRED_VQ_LIST);
+	entry = addattr_nest(n, 1024, TCA_GRED_VQ_ENTRY);
+	addattr32(n, 1024, TCA_GRED_VQ_DP, opt.DP);
+	addattr32(n, 1024, TCA_GRED_VQ_FLAGS, flags);
+	addattr_nest_end(n, entry);
+	addattr_nest_end(n, vqs);
+
 	addattr_nest_end(n, tail);
 	return 0;
 }
 
+struct tc_gred_info {
+	bool	flags_present;
+	__u64	bytes;
+	__u32	packets;
+	__u32	backlog;
+	__u32	prob_drop;
+	__u32	prob_mark;
+	__u32	forced_drop;
+	__u32	forced_mark;
+	__u32	pdrop;
+	__u32	other;
+	__u32	flags;
+};
+
+static void
+gred_parse_vqs(struct tc_gred_info *info, struct rtattr *vqs)
+{
+	int rem = RTA_PAYLOAD(vqs);
+	unsigned int offset = 0;
+
+	while (rem > offset) {
+		struct rtattr *tb_entry[TCA_GRED_VQ_ENTRY_MAX + 1] = {};
+		struct rtattr *tb[TCA_GRED_VQ_MAX + 1] = {};
+		struct rtattr *entry;
+		unsigned int len;
+		unsigned int dp;
+
+		entry = RTA_DATA(vqs) + offset;
+
+		parse_rtattr(tb_entry, TCA_GRED_VQ_ENTRY_MAX, entry,
+			     rem - offset);
+		len = RTA_LENGTH(RTA_PAYLOAD(entry));
+		offset += len;
+
+		if (!tb_entry[TCA_GRED_VQ_ENTRY]) {
+			fprintf(stderr,
+				"ERROR: Failed to parse Virtual Queue entry\n");
+			continue;
+		}
+
+		parse_rtattr_nested(tb, TCA_GRED_VQ_MAX,
+				    tb_entry[TCA_GRED_VQ_ENTRY]);
+
+		if (!tb[TCA_GRED_VQ_DP]) {
+			fprintf(stderr,
+				"ERROR: Virtual Queue without DP attribute\n");
+			continue;
+		}
+
+		dp = rta_getattr_u32(tb[TCA_GRED_VQ_DP]);
+
+		if (tb[TCA_GRED_VQ_STAT_BYTES])
+			info[dp].bytes =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_BYTES]);
+		if (tb[TCA_GRED_VQ_STAT_PACKETS])
+			info[dp].packets =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_PACKETS]);
+		if (tb[TCA_GRED_VQ_STAT_BACKLOG])
+			info[dp].backlog =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_BACKLOG]);
+		if (tb[TCA_GRED_VQ_STAT_PROB_DROP])
+			info[dp].prob_drop =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_PROB_DROP]);
+		if (tb[TCA_GRED_VQ_STAT_PROB_MARK])
+			info[dp].prob_mark =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_PROB_MARK]);
+		if (tb[TCA_GRED_VQ_STAT_FORCED_DROP])
+			info[dp].forced_drop =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_FORCED_DROP]);
+		if (tb[TCA_GRED_VQ_STAT_FORCED_MARK])
+			info[dp].forced_mark =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_FORCED_MARK]);
+		if (tb[TCA_GRED_VQ_STAT_PDROP])
+			info[dp].pdrop =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_PDROP]);
+		if (tb[TCA_GRED_VQ_STAT_OTHER])
+			info[dp].other =
+				rta_getattr_u32(tb[TCA_GRED_VQ_STAT_OTHER]);
+		info[dp].flags_present = !!tb[TCA_GRED_VQ_FLAGS];
+		if (tb[TCA_GRED_VQ_FLAGS])
+			info[dp].flags =
+				rta_getattr_u32(tb[TCA_GRED_VQ_FLAGS]);
+	}
+}
+
+static void
+gred_print_stats(struct tc_gred_info *info, struct tc_gred_qopt *qopt)
+{
+	__u64 bytes = info ? info->bytes : qopt->bytesin;
+
+	SPRINT_BUF(b1);
+
+	if (!is_json_context())
+		printf("\n  Queue size: ");
+
+	print_uint(PRINT_JSON, "qave", NULL, qopt->qave);
+	print_string(PRINT_FP, NULL, "average %s ",
+		     sprint_size(qopt->qave, b1));
+
+	print_uint(PRINT_JSON, "backlog", NULL, qopt->backlog);
+	print_string(PRINT_FP, NULL, "current %s ",
+		     sprint_size(qopt->backlog, b1));
+
+	if (!is_json_context())
+		printf("\n  Dropped packets: ");
+
+	if (info) {
+		print_uint(PRINT_ANY, "forced_drop", "forced %u ",
+			   info->forced_drop);
+		print_uint(PRINT_ANY, "prob_drop", "early %u ",
+			   info->prob_drop);
+		print_uint(PRINT_ANY, "pdrop", "pdrop %u ", info->pdrop);
+		print_uint(PRINT_ANY, "other", "other %u ", info->other);
+
+		if (!is_json_context())
+			printf("\n  Marked packets: ");
+		print_uint(PRINT_ANY, "forced_mark", "forced %u ",
+			   info->forced_mark);
+		print_uint(PRINT_ANY, "prob_mark", "early %u ",
+			   info->prob_mark);
+	} else {
+		print_uint(PRINT_ANY, "forced_drop", "forced %u ",
+			   qopt->forced);
+		print_uint(PRINT_ANY, "prob_drop", "early %u ", qopt->early);
+		print_uint(PRINT_ANY, "pdrop", "pdrop %u ", qopt->pdrop);
+		print_uint(PRINT_ANY, "other", "other %u ", qopt->other);
+	}
+
+	if (!is_json_context())
+		printf("\n  Total packets: ");
+
+	print_uint(PRINT_ANY, "packets", "%u ", qopt->packets);
+
+	print_uint(PRINT_JSON, "bytes", NULL, bytes);
+	print_string(PRINT_FP, NULL, "(%s) ", sprint_size(bytes, b1));
+}
+
 static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
+	struct tc_gred_info infos[MAX_DPs] = {};
 	struct rtattr *tb[TCA_GRED_MAX + 1];
 	struct tc_gred_sopt *sopt;
 	struct tc_gred_qopt *qopt;
+	bool vq_info = false;
 	__u32 *max_p = NULL;
 	__u32 *limit = NULL;
 	unsigned int i;
 
 	SPRINT_BUF(b1);
-	SPRINT_BUF(b2);
-	SPRINT_BUF(b3);
 
 	if (opt == NULL)
 		return 0;
@@ -302,47 +456,69 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		return -1;
 	}
 
-/* Bad hack! should really return a proper message as shown above*/
-
-	fprintf(f, "vqs %u default %u %s",
-		sopt->DPs,
-		sopt->def_DP,
-		sopt->grio ? "grio " : "");
-
-	if (limit)
-		fprintf(f, "limit %s ",
-			sprint_size(*limit, b1));
-
-	for (i = 0; i < MAX_DPs; i++, qopt++) {
-		if (qopt->DP >= MAX_DPs) continue;
-		fprintf(f, "\n vq %u prio %hhu limit %s min %s max %s ",
-			qopt->DP,
-			qopt->prio,
-			sprint_size(qopt->limit, b1),
-			sprint_size(qopt->qth_min, b2),
-			sprint_size(qopt->qth_max, b3));
-		if (show_details) {
-			fprintf(f, "ewma %u ", qopt->Wlog);
-			if (max_p)
-				fprintf(f, "probability %lg ", max_p[i] / pow(2, 32));
-			else
-				fprintf(f, "Plog %u ", qopt->Plog);
-			fprintf(f, "Scell_log %u ", qopt->Scell_log);
-		}
-		if (show_stats) {
-			fprintf(f, "\n  Queue size: average %s current %s ",
-				sprint_size(qopt->qave, b1),
-				sprint_size(qopt->backlog, b2));
-			fprintf(f, "\n  Dropped packets: forced %u early %u pdrop %u other %u ",
-				qopt->forced,
-				qopt->early,
-				qopt->pdrop,
-				qopt->other);
-			fprintf(f, "\n  Total packets: %u (%s) ",
-				qopt->packets,
-				sprint_size(qopt->bytesin, b1));
-		}
+	if (tb[TCA_GRED_VQ_LIST]) {
+		gred_parse_vqs(infos, tb[TCA_GRED_VQ_LIST]);
+		vq_info = true;
 	}
+
+	print_uint(PRINT_ANY, "dp_cnt", "vqs %u ", sopt->DPs);
+	print_uint(PRINT_ANY, "dp_default", "default %u ", sopt->def_DP);
+
+	if (sopt->grio)
+		print_bool(PRINT_ANY, "grio", "grio ", true);
+	else
+		print_bool(PRINT_ANY, "grio", NULL, false);
+
+	if (limit) {
+		print_uint(PRINT_JSON, "limit", NULL, *limit);
+		print_string(PRINT_FP, NULL, "limit %s ",
+			     sprint_size(*limit, b1));
+	}
+
+	tc_red_print_flags(sopt->flags);
+
+	open_json_array(PRINT_JSON, "vqs");
+	for (i = 0; i < MAX_DPs; i++, qopt++) {
+		if (qopt->DP >= MAX_DPs)
+			continue;
+
+		open_json_object(NULL);
+
+		print_uint(PRINT_ANY, "vq", "\n vq %u ", qopt->DP);
+		print_hhu(PRINT_ANY, "prio", "prio %hhu ", qopt->prio);
+
+		print_uint(PRINT_JSON, "limit", NULL, qopt->limit);
+		print_string(PRINT_FP, NULL, "limit %s ",
+			     sprint_size(qopt->limit, b1));
+
+		print_uint(PRINT_JSON, "min", NULL, qopt->qth_min);
+		print_string(PRINT_FP, NULL, "min %s ",
+			     sprint_size(qopt->qth_min, b1));
+
+		print_uint(PRINT_JSON, "max", NULL, qopt->qth_max);
+		print_string(PRINT_FP, NULL, "max %s ",
+			     sprint_size(qopt->qth_max, b1));
+
+		if (infos[i].flags_present)
+			tc_red_print_flags(infos[i].flags);
+
+		if (show_details) {
+			print_uint(PRINT_ANY, "ewma", "ewma %u ", qopt->Wlog);
+			if (max_p)
+				print_float(PRINT_ANY, "probability",
+					    "probability %lg ",
+					    max_p[i] / pow(2, 32));
+			else
+				print_uint(PRINT_ANY, "Plog", "Plog %u ",
+					   qopt->Plog);
+			print_uint(PRINT_ANY, "Scell_log", "Scell_log %u ",
+				   qopt->Scell_log);
+		}
+		if (show_stats)
+			gred_print_stats(vq_info ? &infos[i] : NULL, qopt);
+		close_json_object();
+	}
+	close_json_array(PRINT_JSON, "vqs");
 	return 0;
 }
 

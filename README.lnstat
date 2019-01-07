@@ -7,9 +7,9 @@ This tool is a generalized and more feature-complete replacement for the old
 
 In addition to routing cache statistics, it supports any kind of statistics
 the linux kernel exports via a file in /proc/net/stat.  In a stock 2.6.9
-kernel, this is 
-	per-protocol neighbour cache statistics 
-		(ipv4, ipv6, atm, decnet)
+kernel, this is
+	per-protocol neighbour cache statistics
+		(ipv4, ipv6, atm)
 	routing cache statistics
 		(ipv4)
 	connection tracking statistics
@@ -29,7 +29,7 @@ In order to get a list of supported statistics files, you can run
 	lnstat -d
 
 It will display something like
- 
+
 /proc/net/stat/arp_cache:
          1: entries
          2: allocs
@@ -52,19 +52,19 @@ arp_cach|rt_cache|arp_cach|
 
 
 You can specify the interval (e.g. 10 seconds) by:
-	
+
 	lnstat -i 10
 
 You can specify to only use one particular statistics file:
 
 	lnstat -f ip_conntrack
 
-You can specify individual field widths 
+You can specify individual field widths
 
 	lnstat -k arp_cache:entries,rt_cache:entries -w 20,8
 
 You can specify not to print a header at all
-	
+
 	lnstat -s 0
 
 You can specify to print a header only at start of the program
@@ -76,6 +76,5 @@ You can specify to print a header at start and every 20 lines:
 	lnstat -s 20
 
 You can specify the number of samples you want to take (e.g. 5):
-	
-	lnstat -c 5
 
+	lnstat -c 5

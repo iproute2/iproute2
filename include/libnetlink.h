@@ -23,6 +23,7 @@ struct rtnl_handle {
 	FILE		       *dump_fp;
 #define RTNL_HANDLE_F_LISTEN_ALL_NSID		0x01
 #define RTNL_HANDLE_F_SUPPRESS_NLERR		0x02
+#define RTNL_HANDLE_F_STRICT_CHK		0x04
 	int			flags;
 };
 
@@ -46,16 +47,22 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 	__attribute__((warn_unused_result));
 
 void rtnl_close(struct rtnl_handle *rth);
+void rtnl_set_strict_dump(struct rtnl_handle *rth);
 
-int rtnl_addrdump_req(struct rtnl_handle *rth, int family)
+typedef int (*req_filter_fn_t)(struct nlmsghdr *nlh, int reqlen);
+
+int rtnl_addrdump_req(struct rtnl_handle *rth, int family,
+		      req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 int rtnl_addrlbldump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
-int rtnl_routedump_req(struct rtnl_handle *rth, int family)
+int rtnl_routedump_req(struct rtnl_handle *rth, int family,
+		       req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 int rtnl_ruledump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
-int rtnl_neighdump_req(struct rtnl_handle *rth, int family)
+int rtnl_neighdump_req(struct rtnl_handle *rth, int family,
+		       req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 int rtnl_neightbldump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
@@ -70,8 +77,6 @@ int rtnl_linkdump_req(struct rtnl_handle *rth, int fam)
 	__attribute__((warn_unused_result));
 int rtnl_linkdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 	__attribute__((warn_unused_result));
-
-typedef int (*req_filter_fn_t)(struct nlmsghdr *nlh, int reqlen);
 
 int rtnl_linkdump_req_filter_fn(struct rtnl_handle *rth, int fam,
 				req_filter_fn_t fn)

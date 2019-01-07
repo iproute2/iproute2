@@ -107,7 +107,7 @@ replace " } "
 
 .ti -8
 .IR FAMILY " := [ "
-.BR inet " | " inet6 " | " ipx " | " dnet " | " mpls " | " bridge " | " link " ]"
+.BR inet " | " inet6 " | " mpls " | " bridge " | " link " ]"
 
 .ti -8
 .IR OPTIONS " := " FLAGS " [ "

@@ -18,14 +18,14 @@ int rd_argc(struct rd *rd)
 	return rd->argc;
 }
 
-static char *rd_argv(struct rd *rd)
+char *rd_argv(struct rd *rd)
 {
 	if (!rd_argc(rd))
 		return NULL;
 	return *rd->argv;
 }
 
-static int strcmpx(const char *str1, const char *str2)
+int strcmpx(const char *str1, const char *str2)
 {
 	if (strlen(str1) > strlen(str2))
 		return -1;
@@ -39,7 +39,7 @@ static bool rd_argv_match(struct rd *rd, const char *pattern)
 	return strcmpx(rd_argv(rd), pattern) == 0;
 }
 
-static void rd_arg_inc(struct rd *rd)
+void rd_arg_inc(struct rd *rd)
 {
 	if (!rd_argc(rd))
 		return;
@@ -47,7 +47,7 @@ static void rd_arg_inc(struct rd *rd)
 	rd->argv++;
 }
 
-static bool rd_no_arg(struct rd *rd)
+bool rd_no_arg(struct rd *rd)
 {
 	return rd_argc(rd) == 0;
 }
@@ -404,7 +404,7 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_DRIVER_U64] = MNL_TYPE_U64,
 };
 
-static int rd_attr_check(const struct nlattr *attr, int *typep)
+int rd_attr_check(const struct nlattr *attr, int *typep)
 {
 	int type;
 
@@ -577,6 +577,16 @@ out:
 	return ret;
 }
 
+int rd_exec_require_dev(struct rd *rd, int (*cb)(struct rd *rd))
+{
+	if (rd_no_arg(rd)) {
+		pr_err("Please provide device name.\n");
+		return -EINVAL;
+	}
+
+	return rd_exec_dev(rd, cb);
+}
+
 int rd_exec_cmd(struct rd *rd, const struct rd_cmd *cmds, const char *str)
 {
 	const struct rd_cmd *c;
@@ -696,7 +706,7 @@ void newline(struct rd *rd)
 		pr_out("\n");
 }
 
-static void newline_indent(struct rd *rd)
+void newline_indent(struct rd *rd)
 {
 	newline(rd);
 	if (!rd->json_output)

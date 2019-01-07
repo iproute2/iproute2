@@ -64,6 +64,7 @@ _PRINT_FUNC(null, const char*);
 _PRINT_FUNC(string, const char*);
 _PRINT_FUNC(uint, unsigned int);
 _PRINT_FUNC(u64, uint64_t);
+_PRINT_FUNC(hhu, unsigned char);
 _PRINT_FUNC(hu, unsigned short);
 _PRINT_FUNC(hex, unsigned int);
 _PRINT_FUNC(0xhex, unsigned long long);

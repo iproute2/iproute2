@@ -600,18 +600,6 @@ static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 		return 0;
 	}
 
-	if (family == AF_DECnet) {
-		struct dn_naddr dna;
-
-		addr->family = AF_DECnet;
-		if (dnet_pton(AF_DECnet, name, &dna) <= 0)
-			return -1;
-		memcpy(addr->data, dna.a_addr, 2);
-		addr->bytelen = 2;
-		addr->bitlen = -1;
-		return 0;
-	}
-
 	if (family == AF_MPLS) {
 		unsigned int maxlabels;
 		int i;
@@ -1000,15 +988,6 @@ const char *rt_addr_n2a_r(int af, int len,
 		return inet_ntop(af, addr, buf, buflen);
 	case AF_MPLS:
 		return mpls_ntop(af, addr, buf, buflen);
-	case AF_IPX:
-		return ipx_ntop(af, addr, buf, buflen);
-	case AF_DECnet:
-	{
-		struct dn_naddr dna = { 2, { 0, 0, } };
-
-		memcpy(dna.a_addr, addr, 2);
-		return dnet_ntop(af, &dna, buf, buflen);
-	}
 	case AF_PACKET:
 		return ll_addr_n2a(addr, len, ARPHRD_VOID, buf, buflen);
 	case AF_BRIDGE:
@@ -1050,8 +1029,6 @@ int read_family(const char *name)
 		family = AF_INET;
 	else if (strcmp(name, "inet6") == 0)
 		family = AF_INET6;
-	else if (strcmp(name, "dnet") == 0)
-		family = AF_DECnet;
 	else if (strcmp(name, "link") == 0)
 		family = AF_PACKET;
 	else if (strcmp(name, "ipx") == 0)
@@ -1069,8 +1046,6 @@ const char *family_name(int family)
 		return "inet";
 	if (family == AF_INET6)
 		return "inet6";
-	if (family == AF_DECnet)
-		return "dnet";
 	if (family == AF_PACKET)
 		return "link";
 	if (family == AF_IPX)

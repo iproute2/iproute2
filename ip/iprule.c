@@ -79,6 +79,9 @@ static struct
 	inet_prefix dst;
 	int protocol;
 	int protocolmask;
+	struct fib_rule_port_range sport;
+	struct fib_rule_port_range dport;
+	__u8 ipproto;
 } filter;
 
 static inline int frh_get_table(struct fib_rule_hdr *frh, struct rtattr **tb)
@@ -172,6 +175,39 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		if (!tb[FRA_UID_RANGE] ||
 		    r->start != filter.range.start ||
 		    r->end != filter.range.end)
+			return false;
+	}
+
+	if (filter.ipproto) {
+		__u8 ipproto = 0;
+
+		if (tb[FRA_IP_PROTO])
+			ipproto = rta_getattr_u8(tb[FRA_IP_PROTO]);
+		if (filter.ipproto != ipproto)
+			return false;
+	}
+
+	if (filter.sport.start) {
+		const struct fib_rule_port_range *r;
+
+		if (!tb[FRA_SPORT_RANGE])
+			return false;
+
+		r = RTA_DATA(tb[FRA_SPORT_RANGE]);
+		if (r->start != filter.sport.start ||
+		    r->end != filter.sport.end)
+			return false;
+	}
+
+	if (filter.dport.start) {
+		const struct fib_rule_port_range *r;
+
+		if (!tb[FRA_DPORT_RANGE])
+			return false;
+
+		r = RTA_DATA(tb[FRA_DPORT_RANGE]);
+		if (r->start != filter.dport.start ||
+		    r->end != filter.dport.end)
 			return false;
 	}
 
@@ -633,6 +669,36 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 				filter.protocolmask = 0;
 			}
 			filter.protocol = prot;
+		} else if (strcmp(*argv, "ipproto") == 0) {
+			int ipproto;
+
+			NEXT_ARG();
+			ipproto = inet_proto_a2n(*argv);
+			if (ipproto < 0)
+				invarg("Invalid \"ipproto\" value\n", *argv);
+			filter.ipproto = ipproto;
+		} else if (strcmp(*argv, "sport") == 0) {
+			struct fib_rule_port_range r;
+			int ret;
+
+			NEXT_ARG();
+			ret = sscanf(*argv, "%hu-%hu", &r.start, &r.end);
+			if (ret == 1)
+				r.end = r.start;
+			else if (ret != 2)
+				invarg("invalid port range\n", *argv);
+			filter.sport = r;
+		} else if (strcmp(*argv, "dport") == 0) {
+			struct fib_rule_port_range r;
+			int ret;
+
+			NEXT_ARG();
+			ret = sscanf(*argv, "%hu-%hu", &r.start, &r.end);
+			if (ret == 1)
+				r.end = r.start;
+			else if (ret != 2)
+				invarg("invalid dport range\n", *argv);
+			filter.dport = r;
 		} else{
 			if (matches(*argv, "dst") == 0 ||
 			    matches(*argv, "to") == 0) {

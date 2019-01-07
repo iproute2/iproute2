@@ -211,6 +211,11 @@ void jsonw_float(json_writer_t *self, double num)
 	jsonw_printf(self, "%g", num);
 }
 
+void jsonw_hhu(json_writer_t *self, unsigned char num)
+{
+	jsonw_printf(self, "%hhu", num);
+}
+
 void jsonw_hu(json_writer_t *self, unsigned short num)
 {
 	jsonw_printf(self, "%hu", num);
@@ -286,6 +291,12 @@ void jsonw_xint_field(json_writer_t *self, const char *prop, uint64_t num)
 {
 	jsonw_name(self, prop);
 	jsonw_xint(self, num);
+}
+
+void jsonw_hhu_field(json_writer_t *self, const char *prop, unsigned char num)
+{
+	jsonw_name(self, prop);
+	jsonw_hhu(self, num);
 }
 
 void jsonw_hu_field(json_writer_t *self, const char *prop, unsigned short num)

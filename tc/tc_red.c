@@ -20,7 +20,9 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#include "utils.h"
 #include "tc_core.h"
+#include "tc_util.h"
 #include "tc_red.h"
 
 /*
@@ -96,4 +98,22 @@ int tc_red_eval_idle_damping(int Wlog, unsigned int avpkt, unsigned int bps, __u
 	}
 	sbuf[255] = 31;
 	return clog;
+}
+
+void tc_red_print_flags(__u32 flags)
+{
+	if (flags & TC_RED_ECN)
+		print_bool(PRINT_ANY, "ecn", "ecn ", true);
+	else
+		print_bool(PRINT_ANY, "ecn", NULL, false);
+
+	if (flags & TC_RED_HARDDROP)
+		print_bool(PRINT_ANY, "harddrop", "harddrop ", true);
+	else
+		print_bool(PRINT_ANY, "harddrop", NULL, false);
+
+	if (flags & TC_RED_ADAPTATIVE)
+		print_bool(PRINT_ANY, "adaptive", "adaptive ", true);
+	else
+		print_bool(PRINT_ANY, "adaptive", NULL, false);
 }

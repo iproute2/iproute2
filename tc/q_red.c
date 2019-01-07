@@ -189,18 +189,8 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	print_uint(PRINT_JSON, "max", NULL, qopt->qth_max);
 	print_string(PRINT_FP, NULL, "max %s ", sprint_size(qopt->qth_max, b3));
 
-	if (qopt->flags & TC_RED_ECN)
-		print_bool(PRINT_ANY, "ecn", "ecn ", true);
-	else
-		print_bool(PRINT_ANY, "ecn", NULL, false);
-	if (qopt->flags & TC_RED_HARDDROP)
-		print_bool(PRINT_ANY, "harddrop", "harddrop ", true);
-	else
-		print_bool(PRINT_ANY, "harddrop", NULL, false);
-	if (qopt->flags & TC_RED_ADAPTATIVE)
-		print_bool(PRINT_ANY, "adaptive", "adaptive ", true);
-	else
-		print_bool(PRINT_ANY, "adaptive", NULL, false);
+	tc_red_print_flags(qopt->flags);
+
 	if (show_details) {
 		print_uint(PRINT_ANY, "ewma", "ewma %u ", qopt->Wlog);
 		if (max_P)
