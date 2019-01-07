@@ -115,7 +115,7 @@ EOF
 check_xt_old_internal_h()
 {
     # bail if previous XT checks has already succeeded.
-    grep -q if grep -q TC_CONFIG_XT $CONFIG && return
+    grep -q TC_CONFIG_XT $CONFIG && return
 
     #check if we need our own internal.h
     cat >$TMPDIR/ipttest.c <<EOF
