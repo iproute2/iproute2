@@ -335,10 +335,18 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 
 	if (tb[NDA_DST]) {
 		const char *dst;
+		int family = r->ndm_family;
 
-		dst = format_host_rta(r->ndm_family, tb[NDA_DST]);
+		if (family == AF_BRIDGE) {
+			if (RTA_PAYLOAD(tb[NDA_DST]) == sizeof(struct in6_addr))
+				family = AF_INET6;
+			else
+				family = AF_INET;
+		}
+
+		dst = format_host_rta(family, tb[NDA_DST]);
 		print_color_string(PRINT_ANY,
-				   ifa_family_color(r->ndm_family),
+				   ifa_family_color(family),
 				   "dst", "%s ", dst);
 	}
 
