@@ -114,6 +114,7 @@ static int matchall_print_opt(struct filter_util *qu, FILE *f,
 			   struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_MATCHALL_MAX+1];
+	struct tc_matchall_pcnt *pf = NULL;
 
 	if (opt == NULL)
 		return 0;
@@ -142,6 +143,19 @@ static int matchall_print_opt(struct filter_util *qu, FILE *f,
 		else if (flags & TCA_CLS_FLAGS_NOT_IN_HW)
 			print_bool(PRINT_ANY, "not_in_hw", "\n  not_in_hw", true);
 	}
+
+	if (tb[TCA_MATCHALL_PCNT]) {
+		if (RTA_PAYLOAD(tb[TCA_MATCHALL_PCNT])  < sizeof(*pf)) {
+			print_string(PRINT_FP, NULL, "Broken perf counters\n", NULL);
+			return -1;
+		}
+		pf = RTA_DATA(tb[TCA_MATCHALL_PCNT]);
+	}
+
+	if (show_stats && NULL != pf)
+		print_u64(PRINT_ANY, "rule_hit", " (rule hit %llu)",
+			(unsigned long long) pf->rhit);
+
 
 	if (tb[TCA_MATCHALL_ACT])
 		tc_print_action(f, tb[TCA_MATCHALL_ACT], 0);
