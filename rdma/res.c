@@ -703,7 +703,7 @@ static void print_users(struct rd *rd, uint64_t val)
 static const char *poll_ctx_to_str(uint8_t idx)
 {
 	static const char * const cm_id_states_str[] = {
-		"DIRECT", "SOFTIRQ", "WORKQUEUE"};
+		"DIRECT", "SOFTIRQ", "WORKQUEUE", "UNBOUND_WORKQUEUE"};
 
 	if (idx < ARRAY_SIZE(cm_id_states_str))
 		return cm_id_states_str[idx];
