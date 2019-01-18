@@ -497,7 +497,8 @@ void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 }
 
 static void __xfrm_algo_print(struct xfrm_algo *algo, int type, int len,
-			      FILE *fp, const char *prefix, int newline)
+			      FILE *fp, const char *prefix, int newline,
+			      bool nokeys)
 {
 	int keylen;
 	int i;
@@ -521,7 +522,9 @@ static void __xfrm_algo_print(struct xfrm_algo *algo, int type, int len,
 		goto fin;
 	}
 
-	if (keylen > 0) {
+	if (nokeys)
+		fprintf(fp, "<<Keys hidden>>");
+	else if (keylen > 0) {
 		fprintf(fp, "0x");
 		for (i = 0; i < keylen; i++)
 			fprintf(fp, "%.2x", (unsigned char)algo->alg_key[i]);
@@ -536,13 +539,13 @@ static void __xfrm_algo_print(struct xfrm_algo *algo, int type, int len,
 }
 
 static inline void xfrm_algo_print(struct xfrm_algo *algo, int type, int len,
-				   FILE *fp, const char *prefix)
+				   FILE *fp, const char *prefix, bool nokeys)
 {
-	return __xfrm_algo_print(algo, type, len, fp, prefix, 1);
+	return __xfrm_algo_print(algo, type, len, fp, prefix, 1, nokeys);
 }
 
 static void xfrm_aead_print(struct xfrm_algo_aead *algo, int len,
-			    FILE *fp, const char *prefix)
+			    FILE *fp, const char *prefix, bool nokeys)
 {
 	struct xfrm_algo *base_algo = alloca(sizeof(*base_algo) + algo->alg_key_len / 8);
 
@@ -550,7 +553,8 @@ static void xfrm_aead_print(struct xfrm_algo_aead *algo, int len,
 	base_algo->alg_key_len = algo->alg_key_len;
 	memcpy(base_algo->alg_key, algo->alg_key, algo->alg_key_len / 8);
 
-	__xfrm_algo_print(base_algo, XFRMA_ALG_AEAD, len, fp, prefix, 0);
+	__xfrm_algo_print(base_algo, XFRMA_ALG_AEAD, len, fp, prefix, 0,
+			  nokeys);
 
 	fprintf(fp, " %d", algo->alg_icv_len);
 
@@ -558,7 +562,7 @@ static void xfrm_aead_print(struct xfrm_algo_aead *algo, int len,
 }
 
 static void xfrm_auth_trunc_print(struct xfrm_algo_auth *algo, int len,
-				  FILE *fp, const char *prefix)
+				  FILE *fp, const char *prefix, bool nokeys)
 {
 	struct xfrm_algo *base_algo = alloca(sizeof(*base_algo) + algo->alg_key_len / 8);
 
@@ -566,7 +570,8 @@ static void xfrm_auth_trunc_print(struct xfrm_algo_auth *algo, int len,
 	base_algo->alg_key_len = algo->alg_key_len;
 	memcpy(base_algo->alg_key, algo->alg_key, algo->alg_key_len / 8);
 
-	__xfrm_algo_print(base_algo, XFRMA_ALG_AUTH_TRUNC, len, fp, prefix, 0);
+	__xfrm_algo_print(base_algo, XFRMA_ALG_AUTH_TRUNC, len, fp, prefix, 0,
+			  nokeys);
 
 	fprintf(fp, " %d", algo->alg_trunc_len);
 
@@ -679,7 +684,7 @@ done:
 }
 
 void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
-		      FILE *fp, const char *prefix)
+		      FILE *fp, const char *prefix, bool nokeys)
 {
 	if (tb[XFRMA_MARK]) {
 		struct rtattr *rta = tb[XFRMA_MARK];
@@ -700,36 +705,36 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 	if (tb[XFRMA_ALG_AUTH] && !tb[XFRMA_ALG_AUTH_TRUNC]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH];
 
-		xfrm_algo_print(RTA_DATA(rta),
-				XFRMA_ALG_AUTH, RTA_PAYLOAD(rta), fp, prefix);
+		xfrm_algo_print(RTA_DATA(rta), XFRMA_ALG_AUTH, RTA_PAYLOAD(rta),
+				fp, prefix, nokeys);
 	}
 
 	if (tb[XFRMA_ALG_AUTH_TRUNC]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AUTH_TRUNC];
 
-		xfrm_auth_trunc_print(RTA_DATA(rta),
-				      RTA_PAYLOAD(rta), fp, prefix);
+		xfrm_auth_trunc_print(RTA_DATA(rta), RTA_PAYLOAD(rta), fp,
+				      prefix, nokeys);
 	}
 
 	if (tb[XFRMA_ALG_AEAD]) {
 		struct rtattr *rta = tb[XFRMA_ALG_AEAD];
 
-		xfrm_aead_print(RTA_DATA(rta),
-				RTA_PAYLOAD(rta), fp, prefix);
+		xfrm_aead_print(RTA_DATA(rta), RTA_PAYLOAD(rta), fp, prefix,
+				nokeys);
 	}
 
 	if (tb[XFRMA_ALG_CRYPT]) {
 		struct rtattr *rta = tb[XFRMA_ALG_CRYPT];
 
-		xfrm_algo_print(RTA_DATA(rta),
-				XFRMA_ALG_CRYPT, RTA_PAYLOAD(rta), fp, prefix);
+		xfrm_algo_print(RTA_DATA(rta), XFRMA_ALG_CRYPT,
+				RTA_PAYLOAD(rta), fp, prefix, nokeys);
 	}
 
 	if (tb[XFRMA_ALG_COMP]) {
 		struct rtattr *rta = tb[XFRMA_ALG_COMP];
 
-		xfrm_algo_print(RTA_DATA(rta),
-				XFRMA_ALG_COMP, RTA_PAYLOAD(rta), fp, prefix);
+		xfrm_algo_print(RTA_DATA(rta), XFRMA_ALG_COMP, RTA_PAYLOAD(rta),
+				fp, prefix, nokeys);
 	}
 
 	if (tb[XFRMA_ENCAP]) {
@@ -897,7 +902,7 @@ static int xfrm_selector_iszero(struct xfrm_selector *s)
 
 void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 			    struct rtattr *tb[], FILE *fp, const char *prefix,
-			    const char *title)
+			    const char *title, bool nokeys)
 {
 	char buf[STRBUF_SIZE] = {};
 	int force_spi = xfrm_xfrmproto_is_ipsec(xsinfo->id.proto);
@@ -943,7 +948,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		fprintf(fp, " (0x%s)", strxf_mask8(xsinfo->flags));
 	fprintf(fp, "%s", _SL_);
 
-	xfrm_xfrma_print(tb, xsinfo->family, fp, buf);
+	xfrm_xfrma_print(tb, xsinfo->family, fp, buf, nokeys);
 
 	if (!xfrm_selector_iszero(&xsinfo->sel)) {
 		char sbuf[STRBUF_SIZE];
@@ -1071,7 +1076,7 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 	if (show_stats > 0)
 		xfrm_lifetime_print(&xpinfo->lft, &xpinfo->curlft, fp, buf);
 
-	xfrm_xfrma_print(tb, xpinfo->sel.family, fp, buf);
+	xfrm_xfrma_print(tb, xpinfo->sel.family, fp, buf, false);
 }
 
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
