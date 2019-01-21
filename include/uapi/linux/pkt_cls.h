@@ -333,12 +333,19 @@ enum {
 
 /* Basic filter */
 
+struct tc_basic_pcnt {
+	__u64 rcnt;
+	__u64 rhit;
+};
+
 enum {
 	TCA_BASIC_UNSPEC,
 	TCA_BASIC_CLASSID,
 	TCA_BASIC_EMATCHES,
 	TCA_BASIC_ACT,
 	TCA_BASIC_POLICE,
+	TCA_BASIC_PCNT,
+	TCA_BASIC_PAD,
 	__TCA_BASIC_MAX
 };
 
@@ -527,11 +534,17 @@ enum {
 
 /* Match-all classifier */
 
+struct tc_matchall_pcnt {
+	__u64 rhit;
+};
+
 enum {
 	TCA_MATCHALL_UNSPEC,
 	TCA_MATCHALL_CLASSID,
 	TCA_MATCHALL_ACT,
 	TCA_MATCHALL_FLAGS,
+	TCA_MATCHALL_PCNT,
+	TCA_MATCHALL_PAD,
 	__TCA_MATCHALL_MAX,
 };
 
