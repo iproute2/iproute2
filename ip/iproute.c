@@ -2068,7 +2068,9 @@ static int iproute_get(int argc, char **argv)
 	if (req.r.rtm_family == AF_UNSPEC)
 		req.r.rtm_family = AF_INET;
 
-	req.r.rtm_flags |= RTM_F_LOOKUP_TABLE;
+	/* Only IPv4 supports the RTM_F_LOOKUP_TABLE flag */
+	if (req.r.rtm_family == AF_INET)
+		req.r.rtm_flags |= RTM_F_LOOKUP_TABLE;
 	if (fib_match)
 		req.r.rtm_flags |= RTM_F_FIB_MATCH;
 
