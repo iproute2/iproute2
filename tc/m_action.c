@@ -363,7 +363,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 
 	parse_rtattr_nested(tb, tot_acts, arg);
 
-	if (tab_flush && NULL != tb[0]  && NULL == tb[1])
+	if (tab_flush && tb[0] && !tb[1])
 		return tc_print_action_flush(f, tb[0]);
 
 	open_json_array(PRINT_JSON, "actions");

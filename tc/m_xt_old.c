@@ -224,9 +224,8 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		int i;
 
 		for (i = 0; i < rargc; i++) {
-			if (NULL == argv[i] || 0 == strcmp(argv[i], "action")) {
+			if (!argv[i] || strcmp(argv[i], "action") == 0)
 				break;
-			}
 		}
 		iargc = argc = i;
 	}
