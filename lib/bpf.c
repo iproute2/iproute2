@@ -2193,12 +2193,16 @@ static int bpf_btf_prep_type_data(struct bpf_elf_ctx *ctx)
 		case BTF_KIND_ENUM:
 			type_cur += var_len * sizeof(struct btf_enum);
 			break;
+		case BTF_KIND_FUNC_PROTO:
+			type_cur += var_len * sizeof(struct btf_param);
+			break;
 		case BTF_KIND_TYPEDEF:
 		case BTF_KIND_PTR:
 		case BTF_KIND_FWD:
 		case BTF_KIND_VOLATILE:
 		case BTF_KIND_CONST:
 		case BTF_KIND_RESTRICT:
+		case BTF_KIND_FUNC:
 			break;
 		default:
 			fprintf(stderr, "Object has unknown BTF type: %u!\n", kind);
