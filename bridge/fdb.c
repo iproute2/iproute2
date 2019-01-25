@@ -346,8 +346,7 @@ static int fdb_show(int argc, char **argv)
 	if (rth.flags & RTNL_HANDLE_F_STRICT_CHK)
 		rc = rtnl_neighdump_req(&rth, PF_BRIDGE, fdb_dump_filter);
 	else
-		rc = rtnl_linkdump_req_filter_fn(&rth, PF_BRIDGE,
-						 fdb_linkdump_filter);
+		rc = rtnl_fdb_linkdump_req_filter_fn(&rth, fdb_linkdump_filter);
 	if (rc < 0) {
 		perror("Cannot send dump request");
 		exit(1);

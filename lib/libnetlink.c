@@ -503,6 +503,29 @@ int rtnl_linkdump_req_filter_fn(struct rtnl_handle *rth, int family,
 	return __rtnl_linkdump_req(rth, family);
 }
 
+int rtnl_fdb_linkdump_req_filter_fn(struct rtnl_handle *rth,
+				    req_filter_fn_t filter_fn)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct ifinfomsg ifm;
+		char buf[128];
+	} req = {
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.nlh.nlmsg_type = RTM_GETNEIGH,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.ifm.ifi_family = PF_BRIDGE,
+	};
+	int err;
+
+	err = filter_fn(&req.nlh, sizeof(req));
+	if (err)
+		return err;
+
+	return send(rth->fd, &req, sizeof(req), 0);
+}
+
 int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 {
 	struct {
