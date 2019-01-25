@@ -476,7 +476,7 @@ int rtnl_linkdump_req_filter(struct rtnl_handle *rth, int family,
 int rtnl_linkdump_req_filter_fn(struct rtnl_handle *rth, int family,
 				req_filter_fn_t filter_fn)
 {
-	if (family == AF_UNSPEC) {
+	if (family == AF_UNSPEC || family == AF_PACKET) {
 		struct {
 			struct nlmsghdr nlh;
 			struct ifinfomsg ifm;
