@@ -20,6 +20,10 @@ ip-netns \- process network namespace management
 .I NETNSNAME
 
 .ti -8
+.B ip netns attach
+.I NETNSNAME PID
+
+.ti -8
 .B ip [-all] netns del
 .RI "[ " NETNSNAME " ]"
 
@@ -88,6 +92,12 @@ This command displays all of the network namespaces in /var/run/netns
 .sp
 If NAME is available in /var/run/netns/ this command creates a new
 network namespace and assigns NAME.
+
+.TP
+.B ip netns attach NAME PID - create a new named network namespace
+.sp
+If NAME is available in /var/run/netns/ this command attaches the network
+namespace of the process PID to NAME as if it were created with ip netns.
 
 .TP
 .B ip [-all] netns delete [ NAME ] - delete the name of a network namespace(s)

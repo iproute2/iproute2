@@ -28,6 +28,7 @@ static int usage(void)
 {
 	fprintf(stderr, "Usage: ip netns list\n");
 	fprintf(stderr, "       ip netns add NAME\n");
+	fprintf(stderr, "       ip netns attach NAME PID\n");
 	fprintf(stderr, "       ip netns set NAME NETNSID\n");
 	fprintf(stderr, "       ip [-all] netns delete [NAME]\n");
 	fprintf(stderr, "       ip netns identify [PID]\n");
@@ -632,24 +633,40 @@ static int create_netns_dir(void)
 	return 0;
 }
 
-static int netns_add(int argc, char **argv)
+static int netns_add(int argc, char **argv, bool create)
 {
 	/* This function creates a new network namespace and
 	 * a new mount namespace and bind them into a well known
 	 * location in the filesystem based on the name provided.
 	 *
+	 * If create is true, a new namespace will be created,
+	 * otherwise an existing one will be attached to the file.
+	 *
 	 * The mount namespace is created so that any necessary
 	 * userspace tweaks like remounting /sys, or bind mounting
-	 * a new /etc/resolv.conf can be shared between uers.
+	 * a new /etc/resolv.conf can be shared between users.
 	 */
-	char netns_path[PATH_MAX];
+	char netns_path[PATH_MAX], proc_path[PATH_MAX];
 	const char *name;
+	pid_t pid;
 	int fd;
 	int made_netns_run_dir_mount = 0;
 
-	if (argc < 1) {
-		fprintf(stderr, "No netns name specified\n");
-		return -1;
+	if (create) {
+		if (argc < 1) {
+			fprintf(stderr, "No netns name specified\n");
+			return -1;
+		}
+	} else {
+		if (argc < 2) {
+			fprintf(stderr, "No netns name and PID specified\n");
+			return -1;
+		}
+
+		if (get_s32(&pid, argv[1], 0) || !pid) {
+			fprintf(stderr, "Invalid PID: %s\n", argv[1]);
+			return -1;
+		}
 	}
 	name = argv[0];
 
@@ -689,21 +706,33 @@ static int netns_add(int argc, char **argv)
 		return -1;
 	}
 	close(fd);
-	if (unshare(CLONE_NEWNET) < 0) {
-		fprintf(stderr, "Failed to create a new network namespace \"%s\": %s\n",
-			name, strerror(errno));
-		goto out_delete;
+
+	if (create) {
+		if (unshare(CLONE_NEWNET) < 0) {
+			fprintf(stderr, "Failed to create a new network namespace \"%s\": %s\n",
+				name, strerror(errno));
+			goto out_delete;
+		}
+
+		strcpy(proc_path, "/proc/self/ns/net");
+	} else {
+		snprintf(proc_path, sizeof(proc_path), "/proc/%d/ns/net", pid);
 	}
 
 	/* Bind the netns last so I can watch for it */
-	if (mount("/proc/self/ns/net", netns_path, "none", MS_BIND, NULL) < 0) {
-		fprintf(stderr, "Bind /proc/self/ns/net -> %s failed: %s\n",
-			netns_path, strerror(errno));
+	if (mount(proc_path, netns_path, "none", MS_BIND, NULL) < 0) {
+		fprintf(stderr, "Bind %s -> %s failed: %s\n",
+			proc_path, netns_path, strerror(errno));
 		goto out_delete;
 	}
 	return 0;
 out_delete:
-	netns_delete(argc, argv);
+	if (create) {
+		netns_delete(argc, argv);
+	} else if (unlink(netns_path) < 0) {
+		fprintf(stderr, "Cannot remove namespace file \"%s\": %s\n",
+			netns_path, strerror(errno));
+	}
 	return -1;
 }
 
@@ -846,7 +875,7 @@ int do_netns(int argc, char **argv)
 		return usage();
 
 	if (matches(*argv, "add") == 0)
-		return netns_add(argc-1, argv+1);
+		return netns_add(argc-1, argv+1, true);
 
 	if (matches(*argv, "set") == 0)
 		return netns_set(argc-1, argv+1);
@@ -865,6 +894,9 @@ int do_netns(int argc, char **argv)
 
 	if (matches(*argv, "monitor") == 0)
 		return netns_monitor(argc-1, argv+1);
+
+	if (matches(*argv, "attach") == 0)
+		return netns_add(argc-1, argv+1, false);
 
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip netns help\".\n", *argv);
 	exit(-1);
