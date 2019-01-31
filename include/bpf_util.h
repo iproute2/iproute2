@@ -272,7 +272,7 @@ const char *bpf_prog_to_default_section(enum bpf_prog_type type);
 int bpf_graft_map(const char *map_path, uint32_t *key, int argc, char **argv);
 int bpf_trace_pipe(void);
 
-void bpf_print_ops(FILE *f, struct rtattr *bpf_ops, __u16 len);
+void bpf_print_ops(struct rtattr *bpf_ops, __u16 len);
 
 int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
 		  size_t size_insns, const char *license, char *log,
