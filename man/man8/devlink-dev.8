@@ -63,6 +63,12 @@ devlink-dev \- devlink device configuration
 .BR "devlink dev reload"
 .IR DEV
 
+.ti -8
+.BR "devlink dev info"
+.RI "[ "
+.IR DEV
+.RI "]"
+
 .SH "DESCRIPTION"
 .SS devlink dev show - display devlink device attributes
 
@@ -150,6 +156,26 @@ If this argument is omitted all parameters supported by devlink devices are list
 .PP
 .I "DEV"
 - Specifies the devlink device to reload.
+
+.SS devlink dev info - display device information.
+Display device information provided by the driver. This command can be used
+to query versions of the hardware components or device components which
+can't be updated (
+.I fixed
+) as well as device firmware which can be updated. For firmware components
+.I running
+displays the versions of firmware currently loaded into the device, while
+.I stored
+reports the versions in device's flash.
+.I Running
+and
+.I stored
+versions may differ after flash has been updated, but before reboot.
+
+.PP
+.I "DEV"
+- specifies the devlink device to show.
+If this argument is omitted all devices are listed.
 
 .SH "EXAMPLES"
 .PP

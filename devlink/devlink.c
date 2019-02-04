@@ -383,6 +383,13 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_REGION_CHUNK_DATA] = MNL_TYPE_BINARY,
 	[DEVLINK_ATTR_REGION_CHUNK_ADDR] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_REGION_CHUNK_LEN] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_INFO_DRIVER_NAME] = MNL_TYPE_STRING,
+	[DEVLINK_ATTR_INFO_SERIAL_NUMBER] = MNL_TYPE_STRING,
+	[DEVLINK_ATTR_INFO_VERSION_FIXED] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_INFO_VERSION_RUNNING] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_INFO_VERSION_STORED] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_INFO_VERSION_NAME] = MNL_TYPE_STRING,
+	[DEVLINK_ATTR_INFO_VERSION_VALUE] = MNL_TYPE_STRING,
 };
 
 static int attr_cb(const struct nlattr *attr, void *data)
@@ -1443,6 +1450,7 @@ static void cmd_dev_help(void)
 	pr_err("       devlink dev param set DEV name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink dev param show [DEV name PARAMETER]\n");
 	pr_err("       devlink dev reload DEV\n");
+	pr_err("       devlink dev info [ DEV ]\n");
 }
 
 static bool cmp_arr_last_handle(struct dl *dl, const char *bus_name,
@@ -1769,6 +1777,30 @@ static void pr_out_array_end(struct dl *dl)
 {
 	if (dl->json_output) {
 		jsonw_end_array(dl->jw);
+	} else {
+		__pr_out_indent_dec();
+		__pr_out_indent_dec();
+	}
+}
+
+static void pr_out_object_start(struct dl *dl, const char *name)
+{
+	if (dl->json_output) {
+		jsonw_name(dl->jw, name);
+		jsonw_start_object(dl->jw);
+	} else {
+		__pr_out_indent_inc();
+		__pr_out_newline();
+		pr_out("%s:", name);
+		__pr_out_indent_inc();
+		__pr_out_newline();
+	}
+}
+
+static void pr_out_object_end(struct dl *dl)
+{
+	if (dl->json_output) {
+		jsonw_end_object(dl->jw);
 	} else {
 		__pr_out_indent_dec();
 		__pr_out_indent_dec();
@@ -2415,6 +2447,142 @@ static int cmd_dev_reload(struct dl *dl)
 	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
 }
 
+static void pr_out_versions_single(struct dl *dl, const struct nlmsghdr *nlh,
+				   const char *name, int type)
+{
+	struct nlattr *version;
+
+	mnl_attr_for_each(version, nlh, sizeof(struct genlmsghdr)) {
+		struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+		const char *ver_value;
+		const char *ver_name;
+		int err;
+
+		if (mnl_attr_get_type(version) != type)
+			continue;
+
+		err = mnl_attr_parse_nested(version, attr_cb, tb);
+		if (err != MNL_CB_OK)
+			continue;
+
+		if (!tb[DEVLINK_ATTR_INFO_VERSION_NAME] ||
+		    !tb[DEVLINK_ATTR_INFO_VERSION_VALUE])
+			continue;
+
+		if (name) {
+			pr_out_object_start(dl, name);
+			name = NULL;
+		}
+
+		ver_name = mnl_attr_get_str(tb[DEVLINK_ATTR_INFO_VERSION_NAME]);
+		ver_value = mnl_attr_get_str(tb[DEVLINK_ATTR_INFO_VERSION_VALUE]);
+
+		pr_out_str(dl, ver_name, ver_value);
+		if (!dl->json_output)
+			__pr_out_newline();
+	}
+
+	if (!name)
+		pr_out_object_end(dl);
+}
+
+static void pr_out_info(struct dl *dl, const struct nlmsghdr *nlh,
+			struct nlattr **tb, bool has_versions)
+{
+	__pr_out_handle_start(dl, tb, true, false);
+
+	__pr_out_indent_inc();
+	if (tb[DEVLINK_ATTR_INFO_DRIVER_NAME]) {
+		struct nlattr *nla_drv = tb[DEVLINK_ATTR_INFO_DRIVER_NAME];
+
+		if (!dl->json_output)
+			__pr_out_newline();
+		pr_out_str(dl, "driver", mnl_attr_get_str(nla_drv));
+	}
+
+	if (tb[DEVLINK_ATTR_INFO_SERIAL_NUMBER]) {
+		struct nlattr *nla_sn = tb[DEVLINK_ATTR_INFO_SERIAL_NUMBER];
+
+		if (!dl->json_output)
+			__pr_out_newline();
+		pr_out_str(dl, "serial_number", mnl_attr_get_str(nla_sn));
+	}
+	__pr_out_indent_dec();
+
+	if (has_versions) {
+		pr_out_object_start(dl, "versions");
+
+		pr_out_versions_single(dl, nlh, "fixed",
+				       DEVLINK_ATTR_INFO_VERSION_FIXED);
+		pr_out_versions_single(dl, nlh, "running",
+				       DEVLINK_ATTR_INFO_VERSION_RUNNING);
+		pr_out_versions_single(dl, nlh, "stored",
+				       DEVLINK_ATTR_INFO_VERSION_STORED);
+
+		pr_out_object_end(dl);
+	}
+
+	pr_out_handle_end(dl);
+}
+
+static int cmd_versions_show_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	bool has_versions, has_info;
+	struct dl *dl = data;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME])
+		return MNL_CB_ERROR;
+
+	has_versions = tb[DEVLINK_ATTR_INFO_VERSION_FIXED] ||
+		tb[DEVLINK_ATTR_INFO_VERSION_RUNNING] ||
+		tb[DEVLINK_ATTR_INFO_VERSION_STORED];
+	has_info = tb[DEVLINK_ATTR_INFO_DRIVER_NAME] ||
+		tb[DEVLINK_ATTR_INFO_SERIAL_NUMBER] ||
+		has_versions;
+
+	if (has_info)
+		pr_out_info(dl, nlh, tb, has_versions);
+
+	return MNL_CB_OK;
+}
+
+static void cmd_dev_info_help(void)
+{
+	pr_err("Usage: devlink dev info [ DEV ]\n");
+}
+
+static int cmd_dev_info(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	int err;
+
+	if (dl_argv_match(dl, "help")) {
+		cmd_dev_info_help();
+		return 0;
+	}
+
+	if (dl_argc(dl) == 0)
+		flags |= NLM_F_DUMP;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_INFO_GET, flags);
+
+	if (dl_argc(dl) > 0) {
+		err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE, 0);
+		if (err)
+			return err;
+	}
+
+	pr_out_section_start(dl, "info");
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_versions_show_cb, dl);
+	pr_out_section_end(dl);
+	return err;
+}
+
 static int cmd_dev(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help")) {
@@ -2433,6 +2601,9 @@ static int cmd_dev(struct dl *dl)
 	} else if (dl_argv_match(dl, "param")) {
 		dl_arg_inc(dl);
 		return cmd_dev_param(dl);
+	} else if (dl_argv_match(dl, "info")) {
+		dl_arg_inc(dl);
+		return cmd_dev_info(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
