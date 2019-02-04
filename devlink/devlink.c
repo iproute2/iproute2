@@ -2722,6 +2722,9 @@ static void pr_out_sb_pool(struct dl *dl, struct nlattr **tb)
 		    mnl_attr_get_u32(tb[DEVLINK_ATTR_SB_POOL_SIZE]));
 	pr_out_str(dl, "thtype",
 		   threshold_type_name(mnl_attr_get_u8(tb[DEVLINK_ATTR_SB_POOL_THRESHOLD_TYPE])));
+	if (tb[DEVLINK_ATTR_SB_POOL_CELL_SIZE])
+		pr_out_uint(dl, "cell_size",
+			    mnl_attr_get_u32(tb[DEVLINK_ATTR_SB_POOL_CELL_SIZE]));
 	pr_out_handle_end(dl);
 }
 

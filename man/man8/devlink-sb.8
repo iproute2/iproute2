@@ -128,6 +128,16 @@ Behaviour of this argument it the same for every command.
 - specifies the devlink device to show pools.
 If this argument is omitted all pools of all devices are listed.
 
+Display available pools listing their
+.B type, size, thtype
+and
+.B cell_size. cell_size
+is the allocation granularity of memory within the shared buffer. Drivers
+may round up, round down or reject
+.B size
+passed to the set command if it is not multiple of
+.B cell_size.
+
 .SS devlink sb pool set - set attributes of pool
 
 .PP
