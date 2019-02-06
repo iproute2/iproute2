@@ -195,7 +195,7 @@ static int parse_percent_rate(char *rate, const char *str, const char *dev)
 	long dev_mbit;
 	int ret;
 	double perc, rate_mbit;
-	char *str_perc;
+	char *str_perc = NULL;
 
 	if (!dev[0]) {
 		fprintf(stderr, "No device specified; specify device to rate limit by percentage\n");
@@ -230,6 +230,7 @@ static int parse_percent_rate(char *rate, const char *str, const char *dev)
 	return 0;
 
 malf:
+	free(str_perc);
 	fprintf(stderr, "Specified rate value could not be read or is malformed\n");
 	return -1;
 }
