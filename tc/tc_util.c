@@ -195,7 +195,7 @@ static int parse_percent_rate(char *rate, size_t len,
 {
 	long dev_mbit;
 	int ret;
-	double perc, rate_mbit;
+	double perc, rate_bit;
 	char *str_perc = NULL;
 
 	if (!dev[0]) {
@@ -220,9 +220,9 @@ static int parse_percent_rate(char *rate, size_t len,
 		return -1;
 	}
 
-	rate_mbit = perc * dev_mbit;
+	rate_bit = perc * dev_mbit * 1000 * 1000;
 
-	ret = snprintf(rate, len, "%lf", rate_mbit);
+	ret = snprintf(rate, len, "%lf", rate_bit);
 	if (ret <= 0 || ret >= len) {
 		fprintf(stderr, "Unable to parse calculated rate\n");
 		return -1;
