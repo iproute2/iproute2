@@ -353,9 +353,9 @@ void bpf_print_ops(struct rtattr *bpf_ops, __u16 len)
 
 	for (i = 0; i < len; i++) {
 		open_json_object(NULL);
-		print_uint(PRINT_ANY, "code", "%hu ", ops[i].code);
-		print_uint(PRINT_ANY, "jt", "%hhu ", ops[i].jt);
-		print_uint(PRINT_ANY, "jf", "%hhu ", ops[i].jf);
+		print_hu(PRINT_ANY, "code", "%hu ", ops[i].code);
+		print_hhu(PRINT_ANY, "jt", "%hhu ", ops[i].jt);
+		print_hhu(PRINT_ANY, "jf", "%hhu ", ops[i].jf);
 		if (i == len - 1)
 			print_uint(PRINT_ANY, "k", "%u\'", ops[i].k);
 		else
