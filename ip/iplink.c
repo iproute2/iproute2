@@ -1083,6 +1083,9 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -2;
 
+	/* remove device from cache; next use can refresh with new data */
+	ll_drop_by_index(req.i.ifi_index);
+
 	return 0;
 }
 
