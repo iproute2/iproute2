@@ -98,7 +98,7 @@ void iplink_usage(void)
 		"				   [ trust { on | off} ] ]\n"
 		"				   [ node_guid { eui64 } ]\n"
 		"				   [ port_guid { eui64 } ]\n"
-		"			  [ xdp { off |\n"
+		"			  [ { xdp | xdpgeneric | xdpdrv | xdpoffload } { off |\n"
 		"				  object FILE [ section NAME ] [ verbose ] |\n"
 		"				  pinned FILE } ]\n"
 		"			  [ master DEVICE ][ vrf NAME ]\n"
