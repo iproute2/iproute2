@@ -110,6 +110,7 @@ static int show_header = 1;
 static int follow_events;
 static int sctp_ino;
 static int show_tipcinfo;
+static int show_tos;
 
 enum col_id {
 	COL_NETID,
@@ -3008,6 +3009,15 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 		}
 	}
 
+	if (show_tos) {
+		if (tb[INET_DIAG_TOS])
+			out(" tos:%#x", rta_getattr_u8(tb[INET_DIAG_TOS]));
+		if (tb[INET_DIAG_TCLASS])
+			out(" tclass:%#x", rta_getattr_u8(tb[INET_DIAG_TCLASS]));
+		if (tb[INET_DIAG_CLASS_ID])
+			out(" class_id:%#x", rta_getattr_u32(tb[INET_DIAG_CLASS_ID]));
+	}
+
 	if (show_mem || (show_tcpinfo && s->type != IPPROTO_UDP)) {
 		out("\n\t");
 		if (s->type == IPPROTO_SCTP)
@@ -3056,6 +3066,11 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 		req.r.idiag_ext |= (1<<(INET_DIAG_INFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_VEGASINFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_CONG-1));
+	}
+
+	if (show_tos) {
+		req.r.idiag_ext |= (1<<(INET_DIAG_TOS-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_TCLASS-1));
 	}
 
 	iov[0] = (struct iovec){
@@ -3116,6 +3131,11 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 		req.r.idiag_ext |= (1<<(INET_DIAG_INFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_VEGASINFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_CONG-1));
+	}
+
+	if (show_tos) {
+		req.r.idiag_ext |= (1<<(INET_DIAG_TOS-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_TCLASS-1));
 	}
 
 	iov[0] = (struct iovec){
@@ -4661,6 +4681,7 @@ static void _usage(FILE *dest)
 "   -i, --info          show internal TCP information\n"
 "       --tipcinfo      show internal tipc socket information\n"
 "   -s, --summary       show socket usage summary\n"
+"       --tos           show tos and priority information\n"
 "   -b, --bpf           show bpf filter socket information\n"
 "   -E, --events        continually display sockets as they are destroyed\n"
 "   -Z, --context       display process SELinux security contexts\n"
@@ -4765,6 +4786,8 @@ static int scan_state(const char *state)
 #define OPT_TIPCSOCK 257
 #define OPT_TIPCINFO 258
 
+#define OPT_TOS 259
+
 static const struct option long_opts[] = {
 	{ "numeric", 0, 0, 'n' },
 	{ "resolve", 0, 0, 'r' },
@@ -4800,6 +4823,7 @@ static const struct option long_opts[] = {
 	{ "contexts", 0, 0, 'z' },
 	{ "net", 1, 0, 'N' },
 	{ "tipcinfo", 0, 0, OPT_TIPCINFO},
+	{ "tos", 0, 0, OPT_TOS },
 	{ "kill", 0, 0, 'K' },
 	{ "no-header", 0, 0, 'H' },
 	{ 0 }
@@ -4976,6 +5000,9 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_TIPCINFO:
 			show_tipcinfo = 1;
+			break;
+		case OPT_TOS:
+			show_tos = 1;
 			break;
 		case 'K':
 			current_filter.kill = 1;
