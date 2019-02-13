@@ -718,6 +718,8 @@ static int rtnl_recvmsg(int fd, struct msghdr *msg, char **answer)
 	if (len < 0)
 		return len;
 
+	if (len < 32768)
+		len = 32768;
 	buf = malloc(len);
 	if (!buf) {
 		fprintf(stderr, "malloc error: not enough buffer\n");
