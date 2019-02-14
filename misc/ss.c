@@ -60,7 +60,8 @@
 #endif
 
 #define MAGIC_SEQ 123456
-#define BUF_CHUNK (1024 * 1024)
+#define BUF_CHUNK (1024 * 1024)	/* Buffer chunk allocation size */
+#define BUF_CHUNKS_MAX 5	/* Maximum number of allocated buffer chunks */
 #define LEN_ALIGN(x) (((x) + 1) & ~1)
 
 #define DIAG_REQUEST(_req, _r)						    \
@@ -184,6 +185,7 @@ static struct {
 	struct buf_token *cur;	/* Position of current token in chunk */
 	struct buf_chunk *head;	/* First chunk */
 	struct buf_chunk *tail;	/* Current chunk */
+	int chunks;		/* Number of allocated chunks */
 } buffer;
 
 static const char *TCP_PROTO = "tcp";
@@ -944,6 +946,8 @@ static struct buf_chunk *buf_chunk_new(void)
 
 	new->end = buffer.cur->data;
 
+	buffer.chunks++;
+
 	return new;
 }
 
@@ -1088,33 +1092,6 @@ static int field_is_last(struct column *f)
 	return f - columns == COL_MAX - 1;
 }
 
-static void field_next(void)
-{
-	field_flush(current_field);
-
-	if (field_is_last(current_field))
-		current_field = columns;
-	else
-		current_field++;
-}
-
-/* Walk through fields and flush them until we reach the desired one */
-static void field_set(enum col_id id)
-{
-	while (id != current_field - columns)
-		field_next();
-}
-
-/* Print header for all non-empty columns */
-static void print_header(void)
-{
-	while (!field_is_last(current_field)) {
-		if (!current_field->disabled)
-			out("%s", current_field->header);
-		field_next();
-	}
-}
-
 /* Get the next available token in the buffer starting from the current token */
 static struct buf_token *buf_token_next(struct buf_token *cur)
 {
@@ -1140,6 +1117,7 @@ static void buf_free_all(void)
 		free(tmp);
 	}
 	buffer.head = NULL;
+	buffer.chunks = 0;
 }
 
 /* Get current screen width, default to 80 columns if TIOCGWINSZ fails */
@@ -1300,6 +1278,40 @@ static void render(void)
 
 	buf_free_all();
 	current_field = columns;
+}
+
+/* Move to next field, and render buffer if we reached the maximum number of
+ * chunks, at the last field in a line.
+ */
+static void field_next(void)
+{
+	if (field_is_last(current_field) && buffer.chunks >= BUF_CHUNKS_MAX) {
+		render();
+		return;
+	}
+
+	field_flush(current_field);
+	if (field_is_last(current_field))
+		current_field = columns;
+	else
+		current_field++;
+}
+
+/* Walk through fields and flush them until we reach the desired one */
+static void field_set(enum col_id id)
+{
+	while (id != current_field - columns)
+		field_next();
+}
+
+/* Print header for all non-empty columns */
+static void print_header(void)
+{
+	while (!field_is_last(current_field)) {
+		if (!current_field->disabled)
+			out("%s", current_field->header);
+		field_next();
+	}
 }
 
 static void sock_state_print(struct sockstat *s)
