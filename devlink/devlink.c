@@ -4351,7 +4351,8 @@ static int dpipe_table_show(struct dpipe_ctx *ctx, struct nlattr *nl)
 	size = mnl_attr_get_u32(nla_table[DEVLINK_ATTR_DPIPE_TABLE_SIZE]);
 	counters_enabled = !!mnl_attr_get_u8(nla_table[DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED]);
 
-	resource_valid = !!nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID];
+	resource_valid = nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID] &&
+			 ctx->resources;
 	if (resource_valid) {
 		table->resource_id = mnl_attr_get_u64(nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID]);
 		table->resource_valid = true;
@@ -4467,12 +4468,9 @@ static int cmd_dpipe_table_show(struct dl *dl)
 	dl_opts_put(nlh, dl);
 	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_resource_dump_cb,
 				  &resource_ctx);
-	if (err) {
-		pr_err("error get resources %s\n", strerror(resource_ctx.err));
-		goto err_resource_dump;
-	}
+	if (!err)
+		dpipe_ctx.resources = resource_ctx.resources;
 
-	dpipe_ctx.resources = resource_ctx.resources;
 	flags = NLM_F_REQUEST | NLM_F_ACK;
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_DPIPE_TABLE_GET, flags);
 	dl_opts_put(nlh, dl);
@@ -4485,8 +4483,6 @@ static int cmd_dpipe_table_show(struct dl *dl)
 	dpipe_ctx_fini(&dpipe_ctx);
 	return 0;
 
-err_resource_dump:
-	resource_ctx_fini(&resource_ctx);
 err_resource_ctx_init:
 err_headers_get:
 	dpipe_ctx_fini(&dpipe_ctx);
