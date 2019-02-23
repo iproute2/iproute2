@@ -176,19 +176,19 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 
 	print_link(rd, idx, name, port, nla_line);
 
-	res_print_uint(rd, "lqpn", lqpn);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_PDN])
-		res_print_uint(rd, "pdn", pdn);
+	res_print_uint(rd, "lqpn", lqpn, nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
 	print_rqpn(rd, rqpn, nla_line);
 
 	print_type(rd, type);
 	print_state(rd, state);
 
 	print_rqpsn(rd, rq_psn, nla_line);
-	res_print_uint(rd, "sq-psn", sq_psn);
+	res_print_uint(rd, "sq-psn", sq_psn,
+		       nla_line[RDMA_NLDEV_ATTR_RES_SQ_PSN]);
 
 	print_pathmig(rd, path_mig_state, nla_line);
-	res_print_uint(rd, "pid", pid);
+	res_print_uint(rd, "pdn", pdn, nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
+	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);

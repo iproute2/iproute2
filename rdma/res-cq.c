@@ -17,8 +17,11 @@ static const char *poll_ctx_to_str(uint8_t idx)
 	return "UNKNOWN";
 }
 
-static void print_poll_ctx(struct rd *rd, uint8_t poll_ctx)
+static void print_poll_ctx(struct rd *rd, uint8_t poll_ctx, struct nlattr *attr)
 {
+	if (!attr)
+		return;
+
 	if (rd->json_output) {
 		jsonw_string_field(rd->jw, "poll-ctx",
 				   poll_ctx_to_str(poll_ctx));
@@ -92,17 +95,14 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 		jsonw_start_array(rd->jw);
 
 	print_dev(rd, idx, name);
-	res_print_uint(rd, "cqe", cqe);
-	res_print_uint(rd, "users", users);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX])
-		print_poll_ctx(rd, poll_ctx);
-	res_print_uint(rd, "pid", pid);
+	res_print_uint(rd, "cqn", cqn, nla_line[RDMA_NLDEV_ATTR_RES_CQN]);
+	res_print_uint(rd, "cqe", cqe, nla_line[RDMA_NLDEV_ATTR_RES_CQE]);
+	res_print_uint(rd, "users", users,
+		       nla_line[RDMA_NLDEV_ATTR_RES_USECNT]);
+	print_poll_ctx(rd, poll_ctx, nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX]);
+	res_print_uint(rd, "ctxn", ctxn, nla_line[RDMA_NLDEV_ATTR_RES_CTXN]);
+	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);
-
-	if (nla_line[RDMA_NLDEV_ATTR_RES_CQN])
-		res_print_uint(rd, "cqn", cqn);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_CTXN])
-		res_print_uint(rd, "ctxn", ctxn);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
 	newline(rd);

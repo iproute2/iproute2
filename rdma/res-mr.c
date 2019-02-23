@@ -67,21 +67,14 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 		jsonw_start_array(rd->jw);
 
 	print_dev(rd, idx, name);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_RKEY])
-		print_key(rd, "rkey", rkey);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_LKEY])
-		print_key(rd, "lkey", lkey);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_IOVA])
-		print_key(rd, "iova", iova);
-	res_print_uint(rd, "mrlen", mrlen);
-	res_print_uint(rd, "pid", pid);
+	res_print_uint(rd, "mrn", mrn, nla_line[RDMA_NLDEV_ATTR_RES_MRN]);
+	print_key(rd, "rkey", rkey, nla_line[RDMA_NLDEV_ATTR_RES_RKEY]);
+	print_key(rd, "lkey", lkey, nla_line[RDMA_NLDEV_ATTR_RES_LKEY]);
+	print_key(rd, "iova", iova, nla_line[RDMA_NLDEV_ATTR_RES_IOVA]);
+	res_print_uint(rd, "mrlen", mrlen, nla_line[RDMA_NLDEV_ATTR_RES_MRLEN]);
+	res_print_uint(rd, "pdn", pdn, nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
+	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);
-
-	if (nla_line[RDMA_NLDEV_ATTR_RES_MRN])
-		res_print_uint(rd, "mrn", mrn);
-
-	if (nla_line[RDMA_NLDEV_ATTR_RES_PDN])
-		res_print_uint(rd, "pdn", pdn);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
 	newline(rd);

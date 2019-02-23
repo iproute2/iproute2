@@ -69,18 +69,16 @@ static int res_pd_line(struct rd *rd, const char *name, int idx,
 		jsonw_start_array(rd->jw);
 
 	print_dev(rd, idx, name);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_LOCAL_DMA_LKEY])
-		print_key(rd, "local_dma_lkey", local_dma_lkey);
-	res_print_uint(rd, "users", users);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY])
-		print_key(rd, "unsafe_global_rkey", unsafe_global_rkey);
-	res_print_uint(rd, "pid", pid);
+	res_print_uint(rd, "pdn", pdn, nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
+	print_key(rd, "local_dma_lkey", local_dma_lkey,
+		  nla_line[RDMA_NLDEV_ATTR_RES_LOCAL_DMA_LKEY]);
+	res_print_uint(rd, "users", users,
+		       nla_line[RDMA_NLDEV_ATTR_RES_USECNT]);
+	print_key(rd, "unsafe_global_rkey", unsafe_global_rkey,
+		  nla_line[RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY]);
+	res_print_uint(rd, "ctxn", ctxn, nla_line[RDMA_NLDEV_ATTR_RES_CTXN]);
+	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_CTXN])
-		res_print_uint(rd, "ctxn", ctxn);
-
-	if (nla_line[RDMA_NLDEV_ATTR_RES_PDN])
-		res_print_uint(rd, "pdn", pdn);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
 	newline(rd);

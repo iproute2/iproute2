@@ -47,7 +47,9 @@ static int res_print_summary(struct rd *rd, struct nlattr **tb)
 
 		name = mnl_attr_get_str(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_NAME]);
 		curr = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
-		res_print_uint(rd, name, curr);
+		res_print_uint(
+			rd, name, curr,
+			nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
 	}
 	return 0;
 }
@@ -188,16 +190,24 @@ char *get_task_name(uint32_t pid)
 	return comm;
 }
 
-void print_key(struct rd *rd, const char *name, uint64_t val)
+void print_key(struct rd *rd, const char *name, uint64_t val,
+	       struct nlattr *nlattr)
 {
+	if (!nlattr)
+		return;
+
 	if (rd->json_output)
 		jsonw_xint_field(rd->jw, name, val);
 	else
 		pr_out("%s 0x%" PRIx64 " ", name, val);
 }
 
-void res_print_uint(struct rd *rd, const char *name, uint64_t val)
+void res_print_uint(struct rd *rd, const char *name, uint64_t val,
+		    struct nlattr *nlattr)
 {
+	if (!nlattr)
+		return;
+
 	if (rd->json_output)
 		jsonw_u64_field(rd->jw, name, val);
 	else

@@ -202,16 +202,15 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 		jsonw_start_array(rd->jw);
 
 	print_link(rd, idx, name, port, nla_line);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_LQPN])
-		res_print_uint(rd, "lqpn", lqpn);
+	res_print_uint(rd, "cm-idn", cm_idn,
+		       nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN]);
+	res_print_uint(rd, "lqpn", lqpn, nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
 	if (nla_line[RDMA_NLDEV_ATTR_RES_TYPE])
 		print_qp_type(rd, type);
 	print_cm_id_state(rd, state);
 	print_ps(rd, ps);
-	res_print_uint(rd, "pid", pid);
+	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);
-	if (nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN])
-		res_print_uint(rd, "cm-idn", cm_idn);
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_SRC_ADDR])
 		print_ipaddr(rd, "src-addr", src_addr_str, src_port);
