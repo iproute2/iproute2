@@ -1932,6 +1932,7 @@ static int iproute_get(int argc, char **argv)
 	int fib_match = 0;
 	int from_ok = 0;
 	unsigned int mark = 0;
+	bool address_found = false;
 
 	iproute_reset_filter(0);
 	filter.cloned = 2;
@@ -2037,11 +2038,12 @@ static int iproute_get(int argc, char **argv)
 				addattr_l(&req.n, sizeof(req),
 					  RTA_DST, &addr.data, addr.bytelen);
 			req.r.rtm_dst_len = addr.bitlen;
+			address_found = true;
 		}
 		argc--; argv++;
 	}
 
-	if (req.r.rtm_dst_len == 0) {
+	if (!address_found) {
 		fprintf(stderr, "need at least a destination address\n");
 		return -1;
 	}

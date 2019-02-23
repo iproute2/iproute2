@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <net/if.h>
+#include <linux/limits.h>
 #include <linux/if_arp.h>
 #include <linux/if_ether.h>
 #include <linux/ip.h>

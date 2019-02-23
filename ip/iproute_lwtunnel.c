@@ -31,7 +31,7 @@
 #include <linux/seg6_iptunnel.h>
 #include <linux/seg6_hmac.h>
 #include <linux/seg6_local.h>
-#include <net/if.h>
+#include <linux/if_tunnel.h>
 
 static const char *format_encap_type(int type)
 {
@@ -294,6 +294,7 @@ static void print_encap_mpls(FILE *fp, struct rtattr *encap)
 static void print_encap_ip(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[LWTUNNEL_IP_MAX+1];
+	__u16 flags;
 
 	parse_rtattr_nested(tb, LWTUNNEL_IP_MAX, encap);
 
@@ -318,6 +319,16 @@ static void print_encap_ip(FILE *fp, struct rtattr *encap)
 	if (tb[LWTUNNEL_IP_TOS])
 		print_uint(PRINT_ANY, "tos",
 			   "tos %d ", rta_getattr_u8(tb[LWTUNNEL_IP_TOS]));
+
+	if (tb[LWTUNNEL_IP_FLAGS]) {
+		flags = rta_getattr_u16(tb[LWTUNNEL_IP_FLAGS]);
+		if (flags & TUNNEL_KEY)
+			print_bool(PRINT_ANY, "key", "key ", true);
+		if (flags & TUNNEL_CSUM)
+			print_bool(PRINT_ANY, "csum", "csum ", true);
+		if (flags & TUNNEL_SEQ)
+			print_bool(PRINT_ANY, "seq", "seq ", true);
+	}
 }
 
 static void print_encap_ila(FILE *fp, struct rtattr *encap)
@@ -354,6 +365,7 @@ static void print_encap_ila(FILE *fp, struct rtattr *encap)
 static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[LWTUNNEL_IP6_MAX+1];
+	__u16 flags;
 
 	parse_rtattr_nested(tb, LWTUNNEL_IP6_MAX, encap);
 
@@ -379,6 +391,16 @@ static void print_encap_ip6(FILE *fp, struct rtattr *encap)
 	if (tb[LWTUNNEL_IP6_TC])
 		print_uint(PRINT_ANY, "tc",
 			   "tc %u ", rta_getattr_u8(tb[LWTUNNEL_IP6_TC]));
+
+	if (tb[LWTUNNEL_IP6_FLAGS]) {
+		flags = rta_getattr_u16(tb[LWTUNNEL_IP6_FLAGS]);
+		if (flags & TUNNEL_KEY)
+			print_bool(PRINT_ANY, "key", "key ", true);
+		if (flags & TUNNEL_CSUM)
+			print_bool(PRINT_ANY, "csum", "csum ", true);
+		if (flags & TUNNEL_SEQ)
+			print_bool(PRINT_ANY, "seq", "seq ", true);
+	}
 }
 
 static void print_encap_bpf(FILE *fp, struct rtattr *encap)
@@ -777,9 +799,11 @@ static int parse_encap_ip(struct rtattr *rta, size_t len,
 			  int *argcp, char ***argvp)
 {
 	int id_ok = 0, dst_ok = 0, src_ok = 0, tos_ok = 0, ttl_ok = 0;
+	int key_ok = 0, csum_ok = 0, seq_ok = 0;
 	char **argv = *argvp;
 	int argc = *argcp;
 	int ret = 0;
+	__u16 flags = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "id") == 0) {
@@ -827,6 +851,18 @@ static int parse_encap_ip(struct rtattr *rta, size_t len,
 			if (get_u8(&ttl, *argv, 0))
 				invarg("\"ttl\" value is invalid\n", *argv);
 			ret = rta_addattr8(rta, len, LWTUNNEL_IP_TTL, ttl);
+		} else if (strcmp(*argv, "key") == 0) {
+			if (key_ok++)
+				duparg2("key", *argv);
+			flags |= TUNNEL_KEY;
+		} else if (strcmp(*argv, "csum") == 0) {
+			if (csum_ok++)
+				duparg2("csum", *argv);
+			flags |= TUNNEL_CSUM;
+		} else if (strcmp(*argv, "seq") == 0) {
+			if (seq_ok++)
+				duparg2("seq", *argv);
+			flags |= TUNNEL_SEQ;
 		} else {
 			break;
 		}
@@ -834,6 +870,9 @@ static int parse_encap_ip(struct rtattr *rta, size_t len,
 			break;
 		argc--; argv++;
 	}
+
+	if (flags)
+		ret = rta_addattr16(rta, len,  LWTUNNEL_IP_FLAGS, flags);
 
 	/* argv is currently the first unparsed argument,
 	 * but the lwt_parse_encap() caller will move to the next,
@@ -927,9 +966,11 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len,
 			   int *argcp, char ***argvp)
 {
 	int id_ok = 0, dst_ok = 0, src_ok = 0, tos_ok = 0, ttl_ok = 0;
+	int key_ok = 0, csum_ok = 0, seq_ok = 0;
 	char **argv = *argvp;
 	int argc = *argcp;
 	int ret = 0;
+	__u16 flags = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "id") == 0) {
@@ -979,6 +1020,18 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len,
 				       *argv);
 			ret = rta_addattr8(rta, len, LWTUNNEL_IP6_HOPLIMIT,
 					   hoplimit);
+		} else if (strcmp(*argv, "key") == 0) {
+			if (key_ok++)
+				duparg2("key", *argv);
+			flags |= TUNNEL_KEY;
+		} else if (strcmp(*argv, "csum") == 0) {
+			if (csum_ok++)
+				duparg2("csum", *argv);
+			flags |= TUNNEL_CSUM;
+		} else if (strcmp(*argv, "seq") == 0) {
+			if (seq_ok++)
+				duparg2("seq", *argv);
+			flags |= TUNNEL_SEQ;
 		} else {
 			break;
 		}
@@ -986,6 +1039,9 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len,
 			break;
 		argc--; argv++;
 	}
+
+	if (flags)
+		ret = rta_addattr16(rta, len,  LWTUNNEL_IP6_FLAGS, flags);
 
 	/* argv is currently the first unparsed argument,
 	 * but the lwt_parse_encap() caller will move to the next,

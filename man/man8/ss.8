@@ -244,6 +244,23 @@ the pacing rate and max pacing rate
 a helper variable for TCP internal auto tuning socket receive buffer
 .RE
 .TP
+.B \-\-tos
+Show ToS and priority information. Below fields may appear:
+.RS
+.P
+.TP
+.B tos
+IPv4 Type-of-Service byte
+.P
+.TP
+.B tclass
+IPv6 Traffic Class byte
+.P
+.TP
+.B class_id
+Class id set by net_cls cgroup. If class is zero this shows priority set by SO_PRIORITY.
+.RE
+.TP
 .B \-K, \-\-kill
 Attempts to forcibly close sockets. This option displays sockets that are
 successfully closed and silently skips sockets that the kernel does not support

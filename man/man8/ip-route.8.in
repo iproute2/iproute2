@@ -737,7 +737,8 @@ is a set of encapsulation attributes specific to the
 .B tos
 .IR TOS " ] ["
 .B  ttl
-.IR TTL " ]"
+.IR TTL " ] [ "
+.BR key " ] [" csum " ] [ " seq " ] "
 .in -2
 .sp
 

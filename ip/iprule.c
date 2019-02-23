@@ -459,7 +459,7 @@ int print_rule(struct nlmsghdr *n, void *arg)
 	} else if (frh->action == FR_ACT_NOP) {
 		print_null(PRINT_ANY, "nop", "nop", NULL);
 	} else if (frh->action != FR_ACT_TO_TBL) {
-		print_string(PRINT_ANY, "to_tbl", "%s",
+		print_string(PRINT_ANY, "action", "%s",
 			     rtnl_rtntype_n2a(frh->action, b1, sizeof(b1)));
 	}
 

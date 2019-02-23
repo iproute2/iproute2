@@ -52,8 +52,17 @@
 #include <linux/tipc_netlink.h>
 #include <linux/tipc_sockets_diag.h>
 
+/* AF_VSOCK/PF_VSOCK is only provided since glibc 2.18 */
+#ifndef PF_VSOCK
+#define PF_VSOCK 40
+#endif
+#ifndef AF_VSOCK
+#define AF_VSOCK PF_VSOCK
+#endif
+
 #define MAGIC_SEQ 123456
-#define BUF_CHUNK (1024 * 1024)
+#define BUF_CHUNK (1024 * 1024)	/* Buffer chunk allocation size */
+#define BUF_CHUNKS_MAX 5	/* Maximum number of allocated buffer chunks */
 #define LEN_ALIGN(x) (((x) + 1) & ~1)
 
 #define DIAG_REQUEST(_req, _r)						    \
@@ -111,6 +120,7 @@ static int show_header = 1;
 static int follow_events;
 static int sctp_ino;
 static int show_tipcinfo;
+static int show_tos;
 
 enum col_id {
 	COL_NETID,
@@ -176,6 +186,7 @@ static struct {
 	struct buf_token *cur;	/* Position of current token in chunk */
 	struct buf_chunk *head;	/* First chunk */
 	struct buf_chunk *tail;	/* Current chunk */
+	int chunks;		/* Number of allocated chunks */
 } buffer;
 
 static const char *TCP_PROTO = "tcp";
@@ -946,6 +957,8 @@ static struct buf_chunk *buf_chunk_new(void)
 
 	new->end = buffer.cur->data;
 
+	buffer.chunks++;
+
 	return new;
 }
 
@@ -1090,33 +1103,6 @@ static int field_is_last(struct column *f)
 	return f - columns == COL_MAX - 1;
 }
 
-static void field_next(void)
-{
-	field_flush(current_field);
-
-	if (field_is_last(current_field))
-		current_field = columns;
-	else
-		current_field++;
-}
-
-/* Walk through fields and flush them until we reach the desired one */
-static void field_set(enum col_id id)
-{
-	while (id != current_field - columns)
-		field_next();
-}
-
-/* Print header for all non-empty columns */
-static void print_header(void)
-{
-	while (!field_is_last(current_field)) {
-		if (!current_field->disabled)
-			out("%s", current_field->header);
-		field_next();
-	}
-}
-
 /* Get the next available token in the buffer starting from the current token */
 static struct buf_token *buf_token_next(struct buf_token *cur)
 {
@@ -1142,6 +1128,7 @@ static void buf_free_all(void)
 		free(tmp);
 	}
 	buffer.head = NULL;
+	buffer.chunks = 0;
 }
 
 /* Get current screen width, default to 80 columns if TIOCGWINSZ fails */
@@ -1302,6 +1289,40 @@ static void render(void)
 
 	buf_free_all();
 	current_field = columns;
+}
+
+/* Move to next field, and render buffer if we reached the maximum number of
+ * chunks, at the last field in a line.
+ */
+static void field_next(void)
+{
+	if (field_is_last(current_field) && buffer.chunks >= BUF_CHUNKS_MAX) {
+		render();
+		return;
+	}
+
+	field_flush(current_field);
+	if (field_is_last(current_field))
+		current_field = columns;
+	else
+		current_field++;
+}
+
+/* Walk through fields and flush them until we reach the desired one */
+static void field_set(enum col_id id)
+{
+	while (id != current_field - columns)
+		field_next();
+}
+
+/* Print header for all non-empty columns */
+static void print_header(void)
+{
+	while (!field_is_last(current_field)) {
+		if (!current_field->disabled)
+			out("%s", current_field->header);
+		field_next();
+	}
 }
 
 static void sock_state_print(struct sockstat *s)
@@ -3022,6 +3043,15 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 		}
 	}
 
+	if (show_tos) {
+		if (tb[INET_DIAG_TOS])
+			out(" tos:%#x", rta_getattr_u8(tb[INET_DIAG_TOS]));
+		if (tb[INET_DIAG_TCLASS])
+			out(" tclass:%#x", rta_getattr_u8(tb[INET_DIAG_TCLASS]));
+		if (tb[INET_DIAG_CLASS_ID])
+			out(" class_id:%#x", rta_getattr_u32(tb[INET_DIAG_CLASS_ID]));
+	}
+
 	if (show_mem || (show_tcpinfo && s->type != IPPROTO_UDP)) {
 		out("\n\t");
 		if (s->type == IPPROTO_SCTP)
@@ -3070,6 +3100,11 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 		req.r.idiag_ext |= (1<<(INET_DIAG_INFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_VEGASINFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_CONG-1));
+	}
+
+	if (show_tos) {
+		req.r.idiag_ext |= (1<<(INET_DIAG_TOS-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_TCLASS-1));
 	}
 
 	iov[0] = (struct iovec){
@@ -3130,6 +3165,11 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 		req.r.idiag_ext |= (1<<(INET_DIAG_INFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_VEGASINFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_CONG-1));
+	}
+
+	if (show_tos) {
+		req.r.idiag_ext |= (1<<(INET_DIAG_TOS-1));
+		req.r.idiag_ext |= (1<<(INET_DIAG_TCLASS-1));
 	}
 
 	iov[0] = (struct iovec){
@@ -4814,6 +4854,7 @@ static void _usage(FILE *dest)
 "   -i, --info          show internal TCP information\n"
 "       --tipcinfo      show internal tipc socket information\n"
 "   -s, --summary       show socket usage summary\n"
+"       --tos           show tos and priority information\n"
 "   -b, --bpf           show bpf filter socket information\n"
 "   -E, --events        continually display sockets as they are destroyed\n"
 "   -Z, --context       display process SELinux security contexts\n"
@@ -4918,8 +4959,10 @@ static int scan_state(const char *state)
 #define OPT_TIPCSOCK 257
 #define OPT_TIPCINFO 258
 
+#define OPT_TOS 259
+
 /* Values of 'x' are already used so a non-character is used */
-#define OPT_XDPSOCK 259
+#define OPT_XDPSOCK 260
 
 static const struct option long_opts[] = {
 	{ "numeric", 0, 0, 'n' },
@@ -4956,6 +4999,7 @@ static const struct option long_opts[] = {
 	{ "contexts", 0, 0, 'z' },
 	{ "net", 1, 0, 'N' },
 	{ "tipcinfo", 0, 0, OPT_TIPCINFO},
+	{ "tos", 0, 0, OPT_TOS },
 	{ "kill", 0, 0, 'K' },
 	{ "no-header", 0, 0, 'H' },
 	{ "xdp", 0, 0, OPT_XDPSOCK},
@@ -5138,6 +5182,9 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_TIPCINFO:
 			show_tipcinfo = 1;
+			break;
+		case OPT_TOS:
+			show_tos = 1;
 			break;
 		case 'K':
 			current_filter.kill = 1;

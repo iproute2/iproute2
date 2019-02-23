@@ -2183,7 +2183,7 @@ queries.
 option above.
 
 .BR mcast_flood " { " on " | " off " }"
-- controls whether a given port will be flooded with multicast traffic for which there is no MDB entry.
+- controls whether a given port will flood multicast traffic for which there is no MDB entry.
 
 .BI group_fwd_mask " MASK "
 - set the group forward mask. This is the bitmask that is applied to decide whether to forward incoming frames destined to link-local addresses, ie addresses of the form 01:80:C2:00:00:0X (defaults to 0, ie the bridge does not forward any link-local frames coming on this port).

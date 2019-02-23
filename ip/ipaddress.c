@@ -547,7 +547,7 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 		return;
 	}
 
-	parse_rtattr_nested(vf, IFLA_VF_MAX, vfstats);
+	parse_rtattr_nested(vf, IFLA_VF_STATS_MAX, vfstats);
 
 	if (is_json_context()) {
 		open_json_object("stats");

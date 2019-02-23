@@ -81,6 +81,9 @@ int rtnl_linkdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 int rtnl_linkdump_req_filter_fn(struct rtnl_handle *rth, int fam,
 				req_filter_fn_t fn)
 	__attribute__((warn_unused_result));
+int rtnl_fdb_linkdump_req_filter_fn(struct rtnl_handle *rth,
+				    req_filter_fn_t filter_fn)
+	__attribute__((warn_unused_result));
 int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 	__attribute__((warn_unused_result));
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
