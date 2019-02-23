@@ -35,7 +35,6 @@ static int res_print_summary(struct rd *rd, struct nlattr **tb)
 
 	mnl_attr_for_each_nested(nla_entry, nla_table) {
 		struct nlattr *nla_line[RDMA_NLDEV_ATTR_MAX] = {};
-		char json_name[32];
 
 		err = mnl_attr_parse_nested(nla_entry, rd_attr_cb, nla_line);
 		if (err != MNL_CB_OK)
@@ -48,12 +47,7 @@ static int res_print_summary(struct rd *rd, struct nlattr **tb)
 
 		name = mnl_attr_get_str(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_NAME]);
 		curr = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
-		if (rd->json_output) {
-			snprintf(json_name, 32, "%s", name);
-			jsonw_lluint_field(rd->jw, json_name, curr);
-		} else {
-			pr_out("%s %"PRId64 " ", name, curr);
-		}
+		res_print_uint(rd, name, curr);
 	}
 	return 0;
 }
@@ -125,22 +119,6 @@ const char *qp_types_to_str(uint8_t idx)
 	if (idx < ARRAY_SIZE(qp_types_str))
 		return qp_types_str[idx];
 	return "UNKNOWN";
-}
-
-void print_lqpn(struct rd *rd, uint32_t val)
-{
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "lqpn", val);
-	else
-		pr_out("lqpn %u ", val);
-}
-
-void print_pid(struct rd *rd, uint32_t val)
-{
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "pid", val);
-	else
-		pr_out("pid %u ", val);
 }
 
 void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)
@@ -221,17 +199,9 @@ void print_key(struct rd *rd, const char *name, uint64_t val)
 void res_print_uint(struct rd *rd, const char *name, uint64_t val)
 {
 	if (rd->json_output)
-		jsonw_uint_field(rd->jw, name, val);
+		jsonw_u64_field(rd->jw, name, val);
 	else
 		pr_out("%s %" PRIu64 " ", name, val);
-}
-
-void print_users(struct rd *rd, uint64_t val)
-{
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "users", val);
-	else
-		pr_out("users %" PRIu64 " ", val);
 }
 
 RES_FUNC(res_no_args,	RDMA_NLDEV_CMD_RES_GET,	NULL, true);

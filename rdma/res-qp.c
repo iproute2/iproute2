@@ -66,14 +66,6 @@ static void print_rqpsn(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 		pr_out("rq-psn %u ", val);
 }
 
-static void print_sqpsn(struct rd *rd, uint32_t val)
-{
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "sq-psn", val);
-	else
-		pr_out("sq-psn %u ", val);
-}
-
 static void print_pathmig(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 {
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE])
@@ -209,7 +201,7 @@ int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data)
 
 		print_link(rd, idx, name, port, nla_line);
 
-		print_lqpn(rd, lqpn);
+		res_print_uint(rd, "lqpn", lqpn);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_PDN])
 			res_print_uint(rd, "pdn", pdn);
 		print_rqpn(rd, rqpn, nla_line);
@@ -218,10 +210,10 @@ int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data)
 		print_state(rd, state);
 
 		print_rqpsn(rd, rq_psn, nla_line);
-		print_sqpsn(rd, sq_psn);
+		res_print_uint(rd, "sq-psn", sq_psn);
 
 		print_pathmig(rd, path_mig_state, nla_line);
-		print_pid(rd, pid);
+		res_print_uint(rd, "pid", pid);
 		print_comm(rd, comm, nla_line);
 
 		if (nla_line[RDMA_NLDEV_ATTR_RES_PID])

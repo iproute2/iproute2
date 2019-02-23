@@ -227,12 +227,12 @@ int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data)
 
 		print_link(rd, idx, name, port, nla_line);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_LQPN])
-			print_lqpn(rd, lqpn);
+			res_print_uint(rd, "lqpn", lqpn);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_TYPE])
 			print_qp_type(rd, type);
 		print_cm_id_state(rd, state);
 		print_ps(rd, ps);
-		print_pid(rd, pid);
+		res_print_uint(rd, "pid", pid);
 		print_comm(rd, comm, nla_line);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN])
 			res_print_uint(rd, "cm-idn", cm_idn);

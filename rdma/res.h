@@ -112,12 +112,9 @@ char *get_task_name(uint32_t pid);
 void print_dev(struct rd *rd, uint32_t idx, const char *name);
 void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 		struct nlattr **nla_line);
-void print_users(struct rd *rd, uint64_t val);
 void print_key(struct rd *rd, const char *name, uint64_t val);
 void res_print_uint(struct rd *rd, const char *name, uint64_t val);
-void print_pid(struct rd *rd, uint32_t val);
 void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line);
 const char *qp_types_to_str(uint8_t idx);
-void print_lqpn(struct rd *rd, uint32_t val);
 
 #endif /* _RDMA_TOOL_RES_H_ */

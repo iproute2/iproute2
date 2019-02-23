@@ -97,7 +97,7 @@ int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data)
 		if (nla_line[RDMA_NLDEV_ATTR_RES_IOVA])
 			print_key(rd, "iova", iova);
 		res_print_uint(rd, "mrlen", mrlen);
-		print_pid(rd, pid);
+		res_print_uint(rd, "pid", pid);
 		print_comm(rd, comm, nla_line);
 
 		if (nla_line[RDMA_NLDEV_ATTR_RES_MRN])

@@ -7,14 +7,6 @@
 #include "res.h"
 #include <inttypes.h>
 
-static void print_cqe(struct rd *rd, uint32_t val)
-{
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "cqe", val);
-	else
-		pr_out("cqe %u ", val);
-}
-
 static const char *poll_ctx_to_str(uint8_t idx)
 {
 	static const char * const cm_id_states_str[] = {
@@ -120,11 +112,11 @@ int res_cq_parse_cb(const struct nlmsghdr *nlh, void *data)
 			jsonw_start_array(rd->jw);
 
 		print_dev(rd, idx, name);
-		print_cqe(rd, cqe);
-		print_users(rd, users);
+		res_print_uint(rd, "cqe", cqe);
+		res_print_uint(rd, "users", users);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX])
 			print_poll_ctx(rd, poll_ctx);
-		print_pid(rd, pid);
+		res_print_uint(rd, "pid", pid);
 		print_comm(rd, comm, nla_line);
 
 		if (nla_line[RDMA_NLDEV_ATTR_RES_CQN])

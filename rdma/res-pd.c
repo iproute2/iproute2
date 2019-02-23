@@ -89,10 +89,10 @@ int res_pd_parse_cb(const struct nlmsghdr *nlh, void *data)
 		print_dev(rd, idx, name);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_LOCAL_DMA_LKEY])
 			print_key(rd, "local_dma_lkey", local_dma_lkey);
-		print_users(rd, users);
+		res_print_uint(rd, "users", users);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY])
 			print_key(rd, "unsafe_global_rkey", unsafe_global_rkey);
-		print_pid(rd, pid);
+		res_print_uint(rd, "pid", pid);
 		print_comm(rd, comm, nla_line);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_CTXN])
 			res_print_uint(rd, "ctxn", ctxn);
