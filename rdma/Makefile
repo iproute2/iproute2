@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 include ../config.mk
 
 TARGETS :=
