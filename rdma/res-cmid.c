@@ -107,11 +107,9 @@ static int ss_ntop(struct nlattr *nla_line, char *addr_str, uint16_t *port)
 	}
 	return 0;
 }
-
 static int res_cm_id_line(struct rd *rd, const char *name, int idx,
-			  struct nlattr *nla_entry)
+		       struct nlattr **nla_line)
 {
-	struct nlattr *nla_line[RDMA_NLDEV_ATTR_MAX] = {};
 	char src_addr_str[INET6_ADDRSTRLEN];
 	char dst_addr_str[INET6_ADDRSTRLEN];
 	uint16_t src_port, dst_port;
@@ -120,11 +118,6 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 	uint32_t lqpn = 0, ps;
 	uint32_t cm_idn = 0;
 	char *comm = NULL;
-	int err;
-
-	err = mnl_attr_parse_nested(nla_entry, rd_attr_cb, nla_line);
-	if (err != MNL_CB_OK)
-		return MNL_CB_ERROR;
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_STATE] ||
 	    !nla_line[RDMA_NLDEV_ATTR_RES_PS] ||
@@ -225,6 +218,23 @@ out:	if (nla_line[RDMA_NLDEV_ATTR_RES_PID])
 	return MNL_CB_OK;
 }
 
+int res_cm_id_idx_parse_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
+	struct rd *rd = data;
+	const char *name;
+	int idx;
+
+	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
+	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME])
+		return MNL_CB_ERROR;
+
+	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
+	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
+
+	return res_cm_id_line(rd, name, idx, tb);
+}
+
 int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
@@ -244,8 +254,13 @@ int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data)
 	nla_table = tb[RDMA_NLDEV_ATTR_RES_CM_ID];
 
 	mnl_attr_for_each_nested(nla_entry, nla_table) {
-		ret = res_cm_id_line(rd, name, idx, nla_entry);
+		struct nlattr *nla_line[RDMA_NLDEV_ATTR_MAX] = {};
 
+		ret = mnl_attr_parse_nested(nla_entry, rd_attr_cb, nla_line);
+		if (ret != MNL_CB_OK)
+			break;
+
+		ret = res_cm_id_line(rd, name, idx, nla_line);
 		if (ret != MNL_CB_OK)
 			break;
 	}

@@ -9,31 +9,52 @@
 #include "rdma.h"
 
 int _res_send_msg(struct rd *rd, uint32_t command, mnl_cb_t callback);
-int res_pd_parse_cb(const struct nlmsghdr *nlh, void *data);
-int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data);
-int res_cq_parse_cb(const struct nlmsghdr *nlh, void *data);
-int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data);
-int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data);
+int _res_send_idx_msg(struct rd *rd, uint32_t command, mnl_cb_t callback,
+		      uint32_t idx, uint32_t id);
 
-#define RES_FUNC(name, command, valid_filters, strict_port) \
-	static inline int _##name(struct rd *rd)\
-	{ \
-		return _res_send_msg(rd, command, name##_parse_cb); \
-	} \
-	static inline int name(struct rd *rd) \
-	{\
-		int ret = rd_build_filter(rd, valid_filters); \
-		if (ret) \
-			return ret; \
-		if ((uintptr_t)valid_filters != (uintptr_t)NULL) { \
-			ret = rd_set_arg_to_devname(rd); \
-			if (ret) \
-				return ret;\
-		} \
-		if (strict_port) \
-			return rd_exec_dev(rd, _##name); \
-		else \
-			return rd_exec_link(rd, _##name, strict_port); \
+int res_pd_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_pd_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_mr_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_cq_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_cq_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_cm_id_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_qp_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
+
+#define RES_FUNC(name, command, valid_filters, strict_port, id)                        \
+	static inline int _##name(struct rd *rd)                                       \
+	{                                                                              \
+		uint32_t idx;                                                          \
+		int ret;                                                               \
+		if (id) {                                                              \
+			ret = rd_doit_index(rd, &idx);                                 \
+			if (ret) {                                                     \
+				ret = _res_send_idx_msg(rd, command,                   \
+							name##_idx_parse_cb,           \
+							idx, id);                      \
+				if (!ret)                                              \
+					return ret;                                    \
+				/* Fallback for old systems without .doit callbacks */ \
+			}                                                              \
+		}                                                                      \
+		return _res_send_msg(rd, command, name##_parse_cb);                    \
+	}                                                                              \
+	static inline int name(struct rd *rd)                                          \
+	{                                                                              \
+		int ret = rd_build_filter(rd, valid_filters);                          \
+		if (ret)                                                               \
+			return ret;                                                    \
+		if ((uintptr_t)valid_filters != (uintptr_t)NULL) {                     \
+			ret = rd_set_arg_to_devname(rd);                               \
+			if (ret)                                                       \
+				return ret;                                            \
+		}                                                                      \
+		if (strict_port)                                                       \
+			return rd_exec_dev(rd, _##name);                               \
+		else                                                                   \
+			return rd_exec_link(rd, _##name, strict_port);                 \
 	}
 
 static const
@@ -42,11 +63,12 @@ struct filters pd_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "users", .is_number = true },
 	{ .name = "pid", .is_number = true },
 	{ .name = "ctxn", .is_number = true },
-	{ .name = "pdn", .is_number = true },
+	{ .name = "pdn", .is_number = true, .is_doit = true },
 	{ .name = "ctxn", .is_number = true }
 };
 
-RES_FUNC(res_pd, RDMA_NLDEV_CMD_RES_PD_GET, pd_valid_filters, true);
+RES_FUNC(res_pd, RDMA_NLDEV_CMD_RES_PD_GET, pd_valid_filters, true,
+	 RDMA_NLDEV_ATTR_RES_PDN);
 
 static const
 struct filters mr_valid_filters[MAX_NUMBER_OF_FILTERS] = {
@@ -55,11 +77,12 @@ struct filters mr_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "lkey", .is_number = true },
 	{ .name = "mrlen", .is_number = true },
 	{ .name = "pid", .is_number = true },
-	{ .name = "mrn", .is_number = true },
+	{ .name = "mrn", .is_number = true, .is_doit = true },
 	{ .name = "pdn", .is_number = true }
 };
 
-RES_FUNC(res_mr, RDMA_NLDEV_CMD_RES_MR_GET, mr_valid_filters, true);
+RES_FUNC(res_mr, RDMA_NLDEV_CMD_RES_MR_GET, mr_valid_filters, true,
+	 RDMA_NLDEV_ATTR_RES_MRN);
 
 static const
 struct filters cq_valid_filters[MAX_NUMBER_OF_FILTERS] = {
@@ -67,11 +90,12 @@ struct filters cq_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "users", .is_number = true },
 	{ .name = "poll-ctx", .is_number = false },
 	{ .name = "pid", .is_number = true },
-	{ .name = "cqn", .is_number = true },
+	{ .name = "cqn", .is_number = true, .is_doit = true },
 	{ .name = "ctxn", .is_number = true }
 };
 
-RES_FUNC(res_cq, RDMA_NLDEV_CMD_RES_CQ_GET, cq_valid_filters, true);
+RES_FUNC(res_cq, RDMA_NLDEV_CMD_RES_CQ_GET, cq_valid_filters, true,
+	 RDMA_NLDEV_ATTR_RES_CQN);
 
 static const
 struct filters cm_id_valid_filters[MAX_NUMBER_OF_FILTERS] = {
@@ -87,15 +111,16 @@ struct filters cm_id_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "src-port", .is_number = true },
 	{ .name = "dst-addr", .is_number = false },
 	{ .name = "dst-port", .is_number = true },
-	{ .name = "cm-idn", .is_number = true }
+	{ .name = "cm-idn", .is_number = true, .is_doit = true }
 };
 
-RES_FUNC(res_cm_id, RDMA_NLDEV_CMD_RES_CM_ID_GET, cm_id_valid_filters, false);
+RES_FUNC(res_cm_id, RDMA_NLDEV_CMD_RES_CM_ID_GET, cm_id_valid_filters, false,
+	 RDMA_NLDEV_ATTR_RES_CM_IDN);
 
 static const struct
 filters qp_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "link", .is_number = false },
-	{ .name = "lqpn", .is_number = true },
+	{ .name = "lqpn", .is_number = true, .is_doit = true },
 	{ .name = "rqpn", .is_number = true },
 	{ .name = "pid",  .is_number = true },
 	{ .name = "sq-psn", .is_number = true },
@@ -106,7 +131,8 @@ filters qp_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "pdn", .is_number = true },
 };
 
-RES_FUNC(res_qp,	RDMA_NLDEV_CMD_RES_QP_GET, qp_valid_filters, false);
+RES_FUNC(res_qp, RDMA_NLDEV_CMD_RES_QP_GET, qp_valid_filters, false,
+	 RDMA_NLDEV_ATTR_RES_LQPN);
 
 char *get_task_name(uint32_t pid);
 void print_dev(struct rd *rd, uint32_t idx, const char *name);

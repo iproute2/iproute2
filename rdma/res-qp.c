@@ -79,19 +79,13 @@ static void print_pathmig(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 }
 
 static int res_qp_line(struct rd *rd, const char *name, int idx,
-		       struct nlattr *nla_entry)
+		       struct nlattr **nla_line)
 {
-	struct nlattr *nla_line[RDMA_NLDEV_ATTR_MAX] = {};
 	uint32_t lqpn, rqpn = 0, rq_psn = 0, sq_psn;
 	uint8_t type, state, path_mig_state = 0;
 	uint32_t port = 0, pid = 0;
 	uint32_t pdn = 0;
 	char *comm = NULL;
-	int err;
-
-	err = mnl_attr_parse_nested(nla_entry, rd_attr_cb, nla_line);
-	if (err != MNL_CB_OK)
-		return MNL_CB_ERROR;
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_LQPN] ||
 	    !nla_line[RDMA_NLDEV_ATTR_RES_SQ_PSN] ||
@@ -199,6 +193,23 @@ out:
 	return MNL_CB_OK;
 }
 
+int res_qp_idx_parse_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
+	struct rd *rd = data;
+	const char *name;
+	uint32_t idx;
+
+	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
+	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME])
+		return MNL_CB_ERROR;
+
+	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
+	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
+
+	return res_qp_line(rd, name, idx, tb);
+}
+
 int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
@@ -218,8 +229,13 @@ int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data)
 	nla_table = tb[RDMA_NLDEV_ATTR_RES_QP];
 
 	mnl_attr_for_each_nested(nla_entry, nla_table) {
-		ret = res_qp_line(rd, name, idx, nla_entry);
+		struct nlattr *nla_line[RDMA_NLDEV_ATTR_MAX] = {};
 
+		ret = mnl_attr_parse_nested(nla_entry, rd_attr_cb, nla_line);
+		if (ret != MNL_CB_OK)
+			break;
+
+		ret = res_qp_line(rd, name, idx, nla_line);
 		if (ret != MNL_CB_OK)
 			break;
 	}

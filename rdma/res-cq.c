@@ -31,9 +31,8 @@ static void print_poll_ctx(struct rd *rd, uint8_t poll_ctx, struct nlattr *attr)
 }
 
 static int res_cq_line(struct rd *rd, const char *name, int idx,
-		       struct nlattr *nla_entry)
+		       struct nlattr **nla_line)
 {
-	struct nlattr *nla_line[RDMA_NLDEV_ATTR_MAX] = {};
 	char *comm = NULL;
 	uint32_t pid = 0;
 	uint8_t poll_ctx = 0;
@@ -41,11 +40,6 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 	uint32_t cqn = 0;
 	uint64_t users;
 	uint32_t cqe;
-	int err;
-
-	err = mnl_attr_parse_nested(nla_entry, rd_attr_cb, nla_line);
-	if (err != MNL_CB_OK)
-		return MNL_CB_ERROR;
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_CQE] ||
 	    !nla_line[RDMA_NLDEV_ATTR_RES_USECNT] ||
@@ -80,7 +74,6 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 		cqn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_CQN]);
 	if (rd_check_is_filtered(rd, "cqn", cqn))
 		goto out;
-
 	if (nla_line[RDMA_NLDEV_ATTR_RES_CTXN])
 		ctxn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_CTXN]);
 	if (rd_check_is_filtered(rd, "ctxn", ctxn))
@@ -112,6 +105,23 @@ out:	if (nla_line[RDMA_NLDEV_ATTR_RES_PID])
 	return MNL_CB_OK;
 }
 
+int res_cq_idx_parse_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
+	struct rd *rd = data;
+	const char *name;
+	uint32_t idx;
+
+	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
+	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME])
+		return MNL_CB_ERROR;
+
+	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
+	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
+
+	return res_cq_line(rd, name, idx, tb);
+}
+
 int res_cq_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
@@ -131,7 +141,13 @@ int res_cq_parse_cb(const struct nlmsghdr *nlh, void *data)
 	nla_table = tb[RDMA_NLDEV_ATTR_RES_CQ];
 
 	mnl_attr_for_each_nested(nla_entry, nla_table) {
-		ret = res_cq_line(rd, name, idx, nla_entry);
+		struct nlattr *nla_line[RDMA_NLDEV_ATTR_MAX] = {};
+
+		ret = mnl_attr_parse_nested(nla_entry, rd_attr_cb, nla_line);
+		if (ret != MNL_CB_OK)
+			break;
+
+		ret = res_cq_line(rd, name, idx, nla_line);
 
 		if (ret != MNL_CB_OK)
 			break;

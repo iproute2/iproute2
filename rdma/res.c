@@ -54,6 +54,11 @@ static int res_print_summary(struct rd *rd, struct nlattr **tb)
 	return 0;
 }
 
+static int res_no_args_idx_parse_cb(const struct nlmsghdr *nlh, void *data)
+{
+	return MNL_CB_OK;
+}
+
 static int res_no_args_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
@@ -81,6 +86,33 @@ static int res_no_args_parse_cb(const struct nlmsghdr *nlh, void *data)
 	if (!rd->json_output)
 		pr_out("\n");
 	return MNL_CB_OK;
+}
+
+int _res_send_idx_msg(struct rd *rd, uint32_t command, mnl_cb_t callback,
+		      uint32_t idx, uint32_t id)
+{
+	uint32_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	uint32_t seq;
+	int ret;
+
+	rd_prepare_msg(rd, command, &seq, flags);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
+	if (rd->port_idx)
+		mnl_attr_put_u32(rd->nlh,
+				 RDMA_NLDEV_ATTR_PORT_INDEX, rd->port_idx);
+
+	mnl_attr_put_u32(rd->nlh, id, idx);
+
+	ret = rd_send_msg(rd);
+	if (ret)
+		return ret;
+
+	if (rd->json_output)
+		jsonw_start_object(rd->jw);
+	ret = rd_recv_msg(rd, callback, rd, seq);
+	if (rd->json_output)
+		jsonw_end_object(rd->jw);
+	return ret;
 }
 
 int _res_send_msg(struct rd *rd, uint32_t command, mnl_cb_t callback)
@@ -214,7 +246,7 @@ void res_print_uint(struct rd *rd, const char *name, uint64_t val,
 		pr_out("%s %" PRIu64 " ", name, val);
 }
 
-RES_FUNC(res_no_args,	RDMA_NLDEV_CMD_RES_GET,	NULL, true);
+RES_FUNC(res_no_args,	RDMA_NLDEV_CMD_RES_GET,	NULL, true, 0);
 
 static int res_show(struct rd *rd)
 {
