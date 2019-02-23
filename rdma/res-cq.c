@@ -51,32 +51,36 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 	cqe = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_CQE]);
 
 	users = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_USECNT]);
-	if (rd_check_is_filtered(rd, "users", users))
+	if (rd_is_filtered_attr(rd, "users", users,
+				nla_line[RDMA_NLDEV_ATTR_RES_USECNT]))
 		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX]) {
+	if (nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX])
 		poll_ctx =
 			mnl_attr_get_u8(nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX]);
-		if (rd_check_is_string_filtered(rd, "poll-ctx",
-						poll_ctx_to_str(poll_ctx)))
-			goto out;
-	}
+	if (rd_is_string_filtered_attr(rd, "poll-ctx",
+				       poll_ctx_to_str(poll_ctx),
+				       nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX]))
+		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		comm = get_task_name(pid);
 	}
 
-	if (rd_check_is_filtered(rd, "pid", pid))
+	if (rd_is_filtered_attr(rd, "pid", pid,
+				nla_line[RDMA_NLDEV_ATTR_RES_PID]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_CQN])
 		cqn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_CQN]);
-	if (rd_check_is_filtered(rd, "cqn", cqn))
+	if (rd_is_filtered_attr(rd, "cqn", cqn,
+				nla_line[RDMA_NLDEV_ATTR_RES_CQN]))
 		goto out;
 	if (nla_line[RDMA_NLDEV_ATTR_RES_CTXN])
 		ctxn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_CTXN]);
-	if (rd_check_is_filtered(rd, "ctxn", ctxn))
+	if (rd_is_filtered_attr(rd, "ctxn", ctxn,
+				nla_line[RDMA_NLDEV_ATTR_RES_CTXN]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])

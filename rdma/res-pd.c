@@ -28,7 +28,8 @@ static int res_pd_line(struct rd *rd, const char *name, int idx,
 			nla_line[RDMA_NLDEV_ATTR_RES_LOCAL_DMA_LKEY]);
 
 	users = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_USECNT]);
-	if (rd_check_is_filtered(rd, "users", users))
+	if (rd_is_filtered_attr(rd, "users", users,
+				nla_line[RDMA_NLDEV_ATTR_RES_USECNT]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY])
@@ -40,18 +41,21 @@ static int res_pd_line(struct rd *rd, const char *name, int idx,
 		comm = get_task_name(pid);
 	}
 
-	if (rd_check_is_filtered(rd, "pid", pid))
+	if (rd_is_filtered_attr(rd, "pid", pid,
+				nla_line[RDMA_NLDEV_ATTR_RES_PID]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_CTXN])
 		ctxn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_CTXN]);
 
-	if (rd_check_is_filtered(rd, "ctxn", ctxn))
+	if (rd_is_filtered_attr(rd, "ctxn", ctxn,
+				nla_line[RDMA_NLDEV_ATTR_RES_CTXN]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PDN])
 		pdn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
-	if (rd_check_is_filtered(rd, "pdn", pdn))
+	if (rd_is_filtered_attr(rd, "pdn", pdn,
+				nla_line[RDMA_NLDEV_ATTR_RES_PDN]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])

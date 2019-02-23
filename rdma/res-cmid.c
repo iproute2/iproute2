@@ -132,57 +132,64 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 	if (port && port != rd->port_idx)
 		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_LQPN]) {
+	if (nla_line[RDMA_NLDEV_ATTR_RES_LQPN])
 		lqpn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
-		if (rd_check_is_filtered(rd, "lqpn", lqpn))
-			goto out;
-	}
-	if (nla_line[RDMA_NLDEV_ATTR_RES_TYPE]) {
+
+	if (rd_is_filtered_attr(rd, "lqpn", lqpn,
+				nla_line[RDMA_NLDEV_ATTR_RES_LQPN]))
+		goto out;
+
+	if (nla_line[RDMA_NLDEV_ATTR_RES_TYPE])
 		type = mnl_attr_get_u8(nla_line[RDMA_NLDEV_ATTR_RES_TYPE]);
-		if (rd_check_is_string_filtered(rd, "qp-type",
-						qp_types_to_str(type)))
-			goto out;
-	}
+	if (rd_is_string_filtered_attr(rd, "qp-type", qp_types_to_str(type),
+				       nla_line[RDMA_NLDEV_ATTR_RES_TYPE]))
+		goto out;
 
 	ps = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PS]);
-	if (rd_check_is_string_filtered(rd, "ps", cm_id_ps_to_str(ps)))
+	if (rd_is_string_filtered_attr(rd, "ps", cm_id_ps_to_str(ps),
+				       nla_line[RDMA_NLDEV_ATTR_RES_PS]))
 		goto out;
 
 	state = mnl_attr_get_u8(nla_line[RDMA_NLDEV_ATTR_RES_STATE]);
-	if (rd_check_is_string_filtered(rd, "state", cm_id_state_to_str(state)))
+	if (rd_is_string_filtered_attr(rd, "state", cm_id_state_to_str(state),
+				       nla_line[RDMA_NLDEV_ATTR_RES_STATE]))
 		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_SRC_ADDR]) {
+	if (nla_line[RDMA_NLDEV_ATTR_RES_SRC_ADDR])
 		if (ss_ntop(nla_line[RDMA_NLDEV_ATTR_RES_SRC_ADDR],
 			    src_addr_str, &src_port))
 			goto out;
-		if (rd_check_is_string_filtered(rd, "src-addr", src_addr_str))
-			goto out;
-		if (rd_check_is_filtered(rd, "src-port", src_port))
-			goto out;
-	}
+	if (rd_is_string_filtered_attr(rd, "src-addr", src_addr_str,
+				       nla_line[RDMA_NLDEV_ATTR_RES_SRC_ADDR]))
+		goto out;
+	if (rd_is_filtered_attr(rd, "src-port", src_port,
+				nla_line[RDMA_NLDEV_ATTR_RES_SRC_ADDR]))
+		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_DST_ADDR]) {
+	if (nla_line[RDMA_NLDEV_ATTR_RES_DST_ADDR])
 		if (ss_ntop(nla_line[RDMA_NLDEV_ATTR_RES_DST_ADDR],
 			    dst_addr_str, &dst_port))
 			goto out;
-		if (rd_check_is_string_filtered(rd, "dst-addr", dst_addr_str))
-			goto out;
-		if (rd_check_is_filtered(rd, "dst-port", dst_port))
-			goto out;
-	}
+	if (rd_is_string_filtered_attr(rd, "dst-addr", dst_addr_str,
+				       nla_line[RDMA_NLDEV_ATTR_RES_DST_ADDR]))
+		goto out;
+	if (rd_is_filtered_attr(rd, "dst-port", dst_port,
+				nla_line[RDMA_NLDEV_ATTR_RES_DST_ADDR]))
+		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		comm = get_task_name(pid);
 	}
 
-	if (rd_check_is_filtered(rd, "pid", pid))
+	if (rd_is_filtered_attr(rd, "pid", pid,
+				nla_line[RDMA_NLDEV_ATTR_RES_PID]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN])
 		cm_idn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN]);
-	if (rd_check_is_filtered(rd, "cm-idn", cm_idn))
+	if (rd_is_filtered_attr(rd, "cm-idn", cm_idn,
+				nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME]) {

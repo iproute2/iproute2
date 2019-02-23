@@ -103,53 +103,49 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	lqpn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
-	if (rd_check_is_filtered(rd, "lqpn", lqpn))
+	if (rd_is_filtered_attr(rd, "lqpn", lqpn,
+				nla_line[RDMA_NLDEV_ATTR_RES_LQPN]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PDN])
 		pdn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
-	if (rd_check_is_filtered(rd, "pdn", pdn))
+	if (rd_is_filtered_attr(rd, "pdn", pdn,
+				nla_line[RDMA_NLDEV_ATTR_RES_PDN]))
 		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_RQPN]) {
+	if (nla_line[RDMA_NLDEV_ATTR_RES_RQPN])
 		rqpn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_RQPN]);
-		if (rd_check_is_filtered(rd, "rqpn", rqpn))
-			goto out;
-	} else {
-		if (rd_check_is_key_exist(rd, "rqpn"))
-			goto out;
-	}
+	if (rd_is_filtered_attr(rd, "rqpn", rqpn,
+				nla_line[RDMA_NLDEV_ATTR_RES_RQPN]))
+		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_RQ_PSN]) {
+	if (nla_line[RDMA_NLDEV_ATTR_RES_RQ_PSN])
 		rq_psn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_RQ_PSN]);
-		if (rd_check_is_filtered(rd, "rq-psn", rq_psn))
-			goto out;
-	} else {
-		if (rd_check_is_key_exist(rd, "rq-psn"))
-			goto out;
-	}
+	if (rd_is_filtered_attr(rd, "rq-psn", rq_psn,
+				nla_line[RDMA_NLDEV_ATTR_RES_RQ_PSN]))
+		goto out;
 
 	sq_psn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_SQ_PSN]);
-	if (rd_check_is_filtered(rd, "sq-psn", sq_psn))
+	if (rd_is_filtered_attr(rd, "sq-psn", sq_psn,
+				nla_line[RDMA_NLDEV_ATTR_RES_SQ_PSN]))
 		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE]) {
+	if (nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE])
 		path_mig_state = mnl_attr_get_u8(
 			nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE]);
-		if (rd_check_is_string_filtered(rd, "path-mig-state",
-						path_mig_to_str(path_mig_state)))
-			goto out;
-	} else {
-		if (rd_check_is_key_exist(rd, "path-mig-state"))
-			goto out;
-	}
+	if (rd_is_string_filtered_attr(
+		    rd, "path-mig-state", path_mig_to_str(path_mig_state),
+		    nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE]))
+		goto out;
 
 	type = mnl_attr_get_u8(nla_line[RDMA_NLDEV_ATTR_RES_TYPE]);
-	if (rd_check_is_string_filtered(rd, "type", qp_types_to_str(type)))
+	if (rd_is_string_filtered_attr(rd, "type", qp_types_to_str(type),
+				       nla_line[RDMA_NLDEV_ATTR_RES_TYPE]))
 		goto out;
 
 	state = mnl_attr_get_u8(nla_line[RDMA_NLDEV_ATTR_RES_STATE]);
-	if (rd_check_is_string_filtered(rd, "state", qp_states_to_str(state)))
+	if (rd_is_string_filtered_attr(rd, "state", qp_states_to_str(state),
+				       nla_line[RDMA_NLDEV_ATTR_RES_STATE]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
@@ -157,7 +153,8 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 		comm = get_task_name(pid);
 	}
 
-	if (rd_check_is_filtered(rd, "pid", pid))
+	if (rd_is_filtered_attr(rd, "pid", pid,
+				nla_line[RDMA_NLDEV_ATTR_RES_PID]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])

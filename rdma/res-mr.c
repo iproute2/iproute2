@@ -31,7 +31,8 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 		iova = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_IOVA]);
 
 	mrlen = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_MRLEN]);
-	if (rd_check_is_filtered(rd, "mrlen", mrlen))
+	if (rd_is_filtered_attr(rd, "mrlen", mrlen,
+				nla_line[RDMA_NLDEV_ATTR_RES_MRLEN]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
@@ -39,17 +40,20 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 		comm = get_task_name(pid);
 	}
 
-	if (rd_check_is_filtered(rd, "pid", pid))
+	if (rd_is_filtered_attr(rd, "pid", pid,
+				nla_line[RDMA_NLDEV_ATTR_RES_PID]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_MRN])
 		mrn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_MRN]);
-	if (rd_check_is_filtered(rd, "mrn", mrn))
+	if (rd_is_filtered_attr(rd, "mrn", mrn,
+				nla_line[RDMA_NLDEV_ATTR_RES_MRN]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PDN])
 		pdn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
-	if (rd_check_is_filtered(rd, "pdn", pdn))
+	if (rd_is_filtered_attr(rd, "pdn", pdn,
+				nla_line[RDMA_NLDEV_ATTR_RES_PDN]))
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])

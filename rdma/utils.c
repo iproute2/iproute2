@@ -233,7 +233,7 @@ out:
 	return ret;
 }
 
-bool rd_check_is_key_exist(struct rd *rd, const char *key)
+static bool rd_check_is_key_exist(struct rd *rd, const char *key)
 {
 	struct filter_entry *fe;
 
@@ -249,8 +249,8 @@ bool rd_check_is_key_exist(struct rd *rd, const char *key)
  * Check if string entry is filtered:
  *  * key doesn't exist -> user didn't request -> not filtered
  */
-bool rd_check_is_string_filtered(struct rd *rd,
-				 const char *key, const char *val)
+static bool rd_check_is_string_filtered(struct rd *rd, const char *key,
+					const char *val)
 {
 	bool key_is_filtered = false;
 	struct filter_entry *fe;
@@ -300,7 +300,7 @@ out:
  * Check if key is filtered:
  * key doesn't exist -> user didn't request -> not filtered
  */
-bool rd_check_is_filtered(struct rd *rd, const char *key, uint32_t val)
+static bool rd_check_is_filtered(struct rd *rd, const char *key, uint32_t val)
 {
 	bool key_is_filtered = false;
 	struct filter_entry *fe;
@@ -347,6 +347,24 @@ bool rd_check_is_filtered(struct rd *rd, const char *key, uint32_t val)
 
 out:
 	return key_is_filtered;
+}
+
+bool rd_is_filtered_attr(struct rd *rd, const char *key, uint32_t val,
+			 struct nlattr *attr)
+{
+	if (!attr)
+		return rd_check_is_key_exist(rd, key);
+
+	return rd_check_is_filtered(rd, key, val);
+}
+
+bool rd_is_string_filtered_attr(struct rd *rd, const char *key, const char *val,
+				struct nlattr *attr)
+{
+	if (!attr)
+		rd_check_is_key_exist(rd, key);
+
+	return rd_check_is_string_filtered(rd, key, val);
 }
 
 static void filters_cleanup(struct rd *rd)
