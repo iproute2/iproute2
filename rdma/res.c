@@ -808,28 +808,20 @@ static int res_cq_parse_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_OK;
 }
 
-static void print_key(struct rd *rd, const char *name, uint32_t val)
+static void print_key(struct rd *rd, const char *name, uint64_t val)
 {
 	if (rd->json_output)
 		jsonw_xint_field(rd->jw, name, val);
 	else
-		pr_out("%s 0x%x ", name, val);
+		pr_out("%s 0x%" PRIx64 " ", name, val);
 }
 
-static void print_iova(struct rd *rd, uint64_t val)
+static void res_print_uint(struct rd *rd, const char *name, uint64_t val)
 {
 	if (rd->json_output)
-		jsonw_xint_field(rd->jw, "iova", val);
+		jsonw_uint_field(rd->jw, name, val);
 	else
-		pr_out("iova 0x%" PRIx64 " ", val);
-}
-
-static void print_mrlen(struct rd *rd, uint64_t val)
-{
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "mrlen", val);
-	else
-		pr_out("mrlen %" PRIu64 " ", val);
+		pr_out("%s %" PRIu64 " ", name, val);
 }
 
 static int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data)
@@ -907,8 +899,8 @@ static int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data)
 		if (nla_line[RDMA_NLDEV_ATTR_RES_LKEY])
 			print_key(rd, "lkey", lkey);
 		if (nla_line[RDMA_NLDEV_ATTR_RES_IOVA])
-			print_iova(rd, iova);
-		print_mrlen(rd, mrlen);
+			print_key(rd, "iova", iova);
+		res_print_uint(rd, "mrlen", mrlen);
 		print_pid(rd, pid);
 		print_comm(rd, comm, nla_line);
 
