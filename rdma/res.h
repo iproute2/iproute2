@@ -13,6 +13,7 @@ int res_pd_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_cq_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data);
 
 #define RES_FUNC(name, command, valid_filters, strict_port) \
 	static inline int _##name(struct rd *rd)\
@@ -90,6 +91,22 @@ struct filters cm_id_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 };
 
 RES_FUNC(res_cm_id, RDMA_NLDEV_CMD_RES_CM_ID_GET, cm_id_valid_filters, false);
+
+static const struct
+filters qp_valid_filters[MAX_NUMBER_OF_FILTERS] = {
+	{ .name = "link", .is_number = false },
+	{ .name = "lqpn", .is_number = true },
+	{ .name = "rqpn", .is_number = true },
+	{ .name = "pid",  .is_number = true },
+	{ .name = "sq-psn", .is_number = true },
+	{ .name = "rq-psn", .is_number = true },
+	{ .name = "type", .is_number = false },
+	{ .name = "path-mig-state", .is_number = false },
+	{ .name = "state", .is_number = false },
+	{ .name = "pdn", .is_number = true },
+};
+
+RES_FUNC(res_qp,	RDMA_NLDEV_CMD_RES_QP_GET, qp_valid_filters, false);
 
 char *get_task_name(uint32_t pid);
 void print_dev(struct rd *rd, uint32_t idx, const char *name);
