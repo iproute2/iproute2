@@ -6,7 +6,7 @@ TARGETS :=
 ifeq ($(HAVE_MNL),y)
 CFLAGS += -I./include/uapi/
 
-RDMA_OBJ = rdma.o utils.o dev.o link.o res.o res-pd.o
+RDMA_OBJ = rdma.o utils.o dev.o link.o res.o res-pd.o res-mr.o
 
 TARGETS += rdma
 endif

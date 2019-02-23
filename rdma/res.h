@@ -10,6 +10,7 @@
 
 int _res_send_msg(struct rd *rd, uint32_t command, mnl_cb_t callback);
 int res_pd_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data);
 
 #define RES_FUNC(name, command, valid_filters, strict_port) \
 	static inline int _##name(struct rd *rd)\
@@ -43,6 +44,19 @@ struct filters pd_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 };
 
 RES_FUNC(res_pd, RDMA_NLDEV_CMD_RES_PD_GET, pd_valid_filters, true);
+
+static const
+struct filters mr_valid_filters[MAX_NUMBER_OF_FILTERS] = {
+	{ .name = "dev", .is_number = false },
+	{ .name = "rkey", .is_number = true },
+	{ .name = "lkey", .is_number = true },
+	{ .name = "mrlen", .is_number = true },
+	{ .name = "pid", .is_number = true },
+	{ .name = "mrn", .is_number = true },
+	{ .name = "pdn", .is_number = true }
+};
+
+RES_FUNC(res_mr, RDMA_NLDEV_CMD_RES_MR_GET, mr_valid_filters, true);
 
 char *get_task_name(uint32_t pid);
 void print_dev(struct rd *rd, uint32_t idx, const char *name);
