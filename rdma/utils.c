@@ -1,11 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /*
  * utils.c	RDMA tool
- *
- *              This program is free software; you can redistribute it and/or
- *              modify it under the terms of the GNU General Public License
- *              as published by the Free Software Foundation; either version
- *              2 of the License, or (at your option) any later version.
- *
  * Authors:     Leon Romanovsky <leonro@mellanox.com>
  */
 
@@ -126,6 +121,7 @@ static int add_filter(struct rd *rd, char *key, char *value,
 	struct filter_entry *fe;
 	bool key_found = false;
 	int idx = 0;
+	char *endp;
 	int ret;
 
 	fe = calloc(1, sizeof(*fe));
@@ -168,6 +164,11 @@ static int add_filter(struct rd *rd, char *key, char *value,
 		goto err_alloc;
 	}
 
+	errno = 0;
+	strtol(fe->value, &endp, 10);
+	if (valid_filters[idx].is_doit && !errno && *endp == '\0')
+		fe->is_doit = true;
+
 	for (idx = 0; idx < strlen(fe->value); idx++)
 		fe->value[idx] = tolower(fe->value[idx]);
 
@@ -180,6 +181,20 @@ err_alloc:
 err:
 	free(fe);
 	return ret;
+}
+
+bool rd_doit_index(struct rd *rd, uint32_t *idx)
+{
+	struct filter_entry *fe;
+
+	list_for_each_entry(fe, &rd->filter_list, list) {
+		if (fe->is_doit) {
+			*idx = atoi(fe->value);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 int rd_build_filter(struct rd *rd, const struct filters valid_filters[])
@@ -218,7 +233,7 @@ out:
 	return ret;
 }
 
-bool rd_check_is_key_exist(struct rd *rd, const char *key)
+static bool rd_check_is_key_exist(struct rd *rd, const char *key)
 {
 	struct filter_entry *fe;
 
@@ -234,8 +249,8 @@ bool rd_check_is_key_exist(struct rd *rd, const char *key)
  * Check if string entry is filtered:
  *  * key doesn't exist -> user didn't request -> not filtered
  */
-bool rd_check_is_string_filtered(struct rd *rd,
-				 const char *key, const char *val)
+static bool rd_check_is_string_filtered(struct rd *rd, const char *key,
+					const char *val)
 {
 	bool key_is_filtered = false;
 	struct filter_entry *fe;
@@ -285,7 +300,7 @@ out:
  * Check if key is filtered:
  * key doesn't exist -> user didn't request -> not filtered
  */
-bool rd_check_is_filtered(struct rd *rd, const char *key, uint32_t val)
+static bool rd_check_is_filtered(struct rd *rd, const char *key, uint32_t val)
 {
 	bool key_is_filtered = false;
 	struct filter_entry *fe;
@@ -332,6 +347,24 @@ bool rd_check_is_filtered(struct rd *rd, const char *key, uint32_t val)
 
 out:
 	return key_is_filtered;
+}
+
+bool rd_is_filtered_attr(struct rd *rd, const char *key, uint32_t val,
+			 struct nlattr *attr)
+{
+	if (!attr)
+		return rd_check_is_key_exist(rd, key);
+
+	return rd_check_is_filtered(rd, key, val);
+}
+
+bool rd_is_string_filtered_attr(struct rd *rd, const char *key, const char *val,
+				struct nlattr *attr)
+{
+	if (!attr)
+		rd_check_is_key_exist(rd, key);
+
+	return rd_check_is_string_filtered(rd, key, val);
 }
 
 static void filters_cleanup(struct rd *rd)
