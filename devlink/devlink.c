@@ -199,6 +199,8 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_REGION_SNAPSHOT_ID	BIT(22)
 #define DL_OPT_REGION_ADDRESS		BIT(23)
 #define DL_OPT_REGION_LENGTH		BIT(24)
+#define DL_OPT_FLASH_FILE_NAME	BIT(25)
+#define DL_OPT_FLASH_COMPONENT	BIT(26)
 
 struct dl_opts {
 	uint32_t present; /* flags of present items */
@@ -230,6 +232,8 @@ struct dl_opts {
 	uint32_t region_snapshot_id;
 	uint64_t region_address;
 	uint64_t region_length;
+	const char *flash_file_name;
+	const char *flash_component;
 };
 
 struct dl {
@@ -1185,6 +1189,20 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_REGION_LENGTH;
+		} else if (dl_argv_match(dl, "file") &&
+			   (o_all & DL_OPT_FLASH_FILE_NAME)) {
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &opts->flash_file_name);
+			if (err)
+				return err;
+			o_found |= DL_OPT_FLASH_FILE_NAME;
+		} else if (dl_argv_match(dl, "component") &&
+			   (o_all & DL_OPT_FLASH_COMPONENT)) {
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &opts->flash_component);
+			if (err)
+				return err;
+			o_found |= DL_OPT_FLASH_COMPONENT;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -1389,6 +1407,12 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_REGION_LENGTH)
 		mnl_attr_put_u64(nlh, DEVLINK_ATTR_REGION_CHUNK_LEN,
 				 opts->region_length);
+	if (opts->present & DL_OPT_FLASH_FILE_NAME)
+		mnl_attr_put_strz(nlh, DEVLINK_ATTR_FLASH_UPDATE_FILE_NAME,
+				  opts->flash_file_name);
+	if (opts->present & DL_OPT_FLASH_COMPONENT)
+		mnl_attr_put_strz(nlh, DEVLINK_ATTR_FLASH_UPDATE_COMPONENT,
+				  opts->flash_component);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -1451,6 +1475,7 @@ static void cmd_dev_help(void)
 	pr_err("       devlink dev param show [DEV name PARAMETER]\n");
 	pr_err("       devlink dev reload DEV\n");
 	pr_err("       devlink dev info [ DEV ]\n");
+	pr_err("       devlink dev flash DEV file PATH [ component NAME ]\n");
 }
 
 static bool cmp_arr_last_handle(struct dl *dl, const char *bus_name,
@@ -2583,6 +2608,32 @@ static int cmd_dev_info(struct dl *dl)
 	return err;
 }
 
+static void cmd_dev_flash_help(void)
+{
+	pr_err("Usage: devlink dev flash DEV file PATH [ component NAME ]\n");
+}
+
+static int cmd_dev_flash(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
+		cmd_dev_flash_help();
+		return 0;
+	}
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_FLASH_UPDATE,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE | DL_OPT_FLASH_FILE_NAME,
+				DL_OPT_FLASH_COMPONENT);
+	if (err)
+		return err;
+
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
 static int cmd_dev(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help")) {
@@ -2604,6 +2655,9 @@ static int cmd_dev(struct dl *dl)
 	} else if (dl_argv_match(dl, "info")) {
 		dl_arg_inc(dl);
 		return cmd_dev_info(dl);
+	} else if (dl_argv_match(dl, "flash")) {
+		dl_arg_inc(dl);
+		return cmd_dev_flash(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
