@@ -829,27 +829,37 @@ static int print_driver_entry(struct rd *rd, struct nlattr *key_attr,
 				struct nlattr *val_attr,
 				enum rdma_nldev_print_type print_type)
 {
-	const char *key_str = mnl_attr_get_str(key_attr);
 	int attr_type = nla_type(val_attr);
+	int ret = -EINVAL;
+	char *key_str;
+
+	if (asprintf(&key_str, "drv_%s", mnl_attr_get_str(key_attr)) == -1)
+		return -ENOMEM;
 
 	switch (attr_type) {
 	case RDMA_NLDEV_ATTR_DRIVER_STRING:
-		return print_driver_string(rd, key_str,
-				mnl_attr_get_str(val_attr));
+		ret = print_driver_string(rd, key_str,
+					  mnl_attr_get_str(val_attr));
+		break;
 	case RDMA_NLDEV_ATTR_DRIVER_S32:
-		return print_driver_s32(rd, key_str,
-				mnl_attr_get_u32(val_attr), print_type);
+		ret = print_driver_s32(rd, key_str, mnl_attr_get_u32(val_attr),
+				       print_type);
+		break;
 	case RDMA_NLDEV_ATTR_DRIVER_U32:
-		return print_driver_u32(rd, key_str,
-				mnl_attr_get_u32(val_attr), print_type);
+		ret = print_driver_u32(rd, key_str, mnl_attr_get_u32(val_attr),
+				       print_type);
+		break;
 	case RDMA_NLDEV_ATTR_DRIVER_S64:
-		return print_driver_s64(rd, key_str,
-				mnl_attr_get_u64(val_attr), print_type);
+		ret = print_driver_s64(rd, key_str, mnl_attr_get_u64(val_attr),
+				       print_type);
+		break;
 	case RDMA_NLDEV_ATTR_DRIVER_U64:
-		return print_driver_u64(rd, key_str,
-				mnl_attr_get_u64(val_attr), print_type);
+		ret = print_driver_u64(rd, key_str, mnl_attr_get_u64(val_attr),
+				       print_type);
+		break;
 	}
-	return -EINVAL;
+	free(key_str);
+	return ret;
 }
 
 void print_driver_table(struct rd *rd, struct nlattr *tb)
