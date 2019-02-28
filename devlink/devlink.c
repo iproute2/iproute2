@@ -1628,10 +1628,10 @@ static void pr_out_str(struct dl *dl, const char *name, const char *val)
 
 static void pr_out_bool(struct dl *dl, const char *name, bool val)
 {
-	if (val)
-		pr_out_str(dl, name, "true");
+	if (dl->json_output)
+		jsonw_bool_field(dl->jw, name, val);
 	else
-		pr_out_str(dl, name, "false");
+		pr_out_str(dl, name, val ? "true" : "false");
 }
 
 static void pr_out_uint(struct dl *dl, const char *name, unsigned int val)
