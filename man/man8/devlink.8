@@ -7,7 +7,7 @@ devlink \- Devlink tool
 .in +8
 .ti -8
 .B devlink
-.RI "[ " OPTIONS " ] { " dev | port | monitor | sb | resource | region " } { " COMMAND " | "
+.RI "[ " OPTIONS " ] { " dev | port | monitor | sb | resource | region | health " } { " COMMAND " | "
 .BR help " }"
 .sp
 
@@ -78,6 +78,10 @@ Turn on verbose output.
 .B region
 - devlink address region access
 
+.TP
+.B health
+- devlink reporting and recovery
+
 .SS
 .I COMMAND
 
@@ -109,6 +113,7 @@ Exit status is 0 if command was successful or a positive integer upon failure.
 .BR devlink-sb (8),
 .BR devlink-resource (8),
 .BR devlink-region (8),
+.BR devlink-health (8),
 .br
 
 .SH REPORTING BUGS
