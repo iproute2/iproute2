@@ -5993,6 +5993,11 @@ static int cmd_health_object_common(struct dl *dl, uint8_t cmd)
 	return err;
 }
 
+static int cmd_health_dump_show(struct dl *dl)
+{
+	return cmd_health_object_common(dl, DEVLINK_CMD_HEALTH_REPORTER_DUMP_GET);
+}
+
 static int cmd_health_diagnose(struct dl *dl)
 {
 	return cmd_health_object_common(dl, DEVLINK_CMD_HEALTH_REPORTER_DIAGNOSE);
@@ -6156,6 +6161,7 @@ static void cmd_health_help(void)
 	pr_err("Usage: devlink health show [ dev DEV reporter REPORTER_NAME ]\n");
 	pr_err("       devlink health recover DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health diagnose DEV reporter REPORTER_NAME\n");
+	pr_err("       devlink health dump show DEV reporter REPORTER_NAME\n");
 }
 
 static int cmd_health(struct dl *dl)
@@ -6173,6 +6179,12 @@ static int cmd_health(struct dl *dl)
 	} else if (dl_argv_match(dl, "diagnose")) {
 		dl_arg_inc(dl);
 		return cmd_health_diagnose(dl);
+	} else if (dl_argv_match(dl, "dump")) {
+		dl_arg_inc(dl);
+		if (dl_argv_match(dl, "show")) {
+			dl_arg_inc(dl);
+			return cmd_health_dump_show(dl);
+		}
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
