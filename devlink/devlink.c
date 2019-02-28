@@ -5816,6 +5816,23 @@ static int cmd_region(struct dl *dl)
 	return -ENOENT;
 }
 
+static int cmd_health_dump_clear(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_HEALTH_REPORTER_DUMP_CLEAR,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl,
+				DL_OPT_HANDLE | DL_OPT_HEALTH_REPORTER_NAME, 0);
+	if (err)
+		return err;
+
+	dl_opts_put(nlh, dl);
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
 static int fmsg_value_show(struct dl *dl, int type, struct nlattr *nl_data)
 {
 	uint8_t *data;
@@ -6162,6 +6179,7 @@ static void cmd_health_help(void)
 	pr_err("       devlink health recover DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health diagnose DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump show DEV reporter REPORTER_NAME\n");
+	pr_err("       devlink health dump clear DEV reporter REPORTER_NAME\n");
 }
 
 static int cmd_health(struct dl *dl)
@@ -6184,6 +6202,9 @@ static int cmd_health(struct dl *dl)
 		if (dl_argv_match(dl, "show")) {
 			dl_arg_inc(dl);
 			return cmd_health_dump_show(dl);
+		} else if (dl_argv_match(dl, "clear")) {
+			dl_arg_inc(dl);
+			return cmd_health_dump_clear(dl);
 		}
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
