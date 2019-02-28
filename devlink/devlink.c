@@ -23,6 +23,7 @@
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
 #include <sys/sysinfo.h>
+#include <sys/queue.h>
 
 #include "SNAPSHOT.h"
 #include "list.h"
@@ -5815,6 +5816,188 @@ static int cmd_region(struct dl *dl)
 	return -ENOENT;
 }
 
+static int fmsg_value_show(struct dl *dl, int type, struct nlattr *nl_data)
+{
+	uint8_t *data;
+	uint32_t len;
+
+	switch (type) {
+	case MNL_TYPE_FLAG:
+		pr_out_bool_value(dl, mnl_attr_get_u8(nl_data));
+		break;
+	case MNL_TYPE_U8:
+		pr_out_uint_value(dl, mnl_attr_get_u8(nl_data));
+		break;
+	case MNL_TYPE_U16:
+		pr_out_uint_value(dl, mnl_attr_get_u16(nl_data));
+		break;
+	case MNL_TYPE_U32:
+		pr_out_uint_value(dl, mnl_attr_get_u32(nl_data));
+		break;
+	case MNL_TYPE_U64:
+		pr_out_uint64_value(dl, mnl_attr_get_u64(nl_data));
+		break;
+	case MNL_TYPE_NUL_STRING:
+		pr_out_str_value(dl, mnl_attr_get_str(nl_data));
+		break;
+	case MNL_TYPE_BINARY:
+		len = mnl_attr_get_payload_len(nl_data);
+		data = mnl_attr_get_payload(nl_data);
+		pr_out_binary_value(dl, data, len);
+		break;
+	default:
+		return -EINVAL;
+	}
+	return MNL_CB_OK;
+}
+
+struct nest_qentry {
+	int attr_type;
+	TAILQ_ENTRY(nest_qentry) nest_entries;
+};
+
+struct fmsg_cb_data {
+	struct dl *dl;
+	uint8_t value_type;
+	TAILQ_HEAD(, nest_qentry) qhead;
+};
+
+static int cmd_fmsg_nest_queue(struct fmsg_cb_data *fmsg_data,
+			       uint8_t *attr_value, bool insert)
+{
+	struct nest_qentry *entry = NULL;
+
+	if (insert) {
+		entry = malloc(sizeof(struct nest_qentry));
+		if (!entry)
+			return -ENOMEM;
+
+		entry->attr_type = *attr_value;
+		TAILQ_INSERT_HEAD(&fmsg_data->qhead, entry, nest_entries);
+	} else {
+		if (TAILQ_EMPTY(&fmsg_data->qhead))
+			return MNL_CB_ERROR;
+		entry = TAILQ_FIRST(&fmsg_data->qhead);
+		*attr_value = entry->attr_type;
+		TAILQ_REMOVE(&fmsg_data->qhead, entry, nest_entries);
+		free(entry);
+	}
+	return MNL_CB_OK;
+}
+
+static int cmd_fmsg_nest(struct fmsg_cb_data *fmsg_data, uint8_t nest_value,
+			 bool start)
+{
+	struct dl *dl = fmsg_data->dl;
+	uint8_t value = nest_value;
+	int err;
+
+	err = cmd_fmsg_nest_queue(fmsg_data, &value, start);
+	if (err != MNL_CB_OK)
+		return err;
+
+	switch (value) {
+	case DEVLINK_ATTR_FMSG_OBJ_NEST_START:
+		if (start)
+			pr_out_entry_start(dl);
+		else
+			pr_out_entry_end(dl);
+		break;
+	case DEVLINK_ATTR_FMSG_PAIR_NEST_START:
+		break;
+	case DEVLINK_ATTR_FMSG_ARR_NEST_START:
+		if (dl->json_output) {
+			if (start)
+				jsonw_start_array(dl->jw);
+			else
+				jsonw_end_array(dl->jw);
+		} else {
+			if (start) {
+				__pr_out_newline();
+				__pr_out_indent_inc();
+			} else {
+				__pr_out_indent_dec();
+			}
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
+	return MNL_CB_OK;
+}
+
+static int cmd_fmsg_object_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct fmsg_cb_data *fmsg_data = data;
+	struct dl *dl = fmsg_data->dl;
+	struct nlattr *nla_object;
+	int attr_type;
+	int err;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[DEVLINK_ATTR_FMSG])
+		return MNL_CB_ERROR;
+
+	mnl_attr_for_each_nested(nla_object, tb[DEVLINK_ATTR_FMSG]) {
+		attr_type = mnl_attr_get_type(nla_object);
+		switch (attr_type) {
+		case DEVLINK_ATTR_FMSG_OBJ_NEST_START:
+		case DEVLINK_ATTR_FMSG_PAIR_NEST_START:
+		case DEVLINK_ATTR_FMSG_ARR_NEST_START:
+			err = cmd_fmsg_nest(fmsg_data, attr_type, true);
+			if (err != MNL_CB_OK)
+				return err;
+			break;
+		case DEVLINK_ATTR_FMSG_NEST_END:
+			err = cmd_fmsg_nest(fmsg_data, attr_type, false);
+			if (err != MNL_CB_OK)
+				return err;
+			break;
+		case DEVLINK_ATTR_FMSG_OBJ_NAME:
+			pr_out_name(dl, mnl_attr_get_str(nla_object));
+			break;
+		case DEVLINK_ATTR_FMSG_OBJ_VALUE_TYPE:
+			fmsg_data->value_type = mnl_attr_get_u8(nla_object);
+			break;
+		case DEVLINK_ATTR_FMSG_OBJ_VALUE_DATA:
+			err = fmsg_value_show(dl, fmsg_data->value_type,
+					      nla_object);
+			if (err != MNL_CB_OK)
+				return err;
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
+	return MNL_CB_OK;
+}
+
+static int cmd_health_object_common(struct dl *dl, uint8_t cmd)
+{
+	struct fmsg_cb_data data;
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, cmd,  NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl,
+				DL_OPT_HANDLE | DL_OPT_HEALTH_REPORTER_NAME, 0);
+	if (err)
+		return err;
+
+	data.dl = dl;
+	TAILQ_INIT(&data.qhead);
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_fmsg_object_cb, &data);
+	return err;
+}
+
+static int cmd_health_diagnose(struct dl *dl)
+{
+	return cmd_health_object_common(dl, DEVLINK_CMD_HEALTH_REPORTER_DIAGNOSE);
+}
+
 static int cmd_health_recover(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
@@ -5972,6 +6155,7 @@ static void cmd_health_help(void)
 {
 	pr_err("Usage: devlink health show [ dev DEV reporter REPORTER_NAME ]\n");
 	pr_err("       devlink health recover DEV reporter REPORTER_NAME\n");
+	pr_err("       devlink health diagnose DEV reporter REPORTER_NAME\n");
 }
 
 static int cmd_health(struct dl *dl)
@@ -5986,6 +6170,9 @@ static int cmd_health(struct dl *dl)
 	} else if (dl_argv_match(dl, "recover")) {
 		dl_arg_inc(dl);
 		return cmd_health_recover(dl);
+	} else if (dl_argv_match(dl, "diagnose")) {
+		dl_arg_inc(dl);
+		return cmd_health_diagnose(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
