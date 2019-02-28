@@ -5815,6 +5815,23 @@ static int cmd_region(struct dl *dl)
 	return -ENOENT;
 }
 
+static int cmd_health_recover(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_HEALTH_REPORTER_RECOVER,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl,
+				DL_OPT_HANDLE | DL_OPT_HEALTH_REPORTER_NAME, 0);
+	if (err)
+		return err;
+
+	dl_opts_put(nlh, dl);
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
 enum devlink_health_reporter_state {
 	DEVLINK_HEALTH_REPORTER_STATE_HEALTHY,
 	DEVLINK_HEALTH_REPORTER_STATE_ERROR,
@@ -5954,6 +5971,7 @@ static int cmd_health_show(struct dl *dl)
 static void cmd_health_help(void)
 {
 	pr_err("Usage: devlink health show [ dev DEV reporter REPORTER_NAME ]\n");
+	pr_err("       devlink health recover DEV reporter REPORTER_NAME\n");
 }
 
 static int cmd_health(struct dl *dl)
@@ -5965,6 +5983,9 @@ static int cmd_health(struct dl *dl)
 		   dl_argv_match(dl, "list") || dl_no_arg(dl)) {
 		dl_arg_inc(dl);
 		return cmd_health_show(dl);
+	} else if (dl_argv_match(dl, "recover")) {
+		dl_arg_inc(dl);
+		return cmd_health_recover(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
