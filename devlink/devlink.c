@@ -209,6 +209,8 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_FLASH_FILE_NAME	BIT(25)
 #define DL_OPT_FLASH_COMPONENT	BIT(26)
 #define DL_OPT_HEALTH_REPORTER_NAME	BIT(27)
+#define DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD	BIT(27)
+#define DL_OPT_HEALTH_REPORTER_AUTO_RECOVER	BIT(28)
 
 struct dl_opts {
 	uint32_t present; /* flags of present items */
@@ -243,6 +245,8 @@ struct dl_opts {
 	const char *flash_file_name;
 	const char *flash_component;
 	const char *reporter_name;
+	uint64_t reporter_graceful_period;
+	bool reporter_auto_recover;
 };
 
 struct dl {
@@ -841,6 +845,24 @@ static int dl_argv_uint16_t(struct dl *dl, uint16_t *p_val)
 	return 0;
 }
 
+static int dl_argv_bool(struct dl *dl, bool *p_val)
+{
+	char *str = dl_argv_next(dl);
+	int err;
+
+	if (!str) {
+		pr_err("Boolean argument expected\n");
+		return -EINVAL;
+	}
+
+	err = strtobool(str, p_val);
+	if (err) {
+		pr_err("\"%s\" is not a valid boolean value\n", str);
+		return err;
+	}
+	return 0;
+}
+
 static int dl_argv_str(struct dl *dl, const char **p_str)
 {
 	const char *str = dl_argv_next(dl);
@@ -1270,6 +1292,21 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_HEALTH_REPORTER_NAME;
+		} else if (dl_argv_match(dl, "grace_period") &&
+			   (o_all & DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint64_t(dl,
+					       &opts->reporter_graceful_period);
+			if (err)
+				return err;
+			o_found |= DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD;
+		} else if (dl_argv_match(dl, "auto_recover") &&
+			(o_all & DL_OPT_HEALTH_REPORTER_AUTO_RECOVER)) {
+			dl_arg_inc(dl);
+			err = dl_argv_bool(dl, &opts->reporter_auto_recover);
+			if (err)
+				return err;
+			o_found |= DL_OPT_HEALTH_REPORTER_AUTO_RECOVER;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -1376,6 +1413,14 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_HEALTH_REPORTER_NAME)
 		mnl_attr_put_strz(nlh, DEVLINK_ATTR_HEALTH_REPORTER_NAME,
 				  opts->reporter_name);
+	if (opts->present & DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD)
+		mnl_attr_put_u64(nlh,
+				 DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD,
+				 opts->reporter_graceful_period);
+	if (opts->present & DL_OPT_HEALTH_REPORTER_AUTO_RECOVER)
+		mnl_attr_put_u8(nlh, DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER,
+				opts->reporter_auto_recover);
+
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -5816,6 +5861,23 @@ static int cmd_region(struct dl *dl)
 	return -ENOENT;
 }
 
+static int cmd_health_set_params(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_HEALTH_REPORTER_SET,
+			       NLM_F_REQUEST | NLM_F_ACK);
+	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_HEALTH_REPORTER_NAME,
+			    DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD |
+			    DL_OPT_HEALTH_REPORTER_AUTO_RECOVER);
+	if (err)
+		return err;
+
+	dl_opts_put(nlh, dl);
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
 static int cmd_health_dump_clear(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
@@ -6180,6 +6242,7 @@ static void cmd_health_help(void)
 	pr_err("       devlink health diagnose DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump show DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump clear DEV reporter REPORTER_NAME\n");
+	pr_err("       devlink health set DEV reporter REPORTER_NAME { grace_period | auto_recover } { msec | boolean }\n");
 }
 
 static int cmd_health(struct dl *dl)
@@ -6206,6 +6269,9 @@ static int cmd_health(struct dl *dl)
 			dl_arg_inc(dl);
 			return cmd_health_dump_clear(dl);
 		}
+	} else if (dl_argv_match(dl, "set")) {
+		dl_arg_inc(dl);
+		return cmd_health_set_params(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
