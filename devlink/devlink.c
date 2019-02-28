@@ -22,6 +22,7 @@
 #include <linux/devlink.h>
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
+#include <sys/sysinfo.h>
 
 #include "SNAPSHOT.h"
 #include "list.h"
@@ -40,6 +41,10 @@
 #define PARAM_CMODE_DRIVERINIT_STR "driverinit"
 #define PARAM_CMODE_PERMANENT_STR "permanent"
 #define DL_ARGS_REQUIRED_MAX_ERR_LEN 80
+
+#define HEALTH_REPORTER_STATE_HEALTHY_STR "healthy"
+#define HEALTH_REPORTER_STATE_ERROR_STR "error"
+#define HEALTH_REPORTER_TIMESTAMP_FMT_LEN 80
 
 static int g_new_line_count;
 
@@ -202,6 +207,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_REGION_LENGTH		BIT(24)
 #define DL_OPT_FLASH_FILE_NAME	BIT(25)
 #define DL_OPT_FLASH_COMPONENT	BIT(26)
+#define DL_OPT_HEALTH_REPORTER_NAME	BIT(27)
 
 struct dl_opts {
 	uint32_t present; /* flags of present items */
@@ -235,6 +241,7 @@ struct dl_opts {
 	uint64_t region_length;
 	const char *flash_file_name;
 	const char *flash_component;
+	const char *reporter_name;
 };
 
 struct dl {
@@ -395,6 +402,13 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_INFO_VERSION_STORED] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_INFO_VERSION_NAME] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_INFO_VERSION_VALUE] = MNL_TYPE_STRING,
+	[DEVLINK_ATTR_HEALTH_REPORTER] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_HEALTH_REPORTER_NAME] = MNL_TYPE_STRING,
+	[DEVLINK_ATTR_HEALTH_REPORTER_STATE] = MNL_TYPE_U8,
+	[DEVLINK_ATTR_HEALTH_REPORTER_ERR_COUNT] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD] = MNL_TYPE_U64,
 };
 
 static int attr_cb(const struct nlattr *attr, void *data)
@@ -980,6 +994,7 @@ static const struct dl_args_metadata dl_args_required[] = {
 	{DL_OPT_REGION_SNAPSHOT_ID,   "Region snapshot id expected."},
 	{DL_OPT_REGION_ADDRESS,	      "Region address value expected."},
 	{DL_OPT_REGION_LENGTH,	      "Region length value expected."},
+	{DL_OPT_HEALTH_REPORTER_NAME, "Reporter's name is expected."},
 };
 
 static int dl_args_finding_required_validate(uint32_t o_required,
@@ -1247,6 +1262,13 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_FLASH_COMPONENT;
+		} else if (dl_argv_match(dl, "reporter") &&
+			   (o_all & DL_OPT_HEALTH_REPORTER_NAME)) {
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &opts->reporter_name);
+			if (err)
+				return err;
+			o_found |= DL_OPT_HEALTH_REPORTER_NAME;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -1350,6 +1372,9 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_FLASH_COMPONENT)
 		mnl_attr_put_strz(nlh, DEVLINK_ATTR_FLASH_UPDATE_COMPONENT,
 				  opts->flash_component);
+	if (opts->present & DL_OPT_HEALTH_REPORTER_NAME)
+		mnl_attr_put_strz(nlh, DEVLINK_ATTR_HEALTH_REPORTER_NAME,
+				  opts->reporter_name);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -5790,11 +5815,166 @@ static int cmd_region(struct dl *dl)
 	return -ENOENT;
 }
 
+enum devlink_health_reporter_state {
+	DEVLINK_HEALTH_REPORTER_STATE_HEALTHY,
+	DEVLINK_HEALTH_REPORTER_STATE_ERROR,
+};
+
+static const char *health_state_name(uint8_t state)
+{
+	switch (state) {
+	case DEVLINK_HEALTH_REPORTER_STATE_HEALTHY:
+		return HEALTH_REPORTER_STATE_HEALTHY_STR;
+	case DEVLINK_HEALTH_REPORTER_STATE_ERROR:
+		return HEALTH_REPORTER_STATE_ERROR_STR;
+	default:
+		return "<unknown state>";
+	}
+}
+
+static void format_logtime(uint64_t time_ms, char *ts_date, char *ts_time)
+{
+	struct sysinfo s_info;
+	struct tm *info;
+	time_t now, sec;
+	int err;
+
+	time(&now);
+	info = localtime(&now);
+	err = sysinfo(&s_info);
+	if (err)
+		goto out;
+	/* Subtract uptime in sec from now yields the time of system
+	 * uptime. To this, add time_ms which is the amount of
+	 * milliseconds elapsed between uptime and the dump taken.
+	 */
+	sec = now - s_info.uptime + time_ms / 1000;
+	info = localtime(&sec);
+out:
+	strftime(ts_date, HEALTH_REPORTER_TIMESTAMP_FMT_LEN, "%Y-%m-%d", info);
+	strftime(ts_time, HEALTH_REPORTER_TIMESTAMP_FMT_LEN, "%H:%M:%S", info);
+}
+
+static void pr_out_health(struct dl *dl, struct nlattr **tb_health)
+{
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	enum devlink_health_reporter_state state;
+	const struct nlattr *attr;
+	uint64_t time_ms;
+	int err;
+
+	err = mnl_attr_parse_nested(tb_health[DEVLINK_ATTR_HEALTH_REPORTER],
+				    attr_cb, tb);
+	if (err != MNL_CB_OK)
+		return;
+
+	if (!tb[DEVLINK_ATTR_HEALTH_REPORTER_NAME] ||
+	    !tb[DEVLINK_ATTR_HEALTH_REPORTER_ERR_COUNT] ||
+	    !tb[DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT] ||
+	    !tb[DEVLINK_ATTR_HEALTH_REPORTER_STATE])
+		return;
+
+	pr_out_handle_start_arr(dl, tb_health);
+
+	pr_out_str(dl, "name",
+		   mnl_attr_get_str(tb[DEVLINK_ATTR_HEALTH_REPORTER_NAME]));
+	if (!dl->json_output) {
+		__pr_out_newline();
+		__pr_out_indent_inc();
+	}
+	state = mnl_attr_get_u8(tb[DEVLINK_ATTR_HEALTH_REPORTER_STATE]);
+	pr_out_str(dl, "state", health_state_name(state));
+	pr_out_u64(dl, "error",
+		   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_ERR_COUNT]));
+	pr_out_u64(dl, "recover",
+		   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT]));
+	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS]) {
+		char dump_date[HEALTH_REPORTER_TIMESTAMP_FMT_LEN];
+		char dump_time[HEALTH_REPORTER_TIMESTAMP_FMT_LEN];
+
+		attr = tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS];
+		time_ms = mnl_attr_get_u64(attr);
+		format_logtime(time_ms, dump_date, dump_time);
+
+		pr_out_str(dl, "last_dump_date", dump_date);
+		pr_out_str(dl, "last_dump_time", dump_time);
+	}
+	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD])
+		pr_out_u64(dl, "grace_period",
+			   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD]));
+	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER])
+		pr_out_bool(dl, "auto_recover",
+			    mnl_attr_get_u8(tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER]));
+
+	__pr_out_indent_dec();
+	pr_out_handle_end(dl);
+}
+
+static int cmd_health_show_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct dl *dl = data;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_HEALTH_REPORTER])
+		return MNL_CB_ERROR;
+
+	pr_out_health(dl, tb);
+
+	return MNL_CB_OK;
+}
+
+static int cmd_health_show(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	int err;
+
+	if (dl_argc(dl) == 0)
+		flags |= NLM_F_DUMP;
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_HEALTH_REPORTER_GET,
+			       flags);
+
+	if (dl_argc(dl) > 0) {
+		err = dl_argv_parse_put(nlh, dl,
+					DL_OPT_HANDLE |
+					DL_OPT_HEALTH_REPORTER_NAME, 0);
+		if (err)
+			return err;
+	}
+	pr_out_section_start(dl, "health");
+
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_health_show_cb, dl);
+	pr_out_section_end(dl);
+	return err;
+}
+
+static void cmd_health_help(void)
+{
+	pr_err("Usage: devlink health show [ dev DEV reporter REPORTER_NAME ]\n");
+}
+
+static int cmd_health(struct dl *dl)
+{
+	if (dl_argv_match(dl, "help")) {
+		cmd_health_help();
+		return 0;
+	} else if (dl_argv_match(dl, "show") ||
+		   dl_argv_match(dl, "list") || dl_no_arg(dl)) {
+		dl_arg_inc(dl);
+		return cmd_health_show(dl);
+	}
+	pr_err("Command \"%s\" not found\n", dl_argv(dl));
+	return -ENOENT;
+}
+
 static void help(void)
 {
 	pr_err("Usage: devlink [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "       devlink [ -f[orce] ] -b[atch] filename\n"
-	       "where  OBJECT := { dev | port | sb | monitor | dpipe | resource | region }\n"
+	       "where  OBJECT := { dev | port | sb | monitor | dpipe | resource | region | health }\n"
 	       "       OPTIONS := { -V[ersion] | -n[o-nice-names] | -j[son] | -p[retty] | -v[erbose] }\n");
 }
 
@@ -5827,6 +6007,9 @@ static int dl_cmd(struct dl *dl, int argc, char **argv)
 	} else if (dl_argv_match(dl, "region")) {
 		dl_arg_inc(dl);
 		return cmd_region(dl);
+	} else if (dl_argv_match(dl, "health")) {
+		dl_arg_inc(dl);
+		return cmd_health(dl);
 	}
 	pr_err("Object \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
