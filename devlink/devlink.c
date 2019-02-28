@@ -1651,7 +1651,14 @@ static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
 	if (val == (uint64_t) -1)
 		return pr_out_str(dl, name, "unlimited");
 
-	return pr_out_uint(dl, name, val);
+	if (dl->json_output) {
+		jsonw_u64_field(dl->jw, name, val);
+	} else {
+		if (g_indent_newline)
+			pr_out("%s %lu", name, val);
+		else
+			pr_out(" %s %lu", name, val);
+	}
 }
 
 static void pr_out_region_chunk_start(struct dl *dl, uint64_t addr)
