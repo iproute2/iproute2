@@ -39,6 +39,7 @@
 #define PARAM_CMODE_RUNTIME_STR "runtime"
 #define PARAM_CMODE_DRIVERINIT_STR "driverinit"
 #define PARAM_CMODE_PERMANENT_STR "permanent"
+#define DL_ARGS_REQUIRED_MAX_ERR_LEN 80
 
 static int g_new_line_count;
 
@@ -954,6 +955,49 @@ static int param_cmode_get(const char *cmodestr,
 	return 0;
 }
 
+struct dl_args_metadata {
+	uint32_t o_flag;
+	char err_msg[DL_ARGS_REQUIRED_MAX_ERR_LEN];
+};
+
+static const struct dl_args_metadata dl_args_required[] = {
+	{DL_OPT_PORT_TYPE,	      "Port type not set."},
+	{DL_OPT_PORT_COUNT,	      "Port split count option expected."},
+	{DL_OPT_SB_POOL,	      "Pool index option expected."},
+	{DL_OPT_SB_SIZE,	      "Pool size option expected."},
+	{DL_OPT_SB_TYPE,	      "Pool type option expected."},
+	{DL_OPT_SB_THTYPE,	      "Pool threshold type option expected."},
+	{DL_OPT_SB_TH,		      "Threshold option expected."},
+	{DL_OPT_SB_TC,		      "TC index option expected."},
+	{DL_OPT_ESWITCH_MODE,	      "E-Switch mode option expected."},
+	{DL_OPT_ESWITCH_INLINE_MODE,  "E-Switch inline-mode option expected."},
+	{DL_OPT_DPIPE_TABLE_NAME,     "Dpipe table name expected."},
+	{DL_OPT_DPIPE_TABLE_COUNTERS, "Dpipe table counter state expected."},
+	{DL_OPT_ESWITCH_ENCAP_MODE,   "E-Switch encapsulation option expected."},
+	{DL_OPT_PARAM_NAME,	      "Parameter name expected."},
+	{DL_OPT_PARAM_VALUE,	      "Value to set expected."},
+	{DL_OPT_PARAM_CMODE,	      "Configuration mode expected."},
+	{DL_OPT_REGION_SNAPSHOT_ID,   "Region snapshot id expected."},
+	{DL_OPT_REGION_ADDRESS,	      "Region address value expected."},
+	{DL_OPT_REGION_LENGTH,	      "Region length value expected."},
+};
+
+static int dl_args_finding_required_validate(uint32_t o_required,
+					     uint32_t o_found)
+{
+	uint32_t o_flag;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(dl_args_required); i++) {
+		o_flag = dl_args_required[i].o_flag;
+		if ((o_required & o_flag) && !(o_found & o_flag)) {
+			pr_err("%s\n", dl_args_required[i].err_msg);
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
+
 static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 			 uint32_t o_optional)
 {
@@ -1216,114 +1260,7 @@ static int dl_argv_parse(struct dl *dl, uint32_t o_required,
 		opts->present |= DL_OPT_SB;
 	}
 
-	if ((o_required & DL_OPT_PORT_TYPE) && !(o_found & DL_OPT_PORT_TYPE)) {
-		pr_err("Port type option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_PORT_COUNT) &&
-	    !(o_found & DL_OPT_PORT_COUNT)) {
-		pr_err("Port split count option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_SB_POOL) && !(o_found & DL_OPT_SB_POOL)) {
-		pr_err("Pool index option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_SB_SIZE) && !(o_found & DL_OPT_SB_SIZE)) {
-		pr_err("Pool size option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_SB_TYPE) && !(o_found & DL_OPT_SB_TYPE)) {
-		pr_err("Pool type option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_SB_THTYPE) && !(o_found & DL_OPT_SB_THTYPE)) {
-		pr_err("Pool threshold type option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_SB_TH) && !(o_found & DL_OPT_SB_TH)) {
-		pr_err("Threshold option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_SB_TC) && !(o_found & DL_OPT_SB_TC)) {
-		pr_err("TC index option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_ESWITCH_MODE) &&
-	    !(o_found & DL_OPT_ESWITCH_MODE)) {
-		pr_err("E-Switch mode option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_ESWITCH_INLINE_MODE) &&
-	    !(o_found & DL_OPT_ESWITCH_INLINE_MODE)) {
-		pr_err("E-Switch inline-mode option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_DPIPE_TABLE_NAME) &&
-	    !(o_found & DL_OPT_DPIPE_TABLE_NAME)) {
-		pr_err("Dpipe table name expected\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_DPIPE_TABLE_COUNTERS) &&
-	    !(o_found & DL_OPT_DPIPE_TABLE_COUNTERS)) {
-		pr_err("Dpipe table counter state expected\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_ESWITCH_ENCAP_MODE) &&
-	    !(o_found & DL_OPT_ESWITCH_ENCAP_MODE)) {
-		pr_err("E-Switch encapsulation option expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_PARAM_NAME) &&
-	    !(o_found & DL_OPT_PARAM_NAME)) {
-		pr_err("Parameter name expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_PARAM_VALUE) &&
-	    !(o_found & DL_OPT_PARAM_VALUE)) {
-		pr_err("Value to set expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_PARAM_CMODE) &&
-	    !(o_found & DL_OPT_PARAM_CMODE)) {
-		pr_err("Configuration mode expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_REGION_SNAPSHOT_ID) &&
-	    !(o_found & DL_OPT_REGION_SNAPSHOT_ID)) {
-		pr_err("Region snapshot id expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_REGION_ADDRESS) &&
-	    !(o_found & DL_OPT_REGION_ADDRESS)) {
-		pr_err("Region address value expected.\n");
-		return -EINVAL;
-	}
-
-	if ((o_required & DL_OPT_REGION_LENGTH) &&
-	    !(o_found & DL_OPT_REGION_LENGTH)) {
-		pr_err("Region length value expected.\n");
-		return -EINVAL;
-	}
-
-	return 0;
+	return dl_args_finding_required_validate(o_required, o_found);
 }
 
 static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
