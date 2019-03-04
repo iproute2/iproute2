@@ -69,6 +69,8 @@ bridge \- show / manipulate bridge addresses and devices
 .BR self " ] [ " master " ] [ " router " ] [ " use " ] [ " extern_learn " ] [ " sticky " ] [ "
 .B dst
 .IR IPADDR " ] [ "
+.B src_vni
+.IR SRC_VNI " ] ["
 .B vni
 .IR VNI " ] ["
 .B port
@@ -472,6 +474,13 @@ is of type VXLAN.
 .BI dst " IPADDR"
 the IP address of the destination
 VXLAN tunnel endpoint where the Ethernet MAC ADDRESS resides.
+
+.TP
+.BI src_vni " SRC VNI"
+the src VNI Network Identifier (or VXLAN Segment ID)
+this entry belongs to. Used only when the vxlan device is in
+external or collect metadata mode. If omitted the value specified at
+vxlan device creation will be used.
 
 .TP
 .BI vni " VNI"

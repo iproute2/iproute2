@@ -39,6 +39,7 @@ static void usage(void)
 		"              [ self ] [ master ] [ use ] [ router ] [ extern_learn ]\n"
 		"              [ sticky ] [ local | static | dynamic ] [ dst IPADDR ]\n"
 		"              [ vlan VID ] [ port PORT] [ vni VNI ] [ via DEV ]\n"
+		"              [ src_vni VNI ]\n"
 		"       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ] [ state STATE ] ]\n");
 	exit(-1);
 }
@@ -383,6 +384,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 	inet_prefix dst;
 	unsigned long port = 0;
 	unsigned long vni = ~0;
+	unsigned long src_vni = ~0;
 	unsigned int via = 0;
 	char *endptr;
 	short vid = -1;
@@ -416,6 +418,12 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 			if ((endptr && *endptr) ||
 			    (vni >> 24) || vni == ULONG_MAX)
 				invarg("invalid VNI\n", *argv);
+		} else if (strcmp(*argv, "src_vni") == 0) {
+			NEXT_ARG();
+			src_vni = strtoul(*argv, &endptr, 0);
+			if ((endptr && *endptr) ||
+			    (src_vni >> 24) || src_vni == ULONG_MAX)
+				invarg("invalid src VNI\n", *argv);
 		} else if (strcmp(*argv, "via") == 0) {
 			NEXT_ARG();
 			via = ll_name_to_index(*argv);
@@ -495,6 +503,8 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 	}
 	if (vni != ~0)
 		addattr32(&req.n, sizeof(req), NDA_VNI, vni);
+	if (src_vni != ~0)
+		addattr32(&req.n, sizeof(req), NDA_SRC_VNI, src_vni);
 	if (via)
 		addattr32(&req.n, sizeof(req), NDA_IFINDEX, via);
 
