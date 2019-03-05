@@ -189,6 +189,12 @@ precedence. This flag is ignored if
 .B \-json
 is also given.
 
+Used color palette can be influenced by
+.BR COLORFGBG
+environment variable
+(see
+.BR ENVIRONMENT ).
+
 .TP
 .BR "\-t" , " \-timestamp"
 display current time when using monitor option.
@@ -329,6 +335,17 @@ Usually it is
 .B list
 or, if the objects of this class cannot be listed,
 .BR "help" .
+
+.SH ENVIRONMENT
+.TP
+.B COLORFGBG
+If set, it's value is used for detection whether background is dark or light and use contrast colors for it.
+
+COLORFGBG environment variable usually contains either two or three
+values separated by semicolons; we want the last value in either case.
+If this value is 0-6 or 8, chose colors suitable for dark background:
+
+COLORFGBG=";0" ip -c a
 
 .SH EXIT STATUS
 Exit status is 0 if command was successful, and 1 if there is a syntax error.
