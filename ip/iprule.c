@@ -455,7 +455,8 @@ int print_rule(struct nlmsghdr *n, void *arg)
 			print_string(PRINT_ANY, "goto", "goto %s", "none");
 
 		if (frh->flags & FIB_RULE_UNRESOLVED)
-			print_null(PRINT_ANY, "unresolved", "unresolved", NULL);
+			print_null(PRINT_ANY, "unresolved",
+				   " [unresolved]", NULL);
 	} else if (frh->action == FR_ACT_NOP) {
 		print_null(PRINT_ANY, "nop", "nop", NULL);
 	} else if (frh->action != FR_ACT_TO_TBL) {
