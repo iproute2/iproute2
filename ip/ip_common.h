@@ -130,6 +130,9 @@ void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
 int bridge_parse_xstats(struct link_util *lu, int argc, char **argv);
 int bridge_print_xstats(struct nlmsghdr *n, void *arg);
 
+int bond_parse_xstats(struct link_util *lu, int argc, char **argv);
+int bond_print_xstats(struct nlmsghdr *n, void *arg);
+
 /* iproute_lwtunnel.c */
 int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp);
 void lwt_print_encap(FILE *fp, struct rtattr *encap_type, struct rtattr *encap);
