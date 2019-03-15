@@ -73,7 +73,7 @@ parse_connmark(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		if (matches(*argv, "zone") == 0) {
 			NEXT_ARG();
 			if (get_u16(&sel.zone, *argv, 10)) {
-				fprintf(stderr, "simple: Illegal \"index\"\n");
+				fprintf(stderr, "connmark: Illegal \"zone\"\n");
 				return -1;
 			}
 			argc--;
@@ -87,7 +87,7 @@ parse_connmark(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (get_u32(&sel.index, *argv, 10)) {
-				fprintf(stderr, "simple: Illegal \"index\"\n");
+				fprintf(stderr, "connmark: Illegal \"index\"\n");
 				return -1;
 			}
 			argc--;
