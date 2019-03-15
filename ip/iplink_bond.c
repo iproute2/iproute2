@@ -13,15 +13,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <linux/if_link.h>
-#include <linux/if_ether.h>
-#include <net/if.h>
+#include <linux/if_bonding.h>
 
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "json_print.h"
 
 #define BOND_MAX_ARP_TARGETS    16
+
+static unsigned int xstats_print_attr;
+static int filter_index;
 
 static const char *mode_tbl[] = {
 	"balance-rr",
@@ -649,10 +651,169 @@ static void bond_print_help(struct link_util *lu, int argc, char **argv,
 	print_explain(f);
 }
 
+static void bond_print_xstats_help(struct link_util *lu, FILE *f)
+{
+	fprintf(f, "Usage: ... %s [ 802.3ad ] [ dev DEVICE ]\n", lu->id);
+}
+
+static void bond_print_3ad_stats(struct rtattr *lacpattr)
+{
+	struct rtattr *lacptb[BOND_3AD_STAT_MAX+1];
+	__u64 val;
+
+	parse_rtattr(lacptb, BOND_3AD_STAT_MAX, RTA_DATA(lacpattr),
+		     RTA_PAYLOAD(lacpattr));
+	open_json_object("802.3ad");
+	if (lacptb[BOND_3AD_STAT_LACPDU_RX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		print_u64(PRINT_ANY, "lacpdu_rx", "LACPDU Rx %llu\n",
+			  rta_getattr_u64(lacptb[BOND_3AD_STAT_LACPDU_RX]));
+	}
+	if (lacptb[BOND_3AD_STAT_LACPDU_TX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		print_u64(PRINT_ANY, "lacpdu_tx", "LACPDU Tx %llu\n",
+			  rta_getattr_u64(lacptb[BOND_3AD_STAT_LACPDU_TX]));
+	}
+	if (lacptb[BOND_3AD_STAT_LACPDU_UNKNOWN_RX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		val = rta_getattr_u64(lacptb[BOND_3AD_STAT_LACPDU_UNKNOWN_RX]);
+		print_u64(PRINT_ANY,
+			  "lacpdu_unknown_rx",
+			  "LACPDU Unknown type Rx %llu\n",
+			  val);
+	}
+	if (lacptb[BOND_3AD_STAT_LACPDU_ILLEGAL_RX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		val = rta_getattr_u64(lacptb[BOND_3AD_STAT_LACPDU_ILLEGAL_RX]);
+		print_u64(PRINT_ANY,
+			  "lacpdu_illegal_rx",
+			  "LACPDU Illegal Rx %llu\n",
+			  val);
+	}
+	if (lacptb[BOND_3AD_STAT_MARKER_RX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		print_u64(PRINT_ANY, "marker_rx", "Marker Rx %llu\n",
+			  rta_getattr_u64(lacptb[BOND_3AD_STAT_MARKER_RX]));
+	}
+	if (lacptb[BOND_3AD_STAT_MARKER_TX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		print_u64(PRINT_ANY, "marker_tx", "Marker Tx %llu\n",
+			  rta_getattr_u64(lacptb[BOND_3AD_STAT_MARKER_TX]));
+	}
+	if (lacptb[BOND_3AD_STAT_MARKER_RESP_RX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		val = rta_getattr_u64(lacptb[BOND_3AD_STAT_MARKER_RESP_RX]);
+		print_u64(PRINT_ANY,
+			  "marker_response_rx",
+			  "Marker response Rx %llu\n",
+			  val);
+	}
+	if (lacptb[BOND_3AD_STAT_MARKER_RESP_TX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		val = rta_getattr_u64(lacptb[BOND_3AD_STAT_MARKER_RESP_TX]);
+		print_u64(PRINT_ANY,
+			  "marker_response_tx",
+			  "Marker response Tx %llu\n",
+			  val);
+	}
+	if (lacptb[BOND_3AD_STAT_MARKER_UNKNOWN_RX]) {
+		print_string(PRINT_FP, NULL, "%-16s    ", "");
+		val = rta_getattr_u64(lacptb[BOND_3AD_STAT_MARKER_UNKNOWN_RX]);
+		print_u64(PRINT_ANY,
+			  "marker_unknown_rx",
+			  "Marker unknown type Rx %llu\n",
+			  val);
+	}
+	close_json_object();
+}
+
+static void bond_print_stats_attr(struct rtattr *attr, int ifindex)
+{
+	struct rtattr *bondtb[LINK_XSTATS_TYPE_MAX+1];
+	struct rtattr *i, *list;
+	const char *ifname = "";
+	int rem;
+
+	parse_rtattr(bondtb, LINK_XSTATS_TYPE_MAX+1, RTA_DATA(attr),
+	RTA_PAYLOAD(attr));
+	if (!bondtb[LINK_XSTATS_TYPE_BOND])
+		return;
+
+	list = bondtb[LINK_XSTATS_TYPE_BOND];
+	rem = RTA_PAYLOAD(list);
+	open_json_object(NULL);
+	ifname = ll_index_to_name(ifindex);
+	print_string(PRINT_ANY, "ifname", "%-16s\n", ifname);
+	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+		if (xstats_print_attr && i->rta_type != xstats_print_attr)
+			continue;
+
+		switch (i->rta_type) {
+		case BOND_XSTATS_3AD:
+			bond_print_3ad_stats(i);
+			break;
+		}
+		break;
+	}
+	close_json_object();
+}
+
+int bond_print_xstats(struct nlmsghdr *n, void *arg)
+{
+	struct if_stats_msg *ifsm = NLMSG_DATA(n);
+	struct rtattr *tb[IFLA_STATS_MAX+1];
+	int len = n->nlmsg_len;
+
+	len -= NLMSG_LENGTH(sizeof(*ifsm));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
+	}
+	if (filter_index && filter_index != ifsm->ifindex)
+		return 0;
+
+	parse_rtattr(tb, IFLA_STATS_MAX, IFLA_STATS_RTA(ifsm), len);
+	if (tb[IFLA_STATS_LINK_XSTATS])
+		bond_print_stats_attr(tb[IFLA_STATS_LINK_XSTATS],
+				      ifsm->ifindex);
+
+	if (tb[IFLA_STATS_LINK_XSTATS_SLAVE])
+		bond_print_stats_attr(tb[IFLA_STATS_LINK_XSTATS_SLAVE],
+				      ifsm->ifindex);
+
+	return 0;
+}
+
+int bond_parse_xstats(struct link_util *lu, int argc, char **argv)
+{
+	while (argc > 0) {
+		if (strcmp(*argv, "lacp") == 0 ||
+		    strcmp(*argv, "802.3ad") == 0) {
+			xstats_print_attr = BOND_XSTATS_3AD;
+		} else if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			filter_index = ll_name_to_index(*argv);
+			if (!filter_index)
+				return nodev(*argv);
+		} else if (strcmp(*argv, "help") == 0) {
+			bond_print_xstats_help(lu, stdout);
+			exit(0);
+		} else {
+			invarg("unknown attribute", *argv);
+		}
+		argc--; argv++;
+	}
+
+	return 0;
+}
+
+
 struct link_util bond_link_util = {
 	.id		= "bond",
 	.maxattr	= IFLA_BOND_MAX,
 	.parse_opt	= bond_parse_opt,
 	.print_opt	= bond_print_opt,
 	.print_help	= bond_print_help,
+	.parse_ifla_xstats = bond_parse_xstats,
+	.print_ifla_xstats = bond_print_xstats,
 };

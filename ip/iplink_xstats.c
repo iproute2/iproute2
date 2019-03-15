@@ -70,10 +70,13 @@ int iplink_ifla_xstats(int argc, char **argv)
 		return -1;
 	}
 
+	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, lu->print_ifla_xstats, stdout) < 0) {
+		delete_json_obj();
 		fprintf(stderr, "Dump terminated\n");
 		return -1;
 	}
+	delete_json_obj();
 
 	return 0;
 }

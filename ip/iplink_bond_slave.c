@@ -156,4 +156,6 @@ struct link_util bond_slave_link_util = {
 	.print_opt	= bond_slave_print_opt,
 	.parse_opt	= bond_slave_parse_opt,
 	.print_help	= bond_slave_print_help,
+	.parse_ifla_xstats = bond_parse_xstats,
+	.print_ifla_xstats = bond_print_xstats,
 };
