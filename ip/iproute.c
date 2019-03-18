@@ -450,10 +450,8 @@ static void print_cache_flags(FILE *fp, __u32 flags)
 	if (flags)
 		print_hex(PRINT_ANY, "flags", "%x>", flags);
 
-	if (jw) {
+	if (jw)
 		jsonw_end_array(jw);
-		jsonw_destroy(&jw);
-	}
 }
 
 static void print_rta_cacheinfo(FILE *fp, const struct rta_cacheinfo *ci)
@@ -2079,6 +2077,8 @@ static int iproute_get(int argc, char **argv)
 	if (rtnl_talk(&rth, &req.n, &answer) < 0)
 		return -2;
 
+	new_json_obj(json);
+
 	if (connected && !from_ok) {
 		struct rtmsg *r = NLMSG_DATA(answer);
 		int len = answer->nlmsg_len;
@@ -2123,6 +2123,7 @@ static int iproute_get(int argc, char **argv)
 		req.n.nlmsg_flags = NLM_F_REQUEST;
 		req.n.nlmsg_type = RTM_GETROUTE;
 
+		delete_json_obj();
 		free(answer);
 		if (rtnl_talk(&rth, &req.n, &answer) < 0)
 			return -2;
@@ -2134,6 +2135,7 @@ static int iproute_get(int argc, char **argv)
 		return -1;
 	}
 
+	delete_json_obj();
 	free(answer);
 	return 0;
 }
