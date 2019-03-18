@@ -766,7 +766,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 
 	if ((r->rtm_type != RTN_UNICAST || show_details > 0) &&
 	    (!filter.typemask || (filter.typemask & (1 << r->rtm_type))))
-		print_string(PRINT_ANY, NULL, "%s ",
+		print_string(PRINT_ANY, "type", "%s ",
 			     rtnl_rtntype_n2a(r->rtm_type, b1, sizeof(b1)));
 
 	color = COLOR_NONE;
