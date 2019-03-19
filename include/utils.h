@@ -127,6 +127,14 @@ struct dn_naddr
 # define CLOCK_TAI 11
 #endif
 
+#ifndef AF_XDP
+# define AF_XDP 44
+# if AF_MAX < 45
+#  undef AF_MAX
+#  define AF_MAX 45
+# endif
+#endif
+
 __u32 get_addr32(const char *name);
 int get_addr_1(inet_prefix *dst, const char *arg, int family);
 int get_prefix_1(inet_prefix *dst, char *arg, int family);

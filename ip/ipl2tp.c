@@ -237,9 +237,9 @@ static void print_tunnel(const struct l2tp_data *data)
 		print_string(PRINT_FP, NULL,
 			     "  UDP source / dest ports:", NULL);
 
-		print_uint(PRINT_ANY, "local_port", " %hu",
+		print_hu(PRINT_ANY, "local_port", " %hu",
 			   p->local_udp_port);
-		print_uint(PRINT_ANY, "peer_port", "/%hu",
+		print_hu(PRINT_ANY, "peer_port", "/%hu",
 			   p->peer_udp_port);
 		print_nl();
 

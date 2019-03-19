@@ -859,7 +859,7 @@ void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix, struct rtat
 
 	if (tb[TCA_STATS2]) {
 		print_tcstats2_attr(fp, tb[TCA_STATS2], prefix, xstats);
-		if (xstats && NULL == *xstats)
+		if (xstats && !*xstats)
 			goto compat_xstats;
 		return;
 	}

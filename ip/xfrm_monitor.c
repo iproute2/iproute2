@@ -35,10 +35,11 @@
 
 static void usage(void) __attribute__((noreturn));
 static int listen_all_nsid;
+static bool nokeys;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip xfrm monitor [all-nsid] [ all | OBJECTS | help ]\n");
+	fprintf(stderr, "Usage: ip xfrm monitor [ nokeys ] [ all-nsid ] [ all | OBJECTS | help ]\n");
 	fprintf(stderr, "OBJECTS := { acquire | expire | SA | aevent | policy | report }\n");
 	exit(-1);
 }
@@ -197,7 +198,7 @@ static int xfrm_report_print(struct nlmsghdr *n, void *arg)
 
 	parse_rtattr(tb, XFRMA_MAX, XFRMREP_RTA(xrep), len);
 
-	xfrm_xfrma_print(tb, family, fp, "  ");
+	xfrm_xfrma_print(tb, family, fp, "  ", nokeys);
 
 	if (oneline)
 		fprintf(fp, "\n");
@@ -352,6 +353,8 @@ int do_xfrm_monitor(int argc, char **argv)
 		if (matches(*argv, "file") == 0) {
 			NEXT_ARG();
 			file = *argv;
+		} else if (strcmp(*argv, "nokeys") == 0) {
+			nokeys = true;
 		} else if (strcmp(*argv, "all") == 0) {
 			/* fall out */
 		} else if (matches(*argv, "all-nsid") == 0) {

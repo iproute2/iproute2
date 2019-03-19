@@ -152,6 +152,48 @@ static unsigned int ll_idx_a2n(const char *name)
 	return idx;
 }
 
+static int ll_link_get(const char *name, int index)
+{
+	struct {
+		struct nlmsghdr		n;
+		struct ifinfomsg	ifm;
+		char			buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_GETLINK,
+		.ifm.ifi_index = index,
+	};
+	__u32 filt_mask = RTEXT_FILTER_VF | RTEXT_FILTER_SKIP_STATS;
+	struct rtnl_handle rth = {};
+	struct nlmsghdr *answer;
+	int rc = 0;
+
+	if (rtnl_open(&rth, 0) < 0)
+		return 0;
+
+	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
+	if (name)
+		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name,
+			  strlen(name) + 1);
+
+	if (rtnl_talk(&rth, &req.n, &answer) < 0)
+		goto out;
+
+	/* add entry to cache */
+	rc  = ll_remember_index(answer, NULL);
+	if (!rc) {
+		struct ifinfomsg *ifm = NLMSG_DATA(answer);
+
+		rc = ifm->ifi_index;
+	}
+
+	free(answer);
+out:
+	rtnl_close(&rth);
+	return rc;
+}
+
 const char *ll_index_to_name(unsigned int idx)
 {
 	static char buf[IFNAMSIZ];
@@ -163,6 +205,12 @@ const char *ll_index_to_name(unsigned int idx)
 	im = ll_get_by_index(idx);
 	if (im)
 		return im->name;
+
+	if (ll_link_get(NULL, idx) == idx) {
+		im = ll_get_by_index(idx);
+		if (im)
+			return im->name;
+	}
 
 	if (if_indextoname(idx, buf) == NULL)
 		snprintf(buf, IFNAMSIZ, "if%u", idx);
@@ -204,10 +252,26 @@ unsigned ll_name_to_index(const char *name)
 	if (im)
 		return im->index;
 
-	idx = if_nametoindex(name);
+	idx = ll_link_get(name, 0);
+	if (idx == 0)
+		idx = if_nametoindex(name);
 	if (idx == 0)
 		idx = ll_idx_a2n(name);
 	return idx;
+}
+
+void ll_drop_by_index(unsigned index)
+{
+	struct ll_cache *im;
+
+	im = ll_get_by_index(index);
+	if (!im)
+		return;
+
+	hlist_del(&im->idx_hash);
+	hlist_del(&im->name_hash);
+
+	free(im);
 }
 
 void ll_init_map(struct rtnl_handle *rth)

@@ -63,6 +63,22 @@ devlink-dev \- devlink device configuration
 .BR "devlink dev reload"
 .IR DEV
 
+.ti -8
+.BR "devlink dev info"
+.RI "[ "
+.IR DEV
+.RI "]"
+
+.ti -8
+.BR "devlink dev flash"
+.IR DEV
+.BR file
+.IR PATH
+.RI "["
+.BR target
+.IR ID
+.RI "]"
+
 .SH "DESCRIPTION"
 .SS devlink dev show - display devlink device attributes
 
@@ -150,6 +166,48 @@ If this argument is omitted all parameters supported by devlink devices are list
 .PP
 .I "DEV"
 - Specifies the devlink device to reload.
+
+.SS devlink dev info - display device information.
+Display device information provided by the driver. This command can be used
+to query versions of the hardware components or device components which
+can't be updated (
+.I fixed
+) as well as device firmware which can be updated. For firmware components
+.I running
+displays the versions of firmware currently loaded into the device, while
+.I stored
+reports the versions in device's flash.
+.I Running
+and
+.I stored
+versions may differ after flash has been updated, but before reboot.
+
+.PP
+.I "DEV"
+- specifies the devlink device to show.
+If this argument is omitted all devices are listed.
+
+.SS devlink dev flash - write device's non-volatile memory.
+
+.PP
+.I "DEV"
+- specifies the devlink device to write to.
+
+.BR file
+.I PATH
+- Path to the file which will be written into device's flash. The path needs
+to be relative to one of the directories searched by the kernel firmware loaded,
+such as /lib/firmware.
+
+.BR component
+.I NAME
+- If device stores multiple firmware images in non-volatile memory, this
+parameter may be used to indicate which firmware image should be written.
+The value of
+.I NAME
+should match the component names from
+.B "devlink dev info"
+and may be driver-dependent.
 
 .SH "EXAMPLES"
 .PP

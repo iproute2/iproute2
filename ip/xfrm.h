@@ -105,6 +105,7 @@ struct xfrm_filter {
 extern struct xfrm_filter filter;
 
 int xfrm_state_print(struct nlmsghdr *n, void *arg);
+int xfrm_state_print_nokeys(struct nlmsghdr *n, void *arg);
 int xfrm_policy_print(struct nlmsghdr *n, void *arg);
 int do_xfrm_state(int argc, char **argv);
 int do_xfrm_policy(int argc, char **argv);
@@ -124,10 +125,10 @@ const char *strxf_ptype(__u8 ptype);
 void xfrm_selector_print(struct xfrm_selector *sel, __u16 family,
 			 FILE *fp, const char *prefix);
 void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
-		      FILE *fp, const char *prefix);
+		      FILE *fp, const char *prefix, bool nokeys);
 void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 			    struct rtattr *tb[], FILE *fp, const char *prefix,
-			   const char *title);
+			   const char *title, bool nokeys);
 void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 			    struct rtattr *tb[], FILE *fp, const char *prefix,
 			    const char *title);

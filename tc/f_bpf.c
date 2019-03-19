@@ -235,7 +235,7 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 	}
 
 	if (tb[TCA_BPF_OPS] && tb[TCA_BPF_OPS_LEN])
-		bpf_print_ops(f, tb[TCA_BPF_OPS],
+		bpf_print_ops(tb[TCA_BPF_OPS],
 			      rta_getattr_u16(tb[TCA_BPF_OPS_LEN]));
 
 	if (tb[TCA_BPF_ID])

@@ -42,6 +42,7 @@
 #include <linux/unix_diag.h>
 #include <linux/netdevice.h>	/* for MAX_ADDR_LEN */
 #include <linux/filter.h>
+#include <linux/xdp_diag.h>
 #include <linux/packet_diag.h>
 #include <linux/netlink_diag.h>
 #include <linux/sctp.h>
@@ -209,6 +210,7 @@ enum {
 	VSOCK_ST_DB,
 	VSOCK_DG_DB,
 	TIPC_DB,
+	XDP_DB,
 	MAX_DB
 };
 
@@ -320,6 +322,10 @@ static const struct filter default_dbs[MAX_DB] = {
 		.states   = TIPC_SS_CONN,
 		.families = FAMILY_MASK(AF_TIPC),
 	},
+	[XDP_DB] = {
+		.states   = (1 << SS_CLOSE),
+		.families = FAMILY_MASK(AF_XDP),
+	},
 };
 
 static const struct filter default_afs[AF_MAX] = {
@@ -351,6 +357,10 @@ static const struct filter default_afs[AF_MAX] = {
 		.dbs    = (1 << TIPC_DB),
 		.states = TIPC_SS_CONN,
 	},
+	[AF_XDP] = {
+		.dbs    = (1 << XDP_DB),
+		.states = (1 << SS_CLOSE),
+	},
 };
 
 static int do_default = 1;
@@ -377,7 +387,7 @@ static int filter_db_parse(struct filter *f, const char *s)
 		ENTRY(all, UDP_DB, DCCP_DB, TCP_DB, RAW_DB,
 			   UNIX_ST_DB, UNIX_DG_DB, UNIX_SQ_DB,
 			   PACKET_R_DB, PACKET_DG_DB, NETLINK_DB,
-			   SCTP_DB, VSOCK_ST_DB, VSOCK_DG_DB),
+			   SCTP_DB, VSOCK_ST_DB, VSOCK_DG_DB, XDP_DB),
 		ENTRY(inet, UDP_DB, DCCP_DB, TCP_DB, SCTP_DB, RAW_DB),
 		ENTRY(udp, UDP_DB),
 		ENTRY(dccp, DCCP_DB),
@@ -402,6 +412,7 @@ static int filter_db_parse(struct filter *f, const char *s)
 		ENTRY(v_str, VSOCK_ST_DB),	/* alias for vsock_stream */
 		ENTRY(vsock_dgram, VSOCK_DG_DB),
 		ENTRY(v_dgr, VSOCK_DG_DB),	/* alias for vsock_dgram */
+		ENTRY(xdp, XDP_DB),
 #undef ENTRY
 	};
 	bool enable = true;
@@ -1351,6 +1362,9 @@ static void sock_state_print(struct sockstat *s)
 		break;
 	case AF_VSOCK:
 		sock_name = vsock_netid_name(s->type);
+		break;
+	case AF_XDP:
+		sock_name = "xdp";
 		break;
 	default:
 		sock_name = "unknown";
@@ -4095,6 +4109,142 @@ static int packet_show(struct filter *f)
 	return rc;
 }
 
+static int xdp_stats_print(struct sockstat *s, const struct filter *f)
+{
+	const char *addr, *port;
+	char q_str[16];
+
+	s->local.family = s->remote.family = AF_XDP;
+
+	if (f->f) {
+		if (run_ssfilter(f->f, s) == 0)
+			return 1;
+	}
+
+	sock_state_print(s);
+
+	if (s->iface) {
+		addr = xll_index_to_name(s->iface);
+		snprintf(q_str, sizeof(q_str), "q%d", s->lport);
+		port = q_str;
+		sock_addr_print(addr, ":", port, NULL);
+	} else {
+		sock_addr_print("", "*", "", NULL);
+	}
+
+	sock_addr_print("", "*", "", NULL);
+
+	proc_ctx_print(s);
+
+	if (show_details)
+		sock_details_print(s);
+
+	return 0;
+}
+
+static void xdp_show_ring(const char *name, struct xdp_diag_ring *ring)
+{
+	out("\n\t%s(", name);
+	out("entries:%u", ring->entries);
+	out(")");
+}
+
+static void xdp_show_umem(struct xdp_diag_umem *umem, struct xdp_diag_ring *fr,
+			  struct xdp_diag_ring *cr)
+{
+	out("\n\tumem(");
+	out("id:%u", umem->id);
+	out(",size:%llu", umem->size);
+	out(",num_pages:%u", umem->num_pages);
+	out(",chunk_size:%u", umem->chunk_size);
+	out(",headroom:%u", umem->headroom);
+	out(",ifindex:%u", umem->ifindex);
+	out(",qid:%u", umem->queue_id);
+	out(",zc:%u", umem->flags & XDP_DU_F_ZEROCOPY);
+	out(",refs:%u", umem->refs);
+	out(")");
+
+	if (fr)
+		xdp_show_ring("fr", fr);
+	if (cr)
+		xdp_show_ring("cr", cr);
+}
+
+static int xdp_show_sock(struct nlmsghdr *nlh, void *arg)
+{
+	struct xdp_diag_ring *rx = NULL, *tx = NULL, *fr = NULL, *cr = NULL;
+	struct xdp_diag_msg *msg = NLMSG_DATA(nlh);
+	struct rtattr *tb[XDP_DIAG_MAX + 1];
+	struct xdp_diag_info *info = NULL;
+	struct xdp_diag_umem *umem = NULL;
+	const struct filter *f = arg;
+	struct sockstat stat = {};
+
+	parse_rtattr(tb, XDP_DIAG_MAX, (struct rtattr *)(msg + 1),
+		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*msg)));
+
+	stat.type = msg->xdiag_type;
+	stat.ino = msg->xdiag_ino;
+	stat.state = SS_CLOSE;
+	stat.sk = cookie_sk_get(&msg->xdiag_cookie[0]);
+
+	if (tb[XDP_DIAG_INFO]) {
+		info = RTA_DATA(tb[XDP_DIAG_INFO]);
+		stat.iface = info->ifindex;
+		stat.lport = info->queue_id;
+	}
+
+	if (tb[XDP_DIAG_UID])
+		stat.uid = rta_getattr_u32(tb[XDP_DIAG_UID]);
+	if (tb[XDP_DIAG_RX_RING])
+		rx = RTA_DATA(tb[XDP_DIAG_RX_RING]);
+	if (tb[XDP_DIAG_TX_RING])
+		tx = RTA_DATA(tb[XDP_DIAG_TX_RING]);
+	if (tb[XDP_DIAG_UMEM])
+		umem = RTA_DATA(tb[XDP_DIAG_UMEM]);
+	if (tb[XDP_DIAG_UMEM_FILL_RING])
+		fr = RTA_DATA(tb[XDP_DIAG_UMEM_FILL_RING]);
+	if (tb[XDP_DIAG_UMEM_COMPLETION_RING])
+		cr = RTA_DATA(tb[XDP_DIAG_UMEM_COMPLETION_RING]);
+	if (tb[XDP_DIAG_MEMINFO]) {
+		__u32 *skmeminfo = RTA_DATA(tb[XDP_DIAG_MEMINFO]);
+
+		stat.rq = skmeminfo[SK_MEMINFO_RMEM_ALLOC];
+	}
+
+	if (xdp_stats_print(&stat, f))
+		return 0;
+
+	if (show_details) {
+		if (rx)
+			xdp_show_ring("rx", rx);
+		if (tx)
+			xdp_show_ring("tx", tx);
+		if (umem)
+			xdp_show_umem(umem, fr, cr);
+	}
+
+	if (show_mem)
+		print_skmeminfo(tb, XDP_DIAG_MEMINFO); // really?
+
+
+	return 0;
+}
+
+static int xdp_show(struct filter *f)
+{
+	DIAG_REQUEST(req, struct xdp_diag_req r);
+
+	if (!filter_af_get(f, AF_XDP) || !(f->states & (1 << SS_CLOSE)))
+		return 0;
+
+	req.r.sdiag_family = AF_XDP;
+	req.r.xdiag_show = XDP_SHOW_INFO | XDP_SHOW_RING_CFG | XDP_SHOW_UMEM |
+			   XDP_SHOW_MEMINFO;
+
+	return handle_netlink_request(f, &req.nlh, sizeof(req), xdp_show_sock);
+}
+
 static int netlink_show_one(struct filter *f,
 				int prot, int pid, unsigned int groups,
 				int state, int dst_pid, unsigned int dst_group,
@@ -4482,6 +4632,9 @@ static int generic_show_sock(struct nlmsghdr *nlh, void *arg)
 	case AF_VSOCK:
 		ret = vsock_show_sock(nlh, arg);
 		break;
+	case AF_XDP:
+		ret = xdp_show_sock(nlh, arg);
+		break;
 	default:
 		ret = -1;
 	}
@@ -4720,7 +4873,7 @@ static void _usage(FILE *dest)
 "       --tipc          display only TIPC sockets\n"
 "       --vsock         display only vsock sockets\n"
 "   -f, --family=FAMILY display sockets of type FAMILY\n"
-"       FAMILY := {inet|inet6|link|unix|netlink|vsock|tipc|help}\n"
+"       FAMILY := {inet|inet6|link|unix|netlink|vsock|tipc|xdp|help}\n"
 "\n"
 "   -K, --kill          forcibly close sockets, display what was closed\n"
 "   -H, --no-header     Suppress header line\n"
@@ -4808,6 +4961,9 @@ static int scan_state(const char *state)
 
 #define OPT_TOS 259
 
+/* Values of 'x' are already used so a non-character is used */
+#define OPT_XDPSOCK 260
+
 static const struct option long_opts[] = {
 	{ "numeric", 0, 0, 'n' },
 	{ "resolve", 0, 0, 'r' },
@@ -4846,6 +5002,7 @@ static const struct option long_opts[] = {
 	{ "tos", 0, 0, OPT_TOS },
 	{ "kill", 0, 0, 'K' },
 	{ "no-header", 0, 0, 'H' },
+	{ "xdp", 0, 0, OPT_XDPSOCK},
 	{ 0 }
 
 };
@@ -4933,6 +5090,9 @@ int main(int argc, char *argv[])
 		case '0':
 			filter_af_set(&current_filter, AF_PACKET);
 			break;
+		case OPT_XDPSOCK:
+			filter_af_set(&current_filter, AF_XDP);
+			break;
 		case 'f':
 			if (strcmp(optarg, "inet") == 0)
 				filter_af_set(&current_filter, AF_INET);
@@ -4948,6 +5108,8 @@ int main(int argc, char *argv[])
 				filter_af_set(&current_filter, AF_TIPC);
 			else if (strcmp(optarg, "vsock") == 0)
 				filter_af_set(&current_filter, AF_VSOCK);
+			else if (strcmp(optarg, "xdp") == 0)
+				filter_af_set(&current_filter, AF_XDP);
 			else if (strcmp(optarg, "help") == 0)
 				help();
 			else {
@@ -5148,6 +5310,8 @@ int main(int argc, char *argv[])
 		vsock_show(&current_filter);
 	if (current_filter.dbs & (1<<TIPC_DB))
 		tipc_show(&current_filter);
+	if (current_filter.dbs & (1<<XDP_DB))
+		xdp_show(&current_filter);
 
 	if (show_users || show_proc_ctx || show_sock_ctx)
 		user_ent_destroy();

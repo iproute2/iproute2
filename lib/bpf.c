@@ -339,7 +339,7 @@ out:
 	return ret;
 }
 
-void bpf_print_ops(FILE *f, struct rtattr *bpf_ops, __u16 len)
+void bpf_print_ops(struct rtattr *bpf_ops, __u16 len)
 {
 	struct sock_filter *ops = RTA_DATA(bpf_ops);
 	int i;
@@ -347,14 +347,24 @@ void bpf_print_ops(FILE *f, struct rtattr *bpf_ops, __u16 len)
 	if (len == 0)
 		return;
 
-	fprintf(f, "bytecode \'%u,", len);
+	open_json_object("bytecode");
+	print_uint(PRINT_ANY, "length", "bytecode \'%u,", len);
+	open_json_array(PRINT_JSON, "insns");
 
-	for (i = 0; i < len - 1; i++)
-		fprintf(f, "%hu %hhu %hhu %u,", ops[i].code, ops[i].jt,
-			ops[i].jf, ops[i].k);
+	for (i = 0; i < len; i++) {
+		open_json_object(NULL);
+		print_hu(PRINT_ANY, "code", "%hu ", ops[i].code);
+		print_hhu(PRINT_ANY, "jt", "%hhu ", ops[i].jt);
+		print_hhu(PRINT_ANY, "jf", "%hhu ", ops[i].jf);
+		if (i == len - 1)
+			print_uint(PRINT_ANY, "k", "%u\'", ops[i].k);
+		else
+			print_uint(PRINT_ANY, "k", "%u,", ops[i].k);
+		close_json_object();
+	}
 
-	fprintf(f, "%hu %hhu %hhu %u\'", ops[i].code, ops[i].jt,
-		ops[i].jf, ops[i].k);
+	close_json_array(PRINT_JSON, NULL);
+	close_json_object();
 }
 
 static void bpf_map_pin_report(const struct bpf_elf_map *pin,
