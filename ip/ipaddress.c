@@ -174,7 +174,9 @@ static void print_queuelen(FILE *f, struct rtattr *tb[IFLA_MAX + 1])
 
 		strcpy(ifr.ifr_name, rta_getattr_str(tb[IFLA_IFNAME]));
 		if (ioctl(s, SIOCGIFTXQLEN, &ifr) < 0) {
-			fprintf(f, "ioctl(SIOCGIFTXQLEN) failed: %s\n", strerror(errno));
+			fprintf(stderr,
+				"ioctl(SIOCGIFTXQLEN) failed: %s\n",
+				strerror(errno));
 			close(s);
 			return;
 		}
