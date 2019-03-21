@@ -47,6 +47,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR flood " { " on " | " off " } ] [ "
 .BR hwmode " { " vepa " | " veb " } ] [ "
 .BR mcast_flood " { " on " | " off " } ] [ "
+.BR mcast_to_unicast " { " on " | " off " } ] [ "
 .BR neigh_suppress " { " on " | " off " } ] [ "
 .BR vlan_tunnel " { " on " | " off " } ] [ "
 .BR isolated " { " on " | " off " } ] [ "
@@ -364,6 +365,10 @@ switch.
 .TP
 .BR "mcast_flood on " or " mcast_flood off "
 Controls whether a given port will flood multicast traffic for which there is no MDB entry. By default this flag is on.
+
+.TP
+.BR "mcast_to_unicast on " or " mcast_to_unicast off "
+Controls whether a given port will replicate packets using unicast instead of multicast. By default this flag is off.
 
 .TP
 .BR "neigh_suppress on " or " neigh_suppress off "

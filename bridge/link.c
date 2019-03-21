@@ -146,6 +146,9 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 		if (prtb[IFLA_BRPORT_MCAST_FLOOD])
 			print_onoff(fp, "mcast_flood",
 				    rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_FLOOD]));
+		if (prtb[IFLA_BRPORT_MCAST_TO_UCAST])
+			print_onoff(fp, "mcast_to_unicast",
+				    rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_TO_UCAST]));
 		if (prtb[IFLA_BRPORT_NEIGH_SUPPRESS])
 			print_onoff(fp, "neigh_suppress",
 				    rta_getattr_u8(prtb[IFLA_BRPORT_NEIGH_SUPPRESS]));
@@ -260,6 +263,7 @@ static void usage(void)
 	fprintf(stderr,	"                               [ learning_sync {on | off} ]\n");
 	fprintf(stderr,	"                               [ flood {on | off} ]\n");
 	fprintf(stderr,	"                               [ mcast_flood {on | off} ]\n");
+	fprintf(stderr,	"                               [ mcast_to_unicast {on | off} ]\n");
 	fprintf(stderr,	"                               [ neigh_suppress {on | off} ]\n");
 	fprintf(stderr,	"                               [ vlan_tunnel {on | off} ]\n");
 	fprintf(stderr,	"                               [ isolated {on | off} ]\n");
@@ -306,6 +310,7 @@ static int brlink_modify(int argc, char **argv)
 	__s8 flood = -1;
 	__s8 vlan_tunnel = -1;
 	__s8 mcast_flood = -1;
+	__s8 mcast_to_unicast = -1;
 	__s8 isolated = -1;
 	__s8 hairpin = -1;
 	__s8 bpdu_guard = -1;
@@ -353,6 +358,10 @@ static int brlink_modify(int argc, char **argv)
 		} else if (strcmp(*argv, "mcast_flood") == 0) {
 			NEXT_ARG();
 			if (!on_off("mcast_flood", &mcast_flood, *argv))
+				return -1;
+		} else if (strcmp(*argv, "mcast_to_unicast") == 0) {
+			NEXT_ARG();
+			if (!on_off("mcast_to_unicast", &mcast_to_unicast, *argv))
 				return -1;
 		} else if (strcmp(*argv, "cost") == 0) {
 			NEXT_ARG();
@@ -453,6 +462,9 @@ static int brlink_modify(int argc, char **argv)
 	if (mcast_flood >= 0)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_MCAST_FLOOD,
 			 mcast_flood);
+	if (mcast_to_unicast >= 0)
+		addattr8(&req.n, sizeof(req), IFLA_BRPORT_MCAST_TO_UCAST,
+			 mcast_to_unicast);
 	if (learning >= 0)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_LEARNING, learning);
 	if (learning_sync >= 0)
