@@ -364,28 +364,34 @@ switch.
 
 .TP
 .BR "mcast_flood on " or " mcast_flood off "
-Controls whether a given port will flood multicast traffic for which there is no MDB entry. By default this flag is on.
+Controls whether a given port will flood multicast traffic for which
+there is no MDB entry. By default this flag is on.
 
 .TP
 .BR "mcast_to_unicast on " or " mcast_to_unicast off "
-Controls whether a given port will replicate packets using unicast instead of multicast. By default this flag is off.
+Controls whether a given port will replicate packets using unicast
+instead of multicast. By default this flag is off.
 
 .TP
 .BR "neigh_suppress on " or " neigh_suppress off "
-Controls whether neigh discovery (arp and nd) proxy and suppression is enabled on the port. By default this flag is off.
+Controls whether neigh discovery (arp and nd) proxy and suppression is
+enabled on the port. By default this flag is off.
 
 .TP
 .BR "vlan_tunnel on " or " vlan_tunnel off "
-Controls whether vlan to tunnel mapping is enabled on the port. By default this flag is off.
+Controls whether vlan to tunnel mapping is enabled on the port. By
+default this flag is off.
 
 .TP
 .BR "isolated on " or " isolated off "
-Controls whether a given port will be isolated, which means it will be able to communicate with non-isolated ports only.
-By default this flag is off.
+Controls whether a given port will be isolated, which means it will be
+able to communicate with non-isolated ports only.  By default this
+flag is off.
 
 .TP
 .BI backup_port " DEVICE"
-If the port loses carrier all traffic will be redirected to the configured backup port
+If the port loses carrier all traffic will be redirected to the
+configured backup port
 
 .TP
 .BR nobackup_port
@@ -639,9 +645,9 @@ the VLAN ID that identifies the vlan.
 
 .TP
 .BI tunnel_info " TUNNEL_ID"
-the TUNNEL ID that maps to this vlan. The tunnel id is set in dst_metadata for
-every packet that belongs to this vlan (applicable to bridge ports with vlan_tunnel
-flag set).
+the TUNNEL ID that maps to this vlan. The tunnel id is set in
+dst_metadata for every packet that belongs to this vlan (applicable to
+bridge ports with vlan_tunnel flag set).
 
 .TP
 .BI pvid

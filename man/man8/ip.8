@@ -72,8 +72,9 @@ First failure will cause termination of ip.
 
 .TP
 .BR "\-force"
-Don't terminate ip on errors in batch mode.
-If there were any errors during execution of the commands, the application return code will be non zero.
+Don't terminate ip on errors in batch mode.  If there were any errors
+during execution of the commands, the application return code will be
+non zero.
 
 .TP
 .BR "\-s" , " \-stats" , " \-statistics"
@@ -93,7 +94,8 @@ Zero (0) means loop until all addresses are removed.
 
 .TP
 .BR "\-f" , " \-family " <FAMILY>
-Specifies the protocol family to use. The protocol family identifier can be one of
+Specifies the protocol family to use. The protocol family identifier
+can be one of
 .BR "inet" , " inet6" , " bridge" ,  " mpls"
 or
 .BR link .
@@ -174,7 +176,8 @@ to
 
 .TP
 .BR "\-a" , " \-all"
-executes specified command over all objects, it depends if command supports this option.
+executes specified command over all objects, it depends if command
+supports this option.
 
 .TP
 .BR \-c [ color ][ = { always | auto | never }
@@ -182,7 +185,8 @@ Configure color output. If parameter is omitted or
 .BR always ,
 color output is enabled regardless of stdout state. If parameter is
 .BR auto ,
-stdout is checked to be a terminal before enabling color output. If parameter is
+stdout is checked to be a terminal before enabling color output. If
+parameter is
 .BR never ,
 color output is disabled. If specified multiple times, the last one takes
 precedence. This flag is ignored if
@@ -215,7 +219,8 @@ print human readable rates in IEC units (e.g. 1Ki = 1024).
 
 .TP
 .BR "\-br" , " \-brief"
-Print only basic information in a tabular format for better readability. This option is currently only supported by
+Print only basic information in a tabular format for better
+readability. This option is currently only supported by
 .BR "ip addr show " and " ip link show " commands.
 
 .TP
@@ -224,8 +229,9 @@ Output results in JavaScript Object Notation (JSON).
 
 .TP
 .BR "\-p", " \-pretty"
-The default JSON format is compact and more efficient to parse but hard for most users to read.
-This flag adds indentation for readability.
+The default JSON format is compact and more efficient to parse but
+hard for most users to read.  This flag adds indentation for
+readability.
 
 .SH IP - COMMAND SYNTAX
 
@@ -339,7 +345,8 @@ or, if the objects of this class cannot be listed,
 .SH ENVIRONMENT
 .TP
 .B COLORFGBG
-If set, it's value is used for detection whether background is dark or light and use contrast colors for it.
+If set, it's value is used for detection whether background is dark or
+light and use contrast colors for it.
 
 COLORFGBG environment variable usually contains either two or three
 values separated by semicolons; we want the last value in either case.
