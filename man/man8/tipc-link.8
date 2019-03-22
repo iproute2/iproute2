@@ -1,4 +1,4 @@
-.TH TIPC-LINK 8 "02 Jun 2015" "iproute2" "Linux"
+.TH TIPC-LINK 8 "22 Mar 2019" "iproute2" "Linux"
 
 .\" For consistency, please keep padding right aligned.
 .\" For example '.B "foo " bar' and not '.B foo " bar"'
@@ -14,18 +14,36 @@ tipc-link \- show links or modify link properties
 
 .ti -8
 .B tipc link set
-.RB "{ " "priority "
+.br
+.RB "[ " "{ " "priority "
 .IR PRIORITY
 .RB "| " tolerance
 .IR TOLERANCE
 .RB "| " window
 .IR "WINDOW " }
-.BI "link " LINK
+.BI "link " LINK " ]"
+.RB "|"
+.br
+.RB "[ "
+.RB "{ " broadcast " [ "
+.IR BROADCAST
+.RB " | "
+.IR REPLICAST
+.RB " | "
+.IR AUTOSELECT
+.RB "[ " ratio
+.IR SIZE
+.RB "] " ] " } " "]"
 
 .ti -8
 .B tipc link get
-.RB "{ " "priority" " | " tolerance " | " window " } " link
-.I LINK
+.br
+.RB "[ " "{ " "priority" " | " tolerance " | " window " } " link
+.IR LINK " ] "
+.RB "|"
+.br
+.RB "[ " { " broadcast " } " ]"
+.br
 
 .ti -8
 .B tipc link statistics
@@ -305,6 +323,31 @@ These nodes were not applied to the monitoring list for this peer node.
 They are usually transient and occur during the cluster startup phase
 or network reconfiguration.
 Possible status are: U or D. The status U implies up and D down.
+
+.SS Broadcast properties
+.TP
+.B  BROADCAST
+.br
+Forces all multicast traffic to be transmitted via broadcast only,
+irrespective of cluster size and number of destinations.
+
+.TP
+.B REPLICAST
+.br
+Forces all multicast traffic to be transmitted via replicast only,
+irrespective of cluster size and number of destinations.
+
+.TP
+.B AUTOSELECT
+.br
+Auto switching to broadcast or replicast depending on cluster size and
+destination node number.
+
+.TP
+.B ratio SIZE
+.br
+Set the AUTOSELECT criteria, percentage of destination nodes vs cluster
+size.
 
 .SH EXAMPLES
 .PP
