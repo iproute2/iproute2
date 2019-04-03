@@ -693,7 +693,25 @@ int rd_recv_msg(struct rd *rd, mnl_cb_t callback, void *data, unsigned int seq)
 		ret = mnl_cb_run(buf, ret, seq, portid, callback, data);
 	} while (ret > 0);
 
+	if (ret < 0 && !rd->suppress_errors)
+		perror("error");
+
 	mnl_socket_close(rd->nl);
+	return ret;
+}
+
+static int null_cb(const struct nlmsghdr *nlh, void *data)
+{
+	return MNL_CB_OK;
+}
+
+int rd_sendrecv_msg(struct rd *rd, unsigned int seq)
+{
+	int ret;
+
+	ret = rd_send_msg(rd);
+	if (!ret)
+		ret = rd_recv_msg(rd, null_cb, rd, seq);
 	return ret;
 }
 
