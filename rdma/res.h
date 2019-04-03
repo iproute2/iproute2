@@ -31,6 +31,7 @@ int res_qp_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
 		if (id) {                                                              \
 			ret = rd_doit_index(rd, &idx);                                 \
 			if (ret) {                                                     \
+				rd->suppress_errors = true;                            \
 				ret = _res_send_idx_msg(rd, command,                   \
 							name##_idx_parse_cb,           \
 							idx, id);                      \

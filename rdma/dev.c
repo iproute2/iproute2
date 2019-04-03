@@ -268,7 +268,7 @@ static int dev_set_name(struct rd *rd)
 	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
 	mnl_attr_put_strz(rd->nlh, RDMA_NLDEV_ATTR_DEV_NAME, rd_argv(rd));
 
-	return rd_send_msg(rd);
+	return rd_sendrecv_msg(rd, seq);
 }
 
 static int dev_one_set(struct rd *rd)
