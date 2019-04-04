@@ -891,6 +891,14 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 			(xuo->flags & XFRM_OFFLOAD_INBOUND) ? "in" : "out");
 		fprintf(fp, "%s", _SL_);
 	}
+	if (tb[XFRMA_IF_ID]) {
+		__u32 if_id = rta_getattr_u32(tb[XFRMA_IF_ID]);
+
+		if (prefix)
+			fputs(prefix, fp);
+		fprintf(fp, "if_id %#x", if_id);
+		fprintf(fp, "%s", _SL_);
+	}
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)

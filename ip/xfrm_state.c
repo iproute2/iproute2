@@ -62,6 +62,7 @@ static void usage(void)
 	fprintf(stderr, "        [ coa ADDR[/PLEN] ] [ ctx CTX ] [ extra-flag EXTRA-FLAG-LIST ]\n");
 	fprintf(stderr, "        [ offload [dev DEV] dir DIR ]\n");
 	fprintf(stderr, "        [ output-mark OUTPUT-MARK ]\n");
++	fprintf(stderr, "        [ if_id IF_ID ]\n");
 	fprintf(stderr, "Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n");
 	fprintf(stderr, "        [ reqid REQID ] [ seq SEQ ] [ min SPI max SPI ]\n");
 	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID [ mark MARK [ mask MASK ] ]\n");
@@ -326,6 +327,8 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 		char    str[CTX_BUF_SIZE];
 	} ctx = {};
 	__u32 output_mark = 0;
+	bool is_if_id_set = false;
+	__u32 if_id = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "mode") == 0) {
@@ -445,6 +448,11 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 			NEXT_ARG();
 			if (get_u32(&output_mark, *argv, 0))
 				invarg("value after \"output-mark\" is invalid", *argv);
+		} else if (strcmp(*argv, "if_id") == 0) {
+			NEXT_ARG();
+			if (get_u32(&if_id, *argv, 0))
+				invarg("value after \"if_id\" is invalid", *argv);
+			is_if_id_set = true;
 		} else {
 			/* try to assume ALGO */
 			int type = xfrm_algotype_getbyname(*argv);
@@ -626,6 +634,9 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 			exit(1);
 		}
 	}
+
+	if (is_if_id_set)
+		addattr32(&req.n, sizeof(req.buf), XFRMA_IF_ID, if_id);
 
 	if (xfrm_xfrmproto_is_ipsec(req.xsinfo.id.proto)) {
 		switch (req.xsinfo.mode) {
