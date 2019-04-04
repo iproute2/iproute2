@@ -221,7 +221,8 @@ ip-link \- network device configuration
 .BR vrf " |"
 .BR macsec " |"
 .BR netdevsim " |"
-.BR rmnet " ]"
+.BR rmnet " |"
+.BR xfrm " ]"
 
 .ti -8
 .IR ETYPE " := [ " TYPE " |"
@@ -350,6 +351,9 @@ Link types:
 .sp
 .BR rmnet
 - Qualcomm rmnet device
+.sp
+.BR xfrm
+- Virtual xfrm interface
 .in -8
 
 .TP
@@ -1738,6 +1742,27 @@ the following additional arguments are supported:
 .sp
 .BI mux_id " MUXID "
 - specifies the mux identifier for the rmnet device, possible values 1-254.
+
+.in -8
+
+.TP
+XFRM Type Support
+For a link of type
+.I XFRM
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE " type xfrm dev " PHYS_DEV " [ if_id " IF_ID " ]"
+
+.in +8
+.sp
+.BI dev " PHYS_DEV "
+- specifies the underlying physical interface from which transform traffic is sent and received.
+
+.sp
+.BI if_id " IF-ID "
+- specifies the hexadecimal lookup key used to send traffic to and from specific xfrm
+policies. Policies must be configured with the same key. If not set, the key defaults to
+0 and will match any policies which similarly do not have a lookup key configuration.
 
 .in -8
 
