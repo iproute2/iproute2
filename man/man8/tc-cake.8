@@ -91,6 +91,10 @@ TIME |
 LIMIT ]
 .br
 [
+.BR fwmark
+MASK ]
+.br
+[
 .BR ptm
 |
 .BR atm
@@ -523,6 +527,18 @@ preset on the modern Internet is firmly discouraged.
 		Best Effort (general), 100% threshold.
 .br
 		Voice (CS7, CS6, EF, VA, TOS4), 25% threshold, reduced Codel interval.
+
+.PP
+.B fwmark
+MASK
+.br
+	This options turns on fwmark-based overriding of CAKE's tin selection.
+If set, the option specifies a bitmask that will be applied to the fwmark
+associated with each packet. If the result of this masking is non-zero, the
+result will be right-shifted by the number of least-significant unset bits in
+the mask value, and the result will be used as a the tin number for that packet.
+This can be used to set policies in a firewall script that will override CAKE's
+built-in tin selection.
 
 .SH OTHER PARAMETERS
 .B memlimit
