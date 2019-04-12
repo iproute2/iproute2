@@ -132,9 +132,6 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 
 	open_json_object(NULL);
 
-	if (n->nlmsg_type == RTM_DELMDB)
-		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
-
 	print_int(PRINT_ANY, "index", "%u: ", ifindex);
 	print_color_string(PRINT_ANY, COLOR_IFNAME, "dev", "%s ", dev);
 	print_string(PRINT_ANY, "port", " %s ",
@@ -189,10 +186,8 @@ static void print_mdb_entries(FILE *fp, struct nlmsghdr *n,
 	int rem = RTA_PAYLOAD(mdb);
 	struct rtattr *i;
 
-	open_json_array(PRINT_JSON, "mdb");
 	for (i = RTA_DATA(mdb); RTA_OK(i, rem); i = RTA_NEXT(i, rem))
 		br_print_mdb_entry(fp, ifindex, i, n);
-	close_json_array(PRINT_JSON, NULL);
 }
 
 static void print_router_entries(FILE *fp, struct nlmsghdr *n,
@@ -200,7 +195,6 @@ static void print_router_entries(FILE *fp, struct nlmsghdr *n,
 {
 	const char *brifname = ll_index_to_name(ifindex);
 
-	open_json_array(PRINT_JSON, "router");
 	if (n->nlmsg_type == RTM_GETMDB) {
 		if (show_details)
 			br_print_router_ports(fp, router, brifname);
@@ -222,15 +216,12 @@ static void print_router_entries(FILE *fp, struct nlmsghdr *n,
 				port_name, brifname);
 		}
 	}
-	close_json_array(PRINT_JSON, NULL);
 }
 
-int print_mdb(struct nlmsghdr *n, void *arg)
+static int __parse_mdb_nlmsg(struct nlmsghdr *n, struct rtattr **tb)
 {
-	FILE *fp = arg;
 	struct br_port_msg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	struct rtattr *tb[MDBA_MAX+1];
 
 	if (n->nlmsg_type != RTM_GETMDB &&
 	    n->nlmsg_type != RTM_NEWMDB &&
@@ -252,6 +243,54 @@ int print_mdb(struct nlmsghdr *n, void *arg)
 		return 0;
 
 	parse_rtattr(tb, MDBA_MAX, MDBA_RTA(r), n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
+
+	return 1;
+}
+
+static int print_mdbs(struct nlmsghdr *n, void *arg)
+{
+	struct br_port_msg *r = NLMSG_DATA(n);
+	struct rtattr *tb[MDBA_MAX+1];
+	FILE *fp = arg;
+	int ret;
+
+	ret = __parse_mdb_nlmsg(n, tb);
+	if (ret != 1)
+		return ret;
+
+	if (tb[MDBA_MDB])
+		print_mdb_entries(fp, n, r->ifindex, tb[MDBA_MDB]);
+
+	return 0;
+}
+
+static int print_rtrs(struct nlmsghdr *n, void *arg)
+{
+	struct br_port_msg *r = NLMSG_DATA(n);
+	struct rtattr *tb[MDBA_MAX+1];
+	FILE *fp = arg;
+	int ret;
+
+	ret = __parse_mdb_nlmsg(n, tb);
+	if (ret != 1)
+		return ret;
+
+	if (tb[MDBA_ROUTER])
+		print_router_entries(fp, n, r->ifindex, tb[MDBA_ROUTER]);
+
+	return 0;
+}
+
+int print_mdb_mon(struct nlmsghdr *n, void *arg)
+{
+	struct br_port_msg *r = NLMSG_DATA(n);
+	struct rtattr *tb[MDBA_MAX+1];
+	FILE *fp = arg;
+	int ret;
+
+	ret = __parse_mdb_nlmsg(n, tb);
+	if (ret != 1)
+		return ret;
 
 	if (n->nlmsg_type == RTM_DELMDB)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
@@ -291,18 +330,35 @@ static int mdb_show(int argc, char **argv)
 	}
 
 	new_json_obj(json);
+	open_json_object(NULL);
 
-	/* get mdb entries*/
+	/* get mdb entries */
 	if (rtnl_mdbdump_req(&rth, PF_BRIDGE) < 0) {
 		perror("Cannot send dump request");
 		return -1;
 	}
 
-	if (rtnl_dump_filter(&rth, print_mdb, stdout) < 0) {
+	open_json_array(PRINT_JSON, "mdb");
+	if (rtnl_dump_filter(&rth, print_mdbs, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return -1;
 	}
+	close_json_array(PRINT_JSON, NULL);
 
+	/* get router ports */
+	if (rtnl_mdbdump_req(&rth, PF_BRIDGE) < 0) {
+		perror("Cannot send dump request");
+		return -1;
+	}
+
+	open_json_object("router");
+	if (rtnl_dump_filter(&rth, print_rtrs, stdout) < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		return -1;
+	}
+	close_json_object();
+
+	close_json_object();
 	delete_json_obj();
 	fflush(stdout);
 
