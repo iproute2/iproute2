@@ -9,11 +9,11 @@ ss \- another utility to investigate sockets
 is used to dump socket statistics. It allows showing information similar
 to
 .IR netstat .
-It can display more TCP and state informations than other tools.
+It can display more TCP and state information than other tools.
 
 .SH OPTIONS
-When no option is used ss displays a list of
-open non-listening sockets (e.g. TCP/UNIX/UDP) that have established connection.
+When no option is used ss displays a list of open non-listening
+sockets (e.g. TCP/UNIX/UDP) that have established connection.
 .TP
 .B \-h, \-\-help
 Show summary of options.
@@ -31,13 +31,14 @@ Do not try to resolve service names.
 Try to resolve numeric address/ports.
 .TP
 .B \-a, \-\-all
-Display both listening and non-listening (for TCP this means established connections) sockets.
+Display both listening and non-listening (for TCP this means
+established connections) sockets.
 .TP
 .B \-l, \-\-listening
 Display only listening sockets (these are omitted by default).
 .TP
 .B \-o, \-\-options
-Show timer information. For tcp protocol, the output format is:
+Show timer information. For TCP protocol, the output format is:
 .RS
 .P
 timer:(<timer_name>,<expire_time>,<retrans>)
@@ -47,7 +48,9 @@ timer:(<timer_name>,<expire_time>,<retrans>)
 the name of the timer, there are five kind of timer names:
 .RS
 .P
-.BR on ": means one of these timers: tcp retrans timer, tcp early retrans timer and tail loss probe timer"
+.B on
+: means one of these timers: TCP retrans timer, TCP early retrans
+timer and tail loss probe timer
 .P
 .BR keepalive ": tcp keep alive timer"
 .P
@@ -63,7 +66,7 @@ how long time the timer will expire
 .P
 .TP
 .B <retrans>
-how many times the retran occurs
+how many times the retransmission occured
 .RE
 .TP
 .B \-e, \-\-extended
@@ -121,19 +124,25 @@ the total memory can be allocated for sending packet
 .P
 .TP
 .B <fwd_alloc>
-the memory allocated by the socket as cache, but not used for receiving/sending packet yet. If need memory to send/receive packet, the memory in this cache will be used before allocate additional memory.
+the memory allocated by the socket as cache, but not used for
+receiving/sending packet yet. If need memory to send/receive packet,
+the memory in this cache will be used before allocate additional
+memory.
 .P
 .TP
 .B <wmem_queued>
 The memory allocated for sending packet (which has not been sent to layer 3)
 .P
 .TP
-.B <opt_mem>
+.B <ropt_mem>
 The memory used for storing socket option, e.g., the key for TCP MD5 signature
 .P
 .TP
 .B <back_log>
-The memory used for the sk backlog queue. On a process context, if the process is receiving packet, and a new packet is received, it will be put into the sk backlog queue, so it can be received by the process immediately
+The memory used for the sk backlog queue. On a process context, if the
+process is receiving packet, and a new packet is received, it will be
+put into the sk backlog queue, so it can be received by the process
+immediately
 .RE
 .TP
 .B \-p, \-\-processes
@@ -169,7 +178,8 @@ the congestion algorithm name, the default congestion algorithm is "cubic"
 .P
 .TP
 .B wscale:<snd_wscale>:<rcv_wscale>
-if window scale option is used, this field shows the send scale factor and receive scale factor
+if window scale option is used, this field shows the send scale factor
+and receive scale factor
 .P
 .TP
 .B rto:<icsk_rto>
@@ -177,11 +187,13 @@ tcp re-transmission timeout value, the unit is millisecond
 .P
 .TP
 .B backoff:<icsk_backoff>
-used for exponential backoff re-transmission, the actual re-transmission timeout value is icsk_rto << icsk_backoff
+used for exponential backoff re-transmission, the actual
+re-transmission timeout value is icsk_rto << icsk_backoff
 .P
 .TP
 .B rtt:<rtt>/<rttvar>
-rtt is the average round trip time, rttvar is the mean deviation of rtt, their units are millisecond
+rtt is the average round trip time, rttvar is the mean deviation of
+rtt, their units are millisecond
 .P
 .TP
 .B ato:<ato>
@@ -258,7 +270,8 @@ IPv6 Traffic Class byte
 .P
 .TP
 .B class_id
-Class id set by net_cls cgroup. If class is zero this shows priority set by SO_PRIORITY.
+Class id set by net_cls cgroup. If class is zero this shows priority
+set by SO_PRIORITY.
 .RE
 .TP
 .B \-K, \-\-kill
@@ -309,7 +322,8 @@ and is therefore a useful reference.
 Switch to the specified network namespace name.
 .TP
 .B \-b, \-\-bpf
-Show socket BPF filters (only administrators are allowed to get these information).
+Show socket BPF filters (only administrators are allowed to get these
+information).
 .TP
 .B \-4, \-\-ipv4
 Display only IP version 4 sockets (alias for -f inet).
@@ -345,8 +359,8 @@ Display vsock sockets (alias for -f vsock).
 Display XDP sockets (alias for -f xdp).
 .TP
 .B \-f FAMILY, \-\-family=FAMILY
-Display sockets of type FAMILY.
-Currently the following families are supported: unix, inet, inet6, link, netlink, vsock, xdp.
+Display sockets of type FAMILY.  Currently the following families are
+supported: unix, inet, inet6, link, netlink, vsock, xdp.
 .TP
 .B \-A QUERY, \-\-query=QUERY, \-\-socket=QUERY
 List of socket tables to dump, separated by commas. The following identifiers
@@ -358,11 +372,12 @@ prefixed by an exclamation mark
 to exclude that socket table from being dumped.
 .TP
 .B \-D FILE, \-\-diag=FILE
-Do not display anything, just dump raw information about TCP sockets to FILE after applying filters. If FILE is - stdout is used.
+Do not display anything, just dump raw information about TCP sockets
+to FILE after applying filters. If FILE is - stdout is used.
 .TP
 .B \-F FILE, \-\-filter=FILE
-Read filter information from FILE.
-Each line of FILE is interpreted like single command line option. If FILE is - stdin is used.
+Read filter information from FILE.  Each line of FILE is interpreted
+like single command line option. If FILE is - stdin is used.
 .TP
 .B FILTER := [ state STATE-FILTER ] [ EXPRESSION ]
 Please take a look at the official documentation for details regarding filters.
@@ -370,7 +385,9 @@ Please take a look at the official documentation for details regarding filters.
 .SH STATE-FILTER
 
 .B STATE-FILTER
-allows to construct arbitrary set of states to match. Its syntax is sequence of keywords state and exclude followed by identifier of state.
+allows to construct arbitrary set of states to match. Its syntax is
+sequence of keywords state and exclude followed by identifier of
+state.
 .TP
 Available identifiers are:
 
@@ -417,7 +434,8 @@ Display all established ssh connections.
 Find all local processes connected to X server.
 .TP
 .B ss -o state fin-wait-1 '( sport = :http or sport = :https )' dst 193.233.7/24
-List all the tcp sockets in state FIN-WAIT-1 for our apache to network 193.233.7/24 and look at their timers.
+List all the tcp sockets in state FIN-WAIT-1 for our apache to network
+193.233.7/24 and look at their timers.
 .TP
 .B ss -a -A 'all,!tcp'
 List sockets in all states from all socket tables but TCP.

@@ -221,7 +221,8 @@ ip-link \- network device configuration
 .BR vrf " |"
 .BR macsec " |"
 .BR netdevsim " |"
-.BR rmnet " ]"
+.BR rmnet " |"
+.BR xfrm " ]"
 
 .ti -8
 .IR ETYPE " := [ " TYPE " |"
@@ -350,6 +351,9 @@ Link types:
 .sp
 .BR rmnet
 - Qualcomm rmnet device
+.sp
+.BR xfrm
+- Virtual xfrm interface
 .in -8
 
 .TP
@@ -362,15 +366,18 @@ specifies the number of receive queues for new device.
 
 .TP
 .BI gso_max_size " BYTES "
-specifies the recommended maximum size of a Generic Segment Offload packet the new device should accept.
+specifies the recommended maximum size of a Generic Segment Offload
+packet the new device should accept.
 
 .TP
 .BI gso_max_segs " SEGMENTS "
-specifies the recommended maximum number of a Generic Segment Offload segments the new device should accept.
+specifies the recommended maximum number of a Generic Segment Offload
+segments the new device should accept.
 
 .TP
 .BI index " IDX "
-specifies the desired index of the new virtual device. The link creation fails, if the index is busy.
+specifies the desired index of the new virtual device. The link
+creation fails, if the index is busy.
 
 .TP
 VLAN Type Support
@@ -420,13 +427,14 @@ the following additional arguments are supported:
 .in +4
 If
 .BR reorder_hdr " is " on
-then VLAN header will be not inserted immediately but only before passing to the
-physical device (if this device does not support VLAN offloading), the similar
-on the RX direction - by default the packet will be untagged before being
-received by VLAN device. Reordering allows to accelerate tagging on egress and
-to hide VLAN header on ingress so the packet looks like regular Ethernet packet,
-at the same time it might be confusing for packet capture as the VLAN header
-does not exist within the packet.
+then VLAN header will be not inserted immediately but only before
+passing to the physical device (if this device does not support VLAN
+offloading), the similar on the RX direction - by default the packet
+will be untagged before being received by VLAN device. Reordering
+allows to accelerate tagging on egress and to hide VLAN header on
+ingress so the packet looks like regular Ethernet packet, at the same
+time it might be confusing for packet capture as the VLAN header does
+not exist within the packet.
 
 VLAN offloading can be checked by
 .BR ethtool "(8):"
@@ -441,10 +449,12 @@ where <phy_dev> is the physical device to which VLAN device is bound.
 .in -4
 
 .BR gvrp " { " on " | " off " } "
-- specifies whether this VLAN should be registered using GARP VLAN Registration Protocol.
+- specifies whether this VLAN should be registered using GARP VLAN
+  Registration Protocol.
 
 .BR mvrp " { " on " | " off " } "
-- specifies whether this VLAN should be registered using Multiple VLAN Registration Protocol.
+- specifies whether this VLAN should be registered using Multiple VLAN
+  Registration Protocol.
 
 .BR loose_binding " { " on " | " off " } "
 - specifies whether the VLAN device state is bound to the physical device state.
@@ -467,7 +477,8 @@ Linux packet priority can be set by
 -t mangle -A POSTROUTING [...] -j CLASSIFY --set-class 0:4
 .sp
 .in -4
-and this "4" priority can be used in the egress qos mapping to set VLAN prio "5":
+and this "4" priority can be used in the egress qos mapping to set
+VLAN prio "5":
 .sp
 .in +4
 .B ip
@@ -585,7 +596,8 @@ bit is not set.
 
 .sp
 .BI dstport " PORT"
-- specifies the UDP destination port to communicate to the remote VXLAN tunnel endpoint.
+- specifies the UDP destination port to communicate to the remote
+  VXLAN tunnel endpoint.
 
 .sp
 .BI srcport " MIN MAX"
@@ -1424,22 +1436,39 @@ the following additional arguments are supported:
 .in +8
 .sp
 .BI ageing_time " AGEING_TIME "
-- configure the bridge's FDB entries ageing time, ie the number of seconds a MAC address will be kept in the FDB after a packet has been received from that address. after this time has passed, entries are cleaned up.
+- configure the bridge's FDB entries ageing time, ie the number of
+seconds a MAC address will be kept in the FDB after a packet has been
+received from that address. after this time has passed, entries are
+cleaned up.
 
 .BI group_fwd_mask " MASK "
-- set the group forward mask. This is the bitmask that is applied to decide whether to forward incoming frames destined to link-local addresses, ie addresses of the form 01:80:C2:00:00:0X (defaults to 0, ie the bridge does not forward any link-local frames).
+- set the group forward mask. This is the bitmask that is applied to
+decide whether to forward incoming frames destined to link-local
+addresses, ie addresses of the form 01:80:C2:00:00:0X (defaults to 0,
+ie the bridge does not forward any link-local frames).
 
 .BI group_address " ADDRESS "
-- set the MAC address of the multicast group this bridge uses for STP.  The address must be a link-local address in standard Ethernet MAC address format, ie an address of the form 01:80:C2:00:00:0X, with X in [0, 4..f].
+- set the MAC address of the multicast group this bridge uses for STP.
+The address must be a link-local address in standard Ethernet MAC
+address format, ie an address of the form 01:80:C2:00:00:0X, with X
+ in [0, 4..f].
 
 .BI forward_delay " FORWARD_DELAY "
-- set the forwarding delay in seconds, ie the time spent in LISTENING state (before moving to LEARNING) and in LEARNING state (before moving to FORWARDING). Only relevant if STP is enabled. Valid values are between 2 and 30.
+- set the forwarding delay in seconds, ie the time spent in LISTENING
+state (before moving to LEARNING) and in LEARNING state (before
+moving to FORWARDING). Only relevant if STP is enabled. Valid values
+are between 2 and 30.
 
 .BI hello_time " HELLO_TIME "
-- set the time in seconds between hello packets sent by the bridge, when it is a root bridge or a designated bridges. Only relevant if STP is enabled. Valid values are between 1 and 10.
+- set the time in seconds between hello packets sent by the bridge,
+when it is a root bridge or a designated bridges.
+Only relevant if STP is enabled. Valid values are between 1 and 10.
 
 .BI max_age " MAX_AGE "
-- set the hello packet timeout, ie the time in seconds until another bridge in the spanning tree is assumed to be dead, after reception of its last hello message. Only relevant if STP is enabled. Valid values are between 6 and 40.
+- set the hello packet timeout, ie the time in seconds until another
+bridge in the spanning tree is assumed to be dead, after reception of
+its last hello message. Only relevant if STP is enabled. Valid values
+are between 6 and 40.
 
 .BI stp_state " STP_STATE "
 - turn spanning tree protocol on
@@ -1449,7 +1478,8 @@ or off
 for this bridge.
 
 .BI priority " PRIORITY "
-- set this bridge's spanning tree priority, used during STP root bridge election.
+- set this bridge's spanning tree priority, used during STP root
+bridge election.
 .I PRIORITY
 is a 16bit unsigned integer.
 
@@ -1509,21 +1539,28 @@ or disable
 IGMP querier, ie sending of multicast queries by the bridge (default: disabled).
 
 .BI mcast_querier_interval " QUERIER_INTERVAL "
-- interval between queries sent by other routers. if no queries are seen after this delay has passed, the bridge will start to send its own queries (as if
+- interval between queries sent by other routers. if no queries are seen
+after this delay has passed, the bridge will start to send its own queries
+(as if
 .BI mcast_querier
 was enabled).
 
 .BI mcast_hash_elasticity " HASH_ELASTICITY "
-- set multicast database hash elasticity, ie the maximum chain length in the multicast hash table (defaults to 4).
+- set multicast database hash elasticity, ie the maximum chain length
+in the multicast hash table (defaults to 4).
 
 .BI mcast_hash_max " HASH_MAX "
-- set maximum size of multicast hash table (defaults to 512, value must be a power of 2).
+- set maximum size of multicast hash table (defaults to 512,
+value must be a power of 2).
 
 .BI mcast_last_member_count " LAST_MEMBER_COUNT "
-- set multicast last member count, ie the number of queries the bridge will send before stopping forwarding a multicast group after a "leave" message has been received (defaults to 2).
+- set multicast last member count, ie the number of queries the bridge
+will send before stopping forwarding a multicast group after a "leave"
+message has been received (defaults to 2).
 
 .BI mcast_last_member_interval " LAST_MEMBER_INTERVAL "
-- interval between queries to find remaining members of a group, after a "leave" message is received.
+- interval between queries to find remaining members of a group,
+after a "leave" message is received.
 
 .BI mcast_startup_query_count " STARTUP_QUERY_COUNT "
 - set the number of IGMP queries to send during startup phase (defaults to 2).
@@ -1532,13 +1569,16 @@ was enabled).
 - interval between queries in the startup phase.
 
 .BI mcast_query_interval " QUERY_INTERVAL "
-- interval between queries sent by the bridge after the end of the startup phase.
+- interval between queries sent by the bridge after the end of the
+startup phase.
 
 .BI mcast_query_response_interval " QUERY_RESPONSE_INTERVAL "
-- set the Max Response Time/Maximum Response Delay for IGMP/MLD queries sent by the bridge.
+- set the Max Response Time/Maximum Response Delay for IGMP/MLD
+queries sent by the bridge.
 
 .BI mcast_membership_interval " MEMBERSHIP_INTERVAL "
-- delay after which the bridge will leave a group, if no membership reports for this group are received.
+- delay after which the bridge will leave a group,
+if no membership reports for this group are received.
 
 .BI mcast_stats_enabled " MCAST_STATS_ENABLED "
 - enable
@@ -1615,9 +1655,9 @@ the following additional arguments are supported:
 
 .sp
 .BI port " PORT "
-- sets the port number component of secure channel for this MACsec device, in a
-range from 1 to 65535 inclusive. Numbers with a leading " 0 " or " 0x " are
-interpreted as octal and hexadecimal, respectively.
+- sets the port number component of secure channel for this MACsec
+device, in a range from 1 to 65535 inclusive. Numbers with a leading "
+0 " or " 0x " are interpreted as octal and hexadecimal, respectively.
 
 .sp
 .BI sci " SCI "
@@ -1639,7 +1679,8 @@ is a 64bit wide number in hexadecimal format.
 
 .sp
 .BR "send_sci on " or " send_sci off"
-- specifies whether the SCI is included in every packet, or only when it is necessary.
+- specifies whether the SCI is included in every packet,
+or only when it is necessary.
 
 .sp
 .BR "end_station on " or " end_station off"
@@ -1704,6 +1745,27 @@ the following additional arguments are supported:
 
 .in -8
 
+.TP
+XFRM Type Support
+For a link of type
+.I XFRM
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE " type xfrm dev " PHYS_DEV " [ if_id " IF_ID " ]"
+
+.in +8
+.sp
+.BI dev " PHYS_DEV "
+- specifies the underlying physical interface from which transform traffic is sent and received.
+
+.sp
+.BI if_id " IF-ID "
+- specifies the hexadecimal lookup key used to send traffic to and from specific xfrm
+policies. Policies must be configured with the same key. If not set, the key defaults to
+0 and will match any policies which similarly do not have a lookup key configuration.
+
+.in -8
+
 .SS ip link delete - delete virtual link
 
 .TP
@@ -1736,9 +1798,9 @@ call.
 .TP
 .BI dev " DEVICE "
 .I DEVICE
-specifies network device to operate on. When configuring SR-IOV Virtual Function
-(VF) devices, this keyword should specify the associated Physical Function (PF)
-device.
+specifies network device to operate on. When configuring SR-IOV
+Virtual Function (VF) devices, this keyword should specify the
+associated Physical Function (PF) device.
 
 .TP
 .BI group " GROUP "
@@ -1770,13 +1832,16 @@ flag on the device.
 .BR "protodown on " or " protodown off"
 change the
 .B PROTODOWN
-state on the device. Indicates that a protocol error has been detected on the port. Switch drivers can react to this error by doing a phys down on the switch port.
+state on the device. Indicates that a protocol error has been detected
+on the port. Switch drivers can react to this error by doing a phys
+down on the switch port.
 
 .TP
 .BR "dynamic on " or " dynamic off"
 change the
 .B DYNAMIC
-flag on the device. Indicates that address can change when interface goes down (currently
+flag on the device. Indicates that address can change when interface
+goes down (currently
 .B NOT
 used by the Linux).
 
@@ -1821,8 +1886,8 @@ move the device to the network namespace associated with name
 Some devices are not allowed to change network namespace: loopback, bridge,
 ppp, wireless. These are network namespace local devices. In such case
 .B ip
-tool will return "Invalid argument" error. It is possible to find out if device is local
-to a single network namespace by checking
+tool will return "Invalid argument" error. It is possible to find out
+if device is local to a single network namespace by checking
 .B netns-local
 flag in the output of the
 .BR ethtool ":"
@@ -1834,7 +1899,8 @@ flag in the output of the
 
 To change network namespace for wireless devices the
 .B iw
-tool can be used. But it allows to change network namespace only for physical devices and by process
+tool can be used. But it allows to change network namespace only for
+physical devices and by process
 .IR PID .
 
 .TP
@@ -1887,11 +1953,12 @@ as 0 disables VLAN tagging and filtering for the VF.
 .sp
 .BI proto " VLAN-PROTO"
 - assign VLAN PROTOCOL for the VLAN tag, either 802.1Q or 802.1ad.
-Setting to 802.1ad, all traffic sent from the VF will be tagged with VLAN S-Tag.
-Incoming traffic will have VLAN S-Tags stripped before being passed to the VF.
-Setting to 802.1ad also enables an option to concatenate another VLAN tag, so both
-S-TAG and C-TAG will be inserted/stripped for outgoing/incoming traffic, respectively.
-If not specified, the value is assumed to be 802.1Q. Both the
+Setting to 802.1ad, all traffic sent from the VF will be tagged with
+VLAN S-Tag.  Incoming traffic will have VLAN S-Tags stripped before
+being passed to the VF.  Setting to 802.1ad also enables an option to
+concatenate another VLAN tag, so both S-TAG and C-TAG will be
+inserted/stripped for outgoing/incoming traffic, respectively.  If not
+specified, the value is assumed to be 802.1Q. Both the
 .B vf
 and
 .B vlan
@@ -1909,8 +1976,8 @@ option instead.
 
 .sp
 .BI max_tx_rate " TXRATE"
-- change the allowed maximum transmit bandwidth, in Mbps, for the specified VF.
-Setting this parameter to 0 disables rate limiting.
+- change the allowed maximum transmit bandwidth, in Mbps, for the
+specified VF.  Setting this parameter to 0 disables rate limiting.
 .B vf
 parameter must be specified.
 
@@ -1927,17 +1994,21 @@ parameter must be specified.
 - turn packet spoof checking on or off for the specified VF.
 .sp
 .BI query_rss " on|off"
-- toggle the ability of querying the RSS configuration of a specific VF. VF RSS information like RSS hash key may be considered sensitive on some devices where this information is shared between VF and PF and thus its querying may be prohibited by default.
+- toggle the ability of querying the RSS configuration of a specific
+  VF. VF RSS information like RSS hash key may be considered sensitive
+  on some devices where this information is shared between VF and PF
+  and thus its querying may be prohibited by default.
 .sp
 .BI state " auto|enable|disable"
-- set the virtual link state as seen by the specified VF. Setting to auto means a
-reflection of the PF link state, enable lets the VF to communicate with other VFs on
-this host even if the PF link state is down, disable causes the HW to drop any packets
-sent by the VF.
+- set the virtual link state as seen by the specified VF. Setting to
+auto means a reflection of the PF link state, enable lets the VF to
+communicate with other VFs on this host even if the PF link state is
+down, disable causes the HW to drop any packets sent by the VF.
 .sp
 .BI trust " on|off"
-- trust the specified VF user. This enables that VF user can set a specific feature
-which may impact security and/or performance. (e.g. VF multicast promiscuous mode)
+- trust the specified VF user. This enables that VF user can set a
+specific feature which may impact security and/or
+performance. (e.g. VF multicast promiscuous mode)
 .sp
 .BI node_guid " eui64"
 - configure node GUID for Infiniband VFs.
@@ -2045,7 +2116,8 @@ set the IPv6 address generation mode
 - disable automatic address generation
 
 .I stable_secret
-- generate the interface identifier based on a preset /proc/sys/net/ipv6/conf/{default,DEVICE}/stable_secret
+- generate the interface identifier based on a preset
+  /proc/sys/net/ipv6/conf/{default,DEVICE}/stable_secret
 
 .I random
 - like stable_secret, but auto-generate a new random secret if none is set
@@ -2099,6 +2171,8 @@ the following additional arguments are supported:
 .BR mcast_fast_leave " { " on " | " off "}"
 ] [
 .BR mcast_flood " { " on " | " off " }"
+] [
+.BR mcast_to_unicast " { " on " | " off " }"
 ] [
 .BR group_fwd_mask " MASK"
 ] [
@@ -2183,19 +2257,31 @@ queries.
 option above.
 
 .BR mcast_flood " { " on " | " off " }"
-- controls whether a given port will flood multicast traffic for which there is no MDB entry.
+- controls whether a given port will flood multicast traffic for which
+  there is no MDB entry.
+
+.BR mcast_to_unicast " { " on " | " off " }"
+- controls whether a given port will replicate packets using unicast
+  instead of multicast. By default this flag is off.
 
 .BI group_fwd_mask " MASK "
-- set the group forward mask. This is the bitmask that is applied to decide whether to forward incoming frames destined to link-local addresses, ie addresses of the form 01:80:C2:00:00:0X (defaults to 0, ie the bridge does not forward any link-local frames coming on this port).
+- set the group forward mask. This is the bitmask that is applied to
+decide whether to forward incoming frames destined to link-local
+addresses, ie addresses of the form 01:80:C2:00:00:0X (defaults to
+0, ie the bridge does not forward any link-local frames coming on
+this port).
 
 .BR neigh_suppress " { " on " | " off " }"
-- controls whether neigh discovery (arp and nd) proxy and suppression is enabled on the port. By default this flag is off.
+- controls whether neigh discovery (arp and nd) proxy and suppression
+is enabled on the port. By default this flag is off.
 
 .BR vlan_tunnel " { " on " | " off " }"
-- controls whether vlan to tunnel mapping is enabled on the port. By default this flag is off.
+- controls whether vlan to tunnel mapping is enabled on the port. By
+default this flag is off.
 
 .BI backup_port " DEVICE"
-- if the port loses carrier all traffic will be redirected to the configured backup port
+- if the port loses carrier all traffic will be redirected to the
+configured backup port
 
 .BR nobackup_port
 - removes the currently configured backup port

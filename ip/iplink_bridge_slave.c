@@ -37,6 +37,7 @@ static void print_explain(FILE *f)
 		"                        [ mcast_router MULTICAST_ROUTER ]\n"
 		"                        [ mcast_fast_leave {on | off} ]\n"
 		"                        [ mcast_flood {on | off} ]\n"
+		"                        [ mcast_to_unicast {on | off} ]\n"
 		"                        [ group_fwd_mask MASK ]\n"
 		"                        [ neigh_suppress {on | off} ]\n"
 		"                        [ vlan_tunnel {on | off} ]\n"
@@ -257,6 +258,10 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 		_print_onoff(f, "mcast_flood", "mcast_flood",
 			     rta_getattr_u8(tb[IFLA_BRPORT_MCAST_FLOOD]));
 
+	if (tb[IFLA_BRPORT_MCAST_TO_UCAST])
+		_print_onoff(f, "mcast_to_unicast", "mcast_to_unicast",
+			     rta_getattr_u8(tb[IFLA_BRPORT_MCAST_TO_UCAST]));
+
 	if (tb[IFLA_BRPORT_NEIGH_SUPPRESS])
 		_print_onoff(f, "neigh_suppress", "neigh_suppress",
 			     rta_getattr_u8(tb[IFLA_BRPORT_NEIGH_SUPPRESS]));
@@ -357,6 +362,10 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("mcast_flood", *argv, n,
 						  IFLA_BRPORT_MCAST_FLOOD);
+		} else if (matches(*argv, "mcast_to_unicast") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("mcast_to_unicast", *argv, n,
+						  IFLA_BRPORT_MCAST_TO_UCAST);
 		} else if (matches(*argv, "proxy_arp") == 0) {
 			NEXT_ARG();
 			bridge_slave_parse_on_off("proxy_arp", *argv, n,

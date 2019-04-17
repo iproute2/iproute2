@@ -31,7 +31,7 @@ static void print_explain(FILE *f)
 		"                [ egress-qos-map QOS-MAP ]\n"
 		"\n"
 		"VLANID := 0-4095\n"
-		"VLANPROTO: [ 802.1Q / 802.1ad ]\n"
+		"VLANPROTO: [ 802.1Q | 802.1ad ]\n"
 		"QOS-MAP := [ QOS-MAP ] QOS-MAPPING\n"
 		"QOS-MAPPING := FROM:TO\n"
 	);

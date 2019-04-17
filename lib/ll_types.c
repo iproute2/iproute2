@@ -32,7 +32,7 @@ static const struct {
 	int type;
 	const char *name;
 } arphrd_names[] = {
-{ 0, "generic" },
+__PF(NETROM,netrom)
 __PF(ETHER,ether)
 __PF(EETHER,eether)
 __PF(AX25,ax25)

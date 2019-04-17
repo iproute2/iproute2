@@ -82,6 +82,7 @@ static void explain(void)
 "                [ split-gso* | no-split-gso ]\n"
 "                [ ack-filter | ack-filter-aggressive | no-ack-filter* ]\n"
 "                [ memlimit LIMIT ]\n"
+"                [ fwmark MASK ]\n"
 "                [ ptm | atm | noatm* ] [ overhead N | conservative | raw* ]\n"
 "                [ mpu N ] [ ingress | egress* ]\n"
 "                (* marks defaults)\n");
@@ -106,6 +107,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	int autorate = -1;
 	int ingress = -1;
 	int overhead = 0;
+	int fwmark = -1;
 	int wash = -1;
 	int nat = -1;
 	int atm = -1;
@@ -332,6 +334,16 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 					"Illegal value for \"memlimit\": \"%s\"\n", *argv);
 				return -1;
 			}
+		} else if (strcmp(*argv, "fwmark") == 0) {
+			unsigned int fwm;
+
+			NEXT_ARG();
+			if (get_u32(&fwm, *argv, 0)) {
+				fprintf(stderr,
+					"Illegal value for \"fwmark\": \"%s\"\n", *argv);
+				return -1;
+			}
+			fwmark = fwm;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -376,6 +388,9 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (memlimit)
 		addattr_l(n, 1024, TCA_CAKE_MEMORY, &memlimit,
 			  sizeof(memlimit));
+	if (fwmark != -1)
+		addattr_l(n, 1024, TCA_CAKE_FWMARK, &fwmark,
+			  sizeof(fwmark));
 	if (nat != -1)
 		addattr_l(n, 1024, TCA_CAKE_NAT, &nat, sizeof(nat));
 	if (wash != -1)
@@ -409,6 +424,7 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct rtattr *tb[TCA_CAKE_MAX + 1];
 	unsigned int interval = 0;
 	unsigned int memlimit = 0;
+	unsigned int fwmark = 0;
 	__u64 bandwidth = 0;
 	int ack_filter = 0;
 	int split_gso = 0;
@@ -507,6 +523,10 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	    RTA_PAYLOAD(tb[TCA_CAKE_RTT]) >= sizeof(__u32)) {
 		interval = rta_getattr_u32(tb[TCA_CAKE_RTT]);
 	}
+	if (tb[TCA_CAKE_FWMARK] &&
+	    RTA_PAYLOAD(tb[TCA_CAKE_FWMARK]) >= sizeof(__u32)) {
+		fwmark = rta_getattr_u32(tb[TCA_CAKE_FWMARK]);
+	}
 
 	if (wash)
 		print_string(PRINT_FP, NULL, "wash ", NULL);
@@ -558,6 +578,10 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		print_string(PRINT_FP, NULL, "memlimit %s",
 			     sprint_size(memlimit, b1));
 	}
+
+	if (fwmark)
+		print_uint(PRINT_FP, NULL, "fwmark 0x%x ", fwmark);
+	print_0xhex(PRINT_JSON, "fwmark", NULL, fwmark);
 
 	return 0;
 }
