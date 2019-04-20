@@ -406,6 +406,9 @@ the following additional arguments are supported:
 .BR loose_binding " { " on " | " off " } "
 ]
 [
+.BR bridge_binding " { " on " | " off " } "
+]
+[
 .BI ingress-qos-map " QOS-MAP "
 ]
 [
@@ -458,6 +461,10 @@ where <phy_dev> is the physical device to which VLAN device is bound.
 
 .BR loose_binding " { " on " | " off " } "
 - specifies whether the VLAN device state is bound to the physical device state.
+
+.BR bridge_binding " { " on " | " off " } "
+- specifies whether the VLAN device link state tracks the state of bridge ports
+that are members of the VLAN.
 
 .BI ingress-qos-map " QOS-MAP "
 - defines a mapping of VLAN header prio field to the Linux internal packet
