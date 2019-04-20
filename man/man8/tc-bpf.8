@@ -597,6 +597,7 @@ struct bpf_elf_map __section("maps") map_stats = {
         .size_key       =       sizeof(uint32_t),
         .size_value     =       sizeof(struct tuple),
         .max_elem       =       BPF_MAX_MARK,
+        .pinning        =       PIN_GLOBAL_NS,
 };
 
 static inline void cls_update_stats(const struct __sk_buff *skb,
@@ -709,13 +710,22 @@ in both examples was:
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-/* Used map structure */
+/* Object pinning settings */
+#define PIN_NONE       0
+#define PIN_OBJECT_NS  1
+#define PIN_GLOBAL_NS  2
+
+/* ELF map definition */
 struct bpf_elf_map {
     __u32 type;
     __u32 size_key;
     __u32 size_value;
     __u32 max_elem;
+    __u32 flags;
     __u32 id;
+    __u32 pinning;
+    __u32 inner_id;
+    __u32 inner_idx;
 };
 
 /* Some used BPF function calls. */
