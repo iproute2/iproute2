@@ -428,7 +428,7 @@ int print_rule(struct nlmsghdr *n, void *arg)
 				     "flow_from", " realms %s/",
 				     rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
 		else
-			print_string(PRINT_FP, NULL, " ", NULL);
+			print_string(PRINT_FP, NULL, " realms ", NULL);
 
 		print_string(PRINT_ANY, "flow_to", "%s",
 			     rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
