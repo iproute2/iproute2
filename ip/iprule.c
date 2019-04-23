@@ -443,7 +443,7 @@ int print_rule(struct nlmsghdr *n, void *arg)
 			gateway = format_host_rta(frh->family, tb[RTA_GATEWAY]);
 
 			print_string(PRINT_ANY, "nat_gateway",
-				     "map-to %s ", gateway);
+				     "map-to %s", gateway);
 		} else {
 			print_null(PRINT_ANY, "masquerade", "masquerade", NULL);
 		}
