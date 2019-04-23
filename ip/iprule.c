@@ -468,7 +468,7 @@ int print_rule(struct nlmsghdr *n, void *arg)
 		__u8 protocol = rta_getattr_u8(tb[FRA_PROTOCOL]);
 
 		if ((protocol && protocol != RTPROT_KERNEL) || show_details > 0) {
-			print_string(PRINT_ANY, "protocol", " proto %s ",
+			print_string(PRINT_ANY, "protocol", " proto %s",
 				     rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
 		}
 	}
