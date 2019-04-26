@@ -61,7 +61,7 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 	case RTM_DELMDB:
 		if (prefix_banner)
 			fprintf(fp, "[MDB]");
-		return print_mdb(n, arg);
+		return print_mdb_mon(n, arg);
 
 	case NLMSG_TSTAMP:
 		print_nlmsg_timestamp(fp, n);

@@ -273,34 +273,30 @@ int print_rule(struct nlmsghdr *n, void *arg)
 		print_color_string(PRINT_ANY, ifa_family_color(frh->family),
 				   "src", "%s", src);
 		if (frh->src_len != host_len)
-			print_uint(PRINT_ANY, "srclen", "/%u ", frh->src_len);
-		else
-			print_string(PRINT_FP, NULL, " ", NULL);
+			print_uint(PRINT_ANY, "srclen", "/%u", frh->src_len);
 	} else if (frh->src_len) {
 		print_string(PRINT_ANY, "src", "from %s", "0");
-		print_uint(PRINT_ANY, "srclen", "/%u ", frh->src_len);
+		print_uint(PRINT_ANY, "srclen", "/%u", frh->src_len);
 	} else {
-		print_string(PRINT_ANY, "src", "from %s ", "all");
+		print_string(PRINT_ANY, "src", "from %s", "all");
 	}
 
 	if (tb[FRA_DST]) {
 		const char *dst = rt_addr_n2a_rta(frh->family, tb[FRA_DST]);
 
-		print_string(PRINT_FP, NULL, "to ", NULL);
+		print_string(PRINT_FP, NULL, " to ", NULL);
 		print_color_string(PRINT_ANY, ifa_family_color(frh->family),
 				   "dst", "%s", dst);
 		if (frh->dst_len != host_len)
-			print_uint(PRINT_ANY, "dstlen", "/%u ", frh->dst_len);
-		else
-			print_string(PRINT_FP, NULL, " ", NULL);
+			print_uint(PRINT_ANY, "dstlen", "/%u", frh->dst_len);
 	} else if (frh->dst_len) {
-		print_string(PRINT_ANY, "dst", "to %s", "0");
-		print_uint(PRINT_ANY, "dstlen", "/%u ", frh->dst_len);
+		print_string(PRINT_ANY, "dst", " to %s", "0");
+		print_uint(PRINT_ANY, "dstlen", "/%u", frh->dst_len);
 	}
 
 	if (frh->tos) {
 		print_string(PRINT_ANY, "tos",
-			     "tos %s ",
+			     " tos %s",
 			     rtnl_dsfield_n2a(frh->tos, b1, sizeof(b1)));
 	}
 
@@ -312,34 +308,34 @@ int print_rule(struct nlmsghdr *n, void *arg)
 
 		if (tb[FRA_FWMASK] &&
 		    (mask = rta_getattr_u32(tb[FRA_FWMASK])) != 0xFFFFFFFF) {
-			print_0xhex(PRINT_ANY, "fwmark", "fwmark %#llx", mark);
-			print_0xhex(PRINT_ANY, "fwmask", "/%#llx ", mask);
+			print_0xhex(PRINT_ANY, "fwmark", " fwmark %#llx", mark);
+			print_0xhex(PRINT_ANY, "fwmask", "/%#llx", mask);
 		} else {
-			print_0xhex(PRINT_ANY, "fwmark", "fwmark %#llx ", mark);
+			print_0xhex(PRINT_ANY, "fwmark", " fwmark %#llx", mark);
 		}
 	}
 
 	if (tb[FRA_IFNAME]) {
 		if (!is_json_context())
-			fprintf(fp, "iif ");
+			fprintf(fp, " iif ");
 		print_color_string(PRINT_ANY, COLOR_IFNAME,
-				   "iif", "%s ",
+				   "iif", "%s",
 				   rta_getattr_str(tb[FRA_IFNAME]));
 
 		if (frh->flags & FIB_RULE_IIF_DETACHED)
-			print_null(PRINT_ANY, "iif_detached", "[detached] ",
+			print_null(PRINT_ANY, "iif_detached", " [detached]",
 				   NULL);
 	}
 
 	if (tb[FRA_OIFNAME]) {
 		if (!is_json_context())
-			fprintf(fp, "oif ");
+			fprintf(fp, " oif ");
 
-		print_color_string(PRINT_ANY, COLOR_IFNAME, "oif", "%s ",
+		print_color_string(PRINT_ANY, COLOR_IFNAME, "oif", "%s",
 				   rta_getattr_str(tb[FRA_OIFNAME]));
 
 		if (frh->flags & FIB_RULE_OIF_DETACHED)
-			print_null(PRINT_ANY, "oif_detached", "[detached] ",
+			print_null(PRINT_ANY, "oif_detached", " [detached]",
 				   NULL);
 	}
 
@@ -348,19 +344,19 @@ int print_rule(struct nlmsghdr *n, void *arg)
 
 		if (mdev)
 			print_null(PRINT_ANY, "l3mdev",
-				   "lookup [l3mdev-table] ", NULL);
+				   " lookup [l3mdev-table]", NULL);
 	}
 
 	if (tb[FRA_UID_RANGE]) {
 		struct fib_rule_uid_range *r = RTA_DATA(tb[FRA_UID_RANGE]);
 
-		print_uint(PRINT_ANY, "uid_start", "uidrange %u", r->start);
-		print_uint(PRINT_ANY, "uid_end", "-%u ", r->end);
+		print_uint(PRINT_ANY, "uid_start", " uidrange %u", r->start);
+		print_uint(PRINT_ANY, "uid_end", "-%u", r->end);
 	}
 
 	if (tb[FRA_IP_PROTO]) {
 		SPRINT_BUF(pbuf);
-		print_string(PRINT_ANY, "ipproto", "ipproto %s ",
+		print_string(PRINT_ANY, "ipproto", " ipproto %s",
 			     inet_proto_n2a(rta_getattr_u8(tb[FRA_IP_PROTO]),
 					    pbuf, sizeof(pbuf)));
 	}
@@ -369,11 +365,11 @@ int print_rule(struct nlmsghdr *n, void *arg)
 		struct fib_rule_port_range *r = RTA_DATA(tb[FRA_SPORT_RANGE]);
 
 		if (r->start == r->end) {
-			print_uint(PRINT_ANY, "sport", "sport %u ", r->start);
+			print_uint(PRINT_ANY, "sport", " sport %u", r->start);
 		} else {
-			print_uint(PRINT_ANY, "sport_start", "sport %u",
+			print_uint(PRINT_ANY, "sport_start", " sport %u",
 				   r->start);
-			print_uint(PRINT_ANY, "sport_end", "-%u ", r->end);
+			print_uint(PRINT_ANY, "sport_end", "-%u", r->end);
 		}
 	}
 
@@ -381,24 +377,24 @@ int print_rule(struct nlmsghdr *n, void *arg)
 		struct fib_rule_port_range *r = RTA_DATA(tb[FRA_DPORT_RANGE]);
 
 		if (r->start == r->end) {
-			print_uint(PRINT_ANY, "dport", "dport %u ", r->start);
+			print_uint(PRINT_ANY, "dport", " dport %u", r->start);
 		} else {
-			print_uint(PRINT_ANY, "dport_start", "dport %u",
+			print_uint(PRINT_ANY, "dport_start", " dport %u",
 				   r->start);
-			print_uint(PRINT_ANY, "dport_end", "-%u ", r->end);
+			print_uint(PRINT_ANY, "dport_end", "-%u", r->end);
 		}
 	}
 
 	if (tb[FRA_TUN_ID]) {
 		__u64 tun_id = ntohll(rta_getattr_u64(tb[FRA_TUN_ID]));
 
-		print_u64(PRINT_ANY, "tun_id", "tun_id %llu ", tun_id);
+		print_u64(PRINT_ANY, "tun_id", " tun_id %llu", tun_id);
 	}
 
 	table = frh_get_table(frh, tb);
 	if (table) {
 		print_string(PRINT_ANY, "table",
-			     "lookup %s ",
+			     " lookup %s",
 			     rtnl_rttable_n2a(table, b1, sizeof(b1)));
 
 		if (tb[FRA_SUPPRESS_PREFIXLEN]) {
@@ -406,7 +402,7 @@ int print_rule(struct nlmsghdr *n, void *arg)
 
 			if (pl != -1)
 				print_int(PRINT_ANY, "suppress_prefixlen",
-					  "suppress_prefixlength %d ", pl);
+					  " suppress_prefixlength %d", pl);
 		}
 
 		if (tb[FRA_SUPPRESS_IFGROUP]) {
@@ -417,7 +413,7 @@ int print_rule(struct nlmsghdr *n, void *arg)
 					= rtnl_group_n2a(group, b1, sizeof(b1));
 
 				print_string(PRINT_ANY, "suppress_ifgroup",
-					     "suppress_ifgroup %s ", grname);
+					     " suppress_ifgroup %s", grname);
 			}
 		}
 	}
@@ -429,10 +425,12 @@ int print_rule(struct nlmsghdr *n, void *arg)
 		to &= 0xFFFF;
 		if (from)
 			print_string(PRINT_ANY,
-				     "flow_from", "realms %s/",
+				     "flow_from", " realms %s/",
 				     rtnl_rtrealm_n2a(from, b1, sizeof(b1)));
+		else
+			print_string(PRINT_FP, NULL, " realms ", NULL);
 
-		print_string(PRINT_ANY, "flow_to", "%s ",
+		print_string(PRINT_ANY, "flow_to", "%s",
 			     rtnl_rtrealm_n2a(to, b1, sizeof(b1)));
 	}
 
@@ -443,24 +441,24 @@ int print_rule(struct nlmsghdr *n, void *arg)
 			gateway = format_host_rta(frh->family, tb[RTA_GATEWAY]);
 
 			print_string(PRINT_ANY, "nat_gateway",
-				     "map-to %s ", gateway);
+				     " map-to %s", gateway);
 		} else {
-			print_null(PRINT_ANY, "masquerade", "masquerade", NULL);
+			print_null(PRINT_ANY, "masquerade", " masquerade", NULL);
 		}
 	} else if (frh->action == FR_ACT_GOTO) {
 		if (tb[FRA_GOTO])
-			print_uint(PRINT_ANY, "goto", "goto %u",
+			print_uint(PRINT_ANY, "goto", " goto %u",
 				   rta_getattr_u32(tb[FRA_GOTO]));
 		else
-			print_string(PRINT_ANY, "goto", "goto %s", "none");
+			print_string(PRINT_ANY, "goto", " goto %s", "none");
 
 		if (frh->flags & FIB_RULE_UNRESOLVED)
 			print_null(PRINT_ANY, "unresolved",
 				   " [unresolved]", NULL);
 	} else if (frh->action == FR_ACT_NOP) {
-		print_null(PRINT_ANY, "nop", "nop", NULL);
+		print_null(PRINT_ANY, "nop", " nop", NULL);
 	} else if (frh->action != FR_ACT_TO_TBL) {
-		print_string(PRINT_ANY, "action", "%s",
+		print_string(PRINT_ANY, "action", " %s",
 			     rtnl_rtntype_n2a(frh->action, b1, sizeof(b1)));
 	}
 
@@ -468,7 +466,7 @@ int print_rule(struct nlmsghdr *n, void *arg)
 		__u8 protocol = rta_getattr_u8(tb[FRA_PROTOCOL]);
 
 		if ((protocol && protocol != RTPROT_KERNEL) || show_details > 0) {
-			print_string(PRINT_ANY, "protocol", " proto %s ",
+			print_string(PRINT_ANY, "protocol", " proto %s",
 				     rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
 		}
 	}

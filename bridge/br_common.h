@@ -8,8 +8,8 @@
 
 void print_vlan_info(struct rtattr *tb, int ifindex);
 int print_linkinfo(struct nlmsghdr *n, void *arg);
+int print_mdb_mon(struct nlmsghdr *n, void *arg);
 int print_fdb(struct nlmsghdr *n, void *arg);
-int print_mdb(struct nlmsghdr *n, void *arg);
 
 int do_fdb(int argc, char **argv);
 int do_mdb(int argc, char **argv);
