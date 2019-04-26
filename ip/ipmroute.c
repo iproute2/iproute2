@@ -57,6 +57,7 @@ int print_mroute(struct nlmsghdr *n, void *arg)
 	struct rtmsg *r = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[RTA_MAX+1];
+	FILE *fp = arg;
 	const char *src, *dst;
 	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
@@ -209,6 +210,7 @@ int print_mroute(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "\n", NULL);
 	close_json_object();
+	fflush(fp);
 	return 0;
 }
 
