@@ -155,8 +155,10 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 {
 	__s32 clockid = CLOCKID_INVALID;
 	struct tc_mqprio_qopt opt = { };
+	__s64 cycle_time_extension = 0;
 	struct list_head sched_entries;
-	struct rtattr *tail;
+	struct rtattr *tail, *l;
+	__s64 cycle_time = 0;
 	__s64 base_time = 0;
 	int err, idx;
 
@@ -245,6 +247,29 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 				PREV_ARG();
 				break;
 			}
+		} else if (strcmp(*argv, "cycle-time") == 0) {
+			NEXT_ARG();
+			if (cycle_time) {
+				fprintf(stderr, "taprio: duplicate \"cycle-time\" specification\n");
+				return -1;
+			}
+
+			if (get_s64(&cycle_time, *argv, 10)) {
+				PREV_ARG();
+				break;
+			}
+
+		} else if (strcmp(*argv, "cycle-time-extension") == 0) {
+			NEXT_ARG();
+			if (cycle_time_extension) {
+				fprintf(stderr, "taprio: duplicate \"cycle-time-extension\" specification\n");
+				return -1;
+			}
+
+			if (get_s64(&cycle_time_extension, *argv, 10)) {
+				PREV_ARG();
+				break;
+			}
 		} else if (strcmp(*argv, "clockid") == 0) {
 			NEXT_ARG();
 			if (clockid != CLOCKID_INVALID) {
@@ -277,18 +302,23 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 	if (base_time)
 		addattr_l(n, 1024, TCA_TAPRIO_ATTR_SCHED_BASE_TIME, &base_time, sizeof(base_time));
 
-	if (!list_empty(&sched_entries)) {
-		struct rtattr *entry_list;
-		entry_list = addattr_nest(n, 1024, TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST | NLA_F_NESTED);
+	if (cycle_time)
+		addattr_l(n, 1024, TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME,
+			  &cycle_time, sizeof(cycle_time));
 
-		err = add_sched_list(&sched_entries, n);
-		if (err < 0) {
-			fprintf(stderr, "Could not add schedule to netlink message\n");
-			return -1;
-		}
+	if (cycle_time_extension)
+		addattr_l(n, 1024, TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION,
+			  &cycle_time_extension, sizeof(cycle_time_extension));
 
-		addattr_nest_end(n, entry_list);
+	l = addattr_nest(n, 1024, TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST | NLA_F_NESTED);
+
+	err = add_sched_list(&sched_entries, n);
+	if (err < 0) {
+		fprintf(stderr, "Could not add schedule to netlink message\n");
+		return -1;
 	}
+
+	addattr_nest_end(n, l);
 
 	tail->rta_len = (void *) NLMSG_TAIL(n) - (void *) tail;
 
@@ -345,12 +375,24 @@ static int print_sched_list(FILE *f, struct rtattr *list)
 
 static int print_schedule(FILE *f, struct rtattr **tb)
 {
-	int64_t base_time = 0;
+	int64_t base_time = 0, cycle_time = 0, cycle_time_extension = 0;
 
 	if (tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME])
 		base_time = rta_getattr_s64(tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME]);
 
+	if (tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME])
+		cycle_time = rta_getattr_s64(tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME]);
+
+	if (tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION])
+		cycle_time_extension = rta_getattr_s64(
+			tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION]);
+
 	print_lluint(PRINT_ANY, "base_time", "\tbase-time %lld", base_time);
+
+	print_lluint(PRINT_ANY, "cycle_time", " cycle-time %lld", cycle_time);
+
+	print_lluint(PRINT_ANY, "cycle_time_extension",
+		     " cycle-time-extension %lld", cycle_time_extension);
 
 	print_sched_list(f, tb[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST]);
 
