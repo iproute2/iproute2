@@ -121,6 +121,7 @@ static int follow_events;
 static int sctp_ino;
 static int show_tipcinfo;
 static int show_tos;
+int oneline;
 
 enum col_id {
 	COL_NETID,
@@ -3053,7 +3054,8 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 	}
 
 	if (show_mem || (show_tcpinfo && s->type != IPPROTO_UDP)) {
-		out("\n\t");
+		if (!oneline)
+			out("\n\t");
 		if (s->type == IPPROTO_SCTP)
 			sctp_show_info(nlh, r, tb);
 		else
@@ -3973,7 +3975,10 @@ static int packet_show_sock(struct nlmsghdr *nlh, void *arg)
 
 	if (show_details) {
 		if (pinfo) {
-			out("\n\tver:%d", pinfo->pdi_version);
+			if (oneline)
+				out(" ver:%d", pinfo->pdi_version);
+			else
+				out("\n\tver:%d", pinfo->pdi_version);
 			out(" cpy_thresh:%d", pinfo->pdi_copy_thresh);
 			out(" flags( ");
 			if (pinfo->pdi_flags & PDI_RUNNING)
@@ -3991,19 +3996,28 @@ static int packet_show_sock(struct nlmsghdr *nlh, void *arg)
 			out(" )");
 		}
 		if (ring_rx) {
-			out("\n\tring_rx(");
+			if (oneline)
+				out(" ring_rx(");
+			else
+				out("\n\tring_rx(");
 			packet_show_ring(ring_rx);
 			out(")");
 		}
 		if (ring_tx) {
-			out("\n\tring_tx(");
+			if (oneline)
+				out(" ring_tx(");
+			else
+				out("\n\tring_tx(");
 			packet_show_ring(ring_tx);
 			out(")");
 		}
 		if (has_fanout) {
 			uint16_t type = (fanout >> 16) & 0xffff;
 
-			out("\n\tfanout(");
+			if (oneline)
+				out(" fanout(");
+			else
+				out("\n\tfanout(");
 			out("id:%d,", fanout & 0xffff);
 			out("type:");
 
@@ -4032,7 +4046,10 @@ static int packet_show_sock(struct nlmsghdr *nlh, void *arg)
 		int num = RTA_PAYLOAD(tb[PACKET_DIAG_FILTER]) /
 			  sizeof(struct sock_filter);
 
-		out("\n\tbpf filter (%d): ", num);
+		if (oneline)
+			out(" bpf filter (%d): ", num);
+		else
+			out("\n\tbpf filter (%d): ", num);
 		while (num) {
 			out(" 0x%02x %u %u %u,",
 			    fil->code, fil->jt, fil->jf, fil->k);
@@ -4144,7 +4161,10 @@ static int xdp_stats_print(struct sockstat *s, const struct filter *f)
 
 static void xdp_show_ring(const char *name, struct xdp_diag_ring *ring)
 {
-	out("\n\t%s(", name);
+	if (oneline)
+		out(" %s(", name);
+	else
+		out("\n\t%s(", name);
 	out("entries:%u", ring->entries);
 	out(")");
 }
@@ -4152,7 +4172,10 @@ static void xdp_show_ring(const char *name, struct xdp_diag_ring *ring)
 static void xdp_show_umem(struct xdp_diag_umem *umem, struct xdp_diag_ring *fr,
 			  struct xdp_diag_ring *cr)
 {
-	out("\n\tumem(");
+	if (oneline)
+		out(" tumem(");
+	else
+		out("\n\tumem(");
 	out("id:%u", umem->id);
 	out(",size:%llu", umem->size);
 	out(",num_pages:%u", umem->num_pages);
@@ -4574,7 +4597,10 @@ static int tipc_show_sock(struct nlmsghdr *nlh, void *arg)
 	proc_ctx_print(&ss);
 
 	if (show_tipcinfo) {
-		out("\n type:%s", stype_nameg[ss.type]);
+		if (oneline)
+			out(" type:%s", stype_nameg[ss.type]);
+		else
+			out("\n type:%s", stype_nameg[ss.type]);
 		out(" cong:%s ",
 		       stat[TIPC_NLA_SOCK_STAT_LINK_CONG] ? "link" :
 		       stat[TIPC_NLA_SOCK_STAT_CONN_CONG] ? "conn" : "none");
@@ -4877,6 +4903,7 @@ static void _usage(FILE *dest)
 "\n"
 "   -K, --kill          forcibly close sockets, display what was closed\n"
 "   -H, --no-header     Suppress header line\n"
+"   -O, --oneline       socket's data printed on a single line\n"
 "\n"
 "   -A, --query=QUERY, --socket=QUERY\n"
 "       QUERY := {all|inet|tcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|netlink|vsock_stream|vsock_dgram|tipc}[,QUERY]\n"
@@ -5003,6 +5030,7 @@ static const struct option long_opts[] = {
 	{ "kill", 0, 0, 'K' },
 	{ "no-header", 0, 0, 'H' },
 	{ "xdp", 0, 0, OPT_XDPSOCK},
+	{ "oneline", 0, 0, 'O' },
 	{ 0 }
 
 };
@@ -5018,7 +5046,7 @@ int main(int argc, char *argv[])
 	int state_filter = 0;
 
 	while ((ch = getopt_long(argc, argv,
-				 "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KHS",
+				 "dhaletuwxnro460spbEf:miA:D:F:vVzZN:KHSO",
 				 long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'n':
@@ -5191,6 +5219,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'H':
 			show_header = 0;
+			break;
+		case 'O':
+			oneline = 1;
 			break;
 		case 'h':
 			help();
