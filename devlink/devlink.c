@@ -3858,12 +3858,8 @@ static int cmd_mon(struct dl *dl)
 	if (dl_argv_match(dl, "help")) {
 		cmd_mon_help();
 		return 0;
-	} else if (dl_no_arg(dl)) {
-		dl_arg_inc(dl);
-		return cmd_mon_show(dl);
 	}
-	pr_err("Command \"%s\" not found\n", dl_argv(dl));
-	return -ENOENT;
+	return cmd_mon_show(dl);
 }
 
 struct dpipe_field {
