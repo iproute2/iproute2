@@ -410,6 +410,10 @@ static int xfrm_policy_filter_match(struct xfrm_userpolicy_info *xpinfo,
 	if (!filter.use)
 		return 1;
 
+	if (filter.xpinfo.sel.family != AF_UNSPEC &&
+	    filter.xpinfo.sel.family != xpinfo->sel.family)
+		return 0;
+
 	if ((xpinfo->dir^filter.xpinfo.dir)&filter.dir_mask)
 		return 0;
 
@@ -780,7 +784,7 @@ static int xfrm_policy_list_or_deleteall(int argc, char **argv, int deleteall)
 	char *selp = NULL;
 	struct rtnl_handle rth;
 
-	if (argc > 0)
+	if (argc > 0 || preferred_family != AF_UNSPEC)
 		filter.use = 1;
 	filter.xpinfo.sel.family = preferred_family;
 
