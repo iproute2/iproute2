@@ -39,12 +39,8 @@
 
 #if __BITS_PER_LONG == 64 || (defined(__x86_64__) && defined(__ILP32__))
 /* on 64-bit and x32, avoid the ?: operator */
-#ifndef SIOCGSTAMP
 #define SIOCGSTAMP	SIOCGSTAMP_OLD
-#endif
-#ifndef SIOCGSTAMPNS
 #define SIOCGSTAMPNS	SIOCGSTAMPNS_OLD
-#endif
 #else
 #define SIOCGSTAMP	((sizeof(struct timeval))  == 8 ? \
 			 SIOCGSTAMP_OLD   : SIOCGSTAMP_NEW)
