@@ -107,7 +107,7 @@ int get_netnsid_from_name(const char *name)
 	struct nlmsghdr *answer;
 	struct rtattr *tb[NETNSA_MAX + 1];
 	struct rtgenmsg *rthdr;
-	int len, fd;
+	int len, fd, ret = -1;
 
 	netns_nsid_socket_init();
 
@@ -124,23 +124,22 @@ int get_netnsid_from_name(const char *name)
 
 	/* Validate message and parse attributes */
 	if (answer->nlmsg_type == NLMSG_ERROR)
-		goto err_out;
+		goto out;
 
 	rthdr = NLMSG_DATA(answer);
 	len = answer->nlmsg_len - NLMSG_SPACE(sizeof(*rthdr));
 	if (len < 0)
-		goto err_out;
+		goto out;
 
 	parse_rtattr(tb, NETNSA_MAX, NETNS_RTA(rthdr), len);
 
 	if (tb[NETNSA_NSID]) {
-		free(answer);
-		return rta_getattr_u32(tb[NETNSA_NSID]);
+		ret = rta_getattr_u32(tb[NETNSA_NSID]);
 	}
 
-err_out:
+out:
 	free(answer);
-	return -1;
+	return ret;
 }
 
 struct nsid_cache {

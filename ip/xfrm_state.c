@@ -898,6 +898,10 @@ static int xfrm_state_filter_match(struct xfrm_usersa_info *xsinfo)
 	if (!filter.use)
 		return 1;
 
+	if (filter.xsinfo.family != AF_UNSPEC &&
+	    filter.xsinfo.family != xsinfo->family)
+		return 0;
+
 	if (filter.id_src_mask)
 		if (xfrm_addr_match(&xsinfo->saddr, &filter.xsinfo.saddr,
 				    filter.id_src_mask))
@@ -1170,7 +1174,7 @@ static int xfrm_state_list_or_deleteall(int argc, char **argv, int deleteall)
 	struct rtnl_handle rth;
 	bool nokeys = false;
 
-	if (argc > 0)
+	if (argc > 0 || preferred_family != AF_UNSPEC)
 		filter.use = 1;
 	filter.xsinfo.family = preferred_family;
 

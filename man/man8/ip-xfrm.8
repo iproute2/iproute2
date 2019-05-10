@@ -89,7 +89,7 @@ ip-xfrm \- transform configuration
 .IR MASK " ] ]"
 
 .ti -8
-.BR "ip xfrm state " deleteall " ["
+.BR ip " [ " -4 " | " -6 " ] " "xfrm state deleteall" " ["
 .IR ID " ]"
 .RB "[ " mode
 .IR MODE " ]"
@@ -99,7 +99,7 @@ ip-xfrm \- transform configuration
 .IR FLAG-LIST " ]"
 
 .ti -8
-.BR "ip xfrm state " list " ["
+.BR ip " [ " -4 " | " -6 " ] " "xfrm state list" " ["
 .IR ID " ]"
 .RB "[ " nokeys " ]"
 .RB "[ " mode
@@ -257,7 +257,7 @@ ip-xfrm \- transform configuration
 .IR PTYPE " ]"
 
 .ti -8
-.BR "ip xfrm policy" " { " deleteall " | " list " }"
+.BR ip " [ " -4 " | " -6 " ] " "xfrm policy" " { " deleteall " | " list " }"
 .RB "[ " nosock " ]"
 .RI "[ " SELECTOR " ]"
 .RB "[ " dir
