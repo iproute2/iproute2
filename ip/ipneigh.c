@@ -384,6 +384,9 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	if (r->ndm_flags & NTF_EXT_LEARNED)
 		print_null(PRINT_ANY, "extern_learn", " %s ", "extern_learn");
 
+	if (r->ndm_flags & NTF_OFFLOADED)
+		print_null(PRINT_ANY, "offload", " %s", "offload");
+
 	if (show_stats) {
 		if (tb[NDA_CACHEINFO])
 			print_cacheinfo(RTA_DATA(tb[NDA_CACHEINFO]));

@@ -28,11 +28,16 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip fou add port PORT { ipproto PROTO  | gue } [ -6 ]\n"
-		"       ip fou del port PORT [ -6 ]\n"
+		"		   [ local IFADDR ] [ peer IFADDR ]\n"
+		"		   [ peer_port PORT ] [ dev IFNAME ]\n"
+		"       ip fou del port PORT [ -6 ] [ local IFADDR ]\n"
+		"		   [ peer IFADDR ] [ peer_port PORT ]\n"
+		"		   [ dev IFNAME ]\n"
 		"       ip fou show\n"
 		"\n"
 		"Where: PROTO { ipproto-name | 1..255 }\n"
-		"       PORT { 1..65535 }\n");
+		"       PORT { 1..65535 }\n"
+		"       IFADDR { addr }\n");
 
 	exit(-1);
 }
@@ -48,12 +53,14 @@ static int genl_family = -1;
 static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 			 bool adding)
 {
-	__u16 port;
-	int port_set = 0;
-	__u8 ipproto, type;
+	const char *local = NULL, *peer = NULL;
+	__u16 port, peer_port = 0;
+	__u8 family = AF_INET;
 	bool gue_set = false;
 	int ipproto_set = 0;
-	__u8 family = AF_INET;
+	__u8 ipproto, type;
+	int port_set = 0;
+	int index = 0;
 
 	while (argc > 0) {
 		if (!matches(*argv, "port")) {
@@ -77,6 +84,37 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 			gue_set = true;
 		} else if (!matches(*argv, "-6")) {
 			family = AF_INET6;
+		} else if (!matches(*argv, "local")) {
+			NEXT_ARG();
+
+			local = *argv;
+		} else if (!matches(*argv, "peer")) {
+			NEXT_ARG();
+
+			peer = *argv;
+		} else if (!matches(*argv, "peer_port")) {
+			NEXT_ARG();
+
+			if (get_be16(&peer_port, *argv, 0) || peer_port == 0)
+				invarg("invalid peer port", *argv);
+		} else if (!matches(*argv, "dev")) {
+			const char *ifname;
+
+			NEXT_ARG();
+
+			ifname = *argv;
+
+			if (check_ifname(ifname)) {
+				fprintf(stderr, "fou: invalid device name\n");
+				exit(EXIT_FAILURE);
+			}
+
+			index = ll_name_to_index(ifname);
+
+			if (!index) {
+				fprintf(stderr, "fou: unknown device name\n");
+				exit(EXIT_FAILURE);
+			}
 		} else {
 			fprintf(stderr
 				, "fou: unknown command \"%s\"?\n", *argv);
@@ -101,6 +139,11 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 		return -1;
 	}
 
+	if ((peer_port && !peer) || (peer && !peer_port)) {
+		fprintf(stderr, "fou: both peer and peer port must be set\n");
+		return -1;
+	}
+
 	type = gue_set ? FOU_ENCAP_GUE : FOU_ENCAP_DIRECT;
 
 	addattr16(n, 1024, FOU_ATTR_PORT, port);
@@ -109,6 +152,38 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 
 	if (ipproto_set)
 		addattr8(n, 1024, FOU_ATTR_IPPROTO, ipproto);
+
+	if (local) {
+		inet_prefix local_addr;
+		__u8 attr_type = family == AF_INET ? FOU_ATTR_LOCAL_V4 :
+						     FOU_ATTR_LOCAL_V6;
+
+		if (get_addr(&local_addr, local, family)) {
+			fprintf(stderr, "fou: parsing local address failed\n");
+			exit(EXIT_FAILURE);
+		}
+		addattr_l(n, 1024, attr_type, &local_addr.data,
+			  local_addr.bytelen);
+	}
+
+	if (peer) {
+		inet_prefix peer_addr;
+		__u8 attr_type = family == AF_INET ? FOU_ATTR_PEER_V4 :
+						     FOU_ATTR_PEER_V6;
+
+		if (get_addr(&peer_addr, peer, family)) {
+			fprintf(stderr, "fou: parsing peer address failed\n");
+			exit(EXIT_FAILURE);
+		}
+		addattr_l(n, 1024, attr_type, &peer_addr.data,
+			  peer_addr.bytelen);
+
+		if (peer_port)
+			addattr16(n, 1024, FOU_ATTR_PEER_PORT, peer_port);
+	}
+
+	if (index)
+		addattr32(n, 1024, FOU_ATTR_IFINDEX, index);
 
 	return 0;
 }
@@ -139,8 +214,10 @@ static int do_del(int argc, char **argv)
 
 static int print_fou_mapping(struct nlmsghdr *n, void *arg)
 {
-	struct genlmsghdr *ghdr;
+	__u8 family = AF_INET, local_attr_type, peer_attr_type, byte_len;
 	struct rtattr *tb[FOU_ATTR_MAX + 1];
+	__u8 empty_buf[16] = {0};
+	struct genlmsghdr *ghdr;
 	int len = n->nlmsg_len;
 
 	if (n->nlmsg_type != genl_family)
@@ -166,7 +243,7 @@ static int print_fou_mapping(struct nlmsghdr *n, void *arg)
 			   " ipproto %u", rta_getattr_u8(tb[FOU_ATTR_IPPROTO]));
 
 	if (tb[FOU_ATTR_AF]) {
-		__u8 family = rta_getattr_u8(tb[FOU_ATTR_AF]);
+		family = rta_getattr_u8(tb[FOU_ATTR_AF]);
 
 		print_string(PRINT_JSON, "family", NULL,
 			     family_name(family));
@@ -175,6 +252,48 @@ static int print_fou_mapping(struct nlmsghdr *n, void *arg)
 			print_string(PRINT_FP, NULL,
 				     " -6", NULL);
 	}
+
+	local_attr_type = family == AF_INET ? FOU_ATTR_LOCAL_V4 :
+					      FOU_ATTR_LOCAL_V6;
+	peer_attr_type = family == AF_INET ? FOU_ATTR_PEER_V4 :
+					     FOU_ATTR_PEER_V6;
+	byte_len = af_bit_len(family) / 8;
+
+	if (tb[local_attr_type] && memcmp(RTA_DATA(tb[local_attr_type]),
+					  empty_buf, byte_len)) {
+		print_string(PRINT_ANY, "local", " local %s",
+			     format_host_rta(family, tb[local_attr_type]));
+	}
+
+	if (tb[peer_attr_type] && memcmp(RTA_DATA(tb[peer_attr_type]),
+					 empty_buf, byte_len)) {
+		print_string(PRINT_ANY, "peer", " peer %s",
+			     format_host_rta(family, tb[peer_attr_type]));
+	}
+
+	if (tb[FOU_ATTR_PEER_PORT]) {
+		__u16 p_port = ntohs(rta_getattr_u16(tb[FOU_ATTR_PEER_PORT]));
+
+		if (p_port)
+			print_uint(PRINT_ANY, "peer_port", " peer_port %u",
+				   p_port);
+
+	}
+
+	if (tb[FOU_ATTR_IFINDEX]) {
+		int index = rta_getattr_s32(tb[FOU_ATTR_IFINDEX]);
+
+		if (index) {
+			const char *ifname;
+
+			ifname = ll_index_to_name(index);
+
+			if (ifname)
+				print_string(PRINT_ANY, "dev", " dev %s",
+					     ifname);
+		}
+	}
+
 	print_string(PRINT_FP, NULL, "\n", NULL);
 	close_json_object();
 

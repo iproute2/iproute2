@@ -41,6 +41,7 @@ static void print_explain(FILE *f)
 		"                  [ vlan_protocol VLAN_PROTOCOL ]\n"
 		"                  [ vlan_default_pvid VLAN_DEFAULT_PVID ]\n"
 		"                  [ vlan_stats_enabled VLAN_STATS_ENABLED ]\n"
+		"                  [ vlan_stats_per_port VLAN_STATS_PER_PORT ]\n"
 		"                  [ mcast_snooping MULTICAST_SNOOPING ]\n"
 		"                  [ mcast_router MULTICAST_ROUTER ]\n"
 		"                  [ mcast_query_use_ifaddr MCAST_QUERY_USE_IFADDR ]\n"
@@ -175,6 +176,14 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid vlan_stats_enabled", *argv);
 			addattr8(n, 1024, IFLA_BR_VLAN_STATS_ENABLED,
 				  vlan_stats_enabled);
+		} else if (matches(*argv, "vlan_stats_per_port") == 0) {
+			__u8 vlan_stats_per_port;
+
+			NEXT_ARG();
+			if (get_u8(&vlan_stats_per_port, *argv, 0))
+				invarg("invalid vlan_stats_per_port", *argv);
+			addattr8(n, 1024, IFLA_BR_VLAN_STATS_PER_PORT,
+				 vlan_stats_per_port);
 		} else if (matches(*argv, "mcast_router") == 0) {
 			__u8 mcast_router;
 
@@ -520,6 +529,12 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "vlan_stats_enabled",
 			   "vlan_stats_enabled %u ",
 			   rta_getattr_u8(tb[IFLA_BR_VLAN_STATS_ENABLED]));
+
+	if (tb[IFLA_BR_VLAN_STATS_PER_PORT])
+		print_uint(PRINT_ANY,
+			   "vlan_stats_per_port",
+			   "vlan_stats_per_port %u ",
+			   rta_getattr_u8(tb[IFLA_BR_VLAN_STATS_PER_PORT]));
 
 	if (tb[IFLA_BR_GROUP_FWD_MASK])
 		print_0xhex(PRINT_ANY,

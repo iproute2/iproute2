@@ -28,6 +28,9 @@
 #define PRIORITY_STR "priority"
 #define TOLERANCE_STR "tolerance"
 #define WINDOW_STR "window"
+#define BROADCAST_STR "broadcast"
+
+static const char tipc_bclink_name[] = "broadcast-link";
 
 static int link_list_cb(const struct nlmsghdr *nlh, void *data)
 {
@@ -172,8 +175,90 @@ static void cmd_link_get_help(struct cmdl *cmdl)
 		"PROPERTIES\n"
 		" tolerance             - Get link tolerance\n"
 		" priority              - Get link priority\n"
-		" window                - Get link window\n",
+		" window                - Get link window\n"
+		" broadcast             - Get link broadcast\n",
 		cmdl->argv[0]);
+}
+
+static int cmd_link_get_bcast_cb(const struct nlmsghdr *nlh, void *data)
+{
+	int *prop = data;
+	int prop_ratio = TIPC_NLA_PROP_BROADCAST_RATIO;
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *info[TIPC_NLA_MAX + 1] = {};
+	struct nlattr *attrs[TIPC_NLA_LINK_MAX + 1] = {};
+	struct nlattr *props[TIPC_NLA_PROP_MAX + 1] = {};
+	int bc_mode;
+
+	mnl_attr_parse(nlh, sizeof(*genl), parse_attrs, info);
+	if (!info[TIPC_NLA_LINK])
+		return MNL_CB_ERROR;
+
+	mnl_attr_parse_nested(info[TIPC_NLA_LINK], parse_attrs, attrs);
+	if (!attrs[TIPC_NLA_LINK_PROP])
+		return MNL_CB_ERROR;
+
+	mnl_attr_parse_nested(attrs[TIPC_NLA_LINK_PROP], parse_attrs, props);
+	if (!props[*prop])
+		return MNL_CB_ERROR;
+
+	bc_mode = mnl_attr_get_u32(props[*prop]);
+
+	new_json_obj(json);
+	open_json_object(NULL);
+	switch (bc_mode) {
+	case 0x1:
+		print_string(PRINT_ANY, "method", "%s\n", "BROADCAST");
+		break;
+	case 0x2:
+		print_string(PRINT_ANY, "method", "%s\n", "REPLICAST");
+		break;
+	case 0x4:
+		print_string(PRINT_ANY, "method", "%s", "AUTOSELECT");
+		close_json_object();
+		open_json_object(NULL);
+		print_uint(PRINT_ANY, "ratio", " ratio:%u%\n",
+			   mnl_attr_get_u32(props[prop_ratio]));
+		break;
+	default:
+		print_string(PRINT_ANY, NULL, "UNKNOWN\n", NULL);
+		break;
+	}
+	close_json_object();
+	delete_json_obj();
+	return MNL_CB_OK;
+}
+
+static void cmd_link_get_bcast_help(struct cmdl *cmdl)
+{
+	fprintf(stderr, "Usage: %s link get PPROPERTY\n\n"
+		"PROPERTIES\n"
+		" broadcast             - Get link broadcast\n",
+		cmdl->argv[0]);
+}
+
+static int cmd_link_get_bcast(struct nlmsghdr *nlh, const struct cmd *cmd,
+			     struct cmdl *cmdl, void *data)
+{
+	int prop = TIPC_NLA_PROP_BROADCAST;
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct nlattr *attrs;
+
+	if (help_flag) {
+		(cmd->help)(cmdl);
+		return -EINVAL;
+	}
+
+	nlh = msg_init(buf, TIPC_NL_LINK_GET);
+	if (!nlh) {
+		fprintf(stderr, "error, message initialisation failed\n");
+		return -1;
+	}
+	attrs = mnl_attr_nest_start(nlh, TIPC_NLA_LINK);
+	/* Direct to broadcast-link setting */
+	mnl_attr_put_strz(nlh, TIPC_NLA_LINK_NAME, tipc_bclink_name);
+	mnl_attr_nest_end(nlh, attrs);
+	return msg_doit(nlh, cmd_link_get_bcast_cb, &prop);
 }
 
 static int cmd_link_get(struct nlmsghdr *nlh, const struct cmd *cmd,
@@ -183,6 +268,7 @@ static int cmd_link_get(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ PRIORITY_STR,	cmd_link_get_prop,	cmd_link_get_help },
 		{ TOLERANCE_STR,	cmd_link_get_prop,	cmd_link_get_help },
 		{ WINDOW_STR,	cmd_link_get_prop,	cmd_link_get_help },
+		{ BROADCAST_STR, cmd_link_get_bcast, cmd_link_get_bcast_help },
 		{ NULL }
 	};
 
@@ -521,7 +607,8 @@ static void cmd_link_set_help(struct cmdl *cmdl)
 		"PROPERTIES\n"
 		" tolerance TOLERANCE   - Set link tolerance\n"
 		" priority PRIORITY     - Set link priority\n"
-		" window WINDOW         - Set link window\n",
+		" window WINDOW         - Set link window\n"
+		" broadcast BROADCAST   - Set link broadcast\n",
 		cmdl->argv[0]);
 }
 
@@ -585,6 +672,95 @@ static int cmd_link_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	return msg_doit(nlh, link_get_cb, &prop);
 }
 
+static void cmd_link_set_bcast_help(struct cmdl *cmdl)
+{
+	fprintf(stderr, "Usage: %s link set broadcast PROPERTY\n\n"
+		"PROPERTIES\n"
+		" BROADCAST         - Forces all multicast traffic to be\n"
+		"                     transmitted via broadcast only,\n"
+		"                     irrespective of cluster size and number\n"
+		"                     of destinations\n\n"
+		" REPLICAST         - Forces all multicast traffic to be\n"
+		"                     transmitted via replicast only,\n"
+		"                     irrespective of cluster size and number\n"
+		"                     of destinations\n\n"
+		" AUTOSELECT        - Auto switching to broadcast or replicast\n"
+		"                     depending on cluster size and destination\n"
+		"                     node number\n\n"
+		" ratio SIZE        - Set the AUTOSELECT criteria, percentage of\n"
+		"                     destination nodes vs cluster size\n\n",
+		cmdl->argv[0]);
+}
+
+static int cmd_link_set_bcast(struct nlmsghdr *nlh, const struct cmd *cmd,
+			     struct cmdl *cmdl, void *data)
+{
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct nlattr *props;
+	struct nlattr *attrs;
+	struct opt *opt;
+	struct opt opts[] = {
+		{ "BROADCAST",	OPT_KEY, NULL },
+		{ "REPLICAST",	OPT_KEY, NULL },
+		{ "AUTOSELECT",	OPT_KEY, NULL },
+		{ "ratio",	OPT_KEYVAL,	NULL },
+		{ NULL }
+	};
+	int method = 0;
+
+	if (help_flag) {
+		(cmd->help)(cmdl);
+		return -EINVAL;
+	}
+
+	if (parse_opts(opts, cmdl) < 0)
+		return -EINVAL;
+
+	for (opt = opts; opt->key; opt++)
+		if (opt->val)
+			break;
+
+	if (!opt || !opt->key) {
+		(cmd->help)(cmdl);
+		return -EINVAL;
+	}
+
+	nlh = msg_init(buf, TIPC_NL_LINK_SET);
+	if (!nlh) {
+		fprintf(stderr, "error, message initialisation failed\n");
+		return -1;
+	}
+
+	attrs = mnl_attr_nest_start(nlh, TIPC_NLA_LINK);
+	/* Direct to broadcast-link setting */
+	mnl_attr_put_strz(nlh, TIPC_NLA_LINK_NAME, tipc_bclink_name);
+	props = mnl_attr_nest_start(nlh, TIPC_NLA_LINK_PROP);
+
+	if (get_opt(opts, "BROADCAST"))
+		method = 0x1;
+	else if (get_opt(opts, "REPLICAST"))
+		method = 0x2;
+	else if (get_opt(opts, "AUTOSELECT"))
+		method = 0x4;
+
+	opt = get_opt(opts, "ratio");
+	if (!method && !opt) {
+		(cmd->help)(cmdl);
+		return -EINVAL;
+	}
+
+	if (method)
+		mnl_attr_put_u32(nlh, TIPC_NLA_PROP_BROADCAST, method);
+
+	if (opt)
+		mnl_attr_put_u32(nlh, TIPC_NLA_PROP_BROADCAST_RATIO,
+				 atoi(opt->val));
+
+	mnl_attr_nest_end(nlh, props);
+	mnl_attr_nest_end(nlh, attrs);
+	return msg_doit(nlh, NULL, NULL);
+}
+
 static int cmd_link_set(struct nlmsghdr *nlh, const struct cmd *cmd,
 			struct cmdl *cmdl, void *data)
 {
@@ -592,6 +768,7 @@ static int cmd_link_set(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ PRIORITY_STR,	cmd_link_set_prop,	cmd_link_set_help },
 		{ TOLERANCE_STR,	cmd_link_set_prop,	cmd_link_set_help },
 		{ WINDOW_STR,	cmd_link_set_prop,	cmd_link_set_help },
+		{ BROADCAST_STR, cmd_link_set_bcast, cmd_link_set_bcast_help },
 		{ NULL }
 	};
 

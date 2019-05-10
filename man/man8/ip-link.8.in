@@ -406,6 +406,9 @@ the following additional arguments are supported:
 .BR loose_binding " { " on " | " off " } "
 ]
 [
+.BR bridge_binding " { " on " | " off " } "
+]
+[
 .BI ingress-qos-map " QOS-MAP "
 ]
 [
@@ -458,6 +461,10 @@ where <phy_dev> is the physical device to which VLAN device is bound.
 
 .BR loose_binding " { " on " | " off " } "
 - specifies whether the VLAN device state is bound to the physical device state.
+
+.BR bridge_binding " { " on " | " off " } "
+- specifies whether the VLAN device link state tracks the state of bridge ports
+that are members of the VLAN.
 
 .BI ingress-qos-map " QOS-MAP "
 - defines a mapping of VLAN header prio field to the Linux internal packet
@@ -1392,6 +1399,8 @@ the following additional arguments are supported:
 ] [
 .BI vlan_stats_enabled " VLAN_STATS_ENABLED "
 ] [
+.BI vlan_stats_per_port " VLAN_STATS_PER_PORT "
+] [
 .BI mcast_snooping " MULTICAST_SNOOPING "
 ] [
 .BI mcast_router " MULTICAST_ROUTER "
@@ -1502,6 +1511,13 @@ When disabled, the bridge will not consider the VLAN tag when handling packets.
 or disable
 .RI ( VLAN_STATS_ENABLED " == 0) "
 per-VLAN stats accounting.
+
+.BI vlan_stats_per_port " VLAN_STATS_PER_PORT "
+- enable
+.RI ( VLAN_STATS_PER_PORT " == 1) "
+or disable
+.RI ( VLAN_STATS_PER_PORT " == 0) "
+per-VLAN per-port stats accounting. Can be changed only when there are no port VLANs configured.
 
 .BI mcast_snooping " MULTICAST_SNOOPING "
 - turn multicast snooping on

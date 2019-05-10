@@ -3422,7 +3422,7 @@ static void pr_out_occ_show_item_list(const char *label, struct list_head *list,
 				  occ_item->bound_pool_index);
 		else
 			pr_out_sp(7, "%2u:", occ_item->index);
-		pr_out_sp(15, "%7u/%u", occ_item->cur, occ_item->max);
+		pr_out_sp(21, "%10u/%u", occ_item->cur, occ_item->max);
 		if (i++ % 4 == 0)
 			pr_out("\n");
 	}
