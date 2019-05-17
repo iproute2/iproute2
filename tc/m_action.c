@@ -43,20 +43,20 @@ static void act_usage(void)
 	 * does that, they would know how to fix this ..
 	 *
 	 */
-	fprintf(stderr, "usage: tc actions <ACTSPECOP>*\n");
 	fprintf(stderr,
-		"Where: \tACTSPECOP := ACR | GD | FL\n"
-			"\tACR := add | change | replace <ACTSPEC>*\n"
-			"\tGD := get | delete | <ACTISPEC>*\n"
-			"\tFL := ls | list | flush | <ACTNAMESPEC>\n"
-			"\tACTNAMESPEC :=  action <ACTNAME>\n"
-			"\tACTISPEC := <ACTNAMESPEC> <INDEXSPEC>\n"
-			"\tACTSPEC := action <ACTDETAIL> [INDEXSPEC]\n"
-			"\tINDEXSPEC := index <32 bit indexvalue>\n"
-			"\tACTDETAIL := <ACTNAME> <ACTPARAMS>\n"
-			"\t\tExample ACTNAME is gact, mirred, bpf, etc\n"
-			"\t\tEach action has its own parameters (ACTPARAMS)\n"
-			"\n");
+		"usage: tc actions <ACTSPECOP>*\n"
+		"Where: 	ACTSPECOP := ACR | GD | FL\n"
+		"	ACR := add | change | replace <ACTSPEC>*\n"
+		"	GD := get | delete | <ACTISPEC>*\n"
+		"	FL := ls | list | flush | <ACTNAMESPEC>\n"
+		"	ACTNAMESPEC :=  action <ACTNAME>\n"
+		"	ACTISPEC := <ACTNAMESPEC> <INDEXSPEC>\n"
+		"	ACTSPEC := action <ACTDETAIL> [INDEXSPEC]\n"
+		"	INDEXSPEC := index <32 bit indexvalue>\n"
+		"	ACTDETAIL := <ACTNAME> <ACTPARAMS>\n"
+		"		Example ACTNAME is gact, mirred, bpf, etc\n"
+		"		Each action has its own parameters (ACTPARAMS)\n"
+		"\n");
 
 	exit(-1);
 }

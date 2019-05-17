@@ -27,18 +27,19 @@
 
 static int usage(void)
 {
-	fprintf(stderr, "Usage: tc qdisc [ add | del | replace | change | show ] dev STRING\n");
-	fprintf(stderr, "       [ handle QHANDLE ] [ root | ingress | clsact | parent CLASSID ]\n");
-	fprintf(stderr, "       [ estimator INTERVAL TIME_CONSTANT ]\n");
-	fprintf(stderr, "       [ stab [ help | STAB_OPTIONS] ]\n");
-	fprintf(stderr, "       [ ingress_block BLOCK_INDEX ] [ egress_block BLOCK_INDEX ]\n");
-	fprintf(stderr, "       [ [ QDISC_KIND ] [ help | OPTIONS ] ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "       tc qdisc show [ dev STRING ] [ ingress | clsact ] [ invisible ]\n");
-	fprintf(stderr, "Where:\n");
-	fprintf(stderr, "QDISC_KIND := { [p|b]fifo | tbf | prio | cbq | red | etc. }\n");
-	fprintf(stderr, "OPTIONS := ... try tc qdisc add <desired QDISC_KIND> help\n");
-	fprintf(stderr, "STAB_OPTIONS := ... try tc qdisc add stab help\n");
+	fprintf(stderr,
+		"Usage: tc qdisc [ add | del | replace | change | show ] dev STRING\n"
+		"       [ handle QHANDLE ] [ root | ingress | clsact | parent CLASSID ]\n"
+		"       [ estimator INTERVAL TIME_CONSTANT ]\n"
+		"       [ stab [ help | STAB_OPTIONS] ]\n"
+		"       [ ingress_block BLOCK_INDEX ] [ egress_block BLOCK_INDEX ]\n"
+		"       [ [ QDISC_KIND ] [ help | OPTIONS ] ]\n"
+		"\n"
+		"       tc qdisc show [ dev STRING ] [ ingress | clsact ] [ invisible ]\n"
+		"Where:\n"
+		"QDISC_KIND := { [p|b]fifo | tbf | prio | cbq | red | etc. }\n"
+		"OPTIONS := ... try tc qdisc add <desired QDISC_KIND> help\n"
+		"STAB_OPTIONS := ... try tc qdisc add stab help\n");
 	return -1;
 }
 

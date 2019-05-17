@@ -17,9 +17,10 @@
 
 static void explain(void)
 {
-	fprintf(stderr," Usage: ... tcindex [ hash SIZE ] [ mask MASK ] [ shift SHIFT ]\n");
-	fprintf(stderr, "                    [ pass_on | fall_through ]\n");
-	fprintf(stderr,"                    [ classid CLASSID ] [ action ACTION_SPEC ]\n");
+	fprintf(stderr,
+		" Usage: ... tcindex	[ hash SIZE ] [ mask MASK ] [ shift SHIFT ]\n"
+		"			[ pass_on | fall_through ]\n"
+		"			[ classid CLASSID ] [ action ACTION_SPEC ]\n");
 }
 
 static int tcindex_parse_opt(struct filter_util *qu, char *handle, int argc,

@@ -23,10 +23,11 @@ static void *BODY;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: tc exec [ EXEC_TYPE ] [ help | OPTIONS ]\n");
-	fprintf(stderr, "Where:\n");
-	fprintf(stderr, "EXEC_TYPE := { bpf | etc. }\n");
-	fprintf(stderr, "OPTIONS := ... try tc exec <desired EXEC_KIND> help\n");
+	fprintf(stderr,
+		"Usage: tc exec [ EXEC_TYPE ] [ help | OPTIONS ]\n"
+		"Where:\n"
+		"EXEC_TYPE := { bpf | etc. }\n"
+		"OPTIONS := ... try tc exec <desired EXEC_KIND> help\n");
 }
 
 static int parse_noeopt(struct exec_util *eu, int argc, char **argv)

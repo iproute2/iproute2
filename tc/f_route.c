@@ -26,11 +26,13 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... route [ from REALM | fromif TAG ] [ to REALM ]\n");
-	fprintf(stderr, "                [ classid CLASSID ] [ action ACTION_SPEC ]\n");
-	fprintf(stderr, "       ACTION_SPEC := ... look at individual actions\n");
-	fprintf(stderr, "       CLASSID := X:Y\n");
-	fprintf(stderr, "\nNOTE: CLASSID is parsed as hexadecimal input.\n");
+	fprintf(stderr,
+		"Usage: ... route [ from REALM | fromif TAG ] [ to REALM ]\n"
+		"                [ classid CLASSID ] [ action ACTION_SPEC ]\n"
+		"       ACTION_SPEC := ... look at individual actions\n"
+		"       CLASSID := X:Y\n"
+		"\n"
+		"NOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
 static int route_parse_opt(struct filter_util *qu, char *handle, int argc, char **argv, struct nlmsghdr *n)

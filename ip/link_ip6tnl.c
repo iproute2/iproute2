@@ -32,46 +32,35 @@
 static void ip6tunnel_print_help(struct link_util *lu, int argc, char **argv,
 				 FILE *f)
 {
-	const char *mode;
-
 	fprintf(f,
-		"Usage: ... %-6s [ remote ADDR ]\n",
-		lu->id
-	);
-	fprintf(f,
-		"                  [ local ADDR ]\n"
-		"                  [ encaplimit ELIM ]\n"
-		"                  [ hoplimit HLIM ]\n"
-		"                  [ tclass TCLASS ]\n"
-		"                  [ flowlabel FLOWLABEL ]\n"
-		"                  [ dscp inherit ]\n"
-		"                  [ [no]allow-localremote ]\n"
-		"                  [ dev PHYS_DEV ]\n"
-		"                  [ fwmark MARK ]\n"
-		"                  [ external ]\n"
-		"                  [ noencap ]\n"
-		"                  [ encap { fou | gue | none } ]\n"
-		"                  [ encap-sport PORT ]\n"
-		"                  [ encap-dport PORT ]\n"
-		"                  [ [no]encap-csum ]\n"
-		"                  [ [no]encap-csum6 ]\n"
-		"                  [ [no]encap-remcsum ]\n"
-	);
-	mode = "{ ip6ip6 | ipip6 | any }";
-	fprintf(f,
-		"                  [ mode %s ]\n"
-		"\n",
-		mode
-	);
-	fprintf(f,
-		"Where: ADDR      := IPV6_ADDRESS\n"
-		"       ELIM      := { none | 0..255 }(default=%d)\n"
-		"       HLIM      := 0..255 (default=%d)\n"
-		"       TCLASS    := { 0x0..0xff | inherit }\n"
-		"       FLOWLABEL := { 0x0..0xfffff | inherit }\n"
-		"       MARK      := { 0x0..0xffffffff | inherit }\n",
-		IPV6_DEFAULT_TNL_ENCAP_LIMIT, DEFAULT_TNL_HOP_LIMIT
-	);
+		"Usage: ... %-6s	[ remote ADDR ]\n"
+		"			[ local ADDR ]\n"
+		"			[ encaplimit ELIM ]\n"
+		"			[ hoplimit HLIM ]\n"
+		"			[ tclass TCLASS ]\n"
+		"			[ flowlabel FLOWLABEL ]\n"
+		"			[ dscp inherit ]\n"
+		"			[ [no]allow-localremote ]\n"
+		"			[ dev PHYS_DEV ]\n"
+		"			[ fwmark MARK ]\n"
+		"			[ external ]\n"
+		"			[ noencap ]\n"
+		"			[ encap { fou | gue | none } ]\n"
+		"			[ encap-sport PORT ]\n"
+		"			[ encap-dport PORT ]\n"
+		"			[ [no]encap-csum ]\n"
+		"			[ [no]encap-csum6 ]\n"
+		"			[ [no]encap-remcsum ]\n"
+		"			[ mode { ip6ip6 | ipip6 | any } ]\n"
+		"\n"
+		"Where:	ADDR	  := IPV6_ADDRESS\n"
+		"	ELIM	  := { none | 0..255 }(default=%d)\n"
+		"	HLIM	  := 0..255 (default=%d)\n"
+		"	TCLASS    := { 0x0..0xff | inherit }\n"
+		"	FLOWLABEL := { 0x0..0xfffff | inherit }\n"
+		"	MARK	  := { 0x0..0xffffffff | inherit }\n",
+		lu->id,
+		IPV6_DEFAULT_TNL_ENCAP_LIMIT, DEFAULT_TNL_HOP_LIMIT);
 }
 
 static int ip6tunnel_parse_opt(struct link_util *lu, int argc, char **argv,

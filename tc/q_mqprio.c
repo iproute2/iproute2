@@ -23,13 +23,14 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... mqprio [num_tc NUMBER] [map P0 P1 ...]\n");
-	fprintf(stderr, "                  [queues count1@offset1 count2@offset2 ...] ");
-	fprintf(stderr, "[hw 1|0]\n");
-	fprintf(stderr, "                  [mode dcb|channel]\n");
-	fprintf(stderr, "                  [shaper bw_rlimit SHAPER_PARAMS]\n"
+	fprintf(stderr,
+		"Usage: ... mqprio	[num_tc NUMBER] [map P0 P1 ...]\n"
+		"			[queues count1@offset1 count2@offset2 ...] "
+		"[hw 1|0]\n"
+		"			[mode dcb|channel]\n"
+		"			[shaper bw_rlimit SHAPER_PARAMS]\n"
 		"Where: SHAPER_PARAMS := { min_rate MIN_RATE1 MIN_RATE2 ...|\n"
-		"                          max_rate MAX_RATE1 MAX_RATE2 ... }\n");
+		"			  max_rate MAX_RATE1 MAX_RATE2 ... }\n");
 }
 
 static int mqprio_parse_opt(struct qdisc_util *qu, int argc,

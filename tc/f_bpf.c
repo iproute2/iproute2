@@ -23,36 +23,38 @@ static const enum bpf_prog_type bpf_type = BPF_PROG_TYPE_SCHED_CLS;
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... bpf ...\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "BPF use case:\n");
-	fprintf(stderr, " bytecode BPF_BYTECODE\n");
-	fprintf(stderr, " bytecode-file FILE\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "eBPF use case:\n");
-	fprintf(stderr, " object-file FILE [ section CLS_NAME ] [ export UDS_FILE ]");
-	fprintf(stderr, " [ verbose ] [ direct-action ] [ skip_hw | skip_sw ]\n");
-	fprintf(stderr, " object-pinned FILE [ direct-action ] [ skip_hw | skip_sw ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Common remaining options:\n");
-	fprintf(stderr, " [ action ACTION_SPEC ]\n");
-	fprintf(stderr, " [ classid CLASSID ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where BPF_BYTECODE := \'s,c t f k,c t f k,c t f k,...\'\n");
-	fprintf(stderr, "c,t,f,k and s are decimals; s denotes number of 4-tuples\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where FILE points to a file containing the BPF_BYTECODE string,\n");
-	fprintf(stderr, "an ELF file containing eBPF map definitions and bytecode, or a\n");
-	fprintf(stderr, "pinned eBPF program.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where CLS_NAME refers to the section name containing the\n");
-	fprintf(stderr, "classifier (default \'%s\').\n", bpf_prog_to_default_section(bpf_type));
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where UDS_FILE points to a unix domain socket file in order\n");
-	fprintf(stderr, "to hand off control of all created eBPF maps to an agent.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "ACTION_SPEC := ... look at individual actions\n");
-	fprintf(stderr, "NOTE: CLASSID is parsed as hexadecimal input.\n");
+	fprintf(stderr,
+		"Usage: ... bpf ...\n"
+		"\n"
+		"BPF use case:\n"
+		" bytecode BPF_BYTECODE\n"
+		" bytecode-file FILE\n"
+		"\n"
+		"eBPF use case:\n"
+		" object-file FILE [ section CLS_NAME ] [ export UDS_FILE ]"
+		" [ verbose ] [ direct-action ] [ skip_hw | skip_sw ]\n"
+		" object-pinned FILE [ direct-action ] [ skip_hw | skip_sw ]\n"
+		"\n"
+		"Common remaining options:\n"
+		" [ action ACTION_SPEC ]\n"
+		" [ classid CLASSID ]\n"
+		"\n"
+		"Where BPF_BYTECODE := \'s,c t f k,c t f k,c t f k,...\'\n"
+		"c,t,f,k and s are decimals; s denotes number of 4-tuples\n"
+		"\n"
+		"Where FILE points to a file containing the BPF_BYTECODE string,\n"
+		"an ELF file containing eBPF map definitions and bytecode, or a\n"
+		"pinned eBPF program.\n"
+		"\n"
+		"Where CLS_NAME refers to the section name containing the\n"
+		"classifier (default \'%s\').\n"
+		"\n"
+		"Where UDS_FILE points to a unix domain socket file in order\n"
+		"to hand off control of all created eBPF maps to an agent.\n"
+		"\n"
+		"ACTION_SPEC := ... look at individual actions\n"
+		"NOTE: CLASSID is parsed as hexadecimal input.\n",
+		bpf_prog_to_default_section(bpf_type));
 }
 
 static void bpf_cbpf_cb(void *nl, const struct sock_filter *ops, int ops_len)

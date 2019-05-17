@@ -26,41 +26,36 @@
 static void gre_print_help(struct link_util *lu, int argc, char **argv, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... %-9s [ remote ADDR ]\n",
-		lu->id
-	);
-	fprintf(f,
-		"                     [ local ADDR ]\n"
-		"                     [ [no][i|o]seq ]\n"
-		"                     [ [i|o]key KEY | no[i|o]key ]\n"
-		"                     [ [no][i|o]csum ]\n"
-		"                     [ ttl TTL ]\n"
-		"                     [ tos TOS ]\n"
-		"                     [ [no]pmtudisc ]\n"
-		"                     [ [no]ignore-df ]\n"
-		"                     [ dev PHYS_DEV ]\n"
-		"                     [ fwmark MARK ]\n"
-		"                     [ external ]\n"
-		"                     [ noencap ]\n"
-		"                     [ encap { fou | gue | none } ]\n"
-		"                     [ encap-sport PORT ]\n"
-		"                     [ encap-dport PORT ]\n"
-		"                     [ [no]encap-csum ]\n"
-		"                     [ [no]encap-csum6 ]\n"
-		"                     [ [no]encap-remcsum ]\n"
-		"                     [ erspan_ver version ]\n"
-		"                     [ erspan IDX ]\n"
-		"                     [ erspan_dir { ingress | egress } ]\n"
-		"                     [ erspan_hwid hwid ]\n"
+		"Usage: ... %-9s	[ remote ADDR ]\n"
+		"			[ local ADDR ]\n"
+		"			[ [no][i|o]seq ]\n"
+		"			[ [i|o]key KEY | no[i|o]key ]\n"
+		"			[ [no][i|o]csum ]\n"
+		"			[ ttl TTL ]\n"
+		"			[ tos TOS ]\n"
+		"			[ [no]pmtudisc ]\n"
+		"			[ [no]ignore-df ]\n"
+		"			[ dev PHYS_DEV ]\n"
+		"			[ fwmark MARK ]\n"
+		"			[ external ]\n"
+		"			[ noencap ]\n"
+		"			[ encap { fou | gue | none } ]\n"
+		"			[ encap-sport PORT ]\n"
+		"			[ encap-dport PORT ]\n"
+		"			[ [no]encap-csum ]\n"
+		"			[ [no]encap-csum6 ]\n"
+		"			[ [no]encap-remcsum ]\n"
+		"			[ erspan_ver version ]\n"
+		"			[ erspan IDX ]\n"
+		"			[ erspan_dir { ingress | egress } ]\n"
+		"			[ erspan_hwid hwid ]\n"
 		"\n"
-	);
-	fprintf(f,
-		"Where: ADDR := { IP_ADDRESS | any }\n"
-		"       TOS  := { NUMBER | inherit }\n"
-		"       TTL  := { 1..255 | inherit }\n"
-		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
-		"       MARK := { 0x0..0xffffffff }\n"
-	);
+		"Where:	ADDR := { IP_ADDRESS | any }\n"
+		"	TOS  := { NUMBER | inherit }\n"
+		"	TTL  := { 1..255 | inherit }\n"
+		"	KEY  := { DOTTED_QUAD | NUMBER }\n"
+		"	MARK := { 0x0..0xffffffff }\n",
+		lu->id);
 }
 
 static int gre_parse_opt(struct link_util *lu, int argc, char **argv,

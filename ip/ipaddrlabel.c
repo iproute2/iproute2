@@ -49,8 +49,9 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip addrlabel { add | del } prefix PREFIX [ dev DEV ] [ label LABEL ]\n");
-	fprintf(stderr, "       ip addrlabel [ list | flush | help ]\n");
+	fprintf(stderr,
+		"Usage: ip addrlabel { add | del } prefix PREFIX [ dev DEV ] [ label LABEL ]\n"
+		"       ip addrlabel [ list | flush | help ]\n");
 	exit(-1);
 }
 

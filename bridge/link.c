@@ -254,23 +254,24 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge link set dev DEV [ cost COST ] [ priority PRIO ] [ state STATE ]\n");
-	fprintf(stderr, "                               [ guard {on | off} ]\n");
-	fprintf(stderr, "                               [ hairpin {on | off} ]\n");
-	fprintf(stderr, "                               [ fastleave {on | off} ]\n");
-	fprintf(stderr,	"                               [ root_block {on | off} ]\n");
-	fprintf(stderr,	"                               [ learning {on | off} ]\n");
-	fprintf(stderr,	"                               [ learning_sync {on | off} ]\n");
-	fprintf(stderr,	"                               [ flood {on | off} ]\n");
-	fprintf(stderr,	"                               [ mcast_flood {on | off} ]\n");
-	fprintf(stderr,	"                               [ mcast_to_unicast {on | off} ]\n");
-	fprintf(stderr,	"                               [ neigh_suppress {on | off} ]\n");
-	fprintf(stderr,	"                               [ vlan_tunnel {on | off} ]\n");
-	fprintf(stderr,	"                               [ isolated {on | off} ]\n");
-	fprintf(stderr, "                               [ hwmode {vepa | veb} ]\n");
-	fprintf(stderr,	"                               [ backup_port DEVICE ] [ nobackup_port ]\n");
-	fprintf(stderr, "                               [ self ] [ master ]\n");
-	fprintf(stderr, "       bridge link show [dev DEV]\n");
+	fprintf(stderr,
+		"Usage: bridge link set dev DEV [ cost COST ] [ priority PRIO ] [ state STATE ]\n"
+		"                               [ guard {on | off} ]\n"
+		"                               [ hairpin {on | off} ]\n"
+		"                               [ fastleave {on | off} ]\n"
+		"                               [ root_block {on | off} ]\n"
+		"                               [ learning {on | off} ]\n"
+		"                               [ learning_sync {on | off} ]\n"
+		"                               [ flood {on | off} ]\n"
+		"                               [ mcast_flood {on | off} ]\n"
+		"                               [ mcast_to_unicast {on | off} ]\n"
+		"                               [ neigh_suppress {on | off} ]\n"
+		"                               [ vlan_tunnel {on | off} ]\n"
+		"                               [ isolated {on | off} ]\n"
+		"                               [ hwmode {vepa | veb} ]\n"
+		"                               [ backup_port DEVICE ] [ nobackup_port ]\n"
+		"                               [ self ] [ master ]\n"
+		"       bridge link show [dev DEV]\n");
 	exit(-1);
 }
 

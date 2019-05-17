@@ -30,9 +30,10 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... pie [ limit PACKETS ][ target TIME us]\n");
-	fprintf(stderr, "              [ tupdate TIME us][ alpha ALPHA ]");
-	fprintf(stderr, "[beta BETA ][bytemode | nobytemode][ecn | noecn ]\n");
+	fprintf(stderr,
+		"Usage: ... pie	[ limit PACKETS ][ target TIME us]\n"
+		"		[ tupdate TIME us][ alpha ALPHA ]"
+		"[beta BETA ][bytemode | nobytemode][ecn | noecn ]\n");
 }
 
 #define ALPHA_MAX 32

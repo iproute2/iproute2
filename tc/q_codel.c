@@ -52,9 +52,10 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... codel [ limit PACKETS ] [ target TIME ]\n");
-	fprintf(stderr, "                 [ interval TIME ] [ ecn | noecn ]\n");
-	fprintf(stderr, "                 [ ce_threshold TIME ]\n");
+	fprintf(stderr,
+		"Usage: ... codel [ limit PACKETS ] [ target TIME ]\n"
+		"		 [ interval TIME ] [ ecn | noecn ]\n"
+		"		 [ ce_threshold TIME ]\n");
 }
 
 static int codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,

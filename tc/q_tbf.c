@@ -24,9 +24,10 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... tbf limit BYTES burst BYTES[/BYTES] rate KBPS [ mtu BYTES[/BYTES] ]\n");
-	fprintf(stderr, "               [ peakrate KBPS ] [ latency TIME ] ");
-	fprintf(stderr, "[ overhead BYTES ] [ linklayer TYPE ]\n");
+	fprintf(stderr,
+		"Usage: ... tbf limit BYTES burst BYTES[/BYTES] rate KBPS [ mtu BYTES[/BYTES] ]\n"
+		"	[ peakrate KBPS ] [ latency TIME ] "
+		"[ overhead BYTES ] [ linklayer TYPE ]\n");
 }
 
 static void explain1(const char *arg, const char *val)

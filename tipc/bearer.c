@@ -40,19 +40,19 @@ static void _print_bearer_opts(void)
 {
 	fprintf(stderr,
 		"OPTIONS\n"
-		" priority              - Bearer link priority\n"
-		" tolerance             - Bearer link tolerance\n"
-		" window                - Bearer link window\n"
-		" mtu                   - Bearer link mtu\n");
+		" priority		- Bearer link priority\n"
+		" tolerance		- Bearer link tolerance\n"
+		" window		- Bearer link window\n"
+		" mtu			- Bearer link mtu\n");
 }
 
 void print_bearer_media(void)
 {
 	fprintf(stderr,
 		"\nMEDIA\n"
-		" udp                   - User Datagram Protocol\n"
-		" ib                    - Infiniband\n"
-		" eth                   - Ethernet\n");
+		" udp			- User Datagram Protocol\n"
+		" ib			- Infiniband\n"
+		" eth			- Ethernet\n");
 }
 
 static void cmd_bearer_enable_l2_help(struct cmdl *cmdl, char *media)
@@ -60,25 +60,23 @@ static void cmd_bearer_enable_l2_help(struct cmdl *cmdl, char *media)
 	fprintf(stderr,
 		"Usage: %s bearer enable media %s device DEVICE [OPTIONS]\n"
 		"\nOPTIONS\n"
-		" domain DOMAIN         - Discovery domain\n"
-		" priority PRIORITY     - Bearer priority\n",
+		" domain DOMAIN		- Discovery domain\n"
+		" priority PRIORITY	- Bearer priority\n",
 		cmdl->argv[0], media);
 }
 
 static void cmd_bearer_enable_udp_help(struct cmdl *cmdl, char *media)
 {
 	fprintf(stderr,
-		"Usage: %s bearer enable [OPTIONS] media %s name NAME localip IP [UDP OPTIONS]\n\n",
-		cmdl->argv[0], media);
-	fprintf(stderr,
+		"Usage: %s bearer enable [OPTIONS] media %s name NAME localip IP [UDP OPTIONS]\n\n"
 		"OPTIONS\n"
-		" domain DOMAIN         - Discovery domain\n"
-		" priority PRIORITY     - Bearer priority\n\n");
-	fprintf(stderr,
+		" domain DOMAIN		- Discovery domain\n"
+		" priority PRIORITY	- Bearer priority\n\n"
 		"UDP OPTIONS\n"
-		" localport PORT        - Local UDP port (default 6118)\n"
-		" remoteip IP           - Remote IP address\n"
-		" remoteport PORT       - Remote UDP port (default 6118)\n");
+		" localport PORT	- Local UDP port (default 6118)\n"
+		" remoteip IP		- Remote IP address\n"
+		" remoteport PORT	- Remote UDP port (default 6118)\n",
+		cmdl->argv[0], media);
 }
 
 static int get_netid_cb(const struct nlmsghdr *nlh, void *data)
@@ -996,11 +994,11 @@ void cmd_bearer_help(struct cmdl *cmdl)
 		"\n"
 		"COMMANDS\n"
 		" add			- Add data to existing bearer\n"
-		" enable                - Enable a bearer\n"
-		" disable               - Disable a bearer\n"
-		" set                   - Set various bearer properties\n"
-		" get                   - Get various bearer properties\n"
-		" list                  - List bearers\n", cmdl->argv[0]);
+		" enable		- Enable a bearer\n"
+		" disable		- Disable a bearer\n"
+		" set			- Set various bearer properties\n"
+		" get			- Get various bearer properties\n"
+		" list			- List bearers\n", cmdl->argv[0]);
 }
 
 int cmd_bearer(struct nlmsghdr *nlh, const struct cmd *cmd, struct cmdl *cmdl,

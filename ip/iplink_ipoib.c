@@ -23,8 +23,8 @@ static void print_explain(FILE *f)
 {
 	fprintf(f,
 		"Usage: ... ipoib [ pkey PKEY ]\n"
-		"                 [ mode {datagram | connected} ]\n"
-		"                 [ umcast {0|1} ]\n"
+		"		 [ mode {datagram | connected} ]\n"
+		"		 [ umcast {0|1} ]\n"
 		"\n"
 		"PKEY  := 0x8001-0xffff\n"
 	);

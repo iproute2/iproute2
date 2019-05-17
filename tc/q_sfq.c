@@ -26,12 +26,13 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... sfq [ limit NUMBER ] [ perturb SECS ] [ quantum BYTES ]\n");
-	fprintf(stderr, "               [ divisor NUMBER ] [ flows NUMBER] [ depth NUMBER ]\n");
-	fprintf(stderr, "               [ headdrop ]\n");
-	fprintf(stderr, "               [ redflowlimit BYTES ] [ min BYTES ] [ max BYTES ]\n");
-	fprintf(stderr, "               [ avpkt BYTES ] [ burst PACKETS ] [ probability P ]\n");
-	fprintf(stderr, "               [ ecn ] [ harddrop ]\n");
+	fprintf(stderr,
+		"Usage: ... sfq	[ limit NUMBER ] [ perturb SECS ] [ quantum BYTES ]\n"
+		"		[ divisor NUMBER ] [ flows NUMBER] [ depth NUMBER ]\n"
+		"		[ headdrop ]\n"
+		"		[ redflowlimit BYTES ] [ min BYTES ] [ max BYTES ]\n"
+		"		[ avpkt BYTES ] [ burst PACKETS ] [ probability P ]\n"
+		"		[ ecn ] [ harddrop ]\n");
 }
 
 static int sfq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)

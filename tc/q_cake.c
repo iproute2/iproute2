@@ -71,21 +71,21 @@ static struct cake_preset *find_preset(char *argv)
 static void explain(void)
 {
 	fprintf(stderr,
-"Usage: ... cake [ bandwidth RATE | unlimited* | autorate-ingress ]\n"
-"                [ rtt TIME | datacentre | lan | metro | regional |\n"
-"                  internet* | oceanic | satellite | interplanetary ]\n"
-"                [ besteffort | diffserv8 | diffserv4 | diffserv3* ]\n"
-"                [ flowblind | srchost | dsthost | hosts | flows |\n"
-"                  dual-srchost | dual-dsthost | triple-isolate* ]\n"
-"                [ nat | nonat* ]\n"
-"                [ wash | nowash* ]\n"
-"                [ split-gso* | no-split-gso ]\n"
-"                [ ack-filter | ack-filter-aggressive | no-ack-filter* ]\n"
-"                [ memlimit LIMIT ]\n"
-"                [ fwmark MASK ]\n"
-"                [ ptm | atm | noatm* ] [ overhead N | conservative | raw* ]\n"
-"                [ mpu N ] [ ingress | egress* ]\n"
-"                (* marks defaults)\n");
+		"Usage: ... cake [ bandwidth RATE | unlimited* | autorate-ingress ]\n"
+		"                [ rtt TIME | datacentre | lan | metro | regional |\n"
+		"                  internet* | oceanic | satellite | interplanetary ]\n"
+		"                [ besteffort | diffserv8 | diffserv4 | diffserv3* ]\n"
+		"                [ flowblind | srchost | dsthost | hosts | flows |\n"
+		"                  dual-srchost | dual-dsthost | triple-isolate* ]\n"
+		"                [ nat | nonat* ]\n"
+		"                [ wash | nowash* ]\n"
+		"                [ split-gso* | no-split-gso ]\n"
+		"                [ ack-filter | ack-filter-aggressive | no-ack-filter* ]\n"
+		"                [ memlimit LIMIT ]\n"
+		"                [ fwmark MASK ]\n"
+		"                [ ptm | atm | noatm* ] [ overhead N | conservative | raw* ]\n"
+		"                [ mpu N ] [ ingress | egress* ]\n"
+		"                (* marks defaults)\n");
 }
 
 static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,

@@ -24,18 +24,18 @@
 static void print_usage(FILE *f)
 {
 	fprintf(f,
-"Usage:\tip link add name NAME type hsr slave1 SLAVE1-IF slave2 SLAVE2-IF\n"
-"\t[ supervision ADDR-BYTE ] [version VERSION]\n"
-"\n"
-"NAME\n"
-"	name of new hsr device (e.g. hsr0)\n"
-"SLAVE1-IF, SLAVE2-IF\n"
-"	the two slave devices bound to the HSR device\n"
-"ADDR-BYTE\n"
-"	0-255; the last byte of the multicast address used for HSR supervision\n"
-"	frames (default = 0)\n"
-"VERSION\n"
-"	0,1; the protocol version to be used. (default = 0)\n");
+		"Usage:\tip link add name NAME type hsr slave1 SLAVE1-IF slave2 SLAVE2-IF\n"
+		"\t[ supervision ADDR-BYTE ] [version VERSION]\n"
+		"\n"
+		"NAME\n"
+		"	name of new hsr device (e.g. hsr0)\n"
+		"SLAVE1-IF, SLAVE2-IF\n"
+		"	the two slave devices bound to the HSR device\n"
+		"ADDR-BYTE\n"
+		"	0-255; the last byte of the multicast address used for HSR supervision\n"
+		"	frames (default = 0)\n"
+		"VERSION\n"
+		"	0,1; the protocol version to be used. (default = 0)\n");
 }
 
 static void usage(void)

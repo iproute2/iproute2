@@ -33,46 +33,41 @@
 static void gre_print_help(struct link_util *lu, int argc, char **argv, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... %-9s [ remote ADDR ]\n",
-		lu->id
-	);
-	fprintf(f,
-		"                     [ local ADDR ]\n"
-		"                     [ [no][i|o]seq ]\n"
-		"                     [ [i|o]key KEY | no[i|o]key ]\n"
-		"                     [ [no][i|o]csum ]\n"
-		"                     [ hoplimit TTL ]\n"
-		"                     [ encaplimit ELIM ]\n"
-		"                     [ tclass TCLASS ]\n"
-		"                     [ flowlabel FLOWLABEL ]\n"
-		"                     [ dscp inherit ]\n"
-		"                     [ dev PHYS_DEV ]\n"
-		"                     [ fwmark MARK ]\n"
-		"                     [ [no]allow-localremote ]\n"
-		"                     [ external ]\n"
-		"                     [ noencap ]\n"
-		"                     [ encap { fou | gue | none } ]\n"
-		"                     [ encap-sport PORT ]\n"
-		"                     [ encap-dport PORT ]\n"
-		"                     [ [no]encap-csum ]\n"
-		"                     [ [no]encap-csum6 ]\n"
-		"                     [ [no]encap-remcsum ]\n"
-		"                     [ erspan_ver version ]\n"
-		"                     [ erspan IDX ]\n"
-		"                     [ erspan_dir { ingress | egress } ]\n"
-		"                     [ erspan_hwid hwid ]\n"
+		"Usage: ... %-9s	[ remote ADDR ]\n"
+		"			[ local ADDR ]\n"
+		"			[ [no][i|o]seq ]\n"
+		"			[ [i|o]key KEY | no[i|o]key ]\n"
+		"			[ [no][i|o]csum ]\n"
+		"			[ hoplimit TTL ]\n"
+		"			[ encaplimit ELIM ]\n"
+		"			[ tclass TCLASS ]\n"
+		"			[ flowlabel FLOWLABEL ]\n"
+		"			[ dscp inherit ]\n"
+		"			[ dev PHYS_DEV ]\n"
+		"			[ fwmark MARK ]\n"
+		"			[ [no]allow-localremote ]\n"
+		"			[ external ]\n"
+		"			[ noencap ]\n"
+		"			[ encap { fou | gue | none } ]\n"
+		"			[ encap-sport PORT ]\n"
+		"			[ encap-dport PORT ]\n"
+		"			[ [no]encap-csum ]\n"
+		"			[ [no]encap-csum6 ]\n"
+		"			[ [no]encap-remcsum ]\n"
+		"			[ erspan_ver version ]\n"
+		"			[ erspan IDX ]\n"
+		"			[ erspan_dir { ingress | egress } ]\n"
+		"			[ erspan_hwid hwid ]\n"
 		"\n"
-	);
-	fprintf(f,
-		"Where: ADDR      := IPV6_ADDRESS\n"
-		"       TTL       := { 0..255 } (default=%d)\n"
-		"       KEY       := { DOTTED_QUAD | NUMBER }\n"
-		"       ELIM      := { none | 0..255 }(default=%d)\n"
-		"       TCLASS    := { 0x0..0xff | inherit }\n"
-		"       FLOWLABEL := { 0x0..0xfffff | inherit }\n"
-		"       MARK      := { 0x0..0xffffffff | inherit }\n",
-		DEFAULT_TNL_HOP_LIMIT, IPV6_DEFAULT_TNL_ENCAP_LIMIT
-	);
+		"Where:	ADDR	  := IPV6_ADDRESS\n"
+		"	TTL	  := { 0..255 } (default=%d)\n"
+		"	KEY	  := { DOTTED_QUAD | NUMBER }\n"
+		"	ELIM	  := { none | 0..255 }(default=%d)\n"
+		"	TCLASS	  := { 0x0..0xff | inherit }\n"
+		"	FLOWLABEL := { 0x0..0xfffff | inherit }\n"
+		"	MARK	  := { 0x0..0xffffffff | inherit }\n",
+		lu->id,
+		DEFAULT_TNL_HOP_LIMIT, IPV6_DEFAULT_TNL_ENCAP_LIMIT);
 }
 
 static int gre_parse_opt(struct link_util *lu, int argc, char **argv,

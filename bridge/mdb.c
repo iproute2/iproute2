@@ -30,8 +30,9 @@ static unsigned int filter_index, filter_vlan;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [permanent | temp] [vid VID]\n");
-	fprintf(stderr, "       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
+	fprintf(stderr,
+		"Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [permanent | temp] [vid VID]\n"
+		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
 

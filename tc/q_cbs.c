@@ -24,9 +24,9 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... cbs hicredit BYTES locredit BYTES sendslope BPS idleslope BPS\n");
-	fprintf(stderr, "           [offload 0|1]\n");
-
+	fprintf(stderr,
+		"Usage: ... cbs hicredit BYTES locredit BYTES sendslope BPS idleslope BPS\n"
+		"	   [offload 0|1]\n");
 }
 
 static void explain1(const char *arg, const char *val)

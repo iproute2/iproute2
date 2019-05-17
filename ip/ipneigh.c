@@ -48,13 +48,16 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip neigh { add | del | change | replace }\n"
-			"                { ADDR [ lladdr LLADDR ] [ nud STATE ] | proxy ADDR } [ dev DEV ]\n");
-	fprintf(stderr, "                [ router ] [ extern_learn ] [ protocol PROTO ]\n\n");
-	fprintf(stderr, "       ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n");
-	fprintf(stderr, "                                 [ vrf NAME ]\n\n");
-	fprintf(stderr, "STATE := { permanent | noarp | stale | reachable | none |\n"
-			"           incomplete | delay | probe | failed }\n");
+	fprintf(stderr,
+		"Usage: ip neigh { add | del | change | replace }\n"
+		"		{ ADDR [ lladdr LLADDR ] [ nud STATE ] | proxy ADDR } [ dev DEV ]\n"
+		"		[ router ] [ extern_learn ] [ protocol PROTO ]\n"
+		"\n"
+		"	ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n"
+		"				  [ vrf NAME ]\n"
+		"\n"
+		"STATE := { permanent | noarp | stale | reachable | none |\n"
+		"           incomplete | delay | probe | failed }\n");
 	exit(-1);
 }
 

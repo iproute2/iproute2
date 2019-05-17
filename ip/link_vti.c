@@ -26,22 +26,16 @@
 static void vti_print_help(struct link_util *lu, int argc, char **argv, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... %-4s [ remote ADDR ]\n",
-		lu->id
-	);
-	fprintf(f,
-		"                [ local ADDR ]\n"
-		"                [ [i|o]key KEY ]\n"
-		"                [ dev PHYS_DEV ]\n"
-		"                [ fwmark MARK ]\n"
+		"Usage: ... %-4s	[ remote ADDR ]\n"
+		"		[ local ADDR ]\n"
+		"		[ [i|o]key KEY ]\n"
+		"		[ dev PHYS_DEV ]\n"
+		"		[ fwmark MARK ]\n"
 		"\n"
-	);
-	fprintf(f,
-		"Where: ADDR := { IP%s_ADDRESS }\n"
-		"       KEY  := { DOTTED_QUAD | NUMBER }\n"
-		"       MARK := { 0x0..0xffffffff }\n",
-		""
-	);
+		"Where:	ADDR := { IP_ADDRESS }\n"
+		"	KEY  := { DOTTED_QUAD | NUMBER }\n"
+		"	MARK := { 0x0..0xffffffff }\n",
+		lu->id);
 }
 
 static int vti_parse_opt(struct link_util *lu, int argc, char **argv,

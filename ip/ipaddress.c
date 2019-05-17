@@ -52,32 +52,33 @@ static void usage(void)
 	if (do_link)
 		iplink_usage();
 
-	fprintf(stderr, "Usage: ip address {add|change|replace} IFADDR dev IFNAME [ LIFETIME ]\n");
-	fprintf(stderr, "                                                      [ CONFFLAG-LIST ]\n");
-	fprintf(stderr, "       ip address del IFADDR dev IFNAME [mngtmpaddr]\n");
-	fprintf(stderr, "       ip address {save|flush} [ dev IFNAME ] [ scope SCOPE-ID ]\n");
-	fprintf(stderr, "                            [ to PREFIX ] [ FLAG-LIST ] [ label LABEL ] [up]\n");
-	fprintf(stderr, "       ip address [ show [ dev IFNAME ] [ scope SCOPE-ID ] [ master DEVICE ]\n");
-	fprintf(stderr, "                         [ type TYPE ] [ to PREFIX ] [ FLAG-LIST ]\n");
-	fprintf(stderr, "                         [ label LABEL ] [up] [ vrf NAME ] ]\n");
-	fprintf(stderr, "       ip address {showdump|restore}\n");
-	fprintf(stderr, "IFADDR := PREFIX | ADDR peer PREFIX\n");
-	fprintf(stderr, "          [ broadcast ADDR ] [ anycast ADDR ]\n");
-	fprintf(stderr, "          [ label IFNAME ] [ scope SCOPE-ID ] [ metric METRIC ]\n");
-	fprintf(stderr, "SCOPE-ID := [ host | link | global | NUMBER ]\n");
-	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
-	fprintf(stderr, "FLAG  := [ permanent | dynamic | secondary | primary |\n");
-	fprintf(stderr, "           [-]tentative | [-]deprecated | [-]dadfailed | temporary |\n");
-	fprintf(stderr, "           CONFFLAG-LIST ]\n");
-	fprintf(stderr, "CONFFLAG-LIST := [ CONFFLAG-LIST ] CONFFLAG\n");
-	fprintf(stderr, "CONFFLAG  := [ home | nodad | mngtmpaddr | noprefixroute | autojoin ]\n");
-	fprintf(stderr, "LIFETIME := [ valid_lft LFT ] [ preferred_lft LFT ]\n");
-	fprintf(stderr, "LFT := forever | SECONDS\n");
-	fprintf(stderr, "TYPE := { vlan | veth | vcan | vxcan | dummy | ifb | macvlan | macvtap |\n");
-	fprintf(stderr, "          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan | lowpan |\n");
-	fprintf(stderr, "          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan | vti |\n");
-	fprintf(stderr, "          nlmon | can | bond_slave | ipvlan | geneve | bridge_slave |\n");
-	fprintf(stderr, "          hsr | macsec | netdevsim }\n");
+	fprintf(stderr,
+		"Usage: ip address {add|change|replace} IFADDR dev IFNAME [ LIFETIME ]\n"
+		"                                                      [ CONFFLAG-LIST ]\n"
+		"       ip address del IFADDR dev IFNAME [mngtmpaddr]\n"
+		"       ip address {save|flush} [ dev IFNAME ] [ scope SCOPE-ID ]\n"
+		"                            [ to PREFIX ] [ FLAG-LIST ] [ label LABEL ] [up]\n"
+		"       ip address [ show [ dev IFNAME ] [ scope SCOPE-ID ] [ master DEVICE ]\n"
+		"                         [ type TYPE ] [ to PREFIX ] [ FLAG-LIST ]\n"
+		"                         [ label LABEL ] [up] [ vrf NAME ] ]\n"
+		"       ip address {showdump|restore}\n"
+		"IFADDR := PREFIX | ADDR peer PREFIX\n"
+		"          [ broadcast ADDR ] [ anycast ADDR ]\n"
+		"          [ label IFNAME ] [ scope SCOPE-ID ] [ metric METRIC ]\n"
+		"SCOPE-ID := [ host | link | global | NUMBER ]\n"
+		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
+		"FLAG  := [ permanent | dynamic | secondary | primary |\n"
+		"           [-]tentative | [-]deprecated | [-]dadfailed | temporary |\n"
+		"           CONFFLAG-LIST ]\n"
+		"CONFFLAG-LIST := [ CONFFLAG-LIST ] CONFFLAG\n"
+		"CONFFLAG  := [ home | nodad | mngtmpaddr | noprefixroute | autojoin ]\n"
+		"LIFETIME := [ valid_lft LFT ] [ preferred_lft LFT ]\n"
+		"LFT := forever | SECONDS\n"
+		"TYPE := { vlan | veth | vcan | vxcan | dummy | ifb | macvlan | macvtap |\n"
+		"          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan | lowpan |\n"
+		"          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan | vti |\n"
+		"          nlmon | can | bond_slave | ipvlan | geneve | bridge_slave |\n"
+		"          hsr | macsec | netdevsim }\n");
 
 	exit(-1);
 }

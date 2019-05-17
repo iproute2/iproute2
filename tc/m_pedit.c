@@ -34,8 +34,8 @@ static int pedit_debug;
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... pedit munge [ex] <MUNGE> [CONTROL]\n");
 	fprintf(stderr,
+		"Usage: ... pedit munge [ex] <MUNGE> [CONTROL]\n"
 		"Where: MUNGE := <RAW>|<LAYERED>\n"
 		"\t<RAW>:= <OFFSETC>[ATC]<CMD>\n \t\tOFFSETC:= offset <offval> <u8|u16|u32>\n"
 		"\t\tATC:= at <atval> offmask <maskval> shift <shiftval>\n"

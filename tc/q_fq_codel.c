@@ -49,11 +49,12 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... fq_codel [ limit PACKETS ] [ flows NUMBER ]\n");
-	fprintf(stderr, "                    [ memory_limit BYTES ]\n");
-	fprintf(stderr, "                    [ target TIME ] [ interval TIME ]\n");
-	fprintf(stderr, "                    [ quantum BYTES ] [ [no]ecn ]\n");
-	fprintf(stderr, "                    [ ce_threshold TIME ]\n");
+	fprintf(stderr,
+		"Usage: ... fq_codel	[ limit PACKETS ] [ flows NUMBER ]\n"
+					"[ memory_limit BYTES ]\n"
+					"[ target TIME ] [ interval TIME ]\n"
+					"[ quantum BYTES ] [ [no]ecn ]\n"
+					"[ ce_threshold TIME ]\n");
 }
 
 static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,

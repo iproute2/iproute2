@@ -54,66 +54,84 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip xfrm state { add | update } ID [ ALGO-LIST ] [ mode MODE ]\n");
-	fprintf(stderr, "        [ mark MARK [ mask MASK ] ] [ reqid REQID ] [ seq SEQ ]\n");
-	fprintf(stderr, "        [ replay-window SIZE ] [ replay-seq SEQ ] [ replay-oseq SEQ ]\n");
-	fprintf(stderr, "        [ replay-seq-hi SEQ ] [ replay-oseq-hi SEQ ]\n");
-	fprintf(stderr, "        [ flag FLAG-LIST ] [ sel SELECTOR ] [ LIMIT-LIST ] [ encap ENCAP ]\n");
-	fprintf(stderr, "        [ coa ADDR[/PLEN] ] [ ctx CTX ] [ extra-flag EXTRA-FLAG-LIST ]\n");
-	fprintf(stderr, "        [ offload [dev DEV] dir DIR ]\n");
-	fprintf(stderr, "        [ output-mark OUTPUT-MARK ]\n");
-+	fprintf(stderr, "        [ if_id IF_ID ]\n");
-	fprintf(stderr, "Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n");
-	fprintf(stderr, "        [ reqid REQID ] [ seq SEQ ] [ min SPI max SPI ]\n");
-	fprintf(stderr, "Usage: ip xfrm state { delete | get } ID [ mark MARK [ mask MASK ] ]\n");
-	fprintf(stderr, "Usage: ip xfrm state deleteall [ ID ] [ mode MODE ] [ reqid REQID ]\n");
-	fprintf(stderr, "        [ flag FLAG-LIST ]\n");
-	fprintf(stderr, "Usage: ip xfrm state list [ nokeys ] [ ID ] [ mode MODE ] [ reqid REQID ]\n");
-	fprintf(stderr, "        [ flag FLAG-LIST ]\n");
-	fprintf(stderr, "Usage: ip xfrm state flush [ proto XFRM-PROTO ]\n");
-	fprintf(stderr, "Usage: ip xfrm state count\n");
-	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM-PROTO ] [ spi SPI ]\n");
-	fprintf(stderr, "XFRM-PROTO := ");
-	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ESP));
-	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_AH));
-	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_COMP));
-	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ROUTING));
-	fprintf(stderr, "%s\n", strxf_xfrmproto(IPPROTO_DSTOPTS));
-	fprintf(stderr, "ALGO-LIST := [ ALGO-LIST ] ALGO\n");
-	fprintf(stderr, "ALGO := { ");
-	fprintf(stderr, "%s | ", strxf_algotype(XFRMA_ALG_CRYPT));
-	fprintf(stderr, "%s", strxf_algotype(XFRMA_ALG_AUTH));
-	fprintf(stderr, " } ALGO-NAME ALGO-KEYMAT |\n");
-	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_AUTH_TRUNC));
-	fprintf(stderr, " ALGO-NAME ALGO-KEYMAT ALGO-TRUNC-LEN |\n");
-	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_AEAD));
-	fprintf(stderr, " ALGO-NAME ALGO-KEYMAT ALGO-ICV-LEN |\n");
-	fprintf(stderr, "        %s", strxf_algotype(XFRMA_ALG_COMP));
-	fprintf(stderr, " ALGO-NAME\n");
-	fprintf(stderr, "MODE := transport | tunnel | beet | ro | in_trigger\n");
-	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
-	fprintf(stderr, "FLAG := noecn | decap-dscp | nopmtudisc | wildrecv | icmp | af-unspec | align4 | esn\n");
-	fprintf(stderr, "EXTRA-FLAG-LIST := [ EXTRA-FLAG-LIST ] EXTRA-FLAG\n");
-	fprintf(stderr, "EXTRA-FLAG := dont-encap-dscp\n");
-	fprintf(stderr, "SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n");
-	fprintf(stderr, "UPSPEC := proto { { ");
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_TCP));
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_UDP));
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_SCTP));
-	fprintf(stderr, "%s", strxf_proto(IPPROTO_DCCP));
-	fprintf(stderr, " } [ sport PORT ] [ dport PORT ] |\n");
-	fprintf(stderr, "                  { ");
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_ICMP));
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_ICMPV6));
-	fprintf(stderr, "%s", strxf_proto(IPPROTO_MH));
-	fprintf(stderr, " } [ type NUMBER ] [ code NUMBER ] |\n");
-	fprintf(stderr, "                  %s", strxf_proto(IPPROTO_GRE));
-	fprintf(stderr, " [ key { DOTTED-QUAD | NUMBER } ] | PROTO }\n");
-	fprintf(stderr, "LIMIT-LIST := [ LIMIT-LIST ] limit LIMIT\n");
-	fprintf(stderr, "LIMIT := { time-soft | time-hard | time-use-soft | time-use-hard } SECONDS |\n");
-	fprintf(stderr, "         { byte-soft | byte-hard } SIZE | { packet-soft | packet-hard } COUNT\n");
-	fprintf(stderr, "ENCAP := { espinudp | espinudp-nonike } SPORT DPORT OADDR\n");
-	fprintf(stderr, "DIR := in | out\n");
+	fprintf(stderr,
+		"Usage: ip xfrm state { add | update } ID [ ALGO-LIST ] [ mode MODE ]\n"
+		"        [ mark MARK [ mask MASK ] ] [ reqid REQID ] [ seq SEQ ]\n"
+		"        [ replay-window SIZE ] [ replay-seq SEQ ] [ replay-oseq SEQ ]\n"
+		"        [ replay-seq-hi SEQ ] [ replay-oseq-hi SEQ ]\n"
+		"        [ flag FLAG-LIST ] [ sel SELECTOR ] [ LIMIT-LIST ] [ encap ENCAP ]\n"
+		"        [ coa ADDR[/PLEN] ] [ ctx CTX ] [ extra-flag EXTRA-FLAG-LIST ]\n"
+		"        [ offload [dev DEV] dir DIR ]\n"
+		"        [ output-mark OUTPUT-MARK ]\n"
+		"        [ if_id IF_ID ]\n"
+		"Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n"
+		"        [ reqid REQID ] [ seq SEQ ] [ min SPI max SPI ]\n"
+		"Usage: ip xfrm state { delete | get } ID [ mark MARK [ mask MASK ] ]\n"
+		"Usage: ip xfrm state deleteall [ ID ] [ mode MODE ] [ reqid REQID ]\n"
+		"        [ flag FLAG-LIST ]\n"
+		"Usage: ip xfrm state list [ nokeys ] [ ID ] [ mode MODE ] [ reqid REQID ]\n"
+		"        [ flag FLAG-LIST ]\n"
+		"Usage: ip xfrm state flush [ proto XFRM-PROTO ]\n"
+		"Usage: ip xfrm state count\n"
+		"ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM-PROTO ] [ spi SPI ]\n"
+		"XFRM-PROTO := ");
+	fprintf(stderr,
+		"%s | %s | %s | %s | %s\n",
+		strxf_xfrmproto(IPPROTO_ESP),
+		strxf_xfrmproto(IPPROTO_AH),
+		strxf_xfrmproto(IPPROTO_COMP),
+		strxf_xfrmproto(IPPROTO_ROUTING),
+		strxf_xfrmproto(IPPROTO_DSTOPTS));
+	fprintf(stderr,
+		"ALGO-LIST := [ ALGO-LIST ] ALGO\n"
+		"ALGO := { ");
+	fprintf(stderr,
+		"%s | %s",
+		strxf_algotype(XFRMA_ALG_CRYPT),
+		strxf_algotype(XFRMA_ALG_AUTH));
+	fprintf(stderr,
+		" } ALGO-NAME ALGO-KEYMAT |\n"
+		"        %s", strxf_algotype(XFRMA_ALG_AUTH_TRUNC));
+	fprintf(stderr,
+		" ALGO-NAME ALGO-KEYMAT ALGO-TRUNC-LEN |\n"
+		"        %s", strxf_algotype(XFRMA_ALG_AEAD));
+	fprintf(stderr,
+		" ALGO-NAME ALGO-KEYMAT ALGO-ICV-LEN |\n"
+		"        %s", strxf_algotype(XFRMA_ALG_COMP));
+	fprintf(stderr,
+		" ALGO-NAME\n"
+		"MODE := transport | tunnel | beet | ro | in_trigger\n"
+		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
+		"FLAG := noecn | decap-dscp | nopmtudisc | wildrecv | icmp | af-unspec | align4 | esn\n"
+		"EXTRA-FLAG-LIST := [ EXTRA-FLAG-LIST ] EXTRA-FLAG\n"
+		"EXTRA-FLAG := dont-encap-dscp\n"
+		"SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n"
+		"UPSPEC := proto { { ");
+	fprintf(stderr,
+		"%s | %s | %s | %s",
+		strxf_proto(IPPROTO_TCP),
+		strxf_proto(IPPROTO_UDP),
+		strxf_proto(IPPROTO_SCTP),
+		strxf_proto(IPPROTO_DCCP));
+	fprintf(stderr,
+		" } [ sport PORT ] [ dport PORT ] |\n"
+		"                  { ");
+	fprintf(stderr,
+		"%s | %s | %s",
+		strxf_proto(IPPROTO_ICMP),
+		strxf_proto(IPPROTO_ICMPV6),
+		strxf_proto(IPPROTO_MH));
+	fprintf(stderr,
+		" } [ type NUMBER ] [ code NUMBER ] |\n");
+	fprintf(stderr,
+		"                  %s", strxf_proto(IPPROTO_GRE));
+	fprintf(stderr,
+		" [ key { DOTTED-QUAD | NUMBER } ] | PROTO }\n"
+		"LIMIT-LIST := [ LIMIT-LIST ] limit LIMIT\n"
+		"LIMIT := { time-soft | time-hard | time-use-soft | time-use-hard } SECONDS |\n"
+		"         { byte-soft | byte-hard } SIZE | { packet-soft | packet-hard } COUNT\n"
+		"ENCAP := { espinudp | espinudp-nonike } SPORT DPORT OADDR\n"
+		"DIR := in | out\n");
 
 	exit(-1);
 }

@@ -26,8 +26,9 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... choke limit PACKETS bandwidth KBPS [ecn]\n");
-	fprintf(stderr, "                 [ min PACKETS ] [ max PACKETS ] [ burst PACKETS ]\n");
+	fprintf(stderr,
+		"Usage: ... choke limit PACKETS bandwidth KBPS [ecn]\n"
+		"		 [ min PACKETS ] [ max PACKETS ] [ burst PACKETS ]\n");
 }
 
 static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,

@@ -39,8 +39,9 @@ static bool nokeys;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip xfrm monitor [ nokeys ] [ all-nsid ] [ all | OBJECTS | help ]\n");
-	fprintf(stderr, "OBJECTS := { acquire | expire | SA | aevent | policy | report }\n");
+	fprintf(stderr,
+		"Usage: ip xfrm monitor [ nokeys ] [ all-nsid ] [ all | OBJECTS | help ]\n"
+		"OBJECTS := { acquire | expire | SA | aevent | policy | report }\n");
 	exit(-1);
 }
 

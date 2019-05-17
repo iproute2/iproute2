@@ -39,8 +39,9 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip maddr [ add | del ] MULTIADDR dev STRING\n");
-	fprintf(stderr, "       ip maddr show [ dev STRING ]\n");
+	fprintf(stderr,
+		"Usage: ip maddr [ add | del ] MULTIADDR dev STRING\n"
+		"       ip maddr show [ dev STRING ]\n");
 	exit(-1);
 }
 

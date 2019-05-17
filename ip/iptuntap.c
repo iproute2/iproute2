@@ -40,12 +40,13 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip tuntap { add | del | show | list | lst | help } [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "          [ mode { tun | tap } ] [ user USER ] [ group GROUP ]\n");
-	fprintf(stderr, "          [ one_queue ] [ pi ] [ vnet_hdr ] [ multi_queue ] [ name NAME ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: USER  := { STRING | NUMBER }\n");
-	fprintf(stderr, "       GROUP := { STRING | NUMBER }\n");
+	fprintf(stderr,
+		"Usage: ip tuntap { add | del | show | list | lst | help } [ dev PHYS_DEV ]\n"
+		"	[ mode { tun | tap } ] [ user USER ] [ group GROUP ]\n"
+		"	[ one_queue ] [ pi ] [ vnet_hdr ] [ multi_queue ] [ name NAME ]\n"
+		"\n"
+		"Where:	USER  := { STRING | NUMBER }\n"
+		"	GROUP := { STRING | NUMBER }\n");
 	exit(-1);
 }
 

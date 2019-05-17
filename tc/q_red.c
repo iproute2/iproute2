@@ -27,9 +27,10 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... red limit BYTES [min BYTES] [max BYTES] avpkt BYTES [burst PACKETS]\n");
-	fprintf(stderr, "               [adaptive] [probability PROBABILITY] [bandwidth KBPS]\n");
-	fprintf(stderr, "               [ecn] [harddrop]\n");
+	fprintf(stderr,
+		"Usage: ... red	limit BYTES [min BYTES] [max BYTES] avpkt BYTES [burst PACKETS]\n"
+		"		[adaptive] [probability PROBABILITY] [bandwidth KBPS]\n"
+		"		[ecn] [harddrop]\n");
 }
 
 static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,

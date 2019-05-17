@@ -194,14 +194,14 @@ noexist:
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
-		"       tc [-force] -batch filename\n"
+		"Usage:	tc [ OPTIONS ] OBJECT { COMMAND | help }\n"
+		"	tc [-force] -batch filename\n"
 		"where  OBJECT := { qdisc | class | filter | chain |\n"
-		"                   action | monitor | exec }\n"
+		"		    action | monitor | exec }\n"
 		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[aw] |\n"
-		"                    -o[neline] | -j[son] | -p[retty] | -c[olor]\n"
-		"                    -b[atch] [filename] | -n[etns] name |\n"
-		"                    -nm | -nam[es] | { -cf | -conf } path }\n");
+		"		    -o[neline] | -j[son] | -p[retty] | -c[olor]\n"
+		"		    -b[atch] [filename] | -n[etns] name |\n"
+		"		     -nm | -nam[es] | { -cf | -conf } path }\n");
 }
 
 static int do_cmd(int argc, char **argv, void *buf, size_t buflen)

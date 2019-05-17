@@ -46,24 +46,25 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip -f inet6 tunnel { add | change | del | show } [ NAME ]\n");
-	fprintf(stderr, "          [ mode { ip6ip6 | ipip6 | ip6gre | vti6 | any } ]\n");
-	fprintf(stderr, "          [ remote ADDR local ADDR ] [ dev PHYS_DEV ]\n");
-	fprintf(stderr, "          [ encaplimit ELIM ]\n");
-	fprintf(stderr, "          [ hoplimit TTL ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n");
-	fprintf(stderr, "          [ dscp inherit ]\n");
-	fprintf(stderr, "          [ [no]allow-localremote ]\n");
-	fprintf(stderr, "          [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where: NAME      := STRING\n");
-	fprintf(stderr, "       ADDR      := IPV6_ADDRESS\n");
-	fprintf(stderr, "       ELIM      := { none | 0..255 }(default=%d)\n",
-		IPV6_DEFAULT_TNL_ENCAP_LIMIT);
-	fprintf(stderr, "       TTL       := 0..255 (default=%d)\n",
+	fprintf(stderr,
+		"Usage: ip -f inet6 tunnel { add | change | del | show } [ NAME ]\n"
+		"          [ mode { ip6ip6 | ipip6 | ip6gre | vti6 | any } ]\n"
+		"          [ remote ADDR local ADDR ] [ dev PHYS_DEV ]\n"
+		"          [ encaplimit ELIM ]\n"
+		"          [ hoplimit TTL ] [ tclass TCLASS ] [ flowlabel FLOWLABEL ]\n"
+		"          [ dscp inherit ]\n"
+		"          [ [no]allow-localremote ]\n"
+		"          [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n"
+		"\n"
+		"Where: NAME      := STRING\n"
+		"       ADDR      := IPV6_ADDRESS\n"
+		"       ELIM      := { none | 0..255 }(default=%d)\n"
+		"       TTL       := 0..255 (default=%d)\n"
+		"       TCLASS    := { 0x0..0xff | inherit }\n"
+		"       FLOWLABEL := { 0x0..0xfffff | inherit }\n"
+		"       KEY       := { DOTTED_QUAD | NUMBER }\n",
+		IPV6_DEFAULT_TNL_ENCAP_LIMIT,
 		DEFAULT_TNL_HOP_LIMIT);
-	fprintf(stderr, "       TCLASS    := { 0x0..0xff | inherit }\n");
-	fprintf(stderr, "       FLOWLABEL := { 0x0..0xfffff | inherit }\n");
-	fprintf(stderr, "       KEY       := { DOTTED_QUAD | NUMBER }\n");
 	exit(-1);
 }
 

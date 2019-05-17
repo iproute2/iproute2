@@ -62,10 +62,11 @@ static int dump_msg2(struct nlmsghdr *n, void *arg)
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: rtmon [ OPTIONS ] file FILE [ all | LISTofOBJECTS ]\n");
-	fprintf(stderr, "OPTIONS := { -f[amily] { inet | inet6 | link | help } |\n"
-			"             -4 | -6 | -0 | -V[ersion] }\n");
-	fprintf(stderr, "LISTofOBJECTS := [ link ] [ address ] [ route ]\n");
+	fprintf(stderr,
+		"Usage: rtmon [ OPTIONS ] file FILE [ all | LISTofOBJECTS ]\n"
+		"OPTIONS := { -f[amily] { inet | inet6 | link | help } |\n"
+		"	     -4 | -6 | -0 | -V[ersion] }\n"
+		"LISTofOBJECTS := [ link ] [ address ] [ route ]\n");
 	exit(-1);
 }
 

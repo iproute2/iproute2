@@ -36,11 +36,12 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: tc qdisc { add | replace | change } ... gred setup vqs NUMBER\n");
-	fprintf(stderr, "           default DEFAULT_VQ [ grio ] [ limit BYTES ] [ecn] [harddrop]\n");
-	fprintf(stderr, "       tc qdisc change ... gred vq VQ [ prio VALUE ] limit BYTES\n");
-	fprintf(stderr, "           min BYTES max BYTES avpkt BYTES [ burst PACKETS ]\n");
-	fprintf(stderr, "           [ probability PROBABILITY ] [ bandwidth KBPS ] [ecn] [harddrop]\n");
+	fprintf(stderr,
+		"Usage: tc qdisc { add | replace | change } ... gred setup vqs NUMBER\n"
+		"           default DEFAULT_VQ [ grio ] [ limit BYTES ] [ecn] [harddrop]\n"
+		"       tc qdisc change ... gred vq VQ [ prio VALUE ] limit BYTES\n"
+		"           min BYTES max BYTES avpkt BYTES [ burst PACKETS ]\n"
+		"           [ probability PROBABILITY ] [ bandwidth KBPS ] [ecn] [harddrop]\n");
 }
 
 static int init_gred(struct qdisc_util *qu, int argc, char **argv,

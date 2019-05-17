@@ -45,19 +45,19 @@ static void usage(void) __attribute__((noreturn));
 static void usage(void)
 {
 	fprintf(stderr,
-"Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
-"       ip [ -force ] -batch filename\n"
-"where  OBJECT := { link | address | addrlabel | route | rule | neigh | ntable |\n"
-"                   tunnel | tuntap | maddress | mroute | mrule | monitor | xfrm |\n"
-"                   netns | l2tp | fou | macsec | tcp_metrics | token | netconf | ila |\n"
-"                   vrf | sr }\n"
-"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
-"                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
-"                    -f[amily] { inet | inet6 | mpls | bridge | link } |\n"
-"                    -4 | -6 | -I | -D | -M | -B | -0 |\n"
-"                    -l[oops] { maximum-addr-flush-attempts } | -br[ief] |\n"
-"                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
-"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] | -c[olor]}\n");
+		"Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
+		"       ip [ -force ] -batch filename\n"
+		"where  OBJECT := { link | address | addrlabel | route | rule | neigh | ntable |\n"
+		"                   tunnel | tuntap | maddress | mroute | mrule | monitor | xfrm |\n"
+		"                   netns | l2tp | fou | macsec | tcp_metrics | token | netconf | ila |\n"
+		"                   vrf | sr }\n"
+		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
+		"                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
+		"                    -f[amily] { inet | inet6 | mpls | bridge | link } |\n"
+		"                    -4 | -6 | -I | -D | -M | -B | -0 |\n"
+		"                    -l[oops] { maximum-addr-flush-attempts } | -br[ief] |\n"
+		"                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
+		"                    -rc[vbuf] [size] | -n[etns] name | -a[ll] | -c[olor]}\n");
 	exit(-1);
 }
 

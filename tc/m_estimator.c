@@ -27,10 +27,11 @@ static void est_help(void);
 
 static void est_help(void)
 {
-	fprintf(stderr, "Usage: ... estimator INTERVAL TIME-CONST\n");
-	fprintf(stderr, "  INTERVAL is interval between measurements\n");
-	fprintf(stderr, "  TIME-CONST is averaging time constant\n");
-	fprintf(stderr, "Example: ... est 1sec 8sec\n");
+	fprintf(stderr,
+		"Usage: ... estimator INTERVAL TIME-CONST\n"
+		"  INTERVAL is interval between measurements\n"
+		"  TIME-CONST is averaging time constant\n"
+		"Example: ... est 1sec 8sec\n");
 }
 
 int parse_estimator(int *p_argc, char ***p_argv, struct tc_estimator *est)

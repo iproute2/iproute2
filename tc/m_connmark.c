@@ -27,8 +27,9 @@
 static void
 explain(void)
 {
-	fprintf(stderr, "Usage: ... connmark [zone ZONE] [CONTROL] [index <INDEX>]\n");
-	fprintf(stderr, "where :\n"
+	fprintf(stderr,
+		"Usage: ... connmark [zone ZONE] [CONTROL] [index <INDEX>]\n"
+		"where :\n"
 		"\tZONE is the conntrack zone\n"
 		"\tCONTROL := reclassify | pipe | drop | continue | ok |\n"
 		"\t           goto chain <CHAIN_INDEX>\n");

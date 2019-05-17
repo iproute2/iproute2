@@ -38,8 +38,9 @@ static const struct static_clockid {
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... etf delta NANOS clockid CLOCKID [offload] [deadline_mode]\n");
-	fprintf(stderr, "CLOCKID must be a valid SYS-V id (i.e. CLOCK_TAI)\n");
+	fprintf(stderr,
+		"Usage: ... etf delta NANOS clockid CLOCKID [offload] [deadline_mode]\n"
+		"CLOCKID must be a valid SYS-V id (i.e. CLOCK_TAI)\n");
 }
 
 static void explain1(const char *arg, const char *val)
@@ -49,8 +50,10 @@ static void explain1(const char *arg, const char *val)
 
 static void explain_clockid(const char *val)
 {
-	fprintf(stderr, "etf: illegal value for \"clockid\": \"%s\".\n", val);
-	fprintf(stderr, "It must be a valid SYS-V id (i.e. CLOCK_TAI)\n");
+	fprintf(stderr,
+		"etf: illegal value for \"clockid\": \"%s\".\n"
+		"It must be a valid SYS-V id (i.e. CLOCK_TAI)\n",
+		val);
 }
 
 static int get_clockid(__s32 *val, const char *arg)

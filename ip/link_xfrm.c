@@ -16,8 +16,11 @@
 static void xfrm_print_help(struct link_util *lu, int argc, char **argv,
 			    FILE *f)
 {
-	fprintf(f, "Usage: ... %-4s dev PHYS_DEV [ if_id IF-ID ]\n", lu->id);
-	fprintf(f, "\nWhere: IF-ID := { 0x0..0xffffffff }\n");
+	fprintf(f,
+		"Usage: ... %-4s dev PHYS_DEV [ if_id IF-ID ]\n"
+		"\n"
+		"Where: IF-ID := { 0x0..0xffffffff }\n",
+		lu->id);
 }
 
 static int xfrm_parse_opt(struct link_util *lu, int argc, char **argv,

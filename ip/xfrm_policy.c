@@ -52,51 +52,60 @@ static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip xfrm policy { add | update } SELECTOR dir DIR [ ctx CTX ]\n");
-	fprintf(stderr, "        [ mark MARK [ mask MASK ] ] [ index INDEX ] [ ptype PTYPE ]\n");
-	fprintf(stderr, "        [ action ACTION ] [ priority PRIORITY ] [ flag FLAG-LIST ]\n");
-	fprintf(stderr, "        [ if_id IF_ID ] [ LIMIT-LIST ] [ TMPL-LIST ]\n");
-	fprintf(stderr, "Usage: ip xfrm policy { delete | get } { SELECTOR | index INDEX } dir DIR\n");
-	fprintf(stderr, "        [ ctx CTX ] [ mark MARK [ mask MASK ] ] [ ptype PTYPE ]\n");
-	fprintf(stderr, "Usage: ip xfrm policy { deleteall | list } [ nosock ] [ SELECTOR ] [ dir DIR ]\n");
-	fprintf(stderr, "        [ index INDEX ] [ ptype PTYPE ] [ action ACTION ] [ priority PRIORITY ]\n");
-	fprintf(stderr, "        [ flag FLAG-LIST ]\n");
-	fprintf(stderr, "Usage: ip xfrm policy flush [ ptype PTYPE ]\n");
-	fprintf(stderr, "Usage: ip xfrm policy count\n");
-	fprintf(stderr, "Usage: ip xfrm policy set [ hthresh4 LBITS RBITS ] [ hthresh6 LBITS RBITS ]\n");
-	fprintf(stderr, "SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n");
-	fprintf(stderr, "UPSPEC := proto { { ");
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_TCP));
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_UDP));
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_SCTP));
-	fprintf(stderr, "%s", strxf_proto(IPPROTO_DCCP));
-	fprintf(stderr, " } [ sport PORT ] [ dport PORT ] |\n");
-	fprintf(stderr, "                  { ");
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_ICMP));
-	fprintf(stderr, "%s | ", strxf_proto(IPPROTO_ICMPV6));
-	fprintf(stderr, "%s", strxf_proto(IPPROTO_MH));
-	fprintf(stderr, " } [ type NUMBER ] [ code NUMBER ] |\n");
-	fprintf(stderr, "                  %s", strxf_proto(IPPROTO_GRE));
-	fprintf(stderr, " [ key { DOTTED-QUAD | NUMBER } ] | PROTO }\n");
-	fprintf(stderr, "DIR := in | out | fwd\n");
-	fprintf(stderr, "PTYPE := main | sub\n");
-	fprintf(stderr, "ACTION := allow | block\n");
-	fprintf(stderr, "FLAG-LIST := [ FLAG-LIST ] FLAG\n");
-	fprintf(stderr, "FLAG := localok | icmp\n");
-	fprintf(stderr, "LIMIT-LIST := [ LIMIT-LIST ] limit LIMIT\n");
-	fprintf(stderr, "LIMIT := { time-soft | time-hard | time-use-soft | time-use-hard } SECONDS |\n");
-	fprintf(stderr, "         { byte-soft | byte-hard } SIZE | { packet-soft | packet-hard } COUNT\n");
-	fprintf(stderr, "TMPL-LIST := [ TMPL-LIST ] tmpl TMPL\n");
-	fprintf(stderr, "TMPL := ID [ mode MODE ] [ reqid REQID ] [ level LEVEL ]\n");
-	fprintf(stderr, "ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM-PROTO ] [ spi SPI ]\n");
-	fprintf(stderr, "XFRM-PROTO := ");
-	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ESP));
-	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_AH));
-	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_COMP));
-	fprintf(stderr, "%s | ", strxf_xfrmproto(IPPROTO_ROUTING));
-	fprintf(stderr, "%s\n", strxf_xfrmproto(IPPROTO_DSTOPTS));
-	fprintf(stderr, "MODE := transport | tunnel | beet | ro | in_trigger\n");
-	fprintf(stderr, "LEVEL := required | use\n");
+	fprintf(stderr,
+		"Usage: ip xfrm policy { add | update } SELECTOR dir DIR [ ctx CTX ]\n"
+		"	[ mark MARK [ mask MASK ] ] [ index INDEX ] [ ptype PTYPE ]\n"
+		"	[ action ACTION ] [ priority PRIORITY ] [ flag FLAG-LIST ]\n"
+		"	[ if_id IF_ID ] [ LIMIT-LIST ] [ TMPL-LIST ]\n"
+		"Usage: ip xfrm policy { delete | get } { SELECTOR | index INDEX } dir DIR\n"
+		"	[ ctx CTX ] [ mark MARK [ mask MASK ] ] [ ptype PTYPE ]\n"
+		"Usage: ip xfrm policy { deleteall | list } [ nosock ] [ SELECTOR ] [ dir DIR ]\n"
+		"	[ index INDEX ] [ ptype PTYPE ] [ action ACTION ] [ priority PRIORITY ]\n"
+		"	[ flag FLAG-LIST ]\n"
+		"Usage: ip xfrm policy flush [ ptype PTYPE ]\n"
+		"Usage: ip xfrm policy count\n"
+		"Usage: ip xfrm policy set [ hthresh4 LBITS RBITS ] [ hthresh6 LBITS RBITS ]\n"
+		"SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n"
+		"UPSPEC := proto { { ");
+	fprintf(stderr, "%s | %s | %s | %s } ",
+		strxf_proto(IPPROTO_TCP),
+		strxf_proto(IPPROTO_UDP),
+		strxf_proto(IPPROTO_SCTP),
+		strxf_proto(IPPROTO_DCCP));
+	fprintf(stderr,
+		"[ sport PORT ] [ dport PORT ] |\n"
+		"                  { %s | %s | %s } ",
+		strxf_proto(IPPROTO_ICMP),
+		strxf_proto(IPPROTO_ICMPV6),
+		strxf_proto(IPPROTO_MH));
+	fprintf(stderr,
+		"[ type NUMBER ] [ code NUMBER ] |\n"
+		"                  %s",
+		strxf_proto(IPPROTO_GRE));
+	fprintf(stderr,
+		" [ key { DOTTED-QUAD | NUMBER } ] | PROTO }\n"
+		"DIR := in | out | fwd\n"
+		"PTYPE := main | sub\n"
+		"ACTION := allow | block\n"
+		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
+		"FLAG := localok | icmp\n"
+		"LIMIT-LIST := [ LIMIT-LIST ] limit LIMIT\n"
+		"LIMIT := { time-soft | time-hard | time-use-soft | time-use-hard } SECONDS |\n"
+		"         { byte-soft | byte-hard } SIZE | { packet-soft | packet-hard } COUNT\n"
+		"TMPL-LIST := [ TMPL-LIST ] tmpl TMPL\n"
+		"TMPL := ID [ mode MODE ] [ reqid REQID ] [ level LEVEL ]\n"
+		"ID := [ src ADDR ] [ dst ADDR ] [ proto XFRM-PROTO ] [ spi SPI ]\n"
+		"XFRM-PROTO := ");
+	fprintf(stderr,
+		"%s | %s | %s | %s | %s\n",
+		strxf_xfrmproto(IPPROTO_ESP),
+		strxf_xfrmproto(IPPROTO_AH),
+		strxf_xfrmproto(IPPROTO_COMP),
+		strxf_xfrmproto(IPPROTO_ROUTING),
+		strxf_xfrmproto(IPPROTO_DSTOPTS));
+	fprintf(stderr,
+		"MODE := transport | tunnel | beet | ro | in_trigger\n"
+		"LEVEL := required | use\n");
 
 	exit(-1);
 }

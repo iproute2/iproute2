@@ -55,28 +55,31 @@ static struct option opts[] = {
 
 static int usage(char *name, int exit_code)
 {
-	fprintf(stderr, "%s Version %s\n", name, LNSTAT_VERSION);
-	fprintf(stderr, "Copyright (C) 2004 by Harald Welte <laforge@gnumonks.org>\n");
-	fprintf(stderr, "This program is free software licensed under GNU GPLv2\nwith ABSOLUTELY NO WARRANTY.\n\n");
-	fprintf(stderr, "Parameters:\n");
-	fprintf(stderr, "\t-V --version\t\tPrint Version of Program\n");
-	fprintf(stderr, "\t-c --count <count>\t"
-			"Print <count> number of intervals\n");
-	fprintf(stderr, "\t-d --dump\t\t"
-			"Dump list of available files/keys\n");
-	fprintf(stderr, "\t-j --json\t\t"
-			"Display in JSON format\n");
-	fprintf(stderr, "\t-f --file <file>\tStatistics file to use\n");
-	fprintf(stderr, "\t-h --help\t\tThis help message\n");
-	fprintf(stderr, "\t-i --interval <intv>\t"
-			"Set interval to 'intv' seconds\n");
-	fprintf(stderr, "\t-k --keys k,k,k,...\tDisplay only keys specified\n");
-	fprintf(stderr, "\t-s --subject [0-2]\tControl header printing:\n");
-	fprintf(stderr, "\t\t\t\t0 = never\n");
-	fprintf(stderr, "\t\t\t\t1 = once\n");
-	fprintf(stderr, "\t\t\t\t2 = every 20 lines (default))\n");
-	fprintf(stderr, "\t-w --width n,n,n,...\tWidth for each field\n");
-	fprintf(stderr, "\n");
+	fprintf(stderr,
+		"%s Version %s\n"
+		"Copyright (C) 2004 by Harald Welte <laforge@gnumonks.org>\n"
+		"This program is free software licensed under GNU GPLv2\nwith ABSOLUTELY NO WARRANTY.\n"
+		"\n"
+		"Parameters:\n"
+		"	-V --version		Print Version of Program\n"
+		"	-c --count <count>	"
+		"Print <count> number of intervals\n"
+		"	-d --dump		"
+		"Dump list of available files/keys\n"
+		"	-j --json		"
+		"Display in JSON format\n"
+		"	-f --file <file>	Statistics file to use\n"
+		"	-h --help		This help message\n"
+		"	-i --interval <intv>	"
+		"Set interval to 'intv' seconds\n"
+		"	-k --keys k,k,k,...	Display only keys specified\n"
+		"	-s --subject [0-2]	Control header printing:\n"
+		"				0 = never\n"
+		"				1 = once\n"
+		"				2 = every 20 lines (default))\n"
+		"	-w --width n,n,n,...	Width for each field\n"
+		"\n",
+		name, LNSTAT_VERSION);
 
 	exit(exit_code);
 }

@@ -47,13 +47,14 @@ static const struct static_clockid {
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... taprio clockid CLOCKID\n");
-	fprintf(stderr, "                  [num_tc NUMBER] [map P0 P1 ...] ");
-	fprintf(stderr, "                  [queues COUNT@OFFSET COUNT@OFFSET COUNT@OFFSET ...] ");
-	fprintf(stderr, "                  [ [sched-entry index cmd gate-mask interval] ... ] ");
-	fprintf(stderr, "                  [base-time time] ");
-	fprintf(stderr, "\nCLOCKID must be a valid SYS-V id (i.e. CLOCK_TAI)");
-	fprintf(stderr, "\n");
+	fprintf(stderr,
+		"Usage: ... taprio clockid CLOCKID\n"
+		"		[num_tc NUMBER] [map P0 P1 ...] "
+		"		[queues COUNT@OFFSET COUNT@OFFSET COUNT@OFFSET ...] "
+		"		[ [sched-entry index cmd gate-mask interval] ... ] "
+		"		[base-time time] "
+		"\n"
+		"CLOCKID must be a valid SYS-V id (i.e. CLOCK_TAI)\n");
 }
 
 static void explain_clockid(const char *val)

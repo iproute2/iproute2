@@ -28,10 +28,11 @@
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip tcp_metrics/tcpmetrics { COMMAND | help }\n");
-	fprintf(stderr, "       ip tcp_metrics { show | flush } SELECTOR\n");
-	fprintf(stderr, "       ip tcp_metrics delete [ address ] ADDRESS\n");
-	fprintf(stderr, "SELECTOR := [ [ address ] PREFIX ]\n");
+	fprintf(stderr,
+		"Usage:	ip tcp_metrics/tcpmetrics { COMMAND | help }\n"
+		"	ip tcp_metrics { show | flush } SELECTOR\n"
+		"	ip tcp_metrics delete [ address ] ADDRESS\n"
+		"SELECTOR := [ [ address ] PREFIX ]\n");
 	exit(-1);
 }
 

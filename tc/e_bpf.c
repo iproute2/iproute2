@@ -26,19 +26,21 @@ static char *argv_default[] = { BPF_DEFAULT_CMD, NULL };
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... bpf [ import UDS_FILE ] [ run CMD ]\n");
-	fprintf(stderr, "       ... bpf [ debug ]\n");
-	fprintf(stderr, "       ... bpf [ graft MAP_FILE ] [ key KEY ]\n");
-	fprintf(stderr, "          `... [ object-file OBJ_FILE ] [ type TYPE ] [ section NAME ] [ verbose ]\n");
-	fprintf(stderr, "          `... [ object-pinned PROG_FILE ]\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Where UDS_FILE provides the name of a unix domain socket file\n");
-	fprintf(stderr, "to import eBPF maps and the optional CMD denotes the command\n");
-	fprintf(stderr, "to be executed (default: \'%s\').\n", BPF_DEFAULT_CMD);
-	fprintf(stderr, "Where MAP_FILE points to a pinned map, OBJ_FILE to an object file\n");
-	fprintf(stderr, "and PROG_FILE to a pinned program. TYPE can be {cls, act}, where\n");
-	fprintf(stderr, "\'cls\' is default. KEY is optional and can be inferred from the\n");
-	fprintf(stderr, "section name, otherwise it needs to be provided.\n");
+	fprintf(stderr,
+		"Usage: ... bpf [ import UDS_FILE ] [ run CMD ]\n"
+		"       ... bpf [ debug ]\n"
+		"       ... bpf [ graft MAP_FILE ] [ key KEY ]\n"
+		"          `... [ object-file OBJ_FILE ] [ type TYPE ] [ section NAME ] [ verbose ]\n"
+		"          `... [ object-pinned PROG_FILE ]\n"
+		"\n"
+		"Where UDS_FILE provides the name of a unix domain socket file\n"
+		"to import eBPF maps and the optional CMD denotes the command\n"
+		"to be executed (default: \'%s\').\n"
+		"Where MAP_FILE points to a pinned map, OBJ_FILE to an object file\n"
+		"and PROG_FILE to a pinned program. TYPE can be {cls, act}, where\n"
+		"\'cls\' is default. KEY is optional and can be inferred from the\n"
+		"section name, otherwise it needs to be provided.\n",
+		BPF_DEFAULT_CMD);
 }
 
 static int bpf_num_env_entries(void)

@@ -40,8 +40,9 @@ static int atm_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... atm ( pvc ADDR | svc ADDR [ sap SAP ] ) [ qos QOS ] [ sndbuf BYTES ]\n");
-	fprintf(stderr, "  [ hdr HEX... ] [ excess ( CLASSID | clp ) ] [ clip ]\n");
+	fprintf(stderr,
+		"Usage: ... atm ( pvc ADDR | svc ADDR [ sap SAP ] ) [ qos QOS ] [ sndbuf BYTES ]\n"
+		"  [ hdr HEX... ] [ excess ( CLASSID | clp ) ] [ clip ]\n");
 }
 
 

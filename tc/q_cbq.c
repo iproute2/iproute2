@@ -25,19 +25,21 @@
 
 static void explain_class(void)
 {
-	fprintf(stderr, "Usage: ... cbq bandwidth BPS rate BPS maxburst PKTS [ avpkt BYTES ]\n");
-	fprintf(stderr, "               [ minburst PKTS ] [ bounded ] [ isolated ]\n");
-	fprintf(stderr, "               [ allot BYTES ] [ mpu BYTES ] [ weight RATE ]\n");
-	fprintf(stderr, "               [ prio NUMBER ] [ cell BYTES ] [ ewma LOG ]\n");
-	fprintf(stderr, "               [ estimator INTERVAL TIME_CONSTANT ]\n");
-	fprintf(stderr, "               [ split CLASSID ] [ defmap MASK/CHANGE ]\n");
-	fprintf(stderr, "               [ overhead BYTES ] [ linklayer TYPE ]\n");
+	fprintf(stderr,
+		"Usage: ... cbq	bandwidth BPS rate BPS maxburst PKTS [ avpkt BYTES ]\n"
+		"		[ minburst PKTS ] [ bounded ] [ isolated ]\n"
+		"		[ allot BYTES ] [ mpu BYTES ] [ weight RATE ]\n"
+		"		[ prio NUMBER ] [ cell BYTES ] [ ewma LOG ]\n"
+		"		[ estimator INTERVAL TIME_CONSTANT ]\n"
+		"		[ split CLASSID ] [ defmap MASK/CHANGE ]\n"
+		"		[ overhead BYTES ] [ linklayer TYPE ]\n");
 }
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... cbq bandwidth BPS avpkt BYTES [ mpu BYTES ]\n");
-	fprintf(stderr, "               [ cell BYTES ] [ ewma LOG ]\n");
+	fprintf(stderr,
+		"Usage: ... cbq bandwidth BPS avpkt BYTES [ mpu BYTES ]\n"
+		"               [ cell BYTES ] [ ewma LOG ]\n");
 }
 
 static void explain1(char *arg)

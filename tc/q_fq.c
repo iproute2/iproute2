@@ -50,13 +50,14 @@
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... fq [ limit PACKETS ] [ flow_limit PACKETS ]\n");
-	fprintf(stderr, "              [ quantum BYTES ] [ initial_quantum BYTES ]\n");
-	fprintf(stderr, "              [ maxrate RATE  ] [ buckets NUMBER ]\n");
-	fprintf(stderr, "              [ [no]pacing ] [ refill_delay TIME ]\n");
-	fprintf(stderr, "              [ low_rate_threshold RATE ]\n");
-	fprintf(stderr, "              [ orphan_mask MASK]\n");
-	fprintf(stderr, "              [ ce_threshold TIME ]\n");
+	fprintf(stderr,
+		"Usage: ... fq	[ limit PACKETS ] [ flow_limit PACKETS ]\n"
+		"		[ quantum BYTES ] [ initial_quantum BYTES ]\n"
+		"		[ maxrate RATE  ] [ buckets NUMBER ]\n"
+		"		[ [no]pacing ] [ refill_delay TIME ]\n"
+		"		[ low_rate_threshold RATE ]\n"
+		"		[ orphan_mask MASK]\n"
+		"		[ ce_threshold TIME ]\n");
 }
 
 static unsigned int ilog2(unsigned int val)

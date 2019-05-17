@@ -29,10 +29,11 @@ int listen_all_nsid;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ] [ label ] [all-nsid] [dev DEVICE]\n");
-	fprintf(stderr, "LISTofOBJECTS := link | address | route | mroute | prefix |\n");
-	fprintf(stderr, "                 neigh | netconf | rule | nsid\n");
-	fprintf(stderr, "FILE := file FILENAME\n");
+	fprintf(stderr,
+		"Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ] [ label ] [all-nsid] [dev DEVICE]\n"
+		"LISTofOBJECTS := link | address | route | mroute | prefix |\n"
+		"		 neigh | netconf | rule | nsid\n"
+		"FILE := file FILENAME\n");
 	exit(-1);
 }
 

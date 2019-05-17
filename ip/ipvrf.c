@@ -36,10 +36,11 @@ static struct link_filter vrf_filter;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: ip vrf show [NAME] ...\n");
-	fprintf(stderr, "       ip vrf exec [NAME] cmd ...\n");
-	fprintf(stderr, "       ip vrf identify [PID]\n");
-	fprintf(stderr, "       ip vrf pids [NAME]\n");
+	fprintf(stderr,
+		"Usage:	ip vrf show [NAME] ...\n"
+		"	ip vrf exec [NAME] cmd ...\n"
+		"	ip vrf identify [PID]\n"
+		"	ip vrf pids [NAME]\n");
 
 	exit(-1);
 }
