@@ -154,10 +154,15 @@ ip-link \- network device configuration
 .br
 .RB "[ " addrgenmode " { " eui64 " | " none " | " stable_secret " | " random " } ]"
 .br
-.RB "[ " macaddr " { " flush " | { " add " | " del " } "
-.IR MACADDR " | set [ "
-.IR MACADDR " [ "
-.IR MACADDR " [ ... ] ] ] } ]"
+.RB "[ " macaddr
+.RI "[ " MACADDR " ]"
+.br
+.in +10
+.RB "[ { " flush " | " add " | " del " } "
+.IR MACADDR " ]"
+.br
+.RB "[ " set
+.IR MACADDR " ] ]"
 .br
 
 .ti -8
