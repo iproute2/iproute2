@@ -132,21 +132,21 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 
 	open_json_object(NULL);
 
-	print_int(PRINT_ANY, "index", "%u: ", ifindex);
-	print_color_string(PRINT_ANY, COLOR_IFNAME, "dev", "%s ", dev);
-	print_string(PRINT_ANY, "port", " %s ",
+	print_int(PRINT_JSON, "index", NULL, ifindex);
+	print_color_string(PRINT_ANY, COLOR_IFNAME, "dev", "dev %s", dev);
+	print_string(PRINT_ANY, "port", " port %s",
 		     ll_index_to_name(e->ifindex));
 
 	print_color_string(PRINT_ANY, ifa_family_color(af),
-			    "grp", " %s ",
+			    "grp", " grp %s",
 			    inet_ntop(af, src, abuf, sizeof(abuf)));
 
-	print_string(PRINT_ANY, "state", " %s ",
+	print_string(PRINT_ANY, "state", " %s",
 			   (e->state & MDB_PERMANENT) ? "permanent" : "temp");
 
 	open_json_array(PRINT_JSON, "flags");
 	if (e->flags & MDB_FLAGS_OFFLOAD)
-		print_string(PRINT_ANY, NULL, "%s ", "offload");
+		print_string(PRINT_ANY, NULL, " %s", "offload");
 	close_json_array(PRINT_JSON, NULL);
 
 	if (e->vid)
