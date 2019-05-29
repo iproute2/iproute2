@@ -945,7 +945,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 	else if (!strcmp(name, dev))
 		name = dev;
 
-	if (dev && addr_len) {
+	if (dev && addr_len &&
+	    !(req->n.nlmsg_flags & NLM_F_CREATE)) {
 		int halen = nl_get_ll_addr_len(dev);
 
 		if (halen >= 0 && halen != addr_len) {
