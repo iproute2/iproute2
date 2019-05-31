@@ -29,12 +29,18 @@ rdma-dev \- RDMA device configuration
 .BR NEWNAME
 
 .ti -8
+.B rdma dev set
+.RI "[ " DEV " ]"
+.BR netns
+.BR NSNAME
+
+.ti -8
 .B rdma dev help
 
 .SH "DESCRIPTION"
-.SS rdma dev set - rename rdma device
+.SS rdma dev set - rename RDMA device or set network namespace
 
-.SS rdma dev show - display rdma device attributes
+.SS rdma dev show - display RDMA device attributes
 
 .PP
 .I "DEV"
@@ -58,11 +64,19 @@ rdma dev set mlx5_3 name rdma_0
 Renames the mlx5_3 device to rdma_0.
 .RE
 .PP
+rdma dev set mlx5_3 netns foo
+.RS 4
+Changes the network namespace of RDMA device to foo where foo is
+previously created using iproute2 ip command.
+.RE
+.PP
 
 .SH SEE ALSO
+.BR ip (8),
 .BR rdma (8),
 .BR rdma-link (8),
 .BR rdma-resource (8),
+.BR rdma-system (8),
 .br
 
 .SH AUTHOR
