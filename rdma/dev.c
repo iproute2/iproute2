@@ -4,12 +4,14 @@
  * Authors:     Leon Romanovsky <leonro@mellanox.com>
  */
 
+#include <fcntl.h>
 #include "rdma.h"
 
 static int dev_help(struct rd *rd)
 {
 	pr_out("Usage: %s dev show [DEV]\n", rd->filename);
 	pr_out("       %s dev set [DEV] name DEVNAME\n", rd->filename);
+	pr_out("       %s dev set [DEV] netns NSNAME\n", rd->filename);
 	return 0;
 }
 
@@ -272,11 +274,46 @@ static int dev_set_name(struct rd *rd)
 	return rd_sendrecv_msg(rd, seq);
 }
 
+static int dev_set_netns(struct rd *rd)
+{
+	char *netns_path;
+	uint32_t seq;
+	int netns;
+	int ret;
+
+	if (rd_no_arg(rd)) {
+		pr_err("Please provide device name.\n");
+		return -EINVAL;
+	}
+
+	if (asprintf(&netns_path, "%s/%s", NETNS_RUN_DIR, rd_argv(rd)) < 0)
+		return -ENOMEM;
+
+	netns = open(netns_path, O_RDONLY | O_CLOEXEC);
+	if (netns < 0) {
+		fprintf(stderr, "Cannot open network namespace \"%s\": %s\n",
+			rd_argv(rd), strerror(errno));
+		ret = -EINVAL;
+		goto done;
+	}
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_SET,
+		       &seq, (NLM_F_REQUEST | NLM_F_ACK));
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_NET_NS_FD, netns);
+	ret = rd_sendrecv_msg(rd, seq);
+	close(netns);
+done:
+	free(netns_path);
+	return ret;
+}
+
 static int dev_one_set(struct rd *rd)
 {
 	const struct rd_cmd cmds[] = {
 		{ NULL,		dev_help},
 		{ "name",	dev_set_name},
+		{ "netns",	dev_set_netns},
 		{ 0 }
 	};
 
