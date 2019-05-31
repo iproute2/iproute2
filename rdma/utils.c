@@ -435,6 +435,7 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_DRIVER_U32] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_DRIVER_S64] = MNL_TYPE_U64,
 	[RDMA_NLDEV_ATTR_DRIVER_U64] = MNL_TYPE_U64,
+	[RDMA_NLDEV_SYS_ATTR_NETNS_MODE] = MNL_TYPE_U8,
 };
 
 int rd_attr_check(const struct nlattr *attr, int *typep)
