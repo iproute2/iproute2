@@ -119,6 +119,9 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		}
 	}
 
+	parse_action_control_dflt(&argc, &argv, &sel.action, false,
+				  TC_ACT_PIPE);
+
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
@@ -143,8 +146,6 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 			strlen(simpdata), simpdata);
 		return -1;
 	}
-
-	sel.action = TC_ACT_PIPE;
 
 	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_DEF_PARMS, &sel, sizeof(sel));
