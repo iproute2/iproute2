@@ -89,6 +89,9 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 
 	if (!matches(*argv, "gact"))
 		NEXT_ARG_FWD();
+	/* we're binding existing gact action to filter by index. */
+	if (!matches(*argv, "index"))
+		goto skip_args;
 	if (parse_action_control(&argc, &argv, &p.action, false))
 		usage();	/* does not return */
 
@@ -133,6 +136,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 
 	if (argc > 0) {
 		if (matches(*argv, "index") == 0) {
+skip_args:
 			NEXT_ARG();
 			if (get_u32(&p.index, *argv, 10)) {
 				fprintf(stderr, "Illegal \"index\"\n");
