@@ -298,6 +298,8 @@ static int parse_args(int argc, char **argv, int cmd, struct ip6_tnl_parm2 *p)
 		p->link = ll_name_to_index(medium);
 		if (!p->link)
 			return nodev(medium);
+		else
+			strlcpy(p->name, medium, sizeof(p->name));
 	}
 	return 0;
 }
