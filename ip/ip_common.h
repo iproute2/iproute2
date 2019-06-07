@@ -156,5 +156,8 @@ int name_is_vrf(const char *name);
 #endif
 
 void print_num(FILE *fp, unsigned int width, uint64_t count);
-
+void print_rt_flags(FILE *fp, unsigned int flags);
+void print_rta_if(FILE *fp, const struct rtattr *rta, const char *prefix);
+void print_rta_gateway(FILE *fp, unsigned char family,
+		       const struct rtattr *rta);
 #endif /* _IP_COMMON_H_ */

@@ -349,7 +349,7 @@ static void print_rtax_features(FILE *fp, unsigned int features)
 			    "features", "%#llx ", of);
 }
 
-static void print_rt_flags(FILE *fp, unsigned int flags)
+void print_rt_flags(FILE *fp, unsigned int flags)
 {
 	open_json_array(PRINT_JSON,
 			is_json_context() ?  "flags" : "");
@@ -394,8 +394,7 @@ static void print_rt_pref(FILE *fp, unsigned int pref)
 	}
 }
 
-static void print_rta_if(FILE *fp, const struct rtattr *rta,
-			const char *prefix)
+void print_rta_if(FILE *fp, const struct rtattr *rta, const char *prefix)
 {
 	const char *ifname = ll_index_to_name(rta_getattr_u32(rta));
 
@@ -532,17 +531,16 @@ static void print_rta_newdst(FILE *fp, const struct rtmsg *r,
 	}
 }
 
-static void print_rta_gateway(FILE *fp, const struct rtmsg *r,
-			      const struct rtattr *rta)
+void print_rta_gateway(FILE *fp, unsigned char family, const struct rtattr *rta)
 {
-	const char *gateway = format_host_rta(r->rtm_family, rta);
+	const char *gateway = format_host_rta(family, rta);
 
 	if (is_json_context())
 		print_string(PRINT_JSON, "gateway", NULL, gateway);
 	else {
 		fprintf(fp, "via ");
 		print_color_string(PRINT_FP,
-				   ifa_family_color(r->rtm_family),
+				   ifa_family_color(family),
 				   NULL, "%s ", gateway);
 	}
 }
@@ -679,7 +677,8 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 			if (tb[RTA_NEWDST])
 				print_rta_newdst(fp, r, tb[RTA_NEWDST]);
 			if (tb[RTA_GATEWAY])
-				print_rta_gateway(fp, r, tb[RTA_GATEWAY]);
+				print_rta_gateway(fp, r->rtm_family,
+						  tb[RTA_GATEWAY]);
 			if (tb[RTA_VIA])
 				print_rta_via(fp, tb[RTA_VIA]);
 			if (tb[RTA_FLOW])
@@ -822,7 +821,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len)
-		print_rta_gateway(fp, r, tb[RTA_GATEWAY]);
+		print_rta_gateway(fp, r->rtm_family, tb[RTA_GATEWAY]);
 
 	if (tb[RTA_VIA])
 		print_rta_via(fp, tb[RTA_VIA]);
