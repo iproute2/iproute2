@@ -25,6 +25,7 @@
 #include <linux/fib_rules.h>
 #include <linux/if_addrlabel.h>
 #include <linux/if_bridge.h>
+#include <linux/nexthop.h>
 
 #include "libnetlink.h"
 
@@ -250,6 +251,32 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 int rtnl_open(struct rtnl_handle *rth, unsigned int subscriptions)
 {
 	return rtnl_open_byproto(rth, subscriptions, NETLINK_ROUTE);
+}
+
+int rtnl_nexthopdump_req(struct rtnl_handle *rth, int family,
+			 req_filter_fn_t filter_fn)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct nhmsg nhm;
+		char buf[128];
+	} req = {
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct nhmsg)),
+		.nlh.nlmsg_type = RTM_GETNEXTHOP,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.nhm.nh_family = family,
+	};
+
+	if (filter_fn) {
+		int err;
+
+		err = filter_fn(&req.nlh, sizeof(req));
+		if (err)
+			return err;
+	}
+
+	return send(rth->fd, &req, sizeof(req), 0);
 }
 
 int rtnl_addrdump_req(struct rtnl_handle *rth, int family,
