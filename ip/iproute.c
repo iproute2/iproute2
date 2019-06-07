@@ -997,7 +997,8 @@ static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
 		} else if (strcmp(*argv, "encap") == 0) {
 			int old_len = rta->rta_len;
 
-			if (lwt_parse_encap(rta, len, &argc, &argv))
+			if (lwt_parse_encap(rta, len, &argc, &argv,
+					    RTA_ENCAP, RTA_ENCAP_TYPE))
 				return -1;
 			rtnh->rtnh_len += rta->rta_len - old_len;
 		} else if (strcmp(*argv, "as") == 0) {
@@ -1416,7 +1417,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			rta->rta_type = RTA_ENCAP;
 			rta->rta_len = RTA_LENGTH(0);
 
-			lwt_parse_encap(rta, sizeof(buf), &argc, &argv);
+			lwt_parse_encap(rta, sizeof(buf), &argc, &argv,
+					RTA_ENCAP, RTA_ENCAP_TYPE);
 
 			if (rta->rta_len > RTA_LENGTH(0))
 				addraw_l(&req.n, 1024
