@@ -80,7 +80,7 @@ static void usage(void)
 		"             [ table TABLE_ID ] [ proto RTPROTO ]\n"
 		"             [ scope SCOPE ] [ metric METRIC ]\n"
 		"             [ ttl-propagate { enabled | disabled } ]\n"
-		"INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n"
+		"INFO_SPEC := { NH | nhid ID } OPTIONS FLAGS [ nexthop NH ]...\n"
 		"NH := [ encap ENCAPTYPE ENCAPHDR ] [ via [ FAMILY ] ADDRESS ]\n"
 		"	    [ dev STRING ] [ weight NUMBER ] NHFLAGS\n"
 		"FAMILY := [ inet | inet6 | mpls | bridge | link ]\n"
@@ -809,6 +809,10 @@ int print_route(struct nlmsghdr *n, void *arg)
 		print_string(PRINT_ANY, "src", "from %s ", b1);
 	}
 
+	if (tb[RTA_NH_ID])
+		print_uint(PRINT_ANY, "nhid", "nhid %u ",
+			   rta_getattr_u32(tb[RTA_NH_ID]));
+
 	if (tb[RTA_NEWDST])
 		print_rta_newdst(fp, r, tb[RTA_NEWDST]);
 
@@ -1080,6 +1084,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	int table_ok = 0;
 	int raw = 0;
 	int type_ok = 0;
+	__u32 nhid = 0;
 
 	if (cmd != RTM_DELROUTE) {
 		req.r.rtm_protocol = RTPROT_BOOT;
@@ -1358,6 +1363,11 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "nexthop") == 0) {
 			nhs_ok = 1;
 			break;
+		} else if (!strcmp(*argv, "nhid")) {
+			NEXT_ARG();
+			if (get_u32(&nhid, *argv, 0))
+				invarg("\"id\" value is invalid\n", *argv);
+			addattr32(&req.n, sizeof(req), RTA_NH_ID, nhid);
 		} else if (matches(*argv, "protocol") == 0) {
 			__u32 prot;
 
@@ -1520,7 +1530,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			 req.r.rtm_type == RTN_UNSPEC) {
 			if (cmd == RTM_DELROUTE)
 				req.r.rtm_scope = RT_SCOPE_NOWHERE;
-			else if (!gw_ok && !nhs_ok)
+			else if (!gw_ok && !nhs_ok && !nhid)
 				req.r.rtm_scope = RT_SCOPE_LINK;
 		}
 	}
