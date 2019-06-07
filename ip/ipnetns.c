@@ -707,6 +707,7 @@ static int netns_add(int argc, char **argv, bool create)
 	close(fd);
 
 	if (create) {
+		netns_save();
 		if (unshare(CLONE_NEWNET) < 0) {
 			fprintf(stderr, "Failed to create a new network namespace \"%s\": %s\n",
 				name, strerror(errno));
