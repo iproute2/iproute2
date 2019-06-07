@@ -84,6 +84,12 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		}
 	}
 
+	case RTM_NEWNEXTHOP:
+	case RTM_DELNEXTHOP:
+		print_headers(fp, "[NEXTHOP]", ctrl);
+		print_nexthop(n, arg);
+		return 0;
+
 	case RTM_NEWLINK:
 	case RTM_DELLINK:
 		ll_remember_index(n, NULL);
@@ -161,6 +167,7 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 
 int do_ipmonitor(int argc, char **argv)
 {
+	int lnexthop = 0, nh_set = 1;
 	char *file = NULL;
 	unsigned int groups = 0;
 	int llink = 0;
@@ -202,29 +209,41 @@ int do_ipmonitor(int argc, char **argv)
 		} else if (matches(*argv, "link") == 0) {
 			llink = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (matches(*argv, "address") == 0) {
 			laddr = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (matches(*argv, "route") == 0) {
 			lroute = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (matches(*argv, "mroute") == 0) {
 			lmroute = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (matches(*argv, "prefix") == 0) {
 			lprefix = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (matches(*argv, "neigh") == 0) {
 			lneigh = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (matches(*argv, "netconf") == 0) {
 			lnetconf = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (matches(*argv, "rule") == 0) {
 			lrule = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (matches(*argv, "nsid") == 0) {
 			lnsid = 1;
+			groups = 0;
+			nh_set = 0;
+		} else if (matches(*argv, "nexthop") == 0) {
+			lnexthop = 1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			prefix_banner = 1;
@@ -297,6 +316,9 @@ int do_ipmonitor(int argc, char **argv)
 	if (lnsid) {
 		groups |= nl_mgrp(RTNLGRP_NSID);
 	}
+	if (nh_set)
+		lnexthop = 1;
+
 	if (file) {
 		FILE *fp;
 		int err;
@@ -313,6 +335,12 @@ int do_ipmonitor(int argc, char **argv)
 
 	if (rtnl_open(&rth, groups) < 0)
 		exit(1);
+
+	if (lnexthop && rtnl_add_nl_group(&rth, RTNLGRP_NEXTHOP) < 0) {
+		fprintf(stderr, "Failed to add nexthop group to list\n");
+		exit(1);
+	}
+
 	if (listen_all_nsid && rtnl_listen_all_nsid(&rth) < 0)
 		exit(1);
 
