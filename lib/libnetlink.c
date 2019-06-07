@@ -173,6 +173,12 @@ void rtnl_set_strict_dump(struct rtnl_handle *rth)
 	rth->flags |= RTNL_HANDLE_F_STRICT_CHK;
 }
 
+int rtnl_add_nl_group(struct rtnl_handle *rth, unsigned int group)
+{
+	return setsockopt(rth->fd, SOL_NETLINK, NETLINK_ADD_MEMBERSHIP,
+			  &group, sizeof(group));
+}
+
 void rtnl_close(struct rtnl_handle *rth)
 {
 	if (rth->fd >= 0) {
