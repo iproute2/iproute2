@@ -1523,7 +1523,7 @@ static void __pr_out_handle_start(struct dl *dl, struct nlattr **tb,
 {
 	const char *bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
 	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
-	char buf[32];
+	char buf[64];
 
 	sprintf(buf, "%s/%s", bus_name, dev_name);
 
@@ -1616,7 +1616,7 @@ static void __pr_out_port_handle_start(struct dl *dl, const char *bus_name,
 				       uint32_t port_index, bool try_nice,
 				       bool array)
 {
-	static char buf[32];
+	static char buf[64];
 	char *ifname = NULL;
 
 	if (dl->no_nice_names || !try_nice ||

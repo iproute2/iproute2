@@ -177,7 +177,7 @@ static int ll_link_get(const char *name, int index)
 		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name,
 			  strlen(name) + 1);
 
-	if (rtnl_talk(&rth, &req.n, &answer) < 0)
+	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n, &answer) < 0)
 		goto out;
 
 	/* add entry to cache */

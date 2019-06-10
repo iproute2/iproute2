@@ -10,9 +10,10 @@ skbedit - SKB editing action
 .B priority
 .IR PRIORITY " ] ["
 .B mark
-.IR MARK " ]"
+.IR MARK " ] ["
 .B ptype
-.IR PTYPE " ]"
+.IR PTYPE " ] ["
+.BR inheritdsfield " ]"
 .SH DESCRIPTION
 The
 .B skbedit
@@ -22,7 +23,7 @@ action, which in turn allows to change parts of the packet data itself.
 
 The most unique feature of
 .B skbedit
-is it's ability to decide over which queue of an interface with multiple
+is its ability to decide over which queue of an interface with multiple
 transmit queues the packet is to be sent out. The number of available transmit
 queues is reflected by sysfs entries within
 .I /sys/class/net/<interface>/queues
@@ -61,6 +62,12 @@ needing to allow ingressing packets with the wrong MAC address but
 correct IP address.
 .I PTYPE
 is one of: host, otherhost, broadcast, multicast
+.TP
+.BI inheritdsfield
+Override the packet classification decision, and any value specified with
+.BR priority ", "
+using the information stored in the Differentiated Services Field of the
+IPv6/IPv4 header (RFC2474).
 .SH SEE ALSO
 .BR tc (8),
 .BR tc-pedit (8)
