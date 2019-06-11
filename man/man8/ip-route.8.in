@@ -89,7 +89,9 @@ replace " } "
 .RB "{ " enabled " | " disabled " } ]"
 
 .ti -8
-.IR INFO_SPEC " := " "NH OPTIONS FLAGS" " ["
+.IR INFO_SPEC " := { " NH " | "
+.B nhid
+.IR ID " } " "OPTIONS FLAGS" " ["
 .B  nexthop
 .IR NH " ] ..."
 
@@ -687,6 +689,10 @@ Discovery messages. Namely:
 .sp
 
 .TP
+.BI nhid " ID"
+use nexthop object with given id as nexthop specification.
+.sp
+.TP
 .BI encap " ENCAPTYPE ENCAPHDR"
 attach tunnel encapsulation attributes to this route.
 .sp
@@ -1153,6 +1159,11 @@ Adds an ipv4 route with mpls encapsulation attributes attached to it.
 ip -6 route add 2001:db8:1::/64 encap seg6 mode encap segs 2001:db8:42::1,2001:db8:ffff::2 dev eth0
 .RS 4
 Adds an IPv6 route with SRv6 encapsulation and two segments attached.
+.RE
+.PP
+ip route add 10.1.1.0/30 nhid 10
+.RS 4
+Adds an ipv4 route using nexthop object with id 10.
 .RE
 .SH SEE ALSO
 .br

@@ -80,7 +80,7 @@ static void usage(void)
 		"             [ table TABLE_ID ] [ proto RTPROTO ]\n"
 		"             [ scope SCOPE ] [ metric METRIC ]\n"
 		"             [ ttl-propagate { enabled | disabled } ]\n"
-		"INFO_SPEC := NH OPTIONS FLAGS [ nexthop NH ]...\n"
+		"INFO_SPEC := { NH | nhid ID } OPTIONS FLAGS [ nexthop NH ]...\n"
 		"NH := [ encap ENCAPTYPE ENCAPHDR ] [ via [ FAMILY ] ADDRESS ]\n"
 		"	    [ dev STRING ] [ weight NUMBER ] NHFLAGS\n"
 		"FAMILY := [ inet | inet6 | mpls | bridge | link ]\n"
@@ -349,7 +349,7 @@ static void print_rtax_features(FILE *fp, unsigned int features)
 			    "features", "%#llx ", of);
 }
 
-static void print_rt_flags(FILE *fp, unsigned int flags)
+void print_rt_flags(FILE *fp, unsigned int flags)
 {
 	open_json_array(PRINT_JSON,
 			is_json_context() ?  "flags" : "");
@@ -394,8 +394,7 @@ static void print_rt_pref(FILE *fp, unsigned int pref)
 	}
 }
 
-static void print_rta_if(FILE *fp, const struct rtattr *rta,
-			const char *prefix)
+void print_rta_if(FILE *fp, const struct rtattr *rta, const char *prefix)
 {
 	const char *ifname = ll_index_to_name(rta_getattr_u32(rta));
 
@@ -532,17 +531,16 @@ static void print_rta_newdst(FILE *fp, const struct rtmsg *r,
 	}
 }
 
-static void print_rta_gateway(FILE *fp, const struct rtmsg *r,
-			      const struct rtattr *rta)
+void print_rta_gateway(FILE *fp, unsigned char family, const struct rtattr *rta)
 {
-	const char *gateway = format_host_rta(r->rtm_family, rta);
+	const char *gateway = format_host_rta(family, rta);
 
 	if (is_json_context())
 		print_string(PRINT_JSON, "gateway", NULL, gateway);
 	else {
 		fprintf(fp, "via ");
 		print_color_string(PRINT_FP,
-				   ifa_family_color(r->rtm_family),
+				   ifa_family_color(family),
 				   NULL, "%s ", gateway);
 	}
 }
@@ -679,7 +677,8 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 			if (tb[RTA_NEWDST])
 				print_rta_newdst(fp, r, tb[RTA_NEWDST]);
 			if (tb[RTA_GATEWAY])
-				print_rta_gateway(fp, r, tb[RTA_GATEWAY]);
+				print_rta_gateway(fp, r->rtm_family,
+						  tb[RTA_GATEWAY]);
 			if (tb[RTA_VIA])
 				print_rta_via(fp, tb[RTA_VIA]);
 			if (tb[RTA_FLOW])
@@ -810,6 +809,10 @@ int print_route(struct nlmsghdr *n, void *arg)
 		print_string(PRINT_ANY, "src", "from %s ", b1);
 	}
 
+	if (tb[RTA_NH_ID])
+		print_uint(PRINT_ANY, "nhid", "nhid %u ",
+			   rta_getattr_u32(tb[RTA_NH_ID]));
+
 	if (tb[RTA_NEWDST])
 		print_rta_newdst(fp, r, tb[RTA_NEWDST]);
 
@@ -822,7 +825,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[RTA_GATEWAY] && filter.rvia.bitlen != host_len)
-		print_rta_gateway(fp, r, tb[RTA_GATEWAY]);
+		print_rta_gateway(fp, r->rtm_family, tb[RTA_GATEWAY]);
 
 	if (tb[RTA_VIA])
 		print_rta_via(fp, tb[RTA_VIA]);
@@ -997,7 +1000,8 @@ static int parse_one_nh(struct nlmsghdr *n, struct rtmsg *r,
 		} else if (strcmp(*argv, "encap") == 0) {
 			int old_len = rta->rta_len;
 
-			if (lwt_parse_encap(rta, len, &argc, &argv))
+			if (lwt_parse_encap(rta, len, &argc, &argv,
+					    RTA_ENCAP, RTA_ENCAP_TYPE))
 				return -1;
 			rtnh->rtnh_len += rta->rta_len - old_len;
 		} else if (strcmp(*argv, "as") == 0) {
@@ -1080,6 +1084,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	int table_ok = 0;
 	int raw = 0;
 	int type_ok = 0;
+	__u32 nhid = 0;
 
 	if (cmd != RTM_DELROUTE) {
 		req.r.rtm_protocol = RTPROT_BOOT;
@@ -1358,6 +1363,11 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "nexthop") == 0) {
 			nhs_ok = 1;
 			break;
+		} else if (!strcmp(*argv, "nhid")) {
+			NEXT_ARG();
+			if (get_u32(&nhid, *argv, 0))
+				invarg("\"id\" value is invalid\n", *argv);
+			addattr32(&req.n, sizeof(req), RTA_NH_ID, nhid);
 		} else if (matches(*argv, "protocol") == 0) {
 			__u32 prot;
 
@@ -1416,7 +1426,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			rta->rta_type = RTA_ENCAP;
 			rta->rta_len = RTA_LENGTH(0);
 
-			lwt_parse_encap(rta, sizeof(buf), &argc, &argv);
+			lwt_parse_encap(rta, sizeof(buf), &argc, &argv,
+					RTA_ENCAP, RTA_ENCAP_TYPE);
 
 			if (rta->rta_len > RTA_LENGTH(0))
 				addraw_l(&req.n, 1024
@@ -1519,7 +1530,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			 req.r.rtm_type == RTN_UNSPEC) {
 			if (cmd == RTM_DELROUTE)
 				req.r.rtm_scope = RT_SCOPE_NOWHERE;
-			else if (!gw_ok && !nhs_ok)
+			else if (!gw_ok && !nhs_ok && !nhid)
 				req.r.rtm_scope = RT_SCOPE_LINK;
 		}
 	}

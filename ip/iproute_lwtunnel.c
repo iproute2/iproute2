@@ -1111,7 +1111,8 @@ static int parse_encap_bpf(struct rtattr *rta, size_t len, int *argcp,
 	return 0;
 }
 
-int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
+int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
+		    int encap_attr, int encap_type_attr)
 {
 	struct rtattr *nest;
 	int argc = *argcp;
@@ -1131,7 +1132,7 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
 		exit(-1);
 	}
 
-	nest = rta_nest(rta, len, RTA_ENCAP);
+	nest = rta_nest(rta, len, encap_attr);
 	switch (type) {
 	case LWTUNNEL_ENCAP_MPLS:
 		ret = parse_encap_mpls(rta, len, &argc, &argv);
@@ -1164,7 +1165,7 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp)
 
 	rta_nest_end(rta, nest);
 
-	ret = rta_addattr16(rta, len, RTA_ENCAP_TYPE, type);
+	ret = rta_addattr16(rta, len, encap_type_attr, type);
 
 	*argcp = argc;
 	*argvp = argv;

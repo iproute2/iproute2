@@ -45,7 +45,8 @@ int rtnl_open(struct rtnl_handle *rth, unsigned int subscriptions)
 int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 			     int protocol)
 	__attribute__((warn_unused_result));
-
+int rtnl_add_nl_group(struct rtnl_handle *rth, unsigned int group)
+	__attribute__((warn_unused_result));
 void rtnl_close(struct rtnl_handle *rth);
 void rtnl_set_strict_dump(struct rtnl_handle *rth);
 
@@ -90,6 +91,10 @@ int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)
 	__attribute__((warn_unused_result));
 int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
+	__attribute__((warn_unused_result));
+
+int rtnl_nexthopdump_req(struct rtnl_handle *rth, int family,
+			 req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 
 struct rtnl_ctrl_data {
