@@ -85,6 +85,13 @@ static int mnlg_cb_error(const struct nlmsghdr *nlh, void *data)
 
 static int mnlg_cb_stop(const struct nlmsghdr *nlh, void *data)
 {
+	int len = *(int *)NLMSG_DATA(nlh);
+
+	if (len < 0) {
+		errno = -len;
+		nl_dump_ext_ack_done(nlh, len);
+		return MNL_CB_ERROR;
+	}
 	return MNL_CB_STOP;
 }
 

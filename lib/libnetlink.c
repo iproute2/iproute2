@@ -125,7 +125,7 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	return 0;
 }
 
-static int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
+int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
 {
 	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};
 	unsigned int hlen = sizeof(int);
@@ -155,7 +155,7 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	return 0;
 }
 
-static int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
+int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
 {
 	return 0;
 }
