@@ -32,7 +32,7 @@ const char *inet_proto_n2a(int proto, char *buf, int len)
 		return ncache;
 
 	pe = getprotobynumber(proto);
-	if (pe) {
+	if (pe && !numeric) {
 		if (icache != -1)
 			free(ncache);
 		icache = proto;

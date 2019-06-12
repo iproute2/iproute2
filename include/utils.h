@@ -34,6 +34,7 @@ extern int timestamp_short;
 extern const char * _SL_;
 extern int max_flush_loops;
 extern int batch_mode;
+extern int numeric;
 extern bool do_all;
 
 #ifndef CONFDIR

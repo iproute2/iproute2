@@ -24,6 +24,7 @@
 #include <linux/sockios.h>
 
 #include "rt_names.h"
+#include "utils.h"
 
 const char * ll_type_n2a(int type, char *buf, int len)
 {
@@ -112,7 +113,7 @@ __PF(VOID,void)
 #undef __PF
 
         int i;
-        for (i=0; i<sizeof(arphrd_names)/sizeof(arphrd_names[0]); i++) {
+        for (i=0; !numeric && i<sizeof(arphrd_names)/sizeof(arphrd_names[0]); i++) {
                  if (arphrd_names[i].type == type)
 			return arphrd_names[i].name;
 	}

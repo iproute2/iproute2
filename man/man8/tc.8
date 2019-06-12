@@ -119,6 +119,7 @@ tc \- show / manipulate traffic control settings
 .IR OPTIONS " := {"
 \fB[ -force ] -b\fR[\fIatch\fR] \fB[ filename ] \fR|
 \fB[ \fB-n\fR[\fIetns\fR] name \fB] \fR|
+\fB[ \fB-N\fR[\fIumeric\fR] \fB] \fR|
 \fB[ \fB-nm \fR| \fB-nam\fR[\fIes\fR] \fB] \fR|
 \fB[ \fR{ \fB-cf \fR| \fB-c\fR[\fIonf\fR] \fR} \fB[ filename ] \fB] \fR
 \fB[ -t\fR[imestamp\fR] \fB\] \fR| \fB[ -t\fR[short\fR] \fR| \fB[
@@ -706,6 +707,11 @@ to
 .B tc
 .RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
 .BR help " }"
+
+.TP
+.BR "\-N" , " \-Numeric"
+Print the number of protocol, scope, dsfield, etc directly instead of
+converting it to human readable name.
 
 .TP
 .BR "\-cf" , " \-conf " <FILENAME>

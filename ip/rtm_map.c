@@ -23,6 +23,12 @@
 
 char *rtnl_rtntype_n2a(int id, char *buf, int len)
 {
+
+	if (numeric) {
+		snprintf(buf, len, "%d", id);
+		return buf;
+	}
+
 	switch (id) {
 	case RTN_UNSPEC:
 		return "none";

@@ -43,6 +43,7 @@ bool use_names;
 int json;
 int color;
 int oneline;
+int numeric;
 
 static char *conf_file;
 
@@ -200,7 +201,7 @@ static void usage(void)
 		"		    action | monitor | exec }\n"
 		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[aw] |\n"
 		"		    -o[neline] | -j[son] | -p[retty] | -c[olor]\n"
-		"		    -b[atch] [filename] | -n[etns] name |\n"
+		"		    -b[atch] [filename] | -n[etns] name | -N[umeric] |\n"
 		"		     -nm | -nam[es] | { -cf | -conf } path }\n");
 }
 
@@ -486,6 +487,8 @@ int main(int argc, char **argv)
 			NEXT_ARG();
 			if (netns_switch(argv[1]))
 				return -1;
+		} else if (matches(argv[1], "-Numeric") == 0) {
+			++numeric;
 		} else if (matches(argv[1], "-names") == 0 ||
 				matches(argv[1], "-nm") == 0) {
 			use_names = true;

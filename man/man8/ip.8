@@ -47,6 +47,7 @@ ip \- show / manipulate routing, network devices, interfaces and tunnels
 \fB\-t\fR[\fIimestamp\fR] |
 \fB\-ts\fR[\fIhort\fR] |
 \fB\-n\fR[\fIetns\fR] name |
+\fB\-N\fR[\fIumeric\fR] |
 \fB\-a\fR[\fIll\fR] |
 \fB\-c\fR[\fIolor\fR] |
 \fB\-br\fR[\fIief\fR] |
@@ -173,6 +174,11 @@ to
 .B ip
 .RI "-n[etns] " NETNS " [ " OPTIONS " ] " OBJECT " { " COMMAND " | "
 .BR help " }"
+
+.TP
+.BR "\-N" , " \-Numeric"
+Print the number of protocol, scope, dsfield, etc directly instead of
+converting it to human readable name.
 
 .TP
 .BR "\-a" , " \-all"

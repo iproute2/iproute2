@@ -92,7 +92,7 @@ const char * ll_proto_n2a(unsigned short id, char *buf, int len)
 
 	id = ntohs(id);
 
-        for (i=0; i<sizeof(llproto_names)/sizeof(llproto_names[0]); i++) {
+        for (i=0; !numeric && i<sizeof(llproto_names)/sizeof(llproto_names[0]); i++) {
                  if (llproto_names[i].id == id)
 			return llproto_names[i].name;
 	}
