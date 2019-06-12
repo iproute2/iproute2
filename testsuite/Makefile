@@ -18,9 +18,9 @@ KENVFN := $(shell mktemp /tmp/tc_testkenv.XXXXXX)
 ifneq (,$(wildcard /proc/config.gz))
 	KCPATH := /proc/config.gz
 else
-KVER := $(shell uname -r)
-KCPATHS := /lib/modules/$(KVER)/config /boot/config-$(KVER)
-KCPATH := $(firstword $(wildcard $(KCPATHS)))
+	KVER := $(shell uname -r)
+	KCPATHS := /lib/modules/$(KVER)/config /boot/config-$(KVER)
+	KCPATH := $(firstword $(wildcard $(KCPATHS)))
 endif
 
 .PHONY: compile listtests alltests configure $(TESTS)
