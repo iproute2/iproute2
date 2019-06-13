@@ -114,7 +114,8 @@ clobber:
 distclean: clobber
 
 check: all
-	cd testsuite && $(MAKE) && $(MAKE) alltests
+	$(MAKE) -C testsuite
+	$(MAKE) -C testsuite alltests
 	@if command -v man >/dev/null 2>&1; then \
 		echo "Checking manpages for syntax errors..."; \
 		$(MAKE) -C man check; \
