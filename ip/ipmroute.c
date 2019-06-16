@@ -44,7 +44,7 @@ static void usage(void)
 	exit(-1);
 }
 
-struct rtfilter {
+static struct rtfilter {
 	int tb;
 	int af;
 	int iif;
