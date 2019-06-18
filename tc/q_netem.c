@@ -58,6 +58,43 @@ static void explain1(const char *arg)
  */
 #define MAX_DIST	(16*1024)
 
+/* Print values only if they are non-zero */
+static void __print_int_opt(const char *label_json, const char *label_fp,
+			    int val)
+{
+	print_int(PRINT_ANY, label_json, val ? label_fp : "", val);
+}
+#define PRINT_INT_OPT(label, val)			\
+	__print_int_opt(label, " " label " %d", (val))
+
+/* Time print prints normally with varying units, but for JSON prints
+ * in seconds (1ms vs 0.001).
+ */
+static void __print_time64(const char *label_json, const char *label_fp,
+			   __u64 val)
+{
+	SPRINT_BUF(b1);
+
+	print_string(PRINT_FP, NULL, label_fp, sprint_time64(val, b1));
+	print_float(PRINT_JSON, label_json, NULL, val / 1000000000.);
+}
+#define __PRINT_TIME64(label_json, label_fp, val)	\
+	__print_time64(label_json, label_fp " %s", (val))
+#define PRINT_TIME64(label, val) __PRINT_TIME64(label, " " label, (val))
+
+/* Percent print prints normally in percentage points, but for JSON prints
+ * an absolute value (1% vs 0.01).
+ */
+static void __print_percent(const char *label_json, const char *label_fp,
+			    __u32 per)
+{
+	print_float(PRINT_FP, NULL, label_fp, (100. * per) / UINT32_MAX);
+	print_float(PRINT_JSON, label_json, NULL, (1. * per) / UINT32_MAX);
+}
+#define __PRINT_PERCENT(label_json, label_fp, per)		\
+	__print_percent(label_json, label_fp " %g%%", (per))
+#define PRINT_PERCENT(label, per) __PRINT_PERCENT(label, " " label, (per))
+
 /* scaled value used to percent of maximum. */
 static void set_percent(__u32 *percent, double per)
 {
@@ -75,15 +112,14 @@ static int get_percent(__u32 *percent, const char *str)
 	return 0;
 }
 
-static void print_percent(char *buf, int len, __u32 per)
+static void print_corr(bool present, __u32 value)
 {
-	snprintf(buf, len, "%g%%", (100. * per) / UINT32_MAX);
-}
-
-static char *sprint_percent(__u32 per, char *buf)
-{
-	print_percent(buf, SPRINT_BSIZE-1, per);
-	return buf;
+	if (!is_json_context()) {
+		if (present)
+			__PRINT_PERCENT("", "", value);
+	} else {
+		PRINT_PERCENT("correlation", value);
+	}
 }
 
 /*
@@ -687,97 +723,109 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		}
 	}
 
-	fprintf(f, "limit %d", qopt.limit);
+	print_uint(PRINT_ANY, "limit", "limit %d", qopt.limit);
 
 	if (qopt.latency) {
-		fprintf(f, " delay %s", sprint_ticks(qopt.latency, b1));
+		open_json_object("delay");
+		if (!is_json_context()) {
+			print_string(PRINT_FP, NULL, " delay %s",
+				     sprint_ticks(qopt.latency, b1));
 
-		if (qopt.jitter) {
-			fprintf(f, "  %s", sprint_ticks(qopt.jitter, b1));
-			if (cor && cor->delay_corr)
-				fprintf(f, " %s", sprint_percent(cor->delay_corr, b1));
+			if (qopt.jitter)
+				print_string(PRINT_FP, NULL, "  %s",
+					     sprint_ticks(qopt.jitter, b1));
+		} else {
+			print_float(PRINT_JSON, "delay", NULL,
+				    tc_core_tick2time(qopt.latency) /
+				    1000000.);
+			print_float(PRINT_JSON, "jitter", NULL,
+				    tc_core_tick2time(qopt.jitter) /
+				    1000000.);
 		}
+		print_corr(qopt.jitter && cor && cor->delay_corr,
+			   cor ? cor->delay_corr : 0);
+		close_json_object();
 	}
 
 	if (qopt.loss) {
-		fprintf(f, " loss %s", sprint_percent(qopt.loss, b1));
-		if (cor && cor->loss_corr)
-			fprintf(f, " %s", sprint_percent(cor->loss_corr, b1));
+		open_json_object("loss-random");
+		PRINT_PERCENT("loss", qopt.loss);
+		print_corr(cor && cor->loss_corr, cor ? cor->loss_corr : 0);
+		close_json_object();
 	}
 
 	if (gimodel) {
-		fprintf(f, " loss state p13 %s", sprint_percent(gimodel->p13, b1));
-		fprintf(f, " p31 %s", sprint_percent(gimodel->p31, b1));
-		fprintf(f, " p32 %s", sprint_percent(gimodel->p32, b1));
-		fprintf(f, " p23 %s", sprint_percent(gimodel->p23, b1));
-		fprintf(f, " p14 %s", sprint_percent(gimodel->p14, b1));
+		open_json_object("loss-state");
+		__PRINT_PERCENT("p13", " loss state p13", gimodel->p13);
+		PRINT_PERCENT("p31", gimodel->p31);
+		PRINT_PERCENT("p32", gimodel->p32);
+		PRINT_PERCENT("p23", gimodel->p23);
+		PRINT_PERCENT("p14", gimodel->p14);
+		close_json_object();
 	}
 
 	if (gemodel) {
-		fprintf(f, " loss gemodel p %s",
-			sprint_percent(gemodel->p, b1));
-		fprintf(f, " r %s", sprint_percent(gemodel->r, b1));
-		fprintf(f, " 1-h %s", sprint_percent(UINT32_MAX -
-						     gemodel->h, b1));
-		fprintf(f, " 1-k %s", sprint_percent(gemodel->k1, b1));
+		open_json_object("loss-gemodel");
+		__PRINT_PERCENT("p", " loss gemodel p", gemodel->p);
+		PRINT_PERCENT("r", gemodel->r);
+		PRINT_PERCENT("1-h", UINT32_MAX - gemodel->h);
+		PRINT_PERCENT("1-k", gemodel->k1);
+		close_json_object();
 	}
 
 	if (qopt.duplicate) {
-		fprintf(f, " duplicate %s",
-			sprint_percent(qopt.duplicate, b1));
-		if (cor && cor->dup_corr)
-			fprintf(f, " %s", sprint_percent(cor->dup_corr, b1));
+		open_json_object("duplicate");
+		PRINT_PERCENT("duplicate", qopt.duplicate);
+		print_corr(cor && cor->dup_corr, cor ? cor->dup_corr : 0);
+		close_json_object();
 	}
 
 	if (reorder && reorder->probability) {
-		fprintf(f, " reorder %s",
-			sprint_percent(reorder->probability, b1));
-		if (reorder->correlation)
-			fprintf(f, " %s",
-				sprint_percent(reorder->correlation, b1));
+		open_json_object("reorder");
+		PRINT_PERCENT("reorder", reorder->probability);
+		print_corr(reorder->correlation, reorder->correlation);
+		close_json_object();
 	}
 
 	if (corrupt && corrupt->probability) {
-		fprintf(f, " corrupt %s",
-			sprint_percent(corrupt->probability, b1));
-		if (corrupt->correlation)
-			fprintf(f, " %s",
-				sprint_percent(corrupt->correlation, b1));
+		open_json_object("corrupt");
+		PRINT_PERCENT("corrupt", corrupt->probability);
+		print_corr(corrupt->correlation, corrupt->correlation);
+		close_json_object();
 	}
 
 	if (rate && rate->rate) {
-		if (rate64)
-			fprintf(f, " rate %s", sprint_rate(rate64, b1));
-		else
-			fprintf(f, " rate %s", sprint_rate(rate->rate, b1));
-		if (rate->packet_overhead)
-			fprintf(f, " packetoverhead %d", rate->packet_overhead);
-		if (rate->cell_size)
-			fprintf(f, " cellsize %u", rate->cell_size);
-		if (rate->cell_overhead)
-			fprintf(f, " celloverhead %d", rate->cell_overhead);
+		open_json_object("rate");
+		rate64 = rate64 ? : rate->rate;
+		print_string(PRINT_FP, NULL, " rate %s",
+			     sprint_rate(rate64, b1));
+		print_lluint(PRINT_JSON, "rate", NULL, rate64);
+		PRINT_INT_OPT("packetoverhead", rate->packet_overhead);
+		print_uint(PRINT_ANY, "cellsize",
+			   rate->cell_size ? " cellsize %u" : "",
+			   rate->cell_size);
+		PRINT_INT_OPT("celloverhead", rate->cell_overhead);
+		close_json_object();
 	}
 
 	if (slot) {
+		open_json_object("slot");
 		if (slot->dist_jitter > 0) {
-		    fprintf(f, " slot distribution %s", sprint_time64(slot->dist_delay, b1));
-		    fprintf(f, " %s", sprint_time64(slot->dist_jitter, b1));
+			__PRINT_TIME64("distribution", " slot distribution",
+				       slot->dist_delay);
+			__PRINT_TIME64("jitter", "", slot->dist_jitter);
 		} else {
-		    fprintf(f, " slot %s", sprint_time64(slot->min_delay, b1));
-		    fprintf(f, " %s", sprint_time64(slot->max_delay, b1));
+			__PRINT_TIME64("min-delay", " slot", slot->min_delay);
+			__PRINT_TIME64("max-delay", "", slot->max_delay);
 		}
-		if (slot->max_packets)
-			fprintf(f, " packets %d", slot->max_packets);
-		if (slot->max_bytes)
-			fprintf(f, " bytes %d", slot->max_bytes);
+		PRINT_INT_OPT("packets", slot->max_packets);
+		PRINT_INT_OPT("bytes", slot->max_bytes);
+		close_json_object();
 	}
 
-	if (ecn)
-		fprintf(f, " ecn ");
-
-	if (qopt.gap)
-		fprintf(f, " gap %lu", (unsigned long)qopt.gap);
-
+	print_bool(PRINT_ANY, "ecn", ecn ? " ecn " : "", ecn);
+	print_luint(PRINT_ANY, "gap", qopt.gap ? " gap %lu" : "",
+		    (unsigned long)qopt.gap);
 
 	return 0;
 }
