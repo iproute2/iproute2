@@ -455,7 +455,7 @@ static int ipvrf_exec(int argc, char **argv)
 	if (vrf_switch(argv[0]))
 		return -1;
 
-	return -cmd_exec(argv[1], argv + 1, !!batch_mode);
+	return -cmd_exec(argv[1], argv + 1, !!batch_mode, NULL, NULL);
 }
 
 /* reset VRF association of current process to default VRF;
