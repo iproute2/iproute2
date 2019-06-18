@@ -441,6 +441,13 @@ out:
 	return rc;
 }
 
+static int do_switch(void *arg)
+{
+	char *vrf = arg;
+
+	return vrf_switch(vrf);
+}
+
 static int ipvrf_exec(int argc, char **argv)
 {
 	if (argc < 1) {
@@ -452,10 +459,7 @@ static int ipvrf_exec(int argc, char **argv)
 		return -1;
 	}
 
-	if (vrf_switch(argv[0]))
-		return -1;
-
-	return -cmd_exec(argv[1], argv + 1, !!batch_mode, NULL, NULL);
+	return -cmd_exec(argv[1], argv + 1, !!batch_mode, do_switch, argv[0]);
 }
 
 /* reset VRF association of current process to default VRF;
