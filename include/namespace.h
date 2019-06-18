@@ -49,8 +49,6 @@ static inline int setns(int fd, int nstype)
 }
 #endif /* HAVE_SETNS */
 
-void netns_save(void);
-void netns_restore(void);
 int netns_switch(char *netns);
 int netns_get_fd(const char *netns);
 int netns_foreach(int (*func)(char *nsname, void *arg), void *arg);
