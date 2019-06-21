@@ -1418,33 +1418,6 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n)
 	fprintf(fp, "Timestamp: %s %lu us\n", tstr, usecs);
 }
 
-static int on_netns(char *nsname, void *arg)
-{
-	struct netns_func *f = arg;
-
-	if (netns_switch(nsname))
-		return -1;
-
-	return f->func(nsname, f->arg);
-}
-
-static int on_netns_label(char *nsname, void *arg)
-{
-	printf("\nnetns: %s\n", nsname);
-	return on_netns(nsname, arg);
-}
-
-int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
-		bool show_label)
-{
-	struct netns_func nsf = { .func = func, .arg = arg };
-
-	if (show_label)
-		return netns_foreach(on_netns_label, &nsf);
-
-	return netns_foreach(on_netns, &nsf);
-}
-
 char *int_to_str(int val, char *buf)
 {
 	sprintf(buf, "%d", val);

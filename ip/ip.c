@@ -161,7 +161,6 @@ static int batch(const char *name)
 			if (!force)
 				break;
 		}
-		netns_restore();
 	}
 	if (line)
 		free(line);

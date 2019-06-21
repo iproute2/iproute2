@@ -295,14 +295,12 @@ extern int cmdlineno;
 ssize_t getcmdline(char **line, size_t *len, FILE *in);
 int makeargs(char *line, char *argv[], int maxargs);
 
-int do_each_netns(int (*func)(char *nsname, void *arg), void *arg,
-		bool show_label);
-
 char *int_to_str(int val, char *buf);
 int get_guid(__u64 *guid, const char *arg);
 int get_real_family(int rtm_type, int rtm_family);
 
-int cmd_exec(const char *cmd, char **argv, bool do_fork);
+int cmd_exec(const char *cmd, char **argv, bool do_fork,
+	     int (*setup)(void *), void *arg);
 int make_path(const char *path, mode_t mode);
 char *find_cgroup2_mount(void);
 int get_command_name(const char *pid, char *comm, size_t len);

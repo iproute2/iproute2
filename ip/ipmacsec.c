@@ -95,7 +95,7 @@ static void ipmacsec_usage(void)
 		"       ip macsec show DEV\n"
 		"where  OPTS := [ pn <u32> ] [ on | off ]\n"
 		"       ID   := 128-bit hex string\n"
-		"       KEY  := 128-bit hex string\n"
+		"       KEY  := 128-bit or 256-bit hex string\n"
 		"       SCI  := { sci <u64> | port { 1..2^16-1 } address <lladdr> }\n");
 
 	exit(-1);
@@ -586,14 +586,20 @@ static void print_key(struct rtattr *key)
 				   keyid, sizeof(keyid)));
 }
 
-#define DEFAULT_CIPHER_NAME "GCM-AES-128"
+#define CIPHER_NAME_GCM_AES_128 "GCM-AES-128"
+#define CIPHER_NAME_GCM_AES_256 "GCM-AES-256"
+#define DEFAULT_CIPHER_NAME CIPHER_NAME_GCM_AES_128
 
 static const char *cs_id_to_name(__u64 cid)
 {
 	switch (cid) {
 	case MACSEC_DEFAULT_CIPHER_ID:
-	case MACSEC_DEFAULT_CIPHER_ALT:
 		return DEFAULT_CIPHER_NAME;
+	case MACSEC_CIPHER_ID_GCM_AES_128:
+	     /* MACSEC_DEFAULT_CIPHER_ALT: */
+		return CIPHER_NAME_GCM_AES_128;
+	case MACSEC_CIPHER_ID_GCM_AES_256:
+		return CIPHER_NAME_GCM_AES_256;
 	default:
 		return "(unknown)";
 	}
@@ -1172,7 +1178,7 @@ static void usage(FILE *f)
 {
 	fprintf(f,
 		"Usage: ... macsec [ [ address <lladdr> ] port { 1..2^16-1 } | sci <u64> ]\n"
-		"                  [ cipher { default | gcm-aes-128 } ]\n"
+		"                  [ cipher { default | gcm-aes-128 | gcm-aes-256 } ]\n"
 		"                  [ icvlen { 8..16 } ]\n"
 		"                  [ encrypt { on | off } ]\n"
 		"                  [ send_sci { on | off } ]\n"
@@ -1217,13 +1223,17 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			if (cipher.id)
 				duparg("cipher", *argv);
-			if (strcmp(*argv, "default") == 0 ||
-			    strcmp(*argv, "gcm-aes-128") == 0 ||
-			    strcmp(*argv, "GCM-AES-128") == 0)
+			if (strcmp(*argv, "default") == 0)
 				cipher.id = MACSEC_DEFAULT_CIPHER_ID;
+			else if (strcmp(*argv, "gcm-aes-128") == 0 ||
+			         strcmp(*argv, "GCM-AES-128") == 0)
+				cipher.id = MACSEC_CIPHER_ID_GCM_AES_128;
+			else if (strcmp(*argv, "gcm-aes-256") == 0 ||
+			         strcmp(*argv, "GCM-AES-256") == 0)
+				cipher.id = MACSEC_CIPHER_ID_GCM_AES_256;
 			else
-				invarg("expected: default or gcm-aes-128",
-				       *argv);
+				invarg("expected: default, gcm-aes-128 or"
+				       " gcm-aes-256", *argv);
 		} else if (strcmp(*argv, "icvlen") == 0) {
 			NEXT_ARG();
 			if (cipher.icv_len)
