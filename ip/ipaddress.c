@@ -2257,7 +2257,10 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			else
 				fprintf(stderr, "Warning: nodad option can be set only for IPv6 addresses\n");
 		} else if (strcmp(*argv, "mngtmpaddr") == 0) {
-			ifa_flags |= IFA_F_MANAGETEMPADDR;
+			if (req.ifa.ifa_family == AF_INET6)
+				ifa_flags |= IFA_F_MANAGETEMPADDR;
+			else
+				fprintf(stderr, "Warning: mngtmpaddr option can be set only for IPv6 addresses\n");
 		} else if (strcmp(*argv, "noprefixroute") == 0) {
 			ifa_flags |= IFA_F_NOPREFIXROUTE;
 		} else if (strcmp(*argv, "autojoin") == 0) {
