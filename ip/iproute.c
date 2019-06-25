@@ -1602,6 +1602,30 @@ static int save_route_prep(void)
 	return 0;
 }
 
+static int iproute_dump_filter(struct nlmsghdr *nlh, int reqlen)
+{
+	struct rtmsg *rtm = NLMSG_DATA(nlh);
+	int err;
+
+	rtm->rtm_protocol = filter.protocol;
+	if (filter.cloned)
+		rtm->rtm_flags |= RTM_F_CLONED;
+
+	if (filter.tb) {
+		err = addattr32(nlh, reqlen, RTA_TABLE, filter.tb);
+		if (err)
+			return err;
+	}
+
+	if (filter.oif) {
+		err = addattr32(nlh, reqlen, RTA_OIF, filter.oif);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
 static int iproute_flush(int family, rtnl_filter_t filter_fn)
 {
 	time_t start = time(0);
@@ -1624,7 +1648,7 @@ static int iproute_flush(int family, rtnl_filter_t filter_fn)
 	filter.flushe = sizeof(flushb);
 
 	for (;;) {
-		if (rtnl_routedump_req(&rth, family, NULL) < 0) {
+		if (rtnl_routedump_req(&rth, family, iproute_dump_filter) < 0) {
 			perror("Cannot send dump request");
 			return -2;
 		}
@@ -1662,30 +1686,6 @@ static int iproute_flush(int family, rtnl_filter_t filter_fn)
 			fflush(stdout);
 		}
 	}
-}
-
-static int iproute_dump_filter(struct nlmsghdr *nlh, int reqlen)
-{
-	struct rtmsg *rtm = NLMSG_DATA(nlh);
-	int err;
-
-	rtm->rtm_protocol = filter.protocol;
-	if (filter.cloned)
-		rtm->rtm_flags |= RTM_F_CLONED;
-
-	if (filter.tb) {
-		err = addattr32(nlh, reqlen, RTA_TABLE, filter.tb);
-		if (err)
-			return err;
-	}
-
-	if (filter.oif) {
-		err = addattr32(nlh, reqlen, RTA_OIF, filter.oif);
-		if (err)
-			return err;
-	}
-
-	return 0;
 }
 
 static int iproute_list_flush_or_save(int argc, char **argv, int action)
