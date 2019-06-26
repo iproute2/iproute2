@@ -60,9 +60,9 @@ static int print_token(struct nlmsghdr *n, void *arg)
 		return -1;
 
 	if (ifi->ifi_family != AF_INET6)
-		return -1;
+		return 0;
 	if (ifi->ifi_index == 0)
-		return -1;
+		return 0;
 	if (ifindex > 0 && ifi->ifi_index != ifindex)
 		return 0;
 	if (ifi->ifi_flags & (IFF_LOOPBACK | IFF_NOARP))
