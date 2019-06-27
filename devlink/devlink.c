@@ -1748,9 +1748,9 @@ static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
 		jsonw_u64_field(dl->jw, name, val);
 	} else {
 		if (g_indent_newline)
-			pr_out("%s %lu", name, val);
+			pr_out("%s %"PRIu64, name, val);
 		else
-			pr_out(" %s %lu", name, val);
+			pr_out(" %s %"PRIu64, name, val);
 	}
 }
 
@@ -1775,7 +1775,7 @@ static void pr_out_uint64_value(struct dl *dl, uint64_t value)
 	if (dl->json_output)
 		jsonw_u64(dl->jw, value);
 	else
-		pr_out(" %lu", value);
+		pr_out(" %"PRIu64, value);
 }
 
 static void pr_out_binary_value(struct dl *dl, uint8_t *data, uint32_t len)
