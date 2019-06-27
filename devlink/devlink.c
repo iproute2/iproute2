@@ -19,11 +19,12 @@
 #include <limits.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <sys/sysinfo.h>
+#define _LINUX_SYSINFO_H /* avoid collision with musl header */
 #include <linux/genetlink.h>
 #include <linux/devlink.h>
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
-#include <sys/sysinfo.h>
 #include <sys/queue.h>
 
 #include "SNAPSHOT.h"
