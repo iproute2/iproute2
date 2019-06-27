@@ -284,14 +284,17 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				}
 
 			} else if (!strcmp(*argv, "gemodel")) {
+				double p;
+
 				NEXT_ARG();
-				if (get_percent(&gemodel.p, *argv)) {
+				if (parse_percent(&p, *argv)) {
 					explain1("loss gemodel p");
 					return -1;
 				}
+				set_percent(&gemodel.p, p);
 
 				/* set defaults */
-				set_percent(&gemodel.r, 1.);
+				set_percent(&gemodel.r, 1. - p);
 				set_percent(&gemodel.h, 0);
 				set_percent(&gemodel.k1, 0);
 				loss_type = NETEM_LOSS_GE;
