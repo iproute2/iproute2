@@ -101,22 +101,6 @@ out:
 	return -1;
 }
 
-/* Parse a percent e.g: '30%'
- * return: 0 = ok, -1 = error, 1 = out of range
- */
-int parse_percent(double *val, const char *str)
-{
-	char *p;
-
-	*val = strtod(str, &p) / 100.;
-	if (*val == HUGE_VALF || *val == HUGE_VALL)
-		return 1;
-	if (*p && strcmp(p, "%"))
-		return -1;
-
-	return 0;
-}
-
 int get_hex(char c)
 {
 	if (c >= 'A' && c <= 'F')

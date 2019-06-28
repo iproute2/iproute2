@@ -101,6 +101,7 @@ int print_tc_classid(char *buf, int len, __u32 h);
 char *sprint_tc_classid(__u32 h, char *buf);
 
 int tc_print_police(FILE *f, struct rtattr *tb);
+int parse_percent(double *val, const char *str);
 int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
 
 int parse_action_control(int *argc_p, char ***argv_p,
