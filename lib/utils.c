@@ -374,7 +374,7 @@ int get_u8(__u8 *val, const char *arg, int base)
 
 int get_s64(__s64 *val, const char *arg, int base)
 {
-	long res;
+	long long res;
 	char *ptr;
 
 	errno = 0;
