@@ -120,6 +120,7 @@ static void print_explain(FILE *f)
 		"Usage: ... bond [ mode BONDMODE ] [ active_slave SLAVE_DEV ]\n"
 		"                [ clear_active_slave ] [ miimon MIIMON ]\n"
 		"                [ updelay UPDELAY ] [ downdelay DOWNDELAY ]\n"
+		"                [ peer_notify_delay DELAY ]\n"
 		"                [ use_carrier USE_CARRIER ]\n"
 		"                [ arp_interval ARP_INTERVAL ]\n"
 		"                [ arp_validate ARP_VALIDATE ]\n"
@@ -165,7 +166,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 xmit_hash_policy, num_peer_notif, all_slaves_active;
 	__u8 lacp_rate, ad_select, tlb_dynamic_lb;
 	__u16 ad_user_port_key, ad_actor_sys_prio;
-	__u32 miimon, updelay, downdelay, arp_interval, arp_validate;
+	__u32 miimon, updelay, downdelay, peer_notify_delay, arp_interval, arp_validate;
 	__u32 arp_all_targets, resend_igmp, min_links, lp_interval;
 	__u32 packets_per_slave;
 	unsigned int ifindex;
@@ -200,6 +201,11 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (get_u32(&downdelay, *argv, 0))
 				invarg("invalid downdelay", *argv);
 			addattr32(n, 1024, IFLA_BOND_DOWNDELAY, downdelay);
+		} else if (matches(*argv, "peer_notify_delay") == 0) {
+			NEXT_ARG();
+			if (get_u32(&peer_notify_delay, *argv, 0))
+				invarg("invalid peer_notify_delay", *argv);
+			addattr32(n, 1024, IFLA_BOND_PEER_NOTIF_DELAY, peer_notify_delay);
 		} else if (matches(*argv, "use_carrier") == 0) {
 			NEXT_ARG();
 			if (get_u8(&use_carrier, *argv, 0))
@@ -409,6 +415,12 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "downdelay",
 			   "downdelay %u ",
 			   rta_getattr_u32(tb[IFLA_BOND_DOWNDELAY]));
+
+	if (tb[IFLA_BOND_PEER_NOTIF_DELAY])
+		print_uint(PRINT_ANY,
+			   "peer_notify_delay",
+			   "peer_notify_delay %u ",
+			   rta_getattr_u32(tb[IFLA_BOND_PEER_NOTIF_DELAY]));
 
 	if (tb[IFLA_BOND_USE_CARRIER])
 		print_uint(PRINT_ANY,
