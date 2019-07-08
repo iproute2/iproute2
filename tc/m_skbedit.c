@@ -33,7 +33,7 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... skbedit <[QM] [PM] [MM] [PT] [IF]>\n"
 		"QM = queue_mapping QUEUE_MAPPING\n"
 		"PM = priority PRIORITY\n"
-		"MM = mark MARK\n"
+		"MM = mark MARK[/MASK]\n"
 		"PT = ptype PACKETYPE\n"
 		"IF = inheritdsfield\n"
 		"PACKETYPE = is one of:\n"
@@ -41,6 +41,7 @@ static void explain(void)
 		"QUEUE_MAPPING = device transmit queue to use\n"
 		"PRIORITY = classID to assign to priority field\n"
 		"MARK = firewall mark to set\n"
+		"MASK = mask applied to firewall mark (0xffffffff by default)\n"
 		"note: inheritdsfield maps DS field to skb->priority\n");
 }
 
@@ -61,7 +62,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	struct rtattr *tail;
 	unsigned int tmp;
 	__u16 queue_mapping, ptype;
-	__u32 flags = 0, priority, mark;
+	__u32 flags = 0, priority, mark, mask;
 	__u64 pure_flags = 0;
 	struct tc_skbedit sel = { 0 };
 
@@ -89,11 +90,25 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 			}
 			ok++;
 		} else if (matches(*argv, "mark") == 0) {
-			flags |= SKBEDIT_F_MARK;
+			char *slash;
+
 			NEXT_ARG();
+			slash = strchr(*argv, '/');
+			if (slash)
+				*slash = '\0';
+
+			flags |= SKBEDIT_F_MARK;
 			if (get_u32(&mark, *argv, 0)) {
 				fprintf(stderr, "Illegal mark\n");
 				return -1;
+			}
+
+			if (slash) {
+				if (get_u32(&mask, slash + 1, 0)) {
+					fprintf(stderr, "Illegal mask\n");
+					return -1;
+				}
+				flags |= SKBEDIT_F_MASK;
 			}
 			ok++;
 		} else if (matches(*argv, "ptype") == 0) {
@@ -133,7 +148,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
 			if (get_u32(&sel.index, *argv, 10)) {
-				fprintf(stderr, "Pedit: Illegal \"index\"\n");
+				fprintf(stderr, "skbedit: Illegal \"index\"\n");
 				return -1;
 			}
 			argc--;
@@ -159,6 +174,9 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	if (flags & SKBEDIT_F_MARK)
 		addattr_l(n, MAX_MSG, TCA_SKBEDIT_MARK,
 			  &mark, sizeof(mark));
+	if (flags & SKBEDIT_F_MASK)
+		addattr_l(n, MAX_MSG, TCA_SKBEDIT_MASK,
+			  &mask, sizeof(mask));
 	if (flags & SKBEDIT_F_PTYPE)
 		addattr_l(n, MAX_MSG, TCA_SKBEDIT_PTYPE,
 			  &ptype, sizeof(ptype));
@@ -205,6 +223,10 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	if (tb[TCA_SKBEDIT_MARK] != NULL) {
 		print_uint(PRINT_ANY, "mark", " mark %u",
 			   rta_getattr_u32(tb[TCA_SKBEDIT_MARK]));
+	}
+	if (tb[TCA_SKBEDIT_MASK]) {
+		print_hex(PRINT_ANY, "mask", "/%#x",
+			  rta_getattr_u32(tb[TCA_SKBEDIT_MASK]));
 	}
 	if (tb[TCA_SKBEDIT_PTYPE] != NULL) {
 		ptype = rta_getattr_u16(tb[TCA_SKBEDIT_PTYPE]);
