@@ -578,6 +578,7 @@ static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
 	int i;
 
 	open_json_array(PRINT_JSON, "metrics");
+	open_json_object(NULL);
 
 	parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(rta), RTA_PAYLOAD(rta));
 
@@ -611,7 +612,7 @@ static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
 			print_rtax_features(fp, val);
 			break;
 		default:
-			fprintf(fp, "%u ", val);
+			print_uint(PRINT_ANY, mx_names[i], "%u ", val);
 			break;
 
 		case RTAX_RTT:
@@ -639,6 +640,7 @@ static void print_rta_metrics(FILE *fp, const struct rtattr *rta)
 		}
 	}
 
+	close_json_object();
 	close_json_array(PRINT_JSON, NULL);
 }
 
