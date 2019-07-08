@@ -9,8 +9,7 @@ skbedit - SKB editing action
 .IR QUEUE_MAPPING " ] ["
 .B priority
 .IR PRIORITY " ] ["
-.B mark
-.IR MARK " ] ["
+.BI mark " MARK\fR[\fB/\fIMASK] ] ["
 .B ptype
 .IR PTYPE " ] ["
 .BR inheritdsfield " ]"
@@ -49,12 +48,14 @@ or a hexadecimal major class ID optionally followed by a colon
 .RB ( : )
 and a hexadecimal minor class ID.
 .TP
-.BI mark " MARK"
+.BI mark " MARK\fR[\fB/\fIMASK]"
 Change the packet's firewall mark value.
 .I MARK
 is an unsigned 32bit value in automatically detected format (i.e., prefix with
 .RB ' 0x '
 for hexadecimal interpretation, etc.).
+.I MASK
+defines the 32-bit mask selecting bits of mark value. Default is 0xffffffff.
 .TP
 .BI ptype " PTYPE"
 Override the packet's type. Useful for setting packet type to host when
