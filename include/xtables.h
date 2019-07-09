@@ -206,6 +206,24 @@ enum xtables_ext_flags {
 	XTABLES_EXT_ALIAS = 1 << 0,
 };
 
+#if XTABLES_VERSION_CODE >= 12
+struct xt_xlate;
+
+struct xt_xlate_mt_params {
+	const void			*ip;
+	const struct xt_entry_match	*match;
+	int				numeric;
+	bool				escape_quotes;
+};
+
+struct xt_xlate_tg_params {
+	const void			*ip;
+	const struct xt_entry_target	*target;
+	int				numeric;
+	bool				escape_quotes;
+};
+#endif
+
 /* Include file for additions: new matches and targets. */
 struct xtables_match
 {
@@ -269,6 +287,12 @@ struct xtables_match
 	void (*x6_parse)(struct xt_option_call *);
 	void (*x6_fcheck)(struct xt_fcheck_call *);
 	const struct xt_option_entry *x6_options;
+
+#if XTABLES_VERSION_CODE >= 12
+	/* Translate iptables to nft */
+	int (*xlate)(struct xt_xlate *xl,
+		     const struct xt_xlate_mt_params *params);
+#endif
 
 	/* Size of per-extension instance extra "global" scratch space */
 	size_t udata_size;
@@ -346,6 +370,12 @@ struct xtables_target
 	void (*x6_parse)(struct xt_option_call *);
 	void (*x6_fcheck)(struct xt_fcheck_call *);
 	const struct xt_option_entry *x6_options;
+
+#if XTABLES_VERSION_CODE >= 12
+	/* Translate iptables to nft */
+	int (*xlate)(struct xt_xlate *xl,
+		     const struct xt_xlate_tg_params *params);
+#endif
 
 	size_t udata_size;
 

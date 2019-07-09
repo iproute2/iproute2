@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
@@ -18,11 +19,12 @@
 #include <limits.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <sys/sysinfo.h>
+#define _LINUX_SYSINFO_H /* avoid collision with musl header */
 #include <linux/genetlink.h>
 #include <linux/devlink.h>
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
-#include <sys/sysinfo.h>
 #include <sys/queue.h>
 
 #include "SNAPSHOT.h"
@@ -48,31 +50,52 @@
 #define HEALTH_REPORTER_TIMESTAMP_FMT_LEN 80
 
 static int g_new_line_count;
-
-#define pr_err(args...) fprintf(stderr, ##args)
-#define pr_out(args...)						\
-	do {							\
-		if (g_indent_newline) {				\
-			fprintf(stdout, "%s", g_indent_str);	\
-			g_indent_newline = false;		\
-		}						\
-		fprintf(stdout, ##args);			\
-		g_new_line_count = 0;				\
-	} while (0)
-
-#define pr_out_sp(num, args...)					\
-	do {							\
-		int ret = fprintf(stdout, ##args);		\
-		if (ret < num)					\
-			fprintf(stdout, "%*s", num - ret, "");	\
-		g_new_line_count = 0;				\
-	} while (0)
-
 static int g_indent_level;
 static bool g_indent_newline;
+
 #define INDENT_STR_STEP 2
 #define INDENT_STR_MAXLEN 32
 static char g_indent_str[INDENT_STR_MAXLEN + 1] = "";
+
+static void __attribute__((format(printf, 1, 2)))
+pr_err(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+
+static void __attribute__((format(printf, 1, 2)))
+pr_out(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (g_indent_newline) {
+		printf("%s", g_indent_str);
+		g_indent_newline = false;
+	}
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	g_new_line_count = 0;
+}
+
+static void __attribute__((format(printf, 2, 3)))
+pr_out_sp(unsigned int num, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vprintf(fmt, ap);
+	va_end(ap);
+
+	if (ret < num)
+		printf("%*s", num - ret, "");
+	g_new_line_count = 0;			\
+}
 
 static void __pr_out_indent_inc(void)
 {
@@ -1726,9 +1749,9 @@ static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
 		jsonw_u64_field(dl->jw, name, val);
 	} else {
 		if (g_indent_newline)
-			pr_out("%s %lu", name, val);
+			pr_out("%s %"PRIu64, name, val);
 		else
-			pr_out(" %s %lu", name, val);
+			pr_out(" %s %"PRIu64, name, val);
 	}
 }
 
@@ -1753,7 +1776,7 @@ static void pr_out_uint64_value(struct dl *dl, uint64_t value)
 	if (dl->json_output)
 		jsonw_u64(dl->jw, value);
 	else
-		pr_out(" %lu", value);
+		pr_out(" %"PRIu64, value);
 }
 
 static void pr_out_binary_value(struct dl *dl, uint8_t *data, uint32_t len)
