@@ -2829,6 +2829,12 @@ static void pr_out_port(struct dl *dl, struct nlattr **tb)
 
 		pr_out_str(dl, "flavour", port_flavour_name(port_flavour));
 	}
+	if (tb[DEVLINK_ATTR_PORT_NUMBER]) {
+		uint32_t port_number;
+
+		port_number = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_NUMBER]);
+		pr_out_uint(dl, "port", port_number);
+	}
 	if (tb[DEVLINK_ATTR_PORT_SPLIT_GROUP])
 		pr_out_uint(dl, "split_group",
 			    mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_SPLIT_GROUP]));
