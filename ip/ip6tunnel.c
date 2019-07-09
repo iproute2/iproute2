@@ -387,6 +387,9 @@ static int do_add(int cmd, int argc, char **argv)
 	if (parse_args(argc, argv, cmd, &p) < 0)
 		return -1;
 
+	if (!*p.name)
+		fprintf(stderr, "Tunnel interface name not specified\n");
+
 	if (p.proto == IPPROTO_GRE)
 		basedev = "ip6gre0";
 	else if (p.i_flags & VTI_ISVTI)
