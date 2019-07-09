@@ -150,7 +150,7 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	if (!tb[TCA_SAMPLE_PARMS] || !tb[TCA_SAMPLE_RATE] ||
 	    !tb[TCA_SAMPLE_PSAMPLE_GROUP]) {
-		print_string(PRINT_FP, NULL, "%s", "[NULL sample parameters]");
+		fprintf(stderr, "Missing sample parameters\n");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_SAMPLE_PARMS]);

@@ -188,7 +188,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_VLAN_MAX, arg);
 
 	if (!tb[TCA_VLAN_PARMS]) {
-		print_string(PRINT_FP, NULL, "%s", "[NULL vlan parameters]");
+		fprintf(stderr, "Missing vlanparameters\n");
 		return -1;
 	}
 	parm = RTA_DATA(tb[TCA_VLAN_PARMS]);

@@ -172,7 +172,7 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_CSUM_MAX, arg);
 
 	if (tb[TCA_CSUM_PARMS] == NULL) {
-		fprintf(f, "[NULL csum parameters]");
+		fprintf(stderr, "Missing csum parameters\n");
 		return -1;
 	}
 	sel = RTA_DATA(tb[TCA_CSUM_PARMS]);

@@ -287,7 +287,7 @@ print_mirred(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_MIRRED_MAX, arg);
 
 	if (tb[TCA_MIRRED_PARMS] == NULL) {
-		print_string(PRINT_FP, NULL, "%s", "[NULL mirred parameters]");
+		fprintf(stderr, "Missing mirred parameters\n");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_MIRRED_PARMS]);

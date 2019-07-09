@@ -196,7 +196,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	SPRINT_BUF(b1);
 	__u32 priority;
 	__u16 ptype;
-	struct tc_skbedit *p = NULL;
+	struct tc_skbedit *p;
 
 	if (arg == NULL)
 		return -1;
@@ -204,7 +204,7 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_SKBEDIT_MAX, arg);
 
 	if (tb[TCA_SKBEDIT_PARMS] == NULL) {
-		print_string(PRINT_FP, NULL, "%s", "[NULL skbedit parameters]");
+		fprintf(stderr, "Missing skbedit parameters\n");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_SKBEDIT_PARMS]);

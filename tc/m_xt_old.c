@@ -354,6 +354,8 @@ print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_IPT_MAX + 1];
 	struct xt_entry_target *t = NULL;
+	struct xtables_target *m;
+	__u32 hook;
 
 	if (arg == NULL)
 		return -1;
@@ -363,70 +365,66 @@ print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_IPT_MAX, arg);
 
 	if (tb[TCA_IPT_TABLE] == NULL) {
-		fprintf(f, "[NULL ipt table name ] assuming mangle ");
+		fprintf(stderr, "Missing ipt table name, assuming mangle\n");
 	} else {
 		fprintf(f, "tablename: %s ",
 			rta_getattr_str(tb[TCA_IPT_TABLE]));
 	}
 
 	if (tb[TCA_IPT_HOOK] == NULL) {
-		fprintf(f, "[NULL ipt hook name ]\n ");
+		fprintf(stderr, "Missing ipt hook name\n");
 		return -1;
-	} else {
-		__u32 hook;
-
-		hook = rta_getattr_u32(tb[TCA_IPT_HOOK]);
-		fprintf(f, " hook: %s\n", ipthooks[hook]);
 	}
 
 	if (tb[TCA_IPT_TARG] == NULL) {
-		fprintf(f, "\t[NULL ipt target parameters ]\n");
+		fprintf(stderr, "Missing ipt target parameters\n");
 		return -1;
-	} else {
-		struct xtables_target *m = NULL;
+	}
 
-		t = RTA_DATA(tb[TCA_IPT_TARG]);
-		m = find_target(t->u.user.name, TRY_LOAD);
-		if (m != NULL) {
-			if (build_st(m, t) < 0) {
-				fprintf(stderr, " %s error\n", m->name);
-				return -1;
-			}
+	hook = rta_getattr_u32(tb[TCA_IPT_HOOK]);
+	fprintf(f, " hook: %s\n", ipthooks[hook]);
 
-			opts =
-			    merge_options(opts, m->extra_opts,
-					  &m->option_offset);
-		} else {
-			fprintf(stderr, " failed to find target %s\n\n",
-				t->u.user.name);
+	t = RTA_DATA(tb[TCA_IPT_TARG]);
+	m = find_target(t->u.user.name, TRY_LOAD);
+	if (m != NULL) {
+		if (build_st(m, t) < 0) {
+			fprintf(stderr, " %s error\n", m->name);
 			return -1;
 		}
-		fprintf(f, "\ttarget ");
-		m->print(NULL, m->t, 0);
-		if (tb[TCA_IPT_INDEX] == NULL) {
-			fprintf(f, " [NULL ipt target index ]\n");
-		} else {
-			__u32 index;
 
-			index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
-			fprintf(f, "\n\tindex %u", index);
-		}
-
-		if (tb[TCA_IPT_CNT]) {
-			struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);
-
-			fprintf(f, " ref %d bind %d", c->refcnt, c->bindcnt);
-		}
-		if (show_stats) {
-			if (tb[TCA_IPT_TM]) {
-				struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
-
-				print_tm(f, tm);
-			}
-		}
-		fprintf(f, "\n");
-
+		opts =
+			merge_options(opts, m->extra_opts,
+				      &m->option_offset);
+	} else {
+		fprintf(stderr, " failed to find target %s\n\n",
+			t->u.user.name);
+		return -1;
 	}
+	fprintf(f, "\ttarget ");
+	m->print(NULL, m->t, 0);
+	if (tb[TCA_IPT_INDEX] == NULL) {
+		fprintf(f, " [NULL ipt target index ]\n");
+	} else {
+		__u32 index;
+
+		index = rta_getattr_u32(tb[TCA_IPT_INDEX]);
+		fprintf(f, "\n\tindex %u", index);
+	}
+
+	if (tb[TCA_IPT_CNT]) {
+		struct tc_cnt *c  = RTA_DATA(tb[TCA_IPT_CNT]);
+
+		fprintf(f, " ref %d bind %d", c->refcnt, c->bindcnt);
+	}
+	if (show_stats) {
+		if (tb[TCA_IPT_TM]) {
+			struct tcf_t *tm = RTA_DATA(tb[TCA_IPT_TM]);
+
+			print_tm(f, tm);
+		}
+	}
+	fprintf(f, "\n");
+
 	free_opts(opts);
 
 	return 0;

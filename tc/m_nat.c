@@ -152,7 +152,7 @@ print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_NAT_MAX, arg);
 
 	if (tb[TCA_NAT_PARMS] == NULL) {
-		print_string(PRINT_FP, NULL, "%s", "[NULL nat parameters]");
+		fprintf(stderr, "Missing nat parameters\n");
 		return -1;
 	}
 	sel = RTA_DATA(tb[TCA_NAT_PARMS]);

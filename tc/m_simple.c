@@ -171,13 +171,13 @@ static int print_simple(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_DEF_MAX, arg);
 
 	if (tb[TCA_DEF_PARMS] == NULL) {
-		fprintf(f, "[NULL simple parameters]");
+		fprintf(stderr, "Missing simple parameters\n");
 		return -1;
 	}
 	sel = RTA_DATA(tb[TCA_DEF_PARMS]);
 
 	if (tb[TCA_DEF_DATA] == NULL) {
-		fprintf(f, "[missing simple string]");
+		fprintf(stderr, "Missing simple string\n");
 		return -1;
 	}
 

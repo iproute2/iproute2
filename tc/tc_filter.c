@@ -375,8 +375,7 @@ int print_filter(struct nlmsghdr *n, void *arg)
 			if (q)
 				q->print_fopt(q, fp, tb[TCA_OPTIONS], t->tcm_handle);
 			else
-				print_string(PRINT_FP, NULL,
-					     "[cannot parse parameters]", NULL);
+				fprintf(stderr, "cannot parse option parameters\n");
 			close_json_object();
 		}
 	}
