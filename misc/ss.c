@@ -2361,7 +2361,7 @@ static int proc_inet_split_line(char *line, char **loc, char **rem, char **data)
 
 static char *sprint_bw(char *buf, double bw)
 {
-	if (!resolve_services)
+	if (numeric)
 		sprintf(buf, "%.0f", bw);
 	else if (bw > 1000000.)
 		sprintf(buf, "%.1fM", bw / 1000000.);
