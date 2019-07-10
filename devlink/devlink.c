@@ -1779,29 +1779,31 @@ static void pr_out_uint64_value(struct dl *dl, uint64_t value)
 		pr_out(" %"PRIu64, value);
 }
 
+static bool is_binary_eol(int i)
+{
+	return !(i%16);
+}
+
 static void pr_out_binary_value(struct dl *dl, uint8_t *data, uint32_t len)
 {
-	int i = 1;
+	int i = 0;
 
 	if (dl->json_output)
 		jsonw_start_array(dl->jw);
-	else
-		pr_out("\n");
 
 	while (i < len) {
-		if (dl->json_output) {
+		if (dl->json_output)
 			jsonw_printf(dl->jw, "%d", data[i]);
-		} else {
-			pr_out(" %02x", data[i]);
-			if (!(i % 16))
-				pr_out("\n");
-		}
+		else
+			pr_out("%02x ", data[i]);
 		i++;
+		if (!dl->json_output && is_binary_eol(i))
+			__pr_out_newline();
 	}
 	if (dl->json_output)
 		jsonw_end_array(dl->jw);
-	else if ((i - 1) % 16)
-		pr_out("\n");
+	else if (!is_binary_eol(i))
+		__pr_out_newline();
 }
 
 static void pr_out_str_value(struct dl *dl, const char *value)
