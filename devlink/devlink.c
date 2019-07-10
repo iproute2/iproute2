@@ -2794,8 +2794,26 @@ static const char *port_flavour_name(uint16_t flavour)
 		return "cpu";
 	case DEVLINK_PORT_FLAVOUR_DSA:
 		return "dsa";
+	case DEVLINK_PORT_FLAVOUR_PCI_PF:
+		return "pcipf";
+	case DEVLINK_PORT_FLAVOUR_PCI_VF:
+		return "pcivf";
 	default:
 		return "<unknown flavour>";
+	}
+}
+
+static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
+{
+	uint16_t fn_num;
+
+	if (tb[DEVLINK_ATTR_PORT_PCI_PF_NUMBER]) {
+		fn_num = mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_PCI_PF_NUMBER]);
+		pr_out_uint(dl, "pfnum", fn_num);
+	}
+	if (tb[DEVLINK_ATTR_PORT_PCI_VF_NUMBER]) {
+		fn_num = mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_PCI_VF_NUMBER]);
+		pr_out_uint(dl, "vfnum", fn_num);
 	}
 }
 
@@ -2828,6 +2846,15 @@ static void pr_out_port(struct dl *dl, struct nlattr **tb)
 				mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_FLAVOUR]);
 
 		pr_out_str(dl, "flavour", port_flavour_name(port_flavour));
+
+		switch (port_flavour) {
+		case DEVLINK_PORT_FLAVOUR_PCI_PF:
+		case DEVLINK_PORT_FLAVOUR_PCI_VF:
+			pr_out_port_pfvf_num(dl, tb);
+			break;
+		default:
+			break;
+		}
 	}
 	if (tb[DEVLINK_ATTR_PORT_NUMBER]) {
 		uint32_t port_number;
