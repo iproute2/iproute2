@@ -78,6 +78,8 @@ __PF(TIPC,tipc)
 __PF(AOE,aoe)
 __PF(8021Q,802.1Q)
 __PF(8021AD,802.1ad)
+__PF(MPLS_UC,mpls_uc)
+__PF(MPLS_MC,mpls_mc)
 
 { 0x8100, "802.1Q" },
 { 0x88cc, "LLDP" },
