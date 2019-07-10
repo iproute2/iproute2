@@ -6105,13 +6105,13 @@ static int cmd_fmsg_object_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_OK;
 }
 
-static int cmd_health_object_common(struct dl *dl, uint8_t cmd)
+static int cmd_health_object_common(struct dl *dl, uint8_t cmd, uint16_t flags)
 {
 	struct fmsg_cb_data data;
 	struct nlmsghdr *nlh;
 	int err;
 
-	nlh = mnlg_msg_prepare(dl->nlg, cmd,  NLM_F_REQUEST | NLM_F_ACK);
+	nlh = mnlg_msg_prepare(dl->nlg, cmd, flags | NLM_F_REQUEST | NLM_F_ACK);
 
 	err = dl_argv_parse_put(nlh, dl,
 				DL_OPT_HANDLE | DL_OPT_HEALTH_REPORTER_NAME, 0);
@@ -6126,12 +6126,16 @@ static int cmd_health_object_common(struct dl *dl, uint8_t cmd)
 
 static int cmd_health_dump_show(struct dl *dl)
 {
-	return cmd_health_object_common(dl, DEVLINK_CMD_HEALTH_REPORTER_DUMP_GET);
+	return cmd_health_object_common(dl,
+					DEVLINK_CMD_HEALTH_REPORTER_DUMP_GET,
+					NLM_F_DUMP);
 }
 
 static int cmd_health_diagnose(struct dl *dl)
 {
-	return cmd_health_object_common(dl, DEVLINK_CMD_HEALTH_REPORTER_DIAGNOSE);
+	return cmd_health_object_common(dl,
+					DEVLINK_CMD_HEALTH_REPORTER_DIAGNOSE,
+					0);
 }
 
 static int cmd_health_recover(struct dl *dl)
