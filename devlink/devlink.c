@@ -1788,9 +1788,6 @@ static void pr_out_binary_value(struct dl *dl, uint8_t *data, uint32_t len)
 {
 	int i = 0;
 
-	if (dl->json_output)
-		jsonw_start_array(dl->jw);
-
 	while (i < len) {
 		if (dl->json_output)
 			jsonw_printf(dl->jw, "%d", data[i]);
@@ -1800,9 +1797,7 @@ static void pr_out_binary_value(struct dl *dl, uint8_t *data, uint32_t len)
 		if (!dl->json_output && is_binary_eol(i))
 			__pr_out_newline();
 	}
-	if (dl->json_output)
-		jsonw_end_array(dl->jw);
-	else if (!is_binary_eol(i))
+	if (!dl->json_output && !is_binary_eol(i))
 		__pr_out_newline();
 }
 
