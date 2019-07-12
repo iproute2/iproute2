@@ -308,6 +308,32 @@ void tnl_print_endpoint(const char *name, const struct rtattr *rta, int family)
 	}
 }
 
+void tnl_print_gre_flags(__u8 proto,
+			 __be16 i_flags, __be16 o_flags,
+			 __be32 i_key, __be32 o_key)
+{
+	if ((i_flags & GRE_KEY) && (o_flags & GRE_KEY) &&
+	    o_key == i_key) {
+		printf(" key %u", ntohl(i_key));
+	} else {
+		if (i_flags & GRE_KEY)
+			printf(" ikey %u", ntohl(i_key));
+		if (o_flags & GRE_KEY)
+			printf(" okey %u", ntohl(o_key));
+	}
+
+	if (proto == IPPROTO_GRE) {
+		if (i_flags & GRE_SEQ)
+			printf("%s  Drop packets out of sequence.", _SL_);
+		if (i_flags & GRE_CSUM)
+			printf("%s  Checksum in received packet is required.", _SL_);
+		if (o_flags & GRE_SEQ)
+			printf("%s  Sequence packets on output.", _SL_);
+		if (o_flags & GRE_CSUM)
+			printf("%s  Checksum output packets.", _SL_);
+	}
+}
+
 static void tnl_print_stats(const struct rtnl_link_stats64 *s)
 {
 	printf("%s", _SL_);
