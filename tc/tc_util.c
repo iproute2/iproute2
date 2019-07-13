@@ -198,7 +198,7 @@ int parse_percent(double *val, const char *str)
 	char *p;
 
 	*val = strtod(str, &p) / 100.;
-	if (*val == HUGE_VALF || *val == HUGE_VALL)
+	if (*val > 1.0 || *val < 0.0)
 		return 1;
 	if (*p && strcmp(p, "%"))
 		return -1;
@@ -226,15 +226,15 @@ static int parse_percent_rate(char *rate, size_t len,
 	if (ret != 1)
 		goto malf;
 
-	if (parse_percent(&perc, str_perc))
+	ret = parse_percent(&perc, str_perc);
+	if (ret == 1) {
+		fprintf(stderr, "Invalid rate specified; should be between [0,100]%% but is %s\n", str);
+		goto err;
+	} else if (ret == -1) {
 		goto malf;
+	}
 
 	free(str_perc);
-
-	if (perc > 1.0 || perc < 0.0) {
-		fprintf(stderr, "Invalid rate specified; should be between [0,100]%% but is %s\n", str);
-		return -1;
-	}
 
 	rate_bit = perc * dev_mbit * 1000 * 1000;
 
@@ -247,8 +247,9 @@ static int parse_percent_rate(char *rate, size_t len,
 	return 0;
 
 malf:
-	free(str_perc);
 	fprintf(stderr, "Specified rate value could not be read or is malformed\n");
+err:
+	free(str_perc);
 	return -1;
 }
 
