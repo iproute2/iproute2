@@ -17,6 +17,8 @@ static int stat_help(struct rd *rd)
 	pr_out("       %s statistic OBJECT set COUNTER_SCOPE [DEV/PORT_INDEX] auto {CRITERIA | off}\n", rd->filename);
 	pr_out("       %s statistic OBJECT bind COUNTER_SCOPE [DEV/PORT_INDEX] [OBJECT-ID] [COUNTER-ID]\n", rd->filename);
 	pr_out("       %s statistic OBJECT unbind COUNTER_SCOPE [DEV/PORT_INDEX] [COUNTER-ID]\n", rd->filename);
+	pr_out("       %s statistic show\n", rd->filename);
+	pr_out("       %s statistic show link [ DEV/PORT_INDEX ]\n", rd->filename);
 	pr_out("where  OBJECT: = { qp }\n");
 	pr_out("       CRITERIA : = { type }\n");
 	pr_out("       COUNTER_SCOPE: = { link | dev }\n");
@@ -31,6 +33,8 @@ static int stat_help(struct rd *rd)
 	pr_out("       %s statistic qp bind link mlx5_2/1 lqpn 178 cntn 4\n", rd->filename);
 	pr_out("       %s statistic qp unbind link mlx5_2/1 cntn 4\n", rd->filename);
 	pr_out("       %s statistic qp unbind link mlx5_2/1 cntn 4 lqpn 178\n", rd->filename);
+	pr_out("       %s statistic show\n", rd->filename);
+	pr_out("       %s statistic show link mlx5_2/1\n", rd->filename);
 
 	return 0;
 }
@@ -674,10 +678,78 @@ static int stat_qp(struct rd *rd)
 	return rd_exec_cmd(rd, cmds, "parameter");
 }
 
+static int stat_show_parse_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
+	struct rd *rd = data;
+	const char *name;
+	uint32_t port;
+	int ret;
+
+	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
+	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME] ||
+	    !tb[RDMA_NLDEV_ATTR_PORT_INDEX] ||
+	    !tb[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS])
+		return MNL_CB_ERROR;
+
+	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
+	port = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_PORT_INDEX]);
+	if (rd->json_output) {
+		jsonw_string_field(rd->jw, "ifname", name);
+		jsonw_uint_field(rd->jw, "port", port);
+	} else {
+		pr_out("link %s/%u ", name, port);
+	}
+
+	ret = res_get_hwcounters(rd, tb[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS], true);
+
+	if (!rd->json_output)
+		pr_out("\n");
+	return ret;
+}
+
+static int stat_show_one_link(struct rd *rd)
+{
+	int flags = NLM_F_REQUEST | NLM_F_ACK;
+	uint32_t seq;
+	int ret;
+
+	if (!rd->port_idx)
+		return 0;
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_STAT_GET, &seq,  flags);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_PORT_INDEX, rd->port_idx);
+	ret = rd_send_msg(rd);
+	if (ret)
+		return ret;
+
+	return rd_recv_msg(rd, stat_show_parse_cb, rd, seq);
+}
+
+static int stat_show_link(struct rd *rd)
+{
+	return rd_exec_link(rd, stat_show_one_link, false);
+}
+
+static int stat_show(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL,		stat_show_link },
+		{ "link",	stat_show_link },
+		{ "help",	stat_help },
+		{ 0 }
+	};
+
+	return rd_exec_cmd(rd, cmds, "parameter");
+}
+
 int cmd_stat(struct rd *rd)
 {
 	const struct rd_cmd cmds[] =  {
-		{ NULL,		stat_help },
+		{ NULL,		stat_show },
+		{ "show",	stat_show },
+		{ "list",	stat_show },
 		{ "help",	stat_help },
 		{ "qp",		stat_qp },
 		{ 0 }
