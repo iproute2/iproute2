@@ -19,7 +19,7 @@ rdma \- RDMA tool
 
 .ti -8
 .IR OBJECT " := { "
-.BR dev " | " link " | " system " }"
+.BR dev " | " link " | " system " | " statistic " }"
 .sp
 
 .ti -8
@@ -74,6 +74,10 @@ Generate JSON output.
 .B sys
 - RDMA subsystem related.
 
+.TP
+.B statistic
+- RDMA counter statistic related.
+
 .PP
 The names of all objects may be written in full or
 abbreviated form, for example
@@ -112,6 +116,7 @@ Exit status is 0 if command was successful or a positive integer upon failure.
 .BR rdma-link (8),
 .BR rdma-resource (8),
 .BR rdma-system (8),
+.BR rdma-statistic (8),
 .br
 
 .SH REPORTING BUGS
