@@ -445,6 +445,7 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_ENTRY_VALUE] = MNL_TYPE_U64,
 	[RDMA_NLDEV_ATTR_STAT_MODE] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_STAT_RES] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_STAT_AUTO_MODE_MASK] = MNL_TYPE_U32,
 };
 
 int rd_attr_check(const struct nlattr *attr, int *typep)
