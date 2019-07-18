@@ -289,6 +289,41 @@ bits is assumed.
 .TQ
 .BI enc_ttl " NUMBER"
 .TQ
+.BR
+.TP
+.BI ct_state " CT_STATE"
+.TQ
+.BI ct_zone " CT_MASKED_ZONE"
+.TQ
+.BI ct_mark " CT_MASKED_MARK"
+.TQ
+.BI ct_label " CT_MASKED_LABEL"
+Matches on connection tracking info
+.RS
+.TP
+.I CT_STATE
+Match the connection state, and can ne combination of [{+|-}flag] flags, where flag can be one of
+.RS
+.TP
+trk - Tracked connection.
+.TP
+new - New connection.
+.TP
+est - Established connection.
+.TP
+Example: +trk+est
+.RE
+.TP
+.I CT_MASKED_ZONE
+Match the connection zone, and can be masked.
+.TP
+.I CT_MASKED_MARK
+32bit match on the connection mark, and can be masked.
+.TP
+.I CT_MASKED_LABEL
+128bit match on the connection label, and can be masked.
+.RE
+.TP
 .BI geneve_opts " OPTIONS"
 Match on IP tunnel metadata. Key id
 .I NUMBER

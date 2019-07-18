@@ -127,4 +127,8 @@ int action_a2n(char *arg, int *result, bool allow_num);
 
 bool tc_qdisc_block_exists(__u32 block_index);
 
+void print_masked_u32(const char *name, struct rtattr *attr,
+		      struct rtattr *mask_attr);
+void print_masked_u16(const char *name, struct rtattr *attr,
+		      struct rtattr *mask_attr);
 #endif
