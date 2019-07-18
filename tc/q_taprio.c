@@ -159,6 +159,7 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 	__s64 cycle_time_extension = 0;
 	struct list_head sched_entries;
 	struct rtattr *tail, *l;
+	__u32 taprio_flags = 0;
 	__s64 cycle_time = 0;
 	__s64 base_time = 0;
 	int err, idx;
@@ -281,6 +282,17 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 				explain_clockid(*argv);
 				return -1;
 			}
+		} else if (strcmp(*argv, "flags") == 0) {
+			NEXT_ARG();
+			if (taprio_flags) {
+				fprintf(stderr, "taprio: duplicate \"flags\" specification\n");
+				return -1;
+			}
+			if (get_u32(&taprio_flags, *argv, 0)) {
+				PREV_ARG();
+				return -1;
+			}
+
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -296,6 +308,9 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 
 	if (clockid != CLOCKID_INVALID)
 		addattr_l(n, 1024, TCA_TAPRIO_ATTR_SCHED_CLOCKID, &clockid, sizeof(clockid));
+
+	if (taprio_flags)
+		addattr_l(n, 1024, TCA_TAPRIO_ATTR_FLAGS, &taprio_flags, sizeof(taprio_flags));
 
 	if (opt.num_tc > 0)
 		addattr_l(n, 1024, TCA_TAPRIO_ATTR_PRIOMAP, &opt, sizeof(opt));
@@ -441,6 +456,13 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		clockid = rta_getattr_s32(tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]);
 
 	print_string(PRINT_ANY, "clockid", "clockid %s", get_clock_name(clockid));
+
+	if (tb[TCA_TAPRIO_ATTR_FLAGS]) {
+		__u32 flags;
+
+		flags = rta_getattr_u32(tb[TCA_TAPRIO_ATTR_FLAGS]);
+		print_0xhex(PRINT_ANY, "flags", " flags %#x", flags);
+	}
 
 	print_schedule(f, tb);
 
