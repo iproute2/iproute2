@@ -25,7 +25,6 @@
 #include <linux/devlink.h>
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
-#include <sys/queue.h>
 
 #include "SNAPSHOT.h"
 #include "list.h"
@@ -5981,13 +5980,13 @@ static int fmsg_value_show(struct dl *dl, int type, struct nlattr *nl_data)
 
 struct nest_qentry {
 	int attr_type;
-	TAILQ_ENTRY(nest_qentry) nest_entries;
+	struct list_head nest_entries;
 };
 
 struct fmsg_cb_data {
 	struct dl *dl;
 	uint8_t value_type;
-	TAILQ_HEAD(, nest_qentry) qhead;
+	struct list_head qhead;
 };
 
 static int cmd_fmsg_nest_queue(struct fmsg_cb_data *fmsg_data,
@@ -6001,13 +6000,13 @@ static int cmd_fmsg_nest_queue(struct fmsg_cb_data *fmsg_data,
 			return -ENOMEM;
 
 		entry->attr_type = *attr_value;
-		TAILQ_INSERT_HEAD(&fmsg_data->qhead, entry, nest_entries);
+		list_add(&fmsg_data->qhead, &entry->nest_entries);
 	} else {
-		if (TAILQ_EMPTY(&fmsg_data->qhead))
+		if (list_empty(&fmsg_data->qhead))
 			return MNL_CB_ERROR;
-		entry = TAILQ_FIRST(&fmsg_data->qhead);
+		entry = list_first_entry(&fmsg_data->qhead, struct nest_qentry, nest_entries);
 		*attr_value = entry->attr_type;
-		TAILQ_REMOVE(&fmsg_data->qhead, entry, nest_entries);
+		list_del(&entry->nest_entries);
 		free(entry);
 	}
 	return MNL_CB_OK;
@@ -6116,7 +6115,7 @@ static int cmd_health_object_common(struct dl *dl, uint8_t cmd, uint16_t flags)
 		return err;
 
 	data.dl = dl;
-	TAILQ_INIT(&data.qhead);
+	INIT_LIST_HEAD(&data.qhead);
 	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_fmsg_object_cb, &data);
 	return err;
 }
