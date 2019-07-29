@@ -449,6 +449,7 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_STAT_MODE] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_STAT_RES] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_STAT_AUTO_MODE_MASK] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_DEV_DIM] = MNL_TYPE_U8,
 };
 
 int rd_attr_check(const struct nlattr *attr, int *typep)
@@ -787,6 +788,11 @@ static int print_driver_string(struct rd *rd, const char *key_str,
 	} else {
 		return pr_out("%s %s ", key_str, val_str);
 	}
+}
+
+void print_on_off(struct rd *rd, const char *key_str, bool on)
+{
+	print_driver_string(rd, key_str, (on) ? "on":"off");
 }
 
 static int print_driver_s32(struct rd *rd, const char *key_str, int32_t val,

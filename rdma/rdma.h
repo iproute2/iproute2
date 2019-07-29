@@ -136,6 +136,7 @@ int rd_attr_check(const struct nlattr *attr, int *typep);
 void print_driver_table(struct rd *rd, struct nlattr *tb);
 void newline(struct rd *rd);
 void newline_indent(struct rd *rd);
+void print_on_off(struct rd *rd, const char *key_str, bool on);
 #define MAX_LINE_LENGTH 80
 
 #endif /* _RDMA_TOOL_H_ */
