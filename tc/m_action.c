@@ -556,60 +556,39 @@ bad_val:
 	return ret;
 }
 
-struct tc_action_req {
-	struct nlmsghdr		n;
-	struct tcamsg		t;
-	char			buf[MAX_MSG];
-};
-
 static int tc_action_modify(int cmd, unsigned int flags,
-			    int *argc_p, char ***argv_p,
-			    void *buf, size_t buflen)
+			    int *argc_p, char ***argv_p)
 {
-	struct tc_action_req *req, action_req;
-	char **argv = *argv_p;
-	struct rtattr *tail;
 	int argc = *argc_p;
-	struct iovec iov;
+	char **argv = *argv_p;
 	int ret = 0;
-
-	if (buf) {
-		req = buf;
-		if (buflen < sizeof (struct tc_action_req)) {
-			fprintf(stderr, "buffer is too small: %zu\n", buflen);
-			return -1;
-		}
-	} else {
-		memset(&action_req, 0, sizeof (struct tc_action_req));
-		req = &action_req;
-	}
-
-	req->n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg));
-	req->n.nlmsg_flags = NLM_F_REQUEST | flags;
-	req->n.nlmsg_type = cmd;
-	req->t.tca_family = AF_UNSPEC;
-	tail = NLMSG_TAIL(&req->n);
+	struct {
+		struct nlmsghdr         n;
+		struct tcamsg           t;
+		char                    buf[MAX_MSG];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcamsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | flags,
+		.n.nlmsg_type = cmd,
+		.t.tca_family = AF_UNSPEC,
+	};
+	struct rtattr *tail = NLMSG_TAIL(&req.n);
 
 	argc -= 1;
 	argv += 1;
-	if (parse_action(&argc, &argv, TCA_ACT_TAB, &req->n)) {
+	if (parse_action(&argc, &argv, TCA_ACT_TAB, &req.n)) {
 		fprintf(stderr, "Illegal \"action\"\n");
 		return -1;
 	}
-	tail->rta_len = (void *) NLMSG_TAIL(&req->n) - (void *) tail;
+	tail->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail;
 
-	*argc_p = argc;
-	*argv_p = argv;
-
-	if (buf)
-		return 0;
-
-	iov.iov_base = &req->n;
-	iov.iov_len = req->n.nlmsg_len;
-	if (rtnl_talk_iov(&rth, &iov, 1, NULL) < 0) {
+	if (rtnl_talk(&rth, &req.n, NULL) < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		ret = -1;
 	}
+
+	*argc_p = argc;
+	*argv_p = argv;
 
 	return ret;
 }
@@ -711,7 +690,7 @@ bad_val:
 	return ret;
 }
 
-int do_action(int argc, char **argv, void *buf, size_t buflen)
+int do_action(int argc, char **argv)
 {
 
 	int ret = 0;
@@ -721,12 +700,12 @@ int do_action(int argc, char **argv, void *buf, size_t buflen)
 		if (matches(*argv, "add") == 0) {
 			ret =  tc_action_modify(RTM_NEWACTION,
 						NLM_F_EXCL | NLM_F_CREATE,
-						&argc, &argv, buf, buflen);
+						&argc, &argv);
 		} else if (matches(*argv, "change") == 0 ||
 			  matches(*argv, "replace") == 0) {
 			ret = tc_action_modify(RTM_NEWACTION,
 					       NLM_F_CREATE | NLM_F_REPLACE,
-					       &argc, &argv, buf, buflen);
+					       &argc, &argv);
 		} else if (matches(*argv, "delete") == 0) {
 			argc -= 1;
 			argv += 1;
