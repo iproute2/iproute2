@@ -270,6 +270,7 @@ static int batch(const char *name)
 			if (!force)
 				break;
 		}
+		fflush(stdout);
 	}
 
 	free(line);
