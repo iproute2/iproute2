@@ -314,24 +314,43 @@ void tnl_print_gre_flags(__u8 proto,
 {
 	if ((i_flags & GRE_KEY) && (o_flags & GRE_KEY) &&
 	    o_key == i_key) {
-		printf(" key %u", ntohl(i_key));
+		print_uint(PRINT_ANY, "key", " key %u", ntohl(i_key));
 	} else {
 		if (i_flags & GRE_KEY)
-			printf(" ikey %u", ntohl(i_key));
+			print_uint(PRINT_ANY, "ikey", " ikey %u", ntohl(i_key));
 		if (o_flags & GRE_KEY)
-			printf(" okey %u", ntohl(o_key));
+			print_uint(PRINT_ANY, "okey", " okey %u", ntohl(o_key));
 	}
 
-	if (proto == IPPROTO_GRE) {
-		if (i_flags & GRE_SEQ)
+	if (proto != IPPROTO_GRE)
+		return;
+
+	open_json_array(PRINT_JSON, "flags");
+	if (i_flags & GRE_SEQ) {
+		if (is_json_context())
+			print_string(PRINT_JSON, NULL, "%s", "rx_drop_ooseq");
+		else
 			printf("%s  Drop packets out of sequence.", _SL_);
-		if (i_flags & GRE_CSUM)
+	}
+	if (i_flags & GRE_CSUM) {
+		if (is_json_context())
+			print_string(PRINT_JSON, NULL, "%s", "rx_csum");
+		else
 			printf("%s  Checksum in received packet is required.", _SL_);
-		if (o_flags & GRE_SEQ)
+	}
+	if (o_flags & GRE_SEQ) {
+		if (is_json_context())
+			print_string(PRINT_JSON, NULL, "%s", "tx_seq");
+		else
 			printf("%s  Sequence packets on output.", _SL_);
-		if (o_flags & GRE_CSUM)
+	}
+	if (o_flags & GRE_CSUM) {
+		if (is_json_context())
+			print_string(PRINT_JSON, NULL, "%s", "tx_csum");
+		else
 			printf("%s  Checksum output packets.", _SL_);
 	}
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static void tnl_print_stats(const struct rtnl_link_stats64 *s)
@@ -417,6 +436,7 @@ static int print_nlmsg_tunnel(struct nlmsghdr *n, void *arg)
 
 int do_tunnels_list(struct tnl_print_nlmsg_info *info)
 {
+	new_json_obj(json);
 	if (rtnl_linkdump_req(&rth, preferred_family) < 0) {
 		perror("Cannot send dump request\n");
 		return -1;
@@ -426,6 +446,7 @@ int do_tunnels_list(struct tnl_print_nlmsg_info *info)
 		fprintf(stderr, "Dump terminated\n");
 		return -1;
 	}
+	delete_json_obj();
 
 	return 0;
 }
