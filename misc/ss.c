@@ -2414,7 +2414,7 @@ static void sctp_stats_print(struct sctp_info *s)
 	if (s->sctpi_s_pd_point)
 		out(" pdpoint:%d", s->sctpi_s_pd_point);
 	if (s->sctpi_s_nodelay)
-		out(" nodealy:%d", s->sctpi_s_nodelay);
+		out(" nodelay:%d", s->sctpi_s_nodelay);
 	if (s->sctpi_s_disable_fragments)
 		out(" nofrag:%d", s->sctpi_s_disable_fragments);
 	if (s->sctpi_s_v4mapped)
