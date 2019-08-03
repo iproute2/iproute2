@@ -2937,7 +2937,7 @@ static void sctp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		len = RTA_PAYLOAD(tb[INET_DIAG_LOCALS]);
 		sa = RTA_DATA(tb[INET_DIAG_LOCALS]);
 
-		out("locals:%s", format_host_sa(sa));
+		out(" locals:%s", format_host_sa(sa));
 		for (sa++, len -= sizeof(*sa); len > 0; sa++, len -= sizeof(*sa))
 			out(",%s", format_host_sa(sa));
 
