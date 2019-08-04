@@ -148,9 +148,11 @@ const char *qp_types_to_str(uint8_t idx)
 						     "UC", "UD", "RAW_IPV6",
 						     "RAW_ETHERTYPE",
 						     "UNKNOWN", "RAW_PACKET",
-						     "XRC_INI", "XRC_TGT" };
+						     "XRC_INI", "XRC_TGT",
+						     [0xFF] = "DRIVER",
+	};
 
-	if (idx < ARRAY_SIZE(qp_types_str))
+	if (idx < ARRAY_SIZE(qp_types_str) && qp_types_str[idx])
 		return qp_types_str[idx];
 	return "UNKNOWN";
 }
