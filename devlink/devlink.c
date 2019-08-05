@@ -5978,35 +5978,36 @@ static int fmsg_value_show(struct dl *dl, int type, struct nlattr *nl_data)
 	return MNL_CB_OK;
 }
 
-struct nest_qentry {
+struct nest_entry {
 	int attr_type;
-	struct list_head nest_entries;
+	struct list_head list;
 };
 
 struct fmsg_cb_data {
 	struct dl *dl;
 	uint8_t value_type;
-	struct list_head qhead;
+	struct list_head entry_list;
 };
 
 static int cmd_fmsg_nest_queue(struct fmsg_cb_data *fmsg_data,
 			       uint8_t *attr_value, bool insert)
 {
-	struct nest_qentry *entry = NULL;
+	struct nest_entry *entry;
 
 	if (insert) {
-		entry = malloc(sizeof(struct nest_qentry));
+		entry = malloc(sizeof(struct nest_entry));
 		if (!entry)
 			return -ENOMEM;
 
 		entry->attr_type = *attr_value;
-		list_add(&fmsg_data->qhead, &entry->nest_entries);
+		list_add(&entry->list, &fmsg_data->entry_list);
 	} else {
-		if (list_empty(&fmsg_data->qhead))
+		if (list_empty(&fmsg_data->entry_list))
 			return MNL_CB_ERROR;
-		entry = list_first_entry(&fmsg_data->qhead, struct nest_qentry, nest_entries);
+		entry = list_first_entry(&fmsg_data->entry_list,
+					 struct nest_entry, list);
 		*attr_value = entry->attr_type;
-		list_del(&entry->nest_entries);
+		list_del(&entry->list);
 		free(entry);
 	}
 	return MNL_CB_OK;
@@ -6115,7 +6116,7 @@ static int cmd_health_object_common(struct dl *dl, uint8_t cmd, uint16_t flags)
 		return err;
 
 	data.dl = dl;
-	INIT_LIST_HEAD(&data.qhead);
+	INIT_LIST_HEAD(&data.entry_list);
 	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_fmsg_object_cb, &data);
 	return err;
 }
