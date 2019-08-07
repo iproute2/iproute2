@@ -2414,7 +2414,7 @@ static void sctp_stats_print(struct sctp_info *s)
 	if (s->sctpi_s_pd_point)
 		out(" pdpoint:%d", s->sctpi_s_pd_point);
 	if (s->sctpi_s_nodelay)
-		out(" nodealy:%d", s->sctpi_s_nodelay);
+		out(" nodelay:%d", s->sctpi_s_nodelay);
 	if (s->sctpi_s_disable_fragments)
 		out(" nofrag:%d", s->sctpi_s_disable_fragments);
 	if (s->sctpi_s_v4mapped)
@@ -2937,7 +2937,7 @@ static void sctp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		len = RTA_PAYLOAD(tb[INET_DIAG_LOCALS]);
 		sa = RTA_DATA(tb[INET_DIAG_LOCALS]);
 
-		out("locals:%s", format_host_sa(sa));
+		out(" locals:%s", format_host_sa(sa));
 		for (sa++, len -= sizeof(*sa); len > 0; sa++, len -= sizeof(*sa))
 			out(",%s", format_host_sa(sa));
 

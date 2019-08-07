@@ -35,10 +35,16 @@ rdma-dev \- RDMA device configuration
 .BR NSNAME
 
 .ti -8
+.B rdma dev set
+.RI "[ " DEV " ]"
+.BR adaptive-moderation
+.BR [on/off]
+
+.ti -8
 .B rdma dev help
 
 .SH "DESCRIPTION"
-.SS rdma dev set - rename RDMA device or set network namespace
+.SS rdma dev set - rename RDMA device or set network namespace or set RDMA device adaptive-moderation
 
 .SS rdma dev show - display RDMA device attributes
 
@@ -70,6 +76,14 @@ Changes the network namespace of RDMA device to foo where foo is
 previously created using iproute2 ip command.
 .RE
 .PP
+rdma dev set mlx5_3 adaptive-moderation [on/off]
+.RS 4
+Sets the state of adaptive interrupt moderation for the RDMA device.
+.RE
+.RS 4
+This is a global setting for the RDMA device but the value is printed for each CQ individually because the state is constant from CQ allocation.
+.RE
+.PP
 
 .SH SEE ALSO
 .BR ip (8),
@@ -77,6 +91,7 @@ previously created using iproute2 ip command.
 .BR rdma-link (8),
 .BR rdma-resource (8),
 .BR rdma-system (8),
+.BR rdma-statistic (8),
 .br
 
 .SH AUTHOR

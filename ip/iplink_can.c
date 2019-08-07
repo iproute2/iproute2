@@ -545,7 +545,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		print_int(PRINT_ANY,
 			  "clock",
-			  "\n	  clock %d",
+			  "\n	  clock %d ",
 			  clock->freq);
 	}
 

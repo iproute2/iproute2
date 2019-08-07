@@ -1815,6 +1815,11 @@ can move the system to an unpredictable state. The solution
 is to avoid changing several parameters with one
 .B ip link set
 call.
+The modifier
+.B change
+is equivalent to
+.BR "set" .
+
 
 .TP
 .BI dev " DEVICE "

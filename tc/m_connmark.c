@@ -115,7 +115,7 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	parse_rtattr_nested(tb, TCA_CONNMARK_MAX, arg);
 	if (tb[TCA_CONNMARK_PARMS] == NULL) {
-		print_string(PRINT_FP, NULL, "%s", "[NULL connmark parameters]");
+		fprintf(stderr, "Missing connmark parameters\n");
 		return -1;
 	}
 

@@ -56,7 +56,7 @@ bool rd_no_arg(struct rd *rd)
  * mlx5_1/1    | 1          | false
  * mlx5_1/-    | 0          | false
  *
- * In strict mode, /- will return error.
+ * In strict port mode, a non-0 port must be provided
  */
 static int get_port_from_argv(struct rd *rd, uint32_t *port,
 			      bool *is_dump_all, bool strict_port)
@@ -64,7 +64,7 @@ static int get_port_from_argv(struct rd *rd, uint32_t *port,
 	char *slash;
 
 	*port = 0;
-	*is_dump_all = true;
+	*is_dump_all = strict_port ? false : true;
 
 	slash = strchr(rd_argv(rd), '/');
 	/* if no port found, return 0 */
@@ -83,6 +83,9 @@ static int get_port_from_argv(struct rd *rd, uint32_t *port,
 		if (!*port && strlen(slash))
 			return -EINVAL;
 	}
+	if (strict_port && (*port == 0))
+		return -EINVAL;
+
 	return 0;
 }
 
@@ -436,6 +439,17 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_DRIVER_S64] = MNL_TYPE_U64,
 	[RDMA_NLDEV_ATTR_DRIVER_U64] = MNL_TYPE_U64,
 	[RDMA_NLDEV_SYS_ATTR_NETNS_MODE] = MNL_TYPE_U8,
+	[RDMA_NLDEV_ATTR_STAT_COUNTER] = MNL_TYPE_NESTED,
+	[RDMA_NLDEV_ATTR_STAT_COUNTER_ENTRY] = MNL_TYPE_NESTED,
+	[RDMA_NLDEV_ATTR_STAT_COUNTER_ID] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS] = MNL_TYPE_NESTED,
+	[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_ENTRY] = MNL_TYPE_NESTED,
+	[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_ENTRY_NAME] = MNL_TYPE_NUL_STRING,
+	[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_ENTRY_VALUE] = MNL_TYPE_U64,
+	[RDMA_NLDEV_ATTR_STAT_MODE] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_STAT_RES] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_STAT_AUTO_MODE_MASK] = MNL_TYPE_U32,
+	[RDMA_NLDEV_ATTR_DEV_DIM] = MNL_TYPE_U8,
 };
 
 int rd_attr_check(const struct nlattr *attr, int *typep)
@@ -774,6 +788,11 @@ static int print_driver_string(struct rd *rd, const char *key_str,
 	} else {
 		return pr_out("%s %s ", key_str, val_str);
 	}
+}
+
+void print_on_off(struct rd *rd, const char *key_str, bool on)
+{
+	print_driver_string(rd, key_str, (on) ? "on":"off");
 }
 
 static int print_driver_s32(struct rd *rd, const char *key_str, int32_t val,

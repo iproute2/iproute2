@@ -11,7 +11,7 @@ static void help(char *name)
 {
 	pr_out("Usage: %s [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "       %s [ -f[orce] ] -b[atch] filename\n"
-	       "where  OBJECT := { dev | link | resource | system | help }\n"
+	       "where  OBJECT := { dev | link | resource | system | statistic | help }\n"
 	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty]}\n", name, name);
 }
 
@@ -30,6 +30,7 @@ static int rd_cmd(struct rd *rd, int argc, char **argv)
 		{ "link",	cmd_link },
 		{ "resource",	cmd_res },
 		{ "system",	cmd_sys },
+		{ "statistic",	cmd_stat },
 		{ 0 }
 	};
 

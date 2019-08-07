@@ -313,8 +313,7 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 		if (q)
 			q->print_qopt(q, fp, tb[TCA_OPTIONS]);
 		else
-			print_string(PRINT_FP, NULL,
-				     "[cannot parse qdisc parameters]", NULL);
+			fprintf(stderr, "Cannot parse qdisc parameters\n");
 	}
 	close_json_object();
 

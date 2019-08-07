@@ -218,7 +218,7 @@ skip_encode:
 
 static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 {
-	struct tc_ife *p = NULL;
+	struct tc_ife *p;
 	struct rtattr *tb[TCA_IFE_MAX + 1];
 	__u16 ife_type = 0;
 	__u32 mmark = 0;
@@ -233,7 +233,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_IFE_MAX, arg);
 
 	if (tb[TCA_IFE_PARMS] == NULL) {
-		print_string(PRINT_FP, NULL, "%s", "[NULL ife parameters]");
+		fprintf(stderr, "Missing ife parameters\n");
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_IFE_PARMS]);

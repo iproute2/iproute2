@@ -742,7 +742,7 @@ static int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_PEDIT_MAX, arg);
 
 	if (!tb[TCA_PEDIT_PARMS] && !tb[TCA_PEDIT_PARMS_EX]) {
-		fprintf(f, "[NULL pedit parameters]");
+		fprintf(stderr, "Missing pedit parameters\n");
 		return -1;
 	}
 

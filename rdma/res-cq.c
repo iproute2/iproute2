@@ -30,6 +30,20 @@ static void print_poll_ctx(struct rd *rd, uint8_t poll_ctx, struct nlattr *attr)
 	pr_out("poll-ctx %s ", poll_ctx_to_str(poll_ctx));
 }
 
+static void print_cq_dim_setting(struct rd *rd, struct nlattr *attr)
+{
+	uint8_t dim_setting;
+
+	if (!attr)
+		return;
+
+	dim_setting = mnl_attr_get_u8(attr);
+	if (dim_setting > 1)
+		return;
+
+	print_on_off(rd, "adaptive-moderation", dim_setting);
+}
+
 static int res_cq_line(struct rd *rd, const char *name, int idx,
 		       struct nlattr **nla_line)
 {
@@ -97,6 +111,7 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 	res_print_uint(rd, "users", users,
 		       nla_line[RDMA_NLDEV_ATTR_RES_USECNT]);
 	print_poll_ctx(rd, poll_ctx, nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX]);
+	print_cq_dim_setting(rd, nla_line[RDMA_NLDEV_ATTR_DEV_DIM]);
 	res_print_uint(rd, "ctxn", ctxn, nla_line[RDMA_NLDEV_ATTR_RES_CTXN]);
 	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);

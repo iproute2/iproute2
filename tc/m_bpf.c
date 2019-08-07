@@ -167,7 +167,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_ACT_BPF_MAX, arg);
 
 	if (!tb[TCA_ACT_BPF_PARMS]) {
-		fprintf(f, "[NULL bpf parameters]");
+		fprintf(stderr, "Missing bpf parameters\n");
 		return -1;
 	}
 
