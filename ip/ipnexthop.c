@@ -186,6 +186,7 @@ static void print_nh_group(FILE *fp, const struct rtattr *grps_attr)
 
 		close_json_object();
 	}
+	print_string(PRINT_FP, NULL, "%s", " ");
 	close_json_array(PRINT_JSON, NULL);
 }
 
