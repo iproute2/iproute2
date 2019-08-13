@@ -414,7 +414,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 			if (d[0])
 				duparg("dev", *argv);
 			if (block_index) {
-				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exlusive\n");
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exclusive\n");
 				return -1;
 			}
 			strncpy(d, *argv, sizeof(d)-1);
@@ -423,7 +423,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 			if (block_index)
 				duparg("block", *argv);
 			if (d[0]) {
-				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exlusive\n");
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exclusive\n");
 				return -1;
 			}
 			if (get_u32(&block_index, *argv, 0) || !block_index)
