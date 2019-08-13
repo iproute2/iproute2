@@ -235,7 +235,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_HEALTH_REPORTER_AUTO_RECOVER	BIT(28)
 
 struct dl_opts {
-	uint32_t present; /* flags of present items */
+	uint64_t present; /* flags of present items */
 	char *bus_name;
 	char *dev_name;
 	uint32_t port_index;
@@ -735,7 +735,7 @@ static int dl_argv_handle_port(struct dl *dl, char **p_bus_name,
 
 static int dl_argv_handle_both(struct dl *dl, char **p_bus_name,
 			       char **p_dev_name, uint32_t *p_port_index,
-			       uint32_t *p_handle_bit)
+			       uint64_t *p_handle_bit)
 {
 	char *str = dl_argv_next(dl);
 	unsigned int slash_count;
@@ -1015,7 +1015,7 @@ static int param_cmode_get(const char *cmodestr,
 }
 
 struct dl_args_metadata {
-	uint32_t o_flag;
+	uint64_t o_flag;
 	char err_msg[DL_ARGS_REQUIRED_MAX_ERR_LEN];
 };
 
@@ -1042,10 +1042,10 @@ static const struct dl_args_metadata dl_args_required[] = {
 	{DL_OPT_HEALTH_REPORTER_NAME, "Reporter's name is expected."},
 };
 
-static int dl_args_finding_required_validate(uint32_t o_required,
-					     uint32_t o_found)
+static int dl_args_finding_required_validate(uint64_t o_required,
+					     uint64_t o_found)
 {
-	uint32_t o_flag;
+	uint64_t o_flag;
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(dl_args_required); i++) {
@@ -1058,16 +1058,16 @@ static int dl_args_finding_required_validate(uint32_t o_required,
 	return 0;
 }
 
-static int dl_argv_parse(struct dl *dl, uint32_t o_required,
-			 uint32_t o_optional)
+static int dl_argv_parse(struct dl *dl, uint64_t o_required,
+			 uint64_t o_optional)
 {
 	struct dl_opts *opts = &dl->opts;
-	uint32_t o_all = o_required | o_optional;
-	uint32_t o_found = 0;
+	uint64_t o_all = o_required | o_optional;
+	uint64_t o_found = 0;
 	int err;
 
 	if (o_required & DL_OPT_HANDLE && o_required & DL_OPT_HANDLEP) {
-		uint32_t handle_bit;
+		uint64_t handle_bit;
 
 		err = dl_argv_handle_both(dl, &opts->bus_name, &opts->dev_name,
 					  &opts->port_index, &handle_bit);
@@ -1446,7 +1446,7 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
-			     uint32_t o_required, uint32_t o_optional)
+			     uint64_t o_required, uint64_t o_optional)
 {
 	int err;
 
