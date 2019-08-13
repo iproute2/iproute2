@@ -168,7 +168,7 @@ static int get_netmask(unsigned int *val, const char *arg, int base)
 	if (!get_unsigned(val, arg, base))
 		return 0;
 
-	/* try coverting dotted quad to CIDR */
+	/* try converting dotted quad to CIDR */
 	if (!get_addr_1(&addr, arg, AF_INET) && addr.family == AF_INET) {
 		int b = mask2bits(addr.data[0]);
 
