@@ -74,6 +74,7 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 	__u32 prio = 0;
 	__u32 protocol = 0;
 	int protocol_set = 0;
+	__u32 block_index = 0;
 	__u32 chain_index;
 	int chain_index_set = 0;
 	char *fhandle = NULL;
@@ -89,7 +90,21 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 			NEXT_ARG();
 			if (d[0])
 				duparg("dev", *argv);
+			if (block_index) {
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exclusive\n");
+				return -1;
+			}
 			strncpy(d, *argv, sizeof(d)-1);
+		} else if (matches(*argv, "block") == 0) {
+			NEXT_ARG();
+			if (block_index)
+				duparg("block", *argv);
+			if (d[0]) {
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exclusive\n");
+				return -1;
+			}
+			if (get_u32(&block_index, *argv, 0) || !block_index)
+				invarg("invalid block index value", *argv);
 		} else if (strcmp(*argv, "root") == 0) {
 			if (req.t.tcm_parent) {
 				fprintf(stderr,
@@ -184,6 +199,9 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			return 1;
 		}
+	} else if (block_index) {
+		req.t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
+		req.t.tcm_block_index = block_index;
 	}
 
 	if (q) {
@@ -396,7 +414,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 			if (d[0])
 				duparg("dev", *argv);
 			if (block_index) {
-				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exlusive\n");
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exclusive\n");
 				return -1;
 			}
 			strncpy(d, *argv, sizeof(d)-1);
@@ -405,7 +423,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 			if (block_index)
 				duparg("block", *argv);
 			if (d[0]) {
-				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exlusive\n");
+				fprintf(stderr, "Error: \"dev\" and \"block\" are mutually exclusive\n");
 				return -1;
 			}
 			if (get_u32(&block_index, *argv, 0) || !block_index)

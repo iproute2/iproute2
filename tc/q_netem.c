@@ -39,7 +39,7 @@ static void explain(void)
 		"			[ loss state P13 [P31 [P32 [P23 P14]]]\n" \
 		"			[ loss gemodel PERCENT [R [1-H [1-K]]]\n" \
 		"			[ ecn ]\n" \
-		"			[ reorder PRECENT [CORRELATION] [ gap DISTANCE ]]\n" \
+		"			[ reorder PERCENT [CORRELATION] [ gap DISTANCE ]]\n" \
 		"			[ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n" \
 		"			[ slot MIN_DELAY [MAX_DELAY] [packets MAX_PACKETS]" \
 		" [bytes MAX_BYTES]]\n" \

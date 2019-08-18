@@ -1,5 +1,5 @@
 /*
- * em_ipt.c		IPtables extenstions matching Ematch
+ * em_ipt.c		IPtables extensions matching Ematch
  *
  * (C) 2018 Eyal Birger <eyal.birger@gmail.com>
  *

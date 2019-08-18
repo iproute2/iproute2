@@ -224,7 +224,7 @@ void print_color_null(enum output_type type,
 	}
 }
 
-/* Print line seperator (if not in JSON mode) */
+/* Print line separator (if not in JSON mode) */
 void print_nl(void)
 {
 	if (!_jw)
