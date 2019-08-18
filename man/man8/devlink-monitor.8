@@ -21,7 +21,7 @@ command is the first in the command line and then the object list.
 .I OBJECT-LIST
 is the list of object types that we want to monitor.
 It may contain
-.BR dev ", " port ".
+.BR dev ", " port ", " trap ", " trap-group .
 
 .B devlink
 opens Devlink Netlink socket, listens on it and dumps state changes.
@@ -31,6 +31,7 @@ opens Devlink Netlink socket, listens on it and dumps state changes.
 .BR devlink-dev (8),
 .BR devlink-sb (8),
 .BR devlink-port (8),
+.BR devlink-trap (8),
 .br
 
 .SH AUTHOR
