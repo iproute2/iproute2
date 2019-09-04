@@ -231,8 +231,8 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_FLASH_FILE_NAME	BIT(25)
 #define DL_OPT_FLASH_COMPONENT	BIT(26)
 #define DL_OPT_HEALTH_REPORTER_NAME	BIT(27)
-#define DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD	BIT(27)
-#define DL_OPT_HEALTH_REPORTER_AUTO_RECOVER	BIT(28)
+#define DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD	BIT(28)
+#define DL_OPT_HEALTH_REPORTER_AUTO_RECOVER	BIT(29)
 
 struct dl_opts {
 	uint32_t present; /* flags of present items */
