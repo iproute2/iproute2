@@ -49,11 +49,6 @@ static void usage(void)
 	exit(-1);
 }
 
-static void explain1(char *arg)
-{
-	fprintf(stderr, "Illegal \"%s\"\n", arg);
-}
-
 static int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 			    int tca_id, struct nlmsghdr *n)
 {
@@ -71,6 +66,7 @@ static int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	int Rcell_log =  -1, Pcell_log = -1;
 	struct rtattr *tail;
+	__u64 rate64 = 0, prate64 = 0;
 
 	if (a) /* new way of doing things */
 		NEXT_ARG();
@@ -82,73 +78,47 @@ static int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 
 		if (matches(*argv, "index") == 0) {
 			NEXT_ARG();
-			if (get_u32(&p.index, *argv, 10)) {
-				fprintf(stderr, "Illegal \"index\"\n");
-				return -1;
-			}
+			if (get_u32(&p.index, *argv, 10))
+				invarg("index", *argv);
 		} else if (matches(*argv, "burst") == 0 ||
 			strcmp(*argv, "buffer") == 0 ||
 			strcmp(*argv, "maxburst") == 0) {
 			NEXT_ARG();
-			if (buffer) {
-				fprintf(stderr, "Double \"buffer/burst\" spec\n");
-				return -1;
-			}
-			if (get_size_and_cell(&buffer, &Rcell_log, *argv) < 0) {
-				explain1("buffer");
-				return -1;
-			}
+			if (buffer)
+				duparg("buffer/burst", *argv);
+			if (get_size_and_cell(&buffer, &Rcell_log, *argv) < 0)
+				invarg("buffer", *argv);
 		} else if (strcmp(*argv, "mtu") == 0 ||
 			   strcmp(*argv, "minburst") == 0) {
 			NEXT_ARG();
-			if (mtu) {
-				fprintf(stderr, "Double \"mtu/minburst\" spec\n");
-				return -1;
-			}
-			if (get_size_and_cell(&mtu, &Pcell_log, *argv) < 0) {
-				explain1("mtu");
-				return -1;
-			}
+			if (mtu)
+				duparg("mtu/minburst", *argv);
+			if (get_size_and_cell(&mtu, &Pcell_log, *argv) < 0)
+				invarg("mtu", *argv);
 		} else if (strcmp(*argv, "mpu") == 0) {
 			NEXT_ARG();
-			if (mpu) {
-				fprintf(stderr, "Double \"mpu\" spec\n");
-				return -1;
-			}
-			if (get_size(&mpu, *argv)) {
-				explain1("mpu");
-				return -1;
-			}
+			if (mpu)
+				duparg("mpu", *argv);
+			if (get_size(&mpu, *argv))
+				invarg("mpu", *argv);
 		} else if (strcmp(*argv, "rate") == 0) {
 			NEXT_ARG();
-			if (p.rate.rate) {
-				fprintf(stderr, "Double \"rate\" spec\n");
-				return -1;
-			}
-			if (get_rate(&p.rate.rate, *argv)) {
-				explain1("rate");
-				return -1;
-			}
+			if (rate64)
+				duparg("rate", *argv);
+			if (get_rate64(&rate64, *argv))
+				invarg("rate", *argv);
 		} else if (strcmp(*argv, "avrate") == 0) {
 			NEXT_ARG();
-			if (avrate) {
-				fprintf(stderr, "Double \"avrate\" spec\n");
-				return -1;
-			}
-			if (get_rate(&avrate, *argv)) {
-				explain1("avrate");
-				return -1;
-			}
+			if (avrate)
+				duparg("avrate", *argv);
+			if (get_rate(&avrate, *argv))
+				invarg("avrate", *argv);
 		} else if (matches(*argv, "peakrate") == 0) {
 			NEXT_ARG();
-			if (p.peakrate.rate) {
-				fprintf(stderr, "Double \"peakrate\" spec\n");
-				return -1;
-			}
-			if (get_rate(&p.peakrate.rate, *argv)) {
-				explain1("peakrate");
-				return -1;
-			}
+			if (prate64)
+				duparg("peakrate", *argv);
+			if (get_rate64(&prate64, *argv))
+				invarg("peakrate", *argv);
 		} else if (matches(*argv, "reclassify") == 0 ||
 			   matches(*argv, "drop") == 0 ||
 			   matches(*argv, "shot") == 0 ||
@@ -168,14 +138,12 @@ static int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
 			return -1;
 		} else if (matches(*argv, "overhead") == 0) {
 			NEXT_ARG();
-			if (get_u16(&overhead, *argv, 10)) {
-				explain1("overhead"); return -1;
-			}
+			if (get_u16(&overhead, *argv, 10))
+				invarg("overhead", *argv);
 		} else if (matches(*argv, "linklayer") == 0) {
 			NEXT_ARG();
-			if (get_linklayer(&linklayer, *argv)) {
-				explain1("linklayer"); return -1;
-			}
+			if (get_linklayer(&linklayer, *argv))
+				invarg("linklayer", *argv);
 		} else if (strcmp(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -189,23 +157,23 @@ action_ctrl_ok:
 	if (!ok)
 		return -1;
 
-	if (p.rate.rate && avrate)
+	if (rate64 && avrate)
 		return -1;
 
 	/* Must at least do late binding, use TB or ewma policing */
-	if (!p.rate.rate && !avrate && !p.index) {
+	if (!rate64 && !avrate && !p.index) {
 		fprintf(stderr, "\"rate\" or \"avrate\" MUST be specified.\n");
 		return -1;
 	}
 
 	/* When the TB policer is used, burst is required */
-	if (p.rate.rate && !buffer && !avrate) {
+	if (rate64 && !buffer && !avrate) {
 		fprintf(stderr, "\"burst\" requires \"rate\".\n");
 		return -1;
 	}
 
-	if (p.peakrate.rate) {
-		if (!p.rate.rate) {
+	if (prate64) {
+		if (!rate64) {
 			fprintf(stderr, "\"peakrate\" requires \"rate\".\n");
 			return -1;
 		}
@@ -215,22 +183,24 @@ action_ctrl_ok:
 		}
 	}
 
-	if (p.rate.rate) {
+	if (rate64) {
+		p.rate.rate = (rate64 >= (1ULL << 32)) ? ~0U : rate64;
 		p.rate.mpu = mpu;
 		p.rate.overhead = overhead;
-		if (tc_calc_rtable(&p.rate, rtab, Rcell_log, mtu,
-				   linklayer) < 0) {
+		if (tc_calc_rtable_64(&p.rate, rtab, Rcell_log, mtu,
+				   linklayer, rate64) < 0) {
 			fprintf(stderr, "POLICE: failed to calculate rate table.\n");
 			return -1;
 		}
-		p.burst = tc_calc_xmittime(p.rate.rate, buffer);
+		p.burst = tc_calc_xmittime(rate64, buffer);
 	}
 	p.mtu = mtu;
-	if (p.peakrate.rate) {
+	if (prate64) {
+		p.peakrate.rate = (prate64 >= (1ULL << 32)) ? ~0U : prate64;
 		p.peakrate.mpu = mpu;
 		p.peakrate.overhead = overhead;
-		if (tc_calc_rtable(&p.peakrate, ptab, Pcell_log, mtu,
-				   linklayer) < 0) {
+		if (tc_calc_rtable_64(&p.peakrate, ptab, Pcell_log, mtu,
+				   linklayer, prate64) < 0) {
 			fprintf(stderr, "POLICE: failed to calculate peak rate table.\n");
 			return -1;
 		}
@@ -238,10 +208,16 @@ action_ctrl_ok:
 
 	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_POLICE_TBF, &p, sizeof(p));
-	if (p.rate.rate)
+	if (rate64) {
 		addattr_l(n, MAX_MSG, TCA_POLICE_RATE, rtab, 1024);
-	if (p.peakrate.rate)
+		if (rate64 >= (1ULL << 32))
+			addattr64(n, MAX_MSG, TCA_POLICE_RATE64, rate64);
+	}
+	if (prate64) {
 		addattr_l(n, MAX_MSG, TCA_POLICE_PEAKRATE, ptab, 1024);
+		if (prate64 >= (1ULL << 32))
+			addattr64(n, MAX_MSG, TCA_POLICE_PEAKRATE64, prate64);
+	}
 	if (avrate)
 		addattr32(n, MAX_MSG, TCA_POLICE_AVRATE, avrate);
 	if (presult)
@@ -268,6 +244,7 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_POLICE_MAX+1];
 	unsigned int buffer;
 	unsigned int linklayer;
+	__u64 rate64, prate64;
 
 	if (arg == NULL)
 		return 0;
@@ -286,16 +263,26 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 #endif
 	p = RTA_DATA(tb[TCA_POLICE_TBF]);
 
+	rate64 = p->rate.rate;
+	if (tb[TCA_POLICE_RATE64] &&
+	    RTA_PAYLOAD(tb[TCA_POLICE_RATE64]) >= sizeof(rate64))
+		rate64 = rta_getattr_u64(tb[TCA_POLICE_RATE64]);
+
 	fprintf(f, " police 0x%x ", p->index);
-	fprintf(f, "rate %s ", sprint_rate(p->rate.rate, b1));
-	buffer = tc_calc_xmitsize(p->rate.rate, p->burst);
+	fprintf(f, "rate %s ", sprint_rate(rate64, b1));
+	buffer = tc_calc_xmitsize(rate64, p->burst);
 	fprintf(f, "burst %s ", sprint_size(buffer, b1));
 	fprintf(f, "mtu %s ", sprint_size(p->mtu, b1));
 	if (show_raw)
 		fprintf(f, "[%08x] ", p->burst);
 
-	if (p->peakrate.rate)
-		fprintf(f, "peakrate %s ", sprint_rate(p->peakrate.rate, b1));
+	prate64 = p->peakrate.rate;
+	if (tb[TCA_POLICE_PEAKRATE64] &&
+	    RTA_PAYLOAD(tb[TCA_POLICE_PEAKRATE64]) >= sizeof(prate64))
+		prate64 = rta_getattr_u64(tb[TCA_POLICE_PEAKRATE64]);
+
+	if (prate64)
+		fprintf(f, "peakrate %s ", sprint_rate(prate64, b1));
 
 	if (tb[TCA_POLICE_AVRATE])
 		fprintf(f, "avrate %s ",

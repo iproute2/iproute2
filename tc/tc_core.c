@@ -152,6 +152,35 @@ int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
 	return cell_log;
 }
 
+int tc_calc_rtable_64(struct tc_ratespec *r, __u32 *rtab,
+		   int cell_log, unsigned int mtu,
+		   enum link_layer linklayer, __u64 rate)
+{
+	int i;
+	unsigned int sz;
+	__u64 bps = rate;
+	unsigned int mpu = r->mpu;
+
+	if (mtu == 0)
+		mtu = 2047;
+
+	if (cell_log < 0) {
+		cell_log = 0;
+		while ((mtu >> cell_log) > 255)
+			cell_log++;
+	}
+
+	for (i = 0; i < 256; i++) {
+		sz = tc_adjust_size((i + 1) << cell_log, mpu, linklayer);
+		rtab[i] = tc_calc_xmittime(bps, sz);
+	}
+
+	r->cell_align =  -1;
+	r->cell_log = cell_log;
+	r->linklayer = (linklayer & TC_LINKLAYER_MASK);
+	return cell_log;
+}
+
 /*
    stab[pkt_len>>cell_log] = pkt_xmit_size>>size_log
  */
