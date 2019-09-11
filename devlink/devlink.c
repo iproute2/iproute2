@@ -2253,6 +2253,26 @@ static const struct param_val_conv param_val_conv[] = {
 		.vstr = "flash",
 		.vuint = DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_FLASH,
 	},
+	{
+		.name = "reset_dev_on_drv_probe",
+		.vstr = "unknown",
+		.vuint = DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_UNKNOWN,
+	},
+	{
+		.name = "reset_dev_on_drv_probe",
+		.vstr = "always",
+		.vuint = DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_ALWAYS,
+	},
+	{
+		.name = "reset_dev_on_drv_probe",
+		.vstr = "never",
+		.vuint = DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_NEVER,
+	},
+	{
+		.name = "reset_dev_on_drv_probe",
+		.vstr = "disk",
+		.vuint = DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_DISK,
+	},
 };
 
 #define PARAM_VAL_CONV_LEN ARRAY_SIZE(param_val_conv)
