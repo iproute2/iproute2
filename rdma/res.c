@@ -159,6 +159,9 @@ void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)
 {
 	char tmp[18];
 
+	if (!str)
+		return;
+
 	if (rd->json_output) {
 		/* Don't beatify output in JSON format */
 		jsonw_string_field(rd->jw, "comm", str);
