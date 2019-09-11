@@ -2259,6 +2259,11 @@ static const struct param_val_conv param_val_conv[] = {
 		.vuint = DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_UNKNOWN,
 	},
 	{
+		.name = "fw_load_policy",
+		.vstr = "unknown",
+		.vuint = DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_UNKNOWN,
+	},
+	{
 		.name = "reset_dev_on_drv_probe",
 		.vstr = "always",
 		.vuint = DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_ALWAYS,
