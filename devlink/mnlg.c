@@ -320,3 +320,8 @@ void mnlg_socket_close(struct mnlg_socket *nlg)
 	free(nlg->buf);
 	free(nlg);
 }
+
+int mnlg_socket_get_fd(struct mnlg_socket *nlg)
+{
+	return mnl_socket_get_fd(nlg->nl);
+}

@@ -244,6 +244,17 @@ Sets the parameter internal_error_reset of specified devlink device to true.
 devlink dev reload pci/0000:01:00.0
 .RS 4
 Performs hot reload of specified devlink device.
+.RE
+.PP
+devlink dev flash pci/0000:01:00.0 file firmware.bin
+.RS 4
+Flashes the specified devlink device with provided firmware file name. If the driver supports it, user gets updates about the flash status. For example:
+.br
+Preparing to flash
+.br
+Flashing 100%
+.br
+Flashing done
 
 .SH SEE ALSO
 .BR devlink (8),
