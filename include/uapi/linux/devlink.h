@@ -202,6 +202,15 @@ enum devlink_param_cmode {
 enum devlink_param_fw_load_policy_value {
 	DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_DRIVER,
 	DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_FLASH,
+	DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_DISK,
+	DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_UNKNOWN,
+};
+
+enum devlink_param_reset_dev_on_drv_probe_value {
+	DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_UNKNOWN,
+	DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_ALWAYS,
+	DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_NEVER,
+	DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_DISK,
 };
 
 enum {
@@ -409,6 +418,8 @@ enum devlink_attr {
 	DEVLINK_ATTR_TRAP_GENERIC,			/* flag */
 	DEVLINK_ATTR_TRAP_METADATA,			/* nested */
 	DEVLINK_ATTR_TRAP_GROUP_NAME,			/* string */
+
+	DEVLINK_ATTR_RELOAD_FAILED,			/* u8 0 or 1 */
 
 	/* add new attributes above here, update the policy in devlink.c */
 
