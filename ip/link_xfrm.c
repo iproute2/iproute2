@@ -17,7 +17,7 @@ static void xfrm_print_help(struct link_util *lu, int argc, char **argv,
 			    FILE *f)
 {
 	fprintf(f,
-		"Usage: ... %-4s dev PHYS_DEV [ if_id IF-ID ]\n"
+		"Usage: ... %-4s dev [ PHYS_DEV ] [ if_id IF-ID ]\n"
 		"\n"
 		"Where: IF-ID := { 0x0..0xffffffff }\n",
 		lu->id);
@@ -46,12 +46,8 @@ static int xfrm_parse_opt(struct link_util *lu, int argc, char **argv,
 		argc--; argv++;
 	}
 
-	if (link) {
+	if (link)
 		addattr32(n, 1024, IFLA_XFRM_LINK, link);
-	} else {
-		fprintf(stderr, "must specify physical device\n");
-		return -1;
-	}
 
 	return 0;
 }
