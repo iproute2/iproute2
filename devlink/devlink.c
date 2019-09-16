@@ -478,6 +478,7 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_TRAP_GENERIC] = MNL_TYPE_FLAG,
 	[DEVLINK_ATTR_TRAP_METADATA] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_TRAP_GROUP_NAME] = MNL_TYPE_STRING,
+	[DEVLINK_ATTR_RELOAD_FAILED] = MNL_TYPE_U8,
 };
 
 static const enum mnl_attr_data_type
@@ -1977,11 +1978,6 @@ static void pr_out_region_chunk(struct dl *dl, uint8_t *data, uint32_t len,
 	pr_out_region_chunk_end(dl);
 }
 
-static void pr_out_dev(struct dl *dl, struct nlattr **tb)
-{
-	pr_out_handle(dl, tb);
-}
-
 static void pr_out_section_start(struct dl *dl, const char *name)
 {
 	if (dl->json_output) {
@@ -2682,11 +2678,23 @@ static int cmd_dev_show_cb(const struct nlmsghdr *nlh, void *data)
 	struct dl *dl = data;
 	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
 	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	uint8_t reload_failed = 0;
 
 	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
 	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME])
 		return MNL_CB_ERROR;
-	pr_out_dev(dl, tb);
+
+	if (tb[DEVLINK_ATTR_RELOAD_FAILED])
+		reload_failed = mnl_attr_get_u8(tb[DEVLINK_ATTR_RELOAD_FAILED]);
+
+	if (reload_failed) {
+		__pr_out_handle_start(dl, tb, true, false);
+		pr_out_bool(dl, "reload_failed", true);
+		pr_out_handle_end(dl);
+	} else {
+		pr_out_handle(dl, tb);
+	}
+
 	return MNL_CB_OK;
 }
 
@@ -4237,7 +4245,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 		if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME])
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
-		pr_out_dev(dl, tb);
+		pr_out_handle(dl, tb);
 		break;
 	case DEVLINK_CMD_PORT_GET: /* fall through */
 	case DEVLINK_CMD_PORT_SET: /* fall through */
