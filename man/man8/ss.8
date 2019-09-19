@@ -99,13 +99,13 @@ skmem:(r<rmem_alloc>,rb<rcv_buf>,t<wmem_alloc>,tb<snd_buf>,
 .br
 .RS
 .RS
-f<fwd_alloc>,w<wmem_queued>,
+f<fwd_alloc>,w<wmem_queued>,o<opt_mem>,
 .RE
 .RE
 .br
 .RS
 .RS
-o<opt_mem>,bl<back_log>)
+bl<back_log>,d<sock_drop>)
 .RE
 .RE
 .P
@@ -146,6 +146,10 @@ The memory used for the sk backlog queue. On a process context, if the
 process is receiving packet, and a new packet is received, it will be
 put into the sk backlog queue, so it can be received by the process
 immediately
+.P
+.TP
+.B <sock_drop>
+the number of packets dropped before they are de-multiplexed into the socket
 .RE
 .TP
 .B \-p, \-\-processes

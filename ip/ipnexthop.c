@@ -249,7 +249,7 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[NHA_BLACKHOLE])
-		print_null(PRINT_ANY, "blackhole", "blackhole", NULL);
+		print_null(PRINT_ANY, "blackhole", "blackhole ", NULL);
 
 	if (nhm->nh_protocol != RTPROT_UNSPEC || show_details > 0) {
 		print_string(PRINT_ANY, "protocol", "proto %s ",
