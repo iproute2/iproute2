@@ -1625,7 +1625,9 @@ static int bpf_map_attach(const char *name, struct bpf_elf_ctx *ctx,
 			  int *have_map_in_map)
 {
 	int fd, ifindex, ret, map_inner_fd = 0;
+	bool retried = false;
 
+probe:
 	fd = bpf_probe_pinned(name, ctx, map->pinning);
 	if (fd > 0) {
 		ret = bpf_map_selfcheck_pinned(fd, map, ext,
@@ -1674,10 +1676,14 @@ static int bpf_map_attach(const char *name, struct bpf_elf_ctx *ctx,
 	}
 
 	ret = bpf_place_pinned(fd, name, ctx, map->pinning);
-	if (ret < 0 && errno != EEXIST) {
+	if (ret < 0) {
+		close(fd);
+		if (!retried && errno == EEXIST) {
+			retried = true;
+			goto probe;
+		}
 		fprintf(stderr, "Could not pin %s map: %s\n", name,
 			strerror(errno));
-		close(fd);
 		return ret;
 	}
 
