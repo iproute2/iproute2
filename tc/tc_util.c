@@ -914,3 +914,47 @@ compat_xstats:
 	if (tb[TCA_XSTATS] && xstats)
 		*xstats = tb[TCA_XSTATS];
 }
+
+void print_masked_u32(const char *name, struct rtattr *attr,
+		      struct rtattr *mask_attr)
+{
+	__u32 value, mask;
+	SPRINT_BUF(namefrm);
+	SPRINT_BUF(out);
+	size_t done;
+
+	if (!attr)
+		return;
+
+	value = rta_getattr_u32(attr);
+	mask = mask_attr ? rta_getattr_u32(mask_attr) : UINT32_MAX;
+
+	done = sprintf(out, "%u", value);
+	if (mask != UINT32_MAX)
+		sprintf(out + done, "/0x%x", mask);
+
+	sprintf(namefrm, " %s %%s", name);
+	print_string(PRINT_ANY, name, namefrm, out);
+}
+
+void print_masked_u16(const char *name, struct rtattr *attr,
+		      struct rtattr *mask_attr)
+{
+	__u16 value, mask;
+	SPRINT_BUF(namefrm);
+	SPRINT_BUF(out);
+	size_t done;
+
+	if (!attr)
+		return;
+
+	value = rta_getattr_u16(attr);
+	mask = mask_attr ? rta_getattr_u16(mask_attr) : UINT16_MAX;
+
+	done = sprintf(out, "%u", value);
+	if (mask != UINT16_MAX)
+		sprintf(out + done, "/0x%x", mask);
+
+	sprintf(namefrm, " %s %%s", name);
+	print_string(PRINT_ANY, name, namefrm, out);
+}

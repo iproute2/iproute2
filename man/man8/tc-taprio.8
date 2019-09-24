@@ -112,6 +112,26 @@ means that traffic class 0 is "active" for that schedule entry.
 long that state defined by <command> and <gate mask> should be held
 before moving to the next entry.
 
+.TP
+flags
+.br
+Specifies different modes for taprio. Currently, only txtime-assist is
+supported which can be enabled by setting it to 0x1. In this mode, taprio will
+set the transmit timestamp depending on the interval in which the packet needs
+to be transmitted. It will then utililize the
+.BR etf(8)
+qdisc to sort and transmit the packets at the right time. The second example
+can be used as a reference to configure this mode.
+
+.TP
+txtime-delay
+.br
+This parameter is specific to the txtime offload mode. It specifies the maximum
+time a packet might take to reach the network card from the taprio qdisc. The
+value should always be greater than the delta specified in the
+.BR etf(8)
+qdisc.
+
 .SH EXAMPLES
 
 The following example shows how an traffic schedule with three traffic
@@ -137,6 +157,26 @@ reference CLOCK_TAI. The schedule is composed of three entries each of
               clockid CLOCK_TAI
 .EE
 
+Following is an example to enable the txtime offload mode in taprio. See
+.BR etf(8)
+for more information about configuring the ETF qdisc.
+
+.EX
+# tc qdisc replace dev eth0 parent root handle 100 taprio \\
+              num_tc 3 \\
+              map 2 2 1 0 2 2 2 2 2 2 2 2 2 2 2 2 \\
+              queues 1@0 1@0 1@0 \\
+              base-time 1528743495910289987 \\
+              sched-entry S 01 300000 \\
+              sched-entry S 02 300000 \\
+              sched-entry S 04 400000 \\
+              flags 0x1 \\
+              txtime-delay 200000 \\
+              clockid CLOCK_TAI
+
+# tc qdisc replace dev $IFACE parent 100:1 etf skip_skb_check \\
+              offload delta 200000 clockid CLOCK_TAI
+.EE
 
 .SH AUTHORS
 Vinicius Costa Gomes <vinicius.gomes@intel.com>

@@ -214,7 +214,8 @@ done0:
 			tail = addattr_nest(n, MAX_MSG, ++prio);
 			addattr_l(n, MAX_MSG, TCA_ACT_KIND, k, strlen(k) + 1);
 
-			ret = a->parse_aopt(a, &argc, &argv, TCA_ACT_OPTIONS,
+			ret = a->parse_aopt(a, &argc, &argv,
+					    TCA_ACT_OPTIONS | NLA_F_NESTED,
 					    n);
 
 			if (ret < 0) {

@@ -130,6 +130,13 @@ static int etf_parse_opt(struct qdisc_util *qu, int argc,
 				explain_clockid(*argv);
 				return -1;
 			}
+		} else if (strcmp(*argv, "skip_sock_check") == 0) {
+			if (opt.flags & TC_ETF_SKIP_SOCK_CHECK) {
+				fprintf(stderr, "etf: duplicate \"skip_sock_check\" specification\n");
+				return -1;
+			}
+
+			opt.flags |= TC_ETF_SKIP_SOCK_CHECK;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -171,8 +178,10 @@ static int etf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	print_uint(PRINT_ANY, "delta", "delta %d ", qopt->delta);
 	print_string(PRINT_ANY, "offload", "offload %s ",
 				(qopt->flags & TC_ETF_OFFLOAD_ON) ? "on" : "off");
-	print_string(PRINT_ANY, "deadline_mode", "deadline_mode %s",
+	print_string(PRINT_ANY, "deadline_mode", "deadline_mode %s ",
 				(qopt->flags & TC_ETF_DEADLINE_MODE_ON) ? "on" : "off");
+	print_string(PRINT_ANY, "skip_sock_check", "skip_sock_check %s",
+				(qopt->flags & TC_ETF_SKIP_SOCK_CHECK) ? "on" : "off");
 
 	return 0;
 }

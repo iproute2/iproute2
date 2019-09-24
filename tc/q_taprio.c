@@ -52,7 +52,7 @@ static void explain(void)
 		"		[num_tc NUMBER] [map P0 P1 ...] "
 		"		[queues COUNT@OFFSET COUNT@OFFSET COUNT@OFFSET ...] "
 		"		[ [sched-entry index cmd gate-mask interval] ... ] "
-		"		[base-time time] "
+		"		[base-time time] [txtime-delay delay]"
 		"\n"
 		"CLOCKID must be a valid SYS-V id (i.e. CLOCK_TAI)\n");
 }
@@ -159,6 +159,8 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 	__s64 cycle_time_extension = 0;
 	struct list_head sched_entries;
 	struct rtattr *tail, *l;
+	__u32 taprio_flags = 0;
+	__u32 txtime_delay = 0;
 	__s64 cycle_time = 0;
 	__s64 base_time = 0;
 	int err, idx;
@@ -281,6 +283,28 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 				explain_clockid(*argv);
 				return -1;
 			}
+		} else if (strcmp(*argv, "flags") == 0) {
+			NEXT_ARG();
+			if (taprio_flags) {
+				fprintf(stderr, "taprio: duplicate \"flags\" specification\n");
+				return -1;
+			}
+			if (get_u32(&taprio_flags, *argv, 0)) {
+				PREV_ARG();
+				return -1;
+			}
+
+		} else if (strcmp(*argv, "txtime-delay") == 0) {
+			NEXT_ARG();
+			if (txtime_delay != 0) {
+				fprintf(stderr, "taprio: duplicate \"txtime-delay\" specification\n");
+				return -1;
+			}
+			if (get_u32(&txtime_delay, *argv, 0)) {
+				PREV_ARG();
+				return -1;
+			}
+
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -297,8 +321,14 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 	if (clockid != CLOCKID_INVALID)
 		addattr_l(n, 1024, TCA_TAPRIO_ATTR_SCHED_CLOCKID, &clockid, sizeof(clockid));
 
+	if (taprio_flags)
+		addattr_l(n, 1024, TCA_TAPRIO_ATTR_FLAGS, &taprio_flags, sizeof(taprio_flags));
+
 	if (opt.num_tc > 0)
 		addattr_l(n, 1024, TCA_TAPRIO_ATTR_PRIOMAP, &opt, sizeof(opt));
+
+	if (txtime_delay)
+		addattr_l(n, 1024, TCA_TAPRIO_ATTR_TXTIME_DELAY, &txtime_delay, sizeof(txtime_delay));
 
 	if (base_time)
 		addattr_l(n, 1024, TCA_TAPRIO_ATTR_SCHED_BASE_TIME, &base_time, sizeof(base_time));
@@ -441,6 +471,20 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		clockid = rta_getattr_s32(tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]);
 
 	print_string(PRINT_ANY, "clockid", "clockid %s", get_clock_name(clockid));
+
+	if (tb[TCA_TAPRIO_ATTR_FLAGS]) {
+		__u32 flags;
+
+		flags = rta_getattr_u32(tb[TCA_TAPRIO_ATTR_FLAGS]);
+		print_0xhex(PRINT_ANY, "flags", " flags %#x", flags);
+	}
+
+	if (tb[TCA_TAPRIO_ATTR_TXTIME_DELAY]) {
+		__u32 txtime_delay;
+
+		txtime_delay = rta_getattr_s32(tb[TCA_TAPRIO_ATTR_TXTIME_DELAY]);
+		print_uint(PRINT_ANY, "txtime_delay", " txtime delay %d", txtime_delay);
+	}
 
 	print_schedule(f, tb);
 

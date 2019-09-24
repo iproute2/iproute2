@@ -55,5 +55,8 @@ void tnl_print_encap(struct rtattr *tb[],
 		     int encap_sport, int encap_dport);
 void tnl_print_endpoint(const char *name,
 			const struct rtattr *rta, int family);
+void tnl_print_gre_flags(__u8 proto,
+			 __be16 i_flags, __be16 o_flags,
+			 __be32 i_key, __be32 o_key);
 
 #endif
