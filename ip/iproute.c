@@ -649,24 +649,26 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 	int len = RTA_PAYLOAD(rta);
 	int first = 1;
 
+	open_json_array(PRINT_JSON, "nexthops");
+
 	while (len >= sizeof(*nh)) {
 		struct rtattr *tb[RTA_MAX + 1];
 
 		if (nh->rtnh_len > len)
 			break;
 
-		if (!is_json_context()) {
-			if ((r->rtm_flags & RTM_F_CLONED) &&
-			    r->rtm_type == RTN_MULTICAST) {
-				if (first) {
-					fprintf(fp, "Oifs: ");
-					first = 0;
-				} else {
-					fprintf(fp, " ");
-				}
-			} else
-				fprintf(fp, "%s\tnexthop ", _SL_);
-		}
+		open_json_object(NULL);
+
+		if ((r->rtm_flags & RTM_F_CLONED) &&
+		    r->rtm_type == RTN_MULTICAST) {
+			if (first) {
+				print_string(PRINT_FP, NULL, "Oifs: ", NULL);
+				first = 0;
+			} else {
+				print_string(PRINT_FP, NULL, " ", NULL);
+			}
+		} else
+			print_string(PRINT_FP, NULL, "%s\tnexthop ", _SL_);
 
 		if (nh->rtnh_len > sizeof(*nh)) {
 			parse_rtattr(tb, RTA_MAX, RTNH_DATA(nh),
@@ -689,22 +691,30 @@ static void print_rta_multipath(FILE *fp, const struct rtmsg *r,
 
 		if ((r->rtm_flags & RTM_F_CLONED) &&
 		    r->rtm_type == RTN_MULTICAST) {
-			fprintf(fp, "%s", ll_index_to_name(nh->rtnh_ifindex));
+			print_string(PRINT_ANY, "dev",
+				     "%s", ll_index_to_name(nh->rtnh_ifindex));
+
 			if (nh->rtnh_hops != 1)
-				fprintf(fp, "(ttl>%d)", nh->rtnh_hops);
-			fprintf(fp, " ");
+				print_int(PRINT_ANY, "ttl", "(ttl>%d)", nh->rtnh_hops);
+
+			print_string(PRINT_FP, NULL, " ", NULL);
 		} else {
-			fprintf(fp, "dev %s ", ll_index_to_name(nh->rtnh_ifindex));
+			print_string(PRINT_ANY, "dev",
+				     "dev %s ", ll_index_to_name(nh->rtnh_ifindex));
+
 			if (r->rtm_family != AF_MPLS)
-				fprintf(fp, "weight %d ",
-					nh->rtnh_hops+1);
+				print_int(PRINT_ANY, "weight",
+					  "weight %d ", nh->rtnh_hops + 1);
 		}
 
 		print_rt_flags(fp, nh->rtnh_flags);
 
 		len -= NLMSG_ALIGN(nh->rtnh_len);
 		nh = RTNH_NEXT(nh);
+
+		close_json_object();
 	}
+	close_json_array(PRINT_JSON, NULL);
 }
 
 int print_route(struct nlmsghdr *n, void *arg)
