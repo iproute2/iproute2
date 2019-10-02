@@ -379,6 +379,12 @@ static bool dl_no_arg(struct dl *dl)
 	return dl_argc(dl) == 0;
 }
 
+static void __pr_out_indent_newline(struct dl *dl)
+{
+	if (!g_indent_newline && !dl->json_output)
+		pr_out(" ");
+}
+
 static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_BUS_NAME] = MNL_TYPE_NUL_STRING,
 	[DEVLINK_ATTR_DEV_NAME] = MNL_TYPE_NUL_STRING,
@@ -1828,14 +1834,11 @@ static void pr_out_port_handle_end(struct dl *dl)
 
 static void pr_out_str(struct dl *dl, const char *name, const char *val)
 {
-	if (dl->json_output) {
+	__pr_out_indent_newline(dl);
+	if (dl->json_output)
 		jsonw_string_field(dl->jw, name, val);
-	} else {
-		if (g_indent_newline)
-			pr_out("%s %s", name, val);
-		else
-			pr_out(" %s %s", name, val);
-	}
+	else
+		pr_out("%s %s", name, val);
 }
 
 static void pr_out_bool(struct dl *dl, const char *name, bool val)
@@ -1848,29 +1851,23 @@ static void pr_out_bool(struct dl *dl, const char *name, bool val)
 
 static void pr_out_uint(struct dl *dl, const char *name, unsigned int val)
 {
-	if (dl->json_output) {
+	__pr_out_indent_newline(dl);
+	if (dl->json_output)
 		jsonw_uint_field(dl->jw, name, val);
-	} else {
-		if (g_indent_newline)
-			pr_out("%s %u", name, val);
-		else
-			pr_out(" %s %u", name, val);
-	}
+	else
+		pr_out("%s %u", name, val);
 }
 
 static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
 {
+	__pr_out_indent_newline(dl);
 	if (val == (uint64_t) -1)
 		return pr_out_str(dl, name, "unlimited");
 
-	if (dl->json_output) {
+	if (dl->json_output)
 		jsonw_u64_field(dl->jw, name, val);
-	} else {
-		if (g_indent_newline)
-			pr_out("%s %"PRIu64, name, val);
-		else
-			pr_out(" %s %"PRIu64, name, val);
-	}
+	else
+		pr_out("%s %"PRIu64, name, val);
 }
 
 static void pr_out_bool_value(struct dl *dl, bool value)
@@ -6118,14 +6115,12 @@ static void pr_out_region_handle_end(struct dl *dl)
 
 static void pr_out_region_snapshots_start(struct dl *dl, bool array)
 {
+	__pr_out_indent_newline(dl);
 	if (dl->json_output) {
 		jsonw_name(dl->jw, "snapshot");
 		jsonw_start_array(dl->jw);
 	} else {
-		if (g_indent_newline)
-			pr_out("snapshot %s", array ? "[" : "");
-		else
-			pr_out(" snapshot %s", array ? "[" : "");
+		pr_out("snapshot %s", array ? "[" : "");
 	}
 }
 
