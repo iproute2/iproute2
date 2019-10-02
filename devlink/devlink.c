@@ -1872,26 +1872,29 @@ static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
 
 static void pr_out_bool_value(struct dl *dl, bool value)
 {
+	__pr_out_indent_newline(dl);
 	if (dl->json_output)
 		jsonw_bool(dl->jw, value);
 	else
-		pr_out(" %s", value ? "true" : "false");
+		pr_out("%s", value ? "true" : "false");
 }
 
 static void pr_out_uint_value(struct dl *dl, unsigned int value)
 {
+	__pr_out_indent_newline(dl);
 	if (dl->json_output)
 		jsonw_uint(dl->jw, value);
 	else
-		pr_out(" %u", value);
+		pr_out("%u", value);
 }
 
 static void pr_out_uint64_value(struct dl *dl, uint64_t value)
 {
+	__pr_out_indent_newline(dl);
 	if (dl->json_output)
 		jsonw_u64(dl->jw, value);
 	else
-		pr_out(" %"PRIu64, value);
+		pr_out("%"PRIu64, value);
 }
 
 static bool is_binary_eol(int i)
@@ -1918,18 +1921,20 @@ static void pr_out_binary_value(struct dl *dl, uint8_t *data, uint32_t len)
 
 static void pr_out_str_value(struct dl *dl, const char *value)
 {
+	__pr_out_indent_newline(dl);
 	if (dl->json_output)
 		jsonw_string(dl->jw, value);
 	else
-		pr_out(" %s", value);
+		pr_out("%s", value);
 }
 
 static void pr_out_name(struct dl *dl, const char *name)
 {
+	__pr_out_indent_newline(dl);
 	if (dl->json_output)
 		jsonw_name(dl->jw, name);
 	else
-		pr_out(" %s:", name);
+		pr_out("%s:", name);
 }
 
 static void pr_out_region_chunk_start(struct dl *dl, uint64_t addr)
