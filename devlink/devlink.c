@@ -6660,7 +6660,7 @@ static void pr_out_health(struct dl *dl, struct nlattr **tb_health)
 
 	pr_out_handle_start_arr(dl, tb_health);
 
-	pr_out_str(dl, "name",
+	pr_out_str(dl, "reporter",
 		   mnl_attr_get_str(tb[DEVLINK_ATTR_HEALTH_REPORTER_NAME]));
 	if (!dl->json_output) {
 		__pr_out_newline();
