@@ -56,11 +56,8 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 	uint32_t cqe;
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_CQE] ||
-	    !nla_line[RDMA_NLDEV_ATTR_RES_USECNT] ||
-	    (!nla_line[RDMA_NLDEV_ATTR_RES_PID] &&
-	     !nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])) {
+	    !nla_line[RDMA_NLDEV_ATTR_RES_USECNT])
 		return MNL_CB_ERROR;
-	}
 
 	cqe = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_CQE]);
 

@@ -90,11 +90,8 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_LQPN] ||
 	    !nla_line[RDMA_NLDEV_ATTR_RES_SQ_PSN] ||
 	    !nla_line[RDMA_NLDEV_ATTR_RES_TYPE] ||
-	    !nla_line[RDMA_NLDEV_ATTR_RES_STATE] ||
-	    (!nla_line[RDMA_NLDEV_ATTR_RES_PID] &&
-	     !nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])) {
+	    !nla_line[RDMA_NLDEV_ATTR_RES_STATE])
 		return MNL_CB_ERROR;
-	}
 
 	if (nla_line[RDMA_NLDEV_ATTR_PORT_INDEX])
 		port = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_PORT_INDEX]);

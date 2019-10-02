@@ -120,11 +120,8 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 	char *comm = NULL;
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_STATE] ||
-	    !nla_line[RDMA_NLDEV_ATTR_RES_PS] ||
-	    (!nla_line[RDMA_NLDEV_ATTR_RES_PID] &&
-	     !nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])) {
+	    !nla_line[RDMA_NLDEV_ATTR_RES_PS])
 		return MNL_CB_ERROR;
-	}
 
 	if (nla_line[RDMA_NLDEV_ATTR_PORT_INDEX])
 		port = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_PORT_INDEX]);
