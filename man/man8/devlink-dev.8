@@ -62,6 +62,9 @@ devlink-dev \- devlink device configuration
 .ti -8
 .BR "devlink dev reload"
 .IR DEV
+.RI "[ "
+.BI "netns { " PID " | " NAME " | " ID " }
+.RI "]"
 
 .ti -8
 .BR "devlink dev info"
@@ -166,6 +169,10 @@ If this argument is omitted all parameters supported by devlink devices are list
 .PP
 .I "DEV"
 - Specifies the devlink device to reload.
+
+.BR netns
+.BI { " PID " | " NAME " | " ID " }
+- Specifies the network namespace to reload into, either by pid, name or id.
 
 .SS devlink dev info - display device information.
 Display device information provided by the driver. This command can be used
