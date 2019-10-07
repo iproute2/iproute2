@@ -36,7 +36,7 @@ static int usage(void)
 		"	ip netns pids NAME\n"
 		"	ip [-all] netns exec [NAME] cmd ...\n"
 		"	ip netns monitor\n"
-		"	ip netns list-id\n"
+		"	ip netns list-id [target-nsid POSITIVE-INT] [nsid POSITIVE-INT]\n"
 		"NETNSID := auto | POSITIVE-INT\n");
 	exit(-1);
 }
@@ -46,6 +46,7 @@ static struct rtnl_handle rtnsh = { .fd = -1 };
 
 static int have_rtnl_getnsid = -1;
 static int saved_netns = -1;
+static struct link_filter filter;
 
 static int ipnetns_accept_msg(struct rtnl_ctrl_data *ctrl,
 			      struct nlmsghdr *n, void *arg)
@@ -294,7 +295,7 @@ int print_nsid(struct nlmsghdr *n, void *arg)
 	FILE *fp = (FILE *)arg;
 	struct nsid_cache *c;
 	char name[NAME_MAX];
-	int nsid;
+	int nsid, current;
 
 	if (n->nlmsg_type != RTM_NEWNSID && n->nlmsg_type != RTM_DELNSID)
 		return 0;
@@ -317,9 +318,22 @@ int print_nsid(struct nlmsghdr *n, void *arg)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	nsid = rta_getattr_u32(tb[NETNSA_NSID]);
-	print_uint(PRINT_ANY, "nsid", "nsid %u ", nsid);
+	if (nsid < 0)
+		print_string(PRINT_ANY, "nsid", "nsid %s ", "not-assigned");
+	else
+		print_uint(PRINT_ANY, "nsid", "nsid %u ", nsid);
 
-	c = netns_map_get_by_nsid(nsid);
+	if (tb[NETNSA_CURRENT_NSID]) {
+		current = rta_getattr_u32(tb[NETNSA_CURRENT_NSID]);
+		if (current < 0)
+			print_string(PRINT_ANY, "current-nsid",
+				     "current-nsid %s ", "not-assigned");
+		else
+			print_uint(PRINT_ANY, "current-nsid",
+				   "current-nsid %u ", current);
+	}
+
+	c = netns_map_get_by_nsid(tb[NETNSA_CURRENT_NSID] ? current : nsid);
 	if (c != NULL) {
 		print_string(PRINT_ANY, "name",
 			     "(iproute2 netns name: %s)", c->name);
@@ -340,15 +354,106 @@ int print_nsid(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static int get_netnsid_from_netnsid(int nsid)
+{
+	struct {
+		struct nlmsghdr n;
+		struct rtgenmsg g;
+		char            buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(NLMSG_ALIGN(sizeof(struct rtgenmsg))),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_GETNSID,
+		.g.rtgen_family = AF_UNSPEC,
+	};
+	struct nlmsghdr *answer;
+	int err;
+
+	netns_nsid_socket_init();
+
+	err = addattr32(&req.n, sizeof(req), NETNSA_NSID, nsid);
+	if (err)
+		return err;
+
+	if (filter.target_nsid >= 0) {
+		err = addattr32(&req.n, sizeof(req), NETNSA_TARGET_NSID,
+				filter.target_nsid);
+		if (err)
+			return err;
+	}
+
+	if (rtnl_talk(&rtnsh, &req.n, &answer) < 0)
+		return -2;
+
+	/* Validate message and parse attributes */
+	if (answer->nlmsg_type == NLMSG_ERROR)
+		goto err_out;
+
+	new_json_obj(json);
+	err = print_nsid(answer, stdout);
+	delete_json_obj();
+err_out:
+	free(answer);
+	return err;
+}
+
+static int netns_filter_req(struct nlmsghdr *nlh, int reqlen)
+{
+	int err;
+
+	if (filter.target_nsid >= 0) {
+		err = addattr32(nlh, reqlen, NETNSA_TARGET_NSID,
+				filter.target_nsid);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
 static int netns_list_id(int argc, char **argv)
 {
+	int nsid = -1;
+
 	if (!ipnetns_have_nsid()) {
 		fprintf(stderr,
 			"RTM_GETNSID is not supported by the kernel.\n");
 		return -ENOTSUP;
 	}
 
-	if (rtnl_nsiddump_req(&rth, AF_UNSPEC) < 0) {
+	filter.target_nsid = -1;
+	while (argc > 0) {
+		if (strcmp(*argv, "target-nsid") == 0) {
+			if (filter.target_nsid >= 0)
+				duparg("target-nsid", *argv);
+			NEXT_ARG();
+
+			if (get_integer(&filter.target_nsid, *argv, 0))
+				invarg("\"target-nsid\" value is invalid\n",
+				       *argv);
+			else if (filter.target_nsid < 0)
+				invarg("\"target-nsid\" value should be >= 0\n",
+				       argv[1]);
+		} else if (strcmp(*argv, "nsid") == 0) {
+			if (nsid >= 0)
+				duparg("nsid", *argv);
+			NEXT_ARG();
+
+			if (get_integer(&nsid, *argv, 0))
+				invarg("\"nsid\" value is invalid\n", *argv);
+			else if (nsid < 0)
+				invarg("\"nsid\" value should be >= 0\n",
+				       argv[1]);
+		} else
+			usage();
+		argc--; argv++;
+	}
+
+	if (nsid >= 0)
+		return get_netnsid_from_netnsid(nsid);
+
+	if (rtnl_nsiddump_req_filter_fn(&rth, AF_UNSPEC,
+					netns_filter_req) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}

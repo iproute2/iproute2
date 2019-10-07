@@ -24,6 +24,7 @@ struct link_filter {
 	int master;
 	char *kind;
 	char *slave_kind;
+	int target_nsid;
 };
 
 int get_operstate(const char *name);
