@@ -994,7 +994,7 @@ int do_netns(int argc, char **argv)
 		return netns_list(0, NULL);
 	}
 
-	if (argc > 1 && invalid_name(argv[1])) {
+	if (!do_all && argc > 1 && invalid_name(argv[1])) {
 		fprintf(stderr, "Invalid netns name \"%s\"\n", argv[1]);
 		exit(-1);
 	}
