@@ -86,12 +86,6 @@ install: all
 	install -m 0755 -d $(DESTDIR)$(CONFDIR)
 	install -m 0755 -d $(DESTDIR)$(ARPDDIR)
 	install -m 0755 -d $(DESTDIR)$(HDRDIR)
-	install -m 0755 -d $(DESTDIR)$(DOCDIR)/examples
-	install -m 0755 -d $(DESTDIR)$(DOCDIR)/examples/diffserv
-	install -m 0644 README.iproute2+tc $(shell find examples -maxdepth 1 -type f) \
-		$(DESTDIR)$(DOCDIR)/examples
-	install -m 0644 $(shell find examples/diffserv -maxdepth 1 -type f) \
-		$(DESTDIR)$(DOCDIR)/examples/diffserv
 	@for i in $(SUBDIRS);  do $(MAKE) -C $$i install; done
 	install -m 0644 $(shell find etc/iproute2 -maxdepth 1 -type f) $(DESTDIR)$(CONFDIR)
 	install -m 0755 -d $(DESTDIR)$(BASH_COMPDIR)
