@@ -103,6 +103,10 @@ int _res_send_idx_msg(struct rd *rd, uint32_t command, mnl_cb_t callback,
 
 	mnl_attr_put_u32(rd->nlh, id, idx);
 
+	if (command == RDMA_NLDEV_CMD_STAT_GET)
+		mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_STAT_RES,
+				 RDMA_NLDEV_ATTR_RES_MR);
+
 	ret = rd_send_msg(rd);
 	if (ret)
 		return ret;
@@ -129,6 +133,10 @@ int _res_send_msg(struct rd *rd, uint32_t command, mnl_cb_t callback)
 	if (rd->port_idx)
 		mnl_attr_put_u32(rd->nlh,
 				 RDMA_NLDEV_ATTR_PORT_INDEX, rd->port_idx);
+
+	if (command == RDMA_NLDEV_CMD_STAT_GET)
+		mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_STAT_RES,
+				 RDMA_NLDEV_ATTR_RES_MR);
 
 	ret = rd_send_msg(rd);
 	if (ret)
