@@ -72,7 +72,7 @@ static struct ll_cache *ll_get_by_name(const char *name)
 		struct ll_cache *im
 			= container_of(n, struct ll_cache, name_hash);
 
-		if (strncmp(im->name, name, IFNAMSIZ) == 0)
+		if (strcmp(im->name, name) == 0)
 			return im;
 	}
 
@@ -288,8 +288,9 @@ static int ll_link_get(const char *name, int index)
 
 	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
 	if (name)
-		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name,
-			  strlen(name) + 1);
+		addattr_l(&req.n, sizeof(req),
+			  !check_ifname(name) ? IFLA_IFNAME : IFLA_ALT_IFNAME,
+			  name, strlen(name) + 1);
 
 	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n, &answer) < 0)
 		goto out;
