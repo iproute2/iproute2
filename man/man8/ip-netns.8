@@ -32,6 +32,9 @@ ip-netns \- process network namespace management
 .I NETNSNAME NETNSID
 
 .ti -8
+.IR NETNSID " := " auto " | " POSITIVE-INT
+
+.ti -8
 .BR "ip netns identify"
 .RI "[ " PID " ]"
 
@@ -48,6 +51,7 @@ ip-netns \- process network namespace management
 
 .ti -8
 .BR "ip netns list-id"
+.RI "[ target-nsid " POSITIVE-INT " ] [ nsid " POSITIVE-INT " ]"
 
 .SH DESCRIPTION
 A network namespace is logically another copy of the network stack,
@@ -193,11 +197,27 @@ This command watches network namespace name addition and deletion events
 and prints a line for each event it sees.
 
 .TP
-.B ip netns list-id - list network namespace ids (nsid)
+.B ip netns list-id [target-nsid POSITIVE-INT] [nsid POSITIVE-INT] - list network namespace ids (nsid)
 .sp
 Network namespace ids are used to identify a peer network namespace. This
-command displays nsid of the current network namespace and provides the
+command displays nsids of the current network namespace and provides the
 corresponding iproute2 netns name (from /var/run/netns) if any.
+
+The
+.B target-nsid
+option enables to display nsids of the specified network namespace instead of the current network
+namespace. This
+.B target-nsid
+is a nsid from the current network namespace.
+
+The
+.B nsid
+option enables to display only this nsid. It is a nsid from the current network namespace. In
+combination with the
+.B target-nsid
+option, it enables to convert a specific nsid from the current network namespace to a nsid of the
+.B target-nsid
+network namespace.
 
 .SH EXAMPLES
 .PP
@@ -215,6 +235,31 @@ ip netns exec vpn ip link set lo up
 .RS
 Bring up the loopback interface in the vpn network namespace.
 .RE
+.PP
+ip netns add foo
+.br
+ip netns add bar
+.br
+ip netns set foo 12
+.br
+ip netns set bar 13
+.br
+ip -n foo netns set foo 22
+.br
+ip -n foo netns set bar 23
+.br
+ip -n bar netns set foo 32
+.br
+ip -n bar netns set bar 33
+.br
+ip netns list-id target-nsid 12
+.RS
+Shows the list of nsids from the network namespace foo.
+.RE
+ip netns list-id target-nsid 12 nsid 13
+.RS
+Get nsid of bar from the network namespace foo (result is 23).
+.RE
 
 .SH SEE ALSO
 .br
@@ -222,3 +267,5 @@ Bring up the loopback interface in the vpn network namespace.
 
 .SH AUTHOR
 Original Manpage by Eric W. Biederman
+.br
+Manpage revised by Nicolas Dichtel <nicolas.dichtel@6wind.com>

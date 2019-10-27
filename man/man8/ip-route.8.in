@@ -206,6 +206,8 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR TUNNEL_ID
 .B  dst
 .IR REMOTE_IP " [ "
+.B src
+.IR SRC " ] ["
 .B tos
 .IR TOS " ] ["
 .B  ttl
@@ -740,11 +742,13 @@ is a set of encapsulation attributes specific to the
 .I TUNNEL_ID
 .B  dst
 .IR REMOTE_IP " [ "
+.B src
+.IR SRC " ] ["
 .B tos
 .IR TOS " ] ["
 .B  ttl
 .IR TTL " ] [ "
-.BR key " ] [" csum " ] [ " seq " ] "
+.BR key " ] [ " csum " ] [ " seq " ] "
 .in -2
 .sp
 

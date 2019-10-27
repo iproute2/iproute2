@@ -71,8 +71,6 @@ int rtnl_mdbdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
 int rtnl_netconfdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
-int rtnl_nsiddump_req(struct rtnl_handle *rth, int family)
-	__attribute__((warn_unused_result));
 
 int rtnl_linkdump_req(struct rtnl_handle *rth, int fam)
 	__attribute__((warn_unused_result));
@@ -84,6 +82,9 @@ int rtnl_linkdump_req_filter_fn(struct rtnl_handle *rth, int fam,
 	__attribute__((warn_unused_result));
 int rtnl_fdb_linkdump_req_filter_fn(struct rtnl_handle *rth,
 				    req_filter_fn_t filter_fn)
+	__attribute__((warn_unused_result));
+int rtnl_nsiddump_req_filter_fn(struct rtnl_handle *rth, int family,
+				req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 	__attribute__((warn_unused_result));

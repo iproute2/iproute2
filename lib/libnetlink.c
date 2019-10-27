@@ -438,12 +438,13 @@ int rtnl_netconfdump_req(struct rtnl_handle *rth, int family)
 	return send(rth->fd, &req, sizeof(req), 0);
 }
 
-int rtnl_nsiddump_req(struct rtnl_handle *rth, int family)
+int rtnl_nsiddump_req_filter_fn(struct rtnl_handle *rth, int family,
+				req_filter_fn_t filter_fn)
 {
 	struct {
 		struct nlmsghdr nlh;
 		struct rtgenmsg rtm;
-		char buf[0] __aligned(NLMSG_ALIGNTO);
+		char buf[1024];
 	} req = {
 		.nlh.nlmsg_len = NLMSG_LENGTH(NLMSG_ALIGN(sizeof(struct rtgenmsg))),
 		.nlh.nlmsg_type = RTM_GETNSID,
@@ -451,8 +452,16 @@ int rtnl_nsiddump_req(struct rtnl_handle *rth, int family)
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
 		.rtm.rtgen_family = family,
 	};
+	int err;
 
-	return send(rth->fd, &req, sizeof(req), 0);
+	if (!filter_fn)
+		return -EINVAL;
+
+	err = filter_fn(&req.nlh, sizeof(req));
+	if (err)
+		return err;
+
+	return send(rth->fd, &req, req.nlh.nlmsg_len, 0);
 }
 
 static int __rtnl_linkdump_req(struct rtnl_handle *rth, int family)

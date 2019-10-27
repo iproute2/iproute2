@@ -87,7 +87,7 @@ parse_gact(struct action_util *a, int *argc_p, char ***argv_p,
 		return -1;
 
 	if (!matches(*argv, "gact"))
-		NEXT_ARG_FWD();
+		NEXT_ARG();
 	/* we're binding existing gact action to filter by index. */
 	if (!matches(*argv, "index"))
 		goto skip_args;

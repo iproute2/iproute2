@@ -2364,7 +2364,6 @@ Commands:
 .BI dev " NAME " (default)
 .I NAME
 specifies the network device to show.
-If this argument is omitted all devices in the default group are listed.
 
 .TP
 .BI group " GROUP "
