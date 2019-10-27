@@ -6,6 +6,7 @@
 
 #include "rdma.h"
 #include "res.h"
+#include "stat.h"
 #include <inttypes.h>
 
 static int stat_help(struct rd *rd)
@@ -174,7 +175,7 @@ static int stat_qp_get_mode(struct rd *rd)
 	return rd_exec_cmd(rd, cmds, "parameter");
 }
 
-static int res_get_hwcounters(struct rd *rd, struct nlattr *hwc_table, bool print)
+int res_get_hwcounters(struct rd *rd, struct nlattr *hwc_table, bool print)
 {
 	struct nlattr *nla_entry;
 	const char *nm;
@@ -737,6 +738,7 @@ static int stat_show(struct rd *rd)
 	const struct rd_cmd cmds[] = {
 		{ NULL,		stat_show_link },
 		{ "link",	stat_show_link },
+		{ "mr",		stat_mr },
 		{ "help",	stat_help },
 		{ 0 }
 	};
@@ -752,6 +754,7 @@ int cmd_stat(struct rd *rd)
 		{ "list",	stat_show },
 		{ "help",	stat_help },
 		{ "qp",		stat_qp },
+		{ "mr",		stat_mr },
 		{ 0 }
 	};
 
