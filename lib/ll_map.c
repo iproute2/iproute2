@@ -22,6 +22,7 @@
 #include "libnetlink.h"
 #include "ll_map.h"
 #include "list.h"
+#include "utils.h"
 
 struct ll_cache {
 	struct hlist_node idx_hash;
@@ -29,6 +30,7 @@ struct ll_cache {
 	unsigned	flags;
 	unsigned 	index;
 	unsigned short	type;
+	struct list_head altnames_list;
 	char		name[];
 };
 
@@ -70,17 +72,157 @@ static struct ll_cache *ll_get_by_name(const char *name)
 		struct ll_cache *im
 			= container_of(n, struct ll_cache, name_hash);
 
-		if (strncmp(im->name, name, IFNAMSIZ) == 0)
+		if (strcmp(im->name, name) == 0)
 			return im;
 	}
 
 	return NULL;
 }
 
-int ll_remember_index(struct nlmsghdr *n, void *arg)
+static struct ll_cache *ll_entry_create(struct ifinfomsg *ifi,
+					const char *ifname,
+					struct ll_cache *parent_im)
+{
+	struct ll_cache *im;
+	unsigned int h;
+
+	im = malloc(sizeof(*im) + strlen(ifname) + 1);
+	if (!im)
+		return NULL;
+	im->index = ifi->ifi_index;
+	strcpy(im->name, ifname);
+	im->type = ifi->ifi_type;
+	im->flags = ifi->ifi_flags;
+
+	if (parent_im) {
+		list_add_tail(&im->altnames_list, &parent_im->altnames_list);
+	} else {
+		/* This is parent, insert to index hash. */
+		h = ifi->ifi_index & (IDXMAP_SIZE - 1);
+		hlist_add_head(&im->idx_hash, &idx_head[h]);
+		INIT_LIST_HEAD(&im->altnames_list);
+	}
+
+	h = namehash(ifname) & (IDXMAP_SIZE - 1);
+	hlist_add_head(&im->name_hash, &name_head[h]);
+	return im;
+}
+
+static void ll_entry_destroy(struct ll_cache *im, bool im_is_parent)
+{
+	hlist_del(&im->name_hash);
+	if (im_is_parent)
+		hlist_del(&im->idx_hash);
+	else
+		list_del(&im->altnames_list);
+	free(im);
+}
+
+static void ll_entry_update(struct ll_cache *im, struct ifinfomsg *ifi,
+			    const char *ifname)
 {
 	unsigned int h;
-	const char *ifname;
+
+	im->flags = ifi->ifi_flags;
+	if (!strcmp(im->name, ifname))
+		return;
+	hlist_del(&im->name_hash);
+	h = namehash(ifname) & (IDXMAP_SIZE - 1);
+	hlist_add_head(&im->name_hash, &name_head[h]);
+}
+
+static void ll_altname_entries_create(struct ll_cache *parent_im,
+				      struct ifinfomsg *ifi, struct rtattr **tb)
+{
+	struct rtattr *i, *proplist = tb[IFLA_PROP_LIST];
+	int rem;
+
+	if (!proplist)
+		return;
+	rem = RTA_PAYLOAD(proplist);
+	for (i = RTA_DATA(proplist); RTA_OK(i, rem);
+	     i = RTA_NEXT(i, rem)) {
+		if (i->rta_type != IFLA_ALT_IFNAME)
+			continue;
+		ll_entry_create(ifi, rta_getattr_str(i), parent_im);
+	}
+}
+
+static void ll_altname_entries_destroy(struct ll_cache *parent_im)
+{
+	struct ll_cache *im, *tmp;
+
+	list_for_each_entry_safe(im, tmp, &parent_im->altnames_list,
+				 altnames_list)
+		ll_entry_destroy(im, false);
+}
+
+static void ll_altname_entries_update(struct ll_cache *parent_im,
+				      struct ifinfomsg *ifi, struct rtattr **tb)
+{
+	struct rtattr *i, *proplist = tb[IFLA_PROP_LIST];
+	struct ll_cache *im;
+	int rem;
+
+	if (!proplist) {
+		ll_altname_entries_destroy(parent_im);
+		return;
+	}
+
+	/* Simply compare the altname list with the cached one
+	 * and if it does not fit 1:1, recreate the cached list
+	 * from scratch.
+	 */
+	im = list_first_entry(&parent_im->altnames_list, typeof(*im),
+			      altnames_list);
+	rem = RTA_PAYLOAD(proplist);
+	for (i = RTA_DATA(proplist); RTA_OK(i, rem);
+	     i = RTA_NEXT(i, rem)) {
+		if (i->rta_type != IFLA_ALT_IFNAME)
+			continue;
+		if (!im || strcmp(rta_getattr_str(i), im->name))
+			goto recreate_altname_entries;
+		im = list_next_entry(im, altnames_list);
+	}
+	if (list_next_entry(im, altnames_list))
+		goto recreate_altname_entries;
+	return;
+
+recreate_altname_entries:
+	ll_altname_entries_destroy(parent_im);
+	ll_altname_entries_create(parent_im, ifi, tb);
+}
+
+static void ll_entries_create(struct ifinfomsg *ifi, struct rtattr **tb)
+{
+	struct ll_cache *parent_im;
+
+	if (!tb[IFLA_IFNAME])
+		return;
+	parent_im = ll_entry_create(ifi, rta_getattr_str(tb[IFLA_IFNAME]),
+				    NULL);
+	if (!parent_im)
+		return;
+	ll_altname_entries_create(parent_im, ifi, tb);
+}
+
+static void ll_entries_destroy(struct ll_cache *parent_im)
+{
+	ll_altname_entries_destroy(parent_im);
+	ll_entry_destroy(parent_im, true);
+}
+
+static void ll_entries_update(struct ll_cache *parent_im,
+			      struct ifinfomsg *ifi, struct rtattr **tb)
+{
+	if (tb[IFLA_IFNAME])
+		ll_entry_update(parent_im, ifi,
+				rta_getattr_str(tb[IFLA_IFNAME]));
+	ll_altname_entries_update(parent_im, ifi, tb);
+}
+
+int ll_remember_index(struct nlmsghdr *n, void *arg)
+{
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct ll_cache *im;
 	struct rtattr *tb[IFLA_MAX+1];
@@ -93,45 +235,17 @@ int ll_remember_index(struct nlmsghdr *n, void *arg)
 
 	im = ll_get_by_index(ifi->ifi_index);
 	if (n->nlmsg_type == RTM_DELLINK) {
-		if (im) {
-			hlist_del(&im->name_hash);
-			hlist_del(&im->idx_hash);
-			free(im);
-		}
+		if (im)
+			ll_entries_destroy(im);
 		return 0;
 	}
 
-	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), IFLA_PAYLOAD(n));
-	ifname = rta_getattr_str(tb[IFLA_IFNAME]);
-	if (ifname == NULL)
-		return 0;
-
-	if (im) {
-		/* change to existing entry */
-		if (strcmp(im->name, ifname) != 0) {
-			hlist_del(&im->name_hash);
-			h = namehash(ifname) & (IDXMAP_SIZE - 1);
-			hlist_add_head(&im->name_hash, &name_head[h]);
-		}
-
-		im->flags = ifi->ifi_flags;
-		return 0;
-	}
-
-	im = malloc(sizeof(*im) + strlen(ifname) + 1);
-	if (im == NULL)
-		return 0;
-	im->index = ifi->ifi_index;
-	strcpy(im->name, ifname);
-	im->type = ifi->ifi_type;
-	im->flags = ifi->ifi_flags;
-
-	h = ifi->ifi_index & (IDXMAP_SIZE - 1);
-	hlist_add_head(&im->idx_hash, &idx_head[h]);
-
-	h = namehash(ifname) & (IDXMAP_SIZE - 1);
-	hlist_add_head(&im->name_hash, &name_head[h]);
-
+	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi),
+			   IFLA_PAYLOAD(n), NLA_F_NESTED);
+	if (im)
+		ll_entries_update(im, ifi, tb);
+	else
+		ll_entries_create(ifi, tb);
 	return 0;
 }
 
@@ -174,8 +288,9 @@ static int ll_link_get(const char *name, int index)
 
 	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
 	if (name)
-		addattr_l(&req.n, sizeof(req), IFLA_IFNAME, name,
-			  strlen(name) + 1);
+		addattr_l(&req.n, sizeof(req),
+			  !check_ifname(name) ? IFLA_IFNAME : IFLA_ALT_IFNAME,
+			  name, strlen(name) + 1);
 
 	if (rtnl_talk_suppress_rtnl_errmsg(&rth, &req.n, &answer) < 0)
 		goto out;
