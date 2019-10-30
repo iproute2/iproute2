@@ -250,6 +250,16 @@ done0:
 				addattr_l(n, MAX_MSG, TCA_ACT_COOKIE,
 					  &act_ck, act_ck_len);
 
+			if (*argv && strcmp(*argv, "no_percpu") == 0) {
+				struct nla_bitfield32 flags =
+					{ TCA_ACT_FLAGS_NO_PERCPU_STATS,
+					  TCA_ACT_FLAGS_NO_PERCPU_STATS };
+
+				addattr_l(n, MAX_MSG, TCA_ACT_FLAGS, &flags,
+					  sizeof(struct nla_bitfield32));
+				NEXT_ARG_FWD();
+			}
+
 			addattr_nest_end(n, tail);
 			ok++;
 		}
@@ -316,6 +326,15 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 		print_string(PRINT_ANY, "cookie", "\tcookie %s",
 			     hexstring_n2a(RTA_DATA(tb[TCA_ACT_COOKIE]),
 					   strsz, b1, sizeof(b1)));
+		print_string(PRINT_FP, NULL, "%s", _SL_);
+	}
+	if (tb[TCA_ACT_FLAGS]) {
+		struct nla_bitfield32 *flags = RTA_DATA(tb[TCA_ACT_FLAGS]);
+
+		if (flags->selector & TCA_ACT_FLAGS_NO_PERCPU_STATS)
+			print_bool(PRINT_ANY, "no_percpu", "\tno_percpu",
+				   flags->value &
+				   TCA_ACT_FLAGS_NO_PERCPU_STATS);
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 	}
 

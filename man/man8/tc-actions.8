@@ -47,6 +47,8 @@ actions \- independently defined actions in tc
 ] [
 .I COOKIESPEC
 ] [
+.I FLAGS
+] [
 .I CONTROL
 ]
 
@@ -70,6 +72,10 @@ ACTNAME
 .I COOKIESPEC
 :=
 .BI cookie " COOKIE"
+
+.I FLAGS
+:=
+.I no_percpu
 
 .I ACTDETAIL
 :=
@@ -185,6 +191,14 @@ is a 128-bit value that will not be interpreted by the kernel whatsoever.
 As such, it can be used as a correlating value for maintaining user state.
 The value to be stored is completely arbitrary and does not require a specific
 format. It is stored inside the action structure itself.
+
+.TP
+.I FLAGS
+Action-specific flags. Currently, the only supported flag is
+.I no_percpu
+which indicates that action is expected to have minimal software data-path
+traffic and doesn't need to allocate stat counters with percpu allocator.
+This option is intended to be used by hardware-offloaded actions.
 
 .TP
 .BI since " MSTIME"
