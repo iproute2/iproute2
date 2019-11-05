@@ -345,6 +345,12 @@ static void dl_arg_inc(struct dl *dl)
 	dl->argv++;
 }
 
+static void dl_arg_dec(struct dl *dl)
+{
+	dl->argc++;
+	dl->argv--;
+}
+
 static char *dl_argv_next(struct dl *dl)
 {
 	char *ret;
@@ -1460,7 +1466,8 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			opts->netns = netns_get_fd(netns_str);
-			if (opts->netns < 0) {
+			if ((int)opts->netns < 0) {
+				dl_arg_dec(dl);
 				err = dl_argv_uint32_t(dl, &opts->netns);
 				if (err)
 					return err;
