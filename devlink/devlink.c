@@ -283,7 +283,7 @@ struct dl_opts {
 	bool dpipe_counters_enable;
 	bool eswitch_encap_mode;
 	const char *resource_path;
-	uint32_t resource_size;
+	uint64_t resource_size;
 	uint32_t resource_id;
 	bool resource_id_valid;
 	const char *param_name;
@@ -1348,7 +1348,7 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 		} else if (dl_argv_match(dl, "size") &&
 			   (o_all & DL_OPT_RESOURCE_SIZE)) {
 			dl_arg_inc(dl);
-			err = dl_argv_uint32_t(dl, &opts->resource_size);
+			err = dl_argv_uint64_t(dl, &opts->resource_size);
 			if (err)
 				return err;
 			o_found |= DL_OPT_RESOURCE_SIZE;
