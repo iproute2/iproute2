@@ -1157,6 +1157,10 @@ static int dl_args_finding_required_validate(uint64_t o_required,
 			return -EINVAL;
 		}
 	}
+	if (o_required & ~o_found) {
+		pr_err("BUG: unknown argument required but not found\n");
+		return -EINVAL;
+	}
 	return 0;
 }
 
