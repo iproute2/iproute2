@@ -439,10 +439,10 @@ static int netns_list_id(int argc, char **argv)
 			NEXT_ARG();
 
 			if (get_integer(&filter.target_nsid, *argv, 0))
-				invarg("\"target-nsid\" value is invalid\n",
+				invarg("\"target-nsid\" value is invalid",
 				       *argv);
 			else if (filter.target_nsid < 0)
-				invarg("\"target-nsid\" value should be >= 0\n",
+				invarg("\"target-nsid\" value should be >= 0",
 				       argv[1]);
 		} else if (strcmp(*argv, "nsid") == 0) {
 			if (nsid >= 0)
@@ -450,9 +450,9 @@ static int netns_list_id(int argc, char **argv)
 			NEXT_ARG();
 
 			if (get_integer(&nsid, *argv, 0))
-				invarg("\"nsid\" value is invalid\n", *argv);
+				invarg("\"nsid\" value is invalid", *argv);
 			else if (nsid < 0)
-				invarg("\"nsid\" value should be >= 0\n",
+				invarg("\"nsid\" value should be >= 0",
 				       argv[1]);
 		} else
 			usage();
@@ -932,9 +932,9 @@ static int netns_set(int argc, char **argv)
 	if (strcmp(argv[1], "auto") == 0)
 		nsid = -1;
 	else if (get_integer(&nsid, argv[1], 0))
-		invarg("Invalid \"netnsid\" value\n", argv[1]);
+		invarg("Invalid \"netnsid\" value", argv[1]);
 	else if (nsid < 0)
-		invarg("\"netnsid\" value should be >= 0\n", argv[1]);
+		invarg("\"netnsid\" value should be >= 0", argv[1]);
 
 	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
 	netns = open(netns_path, O_RDONLY | O_CLOEXEC);
