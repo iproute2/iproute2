@@ -137,7 +137,7 @@ int get_netnsid_from_name(const char *name)
 	parse_rtattr(tb, NETNSA_MAX, NETNS_RTA(rthdr), len);
 
 	if (tb[NETNSA_NSID]) {
-		ret = rta_getattr_u32(tb[NETNSA_NSID]);
+		ret = rta_getattr_s32(tb[NETNSA_NSID]);
 	}
 
 out:
@@ -317,20 +317,20 @@ int print_nsid(struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type == RTM_DELNSID)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
-	nsid = rta_getattr_u32(tb[NETNSA_NSID]);
+	nsid = rta_getattr_s32(tb[NETNSA_NSID]);
 	if (nsid < 0)
 		print_string(PRINT_ANY, "nsid", "nsid %s ", "not-assigned");
 	else
-		print_uint(PRINT_ANY, "nsid", "nsid %u ", nsid);
+		print_int(PRINT_ANY, "nsid", "nsid %d ", nsid);
 
 	if (tb[NETNSA_CURRENT_NSID]) {
-		current = rta_getattr_u32(tb[NETNSA_CURRENT_NSID]);
+		current = rta_getattr_s32(tb[NETNSA_CURRENT_NSID]);
 		if (current < 0)
 			print_string(PRINT_ANY, "current-nsid",
 				     "current-nsid %s ", "not-assigned");
 		else
-			print_uint(PRINT_ANY, "current-nsid",
-				   "current-nsid %u ", current);
+			print_int(PRINT_ANY, "current-nsid",
+				  "current-nsid %d ", current);
 	}
 
 	c = netns_map_get_by_nsid(tb[NETNSA_CURRENT_NSID] ? current : nsid);
@@ -491,8 +491,7 @@ static int netns_list(int argc, char **argv)
 		if (ipnetns_have_nsid()) {
 			id = get_netnsid_from_name(entry->d_name);
 			if (id >= 0)
-				print_uint(PRINT_ANY, "id",
-					   " (id: %d)", id);
+				print_int(PRINT_ANY, "id", " (id: %d)", id);
 		}
 		print_string(PRINT_FP, NULL, "\n", NULL);
 		close_json_object();
