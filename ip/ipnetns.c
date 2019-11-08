@@ -340,7 +340,7 @@ int print_nsid(struct nlmsghdr *n, void *arg)
 		netns_map_del(c);
 	}
 
-	/* During 'ip monitor nsid', no chance to have new nsid in cache. */
+	/* nsid might not be in cache */
 	if (c == NULL && n->nlmsg_type == RTM_NEWNSID)
 		if (netns_get_name(nsid, name) == 0) {
 			print_string(PRINT_ANY, "name",
