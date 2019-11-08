@@ -329,15 +329,15 @@ int print_nsid(struct nlmsghdr *n, void *arg)
 
 	nsid = rta_getattr_s32(tb[NETNSA_NSID]);
 	if (nsid < 0)
-		print_string(PRINT_ANY, "nsid", "nsid %s ", "not-assigned");
+		print_string(PRINT_FP, NULL, "nsid unassigned ", NULL);
 	else
 		print_int(PRINT_ANY, "nsid", "nsid %d ", nsid);
 
 	if (tb[NETNSA_CURRENT_NSID]) {
 		current = rta_getattr_s32(tb[NETNSA_CURRENT_NSID]);
 		if (current < 0)
-			print_string(PRINT_ANY, "current-nsid",
-				     "current-nsid %s ", "not-assigned");
+			print_string(PRINT_FP, NULL,
+				     "current-nsid unassigned ", NULL);
 		else
 			print_int(PRINT_ANY, "current-nsid",
 				  "current-nsid %d ", current);
