@@ -1910,7 +1910,7 @@ move the device to the network namespace associated with name
 .RI process " PID".
 
 Some devices are not allowed to change network namespace: loopback, bridge,
-ppp, wireless. These are network namespace local devices. In such case
+wireless. These are network namespace local devices. In such case
 .B ip
 tool will return "Invalid argument" error. It is possible to find out
 if device is local to a single network namespace by checking
