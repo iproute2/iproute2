@@ -161,9 +161,13 @@ static struct hlist_head	name_head[NSIDMAP_SIZE];
 
 static struct nsid_cache *netns_map_get_by_nsid(int nsid)
 {
-	uint32_t h = NSID_HASH_NSID(nsid);
 	struct hlist_node *n;
+	uint32_t h;
 
+	if (nsid < 0)
+		return NULL;
+
+	h = NSID_HASH_NSID(nsid);
 	hlist_for_each(n, &nsid_head[h]) {
 		struct nsid_cache *c = container_of(n, struct nsid_cache,
 						    nsid_hash);
@@ -177,6 +181,9 @@ static struct nsid_cache *netns_map_get_by_nsid(int nsid)
 char *get_name_from_nsid(int nsid)
 {
 	struct nsid_cache *c;
+
+	if (nsid < 0)
+		return NULL;
 
 	netns_nsid_socket_init();
 	netns_map_init();
@@ -266,6 +273,9 @@ static int netns_get_name(int nsid, char *name)
 	DIR *dir;
 	int id;
 
+	if (nsid < 0)
+		return -EINVAL;
+
 	dir = opendir(NETNS_RUN_DIR);
 	if (!dir)
 		return -ENOENT;
@@ -277,7 +287,7 @@ static int netns_get_name(int nsid, char *name)
 			continue;
 		id = get_netnsid_from_name(entry->d_name);
 
-		if (nsid == id) {
+		if (id >= 0 && nsid == id) {
 			strcpy(name, entry->d_name);
 			closedir(dir);
 			return 0;
