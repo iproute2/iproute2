@@ -1125,6 +1125,8 @@ static const struct dl_args_metadata dl_args_required[] = {
 	{DL_OPT_DPIPE_TABLE_NAME,     "Dpipe table name expected."},
 	{DL_OPT_DPIPE_TABLE_COUNTERS, "Dpipe table counter state expected."},
 	{DL_OPT_ESWITCH_ENCAP_MODE,   "E-Switch encapsulation option expected."},
+	{DL_OPT_RESOURCE_PATH,	      "Resource path expected."},
+	{DL_OPT_RESOURCE_SIZE,	      "Resource size expected."},
 	{DL_OPT_PARAM_NAME,	      "Parameter name expected."},
 	{DL_OPT_PARAM_VALUE,	      "Value to set expected."},
 	{DL_OPT_PARAM_CMODE,	      "Configuration mode expected."},

@@ -31,7 +31,7 @@ static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 		netns_mode =
 			mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_NETNS_MODE]);
 
-		if (netns_mode <= ARRAY_SIZE(netns_modes_str))
+		if (netns_mode < ARRAY_SIZE(netns_modes_str))
 			mode_str = netns_modes_str[netns_mode];
 		else
 			mode_str = "unknown";

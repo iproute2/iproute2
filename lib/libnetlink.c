@@ -1174,7 +1174,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 int rtnl_from_file(FILE *rtnl, rtnl_listen_filter_t handler,
 		   void *jarg)
 {
-	int status;
+	size_t status;
 	char buf[16384];
 	struct nlmsghdr *h = (struct nlmsghdr *)buf;
 
@@ -1184,14 +1184,15 @@ int rtnl_from_file(FILE *rtnl, rtnl_listen_filter_t handler,
 
 		status = fread(&buf, 1, sizeof(*h), rtnl);
 
-		if (status < 0) {
-			if (errno == EINTR)
-				continue;
-			perror("rtnl_from_file: fread");
+		if (status == 0 && feof(rtnl))
+			return 0;
+		if (status != sizeof(*h)) {
+			if (ferror(rtnl))
+				perror("rtnl_from_file: fread");
+			if (feof(rtnl))
+				fprintf(stderr, "rtnl-from_file: truncated message\n");
 			return -1;
 		}
-		if (status == 0)
-			return 0;
 
 		len = h->nlmsg_len;
 		l = len - sizeof(*h);
@@ -1204,12 +1205,11 @@ int rtnl_from_file(FILE *rtnl, rtnl_listen_filter_t handler,
 
 		status = fread(NLMSG_DATA(h), 1, NLMSG_ALIGN(l), rtnl);
 
-		if (status < 0) {
-			perror("rtnl_from_file: fread");
-			return -1;
-		}
-		if (status < l) {
-			fprintf(stderr, "rtnl-from_file: truncated message\n");
+		if (status != NLMSG_ALIGN(l)) {
+			if (ferror(rtnl))
+				perror("rtnl_from_file: fread");
+			if (feof(rtnl))
+				fprintf(stderr, "rtnl-from_file: truncated message\n");
 			return -1;
 		}
 
