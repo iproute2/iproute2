@@ -133,6 +133,7 @@ enum col_id {
 	COL_RADDR,
 	COL_RSERV,
 	COL_EXT,
+	COL_PROC,
 	COL_MAX
 };
 
@@ -160,6 +161,7 @@ static struct column columns[] = {
 	{ ALIGN_LEFT,	"Port",			"",	0, 0, 0 },
 	{ ALIGN_RIGHT,	"Peer Address:",	" ",	0, 0, 0 },
 	{ ALIGN_LEFT,	"Port",			"",	0, 0, 0 },
+	{ ALIGN_LEFT,	"Process",		"",	0, 0, 0 },
 	{ ALIGN_LEFT,	"",			"",	0, 0, 0 },
 };
 
