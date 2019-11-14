@@ -109,6 +109,19 @@ test packet against xtables matches
 
 The flag options are the same as those used by the xtable match used.
 
+.SS canid
+ematch rule to match CAN frames
+
+.IR canid "( " IDLIST " )
+
+.IR IDLIST " :=  " IDSPEC [ IDLIST ]
+
+.IR IDSPEC " := { ’sff’ " CANID " | ’eff’ " CANID " }
+
+.IR CANID " := " ID [ ":MASK" ]
+
+.IR ID ", " MASK " := hexadecimal number (i.e. 0x123)
+
 .SH CAVEATS
 
 The ematch syntax uses '(' and ')' to group expressions. All braces need to be
