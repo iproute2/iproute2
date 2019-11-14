@@ -131,4 +131,6 @@ void print_masked_u32(const char *name, struct rtattr *attr,
 		      struct rtattr *mask_attr);
 void print_masked_u16(const char *name, struct rtattr *attr,
 		      struct rtattr *mask_attr);
+void print_masked_u8(const char *name, struct rtattr *attr,
+		     struct rtattr *mask_attr);
 #endif
