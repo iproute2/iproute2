@@ -918,7 +918,7 @@ compat_xstats:
 static void print_masked_type(__u32 type_max,
 			      __u32 (*rta_getattr_type)(const struct rtattr *),
 			      const char *name, struct rtattr *attr,
-			      struct rtattr *mask_attr)
+			      struct rtattr *mask_attr, bool newline)
 {
 	SPRINT_BUF(namefrm);
 	__u32 value, mask;
@@ -939,23 +939,24 @@ static void print_masked_type(__u32 type_max,
 			char mask_name[SPRINT_BSIZE-6];
 
 			sprintf(mask_name, "%s_mask", name);
-			print_string(PRINT_FP, NULL, "%s  ", _SL_);
-			sprintf(namefrm, "%s %%u", mask_name);
+			if (newline)
+				print_string(PRINT_FP, NULL, "%s ", _SL_);
+			sprintf(namefrm, " %s %%u", mask_name);
 			print_hu(PRINT_ANY, mask_name, namefrm, mask);
 		}
 	} else {
 		done = sprintf(out, "%u", value);
 		if (mask != type_max)
 			sprintf(out + done, "/0x%x", mask);
-
-		print_string(PRINT_FP, NULL, "%s  ", _SL_);
-		sprintf(namefrm, "%s %%s", name);
+		if (newline)
+			print_string(PRINT_FP, NULL, "%s ", _SL_);
+		sprintf(namefrm, " %s %%s", name);
 		print_string(PRINT_ANY, name, namefrm, out);
 	}
 }
 
 void print_masked_u32(const char *name, struct rtattr *attr,
-		      struct rtattr *mask_attr)
+		      struct rtattr *mask_attr, bool newline)
 {
 	__u32 value, mask;
 	SPRINT_BUF(namefrm);
@@ -972,12 +973,12 @@ void print_masked_u32(const char *name, struct rtattr *attr,
 	if (mask != UINT32_MAX)
 		sprintf(out + done, "/0x%x", mask);
 
-	sprintf(namefrm, " %s %%s", name);
+	sprintf(namefrm, "%s %s %%s", newline ? "\n " : "", name);
 	print_string(PRINT_ANY, name, namefrm, out);
 }
 
 void print_masked_u16(const char *name, struct rtattr *attr,
-		      struct rtattr *mask_attr)
+		      struct rtattr *mask_attr, bool newline)
 {
 	__u16 value, mask;
 	SPRINT_BUF(namefrm);
@@ -994,7 +995,7 @@ void print_masked_u16(const char *name, struct rtattr *attr,
 	if (mask != UINT16_MAX)
 		sprintf(out + done, "/0x%x", mask);
 
-	sprintf(namefrm, " %s %%s", name);
+	sprintf(namefrm, "%s %s %%s", newline ? "\n " : "", name);
 	print_string(PRINT_ANY, name, namefrm, out);
 }
 
@@ -1004,8 +1005,8 @@ static __u32 __rta_getattr_u8_u32(const struct rtattr *attr)
 }
 
 void print_masked_u8(const char *name, struct rtattr *attr,
-		     struct rtattr *mask_attr)
+		     struct rtattr *mask_attr, bool newline)
 {
 	print_masked_type(UINT8_MAX,  __rta_getattr_u8_u32, name, attr,
-			  mask_attr);
+			  mask_attr, newline);
 }

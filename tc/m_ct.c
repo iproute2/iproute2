@@ -466,8 +466,8 @@ static int print_ct(struct action_util *au, FILE *f, struct rtattr *arg)
 		print_string(PRINT_ANY, "action", " %s", "clear");
 	}
 
-	print_masked_u32("mark", tb[TCA_CT_MARK], tb[TCA_CT_MARK_MASK]);
-	print_masked_u16("zone", tb[TCA_CT_ZONE], NULL);
+	print_masked_u32("mark", tb[TCA_CT_MARK], tb[TCA_CT_MARK_MASK], false);
+	print_masked_u16("zone", tb[TCA_CT_ZONE], NULL, false);
 	ct_print_labels(tb[TCA_CT_LABELS], tb[TCA_CT_LABELS_MASK]);
 	ct_print_nat(ct_action, tb);
 
