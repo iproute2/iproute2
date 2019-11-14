@@ -1847,13 +1847,13 @@ static void flower_print_ct_label(struct rtattr *attr,
 static void flower_print_ct_zone(struct rtattr *attr,
 				 struct rtattr *mask_attr)
 {
-	print_masked_u16("ct_zone", attr, mask_attr, false);
+	print_masked_u16("ct_zone", attr, mask_attr, true);
 }
 
 static void flower_print_ct_mark(struct rtattr *attr,
 				 struct rtattr *mask_attr)
 {
-	print_masked_u32("ct_mark", attr, mask_attr, false);
+	print_masked_u32("ct_mark", attr, mask_attr, true);
 }
 
 static void flower_print_key_id(const char *name, struct rtattr *attr)
