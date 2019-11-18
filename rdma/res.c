@@ -74,17 +74,11 @@ static int res_no_args_parse_cb(const struct nlmsghdr *nlh, void *data)
 
 	idx =  mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
-	if (rd->json_output) {
-		jsonw_uint_field(rd->jw, "ifindex", idx);
-		jsonw_string_field(rd->jw, "ifname", name);
-	} else {
-		pr_out("%u: %s: ", idx, name);
-	}
-
+	open_json_object(NULL);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "ifindex", "%u: ", idx);
+	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "%s: ", name);
 	res_print_summary(rd, tb);
-
-	if (!rd->json_output)
-		pr_out("\n");
+	newline(rd);
 	return MNL_CB_OK;
 }
 
@@ -110,12 +104,7 @@ int _res_send_idx_msg(struct rd *rd, uint32_t command, mnl_cb_t callback,
 	ret = rd_send_msg(rd);
 	if (ret)
 		return ret;
-
-	if (rd->json_output)
-		jsonw_start_object(rd->jw);
 	ret = rd_recv_msg(rd, callback, rd, seq);
-	if (rd->json_output)
-		jsonw_end_object(rd->jw);
 	return ret;
 }
 
@@ -142,11 +131,7 @@ int _res_send_msg(struct rd *rd, uint32_t command, mnl_cb_t callback)
 	if (ret)
 		return ret;
 
-	if (rd->json_output)
-		jsonw_start_object(rd->jw);
 	ret = rd_recv_msg(rd, callback, rd, seq);
-	if (rd->json_output)
-		jsonw_end_object(rd->jw);
 	return ret;
 }
 
@@ -172,46 +157,26 @@ void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)
 	if (!str)
 		return;
 
-	if (rd->json_output) {
-		/* Don't beatify output in JSON format */
-		jsonw_string_field(rd->jw, "comm", str);
-		return;
-	}
-
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID])
 		snprintf(tmp, sizeof(tmp), "%s", str);
 	else
 		snprintf(tmp, sizeof(tmp), "[%s]", str);
-
-	pr_out("comm %s ", tmp);
+	print_color_string(PRINT_ANY, COLOR_NONE, "comm", "comm %s ", str);
 }
 
 void print_dev(struct rd *rd, uint32_t idx, const char *name)
 {
-	if (rd->json_output) {
-		jsonw_uint_field(rd->jw, "ifindex", idx);
-		jsonw_string_field(rd->jw, "ifname", name);
-	} else {
-		pr_out("dev %s ", name);
-	}
+	print_color_int(PRINT_ANY, COLOR_NONE, "ifindex", "ifindex %d ", idx);
+	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "ifname %s ", name);
 }
 
 void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 		struct nlattr **nla_line)
 {
-	if (rd->json_output) {
-		jsonw_uint_field(rd->jw, "ifindex", idx);
-
-		if (nla_line[RDMA_NLDEV_ATTR_PORT_INDEX])
-			jsonw_uint_field(rd->jw, "port", port);
-
-		jsonw_string_field(rd->jw, "ifname", name);
-	} else {
-		if (nla_line[RDMA_NLDEV_ATTR_PORT_INDEX])
-			pr_out("link %s/%u ", name, port);
-		else
-			pr_out("link %s/- ", name);
-	}
+	print_color_uint(PRINT_JSON, COLOR_NONE, "ifindex", NULL, idx);
+	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "link %s/", name);
+	if (nla_line[RDMA_NLDEV_ATTR_PORT_INDEX])
+		print_color_uint(PRINT_ANY, COLOR_NONE, "port", "%u ", port);
 }
 
 char *get_task_name(uint32_t pid)
@@ -243,11 +208,8 @@ void print_key(struct rd *rd, const char *name, uint64_t val,
 {
 	if (!nlattr)
 		return;
-
-	if (rd->json_output)
-		jsonw_xint_field(rd->jw, name, val);
-	else
-		pr_out("%s 0x%" PRIx64 " ", name, val);
+	print_color_string(PRINT_FP, COLOR_NONE, NULL, name, NULL);
+	print_color_hex(PRINT_ANY, COLOR_NONE, name, " 0x%" PRIx64 " ", val);
 }
 
 void res_print_uint(struct rd *rd, const char *name, uint64_t val,
@@ -255,11 +217,8 @@ void res_print_uint(struct rd *rd, const char *name, uint64_t val,
 {
 	if (!nlattr)
 		return;
-
-	if (rd->json_output)
-		jsonw_u64_field(rd->jw, name, val);
-	else
-		pr_out("%s %" PRIu64 " ", name, val);
+	print_color_uint(PRINT_ANY, COLOR_NONE, name, name, val);
+	print_color_uint(PRINT_FP, COLOR_NONE, NULL, " %d ", val);
 }
 
 RES_FUNC(res_no_args,	RDMA_NLDEV_CMD_RES_GET,	NULL, true, 0);

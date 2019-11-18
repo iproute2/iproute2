@@ -20,7 +20,6 @@ static const char *netns_modes_str[] = {
 static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
-	struct rd *rd = data;
 
 	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
 
@@ -36,10 +35,8 @@ static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 		else
 			mode_str = "unknown";
 
-		if (rd->json_output)
-			jsonw_string_field(rd->jw, "netns", mode_str);
-		else
-			pr_out("netns %s\n", mode_str);
+		print_color_string(PRINT_ANY, COLOR_NONE, "netns", "netns %s\n",
+				   mode_str);
 	}
 	return MNL_CB_OK;
 }

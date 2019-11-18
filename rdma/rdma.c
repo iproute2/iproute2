@@ -6,6 +6,7 @@
 
 #include "rdma.h"
 #include "SNAPSHOT.h"
+#include "color.h"
 
 static void help(char *name)
 {
@@ -85,15 +86,6 @@ static int rd_init(struct rd *rd, char *filename)
 	INIT_LIST_HEAD(&rd->dev_map_list);
 	INIT_LIST_HEAD(&rd->filter_list);
 
-	if (rd->json_output) {
-		rd->jw = jsonw_new(stdout);
-		if (!rd->jw) {
-			pr_err("Failed to create JSON writer\n");
-			return -ENOMEM;
-		}
-		jsonw_pretty(rd->jw, rd->pretty_output);
-	}
-
 	rd->buff = malloc(MNL_SOCKET_BUFFER_SIZE);
 	if (!rd->buff)
 		return -ENOMEM;
@@ -109,8 +101,6 @@ static int rd_init(struct rd *rd, char *filename)
 
 static void rd_cleanup(struct rd *rd)
 {
-	if (rd->json_output)
-		jsonw_destroy(&rd->jw);
 	rd_free(rd);
 }
 
@@ -128,7 +118,6 @@ int main(int argc, char **argv)
 	};
 	bool show_driver_details = false;
 	const char *batch_file = NULL;
-	bool pretty_output = false;
 	bool show_details = false;
 	bool json_output = false;
 	bool force = false;
@@ -136,7 +125,6 @@ int main(int argc, char **argv)
 	char *filename;
 	int opt;
 	int err;
-
 	filename = basename(argv[0]);
 
 	while ((opt = getopt_long(argc, argv, ":Vhdpjfb:",
@@ -147,7 +135,7 @@ int main(int argc, char **argv)
 			       filename, SNAPSHOT);
 			return EXIT_SUCCESS;
 		case 'p':
-			pretty_output = true;
+			pretty = 1;
 			break;
 		case 'd':
 			if (show_details)
@@ -156,7 +144,7 @@ int main(int argc, char **argv)
 				show_details = true;
 			break;
 		case 'j':
-			json_output = true;
+			json_output = 1;
 			break;
 		case 'f':
 			force = true;
@@ -183,7 +171,7 @@ int main(int argc, char **argv)
 	rd.show_details = show_details;
 	rd.show_driver_details = show_driver_details;
 	rd.json_output = json_output;
-	rd.pretty_output = pretty_output;
+	rd.pretty_output = pretty;
 
 	err = rd_init(&rd, filename);
 	if (err)

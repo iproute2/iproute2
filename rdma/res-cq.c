@@ -21,13 +21,8 @@ static void print_poll_ctx(struct rd *rd, uint8_t poll_ctx, struct nlattr *attr)
 {
 	if (!attr)
 		return;
-
-	if (rd->json_output) {
-		jsonw_string_field(rd->jw, "poll-ctx",
-				   poll_ctx_to_str(poll_ctx));
-		return;
-	}
-	pr_out("poll-ctx %s ", poll_ctx_to_str(poll_ctx));
+	print_color_string(PRINT_ANY, COLOR_NONE, "poll-ctx", "poll-ctx %s ",
+			   poll_ctx_to_str(poll_ctx));
 }
 
 static void print_cq_dim_setting(struct rd *rd, struct nlattr *attr)
@@ -99,9 +94,7 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 		comm = (char *)mnl_attr_get_str(
 			nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME]);
 
-	if (rd->json_output)
-		jsonw_start_array(rd->jw);
-
+	open_json_object(NULL);
 	print_dev(rd, idx, name);
 	res_print_uint(rd, "cqn", cqn, nla_line[RDMA_NLDEV_ATTR_RES_CQN]);
 	res_print_uint(rd, "cqe", cqe, nla_line[RDMA_NLDEV_ATTR_RES_CQE]);

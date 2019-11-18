@@ -94,29 +94,16 @@ static void dev_print_caps(struct rd *rd, struct nlattr **tb)
 
 	caps = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_CAP_FLAGS]);
 
-	if (rd->json_output) {
-		jsonw_name(rd->jw, "caps");
-		jsonw_start_array(rd->jw);
-	} else {
-		pr_out("\n    caps: <");
-	}
+	print_color_string(PRINT_FP, COLOR_NONE, NULL, "\n    caps: <", NULL);
+	open_json_array(PRINT_JSON, "caps");
 	for (idx = 0; caps; idx++) {
-		if (caps & 0x1) {
-			if (rd->json_output) {
-				jsonw_string(rd->jw, dev_caps_to_str(idx));
-			} else {
-				pr_out("%s", dev_caps_to_str(idx));
-				if (caps >> 0x1)
-					pr_out(", ");
-			}
-		}
+		if (caps & 0x1)
+			print_color_string(PRINT_ANY, COLOR_NONE, NULL,
+					   caps >> 0x1 ? "%s, " : "%s",
+					   dev_caps_to_str(idx));
 		caps >>= 0x1;
 	}
-
-	if (rd->json_output)
-		jsonw_end_array(rd->jw);
-	else
-		pr_out(">");
+	close_json_array(PRINT_ANY, ">");
 }
 
 static void dev_print_fw(struct rd *rd, struct nlattr **tb)
@@ -126,10 +113,7 @@ static void dev_print_fw(struct rd *rd, struct nlattr **tb)
 		return;
 
 	str = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_FW_VERSION]);
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "fw", str);
-	else
-		pr_out("fw %s ", str);
+	print_color_string(PRINT_ANY, COLOR_NONE, "fw", "fw %s ", str);
 }
 
 static void dev_print_node_guid(struct rd *rd, struct nlattr **tb)
@@ -144,10 +128,8 @@ static void dev_print_node_guid(struct rd *rd, struct nlattr **tb)
 	node_guid = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_NODE_GUID]);
 	memcpy(vp, &node_guid, sizeof(uint64_t));
 	snprintf(str, 32, "%04x:%04x:%04x:%04x", vp[3], vp[2], vp[1], vp[0]);
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "node_guid", str);
-	else
-		pr_out("node_guid %s ", str);
+	print_color_string(PRINT_ANY, COLOR_NONE, "node_guid", "node_guid %s ",
+			   str);
 }
 
 static void dev_print_sys_image_guid(struct rd *rd, struct nlattr **tb)
@@ -162,10 +144,8 @@ static void dev_print_sys_image_guid(struct rd *rd, struct nlattr **tb)
 	sys_image_guid = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_SYS_IMAGE_GUID]);
 	memcpy(vp, &sys_image_guid, sizeof(uint64_t));
 	snprintf(str, 32, "%04x:%04x:%04x:%04x", vp[3], vp[2], vp[1], vp[0]);
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "sys_image_guid", str);
-	else
-		pr_out("sys_image_guid %s ", str);
+	print_color_string(PRINT_ANY, COLOR_NONE, "sys_image_guid",
+			   "sys_image_guid %s ", str);
 }
 
 static void dev_print_dim_setting(struct rd *rd, struct nlattr **tb)
@@ -205,10 +185,8 @@ static void dev_print_node_type(struct rd *rd, struct nlattr **tb)
 
 	node_type = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_DEV_NODE_TYPE]);
 	node_str = node_type_to_str(node_type);
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "node_type", node_str);
-	else
-		pr_out("node_type %s ", node_str);
+	print_color_string(PRINT_ANY, COLOR_NONE, "node_type", "node_type %s ",
+			   node_str);
 }
 
 static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
@@ -221,15 +199,11 @@ static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
 	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
 	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME])
 		return MNL_CB_ERROR;
-
+	open_json_object(NULL);
 	idx =  mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
-	if (rd->json_output) {
-		jsonw_uint_field(rd->jw, "ifindex", idx);
-		jsonw_string_field(rd->jw, "ifname", name);
-	} else {
-		pr_out("%u: %s: ", idx, name);
-	}
+	print_color_uint(PRINT_ANY, COLOR_NONE, "ifindex", "%u: ", idx);
+	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "%s: ", name);
 
 	dev_print_node_type(rd, tb);
 	dev_print_fw(rd, tb);
@@ -240,8 +214,7 @@ static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
 		dev_print_caps(rd, tb);
 	}
 
-	if (!rd->json_output)
-		pr_out("\n");
+	newline(rd);
 	return MNL_CB_OK;
 }
 
@@ -257,11 +230,7 @@ static int dev_no_args(struct rd *rd)
 	if (ret)
 		return ret;
 
-	if (rd->json_output)
-		jsonw_start_object(rd->jw);
 	ret = rd_recv_msg(rd, dev_parse_cb, rd, seq);
-	if (rd->json_output)
-		jsonw_end_object(rd->jw);
 	return ret;
 }
 

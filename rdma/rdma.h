@@ -19,7 +19,7 @@
 
 #include "list.h"
 #include "utils.h"
-#include "json_writer.h"
+#include "json_print.h"
 
 #define pr_err(args...) fprintf(stderr, ##args)
 #define pr_out(args...) fprintf(stdout, ##args)
@@ -66,8 +66,8 @@ struct rd {
 	struct nlmsghdr *nlh;
 	char *buff;
 	json_writer_t *jw;
-	bool json_output;
-	bool pretty_output;
+	int json_output;
+	int pretty_output;
 	bool suppress_errors;
 	struct list_head filter_list;
 	char *link_name;

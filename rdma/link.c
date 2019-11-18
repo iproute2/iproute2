@@ -96,29 +96,16 @@ static void link_print_caps(struct rd *rd, struct nlattr **tb)
 
 	caps = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_CAP_FLAGS]);
 
-	if (rd->json_output) {
-		jsonw_name(rd->jw, "caps");
-		jsonw_start_array(rd->jw);
-	} else {
-		pr_out("\n    caps: <");
-	}
+	print_color_string(PRINT_FP, COLOR_NONE, NULL, "\n    caps: <", NULL);
+	open_json_array(PRINT_JSON, "caps");
 	for (idx = 0; caps; idx++) {
-		if (caps & 0x1) {
-			if (rd->json_output) {
-				jsonw_string(rd->jw, caps_to_str(idx));
-			} else {
-				pr_out("%s", caps_to_str(idx));
-				if (caps >> 0x1)
-					pr_out(", ");
-			}
-		}
+		if (caps & 0x1)
+			print_color_string(PRINT_ANY, COLOR_NONE, NULL,
+					   caps >> 0x1 ? "%s, " : "%s",
+					   caps_to_str(idx));
 		caps >>= 0x1;
 	}
-
-	if (rd->json_output)
-		jsonw_end_array(rd->jw);
-	else
-		pr_out(">");
+	close_json_array(PRINT_ANY, ">");
 }
 
 static void link_print_subnet_prefix(struct rd *rd, struct nlattr **tb)
@@ -133,10 +120,8 @@ static void link_print_subnet_prefix(struct rd *rd, struct nlattr **tb)
 	subnet_prefix = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_SUBNET_PREFIX]);
 	memcpy(vp, &subnet_prefix, sizeof(uint64_t));
 	snprintf(str, 32, "%04x:%04x:%04x:%04x", vp[3], vp[2], vp[1], vp[0]);
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "subnet_prefix", str);
-	else
-		pr_out("subnet_prefix %s ", str);
+	print_color_string(PRINT_ANY, COLOR_NONE, "subnet_prefix",
+			   "subnet_prefix %s ", str);
 }
 
 static void link_print_lid(struct rd *rd, struct nlattr **tb)
@@ -147,10 +132,7 @@ static void link_print_lid(struct rd *rd, struct nlattr **tb)
 		return;
 
 	lid = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_LID]);
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "lid", lid);
-	else
-		pr_out("lid %u ", lid);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "lid", "lid %u ", lid);
 }
 
 static void link_print_sm_lid(struct rd *rd, struct nlattr **tb)
@@ -161,10 +143,7 @@ static void link_print_sm_lid(struct rd *rd, struct nlattr **tb)
 		return;
 
 	sm_lid = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_SM_LID]);
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "sm_lid", sm_lid);
-	else
-		pr_out("sm_lid %u ", sm_lid);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "sm_lid", "sm_lid %u ", sm_lid);
 }
 
 static void link_print_lmc(struct rd *rd, struct nlattr **tb)
@@ -175,10 +154,7 @@ static void link_print_lmc(struct rd *rd, struct nlattr **tb)
 		return;
 
 	lmc = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_LMC]);
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "lmc", lmc);
-	else
-		pr_out("lmc %u ", lmc);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "lmc", "lmc %u ", lmc);
 }
 
 static const char *link_state_to_str(uint8_t link_state)
@@ -200,10 +176,8 @@ static void link_print_state(struct rd *rd, struct nlattr **tb)
 		return;
 
 	state = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_PORT_STATE]);
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "state", link_state_to_str(state));
-	else
-		pr_out("state %s ", link_state_to_str(state));
+	print_color_string(PRINT_ANY, COLOR_NONE, "state", "state %s ",
+			   link_state_to_str(state));
 }
 
 static const char *phys_state_to_str(uint8_t phys_state)
@@ -228,11 +202,8 @@ static void link_print_phys_state(struct rd *rd, struct nlattr **tb)
 		return;
 
 	phys_state = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_PORT_PHYS_STATE]);
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "physical_state",
-				   phys_state_to_str(phys_state));
-	else
-		pr_out("physical_state %s ", phys_state_to_str(phys_state));
+	print_color_string(PRINT_ANY, COLOR_NONE, "physical_state",
+			   "physical_state %s ", phys_state_to_str(phys_state));
 }
 
 static void link_print_netdev(struct rd *rd, struct nlattr **tb)
@@ -245,14 +216,10 @@ static void link_print_netdev(struct rd *rd, struct nlattr **tb)
 
 	netdev_name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_NDEV_NAME]);
 	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_NDEV_INDEX]);
-	if (rd->json_output) {
-		jsonw_string_field(rd->jw, "netdev", netdev_name);
-		jsonw_uint_field(rd->jw, "netdev_index", idx);
-	} else {
-		pr_out("netdev %s ", netdev_name);
-		if (rd->show_details)
-			pr_out("netdev_index %u ", idx);
-	}
+	print_color_string(PRINT_ANY, COLOR_NONE, "netdev", "netdev %s ",
+			   netdev_name);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "netdev_index",
+			 rd->show_details ? "netdev_index %u " : "", idx);
 }
 
 static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
@@ -260,7 +227,7 @@ static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
 	struct rd *rd = data;
 	uint32_t port, idx;
-	char name[32];
+	const char *name;
 
 	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
 	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME])
@@ -273,18 +240,12 @@ static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
 
 	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
 	port = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_PORT_INDEX]);
-	snprintf(name, 32, "%s/%u",
-		 mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]), port);
+	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
 
-	if (rd->json_output) {
-		jsonw_uint_field(rd->jw, "ifindex", idx);
-		jsonw_uint_field(rd->jw, "port", port);
-		jsonw_string_field(rd->jw, "ifname", name);
-
-	} else {
-		pr_out("%u/%u: %s: ", idx, port, name);
-	}
-
+	open_json_object(NULL);
+	print_color_uint(PRINT_JSON, COLOR_NONE, "ifindex", NULL, idx);
+	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "link %s/", name);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "port", "%u ", port);
 	link_print_subnet_prefix(rd, tb);
 	link_print_lid(rd, tb);
 	link_print_sm_lid(rd, tb);
@@ -295,8 +256,7 @@ static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
 	if (rd->show_details)
 		link_print_caps(rd, tb);
 
-	if (!rd->json_output)
-		pr_out("\n");
+	newline(rd);
 	return MNL_CB_OK;
 }
 
@@ -313,11 +273,7 @@ static int link_no_args(struct rd *rd)
 	if (ret)
 		return ret;
 
-	if (rd->json_output)
-		jsonw_start_object(rd->jw);
 	ret = rd_recv_msg(rd, link_parse_cb, rd, seq);
-	if (rd->json_output)
-		jsonw_end_object(rd->jw);
 	return ret;
 }
 

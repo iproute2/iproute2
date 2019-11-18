@@ -115,14 +115,10 @@ static int qp_link_get_mode_parse_cb(const struct nlmsghdr *nlh, void *data)
 		snprintf(output, sizeof(output), "qp auto off");
 	}
 
-	if (rd->json_output) {
-		jsonw_uint_field(rd->jw, "ifindex", idx);
-		jsonw_uint_field(rd->jw, "port", port);
-		jsonw_string_field(rd->jw, "mode", output);
-	} else {
-		pr_out("%u/%u: %s/%u: %s\n", idx, port, name, port, output);
-	}
-
+	open_json_object(NULL);
+	print_link(rd, idx, name, port, tb);
+	print_color_string(PRINT_ANY, COLOR_NONE, "mode", "mode %s ", output);
+	newline(rd);
 	return MNL_CB_OK;
 }
 
@@ -149,12 +145,7 @@ static int stat_one_qp_link_get_mode(struct rd *rd)
 	if (ret)
 		return ret;
 
-	if (rd->json_output)
-		jsonw_start_object(rd->jw);
 	ret = rd_recv_msg(rd, qp_link_get_mode_parse_cb, rd, seq);
-	if (rd->json_output)
-		jsonw_end_object(rd->jw);
-
 	return ret;
 }
 
@@ -262,31 +253,17 @@ static int res_counter_line(struct rd *rd, const char *name, int index,
 	err = res_get_hwcounters(rd, hwc_table, false);
 	if (err != MNL_CB_OK)
 		return err;
-
-	if (rd->json_output) {
-		jsonw_string_field(rd->jw, "ifname", name);
-		if (port)
-			jsonw_uint_field(rd->jw, "port", port);
-		jsonw_uint_field(rd->jw, "cntn", cntn);
-	} else {
-		if (port)
-			pr_out("link %s/%u cntn %u ", name, port, cntn);
-		else
-			pr_out("dev %s cntn %u ", name, cntn);
-	}
-
+	open_json_object(NULL);
+	print_link(rd, index, name, port, nla_line);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "cntn", "cntn %u ", cntn);
 	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);
-
 	res_get_hwcounters(rd, hwc_table, true);
-
 	isfirst = true;
+	open_json_array(PRINT_JSON, "lqpn");
+	print_color_string(PRINT_FP, COLOR_NONE, NULL, "\n    LQPN: <", NULL);
 	mnl_attr_for_each_nested(nla_entry, qp_table) {
 		struct nlattr *qp_line[RDMA_NLDEV_ATTR_MAX] = {};
-
-		if (isfirst && !rd->json_output)
-			pr_out("\n    LQPN: <");
-
 		err = mnl_attr_parse_nested(nla_entry, rd_attr_cb, qp_line);
 		if (err != MNL_CB_OK)
 			return -EINVAL;
@@ -295,19 +272,14 @@ static int res_counter_line(struct rd *rd, const char *name, int index,
 			return -EINVAL;
 
 		qpn = mnl_attr_get_u32(qp_line[RDMA_NLDEV_ATTR_RES_LQPN]);
-		if (rd->json_output) {
-			jsonw_uint_field(rd->jw, "lqpn", qpn);
-		} else {
-			if (isfirst)
-				pr_out("%d", qpn);
-			else
-				pr_out(", %d", qpn);
-		}
+		if (!isfirst)
+			print_color_string(PRINT_FP, COLOR_NONE, NULL, ",",
+					   NULL);
+		print_color_uint(PRINT_ANY, COLOR_NONE, NULL, "%d", qpn);
 		isfirst = false;
 	}
-
-	if (!rd->json_output)
-		pr_out(">\n");
+	close_json_array(PRINT_ANY, ">");
+	newline(rd);
 	return MNL_CB_OK;
 }
 
@@ -371,12 +343,7 @@ static int stat_qp_show_one_link(struct rd *rd)
 	if (ret)
 		return ret;
 
-	if (rd->json_output)
-		jsonw_start_object(rd->jw);
 	ret = rd_recv_msg(rd, stat_qp_show_parse_cb, rd, seq);
-	if (rd->json_output)
-		jsonw_end_object(rd->jw);
-
 	return ret;
 }
 
@@ -695,17 +662,12 @@ static int stat_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
 	port = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_PORT_INDEX]);
-	if (rd->json_output) {
-		jsonw_string_field(rd->jw, "ifname", name);
-		jsonw_uint_field(rd->jw, "port", port);
-	} else {
-		pr_out("link %s/%u ", name, port);
-	}
-
+	open_json_object(NULL);
+	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "link %s/", name);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "port", "%u ", port);
 	ret = res_get_hwcounters(rd, tb[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS], true);
 
-	if (!rd->json_output)
-		pr_out("\n");
+	newline(rd);
 	return ret;
 }
 

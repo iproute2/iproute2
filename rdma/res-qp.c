@@ -32,27 +32,19 @@ static void print_rqpn(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 {
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_RQPN])
 		return;
-
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "rqpn", val);
-	else
-		pr_out("rqpn %u ", val);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "rqpn", "rqpn %d ", val);
 }
 
 static void print_type(struct rd *rd, uint32_t val)
 {
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "type", qp_types_to_str(val));
-	else
-		pr_out("type %s ", qp_types_to_str(val));
+	print_color_string(PRINT_ANY, COLOR_NONE, "type", "type %s ",
+			   qp_types_to_str(val));
 }
 
 static void print_state(struct rd *rd, uint32_t val)
 {
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "state", qp_states_to_str(val));
-	else
-		pr_out("state %s ", qp_states_to_str(val));
+	print_color_string(PRINT_ANY, COLOR_NONE, "state", "state %s ",
+			   qp_states_to_str(val));
 }
 
 static void print_rqpsn(struct rd *rd, uint32_t val, struct nlattr **nla_line)
@@ -60,10 +52,7 @@ static void print_rqpsn(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_RQ_PSN])
 		return;
 
-	if (rd->json_output)
-		jsonw_uint_field(rd->jw, "rq-psn", val);
-	else
-		pr_out("rq-psn %u ", val);
+	print_color_uint(PRINT_ANY, COLOR_NONE, "rq-psn", "rq-psn %d ", val);
 }
 
 static void print_pathmig(struct rd *rd, uint32_t val, struct nlattr **nla_line)
@@ -71,11 +60,8 @@ static void print_pathmig(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE])
 		return;
 
-	if (rd->json_output)
-		jsonw_string_field(rd->jw, "path-mig-state",
-				   path_mig_to_str(val));
-	else
-		pr_out("path-mig-state %s ", path_mig_to_str(val));
+	print_color_string(PRINT_ANY, COLOR_NONE, "path-mig-state",
+			   "path-mig-state %s ", path_mig_to_str(val));
 }
 
 static int res_qp_line(struct rd *rd, const char *name, int idx,
@@ -159,11 +145,8 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 		comm = (char *)mnl_attr_get_str(
 			nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME]);
 
-	if (rd->json_output)
-		jsonw_start_array(rd->jw);
-
+	open_json_object(NULL);
 	print_link(rd, idx, name, port, nla_line);
-
 	res_print_uint(rd, "lqpn", lqpn, nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
 	print_rqpn(rd, rqpn, nla_line);
 

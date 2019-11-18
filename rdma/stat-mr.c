@@ -20,9 +20,7 @@ static int stat_mr_line(struct rd *rd, const char *name, int idx,
 				nla_line[RDMA_NLDEV_ATTR_RES_MRN]))
 		goto out;
 
-	if (rd->json_output)
-		jsonw_start_array(rd->jw);
-
+	open_json_object(NULL);
 	print_dev(rd, idx, name);
 	res_print_uint(rd, "mrn", mrn, nla_line[RDMA_NLDEV_ATTR_RES_MRN]);
 
