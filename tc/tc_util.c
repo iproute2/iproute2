@@ -985,3 +985,15 @@ void print_masked_u8(const char *name, struct rtattr *attr,
 	print_masked_type(UINT8_MAX,  __rta_getattr_u8_u32, name, attr,
 			  mask_attr, newline);
 }
+
+static __u32 __rta_getattr_be16_u32(const struct rtattr *attr)
+{
+	return rta_getattr_be16(attr);
+}
+
+void print_masked_be16(const char *name, struct rtattr *attr,
+		       struct rtattr *mask_attr, bool newline)
+{
+	print_masked_type(UINT16_MAX, __rta_getattr_be16_u32, name, attr,
+			  mask_attr, newline);
+}
