@@ -220,7 +220,7 @@ static int flower_parse_matching_flags(char *str,
 }
 
 static int flower_parse_u16(char *str, int value_type, int mask_type,
-			    struct nlmsghdr *n)
+			    struct nlmsghdr *n, bool be)
 {
 	__u16 value, mask;
 	char *slash;
@@ -239,6 +239,10 @@ static int flower_parse_u16(char *str, int value_type, int mask_type,
 		mask = UINT16_MAX;
 	}
 
+	if (be) {
+		value = htons(value);
+		mask = htons(mask);
+	}
 	addattr16(n, MAX_MSG, value_type, value);
 	addattr16(n, MAX_MSG, mask_type, mask);
 
@@ -284,7 +288,8 @@ static int flower_parse_ct_zone(char *str, struct nlmsghdr *n)
 	return flower_parse_u16(str,
 				TCA_FLOWER_KEY_CT_ZONE,
 				TCA_FLOWER_KEY_CT_ZONE_MASK,
-				n);
+				n,
+				false);
 }
 
 static int flower_parse_ct_labels(char *str, struct nlmsghdr *n)
