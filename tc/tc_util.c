@@ -915,46 +915,73 @@ compat_xstats:
 		*xstats = tb[TCA_XSTATS];
 }
 
-void print_masked_u32(const char *name, struct rtattr *attr,
-		      struct rtattr *mask_attr)
+static void print_masked_type(__u32 type_max,
+			      __u32 (*rta_getattr_type)(const struct rtattr *),
+			      const char *name, struct rtattr *attr,
+			      struct rtattr *mask_attr, bool newline)
 {
-	__u32 value, mask;
 	SPRINT_BUF(namefrm);
+	__u32 value, mask;
 	SPRINT_BUF(out);
 	size_t done;
 
 	if (!attr)
 		return;
 
-	value = rta_getattr_u32(attr);
-	mask = mask_attr ? rta_getattr_u32(mask_attr) : UINT32_MAX;
+	value = rta_getattr_type(attr);
+	mask = mask_attr ? rta_getattr_type(mask_attr) : type_max;
 
-	done = sprintf(out, "%u", value);
-	if (mask != UINT32_MAX)
-		sprintf(out + done, "/0x%x", mask);
+	if (is_json_context()) {
+		sprintf(namefrm, "\n  %s %%u", name);
+		print_hu(PRINT_ANY, name, namefrm,
+			 rta_getattr_type(attr));
+		if (mask != type_max) {
+			char mask_name[SPRINT_BSIZE-6];
 
-	sprintf(namefrm, " %s %%s", name);
-	print_string(PRINT_ANY, name, namefrm, out);
+			sprintf(mask_name, "%s_mask", name);
+			if (newline)
+				print_string(PRINT_FP, NULL, "%s ", _SL_);
+			sprintf(namefrm, " %s %%u", mask_name);
+			print_hu(PRINT_ANY, mask_name, namefrm, mask);
+		}
+	} else {
+		done = sprintf(out, "%u", value);
+		if (mask != type_max)
+			sprintf(out + done, "/0x%x", mask);
+		if (newline)
+			print_string(PRINT_FP, NULL, "%s ", _SL_);
+		sprintf(namefrm, " %s %%s", name);
+		print_string(PRINT_ANY, name, namefrm, out);
+	}
+}
+
+void print_masked_u32(const char *name, struct rtattr *attr,
+		      struct rtattr *mask_attr, bool newline)
+{
+	print_masked_type(UINT32_MAX, rta_getattr_u32, name, attr, mask_attr,
+			  newline);
+}
+
+static __u32 __rta_getattr_u16_u32(const struct rtattr *attr)
+{
+	return rta_getattr_u16(attr);
 }
 
 void print_masked_u16(const char *name, struct rtattr *attr,
-		      struct rtattr *mask_attr)
+		      struct rtattr *mask_attr, bool newline)
 {
-	__u16 value, mask;
-	SPRINT_BUF(namefrm);
-	SPRINT_BUF(out);
-	size_t done;
+	print_masked_type(UINT16_MAX, __rta_getattr_u16_u32, name, attr,
+			  mask_attr, newline);
+}
 
-	if (!attr)
-		return;
+static __u32 __rta_getattr_u8_u32(const struct rtattr *attr)
+{
+	return rta_getattr_u8(attr);
+}
 
-	value = rta_getattr_u16(attr);
-	mask = mask_attr ? rta_getattr_u16(mask_attr) : UINT16_MAX;
-
-	done = sprintf(out, "%u", value);
-	if (mask != UINT16_MAX)
-		sprintf(out + done, "/0x%x", mask);
-
-	sprintf(namefrm, " %s %%s", name);
-	print_string(PRINT_ANY, name, namefrm, out);
+void print_masked_u8(const char *name, struct rtattr *attr,
+		     struct rtattr *mask_attr, bool newline)
+{
+	print_masked_type(UINT8_MAX,  __rta_getattr_u8_u32, name, attr,
+			  mask_attr, newline);
 }

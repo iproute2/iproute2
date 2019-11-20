@@ -1,7 +1,7 @@
 .TH ematch 8 "6 August 2012" iproute2 Linux
 .
 .SH NAME
-ematch \- extended matches for use with "basic" or "flow" filters
+ematch \- extended matches for use with "basic", "cgroup"  or "flow" filters
 .
 .SH SYNOPSIS
 .sp
@@ -108,6 +108,19 @@ test packet against xtables matches
 .IR FLAGS " := { " FLAG " [, " FLAGS "] }
 
 The flag options are the same as those used by the xtable match used.
+
+.SS canid
+ematch rule to match CAN frames
+
+.IR canid "( " IDLIST " )
+
+.IR IDLIST " :=  " IDSPEC [ IDLIST ]
+
+.IR IDSPEC " := { ’sff’ " CANID " | ’eff’ " CANID " }
+
+.IR CANID " := " ID [ ":MASK" ]
+
+.IR ID ", " MASK " := hexadecimal number (i.e. 0x123)
 
 .SH CAVEATS
 

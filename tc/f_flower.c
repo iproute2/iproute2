@@ -1617,20 +1617,7 @@ static void flower_print_ip_proto(__u8 *p_ip_proto,
 static void flower_print_ip_attr(const char *name, struct rtattr *key_attr,
 				 struct rtattr *mask_attr)
 {
-	SPRINT_BUF(namefrm);
-	SPRINT_BUF(out);
-	size_t done;
-
-	if (!key_attr)
-		return;
-
-	done = sprintf(out, "0x%x", rta_getattr_u8(key_attr));
-	if (mask_attr)
-		sprintf(out + done, "/%x", rta_getattr_u8(mask_attr));
-
-	print_string(PRINT_FP, NULL, "%s  ", _SL_);
-	sprintf(namefrm, "%s %%s", name);
-	print_string(PRINT_ANY, name, namefrm, out);
+	print_masked_u8(name, key_attr, mask_attr, true);
 }
 
 static void flower_print_matching_flags(char *name,
@@ -1847,13 +1834,13 @@ static void flower_print_ct_label(struct rtattr *attr,
 static void flower_print_ct_zone(struct rtattr *attr,
 				 struct rtattr *mask_attr)
 {
-	print_masked_u16("ct_zone", attr, mask_attr);
+	print_masked_u16("ct_zone", attr, mask_attr, true);
 }
 
 static void flower_print_ct_mark(struct rtattr *attr,
 				 struct rtattr *mask_attr)
 {
-	print_masked_u32("ct_mark", attr, mask_attr);
+	print_masked_u32("ct_mark", attr, mask_attr, true);
 }
 
 static void flower_print_key_id(const char *name, struct rtattr *attr)
