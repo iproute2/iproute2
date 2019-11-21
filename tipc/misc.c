@@ -98,6 +98,44 @@ int str2nodeid(char *str, uint8_t *id)
 	return 0;
 }
 
+int str2key(char *str, struct tipc_aead_key *key)
+{
+	int len = strlen(str);
+	int ishex = 0;
+	int i;
+
+	/* Check if the input is a hex string (i.e. 0x...) */
+	if (len > 2 && strncmp(str, "0x", 2) == 0) {
+	    ishex = is_hex(str + 2, len - 2 - 1);
+	    if (ishex) {
+		len -= 2;
+		str += 2;
+	    }
+	}
+
+	/* Obtain key: */
+	if (!ishex) {
+		key->keylen = len;
+		memcpy(key->key, str, len);
+	} else {
+		/* Convert hex string to key */
+		key->keylen = (len + 1) / 2;
+		for (i = 0; i < key->keylen; i++) {
+			if (i == 0 && len % 2 != 0) {
+				if (sscanf(str, "%1hhx", &key->key[0]) != 1)
+					return -1;
+				str += 1;
+				continue;
+			}
+			if (sscanf(str, "%2hhx", &key->key[i]) != 1)
+				return -1;
+			str += 2;
+		}
+	}
+
+	return 0;
+}
+
 void nodeid2str(uint8_t *id, char *str)
 {
 	int i;

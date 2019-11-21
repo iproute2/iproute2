@@ -157,6 +157,111 @@ static int cmd_node_set_nodeid(struct nlmsghdr *nlh, const struct cmd *cmd,
 	return msg_doit(nlh, NULL, NULL);
 }
 
+static void cmd_node_set_key_help(struct cmdl *cmdl)
+{
+	fprintf(stderr,
+		"Usage: %s node set key KEY [algname ALGNAME] [nodeid NODEID]\n\n"
+		"PROPERTIES\n"
+		" KEY                   - Symmetric KEY & SALT as a normal or hex string\n"
+		"                         that consists of two parts:\n"
+		"                         [KEY: 16, 24 or 32 octets][SALT: 4 octets]\n\n"
+		" algname ALGNAME       - Default: \"gcm(aes)\"\n\n"
+		" nodeid NODEID         - Own or peer node identity to which the key will\n"
+		"                         be attached. If not present, the key is a cluster\n"
+		"                         key!\n\n"
+		"EXAMPLES\n"
+		"  %s node set key this_is_a_key16_salt algname \"gcm(aes)\" nodeid node1\n"
+		"  %s node set key 0x746869735F69735F615F6B657931365F73616C74 nodeid node2\n\n",
+		cmdl->argv[0], cmdl->argv[0], cmdl->argv[0]);
+}
+
+static int cmd_node_set_key(struct nlmsghdr *nlh, const struct cmd *cmd,
+			    struct cmdl *cmdl, void *data)
+{
+	struct {
+		struct tipc_aead_key key;
+		char mem[TIPC_AEAD_KEYLEN_MAX + 1];
+	} input = {};
+	struct opt opts[] = {
+		{ "algname",	OPT_KEYVAL,	NULL },
+		{ "nodeid",	OPT_KEYVAL,	NULL },
+		{ NULL }
+	};
+	struct nlattr *nest;
+	struct opt *opt_algname, *opt_nodeid;
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	uint8_t id[TIPC_NODEID_LEN] = {0,};
+	int keysize;
+	char *str;
+
+	if (help_flag) {
+		(cmd->help)(cmdl);
+		return -EINVAL;
+	}
+
+	if (cmdl->optind >= cmdl->argc) {
+		fprintf(stderr, "error, missing key\n");
+		return -EINVAL;
+	}
+
+	/* Get user key */
+	str = shift_cmdl(cmdl);
+	if (str2key(str, &input.key)) {
+		fprintf(stderr, "error, invalid key input\n");
+		return -EINVAL;
+	}
+
+	if (parse_opts(opts, cmdl) < 0)
+		return -EINVAL;
+
+	/* Get algorithm name, default: "gcm(aes)" */
+	opt_algname = get_opt(opts, "algname");
+	if (!opt_algname)
+		strcpy(input.key.alg_name, "gcm(aes)");
+	else
+		strcpy(input.key.alg_name, opt_algname->val);
+
+	/* Get node identity */
+	opt_nodeid = get_opt(opts, "nodeid");
+	if (opt_nodeid && str2nodeid(opt_nodeid->val, id)) {
+		fprintf(stderr, "error, invalid node identity\n");
+		return -EINVAL;
+	}
+
+	/* Init & do the command */
+	nlh = msg_init(buf, TIPC_NL_KEY_SET);
+	if (!nlh) {
+		fprintf(stderr, "error, message initialisation failed\n");
+		return -1;
+	}
+	nest = mnl_attr_nest_start(nlh, TIPC_NLA_NODE);
+	keysize = tipc_aead_key_size(&input.key);
+	mnl_attr_put(nlh, TIPC_NLA_NODE_KEY, keysize, &input.key);
+	if (opt_nodeid)
+		mnl_attr_put(nlh, TIPC_NLA_NODE_ID, TIPC_NODEID_LEN, id);
+	mnl_attr_nest_end(nlh, nest);
+	return msg_doit(nlh, NULL, NULL);
+}
+
+static int cmd_node_flush_key(struct nlmsghdr *nlh, const struct cmd *cmd,
+			      struct cmdl *cmdl, void *data)
+{
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+
+	if (help_flag) {
+		(cmd->help)(cmdl);
+		return -EINVAL;
+	}
+
+	/* Init & do the command */
+	nlh = msg_init(buf, TIPC_NL_KEY_FLUSH);
+	if (!nlh) {
+		fprintf(stderr, "error, message initialisation failed\n");
+		return -1;
+	}
+	return msg_doit(nlh, NULL, NULL);
+}
+
 static int nodeid_get_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *info[TIPC_NLA_MAX + 1] = {};
@@ -270,13 +375,34 @@ static int cmd_node_set_netid(struct nlmsghdr *nlh, const struct cmd *cmd,
 	return msg_doit(nlh, NULL, NULL);
 }
 
+static void cmd_node_flush_help(struct cmdl *cmdl)
+{
+	fprintf(stderr,
+		"Usage: %s node flush PROPERTY\n\n"
+		"PROPERTIES\n"
+		" key                   - Flush all symmetric-keys\n",
+		cmdl->argv[0]);
+}
+
+static int cmd_node_flush(struct nlmsghdr *nlh, const struct cmd *cmd,
+			  struct cmdl *cmdl, void *data)
+{
+	const struct cmd cmds[] = {
+		{ "key",        cmd_node_flush_key,     NULL },
+		{ NULL }
+	};
+
+	return run_cmd(nlh, cmd, cmds, cmdl, NULL);
+}
+
 static void cmd_node_set_help(struct cmdl *cmdl)
 {
 	fprintf(stderr,
 		"Usage: %s node set PROPERTY\n\n"
 		"PROPERTIES\n"
 		" identity NODEID       - Set node identity\n"
-		" clusterid CLUSTERID   - Set local cluster id\n",
+		" clusterid CLUSTERID   - Set local cluster id\n"
+		" key PROPERTY          - Set symmetric-key\n",
 		cmdl->argv[0]);
 }
 
@@ -288,6 +414,7 @@ static int cmd_node_set(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ "identity",	cmd_node_set_nodeid,	NULL },
 		{ "netid",	cmd_node_set_netid,	NULL },
 		{ "clusterid",	cmd_node_set_netid,	NULL },
+		{ "key",	cmd_node_set_key,	cmd_node_set_key_help },
 		{ NULL }
 	};
 
@@ -325,7 +452,8 @@ void cmd_node_help(struct cmdl *cmdl)
 		"COMMANDS\n"
 		" list                  - List remote nodes\n"
 		" get                   - Get local node parameters\n"
-		" set                   - Set local node parameters\n",
+		" set                   - Set local node parameters\n"
+		" flush                 - Flush local node parameters\n",
 		cmdl->argv[0]);
 }
 
@@ -336,6 +464,7 @@ int cmd_node(struct nlmsghdr *nlh, const struct cmd *cmd, struct cmdl *cmdl,
 		{ "list",	cmd_node_list,	NULL },
 		{ "get",	cmd_node_get,	cmd_node_get_help },
 		{ "set",	cmd_node_set,	cmd_node_set_help },
+		{ "flush",	cmd_node_flush, cmd_node_flush_help},
 		{ NULL }
 	};
 
