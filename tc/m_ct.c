@@ -359,7 +359,7 @@ static void ct_print_nat(int ct_action, struct rtattr **tb)
 {
 	size_t done = 0;
 	char out[256] = "";
-	bool nat;
+	bool nat = false;
 
 	if (!(ct_action & TCA_CT_ACT_NAT))
 		return;
