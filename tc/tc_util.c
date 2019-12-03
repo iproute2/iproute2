@@ -809,11 +809,18 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 
 	if (tbs[TCA_STATS_BASIC]) {
 		struct gnet_stats_basic bs = {0};
+		__u64 packets64 = 0;
+
+		if (tbs[TCA_STATS_PKT64])
+			packets64 = rta_getattr_u64(tbs[TCA_STATS_PKT64]);
 
 		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]), sizeof(bs)));
 		print_string(PRINT_FP, NULL, "%s", prefix);
 		print_lluint(PRINT_ANY, "bytes", "Sent %llu bytes", bs.bytes);
-		print_uint(PRINT_ANY, "packets", " %u pkt", bs.packets);
+		if (packets64)
+			print_lluint(PRINT_ANY, "packets", " %llu pkt", packets64);
+		else
+			print_uint(PRINT_ANY, "packets", " %u pkt", bs.packets);
 	}
 
 	if (tbs[TCA_STATS_QUEUE]) {
