@@ -820,7 +820,7 @@ static int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 			sel->nkeys);
 	}
 
-	fprintf(f, "\n ");
+	print_nl();
 
 	free(keys_ex);
 	return 0;

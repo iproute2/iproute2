@@ -193,13 +193,15 @@ print_gact(struct action_util *au, FILE *f, struct rtattr *arg)
 		pp = &pp_dummy;
 	}
 	open_json_object("prob");
-	print_string(PRINT_ANY, "random_type", "\n\t random type %s",
+	print_nl();
+	print_string(PRINT_ANY, "random_type", "\t random type %s",
 		     prob_n2a(pp->ptype));
 	print_action_control(f, " ", pp->paction, " ");
 	print_int(PRINT_ANY, "val", "val %d", pp->pval);
 	close_json_object();
 #endif
-	print_uint(PRINT_ANY, "index", "\n\t index %u", p->index);
+	print_nl();
+	print_uint(PRINT_ANY, "index", "\t index %u", p->index);
 	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
 	if (show_stats) {
@@ -209,7 +211,7 @@ print_gact(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	print_string(PRINT_FP, NULL, "%s", "\n");
+	print_nl();
 	return 0;
 }
 

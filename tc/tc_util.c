@@ -869,7 +869,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]),
 		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
 		if (!tbs[TCA_STATS_RATE_EST])
-			print_string(PRINT_FP, NULL, "\n", "");
+			print_nl();
 		print_uint(PRINT_JSON, "backlog", NULL, q.backlog);
 		print_string(PRINT_FP, NULL, "%s", prefix);
 		print_string(PRINT_FP, NULL, "backlog %s",

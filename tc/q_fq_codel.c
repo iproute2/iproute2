@@ -257,7 +257,8 @@ static int fq_codel_print_xstats(struct qdisc_util *qu, FILE *f,
 		if (st->qdisc_stats.drop_overmemory)
 			print_uint(PRINT_ANY, "drop_overmemory", " drop_overmemory %u",
 				st->qdisc_stats.drop_overmemory);
-		print_uint(PRINT_ANY, "new_flows_len", "\n  new_flows_len %u",
+		print_nl();
+		print_uint(PRINT_ANY, "new_flows_len", "  new_flows_len %u",
 			st->qdisc_stats.new_flows_len);
 		print_uint(PRINT_ANY, "old_flows_len", " old_flows_len %u",
 			st->qdisc_stats.old_flows_len);

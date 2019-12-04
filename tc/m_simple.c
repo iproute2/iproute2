@@ -194,7 +194,7 @@ static int print_simple(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	fprintf(f, "\n");
+	print_nl();
 
 	return 0;
 }

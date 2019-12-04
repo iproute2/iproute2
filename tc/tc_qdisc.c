@@ -317,11 +317,11 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 	}
 	close_json_object();
 
-	print_string(PRINT_FP, NULL, "\n", NULL);
+	print_nl();
 
 	if (show_details && tb[TCA_STAB]) {
 		print_size_table(fp, " ", tb[TCA_STAB]);
-		print_string(PRINT_FP, NULL, "\n", NULL);
+		print_nl();
 	}
 
 	if (show_stats) {
@@ -329,12 +329,12 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 
 		if (tb[TCA_STATS] || tb[TCA_STATS2] || tb[TCA_XSTATS]) {
 			print_tcstats_attr(fp, tb, " ", &xstats);
-			print_string(PRINT_FP, NULL, "\n", NULL);
+			print_nl();
 		}
 
 		if (q && xstats && q->print_xstats) {
 			q->print_xstats(q, fp, xstats);
-			print_string(PRINT_FP, NULL, "\n", NULL);
+			print_nl();
 		}
 	}
 	close_json_object();

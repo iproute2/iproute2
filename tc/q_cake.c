@@ -766,7 +766,7 @@ static int cake_print_xstats(struct qdisc_util *qu, FILE *f,
 			fprintf(f, "          ");
 			for (i = 0; i < num_tins; i++)
 				fprintf(f, "        Tin %u", i);
-			fprintf(f, "\n");
+			fprintf(f, "%s", _SL_);
 		};
 
 #define GET_TSTAT(i, attr) (tstat[i][TCA_CAKE_TIN_STATS_ ## attr])
@@ -775,7 +775,7 @@ static int cake_print_xstats(struct qdisc_util *qu, FILE *f,
 				fprintf(f, name);		\
 				for (i = 0; i < num_tins; i++)	\
 					fprintf(f, " %12" fmts,	val);	\
-				fprintf(f, "\n");			\
+				fprintf(f, "%s", _SL_);			\
 			}						\
 		} while (0)
 
