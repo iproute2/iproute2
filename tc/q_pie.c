@@ -217,7 +217,7 @@ static int pie_print_xstats(struct qdisc_util *qu, FILE *f,
 	st = RTA_DATA(xstats);
 	/*prob is returned as a fracion of maximum integer value */
 	fprintf(f, "prob %f delay %uus",
-		(double)st->prob / UINT64_MAX, st->delay);
+		(double)st->prob / (double)UINT64_MAX, st->delay);
 
 	if (st->dq_rate_estimating)
 		fprintf(f, " avg_dq_rate %u\n", st->avg_dq_rate);
