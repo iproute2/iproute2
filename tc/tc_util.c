@@ -814,19 +814,23 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		if (tbs[TCA_STATS_PKT64])
 			packets64 = rta_getattr_u64(tbs[TCA_STATS_PKT64]);
 
-		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]), sizeof(bs)));
+		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]),
+		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]), sizeof(bs)));
 		print_string(PRINT_FP, NULL, "%s", prefix);
 		print_lluint(PRINT_ANY, "bytes", "Sent %llu bytes", bs.bytes);
 		if (packets64)
-			print_lluint(PRINT_ANY, "packets", " %llu pkt", packets64);
+			print_lluint(PRINT_ANY, "packets",
+				     " %llu pkt", packets64);
 		else
-			print_uint(PRINT_ANY, "packets", " %u pkt", bs.packets);
+			print_uint(PRINT_ANY, "packets",
+				   " %u pkt", bs.packets);
 	}
 
 	if (tbs[TCA_STATS_QUEUE]) {
 		struct gnet_stats_queue q = {0};
 
-		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
+		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]),
+		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
 		print_uint(PRINT_ANY, "drops", " (dropped %u", q.drops);
 		print_uint(PRINT_ANY, "overlimits", ", overlimits %u",
 			   q.overlimits);
@@ -862,7 +866,8 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 	if (tbs[TCA_STATS_QUEUE]) {
 		struct gnet_stats_queue q = {0};
 
-		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]), MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
+		memcpy(&q, RTA_DATA(tbs[TCA_STATS_QUEUE]),
+		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
 		if (!tbs[TCA_STATS_RATE_EST])
 			print_string(PRINT_FP, NULL, "\n", "");
 		print_uint(PRINT_JSON, "backlog", NULL, q.backlog);
@@ -877,7 +882,8 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		*xstats = tbs[TCA_STATS_APP] ? : NULL;
 }
 
-void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix, struct rtattr **xstats)
+void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix,
+			struct rtattr **xstats)
 {
 	SPRINT_BUF(b1);
 
@@ -892,25 +898,29 @@ void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix, struct rtat
 		struct tc_stats st = {};
 
 		/* handle case where kernel returns more/less than we know about */
-		memcpy(&st, RTA_DATA(tb[TCA_STATS]), MIN(RTA_PAYLOAD(tb[TCA_STATS]), sizeof(st)));
+		memcpy(&st, RTA_DATA(tb[TCA_STATS]),
+		       MIN(RTA_PAYLOAD(tb[TCA_STATS]), sizeof(st)));
 
-		fprintf(fp, "%sSent %llu bytes %u pkts (dropped %u, overlimits %u) ",
-			prefix, (unsigned long long)st.bytes, st.packets, st.drops,
-			st.overlimits);
+		fprintf(fp,
+			"%sSent %llu bytes %u pkts (dropped %u, overlimits %u) ",
+			prefix, (unsigned long long)st.bytes,
+			st.packets, st.drops, st.overlimits);
 
 		if (st.bps || st.pps || st.qlen || st.backlog) {
 			fprintf(fp, "\n%s", prefix);
 			if (st.bps || st.pps) {
 				fprintf(fp, "rate ");
 				if (st.bps)
-					fprintf(fp, "%s ", sprint_rate(st.bps, b1));
+					fprintf(fp, "%s ",
+						sprint_rate(st.bps, b1));
 				if (st.pps)
 					fprintf(fp, "%upps ", st.pps);
 			}
 			if (st.qlen || st.backlog) {
 				fprintf(fp, "backlog ");
 				if (st.backlog)
-					fprintf(fp, "%s ", sprint_size(st.backlog, b1));
+					fprintf(fp, "%s ",
+						sprint_size(st.backlog, b1));
 				if (st.qlen)
 					fprintf(fp, "%up ", st.qlen);
 			}
