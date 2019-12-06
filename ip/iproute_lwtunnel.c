@@ -229,6 +229,8 @@ static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 	struct rtattr *tb[SEG6_LOCAL_MAX + 1];
 	int action;
 
+	SPRINT_BUF(b1);
+
 	parse_rtattr_nested(tb, SEG6_LOCAL_MAX, encap);
 
 	if (!tb[SEG6_LOCAL_ACTION])
@@ -246,8 +248,9 @@ static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 	}
 
 	if (tb[SEG6_LOCAL_TABLE])
-		print_uint(PRINT_ANY, "table",
-			   "table %u ", rta_getattr_u32(tb[SEG6_LOCAL_TABLE]));
+		print_string(PRINT_ANY, "table", "table %s ",
+			     rtnl_rttable_n2a(rta_getattr_u32(tb[SEG6_LOCAL_TABLE]),
+			     b1, sizeof(b1)));
 
 	if (tb[SEG6_LOCAL_NH4]) {
 		print_string(PRINT_ANY, "nh4",
@@ -654,7 +657,7 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 			NEXT_ARG();
 			if (table_ok++)
 				duparg2("table", *argv);
-			get_u32(&table, *argv, 0);
+			rtnl_rttable_a2n(&table, *argv);
 			ret = rta_addattr32(rta, len, SEG6_LOCAL_TABLE, table);
 		} else if (strcmp(*argv, "nh4") == 0) {
 			NEXT_ARG();
