@@ -6682,6 +6682,25 @@ out:
 	pr_out_str(dl, "last_dump_time", dump_time);
 }
 
+static void pr_out_dump_report_timestamp(struct dl *dl, const struct nlattr *attr)
+{
+	char dump_date[HEALTH_REPORTER_TIMESTAMP_FMT_LEN];
+	char dump_time[HEALTH_REPORTER_TIMESTAMP_FMT_LEN];
+	time_t tv_sec;
+	struct tm *tm;
+	uint64_t ts;
+
+	ts = mnl_attr_get_u64(attr);
+	tv_sec = ts / 1000000000;
+	tm = localtime(&tv_sec);
+
+	strftime(dump_date, HEALTH_REPORTER_TIMESTAMP_FMT_LEN, "%Y-%m-%d", tm);
+	strftime(dump_time, HEALTH_REPORTER_TIMESTAMP_FMT_LEN, "%H:%M:%S", tm);
+
+	pr_out_str(dl, "last_dump_date", dump_date);
+	pr_out_str(dl, "last_dump_time", dump_time);
+}
+
 static void pr_out_health(struct dl *dl, struct nlattr **tb_health)
 {
 	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
@@ -6713,7 +6732,9 @@ static void pr_out_health(struct dl *dl, struct nlattr **tb_health)
 		   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_ERR_COUNT]));
 	pr_out_u64(dl, "recover",
 		   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT]));
-	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS])
+	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS_NS])
+		pr_out_dump_report_timestamp(dl, tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS_NS]);
+	else if (tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS])
 		pr_out_dump_reporter_format_logtime(dl, tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS]);
 	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD])
 		pr_out_u64(dl, "grace_period",
