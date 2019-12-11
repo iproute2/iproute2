@@ -31,9 +31,10 @@
 static void explain(void)
 {
 	fprintf(stderr,
-		"Usage: ... pie	[ limit PACKETS ][ target TIME us]\n"
-		"		[ tupdate TIME us][ alpha ALPHA ]"
-		"[beta BETA ][bytemode | nobytemode][ecn | noecn ]\n");
+		"Usage: ... pie [ limit PACKETS ] [ target TIME ]\n"
+		"               [ tupdate TIME ] [ alpha ALPHA ] [ beta BETA ]\n"
+		"               [ bytemode | nobytemode ] [ ecn | noecn ]\n"
+		"               [ dq_rate_estimator | no_dq_rate_estimator ]\n");
 }
 
 #define ALPHA_MAX 32
@@ -49,6 +50,7 @@ static int pie_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	unsigned int beta    = 0;
 	int ecn = -1;
 	int bytemode = -1;
+	int dq_rate_estimator = -1;
 	struct rtattr *tail;
 
 	while (argc > 0) {
@@ -92,6 +94,10 @@ static int pie_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			bytemode = 1;
 		} else if (strcmp(*argv, "nobytemode") == 0) {
 			bytemode = 0;
+		} else if (strcmp(*argv, "dq_rate_estimator") == 0) {
+			dq_rate_estimator = 1;
+		} else if (strcmp(*argv, "no_dq_rate_estimator") == 0) {
+			dq_rate_estimator = 0;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -120,6 +126,9 @@ static int pie_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (bytemode != -1)
 		addattr_l(n, 1024, TCA_PIE_BYTEMODE, &bytemode,
 			  sizeof(bytemode));
+	if (dq_rate_estimator != -1)
+		addattr_l(n, 1024, TCA_PIE_DQ_RATE_ESTIMATOR,
+			  &dq_rate_estimator, sizeof(dq_rate_estimator));
 
 	addattr_nest_end(n, tail);
 	return 0;
@@ -135,6 +144,7 @@ static int pie_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	unsigned int beta;
 	unsigned int ecn;
 	unsigned int bytemode;
+	unsigned int dq_rate_estimator;
 
 	SPRINT_BUF(b1);
 
@@ -182,6 +192,14 @@ static int pie_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			fprintf(f, "bytemode ");
 	}
 
+	if (tb[TCA_PIE_DQ_RATE_ESTIMATOR] &&
+	    RTA_PAYLOAD(tb[TCA_PIE_DQ_RATE_ESTIMATOR]) >= sizeof(__u32)) {
+		dq_rate_estimator =
+				rta_getattr_u32(tb[TCA_PIE_DQ_RATE_ESTIMATOR]);
+		if (dq_rate_estimator)
+			fprintf(f, "dq_rate_estimator ");
+	}
+
 	return 0;
 }
 
@@ -198,9 +216,14 @@ static int pie_print_xstats(struct qdisc_util *qu, FILE *f,
 
 	st = RTA_DATA(xstats);
 	/*prob is returned as a fracion of maximum integer value */
-	fprintf(f, "prob %f delay %uus avg_dq_rate %u\n",
-		(double)st->prob / UINT64_MAX, st->delay,
-		st->avg_dq_rate);
+	fprintf(f, "prob %f delay %uus",
+		(double)st->prob / (double)UINT64_MAX, st->delay);
+
+	if (st->dq_rate_estimating)
+		fprintf(f, " avg_dq_rate %u\n", st->avg_dq_rate);
+	else
+		fprintf(f, "\n");
+
 	fprintf(f, "pkts_in %u overlimit %u dropped %u maxq %u ecn_mark %u\n",
 		st->packets_in, st->overlimit, st->dropped, st->maxq,
 		st->ecn_mark);

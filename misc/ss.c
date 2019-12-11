@@ -1290,6 +1290,11 @@ static void render(void)
 
 		token = buf_token_next(token);
 	}
+	/* Deal with final end-of-line when the last non-empty field printed
+	 * is not the last field.
+	 */
+	if (line_started)
+		printf("\n");
 
 	buf_free_all();
 	current_field = columns;

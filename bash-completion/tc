@@ -323,6 +323,7 @@ _tc_qdisc_options()
             _tc_once_attr 'limit target tupdate alpha beta'
             _tc_one_of_list 'bytemode nobytemode'
             _tc_one_of_list 'ecn noecn'
+            _tc_one_of_list 'dq_rate_estimator no_dq_rate_estimator'
             return 0
             ;;
         red)
