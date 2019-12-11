@@ -6654,8 +6654,11 @@ static const char *health_state_name(uint8_t state)
 	}
 }
 
-static void format_logtime(uint64_t time_ms, char *ts_date, char *ts_time)
+static void pr_out_dump_reporter_format_logtime(struct dl *dl, const struct nlattr *attr)
 {
+	char dump_date[HEALTH_REPORTER_TIMESTAMP_FMT_LEN];
+	char dump_time[HEALTH_REPORTER_TIMESTAMP_FMT_LEN];
+	uint64_t time_ms = mnl_attr_get_u64(attr);
 	struct sysinfo s_info;
 	struct tm *info;
 	time_t now, sec;
@@ -6673,16 +6676,16 @@ static void format_logtime(uint64_t time_ms, char *ts_date, char *ts_time)
 	sec = now - s_info.uptime + time_ms / 1000;
 	info = localtime(&sec);
 out:
-	strftime(ts_date, HEALTH_REPORTER_TIMESTAMP_FMT_LEN, "%Y-%m-%d", info);
-	strftime(ts_time, HEALTH_REPORTER_TIMESTAMP_FMT_LEN, "%H:%M:%S", info);
+	strftime(dump_date, HEALTH_REPORTER_TIMESTAMP_FMT_LEN, "%Y-%m-%d", info);
+	strftime(dump_time, HEALTH_REPORTER_TIMESTAMP_FMT_LEN, "%H:%M:%S", info);
+	pr_out_str(dl, "last_dump_date", dump_date);
+	pr_out_str(dl, "last_dump_time", dump_time);
 }
 
 static void pr_out_health(struct dl *dl, struct nlattr **tb_health)
 {
 	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
 	enum devlink_health_reporter_state state;
-	const struct nlattr *attr;
-	uint64_t time_ms;
 	int err;
 
 	err = mnl_attr_parse_nested(tb_health[DEVLINK_ATTR_HEALTH_REPORTER],
@@ -6710,17 +6713,8 @@ static void pr_out_health(struct dl *dl, struct nlattr **tb_health)
 		   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_ERR_COUNT]));
 	pr_out_u64(dl, "recover",
 		   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT]));
-	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS]) {
-		char dump_date[HEALTH_REPORTER_TIMESTAMP_FMT_LEN];
-		char dump_time[HEALTH_REPORTER_TIMESTAMP_FMT_LEN];
-
-		attr = tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS];
-		time_ms = mnl_attr_get_u64(attr);
-		format_logtime(time_ms, dump_date, dump_time);
-
-		pr_out_str(dl, "last_dump_date", dump_date);
-		pr_out_str(dl, "last_dump_time", dump_time);
-	}
+	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS])
+		pr_out_dump_reporter_format_logtime(dl, tb[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS]);
 	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD])
 		pr_out_u64(dl, "grace_period",
 			   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD]));
