@@ -6463,12 +6463,23 @@ static int fmsg_value_show(struct dl *dl, int type, struct nlattr *nl_data)
 	return MNL_CB_OK;
 }
 
+static void pr_out_fmsg_name(struct dl *dl, char **name)
+{
+	if (!*name)
+		return;
+
+	pr_out_name(dl, *name);
+	free(*name);
+	*name = NULL;
+}
+
 struct nest_entry {
 	int attr_type;
 	struct list_head list;
 };
 
 struct fmsg_cb_data {
+	char *name;
 	struct dl *dl;
 	uint8_t value_type;
 	struct list_head entry_list;
@@ -6498,6 +6509,56 @@ static int cmd_fmsg_nest_queue(struct fmsg_cb_data *fmsg_data,
 	return MNL_CB_OK;
 }
 
+static void pr_out_fmsg_group_start(struct dl *dl, char **name)
+{
+	__pr_out_newline();
+	pr_out_fmsg_name(dl, name);
+	__pr_out_newline();
+	__pr_out_indent_inc();
+}
+
+static void pr_out_fmsg_group_end(struct dl *dl)
+{
+	__pr_out_newline();
+	__pr_out_indent_dec();
+}
+
+static void pr_out_fmsg_start_object(struct dl *dl, char **name)
+{
+	if (dl->json_output) {
+		pr_out_fmsg_name(dl, name);
+		jsonw_start_object(dl->jw);
+	} else {
+		pr_out_fmsg_group_start(dl, name);
+	}
+}
+
+static void pr_out_fmsg_end_object(struct dl *dl)
+{
+	if (dl->json_output)
+		jsonw_end_object(dl->jw);
+	else
+		pr_out_fmsg_group_end(dl);
+}
+
+static void pr_out_fmsg_start_array(struct dl *dl, char **name)
+{
+	if (dl->json_output) {
+		pr_out_fmsg_name(dl, name);
+		jsonw_start_array(dl->jw);
+	} else {
+		pr_out_fmsg_group_start(dl, name);
+	}
+}
+
+static void pr_out_fmsg_end_array(struct dl *dl)
+{
+	if (dl->json_output)
+		jsonw_end_array(dl->jw);
+	else
+		pr_out_fmsg_group_end(dl);
+}
+
 static int cmd_fmsg_nest(struct fmsg_cb_data *fmsg_data, uint8_t nest_value,
 			 bool start)
 {
@@ -6512,26 +6573,17 @@ static int cmd_fmsg_nest(struct fmsg_cb_data *fmsg_data, uint8_t nest_value,
 	switch (value) {
 	case DEVLINK_ATTR_FMSG_OBJ_NEST_START:
 		if (start)
-			pr_out_entry_start(dl);
+			pr_out_fmsg_start_object(dl, &fmsg_data->name);
 		else
-			pr_out_entry_end(dl);
+			pr_out_fmsg_end_object(dl);
 		break;
 	case DEVLINK_ATTR_FMSG_PAIR_NEST_START:
 		break;
 	case DEVLINK_ATTR_FMSG_ARR_NEST_START:
-		if (dl->json_output) {
-			if (start)
-				jsonw_start_array(dl->jw);
-			else
-				jsonw_end_array(dl->jw);
-		} else {
-			if (start) {
-				__pr_out_newline();
-				__pr_out_indent_inc();
-			} else {
-				__pr_out_indent_dec();
-			}
-		}
+		if (start)
+			pr_out_fmsg_start_array(dl, &fmsg_data->name);
+		else
+			pr_out_fmsg_end_array(dl);
 		break;
 	default:
 		return -EINVAL;
@@ -6569,12 +6621,16 @@ static int cmd_fmsg_object_cb(const struct nlmsghdr *nlh, void *data)
 				return err;
 			break;
 		case DEVLINK_ATTR_FMSG_OBJ_NAME:
-			pr_out_name(dl, mnl_attr_get_str(nla_object));
+			free(fmsg_data->name);
+			fmsg_data->name = strdup(mnl_attr_get_str(nla_object));
+			if (!fmsg_data->name)
+				return -ENOMEM;
 			break;
 		case DEVLINK_ATTR_FMSG_OBJ_VALUE_TYPE:
 			fmsg_data->value_type = mnl_attr_get_u8(nla_object);
 			break;
 		case DEVLINK_ATTR_FMSG_OBJ_VALUE_DATA:
+			pr_out_fmsg_name(dl, &fmsg_data->name);
 			err = fmsg_value_show(dl, fmsg_data->value_type,
 					      nla_object);
 			if (err != MNL_CB_OK)
@@ -6585,6 +6641,20 @@ static int cmd_fmsg_object_cb(const struct nlmsghdr *nlh, void *data)
 		}
 	}
 	return MNL_CB_OK;
+}
+
+static void cmd_fmsg_init(struct dl *dl, struct fmsg_cb_data *data)
+{
+	/* FMSG is dynamic: opening of an object or array causes a
+	 * newline. JSON starts with an { or [, but plain text should
+	 * not start with a new line. Ensure this by setting
+	 * g_new_line_count to 1: avoiding newline before the first
+	 * print.
+	 */
+	g_new_line_count = 1;
+	data->name = NULL;
+	data->dl = dl;
+	INIT_LIST_HEAD(&data->entry_list);
 }
 
 static int cmd_health_object_common(struct dl *dl, uint8_t cmd, uint16_t flags)
@@ -6600,9 +6670,9 @@ static int cmd_health_object_common(struct dl *dl, uint8_t cmd, uint16_t flags)
 	if (err)
 		return err;
 
-	data.dl = dl;
-	INIT_LIST_HEAD(&data.entry_list);
+	cmd_fmsg_init(dl, &data);
 	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_fmsg_object_cb, &data);
+	free(data.name);
 	return err;
 }
 
