@@ -266,15 +266,15 @@ static void close_vlan_port(void)
 	close_json_object();
 }
 
-static void print_range(const char *name, __u16 start, __u16 id)
+static void print_range(const char *name, __u32 start, __u32 id)
 {
 	char end[64];
 
 	snprintf(end, sizeof(end), "%sEnd", name);
 
-	print_hu(PRINT_ANY, name, "\t %hu", start);
+	print_uint(PRINT_ANY, name, "\t %u", start);
 	if (start != id)
-		print_hu(PRINT_ANY, end, "-%hu", id);
+		print_uint(PRINT_ANY, end, "-%u", id);
 
 }
 

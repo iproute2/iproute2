@@ -1,4 +1,3 @@
-
 export DEST="127.0.0.1"
 
 ts_log()
@@ -64,6 +63,11 @@ ts_ip()
 ts_ss()
 {
 	__ts_cmd "$SS" "$@"
+}
+
+ts_bridge()
+{
+	__ts_cmd "$BRIDGE" "$@"
 }
 
 ts_qdisc_available()
