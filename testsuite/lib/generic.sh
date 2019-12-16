@@ -121,7 +121,7 @@ test_on_not()
 test_lines_count()
 {
 	echo -n "test on lines count ($1): "
-	if cat "$STD_OUT" | wc -l | grep -q "$1"
+	if [ $(cat "$STD_OUT" | wc -l) -eq "$1" ]
 	then
 		pr_success
 	else
