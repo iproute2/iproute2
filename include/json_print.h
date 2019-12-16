@@ -34,8 +34,6 @@ void delete_json_obj(void);
 
 bool is_json_context(void);
 
-void fflush_fp(void);
-
 void open_json_object(const char *str);
 void close_json_object(void);
 void open_json_array(enum output_type type, const char *delim);
