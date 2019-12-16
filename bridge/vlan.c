@@ -71,8 +71,8 @@ static int add_tunnel_info(struct nlmsghdr *n, int reqsize,
 
 	tinfo = addattr_nest(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_INFO);
 	addattr32(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_ID, tun_id);
-	addattr32(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_VID, vid);
-	addattr32(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_FLAGS, flags);
+	addattr16(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_VID, vid);
+	addattr16(n, reqsize, IFLA_BRIDGE_VLAN_TUNNEL_FLAGS, flags);
 
 	addattr_nest_end(n, tinfo);
 
@@ -304,7 +304,7 @@ static void print_vlan_tunnel_info(FILE *fp, struct rtattr *tb, int ifindex)
 
 		if (ttb[IFLA_BRIDGE_VLAN_TUNNEL_VID])
 			tunnel_vid =
-				rta_getattr_u32(ttb[IFLA_BRIDGE_VLAN_TUNNEL_VID]);
+				rta_getattr_u16(ttb[IFLA_BRIDGE_VLAN_TUNNEL_VID]);
 		else
 			continue;
 
@@ -314,7 +314,7 @@ static void print_vlan_tunnel_info(FILE *fp, struct rtattr *tb, int ifindex)
 
 		if (ttb[IFLA_BRIDGE_VLAN_TUNNEL_FLAGS])
 			tunnel_flags =
-				rta_getattr_u32(ttb[IFLA_BRIDGE_VLAN_TUNNEL_FLAGS]);
+				rta_getattr_u16(ttb[IFLA_BRIDGE_VLAN_TUNNEL_FLAGS]);
 
 		if (!(tunnel_flags & BRIDGE_VLAN_INFO_RANGE_END)) {
 			last_vid_start = tunnel_vid;
