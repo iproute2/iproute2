@@ -576,7 +576,7 @@ static int vlan_show(int argc, char **argv)
 					     (compress_vlans ?
 					      RTEXT_FILTER_BRVLAN_COMPRESSED :
 					      RTEXT_FILTER_BRVLAN)) < 0) {
-			perror("Cannont send dump request");
+			perror("Cannot send dump request");
 			exit(1);
 		}
 
@@ -601,7 +601,7 @@ static int vlan_show(int argc, char **argv)
 
 		filt_mask = IFLA_STATS_FILTER_BIT(IFLA_STATS_LINK_XSTATS);
 		if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask) < 0) {
-			perror("Cannont send dump request");
+			perror("Cannot send dump request");
 			exit(1);
 		}
 
@@ -615,7 +615,7 @@ static int vlan_show(int argc, char **argv)
 
 		filt_mask = IFLA_STATS_FILTER_BIT(IFLA_STATS_LINK_XSTATS_SLAVE);
 		if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask) < 0) {
-			perror("Cannont send slave dump request");
+			perror("Cannot send slave dump request");
 			exit(1);
 		}
 
