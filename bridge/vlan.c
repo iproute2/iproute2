@@ -256,12 +256,14 @@ static int filter_vlan_check(__u16 vid, __u16 flags)
 	return 1;
 }
 
-static void open_vlan_port(int ifi_index, const char *fmt)
+static void open_vlan_port(int ifi_index, const char *fmt,
+			   enum vlan_show_subject subject)
 {
 	open_json_object(NULL);
 	print_color_string(PRINT_ANY, COLOR_IFNAME, "ifname", fmt,
 			   ll_index_to_name(ifi_index));
-	open_json_array(PRINT_JSON, "vlans");
+	open_json_array(PRINT_JSON,
+			subject == VLAN_SHOW_VLAN ? "vlans": "tunnels");
 }
 
 static void close_vlan_port(void)
@@ -289,10 +291,8 @@ static void print_vlan_tunnel_info(struct rtattr *tb, int ifindex)
 	__u16 last_vid_start = 0;
 	__u32 last_tunid_start = 0;
 
-	if (!filter_vlan)
-		open_vlan_port(ifindex, "%s");
+	open_vlan_port(ifindex, "%s", VLAN_SHOW_TUNNELINFO);
 
-	open_json_array(PRINT_JSON, "tunnel");
 	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		struct rtattr *ttb[IFLA_BRIDGE_VLAN_TUNNEL_MAX+1];
 		__u32 tunnel_id = 0;
@@ -331,24 +331,13 @@ static void print_vlan_tunnel_info(struct rtattr *tb, int ifindex)
 		else if (vcheck_ret == 0)
 			continue;
 
-		if (tunnel_flags & BRIDGE_VLAN_INFO_RANGE_BEGIN)
-			continue;
-
-		if (filter_vlan)
-			open_vlan_port(ifindex, "%s");
-
 		open_json_object(NULL);
 		print_range("vlan", last_vid_start, tunnel_vid);
 		print_range("tunid", last_tunid_start, tunnel_id);
 		close_json_object();
-
 		print_string(PRINT_FP, NULL, "%s", _SL_);
-		if (filter_vlan)
-			close_vlan_port();
 	}
-
-	if (!filter_vlan)
-		close_vlan_port();
+	close_vlan_port();
 }
 
 static int print_vlan(struct nlmsghdr *n, void *arg)
@@ -467,7 +456,7 @@ static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 
 		/* found vlan stats, first time print the interface name */
 		if (!found_vlan) {
-			open_vlan_port(ifindex, "%-16s");
+			open_vlan_port(ifindex, "%-16s", VLAN_SHOW_VLAN);
 			found_vlan = true;
 		} else {
 			print_string(PRINT_FP, NULL, "%-16s", "");
@@ -600,7 +589,7 @@ void print_vlan_info(struct rtattr *tb, int ifindex)
 	int rem = RTA_PAYLOAD(list);
 	__u16 last_vid_start = 0;
 
-	open_vlan_port(ifindex, "%s");
+	open_vlan_port(ifindex, "%s", VLAN_SHOW_VLAN);
 
 	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		struct bridge_vlan_info *vinfo;
