@@ -16,9 +16,16 @@ ts_ip "$0" "Enslave $VX_DEV under $BR_DEV" \
 ts_ip "$0" "Set vlan_tunnel on $VX_DEV" \
 	link set dev $VX_DEV type bridge_slave vlan_tunnel on
 
+ts_bridge "$0" "Add single vlan" vlan add dev $VX_DEV vid 1000
+ts_bridge "$0" "Add single tunnel" \
+	vlan add dev $VX_DEV vid 1000 tunnel_info id 1000
+ts_bridge "$0" "Add vlan range" vlan add dev $VX_DEV vid 1010-1020
+ts_bridge "$0" "Add tunnel range" \
+	vlan add dev $VX_DEV vid 1010-1020 tunnel_info id 1010-1020
 ts_bridge "$0" "Add single vlan" vlan add dev $VX_DEV vid 1030
 ts_bridge "$0" "Add tunnel with vni > 16k" \
 	vlan add dev $VX_DEV vid 1030 tunnel_info id 65556
 
 ts_bridge "$0" "Show tunnel info" vlan tunnelshow dev $VX_DEV
 test_on "1030\s+65556"
+test_lines_count 5

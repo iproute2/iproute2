@@ -16,7 +16,11 @@
 #include "utils.h"
 
 static unsigned int filter_index, filter_vlan;
-static int show_vlan_tunnel_info = 0;
+
+enum vlan_show_subject {
+	VLAN_SHOW_VLAN,
+	VLAN_SHOW_TUNNELINFO,
+};
 
 static void usage(void)
 {
@@ -278,7 +282,7 @@ static void print_range(const char *name, __u32 start, __u32 id)
 
 }
 
-static void print_vlan_tunnel_info(FILE *fp, struct rtattr *tb, int ifindex)
+static void print_vlan_tunnel_info(struct rtattr *tb, int ifindex)
 {
 	struct rtattr *i, *list = tb;
 	int rem = RTA_PAYLOAD(list);
@@ -347,52 +351,9 @@ static void print_vlan_tunnel_info(FILE *fp, struct rtattr *tb, int ifindex)
 		close_vlan_port();
 }
 
-static int print_vlan_tunnel(struct nlmsghdr *n, void *arg)
-{
-	struct ifinfomsg *ifm = NLMSG_DATA(n);
-	struct rtattr *tb[IFLA_MAX+1];
-	int len = n->nlmsg_len;
-	FILE *fp = arg;
-
-	if (n->nlmsg_type != RTM_NEWLINK) {
-		fprintf(stderr, "Not RTM_NEWLINK: %08x %08x %08x\n",
-			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
-		return 0;
-	}
-
-	len -= NLMSG_LENGTH(sizeof(*ifm));
-	if (len < 0) {
-		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
-		return -1;
-	}
-
-	if (ifm->ifi_family != AF_BRIDGE)
-		return 0;
-
-	if (filter_index && filter_index != ifm->ifi_index)
-		return 0;
-
-	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifm), len);
-
-	/* if AF_SPEC isn't there, vlan table is not preset for this port */
-	if (!tb[IFLA_AF_SPEC]) {
-		if (!filter_vlan && !is_json_context()) {
-			color_fprintf(fp, COLOR_IFNAME, "%s",
-				      ll_index_to_name(ifm->ifi_index));
-			fprintf(fp, "\tNone\n");
-		}
-		return 0;
-	}
-
-	print_vlan_tunnel_info(fp, tb[IFLA_AF_SPEC], ifm->ifi_index);
-
-	fflush(fp);
-	return 0;
-}
-
 static int print_vlan(struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = arg;
+	enum vlan_show_subject *subject = arg;
 	struct ifinfomsg *ifm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[IFLA_MAX+1];
@@ -420,17 +381,24 @@ static int print_vlan(struct nlmsghdr *n, void *arg)
 	/* if AF_SPEC isn't there, vlan table is not preset for this port */
 	if (!tb[IFLA_AF_SPEC]) {
 		if (!filter_vlan && !is_json_context()) {
-			color_fprintf(fp, COLOR_IFNAME, "%s",
+			color_fprintf(stdout, COLOR_IFNAME, "%s",
 				      ll_index_to_name(ifm->ifi_index));
-			fprintf(fp, "\tNone\n");
+			fprintf(stdout, "\tNone\n");
 		}
 		return 0;
 	}
 
-	print_vlan_info(tb[IFLA_AF_SPEC], ifm->ifi_index);
+	switch (*subject) {
+	case VLAN_SHOW_VLAN:
+		print_vlan_info(tb[IFLA_AF_SPEC], ifm->ifi_index);
+		break;
+	case VLAN_SHOW_TUNNELINFO:
+		print_vlan_tunnel_info(tb[IFLA_AF_SPEC], ifm->ifi_index);
+		break;
+	}
 	print_string(PRINT_FP, NULL, "%s", _SL_);
 
-	fflush(fp);
+	fflush(stdout);
 	return 0;
 }
 
@@ -543,7 +511,7 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static int vlan_show(int argc, char **argv)
+static int vlan_show(int argc, char **argv, int subject)
 {
 	char *filter_dev = NULL;
 	int ret = 0;
@@ -581,17 +549,13 @@ static int vlan_show(int argc, char **argv)
 		}
 
 		if (!is_json_context()) {
-			if (show_vlan_tunnel_info)
-				printf("port\tvlan ids\ttunnel id\n");
-			else
-				printf("port\tvlan ids\n");
+			printf("port\tvlan ids");
+			if (subject == VLAN_SHOW_TUNNELINFO)
+				printf("\ttunnel id");
+			printf("\n");
 		}
 
-		if (show_vlan_tunnel_info)
-			ret = rtnl_dump_filter(&rth, print_vlan_tunnel,
-					       stdout);
-		else
-			ret = rtnl_dump_filter(&rth, print_vlan, stdout);
+		ret = rtnl_dump_filter(&rth, print_vlan, &subject);
 		if (ret < 0) {
 			fprintf(stderr, "Dump ternminated\n");
 			exit(1);
@@ -677,15 +641,14 @@ int do_vlan(int argc, char **argv)
 		if (matches(*argv, "show") == 0 ||
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
-			return vlan_show(argc-1, argv+1);
+			return vlan_show(argc-1, argv+1, VLAN_SHOW_VLAN);
 		if (matches(*argv, "tunnelshow") == 0) {
-			show_vlan_tunnel_info = 1;
-			return vlan_show(argc-1, argv+1);
+			return vlan_show(argc-1, argv+1, VLAN_SHOW_TUNNELINFO);
 		}
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else {
-		return vlan_show(0, NULL);
+		return vlan_show(0, NULL, VLAN_SHOW_VLAN);
 	}
 
 	fprintf(stderr, "Command \"%s\" is unknown, try \"bridge vlan help\".\n", *argv);
