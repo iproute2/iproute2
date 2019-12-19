@@ -37,7 +37,9 @@ static int xfrm_parse_opt(struct link_util *lu, int argc, char **argv,
 				exit(nodev(*argv));
 		} else if (!matches(*argv, "if_id")) {
 			NEXT_ARG();
-			if (!get_u32(&if_id, *argv, 0))
+			if (get_u32(&if_id, *argv, 0))
+				invarg("if_id value is invalid", *argv);
+			else
 				addattr32(n, 1024, IFLA_XFRM_IF_ID, if_id);
 		} else {
 			xfrm_print_help(lu, argc, argv, stderr);
