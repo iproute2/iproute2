@@ -275,12 +275,12 @@ static int fq_codel_print_xstats(struct qdisc_util *qu, FILE *f,
 			sprint_time(st->class_stats.ldelay, b1));
 		if (st->class_stats.dropping) {
 			print_bool(PRINT_ANY, "dropping", " dropping", true);
+			print_int(PRINT_JSON, "drop_next", NULL,
+				  st->class_stats.drop_next);
 			if (st->class_stats.drop_next < 0)
 				print_string(PRINT_FP, NULL, " drop_next -%s",
 					sprint_time(-st->class_stats.drop_next, b1));
 			else {
-				print_uint(PRINT_JSON, "drop_next", NULL,
-					st->class_stats.drop_next);
 				print_string(PRINT_FP, NULL, " drop_next %s",
 					sprint_time(st->class_stats.drop_next, b1));
 			}
