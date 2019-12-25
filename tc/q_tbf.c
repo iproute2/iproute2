@@ -264,7 +264,7 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct tc_tbf_qopt *qopt;
 	unsigned int linklayer;
 	double buffer, mtu;
-	double latency;
+	double latency, lat2;
 	__u64 rate64 = 0, prate64 = 0;
 
 	SPRINT_BUF(b1);
@@ -286,53 +286,79 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_TBF_RATE64] &&
 	    RTA_PAYLOAD(tb[TCA_TBF_RATE64]) >= sizeof(rate64))
 		rate64 = rta_getattr_u64(tb[TCA_TBF_RATE64]);
-	fprintf(f, "rate %s ", sprint_rate(rate64, b1));
+	print_u64(PRINT_JSON, "rate", NULL, rate64);
+	print_string(PRINT_FP, NULL, "rate %s ", sprint_rate(rate64, b1));
 	buffer = tc_calc_xmitsize(rate64, qopt->buffer);
 	if (show_details) {
-		fprintf(f, "burst %s/%u mpu %s ", sprint_size(buffer, b1),
-			1<<qopt->rate.cell_log, sprint_size(qopt->rate.mpu, b2));
+		sprintf(b1, "%s/%u",  sprint_size(buffer, b2),
+			1 << qopt->rate.cell_log);
+		print_string(PRINT_ANY, "burst", "burst %s ", b1);
+		print_uint(PRINT_JSON, "mpu", NULL, qopt->rate.mpu);
+		print_string(PRINT_FP, NULL, "mpu %s ",
+			     sprint_size(qopt->rate.mpu, b1));
 	} else {
-		fprintf(f, "burst %s ", sprint_size(buffer, b1));
+		print_u64(PRINT_JSON, "burst", NULL, buffer);
+		print_string(PRINT_FP, NULL, "burst %s ",
+			     sprint_size(buffer, b1));
 	}
 	if (show_raw)
-		fprintf(f, "[%08x] ", qopt->buffer);
+		print_hex(PRINT_ANY, "burst_raw", "[%08x] ", qopt->buffer);
 	prate64 = qopt->peakrate.rate;
 	if (tb[TCA_TBF_PRATE64] &&
 	    RTA_PAYLOAD(tb[TCA_TBF_PRATE64]) >= sizeof(prate64))
 		prate64 = rta_getattr_u64(tb[TCA_TBF_PRATE64]);
 	if (prate64) {
-		fprintf(f, "peakrate %s ", sprint_rate(prate64, b1));
+		print_u64(PRINT_JSON, "peakrate", NULL, prate64);
+		print_string(PRINT_FP, NULL, "peakrate %s ",
+			     sprint_rate(prate64, b1));
 		if (qopt->mtu || qopt->peakrate.mpu) {
 			mtu = tc_calc_xmitsize(prate64, qopt->mtu);
 			if (show_details) {
-				fprintf(f, "mtu %s/%u mpu %s ", sprint_size(mtu, b1),
-					1<<qopt->peakrate.cell_log, sprint_size(qopt->peakrate.mpu, b2));
+				sprintf(b1, "%s/%u",  sprint_size(mtu, b2),
+					1 << qopt->peakrate.cell_log);
+				print_string(PRINT_ANY, "mtu", "mtu %s ", b1);
+				print_uint(PRINT_JSON, "mpu", NULL,
+					   qopt->peakrate.mpu);
+				print_string(PRINT_FP, NULL, "mpu %s ",
+					     sprint_size(qopt->peakrate.mpu,
+							 b1));
 			} else {
-				fprintf(f, "minburst %s ", sprint_size(mtu, b1));
+				print_u64(PRINT_JSON, "minburst", NULL, mtu);
+				print_string(PRINT_FP, NULL, "minburst %s ",
+					     sprint_size(mtu, b1));
 			}
 			if (show_raw)
-				fprintf(f, "[%08x] ", qopt->mtu);
+				print_hex(PRINT_ANY, "mtu_raw", "[%08x] ",
+					    qopt->mtu);
 		}
 	}
 
-	latency = TIME_UNITS_PER_SEC*(qopt->limit/(double)rate64) - tc_core_tick2time(qopt->buffer);
+	latency = TIME_UNITS_PER_SEC * (qopt->limit / (double)rate64) -
+		  tc_core_tick2time(qopt->buffer);
 	if (prate64) {
-		double lat2 = TIME_UNITS_PER_SEC*(qopt->limit/(double)prate64) - tc_core_tick2time(qopt->mtu);
+		lat2 = TIME_UNITS_PER_SEC * (qopt->limit / (double)prate64) -
+		       tc_core_tick2time(qopt->mtu);
 
 		if (lat2 > latency)
 			latency = lat2;
 	}
-	if (latency >= 0.0)
-		fprintf(f, "lat %s ", sprint_time(latency, b1));
-	if (show_raw || latency < 0.0)
-		fprintf(f, "limit %s ", sprint_size(qopt->limit, b1));
-
-	if (qopt->rate.overhead) {
-		fprintf(f, "overhead %d", qopt->rate.overhead);
+	if (latency >= 0.0) {
+		print_u64(PRINT_JSON, "lat", NULL, latency);
+		print_string(PRINT_FP, NULL, "lat %s ",
+			     sprint_time(latency, b1));
 	}
+	if (show_raw || latency < 0.0) {
+		print_uint(PRINT_JSON, "limit", NULL, qopt->limit);
+		print_string(PRINT_FP, NULL, "limit %s ",
+			     sprint_size(qopt->limit, b1));
+	}
+	if (qopt->rate.overhead)
+		print_int(PRINT_ANY, "overhead", "overhead %d ",
+			  qopt->rate.overhead);
 	linklayer = (qopt->rate.linklayer & TC_LINKLAYER_MASK);
 	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
-		fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b3));
+		print_string(PRINT_ANY, "linklayer", "linklayer %s ",
+			     sprint_linklayer(linklayer, b3));
 
 	return 0;
 }
