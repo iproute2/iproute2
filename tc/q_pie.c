@@ -156,40 +156,44 @@ static int pie_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_PIE_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_PIE_LIMIT]) >= sizeof(__u32)) {
 		limit = rta_getattr_u32(tb[TCA_PIE_LIMIT]);
-		fprintf(f, "limit %up ", limit);
+		print_uint(PRINT_ANY, "limit", "limit %up ", limit);
 	}
 	if (tb[TCA_PIE_TARGET] &&
 	    RTA_PAYLOAD(tb[TCA_PIE_TARGET]) >= sizeof(__u32)) {
 		target = rta_getattr_u32(tb[TCA_PIE_TARGET]);
-		fprintf(f, "target %s ", sprint_time(target, b1));
+		print_uint(PRINT_JSON, "target", NULL, target);
+		print_string(PRINT_FP, NULL, "target %s ",
+			     sprint_time(target, b1));
 	}
 	if (tb[TCA_PIE_TUPDATE] &&
 	    RTA_PAYLOAD(tb[TCA_PIE_TUPDATE]) >= sizeof(__u32)) {
 		tupdate = rta_getattr_u32(tb[TCA_PIE_TUPDATE]);
-		fprintf(f, "tupdate %s ", sprint_time(tupdate, b1));
+		print_uint(PRINT_JSON, "tupdate", NULL, tupdate);
+		print_string(PRINT_FP, NULL, "tupdate %s ",
+			     sprint_time(tupdate, b1));
 	}
 	if (tb[TCA_PIE_ALPHA] &&
 	    RTA_PAYLOAD(tb[TCA_PIE_ALPHA]) >= sizeof(__u32)) {
 		alpha = rta_getattr_u32(tb[TCA_PIE_ALPHA]);
-		fprintf(f, "alpha %u ", alpha);
+		print_uint(PRINT_ANY, "alpha", "alpha %u ", alpha);
 	}
 	if (tb[TCA_PIE_BETA] &&
 	    RTA_PAYLOAD(tb[TCA_PIE_BETA]) >= sizeof(__u32)) {
 		beta = rta_getattr_u32(tb[TCA_PIE_BETA]);
-		fprintf(f, "beta %u ", beta);
+		print_uint(PRINT_ANY, "beta", "beta %u ", beta);
 	}
 
 	if (tb[TCA_PIE_ECN] && RTA_PAYLOAD(tb[TCA_PIE_ECN]) >= sizeof(__u32)) {
 		ecn = rta_getattr_u32(tb[TCA_PIE_ECN]);
 		if (ecn)
-			fprintf(f, "ecn ");
+			print_bool(PRINT_ANY, "ecn", "ecn ", true);
 	}
 
 	if (tb[TCA_PIE_BYTEMODE] &&
 	    RTA_PAYLOAD(tb[TCA_PIE_BYTEMODE]) >= sizeof(__u32)) {
 		bytemode = rta_getattr_u32(tb[TCA_PIE_BYTEMODE]);
 		if (bytemode)
-			fprintf(f, "bytemode ");
+			print_bool(PRINT_ANY, "bytemode", "bytemode ", true);
 	}
 
 	if (tb[TCA_PIE_DQ_RATE_ESTIMATOR] &&
@@ -197,7 +201,8 @@ static int pie_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		dq_rate_estimator =
 				rta_getattr_u32(tb[TCA_PIE_DQ_RATE_ESTIMATOR]);
 		if (dq_rate_estimator)
-			fprintf(f, "dq_rate_estimator ");
+			print_bool(PRINT_ANY, "dq_rate_estimator",
+				   "dq_rate_estimator ", true);
 	}
 
 	return 0;
@@ -208,6 +213,8 @@ static int pie_print_xstats(struct qdisc_util *qu, FILE *f,
 {
 	struct tc_pie_xstats *st;
 
+	SPRINT_BUF(b1);
+
 	if (xstats == NULL)
 		return 0;
 
@@ -215,18 +222,24 @@ static int pie_print_xstats(struct qdisc_util *qu, FILE *f,
 		return -1;
 
 	st = RTA_DATA(xstats);
-	/*prob is returned as a fracion of maximum integer value */
-	fprintf(f, "prob %f delay %uus",
-		(double)st->prob / (double)UINT64_MAX, st->delay);
+
+	/* prob is returned as a fracion of maximum integer value */
+	print_float(PRINT_ANY, "prob", "  prob %lg",
+		    (double)st->prob / (double)UINT64_MAX);
+	print_uint(PRINT_JSON, "delay", NULL, st->delay);
+	print_string(PRINT_FP, NULL, " delay %s", sprint_time(st->delay, b1));
 
 	if (st->dq_rate_estimating)
-		fprintf(f, " avg_dq_rate %u\n", st->avg_dq_rate);
-	else
-		fprintf(f, "\n");
+		print_uint(PRINT_ANY, "avg_dq_rate", " avg_dq_rate %u",
+			   st->avg_dq_rate);
 
-	fprintf(f, "pkts_in %u overlimit %u dropped %u maxq %u ecn_mark %u\n",
-		st->packets_in, st->overlimit, st->dropped, st->maxq,
-		st->ecn_mark);
+	print_nl();
+	print_uint(PRINT_ANY, "pkts_in", "  pkts_in %u", st->packets_in);
+	print_uint(PRINT_ANY, "overlimit", " overlimit %u", st->overlimit);
+	print_uint(PRINT_ANY, "dropped", " dropped %u", st->dropped);
+	print_uint(PRINT_ANY, "maxq", " maxq %u", st->maxq);
+	print_uint(PRINT_ANY, "ecn_mark", " ecn_mark %u", st->ecn_mark);
+
 	return 0;
 
 }
