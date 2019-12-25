@@ -186,18 +186,23 @@ static int choke_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	    RTA_PAYLOAD(tb[TCA_CHOKE_MAX_P]) >= sizeof(__u32))
 		max_P = rta_getattr_u32(tb[TCA_CHOKE_MAX_P]);
 
-	fprintf(f, "limit %up min %up max %up ",
-		qopt->limit, qopt->qth_min, qopt->qth_max);
+	print_uint(PRINT_ANY, "limit", "limit %up ", qopt->limit);
+	print_uint(PRINT_ANY, "min", "min %up ", qopt->qth_min);
+	print_uint(PRINT_ANY, "max", "max %up ", qopt->qth_max);
 
 	tc_red_print_flags(qopt->flags);
 
 	if (show_details) {
-		fprintf(f, "ewma %u ", qopt->Wlog);
+		print_uint(PRINT_ANY, "ewma", "ewma %u ", qopt->Wlog);
+
 		if (max_P)
-			fprintf(f, "probability %g ", max_P / pow(2, 32));
+			print_float(PRINT_ANY, "probability",
+				    "probability %lg ", max_P / pow(2, 32));
 		else
-			fprintf(f, "Plog %u ", qopt->Plog);
-		fprintf(f, "Scell_log %u", qopt->Scell_log);
+			print_uint(PRINT_ANY, "Plog", "Plog %u ", qopt->Plog);
+
+		print_uint(PRINT_ANY, "Scell_log", "Scell_log %u",
+			   qopt->Scell_log);
 	}
 	return 0;
 }
@@ -214,8 +219,13 @@ static int choke_print_xstats(struct qdisc_util *qu, FILE *f,
 		return -1;
 
 	st = RTA_DATA(xstats);
-	fprintf(f, "  marked %u early %u pdrop %u other %u matched %u",
-		st->marked, st->early, st->pdrop, st->other, st->matched);
+
+	print_uint(PRINT_ANY, "marked", "  marked %u", st->marked);
+	print_uint(PRINT_ANY, "early", " early %u", st->early);
+	print_uint(PRINT_ANY, "pdrop", " pdrop %u", st->pdrop);
+	print_uint(PRINT_ANY, "other", " other %u", st->other);
+	print_uint(PRINT_ANY, "matched", " matched %u", st->matched);
+
 	return 0;
 
 }
