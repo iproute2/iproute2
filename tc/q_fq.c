@@ -265,71 +265,94 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_FQ_PLIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_PLIMIT]) >= sizeof(__u32)) {
 		plimit = rta_getattr_u32(tb[TCA_FQ_PLIMIT]);
-		fprintf(f, "limit %up ", plimit);
+		print_uint(PRINT_ANY, "limit", "limit %up ", plimit);
 	}
 	if (tb[TCA_FQ_FLOW_PLIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_PLIMIT]) >= sizeof(__u32)) {
 		flow_plimit = rta_getattr_u32(tb[TCA_FQ_FLOW_PLIMIT]);
-		fprintf(f, "flow_limit %up ", flow_plimit);
+		print_uint(PRINT_ANY, "flow_limit", "flow_limit %up ",
+			   flow_plimit);
 	}
 	if (tb[TCA_FQ_BUCKETS_LOG] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_BUCKETS_LOG]) >= sizeof(__u32)) {
 		buckets_log = rta_getattr_u32(tb[TCA_FQ_BUCKETS_LOG]);
-		fprintf(f, "buckets %u ", 1U << buckets_log);
+		print_uint(PRINT_ANY, "buckets", "buckets %u ",
+			   1U << buckets_log);
 	}
 	if (tb[TCA_FQ_ORPHAN_MASK] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_ORPHAN_MASK]) >= sizeof(__u32)) {
 		orphan_mask = rta_getattr_u32(tb[TCA_FQ_ORPHAN_MASK]);
-		fprintf(f, "orphan_mask %u ", orphan_mask);
+		print_uint(PRINT_ANY, "orphan_mask", "orphan_mask %u ",
+			   orphan_mask);
 	}
 	if (tb[TCA_FQ_RATE_ENABLE] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_RATE_ENABLE]) >= sizeof(int)) {
 		pacing = rta_getattr_u32(tb[TCA_FQ_RATE_ENABLE]);
 		if (pacing == 0)
-			fprintf(f, "nopacing ");
+			print_bool(PRINT_ANY, "pacing", "nopacing ", false);
 	}
 	if (tb[TCA_FQ_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_FQ_QUANTUM]);
-		fprintf(f, "quantum %u ", quantum);
+		print_uint(PRINT_JSON, "quantum", NULL, quantum);
+		print_string(PRINT_FP, NULL, "quantum %s ",
+			     sprint_size(quantum, b1));
 	}
 	if (tb[TCA_FQ_INITIAL_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_INITIAL_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_FQ_INITIAL_QUANTUM]);
-		fprintf(f, "initial_quantum %u ", quantum);
+		print_uint(PRINT_JSON, "initial_quantum", NULL, quantum);
+		print_string(PRINT_FP, NULL, "initial_quantum %s ",
+			     sprint_size(quantum, b1));
 	}
 	if (tb[TCA_FQ_FLOW_MAX_RATE] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_MAX_RATE]) >= sizeof(__u32)) {
 		rate = rta_getattr_u32(tb[TCA_FQ_FLOW_MAX_RATE]);
 
-		if (rate != ~0U)
-			fprintf(f, "maxrate %s ", sprint_rate(rate, b1));
+		if (rate != ~0U) {
+			print_uint(PRINT_JSON, "maxrate", NULL, rate);
+			print_string(PRINT_FP, NULL, "maxrate %s ",
+				     sprint_rate(rate, b1));
+		}
 	}
 	if (tb[TCA_FQ_FLOW_DEFAULT_RATE] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_DEFAULT_RATE]) >= sizeof(__u32)) {
 		rate = rta_getattr_u32(tb[TCA_FQ_FLOW_DEFAULT_RATE]);
 
-		if (rate != 0)
-			fprintf(f, "defrate %s ", sprint_rate(rate, b1));
+		if (rate != 0) {
+			print_uint(PRINT_JSON, "defrate", NULL, rate);
+			print_string(PRINT_FP, NULL, "defrate %s ",
+				     sprint_rate(rate, b1));
+		}
 	}
 	if (tb[TCA_FQ_LOW_RATE_THRESHOLD] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_LOW_RATE_THRESHOLD]) >= sizeof(__u32)) {
 		rate = rta_getattr_u32(tb[TCA_FQ_LOW_RATE_THRESHOLD]);
 
-		if (rate != 0)
-			fprintf(f, "low_rate_threshold %s ", sprint_rate(rate, b1));
+		if (rate != 0) {
+			print_uint(PRINT_JSON, "low_rate_threshold", NULL,
+				   rate);
+			print_string(PRINT_FP, NULL, "low_rate_threshold %s ",
+				     sprint_rate(rate, b1));
+		}
 	}
 	if (tb[TCA_FQ_FLOW_REFILL_DELAY] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_REFILL_DELAY]) >= sizeof(__u32)) {
 		refill_delay = rta_getattr_u32(tb[TCA_FQ_FLOW_REFILL_DELAY]);
-		fprintf(f, "refill_delay %s ", sprint_time(refill_delay, b1));
+		print_uint(PRINT_JSON, "refill_delay", NULL, refill_delay);
+		print_string(PRINT_FP, NULL, "refill_delay %s ",
+			     sprint_time(refill_delay, b1));
 	}
 
 	if (tb[TCA_FQ_CE_THRESHOLD] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CE_THRESHOLD]) >= sizeof(__u32)) {
 		ce_threshold = rta_getattr_u32(tb[TCA_FQ_CE_THRESHOLD]);
-		if (ce_threshold != ~0U)
-			fprintf(f, "ce_threshold %s ", sprint_time(ce_threshold, b1));
+		if (ce_threshold != ~0U) {
+			print_uint(PRINT_JSON, "ce_threshold", NULL,
+				   ce_threshold);
+			print_string(PRINT_FP, NULL, "ce_threshold %s ",
+				     sprint_time(ce_threshold, b1));
+		}
 	}
 
 	return 0;
@@ -340,6 +363,8 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 {
 	struct tc_fq_qd_stats *st, _st;
 
+	SPRINT_BUF(b1);
+
 	if (xstats == NULL)
 		return 0;
 
@@ -348,32 +373,51 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 
 	st = &_st;
 
-	fprintf(f, "  %u flows (%u inactive, %u throttled)",
-		st->flows, st->inactive_flows, st->throttled_flows);
+	print_uint(PRINT_ANY, "flows", "  flows %u", st->flows);
+	print_uint(PRINT_ANY, "inactive", " (inactive %u", st->inactive_flows);
+	print_uint(PRINT_ANY, "throttled", " throttled %u)",
+		   st->throttled_flows);
 
-	if (st->time_next_delayed_flow > 0)
-		fprintf(f, ", next packet delay %llu ns", st->time_next_delayed_flow);
+	if (st->time_next_delayed_flow > 0) {
+		print_lluint(PRINT_JSON, "next_packet_delay", NULL,
+			     st->time_next_delayed_flow);
+		print_string(PRINT_FP, NULL, " next_packet_delay %s",
+			     sprint_time64(st->time_next_delayed_flow, b1));
+	}
 
-	fprintf(f, "\n  %llu gc, %llu highprio",
-		st->gc_flows, st->highprio_packets);
+	print_nl();
+	print_lluint(PRINT_ANY, "gc", "  gc %llu", st->gc_flows);
+	print_lluint(PRINT_ANY, "highprio", " highprio %llu",
+		     st->highprio_packets);
 
 	if (st->tcp_retrans)
-		fprintf(f, ", %llu retrans", st->tcp_retrans);
+		print_lluint(PRINT_ANY, "retrans", " retrans %llu",
+			     st->tcp_retrans);
 
-	fprintf(f, ", %llu throttled", st->throttled);
+	print_lluint(PRINT_ANY, "throttled", " throttled %llu", st->throttled);
 
-	if (st->unthrottle_latency_ns)
-		fprintf(f, ", %u ns latency", st->unthrottle_latency_ns);
+	if (st->unthrottle_latency_ns) {
+		print_uint(PRINT_JSON, "latency", NULL,
+			   st->unthrottle_latency_ns);
+		print_string(PRINT_FP, NULL, " latency %s",
+			     sprint_time64(st->unthrottle_latency_ns, b1));
+	}
 
 	if (st->ce_mark)
-		fprintf(f, ", %llu ce_mark", st->ce_mark);
+		print_lluint(PRINT_ANY, "ce_mark", " ce_mark %llu",
+			     st->ce_mark);
 
 	if (st->flows_plimit)
-		fprintf(f, ", %llu flows_plimit", st->flows_plimit);
+		print_lluint(PRINT_ANY, "flows_plimit", " flows_plimit %llu",
+			     st->flows_plimit);
 
-	if (st->pkts_too_long || st->allocation_errors)
-		fprintf(f, "\n  %llu too long pkts, %llu alloc errors\n",
-			st->pkts_too_long, st->allocation_errors);
+	if (st->pkts_too_long || st->allocation_errors) {
+		print_nl();
+		print_lluint(PRINT_ANY, "pkts_too_long",
+			     "  pkts_too_long %llu", st->pkts_too_long);
+		print_lluint(PRINT_ANY, "alloc_errors", " alloc_erros %llu",
+			     st->allocation_errors);
+	}
 
 	return 0;
 }
