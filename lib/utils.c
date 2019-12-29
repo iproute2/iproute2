@@ -1451,7 +1451,7 @@ int get_guid(__u64 *guid, const char *arg)
 		if (tmp > 255)
 			return -1;
 
-		 *guid |= tmp << (56 - 8 * i);
+		*guid |= tmp << (56 - 8 * i);
 	}
 
 	return 0;
