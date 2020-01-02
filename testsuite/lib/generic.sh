@@ -1,4 +1,3 @@
-
 export DEST="127.0.0.1"
 
 ts_log()
@@ -66,6 +65,11 @@ ts_ss()
 	__ts_cmd "$SS" "$@"
 }
 
+ts_bridge()
+{
+	__ts_cmd "$BRIDGE" "$@"
+}
+
 ts_qdisc_available()
 {
 	HELPOUT=`$TC qdisc add $1 help 2>&1`
@@ -121,7 +125,7 @@ test_on_not()
 test_lines_count()
 {
 	echo -n "test on lines count ($1): "
-	if cat "$STD_OUT" | wc -l | grep -q "$1"
+	if [ $(cat "$STD_OUT" | wc -l) -eq "$1" ]
 	then
 		pr_success
 	else

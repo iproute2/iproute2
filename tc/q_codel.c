@@ -144,28 +144,34 @@ static int codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_CODEL_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_CODEL_LIMIT]) >= sizeof(__u32)) {
 		limit = rta_getattr_u32(tb[TCA_CODEL_LIMIT]);
-		fprintf(f, "limit %up ", limit);
+		print_uint(PRINT_ANY, "limit", "limit %up ", limit);
 	}
 	if (tb[TCA_CODEL_TARGET] &&
 	    RTA_PAYLOAD(tb[TCA_CODEL_TARGET]) >= sizeof(__u32)) {
 		target = rta_getattr_u32(tb[TCA_CODEL_TARGET]);
-		fprintf(f, "target %s ", sprint_time(target, b1));
+		print_uint(PRINT_JSON, "target", NULL, target);
+		print_string(PRINT_FP, NULL, "target %s ",
+			     sprint_time(target, b1));
 	}
 	if (tb[TCA_CODEL_CE_THRESHOLD] &&
 	    RTA_PAYLOAD(tb[TCA_CODEL_CE_THRESHOLD]) >= sizeof(__u32)) {
 		ce_threshold = rta_getattr_u32(tb[TCA_CODEL_CE_THRESHOLD]);
-		fprintf(f, "ce_threshold %s ", sprint_time(ce_threshold, b1));
+		print_uint(PRINT_JSON, "ce_threshold", NULL, ce_threshold);
+		print_string(PRINT_FP, NULL, "ce_threshold %s ",
+			     sprint_time(ce_threshold, b1));
 	}
 	if (tb[TCA_CODEL_INTERVAL] &&
 	    RTA_PAYLOAD(tb[TCA_CODEL_INTERVAL]) >= sizeof(__u32)) {
 		interval = rta_getattr_u32(tb[TCA_CODEL_INTERVAL]);
-		fprintf(f, "interval %s ", sprint_time(interval, b1));
+		print_uint(PRINT_JSON, "interval", NULL, interval);
+		print_string(PRINT_FP, NULL, "interval %s ",
+			     sprint_time(interval, b1));
 	}
 	if (tb[TCA_CODEL_ECN] &&
 	    RTA_PAYLOAD(tb[TCA_CODEL_ECN]) >= sizeof(__u32)) {
 		ecn = rta_getattr_u32(tb[TCA_CODEL_ECN]);
 		if (ecn)
-			fprintf(f, "ecn ");
+			print_bool(PRINT_ANY, "ecn", "ecn ", true);
 	}
 
 	return 0;
@@ -187,18 +193,31 @@ static int codel_print_xstats(struct qdisc_util *qu, FILE *f,
 		st = &_st;
 	}
 
-	fprintf(f, "  count %u lastcount %u ldelay %s",
-		st->count, st->lastcount, sprint_time(st->ldelay, b1));
+	print_uint(PRINT_ANY, "count", "  count %u", st->count);
+	print_uint(PRINT_ANY, "lastcount", " lastcount %u", st->lastcount);
+	print_uint(PRINT_JSON, "ldelay", NULL, st->ldelay);
+	print_string(PRINT_FP, NULL, " ldelay %s", sprint_time(st->ldelay, b1));
+
 	if (st->dropping)
-		fprintf(f, " dropping");
+		print_bool(PRINT_ANY, "dropping", " dropping", true);
+
+	print_int(PRINT_JSON, "drop_next", NULL, st->drop_next);
 	if (st->drop_next < 0)
-		fprintf(f, " drop_next -%s", sprint_time(-st->drop_next, b1));
+		print_string(PRINT_FP, NULL, " drop_next -%s",
+			     sprint_time(-st->drop_next, b1));
 	else
-		fprintf(f, " drop_next %s", sprint_time(st->drop_next, b1));
-	fprintf(f, "\n  maxpacket %u ecn_mark %u drop_overlimit %u",
-		st->maxpacket, st->ecn_mark, st->drop_overlimit);
+		print_string(PRINT_FP, NULL, " drop_next %s",
+			     sprint_time(st->drop_next, b1));
+
+	print_nl();
+	print_uint(PRINT_ANY, "maxpacket", "  maxpacket %u", st->maxpacket);
+	print_uint(PRINT_ANY, "ecn_mark", " ecn_mark %u", st->ecn_mark);
+	print_uint(PRINT_ANY, "drop_overlimit", " drop_overlimit %u",
+		   st->drop_overlimit);
+
 	if (st->ce_mark)
-		fprintf(f, " ce_mark %u", st->ce_mark);
+		print_uint(PRINT_ANY, "ce_mark", " ce_mark %u", st->ce_mark);
+
 	return 0;
 
 }

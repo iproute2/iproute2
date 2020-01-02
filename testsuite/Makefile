@@ -82,7 +82,8 @@ endif
 		TMP_OUT=`mktemp /tmp/tc_testsuite.XXXXXX`; \
 		. $(KENVFN); \
 		STD_ERR="$$TMP_ERR" STD_OUT="$$TMP_OUT" \
-		TC="$$i/tc/tc" IP="$$i/ip/ip" SS=$$i/misc/ss DEV="$(DEV)" IPVER="$@" SNAME="$$i" \
+		TC="$$i/tc/tc" IP="$$i/ip/ip" SS=$$i/misc/ss BRIDGE="$$i/bridge/bridge" \
+		DEV="$(DEV)" IPVER="$@" SNAME="$$i" \
 		ERRF="$(RESULTS_DIR)/$@.$$o.err" $(PREFIX) tests/$@ > $(RESULTS_DIR)/$@.$$o.out; \
 		if [ "$$?" = "127" ]; then \
 			printf "\033[1;35mSKIPPED\033[0m\n"; \

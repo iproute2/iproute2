@@ -90,15 +90,15 @@ Experienced. This is useful for DCTCP-style congestion control algorithms that
 require marking at very shallow queueing thresholds.
 
 .SH EXAMPLES
-#tc qdisc add dev eth0 root est 1sec 4sec fq ce_threshold 4ms
+#tc qdisc add dev eth0 root fq ce_threshold 4ms
 .br
-#tc -s -d qdisc sh dev eth0
+#tc -s -d qdisc show dev eth0
 .br
-qdisc fq 800e: root refcnt 9 limit 10000p flow_limit 1000p buckets 1024 orphan_mask 1023 quantum 3028 initial_quantum 15140 low_rate_threshold 550Kbit refill_delay 40.0ms ce_threshold 4.0ms
- Sent 533368436185 bytes 352296695 pkt (dropped 0, overlimits 0 requeues 1339864)
- rate 39220Mbit 3238202pps backlog 12417828b 358p requeues 1339864
-  1052 flows (852 inactive, 0 throttled)
-  112 gc, 0 highprio, 212 throttled, 21501 ns latency, 470241 ce_mark
+qdisc fq 8001: dev eth0 root refcnt 2 limit 10000p flow_limit 100p buckets 1024 orphan_mask 1023 quantum 3028b initial_quantum 15140b low_rate_threshold 550Kbit refill_delay 40.0ms ce_threshold 4.0ms
+ Sent 72149092 bytes 48062 pkt (dropped 2176, overlimits 0 requeues 0)
+ backlog 1937920b 1280p requeues 0
+  flows 34 (inactive 17 throttled 0)
+  gc 0 highprio 0 throttled 0 ce_mark 47622 flows_plimit 2176
 .br
 .SH SEE ALSO
 .BR tc (8),

@@ -71,7 +71,7 @@ bridge \- show / manipulate bridge addresses and devices
 .B dst
 .IR IPADDR " ] [ "
 .B src_vni
-.IR SRC_VNI " ] ["
+.IR VNI " ] ["
 .B vni
 .IR VNI " ] ["
 .B port
@@ -498,7 +498,7 @@ the IP address of the destination
 VXLAN tunnel endpoint where the Ethernet MAC ADDRESS resides.
 
 .TP
-.BI src_vni " SRC VNI"
+.BI src_vni " VNI"
 the src VNI Network Identifier (or VXLAN Segment ID)
 this entry belongs to. Used only when the vxlan device is in
 external or collect metadata mode. If omitted the value specified at

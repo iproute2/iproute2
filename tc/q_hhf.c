@@ -138,37 +138,46 @@ static int hhf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_HHF_BACKLOG_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_BACKLOG_LIMIT]) >= sizeof(__u32)) {
 		limit = rta_getattr_u32(tb[TCA_HHF_BACKLOG_LIMIT]);
-		fprintf(f, "limit %up ", limit);
+		print_uint(PRINT_ANY, "limit", "limit %up ", limit);
 	}
 	if (tb[TCA_HHF_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_HHF_QUANTUM]);
-		fprintf(f, "quantum %u ", quantum);
+		print_uint(PRINT_JSON, "quantum", NULL, quantum);
+		print_string(PRINT_FP, NULL, "quantum %s ",
+			     sprint_size(quantum, b1));
 	}
 	if (tb[TCA_HHF_HH_FLOWS_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_HH_FLOWS_LIMIT]) >= sizeof(__u32)) {
 		hh_limit = rta_getattr_u32(tb[TCA_HHF_HH_FLOWS_LIMIT]);
-		fprintf(f, "hh_limit %u ", hh_limit);
+		print_uint(PRINT_ANY, "hh_limit", "hh_limit %u ", hh_limit);
 	}
 	if (tb[TCA_HHF_RESET_TIMEOUT] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_RESET_TIMEOUT]) >= sizeof(__u32)) {
 		reset_timeout = rta_getattr_u32(tb[TCA_HHF_RESET_TIMEOUT]);
-		fprintf(f, "reset_timeout %s ", sprint_time(reset_timeout, b1));
+		print_uint(PRINT_JSON, "reset_timeout", NULL, reset_timeout);
+		print_string(PRINT_FP, NULL, "reset_timeout %s ",
+			     sprint_time(reset_timeout, b1));
 	}
 	if (tb[TCA_HHF_ADMIT_BYTES] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_ADMIT_BYTES]) >= sizeof(__u32)) {
 		admit_bytes = rta_getattr_u32(tb[TCA_HHF_ADMIT_BYTES]);
-		fprintf(f, "admit_bytes %u ", admit_bytes);
+		print_uint(PRINT_JSON, "admit_bytes", NULL, admit_bytes);
+		print_string(PRINT_FP, NULL, "admit_bytes %s ",
+			     sprint_size(admit_bytes, b1));
 	}
 	if (tb[TCA_HHF_EVICT_TIMEOUT] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_EVICT_TIMEOUT]) >= sizeof(__u32)) {
 		evict_timeout = rta_getattr_u32(tb[TCA_HHF_EVICT_TIMEOUT]);
-		fprintf(f, "evict_timeout %s ", sprint_time(evict_timeout, b1));
+		print_uint(PRINT_JSON, "evict_timeout", NULL, evict_timeout);
+		print_string(PRINT_FP, NULL, "evict_timeout %s ",
+			     sprint_time(evict_timeout, b1));
 	}
 	if (tb[TCA_HHF_NON_HH_WEIGHT] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_NON_HH_WEIGHT]) >= sizeof(__u32)) {
 		non_hh_weight = rta_getattr_u32(tb[TCA_HHF_NON_HH_WEIGHT]);
-		fprintf(f, "non_hh_weight %u ", non_hh_weight);
+		print_uint(PRINT_ANY, "non_hh_weight", "non_hh_weight %u ",
+			   non_hh_weight);
 	}
 	return 0;
 }
@@ -186,9 +195,13 @@ static int hhf_print_xstats(struct qdisc_util *qu, FILE *f,
 
 	st = RTA_DATA(xstats);
 
-	fprintf(f, "  drop_overlimit %u hh_overlimit %u tot_hh %u cur_hh %u",
-		st->drop_overlimit, st->hh_overlimit,
-		st->hh_tot_count, st->hh_cur_count);
+	print_uint(PRINT_ANY, "drop_overlimit", "  drop_overlimit %u",
+		   st->drop_overlimit);
+	print_uint(PRINT_ANY, "hh_overlimit", " hh_overlimit %u",
+		   st->hh_overlimit);
+	print_uint(PRINT_ANY, "tot_hh", " tot_hh %u", st->hh_tot_count);
+	print_uint(PRINT_ANY, "cur_hh", " cur_hh %u", st->hh_cur_count);
+
 	return 0;
 }
 

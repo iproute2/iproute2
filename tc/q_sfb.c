@@ -143,6 +143,8 @@ static int sfb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct rtattr *tb[__TCA_SFB_MAX];
 	struct tc_sfb_qopt *qopt;
 
+	SPRINT_BUF(b1);
+
 	if (opt == NULL)
 		return 0;
 
@@ -153,14 +155,27 @@ static int sfb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (RTA_PAYLOAD(tb[TCA_SFB_PARMS]) < sizeof(*qopt))
 		return -1;
 
-	fprintf(f,
-		"limit %d max %d target %d\n"
-		"  increment %.5f decrement %.5f penalty rate %d burst %d (%ums %ums)",
-		qopt->limit, qopt->max, qopt->bin_size,
-		(double)qopt->increment / SFB_MAX_PROB,
-		(double)qopt->decrement / SFB_MAX_PROB,
-		qopt->penalty_rate, qopt->penalty_burst,
-		qopt->rehash_interval, qopt->warmup_time);
+	print_uint(PRINT_JSON, "rehash", NULL, qopt->rehash_interval * 1000);
+	print_string(PRINT_FP, NULL, "rehash %s ",
+		     sprint_time(qopt->rehash_interval * 1000, b1));
+
+	print_uint(PRINT_JSON, "db", NULL, qopt->warmup_time * 1000);
+	print_string(PRINT_FP, NULL, "db %s ",
+		     sprint_time(qopt->warmup_time * 1000, b1));
+
+	print_uint(PRINT_ANY, "limit", "limit %up ", qopt->limit);
+	print_uint(PRINT_ANY, "max", "max %up ", qopt->max);
+	print_uint(PRINT_ANY, "target", "target %up ", qopt->bin_size);
+
+	print_float(PRINT_ANY, "increment", "increment %lg ",
+		    (double)qopt->increment / SFB_MAX_PROB);
+	print_float(PRINT_ANY, "decrement", "decrement %lg ",
+		    (double)qopt->decrement / SFB_MAX_PROB);
+
+	print_uint(PRINT_ANY, "penalty_rate", "penalty_rate %upps ",
+		   qopt->penalty_rate);
+	print_uint(PRINT_ANY, "penalty_burst", "penalty_burst %up ",
+		   qopt->penalty_burst);
 
 	return 0;
 }
@@ -168,24 +183,32 @@ static int sfb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 static int sfb_print_xstats(struct qdisc_util *qu, FILE *f,
 			    struct rtattr *xstats)
 {
-    struct tc_sfb_xstats *st;
+	struct tc_sfb_xstats *st;
 
-    if (xstats == NULL)
-	    return 0;
+	if (xstats == NULL)
+		return 0;
 
-    if (RTA_PAYLOAD(xstats) < sizeof(*st))
-	    return -1;
+	if (RTA_PAYLOAD(xstats) < sizeof(*st))
+		return -1;
 
-    st = RTA_DATA(xstats);
-    fprintf(f,
-	    "  earlydrop %u penaltydrop %u bucketdrop %u queuedrop %u childdrop %u marked %u\n"
-	    "  maxqlen %u maxprob %.5f avgprob %.5f ",
-	    st->earlydrop, st->penaltydrop, st->bucketdrop, st->queuedrop, st->childdrop,
-	    st->marked,
-	    st->maxqlen, (double)st->maxprob / SFB_MAX_PROB,
-		(double)st->avgprob / SFB_MAX_PROB);
+	st = RTA_DATA(xstats);
 
-    return 0;
+	print_uint(PRINT_ANY, "earlydrop", "  earlydrop %u", st->earlydrop);
+	print_uint(PRINT_ANY, "penaltydrop", " penaltydrop %u",
+		   st->penaltydrop);
+	print_uint(PRINT_ANY, "bucketdrop", " bucketdrop %u", st->bucketdrop);
+	print_uint(PRINT_ANY, "queuedrop", " queuedrop %u", st->queuedrop);
+	print_uint(PRINT_ANY, "childdrop", " childdrop %u", st->childdrop);
+	print_uint(PRINT_ANY, "marked", " marked %u", st->marked);
+	print_nl();
+	print_uint(PRINT_ANY, "maxqlen", "  maxqlen %u", st->maxqlen);
+
+	print_float(PRINT_ANY, "maxprob", " maxprob %lg",
+		    (double)st->maxprob / SFB_MAX_PROB);
+	print_float(PRINT_ANY, "avgprob", " avgprob %lg",
+		    (double)st->avgprob / SFB_MAX_PROB);
+
+	return 0;
 }
 
 struct qdisc_util sfb_qdisc_util = {
