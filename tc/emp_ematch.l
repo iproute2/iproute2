@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 %{
- #include "emp_ematch.yacc.h"
+ #include "emp_ematch.tab.h"
  #include "m_ematch.h"
 
  extern int ematch_argc;

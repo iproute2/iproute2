@@ -1,7 +1,7 @@
 arpd
 ifstat
 ss
-ssfilter.c
+ssfilter.tab.c
 nstat
 lnstat
 rtacct
