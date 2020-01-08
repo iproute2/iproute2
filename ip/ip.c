@@ -23,6 +23,7 @@
 #include "ip_common.h"
 #include "namespace.h"
 #include "color.h"
+#include "rt_names.h"
 
 int preferred_family = AF_UNSPEC;
 int human_readable;
@@ -36,7 +37,6 @@ int timestamp;
 int force;
 int max_flush_loops = 10;
 int batch_mode;
-int numeric;
 bool do_all;
 
 struct rtnl_handle rth = { .fd = -1 };

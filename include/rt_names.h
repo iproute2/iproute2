@@ -33,4 +33,6 @@ int ll_proto_a2n(unsigned short *id, const char *buf);
 const char *nl_proto_n2a(int id, char *buf, int len);
 int nl_proto_a2n(__u32 *id, const char *arg);
 
+extern int numeric;
+
 #endif
