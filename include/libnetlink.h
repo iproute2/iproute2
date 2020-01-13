@@ -173,7 +173,8 @@ int rta_nest_end(struct rtattr *rta, struct rtattr *nest);
 				    RTA_ALIGN((rta)->rta_len)))
 
 #define parse_rtattr_nested(tb, max, rta) \
-	(parse_rtattr((tb), (max), RTA_DATA(rta), RTA_PAYLOAD(rta)))
+	(parse_rtattr_flags((tb), (max), RTA_DATA(rta), RTA_PAYLOAD(rta), \
+			    NLA_F_NESTED))
 
 #define parse_rtattr_one_nested(type, rta) \
 	(parse_rtattr_one(type, RTA_DATA(rta), RTA_PAYLOAD(rta)))
