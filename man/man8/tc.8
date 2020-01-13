@@ -394,6 +394,12 @@ DSMARK
 Classify packets based on TOS field, change TOS field of packets based on
 classification.
 .TP
+ETS
+The ETS qdisc is a queuing discipline that merges functionality of PRIO and DRR
+qdiscs in one scheduler. ETS makes it easy to configure a set of strict and
+bandwidth-sharing bands to implement the transmission selection described in
+802.1Qaz.
+.TP
 HFSC
 Hierarchical Fair Service Curve guarantees precise bandwidth and delay allocation for leaf classes and allocates excess bandwidth fairly. Unlike HTB, it makes use of packet dropping to achieve low delays which interactive sessions benefit from.
 .TP
@@ -844,6 +850,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR tc-codel (8),
 .BR tc-drr (8),
 .BR tc-ematch (8),
+.BR tc-ets (8),
 .BR tc-flow (8),
 .BR tc-flower (8),
 .BR tc-fq (8),
