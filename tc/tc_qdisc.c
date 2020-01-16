@@ -235,7 +235,7 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 	if (filter_ifindex && filter_ifindex != t->tcm_ifindex)
 		return 0;
 
-	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+	parse_rtattr_flags(tb, TCA_MAX, TCA_RTA(t), len, NLA_F_NESTED);
 
 	if (tb[TCA_KIND] == NULL) {
 		fprintf(stderr, "print_qdisc: NULL kind\n");
@@ -461,7 +461,7 @@ static int tc_qdisc_block_exists_cb(struct nlmsghdr *n, void *arg)
 	if (len < 0)
 		return -1;
 
-	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+	parse_rtattr_flags(tb, TCA_MAX, TCA_RTA(t), len, NLA_F_NESTED);
 
 	if (tb[TCA_KIND] == NULL)
 		return -1;

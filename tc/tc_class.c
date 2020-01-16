@@ -246,8 +246,8 @@ static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
 			 "+---(%s)", cls_id_str);
 		strcat(buf, str);
 
-		parse_rtattr(tb, TCA_MAX, (struct rtattr *)cls->data,
-				cls->data_len);
+		parse_rtattr_flags(tb, TCA_MAX, (struct rtattr *)cls->data,
+				   cls->data_len, NLA_F_NESTED);
 
 		if (tb[TCA_KIND] == NULL) {
 			strcat(buf, " [unknown qdisc kind] ");
@@ -327,7 +327,7 @@ int print_class(struct nlmsghdr *n, void *arg)
 	if (filter_classid && t->tcm_handle != filter_classid)
 		return 0;
 
-	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+	parse_rtattr_flags(tb, TCA_MAX, TCA_RTA(t), len, NLA_F_NESTED);
 
 	if (tb[TCA_KIND] == NULL) {
 		fprintf(stderr, "print_class: NULL kind\n");

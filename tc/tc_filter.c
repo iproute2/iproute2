@@ -267,7 +267,7 @@ int print_filter(struct nlmsghdr *n, void *arg)
 		return -1;
 	}
 
-	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+	parse_rtattr_flags(tb, TCA_MAX, TCA_RTA(t), len, NLA_F_NESTED);
 
 	if (tb[TCA_KIND] == NULL && (n->nlmsg_type == RTM_NEWTFILTER ||
 				     n->nlmsg_type == RTM_GETTFILTER ||
