@@ -183,7 +183,8 @@ static void vlan_print_map(FILE *f,
 	int rem;
 
 	open_json_array(PRINT_JSON, name_json);
-	print_string(PRINT_FP, NULL, "\n      %s { ", name_fp);
+	print_nl();
+	print_string(PRINT_FP, NULL, "      %s { ", name_fp);
 
 	rem = RTA_PAYLOAD(attr);
 	for (i = RTA_DATA(attr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
