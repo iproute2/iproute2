@@ -207,7 +207,7 @@ ip-xfrm \- transform configuration
 
 .ti -8
 .IR ENCAP " :="
-.RB "{ " espinudp " | " espinudp-nonike " }"
+.RB "{ " espinudp " | " espinudp-nonike " | " espintcp " }"
 .IR SPORT " " DPORT " " OADDR
 
 .ti -8
@@ -548,7 +548,7 @@ sets limits in seconds, bytes, or numbers of packets.
 .TP
 .I ENCAP
 encapsulates packets with protocol
-.BR espinudp " or " espinudp-nonike ","
+.BR espinudp ", " espinudp-nonike ", or " espintcp ","
 .RI "using source port " SPORT ", destination port "  DPORT
 .RI ", and original address " OADDR "."
 
