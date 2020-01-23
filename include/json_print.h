@@ -72,4 +72,11 @@ _PRINT_FUNC(lluint, unsigned long long)
 _PRINT_FUNC(float, double)
 #undef _PRINT_FUNC
 
+#define _PRINT_NAME_VALUE_FUNC(type_name, type, format_char)		  \
+	void print_##type_name##_name_value(const char *name, type value) \
+
+_PRINT_NAME_VALUE_FUNC(uint, unsigned int, u);
+_PRINT_NAME_VALUE_FUNC(string, const char*, s);
+#undef _PRINT_NAME_VALUE_FUNC
+
 #endif /* _JSON_PRINT_H_ */

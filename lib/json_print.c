@@ -127,6 +127,19 @@ _PRINT_FUNC(lluint, unsigned long long);
 _PRINT_FUNC(float, double);
 #undef _PRINT_FUNC
 
+#define _PRINT_NAME_VALUE_FUNC(type_name, type, format_char)		 \
+	void print_##type_name##_name_value(const char *name, type value)\
+	{								 \
+		SPRINT_BUF(format);					 \
+									 \
+		snprintf(format, SPRINT_BSIZE,				 \
+			 "%s %%"#format_char, name);			 \
+		print_##type_name(PRINT_ANY, name, format, value);	 \
+	}
+_PRINT_NAME_VALUE_FUNC(uint, unsigned int, u);
+_PRINT_NAME_VALUE_FUNC(string, const char*, s);
+#undef _PRINT_NAME_VALUE_FUNC
+
 void print_color_string(enum output_type type,
 			enum color_attr color,
 			const char *key,
