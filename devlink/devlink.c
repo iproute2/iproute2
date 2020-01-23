@@ -1905,33 +1905,6 @@ static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
 		pr_out("%s %"PRIu64, name, val);
 }
 
-static void pr_out_bool_value(struct dl *dl, bool value)
-{
-	__pr_out_indent_newline(dl);
-	if (dl->json_output)
-		print_bool(PRINT_JSON, NULL, NULL, value);
-	else
-		pr_out("%s", value ? "true" : "false");
-}
-
-static void pr_out_uint_value(struct dl *dl, unsigned int value)
-{
-	__pr_out_indent_newline(dl);
-	if (dl->json_output)
-		print_uint(PRINT_JSON, NULL, NULL, value);
-	else
-		pr_out("%u", value);
-}
-
-static void pr_out_uint64_value(struct dl *dl, uint64_t value)
-{
-	__pr_out_indent_newline(dl);
-	if (dl->json_output)
-		print_u64(PRINT_JSON, NULL, NULL, value);
-	else
-		pr_out("%"PRIu64, value);
-}
-
 static bool is_binary_eol(int i)
 {
 	return !(i%16);
@@ -6450,19 +6423,19 @@ static int fmsg_value_show(struct dl *dl, int type, struct nlattr *nl_data)
 	check_indent_newline(dl);
 	switch (type) {
 	case MNL_TYPE_FLAG:
-		pr_out_bool_value(dl, mnl_attr_get_u8(nl_data));
+		print_bool(PRINT_ANY, NULL, "%s", mnl_attr_get_u8(nl_data));
 		break;
 	case MNL_TYPE_U8:
-		pr_out_uint_value(dl, mnl_attr_get_u8(nl_data));
+		print_uint(PRINT_ANY, NULL, "%u", mnl_attr_get_u8(nl_data));
 		break;
 	case MNL_TYPE_U16:
-		pr_out_uint_value(dl, mnl_attr_get_u16(nl_data));
+		print_uint(PRINT_ANY, NULL, "%u", mnl_attr_get_u16(nl_data));
 		break;
 	case MNL_TYPE_U32:
-		pr_out_uint_value(dl, mnl_attr_get_u32(nl_data));
+		print_uint(PRINT_ANY, NULL, "%u", mnl_attr_get_u32(nl_data));
 		break;
 	case MNL_TYPE_U64:
-		pr_out_uint64_value(dl, mnl_attr_get_u64(nl_data));
+		print_u64(PRINT_ANY, NULL, "%"PRIu64, mnl_attr_get_u64(nl_data));
 		break;
 	case MNL_TYPE_NUL_STRING:
 		print_string(PRINT_ANY, NULL, "%s", mnl_attr_get_str(nl_data));
