@@ -20,7 +20,7 @@ static json_writer_t *_jw;
 #define _IS_JSON_CONTEXT(type) ((type & PRINT_JSON || type & PRINT_ANY) && _jw)
 #define _IS_FP_CONTEXT(type) (!_jw && (type & PRINT_FP || type & PRINT_ANY))
 
-void new_json_obj(int json)
+static void __new_json_obj(int json, bool have_array)
 {
 	if (json) {
 		_jw = jsonw_new(stdout);
@@ -30,16 +30,38 @@ void new_json_obj(int json)
 		}
 		if (pretty)
 			jsonw_pretty(_jw, true);
-		jsonw_start_array(_jw);
+		if (have_array)
+			jsonw_start_array(_jw);
 	}
+}
+
+static void __delete_json_obj(bool have_array)
+{
+	if (_jw) {
+		if (have_array)
+			jsonw_end_array(_jw);
+		jsonw_destroy(&_jw);
+	}
+}
+
+void new_json_obj(int json)
+{
+	__new_json_obj(json, true);
 }
 
 void delete_json_obj(void)
 {
-	if (_jw) {
-		jsonw_end_array(_jw);
-		jsonw_destroy(&_jw);
-	}
+	__delete_json_obj(true);
+}
+
+void new_json_obj_plain(int json)
+{
+	__new_json_obj(json, false);
+}
+
+void delete_json_obj_plain(void)
+{
+	__delete_json_obj(false);
 }
 
 bool is_json_context(void)

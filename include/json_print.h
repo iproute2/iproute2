@@ -31,6 +31,8 @@ enum output_type {
 
 void new_json_obj(int json);
 void delete_json_obj(void);
+void new_json_obj_plain(int json);
+void delete_json_obj_plain(void);
 
 bool is_json_context(void);
 
