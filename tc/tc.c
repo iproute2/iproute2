@@ -29,6 +29,7 @@
 #include "tc_util.h"
 #include "tc_common.h"
 #include "namespace.h"
+#include "rt_names.h"
 
 int show_stats;
 int show_details;
@@ -43,7 +44,6 @@ bool use_names;
 int json;
 int color;
 int oneline;
-int numeric;
 
 static char *conf_file;
 

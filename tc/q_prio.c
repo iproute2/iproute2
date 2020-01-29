@@ -108,7 +108,7 @@ int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		return -1;
 
 	print_uint(PRINT_ANY, "bands", "bands %u ", qopt->bands);
-	open_json_array(PRINT_ANY, "priomap ");
+	open_json_array(PRINT_ANY, "priomap");
 	for (i = 0; i <= TC_PRIO_MAX; i++)
 		print_uint(PRINT_ANY, NULL, " %d", qopt->priomap[i]);
 	close_json_array(PRINT_ANY, "");

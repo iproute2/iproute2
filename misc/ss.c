@@ -35,6 +35,7 @@
 #include "libnetlink.h"
 #include "namespace.h"
 #include "SNAPSHOT.h"
+#include "rt_names.h"
 
 #include <linux/tcp.h>
 #include <linux/sock_diag.h>
@@ -121,7 +122,6 @@ static int follow_events;
 static int sctp_ino;
 static int show_tipcinfo;
 static int show_tos;
-int numeric;
 int oneline;
 
 enum col_id {

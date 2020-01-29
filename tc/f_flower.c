@@ -1599,7 +1599,8 @@ static void flower_print_eth_addr(char *name, struct rtattr *addr_attr,
 			sprintf(out + done, "/%d", bits);
 	}
 
-	sprintf(namefrm, "\n  %s %%s", name);
+	print_nl();
+	sprintf(namefrm, "  %s %%s", name);
 	print_string(PRINT_ANY, name, namefrm, out);
 }
 
@@ -1744,7 +1745,8 @@ static void flower_print_ip_addr(char *name, __be16 eth_type,
 	else if (bits < len * 8)
 		sprintf(out + done, "/%d", bits);
 
-	sprintf(namefrm, "\n  %s %%s", name);
+	print_nl();
+	sprintf(namefrm, "  %s %%s", name);
 	print_string(PRINT_ANY, name, namefrm, out);
 }
 static void flower_print_ip4_addr(char *name, struct rtattr *addr_attr,
@@ -1778,7 +1780,8 @@ static void flower_print_port_range(char *name, struct rtattr *min_attr,
 
 		done = sprintf(out, "%u", rta_getattr_be16(min_attr));
 		sprintf(out + done, "-%u", rta_getattr_be16(max_attr));
-		sprintf(namefrm, "\n  %s %%s", name);
+		print_nl();
+		sprintf(namefrm, "  %s %%s", name);
 		print_string(PRINT_ANY, name, namefrm, out);
 	}
 }
@@ -1797,8 +1800,8 @@ static void flower_print_tcp_flags(const char *name, struct rtattr *flags_attr,
 	if (mask_attr)
 		sprintf(out + done, "/%x", rta_getattr_be16(mask_attr));
 
-	print_string(PRINT_FP, NULL, "%s  ", _SL_);
-	sprintf(namefrm, "%s %%s", name);
+	print_nl();
+	sprintf(namefrm, "  %s %%s", name);
 	print_string(PRINT_ANY, name, namefrm, out);
 }
 
@@ -2086,7 +2089,8 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	if (tb[TCA_FLOWER_INDEV]) {
 		struct rtattr *attr = tb[TCA_FLOWER_INDEV];
 
-		print_string(PRINT_ANY, "indev", "\n  indev %s",
+		print_nl();
+		print_string(PRINT_ANY, "indev", "  indev %s",
 			     rta_getattr_str(attr));
 	}
 
@@ -2277,7 +2281,6 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			print_nl();
 			print_bool(PRINT_ANY, "skip_sw", "  skip_sw", true);
 		}
-
 		if (flags & TCA_CLS_FLAGS_IN_HW) {
 			print_nl();
 			print_bool(PRINT_ANY, "in_hw", "  in_hw", true);

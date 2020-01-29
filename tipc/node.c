@@ -179,8 +179,10 @@ static int cmd_node_set_key(struct nlmsghdr *nlh, const struct cmd *cmd,
 			    struct cmdl *cmdl, void *data)
 {
 	struct {
-		struct tipc_aead_key key;
-		char mem[TIPC_AEAD_KEYLEN_MAX + 1];
+		union {
+			struct tipc_aead_key key;
+			char mem[TIPC_AEAD_KEY_SIZE_MAX];
+		};
 	} input = {};
 	struct opt opts[] = {
 		{ "algname",	OPT_KEYVAL,	NULL },

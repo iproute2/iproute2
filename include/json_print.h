@@ -31,6 +31,8 @@ enum output_type {
 
 void new_json_obj(int json);
 void delete_json_obj(void);
+void new_json_obj_plain(int json);
+void delete_json_obj_plain(void);
 
 bool is_json_context(void);
 
@@ -71,5 +73,12 @@ _PRINT_FUNC(luint, unsigned long)
 _PRINT_FUNC(lluint, unsigned long long)
 _PRINT_FUNC(float, double)
 #undef _PRINT_FUNC
+
+#define _PRINT_NAME_VALUE_FUNC(type_name, type, format_char)		  \
+	void print_##type_name##_name_value(const char *name, type value) \
+
+_PRINT_NAME_VALUE_FUNC(uint, unsigned int, u);
+_PRINT_NAME_VALUE_FUNC(string, const char*, s);
+#undef _PRINT_NAME_VALUE_FUNC
 
 #endif /* _JSON_PRINT_H_ */

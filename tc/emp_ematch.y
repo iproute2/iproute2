@@ -6,11 +6,6 @@
  #include "m_ematch.h"
 %}
 
-%locations
-%token-table
-%define parse.error verbose
-%define api.prefix {ematch_}
-
 %union {
 	unsigned int i;
 	struct bstr *b;

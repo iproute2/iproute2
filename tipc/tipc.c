@@ -22,10 +22,10 @@
 #include "node.h"
 #include "peer.h"
 #include "cmdl.h"
+#include "utils.h"
 
 int help_flag;
 int json;
-int pretty;
 
 static void about(struct cmdl *cmdl)
 {

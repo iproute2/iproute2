@@ -73,7 +73,8 @@ static int skbprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (RTA_PAYLOAD(opt)  < sizeof(*qopt))
 		return -1;
 	qopt = RTA_DATA(opt);
-	fprintf(f, "limit %u ", qopt->limit);
+
+	print_uint(PRINT_ANY, "limit", "limit %u ", qopt->limit);
 	return 0;
 }
 

@@ -1651,7 +1651,8 @@ static int show_handler(struct rtnl_ctrl_data *ctrl,
 	struct ifaddrmsg *ifa = NLMSG_DATA(n);
 
 	open_json_object(NULL);
-	print_int(PRINT_ANY, "index", "if%d:\n", ifa->ifa_index);
+	print_int(PRINT_ANY, "index", "if%d:", ifa->ifa_index);
+	print_nl();
 	print_addrinfo(n, stdout);
 	close_json_object();
 	return 0;

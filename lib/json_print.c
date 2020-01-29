@@ -20,7 +20,7 @@ static json_writer_t *_jw;
 #define _IS_JSON_CONTEXT(type) ((type & PRINT_JSON || type & PRINT_ANY) && _jw)
 #define _IS_FP_CONTEXT(type) (!_jw && (type & PRINT_FP || type & PRINT_ANY))
 
-void new_json_obj(int json)
+static void __new_json_obj(int json, bool have_array)
 {
 	if (json) {
 		_jw = jsonw_new(stdout);
@@ -30,16 +30,38 @@ void new_json_obj(int json)
 		}
 		if (pretty)
 			jsonw_pretty(_jw, true);
-		jsonw_start_array(_jw);
+		if (have_array)
+			jsonw_start_array(_jw);
 	}
+}
+
+static void __delete_json_obj(bool have_array)
+{
+	if (_jw) {
+		if (have_array)
+			jsonw_end_array(_jw);
+		jsonw_destroy(&_jw);
+	}
+}
+
+void new_json_obj(int json)
+{
+	__new_json_obj(json, true);
 }
 
 void delete_json_obj(void)
 {
-	if (_jw) {
-		jsonw_end_array(_jw);
-		jsonw_destroy(&_jw);
-	}
+	__delete_json_obj(true);
+}
+
+void new_json_obj_plain(int json)
+{
+	__new_json_obj(json, false);
+}
+
+void delete_json_obj_plain(void)
+{
+	__delete_json_obj(false);
 }
 
 bool is_json_context(void)
@@ -126,6 +148,19 @@ _PRINT_FUNC(luint, unsigned long);
 _PRINT_FUNC(lluint, unsigned long long);
 _PRINT_FUNC(float, double);
 #undef _PRINT_FUNC
+
+#define _PRINT_NAME_VALUE_FUNC(type_name, type, format_char)		 \
+	void print_##type_name##_name_value(const char *name, type value)\
+	{								 \
+		SPRINT_BUF(format);					 \
+									 \
+		snprintf(format, SPRINT_BSIZE,				 \
+			 "%s %%"#format_char, name);			 \
+		print_##type_name(PRINT_ANY, name, format, value);	 \
+	}
+_PRINT_NAME_VALUE_FUNC(uint, unsigned int, u);
+_PRINT_NAME_VALUE_FUNC(string, const char*, s);
+#undef _PRINT_NAME_VALUE_FUNC
 
 void print_color_string(enum output_type type,
 			enum color_attr color,
