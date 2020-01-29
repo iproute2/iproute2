@@ -743,7 +743,7 @@ static void bridge_print_stats_attr(struct rtattr *attr, int ifindex)
 			print_string(PRINT_FP, NULL, "%-16s      ", "");
 			print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
 				  mstats->igmp_v1reports[BR_MCAST_DIR_TX]);
-			print_u64(PRINT_ANY, "tx_v2", "v2 %llu",
+			print_u64(PRINT_ANY, "tx_v2", "v2 %llu ",
 				  mstats->igmp_v2reports[BR_MCAST_DIR_TX]);
 			print_u64(PRINT_ANY, "tx_v3", "v3 %llu\n",
 				  mstats->igmp_v3reports[BR_MCAST_DIR_TX]);
