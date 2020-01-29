@@ -307,7 +307,8 @@ print_mirred(struct action_util *au, FILE *f, struct rtattr *arg)
 	print_string(PRINT_ANY, "to_dev", " to device %s)", dev);
 	print_action_control(f, " ", p->action, "");
 
-	print_uint(PRINT_ANY, "index", "\n \tindex %u", p->index);
+	print_nl();
+	print_uint(PRINT_ANY, "index", "\tindex %u", p->index);
 	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
 
@@ -318,7 +319,7 @@ print_mirred(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	print_string(PRINT_FP, NULL, "%s", "\n ");
+	print_nl();
 	return 0;
 }
 

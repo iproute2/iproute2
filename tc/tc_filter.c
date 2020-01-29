@@ -267,7 +267,7 @@ int print_filter(struct nlmsghdr *n, void *arg)
 		return -1;
 	}
 
-	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+	parse_rtattr_flags(tb, TCA_MAX, TCA_RTA(t), len, NLA_F_NESTED);
 
 	if (tb[TCA_KIND] == NULL && (n->nlmsg_type == RTM_NEWTFILTER ||
 				     n->nlmsg_type == RTM_GETTFILTER ||
@@ -364,11 +364,11 @@ int print_filter(struct nlmsghdr *n, void *arg)
 			close_json_object();
 		}
 	}
-	print_string(PRINT_FP, NULL, "\n", NULL);
+	print_nl();
 
 	if (show_stats && (tb[TCA_STATS] || tb[TCA_STATS2])) {
 		print_tcstats_attr(fp, tb, " ", NULL);
-		print_string(PRINT_FP, NULL, "\n", NULL);
+		print_nl();
 	}
 
 	close_json_object();

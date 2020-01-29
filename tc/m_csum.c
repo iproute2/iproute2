@@ -205,7 +205,7 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 		 uflag_4, uflag_5, uflag_6, uflag_7);
 	print_string(PRINT_ANY, "csum", "(%s) ", buf);
 
-	print_action_control(f, "action ", sel->action, "\n");
+	print_action_control(f, "action ", sel->action, _SL_);
 	print_uint(PRINT_ANY, "index", "\tindex %u", sel->index);
 	print_int(PRINT_ANY, "ref", " ref %d", sel->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", sel->bindcnt);
@@ -217,7 +217,7 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	print_string(PRINT_FP, NULL, "%s", "\n");
+	print_nl();
 
 	return 0;
 }

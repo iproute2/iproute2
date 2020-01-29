@@ -368,6 +368,10 @@ void print_rt_flags(FILE *fp, unsigned int flags)
 		print_string(PRINT_ANY, NULL, "%s ", "linkdown");
 	if (flags & RTNH_F_UNRESOLVED)
 		print_string(PRINT_ANY, NULL, "%s ", "unresolved");
+	if (flags & RTM_F_OFFLOAD)
+		print_string(PRINT_ANY, NULL, "%s ", "rt_offload");
+	if (flags & RTM_F_TRAP)
+		print_string(PRINT_ANY, NULL, "%s ", "rt_trap");
 
 	close_json_array(PRINT_JSON, NULL);
 }

@@ -68,6 +68,26 @@ static void print_slave_mii_status(FILE *f, struct rtattr *tb)
 			     slave_mii_status[status]);
 }
 
+static void print_slave_oper_state(FILE *fp, const char *name, __u16 state)
+{
+	open_json_array(PRINT_ANY, name);
+	print_string(PRINT_FP, NULL, " <", NULL);
+#define _PF(s, str) if (state & LACP_STATE_##s) {			\
+			state &= ~LACP_STATE_##s;			\
+			print_string(PRINT_ANY, NULL,			\
+				     state ? "%s," : "%s", str); }
+	_PF(LACP_ACTIVITY, "active");
+	_PF(LACP_TIMEOUT, "short_timeout");
+	_PF(AGGREGATION, "aggregating");
+	_PF(SYNCHRONIZATION, "in_sync");
+	_PF(COLLECTING, "collecting");
+	_PF(DISTRIBUTING, "distributing");
+	_PF(DEFAULTED, "defaulted");
+	_PF(EXPIRED, "expired");
+#undef _PF
+	close_json_array(PRINT_ANY, "> ");
+}
+
 static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	SPRINT_BUF(b1);
@@ -106,17 +126,25 @@ static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *t
 			  "ad_aggregator_id %d ",
 			  rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_AGGREGATOR_ID]));
 
-	if (tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE])
+	if (tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE]) {
+		__u8 state = rta_getattr_u8(tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE]);
+
 		print_int(PRINT_ANY,
 			  "ad_actor_oper_port_state",
 			  "ad_actor_oper_port_state %d ",
-			  rta_getattr_u8(tb[IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE]));
+			  state);
+		print_slave_oper_state(f, "ad_actor_oper_port_state_str", state);
+	}
 
-	if (tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE])
+	if (tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE]) {
+		__u16 state = rta_getattr_u8(tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE]);
+
 		print_int(PRINT_ANY,
 			  "ad_partner_oper_port_state",
 			  "ad_partner_oper_port_state %d ",
-			  rta_getattr_u16(tb[IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE]));
+			  state);
+		print_slave_oper_state(f, "ad_partner_oper_port_state_str", state);
+	}
 }
 
 static int bond_slave_parse_opt(struct link_util *lu, int argc, char **argv,

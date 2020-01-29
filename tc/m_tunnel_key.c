@@ -420,7 +420,8 @@ static void tunnel_key_print_geneve_options(const char *name,
 	uint8_t type;
 
 	open_json_array(PRINT_JSON, name);
-	print_string(PRINT_FP, name, "\n\t%s ", "geneve_opt");
+	print_nl();
+	print_string(PRINT_FP, name, "\t%s ", "geneve_opt");
 
 	while (rem) {
 		parse_rtattr(tb, TCA_TUNNEL_KEY_ENC_OPT_GENEVE_MAX, i, rem);

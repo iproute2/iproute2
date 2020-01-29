@@ -2134,7 +2134,7 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 		struct rtattr *attr = tb[TCA_FLOWER_KEY_CVLAN_PRIO];
 
 		print_nl();
-		print_uint(PRINT_ANY, "cvlan_prio", " cvlan_prio %d",
+		print_uint(PRINT_ANY, "cvlan_prio", "  cvlan_prio %d",
 			   rta_getattr_u8(attr));
 	}
 
@@ -2291,7 +2291,8 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 				print_uint(PRINT_ANY, "in_hw_count",
 					   " in_hw_count %u", count);
 			}
-		} else if (flags & TCA_CLS_FLAGS_NOT_IN_HW) {
+		}
+		else if (flags & TCA_CLS_FLAGS_NOT_IN_HW) {
 			print_nl();
 			print_bool(PRINT_ANY, "not_in_hw", "  not_in_hw", true);
 		}

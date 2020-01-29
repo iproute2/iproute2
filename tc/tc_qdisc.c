@@ -235,7 +235,7 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 	if (filter_ifindex && filter_ifindex != t->tcm_ifindex)
 		return 0;
 
-	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+	parse_rtattr_flags(tb, TCA_MAX, TCA_RTA(t), len, NLA_F_NESTED);
 
 	if (tb[TCA_KIND] == NULL) {
 		fprintf(stderr, "print_qdisc: NULL kind\n");
@@ -317,11 +317,11 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 	}
 	close_json_object();
 
-	print_string(PRINT_FP, NULL, "\n", NULL);
+	print_nl();
 
 	if (show_details && tb[TCA_STAB]) {
 		print_size_table(fp, " ", tb[TCA_STAB]);
-		print_string(PRINT_FP, NULL, "\n", NULL);
+		print_nl();
 	}
 
 	if (show_stats) {
@@ -329,12 +329,12 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 
 		if (tb[TCA_STATS] || tb[TCA_STATS2] || tb[TCA_XSTATS]) {
 			print_tcstats_attr(fp, tb, " ", &xstats);
-			print_string(PRINT_FP, NULL, "\n", NULL);
+			print_nl();
 		}
 
 		if (q && xstats && q->print_xstats) {
 			q->print_xstats(q, fp, xstats);
-			print_string(PRINT_FP, NULL, "\n", NULL);
+			print_nl();
 		}
 	}
 	close_json_object();
@@ -461,7 +461,7 @@ static int tc_qdisc_block_exists_cb(struct nlmsghdr *n, void *arg)
 	if (len < 0)
 		return -1;
 
-	parse_rtattr(tb, TCA_MAX, TCA_RTA(t), len);
+	parse_rtattr_flags(tb, TCA_MAX, TCA_RTA(t), len, NLA_F_NESTED);
 
 	if (tb[TCA_KIND] == NULL)
 		return -1;

@@ -391,7 +391,7 @@ print_ipt(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	fprintf(f, "\n");
+	print_nl();
 
 	xtables_free_opts(1);
 
