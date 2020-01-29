@@ -66,24 +66,9 @@ static void usage(void)
 		"Usage: ip xfrm policy count\n"
 		"Usage: ip xfrm policy set [ hthresh4 LBITS RBITS ] [ hthresh6 LBITS RBITS ]\n"
 		"SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n"
-		"UPSPEC := proto { { ");
-	fprintf(stderr, "%s | %s | %s | %s } ",
-		strxf_proto(IPPROTO_TCP),
-		strxf_proto(IPPROTO_UDP),
-		strxf_proto(IPPROTO_SCTP),
-		strxf_proto(IPPROTO_DCCP));
-	fprintf(stderr,
-		"[ sport PORT ] [ dport PORT ] |\n"
-		"                  { %s | %s | %s } ",
-		strxf_proto(IPPROTO_ICMP),
-		strxf_proto(IPPROTO_ICMPV6),
-		strxf_proto(IPPROTO_MH));
-	fprintf(stderr,
-		"[ type NUMBER ] [ code NUMBER ] |\n"
-		"                  %s",
-		strxf_proto(IPPROTO_GRE));
-	fprintf(stderr,
-		" [ key { DOTTED-QUAD | NUMBER } ] | PROTO }\n"
+		"UPSPEC := proto { { tcp | udp | sctp | dccp } [ sport PORT ] [ dport PORT ] |\n"
+		"                  { icmp | ipv6-icmp | mobility-header } [ type NUMBER ] [ code NUMBER ] |\n"
+		"                  gre [ key { DOTTED-QUAD | NUMBER } ] | PROTO }\n"
 		"DIR := in | out | fwd\n"
 		"PTYPE := main | sub\n"
 		"ACTION := allow | block\n"

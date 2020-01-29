@@ -106,27 +106,9 @@ static void usage(void)
 		"EXTRA-FLAG-LIST := [ EXTRA-FLAG-LIST ] EXTRA-FLAG\n"
 		"EXTRA-FLAG := dont-encap-dscp\n"
 		"SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n"
-		"UPSPEC := proto { { ");
-	fprintf(stderr,
-		"%s | %s | %s | %s",
-		strxf_proto(IPPROTO_TCP),
-		strxf_proto(IPPROTO_UDP),
-		strxf_proto(IPPROTO_SCTP),
-		strxf_proto(IPPROTO_DCCP));
-	fprintf(stderr,
-		" } [ sport PORT ] [ dport PORT ] |\n"
-		"                  { ");
-	fprintf(stderr,
-		"%s | %s | %s",
-		strxf_proto(IPPROTO_ICMP),
-		strxf_proto(IPPROTO_ICMPV6),
-		strxf_proto(IPPROTO_MH));
-	fprintf(stderr,
-		" } [ type NUMBER ] [ code NUMBER ] |\n");
-	fprintf(stderr,
-		"                  %s", strxf_proto(IPPROTO_GRE));
-	fprintf(stderr,
-		" [ key { DOTTED-QUAD | NUMBER } ] | PROTO }\n"
+		"UPSPEC := proto { { tcp | udp | sctp | dccp } [ sport PORT ] [ dport PORT ] |\n"
+		"                  { icmp | ipv6-icmp | mobility-header } [ type NUMBER ] [ code NUMBER ] |\n"
+		"                  gre [ key { DOTTED-QUAD | NUMBER } ] | PROTO }\n"
 		"LIMIT-LIST := [ LIMIT-LIST ] limit LIMIT\n"
 		"LIMIT := { time-soft | time-hard | time-use-soft | time-use-hard } SECONDS |\n"
 		"         { byte-soft | byte-hard } SIZE | { packet-soft | packet-hard } COUNT\n"
