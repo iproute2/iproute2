@@ -284,6 +284,13 @@ bandwidth to all the flows using the queue. Each such flow is managed by the
 CoDel queuing discipline. Reordering within a flow is avoided since Codel
 internally uses a FIFO queue.
 .TP
+fq_pie
+FQ-PIE (Flow Queuing with Proportional Integral controller Enhanced) is a
+queuing discipline that combines Flow Queuing with the PIE AQM scheme. FQ-PIE
+uses a Jenkins hash function to classify incoming packets into different flows
+and is used to provide a fair share of the bandwidth to all the flows using the
+qdisc. Each such flow is managed by the PIE algorithm.
+.TP
 gred
 Generalized Random Early Detection combines multiple RED queues in order to
 achieve multiple drop priorities. This is required to realize Assured
@@ -855,6 +862,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR tc-flower (8),
 .BR tc-fq (8),
 .BR tc-fq_codel (8),
+.BR tc-fq_pie (8),
 .BR tc-fw (8),
 .BR tc-hfsc (7),
 .BR tc-hfsc (8),
