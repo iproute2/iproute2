@@ -4128,6 +4128,7 @@ static const char *cmd_name(uint8_t cmd)
 	case DEVLINK_CMD_FLASH_UPDATE: return "begin";
 	case DEVLINK_CMD_FLASH_UPDATE_END: return "end";
 	case DEVLINK_CMD_FLASH_UPDATE_STATUS: return "status";
+	case DEVLINK_CMD_HEALTH_REPORTER_RECOVER: return "status";
 	case DEVLINK_CMD_TRAP_GET: return "get";
 	case DEVLINK_CMD_TRAP_SET: return "set";
 	case DEVLINK_CMD_TRAP_NEW: return "new";
@@ -4168,6 +4169,8 @@ static const char *cmd_obj(uint8_t cmd)
 	case DEVLINK_CMD_FLASH_UPDATE_END:
 	case DEVLINK_CMD_FLASH_UPDATE_STATUS:
 		return "flash";
+	case DEVLINK_CMD_HEALTH_REPORTER_RECOVER:
+		return "health";
 	case DEVLINK_CMD_TRAP_GET:
 	case DEVLINK_CMD_TRAP_SET:
 	case DEVLINK_CMD_TRAP_NEW:
@@ -4229,6 +4232,7 @@ static void pr_out_flash_update(struct dl *dl, struct nlattr **tb)
 }
 
 static void pr_out_region(struct dl *dl, struct nlattr **tb);
+static void pr_out_health(struct dl *dl, struct nlattr **tb_health);
 static void pr_out_trap(struct dl *dl, struct nlattr **tb, bool array);
 static void pr_out_trap_group(struct dl *dl, struct nlattr **tb, bool array);
 
@@ -4295,6 +4299,14 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 		pr_out_mon_header(genl->cmd);
 		pr_out_flash_update(dl, tb);
 		break;
+	case DEVLINK_CMD_HEALTH_REPORTER_RECOVER:
+		mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+		if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+		    !tb[DEVLINK_ATTR_HEALTH_REPORTER])
+			return MNL_CB_ERROR;
+		pr_out_mon_header(genl->cmd);
+		pr_out_health(dl, tb);
+		break;
 	case DEVLINK_CMD_TRAP_GET: /* fall through */
 	case DEVLINK_CMD_TRAP_SET: /* fall through */
 	case DEVLINK_CMD_TRAP_NEW: /* fall through */
@@ -4337,6 +4349,7 @@ static int cmd_mon_show(struct dl *dl)
 		if (strcmp(cur_obj, "all") != 0 &&
 		    strcmp(cur_obj, "dev") != 0 &&
 		    strcmp(cur_obj, "port") != 0 &&
+		    strcmp(cur_obj, "health") != 0 &&
 		    strcmp(cur_obj, "trap") != 0 &&
 		    strcmp(cur_obj, "trap-group") != 0) {
 			pr_err("Unknown object \"%s\"\n", cur_obj);
@@ -4355,7 +4368,7 @@ static int cmd_mon_show(struct dl *dl)
 static void cmd_mon_help(void)
 {
 	pr_err("Usage: devlink monitor [ all | OBJECT-LIST ]\n"
-	       "where  OBJECT-LIST := { dev | port | trap | trap-group }\n");
+	       "where  OBJECT-LIST := { dev | port | health | trap | trap-group }\n");
 }
 
 static int cmd_mon(struct dl *dl)
