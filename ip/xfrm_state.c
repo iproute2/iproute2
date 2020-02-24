@@ -1131,6 +1131,9 @@ static int xfrm_state_keep(struct nlmsghdr *n, void *arg)
 	if (!xfrm_state_filter_match(xsinfo))
 		return 0;
 
+	if (xsinfo->id.proto == IPPROTO_IPIP)
+		return 0;
+
 	if (xb->offset > xb->size) {
 		fprintf(stderr, "State buffer overflow\n");
 		return -1;
