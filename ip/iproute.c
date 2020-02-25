@@ -933,9 +933,6 @@ int print_route(struct nlmsghdr *n, void *arg)
 	if (tb[RTA_IIF] && filter.iifmask != -1)
 		print_rta_if(fp, tb[RTA_IIF], "iif");
 
-	if (tb[RTA_MULTIPATH])
-		print_rta_multipath(fp, r, tb[RTA_MULTIPATH]);
-
 	if (tb[RTA_PREF])
 		print_rt_pref(fp, rta_getattr_u8(tb[RTA_PREF]));
 
@@ -950,6 +947,14 @@ int print_route(struct nlmsghdr *n, void *arg)
 				     "ttl-propogate %s",
 				     propagate ? "enabled" : "disabled");
 	}
+
+	if (tb[RTA_MULTIPATH])
+		print_rta_multipath(fp, r, tb[RTA_MULTIPATH]);
+
+	/* If you are adding new route RTA_XXXX then place it above
+	 * the RTA_MULTIPATH else it will appear that the last nexthop
+	 * in the ECMP has new attributes
+	 */
 
 	print_string(PRINT_FP, NULL, "\n", NULL);
 	close_json_object();
