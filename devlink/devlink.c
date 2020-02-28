@@ -3066,11 +3066,13 @@ static int cmd_dev_flash(struct dl *dl)
 		/* In child, just execute the flash and pass returned
 		 * value through pipe once it is done.
 		 */
+		int cc;
+
 		close(pipe_r);
 		err = _mnlg_socket_send(dl->nlg, nlh);
-		write(pipe_w, &err, sizeof(err));
+		cc = write(pipe_w, &err, sizeof(err));
 		close(pipe_w);
-		exit(0);
+		exit(cc != sizeof(err));
 	}
 	close(pipe_w);
 

@@ -142,14 +142,19 @@ static void load_good_table(FILE *fp)
 		}
 		/* idbuf is as big as buf, so this is safe */
 		nr = sscanf(buf, "%s%llu%lg", idbuf, &val, &rate);
-		if (nr < 2)
-			abort();
+		if (nr < 2) {
+			fprintf(stderr, "%s:%d: error parsing history file\n",
+				__FILE__, __LINE__);
+			exit(-2);
+		}
 		if (nr < 3)
 			rate = 0;
 		if (useless_number(idbuf))
 			continue;
-		if ((n = malloc(sizeof(*n))) == NULL)
-			abort();
+		if ((n = malloc(sizeof(*n))) == NULL) {
+			perror("nstat: malloc");
+			exit(-1);
+		}
 		n->id = strdup(idbuf);
 		n->val = val;
 		n->rate = rate;
@@ -190,8 +195,11 @@ static void load_ugly_table(FILE *fp)
 		int count1, count2, skip = 0;
 
 		p = strchr(buf, ':');
-		if (!p)
-			abort();
+		if (!p) {
+			fprintf(stderr, "%s:%d: error parsing history file\n",
+				__FILE__, __LINE__);
+			exit(-2);
+		}
 		count1 = count_spaces(buf);
 		*p = 0;
 		idbuf[0] = 0;
@@ -211,8 +219,10 @@ static void load_ugly_table(FILE *fp)
 				strncat(idbuf, p, sizeof(idbuf) - off - 1);
 			}
 			n = malloc(sizeof(*n));
-			if (!n)
-				abort();
+			if (!n) {
+				perror("nstat: malloc");
+				exit(-1);
+			}
 			n->id = strdup(idbuf);
 			n->rate = 0;
 			n->next = db;
@@ -221,18 +231,27 @@ static void load_ugly_table(FILE *fp)
 		}
 		n = db;
 		nread = getline(&buf, &buflen, fp);
-		if (nread == -1)
-			abort();
+		if (nread == -1) {
+			fprintf(stderr, "%s:%d: error parsing history file\n",
+				__FILE__, __LINE__);
+			exit(-2);
+		}
 		count2 = count_spaces(buf);
 		if (count2 > count1)
 			skip = count2 - count1;
 		do {
 			p = strrchr(buf, ' ');
-			if (!p)
-				abort();
+			if (!p) {
+				fprintf(stderr, "%s:%d: error parsing history file\n",
+					__FILE__, __LINE__);
+				exit(-2);
+			}
 			*p = 0;
-			if (sscanf(p+1, "%llu", &n->val) != 1)
-				abort();
+			if (sscanf(p+1, "%llu", &n->val) != 1) {
+				fprintf(stderr, "%s:%d: error parsing history file\n",
+					__FILE__, __LINE__);
+				exit(-2);
+			}
 			/* Trick to skip "dummy" trailing ICMP MIB in 2.4 */
 			if (skip)
 				skip--;

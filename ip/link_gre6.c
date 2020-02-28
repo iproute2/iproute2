@@ -106,7 +106,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u8 metadata = 0;
 	__u32 fwmark = 0;
 	__u32 erspan_idx = 0;
-	__u8 erspan_ver = 0;
+	__u8 erspan_ver = 1;
 	__u8 erspan_dir = 0;
 	__u16 erspan_hwid = 0;
 

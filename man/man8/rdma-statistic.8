@@ -9,7 +9,7 @@ rdma-statistic \- RDMA statistic counter configuration
 .B rdma
 .RI "[ " OPTIONS " ]"
 .B statistic
-.RI  " { " COMMAND " | "
+.RI  "{ " COMMAND " | "
 .BR help " }"
 .sp
 
@@ -23,6 +23,7 @@ rdma-statistic \- RDMA statistic counter configuration
 .RI "[ " OBJECT " ]"
 .B show link
 .RI "[ " DEV/PORT_INDX " ]"
+.RI "[ " FILTER_NAME " " FILTER_VALUE " ]"
 
 .ti -8
 .B rdma statistic
@@ -34,7 +35,7 @@ rdma-statistic \- RDMA statistic counter configuration
 .IR OBJECT
 .B set
 .IR COUNTER_SCOPE
-.RI "[ " DEV/PORT_INDEX "]"
+.RI "[ " DEV/PORT_INDEX " ]"
 .B auto
 .RI "{ " CRITERIA " | "
 .BR off " }"
@@ -44,7 +45,7 @@ rdma-statistic \- RDMA statistic counter configuration
 .IR OBJECT
 .B bind
 .IR COUNTER_SCOPE
-.RI "[ " DEV/PORT_INDEX "]"
+.RI "[ " DEV/PORT_INDEX " ]"
 .RI "[ " OBJECT-ID " ]"
 .RI "[ " COUNTER-ID " ]"
 
@@ -53,7 +54,7 @@ rdma-statistic \- RDMA statistic counter configuration
 .IR OBJECT
 .B unbind
 .IR COUNTER_SCOPE
-.RI "[ " DEV/PORT_INDEX "]"
+.RI "[ " DEV/PORT_INDEX " ]"
 .RI "[ " COUNTER-ID " ]"
 .RI "[ " OBJECT-ID " ]"
 
@@ -69,6 +70,10 @@ rdma-statistic \- RDMA statistic counter configuration
 .IR CRITERIA " := "
 .RB "{ " type " }"
 
+.ti -8
+.IR FILTER_NAME " := "
+.RB "{ " cntn " | " lqpn " | " pid " }"
+
 .SH "DESCRIPTION"
 .SS rdma statistic [object] show - Queries the specified RDMA device for RDMA and driver-specific statistics. Show the default hw counters if object is not specified
 
@@ -78,6 +83,9 @@ rdma-statistic \- RDMA statistic counter configuration
 
 .I "PORT_INDEX"
 - specifies counters on this RDMA port to show.
+
+.I "FILTER_NAME
+- specifies a filter to show only the results matching it.
 
 .SS rdma statistic <object> set - configure counter statistic auto-mode for a specific device/port
 In auto mode all objects belong to one category are bind automatically to a single counter set. Not applicable for MR's.
