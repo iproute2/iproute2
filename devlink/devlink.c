@@ -6932,6 +6932,8 @@ static const char *trap_metadata_name(const struct nlattr *attr)
 	switch (attr->nla_type) {
 	case DEVLINK_ATTR_TRAP_METADATA_TYPE_IN_PORT:
 		return "input_port";
+	case DEVLINK_ATTR_TRAP_METADATA_TYPE_FA_COOKIE:
+		return "flow_action_cookie";
 	default:
 		return "<unknown metadata type>";
 	}
