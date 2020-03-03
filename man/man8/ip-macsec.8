@@ -53,6 +53,9 @@ ip-macsec \- MACsec device configuration
 .BI "ip macsec del " DEV " rx " SCI " sa"
 .RI "{ " 0..3 " }"
 
+.BI "ip macsec offload " DEV
+.RB "{ " off " | " phy " }"
+
 .B ip macsec show
 .RI [ " DEV " ]
 
@@ -102,6 +105,10 @@ type.
 .SS Display MACsec configuration
 .nf
 # ip macsec show
+.PP
+.SS Configure offloading on an interface
+.nf
+# ip macsec offload macsec0 phy
 
 .SH NOTES
 This tool can be used to configure the 802.1AE keys of the interface. Note that 802.1AE uses GCM-AES
