@@ -653,6 +653,14 @@ static const char *cs_id_to_name(__u64 cid)
 	}
 }
 
+static const char *validate_to_str(__u8 validate)
+{
+	if (validate >= ARRAY_SIZE(validate_str))
+		return "(unknown)";
+
+	return validate_str[validate];
+}
+
 static const char *offload_to_str(__u8 offload)
 {
 	if (offload >= ARRAY_SIZE(offload_str))
@@ -669,7 +677,7 @@ static void print_attrs(struct rtattr *attrs[])
 		__u8 val = rta_getattr_u8(attrs[MACSEC_SECY_ATTR_VALIDATE]);
 
 		print_string(PRINT_ANY, "validate",
-			     "validate %s ", validate_str[val]);
+			     "validate %s ", validate_to_str(val));
 	}
 
 	print_flag(attrs, "sc", MACSEC_RXSC_ATTR_ACTIVE);
@@ -1208,7 +1216,7 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_string(PRINT_ANY,
 			     "validation",
 			     "validate %s ",
-			     validate_str[val]);
+			     validate_to_str(val));
 	}
 
 	const char *inc_sci, *es, *replay;
