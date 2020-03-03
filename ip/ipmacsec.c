@@ -31,6 +31,11 @@ static const char * const validate_str[] = {
 	[MACSEC_VALIDATE_STRICT] = "strict",
 };
 
+static const char * const offload_str[] = {
+	[MACSEC_OFFLOAD_OFF] = "off",
+	[MACSEC_OFFLOAD_PHY] = "phy",
+};
+
 struct sci {
 	__u64 sci;
 	__u16 port;
@@ -605,6 +610,14 @@ static const char *cs_id_to_name(__u64 cid)
 	}
 }
 
+static const char *offload_to_str(__u8 offload)
+{
+	if (offload >= ARRAY_SIZE(offload_str))
+		return "(unknown)";
+
+	return offload_str[offload];
+}
+
 static void print_attrs(struct rtattr *attrs[])
 {
 	print_flag(attrs, "protect", MACSEC_SECY_ATTR_PROTECT);
@@ -996,6 +1009,19 @@ static int process(struct nlmsghdr *n, void *arg)
 
 	if (attrs[MACSEC_ATTR_RXSC_LIST])
 		print_rxsc_list(attrs[MACSEC_ATTR_RXSC_LIST]);
+
+	if (attrs[MACSEC_ATTR_OFFLOAD]) {
+		struct rtattr *attrs_offload[MACSEC_OFFLOAD_ATTR_MAX + 1];
+		__u8 offload;
+
+		parse_rtattr_nested(attrs_offload, MACSEC_OFFLOAD_ATTR_MAX,
+				    attrs[MACSEC_ATTR_OFFLOAD]);
+
+		offload = rta_getattr_u8(attrs_offload[MACSEC_OFFLOAD_ATTR_TYPE]);
+		print_string(PRINT_ANY, "offload",
+			     "    offload: %s ", offload_to_str(offload));
+		print_nl();
+	}
 
 	close_json_object();
 
