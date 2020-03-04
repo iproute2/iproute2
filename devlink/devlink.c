@@ -3150,6 +3150,8 @@ static const char *port_flavour_name(uint16_t flavour)
 		return "pcipf";
 	case DEVLINK_PORT_FLAVOUR_PCI_VF:
 		return "pcivf";
+	case DEVLINK_PORT_FLAVOUR_VIRTUAL:
+		return "virtual";
 	default:
 		return "<unknown flavour>";
 	}
