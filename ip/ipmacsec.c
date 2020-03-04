@@ -31,6 +31,11 @@ static const char * const validate_str[] = {
 	[MACSEC_VALIDATE_STRICT] = "strict",
 };
 
+static const char * const offload_str[] = {
+	[MACSEC_OFFLOAD_OFF] = "off",
+	[MACSEC_OFFLOAD_PHY] = "phy",
+};
+
 struct sci {
 	__u64 sci;
 	__u16 port;
@@ -93,6 +98,7 @@ static void ipmacsec_usage(void)
 		"       ip macsec del DEV rx SCI sa { 0..3 }\n"
 		"       ip macsec show\n"
 		"       ip macsec show DEV\n"
+		"       ip macsec offload DEV [ off | phy ]\n"
 		"where  OPTS := [ pn <u32> ] [ on | off ]\n"
 		"       ID   := 128-bit hex string\n"
 		"       KEY  := 128-bit or 256-bit hex string\n"
@@ -354,6 +360,7 @@ enum cmd {
 	CMD_ADD,
 	CMD_DEL,
 	CMD_UPD,
+	CMD_OFFLOAD,
 	__CMD_MAX
 };
 
@@ -369,6 +376,9 @@ static const enum macsec_nl_commands macsec_commands[__CMD_MAX][2][2] = {
 	[CMD_DEL] = {
 		[0] = {-1, MACSEC_CMD_DEL_RXSC},
 		[1] = {MACSEC_CMD_DEL_TXSA, MACSEC_CMD_DEL_RXSA},
+	},
+	[CMD_OFFLOAD] = {
+		[0] = {-1, MACSEC_CMD_UPD_OFFLOAD },
 	},
 };
 
@@ -529,6 +539,44 @@ static int do_modify(enum cmd c, int argc, char **argv)
 	return -1;
 }
 
+static int do_offload(enum cmd c, int argc, char **argv)
+{
+	enum macsec_offload offload;
+	struct rtattr *attr;
+	int ifindex, ret;
+
+	if (argc == 0)
+		ipmacsec_usage();
+
+	ifindex = ll_name_to_index(*argv);
+	if (!ifindex) {
+		fprintf(stderr, "Device \"%s\" does not exist.\n", *argv);
+		return -1;
+	}
+	argc--; argv++;
+
+	if (argc == 0)
+		ipmacsec_usage();
+
+	ret = one_of("offload", *argv, offload_str, ARRAY_SIZE(offload_str),
+		     (int *)&offload);
+	if (ret)
+		ipmacsec_usage();
+
+	MACSEC_GENL_REQ(req, MACSEC_BUFLEN, macsec_commands[c][0][1], NLM_F_REQUEST);
+
+	addattr32(&req.n, MACSEC_BUFLEN, MACSEC_ATTR_IFINDEX, ifindex);
+
+	attr = addattr_nest(&req.n, MACSEC_BUFLEN, MACSEC_ATTR_OFFLOAD);
+	addattr8(&req.n, MACSEC_BUFLEN, MACSEC_OFFLOAD_ATTR_TYPE, offload);
+	addattr_nest_end(&req.n, attr);
+
+	if (rtnl_talk(&genl_rth, &req.n, NULL) < 0)
+		return -2;
+
+	return 0;
+}
+
 /* dump/show */
 static struct {
 	int ifindex;
@@ -605,6 +653,22 @@ static const char *cs_id_to_name(__u64 cid)
 	}
 }
 
+static const char *validate_to_str(__u8 validate)
+{
+	if (validate >= ARRAY_SIZE(validate_str))
+		return "(unknown)";
+
+	return validate_str[validate];
+}
+
+static const char *offload_to_str(__u8 offload)
+{
+	if (offload >= ARRAY_SIZE(offload_str))
+		return "(unknown)";
+
+	return offload_str[offload];
+}
+
 static void print_attrs(struct rtattr *attrs[])
 {
 	print_flag(attrs, "protect", MACSEC_SECY_ATTR_PROTECT);
@@ -613,7 +677,7 @@ static void print_attrs(struct rtattr *attrs[])
 		__u8 val = rta_getattr_u8(attrs[MACSEC_SECY_ATTR_VALIDATE]);
 
 		print_string(PRINT_ANY, "validate",
-			     "validate %s ", validate_str[val]);
+			     "validate %s ", validate_to_str(val));
 	}
 
 	print_flag(attrs, "sc", MACSEC_RXSC_ATTR_ACTIVE);
@@ -997,6 +1061,19 @@ static int process(struct nlmsghdr *n, void *arg)
 	if (attrs[MACSEC_ATTR_RXSC_LIST])
 		print_rxsc_list(attrs[MACSEC_ATTR_RXSC_LIST]);
 
+	if (attrs[MACSEC_ATTR_OFFLOAD]) {
+		struct rtattr *attrs_offload[MACSEC_OFFLOAD_ATTR_MAX + 1];
+		__u8 offload;
+
+		parse_rtattr_nested(attrs_offload, MACSEC_OFFLOAD_ATTR_MAX,
+				    attrs[MACSEC_ATTR_OFFLOAD]);
+
+		offload = rta_getattr_u8(attrs_offload[MACSEC_OFFLOAD_ATTR_TYPE]);
+		print_string(PRINT_ANY, "offload",
+			     "    offload: %s ", offload_to_str(offload));
+		print_nl();
+	}
+
 	close_json_object();
 
 	return 0;
@@ -1068,6 +1145,8 @@ int do_ipmacsec(int argc, char **argv)
 		return do_modify(CMD_UPD, argc-1, argv+1);
 	if (matches(*argv, "delete") == 0)
 		return do_modify(CMD_DEL, argc-1, argv+1);
+	if (matches(*argv, "offload") == 0)
+		return do_offload(CMD_OFFLOAD, argc-1, argv+1);
 
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip macsec help\".\n",
 		*argv);
@@ -1137,7 +1216,7 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_string(PRINT_ANY,
 			     "validation",
 			     "validate %s ",
-			     validate_str[val]);
+			     validate_to_str(val));
 	}
 
 	const char *inc_sci, *es, *replay;
