@@ -187,6 +187,7 @@ enum devlink_port_flavour {
 				      * for the PCI VF. It is an internal
 				      * port that faces the PCI VF.
 				      */
+	DEVLINK_PORT_FLAVOUR_VIRTUAL, /* Any virtual port facing the user. */
 };
 
 enum devlink_param_cmode {
@@ -252,6 +253,8 @@ enum devlink_trap_type {
 enum {
 	/* Trap can report input port as metadata */
 	DEVLINK_ATTR_TRAP_METADATA_TYPE_IN_PORT,
+	/* Trap can report flow action cookie as metadata */
+	DEVLINK_ATTR_TRAP_METADATA_TYPE_FA_COOKIE,
 };
 
 enum devlink_attr {
