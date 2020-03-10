@@ -223,9 +223,9 @@ static int pie_print_xstats(struct qdisc_util *qu, FILE *f,
 
 	st = RTA_DATA(xstats);
 
-	/* prob is returned as a fracion of (2^56 - 1) */
+	/* prob is returned as a fracion of maximum integer value */
 	print_float(PRINT_ANY, "prob", "  prob %lg",
-		    (double)st->prob / (double)(UINT64_MAX >> 8));
+		    (double)st->prob / (double)UINT64_MAX);
 	print_uint(PRINT_JSON, "delay", NULL, st->delay);
 	print_string(PRINT_FP, NULL, " delay %s", sprint_time(st->delay, b1));
 
