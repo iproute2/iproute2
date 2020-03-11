@@ -156,7 +156,7 @@ static int parse_mpls(struct action_util *a, int *argc_p, char ***argv_p,
 		}
 	}
 
-	if (action == TCA_MPLS_ACT_PUSH && !label)
+	if (action == TCA_MPLS_ACT_PUSH && label == 0xffffffff)
 		missarg("label");
 
 	if (action == TCA_MPLS_ACT_PUSH && proto &&
