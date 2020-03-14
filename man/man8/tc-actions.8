@@ -49,6 +49,8 @@ actions \- independently defined actions in tc
 ] [
 .I FLAGS
 ] [
+.I HWSTATSSPEC
+] [
 .I CONTROL
 ]
 
@@ -76,6 +78,12 @@ ACTNAME
 .I FLAGS
 :=
 .I no_percpu
+
+.I HWSTATSSPEC
+:=
+.BR hw_stats " {"
+.IR immediate " | " delayed " | " disabled
+.R }
 
 .I ACTDETAIL
 :=
@@ -199,6 +207,29 @@ Action-specific flags. Currently, the only supported flag is
 which indicates that action is expected to have minimal software data-path
 traffic and doesn't need to allocate stat counters with percpu allocator.
 This option is intended to be used by hardware-offloaded actions.
+
+.TP
+.BI hw_stats " HW_STATS"
+Specifies the type of HW stats of new action. If omitted, any stats counter type
+is going to be used, according to driver and its resources.
+The
+.I HW_STATS
+indicates the type. Any of the following are valid:
+.RS
+.TP
+.B immediate
+Means that in dump, user gets the current HW stats state from the device
+queried at the dump time.
+.TP
+.B delayed
+Means that in dump, user gets HW stats that might be out of date for
+some time, maybe couple of seconds. This is the case when driver polls
+stats updates periodically or when it gets async stats update
+from the device.
+.TP
+.B disabled
+No HW stats are going to be available in dump.
+.RE
 
 .TP
 .BI since " MSTIME"
