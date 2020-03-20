@@ -150,31 +150,30 @@ new_cmd(char **argv)
 		(matches(*argv, "add") == 0);
 }
 
-static const struct hw_stats_type_item {
+static const struct hw_stats_item {
 	const char *str;
 	__u8 type;
-} hw_stats_type_items[] = {
-	{ "immediate", TCA_ACT_HW_STATS_TYPE_IMMEDIATE },
-	{ "delayed", TCA_ACT_HW_STATS_TYPE_DELAYED },
+} hw_stats_items[] = {
+	{ "immediate", TCA_ACT_HW_STATS_IMMEDIATE },
+	{ "delayed", TCA_ACT_HW_STATS_DELAYED },
 	{ "disabled", 0 }, /* no bit set */
 };
 
 static void print_hw_stats(const struct rtattr *arg)
 {
-	struct nla_bitfield32 *hw_stats_type_bf = RTA_DATA(arg);
-	__u8 hw_stats_type;
+	struct nla_bitfield32 *hw_stats_bf = RTA_DATA(arg);
+	__u8 hw_stats;
 	int i;
 
-	hw_stats_type = hw_stats_type_bf->value & hw_stats_type_bf->selector;
+	hw_stats = hw_stats_bf->value & hw_stats_bf->selector;
 	print_string(PRINT_FP, NULL, "\t", NULL);
 	open_json_array(PRINT_ANY, "hw_stats");
 
-	for (i = 0; i < ARRAY_SIZE(hw_stats_type_items); i++) {
-		const struct hw_stats_type_item *item;
+	for (i = 0; i < ARRAY_SIZE(hw_stats_items); i++) {
+		const struct hw_stats_item *item;
 
-		item = &hw_stats_type_items[i];
-		if ((!hw_stats_type && !item->type) ||
-		    hw_stats_type & item->type)
+		item = &hw_stats_items[i];
+		if ((!hw_stats && !item->type) || hw_stats & item->type)
 			print_string(PRINT_ANY, NULL, " %s", item->str);
 	}
 	close_json_array(PRINT_JSON, NULL);
@@ -184,18 +183,18 @@ static int parse_hw_stats(const char *str, struct nlmsghdr *n)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(hw_stats_type_items); i++) {
-		const struct hw_stats_type_item *item;
+	for (i = 0; i < ARRAY_SIZE(hw_stats_items); i++) {
+		const struct hw_stats_item *item;
 
-		item = &hw_stats_type_items[i];
+		item = &hw_stats_items[i];
 		if (matches(str, item->str) == 0) {
-			struct nla_bitfield32 hw_stats_type_bf = {
+			struct nla_bitfield32 hw_stats_bf = {
 				.value = item->type,
 				.selector = item->type
 			};
 
-			addattr_l(n, MAX_MSG, TCA_ACT_HW_STATS_TYPE,
-				  &hw_stats_type_bf, sizeof(hw_stats_type_bf));
+			addattr_l(n, MAX_MSG, TCA_ACT_HW_STATS,
+				  &hw_stats_bf, sizeof(hw_stats_bf));
 			return 0;
 		}
 
@@ -399,8 +398,8 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 				   TCA_ACT_FLAGS_NO_PERCPU_STATS);
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 	}
-	if (tb[TCA_ACT_HW_STATS_TYPE])
-		print_hw_stats(tb[TCA_ACT_HW_STATS_TYPE]);
+	if (tb[TCA_ACT_HW_STATS])
+		print_hw_stats(tb[TCA_ACT_HW_STATS]);
 
 	return 0;
 }
