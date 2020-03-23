@@ -13,7 +13,7 @@ bytes
 bytes
 .B [ burst
 packets
-.B ] [ ecn ] [ harddrop] [ bandwidth
+.B ] [ ecn ] [ harddrop ] [ nodrop ] [ bandwidth
 rate
 .B ] [ probability
 chance
@@ -122,6 +122,10 @@ harddrop
 If average flow queue size is above
 .B max
 bytes, this parameter forces a drop instead of ecn marking.
+.TP
+nodrop
+With this parameter, traffic that should be marked, but is not ECN-capable, is
+enqueued. Without the parameter it is early-dropped.
 .TP
 adaptive
 (Added in linux-3.3) Sets RED in adaptive mode as described in http://icir.org/floyd/papers/adaptiveRed.pdf
