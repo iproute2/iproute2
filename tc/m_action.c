@@ -159,7 +159,7 @@ static const struct hw_stats_item {
 	{ "disabled", 0 }, /* no bit set */
 };
 
-static void print_hw_stats(const struct rtattr *arg)
+static void print_hw_stats(const struct rtattr *arg, bool print_used)
 {
 	struct nla_bitfield32 *hw_stats_bf = RTA_DATA(arg);
 	__u8 hw_stats;
@@ -167,7 +167,7 @@ static void print_hw_stats(const struct rtattr *arg)
 
 	hw_stats = hw_stats_bf->value & hw_stats_bf->selector;
 	print_string(PRINT_FP, NULL, "\t", NULL);
-	open_json_array(PRINT_ANY, "hw_stats");
+	open_json_array(PRINT_ANY, print_used ? "used_hw_stats" : "hw_stats");
 
 	for (i = 0; i < ARRAY_SIZE(hw_stats_items); i++) {
 		const struct hw_stats_item *item;
@@ -177,6 +177,7 @@ static void print_hw_stats(const struct rtattr *arg)
 			print_string(PRINT_ANY, NULL, " %s", item->str);
 	}
 	close_json_array(PRINT_JSON, NULL);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 }
 
 static int parse_hw_stats(const char *str, struct nlmsghdr *n)
@@ -399,7 +400,10 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 	}
 	if (tb[TCA_ACT_HW_STATS])
-		print_hw_stats(tb[TCA_ACT_HW_STATS]);
+		print_hw_stats(tb[TCA_ACT_HW_STATS], false);
+
+	if (tb[TCA_ACT_USED_HW_STATS])
+		print_hw_stats(tb[TCA_ACT_USED_HW_STATS], true);
 
 	return 0;
 }
