@@ -62,6 +62,11 @@ _devlink_direct_complete()
             value=$(devlink -j trap group show 2>/dev/null \
                     | jq ".trap_group[\"$dev\"][].name")
             ;;
+        trap_policer)
+            dev=${words[4]}
+            value=$(devlink -j trap policer show 2>/dev/null \
+                    | jq ".trap_policer[\"$dev\"][].policer")
+            ;;
         health_dev)
             value=$(devlink -j health show 2>/dev/null | jq '.health' \
                     | jq 'keys[]')
@@ -678,6 +683,53 @@ _devlink_trap_set_action()
     esac
 }
 
+# Completion for devlink trap group set
+_devlink_trap_group_set()
+{
+    local -A settings=(
+        [action]=notseen
+        [policer]=notseen
+        [nopolicer]=notseen
+    )
+
+    if [[ $cword -eq 7 ]]; then
+        COMPREPLY=( $( compgen -W "action policer nopolicer" -- "$cur" ) )
+    fi
+
+    # Mark seen settings
+    local word
+    for word in "${words[@]:7:${#words[@]}-1}"; do
+        if [[ -n $word ]]; then
+            if [[ "${settings[$word]}" ]]; then
+                settings[$word]=seen
+            fi
+        fi
+    done
+
+    case $prev in
+        action)
+            COMPREPLY=( $( compgen -W "trap drop" -- "$cur" ) )
+            return
+            ;;
+        policer)
+            _devlink_direct_complete "trap_policer"
+            return
+            ;;
+    esac
+
+    local -a comp_words=()
+
+    # Add settings not seen to completions
+    local setting
+    for setting in "${!settings[@]}"; do
+        if [ "${settings[$setting]}" = notseen ]; then
+            comp_words+=( "$setting" )
+        fi
+    done
+
+    COMPREPLY=( $( compgen -W "${comp_words[*]}" -- "$cur" ) )
+}
+
 # Completion for devlink trap group
 _devlink_trap_group()
 {
@@ -701,7 +753,80 @@ _devlink_trap_group()
     esac
 
     if [[ ${words[3]} == "set" ]]; then
-        _devlink_trap_set_action 1
+        _devlink_trap_group_set
+    fi
+}
+
+# Completion for devlink trap policer set
+_devlink_trap_policer_set()
+{
+    local -A settings=(
+        [rate]=notseen
+        [burst]=notseen
+    )
+
+    if [[ $cword -eq 7 ]]; then
+        COMPREPLY=( $( compgen -W "rate burst" -- "$cur" ) )
+    fi
+
+    # Mark seen settings
+    local word
+    for word in "${words[@]:7:${#words[@]}-1}"; do
+        if [[ -n $word ]]; then
+            if [[ "${settings[$word]}" ]]; then
+                settings[$word]=seen
+            fi
+        fi
+    done
+
+    case $prev in
+        rate)
+            # Integer argument
+            return
+            ;;
+        burst)
+            # Integer argument
+            return
+            ;;
+    esac
+
+    local -a comp_words=()
+
+    # Add settings not seen to completions
+    local setting
+    for setting in "${!settings[@]}"; do
+        if [ "${settings[$setting]}" = notseen ]; then
+            comp_words+=( "$setting" )
+        fi
+    done
+
+    COMPREPLY=( $( compgen -W "${comp_words[*]}" -- "$cur" ) )
+}
+
+# Completion for devlink trap policer
+_devlink_trap_policer()
+{
+    case $cword in
+        3)
+            COMPREPLY=( $( compgen -W "set show" -- "$cur" ) )
+            return
+            ;;
+        4)
+            _devlink_direct_complete "dev"
+            return
+            ;;
+        5)
+            COMPREPLY=( $( compgen -W "policer" -- "$cur" ) )
+            return
+            ;;
+        6)
+            _devlink_direct_complete "trap_policer"
+            return
+            ;;
+    esac
+
+    if [[ ${words[3]} == "set" ]]; then
+        _devlink_trap_policer_set
     fi
 }
 
@@ -728,6 +853,10 @@ _devlink_trap()
             return
             ;;
         group)
+            _devlink_trap_$command
+            return
+            ;;
+        policer)
             _devlink_trap_$command
             return
             ;;
