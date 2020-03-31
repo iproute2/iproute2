@@ -262,6 +262,9 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_TRAP_ACTION		BIT(31)
 #define DL_OPT_TRAP_GROUP_NAME		BIT(32)
 #define DL_OPT_NETNS	BIT(33)
+#define DL_OPT_TRAP_POLICER_ID		BIT(34)
+#define DL_OPT_TRAP_POLICER_RATE	BIT(35)
+#define DL_OPT_TRAP_POLICER_BURST	BIT(36)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -303,6 +306,9 @@ struct dl_opts {
 	enum devlink_trap_action trap_action;
 	bool netns_is_pid;
 	uint32_t netns;
+	uint32_t trap_policer_id;
+	uint64_t trap_policer_rate;
+	uint64_t trap_policer_burst;
 };
 
 struct dl {
@@ -506,12 +512,16 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_TRAP_METADATA] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_TRAP_GROUP_NAME] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_RELOAD_FAILED] = MNL_TYPE_U8,
+	[DEVLINK_ATTR_TRAP_POLICER_ID] = MNL_TYPE_U32,
+	[DEVLINK_ATTR_TRAP_POLICER_RATE] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_TRAP_POLICER_BURST] = MNL_TYPE_U64,
 };
 
 static const enum mnl_attr_data_type
 devlink_stats_policy[DEVLINK_ATTR_STATS_MAX + 1] = {
 	[DEVLINK_ATTR_STATS_RX_PACKETS] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_STATS_RX_BYTES] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_STATS_RX_DROPPED] = MNL_TYPE_U64,
 };
 
 static int attr_cb(const struct nlattr *attr, void *data)
@@ -1490,6 +1500,27 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 				opts->netns_is_pid = true;
 			}
 			o_found |= DL_OPT_NETNS;
+		} else if (dl_argv_match(dl, "policer") &&
+			   (o_all & DL_OPT_TRAP_POLICER_ID)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint32_t(dl, &opts->trap_policer_id);
+			if (err)
+				return err;
+			o_found |= DL_OPT_TRAP_POLICER_ID;
+		} else if (dl_argv_match(dl, "rate") &&
+			   (o_all & DL_OPT_TRAP_POLICER_RATE)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint64_t(dl, &opts->trap_policer_rate);
+			if (err)
+				return err;
+			o_found |= DL_OPT_TRAP_POLICER_RATE;
+		} else if (dl_argv_match(dl, "burst") &&
+			   (o_all & DL_OPT_TRAP_POLICER_BURST)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint64_t(dl, &opts->trap_policer_burst);
+			if (err)
+				return err;
+			o_found |= DL_OPT_TRAP_POLICER_BURST;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -1617,6 +1648,15 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 				 opts->netns_is_pid ? DEVLINK_ATTR_NETNS_PID :
 						      DEVLINK_ATTR_NETNS_FD,
 				 opts->netns);
+	if (opts->present & DL_OPT_TRAP_POLICER_ID)
+		mnl_attr_put_u32(nlh, DEVLINK_ATTR_TRAP_POLICER_ID,
+				 opts->trap_policer_id);
+	if (opts->present & DL_OPT_TRAP_POLICER_RATE)
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_TRAP_POLICER_RATE,
+				 opts->trap_policer_rate);
+	if (opts->present & DL_OPT_TRAP_POLICER_BURST)
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_TRAP_POLICER_BURST,
+				 opts->trap_policer_burst);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -2058,6 +2098,9 @@ static void pr_out_stats(struct dl *dl, struct nlattr *nla_stats)
 	if (tb[DEVLINK_ATTR_STATS_RX_PACKETS])
 		pr_out_u64(dl, "packets",
 			   mnl_attr_get_u64(tb[DEVLINK_ATTR_STATS_RX_PACKETS]));
+	if (tb[DEVLINK_ATTR_STATS_RX_DROPPED])
+		pr_out_u64(dl, "dropped",
+			   mnl_attr_get_u64(tb[DEVLINK_ATTR_STATS_RX_DROPPED]));
 	pr_out_object_end(dl);
 	pr_out_object_end(dl);
 }
@@ -4141,6 +4184,10 @@ static const char *cmd_name(uint8_t cmd)
 	case DEVLINK_CMD_TRAP_GROUP_SET: return "set";
 	case DEVLINK_CMD_TRAP_GROUP_NEW: return "new";
 	case DEVLINK_CMD_TRAP_GROUP_DEL: return "del";
+	case DEVLINK_CMD_TRAP_POLICER_GET: return "get";
+	case DEVLINK_CMD_TRAP_POLICER_SET: return "set";
+	case DEVLINK_CMD_TRAP_POLICER_NEW: return "new";
+	case DEVLINK_CMD_TRAP_POLICER_DEL: return "del";
 	default: return "<unknown cmd>";
 	}
 }
@@ -4185,6 +4232,11 @@ static const char *cmd_obj(uint8_t cmd)
 	case DEVLINK_CMD_TRAP_GROUP_NEW:
 	case DEVLINK_CMD_TRAP_GROUP_DEL:
 		return "trap-group";
+	case DEVLINK_CMD_TRAP_POLICER_GET:
+	case DEVLINK_CMD_TRAP_POLICER_SET:
+	case DEVLINK_CMD_TRAP_POLICER_NEW:
+	case DEVLINK_CMD_TRAP_POLICER_DEL:
+		return "trap-policer";
 	default: return "<unknown obj>";
 	}
 }
@@ -4239,6 +4291,7 @@ static void pr_out_region(struct dl *dl, struct nlattr **tb);
 static void pr_out_health(struct dl *dl, struct nlattr **tb_health);
 static void pr_out_trap(struct dl *dl, struct nlattr **tb, bool array);
 static void pr_out_trap_group(struct dl *dl, struct nlattr **tb, bool array);
+static void pr_out_trap_policer(struct dl *dl, struct nlattr **tb, bool array);
 
 static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 {
@@ -4339,6 +4392,19 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 		pr_out_mon_header(genl->cmd);
 		pr_out_trap_group(dl, tb, false);
 		break;
+	case DEVLINK_CMD_TRAP_POLICER_GET: /* fall through */
+	case DEVLINK_CMD_TRAP_POLICER_SET: /* fall through */
+	case DEVLINK_CMD_TRAP_POLICER_NEW: /* fall through */
+	case DEVLINK_CMD_TRAP_POLICER_DEL: /* fall through */
+		mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+		if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+		    !tb[DEVLINK_ATTR_TRAP_POLICER_ID] ||
+		    !tb[DEVLINK_ATTR_TRAP_POLICER_RATE] ||
+		    !tb[DEVLINK_ATTR_TRAP_POLICER_BURST])
+			return MNL_CB_ERROR;
+		pr_out_mon_header(genl->cmd);
+		pr_out_trap_policer(dl, tb, false);
+		break;
 	}
 	return MNL_CB_OK;
 }
@@ -4355,7 +4421,8 @@ static int cmd_mon_show(struct dl *dl)
 		    strcmp(cur_obj, "port") != 0 &&
 		    strcmp(cur_obj, "health") != 0 &&
 		    strcmp(cur_obj, "trap") != 0 &&
-		    strcmp(cur_obj, "trap-group") != 0) {
+		    strcmp(cur_obj, "trap-group") != 0 &&
+		    strcmp(cur_obj, "trap-policer") != 0) {
 			pr_err("Unknown object \"%s\"\n", cur_obj);
 			return -EINVAL;
 		}
@@ -4372,7 +4439,7 @@ static int cmd_mon_show(struct dl *dl)
 static void cmd_mon_help(void)
 {
 	pr_err("Usage: devlink monitor [ all | OBJECT-LIST ]\n"
-	       "where  OBJECT-LIST := { dev | port | health | trap | trap-group }\n");
+	       "where  OBJECT-LIST := { dev | port | health | trap | trap-group | trap-policer }\n");
 }
 
 static int cmd_mon(struct dl *dl)
@@ -7002,6 +7069,8 @@ static void cmd_trap_help(void)
 	pr_err("       devlink trap show [ DEV trap TRAP ]\n");
 	pr_err("       devlink trap group set DEV group GROUP [ action { trap | drop } ]\n");
 	pr_err("       devlink trap group show [ DEV group GROUP ]\n");
+	pr_err("       devlink trap policer set DEV policer POLICER [ rate RATE ] [ burst BURST ]\n");
+	pr_err("       devlink trap policer show DEV policer POLICER\n");
 }
 
 static int cmd_trap_show(struct dl *dl)
@@ -7136,6 +7205,104 @@ static int cmd_trap_group(struct dl *dl)
 	return -ENOENT;
 }
 
+static void pr_out_trap_policer(struct dl *dl, struct nlattr **tb, bool array)
+{
+	if (array)
+		pr_out_handle_start_arr(dl, tb);
+	else
+		__pr_out_handle_start(dl, tb, true, false);
+
+	check_indent_newline(dl);
+	print_uint(PRINT_ANY, "policer", "policer %u",
+		   mnl_attr_get_u32(tb[DEVLINK_ATTR_TRAP_POLICER_ID]));
+	print_u64(PRINT_ANY, "rate", " rate %llu",
+		   mnl_attr_get_u64(tb[DEVLINK_ATTR_TRAP_POLICER_RATE]));
+	print_u64(PRINT_ANY, "burst", " burst %llu",
+		   mnl_attr_get_u64(tb[DEVLINK_ATTR_TRAP_POLICER_BURST]));
+	if (tb[DEVLINK_ATTR_STATS])
+		pr_out_stats(dl, tb[DEVLINK_ATTR_STATS]);
+	pr_out_handle_end(dl);
+}
+
+static int cmd_trap_policer_show_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct dl *dl = data;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_TRAP_POLICER_ID] ||
+	    !tb[DEVLINK_ATTR_TRAP_POLICER_RATE] ||
+	    !tb[DEVLINK_ATTR_TRAP_POLICER_BURST])
+		return MNL_CB_ERROR;
+
+	pr_out_trap_policer(dl, tb, true);
+
+	return MNL_CB_OK;
+}
+
+static int cmd_trap_policer_show(struct dl *dl)
+{
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (dl_argc(dl) == 0)
+		flags |= NLM_F_DUMP;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_TRAP_POLICER_GET, flags);
+
+	if (dl_argc(dl) > 0) {
+		err = dl_argv_parse_put(nlh, dl,
+					DL_OPT_HANDLE | DL_OPT_TRAP_POLICER_ID,
+					0);
+		if (err)
+			return err;
+	}
+
+	pr_out_section_start(dl, "trap_policer");
+	err = _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_trap_policer_show_cb, dl);
+	pr_out_section_end(dl);
+
+	return err;
+}
+
+static int cmd_trap_policer_set(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_TRAP_POLICER_SET,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl,
+				DL_OPT_HANDLE | DL_OPT_TRAP_POLICER_ID,
+				DL_OPT_TRAP_POLICER_RATE |
+				DL_OPT_TRAP_POLICER_BURST);
+	if (err)
+		return err;
+
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
+static int cmd_trap_policer(struct dl *dl)
+{
+	if (dl_argv_match(dl, "help")) {
+		cmd_trap_help();
+		return 0;
+	} else if (dl_argv_match(dl, "show") ||
+		   dl_argv_match(dl, "list") || dl_no_arg(dl)) {
+		dl_arg_inc(dl);
+		return cmd_trap_policer_show(dl);
+	} else if (dl_argv_match(dl, "set")) {
+		dl_arg_inc(dl);
+		return cmd_trap_policer_set(dl);
+	}
+	pr_err("Command \"%s\" not found\n", dl_argv(dl));
+	return -ENOENT;
+}
+
 static int cmd_trap(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help")) {
@@ -7151,6 +7318,9 @@ static int cmd_trap(struct dl *dl)
 	} else if (dl_argv_match(dl, "group")) {
 		dl_arg_inc(dl);
 		return cmd_trap_group(dl);
+	} else if (dl_argv_match(dl, "policer")) {
+		dl_arg_inc(dl);
+		return cmd_trap_policer(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
