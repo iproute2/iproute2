@@ -1507,6 +1507,11 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_TRAP_POLICER_ID;
+		} else if (dl_argv_match(dl, "nopolicer") &&
+			   (o_all & DL_OPT_TRAP_POLICER_ID)) {
+			dl_arg_inc(dl);
+			opts->trap_policer_id = 0;
+			o_found |= DL_OPT_TRAP_POLICER_ID;
 		} else if (dl_argv_match(dl, "rate") &&
 			   (o_all & DL_OPT_TRAP_POLICER_RATE)) {
 			dl_arg_inc(dl);
@@ -7068,6 +7073,7 @@ static void cmd_trap_help(void)
 	pr_err("Usage: devlink trap set DEV trap TRAP [ action { trap | drop } ]\n");
 	pr_err("       devlink trap show [ DEV trap TRAP ]\n");
 	pr_err("       devlink trap group set DEV group GROUP [ action { trap | drop } ]\n");
+	pr_err("                              [ policer POLICER ] [ nopolicer ]\n");
 	pr_err("       devlink trap group show [ DEV group GROUP ]\n");
 	pr_err("       devlink trap policer set DEV policer POLICER [ rate RATE ] [ burst BURST ]\n");
 	pr_err("       devlink trap policer show DEV policer POLICER\n");
@@ -7125,6 +7131,9 @@ static void pr_out_trap_group(struct dl *dl, struct nlattr **tb, bool array)
 	print_string(PRINT_ANY, "name", "name %s",
 		     mnl_attr_get_str(tb[DEVLINK_ATTR_TRAP_GROUP_NAME]));
 	print_bool(PRINT_ANY, "generic", " generic %s", !!tb[DEVLINK_ATTR_TRAP_GENERIC]);
+	if (tb[DEVLINK_ATTR_TRAP_POLICER_ID])
+		print_uint(PRINT_ANY, "policer", " policer %u",
+			   mnl_attr_get_u32(tb[DEVLINK_ATTR_TRAP_POLICER_ID]));
 	pr_out_stats(dl, tb[DEVLINK_ATTR_STATS]);
 	pr_out_handle_end(dl);
 }
@@ -7181,7 +7190,7 @@ static int cmd_trap_group_set(struct dl *dl)
 
 	err = dl_argv_parse_put(nlh, dl,
 				DL_OPT_HANDLE | DL_OPT_TRAP_GROUP_NAME,
-				DL_OPT_TRAP_ACTION);
+				DL_OPT_TRAP_ACTION | DL_OPT_TRAP_POLICER_ID);
 	if (err)
 		return err;
 

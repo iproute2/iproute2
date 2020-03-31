@@ -37,6 +37,10 @@ devlink-trap \- devlink trap configuration
 .ti -8
 .BI "devlink trap group set " DEV " group " GROUP
 .RB "[ " action " { " trap " | " drop " } ]"
+.br
+.RB "[ " policer
+.IB "POLICER " ]
+.RB "[ " nopolicer " ]"
 
 .ti -8
 .BI "devlink trap policer set " DEV " policer " POLICER
@@ -108,6 +112,14 @@ Only applicable if a devlink device is also specified.
 packet trap action. The action is set for all the packet traps member in the
 trap group. The actions of non-drop traps cannot be changed and are thus
 skipped.
+
+.TP
+.BI policer " POLICER"
+packet trap policer. The policer to bind to the packet trap group.
+
+.TP
+.B nopolicer
+Unbind packet trap policer from the packet trap group.
 
 .SS devlink trap policer set - set attributes of packet trap policer
 
