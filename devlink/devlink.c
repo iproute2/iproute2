@@ -318,7 +318,6 @@ struct dl {
 	char **argv;
 	bool no_nice_names;
 	struct dl_opts opts;
-	json_writer_t *jw;
 	bool json_output;
 	bool pretty_output;
 	bool verbose;
