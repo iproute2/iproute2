@@ -23,8 +23,15 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
+static bool gre_is_erspan(struct link_util *lu)
+{
+	return !strcmp(lu->id, "erspan");
+}
+
 static void gre_print_help(struct link_util *lu, int argc, char **argv, FILE *f)
 {
+	bool is_erspan = gre_is_erspan(lu);
+
 	fprintf(f,
 		"Usage: ... %-9s	[ remote ADDR ]\n"
 		"			[ local ADDR ]\n"
@@ -44,18 +51,20 @@ static void gre_print_help(struct link_util *lu, int argc, char **argv, FILE *f)
 		"			[ encap-dport PORT ]\n"
 		"			[ [no]encap-csum ]\n"
 		"			[ [no]encap-csum6 ]\n"
-		"			[ [no]encap-remcsum ]\n"
-		"			[ erspan_ver version ]\n"
-		"			[ erspan IDX ]\n"
-		"			[ erspan_dir { ingress | egress } ]\n"
-		"			[ erspan_hwid hwid ]\n"
+		"			[ [no]encap-remcsum ]\n", lu->id);
+	if (is_erspan)
+		fprintf(f,
+			"			[ erspan_ver version ]\n"
+			"			[ erspan IDX ]\n"
+			"			[ erspan_dir { ingress | egress } ]\n"
+			"			[ erspan_hwid hwid ]\n");
+	fprintf(f,
 		"\n"
 		"Where:	ADDR := { IP_ADDRESS | any }\n"
 		"	TOS  := { NUMBER | inherit }\n"
 		"	TTL  := { 1..255 | inherit }\n"
 		"	KEY  := { DOTTED_QUAD | NUMBER }\n"
-		"	MARK := { 0x0..0xffffffff }\n",
-		lu->id);
+		"	MARK := { 0x0..0xffffffff }\n");
 }
 
 static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
@@ -93,6 +102,7 @@ static int gre_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u16 encapdport = 0;
 	__u8 metadata = 0;
 	__u32 fwmark = 0;
+	bool is_erspan = gre_is_erspan(lu);
 	__u32 erspan_idx = 0;
 	__u8 erspan_ver = 1;
 	__u8 erspan_dir = 0;
@@ -334,19 +344,19 @@ get_failed:
 			NEXT_ARG();
 			if (get_u32(&fwmark, *argv, 0))
 				invarg("invalid fwmark\n", *argv);
-		} else if (strcmp(*argv, "erspan") == 0) {
+		} else if (is_erspan && strcmp(*argv, "erspan") == 0) {
 			NEXT_ARG();
 			if (get_u32(&erspan_idx, *argv, 0))
 				invarg("invalid erspan index\n", *argv);
 			if (erspan_idx & ~((1<<20) - 1) || erspan_idx == 0)
 				invarg("erspan index must be > 0 and <= 20-bit\n", *argv);
-		} else if (strcmp(*argv, "erspan_ver") == 0) {
+		} else if (is_erspan && strcmp(*argv, "erspan_ver") == 0) {
 			NEXT_ARG();
 			if (get_u8(&erspan_ver, *argv, 0))
 				invarg("invalid erspan version\n", *argv);
 			if (erspan_ver != 1 && erspan_ver != 2)
 				invarg("erspan version must be 1 or 2\n", *argv);
-		} else if (strcmp(*argv, "erspan_dir") == 0) {
+		} else if (is_erspan && strcmp(*argv, "erspan_dir") == 0) {
 			NEXT_ARG();
 			if (matches(*argv, "ingress") == 0)
 				erspan_dir = 0;
@@ -354,7 +364,7 @@ get_failed:
 				erspan_dir = 1;
 			else
 				invarg("Invalid erspan direction.", *argv);
-		} else if (strcmp(*argv, "erspan_hwid") == 0) {
+		} else if (is_erspan && strcmp(*argv, "erspan_hwid") == 0) {
 			NEXT_ARG();
 			if (get_u16(&erspan_hwid, *argv, 0))
 				invarg("invalid erspan hwid\n", *argv);
@@ -402,7 +412,7 @@ get_failed:
 		addattr32(n, 1024, IFLA_GRE_LINK, link);
 	addattr_l(n, 1024, IFLA_GRE_TTL, &ttl, 1);
 	addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
-	if (erspan_ver) {
+	if (is_erspan) {
 		addattr8(n, 1024, IFLA_GRE_ERSPAN_VER, erspan_ver);
 		if (erspan_ver == 1 && erspan_idx != 0) {
 			addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
