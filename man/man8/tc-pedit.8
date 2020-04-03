@@ -60,8 +60,8 @@ pedit - generic packet editor action
 
 .ti -8
 .IR IP6HDR_FIELD " := { "
-.BR src " | " dst " | " flow_lbl " | " payload_len " | " nexthdr " |"
-.BR hoplimit " }"
+.BR src " | " dst " | " traffic_class " | " flow_lbl " | " payload_len " | "
+.BR nexthdr " | " hoplimit " }"
 
 .ti -8
 .IR TCPHDR_FIELD " := { "
@@ -228,6 +228,8 @@ are:
 .B src
 .TQ
 .B dst
+.TQ
+.B traffic_class
 .TQ
 .B flow_lbl
 .TQ
