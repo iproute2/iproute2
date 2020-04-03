@@ -369,6 +369,28 @@ tc filter add dev eth0 parent ffff: u32 \\
 	action pedit ex munge tcp dport set 22
 .EE
 .RE
+
+To rewrite just part of a field, use the
+.B retain
+directive. E.g. to overwrite the DSCP part of a dsfield with $DSCP, without
+touching ECN:
+
+.RS
+.EX
+tc filter add dev eth0 ingress flower ... \\
+	action pedit ex munge ip dsfield set $((DSCP << 2)) retain 0xfc
+.EE
+.RE
+
+And vice versa, to set ECN to e.g. 1 without impacting DSCP:
+
+.RS
+.EX
+tc filter add dev eth0 ingress flower ... \\
+	action pedit ex munge ip dsfield set 1 retain 0x3
+.EE
+.RE
+
 .SH SEE ALSO
 .BR tc (8),
 .BR tc-htb (8),
