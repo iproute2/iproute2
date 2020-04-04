@@ -286,7 +286,7 @@ struct dl_opts {
 	enum devlink_eswitch_mode eswitch_mode;
 	enum devlink_eswitch_inline_mode eswitch_inline_mode;
 	const char *dpipe_table_name;
-	bool dpipe_counters_enable;
+	bool dpipe_counters_enabled;
 	enum devlink_eswitch_encap_mode eswitch_encap_mode;
 	const char *resource_path;
 	uint64_t resource_size;
@@ -1336,7 +1336,7 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			    dl_argv_match(dl, "counters_enabled")) &&
 			   (o_all & DL_OPT_DPIPE_TABLE_COUNTERS)) {
 			dl_arg_inc(dl);
-			err = dl_argv_bool(dl, &opts->dpipe_counters_enable);
+			err = dl_argv_bool(dl, &opts->dpipe_counters_enabled);
 			if (err)
 				return err;
 			o_found |= DL_OPT_DPIPE_TABLE_COUNTERS;
@@ -1592,7 +1592,7 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 				  opts->dpipe_table_name);
 	if (opts->present & DL_OPT_DPIPE_TABLE_COUNTERS)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED,
-				opts->dpipe_counters_enable);
+				opts->dpipe_counters_enabled);
 	if (opts->present & DL_OPT_ESWITCH_ENCAP_MODE)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_ESWITCH_ENCAP_MODE,
 				opts->eswitch_encap_mode);
