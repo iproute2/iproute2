@@ -6924,7 +6924,9 @@ static void cmd_health_help(void)
 	pr_err("       devlink health diagnose DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump show DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump clear DEV reporter REPORTER_NAME\n");
-	pr_err("       devlink health set DEV reporter REPORTER_NAME { grace_period | auto_recover } { msec | boolean }\n");
+	pr_err("       devlink health set DEV reporter REPORTER_NAME\n");
+	pr_err("                          [ grace_period MSEC ]\n");
+	pr_err("                          [ auto_recover { true | false } ]\n");
 }
 
 static int cmd_health(struct dl *dl)
