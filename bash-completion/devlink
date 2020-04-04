@@ -105,11 +105,11 @@ _devlink_dev_eswitch_set()
     local -A settings=(
         [mode]=notseen
         [inline-mode]=notseen
-        [encap]=notseen
+        [encap-mode]=notseen
     )
 
     if [[ $cword -eq 5 ]]; then
-        COMPREPLY=( $( compgen -W "mode inline-mode encap" -- "$cur" ) )
+        COMPREPLY=( $( compgen -W "mode inline-mode encap-mode" -- "$cur" ) )
     fi
 
     # Mark seen settings
@@ -132,8 +132,8 @@ _devlink_dev_eswitch_set()
                 "$cur" ) )
             return
             ;;
-        encap)
-            COMPREPLY=( $( compgen -W "disable enable" -- "$cur" ) )
+        encap-mode)
+            COMPREPLY=( $( compgen -W "none basic" -- "$cur" ) )
             return
             ;;
     esac

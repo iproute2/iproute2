@@ -41,6 +41,9 @@
 #define ESWITCH_INLINE_MODE_NETWORK "network"
 #define ESWITCH_INLINE_MODE_TRANSPORT "transport"
 
+#define ESWITCH_ENCAP_MODE_NONE "none"
+#define ESWITCH_ENCAP_MODE_BASIC "basic"
+
 #define PARAM_CMODE_RUNTIME_STR "runtime"
 #define PARAM_CMODE_DRIVERINIT_STR "driverinit"
 #define PARAM_CMODE_PERMANENT_STR "permanent"
@@ -284,7 +287,7 @@ struct dl_opts {
 	enum devlink_eswitch_inline_mode eswitch_inline_mode;
 	const char *dpipe_table_name;
 	bool dpipe_counters_enable;
-	bool eswitch_encap_mode;
+	enum devlink_eswitch_encap_mode eswitch_encap_mode;
 	const char *resource_path;
 	uint64_t resource_size;
 	uint32_t resource_id;
@@ -1078,12 +1081,19 @@ static int eswitch_inline_mode_get(const char *typestr,
 	return 0;
 }
 
-static int eswitch_encap_mode_get(const char *typestr, bool *p_mode)
+static int
+eswitch_encap_mode_get(const char *typestr,
+		       enum devlink_eswitch_encap_mode *p_encap_mode)
 {
-	if (strcmp(typestr, "enable") == 0) {
-		*p_mode = true;
-	} else if (strcmp(typestr, "disable") == 0) {
-		*p_mode = false;
+	/* The initial implementation incorrectly accepted "enable"/"disable".
+	 * Carry it to maintain backward compatibility.
+	 */
+	if (strcmp(typestr, "disable") == 0 ||
+		   strcmp(typestr, ESWITCH_ENCAP_MODE_NONE) == 0) {
+		*p_encap_mode = DEVLINK_ESWITCH_ENCAP_MODE_NONE;
+	} else if (strcmp(typestr, "enable") == 0 ||
+		   strcmp(typestr, ESWITCH_ENCAP_MODE_BASIC) == 0) {
+		*p_encap_mode = DEVLINK_ESWITCH_ENCAP_MODE_BASIC;
 	} else {
 		pr_err("Unknown eswitch encap mode \"%s\"\n", typestr);
 		return -EINVAL;
@@ -1329,7 +1339,8 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_DPIPE_TABLE_COUNTERS;
-		} else if (dl_argv_match(dl, "encap") &&
+		} else if ((dl_argv_match(dl, "encap") || /* Original incorrect implementation */
+			    dl_argv_match(dl, "encap-mode")) &&
 			   (o_all & DL_OPT_ESWITCH_ENCAP_MODE)) {
 			const char *typestr;
 
@@ -1700,7 +1711,7 @@ static void cmd_dev_help(void)
 	pr_err("Usage: devlink dev show [ DEV ]\n");
 	pr_err("       devlink dev eswitch set DEV [ mode { legacy | switchdev } ]\n");
 	pr_err("                               [ inline-mode { none | link | network | transport } ]\n");
-	pr_err("                               [ encap { disable | enable } ]\n");
+	pr_err("                               [ encap-mode { none | basic } ]\n");
 	pr_err("       devlink dev eswitch show DEV\n");
 	pr_err("       devlink dev param set DEV name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink dev param show [DEV name PARAMETER]\n");
@@ -2130,6 +2141,18 @@ static const char *eswitch_inline_mode_name(uint32_t mode)
 	}
 }
 
+static const char *eswitch_encap_mode_name(uint32_t mode)
+{
+	switch (mode) {
+	case DEVLINK_ESWITCH_ENCAP_MODE_NONE:
+		return ESWITCH_ENCAP_MODE_NONE;
+	case DEVLINK_ESWITCH_ENCAP_MODE_BASIC:
+		return ESWITCH_ENCAP_MODE_BASIC;
+	default:
+		return "<unknown mode>";
+	}
+}
+
 static void pr_out_eswitch(struct dl *dl, struct nlattr **tb)
 {
 	__pr_out_handle_start(dl, tb, true, false);
@@ -2147,11 +2170,10 @@ static void pr_out_eswitch(struct dl *dl, struct nlattr **tb)
 				     tb[DEVLINK_ATTR_ESWITCH_INLINE_MODE])));
 	}
 	if (tb[DEVLINK_ATTR_ESWITCH_ENCAP_MODE]) {
-		bool encap_mode = !!mnl_attr_get_u8(tb[DEVLINK_ATTR_ESWITCH_ENCAP_MODE]);
-
 		check_indent_newline(dl);
-		print_string(PRINT_ANY, "encap", "encap %s",
-			     encap_mode ? "enable" : "disable");
+		print_string(PRINT_ANY, "encap-mode", "encap-mode %s",
+			     eswitch_encap_mode_name(mnl_attr_get_u8(
+				    tb[DEVLINK_ATTR_ESWITCH_ENCAP_MODE])));
 	}
 
 	pr_out_handle_end(dl);
