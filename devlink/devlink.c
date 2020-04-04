@@ -2765,18 +2765,13 @@ static int cmd_dev_show(struct dl *dl)
 	return err;
 }
 
-static void cmd_dev_reload_help(void)
-{
-	pr_err("Usage: devlink dev reload DEV [ netns { PID | NAME | ID } ]\n");
-}
-
 static int cmd_dev_reload(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
 	int err;
 
 	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
-		cmd_dev_reload_help();
+		cmd_dev_help();
 		return 0;
 	}
 
@@ -2898,11 +2893,6 @@ static int cmd_versions_show_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_OK;
 }
 
-static void cmd_dev_info_help(void)
-{
-	pr_err("Usage: devlink dev info [ DEV ]\n");
-}
-
 static int cmd_dev_info(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
@@ -2910,7 +2900,7 @@ static int cmd_dev_info(struct dl *dl)
 	int err;
 
 	if (dl_argv_match(dl, "help")) {
-		cmd_dev_info_help();
+		cmd_dev_help();
 		return 0;
 	}
 
@@ -2930,12 +2920,6 @@ static int cmd_dev_info(struct dl *dl)
 	pr_out_section_end(dl);
 	return err;
 }
-
-static void cmd_dev_flash_help(void)
-{
-	pr_err("Usage: devlink dev flash DEV file PATH [ component NAME ]\n");
-}
-
 
 struct cmd_dev_flash_status_ctx {
 	struct dl *dl;
@@ -3084,7 +3068,7 @@ static int cmd_dev_flash(struct dl *dl)
 	int err;
 
 	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
-		cmd_dev_flash_help();
+		cmd_dev_help();
 		return 0;
 	}
 
