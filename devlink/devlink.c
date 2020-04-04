@@ -739,9 +739,11 @@ static int strtobool(const char *str, bool *p_val)
 {
 	bool val;
 
-	if (!strcmp(str, "true") || !strcmp(str, "1"))
+	if (!strcmp(str, "true") || !strcmp(str, "1") ||
+	    !strcmp(str, "enable"))
 		val = true;
-	else if (!strcmp(str, "false") || !strcmp(str, "0"))
+	else if (!strcmp(str, "false") || !strcmp(str, "0") ||
+		 !strcmp(str, "disable"))
 		val = false;
 	else
 		return -EINVAL;
@@ -1076,20 +1078,6 @@ static int eswitch_inline_mode_get(const char *typestr,
 	return 0;
 }
 
-static int dpipe_counters_enable_get(const char *typestr,
-				     bool *counters_enable)
-{
-	if (strcmp(typestr, "enable") == 0) {
-		*counters_enable = 1;
-	} else if (strcmp(typestr, "disable") == 0) {
-		*counters_enable = 0;
-	} else {
-		pr_err("Unknown counter_state \"%s\"\n", typestr);
-		return -EINVAL;
-	}
-	return 0;
-}
-
 static int eswitch_encap_mode_get(const char *typestr, bool *p_mode)
 {
 	if (strcmp(typestr, "enable") == 0) {
@@ -1336,14 +1324,8 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			o_found |= DL_OPT_DPIPE_TABLE_NAME;
 		} else if (dl_argv_match(dl, "counters") &&
 			   (o_all & DL_OPT_DPIPE_TABLE_COUNTERS)) {
-			const char *typestr;
-
 			dl_arg_inc(dl);
-			err = dl_argv_str(dl, &typestr);
-			if (err)
-				return err;
-			err = dpipe_counters_enable_get(typestr,
-							&opts->dpipe_counters_enable);
+			err = dl_argv_bool(dl, &opts->dpipe_counters_enable);
 			if (err)
 				return err;
 			o_found |= DL_OPT_DPIPE_TABLE_COUNTERS;
