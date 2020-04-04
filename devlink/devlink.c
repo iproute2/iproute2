@@ -1332,7 +1332,8 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_DPIPE_TABLE_NAME;
-		} else if (dl_argv_match(dl, "counters") &&
+		} else if ((dl_argv_match(dl, "counters") ||
+			    dl_argv_match(dl, "counters_enabled")) &&
 			   (o_all & DL_OPT_DPIPE_TABLE_COUNTERS)) {
 			dl_arg_inc(dl);
 			err = dl_argv_bool(dl, &opts->dpipe_counters_enable);
