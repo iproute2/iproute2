@@ -116,4 +116,9 @@ void tc_red_print_flags(__u32 flags)
 		print_bool(PRINT_ANY, "adaptive", "adaptive ", true);
 	else
 		print_bool(PRINT_ANY, "adaptive", NULL, false);
+
+	if (flags & TC_RED_NODROP)
+		print_bool(PRINT_ANY, "nodrop", "nodrop ", true);
+	else
+		print_bool(PRINT_ANY, "nodrop", NULL, false);
 }

@@ -30,12 +30,17 @@ static void explain(void)
 	fprintf(stderr,
 		"Usage: ... red	limit BYTES [min BYTES] [max BYTES] avpkt BYTES [burst PACKETS]\n"
 		"		[adaptive] [probability PROBABILITY] [bandwidth KBPS]\n"
-		"		[ecn] [harddrop]\n");
+		"		[ecn] [harddrop] [nodrop]\n");
 }
+
+#define RED_SUPPORTED_FLAGS (TC_RED_HISTORIC_FLAGS | TC_RED_NODROP)
 
 static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n, const char *dev)
 {
+	struct nla_bitfield32 flags_bf = {
+		.selector = RED_SUPPORTED_FLAGS,
+	};
 	struct tc_red_qopt opt = {};
 	unsigned int burst = 0;
 	unsigned int avpkt = 0;
@@ -95,13 +100,15 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 		} else if (strcmp(*argv, "ecn") == 0) {
-			opt.flags |= TC_RED_ECN;
+			flags_bf.value |= TC_RED_ECN;
 		} else if (strcmp(*argv, "harddrop") == 0) {
-			opt.flags |= TC_RED_HARDDROP;
+			flags_bf.value |= TC_RED_HARDDROP;
+		} else if (strcmp(*argv, "nodrop") == 0) {
+			flags_bf.value |= TC_RED_NODROP;
 		} else if (strcmp(*argv, "adaptative") == 0) {
-			opt.flags |= TC_RED_ADAPTATIVE;
+			flags_bf.value |= TC_RED_ADAPTATIVE;
 		} else if (strcmp(*argv, "adaptive") == 0) {
-			opt.flags |= TC_RED_ADAPTATIVE;
+			flags_bf.value |= TC_RED_ADAPTATIVE;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -154,6 +161,7 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	addattr_l(n, 1024, TCA_RED_STAB, sbuf, 256);
 	max_P = probability * pow(2, 32);
 	addattr_l(n, 1024, TCA_RED_MAX_P, &max_P, sizeof(max_P));
+	addattr_l(n, 1024, TCA_RED_FLAGS, &flags_bf, sizeof(flags_bf));
 	addattr_nest_end(n, tail);
 	return 0;
 }
@@ -161,6 +169,7 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_RED_MAX + 1];
+	struct nla_bitfield32 *flags_bf;
 	struct tc_red_qopt *qopt;
 	__u32 max_P = 0;
 
@@ -182,6 +191,12 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_RED_MAX_P] &&
 	    RTA_PAYLOAD(tb[TCA_RED_MAX_P]) >= sizeof(__u32))
 		max_P = rta_getattr_u32(tb[TCA_RED_MAX_P]);
+
+	if (tb[TCA_RED_FLAGS] &&
+	    RTA_PAYLOAD(tb[TCA_RED_FLAGS]) >= sizeof(*flags_bf)) {
+		flags_bf = RTA_DATA(tb[TCA_RED_FLAGS]);
+		qopt->flags = flags_bf->value;
+	}
 
 	print_uint(PRINT_JSON, "limit", NULL, qopt->limit);
 	print_string(PRINT_FP, NULL, "limit %s ", sprint_size(qopt->limit, b1));
