@@ -61,9 +61,9 @@ By default a process inherits its network namespace from its parent. Initially a
 the processes share the same default network namespace from the init process.
 
 By convention a named network namespace is an object at
-.BR "/var/run/netns/" NAME
+.BR "@NETNS_RUN_DIR@/" NAME
 that can be opened. The file descriptor resulting from opening
-.BR "/var/run/netns/" NAME
+.BR "@NETNS_RUN_DIR@/" NAME
 refers to the specified network namespace. Holding that file
 descriptor open keeps the network namespace alive. The file
 descriptor can be used with the
@@ -72,13 +72,13 @@ system call to change the network namespace associated with a task.
 
 For applications that are aware of network namespaces, the convention
 is to look for global network configuration files first in
-.BR "/etc/netns/" NAME "/"
+.BR "@NETNS_ETC_DIR@/" NAME "/"
 then in
 .BR "/etc/".
 For example, if you want a different version of
 .BR /etc/resolv.conf
 for a network namespace used to isolate your vpn you would name it
-.BR /etc/netns/myvpn/resolv.conf.
+.BR @NETNS_ETC_DIR@/myvpn/resolv.conf.
 
 .B ip netns exec
 automates handling of this configuration, file convention for network
@@ -89,24 +89,24 @@ their traditional location in /etc.
 .TP
 .B ip netns list - show all of the named network namespaces
 .sp
-This command displays all of the network namespaces in /var/run/netns
+This command displays all of the network namespaces in @NETNS_RUN_DIR@
 
 .TP
 .B ip netns add NAME - create a new named network namespace
 .sp
-If NAME is available in /var/run/netns/ this command creates a new
+If NAME is available in @NETNS_RUN_DIR@ this command creates a new
 network namespace and assigns NAME.
 
 .TP
 .B ip netns attach NAME PID - create a new named network namespace
 .sp
-If NAME is available in /var/run/netns/ this command attaches the network
+If NAME is available in @NETNS_RUN_DIR@ this command attaches the network
 namespace of the process PID to NAME as if it were created with ip netns.
 
 .TP
 .B ip [-all] netns delete [ NAME ] - delete the name of a network namespace(s)
 .sp
-If NAME is present in /var/run/netns it is umounted and the mount
+If NAME is present in @NETNS_RUN_DIR@ it is umounted and the mount
 point is removed. If this is the last user of the network namespace the
 network namespace will be freed and all physical devices will be moved to the
 default one, otherwise the network namespace persists until it has no more
@@ -160,7 +160,7 @@ Once it is assigned, it's not possible to change it.
 .TP
 .B ip netns identify [PID] - Report network namespaces names for process
 .sp
-This command walks through /var/run/netns and finds all the network
+This command walks through @NETNS_RUN_DIR@ and finds all the network
 namespace names for network namespace of the specified process, if PID is
 not specified then the current process will be used.
 
@@ -201,7 +201,7 @@ and prints a line for each event it sees.
 .sp
 Network namespace ids are used to identify a peer network namespace. This
 command displays nsids of the current network namespace and provides the
-corresponding iproute2 netns name (from /var/run/netns) if any.
+corresponding iproute2 netns name (from @NETNS_RUN_DIR@) if any.
 
 The
 .B target-nsid

@@ -6,7 +6,11 @@ MAN8PAGES = $(TARGETS) $(filter-out $(TARGETS),$(wildcard *.8))
 all: $(TARGETS)
 
 %: %.in
-	sed "s|@SYSCONFDIR@|$(CONFDIR)|g" $< > $@
+	sed \
+		-e "s|@NETNS_ETC_DIR@|$(NETNS_ETC_DIR)|g" \
+		-e "s|@NETNS_RUN_DIR@|$(NETNS_RUN_DIR)|g" \
+		-e "s|@SYSCONFDIR@|$(CONFDIR)|g" \
+		$< > $@
 
 distclean: clean
 
