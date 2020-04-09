@@ -35,7 +35,7 @@ devlink-dev \- devlink device configuration
 .BR inline-mode " { " none " | " link " | " network " | " transport " } "
 .RI "]"
 .RI "[ "
-.BR encap " { " disable " | " enable " } "
+.BR encap-mode " { " none " | " basic " } "
 .RI "]"
 
 .ti -8
@@ -125,13 +125,13 @@ Some HWs need the VF driver to put part of the packet headers on the TX descript
 - L4 mode
 
 .TP
-.BR encap " { " disable " | " enable " } "
+.BR encap-mode " { " none " | " basic " } "
 Set eswitch encapsulation support
 
-.I disable
+.I none
 - Disable encapsulation support
 
-.I enable
+.I basic
 - Enable encapsulation support
 
 .SS devlink dev param set  - set new value to devlink device configuration parameter

@@ -59,13 +59,13 @@ static int nh_dump_filter(struct nlmsghdr *nlh, int reqlen)
 	}
 
 	if (filter.groups) {
-		addattr_l(nlh, reqlen, NHA_GROUPS, NULL, 0);
+		err = addattr_l(nlh, reqlen, NHA_GROUPS, NULL, 0);
 		if (err)
 			return err;
 	}
 
 	if (filter.master) {
-		addattr32(nlh, reqlen, NHA_MASTER, filter.master);
+		err = addattr32(nlh, reqlen, NHA_MASTER, filter.master);
 		if (err)
 			return err;
 	}

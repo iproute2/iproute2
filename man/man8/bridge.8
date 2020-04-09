@@ -420,9 +420,12 @@ link setting is configured on the software bridge (default)
 .BR "\-t" , " \-timestamp"
 display current time when using monitor option.
 
-.SS bridge link show - list bridge port configuration.
+.SS bridge link show - list ports configuration for all bridges.
 
-This command displays the current bridge port configuration and flags.
+This command displays port configuration and flags for all bridges.
+
+To display port configuration and flags for a specific bridge, use the
+"ip link show master <bridge_device>" command.
 
 .SH bridge fdb - forwarding database management
 

@@ -52,13 +52,13 @@ devlink-health \- devlink health reporting and recovery
 .RI "" DEV ""
 .B reporter
 .RI "" REPORTER ""
-.RI " { "
-.B grace_period | auto_recover
-.RI " } { "
-.RI "" msec ""
-.RI "|"
-.RI "" boolean ""
-.RI " } "
+.RI "[ "
+.BI "grace_period " MSEC "
+.RI "]"
+.RI "[ "
+.BR auto_recover " { " true " | " false " } "
+.RI "]"
+
 .ti -8
 .B devlink health help
 
@@ -130,15 +130,9 @@ the next "devlink health dump show" command.
 .I "REPORTER"
 - specifies the reporter's name registered on the devlink device.
 
-.SS devlink health set - Enable the user to configure:
-.PD 0
-1) grace_period [msec] - Time interval between consecutive auto recoveries.
-.P
-2) auto_recover [true/false] - Indicates whether the devlink should execute automatic recover on error.
-.P
+.SS devlink health set - Configure health reporter.
 Please note that this command is not supported on a reporter which
 doesn't support a recovery method.
-.PD
 
 .PP
 .I "DEV"
@@ -147,6 +141,14 @@ doesn't support a recovery method.
 .PP
 .I "REPORTER"
 - specifies the reporter's name registered on the devlink device.
+
+.TP
+.BI grace_period " MSEC "
+Time interval between consecutive auto recoveries.
+
+.TP
+.BR auto_recover " { " true " | " false " } "
+Indicates whether the devlink should execute automatic recover on error.
 
 .SH "EXAMPLES"
 .PP

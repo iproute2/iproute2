@@ -41,6 +41,9 @@
 #define ESWITCH_INLINE_MODE_NETWORK "network"
 #define ESWITCH_INLINE_MODE_TRANSPORT "transport"
 
+#define ESWITCH_ENCAP_MODE_NONE "none"
+#define ESWITCH_ENCAP_MODE_BASIC "basic"
+
 #define PARAM_CMODE_RUNTIME_STR "runtime"
 #define PARAM_CMODE_DRIVERINIT_STR "driverinit"
 #define PARAM_CMODE_PERMANENT_STR "permanent"
@@ -283,8 +286,8 @@ struct dl_opts {
 	enum devlink_eswitch_mode eswitch_mode;
 	enum devlink_eswitch_inline_mode eswitch_inline_mode;
 	const char *dpipe_table_name;
-	bool dpipe_counters_enable;
-	bool eswitch_encap_mode;
+	bool dpipe_counters_enabled;
+	enum devlink_eswitch_encap_mode eswitch_encap_mode;
 	const char *resource_path;
 	uint64_t resource_size;
 	uint32_t resource_id;
@@ -738,9 +741,11 @@ static int strtobool(const char *str, bool *p_val)
 {
 	bool val;
 
-	if (!strcmp(str, "true") || !strcmp(str, "1"))
+	if (!strcmp(str, "true") || !strcmp(str, "1") ||
+	    !strcmp(str, "enable"))
 		val = true;
-	else if (!strcmp(str, "false") || !strcmp(str, "0"))
+	else if (!strcmp(str, "false") || !strcmp(str, "0") ||
+		 !strcmp(str, "disable"))
 		val = false;
 	else
 		return -EINVAL;
@@ -1075,26 +1080,19 @@ static int eswitch_inline_mode_get(const char *typestr,
 	return 0;
 }
 
-static int dpipe_counters_enable_get(const char *typestr,
-				     bool *counters_enable)
+static int
+eswitch_encap_mode_get(const char *typestr,
+		       enum devlink_eswitch_encap_mode *p_encap_mode)
 {
-	if (strcmp(typestr, "enable") == 0) {
-		*counters_enable = 1;
-	} else if (strcmp(typestr, "disable") == 0) {
-		*counters_enable = 0;
-	} else {
-		pr_err("Unknown counter_state \"%s\"\n", typestr);
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int eswitch_encap_mode_get(const char *typestr, bool *p_mode)
-{
-	if (strcmp(typestr, "enable") == 0) {
-		*p_mode = true;
-	} else if (strcmp(typestr, "disable") == 0) {
-		*p_mode = false;
+	/* The initial implementation incorrectly accepted "enable"/"disable".
+	 * Carry it to maintain backward compatibility.
+	 */
+	if (strcmp(typestr, "disable") == 0 ||
+		   strcmp(typestr, ESWITCH_ENCAP_MODE_NONE) == 0) {
+		*p_encap_mode = DEVLINK_ESWITCH_ENCAP_MODE_NONE;
+	} else if (strcmp(typestr, "enable") == 0 ||
+		   strcmp(typestr, ESWITCH_ENCAP_MODE_BASIC) == 0) {
+		*p_encap_mode = DEVLINK_ESWITCH_ENCAP_MODE_BASIC;
 	} else {
 		pr_err("Unknown eswitch encap mode \"%s\"\n", typestr);
 		return -EINVAL;
@@ -1333,20 +1331,16 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_DPIPE_TABLE_NAME;
-		} else if (dl_argv_match(dl, "counters") &&
+		} else if ((dl_argv_match(dl, "counters") ||
+			    dl_argv_match(dl, "counters_enabled")) &&
 			   (o_all & DL_OPT_DPIPE_TABLE_COUNTERS)) {
-			const char *typestr;
-
 			dl_arg_inc(dl);
-			err = dl_argv_str(dl, &typestr);
-			if (err)
-				return err;
-			err = dpipe_counters_enable_get(typestr,
-							&opts->dpipe_counters_enable);
+			err = dl_argv_bool(dl, &opts->dpipe_counters_enabled);
 			if (err)
 				return err;
 			o_found |= DL_OPT_DPIPE_TABLE_COUNTERS;
-		} else if (dl_argv_match(dl, "encap") &&
+		} else if ((dl_argv_match(dl, "encap") || /* Original incorrect implementation */
+			    dl_argv_match(dl, "encap-mode")) &&
 			   (o_all & DL_OPT_ESWITCH_ENCAP_MODE)) {
 			const char *typestr;
 
@@ -1597,7 +1591,7 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 				  opts->dpipe_table_name);
 	if (opts->present & DL_OPT_DPIPE_TABLE_COUNTERS)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED,
-				opts->dpipe_counters_enable);
+				opts->dpipe_counters_enabled);
 	if (opts->present & DL_OPT_ESWITCH_ENCAP_MODE)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_ESWITCH_ENCAP_MODE,
 				opts->eswitch_encap_mode);
@@ -1717,7 +1711,7 @@ static void cmd_dev_help(void)
 	pr_err("Usage: devlink dev show [ DEV ]\n");
 	pr_err("       devlink dev eswitch set DEV [ mode { legacy | switchdev } ]\n");
 	pr_err("                               [ inline-mode { none | link | network | transport } ]\n");
-	pr_err("                               [ encap { disable | enable } ]\n");
+	pr_err("                               [ encap-mode { none | basic } ]\n");
 	pr_err("       devlink dev eswitch show DEV\n");
 	pr_err("       devlink dev param set DEV name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink dev param show [DEV name PARAMETER]\n");
@@ -2147,6 +2141,18 @@ static const char *eswitch_inline_mode_name(uint32_t mode)
 	}
 }
 
+static const char *eswitch_encap_mode_name(uint32_t mode)
+{
+	switch (mode) {
+	case DEVLINK_ESWITCH_ENCAP_MODE_NONE:
+		return ESWITCH_ENCAP_MODE_NONE;
+	case DEVLINK_ESWITCH_ENCAP_MODE_BASIC:
+		return ESWITCH_ENCAP_MODE_BASIC;
+	default:
+		return "<unknown mode>";
+	}
+}
+
 static void pr_out_eswitch(struct dl *dl, struct nlattr **tb)
 {
 	__pr_out_handle_start(dl, tb, true, false);
@@ -2164,11 +2170,10 @@ static void pr_out_eswitch(struct dl *dl, struct nlattr **tb)
 				     tb[DEVLINK_ATTR_ESWITCH_INLINE_MODE])));
 	}
 	if (tb[DEVLINK_ATTR_ESWITCH_ENCAP_MODE]) {
-		bool encap_mode = !!mnl_attr_get_u8(tb[DEVLINK_ATTR_ESWITCH_ENCAP_MODE]);
-
 		check_indent_newline(dl);
-		print_string(PRINT_ANY, "encap", "encap %s",
-			     encap_mode ? "enable" : "disable");
+		print_string(PRINT_ANY, "encap-mode", "encap-mode %s",
+			     eswitch_encap_mode_name(mnl_attr_get_u8(
+				    tb[DEVLINK_ATTR_ESWITCH_ENCAP_MODE])));
 	}
 
 	pr_out_handle_end(dl);
@@ -2759,18 +2764,13 @@ static int cmd_dev_show(struct dl *dl)
 	return err;
 }
 
-static void cmd_dev_reload_help(void)
-{
-	pr_err("Usage: devlink dev reload DEV [ netns { PID | NAME | ID } ]\n");
-}
-
 static int cmd_dev_reload(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
 	int err;
 
 	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
-		cmd_dev_reload_help();
+		cmd_dev_help();
 		return 0;
 	}
 
@@ -2892,11 +2892,6 @@ static int cmd_versions_show_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_OK;
 }
 
-static void cmd_dev_info_help(void)
-{
-	pr_err("Usage: devlink dev info [ DEV ]\n");
-}
-
 static int cmd_dev_info(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
@@ -2904,7 +2899,7 @@ static int cmd_dev_info(struct dl *dl)
 	int err;
 
 	if (dl_argv_match(dl, "help")) {
-		cmd_dev_info_help();
+		cmd_dev_help();
 		return 0;
 	}
 
@@ -2924,12 +2919,6 @@ static int cmd_dev_info(struct dl *dl)
 	pr_out_section_end(dl);
 	return err;
 }
-
-static void cmd_dev_flash_help(void)
-{
-	pr_err("Usage: devlink dev flash DEV file PATH [ component NAME ]\n");
-}
-
 
 struct cmd_dev_flash_status_ctx {
 	struct dl *dl;
@@ -3078,7 +3067,7 @@ static int cmd_dev_flash(struct dl *dl)
 	int err;
 
 	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
-		cmd_dev_flash_help();
+		cmd_dev_help();
 		return 0;
 	}
 
@@ -4970,15 +4959,19 @@ static int cmd_dpipe_headers_show(struct dl *dl)
 	return err;
 }
 
-static void cmd_dpipe_header_help(void)
+static void cmd_dpipe_help(void)
 {
-	pr_err("Usage: devlink dpipe headers show DEV\n");
+	pr_err("Usage: devlink dpipe table show DEV [ name TABLE_NAME ]\n");
+	pr_err("       devlink dpipe table set DEV name TABLE_NAME\n");
+	pr_err("                               [ counters_enabled { true | false } ]\n");
+	pr_err("       devlink dpipe table dump DEV name TABLE_NAME\n");
+	pr_err("       devlink dpipe header show DEV\n");
 }
 
 static int cmd_dpipe_header(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
-		cmd_dpipe_header_help();
+		cmd_dpipe_help();
 		return 0;
 	} else if (dl_argv_match(dl, "show")) {
 		dl_arg_inc(dl);
@@ -5794,16 +5787,10 @@ out:
 	return err;
 }
 
-static void cmd_dpipe_table_help(void)
-{
-	pr_err("Usage: devlink dpipe table [ OBJECT-LIST ]\n"
-	       "where  OBJECT-LIST := { show | set | dump }\n");
-}
-
 static int cmd_dpipe_table(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
-		cmd_dpipe_table_help();
+		cmd_dpipe_help();
 		return 0;
 	} else if (dl_argv_match(dl, "show")) {
 		dl_arg_inc(dl);
@@ -5817,12 +5804,6 @@ static int cmd_dpipe_table(struct dl *dl)
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
-}
-
-static void cmd_dpipe_help(void)
-{
-	pr_err("Usage: devlink dpipe [ OBJECT-LIST ]\n"
-	       "where  OBJECT-LIST := { header | table }\n");
 }
 
 static int cmd_dpipe(struct dl *dl)
@@ -6941,7 +6922,9 @@ static void cmd_health_help(void)
 	pr_err("       devlink health diagnose DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump show DEV reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump clear DEV reporter REPORTER_NAME\n");
-	pr_err("       devlink health set DEV reporter REPORTER_NAME { grace_period | auto_recover } { msec | boolean }\n");
+	pr_err("       devlink health set DEV reporter REPORTER_NAME\n");
+	pr_err("                          [ grace_period MSEC ]\n");
+	pr_err("                          [ auto_recover { true | false } ]\n");
 }
 
 static int cmd_health(struct dl *dl)
