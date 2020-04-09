@@ -10,6 +10,8 @@ classid
 major:
 .B ] htb [ default
 minor-id
+.B ] [ r2q
+divisor
 .B ]
 
 .B tc class ... dev
@@ -93,6 +95,13 @@ will be generated within this qdisc.
 .TP
 default minor-id
 Unclassified traffic gets sent to the class with this minor-id.
+.TP
+r2q divisor
+Divisor used to calculate
+.B quantum
+values for classes.  Classes divide
+.B rate
+by this number.  Default value is 10.
 
 .SH CLASSES
 Classes have a host of parameters to configure their operation.
