@@ -372,6 +372,11 @@ enabled on the bridge. By default the flag is off.
 Controls whether a given port is allowed to become root port or not. Only used
 when STP is enabled on the bridge. By default the flag is off.
 
+This feature is also called root port guard.
+If BPDU is received from a leaf (edge) port, it should not
+be elected as root port. This could be used if using STP on a bridge and the downstream bridges are not fully
+trusted; this prevents a hostile guest from rerouting traffic.
+
 .TP
 .BR "learning on " or " learning off "
 Controls whether a given port will learn MAC addresses from received traffic or
