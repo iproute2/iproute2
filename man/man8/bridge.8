@@ -332,7 +332,9 @@ cause the port to stop processing STP BPDUs.
 .TP
 .BR "hairpin on " or " hairpin off "
 Controls whether traffic may be send back out of the port on which it was
-received. By default, this flag is turned off and the bridge will not forward
+received. This option is also called reflective relay mode, and is used to support
+basic VEPA (Virtual Ethernet Port Aggregator) capabilities.
+By default, this flag is turned off and the bridge will not forward
 traffic back out of the receiving port.
 
 .TP
