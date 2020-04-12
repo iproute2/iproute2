@@ -293,29 +293,29 @@ droot port selectio algorithms.
 
 .TP
 .BI state " STATE "
-the operation state of the port. Except state 0 (disabled),
+the operation state of the port. Except state 0 (disable STP or BPDU filter feature),
 this is primarily used by user space STP/RSTP
-implementation. One may enter a lowercased port state name, or one of the
+implementation. One may enter port state name (case insensitive), or one of the
 numbers below. Negative inputs are ignored, and unrecognized names return an
 error.
 
 .B 0
-- port is in
+- port is in STP
 .B DISABLED
-state. Make this port completely inactive. This is also called
+state. Make this port completely inactive for STP. This is also called
 BPDU filter and could be used to disable STP on an untrusted port, like
 a leaf virtual devices.
 .sp
 
 .B 1
-- STP
+- port is in STP
 .B LISTENING
 state. Only valid if STP is enabled on the bridge. In this
 state the port listens for STP BPDUs and drops all other traffic frames.
 .sp
 
 .B 2
-- STP
+- port is in STP
 .B LEARNING
 state. Only valid if STP is enabled on the bridge. In this
 state the port will accept traffic only for the purpose of updating MAC
@@ -323,13 +323,13 @@ address tables.
 .sp
 
 .B 3
-- STP
+- port is in STP
 .B FORWARDING
 state. Port is fully active.
 .sp
 
 .B 4
-- STP
+- port is in STP
 .B BLOCKING
 state. Only valid if STP is enabled on the bridge. This state
 is used during the STP election process. In this state, port will only process
