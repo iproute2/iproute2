@@ -292,6 +292,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_TRAP_POLICER_ID		BIT(34)
 #define DL_OPT_TRAP_POLICER_RATE	BIT(35)
 #define DL_OPT_TRAP_POLICER_BURST	BIT(36)
+#define DL_OPT_HEALTH_REPORTER_AUTO_DUMP     BIT(37)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -328,6 +329,7 @@ struct dl_opts {
 	const char *reporter_name;
 	uint64_t reporter_graceful_period;
 	bool reporter_auto_recover;
+	bool reporter_auto_dump;
 	const char *trap_name;
 	const char *trap_group_name;
 	enum devlink_trap_action trap_action;
@@ -1474,6 +1476,13 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_HEALTH_REPORTER_AUTO_RECOVER;
+		} else if (dl_argv_match(dl, "auto_dump") &&
+			(o_all & DL_OPT_HEALTH_REPORTER_AUTO_DUMP)) {
+			dl_arg_inc(dl);
+			err = dl_argv_bool(dl, &opts->reporter_auto_dump);
+			if (err)
+				return err;
+			o_found |= DL_OPT_HEALTH_REPORTER_AUTO_DUMP;
 		} else if (dl_argv_match(dl, "trap") &&
 			   (o_all & DL_OPT_TRAP_NAME)) {
 			dl_arg_inc(dl);
@@ -1656,6 +1665,9 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_HEALTH_REPORTER_AUTO_RECOVER)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER,
 				opts->reporter_auto_recover);
+	if (opts->present & DL_OPT_HEALTH_REPORTER_AUTO_DUMP)
+		mnl_attr_put_u8(nlh, DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP,
+				opts->reporter_auto_dump);
 	if (opts->present & DL_OPT_TRAP_NAME)
 		mnl_attr_put_strz(nlh, DEVLINK_ATTR_TRAP_NAME,
 				  opts->trap_name);
@@ -6505,7 +6517,8 @@ static int cmd_health_set_params(struct dl *dl)
 			       NLM_F_REQUEST | NLM_F_ACK);
 	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_HEALTH_REPORTER_NAME,
 			    DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD |
-			    DL_OPT_HEALTH_REPORTER_AUTO_RECOVER);
+			    DL_OPT_HEALTH_REPORTER_AUTO_RECOVER |
+			    DL_OPT_HEALTH_REPORTER_AUTO_DUMP);
 	if (err)
 		return err;
 
@@ -6919,6 +6932,9 @@ static void pr_out_health(struct dl *dl, struct nlattr **tb_health)
 	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER])
 		print_bool(PRINT_ANY, "auto_recover", " auto_recover %s",
 			   mnl_attr_get_u8(tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER]));
+	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP])
+		print_bool(PRINT_ANY, "auto_dump", " auto_dump %s",
+			   mnl_attr_get_u8(tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_DUMP]));
 
 	__pr_out_indent_dec();
 	pr_out_handle_end(dl);
@@ -6975,6 +6991,7 @@ static void cmd_health_help(void)
 	pr_err("       devlink health set DEV reporter REPORTER_NAME\n");
 	pr_err("                          [ grace_period MSEC ]\n");
 	pr_err("                          [ auto_recover { true | false } ]\n");
+	pr_err("                          [ auto_dump    { true | false } ]\n");
 }
 
 static int cmd_health(struct dl *dl)

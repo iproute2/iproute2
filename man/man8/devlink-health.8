@@ -58,6 +58,9 @@ devlink-health \- devlink health reporting and recovery
 .RI "[ "
 .BR auto_recover " { " true " | " false " } "
 .RI "]"
+.RI "[ "
+.BR auto_dump " { " true " | " false " } "
+.RI "]"
 
 .ti -8
 .B devlink health help
@@ -131,8 +134,8 @@ the next "devlink health dump show" command.
 - specifies the reporter's name registered on the devlink device.
 
 .SS devlink health set - Configure health reporter.
-Please note that this command is not supported on a reporter which
-doesn't support a recovery method.
+Please note that some params are not supported on a reporter which
+doesn't support a recovery or dump method.
 
 .PP
 .I "DEV"
@@ -149,6 +152,10 @@ Time interval between consecutive auto recoveries.
 .TP
 .BR auto_recover " { " true " | " false " } "
 Indicates whether the devlink should execute automatic recover on error.
+
+.TP
+.BR auto_dump " { " true " | " false " } "
+Indicates whether the devlink should execute automatic dump on error.
 
 .SH "EXAMPLES"
 .PP
