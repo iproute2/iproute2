@@ -264,7 +264,7 @@ static int fq_codel_print_xstats(struct qdisc_util *qu, FILE *f,
 			st->qdisc_stats.old_flows_len);
 	}
 	if (st->type == TCA_FQ_CODEL_XSTATS_CLASS) {
-		print_uint(PRINT_ANY, "deficit", "  deficit %u",
+		print_int(PRINT_ANY, "deficit", "  deficit %d",
 			st->class_stats.deficit);
 		print_uint(PRINT_ANY, "count", " count %u",
 			st->class_stats.count);
