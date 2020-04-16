@@ -385,6 +385,11 @@ int get_size(unsigned int *size, const char *str)
 	}
 
 	*size = sz;
+
+	/* detect if an overflow happened */
+	if (*size != floor(sz))
+		return -1;
+
 	return 0;
 }
 
