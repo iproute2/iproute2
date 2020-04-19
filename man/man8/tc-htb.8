@@ -10,6 +10,8 @@ classid
 major:
 .B ] htb [ default
 minor-id
+.B ] [ r2q
+divisor
 .B ]
 
 .B tc class ... dev
@@ -28,6 +30,8 @@ bytes
 bytes
 .B ] [ prio
 priority
+.B ] [ quantum
+bytes
 .B ]
 
 .SH DESCRIPTION
@@ -93,6 +97,13 @@ will be generated within this qdisc.
 .TP
 default minor-id
 Unclassified traffic gets sent to the class with this minor-id.
+.TP
+r2q divisor
+Divisor used to calculate
+.B quantum
+values for classes.  Classes divide
+.B rate
+by this number.  Default value is 10.
 
 .SH CLASSES
 Classes have a host of parameters to configure their operation.
@@ -109,7 +120,7 @@ class is going to have children.
 .TP
 prio priority
 In the round-robin process, classes with the lowest priority field are tried
-for packets first. Mandatory.
+for packets first.
 
 .TP
 rate rate
@@ -133,6 +144,17 @@ cburst bytes
 Amount of bytes that can be burst at 'infinite' speed, in other words, as fast
 as the interface can transmit them. For perfect evening out, should be equal to at most one average
 packet. Should be at least as high as the highest cburst of all children.
+
+.TP
+quantum bytes
+Number of bytes to serve from this class before the scheduler moves to the next class.
+Default value is
+.B rate
+divided by the qdisc
+.B r2q
+parameter.  If specified,
+.B r2q
+is ignored.
 
 .SH NOTES
 Due to Unix timing constraints, the maximum ceil rate is not infinite and may in fact be quite low. On Intel,

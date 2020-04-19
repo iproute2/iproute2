@@ -152,6 +152,30 @@ static int _mnlg_socket_recv_run(struct mnlg_socket *nlg,
 	return 0;
 }
 
+static void dummy_signal_handler(int signum)
+{
+}
+
+static int _mnlg_socket_recv_run_intr(struct mnlg_socket *nlg,
+				      mnl_cb_t data_cb, void *data)
+{
+	struct sigaction act, oact;
+	int err;
+
+	act.sa_handler = dummy_signal_handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_NODEFER;
+
+	sigaction(SIGINT, &act, &oact);
+	err = mnlg_socket_recv_run(nlg, data_cb, data);
+	sigaction(SIGINT, &oact, NULL);
+	if (err < 0 && errno != EINTR) {
+		pr_err("devlink answers: %s\n", strerror(errno));
+		return -errno;
+	}
+	return 0;
+}
+
 static int _mnlg_socket_send(struct mnlg_socket *nlg,
 			     const struct nlmsghdr *nlh)
 {
@@ -4236,7 +4260,21 @@ static const char *cmd_obj(uint8_t cmd)
 
 static void pr_out_mon_header(uint8_t cmd)
 {
-	pr_out("[%s,%s] ", cmd_obj(cmd), cmd_name(cmd));
+	if (!is_json_context()) {
+		pr_out("[%s,%s] ", cmd_obj(cmd), cmd_name(cmd));
+	} else {
+		open_json_object(NULL);
+		print_string(PRINT_JSON, "command", NULL, cmd_name(cmd));
+		open_json_object(cmd_obj(cmd));
+	}
+}
+
+static void pr_out_mon_footer(void)
+{
+	if (is_json_context()) {
+		close_json_object();
+		close_json_object();
+	}
 }
 
 static bool cmd_filter_check(struct dl *dl, uint8_t cmd)
@@ -4306,6 +4344,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_handle(dl, tb);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_PORT_GET: /* fall through */
 	case DEVLINK_CMD_PORT_SET: /* fall through */
@@ -4317,6 +4356,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_port(dl, tb);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_PARAM_GET: /* fall through */
 	case DEVLINK_CMD_PARAM_SET: /* fall through */
@@ -4328,6 +4368,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_param(dl, tb, false);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_REGION_GET: /* fall through */
 	case DEVLINK_CMD_REGION_SET: /* fall through */
@@ -4339,6 +4380,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_region(dl, tb);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_FLASH_UPDATE: /* fall through */
 	case DEVLINK_CMD_FLASH_UPDATE_END: /* fall through */
@@ -4348,6 +4390,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_flash_update(dl, tb);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_HEALTH_REPORTER_RECOVER:
 		mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
@@ -4356,6 +4399,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_health(dl, tb);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_TRAP_GET: /* fall through */
 	case DEVLINK_CMD_TRAP_SET: /* fall through */
@@ -4372,6 +4416,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_trap(dl, tb, false);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_TRAP_GROUP_GET: /* fall through */
 	case DEVLINK_CMD_TRAP_GROUP_SET: /* fall through */
@@ -4384,6 +4429,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_trap_group(dl, tb, false);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_TRAP_POLICER_GET: /* fall through */
 	case DEVLINK_CMD_TRAP_POLICER_SET: /* fall through */
@@ -4423,7 +4469,11 @@ static int cmd_mon_show(struct dl *dl)
 	err = _mnlg_socket_group_add(dl->nlg, DEVLINK_GENL_MCGRP_CONFIG_NAME);
 	if (err)
 		return err;
-	err = _mnlg_socket_recv_run(dl->nlg, cmd_mon_show_cb, dl);
+	open_json_object(NULL);
+	open_json_array(PRINT_JSON, "mon");
+	err = _mnlg_socket_recv_run_intr(dl->nlg, cmd_mon_show_cb, dl);
+	close_json_array(PRINT_JSON, NULL);
+	close_json_object();
 	if (err)
 		return err;
 	return 0;
