@@ -51,7 +51,7 @@ static void usage(void)
 		"where  OBJECT := { link | address | addrlabel | route | rule | neigh | ntable |\n"
 		"                   tunnel | tuntap | maddress | mroute | mrule | monitor | xfrm |\n"
 		"                   netns | l2tp | fou | macsec | tcp_metrics | token | netconf | ila |\n"
-		"                   vrf | sr | nexthop }\n"
+		"                   vrf | sr | nexthop | mptcp }\n"
 		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 		"                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
 		"                    -f[amily] { inet | inet6 | mpls | bridge | link } |\n"
@@ -103,6 +103,7 @@ static const struct cmd {
 	{ "vrf",	do_ipvrf},
 	{ "sr",		do_seg6 },
 	{ "nexthop",	do_ipnh },
+	{ "mptcp",	do_mptcp },
 	{ "help",	do_help },
 	{ 0 }
 };
