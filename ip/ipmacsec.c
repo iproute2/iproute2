@@ -34,6 +34,7 @@ static const char * const validate_str[] = {
 static const char * const offload_str[] = {
 	[MACSEC_OFFLOAD_OFF] = "off",
 	[MACSEC_OFFLOAD_PHY] = "phy",
+	[MACSEC_OFFLOAD_MAC] = "mac",
 };
 
 struct sci {
@@ -98,7 +99,7 @@ static void ipmacsec_usage(void)
 		"       ip macsec del DEV rx SCI sa { 0..3 }\n"
 		"       ip macsec show\n"
 		"       ip macsec show DEV\n"
-		"       ip macsec offload DEV [ off | phy ]\n"
+		"       ip macsec offload DEV [ off | phy | mac ]\n"
 		"where  OPTS := [ pn <u32> ] [ on | off ]\n"
 		"       ID   := 128-bit hex string\n"
 		"       KEY  := 128-bit or 256-bit hex string\n"
