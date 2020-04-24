@@ -1220,6 +1220,15 @@ static void macsec_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			     validate_to_str(val));
 	}
 
+	if (tb[IFLA_MACSEC_OFFLOAD]) {
+		__u8 val = rta_getattr_u8(tb[IFLA_MACSEC_OFFLOAD]);
+
+		print_string(PRINT_ANY,
+			     "offload",
+			     "offload %s ",
+			     offload_to_str(val));
+	}
+
 	const char *inc_sci, *es, *replay;
 
 	if (is_json_context()) {
@@ -1268,6 +1277,7 @@ static void usage(FILE *f)
 		"                  [ replay { on | off} window { 0..2^32-1 } ]\n"
 		"                  [ validate { strict | check | disabled } ]\n"
 		"                  [ encodingsa { 0..3 } ]\n"
+		"                  [ offload { mac | phy | off } ]\n"
 		);
 }
 
@@ -1277,6 +1287,7 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 	int ret;
 	__u8 encoding_sa = 0xff;
 	__u32 window = -1;
+	enum macsec_offload offload;
 	struct cipher_args cipher = {0};
 	enum macsec_validation_type validate;
 	bool es = false, scb = false, send_sci = false;
@@ -1398,6 +1409,15 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			ret = get_an(&encoding_sa, *argv);
 			if (ret)
 				invarg("expected an { 0..3 }", *argv);
+		} else if (strcmp(*argv, "offload") == 0) {
+			NEXT_ARG();
+			ret = one_of("offload", *argv,
+				     offload_str, ARRAY_SIZE(offload_str),
+				     (int *)&offload);
+			if (ret != 0)
+				return ret;
+			addattr8(n, MACSEC_BUFLEN,
+				 IFLA_MACSEC_OFFLOAD, offload);
 		} else {
 			fprintf(stderr, "macsec: unknown command \"%s\"?\n",
 				*argv);
