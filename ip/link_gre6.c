@@ -389,8 +389,8 @@ get_failed:
 			NEXT_ARG();
 			if (get_u8(&erspan_ver, *argv, 0))
 				invarg("invalid erspan version\n", *argv);
-			if (erspan_ver != 1 && erspan_ver != 2)
-				invarg("erspan version must be 1 or 2\n", *argv);
+			if (erspan_ver > 2)
+				invarg("erspan version must be 0/1/2\n", *argv);
 		} else if (strcmp(*argv, "erspan_dir") == 0) {
 			NEXT_ARG();
 			if (matches(*argv, "ingress") == 0)
@@ -430,7 +430,7 @@ get_failed:
 	addattr_l(n, 1024, IFLA_GRE_FLOWINFO, &flowinfo, 4);
 	addattr32(n, 1024, IFLA_GRE_FLAGS, flags);
 	addattr32(n, 1024, IFLA_GRE_FWMARK, fwmark);
-	if (erspan_ver) {
+	if (erspan_ver <= 2) {
 		addattr8(n, 1024, IFLA_GRE_ERSPAN_VER, erspan_ver);
 		if (erspan_ver == 1 && erspan_idx != 0) {
 			addattr32(n, 1024, IFLA_GRE_ERSPAN_INDEX, erspan_idx);
