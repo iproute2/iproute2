@@ -291,7 +291,8 @@ done0:
 					invarg(cookie_err_m, *argv);
 				}
 
-				if (hex2mem(*argv, act_ck, slen / 2) < 0)
+				if (slen % 2 ||
+				    hex2mem(*argv, act_ck, slen / 2) < 0)
 					invarg("cookie must be a hex string\n",
 					       *argv);
 
