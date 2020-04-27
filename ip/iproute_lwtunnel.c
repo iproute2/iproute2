@@ -333,6 +333,26 @@ static void lwtunnel_print_geneve_opts(struct rtattr *attr)
 	close_json_array(PRINT_JSON, name);
 }
 
+static void lwtunnel_print_vxlan_opts(struct rtattr *attr)
+{
+	struct rtattr *tb[LWTUNNEL_IP_OPT_VXLAN_MAX + 1];
+	struct rtattr *i = RTA_DATA(attr);
+	int rem = RTA_PAYLOAD(attr);
+	char *name = "vxlan_opts";
+	__u32 gbp;
+
+	parse_rtattr(tb, LWTUNNEL_IP_OPT_VXLAN_MAX, i, rem);
+	gbp = rta_getattr_u32(tb[LWTUNNEL_IP_OPT_VXLAN_GBP]);
+
+	print_nl();
+	print_string(PRINT_FP, name, "\t%s ", name);
+	open_json_array(PRINT_JSON, name);
+	open_json_object(NULL);
+	print_uint(PRINT_ANY, "gbp", "%u ", gbp);
+	close_json_object();
+	close_json_array(PRINT_JSON, name);
+}
+
 static void lwtunnel_print_opts(struct rtattr *attr)
 {
 	struct rtattr *tb_opt[LWTUNNEL_IP_OPTS_MAX + 1];
@@ -340,6 +360,8 @@ static void lwtunnel_print_opts(struct rtattr *attr)
 	parse_rtattr_nested(tb_opt, LWTUNNEL_IP_OPTS_MAX, attr);
 	if (tb_opt[LWTUNNEL_IP_OPTS_GENEVE])
 		lwtunnel_print_geneve_opts(tb_opt[LWTUNNEL_IP_OPTS_GENEVE]);
+	else if (tb_opt[LWTUNNEL_IP_OPTS_VXLAN])
+		lwtunnel_print_vxlan_opts(tb_opt[LWTUNNEL_IP_OPTS_VXLAN]);
 }
 
 static void print_encap_ip(FILE *fp, struct rtattr *encap)
@@ -938,6 +960,22 @@ static int lwtunnel_parse_geneve_opts(char *str, size_t len, struct rtattr *rta)
 	return 0;
 }
 
+static int lwtunnel_parse_vxlan_opts(char *str, size_t len, struct rtattr *rta)
+{
+	struct rtattr *nest;
+	__u32 gbp;
+	int err;
+
+	nest = rta_nest(rta, len, LWTUNNEL_IP_OPTS_VXLAN | NLA_F_NESTED);
+	err = get_u32(&gbp, str, 0);
+	if (err)
+		return err;
+	rta_addattr32(rta, len, LWTUNNEL_IP_OPT_VXLAN_GBP, gbp);
+
+	rta_nest_end(rta, nest);
+	return 0;
+}
+
 static int parse_encap_ip(struct rtattr *rta, size_t len,
 			  int *argcp, char ***argvp)
 {
@@ -1007,6 +1045,21 @@ static int parse_encap_ip(struct rtattr *rta, size_t len,
 			ret = lwtunnel_parse_geneve_opts(*argv, len, rta);
 			if (ret)
 				invarg("\"geneve_opts\" value is invalid\n",
+				       *argv);
+			rta_nest_end(rta, nest);
+		} else if (strcmp(*argv, "vxlan_opts") == 0) {
+			struct rtattr *nest;
+
+			if (opts_ok++)
+				duparg2("opts", *argv);
+
+			NEXT_ARG();
+
+			nest = rta_nest(rta, len,
+					LWTUNNEL_IP_OPTS | NLA_F_NESTED);
+			ret = lwtunnel_parse_vxlan_opts(*argv, len, rta);
+			if (ret)
+				invarg("\"vxlan_opts\" value is invalid\n",
 				       *argv);
 			rta_nest_end(rta, nest);
 		} else if (strcmp(*argv, "key") == 0) {
@@ -1191,6 +1244,21 @@ static int parse_encap_ip6(struct rtattr *rta, size_t len,
 			ret = lwtunnel_parse_geneve_opts(*argv, len, rta);
 			if (ret)
 				invarg("\"geneve_opts\" value is invalid\n",
+				       *argv);
+			rta_nest_end(rta, nest);
+		} else if (strcmp(*argv, "vxlan_opts") == 0) {
+			struct rtattr *nest;
+
+			if (opts_ok++)
+				duparg2("opts", *argv);
+
+			NEXT_ARG();
+
+			nest = rta_nest(rta, len,
+					LWTUNNEL_IP_OPTS | NLA_F_NESTED);
+			ret = lwtunnel_parse_vxlan_opts(*argv, len, rta);
+			if (ret)
+				invarg("\"vxlan_opts\" value is invalid\n",
 				       *argv);
 			rta_nest_end(rta, nest);
 		} else if (strcmp(*argv, "key") == 0) {
