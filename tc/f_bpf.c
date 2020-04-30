@@ -203,22 +203,24 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 	parse_rtattr_nested(tb, TCA_BPF_MAX, opt);
 
 	if (handle)
-		fprintf(f, "handle 0x%x ", handle);
+		print_0xhex(PRINT_ANY, "handle", "handle %#llx ", handle);
 
 	if (tb[TCA_BPF_CLASSID]) {
 		SPRINT_BUF(b1);
-		fprintf(f, "flowid %s ",
+		print_string(PRINT_ANY, "flowid", "flowid %s ",
 			sprint_tc_classid(rta_getattr_u32(tb[TCA_BPF_CLASSID]), b1));
 	}
 
 	if (tb[TCA_BPF_NAME])
-		fprintf(f, "%s ", rta_getattr_str(tb[TCA_BPF_NAME]));
+		print_string(PRINT_ANY, "bpf_name", "%s ",
+			     rta_getattr_str(tb[TCA_BPF_NAME]));
 
 	if (tb[TCA_BPF_FLAGS]) {
 		unsigned int flags = rta_getattr_u32(tb[TCA_BPF_FLAGS]);
 
 		if (flags & TCA_BPF_FLAG_ACT_DIRECT)
-			fprintf(f, "direct-action ");
+			print_bool(PRINT_ANY,
+				   "direct-action", "direct-action ", true);
 	}
 
 	if (tb[TCA_BPF_FLAGS_GEN]) {
@@ -226,14 +228,14 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 			rta_getattr_u32(tb[TCA_BPF_FLAGS_GEN]);
 
 		if (flags & TCA_CLS_FLAGS_SKIP_HW)
-			fprintf(f, "skip_hw ");
+			print_bool(PRINT_ANY, "skip_hw", "skip_hw ", true);
 		if (flags & TCA_CLS_FLAGS_SKIP_SW)
-			fprintf(f, "skip_sw ");
-
+			print_bool(PRINT_ANY, "skip_sw", "skip_sw ", true);
 		if (flags & TCA_CLS_FLAGS_IN_HW)
-			fprintf(f, "in_hw ");
+			print_bool(PRINT_ANY, "in_hw", "in_hw ", true);
 		else if (flags & TCA_CLS_FLAGS_NOT_IN_HW)
-			fprintf(f, "not_in_hw ");
+			print_bool(PRINT_ANY,
+				   "not_in_hw", "not_in_hw ", true);
 	}
 
 	if (tb[TCA_BPF_OPS] && tb[TCA_BPF_OPS_LEN])
@@ -245,14 +247,13 @@ static int bpf_print_opt(struct filter_util *qu, FILE *f,
 	if (!dump_ok && tb[TCA_BPF_TAG]) {
 		SPRINT_BUF(b);
 
-		fprintf(f, "tag %s ",
-			hexstring_n2a(RTA_DATA(tb[TCA_BPF_TAG]),
-				      RTA_PAYLOAD(tb[TCA_BPF_TAG]),
-				      b, sizeof(b)));
+		print_string(PRINT_ANY, "tag", "tag %s ",
+			     hexstring_n2a(RTA_DATA(tb[TCA_BPF_TAG]),
+			     RTA_PAYLOAD(tb[TCA_BPF_TAG]), b, sizeof(b)));
 	}
 
 	if (tb[TCA_BPF_POLICE]) {
-		fprintf(f, "\n");
+		print_nl();
 		tc_print_police(f, tb[TCA_BPF_POLICE]);
 	}
 
