@@ -538,9 +538,9 @@ static int vlan_show(int argc, char **argv, int subject)
 		}
 
 		if (!is_json_context()) {
-			printf("port\tvlan ids");
+			printf("port\tvlan-id");
 			if (subject == VLAN_SHOW_TUNNELINFO)
-				printf("\ttunnel id");
+				printf("\ttunnel-id");
 			printf("\n");
 		}
 
@@ -559,7 +559,7 @@ static int vlan_show(int argc, char **argv, int subject)
 		}
 
 		if (!is_json_context())
-			printf("%-16s vlan id\n", "port");
+			printf("%-16s vlan-id\n", "port");
 
 		if (rtnl_dump_filter(&rth, print_vlan_stats, stdout) < 0) {
 			fprintf(stderr, "Dump terminated\n");
