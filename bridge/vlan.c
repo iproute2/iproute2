@@ -290,8 +290,7 @@ static void print_vlan_tunnel_info(struct rtattr *tb, int ifindex)
 	int rem = RTA_PAYLOAD(list);
 	__u16 last_vid_start = 0;
 	__u32 last_tunid_start = 0;
-
-	open_vlan_port(ifindex, "%s", VLAN_SHOW_TUNNELINFO);
+	bool opened = false;
 
 	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		struct rtattr *ttb[IFLA_BRIDGE_VLAN_TUNNEL_MAX+1];
@@ -331,13 +330,20 @@ static void print_vlan_tunnel_info(struct rtattr *tb, int ifindex)
 		else if (vcheck_ret == 0)
 			continue;
 
+		if (!opened) {
+			open_vlan_port(ifindex, "%s", VLAN_SHOW_TUNNELINFO);
+			opened = true;
+		}
+
 		open_json_object(NULL);
 		print_range("vlan", last_vid_start, tunnel_vid);
 		print_range("tunid", last_tunid_start, tunnel_id);
 		close_json_object();
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 	}
-	close_vlan_port();
+
+	if (opened)
+		close_vlan_port();
 }
 
 static int print_vlan(struct nlmsghdr *n, void *arg)
@@ -366,16 +372,8 @@ static int print_vlan(struct nlmsghdr *n, void *arg)
 		return 0;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifm), len);
-
-	/* if AF_SPEC isn't there, vlan table is not preset for this port */
-	if (!tb[IFLA_AF_SPEC]) {
-		if (!filter_vlan && !is_json_context()) {
-			color_fprintf(stdout, COLOR_IFNAME, "%s",
-				      ll_index_to_name(ifm->ifi_index));
-			fprintf(stdout, "\tNone\n");
-		}
+	if (!tb[IFLA_AF_SPEC])
 		return 0;
-	}
 
 	switch (*subject) {
 	case VLAN_SHOW_VLAN:
@@ -385,9 +383,7 @@ static int print_vlan(struct nlmsghdr *n, void *arg)
 		print_vlan_tunnel_info(tb[IFLA_AF_SPEC], ifm->ifi_index);
 		break;
 	}
-	print_string(PRINT_FP, NULL, "%s", _SL_);
 
-	fflush(stdout);
 	return 0;
 }
 
@@ -588,8 +584,7 @@ void print_vlan_info(struct rtattr *tb, int ifindex)
 	struct rtattr *i, *list = tb;
 	int rem = RTA_PAYLOAD(list);
 	__u16 last_vid_start = 0;
-
-	open_vlan_port(ifindex, "%s", VLAN_SHOW_VLAN);
+	bool opened = false;
 
 	for (i = RTA_DATA(list); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		struct bridge_vlan_info *vinfo;
@@ -608,6 +603,11 @@ void print_vlan_info(struct rtattr *tb, int ifindex)
 		else if (vcheck_ret == 0)
 			continue;
 
+		if (!opened) {
+			open_vlan_port(ifindex, "%s", VLAN_SHOW_VLAN);
+			opened = true;
+		}
+
 		open_json_object(NULL);
 		print_range("vlan", last_vid_start, vinfo->vid);
 
@@ -615,7 +615,9 @@ void print_vlan_info(struct rtattr *tb, int ifindex)
 		close_json_object();
 		print_string(PRINT_FP, NULL, "%s", _SL_);
 	}
-	close_vlan_port();
+
+	if (opened)
+		close_vlan_port();
 }
 
 int do_vlan(int argc, char **argv)
