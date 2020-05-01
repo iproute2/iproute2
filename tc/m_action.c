@@ -177,7 +177,7 @@ static void print_hw_stats(const struct rtattr *arg, bool print_used)
 			print_string(PRINT_ANY, NULL, " %s", item->str);
 	}
 	close_json_array(PRINT_JSON, NULL);
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 }
 
 static int parse_hw_stats(const char *str, struct nlmsghdr *n)
@@ -376,11 +376,11 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 
 	if (show_stats && tb[TCA_ACT_STATS]) {
 		print_string(PRINT_FP, NULL, "\tAction statistics:", NULL);
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		open_json_object("stats");
 		print_tcstats2_attr(f, tb[TCA_ACT_STATS], "\t", NULL);
 		close_json_object();
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 	}
 	if (tb[TCA_ACT_COOKIE]) {
 		int strsz = RTA_PAYLOAD(tb[TCA_ACT_COOKIE]);
@@ -389,7 +389,7 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 		print_string(PRINT_ANY, "cookie", "\tcookie %s",
 			     hexstring_n2a(RTA_DATA(tb[TCA_ACT_COOKIE]),
 					   strsz, b1, sizeof(b1)));
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 	}
 	if (tb[TCA_ACT_FLAGS]) {
 		struct nla_bitfield32 *flags = RTA_DATA(tb[TCA_ACT_FLAGS]);
@@ -398,7 +398,7 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 			print_bool(PRINT_ANY, "no_percpu", "\tno_percpu",
 				   flags->value &
 				   TCA_ACT_FLAGS_NO_PERCPU_STATS);
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 	}
 	if (tb[TCA_ACT_HW_STATS])
 		print_hw_stats(tb[TCA_ACT_HW_STATS], false);
@@ -458,7 +458,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 	for (i = 0; i <= tot_acts; i++) {
 		if (tb[i]) {
 			open_json_object(NULL);
-			print_string(PRINT_FP, NULL, "%s", _SL_);
+			print_nl();
 			print_uint(PRINT_ANY, "order",
 				   "\taction order %u: ", i);
 			if (tc_print_one_action(f, tb[i]) < 0) {
@@ -497,7 +497,7 @@ int print_action(struct nlmsghdr *n, void *arg)
 	open_json_object(NULL);
 	print_uint(PRINT_ANY, "total acts", "total acts %u",
 		   tot_acts ? *tot_acts : 0);
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	close_json_object();
 	if (tb[TCA_ACT_TAB] == NULL) {
 		if (n->nlmsg_type != RTM_GETACTION)

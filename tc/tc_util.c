@@ -788,7 +788,7 @@ static void print_tcstats_basic_hw(struct rtattr **tbs, char *prefix)
 			   sizeof(bs)));
 
 		if (bs.bytes >= bs_hw.bytes && bs.packets >= bs_hw.packets) {
-			print_string(PRINT_FP, NULL, "%s", _SL_);
+			print_nl();
 			print_string(PRINT_FP, NULL, "%s", prefix);
 			print_lluint(PRINT_ANY, "sw_bytes",
 				     "Sent software %llu bytes",
@@ -798,7 +798,7 @@ static void print_tcstats_basic_hw(struct rtattr **tbs, char *prefix)
 		}
 	}
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	print_string(PRINT_FP, NULL, "%s", prefix);
 	print_lluint(PRINT_ANY, "hw_bytes", "Sent hardware %llu bytes",
 		     bs_hw.bytes);

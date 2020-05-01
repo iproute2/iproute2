@@ -360,7 +360,7 @@ static void print_vlan_tunnel_info(struct rtattr *tb, int ifindex)
 		}
 		print_range("tunid", last_tunid_start, tunnel_id);
 		close_json_object();
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 	}
 
 	if (opened)
@@ -644,7 +644,7 @@ void print_vlan_info(struct rtattr *tb, int ifindex)
 
 		print_vlan_flags(vinfo->flags);
 		close_json_object();
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 	}
 
 	if (opened)
