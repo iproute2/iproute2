@@ -546,7 +546,7 @@ static int vlan_show(int argc, char **argv, int subject)
 
 		ret = rtnl_dump_filter(&rth, print_vlan, &subject);
 		if (ret < 0) {
-			fprintf(stderr, "Dump ternminated\n");
+			fprintf(stderr, "Dump terminated\n");
 			exit(1);
 		}
 	} else {
