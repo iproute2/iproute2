@@ -1628,9 +1628,9 @@ static void print_time(char *buf, int len, __u32 time)
 	double tmp = time;
 
 	if (tmp >= TIME_UNITS_PER_SEC)
-		snprintf(buf, len, "%.1fs", tmp/TIME_UNITS_PER_SEC);
+		snprintf(buf, len, "%.3gs", tmp/TIME_UNITS_PER_SEC);
 	else if (tmp >= TIME_UNITS_PER_SEC/1000)
-		snprintf(buf, len, "%.1fms", tmp/(TIME_UNITS_PER_SEC/1000));
+		snprintf(buf, len, "%.3gms", tmp/(TIME_UNITS_PER_SEC/1000));
 	else
 		snprintf(buf, len, "%uus", time);
 }
@@ -1681,11 +1681,11 @@ static void print_time64(char *buf, int len, __s64 time)
 	double nsec = time;
 
 	if (time >= NSEC_PER_SEC)
-		snprintf(buf, len, "%.3fs", nsec/NSEC_PER_SEC);
+		snprintf(buf, len, "%.3gs", nsec/NSEC_PER_SEC);
 	else if (time >= NSEC_PER_MSEC)
-		snprintf(buf, len, "%.3fms", nsec/NSEC_PER_MSEC);
+		snprintf(buf, len, "%.3gms", nsec/NSEC_PER_MSEC);
 	else if (time >= NSEC_PER_USEC)
-		snprintf(buf, len, "%.3fus", nsec/NSEC_PER_USEC);
+		snprintf(buf, len, "%.3gus", nsec/NSEC_PER_USEC);
 	else
 		snprintf(buf, len, "%lldns", time);
 }
