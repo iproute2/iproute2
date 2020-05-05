@@ -379,7 +379,9 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_FQ_TIMER_SLACK] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_TIMER_SLACK]) >= sizeof(__u32)) {
 		timer_slack = rta_getattr_u32(tb[TCA_FQ_TIMER_SLACK]);
-		fprintf(f, "timer_slack %s ", sprint_time64(timer_slack, b1));
+		print_uint(PRINT_JSON, "timer_slack", NULL, timer_slack);
+		print_string(PRINT_FP, NULL, "timer_slack %s ",
+			     sprint_time64(timer_slack, b1));
 	}
 
 	return 0;
@@ -442,7 +444,7 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 		print_nl();
 		print_lluint(PRINT_ANY, "pkts_too_long",
 			     "  pkts_too_long %llu", st->pkts_too_long);
-		print_lluint(PRINT_ANY, "alloc_errors", " alloc_erros %llu",
+		print_lluint(PRINT_ANY, "alloc_errors", " alloc_errors %llu",
 			     st->allocation_errors);
 	}
 
