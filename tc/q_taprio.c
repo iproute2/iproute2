@@ -368,7 +368,7 @@ static int print_sched_list(FILE *f, struct rtattr *list)
 
 	open_json_array(PRINT_JSON, "schedule");
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 
 	for (item = RTA_DATA(list); RTA_OK(item, rem); item = RTA_NEXT(item, rem)) {
 		struct rtattr *tb[TCA_TAPRIO_SCHED_ENTRY_MAX + 1];
@@ -396,7 +396,7 @@ static int print_sched_list(FILE *f, struct rtattr *list)
 		print_uint(PRINT_ANY, "interval", " interval %u", interval);
 		close_json_object();
 
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 	}
 
 	close_json_array(PRINT_ANY, "");
@@ -454,7 +454,7 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		print_uint(PRINT_ANY, NULL, " %u", qopt->prio_tc_map[i]);
 	close_json_array(PRINT_ANY, "");
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 
 	open_json_array(PRINT_ANY, "queues");
 	for (i = 0; i < qopt->num_tc; i++) {
@@ -465,7 +465,7 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	}
 	close_json_array(PRINT_ANY, "");
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 
 	if (tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID])
 		clockid = rta_getattr_s32(tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]);

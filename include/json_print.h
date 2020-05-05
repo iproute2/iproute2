@@ -44,20 +44,24 @@ void close_json_array(enum output_type type, const char *delim);
 void print_nl(void);
 
 #define _PRINT_FUNC(type_name, type)					\
-	void print_color_##type_name(enum output_type t,		\
-				     enum color_attr color,		\
-				     const char *key,			\
-				     const char *fmt,			\
-				     type value);			\
+	int print_color_##type_name(enum output_type t,			\
+				    enum color_attr color,		\
+				    const char *key,			\
+				    const char *fmt,			\
+				    type value);			\
 									\
-	static inline void print_##type_name(enum output_type t,	\
-					     const char *key,		\
-					     const char *fmt,		\
-					     type value)		\
+	static inline int print_##type_name(enum output_type t,		\
+					    const char *key,		\
+					    const char *fmt,		\
+					    type value)			\
 	{								\
-		print_color_##type_name(t, COLOR_NONE, key, fmt, value);	\
+		return print_color_##type_name(t, COLOR_NONE, key, fmt,	\
+					       value);			\
 	}
 
+/* These functions return 0 if printing to a JSON context, number of
+ * characters printed otherwise (as calculated by printf(3)).
+ */
 _PRINT_FUNC(int, int)
 _PRINT_FUNC(s64, int64_t)
 _PRINT_FUNC(bool, bool)

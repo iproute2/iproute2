@@ -289,36 +289,49 @@ the STP path cost of the specified port.
 .BI priority " PRIO "
 the STP port priority. The priority value is an unsigned 8-bit quantity
 (number between 0 and 255). This metric is used in the designated port an
-droot port selectio algorithms.
+droot port selection algorithms.
 
 .TP
 .BI state " STATE "
-the operation state of the port. This is primarily used by user space STP/RSTP
-implementation. One may enter a lowercased port state name, or one of the
+the operation state of the port. Except state 0 (disable STP or BPDU filter feature),
+this is primarily used by user space STP/RSTP
+implementation. One may enter port state name (case insensitive), or one of the
 numbers below. Negative inputs are ignored, and unrecognized names return an
 error.
 
 .B 0
-- port is DISABLED. Make this port completely inactive.
+- port is in STP
+.B DISABLED
+state. Make this port completely inactive for STP. This is also called
+BPDU filter and could be used to disable STP on an untrusted port, like
+a leaf virtual devices.
 .sp
 
 .B 1
-- STP LISTENING state. Only valid if STP is enabled on the bridge. In this
+- port is in STP
+.B LISTENING
+state. Only valid if STP is enabled on the bridge. In this
 state the port listens for STP BPDUs and drops all other traffic frames.
 .sp
 
 .B 2
-- STP LEARNING state. Only valid if STP is enabled on the bridge. In this
+- port is in STP
+.B LEARNING
+state. Only valid if STP is enabled on the bridge. In this
 state the port will accept traffic only for the purpose of updating MAC
 address tables.
 .sp
 
 .B 3
-- STP FORWARDING state. Port is fully active.
+- port is in STP
+.B FORWARDING
+state. Port is fully active.
 .sp
 
 .B 4
-- STP BLOCKING state. Only valid if STP is enabled on the bridge. This state
+- port is in STP
+.B BLOCKING
+state. Only valid if STP is enabled on the bridge. This state
 is used during the STP election process. In this state, port will only process
 STP BPDUs.
 .sp
@@ -327,12 +340,25 @@ STP BPDUs.
 .BR "guard on " or " guard off "
 Controls whether STP BPDUs will be processed by the bridge port. By default,
 the flag is turned off allowed BPDU processing. Turning this flag on will
-cause the port to stop processing STP BPDUs.
+disables
+the bridge port if a STP BPDU packet is received.
+
+If running Spanning Tree on bridge, hostile devices on the network
+may send BPDU on a port and cause network failure. Setting
+.B guard on
+will detect and stop this by disabling the port.
+The port will be restarted if link is brought down, or
+removed and reattached.  For example if guard is enable on
+eth0:
+
+.B ip link set dev eth0 down; ip link set dev eth0 up
 
 .TP
 .BR "hairpin on " or " hairpin off "
 Controls whether traffic may be send back out of the port on which it was
-received. By default, this flag is turned off and the bridge will not forward
+received. This option is also called reflective relay mode, and is used to support
+basic VEPA (Virtual Ethernet Port Aggregator) capabilities.
+By default, this flag is turned off and the bridge will not forward
 traffic back out of the receiving port.
 
 .TP
@@ -345,6 +371,11 @@ enabled on the bridge. By default the flag is off.
 .BR "root_block on " or " root_block off "
 Controls whether a given port is allowed to become root port or not. Only used
 when STP is enabled on the bridge. By default the flag is off.
+
+This feature is also called root port guard.
+If BPDU is received from a leaf (edge) port, it should not
+be elected as root port. This could be used if using STP on a bridge and the downstream bridges are not fully
+trusted; this prevents a hostile guest from rerouting traffic.
 
 .TP
 .BR "learning on " or " learning off "
@@ -382,6 +413,32 @@ there is no MDB entry. By default this flag is on.
 .BR "mcast_to_unicast on " or " mcast_to_unicast off "
 Controls whether a given port will replicate packets using unicast
 instead of multicast. By default this flag is off.
+
+This is done by copying the packet per host and
+changing the multicast destination MAC to a unicast one accordingly.
+
+.BR mcast_to_unicast
+works on top of the multicast snooping feature of
+the bridge. Which means unicast copies are only delivered to hosts which
+are interested in it and signalized this via IGMP/MLD reports
+previously.
+
+This feature is intended for interface types which have a more reliable
+and/or efficient way to deliver unicast packets than broadcast ones
+(e.g. WiFi).
+
+However, it should only be enabled on interfaces where no IGMPv2/MLDv1
+report suppression takes place. IGMP/MLD report suppression issue is usually
+overcome by the network daemon (supplicant) enabling AP isolation and
+by that separating all STAs.
+
+Delivery of STA-to-STA IP multicast is made possible again by
+enabling and utilizing the bridge hairpin mode, which considers the
+incoming port as a potential outgoing port, too (see
+.B hairpin
+option).
+Hairpin mode is performed after multicast snooping, therefore leading to
+only deliver reports to STAs running a multicast router.
 
 .TP
 .BR "neigh_suppress on " or " neigh_suppress off "
@@ -472,7 +529,7 @@ the interface to which this address is associated.
 .B router
 - the destination address is associated with a router.
 Valid if the referenced device is a VXLAN type device and has
-route shortcircuit enabled.
+route short circuit enabled.
 .sp
 
 .B use

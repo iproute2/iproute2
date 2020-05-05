@@ -28,6 +28,6 @@ ts_bridge "$0" "Add tunnel with vni > 16k" \
 
 ts_bridge "$0" "Show tunnel info" vlan tunnelshow dev $VX_DEV
 test_on "1030\s+65556"
-test_lines_count 5
+test_lines_count 4
 
 ts_bridge "$0" "Dump tunnel info" -j vlan tunnelshow dev $VX_DEV

@@ -1131,7 +1131,8 @@ static int xfrm_state_keep(struct nlmsghdr *n, void *arg)
 	if (!xfrm_state_filter_match(xsinfo))
 		return 0;
 
-	if (xsinfo->id.proto == IPPROTO_IPIP)
+	if (xsinfo->id.proto == IPPROTO_IPIP ||
+	    xsinfo->id.proto == IPPROTO_IPV6)
 		return 0;
 
 	if (xb->offset > xb->size) {

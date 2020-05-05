@@ -378,7 +378,7 @@ static int brlink_modify(int argc, char **argv)
 			state = strtol(*argv, &endptr, 10);
 			if (!(**argv != '\0' && *endptr == '\0')) {
 				for (state = 0; state < nstates; state++)
-					if (strcmp(port_states[state], *argv) == 0)
+					if (strcasecmp(port_states[state], *argv) == 0)
 						break;
 				if (state == nstates) {
 					fprintf(stderr,

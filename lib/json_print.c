@@ -123,20 +123,22 @@ void close_json_array(enum output_type type, const char *str)
  */
 #define _PRINT_FUNC(type_name, type)					\
 	__attribute__((format(printf, 4, 0)))				\
-	void print_color_##type_name(enum output_type t,		\
-				     enum color_attr color,		\
-				     const char *key,			\
-				     const char *fmt,			\
-				     type value)			\
+	int print_color_##type_name(enum output_type t,			\
+				    enum color_attr color,		\
+				    const char *key,			\
+				    const char *fmt,			\
+				    type value)				\
 	{								\
+		int ret = 0;						\
 		if (_IS_JSON_CONTEXT(t)) {				\
 			if (!key)					\
 				jsonw_##type_name(_jw, value);		\
 			else						\
 				jsonw_##type_name##_field(_jw, key, value); \
 		} else if (_IS_FP_CONTEXT(t)) {				\
-			color_fprintf(stdout, color, fmt, value);          \
+			ret = color_fprintf(stdout, color, fmt, value); \
 		}							\
+		return ret;						\
 	}
 _PRINT_FUNC(int, int);
 _PRINT_FUNC(s64, int64_t);
@@ -162,12 +164,14 @@ _PRINT_NAME_VALUE_FUNC(uint, unsigned int, u);
 _PRINT_NAME_VALUE_FUNC(string, const char*, s);
 #undef _PRINT_NAME_VALUE_FUNC
 
-void print_color_string(enum output_type type,
-			enum color_attr color,
-			const char *key,
-			const char *fmt,
-			const char *value)
+int print_color_string(enum output_type type,
+		       enum color_attr color,
+		       const char *key,
+		       const char *fmt,
+		       const char *value)
 {
+	int ret = 0;
+
 	if (_IS_JSON_CONTEXT(type)) {
 		if (key && !value)
 			jsonw_name(_jw, key);
@@ -176,8 +180,10 @@ void print_color_string(enum output_type type,
 		else
 			jsonw_string_field(_jw, key, value);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(stdout, color, fmt, value);
+		ret = color_fprintf(stdout, color, fmt, value);
 	}
+
+	return ret;
 }
 
 /*
@@ -185,47 +191,58 @@ void print_color_string(enum output_type type,
  * a value to it, you will need to use "is_json_context()" to have different
  * branch for json and regular output. grep -r "print_bool" for example
  */
-void print_color_bool(enum output_type type,
-		      enum color_attr color,
-		      const char *key,
-		      const char *fmt,
-		      bool value)
+int print_color_bool(enum output_type type,
+		     enum color_attr color,
+		     const char *key,
+		     const char *fmt,
+		     bool value)
 {
+	int ret = 0;
+
 	if (_IS_JSON_CONTEXT(type)) {
 		if (key)
 			jsonw_bool_field(_jw, key, value);
 		else
 			jsonw_bool(_jw, value);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(stdout, color, fmt, value ? "true" : "false");
+		ret = color_fprintf(stdout, color, fmt,
+				    value ? "true" : "false");
 	}
+
+	return ret;
 }
 
 /*
  * In JSON context uses hardcode %#x format: 42 -> 0x2a
  */
-void print_color_0xhex(enum output_type type,
-		       enum color_attr color,
-		       const char *key,
-		       const char *fmt,
-		       unsigned long long hex)
+int print_color_0xhex(enum output_type type,
+		      enum color_attr color,
+		      const char *key,
+		      const char *fmt,
+		      unsigned long long hex)
 {
+	int ret = 0;
+
 	if (_IS_JSON_CONTEXT(type)) {
 		SPRINT_BUF(b1);
 
 		snprintf(b1, sizeof(b1), "%#llx", hex);
 		print_string(PRINT_JSON, key, NULL, b1);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(stdout, color, fmt, hex);
+		ret = color_fprintf(stdout, color, fmt, hex);
 	}
+
+	return ret;
 }
 
-void print_color_hex(enum output_type type,
-		     enum color_attr color,
-		     const char *key,
-		     const char *fmt,
-		     unsigned int hex)
+int print_color_hex(enum output_type type,
+		    enum color_attr color,
+		    const char *key,
+		    const char *fmt,
+		    unsigned int hex)
 {
+	int ret = 0;
+
 	if (_IS_JSON_CONTEXT(type)) {
 		SPRINT_BUF(b1);
 
@@ -235,28 +252,34 @@ void print_color_hex(enum output_type type,
 		else
 			jsonw_string(_jw, b1);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(stdout, color, fmt, hex);
+		ret = color_fprintf(stdout, color, fmt, hex);
 	}
+
+	return ret;
 }
 
 /*
  * In JSON context we don't use the argument "value" we simply call jsonw_null
  * whereas FP context can use "value" to output anything
  */
-void print_color_null(enum output_type type,
-		      enum color_attr color,
-		      const char *key,
-		      const char *fmt,
-		      const char *value)
+int print_color_null(enum output_type type,
+		     enum color_attr color,
+		     const char *key,
+		     const char *fmt,
+		     const char *value)
 {
+	int ret = 0;
+
 	if (_IS_JSON_CONTEXT(type)) {
 		if (key)
 			jsonw_null_field(_jw, key);
 		else
 			jsonw_null(_jw);
 	} else if (_IS_FP_CONTEXT(type)) {
-		color_fprintf(stdout, color, fmt, value);
+		ret = color_fprintf(stdout, color, fmt, value);
 	}
+
+	return ret;
 }
 
 /* Print line separator (if not in JSON mode) */

@@ -265,7 +265,7 @@ static int print_mpls(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 
 	return 0;
 }

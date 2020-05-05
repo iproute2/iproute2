@@ -489,7 +489,7 @@ static void tunnel_key_print_ip_addr(FILE *f, const char *name,
 	else
 		return;
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	if (matches(name, "src_ip") == 0)
 		print_string(PRINT_ANY, "src_ip", "\tsrc_ip %s",
 			     rt_addr_n2a_rta(family, attr));
@@ -503,7 +503,7 @@ static void tunnel_key_print_key_id(FILE *f, const char *name,
 {
 	if (!attr)
 		return;
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	print_uint(PRINT_ANY, "key_id", "\tkey_id %u", rta_getattr_be32(attr));
 }
 
@@ -512,7 +512,7 @@ static void tunnel_key_print_dst_port(FILE *f, char *name,
 {
 	if (!attr)
 		return;
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	print_uint(PRINT_ANY, "dst_port", "\tdst_port %u",
 		   rta_getattr_be16(attr));
 }
@@ -523,7 +523,7 @@ static void tunnel_key_print_flag(FILE *f, const char *name_on,
 {
 	if (!attr)
 		return;
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	print_string(PRINT_ANY, "flag", "\t%s",
 		     rta_getattr_u8(attr) ? name_on : name_off);
 }
@@ -655,11 +655,11 @@ static void tunnel_key_print_tos_ttl(FILE *f, char *name,
 		return;
 
 	if (matches(name, "tos") == 0 && rta_getattr_u8(attr) != 0) {
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		print_uint(PRINT_ANY, "tos", "\ttos 0x%x",
 			   rta_getattr_u8(attr));
 	} else if (matches(name, "ttl") == 0 && rta_getattr_u8(attr) != 0) {
-		print_string(PRINT_FP, NULL, "%s", _SL_);
+		print_nl();
 		print_uint(PRINT_ANY, "ttl", "\tttl %u",
 			   rta_getattr_u8(attr));
 	}
@@ -712,7 +712,7 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 	print_action_control(f, " ", parm->action, "");
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", parm->index);
 	print_int(PRINT_ANY, "ref", " ref %d", parm->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", parm->bindcnt);
@@ -725,7 +725,7 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 
 	return 0;
 }

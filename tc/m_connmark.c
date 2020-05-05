@@ -125,7 +125,7 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 	print_uint(PRINT_ANY, "zone", "zone %u", ci->zone);
 	print_action_control(f, " ", ci->action, "");
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", ci->index);
 	print_int(PRINT_ANY, "ref", " ref %d", ci->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", ci->bindcnt);
@@ -137,7 +137,7 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 
 	return 0;
 }

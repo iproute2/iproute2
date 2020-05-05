@@ -57,6 +57,7 @@ static void explain(void)
 		"		[ [no]pacing ] [ refill_delay TIME ]\n"
 		"		[ low_rate_threshold RATE ]\n"
 		"		[ orphan_mask MASK]\n"
+		"		[ timer_slack TIME]\n"
 		"		[ ce_threshold TIME ]\n");
 }
 
@@ -86,6 +87,7 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	unsigned int refill_delay;
 	unsigned int orphan_mask;
 	unsigned int ce_threshold;
+	unsigned int timer_slack;
 	bool set_plimit = false;
 	bool set_flow_plimit = false;
 	bool set_quantum = false;
@@ -96,6 +98,7 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	bool set_orphan_mask = false;
 	bool set_low_rate_threshold = false;
 	bool set_ce_threshold = false;
+	bool set_timer_slack = false;
 	int pacing = -1;
 	struct rtattr *tail;
 
@@ -146,6 +149,20 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 			set_ce_threshold = true;
+		} else if (strcmp(*argv, "timer_slack") == 0) {
+			__s64 t64;
+
+			NEXT_ARG();
+			if (get_time64(&t64, *argv)) {
+				fprintf(stderr, "Illegal \"timer_slack\"\n");
+				return -1;
+			}
+			timer_slack = t64;
+			if (timer_slack != t64) {
+				fprintf(stderr, "Illegal (out of range) \"timer_slack\"\n");
+				return -1;
+			}
+			set_timer_slack = true;
 		} else if (strcmp(*argv, "defrate") == 0) {
 			NEXT_ARG();
 			if (strchr(*argv, '%')) {
@@ -240,6 +257,9 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (set_ce_threshold)
 		addattr_l(n, 1024, TCA_FQ_CE_THRESHOLD,
 			  &ce_threshold, sizeof(ce_threshold));
+    if (set_timer_slack)
+		addattr_l(n, 1024, TCA_FQ_TIMER_SLACK,
+			  &timer_slack, sizeof(timer_slack));
 	addattr_nest_end(n, tail);
 	return 0;
 }
@@ -254,6 +274,7 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	unsigned int refill_delay;
 	unsigned int orphan_mask;
 	unsigned int ce_threshold;
+	unsigned int timer_slack;
 
 	SPRINT_BUF(b1);
 
@@ -353,6 +374,12 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			print_string(PRINT_FP, NULL, "ce_threshold %s ",
 				     sprint_time(ce_threshold, b1));
 		}
+	}
+
+	if (tb[TCA_FQ_TIMER_SLACK] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_TIMER_SLACK]) >= sizeof(__u32)) {
+		timer_slack = rta_getattr_u32(tb[TCA_FQ_TIMER_SLACK]);
+		fprintf(f, "timer_slack %s ", sprint_time64(timer_slack, b1));
 	}
 
 	return 0;

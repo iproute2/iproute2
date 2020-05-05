@@ -311,7 +311,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 					 sizeof(b2)));
 	}
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", p->index);
 	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
@@ -324,7 +324,7 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 
 	return 0;
 }

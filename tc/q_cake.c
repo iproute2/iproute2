@@ -97,6 +97,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	unsigned int interval = 0;
 	unsigned int diffserv = 0;
 	unsigned int memlimit = 0;
+	unsigned int fwmark = 0;
 	unsigned int target = 0;
 	__u64 bandwidth = 0;
 	int ack_filter = -1;
@@ -107,7 +108,6 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	int autorate = -1;
 	int ingress = -1;
 	int overhead = 0;
-	int fwmark = -1;
 	int wash = -1;
 	int nat = -1;
 	int atm = -1;
@@ -335,15 +335,12 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 		} else if (strcmp(*argv, "fwmark") == 0) {
-			unsigned int fwm;
-
 			NEXT_ARG();
-			if (get_u32(&fwm, *argv, 0)) {
+			if (get_u32(&fwmark, *argv, 0)) {
 				fprintf(stderr,
 					"Illegal value for \"fwmark\": \"%s\"\n", *argv);
 				return -1;
 			}
-			fwmark = fwm;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -388,7 +385,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (memlimit)
 		addattr_l(n, 1024, TCA_CAKE_MEMORY, &memlimit,
 			  sizeof(memlimit));
-	if (fwmark != -1)
+	if (fwmark)
 		addattr_l(n, 1024, TCA_CAKE_FWMARK, &fwmark,
 			  sizeof(fwmark));
 	if (nat != -1)
@@ -523,6 +520,10 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	    RTA_PAYLOAD(tb[TCA_CAKE_RTT]) >= sizeof(__u32)) {
 		interval = rta_getattr_u32(tb[TCA_CAKE_RTT]);
 	}
+	if (tb[TCA_CAKE_MEMORY] &&
+		RTA_PAYLOAD(tb[TCA_CAKE_MEMORY]) >= sizeof(__u32)) {
+		memlimit = rta_getattr_u32(tb[TCA_CAKE_MEMORY]);
+	}
 	if (tb[TCA_CAKE_FWMARK] &&
 	    RTA_PAYLOAD(tb[TCA_CAKE_FWMARK]) >= sizeof(__u32)) {
 		fwmark = rta_getattr_u32(tb[TCA_CAKE_FWMARK]);
@@ -575,7 +576,7 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	if (memlimit) {
 		print_uint(PRINT_JSON, "memlimit", NULL, memlimit);
-		print_string(PRINT_FP, NULL, "memlimit %s",
+		print_string(PRINT_FP, NULL, "memlimit %s ",
 			     sprint_size(memlimit, b1));
 	}
 

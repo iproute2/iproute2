@@ -167,7 +167,7 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	print_action_control(f, " ", p->action, "");
 
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", p->index);
 	print_int(PRINT_ANY, "ref", " ref %d", p->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", p->bindcnt);
@@ -179,7 +179,7 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 	return 0;
 }
 
