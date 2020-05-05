@@ -2382,10 +2382,12 @@ static char *sprint_bw(char *buf, double bw)
 {
 	if (numeric)
 		sprintf(buf, "%.0f", bw);
-	else if (bw > 1000000.)
-		sprintf(buf, "%.1fM", bw / 1000000.);
-	else if (bw > 1000.)
-		sprintf(buf, "%.1fK", bw / 1000.);
+	else if (bw >= 1e9)
+		sprintf(buf, "%.3gG", bw / 1e9);
+	else if (bw >= 1e6)
+		sprintf(buf, "%.3gM", bw / 1e6);
+	else if (bw >= 1e3)
+		sprintf(buf, "%.3gK", bw / 1e3);
 	else
 		sprintf(buf, "%g", bw);
 
