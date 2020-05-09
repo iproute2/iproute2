@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0
-SSOBJ=ss.o ssfilter.tab.o
+SSOBJ=ss.o ssfilter_check.o ssfilter.tab.o
 LNSTATOBJ=lnstat.o lnstat_util.o
 
 TARGETS=ss nstat ifstat rtacct lnstat

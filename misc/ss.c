@@ -29,6 +29,7 @@
 #include <limits.h>
 #include <stdarg.h>
 
+#include "ss_util.h"
 #include "utils.h"
 #include "rt_names.h"
 #include "ll_map.h"
@@ -39,8 +40,6 @@
 #include "cg_map.h"
 
 #include <linux/tcp.h>
-#include <linux/sock_diag.h>
-#include <linux/inet_diag.h>
 #include <linux/unix_diag.h>
 #include <linux/netdevice.h>	/* for MAX_ADDR_LEN */
 #include <linux/filter.h>
@@ -64,23 +63,9 @@
 #define AF_VSOCK PF_VSOCK
 #endif
 
-#define MAGIC_SEQ 123456
 #define BUF_CHUNK (1024 * 1024)	/* Buffer chunk allocation size */
 #define BUF_CHUNKS_MAX 5	/* Maximum number of allocated buffer chunks */
 #define LEN_ALIGN(x) (((x) + 1) & ~1)
-
-#define DIAG_REQUEST(_req, _r)						    \
-	struct {							    \
-		struct nlmsghdr nlh;					    \
-		_r;							    \
-	} _req = {							    \
-		.nlh = {						    \
-			.nlmsg_type = SOCK_DIAG_BY_FAMILY,		    \
-			.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST,\
-			.nlmsg_seq = MAGIC_SEQ,				    \
-			.nlmsg_len = sizeof(_req),			    \
-		},							    \
-	}
 
 #if HAVE_SELINUX
 #include <selinux/selinux.h>

@@ -12,7 +12,14 @@ typedef struct ssfilter * ssfilter_t;
 
 static struct ssfilter * alloc_node(int type, void *pred)
 {
-	struct ssfilter *n = malloc(sizeof(*n));
+	struct ssfilter *n;
+
+	if (!ssfilter_is_supported(type)) {
+		fprintf(stderr, "It looks like such filter is not supported! Too old kernel?\n");
+		exit(-1);
+	}
+
+	n = malloc(sizeof(*n));
 	if (n == NULL)
 		abort();
 	n->type = type;
