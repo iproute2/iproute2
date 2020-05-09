@@ -225,7 +225,7 @@ static int ipvrf_pids(int argc, char **argv)
 		return -1;
 	}
 
-	mnt = find_cgroup2_mount();
+	mnt = find_cgroup2_mount(true);
 	if (!mnt)
 		return -1;
 
@@ -366,7 +366,7 @@ static int vrf_switch(const char *name)
 		}
 	}
 
-	mnt = find_cgroup2_mount();
+	mnt = find_cgroup2_mount(true);
 	if (!mnt)
 		return -1;
 
