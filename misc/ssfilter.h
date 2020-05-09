@@ -11,6 +11,7 @@
 #define SSF_S_AUTO  9
 #define SSF_DEVCOND 10
 #define SSF_MARKMASK 11
+#define SSF_CGROUPCOND 12
 
 #include <stdbool.h>
 
@@ -25,3 +26,4 @@ int ssfilter_parse(struct ssfilter **f, int argc, char **argv, FILE *fp);
 void *parse_hostcond(char *addr, bool is_port);
 void *parse_devcond(char *name);
 void *parse_markmask(const char *markmask);
+void *parse_cgroupcond(const char *path);

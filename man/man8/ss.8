@@ -286,6 +286,15 @@ Class id set by net_cls cgroup. If class is zero this shows priority
 set by SO_PRIORITY.
 .RE
 .TP
+.B \-\-cgroup
+Show cgroup information. Below fields may appear:
+.RS
+.P
+.TP
+.B cgroup
+Cgroup v2 pathname. This pathname is relative to the mount point of the hierarchy.
+.RE
+.TP
 .B \-K, \-\-kill
 Attempts to forcibly close sockets. This option displays sockets that are
 successfully closed and silently skips sockets that the kernel does not support
