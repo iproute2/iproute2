@@ -48,6 +48,7 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 	__u64 max_rate64[TC_QOPT_MAX_QUEUE] = {0};
 	__u16 shaper = TC_MQPRIO_SHAPER_DCB;
 	__u16 mode = TC_MQPRIO_MODE_DCB;
+	int cnt_off_pairs = 0;
 	struct rtattr *tail;
 	__u32 flags = 0;
 
@@ -94,6 +95,7 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 				}
 				free(tmp);
 				idx++;
+				cnt_off_pairs++;
 			}
 		} else if (strcmp(*argv, "hw") == 0) {
 			NEXT_ARG();
@@ -171,6 +173,12 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 			invarg("unknown argument", *argv);
 		}
 		argc--; argv++;
+	}
+
+	if (cnt_off_pairs > opt.num_tc) {
+		fprintf(stderr, "queues count/offset pair count %d can not be higher than given num_tc %d\n",
+			cnt_off_pairs, opt.num_tc);
+		return -1;
 	}
 
 	tail = NLMSG_TAIL(n);
