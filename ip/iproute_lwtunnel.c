@@ -29,6 +29,8 @@
 
 #include <linux/seg6.h>
 #include <linux/seg6_iptunnel.h>
+#include <linux/rpl.h>
+#include <linux/rpl_iptunnel.h>
 #include <linux/seg6_hmac.h>
 #include <linux/seg6_local.h>
 #include <linux/if_tunnel.h>
@@ -50,6 +52,8 @@ static const char *format_encap_type(int type)
 		return "seg6";
 	case LWTUNNEL_ENCAP_SEG6_LOCAL:
 		return "seg6local";
+	case LWTUNNEL_ENCAP_RPL:
+		return "rpl";
 	default:
 		return "unknown";
 	}
@@ -84,6 +88,8 @@ static int read_encap_type(const char *name)
 		return LWTUNNEL_ENCAP_SEG6;
 	else if (strcmp(name, "seg6local") == 0)
 		return LWTUNNEL_ENCAP_SEG6_LOCAL;
+	else if (strcmp(name, "rpl") == 0)
+		return LWTUNNEL_ENCAP_RPL;
 	else if (strcmp(name, "help") == 0)
 		encap_type_usage();
 
@@ -160,6 +166,42 @@ static void print_encap_seg6(FILE *fp, struct rtattr *encap)
 		     "mode %s ", format_seg6mode_type(tuninfo->mode));
 
 	print_srh(fp, tuninfo->srh);
+}
+
+static void print_rpl_srh(FILE *fp, struct ipv6_rpl_sr_hdr *srh)
+{
+	int i;
+
+	if (is_json_context())
+		open_json_array(PRINT_JSON, "segs");
+	else
+		fprintf(fp, "segs %d [ ", srh->segments_left);
+
+	for (i = srh->segments_left - 1; i >= 0; i--) {
+		print_color_string(PRINT_ANY, COLOR_INET6,
+				   NULL, "%s ",
+				   rt_addr_n2a(AF_INET6, 16, &srh->rpl_segaddr[i]));
+	}
+
+	if (is_json_context())
+		close_json_array(PRINT_JSON, NULL);
+	else
+		fprintf(fp, "] ");
+}
+
+static void print_encap_rpl(FILE *fp, struct rtattr *encap)
+{
+	struct rtattr *tb[RPL_IPTUNNEL_MAX + 1];
+	struct ipv6_rpl_sr_hdr *srh;
+
+	parse_rtattr_nested(tb, RPL_IPTUNNEL_MAX, encap);
+
+	if (!tb[RPL_IPTUNNEL_SRH])
+		return;
+
+	srh = RTA_DATA(tb[RPL_IPTUNNEL_SRH]);
+
+	print_rpl_srh(fp, srh);
 }
 
 static const char *seg6_action_names[SEG6_LOCAL_ACTION_MAX + 1] = {
@@ -567,6 +609,9 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 	case LWTUNNEL_ENCAP_SEG6_LOCAL:
 		print_encap_seg6local(fp, encap);
 		break;
+	case LWTUNNEL_ENCAP_RPL:
+		print_encap_rpl(fp, encap);
+		break;
 	}
 }
 
@@ -685,6 +730,79 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 
 out:
 	free(tuninfo);
+	free(srh);
+
+	return ret;
+}
+
+static struct ipv6_rpl_sr_hdr *parse_rpl_srh(char *segbuf)
+{
+	struct ipv6_rpl_sr_hdr *srh;
+	int nsegs = 0;
+	int srhlen;
+	char *s;
+	int i;
+
+	s = segbuf;
+	for (i = 0; *s; *s++ == ',' ? i++ : *s);
+	nsegs = i + 1;
+
+	srhlen = 8 + 16 * nsegs;
+
+	srh = calloc(1, srhlen);
+
+	srh->hdrlen = (srhlen >> 3) - 1;
+	srh->type = 3;
+	srh->segments_left = nsegs;
+
+	for (s = strtok(segbuf, ","); s; s = strtok(NULL, ",")) {
+		inet_prefix addr;
+
+		get_addr(&addr, s, AF_INET6);
+		memcpy(&srh->rpl_segaddr[i], addr.data, sizeof(struct in6_addr));
+		i--;
+	}
+
+	return srh;
+}
+
+static int parse_encap_rpl(struct rtattr *rta, size_t len, int *argcp,
+			   char ***argvp)
+{
+	struct ipv6_rpl_sr_hdr *srh;
+	char **argv = *argvp;
+	char segbuf[1024] = "";
+	int argc = *argcp;
+	int segs_ok = 0;
+	int ret = 0;
+	int srhlen;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "segs") == 0) {
+			NEXT_ARG();
+			if (segs_ok++)
+				duparg2("segs", *argv);
+
+			strlcpy(segbuf, *argv, 1024);
+		} else {
+			break;
+		}
+		argc--; argv++;
+	}
+
+	srh = parse_rpl_srh(segbuf);
+	srhlen = (srh->hdrlen + 1) << 3;
+
+	if (rta_addattr_l(rta, len, RPL_IPTUNNEL_SRH, srh,
+			  srhlen)) {
+		ret = -1;
+		goto out;
+	}
+
+	*argcp = argc + 1;
+	*argvp = argv - 1;
+
+out:
 	free(srh);
 
 	return ret;
@@ -1536,6 +1654,9 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
 		break;
 	case LWTUNNEL_ENCAP_SEG6_LOCAL:
 		ret = parse_encap_seg6local(rta, len, &argc, &argv);
+		break;
+	case LWTUNNEL_ENCAP_RPL:
+		ret = parse_encap_rpl(rta, len, &argc, &argv);
 		break;
 	default:
 		fprintf(stderr, "Error: unsupported encap type\n");
