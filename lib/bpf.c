@@ -781,7 +781,11 @@ static const char *bpf_get_work_dir(enum bpf_prog_type type)
 		}
 	}
 
-	snprintf(bpf_wrk_dir, sizeof(bpf_wrk_dir), "%s/", mnt);
+	ret = snprintf(bpf_wrk_dir, sizeof(bpf_wrk_dir), "%s/", mnt);
+	if (ret < 0 || ret >= sizeof(bpf_wrk_dir)) {
+		mnt = NULL;
+		goto out;
+	}
 
 	ret = bpf_gen_hierarchy(bpf_wrk_dir);
 	if (ret) {
