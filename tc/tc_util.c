@@ -750,21 +750,17 @@ void print_tm(FILE *f, const struct tcf_t *tm)
 {
 	int hz = get_user_hz();
 
-	if (tm->install != 0) {
-		print_uint(PRINT_JSON, "installed", NULL, tm->install);
-		print_uint(PRINT_FP, NULL, " installed %u sec",
-			   (unsigned int)(tm->install/hz));
-	}
-	if (tm->lastuse != 0) {
-		print_uint(PRINT_JSON, "last_used", NULL, tm->lastuse);
-		print_uint(PRINT_FP, NULL, " used %u sec",
-			   (unsigned int)(tm->lastuse/hz));
-	}
-	if (tm->expires != 0) {
-		print_uint(PRINT_JSON, "expires", NULL, tm->expires);
-		print_uint(PRINT_FP, NULL, " expires %u sec",
-			   (unsigned int)(tm->expires/hz));
-	}
+	if (tm->install != 0)
+		print_uint(PRINT_ANY, "installed", " installed %u sec",
+			   tm->install / hz);
+
+	if (tm->lastuse != 0)
+		print_uint(PRINT_ANY, "last_used", " used %u sec",
+			   tm->lastuse / hz);
+
+	if (tm->expires != 0)
+		print_uint(PRINT_ANY, "expires", " expires %u sec",
+			   tm->expires / hz);
 }
 
 static void print_tcstats_basic_hw(struct rtattr **tbs, char *prefix)

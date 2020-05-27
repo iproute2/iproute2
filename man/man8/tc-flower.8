@@ -1,5 +1,11 @@
 .TH "Flower filter in tc" 8 "22 Oct 2015" "iproute2" "Linux"
 
+	"Usage: ct clear\n"
+		"	ct commit [force] [zone ZONE] [mark MASKED_MARK] [label MASKED_LABEL] [nat NAT_SPEC] [OFFLOAD_POLICY]\n"
+		"	ct [nat] [zone ZONE] [OFFLOAD_POLICY]\n"
+		"Where: ZONE is the conntrack zone table number\n"
+		"	NAT_SPEC is {src|dst} addr addr1[-addr2] [port port1[-port2]]\n"
+		"	OFFLOAD_POLICY is [policy_pkts PACKETS] [policy_timeout TIMEOUT]\n"
 .SH NAME
 flower \- flow based traffic control filter
 .SH SYNOPSIS
