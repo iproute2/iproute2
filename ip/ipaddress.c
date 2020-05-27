@@ -1243,7 +1243,7 @@ static const struct ifa_flag_data_t {
 	{ .name = "secondary",		.mask = IFA_F_SECONDARY,	.readonly = true,	.v6only = false},
 	{ .name = "temporary",		.mask = IFA_F_SECONDARY,	.readonly = true,	.v6only = false},
 	{ .name = "nodad",		.mask = IFA_F_NODAD,	 	.readonly = false,	.v6only = true},
-	{ .name = "optimistic",		.mask = IFA_F_OPTIMISTIC,	.readonly = true,	.v6only = true},
+	{ .name = "optimistic",		.mask = IFA_F_OPTIMISTIC,	.readonly = false,	.v6only = true},
 	{ .name = "dadfailed",		.mask = IFA_F_DADFAILED,	.readonly = true,	.v6only = true},
 	{ .name = "home",		.mask = IFA_F_HOMEADDRESS,	.readonly = false,	.v6only = true},
 	{ .name = "deprecated",		.mask = IFA_F_DEPRECATED,	.readonly = true,	.v6only = true},
