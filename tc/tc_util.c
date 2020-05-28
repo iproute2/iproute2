@@ -758,6 +758,10 @@ void print_tm(FILE *f, const struct tcf_t *tm)
 		print_uint(PRINT_ANY, "last_used", " used %u sec",
 			   tm->lastuse / hz);
 
+	if (tm->firstuse != 0)
+		print_uint(PRINT_ANY, "first_used", " firstused %u sec",
+			   tm->firstuse / hz);
+
 	if (tm->expires != 0)
 		print_uint(PRINT_ANY, "expires", " expires %u sec",
 			   tm->expires / hz);
