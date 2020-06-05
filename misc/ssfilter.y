@@ -12,7 +12,14 @@ typedef struct ssfilter * ssfilter_t;
 
 static struct ssfilter * alloc_node(int type, void *pred)
 {
-	struct ssfilter *n = malloc(sizeof(*n));
+	struct ssfilter *n;
+
+	if (!ssfilter_is_supported(type)) {
+		fprintf(stderr, "It looks like such filter is not supported! Too old kernel?\n");
+		exit(-1);
+	}
+
+	n = malloc(sizeof(*n));
 	if (n == NULL)
 		abort();
 	n->type = type;
@@ -36,7 +43,7 @@ static void yyerror(char *s)
 
 %}
 
-%token HOSTCOND DCOND SCOND DPORT SPORT LEQ GEQ NEQ AUTOBOUND DEVCOND DEVNAME MARKMASK FWMARK
+%token HOSTCOND DCOND SCOND DPORT SPORT LEQ GEQ NEQ AUTOBOUND DEVCOND DEVNAME MARKMASK FWMARK CGROUPCOND CGROUPPATH
 %left '|'
 %left '&'
 %nonassoc '!'
@@ -155,6 +162,14 @@ expr:	'(' exprlist ')'
         | FWMARK NEQ MARKMASK
         {
                 $$ = alloc_node(SSF_NOT, alloc_node(SSF_MARKMASK, $3));
+        }
+        | CGROUPPATH eq CGROUPCOND
+        {
+                $$ = alloc_node(SSF_CGROUPCOND, $3);
+        }
+        | CGROUPPATH NEQ CGROUPCOND
+        {
+                $$ = alloc_node(SSF_NOT, alloc_node(SSF_CGROUPCOND, $3));
         }
         | AUTOBOUND
         {
@@ -276,6 +291,10 @@ int yylex(void)
 		tok_type = FWMARK;
 		return FWMARK;
 	}
+	if (strcmp(curtok, "cgroup") == 0) {
+		tok_type = CGROUPPATH;
+		return CGROUPPATH;
+	}
 	if (strcmp(curtok, ">=") == 0 ||
 	    strcmp(curtok, "ge") == 0 ||
 	    strcmp(curtok, "geq") == 0)
@@ -317,6 +336,14 @@ int yylex(void)
 			exit(1);
 		}
 		return MARKMASK;
+	}
+	if (tok_type == CGROUPPATH) {
+		yylval = (void*)parse_cgroupcond(curtok);
+		if (yylval == NULL) {
+			fprintf(stderr, "Cannot parse cgroup %s.\n", curtok);
+			exit(1);
+		}
+		return CGROUPCOND;
 	}
 	yylval = (void*)parse_hostcond(curtok, tok_type == SPORT || tok_type == DPORT);
 	if (yylval == NULL) {

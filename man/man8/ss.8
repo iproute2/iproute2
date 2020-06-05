@@ -261,6 +261,11 @@ the pacing rate and max pacing rate
 .TP
 .B rcv_space:<rcv_space>
 a helper variable for TCP internal auto tuning socket receive buffer
+.P
+.TP
+.B tcp-ulp-mptcp flags:[MmBbJjecv] token:<rem_token(rem_id)/loc_token(loc_id)> seq:<sn> sfseq:<ssn> ssnoff:<off> maplen:<maplen>
+MPTCP subflow information
+.P
 .RE
 .TP
 .B \-\-tos
@@ -279,6 +284,15 @@ IPv6 Traffic Class byte
 .B class_id
 Class id set by net_cls cgroup. If class is zero this shows priority
 set by SO_PRIORITY.
+.RE
+.TP
+.B \-\-cgroup
+Show cgroup information. Below fields may appear:
+.RS
+.P
+.TP
+.B cgroup
+Cgroup v2 pathname. This pathname is relative to the mount point of the hierarchy.
 .RE
 .TP
 .B \-K, \-\-kill

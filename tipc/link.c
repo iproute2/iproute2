@@ -334,7 +334,7 @@ static int _show_link_stat(const char *name, struct nlattr *attrs[],
 
 	open_json_object(NULL);
 
-	print_string(PRINT_ANY, "link", "\nLink <%s>\n", name);
+	print_string(PRINT_ANY, "link", "Link <%s>\n", name);
 	print_string(PRINT_JSON, "state", "", NULL);
 	open_json_array(PRINT_JSON, NULL);
 	if (attrs[TIPC_NLA_LINK_ACTIVE])
@@ -433,7 +433,7 @@ static int _show_link_stat(const char *name, struct nlattr *attrs[],
 			   mnl_attr_get_u32(stats[TIPC_NLA_STATS_LINK_CONGS]));
 	print_uint(PRINT_ANY, "send queue max", "  Send queue max:%u",
 			   mnl_attr_get_u32(stats[TIPC_NLA_STATS_MAX_QUEUE]));
-	print_uint(PRINT_ANY, "avg", " avg:%u\n",
+	print_uint(PRINT_ANY, "avg", " avg:%u\n\n",
 			   mnl_attr_get_u32(stats[TIPC_NLA_STATS_AVG_QUEUE]));
 
 	close_json_object();
@@ -496,7 +496,7 @@ static int _show_bc_link_stat(const char *name, struct nlattr *prop[],
 			   mnl_attr_get_u32(stats[TIPC_NLA_STATS_LINK_CONGS]));
 	print_uint(PRINT_ANY, "send queue max", "  Send queue max:%u",
 			   mnl_attr_get_u32(stats[TIPC_NLA_STATS_MAX_QUEUE]));
-	print_uint(PRINT_ANY, "avg", " avg:%u\n",
+	print_uint(PRINT_ANY, "avg", " avg:%u\n\n",
 			   mnl_attr_get_u32(stats[TIPC_NLA_STATS_AVG_QUEUE]));
 	close_json_object();
 
@@ -527,8 +527,10 @@ static int link_stat_show_cb(const struct nlmsghdr *nlh, void *data)
 
 	name = mnl_attr_get_str(attrs[TIPC_NLA_LINK_NAME]);
 
-	/* If a link is passed, skip all but that link */
-	if (link && (strcmp(name, link) != 0))
+	/* If a link is passed, skip all but that link.
+	 * Support a substring matching as well.
+	 */
+	if (link && !strstr(name, link))
 		return MNL_CB_OK;
 
 	if (attrs[TIPC_NLA_LINK_BROADCAST]) {
@@ -540,7 +542,7 @@ static int link_stat_show_cb(const struct nlmsghdr *nlh, void *data)
 
 static void cmd_link_stat_show_help(struct cmdl *cmdl)
 {
-	fprintf(stderr, "Usage: %s link stat show [ link LINK ]\n",
+	fprintf(stderr, "Usage: %s link stat show [ link { LINK | SUBSTRING | all } ]\n",
 		cmdl->argv[0]);
 }
 
@@ -554,6 +556,7 @@ static int cmd_link_stat_show(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ "link",		OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
+	struct nlattr *attrs;
 	int err = 0;
 
 	if (help_flag) {
@@ -571,8 +574,14 @@ static int cmd_link_stat_show(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 
 	opt = get_opt(opts, "link");
-	if (opt)
-		link = opt->val;
+	if (opt) {
+		if (strcmp(opt->val, "all"))
+			link = opt->val;
+		/* Set the flag to dump all bc links */
+		attrs = mnl_attr_nest_start(nlh, TIPC_NLA_LINK);
+		mnl_attr_put(nlh, TIPC_NLA_LINK_BROADCAST, 0, NULL);
+		mnl_attr_nest_end(nlh, attrs);
+	}
 
 	new_json_obj(json);
 	err = msg_dumpit(nlh, link_stat_show_cb, link);

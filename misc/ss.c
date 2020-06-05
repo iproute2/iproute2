@@ -29,6 +29,7 @@
 #include <limits.h>
 #include <stdarg.h>
 
+#include "ss_util.h"
 #include "utils.h"
 #include "rt_names.h"
 #include "ll_map.h"
@@ -36,10 +37,9 @@
 #include "namespace.h"
 #include "SNAPSHOT.h"
 #include "rt_names.h"
+#include "cg_map.h"
 
 #include <linux/tcp.h>
-#include <linux/sock_diag.h>
-#include <linux/inet_diag.h>
 #include <linux/unix_diag.h>
 #include <linux/netdevice.h>	/* for MAX_ADDR_LEN */
 #include <linux/filter.h>
@@ -53,6 +53,7 @@
 #include <linux/tipc_netlink.h>
 #include <linux/tipc_sockets_diag.h>
 #include <linux/tls.h>
+#include <linux/mptcp.h>
 
 /* AF_VSOCK/PF_VSOCK is only provided since glibc 2.18 */
 #ifndef PF_VSOCK
@@ -62,23 +63,9 @@
 #define AF_VSOCK PF_VSOCK
 #endif
 
-#define MAGIC_SEQ 123456
 #define BUF_CHUNK (1024 * 1024)	/* Buffer chunk allocation size */
 #define BUF_CHUNKS_MAX 5	/* Maximum number of allocated buffer chunks */
 #define LEN_ALIGN(x) (((x) + 1) & ~1)
-
-#define DIAG_REQUEST(_req, _r)						    \
-	struct {							    \
-		struct nlmsghdr nlh;					    \
-		_r;							    \
-	} _req = {							    \
-		.nlh = {						    \
-			.nlmsg_type = SOCK_DIAG_BY_FAMILY,		    \
-			.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST,\
-			.nlmsg_seq = MAGIC_SEQ,				    \
-			.nlmsg_len = sizeof(_req),			    \
-		},							    \
-	}
 
 #if HAVE_SELINUX
 #include <selinux/selinux.h>
@@ -122,6 +109,7 @@ static int follow_events;
 static int sctp_ino;
 static int show_tipcinfo;
 static int show_tos;
+static int show_cgroup;
 int oneline;
 
 enum col_id {
@@ -797,6 +785,7 @@ struct sockstat {
 	char *name;
 	char *peer_name;
 	__u32		    mark;
+	__u64		    cgroup_id;
 };
 
 struct dctcpstat {
@@ -1417,6 +1406,9 @@ static void sock_details_print(struct sockstat *s)
 
 	if (s->mark)
 		out(" fwmark:0x%x", s->mark);
+
+	if (s->cgroup_id)
+		out(" cgroup:%s", cg_id_to_path(s->cgroup_id));
 }
 
 static void sock_addr_print(const char *addr, char *delim, const char *port,
@@ -1643,6 +1635,7 @@ struct aafilter {
 	unsigned int	iface;
 	__u32		mark;
 	__u32		mask;
+	__u64		cgroup_id;
 	struct aafilter *next;
 };
 
@@ -1770,6 +1763,12 @@ static int run_ssfilter(struct ssfilter *f, struct sockstat *s)
 		struct aafilter *a = (void *)f->pred;
 
 		return (s->mark & a->mask) == a->mark;
+	}
+		case SSF_CGROUPCOND:
+	{
+		struct aafilter *a = (void *)f->pred;
+
+		return s->cgroup_id == a->cgroup_id;
 	}
 		/* Yup. It is recursion. Sorry. */
 		case SSF_AND:
@@ -1959,6 +1958,23 @@ static int ssfilter_bytecompile(struct ssfilter *f, char **bytecode)
 		((struct instr *)*bytecode)[0] = (struct instr) {
 			{ INET_DIAG_BC_MARK_COND, inslen, inslen + 4 },
 			{ a->mark, a->mask},
+		};
+
+		return inslen;
+	}
+		case SSF_CGROUPCOND:
+	{
+		struct aafilter *a = (void *)f->pred;
+		struct instr {
+			struct inet_diag_bc_op op;
+			__u64 cgroup_id;
+		} __attribute__((packed));
+		int inslen = sizeof(struct instr);
+
+		if (!(*bytecode = malloc(inslen))) abort();
+		((struct instr *)*bytecode)[0] = (struct instr) {
+			{ INET_DIAG_BC_CGROUP_COND, inslen, inslen + 4 },
+			a->cgroup_id,
 		};
 
 		return inslen;
@@ -2297,6 +2313,22 @@ void *parse_markmask(const char *markmask)
 	res = malloc(sizeof(*res));
 	if (res)
 		memcpy(res, &a, sizeof(a));
+	return res;
+}
+
+void *parse_cgroupcond(const char *path)
+{
+	struct aafilter *res;
+	__u64 id;
+
+	id = get_cgroup2_id(path);
+	if (!id)
+		return NULL;
+
+	res = malloc(sizeof(*res));
+	if (res)
+		res->cgroup_id = id;
+
 	return res;
 }
 
@@ -2845,6 +2877,59 @@ static void tcp_tls_conf(const char *name, struct rtattr *attr)
 	}
 }
 
+static void mptcp_subflow_info(struct rtattr *tb[])
+{
+	u_int32_t flags = 0;
+
+	if (tb[MPTCP_SUBFLOW_ATTR_FLAGS]) {
+		char caps[32 + 1] = { 0 }, *cap = &caps[0];
+
+		flags = rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_FLAGS]);
+
+		if (flags & MPTCP_SUBFLOW_FLAG_MCAP_REM)
+			*cap++ = 'M';
+		if (flags & MPTCP_SUBFLOW_FLAG_MCAP_LOC)
+			*cap++ = 'm';
+		if (flags & MPTCP_SUBFLOW_FLAG_JOIN_REM)
+			*cap++ = 'J';
+		if (flags & MPTCP_SUBFLOW_FLAG_JOIN_LOC)
+			*cap++ = 'j';
+		if (flags & MPTCP_SUBFLOW_FLAG_BKUP_REM)
+			*cap++ = 'B';
+		if (flags & MPTCP_SUBFLOW_FLAG_BKUP_LOC)
+			*cap++ = 'b';
+		if (flags & MPTCP_SUBFLOW_FLAG_FULLY_ESTABLISHED)
+			*cap++ = 'e';
+		if (flags & MPTCP_SUBFLOW_FLAG_CONNECTED)
+			*cap++ = 'c';
+		if (flags & MPTCP_SUBFLOW_FLAG_MAPVALID)
+			*cap++ = 'v';
+		if (flags)
+			out(" flags:%s", caps);
+	}
+	if (tb[MPTCP_SUBFLOW_ATTR_TOKEN_REM] &&
+	    tb[MPTCP_SUBFLOW_ATTR_TOKEN_LOC] &&
+	    tb[MPTCP_SUBFLOW_ATTR_ID_REM] &&
+	    tb[MPTCP_SUBFLOW_ATTR_ID_LOC])
+		out(" token:%04x(id:%hhu)/%04x(id:%hhu)",
+		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_TOKEN_REM]),
+		    rta_getattr_u8(tb[MPTCP_SUBFLOW_ATTR_ID_REM]),
+		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_TOKEN_LOC]),
+		    rta_getattr_u8(tb[MPTCP_SUBFLOW_ATTR_ID_LOC]));
+	if (tb[MPTCP_SUBFLOW_ATTR_MAP_SEQ])
+		out(" seq:%llx",
+		    rta_getattr_u64(tb[MPTCP_SUBFLOW_ATTR_MAP_SEQ]));
+	if (tb[MPTCP_SUBFLOW_ATTR_MAP_SFSEQ])
+		out(" sfseq:%x",
+		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_MAP_SFSEQ]));
+	if (tb[MPTCP_SUBFLOW_ATTR_SSN_OFFSET])
+		out(" ssnoff:%x",
+		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_SSN_OFFSET]));
+	if (tb[MPTCP_SUBFLOW_ATTR_MAP_DATALEN])
+		out(" maplen:%x",
+		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_MAP_DATALEN]));
+}
+
 #define TCPI_HAS_OPT(info, opt) !!(info->tcpi_options & (opt))
 
 static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
@@ -3021,6 +3106,14 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 			tcp_tls_conf("rxconf", tlsinfo[TLS_INFO_RXCONF]);
 			tcp_tls_conf("txconf", tlsinfo[TLS_INFO_TXCONF]);
 		}
+		if (ulpinfo[INET_ULP_INFO_MPTCP]) {
+			struct rtattr *sfinfo[MPTCP_SUBFLOW_ATTR_MAX + 1] =
+				{ 0 };
+
+			parse_rtattr_nested(sfinfo, MPTCP_SUBFLOW_ATTR_MAX,
+					    ulpinfo[INET_ULP_INFO_MPTCP]);
+			mptcp_subflow_info(sfinfo);
+		}
 	}
 }
 
@@ -3104,6 +3197,9 @@ static void parse_diag_msg(struct nlmsghdr *nlh, struct sockstat *s)
 	s->mark = 0;
 	if (tb[INET_DIAG_MARK])
 		s->mark = rta_getattr_u32(tb[INET_DIAG_MARK]);
+	s->cgroup_id = 0;
+	if (tb[INET_DIAG_CGROUP_ID])
+		s->cgroup_id = rta_getattr_u64(tb[INET_DIAG_CGROUP_ID]);
 	if (tb[INET_DIAG_PROTOCOL])
 		s->raw_prot = rta_getattr_u8(tb[INET_DIAG_PROTOCOL]);
 	else
@@ -3169,6 +3265,11 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 			out(" tclass:%#x", rta_getattr_u8(tb[INET_DIAG_TCLASS]));
 		if (tb[INET_DIAG_CLASS_ID])
 			out(" class_id:%#x", rta_getattr_u32(tb[INET_DIAG_CLASS_ID]));
+	}
+
+	if (show_cgroup) {
+		if (tb[INET_DIAG_CGROUP_ID])
+			out(" cgroup:%s", cg_id_to_path(rta_getattr_u64(tb[INET_DIAG_CGROUP_ID])));
 	}
 
 	if (show_mem || (show_tcpinfo && s->type != IPPROTO_UDP)) {
@@ -4996,6 +5097,7 @@ static void _usage(FILE *dest)
 "       --tipcinfo      show internal tipc socket information\n"
 "   -s, --summary       show socket usage summary\n"
 "       --tos           show tos and priority information\n"
+"       --cgroup        show cgroup information\n"
 "   -b, --bpf           show bpf filter socket information\n"
 "   -E, --events        continually display sockets as they are destroyed\n"
 "   -Z, --context       display process SELinux security contexts\n"
@@ -5106,6 +5208,8 @@ static int scan_state(const char *state)
 /* Values of 'x' are already used so a non-character is used */
 #define OPT_XDPSOCK 260
 
+#define OPT_CGROUP 261
+
 static const struct option long_opts[] = {
 	{ "numeric", 0, 0, 'n' },
 	{ "resolve", 0, 0, 'r' },
@@ -5142,6 +5246,7 @@ static const struct option long_opts[] = {
 	{ "net", 1, 0, 'N' },
 	{ "tipcinfo", 0, 0, OPT_TIPCINFO},
 	{ "tos", 0, 0, OPT_TOS },
+	{ "cgroup", 0, 0, OPT_CGROUP },
 	{ "kill", 0, 0, 'K' },
 	{ "no-header", 0, 0, 'H' },
 	{ "xdp", 0, 0, OPT_XDPSOCK},
@@ -5328,6 +5433,9 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_TOS:
 			show_tos = 1;
+			break;
+		case OPT_CGROUP:
+			show_cgroup = 1;
 			break;
 		case 'K':
 			current_filter.kill = 1;

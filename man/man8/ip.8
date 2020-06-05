@@ -22,7 +22,7 @@ ip \- show / manipulate routing, network devices, interfaces and tunnels
 .BR link " | " address " | " addrlabel " | " route " | " rule " | " neigh " | "\
  ntable " | " tunnel " | " tuntap " | " maddress " | "  mroute " | " mrule " | "\
  monitor " | " xfrm " | " netns " | "  l2tp " | "  tcp_metrics " | " token " | "\
- macsec " | " vrf " }"
+ macsec " | " vrf " | " mptcp " }"
 .sp
 
 .ti -8
@@ -269,6 +269,10 @@ readability.
 - watch for netlink messages.
 
 .TP
+.B mptcp
+- manage MPTCP path manager.
+
+.TP
 .B mroute
 - multicast routing cache entry.
 
@@ -405,6 +409,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR ip-link (8),
 .BR ip-maddress (8),
 .BR ip-monitor (8),
+.BR ip-mptcp (8),
 .BR ip-mroute (8),
 .BR ip-neighbour (8),
 .BR ip-netns (8),

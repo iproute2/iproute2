@@ -23,6 +23,8 @@ ip-macsec \- MACsec device configuration
 ] [
 .BR validate " { " strict " | " check " | " disabled " } ] ["
 .BI encodingsa " SA"
+] [
+.BR offload " { " off " | " phy " | " mac " }"
 ]
 
 .BI "ip macsec add " DEV " tx sa"
@@ -54,7 +56,7 @@ ip-macsec \- MACsec device configuration
 .RI "{ " 0..3 " }"
 
 .BI "ip macsec offload " DEV
-.RB "{ " off " | " phy " }"
+.RB "{ " off " | " phy " | " mac " }"
 
 .B ip macsec show
 .RI [ " DEV " ]
@@ -86,7 +88,7 @@ type.
 
 .SH EXAMPLES
 .PP
-.SS Create a MACsec device on link eth0
+.SS Create a MACsec device on link eth0 (offload is disabled by default)
 .nf
 # ip link add link eth0 macsec0 type macsec port 11 encrypt on
 .PP
@@ -109,6 +111,10 @@ type.
 .SS Configure offloading on an interface
 .nf
 # ip macsec offload macsec0 phy
+.PP
+.SS Configure offloading upon MACsec device creation
+.nf
+# ip link add link eth0 macsec0 type macsec port 11 encrypt on offload mac
 
 .SH NOTES
 This tool can be used to configure the 802.1AE keys of the interface. Note that 802.1AE uses GCM-AES

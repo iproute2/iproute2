@@ -66,8 +66,12 @@ options.
 .B id
 ,
 .B dst_port
-and
+,
 .B geneve_opts
+,
+.B vxlan_opts
+and
+.B erspan_opts
 are optional.
 .RS
 .TP
@@ -90,6 +94,20 @@ is specified in the form CLASS:TYPE:DATA, where CLASS is represented as a
 16bit hexadecimal value, TYPE as an 8bit hexadecimal value and DATA as a
 variable length hexadecimal value. Additionally multiple options may be
 listed using a comma delimiter.
+.TP
+.B vxlan_opts
+Vxlan metatdata options.
+.B vxlan_opts
+is specified in the form GBP, as a 32bit number. Multiple options is not
+supported.
+.TP
+.B erspan_opts
+Erspan metatdata options.
+.B erspan_opts
+is specified in the form VERSION:INDEX:DIR:HWID, where VERSION is represented
+as a 8bit number, INDEX as an 32bit number, DIR and HWID as a 8bit number.
+Multiple options is not supported. Note INDEX is used when VERSION is 1,
+and DIR and HWID are used when VERSION is 2.
 .TP
 .B tos
 Outer header TOS

@@ -1163,8 +1163,8 @@ It must be an address on another interface on this host.
 .BR erspan_ver " \fIversion "
 - specifies the ERSPAN version number.
 .IR version
-indicates the ERSPAN version to be created: 1 for version 1 (type II)
-or 2 for version 2 (type III).
+indicates the ERSPAN version to be created: 0 for version 0 type I,
+1 for version 1 (type II) or 2 for version 2 (type III).
 
 .sp
 .BR erspan " \fIIDX "

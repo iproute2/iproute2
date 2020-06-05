@@ -1,18 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#define SSF_DCOND 0
-#define SSF_SCOND 1
-#define SSF_OR	  2
-#define SSF_AND	  3
-#define SSF_NOT	  4
-#define SSF_D_GE  5
-#define SSF_D_LE  6
-#define SSF_S_GE  7
-#define SSF_S_LE  8
-#define SSF_S_AUTO  9
-#define SSF_DEVCOND 10
-#define SSF_MARKMASK 11
-
 #include <stdbool.h>
+
+enum {
+	SSF_DCOND,
+	SSF_SCOND,
+	SSF_OR,
+	SSF_AND,
+	SSF_NOT,
+	SSF_D_GE,
+	SSF_D_LE,
+	SSF_S_GE,
+	SSF_S_LE,
+	SSF_S_AUTO,
+	SSF_DEVCOND,
+	SSF_MARKMASK,
+	SSF_CGROUPCOND,
+	SSF__MAX
+};
+
+bool ssfilter_is_supported(int type);
 
 struct ssfilter
 {
@@ -25,3 +30,4 @@ int ssfilter_parse(struct ssfilter **f, int argc, char **argv, FILE *fp);
 void *parse_hostcond(char *addr, bool is_port);
 void *parse_devcond(char *name);
 void *parse_markmask(const char *markmask);
+void *parse_cgroupcond(const char *path);

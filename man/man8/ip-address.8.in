@@ -92,7 +92,7 @@ ip-address \- protocol address management
 
 .ti -8
 .IR CONFFLAG " := "
-.RB "[ " home " | " mngtmpaddr " | " nodad " | " noprefixroute " | " autojoin " ]"
+.RB "[ " home " | " mngtmpaddr " | " nodad " | " optimstic " | " noprefixroute " | " autojoin " ]"
 
 .ti -8
 .IR LIFETIME " := [ "
@@ -257,6 +257,11 @@ stateless auto-configuration was active.
 .B nodad
 (IPv6 only) do not perform Duplicate Address Detection (RFC 4862) when
 adding this address.
+
+.TP
+.B optimistic
+(IPv6 only) When performing Duplicate Address Detection, use the RFC 4429
+optimistic variant.
 
 .TP
 .B noprefixroute

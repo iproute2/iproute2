@@ -354,8 +354,8 @@ get_failed:
 			NEXT_ARG();
 			if (get_u8(&erspan_ver, *argv, 0))
 				invarg("invalid erspan version\n", *argv);
-			if (erspan_ver != 1 && erspan_ver != 2)
-				invarg("erspan version must be 1 or 2\n", *argv);
+			if (erspan_ver > 2)
+				invarg("erspan version must be 0/1/2\n", *argv);
 		} else if (is_erspan && strcmp(*argv, "erspan_dir") == 0) {
 			NEXT_ARG();
 			if (matches(*argv, "ingress") == 0)
