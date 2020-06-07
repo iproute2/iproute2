@@ -678,7 +678,7 @@ _devlink_trap_set_action()
             COMPREPLY=( $( compgen -W "action" -- "$cur" ) )
             ;;
         $((7 + $i)))
-            COMPREPLY=( $( compgen -W "trap drop" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "trap drop mirror" -- "$cur" ) )
             ;;
     esac
 }
@@ -708,7 +708,7 @@ _devlink_trap_group_set()
 
     case $prev in
         action)
-            COMPREPLY=( $( compgen -W "trap drop" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "trap drop mirror" -- "$cur" ) )
             return
             ;;
         policer)
