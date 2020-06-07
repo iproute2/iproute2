@@ -7080,6 +7080,8 @@ static const char *trap_type_name(uint8_t type)
 		return "drop";
 	case DEVLINK_TRAP_TYPE_EXCEPTION:
 		return "exception";
+	case DEVLINK_TRAP_TYPE_CONTROL:
+		return "control";
 	default:
 		return "<unknown type>";
 	}
