@@ -224,7 +224,7 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 
 	open_json_object(NULL);
 
-	if (n->nlmsg_type == RTM_DELROUTE)
+	if (n->nlmsg_type == RTM_DELNEXTHOP)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (tb[NHA_ID])
