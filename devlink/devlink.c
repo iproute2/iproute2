@@ -19,18 +19,25 @@
 #include <limits.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <signal.h>
+#include <time.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/sysinfo.h>
 #define _LINUX_SYSINFO_H /* avoid collision with musl header */
 #include <linux/genetlink.h>
 #include <linux/devlink.h>
+#include <linux/netlink.h>
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
+#include <sys/select.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 
 #include "SNAPSHOT.h"
 #include "list.h"
 #include "mnlg.h"
-#include "json_writer.h"
+#include "json_print.h"
 #include "utils.h"
 #include "namespace.h"
 
