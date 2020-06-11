@@ -38,7 +38,8 @@ ip-nexthop \- nexthop object management
 .IR NAME " ] [ "
 .B  master
 .IR DEV " ] [ "
-.BR  groups " ] "
+.BR  groups " ] [ "
+.BR  fdb " ]"
 
 .ti -8
 .IR NH " := { "
@@ -49,9 +50,11 @@ ip-nexthop \- nexthop object management
 .IR DEV " ] [ "
 .BR onlink " ] [ "
 .B encap
-.IR ENCAP " ] | "
+.IR ENCAP " ] [ "
+.BR fdb " ] | "
 .B  group
-.IR GROUP " } "
+.IR GROUP " [ "
+.BR fdb " ] } "
 
 .ti -8
 .IR ENCAP " := [ "
@@ -125,6 +128,13 @@ weight (id,weight) and a '/' as a separator between entries.
 .TP
 .B blackhole
 create a blackhole nexthop
+.TP
+.B fdb
+nexthop and nexthop groups for use with layer-2 fdb entries.
+A fdb nexthop group can only have fdb nexthops.
+Example: Used to represent a vxlan remote vtep ip. layer-2 vxlan
+fdb entry pointing to an ecmp nexthop group containing multiple
+remote vtep ips.
 .RE
 
 .TP
@@ -148,6 +158,9 @@ show the nexthops using devices enslaved to given master device
 .TP
 .BI groups
 show only nexthop groups
+.TP
+.BI fdb
+show only fdb nexthops and nexthop groups
 .RE
 .TP
 ip nexthop flush
@@ -185,6 +198,17 @@ ip nexthop add id 4 group 1,5/2,11
 .RS 4
 Adds a nexthop with id 4. The nexthop is a group using nexthops with ids
 1 and 2 with nexthop 1 at weight 5 and nexthop 2 at weight 11.
+.RE
+.PP
+ip nexthop add id 5 via 192.168.1.2 fdb
+.RS 4
+Adds a fdb nexthop with id 5.
+.RE
+.PP
+ip nexthop add id 7 group 5/6 fdb
+.RS 4
+Adds a fdb nexthop group with id 7. A fdb nexthop group can only have
+fdb nexthops.
 .RE
 .SH SEE ALSO
 .br

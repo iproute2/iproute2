@@ -20,6 +20,7 @@ static struct {
 	unsigned int ifindex;
 	unsigned int master;
 	unsigned int proto;
+	unsigned int fdb;
 } filter;
 
 enum {
@@ -39,7 +40,7 @@ static void usage(void)
 		"       ip nexthop { add | replace } id ID NH [ protocol ID ]\n"
 		"       ip nexthop { get| del } id ID\n"
 		"SELECTOR := [ id ID ] [ dev DEV ] [ vrf NAME ] [ master DEV ]\n"
-		"            [ groups ]\n"
+		"            [ groups ] [ fdb ]\n"
 		"NH := { blackhole | [ via ADDRESS ] [ dev DEV ] [ onlink ]\n"
 		"      [ encap ENCAPTYPE ENCAPHDR ] | group GROUP ] }\n"
 		"GROUP := [ id[,weight]>/<id[,weight]>/... ]\n"
@@ -66,6 +67,12 @@ static int nh_dump_filter(struct nlmsghdr *nlh, int reqlen)
 
 	if (filter.master) {
 		err = addattr32(nlh, reqlen, NHA_MASTER, filter.master);
+		if (err)
+			return err;
+	}
+
+	if (filter.fdb) {
+		err = addattr_l(nlh, reqlen, NHA_FDB, NULL, 0);
 		if (err)
 			return err;
 	}
@@ -259,6 +266,9 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 	if (tb[NHA_OIF])
 		print_rt_flags(fp, nhm->nh_flags);
 
+	if (tb[NHA_FDB])
+		print_null(PRINT_ANY, "fdb", "fdb", NULL);
+
 	print_string(PRINT_FP, NULL, "%s", "\n");
 	close_json_object();
 	fflush(fp);
@@ -385,6 +395,8 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), NHA_BLACKHOLE, NULL, 0);
 			if (req.nhm.nh_family == AF_UNSPEC)
 				req.nhm.nh_family = AF_INET;
+		} else if (!strcmp(*argv, "fdb")) {
+			addattr_l(&req.n, sizeof(req), NHA_FDB, NULL, 0);
 		} else if (!strcmp(*argv, "onlink")) {
 			nh_flags |= RTNH_F_ONLINK;
 		} else if (!strcmp(*argv, "group")) {
@@ -487,6 +499,8 @@ static int ipnh_list_flush(int argc, char **argv, int action)
 			if (get_unsigned(&proto, *argv, 0))
 				invarg("invalid protocol value", *argv);
 			filter.proto = proto;
+		} else if (!matches(*argv, "fdb")) {
+			filter.fdb = 1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
