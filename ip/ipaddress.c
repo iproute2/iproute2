@@ -1257,7 +1257,9 @@ static const struct ifa_flag_data_t {
 
 /* Returns a pointer to the data structure for a particular interface flag, or null if no flag could be found */
 static const struct ifa_flag_data_t* lookup_flag_data_by_name(const char* flag_name) {
-	for (int i = 0; i < ARRAY_SIZE(ifa_flag_data); ++i) {
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(ifa_flag_data); ++i) {
 		if (strcmp(flag_name, ifa_flag_data[i].name) == 0)
 			return &ifa_flag_data[i];
 	}
