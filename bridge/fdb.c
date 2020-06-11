@@ -37,9 +37,9 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: bridge fdb { add | append | del | replace } ADDR dev DEV\n"
 		"              [ self ] [ master ] [ use ] [ router ] [ extern_learn ]\n"
-		"              [ sticky ] [ local | static | dynamic ] [ dst IPADDR ]\n"
-		"              [ vlan VID ] [ port PORT] [ vni VNI ] [ via DEV ]\n"
-		"              [ src_vni VNI ]\n"
+		"              [ sticky ] [ local | static | dynamic ] [ vlan VID ]\n"
+		"              { [ dst IPADDR ] [ port PORT] [ vni VNI ] | [ nhid NHID ] }\n"
+		"	       [ via DEV ] [ src_vni VNI ]\n"
 		"       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ] [ state STATE ] ]\n"
 		"       bridge fdb get ADDR [ br BRDEV ] { brport |dev }  DEV [ vlan VID ]\n"
 		"              [ vni VNI ]\n");
@@ -237,6 +237,10 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 					   ll_index_to_name(ifindex));
 	}
 
+	if (tb[NDA_NH_ID])
+		print_uint(PRINT_ANY, "nhid", "nhid %u ",
+			   rta_getattr_u32(tb[NDA_NH_ID]));
+
 	if (tb[NDA_LINK_NETNSID])
 		print_uint(PRINT_ANY,
 				 "linkNetNsId", "link-netnsid %d ",
@@ -390,6 +394,7 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 	unsigned int via = 0;
 	char *endptr;
 	short vid = -1;
+	__u32 nhid = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -401,6 +406,10 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 				duparg2("dst", *argv);
 			get_addr(&dst, *argv, preferred_family);
 			dst_ok = 1;
+		} else if (strcmp(*argv, "nhid") == 0) {
+			NEXT_ARG();
+			if (get_u32(&nhid, *argv, 0))
+				invarg("\"id\" value is invalid\n", *argv);
 		} else if (strcmp(*argv, "port") == 0) {
 
 			NEXT_ARG();
@@ -475,6 +484,11 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		return -1;
 	}
 
+	if (nhid && (dst_ok || port || vni != ~0)) {
+		fprintf(stderr, "dst, port, vni are mutually exclusive with nhid\n");
+		return -1;
+	}
+
 	/* Assume self */
 	if (!(req.ndm.ndm_flags&(NTF_SELF|NTF_MASTER)))
 		req.ndm.ndm_flags |= NTF_SELF;
@@ -496,6 +510,8 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 
 	if (vid >= 0)
 		addattr16(&req.n, sizeof(req), NDA_VLAN, vid);
+	if (nhid > 0)
+		addattr32(&req.n, sizeof(req), NDA_NH_ID, nhid);
 
 	if (port) {
 		unsigned short dport;

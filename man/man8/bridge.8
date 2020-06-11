@@ -68,16 +68,18 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " { "
 .BR local " | " static " | " dynamic " } [ "
 .BR self " ] [ " master " ] [ " router " ] [ " use " ] [ " extern_learn " ] [ " sticky " ] [ "
+.B src_vni
+.IR VNI " ] { ["
 .B dst
 .IR IPADDR " ] [ "
-.B src_vni
-.IR VNI " ] ["
 .B vni
 .IR VNI " ] ["
 .B port
 .IR PORT " ] ["
 .B via
-.IR DEVICE " ]"
+.IR DEVICE " ] | "
+.B nhid
+.IR NHID " } "
 
 .ti -8
 .BR "bridge fdb" " [ " show " ] [ "
@@ -582,6 +584,11 @@ If omitted the default value is used.
 device name of the outgoing interface for the
 VXLAN device driver to reach the
 remote VXLAN tunnel endpoint.
+
+.TP
+.BI nhid " NHID "
+ecmp nexthop group for the VXLAN device driver
+to reach remote VXLAN tunnel endpoints.
 
 .SS bridge fdb append - append a forwarding database entry
 This command adds a new fdb entry with an already known
