@@ -26,6 +26,7 @@
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
 #include <sys/types.h>
+#include <rt_names.h>
 
 #include "SNAPSHOT.h"
 #include "list.h"
@@ -702,6 +703,30 @@ static int attr_stats_cb(const struct nlattr *attr, void *data)
 
 	type = mnl_attr_get_type(attr);
 	if (mnl_attr_validate(attr, devlink_stats_policy[type]) < 0)
+		return MNL_CB_ERROR;
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+static const enum mnl_attr_data_type
+devlink_function_policy[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {
+	[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR ] = MNL_TYPE_BINARY,
+};
+
+static int function_attr_cb(const struct nlattr *attr, void *data)
+{
+	const struct nlattr **tb = data;
+	int type;
+
+	/* Allow the tool to work on top of newer kernels that might contain
+	 * more attributes.
+	 */
+	if (mnl_attr_type_valid(attr, DEVLINK_PORT_FUNCTION_ATTR_MAX) < 0)
+		return MNL_CB_OK;
+
+	type = mnl_attr_get_type(attr);
+	if (mnl_attr_validate(attr, devlink_function_policy[type]) < 0)
 		return MNL_CB_ERROR;
 
 	tb[type] = attr;
@@ -3243,6 +3268,37 @@ static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
 	}
 }
 
+static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
+{
+	struct nlattr *tb[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {};
+	unsigned char *data;
+	SPRINT_BUF(hw_addr);
+	uint32_t len;
+	int err;
+
+	if (!tb_port[DEVLINK_ATTR_PORT_FUNCTION])
+		return;
+
+	err = mnl_attr_parse_nested(tb_port[DEVLINK_ATTR_PORT_FUNCTION],
+				    function_attr_cb, tb);
+	if (err != MNL_CB_OK)
+		return;
+
+	if (!tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR])
+		return;
+
+	len = mnl_attr_get_payload_len(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
+	data = mnl_attr_get_payload(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
+
+	pr_out_object_start(dl, "function");
+	check_indent_newline(dl);
+	print_string(PRINT_ANY, "hw_addr", "hw_addr %s",
+		     ll_addr_n2a(data, len, 0, hw_addr, sizeof(hw_addr)));
+	if (!dl->json_output)
+		__pr_out_indent_dec();
+	pr_out_object_end(dl);
+}
+
 static void pr_out_port(struct dl *dl, struct nlattr **tb)
 {
 	struct nlattr *pt_attr = tb[DEVLINK_ATTR_PORT_TYPE];
@@ -3296,6 +3352,7 @@ static void pr_out_port(struct dl *dl, struct nlattr **tb)
 	if (tb[DEVLINK_ATTR_PORT_SPLIT_GROUP])
 		print_uint(PRINT_ANY, "split_group", " split_group %u",
 			   mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_SPLIT_GROUP]));
+	pr_out_port_function(dl, tb);
 	pr_out_port_handle_end(dl);
 }
 
