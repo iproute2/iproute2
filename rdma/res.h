@@ -33,6 +33,8 @@ static inline uint32_t res_get_command(uint32_t command, struct rd *rd)
 		return RDMA_NLDEV_CMD_RES_QP_GET_RAW;
 	case RDMA_NLDEV_CMD_RES_CQ_GET:
 		return RDMA_NLDEV_CMD_RES_CQ_GET_RAW;
+	case RDMA_NLDEV_CMD_RES_MR_GET:
+		return RDMA_NLDEV_CMD_RES_MR_GET_RAW;
 	default:
 		return command;
 	}
