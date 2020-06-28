@@ -28,10 +28,9 @@ bridge \- show / manipulate bridge addresses and devices
 \fB\-o\fR[\fIneline\fr] }
 
 .ti -8
-.BR "bridge link set"
+.B "bridge link set"
 .B dev
-.IR DEV
-.IR " [ "
+.IR DEV " [ "
 .B cost
 .IR COST " ] [ "
 .B priority
@@ -106,9 +105,9 @@ bridge \- show / manipulate bridge addresses and devices
 .ti -8
 .BR "bridge mdb" " { " add " | " del " } "
 .B dev
-.IR DEV
+.I DEV
 .B port
-.IR PORT
+.I PORT
 .B grp
 .IR GROUP " [ "
 .BR permanent " | " temp " ] [ "
@@ -123,10 +122,10 @@ bridge \- show / manipulate bridge addresses and devices
 .ti -8
 .BR "bridge vlan" " { " add " | " del " } "
 .B dev
-.IR DEV
+.I DEV
 .B vid
 .IR VID " [ "
-.BR tunnel_info
+.B tunnel_info
 .IR TUNNEL_ID " ] [ "
 .BR pvid " ] [ " untagged " ] [ "
 .BR self " ] [ " master " ] "
@@ -166,7 +165,7 @@ to the specified network namespace
 Actually it just simplifies executing of:
 
 .B ip netns exec
-.IR NETNS
+.I NETNS
 .B bridge
 .RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
 .BR help " }"
@@ -183,7 +182,7 @@ Read commands from provided file or standard input and invoke them.
 First failure will cause termination of bridge command.
 
 .TP
-.BR "\-force"
+.B "\-force"
 Don't terminate bridge command on errors in batch mode.
 If there were any errors during execution of the commands, the application
 return code will be non zero.
@@ -393,7 +392,7 @@ bridge FDB.
 Controls whether a given port will flood unicast traffic for which there is no FDB entry. By default this flag is on.
 
 .TP
-.BI hwmode
+.B hwmode
 Some network interface cards support HW bridge functionality and they may be
 configured in different modes. Currently support modes are:
 
@@ -417,7 +416,7 @@ instead of multicast. By default this flag is off.
 This is done by copying the packet per host and
 changing the multicast destination MAC to a unicast one accordingly.
 
-.BR mcast_to_unicast
+.B mcast_to_unicast
 works on top of the multicast snooping feature of
 the bridge. Which means unicast copies are only delivered to hosts which
 are interested in it and signalized this via IGMP/MLD reports
@@ -462,15 +461,15 @@ If the port loses carrier all traffic will be redirected to the
 configured backup port
 
 .TP
-.BR nobackup_port
+.B nobackup_port
 Removes the currently configured backup port
 
 .TP
-.BI self
+.B self
 link setting is configured on specified physical device
 
 .TP
-.BI master
+.B master
 link setting is configured on the software bridge (default)
 
 .TP
@@ -499,7 +498,7 @@ and delete old ones.
 This command creates a new fdb entry.
 
 .TP
-.BI "LLADDR"
+.B LLADDR
 the Ethernet MAC address.
 
 .TP
@@ -626,7 +625,7 @@ and last used time for each entry.
 lookup a bridge forwarding table entry.
 
 .TP
-.BI "LLADDR"
+.B LLADDR
 the Ethernet MAC address.
 
 .TP
@@ -750,21 +749,21 @@ dst_metadata for every packet that belongs to this vlan (applicable to
 bridge ports with vlan_tunnel flag set).
 
 .TP
-.BI pvid
+.B pvid
 the vlan specified is to be considered a PVID at ingress.
 Any untagged frames will be assigned to this VLAN.
 
 .TP
-.BI untagged
+.B untagged
 the vlan specified is to be treated as untagged on egress.
 
 .TP
-.BI self
+.B self
 the vlan is configured on the specified physical device. Required if the
 device is the bridge device.
 
 .TP
-.BI master
+.B master
 the vlan is configured on the software bridge (default).
 
 .SS bridge vlan delete - delete a vlan filter entry
