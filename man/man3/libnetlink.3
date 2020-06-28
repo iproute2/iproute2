@@ -50,7 +50,7 @@ int rta_addattr32(struct rtattr *rta, int maxlen, int type, __u32 data)
 int rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data, int alen)
 .SH DESCRIPTION
 libnetlink provides a higher level interface to
-.BR rtnetlink(7).
+.BR rtnetlink (7).
 The read functions return 0 on success and a negative errno on failure.
 The send functions return the amount of data sent, or -1 on error.
 .TP
@@ -129,9 +129,9 @@ for parsing. The file should contain raw data as received from a rtnetlink socke
 The following functions are useful to construct custom rtnetlink messages. For
 simple database dumping with filtering it is better to use the higher level
 functions above. See
-.BR rtnetlink(3)
+.BR rtnetlink (3)
 and
-.BR netlink(3)
+.BR netlink (3)
 on how to generate a rtnetlink message. The following utility functions
 require a continuous buffer that already contains a netlink message header
 and a rtnetlink request.
@@ -194,7 +194,7 @@ netlink/rtnetlink was designed and written by Alexey Kuznetsov.
 Andi Kleen wrote the man page.
 
 .SH SEE ALSO
-.BR netlink(7),
-.BR rtnetlink(7)
+.BR netlink (7),
+.BR rtnetlink (7)
 .br
 /usr/include/linux/rtnetlink.h
