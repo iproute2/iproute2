@@ -162,23 +162,23 @@ action_ctrl_ok:
 
 	/* Must at least do late binding, use TB or ewma policing */
 	if (!rate64 && !avrate && !p.index) {
-		fprintf(stderr, "\"rate\" or \"avrate\" MUST be specified.\n");
+		fprintf(stderr, "'rate' or 'avrate' MUST be specified.\n");
 		return -1;
 	}
 
 	/* When the TB policer is used, burst is required */
 	if (rate64 && !buffer && !avrate) {
-		fprintf(stderr, "\"burst\" requires \"rate\".\n");
+		fprintf(stderr, "'burst' requires 'rate'.\n");
 		return -1;
 	}
 
 	if (prate64) {
 		if (!rate64) {
-			fprintf(stderr, "\"peakrate\" requires \"rate\".\n");
+			fprintf(stderr, "'peakrate' requires 'rate'.\n");
 			return -1;
 		}
 		if (!mtu) {
-			fprintf(stderr, "\"mtu\" is required, if \"peakrate\" is requested.\n");
+			fprintf(stderr, "'mtu' is required, if 'peakrate' is requested.\n");
 			return -1;
 		}
 	}
