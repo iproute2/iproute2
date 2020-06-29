@@ -161,8 +161,8 @@ action_ctrl_ok:
 		return -1;
 
 	/* Must at least do late binding, use TB or ewma policing */
-	if (!rate64 && !avrate && !p.index) {
-		fprintf(stderr, "'rate' or 'avrate' MUST be specified.\n");
+	if (!rate64 && !avrate && !p.index && !mtu) {
+		fprintf(stderr, "'rate' or 'avrate' or 'mtu' MUST be specified.\n");
 		return -1;
 	}
 
