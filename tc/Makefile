@@ -122,6 +122,7 @@ TCLIB += tc_red.o
 TCLIB += tc_cbq.o
 TCLIB += tc_estimator.o
 TCLIB += tc_stab.o
+TCLIB += tc_qevent.o
 
 CFLAGS += -DCONFIG_GACT -DCONFIG_GACT_PROB
 ifneq ($(IPT_LIB_DIR),)
