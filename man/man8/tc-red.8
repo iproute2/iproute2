@@ -17,7 +17,11 @@ packets
 rate
 .B ] [ probability
 chance
-.B ] [ adaptive ]
+.B ] [ adaptive ] [ qevent early_drop block
+index
+.B ] [ qevent mark block
+index
+.B ]
 
 .SH DESCRIPTION
 Random Early Detection is a classless qdisc which manages its queue size
@@ -133,6 +137,18 @@ adaptive
 Goal of Adaptive RED is to make 'probability' dynamic value between 1% and 50% to reach the target average queue :
 .B (max - min) / 2
 .fi
+
+.SH QEVENTS
+See tc (8) for some general notes about qevents. The RED qdisc supports the
+following qevents:
+
+.TP
+early_drop
+The associated block is executed when packets are early-dropped. This includes
+non-ECT packets in ECN mode.
+.TP
+mark
+The associated block is executed when packets are marked in ECN mode.
 
 .SH EXAMPLE
 

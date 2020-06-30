@@ -22,6 +22,7 @@
 
 #include "utils.h"
 #include "tc_util.h"
+#include "tc_qevent.h"
 
 #include "tc_red.h"
 
@@ -30,10 +31,19 @@ static void explain(void)
 	fprintf(stderr,
 		"Usage: ... red	limit BYTES [min BYTES] [max BYTES] avpkt BYTES [burst PACKETS]\n"
 		"		[adaptive] [probability PROBABILITY] [bandwidth KBPS]\n"
-		"		[ecn] [harddrop] [nodrop]\n");
+		"		[ecn] [harddrop] [nodrop]\n"
+		"		[qevent early_drop block IDX] [qevent mark block IDX]\n");
 }
 
 #define RED_SUPPORTED_FLAGS (TC_RED_HISTORIC_FLAGS | TC_RED_NODROP)
+
+static struct qevent_plain qe_early_drop = {};
+static struct qevent_plain qe_mark = {};
+static struct qevent_util qevents[] = {
+	QEVENT("early_drop", plain, &qe_early_drop, TCA_RED_EARLY_DROP_BLOCK),
+	QEVENT("mark", plain, &qe_mark, TCA_RED_MARK_BLOCK),
+	{},
+};
 
 static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n, const char *dev)
@@ -50,6 +60,8 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	__u8 sbuf[256];
 	__u32 max_P;
 	struct rtattr *tail;
+
+	qevents_init(qevents);
 
 	while (argc > 0) {
 		if (strcmp(*argv, "limit") == 0) {
@@ -109,6 +121,11 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			flags_bf.value |= TC_RED_ADAPTATIVE;
 		} else if (strcmp(*argv, "adaptive") == 0) {
 			flags_bf.value |= TC_RED_ADAPTATIVE;
+		} else if (matches(*argv, "qevent") == 0) {
+			NEXT_ARG();
+			if (qevent_parse(qevents, &argc, &argv))
+				return -1;
+			continue;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -162,6 +179,8 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	max_P = probability * pow(2, 32);
 	addattr_l(n, 1024, TCA_RED_MAX_P, &max_P, sizeof(max_P));
 	addattr_l(n, 1024, TCA_RED_FLAGS, &flags_bf, sizeof(flags_bf));
+	if (qevents_dump(qevents, n))
+		return -1;
 	addattr_nest_end(n, tail);
 	return 0;
 }
@@ -203,12 +222,12 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	print_uint(PRINT_JSON, "min", NULL, qopt->qth_min);
 	print_string(PRINT_FP, NULL, "min %s ", sprint_size(qopt->qth_min, b2));
 	print_uint(PRINT_JSON, "max", NULL, qopt->qth_max);
-	print_string(PRINT_FP, NULL, "max %s ", sprint_size(qopt->qth_max, b3));
+	print_string(PRINT_FP, NULL, "max %s", sprint_size(qopt->qth_max, b3));
 
 	tc_red_print_flags(qopt->flags);
 
 	if (show_details) {
-		print_uint(PRINT_ANY, "ewma", "ewma %u ", qopt->Wlog);
+		print_uint(PRINT_ANY, "ewma", " ewma %u ", qopt->Wlog);
 		if (max_P)
 			print_float(PRINT_ANY, "probability",
 				    "probability %lg ", max_P / pow(2, 32));
@@ -217,6 +236,11 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		print_uint(PRINT_ANY, "Scell_log", "Scell_log %u",
 			   qopt->Scell_log);
 	}
+
+	qevents_init(qevents);
+	if (qevents_read(qevents, tb))
+		return -1;
+	qevents_print(qevents, f);
 	return 0;
 }
 
