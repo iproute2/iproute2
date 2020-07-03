@@ -77,9 +77,13 @@ tc \- show / manipulate traffic control settings
 .B tc
 .RI "[ " OPTIONS " ]"
 .RI "[ " FORMAT " ]"
-.B qdisc show [ dev
+.B qdisc { show | list } [ dev
 \fIDEV\fR
-.B ]
+.B ] [ root | ingress | handle
+\fIQHANDLE\fR
+.B | parent
+\fICLASSID\fR
+.B ] [ invisible ]
 .P
 .B tc
 .RI "[ " OPTIONS " ]"

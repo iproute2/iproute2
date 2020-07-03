@@ -35,11 +35,12 @@ static int usage(void)
 		"       [ ingress_block BLOCK_INDEX ] [ egress_block BLOCK_INDEX ]\n"
 		"       [ [ QDISC_KIND ] [ help | OPTIONS ] ]\n"
 		"\n"
-		"       tc qdisc show [ dev STRING ] [ ingress | clsact ] [ invisible ]\n"
+		"       tc qdisc { show | list } [ dev STRING ] [ QDISC_ID ] [ invisible ]\n"
 		"Where:\n"
 		"QDISC_KIND := { [p|b]fifo | tbf | prio | cbq | red | etc. }\n"
 		"OPTIONS := ... try tc qdisc add <desired QDISC_KIND> help\n"
-		"STAB_OPTIONS := ... try tc qdisc add stab help\n");
+		"STAB_OPTIONS := ... try tc qdisc add stab help\n"
+		"QDISC_ID := { root | ingress | handle QHANDLE | parent CLASSID }\n");
 	return -1;
 }
 
@@ -212,6 +213,8 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 }
 
 static int filter_ifindex;
+static __u32 filter_parent;
+static __u32 filter_handle;
 
 int print_qdisc(struct nlmsghdr *n, void *arg)
 {
@@ -233,6 +236,12 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 	}
 
 	if (filter_ifindex && filter_ifindex != t->tcm_ifindex)
+		return 0;
+
+	if (filter_handle && filter_handle != t->tcm_handle)
+		return 0;
+
+	if (filter_parent && filter_parent != t->tcm_parent)
 		return 0;
 
 	parse_rtattr_flags(tb, TCA_MAX, TCA_RTA(t), len, NLA_F_NESTED);
@@ -344,21 +353,55 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 
 static int tc_qdisc_list(int argc, char **argv)
 {
-	struct tcmsg t = { .tcm_family = AF_UNSPEC };
+	struct {
+		struct nlmsghdr n;
+		struct tcmsg t;
+		char buf[256];
+	} req = {
+		.n.nlmsg_type = RTM_GETQDISC,
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
+		.t.tcm_family = AF_UNSPEC,
+	};
+
 	char d[IFNAMSIZ] = {};
 	bool dump_invisible = false;
+	__u32 handle;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			strncpy(d, *argv, sizeof(d)-1);
+		} else if (strcmp(*argv, "root") == 0) {
+			if (filter_parent)
+				invarg("parent is already specified", *argv);
+			else if (filter_handle)
+				invarg("handle is already specified", *argv);
+			filter_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "ingress") == 0 ||
-			   strcmp(*argv, "clsact") == 0) {
-			if (t.tcm_parent) {
-				fprintf(stderr, "Duplicate parent ID\n");
-				usage();
-			}
-			t.tcm_parent = TC_H_INGRESS;
+				strcmp(*argv, "clsact") == 0) {
+			if (filter_parent)
+				invarg("parent is already specified", *argv);
+			else if (filter_handle)
+				invarg("handle is already specified", *argv);
+			filter_parent = TC_H_INGRESS;
+		} else if (matches(*argv, "parent") == 0) {
+			if (filter_parent)
+				invarg("parent is already specified", *argv);
+			else if (filter_handle)
+				invarg("handle is already specified", *argv);
+			NEXT_ARG();
+			if (get_tc_classid(&handle, *argv))
+				invarg("invalid parent ID", *argv);
+			filter_parent = handle;
+		} else if (matches(*argv, "handle") == 0) {
+			if (filter_parent)
+				invarg("parent is already specified", *argv);
+			else if (filter_handle)
+				invarg("handle is already specified", *argv);
+			NEXT_ARG();
+			if (get_qdisc_handle(&handle, *argv))
+				invarg("invalid handle ID", *argv);
+			filter_handle = handle;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else if (strcmp(*argv, "invisible") == 0) {
@@ -374,32 +417,18 @@ static int tc_qdisc_list(int argc, char **argv)
 	ll_init_map(&rth);
 
 	if (d[0]) {
-		t.tcm_ifindex = ll_name_to_index(d);
-		if (!t.tcm_ifindex)
+		req.t.tcm_ifindex = ll_name_to_index(d);
+		if (!req.t.tcm_ifindex)
 			return -nodev(d);
-		filter_ifindex = t.tcm_ifindex;
+		filter_ifindex = req.t.tcm_ifindex;
 	}
 
 	if (dump_invisible) {
-		struct {
-			struct nlmsghdr n;
-			struct tcmsg t;
-			char buf[256];
-		} req = {
-			.n.nlmsg_type = RTM_GETQDISC,
-			.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
-		};
-
-		req.t.tcm_family = AF_UNSPEC;
-
 		addattr(&req.n, 256, TCA_DUMP_INVISIBLE);
-		if (rtnl_dump_request_n(&rth, &req.n) < 0) {
-			perror("Cannot send dump request");
-			return 1;
-		}
+	}
 
-	} else if (rtnl_dump_request(&rth, RTM_GETQDISC, &t, sizeof(t)) < 0) {
-		perror("Cannot send dump request");
+	if (rtnl_dump_request_n(&rth, &req.n) < 0) {
+		perror("Cannot send request");
 		return 1;
 	}
 
@@ -427,10 +456,6 @@ int do_qdisc(int argc, char **argv)
 		return tc_qdisc_modify(RTM_NEWQDISC, NLM_F_REPLACE, argc-1, argv+1);
 	if (matches(*argv, "delete") == 0)
 		return tc_qdisc_modify(RTM_DELQDISC, 0,  argc-1, argv+1);
-#if 0
-	if (matches(*argv, "get") == 0)
-		return tc_qdisc_get(RTM_GETQDISC, 0,  argc-1, argv+1);
-#endif
 	if (matches(*argv, "list") == 0 || matches(*argv, "show") == 0
 	    || matches(*argv, "lst") == 0)
 		return tc_qdisc_list(argc-1, argv+1);
