@@ -26,6 +26,7 @@
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
 #include <sys/types.h>
+#include <rt_names.h>
 
 #include "SNAPSHOT.h"
 #include "list.h"
@@ -293,6 +294,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_TRAP_POLICER_RATE	BIT(35)
 #define DL_OPT_TRAP_POLICER_BURST	BIT(36)
 #define DL_OPT_HEALTH_REPORTER_AUTO_DUMP     BIT(37)
+#define DL_OPT_PORT_FUNCTION_HW_ADDR BIT(38)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -338,6 +340,8 @@ struct dl_opts {
 	uint32_t trap_policer_id;
 	uint64_t trap_policer_rate;
 	uint64_t trap_policer_burst;
+	char port_function_hw_addr[MAX_ADDR_LEN];
+	uint32_t port_function_hw_addr_len;
 };
 
 struct dl {
@@ -427,6 +431,127 @@ static void __pr_out_indent_newline(struct dl *dl)
 {
 	if (!g_indent_newline && !dl->json_output)
 		pr_out(" ");
+}
+
+static bool is_binary_eol(int i)
+{
+	return !(i%16);
+}
+
+static void pr_out_binary_value(struct dl *dl, uint8_t *data, uint32_t len)
+{
+	int i = 0;
+
+	while (i < len) {
+		if (dl->json_output)
+			print_int(PRINT_JSON, NULL, NULL, data[i]);
+		else
+			pr_out("%02x ", data[i]);
+		i++;
+		if (!dl->json_output && is_binary_eol(i))
+			__pr_out_newline();
+	}
+	if (!dl->json_output && !is_binary_eol(i))
+		__pr_out_newline();
+}
+
+static void pr_out_name(struct dl *dl, const char *name)
+{
+	__pr_out_indent_newline(dl);
+	if (dl->json_output)
+		print_string(PRINT_JSON, name, NULL, NULL);
+	else
+		pr_out("%s:", name);
+}
+
+static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
+{
+	__pr_out_indent_newline(dl);
+	if (val == (uint64_t) -1)
+		return print_string_name_value(name, "unlimited");
+
+	if (dl->json_output)
+		print_u64(PRINT_JSON, name, NULL, val);
+	else
+		pr_out("%s %"PRIu64, name, val);
+}
+
+static void pr_out_section_start(struct dl *dl, const char *name)
+{
+	if (dl->json_output) {
+		open_json_object(NULL);
+		open_json_object(name);
+	}
+}
+
+static void pr_out_section_end(struct dl *dl)
+{
+	if (dl->json_output) {
+		if (dl->arr_last.present)
+			close_json_array(PRINT_JSON, NULL);
+		close_json_object();
+		close_json_object();
+	}
+}
+
+static void pr_out_array_start(struct dl *dl, const char *name)
+{
+	if (dl->json_output) {
+		open_json_array(PRINT_JSON, name);
+	} else {
+		__pr_out_indent_inc();
+		__pr_out_newline();
+		pr_out("%s:", name);
+		__pr_out_indent_inc();
+		__pr_out_newline();
+	}
+}
+
+static void pr_out_array_end(struct dl *dl)
+{
+	if (dl->json_output) {
+		close_json_array(PRINT_JSON, NULL);
+	} else {
+		__pr_out_indent_dec();
+		__pr_out_indent_dec();
+	}
+}
+
+static void pr_out_object_start(struct dl *dl, const char *name)
+{
+	if (dl->json_output) {
+		open_json_object(name);
+	} else {
+		__pr_out_indent_inc();
+		__pr_out_newline();
+		pr_out("%s:", name);
+		__pr_out_indent_inc();
+		__pr_out_newline();
+	}
+}
+
+static void pr_out_object_end(struct dl *dl)
+{
+	if (dl->json_output) {
+		close_json_object();
+	} else {
+		__pr_out_indent_dec();
+		__pr_out_indent_dec();
+	}
+}
+
+static void pr_out_entry_start(struct dl *dl)
+{
+	if (dl->json_output)
+		open_json_object(NULL);
+}
+
+static void pr_out_entry_end(struct dl *dl)
+{
+	if (dl->json_output)
+		close_json_object();
+	else
+		__pr_out_newline();
 }
 
 static void check_indent_newline(struct dl *dl)
@@ -581,6 +706,30 @@ static int attr_stats_cb(const struct nlattr *attr, void *data)
 
 	type = mnl_attr_get_type(attr);
 	if (mnl_attr_validate(attr, devlink_stats_policy[type]) < 0)
+		return MNL_CB_ERROR;
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+static const enum mnl_attr_data_type
+devlink_function_policy[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {
+	[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR ] = MNL_TYPE_BINARY,
+};
+
+static int function_attr_cb(const struct nlattr *attr, void *data)
+{
+	const struct nlattr **tb = data;
+	int type;
+
+	/* Allow the tool to work on top of newer kernels that might contain
+	 * more attributes.
+	 */
+	if (mnl_attr_type_valid(attr, DEVLINK_PORT_FUNCTION_ATTR_MAX) < 0)
+		return MNL_CB_OK;
+
+	type = mnl_attr_get_type(attr);
+	if (mnl_attr_validate(attr, devlink_function_policy[type]) < 0)
 		return MNL_CB_ERROR;
 
 	tb[type] = attr;
@@ -1156,6 +1305,17 @@ static int trap_action_get(const char *actionstr,
 	return 0;
 }
 
+static int hw_addr_parse(const char *addrstr, char *hw_addr, uint32_t *len)
+{
+	int alen;
+
+	alen = ll_addr_a2n(hw_addr, MAX_ADDR_LEN, addrstr);
+	if (alen < 0)
+		return -EINVAL;
+	*len = alen;
+	return 0;
+}
+
 struct dl_args_metadata {
 	uint64_t o_flag;
 	char err_msg[DL_ARGS_REQUIRED_MAX_ERR_LEN];
@@ -1186,6 +1346,7 @@ static const struct dl_args_metadata dl_args_required[] = {
 	{DL_OPT_HEALTH_REPORTER_NAME, "Reporter's name is expected."},
 	{DL_OPT_TRAP_NAME,            "Trap's name is expected."},
 	{DL_OPT_TRAP_GROUP_NAME,      "Trap group's name is expected."},
+	{DL_OPT_PORT_FUNCTION_HW_ADDR, "Port function's hardware address is expected."},
 };
 
 static int dl_args_finding_required_validate(uint64_t o_required,
@@ -1552,6 +1713,20 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_TRAP_POLICER_BURST;
+		} else if (dl_argv_match(dl, "hw_addr") &&
+			   (o_all & DL_OPT_PORT_FUNCTION_HW_ADDR)) {
+			const char *addrstr;
+
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &addrstr);
+			if (err)
+				return err;
+			err = hw_addr_parse(addrstr, opts->port_function_hw_addr,
+					    &opts->port_function_hw_addr_len);
+			if (err)
+				return err;
+			o_found |= DL_OPT_PORT_FUNCTION_HW_ADDR;
+
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -1566,6 +1741,18 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 	}
 
 	return dl_args_finding_required_validate(o_required, o_found);
+}
+
+static void
+dl_function_attr_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
+{
+	struct nlattr *nest;
+
+	nest = mnl_attr_nest_start(nlh, DEVLINK_ATTR_PORT_FUNCTION);
+	mnl_attr_put(nlh, DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR,
+		     opts->port_function_hw_addr_len,
+		     opts->port_function_hw_addr);
+	mnl_attr_nest_end(nlh, nest);
 }
 
 static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
@@ -1691,6 +1878,8 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_TRAP_POLICER_BURST)
 		mnl_attr_put_u64(nlh, DEVLINK_ATTR_TRAP_POLICER_BURST,
 				 opts->trap_policer_burst);
+	if (opts->present & DL_OPT_PORT_FUNCTION_HW_ADDR)
+		dl_function_attr_put(nlh, opts);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -1950,49 +2139,6 @@ static void pr_out_port_handle_end(struct dl *dl)
 		pr_out("\n");
 }
 
-static void pr_out_u64(struct dl *dl, const char *name, uint64_t val)
-{
-	__pr_out_indent_newline(dl);
-	if (val == (uint64_t) -1)
-		return print_string_name_value(name, "unlimited");
-
-	if (dl->json_output)
-		print_u64(PRINT_JSON, name, NULL, val);
-	else
-		pr_out("%s %"PRIu64, name, val);
-}
-
-static bool is_binary_eol(int i)
-{
-	return !(i%16);
-}
-
-static void pr_out_binary_value(struct dl *dl, uint8_t *data, uint32_t len)
-{
-	int i = 0;
-
-	while (i < len) {
-		if (dl->json_output)
-			print_int(PRINT_JSON, NULL, NULL, data[i]);
-		else
-			pr_out("%02x ", data[i]);
-		i++;
-		if (!dl->json_output && is_binary_eol(i))
-			__pr_out_newline();
-	}
-	if (!dl->json_output && !is_binary_eol(i))
-		__pr_out_newline();
-}
-
-static void pr_out_name(struct dl *dl, const char *name)
-{
-	__pr_out_indent_newline(dl);
-	if (dl->json_output)
-		print_string(PRINT_JSON, name, NULL, NULL);
-	else
-		pr_out("%s:", name);
-}
-
 static void pr_out_region_chunk_start(struct dl *dl, uint64_t addr)
 {
 	if (dl->json_output) {
@@ -2032,84 +2178,6 @@ static void pr_out_region_chunk(struct dl *dl, uint8_t *data, uint32_t len,
 		i++;
 	}
 	pr_out_region_chunk_end(dl);
-}
-
-static void pr_out_section_start(struct dl *dl, const char *name)
-{
-	if (dl->json_output) {
-		open_json_object(NULL);
-		open_json_object(name);
-	}
-}
-
-static void pr_out_section_end(struct dl *dl)
-{
-	if (dl->json_output) {
-		if (dl->arr_last.present)
-			close_json_array(PRINT_JSON, NULL);
-		close_json_object();
-		close_json_object();
-	}
-}
-
-static void pr_out_array_start(struct dl *dl, const char *name)
-{
-	if (dl->json_output) {
-		open_json_array(PRINT_JSON, name);
-	} else {
-		__pr_out_indent_inc();
-		__pr_out_newline();
-		pr_out("%s:", name);
-		__pr_out_indent_inc();
-		__pr_out_newline();
-	}
-}
-
-static void pr_out_array_end(struct dl *dl)
-{
-	if (dl->json_output) {
-		close_json_array(PRINT_JSON, NULL);
-	} else {
-		__pr_out_indent_dec();
-		__pr_out_indent_dec();
-	}
-}
-
-static void pr_out_object_start(struct dl *dl, const char *name)
-{
-	if (dl->json_output) {
-		open_json_object(name);
-	} else {
-		__pr_out_indent_inc();
-		__pr_out_newline();
-		pr_out("%s:", name);
-		__pr_out_indent_inc();
-		__pr_out_newline();
-	}
-}
-
-static void pr_out_object_end(struct dl *dl)
-{
-	if (dl->json_output) {
-		close_json_object();
-	} else {
-		__pr_out_indent_dec();
-		__pr_out_indent_dec();
-	}
-}
-
-static void pr_out_entry_start(struct dl *dl)
-{
-	if (dl->json_output)
-		open_json_object(NULL);
-}
-
-static void pr_out_entry_end(struct dl *dl)
-{
-	if (dl->json_output)
-		close_json_object();
-	else
-		__pr_out_newline();
 }
 
 static void pr_out_stats(struct dl *dl, struct nlattr *nla_stats)
@@ -3196,6 +3264,7 @@ static void cmd_port_help(void)
 	pr_err("       devlink port set DEV/PORT_INDEX [ type { eth | ib | auto} ]\n");
 	pr_err("       devlink port split DEV/PORT_INDEX count COUNT\n");
 	pr_err("       devlink port unsplit DEV/PORT_INDEX\n");
+	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ]\n");
 }
 
 static const char *port_type_name(uint32_t type)
@@ -3241,6 +3310,37 @@ static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
 		fn_num = mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_PCI_VF_NUMBER]);
 		print_uint(PRINT_ANY, "vfnum", " vfnum %u", fn_num);
 	}
+}
+
+static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
+{
+	struct nlattr *tb[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {};
+	unsigned char *data;
+	SPRINT_BUF(hw_addr);
+	uint32_t len;
+	int err;
+
+	if (!tb_port[DEVLINK_ATTR_PORT_FUNCTION])
+		return;
+
+	err = mnl_attr_parse_nested(tb_port[DEVLINK_ATTR_PORT_FUNCTION],
+				    function_attr_cb, tb);
+	if (err != MNL_CB_OK)
+		return;
+
+	if (!tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR])
+		return;
+
+	len = mnl_attr_get_payload_len(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
+	data = mnl_attr_get_payload(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
+
+	pr_out_object_start(dl, "function");
+	check_indent_newline(dl);
+	print_string(PRINT_ANY, "hw_addr", "hw_addr %s",
+		     ll_addr_n2a(data, len, 0, hw_addr, sizeof(hw_addr)));
+	if (!dl->json_output)
+		__pr_out_indent_dec();
+	pr_out_object_end(dl);
 }
 
 static void pr_out_port(struct dl *dl, struct nlattr **tb)
@@ -3296,6 +3396,7 @@ static void pr_out_port(struct dl *dl, struct nlattr **tb)
 	if (tb[DEVLINK_ATTR_PORT_SPLIT_GROUP])
 		print_uint(PRINT_ANY, "split_group", " split_group %u",
 			   mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_SPLIT_GROUP]));
+	pr_out_port_function(dl, tb);
 	pr_out_port_handle_end(dl);
 }
 
@@ -3381,6 +3482,38 @@ static int cmd_port_unsplit(struct dl *dl)
 	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
 }
 
+static void cmd_port_function_help(void)
+{
+	pr_err("Usage: devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ]\n");
+}
+
+static int cmd_port_function_set(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_PORT_SET, NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLEP | DL_OPT_PORT_FUNCTION_HW_ADDR, 0);
+	if (err)
+		return err;
+
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
+
+static int cmd_port_function(struct dl *dl)
+{
+	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
+		cmd_port_function_help();
+		return 0;
+	} else if (dl_argv_match(dl, "set")) {
+		dl_arg_inc(dl);
+		return cmd_port_function_set(dl);
+	}
+	pr_err("Command \"%s\" not found\n", dl_argv(dl));
+	return -ENOENT;
+}
+
 static int cmd_port(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help")) {
@@ -3399,6 +3532,9 @@ static int cmd_port(struct dl *dl)
 	} else if (dl_argv_match(dl, "unsplit")) {
 		dl_arg_inc(dl);
 		return cmd_port_unsplit(dl);
+	} else if (dl_argv_match(dl, "function")) {
+		dl_arg_inc(dl);
+		return cmd_port_function(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
