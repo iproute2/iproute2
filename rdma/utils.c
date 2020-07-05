@@ -450,6 +450,7 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_STAT_RES] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_STAT_AUTO_MODE_MASK] = MNL_TYPE_U32,
 	[RDMA_NLDEV_ATTR_DEV_DIM] = MNL_TYPE_U8,
+	[RDMA_NLDEV_ATTR_RES_RAW] = MNL_TYPE_BINARY,
 };
 
 int rd_attr_check(const struct nlattr *attr, int *typep)
@@ -888,6 +889,25 @@ static int print_driver_entry(struct rd *rd, struct nlattr *key_attr,
 	}
 	free(key_str);
 	return ret;
+}
+
+void print_raw_data(struct rd *rd, struct nlattr **nla_line)
+{
+	uint8_t *data;
+	uint32_t len;
+	int i = 0;
+
+	if (!rd->show_raw)
+		return;
+
+	len = mnl_attr_get_payload_len(nla_line[RDMA_NLDEV_ATTR_RES_RAW]);
+	data = mnl_attr_get_payload(nla_line[RDMA_NLDEV_ATTR_RES_RAW]);
+	open_json_array(PRINT_JSON, "data");
+	while (i < len) {
+		print_color_uint(PRINT_ANY, COLOR_NONE, NULL, "%d", data[i]);
+		i++;
+	}
+	close_json_array(PRINT_ANY, ">");
 }
 
 void print_driver_table(struct rd *rd, struct nlattr *tb)

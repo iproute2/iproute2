@@ -7,6 +7,20 @@
 #include "res.h"
 #include <inttypes.h>
 
+static int res_mr_line_raw(struct rd *rd, const char *name, int idx,
+			   struct nlattr **nla_line)
+{
+	if (!nla_line[RDMA_NLDEV_ATTR_RES_RAW])
+		return MNL_CB_ERROR;
+
+	open_json_object(NULL);
+	print_dev(rd, idx, name);
+	print_raw_data(rd, nla_line);
+	newline(rd);
+
+	return MNL_CB_OK;
+}
+
 static int res_mr_line(struct rd *rd, const char *name, int idx,
 		       struct nlattr **nla_line)
 {
@@ -69,6 +83,7 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 	print_comm(rd, comm, nla_line);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
+	print_raw_data(rd, nla_line);
 	newline(rd);
 
 out:
@@ -91,7 +106,8 @@ int res_mr_idx_parse_cb(const struct nlmsghdr *nlh, void *data)
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
 	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
 
-	return res_mr_line(rd, name, idx, tb);
+	return (rd->show_raw) ? res_mr_line_raw(rd, name, idx, tb) :
+		res_mr_line(rd, name, idx, tb);
 }
 
 int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data)
@@ -119,7 +135,8 @@ int res_mr_parse_cb(const struct nlmsghdr *nlh, void *data)
 		if (ret != MNL_CB_OK)
 			break;
 
-		ret = res_mr_line(rd, name, idx, nla_line);
+		ret = (rd->show_raw) ? res_mr_line_raw(rd, name, idx, nla_line) :
+			res_mr_line(rd, name, idx, nla_line);
 		if (ret != MNL_CB_OK)
 			break;
 	}

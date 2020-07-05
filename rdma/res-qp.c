@@ -64,6 +64,20 @@ static void print_pathmig(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 			   "path-mig-state %s ", path_mig_to_str(val));
 }
 
+static int res_qp_line_raw(struct rd *rd, const char *name, int idx,
+			   struct nlattr **nla_line)
+{
+	if (!nla_line[RDMA_NLDEV_ATTR_RES_RAW])
+		return MNL_CB_ERROR;
+
+	open_json_object(NULL);
+	print_link(rd, idx, name, rd->port_idx, nla_line);
+	print_raw_data(rd, nla_line);
+	newline(rd);
+
+	return MNL_CB_OK;
+}
+
 static int res_qp_line(struct rd *rd, const char *name, int idx,
 		       struct nlattr **nla_line)
 {
@@ -184,7 +198,8 @@ int res_qp_idx_parse_cb(const struct nlmsghdr *nlh, void *data)
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
 	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
 
-	return res_qp_line(rd, name, idx, tb);
+	return (rd->show_raw) ? res_qp_line_raw(rd, name, idx, tb) :
+		res_qp_line(rd, name, idx, tb);
 }
 
 int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data)
@@ -212,7 +227,8 @@ int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data)
 		if (ret != MNL_CB_OK)
 			break;
 
-		ret = res_qp_line(rd, name, idx, nla_line);
+		ret = (rd->show_raw) ? res_qp_line_raw(rd, name, idx, nla_line) :
+			res_qp_line(rd, name, idx, nla_line);
 		if (ret != MNL_CB_OK)
 			break;
 	}

@@ -23,24 +23,44 @@ int res_cm_id_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_qp_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
 
+static inline uint32_t res_get_command(uint32_t command, struct rd *rd)
+{
+	if (!rd->show_raw)
+		return command;
+
+	switch (command) {
+	case RDMA_NLDEV_CMD_RES_QP_GET:
+		return RDMA_NLDEV_CMD_RES_QP_GET_RAW;
+	case RDMA_NLDEV_CMD_RES_CQ_GET:
+		return RDMA_NLDEV_CMD_RES_CQ_GET_RAW;
+	case RDMA_NLDEV_CMD_RES_MR_GET:
+		return RDMA_NLDEV_CMD_RES_MR_GET_RAW;
+	default:
+		return command;
+	}
+}
+
 #define RES_FUNC(name, command, valid_filters, strict_port, id)                        \
 	static inline int _##name(struct rd *rd)                                       \
 	{                                                                              \
-		uint32_t idx;                                                          \
+		uint32_t idx, _command;                                                \
 		int ret;                                                               \
+		_command = res_get_command(command, rd);			       \
 		if (id) {                                                              \
 			ret = rd_doit_index(rd, &idx);                                 \
 			if (ret) {                                                     \
 				rd->suppress_errors = true;                            \
-				ret = _res_send_idx_msg(rd, command,                   \
+				ret = _res_send_idx_msg(rd, _command,                  \
 							name##_idx_parse_cb,           \
 							idx, id);                      \
-				if (!ret)                                              \
+				if (!ret || rd->show_raw)                              \
 					return ret;                                    \
-				/* Fallback for old systems without .doit callbacks */ \
+				/* Fallback for old systems without .doit callbacks.   \
+				 * Kernel that supports raw, for sure supports doit.   \
+				 */						       \
 			}                                                              \
 		}                                                                      \
-		return _res_send_msg(rd, command, name##_parse_cb);                    \
+		return _res_send_msg(rd, _command, name##_parse_cb);                   \
 	}                                                                              \
 	static inline int name(struct rd *rd)                                          \
 	{                                                                              \
