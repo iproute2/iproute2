@@ -3168,7 +3168,7 @@ union bpf_attr {
  *	Return
  *		The id is returned or 0 in case the id could not be retrieved.
  *
- * void *bpf_ringbuf_output(void *ringbuf, void *data, u64 size, u64 flags)
+ * int bpf_ringbuf_output(void *ringbuf, void *data, u64 size, u64 flags)
  * 	Description
  * 		Copy *size* bytes from *data* into a ring buffer *ringbuf*.
  * 		If BPF_RB_NO_WAKEUP is specified in *flags*, no notification of
@@ -3759,6 +3759,19 @@ struct xdp_md {
 	__u32 rx_queue_index;  /* rxq->queue_index  */
 
 	__u32 egress_ifindex;  /* txq->dev->ifindex */
+};
+
+/* DEVMAP map-value layout
+ *
+ * The struct data-layout of map-value is a configuration interface.
+ * New members can only be added to the end of this structure.
+ */
+struct bpf_devmap_val {
+	__u32 ifindex;   /* device index */
+	union {
+		int   fd;  /* prog fd on map write */
+		__u32 id;  /* prog id on map read */
+	} bpf_prog;
 };
 
 enum sk_action {
