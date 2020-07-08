@@ -18,7 +18,6 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/time.h>
-#include <fnmatch.h>
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/un.h>
