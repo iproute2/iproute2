@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
 #include <stdio.h>
+#include <linux/if_ether.h>
+#include <linux/if_link.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
 
 #include "libnetlink.h"
-#include "linux/if_ether.h"
-#include "linux/if_link.h"
-#include "linux/netlink.h"
-#include "linux/rtnetlink.h"
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
