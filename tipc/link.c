@@ -217,7 +217,7 @@ static int cmd_link_get_bcast_cb(const struct nlmsghdr *nlh, void *data)
 		print_string(PRINT_ANY, "method", "%s", "AUTOSELECT");
 		close_json_object();
 		open_json_object(NULL);
-		print_uint(PRINT_ANY, "ratio", " ratio:%u%\n",
+		print_uint(PRINT_ANY, "ratio", " ratio:%u\n",
 			   mnl_attr_get_u32(props[prop_ratio]));
 		break;
 	default:
