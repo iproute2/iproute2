@@ -59,6 +59,7 @@ static void usage(void)
 		"	[ if_id IF_ID ] [ LIMIT-LIST ] [ TMPL-LIST ]\n"
 		"Usage: ip xfrm policy { delete | get } { SELECTOR | index INDEX } dir DIR\n"
 		"	[ ctx CTX ] [ mark MARK [ mask MASK ] ] [ ptype PTYPE ]\n"
+		"	[ if_id IF_ID ]\n"
 		"Usage: ip xfrm policy { deleteall | list } [ nosock ] [ SELECTOR ] [ dir DIR ]\n"
 		"	[ index INDEX ] [ ptype PTYPE ] [ action ACTION ] [ priority PRIORITY ]\n"
 		"	[ flag FLAG-LIST ]\n"
@@ -582,6 +583,8 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 		struct xfrm_user_sec_ctx sctx;
 		char    str[CTX_BUF_SIZE];
 	} ctx = {};
+	bool is_if_id_set = false;
+	__u32 if_id = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dir") == 0) {
@@ -619,7 +622,11 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 
 			NEXT_ARG();
 			xfrm_policy_ptype_parse(&upt.type, &argc, &argv);
-
+		} else if (strcmp(*argv, "if_id") == 0) {
+			NEXT_ARG();
+			if (get_u32(&if_id, *argv, 0))
+				invarg("IF_ID value is invalid", *argv);
+			is_if_id_set = true;
 		} else {
 			if (selp)
 				invarg("unknown", *argv);
@@ -668,6 +675,9 @@ static int xfrm_policy_get_or_delete(int argc, char **argv, int delete,
 		addattr_l(&req.n, sizeof(req), XFRMA_SEC_CTX,
 			  (void *)&ctx, ctx.sctx.len);
 	}
+
+	if (is_if_id_set)
+		addattr32(&req.n, sizeof(req.buf), XFRMA_IF_ID, if_id);
 
 	if (rtnl_talk(&rth, &req.n, answer) < 0)
 		exit(2);
@@ -765,6 +775,11 @@ static int xfrm_policy_keep(struct nlmsghdr *n, void *arg)
 			fprintf(stderr, "%s: XFRMA_MARK failed\n", __func__);
 			exit(1);
 		}
+	}
+
+	if (tb[XFRMA_IF_ID]) {
+		addattr32(new_n, xb->size, XFRMA_IF_ID,
+			  rta_getattr_u32(tb[XFRMA_IF_ID]));
 	}
 
 	xb->offset += new_n->nlmsg_len;
