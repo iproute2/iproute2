@@ -619,10 +619,16 @@ static int fdb_get(int argc, char **argv)
 	if (rtnl_talk(&rth, &req.n, &answer) < 0)
 		return -2;
 
+	/*
+	 * Initialize a json_writer and open an array object
+	 * if -json was specified.
+	 */
+	new_json_obj(json);
 	if (print_fdb(answer, stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
 		return -1;
 	}
+	delete_json_obj();
 
 	return 0;
 }
