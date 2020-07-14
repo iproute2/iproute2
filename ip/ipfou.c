@@ -27,10 +27,10 @@
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: ip fou add port PORT { ipproto PROTO  | gue } [ -6 ]\n"
+		"Usage: ip fou add port PORT { ipproto PROTO  | gue }\n"
 		"		   [ local IFADDR ] [ peer IFADDR ]\n"
 		"		   [ peer_port PORT ] [ dev IFNAME ]\n"
-		"       ip fou del port PORT [ -6 ] [ local IFADDR ]\n"
+		"       ip fou del port PORT [ local IFADDR ]\n"
 		"		   [ peer IFADDR ] [ peer_port PORT ]\n"
 		"		   [ dev IFNAME ]\n"
 		"       ip fou show\n"
@@ -55,12 +55,16 @@ static int fou_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 {
 	const char *local = NULL, *peer = NULL;
 	__u16 port, peer_port = 0;
-	__u8 family = AF_INET;
+	__u8 family = preferred_family;
 	bool gue_set = false;
 	int ipproto_set = 0;
 	__u8 ipproto, type;
 	int port_set = 0;
 	int index = 0;
+
+	if (preferred_family == AF_UNSPEC) {
+		family = AF_INET;
+	}
 
 	while (argc > 0) {
 		if (!matches(*argv, "port")) {

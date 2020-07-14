@@ -46,6 +46,8 @@ flower \- flow based traffic control filter
 .IR PRIORITY " | "
 .BR cvlan_ethtype " { " ipv4 " | " ipv6 " | "
 .IR ETH_TYPE " } | "
+.B mpls
+.IR LSE_LIST " | "
 .B mpls_label
 .IR LABEL " | "
 .B mpls_tc
@@ -96,7 +98,24 @@ flower \- flow based traffic control filter
 }
 .IR OPTIONS " | "
 .BR ip_flags
-.IR IP_FLAGS
+.IR IP_FLAGS " }"
+
+.ti -8
+.IR LSE_LIST " := [ " LSE_LIST " ] " LSE
+
+.ti -8
+.IR LSE " := "
+.B lse depth
+.IR DEPTH " { "
+.B label
+.IR LABEL " | "
+.B tc
+.IR TC " | "
+.B bos
+.IR BOS " | "
+.B ttl
+.IR TTL " }"
+
 .SH DESCRIPTION
 The
 .B flower
@@ -182,6 +201,56 @@ Match on QinQ layer three protocol.
 may be either
 .BR ipv4 ", " ipv6
 or an unsigned 16bit value in hexadecimal format.
+
+.TP
+.BI mpls " LSE_LIST"
+Match on the MPLS label stack.
+.I LSE_LIST
+is a list of Label Stack Entries, each introduced by the
+.BR lse " keyword."
+This option can't be used together with the standalone
+.BR mpls_label ", " mpls_tc ", " mpls_bos " and " mpls_ttl " options."
+.RS
+.TP
+.BI lse " LSE_OPTIONS"
+Match on an MPLS Label Stack Entry.
+.I LSE_OPTIONS
+is a list of options that describe the properties of the LSE to match.
+.RS
+.TP
+.BI depth " DEPTH"
+The depth of the Label Stack Entry to consider. Depth starts at 1 (the
+outermost Label Stack Entry). The maximum usable depth may be limited by the
+kernel. This option is mandatory.
+.I DEPTH
+is an unsigned 8 bit value in decimal format.
+.TP
+.BI label " LABEL"
+Match on the MPLS Label field at the specified
+.BR depth .
+.I LABEL
+is an unsigned 20 bit value in decimal format.
+.TP
+.BI tc " TC"
+Match on the MPLS Traffic Class field at the specified
+.BR depth .
+.I TC
+is an unsigned 3 bit value in decimal format.
+.TP
+.BI bos " BOS"
+Match on the MPLS Bottom Of Stack field at the specified
+.BR depth .
+.I BOS
+is a 1 bit value in decimal format.
+.TP
+.BI ttl " TTL"
+Match on the MPLS Time To Live field at the specified
+.BR depth .
+.I TTL
+is an unsigned 8 bit value in decimal format.
+.RE
+.RE
+
 .TP
 .BI mpls_label " LABEL"
 Match the label id in the outermost MPLS label stack entry.
@@ -393,7 +462,7 @@ on the matches of the next lower layer. Precisely, layer one and two matches
 (\fBindev\fR,  \fBdst_mac\fR and \fBsrc_mac\fR)
 have no dependency,
 MPLS and layer three matches
-(\fBmpls_label\fR, \fBmpls_tc\fR, \fBmpls_bos\fR, \fBmpls_ttl\fR,
+(\fBmpls\fR, \fBmpls_label\fR, \fBmpls_tc\fR, \fBmpls_bos\fR, \fBmpls_ttl\fR,
 \fBip_proto\fR, \fBdst_ip\fR, \fBsrc_ip\fR, \fBarp_tip\fR, \fBarp_sip\fR,
 \fBarp_op\fR, \fBarp_tha\fR, \fBarp_sha\fR and \fBip_flags\fR)
 depend on the

@@ -19,19 +19,26 @@
 #include <limits.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <signal.h>
+#include <time.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/sysinfo.h>
 #define _LINUX_SYSINFO_H /* avoid collision with musl header */
 #include <linux/genetlink.h>
 #include <linux/devlink.h>
+#include <linux/netlink.h>
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
+#include <sys/select.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <rt_names.h>
 
 #include "SNAPSHOT.h"
 #include "list.h"
 #include "mnlg.h"
-#include "json_writer.h"
+#include "json_print.h"
 #include "utils.h"
 #include "namespace.h"
 
@@ -1298,6 +1305,8 @@ static int trap_action_get(const char *actionstr,
 		*p_action = DEVLINK_TRAP_ACTION_DROP;
 	} else if (strcmp(actionstr, "trap") == 0) {
 		*p_action = DEVLINK_TRAP_ACTION_TRAP;
+	} else if (strcmp(actionstr, "mirror") == 0) {
+		*p_action = DEVLINK_TRAP_ACTION_MIRROR;
 	} else {
 		pr_err("Unknown trap action \"%s\"\n", actionstr);
 		return -EINVAL;
@@ -2416,6 +2425,11 @@ static const struct param_val_conv param_val_conv[] = {
 		.name = "fw_load_policy",
 		.vstr = "flash",
 		.vuint = DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_FLASH,
+	},
+	{
+		.name = "fw_load_policy",
+		.vstr = "disk",
+		.vuint = DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_DISK,
 	},
 	{
 		.name = "reset_dev_on_drv_probe",
@@ -7209,6 +7223,8 @@ static const char *trap_type_name(uint8_t type)
 		return "drop";
 	case DEVLINK_TRAP_TYPE_EXCEPTION:
 		return "exception";
+	case DEVLINK_TRAP_TYPE_CONTROL:
+		return "control";
 	default:
 		return "<unknown type>";
 	}
@@ -7221,6 +7237,8 @@ static const char *trap_action_name(uint8_t action)
 		return "drop";
 	case DEVLINK_TRAP_ACTION_TRAP:
 		return "trap";
+	case DEVLINK_TRAP_ACTION_MIRROR:
+		return "mirror";
 	default:
 		return "<unknown action>";
 	}
@@ -7295,9 +7313,9 @@ static int cmd_trap_show_cb(const struct nlmsghdr *nlh, void *data)
 
 static void cmd_trap_help(void)
 {
-	pr_err("Usage: devlink trap set DEV trap TRAP [ action { trap | drop } ]\n");
+	pr_err("Usage: devlink trap set DEV trap TRAP [ action { trap | drop | mirror } ]\n");
 	pr_err("       devlink trap show [ DEV trap TRAP ]\n");
-	pr_err("       devlink trap group set DEV group GROUP [ action { trap | drop } ]\n");
+	pr_err("       devlink trap group set DEV group GROUP [ action { trap | drop | mirror } ]\n");
 	pr_err("                              [ policer POLICER ] [ nopolicer ]\n");
 	pr_err("       devlink trap group show [ DEV group GROUP ]\n");
 	pr_err("       devlink trap policer set DEV policer POLICER [ rate RATE ] [ burst BURST ]\n");

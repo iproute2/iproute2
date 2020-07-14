@@ -208,7 +208,7 @@ typedef unsigned short ip_set_id_t;
 #include <linux/netfilter/xt_set.h>
 
 struct xt_set_info info;
-#if IPSET_PROTOCOL == 6
+#if IPSET_PROTOCOL == 6 || IPSET_PROTOCOL == 7
 int main(void)
 {
 	return IPSET_MAXNAMELEN;

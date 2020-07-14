@@ -26,61 +26,60 @@ devlink-dev \- devlink device configuration
 .B devlink dev help
 
 .ti -8
-.BR "devlink dev eswitch set"
-.IR DEV
-.RI "[ "
+.B devlink dev eswitch set
+.I DEV
+[
 .BR mode " { " legacy " | " switchdev " } "
-.RI "]"
-.RI "[ "
+] [
 .BR inline-mode " { " none " | " link " | " network " | " transport " } "
-.RI "]"
-.RI "[ "
+] [
 .BR encap-mode " { " none " | " basic " } "
-.RI "]"
+]
 
 .ti -8
-.BR "devlink dev eswitch show"
-.IR DEV
+.B devlink dev eswitch show
+.I DEV
 
 .ti -8
-.BR "devlink dev param set"
-.IR DEV
-.BR name
-.IR PARAMETER
-.BR value
-.IR VALUE
+.B devlink dev param set
+.I DEV
+.B name
+.I PARAMETER
+.B value
+.I VALUE
 .BR cmode " { " runtime " | " driverinit " | " permanent " } "
 
 .ti -8
-.BR "devlink dev param show"
-.RI "[ "
-.IR DEV
-.BR name
-.IR PARAMETER
-.RI "]"
+.B devlink dev param show
+[
+.I DEV
+.B name
+.I PARAMETER
+]
 
 .ti -8
-.BR "devlink dev reload"
-.IR DEV
-.RI "[ "
-.BI "netns { " PID " | " NAME " | " ID " }
-.RI "]"
+.B devlink dev reload
+.I DEV
+[
+.B netns
+.RI "{ " PID " | " NAME " | " ID " }"
+]
 
 .ti -8
-.BR "devlink dev info"
-.RI "[ "
-.IR DEV
-.RI "]"
+.B devlink dev info
+[
+.I DEV
+]
 
 .ti -8
-.BR "devlink dev flash"
-.IR DEV
-.BR file
-.IR PATH
-.RI "["
-.BR target
-.IR ID
-.RI "]"
+.B devlink dev flash
+.I DEV
+.B file
+.I PATH
+[
+.B target
+.I ID
+]
 
 .SH "DESCRIPTION"
 .SS devlink dev show - display devlink device attributes
@@ -159,8 +158,8 @@ Configuration mode in which the new value is set.
 
 .SS devlink dev param show - display devlink device supported configuration parameters attributes
 
-.BR name
-.IR PARAMETER
+.B name
+.I PARAMETER
 Specify parameter name to show.
 If this argument is omitted all parameters supported by devlink devices are listed.
 
@@ -170,8 +169,8 @@ If this argument is omitted all parameters supported by devlink devices are list
 .I "DEV"
 - Specifies the devlink device to reload.
 
-.BR netns
-.BI { " PID " | " NAME " | " ID " }
+.B netns
+.RI { " PID " | " NAME " | " ID " }
 - Specifies the network namespace to reload into, either by pid, name or id.
 
 .SS devlink dev info - display device information.
@@ -200,13 +199,13 @@ If this argument is omitted all devices are listed.
 .I "DEV"
 - specifies the devlink device to write to.
 
-.BR file
+.B file
 .I PATH
 - Path to the file which will be written into device's flash. The path needs
 to be relative to one of the directories searched by the kernel firmware loaded,
 such as /lib/firmware.
 
-.BR component
+.B component
 .I NAME
 - If device stores multiple firmware images in non-volatile memory, this
 parameter may be used to indicate which firmware image should be written.

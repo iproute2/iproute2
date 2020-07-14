@@ -61,6 +61,8 @@ ip-xfrm \- transform configuration
 .IR EXTRA-FLAG-LIST " ]"
 .RB "[ " output-mark
 .IR OUTPUT-MARK " ]"
+.RB "[ " if_id
+.IR IF-ID " ]"
 
 .ti -8
 .B "ip xfrm state allocspi"
@@ -238,6 +240,8 @@ ip-xfrm \- transform configuration
 .IR PRIORITY " ]"
 .RB "[ " flag
 .IR FLAG-LIST " ]"
+.RB "[ " if_id
+.IR IF-ID " ]"
 .RI "[ " LIMIT-LIST " ] [ " TMPL-LIST " ]"
 
 .ti -8
@@ -255,6 +259,8 @@ ip-xfrm \- transform configuration
 .IR MASK " ] ]"
 .RB "[ " ptype
 .IR PTYPE " ]"
+.RB "[ " if_id
+.IR IF-ID " ]"
 
 .ti -8
 .BR ip " [ " -4 " | " -6 " ] " "xfrm policy" " { " deleteall " | " list " }"
@@ -560,6 +566,10 @@ used to match xfrm policies and states
 .I OUTPUT-MARK
 used to set the output mark to influence the routing
 of the packets emitted by the state
+
+.TP
+.I IF-ID
+xfrm interface identifier used to in both xfrm policies and states
 
 .sp
 .PP

@@ -223,6 +223,7 @@ ip-link \- network device configuration
 .BR ipvtap " |"
 .BR lowpan " |"
 .BR geneve " |"
+.BR bareudp " |"
 .BR vrf " |"
 .BR macsec " |"
 .BR netdevsim " |"
@@ -355,6 +356,9 @@ Link types:
 .sp
 .BR geneve
 - GEneric NEtwork Virtualization Encapsulation
+.sp
+.BR bareudp
+- Bare UDP L3 encapsulation support
 .sp
 .BR macsec
 - Interface for IEEE 802.1AE MAC Security (MACsec)
@@ -1292,6 +1296,46 @@ options.
 - allow incoming UDP packets over IPv6 with zero checksum field.
 
 .in -8
+
+.TP
+Bareudp Type Support
+For a link of type
+.I Bareudp
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BI type " bareudp " dstport " PORT " ethertype " ETHERTYPE"
+[
+.BI srcportmin " SRCPORTMIN "
+] [
+.RB [ no ] multiproto
+]
+
+.in +8
+.sp
+.BI dstport " PORT"
+- specifies the destination port for the UDP tunnel.
+
+.sp
+.BI ethertype " ETHERTYPE"
+- specifies the ethertype of the L3 protocol being tunnelled.
+
+.sp
+.BI srcportmin " SRCPORTMIN"
+- selects the lowest value of the UDP tunnel source port range.
+
+.sp
+.RB [ no ] multiproto
+- activates support for protocols similar to the one
+.RB "specified by " ethertype .
+When
+.I ETHERTYPE
+is "mpls_uc" (that is, unicast MPLS), this allows the tunnel to also handle
+multicast MPLS.
+When
+.I ETHERTYPE
+is "ipv4", this allows the tunnel to also handle IPv6. This option is disabled
+by default.
 
 .TP
 MACVLAN and MACVTAP Type Support

@@ -18,49 +18,47 @@ devlink-health \- devlink health reporting and recovery
 \fB\-V\fR[\fIersion\fR] }
 
 .ti -8
-.BR "devlink health show"
+.B devlink health show
 .RI "[ " DEV ""
 .B reporter
 .RI ""REPORTER " ] "
 
 .ti -8
-.BR "devlink health recover"
+.B devlink health recover
 .RI "" DEV ""
 .B reporter
 .RI "" REPORTER ""
 
 .ti -8
-.BR "devlink health diagnose"
+.B devlink health diagnose
 .RI "" DEV ""
 .B reporter
 .RI "" REPORTER ""
 
 .ti -8
-.BR "devlink health dump show"
+.B devlink health dump show
 .RI "" DEV ""
 .B  reporter
 .RI "" REPORTER ""
 
 .ti -8
-.BR "devlink health dump clear"
+.B devlink health dump clear
 .RI "" DEV ""
 .B reporter
 .RI "" REPORTER ""
 
 .ti -8
-.BR "devlink health set"
+.B devlink health set
 .RI "" DEV ""
 .B reporter
 .RI "" REPORTER ""
-.RI "[ "
+[
 .BI "grace_period " MSEC "
-.RI "]"
-.RI "[ "
+] [
 .BR auto_recover " { " true " | " false " } "
-.RI "]"
-.RI "[ "
+] [
 .BR auto_dump " { " true " | " false " } "
-.RI "]"
+]
 
 .ti -8
 .B devlink health help

@@ -148,10 +148,10 @@ __u64 get_cgroup2_id(const char *path)
 					strerror(errno));
 			goto out;
 		}
-		if (fhp->handle_bytes != sizeof(__u64)) {
-			fprintf(stderr, "Invalid size of cgroup2 ID\n");
-			goto out;
-		}
+	}
+	if (fhp->handle_bytes != sizeof(__u64)) {
+		fprintf(stderr, "Invalid size of cgroup2 ID\n");
+		goto out;
 	}
 
 	memcpy(cg_id.bytes, fhp->f_handle, sizeof(__u64));

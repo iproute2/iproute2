@@ -26,7 +26,7 @@ devlink-trap \- devlink trap configuration
 
 .ti -8
 .BI "devlink trap set " DEV " trap " TRAP
-.RB "[ " action " { " trap " | " drop " } ]"
+.RB "[ " action " { " trap " | " drop " | " mirror " } ]"
 
 .ti -8
 .B "devlink trap group show"
@@ -36,7 +36,7 @@ devlink-trap \- devlink trap configuration
 
 .ti -8
 .BI "devlink trap group set " DEV " group " GROUP
-.RB "[ " action " { " trap " | " drop " } ]"
+.RB "[ " action " { " trap " | " drop " | " mirror " } ]"
 .br
 .RB "[ " policer
 .IB "POLICER " ]
@@ -76,7 +76,7 @@ Only applicable if a devlink device is also specified.
 - specifies the packet trap.
 
 .TP
-.BR action " { " trap " | " drop " } "
+.BR action " { " trap " | " drop " | " mirror " } "
 packet trap action.
 
 .I trap
@@ -84,6 +84,9 @@ packet trap action.
 
 .I drop
 - the packet is dropped by the underlying device and a copy is not sent to the CPU.
+
+.I mirror
+- the packet is forwarded by the underlying device and a copy is sent to the CPU.
 
 .SS devlink trap group show - display available packet trap groups and their attributes
 
@@ -108,14 +111,15 @@ Only applicable if a devlink device is also specified.
 - specifies the packet trap group.
 
 .TP
-.BR action " { " trap " | " drop " } "
+.BR action " { " trap " | " drop " | " mirror " } "
 packet trap action. The action is set for all the packet traps member in the
 trap group. The actions of non-drop traps cannot be changed and are thus
 skipped.
 
 .TP
 .BI policer " POLICER"
-packet trap policer. The policer to bind to the packet trap group.
+packet trap policer. The policer to bind to the packet trap group. A value of
+"0" will unbind the currently bound policer.
 
 .TP
 .B nopolicer
