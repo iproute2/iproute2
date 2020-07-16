@@ -264,10 +264,27 @@ static int red_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 	return 0;
 }
 
+static int red_has_block(struct qdisc_util *qu, struct rtattr *opt, __u32 block_idx, bool *p_has)
+{
+	struct rtattr *tb[TCA_RED_MAX + 1];
+
+	if (opt == NULL)
+		return 0;
+
+	parse_rtattr_nested(tb, TCA_RED_MAX, opt);
+
+	qevents_init(qevents);
+	if (qevents_read(qevents, tb))
+		return -1;
+
+	*p_has = qevents_have_block(qevents, block_idx);
+	return 0;
+}
 
 struct qdisc_util red_qdisc_util = {
 	.id		= "red",
 	.parse_qopt	= red_parse_opt,
 	.print_qopt	= red_print_opt,
 	.print_xstats	= red_print_xstats,
+	.has_block	= red_has_block,
 };
