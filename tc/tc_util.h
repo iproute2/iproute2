@@ -5,6 +5,7 @@
 #define MAX_MSG 16384
 #include <limits.h>
 #include <linux/if.h>
+#include <stdbool.h>
 
 #include <linux/pkt_sched.h>
 #include <linux/pkt_cls.h>
@@ -40,6 +41,7 @@ struct qdisc_util {
 	int (*parse_copt)(struct qdisc_util *qu, int argc,
 			  char **argv, struct nlmsghdr *n, const char *dev);
 	int (*print_copt)(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
+	int (*has_block)(struct qdisc_util *qu, struct rtattr *opt, __u32 block_idx, bool *p_has);
 };
 
 extern __u16 f_proto;

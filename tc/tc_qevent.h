@@ -2,6 +2,7 @@
 #ifndef _TC_QEVENT_H_
 #define _TC_QEVENT_H_
 
+#include <stdbool.h>
 #include <linux/types.h>
 #include <libnetlink.h>
 
@@ -37,6 +38,7 @@ int qevent_parse(struct qevent_util *qevents, int *p_argc, char ***p_argv);
 int qevents_read(struct qevent_util *qevents, struct rtattr **tb);
 int qevents_dump(struct qevent_util *qevents, struct nlmsghdr *n);
 void qevents_print(struct qevent_util *qevents, FILE *f);
+bool qevents_have_block(struct qevent_util *qevents, __u32 block_idx);
 
 struct qevent_plain {
 	struct qevent_base base;

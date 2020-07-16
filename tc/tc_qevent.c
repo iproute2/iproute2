@@ -92,6 +92,21 @@ void qevents_print(struct qevent_util *qevents, FILE *f)
 		close_json_array(PRINT_ANY, "");
 }
 
+bool qevents_have_block(struct qevent_util *qevents, __u32 block_idx)
+{
+	if (!qevents)
+		return false;
+
+	for (; qevents->id; qevents++) {
+		struct qevent_base *qeb = qevents->data;
+
+		if (qeb->block_idx == block_idx)
+			return true;
+	}
+
+	return false;
+}
+
 int qevents_dump(struct qevent_util *qevents, struct nlmsghdr *n)
 {
 	int err;
