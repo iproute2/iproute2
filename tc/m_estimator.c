@@ -57,7 +57,7 @@ int parse_estimator(int *p_argc, char ***p_argv, struct tc_estimator *est)
 		return -1;
 	}
 	if (show_raw)
-		fprintf(stderr, "[estimator i=%u e=%u]\n", est->interval, est->ewma_log);
+		fprintf(stderr, "[estimator i=%hhd e=%u]\n", est->interval, est->ewma_log);
 	*p_argc = argc;
 	*p_argv = argv;
 	return 0;
