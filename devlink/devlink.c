@@ -2112,7 +2112,19 @@ static void __pr_out_port_handle_start(struct dl *dl, const char *bus_name,
 			open_json_object(buf);
 		}
 	} else {
-		pr_out("%s:", buf);
+		if (array) {
+			if (should_arr_last_port_handle_end(dl, bus_name, dev_name, port_index))
+				__pr_out_indent_dec();
+			if (should_arr_last_port_handle_start(dl, bus_name,
+							      dev_name, port_index)) {
+				pr_out("%s:", buf);
+				__pr_out_newline();
+				__pr_out_indent_inc();
+				arr_last_port_handle_set(dl, bus_name, dev_name, port_index);
+			}
+		} else {
+			pr_out("%s:", buf);
+		}
 	}
 }
 
