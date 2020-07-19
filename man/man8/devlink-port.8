@@ -40,6 +40,10 @@ devlink-port \- devlink port configuration
 .RI "[ " DEV/PORT_INDEX " ]"
 
 .ti -8
+.B devlink port health
+.RI "{ " show " | " recover " | " diagnose " | " dump " | " set " }"
+
+.ti -8
 .B devlink port help
 
 .SH "DESCRIPTION"
@@ -91,6 +95,10 @@ Could be performed on any split port of the same split group.
 - specifies the devlink port to show.
 If this argument is omitted all ports are listed.
 
+.SS devlink port health - devlink health reporting and recovery
+Is an alias for
+.BR devlink-health (8).
+
 .SH "EXAMPLES"
 .PP
 devlink port show
@@ -117,12 +125,23 @@ devlink port unsplit pci/0000:01:00.0/1
 .RS 4
 Unplit the specified previously split devlink port.
 .RE
+.PP
+devlink port health show
+.RS 4
+Shows status and configuration of all supported reporters registered on all devlink ports.
+.RE
+.PP
+devlink port health show pci/0000:01:00.0/1 reporter tx
+.RS 4
+Shows status and configuration of tx reporter registered on pci/0000:01:00.0/1 devlink port.
+.RE
 
 .SH SEE ALSO
 .BR devlink (8),
 .BR devlink-dev (8),
 .BR devlink-sb (8),
 .BR devlink-monitor (8),
+.BR devlink-health (8),
 .br
 
 .SH AUTHOR
