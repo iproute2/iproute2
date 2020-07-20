@@ -478,6 +478,9 @@ static int tc_qdisc_block_exists_cb(struct nlmsghdr *n, void *arg)
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tb[TCA_MAX+1];
 	int len = n->nlmsg_len;
+	struct qdisc_util *q;
+	const char *kind;
+	int err;
 
 	if (n->nlmsg_type != RTM_NEWQDISC)
 		return 0;
@@ -506,6 +509,21 @@ static int tc_qdisc_block_exists_cb(struct nlmsghdr *n, void *arg)
 		if (block == ctx->block_index)
 			ctx->found = true;
 	}
+
+	kind = rta_getattr_str(tb[TCA_KIND]);
+	q = get_qdisc_kind(kind);
+	if (!q)
+		return -1;
+	if (q->has_block) {
+		bool found = false;
+
+		err = q->has_block(q, tb[TCA_OPTIONS], ctx->block_index, &found);
+		if (err)
+			return err;
+		if (found)
+			ctx->found = true;
+	}
+
 	return 0;
 }
 
