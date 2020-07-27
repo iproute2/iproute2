@@ -30,7 +30,8 @@
 #include "rt_names.h"
 #include "utils.h"
 
-static unsigned int filter_index, filter_vlan, filter_state, filter_master;
+static unsigned int filter_index, filter_dynamic, filter_master,
+	filter_state, filter_vlan;
 
 static void usage(void)
 {
@@ -40,9 +41,10 @@ static void usage(void)
 		"              [ sticky ] [ local | static | dynamic ] [ dst IPADDR ]\n"
 		"              [ vlan VID ] [ port PORT] [ vni VNI ] [ via DEV ]\n"
 		"              [ src_vni VNI ]\n"
-		"       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ] [ state STATE ] ]\n"
-		"       bridge fdb get ADDR [ br BRDEV ] { brport |dev }  DEV [ vlan VID ]\n"
-		"              [ vni VNI ]\n");
+		"       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ]\n"
+		"              [ state STATE ] [ dynamic ] ]\n"
+		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
+		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n");
 	exit(-1);
 }
 
@@ -165,6 +167,9 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 		vid = rta_getattr_u16(tb[NDA_VLAN]);
 
 	if (filter_vlan && filter_vlan != vid)
+		return 0;
+
+	if (filter_dynamic && (r->ndm_state & NUD_PERMANENT))
 		return 0;
 
 	open_json_object(NULL);
@@ -322,6 +327,8 @@ static int fdb_show(int argc, char **argv)
 			if (state_a2n(&state, *argv))
 				invarg("invalid state", *argv);
 			filter_state |= state;
+		} else if (strcmp(*argv, "dynamic") == 0) {
+			filter_dynamic = 1;
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
@@ -566,6 +573,8 @@ static int fdb_get(int argc, char **argv)
 				duparg2("vlan", *argv);
 			NEXT_ARG();
 			vlan = atoi(*argv);
+		} else if (matches(*argv, "dynamic") == 0) {
+			filter_dynamic = 1;
 		} else {
 			if (strcmp(*argv, "to") == 0)
 				NEXT_ARG();
