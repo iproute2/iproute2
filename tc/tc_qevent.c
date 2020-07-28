@@ -82,8 +82,9 @@ void qevents_print(struct qevent_util *qevents, FILE *f)
 			}
 
 			open_json_object(NULL);
-			print_string(PRINT_ANY, "kind", " qevent %s", qevents->id);
+			print_string(PRINT_ANY, "kind", "qevent %s", qevents->id);
 			qevents->print_qevent(qevents, f);
+			print_string(PRINT_FP, NULL, "%s", " ");
 			close_json_object();
 		}
 	}

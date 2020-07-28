@@ -222,12 +222,12 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	print_uint(PRINT_JSON, "min", NULL, qopt->qth_min);
 	print_string(PRINT_FP, NULL, "min %s ", sprint_size(qopt->qth_min, b2));
 	print_uint(PRINT_JSON, "max", NULL, qopt->qth_max);
-	print_string(PRINT_FP, NULL, "max %s", sprint_size(qopt->qth_max, b3));
+	print_string(PRINT_FP, NULL, "max %s ", sprint_size(qopt->qth_max, b3));
 
 	tc_red_print_flags(qopt->flags);
 
 	if (show_details) {
-		print_uint(PRINT_ANY, "ewma", " ewma %u ", qopt->Wlog);
+		print_uint(PRINT_ANY, "ewma", "ewma %u ", qopt->Wlog);
 		if (max_P)
 			print_float(PRINT_ANY, "probability",
 				    "probability %lg ", max_P / pow(2, 32));
