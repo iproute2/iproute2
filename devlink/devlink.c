@@ -650,6 +650,7 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_REGION_CHUNK_LEN] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_INFO_DRIVER_NAME] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_INFO_SERIAL_NUMBER] = MNL_TYPE_STRING,
+	[DEVLINK_ATTR_INFO_BOARD_SERIAL_NUMBER] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_INFO_VERSION_FIXED] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_INFO_VERSION_RUNNING] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_INFO_VERSION_STORED] = MNL_TYPE_NESTED,
@@ -2981,6 +2982,16 @@ static void pr_out_info(struct dl *dl, const struct nlmsghdr *nlh,
 		print_string(PRINT_ANY, "serial_number", "serial_number %s",
 			     mnl_attr_get_str(nla_sn));
 	}
+
+	if (tb[DEVLINK_ATTR_INFO_BOARD_SERIAL_NUMBER]) {
+		struct nlattr *nla_bsn = tb[DEVLINK_ATTR_INFO_BOARD_SERIAL_NUMBER];
+
+		if (!dl->json_output)
+			__pr_out_newline();
+		check_indent_newline(dl);
+		print_string(PRINT_ANY, "board.serial_number", "board.serial_number %s",
+			     mnl_attr_get_str(nla_bsn));
+	}
 	__pr_out_indent_dec();
 
 	if (has_versions) {
@@ -3016,6 +3027,7 @@ static int cmd_versions_show_cb(const struct nlmsghdr *nlh, void *data)
 		tb[DEVLINK_ATTR_INFO_VERSION_STORED];
 	has_info = tb[DEVLINK_ATTR_INFO_DRIVER_NAME] ||
 		tb[DEVLINK_ATTR_INFO_SERIAL_NUMBER] ||
+		tb[DEVLINK_ATTR_INFO_BOARD_SERIAL_NUMBER] ||
 		has_versions;
 
 	if (has_info)
