@@ -104,7 +104,7 @@ static void usage(void)
 		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
 		"FLAG := noecn | decap-dscp | nopmtudisc | wildrecv | icmp | af-unspec | align4 | esn\n"
 		"EXTRA-FLAG-LIST := [ EXTRA-FLAG-LIST ] EXTRA-FLAG\n"
-		"EXTRA-FLAG := dont-encap-dscp\n"
+		"EXTRA-FLAG := dont-encap-dscp | oseq-may-wrap\n"
 		"SELECTOR := [ src ADDR[/PLEN] ] [ dst ADDR[/PLEN] ] [ dev DEV ] [ UPSPEC ]\n"
 		"UPSPEC := proto { { tcp | udp | sctp | dccp } [ sport PORT ] [ dport PORT ] |\n"
 		"                  { icmp | ipv6-icmp | mobility-header } [ type NUMBER ] [ code NUMBER ] |\n"
@@ -253,6 +253,8 @@ static int xfrm_state_extra_flag_parse(__u32 *extra_flags, int *argcp, char ***a
 		while (1) {
 			if (strcmp(*argv, "dont-encap-dscp") == 0)
 				*extra_flags |= XFRM_SA_XFLAG_DONT_ENCAP_DSCP;
+			else if (strcmp(*argv, "oseq-may-wrap") == 0)
+				*extra_flags |= XFRM_SA_XFLAG_OSEQ_MAY_WRAP;
 			else {
 				PREV_ARG(); /* back track */
 				break;

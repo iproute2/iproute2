@@ -953,6 +953,9 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		XFRM_FLAG_PRINT(fp, extra_flags,
 				XFRM_SA_XFLAG_DONT_ENCAP_DSCP,
 				"dont-encap-dscp");
+		XFRM_FLAG_PRINT(fp, extra_flags,
+				XFRM_SA_XFLAG_OSEQ_MAY_WRAP,
+				"oseq-may-wrap");
 		if (extra_flags)
 			fprintf(fp, "%x", extra_flags);
 	}
