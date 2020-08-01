@@ -12,7 +12,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "SNAPSHOT.h"
+#include "version.h"
 #include "utils.h"
 #include "br_common.h"
 #include "namespace.h"

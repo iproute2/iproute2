@@ -24,7 +24,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "SNAPSHOT.h"
+#include "version.h"
 #include "utils.h"
 #include "tc_util.h"
 #include "tc_common.h"
@@ -299,7 +299,7 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-graph") == 0) {
 			show_graph = 1;
 		} else if (matches(argv[1], "-Version") == 0) {
-			printf("tc utility, iproute2-ss%s\n", SNAPSHOT);
+			printf("tc utility, iproute2-%s\n", version);
 			return 0;
 		} else if (matches(argv[1], "-iec") == 0) {
 			++use_iec;

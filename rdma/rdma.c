@@ -5,7 +5,7 @@
  */
 
 #include "rdma.h"
-#include "SNAPSHOT.h"
+#include "version.h"
 #include "color.h"
 
 static void help(char *name)
@@ -131,8 +131,8 @@ int main(int argc, char **argv)
 				  long_options, NULL)) >= 0) {
 		switch (opt) {
 		case 'V':
-			printf("%s utility, iproute2-ss%s\n",
-			       filename, SNAPSHOT);
+			printf("%s utility, iproute2-%s\n",
+			       filename, version);
 			return EXIT_SUCCESS;
 		case 'p':
 			pretty = 1;

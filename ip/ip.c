@@ -18,7 +18,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "SNAPSHOT.h"
+#include "version.h"
 #include "utils.h"
 #include "ip_common.h"
 #include "namespace.h"
@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 			++timestamp;
 			++timestamp_short;
 		} else if (matches(opt, "-Version") == 0) {
-			printf("ip utility, iproute2-ss%s\n", SNAPSHOT);
+			printf("ip utility, iproute2-%s\n", version);
 			exit(0);
 		} else if (matches(opt, "-force") == 0) {
 			++force;

@@ -65,6 +65,8 @@ all: config.mk
 	for i in $(SUBDIRS); \
 	do echo; echo $$i; $(MAKE) $(MFLAGS) -C $$i; done
 
+.PHONY: clean clobber distclean check cscope version
+
 help:
 	@echo "Make Targets:"
 	@echo " all                 - build binaries"
@@ -73,7 +75,7 @@ help:
 	@echo " install             - install binaries on local machine"
 	@echo " check               - run tests"
 	@echo " cscope              - build cscope database"
-	@echo " snapshot            - generate version number header"
+	@echo " version             - update version"
 	@echo ""
 	@echo "Make Arguments:"
 	@echo " V=[0|1]             - set build verbosity level"
@@ -93,9 +95,9 @@ install: all
 	install -m 0644 bash-completion/devlink $(DESTDIR)$(BASH_COMPDIR)
 	install -m 0644 include/bpf_elf.h $(DESTDIR)$(HDRDIR)
 
-snapshot:
-	echo "static const char SNAPSHOT[] = \""`date +%y%m%d`"\";" \
-		> include/SNAPSHOT.h
+version:
+	echo "static const char version[] = \""`git describe --tags --long`"\";" \
+		> include/version.h
 
 clean:
 	@for i in $(SUBDIRS) testsuite; \

@@ -33,7 +33,7 @@
 
 #include "libnetlink.h"
 #include "json_writer.h"
-#include "SNAPSHOT.h"
+#include "version.h"
 #include "utils.h"
 
 int dump_zeros;
@@ -869,7 +869,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 		case 'V':
-			printf("ifstat utility, iproute2-ss%s\n", SNAPSHOT);
+			printf("ifstat utility, iproute2-%s\n", version);
 			exit(0);
 		case 'h':
 		case '?':
