@@ -287,11 +287,11 @@ enum rdma_nldev_command {
 
 	RDMA_NLDEV_CMD_STAT_DEL,
 
-	RDMA_NLDEV_CMD_RES_QP_GET_RAW, /* can dump */
+	RDMA_NLDEV_CMD_RES_QP_GET_RAW,
 
-	RDMA_NLDEV_CMD_RES_CQ_GET_RAW, /* can dump */
+	RDMA_NLDEV_CMD_RES_CQ_GET_RAW,
 
-	RDMA_NLDEV_CMD_RES_MR_GET_RAW, /* can dump */
+	RDMA_NLDEV_CMD_RES_MR_GET_RAW,
 
 	RDMA_NLDEV_NUM_OPS
 };
@@ -531,7 +531,7 @@ enum rdma_nldev_attr {
 	 */
 	RDMA_NLDEV_ATTR_DEV_DIM,                /* u8 */
 
-	RDMA_NLDEV_ATTR_RES_RAW,                /* binary */
+	RDMA_NLDEV_ATTR_RES_RAW,	/* binary */
 
 	/*
 	 * Always the end
@@ -569,5 +569,6 @@ enum rdma_nl_counter_mode {
  */
 enum rdma_nl_counter_mask {
 	RDMA_COUNTER_MASK_QP_TYPE = 1,
+	RDMA_COUNTER_MASK_PID = 1 << 1,
 };
 #endif /* _RDMA_NETLINK_H */
