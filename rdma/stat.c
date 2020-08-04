@@ -48,6 +48,7 @@ struct counter_param {
 
 static struct counter_param auto_params[] = {
 	{ "type", RDMA_COUNTER_MASK_QP_TYPE, },
+	{ "pid", RDMA_COUNTER_MASK_PID, },
 	{ NULL },
 };
 
@@ -56,6 +57,7 @@ static int prepare_auto_mode_str(struct nlattr **tb, uint32_t mask,
 {
 	char s[] = "qp auto";
 	int i, outlen = strlen(s);
+	bool first = true;
 
 	memset(output, 0, len);
 	snprintf(output, len, "%s", s);
@@ -66,7 +68,12 @@ static int prepare_auto_mode_str(struct nlattr **tb, uint32_t mask,
 				outlen += strlen(auto_params[i].name) + 1;
 				if (outlen >= len)
 					return -EINVAL;
-				strcat(output, " ");
+				if (first) {
+					strcat(output, " ");
+					first = false;
+				} else
+					strcat(output, ",");
+
 				strcat(output, auto_params[i].name);
 			}
 		}
@@ -202,7 +209,7 @@ int res_get_hwcounters(struct rd *rd, struct nlattr *hwc_table, bool print)
 static int res_counter_line(struct rd *rd, const char *name, int index,
 		       struct nlattr **nla_line)
 {
-	uint32_t cntn, port = 0, pid = 0, qpn;
+	uint32_t cntn, port = 0, pid = 0, qpn, qp_type = 0;
 	struct nlattr *hwc_table, *qp_table;
 	struct nlattr *nla_entry;
 	const char *comm = NULL;
@@ -221,6 +228,13 @@ static int res_counter_line(struct rd *rd, const char *name, int index,
 	cntn = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_STAT_COUNTER_ID]);
 	if (rd_is_filtered_attr(rd, "cntn", cntn,
 				nla_line[RDMA_NLDEV_ATTR_STAT_COUNTER_ID]))
+		return MNL_CB_OK;
+
+	if (nla_line[RDMA_NLDEV_ATTR_RES_TYPE])
+		qp_type = mnl_attr_get_u8(nla_line[RDMA_NLDEV_ATTR_RES_TYPE]);
+
+	if (rd_is_string_filtered_attr(rd, "qp-type", qp_types_to_str(qp_type),
+				       nla_line[RDMA_NLDEV_ATTR_RES_TYPE]))
 		return MNL_CB_OK;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
@@ -257,6 +271,8 @@ static int res_counter_line(struct rd *rd, const char *name, int index,
 	open_json_object(NULL);
 	print_link(rd, index, name, port, nla_line);
 	print_color_uint(PRINT_ANY, COLOR_NONE, "cntn", "cntn %u ", cntn);
+	if (nla_line[RDMA_NLDEV_ATTR_RES_TYPE])
+		print_qp_type(rd, qp_type);
 	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);
 	res_get_hwcounters(rd, hwc_table, true);
@@ -321,6 +337,7 @@ static const struct filters stat_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "cntn", .is_number = true },
 	{ .name = "lqpn", .is_number = true },
 	{ .name = "pid", .is_number = true },
+	{ .name = "qp-type", .is_number = false },
 };
 
 static int stat_qp_show_one_link(struct rd *rd)
@@ -382,37 +399,67 @@ static int stat_qp_set_link_auto_sendmsg(struct rd *rd, uint32_t mask)
 	return rd_sendrecv_msg(rd, seq);
 }
 
-static int stat_one_qp_set_link_auto_off(struct rd *rd)
+static int stat_get_auto_mode_mask(struct rd *rd)
 {
-	return stat_qp_set_link_auto_sendmsg(rd, 0);
-}
+	char *modes = rd_argv(rd), *mode, *saved_ptr;
+	const char *delim = ",";
+	int mask = 0, found, i;
 
-static int stat_one_qp_set_auto_type_on(struct rd *rd)
-{
-	return stat_qp_set_link_auto_sendmsg(rd, RDMA_COUNTER_MASK_QP_TYPE);
-}
+	if (!modes)
+		return mask;
 
-static int stat_one_qp_set_link_auto_type(struct rd *rd)
-{
-	const struct rd_cmd cmds[] = {
-		{ NULL,		stat_help },
-		{ "on",		stat_one_qp_set_auto_type_on },
-		{ 0 }
-	};
+	mode = strtok_r(modes, delim, &saved_ptr);
+	do {
+		if (!mode)
+			break;
 
-	return rd_exec_cmd(rd, cmds, "parameter");
+		found = false;
+		for (i = 0;  auto_params[i].name != NULL; i++) {
+			if (!strcmp(mode, auto_params[i].name)) {
+				mask |= auto_params[i].attr;
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			pr_err("Unknown auto mode '%s'.\n", mode);
+			mask = 0;
+			break;
+		}
+
+		mode = strtok_r(NULL, delim, &saved_ptr);
+	} while(1);
+
+	if (mask)
+		rd_arg_inc(rd);
+
+	return mask;
 }
 
 static int stat_one_qp_set_link_auto(struct rd *rd)
 {
-	const struct rd_cmd cmds[] = {
-		{ NULL,		stat_one_qp_link_get_mode },
-		{ "off",	stat_one_qp_set_link_auto_off },
-		{ "type",	stat_one_qp_set_link_auto_type },
-		{ 0 }
-	};
+	int auto_mask = 0;
 
-	return rd_exec_cmd(rd, cmds, "parameter");
+	if (!rd_argc(rd))
+		return -EINVAL;
+
+	if (!strcmpx(rd_argv(rd), "off")) {
+		rd_arg_inc(rd);
+		return stat_qp_set_link_auto_sendmsg(rd, 0);
+	}
+
+	auto_mask = stat_get_auto_mode_mask(rd);
+	if (!auto_mask || !rd_argc(rd))
+		return -EINVAL;
+
+	if (!strcmpx(rd_argv(rd), "on")) {
+		rd_arg_inc(rd);
+		return stat_qp_set_link_auto_sendmsg(rd, auto_mask);
+	} else {
+		pr_err("Unknown parameter '%s'.\n", rd_argv(rd));
+		return -EINVAL;
+	}
 }
 
 static int stat_one_qp_set_link(struct rd *rd)

@@ -179,6 +179,12 @@ void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 		print_color_uint(PRINT_ANY, COLOR_NONE, "port", "%u ", port);
 }
 
+void print_qp_type(struct rd *rd, uint32_t val)
+{
+	print_color_string(PRINT_ANY, COLOR_NONE, "qp-type", "qp-type %s ",
+			   qp_types_to_str(val));
+}
+
 char *get_task_name(uint32_t pid)
 {
 	char *comm;

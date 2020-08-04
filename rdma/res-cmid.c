@@ -7,12 +7,6 @@
 #include "res.h"
 #include <inttypes.h>
 
-static void print_qp_type(struct rd *rd, uint32_t val)
-{
-	print_color_string(PRINT_ANY, COLOR_NONE, "qp-type", "qp-type %s ",
-			   qp_types_to_str(val));
-}
-
 static const char *cm_id_state_to_str(uint8_t idx)
 {
 	static const char *const cm_id_states_str[] = {
