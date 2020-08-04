@@ -68,11 +68,11 @@ rdma-statistic \- RDMA statistic counter configuration
 
 .ti -8
 .IR CRITERIA " := "
-.RB "{ " type " }"
+.RB "{ " type " | " pid " }"
 
 .ti -8
 .IR FILTER_NAME " := "
-.RB "{ " cntn " | " lqpn " | " pid " }"
+.RB "{ " cntn " | " lqpn " | " pid " | " qp-type " }"
 
 .SH "DESCRIPTION"
 .SS rdma statistic [object] show - Queries the specified RDMA device for RDMA and driver-specific statistics. Show the default hw counters if object is not specified
@@ -88,7 +88,7 @@ rdma-statistic \- RDMA statistic counter configuration
 - specifies a filter to show only the results matching it.
 
 .SS rdma statistic <object> set - configure counter statistic auto-mode for a specific device/port
-In auto mode all objects belong to one category are bind automatically to a single counter set. Not applicable for MR's.
+In auto mode all objects belong to one category are bind automatically to a single counter set. The "off" is global for all auto modes together. Not applicable for MR's.
 
 .SS rdma statistic <object> bind - manually bind an object (e.g., a qp) with a counter
 When bound the statistics of this object are available in this counter. Not applicable for MR's.
@@ -127,6 +127,11 @@ rdma statistic qp show link mlx5_2 pid 30489
 Shows the state of all qp counters of specified RDMA port and belonging to pid 30489
 .RE
 .PP
+rdma statistic qp show link mlx5_2 qp-type UD
+.RS 4
+Shows the state of all qp counters of specified RDMA port and with QP type UD
+.RE
+.PP
 rdma statistic qp mode
 .RS 4
 List current counter mode on all devices
@@ -139,7 +144,17 @@ List current counter mode of device mlx5_2 port 1
 .PP
 rdma statistic qp set link mlx5_2/1 auto type on
 .RS 4
-On device mlx5_2 port 1, for each new QP bind it with a counter automatically. Per counter for QPs with same qp type in each process. Currently only "type" is supported.
+On device mlx5_2 port 1, for each new user QP bind it with a counter automatically. Per counter for QPs with same qp type.
+.RE
+.PP
+rdma statistic qp set link mlx5_2/1 auto pid on
+.RS 4
+On device mlx5_2 port 1, for each new user QP bind it with a counter automatically. Per counter for QPs with same pid.
+.RE
+.PP
+rdma statistic qp set link mlx5_2/1 auto pid,type on
+.RS 4
+On device mlx5_2 port 1, for each new user QP bind it with a counter automatically. Per counter for QPs with same pid and same type.
 .RE
 .PP
 rdma statistic qp set link mlx5_2/1 auto off
