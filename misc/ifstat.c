@@ -33,7 +33,7 @@
 
 #include "libnetlink.h"
 #include "json_writer.h"
-#include "SNAPSHOT.h"
+#include "version.h"
 #include "utils.h"
 
 int dump_zeros;
@@ -104,7 +104,7 @@ static int match(const char *id)
 		return 1;
 
 	for (i = 0; i < npatterns; i++) {
-		if (!fnmatch(patterns[i], id, 0))
+		if (!fnmatch(patterns[i], id, FNM_CASEFOLD))
 			return 1;
 	}
 	return 0;
@@ -869,7 +869,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 		case 'V':
-			printf("ifstat utility, iproute2-ss%s\n", SNAPSHOT);
+			printf("ifstat utility, iproute2-%s\n", version);
 			exit(0);
 		case 'h':
 		case '?':

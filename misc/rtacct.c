@@ -30,7 +30,7 @@
 
 #include "rt_names.h"
 
-#include <SNAPSHOT.h>
+#include "version.h"
 
 int reset_history;
 int ignore_history;
@@ -463,7 +463,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 		case 'V':
-			printf("rtacct utility, iproute2-ss%s\n", SNAPSHOT);
+			printf("rtacct utility, iproute2-%s\n", version);
 			exit(0);
 		case 'M':
 			/* Some secret undocumented option, nobody

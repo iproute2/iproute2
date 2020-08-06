@@ -81,9 +81,7 @@ bridge \- show / manipulate bridge addresses and devices
 .IR NHID " } "
 
 .ti -8
-.BR "bridge fdb" " [ " show " ] [ "
-.B dev
-.IR DEV " ] [ "
+.BR "bridge fdb" " [ [ " show " ] [ "
 .B br
 .IR BRDEV " ] [ "
 .B brport
@@ -91,18 +89,24 @@ bridge \- show / manipulate bridge addresses and devices
 .B vlan
 .IR VID " ] [ "
 .B state
-.IR STATE " ]"
+.IR STATE " ] ["
+.B dynamic
+.IR "] ]"
 
 .ti -8
-.B bridge fdb get
-.I LLADDR " [ "
-.B dev
-.IR DEV " ] [ "
+.BR "bridge fdb get" " ["
+.B to
+.IR "]"
+.I LLADDR "[ "
 .B br
-.IR BRDEV " ] [ "
+.IR BRDEV " ]"
+.B { brport | dev }
+.IR DEV " [ "
 .B vlan
-.IR VID  " ] ["
-.BR self " ] [ " master " ]"
+.IR VID  " ] [ "
+.B vni
+.IR VNI " ] ["
+.BR self " ] [ " master " ] [ " dynamic " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " } "

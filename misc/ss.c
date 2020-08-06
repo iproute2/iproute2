@@ -35,7 +35,7 @@
 #include "ll_map.h"
 #include "libnetlink.h"
 #include "namespace.h"
-#include "SNAPSHOT.h"
+#include "version.h"
 #include "rt_names.h"
 #include "cg_map.h"
 
@@ -1682,7 +1682,7 @@ static int unix_match(const inet_prefix *a, const inet_prefix *p)
 		return 1;
 	if (addr == NULL)
 		addr = "";
-	return !fnmatch(pattern, addr, 0);
+	return !fnmatch(pattern, addr, FNM_CASEFOLD);
 }
 
 static int run_ssfilter(struct ssfilter *f, struct sockstat *s)
@@ -5504,7 +5504,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 		case 'V':
-			printf("ss utility, iproute2-ss%s\n", SNAPSHOT);
+			printf("ss utility, iproute2-%s\n", version);
 			exit(0);
 		case 'z':
 			show_sock_ctx++;

@@ -38,6 +38,7 @@
 
 #include <json_writer.h>
 #include "lnstat.h"
+#include "version.h"
 
 static struct option opts[] = {
 	{ "version", 0, NULL, 'V' },
@@ -79,7 +80,7 @@ static int usage(char *name, int exit_code)
 		"				2 = every 20 lines (default))\n"
 		"	-w --width n,n,n,...	Width for each field\n"
 		"\n",
-		name, LNSTAT_VERSION);
+		name, version);
 
 	exit(exit_code);
 }

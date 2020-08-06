@@ -5,8 +5,6 @@
 #include <limits.h>
 #include <sys/select.h>
 
-#define LNSTAT_VERSION "0.02 041002"
-
 #define PROC_NET_STAT	"/proc/net/stat"
 
 #define LNSTAT_MAX_FILES			32

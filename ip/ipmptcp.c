@@ -273,7 +273,7 @@ static int mptcp_addr_show(int argc, char **argv)
 	struct nlmsghdr *answer;
 	int ret;
 
-	if (!argv)
+	if (argc <= 0)
 		return mptcp_addr_dump();
 
 	ret = mptcp_parse_opt(argc, argv, &req.n, false);

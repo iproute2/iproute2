@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <rt_names.h>
 
-#include "SNAPSHOT.h"
+#include "version.h"
 #include "list.h"
 #include "mnlg.h"
 #include "json_print.h"
@@ -7815,7 +7815,7 @@ int main(int argc, char **argv)
 
 		switch (opt) {
 		case 'V':
-			printf("devlink utility, iproute2-ss%s\n", SNAPSHOT);
+			printf("devlink utility, iproute2-%s\n", version);
 			ret = EXIT_SUCCESS;
 			goto dl_free;
 		case 'f':
