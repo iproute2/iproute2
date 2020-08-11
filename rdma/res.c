@@ -157,11 +157,11 @@ void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)
 	if (!str)
 		return;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_PID])
+	if (nla_line[RDMA_NLDEV_ATTR_RES_PID] || rd->json_output)
 		snprintf(tmp, sizeof(tmp), "%s", str);
 	else
 		snprintf(tmp, sizeof(tmp), "[%s]", str);
-	print_color_string(PRINT_ANY, COLOR_NONE, "comm", "comm %s ", str);
+	print_color_string(PRINT_ANY, COLOR_NONE, "comm", "comm %s ", tmp);
 }
 
 void print_dev(struct rd *rd, uint32_t idx, const char *name)
