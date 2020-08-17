@@ -291,7 +291,7 @@ static int multiaddr_modify(int cmd, int argc, char **argv)
 {
 	struct ifreq ifr = {};
 	int family;
-	int fd;
+	int fd, len;
 
 	if (cmd == RTM_NEWADDR)
 		cmd = SIOCADDMULTI;
@@ -313,9 +313,14 @@ static int multiaddr_modify(int cmd, int argc, char **argv)
 				usage();
 			if (ifr.ifr_hwaddr.sa_data[0])
 				duparg("address", *argv);
-			if (ll_addr_a2n(ifr.ifr_hwaddr.sa_data,
-					14, *argv) < 0) {
-				fprintf(stderr, "Error: \"%s\" is not a legal ll address.\n", *argv);
+			len = ll_addr_a2n(ifr.ifr_hwaddr.sa_data,
+					  sizeof(ifr.ifr_hwaddr.sa_data),
+					  *argv);
+			if (len < 0)
+				exit(1);
+
+			if (len != ETH_ALEN) {
+				fprintf(stderr, "Error: Invalid address length %d - must be %d bytes\n", len, ETH_ALEN);
 				exit(1);
 			}
 		}
