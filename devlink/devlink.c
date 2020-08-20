@@ -4654,6 +4654,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 		pr_out_trap_policer(dl, tb, false);
 		break;
 	}
+	fflush(stdout);
 	return MNL_CB_OK;
 }
 
