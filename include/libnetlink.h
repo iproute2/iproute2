@@ -284,4 +284,9 @@ int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
  * messages from dump file */
 #define NLMSG_TSTAMP	15
 
+#define rtattr_for_each_nested(attr, nest) \
+	for ((attr) = (void *)RTA_DATA(nest); \
+	     RTA_OK(attr, RTA_PAYLOAD(nest) - ((char *)(attr) - (char *)RTA_DATA((nest)))); \
+	     (attr) = RTA_TAIL((attr)))
+
 #endif /* __LIBNETLINK_H__ */
