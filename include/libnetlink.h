@@ -289,4 +289,6 @@ int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
 	     RTA_OK(attr, RTA_PAYLOAD(nest) - ((char *)(attr) - (char *)RTA_DATA((nest)))); \
 	     (attr) = RTA_TAIL((attr)))
 
+void nl_print_policy(const struct rtattr *attr, FILE *fp);
+
 #endif /* __LIBNETLINK_H__ */
