@@ -28,13 +28,15 @@
 static int usage(void)
 {
 	fprintf(stderr,"Usage: ctrl <CMD>\n" \
-		       "CMD   := get <PARMS> | list | monitor\n" \
+		       "CMD   := get <PARMS> | list | monitor | policy <PARMS>\n" \
 		       "PARMS := name <name> | id <id>\n" \
 		       "Examples:\n" \
 		       "\tctrl ls\n" \
 		       "\tctrl monitor\n" \
 		       "\tctrl get name foobar\n" \
-		       "\tctrl get id 0xF\n");
+		       "\tctrl get id 0xF\n"
+		       "\tctrl policy name foobar\n"
+		       "\tctrl policy id 0xF\n");
 	return -1;
 }
 
@@ -123,7 +125,8 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 	    ghdr->cmd != CTRL_CMD_DELFAMILY &&
 	    ghdr->cmd != CTRL_CMD_NEWFAMILY &&
 	    ghdr->cmd != CTRL_CMD_NEWMCAST_GRP &&
-	    ghdr->cmd != CTRL_CMD_DELMCAST_GRP) {
+	    ghdr->cmd != CTRL_CMD_DELMCAST_GRP &&
+	    ghdr->cmd != CTRL_CMD_GETPOLICY) {
 		fprintf(stderr, "Unknown controller command %d\n", ghdr->cmd);
 		return 0;
 	}
@@ -136,7 +139,7 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 	}
 
 	attrs = (struct rtattr *) ((char *) ghdr + GENL_HDRLEN);
-	parse_rtattr(tb, CTRL_ATTR_MAX, attrs, len);
+	parse_rtattr_flags(tb, CTRL_ATTR_MAX, attrs, len, NLA_F_NESTED);
 
 	if (tb[CTRL_ATTR_FAMILY_NAME]) {
 		char *name = RTA_DATA(tb[CTRL_ATTR_FAMILY_NAME]);
@@ -159,6 +162,9 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 		__u32 *ma = RTA_DATA(tb[CTRL_ATTR_MAXATTR]);
 		fprintf(fp, " max attribs: %d ",*ma);
 	}
+	if (tb[CTRL_ATTR_POLICY])
+		nl_print_policy(tb[CTRL_ATTR_POLICY], fp);
+
 	/* end of family definitions .. */
 	fprintf(fp,"\n");
 	if (tb[CTRL_ATTR_OPS]) {
@@ -235,7 +241,9 @@ static int ctrl_list(int cmd, int argc, char **argv)
 		exit(1);
 	}
 
-	if (cmd == CTRL_CMD_GETFAMILY) {
+	if (cmd == CTRL_CMD_GETFAMILY || cmd == CTRL_CMD_GETPOLICY) {
+		req.g.cmd = cmd;
+
 		if (argc != 2) {
 			fprintf(stderr, "Wrong number of params\n");
 			return -1;
@@ -260,7 +268,9 @@ static int ctrl_list(int cmd, int argc, char **argv)
 			fprintf(stderr, "Wrong params\n");
 			goto ctrl_done;
 		}
+	}
 
+	if (cmd == CTRL_CMD_GETFAMILY) {
 		if (rtnl_talk(&rth, nlh, &answer) < 0) {
 			fprintf(stderr, "Error talking to the kernel\n");
 			goto ctrl_done;
@@ -273,7 +283,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 
 	}
 
-	if (cmd == CTRL_CMD_UNSPEC) {
+	if (cmd == CTRL_CMD_UNSPEC || cmd == CTRL_CMD_GETPOLICY) {
 		nlh->nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
 		nlh->nlmsg_seq = rth.dump = ++rth.seq;
 
@@ -324,6 +334,8 @@ static int parse_ctrl(struct genl_util *a, int argc, char **argv)
 	    matches(*argv, "show") == 0 ||
 	    matches(*argv, "lst") == 0)
 		return ctrl_list(CTRL_CMD_UNSPEC, argc-1, argv+1);
+	if (matches(*argv, "policy") == 0)
+		return ctrl_list(CTRL_CMD_GETPOLICY, argc-1, argv+1);
 	if (matches(*argv, "help") == 0)
 		return usage();
 
