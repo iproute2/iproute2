@@ -649,6 +649,10 @@ static void xfrm_output_mark_print(struct rtattr *tb[], FILE *fp)
 	__u32 output_mark = rta_getattr_u32(tb[XFRMA_OUTPUT_MARK]);
 
 	fprintf(fp, "output-mark 0x%x", output_mark);
+	if (tb[XFRMA_SET_MARK_MASK]) {
+		__u32 mask = rta_getattr_u32(tb[XFRMA_SET_MARK_MASK]);
+		fprintf(fp, "/0x%x", mask);
+	}
 }
 
 int xfrm_parse_mark(struct xfrm_mark *mark, int *argcp, char ***argvp)
