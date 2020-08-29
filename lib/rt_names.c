@@ -682,3 +682,95 @@ int nl_proto_a2n(__u32 *id, const char *arg)
 	*id = res;
 	return 0;
 }
+
+#define PROTODOWN_REASON_NUM_BITS 32
+static char *protodown_reason_tab[PROTODOWN_REASON_NUM_BITS] = {
+};
+
+static int protodown_reason_init;
+
+static void protodown_reason_initialize(void)
+{
+	struct dirent *de;
+	DIR *d;
+
+	protodown_reason_init = 1;
+
+	d = opendir(CONFDIR "/protodown_reasons.d");
+	if (!d)
+		return;
+
+	while ((de = readdir(d)) != NULL) {
+		char path[PATH_MAX];
+		size_t len;
+
+		if (*de->d_name == '.')
+			continue;
+
+		/* only consider filenames ending in '.conf' */
+		len = strlen(de->d_name);
+		if (len <= 5)
+			continue;
+		if (strcmp(de->d_name + len - 5, ".conf"))
+			continue;
+
+		snprintf(path, sizeof(path), CONFDIR "/protodown_reasons.d/%s",
+			 de->d_name);
+		rtnl_tab_initialize(path, protodown_reason_tab,
+				    PROTODOWN_REASON_NUM_BITS);
+	}
+	closedir(d);
+}
+
+int protodown_reason_n2a(int id, char *buf, int len)
+{
+	if (id < 0 || id >= PROTODOWN_REASON_NUM_BITS)
+		return -1;
+
+	if (numeric) {
+		snprintf(buf, len, "%d", id);
+		return 0;
+	}
+
+	if (!protodown_reason_init)
+		protodown_reason_initialize();
+
+	if (protodown_reason_tab[id])
+		snprintf(buf, len, "%s", protodown_reason_tab[id]);
+	else
+		snprintf(buf, len, "%d", id);
+
+	return 0;
+}
+
+int protodown_reason_a2n(__u32 *id, const char *arg)
+{
+	static char *cache;
+	static unsigned long res;
+	char *end;
+	int i;
+
+	if (cache && strcmp(cache, arg) == 0) {
+		*id = res;
+		return 0;
+	}
+
+	if (!protodown_reason_init)
+		protodown_reason_initialize();
+
+	for (i = 0; i < PROTODOWN_REASON_NUM_BITS; i++) {
+		if (protodown_reason_tab[i] &&
+		    strcmp(protodown_reason_tab[i], arg) == 0) {
+			cache = protodown_reason_tab[i];
+			res = i;
+			*id = res;
+			return 0;
+		}
+	}
+
+	res = strtoul(arg, &end, 0);
+	if (!end || end == arg || *end || res >= PROTODOWN_REASON_NUM_BITS)
+		return -1;
+	*id = res;
+	return 0;
+}

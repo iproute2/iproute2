@@ -105,6 +105,7 @@ void iplink_usage(void)
 		"		[ nomaster ]\n"
 		"		[ addrgenmode { eui64 | none | stable_secret | random } ]\n"
 		"		[ protodown { on | off } ]\n"
+		"		[ protodown_reason PREASON { on | off } ]\n"
 		"		[ gso_max_size BYTES ] | [ gso_max_segs PACKETS ]\n"
 		"\n"
 		"	ip link show [ DEVICE | group GROUP ] [up] [master DEV] [vrf NAME] [type TYPE]\n"
@@ -903,6 +904,28 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 				return on_off("protodown", *argv);
 			addattr8(&req->n, sizeof(*req), IFLA_PROTO_DOWN,
 				 proto_down);
+		} else if (strcmp(*argv, "protodown_reason") == 0) {
+			struct rtattr *pr;
+			__u32 preason = 0, prvalue = 0, prmask = 0;
+
+			NEXT_ARG();
+			if (protodown_reason_a2n(&preason, *argv))
+				invarg("invalid protodown reason\n", *argv);
+			NEXT_ARG();
+			prmask = 1 << preason;
+			if (matches(*argv, "on") == 0)
+				prvalue |= prmask;
+			else if (matches(*argv, "off") == 0)
+				prvalue &= ~prmask;
+			else
+				return on_off("protodown_reason", *argv);
+			pr = addattr_nest(&req->n, sizeof(*req),
+					  IFLA_PROTO_DOWN_REASON | NLA_F_NESTED);
+			addattr32(&req->n, sizeof(*req),
+				  IFLA_PROTO_DOWN_REASON_MASK, prmask);
+			addattr32(&req->n, sizeof(*req),
+				  IFLA_PROTO_DOWN_REASON_VALUE, prvalue);
+			addattr_nest_end(&req->n, pr);
 		} else if (strcmp(*argv, "gso_max_size") == 0) {
 			unsigned int max_size;
 

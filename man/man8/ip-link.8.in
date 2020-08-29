@@ -75,6 +75,9 @@ ip-link \- network device configuration
 .br
 .RB "[ " protodown " { " on " | " off " } ]"
 .br
+.RB "[ " protodown_reason
+.IR PREASON " { " on " | " off " } ]"
+.br
 .RB "[ " trailers " { " on " | " off " } ]"
 .br
 .RB "[ " txqueuelen
@@ -1923,6 +1926,13 @@ change the
 state on the device. Indicates that a protocol error has been detected
 on the port. Switch drivers can react to this error by doing a phys
 down on the switch port.
+
+.TP
+.BR "protodown_reason PREASON on " or " off"
+set
+.B PROTODOWN
+reasons on the device. protodown reason bit names can be enumerated under
+/etc/iproute2/protodown_reasons.d/. possible reasons bits 0-31
 
 .TP
 .BR "dynamic on " or " dynamic off"

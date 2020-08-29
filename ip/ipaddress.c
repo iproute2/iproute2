@@ -874,6 +874,45 @@ static void print_link_event(FILE *f, __u32 event)
 	}
 }
 
+static void print_proto_down(FILE *f, struct rtattr *tb[])
+{
+	struct rtattr *preason[IFLA_PROTO_DOWN_REASON_MAX+1];
+
+	if (tb[IFLA_PROTO_DOWN]) {
+		if (rta_getattr_u8(tb[IFLA_PROTO_DOWN]))
+			print_bool(PRINT_ANY,
+				   "proto_down", " protodown on ", true);
+	}
+
+	if (tb[IFLA_PROTO_DOWN_REASON]) {
+		char buf[255];
+		__u32 reason;
+		int i, start = 1;
+
+		parse_rtattr_nested(preason, IFLA_PROTO_DOWN_REASON_MAX,
+				   tb[IFLA_PROTO_DOWN_REASON]);
+		if (!tb[IFLA_PROTO_DOWN_REASON_VALUE])
+			return;
+
+		reason = rta_getattr_u8(preason[IFLA_PROTO_DOWN_REASON_VALUE]);
+		if (!reason)
+			return;
+
+		open_json_array(PRINT_ANY,
+				is_json_context() ? "proto_down_reason" : "protodown_reason <");
+		for (i = 0; reason; i++, reason >>= 1) {
+			if (reason & 0x1) {
+				if (protodown_reason_n2a(i, buf, sizeof(buf)))
+					break;
+				print_string(PRINT_ANY, NULL,
+					     start ? "%s" : ",%s", buf);
+				start = 0;
+			}
+		}
+		close_json_array(PRINT_ANY, ">");
+	}
+}
+
 int print_linkinfo(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -1066,11 +1105,8 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 		print_int(PRINT_FP, NULL, " new-ifindex %d", id);
 	}
 
-	if (tb[IFLA_PROTO_DOWN]) {
-		if (rta_getattr_u8(tb[IFLA_PROTO_DOWN]))
-			print_bool(PRINT_ANY,
-				   "proto_down", " protodown on ", true);
-	}
+	if (tb[IFLA_PROTO_DOWN])
+		print_proto_down(fp, tb);
 
 	if (show_details) {
 		if (tb[IFLA_PROMISCUITY])
