@@ -1917,6 +1917,28 @@ change the
 flag on the device.
 
 .TP
+.BR "allmulticast on " or " allmulticast off"
+change the
+.B ALLMULTI
+flag on the device. When enabled, instructs network driver to retrieve all
+multicast packets from the network to the kernel for further processing.
+
+.TP
+.BR "promisc on " or " promisc off"
+change the
+.B PROMISC
+flag on the device. When enabled, activates promiscuous operation of the
+network device.
+
+.TP
+.BR "trailers on " or " trailers off"
+change the
+.B NOTRAILERS
+flag on the device,
+.B NOT
+used by the Linux and exists for BSD compatibility.
+
+.TP
 .BR "protodown on " or " protodown off"
 change the
 .B PROTODOWN
