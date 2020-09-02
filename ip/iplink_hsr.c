@@ -25,7 +25,7 @@ static void print_usage(FILE *f)
 {
 	fprintf(f,
 		"Usage:\tip link add name NAME type hsr slave1 SLAVE1-IF slave2 SLAVE2-IF\n"
-		"\t[ supervision ADDR-BYTE ] [version VERSION]\n"
+		"\t[ supervision ADDR-BYTE ] [version VERSION] [proto PROTOCOL]\n"
 		"\n"
 		"NAME\n"
 		"	name of new hsr device (e.g. hsr0)\n"
@@ -35,7 +35,9 @@ static void print_usage(FILE *f)
 		"	0-255; the last byte of the multicast address used for HSR supervision\n"
 		"	frames (default = 0)\n"
 		"VERSION\n"
-		"	0,1; the protocol version to be used. (default = 0)\n");
+		"	0,1; the protocol version to be used. (default = 0)\n"
+		"PROTOCOL\n"
+		"	0 - HSR, 1 - PRP. (default = 0 - HSR)\n");
 }
 
 static void usage(void)
@@ -49,6 +51,7 @@ static int hsr_parse_opt(struct link_util *lu, int argc, char **argv,
 	int ifindex;
 	unsigned char multicast_spec;
 	unsigned char protocol_version;
+	unsigned char protocol = HSR_PROTOCOL_HSR;
 
 	while (argc > 0) {
 		if (matches(*argv, "supervision") == 0) {
@@ -64,6 +67,13 @@ static int hsr_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("version is invalid", *argv);
 			addattr_l(n, 1024, IFLA_HSR_VERSION,
 				  &protocol_version, 1);
+		} else if (matches(*argv, "proto") == 0) {
+			NEXT_ARG();
+			if (!(get_u8(&protocol, *argv, 0) == HSR_PROTOCOL_HSR ||
+			      get_u8(&protocol, *argv, 0) == HSR_PROTOCOL_PRP))
+				invarg("protocol is invalid", *argv);
+			addattr_l(n, 1024, IFLA_HSR_PROTOCOL,
+				  &protocol, 1);
 		} else if (matches(*argv, "slave1") == 0) {
 			NEXT_ARG();
 			ifindex = ll_name_to_index(*argv);
@@ -140,6 +150,9 @@ static void hsr_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 					 RTA_PAYLOAD(tb[IFLA_HSR_SUPERVISION_ADDR]),
 					 ARPHRD_VOID,
 					 b1, sizeof(b1)));
+	if (tb[IFLA_HSR_PROTOCOL])
+		print_hhu(PRINT_ANY, "proto", "proto %hhu ",
+			  rta_getattr_u8(tb[IFLA_HSR_PROTOCOL]));
 }
 
 static void hsr_print_help(struct link_util *lu, int argc, char **argv,

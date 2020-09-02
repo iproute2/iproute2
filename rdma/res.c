@@ -157,26 +157,36 @@ void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)
 	if (!str)
 		return;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_PID])
+	if (nla_line[RDMA_NLDEV_ATTR_RES_PID] || rd->json_output)
 		snprintf(tmp, sizeof(tmp), "%s", str);
 	else
 		snprintf(tmp, sizeof(tmp), "[%s]", str);
-	print_color_string(PRINT_ANY, COLOR_NONE, "comm", "comm %s ", str);
+	print_color_string(PRINT_ANY, COLOR_NONE, "comm", "comm %s ", tmp);
 }
 
 void print_dev(struct rd *rd, uint32_t idx, const char *name)
 {
-	print_color_int(PRINT_ANY, COLOR_NONE, "ifindex", "ifindex %d ", idx);
-	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "ifname %s ", name);
+	print_color_int(PRINT_ANY, COLOR_NONE, "ifindex", NULL, idx);
+	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "dev %s ", name);
 }
 
 void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 		struct nlattr **nla_line)
 {
+	char tmp[64] = {};
+
 	print_color_uint(PRINT_JSON, COLOR_NONE, "ifindex", NULL, idx);
-	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "link %s/", name);
-	if (nla_line[RDMA_NLDEV_ATTR_PORT_INDEX])
-		print_color_uint(PRINT_ANY, COLOR_NONE, "port", "%u ", port);
+	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", NULL, name);
+	if (nla_line[RDMA_NLDEV_ATTR_PORT_INDEX]) {
+		print_color_uint(PRINT_ANY, COLOR_NONE, "port", NULL, port);
+		snprintf(tmp, sizeof(tmp), "%s/%d", name, port);
+	} else {
+		snprintf(tmp, sizeof(tmp), "%s/-", name);
+	}
+
+	if (!rd->json_output)
+		print_color_string(PRINT_ANY, COLOR_NONE, NULL, "link %s ",
+				   tmp);
 }
 
 void print_qp_type(struct rd *rd, uint32_t val)
