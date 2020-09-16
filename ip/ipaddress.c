@@ -744,7 +744,7 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 		close_json_object();
 	} else {
 		/* RX stats */
-		fprintf(fp, "    RX: bytes  packets  errors  dropped overrun mcast   %s%s",
+		fprintf(fp, "    RX: bytes  packets  errors  dropped missed  mcast   %s%s",
 			s->rx_compressed ? "compressed" : "", _SL_);
 
 		fprintf(fp, "    ");
@@ -752,7 +752,7 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 		print_num(fp, 8, s->rx_packets);
 		print_num(fp, 7, s->rx_errors);
 		print_num(fp, 7, s->rx_dropped);
-		print_num(fp, 7, s->rx_over_errors);
+		print_num(fp, 7, s->rx_missed_errors);
 		print_num(fp, 7, s->multicast);
 		if (s->rx_compressed)
 			print_num(fp, 7, s->rx_compressed);
@@ -760,14 +760,14 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 		/* RX error stats */
 		if (show_stats > 1) {
 			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    RX errors: length   crc     frame   fifo    missed%s%s",
+			fprintf(fp, "    RX errors: length   crc     frame   fifo    overrun%s%s",
 				s->rx_nohandler ? "   nohandler" : "", _SL_);
 			fprintf(fp, "               ");
 			print_num(fp, 8, s->rx_length_errors);
 			print_num(fp, 7, s->rx_crc_errors);
 			print_num(fp, 7, s->rx_frame_errors);
 			print_num(fp, 7, s->rx_fifo_errors);
-			print_num(fp, 7, s->rx_missed_errors);
+			print_num(fp, 7, s->rx_over_errors);
 			if (s->rx_nohandler)
 				print_num(fp, 7, s->rx_nohandler);
 		}
