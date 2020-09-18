@@ -3343,6 +3343,9 @@ static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
 {
 	uint16_t fn_num;
 
+	if (tb[DEVLINK_ATTR_PORT_CONTROLLER_NUMBER])
+		print_uint(PRINT_ANY, "controller", " controller %u",
+			   mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_CONTROLLER_NUMBER]));
 	if (tb[DEVLINK_ATTR_PORT_PCI_PF_NUMBER]) {
 		fn_num = mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_PCI_PF_NUMBER]);
 		print_uint(PRINT_ANY, "pfnum", " pfnum %u", fn_num);
