@@ -3351,6 +3351,12 @@ static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
 		fn_num = mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_PCI_VF_NUMBER]);
 		print_uint(PRINT_ANY, "vfnum", " vfnum %u", fn_num);
 	}
+	if (tb[DEVLINK_ATTR_PORT_EXTERNAL]) {
+		uint8_t external;
+
+		external = mnl_attr_get_u8(tb[DEVLINK_ATTR_PORT_EXTERNAL]);
+		print_bool(PRINT_ANY, "external", " external %s", external);
+	}
 }
 
 static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
