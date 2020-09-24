@@ -4536,6 +4536,21 @@ static void xdp_show_umem(struct xdp_diag_umem *umem, struct xdp_diag_ring *fr,
 		xdp_show_ring("cr", cr);
 }
 
+static void xdp_show_stats(struct xdp_diag_stats *stats)
+{
+	if (oneline)
+		out(" stats(");
+	else
+		out("\n\tstats(");
+	out("rx dropped:%llu", stats->n_rx_dropped);
+	out(",rx invalid:%llu", stats->n_rx_invalid);
+	out(",rx queue full:%llu", stats->n_rx_full);
+	out(",rx fill ring empty:%llu", stats->n_fill_ring_empty);
+	out(",tx invalid:%llu", stats->n_tx_invalid);
+	out(",tx ring empty:%llu", stats->n_tx_ring_empty);
+	out(")");
+}
+
 static int xdp_show_sock(struct nlmsghdr *nlh, void *arg)
 {
 	struct xdp_diag_ring *rx = NULL, *tx = NULL, *fr = NULL, *cr = NULL;
@@ -4543,6 +4558,7 @@ static int xdp_show_sock(struct nlmsghdr *nlh, void *arg)
 	struct rtattr *tb[XDP_DIAG_MAX + 1];
 	struct xdp_diag_info *info = NULL;
 	struct xdp_diag_umem *umem = NULL;
+	struct xdp_diag_stats *stats = NULL;
 	const struct filter *f = arg;
 	struct sockstat stat = {};
 
@@ -4577,6 +4593,8 @@ static int xdp_show_sock(struct nlmsghdr *nlh, void *arg)
 
 		stat.rq = skmeminfo[SK_MEMINFO_RMEM_ALLOC];
 	}
+	if (tb[XDP_DIAG_STATS])
+		stats = RTA_DATA(tb[XDP_DIAG_STATS]);
 
 	if (xdp_stats_print(&stat, f))
 		return 0;
@@ -4588,6 +4606,8 @@ static int xdp_show_sock(struct nlmsghdr *nlh, void *arg)
 			xdp_show_ring("tx", tx);
 		if (umem)
 			xdp_show_umem(umem, fr, cr);
+		if (stats)
+			xdp_show_stats(stats);
 	}
 
 	if (show_mem)
@@ -4606,7 +4626,7 @@ static int xdp_show(struct filter *f)
 
 	req.r.sdiag_family = AF_XDP;
 	req.r.xdiag_show = XDP_SHOW_INFO | XDP_SHOW_RING_CFG | XDP_SHOW_UMEM |
-			   XDP_SHOW_MEMINFO;
+			   XDP_SHOW_MEMINFO | XDP_SHOW_STATS;
 
 	return handle_netlink_request(f, &req.nlh, sizeof(req), xdp_show_sock);
 }
