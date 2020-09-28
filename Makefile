@@ -63,7 +63,7 @@ LDLIBS += $(LIBNETLINK)
 all: config.mk
 	@set -e; \
 	for i in $(SUBDIRS); \
-	do echo; echo $$i; $(MAKE) $(MFLAGS) -C $$i; done
+	do echo; echo $$i; $(MAKE) -C $$i; done
 
 .PHONY: clean clobber distclean check cscope version
 
@@ -101,11 +101,11 @@ version:
 
 clean:
 	@for i in $(SUBDIRS) testsuite; \
-	do $(MAKE) $(MFLAGS) -C $$i clean; done
+	do $(MAKE) -C $$i clean; done
 
 clobber:
 	touch config.mk
-	$(MAKE) $(MFLAGS) clean
+	$(MAKE) clean
 	rm -f config.mk cscope.*
 
 distclean: clobber
