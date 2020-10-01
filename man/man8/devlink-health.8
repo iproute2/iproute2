@@ -42,6 +42,12 @@ devlink-health \- devlink health reporting and recovery
 .RI "" REPORTER ""
 
 .ti -8
+.BR "devlink health test"
+.RI "{ " DEV " | " DEV/PORT_INDEX " }"
+.B reporter
+.RI "" REPORTER ""
+
+.ti -8
 .B devlink health dump clear
 .RI "{ " DEV " | " DEV/PORT_INDEX " }"
 .B reporter
@@ -104,6 +110,16 @@ This action performs a recovery and increases the recoveries counter on success.
 .PP
 .I "REPORTER"
 - specifies the reporter's name registered on specified devlink device or port.
+
+.SS devlink health test - Trigger a test event on a reporter.
+
+.PP
+.I "DEV"
+- specifies the devlink device.
+
+.PP
+.I "REPORTER"
+- specifies the reporter's name registered on the devlink device.
 
 .SS devlink health dump show - Display the last saved dump.
 

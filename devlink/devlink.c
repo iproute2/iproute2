@@ -7099,6 +7099,13 @@ static int cmd_health_diagnose(struct dl *dl)
 					0);
 }
 
+static int cmd_health_test(struct dl *dl)
+{
+	return cmd_health_object_common(dl,
+					DEVLINK_CMD_HEALTH_REPORTER_TEST,
+					0);
+}
+
 static int cmd_health_recover(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
@@ -7303,6 +7310,7 @@ static void cmd_health_help(void)
 	pr_err("Usage: devlink health show [ { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME ]\n");
 	pr_err("       devlink health recover { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
 	pr_err("       devlink health diagnose { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
+	pr_err("       devlink health test { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump show { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
 	pr_err("       devlink health dump clear { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
 	pr_err("       devlink health set { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
@@ -7326,6 +7334,9 @@ static int cmd_health(struct dl *dl)
 	} else if (dl_argv_match(dl, "diagnose")) {
 		dl_arg_inc(dl);
 		return cmd_health_diagnose(dl);
+	} else if (dl_argv_match(dl, "test")) {
+		dl_arg_inc(dl);
+		return cmd_health_test(dl);
 	} else if (dl_argv_match(dl, "dump")) {
 		dl_arg_inc(dl);
 		if (dl_argv_match(dl, "show")) {

@@ -635,7 +635,7 @@ _devlink_health_reporter()
 _devlink_health()
 {
     case $command in
-        show|recover|diagnose|set)
+        show|recover|diagnose|set|test)
             _devlink_health_reporter 0
             if [[ $command == "set" ]]; then
                 case $cword in
