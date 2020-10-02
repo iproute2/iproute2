@@ -517,6 +517,11 @@ static void print_ndtstats(const struct ndt_stats *ndts)
 	print_u64(PRINT_ANY, "forced_gc_runs", "forced_gc_runs %llu ",
 		   ndts->ndts_forced_gc_runs);
 
+	print_string(PRINT_FP, NULL, "%s    ", _SL_);
+
+	print_u64(PRINT_ANY, "table_fulls", "table_fulls %llu ",
+		  ndts->ndts_table_fulls);
+
 	print_nl();
 }
 
