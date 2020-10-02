@@ -62,7 +62,7 @@ static void usage(void)
 		"        [ flag FLAG-LIST ] [ sel SELECTOR ] [ LIMIT-LIST ] [ encap ENCAP ]\n"
 		"        [ coa ADDR[/PLEN] ] [ ctx CTX ] [ extra-flag EXTRA-FLAG-LIST ]\n"
 		"        [ offload [dev DEV] dir DIR ]\n"
-		"        [ output-mark OUTPUT-MARK ]\n"
+		"        [ output-mark OUTPUT-MARK [ mask MASK ] ]\n"
 		"        [ if_id IF_ID ]\n"
 		"Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n"
 		"        [ reqid REQID ] [ seq SEQ ] [ min SPI max SPI ]\n"
@@ -328,7 +328,7 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 		struct xfrm_user_sec_ctx sctx;
 		char    str[CTX_BUF_SIZE];
 	} ctx = {};
-	__u32 output_mark = 0;
+	struct xfrm_mark output_mark = {0, 0};
 	bool is_if_id_set = false;
 	__u32 if_id = 0;
 
@@ -448,8 +448,18 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 			}
 		} else if (strcmp(*argv, "output-mark") == 0) {
 			NEXT_ARG();
-			if (get_u32(&output_mark, *argv, 0))
+			if (get_u32(&output_mark.v, *argv, 0))
 				invarg("value after \"output-mark\" is invalid", *argv);
+			if (argc > 1) {
+				NEXT_ARG();
+				if (strcmp(*argv, "mask") == 0) {
+					NEXT_ARG();
+					if (get_u32(&output_mark.m, *argv, 0))
+						invarg("mask value is invalid\n", *argv);
+				} else {
+					PREV_ARG();
+				}
+			}
 		} else if (strcmp(*argv, "if_id") == 0) {
 			NEXT_ARG();
 			if (get_u32(&if_id, *argv, 0))
@@ -741,8 +751,11 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 		}
 	}
 
-	if (output_mark)
-		addattr32(&req.n, sizeof(req.buf), XFRMA_OUTPUT_MARK, output_mark);
+	if (output_mark.v)
+		addattr32(&req.n, sizeof(req.buf), XFRMA_OUTPUT_MARK, output_mark.v);
+
+	if (output_mark.m)
+		addattr32(&req.n, sizeof(req.buf), XFRMA_SET_MARK_MASK, output_mark.m);
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
