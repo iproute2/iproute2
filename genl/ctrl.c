@@ -162,6 +162,33 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 		__u32 *ma = RTA_DATA(tb[CTRL_ATTR_MAXATTR]);
 		fprintf(fp, " max attribs: %d ",*ma);
 	}
+	if (tb[CTRL_ATTR_OP_POLICY]) {
+		const struct rtattr *pos;
+
+		rtattr_for_each_nested(pos, tb[CTRL_ATTR_OP_POLICY]) {
+			struct rtattr *ptb[CTRL_ATTR_POLICY_DUMP_MAX + 1];
+			struct rtattr *pattrs = RTA_DATA(pos);
+			int plen = RTA_PAYLOAD(pos);
+
+			parse_rtattr_flags(ptb, CTRL_ATTR_POLICY_DUMP_MAX,
+					   pattrs, plen, NLA_F_NESTED);
+
+			fprintf(fp, " op %d policies:",
+				pos->rta_type & ~NLA_F_NESTED);
+
+			if (ptb[CTRL_ATTR_POLICY_DO]) {
+				__u32 *v = RTA_DATA(ptb[CTRL_ATTR_POLICY_DO]);
+
+				fprintf(fp, " do=%d", *v);
+			}
+
+			if (ptb[CTRL_ATTR_POLICY_DUMP]) {
+				__u32 *v = RTA_DATA(ptb[CTRL_ATTR_POLICY_DUMP]);
+
+				fprintf(fp, " dump=%d", *v);
+			}
+		}
+	}
 	if (tb[CTRL_ATTR_POLICY])
 		nl_print_policy(tb[CTRL_ATTR_POLICY], fp);
 
