@@ -13,6 +13,8 @@
 #ifndef _LINUX_DEVLINK_H_
 #define _LINUX_DEVLINK_H_
 
+#include <linux/const.h>
+
 #define DEVLINK_GENL_NAME "devlink"
 #define DEVLINK_GENL_VERSION 0x1
 #define DEVLINK_GENL_MCGRP_CONFIG_NAME "config"
@@ -195,6 +197,9 @@ enum devlink_port_flavour {
 				      * port that faces the PCI VF.
 				      */
 	DEVLINK_PORT_FLAVOUR_VIRTUAL, /* Any virtual port facing the user. */
+	DEVLINK_PORT_FLAVOUR_UNUSED, /* Port which exists in the switch, but
+				      * is not used in any way.
+				      */
 };
 
 enum devlink_param_cmode {
