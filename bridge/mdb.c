@@ -155,6 +155,10 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 		print_string(PRINT_ANY, NULL, " %s", "offload");
 	if (e->flags & MDB_FLAGS_FAST_LEAVE)
 		print_string(PRINT_ANY, NULL, " %s", "fast_leave");
+	if (e->flags & MDB_FLAGS_STAR_EXCL)
+		print_string(PRINT_ANY, NULL, " %s", "added_by_star_ex");
+	if (e->flags & MDB_FLAGS_BLOCKED)
+		print_string(PRINT_ANY, NULL, " %s", "blocked");
 	close_json_array(PRINT_JSON, NULL);
 
 	if (e->vid)
