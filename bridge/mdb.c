@@ -153,6 +153,8 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 	open_json_array(PRINT_JSON, "flags");
 	if (e->flags & MDB_FLAGS_OFFLOAD)
 		print_string(PRINT_ANY, NULL, " %s", "offload");
+	if (e->flags & MDB_FLAGS_FAST_LEAVE)
+		print_string(PRINT_ANY, NULL, " %s", "fast_leave");
 	close_json_array(PRINT_JSON, NULL);
 
 	if (e->vid)
