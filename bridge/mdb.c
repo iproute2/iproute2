@@ -31,7 +31,7 @@ static unsigned int filter_index, filter_vlan;
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [permanent | temp] [vid VID]\n"
+		"Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -118,16 +118,16 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr,
 static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 			    struct nlmsghdr *n, struct rtattr **tb)
 {
+	const void *grp, *src;
 	SPRINT_BUF(abuf);
 	const char *dev;
-	const void *src;
 	int af;
 
 	if (filter_vlan && e->vid != filter_vlan)
 		return;
 
 	af = e->addr.proto == htons(ETH_P_IP) ? AF_INET : AF_INET6;
-	src = af == AF_INET ? (const void *)&e->addr.u.ip4 :
+	grp = af == AF_INET ? (const void *)&e->addr.u.ip4 :
 			      (const void *)&e->addr.u.ip6;
 	dev = ll_index_to_name(ifindex);
 
@@ -140,8 +140,13 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 
 	print_color_string(PRINT_ANY, ifa_family_color(af),
 			    "grp", " grp %s",
-			    inet_ntop(af, src, abuf, sizeof(abuf)));
-
+			    inet_ntop(af, grp, abuf, sizeof(abuf)));
+	if (tb && tb[MDBA_MDB_EATTR_SOURCE]) {
+		src = (const void *)RTA_DATA(tb[MDBA_MDB_EATTR_SOURCE]);
+		print_color_string(PRINT_ANY, ifa_family_color(af),
+				   "src", " src %s",
+				   inet_ntop(af, src, abuf, sizeof(abuf)));
+	}
 	print_string(PRINT_ANY, "state", " %s",
 			   (e->state & MDB_PERMANENT) ? "permanent" : "temp");
 
@@ -378,8 +383,8 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.bpm.family = PF_BRIDGE,
 	};
+	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL;
 	struct br_mdb_entry entry = {};
-	char *d = NULL, *p = NULL, *grp = NULL;
 	short vid = 0;
 
 	while (argc > 0) {
@@ -400,6 +405,9 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "vid") == 0) {
 			NEXT_ARG();
 			vid = atoi(*argv);
+		} else if (strcmp(*argv, "src") == 0) {
+			NEXT_ARG();
+			src = *argv;
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
@@ -431,6 +439,24 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 	entry.vid = vid;
 	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
+	if (src) {
+		struct rtattr *nest = addattr_nest(&req.n, sizeof(req),
+						   MDBA_SET_ENTRY_ATTRS);
+		struct in6_addr src_ip6;
+		__be32 src_ip4;
+
+		nest->rta_type |= NLA_F_NESTED;
+		if (!inet_pton(AF_INET, src, &src_ip4)) {
+			if (!inet_pton(AF_INET6, src, &src_ip6)) {
+				fprintf(stderr, "Invalid source address \"%s\"\n", src);
+				return -1;
+			}
+			addattr_l(&req.n, sizeof(req), MDBE_ATTR_SOURCE, &src_ip6, sizeof(src_ip6));
+		} else {
+			addattr32(&req.n, sizeof(req), MDBE_ATTR_SOURCE, src_ip4);
+		}
+		addattr_nest_end(&req.n, nest);
+	}
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;

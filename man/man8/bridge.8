@@ -116,6 +116,8 @@ bridge \- show / manipulate bridge addresses and devices
 .I PORT
 .B grp
 .IR GROUP " [ "
+.B src
+.IR SOURCE " ] [ "
 .BR permanent " | " temp " ] [ "
 .B vid
 .IR VID " ] "
@@ -693,6 +695,12 @@ the port.
 .B temp
 - the mdb entry is temporary (default)
 .sp
+
+.TP
+.BI src " SOURCE"
+optional source IP address of a sender for this multicast group. If IGMPv3 for IPv4, or
+MLDv2 for IPv6 respectively, are enabled it will be included in the lookup when
+forwarding multicast traffic.
 
 .TP
 .BI vid " VID"
