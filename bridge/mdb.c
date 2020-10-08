@@ -150,6 +150,13 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 	print_string(PRINT_ANY, "state", " %s",
 			   (e->state & MDB_PERMANENT) ? "permanent" : "temp");
 
+	if (show_details && tb && tb[MDBA_MDB_EATTR_GROUP_MODE]) {
+		__u8 mode = rta_getattr_u8(tb[MDBA_MDB_EATTR_GROUP_MODE]);
+
+		print_string(PRINT_ANY, "filter_mode", " filter_mode %s",
+			     mode == MCAST_INCLUDE ? "include" : "exclude");
+	}
+
 	open_json_array(PRINT_JSON, "flags");
 	if (e->flags & MDB_FLAGS_OFFLOAD)
 		print_string(PRINT_ANY, NULL, " %s", "offload");
