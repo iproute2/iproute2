@@ -203,6 +203,13 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 			}
 			close_json_array(PRINT_JSON, NULL);
 		}
+		if (tb[MDBA_MDB_EATTR_RTPROT]) {
+			__u8 rtprot = rta_getattr_u8(tb[MDBA_MDB_EATTR_RTPROT]);
+			SPRINT_BUF(rtb);
+
+			print_string(PRINT_ANY, "protocol", " proto %s ",
+				     rtnl_rtprot_n2a(rtprot, rtb, sizeof(rtb)));
+		}
 	}
 
 	open_json_array(PRINT_JSON, "flags");
