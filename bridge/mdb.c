@@ -41,15 +41,20 @@ static bool is_temp_mcast_rtr(__u8 type)
 	return type == MDB_RTR_TYPE_TEMP_QUERY || type == MDB_RTR_TYPE_TEMP;
 }
 
-static const char *format_timer(__u32 ticks)
+static const char *format_timer(__u32 ticks, int align)
 {
 	struct timeval tv;
 	static char tbuf[32];
 
 	__jiffies_to_tv(&tv, ticks);
-	snprintf(tbuf, sizeof(tbuf), "%4lu.%.2lu",
-		 (unsigned long)tv.tv_sec,
-		 (unsigned long)tv.tv_usec / 10000);
+	if (align)
+		snprintf(tbuf, sizeof(tbuf), "%4lu.%.2lu",
+			 (unsigned long)tv.tv_sec,
+			 (unsigned long)tv.tv_usec / 10000);
+	else
+		snprintf(tbuf, sizeof(tbuf), "%lu.%.2lu",
+			 (unsigned long)tv.tv_sec,
+			 (unsigned long)tv.tv_usec / 10000);
 
 	return tbuf;
 }
@@ -65,7 +70,7 @@ static void __print_router_port_stats(FILE *f, struct rtattr *pattr)
 		__u32 timer = rta_getattr_u32(tb[MDBA_ROUTER_PATTR_TIMER]);
 
 		print_string(PRINT_ANY, "timer", " %s",
-			     format_timer(timer));
+			     format_timer(timer, 1));
 	}
 
 	if (tb[MDBA_ROUTER_PATTR_TYPE]) {
@@ -115,6 +120,31 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr,
 	close_json_array(PRINT_JSON, NULL);
 }
 
+static void print_src_entry(struct rtattr *src_attr, int af, const char *sep)
+{
+	struct rtattr *stb[MDBA_MDB_SRCATTR_MAX + 1];
+	SPRINT_BUF(abuf);
+	const char *addr;
+	__u32 timer_val;
+
+	parse_rtattr_nested(stb, MDBA_MDB_SRCATTR_MAX, src_attr);
+	if (!stb[MDBA_MDB_SRCATTR_ADDRESS] || !stb[MDBA_MDB_SRCATTR_TIMER])
+		return;
+
+	addr = inet_ntop(af, RTA_DATA(stb[MDBA_MDB_SRCATTR_ADDRESS]), abuf,
+			 sizeof(abuf));
+	if (!addr)
+		return;
+	timer_val = rta_getattr_u32(stb[MDBA_MDB_SRCATTR_TIMER]);
+
+	open_json_object(NULL);
+	print_string(PRINT_FP, NULL, "%s", sep);
+	print_color_string(PRINT_ANY, ifa_family_color(af),
+			   "address", "%s", addr);
+	print_string(PRINT_ANY, "timer", "/%s", format_timer(timer_val, 0));
+	close_json_object();
+}
+
 static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 			    struct nlmsghdr *n, struct rtattr **tb)
 {
@@ -149,12 +179,30 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 	}
 	print_string(PRINT_ANY, "state", " %s",
 			   (e->state & MDB_PERMANENT) ? "permanent" : "temp");
+	if (show_details && tb) {
+		if (tb[MDBA_MDB_EATTR_GROUP_MODE]) {
+			__u8 mode = rta_getattr_u8(tb[MDBA_MDB_EATTR_GROUP_MODE]);
 
-	if (show_details && tb && tb[MDBA_MDB_EATTR_GROUP_MODE]) {
-		__u8 mode = rta_getattr_u8(tb[MDBA_MDB_EATTR_GROUP_MODE]);
+			print_string(PRINT_ANY, "filter_mode", " filter_mode %s",
+				     mode == MCAST_INCLUDE ? "include" :
+							     "exclude");
+		}
+		if (tb[MDBA_MDB_EATTR_SRC_LIST]) {
+			struct rtattr *i, *attr = tb[MDBA_MDB_EATTR_SRC_LIST];
+			const char *sep = " ";
+			int rem;
 
-		print_string(PRINT_ANY, "filter_mode", " filter_mode %s",
-			     mode == MCAST_INCLUDE ? "include" : "exclude");
+			open_json_array(PRINT_ANY, is_json_context() ?
+								"source_list" :
+								" source_list");
+			rem = RTA_PAYLOAD(attr);
+			for (i = RTA_DATA(attr); RTA_OK(i, rem);
+			     i = RTA_NEXT(i, rem)) {
+				print_src_entry(i, af, sep);
+				sep = ",";
+			}
+			close_json_array(PRINT_JSON, NULL);
+		}
 	}
 
 	open_json_array(PRINT_JSON, "flags");
@@ -175,7 +223,7 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 		__u32 timer = rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]);
 
 		print_string(PRINT_ANY, "timer", " %s",
-			     format_timer(timer));
+			     format_timer(timer, 1));
 	}
 
 	print_nl();
@@ -193,8 +241,9 @@ static void br_print_mdb_entry(FILE *f, int ifindex, struct rtattr *attr,
 	rem = RTA_PAYLOAD(attr);
 	for (i = RTA_DATA(attr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		e = RTA_DATA(i);
-		parse_rtattr(etb, MDBA_MDB_EATTR_MAX, MDB_RTA(RTA_DATA(i)),
-			     RTA_PAYLOAD(i) - RTA_ALIGN(sizeof(*e)));
+		parse_rtattr_flags(etb, MDBA_MDB_EATTR_MAX, MDB_RTA(RTA_DATA(i)),
+				   RTA_PAYLOAD(i) - RTA_ALIGN(sizeof(*e)),
+				   NLA_F_NESTED);
 		print_mdb_entry(f, ifindex, e, n, etb);
 	}
 }
