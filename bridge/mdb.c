@@ -31,7 +31,7 @@ static unsigned int filter_index, filter_vlan;
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [permanent | temp] [vid VID]\n"
+		"Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -41,15 +41,20 @@ static bool is_temp_mcast_rtr(__u8 type)
 	return type == MDB_RTR_TYPE_TEMP_QUERY || type == MDB_RTR_TYPE_TEMP;
 }
 
-static const char *format_timer(__u32 ticks)
+static const char *format_timer(__u32 ticks, int align)
 {
 	struct timeval tv;
 	static char tbuf[32];
 
 	__jiffies_to_tv(&tv, ticks);
-	snprintf(tbuf, sizeof(tbuf), "%4lu.%.2lu",
-		 (unsigned long)tv.tv_sec,
-		 (unsigned long)tv.tv_usec / 10000);
+	if (align)
+		snprintf(tbuf, sizeof(tbuf), "%4lu.%.2lu",
+			 (unsigned long)tv.tv_sec,
+			 (unsigned long)tv.tv_usec / 10000);
+	else
+		snprintf(tbuf, sizeof(tbuf), "%lu.%.2lu",
+			 (unsigned long)tv.tv_sec,
+			 (unsigned long)tv.tv_usec / 10000);
 
 	return tbuf;
 }
@@ -65,7 +70,7 @@ static void __print_router_port_stats(FILE *f, struct rtattr *pattr)
 		__u32 timer = rta_getattr_u32(tb[MDBA_ROUTER_PATTR_TIMER]);
 
 		print_string(PRINT_ANY, "timer", " %s",
-			     format_timer(timer));
+			     format_timer(timer, 1));
 	}
 
 	if (tb[MDBA_ROUTER_PATTR_TYPE]) {
@@ -115,19 +120,44 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr,
 	close_json_array(PRINT_JSON, NULL);
 }
 
+static void print_src_entry(struct rtattr *src_attr, int af, const char *sep)
+{
+	struct rtattr *stb[MDBA_MDB_SRCATTR_MAX + 1];
+	SPRINT_BUF(abuf);
+	const char *addr;
+	__u32 timer_val;
+
+	parse_rtattr_nested(stb, MDBA_MDB_SRCATTR_MAX, src_attr);
+	if (!stb[MDBA_MDB_SRCATTR_ADDRESS] || !stb[MDBA_MDB_SRCATTR_TIMER])
+		return;
+
+	addr = inet_ntop(af, RTA_DATA(stb[MDBA_MDB_SRCATTR_ADDRESS]), abuf,
+			 sizeof(abuf));
+	if (!addr)
+		return;
+	timer_val = rta_getattr_u32(stb[MDBA_MDB_SRCATTR_TIMER]);
+
+	open_json_object(NULL);
+	print_string(PRINT_FP, NULL, "%s", sep);
+	print_color_string(PRINT_ANY, ifa_family_color(af),
+			   "address", "%s", addr);
+	print_string(PRINT_ANY, "timer", "/%s", format_timer(timer_val, 0));
+	close_json_object();
+}
+
 static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 			    struct nlmsghdr *n, struct rtattr **tb)
 {
+	const void *grp, *src;
 	SPRINT_BUF(abuf);
 	const char *dev;
-	const void *src;
 	int af;
 
 	if (filter_vlan && e->vid != filter_vlan)
 		return;
 
 	af = e->addr.proto == htons(ETH_P_IP) ? AF_INET : AF_INET6;
-	src = af == AF_INET ? (const void *)&e->addr.u.ip4 :
+	grp = af == AF_INET ? (const void *)&e->addr.u.ip4 :
 			      (const void *)&e->addr.u.ip6;
 	dev = ll_index_to_name(ifindex);
 
@@ -140,14 +170,57 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 
 	print_color_string(PRINT_ANY, ifa_family_color(af),
 			    "grp", " grp %s",
-			    inet_ntop(af, src, abuf, sizeof(abuf)));
-
+			    inet_ntop(af, grp, abuf, sizeof(abuf)));
+	if (tb && tb[MDBA_MDB_EATTR_SOURCE]) {
+		src = (const void *)RTA_DATA(tb[MDBA_MDB_EATTR_SOURCE]);
+		print_color_string(PRINT_ANY, ifa_family_color(af),
+				   "src", " src %s",
+				   inet_ntop(af, src, abuf, sizeof(abuf)));
+	}
 	print_string(PRINT_ANY, "state", " %s",
 			   (e->state & MDB_PERMANENT) ? "permanent" : "temp");
+	if (show_details && tb) {
+		if (tb[MDBA_MDB_EATTR_GROUP_MODE]) {
+			__u8 mode = rta_getattr_u8(tb[MDBA_MDB_EATTR_GROUP_MODE]);
+
+			print_string(PRINT_ANY, "filter_mode", " filter_mode %s",
+				     mode == MCAST_INCLUDE ? "include" :
+							     "exclude");
+		}
+		if (tb[MDBA_MDB_EATTR_SRC_LIST]) {
+			struct rtattr *i, *attr = tb[MDBA_MDB_EATTR_SRC_LIST];
+			const char *sep = " ";
+			int rem;
+
+			open_json_array(PRINT_ANY, is_json_context() ?
+								"source_list" :
+								" source_list");
+			rem = RTA_PAYLOAD(attr);
+			for (i = RTA_DATA(attr); RTA_OK(i, rem);
+			     i = RTA_NEXT(i, rem)) {
+				print_src_entry(i, af, sep);
+				sep = ",";
+			}
+			close_json_array(PRINT_JSON, NULL);
+		}
+		if (tb[MDBA_MDB_EATTR_RTPROT]) {
+			__u8 rtprot = rta_getattr_u8(tb[MDBA_MDB_EATTR_RTPROT]);
+			SPRINT_BUF(rtb);
+
+			print_string(PRINT_ANY, "protocol", " proto %s ",
+				     rtnl_rtprot_n2a(rtprot, rtb, sizeof(rtb)));
+		}
+	}
 
 	open_json_array(PRINT_JSON, "flags");
 	if (e->flags & MDB_FLAGS_OFFLOAD)
 		print_string(PRINT_ANY, NULL, " %s", "offload");
+	if (e->flags & MDB_FLAGS_FAST_LEAVE)
+		print_string(PRINT_ANY, NULL, " %s", "fast_leave");
+	if (e->flags & MDB_FLAGS_STAR_EXCL)
+		print_string(PRINT_ANY, NULL, " %s", "added_by_star_ex");
+	if (e->flags & MDB_FLAGS_BLOCKED)
+		print_string(PRINT_ANY, NULL, " %s", "blocked");
 	close_json_array(PRINT_JSON, NULL);
 
 	if (e->vid)
@@ -157,7 +230,7 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 		__u32 timer = rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]);
 
 		print_string(PRINT_ANY, "timer", " %s",
-			     format_timer(timer));
+			     format_timer(timer, 1));
 	}
 
 	print_nl();
@@ -175,8 +248,9 @@ static void br_print_mdb_entry(FILE *f, int ifindex, struct rtattr *attr,
 	rem = RTA_PAYLOAD(attr);
 	for (i = RTA_DATA(attr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 		e = RTA_DATA(i);
-		parse_rtattr(etb, MDBA_MDB_EATTR_MAX, MDB_RTA(RTA_DATA(i)),
-			     RTA_PAYLOAD(i) - RTA_ALIGN(sizeof(*e)));
+		parse_rtattr_flags(etb, MDBA_MDB_EATTR_MAX, MDB_RTA(RTA_DATA(i)),
+				   RTA_PAYLOAD(i) - RTA_ALIGN(sizeof(*e)),
+				   NLA_F_NESTED);
 		print_mdb_entry(f, ifindex, e, n, etb);
 	}
 }
@@ -378,8 +452,8 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.bpm.family = PF_BRIDGE,
 	};
+	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL;
 	struct br_mdb_entry entry = {};
-	char *d = NULL, *p = NULL, *grp = NULL;
 	short vid = 0;
 
 	while (argc > 0) {
@@ -400,6 +474,9 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "vid") == 0) {
 			NEXT_ARG();
 			vid = atoi(*argv);
+		} else if (strcmp(*argv, "src") == 0) {
+			NEXT_ARG();
+			src = *argv;
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
@@ -431,6 +508,24 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 	entry.vid = vid;
 	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
+	if (src) {
+		struct rtattr *nest = addattr_nest(&req.n, sizeof(req),
+						   MDBA_SET_ENTRY_ATTRS);
+		struct in6_addr src_ip6;
+		__be32 src_ip4;
+
+		nest->rta_type |= NLA_F_NESTED;
+		if (!inet_pton(AF_INET, src, &src_ip4)) {
+			if (!inet_pton(AF_INET6, src, &src_ip6)) {
+				fprintf(stderr, "Invalid source address \"%s\"\n", src);
+				return -1;
+			}
+			addattr_l(&req.n, sizeof(req), MDBE_ATTR_SOURCE, &src_ip6, sizeof(src_ip6));
+		} else {
+			addattr32(&req.n, sizeof(req), MDBE_ATTR_SOURCE, src_ip4);
+		}
+		addattr_nest_end(&req.n, nest);
+	}
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;
