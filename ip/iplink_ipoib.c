@@ -99,7 +99,7 @@ static void ipoib_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		snprintf(b1, sizeof(b1), "%#.4x", pkey);
 		print_string(PRINT_JSON, "key", NULL, b1);
 	} else {
-		fprintf(f, "pkey  %#.4x ", pkey);
+		fprintf(f, "pkey %#.4x ", pkey);
 	}
 
 	if (!tb[IFLA_IPOIB_MODE] ||
@@ -112,7 +112,7 @@ static void ipoib_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		mode == IPOIB_MODE_DATAGRAM ? "datagram" :
 		mode == IPOIB_MODE_CONNECTED ? "connected" : "unknown";
 
-	print_string(PRINT_ANY, "mode", "mode  %s ", mode_str);
+	print_string(PRINT_ANY, "mode", "mode %s ", mode_str);
 
 	if (!tb[IFLA_IPOIB_UMCAST] ||
 	    RTA_PAYLOAD(tb[IFLA_IPOIB_UMCAST]) < sizeof(__u16))
@@ -126,7 +126,7 @@ static void ipoib_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		snprintf(b1, sizeof(b1), "%.4x", umcast);
 		print_string(PRINT_JSON, "umcast", NULL, b1);
 	} else {
-		fprintf(f, "umcast  %.4x ", umcast);
+		fprintf(f, "umcast %.4x ", umcast);
 	}
 }
 
