@@ -160,7 +160,8 @@ static int cmd_node_set_nodeid(struct nlmsghdr *nlh, const struct cmd *cmd,
 static void cmd_node_set_key_help(struct cmdl *cmdl)
 {
 	fprintf(stderr,
-		"Usage: %s node set key KEY [algname ALGNAME] [PROPERTIES]\n\n"
+		"Usage: %s node set key KEY [algname ALGNAME] [PROPERTIES]\n"
+		"       %s node set key rekeying REKEYING\n\n"
 		"KEY\n"
 		"  Symmetric KEY & SALT as a composite ASCII or hex string (0x...) in form:\n"
 		"  [KEY: 16, 24 or 32 octets][SALT: 4 octets]\n\n"
@@ -170,11 +171,16 @@ static void cmd_node_set_key_help(struct cmdl *cmdl)
 		"  master                - Set KEY as a cluster master key\n"
 		"  <empty>               - Set KEY as a cluster key\n"
 		"  nodeid NODEID         - Set KEY as a per-node key for own or peer\n\n"
+		"REKEYING\n"
+		"  INTERVAL              - Set rekeying interval (in minutes) [0: disable]\n"
+		"  now                   - Trigger one (first) rekeying immediately\n\n"
 		"EXAMPLES\n"
 		"  %s node set key this_is_a_master_key master\n"
 		"  %s node set key 0x746869735F69735F615F6B657931365F73616C74\n"
-		"  %s node set key this_is_a_key16_salt algname \"gcm(aes)\" nodeid 1001002\n\n",
-		cmdl->argv[0], cmdl->argv[0], cmdl->argv[0], cmdl->argv[0]);
+		"  %s node set key this_is_a_key16_salt algname \"gcm(aes)\" nodeid 1001002\n"
+		"  %s node set key rekeying 600\n\n",
+		cmdl->argv[0], cmdl->argv[0], cmdl->argv[0], cmdl->argv[0],
+		cmdl->argv[0], cmdl->argv[0]);
 }
 
 static int cmd_node_set_key(struct nlmsghdr *nlh, const struct cmd *cmd,
@@ -190,12 +196,15 @@ static int cmd_node_set_key(struct nlmsghdr *nlh, const struct cmd *cmd,
 		{ "algname",	OPT_KEYVAL,	NULL },
 		{ "nodeid",	OPT_KEYVAL,	NULL },
 		{ "master",	OPT_KEY,	NULL },
+		{ "rekeying",	OPT_KEYVAL,	NULL },
 		{ NULL }
 	};
 	struct nlattr *nest;
-	struct opt *opt_algname, *opt_nodeid, *opt_master;
+	struct opt *opt_algname, *opt_nodeid, *opt_master, *opt_rekeying;
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	uint8_t id[TIPC_NODEID_LEN] = {0,};
+	uint32_t rekeying = 0;
+	bool has_key = false;
 	int keysize;
 	char *str;
 
@@ -204,16 +213,30 @@ static int cmd_node_set_key(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
+	/* Check if command starts with opts i.e. "rekeying" opt without key */
+	if (find_opt(opts, cmdl->argv[cmdl->optind]))
+		goto get_ops;
 
 	/* Get user key */
+	has_key = true;
 	str = shift_cmdl(cmdl);
 	if (str2key(str, &input.key)) {
 		fprintf(stderr, "error, invalid key input\n");
 		return -EINVAL;
 	}
 
+get_ops:
 	if (parse_opts(opts, cmdl) < 0)
 		return -EINVAL;
+
+	/* Get rekeying time */
+	opt_rekeying = get_opt(opts, "rekeying");
+	if (opt_rekeying) {
+		if (!strcmp(opt_rekeying->val, "now"))
+			rekeying = TIPC_REKEYING_NOW;
+		else
+			rekeying = atoi(opt_rekeying->val);
+	}
 
 	/* Get algorithm name, default: "gcm(aes)" */
 	opt_algname = get_opt(opts, "algname");
@@ -246,12 +269,16 @@ static int cmd_node_set_key(struct nlmsghdr *nlh, const struct cmd *cmd,
 	}
 
 	nest = mnl_attr_nest_start(nlh, TIPC_NLA_NODE);
-	keysize = tipc_aead_key_size(&input.key);
-	mnl_attr_put(nlh, TIPC_NLA_NODE_KEY, keysize, &input.key);
-	if (opt_nodeid)
-		mnl_attr_put(nlh, TIPC_NLA_NODE_ID, TIPC_NODEID_LEN, id);
-	if (opt_master)
-		mnl_attr_put(nlh, TIPC_NLA_NODE_KEY_MASTER, 0, NULL);
+	if (has_key) {
+		keysize = tipc_aead_key_size(&input.key);
+		mnl_attr_put(nlh, TIPC_NLA_NODE_KEY, keysize, &input.key);
+		if (opt_nodeid)
+			mnl_attr_put(nlh, TIPC_NLA_NODE_ID, TIPC_NODEID_LEN, id);
+		if (opt_master)
+			mnl_attr_put(nlh, TIPC_NLA_NODE_KEY_MASTER, 0, NULL);
+	}
+	if (opt_rekeying)
+		mnl_attr_put_u32(nlh, TIPC_NLA_NODE_REKEYING, rekeying);
 
 	mnl_attr_nest_end(nlh, nest);
 	return msg_doit(nlh, NULL, NULL);
