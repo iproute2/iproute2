@@ -17,7 +17,7 @@ mpls - mpls manipulation module
 
 .ti -8
 .IR PUSH " := "
-.BR push " [ " protocol
+.RB "{ " push " | " mac_push " } [ " protocol
 .IR MPLS_PROTO " ]"
 .RB " [ " tc
 .IR MPLS_TC " ] "
@@ -64,7 +64,14 @@ requires no arguments and simply subtracts 1 from the MPLS header TTL field.
 Decapsulation mode. Requires the protocol of the next header.
 .TP
 .B push
-Encapsulation mode. Requires at least the
+Encapsulation mode. Adds the MPLS header between the MAC and the network
+headers. Requires at least the
+.B label
+option.
+.TP
+.B mac_push
+Encapsulation mode. Adds the MPLS header before the MAC header. Requires at
+least the
 .B label
 option.
 .TP
@@ -152,5 +159,36 @@ ip packets and output to eth1:
 .EE
 .RE
 
+Here is another example, where incoming Ethernet frames are encapsulated into
+MPLS with label 123 and TTL 64. Then, an outer Ethernet header is added and the
+resulting frame is finally sent on eth1:
+
+.RS
+.EX
+#tc qdisc add dev eth0 ingress
+#tc filter add dev eth0 ingress matchall \\
+	action mpls mac_push label 123 ttl 64 \\
+	action vlan push_eth \\
+		dst_mac 02:00:00:00:00:02 \\
+		src_mac 02:00:00:00:00:01 \\
+	action mirred egress redirect dev eth1
+.EE
+.RE
+
+The following example assumes that incoming MPLS packets with label 123
+transport Ethernet frames. The outer Ethernet and the MPLS headers are
+stripped, then the inner Ethernet frame is sent on eth1:
+
+.RS
+.EX
+#tc qdisc add dev eth0 ingress
+#tc filter add dev eth0 ingress protocol mpls_uc \\
+	flower mpls_label 123 mpls_bos 1 \\
+	action vlan pop_eth \\
+	action mpls pop protocol teb \\
+	action mirred egress redirect dev eth1
+.EE
+.RE
+
 .SH SEE ALSO
-.BR tc (8)
+.BR tc "(8), " tc-mirred "(8), " tc-vlan (8)
