@@ -46,6 +46,7 @@ struct opt {
 	char *val;
 };
 
+struct opt *find_opt(struct opt *opts, char *str);
 struct opt *get_opt(struct opt *opts, char *key);
 bool has_opt(struct opt *opts, char *key);
 int parse_opts(struct opt *opts, struct cmdl *cmdl);
