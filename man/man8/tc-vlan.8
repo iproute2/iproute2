@@ -5,8 +5,8 @@ vlan - vlan manipulation module
 .SH SYNOPSIS
 .in +8
 .ti -8
-.BR tc " ... " "action vlan" " { " pop " |"
-.IR PUSH " | " MODIFY " } [ " CONTROL " ]"
+.BR tc " ... " "action vlan" " { " pop " | " pop_eth " |"
+.IR PUSH " | " MODIFY " | " PUSH_ETH " } [ " CONTROL " ]"
 
 .ti -8
 .IR PUSH " := "
@@ -23,6 +23,11 @@ vlan - vlan manipulation module
 .BR " [ " priority
 .IR VLANPRIO " ] "
 .BI id " VLANID"
+
+.ti -8
+.IR PUSH_ETH " := "
+.B push_eth
+.BI dst_mac " LLADDR " src_mac " LLADDR "
 
 .ti -8
 .IR CONTROL " := { "
@@ -43,6 +48,20 @@ modes require at least a
 and allow to optionally choose the
 .I VLANPROTO
 to use.
+
+The
+.B vlan
+action can also be used to add or remove the base Ethernet header. The
+.B pop_eth
+mode, which takes no argument, is used to remove the base Ethernet header. All
+existing VLANs must have been previously dropped. The opposite operation,
+adding a base Ethernet header, is done with the
+.B push_eth
+mode. In that case, the packet must have no MAC header (stacking MAC headers is
+not permitted). This mode is mostly useful when a previous action has
+encapsulated the whole original frame behind a network header and one needs
+to prepend an Ethernet header before forwarding the resulting packet.
+
 .SH OPTIONS
 .TP
 .B pop
@@ -58,6 +77,16 @@ Replace mode. Existing 802.1Q tag is replaced. Requires at least
 .B id
 option.
 .TP
+.B pop_eth
+Ethernet header decapsulation mode. Only works on a plain Ethernet header:
+VLANs, if any, must be removed first.
+.TP
+.B push_eth
+Ethernet header encapsulation mode. The Ethertype is automatically set
+using the network header type. Chaining Ethernet headers is not allowed: the
+packet must have no MAC header when using this mode. Requires the
+.BR "dst_mac " and " src_mac " options.
+.TP
 .BI id " VLANID"
 Specify the VLAN ID to encapsulate into.
 .I VLANID
@@ -72,6 +101,12 @@ Choose the VLAN protocol to use. At the time of writing, the kernel accepts only
 .TP
 .BI priority " VLANPRIO"
 Choose the VLAN priority to use. Decimal number in range of 0-7.
+.TP
+.BI dst_mac " LLADDR"
+Choose the destination MAC address to use.
+.TP
+.BI src_mac " LLADDR"
+Choose the source MAC address to use.
 .TP
 .I CONTROL
 How to continue after executing this action.
@@ -122,5 +157,8 @@ process then restarted for the plain packet:
 .EE
 .RE
 
+For an example of the
+.BR pop_eth " and " push_eth " modes, see " tc-mpls (8).
+
 .SH SEE ALSO
-.BR tc (8)
+.BR tc "(8), " tc-mpls (8)
