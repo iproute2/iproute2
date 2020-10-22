@@ -99,14 +99,14 @@ static int parse_mpls(struct action_util *a, int *argc_p, char ***argv_p,
 			if (check_double_action(action, *argv))
 				return -1;
 			action = TCA_MPLS_ACT_PUSH;
-		} else if (matches(*argv, "mac_push") == 0) {
-			if (check_double_action(action, *argv))
-				return -1;
-			action = TCA_MPLS_ACT_MAC_PUSH;
 		} else if (matches(*argv, "modify") == 0) {
 			if (check_double_action(action, *argv))
 				return -1;
 			action = TCA_MPLS_ACT_MODIFY;
+		} else if (matches(*argv, "mac_push") == 0) {
+			if (check_double_action(action, *argv))
+				return -1;
+			action = TCA_MPLS_ACT_MAC_PUSH;
 		} else if (matches(*argv, "dec_ttl") == 0) {
 			if (check_double_action(action, *argv))
 				return -1;
