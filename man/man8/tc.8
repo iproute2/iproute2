@@ -854,6 +854,12 @@ option for creating
 alias.
 .RE
 
+.TP
+.BR "\-br" , " \-brief"
+Print only essential data needed to identify the filter and action (handle,
+cookie, etc.) and stats. This option is currently only supported by
+.BR "tc filter show " command.
+
 .SH "EXAMPLES"
 .PP
 tc -g class show dev eth0

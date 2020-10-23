@@ -44,6 +44,7 @@ bool use_names;
 int json;
 int color;
 int oneline;
+int brief;
 
 static char *conf_file;
 
@@ -202,7 +203,8 @@ static void usage(void)
 		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[aw] |\n"
 		"		    -o[neline] | -j[son] | -p[retty] | -c[olor]\n"
 		"		    -b[atch] [filename] | -n[etns] name | -N[umeric] |\n"
-		"		     -nm | -nam[es] | { -cf | -conf } path }\n");
+		"		     -nm | -nam[es] | { -cf | -conf } path\n"
+		"		     -br[ief] }\n");
 }
 
 static int do_cmd(int argc, char **argv)
@@ -336,6 +338,8 @@ int main(int argc, char **argv)
 			++json;
 		} else if (matches(argv[1], "-oneline") == 0) {
 			++oneline;
+		}else if (matches(argv[1], "-brief") == 0) {
+			++brief;
 		} else {
 			fprintf(stderr,
 				"Option \"%s\" is unknown, try \"tc -help\".\n",
