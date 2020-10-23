@@ -320,7 +320,7 @@ print_ipt(struct action_util *au, FILE *f, struct rtattr *arg)
 	__u32 hook;
 
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	/* copy tcipt_globals because .opts will be modified by iptables */
 	struct xtables_globals tmp_tcipt_globals = tcipt_globals;

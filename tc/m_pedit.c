@@ -745,8 +745,9 @@ static int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct m_pedit_key_ex *keys_ex = NULL;
 	int err;
 
+	print_string(PRINT_ANY, "kind", " %s ", "pedit");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_PEDIT_MAX, arg);
 
@@ -783,7 +784,6 @@ static int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	print_string(PRINT_ANY, "kind", " %s ", "pedit");
 	print_action_control(f, "action ", sel->action, " ");
 	print_uint(PRINT_ANY, "nkeys", "keys %d\n", sel->nkeys);
 	print_uint(PRINT_ANY, "index", " \t index %u", sel->index);

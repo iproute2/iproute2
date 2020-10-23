@@ -161,8 +161,9 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct tc_act_bpf *parm;
 	int d_ok = 0;
 
+	print_string(PRINT_ANY, "kind", "%s ", "bpf");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_ACT_BPF_MAX, arg);
 
@@ -172,7 +173,6 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 
 	parm = RTA_DATA(tb[TCA_ACT_BPF_PARMS]);
-	print_string(PRINT_ANY, "kind", "%s ", "bpf");
 
 	if (tb[TCA_ACT_BPF_NAME])
 		print_string(PRINT_ANY, "bpf_name", "%s ",
