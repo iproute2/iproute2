@@ -253,7 +253,7 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			  &refill_delay, sizeof(refill_delay));
 	if (set_orphan_mask)
 		addattr_l(n, 1024, TCA_FQ_ORPHAN_MASK,
-			  &orphan_mask, sizeof(refill_delay));
+			  &orphan_mask, sizeof(orphan_mask));
 	if (set_ce_threshold)
 		addattr_l(n, 1024, TCA_FQ_CE_THRESHOLD,
 			  &ce_threshold, sizeof(ce_threshold));

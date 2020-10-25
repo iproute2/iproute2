@@ -96,11 +96,10 @@ static void cg_init_map(void)
 
 	mnt = find_cgroup2_mount(false);
 	if (!mnt)
-		exit(1);
+		return;
 
 	mntlen = strlen(mnt);
-	if (nftw(mnt, nftw_fn, 1024, FTW_MOUNT) < 0)
-		exit(1);
+	(void) nftw(mnt, nftw_fn, 1024, FTW_MOUNT);
 
 	free(mnt);
 }
