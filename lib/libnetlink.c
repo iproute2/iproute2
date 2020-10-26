@@ -30,7 +30,9 @@
 #include "libnetlink.h"
 #include "utils.h"
 
+#ifndef __aligned
 #define __aligned(x)		__attribute__((aligned(x)))
+#endif
 
 #ifndef SOL_NETLINK
 #define SOL_NETLINK 270
