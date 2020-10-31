@@ -143,8 +143,9 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_SAMPLE_MAX + 1];
 	struct tc_sample *p;
 
+	print_string(PRINT_ANY, "kind", "%s ", "sample");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_SAMPLE_MAX, arg);
 
@@ -155,7 +156,6 @@ static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_SAMPLE_PARMS]);
 
-	print_string(PRINT_ANY, "kind", "%s ", "sample");
 	print_uint(PRINT_ANY, "rate", "rate 1/%u ",
 		   rta_getattr_u32(tb[TCA_SAMPLE_RATE]));
 	print_uint(PRINT_ANY, "group", "group %u",

@@ -110,8 +110,9 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_CONNMARK_MAX + 1];
 	struct tc_connmark *ci;
 
+	print_string(PRINT_ANY, "kind", "%s ", "connmark");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_CONNMARK_MAX, arg);
 	if (tb[TCA_CONNMARK_PARMS] == NULL) {
@@ -121,7 +122,6 @@ static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	ci = RTA_DATA(tb[TCA_CONNMARK_PARMS]);
 
-	print_string(PRINT_ANY, "kind", "%s ", "connmark");
 	print_uint(PRINT_ANY, "zone", "zone %u", ci->zone);
 	print_action_control(f, " ", ci->action, "");
 

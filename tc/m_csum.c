@@ -166,8 +166,9 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	int uflag_count = 0;
 
+	print_string(PRINT_ANY, "kind", "%s ", "csum");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_CSUM_MAX, arg);
 
@@ -199,7 +200,6 @@ print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
 		uflag_1 = "?empty";
 	}
 
-	print_string(PRINT_ANY, "kind", "%s ", "csum");
 	snprintf(buf, sizeof(buf), "%s%s%s%s%s%s%s",
 		 uflag_1, uflag_2, uflag_3,
 		 uflag_4, uflag_5, uflag_6, uflag_7);

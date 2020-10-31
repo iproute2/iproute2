@@ -171,8 +171,9 @@ print_gact(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct tc_gact *p = NULL;
 	struct rtattr *tb[TCA_GACT_MAX + 1];
 
+	print_string(PRINT_ANY, "kind", "%s ", "gact");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_GACT_MAX, arg);
 
@@ -182,7 +183,6 @@ print_gact(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_GACT_PARMS]);
 
-	print_string(PRINT_ANY, "kind", "%s ", "gact");
 	print_action_control(f, "action ", p->action, "");
 #ifdef CONFIG_GACT_PROB
 	if (tb[TCA_GACT_PROB] != NULL) {

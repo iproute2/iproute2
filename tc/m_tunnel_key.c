@@ -670,8 +670,9 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct rtattr *tb[TCA_TUNNEL_KEY_MAX + 1];
 	struct tc_tunnel_key *parm;
 
+	print_string(PRINT_ANY, "kind", "%s ", "tunnel_key");
 	if (!arg)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_TUNNEL_KEY_MAX, arg);
 
@@ -680,8 +681,6 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 		return -1;
 	}
 	parm = RTA_DATA(tb[TCA_TUNNEL_KEY_PARMS]);
-
-	print_string(PRINT_ANY, "kind", "%s ", "tunnel_key");
 
 	switch (parm->t_action) {
 	case TCA_TUNNEL_KEY_ACT_RELEASE:

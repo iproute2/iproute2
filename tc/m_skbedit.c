@@ -198,8 +198,9 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 	__u16 ptype;
 	struct tc_skbedit *p;
 
+	print_string(PRINT_ANY, "kind", "%s ", "skbedit");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_SKBEDIT_MAX, arg);
 
@@ -208,8 +209,6 @@ static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
 		return -1;
 	}
 	p = RTA_DATA(tb[TCA_SKBEDIT_PARMS]);
-
-	print_string(PRINT_ANY, "kind", "%s ", "skbedit");
 
 	if (tb[TCA_SKBEDIT_QUEUE_MAPPING] != NULL) {
 		print_uint(PRINT_ANY, "queue_mapping", "queue_mapping %u",

@@ -227,8 +227,9 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	int has_optional = 0;
 	SPRINT_BUF(b2);
 
+	print_string(PRINT_ANY, "kind", "%s ", "ife");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_IFE_MAX, arg);
 
@@ -238,7 +239,6 @@ static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_IFE_PARMS]);
 
-	print_string(PRINT_ANY, "kind", "%s ", "ife");
 	print_string(PRINT_ANY, "mode", "%s ",
 		     p->flags & IFE_ENCODE ? "encode" : "decode");
 	print_action_control(f, "action ", p->action, " ");

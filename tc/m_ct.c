@@ -443,8 +443,9 @@ static int print_ct(struct action_util *au, FILE *f, struct rtattr *arg)
 	struct tc_ct *p;
 	int ct_action = 0;
 
+	print_string(PRINT_ANY, "kind", "%s", "ct");
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_CT_MAX, arg);
 	if (tb[TCA_CT_PARMS] == NULL) {
@@ -453,8 +454,6 @@ static int print_ct(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 
 	p = RTA_DATA(tb[TCA_CT_PARMS]);
-
-	print_string(PRINT_ANY, "kind", "%s", "ct");
 
 	if (tb[TCA_CT_ACTION])
 		ct_action = rta_getattr_u16(tb[TCA_CT_ACTION]);
