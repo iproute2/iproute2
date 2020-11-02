@@ -23,12 +23,13 @@ static const char * const action_names[] = {
 static void explain(void)
 {
 	fprintf(stderr,
-		"Usage: mpls pop [ protocol MPLS_PROTO ]\n"
+		"Usage: mpls pop [ protocol MPLS_PROTO ] [CONTROL]\n"
 		"       mpls push [ protocol MPLS_PROTO ] [ label MPLS_LABEL ] [ tc MPLS_TC ]\n"
 		"                 [ ttl MPLS_TTL ] [ bos MPLS_BOS ] [CONTROL]\n"
 		"       mpls mac_push [ protocol MPLS_PROTO ] [ label MPLS_LABEL ] [ tc MPLS_TC ]\n"
 		"                     [ ttl MPLS_TTL ] [ bos MPLS_BOS ] [CONTROL]\n"
-		"       mpls modify [ label MPLS_LABEL ] [ tc MPLS_TC ] [ ttl MPLS_TTL ] [CONTROL]\n"
+		"       mpls modify [ label MPLS_LABEL ] [ tc MPLS_TC ] [ ttl MPLS_TTL ]\n"
+		"                   [ bos MPLS_BOS ] [CONTROL]\n"
 		"           for pop, MPLS_PROTO is next header of packet - e.g. ip or mpls_uc\n"
 		"           for push and mac_push, MPLS_PROTO is one of mpls_uc or mpls_mc\n"
 		"               with default: mpls_uc\n"

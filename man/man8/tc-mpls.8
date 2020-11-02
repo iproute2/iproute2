@@ -147,15 +147,15 @@ a label 123 and sends them out eth1:
 .EE
 .RE
 
-In this example, incoming MPLS unicast packets on eth0 are decapsulated and to
-ip packets and output to eth1:
+In this example, incoming MPLS unicast packets on eth0 are decapsulated
+and redirected to eth1:
 
 .RS
 .EX
 #tc qdisc add dev eth0 handle ffff: ingress
 #tc filter add dev eth0 protocol mpls_uc parent ffff: flower \\
 	action mpls pop protocol ipv4  \\
-	action mirred egress redirect dev eth0
+	action mirred egress redirect dev eth1
 .EE
 .RE
 
