@@ -306,7 +306,7 @@ If the prefix is missing, \fBtc\fR assumes a full-length host match.
 .TQ
 .IR \fBsrc_port " { "  MASKED_NUMBER " | " " MIN_VALUE-MAX_VALUE "  }
 Match on layer 4 protocol source or destination port number, with an
-optional mask. Alternatively, the mininum and maximum values can be
+optional mask. Alternatively, the minimum and maximum values can be
 specified to match on a range of layer 4 protocol source or destination
 port numbers. Only available for
 .BR ip_proto " values " udp ", " tcp  " and " sctp
@@ -384,7 +384,7 @@ Matches on connection tracking info
 .RS
 .TP
 .I CT_STATE
-Match the connection state, and can ne combination of [{+|-}flag] flags, where flag can be one of
+Match the connection state, and can be combination of [{+|-}flag] flags, where flag can be one of
 .RS
 .TP
 trk - Tracked connection.

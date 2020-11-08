@@ -413,9 +413,9 @@ suffered by Australasian residents.  Equivalent to
 .SH FLOW ISOLATION PARAMETERS
 With flow isolation enabled, CAKE places packets from different flows into
 different queues, each of which carries its own AQM state.  Packets from each
-queue are then delivered fairly, according to a DRR++ algorithm which minimises
+queue are then delivered fairly, according to a DRR++ algorithm which minimizes
 latency for "sparse" flows.  CAKE uses a set-associative hashing algorithm to
-minimise flow collisions.
+minimize flow collisions.
 
 These keywords specify whether fairness based on source address, destination
 address, individual flows, or any combination of those is desired.
