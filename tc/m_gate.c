@@ -261,7 +261,7 @@ static int parse_gate(struct action_util *a, int *argc_p, char ***argv_p,
 
 			if (!NEXT_ARG_OK()) {
 				explain_entry_format();
-				fprintf(stderr, "\"sched-entry\" is imcomplete\n");
+				fprintf(stderr, "\"sched-entry\" is incomplete\n");
 				free_entries(&gate_entries);
 				return -1;
 			}
@@ -270,14 +270,14 @@ static int parse_gate(struct action_util *a, int *argc_p, char ***argv_p,
 
 			if (get_gate_state(&gate_state, *argv)) {
 				explain_entry_format();
-				fprintf(stderr, "\"sched-entry\" is imcomplete\n");
+				fprintf(stderr, "\"sched-entry\" is incomplete\n");
 				free_entries(&gate_entries);
 				return -1;
 			}
 
 			if (!NEXT_ARG_OK()) {
 				explain_entry_format();
-				fprintf(stderr, "\"sched-entry\" is imcomplete\n");
+				fprintf(stderr, "\"sched-entry\" is incomplete\n");
 				free_entries(&gate_entries);
 				return -1;
 			}
@@ -287,7 +287,7 @@ static int parse_gate(struct action_util *a, int *argc_p, char ***argv_p,
 			if (get_u32(&interval, *argv, 0) &&
 			    get_time64(&interval_s64, *argv)) {
 				explain_entry_format();
-				fprintf(stderr, "\"sched-entry\" is imcomplete\n");
+				fprintf(stderr, "\"sched-entry\" is incomplete\n");
 				free_entries(&gate_entries);
 				return -1;
 			}
