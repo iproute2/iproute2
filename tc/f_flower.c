@@ -1324,9 +1324,9 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 	bool mpls_format_old = false;
 	bool mpls_format_new = false;
 	struct rtattr *tail;
-	__be16 eth_type = TC_H_MIN(t->tcm_info);
+	__be16 tc_proto = TC_H_MIN(t->tcm_info);
+	__be16 eth_type = tc_proto;
 	__be16 vlan_ethtype = 0;
-	__be16 cvlan_ethtype = 0;
 	__u8 ip_proto = 0xff;
 	__u32 flags = 0;
 	__u32 mtf = 0;
@@ -1464,6 +1464,8 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 						 &vlan_ethtype, n);
 			if (ret < 0)
 				return -1;
+			/* get new ethtype for later parsing  */
+			eth_type = vlan_ethtype;
 		} else if (matches(*argv, "cvlan_id") == 0) {
 			__u16 vid;
 
@@ -1495,9 +1497,10 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				 TCA_FLOWER_KEY_CVLAN_PRIO, cvlan_prio);
 		} else if (matches(*argv, "cvlan_ethtype") == 0) {
 			NEXT_ARG();
+			/* get new ethtype for later parsing */
 			ret = flower_parse_vlan_eth_type(*argv, vlan_ethtype,
 						 TCA_FLOWER_KEY_CVLAN_ETH_TYPE,
-						 &cvlan_ethtype, n);
+						 &eth_type, n);
 			if (ret < 0)
 				return -1;
 		} else if (matches(*argv, "mpls") == 0) {
@@ -1627,9 +1630,7 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			}
 		} else if (matches(*argv, "ip_proto") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_ip_proto(*argv, cvlan_ethtype ?
-						    cvlan_ethtype : vlan_ethtype ?
-						    vlan_ethtype : eth_type,
+			ret = flower_parse_ip_proto(*argv, eth_type,
 						    TCA_FLOWER_KEY_IP_PROTO,
 						    &ip_proto, n);
 			if (ret < 0) {
@@ -1658,9 +1659,7 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			}
 		} else if (matches(*argv, "dst_ip") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_ip_addr(*argv, cvlan_ethtype ?
-						   cvlan_ethtype : vlan_ethtype ?
-						   vlan_ethtype : eth_type,
+			ret = flower_parse_ip_addr(*argv, eth_type,
 						   TCA_FLOWER_KEY_IPV4_DST,
 						   TCA_FLOWER_KEY_IPV4_DST_MASK,
 						   TCA_FLOWER_KEY_IPV6_DST,
@@ -1672,9 +1671,7 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			}
 		} else if (matches(*argv, "src_ip") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_ip_addr(*argv, cvlan_ethtype ?
-						   cvlan_ethtype : vlan_ethtype ?
-						   vlan_ethtype : eth_type,
+			ret = flower_parse_ip_addr(*argv, eth_type,
 						   TCA_FLOWER_KEY_IPV4_SRC,
 						   TCA_FLOWER_KEY_IPV4_SRC_MASK,
 						   TCA_FLOWER_KEY_IPV6_SRC,
@@ -1728,33 +1725,30 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			}
 		} else if (matches(*argv, "arp_tip") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_arp_ip_addr(*argv, vlan_ethtype ?
-						       vlan_ethtype : eth_type,
-						       TCA_FLOWER_KEY_ARP_TIP,
-						       TCA_FLOWER_KEY_ARP_TIP_MASK,
-						       n);
+			ret = flower_parse_arp_ip_addr(*argv, eth_type,
+						TCA_FLOWER_KEY_ARP_TIP,
+						TCA_FLOWER_KEY_ARP_TIP_MASK,
+						n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"arp_tip\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "arp_sip") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_arp_ip_addr(*argv, vlan_ethtype ?
-						       vlan_ethtype : eth_type,
-						       TCA_FLOWER_KEY_ARP_SIP,
-						       TCA_FLOWER_KEY_ARP_SIP_MASK,
-						       n);
+			ret = flower_parse_arp_ip_addr(*argv, eth_type,
+						TCA_FLOWER_KEY_ARP_SIP,
+						TCA_FLOWER_KEY_ARP_SIP_MASK,
+						n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"arp_sip\"\n");
 				return -1;
 			}
 		} else if (matches(*argv, "arp_op") == 0) {
 			NEXT_ARG();
-			ret = flower_parse_arp_op(*argv, vlan_ethtype ?
-						  vlan_ethtype : eth_type,
-						  TCA_FLOWER_KEY_ARP_OP,
-						  TCA_FLOWER_KEY_ARP_OP_MASK,
-						  n);
+			ret = flower_parse_arp_op(*argv, eth_type,
+						TCA_FLOWER_KEY_ARP_OP,
+						TCA_FLOWER_KEY_ARP_OP_MASK,
+						n);
 			if (ret < 0) {
 				fprintf(stderr, "Illegal \"arp_op\"\n");
 				return -1;
@@ -1894,8 +1888,8 @@ parse_done:
 			return ret;
 	}
 
-	if (eth_type != htons(ETH_P_ALL)) {
-		ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, eth_type);
+	if (tc_proto != htons(ETH_P_ALL)) {
+		ret = addattr16(n, MAX_MSG, TCA_FLOWER_KEY_ETH_TYPE, tc_proto);
 		if (ret)
 			return ret;
 	}
