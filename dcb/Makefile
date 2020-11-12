@@ -5,7 +5,7 @@ TARGETS :=
 
 ifeq ($(HAVE_MNL),y)
 
-DCBOBJ = dcb.o
+DCBOBJ = dcb.o dcb_ets.o
 TARGETS += dcb
 
 endif

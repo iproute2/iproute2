@@ -36,4 +36,8 @@ void dcb_print_array_u8(const __u8 *array, size_t size);
 void dcb_print_array_kw(const __u8 *array, size_t array_size,
 			const char *const kw[], size_t kw_size);
 
+/* dcb_ets.c */
+
+int dcb_cmd_ets(struct dcb *dcb, int argc, char **argv);
+
 #endif /* __DCB_H__ */

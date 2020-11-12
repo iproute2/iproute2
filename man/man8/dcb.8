@@ -8,6 +8,13 @@ dcb \- show / manipulate DCB (Data Center Bridging) settings
 
 .ti -8
 .B dcb
+.RI "[ " OPTIONS " ] "
+.B ets
+.RI "{ " COMMAND " | " help " }"
+.sp
+
+.ti -8
+.B dcb
 .RB "[ " -force " ] "
 .BI "-batch " filename
 .sp
@@ -45,6 +52,10 @@ Generate JSON output.
 When combined with -j generate a pretty JSON output.
 
 .SH OBJECTS
+
+.TP
+.B ets
+- Configuration of ETS (Enhanced Transmission Selection)
 
 .SH COMMANDS
 
