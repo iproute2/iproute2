@@ -191,11 +191,12 @@ int print_color_string(enum output_type type,
  * a value to it, you will need to use "is_json_context()" to have different
  * branch for json and regular output. grep -r "print_bool" for example
  */
-int print_color_bool(enum output_type type,
-		     enum color_attr color,
-		     const char *key,
-		     const char *fmt,
-		     bool value)
+static int __print_color_bool(enum output_type type,
+			      enum color_attr color,
+			      const char *key,
+			      const char *fmt,
+			      bool value,
+			      const char *str)
 {
 	int ret = 0;
 
@@ -205,11 +206,30 @@ int print_color_bool(enum output_type type,
 		else
 			jsonw_bool(_jw, value);
 	} else if (_IS_FP_CONTEXT(type)) {
-		ret = color_fprintf(stdout, color, fmt,
-				    value ? "true" : "false");
+		ret = color_fprintf(stdout, color, fmt, str);
 	}
 
 	return ret;
+}
+
+int print_color_bool(enum output_type type,
+		     enum color_attr color,
+		     const char *key,
+		     const char *fmt,
+		     bool value)
+{
+	return __print_color_bool(type, color, key, fmt, value,
+				  value ? "true" : "false");
+}
+
+int print_color_on_off(enum output_type type,
+		       enum color_attr color,
+		       const char *key,
+		       const char *fmt,
+		       bool value)
+{
+	return __print_color_bool(type, color, key, fmt, value,
+				  value ? "on" : "off");
 }
 
 /*
