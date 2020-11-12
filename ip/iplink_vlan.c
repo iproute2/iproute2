@@ -69,7 +69,7 @@ static int vlan_parse_qos_map(int *argcp, char ***argvp, struct nlmsghdr *n,
 
 	tail = addattr_nest(n, 1024, attrtype);
 
-	if (parse_mapping(argcp, argvp, &parse_qos_mapping, n))
+	if (parse_mapping(argcp, argvp, false, &parse_qos_mapping, n))
 		return 1;
 
 	addattr_nest_end(n, tail);
