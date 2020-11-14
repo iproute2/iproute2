@@ -297,15 +297,11 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
 				      struct nlmsghdr *n, int type)
 {
-	__u8 val;
+	int ret;
+	__u8 val = parse_on_off(arg_name, arg_val, &ret);
 
-	if (strcmp(arg_val, "on") == 0)
-		val = 1;
-	else if (strcmp(arg_val, "off") == 0)
-		val = 0;
-	else
-		invarg("should be \"on\" or \"off\"", arg_name);
-
+	if (ret)
+		exit(1);
 	addattr8(n, 1024, type, val);
 }
 
