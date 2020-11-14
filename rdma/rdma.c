@@ -41,40 +41,16 @@ static int rd_cmd(struct rd *rd, int argc, char **argv)
 	return rd_exec_cmd(rd, cmds, "object");
 }
 
+static int rd_batch_cmd(int argc, char *argv[], void *data)
+{
+	struct rd *rd = data;
+
+	return rd_cmd(rd, argc, argv);
+}
+
 static int rd_batch(struct rd *rd, const char *name, bool force)
 {
-	char *line = NULL;
-	size_t len = 0;
-	int ret = 0;
-
-	if (name && strcmp(name, "-") != 0) {
-		if (!freopen(name, "r", stdin)) {
-			pr_err("Cannot open file \"%s\" for reading: %s\n",
-			       name, strerror(errno));
-			return errno;
-		}
-	}
-
-	cmdlineno = 0;
-	while (getcmdline(&line, &len, stdin) != -1) {
-		char *largv[512];
-		int largc;
-
-		largc = makeargs(line, largv, ARRAY_SIZE(largv));
-		if (!largc)
-			continue;	/* blank line */
-
-		ret = rd_cmd(rd, largc, largv);
-		if (ret) {
-			pr_err("Command failed %s:%d\n", name, cmdlineno);
-			if (!force)
-				break;
-		}
-	}
-
-	free(line);
-
-	return ret;
+	return do_batch(name, force, rd_batch_cmd, rd);
 }
 
 static int rd_init(struct rd *rd, char *filename)

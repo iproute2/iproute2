@@ -159,7 +159,7 @@ static void dev_print_dim_setting(struct rd *rd, struct nlattr **tb)
 	if (dim_setting > 1)
 		return;
 
-	print_on_off(rd, "adaptive-moderation", dim_setting);
+	print_on_off(PRINT_ANY, "adaptive-moderation", "adaptive-moderation %s ", dim_setting);
 
 }
 

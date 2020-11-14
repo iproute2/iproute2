@@ -5,14 +5,14 @@ TARGETS :=
 
 ifeq ($(HAVE_MNL),y)
 
-DEVLINKOBJ = devlink.o mnlg.o
-TARGETS += devlink
+DCBOBJ = dcb.o dcb_ets.o
+TARGETS += dcb
 
 endif
 
 all: $(TARGETS) $(LIBS)
 
-devlink: $(DEVLINKOBJ) $(LIBNETLINK)
+dcb: $(DCBOBJ) $(LIBNETLINK)
 	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 install: all
@@ -21,4 +21,4 @@ install: all
 	done
 
 clean:
-	rm -f $(DEVLINKOBJ) $(TARGETS)
+	rm -f $(DCBOBJ) $(TARGETS)

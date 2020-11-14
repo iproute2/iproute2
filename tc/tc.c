@@ -233,22 +233,16 @@ static int do_cmd(int argc, char **argv)
 	return -1;
 }
 
+static int tc_batch_cmd(int argc, char *argv[], void *data)
+{
+	return do_cmd(argc, argv);
+}
+
 static int batch(const char *name)
 {
-	char *line = NULL;
-	size_t len = 0;
-	int ret = 0;
+	int ret;
 
 	batch_mode = 1;
-	if (name && strcmp(name, "-") != 0) {
-		if (freopen(name, "r", stdin) == NULL) {
-			fprintf(stderr,
-				"Cannot open file \"%s\" for reading: %s\n",
-				name, strerror(errno));
-			return -1;
-		}
-	}
-
 	tc_core_init();
 
 	if (rtnl_open(&rth, 0) < 0) {
@@ -256,26 +250,8 @@ static int batch(const char *name)
 		return -1;
 	}
 
-	cmdlineno = 0;
-	while (getcmdline(&line, &len, stdin) != -1) {
-		char *largv[100];
-		int largc;
+	ret = do_batch(name, force, tc_batch_cmd, NULL);
 
-		largc = makeargs(line, largv, 100);
-		if (largc == 0)
-			continue;	/* blank line */
-
-		if (do_cmd(largc, largv)) {
-			fprintf(stderr, "Command failed %s:%d\n",
-				name, cmdlineno);
-			ret = 1;
-			if (!force)
-				break;
-		}
-		fflush(stdout);
-	}
-
-	free(line);
 	rtnl_close(&rth);
 	return ret;
 }
