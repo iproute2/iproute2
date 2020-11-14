@@ -541,14 +541,6 @@ static void print_mq(FILE *f, struct rtattr *tb[])
 	}
 }
 
-static void print_onoff(FILE *f, const char *flag, __u8 val)
-{
-	if (is_json_context())
-		print_bool(PRINT_JSON, flag, NULL, !!val);
-	else
-		fprintf(f, "%s %s ", flag, val ? "on" : "off");
-}
-
 static void print_type(FILE *f, __u8 type)
 {
 	SPRINT_BUF(buf);
@@ -573,17 +565,19 @@ static void tun_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_type(f, rta_getattr_u8(tb[IFLA_TUN_TYPE]));
 
 	if (tb[IFLA_TUN_PI])
-		print_onoff(f, "pi", rta_getattr_u8(tb[IFLA_TUN_PI]));
+		print_on_off(PRINT_ANY, "pi", "pi %s ",
+			     rta_getattr_u8(tb[IFLA_TUN_PI]));
 
 	if (tb[IFLA_TUN_VNET_HDR]) {
-		print_onoff(f, "vnet_hdr",
-			    rta_getattr_u8(tb[IFLA_TUN_VNET_HDR]));
+		print_on_off(PRINT_ANY, "vnet_hdr", "vnet_hdr %s ",
+			     rta_getattr_u8(tb[IFLA_TUN_VNET_HDR]));
 	}
 
 	print_mq(f, tb);
 
 	if (tb[IFLA_TUN_PERSIST])
-		print_onoff(f, "persist", rta_getattr_u8(tb[IFLA_TUN_PERSIST]));
+		print_on_off(PRINT_ANY, "persist", "persist %s ",
+			     rta_getattr_u8(tb[IFLA_TUN_PERSIST]));
 
 	if (tb[IFLA_TUN_OWNER])
 		print_owner(f, rta_getattr_u32(tb[IFLA_TUN_OWNER]));
