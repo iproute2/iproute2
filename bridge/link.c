@@ -78,14 +78,6 @@ static void print_portstate(__u8 state)
 			     "state (%d) ", state);
 }
 
-static void print_onoff(FILE *fp, const char *flag, __u8 val)
-{
-	if (is_json_context())
-		print_bool(PRINT_JSON, flag, NULL, val);
-	else
-		fprintf(fp, "%s %s ", flag, val ? "on" : "off");
-}
-
 static void print_hwmode(__u16 mode)
 {
 	if (mode >= ARRAY_SIZE(hw_mode))
@@ -123,38 +115,38 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 			fprintf(fp, "%s    ", _SL_);
 
 		if (prtb[IFLA_BRPORT_MODE])
-			print_onoff(fp, "hairpin",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_MODE]));
+			print_on_off(PRINT_ANY, "hairpin", "hairpin %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_MODE]));
 		if (prtb[IFLA_BRPORT_GUARD])
-			print_onoff(fp, "guard",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_GUARD]));
+			print_on_off(PRINT_ANY, "guard", "guard %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_GUARD]));
 		if (prtb[IFLA_BRPORT_PROTECT])
-			print_onoff(fp, "root_block",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_PROTECT]));
+			print_on_off(PRINT_ANY, "root_block", "root_block %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_PROTECT]));
 		if (prtb[IFLA_BRPORT_FAST_LEAVE])
-			print_onoff(fp, "fastleave",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_FAST_LEAVE]));
+			print_on_off(PRINT_ANY, "fastleave", "fastleave %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_FAST_LEAVE]));
 		if (prtb[IFLA_BRPORT_LEARNING])
-			print_onoff(fp, "learning",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_LEARNING]));
+			print_on_off(PRINT_ANY, "learning", "learning %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_LEARNING]));
 		if (prtb[IFLA_BRPORT_LEARNING_SYNC])
-			print_onoff(fp, "learning_sync",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_LEARNING_SYNC]));
+			print_on_off(PRINT_ANY, "learning_sync", "learning_sync %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_LEARNING_SYNC]));
 		if (prtb[IFLA_BRPORT_UNICAST_FLOOD])
-			print_onoff(fp, "flood",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_UNICAST_FLOOD]));
+			print_on_off(PRINT_ANY, "flood", "flood %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_UNICAST_FLOOD]));
 		if (prtb[IFLA_BRPORT_MCAST_FLOOD])
-			print_onoff(fp, "mcast_flood",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_FLOOD]));
+			print_on_off(PRINT_ANY, "mcast_flood", "mcast_flood %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_FLOOD]));
 		if (prtb[IFLA_BRPORT_MCAST_TO_UCAST])
-			print_onoff(fp, "mcast_to_unicast",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_TO_UCAST]));
+			print_on_off(PRINT_ANY, "mcast_to_unicast", "mcast_to_unicast %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_TO_UCAST]));
 		if (prtb[IFLA_BRPORT_NEIGH_SUPPRESS])
-			print_onoff(fp, "neigh_suppress",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_NEIGH_SUPPRESS]));
+			print_on_off(PRINT_ANY, "neigh_suppress", "neigh_suppress %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_NEIGH_SUPPRESS]));
 		if (prtb[IFLA_BRPORT_VLAN_TUNNEL])
-			print_onoff(fp, "vlan_tunnel",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_VLAN_TUNNEL]));
+			print_on_off(PRINT_ANY, "vlan_tunnel", "vlan_tunnel %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_VLAN_TUNNEL]));
 
 		if (prtb[IFLA_BRPORT_BACKUP_PORT]) {
 			int ifidx;
@@ -166,8 +158,8 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 		}
 
 		if (prtb[IFLA_BRPORT_ISOLATED])
-			print_onoff(fp, "isolated",
-				    rta_getattr_u8(prtb[IFLA_BRPORT_ISOLATED]));
+			print_on_off(PRINT_ANY, "isolated", "isolated %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_ISOLATED]));
 	} else
 		print_portstate(rta_getattr_u8(attr));
 }
