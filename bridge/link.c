@@ -275,22 +275,6 @@ static void usage(void)
 	exit(-1);
 }
 
-static bool on_off(char *arg, __s8 *attr, char *val)
-{
-	if (strcmp(val, "on") == 0)
-		*attr = 1;
-	else if (strcmp(val, "off") == 0)
-		*attr = 0;
-	else {
-		fprintf(stderr,
-			"Error: argument of \"%s\" must be \"on\" or \"off\"\n",
-			arg);
-		return false;
-	}
-
-	return true;
-}
-
 static int brlink_modify(int argc, char **argv)
 {
 	struct {
@@ -323,6 +307,7 @@ static int brlink_modify(int argc, char **argv)
 	__s16 mode = -1;
 	__u16 flags = 0;
 	struct rtattr *nest;
+	int ret;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -330,40 +315,49 @@ static int brlink_modify(int argc, char **argv)
 			d = *argv;
 		} else if (strcmp(*argv, "guard") == 0) {
 			NEXT_ARG();
-			if (!on_off("guard", &bpdu_guard, *argv))
-				return -1;
+			bpdu_guard = parse_on_off("guard", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "hairpin") == 0) {
 			NEXT_ARG();
-			if (!on_off("hairpin", &hairpin, *argv))
-				return -1;
+			hairpin = parse_on_off("hairpin", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "fastleave") == 0) {
 			NEXT_ARG();
-			if (!on_off("fastleave", &fast_leave, *argv))
-				return -1;
+			fast_leave = parse_on_off("fastleave", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "root_block") == 0) {
 			NEXT_ARG();
-			if (!on_off("root_block", &root_block, *argv))
-				return -1;
+			root_block = parse_on_off("root_block", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "learning") == 0) {
 			NEXT_ARG();
-			if (!on_off("learning", &learning, *argv))
-				return -1;
+			learning = parse_on_off("learning", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "learning_sync") == 0) {
 			NEXT_ARG();
-			if (!on_off("learning_sync", &learning_sync, *argv))
-				return -1;
+			learning_sync = parse_on_off("learning_sync", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "flood") == 0) {
 			NEXT_ARG();
-			if (!on_off("flood", &flood, *argv))
-				return -1;
+			flood = parse_on_off("flood", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "mcast_flood") == 0) {
 			NEXT_ARG();
-			if (!on_off("mcast_flood", &mcast_flood, *argv))
-				return -1;
+			mcast_flood = parse_on_off("mcast_flood", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "mcast_to_unicast") == 0) {
 			NEXT_ARG();
-			if (!on_off("mcast_to_unicast", &mcast_to_unicast, *argv))
-				return -1;
+			mcast_to_unicast = parse_on_off("mcast_to_unicast", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "cost") == 0) {
 			NEXT_ARG();
 			cost = atoi(*argv);
@@ -404,18 +398,19 @@ static int brlink_modify(int argc, char **argv)
 			flags |= BRIDGE_FLAGS_MASTER;
 		} else if (strcmp(*argv, "neigh_suppress") == 0) {
 			NEXT_ARG();
-			if (!on_off("neigh_suppress", &neigh_suppress,
-				    *argv))
-				return -1;
+			neigh_suppress = parse_on_off("neigh_suppress", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "vlan_tunnel") == 0) {
 			NEXT_ARG();
-			if (!on_off("vlan_tunnel", &vlan_tunnel,
-				    *argv))
-				return -1;
+			vlan_tunnel = parse_on_off("vlan_tunnel", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "isolated") == 0) {
 			NEXT_ARG();
-			if (!on_off("isolated", &isolated, *argv))
-				return -1;
+			isolated = parse_on_off("isolated", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "backup_port") == 0) {
 			NEXT_ARG();
 			backup_port_idx = ll_name_to_index(*argv);
