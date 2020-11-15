@@ -141,7 +141,7 @@ main(int argc, char **argv)
 		if (matches(opt, "-help") == 0) {
 			usage();
 		} else if (matches(opt, "-Version") == 0) {
-			printf("bridge utility, 0.0\n");
+			printf("bridge utility, %s\n", version);
 			exit(0);
 		} else if (matches(opt, "-stats") == 0 ||
 			   matches(opt, "-statistics") == 0) {
