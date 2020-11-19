@@ -362,6 +362,8 @@ void print_rt_flags(FILE *fp, unsigned int flags)
 		print_string(PRINT_ANY, NULL, "%s ", "pervasive");
 	if (flags & RTNH_F_OFFLOAD)
 		print_string(PRINT_ANY, NULL, "%s ", "offload");
+	if (flags & RTNH_F_TRAP)
+		print_string(PRINT_ANY, NULL, "%s ", "trap");
 	if (flags & RTM_F_NOTIFY)
 		print_string(PRINT_ANY, NULL, "%s ", "notify");
 	if (flags & RTNH_F_LINKDOWN)
