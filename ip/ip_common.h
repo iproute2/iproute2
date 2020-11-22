@@ -27,6 +27,8 @@ struct link_filter {
 	int target_nsid;
 };
 
+const char *get_ip_lib_dir(void);
+
 int get_operstate(const char *name);
 int print_linkinfo(struct nlmsghdr *n, void *arg);
 int print_addrinfo(struct nlmsghdr *n, void *arg);

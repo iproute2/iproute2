@@ -34,9 +34,6 @@
 #include "namespace.h"
 
 #define IPLINK_IOCTL_COMPAT	1
-#ifndef LIBDIR
-#define LIBDIR "/usr/lib"
-#endif
 
 #ifndef GSO_MAX_SIZE
 #define GSO_MAX_SIZE		65536
@@ -157,7 +154,7 @@ struct link_util *get_link_kind(const char *id)
 		if (strcmp(l->id, id) == 0)
 			return l;
 
-	snprintf(buf, sizeof(buf), LIBDIR "/ip/link_%s.so", id);
+	snprintf(buf, sizeof(buf), "%s/link_%s.so", get_ip_lib_dir(), id);
 	dlh = dlopen(buf, RTLD_LAZY);
 	if (dlh == NULL) {
 		/* look in current binary, only open once */

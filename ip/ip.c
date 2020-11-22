@@ -26,6 +26,10 @@
 #include "rt_names.h"
 #include "bpf_util.h"
 
+#ifndef LIBDIR
+#define LIBDIR "/usr/lib"
+#endif
+
 int preferred_family = AF_UNSPEC;
 int human_readable;
 int use_iec;
@@ -41,6 +45,17 @@ int batch_mode;
 bool do_all;
 
 struct rtnl_handle rth = { .fd = -1 };
+
+const char *get_ip_lib_dir(void)
+{
+	const char *lib_dir;
+
+	lib_dir = getenv("IP_LIB_DIR");
+	if (!lib_dir)
+		lib_dir = LIBDIR "/ip";
+
+	return lib_dir;
+}
 
 static void usage(void) __attribute__((noreturn));
 
