@@ -263,8 +263,7 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 			     rtnl_rtprot_n2a(nhm->nh_protocol, b1, sizeof(b1)));
 	}
 
-	if (tb[NHA_OIF])
-		print_rt_flags(fp, nhm->nh_flags);
+	print_rt_flags(fp, nhm->nh_flags);
 
 	if (tb[NHA_FDB])
 		print_null(PRINT_ANY, "fdb", "fdb", NULL);
