@@ -30,6 +30,7 @@
 #include "tc_common.h"
 #include "namespace.h"
 #include "rt_names.h"
+#include "bpf_util.h"
 
 int show_stats;
 int show_details;
@@ -259,8 +260,9 @@ static int batch(const char *name)
 
 int main(int argc, char **argv)
 {
-	int ret;
+	const char *libbpf_version;
 	char *batch_file = NULL;
+	int ret;
 
 	while (argc > 1) {
 		if (argv[1][0] != '-')
@@ -277,7 +279,11 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-graph") == 0) {
 			show_graph = 1;
 		} else if (matches(argv[1], "-Version") == 0) {
-			printf("tc utility, iproute2-%s\n", version);
+			printf("tc utility, iproute2-%s", version);
+			libbpf_version = get_libbpf_version();
+			if (libbpf_version)
+				printf(", libbpf %s", libbpf_version);
+			printf("\n");
 			return 0;
 		} else if (matches(argv[1], "-iec") == 0) {
 			++use_iec;

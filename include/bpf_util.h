@@ -300,4 +300,7 @@ static inline int bpf_recv_map_fds(const char *path, int *fds,
 	return -1;
 }
 #endif /* HAVE_ELF */
+
+const char *get_libbpf_version(void);
+
 #endif /* __BPF_UTIL__ */
