@@ -291,6 +291,16 @@ int bpf_dump_prog_info(FILE *f, uint32_t id);
 int bpf_send_map_fds(const char *path, const char *obj);
 int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
 		     unsigned int entries);
+#ifdef HAVE_LIBBPF
+int iproute2_bpf_elf_ctx_init(struct bpf_cfg_in *cfg);
+int iproute2_bpf_fetch_ancillary(void);
+int iproute2_get_root_path(char *root_path, size_t len);
+bool iproute2_is_pin_map(const char *libbpf_map_name, char *pathname);
+bool iproute2_is_map_in_map(const char *libbpf_map_name, struct bpf_elf_map *imap,
+			    struct bpf_elf_map *omap, char *omap_name);
+int iproute2_find_map_name_by_id(unsigned int map_id, char *name);
+int iproute2_load_libbpf(struct bpf_cfg_in *cfg);
+#endif /* HAVE_LIBBPF */
 #else
 static inline int bpf_send_map_fds(const char *path, const char *obj)
 {
@@ -303,6 +313,13 @@ static inline int bpf_recv_map_fds(const char *path, int *fds,
 {
 	return -1;
 }
+#ifdef HAVE_LIBBPF
+static inline int iproute2_load_libbpf(struct bpf_cfg_in *cfg)
+{
+	fprintf(stderr, "No ELF library support compiled in.\n");
+	return -1;
+}
+#endif /* HAVE_LIBBPF */
 #endif /* HAVE_ELF */
 
 const char *get_libbpf_version(void);
