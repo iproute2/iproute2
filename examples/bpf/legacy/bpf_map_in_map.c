@@ -1,23 +1,24 @@
-#include "../../include/bpf_api.h"
+#include "../../../include/bpf_api.h"
 
-struct inner_map {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(key_size, sizeof(uint32_t));
-	__uint(value_size, sizeof(uint32_t));
-	__uint(max_entries, 1);
-} map_inner __section(".maps");
+#define MAP_INNER_ID	42
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY_OF_MAPS);
-	__uint(key_size, sizeof(uint32_t));
-	__uint(value_size, sizeof(uint32_t));
-	__uint(max_entries, 1);
-	__uint(pinning, LIBBPF_PIN_BY_NAME);
-	__array(values, struct inner_map);
-} map_outer __section(".maps") = {
-	.values = {
-		[0] = &map_inner,
-	},
+struct bpf_elf_map __section_maps map_inner = {
+	.type		= BPF_MAP_TYPE_ARRAY,
+	.size_key	= sizeof(uint32_t),
+	.size_value	= sizeof(uint32_t),
+	.id		= MAP_INNER_ID,
+	.inner_idx	= 0,
+	.pinning	= PIN_GLOBAL_NS,
+	.max_elem	= 1,
+};
+
+struct bpf_elf_map __section_maps map_outer = {
+	.type		= BPF_MAP_TYPE_ARRAY_OF_MAPS,
+	.size_key	= sizeof(uint32_t),
+	.size_value	= sizeof(uint32_t),
+	.inner_id	= MAP_INNER_ID,
+	.pinning	= PIN_GLOBAL_NS,
+	.max_elem	= 1,
 };
 
 __section("egress")

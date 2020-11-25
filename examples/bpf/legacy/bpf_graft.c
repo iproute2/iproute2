@@ -1,4 +1,4 @@
-#include "../../include/bpf_api.h"
+#include "../../../include/bpf_api.h"
 
 /* This example demonstrates how classifier run-time behaviour
  * can be altered with tail calls. We start out with an empty
@@ -33,13 +33,13 @@
  *   [...]
  */
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uint(key_size, sizeof(uint32_t));
-	__uint(value_size, sizeof(uint32_t));
-	__uint(max_entries, 1);
-	__uint(pinning, LIBBPF_PIN_BY_NAME);
-} jmp_tc __section(".maps");
+struct bpf_elf_map __section_maps jmp_tc = {
+	.type		= BPF_MAP_TYPE_PROG_ARRAY,
+	.size_key	= sizeof(uint32_t),
+	.size_value	= sizeof(uint32_t),
+	.pinning	= PIN_GLOBAL_NS,
+	.max_elem	= 1,
+};
 
 __section("aaa")
 int cls_aaa(struct __sk_buff *skb)

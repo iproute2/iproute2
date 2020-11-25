@@ -940,6 +940,9 @@ static int bpf_do_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
 static int bpf_do_load(struct bpf_cfg_in *cfg)
 {
 	if (cfg->mode == EBPF_OBJECT) {
+#ifdef HAVE_LIBBPF
+		return iproute2_load_libbpf(cfg);
+#endif
 		cfg->prog_fd = bpf_obj_open(cfg->object, cfg->type,
 					    cfg->section, cfg->ifindex,
 					    cfg->verbose);
@@ -1087,10 +1090,9 @@ int bpf_prog_detach_fd(int target_fd, enum bpf_attach_type type)
 	return bpf(BPF_PROG_DETACH, &attr, sizeof(attr));
 }
 
-static int bpf_prog_load_dev(enum bpf_prog_type type,
-			     const struct bpf_insn *insns, size_t size_insns,
-			     const char *license, __u32 ifindex,
-			     char *log, size_t size_log)
+int bpf_prog_load_dev(enum bpf_prog_type type, const struct bpf_insn *insns,
+		      size_t size_insns, const char *license, __u32 ifindex,
+		      char *log, size_t size_log)
 {
 	union bpf_attr attr = {};
 
@@ -1107,14 +1109,6 @@ static int bpf_prog_load_dev(enum bpf_prog_type type,
 	}
 
 	return bpf(BPF_PROG_LOAD, &attr, sizeof(attr));
-}
-
-int bpf_prog_load(enum bpf_prog_type type, const struct bpf_insn *insns,
-		  size_t size_insns, const char *license, char *log,
-		  size_t size_log)
-{
-	return bpf_prog_load_dev(type, insns, size_insns, license, 0,
-				 log, size_log);
 }
 
 #ifdef HAVE_ELF
@@ -3164,4 +3158,179 @@ int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
 	close(fd);
 	return ret;
 }
+
+#ifdef HAVE_LIBBPF
+/* The following functions are wrapper functions for libbpf code to be
+ * compatible with the legacy format. So all the functions have prefix
+ * with iproute2_
+ */
+int iproute2_bpf_elf_ctx_init(struct bpf_cfg_in *cfg)
+{
+	struct bpf_elf_ctx *ctx = &__ctx;
+
+	return bpf_elf_ctx_init(ctx, cfg->object, cfg->type, cfg->ifindex, cfg->verbose);
+}
+
+int iproute2_bpf_fetch_ancillary(void)
+{
+	struct bpf_elf_ctx *ctx = &__ctx;
+	struct bpf_elf_sec_data data;
+	int i, ret = 0;
+
+	for (i = 1; i < ctx->elf_hdr.e_shnum; i++) {
+		ret = bpf_fill_section_data(ctx, i, &data);
+		if (ret < 0)
+			continue;
+
+		if (data.sec_hdr.sh_type == SHT_PROGBITS &&
+		    !strcmp(data.sec_name, ELF_SECTION_MAPS))
+			ret = bpf_fetch_maps_begin(ctx, i, &data);
+		else if (data.sec_hdr.sh_type == SHT_SYMTAB &&
+			 !strcmp(data.sec_name, ".symtab"))
+			ret = bpf_fetch_symtab(ctx, i, &data);
+		else if (data.sec_hdr.sh_type == SHT_STRTAB &&
+			 !strcmp(data.sec_name, ".strtab"))
+			ret = bpf_fetch_strtab(ctx, i, &data);
+		if (ret < 0) {
+			fprintf(stderr, "Error parsing section %d! Perhaps check with readelf -a?\n",
+				i);
+			return ret;
+		}
+	}
+
+	if (bpf_has_map_data(ctx)) {
+		ret = bpf_fetch_maps_end(ctx);
+		if (ret < 0) {
+			fprintf(stderr, "Error fixing up map structure, incompatible struct bpf_elf_map used?\n");
+			return ret;
+		}
+	}
+
+	return ret;
+}
+
+int iproute2_get_root_path(char *root_path, size_t len)
+{
+	struct bpf_elf_ctx *ctx = &__ctx;
+	int ret = 0;
+
+	snprintf(root_path, len, "%s/%s",
+		 bpf_get_work_dir(ctx->type), BPF_DIR_GLOBALS);
+
+	ret = mkdir(root_path, S_IRWXU);
+	if (ret && errno != EEXIST) {
+		fprintf(stderr, "mkdir %s failed: %s\n", root_path, strerror(errno));
+		return ret;
+	}
+
+	return 0;
+}
+
+bool iproute2_is_pin_map(const char *libbpf_map_name, char *pathname)
+{
+	struct bpf_elf_ctx *ctx = &__ctx;
+	const char *map_name, *tmp;
+	unsigned int pinning;
+	int i, ret = 0;
+
+	for (i = 0; i < ctx->map_num; i++) {
+		if (ctx->maps[i].pinning == PIN_OBJECT_NS &&
+		    ctx->noafalg) {
+			fprintf(stderr, "Missing kernel AF_ALG support for PIN_OBJECT_NS!\n");
+			return false;
+		}
+
+		map_name = bpf_map_fetch_name(ctx, i);
+		if (!map_name) {
+			return false;
+		}
+
+		if (strcmp(libbpf_map_name, map_name))
+			continue;
+
+		pinning = ctx->maps[i].pinning;
+
+		if (bpf_no_pinning(ctx, pinning) || !bpf_get_work_dir(ctx->type))
+			return false;
+
+		if (pinning == PIN_OBJECT_NS)
+			ret = bpf_make_obj_path(ctx);
+		else if ((tmp = bpf_custom_pinning(ctx, pinning)))
+			ret = bpf_make_custom_path(ctx, tmp);
+		if (ret < 0)
+			return false;
+
+		bpf_make_pathname(pathname, PATH_MAX, map_name, ctx, pinning);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool iproute2_is_map_in_map(const char *libbpf_map_name, struct bpf_elf_map *imap,
+			    struct bpf_elf_map *omap, char *omap_name)
+{
+	struct bpf_elf_ctx *ctx = &__ctx;
+	const char *inner_map_name, *outer_map_name;
+	int i, j;
+
+	for (i = 0; i < ctx->map_num; i++) {
+		inner_map_name = bpf_map_fetch_name(ctx, i);
+		if (!inner_map_name) {
+			return false;
+		}
+
+		if (strcmp(libbpf_map_name, inner_map_name))
+			continue;
+
+		if (!ctx->maps[i].id ||
+		    ctx->maps[i].inner_id ||
+		    ctx->maps[i].inner_idx == -1)
+			continue;
+
+		*imap = ctx->maps[i];
+
+		for (j = 0; j < ctx->map_num; j++) {
+			if (!bpf_is_map_in_map_type(&ctx->maps[j]))
+				continue;
+			if (ctx->maps[j].inner_id != ctx->maps[i].id)
+				continue;
+
+			*omap = ctx->maps[j];
+			outer_map_name = bpf_map_fetch_name(ctx, j);
+			memcpy(omap_name, outer_map_name, strlen(outer_map_name) + 1);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+int iproute2_find_map_name_by_id(unsigned int map_id, char *name)
+{
+	struct bpf_elf_ctx *ctx = &__ctx;
+	const char *map_name;
+	int i, idx = -1;
+
+	for (i = 0; i < ctx->map_num; i++) {
+		if (ctx->maps[i].id == map_id &&
+		    ctx->maps[i].type == BPF_MAP_TYPE_PROG_ARRAY) {
+			idx = i;
+			break;
+		}
+	}
+
+	if (idx < 0)
+		return -1;
+
+	map_name = bpf_map_fetch_name(ctx, idx);
+	if (!map_name)
+		return -1;
+
+	memcpy(name, map_name, strlen(map_name) + 1);
+	return 0;
+}
+#endif /* HAVE_LIBBPF */
 #endif /* HAVE_ELF */
