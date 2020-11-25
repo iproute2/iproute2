@@ -665,7 +665,7 @@ the bridge to which this address is associated.
 .SH bridge mdb - multicast group database management
 
 .B mdb
-objects contain known IP multicast group addresses on a link.
+objects contain known IP or L2 multicast group addresses on a link.
 
 .P
 The corresponding commands display mdb entries, add new entries,
@@ -685,11 +685,11 @@ the port whose link is known to have members of this multicast group.
 
 .TP
 .BI grp " GROUP"
-the IP multicast group address whose members reside on the link connected to
-the port.
+the multicast group address (IPv4, IPv6 or L2 multicast) whose members reside
+on the link connected to the port.
 
 .B permanent
-- the mdb entry is permanent
+- the mdb entry is permanent. Optional for IPv4 and IPv6, mandatory for L2.
 .sp
 
 .B temp
