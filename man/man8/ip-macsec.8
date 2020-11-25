@@ -119,7 +119,7 @@ type.
 .SH NOTES
 This tool can be used to configure the 802.1AE keys of the interface. Note that 802.1AE uses GCM-AES
 with a initialization vector (IV) derived from the packet number. The same key must not be used
-with the same IV more than once. Instead, keys must be frequently regenerated and distibuted.
+with the same IV more than once. Instead, keys must be frequently regenerated and distributed.
 This tool is thus mostly for debugging and testing, or in combination with a user-space application
 that reconfigures the keys. It is wrong to just configure the keys statically and assume them to work
 indefinitely. The suggested and standardized way for key management is 802.1X-2010, which is implemented

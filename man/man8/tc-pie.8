@@ -40,7 +40,7 @@ aims to control delay. The main design goals are
 PIE is designed to control delay effectively. First, an average dequeue rate is
 estimated based on the standing queue. The rate is used to calculate the current
 delay. Then, on a periodic basis, the delay is used to calculate the dropping
-probabilty. Finally, on arrival, a packet is dropped (or marked) based on this
+probability. Finally, on arrival, a packet is dropped (or marked) based on this
 probability.
 
 PIE makes adjustments to the probability based on the trend of the delay i.e.
@@ -52,7 +52,7 @@ growth and are determined through control theoretic approaches. alpha determines
 the deviation between the current and target latency changes probability. beta exerts
 additional adjustments depending on the latency trend.
 
-The drop probabilty is used to mark packets in ecn mode. However, as in RED,
+The drop probability is used to mark packets in ecn mode. However, as in RED,
 beyond 10% packets are dropped based on this probability. The bytemode is used
 to drop packets proportional to the packet size.
 

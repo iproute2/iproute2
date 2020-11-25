@@ -39,7 +39,7 @@ struct filter_entry {
 	char *key;
 	char *value;
 	/*
-	 * This field menas that we can try to issue .doit calback
+	 * This field means that we can try to issue .doit calback
 	 * on value above. This value can be converted to integer
 	 * with simple atoi(). Otherwise "is_doit" will be false.
 	 */

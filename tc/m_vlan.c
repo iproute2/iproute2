@@ -30,7 +30,7 @@ static const char * const action_names[] = {
 static void explain(void)
 {
 	fprintf(stderr,
-		"Usage: vlan pop\n"
+		"Usage: vlan pop [CONTROL]\n"
 		"       vlan push [ protocol VLANPROTO ] id VLANID [ priority VLANPRIO ] [CONTROL]\n"
 		"       vlan modify [ protocol VLANPROTO ] id VLANID [ priority VLANPRIO ] [CONTROL]\n"
 		"       vlan pop_eth [CONTROL]\n"
@@ -245,7 +245,7 @@ static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
 	parse_rtattr_nested(tb, TCA_VLAN_MAX, arg);
 
 	if (!tb[TCA_VLAN_PARMS]) {
-		fprintf(stderr, "Missing vlanparameters\n");
+		fprintf(stderr, "Missing vlan parameters\n");
 		return -1;
 	}
 	parm = RTA_DATA(tb[TCA_VLAN_PARMS]);
