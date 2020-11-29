@@ -74,7 +74,7 @@ static void explain(void)
 
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len)
 {
-	char eaddr[32];
+	char eaddr[18];
 
 	ether_ntoa_r((const struct ether_addr *)id->addr, eaddr);
 	snprintf(buf, len, "%.2x%.2x.%s", id->prio[0], id->prio[1], eaddr);
