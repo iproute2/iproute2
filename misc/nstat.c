@@ -136,8 +136,7 @@ static void load_good_table(FILE *fp)
 			buf[strlen(buf)-1] = 0;
 			if (info_source[0] && strcmp(info_source, buf+1))
 				source_mismatch = 1;
-			info_source[0] = 0;
-			strncat(info_source, buf+1, sizeof(info_source)-1);
+			strlcpy(info_source, buf + 1, sizeof(info_source));
 			continue;
 		}
 		/* idbuf is as big as buf, so this is safe */

@@ -251,7 +251,7 @@ static void load_raw_table(FILE *fp)
 			buf[strlen(buf)-1] = 0;
 			if (info_source[0] && strcmp(info_source, buf+1))
 				source_mismatch = 1;
-			strncpy(info_source, buf+1, sizeof(info_source)-1);
+			strlcpy(info_source, buf+1, sizeof(info_source));
 			continue;
 		}
 		if ((n = malloc(sizeof(*n))) == NULL)
