@@ -243,13 +243,19 @@ static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	qopt = RTA_DATA(opt);
 
-	fprintf(f, " tc %u map ", qopt->num_tc);
+	print_uint(PRINT_ANY, "tc", "tc %u ", qopt->num_tc);
+	open_json_array(PRINT_ANY, is_json_context() ? "map" : "map ");
 	for (i = 0; i <= TC_PRIO_MAX; i++)
-		fprintf(f, "%u ", qopt->prio_tc_map[i]);
-	fprintf(f, "\n             queues:");
-	for (i = 0; i < qopt->num_tc; i++)
-		fprintf(f, "(%u:%u) ", qopt->offset[i],
-			qopt->offset[i] + qopt->count[i] - 1);
+		print_uint(PRINT_ANY, NULL, "%u ", qopt->prio_tc_map[i]);
+	close_json_array(PRINT_ANY, "");
+	open_json_array(PRINT_ANY, is_json_context() ? "queues" : "\n             queues:");
+	for (i = 0; i < qopt->num_tc; i++) {
+		open_json_array(PRINT_JSON, NULL);
+		print_uint(PRINT_ANY, NULL, "(%u:", qopt->offset[i]);
+		print_uint(PRINT_ANY, NULL, "%u) ", qopt->offset[i] + qopt->count[i] - 1);
+		close_json_array(PRINT_JSON, NULL);
+	}
+	close_json_array(PRINT_ANY, "");
 
 	if (len > 0) {
 		struct rtattr *tb[TCA_MQPRIO_MAX + 1];
@@ -262,18 +268,18 @@ static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			__u16 *mode = RTA_DATA(tb[TCA_MQPRIO_MODE]);
 
 			if (*mode == TC_MQPRIO_MODE_CHANNEL)
-				fprintf(f, "\n             mode:channel");
+				print_string(PRINT_ANY, "mode", "\n             mode:%s", "channel");
 		} else {
-			fprintf(f, "\n             mode:dcb");
+			print_string(PRINT_ANY, "mode", "\n             mode:%s", "dcb");
 		}
 
 		if (tb[TCA_MQPRIO_SHAPER]) {
 			__u16 *shaper = RTA_DATA(tb[TCA_MQPRIO_SHAPER]);
 
 			if (*shaper == TC_MQPRIO_SHAPER_BW_RATE)
-				fprintf(f, "\n             shaper:bw_rlimit");
+				print_string(PRINT_ANY, "shaper", "\n             shaper:%s", "bw_rlimit");
 		} else {
-			fprintf(f, "\n             shaper:dcb");
+			print_string(PRINT_ANY, "shaper", "\n             shaper:%s", "dcb");
 		}
 
 		if (tb[TCA_MQPRIO_MIN_RATE64]) {
@@ -287,9 +293,10 @@ static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 					return -1;
 				*(min++) = rta_getattr_u64(r);
 			}
-			fprintf(f, "	min_rate:");
+			open_json_array(PRINT_ANY, is_json_context() ? "min_rate" : "	min_rate:");
 			for (i = 0; i < qopt->num_tc; i++)
-				fprintf(f, "%s ", sprint_rate(min_rate64[i], b1));
+				print_string(PRINT_ANY, NULL, "%s ", sprint_rate(min_rate64[i], b1));
+			close_json_array(PRINT_ANY, "");
 		}
 
 		if (tb[TCA_MQPRIO_MAX_RATE64]) {
@@ -303,9 +310,10 @@ static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 					return -1;
 				*(max++) = rta_getattr_u64(r);
 			}
-			fprintf(f, "	max_rate:");
+			open_json_array(PRINT_ANY, is_json_context() ? "max_rate" : "	max_rate:");
 			for (i = 0; i < qopt->num_tc; i++)
-				fprintf(f, "%s ", sprint_rate(max_rate64[i], b1));
+				print_string(PRINT_ANY, NULL, "%s ", sprint_rate(max_rate64[i], b1));
+			close_json_array(PRINT_ANY, "");
 		}
 	}
 	return 0;
