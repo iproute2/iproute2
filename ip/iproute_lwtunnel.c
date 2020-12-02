@@ -294,6 +294,11 @@ static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 			     rtnl_rttable_n2a(rta_getattr_u32(tb[SEG6_LOCAL_TABLE]),
 			     b1, sizeof(b1)));
 
+	if (tb[SEG6_LOCAL_VRFTABLE])
+		print_string(PRINT_ANY, "vrftable", "vrftable %s ",
+			     rtnl_rttable_n2a(rta_getattr_u32(tb[SEG6_LOCAL_VRFTABLE]),
+			     b1, sizeof(b1)));
+
 	if (tb[SEG6_LOCAL_NH4]) {
 		print_string(PRINT_ANY, "nh4",
 			     "nh4 %s ", rt_addr_n2a_rta(AF_INET, tb[SEG6_LOCAL_NH4]));
@@ -860,9 +865,10 @@ static int lwt_parse_bpf(struct rtattr *rta, size_t len,
 static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				 char ***argvp)
 {
-	int segs_ok = 0, hmac_ok = 0, table_ok = 0, nh4_ok = 0, nh6_ok = 0;
-	int iif_ok = 0, oif_ok = 0, action_ok = 0, srh_ok = 0, bpf_ok = 0;
-	__u32 action = 0, table, iif, oif;
+	int segs_ok = 0, hmac_ok = 0, table_ok = 0, vrftable_ok = 0;
+	int nh4_ok = 0, nh6_ok = 0, iif_ok = 0, oif_ok = 0;
+	__u32 action = 0, table, vrftable, iif, oif;
+	int action_ok = 0, srh_ok = 0, bpf_ok = 0;
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
 	int argc = *argcp;
@@ -887,6 +893,13 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				duparg2("table", *argv);
 			rtnl_rttable_a2n(&table, *argv);
 			ret = rta_addattr32(rta, len, SEG6_LOCAL_TABLE, table);
+		} else if (strcmp(*argv, "vrftable") == 0) {
+			NEXT_ARG();
+			if (vrftable_ok++)
+				duparg2("vrftable", *argv);
+			rtnl_rttable_a2n(&vrftable, *argv);
+			ret = rta_addattr32(rta, len, SEG6_LOCAL_VRFTABLE,
+					    vrftable);
 		} else if (strcmp(*argv, "nh4") == 0) {
 			NEXT_ARG();
 			if (nh4_ok++)
