@@ -82,7 +82,7 @@ parse_ip6(int *argc_p, char ***argv_p,
 		/* Shift the field by 4 bits on success. */
 		if (!res) {
 			int nkeys = sel->sel.nkeys;
-			struct tc_pedit_key *key = &sel->sel.keys[nkeys - 1];
+			struct tc_pedit_key *key = &sel->keys[nkeys - 1];
 
 			key->mask = htonl(ntohl(key->mask) << 4 | 0xf);
 			key->val = htonl(ntohl(key->val) << 4);
