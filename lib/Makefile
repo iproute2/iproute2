@@ -13,7 +13,10 @@ UTILOBJ += bpf_libbpf.o
 endif
 endif
 
-NLOBJ=libgenl.o libnetlink.o mnl_utils.o
+NLOBJ=libgenl.o libnetlink.o
+ifeq ($(HAVE_MNL),y)
+NLOBJ += mnl_utils.o
+endif
 
 all: libnetlink.a libutil.a
 
