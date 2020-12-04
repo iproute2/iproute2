@@ -1110,7 +1110,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 				}
 				NEXT_ARG();
 			}
-			hash = sel2.sel.keys[0].val & sel2.sel.keys[0].mask;
+			hash = sel2.keys[0].val & sel2.keys[0].mask;
 			hash ^= hash >> 16;
 			hash ^= hash >> 8;
 			htid = ((hash % divisor) << 12) | (htid & 0xFFF00000);

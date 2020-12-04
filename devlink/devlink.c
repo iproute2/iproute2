@@ -2744,7 +2744,7 @@ static int cmd_dev_param_set(struct dl *dl)
 	struct param_ctx ctx = {};
 	struct nlmsghdr *nlh;
 	bool conv_exists;
-	uint32_t val_u32;
+	uint32_t val_u32 = 0;
 	uint16_t val_u16;
 	uint8_t val_u8;
 	bool val_bool;
