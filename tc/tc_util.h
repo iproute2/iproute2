@@ -76,9 +76,7 @@ struct qdisc_util *get_qdisc_kind(const char *str);
 struct filter_util *get_filter_kind(const char *str);
 
 int get_qdisc_handle(__u32 *h, const char *str);
-int get_rate(unsigned int *rate, const char *str);
 int get_percent_rate(unsigned int *rate, const char *str, const char *dev);
-int get_rate64(__u64 *rate, const char *str);
 int get_percent_rate64(__u64 *rate, const char *str, const char *dev);
 int get_size(unsigned int *size, const char *str);
 int get_size_and_cell(unsigned int *size, int *cell_log, char *str);
