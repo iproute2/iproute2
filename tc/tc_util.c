@@ -258,41 +258,6 @@ char *sprint_ticks(__u32 ticks, char *buf)
 	return sprint_time(tc_core_tick2time(ticks), buf);
 }
 
-int get_size(unsigned int *size, const char *str)
-{
-	double sz;
-	char *p;
-
-	sz = strtod(str, &p);
-	if (p == str)
-		return -1;
-
-	if (*p) {
-		if (strcasecmp(p, "kb") == 0 || strcasecmp(p, "k") == 0)
-			sz *= 1024;
-		else if (strcasecmp(p, "gb") == 0 || strcasecmp(p, "g") == 0)
-			sz *= 1024*1024*1024;
-		else if (strcasecmp(p, "gbit") == 0)
-			sz *= 1024*1024*1024/8;
-		else if (strcasecmp(p, "mb") == 0 || strcasecmp(p, "m") == 0)
-			sz *= 1024*1024;
-		else if (strcasecmp(p, "mbit") == 0)
-			sz *= 1024*1024/8;
-		else if (strcasecmp(p, "kbit") == 0)
-			sz *= 1024/8;
-		else if (strcasecmp(p, "b") != 0)
-			return -1;
-	}
-
-	*size = sz;
-
-	/* detect if an overflow happened */
-	if (*size != floor(sz))
-		return -1;
-
-	return 0;
-}
-
 int get_size_and_cell(unsigned int *size, int *cell_log, char *str)
 {
 	char *slash = strchr(str, '/');
