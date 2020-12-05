@@ -333,7 +333,8 @@ int print_color_rate(bool use_iec, enum output_type type, enum color_attr color,
 		rate /= kilo;
 	}
 
-	rc = asprintf(&buf, "%.0f%s%sbit", (double)rate, units[i], str);
+	rc = asprintf(&buf, "%.0f%s%sbit", (double)rate, units[i],
+		      i > 0 ? str : "");
 	if (rc < 0)
 		return -1;
 
