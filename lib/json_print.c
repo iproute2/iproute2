@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "utils.h"
 #include "json_print.h"
@@ -339,4 +340,31 @@ int print_color_rate(bool use_iec, enum output_type type, enum color_attr color,
 	rc = print_color_string(type, color, key, fmt, buf);
 	free(buf);
 	return rc;
+}
+
+char *sprint_size(__u32 sz, char *buf)
+{
+	size_t len = SPRINT_BSIZE - 1;
+	double tmp = sz;
+
+	if (sz >= 1024*1024 && fabs(1024*1024*rint(tmp/(1024*1024)) - sz) < 1024)
+		snprintf(buf, len, "%gMb", rint(tmp/(1024*1024)));
+	else if (sz >= 1024 && fabs(1024*rint(tmp/1024) - sz) < 16)
+		snprintf(buf, len, "%gKb", rint(tmp/1024));
+	else
+		snprintf(buf, len, "%ub", sz);
+
+	return buf;
+}
+
+int print_color_size(enum output_type type, enum color_attr color,
+		     const char *key, const char *fmt, __u32 sz)
+{
+	SPRINT_BUF(buf);
+
+	if (_IS_JSON_CONTEXT(type))
+		return print_color_uint(type, color, key, "%u", sz);
+
+	sprint_size(sz, buf);
+	return print_color_string(type, color, key, fmt, buf);
 }

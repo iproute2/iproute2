@@ -232,16 +232,13 @@ static int fq_pie_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_FQ_PIE_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_PIE_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_FQ_PIE_QUANTUM]);
-		print_uint(PRINT_JSON, "quantum", NULL, quantum);
-		print_string(PRINT_FP, NULL, "quantum %s ",
-			     sprint_size(quantum, b1));
+		print_size(PRINT_ANY, "quantum", "quantum %s ", quantum);
 	}
 	if (tb[TCA_FQ_PIE_MEMORY_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_PIE_MEMORY_LIMIT]) >= sizeof(__u32)) {
 		memory_limit = rta_getattr_u32(tb[TCA_FQ_PIE_MEMORY_LIMIT]);
-		print_uint(PRINT_JSON, "memory_limit", NULL, memory_limit);
-		print_string(PRINT_FP, NULL, "memory_limit %s ",
-			     sprint_size(memory_limit, b1));
+		print_size(PRINT_ANY, "memory_limit", "memory_limit %s ",
+			   memory_limit);
 	}
 	if (tb[TCA_FQ_PIE_ECN_PROB] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_PIE_ECN_PROB]) >= sizeof(__u32)) {

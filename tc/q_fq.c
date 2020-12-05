@@ -315,16 +315,13 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_FQ_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_FQ_QUANTUM]);
-		print_uint(PRINT_JSON, "quantum", NULL, quantum);
-		print_string(PRINT_FP, NULL, "quantum %s ",
-			     sprint_size(quantum, b1));
+		print_size(PRINT_ANY, "quantum", "quantum %s ", quantum);
 	}
 	if (tb[TCA_FQ_INITIAL_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_INITIAL_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_FQ_INITIAL_QUANTUM]);
-		print_uint(PRINT_JSON, "initial_quantum", NULL, quantum);
-		print_string(PRINT_FP, NULL, "initial_quantum %s ",
-			     sprint_size(quantum, b1));
+		print_size(PRINT_ANY, "initial_quantum", "initial_quantum %s ",
+			   quantum);
 	}
 	if (tb[TCA_FQ_FLOW_MAX_RATE] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_MAX_RATE]) >= sizeof(__u32)) {

@@ -221,9 +221,8 @@ static int fq_codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt
 	if (tb[TCA_FQ_CODEL_MEMORY_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_MEMORY_LIMIT]) >= sizeof(__u32)) {
 		memory_limit = rta_getattr_u32(tb[TCA_FQ_CODEL_MEMORY_LIMIT]);
-		print_uint(PRINT_JSON, "memory_limit", NULL, memory_limit);
-		print_string(PRINT_FP, NULL, "memory_limit %s ",
-			     sprint_size(memory_limit, b1));
+		print_size(PRINT_ANY, "memory_limit", "memory_limit %s ",
+			   memory_limit);
 	}
 	if (tb[TCA_FQ_CODEL_ECN] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_ECN]) >= sizeof(__u32)) {

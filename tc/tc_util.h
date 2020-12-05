@@ -88,7 +88,6 @@ void tc_print_rate(enum output_type t, const char *key, const char *fmt,
 		   unsigned long long rate);
 void print_devname(enum output_type type, int ifindex);
 
-char *sprint_size(__u32 size, char *buf);
 char *sprint_tc_classid(__u32 h, char *buf);
 char *sprint_ticks(__u32 ticks, char *buf);
 char *sprint_linklayer(unsigned int linklayer, char *buf);

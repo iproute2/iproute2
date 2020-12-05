@@ -434,7 +434,6 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	int atm = 0;
 	int nat = 0;
 
-	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 
 	if (opt == NULL)
@@ -573,11 +572,8 @@ static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (mpu)
 		print_uint(PRINT_ANY, "mpu", "mpu %u ", mpu);
 
-	if (memlimit) {
-		print_uint(PRINT_JSON, "memlimit", NULL, memlimit);
-		print_string(PRINT_FP, NULL, "memlimit %s ",
-			     sprint_size(memlimit, b1));
-	}
+	if (memlimit)
+		print_size(PRINT_ANY, "memlimit", "memlimit %s ", memlimit);
 
 	if (fwmark)
 		print_uint(PRINT_FP, NULL, "fwmark 0x%x ", fwmark);
@@ -637,11 +633,11 @@ static int cake_print_xstats(struct qdisc_util *qu, FILE *f,
 
 	if (st[TCA_CAKE_STATS_MEMORY_USED] &&
 	    st[TCA_CAKE_STATS_MEMORY_LIMIT]) {
-		print_string(PRINT_FP, NULL, " memory used: %s",
-			sprint_size(GET_STAT_U32(MEMORY_USED), b1));
+		print_size(PRINT_FP, NULL, " memory used: %s",
+			   GET_STAT_U32(MEMORY_USED));
 
-		print_string(PRINT_FP, NULL, " of %s\n",
-			sprint_size(GET_STAT_U32(MEMORY_LIMIT), b1));
+		print_size(PRINT_FP, NULL, " of %s\n",
+			   GET_STAT_U32(MEMORY_LIMIT));
 
 		print_uint(PRINT_JSON, "memory_used", NULL,
 			GET_STAT_U32(MEMORY_USED));

@@ -69,6 +69,7 @@ _PRINT_FUNC(on_off, bool)
 _PRINT_FUNC(null, const char*)
 _PRINT_FUNC(string, const char*)
 _PRINT_FUNC(uint, unsigned int)
+_PRINT_FUNC(size, __u32)
 _PRINT_FUNC(u64, uint64_t)
 _PRINT_FUNC(hhu, unsigned char)
 _PRINT_FUNC(hu, unsigned short)
@@ -95,5 +96,8 @@ static inline int print_rate(bool use_iec, enum output_type t,
 {
 	return print_color_rate(use_iec, t, COLOR_NONE, key, fmt, rate);
 }
+
+/* A backdoor to the size formatter. Please use print_size() instead. */
+char *sprint_size(__u32 sz, char *buf);
 
 #endif /* _JSON_PRINT_H_ */

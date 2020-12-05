@@ -206,9 +206,6 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct tc_sfq_qopt *qopt;
 	struct tc_sfq_qopt_v1 *qopt_ext = NULL;
 
-	SPRINT_BUF(b1);
-	SPRINT_BUF(b2);
-	SPRINT_BUF(b3);
 	if (opt == NULL)
 		return 0;
 
@@ -219,9 +216,7 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	qopt = RTA_DATA(opt);
 
 	print_uint(PRINT_ANY, "limit", "limit %up ", qopt->limit);
-	print_uint(PRINT_JSON, "quantum", NULL, qopt->quantum);
-	print_string(PRINT_FP, NULL, "quantum %s ",
-		     sprint_size(qopt->quantum, b1));
+	print_size(PRINT_ANY, "quantum", "quantum %s ", qopt->quantum);
 
 	if (qopt_ext && qopt_ext->depth)
 		print_uint(PRINT_ANY, "depth", "depth %u ", qopt_ext->depth);
@@ -237,12 +232,8 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			   qopt->perturb_period);
 	if (qopt_ext && qopt_ext->qth_min) {
 		print_uint(PRINT_ANY, "ewma", "ewma %u ", qopt_ext->Wlog);
-		print_uint(PRINT_JSON, "min", NULL, qopt_ext->qth_min);
-		print_string(PRINT_FP, NULL, "min %s ",
-			     sprint_size(qopt_ext->qth_min, b2));
-		print_uint(PRINT_JSON, "max", NULL, qopt_ext->qth_max);
-		print_string(PRINT_FP, NULL, "max %s ",
-			     sprint_size(qopt_ext->qth_max, b3));
+		print_size(PRINT_ANY, "min", "min %s ", qopt_ext->qth_min);
+		print_size(PRINT_ANY, "max", "max %s ", qopt_ext->qth_max);
 		print_float(PRINT_ANY, "probability", "probability %lg ",
 			    qopt_ext->max_P / pow(2, 32));
 		tc_red_print_flags(qopt_ext->flags);

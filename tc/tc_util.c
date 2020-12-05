@@ -412,24 +412,6 @@ void print_devname(enum output_type type, int ifindex)
 			   "dev", "%s ", ifname);
 }
 
-static void print_size(char *buf, int len, __u32 sz)
-{
-	double tmp = sz;
-
-	if (sz >= 1024*1024 && fabs(1024*1024*rint(tmp/(1024*1024)) - sz) < 1024)
-		snprintf(buf, len, "%gMb", rint(tmp/(1024*1024)));
-	else if (sz >= 1024 && fabs(1024*rint(tmp/1024) - sz) < 16)
-		snprintf(buf, len, "%gKb", rint(tmp/1024));
-	else
-		snprintf(buf, len, "%ub", sz);
-}
-
-char *sprint_size(__u32 size, char *buf)
-{
-	print_size(buf, SPRINT_BSIZE-1, size);
-	return buf;
-}
-
 static const char *action_n2a(int action)
 {
 	static char buf[64];
@@ -786,7 +768,6 @@ static void print_tcstats_basic_hw(struct rtattr **tbs, char *prefix)
 
 void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats)
 {
-	SPRINT_BUF(b1);
 	struct rtattr *tbs[TCA_STATS_MAX + 1];
 
 	parse_rtattr_nested(tbs, TCA_STATS_MAX, rta);
@@ -852,10 +833,8 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_QUEUE]), sizeof(q)));
 		if (!tbs[TCA_STATS_RATE_EST])
 			print_nl();
-		print_uint(PRINT_JSON, "backlog", NULL, q.backlog);
 		print_string(PRINT_FP, NULL, "%s", prefix);
-		print_string(PRINT_FP, NULL, "backlog %s",
-			     sprint_size(q.backlog, b1));
+		print_size(PRINT_ANY, "backlog", "backlog %s", q.backlog);
 		print_uint(PRINT_ANY, "qlen", " %up", q.qlen);
 		print_uint(PRINT_FP, NULL, " requeues %u", q.requeues);
 	}
@@ -867,8 +846,6 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix,
 			struct rtattr **xstats)
 {
-	SPRINT_BUF(b1);
-
 	if (tb[TCA_STATS2]) {
 		print_tcstats2_attr(fp, tb[TCA_STATS2], prefix, xstats);
 		if (xstats && !*xstats)
@@ -901,8 +878,8 @@ void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix,
 			if (st.qlen || st.backlog) {
 				fprintf(fp, "backlog ");
 				if (st.backlog)
-					fprintf(fp, "%s ",
-						sprint_size(st.backlog, b1));
+					print_size(PRINT_FP, NULL, "%s ",
+						   st.backlog);
 				if (st.qlen)
 					fprintf(fp, "%up ", st.qlen);
 			}

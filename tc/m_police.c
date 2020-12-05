@@ -238,7 +238,6 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 
 static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 {
-	SPRINT_BUF(b1);
 	SPRINT_BUF(b2);
 	struct tc_police *p;
 	struct rtattr *tb[TCA_POLICE_MAX+1];
@@ -271,8 +270,8 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	fprintf(f, " police 0x%x ", p->index);
 	tc_print_rate(PRINT_FP, NULL, "rate %s ", rate64);
 	buffer = tc_calc_xmitsize(rate64, p->burst);
-	fprintf(f, "burst %s ", sprint_size(buffer, b1));
-	fprintf(f, "mtu %s ", sprint_size(p->mtu, b1));
+	print_size(PRINT_FP, NULL, "burst %s ", buffer);
+	print_size(PRINT_FP, NULL, "mtu %s ", p->mtu);
 	if (show_raw)
 		fprintf(f, "[%08x] ", p->burst);
 
