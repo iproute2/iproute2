@@ -219,9 +219,9 @@ hfsc_print_sc(FILE *f, char *name, struct tc_service_curve *sc)
 	SPRINT_BUF(b1);
 
 	fprintf(f, "%s ", name);
-	fprintf(f, "m1 %s ", sprint_rate(sc->m1, b1));
+	tc_print_rate(PRINT_FP, NULL, "m1 %s ", sc->m1);
 	fprintf(f, "d %s ", sprint_time(tc_core_ktime2time(sc->d), b1));
-	fprintf(f, "m2 %s ", sprint_rate(sc->m2, b1));
+	tc_print_rate(PRINT_FP, NULL, "m2 %s ", sc->m2);
 }
 
 static int

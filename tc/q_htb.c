@@ -299,12 +299,12 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		    RTA_PAYLOAD(tb[TCA_HTB_CEIL64]) >= sizeof(ceil64))
 			ceil64 = rta_getattr_u64(tb[TCA_HTB_CEIL64]);
 
-		fprintf(f, "rate %s ", sprint_rate(rate64, b1));
+		tc_print_rate(PRINT_FP, NULL, "rate %s ", rate64);
 		if (hopt->rate.overhead)
 			fprintf(f, "overhead %u ", hopt->rate.overhead);
 		buffer = tc_calc_xmitsize(rate64, hopt->buffer);
 
-		fprintf(f, "ceil %s ", sprint_rate(ceil64, b1));
+		tc_print_rate(PRINT_FP, NULL, "ceil %s ", ceil64);
 		cbuffer = tc_calc_xmitsize(ceil64, hopt->cbuffer);
 		linklayer = (hopt->rate.linklayer & TC_LINKLAYER_MASK);
 		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)

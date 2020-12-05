@@ -308,3 +308,35 @@ void print_nl(void)
 	if (!_jw)
 		printf("%s", _SL_);
 }
+
+int print_color_rate(bool use_iec, enum output_type type, enum color_attr color,
+		     const char *key, const char *fmt, unsigned long long rate)
+{
+	unsigned long kilo = use_iec ? 1024 : 1000;
+	const char *str = use_iec ? "i" : "";
+	static char *units[5] = {"", "K", "M", "G", "T"};
+	char *buf;
+	int rc;
+	int i;
+
+	if (_IS_JSON_CONTEXT(type))
+		return print_color_lluint(type, color, key, "%llu", rate);
+
+	rate <<= 3; /* bytes/sec -> bits/sec */
+
+	for (i = 0; i < ARRAY_SIZE(units) - 1; i++)  {
+		if (rate < kilo)
+			break;
+		if (((rate % kilo) != 0) && rate < 1000*kilo)
+			break;
+		rate /= kilo;
+	}
+
+	rc = asprintf(&buf, "%.0f%s%sbit", (double)rate, units[i], str);
+	if (rc < 0)
+		return -1;
+
+	rc = print_color_string(type, color, key, fmt, buf);
+	free(buf);
+	return rc;
+}

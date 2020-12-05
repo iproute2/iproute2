@@ -286,8 +286,7 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_TBF_RATE64] &&
 	    RTA_PAYLOAD(tb[TCA_TBF_RATE64]) >= sizeof(rate64))
 		rate64 = rta_getattr_u64(tb[TCA_TBF_RATE64]);
-	print_u64(PRINT_JSON, "rate", NULL, rate64);
-	print_string(PRINT_FP, NULL, "rate %s ", sprint_rate(rate64, b1));
+	tc_print_rate(PRINT_ANY, "rate", "rate %s ", rate64);
 	buffer = tc_calc_xmitsize(rate64, qopt->buffer);
 	if (show_details) {
 		sprintf(b1, "%s/%u",  sprint_size(buffer, b2),
@@ -308,9 +307,7 @@ static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	    RTA_PAYLOAD(tb[TCA_TBF_PRATE64]) >= sizeof(prate64))
 		prate64 = rta_getattr_u64(tb[TCA_TBF_PRATE64]);
 	if (prate64) {
-		print_u64(PRINT_JSON, "peakrate", NULL, prate64);
-		print_string(PRINT_FP, NULL, "peakrate %s ",
-			     sprint_rate(prate64, b1));
+		tc_print_rate(PRINT_FP, "peakrate", "peakrate %s ", prate64);
 		if (qopt->mtu || qopt->peakrate.mpu) {
 			mtu = tc_calc_xmitsize(prate64, qopt->mtu);
 			if (show_details) {

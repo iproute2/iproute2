@@ -86,4 +86,14 @@ _PRINT_NAME_VALUE_FUNC(uint, unsigned int, u);
 _PRINT_NAME_VALUE_FUNC(string, const char*, s);
 #undef _PRINT_NAME_VALUE_FUNC
 
+int print_color_rate(bool use_iec, enum output_type t, enum color_attr color,
+		     const char *key, const char *fmt, unsigned long long rate);
+
+static inline int print_rate(bool use_iec, enum output_type t,
+			     const char *key, const char *fmt,
+			     unsigned long long rate)
+{
+	return print_color_rate(use_iec, t, COLOR_NONE, key, fmt, rate);
+}
+
 #endif /* _JSON_PRINT_H_ */

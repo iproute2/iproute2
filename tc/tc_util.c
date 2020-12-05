@@ -326,31 +326,10 @@ int get_rate64(__u64 *rate, const char *str)
 	return 0;
 }
 
-void print_rate(char *buf, int len, __u64 rate)
+void tc_print_rate(enum output_type t, const char *key, const char *fmt,
+		   unsigned long long rate)
 {
-	extern int use_iec;
-	unsigned long kilo = use_iec ? 1024 : 1000;
-	const char *str = use_iec ? "i" : "";
-	static char *units[5] = {"", "K", "M", "G", "T"};
-	int i;
-
-	rate <<= 3; /* bytes/sec -> bits/sec */
-
-	for (i = 0; i < ARRAY_SIZE(units) - 1; i++)  {
-		if (rate < kilo)
-			break;
-		if (((rate % kilo) != 0) && rate < 1000*kilo)
-			break;
-		rate /= kilo;
-	}
-
-	snprintf(buf, len, "%.0f%s%sbit", (double)rate, units[i], str);
-}
-
-char *sprint_rate(__u64 rate, char *buf)
-{
-	print_rate(buf, SPRINT_BSIZE-1, rate);
-	return buf;
+	print_rate(use_iec, t, key, fmt, rate);
 }
 
 char *sprint_ticks(__u32 ticks, char *buf)
@@ -853,8 +832,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 			   sizeof(re)));
 		print_string(PRINT_FP, NULL, "\n%s", prefix);
 		print_lluint(PRINT_JSON, "rate", NULL, re.bps);
-		print_string(PRINT_FP, NULL, "rate %s",
-			     sprint_rate(re.bps, b1));
+		tc_print_rate(PRINT_FP, NULL, "rate %s", re.bps);
 		print_lluint(PRINT_ANY, "pps", " %llupps", re.pps);
 	} else if (tbs[TCA_STATS_RATE_EST]) {
 		struct gnet_stats_rate_est re = {0};
@@ -863,8 +841,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_RATE_EST]), sizeof(re)));
 		print_string(PRINT_FP, NULL, "\n%s", prefix);
 		print_uint(PRINT_JSON, "rate", NULL, re.bps);
-		print_string(PRINT_FP, NULL, "rate %s",
-			     sprint_rate(re.bps, b1));
+		tc_print_rate(PRINT_FP, NULL, "rate %s", re.bps);
 		print_uint(PRINT_ANY, "pps", " %upps", re.pps);
 	}
 
@@ -916,8 +893,8 @@ void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix,
 			if (st.bps || st.pps) {
 				fprintf(fp, "rate ");
 				if (st.bps)
-					fprintf(fp, "%s ",
-						sprint_rate(st.bps, b1));
+					tc_print_rate(PRINT_FP, NULL, "%s ",
+						      st.bps);
 				if (st.pps)
 					fprintf(fp, "%upps ", st.pps);
 			}
