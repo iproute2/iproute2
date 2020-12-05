@@ -20,7 +20,6 @@
 
 extern int preferred_family;
 extern int human_readable;
-extern int use_iec;
 extern int show_stats;
 extern int show_details;
 extern int show_raw;
