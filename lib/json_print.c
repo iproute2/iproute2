@@ -344,13 +344,15 @@ int print_color_rate(bool use_iec, enum output_type type, enum color_attr color,
 
 char *sprint_size(__u32 sz, char *buf)
 {
+	long kilo = 1024;
+	long mega = kilo * kilo;
 	size_t len = SPRINT_BSIZE - 1;
 	double tmp = sz;
 
-	if (sz >= 1024*1024 && fabs(1024*1024*rint(tmp/(1024*1024)) - sz) < 1024)
-		snprintf(buf, len, "%gMb", rint(tmp/(1024*1024)));
-	else if (sz >= 1024 && fabs(1024*rint(tmp/1024) - sz) < 16)
-		snprintf(buf, len, "%gKb", rint(tmp/1024));
+	if (sz >= mega && fabs(mega * rint(tmp / mega) - sz) < 1024)
+		snprintf(buf, len, "%gMb", rint(tmp / mega));
+	else if (sz >= kilo && fabs(kilo * rint(tmp / kilo) - sz) < 16)
+		snprintf(buf, len, "%gKb", rint(tmp / kilo));
 	else
 		snprintf(buf, len, "%ub", sz);
 
