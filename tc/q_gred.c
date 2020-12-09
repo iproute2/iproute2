@@ -373,18 +373,11 @@ gred_print_stats(struct tc_gred_info *info, struct tc_gred_qopt *qopt)
 {
 	__u64 bytes = info ? info->bytes : qopt->bytesin;
 
-	SPRINT_BUF(b1);
-
 	if (!is_json_context())
 		printf("\n  Queue size: ");
 
-	print_uint(PRINT_JSON, "qave", NULL, qopt->qave);
-	print_string(PRINT_FP, NULL, "average %s ",
-		     sprint_size(qopt->qave, b1));
-
-	print_uint(PRINT_JSON, "backlog", NULL, qopt->backlog);
-	print_string(PRINT_FP, NULL, "current %s ",
-		     sprint_size(qopt->backlog, b1));
+	print_size(PRINT_ANY, "qave", "average %s ", qopt->qave);
+	print_size(PRINT_ANY, "backlog", "current %s ", qopt->backlog);
 
 	if (!is_json_context())
 		printf("\n  Dropped packets: ");
@@ -415,9 +408,7 @@ gred_print_stats(struct tc_gred_info *info, struct tc_gred_qopt *qopt)
 		printf("\n  Total packets: ");
 
 	print_uint(PRINT_ANY, "packets", "%u ", qopt->packets);
-
-	print_uint(PRINT_JSON, "bytes", NULL, bytes);
-	print_string(PRINT_FP, NULL, "(%s) ", sprint_size(bytes, b1));
+	print_size(PRINT_ANY, "bytes", "(%s) ", bytes);
 }
 
 static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
@@ -430,8 +421,6 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	__u32 *max_p = NULL;
 	__u32 *limit = NULL;
 	unsigned int i;
-
-	SPRINT_BUF(b1);
 
 	if (opt == NULL)
 		return 0;
@@ -470,11 +459,8 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	else
 		print_bool(PRINT_ANY, "grio", NULL, false);
 
-	if (limit) {
-		print_uint(PRINT_JSON, "limit", NULL, *limit);
-		print_string(PRINT_FP, NULL, "limit %s ",
-			     sprint_size(*limit, b1));
-	}
+	if (limit)
+		print_size(PRINT_ANY, "limit", "limit %s ", *limit);
 
 	tc_red_print_flags(sopt->flags);
 
@@ -487,18 +473,9 @@ static int gred_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 		print_uint(PRINT_ANY, "vq", "\n vq %u ", qopt->DP);
 		print_hhu(PRINT_ANY, "prio", "prio %hhu ", qopt->prio);
-
-		print_uint(PRINT_JSON, "limit", NULL, qopt->limit);
-		print_string(PRINT_FP, NULL, "limit %s ",
-			     sprint_size(qopt->limit, b1));
-
-		print_uint(PRINT_JSON, "min", NULL, qopt->qth_min);
-		print_string(PRINT_FP, NULL, "min %s ",
-			     sprint_size(qopt->qth_min, b1));
-
-		print_uint(PRINT_JSON, "max", NULL, qopt->qth_max);
-		print_string(PRINT_FP, NULL, "max %s ",
-			     sprint_size(qopt->qth_max, b1));
+		print_size(PRINT_ANY, "limit", "limit %s ", qopt->limit);
+		print_size(PRINT_ANY, "min", "min %s ", qopt->qth_min);
+		print_size(PRINT_ANY, "max", "max %s ", qopt->qth_max);
 
 		if (infos[i].flags_present)
 			tc_red_print_flags(infos[i].flags);

@@ -192,10 +192,6 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct tc_red_qopt *qopt;
 	__u32 max_P = 0;
 
-	SPRINT_BUF(b1);
-	SPRINT_BUF(b2);
-	SPRINT_BUF(b3);
-
 	if (opt == NULL)
 		return 0;
 
@@ -217,12 +213,9 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		qopt->flags = flags_bf->value;
 	}
 
-	print_uint(PRINT_JSON, "limit", NULL, qopt->limit);
-	print_string(PRINT_FP, NULL, "limit %s ", sprint_size(qopt->limit, b1));
-	print_uint(PRINT_JSON, "min", NULL, qopt->qth_min);
-	print_string(PRINT_FP, NULL, "min %s ", sprint_size(qopt->qth_min, b2));
-	print_uint(PRINT_JSON, "max", NULL, qopt->qth_max);
-	print_string(PRINT_FP, NULL, "max %s ", sprint_size(qopt->qth_max, b3));
+	print_size(PRINT_ANY, "limit", "limit %s ", qopt->limit);
+	print_size(PRINT_ANY, "min", "min %s ", qopt->qth_min);
+	print_size(PRINT_ANY, "max", "max %s ", qopt->qth_max);
 
 	tc_red_print_flags(qopt->flags);
 

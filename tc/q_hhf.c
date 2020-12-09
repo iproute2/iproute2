@@ -143,9 +143,7 @@ static int hhf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_HHF_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_HHF_QUANTUM]);
-		print_uint(PRINT_JSON, "quantum", NULL, quantum);
-		print_string(PRINT_FP, NULL, "quantum %s ",
-			     sprint_size(quantum, b1));
+		print_size(PRINT_ANY, "quantum", "quantum %s ", quantum);
 	}
 	if (tb[TCA_HHF_HH_FLOWS_LIMIT] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_HH_FLOWS_LIMIT]) >= sizeof(__u32)) {
@@ -162,9 +160,8 @@ static int hhf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_HHF_ADMIT_BYTES] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_ADMIT_BYTES]) >= sizeof(__u32)) {
 		admit_bytes = rta_getattr_u32(tb[TCA_HHF_ADMIT_BYTES]);
-		print_uint(PRINT_JSON, "admit_bytes", NULL, admit_bytes);
-		print_string(PRINT_FP, NULL, "admit_bytes %s ",
-			     sprint_size(admit_bytes, b1));
+		print_size(PRINT_ANY, "admit_bytes", "admit_bytes %s ",
+			   admit_bytes);
 	}
 	if (tb[TCA_HHF_EVICT_TIMEOUT] &&
 	    RTA_PAYLOAD(tb[TCA_HHF_EVICT_TIMEOUT]) >= sizeof(__u32)) {

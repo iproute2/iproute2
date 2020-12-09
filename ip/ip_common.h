@@ -6,6 +6,8 @@
 
 #include "json_print.h"
 
+extern int use_iec;
+
 struct link_filter {
 	int ifindex;
 	int family;

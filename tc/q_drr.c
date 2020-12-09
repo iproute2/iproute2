@@ -84,16 +84,14 @@ static int drr_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_DRR_MAX + 1];
 
-	SPRINT_BUF(b1);
-
 	if (opt == NULL)
 		return 0;
 
 	parse_rtattr_nested(tb, TCA_DRR_MAX, opt);
 
 	if (tb[TCA_DRR_QUANTUM])
-		fprintf(f, "quantum %s ",
-			sprint_size(rta_getattr_u32(tb[TCA_DRR_QUANTUM]), b1));
+		print_size(PRINT_FP, NULL, "quantum %s ",
+			   rta_getattr_u32(tb[TCA_DRR_QUANTUM]));
 	return 0;
 }
 
@@ -101,15 +99,13 @@ static int drr_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 {
 	struct tc_drr_stats *x;
 
-	SPRINT_BUF(b1);
-
 	if (xstats == NULL)
 		return 0;
 	if (RTA_PAYLOAD(xstats) < sizeof(*x))
 		return -1;
 	x = RTA_DATA(xstats);
 
-	fprintf(f, " deficit %s ", sprint_size(x->deficit, b1));
+	print_size(PRINT_FP, NULL, " deficit %s ", x->deficit);
 	return 0;
 }
 
