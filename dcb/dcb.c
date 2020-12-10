@@ -229,8 +229,8 @@ void dcb_print_named_array(const char *json_name, const char *fp_name,
 }
 
 int dcb_parse_mapping(const char *what_key, __u32 key, __u32 max_key,
-		      const char *what_value, __u32 value, __u32 max_value,
-		      void (*set_array)(__u32 index, __u32 value, void *data),
+		      const char *what_value, __u64 value, __u64 max_value,
+		      void (*set_array)(__u32 index, __u64 value, void *data),
 		      void *set_array_data)
 {
 	bool is_all = key == (__u32) -1;
@@ -242,7 +242,7 @@ int dcb_parse_mapping(const char *what_key, __u32 key, __u32 max_key,
 	}
 
 	if (value > max_value) {
-		fprintf(stderr, "In %s:%s mapping, %s is expected to be 0..%d\n",
+		fprintf(stderr, "In %s:%s mapping, %s is expected to be 0..%llu\n",
 			what_key, what_value, what_value, max_value);
 		return -EINVAL;
 	}
@@ -257,9 +257,23 @@ int dcb_parse_mapping(const char *what_key, __u32 key, __u32 max_key,
 	return 0;
 }
 
-void dcb_set_u8(__u32 key, __u32 value, void *data)
+void dcb_set_u8(__u32 key, __u64 value, void *data)
 {
 	__u8 *array = data;
+
+	array[key] = value;
+}
+
+void dcb_set_u32(__u32 key, __u64 value, void *data)
+{
+	__u32 *array = data;
+
+	array[key] = value;
+}
+
+void dcb_set_u64(__u32 key, __u64 value, void *data)
+{
+	__u64 *array = data;
 
 	array[key] = value;
 }
