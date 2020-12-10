@@ -310,8 +310,8 @@ static void dcb_help(void)
 		"Usage: dcb [ OPTIONS ] OBJECT { COMMAND | help }\n"
 		"       dcb [ -f | --force ] { -b | --batch } filename [ -N | --Netns ] netnsname\n"
 		"where  OBJECT := ets\n"
-		"       OPTIONS := [ -V | --Version | -j | --json | -p | --pretty\n"
-		"                  | -s | --statistics | -v | --verbose ]\n");
+		"       OPTIONS := [ -V | --Version | -i | --iec | -j | --json\n"
+		"                  | -p | --pretty | -s | --statistics | -v | --verbose]\n");
 }
 
 static int dcb_cmd(struct dcb *dcb, int argc, char **argv)
@@ -345,6 +345,7 @@ int main(int argc, char **argv)
 		{ "Version",		no_argument,		NULL, 'V' },
 		{ "force",		no_argument,		NULL, 'f' },
 		{ "batch",		required_argument,	NULL, 'b' },
+		{ "iec",		no_argument,		NULL, 'i' },
 		{ "json",		no_argument,		NULL, 'j' },
 		{ "pretty",		no_argument,		NULL, 'p' },
 		{ "statistics",		no_argument,		NULL, 's' },
@@ -365,7 +366,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	while ((opt = getopt_long(argc, argv, "b:fhjpsvN:V",
+	while ((opt = getopt_long(argc, argv, "b:fhijpsvN:V",
 				  long_options, NULL)) >= 0) {
 
 		switch (opt) {
@@ -393,6 +394,9 @@ int main(int argc, char **argv)
 				ret = EXIT_FAILURE;
 				goto dcb_free;
 			}
+			break;
+		case 'i':
+			dcb->use_iec = true;
 			break;
 		case 'h':
 			dcb_help();
