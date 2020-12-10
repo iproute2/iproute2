@@ -370,7 +370,7 @@ static int dcb_cmd_ets_show(struct dcb *dcb, const char *dev, int argc, char **a
 
 	do {
 		if (matches(*argv, "help") == 0) {
-			dcb_ets_help();
+			dcb_ets_help_show();
 			return 0;
 		} else if (matches(*argv, "willing") == 0) {
 			dcb_ets_print_willing(&ets);
@@ -404,7 +404,7 @@ static int dcb_cmd_ets_show(struct dcb *dcb, const char *dev, int argc, char **a
 			print_nl();
 		} else {
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
-			dcb_ets_help();
+			dcb_ets_help_show();
 			return -EINVAL;
 		}
 
