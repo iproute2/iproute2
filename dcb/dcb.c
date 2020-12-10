@@ -349,7 +349,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	while ((opt = getopt_long(argc, argv, "b:c::fhjnpvN:V",
+	while ((opt = getopt_long(argc, argv, "b:fhjpvN:V",
 				  long_options, NULL)) >= 0) {
 
 		switch (opt) {
