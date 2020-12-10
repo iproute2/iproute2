@@ -9,7 +9,7 @@ dcb \- show / manipulate DCB (Data Center Bridging) settings
 .ti -8
 .B dcb
 .RI "[ " OPTIONS " ] "
-.RB "{ " buffer " | " ets " | " pfc " }"
+.RB "{ " buffer " | " ets " | " maxrate " | " pfc " }"
 .RI "{ " COMMAND " | " help " }"
 .sp
 
@@ -72,6 +72,10 @@ part of the "show" output.
 - Configuration of ETS (Enhanced Transmission Selection)
 
 .TP
+.B maxrate
+- Configuration of per-TC maximum transmit rate
+
+.TP
 .B pfc
 - Configuration of PFC (Priority-based Flow Control)
 
@@ -121,6 +125,7 @@ Exit status is 0 if command was successful or a positive integer upon failure.
 .SH SEE ALSO
 .BR dcb-buffer (8),
 .BR dcb-ets (8),
+.BR dcb-maxrate (8),
 .BR dcb-pfc (8)
 .br
 

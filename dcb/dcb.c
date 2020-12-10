@@ -332,7 +332,7 @@ static void dcb_help(void)
 	fprintf(stderr,
 		"Usage: dcb [ OPTIONS ] OBJECT { COMMAND | help }\n"
 		"       dcb [ -f | --force ] { -b | --batch } filename [ -N | --Netns ] netnsname\n"
-		"where  OBJECT := { buffer | ets | pfc }\n"
+		"where  OBJECT := { buffer | ets | maxrate | pfc }\n"
 		"       OPTIONS := [ -V | --Version | -i | --iec | -j | --json\n"
 		"                  | -p | --pretty | -s | --statistics | -v | --verbose]\n");
 }
@@ -346,6 +346,8 @@ static int dcb_cmd(struct dcb *dcb, int argc, char **argv)
 		return dcb_cmd_buffer(dcb, argc - 1, argv + 1);
 	} else if (matches(*argv, "ets") == 0) {
 		return dcb_cmd_ets(dcb, argc - 1, argv + 1);
+	} else if (matches(*argv, "maxrate") == 0) {
+		return dcb_cmd_maxrate(dcb, argc - 1, argv + 1);
 	} else if (matches(*argv, "pfc") == 0) {
 		return dcb_cmd_pfc(dcb, argc - 1, argv + 1);
 	}

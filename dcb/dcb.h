@@ -50,6 +50,10 @@ int dcb_cmd_buffer(struct dcb *dcb, int argc, char **argv);
 
 int dcb_cmd_ets(struct dcb *dcb, int argc, char **argv);
 
+/* dcb_maxrate.c */
+
+int dcb_cmd_maxrate(struct dcb *dcb, int argc, char **argv);
+
 /* dcb_pfc.c */
 
 int dcb_cmd_pfc(struct dcb *dcb, int argc, char **argv);
