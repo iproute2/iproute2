@@ -9,7 +9,7 @@ dcb \- show / manipulate DCB (Data Center Bridging) settings
 .ti -8
 .B dcb
 .RI "[ " OPTIONS " ] "
-.RB "{ " ets " | " pfc " }"
+.RB "{ " buffer " | " ets " | " pfc " }"
 .RI "{ " COMMAND " | " help " }"
 .sp
 
@@ -64,6 +64,10 @@ part of the "show" output.
 .SH OBJECTS
 
 .TP
+.B buffer
+- Configuration of port buffers
+
+.TP
 .B ets
 - Configuration of ETS (Enhanced Transmission Selection)
 
@@ -115,6 +119,7 @@ other values:
 Exit status is 0 if command was successful or a positive integer upon failure.
 
 .SH SEE ALSO
+.BR dcb-buffer (8),
 .BR dcb-ets (8),
 .BR dcb-pfc (8)
 .br
