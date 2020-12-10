@@ -32,9 +32,9 @@ static void dcb_ets_help_show(void)
 {
 	fprintf(stderr,
 		"Usage: dcb ets show dev STRING\n"
-		"           [ willing | ets-cap | cbs | tc-tsa | reco-tc-tsa |\n"
-		"             pg-bw | tc-bw | reco-tc-bw | prio-tc |\n"
-		"             reco-prio-tc ]\n"
+		"           [ willing ] [ ets-cap ] [ cbs ] [ tc-tsa ]\n"
+		"           [ reco-tc-tsa ] [ pg-bw ] [ tc-bw ] [ reco-tc-bw ]\n"
+		"           [ prio-tc ] [ reco-prio-tc ]\n"
 		"\n"
 	);
 }
