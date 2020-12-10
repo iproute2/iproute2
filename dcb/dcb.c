@@ -310,7 +310,8 @@ static void dcb_help(void)
 		"Usage: dcb [ OPTIONS ] OBJECT { COMMAND | help }\n"
 		"       dcb [ -f | --force ] { -b | --batch } filename [ -N | --Netns ] netnsname\n"
 		"where  OBJECT := ets\n"
-		"       OPTIONS := [ -V | --Version | -j | --json | -p | --pretty | -v | --verbose ]\n");
+		"       OPTIONS := [ -V | --Version | -j | --json | -p | --pretty\n"
+		"                  | -s | --statistics | -v | --verbose ]\n");
 }
 
 static int dcb_cmd(struct dcb *dcb, int argc, char **argv)
@@ -346,6 +347,7 @@ int main(int argc, char **argv)
 		{ "batch",		required_argument,	NULL, 'b' },
 		{ "json",		no_argument,		NULL, 'j' },
 		{ "pretty",		no_argument,		NULL, 'p' },
+		{ "statistics",		no_argument,		NULL, 's' },
 		{ "Netns",		required_argument,	NULL, 'N' },
 		{ "help",		no_argument,		NULL, 'h' },
 		{ NULL, 0, NULL, 0 }
@@ -363,7 +365,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	while ((opt = getopt_long(argc, argv, "b:fhjpvN:V",
+	while ((opt = getopt_long(argc, argv, "b:fhjpsvN:V",
 				  long_options, NULL)) >= 0) {
 
 		switch (opt) {
@@ -382,6 +384,9 @@ int main(int argc, char **argv)
 			break;
 		case 'p':
 			pretty = true;
+			break;
+		case 's':
+			dcb->stats = true;
 			break;
 		case 'N':
 			if (netns_switch(optarg)) {

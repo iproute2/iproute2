@@ -11,6 +11,7 @@ struct dcb {
 	char *buf;
 	struct mnl_socket *nl;
 	bool json_output;
+	bool stats;
 };
 
 int dcb_parse_mapping(const char *what_key, __u32 key, __u32 max_key,
