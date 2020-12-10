@@ -9,7 +9,7 @@ dcb \- show / manipulate DCB (Data Center Bridging) settings
 .ti -8
 .B dcb
 .RI "[ " OPTIONS " ] "
-.B ets
+.RB "{ " ets " | " pfc " }"
 .RI "{ " COMMAND " | " help " }"
 .sp
 
@@ -67,6 +67,10 @@ part of the "show" output.
 .B ets
 - Configuration of ETS (Enhanced Transmission Selection)
 
+.TP
+.B pfc
+- Configuration of PFC (Priority-based Flow Control)
+
 .SH COMMANDS
 
 A \fICOMMAND\fR specifies the action to perform on the object. The set of
@@ -111,7 +115,8 @@ other values:
 Exit status is 0 if command was successful or a positive integer upon failure.
 
 .SH SEE ALSO
-.BR dcb-ets (8)
+.BR dcb-ets (8),
+.BR dcb-pfc (8)
 .br
 
 .SH REPORTING BUGS

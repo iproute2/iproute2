@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <linux/dcbnl.h>
 #include <libmnl/libmnl.h>
@@ -201,6 +202,28 @@ void dcb_print_array_u8(const __u8 *array, size_t size)
 	}
 }
 
+void dcb_print_array_u64(const __u64 *array, size_t size)
+{
+	SPRINT_BUF(b);
+	size_t i;
+
+	for (i = 0; i < size; i++) {
+		snprintf(b, sizeof(b), "%zd:%%" PRIu64 " ", i);
+		print_u64(PRINT_ANY, NULL, b, array[i]);
+	}
+}
+
+void dcb_print_array_on_off(const __u8 *array, size_t size)
+{
+	SPRINT_BUF(b);
+	size_t i;
+
+	for (i = 0; i < size; i++) {
+		snprintf(b, sizeof(b), "%zd:%%s ", i);
+		print_on_off(PRINT_ANY, NULL, b, array[i]);
+	}
+}
+
 void dcb_print_array_kw(const __u8 *array, size_t array_size,
 			const char *const kw[], size_t kw_size)
 {
@@ -309,7 +332,7 @@ static void dcb_help(void)
 	fprintf(stderr,
 		"Usage: dcb [ OPTIONS ] OBJECT { COMMAND | help }\n"
 		"       dcb [ -f | --force ] { -b | --batch } filename [ -N | --Netns ] netnsname\n"
-		"where  OBJECT := ets\n"
+		"where  OBJECT := { ets | pfc }\n"
 		"       OPTIONS := [ -V | --Version | -i | --iec | -j | --json\n"
 		"                  | -p | --pretty | -s | --statistics | -v | --verbose]\n");
 }
@@ -321,6 +344,8 @@ static int dcb_cmd(struct dcb *dcb, int argc, char **argv)
 		return 0;
 	} else if (matches(*argv, "ets") == 0) {
 		return dcb_cmd_ets(dcb, argc - 1, argv + 1);
+	} else if (matches(*argv, "pfc") == 0) {
+		return dcb_cmd_pfc(dcb, argc - 1, argv + 1);
 	}
 
 	fprintf(stderr, "Object \"%s\" is unknown\n", *argv);

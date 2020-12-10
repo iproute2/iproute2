@@ -37,11 +37,17 @@ void dcb_print_named_array(const char *json_name, const char *fp_name,
 			   const __u8 *array, size_t size,
 			   void (*print_array)(const __u8 *, size_t));
 void dcb_print_array_u8(const __u8 *array, size_t size);
+void dcb_print_array_u64(const __u64 *array, size_t size);
+void dcb_print_array_on_off(const __u8 *array, size_t size);
 void dcb_print_array_kw(const __u8 *array, size_t array_size,
 			const char *const kw[], size_t kw_size);
 
 /* dcb_ets.c */
 
 int dcb_cmd_ets(struct dcb *dcb, int argc, char **argv);
+
+/* dcb_pfc.c */
+
+int dcb_cmd_pfc(struct dcb *dcb, int argc, char **argv);
 
 #endif /* __DCB_H__ */
