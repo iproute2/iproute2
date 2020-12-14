@@ -30,12 +30,13 @@
 static void print_explain(struct link_util *lu, FILE *f)
 {
 	fprintf(f,
-		"Usage: ... %s mode MODE [flag MODE_FLAG] MODE_OPTS\n"
+		"Usage: ... %s mode MODE [flag MODE_FLAG] MODE_OPTS [bcqueuelen BC_QUEUE_LEN]\n"
 		"\n"
 		"MODE: private | vepa | bridge | passthru | source\n"
 		"MODE_FLAG: null | nopromisc\n"
 		"MODE_OPTS: for mode \"source\":\n"
-		"\tmacaddr { { add | del } <macaddr> | set [ <macaddr> [ <macaddr>  ... ] ] | flush }\n",
+		"\tmacaddr { { add | del } <macaddr> | set [ <macaddr> [ <macaddr>  ... ] ] | flush }\n"
+		"BC_QUEUE_LEN: Length of the rx queue for broadcast/multicast: [0-4294967295]\n",
 		lu->id
 	);
 }
@@ -58,6 +59,14 @@ static int flag_arg(const char *arg)
 {
 	fprintf(stderr,
 		"Error: argument of \"flag\" must be \"nopromisc\" or \"null\", not \"%s\"\n",
+		arg);
+	return -1;
+}
+
+static int bc_queue_len_arg(const char *arg)
+{
+	fprintf(stderr,
+		"Error: argument of \"bcqueuelen\" must be a positive integer [0-4294967295], not \"%s\"\n",
 		arg);
 	return -1;
 }
@@ -150,6 +159,14 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		} else if (matches(*argv, "nopromisc") == 0) {
 			flags |= MACVLAN_FLAG_NOPROMISC;
 			has_flags = 1;
+		} else if (matches(*argv, "bcqueuelen") == 0) {
+			__u32 bc_queue_len;
+			NEXT_ARG();
+			
+			if (get_u32(&bc_queue_len, *argv, 0)) {
+				return bc_queue_len_arg(*argv);
+			}
+			addattr32(n, 1024, IFLA_MACVLAN_BC_QUEUE_LEN, bc_queue_len);
 		} else if (matches(*argv, "help") == 0) {
 			explain(lu);
 			return -1;
@@ -211,6 +228,18 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 
 	if (flags & MACVLAN_FLAG_NOPROMISC)
 		print_bool(PRINT_ANY, "nopromisc", "nopromisc ", true);
+
+	if (tb[IFLA_MACVLAN_BC_QUEUE_LEN] &&
+		RTA_PAYLOAD(tb[IFLA_MACVLAN_BC_QUEUE_LEN]) >= sizeof(__u32)) {
+		__u32 bc_queue_len = rta_getattr_u32(tb[IFLA_MACVLAN_BC_QUEUE_LEN]);
+		print_luint(PRINT_ANY, "bcqueuelen", "bcqueuelen %lu ", bc_queue_len);
+	}
+
+	if (tb[IFLA_MACVLAN_BC_QUEUE_LEN_USED] &&
+		RTA_PAYLOAD(tb[IFLA_MACVLAN_BC_QUEUE_LEN_USED]) >= sizeof(__u32)) {
+		__u32 bc_queue_len = rta_getattr_u32(tb[IFLA_MACVLAN_BC_QUEUE_LEN_USED]);
+		print_luint(PRINT_ANY, "usedbcqueuelen", "usedbcqueuelen %lu ", bc_queue_len);
+	}
 
 	/* in source mode, there are more options to print */
 
