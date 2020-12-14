@@ -17,9 +17,16 @@ the DCB (Data Center Bridging) subsystem
 .ti -8
 .B dcb ets show dev
 .RI DEV
-.RB "[ { " willing " | " ets-cap " | " cbs " | " tc-tsa " | " reco-tc-tsa
-.RB " | " pg-bw " | " tc-bw " | " reco-tc-bw " | " prio-tc
-.RB " | " reco-prio-tc " } ]"
+.RB "[ " willing " ]"
+.RB "[ " ets-cap " ]"
+.RB "[ " cbs " ]"
+.RB "[ " tc-tsa " ]"
+.RB "[ " reco-tc-tsa " ]"
+.RB "[ " pg-bw " ]"
+.RB "[ " tc-bw " ]"
+.RB "[ " reco-tc-bw " ]"
+.RB "[ " prio-tc " ]"
+.RB "[ " reco-prio-tc " ]"
 
 .ti -8
 .B dcb ets set dev
@@ -53,7 +60,6 @@ the DCB (Data Center Bridging) subsystem
 
 .ti -8
 .IR PRIO " := { " \fB0\fR " .. " \fB7\fR " }"
-
 
 .SH DESCRIPTION
 

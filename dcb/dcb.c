@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <linux/dcbnl.h>
 #include <libmnl/libmnl.h>
@@ -201,6 +202,28 @@ void dcb_print_array_u8(const __u8 *array, size_t size)
 	}
 }
 
+void dcb_print_array_u64(const __u64 *array, size_t size)
+{
+	SPRINT_BUF(b);
+	size_t i;
+
+	for (i = 0; i < size; i++) {
+		snprintf(b, sizeof(b), "%zd:%%" PRIu64 " ", i);
+		print_u64(PRINT_ANY, NULL, b, array[i]);
+	}
+}
+
+void dcb_print_array_on_off(const __u8 *array, size_t size)
+{
+	SPRINT_BUF(b);
+	size_t i;
+
+	for (i = 0; i < size; i++) {
+		snprintf(b, sizeof(b), "%zd:%%s ", i);
+		print_on_off(PRINT_ANY, NULL, b, array[i]);
+	}
+}
+
 void dcb_print_array_kw(const __u8 *array, size_t array_size,
 			const char *const kw[], size_t kw_size)
 {
@@ -229,8 +252,8 @@ void dcb_print_named_array(const char *json_name, const char *fp_name,
 }
 
 int dcb_parse_mapping(const char *what_key, __u32 key, __u32 max_key,
-		      const char *what_value, __u32 value, __u32 max_value,
-		      void (*set_array)(__u32 index, __u32 value, void *data),
+		      const char *what_value, __u64 value, __u64 max_value,
+		      void (*set_array)(__u32 index, __u64 value, void *data),
 		      void *set_array_data)
 {
 	bool is_all = key == (__u32) -1;
@@ -242,7 +265,7 @@ int dcb_parse_mapping(const char *what_key, __u32 key, __u32 max_key,
 	}
 
 	if (value > max_value) {
-		fprintf(stderr, "In %s:%s mapping, %s is expected to be 0..%d\n",
+		fprintf(stderr, "In %s:%s mapping, %s is expected to be 0..%llu\n",
 			what_key, what_value, what_value, max_value);
 		return -EINVAL;
 	}
@@ -257,9 +280,23 @@ int dcb_parse_mapping(const char *what_key, __u32 key, __u32 max_key,
 	return 0;
 }
 
-void dcb_set_u8(__u32 key, __u32 value, void *data)
+void dcb_set_u8(__u32 key, __u64 value, void *data)
 {
 	__u8 *array = data;
+
+	array[key] = value;
+}
+
+void dcb_set_u32(__u32 key, __u64 value, void *data)
+{
+	__u32 *array = data;
+
+	array[key] = value;
+}
+
+void dcb_set_u64(__u32 key, __u64 value, void *data)
+{
+	__u64 *array = data;
 
 	array[key] = value;
 }
@@ -295,8 +332,9 @@ static void dcb_help(void)
 	fprintf(stderr,
 		"Usage: dcb [ OPTIONS ] OBJECT { COMMAND | help }\n"
 		"       dcb [ -f | --force ] { -b | --batch } filename [ -N | --Netns ] netnsname\n"
-		"where  OBJECT := ets\n"
-		"       OPTIONS := [ -V | --Version | -j | --json | -p | --pretty | -v | --verbose ]\n");
+		"where  OBJECT := { buffer | ets | maxrate | pfc }\n"
+		"       OPTIONS := [ -V | --Version | -i | --iec | -j | --json\n"
+		"                  | -p | --pretty | -s | --statistics | -v | --verbose]\n");
 }
 
 static int dcb_cmd(struct dcb *dcb, int argc, char **argv)
@@ -304,8 +342,14 @@ static int dcb_cmd(struct dcb *dcb, int argc, char **argv)
 	if (!argc || matches(*argv, "help") == 0) {
 		dcb_help();
 		return 0;
+	} else if (matches(*argv, "buffer") == 0) {
+		return dcb_cmd_buffer(dcb, argc - 1, argv + 1);
 	} else if (matches(*argv, "ets") == 0) {
 		return dcb_cmd_ets(dcb, argc - 1, argv + 1);
+	} else if (matches(*argv, "maxrate") == 0) {
+		return dcb_cmd_maxrate(dcb, argc - 1, argv + 1);
+	} else if (matches(*argv, "pfc") == 0) {
+		return dcb_cmd_pfc(dcb, argc - 1, argv + 1);
 	}
 
 	fprintf(stderr, "Object \"%s\" is unknown\n", *argv);
@@ -330,8 +374,10 @@ int main(int argc, char **argv)
 		{ "Version",		no_argument,		NULL, 'V' },
 		{ "force",		no_argument,		NULL, 'f' },
 		{ "batch",		required_argument,	NULL, 'b' },
+		{ "iec",		no_argument,		NULL, 'i' },
 		{ "json",		no_argument,		NULL, 'j' },
 		{ "pretty",		no_argument,		NULL, 'p' },
+		{ "statistics",		no_argument,		NULL, 's' },
 		{ "Netns",		required_argument,	NULL, 'N' },
 		{ "help",		no_argument,		NULL, 'h' },
 		{ NULL, 0, NULL, 0 }
@@ -349,7 +395,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	while ((opt = getopt_long(argc, argv, "b:c::fhjnpvN:V",
+	while ((opt = getopt_long(argc, argv, "b:fhijpsvN:V",
 				  long_options, NULL)) >= 0) {
 
 		switch (opt) {
@@ -369,11 +415,17 @@ int main(int argc, char **argv)
 		case 'p':
 			pretty = true;
 			break;
+		case 's':
+			dcb->stats = true;
+			break;
 		case 'N':
 			if (netns_switch(optarg)) {
 				ret = EXIT_FAILURE;
 				goto dcb_free;
 			}
+			break;
+		case 'i':
+			dcb->use_iec = true;
 			break;
 		case 'h':
 			dcb_help();

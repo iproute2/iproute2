@@ -9,7 +9,7 @@ dcb \- show / manipulate DCB (Data Center Bridging) settings
 .ti -8
 .B dcb
 .RI "[ " OPTIONS " ] "
-.B ets
+.RB "{ " buffer " | " ets " | " maxrate " | " pfc " }"
 .RI "{ " COMMAND " | " help " }"
 .sp
 
@@ -44,6 +44,11 @@ Don't terminate dcb on errors in batch mode. If there were any errors during
 execution of the commands, the application return code will be non zero.
 
 .TP
+.BR "\-i" , " --iec"
+When showing rates, use ISO/IEC 1024-based prefixes (Ki, Mi, Bi) instead of
+the 1000-based ones (K, M, B).
+
+.TP
 .BR "\-j" , " --json"
 Generate JSON output.
 
@@ -51,11 +56,28 @@ Generate JSON output.
 .BR "\-p" , " --pretty"
 When combined with -j generate a pretty JSON output.
 
+.TP
+.BR "\-s" , " --statistics"
+If the object in question contains any statistical counters, shown them as
+part of the "show" output.
+
 .SH OBJECTS
+
+.TP
+.B buffer
+- Configuration of port buffers
 
 .TP
 .B ets
 - Configuration of ETS (Enhanced Transmission Selection)
+
+.TP
+.B maxrate
+- Configuration of per-TC maximum transmit rate
+
+.TP
+.B pfc
+- Configuration of PFC (Priority-based Flow Control)
 
 .SH COMMANDS
 
@@ -101,7 +123,10 @@ other values:
 Exit status is 0 if command was successful or a positive integer upon failure.
 
 .SH SEE ALSO
-.BR dcb-ets (8)
+.BR dcb-buffer (8),
+.BR dcb-ets (8),
+.BR dcb-maxrate (8),
+.BR dcb-pfc (8)
 .br
 
 .SH REPORTING BUGS
