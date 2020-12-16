@@ -3136,7 +3136,7 @@ static void mptcp_stats_print(struct mptcp_info *s)
 		out(" subflows:%d", s->mptcpi_subflows);
 	if (s->mptcpi_add_addr_signal)
 		out(" add_addr_signal:%d", s->mptcpi_add_addr_signal);
-	if (s->mptcpi_add_addr_signal)
+	if (s->mptcpi_add_addr_accepted)
 		out(" add_addr_accepted:%d", s->mptcpi_add_addr_accepted);
 	if (s->mptcpi_subflows_max)
 		out(" subflows_max:%d", s->mptcpi_subflows_max);

@@ -819,8 +819,10 @@ static int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
 			print_uint(PRINT_FP, NULL, "\n\t key #%d  at ", i);
 
 			err = print_pedit_location(f, htype, key->off);
-			if (err)
+			if (err) {
+				free(keys_ex);
 				return err;
+			}
 
 			/* In FP, report the "set" command as "val" to keep
 			 * backward compatibility. Report the true name in JSON.

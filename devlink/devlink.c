@@ -3617,19 +3617,21 @@ static int cmd_dev_flash(struct dl *dl)
 
 	err = _mnlg_socket_group_add(nlg_ntf, DEVLINK_GENL_MCGRP_CONFIG_NAME);
 	if (err)
-		return err;
+		goto err_socket;
 
 	err = pipe(pipe_fds);
-	if (err == -1)
-		return -errno;
+	if (err == -1) {
+		err = -errno;
+		goto err_socket;
+	}
 	pipe_r = pipe_fds[0];
 	pipe_w = pipe_fds[1];
 
 	pid = fork();
 	if (pid == -1) {
-		close(pipe_r);
 		close(pipe_w);
-		return -errno;
+		err = -errno;
+		goto out;
 	} else if (!pid) {
 		/* In child, just execute the flash and pass returned
 		 * value through pipe once it is done.
@@ -3658,6 +3660,7 @@ static int cmd_dev_flash(struct dl *dl)
 	err = _mnlg_socket_recv_run(dl->nlg, NULL, NULL);
 out:
 	close(pipe_r);
+err_socket:
 	mnlg_socket_close(nlg_ntf);
 	return err;
 }
