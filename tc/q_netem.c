@@ -800,9 +800,7 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (rate && rate->rate) {
 		open_json_object("rate");
 		rate64 = rate64 ? : rate->rate;
-		print_string(PRINT_FP, NULL, " rate %s",
-			     sprint_rate(rate64, b1));
-		print_lluint(PRINT_JSON, "rate", NULL, rate64);
+		tc_print_rate(PRINT_ANY, "rate", " rate %s", rate64);
 		PRINT_INT_OPT("packetoverhead", rate->packet_overhead);
 		print_uint(PRINT_ANY, "cellsize",
 			   rate->cell_size ? " cellsize %u" : "",

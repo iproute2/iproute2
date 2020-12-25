@@ -374,6 +374,11 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 	if (err < 0)
 		return err;
 
+	if (brief && tb[TCA_ACT_INDEX]) {
+		print_uint(PRINT_ANY, "index", "\t index %u",
+			   rta_getattr_u32(tb[TCA_ACT_INDEX]));
+		print_nl();
+	}
 	if (show_stats && tb[TCA_ACT_STATS]) {
 		print_string(PRINT_FP, NULL, "\tAction statistics:", NULL);
 		print_nl();
@@ -735,8 +740,12 @@ static int tc_act_list_or_flush(int *argc_p, char ***argv_p, int event)
 	addattr_nest_end(&req.n, tail);
 
 	tail3 = NLMSG_TAIL(&req.n);
-	flag_select.value |= TCA_FLAG_LARGE_DUMP_ON;
-	flag_select.selector |= TCA_FLAG_LARGE_DUMP_ON;
+	flag_select.value |= TCA_ACT_FLAG_LARGE_DUMP_ON;
+	flag_select.selector |= TCA_ACT_FLAG_LARGE_DUMP_ON;
+	if (brief) {
+		flag_select.value |= TCA_ACT_FLAG_TERSE_DUMP;
+		flag_select.selector |= TCA_ACT_FLAG_TERSE_DUMP;
+	}
 	addattr_l(&req.n, MAX_MSG, TCA_ROOT_FLAGS, &flag_select,
 		  sizeof(struct nla_bitfield32));
 	tail3->rta_len = (void *) NLMSG_TAIL(&req.n) - (void *) tail3;

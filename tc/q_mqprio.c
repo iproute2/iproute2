@@ -230,8 +230,6 @@ static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	__u64 max_rate64[TC_QOPT_MAX_QUEUE] = {0};
 	int len;
 
-	SPRINT_BUF(b1);
-
 	if (opt == NULL)
 		return 0;
 
@@ -295,7 +293,7 @@ static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			}
 			open_json_array(PRINT_ANY, is_json_context() ? "min_rate" : "	min_rate:");
 			for (i = 0; i < qopt->num_tc; i++)
-				print_string(PRINT_ANY, NULL, "%s ", sprint_rate(min_rate64[i], b1));
+				tc_print_rate(PRINT_ANY, NULL, "%s ", min_rate64[i]);
 			close_json_array(PRINT_ANY, "");
 		}
 
@@ -312,7 +310,7 @@ static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			}
 			open_json_array(PRINT_ANY, is_json_context() ? "max_rate" : "	max_rate:");
 			for (i = 0; i < qopt->num_tc; i++)
-				print_string(PRINT_ANY, NULL, "%s ", sprint_rate(max_rate64[i], b1));
+				tc_print_rate(PRINT_ANY, NULL, "%s ", max_rate64[i]);
 			close_json_array(PRINT_ANY, "");
 		}
 	}

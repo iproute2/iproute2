@@ -1352,6 +1352,7 @@ the following additional arguments are supported:
 .BR type " { " macvlan " | " macvtap " } "
 .BR mode " { " private " | " vepa " | " bridge " | " passthru
 .RB " [ " nopromisc " ] | " source " } "
+.RB " [ " bcqueuelen " { " LENGTH " } ] "
 
 .in +8
 .sp
@@ -1395,6 +1396,18 @@ against source mac address from received frames on underlying interface. This
 allows creating mac based VLAN associations, instead of standard port or tag
 based. The feature is useful to deploy 802.1x mac based behavior,
 where drivers of underlying interfaces doesn't allows that.
+
+.BR bcqueuelen " { " LENGTH " } "
+- Set the length of the RX queue used to process broadcast and multicast packets.
+.BR LENGTH " must be a positive integer in the range [0-4294967295]."
+Setting a length of 0 will effectively drop all broadcast/multicast traffic.
+If not specified the macvlan driver default (1000) is used.
+Note that all macvlans that share the same underlying device are using the same
+.RB "queue. The parameter here is a " request ", the actual queue length used"
+will be the maximum length that any macvlan interface has requested.
+When listing device parameters both the bcqueuelen parameter
+as well as the actual used bcqueuelen are listed to better help
+the user understand the setting.
 .in -8
 
 .TP
@@ -2451,6 +2464,26 @@ Commands:
 .sp
 .in -8
 
+Update the broadcast/multicast queue length.
+
+.B "ip link set type { macvlan | macvap } "
+[
+.BI bcqueuelen "  LENGTH  "
+]
+
+.in +8
+.BI bcqueuelen " LENGTH "
+- Set the length of the RX queue used to process broadcast and multicast packets.
+.IR LENGTH " must be a positive integer in the range [0-4294967295]."
+Setting a length of 0 will effectively drop all broadcast/multicast traffic.
+If not specified the macvlan driver default (1000) is used.
+Note that all macvlans that share the same underlying device are using the same
+.RB "queue. The parameter here is a " request ", the actual queue length used"
+will be the maximum length that any macvlan interface has requested.
+When listing device parameters both the bcqueuelen parameter
+as well as the actual used bcqueuelen are listed to better help
+the user understand the setting.
+.in -8
 
 .SS  ip link show - display device attributes
 

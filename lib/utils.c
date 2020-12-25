@@ -513,6 +513,120 @@ int get_addr64(__u64 *ap, const char *cp)
 	return 1;
 }
 
+/* See http://physics.nist.gov/cuu/Units/binary.html */
+static const struct rate_suffix {
+	const char *name;
+	double scale;
+} suffixes[] = {
+	{ "bit",	1. },
+	{ "Kibit",	1024. },
+	{ "kbit",	1000. },
+	{ "mibit",	1024.*1024. },
+	{ "mbit",	1000000. },
+	{ "gibit",	1024.*1024.*1024. },
+	{ "gbit",	1000000000. },
+	{ "tibit",	1024.*1024.*1024.*1024. },
+	{ "tbit",	1000000000000. },
+	{ "Bps",	8. },
+	{ "KiBps",	8.*1024. },
+	{ "KBps",	8000. },
+	{ "MiBps",	8.*1024*1024. },
+	{ "MBps",	8000000. },
+	{ "GiBps",	8.*1024.*1024.*1024. },
+	{ "GBps",	8000000000. },
+	{ "TiBps",	8.*1024.*1024.*1024.*1024. },
+	{ "TBps",	8000000000000. },
+	{ NULL }
+};
+
+int get_rate(unsigned int *rate, const char *str)
+{
+	char *p;
+	double bps = strtod(str, &p);
+	const struct rate_suffix *s;
+
+	if (p == str)
+		return -1;
+
+	for (s = suffixes; s->name; ++s) {
+		if (strcasecmp(s->name, p) == 0) {
+			bps *= s->scale;
+			p += strlen(p);
+			break;
+		}
+	}
+
+	if (*p)
+		return -1; /* unknown suffix */
+
+	bps /= 8; /* -> bytes per second */
+	*rate = bps;
+	/* detect if an overflow happened */
+	if (*rate != floor(bps))
+		return -1;
+	return 0;
+}
+
+int get_rate64(__u64 *rate, const char *str)
+{
+	char *p;
+	double bps = strtod(str, &p);
+	const struct rate_suffix *s;
+
+	if (p == str)
+		return -1;
+
+	for (s = suffixes; s->name; ++s) {
+		if (strcasecmp(s->name, p) == 0) {
+			bps *= s->scale;
+			p += strlen(p);
+			break;
+		}
+	}
+
+	if (*p)
+		return -1; /* unknown suffix */
+
+	bps /= 8; /* -> bytes per second */
+	*rate = bps;
+	return 0;
+}
+
+int get_size(unsigned int *size, const char *str)
+{
+	double sz;
+	char *p;
+
+	sz = strtod(str, &p);
+	if (p == str)
+		return -1;
+
+	if (*p) {
+		if (strcasecmp(p, "kb") == 0 || strcasecmp(p, "k") == 0)
+			sz *= 1024;
+		else if (strcasecmp(p, "gb") == 0 || strcasecmp(p, "g") == 0)
+			sz *= 1024*1024*1024;
+		else if (strcasecmp(p, "gbit") == 0)
+			sz *= 1024*1024*1024/8;
+		else if (strcasecmp(p, "mb") == 0 || strcasecmp(p, "m") == 0)
+			sz *= 1024*1024;
+		else if (strcasecmp(p, "mbit") == 0)
+			sz *= 1024*1024/8;
+		else if (strcasecmp(p, "kbit") == 0)
+			sz *= 1024/8;
+		else if (strcasecmp(p, "b") != 0)
+			return -1;
+	}
+
+	*size = sz;
+
+	/* detect if an overflow happened */
+	if (*size != floor(sz))
+		return -1;
+
+	return 0;
+}
+
 static void set_address_type(inet_prefix *addr)
 {
 	switch (addr->family) {
@@ -1694,4 +1808,107 @@ char *sprint_time64(__s64 time, char *buf)
 {
 	print_time64(buf, SPRINT_BSIZE-1, time);
 	return buf;
+}
+
+int do_batch(const char *name, bool force,
+	     int (*cmd)(int argc, char *argv[], void *data), void *data)
+{
+	char *line = NULL;
+	size_t len = 0;
+	int ret = EXIT_SUCCESS;
+
+	if (name && strcmp(name, "-") != 0) {
+		if (freopen(name, "r", stdin) == NULL) {
+			fprintf(stderr,
+				"Cannot open file \"%s\" for reading: %s\n",
+				name, strerror(errno));
+			return EXIT_FAILURE;
+		}
+	}
+
+	cmdlineno = 0;
+	while (getcmdline(&line, &len, stdin) != -1) {
+		char *largv[100];
+		int largc;
+
+		largc = makeargs(line, largv, 100);
+		if (!largc)
+			continue;	/* blank line */
+
+		if (cmd(largc, largv, data)) {
+			fprintf(stderr, "Command failed %s:%d\n",
+				name, cmdlineno);
+			ret = EXIT_FAILURE;
+			if (!force)
+				break;
+		}
+	}
+
+	if (line)
+		free(line);
+
+	return ret;
+}
+
+int parse_one_of(const char *msg, const char *realval, const char * const *list,
+		 size_t len, int *p_err)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (list[i] && matches(realval, list[i]) == 0) {
+			*p_err = 0;
+			return i;
+		}
+	}
+
+	fprintf(stderr, "Error: argument of \"%s\" must be one of ", msg);
+	for (i = 0; i < len; i++)
+		if (list[i])
+			fprintf(stderr, "\"%s\", ", list[i]);
+	fprintf(stderr, "not \"%s\"\n", realval);
+	*p_err = -EINVAL;
+	return 0;
+}
+
+bool parse_on_off(const char *msg, const char *realval, int *p_err)
+{
+	static const char * const values_on_off[] = { "off", "on" };
+
+	return parse_one_of(msg, realval, values_on_off, ARRAY_SIZE(values_on_off), p_err);
+}
+
+int parse_mapping(int *argcp, char ***argvp, bool allow_all,
+		  int (*mapping_cb)(__u32 key, char *value, void *data),
+		  void *mapping_cb_data)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+	int ret = 0;
+
+	while (argc > 0) {
+		char *colon = strchr(*argv, ':');
+		__u32 key;
+
+		if (!colon)
+			break;
+		*colon = '\0';
+
+		if (allow_all && matches(*argv, "all") == 0) {
+			key = (__u32) -1;
+		} else if (get_u32(&key, *argv, 0)) {
+			ret = 1;
+			break;
+		}
+		if (mapping_cb(key, colon + 1, mapping_cb_data)) {
+			ret = 1;
+			break;
+		}
+
+		argc--, argv++;
+	}
+
+	*argcp = argc;
+	*argvp = argv;
+	return ret;
 }

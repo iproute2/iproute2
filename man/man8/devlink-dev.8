@@ -63,6 +63,10 @@ devlink-dev \- devlink device configuration
 [
 .B netns
 .RI "{ " PID " | " NAME " | " ID " }"
+] [
+.BR action " { " driver_reinit " | " fw_activate " }"
+] [
+.B limit no_reset
 ]
 
 .ti -8
@@ -172,6 +176,36 @@ If this argument is omitted all parameters supported by devlink devices are list
 .B netns
 .RI { " PID " | " NAME " | " ID " }
 - Specifies the network namespace to reload into, either by pid, name or id.
+
+.BR action " { " driver_reinit " | " fw_activate " }"
+- Specifies the reload action required.
+If this argument is omitted
+.I driver_reinit
+action will be used.
+Note that even though user asks for a specific action, the driver implementation
+might require to perform another action alongside with it. For example, some
+driver do not support driver reinitialization being performed without fw
+activation. Therefore, the devlink reload command returns the list of actions
+which were actrually performed.
+
+.I driver_reinit
+- Driver entities re-initialization, applying devlink-param and
+devlink-resource values.
+
+.I fw_activate
+- Activates new firmware if such image is stored and pending activation. If no
+limitation specified this action may involve firmware reset. If no new image
+pending this action will reload current firmware image.
+
+.B limit no_reset
+- Specifies limitation on reload action.
+If this argument is omitted limit is unspecificed and the reload action is not
+limited. In such case driver implementation may include reset or downtime as
+needed to perform the actions.
+
+.I no_reset
+- No reset allowed, no down time allowed, no link flap and no configuration is
+lost.
 
 .SS devlink dev info - display device information.
 Display device information provided by the driver. This command can be used

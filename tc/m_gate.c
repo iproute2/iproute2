@@ -465,10 +465,8 @@ static int print_gate_list(struct rtattr *list)
 		}
 
 		if (maxoctets != -1) {
-			memset(buf, 0, sizeof(buf));
-			print_uint(PRINT_JSON, "max_octets", NULL, maxoctets);
-			print_string(PRINT_FP, NULL, "\t max-octets %s",
-				     sprint_size(maxoctets, buf));
+			print_size(PRINT_ANY, "max_octets", "\t max-octets %s",
+				   maxoctets);
 		} else {
 			print_string(PRINT_FP, NULL,
 				     "\t max-octets %s", "wildcard");

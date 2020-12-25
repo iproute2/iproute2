@@ -214,8 +214,9 @@ static int print_mpls(struct action_util *au, FILE *f, struct rtattr *arg)
 	SPRINT_BUF(b1);
 	__u32 val;
 
+	print_string(PRINT_ANY, "kind", "%s ", "mpls");
 	if (!arg)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_MPLS_MAX, arg);
 
@@ -225,7 +226,6 @@ static int print_mpls(struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 	parm = RTA_DATA(tb[TCA_MPLS_PARMS]);
 
-	print_string(PRINT_ANY, "kind", "%s ", "mpls");
 	print_string(PRINT_ANY, "mpls_action", " %s",
 		     action_names[parm->m_action]);
 

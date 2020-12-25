@@ -30,6 +30,7 @@
 #include "tc_common.h"
 #include "namespace.h"
 #include "rt_names.h"
+#include "bpf_util.h"
 
 int show_stats;
 int show_details;
@@ -44,6 +45,7 @@ bool use_names;
 int json;
 int color;
 int oneline;
+int brief;
 
 static char *conf_file;
 
@@ -202,7 +204,8 @@ static void usage(void)
 		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[aw] |\n"
 		"		    -o[neline] | -j[son] | -p[retty] | -c[olor]\n"
 		"		    -b[atch] [filename] | -n[etns] name | -N[umeric] |\n"
-		"		     -nm | -nam[es] | { -cf | -conf } path }\n");
+		"		     -nm | -nam[es] | { -cf | -conf } path\n"
+		"		     -br[ief] }\n");
 }
 
 static int do_cmd(int argc, char **argv)
@@ -231,22 +234,16 @@ static int do_cmd(int argc, char **argv)
 	return -1;
 }
 
+static int tc_batch_cmd(int argc, char *argv[], void *data)
+{
+	return do_cmd(argc, argv);
+}
+
 static int batch(const char *name)
 {
-	char *line = NULL;
-	size_t len = 0;
-	int ret = 0;
+	int ret;
 
 	batch_mode = 1;
-	if (name && strcmp(name, "-") != 0) {
-		if (freopen(name, "r", stdin) == NULL) {
-			fprintf(stderr,
-				"Cannot open file \"%s\" for reading: %s\n",
-				name, strerror(errno));
-			return -1;
-		}
-	}
-
 	tc_core_init();
 
 	if (rtnl_open(&rth, 0) < 0) {
@@ -254,26 +251,8 @@ static int batch(const char *name)
 		return -1;
 	}
 
-	cmdlineno = 0;
-	while (getcmdline(&line, &len, stdin) != -1) {
-		char *largv[100];
-		int largc;
+	ret = do_batch(name, force, tc_batch_cmd, NULL);
 
-		largc = makeargs(line, largv, 100);
-		if (largc == 0)
-			continue;	/* blank line */
-
-		if (do_cmd(largc, largv)) {
-			fprintf(stderr, "Command failed %s:%d\n",
-				name, cmdlineno);
-			ret = 1;
-			if (!force)
-				break;
-		}
-		fflush(stdout);
-	}
-
-	free(line);
 	rtnl_close(&rth);
 	return ret;
 }
@@ -281,8 +260,9 @@ static int batch(const char *name)
 
 int main(int argc, char **argv)
 {
-	int ret;
+	const char *libbpf_version;
 	char *batch_file = NULL;
+	int ret;
 
 	while (argc > 1) {
 		if (argv[1][0] != '-')
@@ -299,7 +279,11 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-graph") == 0) {
 			show_graph = 1;
 		} else if (matches(argv[1], "-Version") == 0) {
-			printf("tc utility, iproute2-%s\n", version);
+			printf("tc utility, iproute2-%s", version);
+			libbpf_version = get_libbpf_version();
+			if (libbpf_version)
+				printf(", libbpf %s", libbpf_version);
+			printf("\n");
 			return 0;
 		} else if (matches(argv[1], "-iec") == 0) {
 			++use_iec;
@@ -336,6 +320,8 @@ int main(int argc, char **argv)
 			++json;
 		} else if (matches(argv[1], "-oneline") == 0) {
 			++oneline;
+		}else if (matches(argv[1], "-brief") == 0) {
+			++brief;
 		} else {
 			fprintf(stderr,
 				"Option \"%s\" is unknown, try \"tc -help\".\n",

@@ -358,7 +358,7 @@ print_ipt(struct action_util *au, FILE * f, struct rtattr *arg)
 	__u32 hook;
 
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	set_lib_dir();
 

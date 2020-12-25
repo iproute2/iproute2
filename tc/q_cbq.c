@@ -497,10 +497,7 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	}
 
 	if (r) {
-		char buf[64];
-
-		print_rate(buf, sizeof(buf), r->rate);
-		fprintf(f, "rate %s ", buf);
+		tc_print_rate(PRINT_FP, NULL, "rate %s ", r->rate);
 		linklayer = (r->linklayer & TC_LINKLAYER_MASK);
 		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
 			fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b2));
@@ -533,13 +530,10 @@ static int cbq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		else
 			fprintf(f, "prio no-transmit");
 		if (show_details) {
-			char buf[64];
-
 			fprintf(f, "/%u ", wrr->cpriority);
-			if (wrr->weight != 1) {
-				print_rate(buf, sizeof(buf), wrr->weight);
-				fprintf(f, "weight %s ", buf);
-			}
+			if (wrr->weight != 1)
+				tc_print_rate(PRINT_FP, NULL, "weight %s ",
+					      wrr->weight);
 			if (wrr->allot)
 				fprintf(f, "allot %ub ", wrr->allot);
 		}

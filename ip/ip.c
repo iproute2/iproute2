@@ -24,6 +24,11 @@
 #include "namespace.h"
 #include "color.h"
 #include "rt_names.h"
+#include "bpf_util.h"
+
+#ifndef LIBDIR
+#define LIBDIR "/usr/lib"
+#endif
 
 int preferred_family = AF_UNSPEC;
 int human_readable;
@@ -40,6 +45,17 @@ int batch_mode;
 bool do_all;
 
 struct rtnl_handle rth = { .fd = -1 };
+
+const char *get_ip_lib_dir(void)
+{
+	const char *lib_dir;
+
+	lib_dir = getenv("IP_LIB_DIR");
+	if (!lib_dir)
+		lib_dir = LIBDIR "/ip";
+
+	return lib_dir;
+}
 
 static void usage(void) __attribute__((noreturn));
 
@@ -121,60 +137,35 @@ static int do_cmd(const char *argv0, int argc, char **argv)
 	return EXIT_FAILURE;
 }
 
+static int ip_batch_cmd(int argc, char *argv[], void *data)
+{
+	const int *orig_family = data;
+
+	preferred_family = *orig_family;
+	return do_cmd(argv[0], argc, argv);
+}
+
 static int batch(const char *name)
 {
-	char *line = NULL;
-	size_t len = 0;
-	int ret = EXIT_SUCCESS;
 	int orig_family = preferred_family;
-
-	batch_mode = 1;
-
-	if (name && strcmp(name, "-") != 0) {
-		if (freopen(name, "r", stdin) == NULL) {
-			fprintf(stderr,
-				"Cannot open file \"%s\" for reading: %s\n",
-				name, strerror(errno));
-			return EXIT_FAILURE;
-		}
-	}
+	int ret;
 
 	if (rtnl_open(&rth, 0) < 0) {
 		fprintf(stderr, "Cannot open rtnetlink\n");
 		return EXIT_FAILURE;
 	}
 
-	cmdlineno = 0;
-	while (getcmdline(&line, &len, stdin) != -1) {
-		char *largv[100];
-		int largc;
-
-		preferred_family = orig_family;
-
-		largc = makeargs(line, largv, 100);
-		if (largc == 0)
-			continue;	/* blank line */
-
-		if (do_cmd(largv[0], largc, largv)) {
-			fprintf(stderr, "Command failed %s:%d\n",
-				name, cmdlineno);
-			ret = EXIT_FAILURE;
-			if (!force)
-				break;
-		}
-	}
-	if (line)
-		free(line);
+	ret = do_batch(name, force, ip_batch_cmd, &orig_family);
 
 	rtnl_close(&rth);
 	return ret;
 }
 
-
 int main(int argc, char **argv)
 {
-	char *basename;
+	const char *libbpf_version;
 	char *batch_file = NULL;
+	char *basename;
 	int color = 0;
 
 	/* to run vrf exec without root, capabilities might be set, drop them
@@ -255,7 +246,11 @@ int main(int argc, char **argv)
 			++timestamp;
 			++timestamp_short;
 		} else if (matches(opt, "-Version") == 0) {
-			printf("ip utility, iproute2-%s\n", version);
+			printf("ip utility, iproute2-%s", version);
+			libbpf_version = get_libbpf_version();
+			if (libbpf_version)
+				printf(", libbpf %s", libbpf_version);
+			printf("\n");
 			exit(0);
 		} else if (matches(opt, "-force") == 0) {
 			++force;

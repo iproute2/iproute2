@@ -20,7 +20,6 @@
 
 extern int preferred_family;
 extern int human_readable;
-extern int use_iec;
 extern int show_stats;
 extern int show_details;
 extern int show_raw;
@@ -163,6 +162,9 @@ int get_be64(__be64 *val, const char *arg, int base);
 int get_be32(__be32 *val, const char *arg, int base);
 int get_be16(__be16 *val, const char *arg, int base);
 int get_addr64(__u64 *ap, const char *cp);
+int get_rate(unsigned int *rate, const char *str);
+int get_rate64(__u64 *rate, const char *str);
+int get_size(unsigned int *size, const char *str);
 
 int hex2mem(const char *buf, uint8_t *mem, int count);
 char *hexstring_n2a(const __u8 *str, int len, char *buf, int blen);
@@ -321,5 +323,16 @@ int get_time(unsigned int *time, const char *str);
 int get_time64(__s64 *time, const char *str);
 char *sprint_time(__u32 time, char *buf);
 char *sprint_time64(__s64 time, char *buf);
+
+int do_batch(const char *name, bool force,
+	     int (*cmd)(int argc, char *argv[], void *user), void *user);
+
+int parse_one_of(const char *msg, const char *realval, const char * const *list,
+		 size_t len, int *p_err);
+bool parse_on_off(const char *msg, const char *realval, int *p_err);
+
+int parse_mapping(int *argcp, char ***argvp, bool allow_all,
+		  int (*mapping_cb)(__u32 key, char *value, void *data),
+		  void *mapping_cb_data);
 
 #endif /* __UTILS_H__ */

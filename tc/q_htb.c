@@ -269,7 +269,6 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	__u64 rate64, ceil64;
 
 	SPRINT_BUF(b1);
-	SPRINT_BUF(b2);
 	SPRINT_BUF(b3);
 
 	if (opt == NULL)
@@ -299,29 +298,27 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		    RTA_PAYLOAD(tb[TCA_HTB_CEIL64]) >= sizeof(ceil64))
 			ceil64 = rta_getattr_u64(tb[TCA_HTB_CEIL64]);
 
-		fprintf(f, "rate %s ", sprint_rate(rate64, b1));
+		tc_print_rate(PRINT_FP, NULL, "rate %s ", rate64);
 		if (hopt->rate.overhead)
 			fprintf(f, "overhead %u ", hopt->rate.overhead);
 		buffer = tc_calc_xmitsize(rate64, hopt->buffer);
 
-		fprintf(f, "ceil %s ", sprint_rate(ceil64, b1));
+		tc_print_rate(PRINT_FP, NULL, "ceil %s ", ceil64);
 		cbuffer = tc_calc_xmitsize(ceil64, hopt->cbuffer);
 		linklayer = (hopt->rate.linklayer & TC_LINKLAYER_MASK);
 		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
 			fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b3));
 		if (show_details) {
-			fprintf(f, "burst %s/%u mpu %s ",
-				sprint_size(buffer, b1),
-				1<<hopt->rate.cell_log,
-				sprint_size(hopt->rate.mpu, b2));
-			fprintf(f, "cburst %s/%u mpu %s ",
-				sprint_size(cbuffer, b1),
-				1<<hopt->ceil.cell_log,
-				sprint_size(hopt->ceil.mpu, b2));
+			print_size(PRINT_FP, NULL, "burst %s/", buffer);
+			fprintf(f, "%u ", 1<<hopt->rate.cell_log);
+			print_size(PRINT_FP, NULL, "mpu %s ", hopt->rate.mpu);
+			print_size(PRINT_FP, NULL, "cburst %s/", cbuffer);
+			fprintf(f, "%u ", 1<<hopt->ceil.cell_log);
+			print_size(PRINT_FP, NULL, "mpu %s ", hopt->ceil.mpu);
 			fprintf(f, "level %d ", (int)hopt->level);
 		} else {
-			fprintf(f, "burst %s ", sprint_size(buffer, b1));
-			fprintf(f, "cburst %s ", sprint_size(cbuffer, b1));
+			print_size(PRINT_FP, NULL, "burst %s ", buffer);
+			print_size(PRINT_FP, NULL, "cburst %s ", cbuffer);
 		}
 		if (show_raw)
 			fprintf(f, "buffer [%08x] cbuffer [%08x] ",

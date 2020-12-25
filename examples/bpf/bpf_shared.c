@@ -18,13 +18,13 @@
  * instance is being created.
  */
 
-struct bpf_elf_map __section_maps map_sh = {
-	.type		= BPF_MAP_TYPE_ARRAY,
-	.size_key	= sizeof(uint32_t),
-	.size_value	= sizeof(uint32_t),
-	.pinning	= PIN_OBJECT_NS, /* or PIN_GLOBAL_NS, or PIN_NONE */
-	.max_elem	= 1,
-};
+struct {
+	__uint(type, BPF_MAP_TYPE_ARRAY);
+	__uint(key_size, sizeof(uint32_t));
+	__uint(value_size, sizeof(uint32_t));
+	__uint(max_entries, 1);
+	__uint(pinning, LIBBPF_PIN_BY_NAME);	/* or LIBBPF_PIN_NONE */
+} map_sh __section(".maps");
 
 __section("egress")
 int emain(struct __sk_buff *skb)

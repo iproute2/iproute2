@@ -6,6 +6,8 @@
 
 #include "json_print.h"
 
+extern int use_iec;
+
 struct link_filter {
 	int ifindex;
 	int family;
@@ -26,6 +28,8 @@ struct link_filter {
 	char *slave_kind;
 	int target_nsid;
 };
+
+const char *get_ip_lib_dir(void);
 
 int get_operstate(const char *name);
 int print_linkinfo(struct nlmsghdr *n, void *arg);

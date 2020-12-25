@@ -781,11 +781,6 @@ static int print_driver_string(struct rd *rd, const char *key_str,
 	return 0;
 }
 
-void print_on_off(struct rd *rd, const char *key_str, bool on)
-{
-	print_driver_string(rd, key_str, (on) ? "on":"off");
-}
-
 static int print_driver_s32(struct rd *rd, const char *key_str, int32_t val,
 			      enum rdma_nldev_print_type print_type)
 {

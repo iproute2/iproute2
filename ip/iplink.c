@@ -34,9 +34,6 @@
 #include "namespace.h"
 
 #define IPLINK_IOCTL_COMPAT	1
-#ifndef LIBDIR
-#define LIBDIR "/usr/lib"
-#endif
 
 #ifndef GSO_MAX_SIZE
 #define GSO_MAX_SIZE		65536
@@ -157,7 +154,7 @@ struct link_util *get_link_kind(const char *id)
 		if (strcmp(l->id, id) == 0)
 			return l;
 
-	snprintf(buf, sizeof(buf), LIBDIR "/ip/link_%s.so", id);
+	snprintf(buf, sizeof(buf), "%s/link_%s.so", get_ip_lib_dir(), id);
 	dlh = dlopen(buf, RTLD_LAZY);
 	if (dlh == NULL) {
 		/* look in current binary, only open once */
@@ -352,6 +349,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 	int len, argc = *argcp;
 	char **argv = *argvp;
 	struct rtattr *vfinfo;
+	int ret;
 
 	tivt.min_tx_rate = -1;
 	tivt.max_tx_rate = -1;
@@ -464,12 +462,9 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			struct ifla_vf_spoofchk ivs;
 
 			NEXT_ARG();
-			if (matches(*argv, "on") == 0)
-				ivs.setting = 1;
-			else if (matches(*argv, "off") == 0)
-				ivs.setting = 0;
-			else
-				return on_off("spoofchk", *argv);
+			ivs.setting = parse_on_off("spoofchk", *argv, &ret);
+			if (ret)
+				return ret;
 			ivs.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_SPOOFCHK,
 				  &ivs, sizeof(ivs));
@@ -478,12 +473,9 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			struct ifla_vf_rss_query_en ivs;
 
 			NEXT_ARG();
-			if (matches(*argv, "on") == 0)
-				ivs.setting = 1;
-			else if (matches(*argv, "off") == 0)
-				ivs.setting = 0;
-			else
-				return on_off("query_rss", *argv);
+			ivs.setting = parse_on_off("query_rss", *argv, &ret);
+			if (ret)
+				return ret;
 			ivs.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_RSS_QUERY_EN,
 				  &ivs, sizeof(ivs));
@@ -492,12 +484,9 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 			struct ifla_vf_trust ivt;
 
 			NEXT_ARG();
-			if (matches(*argv, "on") == 0)
-				ivt.setting = 1;
-			else if (matches(*argv, "off") == 0)
-				ivt.setting = 0;
-			else
-				invarg("Invalid \"trust\" value\n", *argv);
+			ivt.setting = parse_on_off("trust", *argv, &ret);
+			if (ret)
+				return ret;
 			ivt.vf = vf;
 			addattr_l(&req->n, sizeof(*req), IFLA_VF_TRUST,
 				  &ivt, sizeof(ivt));
@@ -595,6 +584,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 	int index = 0;
 	int group = -1;
 	int addr_len = 0;
+	int err;
 
 	ret = argc;
 
@@ -738,12 +728,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			int carrier;
 
 			NEXT_ARG();
-			if (strcmp(*argv, "on") == 0)
-				carrier = 1;
-			else if (strcmp(*argv, "off") == 0)
-				carrier = 0;
-			else
-				return on_off("carrier", *argv);
+			carrier = parse_on_off("carrier", *argv, &err);
+			if (err)
+				return err;
 
 			addattr8(&req->n, sizeof(*req), IFLA_CARRIER, carrier);
 		} else if (strcmp(*argv, "vf") == 0) {
@@ -896,12 +883,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			unsigned int proto_down;
 
 			NEXT_ARG();
-			if (strcmp(*argv, "on") == 0)
-				proto_down = 1;
-			else if (strcmp(*argv, "off") == 0)
-				proto_down = 0;
-			else
-				return on_off("protodown", *argv);
+			proto_down = parse_on_off("protodown", *argv, &err);
+			if (err)
+				return err;
 			addattr8(&req->n, sizeof(*req), IFLA_PROTO_DOWN,
 				 proto_down);
 		} else if (strcmp(*argv, "protodown_reason") == 0) {

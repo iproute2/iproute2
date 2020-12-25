@@ -304,6 +304,8 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_HEALTH_REPORTER_AUTO_DUMP     BIT(37)
 #define DL_OPT_PORT_FUNCTION_HW_ADDR BIT(38)
 #define DL_OPT_FLASH_OVERWRITE		BIT(39)
+#define DL_OPT_RELOAD_ACTION		BIT(40)
+#define DL_OPT_RELOAD_LIMIT	BIT(41)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -352,6 +354,8 @@ struct dl_opts {
 	char port_function_hw_addr[MAX_ADDR_LEN];
 	uint32_t port_function_hw_addr_len;
 	uint32_t overwrite_mask;
+	enum devlink_reload_action reload_action;
+	enum devlink_reload_limit reload_limit;
 };
 
 struct dl {
@@ -678,6 +682,15 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_TRAP_METADATA] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_TRAP_GROUP_NAME] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_RELOAD_FAILED] = MNL_TYPE_U8,
+	[DEVLINK_ATTR_DEV_STATS] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_RELOAD_STATS] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_RELOAD_STATS_ENTRY] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_RELOAD_ACTION] = MNL_TYPE_U8,
+	[DEVLINK_ATTR_RELOAD_STATS_LIMIT] = MNL_TYPE_U8,
+	[DEVLINK_ATTR_RELOAD_STATS_VALUE] = MNL_TYPE_U32,
+	[DEVLINK_ATTR_REMOTE_RELOAD_STATS] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_RELOAD_ACTION_INFO] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_RELOAD_ACTION_STATS] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_TRAP_POLICER_ID] = MNL_TYPE_U32,
 	[DEVLINK_ATTR_TRAP_POLICER_RATE] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_TRAP_POLICER_BURST] = MNL_TYPE_U64,
@@ -1344,6 +1357,32 @@ static int hw_addr_parse(const char *addrstr, char *hw_addr, uint32_t *len)
 	return 0;
 }
 
+static int reload_action_get(struct dl *dl, const char *actionstr,
+			     enum devlink_reload_action *action)
+{
+	if (strcmp(actionstr, "driver_reinit") == 0) {
+		*action = DEVLINK_RELOAD_ACTION_DRIVER_REINIT;
+	} else if (strcmp(actionstr, "fw_activate") == 0) {
+		*action = DEVLINK_RELOAD_ACTION_FW_ACTIVATE;
+	} else {
+		pr_err("Unknown reload action \"%s\"\n", actionstr);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int reload_limit_get(struct dl *dl, const char *limitstr,
+			     enum devlink_reload_limit *limit)
+{
+	if (strcmp(limitstr, "no_reset") == 0) {
+		*limit = DEVLINK_RELOAD_LIMIT_NO_RESET;
+	} else {
+		pr_err("Unknown reload limit \"%s\"\n", limitstr);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 struct dl_args_metadata {
 	uint64_t o_flag;
 	char err_msg[DL_ARGS_REQUIRED_MAX_ERR_LEN];
@@ -1730,6 +1769,30 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 				opts->netns_is_pid = true;
 			}
 			o_found |= DL_OPT_NETNS;
+		} else if (dl_argv_match(dl, "action") &&
+			   (o_all & DL_OPT_RELOAD_ACTION)) {
+			const char *actionstr;
+
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &actionstr);
+			if (err)
+				return err;
+			err = reload_action_get(dl, actionstr, &opts->reload_action);
+			if (err)
+				return err;
+			o_found |= DL_OPT_RELOAD_ACTION;
+		} else if (dl_argv_match(dl, "limit") &&
+			   (o_all & DL_OPT_RELOAD_LIMIT)) {
+			const char *limitstr;
+
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &limitstr);
+			if (err)
+				return err;
+			err = reload_limit_get(dl, limitstr, &opts->reload_limit);
+			if (err)
+				return err;
+			o_found |= DL_OPT_RELOAD_LIMIT;
 		} else if (dl_argv_match(dl, "policer") &&
 			   (o_all & DL_OPT_TRAP_POLICER_ID)) {
 			dl_arg_inc(dl);
@@ -1808,6 +1871,16 @@ dl_flash_update_overwrite_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
 
 	mnl_attr_put(nlh, DEVLINK_ATTR_FLASH_UPDATE_OVERWRITE_MASK,
 		     sizeof(overwrite_mask), &overwrite_mask);
+}
+
+static void
+dl_reload_limits_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
+{
+	struct nla_bitfield32 limits;
+
+	limits.selector = DEVLINK_RELOAD_LIMITS_VALID_MASK;
+	limits.value = BIT(opts->reload_limit);
+	mnl_attr_put(nlh, DEVLINK_ATTR_RELOAD_LIMITS, sizeof(limits), &limits);
 }
 
 static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
@@ -1926,6 +1999,11 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 				 opts->netns_is_pid ? DEVLINK_ATTR_NETNS_PID :
 						      DEVLINK_ATTR_NETNS_FD,
 				 opts->netns);
+	if (opts->present & DL_OPT_RELOAD_ACTION)
+		mnl_attr_put_u8(nlh, DEVLINK_ATTR_RELOAD_ACTION,
+				opts->reload_action);
+	if (opts->present & DL_OPT_RELOAD_LIMIT)
+		dl_reload_limits_put(nlh, opts);
 	if (opts->present & DL_OPT_TRAP_POLICER_ID)
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_TRAP_POLICER_ID,
 				 opts->trap_policer_id);
@@ -1998,6 +2076,7 @@ static void cmd_dev_help(void)
 	pr_err("       devlink dev param set DEV name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink dev param show [DEV name PARAMETER]\n");
 	pr_err("       devlink dev reload DEV [ netns { PID | NAME | ID } ]\n");
+	pr_err("                              [ action { driver_reinit | fw_activate } ] [ limit no_reset ]\n");
 	pr_err("       devlink dev info [ DEV ]\n");
 	pr_err("       devlink dev flash DEV file PATH [ component NAME ] [ overwrite SECTION ]\n");
 }
@@ -2286,6 +2365,30 @@ static const char *param_cmode_name(uint8_t cmode)
 	case DEVLINK_PARAM_CMODE_PERMANENT:
 		return PARAM_CMODE_PERMANENT_STR;
 	default: return "<unknown type>";
+	}
+}
+
+static const char *reload_action_name(uint8_t reload_action)
+{
+	switch (reload_action) {
+	case DEVLINK_RELOAD_ACTION_DRIVER_REINIT:
+		return "driver_reinit";
+	case DEVLINK_RELOAD_ACTION_FW_ACTIVATE:
+		return "fw_activate";
+	default:
+		return "<unknown reload action>";
+	}
+}
+
+static const char *reload_limit_name(uint8_t reload_limit)
+{
+	switch (reload_limit) {
+	case DEVLINK_RELOAD_LIMIT_UNSPEC:
+		return "unspecified";
+	case DEVLINK_RELOAD_LIMIT_NO_RESET:
+		return "no_reset";
+	default:
+		return "<unknown reload action>";
 	}
 }
 
@@ -2893,29 +2996,119 @@ static int cmd_dev_param(struct dl *dl)
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
 }
-static int cmd_dev_show_cb(const struct nlmsghdr *nlh, void *data)
-{
-	struct dl *dl = data;
-	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
-	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
-	uint8_t reload_failed = 0;
 
-	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
-	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME])
-		return MNL_CB_ERROR;
+static void pr_out_action_stats(struct dl *dl, struct nlattr *action_stats)
+{
+	struct nlattr *tb_stats_entry[DEVLINK_ATTR_MAX + 1] = {};
+	struct nlattr *nla_reload_stats_entry, *nla_limit, *nla_value;
+	enum devlink_reload_limit limit;
+	uint32_t value;
+	int err;
+
+	mnl_attr_for_each_nested(nla_reload_stats_entry, action_stats) {
+		err = mnl_attr_parse_nested(nla_reload_stats_entry, attr_cb,
+					    tb_stats_entry);
+		if (err != MNL_CB_OK)
+			return;
+
+		nla_limit = tb_stats_entry[DEVLINK_ATTR_RELOAD_STATS_LIMIT];
+		nla_value = tb_stats_entry[DEVLINK_ATTR_RELOAD_STATS_VALUE];
+		if (!nla_limit || !nla_value)
+			return;
+
+		check_indent_newline(dl);
+		limit = mnl_attr_get_u8(nla_limit);
+		value = mnl_attr_get_u32(nla_value);
+		print_uint_name_value(reload_limit_name(limit), value);
+	}
+}
+
+static void pr_out_reload_stats(struct dl *dl, struct nlattr *reload_stats)
+{
+	struct nlattr *nla_action_info, *nla_action, *nla_action_stats;
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	enum devlink_reload_action action;
+	int err;
+
+	mnl_attr_for_each_nested(nla_action_info, reload_stats) {
+		err = mnl_attr_parse_nested(nla_action_info, attr_cb, tb);
+		if (err != MNL_CB_OK)
+			return;
+		nla_action = tb[DEVLINK_ATTR_RELOAD_ACTION];
+		nla_action_stats = tb[DEVLINK_ATTR_RELOAD_ACTION_STATS];
+		if (!nla_action || !nla_action_stats)
+			return;
+
+		action = mnl_attr_get_u8(nla_action);
+		pr_out_object_start(dl, reload_action_name(action));
+		pr_out_action_stats(dl, nla_action_stats);
+		pr_out_object_end(dl);
+	}
+}
+
+static void pr_out_reload_data(struct dl *dl, struct nlattr **tb)
+{
+	struct nlattr *nla_reload_stats, *nla_remote_reload_stats;
+	struct nlattr *tb_stats[DEVLINK_ATTR_MAX + 1] = {};
+	uint8_t reload_failed = 0;
+	int err;
 
 	if (tb[DEVLINK_ATTR_RELOAD_FAILED])
 		reload_failed = mnl_attr_get_u8(tb[DEVLINK_ATTR_RELOAD_FAILED]);
 
 	if (reload_failed) {
-		__pr_out_handle_start(dl, tb, true, false);
 		check_indent_newline(dl);
 		print_bool(PRINT_ANY, "reload_failed", "reload_failed %s", true);
+	}
+	if (!tb[DEVLINK_ATTR_DEV_STATS] || !dl->stats)
+		return;
+	err = mnl_attr_parse_nested(tb[DEVLINK_ATTR_DEV_STATS], attr_cb,
+				    tb_stats);
+	if (err != MNL_CB_OK)
+		return;
+
+	pr_out_object_start(dl, "stats");
+
+	nla_reload_stats = tb_stats[DEVLINK_ATTR_RELOAD_STATS];
+	if (nla_reload_stats) {
+		pr_out_object_start(dl, "reload");
+		pr_out_reload_stats(dl, nla_reload_stats);
+		pr_out_object_end(dl);
+	}
+	nla_remote_reload_stats = tb_stats[DEVLINK_ATTR_REMOTE_RELOAD_STATS];
+	if (nla_remote_reload_stats) {
+		pr_out_object_start(dl, "remote_reload");
+		pr_out_reload_stats(dl, nla_remote_reload_stats);
+		pr_out_object_end(dl);
+	}
+
+	pr_out_object_end(dl);
+}
+
+
+static void pr_out_dev(struct dl *dl, struct nlattr **tb)
+{
+	if ((tb[DEVLINK_ATTR_RELOAD_FAILED] && mnl_attr_get_u8(tb[DEVLINK_ATTR_RELOAD_FAILED])) ||
+	    (tb[DEVLINK_ATTR_DEV_STATS] && dl->stats)) {
+		__pr_out_handle_start(dl, tb, true, false);
+		pr_out_reload_data(dl, tb);
 		pr_out_handle_end(dl);
 	} else {
 		pr_out_handle(dl, tb);
 	}
+}
 
+static int cmd_dev_show_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct dl *dl = data;
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME])
+		return MNL_CB_ERROR;
+
+	pr_out_dev(dl, tb);
 	return MNL_CB_OK;
 }
 
@@ -2942,6 +3135,57 @@ static int cmd_dev_show(struct dl *dl)
 	return err;
 }
 
+static void pr_out_reload_actions_performed(struct dl *dl, struct nlattr **tb)
+{
+	struct nlattr *nla_actions_performed;
+	struct nla_bitfield32 *actions;
+	uint32_t actions_performed;
+	uint16_t len;
+	int action;
+
+	if (!tb[DEVLINK_ATTR_RELOAD_ACTIONS_PERFORMED])
+		return;
+
+	nla_actions_performed = tb[DEVLINK_ATTR_RELOAD_ACTIONS_PERFORMED];
+	len = mnl_attr_get_payload_len(nla_actions_performed);
+	if (len != sizeof(*actions))
+		return;
+	actions = mnl_attr_get_payload(nla_actions_performed);
+	if (!actions)
+		return;
+	g_new_line_count = 1; /* Avoid extra new line in non-json print */
+	pr_out_array_start(dl, "reload_actions_performed");
+	actions_performed = actions->value & actions->selector;
+	for (action = 0; action <= DEVLINK_RELOAD_ACTION_MAX; action++) {
+		if (BIT(action) & actions_performed) {
+			check_indent_newline(dl);
+			print_string(PRINT_ANY, NULL, "%s",
+				     reload_action_name(action));
+		}
+	}
+	pr_out_array_end(dl);
+	if (!dl->json_output)
+		__pr_out_newline();
+}
+
+static int cmd_dev_reload_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct dl *dl = data;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_RELOAD_ACTIONS_PERFORMED])
+		return MNL_CB_ERROR;
+
+	pr_out_section_start(dl, "reload");
+	pr_out_reload_actions_performed(dl, tb);
+	pr_out_section_end(dl);
+
+	return MNL_CB_OK;
+}
+
 static int cmd_dev_reload(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
@@ -2955,11 +3199,13 @@ static int cmd_dev_reload(struct dl *dl)
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_RELOAD,
 			       NLM_F_REQUEST | NLM_F_ACK);
 
-	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE, DL_OPT_NETNS);
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE,
+				DL_OPT_NETNS | DL_OPT_RELOAD_ACTION |
+				DL_OPT_RELOAD_LIMIT);
 	if (err)
 		return err;
 
-	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_dev_reload_cb, dl);
 }
 
 static void pr_out_versions_single(struct dl *dl, const struct nlmsghdr *nlh,
@@ -4711,7 +4957,8 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 		if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME])
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
-		pr_out_handle(dl, tb);
+		dl->stats = true;
+		pr_out_dev(dl, tb);
 		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_PORT_GET: /* fall through */
@@ -7915,43 +8162,16 @@ static void dl_free(struct dl *dl)
 	free(dl);
 }
 
+static int dl_batch_cmd(int argc, char *argv[], void *data)
+{
+	struct dl *dl = data;
+
+	return dl_cmd(dl, argc, argv);
+}
+
 static int dl_batch(struct dl *dl, const char *name, bool force)
 {
-	char *line = NULL;
-	size_t len = 0;
-	int ret = EXIT_SUCCESS;
-
-	if (name && strcmp(name, "-") != 0) {
-		if (freopen(name, "r", stdin) == NULL) {
-			fprintf(stderr,
-				"Cannot open file \"%s\" for reading: %s\n",
-				name, strerror(errno));
-			return EXIT_FAILURE;
-		}
-	}
-
-	cmdlineno = 0;
-	while (getcmdline(&line, &len, stdin) != -1) {
-		char *largv[100];
-		int largc;
-
-		largc = makeargs(line, largv, 100);
-		if (!largc)
-			continue;	/* blank line */
-
-		if (dl_cmd(dl, largc, largv)) {
-			fprintf(stderr, "Command failed %s:%d\n",
-				name, cmdlineno);
-			ret = EXIT_FAILURE;
-			if (!force)
-				break;
-		}
-	}
-
-	if (line)
-		free(line);
-
-	return ret;
+	return do_batch(name, force, dl_batch_cmd, dl);
 }
 
 int main(int argc, char **argv)

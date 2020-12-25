@@ -27,3 +27,4 @@ int check_size_table_opts(struct tc_sizespec *s);
 
 extern int show_graph;
 extern bool use_names;
+extern int use_iec;

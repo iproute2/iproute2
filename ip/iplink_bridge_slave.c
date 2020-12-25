@@ -76,14 +76,6 @@ static void print_portstate(FILE *f, __u8 state)
 		print_int(PRINT_ANY, "state_index", "state (%d) ", state);
 }
 
-static void _print_onoff(FILE *f, char *json_flag, char *flag, __u8 val)
-{
-	if (is_json_context())
-		print_bool(PRINT_JSON, flag, NULL, val);
-	else
-		fprintf(f, "%s %s ", flag, val ? "on" : "off");
-}
-
 static void _print_timer(FILE *f, const char *attr, struct rtattr *timer)
 {
 	struct timeval tv;
@@ -145,27 +137,27 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 			  rta_getattr_u32(tb[IFLA_BRPORT_COST]));
 
 	if (tb[IFLA_BRPORT_MODE])
-		_print_onoff(f, "mode", "hairpin",
+		print_on_off(PRINT_ANY, "hairpin", "hairpin %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_MODE]));
 
 	if (tb[IFLA_BRPORT_GUARD])
-		_print_onoff(f, "guard", "guard",
+		print_on_off(PRINT_ANY, "guard", "guard %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_GUARD]));
 
 	if (tb[IFLA_BRPORT_PROTECT])
-		_print_onoff(f, "protect", "root_block",
+		print_on_off(PRINT_ANY, "root_block", "root_block %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_PROTECT]));
 
 	if (tb[IFLA_BRPORT_FAST_LEAVE])
-		_print_onoff(f, "fast_leave", "fastleave",
+		print_on_off(PRINT_ANY, "fastleave", "fastleave %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_FAST_LEAVE]));
 
 	if (tb[IFLA_BRPORT_LEARNING])
-		_print_onoff(f, "learning", "learning",
+		print_on_off(PRINT_ANY, "learning", "learning %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_LEARNING]));
 
 	if (tb[IFLA_BRPORT_UNICAST_FLOOD])
-		_print_onoff(f, "unicast_flood", "flood",
+		print_on_off(PRINT_ANY, "flood", "flood %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_UNICAST_FLOOD]));
 
 	if (tb[IFLA_BRPORT_ID])
@@ -233,11 +225,11 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 			   rta_getattr_u8(tb[IFLA_BRPORT_CONFIG_PENDING]));
 
 	if (tb[IFLA_BRPORT_PROXYARP])
-		_print_onoff(f, "proxyarp", "proxy_arp",
+		print_on_off(PRINT_ANY, "proxy_arp", "proxy_arp %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_PROXYARP]));
 
 	if (tb[IFLA_BRPORT_PROXYARP_WIFI])
-		_print_onoff(f, "proxyarp_wifi", "proxy_arp_wifi",
+		print_on_off(PRINT_ANY, "proxy_arp_wifi", "proxy_arp_wifi %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_PROXYARP_WIFI]));
 
 	if (tb[IFLA_BRPORT_MULTICAST_ROUTER])
@@ -255,15 +247,15 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 			     rta_getattr_u8(tb[IFLA_BRPORT_FAST_LEAVE]) ? "on" : "off");
 
 	if (tb[IFLA_BRPORT_MCAST_FLOOD])
-		_print_onoff(f, "mcast_flood", "mcast_flood",
+		print_on_off(PRINT_ANY, "mcast_flood", "mcast_flood %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_MCAST_FLOOD]));
 
 	if (tb[IFLA_BRPORT_MCAST_TO_UCAST])
-		_print_onoff(f, "mcast_to_unicast", "mcast_to_unicast",
+		print_on_off(PRINT_ANY, "mcast_to_unicast", "mcast_to_unicast %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_MCAST_TO_UCAST]));
 
 	if (tb[IFLA_BRPORT_NEIGH_SUPPRESS])
-		_print_onoff(f, "neigh_suppress", "neigh_suppress",
+		print_on_off(PRINT_ANY, "neigh_suppress", "neigh_suppress %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_NEIGH_SUPPRESS]));
 
 	if (tb[IFLA_BRPORT_GROUP_FWD_MASK]) {
@@ -279,11 +271,11 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 	}
 
 	if (tb[IFLA_BRPORT_VLAN_TUNNEL])
-		_print_onoff(f, "vlan_tunnel", "vlan_tunnel",
+		print_on_off(PRINT_ANY, "vlan_tunnel", "vlan_tunnel %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_VLAN_TUNNEL]));
 
 	if (tb[IFLA_BRPORT_ISOLATED])
-		_print_onoff(f, "isolated", "isolated",
+		print_on_off(PRINT_ANY, "isolated", "isolated %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_ISOLATED]));
 
 	if (tb[IFLA_BRPORT_BACKUP_PORT]) {
@@ -297,15 +289,11 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
 				      struct nlmsghdr *n, int type)
 {
-	__u8 val;
+	int ret;
+	__u8 val = parse_on_off(arg_name, arg_val, &ret);
 
-	if (strcmp(arg_val, "on") == 0)
-		val = 1;
-	else if (strcmp(arg_val, "off") == 0)
-		val = 0;
-	else
-		invarg("should be \"on\" or \"off\"", arg_name);
-
+	if (ret)
+		exit(1);
 	addattr8(n, 1024, type, val);
 }
 

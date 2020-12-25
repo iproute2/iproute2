@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "utils.h"
 #include "json_print.h"
@@ -191,11 +192,12 @@ int print_color_string(enum output_type type,
  * a value to it, you will need to use "is_json_context()" to have different
  * branch for json and regular output. grep -r "print_bool" for example
  */
-int print_color_bool(enum output_type type,
-		     enum color_attr color,
-		     const char *key,
-		     const char *fmt,
-		     bool value)
+static int __print_color_bool(enum output_type type,
+			      enum color_attr color,
+			      const char *key,
+			      const char *fmt,
+			      bool value,
+			      const char *str)
 {
 	int ret = 0;
 
@@ -205,11 +207,30 @@ int print_color_bool(enum output_type type,
 		else
 			jsonw_bool(_jw, value);
 	} else if (_IS_FP_CONTEXT(type)) {
-		ret = color_fprintf(stdout, color, fmt,
-				    value ? "true" : "false");
+		ret = color_fprintf(stdout, color, fmt, str);
 	}
 
 	return ret;
+}
+
+int print_color_bool(enum output_type type,
+		     enum color_attr color,
+		     const char *key,
+		     const char *fmt,
+		     bool value)
+{
+	return __print_color_bool(type, color, key, fmt, value,
+				  value ? "true" : "false");
+}
+
+int print_color_on_off(enum output_type type,
+		       enum color_attr color,
+		       const char *key,
+		       const char *fmt,
+		       bool value)
+{
+	return __print_color_bool(type, color, key, fmt, value,
+				  value ? "on" : "off");
 }
 
 /*
@@ -287,4 +308,66 @@ void print_nl(void)
 {
 	if (!_jw)
 		printf("%s", _SL_);
+}
+
+int print_color_rate(bool use_iec, enum output_type type, enum color_attr color,
+		     const char *key, const char *fmt, unsigned long long rate)
+{
+	unsigned long kilo = use_iec ? 1024 : 1000;
+	const char *str = use_iec ? "i" : "";
+	static char *units[5] = {"", "K", "M", "G", "T"};
+	char *buf;
+	int rc;
+	int i;
+
+	if (_IS_JSON_CONTEXT(type))
+		return print_color_lluint(type, color, key, "%llu", rate);
+
+	rate <<= 3; /* bytes/sec -> bits/sec */
+
+	for (i = 0; i < ARRAY_SIZE(units) - 1; i++)  {
+		if (rate < kilo)
+			break;
+		if (((rate % kilo) != 0) && rate < 1000*kilo)
+			break;
+		rate /= kilo;
+	}
+
+	rc = asprintf(&buf, "%.0f%s%sbit", (double)rate, units[i],
+		      i > 0 ? str : "");
+	if (rc < 0)
+		return -1;
+
+	rc = print_color_string(type, color, key, fmt, buf);
+	free(buf);
+	return rc;
+}
+
+char *sprint_size(__u32 sz, char *buf)
+{
+	long kilo = 1024;
+	long mega = kilo * kilo;
+	size_t len = SPRINT_BSIZE - 1;
+	double tmp = sz;
+
+	if (sz >= mega && fabs(mega * rint(tmp / mega) - sz) < 1024)
+		snprintf(buf, len, "%gMb", rint(tmp / mega));
+	else if (sz >= kilo && fabs(kilo * rint(tmp / kilo) - sz) < 16)
+		snprintf(buf, len, "%gKb", rint(tmp / kilo));
+	else
+		snprintf(buf, len, "%ub", sz);
+
+	return buf;
+}
+
+int print_color_size(enum output_type type, enum color_attr color,
+		     const char *key, const char *fmt, __u32 sz)
+{
+	SPRINT_BUF(buf);
+
+	if (_IS_JSON_CONTEXT(type))
+		return print_color_uint(type, color, key, "%u", sz);
+
+	sprint_size(sz, buf);
+	return print_color_string(type, color, key, fmt, buf);
 }

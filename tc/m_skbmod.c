@@ -169,7 +169,7 @@ static int print_skbmod(struct action_util *au, FILE *f, struct rtattr *arg)
 	SPRINT_BUF(b2);
 
 	if (arg == NULL)
-		return -1;
+		return 0;
 
 	parse_rtattr_nested(tb, TCA_SKBMOD_MAX, arg);
 

@@ -315,47 +315,37 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (tb[TCA_FQ_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_FQ_QUANTUM]);
-		print_uint(PRINT_JSON, "quantum", NULL, quantum);
-		print_string(PRINT_FP, NULL, "quantum %s ",
-			     sprint_size(quantum, b1));
+		print_size(PRINT_ANY, "quantum", "quantum %s ", quantum);
 	}
 	if (tb[TCA_FQ_INITIAL_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_INITIAL_QUANTUM]) >= sizeof(__u32)) {
 		quantum = rta_getattr_u32(tb[TCA_FQ_INITIAL_QUANTUM]);
-		print_uint(PRINT_JSON, "initial_quantum", NULL, quantum);
-		print_string(PRINT_FP, NULL, "initial_quantum %s ",
-			     sprint_size(quantum, b1));
+		print_size(PRINT_ANY, "initial_quantum", "initial_quantum %s ",
+			   quantum);
 	}
 	if (tb[TCA_FQ_FLOW_MAX_RATE] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_MAX_RATE]) >= sizeof(__u32)) {
 		rate = rta_getattr_u32(tb[TCA_FQ_FLOW_MAX_RATE]);
 
-		if (rate != ~0U) {
-			print_uint(PRINT_JSON, "maxrate", NULL, rate);
-			print_string(PRINT_FP, NULL, "maxrate %s ",
-				     sprint_rate(rate, b1));
-		}
+		if (rate != ~0U)
+			tc_print_rate(PRINT_ANY,
+				      "maxrate", "maxrate %s ", rate);
 	}
 	if (tb[TCA_FQ_FLOW_DEFAULT_RATE] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_DEFAULT_RATE]) >= sizeof(__u32)) {
 		rate = rta_getattr_u32(tb[TCA_FQ_FLOW_DEFAULT_RATE]);
 
-		if (rate != 0) {
-			print_uint(PRINT_JSON, "defrate", NULL, rate);
-			print_string(PRINT_FP, NULL, "defrate %s ",
-				     sprint_rate(rate, b1));
-		}
+		if (rate != 0)
+			tc_print_rate(PRINT_ANY,
+				      "defrate", "defrate %s ", rate);
 	}
 	if (tb[TCA_FQ_LOW_RATE_THRESHOLD] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_LOW_RATE_THRESHOLD]) >= sizeof(__u32)) {
 		rate = rta_getattr_u32(tb[TCA_FQ_LOW_RATE_THRESHOLD]);
 
-		if (rate != 0) {
-			print_uint(PRINT_JSON, "low_rate_threshold", NULL,
-				   rate);
-			print_string(PRINT_FP, NULL, "low_rate_threshold %s ",
-				     sprint_rate(rate, b1));
-		}
+		if (rate != 0)
+			tc_print_rate(PRINT_ANY, "low_rate_threshold",
+				      "low_rate_threshold %s ", rate);
 	}
 	if (tb[TCA_FQ_FLOW_REFILL_DELAY] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_FLOW_REFILL_DELAY]) >= sizeof(__u32)) {

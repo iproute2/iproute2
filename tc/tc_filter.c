@@ -721,6 +721,15 @@ static int tc_filter_list(int cmd, int argc, char **argv)
 	if (filter_chain_index_set)
 		addattr32(&req.n, sizeof(req), TCA_CHAIN, chain_index);
 
+	if (brief) {
+		struct nla_bitfield32 flags = {
+			.value = TCA_DUMP_FLAGS_TERSE,
+			.selector = TCA_DUMP_FLAGS_TERSE
+		};
+
+		addattr_l(&req.n, MAX_MSG, TCA_DUMP_FLAGS, &flags, sizeof(flags));
+	}
+
 	if (rtnl_dump_request_n(&rth, &req.n) < 0) {
 		perror("Cannot send dump request");
 		return 1;

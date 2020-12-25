@@ -41,14 +41,6 @@ static void usage(void)
 	exit(-1);
 }
 
-static void print_onoff(FILE *fp, const char *flag, __u32 val)
-{
-	if (is_json_context())
-		print_bool(PRINT_JSON, flag, NULL, val);
-	else
-		fprintf(fp, "%s %s ", flag, val ? "on" : "off");
-}
-
 static struct rtattr *netconf_rta(struct netconfmsg *ncm)
 {
 	return (struct rtattr *)((char *)ncm
@@ -117,8 +109,8 @@ int print_netconf(struct rtnl_ctrl_data *ctrl, struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[NETCONFA_FORWARDING])
-		print_onoff(fp, "forwarding",
-				rta_getattr_u32(tb[NETCONFA_FORWARDING]));
+		print_on_off(PRINT_ANY, "forwarding", "forwarding %s ",
+			     rta_getattr_u32(tb[NETCONFA_FORWARDING]));
 
 	if (tb[NETCONFA_RP_FILTER]) {
 		__u32 rp_filter = rta_getattr_u32(tb[NETCONFA_RP_FILTER]);
@@ -133,19 +125,21 @@ int print_netconf(struct rtnl_ctrl_data *ctrl, struct nlmsghdr *n, void *arg)
 	}
 
 	if (tb[NETCONFA_MC_FORWARDING])
-		print_onoff(fp, "mc_forwarding",
-				rta_getattr_u32(tb[NETCONFA_MC_FORWARDING]));
+		print_on_off(PRINT_ANY, "mc_forwarding", "mc_forwarding %s ",
+			     rta_getattr_u32(tb[NETCONFA_MC_FORWARDING]));
 
 	if (tb[NETCONFA_PROXY_NEIGH])
-		print_onoff(fp, "proxy_neigh",
-				rta_getattr_u32(tb[NETCONFA_PROXY_NEIGH]));
+		print_on_off(PRINT_ANY, "proxy_neigh", "proxy_neigh %s ",
+			     rta_getattr_u32(tb[NETCONFA_PROXY_NEIGH]));
 
 	if (tb[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN])
-		print_onoff(fp, "ignore_routes_with_linkdown",
-		     rta_getattr_u32(tb[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN]));
+		print_on_off(PRINT_ANY, "ignore_routes_with_linkdown",
+			     "ignore_routes_with_linkdown %s ",
+			     rta_getattr_u32(tb[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN]));
 
 	if (tb[NETCONFA_INPUT])
-		print_onoff(fp, "input", rta_getattr_u32(tb[NETCONFA_INPUT]));
+		print_on_off(PRINT_ANY, "input", "input %s ",
+			     rta_getattr_u32(tb[NETCONFA_INPUT]));
 
 	close_json_object();
 	print_string(PRINT_FP, NULL, "\n", NULL);
