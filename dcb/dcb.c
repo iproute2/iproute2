@@ -467,7 +467,8 @@ static void dcb_help(void)
 		"       dcb [ -f | --force ] { -b | --batch } filename [ -n | --netns ] netnsname\n"
 		"where  OBJECT := { buffer | ets | maxrate | pfc }\n"
 		"       OPTIONS := [ -V | --Version | -i | --iec | -j | --json\n"
-		"                  | -p | --pretty | -s | --statistics | -v | --verbose]\n");
+		"                  | -N | --Numeric | -p | --pretty\n"
+		"                  | -s | --statistics | -v | --verbose]\n");
 }
 
 static int dcb_cmd(struct dcb *dcb, int argc, char **argv)
@@ -509,6 +510,7 @@ int main(int argc, char **argv)
 		{ "batch",		required_argument,	NULL, 'b' },
 		{ "iec",		no_argument,		NULL, 'i' },
 		{ "json",		no_argument,		NULL, 'j' },
+		{ "Numeric",		no_argument,		NULL, 'N' },
 		{ "pretty",		no_argument,		NULL, 'p' },
 		{ "statistics",		no_argument,		NULL, 's' },
 		{ "netns",		required_argument,	NULL, 'n' },
@@ -528,7 +530,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	while ((opt = getopt_long(argc, argv, "b:fhijn:psvV",
+	while ((opt = getopt_long(argc, argv, "b:fhijn:psvNV",
 				  long_options, NULL)) >= 0) {
 
 		switch (opt) {
@@ -544,6 +546,9 @@ int main(int argc, char **argv)
 			break;
 		case 'j':
 			dcb->json_output = true;
+			break;
+		case 'N':
+			dcb->numeric = true;
 			break;
 		case 'p':
 			pretty = true;
