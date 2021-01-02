@@ -2,6 +2,7 @@
 #ifndef __DCB_H__
 #define __DCB_H__ 1
 
+#include <libmnl/libmnl.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -32,6 +33,12 @@ int dcb_get_attribute(struct dcb *dcb, const char *dev, int attr,
 		      void *data, size_t data_len);
 int dcb_set_attribute(struct dcb *dcb, const char *dev, int attr,
 		      const void *data, size_t data_len);
+int dcb_set_attribute_va(struct dcb *dcb, int command, const char *dev,
+			 int (*cb)(struct dcb *dcb, struct nlmsghdr *nlh, void *data),
+			 void *data);
+int dcb_set_attribute_bare(struct dcb *dcb, int command, const char *dev,
+			   int attr, const void *data, size_t data_len,
+			   int response_attr);
 
 void dcb_print_named_array(const char *json_name, const char *fp_name,
 			   const __u8 *array, size_t size,

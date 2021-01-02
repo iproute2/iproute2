@@ -94,12 +94,17 @@ static int dcb_get_attribute_cb(const struct nlmsghdr *nlh, void *data)
 	return mnl_attr_parse(nlh, sizeof(struct dcbmsg), dcb_get_attribute_attr_cb, data);
 }
 
+struct dcb_set_attribute_response {
+	int response_attr;
+};
+
 static int dcb_set_attribute_attr_cb(const struct nlattr *attr, void *data)
 {
+	struct dcb_set_attribute_response *resp = data;
 	uint16_t len;
 	uint8_t err;
 
-	if (mnl_attr_get_type(attr) != DCB_ATTR_IEEE)
+	if (mnl_attr_get_type(attr) != resp->response_attr)
 		return MNL_CB_OK;
 
 	len = mnl_attr_get_payload_len(attr);
@@ -172,24 +177,102 @@ int dcb_get_attribute(struct dcb *dcb, const char *dev, int attr, void *data, si
 	return 0;
 }
 
-int dcb_set_attribute(struct dcb *dcb, const char *dev, int attr, const void *data, size_t data_len)
+static int __dcb_set_attribute(struct dcb *dcb, int command, const char *dev,
+			       int (*cb)(struct dcb *, struct nlmsghdr *, void *),
+			       void *data, int response_attr)
 {
+	struct dcb_set_attribute_response resp = {
+		.response_attr = response_attr,
+	};
 	struct nlmsghdr *nlh;
-	struct nlattr *nest;
 	int ret;
 
-	nlh = dcb_prepare(dcb, dev, RTM_SETDCB, DCB_CMD_IEEE_SET);
+	nlh = dcb_prepare(dcb, dev, RTM_SETDCB, command);
 
-	nest = mnl_attr_nest_start(nlh, DCB_ATTR_IEEE);
-	mnl_attr_put(nlh, attr, data_len, data);
-	mnl_attr_nest_end(nlh, nest);
+	ret = cb(dcb, nlh, data);
+	if (ret)
+		return ret;
 
-	ret = dcb_talk(dcb, nlh, dcb_set_attribute_cb, NULL);
+	ret = dcb_talk(dcb, nlh, dcb_set_attribute_cb, &resp);
 	if (ret) {
 		perror("Attribute write");
 		return ret;
 	}
 	return 0;
+}
+
+struct dcb_set_attribute_ieee_cb {
+	int (*cb)(struct dcb *dcb, struct nlmsghdr *nlh, void *data);
+	void *data;
+};
+
+static int dcb_set_attribute_ieee_cb(struct dcb *dcb, struct nlmsghdr *nlh, void *data)
+{
+	struct dcb_set_attribute_ieee_cb *ieee_data = data;
+	struct nlattr *nest;
+	int ret;
+
+	nest = mnl_attr_nest_start(nlh, DCB_ATTR_IEEE);
+	ret = ieee_data->cb(dcb, nlh, ieee_data->data);
+	if (ret)
+		return ret;
+	mnl_attr_nest_end(nlh, nest);
+
+	return 0;
+}
+
+int dcb_set_attribute_va(struct dcb *dcb, int command, const char *dev,
+			 int (*cb)(struct dcb *dcb, struct nlmsghdr *nlh, void *data),
+			 void *data)
+{
+	struct dcb_set_attribute_ieee_cb ieee_data = {
+		.cb = cb,
+		.data = data,
+	};
+
+	return __dcb_set_attribute(dcb, command, dev,
+				   &dcb_set_attribute_ieee_cb, &ieee_data,
+				   DCB_ATTR_IEEE);
+}
+
+struct dcb_set_attribute {
+	int attr;
+	const void *data;
+	size_t data_len;
+};
+
+static int dcb_set_attribute_put(struct dcb *dcb, struct nlmsghdr *nlh, void *data)
+{
+	struct dcb_set_attribute *dsa = data;
+
+	mnl_attr_put(nlh, dsa->attr, dsa->data_len, dsa->data);
+	return 0;
+}
+
+int dcb_set_attribute(struct dcb *dcb, const char *dev, int attr, const void *data, size_t data_len)
+{
+	struct dcb_set_attribute dsa = {
+		.attr = attr,
+		.data = data,
+		.data_len = data_len,
+	};
+
+	return dcb_set_attribute_va(dcb, DCB_CMD_IEEE_SET, dev,
+				    &dcb_set_attribute_put, &dsa);
+}
+
+int dcb_set_attribute_bare(struct dcb *dcb, int command, const char *dev,
+			   int attr, const void *data, size_t data_len,
+			   int response_attr)
+{
+	struct dcb_set_attribute dsa = {
+		.attr = attr,
+		.data = data,
+		.data_len = data_len,
+	};
+
+	return __dcb_set_attribute(dcb, command, dev,
+				   &dcb_set_attribute_put, &dsa, response_attr);
 }
 
 void dcb_print_array_u8(const __u8 *array, size_t size)
