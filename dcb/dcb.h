@@ -33,9 +33,13 @@ int dcb_get_attribute(struct dcb *dcb, const char *dev, int attr,
 		      void *data, size_t data_len);
 int dcb_set_attribute(struct dcb *dcb, const char *dev, int attr,
 		      const void *data, size_t data_len);
+int dcb_get_attribute_va(struct dcb *dcb, const char *dev, int attr,
+			 void **payload_p, __u16 *payload_len_p);
 int dcb_set_attribute_va(struct dcb *dcb, int command, const char *dev,
 			 int (*cb)(struct dcb *dcb, struct nlmsghdr *nlh, void *data),
 			 void *data);
+int dcb_get_attribute_bare(struct dcb *dcb, int cmd, const char *dev, int attr,
+			   void **payload_p, __u16 *payload_len_p);
 int dcb_set_attribute_bare(struct dcb *dcb, int command, const char *dev,
 			   int attr, const void *data, size_t data_len,
 			   int response_attr);
