@@ -479,18 +479,30 @@ static void rtnl_rtdsfield_initialize(void)
 
 const char *rtnl_dsfield_n2a(int id, char *buf, int len)
 {
+	const char *name;
+
 	if (id < 0 || id >= 256) {
 		snprintf(buf, len, "%d", id);
 		return buf;
 	}
+	if (!numeric) {
+		name = rtnl_dsfield_get_name(id);
+		if (name != NULL)
+			return name;
+	}
+	snprintf(buf, len, "0x%02x", id);
+	return buf;
+}
+
+const char *rtnl_dsfield_get_name(int id)
+{
+	if (id < 0 || id >= 256)
+		return NULL;
 	if (!rtnl_rtdsfield_tab[id]) {
 		if (!rtnl_rtdsfield_init)
 			rtnl_rtdsfield_initialize();
 	}
-	if (!numeric && rtnl_rtdsfield_tab[id])
-		return rtnl_rtdsfield_tab[id];
-	snprintf(buf, len, "0x%02x", id);
-	return buf;
+	return rtnl_rtdsfield_tab[id];
 }
 
 
