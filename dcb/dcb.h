@@ -62,6 +62,10 @@ int dcb_cmd_app(struct dcb *dcb, int argc, char **argv);
 
 int dcb_cmd_buffer(struct dcb *dcb, int argc, char **argv);
 
+/* dcb_dcbx.c */
+
+int dcb_cmd_dcbx(struct dcb *dcb, int argc, char **argv);
+
 /* dcb_ets.c */
 
 int dcb_cmd_ets(struct dcb *dcb, int argc, char **argv);
