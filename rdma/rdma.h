@@ -19,6 +19,7 @@
 
 #include "list.h"
 #include "utils.h"
+#include "mnl_utils.h"
 #include "json_print.h"
 
 #define pr_err(args...) fprintf(stderr, ##args)
