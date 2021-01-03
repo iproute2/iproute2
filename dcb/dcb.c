@@ -332,7 +332,7 @@ static void dcb_help(void)
 {
 	fprintf(stderr,
 		"Usage: dcb [ OPTIONS ] OBJECT { COMMAND | help }\n"
-		"       dcb [ -f | --force ] { -b | --batch } filename [ -N | --Netns ] netnsname\n"
+		"       dcb [ -f | --force ] { -b | --batch } filename [ -n | --netns ] netnsname\n"
 		"where  OBJECT := { buffer | ets | maxrate | pfc }\n"
 		"       OPTIONS := [ -V | --Version | -i | --iec | -j | --json\n"
 		"                  | -p | --pretty | -s | --statistics | -v | --verbose]\n");
@@ -379,7 +379,7 @@ int main(int argc, char **argv)
 		{ "json",		no_argument,		NULL, 'j' },
 		{ "pretty",		no_argument,		NULL, 'p' },
 		{ "statistics",		no_argument,		NULL, 's' },
-		{ "Netns",		required_argument,	NULL, 'N' },
+		{ "netns",		required_argument,	NULL, 'n' },
 		{ "help",		no_argument,		NULL, 'h' },
 		{ NULL, 0, NULL, 0 }
 	};
@@ -396,7 +396,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	while ((opt = getopt_long(argc, argv, "b:fhijpsvN:V",
+	while ((opt = getopt_long(argc, argv, "b:fhijn:psvV",
 				  long_options, NULL)) >= 0) {
 
 		switch (opt) {
@@ -419,7 +419,7 @@ int main(int argc, char **argv)
 		case 's':
 			dcb->stats = true;
 			break;
-		case 'N':
+		case 'n':
 			if (netns_switch(optarg)) {
 				ret = EXIT_FAILURE;
 				goto dcb_free;
