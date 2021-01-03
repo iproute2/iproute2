@@ -38,6 +38,7 @@ static void dcb_fini(struct dcb *dcb)
 {
 	delete_json_obj_plain();
 	mnl_socket_close(dcb->nl);
+	free(dcb->buf);
 }
 
 static struct dcb *dcb_alloc(void)
