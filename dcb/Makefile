@@ -7,6 +7,7 @@ ifeq ($(HAVE_MNL),y)
 
 DCBOBJ = dcb.o dcb_buffer.o dcb_ets.o dcb_maxrate.o dcb_pfc.o
 TARGETS += dcb
+LDLIBS += -lm
 
 endif
 

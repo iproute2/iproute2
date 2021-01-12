@@ -15,6 +15,9 @@
 #include "json_writer.h"
 #include "color.h"
 
+#define _IS_JSON_CONTEXT(type) (is_json_context() && (type & PRINT_JSON || type & PRINT_ANY))
+#define _IS_FP_CONTEXT(type)   (!is_json_context() && (type & PRINT_FP || type & PRINT_ANY))
+
 json_writer_t *get_json_writer(void);
 
 /*
