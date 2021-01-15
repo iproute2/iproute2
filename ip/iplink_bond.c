@@ -70,6 +70,7 @@ static const char *xmit_hash_policy_tbl[] = {
 	"layer2+3",
 	"encap2+3",
 	"encap3+4",
+	"vlan+srcmac",
 	NULL,
 };
 
@@ -148,7 +149,7 @@ static void print_explain(FILE *f)
 		"ARP_ALL_TARGETS := any|all\n"
 		"PRIMARY_RESELECT := always|better|failure\n"
 		"FAIL_OVER_MAC := none|active|follow\n"
-		"XMIT_HASH_POLICY := layer2|layer2+3|layer3+4|encap2+3|encap3+4\n"
+		"XMIT_HASH_POLICY := layer2|layer2+3|layer3+4|encap2+3|encap3+4|vlan+srcmac\n"
 		"LACP_RATE := slow|fast\n"
 		"AD_SELECT := stable|bandwidth|count\n"
 	);
