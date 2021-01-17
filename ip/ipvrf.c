@@ -278,8 +278,8 @@ static int vrf_configure_cgroup(const char *path, int ifindex)
 	 */
 	prog_fd = prog_load(ifindex);
 	if (prog_fd < 0) {
-		fprintf(stderr, "Failed to load BPF prog: '%s'\n",
-			strerror(errno));
+		fprintf(stderr, "Failed to load BPF prog: '%s'\n%s",
+			strerror(errno), bpf_log_buf);
 
 		if (errno != EPERM) {
 			fprintf(stderr,
