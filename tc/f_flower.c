@@ -2470,7 +2470,7 @@ static void flower_print_u32(const char *name, struct rtattr *attr)
 	print_uint(PRINT_ANY, name, namefrm, rta_getattr_u32(attr));
 }
 
-static void flower_print_mpls_opt_lse(const char *name, struct rtattr *lse)
+static void flower_print_mpls_opt_lse(struct rtattr *lse)
 {
 	struct rtattr *tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX + 1];
 	struct rtattr *attr;
@@ -2487,7 +2487,8 @@ static void flower_print_mpls_opt_lse(const char *name, struct rtattr *lse)
 		     RTA_PAYLOAD(lse));
 
 	print_nl();
-	open_json_array(PRINT_ANY, name);
+	print_string(PRINT_FP, NULL, "    lse", NULL);
+	open_json_object(NULL);
 	attr = tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH];
 	if (attr)
 		print_hhu(PRINT_ANY, "depth", " depth %u",
@@ -2505,10 +2506,10 @@ static void flower_print_mpls_opt_lse(const char *name, struct rtattr *lse)
 	attr = tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_TTL];
 	if (attr)
 		print_hhu(PRINT_ANY, "ttl", " ttl %u", rta_getattr_u8(attr));
-	close_json_array(PRINT_JSON, NULL);
+	close_json_object();
 }
 
-static void flower_print_mpls_opts(const char *name, struct rtattr *attr)
+static void flower_print_mpls_opts(struct rtattr *attr)
 {
 	struct rtattr *lse;
 	int rem;
@@ -2517,11 +2518,12 @@ static void flower_print_mpls_opts(const char *name, struct rtattr *attr)
 		return;
 
 	print_nl();
-	open_json_array(PRINT_ANY, name);
+	print_string(PRINT_FP, NULL, "  mpls", NULL);
+	open_json_array(PRINT_JSON, "mpls");
 	rem = RTA_PAYLOAD(attr);
 	lse = RTA_DATA(attr);
 	while (RTA_OK(lse, rem)) {
-		flower_print_mpls_opt_lse("    lse", lse);
+		flower_print_mpls_opt_lse(lse);
 		lse = RTA_NEXT(lse, rem);
 	};
 	if (rem)
@@ -2644,7 +2646,7 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	flower_print_ip_attr("ip_ttl", tb[TCA_FLOWER_KEY_IP_TTL],
 			    tb[TCA_FLOWER_KEY_IP_TTL_MASK]);
 
-	flower_print_mpls_opts("  mpls", tb[TCA_FLOWER_KEY_MPLS_OPTS]);
+	flower_print_mpls_opts(tb[TCA_FLOWER_KEY_MPLS_OPTS]);
 	flower_print_u32("mpls_label", tb[TCA_FLOWER_KEY_MPLS_LABEL]);
 	flower_print_u8("mpls_tc", tb[TCA_FLOWER_KEY_MPLS_TC]);
 	flower_print_u8("mpls_bos", tb[TCA_FLOWER_KEY_MPLS_BOS]);
