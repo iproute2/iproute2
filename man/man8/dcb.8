@@ -9,7 +9,7 @@ dcb \- show / manipulate DCB (Data Center Bridging) settings
 .ti -8
 .B dcb
 .RI "[ " OPTIONS " ] "
-.RB "{ " buffer " | " ets " | " maxrate " | " pfc " }"
+.RB "{ " app " | " buffer " | " ets " | " maxrate " | " pfc " }"
 .RI "{ " COMMAND " | " help " }"
 .sp
 
@@ -60,6 +60,11 @@ the 1000-based ones (K, M, B).
 Generate JSON output.
 
 .TP
+.BR "\-N" , " --Numeric"
+If the subtool in question translates numbers to symbolic names in some way,
+suppress this translation.
+
+.TP
 .BR "\-p" , " --pretty"
 When combined with -j generate a pretty JSON output.
 
@@ -69,6 +74,10 @@ If the object in question contains any statistical counters, shown them as
 part of the "show" output.
 
 .SH OBJECTS
+
+.TP
+.B app
+- Configuration of application priority table
 
 .TP
 .B buffer
@@ -130,6 +139,7 @@ other values:
 Exit status is 0 if command was successful or a positive integer upon failure.
 
 .SH SEE ALSO
+.BR dcb-app (8),
 .BR dcb-buffer (8),
 .BR dcb-ets (8),
 .BR dcb-maxrate (8),
