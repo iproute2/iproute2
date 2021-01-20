@@ -345,6 +345,7 @@ static struct flower_ct_states {
 	{ "trk", TCA_FLOWER_KEY_CT_FLAGS_TRACKED },
 	{ "new", TCA_FLOWER_KEY_CT_FLAGS_NEW },
 	{ "est", TCA_FLOWER_KEY_CT_FLAGS_ESTABLISHED },
+	{ "inv", TCA_FLOWER_KEY_CT_FLAGS_INVALID },
 };
 
 static int flower_parse_ct_state(char *str, struct nlmsghdr *n)
