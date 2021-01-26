@@ -922,6 +922,7 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	const char *name;
 	unsigned int m_flag = 0;
 	SPRINT_BUF(b1);
+	bool truncated_vfs = false;
 
 	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
 		return 0;
@@ -1199,15 +1200,18 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 
 	if ((do_link || show_details) && tb[IFLA_VFINFO_LIST] && tb[IFLA_NUM_VF]) {
 		struct rtattr *i, *vflist = tb[IFLA_VFINFO_LIST];
-		int rem = RTA_PAYLOAD(vflist);
+		int rem = RTA_PAYLOAD(vflist), count = 0;
 
 		open_json_array(PRINT_JSON, "vfinfo_list");
 		for (i = RTA_DATA(vflist); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
 			open_json_object(NULL);
 			print_vfinfo(fp, ifi, i);
 			close_json_object();
+			count++;
 		}
 		close_json_array(PRINT_JSON, NULL);
+		if (count != rta_getattr_u32(tb[IFLA_NUM_VF]))
+			truncated_vfs = true;
 	}
 
 	if (tb[IFLA_PROP_LIST]) {
@@ -1228,6 +1232,9 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "%s", "\n");
 	fflush(fp);
+	/* prettier here if stderr and stdout go to the same place */
+	if (truncated_vfs)
+		fprintf(stderr, "Truncated VF list: %s\n", name);
 	return 1;
 }
 
