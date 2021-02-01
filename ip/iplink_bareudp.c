@@ -22,9 +22,11 @@ static void print_explain(FILE *f)
 		"		[ srcportmin PORT ]\n"
 		"		[ [no]multiproto ]\n"
 		"\n"
-		"Where:	PORT       := 0-65535\n"
-		"	PROTO      := NUMBER | ip | mpls\n"
-		"	SRCPORTMIN := 0-65535\n"
+		"Where:	PORT  := UDP_PORT\n"
+		"	PROTO := ETHERTYPE\n"
+		"\n"
+		"Note: ETHERTYPE can be given as number or as protocol name (\"ipv4\", \"ipv6\",\n"
+		"      \"mpls_uc\", etc.).\n"
 	);
 }
 
