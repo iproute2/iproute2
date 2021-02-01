@@ -1389,6 +1389,7 @@ static struct str_num_map port_flavour_map[] = {
 	{ .str = "dsa", .num = DEVLINK_PORT_FLAVOUR_DSA },
 	{ .str = "pcipf", .num = DEVLINK_PORT_FLAVOUR_PCI_PF },
 	{ .str = "pcivf", .num = DEVLINK_PORT_FLAVOUR_PCI_VF },
+	{ .str = "pcisf", .num = DEVLINK_PORT_FLAVOUR_PCI_SF },
 	{ .str = "virtual", .num = DEVLINK_PORT_FLAVOUR_VIRTUAL},
 	{ .str = NULL, },
 };
@@ -3733,7 +3734,7 @@ static const char *port_flavour_name(uint16_t flavour)
 	return str ? str : "<unknown flavour>";
 }
 
-static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
+static void pr_out_port_pfvfsf_num(struct dl *dl, struct nlattr **tb)
 {
 	uint16_t fn_num;
 
@@ -3747,6 +3748,10 @@ static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
 	if (tb[DEVLINK_ATTR_PORT_PCI_VF_NUMBER]) {
 		fn_num = mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_PCI_VF_NUMBER]);
 		print_uint(PRINT_ANY, "vfnum", " vfnum %u", fn_num);
+	}
+	if (tb[DEVLINK_ATTR_PORT_PCI_SF_NUMBER]) {
+		fn_num = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_PCI_SF_NUMBER]);
+		print_uint(PRINT_ANY, "sfnum", " sfnum %u", fn_num);
 	}
 	if (tb[DEVLINK_ATTR_PORT_EXTERNAL]) {
 		uint8_t external;
@@ -3825,7 +3830,8 @@ static void pr_out_port(struct dl *dl, struct nlattr **tb)
 		switch (port_flavour) {
 		case DEVLINK_PORT_FLAVOUR_PCI_PF:
 		case DEVLINK_PORT_FLAVOUR_PCI_VF:
-			pr_out_port_pfvf_num(dl, tb);
+		case DEVLINK_PORT_FLAVOUR_PCI_SF:
+			pr_out_port_pfvfsf_num(dl, tb);
 			break;
 		default:
 			break;
