@@ -44,6 +44,23 @@ devlink-port \- devlink port configuration
 .RI "{ " show " | " recover " | " diagnose " | " dump " | " set " }"
 
 .ti -8
+.BI "devlink port add"
+.RB "["
+.IR "DEV | DEV/PORT_INDEX"
+.RB "] "
+.RB "[ " flavour
+.IR FLAVOUR " ]"
+.RB "[ " pcipf
+.IR PFNUMBER " ]"
+.RB "{ " pcisf
+.IR SFNUMBER " }"
+.br
+
+.ti -8
+.B devlink port del
+.IR DEV/PORT_INDEX
+
+.ti -8
 .B devlink port help
 
 .SH "DESCRIPTION"
@@ -99,6 +116,42 @@ If this argument is omitted all ports are listed.
 Is an alias for
 .BR devlink-health (8).
 
+.ti -8
+.SS devlink port add - add a devlink port
+.PP
+.B "DEV"
+- specifies the devlink device to operate on. or
+
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port index to use for the requested new port.
+This is optional. When ommited, driver allocates unique port index.
+
+.TP
+.BR flavour " { " pcipf " | " pcisf " } "
+set port flavour
+
+.I pcipf
+- PCI PF port
+
+.I pcisf
+- PCI SF port
+
+.TP
+.BR pfnum " { " pfnumber " } "
+Specifies PCI pfnumber to use on which a SF device to create
+
+.TP
+.BR sfnum " { " sfnumber " } "
+Specifies sfnumber to assign to the device of the SF.
+This field is optional for those devices which supports auto assignment of the SF number.
+
+.ti -8
+.SS devlink port del - delete a devlink port
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port to delete.
+
 .SH "EXAMPLES"
 .PP
 devlink port show
@@ -134,6 +187,16 @@ Shows status and configuration of all supported reporters registered on all devl
 devlink port health show pci/0000:01:00.0/1 reporter tx
 .RS 4
 Shows status and configuration of tx reporter registered on pci/0000:01:00.0/1 devlink port.
+.RE
+.PP
+devlink port add pci/0000:06:00.0 flavour pcisf pfnum 0 sfnum 88
+.RS 4
+Add a devlink port of flavour PCI SF on PCI PF having number 0 with SF number 88.
+.RE
+.PP
+devlink port del pci/0000:06:00.0/1
+.RS 4
+Delete previously created devlink port.
 .RE
 
 .SH SEE ALSO
