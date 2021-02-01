@@ -309,6 +309,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_PORT_FLAVOUR BIT(42)
 #define DL_OPT_PORT_PFNUMBER BIT(43)
 #define DL_OPT_PORT_SFNUMBER BIT(44)
+#define DL_OPT_PORT_FUNCTION_STATE BIT(45)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -362,6 +363,7 @@ struct dl_opts {
 	uint32_t port_sfnumber;
 	uint16_t port_flavour;
 	uint16_t port_pfnumber;
+	uint8_t port_fn_state;
 };
 
 struct dl {
@@ -747,6 +749,7 @@ static int attr_stats_cb(const struct nlattr *attr, void *data)
 static const enum mnl_attr_data_type
 devlink_function_policy[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {
 	[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR ] = MNL_TYPE_BINARY,
+	[DEVLINK_PORT_FN_ATTR_STATE] = MNL_TYPE_U8,
 };
 
 static int function_attr_cb(const struct nlattr *attr, void *data)
@@ -1423,6 +1426,17 @@ static int port_flavour_parse(const char *flavour, uint16_t *value)
 	return 0;
 }
 
+static int port_fn_state_parse(const char *statestr, uint8_t *state)
+{
+	int num;
+
+	num = str_map_lookup_str(port_fn_state_map, statestr);
+	if (num < 0)
+		return num;
+	*state = num;
+	return 0;
+}
+
 struct dl_args_metadata {
 	uint64_t o_flag;
 	char err_msg[DL_ARGS_REQUIRED_MAX_ERR_LEN];
@@ -1874,6 +1888,19 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_PORT_FUNCTION_HW_ADDR;
+		} else if (dl_argv_match(dl, "state") &&
+			   (o_all & DL_OPT_PORT_FUNCTION_STATE)) {
+			const char *statestr;
+
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &statestr);
+			if (err)
+				return err;
+			err = port_fn_state_parse(statestr, &opts->port_fn_state);
+			if (err)
+				return err;
+
+			o_found |= DL_OPT_PORT_FUNCTION_STATE;
 		} else if (dl_argv_match(dl, "flavour") && (o_all & DL_OPT_PORT_FLAVOUR)) {
 			const char *flavourstr;
 
@@ -1919,9 +1946,14 @@ dl_function_attr_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
 	struct nlattr *nest;
 
 	nest = mnl_attr_nest_start(nlh, DEVLINK_ATTR_PORT_FUNCTION);
-	mnl_attr_put(nlh, DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR,
-		     opts->port_function_hw_addr_len,
-		     opts->port_function_hw_addr);
+
+	if (opts->present & DL_OPT_PORT_FUNCTION_HW_ADDR)
+		mnl_attr_put(nlh, DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR,
+			     opts->port_function_hw_addr_len,
+			     opts->port_function_hw_addr);
+	if (opts->present & DL_OPT_PORT_FUNCTION_STATE)
+		mnl_attr_put_u8(nlh, DEVLINK_PORT_FN_ATTR_STATE,
+				opts->port_fn_state);
 	mnl_attr_nest_end(nlh, nest);
 }
 
@@ -2077,7 +2109,7 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_TRAP_POLICER_BURST)
 		mnl_attr_put_u64(nlh, DEVLINK_ATTR_TRAP_POLICER_BURST,
 				 opts->trap_policer_burst);
-	if (opts->present & DL_OPT_PORT_FUNCTION_HW_ADDR)
+	if (opts->present & (DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE))
 		dl_function_attr_put(nlh, opts);
 	if (opts->present & DL_OPT_PORT_FLAVOUR)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PORT_FLAVOUR, opts->port_flavour);
@@ -3770,7 +3802,7 @@ static void cmd_port_help(void)
 	pr_err("       devlink port set DEV/PORT_INDEX [ type { eth | ib | auto} ]\n");
 	pr_err("       devlink port split DEV/PORT_INDEX count COUNT\n");
 	pr_err("       devlink port unsplit DEV/PORT_INDEX\n");
-	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ]\n");
+	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state STATE ]\n");
 	pr_err("       devlink port health show [ DEV/PORT_INDEX reporter REPORTER_NAME ]\n");
 	pr_err("       devlink port add DEV/PORT_INDEX flavour FLAVOUR pfnum PFNUM [ sfnum SFNUM ]\n");
 	pr_err("       devlink port del DEV/PORT_INDEX\n");
@@ -4035,7 +4067,7 @@ static int cmd_port_unsplit(struct dl *dl)
 
 static void cmd_port_function_help(void)
 {
-	pr_err("Usage: devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ]\n");
+	pr_err("Usage: devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state STATE ]\n");
 }
 
 static int cmd_port_function_set(struct dl *dl)
@@ -4043,9 +4075,14 @@ static int cmd_port_function_set(struct dl *dl)
 	struct nlmsghdr *nlh;
 	int err;
 
+	if (dl_no_arg(dl)) {
+		cmd_port_function_help();
+		return 0;
+	}
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_PORT_SET, NLM_F_REQUEST | NLM_F_ACK);
 
-	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLEP | DL_OPT_PORT_FUNCTION_HW_ADDR, 0);
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLEP,
+				DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE);
 	if (err)
 		return err;
 
