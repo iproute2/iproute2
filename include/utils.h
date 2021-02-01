@@ -347,5 +347,6 @@ struct str_num_map {
 
 int str_map_lookup_str(const struct str_num_map *map, const char *needle);
 const char *str_map_lookup_u16(const struct str_num_map *map, uint16_t val);
+const char *str_map_lookup_u8(const struct str_num_map *map, uint8_t val);
 
 #endif /* __UTILS_H__ */

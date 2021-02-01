@@ -1400,6 +1400,18 @@ static struct str_num_map port_flavour_map[] = {
 	{ .str = NULL, },
 };
 
+static struct str_num_map port_fn_state_map[] = {
+	{ .str = "inactive", .num = DEVLINK_PORT_FN_STATE_INACTIVE},
+	{ .str = "active", .num = DEVLINK_PORT_FN_STATE_ACTIVE },
+	{ .str = NULL, }
+};
+
+static struct str_num_map port_fn_opstate_map[] = {
+	{ .str = "attached", .num = DEVLINK_PORT_FN_OPSTATE_ATTACHED},
+	{ .str = "detached", .num = DEVLINK_PORT_FN_OPSTATE_DETACHED},
+	{ .str = NULL, }
+};
+
 static int port_flavour_parse(const char *flavour, uint16_t *value)
 {
 	int num;
@@ -3810,6 +3822,22 @@ static void pr_out_port_pfvfsf_num(struct dl *dl, struct nlattr **tb)
 	}
 }
 
+static const char *port_fn_state(uint8_t state)
+{
+	const char *str;
+
+	str = str_map_lookup_u8(port_fn_state_map, state);
+	return str ? str : "<unknown state>";
+}
+
+static const char *port_fn_opstate(uint8_t state)
+{
+	const char *str;
+
+	str = str_map_lookup_u8(port_fn_opstate_map, state);
+	return str ? str : "<unknown state>";
+}
+
 static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
 {
 	struct nlattr *tb[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {};
@@ -3826,16 +3854,33 @@ static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
 	if (err != MNL_CB_OK)
 		return;
 
-	if (!tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR])
-		return;
-
-	len = mnl_attr_get_payload_len(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
-	data = mnl_attr_get_payload(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
-
 	pr_out_object_start(dl, "function");
 	check_indent_newline(dl);
-	print_string(PRINT_ANY, "hw_addr", "hw_addr %s",
-		     ll_addr_n2a(data, len, 0, hw_addr, sizeof(hw_addr)));
+
+	if (tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]) {
+		len = mnl_attr_get_payload_len(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
+		data = mnl_attr_get_payload(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
+
+		print_string(PRINT_ANY, "hw_addr", "hw_addr %s",
+			     ll_addr_n2a(data, len, 0, hw_addr, sizeof(hw_addr)));
+	}
+	if (tb[DEVLINK_PORT_FN_ATTR_STATE]) {
+		uint8_t state;
+
+		state = mnl_attr_get_u8(tb[DEVLINK_PORT_FN_ATTR_STATE]);
+
+		print_string(PRINT_ANY, "state", " state %s",
+			     port_fn_state(state));
+	}
+	if (tb[DEVLINK_PORT_FN_ATTR_OPSTATE]) {
+		uint8_t state;
+
+		state = mnl_attr_get_u8(tb[DEVLINK_PORT_FN_ATTR_OPSTATE]);
+
+		print_string(PRINT_ANY, "opstate", " opstate %s",
+			     port_fn_opstate(state));
+	}
+
 	if (!dl->json_output)
 		__pr_out_indent_dec();
 	pr_out_object_end(dl);

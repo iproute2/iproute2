@@ -1965,3 +1965,16 @@ const char *str_map_lookup_u16(const struct str_num_map *map, uint16_t val)
 	}
 	return NULL;
 }
+
+const char *str_map_lookup_u8(const struct str_num_map *map, uint8_t val)
+{
+	int num = val;
+
+	while (map && map->str) {
+		if (num == map->num)
+			return map->str;
+
+		map++;
+	}
+	return NULL;
+}
