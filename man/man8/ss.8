@@ -511,7 +511,9 @@ The general host syntax is [FAMILY:]ADDRESS[:PORT].
 .P
 FAMILY must be one of the families supported by the -f option. If not given
 it defaults to the family given with the -f option, and if that is also
-missing, will assume either inet or inet6.
+missing, will assume either inet or inet6. Note that all host conditions in the
+expression should either all be the same family or be only inet and inet6. If there
+is some other mixture of families, the results will probably be unexpected.
 .P
 The form of ADDRESS and PORT depends on the family used. "*" can be used as
 a wildcard for either the address or port. The details for each family are as
