@@ -1937,3 +1937,44 @@ int parse_mapping(int *argcp, char ***argvp, bool allow_all,
 		return parse_mapping_gen(argcp, argvp, parse_mapping_num,
 					 mapping_cb, mapping_cb_data);
 }
+
+int str_map_lookup_str(const struct str_num_map *map, const char *needle)
+{
+	if (!needle)
+		return -EINVAL;
+
+	/* Process array which is NULL terminated by the string. */
+	while (map && map->str) {
+		if (strcmp(map->str, needle) == 0)
+			return map->num;
+
+		map++;
+	}
+	return -EINVAL;
+}
+
+const char *str_map_lookup_u16(const struct str_num_map *map, uint16_t val)
+{
+	int num = val;
+
+	while (map && map->str) {
+		if (num == map->num)
+			return map->str;
+
+		map++;
+	}
+	return NULL;
+}
+
+const char *str_map_lookup_u8(const struct str_num_map *map, uint8_t val)
+{
+	int num = val;
+
+	while (map && map->str) {
+		if (num == map->num)
+			return map->str;
+
+		map++;
+	}
+	return NULL;
+}

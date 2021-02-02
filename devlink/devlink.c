@@ -306,6 +306,10 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_FLASH_OVERWRITE		BIT(39)
 #define DL_OPT_RELOAD_ACTION		BIT(40)
 #define DL_OPT_RELOAD_LIMIT	BIT(41)
+#define DL_OPT_PORT_FLAVOUR BIT(42)
+#define DL_OPT_PORT_PFNUMBER BIT(43)
+#define DL_OPT_PORT_SFNUMBER BIT(44)
+#define DL_OPT_PORT_FUNCTION_STATE BIT(45)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -356,6 +360,10 @@ struct dl_opts {
 	uint32_t overwrite_mask;
 	enum devlink_reload_action reload_action;
 	enum devlink_reload_limit reload_limit;
+	uint32_t port_sfnumber;
+	uint16_t port_flavour;
+	uint16_t port_pfnumber;
+	uint8_t port_fn_state;
 };
 
 struct dl {
@@ -741,6 +749,7 @@ static int attr_stats_cb(const struct nlattr *attr, void *data)
 static const enum mnl_attr_data_type
 devlink_function_policy[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {
 	[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR ] = MNL_TYPE_BINARY,
+	[DEVLINK_PORT_FN_ATTR_STATE] = MNL_TYPE_U8,
 };
 
 static int function_attr_cb(const struct nlattr *attr, void *data)
@@ -1383,6 +1392,51 @@ static int reload_limit_get(struct dl *dl, const char *limitstr,
 	return 0;
 }
 
+static struct str_num_map port_flavour_map[] = {
+	{ .str = "physical", .num = DEVLINK_PORT_FLAVOUR_PHYSICAL },
+	{ .str = "cpu", .num = DEVLINK_PORT_FLAVOUR_CPU },
+	{ .str = "dsa", .num = DEVLINK_PORT_FLAVOUR_DSA },
+	{ .str = "pcipf", .num = DEVLINK_PORT_FLAVOUR_PCI_PF },
+	{ .str = "pcivf", .num = DEVLINK_PORT_FLAVOUR_PCI_VF },
+	{ .str = "pcisf", .num = DEVLINK_PORT_FLAVOUR_PCI_SF },
+	{ .str = "virtual", .num = DEVLINK_PORT_FLAVOUR_VIRTUAL},
+	{ .str = NULL, },
+};
+
+static struct str_num_map port_fn_state_map[] = {
+	{ .str = "inactive", .num = DEVLINK_PORT_FN_STATE_INACTIVE},
+	{ .str = "active", .num = DEVLINK_PORT_FN_STATE_ACTIVE },
+	{ .str = NULL, }
+};
+
+static struct str_num_map port_fn_opstate_map[] = {
+	{ .str = "attached", .num = DEVLINK_PORT_FN_OPSTATE_ATTACHED},
+	{ .str = "detached", .num = DEVLINK_PORT_FN_OPSTATE_DETACHED},
+	{ .str = NULL, }
+};
+
+static int port_flavour_parse(const char *flavour, uint16_t *value)
+{
+	int num;
+
+	num = str_map_lookup_str(port_flavour_map, flavour);
+	if (num < 0)
+		return num;
+	*value = num;
+	return 0;
+}
+
+static int port_fn_state_parse(const char *statestr, uint8_t *state)
+{
+	int num;
+
+	num = str_map_lookup_str(port_fn_state_map, statestr);
+	if (num < 0)
+		return num;
+	*state = num;
+	return 0;
+}
+
 struct dl_args_metadata {
 	uint64_t o_flag;
 	char err_msg[DL_ARGS_REQUIRED_MAX_ERR_LEN];
@@ -1414,6 +1468,8 @@ static const struct dl_args_metadata dl_args_required[] = {
 	{DL_OPT_TRAP_NAME,            "Trap's name is expected."},
 	{DL_OPT_TRAP_GROUP_NAME,      "Trap group's name is expected."},
 	{DL_OPT_PORT_FUNCTION_HW_ADDR, "Port function's hardware address is expected."},
+	{DL_OPT_PORT_FLAVOUR,          "Port flavour is expected."},
+	{DL_OPT_PORT_PFNUMBER,         "Port PCI PF number is expected."},
 };
 
 static int dl_args_finding_required_validate(uint64_t o_required,
@@ -1832,7 +1888,42 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_PORT_FUNCTION_HW_ADDR;
+		} else if (dl_argv_match(dl, "state") &&
+			   (o_all & DL_OPT_PORT_FUNCTION_STATE)) {
+			const char *statestr;
 
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &statestr);
+			if (err)
+				return err;
+			err = port_fn_state_parse(statestr, &opts->port_fn_state);
+			if (err)
+				return err;
+
+			o_found |= DL_OPT_PORT_FUNCTION_STATE;
+		} else if (dl_argv_match(dl, "flavour") && (o_all & DL_OPT_PORT_FLAVOUR)) {
+			const char *flavourstr;
+
+			dl_arg_inc(dl);
+			err = dl_argv_str(dl, &flavourstr);
+			if (err)
+				return err;
+			err = port_flavour_parse(flavourstr, &opts->port_flavour);
+			if (err)
+				return err;
+			o_found |= DL_OPT_PORT_FLAVOUR;
+		} else if (dl_argv_match(dl, "pfnum") && (o_all & DL_OPT_PORT_PFNUMBER)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint16_t(dl, &opts->port_pfnumber);
+			if (err)
+				return err;
+			o_found |= DL_OPT_PORT_PFNUMBER;
+		} else if (dl_argv_match(dl, "sfnum") && (o_all & DL_OPT_PORT_SFNUMBER)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint32_t(dl, &opts->port_sfnumber);
+			if (err)
+				return err;
+			o_found |= DL_OPT_PORT_SFNUMBER;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -1855,9 +1946,14 @@ dl_function_attr_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
 	struct nlattr *nest;
 
 	nest = mnl_attr_nest_start(nlh, DEVLINK_ATTR_PORT_FUNCTION);
-	mnl_attr_put(nlh, DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR,
-		     opts->port_function_hw_addr_len,
-		     opts->port_function_hw_addr);
+
+	if (opts->present & DL_OPT_PORT_FUNCTION_HW_ADDR)
+		mnl_attr_put(nlh, DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR,
+			     opts->port_function_hw_addr_len,
+			     opts->port_function_hw_addr);
+	if (opts->present & DL_OPT_PORT_FUNCTION_STATE)
+		mnl_attr_put_u8(nlh, DEVLINK_PORT_FN_ATTR_STATE,
+				opts->port_fn_state);
 	mnl_attr_nest_end(nlh, nest);
 }
 
@@ -2013,8 +2109,14 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_TRAP_POLICER_BURST)
 		mnl_attr_put_u64(nlh, DEVLINK_ATTR_TRAP_POLICER_BURST,
 				 opts->trap_policer_burst);
-	if (opts->present & DL_OPT_PORT_FUNCTION_HW_ADDR)
+	if (opts->present & (DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE))
 		dl_function_attr_put(nlh, opts);
+	if (opts->present & DL_OPT_PORT_FLAVOUR)
+		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PORT_FLAVOUR, opts->port_flavour);
+	if (opts->present & DL_OPT_PORT_PFNUMBER)
+		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PORT_PCI_PF_NUMBER, opts->port_pfnumber);
+	if (opts->present & DL_OPT_PORT_SFNUMBER)
+		mnl_attr_put_u32(nlh, DEVLINK_ATTR_PORT_PCI_SF_NUMBER, opts->port_sfnumber);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -3700,8 +3802,10 @@ static void cmd_port_help(void)
 	pr_err("       devlink port set DEV/PORT_INDEX [ type { eth | ib | auto} ]\n");
 	pr_err("       devlink port split DEV/PORT_INDEX count COUNT\n");
 	pr_err("       devlink port unsplit DEV/PORT_INDEX\n");
-	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ]\n");
+	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state STATE ]\n");
 	pr_err("       devlink port health show [ DEV/PORT_INDEX reporter REPORTER_NAME ]\n");
+	pr_err("       devlink port add DEV/PORT_INDEX flavour FLAVOUR pfnum PFNUM [ sfnum SFNUM ]\n");
+	pr_err("       devlink port del DEV/PORT_INDEX\n");
 }
 
 static const char *port_type_name(uint32_t type)
@@ -3717,25 +3821,13 @@ static const char *port_type_name(uint32_t type)
 
 static const char *port_flavour_name(uint16_t flavour)
 {
-	switch (flavour) {
-	case DEVLINK_PORT_FLAVOUR_PHYSICAL:
-		return "physical";
-	case DEVLINK_PORT_FLAVOUR_CPU:
-		return "cpu";
-	case DEVLINK_PORT_FLAVOUR_DSA:
-		return "dsa";
-	case DEVLINK_PORT_FLAVOUR_PCI_PF:
-		return "pcipf";
-	case DEVLINK_PORT_FLAVOUR_PCI_VF:
-		return "pcivf";
-	case DEVLINK_PORT_FLAVOUR_VIRTUAL:
-		return "virtual";
-	default:
-		return "<unknown flavour>";
-	}
+	const char *str;
+
+	str = str_map_lookup_u16(port_flavour_map, flavour);
+	return str ? str : "<unknown flavour>";
 }
 
-static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
+static void pr_out_port_pfvfsf_num(struct dl *dl, struct nlattr **tb)
 {
 	uint16_t fn_num;
 
@@ -3750,12 +3842,32 @@ static void pr_out_port_pfvf_num(struct dl *dl, struct nlattr **tb)
 		fn_num = mnl_attr_get_u16(tb[DEVLINK_ATTR_PORT_PCI_VF_NUMBER]);
 		print_uint(PRINT_ANY, "vfnum", " vfnum %u", fn_num);
 	}
+	if (tb[DEVLINK_ATTR_PORT_PCI_SF_NUMBER]) {
+		fn_num = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_PCI_SF_NUMBER]);
+		print_uint(PRINT_ANY, "sfnum", " sfnum %u", fn_num);
+	}
 	if (tb[DEVLINK_ATTR_PORT_EXTERNAL]) {
 		uint8_t external;
 
 		external = mnl_attr_get_u8(tb[DEVLINK_ATTR_PORT_EXTERNAL]);
 		print_bool(PRINT_ANY, "external", " external %s", external);
 	}
+}
+
+static const char *port_fn_state(uint8_t state)
+{
+	const char *str;
+
+	str = str_map_lookup_u8(port_fn_state_map, state);
+	return str ? str : "<unknown state>";
+}
+
+static const char *port_fn_opstate(uint8_t state)
+{
+	const char *str;
+
+	str = str_map_lookup_u8(port_fn_opstate_map, state);
+	return str ? str : "<unknown state>";
 }
 
 static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
@@ -3774,16 +3886,33 @@ static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
 	if (err != MNL_CB_OK)
 		return;
 
-	if (!tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR])
-		return;
-
-	len = mnl_attr_get_payload_len(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
-	data = mnl_attr_get_payload(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
-
 	pr_out_object_start(dl, "function");
 	check_indent_newline(dl);
-	print_string(PRINT_ANY, "hw_addr", "hw_addr %s",
-		     ll_addr_n2a(data, len, 0, hw_addr, sizeof(hw_addr)));
+
+	if (tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]) {
+		len = mnl_attr_get_payload_len(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
+		data = mnl_attr_get_payload(tb[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR]);
+
+		print_string(PRINT_ANY, "hw_addr", "hw_addr %s",
+			     ll_addr_n2a(data, len, 0, hw_addr, sizeof(hw_addr)));
+	}
+	if (tb[DEVLINK_PORT_FN_ATTR_STATE]) {
+		uint8_t state;
+
+		state = mnl_attr_get_u8(tb[DEVLINK_PORT_FN_ATTR_STATE]);
+
+		print_string(PRINT_ANY, "state", " state %s",
+			     port_fn_state(state));
+	}
+	if (tb[DEVLINK_PORT_FN_ATTR_OPSTATE]) {
+		uint8_t state;
+
+		state = mnl_attr_get_u8(tb[DEVLINK_PORT_FN_ATTR_OPSTATE]);
+
+		print_string(PRINT_ANY, "opstate", " opstate %s",
+			     port_fn_opstate(state));
+	}
+
 	if (!dl->json_output)
 		__pr_out_indent_dec();
 	pr_out_object_end(dl);
@@ -3827,7 +3956,8 @@ static void pr_out_port(struct dl *dl, struct nlattr **tb)
 		switch (port_flavour) {
 		case DEVLINK_PORT_FLAVOUR_PCI_PF:
 		case DEVLINK_PORT_FLAVOUR_PCI_VF:
-			pr_out_port_pfvf_num(dl, tb);
+		case DEVLINK_PORT_FLAVOUR_PCI_SF:
+			pr_out_port_pfvfsf_num(dl, tb);
 			break;
 		default:
 			break;
@@ -3937,7 +4067,7 @@ static int cmd_port_unsplit(struct dl *dl)
 
 static void cmd_port_function_help(void)
 {
-	pr_err("Usage: devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ]\n");
+	pr_err("Usage: devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state STATE ]\n");
 }
 
 static int cmd_port_function_set(struct dl *dl)
@@ -3945,9 +4075,14 @@ static int cmd_port_function_set(struct dl *dl)
 	struct nlmsghdr *nlh;
 	int err;
 
+	if (dl_no_arg(dl)) {
+		cmd_port_function_help();
+		return 0;
+	}
 	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_PORT_SET, NLM_F_REQUEST | NLM_F_ACK);
 
-	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLEP | DL_OPT_PORT_FUNCTION_HW_ADDR, 0);
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLEP,
+				DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE);
 	if (err)
 		return err;
 
@@ -3969,6 +4104,58 @@ static int cmd_port_function(struct dl *dl)
 
 static int cmd_health(struct dl *dl);
 static int __cmd_health_show(struct dl *dl, bool show_device, bool show_port);
+
+static void cmd_port_add_help(void)
+{
+	pr_err("       devlink port add { DEV | DEV/PORT_INDEX } flavour FLAVOUR pfnum PFNUM [ sfnum SFNUM ]\n");
+}
+
+static int cmd_port_add(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
+		cmd_port_add_help();
+		return 0;
+	}
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_PORT_NEW,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE | DL_OPT_HANDLEP |
+				DL_OPT_PORT_FLAVOUR | DL_OPT_PORT_PFNUMBER,
+				DL_OPT_PORT_SFNUMBER);
+	if (err)
+		return err;
+
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, cmd_port_show_cb, dl);
+}
+
+static void cmd_port_del_help(void)
+{
+	pr_err("       devlink port del DEV/PORT_INDEX\n");
+}
+
+static int cmd_port_del(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (dl_argv_match(dl, "help") || dl_no_arg(dl)) {
+		cmd_port_del_help();
+		return 0;
+	}
+
+	nlh = mnlg_msg_prepare(dl->nlg, DEVLINK_CMD_PORT_DEL,
+			       NLM_F_REQUEST | NLM_F_ACK);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLEP, 0);
+	if (err)
+		return err;
+
+	return _mnlg_socket_sndrcv(dl->nlg, nlh, NULL, NULL);
+}
 
 static int cmd_port(struct dl *dl)
 {
@@ -4000,7 +4187,14 @@ static int cmd_port(struct dl *dl)
 		} else {
 			return cmd_health(dl);
 		}
+	} else if (dl_argv_match(dl, "add")) {
+		dl_arg_inc(dl);
+		return cmd_port_add(dl);
+	} else if (dl_argv_match(dl, "del")) {
+		dl_arg_inc(dl);
+		return cmd_port_del(dl);
 	}
+
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
 }

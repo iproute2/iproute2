@@ -44,6 +44,33 @@ devlink-port \- devlink port configuration
 .RI "{ " show " | " recover " | " diagnose " | " dump " | " set " }"
 
 .ti -8
+.BI "devlink port add"
+.RB "["
+.IR "DEV | DEV/PORT_INDEX"
+.RB "] "
+.RB "[ " flavour
+.IR FLAVOUR " ]"
+.RB "[ " pcipf
+.IR PFNUMBER " ]"
+.RB "{ " pcisf
+.IR SFNUMBER " }"
+.br
+
+.ti -8
+.B devlink port del
+.IR DEV/PORT_INDEX
+
+.ti -8
+.BR "devlink port function set "
+.IR DEV/PORT_INDEX
+.RI "{ "
+.BR "hw_addr "
+.RI "ADDR }"
+.RI "{ "
+.BR "state"
+.RI "STATE }"
+
+.ti -8
 .B devlink port help
 
 .SH "DESCRIPTION"
@@ -99,6 +126,65 @@ If this argument is omitted all ports are listed.
 Is an alias for
 .BR devlink-health (8).
 
+.ti -8
+.SS devlink port add - add a devlink port
+.PP
+.B "DEV"
+- specifies the devlink device to operate on. or
+
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port index to use for the requested new port.
+This is optional. When ommited, driver allocates unique port index.
+
+.TP
+.BR flavour " { " pcipf " | " pcisf " } "
+set port flavour
+
+.I pcipf
+- PCI PF port
+
+.I pcisf
+- PCI SF port
+
+.TP
+.BR pfnum " { " pfnumber " } "
+Specifies PCI pfnumber to use on which a SF device to create
+
+.TP
+.BR sfnum " { " sfnumber " } "
+Specifies sfnumber to assign to the device of the SF.
+This field is optional for those devices which supports auto assignment of the
+SF number.
+
+.ti -8
+.SS devlink port function set - Set the port function attribute(s).
+
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port to operate on.
+
+.TP
+.BR hw_addr " ADDR"
+- hardware address of the function to set. This is a Ethernet MAC address when
+port type is Ethernet.
+
+.TP
+.BR state " { " active " | " inactive " } "
+- new state of the function to change to.
+
+.I active
+- Once configuration of the function is done, activate the function.
+
+.I inactive
+- To inactivate the function and its device(s), set to inactive.
+
+.ti -8
+.SS devlink port del - delete a devlink port
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port to delete.
+
 .SH "EXAMPLES"
 .PP
 devlink port show
@@ -134,6 +220,47 @@ Shows status and configuration of all supported reporters registered on all devl
 devlink port health show pci/0000:01:00.0/1 reporter tx
 .RS 4
 Shows status and configuration of tx reporter registered on pci/0000:01:00.0/1 devlink port.
+.RE
+.PP
+devlink port add pci/0000:06:00.0 flavour pcisf pfnum 0 sfnum 88
+.RS 4
+Add a devlink port of flavour PCI SF on PCI PF having number 0 with SF number 88.
+To make use of the function an example sequence is to add a port, configure the
+function attribute and activate the function. Once function usage is completed,
+inactivate the function and finally delete the port. When there is desire to
+reuse the port without deletion, it can be reconfigured and activated again when
+function is in inactive state and function's operational state is detached.
+.RE
+.PP
+devlink port del pci/0000:06:00.0/1
+.RS 4
+Delete previously created devlink port. It is recommended to first deactivate
+the function if the function supports state management.
+.RE
+.PP
+devlink port function set pci/0000:01:00.0/1 hw_addr 00:00:00:11:22:33
+.RS 4
+Configure hardware address of the PCI function represented by devlink port.
+If the port supports change in function state, hardware address must be configured
+before activating the function.
+.RE
+.PP
+devlink port function set pci/0000:01:00.0/1 state active
+.RS 4
+Activate the function. This will initiate the function enumeration and driver loading.
+.RE
+.PP
+devlink port function set pci/0000:01:00.0/1 state inactive
+.RS 4
+Deactivate the function. This will initiate the function teardown which results
+in driver unload and device removal.
+.RE
+.PP
+devlink port function set pci/0000:01:00.0/1 hw_addr 00:00:00:11:22:33 state active
+.RS 4
+Configure hardware address and also active the function. When a function is
+activated together with other configuration in a single command, all the
+configuration is applied first before changing the state to active.
 .RE
 
 .SH SEE ALSO
