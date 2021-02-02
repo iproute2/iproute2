@@ -2119,24 +2119,39 @@ void *parse_hostcond(char *addr, bool is_port)
 	int fam = preferred_family;
 	struct filter *f = &current_filter;
 
-	if (fam == AF_UNIX || strncmp(addr, "unix:", 5) == 0) {
+	if (strncmp(addr, "unix:", 5) == 0) {
+		fam = AF_UNIX;
+		addr += 5;
+	} else if (strncmp(addr, "link:", 5) == 0) {
+		fam = AF_PACKET;
+		addr += 5;
+	} else if (strncmp(addr, "netlink:", 8) == 0) {
+		fam = AF_NETLINK;
+		addr += 8;
+	} else if (strncmp(addr, "vsock:", 6) == 0) {
+		fam = AF_VSOCK;
+		addr += 6;
+	} else if (strncmp(addr, "inet:", 5) == 0) {
+		fam = AF_INET;
+		addr += 5;
+	} else if (strncmp(addr, "inet6:", 6) == 0) {
+		fam = AF_INET6;
+		addr += 6;
+	}
+
+	if (fam == AF_UNIX) {
 		char *p;
 
 		a.addr.family = AF_UNIX;
-		if (strncmp(addr, "unix:", 5) == 0)
-			addr += 5;
 		p = strdup(addr);
 		a.addr.bitlen = 8*strlen(p);
 		memcpy(a.addr.data, &p, sizeof(p));
-		fam = AF_UNIX;
 		goto out;
 	}
 
-	if (fam == AF_PACKET || strncmp(addr, "link:", 5) == 0) {
+	if (fam == AF_PACKET) {
 		a.addr.family = AF_PACKET;
 		a.addr.bitlen = 0;
-		if (strncmp(addr, "link:", 5) == 0)
-			addr += 5;
 		port = strchr(addr, ':');
 		if (port) {
 			*port = 0;
@@ -2155,15 +2170,12 @@ void *parse_hostcond(char *addr, bool is_port)
 				return NULL;
 			a.addr.data[0] = ntohs(tmp);
 		}
-		fam = AF_PACKET;
 		goto out;
 	}
 
-	if (fam == AF_NETLINK || strncmp(addr, "netlink:", 8) == 0) {
+	if (fam == AF_NETLINK) {
 		a.addr.family = AF_NETLINK;
 		a.addr.bitlen = 0;
-		if (strncmp(addr, "netlink:", 8) == 0)
-			addr += 8;
 		port = strchr(addr, ':');
 		if (port) {
 			*port = 0;
@@ -2181,16 +2193,13 @@ void *parse_hostcond(char *addr, bool is_port)
 			if (nl_proto_a2n(&a.addr.data[0], addr) == -1)
 				return NULL;
 		}
-		fam = AF_NETLINK;
 		goto out;
 	}
 
-	if (fam == AF_VSOCK || strncmp(addr, "vsock:", 6) == 0) {
+	if (fam == AF_VSOCK) {
 		__u32 cid = ~(__u32)0;
 
 		a.addr.family = AF_VSOCK;
-		if (strncmp(addr, "vsock:", 6) == 0)
-			addr += 6;
 
 		if (is_port)
 			port = addr;
@@ -2212,18 +2221,7 @@ void *parse_hostcond(char *addr, bool is_port)
 				return NULL;
 		}
 		vsock_set_inet_prefix(&a.addr, cid);
-		fam = AF_VSOCK;
 		goto out;
-	}
-
-	if (fam == AF_INET || !strncmp(addr, "inet:", 5)) {
-		fam = AF_INET;
-		if (!strncmp(addr, "inet:", 5))
-			addr += 5;
-	} else if (fam == AF_INET6 || !strncmp(addr, "inet6:", 6)) {
-		fam = AF_INET6;
-		if (!strncmp(addr, "inet6:", 6))
-			addr += 6;
 	}
 
 	/* URL-like literal [] */
