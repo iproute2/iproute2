@@ -30,11 +30,12 @@
 static void explain(void)
 {
 	fprintf(stderr, "Usage: ... qdisc add ... htb [default N] [r2q N]\n"
-		"                      [direct_qlen P]\n"
+		"                      [direct_qlen P] [offload]\n"
 		" default  minor id of class to which unclassified packets are sent {0}\n"
 		" r2q      DRR quantums are computed as rate in Bps/r2q {10}\n"
 		" debug    string of 16 numbers each 0-3 {0}\n\n"
 		" direct_qlen  Limit of the direct queue {in packets}\n"
+		" offload  enable hardware offload\n"
 		"... class add ... htb rate R1 [burst B1] [mpu B] [overhead O]\n"
 		"                      [prio P] [slot S] [pslot PS]\n"
 		"                      [ceil R2] [cburst B2] [mtu MTU] [quantum Q]\n"
@@ -68,6 +69,7 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc,
 	};
 	struct rtattr *tail;
 	unsigned int i; char *p;
+	bool offload = false;
 
 	while (argc > 0) {
 		if (matches(*argv, "r2q") == 0) {
@@ -91,6 +93,8 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc,
 			if (get_u32(&direct_qlen, *argv, 10)) {
 				explain1("direct_qlen"); return -1;
 			}
+		} else if (matches(*argv, "offload") == 0) {
+			offload = true;
 		} else {
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
 			explain();
@@ -103,6 +107,8 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc,
 	if (direct_qlen != ~0U)
 		addattr_l(n, 2024, TCA_HTB_DIRECT_QLEN,
 			  &direct_qlen, sizeof(direct_qlen));
+	if (offload)
+		addattr(n, 2024, TCA_HTB_OFFLOAD);
 	addattr_nest_end(n, tail);
 	return 0;
 }
@@ -344,6 +350,8 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		print_uint(PRINT_ANY, "direct_qlen", " direct_qlen %u",
 			   direct_qlen);
 	}
+	if (tb[TCA_HTB_OFFLOAD])
+		print_null(PRINT_ANY, "offload", " offload", NULL);
 	return 0;
 }
 
