@@ -319,6 +319,57 @@ _devlink_port_split()
     esac
 }
 
+# Completion for devlink port param set
+_devlink_port_param_set()
+{
+    case $cword in
+        7)
+            COMPREPLY=( $( compgen -W "value" -- "$cur" ) )
+            return
+            ;;
+        8)
+            # String argument
+            return
+            ;;
+        9)
+            COMPREPLY=( $( compgen -W "cmode" -- "$cur" ) )
+            return
+            ;;
+        10)
+            COMPREPLY=( $( compgen -W "runtime driverinit permanent" -- \
+                "$cur" ) )
+            return
+            ;;
+    esac
+}
+
+# Completion for devlink port param
+_devlink_port_param()
+{
+    case "$cword" in
+        3)
+            COMPREPLY=( $( compgen -W "show set" -- "$cur" ) )
+            return
+            ;;
+        4)
+            _devlink_direct_complete "port"
+            return
+            ;;
+        5)
+            COMPREPLY=( $( compgen -W "name" -- "$cur" ) )
+            return
+            ;;
+        6)
+            _devlink_direct_complete "param_name"
+            return
+            ;;
+    esac
+
+    if [[ "${words[3]}" == "set" ]]; then
+        _devlink_port_param_set
+    fi
+}
+
 # Completion for devlink port
 _devlink_port()
 {
@@ -329,6 +380,10 @@ _devlink_port()
             ;;
         split)
             _devlink_port_split
+            return
+            ;;
+        param)
+            _devlink_port_param
             return
             ;;
         show|unsplit)

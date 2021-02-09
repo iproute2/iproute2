@@ -71,6 +71,23 @@ devlink-port \- devlink port configuration
 .RI "STATE }"
 
 .ti -8
+.B devlink dev param set
+.I DEV/PORT_INDEX
+.B name
+.I PARAMETER
+.B value
+.I VALUE
+.BR cmode " { " runtime " | " driverinit " | " permanent " } "
+
+.ti -8
+.B devlink dev param show
+[
+.I DEV/PORT_INDEX
+.B name
+.I PARAMETER
+]
+
+.ti -8
 .B devlink port help
 
 .SH "DESCRIPTION"
@@ -185,6 +202,44 @@ port type is Ethernet.
 .B "DEV/PORT_INDEX"
 - specifies the devlink port to delete.
 
+.ti -8
+.SS devlink port param set  - set new value to devlink port configuration parameter
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port to operate on.
+
+.TP
+.BI name " PARAMETER"
+Specify parameter name to set.
+
+.TP
+.BI value " VALUE"
+New value to set.
+
+.TP
+.BR cmode " { " runtime " | " driverinit " | " permanent " } "
+Configuration mode in which the new value is set.
+
+.I runtime
+- Set new value while driver is running. This configuration mode doesn't require any reset to apply the new value.
+
+.I driverinit
+- Set new value which will be applied during driver initialization. This configuration mode requires restart driver by devlink reload command to apply the new value.
+
+.I permanent
+- New value is written to device's non-volatile memory. This configuration mode requires hard reset to apply the new value.
+
+.SS devlink port param show - display devlink port supported configuration parameters attributes
+
+.PP
+.B "DEV/PORT_INDEX"
+- specifies the devlink port to operate on.
+
+.B name
+.I PARAMETER
+Specify parameter name to show.
+If this argument, as well as port index, are omitted - all parameters supported by devlink device ports are listed.
+
 .SH "EXAMPLES"
 .PP
 devlink port show
@@ -261,6 +316,16 @@ devlink port function set pci/0000:01:00.0/1 hw_addr 00:00:00:11:22:33 state act
 Configure hardware address and also active the function. When a function is
 activated together with other configuration in a single command, all the
 configuration is applied first before changing the state to active.
+.RE
+.PP
+devlink dev param show
+.RS 4
+Shows (dumps) all the port parameters across all the devices registered in the devlink.
+.RE
+.PP
+devlink dev param set pci/0000:01:00.0/1 name internal_error_reset value true cmode runtime
+.RS 4
+Sets the parameter internal_error_reset of specified devlink port (#1) to true.
 .RE
 
 .SH SEE ALSO
