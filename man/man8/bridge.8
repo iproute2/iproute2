@@ -397,7 +397,8 @@ bridge FDB.
 
 .TP
 .BR "flood on " or " flood off "
-Controls whether a given port will flood unicast traffic for which there is no FDB entry. By default this flag is on.
+Controls whether unicast traffic for which there is no FDB entry will be
+flooded towards this given port. By default this flag is on.
 
 .TP
 .B hwmode
@@ -413,8 +414,8 @@ switch.
 
 .TP
 .BR "mcast_flood on " or " mcast_flood off "
-Controls whether a given port will flood multicast traffic for which
-there is no MDB entry. By default this flag is on.
+Controls whether multicast traffic for which there is no MDB entry will be
+flooded towards this given port. By default this flag is on.
 
 .TP
 .BR "mcast_to_unicast on " or " mcast_to_unicast off "
