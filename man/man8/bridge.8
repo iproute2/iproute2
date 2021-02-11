@@ -533,12 +533,21 @@ specified.
 .sp
 
 .B self
-- the address is associated with the port drivers fdb. Usually hardware
-  (default).
+- the operation is fulfilled directly by the driver for the specified network
+device. If the network device belongs to a master like a bridge, then the
+bridge is bypassed and not notified of this operation (and if the device does
+notify the bridge, it is driver-specific behavior and not mandated by this
+flag, check the driver for more details). The "bridge fdb add" command can also
+be used on the bridge device itself, and in this case, the added fdb entries
+will be locally terminated (not forwarded). In the latter case, the "self" flag
+is mandatory. The flag is set by default if "master" is not specified.
 .sp
 
 .B master
-- the address is associated with master devices fdb. Usually software.
+- if the specified network device is a port that belongs to a master device
+such as a bridge, the operation is fulfilled by the master device's driver,
+which may in turn notify the port driver too of the address. If the specified
+device is a master itself, such as a bridge, this flag is invalid.
 .sp
 
 .B router
