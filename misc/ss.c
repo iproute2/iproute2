@@ -2111,6 +2111,18 @@ static void vsock_set_inet_prefix(inet_prefix *a, __u32 cid)
 	memcpy(a->data, &cid, sizeof(cid));
 }
 
+static char* find_port(char *addr, bool is_port)
+{
+	char *port = NULL;
+	if (is_port)
+		port = addr;
+	else
+		port = strchr(addr, ':');
+	if (port && *port == ':')
+		*port++ = '\0';
+	return port;
+}
+
 void *parse_hostcond(char *addr, bool is_port)
 {
 	char *port = NULL;
@@ -2152,17 +2164,16 @@ void *parse_hostcond(char *addr, bool is_port)
 	if (fam == AF_PACKET) {
 		a.addr.family = AF_PACKET;
 		a.addr.bitlen = 0;
-		port = strchr(addr, ':');
+		port = find_port(addr, is_port);
 		if (port) {
-			*port = 0;
-			if (port[1] && strcmp(port+1, "*")) {
-				if (get_integer(&a.port, port+1, 0)) {
-					if ((a.port = xll_name_to_index(port+1)) <= 0)
+			if (*port && strcmp(port, "*")) {
+				if (get_integer(&a.port, port, 0)) {
+					if ((a.port = xll_name_to_index(port)) <= 0)
 						return NULL;
 				}
 			}
 		}
-		if (addr[0] && strcmp(addr, "*")) {
+		if (!is_port && addr[0] && strcmp(addr, "*")) {
 			unsigned short tmp;
 
 			a.addr.bitlen = 32;
@@ -2176,19 +2187,18 @@ void *parse_hostcond(char *addr, bool is_port)
 	if (fam == AF_NETLINK) {
 		a.addr.family = AF_NETLINK;
 		a.addr.bitlen = 0;
-		port = strchr(addr, ':');
+		port = find_port(addr, is_port);
 		if (port) {
-			*port = 0;
-			if (port[1] && strcmp(port+1, "*")) {
-				if (get_integer(&a.port, port+1, 0)) {
-					if (strcmp(port+1, "kernel") == 0)
+			if (*port && strcmp(port, "*")) {
+				if (get_integer(&a.port, port, 0)) {
+					if (strcmp(port, "kernel") == 0)
 						a.port = 0;
 					else
 						return NULL;
 				}
 			}
 		}
-		if (addr[0] && strcmp(addr, "*")) {
+		if (!is_port && addr[0] && strcmp(addr, "*")) {
 			a.addr.bitlen = 32;
 			if (nl_proto_a2n(&a.addr.data[0], addr) == -1)
 				return NULL;
@@ -2201,21 +2211,13 @@ void *parse_hostcond(char *addr, bool is_port)
 
 		a.addr.family = AF_VSOCK;
 
-		if (is_port)
-			port = addr;
-		else {
-			port = strchr(addr, ':');
-			if (port) {
-				*port = '\0';
-				port++;
-			}
-		}
+		port = find_port(addr, is_port);
 
 		if (port && strcmp(port, "*") &&
 		    get_u32((__u32 *)&a.port, port, 0))
 			return NULL;
 
-		if (addr[0] && strcmp(addr, "*")) {
+		if (!is_port && addr[0] && strcmp(addr, "*")) {
 			a.addr.bitlen = 32;
 			if (get_u32(&cid, addr, 0))
 				return NULL;
