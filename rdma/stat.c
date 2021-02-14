@@ -502,6 +502,12 @@ static int stat_get_arg(struct rd *rd, const char *arg)
 		return -EINVAL;
 
 	rd_arg_inc(rd);
+
+	if (rd_is_multiarg(rd)) {
+		pr_err("The parameter %s shouldn't include range\n", arg);
+		return -EINVAL;
+	}
+
 	value = strtol(rd_argv(rd), &endp, 10);
 	rd_arg_inc(rd);
 
@@ -523,6 +529,8 @@ static int stat_one_qp_bind(struct rd *rd)
 		return ret;
 
 	lqpn = stat_get_arg(rd, "lqpn");
+	if (lqpn < 0)
+		return lqpn;
 
 	rd_prepare_msg(rd, RDMA_NLDEV_CMD_STAT_SET,
 		       &seq, (NLM_F_REQUEST | NLM_F_ACK));
@@ -537,6 +545,9 @@ static int stat_one_qp_bind(struct rd *rd)
 
 	if (rd_argc(rd)) {
 		cntn = stat_get_arg(rd, "cntn");
+		if (cntn < 0)
+			return cntn;
+
 		mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_STAT_COUNTER_ID,
 				 cntn);
 	}
@@ -607,13 +618,23 @@ static int stat_one_qp_unbind(struct rd *rd)
 	unsigned int portid;
 	uint32_t seq;
 
+	if (rd_no_arg(rd)) {
+		stat_help(rd);
+		return -EINVAL;
+	}
+
 	ret = rd_build_filter(rd, stat_valid_filters);
 	if (ret)
 		return ret;
 
 	cntn = stat_get_arg(rd, "cntn");
+	if (cntn < 0)
+		return cntn;
+
 	if (rd_argc(rd)) {
 		lqpn = stat_get_arg(rd, "lqpn");
+		if (lqpn < 0)
+			return lqpn;
 		return do_stat_qp_unbind_lqpn(rd, cntn, lqpn);
 	}
 
