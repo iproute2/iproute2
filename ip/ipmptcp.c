@@ -17,7 +17,7 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage:	ip mptcp endpoint add ADDRESS [ dev NAME ] [ id ID ]\n"
-		"				      [ FLAG-LIST ]\n"
+		"				      [ port NR ] [ FLAG-LIST ]\n"
 		"	ip mptcp endpoint delete id ID\n"
 		"	ip mptcp endpoint show [ id ID ]\n"
 		"	ip mptcp endpoint flush\n"
@@ -97,6 +97,7 @@ static int mptcp_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 	bool id_set = false;
 	__u32 index = 0;
 	__u32 flags = 0;
+	__u16 port = 0;
 	__u8 id = 0;
 
 	ll_init_map(&rth);
@@ -123,6 +124,10 @@ static int mptcp_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 			if (!index)
 				invarg("device does not exist\n", ifname);
 
+		} else if (matches(*argv, "port") == 0) {
+			NEXT_ARG();
+			if (get_u16(&port, *argv, 0))
+				invarg("expected port", *argv);
 		} else if (get_addr(&address, *argv, AF_UNSPEC) == 0) {
 			addr_set = true;
 		} else {
@@ -145,6 +150,8 @@ static int mptcp_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 		addattr32(n, MPTCP_BUFLEN, MPTCP_PM_ADDR_ATTR_FLAGS, flags);
 	if (index)
 		addattr32(n, MPTCP_BUFLEN, MPTCP_PM_ADDR_ATTR_IF_IDX, index);
+	if (port)
+		addattr16(n, MPTCP_BUFLEN, MPTCP_PM_ADDR_ATTR_PORT, port);
 	if (addr_set) {
 		int type;
 
@@ -181,8 +188,8 @@ static int print_mptcp_addrinfo(struct rtattr *addrinfo)
 	__u8 family = AF_UNSPEC, addr_attr_type;
 	const char *ifname;
 	unsigned int flags;
+	__u16 id, port;
 	int index;
-	__u16 id;
 
 	parse_rtattr_nested(tb, MPTCP_PM_ADDR_ATTR_MAX, addrinfo);
 
@@ -195,6 +202,11 @@ static int print_mptcp_addrinfo(struct rtattr *addrinfo)
 	if (tb[addr_attr_type]) {
 		print_string(PRINT_ANY, "address", "%s ",
 			     format_host_rta(family, tb[addr_attr_type]));
+	}
+	if (tb[MPTCP_PM_ADDR_ATTR_PORT]) {
+		port = rta_getattr_u16(tb[MPTCP_PM_ADDR_ATTR_PORT]);
+		if (port)
+			print_uint(PRINT_ANY, "port", "port %u ", port);
 	}
 	if (tb[MPTCP_PM_ADDR_ATTR_ID]) {
 		id = rta_getattr_u8(tb[MPTCP_PM_ADDR_ATTR_ID]);
