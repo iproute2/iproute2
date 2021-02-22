@@ -253,7 +253,7 @@ int make_path(const char *path, mode_t mode)
 			*delim = '\0';
 
 		rc = mkdir(dir, mode);
-		if (mkdir(dir, mode) != 0 && errno != EEXIST) {
+		if (rc && errno != EEXIST) {
 			fprintf(stderr, "mkdir failed for %s: %s\n",
 				dir, strerror(errno));
 			goto out;
