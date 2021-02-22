@@ -891,13 +891,15 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 			NEXT_ARG();
 			if (table_ok++)
 				duparg2("table", *argv);
-			rtnl_rttable_a2n(&table, *argv);
+			if (rtnl_rttable_a2n(&table, *argv))
+				invarg("invalid table id\n", *argv);
 			ret = rta_addattr32(rta, len, SEG6_LOCAL_TABLE, table);
 		} else if (strcmp(*argv, "vrftable") == 0) {
 			NEXT_ARG();
 			if (vrftable_ok++)
 				duparg2("vrftable", *argv);
-			rtnl_rttable_a2n(&vrftable, *argv);
+			if (rtnl_rttable_a2n(&vrftable, *argv))
+				invarg("invalid vrf table id\n", *argv);
 			ret = rta_addattr32(rta, len, SEG6_LOCAL_VRFTABLE,
 					    vrftable);
 		} else if (strcmp(*argv, "nh4") == 0) {
