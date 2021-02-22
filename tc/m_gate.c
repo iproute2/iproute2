@@ -427,7 +427,7 @@ static int print_gate_list(struct rtattr *list)
 		__u32 index = 0, interval = 0;
 		__u8 gate_state = 0;
 		__s32 ipv = -1, maxoctets = -1;
-		char buf[22];
+		SPRINT_BUF(buf);
 
 		parse_rtattr_nested(tb, TCA_GATE_ENTRY_MAX, item);
 
@@ -490,7 +490,7 @@ static int print_gate(struct action_util *au, FILE *f, struct rtattr *arg)
 	__s64 base_time = 0;
 	__s64 cycle_time = 0;
 	__s64 cycle_time_ext = 0;
-	char buf[22];
+	SPRINT_BUF(buf);
 	int prio = -1;
 
 	if (arg == NULL)
