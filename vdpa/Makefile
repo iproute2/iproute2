@@ -5,21 +5,15 @@ TARGETS :=
 
 ifeq ($(HAVE_MNL),y)
 
-DCBOBJ = dcb.o \
-         dcb_app.o \
-         dcb_buffer.o \
-         dcb_dcbx.o \
-         dcb_ets.o \
-         dcb_maxrate.o \
-         dcb_pfc.o
-TARGETS += dcb
-LDLIBS += -lm
+CFLAGS += -I./include/uapi/
+VDPAOBJ = vdpa.o
+TARGETS += vdpa
 
 endif
 
 all: $(TARGETS) $(LIBS)
 
-dcb: $(DCBOBJ) $(LIBNETLINK)
+vdpa: $(VDPAOBJ)
 	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 install: all
@@ -28,4 +22,4 @@ install: all
 	done
 
 clean:
-	rm -f $(DCBOBJ) $(TARGETS)
+	rm -f $(VDPAOBJ) $(TARGETS)

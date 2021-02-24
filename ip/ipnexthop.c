@@ -38,12 +38,12 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: ip nexthop { list | flush } [ protocol ID ] SELECTOR\n"
 		"       ip nexthop { add | replace } id ID NH [ protocol ID ]\n"
-		"       ip nexthop { get| del } id ID\n"
+		"       ip nexthop { get | del } id ID\n"
 		"SELECTOR := [ id ID ] [ dev DEV ] [ vrf NAME ] [ master DEV ]\n"
 		"            [ groups ] [ fdb ]\n"
 		"NH := { blackhole | [ via ADDRESS ] [ dev DEV ] [ onlink ]\n"
-		"      [ encap ENCAPTYPE ENCAPHDR ] | group GROUP ] }\n"
-		"GROUP := [ id[,weight]>/<id[,weight]>/... ]\n"
+		"        [ encap ENCAPTYPE ENCAPHDR ] | group GROUP [ fdb ] }\n"
+		"GROUP := [ <id[,weight]>/<id[,weight]>/... ]\n"
 		"ENCAPTYPE := [ mpls ]\n"
 		"ENCAPHDR := [ MPLSLABEL ]\n");
 	exit(-1);

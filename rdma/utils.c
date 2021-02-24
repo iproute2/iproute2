@@ -673,16 +673,10 @@ int rd_send_msg(struct rd *rd)
 {
 	int ret;
 
-	rd->nl = mnl_socket_open(NETLINK_RDMA);
+	rd->nl = mnlu_socket_open(NETLINK_RDMA);
 	if (!rd->nl) {
 		pr_err("Failed to open NETLINK_RDMA socket\n");
 		return -ENODEV;
-	}
-
-	ret = mnl_socket_bind(rd->nl, 0, MNL_SOCKET_AUTOPID);
-	if (ret < 0) {
-		pr_err("Failed to bind socket with err %d\n", ret);
-		goto err;
 	}
 
 	ret = mnl_socket_sendto(rd->nl, rd->nlh, rd->nlh->nlmsg_len);
@@ -699,23 +693,13 @@ err:
 
 int rd_recv_msg(struct rd *rd, mnl_cb_t callback, void *data, unsigned int seq)
 {
-	int ret;
-	unsigned int portid;
 	char buf[MNL_SOCKET_BUFFER_SIZE];
+	int ret;
 
-	portid = mnl_socket_get_portid(rd->nl);
-	do {
-		ret = mnl_socket_recvfrom(rd->nl, buf, sizeof(buf));
-		if (ret <= 0)
-			break;
-
-		ret = mnl_cb_run(buf, ret, seq, portid, callback, data);
-	} while (ret > 0);
-
+	ret = mnlu_socket_recv_run(rd->nl, seq, buf, MNL_SOCKET_BUFFER_SIZE,
+				   callback, data);
 	if (ret < 0 && !rd->suppress_errors)
 		perror("error");
-
-	mnl_socket_close(rd->nl);
 	return ret;
 }
 

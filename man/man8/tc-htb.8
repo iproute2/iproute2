@@ -12,7 +12,7 @@ major:
 minor-id
 .B ] [ r2q
 divisor
-.B ]
+.B ] [ offload ]
 
 .B tc class ... dev
 dev
@@ -104,6 +104,9 @@ Divisor used to calculate
 values for classes.  Classes divide
 .B rate
 by this number.  Default value is 10.
+.TP
+offload
+Offload the HTB algorithm to hardware (requires driver and device support).
 
 .SH CLASSES
 Classes have a host of parameters to configure their operation.

@@ -32,7 +32,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ] [ label ] [all-nsid] [dev DEVICE]\n"
 		"LISTofOBJECTS := link | address | route | mroute | prefix |\n"
-		"		 neigh | netconf | rule | nsid\n"
+		"		 neigh | netconf | rule | nsid | nexthop\n"
 		"FILE := file FILENAME\n");
 	exit(-1);
 }
