@@ -1372,8 +1372,10 @@ static int port_flavour_parse(const char *flavour, uint16_t *value)
 	int num;
 
 	num = str_map_lookup_str(port_flavour_map, flavour);
-	if (num < 0)
+	if (num < 0) {
+		invarg("unknown flavour", flavour);
 		return num;
+	}
 	*value = num;
 	return 0;
 }
@@ -1383,8 +1385,10 @@ static int port_fn_state_parse(const char *statestr, uint8_t *state)
 	int num;
 
 	num = str_map_lookup_str(port_fn_state_map, statestr);
-	if (num < 0)
+	if (num < 0) {
+		invarg("unknown state", statestr);
 		return num;
+	}
 	*state = num;
 	return 0;
 }
