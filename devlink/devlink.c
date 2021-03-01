@@ -866,31 +866,6 @@ static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 	return -ENOENT;
 }
 
-static unsigned int strslashcount(char *str)
-{
-	unsigned int count = 0;
-	char *pos = str;
-
-	while ((pos = strchr(pos, '/'))) {
-		count++;
-		pos++;
-	}
-	return count;
-}
-
-static int strslashrsplit(char *str, char **before, char **after)
-{
-	char *slash;
-
-	slash = strrchr(str, '/');
-	if (!slash)
-		return -EINVAL;
-	*slash = '\0';
-	*before = str;
-	*after = slash + 1;
-	return 0;
-}
-
 static int strtouint64_t(const char *str, uint64_t *p_val)
 {
 	char *endptr;
@@ -965,7 +940,7 @@ static int strtobool(const char *str, bool *p_val)
 
 static int __dl_argv_handle(char *str, char **p_bus_name, char **p_dev_name)
 {
-	strslashrsplit(str, p_bus_name, p_dev_name);
+	str_split_by_char(str, p_bus_name, p_dev_name, '/');
 	return 0;
 }
 
@@ -977,7 +952,7 @@ static int dl_argv_handle(struct dl *dl, char **p_bus_name, char **p_dev_name)
 		pr_err("Devlink identification (\"bus_name/dev_name\") expected\n");
 		return -EINVAL;
 	}
-	if (strslashcount(str) != 1) {
+	if (get_str_char_count(str, '/') != 1) {
 		pr_err("Wrong devlink identification string format.\n");
 		pr_err("Expected \"bus_name/dev_name\".\n");
 		return -EINVAL;
@@ -993,7 +968,7 @@ static int __dl_argv_handle_port(char *str,
 	char *portstr;
 	int err;
 
-	err = strslashrsplit(str, &handlestr, &portstr);
+	err = str_split_by_char(str, &handlestr, &portstr, '/');
 	if (err) {
 		pr_err("Port identification \"%s\" is invalid\n", str);
 		return err;
@@ -1004,7 +979,7 @@ static int __dl_argv_handle_port(char *str,
 		       portstr);
 		return err;
 	}
-	err = strslashrsplit(handlestr, p_bus_name, p_dev_name);
+	err = str_split_by_char(handlestr, p_bus_name, p_dev_name, '/');
 	if (err) {
 		pr_err("Port identification \"%s\" is invalid\n", str);
 		return err;
@@ -1037,7 +1012,7 @@ static int dl_argv_handle_port(struct dl *dl, char **p_bus_name,
 		pr_err("Port identification (\"bus_name/dev_name/port_index\" or \"netdev ifname\") expected.\n");
 		return -EINVAL;
 	}
-	slash_count = strslashcount(str);
+	slash_count = get_str_char_count(str, '/');
 	switch (slash_count) {
 	case 0:
 		return __dl_argv_handle_port_ifname(dl, str, p_bus_name,
@@ -1066,7 +1041,7 @@ static int dl_argv_handle_both(struct dl *dl, char **p_bus_name,
 		       "Port identification (\"bus_name/dev_name/port_index\" or \"netdev ifname\")\n");
 		return -EINVAL;
 	}
-	slash_count = strslashcount(str);
+	slash_count = get_str_char_count(str, '/');
 	if (slash_count == 1) {
 		err = __dl_argv_handle(str, p_bus_name, p_dev_name);
 		if (err)
@@ -1098,12 +1073,12 @@ static int __dl_argv_handle_region(char *str, char **p_bus_name,
 	char *handlestr;
 	int err;
 
-	err = strslashrsplit(str, &handlestr, p_region);
+	err = str_split_by_char(str, &handlestr, p_region, '/');
 	if (err) {
 		pr_err("Region identification \"%s\" is invalid\n", str);
 		return err;
 	}
-	err = strslashrsplit(handlestr, p_bus_name, p_dev_name);
+	err = str_split_by_char(handlestr, p_bus_name, p_dev_name, '/');
 	if (err) {
 		pr_err("Region identification \"%s\" is invalid\n", str);
 		return err;
@@ -1122,7 +1097,7 @@ static int dl_argv_handle_region(struct dl *dl, char **p_bus_name,
 		return -EINVAL;
 	}
 
-	slash_count = strslashcount(str);
+	slash_count = get_str_char_count(str, '/');
 	if (slash_count != 2) {
 		pr_err("Wrong region identification string format.\n");
 		pr_err("Expected \"bus_name/dev_name/region\" identification.\n"".\n");
