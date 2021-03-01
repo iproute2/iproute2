@@ -13,6 +13,7 @@ DCBOBJ = dcb.o \
          dcb_maxrate.o \
          dcb_pfc.o
 TARGETS += dcb
+LDLIBS += -lm
 
 endif
 

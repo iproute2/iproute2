@@ -1307,9 +1307,9 @@ For a link of type
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE
-.BI type " bareudp " dstport " PORT " ethertype " ETHERTYPE"
+.BI type " bareudp " dstport " PORT " ethertype " PROTO"
 [
-.BI srcportmin " SRCPORTMIN "
+.BI srcportmin " PORT "
 ] [
 .RB [ no ] multiproto
 ]
@@ -1320,11 +1320,14 @@ the following additional arguments are supported:
 - specifies the destination port for the UDP tunnel.
 
 .sp
-.BI ethertype " ETHERTYPE"
+.BI ethertype " PROTO"
 - specifies the ethertype of the L3 protocol being tunnelled.
+.B ethertype
+can be given as plain Ethernet protocol number or using the protocol name
+("ipv4", "ipv6", "mpls_uc", etc.).
 
 .sp
-.BI srcportmin " SRCPORTMIN"
+.BI srcportmin " PORT"
 - selects the lowest value of the UDP tunnel source port range.
 
 .sp
@@ -1332,11 +1335,11 @@ the following additional arguments are supported:
 - activates support for protocols similar to the one
 .RB "specified by " ethertype .
 When
-.I ETHERTYPE
+.B ethertype
 is "mpls_uc" (that is, unicast MPLS), this allows the tunnel to also handle
 multicast MPLS.
 When
-.I ETHERTYPE
+.B ethertype
 is "ipv4", this allows the tunnel to also handle IPv6. This option is disabled
 by default.
 

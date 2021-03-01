@@ -157,7 +157,8 @@ __u64 get_cgroup2_id(const char *path)
 	memcpy(cg_id.bytes, fhp->f_handle, sizeof(__u64));
 
 out:
-	close(mnt_fd);
+	if (mnt_fd >= 0)
+		close(mnt_fd);
 	free(mnt);
 
 	return cg_id.id;
@@ -179,16 +180,16 @@ char *get_cgroup2_path(__u64 id, bool full)
 	char *path = NULL;
 	char fd_path[64];
 	int link_len;
-	char *mnt;
+	char *mnt = NULL;
 
 	if (!id) {
 		fprintf(stderr, "Invalid cgroup2 ID\n");
-		return NULL;
+		goto out;
 	}
 
 	mnt = find_cgroup2_mount(false);
 	if (!mnt)
-		return NULL;
+		goto out;
 
 	mnt_fd = open(mnt, O_RDONLY);
 	if (mnt_fd < 0) {
@@ -225,8 +226,10 @@ char *get_cgroup2_path(__u64 id, bool full)
 			"Failed to allocate memory for cgroup2 path\n");
 
 out:
-	close(fd);
-	close(mnt_fd);
+	if (fd >= 0)
+		close(fd);
+	if (mnt_fd >= 0)
+		close(mnt_fd);
 	free(mnt);
 
 	return path;
@@ -253,7 +256,7 @@ int make_path(const char *path, mode_t mode)
 			*delim = '\0';
 
 		rc = mkdir(dir, mode);
-		if (mkdir(dir, mode) != 0 && errno != EEXIST) {
+		if (rc && errno != EEXIST) {
 			fprintf(stderr, "mkdir failed for %s: %s\n",
 				dir, strerror(errno));
 			goto out;

@@ -85,6 +85,7 @@ struct rd_cmd {
  * Parser interface
  */
 bool rd_no_arg(struct rd *rd);
+bool rd_is_multiarg(struct rd *rd);
 void rd_arg_inc(struct rd *rd);
 
 char *rd_argv(struct rd *rd);

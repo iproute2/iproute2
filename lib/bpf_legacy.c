@@ -510,20 +510,14 @@ static int bpf_mnt_fs(const char *target)
 
 static int bpf_mnt_check_target(const char *target)
 {
-	struct stat sb = {};
 	int ret;
 
-	ret = stat(target, &sb);
-	if (ret) {
-		ret = mkdir(target, S_IRWXU);
-		if (ret) {
-			fprintf(stderr, "mkdir %s failed: %s\n", target,
-				strerror(errno));
-			return ret;
-		}
-	}
+	ret = mkdir(target, S_IRWXU);
+	if (ret && errno != EEXIST)
+		fprintf(stderr, "mkdir %s failed: %s\n", target,
+			strerror(errno));
 
-	return 0;
+	return ret;
 }
 
 static int bpf_valid_mntpt(const char *mnt, unsigned long magic)

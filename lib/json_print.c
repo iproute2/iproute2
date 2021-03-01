@@ -11,15 +11,11 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <math.h>
 
 #include "utils.h"
 #include "json_print.h"
 
 static json_writer_t *_jw;
-
-#define _IS_JSON_CONTEXT(type) ((type & PRINT_JSON || type & PRINT_ANY) && _jw)
-#define _IS_FP_CONTEXT(type) (!_jw && (type & PRINT_FP || type & PRINT_ANY))
 
 static void __new_json_obj(int json, bool have_array)
 {
@@ -341,33 +337,4 @@ int print_color_rate(bool use_iec, enum output_type type, enum color_attr color,
 	rc = print_color_string(type, color, key, fmt, buf);
 	free(buf);
 	return rc;
-}
-
-char *sprint_size(__u32 sz, char *buf)
-{
-	long kilo = 1024;
-	long mega = kilo * kilo;
-	size_t len = SPRINT_BSIZE - 1;
-	double tmp = sz;
-
-	if (sz >= mega && fabs(mega * rint(tmp / mega) - sz) < 1024)
-		snprintf(buf, len, "%gMb", rint(tmp / mega));
-	else if (sz >= kilo && fabs(kilo * rint(tmp / kilo) - sz) < 16)
-		snprintf(buf, len, "%gKb", rint(tmp / kilo));
-	else
-		snprintf(buf, len, "%ub", sz);
-
-	return buf;
-}
-
-int print_color_size(enum output_type type, enum color_attr color,
-		     const char *key, const char *fmt, __u32 sz)
-{
-	SPRINT_BUF(buf);
-
-	if (_IS_JSON_CONTEXT(type))
-		return print_color_uint(type, color, key, "%u", sz);
-
-	sprint_size(sz, buf);
-	return print_color_string(type, color, key, fmt, buf);
 }

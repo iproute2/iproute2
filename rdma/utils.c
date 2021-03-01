@@ -47,6 +47,13 @@ bool rd_no_arg(struct rd *rd)
 	return rd_argc(rd) == 0;
 }
 
+bool rd_is_multiarg(struct rd *rd)
+{
+	if (!rd_argc(rd))
+		return false;
+	return strpbrk(rd_argv(rd), ",-") != NULL;
+}
+
 /*
  * Possible input:output
  * dev/port    | first port | is_dump_all

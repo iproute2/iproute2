@@ -122,8 +122,14 @@ int netns_foreach(int (*func)(char *nsname, void *arg), void *arg)
 	struct dirent *entry;
 
 	dir = opendir(NETNS_RUN_DIR);
-	if (!dir)
+	if (!dir) {
+		if (errno == ENOENT)
+			return 0;
+
+		fprintf(stderr, "Failed to open directory %s: %s\n",
+			NETNS_RUN_DIR, strerror(errno));
 		return -1;
+	}
 
 	while ((entry = readdir(dir)) != NULL) {
 		if (strcmp(entry->d_name, ".") == 0)

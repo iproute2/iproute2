@@ -2071,7 +2071,18 @@ static int iproute_get(int argc, char **argv)
 			if (addr.bytelen)
 				addattr_l(&req.n, sizeof(req),
 					  RTA_DST, &addr.data, addr.bytelen);
-			req.r.rtm_dst_len = addr.bitlen;
+			if (req.r.rtm_family == AF_INET && addr.bitlen != 32) {
+				fprintf(stderr,
+					"Warning: /%u as prefix is invalid, only /32 (or none) is supported.\n",
+					addr.bitlen);
+				req.r.rtm_dst_len = 32;
+			} else if (req.r.rtm_family == AF_INET6 && addr.bitlen != 128) {
+				fprintf(stderr,
+					"Warning: /%u as prefix is invalid, only /128 (or none) is supported.\n",
+					addr.bitlen);
+				req.r.rtm_dst_len = 128;
+			} else
+				req.r.rtm_dst_len = addr.bitlen;
 			address_found = true;
 		}
 		argc--; argv++;

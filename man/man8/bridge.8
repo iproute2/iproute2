@@ -397,7 +397,8 @@ bridge FDB.
 
 .TP
 .BR "flood on " or " flood off "
-Controls whether a given port will flood unicast traffic for which there is no FDB entry. By default this flag is on.
+Controls whether unicast traffic for which there is no FDB entry will be
+flooded towards this given port. By default this flag is on.
 
 .TP
 .B hwmode
@@ -413,8 +414,8 @@ switch.
 
 .TP
 .BR "mcast_flood on " or " mcast_flood off "
-Controls whether a given port will flood multicast traffic for which
-there is no MDB entry. By default this flag is on.
+Controls whether multicast traffic for which there is no MDB entry will be
+flooded towards this given port. By default this flag is on.
 
 .TP
 .BR "mcast_to_unicast on " or " mcast_to_unicast off "
@@ -514,7 +515,14 @@ the Ethernet MAC address.
 the interface to which this address is associated.
 
 .B local
-- is a local permanent fdb entry
+- is a local permanent fdb entry, which means that the bridge will not forward
+frames with this destination MAC address and VLAN ID, but terminate them
+locally. This flag is default unless "static" or "dynamic" are explicitly
+specified.
+.sp
+
+.B permanent
+- this is a synonym for "local"
 .sp
 
 .B static
@@ -526,11 +534,21 @@ the interface to which this address is associated.
 .sp
 
 .B self
-- the address is associated with the port drivers fdb. Usually hardware.
+- the operation is fulfilled directly by the driver for the specified network
+device. If the network device belongs to a master like a bridge, then the
+bridge is bypassed and not notified of this operation (and if the device does
+notify the bridge, it is driver-specific behavior and not mandated by this
+flag, check the driver for more details). The "bridge fdb add" command can also
+be used on the bridge device itself, and in this case, the added fdb entries
+will be locally terminated (not forwarded). In the latter case, the "self" flag
+is mandatory. The flag is set by default if "master" is not specified.
 .sp
 
 .B master
-- the address is associated with master devices fdb. Usually software (default).
+- if the specified network device is a port that belongs to a master device
+such as a bridge, the operation is fulfilled by the master device's driver,
+which may in turn notify the port driver too of the address. If the specified
+device is a master itself, such as a bridge, this flag is invalid.
 .sp
 
 .B router

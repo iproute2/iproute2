@@ -3404,7 +3404,7 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	struct iovec iov[3];
 	int iovlen = 1;
 
-	if (protocol == IPPROTO_UDP)
+	if (protocol == IPPROTO_UDP || protocol == IPPROTO_MPTCP)
 		return -1;
 
 	if (protocol == IPPROTO_TCP)
@@ -3622,6 +3622,14 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 	rth.dump_fp = dump_fp;
 	if (preferred_family == PF_INET6)
 		family = PF_INET6;
+
+	/* extended protocol will use INET_DIAG_REQ_PROTOCOL,
+	 * not supported by older kernels. On such kernel
+	 * rtnl_dump will bail with rtnl_dump_error().
+	 * Suppress the error to avoid confusing the user
+	 */
+	if (protocol > 255)
+		rth.flags |= RTNL_HANDLE_F_SUPPRESS_NLERR;
 
 again:
 	if ((err = sockdiag_send(family, rth.fd, protocol, f)))

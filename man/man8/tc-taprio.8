@@ -92,7 +92,11 @@ in the schedule;
 clockid
 .br
 Specifies the clock to be used by qdisc's internal timer for measuring
-time and scheduling events.
+time and scheduling events. This argument must be omitted when using the
+full-offload feature (flags 0x2), since in that case, the clockid is
+implicitly /dev/ptpN (where N is given by
+.B ethtool -T eth0 | grep 'PTP Hardware Clock'
+), and therefore not necessarily synchronized with the system's CLOCK_TAI.
 
 .TP
 sched-entry
@@ -115,13 +119,27 @@ before moving to the next entry.
 .TP
 flags
 .br
-Specifies different modes for taprio. Currently, only txtime-assist is
-supported which can be enabled by setting it to 0x1. In this mode, taprio will
-set the transmit timestamp depending on the interval in which the packet needs
-to be transmitted. It will then utililize the
+This is a bit mask which specifies different modes for taprio.
+.RS
+.TP
+.I 0x1
+Enables the txtime-assist feature. In this mode, taprio will set the transmit
+timestamp depending on the interval in which the packet needs to be
+transmitted. It will then utililize the
 .BR etf(8)
 qdisc to sort and transmit the packets at the right time. The second example
 can be used as a reference to configure this mode.
+.TP
+.I 0x2
+Enables the full-offload feature. In this mode, taprio will pass the gate
+control list to the NIC which will execute it cyclically in hardware.
+When using full-offload, there is no need to specify the
+.B clockid
+argument.
+
+The txtime-assist and full-offload features are mutually exclusive, i.e.
+setting flags to 0x3 is invalid.
+.RE
 
 .TP
 txtime-delay
@@ -176,6 +194,29 @@ for more information about configuring the ETF qdisc.
 
 # tc qdisc replace dev $IFACE parent 100:1 etf skip_skb_check \\
               offload delta 200000 clockid CLOCK_TAI
+.EE
+
+The following is a schedule in full offload mode. The
+.B base-time
+is 200 ns and the
+.B cycle-time
+is implicitly calculated as the sum of all
+.B sched-entry
+durations (i.e. 20 us + 20 us + 60 us = 100 us). Although the base-time is in
+the past, the hardware will start executing the schedule at a PTP time equal to
+the smallest integer multiple of 100 us, plus 200 ns, that is larger than the
+NIC's current PTP time.
+
+.EX
+# tc qdisc add dev eth0 parent root taprio \\
+              num_tc 8 \\
+              map 0 1 2 3 4 5 6 7 \\
+              queues 1@0 1@1 1@2 1@3 1@4 1@5 1@6 1@7 \\
+              base-time 200 \\
+              sched-entry S 80 20000 \\
+              sched-entry S a0 20000 \\
+              sched-entry S df 60000 \\
+              flags 0x2
 .EE
 
 .SH AUTHORS

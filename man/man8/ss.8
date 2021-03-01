@@ -440,6 +440,113 @@ states except for
 - opposite to
 .B bucket
 
+.SH EXPRESSION
+
+.B EXPRESSION
+allows filtering based on specific criteria.
+.B EXPRESSION
+consists of a series of predicates combined by boolean operators. The possible operators in increasing
+order of precedence are
+.B or
+(or | or ||),
+.B and
+(or & or &&), and
+.B not
+(or !). If no operator is between consecutive predicates, an implicit
+.B and
+operator is assumed. Subexpressions can be grouped with "(" and ")".
+.P
+The following predicates are supported:
+
+.TP
+.B {dst|src} [=] HOST
+Test if the destination or source matches HOST. See HOST SYNTAX for details.
+.TP
+.B {dport|sport} [OP] [FAMILY:]:PORT
+Compare the destination or source port to PORT. OP can be any of "<", "<=", "=", "!=",
+">=" and ">". Following normal arithmetic rules. FAMILY and PORT are as described in
+HOST SYNTAX below.
+.TP
+.B dev [=|!=] DEVICE
+Match based on the device the connection uses. DEVICE can either be a device name or the
+index of the interface.
+.TP
+.B fwmark [=|!=] MASK
+Matches based on the fwmark value for the connection. This can either be a specific mark value
+or a mark value followed by a "/" and a bitmask of which bits to use in the comparison. For example
+"fwmark = 0x01/0x03" would match if the two least significant bits of the fwmark were 0x01.
+.TP
+.B cgroup [=|!=] PATH
+Match if the connection is part of a cgroup at the given path.
+.TP
+.B autobound
+Match if the port or path of the source address was automatically allocated
+(rather than explicitly specified).
+.P
+Most operators have aliases. If no operator is supplied "=" is assumed.
+Each of the following groups of operators are all equivalent:
+.RS
+.IP \(bu 2
+= == eq
+.IP \(bu
+!= ne neq
+.IP \(bu
+> gt
+.IP \(bu
+< lt
+.IP \(bu
+>= ge geq
+.IP \(bu
+<= le leq
+.IP \(bu
+! not
+.IP \(bu
+| || or
+.IP \(bu
+& && and
+.RE
+.SH HOST SYNTAX
+.P
+The general host syntax is [FAMILY:]ADDRESS[:PORT].
+.P
+FAMILY must be one of the families supported by the -f option. If not given
+it defaults to the family given with the -f option, and if that is also
+missing, will assume either inet or inet6. Note that all host conditions in the
+expression should either all be the same family or be only inet and inet6. If there
+is some other mixture of families, the results will probably be unexpected.
+.P
+The form of ADDRESS and PORT depends on the family used. "*" can be used as
+a wildcard for either the address or port. The details for each family are as
+follows:
+.TP
+.B unix
+ADDRESS is a glob pattern (see
+.BR fnmatch (3))
+that will be matched case-insensitively against the unix socket's address. Both path and abstract
+names are supported. Unix addresses do not support a port, and "*" cannot be used as a wildcard.
+.TP
+.B link
+ADDRESS is the case-insensitive name of an Ethernet protocol to match. PORT
+is either a device name or a device index for the desired link device, as seen
+in the output of ip link.
+.TP
+.B netlink
+ADDRESS is a descriptor of the netlink family. Possible values come from
+/etc/iproute2/nl_protos. PORT is the port id of the socket, which is usually
+the same as the owning process id. The value "kernel" can be used to represent
+the kernel (port id of 0).
+.TP
+.B vsock
+ADDRESS is an integer representing the CID address, and PORT is the port.
+.TP
+.BR inet \ and\  inet6
+ADDRESS is an ip address (either v4 or v6 depending on the family) or a DNS
+hostname that resolves to an ip address of the required version. An ipv6
+address must be enclosed in "[" and "]" to disambiguate the port separator. The
+address may additionally have a prefix length given in CIDR notation (a slash
+followed by the prefix length in bits). PORT is either the numerical
+socket port, or the service name for the port to match.
+
 .SH USAGE EXAMPLES
 .TP
 .B ss -t -a
