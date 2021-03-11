@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 
 #include <libelf.h>
 #include <gelf.h>
