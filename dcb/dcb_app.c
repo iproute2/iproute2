@@ -65,8 +65,7 @@ static void dcb_app_table_fini(struct dcb_app_table *tab)
 
 static int dcb_app_table_push(struct dcb_app_table *tab, struct dcb_app *app)
 {
-	struct dcb_app *apps = reallocarray(tab->apps, tab->n_apps + 1,
-					    sizeof(*tab->apps));
+	struct dcb_app *apps = realloc(tab->apps, (tab->n_apps + 1) * sizeof(*tab->apps));
 
 	if (apps == NULL) {
 		perror("Cannot allocate APP table");

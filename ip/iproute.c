@@ -796,9 +796,10 @@ int print_route(struct nlmsghdr *n, void *arg)
 				 "%s/%u", rt_addr_n2a_rta(family, tb[RTA_DST]),
 				 r->rtm_dst_len);
 		} else {
-			format_host_rta_r(family, tb[RTA_DST],
+			const char *hostname = format_host_rta_r(family, tb[RTA_DST],
 					  b1, sizeof(b1));
-
+			if (hostname)
+				strncpy(b1, hostname, sizeof(b1) - 1);
 		}
 	} else if (r->rtm_dst_len) {
 		snprintf(b1, sizeof(b1), "0/%d ", r->rtm_dst_len);
@@ -818,8 +819,10 @@ int print_route(struct nlmsghdr *n, void *arg)
 				 rt_addr_n2a_rta(family, tb[RTA_SRC]),
 				 r->rtm_src_len);
 		} else {
-			format_host_rta_r(family, tb[RTA_SRC],
+			const char *hostname = format_host_rta_r(family, tb[RTA_SRC],
 					  b1, sizeof(b1));
+			if (hostname)
+				strncpy(b1, hostname, sizeof(b1) - 1);
 		}
 		print_color_string(PRINT_ANY, color,
 				   "from", "from %s ", b1);
