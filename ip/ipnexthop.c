@@ -43,9 +43,12 @@ static void usage(void)
 		"            [ groups ] [ fdb ]\n"
 		"NH := { blackhole | [ via ADDRESS ] [ dev DEV ] [ onlink ]\n"
 		"        [ encap ENCAPTYPE ENCAPHDR ] |\n"
-		"        group GROUP [ fdb ] [ type TYPE ] }\n"
+		"        group GROUP [ fdb ] [ type TYPE [ TYPE_ARGS ] ] }\n"
 		"GROUP := [ <id[,weight]>/<id[,weight]>/... ]\n"
-		"TYPE := { mpath }\n"
+		"TYPE := { mpath | resilient }\n"
+		"TYPE_ARGS := [ RESILIENT_ARGS ]\n"
+		"RESILIENT_ARGS := [ buckets BUCKETS ] [ idle_timer IDLE ]\n"
+		"                  [ unbalanced_timer UNBALANCED ]\n"
 		"ENCAPTYPE := [ mpls ]\n"
 		"ENCAPHDR := [ MPLSLABEL ]\n");
 	exit(-1);
@@ -203,6 +206,66 @@ static void print_nh_group(FILE *fp, const struct rtattr *grps_attr)
 	close_json_array(PRINT_JSON, NULL);
 }
 
+static const char *nh_group_type_name(__u16 type)
+{
+	switch (type) {
+	case NEXTHOP_GRP_TYPE_MPATH:
+		return "mpath";
+	case NEXTHOP_GRP_TYPE_RES:
+		return "resilient";
+	default:
+		return "<unknown type>";
+	}
+}
+
+static void print_nh_group_type(FILE *fp, const struct rtattr *grp_type_attr)
+{
+	__u16 type = rta_getattr_u16(grp_type_attr);
+
+	if (type == NEXTHOP_GRP_TYPE_MPATH)
+		/* Do not print type in order not to break existing output. */
+		return;
+
+	print_string(PRINT_ANY, "type", "type %s ", nh_group_type_name(type));
+}
+
+static void print_nh_res_group(FILE *fp, const struct rtattr *res_grp_attr)
+{
+	struct rtattr *tb[NHA_RES_GROUP_MAX + 1];
+	struct rtattr *rta;
+	struct timeval tv;
+
+	parse_rtattr_nested(tb, NHA_RES_GROUP_MAX, res_grp_attr);
+
+	open_json_object("resilient_args");
+
+	if (tb[NHA_RES_GROUP_BUCKETS])
+		print_uint(PRINT_ANY, "buckets", "buckets %u ",
+			   rta_getattr_u16(tb[NHA_RES_GROUP_BUCKETS]));
+
+	if (tb[NHA_RES_GROUP_IDLE_TIMER]) {
+		rta = tb[NHA_RES_GROUP_IDLE_TIMER];
+		__jiffies_to_tv(&tv, rta_getattr_u32(rta));
+		print_tv(PRINT_ANY, "idle_timer", "idle_timer %g ", &tv);
+	}
+
+	if (tb[NHA_RES_GROUP_UNBALANCED_TIMER]) {
+		rta = tb[NHA_RES_GROUP_UNBALANCED_TIMER];
+		__jiffies_to_tv(&tv, rta_getattr_u32(rta));
+		print_tv(PRINT_ANY, "unbalanced_timer", "unbalanced_timer %g ",
+			 &tv);
+	}
+
+	if (tb[NHA_RES_GROUP_UNBALANCED_TIME]) {
+		rta = tb[NHA_RES_GROUP_UNBALANCED_TIME];
+		__jiffies_to_tv(&tv, rta_getattr_u32(rta));
+		print_tv(PRINT_ANY, "unbalanced_time", "unbalanced_time %g ",
+			 &tv);
+	}
+
+	close_json_object();
+}
+
 int print_nexthop(struct nlmsghdr *n, void *arg)
 {
 	struct nhmsg *nhm = NLMSG_DATA(n);
@@ -229,7 +292,7 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 	if (filter.proto && filter.proto != nhm->nh_protocol)
 		return 0;
 
-	parse_rtattr(tb, NHA_MAX, RTM_NHA(nhm), len);
+	parse_rtattr_flags(tb, NHA_MAX, RTM_NHA(nhm), len, NLA_F_NESTED);
 
 	open_json_object(NULL);
 
@@ -242,6 +305,12 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 
 	if (tb[NHA_GROUP])
 		print_nh_group(fp, tb[NHA_GROUP]);
+
+	if (tb[NHA_GROUP_TYPE])
+		print_nh_group_type(fp, tb[NHA_GROUP_TYPE]);
+
+	if (tb[NHA_RES_GROUP])
+		print_nh_res_group(fp, tb[NHA_RES_GROUP]);
 
 	if (tb[NHA_ENCAP])
 		lwt_print_encap(fp, tb[NHA_ENCAP_TYPE], tb[NHA_ENCAP]);
@@ -333,8 +402,68 @@ static int read_nh_group_type(const char *name)
 {
 	if (strcmp(name, "mpath") == 0)
 		return NEXTHOP_GRP_TYPE_MPATH;
+	else if (strcmp(name, "resilient") == 0)
+		return NEXTHOP_GRP_TYPE_RES;
 
 	return __NEXTHOP_GRP_TYPE_MAX;
+}
+
+static void parse_nh_group_type_res(struct nlmsghdr *n, int maxlen, int *argcp,
+				    char ***argvp)
+{
+	char **argv = *argvp;
+	struct rtattr *nest;
+	int argc = *argcp;
+
+	if (!NEXT_ARG_OK())
+		return;
+
+	nest = addattr_nest(n, maxlen, NHA_RES_GROUP);
+	nest->rta_type |= NLA_F_NESTED;
+
+	NEXT_ARG_FWD();
+	while (argc > 0) {
+		if (strcmp(*argv, "buckets") == 0) {
+			__u16 buckets;
+
+			NEXT_ARG();
+			if (get_u16(&buckets, *argv, 0))
+				invarg("invalid buckets value", *argv);
+
+			addattr16(n, maxlen, NHA_RES_GROUP_BUCKETS, buckets);
+		} else if (strcmp(*argv, "idle_timer") == 0) {
+			__u32 idle_timer;
+
+			NEXT_ARG();
+			if (get_unsigned(&idle_timer, *argv, 0) ||
+			    idle_timer >= ~0UL / 100)
+				invarg("invalid idle timer value", *argv);
+
+			addattr32(n, maxlen, NHA_RES_GROUP_IDLE_TIMER,
+				  idle_timer * 100);
+		} else if (strcmp(*argv, "unbalanced_timer") == 0) {
+			__u32 unbalanced_timer;
+
+			NEXT_ARG();
+			if (get_unsigned(&unbalanced_timer, *argv, 0) ||
+			    unbalanced_timer >= ~0UL / 100)
+				invarg("invalid unbalanced timer value", *argv);
+
+			addattr32(n, maxlen, NHA_RES_GROUP_UNBALANCED_TIMER,
+				  unbalanced_timer * 100);
+		} else {
+			break;
+		}
+		argc--; argv++;
+	}
+
+	/* argv is currently the first unparsed argument, but ipnh_modify()
+	 * will move to the next, so step back.
+	 */
+	*argcp = argc + 1;
+	*argvp = argv - 1;
+
+	addattr_nest_end(n, nest);
 }
 
 static void parse_nh_group_type(struct nlmsghdr *n, int maxlen, int *argcp,
@@ -348,6 +477,15 @@ static void parse_nh_group_type(struct nlmsghdr *n, int maxlen, int *argcp,
 	type = read_nh_group_type(*argv);
 	if (type > NEXTHOP_GRP_TYPE_MAX)
 		invarg("\"type\" value is invalid\n", *argv);
+
+	switch (type) {
+	case NEXTHOP_GRP_TYPE_MPATH:
+		/* No additional arguments */
+		break;
+	case NEXTHOP_GRP_TYPE_RES:
+		parse_nh_group_type_res(n, maxlen, &argc, &argv);
+		break;
+	}
 
 	*argcp = argc;
 	*argvp = argv;
