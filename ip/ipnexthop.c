@@ -327,6 +327,15 @@ static int add_nh_group_attr(struct nlmsghdr *n, int maxlen, char *argv)
 	return addattr_l(n, maxlen, NHA_GROUP, grps, count * sizeof(*grps));
 }
 
+static int ipnh_parse_id(const char *argv)
+{
+	__u32 id;
+
+	if (get_unsigned(&id, argv, 0))
+		invarg("invalid id value", argv);
+	return id;
+}
+
 static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 {
 	struct {
@@ -343,12 +352,9 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	while (argc > 0) {
 		if (!strcmp(*argv, "id")) {
-			__u32 id;
-
 			NEXT_ARG();
-			if (get_unsigned(&id, *argv, 0))
-				invarg("invalid id value", *argv);
-			addattr32(&req.n, sizeof(req), NHA_ID, id);
+			addattr32(&req.n, sizeof(req), NHA_ID,
+				  ipnh_parse_id(*argv));
 		} else if (!strcmp(*argv, "dev")) {
 			int ifindex;
 
@@ -485,12 +491,8 @@ static int ipnh_list_flush(int argc, char **argv, int action)
 			if (!filter.master)
 				invarg("VRF does not exist\n", *argv);
 		} else if (!strcmp(*argv, "id")) {
-			__u32 id;
-
 			NEXT_ARG();
-			if (get_unsigned(&id, *argv, 0))
-				invarg("invalid id value", *argv);
-			return ipnh_get_id(id);
+			return ipnh_get_id(ipnh_parse_id(*argv));
 		} else if (!matches(*argv, "protocol")) {
 			__u32 proto;
 
@@ -536,8 +538,7 @@ static int ipnh_get(int argc, char **argv)
 	while (argc > 0) {
 		if (!strcmp(*argv, "id")) {
 			NEXT_ARG();
-			if (get_unsigned(&id, *argv, 0))
-				invarg("invalid id value", *argv);
+			id = ipnh_parse_id(*argv);
 		} else  {
 			usage();
 		}
