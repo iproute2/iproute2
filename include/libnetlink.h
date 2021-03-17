@@ -97,6 +97,9 @@ int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
 int rtnl_nexthopdump_req(struct rtnl_handle *rth, int family,
 			 req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
+int rtnl_nexthop_bucket_dump_req(struct rtnl_handle *rth, int family,
+				 req_filter_fn_t filter_fn)
+	__attribute__((warn_unused_result));
 
 struct rtnl_ctrl_data {
 	int	nsid;

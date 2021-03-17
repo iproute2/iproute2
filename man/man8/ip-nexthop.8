@@ -29,6 +29,14 @@ ip-nexthop \- nexthop object management
 .I  ID
 
 .ti -8
+.BI "ip nexthop bucket list " BUCKET_SELECTOR
+
+.ti -8
+.BR "ip nexthop bucket get " id
+.I  ID
+.RI "index " INDEX
+
+.ti -8
 .IR SELECTOR " := "
 .RB "[ " id
 .IR ID " ] [ "
@@ -40,6 +48,12 @@ ip-nexthop \- nexthop object management
 .IR DEV " ] [ "
 .BR  groups " ] [ "
 .BR  fdb " ]"
+
+.ti -8
+.IR BUCKET_SELECTOR " := "
+.IR SELECTOR
+.RB " | [ " nhid
+.IR ID " ]"
 
 .ti -8
 .IR NH " := { "
@@ -229,6 +243,37 @@ as show.
 .TP
 ip nexthop get id ID
 get a single nexthop by id
+
+.TP
+ip nexthop bucket show
+show the contents of the nexthop bucket table or the nexthop buckets
+selected by some criteria.
+.RS
+.TP
+.BI id " ID "
+.in +0
+show the nexthop buckets that belong to a nexthop group with a given id
+.TP
+.BI nhid " ID "
+.in +0
+show the nexthop buckets that hold a nexthop with a given id
+.TP
+.BI dev " DEV "
+.in +0
+show the nexthop buckets using the given device
+.TP
+.BI vrf " NAME "
+.in +0
+show the nexthop buckets using devices associated with the vrf name
+.TP
+.BI master " DEV "
+.in +0
+show the nexthop buckets using devices enslaved to given master device
+.RE
+
+.TP
+ip nexthop bucket get id ID index INDEX
+get a single nexthop bucket by nexthop group id and bucket index
 
 .SH EXAMPLES
 .PP
