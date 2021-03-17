@@ -54,7 +54,9 @@ ip-nexthop \- nexthop object management
 .BR fdb " ] | "
 .B  group
 .IR GROUP " [ "
-.BR fdb " ] } "
+.BR fdb " ] [ "
+.B type
+.IR TYPE " ] } "
 
 .ti -8
 .IR ENCAP " := [ "
@@ -70,6 +72,10 @@ ip-nexthop \- nexthop object management
 .ti -8
 .IR GROUP " := "
 .BR id "[," weight "[/...]"
+
+.ti -8
+.IR TYPE " := { "
+.BR mpath " }"
 
 .SH DESCRIPTION
 .B ip nexthop
@@ -122,9 +128,18 @@ is a set of encapsulation attributes specific to the
 .in -2
 
 .TP
-.BI group " GROUP"
+.BI group " GROUP [ " type " TYPE ]"
 create a nexthop group. Group specification is id with an optional
 weight (id,weight) and a '/' as a separator between entries.
+.sp
+.I TYPE
+is a string specifying the nexthop group type. Namely:
+
+.in +8
+.BI mpath
+- Multipath nexthop group backed by the hash-threshold algorithm. The
+default when the type is unspecified.
+
 .TP
 .B blackhole
 create a blackhole nexthop

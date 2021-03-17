@@ -42,8 +42,10 @@ static void usage(void)
 		"SELECTOR := [ id ID ] [ dev DEV ] [ vrf NAME ] [ master DEV ]\n"
 		"            [ groups ] [ fdb ]\n"
 		"NH := { blackhole | [ via ADDRESS ] [ dev DEV ] [ onlink ]\n"
-		"        [ encap ENCAPTYPE ENCAPHDR ] | group GROUP [ fdb ] }\n"
+		"        [ encap ENCAPTYPE ENCAPHDR ] |\n"
+		"        group GROUP [ fdb ] [ type TYPE ] }\n"
 		"GROUP := [ <id[,weight]>/<id[,weight]>/... ]\n"
+		"TYPE := { mpath }\n"
 		"ENCAPTYPE := [ mpls ]\n"
 		"ENCAPHDR := [ MPLSLABEL ]\n");
 	exit(-1);
@@ -327,6 +329,32 @@ static int add_nh_group_attr(struct nlmsghdr *n, int maxlen, char *argv)
 	return addattr_l(n, maxlen, NHA_GROUP, grps, count * sizeof(*grps));
 }
 
+static int read_nh_group_type(const char *name)
+{
+	if (strcmp(name, "mpath") == 0)
+		return NEXTHOP_GRP_TYPE_MPATH;
+
+	return __NEXTHOP_GRP_TYPE_MAX;
+}
+
+static void parse_nh_group_type(struct nlmsghdr *n, int maxlen, int *argcp,
+				char ***argvp)
+{
+	char **argv = *argvp;
+	int argc = *argcp;
+	__u16 type;
+
+	NEXT_ARG();
+	type = read_nh_group_type(*argv);
+	if (type > NEXTHOP_GRP_TYPE_MAX)
+		invarg("\"type\" value is invalid\n", *argv);
+
+	*argcp = argc;
+	*argvp = argv;
+
+	addattr16(n, maxlen, NHA_GROUP_TYPE, type);
+}
+
 static int ipnh_parse_id(const char *argv)
 {
 	__u32 id;
@@ -409,6 +437,8 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 			if (add_nh_group_attr(&req.n, sizeof(req), *argv))
 				invarg("\"group\" value is invalid\n", *argv);
+		} else if (!strcmp(*argv, "type")) {
+			parse_nh_group_type(&req.n, sizeof(req), &argc, &argv);
 		} else if (matches(*argv, "protocol") == 0) {
 			__u32 prot;
 
