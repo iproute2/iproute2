@@ -34,7 +34,8 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip tunnel { add | change | del | show | prl | 6rd } [ NAME ]\n"
-		"	 [ mode { ipip | gre | sit | isatap | vti } ] [ remote ADDR ] [ local ADDR ]\n"
+		"	 [ mode { gre | ipip | isatap | sit | vti } ]\n"
+		"	 [ remote ADDR ] [ local ADDR ]\n"
 		"	 [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n"
 		"	 [ prl-default ADDR ] [ prl-nodefault ADDR ] [ prl-delete ADDR ]\n"
 		"	 [ 6rd-prefix ADDR ] [ 6rd-relay_prefix ADDR ] [ 6rd-reset ]\n"

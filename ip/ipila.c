@@ -31,7 +31,8 @@ static void usage(void)
 		"Usage: ip ila add loc_match LOCATOR_MATCH loc LOCATOR [ dev DEV ] OPTIONS\n"
 		"       ip ila del loc_match LOCATOR_MATCH [ loc LOCATOR ] [ dev DEV ]\n"
 		"       ip ila list\n"
-		"OPTIONS := [ csum-mode { adj-transport | neutral-map | neutral-map-auto | no-action } ]\n"
+		"OPTIONS := [ csum-mode { adj-transport | neutral-map |\n"
+		"                         neutral-map-auto | no-action } ]\n"
 		"           [ ident-type { luid | use-format } ]\n");
 
 	exit(-1);

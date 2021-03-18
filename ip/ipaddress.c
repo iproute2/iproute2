@@ -73,12 +73,8 @@ static void usage(void)
 		"CONFFLAG-LIST := [ CONFFLAG-LIST ] CONFFLAG\n"
 		"CONFFLAG  := [ home | nodad | mngtmpaddr | noprefixroute | autojoin ]\n"
 		"LIFETIME := [ valid_lft LFT ] [ preferred_lft LFT ]\n"
-		"LFT := forever | SECONDS\n"
-		"TYPE := { vlan | veth | vcan | vxcan | dummy | ifb | macvlan | macvtap |\n"
-		"          bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan | lowpan |\n"
-		"          gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan | vti |\n"
-		"          nlmon | can | bond_slave | ipvlan | geneve | bridge_slave |\n"
-		"          hsr | macsec | netdevsim }\n");
+		"LFT := forever | SECONDS\n");
+	iplink_types_usage();
 
 	exit(-1);
 }

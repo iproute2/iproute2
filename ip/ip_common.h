@@ -39,6 +39,7 @@ int print_neigh(struct nlmsghdr *n, void *arg);
 int ipaddr_list_link(int argc, char **argv);
 void ipaddr_get_vf_rate(int, int *, int *, const char *);
 void iplink_usage(void) __attribute__((noreturn));
+void iplink_types_usage(void);
 
 void iproute_reset_filter(int ifindex);
 void ipmroute_reset_filter(int ifindex);

@@ -46,6 +46,19 @@
 static void usage(void) __attribute__((noreturn));
 static int iplink_have_newlink(void);
 
+void iplink_types_usage(void)
+{
+	/* Remember to add new entry here if new type is added. */
+	fprintf(stderr,
+		"TYPE := { bareudp | bond | bond_slave | bridge | bridge_slave |\n"
+		"          dummy | erspan | geneve | gre | gretap | ifb |\n"
+		"          ip6erspan | ip6gre | ip6gretap | ip6tnl |\n"
+		"          ipip | ipoib | ipvlan | ipvtap |\n"
+		"          macsec | macvlan | macvtap |\n"
+		"          netdevsim | nlmon | rmnet | sit | team | team_slave |\n"
+		"          vcan | veth | vlan | vrf | vti | vxcan | vxlan | xfrm }\n");
+}
+
 void iplink_usage(void)
 {
 	if (iplink_have_newlink()) {
@@ -117,13 +130,8 @@ void iplink_usage(void)
 		fprintf(stderr,
 			"\n"
 			"	ip link help [ TYPE ]\n"
-			"\n"
-			"TYPE := { vlan | veth | vcan | vxcan | dummy | ifb | macvlan | macvtap |\n"
-			"	   bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |\n"
-			"	   gre | gretap | erspan | ip6gre | ip6gretap | ip6erspan |\n"
-			"	   vti | nlmon | team_slave | bond_slave | bridge_slave |\n"
-			"	   ipvlan | ipvtap | geneve | bareudp | vrf | macsec | netdevsim | rmnet |\n"
-			"	   xfrm }\n");
+			"\n");
+		iplink_types_usage();
 	}
 	exit(-1);
 }
