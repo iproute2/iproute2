@@ -81,6 +81,7 @@ _PRINT_FUNC(0xhex, unsigned long long)
 _PRINT_FUNC(luint, unsigned long)
 _PRINT_FUNC(lluint, unsigned long long)
 _PRINT_FUNC(float, double)
+_PRINT_FUNC(tv, const struct timeval *)
 #undef _PRINT_FUNC
 
 #define _PRINT_NAME_VALUE_FUNC(type_name, type, format_char)		  \
