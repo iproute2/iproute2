@@ -28,17 +28,12 @@ The makefile will automatically build a config.mk file which
 contains definitions of libraries that may or may not be available
 on the system such as: ATM, ELF, MNL, and SELINUX.
 
-3. To make documentation, cd to doc/ directory , then
-   look at start of Makefile and set correct values for
-   PAGESIZE=a4		, ie: a4 , letter ...	(string)
-   PAGESPERPAGE=2	, ie: 1 , 2 ...		(numeric)
-   and make there. It assumes, that latex, dvips and psnup
-   are in your path.
+3. include/uapi
 
-4. This package includes matching sanitized kernel headers because
-   the build environment may not have up to date versions. See Makefile
-   if you have special requirements and need to point at different
-   kernel include files.
+This package includes matching sanitized kernel headers because
+the build environment may not have up to date versions. See Makefile
+if you have special requirements and need to point at different
+kernel include files.
 
 Stephen Hemminger
 stephen@networkplumber.org

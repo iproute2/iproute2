@@ -50,15 +50,15 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip neigh { add | del | change | replace }\n"
-		"		{ ADDR [ lladdr LLADDR ] [ nud STATE ] | proxy ADDR } [ dev DEV ]\n"
-		"		[ router ] [ extern_learn ] [ protocol PROTO ]\n"
+		"		{ ADDR [ lladdr LLADDR ] [ nud STATE ] proxy ADDR }\n"
+		"		[ dev DEV ] [ router ] [ extern_learn ] [ protocol PROTO ]\n"
 		"\n"
 		"	ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n"
 		"				  [ vrf NAME ]\n"
 		"	ip neigh get { ADDR | proxy ADDR } dev DEV\n"
 		"\n"
-		"STATE := { permanent | noarp | stale | reachable | none |\n"
-		"           incomplete | delay | probe | failed }\n");
+		"STATE := { delay | failed | incomplete | noarp | none |\n"
+		"           permanent | probe | reachable | stale }\n");
 	exit(-1);
 }
 

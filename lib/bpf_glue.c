@@ -4,6 +4,8 @@
  * Authors:	Hangbin Liu <haliu@redhat.com>
  *
  */
+#include <limits.h>
+
 #include "bpf_util.h"
 #ifdef HAVE_LIBBPF
 #include <bpf/bpf.h>

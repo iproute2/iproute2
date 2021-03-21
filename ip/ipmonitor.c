@@ -30,9 +30,10 @@ int listen_all_nsid;
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: ip monitor [ all | LISTofOBJECTS ] [ FILE ] [ label ] [all-nsid] [dev DEVICE]\n"
-		"LISTofOBJECTS := link | address | route | mroute | prefix |\n"
-		"		 neigh | netconf | rule | nsid | nexthop\n"
+		"Usage: ip monitor [ all | OBJECTS ] [ FILE ] [ label ] [ all-nsid ]\n"
+		"                  [ dev DEVICE ]\n"
+		"OBJECTS :=  address | link | mroute | neigh | netconf |\n"
+		"            nexthop | nsid | prefix | route | rule\n"
 		"FILE := file FILENAME\n");
 	exit(-1);
 }
