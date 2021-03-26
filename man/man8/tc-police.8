@@ -5,9 +5,11 @@ police - policing action
 .SH SYNOPSIS
 .in +8
 .ti -8
-.BR tc " ... " "action police"
+.BR tc " ... " "action police ["
 .BI rate " RATE " burst
-.IR BYTES [\fB/ BYTES "] ["
+.IR BYTES [\fB/ BYTES "] ] ["
+.BI pkts_rate " RATE " pkts_burst
+.IR PACKETS "] ["
 .B mtu
 .IR BYTES [\fB/ BYTES "] ] ["
 .BI peakrate " RATE"
@@ -34,19 +36,29 @@ police - policing action
 .SH DESCRIPTION
 The
 .B police
-action allows to limit bandwidth of traffic matched by the filter it is
-attached to. Basically there are two different algorithms available to measure
-the packet rate: The first one uses an internal dual token bucket and is
-configured using the
+action allows limiting of the byte or packet rate of traffic matched by the
+filter it is attached to.
+.P
+There are two different algorithms available to measure the byte rate: The
+first one uses an internal dual token bucket and is configured using the
 .BR rate ", " burst ", " mtu ", " peakrate ", " overhead " and " linklayer
 parameters. The second one uses an in-kernel sampling mechanism. It can be
 fine-tuned using the
 .B estimator
 filter parameter.
+.P
+There is one algorithm available to measure packet rate and it is similar to
+the first algorithm described for byte rate. It is configured using the
+.BR pkt_rate " and " pkt_burst
+parameters.
+.P
+At least one of the
+.BR rate " and " pkt_rate "
+parameters must be configured.
 .SH OPTIONS
 .TP
 .BI rate " RATE"
-The maximum traffic rate of packets passing this action. Those exceeding it will
+The maximum byte rate of packets passing this action. Those exceeding it will
 be treated as defined by the
 .B conform-exceed
 option.
@@ -54,6 +66,15 @@ option.
 .BI burst " BYTES\fR[\fB/\fIBYTES\fR]"
 Set the maximum allowed burst in bytes, optionally followed by a slash ('/')
 sign and cell size which must be a power of 2.
+.TP
+.BI pkt_rate " RATE"
+The maximum packet rate or packets passing this action. Those exceeding it will
+be treated as defined by the
+.B conform-exceed
+option.
+.TP
+.BI pkt_burst " PACKETS"
+Set the maximum allowed burst in packets.
 .TP
 .BI mtu " BYTES\fR[\fB/\fIBYTES\fR]"
 This is the maximum packet size handled by the policer (larger ones will be
