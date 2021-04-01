@@ -13,8 +13,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include <libmnl/libmnl.h>
-
 #include "cmdl.h"
 
 static const struct cmd *find_cmd(const struct cmd *cmds, char *str)

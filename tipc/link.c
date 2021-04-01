@@ -17,7 +17,6 @@
 #include <linux/tipc_netlink.h>
 #include <linux/tipc.h>
 #include <linux/genetlink.h>
-#include <libmnl/libmnl.h>
 
 #include "cmdl.h"
 #include "msg.h"
@@ -60,7 +59,6 @@ static int link_list_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_link_list(struct nlmsghdr *nlh, const struct cmd *cmd,
 			 struct cmdl *cmdl, void *data)
 {
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	int err = 0;
 
 	if (help_flag) {
@@ -68,7 +66,7 @@ static int cmd_link_list(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
-	nlh = msg_init(buf, TIPC_NL_LINK_GET);
+	nlh = msg_init(TIPC_NL_LINK_GET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -126,7 +124,6 @@ static int cmd_link_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 			     struct cmdl *cmdl, void *data)
 {
 	int prop;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *attrs;
 	struct opt *opt;
 	struct opt opts[] = {
@@ -151,7 +148,7 @@ static int cmd_link_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	if (parse_opts(opts, cmdl) < 0)
 		return -EINVAL;
 
-	nlh = msg_init(buf, TIPC_NL_LINK_GET);
+	nlh = msg_init(TIPC_NL_LINK_GET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -241,7 +238,6 @@ static int cmd_link_get_bcast(struct nlmsghdr *nlh, const struct cmd *cmd,
 			     struct cmdl *cmdl, void *data)
 {
 	int prop = TIPC_NLA_PROP_BROADCAST;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *attrs;
 
 	if (help_flag) {
@@ -249,7 +245,7 @@ static int cmd_link_get_bcast(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
-	nlh = msg_init(buf, TIPC_NL_LINK_GET);
+	nlh = msg_init(TIPC_NL_LINK_GET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -284,7 +280,6 @@ static int cmd_link_stat_reset(struct nlmsghdr *nlh, const struct cmd *cmd,
 			       struct cmdl *cmdl, void *data)
 {
 	char *link;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct opt *opt;
 	struct nlattr *nest;
 	struct opt opts[] = {
@@ -302,7 +297,7 @@ static int cmd_link_stat_reset(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
-	nlh = msg_init(buf, TIPC_NL_LINK_RESET_STATS);
+	nlh = msg_init(TIPC_NL_LINK_RESET_STATS);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -550,7 +545,6 @@ static int cmd_link_stat_show(struct nlmsghdr *nlh, const struct cmd *cmd,
 			      struct cmdl *cmdl, void *data)
 {
 	char *link = NULL;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct opt *opt;
 	struct opt opts[] = {
 		{ "link",		OPT_KEYVAL,	NULL },
@@ -564,7 +558,7 @@ static int cmd_link_stat_show(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
-	nlh = msg_init(buf, TIPC_NL_LINK_GET);
+	nlh = msg_init(TIPC_NL_LINK_GET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -626,7 +620,6 @@ static int cmd_link_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 {
 	int val;
 	int prop;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *props;
 	struct nlattr *attrs;
 	struct opt *opt;
@@ -658,7 +651,7 @@ static int cmd_link_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	if (parse_opts(opts, cmdl) < 0)
 		return -EINVAL;
 
-	nlh = msg_init(buf, TIPC_NL_LINK_SET);
+	nlh = msg_init(TIPC_NL_LINK_SET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -704,7 +697,6 @@ static void cmd_link_set_bcast_help(struct cmdl *cmdl)
 static int cmd_link_set_bcast(struct nlmsghdr *nlh, const struct cmd *cmd,
 			     struct cmdl *cmdl, void *data)
 {
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *props;
 	struct nlattr *attrs;
 	struct opt *opt;
@@ -734,7 +726,7 @@ static int cmd_link_set_bcast(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
-	nlh = msg_init(buf, TIPC_NL_LINK_SET);
+	nlh = msg_init(TIPC_NL_LINK_SET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -788,7 +780,6 @@ static int cmd_link_mon_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 				 struct cmdl *cmdl, void *data)
 {
 	int size;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *attrs;
 
 	if (cmdl->argc != cmdl->optind + 1) {
@@ -797,7 +788,7 @@ static int cmd_link_mon_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	}
 	size = atoi(shift_cmdl(cmdl));
 
-	nlh = msg_init(buf, TIPC_NL_MON_SET);
+	nlh = msg_init(TIPC_NL_MON_SET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -841,7 +832,6 @@ static int link_mon_summary_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_link_mon_summary(struct nlmsghdr *nlh, const struct cmd *cmd,
 				struct cmdl *cmdl, void *data)
 {
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	int err = 0;
 
 	if (help_flag) {
@@ -849,7 +839,7 @@ static int cmd_link_mon_summary(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
-	nlh = msg_init(buf, TIPC_NL_MON_GET);
+	nlh = msg_init(TIPC_NL_MON_GET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -1004,11 +994,10 @@ exit:
 static int link_mon_peer_list(uint32_t mon_ref)
 {
 	struct nlmsghdr *nlh;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *nest;
 	int err = 0;
 
-	nlh = msg_init(buf, TIPC_NL_MON_PEER_GET);
+	nlh = msg_init(TIPC_NL_MON_PEER_GET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -1080,7 +1069,6 @@ static void cmd_link_mon_list_udp_help(struct cmdl *cmdl, char *media)
 static int cmd_link_mon_list(struct nlmsghdr *nlh, const struct cmd *cmd,
 			     struct cmdl *cmdl, void *data)
 {
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	char bname[TIPC_MAX_BEARER_NAME] = {0};
 	struct opt opts[] = {
 		{ "media",	OPT_KEYVAL,	NULL },
@@ -1112,7 +1100,7 @@ static int cmd_link_mon_list(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
-	nlh = msg_init(buf, TIPC_NL_MON_GET);
+	nlh = msg_init(TIPC_NL_MON_GET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
@@ -1176,9 +1164,8 @@ static int link_mon_get_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_link_mon_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 				 struct cmdl *cmdl, void *data)
 {
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 
-	nlh = msg_init(buf, TIPC_NL_MON_GET);
+	nlh = msg_init(TIPC_NL_MON_GET);
 	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;

@@ -13,7 +13,11 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <linux/tipc_netlink.h>
+#include <libmnl/libmnl.h>
+#include <errno.h>
 
+#include "mnl_utils.h"
 #include "bearer.h"
 #include "link.h"
 #include "nametable.h"
@@ -26,6 +30,7 @@
 
 int help_flag;
 int json;
+struct mnlu_gen_socket tipc_nlg;
 
 static void about(struct cmdl *cmdl)
 {
@@ -110,8 +115,20 @@ int main(int argc, char *argv[])
 	cmdl.argc = argc;
 	cmdl.argv = argv;
 
-	if ((res = run_cmd(NULL, &cmd, cmds, &cmdl, NULL)) != 0)
-		return 1;
+	res = mnlu_gen_socket_open(&tipc_nlg, TIPC_GENL_V2_NAME,
+				   TIPC_GENL_V2_VERSION);
+	if (res) {
+		fprintf(stderr,
+			"Unable to get TIPC nl family id (module loaded?)\n");
+		return -1;
+	}
 
+	res = run_cmd(NULL, &cmd, cmds, &cmdl, &tipc_nlg);
+	if (res != 0) {
+		mnlu_gen_socket_close(&tipc_nlg);
+		return -1;
+	}
+
+	mnlu_gen_socket_close(&tipc_nlg);
 	return 0;
 }

@@ -15,7 +15,6 @@
 #include <linux/tipc_netlink.h>
 #include <linux/tipc.h>
 #include <linux/genetlink.h>
-#include <libmnl/libmnl.h>
 
 #include "cmdl.h"
 #include "msg.h"
@@ -82,7 +81,6 @@ static int cmd_nametable_show(struct nlmsghdr *nlh, const struct cmd *cmd,
 			      struct cmdl *cmdl, void *data)
 {
 	int iteration = 0;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	int rc = 0;
 
 	if (help_flag) {
@@ -90,7 +88,8 @@ static int cmd_nametable_show(struct nlmsghdr *nlh, const struct cmd *cmd,
 		return -EINVAL;
 	}
 
-	if (!(nlh = msg_init(buf, TIPC_NL_NAME_TABLE_GET))) {
+	nlh = msg_init(TIPC_NL_NAME_TABLE_GET);
+	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
 	}
