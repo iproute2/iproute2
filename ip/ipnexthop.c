@@ -740,6 +740,24 @@ static int ipnh_get_id(__u32 id)
 	return 0;
 }
 
+static int ipnh_list_flush_id(__u32 id, int action)
+{
+	int err;
+
+	if (action == IPNH_LIST)
+		return ipnh_get_id(id);
+
+	if (rtnl_open(&rth_del, 0) < 0) {
+		fprintf(stderr, "Cannot open rtnetlink\n");
+		return EXIT_FAILURE;
+	}
+
+	err = delete_nexthop(id);
+	rtnl_close(&rth_del);
+
+	return err;
+}
+
 static int ipnh_list_flush(int argc, char **argv, int action)
 {
 	unsigned int all = (argc == 0);
@@ -766,7 +784,7 @@ static int ipnh_list_flush(int argc, char **argv, int action)
 				invarg("VRF does not exist\n", *argv);
 		} else if (!strcmp(*argv, "id")) {
 			NEXT_ARG();
-			return ipnh_get_id(ipnh_parse_id(*argv));
+			return ipnh_list_flush_id(ipnh_parse_id(*argv), action);
 		} else if (!matches(*argv, "protocol")) {
 			__u32 proto;
 
