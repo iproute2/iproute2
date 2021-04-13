@@ -965,7 +965,13 @@ static int strtobool(const char *str, bool *p_val)
 
 static int __dl_argv_handle(char *str, char **p_bus_name, char **p_dev_name)
 {
-	strslashrsplit(str, p_bus_name, p_dev_name);
+	int err;
+
+	err = strslashrsplit(str, p_bus_name, p_dev_name);
+	if (err) {
+		pr_err("Devlink identification (\"bus_name/dev_name\") \"%s\" is invalid\n", str);
+		return err;
+	}
 	return 0;
 }
 
