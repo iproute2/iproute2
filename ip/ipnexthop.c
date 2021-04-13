@@ -277,8 +277,9 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 
 static int add_nh_group_attr(struct nlmsghdr *n, int maxlen, char *argv)
 {
-	struct nexthop_grp *grps;
+	struct nexthop_grp *grps = NULL;
 	int count = 0, i;
+	int err = -1;
 	char *sep, *wsep;
 
 	if (*argv != '\0')
@@ -292,11 +293,11 @@ static int add_nh_group_attr(struct nlmsghdr *n, int maxlen, char *argv)
 	}
 
 	if (count == 0)
-		return -1;
+		goto out;
 
 	grps = calloc(count, sizeof(*grps));
 	if (!grps)
-		return -1;
+		goto out;
 
 	for (i = 0; i < count; ++i) {
 		sep = strchr(argv, '/');
@@ -308,7 +309,7 @@ static int add_nh_group_attr(struct nlmsghdr *n, int maxlen, char *argv)
 			*wsep = '\0';
 
 		if (get_unsigned(&grps[i].id, argv, 0))
-			return -1;
+			goto out;
 		if (wsep) {
 			unsigned int w;
 
@@ -324,7 +325,10 @@ static int add_nh_group_attr(struct nlmsghdr *n, int maxlen, char *argv)
 		argv = sep + 1;
 	}
 
-	return addattr_l(n, maxlen, NHA_GROUP, grps, count * sizeof(*grps));
+	err = addattr_l(n, maxlen, NHA_GROUP, grps, count * sizeof(*grps));
+out:
+	free(grps);
+	return err;
 }
 
 static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
