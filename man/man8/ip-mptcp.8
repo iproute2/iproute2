@@ -67,6 +67,9 @@ ip-mptcp \- MPTCP path manager configuration
 .ti -8
 .BR "ip mptcp limits show"
 
+.ti -8
+.BR "ip mptcp monitor"
+
 .SH DESCRIPTION
 
 MPTCP is a transport protocol built on top of TCP that allows TCP
@@ -144,6 +147,11 @@ connection. The MPTCP path manager will try to create a new subflow for
 each accepted ADD_ADDR option, respecting the
 .IR SUBFLOW_NR
 limit.
+
+.sp
+.PP
+.B monitor
+displays creation and deletion of MPTCP connections as well as addition or removal of remote addresses and subflows.
 
 .SH AUTHOR
 Original Manpage by Paolo Abeni <pabeni@redhat.com>

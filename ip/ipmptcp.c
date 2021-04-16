@@ -23,6 +23,7 @@ static void usage(void)
 		"	ip mptcp endpoint flush\n"
 		"	ip mptcp limits set [ subflows NR ] [ add_addr_accepted NR ]\n"
 		"	ip mptcp limits show\n"
+		"	ip mptcp monitor\n"
 		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
 		"FLAG  := [ signal | subflow | backup ]\n");
 
@@ -397,6 +398,110 @@ static int mptcp_limit_get_set(int argc, char **argv, int cmd)
 	return 0;
 }
 
+static const char * const event_to_str[] = {
+	[MPTCP_EVENT_CREATED] = "CREATED",
+	[MPTCP_EVENT_ESTABLISHED] = "ESTABLISHED",
+	[MPTCP_EVENT_CLOSED] = "CLOSED",
+	[MPTCP_EVENT_ANNOUNCED] = "ANNOUNCED",
+	[MPTCP_EVENT_REMOVED] = "REMOVED",
+	[MPTCP_EVENT_SUB_ESTABLISHED] = "SF_ESTABLISHED",
+	[MPTCP_EVENT_SUB_CLOSED] = "SF_CLOSED",
+	[MPTCP_EVENT_SUB_PRIORITY] = "SF_PRIO",
+};
+
+static void print_addr(const char *key, int af, struct rtattr *value)
+{
+	void *data = RTA_DATA(value);
+	char str[INET6_ADDRSTRLEN];
+
+	if (inet_ntop(af, data, str, sizeof(str)))
+		printf(" %s=%s", key, str);
+}
+
+static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
+			     struct nlmsghdr *n, void *arg)
+{
+	const struct genlmsghdr *ghdr = NLMSG_DATA(n);
+	struct rtattr *tb[MPTCP_ATTR_MAX + 1];
+	int len = n->nlmsg_len;
+
+	len -= NLMSG_LENGTH(GENL_HDRLEN);
+	if (len < 0)
+		return -1;
+
+	if (n->nlmsg_type != genl_family)
+		return 0;
+
+	if (timestamp)
+		print_timestamp(stdout);
+
+	if (ghdr->cmd >= ARRAY_SIZE(event_to_str)) {
+		printf("[UNKNOWN %u]\n", ghdr->cmd);
+		goto out;
+	}
+
+	if (event_to_str[ghdr->cmd] == NULL) {
+		printf("[UNKNOWN %u]\n", ghdr->cmd);
+		goto out;
+	}
+
+	printf("[%14s]", event_to_str[ghdr->cmd]);
+
+	parse_rtattr(tb, MPTCP_ATTR_MAX, (void *) ghdr + GENL_HDRLEN, len);
+
+	printf(" token=%08x", rta_getattr_u32(tb[MPTCP_ATTR_TOKEN]));
+
+	if (tb[MPTCP_ATTR_REM_ID])
+		printf(" remid=%u", rta_getattr_u8(tb[MPTCP_ATTR_REM_ID]));
+	if (tb[MPTCP_ATTR_LOC_ID])
+		printf(" locid=%u", rta_getattr_u8(tb[MPTCP_ATTR_LOC_ID]));
+
+	if (tb[MPTCP_ATTR_SADDR4])
+		print_addr("saddr4", AF_INET, tb[MPTCP_ATTR_SADDR4]);
+	if (tb[MPTCP_ATTR_DADDR4])
+		print_addr("daddr4", AF_INET, tb[MPTCP_ATTR_DADDR4]);
+	if (tb[MPTCP_ATTR_SADDR6])
+		print_addr("saddr6", AF_INET6, tb[MPTCP_ATTR_SADDR6]);
+	if (tb[MPTCP_ATTR_DADDR6])
+		print_addr("daddr6", AF_INET6, tb[MPTCP_ATTR_DADDR6]);
+	if (tb[MPTCP_ATTR_SPORT])
+		printf(" sport=%u", rta_getattr_be16(tb[MPTCP_ATTR_SPORT]));
+	if (tb[MPTCP_ATTR_DPORT])
+		printf(" dport=%u", rta_getattr_be16(tb[MPTCP_ATTR_DPORT]));
+	if (tb[MPTCP_ATTR_BACKUP])
+		printf(" backup=%d", rta_getattr_u8(tb[MPTCP_ATTR_BACKUP]));
+	if (tb[MPTCP_ATTR_ERROR])
+		printf(" error=%d", rta_getattr_u8(tb[MPTCP_ATTR_ERROR]));
+	if (tb[MPTCP_ATTR_FLAGS])
+		printf(" flags=%x", rta_getattr_u16(tb[MPTCP_ATTR_FLAGS]));
+	if (tb[MPTCP_ATTR_TIMEOUT])
+		printf(" timeout=%u", rta_getattr_u32(tb[MPTCP_ATTR_TIMEOUT]));
+	if (tb[MPTCP_ATTR_IF_IDX])
+		printf(" ifindex=%d", rta_getattr_s32(tb[MPTCP_ATTR_IF_IDX]));
+	if (tb[MPTCP_ATTR_RESET_REASON])
+		printf(" reset_reason=%u", rta_getattr_u32(tb[MPTCP_ATTR_RESET_REASON]));
+	if (tb[MPTCP_ATTR_RESET_FLAGS])
+		printf(" reset_flags=0x%x", rta_getattr_u32(tb[MPTCP_ATTR_RESET_FLAGS]));
+
+	puts("");
+out:
+	fflush(stdout);
+	return 0;
+}
+
+static int mptcp_monitor(void)
+{
+	if (genl_add_mcast_grp(&genl_rth, genl_family, MPTCP_PM_EV_GRP_NAME) < 0) {
+		perror("can't subscribe to mptcp events");
+		return 1;
+	}
+
+	if (rtnl_listen(&genl_rth, mptcp_monitor_msg, stdout) < 0)
+		return 2;
+
+	return 0;
+}
+
 int do_mptcp(int argc, char **argv)
 {
 	if (argc == 0)
@@ -439,6 +544,14 @@ int do_mptcp(int argc, char **argv)
 		if (matches(*argv, "show") == 0)
 			return mptcp_limit_get_set(argc-1, argv+1,
 						   MPTCP_PM_CMD_GET_LIMITS);
+	}
+
+	if (matches(*argv, "monitor") == 0) {
+		NEXT_ARG_FWD();
+		if (argc == 0)
+			return mptcp_monitor();
+
+		goto unknown;
 	}
 
 unknown:
