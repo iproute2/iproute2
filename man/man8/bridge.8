@@ -171,7 +171,7 @@ As a rule, the information is statistics or some time values.
 
 .TP
 .BR "\-d" , " \-details"
-print detailed information about MDB router ports.
+print detailed information about bridge vlan filter entries or MDB router ports.
 
 .TP
 .BR "\-n" , " \-net" , " \-netns " <NETNS>
@@ -880,6 +880,11 @@ STP BPDUs.
 .SS bridge vlan show - list vlan configuration.
 
 This command displays the current VLAN filter table.
+
+.PP
+With the
+.B -details
+option, the command becomes verbose. It displays the per-vlan options.
 
 .PP
 With the

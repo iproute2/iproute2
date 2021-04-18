@@ -285,6 +285,11 @@ int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
 	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct if_stats_msg))))
 #endif
 
+#ifndef BRVLAN_RTA
+#define BRVLAN_RTA(r) \
+	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct br_vlan_msg))))
+#endif
+
 /* User defined nlmsg_type which is used mostly for logging netlink
  * messages from dump file */
 #define NLMSG_TSTAMP	15
