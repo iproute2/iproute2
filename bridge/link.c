@@ -19,7 +19,7 @@
 
 static unsigned int filter_index;
 
-static const char *port_states[] = {
+static const char *stp_states[] = {
 	[BR_STATE_DISABLED] = "disabled",
 	[BR_STATE_LISTENING] = "listening",
 	[BR_STATE_LEARNING] = "learning",
@@ -68,11 +68,11 @@ static void print_link_flags(FILE *fp, unsigned int flags, unsigned int mdown)
 	close_json_array(PRINT_ANY, "> ");
 }
 
-static void print_portstate(__u8 state)
+void print_stp_state(__u8 state)
 {
 	if (state <= BR_STATE_BLOCKING)
 		print_string(PRINT_ANY, "state",
-			     "state %s ", port_states[state]);
+			     "state %s ", stp_states[state]);
 	else
 		print_uint(PRINT_ANY, "state",
 			     "state (%d) ", state);
@@ -96,7 +96,7 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 		parse_rtattr_nested(prtb, IFLA_BRPORT_MAX, attr);
 
 		if (prtb[IFLA_BRPORT_STATE])
-			print_portstate(rta_getattr_u8(prtb[IFLA_BRPORT_STATE]));
+			print_stp_state(rta_getattr_u8(prtb[IFLA_BRPORT_STATE]));
 
 		if (prtb[IFLA_BRPORT_PRIORITY])
 			print_uint(PRINT_ANY, "priority",
@@ -161,7 +161,7 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 			print_on_off(PRINT_ANY, "isolated", "isolated %s ",
 				     rta_getattr_u8(prtb[IFLA_BRPORT_ISOLATED]));
 	} else
-		print_portstate(rta_getattr_u8(attr));
+		print_stp_state(rta_getattr_u8(attr));
 }
 
 
@@ -359,12 +359,12 @@ static int brlink_modify(int argc, char **argv)
 		} else if (strcmp(*argv, "state") == 0) {
 			NEXT_ARG();
 			char *endptr;
-			size_t nstates = ARRAY_SIZE(port_states);
+			size_t nstates = ARRAY_SIZE(stp_states);
 
 			state = strtol(*argv, &endptr, 10);
 			if (!(**argv != '\0' && *endptr == '\0')) {
 				for (state = 0; state < nstates; state++)
-					if (strcasecmp(port_states[state], *argv) == 0)
+					if (strcasecmp(stp_states[state], *argv) == 0)
 						break;
 				if (state == nstates) {
 					fprintf(stderr,
