@@ -621,7 +621,7 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-int print_vlan_rtm(struct nlmsghdr *n, void *arg)
+int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 {
 	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1], *a;
 	struct br_vlan_msg *bvm = NLMSG_DATA(n);
@@ -647,6 +647,12 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg)
 
 	if (filter_index && filter_index != bvm->ifindex)
 		return 0;
+
+	if (n->nlmsg_type == RTM_DELVLAN)
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
+
+	if (monitor)
+		vlan_rtm_cur_ifidx = -1;
 
 	if (vlan_rtm_cur_ifidx == -1 || vlan_rtm_cur_ifidx != bvm->ifindex) {
 		if (vlan_rtm_cur_ifidx != -1)
@@ -720,6 +726,11 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static int print_vlan_rtm_filter(struct nlmsghdr *n, void *arg)
+{
+	return print_vlan_rtm(n, arg, false);
+}
+
 static int vlan_show(int argc, char **argv, int subject)
 {
 	char *filter_dev = NULL;
@@ -764,7 +775,7 @@ static int vlan_show(int argc, char **argv, int subject)
 			printf("\n");
 		}
 
-		ret = rtnl_dump_filter(&rth, print_vlan_rtm, &subject);
+		ret = rtnl_dump_filter(&rth, print_vlan_rtm_filter, &subject);
 		if (ret < 0) {
 			fprintf(stderr, "Dump terminated\n");
 			exit(1);

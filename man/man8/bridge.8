@@ -153,7 +153,7 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
-.BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " ]"
+.BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " | " vlan " ]"
 
 .SH OPTIONS
 
@@ -911,7 +911,7 @@ command is the first in the command line and then the object list follows:
 .I OBJECT-LIST
 is the list of object types that we want to monitor.
 It may contain
-.BR link ", " fdb ", and " mdb "."
+.BR link ", " fdb ", " vlan " and " mdb "."
 If no
 .B file
 argument is given,
