@@ -11,6 +11,7 @@ int print_linkinfo(struct nlmsghdr *n, void *arg);
 int print_mdb_mon(struct nlmsghdr *n, void *arg);
 int print_fdb(struct nlmsghdr *n, void *arg);
 void print_stp_state(__u8 state);
+int parse_stp_state(const char *arg);
 
 int do_fdb(int argc, char **argv);
 int do_mdb(int argc, char **argv);

@@ -78,6 +78,21 @@ void print_stp_state(__u8 state)
 			     "state (%d) ", state);
 }
 
+int parse_stp_state(const char *arg)
+{
+	size_t nstates = ARRAY_SIZE(stp_states);
+	int state;
+
+	for (state = 0; state < nstates; state++)
+		if (strcmp(stp_states[state], arg) == 0)
+			break;
+
+	if (state == nstates)
+		state = -1;
+
+	return state;
+}
+
 static void print_hwmode(__u16 mode)
 {
 	if (mode >= ARRAY_SIZE(hw_mode))
@@ -359,14 +374,11 @@ static int brlink_modify(int argc, char **argv)
 		} else if (strcmp(*argv, "state") == 0) {
 			NEXT_ARG();
 			char *endptr;
-			size_t nstates = ARRAY_SIZE(stp_states);
 
 			state = strtol(*argv, &endptr, 10);
 			if (!(**argv != '\0' && *endptr == '\0')) {
-				for (state = 0; state < nstates; state++)
-					if (strcasecmp(stp_states[state], *argv) == 0)
-						break;
-				if (state == nstates) {
+				state = parse_stp_state(*argv);
+				if (state == -1) {
 					fprintf(stderr,
 						"Error: invalid STP port state\n");
 					return -1;
