@@ -195,30 +195,6 @@ void print_qp_type(struct rd *rd, uint32_t val)
 			   qp_types_to_str(val));
 }
 
-char *get_task_name(uint32_t pid)
-{
-	char *comm;
-	FILE *f;
-
-	if (!pid)
-		return NULL;
-
-	if (asprintf(&comm, "/proc/%d/comm", pid) < 0)
-		return NULL;
-
-	f = fopen(comm, "r");
-	free(comm);
-	if (!f)
-		return NULL;
-
-	if (fscanf(f, "%ms\n", &comm) != 1)
-		comm = NULL;
-
-	fclose(f);
-
-	return comm;
-}
-
 void print_key(struct rd *rd, const char *name, uint64_t val,
 	       struct nlattr *nlattr)
 {
