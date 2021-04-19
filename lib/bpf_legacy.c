@@ -2832,7 +2832,7 @@ static void bpf_get_cfg(struct bpf_elf_ctx *ctx)
 	int fd;
 
 	fd = open(path_jit, O_RDONLY);
-	if (fd > 0) {
+	if (fd >= 0) {
 		char tmp[16] = {};
 
 		if (read(fd, tmp, sizeof(tmp)) > 0)
