@@ -125,7 +125,7 @@ static const struct cmd {
 	{ 0 }
 };
 
-static int do_cmd(const char *argv0, int argc, char **argv)
+static int do_cmd(const char *argv0, int argc, char **argv, bool final)
 {
 	const struct cmd *c;
 
@@ -134,7 +134,8 @@ static int do_cmd(const char *argv0, int argc, char **argv)
 			return -(c->func(argc-1, argv+1));
 	}
 
-	fprintf(stderr, "Object \"%s\" is unknown, try \"ip help\".\n", argv0);
+	if (final)
+		fprintf(stderr, "Object \"%s\" is unknown, try \"ip help\".\n", argv0);
 	return EXIT_FAILURE;
 }
 
@@ -143,7 +144,7 @@ static int ip_batch_cmd(int argc, char *argv[], void *data)
 	const int *orig_family = data;
 
 	preferred_family = *orig_family;
-	return do_cmd(argv[0], argc, argv);
+	return do_cmd(argv[0], argc, argv, true);
 }
 
 static int batch(const char *name)
@@ -312,11 +313,14 @@ int main(int argc, char **argv)
 
 	rtnl_set_strict_dump(&rth);
 
-	if (strlen(basename) > 2)
-		return do_cmd(basename+2, argc, argv);
+	if (strlen(basename) > 2) {
+		int ret = do_cmd(basename+2, argc, argv, false);
+		if (ret != EXIT_FAILURE)
+			return ret;
+	}
 
 	if (argc > 1)
-		return do_cmd(argv[1], argc-1, argv+1);
+		return do_cmd(argv[1], argc-1, argv+1, true);
 
 	rtnl_close(&rth);
 	usage();
