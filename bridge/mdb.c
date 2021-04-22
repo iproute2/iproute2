@@ -16,9 +16,9 @@
 #include <arpa/inet.h>
 
 #include "libnetlink.h"
+#include "utils.h"
 #include "br_common.h"
 #include "rt_names.h"
-#include "utils.h"
 #include "json_print.h"
 
 #ifndef MDBA_RTA

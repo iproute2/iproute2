@@ -139,12 +139,21 @@ bridge \- show / manipulate bridge addresses and devices
 .BR self " ] [ " master " ] "
 
 .ti -8
+.BR "bridge vlan set"
+.B dev
+.I DEV
+.B vid
+.IR VID " [ "
+.B state
+.IR STP_STATE " ] "
+
+.ti -8
 .BR "bridge vlan" " [ " show " | " tunnelshow " ] [ "
 .B dev
 .IR DEV " ]"
 
 .ti -8
-.BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " ]"
+.BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " | " vlan " ]"
 
 .SH OPTIONS
 
@@ -162,7 +171,7 @@ As a rule, the information is statistics or some time values.
 
 .TP
 .BR "\-d" , " \-details"
-print detailed information about MDB router ports.
+print detailed information about bridge vlan filter entries or MDB router ports.
 
 .TP
 .BR "\-n" , " \-net" , " \-netns " <NETNS>
@@ -813,9 +822,69 @@ The
 .BR "pvid " and " untagged"
 flags are ignored.
 
+.SS bridge vlan set - change vlan filter entry's options
+
+This command changes vlan filter entry's options.
+
+.TP
+.BI dev " NAME"
+the interface with which this vlan is associated.
+
+.TP
+.BI vid " VID"
+the VLAN ID that identifies the vlan.
+
+.TP
+.BI state " STP_STATE "
+the operation state of the vlan. One may enter STP state name (case insensitive), or one of the
+numbers below. Negative inputs are ignored, and unrecognized names return an
+error. Note that the state is set only for the vlan of the specified device, e.g. if it is
+a bridge port then the state will be set only for the vlan of the port.
+
+.B 0
+- vlan is in STP
+.B DISABLED
+state. Make this vlan completely inactive for STP. This is also called
+BPDU filter and could be used to disable STP on an untrusted vlan.
+.sp
+
+.B 1
+- vlan is in STP
+.B LISTENING
+state. Only valid if STP is enabled on the bridge. In this
+state the vlan listens for STP BPDUs and drops all other traffic frames.
+.sp
+
+.B 2
+- vlan is in STP
+.B LEARNING
+state. Only valid if STP is enabled on the bridge. In this
+state the vlan will accept traffic only for the purpose of updating MAC
+address tables.
+.sp
+
+.B 3
+- vlan is in STP
+.B FORWARDING
+state. This is the default vlan state.
+.sp
+
+.B 4
+- vlan is in STP
+.B BLOCKING
+state. Only valid if STP is enabled on the bridge. This state
+is used during the STP election process. In this state, the vlan will only process
+STP BPDUs.
+.sp
+
 .SS bridge vlan show - list vlan configuration.
 
 This command displays the current VLAN filter table.
+
+.PP
+With the
+.B -details
+option, the command becomes verbose. It displays the per-vlan options.
 
 .PP
 With the
@@ -842,7 +911,7 @@ command is the first in the command line and then the object list follows:
 .I OBJECT-LIST
 is the list of object types that we want to monitor.
 It may contain
-.BR link ", " fdb ", and " mdb "."
+.BR link ", " fdb ", " vlan " and " mdb "."
 If no
 .B file
 argument is given,
