@@ -957,6 +957,7 @@ enum bpf_attach_type {
 	BPF_XDP_CPUMAP,
 	BPF_SK_LOOKUP,
 	BPF_XDP,
+	BPF_SK_SKB_VERDICT,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -1117,6 +1118,10 @@ enum bpf_link_type {
  * offset to another bpf function
  */
 #define BPF_PSEUDO_CALL		1
+/* when bpf_call->src_reg == BPF_PSEUDO_KFUNC_CALL,
+ * bpf_call->imm == btf_id of a BTF_KIND_FUNC in the running kernel
+ */
+#define BPF_PSEUDO_KFUNC_CALL	2
 
 /* flags for BPF_MAP_UPDATE_ELEM command */
 enum {
@@ -4573,7 +4578,7 @@ union bpf_attr {
  *
  * long bpf_check_mtu(void *ctx, u32 ifindex, u32 *mtu_len, s32 len_diff, u64 flags)
  *	Description
- *		Check ctx packet size against exceeding MTU of net device (based
+ *		Check packet size against exceeding MTU of net device (based
  *		on *ifindex*).  This helper will likely be used in combination
  *		with helpers that adjust/change the packet size.
  *
@@ -4589,6 +4594,14 @@ union bpf_attr {
  *		Specifying *ifindex* zero means the MTU check is performed
  *		against the current net device.  This is practical if this isn't
  *		used prior to redirect.
+ *
+ *		On input *mtu_len* must be a valid pointer, else verifier will
+ *		reject BPF program.  If the value *mtu_len* is initialized to
+ *		zero then the ctx packet size is use.  When value *mtu_len* is
+ *		provided as input this specify the L3 length that the MTU check
+ *		is done against. Remember XDP and TC length operate at L2, but
+ *		this value is L3 as this correlate to MTU and IP-header tot_len
+ *		values which are L3 (similar behavior as bpf_fib_lookup).
  *
  *		The Linux kernel route table can configure MTUs on a more
  *		specific per route level, which is not provided by this helper.
@@ -4614,11 +4627,9 @@ union bpf_attr {
  *
  *		On return *mtu_len* pointer contains the MTU value of the net
  *		device.  Remember the net device configured MTU is the L3 size,
- *		which is returned here and XDP and TX length operate at L2.
+ *		which is returned here and XDP and TC length operate at L2.
  *		Helper take this into account for you, but remember when using
- *		MTU value in your BPF-code.  On input *mtu_len* must be a valid
- *		pointer and be initialized (to zero), else verifier will reject
- *		BPF program.
+ *		MTU value in your BPF-code.
  *
  *	Return
  *		* 0 on success, and populate MTU value in *mtu_len* pointer.
