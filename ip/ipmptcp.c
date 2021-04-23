@@ -143,6 +143,9 @@ static int mptcp_parse_opt(int argc, char **argv, struct nlmsghdr *n,
 	if (!id_set && !adding)
 		missarg("ID");
 
+	if (port && !(flags & MPTCP_PM_ADDR_FLAG_SIGNAL))
+		invarg("flags must have signal when using port", "port");
+
 	attr_addr = addattr_nest(n, MPTCP_BUFLEN,
 				 MPTCP_PM_ATTR_ADDR | NLA_F_NESTED);
 	if (id_set)
