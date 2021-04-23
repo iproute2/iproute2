@@ -626,7 +626,6 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1], *a;
 	struct br_vlan_msg *bvm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	bool newport = false;
 	int rem;
 
 	if (n->nlmsg_type != RTM_NEWVLAN && n->nlmsg_type != RTM_DELVLAN &&
@@ -654,12 +653,9 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 	if (monitor)
 		vlan_rtm_cur_ifidx = -1;
 
-	if (vlan_rtm_cur_ifidx == -1 || vlan_rtm_cur_ifidx != bvm->ifindex) {
-		if (vlan_rtm_cur_ifidx != -1)
-			close_vlan_port();
-		open_vlan_port(bvm->ifindex, VLAN_SHOW_VLAN);
-		vlan_rtm_cur_ifidx = bvm->ifindex;
-		newport = true;
+	if (vlan_rtm_cur_ifidx != -1 && vlan_rtm_cur_ifidx != bvm->ifindex) {
+		close_vlan_port();
+		vlan_rtm_cur_ifidx = -1;
 	}
 
 	rem = len;
@@ -707,11 +703,14 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 				vstats.tx_bytes = rta_getattr_u64(attr);
 			}
 		}
-		open_json_object(NULL);
-		if (!newport)
+		if (vlan_rtm_cur_ifidx != bvm->ifindex) {
+			open_vlan_port(bvm->ifindex, VLAN_SHOW_VLAN);
+			open_json_object(NULL);
+			vlan_rtm_cur_ifidx = bvm->ifindex;
+		} else {
+			open_json_object(NULL);
 			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
-		else
-			newport = false;
+		}
 		print_range("vlan", vinfo->vid, vrange);
 		print_vlan_flags(vinfo->flags);
 		print_nl();
