@@ -1354,7 +1354,7 @@ the following additional arguments are supported:
 .BI "ip link add link " DEVICE " name " NAME
 .BR type " { " macvlan " | " macvtap " } "
 .BR mode " { " private " | " vepa " | " bridge " | " passthru
-.RB " [ " nopromisc " ] | " source " } "
+.RB " [ " nopromisc " ] | " source " [ " nodst " ] } "
 .RB " [ " bcqueuelen " { " LENGTH " } ] "
 
 .in +8
@@ -1393,12 +1393,15 @@ forces the underlying interface into promiscuous mode. Passing the
 .BR nopromisc " flag prevents this, so the promisc flag may be controlled "
 using standard tools.
 
-.B mode source
+.BR mode " " source " [ " nodst " ] "
 - allows one to set a list of allowed mac address, which is used to match
 against source mac address from received frames on underlying interface. This
 allows creating mac based VLAN associations, instead of standard port or tag
 based. The feature is useful to deploy 802.1x mac based behavior,
-where drivers of underlying interfaces doesn't allows that.
+where drivers of underlying interfaces doesn't allows that. By default, packets
+are also considered (duplicated) for destination-based MACVLAN. Passing the
+.BR nodst " flag stops matching packets from also going through the "
+destination-based flow.
 
 .BR bcqueuelen " { " LENGTH " } "
 - Set the length of the RX queue used to process broadcast and multicast packets.

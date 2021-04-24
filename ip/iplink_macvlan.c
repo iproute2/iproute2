@@ -33,7 +33,7 @@ static void print_explain(struct link_util *lu, FILE *f)
 		"Usage: ... %s mode MODE [flag MODE_FLAG] MODE_OPTS [bcqueuelen BC_QUEUE_LEN]\n"
 		"\n"
 		"MODE: private | vepa | bridge | passthru | source\n"
-		"MODE_FLAG: null | nopromisc\n"
+		"MODE_FLAG: null | nopromisc | nodst\n"
 		"MODE_OPTS: for mode \"source\":\n"
 		"\tmacaddr { { add | del } <macaddr> | set [ <macaddr> [ <macaddr>  ... ] ] | flush }\n"
 		"BC_QUEUE_LEN: Length of the rx queue for broadcast/multicast: [0-4294967295]\n",
@@ -58,7 +58,7 @@ static int mode_arg(const char *arg)
 static int flag_arg(const char *arg)
 {
 	fprintf(stderr,
-		"Error: argument of \"flag\" must be \"nopromisc\" or \"null\", not \"%s\"\n",
+		"Error: argument of \"flag\" must be \"nopromisc\", \"nodst\" or \"null\", not \"%s\"\n",
 		arg);
 	return -1;
 }
@@ -102,6 +102,8 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			if (strcmp(*argv, "nopromisc") == 0)
 				flags |= MACVLAN_FLAG_NOPROMISC;
+			else if (strcmp(*argv, "nodst") == 0)
+				flags |= MACVLAN_FLAG_NODST;
 			else if (strcmp(*argv, "null") == 0)
 				flags |= 0;
 			else
@@ -158,6 +160,9 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			}
 		} else if (matches(*argv, "nopromisc") == 0) {
 			flags |= MACVLAN_FLAG_NOPROMISC;
+			has_flags = 1;
+		} else if (matches(*argv, "nodst") == 0) {
+			flags |= MACVLAN_FLAG_NODST;
 			has_flags = 1;
 		} else if (matches(*argv, "bcqueuelen") == 0) {
 			__u32 bc_queue_len;
@@ -228,6 +233,9 @@ static void macvlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[]
 
 	if (flags & MACVLAN_FLAG_NOPROMISC)
 		print_bool(PRINT_ANY, "nopromisc", "nopromisc ", true);
+
+	if (flags & MACVLAN_FLAG_NODST)
+		print_bool(PRINT_ANY, "nodst", "nodst ", true);
 
 	if (tb[IFLA_MACVLAN_BC_QUEUE_LEN] &&
 		RTA_PAYLOAD(tb[IFLA_MACVLAN_BC_QUEUE_LEN]) >= sizeof(__u32)) {
