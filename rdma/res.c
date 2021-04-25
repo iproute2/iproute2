@@ -11,7 +11,7 @@ static int res_help(struct rd *rd)
 {
 	pr_out("Usage: %s resource\n", rd->filename);
 	pr_out("          resource show [DEV]\n");
-	pr_out("          resource show [qp|cm_id|pd|mr|cq|ctx]\n");
+	pr_out("          resource show [qp|cm_id|pd|mr|cq|ctx|srq]\n");
 	pr_out("          resource show qp link [DEV/PORT]\n");
 	pr_out("          resource show qp link [DEV/PORT] [FILTER-NAME FILTER-VALUE]\n");
 	pr_out("          resource show cm_id link [DEV/PORT]\n");
@@ -24,6 +24,8 @@ static int res_help(struct rd *rd)
 	pr_out("          resource show mr dev [DEV] [FILTER-NAME FILTER-VALUE]\n");
 	pr_out("          resource show ctx dev [DEV]\n");
 	pr_out("          resource show ctx dev [DEV] [FILTER-NAME FILTER-VALUE]\n");
+	pr_out("          resource show srq dev [DEV]\n");
+	pr_out("          resource show srq dev [DEV] [FILTER-NAME FILTER-VALUE]\n");
 	return 0;
 }
 
@@ -227,6 +229,7 @@ static int res_show(struct rd *rd)
 		{ "mr",		res_mr		},
 		{ "pd",		res_pd		},
 		{ "ctx",	res_ctx		},
+		{ "srq",	res_srq		},
 		{ 0 }
 	};
 

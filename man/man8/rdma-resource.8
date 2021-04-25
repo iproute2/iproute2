@@ -13,7 +13,7 @@ rdma-resource \- rdma resource configuration
 
 .ti -8
 .IR RESOURCE " := { "
-.BR cm_id " | " cq " | " mr " | " pd " | " qp " | " ctx " }"
+.BR cm_id " | " cq " | " mr " | " pd " | " qp " | " ctx " | " srq " }"
 .sp
 
 .ti -8
@@ -106,6 +106,11 @@ Show CQs belonging to pid 30489
 rdma resource show ctx ctxn 1
 .RS 4
 Show contexts that have index equal to 1.
+.RE
+.PP
+rdma resource show srq lqpn 5-7
+.RS 4
+Show SRQs that the QPs with lqpn 5-7 are associated with.
 .RE
 .PP
 
