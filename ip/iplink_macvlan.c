@@ -162,7 +162,7 @@ static int macvlan_parse_opt(struct link_util *lu, int argc, char **argv,
 		} else if (matches(*argv, "bcqueuelen") == 0) {
 			__u32 bc_queue_len;
 			NEXT_ARG();
-			
+
 			if (get_u32(&bc_queue_len, *argv, 0)) {
 				return bc_queue_len_arg(*argv);
 			}
