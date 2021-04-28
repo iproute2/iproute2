@@ -13,7 +13,7 @@ rdma-resource \- rdma resource configuration
 
 .ti -8
 .IR RESOURCE " := { "
-.BR cm_id " | " cq " | " mr " | " pd " | " qp " }"
+.BR cm_id " | " cq " | " mr " | " pd " | " qp " | " ctx " | " srq " }"
 .sp
 
 .ti -8
@@ -101,6 +101,16 @@ Show CM_IDs bound to local ip address 172.16.0.100
 rdma resource show cq pid 30489
 .RS 4
 Show CQs belonging to pid 30489
+.RE
+.PP
+rdma resource show ctx ctxn 1
+.RS 4
+Show contexts that have index equal to 1.
+.RE
+.PP
+rdma resource show srq lqpn 5-7
+.RS 4
+Show SRQs that the QPs with lqpn 5-7 are associated with.
 .RE
 .PP
 

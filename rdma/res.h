@@ -22,6 +22,10 @@ int res_cm_id_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_cm_id_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_qp_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_qp_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_ctx_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_ctx_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_srq_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_srq_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
 
 static inline uint32_t res_get_command(uint32_t command, struct rd *rd)
 {
@@ -154,6 +158,30 @@ filters qp_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 
 RES_FUNC(res_qp, RDMA_NLDEV_CMD_RES_QP_GET, qp_valid_filters, false,
 	 RDMA_NLDEV_ATTR_RES_LQPN);
+
+static const
+struct filters ctx_valid_filters[MAX_NUMBER_OF_FILTERS] = {
+	{ .name = "dev", .is_number = false },
+	{ .name = "pid", .is_number = true },
+	{ .name = "ctxn", .is_number = true, .is_doit = true },
+};
+
+RES_FUNC(res_ctx, RDMA_NLDEV_CMD_RES_CTX_GET, ctx_valid_filters, true,
+	 RDMA_NLDEV_ATTR_RES_CTXN);
+
+static const
+struct filters srq_valid_filters[MAX_NUMBER_OF_FILTERS] = {
+	{ .name = "dev", .is_number = false },
+	{ .name = "pid", .is_number = true },
+	{ .name = "srqn", .is_number = true, .is_doit = true },
+	{ .name = "type", .is_number = false },
+	{ .name = "pdn", .is_number = true },
+	{ .name = "cqn", .is_number = true },
+	{ .name = "lqpn", .is_number = true },
+};
+
+RES_FUNC(res_srq, RDMA_NLDEV_CMD_RES_SRQ_GET, srq_valid_filters, true,
+	 RDMA_NLDEV_ATTR_RES_SRQN);
 
 void print_dev(struct rd *rd, uint32_t idx, const char *name);
 void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
