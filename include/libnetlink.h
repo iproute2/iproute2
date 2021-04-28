@@ -69,6 +69,8 @@ int rtnl_neightbldump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
 int rtnl_mdbdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
+int rtnl_brvlandump_req(struct rtnl_handle *rth, int family, __u32 dump_flags)
+	__attribute__((warn_unused_result));
 int rtnl_netconfdump_req(struct rtnl_handle *rth, int family)
 	__attribute__((warn_unused_result));
 
@@ -96,6 +98,9 @@ int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
 
 int rtnl_nexthopdump_req(struct rtnl_handle *rth, int family,
 			 req_filter_fn_t filter_fn)
+	__attribute__((warn_unused_result));
+int rtnl_nexthop_bucket_dump_req(struct rtnl_handle *rth, int family,
+				 req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 
 struct rtnl_ctrl_data {
@@ -278,6 +283,11 @@ int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
 #ifndef IFLA_STATS_RTA
 #define IFLA_STATS_RTA(r) \
 	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct if_stats_msg))))
+#endif
+
+#ifndef BRVLAN_RTA
+#define BRVLAN_RTA(r) \
+	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct br_vlan_msg))))
 #endif
 
 /* User defined nlmsg_type which is used mostly for logging netlink

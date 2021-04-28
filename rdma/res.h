@@ -155,7 +155,6 @@ filters qp_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 RES_FUNC(res_qp, RDMA_NLDEV_CMD_RES_QP_GET, qp_valid_filters, false,
 	 RDMA_NLDEV_ATTR_RES_LQPN);
 
-char *get_task_name(uint32_t pid);
 void print_dev(struct rd *rd, uint32_t idx, const char *name);
 void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 		struct nlattr **nla_line);

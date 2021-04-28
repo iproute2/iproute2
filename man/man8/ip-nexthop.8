@@ -29,6 +29,14 @@ ip-nexthop \- nexthop object management
 .I  ID
 
 .ti -8
+.BI "ip nexthop bucket list " BUCKET_SELECTOR
+
+.ti -8
+.BR "ip nexthop bucket get " id
+.I  ID
+.RI "index " INDEX
+
+.ti -8
 .IR SELECTOR " := "
 .RB "[ " id
 .IR ID " ] [ "
@@ -40,6 +48,12 @@ ip-nexthop \- nexthop object management
 .IR DEV " ] [ "
 .BR  groups " ] [ "
 .BR  fdb " ]"
+
+.ti -8
+.IR BUCKET_SELECTOR " := "
+.IR SELECTOR
+.RB " | [ " nhid
+.IR ID " ]"
 
 .ti -8
 .IR NH " := { "
@@ -54,7 +68,9 @@ ip-nexthop \- nexthop object management
 .BR fdb " ] | "
 .B  group
 .IR GROUP " [ "
-.BR fdb " ] } "
+.BR fdb " ] [ "
+.B type
+.IR TYPE " [ " TYPE_ARGS " ] ] }"
 
 .ti -8
 .IR ENCAP " := [ "
@@ -70,6 +86,23 @@ ip-nexthop \- nexthop object management
 .ti -8
 .IR GROUP " := "
 .BR id "[," weight "[/...]"
+
+.ti -8
+.IR TYPE " := { "
+.BR mpath " | " resilient " }"
+
+.ti -8
+.IR TYPE_ARGS " := [ "
+.IR RESILIENT_ARGS " ] "
+
+.ti -8
+.IR RESILIENT_ARGS " := "
+.RB "[ " buckets
+.IR BUCKETS " ] [ "
+.B  idle_timer
+.IR IDLE " ] [ "
+.B  unbalanced_timer
+.IR UNBALANCED " ]"
 
 .SH DESCRIPTION
 .B ip nexthop
@@ -122,9 +155,49 @@ is a set of encapsulation attributes specific to the
 .in -2
 
 .TP
-.BI group " GROUP"
+.BI group " GROUP [ " type " TYPE [ TYPE_ARGS ] ]"
 create a nexthop group. Group specification is id with an optional
 weight (id,weight) and a '/' as a separator between entries.
+.sp
+.I TYPE
+is a string specifying the nexthop group type. Namely:
+
+.in +8
+.BI mpath
+- Multipath nexthop group backed by the hash-threshold algorithm. The
+default when the type is unspecified.
+.sp
+.BI resilient
+- Resilient nexthop group. Group is resilient to addition and deletion of
+nexthops.
+
+.sp
+.in -8
+.I TYPE_ARGS
+is a set of attributes specific to the
+.I TYPE.
+
+.in +8
+.B resilient
+.in +2
+.B buckets
+.I BUCKETS
+- Number of nexthop buckets. Cannot be changed for an existing group
+.sp
+
+.B idle_timer
+.I IDLE
+- Time in seconds in which a nexthop bucket does not see traffic and is
+therefore considered idle. Default is 120 seconds
+
+.B unbalanced_timer
+.I UNBALANCED
+- Time in seconds in which a nexthop group is unbalanced and is therefore
+considered unbalanced. The kernel will try to rebalance unbalanced groups, which
+might result in some flows being reset. A value of 0 means that no
+rebalancing will take place. Default is 0 seconds
+.in -2
+
 .TP
 .B blackhole
 create a blackhole nexthop
@@ -171,6 +244,37 @@ as show.
 ip nexthop get id ID
 get a single nexthop by id
 
+.TP
+ip nexthop bucket show
+show the contents of the nexthop bucket table or the nexthop buckets
+selected by some criteria.
+.RS
+.TP
+.BI id " ID "
+.in +0
+show the nexthop buckets that belong to a nexthop group with a given id
+.TP
+.BI nhid " ID "
+.in +0
+show the nexthop buckets that hold a nexthop with a given id
+.TP
+.BI dev " DEV "
+.in +0
+show the nexthop buckets using the given device
+.TP
+.BI vrf " NAME "
+.in +0
+show the nexthop buckets using devices associated with the vrf name
+.TP
+.BI master " DEV "
+.in +0
+show the nexthop buckets using devices enslaved to given master device
+.RE
+
+.TP
+ip nexthop bucket get id ID index INDEX
+get a single nexthop bucket by nexthop group id and bucket index
+
 .SH EXAMPLES
 .PP
 ip nexthop ls
@@ -209,6 +313,11 @@ ip nexthop add id 7 group 5/6 fdb
 .RS 4
 Adds a fdb nexthop group with id 7. A fdb nexthop group can only have
 fdb nexthops.
+.RE
+.PP
+ip nexthop add id 10 group 1/2 type resilient buckets 32
+.RS 4
+Add a resilient nexthop group with id 10 and 32 nexthop buckets.
 .RE
 .SH SEE ALSO
 .br

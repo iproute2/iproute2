@@ -196,17 +196,26 @@ void mnlu_gen_socket_close(struct mnlu_gen_socket *nlg)
 	free(nlg->buf);
 }
 
-struct nlmsghdr *mnlu_gen_socket_cmd_prepare(struct mnlu_gen_socket *nlg,
-					     uint8_t cmd, uint16_t flags)
+struct nlmsghdr *
+_mnlu_gen_socket_cmd_prepare(struct mnlu_gen_socket *nlg,
+			     uint8_t cmd, uint16_t flags,
+			     uint32_t id, uint8_t version)
 {
 	struct genlmsghdr hdr = {};
 	struct nlmsghdr *nlh;
 
 	hdr.cmd = cmd;
-	hdr.version = nlg->version;
-	nlh = mnlu_msg_prepare(nlg->buf, nlg->family, flags, &hdr, sizeof(hdr));
+	hdr.version = version;
+	nlh = mnlu_msg_prepare(nlg->buf, id, flags, &hdr, sizeof(hdr));
 	nlg->seq = nlh->nlmsg_seq;
 	return nlh;
+}
+
+struct nlmsghdr *mnlu_gen_socket_cmd_prepare(struct mnlu_gen_socket *nlg,
+					     uint8_t cmd, uint16_t flags)
+{
+	return _mnlu_gen_socket_cmd_prepare(nlg, cmd, flags, nlg->family,
+					    nlg->version);
 }
 
 int mnlu_gen_socket_sndrcv(struct mnlu_gen_socket *nlg, const struct nlmsghdr *nlh,
@@ -228,4 +237,12 @@ int mnlu_gen_socket_sndrcv(struct mnlu_gen_socket *nlg, const struct nlmsghdr *n
 		return -errno;
 	}
 	return 0;
+}
+
+int mnlu_gen_socket_recv_run(struct mnlu_gen_socket *nlg, mnl_cb_t cb,
+			     void *data)
+{
+	return mnlu_socket_recv_run(nlg->nl, nlg->seq, nlg->buf,
+				    MNL_SOCKET_BUFFER_SIZE,
+				    cb, data);
 }

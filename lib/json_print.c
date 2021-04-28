@@ -299,6 +299,19 @@ int print_color_null(enum output_type type,
 	return ret;
 }
 
+int print_color_tv(enum output_type type,
+		   enum color_attr color,
+		   const char *key,
+		   const char *fmt,
+		   const struct timeval *tv)
+{
+	double usecs = tv->tv_usec;
+	double secs = tv->tv_sec;
+	double time = secs + usecs / 1000000;
+
+	return print_color_float(type, color, key, fmt, time);
+}
+
 /* Print line separator (if not in JSON mode) */
 void print_nl(void)
 {

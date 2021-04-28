@@ -260,35 +260,6 @@ static void print_flags(long flags)
 	close_json_array(PRINT_JSON, NULL);
 }
 
-static char *pid_name(pid_t pid)
-{
-	char *comm;
-	FILE *f;
-	int err;
-
-	err = asprintf(&comm, "/proc/%d/comm", pid);
-	if (err < 0)
-		return NULL;
-
-	f = fopen(comm, "r");
-	free(comm);
-	if (!f) {
-		perror("fopen");
-		return NULL;
-	}
-
-	if (fscanf(f, "%ms\n", &comm) != 1) {
-		perror("fscanf");
-		comm = NULL;
-	}
-
-
-	if (fclose(f))
-		perror("fclose");
-
-	return comm;
-}
-
 static void show_processes(const char *name)
 {
 	glob_t globbuf = { };
@@ -346,7 +317,7 @@ static void show_processes(const char *name)
 			} else if (err == 2 &&
 				   !strcmp("iff", key) &&
 				   !strcmp(name, value)) {
-				char *pname = pid_name(pid);
+				char *pname = get_task_name(pid);
 
 				print_string(PRINT_ANY, "name",
 					     "%s", pname ? : "<NULL>");

@@ -91,6 +91,12 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		print_nexthop(n, arg);
 		return 0;
 
+	case RTM_NEWNEXTHOPBUCKET:
+	case RTM_DELNEXTHOPBUCKET:
+		print_headers(fp, "[NEXTHOPBUCKET]", ctrl);
+		print_nexthop_bucket(n, arg);
+		return 0;
+
 	case RTM_NEWLINK:
 	case RTM_DELLINK:
 		ll_remember_index(n, NULL);

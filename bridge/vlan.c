@@ -16,6 +16,7 @@
 #include "utils.h"
 
 static unsigned int filter_index, filter_vlan;
+static int vlan_rtm_cur_ifidx = -1;
 
 enum vlan_show_subject {
 	VLAN_SHOW_VLAN,
@@ -33,6 +34,7 @@ static void usage(void)
 		"Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ tunnel_info id TUNNEL_ID ]\n"
 		"                                                     [ pvid ] [ untagged ]\n"
 		"                                                     [ self ] [ master ]\n"
+		"       bridge vlan { set } vid VLAN_ID dev DEV [ state STP_STATE ]\n"
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
@@ -241,6 +243,100 @@ static int vlan_modify(int cmd, int argc, char **argv)
 	return 0;
 }
 
+static int vlan_option_set(int argc, char **argv)
+{
+	struct {
+		struct nlmsghdr	n;
+		struct br_vlan_msg	bvm;
+		char			buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_vlan_msg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_NEWVLAN,
+		.bvm.family = PF_BRIDGE,
+	};
+	struct bridge_vlan_info vinfo = {};
+	struct rtattr *afspec;
+	short vid_end = -1;
+	char *d = NULL;
+	short vid = -1;
+	int state = -1;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			d = *argv;
+		} else if (strcmp(*argv, "vid") == 0) {
+			char *p;
+
+			NEXT_ARG();
+			p = strchr(*argv, '-');
+			if (p) {
+				*p = '\0';
+				p++;
+				vid = atoi(*argv);
+				vid_end = atoi(p);
+				if (vid >= vid_end || vid_end >= 4096) {
+					fprintf(stderr, "Invalid VLAN range \"%hu-%hu\"\n",
+						vid, vid_end);
+					return -1;
+				}
+			} else {
+				vid = atoi(*argv);
+			}
+		} else if (strcmp(*argv, "state") == 0) {
+			char *endptr;
+
+			NEXT_ARG();
+			state = strtol(*argv, &endptr, 10);
+			if (!(**argv != '\0' && *endptr == '\0'))
+				state = parse_stp_state(*argv);
+			if (state == -1) {
+				fprintf(stderr, "Error: invalid STP state\n");
+				return -1;
+			}
+		} else {
+			if (matches(*argv, "help") == 0)
+				NEXT_ARG();
+		}
+		argc--; argv++;
+	}
+
+	if (d == NULL || vid == -1) {
+		fprintf(stderr, "Device and VLAN ID are required arguments.\n");
+		return -1;
+	}
+
+	req.bvm.ifindex = ll_name_to_index(d);
+	if (req.bvm.ifindex == 0) {
+		fprintf(stderr, "Cannot find network device \"%s\"\n", d);
+		return -1;
+	}
+
+	if (vid >= 4096) {
+		fprintf(stderr, "Invalid VLAN ID \"%hu\"\n", vid);
+		return -1;
+	}
+	afspec = addattr_nest(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY);
+	afspec->rta_type |= NLA_F_NESTED;
+
+	vinfo.flags = BRIDGE_VLAN_INFO_ONLY_OPTS;
+	vinfo.vid = vid;
+	addattr_l(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_INFO, &vinfo,
+		  sizeof(vinfo));
+	if (vid_end != -1)
+		addattr16(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_RANGE,
+			  vid_end);
+	if (state >= 0)
+		addattr8(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_STATE, state);
+	addattr_nest_end(&req.n, afspec);
+
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+		return -1;
+
+	return 0;
+}
+
 /* In order to use this function for both filtering and non-filtering cases
  * we need to make it a tristate:
  * return -1 - if filtering we've gone over so don't continue
@@ -422,14 +518,8 @@ static void print_vlan_flags(__u16 flags)
 	close_json_array(PRINT_JSON, NULL);
 }
 
-static void print_one_vlan_stats(const struct bridge_vlan_xstats *vstats)
+static void __print_one_vlan_stats(const struct bridge_vlan_xstats *vstats)
 {
-	open_json_object(NULL);
-
-	print_hu(PRINT_ANY, "vid", "%hu", vstats->vid);
-	print_vlan_flags(vstats->flags);
-	print_nl();
-
 	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
 	print_lluint(PRINT_ANY, "rx_bytes", "RX: %llu bytes",
 		     vstats->rx_bytes);
@@ -441,6 +531,16 @@ static void print_one_vlan_stats(const struct bridge_vlan_xstats *vstats)
 		     vstats->tx_bytes);
 	print_lluint(PRINT_ANY, "tx_packets", " %llu packets\n",
 		     vstats->tx_packets);
+}
+
+static void print_one_vlan_stats(const struct bridge_vlan_xstats *vstats)
+{
+	open_json_object(NULL);
+
+	print_hu(PRINT_ANY, "vid", "%hu", vstats->vid);
+	print_vlan_flags(vstats->flags);
+	print_nl();
+	__print_one_vlan_stats(vstats);
 
 	close_json_object();
 }
@@ -521,6 +621,115 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
+{
+	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1], *a;
+	struct br_vlan_msg *bvm = NLMSG_DATA(n);
+	int len = n->nlmsg_len;
+	int rem;
+
+	if (n->nlmsg_type != RTM_NEWVLAN && n->nlmsg_type != RTM_DELVLAN &&
+	    n->nlmsg_type != RTM_GETVLAN) {
+		fprintf(stderr, "Unknown vlan rtm message: %08x %08x %08x\n",
+			n->nlmsg_len, n->nlmsg_type, n->nlmsg_flags);
+		return 0;
+	}
+
+	len -= NLMSG_LENGTH(sizeof(*bvm));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -1;
+	}
+
+	if (bvm->family != AF_BRIDGE)
+		return 0;
+
+	if (filter_index && filter_index != bvm->ifindex)
+		return 0;
+
+	if (n->nlmsg_type == RTM_DELVLAN)
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
+
+	if (monitor)
+		vlan_rtm_cur_ifidx = -1;
+
+	if (vlan_rtm_cur_ifidx != -1 && vlan_rtm_cur_ifidx != bvm->ifindex) {
+		close_vlan_port();
+		vlan_rtm_cur_ifidx = -1;
+	}
+
+	rem = len;
+	for (a = BRVLAN_RTA(bvm); RTA_OK(a, rem); a = RTA_NEXT(a, rem)) {
+		struct bridge_vlan_xstats vstats;
+		struct bridge_vlan_info *vinfo;
+		__u32 vrange = 0;
+		__u8 state = 0;
+
+		parse_rtattr_flags(vtb, BRIDGE_VLANDB_ENTRY_MAX, RTA_DATA(a),
+				   RTA_PAYLOAD(a), NLA_F_NESTED);
+		vinfo = RTA_DATA(vtb[BRIDGE_VLANDB_ENTRY_INFO]);
+
+		memset(&vstats, 0, sizeof(vstats));
+		if (vtb[BRIDGE_VLANDB_ENTRY_RANGE])
+			vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_ENTRY_RANGE]);
+		else
+			vrange = vinfo->vid;
+
+		if (vtb[BRIDGE_VLANDB_ENTRY_STATE])
+			state = rta_getattr_u8(vtb[BRIDGE_VLANDB_ENTRY_STATE]);
+
+		if (vtb[BRIDGE_VLANDB_ENTRY_STATS]) {
+			struct rtattr *stb[BRIDGE_VLANDB_STATS_MAX+1];
+			struct rtattr *attr;
+
+			attr = vtb[BRIDGE_VLANDB_ENTRY_STATS];
+			parse_rtattr(stb, BRIDGE_VLANDB_STATS_MAX, RTA_DATA(attr),
+				     RTA_PAYLOAD(attr));
+
+			if (stb[BRIDGE_VLANDB_STATS_RX_BYTES]) {
+				attr = stb[BRIDGE_VLANDB_STATS_RX_BYTES];
+				vstats.rx_bytes = rta_getattr_u64(attr);
+			}
+			if (stb[BRIDGE_VLANDB_STATS_RX_PACKETS]) {
+				attr = stb[BRIDGE_VLANDB_STATS_RX_PACKETS];
+				vstats.rx_packets = rta_getattr_u64(attr);
+			}
+			if (stb[BRIDGE_VLANDB_STATS_TX_PACKETS]) {
+				attr = stb[BRIDGE_VLANDB_STATS_TX_PACKETS];
+				vstats.tx_packets = rta_getattr_u64(attr);
+			}
+			if (stb[BRIDGE_VLANDB_STATS_TX_BYTES]) {
+				attr = stb[BRIDGE_VLANDB_STATS_TX_BYTES];
+				vstats.tx_bytes = rta_getattr_u64(attr);
+			}
+		}
+		if (vlan_rtm_cur_ifidx != bvm->ifindex) {
+			open_vlan_port(bvm->ifindex, VLAN_SHOW_VLAN);
+			open_json_object(NULL);
+			vlan_rtm_cur_ifidx = bvm->ifindex;
+		} else {
+			open_json_object(NULL);
+			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
+		}
+		print_range("vlan", vinfo->vid, vrange);
+		print_vlan_flags(vinfo->flags);
+		print_nl();
+		print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
+		print_stp_state(state);
+		print_nl();
+		if (show_stats)
+			__print_one_vlan_stats(&vstats);
+		close_json_object();
+	}
+
+	return 0;
+}
+
+static int print_vlan_rtm_filter(struct nlmsghdr *n, void *arg)
+{
+	return print_vlan_rtm(n, arg, false);
+}
+
 static int vlan_show(int argc, char **argv, int subject)
 {
 	char *filter_dev = NULL;
@@ -548,6 +757,34 @@ static int vlan_show(int argc, char **argv, int subject)
 	}
 
 	new_json_obj(json);
+
+	/* if show_details is true then use the new bridge vlan dump format */
+	if (show_details && subject == VLAN_SHOW_VLAN) {
+		__u32 dump_flags = show_stats ? BRIDGE_VLANDB_DUMPF_STATS : 0;
+
+		if (rtnl_brvlandump_req(&rth, PF_BRIDGE, dump_flags) < 0) {
+			perror("Cannot send dump request");
+			exit(1);
+		}
+
+		if (!is_json_context()) {
+			printf("%-" __stringify(IFNAMSIZ) "s  %-"
+			       __stringify(VLAN_ID_LEN) "s", "port",
+			       "vlan-id");
+			printf("\n");
+		}
+
+		ret = rtnl_dump_filter(&rth, print_vlan_rtm_filter, &subject);
+		if (ret < 0) {
+			fprintf(stderr, "Dump terminated\n");
+			exit(1);
+		}
+
+		if (vlan_rtm_cur_ifidx != -1)
+			close_vlan_port();
+
+		goto out;
+	}
 
 	if (!show_stats) {
 		if (rtnl_linkdump_req_filter(&rth, PF_BRIDGE,
@@ -602,6 +839,7 @@ static int vlan_show(int argc, char **argv, int subject)
 		}
 	}
 
+out:
 	delete_json_obj();
 	fflush(stdout);
 	return 0;
@@ -667,6 +905,8 @@ int do_vlan(int argc, char **argv)
 		if (matches(*argv, "tunnelshow") == 0) {
 			return vlan_show(argc-1, argv+1, VLAN_SHOW_TUNNELINFO);
 		}
+		if (matches(*argv, "set") == 0)
+			return vlan_option_set(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else {

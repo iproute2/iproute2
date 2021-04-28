@@ -17,6 +17,7 @@
 16	dhcp
 18	keepalived
 42	babel
+99	openr
 186	bgp
 187	isis
 188	ospf

@@ -15,9 +15,7 @@
 #include <errno.h>
 
 #include <linux/tipc_netlink.h>
-#include <linux/tipc.h>
 #include <linux/genetlink.h>
-#include <libmnl/libmnl.h>
 
 #include "cmdl.h"
 #include "msg.h"
@@ -45,14 +43,13 @@ static int media_list_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_media_list(struct nlmsghdr *nlh, const struct cmd *cmd,
 			 struct cmdl *cmdl, void *data)
 {
-	char buf[MNL_SOCKET_BUFFER_SIZE];
-
 	if (help_flag) {
 		fprintf(stderr, "Usage: %s media list\n", cmdl->argv[0]);
 		return -EINVAL;
 	}
 
-	if (!(nlh = msg_init(buf, TIPC_NL_MEDIA_GET))) {
+	nlh = msg_init(TIPC_NL_MEDIA_GET);
+	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
 	}
@@ -89,7 +86,6 @@ static int cmd_media_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 			      struct cmdl *cmdl, void *data)
 {
 	int prop;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *nest;
 	struct opt *opt;
 	struct opt opts[] = {
@@ -116,7 +112,8 @@ static int cmd_media_get_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	if (parse_opts(opts, cmdl) < 0)
 		return -EINVAL;
 
-	if (!(nlh = msg_init(buf, TIPC_NL_MEDIA_GET))) {
+	nlh = msg_init(TIPC_NL_MEDIA_GET);
+	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
 	}
@@ -179,7 +176,6 @@ static int cmd_media_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 {
 	int val;
 	int prop;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *props;
 	struct nlattr *attrs;
 	struct opt *opt;
@@ -213,7 +209,8 @@ static int cmd_media_set_prop(struct nlmsghdr *nlh, const struct cmd *cmd,
 	if (parse_opts(opts, cmdl) < 0)
 		return -EINVAL;
 
-	if (!(nlh = msg_init(buf, TIPC_NL_MEDIA_SET))) {
+	nlh = msg_init(TIPC_NL_MEDIA_SET);
+	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
 	}

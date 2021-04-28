@@ -15,7 +15,6 @@
 #include <linux/tipc.h>
 #include <linux/tipc_netlink.h>
 #include <linux/genetlink.h>
-#include <libmnl/libmnl.h>
 
 #include "cmdl.h"
 #include "msg.h"
@@ -46,10 +45,10 @@ static int publ_list_cb(const struct nlmsghdr *nlh, void *data)
 static int publ_list(uint32_t sock)
 {
 	struct nlmsghdr *nlh;
-	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlattr *nest;
 
-	if (!(nlh = msg_init(buf, TIPC_NL_PUBL_GET))) {
+	nlh = msg_init(TIPC_NL_PUBL_GET);
+	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
 	}
@@ -103,14 +102,13 @@ static int sock_list_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_socket_list(struct nlmsghdr *nlh, const struct cmd *cmd,
 			   struct cmdl *cmdl, void *data)
 {
-	char buf[MNL_SOCKET_BUFFER_SIZE];
-
 	if (help_flag) {
 		fprintf(stderr, "Usage: %s socket list\n", cmdl->argv[0]);
 		return -EINVAL;
 	}
 
-	if (!(nlh = msg_init(buf, TIPC_NL_SOCK_GET))) {
+	nlh = msg_init(TIPC_NL_SOCK_GET);
+	if (!nlh) {
 		fprintf(stderr, "error, message initialisation failed\n");
 		return -1;
 	}

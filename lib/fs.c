@@ -316,3 +316,27 @@ int get_command_name(const char *pid, char *comm, size_t len)
 
 	return 0;
 }
+
+char *get_task_name(pid_t pid)
+{
+	char *comm;
+	FILE *f;
+
+	if (!pid)
+		return NULL;
+
+	if (asprintf(&comm, "/proc/%d/comm", pid) < 0)
+		return NULL;
+
+	f = fopen(comm, "r");
+	if (!f)
+		return NULL;
+
+	if (fscanf(f, "%ms\n", &comm) != 1)
+		comm = NULL;
+
+	fclose(f);
+
+	return comm;
+}
+

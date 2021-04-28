@@ -907,6 +907,14 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		fprintf(fp, "if_id %#x", if_id);
 		fprintf(fp, "%s", _SL_);
 	}
+	if (tb[XFRMA_TFCPAD]) {
+		__u32 tfcpad = rta_getattr_u32(tb[XFRMA_TFCPAD]);
+
+		if (prefix)
+			fputs(prefix, fp);
+		fprintf(fp, "tfcpad %u", tfcpad);
+		fprintf(fp, "%s", _SL_);
+	}
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)

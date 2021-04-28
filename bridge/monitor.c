@@ -31,7 +31,7 @@ static int prefix_banner;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge monitor [file | link | fdb | mdb | all]\n");
+	fprintf(stderr, "Usage: bridge monitor [file | link | fdb | mdb | vlan | all]\n");
 	exit(-1);
 }
 
@@ -67,6 +67,12 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		print_nlmsg_timestamp(fp, n);
 		return 0;
 
+	case RTM_NEWVLAN:
+	case RTM_DELVLAN:
+		if (prefix_banner)
+			fprintf(fp, "[VLAN]");
+		return print_vlan_rtm(n, arg, true);
+
 	default:
 		return 0;
 	}
@@ -79,6 +85,7 @@ int do_monitor(int argc, char **argv)
 	int llink = 0;
 	int lneigh = 0;
 	int lmdb = 0;
+	int lvlan = 0;
 
 	rtnl_close(&rth);
 
@@ -95,8 +102,12 @@ int do_monitor(int argc, char **argv)
 		} else if (matches(*argv, "mdb") == 0) {
 			lmdb = 1;
 			groups = 0;
+		} else if (matches(*argv, "vlan") == 0) {
+			lvlan = 1;
+			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
+			lvlan = 1;
 			prefix_banner = 1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
@@ -134,6 +145,12 @@ int do_monitor(int argc, char **argv)
 
 	if (rtnl_open(&rth, groups) < 0)
 		exit(1);
+
+	if (lvlan && rtnl_add_nl_group(&rth, RTNLGRP_BRVLAN) < 0) {
+		fprintf(stderr, "Failed to add bridge vlan group to list\n");
+		exit(1);
+	}
+
 	ll_init_map(&rth);
 
 	if (rtnl_listen(&rth, accept_msg, stdout) < 0)

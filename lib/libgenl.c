@@ -67,6 +67,72 @@ int genl_resolve_family(struct rtnl_handle *grth, const char *family)
 	return fnum;
 }
 
+static int genl_parse_grps(struct rtattr *attr, const char *name, unsigned int *id)
+{
+	const struct rtattr *pos;
+
+	rtattr_for_each_nested(pos, attr) {
+		struct rtattr *tb[CTRL_ATTR_MCAST_GRP_MAX + 1];
+
+		parse_rtattr_nested(tb, CTRL_ATTR_MCAST_GRP_MAX, pos);
+
+		if (tb[CTRL_ATTR_MCAST_GRP_NAME] && tb[CTRL_ATTR_MCAST_GRP_ID]) {
+			if (strcmp(name, rta_getattr_str(tb[CTRL_ATTR_MCAST_GRP_NAME])) == 0) {
+				*id = rta_getattr_u32(tb[CTRL_ATTR_MCAST_GRP_ID]);
+				return 0;
+			}
+		}
+	}
+
+	return -1;
+}
+
+int genl_add_mcast_grp(struct rtnl_handle *grth, __u16 fnum, const char *group)
+{
+	GENL_REQUEST(req, 1024, GENL_ID_CTRL, 0, 0, CTRL_CMD_GETFAMILY,
+		     NLM_F_REQUEST);
+	struct rtattr *tb[CTRL_ATTR_MAX + 1];
+	struct nlmsghdr *answer = NULL;
+	struct genlmsghdr *ghdr;
+	struct rtattr *attrs;
+	int len, ret = -1;
+	unsigned int id;
+
+	addattr16(&req.n, sizeof(req), CTRL_ATTR_FAMILY_ID, fnum);
+
+	if (rtnl_talk(grth, &req.n, &answer) < 0) {
+		fprintf(stderr, "Error talking to the kernel\n");
+		return -2;
+	}
+
+	ghdr = NLMSG_DATA(answer);
+	len = answer->nlmsg_len;
+
+	if (answer->nlmsg_type != GENL_ID_CTRL)
+		goto err_free;
+
+	len -= NLMSG_LENGTH(GENL_HDRLEN);
+	if (len < 0)
+		goto err_free;
+
+	attrs = (struct rtattr *) ((char *) ghdr + GENL_HDRLEN);
+	parse_rtattr(tb, CTRL_ATTR_MAX, attrs, len);
+
+	if (tb[CTRL_ATTR_MCAST_GROUPS] == NULL) {
+		fprintf(stderr, "Missing mcast groups TLV\n");
+		goto err_free;
+	}
+
+	if (genl_parse_grps(tb[CTRL_ATTR_MCAST_GROUPS], group, &id) < 0)
+		goto err_free;
+
+	ret = rtnl_add_nl_group(grth, id);
+
+err_free:
+	free(answer);
+	return ret;
+}
+
 int genl_init_handle(struct rtnl_handle *grth, const char *family,
 		     int *genl_family)
 {
