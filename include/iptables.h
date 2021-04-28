@@ -12,7 +12,7 @@ extern int do_command4(int argc, char *argv[], char **table,
 		      struct xtc_handle **handle, bool restore);
 extern int delete_chain4(const xt_chainlabel chain, int verbose,
 			struct xtc_handle *handle);
-extern int flush_entries4(const xt_chainlabel chain, int verbose, 
+extern int flush_entries4(const xt_chainlabel chain, int verbose,
 			struct xtc_handle *handle);
 extern int for_each_chain4(int (*fn)(const xt_chainlabel, int, struct xtc_handle *),
 		int verbose, int builtinstoo, struct xtc_handle *handle);

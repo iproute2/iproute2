@@ -579,18 +579,18 @@ static int netns_pids(int argc, char **argv)
 {
 	const char *name;
 	char net_path[PATH_MAX];
-	int netns;
+	int netns = -1, ret = -1;
 	struct stat netst;
 	DIR *dir;
 	struct dirent *entry;
 
 	if (argc < 1) {
 		fprintf(stderr, "No netns name specified\n");
-		return -1;
+		goto out;
 	}
 	if (argc > 1) {
 		fprintf(stderr, "extra arguments specified\n");
-		return -1;
+		goto out;
 	}
 
 	name = argv[0];
@@ -599,18 +599,18 @@ static int netns_pids(int argc, char **argv)
 	if (netns < 0) {
 		fprintf(stderr, "Cannot open network namespace: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 	if (fstat(netns, &netst) < 0) {
 		fprintf(stderr, "Stat of netns failed: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 	dir = opendir("/proc/");
 	if (!dir) {
 		fprintf(stderr, "Open of /proc failed: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 	while ((entry = readdir(dir))) {
 		char pid_net_path[PATH_MAX];
@@ -627,15 +627,19 @@ static int netns_pids(int argc, char **argv)
 			printf("%s\n", entry->d_name);
 		}
 	}
+	ret = 0;
 	closedir(dir);
-	return 0;
+out:
+	if (netns >= 0)
+		close(netns);
+	return ret;
 
 }
 
 int netns_identify_pid(const char *pidstr, char *name, int len)
 {
 	char net_path[PATH_MAX];
-	int netns;
+	int netns = -1, ret = -1;
 	struct stat netst;
 	DIR *dir;
 	struct dirent *entry;
@@ -647,22 +651,24 @@ int netns_identify_pid(const char *pidstr, char *name, int len)
 	if (netns < 0) {
 		fprintf(stderr, "Cannot open network namespace: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 	if (fstat(netns, &netst) < 0) {
 		fprintf(stderr, "Stat of netns failed: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 	dir = opendir(NETNS_RUN_DIR);
 	if (!dir) {
 		/* Succeed treat a missing directory as an empty directory */
-		if (errno == ENOENT)
-			return 0;
+		if (errno == ENOENT) {
+			ret = 0;
+			goto out;
+		}
 
 		fprintf(stderr, "Failed to open directory %s:%s\n",
 			NETNS_RUN_DIR, strerror(errno));
-		return -1;
+		goto out;
 	}
 
 	while ((entry = readdir(dir))) {
@@ -685,8 +691,12 @@ int netns_identify_pid(const char *pidstr, char *name, int len)
 			strlcpy(name, entry->d_name, len);
 		}
 	}
+	ret = 0;
 	closedir(dir);
-	return 0;
+out:
+	if (netns >= 0)
+		close(netns);
+	return ret;
 
 }
 

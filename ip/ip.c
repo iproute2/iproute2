@@ -157,6 +157,7 @@ static int batch(const char *name)
 		return EXIT_FAILURE;
 	}
 
+	batch_mode = 1;
 	ret = do_batch(name, force, ip_batch_cmd, &orig_family);
 
 	rtnl_close(&rth);

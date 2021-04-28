@@ -299,8 +299,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 
 			NEXT_ARG();
 			overhead = strtol(*argv, &p, 10);
-			if (!p || *p || !*argv ||
-			    overhead < -64 || overhead > 256) {
+			if (!p || *p || overhead < -64 || overhead > 256) {
 				fprintf(stderr,
 					"Illegal \"overhead\", valid range is -64 to 256\\n");
 				return -1;
@@ -312,7 +311,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 
 			NEXT_ARG();
 			mpu = strtol(*argv, &p, 10);
-			if (!p || *p || !*argv || mpu < 0 || mpu > 256) {
+			if (!p || *p || mpu < 0 || mpu > 256) {
 				fprintf(stderr,
 					"Illegal \"mpu\", valid range is 0 to 256\\n");
 				return -1;

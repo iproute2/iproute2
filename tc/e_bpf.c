@@ -159,7 +159,9 @@ static int parse_bpf(struct exec_util *eu, int argc, char **argv)
 
 	envp_run[env_num - 1] = NULL;
 out:
-	return execvpe(argv_run[0], argv_run, envp_run);
+	ret = execvpe(argv_run[0], argv_run, envp_run);
+	free(envp_run);
+	return ret;
 
 err_free_env:
 	for (--i; i >= env_old; i--)

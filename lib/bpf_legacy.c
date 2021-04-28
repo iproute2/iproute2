@@ -2832,7 +2832,7 @@ static void bpf_get_cfg(struct bpf_elf_ctx *ctx)
 	int fd;
 
 	fd = open(path_jit, O_RDONLY);
-	if (fd > 0) {
+	if (fd >= 0) {
 		char tmp[16] = {};
 
 		if (read(fd, tmp, sizeof(tmp)) > 0)
@@ -3092,13 +3092,13 @@ int bpf_send_map_fds(const char *path, const char *obj)
 		.st  = &ctx->stat,
 		.obj = obj,
 	};
-	int fd, ret;
+	int fd, ret = -1;
 
 	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		fprintf(stderr, "Cannot open socket: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 
 	strlcpy(addr.sun_path, path, sizeof(addr.sun_path));
@@ -3107,7 +3107,7 @@ int bpf_send_map_fds(const char *path, const char *obj)
 	if (ret < 0) {
 		fprintf(stderr, "Cannot connect to %s: %s\n",
 			path, strerror(errno));
-		return -1;
+		goto out;
 	}
 
 	ret = bpf_map_set_send(fd, &addr, sizeof(addr), &bpf_aux,
@@ -3117,7 +3117,9 @@ int bpf_send_map_fds(const char *path, const char *obj)
 			path, strerror(errno));
 
 	bpf_maps_teardown(ctx);
-	close(fd);
+out:
+	if (fd >= 0)
+		close(fd);
 	return ret;
 }
 
@@ -3125,13 +3127,13 @@ int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
 		     unsigned int entries)
 {
 	struct sockaddr_un addr = { .sun_family = AF_UNIX };
-	int fd, ret;
+	int fd, ret = -1;
 
 	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		fprintf(stderr, "Cannot open socket: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 
 	strlcpy(addr.sun_path, path, sizeof(addr.sun_path));
@@ -3140,7 +3142,7 @@ int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
 	if (ret < 0) {
 		fprintf(stderr, "Cannot bind to socket: %s\n",
 			strerror(errno));
-		return -1;
+		goto out;
 	}
 
 	ret = bpf_map_set_recv(fd, fds, aux, entries);
@@ -3149,7 +3151,10 @@ int bpf_recv_map_fds(const char *path, int *fds, struct bpf_map_aux *aux,
 			path, strerror(errno));
 
 	unlink(addr.sun_path);
-	close(fd);
+
+out:
+	if (fd >= 0)
+		close(fd);
 	return ret;
 }
 
