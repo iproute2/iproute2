@@ -20,6 +20,7 @@ static const char *netns_modes_str[] = {
 static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
+	bool cof = false;
 
 	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
 
@@ -35,9 +36,17 @@ static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 		else
 			mode_str = "unknown";
 
-		print_color_string(PRINT_ANY, COLOR_NONE, "netns", "netns %s\n",
+		print_color_string(PRINT_ANY, COLOR_NONE, "netns", "netns %s ",
 				   mode_str);
 	}
+
+	if (tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK])
+		cof = mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK]);
+
+	print_color_on_off(PRINT_ANY, COLOR_NONE, "copy-on-fork",
+			   "copy-on-fork %s\n",
+			   cof);
+
 	return MNL_CB_OK;
 }
 
