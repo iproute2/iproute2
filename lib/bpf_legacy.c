@@ -2992,7 +2992,7 @@ static int bpf_obj_open(const char *pathname, enum bpf_prog_type type,
 out:
 	bpf_elf_ctx_destroy(ctx, ret < 0);
 	if (ret < 0) {
-		if (fd)
+		if (fd >= 0)
 			close(fd);
 		return ret;
 	}
