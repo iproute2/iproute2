@@ -236,10 +236,15 @@ get_ops:
 
 	/* Get algorithm name, default: "gcm(aes)" */
 	opt_algname = get_opt(opts, "algname");
-	if (!opt_algname)
+	if (!opt_algname) {
 		strcpy(input.key.alg_name, "gcm(aes)");
-	else
+	} else {
+		if (strlen(opt_algname->val) > TIPC_AEAD_ALG_NAME) {
+			fprintf(stderr, "error, invalid algname\n");
+			return -EINVAL;
+		}
 		strcpy(input.key.alg_name, opt_algname->val);
+	}
 
 	/* Get node identity */
 	opt_nodeid = get_opt(opts, "nodeid");
