@@ -757,7 +757,7 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 		if (show_stats > 1) {
 			fprintf(fp, "%s", _SL_);
 			fprintf(fp, "    RX errors: length   crc     frame   fifo    overrun%s%s",
-				s->rx_nohandler ? "   nohandler" : "", _SL_);
+				s->rx_nohandler ? " nohandler" : "", _SL_);
 			fprintf(fp, "               ");
 			print_num(fp, 8, s->rx_length_errors);
 			print_num(fp, 7, s->rx_crc_errors);
