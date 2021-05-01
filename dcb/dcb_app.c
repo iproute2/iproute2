@@ -667,7 +667,7 @@ static int dcb_cmd_app_show(struct dcb *dcb, const char *dev, int argc, char **a
 out:
 	close_json_object();
 	dcb_app_table_fini(&tab);
-	return 0;
+	return ret;
 }
 
 static int dcb_cmd_app_flush(struct dcb *dcb, const char *dev, int argc, char **argv)
