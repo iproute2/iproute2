@@ -147,11 +147,6 @@ parse_priomap:
 		explain();
 		return -1;
 	}
-	if (nbands < 1) {
-		fprintf(stderr, "The number of \"bands\" must be >= 1\n");
-		explain();
-		return -1;
-	}
 	if (nstrict + nquanta > nbands) {
 		fprintf(stderr, "Not enough total bands to cover all the strict bands and quanta\n");
 		explain();
