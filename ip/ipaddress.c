@@ -10,6 +10,7 @@
  *
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -544,6 +545,29 @@ static void print_vfinfo(FILE *fp, struct ifinfomsg *ifi, struct rtattr *vfinfo)
 		print_vf_stats64(fp, vf[IFLA_VF_STATS]);
 }
 
+static void size_columns(unsigned int cols[], unsigned int n, ...)
+{
+	unsigned int i, len;
+	uint64_t val, powi;
+	va_list args;
+
+	va_start(args, n);
+
+	for (i = 0; i < n; i++) {
+		val = va_arg(args, unsigned long long);
+
+		if (human_readable)
+			continue;
+
+		for (len = 1, powi = 10; powi < val; len++, powi *= 10)
+			/* nothing */;
+		if (len > cols[i])
+			cols[i] = len;
+	}
+
+	va_end(args);
+}
+
 void print_num(FILE *fp, unsigned int width, uint64_t count)
 {
 	const char *prefix = "kMGTPE";
@@ -554,7 +578,7 @@ void print_num(FILE *fp, unsigned int width, uint64_t count)
 	char buf[64];
 
 	if (!human_readable || count < base) {
-		fprintf(fp, "%-*"PRIu64" ", width, count);
+		fprintf(fp, "%*"PRIu64" ", width, count);
 		return;
 	}
 
@@ -581,7 +605,7 @@ void print_num(FILE *fp, unsigned int width, uint64_t count)
 	snprintf(buf, sizeof(buf), "%.*f%c%s", precision,
 		 (double) count / powi, *prefix, use_iec ? "i" : "");
 
-	fprintf(fp, "%-*s ", width, buf);
+	fprintf(fp, "%*s ", width, buf);
 }
 
 static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
@@ -659,6 +683,15 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 {
 	const struct rtattr *carrier_changes = tb[IFLA_CARRIER_CHANGES];
 	struct rtnl_link_stats64 _s, *s = &_s;
+	unsigned int cols[] = {
+		strlen("*X errors:"),
+		strlen("packets"),
+		strlen("errors"),
+		strlen("dropped"),
+		strlen("heartbt"),
+		strlen("overrun"),
+		strlen("compressed"),
+	};
 	int ret;
 
 	ret = get_rtnl_link_stats_rta(s, tb);
@@ -739,65 +772,98 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 		close_json_object();
 		close_json_object();
 	} else {
+		size_columns(cols, ARRAY_SIZE(cols),
+			     s->rx_bytes, s->rx_packets, s->rx_errors,
+			     s->rx_dropped, s->rx_missed_errors,
+			     s->multicast, s->rx_compressed);
+		if (show_stats > 1)
+			size_columns(cols, ARRAY_SIZE(cols), 0,
+				     s->rx_length_errors, s->rx_crc_errors,
+				     s->rx_frame_errors, s->rx_fifo_errors,
+				     s->rx_over_errors, s->rx_nohandler);
+		size_columns(cols, ARRAY_SIZE(cols),
+			     s->tx_bytes, s->tx_packets, s->tx_errors,
+			     s->tx_dropped, s->tx_carrier_errors,
+			     s->collisions, s->tx_compressed);
+		if (show_stats > 1)
+			size_columns(cols, ARRAY_SIZE(cols), 0, 0,
+				     s->tx_aborted_errors, s->tx_fifo_errors,
+				     s->tx_window_errors,
+				     s->tx_heartbeat_errors,
+				     carrier_changes ?
+				     rta_getattr_u32(carrier_changes) : 0);
+
 		/* RX stats */
-		fprintf(fp, "    RX: bytes  packets  errors  dropped missed  mcast   %s%s",
-			s->rx_compressed ? "compressed" : "", _SL_);
+		fprintf(fp, "    RX: %*s %*s %*s %*s %*s %*s %*s%s",
+			cols[0] - 4, "bytes", cols[1], "packets",
+			cols[2], "errors", cols[3], "dropped",
+			cols[4], "missed", cols[5], "mcast",
+			cols[6], s->rx_compressed ? "compressed" : "", _SL_);
 
 		fprintf(fp, "    ");
-		print_num(fp, 10, s->rx_bytes);
-		print_num(fp, 8, s->rx_packets);
-		print_num(fp, 7, s->rx_errors);
-		print_num(fp, 7, s->rx_dropped);
-		print_num(fp, 7, s->rx_missed_errors);
-		print_num(fp, 7, s->multicast);
+		print_num(fp, cols[0], s->rx_bytes);
+		print_num(fp, cols[1], s->rx_packets);
+		print_num(fp, cols[2], s->rx_errors);
+		print_num(fp, cols[3], s->rx_dropped);
+		print_num(fp, cols[4], s->rx_missed_errors);
+		print_num(fp, cols[5], s->multicast);
 		if (s->rx_compressed)
-			print_num(fp, 7, s->rx_compressed);
+			print_num(fp, cols[6], s->rx_compressed);
 
 		/* RX error stats */
 		if (show_stats > 1) {
 			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    RX errors: length   crc     frame   fifo    overrun%s%s",
-				s->rx_nohandler ? " nohandler" : "", _SL_);
-			fprintf(fp, "               ");
-			print_num(fp, 8, s->rx_length_errors);
-			print_num(fp, 7, s->rx_crc_errors);
-			print_num(fp, 7, s->rx_frame_errors);
-			print_num(fp, 7, s->rx_fifo_errors);
-			print_num(fp, 7, s->rx_over_errors);
+			fprintf(fp, "    RX errors:%*s %*s %*s %*s %*s %*s %*s%s",
+				cols[0] - 10, "", cols[1], "length",
+				cols[2], "crc", cols[3], "frame",
+				cols[4], "fifo", cols[5], "overrun",
+				cols[6], s->rx_nohandler ? "nohandler" : "",
+				_SL_);
+			fprintf(fp, "%*s", cols[0] + 5, "");
+			print_num(fp, cols[1], s->rx_length_errors);
+			print_num(fp, cols[2], s->rx_crc_errors);
+			print_num(fp, cols[3], s->rx_frame_errors);
+			print_num(fp, cols[4], s->rx_fifo_errors);
+			print_num(fp, cols[5], s->rx_over_errors);
 			if (s->rx_nohandler)
-				print_num(fp, 7, s->rx_nohandler);
+				print_num(fp, cols[6], s->rx_nohandler);
 		}
 		fprintf(fp, "%s", _SL_);
 
 		/* TX stats */
-		fprintf(fp, "    TX: bytes  packets  errors  dropped carrier collsns %s%s",
-			s->tx_compressed ? "compressed" : "", _SL_);
+		fprintf(fp, "    TX: %*s %*s %*s %*s %*s %*s %*s%s",
+			cols[0] - 4, "bytes", cols[1], "packets",
+			cols[2], "errors", cols[3], "dropped",
+			cols[4], "carrier", cols[5], "collsns",
+			cols[6], s->tx_compressed ? "compressed" : "", _SL_);
 
 		fprintf(fp, "    ");
-		print_num(fp, 10, s->tx_bytes);
-		print_num(fp, 8, s->tx_packets);
-		print_num(fp, 7, s->tx_errors);
-		print_num(fp, 7, s->tx_dropped);
-		print_num(fp, 7, s->tx_carrier_errors);
-		print_num(fp, 7, s->collisions);
+		print_num(fp, cols[0], s->tx_bytes);
+		print_num(fp, cols[1], s->tx_packets);
+		print_num(fp, cols[2], s->tx_errors);
+		print_num(fp, cols[3], s->tx_dropped);
+		print_num(fp, cols[4], s->tx_carrier_errors);
+		print_num(fp, cols[5], s->collisions);
 		if (s->tx_compressed)
-			print_num(fp, 7, s->tx_compressed);
+			print_num(fp, cols[6], s->tx_compressed);
 
 		/* TX error stats */
 		if (show_stats > 1) {
 			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    TX errors: aborted  fifo   window heartbeat");
-			if (carrier_changes)
-				fprintf(fp, " transns");
-			fprintf(fp, "%s", _SL_);
+			fprintf(fp, "    TX errors:%*s %*s %*s %*s %*s %*s%s",
+				cols[0] - 10, "", cols[1], "aborted",
+				cols[2], "fifo", cols[3], "window",
+				cols[4], "heartbt",
+				cols[5], carrier_changes ? "transns" : "",
+				_SL_);
 
-			fprintf(fp, "               ");
-			print_num(fp, 8, s->tx_aborted_errors);
-			print_num(fp, 7, s->tx_fifo_errors);
-			print_num(fp, 7, s->tx_window_errors);
-			print_num(fp, 7, s->tx_heartbeat_errors);
+			fprintf(fp, "%*s", cols[0] + 5, "");
+			print_num(fp, cols[1], s->tx_aborted_errors);
+			print_num(fp, cols[2], s->tx_fifo_errors);
+			print_num(fp, cols[3], s->tx_window_errors);
+			print_num(fp, cols[4], s->tx_heartbeat_errors);
 			if (carrier_changes)
-				print_num(fp, 7,
+				print_num(fp, cols[5],
 					  rta_getattr_u32(carrier_changes));
 		}
 	}
