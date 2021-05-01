@@ -113,6 +113,9 @@ int str2key(char *str, struct tipc_aead_key *key)
 	    }
 	}
 
+	if (len > TIPC_AEAD_KEYLEN_MAX)
+		return -1;
+
 	/* Obtain key: */
 	if (!ishex) {
 		key->keylen = len;
