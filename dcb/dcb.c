@@ -571,7 +571,8 @@ int main(int argc, char **argv)
 			break;
 		case 'h':
 			dcb_help();
-			return 0;
+			ret = EXIT_SUCCESS;
+			goto dcb_free;
 		default:
 			fprintf(stderr, "Unknown option.\n");
 			dcb_help();
