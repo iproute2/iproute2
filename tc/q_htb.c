@@ -125,6 +125,7 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 	unsigned int linklayer  = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
 	__u64 ceil64 = 0, rate64 = 0;
+	char *param;
 
 	while (argc > 0) {
 		if (matches(*argv, "prio") == 0) {
@@ -160,17 +161,19 @@ static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, str
 		} else if (matches(*argv, "burst") == 0 ||
 			   strcmp(*argv, "buffer") == 0 ||
 			   strcmp(*argv, "maxburst") == 0) {
+			param = *argv;
 			NEXT_ARG();
 			if (get_size_and_cell(&buffer, &cell_log, *argv) < 0) {
-				explain1("buffer");
+				explain1(param);
 				return -1;
 			}
 		} else if (matches(*argv, "cburst") == 0 ||
 			   strcmp(*argv, "cbuffer") == 0 ||
 			   strcmp(*argv, "cmaxburst") == 0) {
+			param = *argv;
 			NEXT_ARG();
 			if (get_size_and_cell(&cbuffer, &ccell_log, *argv) < 0) {
-				explain1("cbuffer");
+				explain1(param);
 				return -1;
 			}
 		} else if (strcmp(*argv, "ceil") == 0) {
