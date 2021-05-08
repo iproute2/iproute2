@@ -102,9 +102,16 @@ static void usage(void)
 		"BOOL := [1|0]\n"
 		"FEATURES := ecn\n"
 		"ENCAPTYPE := [ mpls | ip | ip6 | seg6 | seg6local | rpl ]\n"
-		"ENCAPHDR := [ MPLSLABEL | SEG6HDR ]\n"
+		"ENCAPHDR := [ MPLSLABEL | SEG6HDR | SEG6LOCAL ]\n"
 		"SEG6HDR := [ mode SEGMODE ] segs ADDR1,ADDRi,ADDRn [hmac HMACKEYID] [cleanup]\n"
 		"SEGMODE := [ encap | inline ]\n"
+		"SEG6LOCAL := action ACTION [ OPTIONS ] [ count ]\n"
+		"ACTION := { End | End.X | End.T | End.DX2 | End.DX6 | End.DX4 |\n"
+		"            End.DT6 | End.DT4 | End.B6 | End.B6.Encaps | End.BM |\n"
+		"            End.S | End.AS | End.AM | End.BPF }\n"
+		"OPTIONS := OPTION [ OPTIONS ]\n"
+		"OPTION := { srh SEG6HDR | nh4 ADDR | nh6 ADDR | iif DEV | oif DEV |\n"
+		"            table TABLEID | vrftable TABLEID | endpoint PROGNAME }\n"
 		"ROUTE_GET_FLAGS := [ fibmatch ]\n");
 	exit(-1);
 }

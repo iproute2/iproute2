@@ -266,6 +266,42 @@ static void print_encap_bpf_prog(FILE *fp, struct rtattr *encap,
 	}
 }
 
+static void print_seg6_local_counters(FILE *fp, struct rtattr *encap)
+{
+	struct rtattr *tb[SEG6_LOCAL_CNT_MAX + 1];
+	__u64 packets = 0, bytes = 0, errors = 0;
+
+	parse_rtattr_nested(tb, SEG6_LOCAL_CNT_MAX, encap);
+
+	if (tb[SEG6_LOCAL_CNT_PACKETS])
+		packets = rta_getattr_u64(tb[SEG6_LOCAL_CNT_PACKETS]);
+
+	if (tb[SEG6_LOCAL_CNT_BYTES])
+		bytes = rta_getattr_u64(tb[SEG6_LOCAL_CNT_BYTES]);
+
+	if (tb[SEG6_LOCAL_CNT_ERRORS])
+		errors = rta_getattr_u64(tb[SEG6_LOCAL_CNT_ERRORS]);
+
+	if (is_json_context()) {
+		open_json_object("stats64");
+
+		print_u64(PRINT_JSON, "packets", NULL, packets);
+		print_u64(PRINT_JSON, "bytes", NULL, bytes);
+		print_u64(PRINT_JSON, "errors", NULL, errors);
+
+		close_json_object();
+	} else {
+		print_string(PRINT_FP, NULL, "%s ", "packets");
+		print_num(fp, 1, packets);
+
+		print_string(PRINT_FP, NULL, "%s ", "bytes");
+		print_num(fp, 1, bytes);
+
+		print_string(PRINT_FP, NULL, "%s ", "errors");
+		print_num(fp, 1, errors);
+	}
+}
+
 static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[SEG6_LOCAL_MAX + 1];
@@ -325,6 +361,9 @@ static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 
 	if (tb[SEG6_LOCAL_BPF])
 		print_encap_bpf_prog(fp, tb[SEG6_LOCAL_BPF], "endpoint");
+
+	if (tb[SEG6_LOCAL_COUNTERS] && show_stats)
+		print_seg6_local_counters(fp, tb[SEG6_LOCAL_COUNTERS]);
 }
 
 static void print_encap_mpls(FILE *fp, struct rtattr *encap)
@@ -862,13 +901,39 @@ static int lwt_parse_bpf(struct rtattr *rta, size_t len,
 	return 0;
 }
 
+/* for the moment, counters are always initialized to zero by the kernel; so we
+ * do not expect to parse any argument here.
+ */
+static int seg6local_fill_counters(struct rtattr *rta, size_t len, int attr)
+{
+	struct rtattr *nest;
+	int ret;
+
+	nest = rta_nest(rta, len, attr);
+
+	ret = rta_addattr64(rta, len, SEG6_LOCAL_CNT_PACKETS, 0);
+	if (ret < 0)
+		return ret;
+
+	ret = rta_addattr64(rta, len, SEG6_LOCAL_CNT_BYTES, 0);
+	if (ret < 0)
+		return ret;
+
+	ret = rta_addattr64(rta, len, SEG6_LOCAL_CNT_ERRORS, 0);
+	if (ret < 0)
+		return ret;
+
+	rta_nest_end(rta, nest);
+	return 0;
+}
+
 static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				 char ***argvp)
 {
 	int segs_ok = 0, hmac_ok = 0, table_ok = 0, vrftable_ok = 0;
+	int action_ok = 0, srh_ok = 0, bpf_ok = 0, counters_ok = 0;
 	int nh4_ok = 0, nh6_ok = 0, iif_ok = 0, oif_ok = 0;
 	__u32 action = 0, table, vrftable, iif, oif;
-	int action_ok = 0, srh_ok = 0, bpf_ok = 0;
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
 	int argc = *argcp;
@@ -932,6 +997,11 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 			if (!oif)
 				exit(nodev(*argv));
 			ret = rta_addattr32(rta, len, SEG6_LOCAL_OIF, oif);
+		} else if (strcmp(*argv, "count") == 0) {
+			if (counters_ok++)
+				duparg2("count", *argv);
+			ret = seg6local_fill_counters(rta, len,
+						      SEG6_LOCAL_COUNTERS);
 		} else if (strcmp(*argv, "srh") == 0) {
 			NEXT_ARG();
 			if (srh_ok++)

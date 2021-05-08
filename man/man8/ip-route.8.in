@@ -240,7 +240,8 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .B seg6local
 .BR action
 .IR SEG6_ACTION " [ "
-.IR SEG6_ACTION_PARAM " ] "
+.IR SEG6_ACTION_PARAM " ] [ "
+.BR count " ] "
 
 .ti -8
 .IR ROUTE_GET_FLAGS " := "
@@ -801,8 +802,14 @@ is a set of encapsulation attributes specific to the
 .B seg6local
 .in +2
 .IR SEG6_ACTION " [ "
-.IR SEG6_ACTION_PARAM " ] "
-- Operation to perform on matching packets.
+.IR SEG6_ACTION_PARAM " ] [ "
+.BR count " ] "
+- Operation to perform on matching packets. The optional \fBcount\fR
+attribute is used to collect statistics on the processing of actions.
+Three counters are implemented: 1) packets correctly processed;
+2) bytes correctly processed; 3) packets that cause a processing error
+(i.e., missing SID List, wrong SID List, etc). To retrieve the counters
+related to an action use the \fB-s\fR flag in the \fBshow\fR command.
 The following actions are currently supported (\fBLinux 4.14+ only\fR).
 .in +2
 
