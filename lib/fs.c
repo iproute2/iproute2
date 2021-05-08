@@ -25,10 +25,35 @@
 
 #include "utils.h"
 
+#ifndef HAVE_HANDLE_AT
+# include <sys/syscall.h>
+#endif
+
 #define CGROUP2_FS_NAME "cgroup2"
 
 /* if not already mounted cgroup2 is mounted here for iproute2's use */
 #define MNT_CGRP2_PATH  "/var/run/cgroup2"
+
+
+#ifndef HAVE_HANDLE_AT
+struct file_handle {
+	unsigned handle_bytes;
+	int handle_type;
+	unsigned char f_handle[];
+};
+
+static int name_to_handle_at(int dirfd, const char *pathname,
+	struct file_handle *handle, int *mount_id, int flags)
+{
+	return syscall(__NR_name_to_handle_at, dirfd, pathname, handle,
+	               mount_id, flags);
+}
+
+static int open_by_handle_at(int mount_fd, struct file_handle *handle, int flags)
+{
+	return syscall(__NR_open_by_handle_at, mount_fd, handle, flags);
+}
+#endif
 
 /* return mount path of first occurrence of given fstype */
 static char *find_fs_mount(const char *fs_to_find)

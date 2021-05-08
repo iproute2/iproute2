@@ -202,6 +202,31 @@ EOF
     rm -f $TMPDIR/setnstest.c $TMPDIR/setnstest
 }
 
+check_name_to_handle_at()
+{
+    cat >$TMPDIR/name_to_handle_at_test.c <<EOF
+#define _GNU_SOURCE
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+int main(int argc, char **argv)
+{
+	struct file_handle *fhp;
+	int mount_id, flags, dirfd;
+	char *pathname;
+	name_to_handle_at(dirfd, pathname, fhp, &mount_id, flags);
+	return 0;
+}
+EOF
+    if $CC -I$INCLUDE -o $TMPDIR/name_to_handle_at_test $TMPDIR/name_to_handle_at_test.c >/dev/null 2>&1; then
+        echo "yes"
+        echo "CFLAGS += -DHAVE_HANDLE_AT" >>$CONFIG
+    else
+        echo "no"
+    fi
+    rm -f $TMPDIR/name_to_handle_at_test.c $TMPDIR/name_to_handle_at_test
+}
+
 check_ipset()
 {
     cat >$TMPDIR/ipsettest.c <<EOF
@@ -491,6 +516,9 @@ fi
 
 echo -n "libc has setns: "
 check_setns
+
+echo -n "libc has name_to_handle_at: "
+check_name_to_handle_at
 
 echo -n "SELinux support: "
 check_selinux
