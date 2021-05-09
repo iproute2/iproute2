@@ -60,7 +60,7 @@ SUBDIRS=lib ip tc bridge misc netem genl tipc devlink rdma dcb man vdpa
 LIBNETLINK=../lib/libutil.a ../lib/libnetlink.a
 LDLIBS += $(LIBNETLINK)
 
-all: config.mk
+all: config
 	@set -e; \
 	for i in $(SUBDIRS); \
 	do echo; echo $$i; $(MAKE) -C $$i; done
@@ -80,8 +80,10 @@ help:
 	@echo "Make Arguments:"
 	@echo " V=[0|1]             - set build verbosity level"
 
-config.mk:
-	sh configure $(KERNEL_INCLUDE)
+config:
+	@if [ ! -f config.mk -o configure -nt config.mk ]; then \
+		sh configure $(KERNEL_INCLUDE); \
+	fi
 
 install: all
 	install -m 0755 -d $(DESTDIR)$(SBINDIR)
