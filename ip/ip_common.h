@@ -89,7 +89,7 @@ int do_seg6(int argc, char **argv);
 int do_ipnh(int argc, char **argv);
 int do_mptcp(int argc, char **argv);
 
-int iplink_get(char *name, __u32 filt_mask);
+int iplink_get(unsigned ifindex, __u32 filt_mask);
 int iplink_ifla_xstats(int argc, char **argv);
 
 int ip_link_list(req_filter_fn_t filter_fn, struct nlmsg_chain *linfo);

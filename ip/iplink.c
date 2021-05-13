@@ -1101,21 +1101,17 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	return 0;
 }
 
-int iplink_get(char *name, __u32 filt_mask)
+int iplink_get(unsigned ifindex, __u32 filt_mask)
 {
 	struct iplink_req req = {
 		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
 		.n.nlmsg_flags = NLM_F_REQUEST,
 		.n.nlmsg_type = RTM_GETLINK,
 		.i.ifi_family = preferred_family,
+		.i.ifi_index = ifindex,
 	};
 	struct nlmsghdr *answer;
 
-	if (name) {
-		addattr_l(&req.n, sizeof(req),
-			  !check_ifname(name) ? IFLA_IFNAME : IFLA_ALT_IFNAME,
-			  name, strlen(name) + 1);
-	}
 	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
 
 	if (rtnl_talk(&rth, &req.n, &answer) < 0)
