@@ -3,6 +3,7 @@
  * libgenl.c	GENL library
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -84,6 +85,7 @@ static int genl_parse_grps(struct rtattr *attr, const char *name, unsigned int *
 		}
 	}
 
+	errno = ENOENT;
 	return -1;
 }
 
@@ -108,17 +110,22 @@ int genl_add_mcast_grp(struct rtnl_handle *grth, __u16 fnum, const char *group)
 	ghdr = NLMSG_DATA(answer);
 	len = answer->nlmsg_len;
 
-	if (answer->nlmsg_type != GENL_ID_CTRL)
+	if (answer->nlmsg_type != GENL_ID_CTRL) {
+		errno = EINVAL;
 		goto err_free;
+	}
 
 	len -= NLMSG_LENGTH(GENL_HDRLEN);
-	if (len < 0)
+	if (len < 0) {
+		errno = EINVAL;
 		goto err_free;
+	}
 
 	attrs = (struct rtattr *) ((char *) ghdr + GENL_HDRLEN);
 	parse_rtattr(tb, CTRL_ATTR_MAX, attrs, len);
 
 	if (tb[CTRL_ATTR_MCAST_GROUPS] == NULL) {
+		errno = ENOENT;
 		fprintf(stderr, "Missing mcast groups TLV\n");
 		goto err_free;
 	}
