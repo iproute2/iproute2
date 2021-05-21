@@ -94,7 +94,7 @@ static void explain(void)
 		"	LSE := lse depth DEPTH { label LABEL | tc TC | bos BOS | ttl TTL }\n"
 		"	FILTERID := X:Y:Z\n"
 		"	MASKED_LLADDR := { LLADDR | LLADDR/MASK | LLADDR/BITS }\n"
-		"	MASKED_CT_STATE := combination of {+|-} and flags trk,est,new\n"
+		"	MASKED_CT_STATE := combination of {+|-} and flags trk,est,new,rel\n"
 		"	ACTION-SPEC := ... look at individual actions\n"
 		"\n"
 		"NOTE:	CLASSID, IP-PROTO are parsed as hexadecimal input.\n"
@@ -345,6 +345,7 @@ static struct flower_ct_states {
 	{ "trk", TCA_FLOWER_KEY_CT_FLAGS_TRACKED },
 	{ "new", TCA_FLOWER_KEY_CT_FLAGS_NEW },
 	{ "est", TCA_FLOWER_KEY_CT_FLAGS_ESTABLISHED },
+	{ "rel", TCA_FLOWER_KEY_CT_FLAGS_RELATED },
 	{ "inv", TCA_FLOWER_KEY_CT_FLAGS_INVALID },
 	{ "rpl", TCA_FLOWER_KEY_CT_FLAGS_REPLY },
 };
