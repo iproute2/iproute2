@@ -7,7 +7,7 @@
 #                           off: disable libbpf probing
 #   LIBBPF_DIR              Path to libbpf DESTDIR to use
 
-INCLUDE=${1:-"$PWD/include"}
+INCLUDE="$PWD/include"
 
 # Output file which is input to Makefile
 CONFIG=config.mk
@@ -485,6 +485,35 @@ ifeq (\$(VERBOSE), 0)
 endif
 EOF
 }
+
+usage()
+{
+	cat <<EOF
+Usage: $0 [OPTIONS]
+	--include_dir		Path to iproute2 include dir
+	-h | --help		Show this usage info
+EOF
+	exit $1
+}
+
+# Compat with the old INCLUDE path setting method.
+if [ $# -eq 1 ] && [ "$(echo $1 | cut -c 1)" != '-' ]; then
+	INCLUDE="$1"
+else
+	while true; do
+		case "$1" in
+			--include_dir)
+				INCLUDE=$2
+				shift 2 ;;
+			-h | --help)
+				usage 0 ;;
+			"")
+				break ;;
+			*)
+				usage 1 ;;
+		esac
+	done
+fi
 
 echo "# Generated config based on" $INCLUDE >$CONFIG
 quiet_config >> $CONFIG
