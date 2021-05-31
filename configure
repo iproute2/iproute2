@@ -1,11 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0
 # This is not an autoconf generated configure
-#
-# Influential LIBBPF environment variables:
-#   LIBBPF_FORCE={on,off}   on: require link against libbpf;
-#                           off: disable libbpf probing
-#   LIBBPF_DIR              Path to libbpf DESTDIR to use
 
 INCLUDE="$PWD/include"
 
@@ -491,6 +486,10 @@ usage()
 	cat <<EOF
 Usage: $0 [OPTIONS]
 	--include_dir		Path to iproute2 include dir
+	--libbpf_dir		Path to libbpf DESTDIR
+	--libbpf_force		Enable/disable libbpf by force. Available options:
+				  on: require link against libbpf, quit config if no libbpf support
+				  off: disable libbpf probing
 	-h | --help		Show this usage info
 EOF
 	exit $1
@@ -504,6 +503,15 @@ else
 		case "$1" in
 			--include_dir)
 				INCLUDE=$2
+				shift 2 ;;
+			--libbpf_dir)
+				LIBBPF_DIR="$2"
+				shift 2 ;;
+			--libbpf_force)
+				if [ "$2" != 'on' ] && [ "$2" != 'off' ]; then
+					usage 1
+				fi
+				LIBBPF_FORCE=$2
 				shift 2 ;;
 			-h | --help)
 				usage 0 ;;
