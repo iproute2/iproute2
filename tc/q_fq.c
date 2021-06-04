@@ -58,7 +58,9 @@ static void explain(void)
 		"		[ low_rate_threshold RATE ]\n"
 		"		[ orphan_mask MASK]\n"
 		"		[ timer_slack TIME]\n"
-		"		[ ce_threshold TIME ]\n");
+		"		[ ce_threshold TIME ]\n"
+		"		[ horizon TIME ]\n"
+		"		[ horizon_{cap|drop} ]\n");
 }
 
 static unsigned int ilog2(unsigned int val)
@@ -88,6 +90,8 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	unsigned int orphan_mask;
 	unsigned int ce_threshold;
 	unsigned int timer_slack;
+	unsigned int horizon;
+	__u8 horizon_drop = 255;
 	bool set_plimit = false;
 	bool set_flow_plimit = false;
 	bool set_quantum = false;
@@ -99,6 +103,7 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	bool set_low_rate_threshold = false;
 	bool set_ce_threshold = false;
 	bool set_timer_slack = false;
+	bool set_horizon = false;
 	int pacing = -1;
 	struct rtattr *tail;
 
@@ -163,6 +168,17 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 			set_timer_slack = true;
+		} else if (strcmp(*argv, "horizon_drop") == 0) {
+			horizon_drop = 1;
+		} else if (strcmp(*argv, "horizon_cap") == 0) {
+			horizon_drop = 0;
+		} else if (strcmp(*argv, "horizon") == 0) {
+			NEXT_ARG();
+			if (get_time(&horizon, *argv)) {
+				fprintf(stderr, "Illegal \"horizon\"\n");
+				return -1;
+			}
+			set_horizon = true;
 		} else if (strcmp(*argv, "defrate") == 0) {
 			NEXT_ARG();
 			if (strchr(*argv, '%')) {
@@ -260,6 +276,12 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
     if (set_timer_slack)
 		addattr_l(n, 1024, TCA_FQ_TIMER_SLACK,
 			  &timer_slack, sizeof(timer_slack));
+    if (set_horizon)
+		addattr_l(n, 1024, TCA_FQ_HORIZON,
+			  &horizon, sizeof(horizon));
+    if (horizon_drop != 255)
+		addattr_l(n, 1024, TCA_FQ_HORIZON_DROP,
+			  &horizon_drop, sizeof(horizon_drop));
 	addattr_nest_end(n, tail);
 	return 0;
 }
@@ -275,6 +297,8 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	unsigned int orphan_mask;
 	unsigned int ce_threshold;
 	unsigned int timer_slack;
+	unsigned int horizon;
+	__u8 horizon_drop;
 
 	SPRINT_BUF(b1);
 
@@ -374,6 +398,23 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			     sprint_time64(timer_slack, b1));
 	}
 
+	if (tb[TCA_FQ_HORIZON] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_HORIZON]) >= sizeof(__u32)) {
+		horizon = rta_getattr_u32(tb[TCA_FQ_HORIZON]);
+		print_uint(PRINT_JSON, "horizon", NULL, horizon);
+		print_string(PRINT_FP, NULL, "horizon %s ",
+			     sprint_time(horizon, b1));
+	}
+
+	if (tb[TCA_FQ_HORIZON_DROP] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_HORIZON_DROP]) >= sizeof(__u8)) {
+		horizon_drop = rta_getattr_u8(tb[TCA_FQ_HORIZON_DROP]);
+		if (!horizon_drop)
+			print_null(PRINT_ANY, "horizon_cap", "horizon_cap ", NULL);
+		else
+			print_null(PRINT_ANY, "horizon_drop", "horizon_drop ", NULL);
+	}
+
 	return 0;
 }
 
@@ -430,12 +471,25 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 		print_lluint(PRINT_ANY, "flows_plimit", " flows_plimit %llu",
 			     st->flows_plimit);
 
-	if (st->pkts_too_long || st->allocation_errors) {
+	if (st->pkts_too_long || st->allocation_errors ||
+	    st->horizon_drops || st->horizon_caps) {
 		print_nl();
-		print_lluint(PRINT_ANY, "pkts_too_long",
-			     "  pkts_too_long %llu", st->pkts_too_long);
-		print_lluint(PRINT_ANY, "alloc_errors", " alloc_errors %llu",
-			     st->allocation_errors);
+		if (st->pkts_too_long)
+			print_lluint(PRINT_ANY, "pkts_too_long",
+				     " pkts_too_long %llu",
+				     st->pkts_too_long);
+		if (st->allocation_errors)
+			print_lluint(PRINT_ANY, "alloc_errors",
+				     " alloc_errors %llu",
+				     st->allocation_errors);
+		if (st->horizon_drops)
+			print_lluint(PRINT_ANY, "horizon_drops",
+				     " horizon_drops %llu",
+				     st->horizon_drops);
+		if (st->horizon_caps)
+			print_lluint(PRINT_ANY, "horizon_caps",
+				     "  horizon_caps %llu",
+				     st->horizon_caps);
 	}
 
 	return 0;
