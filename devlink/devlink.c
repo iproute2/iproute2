@@ -286,6 +286,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_PORT_PFNUMBER BIT(43)
 #define DL_OPT_PORT_SFNUMBER BIT(44)
 #define DL_OPT_PORT_FUNCTION_STATE BIT(45)
+#define DL_OPT_PORT_CONTROLLER BIT(46)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -336,6 +337,7 @@ struct dl_opts {
 	uint32_t overwrite_mask;
 	enum devlink_reload_action reload_action;
 	enum devlink_reload_limit reload_limit;
+	uint32_t port_controller;
 	uint32_t port_sfnumber;
 	uint16_t port_flavour;
 	uint16_t port_pfnumber;
@@ -1886,6 +1888,12 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_PORT_SFNUMBER;
+		} else if (dl_argv_match(dl, "controller") && (o_all & DL_OPT_PORT_CONTROLLER)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint32_t(dl, &opts->port_controller);
+			if (err)
+				return err;
+			o_found |= DL_OPT_PORT_CONTROLLER;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -2079,6 +2087,9 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PORT_PCI_PF_NUMBER, opts->port_pfnumber);
 	if (opts->present & DL_OPT_PORT_SFNUMBER)
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_PORT_PCI_SF_NUMBER, opts->port_sfnumber);
+	if (opts->present & DL_OPT_PORT_CONTROLLER)
+		mnl_attr_put_u32(nlh, DEVLINK_ATTR_PORT_CONTROLLER_NUMBER,
+				 opts->port_controller);
 }
 
 static int dl_argv_parse_put(struct nlmsghdr *nlh, struct dl *dl,
@@ -3795,7 +3806,8 @@ static void cmd_port_help(void)
 	pr_err("       devlink port param set DEV/PORT_INDEX name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink port param show [DEV/PORT_INDEX name PARAMETER]\n");
 	pr_err("       devlink port health show [ DEV/PORT_INDEX reporter REPORTER_NAME ]\n");
-	pr_err("       devlink port add DEV/PORT_INDEX flavour FLAVOUR pfnum PFNUM [ sfnum SFNUM ]\n");
+	pr_err("       devlink port add DEV/PORT_INDEX flavour FLAVOUR pfnum PFNUM\n"
+	       "                      [ sfnum SFNUM ][ controller CNUM ]\n");
 	pr_err("       devlink port del DEV/PORT_INDEX\n");
 }
 
@@ -4324,7 +4336,8 @@ static int __cmd_health_show(struct dl *dl, bool show_device, bool show_port);
 
 static void cmd_port_add_help(void)
 {
-	pr_err("       devlink port add { DEV | DEV/PORT_INDEX } flavour FLAVOUR pfnum PFNUM [ sfnum SFNUM ]\n");
+	pr_err("       devlink port add DEV/PORT_INDEX flavour FLAVOUR pfnum PFNUM\n"
+	       "                      [ sfnum SFNUM ][ controller CNUM ]\n");
 }
 
 static int cmd_port_add(struct dl *dl)
@@ -4342,7 +4355,7 @@ static int cmd_port_add(struct dl *dl)
 
 	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE | DL_OPT_HANDLEP |
 				DL_OPT_PORT_FLAVOUR | DL_OPT_PORT_PFNUMBER,
-				DL_OPT_PORT_SFNUMBER);
+				DL_OPT_PORT_SFNUMBER | DL_OPT_PORT_CONTROLLER);
 	if (err)
 		return err;
 

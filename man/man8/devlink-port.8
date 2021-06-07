@@ -52,8 +52,12 @@ devlink-port \- devlink port configuration
 .IR FLAVOUR " ]"
 .RB "[ " pcipf
 .IR PFNUMBER " ]"
+.br
 .RB "{ " pcisf
 .IR SFNUMBER " }"
+.br
+.RB "[ " controller
+.IR CNUM " ]"
 .br
 
 .ti -8
@@ -173,6 +177,12 @@ Specifies PCI pfnumber to use on which a SF device to create
 Specifies sfnumber to assign to the device of the SF.
 This field is optional for those devices which supports auto assignment of the
 SF number.
+
+.TP
+.BR controller " { " controller " } "
+Specifies controller number for which the SF port is created.
+This field is optional. It is used only when SF port is created for the
+external controller.
 
 .ti -8
 .SS devlink port function set - Set the port function attribute(s).
@@ -326,6 +336,17 @@ Shows (dumps) all the port parameters across all the devices registered in the d
 devlink dev param set pci/0000:01:00.0/1 name internal_error_reset value true cmode runtime
 .RS 4
 Sets the parameter internal_error_reset of specified devlink port (#1) to true.
+.RE
+.PP
+devlink port add pci/0000:06:00.0 flavour pcisf pfnum 0 sfnum 88 controller 1
+.RS 4
+Add a devlink port of flavour PCI SF on controller 1 which has PCI PF of number
+0 with SF number 88. To make use of the function an example sequence is to add
+a port, configure the function attribute and activate the function. Once
+the function usage is completed, deactivate the function and finally delete
+the port. When there is desire to reuse the port without deletion, it can be
+reconfigured and activated again when function is in inactive state and
+function's operational state is detached.
 .RE
 
 .SH SEE ALSO
