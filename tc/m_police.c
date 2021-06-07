@@ -278,18 +278,19 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	__u64 rate64, prate64;
 	__u64 pps64, ppsburst64;
 
+	print_string(PRINT_ANY, "kind", "%s", "police");
 	if (arg == NULL)
 		return 0;
 
 	parse_rtattr_nested(tb, TCA_POLICE_MAX, arg);
 
 	if (tb[TCA_POLICE_TBF] == NULL) {
-		fprintf(f, "[NULL police tbf]");
-		return 0;
+		fprintf(stderr, "[NULL police tbf]");
+		return -1;
 	}
 #ifndef STOOPID_8BYTE
 	if (RTA_PAYLOAD(tb[TCA_POLICE_TBF])  < sizeof(*p)) {
-		fprintf(f, "[truncated police tbf]");
+		fprintf(stderr, "[truncated police tbf]");
 		return -1;
 	}
 #endif
@@ -300,13 +301,13 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	    RTA_PAYLOAD(tb[TCA_POLICE_RATE64]) >= sizeof(rate64))
 		rate64 = rta_getattr_u64(tb[TCA_POLICE_RATE64]);
 
-	fprintf(f, " police 0x%x ", p->index);
+	print_uint(PRINT_ANY, "index", "\t index %u ", p->index);
 	tc_print_rate(PRINT_FP, NULL, "rate %s ", rate64);
 	buffer = tc_calc_xmitsize(rate64, p->burst);
 	print_size(PRINT_FP, NULL, "burst %s ", buffer);
 	print_size(PRINT_FP, NULL, "mtu %s ", p->mtu);
 	if (show_raw)
-		fprintf(f, "[%08x] ", p->burst);
+		print_hex(PRINT_FP, NULL, "[%08x] ", p->burst);
 
 	prate64 = p->peakrate.rate;
 	if (tb[TCA_POLICE_PEAKRATE64] &&
@@ -327,8 +328,8 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 		pps64 = rta_getattr_u64(tb[TCA_POLICE_PKTRATE64]);
 		ppsburst64 = rta_getattr_u64(tb[TCA_POLICE_PKTBURST64]);
 		ppsburst64 = tc_calc_xmitsize(pps64, ppsburst64);
-		fprintf(f, "pkts_rate %llu ", pps64);
-		fprintf(f, "pkts_burst %llu ", ppsburst64);
+		print_u64(PRINT_ANY, "pkts_rate", "pkts_rate %llu ", pps64);
+		print_u64(PRINT_ANY, "pkts_burst", "pkts_burst %llu ", ppsburst64);
 	}
 
 	print_action_control(f, "action ", p->action, "");
@@ -337,14 +338,17 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 		__u32 action = rta_getattr_u32(tb[TCA_POLICE_RESULT]);
 
 		print_action_control(f, "/", action, " ");
-	} else
-		fprintf(f, " ");
+	} else {
+		print_string(PRINT_FP, NULL, " ", NULL);
+	}
 
-	fprintf(f, "overhead %ub ", p->rate.overhead);
+	print_uint(PRINT_ANY, "overhead", "overhead %u ", p->rate.overhead);
 	linklayer = (p->rate.linklayer & TC_LINKLAYER_MASK);
 	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
-		fprintf(f, "linklayer %s ", sprint_linklayer(linklayer, b2));
-	fprintf(f, "\n\tref %d bind %d", p->refcnt, p->bindcnt);
+		print_string(PRINT_ANY, "linklayer", "linklayer %s ",
+			     sprint_linklayer(linklayer, b2));
+	print_int(PRINT_ANY, "ref", "ref %d ", p->refcnt);
+	print_int(PRINT_ANY, "bind", "bind %d ", p->bindcnt);
 	if (show_stats) {
 		if (tb[TCA_POLICE_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_POLICE_TM]);
@@ -352,7 +356,7 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 			print_tm(f, tm);
 		}
 	}
-	fprintf(f, "\n");
+	print_nl();
 
 
 	return 0;
