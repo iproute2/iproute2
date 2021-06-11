@@ -917,6 +917,19 @@ static int strtobool(const char *str, bool *p_val)
 	return 0;
 }
 
+static int ident_str_validate(char *str, unsigned int expected)
+{
+	if (!str)
+		return -EINVAL;
+
+	if (get_str_char_count(str, '/') != expected) {
+		pr_err("Wrong identification string format.\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int __dl_argv_handle(char *str, char **p_bus_name, char **p_dev_name)
 {
 	int err;
@@ -932,15 +945,12 @@ static int __dl_argv_handle(char *str, char **p_bus_name, char **p_dev_name)
 static int dl_argv_handle(struct dl *dl, char **p_bus_name, char **p_dev_name)
 {
 	char *str = dl_argv_next(dl);
+	int err;
 
-	if (!str) {
+	err = ident_str_validate(str, 1);
+	if (err) {
 		pr_err("Devlink identification (\"bus_name/dev_name\") expected\n");
-		return -EINVAL;
-	}
-	if (get_str_char_count(str, '/') != 1) {
-		pr_err("Wrong devlink identification string format.\n");
-		pr_err("Expected \"bus_name/dev_name\".\n");
-		return -EINVAL;
+		return err;
 	}
 	return __dl_argv_handle(str, p_bus_name, p_dev_name);
 }
@@ -1075,18 +1085,12 @@ static int dl_argv_handle_region(struct dl *dl, char **p_bus_name,
 					char **p_dev_name, char **p_region)
 {
 	char *str = dl_argv_next(dl);
-	unsigned int slash_count;
+	int err;
 
-	if (!str) {
-		pr_err("Expected \"bus_name/dev_name/region\" identification.\n");
-		return -EINVAL;
-	}
-
-	slash_count = get_str_char_count(str, '/');
-	if (slash_count != 2) {
-		pr_err("Wrong region identification string format.\n");
+	err = ident_str_validate(str, 2);
+	if (err) {
 		pr_err("Expected \"bus_name/dev_name/region\" identification.\n"".\n");
-		return -EINVAL;
+		return err;
 	}
 
 	return __dl_argv_handle_region(str, p_bus_name, p_dev_name, p_region);
