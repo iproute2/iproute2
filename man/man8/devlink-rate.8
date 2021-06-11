@@ -15,7 +15,7 @@ devlink-rate \- devlink rate management
 
 .ti -8
 .IR OPTIONS " := { "
-.BR -j [ \fIson "] | " -p [ \fIretty "] }"
+.BR -j [ \fIson "] | " -p [ \fIretty "] | " -i [ \fIec "] }"
 
 .ti -8
 .B devlink port function rate show
@@ -61,9 +61,10 @@ except decimal number, to avoid collisions with leafs.
 .PP
 Command output show rate object identifier, it's type and rate values along with
 parent node name. Rate values printed in SI units which are more suitable to
-represent specific value. JSON (\fB-j\fR) output always print rate values in
-bytes per second. Zero rate values means "unlimited" rates and ommited in
-output, as well as parent node name.
+represent specific value. To print values in IEC units \fB-i\fR switch is
+used. JSON (\fB-j\fR) output always print rate values in bytes per second. Zero
+rate values means "unlimited" rates and ommited in output, as well as parent
+node name.
 
 .SS devlink port function rate set - set rate object parameters.
 Allows set rate object's parameters. If any parameter specified multiple times
@@ -85,7 +86,7 @@ rate group.
 .TP 8
 .I VALUE
 These parameter accept a floating point number, possibly followed by either a
-unit.
+unit (both SI and IEC units supported).
 .RS
 .TP
 bit or a bare number
@@ -117,6 +118,9 @@ Gigabytes per second
 .TP
 tbps
 Terabytes per second
+.P
+To specify in IEC units, replace the SI prefix (k-, m-, g-, t-) with IEC prefix
+(ki-, mi-, gi- and ti-) respectively. Input is case-insensitive.
 .RE
 .PP
 .BI parent " NODE_NAME \fR| " noparent
@@ -165,6 +169,16 @@ pci/0000:03:00.0 device:
 # devlink port function rate show pci/0000:03:00.0/1
 .br
 pci/0000:03:00.0/1 type leaf
+.br
+.RE
+
+.PP
+\fB*\fR Display leaf rate object rate values using IEC units:
+.RS 4
+.PP
+# devlink -i port function rate show pci/0000:03:00.0/2
+.br
+pci/0000:03:00.0/2 type leaf 11718Kibit
 .br
 .RE
 
