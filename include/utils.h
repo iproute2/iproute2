@@ -50,6 +50,9 @@ void incomplete_command(void) __attribute__((noreturn));
 #define NEXT_ARG_FWD() do { argv++; argc--; } while(0)
 #define PREV_ARG() do { argv--; argc++; } while(0)
 
+/* Upper limit for batch mode */
+#define MAX_ARGS 512
+
 #define TIME_UNITS_PER_SEC	1000000
 #define NSEC_PER_USEC 1000
 #define NSEC_PER_MSEC 1000000

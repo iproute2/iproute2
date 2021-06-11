@@ -1714,10 +1714,10 @@ int do_batch(const char *name, bool force,
 
 	cmdlineno = 0;
 	while (getcmdline(&line, &len, stdin) != -1) {
-		char *largv[100];
+		char *largv[MAX_ARGS];
 		int largc;
 
-		largc = makeargs(line, largv, 100);
+		largc = makeargs(line, largv, MAX_ARGS);
 		if (!largc)
 			continue;	/* blank line */
 
