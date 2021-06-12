@@ -75,6 +75,10 @@ devlink-port \- devlink port configuration
 .RI "STATE }"
 
 .ti -8
+.BR "devlink port function rate "
+.RI "{ " show " | " set " | " add " | " del " | " help " }"
+
+.ti -8
 .B devlink dev param set
 .I DEV/PORT_INDEX
 .B name
@@ -249,6 +253,10 @@ Configuration mode in which the new value is set.
 .I PARAMETER
 Specify parameter name to show.
 If this argument, as well as port index, are omitted - all parameters supported by devlink device ports are listed.
+
+.SS devlink port function rate - manage devlink rate objects
+Is an alias for
+.BR devlink-rate (8).
 
 .SH "EXAMPLES"
 .PP
