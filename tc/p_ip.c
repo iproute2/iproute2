@@ -68,7 +68,7 @@ parse_ip(int *argc_p, char ***argv_p,
 	if (strcmp(*argv, "ttl") == 0) {
 		NEXT_ARG();
 		tkey->off = 8;
-		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey, 0);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey, PEDIT_ALLOW_DEC);
 		goto done;
 	}
 	if (strcmp(*argv, "protocol") == 0) {

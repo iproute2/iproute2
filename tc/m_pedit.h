@@ -39,6 +39,10 @@
 
 #define PEDITKINDSIZ 16
 
+enum m_pedit_flags {
+	PEDIT_ALLOW_DEC = 1<<0,
+};
+
 struct m_pedit_key {
 	__u32           mask;  /* AND */
 	__u32           val;   /*XOR */

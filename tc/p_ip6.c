@@ -71,7 +71,7 @@ parse_ip6(int *argc_p, char ***argv_p,
 	if (strcmp(*argv, "hoplimit") == 0) {
 		NEXT_ARG();
 		tkey->off = 7;
-		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey, 0);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey, PEDIT_ALLOW_DEC);
 		goto done;
 	}
 	if (strcmp(*argv, "traffic_class") == 0) {

@@ -77,6 +77,7 @@ pedit - generic packet editor action
 .IR VAL " | "
 .BR add
 .IR VAL " | "
+.BR decrement " | "
 .BR preserve " } [ " retain
 .IR RVAL " ]"
 
@@ -96,7 +97,7 @@ chosen automatically based on the header field size.
 .B ex
 Use extended pedit.
 .I EXTENDED_LAYERED_OP
-and the add
+and the add/decrement
 .I CMD_SPEC
 are allowed only in this mode.
 .TP
@@ -287,6 +288,11 @@ Add the addressed data by a specific value. The size of
 is defined by the size of the addressed header field in
 .IR EXTENDED_LAYERED_OP .
 This operation is supported only for extended layered op.
+.TP
+.BI decrement
+Decrease the addressed data by one.
+This operation is supported only for
+.BR ip " " ttl " and " ip6 " " hoplimit "."
 .TP
 .B preserve
 Keep the addressed data as is.
