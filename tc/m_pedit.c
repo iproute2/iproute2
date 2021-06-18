@@ -330,7 +330,7 @@ static int parse_val(int *argc_p, char ***argv_p, __u32 *val, int type)
 }
 
 int parse_cmd(int *argc_p, char ***argv_p, __u32 len, int type, __u32 retain,
-	      struct m_pedit_sel *sel, struct m_pedit_key *tkey)
+	      struct m_pedit_sel *sel, struct m_pedit_key *tkey, int flags)
 {
 	__u32 mask[4] = { 0 };
 	__u32 val[4] = { 0 };
@@ -502,7 +502,7 @@ done:
 		NEXT_ARG();
 	}
 
-	res = parse_cmd(&argc, &argv, len, TU32, retain, sel, tkey);
+	res = parse_cmd(&argc, &argv, len, TU32, retain, sel, tkey, 0);
 
 	*argc_p = argc;
 	*argv_p = argv;

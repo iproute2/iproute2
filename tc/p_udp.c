@@ -41,14 +41,14 @@ parse_udp(int *argc_p, char ***argv_p,
 	if (strcmp(*argv, "sport") == 0) {
 		NEXT_ARG();
 		tkey->off = 0;
-		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey, 0);
 		goto done;
 	}
 
 	if (strcmp(*argv, "dport") == 0) {
 		NEXT_ARG();
 		tkey->off = 2;
-		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey, 0);
 		goto done;
 	}
 

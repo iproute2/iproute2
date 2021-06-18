@@ -41,43 +41,43 @@ parse_ip6(int *argc_p, char ***argv_p,
 	if (strcmp(*argv, "src") == 0) {
 		NEXT_ARG();
 		tkey->off = 8;
-		res = parse_cmd(&argc, &argv, 16, TIPV6, RU32, sel, tkey);
+		res = parse_cmd(&argc, &argv, 16, TIPV6, RU32, sel, tkey, 0);
 		goto done;
 	}
 	if (strcmp(*argv, "dst") == 0) {
 		NEXT_ARG();
 		tkey->off = 24;
-		res = parse_cmd(&argc, &argv, 16, TIPV6, RU32, sel, tkey);
+		res = parse_cmd(&argc, &argv, 16, TIPV6, RU32, sel, tkey, 0);
 		goto done;
 	}
 	if (strcmp(*argv, "flow_lbl") == 0) {
 		NEXT_ARG();
 		tkey->off = 0;
-		res = parse_cmd(&argc, &argv, 4, TU32, 0x0007ffff, sel, tkey);
+		res = parse_cmd(&argc, &argv, 4, TU32, 0x0007ffff, sel, tkey, 0);
 		goto done;
 	}
 	if (strcmp(*argv, "payload_len") == 0) {
 		NEXT_ARG();
 		tkey->off = 4;
-		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey, 0);
 		goto done;
 	}
 	if (strcmp(*argv, "nexthdr") == 0) {
 		NEXT_ARG();
 		tkey->off = 6;
-		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey, 0);
 		goto done;
 	}
 	if (strcmp(*argv, "hoplimit") == 0) {
 		NEXT_ARG();
 		tkey->off = 7;
-		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey, 0);
 		goto done;
 	}
 	if (strcmp(*argv, "traffic_class") == 0) {
 		NEXT_ARG();
 		tkey->off = 1;
-		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey, 0);
 
 		/* Shift the field by 4 bits on success. */
 		if (!res) {

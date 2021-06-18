@@ -41,21 +41,21 @@ parse_tcp(int *argc_p, char ***argv_p,
 	if (strcmp(*argv, "sport") == 0) {
 		NEXT_ARG();
 		tkey->off = 0;
-		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey, 0);
 		goto done;
 	}
 
 	if (strcmp(*argv, "dport") == 0) {
 		NEXT_ARG();
 		tkey->off = 2;
-		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey, 0);
 		goto done;
 	}
 
 	if (strcmp(*argv, "flags") == 0) {
 		NEXT_ARG();
 		tkey->off = 13;
-		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey);
+		res = parse_cmd(&argc, &argv, 1, TU32, RU8, sel, tkey, 0);
 		goto done;
 	}
 

@@ -41,21 +41,21 @@ parse_eth(int *argc_p, char ***argv_p,
 	if (strcmp(*argv, "type") == 0) {
 		NEXT_ARG();
 		tkey->off = 12;
-		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey);
+		res = parse_cmd(&argc, &argv, 2, TU32, RU16, sel, tkey, 0);
 		goto done;
 	}
 
 	if (strcmp(*argv, "dst") == 0) {
 		NEXT_ARG();
 		tkey->off = 0;
-		res = parse_cmd(&argc, &argv, 6, TMAC, RU32, sel, tkey);
+		res = parse_cmd(&argc, &argv, 6, TMAC, RU32, sel, tkey, 0);
 		goto done;
 	}
 
 	if (strcmp(*argv, "src") == 0) {
 		NEXT_ARG();
 		tkey->off = 6;
-		res = parse_cmd(&argc, &argv, 6, TMAC, RU32, sel, tkey);
+		res = parse_cmd(&argc, &argv, 6, TMAC, RU32, sel, tkey, 0);
 		goto done;
 	}
 
