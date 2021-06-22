@@ -7,6 +7,7 @@ ifeq ($(HAVE_MNL),y)
 
 DEVLINKOBJ = devlink.o mnlg.o
 TARGETS += devlink
+LDLIBS += -lm
 
 endif
 
