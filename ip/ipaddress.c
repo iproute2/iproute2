@@ -1242,6 +1242,20 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 						   RTA_PAYLOAD(tb[IFLA_PHYS_SWITCH_ID]),
 						   b1, sizeof(b1)));
 		}
+
+		if (tb[IFLA_PARENT_DEV_BUS_NAME]) {
+			print_string(PRINT_ANY,
+				     "parentbus",
+				     "parentbus %s ",
+				     rta_getattr_str(tb[IFLA_PARENT_DEV_BUS_NAME]));
+		}
+
+		if (tb[IFLA_PARENT_DEV_NAME]) {
+			print_string(PRINT_ANY,
+				     "parentdev",
+				     "parentdev %s ",
+				     rta_getattr_str(tb[IFLA_PARENT_DEV_NAME]));
+		}
 	}
 
 	if ((do_link || show_details) && tb[IFLA_IFALIAS]) {
