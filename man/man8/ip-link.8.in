@@ -251,12 +251,12 @@ ip-link \- network device configuration
 .in -8
 
 .ti -8
-.BI "ip link property add"
+.BI "ip link property add dev " DEVICE
 .RB "[ " altname
 .IR NAME " .. ]"
 
 .ti -8
-.BI "ip link property del"
+.BI "ip link property del dev " DEVICE
 .RB "[ " altname
 .IR NAME " .. ]"
 
