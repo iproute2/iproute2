@@ -3546,7 +3546,7 @@ static int cmd_dev_flash_status_cb(const struct nlmsghdr *nlh, void *data)
 		}
 	}
 	if (total) {
-		pr_out_tty(" %3lu%%", (done * 100) / total);
+		pr_out_tty(" %3"PRIu64"%%", (done * 100) / total);
 		ctx->last_pc = 1;
 	} else {
 		ctx->last_pc = 0;
@@ -3601,7 +3601,7 @@ static void cmd_dev_flash_time_elapsed(struct cmd_dev_flash_status_ctx *ctx)
 		 */
 		if (!ctx->status_msg_timeout) {
 			len = snprintf(msg, sizeof(msg),
-				       " ( %lum %lus )", elapsed_m, elapsed_s);
+				       " ( %"PRIu64"m %"PRIu64"s )", elapsed_m, elapsed_s);
 		} else if (res.tv_sec <= ctx->status_msg_timeout) {
 			uint64_t timeout_m, timeout_s;
 
@@ -3609,11 +3609,11 @@ static void cmd_dev_flash_time_elapsed(struct cmd_dev_flash_status_ctx *ctx)
 			timeout_s = ctx->status_msg_timeout % 60;
 
 			len = snprintf(msg, sizeof(msg),
-				       " ( %lum %lus : %lum %lus )",
+				       " ( %"PRIu64"m %"PRIu64"s : %"PRIu64"m %"PRIu64"s )",
 				       elapsed_m, elapsed_s, timeout_m, timeout_s);
 		} else {
 			len = snprintf(msg, sizeof(msg),
-				       " ( %lum %lus : timeout reached )", elapsed_m, elapsed_s);
+				       " ( %"PRIu64"m %"PRIu64"s : timeout reached )", elapsed_m, elapsed_s);
 		}
 
 		ctx->elapsed_time_msg_len = len;
