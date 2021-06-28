@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <stdint.h>
 
 #ifdef HAVE_LIBBSD
 #include <bsd/string.h>
@@ -264,7 +265,7 @@ void print_nlmsg_timestamp(FILE *fp, const struct nlmsghdr *n);
 unsigned int print_name_and_link(const char *fmt,
 				 const char *name, struct rtattr *tb[]);
 
-#define BIT(nr)                 (1UL << (nr))
+#define BIT(nr)                 (UINT64_C(1) << (nr))
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
