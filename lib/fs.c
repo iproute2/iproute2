@@ -339,4 +339,3 @@ char *get_task_name(pid_t pid)
 
 	return comm;
 }
-
