@@ -268,10 +268,12 @@ static int load_bpf_object(struct bpf_cfg_in *cfg)
 	}
 
 	bpf_object__for_each_program(p, obj) {
+		bool prog_to_attach = !prog && cfg->section &&
+			!strcmp(get_bpf_program__section_name(p), cfg->section);
+
 		/* Only load the programs that will either be subsequently
 		 * attached or inserted into a tail call map */
-		if (find_legacy_tail_calls(p, obj) < 0 && cfg->section &&
-		    strcmp(get_bpf_program__section_name(p), cfg->section)) {
+		if (find_legacy_tail_calls(p, obj) < 0 && !prog_to_attach) {
 			ret = bpf_program__set_autoload(p, false);
 			if (ret)
 				return -EINVAL;
@@ -280,7 +282,8 @@ static int load_bpf_object(struct bpf_cfg_in *cfg)
 
 		bpf_program__set_type(p, cfg->type);
 		bpf_program__set_ifindex(p, cfg->ifindex);
-		if (!prog)
+
+		if (prog_to_attach)
 			prog = p;
 	}
 
