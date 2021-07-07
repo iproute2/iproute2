@@ -943,12 +943,14 @@ skip_it:
 }
 
 int rtnl_dump_filter_nc(struct rtnl_handle *rth,
-		     rtnl_filter_t filter,
-		     void *arg1, __u16 nc_flags)
+			rtnl_filter_t filter,
+			void *arg1, __u16 nc_flags)
 {
-	const struct rtnl_dump_filter_arg a[2] = {
-		{ .filter = filter, .arg1 = arg1,
-		  .errhndlr = NULL, .arg2 = NULL, .nc_flags = nc_flags, },
+	const struct rtnl_dump_filter_arg a[] = {
+		{
+			.filter = filter, .arg1 = arg1,
+			.nc_flags = nc_flags,
+		},
 		{ },
 	};
 
@@ -962,9 +964,12 @@ int rtnl_dump_filter_errhndlr_nc(struct rtnl_handle *rth,
 		     void *arg2,
 		     __u16 nc_flags)
 {
-	const struct rtnl_dump_filter_arg a[2] = {
-		{ .filter = filter, .arg1 = arg1,
-		  .errhndlr = errhndlr, .arg2 = arg2, .nc_flags = nc_flags, },
+	const struct rtnl_dump_filter_arg a[] = {
+		{
+			.filter = filter, .arg1 = arg1,
+			.errhndlr = errhndlr, .arg2 = arg2,
+			.nc_flags = nc_flags,
+		},
 		{ },
 	};
 
