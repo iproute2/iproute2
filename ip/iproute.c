@@ -1734,6 +1734,18 @@ static int iproute_flush(int family, rtnl_filter_t filter_fn)
 	}
 }
 
+static int save_route_errhndlr(struct nlmsghdr *n, void *arg)
+{
+	int err = -*(int *)NLMSG_DATA(n);
+
+	if (n->nlmsg_type == NLMSG_DONE &&
+	    filter.tb == RT_TABLE_MAIN &&
+	    err == ENOENT)
+		return RTNL_SUPPRESS_NLMSG_DONE_NLERR;
+
+	return RTNL_LET_NLERR;
+}
+
 static int iproute_list_flush_or_save(int argc, char **argv, int action)
 {
 	int dump_family = preferred_family;
@@ -1946,7 +1958,8 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 
 	new_json_obj(json);
 
-	if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
+	if (rtnl_dump_filter_errhndlr(&rth, filter_fn, stdout,
+				      save_route_errhndlr, NULL) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return -2;
 	}

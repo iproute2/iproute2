@@ -718,7 +718,8 @@ int rtnl_dump_request_n(struct rtnl_handle *rth, struct nlmsghdr *n)
 	return sendmsg(rth->fd, &msg, 0);
 }
 
-static int rtnl_dump_done(struct nlmsghdr *h)
+static int rtnl_dump_done(struct nlmsghdr *h,
+			  const struct rtnl_dump_filter_arg *a)
 {
 	int len = *(int *)NLMSG_DATA(h);
 
@@ -728,11 +729,15 @@ static int rtnl_dump_done(struct nlmsghdr *h)
 	}
 
 	if (len < 0) {
+		errno = -len;
+
+		if (a->errhndlr(h, a->arg2) & RTNL_SUPPRESS_NLMSG_DONE_NLERR)
+			return 0;
+
 		/* check for any messages returned from kernel */
 		if (nl_dump_ext_ack_done(h, len))
 			return len;
 
-		errno = -len;
 		switch (errno) {
 		case ENOENT:
 		case EOPNOTSUPP:
@@ -753,8 +758,9 @@ static int rtnl_dump_done(struct nlmsghdr *h)
 	return 0;
 }
 
-static void rtnl_dump_error(const struct rtnl_handle *rth,
-			    struct nlmsghdr *h)
+static int rtnl_dump_error(const struct rtnl_handle *rth,
+			    struct nlmsghdr *h,
+			    const struct rtnl_dump_filter_arg *a)
 {
 
 	if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
@@ -766,11 +772,16 @@ static void rtnl_dump_error(const struct rtnl_handle *rth,
 		if (rth->proto == NETLINK_SOCK_DIAG &&
 		    (errno == ENOENT ||
 		     errno == EOPNOTSUPP))
-			return;
+			return -1;
+
+		if (a->errhndlr(h, a->arg2) & RTNL_SUPPRESS_NLMSG_ERROR_NLERR)
+			return 0;
 
 		if (!(rth->flags & RTNL_HANDLE_F_SUPPRESS_NLERR))
 			perror("RTNETLINK answers");
 	}
+
+	return -1;
 }
 
 static int __rtnl_recvmsg(int fd, struct msghdr *msg, int flags)
@@ -879,7 +890,7 @@ static int rtnl_dump_filter_l(struct rtnl_handle *rth,
 					dump_intr = 1;
 
 				if (h->nlmsg_type == NLMSG_DONE) {
-					err = rtnl_dump_done(h);
+					err = rtnl_dump_done(h, a);
 					if (err < 0) {
 						free(buf);
 						return -1;
@@ -890,9 +901,13 @@ static int rtnl_dump_filter_l(struct rtnl_handle *rth,
 				}
 
 				if (h->nlmsg_type == NLMSG_ERROR) {
-					rtnl_dump_error(rth, h);
-					free(buf);
-					return -1;
+					err = rtnl_dump_error(rth, h, a);
+					if (err < 0) {
+						free(buf);
+						return -1;
+					}
+
+					goto skip_it;
 				}
 
 				if (!rth->dump_fp) {
@@ -932,8 +947,25 @@ int rtnl_dump_filter_nc(struct rtnl_handle *rth,
 		     void *arg1, __u16 nc_flags)
 {
 	const struct rtnl_dump_filter_arg a[2] = {
-		{ .filter = filter, .arg1 = arg1, .nc_flags = nc_flags, },
-		{ .filter = NULL,   .arg1 = NULL, .nc_flags = 0, },
+		{ .filter = filter, .arg1 = arg1,
+		  .errhndlr = NULL, .arg2 = NULL, .nc_flags = nc_flags, },
+		{ },
+	};
+
+	return rtnl_dump_filter_l(rth, a);
+}
+
+int rtnl_dump_filter_errhndlr_nc(struct rtnl_handle *rth,
+		     rtnl_filter_t filter,
+		     void *arg1,
+		     rtnl_err_hndlr_t errhndlr,
+		     void *arg2,
+		     __u16 nc_flags)
+{
+	const struct rtnl_dump_filter_arg a[2] = {
+		{ .filter = filter, .arg1 = arg1,
+		  .errhndlr = errhndlr, .arg2 = arg2, .nc_flags = nc_flags, },
+		{ },
 	};
 
 	return rtnl_dump_filter_l(rth, a);
