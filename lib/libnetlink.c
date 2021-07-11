@@ -731,7 +731,7 @@ static int rtnl_dump_done(struct nlmsghdr *h,
 	if (len < 0) {
 		errno = -len;
 
-		if (a->errhndlr(h, a->arg2) & RTNL_SUPPRESS_NLMSG_DONE_NLERR)
+		if (a->errhndlr && (a->errhndlr(h, a->arg2) & RTNL_SUPPRESS_NLMSG_DONE_NLERR))
 			return 0;
 
 		/* check for any messages returned from kernel */
@@ -774,7 +774,7 @@ static int rtnl_dump_error(const struct rtnl_handle *rth,
 		     errno == EOPNOTSUPP))
 			return -1;
 
-		if (a->errhndlr(h, a->arg2) & RTNL_SUPPRESS_NLMSG_ERROR_NLERR)
+		if (a->errhndlr && (a->errhndlr(h, a->arg2) & RTNL_SUPPRESS_NLMSG_ERROR_NLERR))
 			return 0;
 
 		if (!(rth->flags & RTNL_HANDLE_F_SUPPRESS_NLERR))
