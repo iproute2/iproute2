@@ -1093,15 +1093,15 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 	char   buf[16384];
 	char   cmsgbuf[BUFSIZ];
 
-	if (rtnl->flags & RTNL_HANDLE_F_LISTEN_ALL_NSID) {
-		msg.msg_control = &cmsgbuf;
-		msg.msg_controllen = sizeof(cmsgbuf);
-	}
-
 	iov.iov_base = buf;
 	while (1) {
 		struct rtnl_ctrl_data ctrl;
 		struct cmsghdr *cmsg;
+
+		if (rtnl->flags & RTNL_HANDLE_F_LISTEN_ALL_NSID) {
+			msg.msg_control = &cmsgbuf;
+			msg.msg_controllen = sizeof(cmsgbuf);
+		}
 
 		iov.iov_len = sizeof(buf);
 		status = recvmsg(rtnl->fd, &msg, 0);
