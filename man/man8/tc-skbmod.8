@@ -5,12 +5,12 @@ skbmod - user-friendly packet editor action
 .SH SYNOPSIS
 .in +8
 .ti -8
-.BR tc " ... " "action skbmod " "{ [ " "set "
-.IR SETTABLE " ] [ "
+.BR tc " ... " "action skbmod " "{ " "set "
+.IR SETTABLE " | "
 .BI swap " SWAPPABLE"
-.RI " ] [ " CONTROL " ] [ "
+.RI " } [ " CONTROL " ] [ "
 .BI index " INDEX "
-] }
+]
 
 .ti -8
 .IR SETTABLE " := "
@@ -25,6 +25,7 @@ skbmod - user-friendly packet editor action
 .IR SWAPPABLE " := "
 .B mac
 .ti -8
+
 .IR CONTROL " := {"
 .BR reclassify " | " pipe " | " drop " | " shot " | " continue " | " pass " }"
 .SH DESCRIPTION
@@ -48,10 +49,7 @@ Change the source mac to the specified address.
 Change the ethertype to the specified value.
 .TP
 .BI mac
-Used to swap mac addresses. The
-.B swap mac
-directive is performed
-after any outstanding D/SMAC changes.
+Used to swap mac addresses.
 .TP
 .I CONTROL
 The following keywords allow to control how the tree of qdisc, classes,
@@ -128,9 +126,13 @@ tc filter add dev eth3 parent 1: protocol ip prio 10 \\
 .EE
 .RE
 
-As mentioned above, the swap action will occur after any
-.B " smac/dmac "
-substitutions are executed, if they are present.
+However, trying to
+.B set
+and
+.B swap
+in a single
+.B skbmod
+command will cause undefined behavior.
 
 .SH SEE ALSO
 .BR tc (8),
