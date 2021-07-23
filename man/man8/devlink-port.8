@@ -67,12 +67,12 @@ devlink-port \- devlink port configuration
 .ti -8
 .BR "devlink port function set "
 .IR DEV/PORT_INDEX
-.RI "{ "
+.RI "[ "
 .BR "hw_addr "
-.RI "ADDR }"
-.RI "{ "
-.BR "state"
-.RI "STATE }"
+.RI "ADDR ]"
+.RI "[ "
+.BR state " { " active " | " inactive " }"
+.RI "]"
 
 .ti -8
 .BR "devlink port function rate "
