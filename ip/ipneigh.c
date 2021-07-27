@@ -251,6 +251,51 @@ static void print_neigh_state(unsigned int nud)
 	close_json_array(PRINT_JSON, NULL);
 }
 
+static int print_neigh_brief(FILE *fp, struct ndmsg *r, struct rtattr *tb[])
+{
+	if (tb[NDA_DST]) {
+		const char *dst;
+		int family = r->ndm_family;
+
+		if (family == AF_BRIDGE) {
+			if (RTA_PAYLOAD(tb[NDA_DST]) == sizeof(struct in6_addr))
+				family = AF_INET6;
+			else
+				family = AF_INET;
+		}
+
+		dst = format_host_rta(family, tb[NDA_DST]);
+		print_color_string(PRINT_ANY, ifa_family_color(family),
+				   "dst", "%-39s ", dst);
+	}
+
+	if (!filter.index && r->ndm_ifindex) {
+		print_color_string(PRINT_ANY, COLOR_IFNAME,
+				   "dev", "%-16s ",
+				   ll_index_to_name(r->ndm_ifindex));
+	}
+
+	if (tb[NDA_LLADDR]) {
+		const char *lladdr;
+
+		SPRINT_BUF(b1);
+
+		lladdr = ll_addr_n2a(RTA_DATA(tb[NDA_LLADDR]),
+				     RTA_PAYLOAD(tb[NDA_LLADDR]),
+				     ll_index_to_type(r->ndm_ifindex),
+				     b1, sizeof(b1));
+
+		print_color_string(PRINT_ANY, COLOR_MAC,
+				   "lladdr", "%s", lladdr);
+	}
+
+	print_string(PRINT_FP, NULL, "%s", "\n");
+	close_json_object();
+	fflush(fp);
+
+	return 0;
+}
+
 int print_neigh(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
@@ -337,6 +382,9 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	else if (n->nlmsg_type == RTM_GETNEIGH)
 		print_null(PRINT_ANY, "miss", "%s ", "miss");
 
+	if (brief)
+		return print_neigh_brief(fp, r, tb);
+
 	if (tb[NDA_DST]) {
 		const char *dst;
 		int family = r->ndm_family;
@@ -412,7 +460,7 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "\n", "");
 	close_json_object();
-	fflush(stdout);
+	fflush(fp);
 
 	return 0;
 }
