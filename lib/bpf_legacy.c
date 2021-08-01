@@ -1531,7 +1531,7 @@ retry:
 		 * into our buffer. Still, try to give a debuggable error
 		 * log for the user, so enlarge it and re-fail.
 		 */
-		if (fd < 0 && (errno == ENOSPC || !ctx->log_size)) {
+		if (fd < 0 && errno == ENOSPC) {
 			if (tries++ < 10 && !bpf_log_realloc(ctx))
 				goto retry;
 
@@ -2069,7 +2069,7 @@ retry:
 	fd = bpf_btf_load(ctx->btf_data->d_buf, ctx->btf_data->d_size,
 			  ctx->log, ctx->log_size);
 	if (fd < 0 || ctx->verbose) {
-		if (fd < 0 && (errno == ENOSPC || !ctx->log_size)) {
+		if (fd < 0 && errno == ENOSPC) {
 			if (tries++ < 10 && !bpf_log_realloc(ctx))
 				goto retry;
 
