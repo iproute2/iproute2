@@ -190,7 +190,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .ti -8
 .IR ENCAP " := [ "
 .IR ENCAP_MPLS " | " ENCAP_IP " | " ENCAP_BPF " | "
-.IR ENCAP_SEG6 " | " ENCAP_SEG6LOCAL " ] "
+.IR ENCAP_SEG6 " | " ENCAP_SEG6LOCAL " | " ENCAP_IOAM6 " ] "
 
 .ti -8
 .IR ENCAP_MPLS " := "
@@ -242,6 +242,18 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR SEG6_ACTION " [ "
 .IR SEG6_ACTION_PARAM " ] [ "
 .BR count " ] "
+
+.ti -8
+.IR ENCAP_IOAM6 " := "
+.B ioam6
+.BR trace
+.BR prealloc
+.BR type
+.IR IOAM6_TRACE_TYPE
+.BR ns
+.IR IOAM6_NAMESPACE
+.BR size
+.IR IOAM6_TRACE_SIZE
 
 .ti -8
 .IR ROUTE_GET_FLAGS " := "
@@ -717,6 +729,9 @@ is a string specifying the supported encapsulation type. Namely:
 .sp
 .BI seg6local
 - local SRv6 segment processing
+.sp
+.BI ioam6
+- encapsulation type IPv6 IOAM
 
 .in -8
 .I ENCAPHDR
@@ -896,6 +911,20 @@ Additionally, encapsulate the matching packet within an outer IPv6 header
 followed by the specified SRH. The destination address of the outer IPv6
 header is set to the first segment of the new SRH. The source
 address is set as described in \fBip-sr\fR(8).
+.in -2
+
+.B ioam6
+.in +2
+.I IOAM6_TRACE_TYPE
+- List of IOAM data required in the trace, represented by a bitfield (24 bits).
+.sp
+
+.I IOAM6_NAMESPACE
+- Numerical value to represent an IOAM namespace. See \fBip-ioam\fR(8).
+.sp
+
+.I IOAM6_TRACE_SIZE
+- Size, in octets, of the pre-allocated trace data block.
 .in -4
 
 .in -8
@@ -1218,6 +1247,11 @@ Adds an IPv6 route with SRv6 encapsulation and two segments attached.
 ip -6 route add 2001:db8:1::/64 encap seg6local action End.DT46 vrftable 100 dev vrf100
 .RS 4
 Adds an IPv6 route with SRv6 decapsulation and forward with lookup in VRF table.
+.RE
+.PP
+ip -6 route add 2001:db8:1::/64 encap ioam6 trace prealloc type 0x800000 ns 1 size 12 dev eth0
+.RS 4
+Adds an IPv6 route with an IOAM Pre-allocated Trace encapsulation that only includes the hop limit and the node id, configured for the IOAM namespace 1 and a pre-allocated data block of 12 octets.
 .RE
 .PP
 ip route add 10.1.1.0/30 nhid 10

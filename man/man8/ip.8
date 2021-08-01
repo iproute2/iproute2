@@ -22,7 +22,7 @@ ip \- show / manipulate routing, network devices, interfaces and tunnels
 .BR link " | " address " | " addrlabel " | " route " | " rule " | " neigh " | "\
  ntable " | " tunnel " | " tuntap " | " maddress " | "  mroute " | " mrule " | "\
  monitor " | " xfrm " | " netns " | "  l2tp " | "  tcp_metrics " | " token " | "\
- macsec " | " vrf " | " mptcp " }"
+ macsec " | " vrf " | " mptcp " | " ioam " }"
 .sp
 
 .ti -8
@@ -253,6 +253,10 @@ readability.
 - label configuration for protocol address selection.
 
 .TP
+.B ioam
+- manage IOAM namespaces and IOAM schemas.
+
+.TP
 .B l2tp
 - tunnel ethernet over IP (L2TPv3).
 
@@ -405,6 +409,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .SH SEE ALSO
 .BR ip-address (8),
 .BR ip-addrlabel (8),
+.BR ip-ioam (8),
 .BR ip-l2tp (8),
 .BR ip-link (8),
 .BR ip-maddress (8),
