@@ -64,7 +64,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
 		"       ip [ -force ] -batch filename\n"
-		"where  OBJECT := { address | addrlabel | fou | help | ila | l2tp | link |\n"
+		"where  OBJECT := { address | addrlabel | fou | help | ila | ioam | l2tp | link |\n"
 		"                   macsec | maddress | monitor | mptcp | mroute | mrule |\n"
 		"                   neighbor | neighbour | netconf | netns | nexthop | ntable |\n"
 		"                   ntbl | route | rule | sr | tap | tcpmetrics |\n"
@@ -121,6 +121,7 @@ static const struct cmd {
 	{ "sr",		do_seg6 },
 	{ "nexthop",	do_ipnh },
 	{ "mptcp",	do_mptcp },
+	{ "ioam",	do_ioam6 },
 	{ "help",	do_help },
 	{ 0 }
 };
