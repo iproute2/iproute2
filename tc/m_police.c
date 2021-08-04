@@ -278,7 +278,7 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	__u64 rate64, prate64;
 	__u64 pps64, ppsburst64;
 
-	print_string(PRINT_ANY, "kind", "%s", "police");
+	print_string(PRINT_JSON, "kind", "%s", "police");
 	if (arg == NULL)
 		return 0;
 
@@ -301,7 +301,8 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 	    RTA_PAYLOAD(tb[TCA_POLICE_RATE64]) >= sizeof(rate64))
 		rate64 = rta_getattr_u64(tb[TCA_POLICE_RATE64]);
 
-	print_uint(PRINT_ANY, "index", "\t index %u ", p->index);
+	print_hex(PRINT_FP, NULL, " police 0x%x ", p->index);
+	print_uint(PRINT_JSON, "index", NULL, p->index);
 	tc_print_rate(PRINT_FP, NULL, "rate %s ", rate64);
 	buffer = tc_calc_xmitsize(rate64, p->burst);
 	print_size(PRINT_FP, NULL, "burst %s ", buffer);
@@ -342,12 +343,13 @@ static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
 		print_string(PRINT_FP, NULL, " ", NULL);
 	}
 
-	print_uint(PRINT_ANY, "overhead", "overhead %u ", p->rate.overhead);
+	print_size(PRINT_ANY, "overhead", "overhead %s ", p->rate.overhead);
 	linklayer = (p->rate.linklayer & TC_LINKLAYER_MASK);
 	if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
 		print_string(PRINT_ANY, "linklayer", "linklayer %s ",
 			     sprint_linklayer(linklayer, b2));
-	print_int(PRINT_ANY, "ref", "ref %d ", p->refcnt);
+	print_nl();
+	print_int(PRINT_ANY, "ref", "\tref %d ", p->refcnt);
 	print_int(PRINT_ANY, "bind", "bind %d ", p->bindcnt);
 	if (show_stats) {
 		if (tb[TCA_POLICE_TM]) {
