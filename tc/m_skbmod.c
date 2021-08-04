@@ -28,7 +28,7 @@
 static void skbmod_explain(void)
 {
 	fprintf(stderr,
-		"Usage:... skbmod { set <SETTABLE> | swap <SWAPPABLE> } [CONTROL] [index INDEX]\n"
+		"Usage:... skbmod { set <SETTABLE> | swap <SWAPPABLE> | ecn } [CONTROL] [index INDEX]\n"
 		"where SETTABLE is: [dmac DMAC] [smac SMAC] [etype ETYPE]\n"
 		"where SWAPPABLE is: \"mac\" to swap mac addresses\n"
 		"\tDMAC := 6 byte Destination MAC address\n"
@@ -110,6 +110,9 @@ static int parse_skbmod(struct action_util *a, int *argc_p, char ***argv_p,
 			}
 			p.flags |= SKBMOD_F_SMAC;
 			fprintf(stderr, "src MAC address <%s>\n", saddr);
+			ok += 1;
+		} else if (matches(*argv, "ecn") == 0) {
+			p.flags |= SKBMOD_F_ECN;
 			ok += 1;
 		} else if (matches(*argv, "help") == 0) {
 			skbmod_usage();
@@ -210,6 +213,9 @@ static int print_skbmod(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	if (p->flags & SKBMOD_F_SWAPMAC)
 		fprintf(f, "swap mac ");
+
+	if (p->flags & SKBMOD_F_ECN)
+		fprintf(f, "ecn ");
 
 	fprintf(f, "\n\t index %u ref %d bind %d", p->index, p->refcnt,
 		p->bindcnt);
