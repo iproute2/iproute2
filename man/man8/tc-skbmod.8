@@ -8,7 +8,8 @@ skbmod - user-friendly packet editor action
 .BR tc " ... " "action skbmod " "{ " "set "
 .IR SETTABLE " | "
 .BI swap " SWAPPABLE"
-.RI " } [ " CONTROL " ] [ "
+.RB " | " ecn
+.RI "} [ " CONTROL " ] [ "
 .BI index " INDEX "
 ]
 
@@ -37,6 +38,12 @@ action. Instead of having to manually edit 8-, 16-, or 32-bit chunks of an
 ethernet header,
 .B skbmod
 allows complete substitution of supported elements.
+Action must be one of
+.BR set ", " swap " and " ecn "."
+.BR set " and " swap
+only affect Ethernet packets, while
+.B ecn
+only affects IP packets.
 .SH OPTIONS
 .TP
 .BI dmac " DMAC"
@@ -50,6 +57,10 @@ Change the ethertype to the specified value.
 .TP
 .BI mac
 Used to swap mac addresses.
+.TP
+.B ecn
+Used to mark ECN Capable Transport (ECT) IP packets as Congestion Encountered (CE).
+Does not affect Non ECN-Capable Transport (Non-ECT) packets.
 .TP
 .I CONTROL
 The following keywords allow to control how the tree of qdisc, classes,
@@ -115,7 +126,7 @@ tc filter add dev eth5 parent 1: protocol ip prio 10 \\
 .EE
 .RE
 
-Finally, swap the destination and source mac addresses in the header:
+To swap the destination and source mac addresses in the Ethernet header:
 
 .RS
 .EX
@@ -126,13 +137,22 @@ tc filter add dev eth3 parent 1: protocol ip prio 10 \\
 .EE
 .RE
 
-However, trying to
-.B set
-and
-.B swap
-in a single
-.B skbmod
-command will cause undefined behavior.
+Finally, to mark the CE codepoint in the IP header for ECN Capable Transport (ECT) packets:
+
+.RS
+.EX
+tc filter add dev eth0 parent 1: protocol ip prio 10 \\
+	u32 match ip protocol 1 0xff flowid 1:2 \\
+	action skbmod \\
+	ecn
+.EE
+.RE
+
+Only one of
+.BR set ", " swap " and " ecn
+shall be used in a single command.
+Trying to use more than one of them in a single command is considered undefined behavior; pipe
+multiple commands together instead.
 
 .SH SEE ALSO
 .BR tc (8),
