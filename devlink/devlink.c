@@ -3700,7 +3700,7 @@ static int cmd_dev_flash_status_cb(const struct nlmsghdr *nlh, void *data)
 	    strcmp(dev_name, opts->dev_name))
 		return MNL_CB_ERROR;
 
-	if (genl->cmd == DEVLINK_CMD_FLASH_UPDATE_END && ctx->not_first) {
+	if (genl->cmd == DEVLINK_CMD_FLASH_UPDATE_END) {
 		pr_out("\n");
 		free(ctx->last_msg);
 		free(ctx->last_component);
