@@ -63,7 +63,7 @@ const char *get_libbpf_version(void)
 	if (fp == NULL)
 		goto out;
 
-	while ((s = fgets(buf, sizeof(buf), fp)) != NULL) {
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		if ((s = strstr(buf, "libbpf.so.")) != NULL) {
 			strncpy(_libbpf_version, s+10, sizeof(_libbpf_version)-1);
 			strtok(_libbpf_version, "\n");
