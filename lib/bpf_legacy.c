@@ -3298,6 +3298,9 @@ bool iproute2_is_map_in_map(const char *libbpf_map_name, struct bpf_elf_map *ima
 
 			*omap = ctx->maps[j];
 			outer_map_name = bpf_map_fetch_name(ctx, j);
+			if (!outer_map_name)
+				return false;
+
 			memcpy(omap_name, outer_map_name, strlen(outer_map_name) + 1);
 
 			return true;
