@@ -74,6 +74,12 @@ static const char *xmit_hash_policy_tbl[] = {
 	NULL,
 };
 
+static const char *lacp_active_tbl[] = {
+	"off",
+	"on",
+	NULL,
+};
+
 static const char *lacp_rate_tbl[] = {
 	"slow",
 	"fast",
@@ -139,6 +145,7 @@ static void print_explain(FILE *f)
 		"                [ packets_per_slave PACKETS_PER_SLAVE ]\n"
 		"                [ tlb_dynamic_lb TLB_DYNAMIC_LB ]\n"
 		"                [ lacp_rate LACP_RATE ]\n"
+		"                [ lacp_active LACP_ACTIVE]\n"
 		"                [ ad_select AD_SELECT ]\n"
 		"                [ ad_user_port_key PORTKEY ]\n"
 		"                [ ad_actor_sys_prio SYSPRIO ]\n"
@@ -150,6 +157,7 @@ static void print_explain(FILE *f)
 		"PRIMARY_RESELECT := always|better|failure\n"
 		"FAIL_OVER_MAC := none|active|follow\n"
 		"XMIT_HASH_POLICY := layer2|layer2+3|layer3+4|encap2+3|encap3+4|vlan+srcmac\n"
+		"LACP_ACTIVE := off|on\n"
 		"LACP_RATE := slow|fast\n"
 		"AD_SELECT := stable|bandwidth|count\n"
 	);
@@ -165,7 +173,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 {
 	__u8 mode, use_carrier, primary_reselect, fail_over_mac;
 	__u8 xmit_hash_policy, num_peer_notif, all_slaves_active;
-	__u8 lacp_rate, ad_select, tlb_dynamic_lb;
+	__u8 lacp_active, lacp_rate, ad_select, tlb_dynamic_lb;
 	__u16 ad_user_port_key, ad_actor_sys_prio;
 	__u32 miimon, updelay, downdelay, peer_notify_delay, arp_interval, arp_validate;
 	__u32 arp_all_targets, resend_igmp, min_links, lp_interval;
@@ -323,6 +331,13 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			lacp_rate = get_index(lacp_rate_tbl, *argv);
 			addattr8(n, 1024, IFLA_BOND_AD_LACP_RATE, lacp_rate);
+		} else if (strcmp(*argv, "lacp_active") == 0) {
+			NEXT_ARG();
+			if (get_index(lacp_active_tbl, *argv) < 0)
+				invarg("invalid lacp_active", *argv);
+
+			lacp_active = get_index(lacp_active_tbl, *argv);
+			addattr8(n, 1024, IFLA_BOND_AD_LACP_ACTIVE, lacp_active);
 		} else if (matches(*argv, "ad_select") == 0) {
 			NEXT_ARG();
 			if (get_index(ad_select_tbl, *argv) < 0)
@@ -560,6 +575,15 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "packets_per_slave",
 			   "packets_per_slave %u ",
 			   rta_getattr_u32(tb[IFLA_BOND_PACKETS_PER_SLAVE]));
+
+	if (tb[IFLA_BOND_AD_LACP_ACTIVE]) {
+		const char *lacp_active = get_name(lacp_active_tbl,
+						   rta_getattr_u8(tb[IFLA_BOND_AD_LACP_ACTIVE]));
+		print_string(PRINT_ANY,
+			     "ad_lacp_active",
+			     "lacp_active %s ",
+			     lacp_active);
+	}
 
 	if (tb[IFLA_BOND_AD_LACP_RATE]) {
 		const char *lacp_rate = get_name(lacp_rate_tbl,
