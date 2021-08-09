@@ -442,7 +442,6 @@ static void gre_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GRE_COLLECT_METADATA]) {
 		print_bool(PRINT_ANY, "external", "external ", true);
-		return;
 	}
 
 	tnl_print_endpoint("remote", tb[IFLA_GRE_REMOTE], AF_INET);
