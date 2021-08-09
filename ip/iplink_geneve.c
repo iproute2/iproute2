@@ -243,7 +243,6 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 
 static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
-	__u32 vni;
 	__u8 ttl = 0;
 	__u8 tos = 0;
 
@@ -252,15 +251,12 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_GENEVE_COLLECT_METADATA]) {
 		print_bool(PRINT_ANY, "external", "external ", true);
-		return;
 	}
 
-	if (!tb[IFLA_GENEVE_ID] ||
-	    RTA_PAYLOAD(tb[IFLA_GENEVE_ID]) < sizeof(__u32))
-		return;
-
-	vni = rta_getattr_u32(tb[IFLA_GENEVE_ID]);
-	print_uint(PRINT_ANY, "id", "id %u ", vni);
+	if (tb[IFLA_GENEVE_ID] &&
+	    RTA_PAYLOAD(tb[IFLA_GENEVE_ID]) >= sizeof(__u32)) {
+		print_uint(PRINT_ANY, "id", "id %u ", rta_getattr_u32(tb[IFLA_GENEVE_ID]));
+	}
 
 	if (tb[IFLA_GENEVE_REMOTE]) {
 		__be32 addr = rta_getattr_u32(tb[IFLA_GENEVE_REMOTE]);
