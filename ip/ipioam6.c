@@ -62,19 +62,15 @@ static void print_namespace(struct rtattr *attrs[])
 		print_uint(PRINT_ANY, "schema", " [schema %u]",
 			   rta_getattr_u32(attrs[IOAM6_ATTR_SC_ID]));
 
-	if (!attrs[IOAM6_ATTR_NS_DATA])
-		print_null(PRINT_ANY, "data", "", NULL);
-	else
+	if (attrs[IOAM6_ATTR_NS_DATA])
 		print_hex(PRINT_ANY, "data", ", data %#010x",
 			  rta_getattr_u32(attrs[IOAM6_ATTR_NS_DATA]));
 
-	if (!attrs[IOAM6_ATTR_NS_DATA_WIDE])
-		print_null(PRINT_ANY, "wide", "", NULL);
-	else
+	if (attrs[IOAM6_ATTR_NS_DATA_WIDE])
 		print_0xhex(PRINT_ANY, "wide", ", wide %#018lx",
 			    rta_getattr_u64(attrs[IOAM6_ATTR_NS_DATA_WIDE]));
 
-	print_null(PRINT_ANY, "", "\n", NULL);
+	print_nl();
 }
 
 static void print_schema(struct rtattr *attrs[])
@@ -97,7 +93,7 @@ static void print_schema(struct rtattr *attrs[])
 		print_hhu(PRINT_ANY, "", " %02x", data[i]);
 		i++;
 	}
-	print_null(PRINT_ANY, "", "\n", NULL);
+	print_nl();
 }
 
 static int process_msg(struct nlmsghdr *n, void *arg)
