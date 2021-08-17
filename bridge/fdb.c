@@ -192,10 +192,13 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 				   "mac", "%s ", lladdr);
 	}
 
-	if (!filter_index && r->ndm_ifindex)
+	if (!filter_index && r->ndm_ifindex) {
+		print_string(PRINT_FP, NULL, "dev ", NULL);
+
 		print_color_string(PRINT_ANY, COLOR_IFNAME,
-				   "ifname", "dev %s ",
+				   "ifname", "%s ",
 				   ll_index_to_name(r->ndm_ifindex));
+	}
 
 	if (tb[NDA_DST]) {
 		int family = AF_INET;
@@ -208,9 +211,11 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 				  RTA_PAYLOAD(tb[NDA_DST]),
 				  RTA_DATA(tb[NDA_DST]));
 
+		print_string(PRINT_FP, NULL, "dst ", NULL);
+
 		print_color_string(PRINT_ANY,
 				   ifa_family_color(family),
-				    "dst", "dst %s ", dst);
+				   "dst", "%s ", dst);
 	}
 
 	if (vid)
