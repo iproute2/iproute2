@@ -3404,13 +3404,13 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 	struct iovec iov[3];
 	int iovlen = 1;
 
-	if (protocol == IPPROTO_UDP || protocol == IPPROTO_MPTCP)
-		return -1;
-
 	if (protocol == IPPROTO_TCP)
 		req.nlh.nlmsg_type = TCPDIAG_GETSOCK;
-	else
+	else if (protocol == IPPROTO_DCCP)
 		req.nlh.nlmsg_type = DCCPDIAG_GETSOCK;
+	else
+		return -1;
+
 	if (show_mem) {
 		req.r.idiag_ext |= (1<<(INET_DIAG_MEMINFO-1));
 		req.r.idiag_ext |= (1<<(INET_DIAG_SKMEMINFO-1));
