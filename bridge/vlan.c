@@ -9,6 +9,7 @@
 #include <linux/if_bridge.h>
 #include <linux/if_ether.h>
 #include <string.h>
+#include <errno.h>
 
 #include "json_print.h"
 #include "libnetlink.h"
@@ -38,6 +39,7 @@ static void usage(void)
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
+		"                      [ mcast_snooping MULTICAST_SNOOPING ]\n"
 		"       bridge vlan global { show } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
@@ -355,6 +357,7 @@ static int vlan_global_option_set(int argc, char **argv)
 	short vid_end = -1;
 	char *d = NULL;
 	short vid = -1;
+	__u8 val8;
 
 	afspec = addattr_nest(&req.n, sizeof(req),
 			      BRIDGE_VLANDB_GLOBAL_OPTIONS);
@@ -397,6 +400,12 @@ static int vlan_global_option_set(int argc, char **argv)
 			if (vid_end != -1)
 				addattr16(&req.n, sizeof(req),
 					  BRIDGE_VLANDB_GOPTS_RANGE, vid_end);
+		} else if (strcmp(*argv, "mcast_snooping") == 0) {
+			NEXT_ARG();
+			if (get_u8(&val8, *argv, 0))
+				invarg("invalid mcast_snooping", *argv);
+			addattr8(&req.n, 1024,
+				 BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING, val8);
 		} else {
 			if (strcmp(*argv, "help") == 0)
 				NEXT_ARG();
@@ -702,7 +711,7 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 
 static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 {
-	struct rtattr *vtb[BRIDGE_VLANDB_GOPTS_MAX + 1];
+	struct rtattr *vtb[BRIDGE_VLANDB_GOPTS_MAX + 1], *vattr;
 	__u16 vid, vrange = 0;
 
 	if ((a->rta_type & NLA_TYPE_MASK) != BRIDGE_VLANDB_GLOBAL_OPTIONS)
@@ -728,6 +737,13 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 		print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
 	}
 	print_range("vlan", vid, vrange);
+	print_nl();
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING];
+		print_uint(PRINT_ANY, "mcast_snooping", "mcast_snooping %u ",
+			   rta_getattr_u8(vattr));
+	}
 	print_nl();
 	close_json_object();
 }
