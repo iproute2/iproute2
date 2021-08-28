@@ -173,7 +173,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B mcast_membership_interval
 .IR MEMBERSHIP_INTERVAL " ] [ "
 .B mcast_querier_interval
-.IR QUERIER_INTERVAL " ]"
+.IR QUERIER_INTERVAL " ] [ "
+.B mcast_query_interval
+.IR QUERY_INTERVAL " ]"
 
 .ti -8
 .BR "bridge vlan global" " [ " show " ] [ "
@@ -980,6 +982,11 @@ after this delay has passed, the bridge will start to send its own queries
 (as if
 .BI mcast_querier
 was enabled).
+
+.TP
+.BI mcast_query_interval " QUERY_INTERVAL "
+interval between queries sent by the bridge after the end of the
+startup phase.
 
 .SS bridge vlan global show - list global vlan options.
 

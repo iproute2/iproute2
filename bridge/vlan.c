@@ -47,6 +47,7 @@ static void usage(void)
 		"                      [ mcast_startup_query_count STARTUP_QUERY_COUNT ]\n"
 		"                      [ mcast_membership_interval MEMBERSHIP_INTERVAL ]\n"
 		"                      [ mcast_querier_interval QUERIER_INTERVAL ]\n"
+		"                      [ mcast_query_interval QUERY_INTERVAL ]\n"
 		"       bridge vlan global { show } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
@@ -466,6 +467,14 @@ static int vlan_global_option_set(int argc, char **argv)
 			addattr64(&req.n, 1024,
 				  BRIDGE_VLANDB_GOPTS_MCAST_QUERIER_INTVL,
 				  val64);
+		} else if (strcmp(*argv, "mcast_query_interval") == 0) {
+			NEXT_ARG();
+			if (get_u64(&val64, *argv, 0))
+				invarg("invalid mcast_query_interval",
+				       *argv);
+			addattr64(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_QUERY_INTVL,
+				  val64);
 		} else {
 			if (strcmp(*argv, "help") == 0)
 				NEXT_ARG();
@@ -842,6 +851,12 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERIER_INTVL];
 		print_lluint(PRINT_ANY, "mcast_querier_interval",
 			     "mcast_querier_interval %llu ",
+			     rta_getattr_u64(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERY_INTVL]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERY_INTVL];
+		print_lluint(PRINT_ANY, "mcast_query_interval",
+			     "mcast_query_interval %llu ",
 			     rta_getattr_u64(vattr));
 	}
 	print_nl();
