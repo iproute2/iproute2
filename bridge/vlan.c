@@ -622,7 +622,7 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static void print_vlan_global_opts(struct rtattr *a)
+static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 {
 	struct rtattr *vtb[BRIDGE_VLANDB_GOPTS_MAX + 1];
 	__u16 vid, vrange = 0;
@@ -637,11 +637,24 @@ static void print_vlan_global_opts(struct rtattr *a)
 		vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_GOPTS_RANGE]);
 	else
 		vrange = vid;
+
+	if (filter_vlan && (filter_vlan < vid || filter_vlan > vrange))
+		return;
+
+	if (vlan_rtm_cur_ifidx != ifindex) {
+		open_vlan_port(ifindex, VLAN_SHOW_VLAN);
+		open_json_object(NULL);
+		vlan_rtm_cur_ifidx = ifindex;
+	} else {
+		open_json_object(NULL);
+		print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
+	}
 	print_range("vlan", vid, vrange);
 	print_nl();
+	close_json_object();
 }
 
-static void print_vlan_opts(struct rtattr *a)
+static void print_vlan_opts(struct rtattr *a, int ifindex)
 {
 	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1];
 	struct bridge_vlan_xstats vstats;
@@ -661,6 +674,9 @@ static void print_vlan_opts(struct rtattr *a)
 		vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_ENTRY_RANGE]);
 	else
 		vrange = vinfo->vid;
+
+	if (filter_vlan && (filter_vlan < vinfo->vid || filter_vlan > vrange))
+		return;
 
 	if (vtb[BRIDGE_VLANDB_ENTRY_STATE])
 		state = rta_getattr_u8(vtb[BRIDGE_VLANDB_ENTRY_STATE]);
@@ -690,6 +706,15 @@ static void print_vlan_opts(struct rtattr *a)
 			vstats.tx_bytes = rta_getattr_u64(attr);
 		}
 	}
+
+	if (vlan_rtm_cur_ifidx != ifindex) {
+		open_vlan_port(ifindex, VLAN_SHOW_VLAN);
+		open_json_object(NULL);
+		vlan_rtm_cur_ifidx = ifindex;
+	} else {
+		open_json_object(NULL);
+		print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
+	}
 	print_range("vlan", vinfo->vid, vrange);
 	print_vlan_flags(vinfo->flags);
 	print_nl();
@@ -698,6 +723,7 @@ static void print_vlan_opts(struct rtattr *a)
 	print_nl();
 	if (show_stats)
 		__print_one_vlan_stats(&vstats);
+	close_json_object();
 }
 
 int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor, bool global_only)
@@ -746,23 +772,14 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor, bool global_only
 		    (global_only && rta_type != BRIDGE_VLANDB_GLOBAL_OPTIONS))
 			continue;
 
-		if (vlan_rtm_cur_ifidx != bvm->ifindex) {
-			open_vlan_port(bvm->ifindex, VLAN_SHOW_VLAN);
-			open_json_object(NULL);
-			vlan_rtm_cur_ifidx = bvm->ifindex;
-		} else {
-			open_json_object(NULL);
-			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
-		}
 		switch (rta_type) {
 		case BRIDGE_VLANDB_ENTRY:
-			print_vlan_opts(a);
+			print_vlan_opts(a, bvm->ifindex);
 			break;
 		case BRIDGE_VLANDB_GLOBAL_OPTIONS:
-			print_vlan_global_opts(a);
+			print_vlan_global_opts(a, bvm->ifindex);
 			break;
 		}
-		close_json_object();
 	}
 
 	return 0;
