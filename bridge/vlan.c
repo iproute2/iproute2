@@ -40,6 +40,7 @@ static void usage(void)
 		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
 		"                      [ mcast_snooping MULTICAST_SNOOPING ]\n"
+		"                      [ mcast_querier MULTICAST_QUERIER ]\n"
 		"                      [ mcast_igmp_version IGMP_VERSION ]\n"
 		"                      [ mcast_mld_version MLD_VERSION ]\n"
 		"                      [ mcast_last_member_count LAST_MEMBER_COUNT ]\n"
@@ -418,6 +419,12 @@ static int vlan_global_option_set(int argc, char **argv)
 				invarg("invalid mcast_snooping", *argv);
 			addattr8(&req.n, 1024,
 				 BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING, val8);
+		} else if (strcmp(*argv, "mcast_querier") == 0) {
+			NEXT_ARG();
+			if (get_u8(&val8, *argv, 0))
+				invarg("invalid mcast_querier", *argv);
+			addattr8(&req.n, 1024,
+				 BRIDGE_VLANDB_GOPTS_MCAST_QUERIER, val8);
 		} else if (strcmp(*argv, "mcast_igmp_version") == 0) {
 			NEXT_ARG();
 			if (get_u8(&val8, *argv, 0))
@@ -829,6 +836,11 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING]) {
 		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING];
 		print_uint(PRINT_ANY, "mcast_snooping", "mcast_snooping %u ",
+			   rta_getattr_u8(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERIER]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERIER];
+		print_uint(PRINT_ANY, "mcast_querier", "mcast_querier %u ",
 			   rta_getattr_u8(vattr));
 	}
 	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_IGMP_VERSION]) {

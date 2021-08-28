@@ -160,6 +160,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VID " [ "
 .B mcast_snooping
 .IR MULTICAST_SNOOPING " ] [ "
+.B mcast_querier
+.IR MULTICAST_QUERIER " ] [ "
 .B mcast_igmp_version
 .IR IGMP_VERSION " ] [ "
 .B mcast_mld_version
@@ -950,6 +952,14 @@ turn multicast snooping for VLAN entry with VLAN ID on
 .RI ( MULTICAST_SNOOPING " > 0) "
 or off
 .RI ( MULTICAST_SNOOPING " == 0). Default is on. "
+
+.TP
+.BI mcast_querier " MULTICAST_QUERIER "
+enable
+.RI ( MULTICAST_QUERIER " > 0) "
+or disable
+.RI ( MULTICAST_QUERIER " == 0) "
+IGMP/MLD querier, ie sending of multicast queries by the bridge. Default is disabled.
 
 .TP
 .BI mcast_igmp_version " IGMP_VERSION "
