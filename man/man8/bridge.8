@@ -165,7 +165,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B mcast_mld_version
 .IR MLD_VERSION " ] [ "
 .B mcast_last_member_count
-.IR LAST_MEMBER_COUNT " ]"
+.IR LAST_MEMBER_COUNT " ] [ "
+.B mcast_startup_query_count
+.IR STARTUP_QUERY_COUNT " ]"
 
 .ti -8
 .BR "bridge vlan global" " [ " show " ] [ "
@@ -950,6 +952,10 @@ set the MLD version. Default is 1.
 set multicast last member count, ie the number of queries the bridge
 will send before stopping forwarding a multicast group after a "leave"
 message has been received. Default is 2.
+
+.TP
+.BI mcast_startup_query_count " STARTUP_QUERY_COUNT "
+set the number of queries to send during startup phase. Default is 2.
 
 .SS bridge vlan global show - list global vlan options.
 
