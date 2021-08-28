@@ -37,6 +37,7 @@ static void usage(void)
 		"       bridge vlan { set } vid VLAN_ID dev DEV [ state STP_STATE ]\n"
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
+		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
 		"       bridge vlan global { show } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
@@ -331,6 +332,83 @@ static int vlan_option_set(int argc, char **argv)
 	if (state >= 0)
 		addattr8(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_STATE, state);
 	addattr_nest_end(&req.n, afspec);
+
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+		return -1;
+
+	return 0;
+}
+
+static int vlan_global_option_set(int argc, char **argv)
+{
+	struct {
+		struct nlmsghdr	n;
+		struct br_vlan_msg	bvm;
+		char			buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_vlan_msg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_NEWVLAN,
+		.bvm.family = PF_BRIDGE,
+	};
+	struct rtattr *afspec;
+	short vid_end = -1;
+	char *d = NULL;
+	short vid = -1;
+
+	afspec = addattr_nest(&req.n, sizeof(req),
+			      BRIDGE_VLANDB_GLOBAL_OPTIONS);
+	afspec->rta_type |= NLA_F_NESTED;
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			d = *argv;
+			req.bvm.ifindex = ll_name_to_index(d);
+			if (req.bvm.ifindex == 0) {
+				fprintf(stderr, "Cannot find network device \"%s\"\n",
+					d);
+				return -1;
+			}
+		} else if (strcmp(*argv, "vid") == 0) {
+			char *p;
+
+			NEXT_ARG();
+			p = strchr(*argv, '-');
+			if (p) {
+				*p = '\0';
+				p++;
+				vid = atoi(*argv);
+				vid_end = atoi(p);
+				if (vid >= vid_end || vid_end >= 4096) {
+					fprintf(stderr, "Invalid VLAN range \"%hu-%hu\"\n",
+						vid, vid_end);
+					return -1;
+				}
+			} else {
+				vid = atoi(*argv);
+			}
+			if (vid >= 4096) {
+				fprintf(stderr, "Invalid VLAN ID \"%hu\"\n",
+					vid);
+				return -1;
+			}
+			addattr16(&req.n, sizeof(req), BRIDGE_VLANDB_GOPTS_ID,
+				  vid);
+			if (vid_end != -1)
+				addattr16(&req.n, sizeof(req),
+					  BRIDGE_VLANDB_GOPTS_RANGE, vid_end);
+		} else {
+			if (strcmp(*argv, "help") == 0)
+				NEXT_ARG();
+		}
+		argc--; argv++;
+	}
+	addattr_nest_end(&req.n, afspec);
+
+	if (d == NULL || vid == -1) {
+		fprintf(stderr, "Device and VLAN ID are required arguments.\n");
+		return -1;
+	}
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;
@@ -1016,6 +1094,8 @@ static int vlan_global(int argc, char **argv)
 		    strcmp(*argv, "lst") == 0 ||
 		    strcmp(*argv, "list") == 0)
 			return vlan_global_show(argc-1, argv+1);
+		else if (strcmp(*argv, "set") == 0)
+			return vlan_global_option_set(argc-1, argv+1);
 		else
 			usage();
 	} else {

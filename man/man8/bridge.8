@@ -153,6 +153,13 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
+.BR "bridge vlan global set"
+.B dev
+.I DEV
+.B vid
+.IR VID " [ ]"
+
+.ti -8
 .BR "bridge vlan global" " [ " show " ] [ "
 .B dev
 .IR DEV " ] [ "
@@ -901,6 +908,19 @@ option, the command displays per-vlan traffic statistics.
 .SS bridge vlan tunnelshow - list vlan tunnel mapping.
 
 This command displays the current vlan tunnel info mapping.
+
+.SS bridge vlan global set - change vlan filter entry's global options
+
+This command changes vlan filter entry's global options.
+
+.TP
+.BI dev " NAME"
+the interface with which this vlan is associated. Only bridge devices are
+supported for global options.
+
+.TP
+.BI vid " VID"
+the VLAN ID that identifies the vlan.
 
 .SS bridge vlan global show - list global vlan options.
 
