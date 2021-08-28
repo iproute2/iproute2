@@ -621,11 +621,67 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static void print_vlan_opts(struct rtattr *a)
+{
+	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1];
+	struct bridge_vlan_xstats vstats;
+	struct bridge_vlan_info *vinfo;
+	__u16 vrange = 0;
+	__u8 state = 0;
+
+	parse_rtattr_flags(vtb, BRIDGE_VLANDB_ENTRY_MAX, RTA_DATA(a),
+			   RTA_PAYLOAD(a), NLA_F_NESTED);
+	vinfo = RTA_DATA(vtb[BRIDGE_VLANDB_ENTRY_INFO]);
+
+	memset(&vstats, 0, sizeof(vstats));
+	if (vtb[BRIDGE_VLANDB_ENTRY_RANGE])
+		vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_ENTRY_RANGE]);
+	else
+		vrange = vinfo->vid;
+
+	if (vtb[BRIDGE_VLANDB_ENTRY_STATE])
+		state = rta_getattr_u8(vtb[BRIDGE_VLANDB_ENTRY_STATE]);
+
+	if (vtb[BRIDGE_VLANDB_ENTRY_STATS]) {
+		struct rtattr *stb[BRIDGE_VLANDB_STATS_MAX+1];
+		struct rtattr *attr;
+
+		attr = vtb[BRIDGE_VLANDB_ENTRY_STATS];
+		parse_rtattr(stb, BRIDGE_VLANDB_STATS_MAX, RTA_DATA(attr),
+			     RTA_PAYLOAD(attr));
+
+		if (stb[BRIDGE_VLANDB_STATS_RX_BYTES]) {
+			attr = stb[BRIDGE_VLANDB_STATS_RX_BYTES];
+			vstats.rx_bytes = rta_getattr_u64(attr);
+		}
+		if (stb[BRIDGE_VLANDB_STATS_RX_PACKETS]) {
+			attr = stb[BRIDGE_VLANDB_STATS_RX_PACKETS];
+			vstats.rx_packets = rta_getattr_u64(attr);
+		}
+		if (stb[BRIDGE_VLANDB_STATS_TX_PACKETS]) {
+			attr = stb[BRIDGE_VLANDB_STATS_TX_PACKETS];
+			vstats.tx_packets = rta_getattr_u64(attr);
+		}
+		if (stb[BRIDGE_VLANDB_STATS_TX_BYTES]) {
+			attr = stb[BRIDGE_VLANDB_STATS_TX_BYTES];
+			vstats.tx_bytes = rta_getattr_u64(attr);
+		}
+	}
+	print_range("vlan", vinfo->vid, vrange);
+	print_vlan_flags(vinfo->flags);
+	print_nl();
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
+	print_stp_state(state);
+	print_nl();
+	if (show_stats)
+		__print_one_vlan_stats(&vstats);
+}
+
 int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 {
-	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1], *a;
 	struct br_vlan_msg *bvm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
+	struct rtattr *a;
 	int rem;
 
 	if (n->nlmsg_type != RTM_NEWVLAN && n->nlmsg_type != RTM_DELVLAN &&
@@ -660,49 +716,6 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 
 	rem = len;
 	for (a = BRVLAN_RTA(bvm); RTA_OK(a, rem); a = RTA_NEXT(a, rem)) {
-		struct bridge_vlan_xstats vstats;
-		struct bridge_vlan_info *vinfo;
-		__u32 vrange = 0;
-		__u8 state = 0;
-
-		parse_rtattr_flags(vtb, BRIDGE_VLANDB_ENTRY_MAX, RTA_DATA(a),
-				   RTA_PAYLOAD(a), NLA_F_NESTED);
-		vinfo = RTA_DATA(vtb[BRIDGE_VLANDB_ENTRY_INFO]);
-
-		memset(&vstats, 0, sizeof(vstats));
-		if (vtb[BRIDGE_VLANDB_ENTRY_RANGE])
-			vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_ENTRY_RANGE]);
-		else
-			vrange = vinfo->vid;
-
-		if (vtb[BRIDGE_VLANDB_ENTRY_STATE])
-			state = rta_getattr_u8(vtb[BRIDGE_VLANDB_ENTRY_STATE]);
-
-		if (vtb[BRIDGE_VLANDB_ENTRY_STATS]) {
-			struct rtattr *stb[BRIDGE_VLANDB_STATS_MAX+1];
-			struct rtattr *attr;
-
-			attr = vtb[BRIDGE_VLANDB_ENTRY_STATS];
-			parse_rtattr(stb, BRIDGE_VLANDB_STATS_MAX, RTA_DATA(attr),
-				     RTA_PAYLOAD(attr));
-
-			if (stb[BRIDGE_VLANDB_STATS_RX_BYTES]) {
-				attr = stb[BRIDGE_VLANDB_STATS_RX_BYTES];
-				vstats.rx_bytes = rta_getattr_u64(attr);
-			}
-			if (stb[BRIDGE_VLANDB_STATS_RX_PACKETS]) {
-				attr = stb[BRIDGE_VLANDB_STATS_RX_PACKETS];
-				vstats.rx_packets = rta_getattr_u64(attr);
-			}
-			if (stb[BRIDGE_VLANDB_STATS_TX_PACKETS]) {
-				attr = stb[BRIDGE_VLANDB_STATS_TX_PACKETS];
-				vstats.tx_packets = rta_getattr_u64(attr);
-			}
-			if (stb[BRIDGE_VLANDB_STATS_TX_BYTES]) {
-				attr = stb[BRIDGE_VLANDB_STATS_TX_BYTES];
-				vstats.tx_bytes = rta_getattr_u64(attr);
-			}
-		}
 		if (vlan_rtm_cur_ifidx != bvm->ifindex) {
 			open_vlan_port(bvm->ifindex, VLAN_SHOW_VLAN);
 			open_json_object(NULL);
@@ -711,14 +724,7 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 			open_json_object(NULL);
 			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
 		}
-		print_range("vlan", vinfo->vid, vrange);
-		print_vlan_flags(vinfo->flags);
-		print_nl();
-		print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
-		print_stp_state(state);
-		print_nl();
-		if (show_stats)
-			__print_one_vlan_stats(&vstats);
+		print_vlan_opts(a);
 		close_json_object();
 	}
 
