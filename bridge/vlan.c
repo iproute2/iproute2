@@ -45,6 +45,7 @@ static void usage(void)
 		"                      [ mcast_last_member_count LAST_MEMBER_COUNT ]\n"
 		"                      [ mcast_last_member_interval LAST_MEMBER_INTERVAL ]\n"
 		"                      [ mcast_startup_query_count STARTUP_QUERY_COUNT ]\n"
+		"                      [ mcast_startup_query_interval STARTUP_QUERY_INTERVAL ]\n"
 		"                      [ mcast_membership_interval MEMBERSHIP_INTERVAL ]\n"
 		"                      [ mcast_querier_interval QUERIER_INTERVAL ]\n"
 		"                      [ mcast_query_interval QUERY_INTERVAL ]\n"
@@ -484,6 +485,14 @@ static int vlan_global_option_set(int argc, char **argv)
 			addattr64(&req.n, 1024,
 				  BRIDGE_VLANDB_GOPTS_MCAST_QUERY_RESPONSE_INTVL,
 				  val64);
+		} else if (strcmp(*argv, "mcast_startup_query_interval") == 0) {
+			NEXT_ARG();
+			if (get_u64(&val64, *argv, 0))
+				invarg("invalid mcast_startup_query_interval",
+				       *argv);
+			addattr64(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_INTVL,
+				  val64);
 		} else {
 			if (strcmp(*argv, "help") == 0)
 				NEXT_ARG();
@@ -849,6 +858,12 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 		print_uint(PRINT_ANY, "mcast_startup_query_count",
 			   "mcast_startup_query_count %u ",
 			   rta_getattr_u32(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_INTVL]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_INTVL];
+		print_lluint(PRINT_ANY, "mcast_startup_query_interval",
+			     "mcast_startup_query_interval %llu ",
+			     rta_getattr_u64(vattr));
 	}
 	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_MEMBERSHIP_INTVL]) {
 		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_MEMBERSHIP_INTVL];

@@ -170,6 +170,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR LAST_MEMBER_INTERVAL " ] [ "
 .B mcast_startup_query_count
 .IR STARTUP_QUERY_COUNT " ] [ "
+.B mcast_startup_query_interval
+.IR STARTUP_QUERY_INTERVAL " ] [ "
 .B mcast_membership_interval
 .IR MEMBERSHIP_INTERVAL " ] [ "
 .B mcast_querier_interval
@@ -971,6 +973,10 @@ after a "leave" message is received.
 .TP
 .BI mcast_startup_query_count " STARTUP_QUERY_COUNT "
 set the number of queries to send during startup phase. Default is 2.
+
+.TP
+.BI mcast_startup_query_interval " STARTUP_QUERY_INTERVAL "
+interval between queries in the startup phase.
 
 .TP
 .BI mcast_membership_interval " MEMBERSHIP_INTERVAL "
