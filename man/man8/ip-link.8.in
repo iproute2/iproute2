@@ -1492,6 +1492,8 @@ the following additional arguments are supported:
 ] [
 .BI mcast_snooping " MULTICAST_SNOOPING "
 ] [
+.BI mcast_vlan_snooping " MULTICAST_VLAN_SNOOPING "
+] [
 .BI mcast_router " MULTICAST_ROUTER "
 ] [
 .BI mcast_query_use_ifaddr " MCAST_QUERY_USE_IFADDR "
@@ -1613,6 +1615,12 @@ per-VLAN per-port stats accounting. Can be changed only when there are no port V
 .RI ( MULTICAST_SNOOPING " > 0) "
 or off
 .RI ( MULTICAST_SNOOPING " == 0). "
+
+.BI mcast_vlan_snooping " MULTICAST_VLAN_SNOOPING "
+- turn multicast VLAN snooping on
+.RI ( MULTICAST_VLAN_SNOOPING " > 0) "
+or off
+.RI ( MULTICAST_VLAN_SNOOPING " == 0). "
 
 .BI mcast_router " MULTICAST_ROUTER "
 - set bridge's multicast router if IGMP snooping is enabled.

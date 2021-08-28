@@ -43,6 +43,7 @@ static void print_explain(FILE *f)
 		"		  [ vlan_stats_enabled VLAN_STATS_ENABLED ]\n"
 		"		  [ vlan_stats_per_port VLAN_STATS_PER_PORT ]\n"
 		"		  [ mcast_snooping MULTICAST_SNOOPING ]\n"
+		"		  [ mcast_vlan_snooping MULTICAST_VLAN_SNOOPING ]\n"
 		"		  [ mcast_router MULTICAST_ROUTER ]\n"
 		"		  [ mcast_query_use_ifaddr MCAST_QUERY_USE_IFADDR ]\n"
 		"		  [ mcast_querier MULTICAST_QUERIER ]\n"
@@ -83,6 +84,7 @@ void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len)
 static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 			    struct nlmsghdr *n)
 {
+	struct br_boolopt_multi bm = {};
 	__u32 val;
 
 	while (argc > 0) {
@@ -200,6 +202,18 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid mcast_snooping", *argv);
 
 			addattr8(n, 1024, IFLA_BR_MCAST_SNOOPING, mcast_snoop);
+		} else if (strcmp(*argv, "mcast_vlan_snooping") == 0) {
+			__u32 mcvl_bit = 1 << BR_BOOLOPT_MCAST_VLAN_SNOOPING;
+			__u8 mcast_vlan_snooping;
+
+			NEXT_ARG();
+			if (get_u8(&mcast_vlan_snooping, *argv, 0))
+				invarg("invalid mcast_vlan_snooping", *argv);
+			bm.optmask |= 1 << BR_BOOLOPT_MCAST_VLAN_SNOOPING;
+			if (mcast_vlan_snooping)
+				bm.optval |= mcvl_bit;
+			else
+				bm.optval &= ~mcvl_bit;
 		} else if (matches(*argv, "mcast_query_use_ifaddr") == 0) {
 			__u8 mcast_qui;
 
@@ -379,6 +393,9 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 		argc--, argv++;
 	}
 
+	if (bm.optmask)
+		addattr_l(n, 1024, IFLA_BR_MULTI_BOOLOPT,
+			  &bm, sizeof(bm));
 	return 0;
 }
 
@@ -558,6 +575,18 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "mcast_snooping",
 			   "mcast_snooping %u ",
 			   rta_getattr_u8(tb[IFLA_BR_MCAST_SNOOPING]));
+
+	if (tb[IFLA_BR_MULTI_BOOLOPT]) {
+		__u32 mcvl_bit = 1 << BR_BOOLOPT_MCAST_VLAN_SNOOPING;
+		struct br_boolopt_multi *bm;
+
+		bm = RTA_DATA(tb[IFLA_BR_MULTI_BOOLOPT]);
+		if (bm->optmask & mcvl_bit)
+			print_uint(PRINT_ANY,
+				   "mcast_vlan_snooping",
+				   "mcast_vlan_snooping %u ",
+				    !!(bm->optval & mcvl_bit));
+	}
 
 	if (tb[IFLA_BR_MCAST_ROUTER])
 		print_uint(PRINT_ANY,
