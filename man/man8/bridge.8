@@ -169,7 +169,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B mcast_last_member_interval
 .IR LAST_MEMBER_INTERVAL " ] [ "
 .B mcast_startup_query_count
-.IR STARTUP_QUERY_COUNT " ]"
+.IR STARTUP_QUERY_COUNT " ] [ "
+.B mcast_membership_interval
+.IR MEMBERSHIP_INTERVAL " ]"
 
 .ti -8
 .BR "bridge vlan global" " [ " show " ] [ "
@@ -963,6 +965,11 @@ after a "leave" message is received.
 .TP
 .BI mcast_startup_query_count " STARTUP_QUERY_COUNT "
 set the number of queries to send during startup phase. Default is 2.
+
+.TP
+.BI mcast_membership_interval " MEMBERSHIP_INTERVAL "
+delay after which the bridge will leave a group,
+if no membership reports for this group are received.
 
 .SS bridge vlan global show - list global vlan options.
 
