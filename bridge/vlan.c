@@ -629,6 +629,9 @@ static void print_vlan_opts(struct rtattr *a)
 	__u16 vrange = 0;
 	__u8 state = 0;
 
+	if ((a->rta_type & NLA_TYPE_MASK) != BRIDGE_VLANDB_ENTRY)
+		return;
+
 	parse_rtattr_flags(vtb, BRIDGE_VLANDB_ENTRY_MAX, RTA_DATA(a),
 			   RTA_PAYLOAD(a), NLA_F_NESTED);
 	vinfo = RTA_DATA(vtb[BRIDGE_VLANDB_ENTRY_INFO]);
@@ -716,6 +719,12 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 
 	rem = len;
 	for (a = BRVLAN_RTA(bvm); RTA_OK(a, rem); a = RTA_NEXT(a, rem)) {
+		unsigned short rta_type = a->rta_type & NLA_TYPE_MASK;
+
+		/* skip unknown attributes */
+		if (rta_type > BRIDGE_VLANDB_MAX)
+			continue;
+
 		if (vlan_rtm_cur_ifidx != bvm->ifindex) {
 			open_vlan_port(bvm->ifindex, VLAN_SHOW_VLAN);
 			open_json_object(NULL);
@@ -724,7 +733,11 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 			open_json_object(NULL);
 			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
 		}
-		print_vlan_opts(a);
+		switch (rta_type) {
+		case BRIDGE_VLANDB_ENTRY:
+			print_vlan_opts(a);
+			break;
+		}
 		close_json_object();
 	}
 
