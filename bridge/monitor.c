@@ -71,7 +71,7 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 	case RTM_DELVLAN:
 		if (prefix_banner)
 			fprintf(fp, "[VLAN]");
-		return print_vlan_rtm(n, arg, true);
+		return print_vlan_rtm(n, arg, true, false);
 
 	default:
 		return 0;

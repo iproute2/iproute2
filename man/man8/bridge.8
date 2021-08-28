@@ -153,6 +153,13 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
+.BR "bridge vlan global" " [ " show " ] [ "
+.B dev
+.IR DEV " ] [ "
+.B vid
+.IR VID " ]"
+
+.ti -8
 .BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " | " vlan " ]"
 
 .SH OPTIONS
@@ -894,6 +901,20 @@ option, the command displays per-vlan traffic statistics.
 .SS bridge vlan tunnelshow - list vlan tunnel mapping.
 
 This command displays the current vlan tunnel info mapping.
+
+.SS bridge vlan global show - list global vlan options.
+
+This command displays the global VLAN options for each VLAN entry.
+
+.TP
+.BI dev " DEV"
+the interface only whose VLAN global options should be listed. Default is to list
+all bridge interfaces.
+
+.TP
+.BI vid " VID"
+the VLAN ID only whose global options should be listed. Default is to list
+all vlans.
 
 .SH bridge monitor - state monitoring
 

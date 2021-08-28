@@ -36,7 +36,8 @@ static void usage(void)
 		"                                                     [ self ] [ master ]\n"
 		"       bridge vlan { set } vid VLAN_ID dev DEV [ state STP_STATE ]\n"
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
-		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n");
+		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
+		"       bridge vlan global { show } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
 
@@ -621,6 +622,25 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static void print_vlan_global_opts(struct rtattr *a)
+{
+	struct rtattr *vtb[BRIDGE_VLANDB_GOPTS_MAX + 1];
+	__u16 vid, vrange = 0;
+
+	if ((a->rta_type & NLA_TYPE_MASK) != BRIDGE_VLANDB_GLOBAL_OPTIONS)
+		return;
+
+	parse_rtattr_flags(vtb, BRIDGE_VLANDB_GOPTS_MAX, RTA_DATA(a),
+			   RTA_PAYLOAD(a), NLA_F_NESTED);
+	vid = rta_getattr_u16(vtb[BRIDGE_VLANDB_GOPTS_ID]);
+	if (vtb[BRIDGE_VLANDB_GOPTS_RANGE])
+		vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_GOPTS_RANGE]);
+	else
+		vrange = vid;
+	print_range("vlan", vid, vrange);
+	print_nl();
+}
+
 static void print_vlan_opts(struct rtattr *a)
 {
 	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1];
@@ -680,7 +700,7 @@ static void print_vlan_opts(struct rtattr *a)
 		__print_one_vlan_stats(&vstats);
 }
 
-int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
+int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor, bool global_only)
 {
 	struct br_vlan_msg *bvm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
@@ -722,7 +742,8 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 		unsigned short rta_type = a->rta_type & NLA_TYPE_MASK;
 
 		/* skip unknown attributes */
-		if (rta_type > BRIDGE_VLANDB_MAX)
+		if (rta_type > BRIDGE_VLANDB_MAX ||
+		    (global_only && rta_type != BRIDGE_VLANDB_GLOBAL_OPTIONS))
 			continue;
 
 		if (vlan_rtm_cur_ifidx != bvm->ifindex) {
@@ -737,6 +758,9 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 		case BRIDGE_VLANDB_ENTRY:
 			print_vlan_opts(a);
 			break;
+		case BRIDGE_VLANDB_GLOBAL_OPTIONS:
+			print_vlan_global_opts(a);
+			break;
 		}
 		close_json_object();
 	}
@@ -746,7 +770,12 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 
 static int print_vlan_rtm_filter(struct nlmsghdr *n, void *arg)
 {
-	return print_vlan_rtm(n, arg, false);
+	return print_vlan_rtm(n, arg, false, false);
+}
+
+static int print_vlan_rtm_global_filter(struct nlmsghdr *n, void *arg)
+{
+	return print_vlan_rtm(n, arg, false, true);
 }
 
 static int vlan_show(int argc, char **argv, int subject)
@@ -864,6 +893,61 @@ out:
 	return 0;
 }
 
+static int vlan_global_show(int argc, char **argv)
+{
+	__u32 dump_flags = BRIDGE_VLANDB_DUMPF_GLOBAL;
+	int ret = 0, subject = VLAN_SHOW_VLAN;
+	char *filter_dev = NULL;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			if (filter_dev)
+				duparg("dev", *argv);
+			filter_dev = *argv;
+		} else if (strcmp(*argv, "vid") == 0) {
+			NEXT_ARG();
+			if (filter_vlan)
+				duparg("vid", *argv);
+			filter_vlan = atoi(*argv);
+		}
+		argc--; argv++;
+	}
+
+	if (filter_dev) {
+		filter_index = ll_name_to_index(filter_dev);
+		if (!filter_index)
+			return nodev(filter_dev);
+	}
+
+	new_json_obj(json);
+
+	if (rtnl_brvlandump_req(&rth, PF_BRIDGE, dump_flags) < 0) {
+		perror("Cannot send dump request");
+		exit(1);
+	}
+
+	if (!is_json_context()) {
+		printf("%-" __stringify(IFNAMSIZ) "s  %-"
+		       __stringify(VLAN_ID_LEN) "s", "port",
+		       "vlan-id");
+		printf("\n");
+	}
+
+	ret = rtnl_dump_filter(&rth, print_vlan_rtm_global_filter, &subject);
+	if (ret < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		exit(1);
+	}
+
+	if (vlan_rtm_cur_ifidx != -1)
+		close_vlan_port();
+
+	delete_json_obj();
+	fflush(stdout);
+	return 0;
+}
+
 void print_vlan_info(struct rtattr *tb, int ifindex)
 {
 	struct rtattr *i, *list = tb;
@@ -908,6 +992,22 @@ void print_vlan_info(struct rtattr *tb, int ifindex)
 		close_vlan_port();
 }
 
+static int vlan_global(int argc, char **argv)
+{
+	if (argc > 0) {
+		if (strcmp(*argv, "show") == 0 ||
+		    strcmp(*argv, "lst") == 0 ||
+		    strcmp(*argv, "list") == 0)
+			return vlan_global_show(argc-1, argv+1);
+		else
+			usage();
+	} else {
+		return vlan_global_show(0, NULL);
+	}
+
+	return 0;
+}
+
 int do_vlan(int argc, char **argv)
 {
 	ll_init_map(&rth);
@@ -926,6 +1026,8 @@ int do_vlan(int argc, char **argv)
 		}
 		if (matches(*argv, "set") == 0)
 			return vlan_option_set(argc-1, argv+1);
+		if (strcmp(*argv, "global") == 0)
+			return vlan_global(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else {
