@@ -41,6 +41,7 @@ static void usage(void)
 		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
 		"                      [ mcast_snooping MULTICAST_SNOOPING ]\n"
 		"                      [ mcast_igmp_version IGMP_VERSION ]\n"
+		"                      [ mcast_mld_version MLD_VERSION ]\n"
 		"       bridge vlan global { show } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
@@ -413,6 +414,12 @@ static int vlan_global_option_set(int argc, char **argv)
 				invarg("invalid mcast_igmp_version", *argv);
 			addattr8(&req.n, 1024,
 				 BRIDGE_VLANDB_GOPTS_MCAST_IGMP_VERSION, val8);
+		} else if (strcmp(*argv, "mcast_mld_version") == 0) {
+			NEXT_ARG();
+			if (get_u8(&val8, *argv, 0))
+				invarg("invalid mcast_mld_version", *argv);
+			addattr8(&req.n, 1024,
+				 BRIDGE_VLANDB_GOPTS_MCAST_MLD_VERSION, val8);
 		} else {
 			if (strcmp(*argv, "help") == 0)
 				NEXT_ARG();
@@ -755,6 +762,11 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_IGMP_VERSION];
 		print_uint(PRINT_ANY, "mcast_igmp_version",
 			   "mcast_igmp_version %u ", rta_getattr_u8(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_MLD_VERSION]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_MLD_VERSION];
+		print_uint(PRINT_ANY, "mcast_mld_version",
+			   "mcast_mld_version %u ", rta_getattr_u8(vattr));
 	}
 	print_nl();
 	close_json_object();

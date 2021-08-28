@@ -161,7 +161,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B mcast_snooping
 .IR MULTICAST_SNOOPING " ] [ "
 .B mcast_igmp_version
-.IR IGMP_VERSION " ]"
+.IR IGMP_VERSION " ] [ "
+.B mcast_mld_version
+.IR MLD_VERSION " ]"
 
 .ti -8
 .BR "bridge vlan global" " [ " show " ] [ "
@@ -936,6 +938,10 @@ or off
 .TP
 .BI mcast_igmp_version " IGMP_VERSION "
 set the IGMP version. Default is 2.
+
+.TP
+.BI mcast_mld_version " MLD_VERSION "
+set the MLD version. Default is 1.
 
 .SS bridge vlan global show - list global vlan options.
 
