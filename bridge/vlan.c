@@ -803,6 +803,36 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static void print_vlan_router_ports(struct rtattr *rattr)
+{
+	int rem = RTA_PAYLOAD(rattr);
+	struct rtattr *i;
+
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
+	open_json_array(PRINT_ANY, is_json_context() ? "router_ports" :
+						       "router ports: ");
+	for (i = RTA_DATA(rattr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+		uint32_t *port_ifindex = RTA_DATA(i);
+		const char *port_ifname = ll_index_to_name(*port_ifindex);
+
+		open_json_object(NULL);
+		if (show_stats && i != RTA_DATA(rattr)) {
+			print_nl();
+			/* start: IFNAMSIZ + 4 + strlen("router ports: ") */
+			print_string(PRINT_FP, NULL,
+				     "%-" __stringify(IFNAMSIZ) "s    "
+				     "              ",
+				     "");
+		}
+		print_string(PRINT_ANY, "port", "%s ", port_ifname);
+		if (show_stats)
+			br_print_router_port_stats(i);
+		close_json_object();
+	}
+	close_json_array(PRINT_JSON, NULL);
+	print_nl();
+}
+
 static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 {
 	struct rtattr *vtb[BRIDGE_VLANDB_GOPTS_MAX + 1], *vattr;
@@ -902,6 +932,10 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 			     rta_getattr_u64(vattr));
 	}
 	print_nl();
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_ROUTER_PORTS]) {
+		vattr = RTA_DATA(vtb[BRIDGE_VLANDB_GOPTS_MCAST_ROUTER_PORTS]);
+		print_vlan_router_ports(vattr);
+	}
 	close_json_object();
 }
 
