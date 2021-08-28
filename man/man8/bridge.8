@@ -163,7 +163,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B mcast_igmp_version
 .IR IGMP_VERSION " ] [ "
 .B mcast_mld_version
-.IR MLD_VERSION " ]"
+.IR MLD_VERSION " ] [ "
+.B mcast_last_member_count
+.IR LAST_MEMBER_COUNT " ]"
 
 .ti -8
 .BR "bridge vlan global" " [ " show " ] [ "
@@ -942,6 +944,12 @@ set the IGMP version. Default is 2.
 .TP
 .BI mcast_mld_version " MLD_VERSION "
 set the MLD version. Default is 1.
+
+.TP
+.BI mcast_last_member_count " LAST_MEMBER_COUNT "
+set multicast last member count, ie the number of queries the bridge
+will send before stopping forwarding a multicast group after a "leave"
+message has been received. Default is 2.
 
 .SS bridge vlan global show - list global vlan options.
 
