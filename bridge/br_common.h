@@ -12,7 +12,9 @@ int print_mdb_mon(struct nlmsghdr *n, void *arg);
 int print_fdb(struct nlmsghdr *n, void *arg);
 void print_stp_state(__u8 state);
 int parse_stp_state(const char *arg);
-int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor);
+int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor,
+		   bool global_only);
+void br_print_router_port_stats(struct rtattr *pattr);
 
 int do_fdb(int argc, char **argv);
 int do_mdb(int argc, char **argv);

@@ -9,6 +9,7 @@
 #include <linux/if_bridge.h>
 #include <linux/if_ether.h>
 #include <string.h>
+#include <errno.h>
 
 #include "json_print.h"
 #include "libnetlink.h"
@@ -36,7 +37,21 @@ static void usage(void)
 		"                                                     [ self ] [ master ]\n"
 		"       bridge vlan { set } vid VLAN_ID dev DEV [ state STP_STATE ]\n"
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
-		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n");
+		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
+		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
+		"                      [ mcast_snooping MULTICAST_SNOOPING ]\n"
+		"                      [ mcast_querier MULTICAST_QUERIER ]\n"
+		"                      [ mcast_igmp_version IGMP_VERSION ]\n"
+		"                      [ mcast_mld_version MLD_VERSION ]\n"
+		"                      [ mcast_last_member_count LAST_MEMBER_COUNT ]\n"
+		"                      [ mcast_last_member_interval LAST_MEMBER_INTERVAL ]\n"
+		"                      [ mcast_startup_query_count STARTUP_QUERY_COUNT ]\n"
+		"                      [ mcast_startup_query_interval STARTUP_QUERY_INTERVAL ]\n"
+		"                      [ mcast_membership_interval MEMBERSHIP_INTERVAL ]\n"
+		"                      [ mcast_querier_interval QUERIER_INTERVAL ]\n"
+		"                      [ mcast_query_interval QUERY_INTERVAL ]\n"
+		"                      [ mcast_query_response_interval QUERY_RESPONSE_INTERVAL ]\n"
+		"       bridge vlan global { show } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
 
@@ -337,6 +352,173 @@ static int vlan_option_set(int argc, char **argv)
 	return 0;
 }
 
+static int vlan_global_option_set(int argc, char **argv)
+{
+	struct {
+		struct nlmsghdr	n;
+		struct br_vlan_msg	bvm;
+		char			buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_vlan_msg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_NEWVLAN,
+		.bvm.family = PF_BRIDGE,
+	};
+	struct rtattr *afspec;
+	short vid_end = -1;
+	char *d = NULL;
+	short vid = -1;
+	__u64 val64;
+	__u32 val32;
+	__u8 val8;
+
+	afspec = addattr_nest(&req.n, sizeof(req),
+			      BRIDGE_VLANDB_GLOBAL_OPTIONS);
+	afspec->rta_type |= NLA_F_NESTED;
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			d = *argv;
+			req.bvm.ifindex = ll_name_to_index(d);
+			if (req.bvm.ifindex == 0) {
+				fprintf(stderr, "Cannot find network device \"%s\"\n",
+					d);
+				return -1;
+			}
+		} else if (strcmp(*argv, "vid") == 0) {
+			char *p;
+
+			NEXT_ARG();
+			p = strchr(*argv, '-');
+			if (p) {
+				*p = '\0';
+				p++;
+				vid = atoi(*argv);
+				vid_end = atoi(p);
+				if (vid >= vid_end || vid_end >= 4096) {
+					fprintf(stderr, "Invalid VLAN range \"%hu-%hu\"\n",
+						vid, vid_end);
+					return -1;
+				}
+			} else {
+				vid = atoi(*argv);
+			}
+			if (vid >= 4096) {
+				fprintf(stderr, "Invalid VLAN ID \"%hu\"\n",
+					vid);
+				return -1;
+			}
+			addattr16(&req.n, sizeof(req), BRIDGE_VLANDB_GOPTS_ID,
+				  vid);
+			if (vid_end != -1)
+				addattr16(&req.n, sizeof(req),
+					  BRIDGE_VLANDB_GOPTS_RANGE, vid_end);
+		} else if (strcmp(*argv, "mcast_snooping") == 0) {
+			NEXT_ARG();
+			if (get_u8(&val8, *argv, 0))
+				invarg("invalid mcast_snooping", *argv);
+			addattr8(&req.n, 1024,
+				 BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING, val8);
+		} else if (strcmp(*argv, "mcast_querier") == 0) {
+			NEXT_ARG();
+			if (get_u8(&val8, *argv, 0))
+				invarg("invalid mcast_querier", *argv);
+			addattr8(&req.n, 1024,
+				 BRIDGE_VLANDB_GOPTS_MCAST_QUERIER, val8);
+		} else if (strcmp(*argv, "mcast_igmp_version") == 0) {
+			NEXT_ARG();
+			if (get_u8(&val8, *argv, 0))
+				invarg("invalid mcast_igmp_version", *argv);
+			addattr8(&req.n, 1024,
+				 BRIDGE_VLANDB_GOPTS_MCAST_IGMP_VERSION, val8);
+		} else if (strcmp(*argv, "mcast_mld_version") == 0) {
+			NEXT_ARG();
+			if (get_u8(&val8, *argv, 0))
+				invarg("invalid mcast_mld_version", *argv);
+			addattr8(&req.n, 1024,
+				 BRIDGE_VLANDB_GOPTS_MCAST_MLD_VERSION, val8);
+		} else if (strcmp(*argv, "mcast_last_member_count") == 0) {
+			NEXT_ARG();
+			if (get_u32(&val32, *argv, 0))
+				invarg("invalid mcast_last_member_count", *argv);
+			addattr32(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_LAST_MEMBER_CNT,
+				  val32);
+		} else if (strcmp(*argv, "mcast_startup_query_count") == 0) {
+			NEXT_ARG();
+			if (get_u32(&val32, *argv, 0))
+				invarg("invalid mcast_startup_query_count",
+				       *argv);
+			addattr32(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_CNT,
+				  val32);
+		} else if (strcmp(*argv, "mcast_last_member_interval") == 0) {
+			NEXT_ARG();
+			if (get_u64(&val64, *argv, 0))
+				invarg("invalid mcast_last_member_interval",
+				       *argv);
+			addattr64(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_LAST_MEMBER_INTVL,
+				  val64);
+		} else if (strcmp(*argv, "mcast_membership_interval") == 0) {
+			NEXT_ARG();
+			if (get_u64(&val64, *argv, 0))
+				invarg("invalid mcast_membership_interval",
+				       *argv);
+			addattr64(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_MEMBERSHIP_INTVL,
+				  val64);
+		} else if (strcmp(*argv, "mcast_querier_interval") == 0) {
+			NEXT_ARG();
+			if (get_u64(&val64, *argv, 0))
+				invarg("invalid mcast_querier_interval",
+				       *argv);
+			addattr64(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_QUERIER_INTVL,
+				  val64);
+		} else if (strcmp(*argv, "mcast_query_interval") == 0) {
+			NEXT_ARG();
+			if (get_u64(&val64, *argv, 0))
+				invarg("invalid mcast_query_interval",
+				       *argv);
+			addattr64(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_QUERY_INTVL,
+				  val64);
+		} else if (strcmp(*argv, "mcast_query_response_interval") == 0) {
+			NEXT_ARG();
+			if (get_u64(&val64, *argv, 0))
+				invarg("invalid mcast_query_response_interval",
+				       *argv);
+			addattr64(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_QUERY_RESPONSE_INTVL,
+				  val64);
+		} else if (strcmp(*argv, "mcast_startup_query_interval") == 0) {
+			NEXT_ARG();
+			if (get_u64(&val64, *argv, 0))
+				invarg("invalid mcast_startup_query_interval",
+				       *argv);
+			addattr64(&req.n, 1024,
+				  BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_INTVL,
+				  val64);
+		} else {
+			if (strcmp(*argv, "help") == 0)
+				NEXT_ARG();
+		}
+		argc--; argv++;
+	}
+	addattr_nest_end(&req.n, afspec);
+
+	if (d == NULL || vid == -1) {
+		fprintf(stderr, "Device and VLAN ID are required arguments.\n");
+		return -1;
+	}
+
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+		return -1;
+
+	return 0;
+}
+
 /* In order to use this function for both filtering and non-filtering cases
  * we need to make it a tristate:
  * return -1 - if filtering we've gone over so don't continue
@@ -621,11 +803,219 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
+static void print_vlan_router_ports(struct rtattr *rattr)
 {
-	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1], *a;
+	int rem = RTA_PAYLOAD(rattr);
+	struct rtattr *i;
+
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
+	open_json_array(PRINT_ANY, is_json_context() ? "router_ports" :
+						       "router ports: ");
+	for (i = RTA_DATA(rattr); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+		uint32_t *port_ifindex = RTA_DATA(i);
+		const char *port_ifname = ll_index_to_name(*port_ifindex);
+
+		open_json_object(NULL);
+		if (show_stats && i != RTA_DATA(rattr)) {
+			print_nl();
+			/* start: IFNAMSIZ + 4 + strlen("router ports: ") */
+			print_string(PRINT_FP, NULL,
+				     "%-" __stringify(IFNAMSIZ) "s    "
+				     "              ",
+				     "");
+		}
+		print_string(PRINT_ANY, "port", "%s ", port_ifname);
+		if (show_stats)
+			br_print_router_port_stats(i);
+		close_json_object();
+	}
+	close_json_array(PRINT_JSON, NULL);
+	print_nl();
+}
+
+static void print_vlan_global_opts(struct rtattr *a, int ifindex)
+{
+	struct rtattr *vtb[BRIDGE_VLANDB_GOPTS_MAX + 1], *vattr;
+	__u16 vid, vrange = 0;
+
+	if ((a->rta_type & NLA_TYPE_MASK) != BRIDGE_VLANDB_GLOBAL_OPTIONS)
+		return;
+
+	parse_rtattr_flags(vtb, BRIDGE_VLANDB_GOPTS_MAX, RTA_DATA(a),
+			   RTA_PAYLOAD(a), NLA_F_NESTED);
+	vid = rta_getattr_u16(vtb[BRIDGE_VLANDB_GOPTS_ID]);
+	if (vtb[BRIDGE_VLANDB_GOPTS_RANGE])
+		vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_GOPTS_RANGE]);
+	else
+		vrange = vid;
+
+	if (filter_vlan && (filter_vlan < vid || filter_vlan > vrange))
+		return;
+
+	if (vlan_rtm_cur_ifidx != ifindex) {
+		open_vlan_port(ifindex, VLAN_SHOW_VLAN);
+		open_json_object(NULL);
+		vlan_rtm_cur_ifidx = ifindex;
+	} else {
+		open_json_object(NULL);
+		print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
+	}
+	print_range("vlan", vid, vrange);
+	print_nl();
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_SNOOPING];
+		print_uint(PRINT_ANY, "mcast_snooping", "mcast_snooping %u ",
+			   rta_getattr_u8(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERIER]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERIER];
+		print_uint(PRINT_ANY, "mcast_querier", "mcast_querier %u ",
+			   rta_getattr_u8(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_IGMP_VERSION]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_IGMP_VERSION];
+		print_uint(PRINT_ANY, "mcast_igmp_version",
+			   "mcast_igmp_version %u ", rta_getattr_u8(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_MLD_VERSION]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_MLD_VERSION];
+		print_uint(PRINT_ANY, "mcast_mld_version",
+			   "mcast_mld_version %u ", rta_getattr_u8(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_MLD_VERSION]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_LAST_MEMBER_CNT];
+		print_uint(PRINT_ANY, "mcast_last_member_count",
+			   "mcast_last_member_count %u ",
+			   rta_getattr_u32(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_LAST_MEMBER_INTVL]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_LAST_MEMBER_INTVL];
+		print_lluint(PRINT_ANY, "mcast_last_member_interval",
+			     "mcast_last_member_interval %llu ",
+			     rta_getattr_u64(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_CNT]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_CNT];
+		print_uint(PRINT_ANY, "mcast_startup_query_count",
+			   "mcast_startup_query_count %u ",
+			   rta_getattr_u32(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_INTVL]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_INTVL];
+		print_lluint(PRINT_ANY, "mcast_startup_query_interval",
+			     "mcast_startup_query_interval %llu ",
+			     rta_getattr_u64(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_MEMBERSHIP_INTVL]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_MEMBERSHIP_INTVL];
+		print_lluint(PRINT_ANY, "mcast_membership_interval",
+			     "mcast_membership_interval %llu ",
+			     rta_getattr_u64(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERIER_INTVL]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERIER_INTVL];
+		print_lluint(PRINT_ANY, "mcast_querier_interval",
+			     "mcast_querier_interval %llu ",
+			     rta_getattr_u64(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERY_INTVL]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERY_INTVL];
+		print_lluint(PRINT_ANY, "mcast_query_interval",
+			     "mcast_query_interval %llu ",
+			     rta_getattr_u64(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERY_RESPONSE_INTVL]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MCAST_QUERY_RESPONSE_INTVL];
+		print_lluint(PRINT_ANY, "mcast_query_response_interval",
+			     "mcast_query_response_interval %llu ",
+			     rta_getattr_u64(vattr));
+	}
+	print_nl();
+	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_ROUTER_PORTS]) {
+		vattr = RTA_DATA(vtb[BRIDGE_VLANDB_GOPTS_MCAST_ROUTER_PORTS]);
+		print_vlan_router_ports(vattr);
+	}
+	close_json_object();
+}
+
+static void print_vlan_opts(struct rtattr *a, int ifindex)
+{
+	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1];
+	struct bridge_vlan_xstats vstats;
+	struct bridge_vlan_info *vinfo;
+	__u16 vrange = 0;
+	__u8 state = 0;
+
+	if ((a->rta_type & NLA_TYPE_MASK) != BRIDGE_VLANDB_ENTRY)
+		return;
+
+	parse_rtattr_flags(vtb, BRIDGE_VLANDB_ENTRY_MAX, RTA_DATA(a),
+			   RTA_PAYLOAD(a), NLA_F_NESTED);
+	vinfo = RTA_DATA(vtb[BRIDGE_VLANDB_ENTRY_INFO]);
+
+	memset(&vstats, 0, sizeof(vstats));
+	if (vtb[BRIDGE_VLANDB_ENTRY_RANGE])
+		vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_ENTRY_RANGE]);
+	else
+		vrange = vinfo->vid;
+
+	if (filter_vlan && (filter_vlan < vinfo->vid || filter_vlan > vrange))
+		return;
+
+	if (vtb[BRIDGE_VLANDB_ENTRY_STATE])
+		state = rta_getattr_u8(vtb[BRIDGE_VLANDB_ENTRY_STATE]);
+
+	if (vtb[BRIDGE_VLANDB_ENTRY_STATS]) {
+		struct rtattr *stb[BRIDGE_VLANDB_STATS_MAX+1];
+		struct rtattr *attr;
+
+		attr = vtb[BRIDGE_VLANDB_ENTRY_STATS];
+		parse_rtattr(stb, BRIDGE_VLANDB_STATS_MAX, RTA_DATA(attr),
+			     RTA_PAYLOAD(attr));
+
+		if (stb[BRIDGE_VLANDB_STATS_RX_BYTES]) {
+			attr = stb[BRIDGE_VLANDB_STATS_RX_BYTES];
+			vstats.rx_bytes = rta_getattr_u64(attr);
+		}
+		if (stb[BRIDGE_VLANDB_STATS_RX_PACKETS]) {
+			attr = stb[BRIDGE_VLANDB_STATS_RX_PACKETS];
+			vstats.rx_packets = rta_getattr_u64(attr);
+		}
+		if (stb[BRIDGE_VLANDB_STATS_TX_PACKETS]) {
+			attr = stb[BRIDGE_VLANDB_STATS_TX_PACKETS];
+			vstats.tx_packets = rta_getattr_u64(attr);
+		}
+		if (stb[BRIDGE_VLANDB_STATS_TX_BYTES]) {
+			attr = stb[BRIDGE_VLANDB_STATS_TX_BYTES];
+			vstats.tx_bytes = rta_getattr_u64(attr);
+		}
+	}
+
+	if (vlan_rtm_cur_ifidx != ifindex) {
+		open_vlan_port(ifindex, VLAN_SHOW_VLAN);
+		open_json_object(NULL);
+		vlan_rtm_cur_ifidx = ifindex;
+	} else {
+		open_json_object(NULL);
+		print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
+	}
+	print_range("vlan", vinfo->vid, vrange);
+	print_vlan_flags(vinfo->flags);
+	print_nl();
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
+	print_stp_state(state);
+	print_nl();
+	if (show_stats)
+		__print_one_vlan_stats(&vstats);
+	close_json_object();
+}
+
+int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor, bool global_only)
+{
 	struct br_vlan_msg *bvm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
+	struct rtattr *a;
 	int rem;
 
 	if (n->nlmsg_type != RTM_NEWVLAN && n->nlmsg_type != RTM_DELVLAN &&
@@ -660,66 +1050,21 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 
 	rem = len;
 	for (a = BRVLAN_RTA(bvm); RTA_OK(a, rem); a = RTA_NEXT(a, rem)) {
-		struct bridge_vlan_xstats vstats;
-		struct bridge_vlan_info *vinfo;
-		__u32 vrange = 0;
-		__u8 state = 0;
+		unsigned short rta_type = a->rta_type & NLA_TYPE_MASK;
 
-		parse_rtattr_flags(vtb, BRIDGE_VLANDB_ENTRY_MAX, RTA_DATA(a),
-				   RTA_PAYLOAD(a), NLA_F_NESTED);
-		vinfo = RTA_DATA(vtb[BRIDGE_VLANDB_ENTRY_INFO]);
+		/* skip unknown attributes */
+		if (rta_type > BRIDGE_VLANDB_MAX ||
+		    (global_only && rta_type != BRIDGE_VLANDB_GLOBAL_OPTIONS))
+			continue;
 
-		memset(&vstats, 0, sizeof(vstats));
-		if (vtb[BRIDGE_VLANDB_ENTRY_RANGE])
-			vrange = rta_getattr_u16(vtb[BRIDGE_VLANDB_ENTRY_RANGE]);
-		else
-			vrange = vinfo->vid;
-
-		if (vtb[BRIDGE_VLANDB_ENTRY_STATE])
-			state = rta_getattr_u8(vtb[BRIDGE_VLANDB_ENTRY_STATE]);
-
-		if (vtb[BRIDGE_VLANDB_ENTRY_STATS]) {
-			struct rtattr *stb[BRIDGE_VLANDB_STATS_MAX+1];
-			struct rtattr *attr;
-
-			attr = vtb[BRIDGE_VLANDB_ENTRY_STATS];
-			parse_rtattr(stb, BRIDGE_VLANDB_STATS_MAX, RTA_DATA(attr),
-				     RTA_PAYLOAD(attr));
-
-			if (stb[BRIDGE_VLANDB_STATS_RX_BYTES]) {
-				attr = stb[BRIDGE_VLANDB_STATS_RX_BYTES];
-				vstats.rx_bytes = rta_getattr_u64(attr);
-			}
-			if (stb[BRIDGE_VLANDB_STATS_RX_PACKETS]) {
-				attr = stb[BRIDGE_VLANDB_STATS_RX_PACKETS];
-				vstats.rx_packets = rta_getattr_u64(attr);
-			}
-			if (stb[BRIDGE_VLANDB_STATS_TX_PACKETS]) {
-				attr = stb[BRIDGE_VLANDB_STATS_TX_PACKETS];
-				vstats.tx_packets = rta_getattr_u64(attr);
-			}
-			if (stb[BRIDGE_VLANDB_STATS_TX_BYTES]) {
-				attr = stb[BRIDGE_VLANDB_STATS_TX_BYTES];
-				vstats.tx_bytes = rta_getattr_u64(attr);
-			}
+		switch (rta_type) {
+		case BRIDGE_VLANDB_ENTRY:
+			print_vlan_opts(a, bvm->ifindex);
+			break;
+		case BRIDGE_VLANDB_GLOBAL_OPTIONS:
+			print_vlan_global_opts(a, bvm->ifindex);
+			break;
 		}
-		if (vlan_rtm_cur_ifidx != bvm->ifindex) {
-			open_vlan_port(bvm->ifindex, VLAN_SHOW_VLAN);
-			open_json_object(NULL);
-			vlan_rtm_cur_ifidx = bvm->ifindex;
-		} else {
-			open_json_object(NULL);
-			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
-		}
-		print_range("vlan", vinfo->vid, vrange);
-		print_vlan_flags(vinfo->flags);
-		print_nl();
-		print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
-		print_stp_state(state);
-		print_nl();
-		if (show_stats)
-			__print_one_vlan_stats(&vstats);
-		close_json_object();
 	}
 
 	return 0;
@@ -727,7 +1072,12 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 
 static int print_vlan_rtm_filter(struct nlmsghdr *n, void *arg)
 {
-	return print_vlan_rtm(n, arg, false);
+	return print_vlan_rtm(n, arg, false, false);
+}
+
+static int print_vlan_rtm_global_filter(struct nlmsghdr *n, void *arg)
+{
+	return print_vlan_rtm(n, arg, false, true);
 }
 
 static int vlan_show(int argc, char **argv, int subject)
@@ -845,6 +1195,61 @@ out:
 	return 0;
 }
 
+static int vlan_global_show(int argc, char **argv)
+{
+	__u32 dump_flags = BRIDGE_VLANDB_DUMPF_GLOBAL;
+	int ret = 0, subject = VLAN_SHOW_VLAN;
+	char *filter_dev = NULL;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			if (filter_dev)
+				duparg("dev", *argv);
+			filter_dev = *argv;
+		} else if (strcmp(*argv, "vid") == 0) {
+			NEXT_ARG();
+			if (filter_vlan)
+				duparg("vid", *argv);
+			filter_vlan = atoi(*argv);
+		}
+		argc--; argv++;
+	}
+
+	if (filter_dev) {
+		filter_index = ll_name_to_index(filter_dev);
+		if (!filter_index)
+			return nodev(filter_dev);
+	}
+
+	new_json_obj(json);
+
+	if (rtnl_brvlandump_req(&rth, PF_BRIDGE, dump_flags) < 0) {
+		perror("Cannot send dump request");
+		exit(1);
+	}
+
+	if (!is_json_context()) {
+		printf("%-" __stringify(IFNAMSIZ) "s  %-"
+		       __stringify(VLAN_ID_LEN) "s", "port",
+		       "vlan-id");
+		printf("\n");
+	}
+
+	ret = rtnl_dump_filter(&rth, print_vlan_rtm_global_filter, &subject);
+	if (ret < 0) {
+		fprintf(stderr, "Dump terminated\n");
+		exit(1);
+	}
+
+	if (vlan_rtm_cur_ifidx != -1)
+		close_vlan_port();
+
+	delete_json_obj();
+	fflush(stdout);
+	return 0;
+}
+
 void print_vlan_info(struct rtattr *tb, int ifindex)
 {
 	struct rtattr *i, *list = tb;
@@ -889,6 +1294,24 @@ void print_vlan_info(struct rtattr *tb, int ifindex)
 		close_vlan_port();
 }
 
+static int vlan_global(int argc, char **argv)
+{
+	if (argc > 0) {
+		if (strcmp(*argv, "show") == 0 ||
+		    strcmp(*argv, "lst") == 0 ||
+		    strcmp(*argv, "list") == 0)
+			return vlan_global_show(argc-1, argv+1);
+		else if (strcmp(*argv, "set") == 0)
+			return vlan_global_option_set(argc-1, argv+1);
+		else
+			usage();
+	} else {
+		return vlan_global_show(0, NULL);
+	}
+
+	return 0;
+}
+
 int do_vlan(int argc, char **argv)
 {
 	ll_init_map(&rth);
@@ -907,6 +1330,8 @@ int do_vlan(int argc, char **argv)
 		}
 		if (matches(*argv, "set") == 0)
 			return vlan_option_set(argc-1, argv+1);
+		if (strcmp(*argv, "global") == 0)
+			return vlan_global(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else {

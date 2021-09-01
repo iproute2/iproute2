@@ -153,6 +153,44 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
+.BR "bridge vlan global set"
+.B dev
+.I DEV
+.B vid
+.IR VID " [ "
+.B mcast_snooping
+.IR MULTICAST_SNOOPING " ] [ "
+.B mcast_querier
+.IR MULTICAST_QUERIER " ] [ "
+.B mcast_igmp_version
+.IR IGMP_VERSION " ] [ "
+.B mcast_mld_version
+.IR MLD_VERSION " ] [ "
+.B mcast_last_member_count
+.IR LAST_MEMBER_COUNT " ] [ "
+.B mcast_last_member_interval
+.IR LAST_MEMBER_INTERVAL " ] [ "
+.B mcast_startup_query_count
+.IR STARTUP_QUERY_COUNT " ] [ "
+.B mcast_startup_query_interval
+.IR STARTUP_QUERY_INTERVAL " ] [ "
+.B mcast_membership_interval
+.IR MEMBERSHIP_INTERVAL " ] [ "
+.B mcast_querier_interval
+.IR QUERIER_INTERVAL " ] [ "
+.B mcast_query_interval
+.IR QUERY_INTERVAL " ] [ "
+.B mcast_query_response_interval
+.IR QUERY_RESPONSE_INTERVAL " ]"
+
+.ti -8
+.BR "bridge vlan global" " [ " show " ] [ "
+.B dev
+.IR DEV " ] [ "
+.B vid
+.IR VID " ]"
+
+.ti -8
 .BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " | " vlan " ]"
 
 .SH OPTIONS
@@ -894,6 +932,98 @@ option, the command displays per-vlan traffic statistics.
 .SS bridge vlan tunnelshow - list vlan tunnel mapping.
 
 This command displays the current vlan tunnel info mapping.
+
+.SS bridge vlan global set - change vlan filter entry's global options
+
+This command changes vlan filter entry's global options.
+
+.TP
+.BI dev " NAME"
+the interface with which this vlan is associated. Only bridge devices are
+supported for global options.
+
+.TP
+.BI vid " VID"
+the VLAN ID that identifies the vlan.
+
+.TP
+.BI mcast_snooping " MULTICAST_SNOOPING "
+turn multicast snooping for VLAN entry with VLAN ID on
+.RI ( MULTICAST_SNOOPING " > 0) "
+or off
+.RI ( MULTICAST_SNOOPING " == 0). Default is on. "
+
+.TP
+.BI mcast_querier " MULTICAST_QUERIER "
+enable
+.RI ( MULTICAST_QUERIER " > 0) "
+or disable
+.RI ( MULTICAST_QUERIER " == 0) "
+IGMP/MLD querier, ie sending of multicast queries by the bridge. Default is disabled.
+
+.TP
+.BI mcast_igmp_version " IGMP_VERSION "
+set the IGMP version. Default is 2.
+
+.TP
+.BI mcast_mld_version " MLD_VERSION "
+set the MLD version. Default is 1.
+
+.TP
+.BI mcast_last_member_count " LAST_MEMBER_COUNT "
+set multicast last member count, ie the number of queries the bridge
+will send before stopping forwarding a multicast group after a "leave"
+message has been received. Default is 2.
+
+.TP
+.BI mcast_last_member_interval " LAST_MEMBER_INTERVAL "
+interval between queries to find remaining members of a group,
+after a "leave" message is received.
+
+.TP
+.BI mcast_startup_query_count " STARTUP_QUERY_COUNT "
+set the number of queries to send during startup phase. Default is 2.
+
+.TP
+.BI mcast_startup_query_interval " STARTUP_QUERY_INTERVAL "
+interval between queries in the startup phase.
+
+.TP
+.BI mcast_membership_interval " MEMBERSHIP_INTERVAL "
+delay after which the bridge will leave a group,
+if no membership reports for this group are received.
+
+.TP
+.BI mcast_querier_interval " QUERIER_INTERVAL "
+interval between queries sent by other routers. If no queries are seen
+after this delay has passed, the bridge will start to send its own queries
+(as if
+.BI mcast_querier
+was enabled).
+
+.TP
+.BI mcast_query_interval " QUERY_INTERVAL "
+interval between queries sent by the bridge after the end of the
+startup phase.
+
+.TP
+.BI mcast_query_response_interval " QUERY_RESPONSE_INTERVAL "
+set the Max Response Time/Maximum Response Delay for IGMP/MLD
+queries sent by the bridge.
+
+.SS bridge vlan global show - list global vlan options.
+
+This command displays the global VLAN options for each VLAN entry.
+
+.TP
+.BI dev " DEV"
+the interface only whose VLAN global options should be listed. Default is to list
+all bridge interfaces.
+
+.TP
+.BI vid " VID"
+the VLAN ID only whose global options should be listed. Default is to list
+all vlans.
 
 .SH bridge monitor - state monitoring
 

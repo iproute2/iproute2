@@ -59,7 +59,7 @@ static const char *format_timer(__u32 ticks, int align)
 	return tbuf;
 }
 
-static void __print_router_port_stats(FILE *f, struct rtattr *pattr)
+void br_print_router_port_stats(struct rtattr *pattr)
 {
 	struct rtattr *tb[MDBA_ROUTER_PATTR_MAX + 1];
 
@@ -101,13 +101,13 @@ static void br_print_router_ports(FILE *f, struct rtattr *attr,
 			print_string(PRINT_JSON, "port", NULL, port_ifname);
 
 			if (show_stats)
-				__print_router_port_stats(f, i);
+				br_print_router_port_stats(i);
 			close_json_object();
 		} else if (show_stats) {
 			fprintf(f, "router ports on %s: %s",
 				brifname, port_ifname);
 
-			__print_router_port_stats(f, i);
+			br_print_router_port_stats(i);
 			fprintf(f, "\n");
 		} else {
 			fprintf(f, "%s ", port_ifname);
