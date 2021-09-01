@@ -272,16 +272,24 @@ static int vlan_option_set(int argc, char **argv)
 	};
 	struct bridge_vlan_info vinfo = {};
 	struct rtattr *afspec;
-	short vid_end = -1;
 	char *d = NULL;
 	short vid = -1;
-	int state = -1;
 
+	afspec = addattr_nest(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY);
+	afspec->rta_type |= NLA_F_NESTED;
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			d = *argv;
+			req.bvm.ifindex = ll_name_to_index(d);
+			if (req.bvm.ifindex == 0) {
+				fprintf(stderr,
+					"Cannot find network device \"%s\"\n",
+					d);
+				return -1;
+			}
 		} else if (strcmp(*argv, "vid") == 0) {
+			short vid_end = -1;
 			char *p;
 
 			NEXT_ARG();
@@ -299,8 +307,22 @@ static int vlan_option_set(int argc, char **argv)
 			} else {
 				vid = atoi(*argv);
 			}
+			if (vid >= 4096) {
+				fprintf(stderr, "Invalid VLAN ID \"%hu\"\n",
+					vid);
+				return -1;
+			}
+
+			vinfo.flags = BRIDGE_VLAN_INFO_ONLY_OPTS;
+			vinfo.vid = vid;
+			addattr_l(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_INFO,
+				  &vinfo, sizeof(vinfo));
+			if (vid_end != -1)
+				addattr16(&req.n, sizeof(req),
+					  BRIDGE_VLANDB_ENTRY_RANGE, vid_end);
 		} else if (strcmp(*argv, "state") == 0) {
 			char *endptr;
+			int state;
 
 			NEXT_ARG();
 			state = strtol(*argv, &endptr, 10);
@@ -310,41 +332,20 @@ static int vlan_option_set(int argc, char **argv)
 				fprintf(stderr, "Error: invalid STP state\n");
 				return -1;
 			}
+			addattr8(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_STATE,
+				 state);
 		} else {
 			if (matches(*argv, "help") == 0)
 				NEXT_ARG();
 		}
 		argc--; argv++;
 	}
+	addattr_nest_end(&req.n, afspec);
 
 	if (d == NULL || vid == -1) {
 		fprintf(stderr, "Device and VLAN ID are required arguments.\n");
 		return -1;
 	}
-
-	req.bvm.ifindex = ll_name_to_index(d);
-	if (req.bvm.ifindex == 0) {
-		fprintf(stderr, "Cannot find network device \"%s\"\n", d);
-		return -1;
-	}
-
-	if (vid >= 4096) {
-		fprintf(stderr, "Invalid VLAN ID \"%hu\"\n", vid);
-		return -1;
-	}
-	afspec = addattr_nest(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY);
-	afspec->rta_type |= NLA_F_NESTED;
-
-	vinfo.flags = BRIDGE_VLAN_INFO_ONLY_OPTS;
-	vinfo.vid = vid;
-	addattr_l(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_INFO, &vinfo,
-		  sizeof(vinfo));
-	if (vid_end != -1)
-		addattr16(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_RANGE,
-			  vid_end);
-	if (state >= 0)
-		addattr8(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_STATE, state);
-	addattr_nest_end(&req.n, afspec);
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;
