@@ -243,6 +243,9 @@ static void print_flags(long flags)
 	if (flags & IFF_ONE_QUEUE)
 		print_string(PRINT_ANY, NULL, " %s", "one_queue");
 
+	if (flags & IFF_MULTI_QUEUE)
+		print_string(PRINT_ANY, NULL, " %s", "multi_queue");
+
 	if (flags & IFF_VNET_HDR)
 		print_string(PRINT_ANY, NULL, " %s", "vnet_hdr");
 
@@ -253,9 +256,10 @@ static void print_flags(long flags)
 		print_string(PRINT_ANY, NULL, " %s", "filter");
 
 	flags &= ~(IFF_TUN | IFF_TAP | IFF_NO_PI | IFF_ONE_QUEUE |
-		   IFF_VNET_HDR | IFF_PERSIST | IFF_NOFILTER);
+		   IFF_MULTI_QUEUE | IFF_VNET_HDR | IFF_PERSIST |
+		   IFF_NOFILTER);
 	if (flags)
-		print_0xhex(PRINT_ANY, NULL, "%#llx", flags);
+		print_0xhex(PRINT_ANY, NULL, " %#llx", flags);
 
 	close_json_array(PRINT_JSON, NULL);
 }
