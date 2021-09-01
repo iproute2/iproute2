@@ -1,72 +1,62 @@
-#!/bin/sh
+#! /usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0
-
 #
-# Script created by: Stephen R. van den Berg <srb@cuci.nl>, 1999/04/18
-# Donated to the public domain.
-#
-# This script transforms the output of "ip" into more readable text.
-# "ip" is the Linux-advanced-routing configuration tool part of the
-# iproute package.
-#
+# This is simple script to process JSON output from ip route
+# command and format it.  Based on earlier shell script version.
+"""Script to parse ip route output into more readable text."""
 
-test "X-h" = "X$1" && echo "Usage: $0 [tablenr [raw ip args...]]" && exit 64
+import sys
+import json
+import getopt
+import subprocess
 
-test -z "$*" && set 0
 
-ip route list table "$@" |
- while read network rest
- do set xx $rest
-    shift
-    proto=""
-    via=""
-    dev=""
-    scope=""
-    src=""
-    table=""
-    case $network in
-       broadcast|local|unreachable) via=$network
-          network=$1
-          shift
-          ;;
-    esac
-    while test $# != 0
-    do
-       case "$1" in
-          proto|via|dev|scope|src|table)
-             key=$1
-             val=$2
-             eval "$key='$val'"
-             shift 2
-             ;;
-          dead|onlink|pervasive|offload|notify|linkdown|unresolved)
-             shift
-             ;;
-          *)
-             # avoid infinite loop on unknown keyword without value at line end
-             shift
-             shift
-             ;;
-       esac
-    done
-    echo "$network	$via	$src	$proto	$scope	$dev	$table"
- done | awk -F '	' '
-BEGIN {
-   format="%15s%-3s %15s %15s %8s %8s%7s %s\n";
-   printf(format,"target","","gateway","source","proto","scope","dev","tbl");
- }
- { network=$1;
-   mask="";
-   if(match(network,"/"))
-    { mask=" "substr(network,RSTART+1);
-      network=substr(network,0,RSTART);
-    }
-   via=$2;
-   src=$3;
-   proto=$4;
-   scope=$5;
-   dev=$6;
-   table=$7;
-   printf(format,network,mask,via,src,proto,scope,dev,table);
- }
-'
+def usage():
+    '''Print usage and exit'''
+    print("Usage: {} [tablenr [raw ip args...]]".format(sys.argv[0]))
+    sys.exit(64)
+
+
+def main():
+    '''Process the arguments'''
+    family = 'inet'
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "h46f:", ["help", "family="])
+    except getopt.GetoptError as err:
+        print(err)
+        usage()
+
+    for opt, arg in opts:
+        if opt in ["-h", "--help"]:
+            usage()
+        elif opt == '-6':
+            family = 'inet6'
+        elif opt == "-4":
+            family = 'inet'
+        elif opt in ["-f", "--family"]:
+            family = arg
+        else:
+            assert False, "unhandled option"
+
+    if not args:
+        args = ['0']
+
+    cmd = ['ip', '-f', family, '-j', 'route', 'list', 'table'] + args
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    tbl = json.load(process.stdout)
+    if family == 'inet':
+        fmt = '{:15} {:15} {:15} {:8} {:8}{:<16} {}'
+    else:
+        fmt = '{:32} {:32} {:32} {:8} {:8}{:<16} {}'
+
+    # ip route json keys
+    keys = ['dst', 'gateway', 'prefsrc', 'protocol', 'scope', 'dev', 'table']
+    print(fmt.format(*map(lambda x: x.capitalize(), keys)))
+
+    for record in tbl:
+        fields = [record[k] if k in record else '' for k in keys]
+        print(fmt.format(*fields))
+
+
+if __name__ == "__main__":
+    main()
