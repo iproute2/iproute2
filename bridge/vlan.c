@@ -36,6 +36,7 @@ static void usage(void)
 		"                                                     [ pvid ] [ untagged ]\n"
 		"                                                     [ self ] [ master ]\n"
 		"       bridge vlan { set } vid VLAN_ID dev DEV [ state STP_STATE ]\n"
+		"                                               [ mcast_router MULTICAST_ROUTER ]\n"
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
@@ -334,6 +335,15 @@ static int vlan_option_set(int argc, char **argv)
 			}
 			addattr8(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_STATE,
 				 state);
+		} else if (strcmp(*argv, "mcast_router") == 0) {
+			__u8 mcast_router;
+
+			NEXT_ARG();
+			if (get_u8(&mcast_router, *argv, 0))
+				invarg("invalid mcast_router", *argv);
+			addattr8(&req.n, sizeof(req),
+				 BRIDGE_VLANDB_ENTRY_MCAST_ROUTER,
+				 mcast_router);
 		} else {
 			if (matches(*argv, "help") == 0)
 				NEXT_ARG();
@@ -942,7 +952,7 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 
 static void print_vlan_opts(struct rtattr *a, int ifindex)
 {
-	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1];
+	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1], *vattr;
 	struct bridge_vlan_xstats vstats;
 	struct bridge_vlan_info *vinfo;
 	__u16 vrange = 0;
@@ -1006,6 +1016,11 @@ static void print_vlan_opts(struct rtattr *a, int ifindex)
 	print_nl();
 	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
 	print_stp_state(state);
+	if (vtb[BRIDGE_VLANDB_ENTRY_MCAST_ROUTER]) {
+		vattr = vtb[BRIDGE_VLANDB_ENTRY_MCAST_ROUTER];
+		print_uint(PRINT_ANY, "mcast_router", "mcast_router %u ",
+			   rta_getattr_u8(vattr));
+	}
 	print_nl();
 	if (show_stats)
 		__print_one_vlan_stats(&vstats);

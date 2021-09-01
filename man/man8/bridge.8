@@ -145,7 +145,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B vid
 .IR VID " [ "
 .B state
-.IR STP_STATE " ] "
+.IR STP_STATE " ] [ "
+.B mcast_router
+.IR MULTICAST_ROUTER " ]"
 
 .ti -8
 .BR "bridge vlan" " [ " show " | " tunnelshow " ] [ "
@@ -913,6 +915,31 @@ state. This is the default vlan state.
 state. Only valid if STP is enabled on the bridge. This state
 is used during the STP election process. In this state, the vlan will only process
 STP BPDUs.
+.sp
+
+.TP
+.BI mcast_router " MULTICAST_ROUTER "
+configure this vlan and interface's multicast router mode, note that only modes
+0 - 2 are available for bridge devices.
+A vlan and interface with a multicast router will receive all multicast traffic.
+.I MULTICAST_ROUTER
+may be either
+.sp
+.B 0
+- to disable multicast router.
+.sp
+
+.B 1
+- to let the system detect the presence of routers (default).
+.sp
+
+.B 2
+- to permanently enable multicast traffic forwarding on this vlan and interface.
+.sp
+
+.B 3
+- to temporarily mark this vlan and port as having a multicast router, i.e.
+enable multicast traffic forwarding. This mode is available only for ports.
 .sp
 
 .SS bridge vlan show - list vlan configuration.
