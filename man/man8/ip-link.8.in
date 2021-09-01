@@ -2383,7 +2383,7 @@ may be either
 .B 0
 to disable multicast routers on this port,
 .B 1
-to let the system detect the presence of of routers (this is the default),
+to let the system detect the presence of routers (this is the default),
 .B 2
 to permanently enable multicast traffic forwarding on this port or
 .B 3
