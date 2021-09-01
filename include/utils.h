@@ -109,17 +109,6 @@ static inline bool is_addrtype_inet_not_multi(const inet_prefix *p)
 	return (p->flags & ADDRTYPE_INET_MULTI) == ADDRTYPE_INET;
 }
 
-#define DN_MAXADDL 20
-#ifndef AF_DECnet
-#define AF_DECnet 12
-#endif
-
-struct dn_naddr
-{
-        unsigned short          a_len;
-        unsigned char a_addr[DN_MAXADDL];
-};
-
 #ifndef AF_MPLS
 # define AF_MPLS 28
 #endif

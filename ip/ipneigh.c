@@ -328,8 +328,7 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	if (!(filter.state&r->ndm_state) &&
 	    !(r->ndm_flags & NTF_PROXY) &&
 	    !(r->ndm_flags & NTF_EXT_LEARNED) &&
-	    (r->ndm_state || !(filter.state&0x100)) &&
-	    (r->ndm_family != AF_DECnet))
+	    (r->ndm_state || !(filter.state&0x100)))
 		return 0;
 
 	if (filter.master && !(n->nlmsg_flags & NLM_F_DUMP_FILTERED)) {

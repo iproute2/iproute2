@@ -72,7 +72,7 @@ static void usage(void)
 		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 		"                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
 		"                    -f[amily] { inet | inet6 | mpls | bridge | link } |\n"
-		"                    -4 | -6 | -I | -D | -M | -B | -0 |\n"
+		"                    -4 | -6 | -M | -B | -0 |\n"
 		"                    -l[oops] { maximum-addr-flush-attempts } | -br[ief] |\n"
 		"                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
 		"                    -rc[vbuf] [size] | -n[etns] name | -N[umeric] | -a[ll] |\n"
@@ -224,8 +224,6 @@ int main(int argc, char **argv)
 			preferred_family = AF_INET6;
 		} else if (strcmp(opt, "-0") == 0) {
 			preferred_family = AF_PACKET;
-		} else if (strcmp(opt, "-D") == 0) {
-			preferred_family = AF_DECnet;
 		} else if (strcmp(opt, "-M") == 0) {
 			preferred_family = AF_MPLS;
 		} else if (strcmp(opt, "-B") == 0) {
