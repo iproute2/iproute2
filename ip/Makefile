@@ -18,7 +18,7 @@ RTMONOBJ=rtmon.o
 include ../config.mk
 
 ALLOBJ=$(IPOBJ) $(RTMONOBJ)
-SCRIPTS=routel routef
+SCRIPTS=routel
 TARGETS=ip rtmon
 
 all: $(TARGETS) $(SCRIPTS)
