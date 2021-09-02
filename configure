@@ -518,7 +518,7 @@ else
 			"")
 				break ;;
 			*)
-				usage 1 ;;
+				shift 1 ;;
 		esac
 	done
 fi
