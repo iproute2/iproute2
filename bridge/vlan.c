@@ -36,6 +36,7 @@ static void usage(void)
 		"                                                     [ pvid ] [ untagged ]\n"
 		"                                                     [ self ] [ master ]\n"
 		"       bridge vlan { set } vid VLAN_ID dev DEV [ state STP_STATE ]\n"
+		"                                               [ mcast_router MULTICAST_ROUTER ]\n"
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
@@ -272,16 +273,24 @@ static int vlan_option_set(int argc, char **argv)
 	};
 	struct bridge_vlan_info vinfo = {};
 	struct rtattr *afspec;
-	short vid_end = -1;
 	char *d = NULL;
 	short vid = -1;
-	int state = -1;
 
+	afspec = addattr_nest(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY);
+	afspec->rta_type |= NLA_F_NESTED;
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			d = *argv;
+			req.bvm.ifindex = ll_name_to_index(d);
+			if (req.bvm.ifindex == 0) {
+				fprintf(stderr,
+					"Cannot find network device \"%s\"\n",
+					d);
+				return -1;
+			}
 		} else if (strcmp(*argv, "vid") == 0) {
+			short vid_end = -1;
 			char *p;
 
 			NEXT_ARG();
@@ -299,8 +308,22 @@ static int vlan_option_set(int argc, char **argv)
 			} else {
 				vid = atoi(*argv);
 			}
+			if (vid >= 4096) {
+				fprintf(stderr, "Invalid VLAN ID \"%hu\"\n",
+					vid);
+				return -1;
+			}
+
+			vinfo.flags = BRIDGE_VLAN_INFO_ONLY_OPTS;
+			vinfo.vid = vid;
+			addattr_l(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_INFO,
+				  &vinfo, sizeof(vinfo));
+			if (vid_end != -1)
+				addattr16(&req.n, sizeof(req),
+					  BRIDGE_VLANDB_ENTRY_RANGE, vid_end);
 		} else if (strcmp(*argv, "state") == 0) {
 			char *endptr;
+			int state;
 
 			NEXT_ARG();
 			state = strtol(*argv, &endptr, 10);
@@ -310,41 +333,29 @@ static int vlan_option_set(int argc, char **argv)
 				fprintf(stderr, "Error: invalid STP state\n");
 				return -1;
 			}
+			addattr8(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_STATE,
+				 state);
+		} else if (strcmp(*argv, "mcast_router") == 0) {
+			__u8 mcast_router;
+
+			NEXT_ARG();
+			if (get_u8(&mcast_router, *argv, 0))
+				invarg("invalid mcast_router", *argv);
+			addattr8(&req.n, sizeof(req),
+				 BRIDGE_VLANDB_ENTRY_MCAST_ROUTER,
+				 mcast_router);
 		} else {
 			if (matches(*argv, "help") == 0)
 				NEXT_ARG();
 		}
 		argc--; argv++;
 	}
+	addattr_nest_end(&req.n, afspec);
 
 	if (d == NULL || vid == -1) {
 		fprintf(stderr, "Device and VLAN ID are required arguments.\n");
 		return -1;
 	}
-
-	req.bvm.ifindex = ll_name_to_index(d);
-	if (req.bvm.ifindex == 0) {
-		fprintf(stderr, "Cannot find network device \"%s\"\n", d);
-		return -1;
-	}
-
-	if (vid >= 4096) {
-		fprintf(stderr, "Invalid VLAN ID \"%hu\"\n", vid);
-		return -1;
-	}
-	afspec = addattr_nest(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY);
-	afspec->rta_type |= NLA_F_NESTED;
-
-	vinfo.flags = BRIDGE_VLAN_INFO_ONLY_OPTS;
-	vinfo.vid = vid;
-	addattr_l(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_INFO, &vinfo,
-		  sizeof(vinfo));
-	if (vid_end != -1)
-		addattr16(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_RANGE,
-			  vid_end);
-	if (state >= 0)
-		addattr8(&req.n, sizeof(req), BRIDGE_VLANDB_ENTRY_STATE, state);
-	addattr_nest_end(&req.n, afspec);
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;
@@ -941,7 +952,7 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 
 static void print_vlan_opts(struct rtattr *a, int ifindex)
 {
-	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1];
+	struct rtattr *vtb[BRIDGE_VLANDB_ENTRY_MAX + 1], *vattr;
 	struct bridge_vlan_xstats vstats;
 	struct bridge_vlan_info *vinfo;
 	__u16 vrange = 0;
@@ -1005,6 +1016,11 @@ static void print_vlan_opts(struct rtattr *a, int ifindex)
 	print_nl();
 	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    ", "");
 	print_stp_state(state);
+	if (vtb[BRIDGE_VLANDB_ENTRY_MCAST_ROUTER]) {
+		vattr = vtb[BRIDGE_VLANDB_ENTRY_MCAST_ROUTER];
+		print_uint(PRINT_ANY, "mcast_router", "mcast_router %u ",
+			   rta_getattr_u8(vattr));
+	}
 	print_nl();
 	if (show_stats)
 		__print_one_vlan_stats(&vstats);
