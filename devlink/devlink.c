@@ -3700,7 +3700,7 @@ static int cmd_dev_flash_status_cb(const struct nlmsghdr *nlh, void *data)
 	    strcmp(dev_name, opts->dev_name))
 		return MNL_CB_ERROR;
 
-	if (genl->cmd == DEVLINK_CMD_FLASH_UPDATE_END && ctx->not_first) {
+	if (genl->cmd == DEVLINK_CMD_FLASH_UPDATE_END) {
 		pr_out("\n");
 		free(ctx->last_msg);
 		free(ctx->last_component);
@@ -3988,7 +3988,7 @@ static void cmd_port_help(void)
 	pr_err("       devlink port set DEV/PORT_INDEX [ type { eth | ib | auto} ]\n");
 	pr_err("       devlink port split DEV/PORT_INDEX count COUNT\n");
 	pr_err("       devlink port unsplit DEV/PORT_INDEX\n");
-	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state STATE ]\n");
+	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state { active | inactive } ]\n");
 	pr_err("       devlink port function rate { help | show | add | del | set }\n");
 	pr_err("       devlink port param set DEV/PORT_INDEX name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink port param show [DEV/PORT_INDEX name PARAMETER]\n");

@@ -540,7 +540,7 @@ static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 	memset(addr, 0, sizeof(*addr));
 
 	if (strcmp(name, "default") == 0) {
-		if ((family == AF_DECnet) || (family == AF_MPLS))
+		if (family == AF_MPLS)
 			return -1;
 		addr->family = family;
 		addr->bytelen = af_byte_len(addr->family);
@@ -551,7 +551,7 @@ static int __get_addr_1(inet_prefix *addr, const char *name, int family)
 
 	if (strcmp(name, "all") == 0 ||
 	    strcmp(name, "any") == 0) {
-		if ((family == AF_DECnet) || (family == AF_MPLS))
+		if (family == AF_MPLS)
 			return -1;
 		addr->family = family;
 		addr->bytelen = 0;
@@ -636,10 +636,6 @@ int af_bit_len(int af)
 		return 128;
 	case AF_INET:
 		return 32;
-	case AF_DECnet:
-		return 16;
-	case AF_IPX:
-		return 80;
 	case AF_MPLS:
 		return 20;
 	}
@@ -728,16 +724,6 @@ int get_addr_rta(inet_prefix *dst, const struct rtattr *rta, int family)
 		dst->family = AF_INET6;
 		dst->bytelen = 16;
 		memcpy(dst->data, data, 16);
-		break;
-	case 2:
-		dst->family = AF_DECnet;
-		dst->bytelen = 2;
-		memcpy(dst->data, data, 2);
-		break;
-	case 10:
-		dst->family = AF_IPX;
-		dst->bytelen = 10;
-		memcpy(dst->data, data, 10);
 		break;
 	default:
 		return -1;
@@ -1029,8 +1015,6 @@ int read_family(const char *name)
 		family = AF_INET6;
 	else if (strcmp(name, "link") == 0)
 		family = AF_PACKET;
-	else if (strcmp(name, "ipx") == 0)
-		family = AF_IPX;
 	else if (strcmp(name, "mpls") == 0)
 		family = AF_MPLS;
 	else if (strcmp(name, "bridge") == 0)
@@ -1046,8 +1030,6 @@ const char *family_name(int family)
 		return "inet6";
 	if (family == AF_PACKET)
 		return "link";
-	if (family == AF_IPX)
-		return "ipx";
 	if (family == AF_MPLS)
 		return "mpls";
 	if (family == AF_BRIDGE)

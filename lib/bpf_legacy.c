@@ -1531,7 +1531,7 @@ retry:
 		 * into our buffer. Still, try to give a debuggable error
 		 * log for the user, so enlarge it and re-fail.
 		 */
-		if (fd < 0 && (errno == ENOSPC || !ctx->log_size)) {
+		if (fd < 0 && errno == ENOSPC) {
 			if (tries++ < 10 && !bpf_log_realloc(ctx))
 				goto retry;
 
@@ -2069,7 +2069,7 @@ retry:
 	fd = bpf_btf_load(ctx->btf_data->d_buf, ctx->btf_data->d_size,
 			  ctx->log, ctx->log_size);
 	if (fd < 0 || ctx->verbose) {
-		if (fd < 0 && (errno == ENOSPC || !ctx->log_size)) {
+		if (fd < 0 && errno == ENOSPC) {
 			if (tries++ < 10 && !bpf_log_realloc(ctx))
 				goto retry;
 
@@ -3298,6 +3298,9 @@ bool iproute2_is_map_in_map(const char *libbpf_map_name, struct bpf_elf_map *ima
 
 			*omap = ctx->maps[j];
 			outer_map_name = bpf_map_fetch_name(ctx, j);
+			if (!outer_map_name)
+				return false;
+
 			memcpy(omap_name, outer_map_name, strlen(outer_map_name) + 1);
 
 			return true;

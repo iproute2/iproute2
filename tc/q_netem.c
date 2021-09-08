@@ -267,7 +267,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 					NEXT_ARG();
 					++present[TCA_NETEM_CORR];
 					if (get_percent(&cor.loss_corr, *argv)) {
-						explain1("loss correllation");
+						explain1("loss correlation");
 						return -1;
 					}
 				}

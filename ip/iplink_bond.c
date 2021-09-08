@@ -41,6 +41,9 @@ static const char *arp_validate_tbl[] = {
 	"active",
 	"backup",
 	"all",
+	"filter",
+	"filter_active",
+	"filter_backup",
 	NULL,
 };
 
@@ -152,7 +155,7 @@ static void print_explain(FILE *f)
 		"                [ ad_actor_system LLADDR ]\n"
 		"\n"
 		"BONDMODE := balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb\n"
-		"ARP_VALIDATE := none|active|backup|all\n"
+		"ARP_VALIDATE := none|active|backup|all|filter|filter_active|filter_backup\n"
 		"ARP_ALL_TARGETS := any|all\n"
 		"PRIMARY_RESELECT := always|better|failure\n"
 		"FAIL_OVER_MAC := none|active|follow\n"

@@ -978,6 +978,13 @@ show_k:
 	goto show_k;
 }
 
+static __u32 u32_hash_fold(struct tc_u32_key *key)
+{
+	__u8 fshift = key->mask ? ffs(ntohl(key->mask)) - 1 : 0;
+
+	return ntohl(key->val & key->mask) >> fshift;
+}
+
 static int u32_parse_opt(struct filter_util *qu, char *handle,
 			 int argc, char **argv, struct nlmsghdr *n)
 {
@@ -1110,9 +1117,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 				}
 				NEXT_ARG();
 			}
-			hash = sel2.keys[0].val & sel2.keys[0].mask;
-			hash ^= hash >> 16;
-			hash ^= hash >> 8;
+			hash = u32_hash_fold(&sel2.keys[0]);
 			htid = ((hash % divisor) << 12) | (htid & 0xFFF00000);
 			sample_ok = 1;
 			continue;
