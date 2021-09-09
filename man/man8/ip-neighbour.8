@@ -35,7 +35,8 @@ ip-neighbour \- neighbour/arp tables management.
 .B  nud
 .IR STATE " ] [ "
 .B  vrf
-.IR NAME " ] "
+.IR NAME " ] ["
+.BR nomaster " ]"
 
 .ti -8
 .B ip neigh get
@@ -190,6 +191,10 @@ only list the neighbours attached to this device.
 .TP
 .BI vrf " NAME"
 only list the neighbours for given VRF.
+
+.TP
+.BI nomaster
+only list neighbours attached to an interface with no master.
 
 .TP
 .BI proxy

@@ -54,7 +54,7 @@ static void usage(void)
 		"		[ dev DEV ] [ router ] [ extern_learn ] [ protocol PROTO ]\n"
 		"\n"
 		"	ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n"
-		"				  [ vrf NAME ]\n"
+		"				  [ vrf NAME ] [ nomaster ]\n"
 		"	ip neigh get { ADDR | proxy ADDR } dev DEV\n"
 		"\n"
 		"STATE := { delay | failed | incomplete | noarp | none |\n"
@@ -535,6 +535,8 @@ static int do_show_or_flush(int argc, char **argv, int flush)
 			if (!name_is_vrf(*argv))
 				invarg("Not a valid VRF name\n", *argv);
 			filter.master = ifindex;
+		} else if (strcmp(*argv, "nomaster") == 0) {
+			filter.master = -1;
 		} else if (strcmp(*argv, "unused") == 0) {
 			filter.unused_only = 1;
 		} else if (strcmp(*argv, "nud") == 0) {

@@ -49,7 +49,8 @@ ip-address \- protocol address management
 .IR TYPE " ] [ "
 .B vrf
 .IR NAME " ] [ "
-.BR up " ] ]"
+.BR up " ] ["
+.BR nomaster " ] ]"
 
 .ti -8
 .BR "ip address" " { " showdump " | " restore " }"
@@ -339,6 +340,10 @@ output.
 .TP
 .B up
 only list running interfaces.
+
+.TP
+.B nomaster
+only list interfaces with no master.
 
 .TP
 .BR dynamic " and " permanent
