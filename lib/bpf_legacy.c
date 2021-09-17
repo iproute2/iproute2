@@ -203,12 +203,32 @@ int bpf_dump_prog_info(FILE *f, uint32_t id)
 	if (!ret && len) {
 		int jited = !!info.jited_prog_len;
 
+		if (info.name)
+			print_string(PRINT_ANY, "name", "name %s ", info.name);
+
 		print_string(PRINT_ANY, "tag", "tag %s ",
 			     hexstring_n2a(info.tag, sizeof(info.tag),
 					   tmp, sizeof(tmp)));
 		print_uint(PRINT_JSON, "jited", NULL, jited);
 		if (jited && !is_json_context())
 			fprintf(f, "jited ");
+
+		if (show_details) {
+			if (info.load_time) {
+				/* ns since boottime */
+				print_lluint(PRINT_ANY, "load_time",
+					     "load_time %llu ", info.load_time);
+
+				print_luint(PRINT_ANY, "created_by_uid",
+					    "created_by_uid %lu ",
+					    info.created_by_uid);
+			}
+
+			if (info.btf_id)
+				print_luint(PRINT_ANY, "btf_id", "btf_id %lu ",
+					    info.btf_id);
+		}
+
 		dump_ok = 1;
 	}
 
