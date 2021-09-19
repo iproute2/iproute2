@@ -43,6 +43,9 @@ DEFINES+=-DCONFDIR=\"$(CONFDIR)\" \
 #options for AX.25
 ADDLIB+=ax25_ntop.o
 
+#options for AX.25
+ADDLIB+=rose_ntop.o
+
 #options for mpls
 ADDLIB+=mpls_ntop.o mpls_pton.o
 
