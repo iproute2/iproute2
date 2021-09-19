@@ -203,6 +203,8 @@ const char *ax25_ntop(int af, const void *addr, char *str, socklen_t len);
 const char *mpls_ntop(int af, const void *addr, char *str, size_t len);
 int mpls_pton(int af, const char *src, void *addr, size_t alen);
 
+const char *netrom_ntop(int af, const void *addr, char *str, socklen_t len);
+
 extern int __iproute2_hz_internal;
 int __get_hz(void);
 

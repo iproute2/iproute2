@@ -46,6 +46,9 @@ ADDLIB+=ax25_ntop.o
 #options for mpls
 ADDLIB+=mpls_ntop.o mpls_pton.o
 
+#options for NETROM
+ADDLIB+=netrom_ntop.o
+
 CC := gcc
 HOSTCC ?= $(CC)
 DEFINES += -D_GNU_SOURCE
