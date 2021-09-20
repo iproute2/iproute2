@@ -725,7 +725,7 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 	if (min && max) {
 		__be16 min_port_type, max_port_type;
 
-		if (max <= min) {
+		if (ntohs(max) <= ntohs(min)) {
 			fprintf(stderr, "max value should be greater than min value\n");
 			return -1;
 		}
