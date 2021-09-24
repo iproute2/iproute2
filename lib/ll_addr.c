@@ -39,6 +39,12 @@ const char *ll_addr_n2a(const unsigned char *addr, int alen, int type,
 
 	if (alen == 16 && (type == ARPHRD_TUNNEL6 || type == ARPHRD_IP6GRE))
 		return inet_ntop(AF_INET6, addr, buf, blen);
+	if (alen == 7 && type == ARPHRD_AX25)
+		return ax25_ntop(AF_AX25, addr, buf, blen);
+	if (alen == 7 && type == ARPHRD_NETROM)
+		return netrom_ntop(AF_NETROM, addr, buf, blen);
+	if (alen == 5 && type == ARPHRD_ROSE)
+		return rose_ntop(AF_ROSE, addr, buf, blen);
 
 	snprintf(buf, blen, "%02x", addr[0]);
 	for (i = 1, l = 2; i < alen && l < blen; i++, l += 3)

@@ -198,8 +198,14 @@ bool matches(const char *prefix, const char *string);
 int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits);
 int inet_addr_match_rta(const inet_prefix *m, const struct rtattr *rta);
 
+const char *ax25_ntop(int af, const void *addr, char *str, socklen_t len);
+
+const char *rose_ntop(int af, const void *addr, char *buf, socklen_t buflen);
+
 const char *mpls_ntop(int af, const void *addr, char *str, size_t len);
 int mpls_pton(int af, const char *src, void *addr, size_t alen);
+
+const char *netrom_ntop(int af, const void *addr, char *str, socklen_t len);
 
 extern int __iproute2_hz_internal;
 int __get_hz(void);
