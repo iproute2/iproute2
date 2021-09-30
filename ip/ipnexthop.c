@@ -13,6 +13,7 @@
 
 #include "utils.h"
 #include "ip_common.h"
+#include "nh_common.h"
 
 static struct {
 	unsigned int flushed;
@@ -264,39 +265,50 @@ static void print_nh_group_type(FILE *fp, const struct rtattr *grp_type_attr)
 	print_string(PRINT_ANY, "type", "type %s ", nh_group_type_name(type));
 }
 
-static void print_nh_res_group(FILE *fp, const struct rtattr *res_grp_attr)
+static void parse_nh_res_group_rta(const struct rtattr *res_grp_attr,
+				   struct nha_res_grp *res_grp)
 {
 	struct rtattr *tb[NHA_RES_GROUP_MAX + 1];
 	struct rtattr *rta;
-	struct timeval tv;
 
+	memset(res_grp, 0, sizeof(*res_grp));
 	parse_rtattr_nested(tb, NHA_RES_GROUP_MAX, res_grp_attr);
 
-	open_json_object("resilient_args");
-
 	if (tb[NHA_RES_GROUP_BUCKETS])
-		print_uint(PRINT_ANY, "buckets", "buckets %u ",
-			   rta_getattr_u16(tb[NHA_RES_GROUP_BUCKETS]));
+		res_grp->buckets = rta_getattr_u16(tb[NHA_RES_GROUP_BUCKETS]);
 
 	if (tb[NHA_RES_GROUP_IDLE_TIMER]) {
 		rta = tb[NHA_RES_GROUP_IDLE_TIMER];
-		__jiffies_to_tv(&tv, rta_getattr_u32(rta));
-		print_tv(PRINT_ANY, "idle_timer", "idle_timer %g ", &tv);
+		res_grp->idle_timer = rta_getattr_u32(rta);
 	}
 
 	if (tb[NHA_RES_GROUP_UNBALANCED_TIMER]) {
 		rta = tb[NHA_RES_GROUP_UNBALANCED_TIMER];
-		__jiffies_to_tv(&tv, rta_getattr_u32(rta));
-		print_tv(PRINT_ANY, "unbalanced_timer", "unbalanced_timer %g ",
-			 &tv);
+		res_grp->unbalanced_timer = rta_getattr_u32(rta);
 	}
 
 	if (tb[NHA_RES_GROUP_UNBALANCED_TIME]) {
 		rta = tb[NHA_RES_GROUP_UNBALANCED_TIME];
-		__jiffies_to_tv(&tv, rta_getattr_u32(rta));
-		print_tv(PRINT_ANY, "unbalanced_time", "unbalanced_time %g ",
-			 &tv);
+		res_grp->unbalanced_time = rta_getattr_u64(rta);
 	}
+}
+
+static void print_nh_res_group(const struct nha_res_grp *res_grp)
+{
+	struct timeval tv;
+
+	open_json_object("resilient_args");
+
+	print_uint(PRINT_ANY, "buckets", "buckets %u ", res_grp->buckets);
+
+	 __jiffies_to_tv(&tv, res_grp->idle_timer);
+	print_tv(PRINT_ANY, "idle_timer", "idle_timer %g ", &tv);
+
+	__jiffies_to_tv(&tv, res_grp->unbalanced_timer);
+	print_tv(PRINT_ANY, "unbalanced_timer", "unbalanced_timer %g ", &tv);
+
+	__jiffies_to_tv(&tv, res_grp->unbalanced_time);
+	print_tv(PRINT_ANY, "unbalanced_time", "unbalanced_time %g ", &tv);
 
 	close_json_object();
 }
@@ -371,8 +383,12 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 	if (tb[NHA_GROUP_TYPE])
 		print_nh_group_type(fp, tb[NHA_GROUP_TYPE]);
 
-	if (tb[NHA_RES_GROUP])
-		print_nh_res_group(fp, tb[NHA_RES_GROUP]);
+	if (tb[NHA_RES_GROUP]) {
+		struct nha_res_grp res_grp;
+
+		parse_nh_res_group_rta(tb[NHA_RES_GROUP], &res_grp);
+		print_nh_res_group(&res_grp);
+	}
 
 	if (tb[NHA_ENCAP])
 		lwt_print_encap(fp, tb[NHA_ENCAP_TYPE], tb[NHA_ENCAP]);
