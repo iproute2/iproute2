@@ -410,13 +410,13 @@ static void print_rt_pref(FILE *fp, unsigned int pref)
 	}
 }
 
-void print_rta_if(FILE *fp, const struct rtattr *rta, const char *prefix)
+void print_rta_ifidx(FILE *fp, __u32 ifidx, const char *prefix)
 {
-	const char *ifname = ll_index_to_name(rta_getattr_u32(rta));
+	const char *ifname = ll_index_to_name(ifidx);
 
-	if (is_json_context())
+	if (is_json_context()) {
 		print_string(PRINT_JSON, prefix, NULL, ifname);
-	else {
+	} else {
 		fprintf(fp, "%s ", prefix);
 		color_fprintf(fp, COLOR_IFNAME, "%s ", ifname);
 	}
@@ -862,7 +862,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 		print_rta_via(fp, tb[RTA_VIA]);
 
 	if (tb[RTA_OIF] && filter.oifmask != -1)
-		print_rta_if(fp, tb[RTA_OIF], "dev");
+		print_rta_ifidx(fp, rta_getattr_u32(tb[RTA_OIF]), "dev");
 
 	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
 		print_string(PRINT_ANY,
@@ -946,7 +946,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 		print_rta_metrics(fp, tb[RTA_METRICS]);
 
 	if (tb[RTA_IIF] && filter.iifmask != -1)
-		print_rta_if(fp, tb[RTA_IIF], "iif");
+		print_rta_ifidx(fp, rta_getattr_u32(tb[RTA_IIF]), "iif");
 
 	if (tb[RTA_PREF])
 		print_rt_pref(fp, rta_getattr_u8(tb[RTA_PREF]));

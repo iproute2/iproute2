@@ -381,7 +381,7 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 		print_rta_gateway(fp, nhm->nh_family, tb[NHA_GATEWAY]);
 
 	if (tb[NHA_OIF])
-		print_rta_if(fp, tb[NHA_OIF], "dev");
+		print_rta_ifidx(fp, rta_getattr_u32(tb[NHA_OIF]), "dev");
 
 	if (nhm->nh_scope != RT_SCOPE_UNIVERSE || show_details > 0) {
 		print_string(PRINT_ANY, "scope", "scope %s ",
