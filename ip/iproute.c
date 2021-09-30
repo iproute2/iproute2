@@ -28,6 +28,7 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "nh_common.h"
 
 #ifndef RTAX_RTTVAR
 #define RTAX_RTTVAR RTAX_HOPS
@@ -967,6 +968,10 @@ int print_route(struct nlmsghdr *n, void *arg)
 				     "ttl-propogate %s",
 				     propagate ? "enabled" : "disabled");
 	}
+
+	if (tb[RTA_NH_ID] && show_details)
+		print_cache_nexthop_id(fp, "\n\tnh_info ", "nh_info",
+				       rta_getattr_u32(tb[RTA_NH_ID]));
 
 	if (tb[RTA_MULTIPATH])
 		print_rta_multipath(fp, r, tb[RTA_MULTIPATH]);
