@@ -7845,6 +7845,10 @@ static void pr_out_region(struct dl *dl, struct nlattr **tb)
 	if (tb[DEVLINK_ATTR_REGION_SNAPSHOT_ID])
 		pr_out_snapshot(dl, tb);
 
+	if (tb[DEVLINK_ATTR_REGION_MAX_SNAPSHOTS])
+		pr_out_u64(dl, "max",
+			   mnl_attr_get_u32(tb[DEVLINK_ATTR_REGION_MAX_SNAPSHOTS]));
+
 	pr_out_region_handle_end(dl);
 }
 
