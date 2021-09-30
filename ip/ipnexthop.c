@@ -431,14 +431,66 @@ out_err:
 	return err;
 }
 
+static void __print_nexthop_entry(FILE *fp, const char *jsobj,
+				  struct nh_entry *nhe,
+				  bool deleted)
+{
+	SPRINT_BUF(b1);
+
+	open_json_object(jsobj);
+
+	if (deleted)
+		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
+
+	print_uint(PRINT_ANY, "id", "id %u ", nhe->nh_id);
+
+	if (nhe->nh_groups)
+		print_nh_group(nhe);
+
+	print_nh_group_type(nhe->nh_grp_type);
+
+	if (nhe->nh_has_res_grp)
+		print_nh_res_group(&nhe->nh_res_grp);
+
+	if (nhe->nh_encap)
+		lwt_print_encap(fp, &nhe->nh_encap_type.rta, nhe->nh_encap);
+
+	if (nhe->nh_gateway_len)
+		__print_rta_gateway(fp, nhe->nh_family,
+				    format_host(nhe->nh_family,
+				    nhe->nh_gateway_len,
+				    &nhe->nh_gateway));
+
+	if (nhe->nh_oif)
+		print_rta_ifidx(fp, nhe->nh_oif, "dev");
+
+	if (nhe->nh_scope != RT_SCOPE_UNIVERSE || show_details > 0) {
+		print_string(PRINT_ANY, "scope", "scope %s ",
+			     rtnl_rtscope_n2a(nhe->nh_scope, b1, sizeof(b1)));
+	}
+
+	if (nhe->nh_blackhole)
+		print_null(PRINT_ANY, "blackhole", "blackhole ", NULL);
+
+	if (nhe->nh_protocol != RTPROT_UNSPEC || show_details > 0) {
+		print_string(PRINT_ANY, "protocol", "proto %s ",
+			     rtnl_rtprot_n2a(nhe->nh_protocol, b1, sizeof(b1)));
+	}
+
+	print_rt_flags(fp, nhe->nh_flags);
+
+	if (nhe->nh_fdb)
+		print_null(PRINT_ANY, "fdb", "fdb", NULL);
+
+	close_json_object();
+}
+
 int print_nexthop(struct nlmsghdr *n, void *arg)
 {
 	struct nhmsg *nhm = NLMSG_DATA(n);
 	FILE *fp = (FILE *)arg;
 	struct nh_entry nhe;
 	int len, err;
-
-	SPRINT_BUF(b1);
 
 	if (n->nlmsg_type != RTM_DELNEXTHOP &&
 	    n->nlmsg_type != RTM_NEWNEXTHOP) {
@@ -463,53 +515,8 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 		fprintf(stderr, "Error parsing nexthop: %s\n", strerror(-err));
 		return -1;
 	}
-	open_json_object(NULL);
-
-	if (n->nlmsg_type == RTM_DELNEXTHOP)
-		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
-
-	print_uint(PRINT_ANY, "id", "id %u ", nhe.nh_id);
-
-	if (nhe.nh_groups)
-		print_nh_group(&nhe);
-
-	print_nh_group_type(nhe.nh_grp_type);
-
-	if (nhe.nh_has_res_grp)
-		print_nh_res_group(&nhe.nh_res_grp);
-
-	if (nhe.nh_encap)
-		lwt_print_encap(fp, &nhe.nh_encap_type.rta, nhe.nh_encap);
-
-	if (nhe.nh_gateway_len)
-		__print_rta_gateway(fp, nhe.nh_family,
-				    format_host(nhe.nh_family,
-				    nhe.nh_gateway_len,
-				    &nhe.nh_gateway));
-
-	if (nhe.nh_oif)
-		print_rta_ifidx(fp, nhe.nh_oif, "dev");
-
-	if (nhe.nh_scope != RT_SCOPE_UNIVERSE || show_details > 0) {
-		print_string(PRINT_ANY, "scope", "scope %s ",
-			     rtnl_rtscope_n2a(nhe.nh_scope, b1, sizeof(b1)));
-	}
-
-	if (nhe.nh_blackhole)
-		print_null(PRINT_ANY, "blackhole", "blackhole ", NULL);
-
-	if (nhe.nh_protocol != RTPROT_UNSPEC || show_details > 0) {
-		print_string(PRINT_ANY, "protocol", "proto %s ",
-			     rtnl_rtprot_n2a(nhe.nh_protocol, b1, sizeof(b1)));
-	}
-
-	print_rt_flags(fp, nhe.nh_flags);
-
-	if (nhe.nh_fdb)
-		print_null(PRINT_ANY, "fdb", "fdb", NULL);
-
+	__print_nexthop_entry(fp, NULL, &nhe, n->nlmsg_type == RTM_DELNEXTHOP);
 	print_string(PRINT_FP, NULL, "%s", "\n");
-	close_json_object();
 	fflush(fp);
 	ipnh_destroy_entry(&nhe);
 
