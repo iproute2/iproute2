@@ -22,6 +22,7 @@
 
 #include "utils.h"
 #include "ip_common.h"
+#include "nh_common.h"
 
 static void usage(void) __attribute__((noreturn));
 static int prefix_banner;
@@ -88,7 +89,7 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 	case RTM_NEWNEXTHOP:
 	case RTM_DELNEXTHOP:
 		print_headers(fp, "[NEXTHOP]", ctrl);
-		print_nexthop(n, arg);
+		print_cache_nexthop(n, arg, true);
 		return 0;
 
 	case RTM_NEWNEXTHOPBUCKET:

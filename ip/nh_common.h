@@ -48,5 +48,6 @@ struct nh_entry {
 
 void print_cache_nexthop_id(FILE *fp, const char *fp_prefix, const char *jsobj,
 			    __u32 nh_id);
+int print_cache_nexthop(struct nlmsghdr *n, void *arg, bool process_cache);
 
 #endif /* __NH_COMMON_H__ */

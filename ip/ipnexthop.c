@@ -602,6 +602,42 @@ static void ipnh_cache_del(struct nh_entry *nhe)
 	free(nhe);
 }
 
+/* update, add or delete a nexthop entry based on nlmsghdr */
+static int ipnh_cache_process_nlmsg(const struct nlmsghdr *n,
+				    struct nh_entry *new_nhe)
+{
+	struct nh_entry *nhe;
+
+	nhe = ipnh_cache_get(new_nhe->nh_id);
+	switch (n->nlmsg_type) {
+	case RTM_DELNEXTHOP:
+		if (nhe)
+			ipnh_cache_del(nhe);
+		ipnh_destroy_entry(new_nhe);
+		break;
+	case RTM_NEWNEXTHOP:
+		if (!nhe) {
+			nhe = malloc(sizeof(*nhe));
+			if (!nhe) {
+				ipnh_destroy_entry(new_nhe);
+				return -1;
+			}
+		} else {
+			/* this allows us to save 1 allocation on updates by
+			 * reusing the old nh entry, but we need to cleanup its
+			 * internal storage
+			 */
+			ipnh_cache_unlink_entry(nhe);
+			ipnh_destroy_entry(nhe);
+		}
+		memcpy(nhe, new_nhe, sizeof(*nhe));
+		ipnh_cache_link_entry(nhe);
+		break;
+	}
+
+	return 0;
+}
+
 void print_cache_nexthop_id(FILE *fp, const char *fp_prefix, const char *jsobj,
 			    __u32 nh_id)
 {
@@ -618,7 +654,7 @@ void print_cache_nexthop_id(FILE *fp, const char *fp_prefix, const char *jsobj,
 	__print_nexthop_entry(fp, jsobj, nhe, false);
 }
 
-int print_nexthop(struct nlmsghdr *n, void *arg)
+int print_cache_nexthop(struct nlmsghdr *n, void *arg, bool process_cache)
 {
 	struct nhmsg *nhm = NLMSG_DATA(n);
 	FILE *fp = (FILE *)arg;
@@ -651,9 +687,18 @@ int print_nexthop(struct nlmsghdr *n, void *arg)
 	__print_nexthop_entry(fp, NULL, &nhe, n->nlmsg_type == RTM_DELNEXTHOP);
 	print_string(PRINT_FP, NULL, "%s", "\n");
 	fflush(fp);
-	ipnh_destroy_entry(&nhe);
+
+	if (process_cache)
+		ipnh_cache_process_nlmsg(n, &nhe);
+	else
+		ipnh_destroy_entry(&nhe);
 
 	return 0;
+}
+
+static int print_nexthop_nocache(struct nlmsghdr *n, void *arg)
+{
+	return print_cache_nexthop(n, arg, false);
 }
 
 int print_nexthop_bucket(struct nlmsghdr *n, void *arg)
@@ -967,7 +1012,7 @@ static int ipnh_get_id(__u32 id)
 
 	new_json_obj(json);
 
-	if (print_nexthop(answer, (void *)stdout) < 0) {
+	if (print_nexthop_nocache(answer, (void *)stdout) < 0) {
 		free(answer);
 		return -1;
 	}
@@ -1052,7 +1097,7 @@ static int ipnh_list_flush(int argc, char **argv, int action)
 
 	new_json_obj(json);
 
-	if (rtnl_dump_filter(&rth, print_nexthop, stdout) < 0) {
+	if (rtnl_dump_filter(&rth, print_nexthop_nocache, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return -2;
 	}

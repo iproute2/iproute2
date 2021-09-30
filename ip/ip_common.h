@@ -53,7 +53,6 @@ int print_prefix(struct nlmsghdr *n, void *arg);
 int print_rule(struct nlmsghdr *n, void *arg);
 int print_netconf(struct rtnl_ctrl_data *ctrl,
 		  struct nlmsghdr *n, void *arg);
-int print_nexthop(struct nlmsghdr *n, void *arg);
 int print_nexthop_bucket(struct nlmsghdr *n, void *arg);
 void netns_map_init(void);
 void netns_nsid_socket_init(void);
