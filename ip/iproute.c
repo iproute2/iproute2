@@ -547,18 +547,23 @@ static void print_rta_newdst(FILE *fp, const struct rtmsg *r,
 	}
 }
 
-void print_rta_gateway(FILE *fp, unsigned char family, const struct rtattr *rta)
+void __print_rta_gateway(FILE *fp, unsigned char family, const char *gateway)
 {
-	const char *gateway = format_host_rta(family, rta);
-
-	if (is_json_context())
+	if (is_json_context()) {
 		print_string(PRINT_JSON, "gateway", NULL, gateway);
-	else {
+	} else {
 		fprintf(fp, "via ");
 		print_color_string(PRINT_FP,
 				   ifa_family_color(family),
 				   NULL, "%s ", gateway);
 	}
+}
+
+void print_rta_gateway(FILE *fp, unsigned char family, const struct rtattr *rta)
+{
+	const char *gateway = format_host_rta(family, rta);
+
+	__print_rta_gateway(fp, family, gateway);
 }
 
 static void print_rta_via(FILE *fp, const struct rtattr *rta)
