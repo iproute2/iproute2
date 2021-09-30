@@ -278,7 +278,7 @@ static int mptcp_addr_dump(void)
 		return -2;
 	}
 
-	close_json_object();
+	delete_json_obj();
 	fflush(stdout);
 	return 0;
 }
