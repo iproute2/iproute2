@@ -485,6 +485,25 @@ static void __print_nexthop_entry(FILE *fp, const char *jsobj,
 	close_json_object();
 }
 
+static int  __ipnh_get_id(struct rtnl_handle *rthp, __u32 nh_id,
+			  struct nlmsghdr **answer)
+{
+	struct {
+		struct nlmsghdr n;
+		struct nhmsg	nhm;
+		char		buf[1024];
+	} req = {
+		.n.nlmsg_len	= NLMSG_LENGTH(sizeof(struct nhmsg)),
+		.n.nlmsg_flags	= NLM_F_REQUEST,
+		.n.nlmsg_type	= RTM_GETNEXTHOP,
+		.nhm.nh_family	= preferred_family,
+	};
+
+	addattr32(&req.n, sizeof(req), NHA_ID, nh_id);
+
+	return rtnl_talk(rthp, &req.n, answer);
+}
+
 int print_nexthop(struct nlmsghdr *n, void *arg)
 {
 	struct nhmsg *nhm = NLMSG_DATA(n);
@@ -827,21 +846,9 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 static int ipnh_get_id(__u32 id)
 {
-	struct {
-		struct nlmsghdr	n;
-		struct nhmsg	nhm;
-		char		buf[1024];
-	} req = {
-		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct nhmsg)),
-		.n.nlmsg_flags = NLM_F_REQUEST,
-		.n.nlmsg_type  = RTM_GETNEXTHOP,
-		.nhm.nh_family = preferred_family,
-	};
 	struct nlmsghdr *answer;
 
-	addattr32(&req.n, sizeof(req), NHA_ID, id);
-
-	if (rtnl_talk(&rth, &req.n, &answer) < 0)
+	if (__ipnh_get_id(&rth, id, &answer) < 0)
 		return -2;
 
 	new_json_obj(json);
