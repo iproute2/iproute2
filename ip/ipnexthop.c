@@ -34,6 +34,8 @@ enum {
 #define RTM_NHA(h)  ((struct rtattr *)(((char *)(h)) + \
 			NLMSG_ALIGN(sizeof(struct nhmsg))))
 
+static struct hlist_head nh_cache[NH_CACHE_SIZE];
+
 static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
@@ -502,6 +504,102 @@ static int  __ipnh_get_id(struct rtnl_handle *rthp, __u32 nh_id,
 	addattr32(&req.n, sizeof(req), NHA_ID, nh_id);
 
 	return rtnl_talk(rthp, &req.n, answer);
+}
+
+static struct hlist_head *ipnh_cache_head(__u32 nh_id)
+{
+	nh_id ^= nh_id >> 20;
+	nh_id ^= nh_id >> 10;
+
+	return &nh_cache[nh_id % NH_CACHE_SIZE];
+}
+
+static void ipnh_cache_link_entry(struct nh_entry *nhe)
+{
+	struct hlist_head *head = ipnh_cache_head(nhe->nh_id);
+
+	hlist_add_head(&nhe->nh_hash, head);
+}
+
+static void ipnh_cache_unlink_entry(struct nh_entry *nhe)
+{
+	hlist_del(&nhe->nh_hash);
+}
+
+static struct nh_entry *ipnh_cache_get(__u32 nh_id)
+{
+	struct hlist_head *head = ipnh_cache_head(nh_id);
+	struct nh_entry *nhe;
+	struct hlist_node *n;
+
+	hlist_for_each(n, head) {
+		nhe = container_of(n, struct nh_entry, nh_hash);
+		if (nhe->nh_id == nh_id)
+			return nhe;
+	}
+
+	return NULL;
+}
+
+static int __ipnh_cache_parse_nlmsg(const struct nlmsghdr *n,
+				    struct nh_entry *nhe)
+{
+	int err, len;
+
+	len = n->nlmsg_len - NLMSG_SPACE(sizeof(struct nhmsg));
+	if (len < 0) {
+		fprintf(stderr, "BUG: wrong nlmsg len %d\n", len);
+		return -EINVAL;
+	}
+
+	err = ipnh_parse_nhmsg(stderr, NLMSG_DATA(n), len, nhe);
+	if (err) {
+		fprintf(stderr, "Error parsing nexthop: %s\n", strerror(-err));
+		return err;
+	}
+
+	return 0;
+}
+
+static struct nh_entry *ipnh_cache_add(__u32 nh_id)
+{
+	struct rtnl_handle cache_rth = { .fd = -1 };
+	struct nlmsghdr *answer = NULL;
+	struct nh_entry *nhe = NULL;
+
+	if (rtnl_open(&cache_rth, 0) < 0)
+		goto out;
+
+	if (__ipnh_get_id(&cache_rth, nh_id, &answer) < 0)
+		goto out;
+
+	nhe = malloc(sizeof(*nhe));
+	if (!nhe)
+		goto out;
+
+	if (__ipnh_cache_parse_nlmsg(answer, nhe))
+		goto out_free_nhe;
+
+	ipnh_cache_link_entry(nhe);
+
+out:
+	if (answer)
+		free(answer);
+	rtnl_close(&cache_rth);
+
+	return nhe;
+
+out_free_nhe:
+	free(nhe);
+	nhe = NULL;
+	goto out;
+}
+
+static void ipnh_cache_del(struct nh_entry *nhe)
+{
+	ipnh_cache_unlink_entry(nhe);
+	ipnh_destroy_entry(nhe);
+	free(nhe);
 }
 
 int print_nexthop(struct nlmsghdr *n, void *arg)

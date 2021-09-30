@@ -2,6 +2,10 @@
 #ifndef __NH_COMMON_H__
 #define __NH_COMMON_H__ 1
 
+#include <list.h>
+
+#define NH_CACHE_SIZE		1024
+
 struct nha_res_grp {
 	__u16			buckets;
 	__u32			idle_timer;
@@ -10,6 +14,8 @@ struct nha_res_grp {
 };
 
 struct nh_entry {
+	struct hlist_node	nh_hash;
+
 	__u32			nh_id;
 	__u32			nh_oif;
 	__u32			nh_flags;
