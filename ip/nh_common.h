@@ -46,4 +46,7 @@ struct nh_entry {
 	struct nexthop_grp	*nh_groups;
 };
 
+void print_cache_nexthop_id(FILE *fp, const char *fp_prefix, const char *jsobj,
+			    __u32 nh_id);
+
 #endif /* __NH_COMMON_H__ */

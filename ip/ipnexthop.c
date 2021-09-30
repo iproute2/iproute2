@@ -602,6 +602,22 @@ static void ipnh_cache_del(struct nh_entry *nhe)
 	free(nhe);
 }
 
+void print_cache_nexthop_id(FILE *fp, const char *fp_prefix, const char *jsobj,
+			    __u32 nh_id)
+{
+	struct nh_entry *nhe = ipnh_cache_get(nh_id);
+
+	if (!nhe) {
+		nhe = ipnh_cache_add(nh_id);
+		if (!nhe)
+			return;
+	}
+
+	if (fp_prefix)
+		print_string(PRINT_FP, NULL, "%s", fp_prefix);
+	__print_nexthop_entry(fp, jsobj, nhe, false);
+}
+
 int print_nexthop(struct nlmsghdr *n, void *arg)
 {
 	struct nhmsg *nhm = NLMSG_DATA(n);
