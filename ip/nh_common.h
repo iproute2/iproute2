@@ -9,4 +9,35 @@ struct nha_res_grp {
 	__u64			unbalanced_time;
 };
 
+struct nh_entry {
+	__u32			nh_id;
+	__u32			nh_oif;
+	__u32			nh_flags;
+	__u16			nh_grp_type;
+	__u8			nh_family;
+	__u8			nh_scope;
+	__u8			nh_protocol;
+
+	bool			nh_blackhole;
+	bool			nh_fdb;
+
+	int			nh_gateway_len;
+	union {
+		__be32		ipv4;
+		struct in6_addr	ipv6;
+	}			nh_gateway;
+
+	struct rtattr		*nh_encap;
+	union {
+		struct rtattr   rta;
+		__u8		_buf[RTA_LENGTH(sizeof(__u16))];
+	}			nh_encap_type;
+
+	bool			nh_has_res_grp;
+	struct nha_res_grp	nh_res_grp;
+
+	int			nh_groups_cnt;
+	struct nexthop_grp	*nh_groups;
+};
+
 #endif /* __NH_COMMON_H__ */
