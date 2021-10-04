@@ -35,6 +35,7 @@ enum {
 			NLMSG_ALIGN(sizeof(struct nhmsg))))
 
 static struct hlist_head nh_cache[NH_CACHE_SIZE];
+static struct rtnl_handle nh_cache_rth = { .fd = -1 };
 
 static void usage(void) __attribute__((noreturn));
 
@@ -563,14 +564,15 @@ static int __ipnh_cache_parse_nlmsg(const struct nlmsghdr *n,
 
 static struct nh_entry *ipnh_cache_add(__u32 nh_id)
 {
-	struct rtnl_handle cache_rth = { .fd = -1 };
 	struct nlmsghdr *answer = NULL;
 	struct nh_entry *nhe = NULL;
 
-	if (rtnl_open(&cache_rth, 0) < 0)
+	if (nh_cache_rth.fd < 0 && rtnl_open(&nh_cache_rth, 0) < 0) {
+		nh_cache_rth.fd = -1;
 		goto out;
+	}
 
-	if (__ipnh_get_id(&cache_rth, nh_id, &answer) < 0)
+	if (__ipnh_get_id(&nh_cache_rth, nh_id, &answer) < 0)
 		goto out;
 
 	nhe = malloc(sizeof(*nhe));
@@ -585,7 +587,6 @@ static struct nh_entry *ipnh_cache_add(__u32 nh_id)
 out:
 	if (answer)
 		free(answer);
-	rtnl_close(&cache_rth);
 
 	return nhe;
 
