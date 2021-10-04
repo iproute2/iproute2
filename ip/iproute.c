@@ -28,6 +28,7 @@
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
+#include "nh_common.h"
 
 #ifndef RTAX_RTTVAR
 #define RTAX_RTTVAR RTAX_HOPS
@@ -410,13 +411,13 @@ static void print_rt_pref(FILE *fp, unsigned int pref)
 	}
 }
 
-void print_rta_if(FILE *fp, const struct rtattr *rta, const char *prefix)
+void print_rta_ifidx(FILE *fp, __u32 ifidx, const char *prefix)
 {
-	const char *ifname = ll_index_to_name(rta_getattr_u32(rta));
+	const char *ifname = ll_index_to_name(ifidx);
 
-	if (is_json_context())
+	if (is_json_context()) {
 		print_string(PRINT_JSON, prefix, NULL, ifname);
-	else {
+	} else {
 		fprintf(fp, "%s ", prefix);
 		color_fprintf(fp, COLOR_IFNAME, "%s ", ifname);
 	}
@@ -547,18 +548,23 @@ static void print_rta_newdst(FILE *fp, const struct rtmsg *r,
 	}
 }
 
-void print_rta_gateway(FILE *fp, unsigned char family, const struct rtattr *rta)
+void __print_rta_gateway(FILE *fp, unsigned char family, const char *gateway)
 {
-	const char *gateway = format_host_rta(family, rta);
-
-	if (is_json_context())
+	if (is_json_context()) {
 		print_string(PRINT_JSON, "gateway", NULL, gateway);
-	else {
+	} else {
 		fprintf(fp, "via ");
 		print_color_string(PRINT_FP,
 				   ifa_family_color(family),
 				   NULL, "%s ", gateway);
 	}
+}
+
+void print_rta_gateway(FILE *fp, unsigned char family, const struct rtattr *rta)
+{
+	const char *gateway = format_host_rta(family, rta);
+
+	__print_rta_gateway(fp, family, gateway);
 }
 
 static void print_rta_via(FILE *fp, const struct rtattr *rta)
@@ -862,7 +868,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 		print_rta_via(fp, tb[RTA_VIA]);
 
 	if (tb[RTA_OIF] && filter.oifmask != -1)
-		print_rta_if(fp, tb[RTA_OIF], "dev");
+		print_rta_ifidx(fp, rta_getattr_u32(tb[RTA_OIF]), "dev");
 
 	if (table && (table != RT_TABLE_MAIN || show_details > 0) && !filter.tb)
 		print_string(PRINT_ANY,
@@ -946,7 +952,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 		print_rta_metrics(fp, tb[RTA_METRICS]);
 
 	if (tb[RTA_IIF] && filter.iifmask != -1)
-		print_rta_if(fp, tb[RTA_IIF], "iif");
+		print_rta_ifidx(fp, rta_getattr_u32(tb[RTA_IIF]), "iif");
 
 	if (tb[RTA_PREF])
 		print_rt_pref(fp, rta_getattr_u8(tb[RTA_PREF]));
@@ -962,6 +968,10 @@ int print_route(struct nlmsghdr *n, void *arg)
 				     "ttl-propogate %s",
 				     propagate ? "enabled" : "disabled");
 	}
+
+	if (tb[RTA_NH_ID] && show_details)
+		print_cache_nexthop_id(fp, "\n\tnh_info ", "nh_info",
+				       rta_getattr_u32(tb[RTA_NH_ID]));
 
 	if (tb[RTA_MULTIPATH])
 		print_rta_multipath(fp, r, tb[RTA_MULTIPATH]);
