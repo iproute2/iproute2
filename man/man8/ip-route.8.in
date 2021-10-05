@@ -246,13 +246,17 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .ti -8
 .IR ENCAP_IOAM6 " := "
 .B ioam6
-.BR trace
-.BR prealloc
-.BR type
+.BR mode " [ "
+.BR inline " | " encap " | " auto " ] ["
+.B tundst
+.IR ADDRESS " ] "
+.B trace
+.B prealloc
+.B type
 .IR IOAM6_TRACE_TYPE
-.BR ns
+.B ns
 .IR IOAM6_NAMESPACE
-.BR size
+.B size
 .IR IOAM6_TRACE_SIZE
 
 .ti -8
@@ -915,14 +919,35 @@ address is set as described in \fBip-sr\fR(8).
 
 .B ioam6
 .in +2
+.B mode inline
+- Directly insert IOAM after IPv6 header (default mode).
+.sp
+
+.B mode encap
+- Encapsulate packet in an outer IPv6 header with IOAM.
+.sp
+
+.B mode auto
+- Automatically use inline mode for local packets and encap mode for in-transit
+packets.
+.sp
+
+.B tundst
+.I ADDRESS
+- IPv6 address of the tunnel destination (outer header), not used with inline
+mode.
+
+.B type
 .I IOAM6_TRACE_TYPE
 - List of IOAM data required in the trace, represented by a bitfield (24 bits).
 .sp
 
+.B ns
 .I IOAM6_NAMESPACE
 - Numerical value to represent an IOAM namespace. See \fBip-ioam\fR(8).
 .sp
 
+.B size
 .I IOAM6_TRACE_SIZE
 - Size, in octets, of the pre-allocated trace data block.
 .in -4
@@ -1249,9 +1274,9 @@ ip -6 route add 2001:db8:1::/64 encap seg6local action End.DT46 vrftable 100 dev
 Adds an IPv6 route with SRv6 decapsulation and forward with lookup in VRF table.
 .RE
 .PP
-ip -6 route add 2001:db8:1::/64 encap ioam6 trace prealloc type 0x800000 ns 1 size 12 dev eth0
+ip -6 route add 2001:db8:1::/64 encap ioam6 mode encap tundst 2001:db8:42::1 trace prealloc type 0x800000 ns 1 size 12 dev eth0
 .RS 4
-Adds an IPv6 route with an IOAM Pre-allocated Trace encapsulation that only includes the hop limit and the node id, configured for the IOAM namespace 1 and a pre-allocated data block of 12 octets.
+Adds an IPv6 route with an IOAM Pre-allocated Trace encapsulation (ip6ip6) that only includes the hop limit and the node id, configured for the IOAM namespace 1 and a pre-allocated data block of 12 octets.
 .RE
 .PP
 ip route add 10.1.1.0/30 nhid 10
