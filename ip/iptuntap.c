@@ -42,11 +42,11 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip tuntap { add | del | show | list | lst | help } [ dev PHYS_DEV ]\n"
-		"	[ mode { tun | tap } ] [ user USER ] [ group GROUP ]\n"
-		"	[ one_queue ] [ pi ] [ vnet_hdr ] [ multi_queue ] [ name NAME ]\n"
+		"       [ mode { tun | tap } ] [ user USER ] [ group GROUP ]\n"
+		"       [ one_queue ] [ pi ] [ vnet_hdr ] [ multi_queue ] [ name NAME ]\n"
 		"\n"
-		"Where:	USER  := { STRING | NUMBER }\n"
-		"	GROUP := { STRING | NUMBER }\n");
+		"Where: USER  := { STRING | NUMBER }\n"
+		"       GROUP := { STRING | NUMBER }\n");
 	exit(-1);
 }
 

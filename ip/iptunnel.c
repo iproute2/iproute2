@@ -34,18 +34,18 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip tunnel { add | change | del | show | prl | 6rd } [ NAME ]\n"
-		"	 [ mode { gre | ipip | isatap | sit | vti } ]\n"
-		"	 [ remote ADDR ] [ local ADDR ]\n"
-		"	 [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n"
-		"	 [ prl-default ADDR ] [ prl-nodefault ADDR ] [ prl-delete ADDR ]\n"
-		"	 [ 6rd-prefix ADDR ] [ 6rd-relay_prefix ADDR ] [ 6rd-reset ]\n"
-		"	 [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n"
+		"        [ mode { gre | ipip | isatap | sit | vti } ]\n"
+		"        [ remote ADDR ] [ local ADDR ]\n"
+		"        [ [i|o]seq ] [ [i|o]key KEY ] [ [i|o]csum ]\n"
+		"        [ prl-default ADDR ] [ prl-nodefault ADDR ] [ prl-delete ADDR ]\n"
+		"        [ 6rd-prefix ADDR ] [ 6rd-relay_prefix ADDR ] [ 6rd-reset ]\n"
+		"        [ ttl TTL ] [ tos TOS ] [ [no]pmtudisc ] [ dev PHYS_DEV ]\n"
 		"\n"
-		"Where:	NAME := STRING\n"
-		"	ADDR := { IP_ADDRESS | any }\n"
-		"	TOS  := { STRING | 00..ff | inherit | inherit/STRING | inherit/00..ff }\n"
-		"	TTL  := { 1..255 | inherit }\n"
-		"	KEY  := { DOTTED_QUAD | NUMBER }\n");
+		"Where: NAME := STRING\n"
+		"       ADDR := { IP_ADDRESS | any }\n"
+		"       TOS  := { STRING | 00..ff | inherit | inherit/STRING | inherit/00..ff }\n"
+		"       TTL  := { 1..255 | inherit }\n"
+		"       KEY  := { DOTTED_QUAD | NUMBER }\n");
 	exit(-1);
 }
 

@@ -47,15 +47,15 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip ntable change name NAME [ dev DEV ]\n"
-		"	 [ thresh1 VAL ] [ thresh2 VAL ] [ thresh3 VAL ] [ gc_int MSEC ]\n"
-		"	 [ PARMS ]\n"
+		"        [ thresh1 VAL ] [ thresh2 VAL ] [ thresh3 VAL ] [ gc_int MSEC ]\n"
+		"        [ PARMS ]\n"
 		"Usage: ip ntable show [ dev DEV ] [ name NAME ]\n"
 
 		"PARMS := [ base_reachable MSEC ] [ retrans MSEC ] [ gc_stale MSEC ]\n"
-		"	 [ delay_probe MSEC ] [ queue LEN ]\n"
-		"	 [ app_probes VAL ] [ ucast_probes VAL ] [ mcast_probes VAL ]\n"
-		"	 [ anycast_delay MSEC ] [ proxy_delay MSEC ] [ proxy_queue LEN ]\n"
-		"	 [ locktime MSEC ]\n"
+		"         [ delay_probe MSEC ] [ queue LEN ]\n"
+		"         [ app_probes VAL ] [ ucast_probes VAL ] [ mcast_probes VAL ]\n"
+		"         [ anycast_delay MSEC ] [ proxy_delay MSEC ] [ proxy_queue LEN ]\n"
+		"         [ locktime MSEC ]\n"
 		);
 
 	exit(-1);

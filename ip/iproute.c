@@ -82,7 +82,7 @@ static void usage(void)
 		"             [ ttl-propagate { enabled | disabled } ]\n"
 		"INFO_SPEC := { NH | nhid ID } OPTIONS FLAGS [ nexthop NH ]...\n"
 		"NH := [ encap ENCAPTYPE ENCAPHDR ] [ via [ FAMILY ] ADDRESS ]\n"
-		"	    [ dev STRING ] [ weight NUMBER ] NHFLAGS\n"
+		"      [ dev STRING ] [ weight NUMBER ] NHFLAGS\n"
 		"FAMILY := [ inet | inet6 | mpls | bridge | link ]\n"
 		"OPTIONS := FLAGS [ mtu NUMBER ] [ advmss NUMBER ] [ as [ to ] ADDRESS ]\n"
 		"           [ rtt TIME ] [ rttvar TIME ] [ reordering NUMBER ]\n"

@@ -34,10 +34,10 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip sr { COMMAND | help }\n"
-		"	   ip sr hmac show\n"
-		"	   ip sr hmac set KEYID ALGO\n"
-		"	   ip sr tunsrc show\n"
-		"	   ip sr tunsrc set ADDRESS\n"
+		"          ip sr hmac show\n"
+		"          ip sr hmac set KEYID ALGO\n"
+		"          ip sr tunsrc show\n"
+		"          ip sr tunsrc set ADDRESS\n"
 		"where  ALGO := { sha1 | sha256 }\n");
 	exit(-1);
 }
