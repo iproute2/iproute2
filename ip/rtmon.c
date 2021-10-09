@@ -65,7 +65,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: rtmon [ OPTIONS ] file FILE [ all | LISTofOBJECTS ]\n"
 		"OPTIONS := { -f[amily] { inet | inet6 | link | help } |\n"
-		"	     -4 | -6 | -0 | -V[ersion] }\n"
+		"             -4 | -6 | -0 | -V[ersion] }\n"
 		"LISTofOBJECTS := [ link ] [ address ] [ route ]\n");
 	exit(-1);
 }

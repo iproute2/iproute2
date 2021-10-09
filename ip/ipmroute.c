@@ -37,8 +37,8 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip mroute show [ [ to ] PREFIX ] [ from PREFIX ] [ iif DEVICE ]\n"
-	"			[ table TABLE_ID ]\n"
-	"TABLE_ID := [ local | main | default | all | NUMBER ]\n"
+		"                      [ table TABLE_ID ]\n"
+		"TABLE_ID := [ local | main | default | all | NUMBER ]\n"
 #if 0
 	"Usage: ip mroute [ add | del ] DESTINATION from SOURCE [ iif DEVICE ] [ oif DEVICE ]\n"
 #endif

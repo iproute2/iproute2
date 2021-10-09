@@ -533,9 +533,12 @@ static int bpf_mnt_check_target(const char *target)
 	int ret;
 
 	ret = mkdir(target, S_IRWXU);
-	if (ret && errno != EEXIST)
+	if (ret) {
+		if (errno == EEXIST)
+			return 0;
 		fprintf(stderr, "mkdir %s failed: %s\n", target,
 			strerror(errno));
+	}
 
 	return ret;
 }
