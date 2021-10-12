@@ -579,6 +579,7 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 
 int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 {
+	bool move_netns = false;
 	char *name = NULL;
 	char *dev = NULL;
 	char *link = NULL;
@@ -684,6 +685,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 					  IFLA_NET_NS_PID, &netns, 4);
 			else
 				invarg("Invalid \"netns\" value\n", *argv);
+			move_netns = true;
 		} else if (strcmp(*argv, "multicast") == 0) {
 			NEXT_ARG();
 			req->i.ifi_change |= IFF_MULTICAST;
@@ -981,9 +983,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 		}
 	}
 
-	if (!(req->n.nlmsg_flags & NLM_F_CREATE) && index) {
+	if (index &&
+	    (!(req->n.nlmsg_flags & NLM_F_CREATE) &&
+	     !move_netns)) {
 		fprintf(stderr,
-			"index can be used only when creating devices.\n");
+			"index can be used only when creating devices or when moving device to another netns.\n");
 		exit(-1);
 	}
 
@@ -1020,6 +1024,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 		/* Not renaming to the same name */
 		if (name == dev)
 			name = NULL;
+
+		if (index)
+			addattr32(&req->n, sizeof(*req), IFLA_NEW_IFINDEX, index);
 	} else {
 		if (name != dev) {
 			fprintf(stderr,
