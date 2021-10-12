@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <rt_names.h>
-#include <errno.h>
 
 #include <linux/genetlink.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
 #include <linux/mptcp.h>
 
 #include "utils.h"
 #include "ip_common.h"
-#include "libgenl.h"
 #include "json_print.h"
+#include "libgenl.h"
+#include "libnetlink.h"
+#include "ll_map.h"
 
 static void usage(void)
 {
