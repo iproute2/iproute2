@@ -517,10 +517,12 @@ else
 				shift 2 ;;
 			-h | --help)
 				usage 0 ;;
+			--*)
+				shift ;;
 			"")
 				break ;;
 			*)
-				shift 1 ;;
+				usage 1 ;;
 		esac
 	done
 fi
