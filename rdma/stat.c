@@ -20,6 +20,8 @@ static int stat_help(struct rd *rd)
 	pr_out("       %s statistic OBJECT unbind COUNTER_SCOPE [DEV/PORT_INDEX] [COUNTER-ID]\n", rd->filename);
 	pr_out("       %s statistic show\n", rd->filename);
 	pr_out("       %s statistic show link [ DEV/PORT_INDEX ]\n", rd->filename);
+	pr_out("       %s statistic mode [ supported ]\n", rd->filename);
+	pr_out("       %s statistic mode [ supported ] link [ DEV/PORT_INDEX ]\n", rd->filename);
 	pr_out("where  OBJECT: = { qp }\n");
 	pr_out("       CRITERIA : = { type }\n");
 	pr_out("       COUNTER_SCOPE: = { link | dev }\n");
@@ -37,6 +39,10 @@ static int stat_help(struct rd *rd)
 	pr_out("       %s statistic qp unbind link mlx5_2/1 cntn 4 lqpn 178\n", rd->filename);
 	pr_out("       %s statistic show\n", rd->filename);
 	pr_out("       %s statistic show link mlx5_2/1\n", rd->filename);
+	pr_out("       %s statistic mode\n", rd->filename);
+	pr_out("       %s statistic mode link mlx5_2/1\n", rd->filename);
+	pr_out("       %s statistic mode supported\n", rd->filename);
+	pr_out("       %s statistic mode supported link mlx5_2/1\n", rd->filename);
 
 	return 0;
 }
@@ -715,6 +721,162 @@ static int stat_qp(struct rd *rd)
 	return rd_exec_cmd(rd, cmds, "parameter");
 }
 
+static int do_stat_mode_parse_cb(const struct nlmsghdr *nlh, void *data,
+				 bool supported)
+{
+	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
+	struct nlattr *nla_entry;
+	const char *dev, *name;
+	struct rd *rd = data;
+	int enabled, err = 0;
+	bool isfirst = true;
+	uint32_t port;
+
+	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
+	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME] ||
+	    !tb[RDMA_NLDEV_ATTR_PORT_INDEX] ||
+	    !tb[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS])
+		return MNL_CB_ERROR;
+
+	dev = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
+	port = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_PORT_INDEX]);
+
+	mnl_attr_for_each_nested(nla_entry,
+				 tb[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS]) {
+		struct nlattr *cnt[RDMA_NLDEV_ATTR_MAX] = {};
+
+		err  = mnl_attr_parse_nested(nla_entry, rd_attr_cb, cnt);
+		if ((err != MNL_CB_OK) ||
+		    (!cnt[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_ENTRY_NAME]))
+			return -EINVAL;
+
+		if (!cnt[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_DYNAMIC])
+			continue;
+
+		enabled = mnl_attr_get_u8(cnt[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_DYNAMIC]);
+		name = mnl_attr_get_str(cnt[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_ENTRY_NAME]);
+		if (supported || enabled) {
+			if (isfirst) {
+				open_json_object(NULL);
+				print_color_string(PRINT_ANY, COLOR_NONE,
+						   "ifname", "link %s/", dev);
+				print_color_uint(PRINT_ANY, COLOR_NONE, "port",
+						 "%u ", port);
+				if (supported)
+					open_json_array(PRINT_ANY,
+						"supported optional-counters");
+				else
+					open_json_array(PRINT_ANY,
+							"optional-counters");
+				print_color_string(PRINT_FP, COLOR_NONE, NULL,
+						   " ", NULL);
+				isfirst = false;
+			} else {
+				print_color_string(PRINT_FP, COLOR_NONE, NULL,
+						   ",", NULL);
+			}
+			if (rd->pretty_output && !rd->json_output)
+				newline_indent(rd);
+
+			print_color_string(PRINT_ANY, COLOR_NONE, NULL, "%s",
+					   name);
+		}
+	}
+
+	if (!isfirst) {
+		close_json_array(PRINT_JSON, NULL);
+		newline(rd);
+	}
+
+	return 0;
+}
+
+static int stat_mode_parse_cb(const struct nlmsghdr *nlh, void *data)
+{
+	return do_stat_mode_parse_cb(nlh, data, false);
+}
+
+static int stat_mode_parse_cb_supported(const struct nlmsghdr *nlh, void *data)
+{
+	return do_stat_mode_parse_cb(nlh, data, true);
+}
+
+static int stat_one_link_get_status_req(struct rd *rd, uint32_t *seq)
+{
+	int flags = NLM_F_REQUEST | NLM_F_ACK;
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_STAT_GET_STATUS, seq,  flags);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_PORT_INDEX, rd->port_idx);
+
+	return rd_send_msg(rd);
+}
+
+static int stat_one_link_get_mode(struct rd *rd)
+{
+	uint32_t seq;
+	int err;
+
+	if (!rd->port_idx)
+		return 0;
+
+	err = stat_one_link_get_status_req(rd, &seq);
+	if (err)
+		return err;
+
+	return rd_recv_msg(rd, stat_mode_parse_cb, rd, seq);
+}
+
+static int stat_one_link_get_mode_supported(struct rd *rd)
+{
+	uint32_t seq;
+	int err;
+
+	if (!rd->port_idx)
+		return 0;
+
+	err = stat_one_link_get_status_req(rd, &seq);
+	if (err)
+		return err;
+
+	return rd_recv_msg(rd, stat_mode_parse_cb_supported, rd, seq);
+}
+
+static int stat_link_get_mode(struct rd *rd)
+{
+	return rd_exec_link(rd, stat_one_link_get_mode, false);
+}
+
+static int stat_link_get_mode_supported(struct rd *rd)
+{
+	return rd_exec_link(rd, stat_one_link_get_mode_supported, false);
+}
+
+static int stat_mode_supported(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL,		stat_link_get_mode_supported },
+		{ "link",	stat_link_get_mode_supported },
+		{ "help",	stat_help },
+		{ 0 },
+	};
+	return rd_exec_cmd(rd, cmds, "parameter");
+}
+
+static int stat_mode(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL,		stat_link_get_mode },
+		{ "link",	stat_link_get_mode },
+		{ "show",	stat_link_get_mode },
+		{ "supported",	stat_mode_supported },
+		{ "help",	stat_help },
+		{ 0 },
+	};
+
+	return rd_exec_cmd(rd, cmds, "parameter");
+}
+
 static int stat_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
@@ -786,6 +948,7 @@ int cmd_stat(struct rd *rd)
 		{ "help",	stat_help },
 		{ "qp",		stat_qp },
 		{ "mr",		stat_mr },
+		{ "mode",	stat_mode },
 		{ 0 }
 	};
 
