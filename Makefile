@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0
 # Top level Makefile for iproute2
 
+-include config.mk
+
 ifeq ("$(origin V)", "command line")
 VERBOSE = $(V)
 endif
@@ -13,7 +15,6 @@ MAKEFLAGS += --no-print-directory
 endif
 
 PREFIX?=/usr
-LIBDIR?=$(PREFIX)/lib
 SBINDIR?=/sbin
 CONFDIR?=/etc/iproute2
 NETNS_RUN_DIR?=/var/run/netns
@@ -69,7 +70,7 @@ SUBDIRS=lib ip tc bridge misc netem genl tipc devlink rdma dcb man vdpa
 LIBNETLINK=../lib/libutil.a ../lib/libnetlink.a
 LDLIBS += $(LIBNETLINK)
 
-all: config
+all: config.mk
 	@set -e; \
 	for i in $(SUBDIRS); \
 	do echo; echo $$i; $(MAKE) -C $$i; done
@@ -89,7 +90,7 @@ help:
 	@echo "Make Arguments:"
 	@echo " V=[0|1]             - set build verbosity level"
 
-config:
+config.mk:
 	@if [ ! -f config.mk -o configure -nt config.mk ]; then \
 		sh configure $(KERNEL_INCLUDE); \
 	fi

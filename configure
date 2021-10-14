@@ -4,6 +4,7 @@
 
 INCLUDE="$PWD/include"
 PREFIX="/usr"
+LIBDIR="\${prefix}/lib"
 
 # Output file which is input to Makefile
 CONFIG=config.mk
@@ -147,6 +148,15 @@ EOF
 	    echo "TC_CONFIG_XT_OLD_H:=y" >>$CONFIG
 	fi
 	rm -f $TMPDIR/ipttest.c $TMPDIR/ipttest
+}
+
+check_lib_dir()
+{
+	LIBDIR=$(echo $LIBDIR | sed "s|\${prefix}|$PREFIX|")
+
+	echo -n "lib directory: "
+	echo "$LIBDIR"
+	echo "LIBDIR:=$LIBDIR" >> $CONFIG
 }
 
 check_ipt()
@@ -487,6 +497,7 @@ usage()
 	cat <<EOF
 Usage: $0 [OPTIONS]
 	--include_dir <dir>		Path to iproute2 include dir
+	--libdir <dir>			Path to iproute2 lib dir
 	--libbpf_dir <dir>		Path to libbpf DESTDIR
 	--libbpf_force <on|off>		Enable/disable libbpf by force. Available options:
 					  on: require link against libbpf, quit config if no libbpf support
@@ -508,6 +519,11 @@ else
 				INCLUDE="$1" ;;
 			--include_dir=*)
 				INCLUDE="${1#*=}" ;;
+			--libdir)
+				shift
+				LIBDIR="$1" ;;
+			--libdir=*)
+				LIBDIR="${1#*=}" ;;
 			--libbpf_dir)
 				shift
 				LIBBPF_DIR="$1" ;;
@@ -544,6 +560,7 @@ if [ "${LIBBPF_FORCE-unused}" != "unused" ]; then
 	fi
 fi
 [ -z "$PREFIX" ] && usage 1
+[ -z "$LIBDIR" ] && usage 1
 
 echo "# Generated config based on" $INCLUDE >$CONFIG
 quiet_config >> $CONFIG
@@ -568,6 +585,7 @@ if ! grep -q TC_CONFIG_NO_XT $CONFIG; then
 fi
 
 echo
+check_lib_dir
 if ! grep -q TC_CONFIG_NO_XT $CONFIG; then
 	echo -n "iptables modules directory: "
 	check_ipt_lib_dir
