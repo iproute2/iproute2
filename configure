@@ -486,7 +486,7 @@ usage()
 	cat <<EOF
 Usage: $0 [OPTIONS]
 	--include_dir <dir>	Path to iproute2 include dir
-	--libbpf_dir		Path to libbpf DESTDIR
+	--libbpf_dir <dir>	Path to libbpf DESTDIR
 	--libbpf_force		Enable/disable libbpf by force. Available options:
 				  on: require link against libbpf, quit config if no libbpf support
 				  off: disable libbpf probing
@@ -506,8 +506,9 @@ else
 				INCLUDE="$1"
 				[ "$#" -gt 0 ] && shift ;;
 			--libbpf_dir)
-				LIBBPF_DIR="$2"
-				shift 2 ;;
+				shift
+				LIBBPF_DIR="$1"
+				[ "$#" -gt 0 ] && shift ;;
 			--libbpf_force)
 				if [ "$2" != 'on' ] && [ "$2" != 'off' ]; then
 					usage 1
@@ -525,6 +526,9 @@ else
 fi
 
 [ -d "$INCLUDE" ] || usage 1
+if [ "${LIBBPF_DIR-unused}" != "unused" ]; then
+	[ -d "$LIBBPF_DIR" ] || usage 1
+fi
 
 echo "# Generated config based on" $INCLUDE >$CONFIG
 quiet_config >> $CONFIG
