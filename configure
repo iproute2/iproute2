@@ -504,12 +504,18 @@ else
 			--include_dir)
 				shift
 				INCLUDE="$1" ;;
+			--include_dir=*)
+				INCLUDE="${1#*=}" ;;
 			--libbpf_dir)
 				shift
 				LIBBPF_DIR="$1" ;;
+			--libbpf_dir=*)
+				LIBBPF_DIR="${1#*=}" ;;
 			--libbpf_force)
 				shift
 				LIBBPF_FORCE="$1" ;;
+			--libbpf_force=*)
+				LIBBPF_FORCE="${1#*=}" ;;
 			-h | --help)
 				usage 0 ;;
 			--*)
