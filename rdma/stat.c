@@ -22,6 +22,8 @@ static int stat_help(struct rd *rd)
 	pr_out("       %s statistic show link [ DEV/PORT_INDEX ]\n", rd->filename);
 	pr_out("       %s statistic mode [ supported ]\n", rd->filename);
 	pr_out("       %s statistic mode [ supported ] link [ DEV/PORT_INDEX ]\n", rd->filename);
+	pr_out("       %s statistic set link [ DEV/PORT_INDEX ] optional-counters [ OPTIONAL-COUNTERS ]\n", rd->filename);
+	pr_out("       %s statistic unset link [ DEV/PORT_INDEX ] optional-counters\n", rd->filename);
 	pr_out("where  OBJECT: = { qp }\n");
 	pr_out("       CRITERIA : = { type }\n");
 	pr_out("       COUNTER_SCOPE: = { link | dev }\n");
@@ -43,6 +45,8 @@ static int stat_help(struct rd *rd)
 	pr_out("       %s statistic mode link mlx5_2/1\n", rd->filename);
 	pr_out("       %s statistic mode supported\n", rd->filename);
 	pr_out("       %s statistic mode supported link mlx5_2/1\n", rd->filename);
+	pr_out("       %s statistic set link mlx5_2/1 optional-counters cc_rx_ce_pkts,cc_rx_cnp_pkts\n", rd->filename);
+	pr_out("       %s statistic unset link mlx5_2/1 optional-counters\n", rd->filename);
 
 	return 0;
 }
@@ -499,6 +503,30 @@ static int stat_qp_set(struct rd *rd)
 	return rd_exec_cmd(rd, cmds, "parameter");
 }
 
+static int stat_get_arg_str(struct rd *rd, const char *arg, char **value, bool allow_empty)
+{
+	int len = 0;
+
+	if (strcmpx(rd_argv(rd), arg) != 0) {
+		pr_err("Unknown parameter '%s'.\n", rd_argv(rd));
+		return -EINVAL;
+	}
+
+	rd_arg_inc(rd);
+	if (!rd_no_arg(rd)) {
+		*value = strdup(rd_argv(rd));
+		len = strlen(*value);
+		rd_arg_inc(rd);
+	}
+
+	if ((allow_empty && len) || (!allow_empty && !len)) {
+		stat_help(rd);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int stat_get_arg(struct rd *rd, const char *arg)
 {
 	int value = 0;
@@ -877,6 +905,154 @@ static int stat_mode(struct rd *rd)
 	return rd_exec_cmd(rd, cmds, "parameter");
 }
 
+static int stat_one_set_link_opcounters(const struct nlmsghdr *nlh, void *data)
+{
+	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
+	struct nlattr *nla_entry, *tb_set;
+	int ret, flags = NLM_F_REQUEST | NLM_F_ACK;
+	char *opcnt, *opcnts;
+	struct rd *rd = data;
+	uint32_t seq;
+	bool found;
+
+	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
+	if (!tb[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS])
+		return MNL_CB_ERROR;
+
+	if (rd_no_arg(rd)) {
+		stat_help(rd);
+		return -EINVAL;
+	}
+
+	ret = stat_get_arg_str(rd, "optional-counters", &opcnts, false);
+	if (ret)
+		return ret;
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_STAT_SET, &seq, flags);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX,
+			 rd->dev_idx);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_PORT_INDEX,
+			 rd->port_idx);
+
+	tb_set = mnl_attr_nest_start(rd->nlh, RDMA_NLDEV_ATTR_STAT_HWCOUNTERS);
+
+	opcnt = strtok(opcnts, ",");
+	while (opcnt) {
+		found = false;
+		mnl_attr_for_each_nested(nla_entry,
+					 tb[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS]) {
+			struct nlattr *cnt[RDMA_NLDEV_ATTR_MAX] = {}, *nm, *id;
+
+			if (mnl_attr_parse_nested(nla_entry, rd_attr_cb,
+						  cnt) != MNL_CB_OK)
+				return -EINVAL;
+
+			nm = cnt[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_ENTRY_NAME];
+			id = cnt[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_INDEX];
+			if (!nm || ! id)
+				return -EINVAL;
+
+			if (!cnt[RDMA_NLDEV_ATTR_STAT_HWCOUNTER_DYNAMIC])
+				continue;
+
+			if (strcmp(opcnt, mnl_attr_get_str(nm)) == 0) {
+				mnl_attr_put_u32(rd->nlh,
+						 RDMA_NLDEV_ATTR_STAT_HWCOUNTER_INDEX,
+						 mnl_attr_get_u32(id));
+				found = true;
+			}
+		}
+
+		if (!found)
+			return -EINVAL;
+
+		opcnt = strtok(NULL, ",");
+	}
+	mnl_attr_nest_end(rd->nlh, tb_set);
+
+	return rd_sendrecv_msg(rd, seq);
+}
+
+static int stat_one_set_link(struct rd *rd)
+{
+	uint32_t seq;
+	int err;
+
+	if (!rd->port_idx)
+		return 0;
+
+	err = stat_one_link_get_status_req(rd, &seq);
+	if (err)
+		return err;
+
+	return rd_recv_msg(rd, stat_one_set_link_opcounters, rd, seq);
+}
+
+static int stat_set_link(struct rd *rd)
+{
+	return rd_exec_link(rd, stat_one_set_link, true);
+}
+
+static int stat_set(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL,		stat_help },
+		{ "link",	stat_set_link },
+		{ "help",	stat_help },
+		{ 0 },
+	};
+	return rd_exec_cmd(rd, cmds, "parameter");
+}
+
+static int stat_one_unset_link_opcounters(struct rd *rd)
+{
+	int ret, flags = NLM_F_REQUEST | NLM_F_ACK;
+	struct nlattr *tbl;
+	uint32_t seq;
+	char *opcnts;
+
+	if (rd_no_arg(rd)) {
+		stat_help(rd);
+		return -EINVAL;
+	}
+
+	ret = stat_get_arg_str(rd, "optional-counters", &opcnts, true);
+	if (ret)
+		return ret;
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_STAT_SET, &seq, flags);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX,
+			 rd->dev_idx);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_PORT_INDEX,
+			 rd->port_idx);
+
+	tbl = mnl_attr_nest_start(rd->nlh, RDMA_NLDEV_ATTR_STAT_HWCOUNTERS);
+	mnl_attr_nest_end(rd->nlh, tbl);
+
+	return rd_sendrecv_msg(rd, seq);
+}
+
+static int stat_one_unset_link(struct rd *rd)
+{
+	return stat_one_unset_link_opcounters(rd);
+}
+
+static int stat_unset_link(struct rd *rd)
+{
+	return rd_exec_link(rd, stat_one_unset_link, true);
+}
+
+static int stat_unset(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL,		stat_help },
+		{ "link",	stat_unset_link },
+		{ "help",	stat_help },
+		{ 0 },
+	};
+	return rd_exec_cmd(rd, cmds, "parameter");
+}
+
 static int stat_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
@@ -949,6 +1125,8 @@ int cmd_stat(struct rd *rd)
 		{ "qp",		stat_qp },
 		{ "mr",		stat_mr },
 		{ "mode",	stat_mode },
+		{ "set",	stat_set },
+		{ "unset",	stat_unset },
 		{ 0 }
 	};
 
