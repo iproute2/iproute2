@@ -3,6 +3,7 @@
 # This is not an autoconf generated configure
 
 INCLUDE="$PWD/include"
+PREFIX="/usr"
 
 # Output file which is input to Makefile
 CONFIG=config.mk
@@ -490,6 +491,7 @@ Usage: $0 [OPTIONS]
 	--libbpf_force <on|off>		Enable/disable libbpf by force. Available options:
 					  on: require link against libbpf, quit config if no libbpf support
 					  off: disable libbpf probing
+	--prefix <dir>			Path prefix of the lib files to install
 	-h | --help			Show this usage info
 EOF
 	exit $1
@@ -516,6 +518,11 @@ else
 				LIBBPF_FORCE="$1" ;;
 			--libbpf_force=*)
 				LIBBPF_FORCE="${1#*=}" ;;
+			--prefix)
+				shift
+				PREFIX="$1" ;;
+			--prefix=*)
+				PREFIX="${1#*=}" ;;
 			-h | --help)
 				usage 0 ;;
 			--*)
@@ -536,6 +543,7 @@ if [ "${LIBBPF_FORCE-unused}" != "unused" ]; then
 		usage 1
 	fi
 fi
+[ -z "$PREFIX" ] && usage 1
 
 echo "# Generated config based on" $INCLUDE >$CONFIG
 quiet_config >> $CONFIG
