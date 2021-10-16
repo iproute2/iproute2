@@ -59,6 +59,28 @@ rdma-statistic \- RDMA statistic counter configuration
 .RI "[ " OBJECT-ID " ]"
 
 .ti -8
+.B rdma statistic
+.B mode
+.B "[" supported "]"
+.B link
+.RI "[ " DEV/PORT_INDEX " ]"
+
+.ti -8
+.B rdma statistic
+.B set
+.B link
+.RI "[ " DEV/PORT_INDEX " ]"
+.B optional-counters
+.RI "[ " OPTIONAL-COUNTERS " ]"
+
+.ti -8
+.B rdma statistic
+.B unset
+.B link
+.RI "[ " DEV/PORT_INDEX " ]"
+.B optional-counters
+
+.ti -8
 .IR COUNTER_SCOPE " := "
 .RB "{ " link " | " dev " }"
 
@@ -99,6 +121,17 @@ When unbound the statistics of this object are no longer available in this count
 .I "COUNTER-ID"
 - specifies the id of the counter to be bound.
 If this argument is omitted then a new counter will be allocated.
+
+.SS rdma statistic mode - Display the enabled optional counters for each link.
+
+.SS rdma statistic mode supported - Display the supported optional counters for each link.
+
+.SS rdma statistic set - Enable a set of optional counters for a specific device/port.
+
+.I "OPTIONAL-COUNTERS"
+- specifies the name of the optional counters to enable. Optional counters that are not specified will be disabled. Note that optional counters are driver-specific.
+
+.SS rdma statistic unset - Disable all optional counters for a specific device/port.
 
 .SH "EXAMPLES"
 .PP
@@ -186,6 +219,26 @@ rdma statistic show mr mrn 6
 .RS 4
 Dump a specific MR statistics with mrn 6. Dumps nothing if does not exists.
 .RE
+.PP
+rdma statistic mode link mlx5_2/1
+.RS 4
+Display the optional counters that was enabled on mlx5_2/1.
+.RE
+.PP
+rdma statistic mode supported link mlx5_2/1
+.RS 4
+Display the optional counters that mlx5_2/1 supports.
+.RE
+.PP
+rdma statistic set link mlx5_2/1 optional-counters cc_rx_ce_pkts,cc_rx_cnp_pkts
+.RS 4
+Enable the cc_rx_ce_pkts,cc_rx_cnp_pkts counters on device mlx5_2 port 1.
+.RE
+.PP
+rdma statistic unset link mlx5_2/1 optional-counters
+.RS 4
+Disable all the optional counters on device mlx5_2 port 1.
+.RE
 
 .SH SEE ALSO
 .BR rdma (8),
@@ -198,3 +251,5 @@ Dump a specific MR statistics with mrn 6. Dumps nothing if does not exists.
 Mark Zhang <markz@mellanox.com>
 .br
 Erez Alfasi <ereza@mellanox.com>
+.br
+Neta Ostrovsky <netao@nvidia.com>
