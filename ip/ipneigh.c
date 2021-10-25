@@ -51,7 +51,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: ip neigh { add | del | change | replace }\n"
 		"                { ADDR [ lladdr LLADDR ] [ nud STATE ] proxy ADDR }\n"
-		"                [ dev DEV ] [ router ] [ extern_learn ] [ protocol PROTO ]\n"
+		"                [ dev DEV ] [ router ] [ use ] [ extern_learn ] [ protocol PROTO ]\n"
 		"\n"
 		"	ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n"
 		"				  [ vrf NAME ] [ nomaster ]\n"
@@ -148,6 +148,8 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_flags |= NTF_PROXY;
 		} else if (strcmp(*argv, "router") == 0) {
 			req.ndm.ndm_flags |= NTF_ROUTER;
+		} else if (strcmp(*argv, "use") == 0) {
+			req.ndm.ndm_flags |= NTF_USE;
 		} else if (matches(*argv, "extern_learn") == 0) {
 			req.ndm.ndm_flags |= NTF_EXT_LEARNED;
 		} else if (strcmp(*argv, "dev") == 0) {

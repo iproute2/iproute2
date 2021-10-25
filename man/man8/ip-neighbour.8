@@ -25,6 +25,7 @@ ip-neighbour \- neighbour/arp tables management.
 .B  dev
 .IR DEV " ] [ "
 .BR router " ] [ "
+.BR use " ] [ "
 .BR extern_learn " ]"
 
 .ti -8
@@ -91,6 +92,13 @@ indicates whether we are proxying for this neighbour entry
 .TP
 .BI router
 indicates whether neighbour is a router
+
+.TP
+.BI use
+this neigh entry is in "use". This option can be used to indicate to
+the kernel that a controller is using this dynamic entry. If the entry
+does not exist, the kernel will resolve it. If it exists, an attempt
+to refresh the neighbor entry will be triggered.
 
 .TP
 .BI extern_learn
