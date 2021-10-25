@@ -26,6 +26,7 @@ ip-neighbour \- neighbour/arp tables management.
 .IR DEV " ] [ "
 .BR router " ] [ "
 .BR use " ] [ "
+.BR managed " ] [ "
 .BR extern_learn " ]"
 
 .ti -8
@@ -99,6 +100,14 @@ this neigh entry is in "use". This option can be used to indicate to
 the kernel that a controller is using this dynamic entry. If the entry
 does not exist, the kernel will resolve it. If it exists, an attempt
 to refresh the neighbor entry will be triggered.
+
+.TP
+.BI managed
+this neigh entry is "managed". This option can be used to indicate to
+the kernel that a controller is using this dynamic entry. In contrast
+to "use", if the entry does not exist, the kernel will resolve it and
+periodically attempt to auto-refresh the neighbor entry such that it
+remains in resolved state when possible.
 
 .TP
 .BI extern_learn
