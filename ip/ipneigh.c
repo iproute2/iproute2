@@ -235,7 +235,7 @@ static void print_neigh_state(unsigned int nud)
 #define PRINT_FLAG(f)						\
 	if (nud & NUD_##f) {					\
 		nud &= ~NUD_##f;				\
-		print_string(PRINT_ANY, NULL, " %s", #f);	\
+		print_string(PRINT_ANY, NULL, "%s ", #f);	\
 	}
 
 	PRINT_FLAG(INCOMPLETE);
@@ -423,27 +423,27 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 			fprintf(fp, "lladdr ");
 
 		print_color_string(PRINT_ANY, COLOR_MAC,
-				   "lladdr", "%s", lladdr);
+				   "lladdr", "%s ", lladdr);
 	}
 
 	if (r->ndm_flags & NTF_ROUTER)
-		print_null(PRINT_ANY, "router", " %s", "router");
+		print_null(PRINT_ANY, "router", "%s ", "router");
 
 	if (r->ndm_flags & NTF_PROXY)
-		print_null(PRINT_ANY, "proxy", " %s", "proxy");
+		print_null(PRINT_ANY, "proxy", "%s ", "proxy");
 
 	if (r->ndm_flags & NTF_EXT_LEARNED)
-		print_null(PRINT_ANY, "extern_learn", " %s ", "extern_learn");
+		print_null(PRINT_ANY, "extern_learn", "%s ", "extern_learn");
 
 	if (r->ndm_flags & NTF_OFFLOADED)
-		print_null(PRINT_ANY, "offload", " %s", "offload");
+		print_null(PRINT_ANY, "offload", "%s ", "offload");
 
 	if (show_stats) {
 		if (tb[NDA_CACHEINFO])
 			print_cacheinfo(RTA_DATA(tb[NDA_CACHEINFO]));
 
 		if (tb[NDA_PROBES])
-			print_uint(PRINT_ANY, "probes", " probes %u",
+			print_uint(PRINT_ANY, "probes", "probes %u ",
 				   rta_getattr_u32(tb[NDA_PROBES]));
 	}
 
@@ -453,7 +453,7 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	if (protocol) {
 		SPRINT_BUF(b1);
 
-		print_string(PRINT_ANY, "protocol", " proto %s ",
+		print_string(PRINT_ANY, "protocol", "proto %s ",
 			     rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
 	}
 
