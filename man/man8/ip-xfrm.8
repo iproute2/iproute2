@@ -299,6 +299,18 @@ ip-xfrm \- transform configuration
 .IR LBITS " " RBITS " ]"
 
 .ti -8
+.B "ip xfrm policy setdefault"
+.IR DIR
+.IR ACTION " [ "
+.IR DIR
+.IR ACTION " ] [ "
+.IR DIR
+.IR ACTION " ]"
+
+.ti -8
+.B "ip xfrm policy getdefault"
+
+.ti -8
 .IR SELECTOR " :="
 .RB "[ " src
 .IR ADDR "[/" PLEN "] ]"

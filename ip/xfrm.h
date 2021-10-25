@@ -132,6 +132,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 			    struct rtattr *tb[], FILE *fp, const char *prefix,
 			    const char *title);
+int xfrm_policy_default_print(struct nlmsghdr *n, FILE *fp);
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
 		  int loose, int *argcp, char ***argvp);
 int xfrm_mode_parse(__u8 *mode, int *argcp, char ***argvp);

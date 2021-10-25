@@ -323,6 +323,9 @@ static int xfrm_accept_msg(struct rtnl_ctrl_data *ctrl,
 	case XFRM_MSG_MAPPING:
 		xfrm_mapping_print(n, arg);
 		return 0;
+	case XFRM_MSG_GETDEFAULT:
+		xfrm_policy_default_print(n, arg);
+		return 0;
 	default:
 		break;
 	}
