@@ -51,7 +51,8 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: ip neigh { add | del | change | replace }\n"
 		"                { ADDR [ lladdr LLADDR ] [ nud STATE ] proxy ADDR }\n"
-		"                [ dev DEV ] [ router ] [ extern_learn ] [ protocol PROTO ]\n"
+		"                [ dev DEV ] [ router ] [ use ] [ managed ] [ extern_learn ]\n"
+		"                [ protocol PROTO ]\n"
 		"\n"
 		"	ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n"
 		"				  [ vrf NAME ] [ nomaster ]\n"
@@ -115,6 +116,7 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 		.ndm.ndm_family = preferred_family,
 		.ndm.ndm_state = NUD_PERMANENT,
 	};
+	__u32 ext_flags = 0;
 	char  *dev = NULL;
 	int dst_ok = 0;
 	int dev_ok = 0;
@@ -148,6 +150,11 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_flags |= NTF_PROXY;
 		} else if (strcmp(*argv, "router") == 0) {
 			req.ndm.ndm_flags |= NTF_ROUTER;
+		} else if (strcmp(*argv, "use") == 0) {
+			req.ndm.ndm_flags |= NTF_USE;
+		} else if (strcmp(*argv, "managed") == 0) {
+			ext_flags |= NTF_EXT_MANAGED;
+			req.ndm.ndm_state = NUD_NONE;
 		} else if (matches(*argv, "extern_learn") == 0) {
 			req.ndm.ndm_flags |= NTF_EXT_LEARNED;
 		} else if (strcmp(*argv, "dev") == 0) {
@@ -183,7 +190,10 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 	req.ndm.ndm_family = dst.family;
 	if (addattr_l(&req.n, sizeof(req), NDA_DST, &dst.data, dst.bytelen) < 0)
 		return -1;
-
+	if (ext_flags &&
+	    addattr_l(&req.n, sizeof(req), NDA_FLAGS_EXT, &ext_flags,
+		      sizeof(ext_flags)) < 0)
+		return -1;
 	if (lla && strcmp(lla, "null")) {
 		char llabuf[20];
 		int l;
@@ -235,7 +245,7 @@ static void print_neigh_state(unsigned int nud)
 #define PRINT_FLAG(f)						\
 	if (nud & NUD_##f) {					\
 		nud &= ~NUD_##f;				\
-		print_string(PRINT_ANY, NULL, " %s", #f);	\
+		print_string(PRINT_ANY, NULL, "%s ", #f);	\
 	}
 
 	PRINT_FLAG(INCOMPLETE);
@@ -303,6 +313,7 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	int len = n->nlmsg_len;
 	struct rtattr *tb[NDA_MAX+1];
 	static int logit = 1;
+	__u32 ext_flags = 0;
 	__u8 protocol = 0;
 
 	if (n->nlmsg_type != RTM_NEWNEIGH && n->nlmsg_type != RTM_DELNEIGH &&
@@ -346,6 +357,8 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 
 	if (tb[NDA_PROTOCOL])
 		protocol = rta_getattr_u8(tb[NDA_PROTOCOL]);
+	if (tb[NDA_FLAGS_EXT])
+		ext_flags = rta_getattr_u32(tb[NDA_FLAGS_EXT]);
 
 	if (filter.protocol && filter.protocol != protocol)
 		return 0;
@@ -423,27 +436,26 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 			fprintf(fp, "lladdr ");
 
 		print_color_string(PRINT_ANY, COLOR_MAC,
-				   "lladdr", "%s", lladdr);
+				   "lladdr", "%s ", lladdr);
 	}
 
 	if (r->ndm_flags & NTF_ROUTER)
-		print_null(PRINT_ANY, "router", " %s", "router");
-
+		print_null(PRINT_ANY, "router", "%s ", "router");
 	if (r->ndm_flags & NTF_PROXY)
-		print_null(PRINT_ANY, "proxy", " %s", "proxy");
-
+		print_null(PRINT_ANY, "proxy", "%s ", "proxy");
+	if (ext_flags & NTF_EXT_MANAGED)
+		print_null(PRINT_ANY, "managed", "%s ", "managed");
 	if (r->ndm_flags & NTF_EXT_LEARNED)
-		print_null(PRINT_ANY, "extern_learn", " %s ", "extern_learn");
-
+		print_null(PRINT_ANY, "extern_learn", "%s ", "extern_learn");
 	if (r->ndm_flags & NTF_OFFLOADED)
-		print_null(PRINT_ANY, "offload", " %s", "offload");
+		print_null(PRINT_ANY, "offload", "%s ", "offload");
 
 	if (show_stats) {
 		if (tb[NDA_CACHEINFO])
 			print_cacheinfo(RTA_DATA(tb[NDA_CACHEINFO]));
 
 		if (tb[NDA_PROBES])
-			print_uint(PRINT_ANY, "probes", " probes %u",
+			print_uint(PRINT_ANY, "probes", "probes %u ",
 				   rta_getattr_u32(tb[NDA_PROBES]));
 	}
 
@@ -453,7 +465,7 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 	if (protocol) {
 		SPRINT_BUF(b1);
 
-		print_string(PRINT_ANY, "protocol", " proto %s ",
+		print_string(PRINT_ANY, "protocol", "proto %s ",
 			     rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
 	}
 
