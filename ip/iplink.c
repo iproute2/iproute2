@@ -50,7 +50,7 @@ void iplink_types_usage(void)
 {
 	/* Remember to add new entry here if new type is added. */
 	fprintf(stderr,
-		"TYPE := { bareudp | bond | bond_slave | bridge | bridge_slave |\n"
+		"TYPE := { amt | bareudp | bond | bond_slave | bridge | bridge_slave |\n"
 		"          dummy | erspan | geneve | gre | gretap | ifb |\n"
 		"          ip6erspan | ip6gre | ip6gretap | ip6tnl |\n"
 		"          ipip | ipoib | ipvlan | ipvtap |\n"

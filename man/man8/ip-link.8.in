@@ -198,6 +198,7 @@ ip-link \- network device configuration
 
 .ti -8
 .IR TYPE " := [ "
+.BR amt " | "
 .BR bridge " | "
 .BR bond " | "
 .BR can " | "
@@ -363,6 +364,9 @@ Link types:
 .sp
 .BR bareudp
 - Bare UDP L3 encapsulation support
+.sp
+.BR amt
+- Automatic Multicast Tunneling (AMT)
 .sp
 .BR macsec
 - Interface for IEEE 802.1AE MAC Security (MACsec)
@@ -1343,6 +1347,48 @@ When
 .B ethertype
 is "ipv4", this allows the tunnel to also handle IPv6. This option is disabled
 by default.
+
+.TP
+AMT Type Support
+For a link of type
+.I AMT
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BI type " AMT " discovery " IPADDR " mode " { " gateway " | " relay " } "
+.BI local " IPADDR " dev " PHYS_DEV " [
+.BI relay_port " PORT " ]
+[
+.BI gateway_port " PORT " ]
+[
+.BI max_tunnels " NUMBER "
+]
+
+.in +8
+.sp
+.BI discovery " IPADDR"
+- specifies the unicast discovery IP address to use to find remote IP address.
+
+.BR mode " { " gateway " | " relay " } "
+- specifies the role of AMT, Gateway or Relay
+
+.BI local " IPADDR "
+- specifies the source IP address to use in outgoing packets.
+
+.BI dev " PHYS_DEV "
+- specifies the underlying physical interface from which transform traffic
+is sent and received.
+
+.BI relay_port " PORT "
+- specifies the UDP Relay port to communicate to the Relay.
+
+.BI gateway_port " PORT "
+- specifies the UDP Gateway port to communicate to the Gateway.
+
+.BI max_tunnels " NUMBER "
+- specifies the maximum number of tunnels.
+
+.in -8
 
 .TP
 MACVLAN and MACVTAP Type Support
