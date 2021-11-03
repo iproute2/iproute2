@@ -88,34 +88,43 @@ static void set_ctrlmode(char *name, char *arg,
 	cm->mask |= flags;
 }
 
-static void print_ctrlmode(FILE *f, __u32 cm)
+static void print_flag(enum output_type t, __u32 *flags, __u32 flag,
+		       const char* name)
 {
-	open_json_array(PRINT_ANY, is_json_context() ? "ctrlmode" : "<");
-#define _PF(cmflag, cmname)						\
-	if (cm & cmflag) {						\
-		cm &= ~cmflag;						\
-		print_string(PRINT_ANY, NULL, cm ? "%s," : "%s", cmname); \
+	if (*flags & flag) {
+		*flags &= ~flag;
+		print_string(t, NULL, *flags ? "%s," : "%s", name);
 	}
-	_PF(CAN_CTRLMODE_LOOPBACK, "LOOPBACK");
-	_PF(CAN_CTRLMODE_LISTENONLY, "LISTEN-ONLY");
-	_PF(CAN_CTRLMODE_3_SAMPLES, "TRIPLE-SAMPLING");
-	_PF(CAN_CTRLMODE_ONE_SHOT, "ONE-SHOT");
-	_PF(CAN_CTRLMODE_BERR_REPORTING, "BERR-REPORTING");
-	_PF(CAN_CTRLMODE_FD, "FD");
-	_PF(CAN_CTRLMODE_FD_NON_ISO, "FD-NON-ISO");
-	_PF(CAN_CTRLMODE_PRESUME_ACK, "PRESUME-ACK");
-	_PF(CAN_CTRLMODE_CC_LEN8_DLC, "CC-LEN8-DLC");
-#undef _PF
-	if (cm)
-		print_hex(PRINT_ANY, NULL, "%x", cm);
-	close_json_array(PRINT_ANY, "> ");
+}
+
+static void print_ctrlmode(enum output_type t, __u32 flags, const char* key)
+{
+	if (!flags)
+		return;
+
+	open_json_array(t, is_json_context() ? key : "<");
+
+	print_flag(t, &flags, CAN_CTRLMODE_LOOPBACK, "LOOPBACK");
+	print_flag(t, &flags, CAN_CTRLMODE_LISTENONLY, "LISTEN-ONLY");
+	print_flag(t, &flags, CAN_CTRLMODE_3_SAMPLES, "TRIPLE-SAMPLING");
+	print_flag(t, &flags, CAN_CTRLMODE_ONE_SHOT, "ONE-SHOT");
+	print_flag(t, &flags, CAN_CTRLMODE_BERR_REPORTING, "BERR-REPORTING");
+	print_flag(t, &flags, CAN_CTRLMODE_FD, "FD");
+	print_flag(t, &flags, CAN_CTRLMODE_FD_NON_ISO, "FD-NON-ISO");
+	print_flag(t, &flags, CAN_CTRLMODE_PRESUME_ACK, "PRESUME-ACK");
+	print_flag(t, &flags, CAN_CTRLMODE_CC_LEN8_DLC, "CC-LEN8-DLC");
+
+	if (flags)
+		print_hex(t, NULL, "%x", flags);
+
+	close_json_array(t, "> ");
 }
 
 static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			 struct nlmsghdr *n)
 {
 	struct can_bittiming bt = {}, dbt = {};
-	struct can_ctrlmode cm = {0, 0};
+	struct can_ctrlmode cm = { 0 };
 
 	while (argc > 0) {
 		if (matches(*argv, "bitrate") == 0) {
@@ -282,8 +291,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_CAN_CTRLMODE]) {
 		struct can_ctrlmode *cm = RTA_DATA(tb[IFLA_CAN_CTRLMODE]);
 
-		if (cm->flags)
-			print_ctrlmode(f, cm->flags);
+		print_ctrlmode(PRINT_ANY, cm->flags, "ctrlmode");
 	}
 
 	if (tb[IFLA_CAN_STATE]) {
