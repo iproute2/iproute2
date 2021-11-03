@@ -44,14 +44,14 @@ static void print_usage(FILE *f)
 		"\n"
 		"\t[ termination { 0..65535 } ]\n"
 		"\n"
-		"\tWhere: BITRATE	:= { 1..1000000 }\n"
+		"\tWhere: BITRATE	:= { NUMBER in bps }\n"
 		"\t	  SAMPLE-POINT	:= { 0.000..0.999 }\n"
-		"\t	  TQ		:= { NUMBER }\n"
-		"\t	  PROP-SEG	:= { 1..8 }\n"
-		"\t	  PHASE-SEG1	:= { 1..8 }\n"
-		"\t	  PHASE-SEG2	:= { 1..8 }\n"
-		"\t	  SJW		:= { 1..4 }\n"
-		"\t	  RESTART-MS	:= { 0 | NUMBER }\n"
+		"\t	  TQ		:= { NUMBER in ns }\n"
+		"\t	  PROP-SEG	:= { NUMBER in tq }\n"
+		"\t	  PHASE-SEG1	:= { NUMBER in tq }\n"
+		"\t	  PHASE-SEG2	:= { NUMBER in tq }\n"
+		"\t	  SJW		:= { NUMBER in tq }\n"
+		"\t	  RESTART-MS	:= { 0 | NUMBER in ms }\n"
 		);
 }
 
