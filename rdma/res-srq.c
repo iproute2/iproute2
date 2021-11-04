@@ -26,11 +26,24 @@ static void print_type(struct rd *rd, uint32_t val)
 			   srq_types_to_str(val));
 }
 
-static void print_qps(const char *str)
+static void print_qps(char *qp_str)
 {
-	if (!strlen(str))
+	char *qpn;
+
+	if (!strlen(qp_str))
 		return;
-	print_color_string(PRINT_ANY, COLOR_NONE, "lqpn", "lqpn %s ", str);
+
+	open_json_array(PRINT_ANY, "lqpn");
+	print_color_string(PRINT_FP, COLOR_NONE, NULL, " ", NULL);
+	qpn = strtok(qp_str, ",");
+	while (qpn) {
+		print_color_string(PRINT_ANY, COLOR_NONE, NULL, "%s", qpn);
+		qpn = strtok(NULL, ",");
+		if (qpn)
+			print_color_string(PRINT_FP, COLOR_NONE, NULL, ",", NULL);
+	}
+	print_color_string(PRINT_FP, COLOR_NONE, NULL, " ", NULL);
+	close_json_array(PRINT_JSON, NULL);
 }
 
 static int filter_srq_range_qps(struct rd *rd, struct nlattr **qp_line,

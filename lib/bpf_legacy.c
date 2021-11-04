@@ -3307,8 +3307,7 @@ bool iproute2_is_map_in_map(const char *libbpf_map_name, struct bpf_elf_map *ima
 			continue;
 
 		if (!ctx->maps[i].id ||
-		    ctx->maps[i].inner_id ||
-		    ctx->maps[i].inner_idx == -1)
+		    ctx->maps[i].inner_id)
 			continue;
 
 		*imap = ctx->maps[i];

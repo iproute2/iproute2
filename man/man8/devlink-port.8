@@ -45,17 +45,15 @@ devlink-port \- devlink port configuration
 
 .ti -8
 .BI "devlink port add"
-.RB "["
+.RB "{"
 .IR "DEV | DEV/PORT_INDEX"
-.RB "] "
+.RB "} "
 .RB "[ " flavour
 .IR FLAVOUR " ]"
-.RB "[ " pcipf
+.RB "[ " pfnum
 .IR PFNUMBER " ]"
-.br
-.RB "{ " pcisf
-.IR SFNUMBER " }"
-.br
+.RB "[ " sfnum
+.IR SFNUMBER " ]"
 .RB "[ " controller
 .IR CNUM " ]"
 .br
@@ -102,7 +100,7 @@ devlink-port \- devlink port configuration
 .SS devlink port set - change devlink port attributes
 
 .PP
-.B "DEV/PORT_INDEX"
+.I "DEV/PORT_INDEX"
 - specifies the devlink port to operate on.
 
 .in +4
@@ -126,7 +124,7 @@ set port type
 .SS devlink port split - split devlink port into more
 
 .PP
-.B "DEV/PORT_INDEX"
+.I "DEV/PORT_INDEX"
 - specifies the devlink port to operate on.
 
 .TP
@@ -137,7 +135,7 @@ number of ports to split to.
 Could be performed on any split port of the same split group.
 
 .PP
-.B "DEV/PORT_INDEX"
+.I "DEV/PORT_INDEX"
 - specifies the devlink port to operate on.
 
 .SS devlink port show - display devlink port attributes
@@ -154,11 +152,11 @@ Is an alias for
 .ti -8
 .SS devlink port add - add a devlink port
 .PP
-.B "DEV"
+.I "DEV"
 - specifies the devlink device to operate on. or
 
 .PP
-.B "DEV/PORT_INDEX"
+.I "DEV/PORT_INDEX"
 - specifies the devlink port index to use for the requested new port.
 This is optional. When omitted, driver allocates unique port index.
 
@@ -173,17 +171,17 @@ set port flavour
 - PCI SF port
 
 .TP
-.BR pfnum " { " pfnumber " } "
+.BI pfnum " PFNUMBER "
 Specifies PCI pfnumber to use on which a SF device to create
 
 .TP
-.BR sfnum " { " sfnumber " } "
+.BI sfnum " SFNUMBER "
 Specifies sfnumber to assign to the device of the SF.
 This field is optional for those devices which supports auto assignment of the
 SF number.
 
 .TP
-.BR controller " { " controller " } "
+.BI controller " CNUM "
 Specifies controller number for which the SF port is created.
 This field is optional. It is used only when SF port is created for the
 external controller.
@@ -192,17 +190,17 @@ external controller.
 .SS devlink port function set - Set the port function attribute(s).
 
 .PP
-.B "DEV/PORT_INDEX"
+.I "DEV/PORT_INDEX"
 - specifies the devlink port to operate on.
 
 .TP
-.BR hw_addr " ADDR"
-- hardware address of the function to set. This is a Ethernet MAC address when
+.BI hw_addr " ADDR"
+Hardware address of the function to set. This is a Ethernet MAC address when
 port type is Ethernet.
 
 .TP
 .BR state " { " active " | " inactive " } "
-- new state of the function to change to.
+New state of the function to change to.
 
 .I active
 - Once configuration of the function is done, activate the function.
@@ -213,13 +211,13 @@ port type is Ethernet.
 .ti -8
 .SS devlink port del - delete a devlink port
 .PP
-.B "DEV/PORT_INDEX"
+.I "DEV/PORT_INDEX"
 - specifies the devlink port to delete.
 
 .ti -8
 .SS devlink port param set  - set new value to devlink port configuration parameter
 .PP
-.B "DEV/PORT_INDEX"
+.I "DEV/PORT_INDEX"
 - specifies the devlink port to operate on.
 
 .TP
@@ -246,7 +244,7 @@ Configuration mode in which the new value is set.
 .SS devlink port param show - display devlink port supported configuration parameters attributes
 
 .PP
-.B "DEV/PORT_INDEX"
+.I "DEV/PORT_INDEX"
 - specifies the devlink port to operate on.
 
 .B name

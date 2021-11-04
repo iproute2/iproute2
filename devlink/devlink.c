@@ -3036,6 +3036,7 @@ static int cmd_dev_param_show_cb(const struct nlmsghdr *nlh, void *data)
 struct param_ctx {
 	struct dl *dl;
 	int nla_type;
+	bool cmode_found;
 	union {
 		uint8_t vu8;
 		uint16_t vu16;
@@ -3088,6 +3089,7 @@ static int cmd_dev_param_set_cb(const struct nlmsghdr *nlh, void *data)
 
 		cmode = mnl_attr_get_u8(nla_value[DEVLINK_ATTR_PARAM_VALUE_CMODE]);
 		if (cmode == dl->opts.cmode) {
+			ctx->cmode_found = true;
 			val_attr = nla_value[DEVLINK_ATTR_PARAM_VALUE_DATA];
 			switch (nla_type) {
 			case MNL_TYPE_U8:
@@ -3140,6 +3142,10 @@ static int cmd_dev_param_set(struct dl *dl)
 	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, cmd_dev_param_set_cb, &ctx);
 	if (err)
 		return err;
+	if (!ctx.cmode_found) {
+		pr_err("Configuration mode not supported\n");
+		return -ENOTSUP;
+	}
 
 	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_PARAM_SET,
 			       NLM_F_REQUEST | NLM_F_ACK);
