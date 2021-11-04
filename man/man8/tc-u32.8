@@ -427,7 +427,7 @@ Also minimal header size for IPv4 and lack of IPv6 extension headers is assumed.
 IPv4 only, check certain flags and fragment offset values. Match if the packet
 is not a fragment
 .RB ( nofrag ),
-the first fragment
+the first fragment of a fragmented packet
 .RB ( firstfrag ),
 if Don't Fragment
 .RB ( df )
@@ -644,7 +644,7 @@ tc filter add dev eth0 parent 1:0 protocol ip \\
 tc filter add dev eth0 parent 1:0 protocol ip \\
         u32 ht 800: \\
         match ip protocol 6 FF \\
-        match ip firstfrag \\
+        match u16 0 1fff at 6 \\
         offset at 0 mask 0f00 shift 6 \\
         link 1:
 .EE
