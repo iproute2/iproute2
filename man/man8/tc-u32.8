@@ -150,7 +150,7 @@ u32 \- universal 32bit traffic control filter
 .BR at " [ " nexthdr+ " ] "
 .IR int_value " ]"
 .SH DESCRIPTION
-The Universal/Ugly 32bit filter allows to match arbitrary bitfields in the
+The Universal/Ugly 32bit filter allows one to match arbitrary bitfields in the
 packet. Due to breaking everything down to values, masks and offsets, It is
 equally powerful and hard to use. Luckily many abstracting directives are
 present which allow defining rules on a higher level and therefore free the
@@ -375,7 +375,7 @@ or IPv6 (
 .BR ip6 )
 header.
 .IR IP / IP6
-then allows to match various header fields:
+then allows one to match various header fields:
 .RS
 .TP
 .BI src " ADDR"

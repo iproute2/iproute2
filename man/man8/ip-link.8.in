@@ -462,7 +462,7 @@ then VLAN header will be not inserted immediately but only before
 passing to the physical device (if this device does not support VLAN
 offloading), the similar on the RX direction - by default the packet
 will be untagged before being received by VLAN device. Reordering
-allows to accelerate tagging on egress and to hide VLAN header on
+allows one to accelerate tagging on egress and to hide VLAN header on
 ingress so the packet looks like regular Ethernet packet, at the same
 time it might be confusing for packet capture as the VLAN header does
 not exist within the packet.
@@ -691,7 +691,7 @@ or the internal FDB should be used.
 - enables the Group Policy extension (VXLAN-GBP).
 
 .in +4
-Allows to transport group policy context across VXLAN network peers.
+Allows one to transport group policy context across VXLAN network peers.
 If enabled, includes the mark of a packet in the VXLAN header for outgoing
 packets and fills the packet mark based on the information found in the
 VXLAN header for incoming packets.
@@ -2093,7 +2093,7 @@ flag in the output of the
 
 To change network namespace for wireless devices the
 .B iw
-tool can be used. But it allows to change network namespace only for
+tool can be used. But it allows one to change network namespace only for
 physical devices and by process
 .IR PID .
 

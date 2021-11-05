@@ -10,7 +10,7 @@ Where:
 
 ACTION semantics
 - pass and ok are equivalent to accept
-- continue allows to restart classification lookup
+- continue allows one to restart classification lookup
 - drop drops packets
 - reclassify implies continue classification where we left off
 
