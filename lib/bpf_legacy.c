@@ -203,9 +203,7 @@ int bpf_dump_prog_info(FILE *f, uint32_t id)
 	if (!ret && len) {
 		int jited = !!info.jited_prog_len;
 
-		if (info.name)
-			print_string(PRINT_ANY, "name", "name %s ", info.name);
-
+		print_string(PRINT_ANY, "name", "name %s ", info.name);
 		print_string(PRINT_ANY, "tag", "tag %s ",
 			     hexstring_n2a(info.tag, sizeof(info.tag),
 					   tmp, sizeof(tmp)));
