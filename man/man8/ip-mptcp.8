@@ -53,6 +53,8 @@ ip-mptcp \- MPTCP path manager configuration
 .B subflow
 .RB "|"
 .B backup
+.RB "|"
+.B fullmesh
 .RB  "]"
 
 .ti -8
@@ -103,22 +105,41 @@ is a unique numeric identifier for the given endpoint
 
 .TP
 .BR signal
-the endpoint will be announced/signalled to each peer via an ADD_ADDR MPTCP
-sub-option
+The endpoint will be announced/signaled to each peer via an MPTCP ADD_ADDR
+sub-option. Upon reception of an ADD_ADDR sub-option, the peer can try to
+create additional subflows, see
+.BR ADD_ADDR_ACCEPTED_NR.
 
 .TP
 .BR subflow
-if additional subflow creation is allowed by MPTCP limits, the endpoint will
-be used as the source address to create an additional subflow after that
-the MPTCP connection is established.
+If additional subflow creation is allowed by the MPTCP limits, the MPTCP
+path manager will try to create an additional subflow using this endpoint
+as the source address after the MPTCP connection is established.
 
 .TP
 .BR backup
-the endpoint will be announced as a backup address, if this is a
-.BR signal
-endpoint, or the subflow will be created as a backup one if this is a
+If this is a
 .BR subflow
-endpoint
+endpoint, the subflows created using this endpoint will have the backup
+flag set during the connection process. This flag instructs the peer to
+only send data on a given subflow when all non-backup subflows are
+unavailable. This does not affect outgoing data, where subflow priority
+is determined by the backup/non-backup flag received from the peer
+
+.TP
+.BR fullmesh
+If this is a
+.BR subflow
+endpoint and additional subflow creation is allowed by the MPTCP limits,
+the MPTCP path manager will try to create an additional subflow for each
+known peer address, using this endpoint as the source address. This will
+occur after the MPTCP connection is established. If the peer did not
+announce any additional addresses using the MPTCP ADD_ADDR sub-option,
+this will behave the same as a plain
+.BR subflow
+endpoint. When the peer does announce addresses, each received ADD_ADDR
+sub-option will trigger creation of an additional subflow to generate a
+full mesh topology.
 
 .sp
 .PP
@@ -136,17 +157,29 @@ ip mptcp limits set	change the MPTCP subflow creation limits
 .IR SUBFLOW_NR
 specifies the maximum number of additional subflows allowed for each MPTCP
 connection. Additional subflows can be created due to: incoming accepted
-ADD_ADDR option, local
+ADD_ADDR sub-option, local
 .BR subflow
 endpoints, additional subflows started by the peer.
 
 .TP
 .IR ADD_ADDR_ACCEPTED_NR
-specifies the maximum number of ADD_ADDR suboptions accepted for each MPTCP
-connection. The MPTCP path manager will try to create a new subflow for
-each accepted ADD_ADDR option, respecting the
+specifies the maximum number of incoming ADD_ADDR sub-options accepted for
+each MPTCP connection. After receiving the specified number of ADD_ADDR
+sub-options, any other incoming one will be ignored for the MPTCP connection
+lifetime. When an ADD_ADDR sub-option is accepted and there are no local
+.IR fullmesh
+endpoints, the MPTCP path manager will try to create a new subflow using the
+address in the ADD_ADDR sub-option as the destination address and a source
+address determined using local routing resolution
+When
+.IR fullmesh
+endpoints are available, the MPTCP path manager will try to create new subflows
+using each
+.IR fullmesh
+endpoint as a source address and the peer's ADD_ADDR address as the destination.
+In both cases the
 .IR SUBFLOW_NR
-limit.
+limit is enforced.
 
 .sp
 .PP
