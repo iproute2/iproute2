@@ -153,6 +153,7 @@ static void print_explain(FILE *f)
 		"                [ ad_user_port_key PORTKEY ]\n"
 		"                [ ad_actor_sys_prio SYSPRIO ]\n"
 		"                [ ad_actor_system LLADDR ]\n"
+		"                [ arp_missed_max MISSED_MAX ]\n"
 		"\n"
 		"BONDMODE := balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb\n"
 		"ARP_VALIDATE := none|active|backup|all|filter|filter_active|filter_backup\n"
@@ -181,6 +182,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u32 miimon, updelay, downdelay, peer_notify_delay, arp_interval, arp_validate;
 	__u32 arp_all_targets, resend_igmp, min_links, lp_interval;
 	__u32 packets_per_slave;
+	__u8 missed_max;
 	unsigned int ifindex;
 
 	while (argc > 0) {
@@ -258,6 +260,12 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid arp_all_targets", *argv);
 			arp_all_targets = get_index(arp_all_targets_tbl, *argv);
 			addattr32(n, 1024, IFLA_BOND_ARP_ALL_TARGETS, arp_all_targets);
+		} else if (strcmp(*argv, "arp_missed_max") == 0) {
+			NEXT_ARG();
+			if (get_u8(&missed_max, *argv, 0))
+				invarg("invalid arp_missed_max", *argv);
+
+			addattr8(n, 1024, IFLA_BOND_MISSED_MAX, missed_max);
 		} else if (matches(*argv, "primary") == 0) {
 			NEXT_ARG();
 			ifindex = ll_name_to_index(*argv);
@@ -452,6 +460,12 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "arp_interval",
 			   "arp_interval %u ",
 			   rta_getattr_u32(tb[IFLA_BOND_ARP_INTERVAL]));
+
+	if (tb[IFLA_BOND_MISSED_MAX])
+		print_uint(PRINT_ANY,
+			   "arp_missed_max",
+			   "arp_missed_max %u ",
+			   rta_getattr_u8(tb[IFLA_BOND_MISSED_MAX]));
 
 	if (tb[IFLA_BOND_ARP_IP_TARGET]) {
 		struct rtattr *iptb[BOND_MAX_ARP_TARGETS + 1];
