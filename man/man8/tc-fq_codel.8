@@ -20,6 +20,8 @@ BYTES ] [
 ] [
 .B ce_threshold
 TIME ] [
+.B ce_threshold_selector
+VALUE/MASK ] [
 .B memory_limit
 BYTES ]
 
@@ -88,6 +90,15 @@ is turned on by default.
 sets a threshold above which all packets are marked with ECN Congestion
 Experienced. This is useful for DCTCP-style congestion control algorithms that
 require marking at very shallow queueing thresholds.
+
+.SS ce_threshold_selector
+sets a filter so that the
+.B ce_threshold
+feature is applied to only a subset of the traffic seen by the qdisc. If set, the MASK value
+will be applied as a bitwise AND to the diffserv/ECN byte of the IP header, and only if the
+result of this masking equals VALUE, will the
+.B ce_threshold
+logic be applied to the packet.
 
 .SH EXAMPLES
 #tc qdisc add   dev eth0 root fq_codel

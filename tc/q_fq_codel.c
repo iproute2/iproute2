@@ -55,6 +55,7 @@ static void explain(void)
 					"[ target TIME ] [ interval TIME ]\n"
 					"[ quantum BYTES ] [ [no]ecn ]\n"
 					"[ ce_threshold TIME ]\n"
+					"[ ce_threshold_selector VALUE/MASK ]\n"
 					"[ drop_batch SIZE ]\n");
 }
 
@@ -69,6 +70,8 @@ static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	unsigned int quantum = 0;
 	unsigned int ce_threshold = ~0U;
 	unsigned int memory = ~0U;
+	__u8 ce_threshold_mask = 0;
+	__u8 ce_threshold_selector = 0xFF;
 	int ecn = -1;
 	struct rtattr *tail;
 
@@ -107,6 +110,24 @@ static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			NEXT_ARG();
 			if (get_time(&ce_threshold, *argv)) {
 				fprintf(stderr, "Illegal \"ce_threshold\"\n");
+				return -1;
+			}
+		} else if (strcmp(*argv, "ce_threshold_selector") == 0) {
+			char *sep;
+
+			NEXT_ARG();
+			sep = strchr(*argv, '/');
+			if (!sep) {
+				fprintf(stderr, "Missing mask for \"ce_threshold_selector\"\n");
+				return -1;
+			}
+			*sep++ = '\0';
+			if (get_u8(&ce_threshold_mask, sep, 0)) {
+				fprintf(stderr, "Illegal mask for \"ce_threshold_selector\"\n");
+				return -1;
+			}
+			if (get_u8(&ce_threshold_selector, *argv, 0)) {
+				fprintf(stderr, "Illegal \"ce_threshold_selector\"\n");
 				return -1;
 			}
 		} else if (strcmp(*argv, "memory_limit") == 0) {
@@ -152,6 +173,10 @@ static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (ce_threshold != ~0U)
 		addattr_l(n, 1024, TCA_FQ_CODEL_CE_THRESHOLD,
 			  &ce_threshold, sizeof(ce_threshold));
+	if (ce_threshold_selector != 0xFF) {
+		addattr8(n, 1024, TCA_FQ_CODEL_CE_THRESHOLD_MASK, ce_threshold_mask);
+		addattr8(n, 1024, TCA_FQ_CODEL_CE_THRESHOLD_SELECTOR, ce_threshold_selector);
+	}
 	if (memory != ~0U)
 		addattr_l(n, 1024, TCA_FQ_CODEL_MEMORY_LIMIT,
 			  &memory, sizeof(memory));
@@ -172,6 +197,8 @@ static int fq_codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt
 	unsigned int ecn;
 	unsigned int quantum;
 	unsigned int ce_threshold;
+	__u8 ce_threshold_selector = 0;
+	__u8 ce_threshold_mask = 0;
 	unsigned int memory_limit;
 	unsigned int drop_batch;
 
@@ -211,6 +238,19 @@ static int fq_codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt
 		print_string(PRINT_FP, NULL, "ce_threshold %s ",
 			     sprint_time(ce_threshold, b1));
 	}
+	if (tb[TCA_FQ_CODEL_CE_THRESHOLD_SELECTOR] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_CE_THRESHOLD_SELECTOR]) >= sizeof(__u8))
+		ce_threshold_selector = rta_getattr_u8(tb[TCA_FQ_CODEL_CE_THRESHOLD_SELECTOR]);
+	if (tb[TCA_FQ_CODEL_CE_THRESHOLD_MASK] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_CE_THRESHOLD_MASK]) >= sizeof(__u8))
+		ce_threshold_mask = rta_getattr_u8(tb[TCA_FQ_CODEL_CE_THRESHOLD_MASK]);
+	if (ce_threshold_mask || ce_threshold_selector) {
+		print_hhu(PRINT_ANY, "ce_threshold_selector", "ce_threshold_selector %#x",
+			  ce_threshold_selector);
+		print_hhu(PRINT_ANY, "ce_threshold_mask", "/%#x ",
+			  ce_threshold_mask);
+	}
+
 	if (tb[TCA_FQ_CODEL_INTERVAL] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_CODEL_INTERVAL]) >= sizeof(__u32)) {
 		interval = rta_getattr_u32(tb[TCA_FQ_CODEL_INTERVAL]);
