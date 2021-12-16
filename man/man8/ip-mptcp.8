@@ -35,6 +35,13 @@ ip-mptcp \- MPTCP path manager configuration
 .I ID
 
 .ti -8
+.BR "ip mptcp endpoint change id "
+.I ID
+.RB "[ "
+.I BACKUP-OPT
+.RB "] "
+
+.ti -8
 .BR "ip mptcp endpoint show "
 .RB "[ " id
 .I ID
@@ -55,6 +62,13 @@ ip-mptcp \- MPTCP path manager configuration
 .B backup
 .RB "|"
 .B fullmesh
+.RB  "]"
+
+.ti -8
+.IR BACKUP-OPT " := ["
+.B backup
+.RB "|"
+.B nobackup
 .RB  "]"
 
 .ti -8
