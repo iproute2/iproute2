@@ -31,6 +31,7 @@ vdpa-dev \- vdpa device configuration
 .I NAME
 .B mgmtdev
 .I MGMTDEV
+.RI "[ mac " MACADDR " ]"
 
 .ti -8
 .B vdpa dev del
@@ -62,6 +63,11 @@ Name of the new vdpa device to add.
 .TP
 .BI mgmtdev " MGMTDEV"
 Name of the management device to use for device addition.
+
+.PP
+.BI mac " MACADDR"
+- specifies the mac address for the new vdpa device.
+This is applicable only for the network type of vdpa device. This is optional.
 
 .SS vdpa dev del - Delete the vdpa device.
 
@@ -96,6 +102,11 @@ Shows the specified vdpa device.
 vdpa dev add name foo mgmtdev vdpa_sim_net
 .RS 4
 Add the vdpa device named foo on the management device vdpa_sim_net.
+.RE
+.PP
+vdpa dev add name foo mgmtdev vdpa_sim_net mac 00:11:22:33:44:55
+.RS 4
+Add the vdpa device named foo on the management device vdpa_sim_net with mac address of 00:11:22:33:44:55.
 .RE
 .PP
 vdpa dev del foo

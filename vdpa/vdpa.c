@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <errno.h>
 #include <linux/genetlink.h>
+#include <linux/if_ether.h>
 #include <linux/vdpa.h>
 #include <linux/virtio_ids.h>
 #include <linux/virtio_net.h>
@@ -20,6 +21,7 @@
 #define VDPA_OPT_VDEV_MGMTDEV_HANDLE	BIT(1)
 #define VDPA_OPT_VDEV_NAME		BIT(2)
 #define VDPA_OPT_VDEV_HANDLE		BIT(3)
+#define VDPA_OPT_VDEV_MAC		BIT(4)
 
 struct vdpa_opts {
 	uint64_t present; /* flags of present items */
@@ -27,6 +29,7 @@ struct vdpa_opts {
 	char *mdev_name;
 	const char *vdev_name;
 	unsigned int device_id;
+	char mac[ETH_ALEN];
 };
 
 struct vdpa {
@@ -136,6 +139,21 @@ static int vdpa_argv_str(struct vdpa *vdpa, int argc, char **argv,
 	return 0;
 }
 
+static int vdpa_argv_mac(struct vdpa *vdpa, int argc, char **argv, char *mac)
+{
+	int alen;
+
+	if (argc <= 0 || *argv == NULL) {
+		fprintf(stderr, "String parameter expected\n");
+		return -EINVAL;
+	}
+
+	alen = ll_addr_a2n(mac, ETH_ALEN, *argv);
+	if (alen < 0)
+		return -EINVAL;
+	return 0;
+}
+
 struct vdpa_args_metadata {
 	uint64_t o_flag;
 	const char *err_msg;
@@ -183,13 +201,16 @@ static void vdpa_opts_put(struct nlmsghdr *nlh, struct vdpa *vdpa)
 	if ((opts->present & VDPA_OPT_VDEV_NAME) ||
 	    (opts->present & VDPA_OPT_VDEV_HANDLE))
 		mnl_attr_put_strz(nlh, VDPA_ATTR_DEV_NAME, opts->vdev_name);
+	if (opts->present & VDPA_OPT_VDEV_MAC)
+		mnl_attr_put(nlh, VDPA_ATTR_DEV_NET_CFG_MACADDR,
+			     sizeof(opts->mac), opts->mac);
 }
 
 static int vdpa_argv_parse(struct vdpa *vdpa, int argc, char **argv,
-			   uint64_t o_required)
+			   uint64_t o_required, uint64_t o_optional)
 {
+	uint64_t o_all = o_required | o_optional;
 	struct vdpa_opts *opts = &vdpa->opts;
-	uint64_t o_all = o_required;
 	uint64_t o_found = 0;
 	int err;
 
@@ -233,6 +254,15 @@ static int vdpa_argv_parse(struct vdpa *vdpa, int argc, char **argv,
 
 			NEXT_ARG_FWD();
 			o_found |= VDPA_OPT_VDEV_MGMTDEV_HANDLE;
+		} else if ((strcmp(*argv, "mac") == 0) &&
+			   (o_all & VDPA_OPT_VDEV_MAC)) {
+			NEXT_ARG_FWD();
+			err = vdpa_argv_mac(vdpa, argc, argv, opts->mac);
+			if (err)
+				return err;
+
+			NEXT_ARG_FWD();
+			o_found |= VDPA_OPT_VDEV_MAC;
 		} else {
 			fprintf(stderr, "Unknown option \"%s\"\n", *argv);
 			return -EINVAL;
@@ -246,11 +276,11 @@ static int vdpa_argv_parse(struct vdpa *vdpa, int argc, char **argv,
 
 static int vdpa_argv_parse_put(struct nlmsghdr *nlh, struct vdpa *vdpa,
 			       int argc, char **argv,
-			       uint64_t o_required)
+			       uint64_t o_required, uint64_t o_optional)
 {
 	int err;
 
-	err = vdpa_argv_parse(vdpa, argc, argv, o_required);
+	err = vdpa_argv_parse(vdpa, argc, argv, o_required, o_optional);
 	if (err)
 		return err;
 	vdpa_opts_put(nlh, vdpa);
@@ -386,7 +416,7 @@ static int cmd_mgmtdev_show(struct vdpa *vdpa, int argc, char **argv)
 					  flags);
 	if (argc > 0) {
 		err = vdpa_argv_parse_put(nlh, vdpa, argc, argv,
-					  VDPA_OPT_MGMTDEV_HANDLE);
+					  VDPA_OPT_MGMTDEV_HANDLE, 0);
 		if (err)
 			return err;
 	}
@@ -413,7 +443,7 @@ static int cmd_mgmtdev(struct vdpa *vdpa, int argc, char **argv)
 static void cmd_dev_help(void)
 {
 	fprintf(stderr, "Usage: vdpa dev show [ DEV ]\n");
-	fprintf(stderr, "       vdpa dev add name NAME mgmtdev MANAGEMENTDEV\n");
+	fprintf(stderr, "       vdpa dev add name NAME mgmtdev MANAGEMENTDEV [ mac MACADDR ]\n");
 	fprintf(stderr, "       vdpa dev del DEV\n");
 	fprintf(stderr, "Usage: vdpa dev config COMMAND [ OPTIONS ]\n");
 }
@@ -483,7 +513,7 @@ static int cmd_dev_show(struct vdpa *vdpa, int argc, char **argv)
 	nlh = mnlu_gen_socket_cmd_prepare(&vdpa->nlg, VDPA_CMD_DEV_GET, flags);
 	if (argc > 0) {
 		err = vdpa_argv_parse_put(nlh, vdpa, argc, argv,
-					  VDPA_OPT_VDEV_HANDLE);
+					  VDPA_OPT_VDEV_HANDLE, 0);
 		if (err)
 			return err;
 	}
@@ -502,7 +532,8 @@ static int cmd_dev_add(struct vdpa *vdpa, int argc, char **argv)
 	nlh = mnlu_gen_socket_cmd_prepare(&vdpa->nlg, VDPA_CMD_DEV_NEW,
 					  NLM_F_REQUEST | NLM_F_ACK);
 	err = vdpa_argv_parse_put(nlh, vdpa, argc, argv,
-				  VDPA_OPT_VDEV_MGMTDEV_HANDLE | VDPA_OPT_VDEV_NAME);
+				  VDPA_OPT_VDEV_MGMTDEV_HANDLE | VDPA_OPT_VDEV_NAME,
+				  VDPA_OPT_VDEV_MAC);
 	if (err)
 		return err;
 
@@ -516,7 +547,8 @@ static int cmd_dev_del(struct vdpa *vdpa,  int argc, char **argv)
 
 	nlh = mnlu_gen_socket_cmd_prepare(&vdpa->nlg, VDPA_CMD_DEV_DEL,
 					  NLM_F_REQUEST | NLM_F_ACK);
-	err = vdpa_argv_parse_put(nlh, vdpa, argc, argv, VDPA_OPT_VDEV_HANDLE);
+	err = vdpa_argv_parse_put(nlh, vdpa, argc, argv, VDPA_OPT_VDEV_HANDLE,
+				  0);
 	if (err)
 		return err;
 
@@ -597,7 +629,7 @@ static int cmd_dev_config_show(struct vdpa *vdpa, int argc, char **argv)
 					  flags);
 	if (argc > 0) {
 		err = vdpa_argv_parse_put(nlh, vdpa, argc, argv,
-					  VDPA_OPT_VDEV_HANDLE);
+					  VDPA_OPT_VDEV_HANDLE, 0);
 		if (err)
 			return err;
 	}
