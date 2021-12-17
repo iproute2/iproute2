@@ -6,9 +6,11 @@
 #include <linux/genetlink.h>
 #include <linux/vdpa.h>
 #include <linux/virtio_ids.h>
+#include <linux/virtio_net.h>
 #include <linux/netlink.h>
 #include <libmnl/libmnl.h>
 #include "mnl_utils.h"
+#include <rt_names.h>
 
 #include "version.h"
 #include "json_print.h"
@@ -413,6 +415,7 @@ static void cmd_dev_help(void)
 	fprintf(stderr, "Usage: vdpa dev show [ DEV ]\n");
 	fprintf(stderr, "       vdpa dev add name NAME mgmtdev MANAGEMENTDEV\n");
 	fprintf(stderr, "       vdpa dev del DEV\n");
+	fprintf(stderr, "Usage: vdpa dev config COMMAND [ OPTIONS ]\n");
 }
 
 static const char *device_type_name(uint32_t type)
@@ -520,6 +523,111 @@ static int cmd_dev_del(struct vdpa *vdpa,  int argc, char **argv)
 	return mnlu_gen_socket_sndrcv(&vdpa->nlg, nlh, NULL, NULL);
 }
 
+static void pr_out_dev_net_config(struct nlattr **tb)
+{
+	SPRINT_BUF(macaddr);
+	uint16_t val_u16;
+
+	if (tb[VDPA_ATTR_DEV_NET_CFG_MACADDR]) {
+		const unsigned char *data;
+		uint16_t len;
+
+		len = mnl_attr_get_payload_len(tb[VDPA_ATTR_DEV_NET_CFG_MACADDR]);
+		data = mnl_attr_get_payload(tb[VDPA_ATTR_DEV_NET_CFG_MACADDR]);
+
+		print_string(PRINT_ANY, "mac", "mac %s ",
+			     ll_addr_n2a(data, len, 0, macaddr, sizeof(macaddr)));
+	}
+	if (tb[VDPA_ATTR_DEV_NET_STATUS]) {
+		val_u16 = mnl_attr_get_u16(tb[VDPA_ATTR_DEV_NET_STATUS]);
+		print_string(PRINT_ANY, "link ", "link %s ",
+			     (val_u16 & VIRTIO_NET_S_LINK_UP) ? "up" : "down");
+		print_bool(PRINT_ANY, "link_announce ", "link_announce %s ",
+			     (val_u16 & VIRTIO_NET_S_ANNOUNCE) ? true : false);
+	}
+	if (tb[VDPA_ATTR_DEV_NET_CFG_MAX_VQP]) {
+		val_u16 = mnl_attr_get_u16(tb[VDPA_ATTR_DEV_NET_CFG_MAX_VQP]);
+		print_uint(PRINT_ANY, "max_vq_pairs", "max_vq_pairs %d ",
+			     val_u16);
+	}
+	if (tb[VDPA_ATTR_DEV_NET_CFG_MTU]) {
+		val_u16 = mnl_attr_get_u16(tb[VDPA_ATTR_DEV_NET_CFG_MTU]);
+		print_uint(PRINT_ANY, "mtu", "mtu %d ", val_u16);
+	}
+}
+
+static void pr_out_dev_config(struct vdpa *vdpa, struct nlattr **tb)
+{
+	uint32_t device_id = mnl_attr_get_u32(tb[VDPA_ATTR_DEV_ID]);
+
+	pr_out_vdev_handle_start(vdpa, tb);
+	switch (device_id) {
+	case VIRTIO_ID_NET:
+		pr_out_dev_net_config(tb);
+		break;
+	default:
+		break;
+	}
+	pr_out_vdev_handle_end(vdpa);
+}
+
+static int cmd_dev_config_show_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[VDPA_ATTR_MAX + 1] = {};
+	struct vdpa *vdpa = data;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[VDPA_ATTR_DEV_NAME] || !tb[VDPA_ATTR_DEV_ID])
+		return MNL_CB_ERROR;
+	pr_out_dev_config(vdpa, tb);
+	return MNL_CB_OK;
+}
+
+static int cmd_dev_config_show(struct vdpa *vdpa, int argc, char **argv)
+{
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (argc <= 0)
+		flags |= NLM_F_DUMP;
+
+	nlh = mnlu_gen_socket_cmd_prepare(&vdpa->nlg, VDPA_CMD_DEV_CONFIG_GET,
+					  flags);
+	if (argc > 0) {
+		err = vdpa_argv_parse_put(nlh, vdpa, argc, argv,
+					  VDPA_OPT_VDEV_HANDLE);
+		if (err)
+			return err;
+	}
+
+	pr_out_section_start(vdpa, "config");
+	err = mnlu_gen_socket_sndrcv(&vdpa->nlg, nlh, cmd_dev_config_show_cb, vdpa);
+	pr_out_section_end(vdpa);
+	return err;
+}
+
+static void cmd_dev_config_help(void)
+{
+	fprintf(stderr, "Usage: vdpa dev config show [ DEV ]\n");
+}
+
+static int cmd_dev_config(struct vdpa *vdpa, int argc, char **argv)
+{
+	if (!argc)
+		return cmd_dev_config_show(vdpa, argc - 1, argv + 1);
+
+	if (matches(*argv, "help") == 0) {
+		cmd_dev_config_help();
+		return 0;
+	} else if (matches(*argv, "show") == 0) {
+		return cmd_dev_config_show(vdpa, argc - 1, argv + 1);
+	}
+	fprintf(stderr, "Command \"%s\" not found\n", *argv);
+	return -ENOENT;
+}
+
 static int cmd_dev(struct vdpa *vdpa, int argc, char **argv)
 {
 	if (!argc)
@@ -535,6 +643,8 @@ static int cmd_dev(struct vdpa *vdpa, int argc, char **argv)
 		return cmd_dev_add(vdpa, argc - 1, argv + 1);
 	} else if (matches(*argv, "del") == 0) {
 		return cmd_dev_del(vdpa, argc - 1, argv + 1);
+	} else if (matches(*argv, "config") == 0) {
+		return cmd_dev_config(vdpa, argc - 1, argv + 1);
 	}
 	fprintf(stderr, "Command \"%s\" not found\n", *argv);
 	return -ENOENT;

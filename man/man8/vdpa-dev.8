@@ -36,6 +36,10 @@ vdpa-dev \- vdpa device configuration
 .B vdpa dev del
 .I DEV
 
+.ti -8
+.B vdpa dev config show
+.RI "[ " DEV " ]"
+
 .SH "DESCRIPTION"
 .SS vdpa dev show - display vdpa device attributes
 
@@ -65,6 +69,18 @@ Name of the management device to use for device addition.
 .I "DEV"
 - specifies the vdpa device to delete.
 
+.SS vdpa dev config show - Show configuration of specific device or all devices.
+
+.PP
+.I "DEV"
+- specifies the vdpa device to show its configuration.
+If this argument is omitted all devices configuration is listed.
+
+.in +4
+Format is:
+.in +2
+VDPA_DEVICE_NAME
+
 .SH "EXAMPLES"
 .PP
 vdpa dev show
@@ -85,6 +101,11 @@ Add the vdpa device named foo on the management device vdpa_sim_net.
 vdpa dev del foo
 .RS 4
 Delete the vdpa device named foo which was previously created.
+.RE
+.PP
+vdpa dev config show foo
+.RS 4
+Shows the vdpa device configuration of device named foo.
 .RE
 
 .SH SEE ALSO
