@@ -22,6 +22,7 @@
 #define VDPA_OPT_VDEV_NAME		BIT(2)
 #define VDPA_OPT_VDEV_HANDLE		BIT(3)
 #define VDPA_OPT_VDEV_MAC		BIT(4)
+#define VDPA_OPT_VDEV_MTU		BIT(5)
 
 struct vdpa_opts {
 	uint64_t present; /* flags of present items */
@@ -30,6 +31,7 @@ struct vdpa_opts {
 	const char *vdev_name;
 	unsigned int device_id;
 	char mac[ETH_ALEN];
+	uint16_t mtu;
 };
 
 struct vdpa {
@@ -154,6 +156,17 @@ static int vdpa_argv_mac(struct vdpa *vdpa, int argc, char **argv, char *mac)
 	return 0;
 }
 
+static int vdpa_argv_u16(struct vdpa *vdpa, int argc, char **argv,
+			 uint16_t *result)
+{
+	if (argc <= 0 || *argv == NULL) {
+		fprintf(stderr, "number expected\n");
+		return -EINVAL;
+	}
+
+	return get_u16(result, *argv, 10);
+}
+
 struct vdpa_args_metadata {
 	uint64_t o_flag;
 	const char *err_msg;
@@ -204,6 +217,8 @@ static void vdpa_opts_put(struct nlmsghdr *nlh, struct vdpa *vdpa)
 	if (opts->present & VDPA_OPT_VDEV_MAC)
 		mnl_attr_put(nlh, VDPA_ATTR_DEV_NET_CFG_MACADDR,
 			     sizeof(opts->mac), opts->mac);
+	if (opts->present & VDPA_OPT_VDEV_MTU)
+		mnl_attr_put_u16(nlh, VDPA_ATTR_DEV_NET_CFG_MTU, opts->mtu);
 }
 
 static int vdpa_argv_parse(struct vdpa *vdpa, int argc, char **argv,
@@ -263,6 +278,15 @@ static int vdpa_argv_parse(struct vdpa *vdpa, int argc, char **argv,
 
 			NEXT_ARG_FWD();
 			o_found |= VDPA_OPT_VDEV_MAC;
+		} else if ((strcmp(*argv, "mtu") == 0) &&
+			   (o_all & VDPA_OPT_VDEV_MTU)) {
+			NEXT_ARG_FWD();
+			err = vdpa_argv_u16(vdpa, argc, argv, &opts->mtu);
+			if (err)
+				return err;
+
+			NEXT_ARG_FWD();
+			o_found |= VDPA_OPT_VDEV_MTU;
 		} else {
 			fprintf(stderr, "Unknown option \"%s\"\n", *argv);
 			return -EINVAL;
@@ -443,7 +467,7 @@ static int cmd_mgmtdev(struct vdpa *vdpa, int argc, char **argv)
 static void cmd_dev_help(void)
 {
 	fprintf(stderr, "Usage: vdpa dev show [ DEV ]\n");
-	fprintf(stderr, "       vdpa dev add name NAME mgmtdev MANAGEMENTDEV [ mac MACADDR ]\n");
+	fprintf(stderr, "       vdpa dev add name NAME mgmtdev MANAGEMENTDEV [ mac MACADDR ] [ mtu MTU ]\n");
 	fprintf(stderr, "       vdpa dev del DEV\n");
 	fprintf(stderr, "Usage: vdpa dev config COMMAND [ OPTIONS ]\n");
 }
@@ -533,7 +557,7 @@ static int cmd_dev_add(struct vdpa *vdpa, int argc, char **argv)
 					  NLM_F_REQUEST | NLM_F_ACK);
 	err = vdpa_argv_parse_put(nlh, vdpa, argc, argv,
 				  VDPA_OPT_VDEV_MGMTDEV_HANDLE | VDPA_OPT_VDEV_NAME,
-				  VDPA_OPT_VDEV_MAC);
+				  VDPA_OPT_VDEV_MAC | VDPA_OPT_VDEV_MTU);
 	if (err)
 		return err;
 
