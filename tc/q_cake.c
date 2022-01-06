@@ -95,7 +95,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	bool overhead_override = false;
 	bool overhead_set = false;
 	unsigned int interval = 0;
-	unsigned int diffserv = 0;
+	int diffserv = -1;
 	unsigned int memlimit = 0;
 	unsigned int fwmark = 0;
 	unsigned int target = 0;
@@ -356,7 +356,7 @@ static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (bandwidth || unlimited)
 		addattr_l(n, 1024, TCA_CAKE_BASE_RATE64, &bandwidth,
 			  sizeof(bandwidth));
-	if (diffserv)
+	if (diffserv != -1)
 		addattr_l(n, 1024, TCA_CAKE_DIFFSERV_MODE, &diffserv,
 			  sizeof(diffserv));
 	if (atm != -1)
