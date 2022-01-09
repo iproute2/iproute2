@@ -396,6 +396,20 @@ static void can_print_tdc_const_opt(FILE *f, struct rtattr *tdc_attr)
 	close_json_object();
 }
 
+static void can_print_ctrlmode_ext(FILE *f, struct rtattr *ctrlmode_ext_attr,
+				   __u32 cm_flags)
+{
+	struct rtattr *tb[IFLA_CAN_CTRLMODE_MAX + 1];
+
+	parse_rtattr_nested(tb, IFLA_CAN_CTRLMODE_MAX, ctrlmode_ext_attr);
+	if (tb[IFLA_CAN_CTRLMODE_SUPPORTED]) {
+		__u32 *supported = RTA_DATA(tb[IFLA_CAN_CTRLMODE_SUPPORTED]);
+
+		print_ctrlmode(PRINT_JSON, *supported, "ctrlmode_supported");
+		print_ctrlmode(PRINT_JSON, cm_flags & ~*supported, "ctrlmode_static");
+	}
+}
+
 static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	if (!tb)
@@ -405,6 +419,9 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		struct can_ctrlmode *cm = RTA_DATA(tb[IFLA_CAN_CTRLMODE]);
 
 		print_ctrlmode(PRINT_ANY, cm->flags, "ctrlmode");
+		if (tb[IFLA_CAN_CTRLMODE_EXT])
+			can_print_ctrlmode_ext(f, tb[IFLA_CAN_CTRLMODE_EXT],
+					       cm->flags);
 	}
 
 	if (tb[IFLA_CAN_STATE]) {
