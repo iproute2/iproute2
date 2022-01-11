@@ -146,12 +146,12 @@ const char *qp_types_to_str(uint8_t idx)
 						     "RAW_ETHERTYPE",
 						     "UNKNOWN", "RAW_PACKET",
 						     "XRC_INI", "XRC_TGT",
-						     [0xFF] = "DRIVER",
 	};
 
-	if (idx < ARRAY_SIZE(qp_types_str) && qp_types_str[idx])
+	if (idx < ARRAY_SIZE(qp_types_str))
 		return qp_types_str[idx];
-	return "UNKNOWN";
+
+	return (idx == 0xFF) ? "DRIVER" : "UNKNOWN";
 }
 
 void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)

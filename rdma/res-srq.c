@@ -70,9 +70,8 @@ static int filter_srq_range_qps(struct rd *rd, struct nlattr **qp_line,
 					 *delimiter, tmp_min_range,
 					 tmp_max_range);
 
-			if (strlen(qp_str) + strlen(tmp) >= MAX_QP_STR_LEN)
-				return -EINVAL;
-			strncat(qp_str, tmp, sizeof(tmp) - 1);
+			strncat(qp_str, tmp,
+				MAX_QP_STR_LEN - strlen(qp_str) - 1);
 
 			memset(tmp, 0, strlen(tmp));
 			*delimiter = ",";
@@ -94,9 +93,7 @@ static int filter_srq_range_qps(struct rd *rd, struct nlattr **qp_line,
 		snprintf(tmp, sizeof(tmp), "%s%d-%d", *delimiter,
 			 tmp_min_range, tmp_max_range);
 
-	if (strlen(qp_str) + strlen(tmp) >= MAX_QP_STR_LEN)
-		return -EINVAL;
-	strncat(qp_str, tmp, sizeof(tmp) - 1);
+	strncat(qp_str, tmp, MAX_QP_STR_LEN - strlen(qp_str) - 1);
 	*delimiter = ",";
 	return 0;
 }
@@ -137,9 +134,8 @@ static int get_srq_qps(struct rd *rd, struct nlattr *qp_table,  char *qp_str)
 					qp_line[RDMA_NLDEV_ATTR_RES_LQPN]))
 				continue;
 			snprintf(tmp, sizeof(tmp), "%s%d", delimiter, qpn);
-			if (strlen(qp_str) + strlen(tmp) >= MAX_QP_STR_LEN)
-				goto out;
-			strncat(qp_str, tmp, sizeof(tmp) - 1);
+			strncat(qp_str, tmp,
+				MAX_QP_STR_LEN - strlen(qp_str) - 1);
 			delimiter = ",";
 		} else if (qp_line[RDMA_NLDEV_ATTR_MIN_RANGE] &&
 			   qp_line[RDMA_NLDEV_ATTR_MAX_RANGE]) {
