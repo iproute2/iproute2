@@ -298,14 +298,7 @@ void tnl_print_endpoint(const char *name, const struct rtattr *rta, int family)
 			value = "unknown";
 	}
 
-	if (is_json_context()) {
-		print_string(PRINT_JSON, name, NULL, value);
-	} else {
-		SPRINT_BUF(b1);
-
-		snprintf(b1, sizeof(b1), "%s %%s ", name);
-		print_string(PRINT_FP, NULL, b1, value);
-	}
+	print_string_name_value(name, value);
 }
 
 void tnl_print_gre_flags(__u8 proto,
