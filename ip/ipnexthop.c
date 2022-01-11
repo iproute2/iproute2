@@ -6,6 +6,7 @@
  */
 
 #include <linux/nexthop.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <rt_names.h>
@@ -840,7 +841,7 @@ static void parse_nh_group_type_res(struct nlmsghdr *n, int maxlen, int *argcp,
 
 			NEXT_ARG();
 			if (get_unsigned(&idle_timer, *argv, 0) ||
-			    idle_timer >= ~0UL / 100)
+			    idle_timer >= UINT32_MAX / 100)
 				invarg("invalid idle timer value", *argv);
 
 			addattr32(n, maxlen, NHA_RES_GROUP_IDLE_TIMER,
@@ -850,7 +851,7 @@ static void parse_nh_group_type_res(struct nlmsghdr *n, int maxlen, int *argcp,
 
 			NEXT_ARG();
 			if (get_unsigned(&unbalanced_timer, *argv, 0) ||
-			    unbalanced_timer >= ~0UL / 100)
+			    unbalanced_timer >= UINT32_MAX / 100)
 				invarg("invalid unbalanced timer value", *argv);
 
 			addattr32(n, maxlen, NHA_RES_GROUP_UNBALANCED_TIMER,

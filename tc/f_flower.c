@@ -2195,7 +2195,7 @@ static void flower_print_ct_label(struct rtattr *attr,
 	const unsigned char *str;
 	bool print_mask = false;
 	int data_len, i;
-	SPRINT_BUF(out);
+	char out[128];
 	char *p;
 
 	if (!attr)

@@ -50,7 +50,6 @@ test_on "vlan"
 test_on "modify"
 test_on "id 5"
 test_on "protocol 802.1Q"
-test_on "priority 0"
 test_on "pipe"
 
 reset_qdisc

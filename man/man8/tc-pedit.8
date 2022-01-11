@@ -118,7 +118,7 @@ or a single byte
 .BI at " AT " offmask " MASK " shift " SHIFT"
 This is an optional part of
 .IR RAW_OP
-which allows to have a variable
+which allows one to have a variable
 .I OFFSET
 depending on packet data at offset
 .IR AT ,
@@ -202,7 +202,7 @@ unexpected things.
 .B icmp_type
 .TQ
 .B icmp_code
-Again, this allows to change data past the actual IP header itself. It assumes
+Again, this allows one to change data past the actual IP header itself. It assumes
 an ICMP header is present immediately following the (minimal sized) IP header.
 If it is not or the latter is bigger than the minimum of 20 bytes, this will do
 unexpected things. These fields are eight-bit values.
@@ -300,7 +300,7 @@ Keep the addressed data as is.
 .BI retain " RVAL"
 This optional extra part of
 .I CMD_SPEC
-allows to exclude bits from being changed. Supported only for 32 bits fields
+allows one to exclude bits from being changed. Supported only for 32 bits fields
 or smaller.
 .TP
 .I CONTROL

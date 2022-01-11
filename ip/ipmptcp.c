@@ -315,7 +315,11 @@ static int mptcp_addr_show(int argc, char **argv)
 	if (rtnl_talk(&genl_rth, &req.n, &answer) < 0)
 		return -2;
 
-	return print_mptcp_addr(answer, stdout);
+	new_json_obj(json);
+	ret = print_mptcp_addr(answer, stdout);
+	delete_json_obj();
+	fflush(stdout);
+	return ret;
 }
 
 static int mptcp_addr_flush(int argc, char **argv)
