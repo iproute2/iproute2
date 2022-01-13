@@ -2,7 +2,7 @@
 
 #include <errno.h>
 #include <sys/socket.h>
-#include <netax25/ax25.h>
+#include <linux/ax25.h>
 
 #include "utils.h"
 
