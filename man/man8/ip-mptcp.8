@@ -31,8 +31,11 @@ ip-mptcp \- MPTCP path manager configuration
 .RB "] "
 
 .ti -8
-.BR "ip mptcp endpoint del id "
+.BR "ip mptcp endpoint delete id "
 .I ID
+.RB "[ "
+.I IFADDR
+.RB "] "
 
 .ti -8
 .BR "ip mptcp endpoint change id "
@@ -108,12 +111,23 @@ ip mptcp endpoint flush	flush all existing MPTCP endpoints
 .TE
 
 .TP
+.IR IFADDR
+An IPv4 or IPv6 address. When used with the
+.B delete id
+operation, an
+.B IFADDR
+is only included when the
+.B ID
+is 0.
+
+.TP
 .IR PORT
 When a port number is specified, incoming MPTCP subflows for already
 established MPTCP sockets will be accepted on the specified port, regardless
 the original listener port accepting the first MPTCP subflow and/or
 this peer being actually on the client side.
 
+.TP
 .IR ID
 is a unique numeric identifier for the given endpoint
 
