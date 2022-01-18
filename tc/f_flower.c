@@ -84,7 +84,7 @@ static void explain(void)
 		"			geneve_opts MASKED-OPTIONS |\n"
 		"			vxlan_opts MASKED-OPTIONS |\n"
 		"                       erspan_opts MASKED-OPTIONS |\n"
-		"			ip_flags IP-FLAGS | \n"
+		"			ip_flags IP-FLAGS |\n"
 		"			enc_dst_port [ port_number ] |\n"
 		"			ct_state MASKED_CT_STATE |\n"
 		"			ct_label MASKED_CT_LABEL |\n"
@@ -118,7 +118,7 @@ static int flower_parse_eth_addr(char *str, int addr_type, int mask_type,
 	addattr_l(n, MAX_MSG, addr_type, addr, sizeof(addr));
 
 	if (slash) {
-		unsigned bits;
+		unsigned int bits;
 
 		if (!get_unsigned(&bits, slash + 1, 10)) {
 			uint64_t mask;
@@ -529,8 +529,7 @@ static int flower_parse_u8(char *str, int value_type, int mask_type,
 		ret = get_u8(&mask, slash + 1, 10);
 		if (ret)
 			goto err;
-	}
-	else {
+	} else {
 		mask = UINT8_MAX;
 	}
 
@@ -1865,11 +1864,9 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				return -1;
 			}
 			continue;
-		} else if (strcmp(*argv, "help") == 0) {
-			explain();
-			return -1;
 		} else {
-			fprintf(stderr, "What is \"%s\"?\n", *argv);
+			if (strcmp(*argv, "help") != 0)
+				fprintf(stderr, "What is \"%s\"?\n", *argv);
 			explain();
 			return -1;
 		}
@@ -1917,7 +1914,7 @@ static int __mask_bits(char *addr, size_t len)
 				bits++;
 			} else if (bits) {
 				hole = true;
-			} else{
+			} else {
 				return -1;
 			}
 		}
@@ -2780,8 +2777,7 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 				print_uint(PRINT_ANY, "in_hw_count",
 					   " in_hw_count %u", count);
 			}
-		}
-		else if (flags & TCA_CLS_FLAGS_NOT_IN_HW) {
+		} else if (flags & TCA_CLS_FLAGS_NOT_IN_HW) {
 			print_nl();
 			print_bool(PRINT_ANY, "not_in_hw", "  not_in_hw", true);
 		}
