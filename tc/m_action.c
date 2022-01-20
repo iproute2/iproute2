@@ -466,10 +466,8 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 			print_nl();
 			print_uint(PRINT_ANY, "order",
 				   "\taction order %u: ", i);
-			if (tc_print_one_action(f, tb[i]) < 0) {
-				print_string(PRINT_FP, NULL,
-					     "Error printing action\n", NULL);
-			}
+			if (tc_print_one_action(f, tb[i]) < 0)
+				fprintf(stderr, "Error printing action\n");
 			close_json_object();
 		}
 
