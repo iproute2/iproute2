@@ -51,9 +51,10 @@ static void act_usage(void)
 		"	FL := ls | list | flush | <ACTNAMESPEC>\n"
 		"	ACTNAMESPEC :=  action <ACTNAME>\n"
 		"	ACTISPEC := <ACTNAMESPEC> <INDEXSPEC>\n"
-		"	ACTSPEC := action <ACTDETAIL> [INDEXSPEC] [HWSTATSSPEC]\n"
+		"	ACTSPEC := action <ACTDETAIL> [INDEXSPEC] [HWSTATSSPEC] [SKIPSPEC]\n"
 		"	INDEXSPEC := index <32 bit indexvalue>\n"
 		"	HWSTATSSPEC := hw_stats [ immediate | delayed | disabled ]\n"
+		"	SKIPSPEC := [ skip_sw | skip_hw ]\n"
 		"	ACTDETAIL := <ACTNAME> <ACTPARAMS>\n"
 		"		Example ACTNAME is gact, mirred, bpf, etc\n"
 		"		Each action has its own parameters (ACTPARAMS)\n"
@@ -245,6 +246,8 @@ int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 			goto done0;
 		} else {
 			struct action_util *a = NULL;
+			int skip_loop = 2;
+			__u32 flag = 0;
 
 			if (!action_a2n(*argv, NULL, false))
 				strncpy(k, "gact", sizeof(k) - 1);
@@ -314,13 +317,27 @@ done0:
 			}
 
 			if (*argv && strcmp(*argv, "no_percpu") == 0) {
+				flag |= TCA_ACT_FLAGS_NO_PERCPU_STATS;
+				NEXT_ARG_FWD();
+			}
+
+			/* we need to parse twice to fix skip flag out of order */
+			while (skip_loop--) {
+				if (*argv && strcmp(*argv, "skip_sw") == 0) {
+					flag |= TCA_ACT_FLAGS_SKIP_SW;
+					NEXT_ARG_FWD();
+				} else if (*argv && strcmp(*argv, "skip_hw") == 0) {
+					flag |= TCA_ACT_FLAGS_SKIP_HW;
+					NEXT_ARG_FWD();
+				}
+			}
+
+			if (flag) {
 				struct nla_bitfield32 flags =
-					{ TCA_ACT_FLAGS_NO_PERCPU_STATS,
-					  TCA_ACT_FLAGS_NO_PERCPU_STATS };
+					{ flag, flag };
 
 				addattr_l(n, MAX_MSG, TCA_ACT_FLAGS, &flags,
 					  sizeof(struct nla_bitfield32));
-				NEXT_ARG_FWD();
 			}
 
 			addattr_nest_end(n, tail);
@@ -396,13 +413,39 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 					   strsz, b1, sizeof(b1)));
 		print_nl();
 	}
-	if (tb[TCA_ACT_FLAGS]) {
-		struct nla_bitfield32 *flags = RTA_DATA(tb[TCA_ACT_FLAGS]);
+	if (tb[TCA_ACT_FLAGS] || tb[TCA_ACT_IN_HW_COUNT]) {
+		bool skip_hw = false;
+		if (tb[TCA_ACT_FLAGS]) {
+			struct nla_bitfield32 *flags = RTA_DATA(tb[TCA_ACT_FLAGS]);
 
-		if (flags->selector & TCA_ACT_FLAGS_NO_PERCPU_STATS)
-			print_bool(PRINT_ANY, "no_percpu", "\tno_percpu",
-				   flags->value &
-				   TCA_ACT_FLAGS_NO_PERCPU_STATS);
+			if (flags->selector & TCA_ACT_FLAGS_NO_PERCPU_STATS)
+				print_bool(PRINT_ANY, "no_percpu", "\tno_percpu",
+					   flags->value &
+					   TCA_ACT_FLAGS_NO_PERCPU_STATS);
+			if (flags->selector & TCA_ACT_FLAGS_SKIP_HW) {
+				print_bool(PRINT_ANY, "skip_hw", "\tskip_hw",
+					   flags->value &
+					   TCA_ACT_FLAGS_SKIP_HW);
+				skip_hw = !!(flags->value & TCA_ACT_FLAGS_SKIP_HW);
+			}
+			if (flags->selector & TCA_ACT_FLAGS_SKIP_SW)
+				print_bool(PRINT_ANY, "skip_sw", "\tskip_sw",
+					   flags->value &
+					   TCA_ACT_FLAGS_SKIP_SW);
+		}
+		if (tb[TCA_ACT_IN_HW_COUNT] && !skip_hw) {
+			__u32 count = rta_getattr_u32(tb[TCA_ACT_IN_HW_COUNT]);
+			if (count) {
+				print_bool(PRINT_ANY, "in_hw", "\tin_hw",
+					   true);
+				print_uint(PRINT_ANY, "in_hw_count",
+					   " in_hw_count %u", count);
+			} else {
+				print_bool(PRINT_ANY, "not_in_hw",
+					   "\tnot_in_hw", true);
+			}
+		}
+
 		print_nl();
 	}
 	if (tb[TCA_ACT_HW_STATS])

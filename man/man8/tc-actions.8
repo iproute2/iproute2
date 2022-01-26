@@ -52,6 +52,8 @@ actions \- independently defined actions in tc
 .I HWSTATSSPEC
 ] [
 .I CONTROL
+] [
+.I SKIPSPEC
 ]
 
 .I ACTISPEC
@@ -97,6 +99,11 @@ Time since last update.
 .I CONTROL
 := {
 .IR reclassify " | " pipe " | " drop " | " continue " | " ok
+}
+
+.I SKIPSPEC
+:= {
+.IR skip_sw " | " skip_hw
 }
 
 .I TC_OPTIONS
@@ -268,6 +275,23 @@ Continue the classification with the next filter.
 .B pass
 Return to the calling qdisc for packet processing, and end classification of
 this packet.
+.RE
+
+.TP
+.I SKIPSPEC
+The
+.I SKIPSPEC
+indicates how
+.B tc
+should proceed when executing the action. Any of the following are valid:
+.RS
+.TP
+.B skip_sw
+Do not process action by software. If hardware has no offload support for this
+action, operation will fail.
+.TP
+.B skip_hw
+Do not process action by hardware.
 .RE
 
 .SH SEE ALSO
