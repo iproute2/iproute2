@@ -1,13 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * q_netem.c		NETEM.
- *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
- *
- * Authors:	Stephen Hemminger <shemminger@linux-foundation.org>
- *
+ * Author:	Stephen Hemminger <shemminger@linux-foundation.org>
  */
 
 #include <stdio.h>
@@ -30,22 +23,20 @@
 static void explain(void)
 {
 	fprintf(stderr,
-		"Usage: ... netem	[ limit PACKETS ]\n" \
-		"			[ delay TIME [ JITTER [CORRELATION]]]\n" \
-		"			[ distribution {uniform|normal|pareto|paretonormal} ]\n" \
-		"			[ corrupt PERCENT [CORRELATION]]\n" \
-		"			[ duplicate PERCENT [CORRELATION]]\n" \
-		"			[ loss random PERCENT [CORRELATION]]\n" \
-		"			[ loss state P13 [P31 [P32 [P23 P14]]]\n" \
-		"			[ loss gemodel PERCENT [R [1-H [1-K]]]\n" \
-		"			[ ecn ]\n" \
-		"			[ reorder PERCENT [CORRELATION] [ gap DISTANCE ]]\n" \
-		"			[ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n" \
-		"			[ slot MIN_DELAY [MAX_DELAY] [packets MAX_PACKETS]" \
-		" [bytes MAX_BYTES]]\n" \
-		"		[ slot distribution" \
-		" {uniform|normal|pareto|paretonormal|custom} DELAY JITTER" \
-		" [packets MAX_PACKETS] [bytes MAX_BYTES]]\n");
+		"Usage: ... netem [ limit PACKETS ]\n"
+		"                 [ delay TIME [ JITTER [CORRELATION]]]\n"
+		"                 [ distribution {uniform|normal|pareto|paretonormal} ]\n"
+		"                 [ corrupt PERCENT [CORRELATION]]\n"
+		"                 [ duplicate PERCENT [CORRELATION]]\n"
+		"                 [ loss random PERCENT [CORRELATION]]\n"
+		"                 [ loss state P13 [P31 [P32 [P23 P14]]]\n"
+		"                 [ loss gemodel PERCENT [R [1-H [1-K]]]\n"
+		"                 [ ecn ]\n"
+		"                 [ reorder PERCENT [CORRELATION] [ gap DISTANCE ]]\n"
+		"                 [ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n"
+		"                 [ slot MIN_DELAY [MAX_DELAY] [packets MAX_PACKETS] [bytes MAX_BYTES]]\n"
+		"                 [ slot distribution {uniform|normal|pareto|paretonormal|custom}\n"
+		"                   DELAY JITTER [packets MAX_PACKETS] [bytes MAX_BYTES]]\n");
 }
 
 static void explain1(const char *arg)
@@ -138,7 +129,8 @@ static int get_distribution(const char *type, __s16 *data, int maxdata)
 	char name[128];
 
 	snprintf(name, sizeof(name), "%s/%s.dist", get_tc_lib(), type);
-	if ((f = fopen(name, "r")) == NULL) {
+	f = fopen(name, "r");
+	if (f == NULL) {
 		fprintf(stderr, "No distribution data for %s (%s: %s)\n",
 			type, name, strerror(errno));
 		return -1;
@@ -175,8 +167,10 @@ static int get_distribution(const char *type, __s16 *data, int maxdata)
 #define NEXT_IS_SIGNED_NUMBER() \
 	(NEXT_ARG_OK() && (isdigit(argv[1][0]) || argv[1][0] == '-'))
 
-/* Adjust for the fact that psched_ticks aren't always usecs
-   (based on kernel PSCHED_CLOCK configuration */
+/*
+ * Adjust for the fact that psched_ticks aren't always usecs
+ *  (based on kernel PSCHED_CLOCK configuration
+ */
 static int get_ticks(__u32 *ticks, const char *str)
 {
 	unsigned int t;
@@ -258,7 +252,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 
 			if (!strcmp(*argv, "random")) {
 				NEXT_ARG();
-			random_loss_model:
+random_loss_model:
 				if (get_percent(&opt.loss, *argv)) {
 					explain1("loss percent");
 					return -1;
@@ -523,6 +517,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			if (NEXT_ARG_OK() &&
 			    matches(*(argv+1), "bytes") == 0) {
 				unsigned int max_bytes;
+
 				NEXT_ARG();
 				if (!NEXT_ARG_OK() ||
 				    get_size(&max_bytes, *(argv+1))) {
@@ -532,11 +527,9 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				slot.max_bytes = (int) max_bytes;
 				NEXT_ARG();
 			}
-		} else if (strcmp(*argv, "help") == 0) {
-			explain();
-			return -1;
 		} else {
-			fprintf(stderr, "What is \"%s\"?\n", *argv);
+			if (strcmp(*argv, "help") != 0)
+				fprintf(stderr, "What is \"%s\"?\n", *argv);
 			explain();
 			return -1;
 		}
