@@ -299,6 +299,13 @@ int print_color_null(enum output_type type,
 	return ret;
 }
 
+/*
+ * This function does take printf style argument but applying
+ * format attribute to causes more warnings since the print_XXX
+ * functions are used with NULL for format if unused.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 int print_color_tv(enum output_type type,
 		   enum color_attr color,
 		   const char *key,
@@ -311,6 +318,7 @@ int print_color_tv(enum output_type type,
 
 	return print_color_float(type, color, key, fmt, time);
 }
+#pragma GCC diagnostic pop
 
 /* Print line separator (if not in JSON mode) */
 void print_nl(void)

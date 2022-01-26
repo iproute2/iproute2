@@ -247,7 +247,8 @@ int get_percent_rate64(__u64 *rate, const char *str, const char *dev)
 	return get_rate64(rate, r_str);
 }
 
-void tc_print_rate(enum output_type t, const char *key, const char *fmt,
+void __attribute__((format(printf, 3, 0)))
+tc_print_rate(enum output_type t, const char *key, const char *fmt,
 		   unsigned long long rate)
 {
 	print_rate(use_iec, t, key, fmt, rate);
@@ -782,7 +783,6 @@ static void print_masked_type(__u32 type_max,
 			      const char *name, struct rtattr *attr,
 			      struct rtattr *mask_attr, bool newline)
 {
-	SPRINT_BUF(namefrm);
 	__u32 value, mask;
 	SPRINT_BUF(out);
 	size_t done;
@@ -794,26 +794,20 @@ static void print_masked_type(__u32 type_max,
 	mask = mask_attr ? rta_getattr_type(mask_attr) : type_max;
 
 	if (is_json_context()) {
-		sprintf(namefrm, "\n  %s %%u", name);
-		print_hu(PRINT_ANY, name, namefrm,
-			 rta_getattr_type(attr));
+		print_hu(PRINT_JSON, name, NULL, value);
 		if (mask != type_max) {
 			char mask_name[SPRINT_BSIZE-6];
 
 			sprintf(mask_name, "%s_mask", name);
-			if (newline)
-				print_string(PRINT_FP, NULL, "%s ", _SL_);
-			sprintf(namefrm, " %s %%u", mask_name);
-			print_hu(PRINT_ANY, mask_name, namefrm, mask);
+			print_hu(PRINT_JSON, mask_name, NULL, mask);
 		}
 	} else {
 		done = sprintf(out, "%u", value);
 		if (mask != type_max)
 			sprintf(out + done, "/0x%x", mask);
-		if (newline)
-			print_string(PRINT_FP, NULL, "%s ", _SL_);
-		sprintf(namefrm, " %s %%s", name);
-		print_string(PRINT_ANY, name, namefrm, out);
+
+		print_nl();
+		print_string_name_value(name, out);
 	}
 }
 
