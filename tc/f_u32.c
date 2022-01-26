@@ -824,23 +824,27 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 {
 	char abuf[256];
 
+	open_json_object("match");
 	switch (key->off) {
 	case 0:
 		switch (ntohl(key->mask)) {
 		case 0x0f000000:
-			fprintf(f, "\n  match IP ihl %u",
-				ntohl(key->val) >> 24);
+			print_nl();
+			print_uint(PRINT_ANY, "ip_ihl", "  match IP ihl %u",
+				   ntohl(key->val) >> 24);
 			return;
 		case 0x00ff0000:
-			fprintf(f, "\n  match IP dsfield %#x",
-				ntohl(key->val) >> 16);
+			print_nl();
+			print_0xhex(PRINT_ANY, "ip_dsfield", "  match IP dsfield %#x",
+				    ntohl(key->val) >> 16);
 			return;
 		}
 		break;
 	case 8:
 		if (ntohl(key->mask) == 0x00ff0000) {
-			fprintf(f, "\n  match IP protocol %d",
-				ntohl(key->val) >> 16);
+			print_nl();
+			print_int(PRINT_ANY, "ip_protocol", "  match IP protocol %d",
+				  ntohl(key->val) >> 16);
 			return;
 		}
 		break;
@@ -849,11 +853,21 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 			int bits = mask2bits(key->mask);
 
 			if (bits >= 0) {
-				fprintf(f, "\n  %s %s/%d",
-					key->off == 12 ? "match IP src" : "match IP dst",
-					inet_ntop(AF_INET, &key->val,
-						  abuf, sizeof(abuf)),
-					bits);
+				const char *addr;
+
+				if (key->off == 12) {
+					print_nl();
+					print_null(PRINT_FP, NULL, "  match IP src ", NULL);
+					open_json_object("src");
+				} else {
+					print_nl();
+					print_null(PRINT_FP, NULL, "  match IP dst ", NULL);
+					open_json_object("dst");
+				}
+				addr = inet_ntop(AF_INET, &key->val, abuf, sizeof(abuf));
+				print_string(PRINT_ANY, "address", "%s", addr);
+				print_int(PRINT_ANY, "prefixlen", "/%d", bits);
+				close_json_object();
 				return;
 			}
 		}
@@ -862,45 +876,52 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 	case 20:
 		switch (ntohl(key->mask)) {
 		case 0x0000ffff:
-			fprintf(f, "\n  match dport %u",
-				ntohl(key->val) & 0xffff);
+			print_uint(PRINT_ANY, "dport", "match dport %u",
+				   ntohl(key->val) & 0xffff);
 			return;
 		case 0xffff0000:
-			fprintf(f, "\n  match sport %u",
-				ntohl(key->val) >> 16);
+			print_nl();
+			print_uint(PRINT_ANY, "sport", "  match sport %u",
+				   ntohl(key->val) >> 16);
 			return;
 		case 0xffffffff:
-			fprintf(f, "\n  match dport %u, match sport %u",
-				ntohl(key->val) & 0xffff,
-				ntohl(key->val) >> 16);
-
+			print_nl();
+			print_uint(PRINT_ANY, "dport", "  match dport %u, ",
+				   ntohl(key->val) & 0xffff);
+			print_uint(PRINT_ANY, "sport", "match sport %u",
+				   ntohl(key->val) >> 16);
 			return;
 		}
 		/* XXX: Default print_raw */
 	}
+	close_json_object();
 }
 
 static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 {
 	char abuf[256];
 
+	open_json_object("match");
 	switch (key->off) {
 	case 0:
 		switch (ntohl(key->mask)) {
 		case 0x0f000000:
-			fprintf(f, "\n  match IP ihl %u",
-				ntohl(key->val) >> 24);
+			print_nl();
+			print_uint(PRINT_ANY, "ip_ihl", "  match IP ihl %u",
+				   ntohl(key->val) >> 24);
 			return;
 		case 0x00ff0000:
-			fprintf(f, "\n  match IP dsfield %#x",
-				ntohl(key->val) >> 16);
+			print_nl();
+			print_0xhex(PRINT_ANY, "ip_dsfield", "  match IP dsfield %#x",
+				    ntohl(key->val) >> 16);
 			return;
 		}
 		break;
 	case 8:
 		if (ntohl(key->mask) == 0x00ff0000) {
-			fprintf(f, "\n  match IP protocol %d",
-				ntohl(key->val) >> 16);
+			print_nl();
+			print_int(PRINT_ANY, "ip_protocol", "  match IP protocol %d",
+				  ntohl(key->val) >> 16);
 			return;
 		}
 		break;
@@ -909,11 +930,21 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 			int bits = mask2bits(key->mask);
 
 			if (bits >= 0) {
-				fprintf(f, "\n  %s %s/%d",
-					key->off == 12 ? "match IP src" : "match IP dst",
-					inet_ntop(AF_INET, &key->val,
-						  abuf, sizeof(abuf)),
-					bits);
+				const char *addr;
+
+				if (key->off == 12) {
+					print_nl();
+					print_null(PRINT_FP, NULL, "  match IP src ", NULL);
+					open_json_object("src");
+				} else {
+					print_nl();
+					print_null(PRINT_FP, NULL, "  match IP dst ", NULL);
+					open_json_object("dst");
+				}
+				addr = inet_ntop(AF_INET, &key->val, abuf, sizeof(abuf));
+				print_string(PRINT_ANY, "address", "%s", addr);
+				print_int(PRINT_ANY, "prefixlen", "/%d", bits);
+				close_json_object();
 				return;
 			}
 		}
@@ -922,31 +953,37 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 	case 20:
 		switch (ntohl(key->mask)) {
 		case 0x0000ffff:
-			fprintf(f, "\n  match sport %u",
-				ntohl(key->val) & 0xffff);
+			print_nl();
+			print_uint(PRINT_ANY, "sport", "  match sport %u",
+				   ntohl(key->val) & 0xffff);
 			return;
 		case 0xffff0000:
-			fprintf(f, "\n  match dport %u",
-				ntohl(key->val) >> 16);
+			print_uint(PRINT_ANY, "dport", "match dport %u",
+				   ntohl(key->val) >> 16);
 			return;
 		case 0xffffffff:
-			fprintf(f, "\n  match sport %u, match dport %u",
-				ntohl(key->val) & 0xffff,
-				ntohl(key->val) >> 16);
+			print_nl();
+			print_uint(PRINT_ANY, "sport", "  match sport %u, ",
+				   ntohl(key->val) & 0xffff);
+			print_uint(PRINT_ANY, "dport", "match dport %u",
+				   ntohl(key->val) >> 16);
 
 			return;
 		}
 		/* XXX: Default print_raw */
 	}
+	close_json_object();
 }
 
 static void print_raw(FILE *f, const struct tc_u32_key *key)
 {
-	fprintf(f, "\n  match %08x/%08x at %s%d",
-		(unsigned int)ntohl(key->val),
-		(unsigned int)ntohl(key->mask),
-		key->offmask ? "nexthdr+" : "",
-		key->off);
+	open_json_object("match");
+	print_nl();
+	print_hex(PRINT_ANY, "value", "  match %08x", (unsigned int)ntohl(key->val));
+	print_hex(PRINT_ANY, "mask", "/%08x ", (unsigned int)ntohl(key->mask));
+	print_string(PRINT_ANY, "offmask", "at %s", key->offmask ? "nexthdr+" : "");
+	print_int(PRINT_ANY, "off", "%d", key->off);
+	close_json_object();
 }
 
 static const struct {
