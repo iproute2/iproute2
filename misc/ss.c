@@ -97,6 +97,11 @@ static int security_get_initial_context(char *name,  char **context)
 	*context = NULL;
 	return -1;
 }
+
+static void freecon(char *context)
+{
+	free(context);
+}
 #endif
 
 int preferred_family = AF_UNSPEC;
@@ -618,7 +623,7 @@ static void user_ent_hash_build(void)
 		snprintf(name + nameoff, sizeof(name) - nameoff, "%d/fd/", pid);
 		pos = strlen(name);
 		if ((dir1 = opendir(name)) == NULL) {
-			free(pid_context);
+			freecon(pid_context);
 			continue;
 		}
 
@@ -667,9 +672,9 @@ static void user_ent_hash_build(void)
 			}
 			user_ent_add(ino, p, pid, fd,
 					pid_context, sock_context);
-			free(sock_context);
+			freecon(sock_context);
 		}
-		free(pid_context);
+		freecon(pid_context);
 		closedir(dir1);
 	}
 	closedir(dir);
@@ -4725,7 +4730,7 @@ static int netlink_show_one(struct filter *f,
 			getpidcon(pid, &pid_context);
 
 		out(" proc_ctx=%s", pid_context ? : "unavailable");
-		free(pid_context);
+		freecon(pid_context);
 	}
 
 	if (show_details) {
