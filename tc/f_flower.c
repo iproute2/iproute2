@@ -102,6 +102,13 @@ static void explain(void)
 		"	to specify different mask, he has to use different prio.\n");
 }
 
+/* prints newline, two spaces, name/value */
+static void print_indent_name_value(const char *name, const char *value)
+{
+	print_string(PRINT_FP, NULL, "%s  ", _SL_);
+	print_string_name_value(name, value);
+}
+
 static int flower_parse_eth_addr(char *str, int addr_type, int mask_type,
 				 struct nlmsghdr *n)
 {
@@ -1945,8 +1952,7 @@ static void flower_print_eth_addr(const char *name, struct rtattr *addr_attr,
 			sprintf(out + done, "/%d", bits);
 	}
 
-	print_nl();
-	print_string_name_value(name, out);
+	print_indent_name_value(name, out);
 }
 
 static void flower_print_eth_type(__be16 *p_eth_type,
@@ -2089,8 +2095,7 @@ static void flower_print_ip_addr(char *name, __be16 eth_type,
 	else if (bits < len * 8)
 		sprintf(out + done, "/%d", bits);
 
-	print_nl();
-	print_string_name_value(name, out);
+	print_indent_name_value(name, out);
 }
 
 static void flower_print_ip4_addr(char *name, struct rtattr *addr_attr,
@@ -2123,8 +2128,7 @@ static void flower_print_port_range(char *name, struct rtattr *min_attr,
 
 		done = sprintf(out, "%u", rta_getattr_be16(min_attr));
 		sprintf(out + done, "-%u", rta_getattr_be16(max_attr));
-		print_nl();
-		print_string_name_value(name, out);
+		print_indent_name_value(name, out);
 	}
 }
 
@@ -2141,8 +2145,7 @@ static void flower_print_tcp_flags(const char *name, struct rtattr *flags_attr,
 	if (mask_attr)
 		sprintf(out + done, "/%x", rta_getattr_be16(mask_attr));
 
-	print_nl();
-	print_string_name_value(name, out);
+	print_indent_name_value(name, out);
 }
 
 static void flower_print_ct_state(struct rtattr *flags_attr,
@@ -2438,8 +2441,7 @@ static void flower_print_masked_u8(const char *name, struct rtattr *attr,
 	if (mask != UINT8_MAX)
 		sprintf(out + done, "/%d", mask);
 
-	print_nl();
-	print_string_name_value(name, out);
+	print_indent_name_value(name, out);
 }
 
 static void flower_print_u8(const char *name, struct rtattr *attr)
