@@ -784,8 +784,6 @@ static void print_masked_type(__u32 type_max,
 			      struct rtattr *mask_attr, bool newline)
 {
 	__u32 value, mask;
-	SPRINT_BUF(out);
-	size_t done;
 
 	if (!attr)
 		return;
@@ -793,21 +791,18 @@ static void print_masked_type(__u32 type_max,
 	value = rta_getattr_type(attr);
 	mask = mask_attr ? rta_getattr_type(mask_attr) : type_max;
 
-	if (is_json_context()) {
-		print_hu(PRINT_JSON, name, NULL, value);
-		if (mask != type_max) {
-			char mask_name[SPRINT_BSIZE-6];
+	if (newline)
+		print_string(PRINT_FP, NULL, "%s  ", _SL_);
+	else
+		print_string(PRINT_FP, NULL, " ", _SL_);
 
-			sprintf(mask_name, "%s_mask", name);
-			print_hu(PRINT_JSON, mask_name, NULL, mask);
-		}
-	} else {
-		done = sprintf(out, "%u", value);
-		if (mask != type_max)
-			sprintf(out + done, "/0x%x", mask);
+	print_uint_name_value(name, value);
 
-		print_nl();
-		print_string_name_value(name, out);
+	if (mask != type_max) {
+		char mask_name[SPRINT_BSIZE-6];
+
+		snprintf(mask_name, sizeof(mask_name), "%s_mask", name);
+		print_hex(PRINT_ANY, mask_name, "/0x%x", mask);
 	}
 }
 
