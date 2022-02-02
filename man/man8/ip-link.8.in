@@ -36,10 +36,13 @@ ip-link \- network device configuration
 .RB "[ " numrxqueues
 .IR QUEUE_COUNT " ]"
 .br
-.BR "[ " gso_max_size
+.RB "[ " gso_max_size
 .IR BYTES " ]"
 .RB "[ " gso_max_segs
 .IR SEGMENTS " ]"
+.br
+.RB "[ " gro_max_size
+.IR BYTES " ]"
 .br
 .BI type " TYPE"
 .RI "[ " ARGS " ]"
@@ -82,6 +85,13 @@ ip-link \- network device configuration
 .br
 .RB "[ " txqueuelen
 .IR PACKETS " ]"
+.br
+.RB "[ " max_gso_size
+.IR BYTES " ]"
+.RB "[ " max_gso_segs
+.IR SEGMENTS " ]"
+.RB "[ " max_gro_size
+.IR BYTES " ]"
 .br
 .RB "[ " name
 .IR NEWNAME " ]"
@@ -401,6 +411,11 @@ packet the new device should accept.
 .BI gso_max_segs " SEGMENTS "
 specifies the recommended maximum number of a Generic Segment Offload
 segments the new device should accept.
+
+.TP
+.BI gro_max_size " BYTES "
+specifies the maximum size of a packet built by GRO stack
+on this device.
 
 .TP
 .BI index " IDX "
