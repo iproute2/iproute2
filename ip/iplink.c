@@ -118,6 +118,7 @@ void iplink_usage(void)
 		"		[ protodown { on | off } ]\n"
 		"		[ protodown_reason PREASON { on | off } ]\n"
 		"		[ gso_max_size BYTES ] | [ gso_max_segs PACKETS ]\n"
+		"		[ gro_max_size BYTES ]\n"
 		"\n"
 		"	ip link show [ DEVICE | group GROUP ] [up] [master DEV] [vrf NAME] [type TYPE]\n"
 		"		[nomaster]\n"
@@ -942,6 +943,15 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 				       *argv);
 			addattr32(&req->n, sizeof(*req),
 				  IFLA_GSO_MAX_SEGS, max_segs);
+		}  else if (strcmp(*argv, "gro_max_size") == 0) {
+			unsigned int max_size;
+
+			NEXT_ARG();
+			if (get_unsigned(&max_size, *argv, 0))
+				invarg("Invalid \"gro_max_size\" value\n",
+				       *argv);
+			addattr32(&req->n, sizeof(*req),
+				  IFLA_GRO_MAX_SIZE, max_size);
 		} else if (strcmp(*argv, "parentdev") == 0) {
 			NEXT_ARG();
 			addattr_l(&req->n, sizeof(*req), IFLA_PARENT_DEV_NAME,

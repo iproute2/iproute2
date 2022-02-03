@@ -1219,6 +1219,12 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 				   "gso_max_segs %u ",
 				   rta_getattr_u32(tb[IFLA_GSO_MAX_SEGS]));
 
+		if (tb[IFLA_GRO_MAX_SIZE])
+			print_uint(PRINT_ANY,
+				   "gro_max_size",
+				   "gro_max_size %u ",
+				   rta_getattr_u32(tb[IFLA_GRO_MAX_SIZE]));
+
 		if (tb[IFLA_PHYS_PORT_NAME])
 			print_string(PRINT_ANY,
 				     "phys_port_name",
