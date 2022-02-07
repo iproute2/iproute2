@@ -54,18 +54,18 @@ static const char *get_bpf_program__section_name(const struct bpf_program *prog)
 static int create_map(const char *name, struct bpf_elf_map *map,
 		      __u32 ifindex, int inner_fd)
 {
-	struct bpf_create_map_attr map_attr = {};
+	union bpf_attr attr = {};
 
-	map_attr.name = name;
-	map_attr.map_type = map->type;
-	map_attr.map_flags = map->flags;
-	map_attr.key_size = map->size_key;
-	map_attr.value_size = map->size_value;
-	map_attr.max_entries = map->max_elem;
-	map_attr.map_ifindex = ifindex;
-	map_attr.inner_map_fd = inner_fd;
+	attr.map_type = map->type;
+	strlcpy(attr.map_name, name, sizeof(attr.map_name));
+	attr.map_flags = map->flags;
+	attr.key_size = map->size_key;
+	attr.value_size = map->size_value;
+	attr.max_entries = map->max_elem;
+	attr.map_ifindex = ifindex;
+	attr.inner_map_fd = inner_fd;
 
-	return bpf_create_map_xattr(&map_attr);
+	return bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
 }
 
 static int create_map_in_map(struct bpf_object *obj, struct bpf_map *map,
