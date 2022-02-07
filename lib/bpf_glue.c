@@ -4,12 +4,25 @@
  * Authors:	Hangbin Liu <haliu@redhat.com>
  *
  */
+#include <sys/syscall.h>
 #include <limits.h>
+#include <unistd.h>
 
 #include "bpf_util.h"
 #ifdef HAVE_LIBBPF
 #include <bpf/bpf.h>
 #endif
+
+int bpf(int cmd, union bpf_attr *attr, unsigned int size)
+{
+#ifdef __NR_bpf
+	return syscall(__NR_bpf, cmd, attr, size);
+#else
+	fprintf(stderr, "No bpf syscall, kernel headers too old?\n");
+	errno = ENOSYS;
+	return -1;
+#endif
+}
 
 int bpf_program_attach(int prog_fd, int target_fd, enum bpf_attach_type type)
 {
