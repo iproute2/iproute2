@@ -1126,6 +1126,13 @@ int bpf_prog_load_dev(enum bpf_prog_type type, const struct bpf_insn *insns,
 	return bpf(BPF_PROG_LOAD, &attr, sizeof(attr));
 }
 
+int bpf_program_load(enum bpf_prog_type type, const struct bpf_insn *insns,
+		     size_t size_insns, const char *license, char *log,
+		     size_t size_log)
+{
+	return bpf_prog_load_dev(type, insns, size_insns, license, 0, log, size_log);
+}
+
 #ifdef HAVE_ELF
 struct bpf_elf_prog {
 	enum bpf_prog_type	type;
