@@ -210,13 +210,13 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 	if (setsockopt(rth->fd, SOL_SOCKET, SO_SNDBUF,
 		       &sndbuf, sizeof(sndbuf)) < 0) {
 		perror("SO_SNDBUF");
-		return -1;
+		goto err;
 	}
 
 	if (setsockopt(rth->fd, SOL_SOCKET, SO_RCVBUF,
 		       &rcvbuf, sizeof(rcvbuf)) < 0) {
 		perror("SO_RCVBUF");
-		return -1;
+		goto err;
 	}
 
 	/* Older kernels may no support extended ACK reporting */
@@ -230,25 +230,28 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 	if (bind(rth->fd, (struct sockaddr *)&rth->local,
 		 sizeof(rth->local)) < 0) {
 		perror("Cannot bind netlink socket");
-		return -1;
+		goto err;
 	}
 	addr_len = sizeof(rth->local);
 	if (getsockname(rth->fd, (struct sockaddr *)&rth->local,
 			&addr_len) < 0) {
 		perror("Cannot getsockname");
-		return -1;
+		goto err;
 	}
 	if (addr_len != sizeof(rth->local)) {
 		fprintf(stderr, "Wrong address length %d\n", addr_len);
-		return -1;
+		goto err;
 	}
 	if (rth->local.nl_family != AF_NETLINK) {
 		fprintf(stderr, "Wrong address family %d\n",
 			rth->local.nl_family);
-		return -1;
+		goto err;
 	}
 	rth->seq = time(NULL);
 	return 0;
+err:
+	rtnl_close(rth);
+	return -1;
 }
 
 int rtnl_open(struct rtnl_handle *rth, unsigned int subscriptions)
