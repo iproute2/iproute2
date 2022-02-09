@@ -299,6 +299,7 @@ void tnl_print_endpoint(const char *name, const struct rtattr *rta, int family)
 	}
 
 	print_string_name_value(name, value);
+	print_string(PRINT_FP, NULL, " ", NULL);
 }
 
 void tnl_print_gre_flags(__u8 proto,
