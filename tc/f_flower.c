@@ -109,6 +109,12 @@ static void print_indent_name_value(const char *name, const char *value)
 	print_string_name_value(name, value);
 }
 
+static void print_uint_indent_name_value(const char *name, unsigned int value)
+{
+	print_string(PRINT_FP, NULL, "  ", NULL);
+	print_uint_name_value(name, value);
+}
+
 static int flower_parse_eth_addr(char *str, int addr_type, int mask_type,
 				 struct nlmsghdr *n)
 {
@@ -2236,7 +2242,7 @@ static void flower_print_key_id(const char *name, struct rtattr *attr)
 		return;
 
 	print_nl();
-	print_uint_name_value(name, rta_getattr_be32(attr));
+	print_uint_indent_name_value(name, rta_getattr_be32(attr));
 }
 
 static void flower_print_geneve_opts(const char *name, struct rtattr *attr,
@@ -2455,7 +2461,7 @@ static void flower_print_u32(const char *name, struct rtattr *attr)
 		return;
 
 	print_nl();
-	print_uint_name_value(name, rta_getattr_u32(attr));
+	print_uint_indent_name_value(name, rta_getattr_u32(attr));
 }
 
 static void flower_print_mpls_opt_lse(struct rtattr *lse)
