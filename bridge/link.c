@@ -543,12 +543,12 @@ static int brlink_show(int argc, char **argv)
 					     (compress_vlans ?
 					      RTEXT_FILTER_BRVLAN_COMPRESSED :
 					      RTEXT_FILTER_BRVLAN)) < 0) {
-			perror("Cannon send dump request");
+			perror("Cannot send dump request");
 			exit(1);
 		}
 	} else {
 		if (rtnl_linkdump_req(&rth, PF_BRIDGE) < 0) {
-			perror("Cannon send dump request");
+			perror("Cannot send dump request");
 			exit(1);
 		}
 	}
