@@ -192,12 +192,6 @@ static void print_af_spec(struct rtattr *attr, int ifindex)
 
 	if (aftb[IFLA_BRIDGE_MODE])
 		print_hwmode(rta_getattr_u16(aftb[IFLA_BRIDGE_MODE]));
-
-	if (!show_details)
-		return;
-
-	if (aftb[IFLA_BRIDGE_VLAN_INFO])
-		print_vlan_info(aftb[IFLA_BRIDGE_VLAN_INFO], ifindex);
 }
 
 int print_linkinfo(struct nlmsghdr *n, void *arg)
@@ -538,19 +532,9 @@ static int brlink_show(int argc, char **argv)
 			return nodev(filter_dev);
 	}
 
-	if (show_details) {
-		if (rtnl_linkdump_req_filter(&rth, PF_BRIDGE,
-					     (compress_vlans ?
-					      RTEXT_FILTER_BRVLAN_COMPRESSED :
-					      RTEXT_FILTER_BRVLAN)) < 0) {
-			perror("Cannot send dump request");
-			exit(1);
-		}
-	} else {
-		if (rtnl_linkdump_req(&rth, PF_BRIDGE) < 0) {
-			perror("Cannot send dump request");
-			exit(1);
-		}
+	if (rtnl_linkdump_req(&rth, PF_BRIDGE) < 0) {
+		perror("Cannot send dump request");
+		exit(1);
 	}
 
 	new_json_obj(json);
