@@ -857,20 +857,6 @@ static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 	return -ENOENT;
 }
 
-static int strtouint32_t(const char *str, uint32_t *p_val)
-{
-	char *endptr;
-	unsigned long int val;
-
-	val = strtoul(str, &endptr, 10);
-	if (endptr == str || *endptr != '\0')
-		return -EINVAL;
-	if (val > UINT_MAX)
-		return -ERANGE;
-	*p_val = val;
-	return 0;
-}
-
 static int strtouint16_t(const char *str, uint16_t *p_val)
 {
 	char *endptr;
@@ -966,7 +952,7 @@ static int __dl_argv_handle_port(char *str,
 		pr_err("Port identification \"%s\" is invalid\n", str);
 		return err;
 	}
-	err = strtouint32_t(portstr, p_port_index);
+	err = get_u32(p_port_index, portstr, 10);
 	if (err) {
 		pr_err("Port index \"%s\" is not a number or not within range\n",
 		       portstr);
@@ -1145,7 +1131,7 @@ static int dl_argv_handle_rate(struct dl *dl, char **p_bus_name,
 	}
 
 	if (strspn(identifier, "0123456789") == strlen(identifier)) {
-		err = strtouint32_t(identifier, p_port_index);
+		err = get_u32(p_port_index, identifier, 10);
 		if (err) {
 			pr_err("Port index \"%s\" is not a number"
 			       " or not within range\n", identifier);
@@ -1187,7 +1173,7 @@ static int dl_argv_uint32_t(struct dl *dl, uint32_t *p_val)
 		return -EINVAL;
 	}
 
-	err = strtouint32_t(str, p_val);
+	err = get_u32(p_val, str, 10);
 	if (err) {
 		pr_err("\"%s\" is not a number or not within range\n", str);
 		return err;
@@ -3184,7 +3170,7 @@ static int cmd_dev_param_set(struct dl *dl)
 						      dl->opts.param_value,
 						      &val_u32);
 		else
-			err = strtouint32_t(dl->opts.param_value, &val_u32);
+			err = get_u32(&val_u32, dl->opts.param_value, 10);
 		if (err)
 			goto err_param_value_parse;
 		if (val_u32 == ctx.value.vu32)
@@ -4446,7 +4432,7 @@ static int cmd_port_param_set(struct dl *dl)
 						      dl->opts.param_value,
 						      &val_u32);
 		else
-			err = strtouint32_t(dl->opts.param_value, &val_u32);
+			err = get_u32(&val_u32, dl->opts.param_value, 10);
 		if (err)
 			goto err_param_value_parse;
 		if (val_u32 == ctx.value.vu32)
