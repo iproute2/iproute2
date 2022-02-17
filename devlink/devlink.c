@@ -857,20 +857,6 @@ static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 	return -ENOENT;
 }
 
-static int strtouint16_t(const char *str, uint16_t *p_val)
-{
-	char *endptr;
-	unsigned long int val;
-
-	val = strtoul(str, &endptr, 10);
-	if (endptr == str || *endptr != '\0')
-		return -EINVAL;
-	if (val > USHRT_MAX)
-		return -ERANGE;
-	*p_val = val;
-	return 0;
-}
-
 static int strtouint8_t(const char *str, uint8_t *p_val)
 {
 	char *endptr;
@@ -1191,7 +1177,7 @@ static int dl_argv_uint16_t(struct dl *dl, uint16_t *p_val)
 		return -EINVAL;
 	}
 
-	err = strtouint16_t(str, p_val);
+	err = get_u16(p_val, str, 10);
 	if (err) {
 		pr_err("\"%s\" is not a number or not within range\n", str);
 		return err;
@@ -3154,7 +3140,7 @@ static int cmd_dev_param_set(struct dl *dl)
 						      &val_u32);
 			val_u16 = val_u32;
 		} else {
-			err = strtouint16_t(dl->opts.param_value, &val_u16);
+			err = get_u16(&val_u16, dl->opts.param_value, 10);
 		}
 		if (err)
 			goto err_param_value_parse;
@@ -4416,7 +4402,7 @@ static int cmd_port_param_set(struct dl *dl)
 						      &val_u32);
 			val_u16 = val_u32;
 		} else {
-			err = strtouint16_t(dl->opts.param_value, &val_u16);
+			err = get_u16(&val_u16, dl->opts.param_value, 10);
 		}
 		if (err)
 			goto err_param_value_parse;
