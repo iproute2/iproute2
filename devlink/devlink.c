@@ -315,7 +315,7 @@ struct dl_opts {
 	bool dpipe_counters_enabled;
 	enum devlink_eswitch_encap_mode eswitch_encap_mode;
 	const char *resource_path;
-	uint64_t resource_size;
+	__u64 resource_size;
 	uint32_t resource_id;
 	bool resource_id_valid;
 	const char *param_name;
@@ -323,12 +323,12 @@ struct dl_opts {
 	enum devlink_param_cmode cmode;
 	char *region_name;
 	uint32_t region_snapshot_id;
-	uint64_t region_address;
-	uint64_t region_length;
+	__u64 region_address;
+	__u64 region_length;
 	const char *flash_file_name;
 	const char *flash_component;
 	const char *reporter_name;
-	uint64_t reporter_graceful_period;
+	__u64 reporter_graceful_period;
 	bool reporter_auto_recover;
 	bool reporter_auto_dump;
 	const char *trap_name;
@@ -337,8 +337,8 @@ struct dl_opts {
 	bool netns_is_pid;
 	uint32_t netns;
 	uint32_t trap_policer_id;
-	uint64_t trap_policer_rate;
-	uint64_t trap_policer_burst;
+	__u64 trap_policer_rate;
+	__u64 trap_policer_burst;
 	char port_function_hw_addr[MAX_ADDR_LEN];
 	uint32_t port_function_hw_addr_len;
 	uint32_t overwrite_mask;
@@ -857,20 +857,6 @@ static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 	return -ENOENT;
 }
 
-static int strtouint64_t(const char *str, uint64_t *p_val)
-{
-	char *endptr;
-	unsigned long long int val;
-
-	val = strtoull(str, &endptr, 10);
-	if (endptr == str || *endptr != '\0')
-		return -EINVAL;
-	if (val > ULONG_MAX)
-		return -ERANGE;
-	*p_val = val;
-	return 0;
-}
-
 static int strtouint32_t(const char *str, uint32_t *p_val)
 {
 	char *endptr;
@@ -1173,7 +1159,7 @@ static int dl_argv_handle_rate(struct dl *dl, char **p_bus_name,
 	return 0;
 }
 
-static int dl_argv_uint64_t(struct dl *dl, uint64_t *p_val)
+static int dl_argv_uint64_t(struct dl *dl, __u64 *p_val)
 {
 	char *str = dl_argv_next(dl);
 	int err;
@@ -1183,7 +1169,7 @@ static int dl_argv_uint64_t(struct dl *dl, uint64_t *p_val)
 		return -EINVAL;
 	}
 
-	err = strtouint64_t(str, p_val);
+	err = get_u64(p_val, str, 10);
 	if (err) {
 		pr_err("\"%s\" is not a number or not within range\n", str);
 		return err;
