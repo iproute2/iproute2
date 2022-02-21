@@ -21,6 +21,7 @@
 #include "json_print.h"
 
 #define BOND_MAX_ARP_TARGETS    16
+#define BOND_MAX_NS_TARGETS     BOND_MAX_ARP_TARGETS
 
 static unsigned int xstats_print_attr;
 static int filter_index;
@@ -136,6 +137,7 @@ static void print_explain(FILE *f)
 		"                [ arp_validate ARP_VALIDATE ]\n"
 		"                [ arp_all_targets ARP_ALL_TARGETS ]\n"
 		"                [ arp_ip_target [ ARP_IP_TARGET, ... ] ]\n"
+		"                [ ns_ip6_target [ NS_IP6_TARGET, ... ] ]\n"
 		"                [ primary SLAVE_DEV ]\n"
 		"                [ primary_reselect PRIMARY_RESELECT ]\n"
 		"                [ fail_over_mac FAIL_OVER_MAC ]\n"
@@ -243,6 +245,25 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 					__u32 addr = get_addr32(target);
 
 					addattr32(n, 1024, i, addr);
+					target = strtok(NULL, ",");
+				}
+				addattr_nest_end(n, nest);
+			}
+			addattr_nest_end(n, nest);
+		} else if (strcmp(*argv, "ns_ip6_target") == 0) {
+			struct rtattr *nest = addattr_nest(n, 1024,
+				IFLA_BOND_NS_IP6_TARGET);
+			if (NEXT_ARG_OK()) {
+				NEXT_ARG();
+				char *targets = strdupa(*argv);
+				char *target = strtok(targets, ",");
+				int i;
+
+				for (i = 0; target && i < BOND_MAX_NS_TARGETS; i++) {
+					inet_prefix ip6_addr;
+
+					get_addr(&ip6_addr, target, AF_INET6);
+					addattr_l(n, 1024, i, ip6_addr.data, sizeof(struct in6_addr));
 					target = strtok(NULL, ",");
 				}
 				addattr_nest_end(n, nest);
@@ -404,6 +425,8 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 
 static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
+	int i;
+
 	if (!tb)
 		return;
 
@@ -469,7 +492,6 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_BOND_ARP_IP_TARGET]) {
 		struct rtattr *iptb[BOND_MAX_ARP_TARGETS + 1];
-		int i;
 
 		parse_rtattr_nested(iptb, BOND_MAX_ARP_TARGETS,
 				    tb[IFLA_BOND_ARP_IP_TARGET]);
@@ -492,6 +514,35 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		}
 
 		if (iptb[0]) {
+			print_string(PRINT_FP, NULL, " ", NULL);
+			close_json_array(PRINT_JSON, NULL);
+		}
+	}
+
+	if (tb[IFLA_BOND_NS_IP6_TARGET]) {
+		struct rtattr *ip6tb[BOND_MAX_NS_TARGETS + 1];
+
+		parse_rtattr_nested(ip6tb, BOND_MAX_NS_TARGETS,
+				    tb[IFLA_BOND_NS_IP6_TARGET]);
+
+		if (ip6tb[0]) {
+			open_json_array(PRINT_JSON, "ns_ip6_target");
+			print_string(PRINT_FP, NULL, "ns_ip6_target ", NULL);
+		}
+
+		for (i = 0; i < BOND_MAX_NS_TARGETS; i++) {
+			if (ip6tb[i])
+				print_string(PRINT_ANY,
+					     NULL,
+					     "%s",
+					     rt_addr_n2a_rta(AF_INET6, ip6tb[i]));
+			if (!is_json_context()
+			    && i < BOND_MAX_NS_TARGETS-1
+			    && ip6tb[i+1])
+				fprintf(f, ",");
+		}
+
+		if (ip6tb[0]) {
 			print_string(PRINT_FP, NULL, " ", NULL);
 			close_json_array(PRINT_JSON, NULL);
 		}
