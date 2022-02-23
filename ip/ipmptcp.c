@@ -116,6 +116,11 @@ static int mptcp_parse_opt(int argc, char **argv, struct nlmsghdr *n, int cmd)
 	ll_init_map(&rth);
 	while (argc > 0) {
 		if (get_flags(*argv, &flags) == 0) {
+			if (adding &&
+			    (flags & MPTCP_PM_ADDR_FLAG_SIGNAL) &&
+			    (flags & MPTCP_PM_ADDR_FLAG_FULLMESH))
+				invarg("flags mustn't have both signal and fullmesh", *argv);
+
 			/* allow changing the 'backup' flag only */
 			if (cmd == MPTCP_PM_CMD_SET_FLAGS &&
 			    (flags & ~MPTCP_PM_ADDR_FLAG_BACKUP))
