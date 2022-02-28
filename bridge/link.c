@@ -175,6 +175,9 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 		if (prtb[IFLA_BRPORT_ISOLATED])
 			print_on_off(PRINT_ANY, "isolated", "isolated %s ",
 				     rta_getattr_u8(prtb[IFLA_BRPORT_ISOLATED]));
+		if (prtb[IFLA_BRPORT_LOCKED])
+			print_on_off(PRINT_ANY, "locked", "locked %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_LOCKED]));
 	} else
 		print_stp_state(rta_getattr_u8(attr));
 }
@@ -269,6 +272,7 @@ static void usage(void)
 		"                               [ neigh_suppress {on | off} ]\n"
 		"                               [ vlan_tunnel {on | off} ]\n"
 		"                               [ isolated {on | off} ]\n"
+		"                               [ locked {on | off} ]\n"
 		"                               [ hwmode {vepa | veb} ]\n"
 		"                               [ backup_port DEVICE ] [ nobackup_port ]\n"
 		"                               [ self ] [ master ]\n"
@@ -297,6 +301,7 @@ static int brlink_modify(int argc, char **argv)
 	__s8 vlan_tunnel = -1;
 	__s8 mcast_flood = -1;
 	__s8 mcast_to_unicast = -1;
+	__s8 locked = -1;
 	__s8 isolated = -1;
 	__s8 hairpin = -1;
 	__s8 bpdu_guard = -1;
@@ -409,6 +414,11 @@ static int brlink_modify(int argc, char **argv)
 			isolated = parse_on_off("isolated", *argv, &ret);
 			if (ret)
 				return ret;
+		} else if (strcmp(*argv, "locked") == 0) {
+			NEXT_ARG();
+			locked = parse_on_off("locked", *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "backup_port") == 0) {
 			NEXT_ARG();
 			backup_port_idx = ll_name_to_index(*argv);
@@ -482,6 +492,9 @@ static int brlink_modify(int argc, char **argv)
 			 vlan_tunnel);
 	if (isolated != -1)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_ISOLATED, isolated);
+
+	if (locked >= 0)
+		addattr8(&req.n, sizeof(req), IFLA_BRPORT_LOCKED, locked);
 
 	if (backup_port_idx != -1)
 		addattr32(&req.n, sizeof(req), IFLA_BRPORT_BACKUP_PORT,
