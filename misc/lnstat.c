@@ -331,6 +331,7 @@ int main(int argc, char **argv)
 				for (i = 0; i < MAX_FIELDS; i++)
 					fp.params[i].print.width = len;
 			}
+			free(tmp);
 			break;
 		default:
 			usage(argv[0], 1);

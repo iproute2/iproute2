@@ -654,6 +654,8 @@ static int dcb_cmd_app_show(struct dcb *dcb, const char *dev, int argc, char **a
 			dcb_app_print_dgram_port_prio(&tab);
 		} else if (matches(*argv, "port-prio") == 0) {
 			dcb_app_print_port_prio(&tab);
+		} else if (matches(*argv, "default-prio") == 0) {
+			dcb_app_print_default_prio(&tab);
 		} else {
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
 			dcb_app_help_show_flush();

@@ -106,7 +106,7 @@ static int dcb_set_attribute_attr_cb(const struct nlattr *attr, void *data)
 {
 	struct dcb_set_attribute_response *resp = data;
 	uint16_t len;
-	uint8_t err;
+	int8_t err;
 
 	if (mnl_attr_get_type(attr) != resp->response_attr)
 		return MNL_CB_OK;
@@ -117,10 +117,12 @@ static int dcb_set_attribute_attr_cb(const struct nlattr *attr, void *data)
 		return MNL_CB_ERROR;
 	}
 
+	/* The attribute is formally u8, but actually an i8 containing a
+	 * negative errno value.
+	 */
 	err = mnl_attr_get_u8(attr);
 	if (err) {
-		fprintf(stderr, "Error when attempting to set attribute: %s\n",
-			strerror(err));
+		errno = -err;
 		return MNL_CB_ERROR;
 	}
 
@@ -242,9 +244,11 @@ static int __dcb_set_attribute(struct dcb *dcb, int command, const char *dev,
 	if (ret)
 		return ret;
 
+	errno = 0;
 	ret = dcb_talk(dcb, nlh, dcb_set_attribute_cb, &resp);
 	if (ret) {
-		perror("Attribute write");
+		if (errno)
+			perror("Attribute write");
 		return ret;
 	}
 	return 0;

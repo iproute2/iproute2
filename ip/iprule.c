@@ -592,7 +592,8 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 			filter.prefmask = 1;
 		} else if (strcmp(*argv, "not") == 0) {
 			filter.not = 1;
-		} else if (strcmp(*argv, "tos") == 0) {
+		} else if (strcmp(*argv, "tos") == 0 ||
+			   strcmp(*argv, "dsfield") == 0) {
 			__u32 tos;
 
 			NEXT_ARG();
