@@ -127,10 +127,10 @@ _tc_direct_complete()
         protocol) # list comes from lib/ll_proto.c
             COMPREPLY+=( $( compgen -W ' 802.1Q 802.1ad 802_2 802_3 LLDP aarp \
                 all aoe arp atalk atmfate atmmpoa ax25 bpq can control cust \
-                ddcmp dec diag dna_dl dna_rc dna_rt econet ieeepup ieeepupat \
-                ip ipv4 ipv6 ipx irda lat localtalk loop mobitex ppp_disc \
-                ppp_mp ppp_ses ppptalk pup pupat rarp sca snap tipc tr_802_2 \
-                wan_ppp x25' -- "$cur" ) )
+                ddcmp dec diag dna_dl dna_rc dna_rt econet ethercat ieeepup \
+                ieeepupat ip ipv4 ipv6 ipx irda lat localtalk loop mobitex \
+                ppp_disc ppp_mp ppp_ses ppptalk profinet pup pupat rarp sca \
+                snap tipc tr_802_2 wan_ppp x25' -- "$cur" ) )
             return 0
             ;;
         prio)
