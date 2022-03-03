@@ -854,6 +854,8 @@ struct tcpstat {
 	unsigned int	    reord_seen;
 	double		    rcv_rtt;
 	double		    min_rtt;
+	unsigned int 	    rcv_ooopack;
+	unsigned int	    snd_wnd;
 	int		    rcv_space;
 	unsigned int        rcv_ssthresh;
 	unsigned long long  busy_time;
@@ -2654,6 +2656,10 @@ static void tcp_stats_print(struct tcpstat *s)
 		out(" notsent:%u", s->not_sent);
 	if (s->min_rtt)
 		out(" minrtt:%g", s->min_rtt);
+	if (s->rcv_ooopack)
+		out(" rcv_ooopack:%u", s->rcv_ooopack);
+	if (s->snd_wnd)
+		out(" snd_wnd:%u", s->snd_wnd);
 }
 
 static void tcp_timer_print(struct tcpstat *s)
@@ -3088,6 +3094,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.reord_seen = info->tcpi_reord_seen;
 		s.bytes_sent = info->tcpi_bytes_sent;
 		s.bytes_retrans = info->tcpi_bytes_retrans;
+		s.rcv_ooopack = info->tcpi_rcv_ooopack;
+		s.snd_wnd = info->tcpi_snd_wnd;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 		free(s.bbr_info);
