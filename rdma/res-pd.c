@@ -65,7 +65,7 @@ static int res_pd_line(struct rd *rd, const char *name, int idx,
 	res_print_uint(rd, "pdn", pdn, nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
 	print_key(rd, "local_dma_lkey", local_dma_lkey,
 		  nla_line[RDMA_NLDEV_ATTR_RES_LOCAL_DMA_LKEY]);
-	res_print_uint(rd, "users", users,
+	res_print_u64(rd, "users", users,
 		       nla_line[RDMA_NLDEV_ATTR_RES_USECNT]);
 	print_key(rd, "unsafe_global_rkey", unsafe_global_rkey,
 		  nla_line[RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY]);
