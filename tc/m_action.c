@@ -364,7 +364,7 @@ bad_val:
 	return -1;
 }
 
-static int tc_print_one_action(FILE *f, struct rtattr *arg)
+static int tc_print_one_action(FILE *f, struct rtattr *arg, bool bind)
 {
 
 	struct rtattr *tb[TCA_ACT_MAX + 1];
@@ -415,26 +415,37 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 	}
 	if (tb[TCA_ACT_FLAGS] || tb[TCA_ACT_IN_HW_COUNT]) {
 		bool skip_hw = false;
+		bool newline = false;
+
 		if (tb[TCA_ACT_FLAGS]) {
 			struct nla_bitfield32 *flags = RTA_DATA(tb[TCA_ACT_FLAGS]);
 
-			if (flags->selector & TCA_ACT_FLAGS_NO_PERCPU_STATS)
+			if (flags->selector & TCA_ACT_FLAGS_NO_PERCPU_STATS) {
+				newline = true;
 				print_bool(PRINT_ANY, "no_percpu", "\tno_percpu",
 					   flags->value &
 					   TCA_ACT_FLAGS_NO_PERCPU_STATS);
-			if (flags->selector & TCA_ACT_FLAGS_SKIP_HW) {
-				print_bool(PRINT_ANY, "skip_hw", "\tskip_hw",
-					   flags->value &
-					   TCA_ACT_FLAGS_SKIP_HW);
-				skip_hw = !!(flags->value & TCA_ACT_FLAGS_SKIP_HW);
 			}
-			if (flags->selector & TCA_ACT_FLAGS_SKIP_SW)
-				print_bool(PRINT_ANY, "skip_sw", "\tskip_sw",
-					   flags->value &
-					   TCA_ACT_FLAGS_SKIP_SW);
+			if (!bind) {
+				if (flags->selector & TCA_ACT_FLAGS_SKIP_HW) {
+					newline = true;
+					print_bool(PRINT_ANY, "skip_hw", "\tskip_hw",
+						   flags->value &
+						   TCA_ACT_FLAGS_SKIP_HW);
+					skip_hw = !!(flags->value & TCA_ACT_FLAGS_SKIP_HW);
+				}
+				if (flags->selector & TCA_ACT_FLAGS_SKIP_SW) {
+					newline = true;
+					print_bool(PRINT_ANY, "skip_sw", "\tskip_sw",
+						   flags->value &
+						   TCA_ACT_FLAGS_SKIP_SW);
+				}
+			}
 		}
-		if (tb[TCA_ACT_IN_HW_COUNT] && !skip_hw) {
+		if (tb[TCA_ACT_IN_HW_COUNT] && !bind && !skip_hw) {
 			__u32 count = rta_getattr_u32(tb[TCA_ACT_IN_HW_COUNT]);
+
+			newline = true;
 			if (count) {
 				print_bool(PRINT_ANY, "in_hw", "\tin_hw",
 					   true);
@@ -446,7 +457,8 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg)
 			}
 		}
 
-		print_nl();
+		if (newline)
+			print_nl();
 	}
 	if (tb[TCA_ACT_HW_STATS])
 		print_hw_stats(tb[TCA_ACT_HW_STATS], false);
@@ -483,8 +495,9 @@ tc_print_action_flush(FILE *f, const struct rtattr *arg)
 	return 0;
 }
 
-int
-tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
+static int
+tc_dump_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts,
+	       bool bind)
 {
 
 	int i;
@@ -509,7 +522,7 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 			print_nl();
 			print_uint(PRINT_ANY, "order",
 				   "\taction order %u: ", i);
-			if (tc_print_one_action(f, tb[i]) < 0)
+			if (tc_print_one_action(f, tb[i], bind) < 0)
 				fprintf(stderr, "Error printing action\n");
 			close_json_object();
 		}
@@ -518,6 +531,12 @@ tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
 	close_json_array(PRINT_JSON, NULL);
 
 	return 0;
+}
+
+int
+tc_print_action(FILE *f, const struct rtattr *arg, unsigned short tot_acts)
+{
+	return tc_dump_action(f, arg, tot_acts, true);
 }
 
 int print_action(struct nlmsghdr *n, void *arg)
@@ -570,7 +589,7 @@ int print_action(struct nlmsghdr *n, void *arg)
 	}
 
 	open_json_object(NULL);
-	tc_print_action(fp, tb[TCA_ACT_TAB], tot_acts ? *tot_acts:0);
+	tc_dump_action(fp, tb[TCA_ACT_TAB], tot_acts ? *tot_acts:0, false);
 	close_json_object();
 
 	return 0;
