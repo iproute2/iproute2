@@ -50,6 +50,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR neigh_suppress " { " on " | " off " } ] [ "
 .BR vlan_tunnel " { " on " | " off " } ] [ "
 .BR isolated " { " on " | " off " } ] [ "
+.BR locked " { " on " | " off " } ] [ "
 .B backup_port
 .IR  DEVICE " ] ["
 .BR nobackup_port " ] [ "
@@ -512,6 +513,16 @@ default this flag is off.
 Controls whether a given port will be isolated, which means it will be
 able to communicate with non-isolated ports only.  By default this
 flag is off.
+
+.TP
+.BR "locked on " or " locked off "
+Controls whether a port will be locked, meaning that hosts behind the
+port will not be able to communicate through the port unless an FDB
+entry with the units MAC address is in the FDB.
+The common use is that hosts are allowed access through authentication
+with the IEEE 802.1X protocol or based on whitelists or like setups.
+By default this flag is off.
+
 
 .TP
 .BI backup_port " DEVICE"
