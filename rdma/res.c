@@ -51,7 +51,7 @@ static int res_print_summary(struct rd *rd, struct nlattr **tb)
 
 		name = mnl_attr_get_str(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_NAME]);
 		curr = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
-		res_print_uint(
+		res_print_u64(
 			rd, name, curr,
 			nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
 	}
@@ -208,13 +208,22 @@ void print_key(struct rd *rd, const char *name, uint64_t val,
 	print_color_hex(PRINT_ANY, COLOR_NONE, name, " 0x%" PRIx64 " ", val);
 }
 
-void res_print_uint(struct rd *rd, const char *name, uint64_t val,
+void res_print_u32(struct rd *rd, const char *name, uint32_t val,
 		    struct nlattr *nlattr)
 {
 	if (!nlattr)
 		return;
 	print_color_uint(PRINT_ANY, COLOR_NONE, name, name, val);
-	print_color_uint(PRINT_FP, COLOR_NONE, NULL, " %d ", val);
+	print_color_uint(PRINT_FP, COLOR_NONE, NULL, " %" PRIu32 " ", val);
+}
+
+void res_print_u64(struct rd *rd, const char *name, uint64_t val,
+		    struct nlattr *nlattr)
+{
+	if (!nlattr)
+		return;
+	print_color_u64(PRINT_ANY, COLOR_NONE, name, name, val);
+	print_color_u64(PRINT_FP, COLOR_NONE, NULL, " %" PRIu64 " ", val);
 }
 
 RES_FUNC(res_no_args,	RDMA_NLDEV_CMD_RES_GET,	NULL, true, 0);

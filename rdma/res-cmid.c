@@ -181,14 +181,14 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 
 	open_json_object(NULL);
 	print_link(rd, idx, name, port, nla_line);
-	res_print_uint(rd, "cm-idn", cm_idn,
+	res_print_u32(rd, "cm-idn", cm_idn,
 		       nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN]);
-	res_print_uint(rd, "lqpn", lqpn, nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
+	res_print_u32(rd, "lqpn", lqpn, nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
 	if (nla_line[RDMA_NLDEV_ATTR_RES_TYPE])
 		print_qp_type(rd, type);
 	print_cm_id_state(rd, state);
 	print_ps(rd, ps);
-	res_print_uint(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
+	res_print_u32(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 	print_comm(rd, comm, nla_line);
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_SRC_ADDR])

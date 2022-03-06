@@ -188,7 +188,9 @@ void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 		struct nlattr **nla_line);
 void print_key(struct rd *rd, const char *name, uint64_t val,
 	       struct nlattr *nlattr);
-void res_print_uint(struct rd *rd, const char *name, uint64_t val,
+void res_print_u32(struct rd *rd, const char *name, uint32_t val,
+		    struct nlattr *nlattr);
+void res_print_u64(struct rd *rd, const char *name, uint64_t val,
 		    struct nlattr *nlattr);
 void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line);
 const char *qp_types_to_str(uint8_t idx);

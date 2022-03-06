@@ -22,7 +22,7 @@ static int stat_mr_line(struct rd *rd, const char *name, int idx,
 
 	open_json_object(NULL);
 	print_dev(rd, idx, name);
-	res_print_uint(rd, "mrn", mrn, nla_line[RDMA_NLDEV_ATTR_RES_MRN]);
+	res_print_u32(rd, "mrn", mrn, nla_line[RDMA_NLDEV_ATTR_RES_MRN]);
 
 	if (nla_line[RDMA_NLDEV_ATTR_STAT_HWCOUNTERS]) {
 		ret = res_get_hwcounters(
