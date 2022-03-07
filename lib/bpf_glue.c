@@ -4,22 +4,23 @@
  * Authors:	Hangbin Liu <haliu@redhat.com>
  *
  */
+#include <sys/syscall.h>
 #include <limits.h>
+#include <unistd.h>
 
 #include "bpf_util.h"
 #ifdef HAVE_LIBBPF
 #include <bpf/bpf.h>
 #endif
 
-int bpf_program_load(enum bpf_prog_type type, const struct bpf_insn *insns,
-		     size_t size_insns, const char *license, char *log,
-		     size_t size_log)
+int bpf(int cmd, union bpf_attr *attr, unsigned int size)
 {
-#ifdef HAVE_LIBBPF
-	return bpf_load_program(type, insns, size_insns / sizeof(struct bpf_insn),
-				license, 0, log, size_log);
+#ifdef __NR_bpf
+	return syscall(__NR_bpf, cmd, attr, size);
 #else
-	return bpf_prog_load_dev(type, insns, size_insns, license, 0, log, size_log);
+	fprintf(stderr, "No bpf syscall, kernel headers too old?\n");
+	errno = ENOSYS;
+	return -1;
 #endif
 }
 

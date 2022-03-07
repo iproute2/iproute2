@@ -33,7 +33,6 @@
 #include <sys/un.h>
 #include <sys/vfs.h>
 #include <sys/mount.h>
-#include <sys/syscall.h>
 #include <sys/sendfile.h>
 #include <sys/resource.h>
 
@@ -132,17 +131,6 @@ static int bpf_obj_open(const char *path, enum bpf_prog_type type,
 static inline __u64 bpf_ptr_to_u64(const void *ptr)
 {
 	return (__u64)(unsigned long)ptr;
-}
-
-static int bpf(int cmd, union bpf_attr *attr, unsigned int size)
-{
-#ifdef __NR_bpf
-	return syscall(__NR_bpf, cmd, attr, size);
-#else
-	fprintf(stderr, "No bpf syscall, kernel headers too old?\n");
-	errno = ENOSYS;
-	return -1;
-#endif
 }
 
 static int bpf_map_update(int fd, const void *key, const void *value,
@@ -1124,6 +1112,13 @@ int bpf_prog_load_dev(enum bpf_prog_type type, const struct bpf_insn *insns,
 	}
 
 	return bpf(BPF_PROG_LOAD, &attr, sizeof(attr));
+}
+
+int bpf_program_load(enum bpf_prog_type type, const struct bpf_insn *insns,
+		     size_t size_insns, const char *license, char *log,
+		     size_t size_log)
+{
+	return bpf_prog_load_dev(type, insns, size_insns, license, 0, log, size_log);
 }
 
 #ifdef HAVE_ELF
