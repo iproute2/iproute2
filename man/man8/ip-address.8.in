@@ -195,9 +195,6 @@ is derived by setting/resetting the host bits of the interface prefix.
 .TP
 .BI label " LABEL"
 Each address may be tagged with a label string.
-In order to preserve compatibility with Linux-2.0 net aliases,
-this string must coincide with the name of the device or must be prefixed
-with the device name followed by colon.
 The maximum allowed total length of label is 15 characters.
 
 .TP
