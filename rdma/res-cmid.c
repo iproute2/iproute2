@@ -159,8 +159,11 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
+		SPRINT_BUF(b);
+
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
-		comm = get_task_name(pid);
+		if (!get_task_name(pid, b, sizeof(b)))
+			comm = b;
 	}
 
 	if (rd_is_filtered_attr(rd, "pid", pid,
@@ -199,8 +202,7 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
 	newline(rd);
 
-out:	if (nla_line[RDMA_NLDEV_ATTR_RES_PID])
-		free(comm);
+out:
 	return MNL_CB_OK;
 }
 

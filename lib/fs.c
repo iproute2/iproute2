@@ -342,25 +342,28 @@ int get_command_name(const char *pid, char *comm, size_t len)
 	return 0;
 }
 
-char *get_task_name(pid_t pid)
+int get_task_name(pid_t pid, char *name, size_t len)
 {
-	char *comm;
+	char path[PATH_MAX];
 	FILE *f;
 
 	if (!pid)
-		return NULL;
+		return -1;
 
-	if (asprintf(&comm, "/proc/%d/comm", pid) < 0)
-		return NULL;
+	if (snprintf(path, sizeof(path), "/proc/%d/comm", pid) >= sizeof(path))
+		return -1;
 
-	f = fopen(comm, "r");
+	f = fopen(path, "r");
 	if (!f)
-		return NULL;
+		return -1;
 
-	if (fscanf(f, "%ms\n", &comm) != 1)
-		comm = NULL;
+	if (!fgets(name, len, f))
+		return -1;
+
+	/* comm ends in \n, get rid of it */
+	name[strcspn(name, "\n")] = '\0';
 
 	fclose(f);
 
-	return comm;
+	return 0;
 }

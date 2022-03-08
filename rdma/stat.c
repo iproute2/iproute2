@@ -248,8 +248,11 @@ static int res_counter_line(struct rd *rd, const char *name, int index,
 		return MNL_CB_OK;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
+		SPRINT_BUF(b);
+
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
-		comm = get_task_name(pid);
+		if (!get_task_name(pid, b, sizeof(b)))
+			comm = b;
 	}
 	if (rd_is_filtered_attr(rd, "pid", pid,
 				nla_line[RDMA_NLDEV_ATTR_RES_PID]))

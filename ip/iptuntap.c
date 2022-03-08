@@ -321,14 +321,16 @@ static void show_processes(const char *name)
 			} else if (err == 2 &&
 				   !strcmp("iff", key) &&
 				   !strcmp(name, value)) {
-				char *pname = get_task_name(pid);
+				SPRINT_BUF(pname);
 
-				print_string(PRINT_ANY, "name",
-					     "%s", pname ? : "<NULL>");
+				if (get_task_name(pid, pname, sizeof(pname)))
+					print_string(PRINT_ANY, "name",
+						     "%s", "<NULL>");
+				else
+					print_string(PRINT_ANY, "name",
+						     "%s", pname);
 
-				print_uint(PRINT_ANY, "pid",
-					   "(%d)", pid);
-				free(pname);
+				print_uint(PRINT_ANY, "pid", "(%d)", pid);
 			}
 
 			free(key);
