@@ -19,10 +19,10 @@ check_toolchain()
     : ${AR=ar}
     : ${CC=gcc}
     : ${YACC=bison}
-    echo "PKG_CONFIG?=${PKG_CONFIG}" >>$CONFIG
-    echo "AR?=${AR}" >>$CONFIG
-    echo "CC?=${CC}" >>$CONFIG
-    echo "YACC?=${YACC}" >>$CONFIG
+    echo "PKG_CONFIG:=${PKG_CONFIG}" >>$CONFIG
+    echo "AR:=${AR}" >>$CONFIG
+    echo "CC:=${CC}" >>$CONFIG
+    echo "YACC:=${YACC}" >>$CONFIG
 }
 
 check_atm()
