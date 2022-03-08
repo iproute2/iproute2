@@ -89,6 +89,10 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		if (!get_task_name(pid, b, sizeof(b)))
 			comm = b;
+	} else if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME]) {
+		/* discard const from mnl_attr_get_str */
+		comm = (char *)mnl_attr_get_str(
+			nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME]);
 	}
 
 	if (rd_is_filtered_attr(rd, "pid", pid,
@@ -105,11 +109,6 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 	if (rd_is_filtered_attr(rd, "ctxn", ctxn,
 				nla_line[RDMA_NLDEV_ATTR_RES_CTXN]))
 		goto out;
-
-	if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME])
-		/* discard const from mnl_attr_get_str */
-		comm = (char *)mnl_attr_get_str(
-			nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME]);
 
 	open_json_object(NULL);
 	print_dev(rd, idx, name);
