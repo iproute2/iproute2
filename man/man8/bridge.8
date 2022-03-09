@@ -45,6 +45,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR learning_sync " { " on " | " off " } ] [ "
 .BR flood " { " on " | " off " } ] [ "
 .BR hwmode " { " vepa " | " veb " } ] [ "
+.BR bcast_flood " { " on " | " off " } ] [ "
 .BR mcast_flood " { " on " | " off " } ] [ "
 .BR mcast_to_unicast " { " on " | " off " } ] [ "
 .BR neigh_suppress " { " on " | " off " } ] [ "
@@ -461,6 +462,11 @@ switch.
 
 .B veb
 - bridging happens in hardware.
+
+.TP
+.BR "bcast_flood on " or " bcast_flood off "
+Controls flooding of broadcast traffic on the given port.
+By default this flag is on.
 
 .TP
 .BR "mcast_flood on " or " mcast_flood off "
