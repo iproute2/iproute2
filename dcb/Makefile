@@ -1,10 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
 include ../config.mk
 
-TARGETS :=
-
-ifeq ($(HAVE_MNL),y)
-
 DCBOBJ = dcb.o \
          dcb_app.o \
          dcb_buffer.o \
@@ -14,8 +10,6 @@ DCBOBJ = dcb.o \
          dcb_pfc.o
 TARGETS += dcb
 LDLIBS += -lm
-
-endif
 
 all: $(TARGETS) $(LIBS)
 

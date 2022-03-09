@@ -1,15 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 include ../config.mk
 
-TARGETS :=
-
-ifeq ($(HAVE_MNL),y)
-
 DEVLINKOBJ = devlink.o mnlg.o
 TARGETS += devlink
 LDLIBS += -lm
-
-endif
 
 all: $(TARGETS) $(LIBS)
 

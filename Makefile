@@ -65,7 +65,10 @@ WFLAGS += -Wmissing-declarations -Wold-style-definition -Wformat=2
 CFLAGS := $(WFLAGS) $(CCOPTS) -I../include -I../include/uapi $(DEFINES) $(CFLAGS)
 YACCFLAGS = -d -t -v
 
-SUBDIRS=lib ip tc bridge misc netem genl tipc devlink rdma dcb man vdpa
+SUBDIRS=lib ip tc bridge misc netem genl man
+ifeq ($(HAVE_MNL),y)
+SUBDIRS += tipc devlink rdma dcb vdpa
+endif
 
 LIBNETLINK=../lib/libutil.a ../lib/libnetlink.a
 LDLIBS += $(LIBNETLINK)

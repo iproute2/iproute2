@@ -1,15 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 include ../config.mk
 
-TARGETS :=
-
-ifeq ($(HAVE_MNL),y)
-
 CFLAGS += -I./include/uapi/
 VDPAOBJ = vdpa.o
 TARGETS += vdpa
-
-endif
 
 all: $(TARGETS) $(LIBS)
 
