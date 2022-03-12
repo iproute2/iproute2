@@ -153,6 +153,9 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 		if (prtb[IFLA_BRPORT_MCAST_FLOOD])
 			print_on_off(PRINT_ANY, "mcast_flood", "mcast_flood %s ",
 				     rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_FLOOD]));
+		if (prtb[IFLA_BRPORT_BCAST_FLOOD])
+			print_on_off(PRINT_ANY, "bcast_flood", "bcast_flood %s ",
+				     rta_getattr_u8(prtb[IFLA_BRPORT_BCAST_FLOOD]));
 		if (prtb[IFLA_BRPORT_MCAST_TO_UCAST])
 			print_on_off(PRINT_ANY, "mcast_to_unicast", "mcast_to_unicast %s ",
 				     rta_getattr_u8(prtb[IFLA_BRPORT_MCAST_TO_UCAST]));
@@ -268,6 +271,7 @@ static void usage(void)
 		"                               [ learning_sync {on | off} ]\n"
 		"                               [ flood {on | off} ]\n"
 		"                               [ mcast_flood {on | off} ]\n"
+		"                               [ bcast_flood {on | off} ]\n"
 		"                               [ mcast_to_unicast {on | off} ]\n"
 		"                               [ neigh_suppress {on | off} ]\n"
 		"                               [ vlan_tunnel {on | off} ]\n"
@@ -300,6 +304,7 @@ static int brlink_modify(int argc, char **argv)
 	__s8 flood = -1;
 	__s8 vlan_tunnel = -1;
 	__s8 mcast_flood = -1;
+	__s8 bcast_flood = -1;
 	__s8 mcast_to_unicast = -1;
 	__s8 locked = -1;
 	__s8 isolated = -1;
@@ -357,6 +362,11 @@ static int brlink_modify(int argc, char **argv)
 		} else if (strcmp(*argv, "mcast_flood") == 0) {
 			NEXT_ARG();
 			mcast_flood = parse_on_off("mcast_flood", *argv, &ret);
+			if (ret)
+				return ret;
+		} else if (strcmp(*argv, "bcast_flood") == 0) {
+			NEXT_ARG();
+			bcast_flood = parse_on_off("bcast_flood", *argv, &ret);
 			if (ret)
 				return ret;
 		} else if (strcmp(*argv, "mcast_to_unicast") == 0) {
@@ -466,6 +476,9 @@ static int brlink_modify(int argc, char **argv)
 	if (mcast_flood >= 0)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_MCAST_FLOOD,
 			 mcast_flood);
+	if (bcast_flood >= 0)
+		addattr8(&req.n, sizeof(req), IFLA_BRPORT_BCAST_FLOOD,
+			 bcast_flood);
 	if (mcast_to_unicast >= 0)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_MCAST_TO_UCAST,
 			 mcast_to_unicast);
