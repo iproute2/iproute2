@@ -33,6 +33,7 @@ vdpa-dev \- vdpa device configuration
 .I MGMTDEV
 .RI "[ mac " MACADDR " ]"
 .RI "[ mtu " MTU " ]"
+.RI "[ max_vqp " MAX_VQ_PAIRS " ]"
 
 .ti -8
 .B vdpa dev del
@@ -117,6 +118,11 @@ Add the vdpa device named foo on the management device vdpa_sim_net with mac add
 vdpa dev add name foo mgmtdev vdpa_sim_net mac 00:11:22:33:44:55 mtu 9000
 .RS 4
 Add the vdpa device named foo on the management device vdpa_sim_net with mac address of 00:11:22:33:44:55 and mtu of 9000 bytes.
+.RE
+.PP
+vdpa dev add name foo mgmtdev auxiliary/mlx5_core.sf.1 mac 00:11:22:33:44:55 max_vqp 8
+.RS 4
+Add the vdpa device named foo on the management device auxiliary/mlx5_core.sf.1 with mac address of 00:11:22:33:44:55 and max 8 virtqueue pairs
 .RE
 .PP
 vdpa dev del foo
