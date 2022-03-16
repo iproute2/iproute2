@@ -47,6 +47,8 @@ bridge \- show / manipulate bridge addresses and devices
 .BR hwmode " { " vepa " | " veb " } ] [ "
 .BR bcast_flood " { " on " | " off " } ] [ "
 .BR mcast_flood " { " on " | " off " } ] [ "
+.BR mcast_router
+.IR MULTICAST_ROUTER " ] ["
 .BR mcast_to_unicast " { " on " | " off " } ] [ "
 .BR neigh_suppress " { " on " | " off " } ] [ "
 .BR vlan_tunnel " { " on " | " off " } ] [ "
@@ -472,6 +474,19 @@ By default this flag is on.
 .BR "mcast_flood on " or " mcast_flood off "
 Controls whether multicast traffic for which there is no MDB entry will be
 flooded towards this given port. By default this flag is on.
+
+.TP
+.BI mcast_router " MULTICAST_ROUTER "
+This flag is almost the same as the per-VLAN flag, see below, except its
+value can only be set in the range 0-2.  The default is
+.B 1
+where the bridge figures out automatically where an IGMP/MLD querier,
+MRDISC capable device, or PIM router, is located.  Setting this flag to
+.B 2
+is useful in cases where the multicast router does not indicate its
+presence in any meaningful way (e.g. older versions of SMCRoute, or
+mrouted), or when there is a need for forwarding both known and unknown
+IP multicast to a secondary/backup router.
 
 .TP
 .BR "mcast_to_unicast on " or " mcast_to_unicast off "
