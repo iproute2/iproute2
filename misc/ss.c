@@ -55,6 +55,11 @@
 #include <linux/tls.h>
 #include <linux/mptcp.h>
 
+#if HAVE_RPC
+#include <rpc/rpc.h>
+#include <rpc/xdr.h>
+#endif
+
 /* AF_VSOCK/PF_VSOCK is only provided since glibc 2.18 */
 #ifndef PF_VSOCK
 #define PF_VSOCK 40
@@ -192,8 +197,12 @@ static struct {
 } buffer;
 
 static const char *TCP_PROTO = "tcp";
-static const char *SCTP_PROTO = "sctp";
 static const char *UDP_PROTO = "udp";
+#ifdef HAVE_RPC
+static const char *TCP6_PROTO = "tcp6";
+static const char *UDP6_PROTO = "udp6";
+static const char *SCTP_PROTO = "sctp";
+#endif
 static const char *RAW_PROTO = "raw";
 static const char *dg_proto;
 
@@ -1479,45 +1488,87 @@ struct scache {
 
 static struct scache *rlist;
 
+#ifdef HAVE_RPC
+static CLIENT *rpc_client_create(rpcprog_t prog, rpcvers_t vers)
+{
+	struct netbuf nbuf;
+	struct sockaddr_un saddr;
+	int sock;
+
+	memset(&saddr, 0, sizeof(saddr));
+	sock = socket(AF_LOCAL, SOCK_STREAM, 0);
+	if (sock < 0)
+		return NULL;
+
+	saddr.sun_family = AF_LOCAL;
+	strcpy(saddr.sun_path, _PATH_RPCBINDSOCK);
+	nbuf.len = SUN_LEN(&saddr);
+	nbuf.maxlen = sizeof(struct sockaddr_un);
+	nbuf.buf = &saddr;
+
+	return clnt_vc_create(sock, &nbuf, prog, vers, 0, 0);
+}
+
 static void init_service_resolver(void)
 {
-	char buf[128];
-	FILE *fp = popen("/usr/sbin/rpcinfo -p 2>/dev/null", "r");
+	struct rpcblist *rhead = NULL;
+	struct timeval timeout;
+	struct rpcent *rpc;
+	enum clnt_stat res;
+	CLIENT *client;
 
-	if (!fp)
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+
+	client = rpc_client_create(PMAPPROG, RPCBVERS4);
+	if (!client)
 		return;
 
-	if (!fgets(buf, sizeof(buf), fp)) {
-		pclose(fp);
+	res = clnt_call(client, RPCBPROC_DUMP, (xdrproc_t)xdr_void, NULL,
+			(xdrproc_t)xdr_rpcblist_ptr, (char *)&rhead,
+			timeout);
+	if (res != RPC_SUCCESS)
 		return;
-	}
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		unsigned int progn, port;
-		char proto[128], prog[128] = "rpc.";
+
+	for (; rhead; rhead = rhead->rpcb_next) {
+		char prog[128] = "rpc.";
 		struct scache *c;
+		int hport, lport, ok;
 
-		if (sscanf(buf, "%u %*d %s %u %s",
-			   &progn, proto, &port, prog+4) != 4)
+		c = malloc(sizeof(*c));
+		if (!c)
 			continue;
 
-		if (!(c = malloc(sizeof(*c))))
+		ok = sscanf(rhead->rpcb_map.r_addr, "::.%d.%d", &hport, &lport);
+		if (!ok)
+			ok = sscanf(rhead->rpcb_map.r_addr, "0.0.0.0.%d.%d",
+				    &hport, &lport);
+		if (!ok)
 			continue;
+		c->port = hport << 8 | lport;
 
-		c->port = port;
-		c->name = strdup(prog);
-		if (strcmp(proto, TCP_PROTO) == 0)
+		if (strcmp(rhead->rpcb_map.r_netid, TCP_PROTO) == 0 ||
+		    strcmp(rhead->rpcb_map.r_netid, TCP6_PROTO) == 0)
 			c->proto = TCP_PROTO;
-		else if (strcmp(proto, UDP_PROTO) == 0)
+		else if (strcmp(rhead->rpcb_map.r_netid, UDP_PROTO) == 0 ||
+			 strcmp(rhead->rpcb_map.r_netid, UDP6_PROTO) == 0)
 			c->proto = UDP_PROTO;
-		else if (strcmp(proto, SCTP_PROTO) == 0)
+		else if (strcmp(rhead->rpcb_map.r_netid, SCTP_PROTO) == 0)
 			c->proto = SCTP_PROTO;
 		else
-			c->proto = NULL;
+			continue;
+
+		rpc = getrpcbynumber(rhead->rpcb_map.r_prog);
+		if (rpc) {
+			strncat(prog, rpc->r_name, 128 - strlen(prog));
+			c->name = strdup(prog);
+		}
+
 		c->next = rlist;
 		rlist = c;
 	}
-	pclose(fp);
 }
+#endif
 
 /* Even do not try default linux ephemeral port ranges:
  * default /etc/services contains so much of useless crap
@@ -5668,9 +5719,11 @@ int main(int argc, char *argv[])
 	filter_states_set(&current_filter, state_filter);
 	filter_merge_defaults(&current_filter);
 
+#ifdef HAVE_RPC
 	if (!numeric && resolve_hosts &&
 	    (current_filter.dbs & (UNIX_DBM|INET_L4_DBM)))
 		init_service_resolver();
+#endif
 
 	if (current_filter.dbs == 0) {
 		fprintf(stderr, "ss: no socket tables to show with such filter.\n");
