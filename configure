@@ -395,6 +395,19 @@ check_selinux()
 	fi
 }
 
+check_tirpc()
+{
+	if ${PKG_CONFIG} libtirpc --exists; then
+		echo "HAVE_RPC:=y" >>$CONFIG
+		echo "yes"
+
+		echo 'LDLIBS +=' `${PKG_CONFIG} --libs libtirpc` >>$CONFIG
+		echo 'CFLAGS += -DHAVE_RPC' `${PKG_CONFIG} --cflags libtirpc` >>$CONFIG
+	else
+		echo "no"
+	fi
+}
+
 check_mnl()
 {
 	if ${PKG_CONFIG} libmnl --exists; then
@@ -599,6 +612,9 @@ check_name_to_handle_at
 
 echo -n "SELinux support: "
 check_selinux
+
+echo -n "libtirpc support: "
+check_tirpc
 
 echo -n "libbpf support: "
 check_libbpf
