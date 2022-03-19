@@ -1259,6 +1259,8 @@ the following additional arguments are supported:
 .RB [ no ] udp6zerocsumtx
 ] [
 .RB [ no ] udp6zerocsumrx
+] [
+.B innerprotoinherit
 ]
 
 .in +8
@@ -1321,6 +1323,10 @@ options.
 .sp
 .RB [ no ] udp6zerocsumrx
 - allow incoming UDP packets over IPv6 with zero checksum field.
+
+.sp
+.B innerprotoinherit
+- use IPv4/IPv6 as inner protocol instead of Ethernet.
 
 .in -8
 

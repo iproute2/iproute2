@@ -31,6 +31,7 @@ static void print_explain(FILE *f)
 		"		[ [no]udpcsum ]\n"
 		"		[ [no]udp6zerocsumtx ]\n"
 		"		[ [no]udp6zerocsumrx ]\n"
+		"		[ innerprotoinherit ]\n"
 		"\n"
 		"Where:	VNI   := 0-16777215\n"
 		"	ADDR  := IP_ADDRESS\n"
@@ -72,6 +73,7 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u64 attrs = 0;
 	bool set_op = (n->nlmsg_type == RTM_NEWLINK &&
 		       !(n->nlmsg_flags & NLM_F_CREATE));
+	bool inner_proto_inherit = false;
 
 	inet_prefix_reset(&daddr);
 
@@ -182,6 +184,10 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 			check_duparg(&attrs, IFLA_GENEVE_UDP_ZERO_CSUM6_RX,
 				     *argv, *argv);
 			udp6zerocsumrx = 0;
+		} else if (!strcmp(*argv, "innerprotoinherit")) {
+			check_duparg(&attrs, IFLA_GENEVE_INNER_PROTO_INHERIT,
+				     *argv, *argv);
+			inner_proto_inherit = true;
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -231,6 +237,8 @@ static int geneve_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr16(n, 1024, IFLA_GENEVE_PORT, htons(dstport));
 	if (metadata)
 		addattr(n, 1024, IFLA_GENEVE_COLLECT_METADATA);
+	if (inner_proto_inherit)
+		addattr(n, 1024, IFLA_GENEVE_INNER_PROTO_INHERIT);
 	if (GENEVE_ATTRSET(attrs, IFLA_GENEVE_UDP_CSUM))
 		addattr8(n, 1024, IFLA_GENEVE_UDP_CSUM, udpcsum);
 	if (GENEVE_ATTRSET(attrs, IFLA_GENEVE_UDP_ZERO_CSUM6_TX))
@@ -364,6 +372,11 @@ static void geneve_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				fputs("no", f);
 			fputs("udp6zerocsumrx ", f);
 		}
+	}
+
+	if (tb[IFLA_GENEVE_INNER_PROTO_INHERIT]) {
+		print_bool(PRINT_ANY, "inner_proto_inherit",
+			   "innerprotoinherit ", true);
 	}
 }
 
