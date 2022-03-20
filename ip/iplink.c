@@ -927,8 +927,7 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			unsigned int max_size;
 
 			NEXT_ARG();
-			if (get_unsigned(&max_size, *argv, 0) ||
-			    max_size > GSO_MAX_SIZE)
+			if (get_unsigned(&max_size, *argv, 0))
 				invarg("Invalid \"gso_max_size\" value\n",
 				       *argv);
 			addattr32(&req->n, sizeof(*req),
