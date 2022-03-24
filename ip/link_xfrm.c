@@ -19,7 +19,7 @@ static void xfrm_print_help(struct link_util *lu, int argc, char **argv,
 	fprintf(f,
 		"Usage: ... %-4s dev [ PHYS_DEV ] [ if_id IF-ID ]\n"
 		"\n"
-		"Where: IF-ID := { 0x0..0xffffffff }\n",
+		"Where: IF-ID := { 0x1..0xffffffff }\n",
 		lu->id);
 }
 
@@ -39,6 +39,8 @@ static int xfrm_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			if (get_u32(&if_id, *argv, 0))
 				invarg("if_id value is invalid", *argv);
+			else if (!if_id)
+				invarg("if_id value is invalid", *argv);
 			else
 				addattr32(n, 1024, IFLA_XFRM_IF_ID, if_id);
 		} else {
@@ -47,6 +49,9 @@ static int xfrm_parse_opt(struct link_util *lu, int argc, char **argv,
 		}
 		argc--; argv++;
 	}
+
+	if (!if_id)
+		missarg("IF_ID");
 
 	if (link)
 		addattr32(n, 1024, IFLA_XFRM_LINK, link);
