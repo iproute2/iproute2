@@ -244,7 +244,8 @@ ip-link \- network device configuration
 .BR netdevsim " |"
 .BR rmnet " |"
 .BR xfrm " |"
-.BR gtp " ]"
+.BR gtp " |"
+.BR virt_wifi " ]"
 
 .ti -8
 .IR ETYPE " := [ " TYPE " |"
@@ -396,6 +397,9 @@ Link types:
 .sp
 .BR gtp
 - GPRS Tunneling Protocol
+.sp
+.BR virt_wifi
+- rtnetlink wifi simulation device
 .in -8
 
 .TP
