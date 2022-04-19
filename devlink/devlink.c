@@ -8526,6 +8526,23 @@ static void cmd_health_help(void)
 	pr_err("                          [ auto_dump    { true | false } ]\n");
 }
 
+static int cmd_health_dump(struct dl *dl)
+{
+	if (dl_argv_match(dl, "help")) {
+		cmd_health_help();
+		return 0;
+	} else if (dl_argv_match(dl, "show") ||
+		   dl_argv_match(dl, "list") || dl_no_arg(dl)) {
+		dl_arg_inc(dl);
+		return cmd_health_dump_show(dl);
+	} else if (dl_argv_match(dl, "clear")) {
+		dl_arg_inc(dl);
+		return cmd_health_dump_clear(dl);
+	}
+	pr_err("Command \"%s\" not found\n", dl_argv(dl));
+	return -ENOENT;
+}
+
 static int cmd_health(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help")) {
@@ -8546,13 +8563,7 @@ static int cmd_health(struct dl *dl)
 		return cmd_health_test(dl);
 	} else if (dl_argv_match(dl, "dump")) {
 		dl_arg_inc(dl);
-		if (dl_argv_match(dl, "show")) {
-			dl_arg_inc(dl);
-			return cmd_health_dump_show(dl);
-		} else if (dl_argv_match(dl, "clear")) {
-			dl_arg_inc(dl);
-			return cmd_health_dump_clear(dl);
-		}
+		return cmd_health_dump(dl);
 	} else if (dl_argv_match(dl, "set")) {
 		dl_arg_inc(dl);
 		return cmd_health_set_params(dl);
