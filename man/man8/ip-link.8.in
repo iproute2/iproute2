@@ -209,43 +209,43 @@ ip-link \- network device configuration
 .ti -8
 .IR TYPE " := [ "
 .BR amt " | "
-.BR bridge " | "
+.BR bareudp " |"
 .BR bond " | "
+.BR bridge " | "
 .BR can " | "
 .BR dummy " | "
-.BR hsr " | "
-.BR ifb " | "
-.BR ipoib " |"
-.BR macvlan  " | "
-.BR macvtap  " | "
-.BR vcan " | "
-.BR vxcan " | "
-.BR veth " | "
-.BR vlan " | "
-.BR vxlan " |"
-.BR ip6tnl " |"
-.BR ipip " |"
-.BR sit " |"
+.BR erspan " |"
+.BR geneve " |"
 .BR gre " |"
 .BR gretap " |"
-.BR erspan " |"
+.BR gtp " |"
+.BR hsr " | "
+.BR ifb " | "
+.BR ip6erspan " |"
 .BR ip6gre " |"
 .BR ip6gretap " |"
-.BR ip6erspan " |"
-.BR vti " |"
-.BR nlmon " |"
+.BR ip6tnl " |"
+.BR ipip " |"
+.BR ipoib " |"
 .BR ipvlan " |"
 .BR ipvtap " |"
 .BR lowpan " |"
-.BR geneve " |"
-.BR bareudp " |"
-.BR vrf " |"
 .BR macsec " |"
+.BR macvlan  " | "
+.BR macvtap  " | "
 .BR netdevsim " |"
+.BR nlmon " |"
 .BR rmnet " |"
-.BR xfrm " |"
-.BR gtp " |"
-.BR virt_wifi " ]"
+.BR sit " |"
+.BR vcan " | "
+.BR veth " | "
+.BR virt_wifi " |"
+.BR vlan " | "
+.BR vrf " |"
+.BR vti " |"
+.BR vxcan " | "
+.BR vxlan " |"
+.BR xfrm " ]"
 
 .ti -8
 .IR ETYPE " := [ " TYPE " |"
@@ -290,14 +290,37 @@ specifies the type of the new device.
 Link types:
 
 .in +8
-.B bridge
-- Ethernet Bridge device
+.BR amt
+- Automatic Multicast Tunneling (AMT)
+.sp
+.BR bareudp
+- Bare UDP L3 encapsulation support
 .sp
 .B bond
 - Bonding device
+.B bridge
+- Ethernet Bridge device
+.sp
+.B can
+- Controller Area Network
 .sp
 .B dummy
 - Dummy network interface
+.sp
+.BR erspan
+- Encapsulated Remote SPAN over GRE and IPv4
+.sp
+.B geneve
+- GEneric NEtwork Virtualization Encapsulation
+.sp
+.B gre
+- Virtual tunnel interface GRE over IPv4
+.sp
+.BR gretap
+- Virtual L2 tunnel interface GRE over IPv4
+.sp
+.BR gtp
+- GPRS Tunneling Protocol
 .sp
 .B hsr
 - High-availability Seamless Redundancy device
@@ -305,47 +328,8 @@ Link types:
 .B ifb
 - Intermediate Functional Block device
 .sp
-.B ipoib
-- IP over Infiniband device
-.sp
-.B macvlan
-- Virtual interface base on link layer address (MAC)
-.sp
-.B macvtap
-- Virtual interface based on link layer address (MAC) and TAP.
-.sp
-.B vcan
-- Virtual Controller Area Network interface
-.sp
-.B vxcan
-- Virtual Controller Area Network tunnel interface
-.sp
-.B veth
-- Virtual ethernet interface
-.sp
-.BR vlan
-- 802.1q tagged virtual LAN interface
-.sp
-.BR vxlan
-- Virtual eXtended LAN
-.sp
-.BR ip6tnl
-- Virtual tunnel interface IPv4|IPv6 over IPv6
-.sp
-.BR ipip
-- Virtual tunnel interface IPv4 over IPv4
-.sp
-.BR sit
-- Virtual tunnel interface IPv6 over IPv4
-.sp
-.BR gre
-- Virtual tunnel interface GRE over IPv4
-.sp
-.BR gretap
-- Virtual L2 tunnel interface GRE over IPv4
-.sp
-.BR erspan
-- Encapsulated Remote SPAN over GRE and IPv4
+.BR ip6erspan
+- Encapsulated Remote SPAN over GRE and IPv6
 .sp
 .BR ip6gre
 - Virtual tunnel interface GRE over IPv6
@@ -353,14 +337,14 @@ Link types:
 .BR ip6gretap
 - Virtual L2 tunnel interface GRE over IPv6
 .sp
-.BR ip6erspan
-- Encapsulated Remote SPAN over GRE and IPv6
+.BR ip6tnl
+- Virtual tunnel interface IPv4|IPv6 over IPv6
 .sp
-.BR vti
-- Virtual tunnel interface
+.BR ipip
+- Virtual tunnel interface IPv4 over IPv4
 .sp
-.BR nlmon
-- Netlink monitoring device
+.B ipoib
+- IP over Infiniband device
 .sp
 .BR ipvlan
 - Interface for L3 (IPv6/IPv4) based VLANs
@@ -371,35 +355,54 @@ Link types:
 .BR lowpan
 - Interface for 6LoWPAN (IPv6) over IEEE 802.15.4 / Bluetooth
 .sp
-.BR geneve
-- GEneric NEtwork Virtualization Encapsulation
-.sp
-.BR bareudp
-- Bare UDP L3 encapsulation support
-.sp
-.BR amt
-- Automatic Multicast Tunneling (AMT)
-.sp
 .BR macsec
 - Interface for IEEE 802.1AE MAC Security (MACsec)
 .sp
-.BR vrf
-- Interface for L3 VRF domains
+.B macvlan
+- Virtual interface base on link layer address (MAC)
+.sp
+.B macvtap
+- Virtual interface based on link layer address (MAC) and TAP.
 .sp
 .BR netdevsim
 - Interface for netdev API tests
 .sp
+.BR nlmon
+- Netlink monitoring device
+.sp
 .BR rmnet
 - Qualcomm rmnet device
+.sp
+.BR sit
+- Virtual tunnel interface IPv6 over IPv4
+.sp
+.B vcan
+- Virtual Controller Area Network interface
+.sp
+.B veth
+- Virtual ethernet interface
+.sp
+.BR virt_wifi
+- rtnetlink wifi simulation device
+.sp
+.BR vlan
+- 802.1q tagged virtual LAN interface
+.sp
+.BR vrf
+- Interface for L3 VRF domains
+.sp
+.BR vti
+- Virtual tunnel interface
+.sp
+.B vxcan
+- Virtual Controller Area Network tunnel interface
+.sp
+.BR vxlan
+- Virtual eXtended LAN
 .sp
 .BR xfrm
 - Virtual xfrm interface
 .sp
-.BR gtp
-- GPRS Tunneling Protocol
-.sp
-.BR virt_wifi
-- rtnetlink wifi simulation device
 .in -8
 
 .TP
