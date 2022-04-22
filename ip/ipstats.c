@@ -164,6 +164,197 @@ static int ipstats_show_64(struct ipstats_stat_show_attrs *attrs,
 	return 0;
 }
 
+enum ipstats_maybe_on_off {
+	IPSTATS_MOO_OFF = -1,
+	IPSTATS_MOO_INVALID,
+	IPSTATS_MOO_ON,
+};
+
+static bool ipstats_moo_to_bool(enum ipstats_maybe_on_off moo)
+{
+	assert(moo != IPSTATS_MOO_INVALID);
+	return moo + 1;
+}
+
+static int ipstats_print_moo(enum output_type t, const char *key,
+			     const char *fmt, enum ipstats_maybe_on_off moo)
+{
+	if (!moo)
+		return 0;
+	return print_on_off(t, key, fmt, ipstats_moo_to_bool(moo));
+}
+
+struct ipstats_hw_s_info_one {
+	enum ipstats_maybe_on_off request;
+	enum ipstats_maybe_on_off used;
+};
+
+enum ipstats_hw_s_info_idx {
+	IPSTATS_HW_S_INFO_IDX_L3_STATS,
+	IPSTATS_HW_S_INFO_IDX_COUNT
+};
+
+static const char *const ipstats_hw_s_info_name[] = {
+	"l3_stats",
+};
+
+static_assert(ARRAY_SIZE(ipstats_hw_s_info_name) ==
+	      IPSTATS_HW_S_INFO_IDX_COUNT,
+	      "mismatch: enum ipstats_hw_s_info_idx x ipstats_hw_s_info_name");
+
+struct ipstats_hw_s_info {
+	/* Indexed by enum ipstats_hw_s_info_idx. */
+	struct ipstats_hw_s_info_one *infos[IPSTATS_HW_S_INFO_IDX_COUNT];
+};
+
+static enum ipstats_maybe_on_off ipstats_dissect_01(int value, const char *what)
+{
+	switch (value) {
+	case 0:
+		return IPSTATS_MOO_OFF;
+	case 1:
+		return IPSTATS_MOO_ON;
+	default:
+		fprintf(stderr, "Invalid value for %s: expected 0 or 1, got %d.\n",
+			what, value);
+		return IPSTATS_MOO_INVALID;
+	}
+}
+
+static int ipstats_dissect_hw_s_info_one(const struct rtattr *at,
+					 struct ipstats_hw_s_info_one *p_hwsio,
+					 const char *what)
+{
+	int attr_id_request = IFLA_OFFLOAD_XSTATS_HW_S_INFO_REQUEST;
+	struct rtattr *tb[IFLA_OFFLOAD_XSTATS_HW_S_INFO_MAX + 1];
+	int attr_id_used = IFLA_OFFLOAD_XSTATS_HW_S_INFO_USED;
+	struct ipstats_hw_s_info_one hwsio = {};
+	int err;
+	int v;
+
+	err = parse_rtattr_nested(tb, IFLA_OFFLOAD_XSTATS_HW_S_INFO_MAX, at);
+	if (err)
+		return err;
+
+	if (tb[attr_id_request]) {
+		v = rta_getattr_u8(tb[attr_id_request]);
+		hwsio.request = ipstats_dissect_01(v, "request");
+
+		/* This has to be present & valid. */
+		if (!hwsio.request)
+			return -EINVAL;
+	}
+
+	if (tb[attr_id_used]) {
+		v = rta_getattr_u8(tb[attr_id_used]);
+		hwsio.used = ipstats_dissect_01(v, "used");
+	}
+
+	*p_hwsio = hwsio;
+	return 0;
+}
+
+static int ipstats_dissect_hw_s_info(const struct rtattr *at,
+				     struct ipstats_hw_s_info *hwsi)
+{
+	struct rtattr *tb[IFLA_OFFLOAD_XSTATS_MAX + 1];
+	int attr_id_l3 = IFLA_OFFLOAD_XSTATS_L3_STATS;
+	struct ipstats_hw_s_info_one *hwsio = NULL;
+	int err;
+
+	err = parse_rtattr_nested(tb, IFLA_OFFLOAD_XSTATS_MAX, at);
+	if (err)
+		return err;
+
+	*hwsi = (struct ipstats_hw_s_info){};
+
+	if (tb[attr_id_l3]) {
+		hwsio = malloc(sizeof(*hwsio));
+		if (!hwsio) {
+			err = -ENOMEM;
+			goto out;
+		}
+
+		err = ipstats_dissect_hw_s_info_one(tb[attr_id_l3], hwsio, "l3");
+		if (err)
+			goto out;
+
+		hwsi->infos[IPSTATS_HW_S_INFO_IDX_L3_STATS] = hwsio;
+		hwsio = NULL;
+	}
+
+	return 0;
+
+out:
+	free(hwsio);
+	return err;
+}
+
+static void ipstats_fini_hw_s_info(struct ipstats_hw_s_info *hwsi)
+{
+	int i;
+
+	for (i = 0; i < IPSTATS_HW_S_INFO_IDX_COUNT; i++)
+		free(hwsi->infos[i]);
+}
+
+static void
+__ipstats_show_hw_s_info_one(const struct ipstats_hw_s_info_one *hwsio)
+{
+	if (hwsio == NULL)
+		return;
+
+	ipstats_print_moo(PRINT_ANY, "request", " %s", hwsio->request);
+	ipstats_print_moo(PRINT_ANY, "used", " used %s", hwsio->used);
+}
+
+static void
+ipstats_show_hw_s_info_one(const struct ipstats_hw_s_info *hwsi,
+			   enum ipstats_hw_s_info_idx idx)
+{
+	const struct ipstats_hw_s_info_one *hwsio = hwsi->infos[idx];
+	const char *name = ipstats_hw_s_info_name[idx];
+
+	if (hwsio == NULL)
+		return;
+
+	print_string(PRINT_FP, NULL, "    %s", name);
+	open_json_object(name);
+	__ipstats_show_hw_s_info_one(hwsio);
+	close_json_object();
+}
+
+static int __ipstats_show_hw_s_info(const struct rtattr *at)
+{
+	struct ipstats_hw_s_info hwsi = {};
+	int err;
+
+	err = ipstats_dissect_hw_s_info(at, &hwsi);
+	if (err)
+		return err;
+
+	open_json_object("info");
+	ipstats_show_hw_s_info_one(&hwsi, IPSTATS_HW_S_INFO_IDX_L3_STATS);
+	close_json_object();
+
+	ipstats_fini_hw_s_info(&hwsi);
+	return 0;
+}
+
+static int ipstats_show_hw_s_info(struct ipstats_stat_show_attrs *attrs,
+				  unsigned int group, unsigned int subgroup)
+{
+	const struct rtattr *at;
+	int err;
+
+	at = ipstats_stat_show_get_attr(attrs, group, subgroup, &err);
+	if (at == NULL)
+		return err;
+
+	print_nl();
+	return __ipstats_show_hw_s_info(at);
+}
+
 static void
 ipstats_stat_desc_pack_cpu_hit(struct ipstats_stat_dump_filters *filters,
 			       const struct ipstats_stat_desc *desc)
@@ -189,8 +380,34 @@ static const struct ipstats_stat_desc ipstats_stat_desc_offload_cpu_hit = {
 	.show = &ipstats_stat_desc_show_cpu_hit,
 };
 
+static void
+ipstats_stat_desc_pack_hw_stats_info(struct ipstats_stat_dump_filters *filters,
+				     const struct ipstats_stat_desc *desc)
+{
+	ipstats_stat_desc_enable_bit(filters,
+				     IFLA_STATS_LINK_OFFLOAD_XSTATS,
+				     IFLA_OFFLOAD_XSTATS_HW_S_INFO);
+}
+
+static int
+ipstats_stat_desc_show_hw_stats_info(struct ipstats_stat_show_attrs *attrs,
+				     const struct ipstats_stat_desc *desc)
+{
+	return ipstats_show_hw_s_info(attrs,
+				      IFLA_STATS_LINK_OFFLOAD_XSTATS,
+				      IFLA_OFFLOAD_XSTATS_HW_S_INFO);
+}
+
+static const struct ipstats_stat_desc ipstats_stat_desc_offload_hw_s_info = {
+	.name = "hw_stats_info",
+	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
+	.pack = &ipstats_stat_desc_pack_hw_stats_info,
+	.show = &ipstats_stat_desc_show_hw_stats_info,
+};
+
 static const struct ipstats_stat_desc *ipstats_stat_desc_offload_subs[] = {
 	&ipstats_stat_desc_offload_cpu_hit,
+	&ipstats_stat_desc_offload_hw_s_info,
 };
 
 static const struct ipstats_stat_desc ipstats_stat_desc_offload_group = {
