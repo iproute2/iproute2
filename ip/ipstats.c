@@ -165,6 +165,42 @@ static int ipstats_show_64(struct ipstats_stat_show_attrs *attrs,
 }
 
 static void
+ipstats_stat_desc_pack_cpu_hit(struct ipstats_stat_dump_filters *filters,
+			       const struct ipstats_stat_desc *desc)
+{
+	ipstats_stat_desc_enable_bit(filters,
+				     IFLA_STATS_LINK_OFFLOAD_XSTATS,
+				     IFLA_OFFLOAD_XSTATS_CPU_HIT);
+}
+
+static int ipstats_stat_desc_show_cpu_hit(struct ipstats_stat_show_attrs *attrs,
+					  const struct ipstats_stat_desc *desc)
+{
+	print_nl();
+	return ipstats_show_64(attrs,
+			       IFLA_STATS_LINK_OFFLOAD_XSTATS,
+			       IFLA_OFFLOAD_XSTATS_CPU_HIT);
+}
+
+static const struct ipstats_stat_desc ipstats_stat_desc_offload_cpu_hit = {
+	.name = "cpu_hit",
+	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
+	.pack = &ipstats_stat_desc_pack_cpu_hit,
+	.show = &ipstats_stat_desc_show_cpu_hit,
+};
+
+static const struct ipstats_stat_desc *ipstats_stat_desc_offload_subs[] = {
+	&ipstats_stat_desc_offload_cpu_hit,
+};
+
+static const struct ipstats_stat_desc ipstats_stat_desc_offload_group = {
+	.name = "offload",
+	.kind = IPSTATS_STAT_DESC_KIND_GROUP,
+	.subs = ipstats_stat_desc_offload_subs,
+	.nsubs = ARRAY_SIZE(ipstats_stat_desc_offload_subs),
+};
+
+static void
 ipstats_stat_desc_pack_link(struct ipstats_stat_dump_filters *filters,
 			    const struct ipstats_stat_desc *desc)
 {
@@ -189,6 +225,7 @@ static const struct ipstats_stat_desc ipstats_stat_desc_toplev_link = {
 
 static const struct ipstats_stat_desc *ipstats_stat_desc_toplev_subs[] = {
 	&ipstats_stat_desc_toplev_link,
+	&ipstats_stat_desc_offload_group,
 };
 
 static const struct ipstats_stat_desc ipstats_stat_desc_toplev_group = {
