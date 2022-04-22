@@ -171,4 +171,7 @@ void print_rta_ifidx(FILE *fp, __u32 ifidx, const char *prefix);
 void __print_rta_gateway(FILE *fp, unsigned char family, const char *gateway);
 void print_rta_gateway(FILE *fp, unsigned char family,
 		       const struct rtattr *rta);
+void size_columns(unsigned int cols[], unsigned int n, ...);
+void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
+		   const struct rtattr *carrier_changes, const char *what);
 #endif /* _IP_COMMON_H_ */
