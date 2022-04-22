@@ -164,6 +164,82 @@ static int ipstats_show_64(struct ipstats_stat_show_attrs *attrs,
 	return 0;
 }
 
+static void print_hw_stats64(FILE *fp, struct rtnl_hw_stats64 *s)
+{
+	unsigned int cols[] = {
+		strlen("*X: bytes"),
+		strlen("packets"),
+		strlen("errors"),
+		strlen("dropped"),
+		strlen("overrun"),
+	};
+
+	if (is_json_context()) {
+		/* RX stats */
+		open_json_object("rx");
+		print_u64(PRINT_JSON, "bytes", NULL, s->rx_bytes);
+		print_u64(PRINT_JSON, "packets", NULL, s->rx_packets);
+		print_u64(PRINT_JSON, "errors", NULL, s->rx_errors);
+		print_u64(PRINT_JSON, "dropped", NULL, s->rx_dropped);
+		print_u64(PRINT_JSON, "multicast", NULL, s->multicast);
+		close_json_object();
+
+		/* TX stats */
+		open_json_object("tx");
+		print_u64(PRINT_JSON, "bytes", NULL, s->tx_bytes);
+		print_u64(PRINT_JSON, "packets", NULL, s->tx_packets);
+		print_u64(PRINT_JSON, "errors", NULL, s->tx_errors);
+		print_u64(PRINT_JSON, "dropped", NULL, s->tx_dropped);
+		close_json_object();
+	} else {
+		size_columns(cols, ARRAY_SIZE(cols),
+			     s->rx_bytes, s->rx_packets, s->rx_errors,
+			     s->rx_dropped, s->multicast);
+		size_columns(cols, ARRAY_SIZE(cols),
+			     s->tx_bytes, s->tx_packets, s->tx_errors,
+			     s->tx_dropped, 0);
+
+		/* RX stats */
+		fprintf(fp, "    RX: %*s %*s %*s %*s %*s%s",
+			cols[0] - 4, "bytes", cols[1], "packets",
+			cols[2], "errors", cols[3], "dropped",
+			cols[4], "mcast", _SL_);
+
+		fprintf(fp, "    ");
+		print_num(fp, cols[0], s->rx_bytes);
+		print_num(fp, cols[1], s->rx_packets);
+		print_num(fp, cols[2], s->rx_errors);
+		print_num(fp, cols[3], s->rx_dropped);
+		print_num(fp, cols[4], s->multicast);
+		fprintf(fp, "%s", _SL_);
+
+		/* TX stats */
+		fprintf(fp, "    TX: %*s %*s %*s %*s%s",
+			cols[0] - 4, "bytes", cols[1], "packets",
+			cols[2], "errors", cols[3], "dropped", _SL_);
+
+		fprintf(fp, "    ");
+		print_num(fp, cols[0], s->tx_bytes);
+		print_num(fp, cols[1], s->tx_packets);
+		print_num(fp, cols[2], s->tx_errors);
+		print_num(fp, cols[3], s->tx_dropped);
+	}
+}
+
+static int ipstats_show_hw64(const struct rtattr *at)
+{
+	struct rtnl_hw_stats64 *stats;
+
+	stats = IPSTATS_RTA_PAYLOAD(struct rtnl_hw_stats64, at);
+	if (stats == NULL) {
+		fprintf(stderr, "Error: attribute payload too short");
+		return -EINVAL;
+	}
+
+	print_hw_stats64(stdout, stats);
+	return 0;
+}
+
 enum ipstats_maybe_on_off {
 	IPSTATS_MOO_OFF = -1,
 	IPSTATS_MOO_INVALID,
@@ -355,6 +431,57 @@ static int ipstats_show_hw_s_info(struct ipstats_stat_show_attrs *attrs,
 	return __ipstats_show_hw_s_info(at);
 }
 
+static int __ipstats_show_hw_stats(const struct rtattr *at_hwsi,
+				   const struct rtattr *at_stats,
+				   enum ipstats_hw_s_info_idx idx)
+{
+	int err = 0;
+
+	if (at_hwsi != NULL) {
+		struct ipstats_hw_s_info hwsi = {};
+
+		err = ipstats_dissect_hw_s_info(at_hwsi, &hwsi);
+		if (err)
+			return err;
+
+		open_json_object("info");
+		__ipstats_show_hw_s_info_one(hwsi.infos[idx]);
+		close_json_object();
+
+		ipstats_fini_hw_s_info(&hwsi);
+	}
+
+	if (at_stats != NULL) {
+		print_nl();
+		open_json_object("stats64");
+		err = ipstats_show_hw64(at_stats);
+		close_json_object();
+	}
+
+	return err;
+}
+
+static int ipstats_show_hw_stats(struct ipstats_stat_show_attrs *attrs,
+				 unsigned int group,
+				 unsigned int hw_s_info,
+				 unsigned int hw_stats,
+				 enum ipstats_hw_s_info_idx idx)
+{
+	const struct rtattr *at_stats;
+	const struct rtattr *at_hwsi;
+	int err = 0;
+
+	at_hwsi = ipstats_stat_show_get_attr(attrs, group, hw_s_info, &err);
+	if (at_hwsi == NULL)
+		return err;
+
+	at_stats = ipstats_stat_show_get_attr(attrs, group, hw_stats, &err);
+	if (at_stats == NULL && err != 0)
+		return err;
+
+	return __ipstats_show_hw_stats(at_hwsi, at_stats, idx);
+}
+
 static void
 ipstats_stat_desc_pack_cpu_hit(struct ipstats_stat_dump_filters *filters,
 			       const struct ipstats_stat_desc *desc)
@@ -405,9 +532,40 @@ static const struct ipstats_stat_desc ipstats_stat_desc_offload_hw_s_info = {
 	.show = &ipstats_stat_desc_show_hw_stats_info,
 };
 
+static void
+ipstats_stat_desc_pack_l3_stats(struct ipstats_stat_dump_filters *filters,
+				const struct ipstats_stat_desc *desc)
+{
+	ipstats_stat_desc_enable_bit(filters,
+				     IFLA_STATS_LINK_OFFLOAD_XSTATS,
+				     IFLA_OFFLOAD_XSTATS_L3_STATS);
+	ipstats_stat_desc_enable_bit(filters,
+				     IFLA_STATS_LINK_OFFLOAD_XSTATS,
+				     IFLA_OFFLOAD_XSTATS_HW_S_INFO);
+}
+
+static int
+ipstats_stat_desc_show_l3_stats(struct ipstats_stat_show_attrs *attrs,
+				const struct ipstats_stat_desc *desc)
+{
+	return ipstats_show_hw_stats(attrs,
+				     IFLA_STATS_LINK_OFFLOAD_XSTATS,
+				     IFLA_OFFLOAD_XSTATS_HW_S_INFO,
+				     IFLA_OFFLOAD_XSTATS_L3_STATS,
+				     IPSTATS_HW_S_INFO_IDX_L3_STATS);
+}
+
+static const struct ipstats_stat_desc ipstats_stat_desc_offload_l3_stats = {
+	.name = "l3_stats",
+	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
+	.pack = &ipstats_stat_desc_pack_l3_stats,
+	.show = &ipstats_stat_desc_show_l3_stats,
+};
+
 static const struct ipstats_stat_desc *ipstats_stat_desc_offload_subs[] = {
 	&ipstats_stat_desc_offload_cpu_hit,
 	&ipstats_stat_desc_offload_hw_s_info,
+	&ipstats_stat_desc_offload_l3_stats,
 };
 
 static const struct ipstats_stat_desc ipstats_stat_desc_offload_group = {
