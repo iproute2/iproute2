@@ -202,7 +202,7 @@ static void load_info(void)
 		ll_init_map(&rth);
 		filter_mask = IFLA_STATS_FILTER_BIT(filter_type);
 		if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC,
-					      filter_mask) < 0) {
+					      filter_mask, NULL, NULL) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}

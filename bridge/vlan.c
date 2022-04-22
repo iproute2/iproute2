@@ -1179,7 +1179,8 @@ static int vlan_show(int argc, char **argv, int subject)
 		__u32 filt_mask;
 
 		filt_mask = IFLA_STATS_FILTER_BIT(IFLA_STATS_LINK_XSTATS);
-		if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask) < 0) {
+		if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask,
+					      NULL, NULL) < 0) {
 			perror("Cannot send dump request");
 			exit(1);
 		}
@@ -1194,7 +1195,8 @@ static int vlan_show(int argc, char **argv, int subject)
 		}
 
 		filt_mask = IFLA_STATS_FILTER_BIT(IFLA_STATS_LINK_XSTATS_SLAVE);
-		if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask) < 0) {
+		if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask,
+					      NULL, NULL) < 0) {
 			perror("Cannot send slave dump request");
 			exit(1);
 		}

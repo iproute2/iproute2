@@ -619,12 +619,13 @@ int rtnl_fdb_linkdump_req_filter_fn(struct rtnl_handle *rth,
 	return send(rth->fd, &req, sizeof(req), 0);
 }
 
-int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
+int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam,
+			      __u32 filt_mask,
+			      int (*filter_fn)(struct ipstats_req *req,
+					       void *data),
+			      void *filter_data)
 {
-	struct {
-		struct nlmsghdr nlh;
-		struct if_stats_msg ifsm;
-	} req;
+	struct ipstats_req req;
 
 	memset(&req, 0, sizeof(req));
 	req.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct if_stats_msg));
@@ -634,6 +635,14 @@ int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
 	req.ifsm.family = fam;
 	req.ifsm.filter_mask = filt_mask;
+
+	if (filter_fn) {
+		int err;
+
+		err = filter_fn(&req, filter_data);
+		if (err)
+			return err;
+	}
 
 	return send(rth->fd, &req, sizeof(req), 0);
 }
