@@ -1219,3 +1219,23 @@ int do_ipstats(int argc, char **argv)
 
 	return rc;
 }
+
+int ipstats_print(struct nlmsghdr *n, void *arg)
+{
+	struct ipstats_stat_enabled_one one = {
+		.desc = &ipstats_stat_desc_offload_hw_s_info,
+	};
+	struct ipstats_stat_enabled enabled = {
+		.enabled = &one,
+		.nenabled = 1,
+	};
+	FILE *fp = arg;
+	int rc;
+
+	rc = ipstats_process_ifsm(n, &enabled);
+	if (rc)
+		return rc;
+
+	fflush(fp);
+	return 0;
+}

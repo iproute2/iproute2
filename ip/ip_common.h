@@ -57,6 +57,7 @@ int print_nexthop_bucket(struct nlmsghdr *n, void *arg);
 void netns_map_init(void);
 void netns_nsid_socket_init(void);
 int print_nsid(struct nlmsghdr *n, void *arg);
+int ipstats_print(struct nlmsghdr *n, void *arg);
 char *get_name_from_nsid(int nsid);
 int get_netnsid_from_name(const char *name);
 int set_netnsid_from_name(const char *name, int nsid);

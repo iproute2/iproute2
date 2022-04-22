@@ -34,7 +34,7 @@ static void usage(void)
 		"Usage: ip monitor [ all | OBJECTS ] [ FILE ] [ label ] [ all-nsid ]\n"
 		"                  [ dev DEVICE ]\n"
 		"OBJECTS :=  address | link | mroute | neigh | netconf |\n"
-		"            nexthop | nsid | prefix | route | rule\n"
+		"            nexthop | nsid | prefix | route | rule | stats\n"
 		"FILE := file FILENAME\n");
 	exit(-1);
 }
@@ -158,6 +158,11 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		print_nsid(n, arg);
 		return 0;
 
+	case RTM_NEWSTATS:
+		print_headers(fp, "[STATS]", ctrl);
+		ipstats_print(n, arg);
+		return 0;
+
 	case NLMSG_ERROR:
 	case NLMSG_NOOP:
 	case NLMSG_DONE:
@@ -185,6 +190,7 @@ int do_ipmonitor(int argc, char **argv)
 	int lprefix = 0;
 	int lneigh = 0;
 	int lnetconf = 0;
+	int lstats = 0;
 	int lrule = 0;
 	int lnsid = 0;
 	int ifindex = 0;
@@ -252,6 +258,9 @@ int do_ipmonitor(int argc, char **argv)
 			nh_set = 0;
 		} else if (matches(*argv, "nexthop") == 0) {
 			lnexthop = 1;
+			groups = 0;
+		} else if (strcmp(*argv, "stats") == 0) {
+			lstats = 1;
 			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			prefix_banner = 1;
@@ -346,6 +355,11 @@ int do_ipmonitor(int argc, char **argv)
 
 	if (lnexthop && rtnl_add_nl_group(&rth, RTNLGRP_NEXTHOP) < 0) {
 		fprintf(stderr, "Failed to add nexthop group to list\n");
+		exit(1);
+	}
+
+	if (lstats && rtnl_add_nl_group(&rth, RTNLGRP_STATS) < 0) {
+		fprintf(stderr, "Failed to add stats group to list\n");
 		exit(1);
 	}
 
