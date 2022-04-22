@@ -12,6 +12,15 @@ struct ipstats_stat_dump_filters {
 	__u32 mask[IFLA_STATS_MAX + 1];
 };
 
+static void
+ipstats_stat_desc_enable_bit(struct ipstats_stat_dump_filters *filters,
+			     unsigned int group, unsigned int subgroup)
+{
+	filters->mask[0] |= IFLA_STATS_FILTER_BIT(group);
+	if (subgroup)
+		filters->mask[group] |= IFLA_STATS_FILTER_BIT(subgroup);
+}
+
 struct ipstats_stat_show_attrs {
 	struct if_stats_msg *ifsm;
 	int len;
@@ -89,6 +98,29 @@ ipstats_stat_show_attrs_alloc_tb(struct ipstats_stat_show_attrs *attrs,
 	return err;
 }
 
+static const struct rtattr *
+ipstats_stat_show_get_attr(struct ipstats_stat_show_attrs *attrs,
+			   int group, int subgroup, int *err)
+{
+	int tmp_err;
+
+	if (err == NULL)
+		err = &tmp_err;
+
+	*err = 0;
+	if (subgroup == 0)
+		return attrs->tbs[0][group];
+
+	if (attrs->tbs[0][group] == NULL)
+		return NULL;
+
+	*err = ipstats_stat_show_attrs_alloc_tb(attrs, group);
+	if (*err != 0)
+		return NULL;
+
+	return attrs->tbs[group][subgroup];
+}
+
 static void
 ipstats_stat_show_attrs_free(struct ipstats_stat_show_attrs *attrs)
 {
@@ -98,7 +130,65 @@ ipstats_stat_show_attrs_free(struct ipstats_stat_show_attrs *attrs)
 		free(attrs->tbs[i]);
 }
 
+#define IPSTATS_RTA_PAYLOAD(TYPE, AT)					\
+	({								\
+		const struct rtattr *__at = (AT);			\
+		TYPE *__ret = NULL;					\
+									\
+		if (__at != NULL &&					\
+		    __at->rta_len - RTA_LENGTH(0) >= sizeof(TYPE))	\
+			__ret = RTA_DATA(__at);				\
+		__ret;							\
+	})
+
+static int ipstats_show_64(struct ipstats_stat_show_attrs *attrs,
+			   unsigned int group, unsigned int subgroup)
+{
+	struct rtnl_link_stats64 *stats;
+	const struct rtattr *at;
+	int err;
+
+	at = ipstats_stat_show_get_attr(attrs, group, subgroup, &err);
+	if (at == NULL)
+		return err;
+
+	stats = IPSTATS_RTA_PAYLOAD(struct rtnl_link_stats64, at);
+	if (stats == NULL) {
+		fprintf(stderr, "Error: attribute payload too short");
+		return -EINVAL;
+	}
+
+	open_json_object("stats64");
+	print_stats64(stdout, stats, NULL, NULL);
+	close_json_object();
+	return 0;
+}
+
+static void
+ipstats_stat_desc_pack_link(struct ipstats_stat_dump_filters *filters,
+			    const struct ipstats_stat_desc *desc)
+{
+	ipstats_stat_desc_enable_bit(filters,
+				     IFLA_STATS_LINK_64, 0);
+}
+
+static int
+ipstats_stat_desc_show_link(struct ipstats_stat_show_attrs *attrs,
+			    const struct ipstats_stat_desc *desc)
+{
+	print_nl();
+	return ipstats_show_64(attrs, IFLA_STATS_LINK_64, 0);
+}
+
+static const struct ipstats_stat_desc ipstats_stat_desc_toplev_link = {
+	.name = "link",
+	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
+	.pack = &ipstats_stat_desc_pack_link,
+	.show = &ipstats_stat_desc_show_link,
+};
+
 static const struct ipstats_stat_desc *ipstats_stat_desc_toplev_subs[] = {
+	&ipstats_stat_desc_toplev_link,
 };
 
 static const struct ipstats_stat_desc ipstats_stat_desc_toplev_group = {
