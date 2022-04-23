@@ -151,7 +151,8 @@ handle_legacy_map_in_map(struct bpf_object *obj, struct bpf_map *inner_map,
 	return ret;
 }
 
-static int find_legacy_tail_calls(struct bpf_program *prog, struct bpf_object *obj)
+static int find_legacy_tail_calls(struct bpf_program *prog, struct bpf_object *obj,
+				  struct bpf_map **pmap)
 {
 	unsigned int map_id, key_id;
 	const char *sec_name;
@@ -175,8 +176,8 @@ static int find_legacy_tail_calls(struct bpf_program *prog, struct bpf_object *o
 	if (!map)
 		return -1;
 
-	/* Save the map here for later updating */
-	bpf_program__set_priv(prog, map, NULL);
+	if (pmap)
+		*pmap = map;
 
 	return 0;
 }
@@ -190,8 +191,10 @@ static int update_legacy_tail_call_maps(struct bpf_object *obj)
 	struct bpf_map *map;
 
 	bpf_object__for_each_program(prog, obj) {
-		map = bpf_program__priv(prog);
-		if (!map)
+		/* load_bpf_object has already verified find_legacy_tail_calls
+		 * succeeds when it should
+		 */
+		if (find_legacy_tail_calls(prog, obj, &map) < 0)
 			continue;
 
 		prog_fd = bpf_program__fd(prog);
@@ -275,7 +278,8 @@ static int load_bpf_object(struct bpf_cfg_in *cfg)
 
 		/* Only load the programs that will either be subsequently
 		 * attached or inserted into a tail call map */
-		if (find_legacy_tail_calls(p, obj) < 0 && !prog_to_attach) {
+		if (find_legacy_tail_calls(p, obj, NULL) < 0 &&
+		    !prog_to_attach) {
 			ret = bpf_program__set_autoload(p, false);
 			if (ret)
 				return -EINVAL;
