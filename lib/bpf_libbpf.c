@@ -248,7 +248,6 @@ static int handle_legacy_maps(struct bpf_object *obj)
 
 static int load_bpf_object(struct bpf_cfg_in *cfg)
 {
-	struct bpf_object_load_attr attr = {};
 	struct bpf_program *p, *prog = NULL;
 	struct bpf_object *obj;
 	char root_path[PATH_MAX];
@@ -305,11 +304,7 @@ static int load_bpf_object(struct bpf_cfg_in *cfg)
 	if (ret)
 		goto unload_obj;
 
-	attr.obj = obj;
-	if (cfg->verbose)
-		attr.log_level = 2;
-
-	ret = bpf_object__load_xattr(&attr);
+	ret = bpf_object__load(obj);
 	if (ret)
 		goto unload_obj;
 
