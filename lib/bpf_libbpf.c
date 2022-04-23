@@ -249,6 +249,11 @@ static int handle_legacy_maps(struct bpf_object *obj)
 	return ret;
 }
 
+static bool bpf_map_is_offload_neutral(const struct bpf_map *map)
+{
+	return bpf_map__type(map) == BPF_MAP_TYPE_PERF_EVENT_ARRAY;
+}
+
 static int load_bpf_object(struct bpf_cfg_in *cfg)
 {
 	struct bpf_program *p, *prog = NULL;
@@ -294,7 +299,7 @@ static int load_bpf_object(struct bpf_cfg_in *cfg)
 	}
 
 	bpf_object__for_each_map(map, obj) {
-		if (!bpf_map__is_offload_neutral(map))
+		if (!bpf_map_is_offload_neutral(map))
 			bpf_map__set_ifindex(map, cfg->ifindex);
 	}
 
