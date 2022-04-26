@@ -48,6 +48,7 @@ static void explain(void)
 		"\n"
 		"Where: MATCH-LIST := [ MATCH-LIST ] MATCH\n"
 		"       MATCH      := {	indev DEV-NAME |\n"
+		"			num_of_vlans VLANS_COUNT |\n"
 		"			vlan_id VID |\n"
 		"			vlan_prio PRIORITY |\n"
 		"			vlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n"
@@ -1525,6 +1526,17 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			if (check_ifname(*argv))
 				invarg("\"indev\" not a valid ifname", *argv);
 			addattrstrz(n, MAX_MSG, TCA_FLOWER_INDEV, *argv);
+		} else if (strcmp(*argv, "num_of_vlans") == 0) {
+			__u8 num_of_vlans;
+
+			NEXT_ARG();
+			ret = get_u8(&num_of_vlans, *argv, 10);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"num_of_vlans\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG,
+				 TCA_FLOWER_KEY_NUM_OF_VLANS, num_of_vlans);
 		} else if (matches(*argv, "vlan_id") == 0) {
 			__u16 vid;
 
@@ -2693,6 +2705,14 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	}
 
 	open_json_object("keys");
+
+	if (tb[TCA_FLOWER_KEY_NUM_OF_VLANS]) {
+		struct rtattr *attr = tb[TCA_FLOWER_KEY_NUM_OF_VLANS];
+
+		print_nl();
+		print_uint(PRINT_ANY, "num_of_vlans", "  num_of_vlans %d",
+			   rta_getattr_u8(attr));
+	}
 
 	if (tb[TCA_FLOWER_KEY_VLAN_ID]) {
 		struct rtattr *attr = tb[TCA_FLOWER_KEY_VLAN_ID];
