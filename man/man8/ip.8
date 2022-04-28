@@ -22,7 +22,7 @@ ip \- show / manipulate routing, network devices, interfaces and tunnels
 .BR link " | " address " | " addrlabel " | " route " | " rule " | " neigh " | "\
  ntable " | " tunnel " | " tuntap " | " maddress " | "  mroute " | " mrule " | "\
  monitor " | " xfrm " | " netns " | "  l2tp " | "  tcp_metrics " | " token " | "\
- macsec " | " vrf " | " mptcp " | " ioam " }"
+ macsec " | " vrf " | " mptcp " | " ioam " | " stats " }"
 .sp
 
 .ti -8
@@ -303,6 +303,10 @@ readability.
 - rule in routing policy database.
 
 .TP
+.B stats
+- manage and show interface statistics.
+
+.TP
 .B tcp_metrics/tcpmetrics
 - manage TCP Metrics
 
@@ -419,6 +423,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR ip-ntable (8),
 .BR ip-route (8),
 .BR ip-rule (8),
+.BR ip-stats (8)
 .BR ip-tcp_metrics (8),
 .BR ip-token (8),
 .BR ip-tunnel (8),

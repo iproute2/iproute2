@@ -57,6 +57,7 @@ int print_nexthop_bucket(struct nlmsghdr *n, void *arg);
 void netns_map_init(void);
 void netns_nsid_socket_init(void);
 int print_nsid(struct nlmsghdr *n, void *arg);
+int ipstats_print(struct nlmsghdr *n, void *arg);
 char *get_name_from_nsid(int nsid);
 int get_netnsid_from_name(const char *name);
 int set_netnsid_from_name(const char *name, int nsid);
@@ -90,6 +91,7 @@ int do_seg6(int argc, char **argv);
 int do_ipnh(int argc, char **argv);
 int do_mptcp(int argc, char **argv);
 int do_ioam6(int argc, char **argv);
+int do_ipstats(int argc, char **argv);
 
 int iplink_get(char *name, __u32 filt_mask);
 int iplink_ifla_xstats(int argc, char **argv);
@@ -157,6 +159,32 @@ void xdp_dump(FILE *fp, struct rtattr *tb, bool link, bool details);
 __u32 ipvrf_get_table(const char *name);
 int name_is_vrf(const char *name);
 
+/* ipstats.c */
+enum ipstats_stat_desc_kind {
+	IPSTATS_STAT_DESC_KIND_LEAF,
+	IPSTATS_STAT_DESC_KIND_GROUP,
+};
+
+struct ipstats_stat_dump_filters;
+struct ipstats_stat_show_attrs;
+
+struct ipstats_stat_desc {
+	const char *name;
+	enum ipstats_stat_desc_kind kind;
+	union {
+		struct {
+			const struct ipstats_stat_desc **subs;
+			size_t nsubs;
+		};
+		struct {
+			void (*pack)(struct ipstats_stat_dump_filters *filters,
+				     const struct ipstats_stat_desc *desc);
+			int (*show)(struct ipstats_stat_show_attrs *attrs,
+				    const struct ipstats_stat_desc *desc);
+		};
+	};
+};
+
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
 #endif
@@ -171,4 +199,7 @@ void print_rta_ifidx(FILE *fp, __u32 ifidx, const char *prefix);
 void __print_rta_gateway(FILE *fp, unsigned char family, const char *gateway);
 void print_rta_gateway(FILE *fp, unsigned char family,
 		       const struct rtattr *rta);
+void size_columns(unsigned int cols[], unsigned int n, ...);
+void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
+		   const struct rtattr *carrier_changes, const char *what);
 #endif /* _IP_COMMON_H_ */

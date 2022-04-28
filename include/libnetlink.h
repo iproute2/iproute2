@@ -37,6 +37,12 @@ struct nlmsg_chain {
 	struct nlmsg_list *tail;
 };
 
+struct ipstats_req {
+	struct nlmsghdr nlh;
+	struct if_stats_msg ifsm;
+	char buf[128];
+};
+
 extern int rcvbuf;
 
 int rtnl_open(struct rtnl_handle *rth, unsigned int subscriptions)
@@ -88,7 +94,10 @@ int rtnl_fdb_linkdump_req_filter_fn(struct rtnl_handle *rth,
 int rtnl_nsiddump_req_filter_fn(struct rtnl_handle *rth, int family,
 				req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
-int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
+int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask,
+			      int (*filter_fn)(struct ipstats_req *req,
+					       void *data),
+			      void *filter_data)
 	__attribute__((warn_unused_result));
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)
