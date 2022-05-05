@@ -130,21 +130,21 @@ ipstats_stat_show_attrs_free(struct ipstats_stat_show_attrs *attrs)
 		free(attrs->tbs[i]);
 }
 
-#define IPSTATS_RTA_PAYLOAD(TYPE, AT)					\
-	({								\
+#define IPSTATS_RTA_PAYLOAD(VAR, AT)					\
+	do {								\
 		const struct rtattr *__at = (AT);			\
-		TYPE *__ret = NULL;					\
+		size_t __at_sz = __at->rta_len - RTA_LENGTH(0);		\
+		size_t __var_sz = sizeof(VAR);				\
+		typeof(VAR) *__dest = &VAR;				\
 									\
-		if (__at != NULL &&					\
-		    __at->rta_len - RTA_LENGTH(0) >= sizeof(TYPE))	\
-			__ret = RTA_DATA(__at);				\
-		__ret;							\
-	})
+		memset(__dest, 0, __var_sz);				\
+		memcpy(__dest, RTA_DATA(__at), MIN(__at_sz, __var_sz));	\
+	} while (0)
 
 static int ipstats_show_64(struct ipstats_stat_show_attrs *attrs,
 			   unsigned int group, unsigned int subgroup)
 {
-	struct rtnl_link_stats64 *stats;
+	struct rtnl_link_stats64 stats;
 	const struct rtattr *at;
 	int err;
 
@@ -152,14 +152,10 @@ static int ipstats_show_64(struct ipstats_stat_show_attrs *attrs,
 	if (at == NULL)
 		return err;
 
-	stats = IPSTATS_RTA_PAYLOAD(struct rtnl_link_stats64, at);
-	if (stats == NULL) {
-		fprintf(stderr, "Error: attribute payload too short");
-		return -EINVAL;
-	}
+	IPSTATS_RTA_PAYLOAD(stats, at);
 
 	open_json_object("stats64");
-	print_stats64(stdout, stats, NULL, NULL);
+	print_stats64(stdout, &stats, NULL, NULL);
 	close_json_object();
 	return 0;
 }
@@ -228,15 +224,10 @@ static void print_hw_stats64(FILE *fp, struct rtnl_hw_stats64 *s)
 
 static int ipstats_show_hw64(const struct rtattr *at)
 {
-	struct rtnl_hw_stats64 *stats;
+	struct rtnl_hw_stats64 stats;
 
-	stats = IPSTATS_RTA_PAYLOAD(struct rtnl_hw_stats64, at);
-	if (stats == NULL) {
-		fprintf(stderr, "Error: attribute payload too short");
-		return -EINVAL;
-	}
-
-	print_hw_stats64(stdout, stats);
+	IPSTATS_RTA_PAYLOAD(stats, at);
+	print_hw_stats64(stdout, &stats);
 	return 0;
 }
 
