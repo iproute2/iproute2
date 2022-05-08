@@ -112,6 +112,9 @@ int rtnl_nexthop_bucket_dump_req(struct rtnl_handle *rth, int family,
 				 req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
 
+int rtnl_tunneldump_req(struct rtnl_handle *rth, int family, int ifindex)
+	__attribute__((warn_unused_result));
+
 struct rtnl_ctrl_data {
 	int	nsid;
 };
@@ -329,6 +332,11 @@ int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
 #ifndef BRVLAN_RTA
 #define BRVLAN_RTA(r) \
 	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct br_vlan_msg))))
+#endif
+
+#ifndef TUNNEL_RTA
+#define TUNNEL_RTA(r) \
+	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct tunnel_msg))))
 #endif
 
 /* User defined nlmsg_type which is used mostly for logging netlink
