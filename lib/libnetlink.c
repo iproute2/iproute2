@@ -1610,7 +1610,8 @@ void nl_print_policy(const struct rtattr *attr, FILE *fp)
 	}
 }
 
-int rtnl_tunneldump_req(struct rtnl_handle *rth, int family, int ifindex)
+int rtnl_tunneldump_req(struct rtnl_handle *rth, int family, int ifindex,
+			__u8 flags)
 {
 	struct {
 		struct nlmsghdr nlh;
@@ -1622,6 +1623,7 @@ int rtnl_tunneldump_req(struct rtnl_handle *rth, int family, int ifindex)
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
 		.tmsg.family = family,
+		.tmsg.flags = flags,
 		.tmsg.ifindex = ifindex,
 	};
 

@@ -186,6 +186,59 @@ static void print_range(const char *name, __u32 start, __u32 id)
 
 }
 
+static void print_vnifilter_entry_stats(struct rtattr *stats_attr)
+{
+	struct rtattr *stb[VNIFILTER_ENTRY_STATS_MAX+1];
+	__u64 stat;
+
+	open_json_object("stats");
+	parse_rtattr_flags(stb, VNIFILTER_ENTRY_STATS_MAX, RTA_DATA(stats_attr),
+			   RTA_PAYLOAD(stats_attr), NLA_F_NESTED);
+
+	print_nl();
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s   ", "");
+	print_string(PRINT_FP, NULL, "RX: ", "");
+
+	if (stb[VNIFILTER_ENTRY_STATS_RX_BYTES]) {
+		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_RX_BYTES]);
+		print_lluint(PRINT_ANY, "rx_bytes", "bytes %llu ", stat);
+	}
+	if (stb[VNIFILTER_ENTRY_STATS_RX_PKTS]) {
+		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_RX_PKTS]);
+		print_lluint(PRINT_ANY, "rx_pkts", "pkts %llu ", stat);
+	}
+	if (stb[VNIFILTER_ENTRY_STATS_RX_DROPS]) {
+		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_RX_DROPS]);
+		print_lluint(PRINT_ANY, "rx_drops", "drops %llu ", stat);
+	}
+	if (stb[VNIFILTER_ENTRY_STATS_RX_ERRORS]) {
+		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_RX_ERRORS]);
+		print_lluint(PRINT_ANY, "rx_errors", "errors %llu ", stat);
+	}
+
+	print_nl();
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s   ", "");
+	print_string(PRINT_FP, NULL, "TX: ", "");
+
+	if (stb[VNIFILTER_ENTRY_STATS_TX_BYTES]) {
+		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_TX_BYTES]);
+		print_lluint(PRINT_ANY, "tx_bytes", "bytes %llu ", stat);
+	}
+	if (stb[VNIFILTER_ENTRY_STATS_TX_PKTS]) {
+		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_TX_PKTS]);
+		print_lluint(PRINT_ANY, "tx_pkts", "pkts %llu ", stat);
+	}
+	if (stb[VNIFILTER_ENTRY_STATS_TX_DROPS]) {
+		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_TX_DROPS]);
+		print_lluint(PRINT_ANY, "tx_drops", "drops %llu ", stat);
+	}
+	if (stb[VNIFILTER_ENTRY_STATS_TX_ERRORS]) {
+		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_TX_ERRORS]);
+		print_lluint(PRINT_ANY, "tx_errors", "errors %llu ", stat);
+	}
+	close_json_object();
+}
+
 static void print_vni(struct rtattr *t, int ifindex)
 {
 	struct rtattr *ttb[VXLAN_VNIFILTER_ENTRY_MAX+1];
@@ -242,6 +295,10 @@ static void print_vni(struct rtattr *t, int ifindex)
 							 &addr));
 		}
 	}
+
+	if (ttb[VXLAN_VNIFILTER_ENTRY_STATS])
+		print_vnifilter_entry_stats(ttb[VXLAN_VNIFILTER_ENTRY_STATS]);
+
 	close_json_object();
 	print_string(PRINT_FP, NULL, "%s", _SL_);
 }
@@ -310,6 +367,7 @@ static int print_vnifilter_rtm_filter(struct nlmsghdr *n, void *arg)
 static int vni_show(int argc, char **argv)
 {
 	char *filter_dev = NULL;
+	__u8 flags = 0;
 	int ret = 0;
 
 	while (argc > 0) {
@@ -330,25 +388,26 @@ static int vni_show(int argc, char **argv)
 
 	new_json_obj(json);
 
-	if (!show_stats) {
-		if (rtnl_tunneldump_req(&rth, PF_BRIDGE, filter_index) < 0) {
-			perror("Cannot send dump request");
-			exit(1);
-		}
+	if (show_stats)
+		flags = TUNNEL_MSG_FLAG_STATS;
 
-		if (!is_json_context()) {
-			printf("%-" __stringify(IFNAMSIZ) "s  %-"
-			       __stringify(VXLAN_ID_LEN) "s  %-"
-			       __stringify(15) "s",
-			       "dev", "vni", "group/remote");
-			printf("\n");
-		}
+	if (rtnl_tunneldump_req(&rth, PF_BRIDGE, filter_index, flags) < 0) {
+		perror("Cannot send dump request");
+		exit(1);
+	}
 
-		ret = rtnl_dump_filter(&rth, print_vnifilter_rtm_filter, NULL);
-		if (ret < 0) {
-			fprintf(stderr, "Dump ternminated\n");
-			exit(1);
-		}
+	if (!is_json_context()) {
+		printf("%-" __stringify(IFNAMSIZ) "s  %-"
+		       __stringify(VXLAN_ID_LEN) "s  %-"
+		       __stringify(15) "s",
+		       "dev", "vni", "group/remote");
+		printf("\n");
+	}
+
+	ret = rtnl_dump_filter(&rth, print_vnifilter_rtm_filter, NULL);
+	if (ret < 0) {
+		fprintf(stderr, "Dump ternminated\n");
+		exit(1);
 	}
 
 	delete_json_obj();
