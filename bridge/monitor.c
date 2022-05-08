@@ -31,8 +31,18 @@ static int prefix_banner;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: bridge monitor [file | link | fdb | mdb | vlan | all]\n");
+	fprintf(stderr, "Usage: bridge monitor [file | link | fdb | mdb | vlan | vni | all]\n");
 	exit(-1);
+}
+
+static int print_tunnel_rtm(struct nlmsghdr *n, void *arg, bool monitor)
+{
+	struct tunnel_msg *tmsg = NLMSG_DATA(n);
+
+	if (tmsg->family == PF_BRIDGE)
+		return print_vnifilter_rtm(n, arg, monitor);
+
+	return 0;
 }
 
 static int accept_msg(struct rtnl_ctrl_data *ctrl,
@@ -73,6 +83,12 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 			fprintf(fp, "[VLAN]");
 		return print_vlan_rtm(n, arg, true, false);
 
+	case RTM_NEWTUNNEL:
+	case RTM_DELTUNNEL:
+		if (prefix_banner)
+			fprintf(fp, "[TUNNEL]");
+		return print_tunnel_rtm(n, arg, true);
+
 	default:
 		return 0;
 	}
@@ -86,6 +102,7 @@ int do_monitor(int argc, char **argv)
 	int lneigh = 0;
 	int lmdb = 0;
 	int lvlan = 0;
+	int lvni = 0;
 
 	rtnl_close(&rth);
 
@@ -105,9 +122,13 @@ int do_monitor(int argc, char **argv)
 		} else if (matches(*argv, "vlan") == 0) {
 			lvlan = 1;
 			groups = 0;
+		} else if (strcmp(*argv, "vni") == 0) {
+			lvni = 1;
+			groups = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			groups = ~RTMGRP_TC;
 			lvlan = 1;
+			lvni = 1;
 			prefix_banner = 1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
@@ -148,6 +169,11 @@ int do_monitor(int argc, char **argv)
 
 	if (lvlan && rtnl_add_nl_group(&rth, RTNLGRP_BRVLAN) < 0) {
 		fprintf(stderr, "Failed to add bridge vlan group to list\n");
+		exit(1);
+	}
+
+	if (lvni && rtnl_add_nl_group(&rth, RTNLGRP_TUNNEL) < 0) {
+		fprintf(stderr, "Failed to add bridge vni group to list\n");
 		exit(1);
 	}
 

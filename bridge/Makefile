@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0
-BROBJ = bridge.o fdb.o monitor.o link.o mdb.o vlan.o
+BROBJ = bridge.o fdb.o monitor.o link.o mdb.o vlan.o vni.o
 
 include ../config.mk
 

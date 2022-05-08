@@ -13,7 +13,7 @@ bridge \- show / manipulate bridge addresses and devices
 
 .ti -8
 .IR OBJECT " := { "
-.BR link " | " fdb " | " mdb " | " vlan " | " monitor " }"
+.BR link " | " fdb " | " mdb " | " vlan " | " vni " | " monitor " }"
 .sp
 
 .ti -8
@@ -197,6 +197,25 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VID " ]"
 
 .ti -8
+.BR "bridge vlan" " show " [ "
+.B dev
+.IR DEV " ]"
+
+.ti -8
+.BR "bridge vni" " { " add " | " del " } "
+.B dev
+.I DEV
+.B vni
+.IR VNI " [ { "
+.B group | remote "} "
+.IR IPADDR " ] "
+
+.ti -8
+.BR "bridge vni" " show " [ "
+.B dev
+.IR DEV " ]"
+
+.ti -8
 .BR "bridge monitor" " [ " all " | " neigh " | " link " | " mdb " | " vlan " ]"
 
 .SH OPTIONS
@@ -302,6 +321,10 @@ the output.
 .TP
 .B vlan
 - VLAN filter list.
+
+.TP
+.B vni
+- VNI filter list.
 
 .SS
 .I COMMAND
@@ -1083,6 +1106,58 @@ all bridge interfaces.
 .BI vid " VID"
 the VLAN ID only whose global options should be listed. Default is to list
 all vlans.
+
+.SH bridge vni - VNI filter list
+
+.B vni
+objects contain known VNI IDs for a dst metadata vxlan link.
+
+.P
+The corresponding commands display vni filter entries, add new entries,
+and delete old ones.
+
+.SS bridge vni add - add a new vni filter entry
+
+This command creates a new vni filter entry.
+
+.TP
+.BI dev " NAME"
+the interface with which this vni is associated.
+
+.TP
+.BI vni " VNI"
+the VNI ID that identifies the vni.
+
+.TP
+.BI remote " IPADDR"
+specifies the unicast destination IP address to use in outgoing packets
+when the destination link layer address is not known in the VXLAN device
+forwarding database. This parameter cannot be specified with the group.
+
+.TP
+.BI group " IPADDR"
+specifies the multicast IP address to join for this VNI
+
+.SS bridge vni del - delete a new vni filter entry
+
+This command removes an existing vni filter entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge vni add".
+
+.SS bridge vni show - list vni filtering configuration.
+
+This command displays the current vni filter table.
+
+.PP
+With the
+.B -statistics
+option, the command displays per-vni traffic statistics.
+
+.TP
+.BI dev " NAME"
+shows vni filtering table associated with the vxlan device
 
 .SH bridge monitor - state monitoring
 

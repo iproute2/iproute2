@@ -1609,3 +1609,23 @@ void nl_print_policy(const struct rtattr *attr, FILE *fp)
 		}
 	}
 }
+
+int rtnl_tunneldump_req(struct rtnl_handle *rth, int family, int ifindex,
+			__u8 flags)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct tunnel_msg tmsg;
+		char buf[256];
+	} req = {
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct tunnel_msg)),
+		.nlh.nlmsg_type = RTM_GETTUNNEL,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.tmsg.family = family,
+		.tmsg.flags = flags,
+		.tmsg.ifindex = ifindex,
+	};
+
+	return send(rth->fd, &req, sizeof(req), 0);
+}

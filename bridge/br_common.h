@@ -14,6 +14,7 @@ void print_stp_state(__u8 state);
 int parse_stp_state(const char *arg);
 int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor,
 		   bool global_only);
+int print_vnifilter_rtm(struct nlmsghdr *n, void *arg, bool monitor);
 void br_print_router_port_stats(struct rtattr *pattr);
 
 int do_fdb(int argc, char **argv);
@@ -21,6 +22,7 @@ int do_mdb(int argc, char **argv);
 int do_monitor(int argc, char **argv);
 int do_vlan(int argc, char **argv);
 int do_link(int argc, char **argv);
+int do_vni(int argc, char **argv);
 
 extern int preferred_family;
 extern int show_stats;
