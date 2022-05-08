@@ -601,6 +601,8 @@ the following additional arguments are supported:
 .B gbp
 ] [
 .B gpe
+] [
+.RB [ no ] vnifilter
 ]
 
 .in +8
@@ -711,6 +713,13 @@ are entered into the VXLAN device forwarding database.
 - specifies whether an external control plane
 .RB "(e.g. " "ip route encap" )
 or the internal FDB should be used.
+
+.sp
+.RB [ no ] vnifilter
+- specifies whether the vxlan device is capable of vni filtering. Only works with a vxlan
+device with external flag set. once enabled, bridge vni command is used to manage the
+vni filtering table on the device. The device can only receive packets with vni's configured
+in the vni filtering table.
 
 .sp
 .B gbp
