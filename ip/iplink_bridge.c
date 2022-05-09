@@ -714,11 +714,140 @@ static void bridge_print_xstats_help(struct link_util *lu, FILE *f)
 	fprintf(f, "Usage: ... %s [ igmp ] [ dev DEVICE ]\n", lu->id);
 }
 
+static void bridge_print_stats_mcast(const struct rtattr *attr)
+{
+	struct br_mcast_stats *mstats;
+
+	mstats = RTA_DATA(attr);
+	open_json_object("multicast");
+	open_json_object("igmp_queries");
+	print_string(PRINT_FP, NULL,
+		     "%-16s    IGMP queries:\n", "");
+	print_string(PRINT_FP, NULL, "%-16s      ", "");
+	print_u64(PRINT_ANY, "rx_v1", "RX: v1 %llu ",
+		  mstats->igmp_v1queries[BR_MCAST_DIR_RX]);
+	print_u64(PRINT_ANY, "rx_v2", "v2 %llu ",
+		  mstats->igmp_v2queries[BR_MCAST_DIR_RX]);
+	print_u64(PRINT_ANY, "rx_v3", "v3 %llu\n",
+		  mstats->igmp_v3queries[BR_MCAST_DIR_RX]);
+	print_string(PRINT_FP, NULL, "%-16s      ", "");
+	print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
+		  mstats->igmp_v1queries[BR_MCAST_DIR_TX]);
+	print_u64(PRINT_ANY, "tx_v2", "v2 %llu ",
+		  mstats->igmp_v2queries[BR_MCAST_DIR_TX]);
+	print_u64(PRINT_ANY, "tx_v3", "v3 %llu\n",
+		  mstats->igmp_v3queries[BR_MCAST_DIR_TX]);
+	close_json_object();
+
+	open_json_object("igmp_reports");
+	print_string(PRINT_FP, NULL,
+		     "%-16s    IGMP reports:\n", "");
+	print_string(PRINT_FP, NULL, "%-16s      ", "");
+	print_u64(PRINT_ANY, "rx_v1", "RX: v1 %llu ",
+		  mstats->igmp_v1reports[BR_MCAST_DIR_RX]);
+	print_u64(PRINT_ANY, "rx_v2", "v2 %llu ",
+		  mstats->igmp_v2reports[BR_MCAST_DIR_RX]);
+	print_u64(PRINT_ANY, "rx_v3", "v3 %llu\n",
+		  mstats->igmp_v3reports[BR_MCAST_DIR_RX]);
+	print_string(PRINT_FP, NULL, "%-16s      ", "");
+	print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
+		  mstats->igmp_v1reports[BR_MCAST_DIR_TX]);
+	print_u64(PRINT_ANY, "tx_v2", "v2 %llu ",
+		  mstats->igmp_v2reports[BR_MCAST_DIR_TX]);
+	print_u64(PRINT_ANY, "tx_v3", "v3 %llu\n",
+		  mstats->igmp_v3reports[BR_MCAST_DIR_TX]);
+	close_json_object();
+
+	open_json_object("igmp_leaves");
+	print_string(PRINT_FP, NULL,
+		     "%-16s    IGMP leaves: ", "");
+	print_u64(PRINT_ANY, "rx", "RX: %llu ",
+		  mstats->igmp_leaves[BR_MCAST_DIR_RX]);
+	print_u64(PRINT_ANY, "tx", "TX: %llu\n",
+		  mstats->igmp_leaves[BR_MCAST_DIR_TX]);
+	close_json_object();
+
+	print_string(PRINT_FP, NULL,
+		     "%-16s    IGMP parse errors: ", "");
+	print_u64(PRINT_ANY, "igmp_parse_errors", "%llu\n",
+		  mstats->igmp_parse_errors);
+
+	open_json_object("mld_queries");
+	print_string(PRINT_FP, NULL,
+		     "%-16s    MLD queries:\n", "");
+	print_string(PRINT_FP, NULL, "%-16s      ", "");
+	print_u64(PRINT_ANY, "rx_v1", "RX: v1 %llu ",
+		  mstats->mld_v1queries[BR_MCAST_DIR_RX]);
+	print_u64(PRINT_ANY, "rx_v2", "v2 %llu\n",
+		  mstats->mld_v2queries[BR_MCAST_DIR_RX]);
+	print_string(PRINT_FP, NULL, "%-16s      ", "");
+	print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
+		  mstats->mld_v1queries[BR_MCAST_DIR_TX]);
+	print_u64(PRINT_ANY, "tx_v2", "v2 %llu\n",
+		  mstats->mld_v2queries[BR_MCAST_DIR_TX]);
+	close_json_object();
+
+	open_json_object("mld_reports");
+	print_string(PRINT_FP, NULL,
+		     "%-16s    MLD reports:\n", "");
+	print_string(PRINT_FP, NULL, "%-16s      ", "");
+	print_u64(PRINT_ANY, "rx_v1", "RX: v1 %llu ",
+		  mstats->mld_v1reports[BR_MCAST_DIR_RX]);
+	print_u64(PRINT_ANY, "rx_v2", "v2 %llu\n",
+		  mstats->mld_v2reports[BR_MCAST_DIR_RX]);
+	print_string(PRINT_FP, NULL, "%-16s      ", "");
+	print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
+		  mstats->mld_v1reports[BR_MCAST_DIR_TX]);
+	print_u64(PRINT_ANY, "tx_v2", "v2 %llu\n",
+		  mstats->mld_v2reports[BR_MCAST_DIR_TX]);
+	close_json_object();
+
+	open_json_object("mld_leaves");
+	print_string(PRINT_FP, NULL,
+		     "%-16s    MLD leaves: ", "");
+	print_u64(PRINT_ANY, "rx", "RX: %llu ",
+		  mstats->mld_leaves[BR_MCAST_DIR_RX]);
+	print_u64(PRINT_ANY, "tx", "TX: %llu\n",
+		  mstats->mld_leaves[BR_MCAST_DIR_TX]);
+	close_json_object();
+
+	print_string(PRINT_FP, NULL,
+		     "%-16s    MLD parse errors: ", "");
+	print_u64(PRINT_ANY, "mld_parse_errors", "%llu\n",
+		  mstats->mld_parse_errors);
+	close_json_object();
+}
+
+static void bridge_print_stats_stp(const struct rtattr *attr)
+{
+	struct bridge_stp_xstats *sstats;
+
+	sstats = RTA_DATA(attr);
+	open_json_object("stp");
+	print_string(PRINT_FP, NULL,
+		     "%-16s    STP BPDU:  ", "");
+	print_u64(PRINT_ANY, "rx_bpdu", "RX: %llu ",
+		  sstats->rx_bpdu);
+	print_u64(PRINT_ANY, "tx_bpdu", "TX: %llu\n",
+		  sstats->tx_bpdu);
+	print_string(PRINT_FP, NULL,
+		     "%-16s    STP TCN:   ", "");
+	print_u64(PRINT_ANY, "rx_tcn", "RX: %llu ",
+		  sstats->rx_tcn);
+	print_u64(PRINT_ANY, "tx_tcn", "TX: %llu\n",
+		  sstats->tx_tcn);
+	print_string(PRINT_FP, NULL,
+		     "%-16s    STP Transitions: ", "");
+	print_u64(PRINT_ANY, "transition_blk", "Blocked: %llu ",
+		  sstats->transition_blk);
+	print_u64(PRINT_ANY, "transition_fwd", "Forwarding: %llu\n",
+		  sstats->transition_fwd);
+	close_json_object();
+}
+
 static void bridge_print_stats_attr(struct rtattr *attr, int ifindex)
 {
 	struct rtattr *brtb[LINK_XSTATS_TYPE_MAX+1];
-	struct bridge_stp_xstats *sstats;
-	struct br_mcast_stats *mstats;
 	struct rtattr *i, *list;
 	const char *ifname = "";
 	int rem;
@@ -738,127 +867,10 @@ static void bridge_print_stats_attr(struct rtattr *attr, int ifindex)
 			continue;
 		switch (i->rta_type) {
 		case BRIDGE_XSTATS_MCAST:
-			mstats = RTA_DATA(i);
-			open_json_object("multicast");
-			open_json_object("igmp_queries");
-			print_string(PRINT_FP, NULL,
-				     "%-16s    IGMP queries:\n", "");
-			print_string(PRINT_FP, NULL, "%-16s      ", "");
-			print_u64(PRINT_ANY, "rx_v1", "RX: v1 %llu ",
-				  mstats->igmp_v1queries[BR_MCAST_DIR_RX]);
-			print_u64(PRINT_ANY, "rx_v2", "v2 %llu ",
-				  mstats->igmp_v2queries[BR_MCAST_DIR_RX]);
-			print_u64(PRINT_ANY, "rx_v3", "v3 %llu\n",
-				  mstats->igmp_v3queries[BR_MCAST_DIR_RX]);
-			print_string(PRINT_FP, NULL, "%-16s      ", "");
-			print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
-				  mstats->igmp_v1queries[BR_MCAST_DIR_TX]);
-			print_u64(PRINT_ANY, "tx_v2", "v2 %llu ",
-				  mstats->igmp_v2queries[BR_MCAST_DIR_TX]);
-			print_u64(PRINT_ANY, "tx_v3", "v3 %llu\n",
-				  mstats->igmp_v3queries[BR_MCAST_DIR_TX]);
-			close_json_object();
-
-			open_json_object("igmp_reports");
-			print_string(PRINT_FP, NULL,
-				     "%-16s    IGMP reports:\n", "");
-			print_string(PRINT_FP, NULL, "%-16s      ", "");
-			print_u64(PRINT_ANY, "rx_v1", "RX: v1 %llu ",
-				  mstats->igmp_v1reports[BR_MCAST_DIR_RX]);
-			print_u64(PRINT_ANY, "rx_v2", "v2 %llu ",
-				  mstats->igmp_v2reports[BR_MCAST_DIR_RX]);
-			print_u64(PRINT_ANY, "rx_v3", "v3 %llu\n",
-				  mstats->igmp_v3reports[BR_MCAST_DIR_RX]);
-			print_string(PRINT_FP, NULL, "%-16s      ", "");
-			print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
-				  mstats->igmp_v1reports[BR_MCAST_DIR_TX]);
-			print_u64(PRINT_ANY, "tx_v2", "v2 %llu ",
-				  mstats->igmp_v2reports[BR_MCAST_DIR_TX]);
-			print_u64(PRINT_ANY, "tx_v3", "v3 %llu\n",
-				  mstats->igmp_v3reports[BR_MCAST_DIR_TX]);
-			close_json_object();
-
-			open_json_object("igmp_leaves");
-			print_string(PRINT_FP, NULL,
-				     "%-16s    IGMP leaves: ", "");
-			print_u64(PRINT_ANY, "rx", "RX: %llu ",
-				  mstats->igmp_leaves[BR_MCAST_DIR_RX]);
-			print_u64(PRINT_ANY, "tx", "TX: %llu\n",
-				  mstats->igmp_leaves[BR_MCAST_DIR_TX]);
-			close_json_object();
-
-			print_string(PRINT_FP, NULL,
-				     "%-16s    IGMP parse errors: ", "");
-			print_u64(PRINT_ANY, "igmp_parse_errors", "%llu\n",
-				  mstats->igmp_parse_errors);
-
-			open_json_object("mld_queries");
-			print_string(PRINT_FP, NULL,
-				     "%-16s    MLD queries:\n", "");
-			print_string(PRINT_FP, NULL, "%-16s      ", "");
-			print_u64(PRINT_ANY, "rx_v1", "RX: v1 %llu ",
-				  mstats->mld_v1queries[BR_MCAST_DIR_RX]);
-			print_u64(PRINT_ANY, "rx_v2", "v2 %llu\n",
-				  mstats->mld_v2queries[BR_MCAST_DIR_RX]);
-			print_string(PRINT_FP, NULL, "%-16s      ", "");
-			print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
-				  mstats->mld_v1queries[BR_MCAST_DIR_TX]);
-			print_u64(PRINT_ANY, "tx_v2", "v2 %llu\n",
-				  mstats->mld_v2queries[BR_MCAST_DIR_TX]);
-			close_json_object();
-
-			open_json_object("mld_reports");
-			print_string(PRINT_FP, NULL,
-				     "%-16s    MLD reports:\n", "");
-			print_string(PRINT_FP, NULL, "%-16s      ", "");
-			print_u64(PRINT_ANY, "rx_v1", "RX: v1 %llu ",
-				  mstats->mld_v1reports[BR_MCAST_DIR_RX]);
-			print_u64(PRINT_ANY, "rx_v2", "v2 %llu\n",
-				  mstats->mld_v2reports[BR_MCAST_DIR_RX]);
-			print_string(PRINT_FP, NULL, "%-16s      ", "");
-			print_u64(PRINT_ANY, "tx_v1", "TX: v1 %llu ",
-				  mstats->mld_v1reports[BR_MCAST_DIR_TX]);
-			print_u64(PRINT_ANY, "tx_v2", "v2 %llu\n",
-				  mstats->mld_v2reports[BR_MCAST_DIR_TX]);
-			close_json_object();
-
-			open_json_object("mld_leaves");
-			print_string(PRINT_FP, NULL,
-				     "%-16s    MLD leaves: ", "");
-			print_u64(PRINT_ANY, "rx", "RX: %llu ",
-				  mstats->mld_leaves[BR_MCAST_DIR_RX]);
-			print_u64(PRINT_ANY, "tx", "TX: %llu\n",
-				  mstats->mld_leaves[BR_MCAST_DIR_TX]);
-			close_json_object();
-
-			print_string(PRINT_FP, NULL,
-				     "%-16s    MLD parse errors: ", "");
-			print_u64(PRINT_ANY, "mld_parse_errors", "%llu\n",
-				  mstats->mld_parse_errors);
-			close_json_object();
+			bridge_print_stats_mcast(i);
 			break;
 		case BRIDGE_XSTATS_STP:
-			sstats = RTA_DATA(i);
-			open_json_object("stp");
-			print_string(PRINT_FP, NULL,
-				     "%-16s    STP BPDU:  ", "");
-			print_u64(PRINT_ANY, "rx_bpdu", "RX: %llu ",
-				  sstats->rx_bpdu);
-			print_u64(PRINT_ANY, "tx_bpdu", "TX: %llu\n",
-				  sstats->tx_bpdu);
-			print_string(PRINT_FP, NULL,
-				     "%-16s    STP TCN:   ", "");
-			print_u64(PRINT_ANY, "rx_tcn", "RX: %llu ",
-				  sstats->rx_tcn);
-			print_u64(PRINT_ANY, "tx_tcn", "TX: %llu\n",
-				  sstats->tx_tcn);
-			print_string(PRINT_FP, NULL,
-				     "%-16s    STP Transitions: ", "");
-			print_u64(PRINT_ANY, "transition_blk", "Blocked: %llu ",
-				  sstats->transition_blk);
-			print_u64(PRINT_ANY, "transition_fwd", "Forwarding: %llu\n",
-				  sstats->transition_fwd);
-			close_json_object();
+			bridge_print_stats_stp(i);
 			break;
 		}
 	}
