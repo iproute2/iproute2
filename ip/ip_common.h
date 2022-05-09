@@ -142,6 +142,8 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type);
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
 int bridge_parse_xstats(struct link_util *lu, int argc, char **argv);
 int bridge_print_xstats(struct nlmsghdr *n, void *arg);
+extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_bridge_group;
+extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_slave_bridge_group;
 
 int bond_parse_xstats(struct link_util *lu, int argc, char **argv);
 int bond_print_xstats(struct nlmsghdr *n, void *arg);
