@@ -1521,6 +1521,13 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 {
 	struct rtattr *mrtb[MPLS_STATS_MAX+1];
 	struct mpls_link_stats *stats;
+	unsigned int cols[] = {
+		strlen("*X: bytes"),
+		strlen("packets"),
+		strlen("errors"),
+		strlen("dropped"),
+		strlen("noroute"),
+	};
 
 	parse_rtattr(mrtb, MPLS_STATS_MAX, RTA_DATA(attr),
 		     RTA_PAYLOAD(attr));
@@ -1528,22 +1535,35 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 		return;
 
 	stats = RTA_DATA(mrtb[MPLS_STATS_LINK]);
-
 	fprintf(fp, "    mpls:\n");
-	fprintf(fp, "        RX: bytes  packets  errors  dropped  noroute\n");
+
+	size_columns(cols, ARRAY_SIZE(cols),
+		     stats->rx_bytes, stats->rx_packets, stats->rx_errors,
+		     stats->rx_dropped, stats->rx_noroute);
+	size_columns(cols, ARRAY_SIZE(cols),
+		     stats->tx_bytes, stats->tx_packets, stats->tx_errors,
+		     stats->tx_dropped, 0);
+
+	fprintf(fp, "        RX: %*s %*s %*s %*s %*s%s",
+		cols[0] - 4, "bytes", cols[1], "packets",
+		cols[2], "errors", cols[3], "dropped",
+		cols[4], "noroute", _SL_);
 	fprintf(fp, "        ");
-	print_num(fp, 10, stats->rx_bytes);
-	print_num(fp, 8, stats->rx_packets);
-	print_num(fp, 7, stats->rx_errors);
-	print_num(fp, 8, stats->rx_dropped);
-	print_num(fp, 7, stats->rx_noroute);
+	print_num(fp, cols[0], stats->rx_bytes);
+	print_num(fp, cols[1], stats->rx_packets);
+	print_num(fp, cols[2], stats->rx_errors);
+	print_num(fp, cols[3], stats->rx_dropped);
+	print_num(fp, cols[4], stats->rx_noroute);
 	fprintf(fp, "\n");
-	fprintf(fp, "        TX: bytes  packets  errors  dropped\n");
+
+	fprintf(fp, "        TX: %*s %*s %*s %*s%s",
+		cols[0] - 4, "bytes", cols[1], "packets",
+		cols[2], "errors", cols[3], "dropped", _SL_);
 	fprintf(fp, "        ");
-	print_num(fp, 10, stats->tx_bytes);
-	print_num(fp, 8, stats->tx_packets);
-	print_num(fp, 7, stats->tx_errors);
-	print_num(fp, 7, stats->tx_dropped);
+	print_num(fp, cols[0], stats->tx_bytes);
+	print_num(fp, cols[1], stats->tx_packets);
+	print_num(fp, cols[2], stats->tx_errors);
+	print_num(fp, cols[3], stats->tx_dropped);
 	fprintf(fp, "\n");
 }
 
