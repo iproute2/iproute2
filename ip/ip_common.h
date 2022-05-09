@@ -145,8 +145,11 @@ int bridge_print_xstats(struct nlmsghdr *n, void *arg);
 extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_bridge_group;
 extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_slave_bridge_group;
 
+/* iplink_bond.c */
 int bond_parse_xstats(struct link_util *lu, int argc, char **argv);
 int bond_print_xstats(struct nlmsghdr *n, void *arg);
+extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_bond_group;
+extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_slave_bond_group;
 
 /* iproute_lwtunnel.c */
 int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
