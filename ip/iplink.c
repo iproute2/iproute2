@@ -1555,7 +1555,6 @@ void print_mpls_link_stats(FILE *fp, const struct mpls_link_stats *stats,
 	print_num(fp, cols[1], stats->tx_packets);
 	print_num(fp, cols[2], stats->tx_errors);
 	print_num(fp, cols[3], stats->tx_dropped);
-	fprintf(fp, "\n");
 }
 
 static void print_mpls_stats(FILE *fp, struct rtattr *attr)
@@ -1571,6 +1570,7 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 	stats = RTA_DATA(mrtb[MPLS_STATS_LINK]);
 	fprintf(fp, "    mpls:\n");
 	print_mpls_link_stats(fp, stats, "        ");
+	fprintf(fp, "\n");
 }
 
 static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)

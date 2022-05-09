@@ -589,9 +589,63 @@ static const struct ipstats_stat_desc ipstats_stat_desc_toplev_link = {
 	.show = &ipstats_stat_desc_show_link,
 };
 
+static const struct ipstats_stat_desc ipstats_stat_desc_afstats_group;
+
+static void
+ipstats_stat_desc_pack_afstats(struct ipstats_stat_dump_filters *filters,
+			       const struct ipstats_stat_desc *desc)
+{
+	ipstats_stat_desc_enable_bit(filters, IFLA_STATS_AF_SPEC, 0);
+}
+
+static int
+ipstats_stat_desc_show_afstats_mpls(struct ipstats_stat_show_attrs *attrs,
+				    const struct ipstats_stat_desc *desc)
+{
+	struct rtattr *mrtb[MPLS_STATS_MAX+1];
+	struct mpls_link_stats stats;
+	const struct rtattr *at;
+	int err;
+
+	at = ipstats_stat_show_get_attr(attrs, IFLA_STATS_AF_SPEC,
+					AF_MPLS, &err);
+	if (at == NULL)
+		return err;
+
+	parse_rtattr_nested(mrtb, MPLS_STATS_MAX, at);
+	if (mrtb[MPLS_STATS_LINK] == NULL)
+		return -ENOENT;
+
+	IPSTATS_RTA_PAYLOAD(stats, mrtb[MPLS_STATS_LINK]);
+
+	print_nl();
+	open_json_object("mpls_stats");
+	print_mpls_link_stats(stdout, &stats, "    ");
+	close_json_object();
+	return 0;
+}
+
+static const struct ipstats_stat_desc ipstats_stat_desc_afstats_mpls = {
+	.name = "mpls",
+	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
+	.pack = &ipstats_stat_desc_pack_afstats,
+	.show = &ipstats_stat_desc_show_afstats_mpls,
+};
+
+static const struct ipstats_stat_desc *ipstats_stat_desc_afstats_subs[] = {
+	&ipstats_stat_desc_afstats_mpls,
+};
+
+static const struct ipstats_stat_desc ipstats_stat_desc_afstats_group = {
+	.name = "afstats",
+	.kind = IPSTATS_STAT_DESC_KIND_GROUP,
+	.subs = ipstats_stat_desc_afstats_subs,
+	.nsubs = ARRAY_SIZE(ipstats_stat_desc_afstats_subs),
+};
 static const struct ipstats_stat_desc *ipstats_stat_desc_toplev_subs[] = {
 	&ipstats_stat_desc_toplev_link,
 	&ipstats_stat_desc_offload_group,
+	&ipstats_stat_desc_afstats_group,
 };
 
 static const struct ipstats_stat_desc ipstats_stat_desc_toplev_group = {
