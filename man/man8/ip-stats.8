@@ -68,6 +68,20 @@ The following groups are recognized:
 - A group that contains a number of HW-oriented statistics. See below for
 individual subgroups within this group.
 
+.ti 14
+.B group xstats
+- Extended statistics. A subgroup identifies the type of netdevice to show the
+statistics for.
+
+.ti 14
+.B group xstats_slave
+- Extended statistics for the slave of a netdevice of a given type. A subgroup
+identifies the type of master netdevice.
+
+.ti 14
+.B group afstats
+- A group for address-family specific netdevice statistics.
+
 .TQ
 .BR "group offload " subgroups:
 .in 21
@@ -132,6 +146,39 @@ For example:
           7176      58      0       0
 
 Note how the l3_stats_info for the selected group is also part of the dump.
+
+.TQ
+.BR "group xstats " and " group xstats_slave " subgroups:
+.in 21
+
+.ti 14
+.B subgroup bridge \fR[\fB suite stp \fR] [\fB suite mcast \fR]
+- Statistics for STP and, respectively, IGMP / MLD (under the keyword
+\fBmcast\fR) traffic on bridges and their slaves.
+
+.ti 14
+.B subgroup bond \fR[\fB suite 802.3ad \fR]
+- Statistics for LACP traffic on bond devices and their slaves.
+
+.TQ
+.BR "group afstats " subgroups:
+.in 21
+
+.ti 14
+.B subgroup mpls
+- Statistics for MPLS traffic seen on the netdevice. For example:
+
+# ip stats show dev veth01 group afstats subgroup mpls
+.br
+3: veth01: group afstats subgroup mpls
+.br
+    RX: bytes packets errors dropped noroute
+.br
+            0       0      0       0       0
+.br
+    TX: bytes packets errors dropped
+.br
+          216       2      0       0
 
 .SH EXAMPLES
 .PP
