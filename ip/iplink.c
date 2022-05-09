@@ -1517,10 +1517,9 @@ static int do_set(int argc, char **argv)
 }
 #endif /* IPLINK_IOCTL_COMPAT */
 
-static void print_mpls_stats(FILE *fp, struct rtattr *attr)
+void print_mpls_link_stats(FILE *fp, const struct mpls_link_stats *stats,
+			   const char *indent)
 {
-	struct rtattr *mrtb[MPLS_STATS_MAX+1];
-	struct mpls_link_stats *stats;
 	unsigned int cols[] = {
 		strlen("*X: bytes"),
 		strlen("packets"),
@@ -1529,14 +1528,6 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 		strlen("noroute"),
 	};
 
-	parse_rtattr(mrtb, MPLS_STATS_MAX, RTA_DATA(attr),
-		     RTA_PAYLOAD(attr));
-	if (!mrtb[MPLS_STATS_LINK])
-		return;
-
-	stats = RTA_DATA(mrtb[MPLS_STATS_LINK]);
-	fprintf(fp, "    mpls:\n");
-
 	size_columns(cols, ARRAY_SIZE(cols),
 		     stats->rx_bytes, stats->rx_packets, stats->rx_errors,
 		     stats->rx_dropped, stats->rx_noroute);
@@ -1544,11 +1535,11 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 		     stats->tx_bytes, stats->tx_packets, stats->tx_errors,
 		     stats->tx_dropped, 0);
 
-	fprintf(fp, "        RX: %*s %*s %*s %*s %*s%s",
+	fprintf(fp, "%sRX: %*s %*s %*s %*s %*s%s", indent,
 		cols[0] - 4, "bytes", cols[1], "packets",
 		cols[2], "errors", cols[3], "dropped",
 		cols[4], "noroute", _SL_);
-	fprintf(fp, "        ");
+	fprintf(fp, "%s", indent);
 	print_num(fp, cols[0], stats->rx_bytes);
 	print_num(fp, cols[1], stats->rx_packets);
 	print_num(fp, cols[2], stats->rx_errors);
@@ -1556,15 +1547,30 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 	print_num(fp, cols[4], stats->rx_noroute);
 	fprintf(fp, "\n");
 
-	fprintf(fp, "        TX: %*s %*s %*s %*s%s",
+	fprintf(fp, "%sTX: %*s %*s %*s %*s%s", indent,
 		cols[0] - 4, "bytes", cols[1], "packets",
 		cols[2], "errors", cols[3], "dropped", _SL_);
-	fprintf(fp, "        ");
+	fprintf(fp, "%s", indent);
 	print_num(fp, cols[0], stats->tx_bytes);
 	print_num(fp, cols[1], stats->tx_packets);
 	print_num(fp, cols[2], stats->tx_errors);
 	print_num(fp, cols[3], stats->tx_dropped);
 	fprintf(fp, "\n");
+}
+
+static void print_mpls_stats(FILE *fp, struct rtattr *attr)
+{
+	struct rtattr *mrtb[MPLS_STATS_MAX+1];
+	struct mpls_link_stats *stats;
+
+	parse_rtattr(mrtb, MPLS_STATS_MAX, RTA_DATA(attr),
+		     RTA_PAYLOAD(attr));
+	if (!mrtb[MPLS_STATS_LINK])
+		return;
+
+	stats = RTA_DATA(mrtb[MPLS_STATS_LINK]);
+	fprintf(fp, "    mpls:\n");
+	print_mpls_link_stats(fp, stats, "        ");
 }
 
 static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)

@@ -3,6 +3,7 @@
 #define _IP_COMMON_H_
 
 #include <stdbool.h>
+#include <linux/mpls.h>
 
 #include "json_print.h"
 
@@ -202,4 +203,6 @@ void print_rta_gateway(FILE *fp, unsigned char family,
 void size_columns(unsigned int cols[], unsigned int n, ...);
 void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 		   const struct rtattr *carrier_changes, const char *what);
+void print_mpls_link_stats(FILE *fp, const struct mpls_link_stats *stats,
+			   const char *indent);
 #endif /* _IP_COMMON_H_ */
