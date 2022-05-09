@@ -34,6 +34,7 @@ struct ipstats_stat_show_attrs {
 static const char *const ipstats_levels[] = {
 	"group",
 	"subgroup",
+	"suite",
 };
 
 enum {
@@ -1024,7 +1025,7 @@ static int do_help(void)
 
 	fprintf(stderr,
 		"Usage: ip stats help\n"
-		"       ip stats show [ dev DEV ] [ group GROUP [ subgroup SUBGROUP ] ... ] ...\n"
+		"       ip stats show [ dev DEV ] [ group GROUP [ subgroup SUBGROUP [ suite SUITE ] ... ] ... ] ...\n"
 		"       ip stats set dev DEV l3_stats { on | off }\n"
 		);
 
@@ -1048,6 +1049,8 @@ static int do_help(void)
 			continue;
 
 		for (j = 0; j < desc->nsubs; j++) {
+			size_t k;
+
 			if (j == 0)
 				fprintf(stderr, "%s SUBGROUP := {", desc->name);
 			else
@@ -1057,6 +1060,10 @@ static int do_help(void)
 
 			if (desc->subs[j]->kind != IPSTATS_STAT_DESC_KIND_GROUP)
 				continue;
+
+			for (k = 0; k < desc->subs[j]->nsubs; k++)
+				fprintf(stderr, " [ suite %s ]",
+					desc->subs[j]->subs[k]->name);
 		}
 		if (opened)
 			fprintf(stderr, " }\n");
