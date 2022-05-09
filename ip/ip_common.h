@@ -186,6 +186,20 @@ struct ipstats_stat_desc {
 	};
 };
 
+struct ipstats_stat_desc_xstats {
+	const struct ipstats_stat_desc desc;
+	int xstats_at;
+	int link_type_at;
+	int inner_max;
+	int inner_at;
+	void (*show_cb)(const struct rtattr *at);
+};
+
+void ipstats_stat_desc_pack_xstats(struct ipstats_stat_dump_filters *filters,
+				   const struct ipstats_stat_desc *desc);
+int ipstats_stat_desc_show_xstats(struct ipstats_stat_show_attrs *attrs,
+				  const struct ipstats_stat_desc *desc);
+
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
 #endif

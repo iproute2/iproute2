@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 
+#include "list.h"
 #include "utils.h"
 #include "ip_common.h"
 
@@ -567,6 +568,62 @@ static const struct ipstats_stat_desc ipstats_stat_desc_offload_group = {
 	.nsubs = ARRAY_SIZE(ipstats_stat_desc_offload_subs),
 };
 
+void ipstats_stat_desc_pack_xstats(struct ipstats_stat_dump_filters *filters,
+				   const struct ipstats_stat_desc *desc)
+{
+	struct ipstats_stat_desc_xstats *xdesc;
+
+	xdesc = container_of(desc, struct ipstats_stat_desc_xstats, desc);
+	ipstats_stat_desc_enable_bit(filters, xdesc->xstats_at, 0);
+}
+
+int ipstats_stat_desc_show_xstats(struct ipstats_stat_show_attrs *attrs,
+				  const struct ipstats_stat_desc *desc)
+{
+	struct ipstats_stat_desc_xstats *xdesc;
+	const struct rtattr *at;
+	struct rtattr **tb;
+	int err;
+
+	xdesc = container_of(desc, struct ipstats_stat_desc_xstats, desc);
+	at = ipstats_stat_show_get_attr(attrs,
+					xdesc->xstats_at,
+					xdesc->link_type_at, &err);
+	if (at == NULL)
+		return err;
+
+	tb = alloca(sizeof(*tb) * (xdesc->inner_max + 1));
+	err = parse_rtattr_nested(tb, xdesc->inner_max, at);
+	if (err != 0)
+		return err;
+
+	if (tb[xdesc->inner_at] != NULL) {
+		print_nl();
+		xdesc->show_cb(tb[xdesc->inner_at]);
+	}
+	return 0;
+}
+
+static const struct ipstats_stat_desc *ipstats_stat_desc_xstats_subs[] = {
+};
+
+static const struct ipstats_stat_desc ipstats_stat_desc_xstats_group = {
+	.name = "xstats",
+	.kind = IPSTATS_STAT_DESC_KIND_GROUP,
+	.subs = ipstats_stat_desc_xstats_subs,
+	.nsubs = ARRAY_SIZE(ipstats_stat_desc_xstats_subs),
+};
+
+static const struct ipstats_stat_desc *ipstats_stat_desc_xstats_slave_subs[] = {
+};
+
+static const struct ipstats_stat_desc ipstats_stat_desc_xstats_slave_group = {
+	.name = "xstats_slave",
+	.kind = IPSTATS_STAT_DESC_KIND_GROUP,
+	.subs = ipstats_stat_desc_xstats_slave_subs,
+	.nsubs = ARRAY_SIZE(ipstats_stat_desc_xstats_slave_subs),
+};
+
 static void
 ipstats_stat_desc_pack_link(struct ipstats_stat_dump_filters *filters,
 			    const struct ipstats_stat_desc *desc)
@@ -645,6 +702,8 @@ static const struct ipstats_stat_desc ipstats_stat_desc_afstats_group = {
 };
 static const struct ipstats_stat_desc *ipstats_stat_desc_toplev_subs[] = {
 	&ipstats_stat_desc_toplev_link,
+	&ipstats_stat_desc_xstats_group,
+	&ipstats_stat_desc_xstats_slave_group,
 	&ipstats_stat_desc_offload_group,
 	&ipstats_stat_desc_afstats_group,
 };
