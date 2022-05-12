@@ -3,6 +3,7 @@
 #define _IP_COMMON_H_
 
 #include <stdbool.h>
+#include <linux/mpls.h>
 
 #include "json_print.h"
 
@@ -141,9 +142,14 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type);
 void br_dump_bridge_id(const struct ifla_bridge_id *id, char *buf, size_t len);
 int bridge_parse_xstats(struct link_util *lu, int argc, char **argv);
 int bridge_print_xstats(struct nlmsghdr *n, void *arg);
+extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_bridge_group;
+extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_slave_bridge_group;
 
+/* iplink_bond.c */
 int bond_parse_xstats(struct link_util *lu, int argc, char **argv);
 int bond_print_xstats(struct nlmsghdr *n, void *arg);
+extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_bond_group;
+extern const struct ipstats_stat_desc ipstats_stat_desc_xstats_slave_bond_group;
 
 /* iproute_lwtunnel.c */
 int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
@@ -185,6 +191,20 @@ struct ipstats_stat_desc {
 	};
 };
 
+struct ipstats_stat_desc_xstats {
+	const struct ipstats_stat_desc desc;
+	int xstats_at;
+	int link_type_at;
+	int inner_max;
+	int inner_at;
+	void (*show_cb)(const struct rtattr *at);
+};
+
+void ipstats_stat_desc_pack_xstats(struct ipstats_stat_dump_filters *filters,
+				   const struct ipstats_stat_desc *desc);
+int ipstats_stat_desc_show_xstats(struct ipstats_stat_show_attrs *attrs,
+				  const struct ipstats_stat_desc *desc);
+
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
 #endif
@@ -202,4 +222,6 @@ void print_rta_gateway(FILE *fp, unsigned char family,
 void size_columns(unsigned int cols[], unsigned int n, ...);
 void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 		   const struct rtattr *carrier_changes, const char *what);
+void print_mpls_link_stats(FILE *fp, const struct mpls_link_stats *stats,
+			   const char *indent);
 #endif /* _IP_COMMON_H_ */

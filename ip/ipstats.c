@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 
+#include "list.h"
 #include "utils.h"
 #include "ip_common.h"
 
@@ -34,6 +35,7 @@ struct ipstats_stat_show_attrs {
 static const char *const ipstats_levels[] = {
 	"group",
 	"subgroup",
+	"suite",
 };
 
 enum {
@@ -566,6 +568,66 @@ static const struct ipstats_stat_desc ipstats_stat_desc_offload_group = {
 	.nsubs = ARRAY_SIZE(ipstats_stat_desc_offload_subs),
 };
 
+void ipstats_stat_desc_pack_xstats(struct ipstats_stat_dump_filters *filters,
+				   const struct ipstats_stat_desc *desc)
+{
+	struct ipstats_stat_desc_xstats *xdesc;
+
+	xdesc = container_of(desc, struct ipstats_stat_desc_xstats, desc);
+	ipstats_stat_desc_enable_bit(filters, xdesc->xstats_at, 0);
+}
+
+int ipstats_stat_desc_show_xstats(struct ipstats_stat_show_attrs *attrs,
+				  const struct ipstats_stat_desc *desc)
+{
+	struct ipstats_stat_desc_xstats *xdesc;
+	const struct rtattr *at;
+	struct rtattr **tb;
+	int err;
+
+	xdesc = container_of(desc, struct ipstats_stat_desc_xstats, desc);
+	at = ipstats_stat_show_get_attr(attrs,
+					xdesc->xstats_at,
+					xdesc->link_type_at, &err);
+	if (at == NULL)
+		return err;
+
+	tb = alloca(sizeof(*tb) * (xdesc->inner_max + 1));
+	err = parse_rtattr_nested(tb, xdesc->inner_max, at);
+	if (err != 0)
+		return err;
+
+	if (tb[xdesc->inner_at] != NULL) {
+		print_nl();
+		xdesc->show_cb(tb[xdesc->inner_at]);
+	}
+	return 0;
+}
+
+static const struct ipstats_stat_desc *ipstats_stat_desc_xstats_subs[] = {
+	&ipstats_stat_desc_xstats_bridge_group,
+	&ipstats_stat_desc_xstats_bond_group,
+};
+
+static const struct ipstats_stat_desc ipstats_stat_desc_xstats_group = {
+	.name = "xstats",
+	.kind = IPSTATS_STAT_DESC_KIND_GROUP,
+	.subs = ipstats_stat_desc_xstats_subs,
+	.nsubs = ARRAY_SIZE(ipstats_stat_desc_xstats_subs),
+};
+
+static const struct ipstats_stat_desc *ipstats_stat_desc_xstats_slave_subs[] = {
+	&ipstats_stat_desc_xstats_slave_bridge_group,
+	&ipstats_stat_desc_xstats_slave_bond_group,
+};
+
+static const struct ipstats_stat_desc ipstats_stat_desc_xstats_slave_group = {
+	.name = "xstats_slave",
+	.kind = IPSTATS_STAT_DESC_KIND_GROUP,
+	.subs = ipstats_stat_desc_xstats_slave_subs,
+	.nsubs = ARRAY_SIZE(ipstats_stat_desc_xstats_slave_subs),
+};
+
 static void
 ipstats_stat_desc_pack_link(struct ipstats_stat_dump_filters *filters,
 			    const struct ipstats_stat_desc *desc)
@@ -589,9 +651,65 @@ static const struct ipstats_stat_desc ipstats_stat_desc_toplev_link = {
 	.show = &ipstats_stat_desc_show_link,
 };
 
+static const struct ipstats_stat_desc ipstats_stat_desc_afstats_group;
+
+static void
+ipstats_stat_desc_pack_afstats(struct ipstats_stat_dump_filters *filters,
+			       const struct ipstats_stat_desc *desc)
+{
+	ipstats_stat_desc_enable_bit(filters, IFLA_STATS_AF_SPEC, 0);
+}
+
+static int
+ipstats_stat_desc_show_afstats_mpls(struct ipstats_stat_show_attrs *attrs,
+				    const struct ipstats_stat_desc *desc)
+{
+	struct rtattr *mrtb[MPLS_STATS_MAX+1];
+	struct mpls_link_stats stats;
+	const struct rtattr *at;
+	int err;
+
+	at = ipstats_stat_show_get_attr(attrs, IFLA_STATS_AF_SPEC,
+					AF_MPLS, &err);
+	if (at == NULL)
+		return err;
+
+	parse_rtattr_nested(mrtb, MPLS_STATS_MAX, at);
+	if (mrtb[MPLS_STATS_LINK] == NULL)
+		return -ENOENT;
+
+	IPSTATS_RTA_PAYLOAD(stats, mrtb[MPLS_STATS_LINK]);
+
+	print_nl();
+	open_json_object("mpls_stats");
+	print_mpls_link_stats(stdout, &stats, "    ");
+	close_json_object();
+	return 0;
+}
+
+static const struct ipstats_stat_desc ipstats_stat_desc_afstats_mpls = {
+	.name = "mpls",
+	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
+	.pack = &ipstats_stat_desc_pack_afstats,
+	.show = &ipstats_stat_desc_show_afstats_mpls,
+};
+
+static const struct ipstats_stat_desc *ipstats_stat_desc_afstats_subs[] = {
+	&ipstats_stat_desc_afstats_mpls,
+};
+
+static const struct ipstats_stat_desc ipstats_stat_desc_afstats_group = {
+	.name = "afstats",
+	.kind = IPSTATS_STAT_DESC_KIND_GROUP,
+	.subs = ipstats_stat_desc_afstats_subs,
+	.nsubs = ARRAY_SIZE(ipstats_stat_desc_afstats_subs),
+};
 static const struct ipstats_stat_desc *ipstats_stat_desc_toplev_subs[] = {
 	&ipstats_stat_desc_toplev_link,
+	&ipstats_stat_desc_xstats_group,
+	&ipstats_stat_desc_xstats_slave_group,
 	&ipstats_stat_desc_offload_group,
+	&ipstats_stat_desc_afstats_group,
 };
 
 static const struct ipstats_stat_desc ipstats_stat_desc_toplev_group = {
@@ -970,7 +1088,7 @@ static int do_help(void)
 
 	fprintf(stderr,
 		"Usage: ip stats help\n"
-		"       ip stats show [ dev DEV ] [ group GROUP [ subgroup SUBGROUP ] ... ] ...\n"
+		"       ip stats show [ dev DEV ] [ group GROUP [ subgroup SUBGROUP [ suite SUITE ] ... ] ... ] ...\n"
 		"       ip stats set dev DEV l3_stats { on | off }\n"
 		);
 
@@ -994,6 +1112,8 @@ static int do_help(void)
 			continue;
 
 		for (j = 0; j < desc->nsubs; j++) {
+			size_t k;
+
 			if (j == 0)
 				fprintf(stderr, "%s SUBGROUP := {", desc->name);
 			else
@@ -1003,6 +1123,10 @@ static int do_help(void)
 
 			if (desc->subs[j]->kind != IPSTATS_STAT_DESC_KIND_GROUP)
 				continue;
+
+			for (k = 0; k < desc->subs[j]->nsubs; k++)
+				fprintf(stderr, " [ suite %s ]",
+					desc->subs[j]->subs[k]->name);
 		}
 		if (opened)
 			fprintf(stderr, " }\n");
