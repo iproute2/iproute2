@@ -72,7 +72,7 @@ action police mtu 4000 rate 1500kbit burst 90k
 2)In order to take advantage of some of the targets written by the
 iptables people, a classifier can have a packet being massaged by an
 iptable target. I have only tested with mangler targets up to now.
-(infact anything that is not in the mangling table is disabled right now)
+(in fact anything that is not in the mangling table is disabled right now)
 
 In terms of hooks:
 *ingress is mapped to pre-routing hook
