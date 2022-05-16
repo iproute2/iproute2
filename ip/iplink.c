@@ -35,9 +35,6 @@
 
 #define IPLINK_IOCTL_COMPAT	1
 
-#ifndef GSO_MAX_SIZE
-#define GSO_MAX_SIZE		65536
-#endif
 #ifndef GSO_MAX_SEGS
 #define GSO_MAX_SEGS		65535
 #endif
