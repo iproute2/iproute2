@@ -618,7 +618,6 @@ static void user_ent_hash_build(void)
 	while ((d = readdir(dir)) != NULL) {
 		struct dirent *d1;
 		char process[16];
-		char *p;
 		int pid, pos;
 		DIR *dir1;
 
@@ -636,7 +635,6 @@ static void user_ent_hash_build(void)
 		}
 
 		process[0] = '\0';
-		p = process;
 
 		while ((d1 = readdir(dir1)) != NULL) {
 			const char *pattern = "socket:[";
@@ -667,18 +665,18 @@ static void user_ent_hash_build(void)
 			if (getfilecon(tmp, &sock_context) <= 0)
 				sock_context = strdup(no_ctx);
 
-			if (*p == '\0') {
+			if (process[0] == '\0') {
 				FILE *fp;
 
 				snprintf(tmp, sizeof(tmp), "%s/%d/stat",
 					root, pid);
 				if ((fp = fopen(tmp, "r")) != NULL) {
-					if (fscanf(fp, "%*d (%[^)])", p) < 1)
+					if (fscanf(fp, "%*d (%[^)])", process) < 1)
 						; /* ignore */
 					fclose(fp);
 				}
 			}
-			user_ent_add(ino, p, pid, fd,
+			user_ent_add(ino, process, pid, fd,
 					pid_context, sock_context);
 			freecon(sock_context);
 		}
