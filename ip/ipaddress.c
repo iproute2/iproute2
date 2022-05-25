@@ -1230,6 +1230,18 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 				   "gso_max_segs %u ",
 				   rta_getattr_u32(tb[IFLA_GSO_MAX_SEGS]));
 
+		if (tb[IFLA_TSO_MAX_SIZE])
+				   print_uint(PRINT_ANY,
+				   "tso_max_size",
+				   "tso_max_size %u ",
+				   rta_getattr_u32(tb[IFLA_TSO_MAX_SIZE]));
+
+		if (tb[IFLA_TSO_MAX_SEGS])
+				   print_uint(PRINT_ANY,
+				   "tso_max_segs",
+				   "tso_max_segs %u ",
+				   rta_getattr_u32(tb[IFLA_TSO_MAX_SEGS]));
+
 		if (tb[IFLA_GRO_MAX_SIZE])
 			print_uint(PRINT_ANY,
 				   "gro_max_size",
