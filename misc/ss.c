@@ -652,10 +652,7 @@ static void user_ent_hash_build(void)
 
 			sscanf(lnk, "socket:[%u]", &ino);
 
-			snprintf(tmp, sizeof(tmp), "%s/%d/fd/%s",
-					root, pid, d1->d_name);
-
-			if (getfilecon(tmp, &sock_context) <= 0)
+			if (getfilecon(name, &sock_context) <= 0)
 				sock_context = strdup(no_ctx);
 
 			if (process[0] == '\0') {
