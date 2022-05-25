@@ -621,9 +621,8 @@ static void user_ent_hash_build(void)
 		char *p;
 		int pid, pos;
 		DIR *dir1;
-		char crap;
 
-		if (sscanf(d->d_name, "%d%c", &pid, &crap) != 1)
+		if (sscanf(d->d_name, "%d%*c", &pid) != 1)
 			continue;
 
 		if (getpidcon(pid, &pid_context) != 0)
@@ -647,7 +646,7 @@ static void user_ent_hash_build(void)
 			ssize_t link_len;
 			char tmp[1024];
 
-			if (sscanf(d1->d_name, "%d%c", &fd, &crap) != 1)
+			if (sscanf(d1->d_name, "%d%*c", &fd) != 1)
 				continue;
 
 			snprintf(name+pos, sizeof(name) - pos, "%d", fd);
