@@ -112,7 +112,8 @@ static void freecon(char *context)
 int preferred_family = AF_UNSPEC;
 static int show_options;
 int show_details;
-static int show_users;
+static int show_processes;
+static int show_threads;
 static int show_mem;
 static int show_tcpinfo;
 static int show_bpf;
@@ -526,9 +527,10 @@ struct user_ent {
 	struct user_ent	*next;
 	unsigned int	ino;
 	int		pid;
+	int		tid;
 	int		fd;
-	char		*process;
-	char		*process_ctx;
+	char		*task;
+	char		*task_ctx;
 	char		*socket_ctx;
 };
 
@@ -542,9 +544,9 @@ static int user_ent_hashfn(unsigned int ino)
 	return val & (USER_ENT_HASH_SIZE - 1);
 }
 
-static void user_ent_add(unsigned int ino, char *process,
-					int pid, int fd,
-					char *proc_ctx,
+static void user_ent_add(unsigned int ino, char *task,
+					int pid, int tid, int fd,
+					char *task_ctx,
 					char *sock_ctx)
 {
 	struct user_ent *p, **pp;
@@ -557,9 +559,10 @@ static void user_ent_add(unsigned int ino, char *process,
 	p->next = NULL;
 	p->ino = ino;
 	p->pid = pid;
+	p->tid = tid;
 	p->fd = fd;
-	p->process = strdup(process);
-	p->process_ctx = strdup(proc_ctx);
+	p->task = strdup(task);
+	p->task_ctx = strdup(task_ctx);
 	p->socket_ctx = strdup(sock_ctx);
 
 	pp = &user_ent_hash[user_ent_hashfn(ino)];
@@ -569,7 +572,7 @@ static void user_ent_add(unsigned int ino, char *process,
 
 #define MAX_PATH_LEN	1024
 
-static void user_ent_hash_build_task(char *path, int pid)
+static void user_ent_hash_build_task(char *path, int pid, int tid)
 {
 	const char *no_ctx = "unavailable";
 	char task[16] = {'\0', };
@@ -579,7 +582,7 @@ static void user_ent_hash_build_task(char *path, int pid)
 	struct dirent *d;
 	DIR *dir;
 
-	if (getpidcon(pid, &task_context) != 0)
+	if (getpidcon(tid, &task_context) != 0)
 		task_context = strdup(no_ctx);
 
 	pos_id = strlen(path);	/* $PROC_ROOT/$ID/ */
@@ -634,7 +637,7 @@ static void user_ent_hash_build_task(char *path, int pid)
 			}
 		}
 
-		user_ent_add(ino, task, pid, fd, task_context, sock_context);
+		user_ent_add(ino, task, pid, tid, fd, task_context, sock_context);
 		freecon(sock_context);
 	}
 
@@ -650,8 +653,8 @@ static void user_ent_destroy(void)
 	while (cnt != USER_ENT_HASH_SIZE) {
 		p = user_ent_hash[cnt];
 		while (p) {
-			free(p->process);
-			free(p->process_ctx);
+			free(p->task);
+			free(p->task_ctx);
 			free(p->socket_ctx);
 			p_next = p->next;
 			free(p);
@@ -687,7 +690,30 @@ static void user_ent_hash_build(void)
 			continue;
 
 		snprintf(name + nameoff, sizeof(name) - nameoff, "%d/", pid);
-		user_ent_hash_build_task(name, pid);
+		user_ent_hash_build_task(name, pid, pid);
+
+		if (show_threads) {
+			struct dirent *task_d;
+			DIR *task_dir;
+
+			snprintf(name + nameoff, sizeof(name) - nameoff, "%d/task/", pid);
+
+			task_dir = opendir(name);
+			if (!task_dir)
+				continue;
+
+			while ((task_d = readdir(task_dir)) != NULL) {
+				int tid;
+
+				if (sscanf(task_d->d_name, "%d%*c", &tid) != 1)
+					continue;
+				if (tid == pid)
+					continue;
+
+				snprintf(name + nameoff, sizeof(name) - nameoff, "%d/", tid);
+				user_ent_hash_build_task(name, pid, tid);
+			}
+		}
 	}
 	closedir(dir);
 }
@@ -704,6 +730,7 @@ static int find_entry(unsigned int ino, char **buf, int type)
 	struct user_ent *p;
 	int cnt = 0;
 	char *ptr;
+	char thread_info[16] = {'\0', };
 	char *new_buf;
 	int len, new_buf_len;
 	int buf_used = 0;
@@ -720,23 +747,27 @@ static int find_entry(unsigned int ino, char **buf, int type)
 
 		while (1) {
 			ptr = *buf + buf_used;
+
+			if (show_threads)
+				snprintf(thread_info, sizeof(thread_info), "tid=%d,", p->tid);
+
 			switch (type) {
 			case USERS:
 				len = snprintf(ptr, buf_len - buf_used,
-					"(\"%s\",pid=%d,fd=%d),",
-					p->process, p->pid, p->fd);
+					"(\"%s\",pid=%d,%sfd=%d),",
+					p->task, p->pid, thread_info, p->fd);
 				break;
 			case PROC_CTX:
 				len = snprintf(ptr, buf_len - buf_used,
-					"(\"%s\",pid=%d,proc_ctx=%s,fd=%d),",
-					p->process, p->pid,
-					p->process_ctx, p->fd);
+					"(\"%s\",pid=%d,%sproc_ctx=%s,fd=%d),",
+					p->task, p->pid, thread_info,
+					p->task_ctx, p->fd);
 				break;
 			case PROC_SOCK_CTX:
 				len = snprintf(ptr, buf_len - buf_used,
-					"(\"%s\",pid=%d,proc_ctx=%s,fd=%d,sock_ctx=%s),",
-					p->process, p->pid,
-					p->process_ctx, p->fd,
+					"(\"%s\",pid=%d,%sproc_ctx=%s,fd=%d,sock_ctx=%s),",
+					p->task, p->pid, thread_info,
+					p->task_ctx, p->fd,
 					p->socket_ctx);
 				break;
 			default:
@@ -2417,7 +2448,7 @@ static void proc_ctx_print(struct sockstat *s)
 			out(" users:(%s)", buf);
 			free(buf);
 		}
-	} else if (show_users) {
+	} else if (show_processes || show_threads) {
 		if (find_entry(s->ino, &buf, USERS) > 0) {
 			out(" users:(%s)", buf);
 			free(buf);
@@ -5318,6 +5349,7 @@ static void _usage(FILE *dest)
 "   -e, --extended      show detailed socket information\n"
 "   -m, --memory        show socket memory usage\n"
 "   -p, --processes     show process using socket\n"
+"   -T, --threads       show thread using socket\n"
 "   -i, --info          show internal TCP information\n"
 "       --tipcinfo      show internal tipc socket information\n"
 "   -s, --summary       show socket usage summary\n"
@@ -5325,8 +5357,8 @@ static void _usage(FILE *dest)
 "       --cgroup        show cgroup information\n"
 "   -b, --bpf           show bpf filter socket information\n"
 "   -E, --events        continually display sockets as they are destroyed\n"
-"   -Z, --context       display process SELinux security contexts\n"
-"   -z, --contexts      display process and socket SELinux security contexts\n"
+"   -Z, --context       display task SELinux security contexts\n"
+"   -z, --contexts      display task and socket SELinux security contexts\n"
 "   -N, --net           switch to the specified network namespace name\n"
 "\n"
 "   -4, --ipv4          display only IP version 4 sockets\n"
@@ -5447,6 +5479,7 @@ static const struct option long_opts[] = {
 	{ "memory", 0, 0, 'm' },
 	{ "info", 0, 0, 'i' },
 	{ "processes", 0, 0, 'p' },
+	{ "threads", 0, 0, 'T' },
 	{ "bpf", 0, 0, 'b' },
 	{ "events", 0, 0, 'E' },
 	{ "dccp", 0, 0, 'd' },
@@ -5497,7 +5530,7 @@ int main(int argc, char *argv[])
 	int state_filter = 0;
 
 	while ((ch = getopt_long(argc, argv,
-				 "dhaletuwxnro460spbEf:mMiA:D:F:vVzZN:KHSO",
+				 "dhaletuwxnro460spTbEf:mMiA:D:F:vVzZN:KHSO",
 				 long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'n':
@@ -5520,7 +5553,10 @@ int main(int argc, char *argv[])
 			show_tcpinfo = 1;
 			break;
 		case 'p':
-			show_users++;
+			show_processes++;
+			break;
+		case 'T':
+			show_threads++;
 			break;
 		case 'b':
 			show_options = 1;
@@ -5689,7 +5725,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (show_users || show_proc_ctx || show_sock_ctx)
+	if (show_processes || show_threads || show_proc_ctx || show_sock_ctx)
 		user_ent_hash_build();
 
 	argc -= optind;
@@ -5809,7 +5845,7 @@ int main(int argc, char *argv[])
 	if (current_filter.dbs & (1<<MPTCP_DB))
 		mptcp_show(&current_filter);
 
-	if (show_users || show_proc_ctx || show_sock_ctx)
+	if (show_processes || show_threads || show_proc_ctx || show_sock_ctx)
 		user_ent_destroy();
 
 	render();
