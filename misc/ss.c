@@ -599,7 +599,7 @@ static void user_ent_hash_build(void)
 
 	strlcpy(name, root, sizeof(name));
 
-	if (strlen(name) == 0 || name[strlen(name)-1] != '/')
+	if (strlen(name) == 0 || name[strlen(name) - 1] != '/')
 		strcat(name, "/");
 
 	nameoff = strlen(name);
@@ -622,7 +622,8 @@ static void user_ent_hash_build(void)
 
 		snprintf(name + nameoff, sizeof(name) - nameoff, "%d/fd/", pid);
 		pos = strlen(name);
-		if ((dir1 = opendir(name)) == NULL) {
+		dir1 = opendir(name);
+		if (!dir1) {
 			freecon(pid_context);
 			continue;
 		}
@@ -640,9 +641,9 @@ static void user_ent_hash_build(void)
 			if (sscanf(d1->d_name, "%d%*c", &fd) != 1)
 				continue;
 
-			snprintf(name+pos, sizeof(name) - pos, "%d", fd);
+			snprintf(name + pos, sizeof(name) - pos, "%d", fd);
 
-			link_len = readlink(name, lnk, sizeof(lnk)-1);
+			link_len = readlink(name, lnk, sizeof(lnk) - 1);
 			if (link_len == -1)
 				continue;
 			lnk[link_len] = '\0';
@@ -650,7 +651,8 @@ static void user_ent_hash_build(void)
 			if (strncmp(lnk, pattern, strlen(pattern)))
 				continue;
 
-			sscanf(lnk, "socket:[%u]", &ino);
+			if (sscanf(lnk, "socket:[%u]", &ino) != 1)
+				continue;
 
 			if (getfilecon(name, &sock_context) <= 0)
 				sock_context = strdup(no_ctx);
@@ -658,16 +660,16 @@ static void user_ent_hash_build(void)
 			if (process[0] == '\0') {
 				FILE *fp;
 
-				snprintf(tmp, sizeof(tmp), "%s/%d/stat",
-					root, pid);
-				if ((fp = fopen(tmp, "r")) != NULL) {
+				snprintf(tmp, sizeof(tmp), "%s/%d/stat", root, pid);
+
+				fp = fopen(tmp, "r");
+				if (fp) {
 					if (fscanf(fp, "%*d (%[^)])", process) < 1)
 						; /* ignore */
 					fclose(fp);
 				}
 			}
-			user_ent_add(ino, process, pid, fd,
-					pid_context, sock_context);
+			user_ent_add(ino, process, pid, fd, pid_context, sock_context);
 			freecon(sock_context);
 		}
 		freecon(pid_context);
