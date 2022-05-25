@@ -596,13 +596,6 @@ static void user_ent_hash_build(void)
 	char *pid_context;
 	char *sock_context;
 	const char *no_ctx = "unavailable";
-	static int user_ent_hash_build_init;
-
-	/* If show_users & show_proc_ctx set only do this once */
-	if (user_ent_hash_build_init != 0)
-		return;
-
-	user_ent_hash_build_init = 1;
 
 	strlcpy(name, root, sizeof(name));
 
@@ -5515,7 +5508,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			show_users++;
-			user_ent_hash_build();
 			break;
 		case 'b':
 			show_options = 1;
@@ -5650,7 +5642,6 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			show_proc_ctx++;
-			user_ent_hash_build();
 			break;
 		case 'N':
 			if (netns_switch(optarg))
@@ -5684,6 +5675,9 @@ int main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	if (show_users || show_proc_ctx || show_sock_ctx)
+		user_ent_hash_build();
 
 	argc -= optind;
 	argv += optind;
