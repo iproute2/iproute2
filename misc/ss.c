@@ -567,6 +567,81 @@ static void user_ent_add(unsigned int ino, char *process,
 	*pp = p;
 }
 
+#define MAX_PATH_LEN	1024
+
+static void user_ent_hash_build_task(char *path, int pid)
+{
+	const char *no_ctx = "unavailable";
+	char task[16] = {'\0', };
+	char stat[MAX_PATH_LEN];
+	int pos_id, pos_fd;
+	char *task_context;
+	struct dirent *d;
+	DIR *dir;
+
+	if (getpidcon(pid, &task_context) != 0)
+		task_context = strdup(no_ctx);
+
+	pos_id = strlen(path);	/* $PROC_ROOT/$ID/ */
+
+	snprintf(path + pos_id, MAX_PATH_LEN - pos_id, "fd/");
+	dir = opendir(path);
+	if (!dir) {
+		freecon(task_context);
+		return;
+	}
+
+	pos_fd = strlen(path);	/* $PROC_ROOT/$ID/fd/ */
+
+	while ((d = readdir(dir)) != NULL) {
+		const char *pattern = "socket:[";
+		char *sock_context;
+		unsigned int ino;
+		ssize_t link_len;
+		char lnk[64];
+		int fd;
+
+		if (sscanf(d->d_name, "%d%*c", &fd) != 1)
+			continue;
+
+		snprintf(path + pos_fd, MAX_PATH_LEN - pos_fd, "%d", fd);
+
+		link_len = readlink(path, lnk, sizeof(lnk) - 1);
+		if (link_len == -1)
+			continue;
+		lnk[link_len] = '\0';
+
+		if (strncmp(lnk, pattern, strlen(pattern)))
+			continue;
+
+		if (sscanf(lnk, "socket:[%u]", &ino) != 1)
+			continue;
+
+		if (getfilecon(path, &sock_context) <= 0)
+			sock_context = strdup(no_ctx);
+
+		if (task[0] == '\0') {
+			FILE *fp;
+
+			strlcpy(stat, path, pos_id + 1);
+			snprintf(stat + pos_id, sizeof(stat) - pos_id, "stat");
+
+			fp = fopen(stat, "r");
+			if (fp) {
+				if (fscanf(fp, "%*d (%[^)])", task) < 1)
+					; /* ignore */
+				fclose(fp);
+			}
+		}
+
+		user_ent_add(ino, task, pid, fd, task_context, sock_context);
+		freecon(sock_context);
+	}
+
+	freecon(task_context);
+	closedir(dir);
+}
+
 static void user_ent_destroy(void)
 {
 	struct user_ent *p, *p_next;
@@ -589,13 +664,10 @@ static void user_ent_destroy(void)
 static void user_ent_hash_build(void)
 {
 	const char *root = getenv("PROC_ROOT") ? : "/proc/";
+	char name[MAX_PATH_LEN];
 	struct dirent *d;
-	char name[1024];
 	int nameoff;
 	DIR *dir;
-	char *pid_context;
-	char *sock_context;
-	const char *no_ctx = "unavailable";
 
 	strlcpy(name, root, sizeof(name));
 
@@ -609,71 +681,13 @@ static void user_ent_hash_build(void)
 		return;
 
 	while ((d = readdir(dir)) != NULL) {
-		struct dirent *d1;
-		char process[16];
-		int pid, pos;
-		DIR *dir1;
+		int pid;
 
 		if (sscanf(d->d_name, "%d%*c", &pid) != 1)
 			continue;
 
-		if (getpidcon(pid, &pid_context) != 0)
-			pid_context = strdup(no_ctx);
-
-		snprintf(name + nameoff, sizeof(name) - nameoff, "%d/fd/", pid);
-		pos = strlen(name);
-		dir1 = opendir(name);
-		if (!dir1) {
-			freecon(pid_context);
-			continue;
-		}
-
-		process[0] = '\0';
-
-		while ((d1 = readdir(dir1)) != NULL) {
-			const char *pattern = "socket:[";
-			unsigned int ino;
-			char lnk[64];
-			int fd;
-			ssize_t link_len;
-			char tmp[1024];
-
-			if (sscanf(d1->d_name, "%d%*c", &fd) != 1)
-				continue;
-
-			snprintf(name + pos, sizeof(name) - pos, "%d", fd);
-
-			link_len = readlink(name, lnk, sizeof(lnk) - 1);
-			if (link_len == -1)
-				continue;
-			lnk[link_len] = '\0';
-
-			if (strncmp(lnk, pattern, strlen(pattern)))
-				continue;
-
-			if (sscanf(lnk, "socket:[%u]", &ino) != 1)
-				continue;
-
-			if (getfilecon(name, &sock_context) <= 0)
-				sock_context = strdup(no_ctx);
-
-			if (process[0] == '\0') {
-				FILE *fp;
-
-				snprintf(tmp, sizeof(tmp), "%s/%d/stat", root, pid);
-
-				fp = fopen(tmp, "r");
-				if (fp) {
-					if (fscanf(fp, "%*d (%[^)])", process) < 1)
-						; /* ignore */
-					fclose(fp);
-				}
-			}
-			user_ent_add(ino, process, pid, fd, pid_context, sock_context);
-			freecon(sock_context);
-		}
-		freecon(pid_context);
-		closedir(dir1);
+		snprintf(name + nameoff, sizeof(name) - nameoff, "%d/", pid);
+		user_ent_hash_build_task(name, pid);
 	}
 	closedir(dir);
 }
