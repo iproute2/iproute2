@@ -1,0 +1,208 @@
+.TH IP\-STATS 8 "16 Mar 2022" "iproute2" "Linux"
+.SH NAME
+ip-stats \- manage and show interface statistics
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip
+.B stats
+.RI  " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.BR "ip stats show"
+.RB "[ " dev
+.IR DEV " ] "
+.RB "[ " group
+.IR GROUP " [ "
+.BI subgroup " SUBGROUP"
+.RB " [ " suite
+.IR " SUITE" " ] ... ] ... ] ..."
+
+.ti -8
+.BR "ip stats set"
+.BI dev " DEV"
+.BR l3_stats " { "
+.BR on " | " off " }"
+
+.SH DESCRIPTION
+
+.TP
+.B ip stats set
+is used for toggling whether a certain HW statistics suite is collected on
+a given netdevice. The following statistics suites are supported:
+
+.in 21
+
+.ti 14
+.B l3_stats
+L3 stats reflect traffic that takes place in a HW device on an object that
+corresponds to the given software netdevice.
+
+.TP
+.B ip stats show
+is used for showing stats on a given netdevice, or dumping statistics
+across all netdevices. By default, all stats are requested. It is possible
+to filter which stats are requested by using the
+.B group
+and
+.B subgroup
+keywords.
+
+It is possible to specify several groups, or several subgroups for one
+group. When no subgroups are given for a group, all the subgroups are
+requested.
+
+The following groups are recognized:
+.in 21
+
+.ti 14
+.B group link
+- Link statistics. The same suite that "ip -s link show" shows.
+
+.ti 14
+.B group offload
+- A group that contains a number of HW-oriented statistics. See below for
+individual subgroups within this group.
+
+.ti 14
+.B group xstats
+- Extended statistics. A subgroup identifies the type of netdevice to show the
+statistics for.
+
+.ti 14
+.B group xstats_slave
+- Extended statistics for the slave of a netdevice of a given type. A subgroup
+identifies the type of master netdevice.
+
+.ti 14
+.B group afstats
+- A group for address-family specific netdevice statistics.
+
+.TQ
+.BR "group offload " subgroups:
+.in 21
+
+.ti 14
+.B subgroup cpu_hit
+- The
+.B cpu_hit
+statistics suite is useful on hardware netdevices. The
+.B link
+statistics on these devices reflect both the hardware- and
+software-datapath traffic. The
+.B cpu_hit
+statistics then only reflect software-datapath traffic.
+
+.ti 14
+.B subgroup hw_stats_info
+- This suite does not include traffic statistics, but rather communicates
+the state of other statistics. Through this subgroup, it is possible to
+discover whether a given statistic was enabled, and when it was, whether
+any device driver actually configured its device to collect these
+statistics. For example,
+.B l3_stats
+was enabled in the following case, but no driver has installed it:
+
+# ip stats show dev swp1 group offload subgroup hw_stats_info
+.br
+56: swp1: group offload subgroup hw_stats_info
+.br
+    l3_stats on used off
+
+After an L3 address is added to the netdevice, the counter will be
+installed:
+
+# ip addr add dev swp1 192.0.2.1/28
+.br
+# ip stats show dev swp1 group offload subgroup hw_stats_info
+.br
+56: swp1: group offload subgroup hw_stats_info
+.br
+    l3_stats on used on
+
+.ti 14
+.B subgroup l3_stats
+- These statistics reflect L3 traffic that takes place in HW on an object
+that corresponds to the netdevice. Note that this suite is disabled by
+default and needs to be first enabled through
+.B ip stats set\fR.
+
+For example:
+
+# ip stats show dev swp2.200 group offload subgroup l3_stats
+.br
+112: swp2.200: group offload subgroup l3_stats on used on
+.br
+    RX:  bytes packets errors dropped   mcast
+.br
+          8900      72      2       0       3
+.br
+    TX:  bytes packets errors dropped
+.br
+          7176      58      0       0
+
+Note how the l3_stats_info for the selected group is also part of the dump.
+
+.TQ
+.BR "group xstats " and " group xstats_slave " subgroups:
+.in 21
+
+.ti 14
+.B subgroup bridge \fR[\fB suite stp \fR] [\fB suite mcast \fR]
+- Statistics for STP and, respectively, IGMP / MLD (under the keyword
+\fBmcast\fR) traffic on bridges and their slaves.
+
+.ti 14
+.B subgroup bond \fR[\fB suite 802.3ad \fR]
+- Statistics for LACP traffic on bond devices and their slaves.
+
+.TQ
+.BR "group afstats " subgroups:
+.in 21
+
+.ti 14
+.B subgroup mpls
+- Statistics for MPLS traffic seen on the netdevice. For example:
+
+# ip stats show dev veth01 group afstats subgroup mpls
+.br
+3: veth01: group afstats subgroup mpls
+.br
+    RX: bytes packets errors dropped noroute
+.br
+            0       0      0       0       0
+.br
+    TX: bytes packets errors dropped
+.br
+          216       2      0       0
+
+.SH EXAMPLES
+.PP
+# ip stats set dev swp1 l3_stats on
+.RS
+Enables collection of L3 HW statistics on swp1.
+.RE
+
+.PP
+# ip stats show group offload
+.RS
+Shows all offload statistics on all netdevices.
+.RE
+
+.PP
+# ip stats show dev swp1 group link
+.RS
+Shows link statistics on the given netdevice.
+.RE
+
+.SH SEE ALSO
+.br
+.BR ip (8),
+.BR ip-link (8),
+
+.SH AUTHOR
+Manpage by Petr Machata.

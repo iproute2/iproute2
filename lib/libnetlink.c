@@ -619,12 +619,13 @@ int rtnl_fdb_linkdump_req_filter_fn(struct rtnl_handle *rth,
 	return send(rth->fd, &req, sizeof(req), 0);
 }
 
-int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
+int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam,
+			      __u32 filt_mask,
+			      int (*filter_fn)(struct ipstats_req *req,
+					       void *data),
+			      void *filter_data)
 {
-	struct {
-		struct nlmsghdr nlh;
-		struct if_stats_msg ifsm;
-	} req;
+	struct ipstats_req req;
 
 	memset(&req, 0, sizeof(req));
 	req.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct if_stats_msg));
@@ -634,6 +635,14 @@ int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
 	req.nlh.nlmsg_seq = rth->dump = ++rth->seq;
 	req.ifsm.family = fam;
 	req.ifsm.filter_mask = filt_mask;
+
+	if (filter_fn) {
+		int err;
+
+		err = filter_fn(&req, filter_data);
+		if (err)
+			return err;
+	}
 
 	return send(rth->fd, &req, sizeof(req), 0);
 }
@@ -1599,4 +1608,24 @@ void nl_print_policy(const struct rtattr *attr, FILE *fp)
 					rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_MAX_LENGTH]));
 		}
 	}
+}
+
+int rtnl_tunneldump_req(struct rtnl_handle *rth, int family, int ifindex,
+			__u8 flags)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct tunnel_msg tmsg;
+		char buf[256];
+	} req = {
+		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct tunnel_msg)),
+		.nlh.nlmsg_type = RTM_GETTUNNEL,
+		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+		.nlh.nlmsg_seq = rth->dump = ++rth->seq,
+		.tmsg.family = family,
+		.tmsg.flags = flags,
+		.tmsg.ifindex = ifindex,
+	};
+
+	return send(rth->fd, &req, sizeof(req), 0);
 }

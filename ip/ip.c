@@ -123,6 +123,7 @@ static const struct cmd {
 	{ "mptcp",	do_mptcp },
 	{ "ioam",	do_ioam6 },
 	{ "help",	do_help },
+	{ "stats",	do_ipstats },
 	{ 0 }
 };
 

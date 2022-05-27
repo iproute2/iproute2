@@ -54,7 +54,7 @@ void iplink_types_usage(void)
 		"          macsec | macvlan | macvtap |\n"
 		"          netdevsim | nlmon | rmnet | sit | team | team_slave |\n"
 		"          vcan | veth | vlan | vrf | vti | vxcan | vxlan | wwan |\n"
-		"          xfrm }\n");
+		"          xfrm | virt_wifi }\n");
 }
 
 void iplink_usage(void)
@@ -1514,6 +1514,65 @@ static int do_set(int argc, char **argv)
 }
 #endif /* IPLINK_IOCTL_COMPAT */
 
+void print_mpls_link_stats(FILE *fp, const struct mpls_link_stats *stats,
+			   const char *indent)
+{
+	unsigned int cols[] = {
+		strlen("*X: bytes"),
+		strlen("packets"),
+		strlen("errors"),
+		strlen("dropped"),
+		strlen("noroute"),
+	};
+
+	if (is_json_context()) {
+		/* RX stats */
+		open_json_object("rx");
+		print_u64(PRINT_JSON, "bytes", NULL, stats->rx_bytes);
+		print_u64(PRINT_JSON, "packets", NULL, stats->rx_packets);
+		print_u64(PRINT_JSON, "errors", NULL, stats->rx_errors);
+		print_u64(PRINT_JSON, "dropped", NULL, stats->rx_dropped);
+		print_u64(PRINT_JSON, "noroute", NULL, stats->rx_noroute);
+		close_json_object();
+
+		/* TX stats */
+		open_json_object("tx");
+		print_u64(PRINT_JSON, "bytes", NULL, stats->tx_bytes);
+		print_u64(PRINT_JSON, "packets", NULL, stats->tx_packets);
+		print_u64(PRINT_JSON, "errors", NULL, stats->tx_errors);
+		print_u64(PRINT_JSON, "dropped", NULL, stats->tx_dropped);
+		close_json_object();
+	} else {
+		size_columns(cols, ARRAY_SIZE(cols), stats->rx_bytes,
+			     stats->rx_packets, stats->rx_errors,
+			     stats->rx_dropped, stats->rx_noroute);
+		size_columns(cols, ARRAY_SIZE(cols), stats->tx_bytes,
+			     stats->tx_packets, stats->tx_errors,
+			     stats->tx_dropped, 0);
+
+		fprintf(fp, "%sRX: %*s %*s %*s %*s %*s%s", indent,
+			cols[0] - 4, "bytes", cols[1], "packets",
+			cols[2], "errors", cols[3], "dropped",
+			cols[4], "noroute", _SL_);
+		fprintf(fp, "%s", indent);
+		print_num(fp, cols[0], stats->rx_bytes);
+		print_num(fp, cols[1], stats->rx_packets);
+		print_num(fp, cols[2], stats->rx_errors);
+		print_num(fp, cols[3], stats->rx_dropped);
+		print_num(fp, cols[4], stats->rx_noroute);
+		fprintf(fp, "\n");
+
+		fprintf(fp, "%sTX: %*s %*s %*s %*s%s", indent,
+			cols[0] - 4, "bytes", cols[1], "packets",
+			cols[2], "errors", cols[3], "dropped", _SL_);
+		fprintf(fp, "%s", indent);
+		print_num(fp, cols[0], stats->tx_bytes);
+		print_num(fp, cols[1], stats->tx_packets);
+		print_num(fp, cols[2], stats->tx_errors);
+		print_num(fp, cols[3], stats->tx_dropped);
+	}
+}
+
 static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 {
 	struct rtattr *mrtb[MPLS_STATS_MAX+1];
@@ -1525,22 +1584,8 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 		return;
 
 	stats = RTA_DATA(mrtb[MPLS_STATS_LINK]);
-
 	fprintf(fp, "    mpls:\n");
-	fprintf(fp, "        RX: bytes  packets  errors  dropped  noroute\n");
-	fprintf(fp, "        ");
-	print_num(fp, 10, stats->rx_bytes);
-	print_num(fp, 8, stats->rx_packets);
-	print_num(fp, 7, stats->rx_errors);
-	print_num(fp, 8, stats->rx_dropped);
-	print_num(fp, 7, stats->rx_noroute);
-	fprintf(fp, "\n");
-	fprintf(fp, "        TX: bytes  packets  errors  dropped\n");
-	fprintf(fp, "        ");
-	print_num(fp, 10, stats->tx_bytes);
-	print_num(fp, 8, stats->tx_packets);
-	print_num(fp, 7, stats->tx_errors);
-	print_num(fp, 7, stats->tx_dropped);
+	print_mpls_link_stats(fp, stats, "        ");
 	fprintf(fp, "\n");
 }
 
@@ -1641,7 +1686,8 @@ static int iplink_afstats(int argc, char **argv)
 		}
 	}
 
-	if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask) < 0) {
+	if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask,
+				      NULL, NULL) < 0) {
 		perror("Cannont send dump request");
 		return 1;
 	}

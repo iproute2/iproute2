@@ -164,6 +164,11 @@ provided in LLADDR format, in which case it is a bitwise mask, or as a
 number of high bits to match. If the mask is missing then a match on all
 bits is assumed.
 .TP
+.BI num_of_vlans " NUM"
+Match on the number of vlan tags in the packet.
+.I NUM
+can be 0 or small positive integer. Typically in 0-4 range.
+.TP
 .BI vlan_id " VID"
 Match on vlan tag id.
 .I VID

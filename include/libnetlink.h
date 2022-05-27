@@ -37,6 +37,12 @@ struct nlmsg_chain {
 	struct nlmsg_list *tail;
 };
 
+struct ipstats_req {
+	struct nlmsghdr nlh;
+	struct if_stats_msg ifsm;
+	char buf[128];
+};
+
 extern int rcvbuf;
 
 int rtnl_open(struct rtnl_handle *rth, unsigned int subscriptions)
@@ -88,7 +94,10 @@ int rtnl_fdb_linkdump_req_filter_fn(struct rtnl_handle *rth,
 int rtnl_nsiddump_req_filter_fn(struct rtnl_handle *rth, int family,
 				req_filter_fn_t filter_fn)
 	__attribute__((warn_unused_result));
-int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask)
+int rtnl_statsdump_req_filter(struct rtnl_handle *rth, int fam, __u32 filt_mask,
+			      int (*filter_fn)(struct ipstats_req *req,
+					       void *data),
+			      void *filter_data)
 	__attribute__((warn_unused_result));
 int rtnl_dump_request(struct rtnl_handle *rth, int type, void *req,
 			     int len)
@@ -101,6 +110,10 @@ int rtnl_nexthopdump_req(struct rtnl_handle *rth, int family,
 	__attribute__((warn_unused_result));
 int rtnl_nexthop_bucket_dump_req(struct rtnl_handle *rth, int family,
 				 req_filter_fn_t filter_fn)
+	__attribute__((warn_unused_result));
+
+int rtnl_tunneldump_req(struct rtnl_handle *rth, int family, int ifindex,
+			__u8 flags)
 	__attribute__((warn_unused_result));
 
 struct rtnl_ctrl_data {
@@ -320,6 +333,11 @@ int rtnl_from_file(FILE *, rtnl_listen_filter_t handler,
 #ifndef BRVLAN_RTA
 #define BRVLAN_RTA(r) \
 	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct br_vlan_msg))))
+#endif
+
+#ifndef TUNNEL_RTA
+#define TUNNEL_RTA(r) \
+	((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct tunnel_msg))))
 #endif
 
 /* User defined nlmsg_type which is used mostly for logging netlink

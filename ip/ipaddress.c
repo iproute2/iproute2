@@ -546,7 +546,7 @@ static void print_vfinfo(FILE *fp, struct ifinfomsg *ifi, struct rtattr *vfinfo)
 		print_vf_stats64(fp, vf[IFLA_VF_STATS]);
 }
 
-static void size_columns(unsigned int cols[], unsigned int n, ...)
+void size_columns(unsigned int cols[], unsigned int n, ...)
 {
 	unsigned int i, len;
 	uint64_t val, powi;
@@ -680,10 +680,10 @@ static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 	}
 }
 
-static void __print_link_stats(FILE *fp, struct rtattr *tb[])
+void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
+		   const struct rtattr *carrier_changes,
+		   const char *what)
 {
-	const struct rtattr *carrier_changes = tb[IFLA_CARRIER_CHANGES];
-	struct rtnl_link_stats64 _s, *s = &_s;
 	unsigned int cols[] = {
 		strlen("*X errors:"),
 		strlen("packets"),
@@ -693,14 +693,10 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 		strlen("overrun"),
 		strlen("compressed"),
 	};
-	int ret;
-
-	ret = get_rtnl_link_stats_rta(s, tb);
-	if (ret < 0)
-		return;
 
 	if (is_json_context()) {
-		open_json_object((ret == sizeof(*s)) ? "stats64" : "stats");
+		if (what)
+			open_json_object(what);
 
 		/* RX stats */
 		open_json_object("rx");
@@ -771,7 +767,8 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 		}
 
 		close_json_object();
-		close_json_object();
+		if (what)
+			close_json_object();
 	} else {
 		size_columns(cols, ARRAY_SIZE(cols),
 			     s->rx_bytes, s->rx_packets, s->rx_errors,
@@ -868,6 +865,20 @@ static void __print_link_stats(FILE *fp, struct rtattr *tb[])
 					  rta_getattr_u32(carrier_changes));
 		}
 	}
+}
+
+static void __print_link_stats(FILE *fp, struct rtattr *tb[])
+{
+	const struct rtattr *carrier_changes = tb[IFLA_CARRIER_CHANGES];
+	struct rtnl_link_stats64 _s, *s = &_s;
+	int ret;
+
+	ret = get_rtnl_link_stats_rta(s, tb);
+	if (ret < 0)
+		return;
+
+	print_stats64(fp, s, carrier_changes,
+		      (ret == sizeof(*s)) ? "stats64" : "stats");
 }
 
 static void print_link_stats(FILE *fp, struct nlmsghdr *n)
