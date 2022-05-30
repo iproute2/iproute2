@@ -113,16 +113,15 @@ int str2key(char *str, struct tipc_aead_key *key)
 	    }
 	}
 
-	if (len > TIPC_AEAD_KEYLEN_MAX)
+	key->keylen = ishex ? (len + 1) / 2 : len;
+	if (key->keylen > TIPC_AEAD_KEYLEN_MAX)
 		return -1;
 
 	/* Obtain key: */
 	if (!ishex) {
-		key->keylen = len;
 		memcpy(key->key, str, len);
 	} else {
 		/* Convert hex string to key */
-		key->keylen = (len + 1) / 2;
 		for (i = 0; i < key->keylen; i++) {
 			if (i == 0 && len % 2 != 0) {
 				if (sscanf(str, "%1hhx", &key->key[0]) != 1)

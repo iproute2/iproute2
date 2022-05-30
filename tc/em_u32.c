@@ -84,7 +84,7 @@ static int u32_parse_eopt(struct nlmsghdr *n, struct tcf_ematch_hdr *hdr,
 		char buf[a->len - nh_len + 1];
 
 		offmask = -1;
-		memcpy(buf, a->data + nh_len, a->len - nh_len);
+		strncpy(buf, a->data + nh_len, a->len - nh_len + 1);
 		offset = strtoul(buf, NULL, 0);
 	} else if (!bstrcmp(a, "nexthdr+")) {
 		a = bstr_next(a);
