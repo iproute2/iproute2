@@ -2952,6 +2952,11 @@ static void tcp_tls_conf(const char *name, struct rtattr *attr)
 	}
 }
 
+static void tcp_tls_zc_sendfile(struct rtattr *attr)
+{
+	out(" zerocopy_sendfile: %s", attr ? "active" : "inactive");
+}
+
 static void mptcp_subflow_info(struct rtattr *tb[])
 {
 	u_int32_t flags = 0;
@@ -3182,6 +3187,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 			tcp_tls_cipher(tlsinfo[TLS_INFO_CIPHER]);
 			tcp_tls_conf("rxconf", tlsinfo[TLS_INFO_RXCONF]);
 			tcp_tls_conf("txconf", tlsinfo[TLS_INFO_TXCONF]);
+			tcp_tls_zc_sendfile(tlsinfo[TLS_INFO_ZC_SENDFILE]);
 		}
 		if (ulpinfo[INET_ULP_INFO_MPTCP]) {
 			struct rtattr *sfinfo[MPTCP_SUBFLOW_ATTR_MAX + 1] =
