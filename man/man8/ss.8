@@ -155,6 +155,10 @@ the number of packets dropped before they are de-multiplexed into the socket
 .B \-p, \-\-processes
 Show process using socket.
 .TP
+.B \-T, \-\-threads
+Show thread using socket. Implies \-p.
+.BR \-p .
+.TP
 .B \-i, \-\-info
 Show internal TCP information. Below fields may appear:
 .RS
@@ -311,7 +315,9 @@ Continually display sockets as they are destroyed
 .B \-Z, \-\-context
 As the
 .B \-p
-option but also shows process security context.
+option but also shows process security context. If the
+.B \-T
+option is used, also shows thread security context.
 .sp
 For
 .BR netlink (7)
