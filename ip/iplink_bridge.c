@@ -937,23 +937,9 @@ struct link_util bridge_link_util = {
 	.print_ifla_xstats = bridge_print_xstats,
 };
 
-static const struct ipstats_stat_desc ipstats_stat_desc_bridge_tmpl_stp = {
-	.name = "stp",
-	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
-	.show = &ipstats_stat_desc_show_xstats,
-	.pack = &ipstats_stat_desc_pack_xstats,
-};
-
-static const struct ipstats_stat_desc ipstats_stat_desc_bridge_tmpl_mcast = {
-	.name = "mcast",
-	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
-	.show = &ipstats_stat_desc_show_xstats,
-	.pack = &ipstats_stat_desc_pack_xstats,
-};
-
 static const struct ipstats_stat_desc_xstats
 ipstats_stat_desc_xstats_bridge_stp = {
-	.desc = ipstats_stat_desc_bridge_tmpl_stp,
+	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("stp"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
 	.inner_max = BRIDGE_XSTATS_MAX,
@@ -963,7 +949,7 @@ ipstats_stat_desc_xstats_bridge_stp = {
 
 static const struct ipstats_stat_desc_xstats
 ipstats_stat_desc_xstats_bridge_mcast = {
-	.desc = ipstats_stat_desc_bridge_tmpl_mcast,
+	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("mcast"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
 	.inner_max = BRIDGE_XSTATS_MAX,
@@ -986,7 +972,7 @@ const struct ipstats_stat_desc ipstats_stat_desc_xstats_bridge_group = {
 
 static const struct ipstats_stat_desc_xstats
 ipstats_stat_desc_xstats_slave_bridge_stp = {
-	.desc = ipstats_stat_desc_bridge_tmpl_stp,
+	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("stp"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
 	.inner_max = BRIDGE_XSTATS_MAX,
@@ -996,7 +982,7 @@ ipstats_stat_desc_xstats_slave_bridge_stp = {
 
 static const struct ipstats_stat_desc_xstats
 ipstats_stat_desc_xstats_slave_bridge_mcast = {
-	.desc = ipstats_stat_desc_bridge_tmpl_mcast,
+	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("mcast"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
 	.inner_max = BRIDGE_XSTATS_MAX,
