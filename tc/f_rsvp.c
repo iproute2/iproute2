@@ -230,14 +230,14 @@ static int rsvp_parse_opt(struct filter_util *qu, char *handle, int argc,
 			pinfo_ok++;
 		} else if (matches(*argv, "classid") == 0 ||
 			   strcmp(*argv, "flowid") == 0) {
-			unsigned int handle;
+			unsigned int classid;
 
 			NEXT_ARG();
-			if (get_tc_classid(&handle, *argv)) {
+			if (get_tc_classid(&classid, *argv)) {
 				fprintf(stderr, "Illegal \"classid\"\n");
 				return -1;
 			}
-			addattr_l(n, 4096, TCA_RSVP_CLASSID, &handle, 4);
+			addattr_l(n, 4096, TCA_RSVP_CLASSID, &classid, 4);
 		} else if (strcmp(*argv, "tunnelid") == 0) {
 			unsigned int tid;
 
