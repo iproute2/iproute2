@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TC_UTIL_H_
-#define _TC_UTIL_H_ 1
+#ifndef _GENL_UTILS_H_
+#define _GENL_UTILS_H_ 1
 
 #include <linux/genetlink.h>
 #include "utils.h"
