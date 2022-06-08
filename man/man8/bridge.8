@@ -123,7 +123,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
 .BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
-.BR [no]sticky " ]"
+.BR [no]sticky " ] [ " [no]offloaded " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " } "
@@ -860,6 +860,11 @@ if "no" is prepended then only entries without extern_learn flag will be deleted
 .B [no]sticky
 if specified then only entries with sticky flag will be deleted or respectively
 if "no" is prepended then only entries without sticky flag will be deleted.
+
+.TP
+.B [no]offloaded
+if specified then only entries with offloaded flag will be deleted or respectively
+if "no" is prepended then only entries without offloaded flag will be deleted.
 .sp
 
 .SH bridge mdb - multicast group database management
