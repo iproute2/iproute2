@@ -121,7 +121,7 @@ bridge \- show / manipulate bridge addresses and devices
 .B vlan
 .IR VID " ] [ "
 .BR self " ] [ " master " ] [ "
-.BR [no]permanent " | " [no]static " ]"
+.BR [no]permanent " | " [no]static " | " [no]dynamic " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " } "
@@ -838,6 +838,11 @@ is prepended then only non-permanent entries will be deleted.
 .B [no]static
 if specified then only static entries will be deleted or respectively if "no"
 is prepended then only non-static entries will be deleted.
+
+.TP
+.B [no]dynamic
+if specified then only dynamic entries will be deleted or respectively if "no"
+is prepended then only non-dynamic (static or permanent) entries will be deleted.
 .sp
 
 .SH bridge mdb - multicast group database management
