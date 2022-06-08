@@ -122,7 +122,7 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VID " ] [ "
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
-.BR [no]added_by_user " ]"
+.BR [no]added_by_user " ] [ " [no]extern_learn " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " } "
@@ -849,6 +849,11 @@ is prepended then only non-dynamic (static or permanent) entries will be deleted
 .B [no]added_by_user
 if specified then only entries with added_by_user flag will be deleted or respectively
 if "no" is prepended then only entries without added_by_user flag will be deleted.
+
+.TP
+.B [no]extern_learn
+if specified then only entries with extern_learn flag will be deleted or respectively
+if "no" is prepended then only entries without extern_learn flag will be deleted.
 .sp
 
 .SH bridge mdb - multicast group database management
