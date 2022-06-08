@@ -46,7 +46,8 @@ static void usage(void)
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
 		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
 		"       bridge fdb flush dev DEV [ brport DEV ] [ vlan VID ]\n"
-		"              [ self ] [ master ] [ [no]permanent | [no]static | [no]dynamic ]\n");
+		"              [ self ] [ master ] [ [no]permanent | [no]static | [no]dynamic ]\n"
+		"              [ [no]added_by_user ]\n");
 	exit(-1);
 }
 
@@ -681,6 +682,7 @@ static int fdb_flush(int argc, char **argv)
 		.ndm.ndm_family = PF_BRIDGE,
 	};
 	unsigned short ndm_state_mask = 0;
+	unsigned short ndm_flags_mask = 0;
 	short vid = -1, port_ifidx = -1;
 	unsigned short ndm_flags = 0;
 	unsigned short ndm_state = 0;
@@ -712,6 +714,12 @@ static int fdb_flush(int argc, char **argv)
 		} else if (strcmp(*argv, "nodynamic") == 0) {
 			ndm_state |= NUD_NOARP;
 			ndm_state_mask |= NUD_NOARP;
+		} else if (strcmp(*argv, "added_by_user") == 0) {
+			ndm_flags |= NTF_USE;
+			ndm_flags_mask |= NTF_USE;
+		} else if (strcmp(*argv, "noadded_by_user") == 0) {
+			ndm_flags &= ~NTF_USE;
+			ndm_flags_mask |= NTF_USE;
 		} else if (strcmp(*argv, "brport") == 0) {
 			if (port)
 				duparg2("brport", *argv);
@@ -764,6 +772,9 @@ static int fdb_flush(int argc, char **argv)
 		addattr32(&req.n, sizeof(req), NDA_IFINDEX, port_ifidx);
 	if (vid > -1)
 		addattr16(&req.n, sizeof(req), NDA_VLAN, vid);
+	if (ndm_flags_mask)
+		addattr8(&req.n, sizeof(req), NDA_NDM_FLAGS_MASK,
+			 ndm_flags_mask);
 	if (ndm_state_mask)
 		addattr16(&req.n, sizeof(req), NDA_NDM_STATE_MASK,
 			  ndm_state_mask);
