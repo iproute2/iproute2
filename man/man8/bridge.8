@@ -113,6 +113,12 @@ bridge \- show / manipulate bridge addresses and devices
 .BR self " ] [ " master " ] [ " dynamic " ]"
 
 .ti -8
+.BR "bridge fdb flush"
+.B dev
+.IR DEV " [ "
+.BR self " ] [ " master " ]"
+
+.ti -8
 .BR "bridge mdb" " { " add " | " del " } "
 .B dev
 .I DEV
@@ -782,6 +788,29 @@ the bridge to which this address is associated.
 .TP
 .B master
 - the address is associated with master devices fdb. Usually software (default).
+
+.SS bridge fdb flush - flush bridge forwarding table entries.
+
+flush the matching bridge forwarding table entries.
+
+.TP
+.BI dev " DEV"
+the target device for the operation. If the device is a bridge port and "master"
+is set then the operation will be fulfilled by its master device's driver and
+all entries pointing to that port will be deleted.
+
+.TP
+.B self
+the operation is fulfilled directly by the driver for the specified network
+device. If the network device belongs to a master like a bridge, then the
+bridge is bypassed and not notified of this operation. The "bridge fdb flush"
+command can also be used on the bridge device itself. The flag is set by default if
+"master" is not specified.
+
+.TP
+.B master
+if the specified network device is a port that belongs to a master device
+such as a bridge, the operation is fulfilled by the master device's driver.
 .sp
 
 .SH bridge mdb - multicast group database management

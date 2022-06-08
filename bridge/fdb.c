@@ -44,7 +44,8 @@ static void usage(void)
 		"       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ]\n"
 		"              [ state STATE ] [ dynamic ] ]\n"
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
-		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n");
+		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
+		"       bridge fdb flush dev DEV [ self ] [ master ]\n");
 	exit(-1);
 }
 
@@ -666,6 +667,59 @@ static int fdb_get(int argc, char **argv)
 	return 0;
 }
 
+static int fdb_flush(int argc, char **argv)
+{
+	struct {
+		struct nlmsghdr	n;
+		struct ndmsg		ndm;
+		char			buf[256];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_BULK,
+		.n.nlmsg_type = RTM_DELNEIGH,
+		.ndm.ndm_family = PF_BRIDGE,
+	};
+	unsigned short ndm_flags = 0;
+	char *d = NULL;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			d = *argv;
+		} else if (strcmp(*argv, "master") == 0) {
+			ndm_flags |= NTF_MASTER;
+		} else if (strcmp(*argv, "self") == 0) {
+			ndm_flags |= NTF_SELF;
+		} else {
+			if (strcmp(*argv, "help") == 0)
+				NEXT_ARG();
+		}
+		argc--; argv++;
+	}
+
+	if (d == NULL) {
+		fprintf(stderr, "Device is a required argument.\n");
+		return -1;
+	}
+
+	req.ndm.ndm_ifindex = ll_name_to_index(d);
+	if (req.ndm.ndm_ifindex == 0) {
+		fprintf(stderr, "Cannot find bridge device \"%s\"\n", d);
+		return -1;
+	}
+
+	/* if self and master were not specified assume self */
+	if (!(ndm_flags & (NTF_SELF | NTF_MASTER)))
+		ndm_flags |= NTF_SELF;
+
+	req.ndm.ndm_flags = ndm_flags;
+
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+		return -1;
+
+	return 0;
+}
+
 int do_fdb(int argc, char **argv)
 {
 	ll_init_map(&rth);
@@ -685,6 +739,8 @@ int do_fdb(int argc, char **argv)
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
 			return fdb_show(argc-1, argv+1);
+		if (strcmp(*argv, "flush") == 0)
+			return fdb_flush(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else
