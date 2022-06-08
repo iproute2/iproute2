@@ -47,7 +47,7 @@ static void usage(void)
 		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
 		"       bridge fdb flush dev DEV [ brport DEV ] [ vlan VID ]\n"
 		"              [ self ] [ master ] [ [no]permanent | [no]static | [no]dynamic ]\n"
-		"              [ [no]added_by_user ] [ [no]extern_learn ]\n");
+		"              [ [no]added_by_user ] [ [no]extern_learn ] [ [no]sticky ]\n");
 	exit(-1);
 }
 
@@ -726,6 +726,12 @@ static int fdb_flush(int argc, char **argv)
 		} else if (strcmp(*argv, "noextern_learn") == 0) {
 			ndm_flags &= ~NTF_EXT_LEARNED;
 			ndm_flags_mask |= NTF_EXT_LEARNED;
+		} else if (strcmp(*argv, "sticky") == 0) {
+			ndm_flags |= NTF_STICKY;
+			ndm_flags_mask |= NTF_STICKY;
+		} else if (strcmp(*argv, "nosticky") == 0) {
+			ndm_flags &= ~NTF_STICKY;
+			ndm_flags_mask |= NTF_STICKY;
 		} else if (strcmp(*argv, "brport") == 0) {
 			if (port)
 				duparg2("brport", *argv);
