@@ -46,7 +46,7 @@ static void usage(void)
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
 		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
 		"       bridge fdb flush dev DEV [ brport DEV ] [ vlan VID ]\n"
-		"              [ self ] [ master ]\n");
+		"              [ self ] [ master ] [ [no]permanent ]\n");
 	exit(-1);
 }
 
@@ -680,8 +680,10 @@ static int fdb_flush(int argc, char **argv)
 		.n.nlmsg_type = RTM_DELNEIGH,
 		.ndm.ndm_family = PF_BRIDGE,
 	};
+	unsigned short ndm_state_mask = 0;
 	short vid = -1, port_ifidx = -1;
 	unsigned short ndm_flags = 0;
+	unsigned short ndm_state = 0;
 	char *d = NULL, *port = NULL;
 
 	while (argc > 0) {
@@ -692,6 +694,12 @@ static int fdb_flush(int argc, char **argv)
 			ndm_flags |= NTF_MASTER;
 		} else if (strcmp(*argv, "self") == 0) {
 			ndm_flags |= NTF_SELF;
+		} else if (strcmp(*argv, "permanent") == 0) {
+			ndm_state |= NUD_PERMANENT;
+			ndm_state_mask |= NUD_PERMANENT;
+		} else if (strcmp(*argv, "nopermanent") == 0) {
+			ndm_state &= ~NUD_PERMANENT;
+			ndm_state_mask |= NUD_PERMANENT;
 		} else if (strcmp(*argv, "brport") == 0) {
 			if (port)
 				duparg2("brport", *argv);
@@ -739,10 +747,14 @@ static int fdb_flush(int argc, char **argv)
 		ndm_flags |= NTF_SELF;
 
 	req.ndm.ndm_flags = ndm_flags;
+	req.ndm.ndm_state = ndm_state;
 	if (port_ifidx > -1)
 		addattr32(&req.n, sizeof(req), NDA_IFINDEX, port_ifidx);
 	if (vid > -1)
 		addattr16(&req.n, sizeof(req), NDA_VLAN, vid);
+	if (ndm_state_mask)
+		addattr16(&req.n, sizeof(req), NDA_NDM_STATE_MASK,
+			  ndm_state_mask);
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;

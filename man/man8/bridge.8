@@ -120,7 +120,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ] [ "
 .B vlan
 .IR VID " ] [ "
-.BR self " ] [ " master " ]"
+.BR self " ] [ " master " ] [ "
+.BR [no]permanent " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " } "
@@ -795,7 +796,8 @@ the bridge to which this address is associated.
 
 .SS bridge fdb flush - flush bridge forwarding table entries.
 
-flush the matching bridge forwarding table entries.
+flush the matching bridge forwarding table entries. Some options below have a negated
+form when "no" is prepended to them (e.g. permanent and nopermanent).
 
 .TP
 .BI dev " DEV"
@@ -826,6 +828,11 @@ command can also be used on the bridge device itself. The flag is set by default
 .B master
 if the specified network device is a port that belongs to a master device
 such as a bridge, the operation is fulfilled by the master device's driver.
+
+.TP
+.B [no]permanent
+if specified then only permanent entries will be deleted or respectively if "no"
+is prepended then only non-permanent entries will be deleted.
 .sp
 
 .SH bridge mdb - multicast group database management
