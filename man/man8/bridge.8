@@ -116,6 +116,8 @@ bridge \- show / manipulate bridge addresses and devices
 .BR "bridge fdb flush"
 .B dev
 .IR DEV " [ "
+.B brport
+.IR DEV " ] [ "
 .B vlan
 .IR VID " ] [ "
 .BR self " ] [ " master " ]"
@@ -800,6 +802,12 @@ flush the matching bridge forwarding table entries.
 the target device for the operation. If the device is a bridge port and "master"
 is set then the operation will be fulfilled by its master device's driver and
 all entries pointing to that port will be deleted.
+
+.TP
+.BI brport " DEV"
+the target bridge port for the operation. If the bridge device is specified then only
+entries pointing to the bridge itself will be deleted. Note that the target device
+specified by this option will override the one specified by dev above.
 
 .TP
 .BI vlan " VID"

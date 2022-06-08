@@ -45,7 +45,8 @@ static void usage(void)
 		"              [ state STATE ] [ dynamic ] ]\n"
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
 		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
-		"       bridge fdb flush dev DEV [ vlan VID ] [ self ] [ master ]\n");
+		"       bridge fdb flush dev DEV [ brport DEV ] [ vlan VID ]\n"
+		"              [ self ] [ master ]\n");
 	exit(-1);
 }
 
@@ -679,9 +680,9 @@ static int fdb_flush(int argc, char **argv)
 		.n.nlmsg_type = RTM_DELNEIGH,
 		.ndm.ndm_family = PF_BRIDGE,
 	};
+	short vid = -1, port_ifidx = -1;
 	unsigned short ndm_flags = 0;
-	char *d = NULL;
-	short vid = -1;
+	char *d = NULL, *port = NULL;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -691,6 +692,11 @@ static int fdb_flush(int argc, char **argv)
 			ndm_flags |= NTF_MASTER;
 		} else if (strcmp(*argv, "self") == 0) {
 			ndm_flags |= NTF_SELF;
+		} else if (strcmp(*argv, "brport") == 0) {
+			if (port)
+				duparg2("brport", *argv);
+			NEXT_ARG();
+			port = *argv;
 		} else if (strcmp(*argv, "vlan") == 0) {
 			if (vid >= 0)
 				duparg2("vlan", *argv);
@@ -714,6 +720,15 @@ static int fdb_flush(int argc, char **argv)
 		return -1;
 	}
 
+	if (port) {
+		port_ifidx = ll_name_to_index(port);
+		if (port_ifidx == 0) {
+			fprintf(stderr, "Cannot find bridge port device \"%s\"\n",
+				port);
+			return -1;
+		}
+	}
+
 	if (vid >= 4096) {
 		fprintf(stderr, "Invalid VLAN ID \"%hu\"\n", vid);
 		return -1;
@@ -724,6 +739,8 @@ static int fdb_flush(int argc, char **argv)
 		ndm_flags |= NTF_SELF;
 
 	req.ndm.ndm_flags = ndm_flags;
+	if (port_ifidx > -1)
+		addattr32(&req.n, sizeof(req), NDA_IFINDEX, port_ifidx);
 	if (vid > -1)
 		addattr16(&req.n, sizeof(req), NDA_VLAN, vid);
 
