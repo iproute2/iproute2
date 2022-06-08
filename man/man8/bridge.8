@@ -121,7 +121,7 @@ bridge \- show / manipulate bridge addresses and devices
 .B vlan
 .IR VID " ] [ "
 .BR self " ] [ " master " ] [ "
-.BR [no]permanent " ]"
+.BR [no]permanent " | " [no]static " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " } "
@@ -833,6 +833,11 @@ such as a bridge, the operation is fulfilled by the master device's driver.
 .B [no]permanent
 if specified then only permanent entries will be deleted or respectively if "no"
 is prepended then only non-permanent entries will be deleted.
+
+.TP
+.B [no]static
+if specified then only static entries will be deleted or respectively if "no"
+is prepended then only non-static entries will be deleted.
 .sp
 
 .SH bridge mdb - multicast group database management

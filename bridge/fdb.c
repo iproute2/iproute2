@@ -46,7 +46,7 @@ static void usage(void)
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
 		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
 		"       bridge fdb flush dev DEV [ brport DEV ] [ vlan VID ]\n"
-		"              [ self ] [ master ] [ [no]permanent ]\n");
+		"              [ self ] [ master ] [ [no]permanent | [no]static ]\n");
 	exit(-1);
 }
 
@@ -700,6 +700,12 @@ static int fdb_flush(int argc, char **argv)
 		} else if (strcmp(*argv, "nopermanent") == 0) {
 			ndm_state &= ~NUD_PERMANENT;
 			ndm_state_mask |= NUD_PERMANENT;
+		} else if (strcmp(*argv, "static") == 0) {
+			ndm_state |= NUD_NOARP;
+			ndm_state_mask |= NUD_NOARP | NUD_PERMANENT;
+		} else if (strcmp(*argv, "nostatic") == 0) {
+			ndm_state &= ~NUD_NOARP;
+			ndm_state_mask |= NUD_NOARP;
 		} else if (strcmp(*argv, "brport") == 0) {
 			if (port)
 				duparg2("brport", *argv);
