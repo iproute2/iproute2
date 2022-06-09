@@ -692,6 +692,7 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 		strlen("heartbt"),
 		strlen("overrun"),
 		strlen("compressed"),
+		strlen("otherhost"),
 	};
 
 	if (is_json_context()) {
@@ -730,6 +731,10 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 			if (s->rx_nohandler)
 				print_u64(PRINT_JSON,
 					   "nohandler", NULL, s->rx_nohandler);
+			if (s->rx_otherhost_dropped)
+				print_u64(PRINT_JSON,
+					   "otherhost", NULL,
+					   s->rx_otherhost_dropped);
 		}
 		close_json_object();
 
@@ -778,7 +783,8 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 			size_columns(cols, ARRAY_SIZE(cols), 0,
 				     s->rx_length_errors, s->rx_crc_errors,
 				     s->rx_frame_errors, s->rx_fifo_errors,
-				     s->rx_over_errors, s->rx_nohandler);
+				     s->rx_over_errors, s->rx_nohandler,
+				     s->rx_otherhost_dropped);
 		size_columns(cols, ARRAY_SIZE(cols),
 			     s->tx_bytes, s->tx_packets, s->tx_errors,
 			     s->tx_dropped, s->tx_carrier_errors,
@@ -811,11 +817,14 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 		/* RX error stats */
 		if (show_stats > 1) {
 			fprintf(fp, "%s", _SL_);
-			fprintf(fp, "    RX errors:%*s %*s %*s %*s %*s %*s %*s%s",
+			fprintf(fp, "    RX errors:%*s %*s %*s %*s %*s %*s%*s%*s%s",
 				cols[0] - 10, "", cols[1], "length",
 				cols[2], "crc", cols[3], "frame",
 				cols[4], "fifo", cols[5], "overrun",
-				cols[6], s->rx_nohandler ? "nohandler" : "",
+				s->rx_nohandler ? cols[6] + 1 : 0,
+				s->rx_nohandler ? " nohandler" : "",
+				s->rx_otherhost_dropped ? cols[7] + 1 : 0,
+				s->rx_otherhost_dropped ? " otherhost" : "",
 				_SL_);
 			fprintf(fp, "%*s", cols[0] + 5, "");
 			print_num(fp, cols[1], s->rx_length_errors);
@@ -825,6 +834,8 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 			print_num(fp, cols[5], s->rx_over_errors);
 			if (s->rx_nohandler)
 				print_num(fp, cols[6], s->rx_nohandler);
+			if (s->rx_otherhost_dropped)
+				print_num(fp, cols[7], s->rx_otherhost_dropped);
 		}
 		fprintf(fp, "%s", _SL_);
 
