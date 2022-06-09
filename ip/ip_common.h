@@ -205,6 +205,13 @@ void ipstats_stat_desc_pack_xstats(struct ipstats_stat_dump_filters *filters,
 int ipstats_stat_desc_show_xstats(struct ipstats_stat_show_attrs *attrs,
 				  const struct ipstats_stat_desc *desc);
 
+#define IPSTATS_STAT_DESC_XSTATS_LEAF(NAME) {		\
+		.name = (NAME),				\
+		.kind = IPSTATS_STAT_DESC_KIND_LEAF,	\
+		.show = &ipstats_stat_desc_show_xstats,	\
+		.pack = &ipstats_stat_desc_pack_xstats,	\
+	}
+
 #ifndef	INFINITY_LIFE_TIME
 #define     INFINITY_LIFE_TIME      0xFFFFFFFFU
 #endif

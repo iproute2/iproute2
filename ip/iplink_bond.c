@@ -923,16 +923,9 @@ struct link_util bond_link_util = {
 	.print_ifla_xstats = bond_print_xstats,
 };
 
-static const struct ipstats_stat_desc ipstats_stat_desc_bond_tmpl_lacp = {
-	.name = "802.3ad",
-	.kind = IPSTATS_STAT_DESC_KIND_LEAF,
-	.show = &ipstats_stat_desc_show_xstats,
-	.pack = &ipstats_stat_desc_pack_xstats,
-};
-
 static const struct ipstats_stat_desc_xstats
 ipstats_stat_desc_xstats_bond_lacp = {
-	.desc = ipstats_stat_desc_bond_tmpl_lacp,
+	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("802.3ad"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS,
 	.link_type_at = LINK_XSTATS_TYPE_BOND,
 	.inner_max = BOND_XSTATS_MAX,
@@ -954,7 +947,7 @@ const struct ipstats_stat_desc ipstats_stat_desc_xstats_bond_group = {
 
 static const struct ipstats_stat_desc_xstats
 ipstats_stat_desc_xstats_slave_bond_lacp = {
-	.desc = ipstats_stat_desc_bond_tmpl_lacp,
+	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("802.3ad"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
 	.link_type_at = LINK_XSTATS_TYPE_BOND,
 	.inner_max = BOND_XSTATS_MAX,
