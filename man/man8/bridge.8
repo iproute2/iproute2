@@ -113,6 +113,19 @@ bridge \- show / manipulate bridge addresses and devices
 .BR self " ] [ " master " ] [ " dynamic " ]"
 
 .ti -8
+.BR "bridge fdb flush"
+.B dev
+.IR DEV " [ "
+.B brport
+.IR DEV " ] [ "
+.B vlan
+.IR VID " ] [ "
+.BR self " ] [ " master " ] [ "
+.BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
+.BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
+.BR [no]sticky " ] [ " [no]offloaded " ]"
+
+.ti -8
 .BR "bridge mdb" " { " add " | " del " } "
 .B dev
 .I DEV
@@ -782,6 +795,76 @@ the bridge to which this address is associated.
 .TP
 .B master
 - the address is associated with master devices fdb. Usually software (default).
+
+.SS bridge fdb flush - flush bridge forwarding table entries.
+
+flush the matching bridge forwarding table entries. Some options below have a negated
+form when "no" is prepended to them (e.g. permanent and nopermanent).
+
+.TP
+.BI dev " DEV"
+the target device for the operation. If the device is a bridge port and "master"
+is set then the operation will be fulfilled by its master device's driver and
+all entries pointing to that port will be deleted.
+
+.TP
+.BI brport " DEV"
+the target bridge port for the operation. If the bridge device is specified then only
+entries pointing to the bridge itself will be deleted. Note that the target device
+specified by this option will override the one specified by dev above.
+
+.TP
+.BI vlan " VID"
+the target VLAN ID for the operation. Match forwarding table entries only with the
+specified VLAN ID.
+
+.TP
+.B self
+the operation is fulfilled directly by the driver for the specified network
+device. If the network device belongs to a master like a bridge, then the
+bridge is bypassed and not notified of this operation. The "bridge fdb flush"
+command can also be used on the bridge device itself. The flag is set by default if
+"master" is not specified.
+
+.TP
+.B master
+if the specified network device is a port that belongs to a master device
+such as a bridge, the operation is fulfilled by the master device's driver.
+
+.TP
+.B [no]permanent
+if specified then only permanent entries will be deleted or respectively if "no"
+is prepended then only non-permanent entries will be deleted.
+
+.TP
+.B [no]static
+if specified then only static entries will be deleted or respectively if "no"
+is prepended then only non-static entries will be deleted.
+
+.TP
+.B [no]dynamic
+if specified then only dynamic entries will be deleted or respectively if "no"
+is prepended then only non-dynamic (static or permanent) entries will be deleted.
+
+.TP
+.B [no]added_by_user
+if specified then only entries with added_by_user flag will be deleted or respectively
+if "no" is prepended then only entries without added_by_user flag will be deleted.
+
+.TP
+.B [no]extern_learn
+if specified then only entries with extern_learn flag will be deleted or respectively
+if "no" is prepended then only entries without extern_learn flag will be deleted.
+
+.TP
+.B [no]sticky
+if specified then only entries with sticky flag will be deleted or respectively
+if "no" is prepended then only entries without sticky flag will be deleted.
+
+.TP
+.B [no]offloaded
+if specified then only entries with offloaded flag will be deleted or respectively
+if "no" is prepended then only entries without offloaded flag will be deleted.
 .sp
 
 .SH bridge mdb - multicast group database management

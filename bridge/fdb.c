@@ -44,7 +44,11 @@ static void usage(void)
 		"       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ]\n"
 		"              [ state STATE ] [ dynamic ] ]\n"
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
-		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n");
+		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
+		"       bridge fdb flush dev DEV [ brport DEV ] [ vlan VID ]\n"
+		"              [ self ] [ master ] [ [no]permanent | [no]static | [no]dynamic ]\n"
+		"              [ [no]added_by_user ] [ [no]extern_learn ] [ [no]sticky ]\n"
+		"              [ [no]offloaded ]\n");
 	exit(-1);
 }
 
@@ -666,6 +670,140 @@ static int fdb_get(int argc, char **argv)
 	return 0;
 }
 
+static int fdb_flush(int argc, char **argv)
+{
+	struct {
+		struct nlmsghdr	n;
+		struct ndmsg		ndm;
+		char			buf[256];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_BULK,
+		.n.nlmsg_type = RTM_DELNEIGH,
+		.ndm.ndm_family = PF_BRIDGE,
+	};
+	unsigned short ndm_state_mask = 0;
+	unsigned short ndm_flags_mask = 0;
+	short vid = -1, port_ifidx = -1;
+	unsigned short ndm_flags = 0;
+	unsigned short ndm_state = 0;
+	char *d = NULL, *port = NULL;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			d = *argv;
+		} else if (strcmp(*argv, "master") == 0) {
+			ndm_flags |= NTF_MASTER;
+		} else if (strcmp(*argv, "self") == 0) {
+			ndm_flags |= NTF_SELF;
+		} else if (strcmp(*argv, "permanent") == 0) {
+			ndm_state |= NUD_PERMANENT;
+			ndm_state_mask |= NUD_PERMANENT;
+		} else if (strcmp(*argv, "nopermanent") == 0) {
+			ndm_state &= ~NUD_PERMANENT;
+			ndm_state_mask |= NUD_PERMANENT;
+		} else if (strcmp(*argv, "static") == 0) {
+			ndm_state |= NUD_NOARP;
+			ndm_state_mask |= NUD_NOARP | NUD_PERMANENT;
+		} else if (strcmp(*argv, "nostatic") == 0) {
+			ndm_state &= ~NUD_NOARP;
+			ndm_state_mask |= NUD_NOARP;
+		} else if (strcmp(*argv, "dynamic") == 0) {
+			ndm_state &= ~NUD_NOARP | NUD_PERMANENT;
+			ndm_state_mask |= NUD_NOARP | NUD_PERMANENT;
+		} else if (strcmp(*argv, "nodynamic") == 0) {
+			ndm_state |= NUD_NOARP;
+			ndm_state_mask |= NUD_NOARP;
+		} else if (strcmp(*argv, "added_by_user") == 0) {
+			ndm_flags |= NTF_USE;
+			ndm_flags_mask |= NTF_USE;
+		} else if (strcmp(*argv, "noadded_by_user") == 0) {
+			ndm_flags &= ~NTF_USE;
+			ndm_flags_mask |= NTF_USE;
+		} else if (strcmp(*argv, "extern_learn") == 0) {
+			ndm_flags |= NTF_EXT_LEARNED;
+			ndm_flags_mask |= NTF_EXT_LEARNED;
+		} else if (strcmp(*argv, "noextern_learn") == 0) {
+			ndm_flags &= ~NTF_EXT_LEARNED;
+			ndm_flags_mask |= NTF_EXT_LEARNED;
+		} else if (strcmp(*argv, "sticky") == 0) {
+			ndm_flags |= NTF_STICKY;
+			ndm_flags_mask |= NTF_STICKY;
+		} else if (strcmp(*argv, "nosticky") == 0) {
+			ndm_flags &= ~NTF_STICKY;
+			ndm_flags_mask |= NTF_STICKY;
+		} else if (strcmp(*argv, "offloaded") == 0) {
+			ndm_flags |= NTF_OFFLOADED;
+			ndm_flags_mask |= NTF_OFFLOADED;
+		} else if (strcmp(*argv, "nooffloaded") == 0) {
+			ndm_flags &= ~NTF_OFFLOADED;
+			ndm_flags_mask |= NTF_OFFLOADED;
+		} else if (strcmp(*argv, "brport") == 0) {
+			if (port)
+				duparg2("brport", *argv);
+			NEXT_ARG();
+			port = *argv;
+		} else if (strcmp(*argv, "vlan") == 0) {
+			if (vid >= 0)
+				duparg2("vlan", *argv);
+			NEXT_ARG();
+			vid = atoi(*argv);
+		} else {
+			if (strcmp(*argv, "help") == 0)
+				NEXT_ARG();
+		}
+		argc--; argv++;
+	}
+
+	if (d == NULL) {
+		fprintf(stderr, "Device is a required argument.\n");
+		return -1;
+	}
+
+	req.ndm.ndm_ifindex = ll_name_to_index(d);
+	if (req.ndm.ndm_ifindex == 0) {
+		fprintf(stderr, "Cannot find bridge device \"%s\"\n", d);
+		return -1;
+	}
+
+	if (port) {
+		port_ifidx = ll_name_to_index(port);
+		if (port_ifidx == 0) {
+			fprintf(stderr, "Cannot find bridge port device \"%s\"\n",
+				port);
+			return -1;
+		}
+	}
+
+	if (vid >= 4096) {
+		fprintf(stderr, "Invalid VLAN ID \"%hu\"\n", vid);
+		return -1;
+	}
+
+	/* if self and master were not specified assume self */
+	if (!(ndm_flags & (NTF_SELF | NTF_MASTER)))
+		ndm_flags |= NTF_SELF;
+
+	req.ndm.ndm_flags = ndm_flags;
+	req.ndm.ndm_state = ndm_state;
+	if (port_ifidx > -1)
+		addattr32(&req.n, sizeof(req), NDA_IFINDEX, port_ifidx);
+	if (vid > -1)
+		addattr16(&req.n, sizeof(req), NDA_VLAN, vid);
+	if (ndm_flags_mask)
+		addattr8(&req.n, sizeof(req), NDA_NDM_FLAGS_MASK,
+			 ndm_flags_mask);
+	if (ndm_state_mask)
+		addattr16(&req.n, sizeof(req), NDA_NDM_STATE_MASK,
+			  ndm_state_mask);
+
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+		return -1;
+
+	return 0;
+}
+
 int do_fdb(int argc, char **argv)
 {
 	ll_init_map(&rth);
@@ -685,6 +823,8 @@ int do_fdb(int argc, char **argv)
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
 			return fdb_show(argc-1, argv+1);
+		if (strcmp(*argv, "flush") == 0)
+			return fdb_flush(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else
