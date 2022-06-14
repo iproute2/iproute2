@@ -14,9 +14,15 @@ the
 .B fw
 filter allows one to classify packets based on a previously set
 .BR fwmark " by " iptables .
-If it is identical to the filter's
+If the masked value of the
+.B fwmark
+matches the filter's masked
 .BR handle ,
-the filter matches.
+the filter matches. By default, all 32 bits of the
+.B handle
+and the
+.B fwmark
+are masked.
 .B iptables
 allows one to mark single packets with the
 .B MARK
@@ -60,7 +66,39 @@ statement marking packets coming in on eth0:
 iptables -t mangle -A PREROUTING -i eth0 -j MARK --set-mark 6
 .EE
 .RE
+
+Specific bits of the packet's
+.B fwmark
+can be set using the
+.B skbedit
+action. For example, to only set one bit of the
+.B fwmark
+without changing any other bit:
+
+.RS
+.EX
+tc filter add ... action skbedit mark 0x8/0x8
+.EE
+.RE
+
+The
+.B fw
+filter can then be used to match on this bit by masking the
+.B handle:
+
+.RS
+.EX
+tc filter add ... handle 0x8/0x8 fw action drop
+.EE
+.RE
+
+This is useful when different bits of the
+.B fwmark
+are assigned different meanings.
+.EE
+.RE
 .SH SEE ALSO
 .BR tc (8),
 .BR iptables (8),
-.BR iptables-extensions (8)
+.BR iptables-extensions (8),
+.BR tc-skbedit (8)
