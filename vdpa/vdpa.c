@@ -26,6 +26,7 @@
 #define VDPA_OPT_VDEV_MAC		BIT(4)
 #define VDPA_OPT_VDEV_MTU		BIT(5)
 #define VDPA_OPT_MAX_VQP		BIT(6)
+#define VDPA_OPT_QUEUE_INDEX		BIT(7)
 
 struct vdpa_opts {
 	uint64_t present; /* flags of present items */
@@ -36,6 +37,7 @@ struct vdpa_opts {
 	char mac[ETH_ALEN];
 	uint16_t mtu;
 	uint16_t max_vqp;
+	uint32_t queue_idx;
 };
 
 struct vdpa {
@@ -174,6 +176,17 @@ static int vdpa_argv_u16(struct vdpa *vdpa, int argc, char **argv,
 	return get_u16(result, *argv, 10);
 }
 
+static int vdpa_argv_u32(struct vdpa *vdpa, int argc, char **argv,
+			 uint32_t *result)
+{
+	if (argc <= 0 || !*argv) {
+		fprintf(stderr, "number expected\n");
+		return -EINVAL;
+	}
+
+	return get_u32(result, *argv, 10);
+}
+
 struct vdpa_args_metadata {
 	uint64_t o_flag;
 	const char *err_msg;
@@ -183,6 +196,7 @@ static const struct vdpa_args_metadata vdpa_args_required[] = {
 	{VDPA_OPT_VDEV_MGMTDEV_HANDLE, "management device handle not set."},
 	{VDPA_OPT_VDEV_NAME, "device name is not set."},
 	{VDPA_OPT_VDEV_HANDLE, "device name is not set."},
+	{VDPA_OPT_QUEUE_INDEX, "queue index is not set."},
 };
 
 static int vdpa_args_finding_required_validate(uint64_t o_required,
@@ -228,6 +242,8 @@ static void vdpa_opts_put(struct nlmsghdr *nlh, struct vdpa *vdpa)
 		mnl_attr_put_u16(nlh, VDPA_ATTR_DEV_NET_CFG_MTU, opts->mtu);
 	if (opts->present & VDPA_OPT_MAX_VQP)
 		mnl_attr_put_u16(nlh, VDPA_ATTR_DEV_NET_CFG_MAX_VQP, opts->max_vqp);
+	if (opts->present & VDPA_OPT_QUEUE_INDEX)
+		mnl_attr_put_u32(nlh, VDPA_ATTR_DEV_QUEUE_INDEX, opts->queue_idx);
 }
 
 static int vdpa_argv_parse(struct vdpa *vdpa, int argc, char **argv,
@@ -304,6 +320,15 @@ static int vdpa_argv_parse(struct vdpa *vdpa, int argc, char **argv,
 
 			NEXT_ARG_FWD();
 			o_found |= VDPA_OPT_MAX_VQP;
+		} else if (!strcmp(*argv, "qidx") &&
+			   (o_optional & VDPA_OPT_QUEUE_INDEX)) {
+			NEXT_ARG_FWD();
+			err = vdpa_argv_u32(vdpa, argc, argv, &opts->queue_idx);
+			if (err)
+				return err;
+
+			NEXT_ARG_FWD();
+			o_found |= VDPA_OPT_QUEUE_INDEX;
 		} else {
 			fprintf(stderr, "Unknown option \"%s\"\n", *argv);
 			return -EINVAL;
@@ -594,6 +619,7 @@ static void cmd_dev_help(void)
 	fprintf(stderr, "                                                    [ max_vqp MAX_VQ_PAIRS ]\n");
 	fprintf(stderr, "       vdpa dev del DEV\n");
 	fprintf(stderr, "Usage: vdpa dev config COMMAND [ OPTIONS ]\n");
+	fprintf(stderr, "Usage: vdpa dev vstats COMMAND\n");
 }
 
 static const char *device_type_name(uint32_t type)
@@ -819,6 +845,141 @@ static int cmd_dev_config(struct vdpa *vdpa, int argc, char **argv)
 	return -ENOENT;
 }
 
+#define MAX_KEY_LEN 200
+/* 5 bytes for format */
+#define MAX_FMT_LEN (MAX_KEY_LEN + 5 + 1)
+
+static void print_queue_type(struct nlattr *attr, uint16_t max_vqp, uint64_t features)
+{
+	bool is_ctrl = false;
+	uint16_t qidx = 0;
+
+	qidx = mnl_attr_get_u16(attr);
+	is_ctrl = features & BIT(VIRTIO_NET_F_CTRL_VQ) && qidx == 2 * max_vqp;
+	if (!is_ctrl) {
+		if (qidx & 1)
+			print_string(PRINT_ANY, "queue_type", "queue_type %s ",
+				     "tx");
+		else
+			print_string(PRINT_ANY, "queue_type", "queue_type %s ",
+				     "rx");
+	} else {
+		print_string(PRINT_ANY, "queue_type", "queue_type %s ",
+			     "control_vq");
+	}
+}
+
+static void pr_out_dev_net_vstats(const struct nlmsghdr *nlh)
+{
+	const char *name = NULL;
+	uint64_t features = 0;
+	char fmt[MAX_FMT_LEN];
+	uint16_t max_vqp = 0;
+	struct nlattr *attr;
+	uint64_t v64;
+
+	mnl_attr_for_each(attr, nlh, sizeof(struct genlmsghdr)) {
+		switch (attr->nla_type) {
+		case VDPA_ATTR_DEV_NET_CFG_MAX_VQP:
+			max_vqp = mnl_attr_get_u16(attr);
+			break;
+		case VDPA_ATTR_DEV_NEGOTIATED_FEATURES:
+			features = mnl_attr_get_u64(attr);
+			break;
+		case VDPA_ATTR_DEV_QUEUE_INDEX:
+			print_queue_type(attr, max_vqp, features);
+			break;
+		case VDPA_ATTR_DEV_VENDOR_ATTR_NAME:
+			name = mnl_attr_get_str(attr);
+			if (strlen(name) > MAX_KEY_LEN)
+				return;
+
+			strcpy(fmt, name);
+			strcat(fmt, " %lu ");
+			break;
+		case VDPA_ATTR_DEV_VENDOR_ATTR_VALUE:
+			v64 = mnl_attr_get_u64(attr);
+			print_u64(PRINT_ANY, name, fmt, v64);
+			break;
+		}
+	}
+}
+
+static void pr_out_dev_vstats(struct vdpa *vdpa, struct nlattr **tb, const struct nlmsghdr *nlh)
+{
+	uint32_t device_id = mnl_attr_get_u32(tb[VDPA_ATTR_DEV_ID]);
+
+	pr_out_vdev_handle_start(vdpa, tb);
+	switch (device_id) {
+	case VIRTIO_ID_NET:
+		pr_out_dev_net_vstats(nlh);
+		break;
+	default:
+		break;
+	}
+	pr_out_vdev_handle_end(vdpa);
+}
+
+static int cmd_dev_vstats_show_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[VDPA_ATTR_MAX + 1] = {};
+	struct vdpa *vdpa = data;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+	if (!tb[VDPA_ATTR_DEV_NAME] || !tb[VDPA_ATTR_DEV_ID])
+		return MNL_CB_ERROR;
+	pr_out_dev_vstats(vdpa, tb, nlh);
+	return MNL_CB_OK;
+}
+
+static void cmd_dev_vstats_help(void)
+{
+	fprintf(stderr, "Usage: vdpa dev vstats show DEV [qidx QUEUE_INDEX]\n");
+}
+
+static int cmd_dev_vstats_show(struct vdpa *vdpa, int argc, char **argv)
+{
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (argc != 1 && argc != 3) {
+		cmd_dev_vstats_help();
+		return -EINVAL;
+	}
+
+	nlh = mnlu_gen_socket_cmd_prepare(&vdpa->nlg, VDPA_CMD_DEV_STATS_GET,
+					  flags);
+
+	err = vdpa_argv_parse_put(nlh, vdpa, argc, argv,
+				  VDPA_OPT_VDEV_HANDLE, VDPA_OPT_QUEUE_INDEX);
+	if (err)
+		return err;
+
+	pr_out_section_start(vdpa, "vstats");
+	err = mnlu_gen_socket_sndrcv(&vdpa->nlg, nlh, cmd_dev_vstats_show_cb, vdpa);
+	pr_out_section_end(vdpa);
+	return 0;
+}
+
+static int cmd_dev_vstats(struct vdpa *vdpa, int argc, char **argv)
+{
+	if (argc < 1) {
+		cmd_dev_vstats_help();
+		return -EINVAL;
+	}
+
+	if (!strcmp(*argv, "help")) {
+		cmd_dev_vstats_help();
+		return 0;
+	} else if (!strcmp(*argv, "show")) {
+		return cmd_dev_vstats_show(vdpa, argc - 1, argv + 1);
+	}
+	fprintf(stderr, "Command \"%s\" not found\n", *argv);
+	return -ENOENT;
+}
+
 static int cmd_dev(struct vdpa *vdpa, int argc, char **argv)
 {
 	if (!argc)
@@ -836,6 +997,8 @@ static int cmd_dev(struct vdpa *vdpa, int argc, char **argv)
 		return cmd_dev_del(vdpa, argc - 1, argv + 1);
 	} else if (matches(*argv, "config") == 0) {
 		return cmd_dev_config(vdpa, argc - 1, argv + 1);
+	} else if (!strcmp(*argv, "vstats")) {
+		return cmd_dev_vstats(vdpa, argc - 1, argv + 1);
 	}
 	fprintf(stderr, "Command \"%s\" not found\n", *argv);
 	return -ENOENT;
