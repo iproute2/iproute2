@@ -19,7 +19,7 @@
 
 static void print_explain(FILE *f)
 {
-	fprintf(f, "Usage: ... bond_slave [ queue_id ID ]\n");
+	fprintf(f, "Usage: ... bond_slave [ queue_id ID ] [ prio PRIORITY ]\n");
 }
 
 static void explain(void)
@@ -120,6 +120,10 @@ static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *t
 			  "queue_id %d ",
 			  rta_getattr_u16(tb[IFLA_BOND_SLAVE_QUEUE_ID]));
 
+	if (tb[IFLA_BOND_SLAVE_PRIO])
+		print_int(PRINT_ANY, "prio", "prio %d ",
+			  rta_getattr_s32(tb[IFLA_BOND_SLAVE_PRIO]));
+
 	if (tb[IFLA_BOND_SLAVE_AD_AGGREGATOR_ID])
 		print_int(PRINT_ANY,
 			  "ad_aggregator_id",
@@ -151,6 +155,7 @@ static int bond_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 				struct nlmsghdr *n)
 {
 	__u16 queue_id;
+	int prio;
 
 	while (argc > 0) {
 		if (matches(*argv, "queue_id") == 0) {
@@ -158,6 +163,11 @@ static int bond_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (get_u16(&queue_id, *argv, 0))
 				invarg("queue_id is invalid", *argv);
 			addattr16(n, 1024, IFLA_BOND_SLAVE_QUEUE_ID, queue_id);
+		} else if (strcmp(*argv, "prio") == 0) {
+			NEXT_ARG();
+			if (get_s32(&prio, *argv, 0))
+				invarg("prio is invalid", *argv);
+			addattr32(n, 1024, IFLA_BOND_SLAVE_PRIO, prio);
 		} else {
 			if (matches(*argv, "help") != 0)
 				fprintf(stderr,

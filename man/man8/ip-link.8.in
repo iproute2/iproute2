@@ -2567,12 +2567,20 @@ the following additional arguments are supported:
 .B "ip link set type bond_slave"
 [
 .BI queue_id " ID"
+] [
+.BI prio " PRIORITY"
 ]
 
 .in +8
 .sp
 .BI queue_id " ID"
 - set the slave's queue ID (a 16bit unsigned value).
+
+.sp
+.BI prio " PRIORITY"
+- set the slave's priority for active slave re-selection during failover
+(a 32bit signed value). This option only valid for active-backup(1),
+balance-tlb (5) and balance-alb (6) mode.
 
 .in -8
 
