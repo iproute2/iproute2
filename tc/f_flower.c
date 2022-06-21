@@ -1452,17 +1452,17 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 	while (argc > 0) {
 		if (matches(*argv, "classid") == 0 ||
 		    matches(*argv, "flowid") == 0) {
-			unsigned int handle;
+			unsigned int classid;
 
 			NEXT_ARG();
-			ret = get_tc_classid(&handle, *argv);
+			ret = get_tc_classid(&classid, *argv);
 			if (ret) {
 				fprintf(stderr, "Illegal \"classid\"\n");
 				return -1;
 			}
-			addattr_l(n, MAX_MSG, TCA_FLOWER_CLASSID, &handle, 4);
+			addattr_l(n, MAX_MSG, TCA_FLOWER_CLASSID, &classid, 4);
 		} else if (matches(*argv, "hw_tc") == 0) {
-			unsigned int handle;
+			unsigned int classid;
 			__u32 tc;
 			char *end;
 
@@ -1476,10 +1476,10 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "TC index exceeds max range\n");
 				return -1;
 			}
-			handle = TC_H_MAKE(TC_H_MAJ(t->tcm_parent),
+			classid = TC_H_MAKE(TC_H_MAJ(t->tcm_parent),
 					   TC_H_MIN(tc + TC_H_MIN_PRIORITY));
-			addattr_l(n, MAX_MSG, TCA_FLOWER_CLASSID, &handle,
-				  sizeof(handle));
+			addattr_l(n, MAX_MSG, TCA_FLOWER_CLASSID, &classid,
+				  sizeof(classid));
 		} else if (matches(*argv, "ip_flags") == 0) {
 			NEXT_ARG();
 			ret = flower_parse_matching_flags(*argv,
