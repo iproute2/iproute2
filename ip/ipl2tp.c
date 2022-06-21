@@ -258,7 +258,7 @@ static void print_tunnel(const struct l2tp_data *data)
 					   NULL, p->udp6_csum_tx);
 
 				print_bool(PRINT_JSON, "checksum_rx",
-					   NULL, p->udp6_csum_tx);
+					   NULL, p->udp6_csum_rx);
 			} else {
 				printf("  UDP checksum: %s%s%s%s\n",
 				       p->udp6_csum_tx && p->udp6_csum_rx
