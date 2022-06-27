@@ -549,7 +549,7 @@ static void print_vfinfo(FILE *fp, struct ifinfomsg *ifi, struct rtattr *vfinfo)
 void size_columns(unsigned int cols[], unsigned int n, ...)
 {
 	unsigned int i, len;
-	uint64_t val, powi;
+	uint64_t val;
 	va_list args;
 
 	va_start(args, n);
@@ -560,7 +560,7 @@ void size_columns(unsigned int cols[], unsigned int n, ...)
 		if (human_readable)
 			continue;
 
-		for (len = 1, powi = 10; powi < val; len++, powi *= 10)
+		for (len = 1; val > 9; len++, val /= 10)
 			/* nothing */;
 		if (len > cols[i])
 			cols[i] = len;
