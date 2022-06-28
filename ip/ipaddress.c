@@ -783,13 +783,15 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 			     s->tx_bytes, s->tx_packets, s->tx_errors,
 			     s->tx_dropped, s->tx_carrier_errors,
 			     s->collisions, s->tx_compressed);
-		if (show_stats > 1)
+		if (show_stats > 1) {
+			uint64_t cc = carrier_changes ?
+				      rta_getattr_u32(carrier_changes) : 0;
+
 			size_columns(cols, ARRAY_SIZE(cols), 0, 0,
 				     s->tx_aborted_errors, s->tx_fifo_errors,
 				     s->tx_window_errors,
-				     s->tx_heartbeat_errors,
-				     carrier_changes ?
-				     rta_getattr_u32(carrier_changes) : 0);
+				     s->tx_heartbeat_errors, cc);
+		}
 
 		/* RX stats */
 		fprintf(fp, "    RX: %*s %*s %*s %*s %*s %*s %*s%s",
