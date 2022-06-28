@@ -101,6 +101,13 @@ result of this masking equals VALUE, will the
 .B ce_threshold
 logic be applied to the packet.
 
+.SS drop_batch
+sets the maximum number of packets to drop when
+.B limit
+or
+.B memory_limit
+is exceeded. Default value is 64.
+
 .SH EXAMPLES
 #tc qdisc add   dev eth0 root fq_codel
 .br
