@@ -775,10 +775,12 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 		if (what)
 			close_json_object();
 	} else {
+		uint64_t zero64 = 0;
+
 		size_columns(cols, ARRAY_SIZE(cols),
 			     s->rx_bytes, s->rx_packets, s->rx_errors,
 			     s->rx_dropped, s->rx_missed_errors,
-			     s->multicast, s->rx_compressed);
+			     s->multicast, s->rx_compressed, zero64);
 		if (show_stats > 1)
 			size_columns(cols, ARRAY_SIZE(cols), 0,
 				     s->rx_length_errors, s->rx_crc_errors,
@@ -788,7 +790,7 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 		size_columns(cols, ARRAY_SIZE(cols),
 			     s->tx_bytes, s->tx_packets, s->tx_errors,
 			     s->tx_dropped, s->tx_carrier_errors,
-			     s->collisions, s->tx_compressed);
+			     s->collisions, s->tx_compressed, zero64);
 		if (show_stats > 1) {
 			uint64_t cc = carrier_changes ?
 				      rta_getattr_u32(carrier_changes) : 0;
@@ -796,7 +798,7 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 			size_columns(cols, ARRAY_SIZE(cols), 0, 0,
 				     s->tx_aborted_errors, s->tx_fifo_errors,
 				     s->tx_window_errors,
-				     s->tx_heartbeat_errors, cc);
+				     s->tx_heartbeat_errors, cc, zero64);
 		}
 
 		/* RX stats */
