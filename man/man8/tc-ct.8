@@ -74,8 +74,8 @@ Example showing natted firewall in conntrack zone 2, and conntrack mark usage:
 
 #Add ingress qdisc on eth0 and eth1 interfaces
 .nf
-$ tc qdisc add dev eth0 handle ingress
-$ tc qdisc add dev eth1 handle ingress
+$ tc qdisc add dev eth0 ingress
+$ tc qdisc add dev eth1 ingress
 
 #Setup filters on eth0, allowing opening new connections in zone 2, and doing src nat + mark for each new connection
 $ tc filter add dev eth0 ingress prio 1 chain 0 proto ip flower ip_proto tcp ct_state -trk \\

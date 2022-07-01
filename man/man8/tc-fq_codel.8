@@ -66,7 +66,8 @@ the local minimum queue delay that packets experience. Default value is 5ms.
 has the same semantics as
 .B codel
 and is used to ensure that the measured minimum delay does not become too stale.
-The minimum delay must be experienced in the last epoch of length .B interval.
+The minimum delay must be experienced in the last epoch of length 
+.BR interval .
 It should be set on the order of the worst-case RTT through the bottleneck to
 give endpoints sufficient time to react. Default value is 100ms.
 
