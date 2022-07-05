@@ -254,6 +254,22 @@ static bool bpf_map_is_offload_neutral(const struct bpf_map *map)
 	return bpf_map__type(map) == BPF_MAP_TYPE_PERF_EVENT_ARRAY;
 }
 
+static bool find_prog_to_attach(struct bpf_program *prog,
+				struct bpf_program *exist_prog,
+				const char *section, const char *prog_name)
+{
+	if (exist_prog)
+		return false;
+
+	/* We have default section name 'prog'. So do not check
+	 * section name if there already has program name.
+	 */
+	if (prog_name)
+		return !strcmp(bpf_program__name(prog), prog_name);
+	else
+		return !strcmp(get_bpf_program__section_name(prog), section);
+}
+
 static int load_bpf_object(struct bpf_cfg_in *cfg)
 {
 	struct bpf_program *p, *prog = NULL;
@@ -278,8 +294,9 @@ static int load_bpf_object(struct bpf_cfg_in *cfg)
 	}
 
 	bpf_object__for_each_program(p, obj) {
-		bool prog_to_attach = !prog && cfg->section &&
-			!strcmp(get_bpf_program__section_name(p), cfg->section);
+		bool prog_to_attach = find_prog_to_attach(p, prog,
+							  cfg->section,
+							  cfg->prog_name);
 
 		/* Only load the programs that will either be subsequently
 		 * attached or inserted into a tail call map */
@@ -304,7 +321,10 @@ static int load_bpf_object(struct bpf_cfg_in *cfg)
 	}
 
 	if (!prog) {
-		fprintf(stderr, "object file doesn't contain sec %s\n", cfg->section);
+		if (cfg->prog_name)
+			fprintf(stderr, "object file doesn't contain prog %s\n", cfg->prog_name);
+		else
+			fprintf(stderr, "object file doesn't contain sec %s\n", cfg->section);
 		return -ENOENT;
 	}
 

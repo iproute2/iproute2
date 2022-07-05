@@ -149,7 +149,7 @@ ip-link \- network device configuration
 .in +8
 .BR object
 .IR FILE
-.RB "[ " section
+.RB "[ { " section " | " program " } "
 .IR NAME " ]"
 .RB "[ " verbose " ] |"
 .br
@@ -2341,6 +2341,13 @@ name is specified, the default one ("prog") will be used. This option is
 to be passed with the
 .B object
 option.
+
+.BI program " NAME "
+- Specifies the BPF program name that need to be attached. When the program
+name is specified, the section name parameter will be ignored. This option
+only works when iproute2 build with
+.B libbpf
+support.
 
 .BI verbose
 - Act in verbose mode. For example, even in case of success, this will

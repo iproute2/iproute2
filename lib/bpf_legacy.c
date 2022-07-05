@@ -831,7 +831,7 @@ static int bpf_obj_pinned(const char *pathname, enum bpf_prog_type type)
 
 static int bpf_do_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
 {
-	const char *file, *section, *uds_name;
+	const char *file, *section, *uds_name, *prog_name;
 	bool verbose = false;
 	int i, ret, argc;
 	char **argv;
@@ -862,7 +862,7 @@ static int bpf_do_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
 	}
 
 	NEXT_ARG();
-	file = section = uds_name = NULL;
+	file = section = uds_name = prog_name = NULL;
 	if (cfg->mode == EBPF_OBJECT || cfg->mode == EBPF_PINNED) {
 		file = *argv;
 		NEXT_ARG_FWD();
@@ -896,6 +896,12 @@ static int bpf_do_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
 		if (argc > 0 && matches(*argv, "section") == 0) {
 			NEXT_ARG();
 			section = *argv;
+			NEXT_ARG_FWD();
+		}
+
+		if (argc > 0 && strcmp(*argv, "program") == 0) {
+			NEXT_ARG();
+			prog_name = *argv;
 			NEXT_ARG_FWD();
 		}
 
@@ -936,6 +942,7 @@ static int bpf_do_parse(struct bpf_cfg_in *cfg, const bool *opt_tbl)
 	cfg->argc    = argc;
 	cfg->argv    = argv;
 	cfg->verbose = verbose;
+	cfg->prog_name = prog_name;
 
 	return ret;
 }

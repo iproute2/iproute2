@@ -107,7 +107,11 @@ void iplink_usage(void)
 		"			 [ node_guid EUI64 ]\n"
 		"			 [ port_guid EUI64 ] ]\n"
 		"		[ { xdp | xdpgeneric | xdpdrv | xdpoffload } { off |\n"
+#ifdef HAVE_LIBBPF
+		"			  object FILE [ { section | program } NAME ] [ verbose ] |\n"
+#else
 		"			  object FILE [ section NAME ] [ verbose ] |\n"
+#endif
 		"			  pinned FILE } ]\n"
 		"		[ master DEVICE ][ vrf NAME ]\n"
 		"		[ nomaster ]\n"

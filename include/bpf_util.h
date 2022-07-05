@@ -68,6 +68,7 @@ enum bpf_mode {
 struct bpf_cfg_in {
 	const char *object;
 	const char *section;
+	const char *prog_name;
 	const char *uds;
 	enum bpf_prog_type type;
 	enum bpf_mode mode;
