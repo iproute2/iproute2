@@ -436,9 +436,13 @@ static int mptcp_limit_get_set(int argc, char **argv, int cmd)
 	if (rtnl_talk(&genl_rth, &req.n, do_get ? &answer : NULL) < 0)
 		return -2;
 
-	if (do_get)
-		return print_mptcp_limit(answer, stdout);
-	return 0;
+	ret = 0;
+	if (do_get) {
+		ret = print_mptcp_limit(answer, stdout);
+		free(answer);
+	}
+
+	return ret;
 }
 
 static const char * const event_to_str[] = {
