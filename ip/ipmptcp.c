@@ -337,6 +337,7 @@ static int mptcp_addr_show(int argc, char **argv)
 	new_json_obj(json);
 	ret = print_mptcp_addr(answer, stdout);
 	delete_json_obj();
+	free(answer);
 	fflush(stdout);
 	return ret;
 }
