@@ -1,0 +1,101 @@
+.TH DEVLINK\-LC 8 "20 Apr 2022" "iproute2" "Linux"
+.SH NAME
+devlink-lc \- devlink line card configuration
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B devlink
+.RI "[ " OPTIONS " ]"
+.B lc
+.RI  " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] }
+
+.ti -8
+.B "devlink lc set"
+.IB DEV " lc " LC_INDEX
+.RB [ " type " {
+.IR LC_TYPE " | "
+.BR notype " } ] "
+
+.ti -8
+.B "devlink lc show"
+.RI "[ " DEV " [ "
+.BI lc " LC_INDEX
+.R  " ] ]"
+
+.ti -8
+.B devlink lc help
+
+.SH "DESCRIPTION"
+.SS devlink lc set - change line card attributes
+
+.PP
+.TP
+.I "DEV"
+Specifies the devlink device to operate on.
+
+.in +4
+Format is:
+.in +2
+BUS_NAME/BUS_ADDRESS
+
+.TP
+.BI lc " LC_INDEX "
+Specifies index of a line card slot to set.
+
+.TP
+.BR type " { "
+.IR LC_TYPE " | "
+.BR notype " } "
+Type of line card to provision. Each driver provides a list of supported line card types which is shown in the output of
+.BR "devlink lc show " command.
+
+.SS devlink lc show - display line card attributes
+
+.PP
+.TP
+.I "DEV"
+.RB "Specifies the devlink device to operate on. If this and " lc " arguments are omitted all line cards of all devices are listed.
+
+.TP
+.BI lc " LC_INDEX "
+Specifies index of a line card slot to show.
+
+.SH "EXAMPLES"
+.PP
+devlink lc show
+.RS 4
+Shows the state of all line cards on the system.
+.RE
+.PP
+devlink lc show pci/0000:01:00.0 lc 1
+.RS 4
+Shows the state of line card with index 1.
+.RE
+.PP
+devlink lc set pci/0000:01:00.0 lc 1 type 16x100G
+.RS 4
+.RI "Sets type of specified line card to type " 16x100G "."
+.RE
+.PP
+devlink lc set pci/0000:01:00.0 lc 1 notype
+.RS 4
+Clears provisioning on a line card.
+.RE
+
+.SH SEE ALSO
+.BR devlink (8),
+.BR devlink-dev (8),
+.BR devlink-port (8),
+.BR devlink-monitor (8),
+.br
+
+.SH AUTHOR
+Jiri Pirko <jiri@nvidia.com>

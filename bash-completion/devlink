@@ -43,6 +43,19 @@ _devlink_direct_complete()
                     | jq '.port as $ports | $ports | keys[] as $key
                     | ($ports[$key].netdev // $key)')
             ;;
+        lc)
+            dev=${words[3]}
+            value=$(devlink -j lc show 2>/dev/null \
+                    | jq ".lc[\"$dev\"]" \
+                    | jq '. as $lcs | $lcs | keys[] as $key |($lcs[$key].lc)' \
+                    2>/dev/null)
+            ;;
+        lc_type)
+            dev=${words[3]}
+            lc=${words[5]}
+            value=$(devlink lc show $dev lc $lc -j 2>/dev/null \
+                    | jq '.[][][]["supported_types"][]')
+            ;;
         region)
             value=$(devlink -j region show 2>/dev/null \
                     | jq '.regions' | jq 'keys[]')
@@ -390,6 +403,62 @@ _devlink_port()
             if [[ $cword -eq 3 ]]; then
                 _devlink_direct_complete "port"
             fi
+            return
+            ;;
+    esac
+}
+
+# Completion for devlink lc set
+_devlink_lc_set()
+{
+    case "$cword" in
+        3)
+            _devlink_direct_complete "dev"
+            return
+            ;;
+        4)
+            COMPREPLY=( $( compgen -W "lc" -- "$cur" ) )
+            ;;
+        5)
+            _devlink_direct_complete "lc"
+            ;;
+        6)
+            COMPREPLY=( $( compgen -W "type notype" -- "$cur" ) )
+            return
+            ;;
+        7)
+            if [[ "$prev" == "type" ]]; then
+                _devlink_direct_complete "lc_type"
+            fi
+    esac
+}
+
+# Completion for devlink lc show
+_devlink_lc_show()
+{
+    case $cword in
+        3)
+            _devlink_direct_complete "dev"
+            ;;
+        4)
+            COMPREPLY=( $( compgen -W "lc" -- "$cur" ) )
+            ;;
+        5)
+            _devlink_direct_complete "lc"
+            ;;
+    esac
+}
+
+# Completion for devlink lc
+_devlink_lc()
+{
+    case $command in
+        set)
+            _devlink_lc_set
+            return
+            ;;
+        show)
+            _devlink_lc_show
             return
             ;;
     esac
@@ -988,6 +1057,7 @@ _devlink()
     local object=${words[1]}
     local command=${words[2]}
     local pprev=${words[cword - 2]}
+    local prev=${words[cword - 1]}
 
     if [[ $objects =~ $object ]]; then
         if [[ $cword -eq 2 ]]; then
