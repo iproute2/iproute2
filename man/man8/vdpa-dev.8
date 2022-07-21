@@ -43,6 +43,13 @@ vdpa-dev \- vdpa device configuration
 .B vdpa dev config show
 .RI "[ " DEV " ]"
 
+.ti -8
+.B vdpa dev vstats show
+.I DEV
+.B qidx
+.I QUEUE_INDEX
+
+
 .SH "DESCRIPTION"
 .SS vdpa dev show - display vdpa device attributes
 
@@ -93,6 +100,16 @@ Format is:
 .in +2
 VDPA_DEVICE_NAME
 
+.SS vdpa dev vstats show - shows vendor specific statistics for the given device and virtqueue index. The information is presented as name-value pairs where name is the name of the field and value is a numeric value for it.
+
+.TP
+.BI "DEV"
+- specifies the vdpa device to query
+
+.TP
+.BI qidx " QUEUE_INDEX"
+- specifies the virtqueue index to query
+
 .SH "EXAMPLES"
 .PP
 vdpa dev show
@@ -133,6 +150,11 @@ Delete the vdpa device named foo which was previously created.
 vdpa dev config show foo
 .RS 4
 Shows the vdpa device configuration of device named foo.
+.RE
+.PP
+vdpa dev vstats show vdpa0 qidx 1
+.RS 4
+Shows vendor specific statistics information for vdpa device vdpa0 and virtqueue index 1
 .RE
 
 .SH SEE ALSO
