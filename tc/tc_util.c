@@ -93,7 +93,7 @@ ok:
 
 int get_tc_classid(__u32 *h, const char *str)
 {
-	__u32 maj, min;
+	unsigned long maj, min;
 	char *p;
 
 	maj = TC_H_ROOT;
