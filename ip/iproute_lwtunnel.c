@@ -135,6 +135,8 @@ static const char *seg6_mode_types[] = {
 	[SEG6_IPTUN_MODE_INLINE]	= "inline",
 	[SEG6_IPTUN_MODE_ENCAP]		= "encap",
 	[SEG6_IPTUN_MODE_L2ENCAP]	= "l2encap",
+	[SEG6_IPTUN_MODE_ENCAP_RED]	= "encap.red",
+	[SEG6_IPTUN_MODE_L2ENCAP_RED]	= "l2encap.red",
 };
 
 static const char *format_seg6mode_type(int mode)

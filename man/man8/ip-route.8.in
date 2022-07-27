@@ -229,7 +229,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR ENCAP_SEG6 " := "
 .B seg6
 .BR mode " [ "
-.BR encap " | " inline " | " l2encap " ] "
+.BR encap " | " encap.red " | " inline " | " l2encap " | " l2encap.red " ] "
 .B segs
 .IR SEGMENTS " [ "
 .B hmac
@@ -807,8 +807,20 @@ is a set of encapsulation attributes specific to the
 - Encapsulate packet in an outer IPv6 header with SRH
 .sp
 
+.B mode encap.red
+- Encapsulate packet in an outer IPv6 header with SRH applying the
+reduced segment list. When there is only one segment and the HMAC is
+not present, the SRH is omitted.
+.sp
+
 .B mode l2encap
 - Encapsulate ingress L2 frame within an outer IPv6 header and SRH
+.sp
+
+.B mode l2encap.red
+- Encapsulate ingress L2 frame within an outer IPv6 header and SRH
+applying the reduced segment list. When there is only one segment
+and the HMAC is not present, the SRH is omitted.
 .sp
 
 .I SEGMENTS
