@@ -40,6 +40,10 @@ flower \- flow based traffic control filter
 .IR PRIORITY " | "
 .BR cvlan_ethtype " { " ipv4 " | " ipv6 " | "
 .IR ETH_TYPE " } | "
+.B pppoe_sid
+.IR PSID " | "
+.BR ppp_proto " { " ip " | " ipv6 " | " mpls_uc " | " mpls_mc " | "
+.IR PPP_PROTO " } | "
 .B mpls
 .IR LSE_LIST " | "
 .B mpls_label
@@ -202,7 +206,18 @@ Match on QinQ layer three protocol.
 may be either
 .BR ipv4 ", " ipv6
 or an unsigned 16bit value in hexadecimal format.
-
+.TP
+.BI pppoe_sid " PSID"
+Match on PPPoE session id.
+.I PSID
+is an unsigned 16bit value in decimal format.
+.TP
+.BI ppp_proto " PPP_PROTO"
+Match on PPP layer three protocol.
+.I PPP_PROTO
+may be either
+.BR ip ", " ipv6 ", " mpls_uc ", " mpls_mc
+or an unsigned 16bit value in hexadecimal format.
 .TP
 .BI mpls " LSE_LIST"
 Match on the MPLS label stack.
