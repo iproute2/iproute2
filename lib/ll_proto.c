@@ -28,10 +28,8 @@
 
 
 #define __PF(f,n) { ETH_P_##f, #n },
-static const struct {
-	int id;
-	const char *name;
-} llproto_names[] = {
+
+static const struct proto llproto_names[] = {
 __PF(LOOP,loop)
 __PF(PUP,pup)
 __PF(PUPAT,pupat)
@@ -90,31 +88,16 @@ __PF(TEB,teb)
 };
 #undef __PF
 
-
-const char * ll_proto_n2a(unsigned short id, char *buf, int len)
+const char *ll_proto_n2a(unsigned short id, char *buf, int len)
 {
-        int i;
+	size_t len_tb = ARRAY_SIZE(llproto_names);
 
-	id = ntohs(id);
-
-        for (i=0; !numeric && i<sizeof(llproto_names)/sizeof(llproto_names[0]); i++) {
-                 if (llproto_names[i].id == id)
-			return llproto_names[i].name;
-	}
-        snprintf(buf, len, "[%d]", id);
-        return buf;
+	return proto_n2a(id, buf, len, llproto_names, len_tb);
 }
 
 int ll_proto_a2n(unsigned short *id, const char *buf)
 {
-        int i;
-        for (i=0; i < sizeof(llproto_names)/sizeof(llproto_names[0]); i++) {
-                 if (strcasecmp(llproto_names[i].name, buf) == 0) {
-			 *id = htons(llproto_names[i].id);
-			 return 0;
-		 }
-	}
-	if (get_be16(id, buf, 0))
-		return -1;
-	return 0;
+	size_t len_tb = ARRAY_SIZE(llproto_names);
+
+	return proto_a2n(id, buf, llproto_names, len_tb);
 }
