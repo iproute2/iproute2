@@ -731,8 +731,10 @@ static int ipneigh_get(int argc, char **argv)
 	ipneigh_reset_filter(0);
 	if (print_neigh(answer, stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
+		free(answer);
 		return -1;
 	}
+	free(answer);
 
 	return 0;
 }

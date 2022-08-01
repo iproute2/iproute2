@@ -575,6 +575,7 @@ static int fdb_get(int argc, char **argv)
 	char *addr = NULL;
 	short vlan = -1;
 	char *endptr;
+	int ret;
 
 	while (argc > 0) {
 		if ((strcmp(*argv, "brport") == 0) || strcmp(*argv, "dev") == 0) {
@@ -661,13 +662,15 @@ static int fdb_get(int argc, char **argv)
 	 * if -json was specified.
 	 */
 	new_json_obj(json);
+	ret = 0;
 	if (print_fdb(answer, stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
-		return -1;
+		ret = -1;
 	}
 	delete_json_obj();
+	free(answer);
 
-	return 0;
+	return ret;
 }
 
 static int fdb_flush(int argc, char **argv)

@@ -7,6 +7,7 @@
 #include <sys/syscall.h>
 #include <limits.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "bpf_util.h"
 #ifdef HAVE_LIBBPF

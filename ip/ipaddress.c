@@ -2055,8 +2055,10 @@ static int ipaddr_link_get(int index, struct nlmsg_chain *linfo)
 
 	if (store_nlmsg(answer, linfo) < 0) {
 		fprintf(stderr, "Failed to process link information\n");
+		free(answer);
 		return 1;
 	}
+	free(answer);
 
 	return 0;
 }
