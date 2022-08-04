@@ -85,6 +85,20 @@ devlink-dev \- devlink device configuration
 .I ID
 ]
 
+.ti -8
+.B devlink dev selftests show
+[
+.I DEV
+]
+
+.ti -8
+.B devlink dev selftests run
+.I DEV
+[
+.B id
+.I ID...
+]
+
 .SH "DESCRIPTION"
 .SS devlink dev show - display devlink device attributes
 
@@ -249,6 +263,28 @@ should match the component names from
 .B "devlink dev info"
 and may be driver-dependent.
 
+.SS devlink dev selftests show - shows supported selftests on devlink device.
+
+.PP
+.I "DEV"
+- specifies the devlink device.
+If this argument is omitted all selftests for devlink devices are listed.
+
+.SS devlink dev selftests run - runs selftests on devlink device.
+
+.PP
+.I "DEV"
+- specifies the devlink device to execute selftests.
+
+.B id
+.I  ID...
+- The value of
+.I ID(s)
+should match the selftests shown in
+.B "devlink dev selftests show"
+to execute selftests on the devlink device.
+If this argument is omitted all selftests supported by devlink devices are executed.
+
 .SH "EXAMPLES"
 .PP
 devlink dev show
@@ -295,6 +331,16 @@ Preparing to flash
 Flashing 100%
 .br
 Flashing done
+.RE
+.PP
+devlink dev selftests show pci/0000:01:00.0
+.RS 4
+Shows the supported selftests by the devlink device.
+.RE
+.PP
+devlink dev selftests run pci/0000:01:00.0 id flash
+.RS 4
+Perform a flash test on the devlink device.
 .RE
 
 .SH SEE ALSO

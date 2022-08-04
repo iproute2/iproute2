@@ -33,6 +33,11 @@ _devlink_direct_complete()
         dev)
             value=$(devlink dev show 2>/dev/null)
             ;;
+        selftests_id)
+            dev=${words[4]}
+            value=$(devlink -j dev selftests show 2>/dev/null \
+                    | jq ".selftests[\"$dev\"][]")
+            ;;
         param_name)
             dev=${words[4]}
             value=$(devlink -j dev param show 2>/dev/null \
@@ -275,6 +280,29 @@ _devlink_dev_flash()
      esac
 }
 
+# Completion for devlink dev selftests
+_devlink_dev_selftests()
+{
+    if [[ $cword -gt 5 ]]; then
+            _devlink_direct_complete "selftests_id"
+            return
+    fi
+    case "$cword" in
+        3)
+            COMPREPLY=( $( compgen -W "show run" -- "$cur" ) )
+            return
+            ;;
+        4)
+            _devlink_direct_complete "dev"
+            return
+            ;;
+        5)
+            COMPREPLY=( $( compgen -W "id" -- "$cur" ) )
+            return
+            ;;
+    esac
+}
+
 # Completion for devlink dev
 _devlink_dev()
 {
@@ -287,7 +315,7 @@ _devlink_dev()
             fi
             return
             ;;
-        eswitch|param)
+        eswitch|param|selftests)
             _devlink_dev_$command
             return
             ;;

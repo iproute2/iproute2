@@ -296,6 +296,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_PORT_FN_RATE_PARENT	BIT(51)
 #define DL_OPT_LINECARD		BIT(52)
 #define DL_OPT_LINECARD_TYPE	BIT(53)
+#define DL_OPT_SELFTESTS	BIT(54)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -358,6 +359,7 @@ struct dl_opts {
 	const char *rate_parent_node;
 	uint32_t linecard_index;
 	const char *linecard_type;
+	bool selftests_opt[DEVLINK_ATTR_SELFTEST_ID_MAX + 1];
 };
 
 struct dl {
@@ -701,6 +703,7 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_LINECARD_STATE] = MNL_TYPE_U8,
 	[DEVLINK_ATTR_LINECARD_TYPE] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_LINECARD_SUPPORTED_TYPES] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_SELFTESTS] = MNL_TYPE_NESTED,
 };
 
 static const enum mnl_attr_data_type
@@ -1409,6 +1412,17 @@ static struct str_num_map port_fn_opstate_map[] = {
 	{ .str = NULL, }
 };
 
+static int selftests_get(const char *selftest_name, bool *selftests_opt)
+{
+	if (strcmp(selftest_name, "flash") == 0) {
+		selftests_opt[0] = true;
+	} else {
+		pr_err("Unknown selftest \"%s\"\n", selftest_name);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 static int port_flavour_parse(const char *flavour, uint16_t *value)
 {
 	int num;
@@ -1500,6 +1514,7 @@ static const struct dl_args_metadata dl_args_required[] = {
 	{DL_OPT_PORT_PFNUMBER,         "Port PCI PF number is expected."},
 	{DL_OPT_LINECARD,	      "Linecard index expected."},
 	{DL_OPT_LINECARD_TYPE,	      "Linecard type expected."},
+	{DL_OPT_SELFTESTS,            "Test name is expected"},
 };
 
 static int dl_args_finding_required_validate(uint64_t o_required,
@@ -1803,6 +1818,21 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 				return err;
 			o_found |= DL_OPT_FLASH_OVERWRITE;
 
+		} else if (dl_argv_match(dl, "id") &&
+				(o_all & DL_OPT_SELFTESTS)) {
+			dl_arg_inc(dl);
+			while (dl_argc(dl)) {
+				const char *selftest_name;
+				err = dl_argv_str(dl, &selftest_name);
+				if (err)
+					return err;
+				err = selftests_get(selftest_name,
+						    opts->selftests_opt);
+				if (err)
+					return err;
+			}
+			o_found |= DL_OPT_SELFTESTS;
+
 		} else if (dl_argv_match(dl, "reporter") &&
 			   (o_all & DL_OPT_HEALTH_REPORTER_NAME)) {
 			dl_arg_inc(dl);
@@ -2092,6 +2122,34 @@ dl_reload_limits_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
 	mnl_attr_put(nlh, DEVLINK_ATTR_RELOAD_LIMITS, sizeof(limits), &limits);
 }
 
+static void
+dl_selftests_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
+{
+	bool test_sel = false;
+	struct nlattr *nest;
+	int id;
+
+	nest = mnl_attr_nest_start(nlh, DEVLINK_ATTR_SELFTESTS);
+
+	for (id = DEVLINK_ATTR_SELFTEST_ID_UNSPEC + 1;
+	     id <= DEVLINK_ATTR_SELFTEST_ID_MAX &&
+		opts->selftests_opt[id]; id++) {
+		if (opts->selftests_opt[id]) {
+			test_sel = true;
+			mnl_attr_put(nlh, id, 0, NULL);
+		}
+	}
+
+	/* No test selected from user, select all */
+	if (!test_sel) {
+		for (id = DEVLINK_ATTR_SELFTEST_ID_UNSPEC + 1;
+		     id <= DEVLINK_ATTR_SELFTEST_ID_MAX; id++)
+			mnl_attr_put(nlh, id, 0, NULL);
+	}
+
+	mnl_attr_nest_end(nlh, nest);
+}
+
 static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 {
 	struct dl_opts *opts = &dl->opts;
@@ -2186,6 +2244,8 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 				  opts->flash_component);
 	if (opts->present & DL_OPT_FLASH_OVERWRITE)
 		dl_flash_update_overwrite_put(nlh, opts);
+	if (opts->present & DL_OPT_SELFTESTS)
+		dl_selftests_put(nlh, opts);
 	if (opts->present & DL_OPT_HEALTH_REPORTER_NAME)
 		mnl_attr_put_strz(nlh, DEVLINK_ATTR_HEALTH_REPORTER_NAME,
 				  opts->reporter_name);
@@ -2327,6 +2387,8 @@ static void cmd_dev_help(void)
 	pr_err("                              [ action { driver_reinit | fw_activate } ] [ limit no_reset ]\n");
 	pr_err("       devlink dev info [ DEV ]\n");
 	pr_err("       devlink dev flash DEV file PATH [ component NAME ] [ overwrite SECTION ]\n");
+	pr_err("       devlink dev selftests show [DEV]\n");
+	pr_err("       devlink dev selftests run DEV [id TESTNAME ]\n");
 }
 
 static bool cmp_arr_last_handle(struct dl *dl, const char *bus_name,
@@ -2419,6 +2481,41 @@ static void pr_out_handle(struct dl *dl, struct nlattr **tb)
 {
 	__pr_out_handle_start(dl, tb, false, false);
 	pr_out_handle_end(dl);
+}
+
+static void pr_out_selftests_handle_start(struct dl *dl, struct nlattr **tb)
+{
+	const char *bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
+	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
+	char buf[64];
+
+	sprintf(buf, "%s/%s", bus_name, dev_name);
+
+	if (dl->json_output) {
+		if (should_arr_last_handle_end(dl, bus_name, dev_name))
+			close_json_array(PRINT_JSON, NULL);
+		if (should_arr_last_handle_start(dl, bus_name,
+						 dev_name)) {
+			open_json_array(PRINT_JSON, buf);
+			arr_last_handle_set(dl, bus_name, dev_name);
+		}
+	} else {
+		if (should_arr_last_handle_end(dl, bus_name, dev_name))
+			__pr_out_indent_dec();
+		if (should_arr_last_handle_start(dl, bus_name,
+						 dev_name)) {
+			pr_out("%s%s", buf, ":");
+			__pr_out_newline();
+			__pr_out_indent_inc();
+			arr_last_handle_set(dl, bus_name, dev_name);
+		}
+	}
+}
+
+static void pr_out_selftests_handle_end(struct dl *dl)
+{
+	if (!dl->json_output)
+		__pr_out_newline();
 }
 
 static bool cmp_arr_last_port_handle(struct dl *dl, const char *bus_name,
@@ -3946,6 +4043,234 @@ err_socket:
 	return err;
 }
 
+static const char *devlink_get_selftest_name(int id)
+{
+	switch (id) {
+	case DEVLINK_ATTR_SELFTEST_ID_FLASH:
+		return "flash";
+	default:
+		return "unknown";
+	}
+}
+
+static const enum mnl_attr_data_type
+devlink_selftest_id_policy[DEVLINK_ATTR_SELFTEST_ID_MAX + 1] = {
+	[DEVLINK_ATTR_SELFTEST_ID_FLASH] = MNL_TYPE_FLAG,
+};
+
+static int selftests_attr_cb(const struct nlattr *attr, void *data)
+{
+	const struct nlattr **tb = data;
+	int type;
+
+	if (mnl_attr_type_valid(attr, DEVLINK_ATTR_SELFTEST_ID_MAX) < 0)
+		return MNL_CB_OK;
+
+	type = mnl_attr_get_type(attr);
+	if (mnl_attr_validate(attr, devlink_selftest_id_policy[type]) < 0)
+		return MNL_CB_ERROR;
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+static int cmd_dev_selftests_show_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct nlattr *selftests[DEVLINK_ATTR_SELFTEST_ID_MAX + 1] = {};
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct dl *dl = data;
+	int avail = 0;
+	int err;
+	int i;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_SELFTESTS])
+		return MNL_CB_ERROR;
+
+	err = mnl_attr_parse_nested(tb[DEVLINK_ATTR_SELFTESTS],
+				    selftests_attr_cb, selftests);
+	if (err != MNL_CB_OK)
+		return MNL_CB_ERROR;
+
+	for (i = DEVLINK_ATTR_SELFTEST_ID_UNSPEC + 1;
+	     i <= DEVLINK_ATTR_SELFTEST_ID_MAX; i++) {
+		if (!(selftests[i]))
+			continue;
+
+		if (!avail) {
+			pr_out_selftests_handle_start(dl, tb);
+			avail = 1;
+		}
+
+		check_indent_newline(dl);
+		print_string(PRINT_ANY, NULL, "%s", devlink_get_selftest_name(i));
+	}
+
+	if (avail) {
+		pr_out_selftests_handle_end(dl);
+	}
+
+	return MNL_CB_OK;
+}
+
+static const char *devlink_selftest_status_to_str(uint8_t status)
+{
+	switch (status) {
+	case DEVLINK_SELFTEST_STATUS_SKIP:
+		return "skipped";
+	case DEVLINK_SELFTEST_STATUS_PASS:
+		return "passed";
+	case DEVLINK_SELFTEST_STATUS_FAIL:
+		return "failed";
+	default:
+		return "unknown";
+	}
+}
+
+static const enum mnl_attr_data_type
+devlink_selftests_result_policy[DEVLINK_ATTR_SELFTEST_RESULT_MAX + 1] = {
+	[DEVLINK_ATTR_SELFTEST_RESULT] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_SELFTEST_RESULT_ID] = MNL_TYPE_U32,
+	[DEVLINK_ATTR_SELFTEST_RESULT_STATUS] = MNL_TYPE_U8,
+};
+
+static int selftests_result_attr_cb(const struct nlattr *attr, void *data)
+{
+	const struct nlattr **tb = data;
+	int type;
+
+	if (mnl_attr_type_valid(attr, DEVLINK_ATTR_SELFTEST_RESULT_MAX) < 0)
+		return MNL_CB_OK;
+
+	type = mnl_attr_get_type(attr);
+	if (mnl_attr_validate(attr, devlink_selftests_result_policy[type]) < 0)
+		return MNL_CB_ERROR;
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+static int cmd_dev_selftests_run_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	struct nlattr *selftest;
+	struct dl *dl = data;
+	int avail = 0;
+
+	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
+
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_SELFTESTS])
+		return MNL_CB_ERROR;
+
+	mnl_attr_for_each_nested(selftest, tb[DEVLINK_ATTR_SELFTESTS]) {
+		struct nlattr *result[DEVLINK_ATTR_SELFTEST_RESULT_MAX + 1] = {};
+		uint8_t status;
+		int err;
+		int id;
+
+		err = mnl_attr_parse_nested(selftest,
+					    selftests_result_attr_cb, result);
+		if (err != MNL_CB_OK)
+			return MNL_CB_ERROR;
+
+		if (!result[DEVLINK_ATTR_SELFTEST_RESULT_ID] ||
+		    !result[DEVLINK_ATTR_SELFTEST_RESULT_STATUS])
+			return MNL_CB_ERROR;
+
+		if (!avail) {
+			pr_out_section_start(dl, "selftests");
+			__pr_out_handle_start(dl, tb, true, false);
+			__pr_out_indent_inc();
+			avail = 1;
+			if (!dl->json_output)
+				__pr_out_newline();
+		}
+
+		id = mnl_attr_get_u32(result[DEVLINK_ATTR_SELFTEST_RESULT_ID]);
+		status = mnl_attr_get_u8(result[DEVLINK_ATTR_SELFTEST_RESULT_STATUS]);
+
+		pr_out_object_start(dl, devlink_get_selftest_name(id));
+		check_indent_newline(dl);
+		print_string_name_value("status",
+					devlink_selftest_status_to_str(status));
+		pr_out_object_end(dl);
+		if (!dl->json_output)
+			__pr_out_newline();
+	}
+
+	if (avail) {
+		__pr_out_indent_dec();
+		pr_out_handle_end(dl);
+		pr_out_section_end(dl);
+	}
+
+	return MNL_CB_OK;
+}
+
+static int cmd_dev_selftests_run(struct dl *dl)
+{
+	struct nlmsghdr *nlh;
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	int err;
+
+	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_SELFTESTS_RUN, flags);
+
+	err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE, DL_OPT_SELFTESTS);
+	if (err)
+		return err;
+
+	if (!(dl->opts.present & DL_OPT_SELFTESTS))
+		dl_selftests_put(nlh, &dl->opts);
+
+	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, cmd_dev_selftests_run_cb, dl);
+	return err;
+}
+
+static int cmd_dev_selftests_show(struct dl *dl)
+{
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
+	struct nlmsghdr *nlh;
+	int err;
+
+	if (dl_argc(dl) == 0)
+		flags |= NLM_F_DUMP;
+
+	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_SELFTESTS_GET, flags);
+
+	if (dl_argc(dl) > 0) {
+		err = dl_argv_parse_put(nlh, dl, DL_OPT_HANDLE, 0);
+		if (err)
+			return err;
+	}
+
+	pr_out_section_start(dl, "selftests");
+	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, cmd_dev_selftests_show_cb, dl);
+	pr_out_section_end(dl);
+	return err;
+}
+
+static int cmd_dev_selftests(struct dl *dl)
+{
+	if (dl_argv_match(dl, "help")) {
+		cmd_dev_help();
+		return 0;
+	} else if (dl_argv_match(dl, "show") ||
+		   dl_argv_match(dl, "list") || dl_no_arg(dl)) {
+		dl_arg_inc(dl);
+		return cmd_dev_selftests_show(dl);
+	} else if (dl_argv_match(dl, "run")) {
+		dl_arg_inc(dl);
+		return cmd_dev_selftests_run(dl);
+	}
+	pr_err("Command \"%s\" not found\n", dl_argv(dl));
+	return -ENOENT;
+}
+
 static int cmd_dev(struct dl *dl)
 {
 	if (dl_argv_match(dl, "help")) {
@@ -3970,6 +4295,9 @@ static int cmd_dev(struct dl *dl)
 	} else if (dl_argv_match(dl, "flash")) {
 		dl_arg_inc(dl);
 		return cmd_dev_flash(dl);
+	} else if (dl_argv_match(dl, "selftests")) {
+		dl_arg_inc(dl);
+		return cmd_dev_selftests(dl);
 	}
 	pr_err("Command \"%s\" not found\n", dl_argv(dl));
 	return -ENOENT;
