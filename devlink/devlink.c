@@ -703,6 +703,7 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_LINECARD_STATE] = MNL_TYPE_U8,
 	[DEVLINK_ATTR_LINECARD_TYPE] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_LINECARD_SUPPORTED_TYPES] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_NESTED_DEVLINK] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_SELFTESTS] = MNL_TYPE_NESTED,
 };
 
@@ -2421,6 +2422,25 @@ static bool should_arr_last_handle_end(struct dl *dl, const char *bus_name,
 {
 	return dl->arr_last.present &&
 	       !cmp_arr_last_handle(dl, bus_name, dev_name);
+}
+
+static void pr_out_nested_handle(struct nlattr *nla_nested_dl)
+{
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	char buf[64];
+	int err;
+
+	err = mnl_attr_parse_nested(nla_nested_dl, attr_cb, tb);
+	if (err != MNL_CB_OK)
+		return;
+
+	if (!tb[DEVLINK_ATTR_BUS_NAME] ||
+	    !tb[DEVLINK_ATTR_DEV_NAME])
+		return;
+
+	sprintf(buf, "%s/%s", mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
+		mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
+	print_string(PRINT_ANY, "nested_devlink", " nested_devlink %s", buf);
 }
 
 static void __pr_out_handle_start(struct dl *dl, struct nlattr **tb,
@@ -5278,6 +5298,9 @@ static void pr_out_linecard(struct dl *dl, struct nlattr **tb)
 	if (tb[DEVLINK_ATTR_LINECARD_TYPE])
 		print_string(PRINT_ANY, "type", " type %s",
 			     mnl_attr_get_str(tb[DEVLINK_ATTR_LINECARD_TYPE]));
+	if (tb[DEVLINK_ATTR_NESTED_DEVLINK])
+		pr_out_nested_handle(tb[DEVLINK_ATTR_NESTED_DEVLINK]);
+
 	pr_out_linecard_supported_types(dl, tb);
 	pr_out_handle_end(dl);
 }
