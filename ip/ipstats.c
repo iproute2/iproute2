@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 #include <assert.h>
 #include <errno.h>
+#include <sys/param.h>
 
 #include "list.h"
 #include "utils.h"
