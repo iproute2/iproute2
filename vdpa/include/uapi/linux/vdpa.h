@@ -18,7 +18,7 @@ enum vdpa_command {
 	VDPA_CMD_DEV_DEL,
 	VDPA_CMD_DEV_GET,		/* can dump */
 	VDPA_CMD_DEV_CONFIG_GET,	/* can dump */
-	VDPA_CMD_DEV_STATS_GET,
+	VDPA_CMD_DEV_VSTATS_GET,
 };
 
 enum vdpa_attr {
@@ -48,9 +48,9 @@ enum vdpa_attr {
 	VDPA_ATTR_DEV_MGMTDEV_MAX_VQS,		/* u32 */
 	VDPA_ATTR_DEV_SUPPORTED_FEATURES,	/* u64 */
 
-	VDPA_ATTR_DEV_QUEUE_INDEX,		/* u32 */
+	VDPA_ATTR_DEV_QUEUE_INDEX,              /* u32 */
 	VDPA_ATTR_DEV_VENDOR_ATTR_NAME,		/* string */
-	VDPA_ATTR_DEV_VENDOR_ATTR_VALUE,	/* u64 */
+	VDPA_ATTR_DEV_VENDOR_ATTR_VALUE,        /* u64 */
 
 	/* new attributes must be added above here */
 	VDPA_ATTR_MAX,
