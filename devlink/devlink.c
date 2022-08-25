@@ -374,6 +374,7 @@ struct dl {
 	bool verbose;
 	bool stats;
 	bool hex;
+	bool map_loaded;
 	struct {
 		bool present;
 		char *bus_name;
@@ -817,13 +818,15 @@ static void ifname_map_fini(struct dl *dl)
 	}
 }
 
-static int ifname_map_init(struct dl *dl)
+static void ifname_map_init(struct dl *dl)
+{
+	INIT_LIST_HEAD(&dl->ifname_map_list);
+}
+
+static int ifname_map_load(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
 	int err;
-
-	INIT_LIST_HEAD(&dl->ifname_map_list);
-
 
 	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_PORT_GET,
 			       NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP);
@@ -841,7 +844,16 @@ static int ifname_map_lookup(struct dl *dl, const char *ifname,
 			     uint32_t *p_port_index)
 {
 	struct ifname_map *ifname_map;
+	int err;
 
+	if (!dl->map_loaded) {
+		err = ifname_map_load(dl);
+		if (err) {
+			pr_err("Failed to create index map\n");
+			return err;
+		}
+		dl->map_loaded = true;
+	}
 	list_for_each_entry(ifname_map, &dl->ifname_map_list, list) {
 		if (strcmp(ifname, ifname_map->ifname) == 0) {
 			*p_bus_name = ifname_map->bus_name;
@@ -9622,17 +9634,10 @@ static int dl_init(struct dl *dl)
 		return -errno;
 	}
 
-	err = ifname_map_init(dl);
-	if (err) {
-		pr_err("Failed to create index map\n");
-		goto err_ifname_map_create;
-	}
+	ifname_map_init(dl);
+
 	new_json_obj_plain(dl->json_output);
 	return 0;
-
-err_ifname_map_create:
-	mnlu_gen_socket_close(&dl->nlg);
-	return err;
 }
 
 static void dl_fini(struct dl *dl)
