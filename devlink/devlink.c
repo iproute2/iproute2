@@ -3812,12 +3812,12 @@ static int cmd_dev_flash_status_cb(const struct nlmsghdr *nlh, void *data)
 
 	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
 	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME])
-		return MNL_CB_ERROR;
+		return MNL_CB_STOP;
 	bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
 	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	if (strcmp(bus_name, opts->bus_name) ||
 	    strcmp(dev_name, opts->dev_name))
-		return MNL_CB_ERROR;
+		return MNL_CB_STOP;
 
 	if (genl->cmd == DEVLINK_CMD_FLASH_UPDATE_END) {
 		pr_out("\n");
