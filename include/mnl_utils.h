@@ -6,6 +6,7 @@ struct mnlu_gen_socket {
 	struct mnl_socket *nl;
 	char *buf;
 	uint32_t family;
+	uint32_t maxattr;
 	unsigned int seq;
 	uint8_t version;
 };
