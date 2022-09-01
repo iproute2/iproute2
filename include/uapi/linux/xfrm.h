@@ -33,7 +33,7 @@ struct xfrm_sec_ctx {
 	__u8	ctx_alg;
 	__u16	ctx_len;
 	__u32	ctx_sid;
-	char	ctx_str[0];
+	char	ctx_str[];
 };
 
 /* Security Context Domains of Interpretation */
@@ -96,7 +96,7 @@ struct xfrm_replay_state_esn {
 	__u32		oseq_hi;
 	__u32		seq_hi;
 	__u32		replay_window;
-	__u32		bmp[0];
+	__u32		bmp[];
 };
 
 struct xfrm_algo {
@@ -296,7 +296,7 @@ enum xfrm_attr_type_t {
 	XFRMA_ETIMER_THRESH,
 	XFRMA_SRCADDR,		/* xfrm_address_t */
 	XFRMA_COADDR,		/* xfrm_address_t */
-	XFRMA_LASTUSED,		/* unsigned long  */
+	XFRMA_LASTUSED,		/* __u64 */
 	XFRMA_POLICY_TYPE,	/* struct xfrm_userpolicy_type */
 	XFRMA_MIGRATE,
 	XFRMA_ALG_AEAD,		/* struct xfrm_algo_aead */
