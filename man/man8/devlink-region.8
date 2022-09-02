@@ -23,6 +23,14 @@ devlink-region \- devlink address region access
 .RI "[ " DEV/REGION " ]"
 
 .ti -8
+.BR "devlink region new"
+.RI "" DEV/REGION ""
+.BR "[ "
+.BR "snapshot"
+.RI "" SNAPSHOT_ID ""
+.BR "]"
+
+.ti -8
 .BR "devlink region del"
 .RI "" DEV/REGION ""
 .BR "snapshot"
@@ -55,6 +63,17 @@ devlink-region \- devlink address region access
 .PP
 .I "DEV/REGION"
 - specifies the devlink device and address-region to query.
+
+.SS devlink region new - Create a snapshot specified by address-region name and snapshot ID
+
+.PP
+.I "DEV/REGION"
+- specifies the devlink device and address-region to snapshot
+
+.PP
+snapshot
+.I "SNAPSHOT_ID"
+- optionally specifies the snapshot ID to assign. If not specified, devlink will assign a unique ID to the snapshot.
 
 .SS devlink region del - Delete a snapshot specified by address-region name and snapshot ID
 
@@ -104,6 +123,11 @@ length
 devlink region show
 .RS 4
 List available address regions and snapshot.
+.RE
+.PP
+devlink region new pci/0000:00:05.0/cr-space
+.RS 4
+Create a new snapshot from cr-space address region from device pci/0000:00:05.0.
 .RE
 .PP
 devlink region del pci/0000:00:05.0/cr-space snapshot 1
