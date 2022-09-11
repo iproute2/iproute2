@@ -43,11 +43,19 @@ struct sci {
 
 struct sa_desc {
 	__u8 an;
-	__u32 pn;
+	union {
+		__u32 pn32;
+		__u64 pn64;
+	} pn;
 	__u8 key_id[MACSEC_KEYID_LEN];
 	__u32 key_len;
 	__u8 key[MACSEC_MAX_KEY_LEN];
 	__u8 active;
+	__u8 salt[MACSEC_SALT_LEN];
+	__u32 ssci;
+	bool xpn;
+	bool salt_set;
+	bool ssci_set;
 };
 
 struct cipher_args {
@@ -98,12 +106,18 @@ static void ipmacsec_usage(void)
 		"       ip macsec show\n"
 		"       ip macsec show DEV\n"
 		"       ip macsec offload DEV [ off | phy | mac ]\n"
-		"where  OPTS := [ pn <u32> ] [ on | off ]\n"
+		"where  OPTS := [ pn <u32> | xpn <u64> ] [ salt SALT ] [ ssci <u32> ] [ on | off ]\n"
 		"       ID   := 128-bit hex string\n"
 		"       KEY  := 128-bit or 256-bit hex string\n"
-		"       SCI  := { sci <u64> | port { 1..2^16-1 } address <lladdr> }\n");
+		"       SCI  := { sci <u64> | port { 1..2^16-1 } address <lladdr> }\n"
+		"       SALT := 96-bit hex string\n");
 
 	exit(-1);
+}
+
+static bool ciphersuite_is_xpn(__u64 cid)
+{
+	return (cid == MACSEC_CIPHER_ID_GCM_AES_XPN_128 || cid == MACSEC_CIPHER_ID_GCM_AES_XPN_256);
 }
 
 static int get_an(__u8 *val, const char *arg)
@@ -122,6 +136,11 @@ static int get_an(__u8 *val, const char *arg)
 static int get_sci(__u64 *sci, const char *arg)
 {
 	return get_be64(sci, arg, 16);
+}
+
+static int get_ssci(__u32 *ssci, const char *arg)
+{
+	return get_be32(ssci, arg, 16);
 }
 
 static int get_port(__be16 *port, const char *arg)
@@ -174,14 +193,42 @@ static int parse_sa_args(int *argcp, char ***argvp, struct sa_desc *sa)
 
 	while (argc > 0) {
 		if (strcmp(*argv, "pn") == 0) {
-			if (sa->pn != 0)
+			if (sa->pn.pn64 != 0)
 				duparg2("pn", "pn");
 			NEXT_ARG();
-			ret = get_u32(&sa->pn, *argv, 0);
+			ret = get_u32(&sa->pn.pn32, *argv, 0);
 			if (ret)
 				invarg("expected pn", *argv);
-			if (sa->pn == 0)
+			if (sa->pn.pn32 == 0)
 				invarg("expected pn != 0", *argv);
+		} else if (strcmp(*argv, "xpn") == 0) {
+			if (sa->pn.pn64 != 0)
+				duparg2("xpn", "xpn");
+			NEXT_ARG();
+			ret = get_u64(&sa->pn.pn64, *argv, 0);
+			if (ret)
+				invarg("expected pn", *argv);
+			if (sa->pn.pn64 == 0)
+				invarg("expected pn != 0", *argv);
+			sa->xpn = true;
+		} else if (strcmp(*argv, "salt") == 0) {
+			unsigned int len;
+
+			if (sa->salt_set)
+				duparg2("salt", "salt");
+			NEXT_ARG();
+			if (!hexstring_a2n(*argv, sa->salt, MACSEC_SALT_LEN,
+					   &len))
+				invarg("expected salt", *argv);
+			sa->salt_set = true;
+		} else if (strcmp(*argv, "ssci") == 0) {
+			if (sa->ssci_set)
+				duparg2("ssci", "ssci");
+			NEXT_ARG();
+			ret = get_ssci(&sa->ssci, *argv);
+			if (ret)
+				invarg("expected ssci", *argv);
+			sa->ssci_set = true;
 		} else if (strcmp(*argv, "key") == 0) {
 			unsigned int len;
 
@@ -392,9 +439,21 @@ static int do_modify_nl(enum cmd c, enum macsec_nl_commands cmd, int ifindex,
 	addattr8(&req.n, MACSEC_BUFLEN, MACSEC_SA_ATTR_AN, sa->an);
 
 	if (c != CMD_DEL) {
-		if (sa->pn)
-			addattr32(&req.n, MACSEC_BUFLEN, MACSEC_SA_ATTR_PN,
-				  sa->pn);
+		if (sa->xpn) {
+			if (sa->pn.pn64)
+				addattr64(&req.n, MACSEC_BUFLEN, MACSEC_SA_ATTR_PN,
+					  sa->pn.pn64);
+			if (sa->salt_set)
+				addattr_l(&req.n, MACSEC_BUFLEN, MACSEC_SA_ATTR_SALT,
+					  sa->salt, MACSEC_SALT_LEN);
+			if (sa->ssci_set)
+				addattr32(&req.n, MACSEC_BUFLEN, MACSEC_SA_ATTR_SSCI,
+					  sa->ssci);
+		} else {
+			if (sa->pn.pn32)
+				addattr32(&req.n, MACSEC_BUFLEN, MACSEC_SA_ATTR_PN,
+					  sa->pn.pn32);
+		}
 
 		if (sa->key_len) {
 			addattr_l(&req.n, MACSEC_BUFLEN, MACSEC_SA_ATTR_KEYID,
@@ -426,7 +485,7 @@ static bool check_sa_args(enum cmd c, struct sa_desc *sa)
 			return -1;
 		}
 
-		if (sa->pn == 0) {
+		if (sa->pn.pn64 == 0) {
 			fprintf(stderr, "must specify a packet number != 0\n");
 			return -1;
 		}
@@ -615,6 +674,9 @@ static void print_key(struct rtattr *key)
 
 #define CIPHER_NAME_GCM_AES_128 "GCM-AES-128"
 #define CIPHER_NAME_GCM_AES_256 "GCM-AES-256"
+#define CIPHER_NAME_GCM_AES_XPN_128 "GCM-AES-XPN-128"
+#define CIPHER_NAME_GCM_AES_XPN_256 "GCM-AES-XPN-256"
+
 #define DEFAULT_CIPHER_NAME CIPHER_NAME_GCM_AES_128
 
 static const char *cs_id_to_name(__u64 cid)
@@ -627,6 +689,10 @@ static const char *cs_id_to_name(__u64 cid)
 		return CIPHER_NAME_GCM_AES_128;
 	case MACSEC_CIPHER_ID_GCM_AES_256:
 		return CIPHER_NAME_GCM_AES_256;
+	case MACSEC_CIPHER_ID_GCM_AES_XPN_128:
+		return CIPHER_NAME_GCM_AES_XPN_128;
+	case MACSEC_CIPHER_ID_GCM_AES_XPN_256:
+		return CIPHER_NAME_GCM_AES_XPN_256;
 	default:
 		return "(unknown)";
 	}
@@ -846,8 +912,8 @@ static void print_txsa_stats(const char *prefix, struct rtattr *attr)
 }
 
 static void print_tx_sc(const char *prefix, __u64 sci, __u8 encoding_sa,
-			struct rtattr *txsc_stats, struct rtattr *secy_stats,
-			struct rtattr *sa)
+			bool is_xpn, struct rtattr *txsc_stats,
+			struct rtattr *secy_stats, struct rtattr *sa)
 {
 	struct rtattr *sa_attr[MACSEC_SA_ATTR_MAX + 1];
 	struct rtattr *a;
@@ -875,8 +941,16 @@ static void print_tx_sc(const char *prefix, __u64 sci, __u8 encoding_sa,
 		print_string(PRINT_FP, NULL, "%s", prefix);
 		print_uint(PRINT_ANY, "an", "%d:",
 			   rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_AN]));
-		print_uint(PRINT_ANY, "pn", " PN %u,",
-			   rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_PN]));
+		if (is_xpn) {
+			print_uint(PRINT_ANY, "pn", " PN %u,",
+				   rta_getattr_u64(sa_attr[MACSEC_SA_ATTR_PN]));
+			print_0xhex(PRINT_ANY, "ssci",
+				    "SSCI %08x",
+				    ntohl(rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_SSCI])));
+		} else {
+			print_uint(PRINT_ANY, "pn", " PN %u,",
+				   rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_PN]));
+		}
 
 		print_bool(PRINT_JSON, "active", NULL, state);
 		print_string(PRINT_FP, NULL,
@@ -916,7 +990,8 @@ static void print_rxsc_stats(const char *prefix, struct rtattr *attr)
 }
 
 static void print_rx_sc(const char *prefix, __be64 sci, __u8 active,
-			struct rtattr *rxsc_stats, struct rtattr *sa)
+			bool is_xpn, struct rtattr *rxsc_stats,
+			struct rtattr *sa)
 {
 	struct rtattr *sa_attr[MACSEC_SA_ATTR_MAX + 1];
 	struct rtattr *a;
@@ -943,8 +1018,16 @@ static void print_rx_sc(const char *prefix, __be64 sci, __u8 active,
 		print_string(PRINT_FP, NULL, "%s", prefix);
 		print_uint(PRINT_ANY, "an", "%u:",
 			   rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_AN]));
-		print_uint(PRINT_ANY, "pn", " PN %u,",
-			   rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_PN]));
+		if (is_xpn) {
+			print_uint(PRINT_ANY, "pn", " PN %u,",
+				   rta_getattr_u64(sa_attr[MACSEC_SA_ATTR_PN]));
+			print_0xhex(PRINT_ANY, "ssci",
+				    "SSCI %08x",
+				    ntohl(rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_SSCI])));
+		} else {
+			print_uint(PRINT_ANY, "pn", " PN %u,",
+				   rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_PN]));
+		}
 
 		print_bool(PRINT_JSON, "active", NULL, state);
 		print_string(PRINT_FP, NULL, " state %s,",
@@ -958,7 +1041,7 @@ static void print_rx_sc(const char *prefix, __be64 sci, __u8 active,
 	close_json_array(PRINT_JSON, NULL);
 }
 
-static void print_rxsc_list(struct rtattr *sc)
+static void print_rxsc_list(struct rtattr *sc, bool is_xpn)
 {
 	int rem = RTA_PAYLOAD(sc);
 	struct rtattr *c;
@@ -973,6 +1056,7 @@ static void print_rxsc_list(struct rtattr *sc)
 		print_rx_sc("    ",
 			    rta_getattr_u64(sc_attr[MACSEC_RXSC_ATTR_SCI]),
 			    rta_getattr_u32(sc_attr[MACSEC_RXSC_ATTR_ACTIVE]),
+			    is_xpn,
 			    sc_attr[MACSEC_RXSC_ATTR_STATS],
 			    sc_attr[MACSEC_RXSC_ATTR_SA_LIST]);
 		close_json_object();
@@ -989,6 +1073,8 @@ static int process(struct nlmsghdr *n, void *arg)
 	int ifindex;
 	__u64 sci;
 	__u8 encoding_sa;
+	__u64 cid;
+	bool is_xpn = false;
 
 	if (n->nlmsg_type != genl_family)
 		return -1;
@@ -1032,13 +1118,15 @@ static int process(struct nlmsghdr *n, void *arg)
 
 	print_attrs(attrs_secy);
 
-	print_tx_sc("    ", sci, encoding_sa,
+	cid = rta_getattr_u64(attrs_secy[MACSEC_SECY_ATTR_CIPHER_SUITE]);
+	is_xpn = ciphersuite_is_xpn(cid);
+	print_tx_sc("    ", sci, encoding_sa, is_xpn,
 		    attrs[MACSEC_ATTR_TXSC_STATS],
 		    attrs[MACSEC_ATTR_SECY_STATS],
 		    attrs[MACSEC_ATTR_TXSA_LIST]);
 
 	if (attrs[MACSEC_ATTR_RXSC_LIST])
-		print_rxsc_list(attrs[MACSEC_ATTR_RXSC_LIST]);
+		print_rxsc_list(attrs[MACSEC_ATTR_RXSC_LIST], is_xpn);
 
 	if (attrs[MACSEC_ATTR_OFFLOAD]) {
 		struct rtattr *attrs_offload[MACSEC_OFFLOAD_ATTR_MAX + 1];
@@ -1245,7 +1333,7 @@ static void usage(FILE *f)
 {
 	fprintf(f,
 		"Usage: ... macsec [ [ address <lladdr> ] port { 1..2^16-1 } | sci <u64> ]\n"
-		"                  [ cipher { default | gcm-aes-128 | gcm-aes-256 } ]\n"
+		"                  [ cipher { default | gcm-aes-128 | gcm-aes-256 | gcm-aes-xpn-128 | gcm-aes-xpn-256 } ]\n"
 		"                  [ icvlen { 8..16 } ]\n"
 		"                  [ encrypt { on | off } ]\n"
 		"                  [ send_sci { on | off } ]\n"
@@ -1300,9 +1388,15 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			else if (strcmp(*argv, "gcm-aes-256") == 0 ||
 			         strcmp(*argv, "GCM-AES-256") == 0)
 				cipher.id = MACSEC_CIPHER_ID_GCM_AES_256;
+			else if (strcmp(*argv, "gcm-aes-xpn-128") == 0 ||
+				 strcmp(*argv, "GCM-AES-XPN-128") == 0)
+				cipher.id = MACSEC_CIPHER_ID_GCM_AES_XPN_128;
+			else if (strcmp(*argv, "gcm-aes-xpn-256") == 0 ||
+				 strcmp(*argv, "GCM-AES-XPN-256") == 0)
+				cipher.id = MACSEC_CIPHER_ID_GCM_AES_XPN_256;
 			else
-				invarg("expected: default, gcm-aes-128 or"
-				       " gcm-aes-256", *argv);
+				invarg("expected: default, gcm-aes-128, gcm-aes-256,"
+				       " gcm-aes-xpn-128 or gcm-aes-xpn-256", *argv);
 		} else if (strcmp(*argv, "icvlen") == 0) {
 			NEXT_ARG();
 			if (cipher.icv_len)
