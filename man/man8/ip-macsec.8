@@ -10,7 +10,7 @@ ip-macsec \- MACsec device configuration
 |
 .BI sci " <u64>"
 ] [
-.BR cipher " { " default " | " gcm-aes-128 " | " gcm-aes-256 " } ] ["
+.BR cipher " { " default " | " gcm-aes-128 " | " gcm-aes-256 " | " gcm-aes-xpn-128 " | " gcm-aes-xpn-256 " } ] ["
 .BI icvlen " ICVLEN"
 ] [
 .BR encrypt " { " on " | " off " } ] ["
@@ -63,7 +63,13 @@ ip-macsec \- MACsec device configuration
 
 .IR OPTS " := [ "
 .BR pn " { "
-.IR 1..2^32-1 " } ] ["
+.IR 1..2^32-1 " } |"
+.BR xpn " { "
+.IR 1..2^64-1 " } ] ["
+.B salt
+.IR SALT " ] ["
+.B ssci
+.IR <u32> " ] ["
 .BR on " | " off " ]"
 .br
 .IR SCI " := { "
@@ -75,6 +81,8 @@ ip-macsec \- MACsec device configuration
 }
 .br
 .IR PORT " := { " 1..2^16-1 " } "
+.br
+.IR SALT " := 96-bit hex string "
 
 
 .SH DESCRIPTION
@@ -116,6 +124,29 @@ type.
 .nf
 # ip link add link eth0 macsec0 type macsec port 11 encrypt on offload mac
 
+.SH EXTENDED PACKET NUMBER EXAMPLES
+.PP
+.SS Create a MACsec device on link eth0 with enabled extended packet number (offload is disabled by default)
+.nf
+# ip link add link eth0 macsec0 type macsec port 11 encrypt on cipher gcm-aes-xpn-128
+.PP
+.SS Configure a secure association on that device
+.nf
+# ip macsec add macsec0 tx sa 0 xpn 1024 on salt 838383838383838383838383 ssci 123 key 01 81818181818181818181818181818181
+.PP
+.SS Configure a receive channel
+.nf
+# ip macsec add macsec0 rx port 11 address c6:19:52:8f:e6:a0
+.PP
+.SS Configure a receive association
+.nf
+# ip macsec add macsec0 rx port 11 address c6:19:52:8f:e6:a0 sa 0 xpn 1 on salt 838383838383838383838383 ssci 123 key 00 82828282828282828282828282828282
+.PP
+.SS Display MACsec configuration
+.nf
+# ip macsec show
+.PP
+
 .SH NOTES
 This tool can be used to configure the 802.1AE keys of the interface. Note that 802.1AE uses GCM-AES
 with a initialization vector (IV) derived from the packet number. The same key must not be used
@@ -124,6 +155,28 @@ This tool is thus mostly for debugging and testing, or in combination with a use
 that reconfigures the keys. It is wrong to just configure the keys statically and assume them to work
 indefinitely. The suggested and standardized way for key management is 802.1X-2010, which is implemented
 by wpa_supplicant.
+
+.SH EXTENDED PACKET NUMBER NOTES
+Passing cipher
+.B gcm-aes-xpn-128
+or
+.B gcm-aes-xpn-256
+to
+.B ip link add
+command using the
+.I macsec
+type requires using the keyword
+.B 'xpn'
+instead of
+.B 'pn'
+in addition to providing a salt using the
+.B 'salt'
+keyword and ssci using the
+.B 'ssci'
+keyword when using the
+.B ip macsec
+command.
+
 
 .SH SEE ALSO
 .br
