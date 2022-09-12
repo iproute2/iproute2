@@ -159,6 +159,100 @@ static int read_seg6mode_type(const char *mode)
 	return -1;
 }
 
+static const char *seg6_flavor_names[SEG6_LOCAL_FLV_OP_MAX + 1] = {
+	[SEG6_LOCAL_FLV_OP_PSP]		= "psp",
+	[SEG6_LOCAL_FLV_OP_USP]		= "usp",
+	[SEG6_LOCAL_FLV_OP_USD]		= "usd",
+	[SEG6_LOCAL_FLV_OP_NEXT_CSID]	= "next-csid"
+};
+
+static int read_seg6_local_flv_type(const char *name)
+{
+	int i;
+
+	for (i = 1; i < SEG6_LOCAL_FLV_OP_MAX + 1; ++i) {
+		if (!seg6_flavor_names[i])
+			continue;
+
+		if (strcasecmp(seg6_flavor_names[i], name) == 0)
+			return i;
+	}
+
+	return -1;
+}
+
+static int parse_seg6local_flavors(const char *buf, __u32 *flv_mask)
+{
+	unsigned char flavor_ok[SEG6_LOCAL_FLV_OP_MAX + 1] = { 0, };
+	char *wbuf;
+	__u32 mask = 0;
+	int index;
+	char *s;
+
+	/* strtok changes first parameter, so we need to make a local copy */
+	wbuf = strdupa(buf);
+
+	if (strlen(wbuf) == 0)
+		return -1;
+
+	for (s = strtok(wbuf, ","); s; s = strtok(NULL, ",")) {
+		index = read_seg6_local_flv_type(s);
+		if (index < 0 || index > SEG6_LOCAL_FLV_OP_MAX)
+			return -1;
+		/* we check for duplicates */
+		if (flavor_ok[index]++)
+			return -1;
+
+		mask |= (1 << index);
+	}
+
+	*flv_mask = mask;
+	return 0;
+}
+
+static void print_flavors(FILE *fp, __u32 flavors)
+{
+	int i, fnumber = 0;
+	char *flv_name;
+
+	if (is_json_context())
+		open_json_array(PRINT_JSON, "flavors");
+	else
+		print_string(PRINT_FP, NULL, "flavors ", NULL);
+
+	for (i = 0; i < SEG6_LOCAL_FLV_OP_MAX + 1; ++i) {
+		if (flavors & (1 << i)) {
+			flv_name = (char *) seg6_flavor_names[i];
+			if (!flv_name)
+				continue;
+
+			if (is_json_context())
+				print_string(PRINT_JSON, NULL, NULL, flv_name);
+			else {
+				if (fnumber++ == 0)
+					print_string(PRINT_FP, NULL, "%s", flv_name);
+				else
+					print_string(PRINT_FP, NULL, ",%s", flv_name);
+			}
+		}
+	}
+
+	if (is_json_context())
+		close_json_array(PRINT_JSON, NULL);
+	else
+		print_string(PRINT_FP, NULL, " ", NULL);
+}
+
+static void print_flavors_attr(FILE *fp, const char *key, __u32 value)
+{
+	if (is_json_context()) {
+		print_u64(PRINT_JSON, key, NULL, value);
+	} else {
+		print_string(PRINT_FP, NULL, "%s ", key);
+		print_num(fp, 1, value);
+	}
+}
+
 static void print_encap_seg6(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[SEG6_IPTUNNEL_MAX+1];
@@ -376,6 +470,30 @@ static void print_seg6_local_counters(FILE *fp, struct rtattr *encap)
 	}
 }
 
+static void print_seg6_local_flavors(FILE *fp, struct rtattr *encap)
+{
+	struct rtattr *tb[SEG6_LOCAL_FLV_MAX + 1];
+	__u8 lbl = 0, nfl = 0;
+	__u32 flavors = 0;
+
+	parse_rtattr_nested(tb, SEG6_LOCAL_FLV_MAX, encap);
+
+	if (tb[SEG6_LOCAL_FLV_OPERATION]) {
+		flavors = rta_getattr_u32(tb[SEG6_LOCAL_FLV_OPERATION]);
+		print_flavors(fp, flavors);
+	}
+
+	if (tb[SEG6_LOCAL_FLV_LCBLOCK_BITS]) {
+		lbl = rta_getattr_u8(tb[SEG6_LOCAL_FLV_LCBLOCK_BITS]);
+		print_flavors_attr(fp, "lblen", lbl);
+	}
+
+	if (tb[SEG6_LOCAL_FLV_LCNODE_FN_BITS]) {
+		nfl = rta_getattr_u8(tb[SEG6_LOCAL_FLV_LCNODE_FN_BITS]);
+		print_flavors_attr(fp, "nflen", nfl);
+	}
+}
+
 static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[SEG6_LOCAL_MAX + 1];
@@ -438,6 +556,9 @@ static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 
 	if (tb[SEG6_LOCAL_COUNTERS] && show_stats)
 		print_seg6_local_counters(fp, tb[SEG6_LOCAL_COUNTERS]);
+
+	if (tb[SEG6_LOCAL_FLAVORS])
+		print_seg6_local_flavors(fp, tb[SEG6_LOCAL_FLAVORS]);
 }
 
 static void print_encap_mpls(FILE *fp, struct rtattr *encap)
@@ -1177,12 +1298,66 @@ static int seg6local_fill_counters(struct rtattr *rta, size_t len, int attr)
 	return 0;
 }
 
+static int seg6local_parse_flavors(struct rtattr *rta, size_t len,
+			 int *argcp, char ***argvp, int attr)
+{
+	int lbl_ok = 0, nfl_ok = 0;
+	__u8 lbl = 0, nfl = 0;
+	struct rtattr *nest;
+	__u32 flavors = 0;
+	int ret;
+
+	char **argv = *argvp;
+	int argc = *argcp;
+
+	nest = rta_nest(rta, len, attr);
+
+	ret = parse_seg6local_flavors(*argv, &flavors);
+	if (ret < 0)
+		return ret;
+
+	ret = rta_addattr32(rta, len, SEG6_LOCAL_FLV_OPERATION, flavors);
+	if (ret < 0)
+		return ret;
+
+	if (flavors & (1 << SEG6_LOCAL_FLV_OP_NEXT_CSID)) {
+		NEXT_ARG_FWD();
+		if (strcmp(*argv, "lblen") == 0){
+			NEXT_ARG();
+			if (lbl_ok++)
+				duparg2("lblen", *argv);
+			if (get_u8(&lbl, *argv, 0))
+				invarg("\"locator-block length\" value is invalid\n", *argv);
+			ret = rta_addattr8(rta, len, SEG6_LOCAL_FLV_LCBLOCK_BITS, lbl);
+			NEXT_ARG_FWD();
+		}
+
+		if (strcmp(*argv, "nflen") == 0){
+			NEXT_ARG();
+			if (nfl_ok++)
+				duparg2("nflen", *argv);
+			if (get_u8(&nfl, *argv, 0))
+				invarg("\"locator-node function length\" value is invalid\n", *argv);
+			ret = rta_addattr8(rta, len, SEG6_LOCAL_FLV_LCNODE_FN_BITS, nfl);
+			NEXT_ARG_FWD();
+		}
+		PREV_ARG();
+	}
+
+	rta_nest_end(rta, nest);
+
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
 static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				 char ***argvp)
 {
+	int nh4_ok = 0, nh6_ok = 0, iif_ok = 0, oif_ok = 0, flavors_ok = 0;
 	int segs_ok = 0, hmac_ok = 0, table_ok = 0, vrftable_ok = 0;
 	int action_ok = 0, srh_ok = 0, bpf_ok = 0, counters_ok = 0;
-	int nh4_ok = 0, nh6_ok = 0, iif_ok = 0, oif_ok = 0;
 	__u32 action = 0, table, vrftable, iif, oif;
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
@@ -1252,6 +1427,15 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				duparg2("count", *argv);
 			ret = seg6local_fill_counters(rta, len,
 						      SEG6_LOCAL_COUNTERS);
+		} else if (strcmp(*argv, "flavors") == 0) {
+			NEXT_ARG();
+			if (flavors_ok++)
+				duparg2("flavors", *argv);
+
+			if (seg6local_parse_flavors(rta, len, &argc, &argv,
+						    SEG6_LOCAL_FLAVORS))
+				invarg("invalid \"flavors\" attribute\n",
+					*argv);
 		} else if (strcmp(*argv, "srh") == 0) {
 			NEXT_ARG();
 			if (srh_ok++)

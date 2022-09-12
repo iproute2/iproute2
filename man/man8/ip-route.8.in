@@ -846,10 +846,14 @@ related to an action use the \fB-s\fR flag in the \fBshow\fR command.
 The following actions are currently supported (\fBLinux 4.14+ only\fR).
 .in +2
 
-.B End
+.BR End " [ " flavors
+.IR FLAVORS " ] "
 - Regular SRv6 processing as intermediate segment endpoint.
 This action only accepts packets with a non-zero Segments Left
-value. Other matching packets are dropped.
+value. Other matching packets are dropped. The presence of flavors
+can change the regular processing of an End behavior according to
+the user-provided Flavor operations and information carried in the packet.
+See \fBFlavors parameters\fR section.
 
 .B End.X nh6
 .I NEXTHOP
@@ -929,7 +933,60 @@ Additionally, encapsulate the matching packet within an outer IPv6 header
 followed by the specified SRH. The destination address of the outer IPv6
 header is set to the first segment of the new SRH. The source
 address is set as described in \fBip-sr\fR(8).
+
+.B Flavors parameters
+
+The flavors represent additional operations that can modify or extend a
+subset of the existing behaviors.
+.in +2
+
+.B flavors
+.IR OPERATION "[," OPERATION "] [" ATTRIBUTES "]"
+.in +2
+
+.IR OPERATION " := { "
+.BR psp " | "
+.BR usp " | "
+.BR usd " | "
+.BR next-csid " }"
+
+.IR ATTRIBUTES " := {"
+.IR "KEY VALUE" " } ["
+.IR ATTRIBUTES " ]"
+
+.IR KEY " := { "
+.BR lblen " | "
+.BR nflen " } "
 .in -2
+
+.B psp
+- Penultimate Segment Pop of the SRH (not yet supported in kernel)
+
+.B usp
+- Ultimate Segment Pop of the SRH (not yet supported in kernel)
+
+.B usd
+- Ultimate Segment Decapsulation (not yet supported in kernel)
+
+.B next-csid
+- The NEXT-C-SID mechanism offers the possibility of encoding
+several SRv6 segments within a single 128 bit SID address. The NEXT-C-SID
+flavor can be configured to support user-provided Locator-Block and
+Locator-Node Function lengths. If Locator-Block and/or Locator-Node Function
+lengths are not provided by the user during configuration of an SRv6 End
+behavior instance with NEXT-C-SID flavor, the default value is 32-bit for
+Locator-Block and 16-bit for Locator-Node Function.
+
+.BI lblen " VALUE "
+- defines the Locator-Block length for NEXT-C-SID flavor.
+The Locator-Block length must be greater than 0 and evenly divisible by 8. This
+attribute can be used only with NEXT-C-SID flavor.
+
+.BI nflen " VALUE "
+- defines the Locator-Node Function length for NEXT-C-SID
+flavors. The Locator-Node Function length must be greater than 0 and evenly
+divisible by 8. This attribute can be used only with NEXT-C-SID flavor.
+.in -4
 
 .B ioam6
 .in +2
@@ -1289,6 +1346,16 @@ Adds an IPv6 route with SRv6 encapsulation and two segments attached.
 ip -6 route add 2001:db8:1::/64 encap seg6local action End.DT46 vrftable 100 dev vrf100
 .RS 4
 Adds an IPv6 route with SRv6 decapsulation and forward with lookup in VRF table.
+.RE
+.PP
+ip -6 route add 2001:db8:1::/64 encap seg6local action End flavors next-csid dev eth0
+.RS 4
+Adds an IPv6 route with SRv6 End behavior with next-csid flavor enabled.
+.RE
+.PP
+ip -6 route add 2001:db8:1::/64 encap seg6local action End flavors next-csid lblen 48 nflen 16 dev eth0
+.RS 4
+Adds an IPv6 route with SRv6 End behavior with next-csid flavor enabled and user-provided Locator-Block and Locator-Node Function lengths.
 .RE
 .PP
 ip -6 route add 2001:db8:1::/64 encap ioam6 freq 2/5 mode encap tundst 2001:db8:42::1 trace prealloc type 0x800000 ns 1 size 12 dev eth0
