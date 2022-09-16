@@ -1586,7 +1586,7 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 	if (!brief) {
 		const char *name;
 
-		if (filter.oneline || filter.flushb) {
+		if (filter.oneline || filter.flushb || echo_request) {
 			const char *dev = ll_index_to_name(ifa->ifa_index);
 
 			if (is_json_context()) {
@@ -2416,6 +2416,11 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 	__u32 preferred_lft = INFINITY_LIFE_TIME;
 	__u32 valid_lft = INFINITY_LIFE_TIME;
 	unsigned int ifa_flags = 0;
+	struct nlmsghdr *answer;
+	int ret;
+
+	if (echo_request)
+		req.n.nlmsg_flags |= NLM_F_ECHO | NLM_F_ACK;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "peer") == 0 ||
@@ -2597,8 +2602,22 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+	if (echo_request)
+		ret = rtnl_talk(&rth, &req.n, &answer);
+	else
+		ret = rtnl_talk(&rth, &req.n, NULL);
+
+	if (ret < 0)
 		return -2;
+
+	if (echo_request) {
+		new_json_obj(json);
+		open_json_object(NULL);
+		print_addrinfo(answer, stdout);
+		close_json_object();
+		delete_json_obj();
+		free(answer);
+	}
 
 	return 0;
 }

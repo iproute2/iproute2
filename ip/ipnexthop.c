@@ -919,7 +919,12 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.nhm.nh_family = preferred_family,
 	};
+	struct nlmsghdr *answer;
 	__u32 nh_flags = 0;
+	int ret;
+
+	if (echo_request)
+		req.n.nlmsg_flags |= NLM_F_ECHO | NLM_F_ACK;
 
 	while (argc > 0) {
 		if (!strcmp(*argv, "id")) {
@@ -999,8 +1004,22 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	req.nhm.nh_flags = nh_flags;
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+	if (echo_request)
+		ret = rtnl_talk(&rth, &req.n, &answer);
+	else
+		ret = rtnl_talk(&rth, &req.n, NULL);
+
+	if (ret < 0)
 		return -2;
+
+	if (echo_request) {
+		new_json_obj(json);
+		open_json_object(NULL);
+		print_nexthop_nocache(answer, (void *)stdout);
+		close_json_object();
+		delete_json_obj();
+		free(answer);
+	}
 
 	return 0;
 }

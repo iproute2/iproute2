@@ -1123,6 +1123,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	};
 	char  mxbuf[256];
 	struct rtattr *mxrta = (void *)mxbuf;
+	struct nlmsghdr *answer;
 	unsigned int mxlock = 0;
 	char  *d = NULL;
 	int gw_ok = 0;
@@ -1133,12 +1134,16 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	int raw = 0;
 	int type_ok = 0;
 	__u32 nhid = 0;
+	int ret;
 
 	if (cmd != RTM_DELROUTE) {
 		req.r.rtm_protocol = RTPROT_BOOT;
 		req.r.rtm_scope = RT_SCOPE_UNIVERSE;
 		req.r.rtm_type = RTN_UNICAST;
 	}
+
+	if (echo_request)
+		req.n.nlmsg_flags |= NLM_F_ECHO | NLM_F_ACK;
 
 	mxrta->rta_type = RTA_METRICS;
 	mxrta->rta_len = RTA_LENGTH(0);
@@ -1586,8 +1591,22 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (!type_ok && req.r.rtm_family == AF_MPLS)
 		req.r.rtm_type = RTN_UNICAST;
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+	if (echo_request)
+		ret = rtnl_talk(&rth, &req.n, &answer);
+	else
+		ret = rtnl_talk(&rth, &req.n, NULL);
+
+	if (ret < 0)
 		return -2;
+
+	if (echo_request) {
+		new_json_obj(json);
+		open_json_object(NULL);
+		print_route(answer, (void *)stdout);
+		close_json_object();
+		delete_json_obj();
+		free(answer);
+	}
 
 	return 0;
 }
