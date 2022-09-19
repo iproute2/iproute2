@@ -1205,6 +1205,12 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 				   " promiscuity %u ",
 				   rta_getattr_u32(tb[IFLA_PROMISCUITY]));
 
+		if (tb[IFLA_ALLMULTI])
+			print_uint(PRINT_ANY,
+				   "allmulti",
+				   " allmulti %u ",
+				   rta_getattr_u32(tb[IFLA_ALLMULTI]));
+
 		if (tb[IFLA_MIN_MTU])
 			print_uint(PRINT_ANY,
 				   "min_mtu", "minmtu %u ",
