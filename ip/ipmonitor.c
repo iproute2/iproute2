@@ -180,6 +180,7 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 
 int do_ipmonitor(int argc, char **argv)
 {
+	int lstats = 0, stats_set = 1;
 	int lnexthop = 0, nh_set = 1;
 	char *file = NULL;
 	unsigned int groups = 0;
@@ -190,7 +191,6 @@ int do_ipmonitor(int argc, char **argv)
 	int lprefix = 0;
 	int lneigh = 0;
 	int lnetconf = 0;
-	int lstats = 0;
 	int lrule = 0;
 	int lnsid = 0;
 	int ifindex = 0;
@@ -224,41 +224,51 @@ int do_ipmonitor(int argc, char **argv)
 			llink = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "address") == 0) {
 			laddr = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "route") == 0) {
 			lroute = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "mroute") == 0) {
 			lmroute = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "prefix") == 0) {
 			lprefix = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "neigh") == 0) {
 			lneigh = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "netconf") == 0) {
 			lnetconf = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "rule") == 0) {
 			lrule = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "nsid") == 0) {
 			lnsid = 1;
 			groups = 0;
 			nh_set = 0;
+			stats_set = 0;
 		} else if (matches(*argv, "nexthop") == 0) {
 			lnexthop = 1;
 			groups = 0;
+			stats_set = 0;
 		} else if (strcmp(*argv, "stats") == 0) {
 			lstats = 1;
 			groups = 0;
@@ -336,6 +346,8 @@ int do_ipmonitor(int argc, char **argv)
 	}
 	if (nh_set)
 		lnexthop = 1;
+	if (stats_set)
+		lstats = 1;
 
 	if (file) {
 		FILE *fp;
