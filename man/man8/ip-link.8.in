@@ -213,6 +213,7 @@ ip-link \- network device configuration
 .BR bond " | "
 .BR bridge " | "
 .BR can " | "
+.BR dsa " | "
 .BR dummy " | "
 .BR erspan " |"
 .BR geneve " |"
@@ -303,6 +304,9 @@ Link types:
 .sp
 .B can
 - Controller Area Network
+.sp
+.B dsa
+- Distributed Switch Architecture
 .sp
 .B dummy
 - Dummy network interface
@@ -2637,6 +2641,32 @@ as well as the actual used bcqueuelen are listed to better help
 the user understand the setting.
 .in -8
 
+.TP
+DSA user port support
+For a link having the DSA user port type, the following additional arguments
+are supported:
+
+.B "ip link set type dsa "
+[
+.BI conduit " DEVICE"
+]
+
+.in +8
+.sp
+.BI conduit " DEVICE"
+- change the DSA conduit (host network interface) responsible for handling the
+locally terminated traffic for the given DSA switch user port. For a
+description of which network interfaces are suitable for serving as conduit
+interfaces of this user port, please see
+https://www.kernel.org/doc/html/latest/networking/dsa/configuration.html#affinity-of-user-ports-to-cpu-ports
+as well as what is supported by the driver in use.
+
+.sp
+.BI master " DEVICE"
+- this is a synonym for "conduit".
+
+.in -8
+
 .SS  ip link show - display device attributes
 
 .TP
@@ -2792,6 +2822,11 @@ local fc00:100::2 remote fc00:100::1
 erspan_ver 2 erspan_dir ingress erspan_hwid 17
 .RS 4
 Creates a IP6ERSPAN version 2 interface named ip6erspan00.
+.RE
+.PP
+ip link set dev swp0 type dsa conduit eth1
+.RS 4
+Changes the conduit interface of the swp0 user port to eth1.
 .RE
 
 .SH SEE ALSO
