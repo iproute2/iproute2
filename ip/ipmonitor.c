@@ -262,6 +262,7 @@ int do_ipmonitor(int argc, char **argv)
 		} else if (strcmp(*argv, "stats") == 0) {
 			lstats = 1;
 			groups = 0;
+			nh_set = 0;
 		} else if (strcmp(*argv, "all") == 0) {
 			prefix_banner = 1;
 		} else if (matches(*argv, "all-nsid") == 0) {
