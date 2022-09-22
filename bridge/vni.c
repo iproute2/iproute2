@@ -309,6 +309,7 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 	int len = n->nlmsg_len;
 	bool first = true;
 	struct rtattr *t;
+	FILE *fp = arg;
 	int rem;
 
 	if (n->nlmsg_type != RTM_NEWTUNNEL &&
@@ -330,6 +331,8 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 
 	if (filter_index && filter_index != tmsg->ifindex)
 		return 0;
+
+	print_headers(fp, "[TUNNEL]");
 
 	if (n->nlmsg_type == RTM_DELTUNNEL)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
@@ -418,6 +421,7 @@ static int vni_show(int argc, char **argv)
 int do_vni(int argc, char **argv)
 {
 	ll_init_map(&rth);
+	timestamp = 0;
 
 	if (argc > 0) {
 		if (strcmp(*argv, "add") == 0)

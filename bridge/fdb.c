@@ -179,6 +179,8 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 	if (filter_dynamic && (r->ndm_state & NUD_PERMANENT))
 		return 0;
 
+	print_headers(fp, "[NEIGH]");
+
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELNEIGH)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
@@ -810,6 +812,7 @@ static int fdb_flush(int argc, char **argv)
 int do_fdb(int argc, char **argv)
 {
 	ll_init_map(&rth);
+	timestamp = 0;
 
 	if (argc > 0) {
 		if (matches(*argv, "add") == 0)

@@ -230,6 +230,8 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	if (!name)
 		return -1;
 
+	print_headers(fp, "[LINK]");
+
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELLINK)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
@@ -588,6 +590,8 @@ static int brlink_show(int argc, char **argv)
 int do_link(int argc, char **argv)
 {
 	ll_init_map(&rth);
+	timestamp = 0;
+
 	if (argc > 0) {
 		if (matches(*argv, "set") == 0 ||
 		    matches(*argv, "change") == 0)

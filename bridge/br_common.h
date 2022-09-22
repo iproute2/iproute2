@@ -16,6 +16,7 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor,
 		   bool global_only);
 int print_vnifilter_rtm(struct nlmsghdr *n, void *arg, bool monitor);
 void br_print_router_port_stats(struct rtattr *pattr);
+void print_headers(FILE *fp, const char *label);
 
 int do_fdb(int argc, char **argv);
 int do_mdb(int argc, char **argv);

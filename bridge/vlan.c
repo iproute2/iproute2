@@ -1032,6 +1032,7 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor, bool global_only
 	struct br_vlan_msg *bvm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *a;
+	FILE *fp = arg;
 	int rem;
 
 	if (n->nlmsg_type != RTM_NEWVLAN && n->nlmsg_type != RTM_DELVLAN &&
@@ -1052,6 +1053,8 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor, bool global_only
 
 	if (filter_index && filter_index != bvm->ifindex)
 		return 0;
+
+	print_headers(fp, "[VLAN]");
 
 	if (n->nlmsg_type == RTM_DELVLAN)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
@@ -1333,6 +1336,7 @@ static int vlan_global(int argc, char **argv)
 int do_vlan(int argc, char **argv)
 {
 	ll_init_map(&rth);
+	timestamp = 0;
 
 	if (argc > 0) {
 		if (matches(*argv, "add") == 0)
