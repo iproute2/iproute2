@@ -178,39 +178,25 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 	return 0;
 }
 
+#define IPMON_LLINK		BIT(0)
+#define IPMON_LADDR		BIT(1)
+#define IPMON_LROUTE		BIT(2)
+#define IPMON_LMROUTE		BIT(3)
+#define IPMON_LPREFIX		BIT(4)
+#define IPMON_LNEIGH		BIT(5)
+#define IPMON_LNETCONF		BIT(6)
+#define IPMON_LSTATS		BIT(7)
+#define IPMON_LRULE		BIT(8)
+#define IPMON_LNSID		BIT(9)
+#define IPMON_LNEXTHOP		BIT(10)
+
+#define IPMON_L_ALL		(~0)
+
 int do_ipmonitor(int argc, char **argv)
 {
-	int lstats = 0, stats_set = 1;
-	int lnexthop = 0, nh_set = 1;
+	unsigned int groups = 0, lmask = 0;
 	char *file = NULL;
-	unsigned int groups = 0;
-	int llink = 0;
-	int laddr = 0;
-	int lroute = 0;
-	int lmroute = 0;
-	int lprefix = 0;
-	int lneigh = 0;
-	int lnetconf = 0;
-	int lrule = 0;
-	int lnsid = 0;
 	int ifindex = 0;
-
-	groups |= nl_mgrp(RTNLGRP_LINK);
-	groups |= nl_mgrp(RTNLGRP_IPV4_IFADDR);
-	groups |= nl_mgrp(RTNLGRP_IPV6_IFADDR);
-	groups |= nl_mgrp(RTNLGRP_IPV4_ROUTE);
-	groups |= nl_mgrp(RTNLGRP_IPV6_ROUTE);
-	groups |= nl_mgrp(RTNLGRP_MPLS_ROUTE);
-	groups |= nl_mgrp(RTNLGRP_IPV4_MROUTE);
-	groups |= nl_mgrp(RTNLGRP_IPV6_MROUTE);
-	groups |= nl_mgrp(RTNLGRP_IPV6_PREFIX);
-	groups |= nl_mgrp(RTNLGRP_NEIGH);
-	groups |= nl_mgrp(RTNLGRP_IPV4_NETCONF);
-	groups |= nl_mgrp(RTNLGRP_IPV6_NETCONF);
-	groups |= nl_mgrp(RTNLGRP_IPV4_RULE);
-	groups |= nl_mgrp(RTNLGRP_IPV6_RULE);
-	groups |= nl_mgrp(RTNLGRP_NSID);
-	groups |= nl_mgrp(RTNLGRP_MPLS_NETCONF);
 
 	rtnl_close(&rth);
 
@@ -221,58 +207,27 @@ int do_ipmonitor(int argc, char **argv)
 		} else if (matches(*argv, "label") == 0) {
 			prefix_banner = 1;
 		} else if (matches(*argv, "link") == 0) {
-			llink = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LLINK;
 		} else if (matches(*argv, "address") == 0) {
-			laddr = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LADDR;
 		} else if (matches(*argv, "route") == 0) {
-			lroute = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LROUTE;
 		} else if (matches(*argv, "mroute") == 0) {
-			lmroute = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LMROUTE;
 		} else if (matches(*argv, "prefix") == 0) {
-			lprefix = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LPREFIX;
 		} else if (matches(*argv, "neigh") == 0) {
-			lneigh = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LNEIGH;
 		} else if (matches(*argv, "netconf") == 0) {
-			lnetconf = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LNETCONF;
 		} else if (matches(*argv, "rule") == 0) {
-			lrule = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LRULE;
 		} else if (matches(*argv, "nsid") == 0) {
-			lnsid = 1;
-			groups = 0;
-			nh_set = 0;
-			stats_set = 0;
+			lmask |= IPMON_LNSID;
 		} else if (matches(*argv, "nexthop") == 0) {
-			lnexthop = 1;
-			groups = 0;
-			stats_set = 0;
+			lmask |= IPMON_LNEXTHOP;
 		} else if (strcmp(*argv, "stats") == 0) {
-			lstats = 1;
-			groups = 0;
-			nh_set = 0;
+			lmask |= IPMON_LSTATS;
 		} else if (strcmp(*argv, "all") == 0) {
 			prefix_banner = 1;
 		} else if (matches(*argv, "all-nsid") == 0) {
@@ -298,15 +253,18 @@ int do_ipmonitor(int argc, char **argv)
 	ipneigh_reset_filter(ifindex);
 	ipnetconf_reset_filter(ifindex);
 
-	if (llink)
+	if (!lmask)
+		lmask = IPMON_L_ALL;
+
+	if (lmask & IPMON_LLINK)
 		groups |= nl_mgrp(RTNLGRP_LINK);
-	if (laddr) {
+	if (lmask & IPMON_LADDR) {
 		if (!preferred_family || preferred_family == AF_INET)
 			groups |= nl_mgrp(RTNLGRP_IPV4_IFADDR);
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_IFADDR);
 	}
-	if (lroute) {
+	if (lmask & IPMON_LROUTE) {
 		if (!preferred_family || preferred_family == AF_INET)
 			groups |= nl_mgrp(RTNLGRP_IPV4_ROUTE);
 		if (!preferred_family || preferred_family == AF_INET6)
@@ -314,20 +272,20 @@ int do_ipmonitor(int argc, char **argv)
 		if (!preferred_family || preferred_family == AF_MPLS)
 			groups |= nl_mgrp(RTNLGRP_MPLS_ROUTE);
 	}
-	if (lmroute) {
+	if (lmask & IPMON_LMROUTE) {
 		if (!preferred_family || preferred_family == AF_INET)
 			groups |= nl_mgrp(RTNLGRP_IPV4_MROUTE);
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_MROUTE);
 	}
-	if (lprefix) {
+	if (lmask & IPMON_LPREFIX) {
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_PREFIX);
 	}
-	if (lneigh) {
+	if (lmask & IPMON_LNEIGH) {
 		groups |= nl_mgrp(RTNLGRP_NEIGH);
 	}
-	if (lnetconf) {
+	if (lmask & IPMON_LNETCONF) {
 		if (!preferred_family || preferred_family == AF_INET)
 			groups |= nl_mgrp(RTNLGRP_IPV4_NETCONF);
 		if (!preferred_family || preferred_family == AF_INET6)
@@ -335,19 +293,15 @@ int do_ipmonitor(int argc, char **argv)
 		if (!preferred_family || preferred_family == AF_MPLS)
 			groups |= nl_mgrp(RTNLGRP_MPLS_NETCONF);
 	}
-	if (lrule) {
+	if (lmask & IPMON_LRULE) {
 		if (!preferred_family || preferred_family == AF_INET)
 			groups |= nl_mgrp(RTNLGRP_IPV4_RULE);
 		if (!preferred_family || preferred_family == AF_INET6)
 			groups |= nl_mgrp(RTNLGRP_IPV6_RULE);
 	}
-	if (lnsid) {
+	if (lmask & IPMON_LNSID) {
 		groups |= nl_mgrp(RTNLGRP_NSID);
 	}
-	if (nh_set)
-		lnexthop = 1;
-	if (stats_set)
-		lstats = 1;
 
 	if (file) {
 		FILE *fp;
@@ -366,12 +320,14 @@ int do_ipmonitor(int argc, char **argv)
 	if (rtnl_open(&rth, groups) < 0)
 		exit(1);
 
-	if (lnexthop && rtnl_add_nl_group(&rth, RTNLGRP_NEXTHOP) < 0) {
+	if (lmask & IPMON_LNEXTHOP &&
+	    rtnl_add_nl_group(&rth, RTNLGRP_NEXTHOP) < 0) {
 		fprintf(stderr, "Failed to add nexthop group to list\n");
 		exit(1);
 	}
 
-	if (lstats && rtnl_add_nl_group(&rth, RTNLGRP_STATS) < 0) {
+	if (lmask & IPMON_LSTATS &&
+	    rtnl_add_nl_group(&rth, RTNLGRP_STATS) < 0) {
 		fprintf(stderr, "Failed to add stats group to list\n");
 		exit(1);
 	}
