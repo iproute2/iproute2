@@ -129,13 +129,12 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	return 0;
 }
 
-int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
+int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, unsigned int offset, int error)
 {
 	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};
-	unsigned int hlen = sizeof(int);
 	const char *msg = NULL;
 
-	if (mnl_attr_parse(nlh, hlen, err_attr_cb, tb) != MNL_CB_OK)
+	if (mnl_attr_parse(nlh, offset, err_attr_cb, tb) != MNL_CB_OK)
 		return 0;
 
 	if (tb[NLMSGERR_ATTR_MSG])
@@ -159,7 +158,7 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	return 0;
 }
 
-int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
+int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, unsigned int offset, int error)
 {
 	return 0;
 }
@@ -747,7 +746,7 @@ static int rtnl_dump_done(struct nlmsghdr *h,
 			return 0;
 
 		/* check for any messages returned from kernel */
-		if (nl_dump_ext_ack_done(h, len))
+		if (nl_dump_ext_ack_done(h, sizeof(int), len))
 			return len;
 
 		switch (errno) {

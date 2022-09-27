@@ -79,7 +79,7 @@ static int mnlu_cb_stop(const struct nlmsghdr *nlh, void *data)
 
 	if (len < 0) {
 		errno = -len;
-		nl_dump_ext_ack_done(nlh, len);
+		nl_dump_ext_ack_done(nlh, sizeof(int), len);
 		return MNL_CB_ERROR;
 	}
 	return MNL_CB_STOP;
