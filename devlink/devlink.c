@@ -782,7 +782,7 @@ static int ifname_map_cb(const struct nlmsghdr *nlh, void *data)
 	struct ifname_map *ifname_map;
 	const char *bus_name;
 	const char *dev_name;
-	uint32_t port_ifindex;
+	uint32_t port_index;
 	const char *port_ifname;
 
 	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
@@ -795,10 +795,10 @@ static int ifname_map_cb(const struct nlmsghdr *nlh, void *data)
 
 	bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
 	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
-	port_ifindex = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]);
+	port_index = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]);
 	port_ifname = mnl_attr_get_str(tb[DEVLINK_ATTR_PORT_NETDEV_NAME]);
 	ifname_map = ifname_map_alloc(bus_name, dev_name,
-				      port_ifindex, port_ifname);
+				      port_index, port_ifname);
 	if (!ifname_map)
 		return MNL_CB_ERROR;
 	list_add(&ifname_map->list, &dl->ifname_map_list);
