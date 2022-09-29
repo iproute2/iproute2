@@ -71,8 +71,6 @@ static bool g_indent_newline;
 #define INDENT_STR_MAXLEN 32
 static char g_indent_str[INDENT_STR_MAXLEN + 1] = "";
 
-static bool use_iec = false;
-
 static void __attribute__((format(printf, 1, 2)))
 pr_err(const char *fmt, ...)
 {
@@ -374,6 +372,7 @@ struct dl {
 	bool verbose;
 	bool stats;
 	bool hex;
+	bool use_iec;
 	bool map_loaded;
 	struct {
 		bool present;
@@ -4926,7 +4925,7 @@ static void pr_out_port_fn_rate(struct dl *dl, struct nlattr **tb)
 			mnl_attr_get_u64(tb[DEVLINK_ATTR_RATE_TX_SHARE]);
 
 		if (rate)
-			print_rate(use_iec, PRINT_ANY, "tx_share",
+			print_rate(dl->use_iec, PRINT_ANY, "tx_share",
 				   " tx_share %s", rate);
 	}
 	if (tb[DEVLINK_ATTR_RATE_TX_MAX]) {
@@ -4934,7 +4933,7 @@ static void pr_out_port_fn_rate(struct dl *dl, struct nlattr **tb)
 			mnl_attr_get_u64(tb[DEVLINK_ATTR_RATE_TX_MAX]);
 
 		if (rate)
-			print_rate(use_iec, PRINT_ANY, "tx_max",
+			print_rate(dl->use_iec, PRINT_ANY, "tx_max",
 				   " tx_max %s", rate);
 	}
 	if (tb[DEVLINK_ATTR_RATE_PARENT_NODE_NAME]) {
@@ -9739,7 +9738,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case 'i':
-			use_iec = true;
+			dl->use_iec = true;
 			break;
 		case 'x':
 			dl->hex = true;
