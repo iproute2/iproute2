@@ -787,11 +787,6 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		.frh.family = preferred_family,
 		.frh.action = FR_ACT_UNSPEC,
 	};
-	struct nlmsghdr *answer;
-	int ret;
-
-	if (echo_request)
-		req.n.nlmsg_flags |= NLM_F_ECHO | NLM_F_ACK;
 
 	if (cmd == RTM_NEWRULE) {
 		if (argc == 0) {
@@ -1022,23 +1017,9 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		req.frh.table = RT_TABLE_MAIN;
 
 	if (echo_request)
-		ret = rtnl_talk(&rth, &req.n, &answer);
-	else
-		ret = rtnl_talk(&rth, &req.n, NULL);
+		return rtnl_echo_talk(&rth, &req.n, json, print_rule);
 
-	if (ret < 0)
-		return -2;
-
-	if (echo_request) {
-		new_json_obj(json);
-		open_json_object(NULL);
-		print_rule(answer, stdout);
-		close_json_object();
-		delete_json_obj();
-		free(answer);
-	}
-
-	return 0;
+	return rtnl_talk(&rth, &req.n, NULL);
 }
 
 int do_iprule(int argc, char **argv)

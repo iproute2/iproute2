@@ -1138,6 +1138,28 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	return __rtnl_talk_iov(rtnl, &iov, 1, answer, show_rtnl_err, errfn);
 }
 
+int rtnl_echo_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, int json,
+		   int (*print_info)(struct nlmsghdr *n, void *arg))
+{
+	struct nlmsghdr *answer;
+	int ret;
+
+	n->nlmsg_flags |= NLM_F_ECHO | NLM_F_ACK;
+
+	ret = rtnl_talk(rtnl, n, &answer);
+	if (ret)
+		return ret;
+
+	new_json_obj(json);
+	open_json_object(NULL);
+	print_info(answer, stdout);
+	close_json_object();
+	delete_json_obj();
+	free(answer);
+
+	return 0;
+}
+
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr **answer)
 {

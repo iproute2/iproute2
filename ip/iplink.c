@@ -1073,15 +1073,11 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.i.ifi_family = preferred_family,
 	};
-	struct nlmsghdr *answer;
 	int ret;
 
 	ret = iplink_parse(argc, argv, &req, &type);
 	if (ret < 0)
 		return ret;
-
-	if (echo_request)
-		req.n.nlmsg_flags |= NLM_F_ECHO | NLM_F_ACK;
 
 	if (type) {
 		struct link_util *lu;
@@ -1128,21 +1124,12 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 	}
 
 	if (echo_request)
-		ret = rtnl_talk(&rth, &req.n, &answer);
+		ret = rtnl_echo_talk(&rth, &req.n, json, print_linkinfo);
 	else
 		ret = rtnl_talk(&rth, &req.n, NULL);
 
-	if (ret < 0)
-		return -2;
-
-	if (echo_request) {
-		new_json_obj(json);
-		open_json_object(NULL);
-		print_linkinfo(answer, stdout);
-		close_json_object();
-		delete_json_obj();
-		free(answer);
-	}
+	if (ret)
+		return ret;
 
 	/* remove device from cache; next use can refresh with new data */
 	ll_drop_by_index(req.i.ifi_index);
