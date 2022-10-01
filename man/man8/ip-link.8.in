@@ -1572,6 +1572,8 @@ the following additional arguments are supported:
 ] [
 .BI priority " PRIORITY "
 ] [
+.BI no_linklocal_learn " NO_LINKLOCAL_LEARN "
+] [
 .BI vlan_filtering " VLAN_FILTERING "
 ] [
 .BI vlan_protocol " VLAN_PROTOCOL "
@@ -1674,6 +1676,14 @@ for this bridge.
 bridge election.
 .I PRIORITY
 is a 16bit unsigned integer.
+
+.BI no_linklocal_learn " NO_LINKLOCAL_LEARN "
+- turn link-local learning on
+.RI ( NO_LINKLOCAL_LEARN " == 0) "
+or off
+.RI ( NO_LINKLOCAL_LEARN " > 0). "
+When disabled, the bridge will not learn from link-local frames (default:
+enabled).
 
 .BI vlan_filtering " VLAN_FILTERING "
 - turn VLAN filtering on
