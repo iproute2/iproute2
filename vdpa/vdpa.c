@@ -949,7 +949,7 @@ static int cmd_dev_vstats_show(struct vdpa *vdpa, int argc, char **argv)
 		return -EINVAL;
 	}
 
-	nlh = mnlu_gen_socket_cmd_prepare(&vdpa->nlg, VDPA_CMD_DEV_STATS_GET,
+	nlh = mnlu_gen_socket_cmd_prepare(&vdpa->nlg, VDPA_CMD_DEV_VSTATS_GET,
 					  flags);
 
 	err = vdpa_argv_parse_put(nlh, vdpa, argc, argv,

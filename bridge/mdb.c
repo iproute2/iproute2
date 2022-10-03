@@ -380,6 +380,8 @@ int print_mdb_mon(struct nlmsghdr *n, void *arg)
 	if (ret != 1)
 		return ret;
 
+	print_headers(fp, "[MDB]");
+
 	if (n->nlmsg_type == RTM_DELMDB)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
@@ -564,6 +566,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 int do_mdb(int argc, char **argv)
 {
 	ll_init_map(&rth);
+	timestamp = 0;
 
 	if (argc > 0) {
 		if (matches(*argv, "add") == 0)

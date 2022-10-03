@@ -35,42 +35,22 @@ static void usage(void)
 	exit(-1);
 }
 
-static int print_tunnel_rtm(struct nlmsghdr *n, void *arg, bool monitor)
-{
-	struct tunnel_msg *tmsg = NLMSG_DATA(n);
-
-	if (tmsg->family == PF_BRIDGE)
-		return print_vnifilter_rtm(n, arg, monitor);
-
-	return 0;
-}
-
 static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		      struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
 
-	if (timestamp)
-		print_timestamp(fp);
-
 	switch (n->nlmsg_type) {
 	case RTM_NEWLINK:
 	case RTM_DELLINK:
-		if (prefix_banner)
-			fprintf(fp, "[LINK]");
-
 		return print_linkinfo(n, arg);
 
 	case RTM_NEWNEIGH:
 	case RTM_DELNEIGH:
-		if (prefix_banner)
-			fprintf(fp, "[NEIGH]");
 		return print_fdb(n, arg);
 
 	case RTM_NEWMDB:
 	case RTM_DELMDB:
-		if (prefix_banner)
-			fprintf(fp, "[MDB]");
 		return print_mdb_mon(n, arg);
 
 	case NLMSG_TSTAMP:
@@ -79,19 +59,24 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 
 	case RTM_NEWVLAN:
 	case RTM_DELVLAN:
-		if (prefix_banner)
-			fprintf(fp, "[VLAN]");
 		return print_vlan_rtm(n, arg, true, false);
 
 	case RTM_NEWTUNNEL:
 	case RTM_DELTUNNEL:
-		if (prefix_banner)
-			fprintf(fp, "[TUNNEL]");
-		return print_tunnel_rtm(n, arg, true);
+		return print_vnifilter_rtm(n, arg, true);
 
 	default:
 		return 0;
 	}
+}
+
+void print_headers(FILE *fp, const char *label)
+{
+	if (timestamp)
+		print_timestamp(fp);
+
+	if (prefix_banner)
+		fprintf(fp, "%s", label);
 }
 
 int do_monitor(int argc, char **argv)
