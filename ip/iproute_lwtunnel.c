@@ -58,6 +58,8 @@ static const char *format_encap_type(int type)
 		return "rpl";
 	case LWTUNNEL_ENCAP_IOAM6:
 		return "ioam6";
+	case LWTUNNEL_ENCAP_XFRM:
+		return "xfrm";
 	default:
 		return "unknown";
 	}
@@ -96,6 +98,8 @@ static int read_encap_type(const char *name)
 		return LWTUNNEL_ENCAP_RPL;
 	else if (strcmp(name, "ioam6") == 0)
 		return LWTUNNEL_ENCAP_IOAM6;
+	else if (strcmp(name, "xfrm") == 0)
+		return LWTUNNEL_ENCAP_XFRM;
 	else if (strcmp(name, "help") == 0)
 		encap_type_usage();
 
@@ -814,6 +818,24 @@ static void print_encap_bpf(FILE *fp, struct rtattr *encap)
 			   " %u ", rta_getattr_u32(tb[LWT_BPF_XMIT_HEADROOM]));
 }
 
+static void print_encap_xfrm(FILE *fp, struct rtattr *encap)
+{
+	struct rtattr *tb[LWT_XFRM_MAX+1];
+
+	parse_rtattr_nested(tb, LWT_XFRM_MAX, encap);
+
+	if (tb[LWT_XFRM_IF_ID])
+		print_uint(PRINT_ANY, "if_id", "if_id %lu ",
+			   rta_getattr_u32(tb[LWT_XFRM_IF_ID]));
+
+	if (tb[LWT_XFRM_LINK]) {
+		int link = rta_getattr_u32(tb[LWT_XFRM_LINK]);
+
+		print_string(PRINT_ANY, "link_dev", "link_dev %s ",
+			     ll_index_to_name(link));
+	}
+}
+
 void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 			  struct rtattr *encap)
 {
@@ -853,6 +875,9 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 		break;
 	case LWTUNNEL_ENCAP_IOAM6:
 		print_encap_ioam6(fp, encap);
+		break;
+	case LWTUNNEL_ENCAP_XFRM:
+		print_encap_xfrm(fp, encap);
 		break;
 	}
 }
@@ -2129,6 +2154,61 @@ static int parse_encap_bpf(struct rtattr *rta, size_t len, int *argcp,
 	return 0;
 }
 
+static void lwt_xfrm_usage(void)
+{
+	fprintf(stderr, "Usage: ip route ... encap xfrm if_id IF_ID [ link_dev LINK ]\n");
+	exit(-1);
+}
+
+static int parse_encap_xfrm(struct rtattr *rta, size_t len,
+			    int *argcp, char ***argvp)
+{
+	int if_id_ok = 0, link_ok = 0;
+	char **argv = *argvp;
+	int argc = *argcp;
+	int ret = 0;
+
+	while (argc > 0) {
+		if (!strcmp(*argv, "if_id")) {
+			__u32 if_id;
+
+			NEXT_ARG();
+			if (if_id_ok++)
+				duparg2("if_id", *argv);
+			if (get_u32(&if_id, *argv, 0) || if_id == 0)
+				invarg("\"if_id\" value is invalid\n", *argv);
+			ret = rta_addattr32(rta, len, LWT_XFRM_IF_ID, if_id);
+		} else if (!strcmp(*argv, "link_dev")) {
+			int link;
+
+			NEXT_ARG();
+			if (link_ok++)
+				duparg2("link_dev", *argv);
+			link = ll_name_to_index(*argv);
+			if (!link)
+				exit(nodev(*argv));
+			ret = rta_addattr32(rta, len, LWT_XFRM_LINK, link);
+		} else if (!strcmp(*argv, "help")) {
+			lwt_xfrm_usage();
+		}
+		if (ret)
+			break;
+		argc--; argv++;
+	}
+
+	if (!if_id_ok)
+		lwt_xfrm_usage();
+
+	/* argv is currently the first unparsed argument,
+	 * but the lwt_parse_encap() caller will move to the next,
+	 * so step back
+	 */
+	*argcp = argc + 1;
+	*argvp = argv - 1;
+
+	return ret;
+}
+
 int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
 		    int encap_attr, int encap_type_attr)
 {
@@ -2179,6 +2259,9 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
 		break;
 	case LWTUNNEL_ENCAP_IOAM6:
 		ret = parse_encap_ioam6(rta, len, &argc, &argv);
+		break;
+	case LWTUNNEL_ENCAP_XFRM:
+		ret = parse_encap_xfrm(rta, len, &argc, &argv);
 		break;
 	default:
 		fprintf(stderr, "Error: unsupported encap type\n");

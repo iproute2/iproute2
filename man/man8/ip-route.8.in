@@ -738,6 +738,9 @@ is a string specifying the supported encapsulation type. Namely:
 .sp
 .BI ioam6
 - encapsulation type IPv6 IOAM
+.sp
+.BI xfrm
+- encapsulation type XFRM
 
 .in -8
 .I ENCAPHDR
@@ -1024,6 +1027,14 @@ mode.
 .B size
 .I IOAM6_TRACE_SIZE
 - Size, in octets, of the pre-allocated trace data block.
+.in -2
+
+.B xfrm
+.in +2
+.B if_id
+.I IF_ID
+.B  " [ link_dev
+.IR LINK_DEV " ] "
 .in -4
 
 .in -8
