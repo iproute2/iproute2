@@ -1967,6 +1967,7 @@ For a link of type
 the following additional arguments are supported:
 
 .BI "ip link add " DEVICE " type xfrm dev " PHYS_DEV " [ if_id " IF_ID " ]"
+.BR "[ external ]"
 
 .in +8
 .sp
@@ -1978,6 +1979,12 @@ the following additional arguments are supported:
 - specifies the hexadecimal lookup key used to send traffic to and from specific xfrm
 policies. Policies must be configured with the same key. If not set, the key defaults to
 0 and will match any policies which similarly do not have a lookup key configuration.
+
+.sp
+.BI external
+- make this device externally controlled. This flag is mutually exclusive with the
+.BR dev " and " if_id
+options.
 
 .in -8
 
