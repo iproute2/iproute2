@@ -31,7 +31,6 @@
 
 #include "ss_util.h"
 #include "utils.h"
-#include "rt_names.h"
 #include "ll_map.h"
 #include "libnetlink.h"
 #include "namespace.h"
