@@ -434,7 +434,6 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_TAPRIO_ATTR_MAX + 1];
 	struct tc_mqprio_qopt *qopt = 0;
-	__s32 clockid = CLOCKID_INVALID;
 	int i;
 
 	if (opt == NULL)
@@ -467,10 +466,13 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 	print_nl();
 
-	if (tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID])
-		clockid = rta_getattr_s32(tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]);
+	if (tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]) {
+		__s32 clockid;
 
-	print_string(PRINT_ANY, "clockid", "clockid %s", get_clock_name(clockid));
+		clockid = rta_getattr_s32(tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]);
+		print_string(PRINT_ANY, "clockid", "clockid %s",
+			     get_clock_name(clockid));
+	}
 
 	if (tb[TCA_TAPRIO_ATTR_FLAGS]) {
 		__u32 flags;
