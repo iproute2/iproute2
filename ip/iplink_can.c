@@ -519,7 +519,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				   i < bitrate_cnt - 1 ? "%8u, " : "%8u",
 				   bitrate_const[i]);
 		}
-		close_json_array(PRINT_JSON, " ]");
+		close_json_array(PRINT_ANY, " ]");
 	}
 
 	/* data bittiming is irrelevant if fixed bitrate is defined */
@@ -606,7 +606,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				   i < dbitrate_cnt - 1 ? "%8u, " : "%8u",
 				   dbitrate_const[i]);
 		}
-		close_json_array(PRINT_JSON, " ]");
+		close_json_array(PRINT_ANY, " ]");
 	}
 
 	if (tb[IFLA_CAN_TERMINATION_CONST] && tb[IFLA_CAN_TERMINATION]) {
@@ -623,7 +623,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			print_hu(PRINT_ANY, NULL,
 				 i < trm_cnt - 1 ? "%hu, " : "%hu",
 				 trm_const[i]);
-		close_json_array(PRINT_JSON, " ]");
+		close_json_array(PRINT_ANY, " ]");
 	}
 
 	if (tb[IFLA_CAN_CLOCK]) {
