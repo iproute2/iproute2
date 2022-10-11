@@ -102,8 +102,8 @@ static void usage(void)
 		"TIME := NUMBER[s|ms]\n"
 		"BOOL := [1|0]\n"
 		"FEATURES := ecn\n"
-		"ENCAPTYPE := [ mpls | ip | ip6 | seg6 | seg6local | rpl | ioam6 ]\n"
-		"ENCAPHDR := [ MPLSLABEL | SEG6HDR | SEG6LOCAL | IOAM6HDR ]\n"
+		"ENCAPTYPE := [ mpls | ip | ip6 | seg6 | seg6local | rpl | ioam6 | xfrm ]\n"
+		"ENCAPHDR := [ MPLSLABEL | SEG6HDR | SEG6LOCAL | IOAM6HDR | XFRMINFO ]\n"
 		"SEG6HDR := [ mode SEGMODE ] segs ADDR1,ADDRi,ADDRn [hmac HMACKEYID] [cleanup]\n"
 		"SEGMODE := [ encap | encap.red | inline | l2encap | l2encap.red ]\n"
 		"SEG6LOCAL := action ACTION [ OPTIONS ] [ count ]\n"
@@ -111,9 +111,12 @@ static void usage(void)
 		"            End.DT6 | End.DT4 | End.DT46 | End.B6 | End.B6.Encaps |\n"
 		"            End.BM | End.S | End.AS | End.AM | End.BPF }\n"
 		"OPTIONS := OPTION [ OPTIONS ]\n"
-		"OPTION := { srh SEG6HDR | nh4 ADDR | nh6 ADDR | iif DEV | oif DEV |\n"
+		"OPTION := { flavors FLAVORS | srh SEG6HDR | nh4 ADDR | nh6 ADDR | iif DEV | oif DEV |\n"
 		"            table TABLEID | vrftable TABLEID | endpoint PROGNAME }\n"
+		"FLAVORS := { FLAVOR[,FLAVOR] }\n"
+		"FLAVOR := { psp | usp | usd | next-csid }\n"
 		"IOAM6HDR := trace prealloc type IOAM6_TRACE_TYPE ns IOAM6_NAMESPACE size IOAM6_TRACE_SIZE\n"
+		"XFRMINFO := if_id IF_ID [ link_dev LINK ]\n"
 		"ROUTE_GET_FLAGS := [ fibmatch ]\n");
 	exit(-1);
 }
@@ -1584,10 +1587,10 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (!type_ok && req.r.rtm_family == AF_MPLS)
 		req.r.rtm_type = RTN_UNICAST;
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0)
-		return -2;
+	if (echo_request)
+		return rtnl_echo_talk(&rth, &req.n, json, print_route);
 
-	return 0;
+	return rtnl_talk(&rth, &req.n, NULL);
 }
 
 static int iproute_flush_cache(void)

@@ -87,10 +87,29 @@ struct bpf_cgroup_storage_key {
 	__u32	attach_type;		/* program attach type (enum bpf_attach_type) */
 };
 
+enum bpf_cgroup_iter_order {
+	BPF_CGROUP_ITER_ORDER_UNSPEC = 0,
+	BPF_CGROUP_ITER_SELF_ONLY,		/* process only a single object. */
+	BPF_CGROUP_ITER_DESCENDANTS_PRE,	/* walk descendants in pre-order. */
+	BPF_CGROUP_ITER_DESCENDANTS_POST,	/* walk descendants in post-order. */
+	BPF_CGROUP_ITER_ANCESTORS_UP,		/* walk ancestors upward. */
+};
+
 union bpf_iter_link_info {
 	struct {
 		__u32	map_fd;
 	} map;
+	struct {
+		enum bpf_cgroup_iter_order order;
+
+		/* At most one of cgroup_fd and cgroup_id can be non-zero. If
+		 * both are zero, the walk starts from the default cgroup v2
+		 * root. For walking v1 hierarchy, one should always explicitly
+		 * specify cgroup_fd.
+		 */
+		__u32	cgroup_fd;
+		__u64	cgroup_id;
+	} cgroup;
 };
 
 /* BPF syscall commands, see bpf(2) man-page for more details. */
@@ -2573,10 +2592,12 @@ union bpf_attr {
  *		There are two supported modes at this time:
  *
  *		* **BPF_ADJ_ROOM_MAC**: Adjust room at the mac layer
- *		  (room space is added or removed below the layer 2 header).
+ * 		  (room space is added or removed between the layer 2 and
+ * 		  layer 3 headers).
  *
  * 		* **BPF_ADJ_ROOM_NET**: Adjust room at the network layer
- * 		  (room space is added or removed below the layer 3 header).
+ * 		  (room space is added or removed between the layer 3 and
+ * 		  layer 4 headers).
  *
  *		The following flags are supported at this time:
  *
@@ -3008,8 +3029,18 @@ union bpf_attr {
  * 		**BPF_F_USER_STACK**
  * 			Collect a user space stack instead of a kernel stack.
  * 		**BPF_F_USER_BUILD_ID**
- * 			Collect buildid+offset instead of ips for user stack,
- * 			only valid if **BPF_F_USER_STACK** is also specified.
+ * 			Collect (build_id, file_offset) instead of ips for user
+ * 			stack, only valid if **BPF_F_USER_STACK** is also
+ * 			specified.
+ *
+ * 			*file_offset* is an offset relative to the beginning
+ * 			of the executable or shared object file backing the vma
+ * 			which the *ip* falls in. It is *not* an offset relative
+ * 			to that object's base address. Accordingly, it must be
+ * 			adjusted by adding (sh_addr - sh_offset), where
+ * 			sh_{addr,offset} correspond to the executable section
+ * 			containing *file_offset* in the object, for comparisons
+ * 			to symbols' st_value to be valid.
  *
  * 		**bpf_get_stack**\ () can collect up to
  * 		**PERF_MAX_STACK_DEPTH** both kernel and user frames, subject
@@ -4425,7 +4456,7 @@ union bpf_attr {
  *
  *		**-EEXIST** if the option already exists.
  *
- *		**-EFAULT** on failrue to parse the existing header options.
+ *		**-EFAULT** on failure to parse the existing header options.
  *
  *		**-EPERM** if the helper cannot be used under the current
  *		*skops*\ **->op**.
@@ -4634,7 +4665,7 @@ union bpf_attr {
  *		a *map* with *task* as the **key**.  From this
  *		perspective,  the usage is not much different from
  *		**bpf_map_lookup_elem**\ (*map*, **&**\ *task*) except this
- *		helper enforces the key must be an task_struct and the map must also
+ *		helper enforces the key must be a task_struct and the map must also
  *		be a **BPF_MAP_TYPE_TASK_STORAGE**.
  *
  *		Underneath, the value is stored locally at *task* instead of
@@ -4692,7 +4723,7 @@ union bpf_attr {
  *
  * long bpf_ima_inode_hash(struct inode *inode, void *dst, u32 size)
  *	Description
- *		Returns the stored IMA hash of the *inode* (if it's avaialable).
+ *		Returns the stored IMA hash of the *inode* (if it's available).
  *		If the hash is larger than *size*, then only *size*
  *		bytes will be copied to *dst*
  *	Return
@@ -4716,12 +4747,12 @@ union bpf_attr {
  *
  *		The argument *len_diff* can be used for querying with a planned
  *		size change. This allows to check MTU prior to changing packet
- *		ctx. Providing an *len_diff* adjustment that is larger than the
+ *		ctx. Providing a *len_diff* adjustment that is larger than the
  *		actual packet size (resulting in negative packet size) will in
- *		principle not exceed the MTU, why it is not considered a
- *		failure.  Other BPF-helpers are needed for performing the
- *		planned size change, why the responsability for catch a negative
- *		packet size belong in those helpers.
+ *		principle not exceed the MTU, which is why it is not considered
+ *		a failure.  Other BPF helpers are needed for performing the
+ *		planned size change; therefore the responsibility for catching
+ *		a negative packet size belongs in those helpers.
  *
  *		Specifying *ifindex* zero means the MTU check is performed
  *		against the current net device.  This is practical if this isn't
@@ -5073,17 +5104,29 @@ union bpf_attr {
  *
  * int bpf_get_retval(void)
  *	Description
- *		Get the syscall's return value that will be returned to userspace.
+ *		Get the BPF program's return value that will be returned to the upper layers.
  *
- *		This helper is currently supported by cgroup programs only.
+ *		This helper is currently supported by cgroup programs and only by the hooks
+ *		where BPF program's return value is returned to the userspace via errno.
  *	Return
- *		The syscall's return value.
+ *		The BPF program's return value.
  *
  * int bpf_set_retval(int retval)
  *	Description
- *		Set the syscall's return value that will be returned to userspace.
+ *		Set the BPF program's return value that will be returned to the upper layers.
  *
- *		This helper is currently supported by cgroup programs only.
+ *		This helper is currently supported by cgroup programs and only by the hooks
+ *		where BPF program's return value is returned to the userspace via errno.
+ *
+ *		Note that there is the following corner case where the program exports an error
+ *		via bpf_set_retval but signals success via 'return 1':
+ *
+ *			bpf_set_retval(-EPERM);
+ *			return 1;
+ *
+ *		In this case, the BPF program's return value will use helper's -EPERM. This
+ *		still holds true for cgroup/bind{4,6} which supports extra 'return 3' success case.
+ *
  *	Return
  *		0 on success, or a negative error in case of failure.
  *
@@ -5331,6 +5374,18 @@ union bpf_attr {
  *		**-EACCES** if the SYN cookie is not valid.
  *
  *		**-EPROTONOSUPPORT** if CONFIG_IPV6 is not builtin.
+ *
+ * u64 bpf_ktime_get_tai_ns(void)
+ *	Description
+ *		A nonsettable system-wide clock derived from wall-clock time but
+ *		ignoring leap seconds.  This clock does not experience
+ *		discontinuities and backwards jumps caused by NTP inserting leap
+ *		seconds as CLOCK_REALTIME does.
+ *
+ *		See: **clock_gettime**\ (**CLOCK_TAI**)
+ *	Return
+ *		Current *ktime*.
+ *
  */
 #define __BPF_FUNC_MAPPER(FN)		\
 	FN(unspec),			\
@@ -5541,6 +5596,7 @@ union bpf_attr {
 	FN(tcp_raw_gen_syncookie_ipv6),	\
 	FN(tcp_raw_check_syncookie_ipv4),	\
 	FN(tcp_raw_check_syncookie_ipv6),	\
+	FN(ktime_get_tai_ns),		\
 	/* */
 
 /* integer value in 'imm' field of BPF_CALL instruction selects which helper
@@ -5601,6 +5657,11 @@ enum {
 	BPF_F_ZERO_CSUM_TX		= (1ULL << 1),
 	BPF_F_DONT_FRAGMENT		= (1ULL << 2),
 	BPF_F_SEQ_NUMBER		= (1ULL << 3),
+};
+
+/* BPF_FUNC_skb_get_tunnel_key flags. */
+enum {
+	BPF_F_TUNINFO_FLAGS		= (1ULL << 4),
 };
 
 /* BPF_FUNC_perf_event_output, BPF_FUNC_perf_event_read and
@@ -5792,7 +5853,10 @@ struct bpf_tunnel_key {
 	};
 	__u8 tunnel_tos;
 	__u8 tunnel_ttl;
-	__u16 tunnel_ext;	/* Padding, future use. */
+	union {
+		__u16 tunnel_ext;	/* compat */
+		__be16 tunnel_flags;
+	};
 	__u32 tunnel_label;
 	union {
 		__u32 local_ipv4;
@@ -5836,6 +5900,11 @@ enum bpf_ret_code {
 	 *    represented by BPF_REDIRECT above).
 	 */
 	BPF_LWT_REROUTE = 128,
+	/* BPF_FLOW_DISSECTOR_CONTINUE: used by BPF_PROG_TYPE_FLOW_DISSECTOR
+	 *   to indicate that no custom dissection was performed, and
+	 *   fallback to standard dissector is requested.
+	 */
+	BPF_FLOW_DISSECTOR_CONTINUE = 129,
 };
 
 struct bpf_sock {
@@ -6134,10 +6203,21 @@ struct bpf_link_info {
 		struct {
 			__aligned_u64 target_name; /* in/out: target_name buffer ptr */
 			__u32 target_name_len;	   /* in/out: target_name buffer len */
+
+			/* If the iter specific field is 32 bits, it can be put
+			 * in the first or second union. Otherwise it should be
+			 * put in the second union.
+			 */
 			union {
 				struct {
 					__u32 map_id;
 				} map;
+			};
+			union {
+				struct {
+					__u64 cgroup_id;
+					__u32 order;
+				} cgroup;
 			};
 		} iter;
 		struct  {

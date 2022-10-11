@@ -58,6 +58,8 @@ static const char *format_encap_type(int type)
 		return "rpl";
 	case LWTUNNEL_ENCAP_IOAM6:
 		return "ioam6";
+	case LWTUNNEL_ENCAP_XFRM:
+		return "xfrm";
 	default:
 		return "unknown";
 	}
@@ -96,6 +98,8 @@ static int read_encap_type(const char *name)
 		return LWTUNNEL_ENCAP_RPL;
 	else if (strcmp(name, "ioam6") == 0)
 		return LWTUNNEL_ENCAP_IOAM6;
+	else if (strcmp(name, "xfrm") == 0)
+		return LWTUNNEL_ENCAP_XFRM;
 	else if (strcmp(name, "help") == 0)
 		encap_type_usage();
 
@@ -157,6 +161,100 @@ static int read_seg6mode_type(const char *mode)
 	}
 
 	return -1;
+}
+
+static const char *seg6_flavor_names[SEG6_LOCAL_FLV_OP_MAX + 1] = {
+	[SEG6_LOCAL_FLV_OP_PSP]		= "psp",
+	[SEG6_LOCAL_FLV_OP_USP]		= "usp",
+	[SEG6_LOCAL_FLV_OP_USD]		= "usd",
+	[SEG6_LOCAL_FLV_OP_NEXT_CSID]	= "next-csid"
+};
+
+static int read_seg6_local_flv_type(const char *name)
+{
+	int i;
+
+	for (i = 1; i < SEG6_LOCAL_FLV_OP_MAX + 1; ++i) {
+		if (!seg6_flavor_names[i])
+			continue;
+
+		if (strcasecmp(seg6_flavor_names[i], name) == 0)
+			return i;
+	}
+
+	return -1;
+}
+
+static int parse_seg6local_flavors(const char *buf, __u32 *flv_mask)
+{
+	unsigned char flavor_ok[SEG6_LOCAL_FLV_OP_MAX + 1] = { 0, };
+	char *wbuf;
+	__u32 mask = 0;
+	int index;
+	char *s;
+
+	/* strtok changes first parameter, so we need to make a local copy */
+	wbuf = strdupa(buf);
+
+	if (strlen(wbuf) == 0)
+		return -1;
+
+	for (s = strtok(wbuf, ","); s; s = strtok(NULL, ",")) {
+		index = read_seg6_local_flv_type(s);
+		if (index < 0 || index > SEG6_LOCAL_FLV_OP_MAX)
+			return -1;
+		/* we check for duplicates */
+		if (flavor_ok[index]++)
+			return -1;
+
+		mask |= (1 << index);
+	}
+
+	*flv_mask = mask;
+	return 0;
+}
+
+static void print_flavors(FILE *fp, __u32 flavors)
+{
+	int i, fnumber = 0;
+	char *flv_name;
+
+	if (is_json_context())
+		open_json_array(PRINT_JSON, "flavors");
+	else
+		print_string(PRINT_FP, NULL, "flavors ", NULL);
+
+	for (i = 0; i < SEG6_LOCAL_FLV_OP_MAX + 1; ++i) {
+		if (flavors & (1 << i)) {
+			flv_name = (char *) seg6_flavor_names[i];
+			if (!flv_name)
+				continue;
+
+			if (is_json_context())
+				print_string(PRINT_JSON, NULL, NULL, flv_name);
+			else {
+				if (fnumber++ == 0)
+					print_string(PRINT_FP, NULL, "%s", flv_name);
+				else
+					print_string(PRINT_FP, NULL, ",%s", flv_name);
+			}
+		}
+	}
+
+	if (is_json_context())
+		close_json_array(PRINT_JSON, NULL);
+	else
+		print_string(PRINT_FP, NULL, " ", NULL);
+}
+
+static void print_flavors_attr(FILE *fp, const char *key, __u32 value)
+{
+	if (is_json_context()) {
+		print_u64(PRINT_JSON, key, NULL, value);
+	} else {
+		print_string(PRINT_FP, NULL, "%s ", key);
+		print_num(fp, 1, value);
+	}
 }
 
 static void print_encap_seg6(FILE *fp, struct rtattr *encap)
@@ -376,6 +474,30 @@ static void print_seg6_local_counters(FILE *fp, struct rtattr *encap)
 	}
 }
 
+static void print_seg6_local_flavors(FILE *fp, struct rtattr *encap)
+{
+	struct rtattr *tb[SEG6_LOCAL_FLV_MAX + 1];
+	__u8 lbl = 0, nfl = 0;
+	__u32 flavors = 0;
+
+	parse_rtattr_nested(tb, SEG6_LOCAL_FLV_MAX, encap);
+
+	if (tb[SEG6_LOCAL_FLV_OPERATION]) {
+		flavors = rta_getattr_u32(tb[SEG6_LOCAL_FLV_OPERATION]);
+		print_flavors(fp, flavors);
+	}
+
+	if (tb[SEG6_LOCAL_FLV_LCBLOCK_BITS]) {
+		lbl = rta_getattr_u8(tb[SEG6_LOCAL_FLV_LCBLOCK_BITS]);
+		print_flavors_attr(fp, "lblen", lbl);
+	}
+
+	if (tb[SEG6_LOCAL_FLV_LCNODE_FN_BITS]) {
+		nfl = rta_getattr_u8(tb[SEG6_LOCAL_FLV_LCNODE_FN_BITS]);
+		print_flavors_attr(fp, "nflen", nfl);
+	}
+}
+
 static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 {
 	struct rtattr *tb[SEG6_LOCAL_MAX + 1];
@@ -438,6 +560,9 @@ static void print_encap_seg6local(FILE *fp, struct rtattr *encap)
 
 	if (tb[SEG6_LOCAL_COUNTERS] && show_stats)
 		print_seg6_local_counters(fp, tb[SEG6_LOCAL_COUNTERS]);
+
+	if (tb[SEG6_LOCAL_FLAVORS])
+		print_seg6_local_flavors(fp, tb[SEG6_LOCAL_FLAVORS]);
 }
 
 static void print_encap_mpls(FILE *fp, struct rtattr *encap)
@@ -693,6 +818,24 @@ static void print_encap_bpf(FILE *fp, struct rtattr *encap)
 			   " %u ", rta_getattr_u32(tb[LWT_BPF_XMIT_HEADROOM]));
 }
 
+static void print_encap_xfrm(FILE *fp, struct rtattr *encap)
+{
+	struct rtattr *tb[LWT_XFRM_MAX+1];
+
+	parse_rtattr_nested(tb, LWT_XFRM_MAX, encap);
+
+	if (tb[LWT_XFRM_IF_ID])
+		print_uint(PRINT_ANY, "if_id", "if_id %lu ",
+			   rta_getattr_u32(tb[LWT_XFRM_IF_ID]));
+
+	if (tb[LWT_XFRM_LINK]) {
+		int link = rta_getattr_u32(tb[LWT_XFRM_LINK]);
+
+		print_string(PRINT_ANY, "link_dev", "link_dev %s ",
+			     ll_index_to_name(link));
+	}
+}
+
 void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 			  struct rtattr *encap)
 {
@@ -732,6 +875,9 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 		break;
 	case LWTUNNEL_ENCAP_IOAM6:
 		print_encap_ioam6(fp, encap);
+		break;
+	case LWTUNNEL_ENCAP_XFRM:
+		print_encap_xfrm(fp, encap);
 		break;
 	}
 }
@@ -1177,12 +1323,66 @@ static int seg6local_fill_counters(struct rtattr *rta, size_t len, int attr)
 	return 0;
 }
 
+static int seg6local_parse_flavors(struct rtattr *rta, size_t len,
+			 int *argcp, char ***argvp, int attr)
+{
+	int lbl_ok = 0, nfl_ok = 0;
+	__u8 lbl = 0, nfl = 0;
+	struct rtattr *nest;
+	__u32 flavors = 0;
+	int ret;
+
+	char **argv = *argvp;
+	int argc = *argcp;
+
+	nest = rta_nest(rta, len, attr);
+
+	ret = parse_seg6local_flavors(*argv, &flavors);
+	if (ret < 0)
+		return ret;
+
+	ret = rta_addattr32(rta, len, SEG6_LOCAL_FLV_OPERATION, flavors);
+	if (ret < 0)
+		return ret;
+
+	if (flavors & (1 << SEG6_LOCAL_FLV_OP_NEXT_CSID)) {
+		NEXT_ARG_FWD();
+		if (strcmp(*argv, "lblen") == 0){
+			NEXT_ARG();
+			if (lbl_ok++)
+				duparg2("lblen", *argv);
+			if (get_u8(&lbl, *argv, 0))
+				invarg("\"locator-block length\" value is invalid\n", *argv);
+			ret = rta_addattr8(rta, len, SEG6_LOCAL_FLV_LCBLOCK_BITS, lbl);
+			NEXT_ARG_FWD();
+		}
+
+		if (strcmp(*argv, "nflen") == 0){
+			NEXT_ARG();
+			if (nfl_ok++)
+				duparg2("nflen", *argv);
+			if (get_u8(&nfl, *argv, 0))
+				invarg("\"locator-node function length\" value is invalid\n", *argv);
+			ret = rta_addattr8(rta, len, SEG6_LOCAL_FLV_LCNODE_FN_BITS, nfl);
+			NEXT_ARG_FWD();
+		}
+		PREV_ARG();
+	}
+
+	rta_nest_end(rta, nest);
+
+	*argcp = argc;
+	*argvp = argv;
+
+	return 0;
+}
+
 static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				 char ***argvp)
 {
+	int nh4_ok = 0, nh6_ok = 0, iif_ok = 0, oif_ok = 0, flavors_ok = 0;
 	int segs_ok = 0, hmac_ok = 0, table_ok = 0, vrftable_ok = 0;
 	int action_ok = 0, srh_ok = 0, bpf_ok = 0, counters_ok = 0;
-	int nh4_ok = 0, nh6_ok = 0, iif_ok = 0, oif_ok = 0;
 	__u32 action = 0, table, vrftable, iif, oif;
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
@@ -1252,6 +1452,15 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 				duparg2("count", *argv);
 			ret = seg6local_fill_counters(rta, len,
 						      SEG6_LOCAL_COUNTERS);
+		} else if (strcmp(*argv, "flavors") == 0) {
+			NEXT_ARG();
+			if (flavors_ok++)
+				duparg2("flavors", *argv);
+
+			if (seg6local_parse_flavors(rta, len, &argc, &argv,
+						    SEG6_LOCAL_FLAVORS))
+				invarg("invalid \"flavors\" attribute\n",
+					*argv);
 		} else if (strcmp(*argv, "srh") == 0) {
 			NEXT_ARG();
 			if (srh_ok++)
@@ -1945,6 +2154,61 @@ static int parse_encap_bpf(struct rtattr *rta, size_t len, int *argcp,
 	return 0;
 }
 
+static void lwt_xfrm_usage(void)
+{
+	fprintf(stderr, "Usage: ip route ... encap xfrm if_id IF_ID [ link_dev LINK ]\n");
+	exit(-1);
+}
+
+static int parse_encap_xfrm(struct rtattr *rta, size_t len,
+			    int *argcp, char ***argvp)
+{
+	int if_id_ok = 0, link_ok = 0;
+	char **argv = *argvp;
+	int argc = *argcp;
+	int ret = 0;
+
+	while (argc > 0) {
+		if (!strcmp(*argv, "if_id")) {
+			__u32 if_id;
+
+			NEXT_ARG();
+			if (if_id_ok++)
+				duparg2("if_id", *argv);
+			if (get_u32(&if_id, *argv, 0) || if_id == 0)
+				invarg("\"if_id\" value is invalid\n", *argv);
+			ret = rta_addattr32(rta, len, LWT_XFRM_IF_ID, if_id);
+		} else if (!strcmp(*argv, "link_dev")) {
+			int link;
+
+			NEXT_ARG();
+			if (link_ok++)
+				duparg2("link_dev", *argv);
+			link = ll_name_to_index(*argv);
+			if (!link)
+				exit(nodev(*argv));
+			ret = rta_addattr32(rta, len, LWT_XFRM_LINK, link);
+		} else if (!strcmp(*argv, "help")) {
+			lwt_xfrm_usage();
+		}
+		if (ret)
+			break;
+		argc--; argv++;
+	}
+
+	if (!if_id_ok)
+		lwt_xfrm_usage();
+
+	/* argv is currently the first unparsed argument,
+	 * but the lwt_parse_encap() caller will move to the next,
+	 * so step back
+	 */
+	*argcp = argc + 1;
+	*argvp = argv - 1;
+
+	return ret;
+}
+
 int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
 		    int encap_attr, int encap_type_attr)
 {
@@ -1995,6 +2259,9 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
 		break;
 	case LWTUNNEL_ENCAP_IOAM6:
 		ret = parse_encap_ioam6(rta, len, &argc, &argv);
+		break;
+	case LWTUNNEL_ENCAP_XFRM:
+		ret = parse_encap_xfrm(rta, len, &argc, &argv);
 		break;
 	default:
 		fprintf(stderr, "Error: unsupported encap type\n");

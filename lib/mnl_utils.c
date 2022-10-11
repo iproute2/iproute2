@@ -79,7 +79,7 @@ static int mnlu_cb_stop(const struct nlmsghdr *nlh, void *data)
 
 	if (len < 0) {
 		errno = -len;
-		nl_dump_ext_ack_done(nlh, len);
+		nl_dump_ext_ack_done(nlh, sizeof(int), len);
 		return MNL_CB_ERROR;
 	}
 	return MNL_CB_STOP;
@@ -110,7 +110,7 @@ int mnlu_socket_recv_run(struct mnl_socket *nl, unsigned int seq, void *buf, siz
 	return err;
 }
 
-static int get_family_id_attr_cb(const struct nlattr *attr, void *data)
+static int get_family_attrs_cb(const struct nlattr *attr, void *data)
 {
 	int type = mnl_attr_get_type(attr);
 	const struct nlattr **tb = data;
@@ -121,20 +121,26 @@ static int get_family_id_attr_cb(const struct nlattr *attr, void *data)
 	if (type == CTRL_ATTR_FAMILY_ID &&
 	    mnl_attr_validate(attr, MNL_TYPE_U16) < 0)
 		return MNL_CB_ERROR;
+	if (type == CTRL_ATTR_MAXATTR &&
+	    mnl_attr_validate(attr, MNL_TYPE_U32) < 0)
+		return MNL_CB_ERROR;
 	tb[type] = attr;
 	return MNL_CB_OK;
 }
 
-static int get_family_id_cb(const struct nlmsghdr *nlh, void *data)
+static int get_family_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
 	struct nlattr *tb[CTRL_ATTR_MAX + 1] = {};
-	uint32_t *p_id = data;
+	struct mnlu_gen_socket *nlg = data;
 
-	mnl_attr_parse(nlh, sizeof(*genl), get_family_id_attr_cb, tb);
+	mnl_attr_parse(nlh, sizeof(*genl), get_family_attrs_cb, tb);
 	if (!tb[CTRL_ATTR_FAMILY_ID])
 		return MNL_CB_ERROR;
-	*p_id = mnl_attr_get_u16(tb[CTRL_ATTR_FAMILY_ID]);
+	if (!tb[CTRL_ATTR_MAXATTR])
+		return MNL_CB_ERROR;
+	nlg->family = mnl_attr_get_u16(tb[CTRL_ATTR_FAMILY_ID]);
+	nlg->maxattr = mnl_attr_get_u32(tb[CTRL_ATTR_MAXATTR]);
 	return MNL_CB_OK;
 }
 
@@ -159,7 +165,7 @@ static int family_get(struct mnlu_gen_socket *nlg, const char *family_name)
 
 	err = mnlu_socket_recv_run(nlg->nl, nlh->nlmsg_seq, nlg->buf,
 				   MNL_SOCKET_BUFFER_SIZE,
-				   get_family_id_cb, &nlg->family);
+				   get_family_cb, nlg);
 	return err;
 }
 

@@ -999,10 +999,10 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	req.nhm.nh_flags = nh_flags;
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0)
-		return -2;
+	if (echo_request)
+		return rtnl_echo_talk(&rth, &req.n, json, print_nexthop_nocache);
 
-	return 0;
+	return rtnl_talk(&rth, &req.n, NULL);
 }
 
 static int ipnh_get_id(__u32 id)

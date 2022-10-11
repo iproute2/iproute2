@@ -36,6 +36,7 @@ extern int max_flush_loops;
 extern int batch_mode;
 extern int numeric;
 extern bool do_all;
+extern int echo_request;
 
 #ifndef CONFDIR
 #define CONFDIR		"/etc/iproute2"

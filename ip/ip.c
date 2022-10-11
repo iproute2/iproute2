@@ -39,6 +39,7 @@ int oneline;
 int brief;
 int json;
 int timestamp;
+int echo_request;
 int force;
 int max_flush_loops = 10;
 int batch_mode;
@@ -293,6 +294,8 @@ int main(int argc, char **argv)
 			++numeric;
 		} else if (matches(opt, "-all") == 0) {
 			do_all = true;
+		} else if (strcmp(opt, "-echo") == 0) {
+			++echo_request;
 		} else {
 			fprintf(stderr,
 				"Option \"%s\" is unknown, try \"ip -help\".\n",

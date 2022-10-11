@@ -1205,6 +1205,12 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 				   " promiscuity %u ",
 				   rta_getattr_u32(tb[IFLA_PROMISCUITY]));
 
+		if (tb[IFLA_ALLMULTI])
+			print_uint(PRINT_ANY,
+				   "allmulti",
+				   " allmulti %u ",
+				   rta_getattr_u32(tb[IFLA_ALLMULTI]));
+
 		if (tb[IFLA_MIN_MTU])
 			print_uint(PRINT_ANY,
 				   "min_mtu", "minmtu %u ",
@@ -1586,7 +1592,7 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 	if (!brief) {
 		const char *name;
 
-		if (filter.oneline || filter.flushb) {
+		if (filter.oneline || filter.flushb || echo_request) {
 			const char *dev = ll_index_to_name(ifa->ifa_index);
 
 			if (is_json_context()) {
@@ -2597,10 +2603,10 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0)
-		return -2;
+	if (echo_request)
+		return rtnl_echo_talk(&rth, &req.n, json, print_addrinfo);
 
-	return 0;
+	return rtnl_talk(&rth, &req.n, NULL);
 }
 
 int do_ipaddr(int argc, char **argv)

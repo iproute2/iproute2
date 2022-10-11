@@ -37,6 +37,7 @@ static void print_explain(FILE *f)
 		"		  [ priority PRIORITY ]\n"
 		"		  [ group_fwd_mask MASK ]\n"
 		"		  [ group_address ADDRESS ]\n"
+		"		  [ no_linklocal_learn NO_LINKLOCAL_LEARN ]\n"
 		"		  [ vlan_filtering VLAN_FILTERING ]\n"
 		"		  [ vlan_protocol VLAN_PROTOCOL ]\n"
 		"		  [ vlan_default_pvid VLAN_DEFAULT_PVID ]\n"
@@ -159,6 +160,18 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (len < 0)
 				return -1;
 			addattr_l(n, 1024, IFLA_BR_GROUP_ADDR, llabuf, len);
+		} else if (strcmp(*argv, "no_linklocal_learn") == 0) {
+			__u32 no_ll_learn_bit = 1 << BR_BOOLOPT_NO_LL_LEARN;
+			__u8 no_ll_learn;
+
+			NEXT_ARG();
+			if (get_u8(&no_ll_learn, *argv, 0))
+				invarg("invalid no_linklocal_learn", *argv);
+			bm.optmask |= 1 << BR_BOOLOPT_NO_LL_LEARN;
+			if (no_ll_learn)
+				bm.optval |= no_ll_learn_bit;
+			else
+				bm.optval &= ~no_ll_learn_bit;
 		} else if (matches(*argv, "fdb_flush") == 0) {
 			addattr(n, 1024, IFLA_BR_FDB_FLUSH);
 		} else if (matches(*argv, "vlan_default_pvid") == 0) {
@@ -578,9 +591,15 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_BR_MULTI_BOOLOPT]) {
 		__u32 mcvl_bit = 1 << BR_BOOLOPT_MCAST_VLAN_SNOOPING;
+		__u32 no_ll_learn_bit = 1 << BR_BOOLOPT_NO_LL_LEARN;
 		struct br_boolopt_multi *bm;
 
 		bm = RTA_DATA(tb[IFLA_BR_MULTI_BOOLOPT]);
+		if (bm->optmask & no_ll_learn_bit)
+			print_uint(PRINT_ANY,
+				   "no_linklocal_learn",
+				   "no_linklocal_learn %u ",
+				    !!(bm->optval & no_ll_learn_bit));
 		if (bm->optmask & mcvl_bit)
 			print_uint(PRINT_ANY,
 				   "mcast_vlan_snooping",

@@ -171,6 +171,9 @@ int rtnl_dump_filter_errhndlr_nc(struct rtnl_handle *rth,
 #define rtnl_dump_filter_errhndlr(rth, filter, farg, errhndlr, earg) \
 	rtnl_dump_filter_errhndlr_nc(rth, filter, farg, errhndlr, earg, 0)
 
+int rtnl_echo_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, int json,
+		   int (*print_info)(struct nlmsghdr *n, void *arg))
+	__attribute__((warn_unused_result));
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr **answer)
 	__attribute__((warn_unused_result));
@@ -185,7 +188,7 @@ int rtnl_send(struct rtnl_handle *rth, const void *buf, int)
 int rtnl_send_check(struct rtnl_handle *rth, const void *buf, int)
 	__attribute__((warn_unused_result));
 int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn);
-int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error);
+int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, unsigned int offset, int error);
 
 int addattr(struct nlmsghdr *n, int maxlen, int type);
 int addattr8(struct nlmsghdr *n, int maxlen, int type, __u8 data);

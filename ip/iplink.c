@@ -48,7 +48,7 @@ void iplink_types_usage(void)
 	/* Remember to add new entry here if new type is added. */
 	fprintf(stderr,
 		"TYPE := { amt | bareudp | bond | bond_slave | bridge | bridge_slave |\n"
-		"          dummy | erspan | geneve | gre | gretap | gtp | ifb |\n"
+		"          dsa | dummy | erspan | geneve | gre | gretap | gtp | ifb |\n"
 		"          ip6erspan | ip6gre | ip6gretap | ip6tnl |\n"
 		"          ipip | ipoib | ipvlan | ipvtap |\n"
 		"          macsec | macvlan | macvtap |\n"
@@ -1123,8 +1123,13 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		return -1;
 	}
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0)
-		return -2;
+	if (echo_request)
+		ret = rtnl_echo_talk(&rth, &req.n, json, print_linkinfo);
+	else
+		ret = rtnl_talk(&rth, &req.n, NULL);
+
+	if (ret)
+		return ret;
 
 	/* remove device from cache; next use can refresh with new data */
 	ll_drop_by_index(req.i.ifi_index);

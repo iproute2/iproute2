@@ -22,14 +22,6 @@
 #include "utils.h"
 #include "mnlg.h"
 
-struct mnlg_socket {
-	struct mnl_socket *nl;
-	char *buf;
-	uint32_t id;
-	uint8_t version;
-	unsigned int seq;
-};
-
 int mnlg_socket_send(struct mnlu_gen_socket *nlg, const struct nlmsghdr *nlh)
 {
 	return mnl_socket_sendto(nlg->nl, nlh, nlh->nlmsg_len);

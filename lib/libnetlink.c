@@ -129,13 +129,12 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	return 0;
 }
 
-int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
+int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, unsigned int offset, int error)
 {
 	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1] = {};
-	unsigned int hlen = sizeof(int);
 	const char *msg = NULL;
 
-	if (mnl_attr_parse(nlh, hlen, err_attr_cb, tb) != MNL_CB_OK)
+	if (mnl_attr_parse(nlh, offset, err_attr_cb, tb) != MNL_CB_OK)
 		return 0;
 
 	if (tb[NLMSGERR_ATTR_MSG])
@@ -159,7 +158,7 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 	return 0;
 }
 
-int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, int error)
+int nl_dump_ext_ack_done(const struct nlmsghdr *nlh, unsigned int offset, int error)
 {
 	return 0;
 }
@@ -747,7 +746,7 @@ static int rtnl_dump_done(struct nlmsghdr *h,
 			return 0;
 
 		/* check for any messages returned from kernel */
-		if (nl_dump_ext_ack_done(h, len))
+		if (nl_dump_ext_ack_done(h, sizeof(int), len))
 			return len;
 
 		switch (errno) {
@@ -1137,6 +1136,28 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	};
 
 	return __rtnl_talk_iov(rtnl, &iov, 1, answer, show_rtnl_err, errfn);
+}
+
+int rtnl_echo_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, int json,
+		   int (*print_info)(struct nlmsghdr *n, void *arg))
+{
+	struct nlmsghdr *answer;
+	int ret;
+
+	n->nlmsg_flags |= NLM_F_ECHO | NLM_F_ACK;
+
+	ret = rtnl_talk(rtnl, n, &answer);
+	if (ret)
+		return ret;
+
+	new_json_obj(json);
+	open_json_object(NULL);
+	print_info(answer, stdout);
+	close_json_object();
+	delete_json_obj();
+	free(answer);
+
+	return 0;
 }
 
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,

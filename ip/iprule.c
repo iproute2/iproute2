@@ -1016,10 +1016,10 @@ static int iprule_modify(int cmd, int argc, char **argv)
 	if (!table_ok && cmd == RTM_NEWRULE)
 		req.frh.table = RT_TABLE_MAIN;
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0)
-		return -2;
+	if (echo_request)
+		return rtnl_echo_talk(&rth, &req.n, json, print_rule);
 
-	return 0;
+	return rtnl_talk(&rth, &req.n, NULL);
 }
 
 int do_iprule(int argc, char **argv)
