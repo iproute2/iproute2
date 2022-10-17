@@ -385,6 +385,9 @@ Display vsock sockets (alias for -f vsock).
 .B \-\-xdp
 Display XDP sockets (alias for -f xdp).
 .TP
+.B \-M, \-\-mptcp
+Display MPTCP sockets.
+.TP
 .B \-\-inet-sockopt
 Display inet socket options.
 .TP
@@ -396,7 +399,7 @@ supported: unix, inet, inet6, link, netlink, vsock, xdp.
 List of socket tables to dump, separated by commas. The following identifiers
 are understood: all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram,
 unix_stream, unix_seqpacket, packet_raw, packet_dgram, dccp, sctp,
-vsock_stream, vsock_dgram, xdp Any item in the list may optionally be
+vsock_stream, vsock_dgram, xdp, mptcp. Any item in the list may optionally be
 prefixed by an exclamation mark
 .RB ( ! )
 to exclude that socket table from being dumped.
