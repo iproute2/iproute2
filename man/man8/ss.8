@@ -299,6 +299,11 @@ Show cgroup information. Below fields may appear:
 Cgroup v2 pathname. This pathname is relative to the mount point of the hierarchy.
 .RE
 .TP
+.B \-\-tipcinfo
+Show internal tipc socket information.
+.RS
+.P
+.TP
 .B \-K, \-\-kill
 Attempts to forcibly close sockets. This option displays sockets that are
 successfully closed and silently skips sockets that the kernel does not support
@@ -379,6 +384,10 @@ Display Unix domain sockets (alias for -f unix).
 .B \-S, \-\-sctp
 Display SCTP sockets.
 .TP
+.B \-\-tipc
+Display tipc sockets (alias for -f tipc).
+.TP
+.TP
 .B \-\-vsock
 Display vsock sockets (alias for -f vsock).
 .TP
@@ -393,12 +402,12 @@ Display inet socket options.
 .TP
 .B \-f FAMILY, \-\-family=FAMILY
 Display sockets of type FAMILY.  Currently the following families are
-supported: unix, inet, inet6, link, netlink, vsock, xdp.
+supported: unix, inet, inet6, link, netlink, vsock, tipc, xdp.
 .TP
 .B \-A QUERY, \-\-query=QUERY, \-\-socket=QUERY
 List of socket tables to dump, separated by commas. The following identifiers
 are understood: all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram,
-unix_stream, unix_seqpacket, packet_raw, packet_dgram, dccp, sctp,
+unix_stream, unix_seqpacket, packet_raw, packet_dgram, dccp, sctp, tipc,
 vsock_stream, vsock_dgram, xdp, mptcp. Any item in the list may optionally be
 prefixed by an exclamation mark
 .RB ( ! )
