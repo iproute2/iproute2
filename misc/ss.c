@@ -424,6 +424,7 @@ static int filter_db_parse(struct filter *f, const char *s)
 		ENTRY(packet_dgram, PACKET_DG_DB),
 		ENTRY(p_dgr, PACKET_DG_DB),	/* alias for packet_dgram */
 		ENTRY(netlink, NETLINK_DB),
+		ENTRY(tipc, TIPC_DB),
 		ENTRY(vsock, VSOCK_ST_DB, VSOCK_DG_DB),
 		ENTRY(vsock_stream, VSOCK_ST_DB),
 		ENTRY(v_str, VSOCK_ST_DB),	/* alias for vsock_stream */
