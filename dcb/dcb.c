@@ -156,7 +156,8 @@ static struct nlmsghdr *dcb_prepare(struct dcb *dcb, const char *dev,
 	};
 	struct nlmsghdr *nlh;
 
-	nlh = mnlu_msg_prepare(dcb->buf, nlmsg_type, NLM_F_REQUEST, &dcbm, sizeof(dcbm));
+	nlh = mnlu_msg_prepare(dcb->buf, nlmsg_type, NLM_F_REQUEST | NLM_F_ACK,
+			       &dcbm, sizeof(dcbm));
 	mnl_attr_put_strz(nlh, DCB_ATTR_IFNAME, dev);
 	return nlh;
 }
