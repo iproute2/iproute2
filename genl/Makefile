@@ -11,8 +11,6 @@ GENLMODULES += ctrl.o
 
 GENLOBJ += $(GENLMODULES)
 
-GENLLIB :=
-
 ifeq ($(SHARED_LIBS),y)
 LDFLAGS += -Wl,-export-dynamic
 LDLIBS  += -lm -ldl
@@ -20,14 +18,14 @@ endif
 
 all: genl
 
-genl: $(GENLOBJ) $(LIBNETLINK) $(LIBUTIL) $(GENLLIB)
+genl: $(GENLOBJ) $(LIBNETLINK)
 	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 install: all
 	install -m 0755 genl $(DESTDIR)$(SBINDIR)
 
 clean:
-	rm -f $(GENLOBJ) $(GENLLIB) genl
+	rm -f $(GENLOBJ) genl
 
 ifneq ($(SHARED_LIBS),y)
 
