@@ -195,6 +195,8 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 int do_ipmonitor(int argc, char **argv)
 {
 	unsigned int groups = 0, lmask = 0;
+	/* "needed" mask, failure to enable is an error */
+	unsigned int nmask;
 	char *file = NULL;
 	int ifindex = 0;
 
@@ -253,6 +255,7 @@ int do_ipmonitor(int argc, char **argv)
 	ipneigh_reset_filter(ifindex);
 	ipnetconf_reset_filter(ifindex);
 
+	nmask = lmask;
 	if (!lmask)
 		lmask = IPMON_L_ALL;
 
@@ -327,7 +330,8 @@ int do_ipmonitor(int argc, char **argv)
 	}
 
 	if (lmask & IPMON_LSTATS &&
-	    rtnl_add_nl_group(&rth, RTNLGRP_STATS) < 0) {
+	    rtnl_add_nl_group(&rth, RTNLGRP_STATS) < 0 &&
+	    nmask & IPMON_LSTATS) {
 		fprintf(stderr, "Failed to add stats group to list\n");
 		exit(1);
 	}
