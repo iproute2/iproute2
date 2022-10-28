@@ -150,6 +150,15 @@ value should always be greater than the delta specified in the
 .BR etf(8)
 qdisc.
 
+.TP
+max-sdu
+.br
+Specifies an array containing at most 16 elements, one per traffic class, which
+corresponds to the queueMaxSDU table from IEEE 802.1Q-2018. Each array element
+represents the maximum L2 payload size that can egress that traffic class.
+Elements that are not filled in default to 0. The value 0 means that the
+traffic class can send packets up to the port's maximum MTU in size.
+
 .SH EXAMPLES
 
 The following example shows how an traffic schedule with three traffic
@@ -205,17 +214,22 @@ is implicitly calculated as the sum of all
 durations (i.e. 20 us + 20 us + 60 us = 100 us). Although the base-time is in
 the past, the hardware will start executing the schedule at a PTP time equal to
 the smallest integer multiple of 100 us, plus 200 ns, that is larger than the
-NIC's current PTP time.
+NIC's current PTP time. In addition, the MTU for traffic class 5 is limited to
+200 octets, so that the interference this creates upon traffic class 7 during
+the time window when their gates are both open is bounded. The interference is
+determined by the transmit time of the max SDU, plus the L2 header length, plus
+the L1 overhead.
 
 .EX
 # tc qdisc add dev eth0 parent root taprio \\
               num_tc 8 \\
               map 0 1 2 3 4 5 6 7 \\
               queues 1@0 1@1 1@2 1@3 1@4 1@5 1@6 1@7 \\
+              max-sdu 0 0 0 0 0 200 0 0 \\
               base-time 200 \\
               sched-entry S 80 20000 \\
               sched-entry S a0 20000 \\
-              sched-entry S df 60000 \\
+              sched-entry S 5f 60000 \\
               flags 0x2
 .EE
 

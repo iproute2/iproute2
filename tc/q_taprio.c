@@ -151,13 +151,33 @@ static struct sched_entry *create_entry(uint32_t gatemask, uint32_t interval, ui
 	return e;
 }
 
+static void add_tc_entries(struct nlmsghdr *n, __u32 max_sdu[TC_QOPT_MAX_QUEUE],
+			   int num_max_sdu_entries)
+{
+	struct rtattr *l;
+	__u32 tc;
+
+	for (tc = 0; tc <= num_max_sdu_entries; tc++) {
+		l = addattr_nest(n, 1024, TCA_TAPRIO_ATTR_TC_ENTRY | NLA_F_NESTED);
+
+		addattr_l(n, 1024, TCA_TAPRIO_TC_ENTRY_INDEX, &tc, sizeof(tc));
+		addattr_l(n, 1024, TCA_TAPRIO_TC_ENTRY_MAX_SDU,
+			  &max_sdu[tc], sizeof(max_sdu[tc]));
+
+		addattr_nest_end(n, l);
+	}
+}
+
 static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 			    char **argv, struct nlmsghdr *n, const char *dev)
 {
+	__u32 max_sdu[TC_QOPT_MAX_QUEUE] = { };
 	__s32 clockid = CLOCKID_INVALID;
 	struct tc_mqprio_qopt opt = { };
 	__s64 cycle_time_extension = 0;
 	struct list_head sched_entries;
+	bool have_tc_entries = false;
+	int num_max_sdu_entries = 0;
 	struct rtattr *tail, *l;
 	__u32 taprio_flags = 0;
 	__u32 txtime_delay = 0;
@@ -211,6 +231,17 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 				free(tmp);
 				idx++;
 			}
+		} else if (strcmp(*argv, "max-sdu") == 0) {
+			while (idx < TC_QOPT_MAX_QUEUE && NEXT_ARG_OK()) {
+				NEXT_ARG();
+				if (get_u32(&max_sdu[idx], *argv, 10)) {
+					PREV_ARG();
+					break;
+				}
+				num_max_sdu_entries++;
+				idx++;
+			}
+			have_tc_entries = true;
 		} else if (strcmp(*argv, "sched-entry") == 0) {
 			uint32_t mask, interval;
 			struct sched_entry *e;
@@ -341,6 +372,9 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 		addattr_l(n, 1024, TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION,
 			  &cycle_time_extension, sizeof(cycle_time_extension));
 
+	if (have_tc_entries)
+		add_tc_entries(n, max_sdu, num_max_sdu_entries);
+
 	l = addattr_nest(n, 1024, TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST | NLA_F_NESTED);
 
 	err = add_sched_list(&sched_entries, n);
@@ -430,6 +464,65 @@ static int print_schedule(FILE *f, struct rtattr **tb)
 	return 0;
 }
 
+static void dump_tc_entry(__u32 max_sdu[TC_QOPT_MAX_QUEUE],
+			  struct rtattr *item, bool *have_tc_entries,
+			  int *max_tc_index)
+{
+	struct rtattr *tb[TCA_TAPRIO_TC_ENTRY_MAX + 1];
+	__u32 tc, val = 0;
+
+	parse_rtattr_nested(tb, TCA_TAPRIO_TC_ENTRY_MAX, item);
+
+	if (!tb[TCA_TAPRIO_TC_ENTRY_INDEX]) {
+		fprintf(stderr, "Missing tc entry index\n");
+		return;
+	}
+
+	tc = rta_getattr_u32(tb[TCA_TAPRIO_TC_ENTRY_INDEX]);
+	/* Prevent array out of bounds access */
+	if (tc >= TC_QOPT_MAX_QUEUE) {
+		fprintf(stderr, "Unexpected tc entry index %d\n", tc);
+		return;
+	}
+
+	if (*max_tc_index < tc)
+		*max_tc_index = tc;
+
+	if (tb[TCA_TAPRIO_TC_ENTRY_MAX_SDU])
+		val = rta_getattr_u32(tb[TCA_TAPRIO_TC_ENTRY_MAX_SDU]);
+
+	max_sdu[tc] = val;
+
+	*have_tc_entries = true;
+}
+
+static void dump_tc_entries(FILE *f, struct rtattr *opt)
+{
+	__u32 max_sdu[TC_QOPT_MAX_QUEUE] = {};
+	int tc, rem, max_tc_index = 0;
+	bool have_tc_entries = false;
+	struct rtattr *i;
+
+	rem = RTA_PAYLOAD(opt);
+
+	for (i = RTA_DATA(opt); RTA_OK(i, rem); i = RTA_NEXT(i, rem)) {
+		if (i->rta_type != (TCA_TAPRIO_ATTR_TC_ENTRY | NLA_F_NESTED))
+			continue;
+
+		dump_tc_entry(max_sdu, i, &have_tc_entries, &max_tc_index);
+	}
+
+	if (!have_tc_entries)
+		return;
+
+	open_json_array(PRINT_ANY, "max-sdu");
+	for (tc = 0; tc <= max_tc_index; tc++)
+		print_uint(PRINT_ANY, NULL, " %u", max_sdu[tc]);
+	close_json_array(PRINT_ANY, "");
+
+	print_nl();
+}
+
 static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_TAPRIO_ATTR_MAX + 1];
@@ -502,6 +595,8 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 
 		close_json_object();
 	}
+
+	dump_tc_entries(f, opt);
 
 	return 0;
 }
