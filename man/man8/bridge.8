@@ -574,12 +574,16 @@ flag is off.
 
 .TP
 .BR "locked on " or " locked off "
-Controls whether a port will be locked, meaning that hosts behind the
-port will not be able to communicate through the port unless an FDB
-entry with the units MAC address is in the FDB.
-The common use is that hosts are allowed access through authentication
-with the IEEE 802.1X protocol or based on whitelists or like setups.
-By default this flag is off.
+Controls whether a port is locked or not. When locked, non-link-local frames
+received through the port are dropped unless an FDB entry with the MAC source
+address points to the port. The common use case is IEEE 802.1X where hosts can
+authenticate themselves by exchanging EAPOL frames with an authenticator. After
+authentication is complete, the user space control plane can install a matching
+FDB entry to allow traffic from the host to be forwarded by the bridge. When
+learning is enabled on a locked port, the
+.B no_linklocal_learn
+bridge option needs to be on to prevent the bridge from learning from received
+EAPOL frames. By default this flag is off.
 
 .TP
 .BR "mab on " or " mab off "

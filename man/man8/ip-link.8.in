@@ -2576,9 +2576,16 @@ is enabled on the port. By default this flag is off.
 default this flag is off.
 
 .BR locked " { " on " | " off " }"
-- sets or unsets a port in locked mode, so that when enabled, hosts
-behind the port cannot communicate through the port unless a FDB entry
-representing the host is in the FDB. By default this flag is off.
+- controls whether a port is locked or not. When locked, non-link-local frames
+received through the port are dropped unless an FDB entry with the MAC source
+address points to the port. The common use case is IEEE 802.1X where hosts can
+authenticate themselves by exchanging EAPOL frames with an authenticator. After
+authentication is complete, the user space control plane can install a matching
+FDB entry to allow traffic from the host to be forwarded by the bridge. When
+learning is enabled on a locked port, the
+.B no_linklocal_learn
+bridge option needs to be on to prevent the bridge from learning from received
+EAPOL frames. By default this flag is off.
 
 .BR mab " { " on " | " off " }"
 - controls whether MAC Authentication Bypass (MAB) is enabled on the port or
