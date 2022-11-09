@@ -838,6 +838,23 @@ static int ifname_map_load(struct dl *dl)
 	return 0;
 }
 
+static int ifname_map_check_load(struct dl *dl)
+{
+	int err;
+
+	if (dl->map_loaded)
+		return 0;
+
+	err = ifname_map_load(dl);
+	if (err) {
+		pr_err("Failed to create index map\n");
+		return err;
+	}
+	dl->map_loaded = true;
+	return 0;
+}
+
+
 static int ifname_map_lookup(struct dl *dl, const char *ifname,
 			     char **p_bus_name, char **p_dev_name,
 			     uint32_t *p_port_index)
@@ -845,14 +862,10 @@ static int ifname_map_lookup(struct dl *dl, const char *ifname,
 	struct ifname_map *ifname_map;
 	int err;
 
-	if (!dl->map_loaded) {
-		err = ifname_map_load(dl);
-		if (err) {
-			pr_err("Failed to create index map\n");
-			return err;
-		}
-		dl->map_loaded = true;
-	}
+	err = ifname_map_check_load(dl);
+	if (err)
+		return err;
+
 	list_for_each_entry(ifname_map, &dl->ifname_map_list, list) {
 		if (strcmp(ifname, ifname_map->ifname) == 0) {
 			*p_bus_name = ifname_map->bus_name;
@@ -869,6 +882,12 @@ static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 				 char **p_ifname)
 {
 	struct ifname_map *ifname_map;
+
+	int err;
+
+	err = ifname_map_check_load(dl);
+	if (err)
+		return err;
 
 	list_for_each_entry(ifname_map, &dl->ifname_map_list, list) {
 		if (strcmp(bus_name, ifname_map->bus_name) == 0 &&
