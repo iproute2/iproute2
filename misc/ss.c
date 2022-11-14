@@ -31,7 +31,6 @@
 
 #include "ss_util.h"
 #include "utils.h"
-#include "rt_names.h"
 #include "ll_map.h"
 #include "libnetlink.h"
 #include "namespace.h"
@@ -425,6 +424,7 @@ static int filter_db_parse(struct filter *f, const char *s)
 		ENTRY(packet_dgram, PACKET_DG_DB),
 		ENTRY(p_dgr, PACKET_DG_DB),	/* alias for packet_dgram */
 		ENTRY(netlink, NETLINK_DB),
+		ENTRY(tipc, TIPC_DB),
 		ENTRY(vsock, VSOCK_ST_DB, VSOCK_DG_DB),
 		ENTRY(vsock_stream, VSOCK_ST_DB),
 		ENTRY(v_str, VSOCK_ST_DB),	/* alias for vsock_stream */
@@ -5374,6 +5374,7 @@ static void _usage(FILE *dest)
 "   -x, --unix          display only Unix domain sockets\n"
 "       --tipc          display only TIPC sockets\n"
 "       --vsock         display only vsock sockets\n"
+"       --xdp           display only XDP sockets\n"
 "   -f, --family=FAMILY display sockets of type FAMILY\n"
 "       FAMILY := {inet|inet6|link|unix|netlink|vsock|tipc|xdp|help}\n"
 "\n"
@@ -5383,7 +5384,7 @@ static void _usage(FILE *dest)
 "       --inet-sockopt  show various inet socket options\n"
 "\n"
 "   -A, --query=QUERY, --socket=QUERY\n"
-"       QUERY := {all|inet|tcp|mptcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|netlink|vsock_stream|vsock_dgram|tipc}[,QUERY]\n"
+"       QUERY := {all|inet|tcp|mptcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|packet_raw|packet_dgram|netlink|dccp|sctp|vsock_stream|vsock_dgram|tipc|xdp}[,QUERY]\n"
 "\n"
 "   -D, --diag=FILE     Dump raw information about TCP sockets to FILE\n"
 "   -F, --filter=FILE   read filter information from FILE\n"

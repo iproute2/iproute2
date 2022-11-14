@@ -2,8 +2,8 @@
 CFLAGS=
 include ../../config.mk
 
-generate_nlmsg: generate_nlmsg.c ../../lib/libnetlink.c
-	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(EXTRA_CFLAGS) -I../../include -I../../include/uapi -include../../include/uapi/linux/netlink.h -o $@ $^ -lmnl
+generate_nlmsg: generate_nlmsg.c ../../lib/libnetlink.a ../../lib/libutil.a
+	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) $(EXTRA_CFLAGS) -I../../include -I../../include/uapi -include../../include/uapi/linux/netlink.h -o $@ $^ -lmnl -lcap
 
 clean:
 	rm -f generate_nlmsg

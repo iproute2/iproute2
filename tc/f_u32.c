@@ -1275,12 +1275,14 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		fprintf(stderr, "divisor and hash missing ");
 	}
 	if (tb[TCA_U32_CLASSID]) {
+		__u32 classid = rta_getattr_u32(tb[TCA_U32_CLASSID]);
 		SPRINT_BUF(b1);
-		fprintf(f, "%sflowid %s ",
-			!sel || !(sel->flags & TC_U32_TERMINAL) ? "*" : "",
-			sprint_tc_classid(rta_getattr_u32(tb[TCA_U32_CLASSID]),
-					  b1));
-	} else if (sel && sel->flags & TC_U32_TERMINAL) {
+		if (sel && (sel->flags & TC_U32_TERMINAL))
+			print_string(PRINT_FP, NULL, "*", NULL);
+
+		print_string(PRINT_ANY, "flowid", "flowid %s ",
+			     sprint_tc_classid(classid, b1));
+	} else if (sel && (sel->flags & TC_U32_TERMINAL)) {
 		print_string(PRINT_FP, NULL, "terminal flowid ", NULL);
 	}
 	if (tb[TCA_U32_LINK]) {
