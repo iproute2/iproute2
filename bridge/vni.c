@@ -303,7 +303,7 @@ static void print_vni(struct rtattr *t, int ifindex)
 	print_string(PRINT_FP, NULL, "%s", _SL_);
 }
 
-int print_vnifilter_rtm(struct nlmsghdr *n, void *arg, bool monitor)
+int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 {
 	struct tunnel_msg *tmsg = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
@@ -364,7 +364,7 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg, bool monitor)
 
 static int print_vnifilter_rtm_filter(struct nlmsghdr *n, void *arg)
 {
-	return print_vnifilter_rtm(n, arg, false);
+	return print_vnifilter_rtm(n, arg);
 }
 
 static int vni_show(int argc, char **argv)

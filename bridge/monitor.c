@@ -63,7 +63,7 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 
 	case RTM_NEWTUNNEL:
 	case RTM_DELTUNNEL:
-		return print_vnifilter_rtm(n, arg, true);
+		return print_vnifilter_rtm(n, arg);
 
 	default:
 		return 0;

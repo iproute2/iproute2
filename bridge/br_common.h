@@ -14,7 +14,7 @@ void print_stp_state(__u8 state);
 int parse_stp_state(const char *arg);
 int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor,
 		   bool global_only);
-int print_vnifilter_rtm(struct nlmsghdr *n, void *arg, bool monitor);
+int print_vnifilter_rtm(struct nlmsghdr *n, void *arg);
 void br_print_router_port_stats(struct rtattr *pattr);
 void print_headers(FILE *fp, const char *label);
 
