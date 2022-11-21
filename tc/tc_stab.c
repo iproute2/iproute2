@@ -130,20 +130,4 @@ void print_size_table(FILE *fp, const char *prefix, struct rtattr *rta)
 		if (s.tsize)
 			fprintf(fp, "tsize %u ", s.tsize);
 	}
-
-#if 0
-	if (tb[TCA_STAB_DATA]) {
-		unsigned int i, j, dlen;
-		__u16 *data = RTA_DATA(tb[TCA_STAB_DATA]);
-
-		dlen = RTA_PAYLOAD(tb[TCA_STAB_DATA]) / sizeof(__u16);
-
-		fprintf(fp, "\n%sstab data:", prefix);
-		for (i = 0; i < dlen/12; i++) {
-			fprintf(fp, "\n%s %3u:", prefix, i * 12);
-			for (j = 0; i * 12 + j < dlen; j++)
-				fprintf(fp, " %05x", data[i * 12 + j]);
-		}
-	}
-#endif
 }
