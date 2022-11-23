@@ -124,11 +124,6 @@ static int xfrm_algo_parse(struct xfrm_algo *alg, enum xfrm_attr_type_t type,
 	int len;
 	int slen = strlen(key);
 
-#if 0
-	/* XXX: verifying both name and key is required! */
-	fprintf(stderr, "warning: ALGO-NAME/ALGO-KEYMAT values will be sent to the kernel promiscuously! (verifying them isn't implemented yet)\n");
-#endif
-
 	strlcpy(alg->alg_name, name, sizeof(alg->alg_name));
 
 	if (slen > 2 && strncmp(key, "0x", 2) == 0) {
@@ -791,12 +786,6 @@ static int xfrm_state_allocspi(int argc, char **argv)
 		.n.nlmsg_flags = NLM_F_REQUEST,
 		.n.nlmsg_type = XFRM_MSG_ALLOCSPI,
 		.xspi.info.family = preferred_family,
-#if 0
-		.xspi.lft.soft_byte_limit = XFRM_INF,
-		.xspi.lft.hard_byte_limit = XFRM_INF,
-		.xspi.lft.soft_packet_limit = XFRM_INF,
-		.xspi.lft.hard_packet_limit = XFRM_INF,
-#endif
 	};
 	char *idp = NULL;
 	char *minp = NULL;
