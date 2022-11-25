@@ -117,6 +117,7 @@ void print_size_table(struct rtattr *rta)
 		memcpy(&s, RTA_DATA(tb[TCA_STAB_BASE]),
 				MIN(RTA_PAYLOAD(tb[TCA_STAB_BASE]), sizeof(s)));
 
+		open_json_object("stab");
 		print_string(PRINT_FP, NULL, " ", NULL);
 
 		if (s.linklayer)
@@ -135,5 +136,6 @@ void print_size_table(struct rtattr *rta)
 		if (s.tsize)
 			print_uint(PRINT_ANY, "tsize",
 				   "tsize %u ", s.tsize);
+		close_json_object();
 	}
 }
