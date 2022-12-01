@@ -729,12 +729,15 @@ static int ipneigh_get(int argc, char **argv)
 		return -2;
 
 	ipneigh_reset_filter(0);
+	new_json_obj(json);
 	if (print_neigh(answer, stdout) < 0) {
 		fprintf(stderr, "An error :-)\n");
 		free(answer);
+		delete_json_obj();
 		return -1;
 	}
 	free(answer);
+	delete_json_obj();
 
 	return 0;
 }
