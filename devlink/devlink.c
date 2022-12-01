@@ -295,6 +295,7 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 #define DL_OPT_LINECARD		BIT(52)
 #define DL_OPT_LINECARD_TYPE	BIT(53)
 #define DL_OPT_SELFTESTS	BIT(54)
+#define DL_OPT_PORT_FN_RATE_TX_PRIORITY	BIT(55)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -353,6 +354,7 @@ struct dl_opts {
 	uint16_t rate_type;
 	uint64_t rate_tx_share;
 	uint64_t rate_tx_max;
+	uint32_t rate_tx_priority;
 	char *rate_node_name;
 	const char *rate_parent_node;
 	uint32_t linecard_index;
@@ -2067,6 +2069,13 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_PORT_FN_RATE_TX_MAX;
+		} else if (dl_argv_match(dl, "tx_priority") &&
+			   (o_all & DL_OPT_PORT_FN_RATE_TX_PRIORITY)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint32_t(dl, &opts->rate_tx_priority);
+			if (err)
+				return err;
+			o_found |= DL_OPT_PORT_FN_RATE_TX_PRIORITY;
 		} else if (dl_argv_match(dl, "parent") &&
 			   (o_all & DL_OPT_PORT_FN_RATE_PARENT)) {
 			dl_arg_inc(dl);
@@ -2335,6 +2344,9 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_PORT_FN_RATE_TX_SHARE)
 		mnl_attr_put_u64(nlh, DEVLINK_ATTR_RATE_TX_SHARE,
 				 opts->rate_tx_share);
+	if (opts->present & DL_OPT_PORT_FN_RATE_TX_PRIORITY)
+		mnl_attr_put_u32(nlh, DEVLINK_ATTR_RATE_TX_PRIORITY,
+				 opts->rate_tx_priority);
 	if (opts->present & DL_OPT_PORT_FN_RATE_TX_MAX)
 		mnl_attr_put_u64(nlh, DEVLINK_ATTR_RATE_TX_MAX,
 				 opts->rate_tx_max);
@@ -4955,6 +4967,13 @@ static void pr_out_port_fn_rate(struct dl *dl, struct nlattr **tb)
 			print_rate(dl->use_iec, PRINT_ANY, "tx_max",
 				   " tx_max %s", rate);
 	}
+	if (tb[DEVLINK_ATTR_RATE_TX_PRIORITY]) {
+		uint32_t priority =
+			mnl_attr_get_u32(tb[DEVLINK_ATTR_RATE_TX_PRIORITY]);
+		if (priority)
+			print_uint(PRINT_ANY, "tx_priority",
+				   " tx_priority %u", priority);
+	}
 	if (tb[DEVLINK_ATTR_RATE_PARENT_NODE_NAME]) {
 		const char *parent =
 			mnl_attr_get_str(tb[DEVLINK_ATTR_RATE_PARENT_NODE_NAME]);
@@ -4986,11 +5005,12 @@ static void cmd_port_fn_rate_help(void)
 	pr_err("Usage: devlink port function rate help\n");
 	pr_err("       devlink port function rate show [ DEV/{ PORT_INDEX | NODE_NAME } ]\n");
 	pr_err("       devlink port function rate add DEV/NODE_NAME\n");
-	pr_err("               [ tx_share VAL ][ tx_max VAL ][ { parent NODE_NAME | noparent } ]\n");
+	pr_err("               [ tx_share VAL ][ tx_max VAL ][ tx_priority N ][ { parent NODE_NAME | noparent } ]\n");
 	pr_err("       devlink port function rate del DEV/NODE_NAME\n");
 	pr_err("       devlink port function rate set DEV/{ PORT_INDEX | NODE_NAME }\n");
-	pr_err("               [ tx_share VAL ][ tx_max VAL ][ { parent NODE_NAME | noparent } ]\n\n");
+	pr_err("               [ tx_share VAL ][ tx_max VAL ][ tx_priority N ][ { parent NODE_NAME | noparent } ]\n\n");
 	pr_err("       VAL - float or integer value in units of bits or bytes per second (bit|bps)\n");
+	pr_err("       N - integer representing priority of the node among siblings\n");
 	pr_err("       and SI (k-, m-, g-, t-) or IEC (ki-, mi-, gi-, ti-) case-insensitive prefix.\n");
 	pr_err("       Bare number, means bits per second, is possible.\n\n");
 	pr_err("       For details refer to devlink-rate(8) man page.\n");
@@ -5049,7 +5069,8 @@ static int cmd_port_fn_rate_add(struct dl *dl)
 	int err;
 
 	err = dl_argv_parse(dl, DL_OPT_PORT_FN_RATE_NODE_NAME,
-			    DL_OPT_PORT_FN_RATE_TX_SHARE | DL_OPT_PORT_FN_RATE_TX_MAX);
+			    DL_OPT_PORT_FN_RATE_TX_SHARE | DL_OPT_PORT_FN_RATE_TX_MAX |
+			    DL_OPT_PORT_FN_RATE_TX_PRIORITY);
 	if (err)
 		return err;
 
@@ -5103,6 +5124,9 @@ static int port_fn_get_rates_cb(const struct nlmsghdr *nlh, void *data)
 	if (tb[DEVLINK_ATTR_RATE_TX_MAX])
 		opts->rate_tx_max =
 			mnl_attr_get_u64(tb[DEVLINK_ATTR_RATE_TX_MAX]);
+	if (tb[DEVLINK_ATTR_RATE_TX_PRIORITY])
+		opts->rate_tx_priority =
+			mnl_attr_get_u32(tb[DEVLINK_ATTR_RATE_TX_PRIORITY]);
 	return MNL_CB_OK;
 }
 
@@ -5116,6 +5140,7 @@ static int cmd_port_fn_rate_set(struct dl *dl)
 				DL_OPT_PORT_FN_RATE_NODE_NAME,
 				DL_OPT_PORT_FN_RATE_TX_SHARE |
 				DL_OPT_PORT_FN_RATE_TX_MAX |
+				DL_OPT_PORT_FN_RATE_TX_PRIORITY |
 				DL_OPT_PORT_FN_RATE_PARENT);
 	if (err)
 		return err;
