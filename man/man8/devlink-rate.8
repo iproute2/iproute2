@@ -26,12 +26,16 @@ devlink-rate \- devlink rate management
 .RI "{ " DEV/PORT_INDEX " | " DEV/NODE_NAME " } "
 .RB [ " tx_share \fIVALUE " ]
 .RB [ " tx_max \fIVALUE " ]
+.RB [ " tx_priority \fIN " ]
+.RB [ " tx_weight \fIN " ]
 .RB "[ {" " parent \fINODE_NAME " | " noparent " "} ]"
 
 .ti -8
 .BI "devlink port function rate add " DEV/NODE_NAME
 .RB [ " tx_share \fIVALUE " ]
 .RB [ " tx_max \fIVALUE " ]
+.RB [ " tx_priority \fIN " ]
+.RB [ " tx_weight \fIN " ]
 .RB "[ {" " parent \fINODE_NAME " | " noparent " "} ]"
 
 .ti -8
@@ -83,6 +87,20 @@ rate group.
 .PP
 .BI tx_max " VALUE"
 - specifies maximum tx rate value.
+.PP
+.BI tx_priority " N"
+- allows for usage of strict priority arbiter among siblings. This arbitration
+scheme attempts to schedule nodes based on their priority as long as the nodes
+remain within their bandwidth limit. The higher the priority the higher the
+probability that the node will get selected for scheduling.
+.PP
+.BI tx_weight " N"
+- allows for usage of Weighted Fair Queuing arbitration scheme among siblings.
+This arbitration scheme can be used simultaneously with the strict priority.
+As a node is configured with a higher rate it gets more BW relative to it's
+siblings. Values are relative like a percentage points, they basically tell
+how much BW should node take relative to it's siblings.
+.PP
 .TP 8
 .I VALUE
 These parameter accept a floating point number, possibly followed by either a
@@ -122,6 +140,10 @@ Terabytes per second
 To specify in IEC units, replace the SI prefix (k-, m-, g-, t-) with IEC prefix
 (ki-, mi-, gi- and ti-) respectively. Input is case-insensitive.
 .RE
+.PP
+.TP 8
+.I N
+These parameter accept integer meaning weight or priority of a node.
 .PP
 .BI parent " NODE_NAME \fR| " noparent
 - set rate object parent to existing node with name \fINODE_NAME\fR or unset
