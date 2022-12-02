@@ -787,6 +787,7 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		.frh.family = preferred_family,
 		.frh.action = FR_ACT_UNSPEC,
 	};
+	int ret;
 
 	if (cmd == RTM_NEWRULE) {
 		if (argc == 0) {
@@ -1017,9 +1018,14 @@ static int iprule_modify(int cmd, int argc, char **argv)
 		req.frh.table = RT_TABLE_MAIN;
 
 	if (echo_request)
-		return rtnl_echo_talk(&rth, &req.n, json, print_rule);
+		ret = rtnl_echo_talk(&rth, &req.n, json, print_rule);
+	else
+		ret = rtnl_talk(&rth, &req.n, NULL);
 
-	return rtnl_talk(&rth, &req.n, NULL);
+	if (ret)
+		return -2;
+
+	return 0;
 }
 
 int do_iprule(int argc, char **argv)

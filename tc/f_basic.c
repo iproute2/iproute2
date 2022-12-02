@@ -119,19 +119,22 @@ static int basic_print_opt(struct filter_util *qu, FILE *f,
 	parse_rtattr_nested(tb, TCA_BASIC_MAX, opt);
 
 	if (handle)
-		fprintf(f, "handle 0x%x ", handle);
+		print_hex(PRINT_ANY, "handle",
+			  "handle 0x%x ", handle);
 
 	if (tb[TCA_BASIC_CLASSID]) {
+		uint32_t classid = rta_getattr_u32(tb[TCA_BASIC_CLASSID]);
 		SPRINT_BUF(b1);
-		fprintf(f, "flowid %s ",
-			sprint_tc_classid(rta_getattr_u32(tb[TCA_BASIC_CLASSID]), b1));
+
+		print_string(PRINT_ANY, "flowid", "flowid %s ",
+			     sprint_tc_classid(classid, b1));
 	}
 
 	if (tb[TCA_BASIC_EMATCHES])
 		print_ematch(f, tb[TCA_BASIC_EMATCHES]);
 
 	if (tb[TCA_BASIC_POLICE]) {
-		fprintf(f, "\n");
+		print_nl();
 		tc_print_police(f, tb[TCA_BASIC_POLICE]);
 	}
 

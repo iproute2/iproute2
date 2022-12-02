@@ -329,7 +329,7 @@ int print_qdisc(struct nlmsghdr *n, void *arg)
 	print_nl();
 
 	if (show_details && tb[TCA_STAB]) {
-		print_size_table(fp, " ", tb[TCA_STAB]);
+		print_size_table(tb[TCA_STAB]);
 		print_nl();
 	}
 

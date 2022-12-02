@@ -103,7 +103,7 @@ int parse_size_table(int *argcp, char ***argvp, struct tc_sizespec *sp)
 	return 0;
 }
 
-void print_size_table(FILE *fp, const char *prefix, struct rtattr *rta)
+void print_size_table(struct rtattr *rta)
 {
 	struct rtattr *tb[TCA_STAB_MAX + 1];
 
@@ -117,33 +117,25 @@ void print_size_table(FILE *fp, const char *prefix, struct rtattr *rta)
 		memcpy(&s, RTA_DATA(tb[TCA_STAB_BASE]),
 				MIN(RTA_PAYLOAD(tb[TCA_STAB_BASE]), sizeof(s)));
 
-		fprintf(fp, "%s", prefix);
+		open_json_object("stab");
+		print_string(PRINT_FP, NULL, " ", NULL);
+
 		if (s.linklayer)
-			fprintf(fp, "linklayer %s ",
-					sprint_linklayer(s.linklayer, b1));
+			print_string(PRINT_ANY, "linklayer",
+				     "linklayer %s ",
+				     sprint_linklayer(s.linklayer, b1));
 		if (s.overhead)
-			fprintf(fp, "overhead %d ", s.overhead);
+			print_int(PRINT_ANY, "overhead",
+				  "overhead %d ", s.overhead);
 		if (s.mpu)
-			fprintf(fp, "mpu %u ", s.mpu);
+			print_uint(PRINT_ANY, "mpu",
+				   "mpu %u ", s.mpu);
 		if (s.mtu)
-			fprintf(fp, "mtu %u ", s.mtu);
+			print_uint(PRINT_ANY, "mtu",
+				   "mtu %u ", s.mtu);
 		if (s.tsize)
-			fprintf(fp, "tsize %u ", s.tsize);
+			print_uint(PRINT_ANY, "tsize",
+				   "tsize %u ", s.tsize);
+		close_json_object();
 	}
-
-#if 0
-	if (tb[TCA_STAB_DATA]) {
-		unsigned int i, j, dlen;
-		__u16 *data = RTA_DATA(tb[TCA_STAB_DATA]);
-
-		dlen = RTA_PAYLOAD(tb[TCA_STAB_DATA]) / sizeof(__u16);
-
-		fprintf(fp, "\n%sstab data:", prefix);
-		for (i = 0; i < dlen/12; i++) {
-			fprintf(fp, "\n%s %3u:", prefix, i * 12);
-			for (j = 0; i * 12 + j < dlen; j++)
-				fprintf(fp, " %05x", data[i * 12 + j]);
-		}
-	}
-#endif
 }

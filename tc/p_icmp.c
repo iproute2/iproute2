@@ -27,31 +27,7 @@ static int
 parse_icmp(int *argc_p, char ***argv_p,
 	   struct m_pedit_sel *sel, struct m_pedit_key *tkey)
 {
-	int res = -1;
-#if 0
-	int argc = *argc_p;
-	char **argv = *argv_p;
-
-	if (argc < 2)
-		return -1;
-
-	if (strcmp(*argv, "type") == 0) {
-		NEXT_ARG();
-		res = parse_u8(&argc, &argv, 0);
-		goto done;
-	}
-	if (strcmp(*argv, "code") == 0) {
-		NEXT_ARG();
-		res = parse_u8(&argc, &argv, 1);
-		goto done;
-	}
 	return -1;
-
-done:
-	*argc_p = argc;
-	*argv_p = argv;
-#endif
-	return res;
 }
 
 struct m_pedit_util p_pedit_icmp = {

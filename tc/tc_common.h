@@ -16,7 +16,7 @@ int print_action(struct nlmsghdr *n, void *arg);
 int print_filter(struct nlmsghdr *n, void *arg);
 int print_qdisc(struct nlmsghdr *n, void *arg);
 int print_class(struct nlmsghdr *n, void *arg);
-void print_size_table(FILE *fp, const char *prefix, struct rtattr *rta);
+void print_size_table(struct rtattr *rta);
 
 struct tc_estimator;
 int parse_estimator(int *p_argc, char ***p_argv, struct tc_estimator *est);

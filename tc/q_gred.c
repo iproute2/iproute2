@@ -27,8 +27,7 @@
 
 #include "tc_red.h"
 
-
-#if 0
+#ifdef DEBUG
 #define DPRINTF(format, args...) fprintf(stderr, format, ##args)
 #else
 #define DPRINTF(format, args...)

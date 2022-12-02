@@ -920,6 +920,7 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 		.nhm.nh_family = preferred_family,
 	};
 	__u32 nh_flags = 0;
+	int ret;
 
 	while (argc > 0) {
 		if (!strcmp(*argv, "id")) {
@@ -1000,9 +1001,14 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 	req.nhm.nh_flags = nh_flags;
 
 	if (echo_request)
-		return rtnl_echo_talk(&rth, &req.n, json, print_nexthop_nocache);
+		ret = rtnl_echo_talk(&rth, &req.n, json, print_nexthop_nocache);
+	else
+		ret = rtnl_talk(&rth, &req.n, NULL);
 
-	return rtnl_talk(&rth, &req.n, NULL);
+	if (ret)
+		return -2;
+
+	return 0;
 }
 
 static int ipnh_get_id(__u32 id)

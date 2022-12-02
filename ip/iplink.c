@@ -1129,7 +1129,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		ret = rtnl_talk(&rth, &req.n, NULL);
 
 	if (ret)
-		return ret;
+		return -2;
 
 	/* remove device from cache; next use can refresh with new data */
 	ll_drop_by_index(req.i.ifi_index);

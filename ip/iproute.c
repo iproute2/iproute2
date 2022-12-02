@@ -1134,6 +1134,7 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 	int raw = 0;
 	int type_ok = 0;
 	__u32 nhid = 0;
+	int ret;
 
 	if (cmd != RTM_DELROUTE) {
 		req.r.rtm_protocol = RTPROT_BOOT;
@@ -1588,9 +1589,14 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 		req.r.rtm_type = RTN_UNICAST;
 
 	if (echo_request)
-		return rtnl_echo_talk(&rth, &req.n, json, print_route);
+		ret = rtnl_echo_talk(&rth, &req.n, json, print_route);
+	else
+		ret = rtnl_talk(&rth, &req.n, NULL);
 
-	return rtnl_talk(&rth, &req.n, NULL);
+	if (ret)
+		return -2;
+
+	return 0;
 }
 
 static int iproute_flush_cache(void)
