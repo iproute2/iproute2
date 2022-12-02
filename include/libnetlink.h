@@ -38,9 +38,9 @@ struct nlmsg_chain {
 };
 
 struct ipstats_req {
-	struct nlmsghdr nlh;
 	struct if_stats_msg ifsm;
 	char buf[128];
+	struct nlmsghdr nlh;
 };
 
 extern int rcvbuf;
