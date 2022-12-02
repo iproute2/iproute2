@@ -157,7 +157,7 @@ static void add_tc_entries(struct nlmsghdr *n, __u32 max_sdu[TC_QOPT_MAX_QUEUE],
 	struct rtattr *l;
 	__u32 tc;
 
-	for (tc = 0; tc <= num_max_sdu_entries; tc++) {
+	for (tc = 0; tc < num_max_sdu_entries; tc++) {
 		l = addattr_nest(n, 1024, TCA_TAPRIO_ATTR_TC_ENTRY | NLA_F_NESTED);
 
 		addattr_l(n, 1024, TCA_TAPRIO_TC_ENTRY_INDEX, &tc, sizeof(tc));
