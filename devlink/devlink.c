@@ -8603,8 +8603,8 @@ static int cmd_region_read(struct dl *dl)
 	int err;
 
 	err = dl_argv_parse(dl, DL_OPT_HANDLE_REGION | DL_OPT_REGION_ADDRESS |
-			    DL_OPT_REGION_LENGTH | DL_OPT_REGION_SNAPSHOT_ID,
-			    0);
+			    DL_OPT_REGION_LENGTH,
+			    DL_OPT_REGION_SNAPSHOT_ID);
 	if (err)
 		return err;
 
@@ -8612,6 +8612,10 @@ static int cmd_region_read(struct dl *dl)
 			       NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP);
 
 	dl_opts_put(nlh, dl);
+
+	/* If user didn't provide a snapshot id, perform a direct read */
+	if (!(dl->opts.present & DL_OPT_REGION_SNAPSHOT_ID))
+		mnl_attr_put(nlh, DEVLINK_ATTR_REGION_DIRECT, 0, NULL);
 
 	pr_out_section_start(dl, "read");
 	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, cmd_region_read_cb, dl);
