@@ -778,16 +778,35 @@ static int function_attr_cb(const struct nlattr *attr, void *data)
 	return MNL_CB_OK;
 }
 
+static int ifname_map_add(struct dl *dl, const char *ifname,
+			  const char *bus_name, const char *dev_name,
+			  uint32_t port_index)
+{
+	struct ifname_map *ifname_map;
+
+	ifname_map = ifname_map_alloc(bus_name, dev_name, port_index, ifname);
+	if (!ifname_map)
+		return -ENOMEM;
+	list_add(&ifname_map->list, &dl->ifname_map_list);
+	return 0;
+}
+
+static void ifname_map_del(struct ifname_map *ifname_map)
+{
+	list_del(&ifname_map->list);
+	ifname_map_free(ifname_map);
+}
+
 static int ifname_map_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
 	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
 	struct dl *dl = data;
-	struct ifname_map *ifname_map;
 	const char *bus_name;
 	const char *dev_name;
 	uint32_t port_index;
 	const char *port_ifname;
+	int err;
 
 	mnl_attr_parse(nlh, sizeof(*genl), attr_cb, tb);
 	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
@@ -801,11 +820,9 @@ static int ifname_map_cb(const struct nlmsghdr *nlh, void *data)
 	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	port_index = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]);
 	port_ifname = mnl_attr_get_str(tb[DEVLINK_ATTR_PORT_NETDEV_NAME]);
-	ifname_map = ifname_map_alloc(bus_name, dev_name,
-				      port_index, port_ifname);
-	if (!ifname_map)
+	err = ifname_map_add(dl, port_ifname, bus_name, dev_name, port_index);
+	if (err)
 		return MNL_CB_ERROR;
-	list_add(&ifname_map->list, &dl->ifname_map_list);
 
 	return MNL_CB_OK;
 }
@@ -816,8 +833,7 @@ static void ifname_map_fini(struct dl *dl)
 
 	list_for_each_entry_safe(ifname_map, tmp,
 				 &dl->ifname_map_list, list) {
-		list_del(&ifname_map->list);
-		ifname_map_free(ifname_map);
+		ifname_map_del(ifname_map);
 	}
 }
 
