@@ -242,6 +242,18 @@ static void ifname_map_free(struct ifname_map *ifname_map)
 	free(ifname_map);
 }
 
+static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)
+{
+	char *new_ifname;
+
+	new_ifname = strdup(ifname);
+	if (!new_ifname)
+		return -ENOMEM;
+	free(ifname_map->ifname);
+	ifname_map->ifname = new_ifname;
+	return 0;
+}
+
 #define DL_OPT_HANDLE		BIT(0)
 #define DL_OPT_HANDLEP		BIT(1)
 #define DL_OPT_PORT_TYPE	BIT(2)
@@ -985,7 +997,7 @@ static int ifname_map_lookup(struct dl *dl, const char *ifname,
 
 static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 				 const char *dev_name, uint32_t port_index,
-				 char **p_ifname)
+				 const char **p_ifname)
 {
 	struct ifname_map *ifname_map;
 
@@ -999,6 +1011,12 @@ static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 		if (strcmp(bus_name, ifname_map->bus_name) == 0 &&
 		    strcmp(dev_name, ifname_map->dev_name) == 0 &&
 		    port_index == ifname_map->port_index) {
+			/* In case non-NULL ifname is passed, update the
+			 * looked-up entry.
+			 */
+			if (*p_ifname)
+				return ifname_map_update(ifname_map, *p_ifname);
+
 			*p_ifname = ifname_map->ifname;
 			return 0;
 		}
@@ -2715,11 +2733,10 @@ static bool should_arr_last_port_handle_end(struct dl *dl,
 
 static void __pr_out_port_handle_start(struct dl *dl, const char *bus_name,
 				       const char *dev_name,
-				       uint32_t port_index, bool try_nice,
-				       bool array)
+				       uint32_t port_index, const char *ifname,
+				       bool try_nice, bool array)
 {
 	static char buf[64];
-	char *ifname = NULL;
 
 	if (dl->no_nice_names || !try_nice ||
 	    ifname_map_rev_lookup(dl, bus_name, dev_name,
@@ -2767,6 +2784,7 @@ static void __pr_out_port_handle_start(struct dl *dl, const char *bus_name,
 static void __pr_out_port_handle_start_tb(struct dl *dl, struct nlattr **tb,
 					  bool try_nice, bool array)
 {
+	const char *ifname = NULL;
 	const char *bus_name;
 	const char *dev_name;
 	uint32_t port_index;
@@ -2774,7 +2792,10 @@ static void __pr_out_port_handle_start_tb(struct dl *dl, struct nlattr **tb,
 	bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
 	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	port_index = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]);
-	__pr_out_port_handle_start(dl, bus_name, dev_name, port_index, try_nice, array);
+	if (tb[DEVLINK_ATTR_PORT_NETDEV_NAME])
+		ifname = mnl_attr_get_str(tb[DEVLINK_ATTR_PORT_NETDEV_NAME]);
+	__pr_out_port_handle_start(dl, bus_name, dev_name, port_index,
+				   ifname, try_nice, array);
 }
 
 static void pr_out_port_handle_start(struct dl *dl, struct nlattr **tb, bool try_nice)
@@ -6160,7 +6181,8 @@ static void pr_out_occ_show(struct occ_show *occ_show)
 
 	list_for_each_entry(occ_port, &occ_show->port_list, list) {
 		__pr_out_port_handle_start(dl, opts->bus_name, opts->dev_name,
-					   occ_port->port_index, true, false);
+					   occ_port->port_index, NULL,
+					   true, false);
 		pr_out_occ_show_port(dl, occ_port);
 		pr_out_port_handle_end(dl);
 	}
