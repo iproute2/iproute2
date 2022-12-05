@@ -2764,7 +2764,8 @@ static void __pr_out_port_handle_start(struct dl *dl, const char *bus_name,
 	}
 }
 
-static void pr_out_port_handle_start(struct dl *dl, struct nlattr **tb, bool try_nice)
+static void __pr_out_port_handle_start_tb(struct dl *dl, struct nlattr **tb,
+					  bool try_nice, bool array)
 {
 	const char *bus_name;
 	const char *dev_name;
@@ -2773,19 +2774,17 @@ static void pr_out_port_handle_start(struct dl *dl, struct nlattr **tb, bool try
 	bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
 	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	port_index = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]);
-	__pr_out_port_handle_start(dl, bus_name, dev_name, port_index, try_nice, false);
+	__pr_out_port_handle_start(dl, bus_name, dev_name, port_index, try_nice, array);
+}
+
+static void pr_out_port_handle_start(struct dl *dl, struct nlattr **tb, bool try_nice)
+{
+	__pr_out_port_handle_start_tb(dl, tb, try_nice, false);
 }
 
 static void pr_out_port_handle_start_arr(struct dl *dl, struct nlattr **tb, bool try_nice)
 {
-	const char *bus_name;
-	const char *dev_name;
-	uint32_t port_index;
-
-	bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
-	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
-	port_index = mnl_attr_get_u32(tb[DEVLINK_ATTR_PORT_INDEX]);
-	__pr_out_port_handle_start(dl, bus_name, dev_name, port_index, try_nice, true);
+	__pr_out_port_handle_start_tb(dl, tb, try_nice, true);
 }
 
 static void pr_out_port_handle_end(struct dl *dl)
