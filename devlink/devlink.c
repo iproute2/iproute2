@@ -43,6 +43,8 @@
 #include "json_print.h"
 #include "utils.h"
 #include "namespace.h"
+#include "libnetlink.h"
+#include "../ip/ip_common.h"
 
 #define ESWITCH_MODE_LEGACY "legacy"
 #define ESWITCH_MODE_SWITCHDEV "switchdev"
@@ -797,6 +799,81 @@ static void ifname_map_del(struct ifname_map *ifname_map)
 	ifname_map_free(ifname_map);
 }
 
+static int ifname_map_rtnl_port_parse(struct dl *dl, const char *ifname,
+				      struct rtattr *nest)
+{
+	struct rtattr *tb[DEVLINK_ATTR_MAX + 1];
+	const char *bus_name;
+	const char *dev_name;
+	uint32_t port_index;
+
+	parse_rtattr_nested(tb, DEVLINK_ATTR_MAX, nest);
+	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME] ||
+	    !tb[DEVLINK_ATTR_PORT_INDEX])
+		return -ENOENT;
+
+	bus_name = rta_getattr_str(tb[DEVLINK_ATTR_BUS_NAME]);
+	dev_name = rta_getattr_str(tb[DEVLINK_ATTR_DEV_NAME]);
+	port_index = rta_getattr_u32(tb[DEVLINK_ATTR_PORT_INDEX]);
+	return ifname_map_add(dl, ifname, bus_name, dev_name, port_index);
+}
+
+static int ifname_map_rtnl_init(struct dl *dl, const char *ifname)
+{
+	struct iplink_req req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_GETLINK,
+		.i.ifi_family = AF_UNSPEC,
+	};
+	struct rtattr *tb[IFLA_MAX + 1];
+	struct rtnl_handle rth;
+	struct ifinfomsg *ifi;
+	struct nlmsghdr *n;
+	int len;
+	int err;
+
+	if (rtnl_open(&rth, 0) < 0) {
+		pr_err("Cannot open rtnetlink\n");
+		return -EINVAL;
+	}
+
+	addattr_l(&req.n, sizeof(req),
+		  !check_ifname(ifname) ? IFLA_IFNAME : IFLA_ALT_IFNAME,
+		  ifname, strlen(ifname) + 1);
+
+	if (rtnl_talk(&rth, &req.n, &n) < 0) {
+		err = -EINVAL;
+		goto out;
+	}
+
+	if (n->nlmsg_type != RTM_NEWLINK) {
+		err = -EINVAL;
+		goto out;
+	}
+
+	ifi = NLMSG_DATA(n);
+	len = n->nlmsg_len;
+
+	len -= NLMSG_LENGTH(sizeof(*ifi));
+	if (len < 0) {
+		err = -EINVAL;
+		goto out;
+	}
+
+	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
+	if (!tb[IFLA_DEVLINK_PORT]) {
+		err = -EOPNOTSUPP;
+		goto out;
+	}
+
+	err = ifname_map_rtnl_port_parse(dl, ifname, tb[IFLA_DEVLINK_PORT]);
+
+out:
+	rtnl_close(&rth);
+	return err;
+}
+
 static int ifname_map_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
@@ -842,10 +919,19 @@ static void ifname_map_init(struct dl *dl)
 	INIT_LIST_HEAD(&dl->ifname_map_list);
 }
 
-static int ifname_map_load(struct dl *dl)
+static int ifname_map_load(struct dl *dl, const char *ifname)
 {
 	struct nlmsghdr *nlh;
 	int err;
+
+	if (ifname) {
+		err = ifname_map_rtnl_init(dl, ifname);
+		if (!err)
+			return 0;
+		/* In case kernel does not support devlink port info passed over
+		 * RT netlink, fall-back to ports dump.
+		 */
+	}
 
 	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_PORT_GET,
 			       NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP);
@@ -858,14 +944,14 @@ static int ifname_map_load(struct dl *dl)
 	return 0;
 }
 
-static int ifname_map_check_load(struct dl *dl)
+static int ifname_map_check_load(struct dl *dl, const char *ifname)
 {
 	int err;
 
 	if (dl->map_loaded)
 		return 0;
 
-	err = ifname_map_load(dl);
+	err = ifname_map_load(dl, ifname);
 	if (err) {
 		pr_err("Failed to create index map\n");
 		return err;
@@ -882,7 +968,7 @@ static int ifname_map_lookup(struct dl *dl, const char *ifname,
 	struct ifname_map *ifname_map;
 	int err;
 
-	err = ifname_map_check_load(dl);
+	err = ifname_map_check_load(dl, ifname);
 	if (err)
 		return err;
 
@@ -905,7 +991,7 @@ static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 
 	int err;
 
-	err = ifname_map_check_load(dl);
+	err = ifname_map_check_load(dl, NULL);
 	if (err)
 		return err;
 
