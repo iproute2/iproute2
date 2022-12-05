@@ -23,6 +23,7 @@ the DCB (Data Center Bridging) subsystem
 .RB "[ " dgram-port-prio " ]"
 .RB "[ " port-prio " ]"
 .RB "[ " dscp-prio " ]"
+.RB "[ " pcp-prio " ]"
 
 .ti -8
 .B dcb ets " { " add " | " del " | " replace " } " dev
@@ -33,6 +34,7 @@ the DCB (Data Center Bridging) subsystem
 .RB "[ " dgram-port-prio " " \fIPORT-MAP\fB " ]"
 .RB "[ " port-prio " " \fIPORT-MAP\fB " ]"
 .RB "[ " dscp-prio " " \fIDSCP-MAP\fB " ]"
+.RB "[ " pcp-prio " " \fIPCP-MAP\fB " ]"
 
 .ti -8
 .IR PRIO-LIST " := [ " PRIO-LIST " ] " PRIO
@@ -56,6 +58,12 @@ the DCB (Data Center Bridging) subsystem
 .IR DSCP-MAPPING " := { " DSCP " | " \fBall " }" \fB:\fIPRIO\fR
 
 .ti -8
+.IR PCP-MAP " := [ " PCP-MAP " ] " PCP-MAPPING
+
+.ti -8
+.IR PCP-MAPPING " := " PCP\fB:\fIPRIO\fR
+
+.ti -8
 .IR ET " := { " \fB0x600\fR " .. " \fB0xffff\fR " }"
 
 .ti -8
@@ -63,6 +71,9 @@ the DCB (Data Center Bridging) subsystem
 
 .ti -8
 .IR DSCP " := { " \fB0\fR " .. " \fB63\fR " }"
+
+.ti -8
+.IR PCP " := { " \fB0(nd/de)\fR " .. " \fB7(nd/de)\fR " }"
 
 .ti -8
 .IR PRIO " := { " \fB0\fR " .. " \fB7\fR " }"
@@ -182,6 +193,17 @@ command line option
 .B -N
 turns the show translation off.
 
+.TP
+.B pcp-prio \fIPCP-MAP
+\fIPCP-MAP\fR uses the array parameter syntax, see
+.BR dcb (8)
+for details. Keys are PCP/DEI. Values are priorities assigned to traffic with
+matching PCP/DEI. PCP/DEI values are written as a combination of numeric- and
+symbolic values, to accommodate for both. PCP always in numerical form e.g
+0 .. 7 and DEI in symbolic form e.g 'de' (drop-eligible), indicating that the
+DEI bit is 1 or 'nd' (not-drop-eligible), indicating that the DEI bit is 0.
+In combination 2de:1 translates to a mapping of PCP=2 and DEI=1 to priority 1.
+
 .SH EXAMPLE & USAGE
 
 Prioritize traffic with DSCP 0 to priority 0, 24 to 3 and 48 to 6:
@@ -220,6 +242,16 @@ Flush all DSCP rules:
 # dcb app show dev eth0 dscp-prio
 .br
 (nothing)
+
+Add a rule to map traffic with PCP 1 and DEI 0 to priority 1 and PCP 2 and DEI 1
+to priority 2:
+
+.P
+# dcb app add dev eth0 pcp-prio 1nd:1 2de:2
+.br
+# dcb app show dev eth0 pcp-prio
+.br
+pcp-prio 1nd:1 2de:2
 
 .SH EXIT STATUS
 Exit status is 0 if command was successful or a positive integer upon failure.
