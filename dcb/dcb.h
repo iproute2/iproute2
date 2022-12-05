@@ -61,6 +61,10 @@ enum ieee_attrs_app dcb_app_attr_type_get(__u8 selector);
 bool dcb_app_attr_type_validate(enum ieee_attrs_app type);
 bool dcb_app_selector_validate(enum ieee_attrs_app type, __u8 selector);
 
+/* dcb_apptrust.c */
+
+int dcb_cmd_apptrust(struct dcb *dcb, int argc, char **argv);
+
 /* dcb_buffer.c */
 
 int dcb_cmd_buffer(struct dcb *dcb, int argc, char **argv);
