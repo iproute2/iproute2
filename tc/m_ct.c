@@ -243,7 +243,7 @@ parse_ct(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 				return -1;
 			}
 
-			NEXT_ARG_FWD();
+			NEXT_ARG();
 			if (matches(*argv, "port") != 0)
 				continue;
 
