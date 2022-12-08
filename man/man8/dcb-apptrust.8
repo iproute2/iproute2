@@ -1,0 +1,109 @@
+.TH DCB-APPTRUST 8 "22 November 2022" "iproute2" "Linux"
+.SH NAME
+dcb-apptrust \- show / configure per-selector trust and trust order of the
+application priority table of the DCB (Data Center Bridging) subsystem.
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+
+.ti -8
+.B dcb
+.RI "[ " OPTIONS " ] "
+.B apptrust
+.RI "{ " COMMAND " | " help " }"
+.sp
+
+.ti -8
+.B dcb apptrust show dev
+.RI DEV
+.RB "[ " order " ]"
+
+.ti -8
+.B dcb apptrust set dev
+.RI DEV
+.RB "[ " order " " \fiSEL-LIST\fB " ]"
+
+.ti -8
+.IR SEL-LIST " := [ " SEL-LIST " ] " SEL
+
+.ti -8
+.IR SEL " := { " ethtype " | " stream-port " | " dgram-port " | " port " | " dscp " | " pcp " } "
+
+.SH DESCRIPTION
+
+.B dcb apptrust
+is used to configure per-selector trust and trust order of the
+Application Priority Table, see
+.BR dcb-app (8)
+for details on how to configure app table entries.
+
+Selector trust can be used by the
+software stack, or drivers (most likely the latter), when querying the APP
+table, to determine if an APP entry should take effect, or not. Additionaly, the
+order of the trusted selectors will dictate which selector should take
+precedence, in the case of multiple different APP table selectors being present.
+
+.SH COMMANDS
+
+.TP
+.B show
+Display all trusted selectors.
+
+.TP
+.B set
+Set new list of trusted selectors. Empty list is effectively the same as
+removing trust entirely.
+
+.SH PARAMETERS
+
+The following describes only the write direction, i.e. as used with the
+\fBset\fR command. For the \fBshow\fR command, the parameter name is to be used
+as a simple keyword without further arguments. This instructs the tool to show
+the values of a given parameter.
+
+.TP
+.B order \fISEL-LIST
+\fISEL-LIST\fR is a space-separated list of selector names. Possible selector
+values are:
+.B ethtype,
+.B stream-port,
+.B dgram-port,
+.B port,
+.B dscp,
+and
+.B pcp
+
+
+.SH EXAMPLE & USAGE
+
+Set trust order to: dscp, pcp for eth0:
+.P
+# dcb apptrust set dev eth0 order dscp pcp
+
+Set trust order to: port (stream or dgram), pcp, ethtype for eth1:
+.P
+# dcb apptrust set dev eth1 order port pcp ethtype
+
+Show what was set:
+
+.P
+# dcb apptrust show dev eth0
+.br
+order: port pcp ethtype
+
+.SH EXIT STATUS
+Exit status is 0 if command was successful or a positive integer upon failure.
+
+.SH SEE ALSO
+.BR dcb (8),
+.BR dcb-app (8)
+
+.SH REPORTING BUGS
+Report any bugs to the Network Developers mailing list
+.B <netdev@vger.kernel.org>
+where the development and maintenance is primarily done.
+You do not have to be subscribed to the list to send a message there.
+
+.SH AUTHOR
+Daniel Machon <daniel.machon@microchip.com>

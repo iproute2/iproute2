@@ -10,6 +10,18 @@
 #include "utils.h"
 #include "rt_names.h"
 
+#define DCB_APP_PCP_MAX 15
+
+static const char *const pcp_names[DCB_APP_PCP_MAX + 1] = {
+	"0nd", "1nd", "2nd", "3nd", "4nd", "5nd", "6nd", "7nd",
+	"0de", "1de", "2de", "3de", "4de", "5de", "6de", "7de"
+};
+
+static const char *const ieee_attrs_app_names[__DCB_ATTR_IEEE_APP_MAX] = {
+	[DCB_ATTR_IEEE_APP] = "DCB_ATTR_IEEE_APP",
+	[DCB_ATTR_DCB_APP] = "DCB_ATTR_DCB_APP"
+};
+
 static void dcb_app_help_add(void)
 {
 	fprintf(stderr,
@@ -20,11 +32,13 @@ static void dcb_app_help_add(void)
 		"           [ dgram-port-prio PORT:PRIO ]\n"
 		"           [ port-prio PORT:PRIO ]\n"
 		"           [ dscp-prio INTEGER:PRIO ]\n"
+		"           [ pcp-prio PCP:PRIO ]\n"
 		"\n"
 		" where PRIO := { 0 .. 7 }\n"
 		"       ET := { 0x600 .. 0xffff }\n"
 		"       PORT := { 1 .. 65535 }\n"
 		"       DSCP := { 0 .. 63 }\n"
+		"       PCP := { 0(nd/de) .. 7(nd/de) }\n"
 		"\n"
 	);
 }
@@ -39,6 +53,7 @@ static void dcb_app_help_show_flush(void)
 		"           [ dgram-port-prio ]\n"
 		"           [ port-prio ]\n"
 		"           [ dscp-prio ]\n"
+		"           [ pcp-prio ]\n"
 		"\n"
 	);
 }
@@ -57,6 +72,38 @@ struct dcb_app_table {
 	struct dcb_app *apps;
 	size_t n_apps;
 };
+
+enum ieee_attrs_app dcb_app_attr_type_get(__u8 selector)
+{
+	switch (selector) {
+	case IEEE_8021QAZ_APP_SEL_ETHERTYPE:
+	case IEEE_8021QAZ_APP_SEL_STREAM:
+	case IEEE_8021QAZ_APP_SEL_DGRAM:
+	case IEEE_8021QAZ_APP_SEL_ANY:
+	case IEEE_8021QAZ_APP_SEL_DSCP:
+		return DCB_ATTR_IEEE_APP;
+	case DCB_APP_SEL_PCP:
+		return DCB_ATTR_DCB_APP;
+	default:
+		return DCB_ATTR_IEEE_APP_UNSPEC;
+	}
+}
+
+bool dcb_app_attr_type_validate(enum ieee_attrs_app type)
+{
+	switch (type) {
+	case DCB_ATTR_IEEE_APP:
+	case DCB_ATTR_DCB_APP:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool dcb_app_selector_validate(enum ieee_attrs_app type, __u8 selector)
+{
+	return dcb_app_attr_type_get(selector) == type;
+}
 
 static void dcb_app_table_fini(struct dcb_app_table *tab)
 {
@@ -213,6 +260,32 @@ static int dcb_app_parse_mapping_ethtype_prio(__u32 key, char *value, void *data
 				 dcb_app_parse_mapping_cb, data);
 }
 
+static int dcb_app_parse_pcp(__u32 *key, const char *arg)
+{
+	int i;
+
+	for(i = 0; i < ARRAY_SIZE(pcp_names); i++) {
+		if (pcp_names[i] && strcmp(arg, pcp_names[i]) == 0) {
+			*key = i;
+			return 0;
+		}
+	}
+
+	return -EINVAL;
+}
+
+static int dcb_app_parse_mapping_pcp_prio(__u32 key, char *value, void *data)
+{
+	__u8 prio;
+
+	if (get_u8(&prio, value, 0))
+		return -EINVAL;
+
+	return dcb_parse_mapping("PCP", key, DCB_APP_PCP_MAX,
+				 "PRIO", prio, IEEE_8021QAZ_MAX_TCS - 1,
+				 dcb_app_parse_mapping_cb, data);
+}
+
 static int dcb_app_parse_dscp(__u32 *key, const char *arg)
 {
 	if (parse_mapping_num_all(key, arg) == 0)
@@ -309,6 +382,11 @@ static bool dcb_app_is_dscp(const struct dcb_app *app)
 	return app->selector == IEEE_8021QAZ_APP_SEL_DSCP;
 }
 
+static bool dcb_app_is_pcp(const struct dcb_app *app)
+{
+	return app->selector == DCB_APP_SEL_PCP;
+}
+
 static bool dcb_app_is_stream_port(const struct dcb_app *app)
 {
 	return app->selector == IEEE_8021QAZ_APP_SEL_STREAM;
@@ -342,6 +420,15 @@ static int dcb_app_print_key_dscp(__u16 protocol)
 	if (!is_json_context() && name != NULL)
 		return print_string(PRINT_FP, NULL, "%s:", name);
 	return print_uint(PRINT_ANY, NULL, "%d:", protocol);
+}
+
+static int dcb_app_print_key_pcp(__u16 protocol)
+{
+	/* Print in numerical form, if protocol value is out-of-range */
+	if (protocol > DCB_APP_PCP_MAX)
+		return print_uint(PRINT_ANY, NULL, "%d:", protocol);
+
+	return print_string(PRINT_ANY, NULL, "%s:", pcp_names[protocol]);
 }
 
 static void dcb_app_print_filtered(const struct dcb_app_table *tab,
@@ -380,6 +467,15 @@ static void dcb_app_print_ethtype_prio(const struct dcb_app_table *tab)
 {
 	dcb_app_print_filtered(tab, dcb_app_is_ethtype,  dcb_app_print_key_hex,
 			       "ethtype_prio", "ethtype-prio");
+}
+
+static void dcb_app_print_pcp_prio(const struct dcb *dcb,
+				   const struct dcb_app_table *tab)
+{
+	dcb_app_print_filtered(tab, dcb_app_is_pcp,
+			       dcb->numeric ? dcb_app_print_key_dec
+					    : dcb_app_print_key_pcp,
+			       "pcp_prio", "pcp-prio");
 }
 
 static void dcb_app_print_dscp_prio(const struct dcb *dcb,
@@ -439,26 +535,41 @@ static void dcb_app_print(const struct dcb *dcb, const struct dcb_app_table *tab
 	dcb_app_print_stream_port_prio(tab);
 	dcb_app_print_dgram_port_prio(tab);
 	dcb_app_print_port_prio(tab);
+	dcb_app_print_pcp_prio(dcb, tab);
 }
 
 static int dcb_app_get_table_attr_cb(const struct nlattr *attr, void *data)
 {
 	struct dcb_app_table *tab = data;
 	struct dcb_app *app;
+	uint16_t type;
 	int ret;
 
-	if (mnl_attr_get_type(attr) != DCB_ATTR_IEEE_APP) {
-		fprintf(stderr, "Unknown attribute in DCB_ATTR_IEEE_APP_TABLE: %d\n",
-			mnl_attr_get_type(attr));
+	type = mnl_attr_get_type(attr);
+
+	if (!dcb_app_attr_type_validate(type)) {
+		fprintf(stderr,
+			"Unknown attribute in DCB_ATTR_IEEE_APP_TABLE: %d\n",
+			type);
 		return MNL_CB_OK;
 	}
 	if (mnl_attr_get_payload_len(attr) < sizeof(struct dcb_app)) {
-		fprintf(stderr, "DCB_ATTR_IEEE_APP payload expected to have size %zd, not %d\n",
-			sizeof(struct dcb_app), mnl_attr_get_payload_len(attr));
+		fprintf(stderr,
+			"%s payload expected to have size %zd, not %d\n",
+			ieee_attrs_app_names[type], sizeof(struct dcb_app),
+			mnl_attr_get_payload_len(attr));
 		return MNL_CB_OK;
 	}
 
 	app = mnl_attr_get_payload(attr);
+
+	/* Check that selector is encapsulated in the right attribute */
+	if (!dcb_app_selector_validate(type, app->selector)) {
+		fprintf(stderr, "Wrong selector for type: %s\n",
+			ieee_attrs_app_names[type]);
+		return MNL_CB_OK;
+	}
+
 	ret = dcb_app_table_push(tab, app);
 	if (ret != 0)
 		return MNL_CB_ERROR;
@@ -491,6 +602,7 @@ struct dcb_app_add_del {
 static int dcb_app_add_del_cb(struct dcb *dcb, struct nlmsghdr *nlh, void *data)
 {
 	struct dcb_app_add_del *add_del = data;
+	enum ieee_attrs_app type;
 	struct nlattr *nest;
 	size_t i;
 
@@ -498,9 +610,10 @@ static int dcb_app_add_del_cb(struct dcb *dcb, struct nlmsghdr *nlh, void *data)
 
 	for (i = 0; i < add_del->tab->n_apps; i++) {
 		const struct dcb_app *app = &add_del->tab->apps[i];
+		type = dcb_app_attr_type_get(app->selector);
 
 		if (add_del->filter == NULL || add_del->filter(app))
-			mnl_attr_put(nlh, DCB_ATTR_IEEE_APP, sizeof(*app), app);
+			mnl_attr_put(nlh, type, sizeof(*app), app);
 	}
 
 	mnl_attr_nest_end(nlh, nest);
@@ -577,6 +690,12 @@ static int dcb_cmd_app_parse_add_del(struct dcb *dcb, const char *dev,
 			ret = parse_mapping(&argc, &argv, false,
 					    &dcb_app_parse_mapping_port_prio,
 					    &pm);
+		} else if (strcmp(*argv, "pcp-prio") == 0) {
+			NEXT_ARG();
+			pm.selector = DCB_APP_SEL_PCP;
+			ret = parse_mapping_gen(&argc, &argv, &dcb_app_parse_pcp,
+						&dcb_app_parse_mapping_pcp_prio,
+						&pm);
 		} else {
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
 			dcb_app_help_add();
@@ -656,6 +775,8 @@ static int dcb_cmd_app_show(struct dcb *dcb, const char *dev, int argc, char **a
 			dcb_app_print_port_prio(&tab);
 		} else if (matches(*argv, "default-prio") == 0) {
 			dcb_app_print_default_prio(&tab);
+		} else if (strcmp(*argv, "pcp-prio") == 0) {
+			dcb_app_print_pcp_prio(dcb, &tab);
 		} else {
 			fprintf(stderr, "What is \"%s\"?\n", *argv);
 			dcb_app_help_show_flush();
@@ -703,6 +824,11 @@ static int dcb_cmd_app_flush(struct dcb *dcb, const char *dev, int argc, char **
 		} else if (matches(*argv, "dscp-prio") == 0) {
 			ret = dcb_app_add_del(dcb, dev, DCB_CMD_IEEE_DEL, &tab,
 					      &dcb_app_is_dscp);
+			if (ret != 0)
+				goto out;
+		} else if (strcmp(*argv, "pcp-prio") == 0) {
+			ret = dcb_app_add_del(dcb, dev, DCB_CMD_IEEE_DEL, &tab,
+					      &dcb_app_is_pcp);
 			if (ret != 0)
 				goto out;
 		} else {
