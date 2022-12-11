@@ -71,6 +71,12 @@ devlink-port \- devlink port configuration
 .RI "[ "
 .BR state " { " active " | " inactive " }"
 .RI "]"
+.RI "[ "
+.BR roce " { " enable " | " disable " }"
+.RI "]"
+.RI "[ "
+.BR migratable " { " enable " | " disable " }"
+.RI "]"
 
 .ti -8
 .BR "devlink port function rate "
@@ -208,6 +214,14 @@ New state of the function to change to.
 .I inactive
 - To inactivate the function and its device(s), set to inactive.
 
+.TP
+.BR roce " { " enable " | " disable  " } "
+Set the RoCE capability of the function.
+
+.TP
+.BR migratable " { " enable " | " disable  " } "
+Set the migratable capability of the function.
+
 .ti -8
 .SS devlink port del - delete a devlink port
 .PP
@@ -325,6 +339,16 @@ devlink port function set pci/0000:01:00.0/1 state inactive
 .RS 4
 Deactivate the function. This will initiate the function teardown which results
 in driver unload and device removal.
+.RE
+.PP
+devlink port function set pci/0000:01:00.0/1 roce enable
+.RS 4
+This will enable the RoCE functionality of the function.
+.RE
+.PP
+devlink port function set pci/0000:01:00.0/1 migratable enable
+.RS 4
+This will enable the migratable functionality of the function.
 .RE
 .PP
 devlink port function set pci/0000:01:00.0/1 hw_addr 00:00:00:11:22:33 state active
