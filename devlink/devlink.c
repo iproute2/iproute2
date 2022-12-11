@@ -311,6 +311,7 @@ static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)
 #define DL_OPT_SELFTESTS	BIT(54)
 #define DL_OPT_PORT_FN_RATE_TX_PRIORITY	BIT(55)
 #define DL_OPT_PORT_FN_RATE_TX_WEIGHT	BIT(56)
+#define DL_OPT_PORT_FN_CAPS	BIT(57)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -376,6 +377,7 @@ struct dl_opts {
 	uint32_t linecard_index;
 	const char *linecard_type;
 	bool selftests_opt[DEVLINK_ATTR_SELFTEST_ID_MAX + 1];
+	struct nla_bitfield32 port_fn_caps;
 };
 
 struct dl {
@@ -2236,6 +2238,18 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			dl_arg_inc(dl);
 			opts->linecard_type = "";
 			o_found |= DL_OPT_LINECARD_TYPE;
+		} else if (dl_argv_match(dl, "roce") &&
+			   (o_all & DL_OPT_PORT_FN_CAPS)) {
+			bool roce;
+
+			dl_arg_inc(dl);
+			err = dl_argv_bool(dl, &roce);
+			if (err)
+				return err;
+			opts->port_fn_caps.selector |= DEVLINK_PORT_FN_CAP_ROCE;
+			if (roce)
+				opts->port_fn_caps.value |= DEVLINK_PORT_FN_CAP_ROCE;
+			o_found |= DL_OPT_PORT_FN_CAPS;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -2266,6 +2280,10 @@ dl_function_attr_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
 	if (opts->present & DL_OPT_PORT_FUNCTION_STATE)
 		mnl_attr_put_u8(nlh, DEVLINK_PORT_FN_ATTR_STATE,
 				opts->port_fn_state);
+	if (opts->present & DL_OPT_PORT_FN_CAPS)
+		mnl_attr_put(nlh, DEVLINK_PORT_FN_ATTR_CAPS,
+			     sizeof(opts->port_fn_caps), &opts->port_fn_caps);
+
 	mnl_attr_nest_end(nlh, nest);
 }
 
@@ -2456,7 +2474,8 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_TRAP_POLICER_BURST)
 		mnl_attr_put_u64(nlh, DEVLINK_ATTR_TRAP_POLICER_BURST,
 				 opts->trap_policer_burst);
-	if (opts->present & (DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE))
+	if (opts->present & (DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE |
+			     DL_OPT_PORT_FN_CAPS))
 		dl_function_attr_put(nlh, opts);
 	if (opts->present & DL_OPT_PORT_FLAVOUR)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PORT_FLAVOUR, opts->port_flavour);
@@ -4508,6 +4527,7 @@ static void cmd_port_help(void)
 	pr_err("       devlink port split DEV/PORT_INDEX count COUNT\n");
 	pr_err("       devlink port unsplit DEV/PORT_INDEX\n");
 	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state { active | inactive } ]\n");
+	pr_err("                      [ roce { enable | disable } ]\n");
 	pr_err("       devlink port function rate { help | show | add | del | set }\n");
 	pr_err("       devlink port param set DEV/PORT_INDEX name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink port param show [DEV/PORT_INDEX name PARAMETER]\n");
@@ -4620,6 +4640,15 @@ static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
 
 		print_string(PRINT_ANY, "opstate", " opstate %s",
 			     port_fn_opstate(state));
+	}
+	if (tb[DEVLINK_PORT_FN_ATTR_CAPS]) {
+		struct nla_bitfield32 *port_fn_caps =
+			mnl_attr_get_payload(tb[DEVLINK_PORT_FN_ATTR_CAPS]);
+
+		if (port_fn_caps->selector & DEVLINK_PORT_FN_CAP_ROCE)
+			print_string(PRINT_ANY, "roce", " roce %s",
+				     port_fn_caps->value & DEVLINK_PORT_FN_CAP_ROCE ?
+				     "enable" : "disable");
 	}
 
 	if (!dl->json_output)
@@ -4815,6 +4844,7 @@ static int cmd_port_param_show(struct dl *dl)
 static void cmd_port_function_help(void)
 {
 	pr_err("Usage: devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state STATE ]\n");
+	pr_err("                      [ roce { enable | disable } ]\n");
 	pr_err("       devlink port function rate { help | show | add | del | set }\n");
 }
 
@@ -4828,7 +4858,8 @@ static int cmd_port_function_set(struct dl *dl)
 		return 0;
 	}
 	err = dl_argv_parse(dl, DL_OPT_HANDLEP,
-			    DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE);
+			    DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE |
+			    DL_OPT_PORT_FN_CAPS);
 	if (err)
 		return err;
 
