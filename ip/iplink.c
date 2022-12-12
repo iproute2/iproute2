@@ -1628,7 +1628,7 @@ static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)
 			print_mpls_stats(fp, i);
 			break;
 		default:
-			fprintf(fp, "    unknown af(%d)\n", i->rta_type);
+			fprintf(stderr, "    unknown af(%d)\n", i->rta_type);
 			break;
 		}
 	}
