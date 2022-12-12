@@ -688,8 +688,8 @@ done:
 	return 0;
 }
 
-void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
-		      FILE *fp, const char *prefix, bool nokeys)
+void xfrm_xfrma_print(struct rtattr *tb[], __u16 family, FILE *fp,
+		      const char *prefix, bool nokeys, bool dir)
 {
 	if (tb[XFRMA_MARK]) {
 		struct rtattr *rta = tb[XFRMA_MARK];
@@ -895,9 +895,12 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		xuo = (struct xfrm_user_offload *)
 			RTA_DATA(tb[XFRMA_OFFLOAD_DEV]);
-		fprintf(fp, "dev %s dir %s mode %s",
-			ll_index_to_name(xuo->ifindex),
-			(xuo->flags & XFRM_OFFLOAD_INBOUND) ? "in" : "out",
+		fprintf(fp, "dev %s ",
+			ll_index_to_name(xuo->ifindex));
+		if (dir)
+			fprintf(fp, "dir %s ",
+			(xuo->flags & XFRM_OFFLOAD_INBOUND) ? "in" : "out");
+		fprintf(fp, "mode %s",
 			(xuo->flags & XFRM_OFFLOAD_PACKET) ? "packet" : "crypto");
 		fprintf(fp, "%s", _SL_);
 	}
@@ -990,7 +993,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 		fprintf(fp, " (0x%s)", strxf_mask8(xsinfo->flags));
 	fprintf(fp, "%s", _SL_);
 
-	xfrm_xfrma_print(tb, xsinfo->family, fp, buf, nokeys);
+	xfrm_xfrma_print(tb, xsinfo->family, fp, buf, nokeys, true);
 
 	if (!xfrm_selector_iszero(&xsinfo->sel)) {
 		char sbuf[STRBUF_SIZE];
@@ -1096,7 +1099,7 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 	if (show_stats > 0)
 		xfrm_lifetime_print(&xpinfo->lft, &xpinfo->curlft, fp, buf);
 
-	xfrm_xfrma_print(tb, xpinfo->sel.family, fp, buf, false);
+	xfrm_xfrma_print(tb, xpinfo->sel.family, fp, buf, false, false);
 }
 
 int xfrm_id_parse(xfrm_address_t *saddr, struct xfrm_id *id, __u16 *family,
