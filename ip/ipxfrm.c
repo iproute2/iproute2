@@ -895,8 +895,10 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 
 		xuo = (struct xfrm_user_offload *)
 			RTA_DATA(tb[XFRMA_OFFLOAD_DEV]);
-		fprintf(fp, "dev %s dir %s", ll_index_to_name(xuo->ifindex),
-			(xuo->flags & XFRM_OFFLOAD_INBOUND) ? "in" : "out");
+		fprintf(fp, "dev %s dir %s mode %s",
+			ll_index_to_name(xuo->ifindex),
+			(xuo->flags & XFRM_OFFLOAD_INBOUND) ? "in" : "out",
+			(xuo->flags & XFRM_OFFLOAD_PACKET) ? "packet" : "crypto");
 		fprintf(fp, "%s", _SL_);
 	}
 	if (tb[XFRMA_IF_ID]) {
