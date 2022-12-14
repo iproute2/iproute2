@@ -199,7 +199,7 @@ static int xfrm_report_print(struct nlmsghdr *n, void *arg)
 
 	parse_rtattr(tb, XFRMA_MAX, XFRMREP_RTA(xrep), len);
 
-	xfrm_xfrma_print(tb, family, fp, "  ", nokeys);
+	xfrm_xfrma_print(tb, family, fp, "  ", nokeys, true);
 
 	if (oneline)
 		fprintf(fp, "\n");

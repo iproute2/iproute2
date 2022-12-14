@@ -61,7 +61,7 @@ static void usage(void)
 		"        [ replay-seq-hi SEQ ] [ replay-oseq-hi SEQ ]\n"
 		"        [ flag FLAG-LIST ] [ sel SELECTOR ] [ LIMIT-LIST ] [ encap ENCAP ]\n"
 		"        [ coa ADDR[/PLEN] ] [ ctx CTX ] [ extra-flag EXTRA-FLAG-LIST ]\n"
-		"        [ offload [dev DEV] dir DIR ]\n"
+		"        [ offload [ crypto | packet ] dev DEV dir DIR ]\n"
 		"        [ output-mark OUTPUT-MARK [ mask MASK ] ]\n"
 		"        [ if_id IF_ID ] [ tfcpad LENGTH ]\n"
 		"Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n"
@@ -267,7 +267,7 @@ static int xfrm_state_extra_flag_parse(__u32 *extra_flags, int *argcp, char ***a
 	return 0;
 }
 
-static int xfrm_offload_dir_parse(__u8 *dir, int *argcp, char ***argvp)
+static bool xfrm_offload_dir_parse(__u8 *dir, int *argcp, char ***argvp)
 {
 	int argc = *argcp;
 	char **argv = *argvp;
@@ -277,12 +277,12 @@ static int xfrm_offload_dir_parse(__u8 *dir, int *argcp, char ***argvp)
 	else if (strcmp(*argv, "out") == 0)
 		*dir = 0;
 	else
-		invarg("DIR value is invalid", *argv);
+		return false;
 
 	*argcp = argc;
 	*argvp = argv;
 
-	return 0;
+	return true;
 }
 
 static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
@@ -307,7 +307,7 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 	struct xfrm_user_offload xuo = {};
 	unsigned int ifindex = 0;
 	__u8 dir = 0;
-	bool is_offload = false;
+	bool is_offload = false, is_packet_offload = false;
 	__u32 replay_window = 0;
 	__u32 seq = 0, oseq = 0, seq_hi = 0, oseq_hi = 0;
 	char *idp = NULL;
@@ -424,24 +424,37 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req.buf), XFRMA_SEC_CTX,
 				  (void *)&ctx, ctx.sctx.len);
 		} else if (strcmp(*argv, "offload") == 0) {
-			is_offload = true;
 			NEXT_ARG();
+			/* If user doesn't provide offload mode, treat it as
+			 * crypto one for the backward compatibility.
+			 */
+			if (strcmp(*argv, "crypto") == 0)
+				NEXT_ARG();
+			else if (strcmp(*argv, "packet") == 0) {
+				is_packet_offload = true;
+				NEXT_ARG();
+			}
+
 			if (strcmp(*argv, "dev") == 0) {
 				NEXT_ARG();
 				ifindex = ll_name_to_index(*argv);
-				if (!ifindex) {
-					invarg("value after \"offload dev\" is invalid", *argv);
-					is_offload = false;
-				}
-				NEXT_ARG();
-			}
+				if (!ifindex)
+					invarg("Invalid device name", *argv);
+			} else
+				invarg("Missing dev keyword", *argv);
+
+			NEXT_ARG();
 			if (strcmp(*argv, "dir") == 0) {
+				bool is_dir;
+
 				NEXT_ARG();
-				xfrm_offload_dir_parse(&dir, &argc, &argv);
-			} else {
-				invarg("value after \"offload dir\" is invalid", *argv);
-				is_offload = false;
-			}
+				is_dir = xfrm_offload_dir_parse(&dir, &argc,
+								&argv);
+				if (!is_dir)
+					invarg("DIR value is invalid", *argv);
+			} else
+				invarg("Missing DIR keyword", *argv);
+			is_offload = true;
 		} else if (strcmp(*argv, "output-mark") == 0) {
 			NEXT_ARG();
 			if (get_u32(&output_mark.v, *argv, 0))
@@ -605,6 +618,8 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (is_offload) {
 		xuo.ifindex = ifindex;
 		xuo.flags = dir;
+		if (is_packet_offload)
+			xuo.flags |= XFRM_OFFLOAD_PACKET;
 		addattr_l(&req.n, sizeof(req.buf), XFRMA_OFFLOAD_DEV, &xuo,
 			  sizeof(xuo));
 	}

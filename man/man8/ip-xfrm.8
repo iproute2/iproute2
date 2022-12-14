@@ -65,6 +65,12 @@ ip-xfrm \- transform configuration
 .IR MASK " ] ]"
 .RB "[ " if_id
 .IR IF-ID " ]"
+.RB "[ " offload
+.RB "[ " crypto | packet " ]"
+.RB dev
+.IR DEV "
+.RB dir
+.IR DIR " ]"
 .RB "[ " tfcpad
 .IR LENGTH " ]"
 
@@ -246,6 +252,10 @@ ip-xfrm \- transform configuration
 .IR FLAG-LIST " ]"
 .RB "[ " if_id
 .IR IF-ID " ]"
+.RB "[ " offload
+.RB packet
+.RB dev
+.IR DEV " ]"
 .RI "[ " LIMIT-LIST " ] [ " TMPL-LIST " ]"
 
 .ti -8
@@ -586,6 +596,10 @@ of the packets emitted by the state
 .TP
 .I IF-ID
 xfrm interface identifier used to in both xfrm policies and states
+
+.TP
+.I DEV
+Network interface name used to offload policies and states
 
 .sp
 .PP
