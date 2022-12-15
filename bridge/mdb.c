@@ -32,6 +32,7 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
+		"              [ filter_mode { include | exclude } ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -493,6 +494,21 @@ static int mdb_parse_src(struct nlmsghdr *n, int maxlen, const char *src)
 	return -1;
 }
 
+static int mdb_parse_mode(struct nlmsghdr *n, int maxlen, const char *mode)
+{
+	if (strcmp(mode, "include") == 0) {
+		addattr8(n, maxlen, MDBE_ATTR_GROUP_MODE, MCAST_INCLUDE);
+		return 0;
+	}
+
+	if (strcmp(mode, "exclude") == 0) {
+		addattr8(n, maxlen, MDBE_ATTR_GROUP_MODE, MCAST_EXCLUDE);
+		return 0;
+	}
+
+	return -1;
+}
+
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -505,7 +521,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.bpm.family = PF_BRIDGE,
 	};
-	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL;
+	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL, *mode = NULL;
 	struct br_mdb_entry entry = {};
 	bool set_attrs = false;
 	short vid = 0;
@@ -531,6 +547,10 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "src") == 0) {
 			NEXT_ARG();
 			src = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "filter_mode") == 0) {
+			NEXT_ARG();
+			mode = *argv;
 			set_attrs = true;
 		} else {
 			if (matches(*argv, "help") == 0)
@@ -567,6 +587,11 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 		if (src && mdb_parse_src(&req.n, sizeof(req), src)) {
 			fprintf(stderr, "Invalid source address \"%s\"\n", src);
+			return -1;
+		}
+
+		if (mode && mdb_parse_mode(&req.n, sizeof(req), mode)) {
+			fprintf(stderr, "Invalid filter mode \"%s\"\n", mode);
 			return -1;
 		}
 

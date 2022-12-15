@@ -138,7 +138,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR SOURCE " ] [ "
 .BR permanent " | " temp " ] [ "
 .B vid
-.IR VID " ] "
+.IR VID " ] [ "
+.BR filter_mode " { " include " | " exclude " } ] "
 
 .ti -8
 .BR "bridge mdb show" " [ "
@@ -930,6 +931,11 @@ forwarding multicast traffic.
 .TP
 .BI vid " VID"
 the VLAN ID which is known to have members of this multicast group.
+
+.TP
+.BR "filter_mode include " or " filter_mode exclude "
+controls whether the sources in the entry's source list are in INCLUDE or
+EXCLUDE mode. Can only be set for (*, G) entries.
 
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry
