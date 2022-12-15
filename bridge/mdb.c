@@ -474,6 +474,25 @@ static int mdb_parse_grp(const char *grp, struct br_mdb_entry *e)
 	return -1;
 }
 
+static int mdb_parse_src(struct nlmsghdr *n, int maxlen, const char *src)
+{
+	struct in6_addr src_ip6;
+	__be32 src_ip4;
+
+	if (inet_pton(AF_INET, src, &src_ip4)) {
+		addattr32(n, maxlen, MDBE_ATTR_SOURCE, src_ip4);
+		return 0;
+	}
+
+	if (inet_pton(AF_INET6, src, &src_ip6)) {
+		addattr_l(n, maxlen, MDBE_ATTR_SOURCE, &src_ip6,
+			  sizeof(src_ip6));
+		return 0;
+	}
+
+	return -1;
+}
+
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -543,19 +562,14 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	if (set_attrs) {
 		struct rtattr *nest = addattr_nest(&req.n, sizeof(req),
 						   MDBA_SET_ENTRY_ATTRS);
-		struct in6_addr src_ip6;
-		__be32 src_ip4;
 
 		nest->rta_type |= NLA_F_NESTED;
-		if (!inet_pton(AF_INET, src, &src_ip4)) {
-			if (!inet_pton(AF_INET6, src, &src_ip6)) {
-				fprintf(stderr, "Invalid source address \"%s\"\n", src);
-				return -1;
-			}
-			addattr_l(&req.n, sizeof(req), MDBE_ATTR_SOURCE, &src_ip6, sizeof(src_ip6));
-		} else {
-			addattr32(&req.n, sizeof(req), MDBE_ATTR_SOURCE, src_ip4);
+
+		if (src && mdb_parse_src(&req.n, sizeof(req), src)) {
+			fprintf(stderr, "Invalid source address \"%s\"\n", src);
+			return -1;
 		}
+
 		addattr_nest_end(&req.n, nest);
 	}
 
