@@ -141,7 +141,9 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VID " ] [ "
 .BR filter_mode " { " include " | " exclude " } ] [ "
 .B source_list
-.IR SOURCE_LIST " ]
+.IR SOURCE_LIST " ] [ "
+.B proto
+.IR PROTO " ]
 
 .ti -8
 .BR "bridge mdb show" " [ "
@@ -945,6 +947,14 @@ optional list of source IP addresses of senders for this multicast group,
 separated by a ','.  Whether the entry forwards packets from these senders or
 not is determined by the entry's filter mode, which becomes a mandatory
 argument. Can only be set for (*, G) entries.
+
+.TP
+.BI proto " PROTO"
+the routing protocol identifier of this mdb entry. Can be a number or a string
+from the file /etc/iproute2/rt_protos. If the routing protocol is not given,
+then
+.B static
+is assumed.
 
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry
