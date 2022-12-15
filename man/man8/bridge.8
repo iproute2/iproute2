@@ -127,7 +127,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR [no]sticky " ] [ " [no]offloaded " ]"
 
 .ti -8
-.BR "bridge mdb" " { " add " | " del " } "
+.BR "bridge mdb" " { " add " | " del " | " replace " } "
 .B dev
 .I DEV
 .B port
@@ -898,8 +898,8 @@ if "no" is prepended then only entries without offloaded flag will be deleted.
 objects contain known IP or L2 multicast group addresses on a link.
 
 .P
-The corresponding commands display mdb entries, add new entries,
-and delete old ones.
+The corresponding commands display mdb entries, add new entries, replace
+entries and delete old ones.
 
 .SS bridge mdb add - add a new multicast group database entry
 
@@ -959,6 +959,13 @@ is assumed.
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry
 This command removes an existing mdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge mdb add" .
+
+.SS bridge mdb replace - replace a multicast group database entry
+If no matching entry is found, a new one will be created instead.
 
 .PP
 The arguments are the same as with
