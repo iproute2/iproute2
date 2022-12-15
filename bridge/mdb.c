@@ -488,6 +488,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	};
 	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL;
 	struct br_mdb_entry entry = {};
+	bool set_attrs = false;
 	short vid = 0;
 
 	while (argc > 0) {
@@ -511,6 +512,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "src") == 0) {
 			NEXT_ARG();
 			src = *argv;
+			set_attrs = true;
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
@@ -538,7 +540,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 	entry.vid = vid;
 	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
-	if (src) {
+	if (set_attrs) {
 		struct rtattr *nest = addattr_nest(&req.n, sizeof(req),
 						   MDBA_SET_ENTRY_ATTRS);
 		struct in6_addr src_ip6;
