@@ -6741,6 +6741,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_trap_policer(dl, tb, false);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_LINECARD_GET: /* fall through */
 	case DEVLINK_CMD_LINECARD_SET: /* fall through */
