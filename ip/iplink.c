@@ -68,6 +68,7 @@ void iplink_usage(void)
 			"		    [ mtu MTU ] [index IDX ]\n"
 			"		    [ numtxqueues QUEUE_COUNT ]\n"
 			"		    [ numrxqueues QUEUE_COUNT ]\n"
+			"		    [ netns { PID | NAME } ]\n"
 			"		    type TYPE [ ARGS ]\n"
 			"\n"
 			"	ip link delete { DEVICE | dev DEVICE | group DEVGROUP } type TYPE [ ARGS ]\n"
@@ -1569,7 +1570,7 @@ void print_mpls_link_stats(FILE *fp, const struct mpls_link_stats *stats,
 		print_num(fp, cols[2], stats->rx_errors);
 		print_num(fp, cols[3], stats->rx_dropped);
 		print_num(fp, cols[4], stats->rx_noroute);
-		fprintf(fp, "\n");
+		print_nl();
 
 		fprintf(fp, "%sTX: %*s %*s %*s %*s%s", indent,
 			cols[0] - 4, "bytes", cols[1], "packets",
@@ -1593,9 +1594,11 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 		return;
 
 	stats = RTA_DATA(mrtb[MPLS_STATS_LINK]);
-	fprintf(fp, "    mpls:\n");
+	print_string(PRINT_FP, NULL, "    mpls:", NULL);
+	print_nl();
 	print_mpls_link_stats(fp, stats, "        ");
-	fprintf(fp, "\n");
+	print_string(PRINT_FP, NULL, "%s", "\n");
+	fflush(fp);
 }
 
 static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)
@@ -1611,8 +1614,12 @@ static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)
 			continue;
 
 		if (!if_printed) {
-			fprintf(fp, "%u: %s\n", ifindex,
-				ll_index_to_name(ifindex));
+			print_uint(PRINT_ANY, "ifindex",
+				   "%u:", ifindex);
+			print_color_string(PRINT_ANY, COLOR_IFNAME, 
+					   "ifname", "%s",
+					   ll_index_to_name(ifindex));
+			print_nl();
 			if_printed = true;
 		}
 
@@ -1621,7 +1628,7 @@ static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)
 			print_mpls_stats(fp, i);
 			break;
 		default:
-			fprintf(fp, "    unknown af(%d)\n", i->rta_type);
+			fprintf(stderr, "    unknown af(%d)\n", i->rta_type);
 			break;
 		}
 	}
@@ -1695,6 +1702,8 @@ static int iplink_afstats(int argc, char **argv)
 		}
 	}
 
+	new_json_obj(json);
+
 	if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask,
 				      NULL, NULL) < 0) {
 		perror("Cannont send dump request");
@@ -1706,6 +1715,7 @@ static int iplink_afstats(int argc, char **argv)
 		return 1;
 	}
 
+	delete_json_obj();
 	return 0;
 }
 

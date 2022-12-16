@@ -43,6 +43,8 @@ ip-link \- network device configuration
 .br
 .RB "[ " gro_max_size
 .IR BYTES " ]"
+.RB "[ " netns " {"
+.IR PID " | " NETNSNAME " } ]"
 .br
 .BI type " TYPE"
 .RI "[ " ARGS " ]"
@@ -436,6 +438,10 @@ on this device.
 .BI index " IDX "
 specifies the desired index of the new virtual device. The link
 creation fails, if the index is busy.
+
+.TP
+.BI netns " { PID | NAME } "
+specifies the desired network namespace to create interface in.
 
 .TP
 VLAN Type Support

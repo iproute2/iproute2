@@ -614,7 +614,7 @@ void print_tm(FILE *f, const struct tcf_t *tm)
 			   tm->expires / hz);
 }
 
-static void print_tcstats_basic_hw(struct rtattr **tbs, char *prefix)
+static void print_tcstats_basic_hw(struct rtattr **tbs, const char *prefix)
 {
 	struct gnet_stats_basic bs_hw;
 
@@ -652,7 +652,8 @@ static void print_tcstats_basic_hw(struct rtattr **tbs, char *prefix)
 	print_uint(PRINT_ANY, "hw_packets", " %u pkt", bs_hw.packets);
 }
 
-void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtattr **xstats)
+void print_tcstats2_attr(FILE *fp, struct rtattr *rta,
+			 const char *prefix, struct rtattr **xstats)
 {
 	struct rtattr *tbs[TCA_STATS_MAX + 1];
 
@@ -729,7 +730,7 @@ void print_tcstats2_attr(FILE *fp, struct rtattr *rta, char *prefix, struct rtat
 		*xstats = tbs[TCA_STATS_APP] ? : NULL;
 }
 
-void print_tcstats_attr(FILE *fp, struct rtattr *tb[], char *prefix,
+void print_tcstats_attr(FILE *fp, struct rtattr *tb[], const char *prefix,
 			struct rtattr **xstats)
 {
 	if (tb[TCA_STATS2]) {

@@ -365,7 +365,7 @@ int print_class(struct nlmsghdr *n, void *arg)
 		if (q && q->print_copt)
 			q->print_copt(q, fp, tb[TCA_OPTIONS]);
 		else
-			fprintf(fp, "[cannot parse class parameters]");
+			fprintf(stderr, "[cannot parse class parameters]");
 	}
 	fprintf(fp, "\n");
 	if (show_stats) {

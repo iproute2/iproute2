@@ -90,9 +90,9 @@ char *sprint_ticks(__u32 ticks, char *buf);
 char *sprint_linklayer(unsigned int linklayer, char *buf);
 
 void print_tcstats_attr(FILE *fp, struct rtattr *tb[],
-			char *prefix, struct rtattr **xstats);
+			const char *prefix, struct rtattr **xstats);
 void print_tcstats2_attr(FILE *fp, struct rtattr *rta,
-			 char *prefix, struct rtattr **xstats);
+			 const char *prefix, struct rtattr **xstats);
 
 int get_tc_classid(__u32 *h, const char *str);
 int print_tc_classid(char *buf, int len, __u32 h);

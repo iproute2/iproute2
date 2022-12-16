@@ -1092,14 +1092,19 @@ next:
 						rtnl_talk_error(h, err, errfn);
 				}
 
+				if (i < iovlen) {
+					free(buf);
+					goto next;
+				}
+
+				if (error) {
+					free(buf);
+					return -i;
+				}
+
 				if (answer)
 					*answer = (struct nlmsghdr *)buf;
-				else
-					free(buf);
-
-				if (i < iovlen)
-					goto next;
-				return error ? -i : 0;
+				return 0;
 			}
 
 			if (answer) {
