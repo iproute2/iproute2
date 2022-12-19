@@ -31,7 +31,8 @@ static unsigned int filter_index, filter_vlan;
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: bridge mdb { add | del } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
+		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
+		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -474,6 +475,101 @@ static int mdb_parse_grp(const char *grp, struct br_mdb_entry *e)
 	return -1;
 }
 
+static int mdb_parse_src(struct nlmsghdr *n, int maxlen, const char *src)
+{
+	struct in6_addr src_ip6;
+	__be32 src_ip4;
+
+	if (inet_pton(AF_INET, src, &src_ip4)) {
+		addattr32(n, maxlen, MDBE_ATTR_SOURCE, src_ip4);
+		return 0;
+	}
+
+	if (inet_pton(AF_INET6, src, &src_ip6)) {
+		addattr_l(n, maxlen, MDBE_ATTR_SOURCE, &src_ip6,
+			  sizeof(src_ip6));
+		return 0;
+	}
+
+	return -1;
+}
+
+static int mdb_parse_mode(struct nlmsghdr *n, int maxlen, const char *mode)
+{
+	if (strcmp(mode, "include") == 0) {
+		addattr8(n, maxlen, MDBE_ATTR_GROUP_MODE, MCAST_INCLUDE);
+		return 0;
+	}
+
+	if (strcmp(mode, "exclude") == 0) {
+		addattr8(n, maxlen, MDBE_ATTR_GROUP_MODE, MCAST_EXCLUDE);
+		return 0;
+	}
+
+	return -1;
+}
+
+static int mdb_parse_src_entry(struct nlmsghdr *n, int maxlen, char *src_entry)
+{
+	struct in6_addr src_ip6;
+	struct rtattr *nest;
+	__be32 src_ip4;
+
+	nest = addattr_nest(n, maxlen, MDBE_SRC_LIST_ENTRY | NLA_F_NESTED);
+
+	if (inet_pton(AF_INET, src_entry, &src_ip4))
+		addattr32(n, maxlen, MDBE_SRCATTR_ADDRESS, src_ip4);
+	else if (inet_pton(AF_INET6, src_entry, &src_ip6))
+		addattr_l(n, maxlen, MDBE_SRCATTR_ADDRESS, &src_ip6,
+			  sizeof(src_ip6));
+	else
+		return -1;
+
+	addattr_nest_end(n, nest);
+
+	return 0;
+}
+
+static int mdb_parse_src_list(struct nlmsghdr *n, int maxlen, char *src_list)
+{
+	struct rtattr *nest;
+	char *sep;
+
+	nest = addattr_nest(n, maxlen, MDBE_ATTR_SRC_LIST | NLA_F_NESTED);
+
+	do {
+		sep = strchr(src_list, ',');
+		if (sep)
+			*sep = '\0';
+
+		if (mdb_parse_src_entry(n, maxlen, src_list)) {
+			fprintf(stderr, "Invalid source entry \"%s\" in source list\n",
+				src_list);
+			return -1;
+		}
+
+		src_list = sep + 1;
+	} while (sep);
+
+	addattr_nest_end(n, nest);
+
+	return 0;
+}
+
+static int mdb_parse_proto(struct nlmsghdr *n, int maxlen, const char *proto)
+{
+	__u32 proto_id;
+	int err;
+
+	err = rtnl_rtprot_a2n(&proto_id, proto);
+	if (err)
+		return err;
+
+	addattr8(n, maxlen, MDBE_ATTR_RTPROT, proto_id);
+
+	return 0;
+}
+
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -486,8 +582,10 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.bpm.family = PF_BRIDGE,
 	};
-	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL;
+	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL, *mode = NULL;
+	char *src_list = NULL, *proto = NULL;
 	struct br_mdb_entry entry = {};
+	bool set_attrs = false;
 	short vid = 0;
 
 	while (argc > 0) {
@@ -511,6 +609,19 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "src") == 0) {
 			NEXT_ARG();
 			src = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "filter_mode") == 0) {
+			NEXT_ARG();
+			mode = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "source_list") == 0) {
+			NEXT_ARG();
+			src_list = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "proto") == 0) {
+			NEXT_ARG();
+			proto = *argv;
+			set_attrs = true;
 		} else {
 			if (matches(*argv, "help") == 0)
 				usage();
@@ -538,22 +649,32 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 	entry.vid = vid;
 	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
-	if (src) {
+	if (set_attrs) {
 		struct rtattr *nest = addattr_nest(&req.n, sizeof(req),
 						   MDBA_SET_ENTRY_ATTRS);
-		struct in6_addr src_ip6;
-		__be32 src_ip4;
 
 		nest->rta_type |= NLA_F_NESTED;
-		if (!inet_pton(AF_INET, src, &src_ip4)) {
-			if (!inet_pton(AF_INET6, src, &src_ip6)) {
-				fprintf(stderr, "Invalid source address \"%s\"\n", src);
-				return -1;
-			}
-			addattr_l(&req.n, sizeof(req), MDBE_ATTR_SOURCE, &src_ip6, sizeof(src_ip6));
-		} else {
-			addattr32(&req.n, sizeof(req), MDBE_ATTR_SOURCE, src_ip4);
+
+		if (src && mdb_parse_src(&req.n, sizeof(req), src)) {
+			fprintf(stderr, "Invalid source address \"%s\"\n", src);
+			return -1;
 		}
+
+		if (mode && mdb_parse_mode(&req.n, sizeof(req), mode)) {
+			fprintf(stderr, "Invalid filter mode \"%s\"\n", mode);
+			return -1;
+		}
+
+		if (src_list && mdb_parse_src_list(&req.n, sizeof(req),
+						   src_list))
+			return -1;
+
+		if (proto && mdb_parse_proto(&req.n, sizeof(req), proto)) {
+			fprintf(stderr, "Invalid protocol value \"%s\"\n",
+				proto);
+			return -1;
+		}
+
 		addattr_nest_end(&req.n, nest);
 	}
 
@@ -571,6 +692,8 @@ int do_mdb(int argc, char **argv)
 	if (argc > 0) {
 		if (matches(*argv, "add") == 0)
 			return mdb_modify(RTM_NEWMDB, NLM_F_CREATE|NLM_F_EXCL, argc-1, argv+1);
+		if (strcmp(*argv, "replace") == 0)
+			return mdb_modify(RTM_NEWMDB, NLM_F_CREATE|NLM_F_REPLACE, argc-1, argv+1);
 		if (matches(*argv, "delete") == 0)
 			return mdb_modify(RTM_DELMDB, 0, argc-1, argv+1);
 

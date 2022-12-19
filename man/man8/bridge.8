@@ -127,7 +127,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR [no]sticky " ] [ " [no]offloaded " ]"
 
 .ti -8
-.BR "bridge mdb" " { " add " | " del " } "
+.BR "bridge mdb" " { " add " | " del " | " replace " } "
 .B dev
 .I DEV
 .B port
@@ -138,7 +138,12 @@ bridge \- show / manipulate bridge addresses and devices
 .IR SOURCE " ] [ "
 .BR permanent " | " temp " ] [ "
 .B vid
-.IR VID " ] "
+.IR VID " ] [ "
+.BR filter_mode " { " include " | " exclude " } ] [ "
+.B source_list
+.IR SOURCE_LIST " ] [ "
+.B proto
+.IR PROTO " ]
 
 .ti -8
 .BR "bridge mdb show" " [ "
@@ -893,8 +898,8 @@ if "no" is prepended then only entries without offloaded flag will be deleted.
 objects contain known IP or L2 multicast group addresses on a link.
 
 .P
-The corresponding commands display mdb entries, add new entries,
-and delete old ones.
+The corresponding commands display mdb entries, add new entries, replace
+entries and delete old ones.
 
 .SS bridge mdb add - add a new multicast group database entry
 
@@ -931,9 +936,36 @@ forwarding multicast traffic.
 .BI vid " VID"
 the VLAN ID which is known to have members of this multicast group.
 
+.TP
+.BR "filter_mode include " or " filter_mode exclude "
+controls whether the sources in the entry's source list are in INCLUDE or
+EXCLUDE mode. Can only be set for (*, G) entries.
+
+.TP
+.BI source_list " SOURCE_LIST"
+optional list of source IP addresses of senders for this multicast group,
+separated by a ','.  Whether the entry forwards packets from these senders or
+not is determined by the entry's filter mode, which becomes a mandatory
+argument. Can only be set for (*, G) entries.
+
+.TP
+.BI proto " PROTO"
+the routing protocol identifier of this mdb entry. Can be a number or a string
+from the file /etc/iproute2/rt_protos. If the routing protocol is not given,
+then
+.B static
+is assumed.
+
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry
 This command removes an existing mdb entry.
+
+.PP
+The arguments are the same as with
+.BR "bridge mdb add" .
+
+.SS bridge mdb replace - replace a multicast group database entry
+If no matching entry is found, a new one will be created instead.
 
 .PP
 The arguments are the same as with
