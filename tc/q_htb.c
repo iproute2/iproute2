@@ -113,7 +113,8 @@ static int htb_parse_opt(struct qdisc_util *qu, int argc,
 	return 0;
 }
 
-static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
+static int htb_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
+			       struct nlmsghdr *n, const char *dev)
 {
 	struct tc_htb_opt opt = {};
 	__u32 rtab[256], ctab[256];
@@ -316,7 +317,8 @@ static int htb_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		cbuffer = tc_calc_xmitsize(ceil64, hopt->cbuffer);
 		linklayer = (hopt->rate.linklayer & TC_LINKLAYER_MASK);
 		if (linklayer > TC_LINKLAYER_ETHERNET || show_details)
-			print_string(PRINT_ANY, "linklayer", "linklayer %s ", sprint_linklayer(linklayer, b3));
+			print_string(PRINT_ANY, "linklayer", "linklayer %s ",
+				     sprint_linklayer(linklayer, b3));
 		if (show_details) {
 			print_size(PRINT_ANY, "burst", "burst %s/", buffer);
 			print_uint(PRINT_ANY, "burst_cell", "%u", 1<<hopt->rate.cell_log);
