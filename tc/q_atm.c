@@ -3,7 +3,6 @@
  * q_atm.c		ATM.
  *
  * Hacked 1998-2000 by Werner Almesberger, EPFL ICA
- *
  */
 
 #include <stdio.h>
