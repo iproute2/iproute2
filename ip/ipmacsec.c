@@ -1513,7 +1513,8 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			  &cipher.icv_len, sizeof(cipher.icv_len));
 
 	if (replay_protect != -1) {
-		addattr32(n, MACSEC_BUFLEN, IFLA_MACSEC_WINDOW, window);
+		if (replay_protect)
+			addattr32(n, MACSEC_BUFLEN, IFLA_MACSEC_WINDOW, window);
 		addattr8(n, MACSEC_BUFLEN, IFLA_MACSEC_REPLAY_PROTECT,
 			 replay_protect);
 	}
