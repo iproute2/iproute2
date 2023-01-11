@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: NIST-PD */
 /*
  * Paretoormal distribution table generator
  *
