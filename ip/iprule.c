@@ -695,7 +695,7 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 			else if (ret != 2)
 				invarg("invalid dport range\n", *argv);
 			filter.dport = r;
-		} else{
+		} else {
 			if (matches(*argv, "dst") == 0 ||
 			    matches(*argv, "to") == 0) {
 				NEXT_ARG();

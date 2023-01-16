@@ -1963,7 +1963,7 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 
 			dl_arg_inc(dl);
 			err = dl_argv_str(dl, &sectionstr);
-			if(err)
+			if (err)
 				return err;
 			err = flash_overwrite_section_get(sectionstr,
 							  &opts->overwrite_mask);

@@ -264,7 +264,7 @@ static int dcb_app_parse_pcp(__u32 *key, const char *arg)
 {
 	int i;
 
-	for(i = 0; i < ARRAY_SIZE(pcp_names); i++) {
+	for (i = 0; i < ARRAY_SIZE(pcp_names); i++) {
 		if (pcp_names[i] && strcmp(arg, pcp_names[i]) == 0) {
 			*key = i;
 			return 0;
