@@ -37,9 +37,6 @@ static int accept_tcmsg(struct rtnl_ctrl_data *ctrl,
 	if (timestamp)
 		print_timestamp(fp);
 
-	if (n->nlmsg_type == NLMSG_DONE)
-		nl_dump_ext_ack_done(n, 0, 0);
-
 	if (n->nlmsg_type == RTM_NEWTFILTER ||
 	    n->nlmsg_type == RTM_DELTFILTER ||
 	    n->nlmsg_type == RTM_NEWCHAIN ||
