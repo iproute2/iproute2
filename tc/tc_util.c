@@ -843,3 +843,12 @@ void print_masked_be16(const char *name, struct rtattr *attr,
 	print_masked_type(UINT16_MAX, __rta_getattr_be16_u32, name, attr,
 			  mask_attr, newline);
 }
+
+void print_ext_msg(struct rtattr **tb)
+{
+	if (!tb[TCA_EXT_WARN_MSG])
+		return;
+
+	print_string(PRINT_ANY, "warn", "%s", rta_getattr_str(tb[TCA_EXT_WARN_MSG]));
+	print_nl();
+}

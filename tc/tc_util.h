@@ -133,4 +133,6 @@ void print_masked_u8(const char *name, struct rtattr *attr,
 		     struct rtattr *mask_attr, bool newline);
 void print_masked_be16(const char *name, struct rtattr *attr,
 		       struct rtattr *mask_attr, bool newline);
+
+void print_ext_msg(struct rtattr **tb);
 #endif

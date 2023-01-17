@@ -586,6 +586,7 @@ int print_action(struct nlmsghdr *n, void *arg)
 
 	open_json_object(NULL);
 	tc_dump_action(fp, tb[TCA_ACT_TAB], tot_acts ? *tot_acts:0, false);
+	print_ext_msg(tb);
 	close_json_object();
 
 	return 0;

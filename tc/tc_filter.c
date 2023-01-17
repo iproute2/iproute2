@@ -366,6 +366,7 @@ int print_filter(struct nlmsghdr *n, void *arg)
 		print_nl();
 	}
 
+	print_ext_msg(tb);
 	close_json_object();
 	fflush(fp);
 	return 0;
