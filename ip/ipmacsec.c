@@ -938,8 +938,8 @@ static void print_tx_sc(const char *prefix, __u64 sci, __u8 encoding_sa,
 		print_uint(PRINT_ANY, "an", "%d:",
 			   rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_AN]));
 		if (is_xpn) {
-			print_uint(PRINT_ANY, "pn", " PN %u,",
-				   rta_getattr_u64(sa_attr[MACSEC_SA_ATTR_PN]));
+			print_lluint(PRINT_ANY, "pn", " PN %llu,",
+				     rta_getattr_u64(sa_attr[MACSEC_SA_ATTR_PN]));
 			print_0xhex(PRINT_ANY, "ssci",
 				    "SSCI %08x",
 				    ntohl(rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_SSCI])));
@@ -1015,8 +1015,8 @@ static void print_rx_sc(const char *prefix, __be64 sci, __u8 active,
 		print_uint(PRINT_ANY, "an", "%u:",
 			   rta_getattr_u8(sa_attr[MACSEC_SA_ATTR_AN]));
 		if (is_xpn) {
-			print_uint(PRINT_ANY, "pn", " PN %u,",
-				   rta_getattr_u64(sa_attr[MACSEC_SA_ATTR_PN]));
+			print_lluint(PRINT_ANY, "pn", " PN %llu,",
+				     rta_getattr_u64(sa_attr[MACSEC_SA_ATTR_PN]));
 			print_0xhex(PRINT_ANY, "ssci",
 				    "SSCI %08x",
 				    ntohl(rta_getattr_u32(sa_attr[MACSEC_SA_ATTR_SSCI])));
