@@ -3,7 +3,7 @@
 # Copyright 2016 Quentin Monnet <quentin.monnet@6wind.com>
 
 QDISC_KIND=' choke codel bfifo pfifo pfifo_head_drop fq fq_codel gred hhf \
-            mqprio multiq netem pfifo_fast pie fq_pie red rr sfb sfq tbf atm \
+            mqprio multiq netem pfifo_fast pie fq_pie red sfb sfq tbf atm \
             cbq drr dsmark hfsc htb prio qfq '
 FILTER_KIND=' basic bpf cgroup flow flower fw route rsvp tcindex u32 matchall '
 ACTION_KIND=' gact mirred bpf sample '
@@ -339,7 +339,7 @@ _tc_qdisc_options()
                 bandwidth ecn harddrop'
             return 0
             ;;
-        rr|prio)
+        prio)
             _tc_once_attr 'bands priomap multiqueue'
             return 0
             ;;

@@ -1,13 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * link_ip6tnl.c	ip6tnl driver module
  *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
- *
  * Authors:	Nicolas Dichtel <nicolas.dichtel@6wind.com>
- *
  */
 
 #include <string.h>

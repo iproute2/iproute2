@@ -3,7 +3,6 @@
  * q_dsmark.c		Differentiated Services field marking.
  *
  * Hacked 1998,1999 by Werner Almesberger, EPFL ICA
- *
  */
 
 #include <stdio.h>

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: NIST-PD */
 /*
  * Pareto distribution table generator
  * Taken from the uncopyrighted NISTnet code.

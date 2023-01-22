@@ -1,10 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * devlink.c	Devlink tool
- *
- *              This program is free software; you can redistribute it and/or
- *              modify it under the terms of the GNU General Public License
- *              as published by the Free Software Foundation; either version
- *              2 of the License, or (at your option) any later version.
  *
  * Authors:     Jiri Pirko <jiri@mellanox.com>
  */
@@ -1967,7 +1963,7 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 
 			dl_arg_inc(dl);
 			err = dl_argv_str(dl, &sectionstr);
-			if(err)
+			if (err)
 				return err;
 			err = flash_overwrite_section_get(sectionstr,
 							  &opts->overwrite_mask);
@@ -6741,6 +6737,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		pr_out_trap_policer(dl, tb, false);
+		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_LINECARD_GET: /* fall through */
 	case DEVLINK_CMD_LINECARD_SET: /* fall through */

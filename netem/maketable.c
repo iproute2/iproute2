@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: NIST-PD */
 /*
  * Experimental data  distribution table generator
  * Taken from the uncopyrighted NISTnet code (public domain).

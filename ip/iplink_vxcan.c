@@ -1,10 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * iplink_vxcan.c	vxcan device support (Virtual CAN Tunnel)
- *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
  *
  * Author:	Oliver Hartkopp <socketcan@hartkopp.net>
  * Based on:	link_veth.c from Pavel Emelianov <xemul@openvz.org>

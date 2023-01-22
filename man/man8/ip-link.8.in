@@ -301,6 +301,7 @@ Link types:
 .sp
 .B bond
 - Bonding device
+.sp
 .B bridge
 - Ethernet Bridge device
 .sp

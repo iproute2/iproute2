@@ -1,13 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * tc_class.c		"tc class".
  *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
- *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
- *
  */
 
 #include <stdio.h>
@@ -334,8 +329,9 @@ int print_class(struct nlmsghdr *n, void *arg)
 		return -1;
 	}
 
+	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELTCLASS)
-		fprintf(fp, "deleted ");
+		print_null(PRINT_ANY, "deleted", "deleted ", NULL);
 
 	abuf[0] = 0;
 	if (t->tcm_handle) {
@@ -344,22 +340,24 @@ int print_class(struct nlmsghdr *n, void *arg)
 		else
 			print_tc_classid(abuf, sizeof(abuf), t->tcm_handle);
 	}
-	fprintf(fp, "class %s %s ", rta_getattr_str(tb[TCA_KIND]), abuf);
+	print_string(PRINT_ANY, "class", "class %s ",  rta_getattr_str(tb[TCA_KIND]));
+	print_string(PRINT_ANY, "handle", "%s ", abuf);
 
 	if (filter_ifindex == 0)
-		fprintf(fp, "dev %s ", ll_index_to_name(t->tcm_ifindex));
+		print_devname(PRINT_ANY, t->tcm_ifindex);
 
 	if (t->tcm_parent == TC_H_ROOT)
-		fprintf(fp, "root ");
+		print_bool(PRINT_ANY, "root", "root ", true);
 	else {
 		if (filter_qdisc)
 			print_tc_classid(abuf, sizeof(abuf), TC_H_MIN(t->tcm_parent));
 		else
 			print_tc_classid(abuf, sizeof(abuf), t->tcm_parent);
-		fprintf(fp, "parent %s ", abuf);
+		print_string(PRINT_ANY, "parent", "parent %s ", abuf);
 	}
 	if (t->tcm_info)
-		fprintf(fp, "leaf %x: ", t->tcm_info>>16);
+		print_0xhex(PRINT_ANY, "leaf", "leaf %x", t->tcm_info>>16);
+
 	q = get_qdisc_kind(RTA_DATA(tb[TCA_KIND]));
 	if (tb[TCA_OPTIONS]) {
 		if (q && q->print_copt)
@@ -367,19 +365,21 @@ int print_class(struct nlmsghdr *n, void *arg)
 		else
 			fprintf(stderr, "[cannot parse class parameters]");
 	}
-	fprintf(fp, "\n");
+	print_nl();
 	if (show_stats) {
 		struct rtattr *xstats = NULL;
-
+		open_json_object("stats");
 		if (tb[TCA_STATS] || tb[TCA_STATS2]) {
 			print_tcstats_attr(fp, tb, " ", &xstats);
-			fprintf(fp, "\n");
+			print_string(PRINT_FP, NULL, "\n", NULL);
 		}
 		if (q && (xstats || tb[TCA_XSTATS]) && q->print_xstats) {
 			q->print_xstats(q, fp, xstats ? : tb[TCA_XSTATS]);
-			fprintf(fp, "\n");
+			print_string(PRINT_FP, NULL, "\n", NULL);
 		}
+		close_json_object();
 	}
+	close_json_object();
 	fflush(fp);
 	return 0;
 }
@@ -450,11 +450,12 @@ static int tc_class_list(int argc, char **argv)
 		perror("Cannot send dump request");
 		return 1;
 	}
-
+	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, print_class, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		return 1;
 	}
+	delete_json_obj();
 
 	if (show_graph)
 		graph_cls_show(stdout, &buf[0], &root_cls_list, 0);

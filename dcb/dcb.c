@@ -72,7 +72,7 @@ static int dcb_get_attribute_attr_ieee_cb(const struct nlattr *attr, void *data)
 
 	ga->payload = mnl_attr_get_payload(attr);
 	ga->payload_len = mnl_attr_get_payload_len(attr);
-	return MNL_CB_STOP;
+	return MNL_CB_OK;
 }
 
 static int dcb_get_attribute_attr_cb(const struct nlattr *attr, void *data)
@@ -126,7 +126,7 @@ static int dcb_set_attribute_attr_cb(const struct nlattr *attr, void *data)
 		return MNL_CB_ERROR;
 	}
 
-	return MNL_CB_STOP;
+	return MNL_CB_OK;
 }
 
 static int dcb_set_attribute_cb(const struct nlmsghdr *nlh, void *data)

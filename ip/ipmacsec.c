@@ -1,10 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * ipmacsec.c		"ip macsec".
- *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
  *
  * Authors:	Sabrina Dubroca <sd@queasysnail.net>
  */
@@ -1517,7 +1513,8 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			  &cipher.icv_len, sizeof(cipher.icv_len));
 
 	if (replay_protect != -1) {
-		addattr32(n, MACSEC_BUFLEN, IFLA_MACSEC_WINDOW, window);
+		if (replay_protect)
+			addattr32(n, MACSEC_BUFLEN, IFLA_MACSEC_WINDOW, window);
 		addattr8(n, MACSEC_BUFLEN, IFLA_MACSEC_REPLAY_PROTECT,
 			 replay_protect);
 	}

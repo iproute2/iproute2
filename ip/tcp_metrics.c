@@ -1,9 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * tcp_metrics.c	"ip tcp_metrics/tcpmetrics"
- *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		version 2 as published by the Free Software Foundation;
  *
  * Authors:	Julian Anastasov <ja@ssi.bg>, August 2012
  */
