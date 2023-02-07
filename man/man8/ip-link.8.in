@@ -1637,10 +1637,10 @@ the following additional arguments are supported:
 .in +8
 .sp
 .BI ageing_time " AGEING_TIME "
-- configure the bridge's FDB entries ageing time, ie the number of
-seconds a MAC address will be kept in the FDB after a packet has been
-received from that address. after this time has passed, entries are
-cleaned up.
+- configure the bridge's FDB entries ageing time in 100ths of a 
+second, ie the amount of time a MAC address will be kept in the FDB 
+after a packet has been received from that address. after this time 
+has passed, entries are cleaned up.
 
 .BI group_fwd_mask " MASK "
 - set the group forward mask. This is the bitmask that is applied to
