@@ -47,6 +47,8 @@ bridge \- show / manipulate bridge addresses and devices
 .BR hwmode " { " vepa " | " veb " } ] [ "
 .BR bcast_flood " { " on " | " off " } ] [ "
 .BR mcast_flood " { " on " | " off " } ] [ "
+.BR mcast_max_groups
+.IR MAX_GROUPS " ] ["
 .BR mcast_router
 .IR MULTICAST_ROUTER " ] ["
 .BR mcast_to_unicast " { " on " | " off " } ] [ "
@@ -169,6 +171,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VID " [ "
 .B state
 .IR STP_STATE " ] [ "
+.B mcast_max_groups
+.IR MAX_GROUPS " ] [ "
 .B mcast_router
 .IR MULTICAST_ROUTER " ]"
 
@@ -516,6 +520,15 @@ By default this flag is on.
 .BR "mcast_flood on " or " mcast_flood off "
 Controls whether multicast traffic for which there is no MDB entry will be
 flooded towards this given port. By default this flag is on.
+
+.TP
+.BI mcast_max_groups " MAX_GROUPS "
+Sets the maximum number of MDB entries that can be registered for a given
+port. Attempts to register more MDB entries at the port than this limit
+allows will be rejected, whether they are done through netlink (e.g. the
+\fBbridge\fR tool), or IGMP or MLD membership reports. Setting a limit to 0
+has the effect of disabling the limit. The default value is 0. See also the
+\fBip link\fR option \fBmcast_hash_max\fR.
 
 .TP
 .BI mcast_router " MULTICAST_ROUTER "
@@ -1106,6 +1119,15 @@ state. Only valid if STP is enabled on the bridge. This state
 is used during the STP election process. In this state, the vlan will only process
 STP BPDUs.
 .sp
+
+.TP
+.BI mcast_max_groups " MAX_GROUPS "
+Sets the maximum number of MDB entries that can be registered for a given
+VLAN on a given port. A VLAN-specific equivalent of the per-port option of
+the same name, see above for details.
+
+Note that this option is only available when \fBip link\fR option
+\fBmcast_vlan_snooping\fR is enabled.
 
 .TP
 .BI mcast_router " MULTICAST_ROUTER "
