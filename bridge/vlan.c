@@ -37,6 +37,7 @@ static void usage(void)
 		"                                                     [ self ] [ master ]\n"
 		"       bridge vlan { set } vid VLAN_ID dev DEV [ state STP_STATE ]\n"
 		"                                               [ mcast_router MULTICAST_ROUTER ]\n"
+		"                                               [ mcast_max_groups MAX_GROUPS ]\n"
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
@@ -344,6 +345,15 @@ static int vlan_option_set(int argc, char **argv)
 			addattr8(&req.n, sizeof(req),
 				 BRIDGE_VLANDB_ENTRY_MCAST_ROUTER,
 				 mcast_router);
+		} else if (strcmp(*argv, "mcast_max_groups") == 0) {
+			__u32 max_groups;
+
+			NEXT_ARG();
+			if (get_u32(&max_groups, *argv, 0))
+				invarg("invalid mcast_max_groups", *argv);
+			addattr32(&req.n, sizeof(req),
+				  BRIDGE_VLANDB_ENTRY_MCAST_MAX_GROUPS,
+				  max_groups);
 		} else {
 			if (matches(*argv, "help") == 0)
 				NEXT_ARG();
@@ -1020,6 +1030,16 @@ static void print_vlan_opts(struct rtattr *a, int ifindex)
 		vattr = vtb[BRIDGE_VLANDB_ENTRY_MCAST_ROUTER];
 		print_uint(PRINT_ANY, "mcast_router", "mcast_router %u ",
 			   rta_getattr_u8(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_ENTRY_MCAST_N_GROUPS]) {
+		vattr = vtb[BRIDGE_VLANDB_ENTRY_MCAST_N_GROUPS];
+		print_uint(PRINT_ANY, "mcast_n_groups", "mcast_n_groups %u ",
+			   rta_getattr_u32(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_ENTRY_MCAST_MAX_GROUPS]) {
+		vattr = vtb[BRIDGE_VLANDB_ENTRY_MCAST_MAX_GROUPS];
+		print_uint(PRINT_ANY, "mcast_max_groups", "mcast_max_groups %u ",
+			   rta_getattr_u32(vattr));
 	}
 	print_nl();
 	if (show_stats)
