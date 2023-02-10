@@ -1099,6 +1099,8 @@ next:
 
 				if (answer)
 					*answer = (struct nlmsghdr *)buf;
+				else
+					free(buf);
 				return 0;
 			}
 
