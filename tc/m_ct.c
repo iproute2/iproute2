@@ -13,6 +13,7 @@
 #include <string.h>
 #include "utils.h"
 #include "tc_util.h"
+#include "rt_names.h"
 #include <linux/tc_act/tc_ct.h>
 
 static void
@@ -20,10 +21,11 @@ usage(void)
 {
 	fprintf(stderr,
 		"Usage: ct clear\n"
-		"	ct commit [force] [zone ZONE] [mark MASKED_MARK] [label MASKED_LABEL] [nat NAT_SPEC]\n"
+		"	ct commit [force] [zone ZONE] [mark MASKED_MARK] [label MASKED_LABEL] [nat NAT_SPEC] [helper HELPER]\n"
 		"	ct [nat] [zone ZONE]\n"
 		"Where: ZONE is the conntrack zone table number\n"
 		"	NAT_SPEC is {src|dst} addr addr1[-addr2] [port port1[-port2]]\n"
+		"	HELPER is family-proto-name such as ipv4-tcp-ftp\n"
 		"\n");
 	exit(-1);
 }
@@ -156,6 +158,30 @@ static int ct_parse_mark(char *str, struct nlmsghdr *n)
 	return ct_parse_u32(str, TCA_CT_MARK, TCA_CT_MARK_MASK, n);
 }
 
+static int ct_parse_helper(char *str, struct nlmsghdr *n)
+{
+	char f[32], p[32], name[32];
+	__u8 family, proto;
+
+	if (strlen(str) >= 32 ||
+	    sscanf(str, "%[^-]-%[^-]-%[^-]", f, p, name) != 3)
+		return -1;
+	if (!strcmp(f, "ipv4"))
+		family = AF_INET;
+	else if (!strcmp(f, "ipv6"))
+		family = AF_INET6;
+	else
+		return -1;
+	proto = inet_proto_a2n(p);
+	if (proto < 0)
+		return -1;
+
+	addattr8(n, MAX_MSG, TCA_CT_HELPER_FAMILY, family);
+	addattr8(n, MAX_MSG, TCA_CT_HELPER_PROTO, proto);
+	addattrstrz(n, MAX_MSG, TCA_CT_HELPER_NAME, name);
+	return 0;
+}
+
 static int ct_parse_labels(char *str, struct nlmsghdr *n)
 {
 #define LABELS_SIZE	16
@@ -283,6 +309,14 @@ parse_ct(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 			}
 		} else if (matches(*argv, "help") == 0) {
 			usage();
+		} else if (matches(*argv, "helper") == 0) {
+			NEXT_ARG();
+
+			ret = ct_parse_helper(*argv, n);
+			if (ret) {
+				fprintf(stderr, "ct: Illegal \"helper\"\n");
+				return -1;
+			}
 		} else {
 			break;
 		}
@@ -436,6 +470,22 @@ static void ct_print_labels(struct rtattr *attr,
 	print_string(PRINT_ANY, "label", " label %s", out);
 }
 
+static void ct_print_helper(struct rtattr *family, struct rtattr *proto, struct rtattr *name)
+{
+	char helper[32], buf[32], *n;
+	int *f, *p;
+
+	if (!family || !proto || !name)
+		return;
+
+	f = RTA_DATA(family);
+	p = RTA_DATA(proto);
+	n = RTA_DATA(name);
+	snprintf(helper, sizeof(helper), "%s-%s-%s", (*f == AF_INET) ? "ipv4" : "ipv6",
+		 inet_proto_n2a(*p, buf, sizeof(buf)), n);
+	print_string(PRINT_ANY, "helper", " helper %s", helper);
+}
+
 static int print_ct(struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_CT_MAX + 1];
@@ -468,6 +518,7 @@ static int print_ct(struct action_util *au, FILE *f, struct rtattr *arg)
 	print_masked_u32("mark", tb[TCA_CT_MARK], tb[TCA_CT_MARK_MASK], false);
 	print_masked_u16("zone", tb[TCA_CT_ZONE], NULL, false);
 	ct_print_labels(tb[TCA_CT_LABELS], tb[TCA_CT_LABELS_MASK]);
+	ct_print_helper(tb[TCA_CT_HELPER_FAMILY], tb[TCA_CT_HELPER_PROTO], tb[TCA_CT_HELPER_NAME]);
 	ct_print_nat(ct_action, tb);
 
 	print_action_control(f, " ", p->action, "");
