@@ -963,7 +963,12 @@ subset of the existing behaviors.
 .in -2
 
 .B psp
-- Penultimate Segment Pop of the SRH (not yet supported in kernel)
+- The Penultimate Segment Pop (PSP) copies the last SID from the SID List
+(carried by the outermost SRH) into the IPv6 Destination Address (DA) and
+removes (i.e. pops) the SRH from the IPv6 header.
+The PSP operation takes place only at a penultimate SR Segment Endpoint node
+(e.g., the Segment Left must be one) and does not happen at non-penultimate
+endpoint nodes.
 
 .B usp
 - Ultimate Segment Pop of the SRH (not yet supported in kernel)
@@ -1357,6 +1362,11 @@ Adds an IPv6 route with SRv6 encapsulation and two segments attached.
 ip -6 route add 2001:db8:1::/64 encap seg6local action End.DT46 vrftable 100 dev vrf100
 .RS 4
 Adds an IPv6 route with SRv6 decapsulation and forward with lookup in VRF table.
+.RE
+.PP
+ip -6 route add 2001:db8:1::/64 encap seg6local action End flavors psp dev eth0
+.RS 4
+Adds an IPv6 route with SRv6 End behavior with psp flavor enabled.
 .RE
 .PP
 ip -6 route add 2001:db8:1::/64 encap seg6local action End flavors next-csid dev eth0
