@@ -88,11 +88,11 @@ ip-link \- network device configuration
 .RB "[ " txqueuelen
 .IR PACKETS " ]"
 .br
-.RB "[ " max_gso_size
+.RB "[ " gso_max_size
 .IR BYTES " ]"
-.RB "[ " max_gso_segs
+.RB "[ " gso_max_segs
 .IR SEGMENTS " ]"
-.RB "[ " max_gro_size
+.RB "[ " gro_max_size
 .IR BYTES " ]"
 .br
 .RB "[ " name

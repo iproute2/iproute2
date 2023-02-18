@@ -748,6 +748,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 	int ret;
 
 	SPRINT_BUF(b1);
+	SPRINT_BUF(b2);
 
 	if (n->nlmsg_type != RTM_NEWROUTE && n->nlmsg_type != RTM_DELROUTE) {
 		fprintf(stderr, "Not a route: %08x %08x %08x\n",
@@ -809,7 +810,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 				 r->rtm_dst_len);
 		} else {
 			const char *hostname = format_host_rta_r(family, tb[RTA_DST],
-					  b1, sizeof(b1));
+					  b2, sizeof(b2));
 			if (hostname)
 				strncpy(b1, hostname, sizeof(b1) - 1);
 		}
@@ -832,7 +833,7 @@ int print_route(struct nlmsghdr *n, void *arg)
 				 r->rtm_src_len);
 		} else {
 			const char *hostname = format_host_rta_r(family, tb[RTA_SRC],
-					  b1, sizeof(b1));
+					  b2, sizeof(b2));
 			if (hostname)
 				strncpy(b1, hostname, sizeof(b1) - 1);
 		}
