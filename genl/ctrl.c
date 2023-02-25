@@ -57,7 +57,7 @@ static void print_ctrl_cmd_flags(FILE *fp, __u32 fl)
 	fprintf(fp, "\n");
 }
 
-static int print_ctrl_cmds(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
+static int print_ctrl_cmds(FILE *fp, struct rtattr *arg)
 {
 	struct rtattr *tb[CTRL_ATTR_OP_MAX + 1];
 
@@ -70,7 +70,7 @@ static int print_ctrl_cmds(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
 		fprintf(fp, " ID-0x%x ",*id);
 	}
 	/* we are only gonna do this for newer version of the controller */
-	if (tb[CTRL_ATTR_OP_FLAGS] && ctrl_ver >= 0x2) {
+	if (tb[CTRL_ATTR_OP_FLAGS]) {
 		__u32 *fl = RTA_DATA(tb[CTRL_ATTR_OP_FLAGS]);
 		print_ctrl_cmd_flags(fp, *fl);
 	}
@@ -78,7 +78,7 @@ static int print_ctrl_cmds(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
 
 }
 
-static int print_ctrl_grp(FILE *fp, struct rtattr *arg, __u32 ctrl_ver)
+static int print_ctrl_grp(FILE *fp, struct rtattr *arg)
 {
 	struct rtattr *tb[CTRL_ATTR_MCAST_GRP_MAX + 1];
 
@@ -109,7 +109,6 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 	int len = n->nlmsg_len;
 	struct rtattr *attrs;
 	FILE *fp = (FILE *) arg;
-	__u32 ctrl_v = 0x1;
 
 	if (n->nlmsg_type !=  GENL_ID_CTRL) {
 		fprintf(stderr, "Not a controller message, nlmsg_len=%d "
@@ -148,7 +147,6 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 	if (tb[CTRL_ATTR_VERSION]) {
 		__u32 *v = RTA_DATA(tb[CTRL_ATTR_VERSION]);
 		fprintf(fp, " Version: 0x%x ",*v);
-		ctrl_v = *v;
 	}
 	if (tb[CTRL_ATTR_HDRSIZE]) {
 		__u32 *h = RTA_DATA(tb[CTRL_ATTR_HDRSIZE]);
@@ -198,7 +196,7 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 		for (i = 0; i < GENL_MAX_FAM_OPS; i++) {
 			if (tb2[i]) {
 				fprintf(fp, "\t\t#%d: ", i);
-				if (0 > print_ctrl_cmds(fp, tb2[i], ctrl_v)) {
+				if (0 > print_ctrl_cmds(fp, tb2[i])) {
 					fprintf(fp, "Error printing command\n");
 				}
 				/* for next command */
@@ -221,7 +219,7 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 		for (i = 0; i < GENL_MAX_FAM_GRPS; i++) {
 			if (tb2[i]) {
 				fprintf(fp, "\t\t#%d: ", i);
-				if (0 > print_ctrl_grp(fp, tb2[i], ctrl_v))
+				if (0 > print_ctrl_grp(fp, tb2[i]))
 					fprintf(fp, "Error printing group\n");
 				/* for next group */
 				fprintf(fp,"\n");
