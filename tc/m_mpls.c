@@ -91,6 +91,9 @@ static int parse_mpls(struct action_util *a, int *argc_p, char ***argv_p,
 
 	NEXT_ARG();
 
+	if (strcmp(*argv, "index") == 0)
+		goto skip_args;
+
 	while (argc > 0) {
 		if (matches(*argv, "pop") == 0) {
 			if (check_double_action(action, *argv))
@@ -164,6 +167,7 @@ static int parse_mpls(struct action_util *a, int *argc_p, char ***argv_p,
 
 	if (argc) {
 		if (matches(*argv, "index") == 0) {
+skip_args:
 			NEXT_ARG();
 			if (get_u32(&parm.index, *argv, 10))
 				invarg("illegal index", *argv);
