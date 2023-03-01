@@ -1273,7 +1273,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	if (tb[TCA_U32_CLASSID]) {
 		__u32 classid = rta_getattr_u32(tb[TCA_U32_CLASSID]);
 		SPRINT_BUF(b1);
-		if (sel && (sel->flags & TC_U32_TERMINAL))
+		if (!sel || !(sel->flags & TC_U32_TERMINAL))
 			print_string(PRINT_FP, NULL, "*", NULL);
 
 		print_string(PRINT_ANY, "flowid", "flowid %s ",
