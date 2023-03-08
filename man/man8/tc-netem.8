@@ -1,6 +1,6 @@
 .TH NETEM 8 "25 November 2011" "iproute2" "Linux"
 .SH NAME
-NetEm \- Network Emulator
+netem \- Network Emulator
 .SH SYNOPSIS
 .B "tc qdisc ... dev"
 .IR DEVICE " ] "
@@ -20,7 +20,7 @@ NetEm \- Network Emulator
 .IR TIME " [ " JITTER " [ " CORRELATION " ]]]"
 .br
        [
-.BR distribution " { "uniform " | " normal " | " pareto " |  " paretonormal " } ]"
+.BR distribution " { "uniform " | " normal " | " pareto " | " paretonormal " } ]"
 
 .IR LOSS " := "
 .BR loss " { "
@@ -64,135 +64,175 @@ NetEm \- Network Emulator
 .BR bytes
 .IR BYTES " ]"
 
-
 .SH DESCRIPTION
-NetEm is an enhancement of the Linux traffic control facilities
-that allow one to add delay, packet loss, duplication and more other
-characteristics to packets outgoing from a selected network
-interface. NetEm is built using the existing Quality Of Service (QOS)
-and Differentiated Services (diffserv) facilities in the Linux
-kernel.
+The
+.B netem
+queue discipline provides Network Emulation functionality
+for testing protocols by emulating the properties of real-world networks.
 
-.SH netem OPTIONS
-netem has the following options:
+The queue discipline provides one or more network impairments to packets
+such as: delay, loss, duplication, and packet corruption.
 
-.SS limit packets
+.SH OPTIONS
+.TP
+.BI limit " COUNT"
+Limits the maximum number of packets the qdisc may hold when doing delay.
 
-maximum number of packets the qdisc may hold queued at a time.
-
-.SS delay
-adds the chosen delay to the packets outgoing to chosen network interface. The
-optional parameters allows one to introduce a delay variation and a correlation.
-Delay and jitter values are expressed in ms while correlation is percentage.
-
-.SS distribution
-allow the user to choose the delay distribution. If not specified, the default
-distribution is Normal. Additional parameters allow one to consider situations in
-which network has variable delays depending on traffic flows concurring on the
-same path, that causes several delay peaks and a tail.
-
-.SS loss random
-adds an independent loss probability to the packets outgoing from the chosen
-network interface. It is also possible to add a correlation, but this option
-is now deprecated due to the noticed bad behavior.
-
-.SS loss state
-adds packet losses according to the 4-state Markov using the transition
-probabilities as input parameters. The parameter p13 is mandatory and if used
-alone corresponds to the Bernoulli model. The optional parameters allows one to
-extend the model to 2-state (p31), 3-state (p23 and p32) and 4-state (p14).
-State 1 corresponds to good reception, State 4 to independent losses, State 3
-to burst losses and State 2 to good reception within a burst.
-
-.SS loss gemodel
-adds packet losses according to the Gilbert-Elliot loss model or its special
-cases (Gilbert, Simple Gilbert and Bernoulli). To use the Bernoulli model, the
-only needed parameter is p while the others will be set to the default
-values r=1-p, 1-h=1 and 1-k=0. The parameters needed for the Simple Gilbert
-model are two (p and r), while three parameters (p, r, 1-h) are needed for the
-Gilbert model and four (p, r, 1-h and 1-k) are needed for the Gilbert-Elliot
-model. As known, p and r are the transition probabilities between the bad and
-the good states, 1-h is the loss probability in the bad state and 1-k is the
-loss probability in the good state.
-
-.SS ecn
-can be used optionally to mark packets instead of dropping them. A loss model
-has to be used for this to be enabled.
-
-.SS corrupt
-allows the emulation of random noise introducing an error in a random position
-for a chosen percent of packets. It is also possible to add a correlation
-through the proper parameter.
-
-.SS duplicate
-using this option the chosen percent of packets is duplicated before queuing
-them. It is also possible to add a correlation through the proper parameter.
-
-.SS reorder
-to use reordering, a delay option must be specified. There are two ways to use
-this option (assuming 'delay 10ms' in the options list).
-
-.B "reorder "
-.I 25% 50%
-.B "gap"
-.I 5
+.TP
+.B delay
+.IR TIME " [ " JITTER " [ " CORRELATION " ]]]"
 .br
-in this first example, the first 4 (gap - 1) packets are delayed by 10ms and
-subsequent packets are sent immediately with a probability of 0.25 (with
-correlation of 50% ) or delayed with a probability of 0.75. After a packet is
-reordered, the process restarts i.e. the next 4 packets are delayed and
-subsequent packets are sent immediately or delayed based on reordering
-probability. To cause a repeatable pattern where every 5th packet is reordered
-reliably, a reorder probability of 100% can be used.
+Delays the packets before sending.
+The optional parameters allow introducing a delay variation and a correlation.
+Delay and jitter values are expressed in milliseconds;
+Correlation is set by specifying a percent of how much the previous delay
+will impact the current random value.
 
-.B reorder
-.I 25% 50%
+.TP
+.BI distribution " TYPE"
+Specifies a pattern for delay distribution.
+.RS
+.TP
+.B uniform
+Use an equally weighted distribution of packet delays.
+.TP
+.B normal
+Use a Gaussian distribution of delays.
+Sometimes called a Bell Curve.
+.TP
+.B pareto
+Use a Pareto distribution of packet delays.
+This is useful to emulate long-tail distributions.
+.TP
+.B paretonormal
+This is a mix of
+.B pareto
+and
+.B normal
+distribution which has properties of both Bell curve and long tail.
+.RE
+
+.TP
+.BI loss " MODEL"
+Drop packets based on a loss model.
+.I MODEL
+can be one of
+.RS
+.TP
+.BI random " PERCENT"
+Each packet loss is independent.
+.TP
+.BI state " P13 [ P31 [ P32 [ P23 P14 ]]]"
+Use a 4-state Markov chain to describe packet loss.
 .br
-in this second example 25% of packets are sent immediately (with correlation of
-50%) while the others are delayed by 10 ms.
+.I P13
+is the packet loss.
+Optional parameters extend the model to 2-state
+.IR P31 ,
+3-state
+.IR P23 ,
+.I P32
+and 4-state
+.IR P14 .
 
-.SS rate
-delay packets based on packet size and is a replacement for
-.IR TBF .
-Rate can be
-specified in common units (e.g. 100kbit). Optional
+The Markov chain states are:
+.RS
+.TP
+.B 1
+good packet reception (no loss).
+.TP
+.B 2
+good reception within a burst.
+.TP
+.B 3
+burst losses.
+.TP
+.B 4
+independent losses.
+.RE
+
+.TP
+.BI gemodel " PERCENT [ R [ 1-H [ 1-K ]]]"
+Use a Gilbert-Elliot (burst loss) model
+based on:
+.RS
+.TP
+.I PERCENT
+probability of starting bad (lossy) state.
+.TP
+.I R
+probability of exiting bad state.
+.TP
+.I "1-H"
+loss probability in bad state.
+.TP
+.I "1-K"
+loss probability in good state.
+.RE
+.RE
+
+.TP
+.B ecn
+Use
+Explicit Congestion Notification (ECN)
+to mark packets instead of dropping them.
+A loss model has to be used for this to be enabled.
+.TP
+.BI corrupt " PERCENT"
+modifies the contents of the packet at a random position
+based on
+.IR PERCENT .
+.TP
+.BI duplicate " PERCENT"
+creates a copy of the packet before queuing.
+.TP
+.BI reorder " PERCENT"
+modifies the order of packet in the queue.
+.TP
+.BI gap " DISTANCE"
+sends some packets immediately.
+The first packets
+.I "(DISTANCE - 1)"
+are delayed and the next packet is sent immediately.
+
+.TP
+.BI rate " RATE [ PACKETOVERHEAD [ CELLSIZE  [ CELLOVERHEAD ]]]"
+Delays packets based on packet size to emulate a fixed link speed.
+Optional parameters:
+.RS
+.TP
 .I PACKETOVERHEAD
-(in bytes) specify an per packet overhead and can be negative. A positive value can be
-used to simulate additional link layer headers. A negative value can be used to
-artificial strip the Ethernet header (e.g. -14) and/or simulate a link layer
-header compression scheme. The third parameter - an unsigned value - specify
-the cellsize. Cellsize can be used to simulate link layer schemes. ATM for
-example has an payload cellsize of 48 bytes and 5 byte per cell header. If a
-packet is 50 byte then ATM must use two cells: 2 * 48 bytes payload including 2
-* 5 byte header, thus consume 106 byte on the wire. The last optional value
+Specify a per packet overhead in bytes.
+Used to simulate additional link layer headers.
+A negative value can be used to simlate when the Ethernet header is
+stripped (e.g. -14) or header compression is used.
+.TP
+.I CELLSIZE
+simulate link layer schemes like ATM.
+.TP
 .I CELLOVERHEAD
-can be used to specify per cell overhead - for our ATM example 5.
-.I CELLOVERHEAD
-can be negative, but use negative values with caution.
+specify per cell overhead.
+.RE
 
-Note that rate throttling is limited by several factors: the kernel clock
-granularity avoid a perfect shaping at a specific level. This will show up in
-an artificial packet compression (bursts). Another influence factor are network
-adapter buffers which can also add artificial delay.
+Rate throttling impacted by several factors including the kernel clock
+granularity. This will show up in an artificial packet compression (bursts).
 
-.SS slot
-defer delivering accumulated packets to within a slot. Each available slot can be
-configured with a minimum delay to acquire, and an optional maximum delay.
-Alternatively it can be configured with the distribution similar to
-.BR distribution
-for
-.BR delay
-option. Slot delays can be specified in nanoseconds, microseconds, milliseconds or seconds
-(e.g. 800us). Values for the optional parameters
-.I BYTES
-will limit the number of bytes delivered per slot, and/or
-.I PACKETS
-will limit the number of packets delivered per slot.
+.TP
+.BI slot " MIN_DELAY [  MAX_DELAY  ]"
+allows emulating slotted networks.
+Defer delivering accumulated packets to within a slot.
+Each available slot is configured with a minimum delay to acquire,
+and an optional maximum delay.
+.TP
+.B slot distribution
+allows configuring based on distribution similar to
+.B distribution
+option for packet delays.
 
 These slot options can provide a crude approximation of bursty MACs such as
 DOCSIS, WiFi, and LTE.
 
-Note that slotting is limited by several factors: the kernel clock granularity,
+Slot emulation is limited by several factors: the kernel clock granularity,
 as with a rate, and attempts to deliver many packets within a slot will be
 smeared by the timer resolution, and by the underlying native bandwidth also.
 
@@ -201,36 +241,156 @@ where either the rate, or the slot limits on bytes or packets per slot, govern
 the actual delivered rate.
 
 .SH LIMITATIONS
-The main known limitation of Netem are related to timer granularity, since
-Linux is not a real-time operating system.
+Netem is limited by the timer granularity in the kernel.
+Rate and delay maybe impacted by clock interrupts.
+.PP
+Mixing forms of reordering may lead to unexpected results.
+For any method of reordering to work, some delay is necessary.
+If the delay is less than the inter-packet arrival time then
+no reordering will be seen.
+Due to mechanisms like TSQ (TCP Small Queues), for TCP performance test
+results to be realistic netem must be placed on the ingress of the
+receiver host.
+.PP
+Combining netem with other qdisc is possible but may not always
+work because netem use skb control block to set delays.
 
 .SH EXAMPLES
 .PP
-tc qdisc add dev eth0 root netem rate 5kbit 20 100 5
+.EX
+# tc qdisc add dev eth0 root netem delay 100ms
+.EE
 .RS 4
-delay all outgoing packets on device eth0 with a rate of 5kbit, a per packet
-overhead of 20 byte, a cellsize of 100 byte and a per celloverhead of 5 byte:
+Add fixed amount of delay to all packets going out on device eth0.
+Each packet will have added delay of 100ms ± 10ms.
+.RE
+.PP
+.EX
+# tc qdisc change dev eth0 root netem delay 100ms 10ms 25%
+.EE
+.RS 4
+This causes the added delay of 100ms ± 10ms
+and the next packet delay value will be biased by 25% on the most recent delay.
+This isn't a true statistical correlation, but an approximation.
+.RE
+.PP
+.EX
+# tc qdisc change dev eth0 root netem delay 100ms 20ms distribution normal
+.EE
+.RS 4
+This delays packets according to a normal distribution (Bell curve)
+over a range of 100ms ± 20ms.
+.RE
+.PP
+.EX
+# tc qdisc change dev eth0 root netem loss 0.1%
+.EE
+.RS 4
+This causes 1/10th of a percent (i.e 1 out of 1000) packets to be
+randomly dropped.
+
+An optional correlation may also be added.
+This causes the random number generator to be less random and can be used to emulate packet burst losses.
+.RE
+.PP
+.EX
+# tc qdisc change dev eth0 root netem duplicate 1%
+.EE
+.RS 4
+This causes one percent of the packets sent on eth0 to be duplicated.
+.RE
+.PP
+.EX
+# tc qdisc change dev eth0 root netem loss 0.3% 25%
+.EE
+.RS 4
+This will cause 0.3% of packets to be lost,
+and each successive probability depends is biased by 25% of the previous one.
+.RE
+.PP
+There are two different ways to specify reordering.
+The gap method uses a fixed sequence and reorders every Nth packet.
+.EX
+# tc qdisc change dev eth0 root netem gap 5 delay 10ms
+.EE
+.RS 4
+This causes every 5th (10th, 15th, …) packet to go to be sent immediately
+and every other packet to be delayed by 10ms.
+This is predictable and useful for base protocol testing like reassembly.
+.RE
+.PP
+The reorder form uses a percentage of the packets to get misordered.
+.EX
+# tc qdisc change dev eth0 root netem delay 10ms reorder 25% 50%
+.EE
+In this example, 25% of packets (with a correlation of 50%) will get sent immediately, others will be delayed by 10ms.
+.PP
+Packets will also get reordered if jitter is large enough.
+.EX
+# tc qdisc change dev eth0 root netem delay 100ms 75ms
+.EE
+.RS 4
+If the first packet gets a random delay of 100ms (100ms base - 0ms jitter)
+and the second packet is sent 1ms later and gets a delay of 50ms (100ms base - 50ms jitter);
+the second packet will be sent first.
+This is because the queue discipline tfifo inside netem,
+keeps packets in order by time to send.
+.RE
+.PP
+If you don't want this behavior then replace the internal
+queue discipline tfifo with a simple FIFO queue discipline.
+.EX
+# tc qdisc add dev eth0 root handle 1: netem delay 10ms 100ms
+# tc qdisc add dev eth0 parent 1:1 pfifo limit 1000
+.EE
+
+.PP
+Example of using rate control and cells size.
+.EX
+# tc qdisc add dev eth0 root netem rate 5kbit 20 100 5
+.EE
+.RS 4
+Delay all outgoing packets on device eth0 with a rate of 5kbit, a per packet
+overhead of 20 byte, a cellsize of 100 byte and a per celloverhead of 5 bytes.
 .RE
 
+.PP
+It is possible to selectively apply impairment using traffic classification.
+.EX
+# tc qdisc add dev eth0 root handle 1: prio
+# tc qdisc add dev eth0 parent 1:3 handle 30: \
+   tbf rate 20kbit buffer 1600 limit  3000
+# tc qdisc add dev eth0 parent 30:1 handle 31: \
+   netem delay 200ms 10ms distribution normal
+# tc filter add dev eth0 protocol ip parent 1:0 prio 3 u32 \
+   match ip dst 65.172.181.4/32 flowid 1:3
+.EE
+.RS 4
+This eample uses a priority queueing discipline;
+a TBF is added to do rate control; and a simple netem delay.
+A filter classifies all packets going to 65.172.181.4 as being priority 3.
+.PP
 .SH SOURCES
 .IP " 1. " 4
 Hemminger S. , "Network Emulation with NetEm", Open Source Development Lab,
 April 2005
-(http://devresources.linux-foundation.org/shemminger/netem/LCA2005_paper.pdf)
+.UR http://devresources.linux-foundation.org/shemminger/netem/LCA2005_paper.pdf
+.UE
 
 .IP " 2. " 4
-Netem page from Linux foundation, (https://wiki.linuxfoundation.org/networking/netem)
-
-.IP " 3. " 4
 Salsano S., Ludovici F., Ordine A., "Definition of a general and intuitive loss
 model for packet networks and its implementation in the Netem module in the
-Linux kernel", available at http://netgroup.uniroma2.it/NetemCLG
+Linux kernel", available at
+.UR http://netgroup.uniroma2.it/NetemCLG
+.UE
 
 .SH SEE ALSO
-.BR tc (8),
-.BR tc-tbf (8)
+.BR tc (8)
 
 .SH AUTHOR
-Netem was written by Stephen Hemminger at Linux foundation and is based on NISTnet.
-This manpage was created by Fabio Ludovici <fabio.ludovici at yahoo dot it> and
-Hagen Paul Pfeifer <hagen@jauu.net>
+Netem was written by Stephen Hemminger at Linux foundation and was
+inspired by NISTnet.
+
+Original manpage was created by Fabio Ludovici
+<fabio.ludovici at yahoo dot it> and Hagen Paul Pfeifer
+<hagen@jauu.net>.
