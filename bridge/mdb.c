@@ -34,7 +34,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
 		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
-		"              [ dst_port DST_PORT ] [ vni VNI ] [ src_vni SRC_VNI ]\n"
+		"              [ dst_port DST_PORT ] [ vni VNI ] [ src_vni SRC_VNI ] [ via DEV ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -271,6 +271,14 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 	if (tb[MDBA_MDB_EATTR_SRC_VNI])
 		print_uint(PRINT_ANY, "src_vni", " src_vni %u",
 			   rta_getattr_u32(tb[MDBA_MDB_EATTR_SRC_VNI]));
+
+	if (tb[MDBA_MDB_EATTR_IFINDEX]) {
+		unsigned int ifindex;
+
+		ifindex = rta_getattr_u32(tb[MDBA_MDB_EATTR_IFINDEX]);
+		print_string(PRINT_ANY, "via", " via %s",
+			     ll_index_to_name(ifindex));
+	}
 
 	if (show_stats && tb && tb[MDBA_MDB_EATTR_TIMER]) {
 		__u32 timer = rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]);
@@ -659,6 +667,19 @@ static int mdb_parse_vni(struct nlmsghdr *n, int maxlen, const char *vni,
 	return 0;
 }
 
+static int mdb_parse_dev(struct nlmsghdr *n, int maxlen, const char *dev)
+{
+	unsigned int ifindex;
+
+	ifindex = ll_name_to_index(dev);
+	if (!ifindex)
+		return -1;
+
+	addattr32(n, maxlen, MDBE_ATTR_IFINDEX, ifindex);
+
+	return 0;
+}
+
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -672,7 +693,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		.bpm.family = PF_BRIDGE,
 	};
 	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL, *mode = NULL;
-	char *dst_port = NULL, *vni = NULL, *src_vni = NULL;
+	char *dst_port = NULL, *vni = NULL, *src_vni = NULL, *via = NULL;
 	char *src_list = NULL, *proto = NULL, *dst = NULL;
 	struct br_mdb_entry entry = {};
 	bool set_attrs = false;
@@ -727,6 +748,10 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "src_vni") == 0) {
 			NEXT_ARG();
 			src_vni = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "via") == 0) {
+			NEXT_ARG();
+			via = *argv;
 			set_attrs = true;
 		} else {
 			if (matches(*argv, "help") == 0)
@@ -805,6 +830,9 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 			fprintf(stderr, "Invalid source VNI \"%s\"\n", src_vni);
 			return -1;
 		}
+
+		if (via && mdb_parse_dev(&req.n, sizeof(req), via))
+			return nodev(via);
 
 		addattr_nest_end(&req.n, nest);
 	}

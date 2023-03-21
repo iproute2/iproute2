@@ -153,7 +153,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B vni
 .IR VNI " ] [ "
 .B src_vni
-.IR SRC_VNI " ]
+.IR SRC_VNI " ] [ "
+.B via
+.IR DEV " ]
 
 .ti -8
 .BR "bridge mdb show" " [ "
@@ -1005,6 +1007,11 @@ or the source VNI when the VXLAN device is in external mode.
 the source VNI Network Identifier this entry belongs to. Used only when the
 VXLAN device is in external mode. If omitted, the value specified at VXLAN
 device creation will be used.
+
+.TP
+.BI via " DEV"
+device name of the outgoing interface for the VXLAN device to reach the remote
+VXLAN tunnel endpoint.
 
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry
