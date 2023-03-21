@@ -1014,6 +1014,12 @@ device name of the outgoing interface for the VXLAN device to reach the remote
 VXLAN tunnel endpoint.
 
 .in -8
+The 0.0.0.0 and :: MDB entries are special catchall entries used to flood IPv4
+and IPv6 unregistered multicast packets, respectively. Therefore, when these
+entries are programmed, the catchall 00:00:00:00:00:00 FDB entry will only
+flood broadcast, unknown unicast and link-local multicast.
+
+.in -8
 .SS bridge mdb delete - delete a multicast group database entry
 This command removes an existing mdb entry.
 
