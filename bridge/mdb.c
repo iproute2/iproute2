@@ -34,7 +34,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
 		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
-		"              [ dst_port DST_PORT ]\n"
+		"              [ dst_port DST_PORT ] [ vni VNI ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -263,6 +263,10 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 	if (tb[MDBA_MDB_EATTR_DST_PORT])
 		print_uint(PRINT_ANY, "dst_port", " dst_port %u",
 			   rta_getattr_u16(tb[MDBA_MDB_EATTR_DST_PORT]));
+
+	if (tb[MDBA_MDB_EATTR_VNI])
+		print_uint(PRINT_ANY, "vni", " vni %u",
+			   rta_getattr_u32(tb[MDBA_MDB_EATTR_VNI]));
 
 	if (show_stats && tb && tb[MDBA_MDB_EATTR_TIMER]) {
 		__u32 timer = rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]);
@@ -636,6 +640,21 @@ static int mdb_parse_dst_port(struct nlmsghdr *n, int maxlen,
 	return 0;
 }
 
+static int mdb_parse_vni(struct nlmsghdr *n, int maxlen, const char *vni,
+			 int attr_type)
+{
+	unsigned long vni_num;
+	char *endptr;
+
+	vni_num = strtoul(vni, &endptr, 0);
+	if ((endptr && *endptr) || vni_num == ULONG_MAX)
+		return -1;
+
+	addattr32(n, maxlen, attr_type, vni_num);
+
+	return 0;
+}
+
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -650,7 +669,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	};
 	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL, *mode = NULL;
 	char *src_list = NULL, *proto = NULL, *dst = NULL;
-	char *dst_port = NULL;
+	char *dst_port = NULL, *vni = NULL;
 	struct br_mdb_entry entry = {};
 	bool set_attrs = false;
 	short vid = 0;
@@ -696,6 +715,10 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "dst_port") == 0) {
 			NEXT_ARG();
 			dst_port = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "vni") == 0) {
+			NEXT_ARG();
+			vni = *argv;
 			set_attrs = true;
 		} else {
 			if (matches(*argv, "help") == 0)
@@ -759,6 +782,13 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		if (dst_port && mdb_parse_dst_port(&req.n, sizeof(req),
 						   dst_port)) {
 			fprintf(stderr, "Invalid destination port \"%s\"\n", dst_port);
+			return -1;
+		}
+
+		if (vni && mdb_parse_vni(&req.n, sizeof(req), vni,
+					 MDBE_ATTR_VNI)) {
+			fprintf(stderr, "Invalid destination VNI \"%s\"\n",
+				vni);
 			return -1;
 		}
 
