@@ -147,7 +147,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B proto
 .IR PROTO " ] [ "
 .B dst
-.IR IPADDR " ]
+.IR IPADDR " ] [ "
+.B dst_port
+.IR DST_PORT " ]
 
 .ti -8
 .BR "bridge mdb show" " [ "
@@ -981,6 +983,12 @@ is of type VXLAN.
 .BI dst " IPADDR"
 the IP address of the destination
 VXLAN tunnel endpoint where the multicast receivers reside.
+
+.TP
+.BI dst_port " DST_PORT"
+the UDP destination port number to use to connect to the remote VXLAN tunnel
+endpoint. If omitted, the value specified at VXLAN device creation will be
+used.
 
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry

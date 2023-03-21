@@ -14,6 +14,7 @@
 #include <linux/if_ether.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include "libnetlink.h"
 #include "utils.h"
@@ -33,6 +34,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
 		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
+		"              [ dst_port DST_PORT ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -257,6 +259,10 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 
 	if (tb[MDBA_MDB_EATTR_DST])
 		print_dst(tb[MDBA_MDB_EATTR_DST]);
+
+	if (tb[MDBA_MDB_EATTR_DST_PORT])
+		print_uint(PRINT_ANY, "dst_port", " dst_port %u",
+			   rta_getattr_u16(tb[MDBA_MDB_EATTR_DST_PORT]));
 
 	if (show_stats && tb && tb[MDBA_MDB_EATTR_TIMER]) {
 		__u32 timer = rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]);
@@ -607,6 +613,29 @@ static int mdb_parse_dst(struct nlmsghdr *n, int maxlen, const char *dst)
 	return -1;
 }
 
+static int mdb_parse_dst_port(struct nlmsghdr *n, int maxlen,
+			      const char *dst_port)
+{
+	unsigned long port;
+	char *endptr;
+
+	port = strtoul(dst_port, &endptr, 0);
+	if (endptr && *endptr) {
+		struct servent *pse;
+
+		pse = getservbyname(dst_port, "udp");
+		if (!pse)
+			return -1;
+		port = ntohs(pse->s_port);
+	} else if (port > USHRT_MAX) {
+		return -1;
+	}
+
+	addattr16(n, maxlen, MDBE_ATTR_DST_PORT, port);
+
+	return 0;
+}
+
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -621,6 +650,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	};
 	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL, *mode = NULL;
 	char *src_list = NULL, *proto = NULL, *dst = NULL;
+	char *dst_port = NULL;
 	struct br_mdb_entry entry = {};
 	bool set_attrs = false;
 	short vid = 0;
@@ -662,6 +692,10 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "dst") == 0) {
 			NEXT_ARG();
 			dst = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "dst_port") == 0) {
+			NEXT_ARG();
+			dst_port = *argv;
 			set_attrs = true;
 		} else {
 			if (matches(*argv, "help") == 0)
@@ -719,6 +753,12 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		if (dst && mdb_parse_dst(&req.n, sizeof(req), dst)) {
 			fprintf(stderr, "Invalid underlay destination address \"%s\"\n",
 				dst);
+			return -1;
+		}
+
+		if (dst_port && mdb_parse_dst_port(&req.n, sizeof(req),
+						   dst_port)) {
+			fprintf(stderr, "Invalid destination port \"%s\"\n", dst_port);
 			return -1;
 		}
 
