@@ -32,7 +32,7 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
-		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ]\n"
+		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -146,6 +146,21 @@ static void print_src_entry(struct rtattr *src_attr, int af, const char *sep)
 	close_json_object();
 }
 
+static void print_dst(const struct rtattr *dst_attr)
+{
+	SPRINT_BUF(abuf);
+	int af = AF_INET;
+	const void *dst;
+
+	if (RTA_PAYLOAD(dst_attr) == sizeof(struct in6_addr))
+		af = AF_INET6;
+
+	dst = (const void *)RTA_DATA(dst_attr);
+	print_color_string(PRINT_ANY, ifa_family_color(af),
+			   "dst", " dst %s",
+			   inet_ntop(af, dst, abuf, sizeof(abuf)));
+}
+
 static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 			    struct nlmsghdr *n, struct rtattr **tb)
 {
@@ -239,6 +254,9 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 
 	if (e->vid)
 		print_uint(PRINT_ANY, "vid", " vid %u", e->vid);
+
+	if (tb[MDBA_MDB_EATTR_DST])
+		print_dst(tb[MDBA_MDB_EATTR_DST]);
 
 	if (show_stats && tb && tb[MDBA_MDB_EATTR_TIMER]) {
 		__u32 timer = rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]);
@@ -570,6 +588,25 @@ static int mdb_parse_proto(struct nlmsghdr *n, int maxlen, const char *proto)
 	return 0;
 }
 
+static int mdb_parse_dst(struct nlmsghdr *n, int maxlen, const char *dst)
+{
+	struct in6_addr dst_ip6;
+	__be32 dst_ip4;
+
+	if (inet_pton(AF_INET, dst, &dst_ip4)) {
+		addattr32(n, maxlen, MDBE_ATTR_DST, dst_ip4);
+		return 0;
+	}
+
+	if (inet_pton(AF_INET6, dst, &dst_ip6)) {
+		addattr_l(n, maxlen, MDBE_ATTR_DST, &dst_ip6,
+			  sizeof(dst_ip6));
+		return 0;
+	}
+
+	return -1;
+}
+
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -583,7 +620,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		.bpm.family = PF_BRIDGE,
 	};
 	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL, *mode = NULL;
-	char *src_list = NULL, *proto = NULL;
+	char *src_list = NULL, *proto = NULL, *dst = NULL;
 	struct br_mdb_entry entry = {};
 	bool set_attrs = false;
 	short vid = 0;
@@ -621,6 +658,10 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "proto") == 0) {
 			NEXT_ARG();
 			proto = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "dst") == 0) {
+			NEXT_ARG();
+			dst = *argv;
 			set_attrs = true;
 		} else {
 			if (matches(*argv, "help") == 0)
@@ -672,6 +713,12 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		if (proto && mdb_parse_proto(&req.n, sizeof(req), proto)) {
 			fprintf(stderr, "Invalid protocol value \"%s\"\n",
 				proto);
+			return -1;
+		}
+
+		if (dst && mdb_parse_dst(&req.n, sizeof(req), dst)) {
+			fprintf(stderr, "Invalid underlay destination address \"%s\"\n",
+				dst);
 			return -1;
 		}
 

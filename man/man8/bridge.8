@@ -145,7 +145,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B source_list
 .IR SOURCE_LIST " ] [ "
 .B proto
-.IR PROTO " ]
+.IR PROTO " ] [ "
+.B dst
+.IR IPADDR " ]
 
 .ti -8
 .BR "bridge mdb show" " [ "
@@ -968,6 +970,17 @@ from the file /etc/iproute2/rt_protos. If the routing protocol is not given,
 then
 .B static
 is assumed.
+
+.in -8
+The next command line parameters apply only
+when the specified device
+.I DEV
+is of type VXLAN.
+
+.TP
+.BI dst " IPADDR"
+the IP address of the destination
+VXLAN tunnel endpoint where the multicast receivers reside.
 
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry
