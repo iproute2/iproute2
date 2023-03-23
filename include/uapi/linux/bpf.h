@@ -2801,7 +2801,7 @@ union bpf_attr {
  *
  * long bpf_perf_prog_read_value(struct bpf_perf_event_data *ctx, struct bpf_perf_event_value *buf, u32 buf_size)
  * 	Description
- * 		For en eBPF program attached to a perf event, retrieve the
+ * 		For an eBPF program attached to a perf event, retrieve the
  * 		value of the event counter associated to *ctx* and store it in
  * 		the structure pointed by *buf* and of size *buf_size*. Enabled
  * 		and running times are also stored in the structure (see
@@ -3134,6 +3134,11 @@ union bpf_attr {
  *		**BPF_FIB_LOOKUP_OUTPUT**
  *			Perform lookup from an egress perspective (default is
  *			ingress).
+ *		**BPF_FIB_LOOKUP_SKIP_NEIGH**
+ *			Skip the neighbour table lookup. *params*->dmac
+ *			and *params*->smac will not be set as output. A common
+ *			use case is to call **bpf_redirect_neigh**\ () after
+ *			doing **bpf_fib_lookup**\ ().
  *
  *		*ctx* is either **struct xdp_md** for XDP programs or
  *		**struct sk_buff** tc cls_act programs.
@@ -4964,6 +4969,12 @@ union bpf_attr {
  *		different maps if key/value layout matches across maps.
  *		Every bpf_timer_set_callback() can have different callback_fn.
  *
+ *		*flags* can be one of:
+ *
+ *		**BPF_F_TIMER_ABS**
+ *			Start the timer in absolute expire value instead of the
+ *			default relative one.
+ *
  *	Return
  *		0 on success.
  *		**-EINVAL** if *timer* was not initialized with bpf_timer_init() earlier
@@ -5320,11 +5331,22 @@ union bpf_attr {
  *	Description
  *		Write *len* bytes from *src* into *dst*, starting from *offset*
  *		into *dst*.
- *		*flags* is currently unused.
+ *
+ *		*flags* must be 0 except for skb-type dynptrs.
+ *
+ *		For skb-type dynptrs:
+ *		    *  All data slices of the dynptr are automatically
+ *		       invalidated after **bpf_dynptr_write**\ (). This is
+ *		       because writing may pull the skb and change the
+ *		       underlying packet buffer.
+ *
+ *		    *  For *flags*, please see the flags accepted by
+ *		       **bpf_skb_store_bytes**\ ().
  *	Return
  *		0 on success, -E2BIG if *offset* + *len* exceeds the length
  *		of *dst*'s data, -EINVAL if *dst* is an invalid dynptr or if *dst*
- *		is a read-only dynptr or if *flags* is not 0.
+ *		is a read-only dynptr or if *flags* is not correct. For skb-type dynptrs,
+ *		other errors correspond to errors returned by **bpf_skb_store_bytes**\ ().
  *
  * void *bpf_dynptr_data(const struct bpf_dynptr *ptr, u32 offset, u32 len)
  *	Description
@@ -5332,6 +5354,9 @@ union bpf_attr {
  *
  *		*len* must be a statically known value. The returned data slice
  *		is invalidated whenever the dynptr is invalidated.
+ *
+ *		skb and xdp type dynptrs may not use bpf_dynptr_data. They should
+ *		instead use bpf_dynptr_slice and bpf_dynptr_slice_rdwr.
  *	Return
  *		Pointer to the underlying dynptr data, NULL if the dynptr is
  *		read-only, if the dynptr is invalid, or if the offset and length
@@ -6750,6 +6775,7 @@ struct bpf_raw_tracepoint_args {
 enum {
 	BPF_FIB_LOOKUP_DIRECT  = (1U << 0),
 	BPF_FIB_LOOKUP_OUTPUT  = (1U << 1),
+	BPF_FIB_LOOKUP_SKIP_NEIGH = (1U << 2),
 };
 
 enum {
@@ -6917,6 +6943,17 @@ struct bpf_list_node {
 	__u64 :64;
 } __attribute__((aligned(8)));
 
+struct bpf_rb_root {
+	__u64 :64;
+	__u64 :64;
+} __attribute__((aligned(8)));
+
+struct bpf_rb_node {
+	__u64 :64;
+	__u64 :64;
+	__u64 :64;
+} __attribute__((aligned(8)));
+
 struct bpf_sysctl {
 	__u32	write;		/* Sysctl is being read (= 0) or written (= 1).
 				 * Allows 1,2,4-byte read, but no write.
@@ -7064,6 +7101,15 @@ struct bpf_core_relo {
 	__u32 type_id;
 	__u32 access_str_off;
 	enum bpf_core_relo_kind kind;
+};
+
+/*
+ * Flags to control bpf_timer_start() behaviour.
+ *     - BPF_F_TIMER_ABS: Timeout passed is absolute time, by default it is
+ *       relative to current time.
+ */
+enum {
+	BPF_F_TIMER_ABS = (1ULL << 0),
 };
 
 #endif /* __LINUX_BPF_H__ */
