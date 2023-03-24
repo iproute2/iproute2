@@ -5791,7 +5791,7 @@ int main(int argc, char *argv[])
 		}
 		if (dump_tcpdiag[0] != '-') {
 			dump_fp = fopen(dump_tcpdiag, "w");
-			if (!dump_tcpdiag) {
+			if (!dump_fp) {
 				perror("fopen dump file");
 				exit(-1);
 			}
