@@ -145,7 +145,17 @@ bridge \- show / manipulate bridge addresses and devices
 .B source_list
 .IR SOURCE_LIST " ] [ "
 .B proto
-.IR PROTO " ]
+.IR PROTO " ] [ "
+.B dst
+.IR IPADDR " ] [ "
+.B dst_port
+.IR DST_PORT " ] [ "
+.B vni
+.IR VNI " ] [ "
+.B src_vni
+.IR SRC_VNI " ] [ "
+.B via
+.IR DEV " ]
 
 .ti -8
 .BR "bridge mdb show" " [ "
@@ -968,6 +978,46 @@ from the file /etc/iproute2/rt_protos. If the routing protocol is not given,
 then
 .B static
 is assumed.
+
+.in -8
+The next command line parameters apply only
+when the specified device
+.I DEV
+is of type VXLAN.
+
+.TP
+.BI dst " IPADDR"
+the IP address of the destination
+VXLAN tunnel endpoint where the multicast receivers reside.
+
+.TP
+.BI dst_port " DST_PORT"
+the UDP destination port number to use to connect to the remote VXLAN tunnel
+endpoint. If omitted, the value specified at VXLAN device creation will be
+used.
+
+.TP
+.BI vni " VNI"
+the VXLAN VNI Network Identifier to use to connect to the remote VXLAN tunnel
+endpoint. If omitted, the value specified at VXLAN device creation will be used
+or the source VNI when the VXLAN device is in external mode.
+
+.TP
+.BI src_vni " SRC_VNI"
+the source VNI Network Identifier this entry belongs to. Used only when the
+VXLAN device is in external mode. If omitted, the value specified at VXLAN
+device creation will be used.
+
+.TP
+.BI via " DEV"
+device name of the outgoing interface for the VXLAN device to reach the remote
+VXLAN tunnel endpoint.
+
+.in -8
+The 0.0.0.0 and :: MDB entries are special catchall entries used to flood IPv4
+and IPv6 unregistered multicast packets, respectively. Therefore, when these
+entries are programmed, the catchall 00:00:00:00:00:00 FDB entry will only
+flood broadcast, unknown unicast and link-local multicast.
 
 .in -8
 .SS bridge mdb delete - delete a multicast group database entry
