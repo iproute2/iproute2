@@ -50,7 +50,9 @@ ip-address \- protocol address management
 .B vrf
 .IR NAME " ] [ "
 .BR up " ] ["
-.BR nomaster " ] ]"
+.BR nomaster " ]"
+.B proto
+.IR ADDRPROTO " ] ]"
 
 .ti -8
 .BR "ip address" " { " showdump " | " restore " }"
@@ -66,12 +68,18 @@ ip-address \- protocol address management
 .B  label
 .IR LABEL " ] [ "
 .B  scope
-.IR SCOPE-ID " ]"
+.IR SCOPE-ID " ] [ "
+.B proto
+.IR ADDRPROTO " ]"
 
 .ti -8
 .IR SCOPE-ID " := "
 .RB "[ " host " | " link " | " global " | "
 .IR NUMBER " ]"
+
+.ti -8
+.IR ADDRPROTO " := [ "
+.IR NAME " | " NUMBER " ]"
 
 .ti -8
 .IR FLAG-LIST " := [ "  FLAG-LIST " ] " FLAG
@@ -288,6 +296,36 @@ flag when adding a multicast address enables similar functionality for
 Openvswitch VXLAN interfaces as well as other tunneling mechanisms that need to
 receive multicast traffic.
 
+.TP
+.BI proto " ADDRPROTO"
+the protocol identifier of this route.
+.I ADDRPROTO
+may be a number or a string from the file
+.BR "/etc/iproute2/rt_addrprotos" .
+If the protocol ID is not given,
+
+.B ip assumes protocol 0. Several protocol
+values have a fixed interpretation. Namely:
+
+.in +8
+.B kernel_lo
+- The ::1 address that kernel installs on a loopback netdevice has this
+  protocol value
+.sp
+
+.B kernel_ra
+- IPv6 addresses installed in response to router advertisement messages
+.sp
+
+.B kernel_ll
+- Link-local addresses have this protocol value
+.sp
+.in -8
+
+.sp
+The rest of the values are not reserved and the administrator is free
+to assign (or not to assign) protocol tags.
+
 .SS ip address delete - delete protocol address
 .B Arguments:
 coincide with the arguments of
@@ -399,6 +437,13 @@ inverse of
 .B -primary
 This is an alias for
 .BR temporary " or " secondary .
+
+.TP
+.BI proto " ADDRPROTO"
+Only show addresses with a given protocol, or those for which the kernel
+response did not include protocol. See the corresponding argument to
+.B ip addr add
+for details about address protocols.
 
 .SS ip address flush - flush protocol addresses
 This command flushes the protocol addresses selected by some criteria.
