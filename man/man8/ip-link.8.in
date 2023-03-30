@@ -1479,6 +1479,7 @@ the following additional arguments are supported:
 .BR mode " { " private " | " vepa " | " bridge " | " passthru
 .RB " [ " nopromisc " ] | " source " [ " nodst " ] } "
 .RB " [ " bcqueuelen " { " LENGTH " } ] "
+.RB " [ " bclim " " LIMIT " ] "
 
 .in +8
 .sp
@@ -1537,6 +1538,13 @@ will be the maximum length that any macvlan interface has requested.
 When listing device parameters both the bcqueuelen parameter
 as well as the actual used bcqueuelen are listed to better help
 the user understand the setting.
+
+.BR bclim " " LIMIT
+- Set the threshold for broadcast queueing.
+.BR LIMIT " must be a 32-bit integer."
+Setting this to -1 disables broadcast queueing altogether.  Otherwise
+a multicast address will be queued as broadcast if the number of devices
+using it is greater than the given value.
 .in -8
 
 .TP
@@ -2699,6 +2707,9 @@ Update the broadcast/multicast queue length.
 [
 .BI bcqueuelen "  LENGTH  "
 ]
+[
+.BI bclim " LIMIT "
+]
 
 .in +8
 .BI bcqueuelen " LENGTH "
@@ -2712,6 +2723,13 @@ will be the maximum length that any macvlan interface has requested.
 When listing device parameters both the bcqueuelen parameter
 as well as the actual used bcqueuelen are listed to better help
 the user understand the setting.
+
+.BI bclim " LIMIT "
+- Set the threshold for broadcast queueing.
+.IR LIMIT " must be a 32-bit integer."
+Setting this to -1 disables broadcast queueing altogether.  Otherwise
+a multicast address will be queued as broadcast if the number of devices
+using it is greater than the given value.
 .in -8
 
 .TP
