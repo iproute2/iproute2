@@ -28,6 +28,8 @@ struct link_filter {
 	char *kind;
 	char *slave_kind;
 	int target_nsid;
+	bool have_proto;
+	int proto;
 };
 
 const char *get_ip_lib_dir(void);
