@@ -26,7 +26,8 @@ static void explain(void)
 		"dst_ip <IP> (mandatory)\n"
 		"dst_port <UDP_PORT>\n"
 		"geneve_opts | vxlan_opts | erspan_opts <OPTIONS>\n"
-		"csum | nocsum (default is \"csum\")\n");
+		"csum | nocsum (default is \"csum\")\n"
+		"nofrag\n");
 }
 
 static void usage(void)
@@ -321,7 +322,7 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 	int ret;
 	int has_src_ip = 0;
 	int has_dst_ip = 0;
-	int csum = 1;
+	int csum = 1, nofrag = 0;
 
 	if (matches(*argv, "tunnel_key") != 0)
 		return -1;
@@ -425,6 +426,8 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 			csum = 1;
 		} else if (matches(*argv, "nocsum") == 0) {
 			csum = 0;
+		} else if (strcmp(*argv, "nofrag") == 0) {
+			nofrag = 1;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -434,6 +437,9 @@ static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
 	}
 
 	addattr8(n, MAX_MSG, TCA_TUNNEL_KEY_NO_CSUM, !csum);
+
+	if (nofrag)
+		addattr(n, MAX_MSG, TCA_TUNNEL_KEY_NO_FRAG);
 
 	parse_action_control_dflt(&argc, &argv, &parm.action,
 				  false, TC_ACT_PIPE);
@@ -513,15 +519,36 @@ static void tunnel_key_print_dst_port(FILE *f, char *name,
 		   rta_getattr_be16(attr));
 }
 
-static void tunnel_key_print_flag(FILE *f, const char *name_on,
-				  const char *name_off,
-				  struct rtattr *attr)
+static const struct {
+	const char *name;
+	unsigned int nl_flag;
+} tunnel_key_flag_names[] = {
+	{ "",	    TCA_TUNNEL_KEY_NO_CSUM }, /* special handling, not bool */
+	{ "nofrag", TCA_TUNNEL_KEY_NO_FRAG },
+};
+
+static void tunnel_key_print_flags(struct rtattr *tb[])
 {
-	if (!attr)
-		return;
+	unsigned int i, nl_flag;
+
 	print_nl();
-	print_string(PRINT_ANY, "flag", "\t%s",
-		     rta_getattr_u8(attr) ? name_on : name_off);
+	for (i = 0; i < ARRAY_SIZE(tunnel_key_flag_names); i++) {
+		nl_flag = tunnel_key_flag_names[i].nl_flag;
+		if (nl_flag == TCA_TUNNEL_KEY_NO_CSUM) {
+			/* special handling to preserve csum/nocsum design */
+			if (!tb[nl_flag])
+				continue;
+			print_string(PRINT_ANY, "flag", "\t%s",
+				     rta_getattr_u8(tb[nl_flag]) ?
+					"nocsum" : "csum" );
+		} else {
+			if (tb[nl_flag])
+				print_string(PRINT_FP, NULL, "\t%s",
+					     tunnel_key_flag_names[i].name);
+			print_bool(PRINT_JSON, tunnel_key_flag_names[i].name,
+				   NULL, !!tb[nl_flag]);
+		}
+	}
 }
 
 static void tunnel_key_print_geneve_options(struct rtattr *attr)
@@ -697,8 +724,7 @@ static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
 		tunnel_key_print_dst_port(f, "dst_port",
 					  tb[TCA_TUNNEL_KEY_ENC_DST_PORT]);
 		tunnel_key_print_key_opt(tb[TCA_TUNNEL_KEY_ENC_OPTS]);
-		tunnel_key_print_flag(f, "nocsum", "csum",
-				      tb[TCA_TUNNEL_KEY_NO_CSUM]);
+		tunnel_key_print_flags(tb);
 		tunnel_key_print_tos_ttl(f, "tos",
 					  tb[TCA_TUNNEL_KEY_ENC_TOS]);
 		tunnel_key_print_tos_ttl(f, "ttl",

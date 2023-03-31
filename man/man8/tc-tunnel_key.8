@@ -131,6 +131,9 @@ If using
 .B nocsum
 with IPv6, be sure you know what you are doing. Zero UDP checksums provide
 weaker protection against corrupted packets. See RFC6935 for details.
+.TP
+.B nofrag
+disallow IP fragmentation.
 .RE
 .SH EXAMPLES
 The following example encapsulates incoming ICMP packets on eth0 into a vxlan
