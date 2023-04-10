@@ -17,6 +17,7 @@
 #include <net/if_arp.h>
 #include <linux/ip.h>
 #include <linux/if_tunnel.h>
+#include <linux/ip6_tunnel.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -172,11 +173,20 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 			if (get_ifname(p->name, *argv))
 				invarg("\"name\" not a valid ifname", *argv);
 			if (cmd == SIOCCHGTUNNEL && count == 0) {
-				struct ip_tunnel_parm old_p = {};
+				union {
+					struct ip_tunnel_parm ip_tnl;
+					struct ip6_tnl_parm2 ip6_tnl;
+				} old_p = {};
 
 				if (tnl_get_ioctl(*argv, &old_p))
 					return -1;
-				*p = old_p;
+
+				if (old_p.ip_tnl.iph.version != 4 ||
+				    old_p.ip_tnl.iph.ihl != 5)
+					invarg("\"name\" is not an ip tunnel",
+					       *argv);
+
+				*p = old_p.ip_tnl;
 			}
 		}
 		count++;
