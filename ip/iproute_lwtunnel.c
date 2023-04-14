@@ -840,8 +840,9 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 		return;
 
 	et = rta_getattr_u16(encap_type);
-
-	print_string(PRINT_ANY, "encap", " encap %s ", format_encap_type(et));
+	open_json_object("encap");
+	print_string(PRINT_ANY, "encap_type", " encap %s ",
+		     format_encap_type(et));
 
 	switch (et) {
 	case LWTUNNEL_ENCAP_MPLS:
@@ -875,6 +876,7 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 		print_encap_xfrm(fp, encap);
 		break;
 	}
+	close_json_object();
 }
 
 static struct ipv6_sr_hdr *parse_srh(char *segbuf, int hmac, bool encap)
