@@ -32,7 +32,7 @@
 #include <linux/ioam6.h>
 #include <linux/ioam6_iptunnel.h>
 
-static const char *format_encap_type(int type)
+static const char *format_encap_type(uint16_t type)
 {
 	switch (type) {
 	case LWTUNNEL_ENCAP_MPLS:
@@ -62,7 +62,7 @@ static const char *format_encap_type(int type)
 
 static void encap_type_usage(void)
 {
-	int i;
+	uint16_t i;
 
 	fprintf(stderr, "Usage: ip route ... encap TYPE [ OPTIONS ] [...]\n");
 
@@ -73,7 +73,7 @@ static void encap_type_usage(void)
 	exit(-1);
 }
 
-static int read_encap_type(const char *name)
+static uint16_t read_encap_type(const char *name)
 {
 	if (strcmp(name, "mpls") == 0)
 		return LWTUNNEL_ENCAP_MPLS;
@@ -834,7 +834,7 @@ static void print_encap_xfrm(FILE *fp, struct rtattr *encap)
 void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 			  struct rtattr *encap)
 {
-	int et;
+	uint16_t et;
 
 	if (!encap_type)
 		return;
