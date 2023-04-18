@@ -3,23 +3,30 @@
 MQPRIO \- Multiqueue Priority Qdisc (Offloaded Hardware QOS)
 .SH SYNOPSIS
 .B tc qdisc ... dev
-dev
-.B  ( parent
-classid
-.B | root) [ handle
-major:
-.B ] mqprio [ num_tc
-tcs
-.B ] [ map
-P0 P1 P2...
-.B ] [ queues
-count1@offset1 count2@offset2 ...
-.B ] [ hw
-1|0
-.B ] [ mode
-dcb|channel
-.B ] [ shaper
-dcb|bw_rlimit ] [
+dev (
+.B parent
+classid | root) [
+.B handle
+major: ]
+.B mqprio
+.ti +8
+[
+.B num_tc
+tcs ] [
+.B map
+P0 P1 P2... ] [
+.B queues
+count1@offset1 count2@offset2 ... ]
+.ti +8
+[
+.B hw
+1|0 ] [
+.B mode
+dcb|channel ] [
+.B shaper
+dcb|bw_rlimit ]
+.ti +8
+[
 .B min_rate
 min_rate1 min_rate2 ... ] [
 .B max_rate
