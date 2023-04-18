@@ -30,9 +30,11 @@ dcb|bw_rlimit ]
 .B min_rate
 min_rate1 min_rate2 ... ] [
 .B max_rate
-max_rate1 max_rate2 ...
-.B ]
-
+max_rate1 max_rate2 ... ]
+.ti +8
+[
+.B fp
+FP0 FP1 FP2 ... ]
 
 .SH DESCRIPTION
 The MQPRIO qdisc is a simple queuing discipline that allows mapping
@@ -162,6 +164,34 @@ the
 argument is set to
 .B 'bw_rlimit'.
 
+.TP
+fp
+Selects whether traffic classes are express (deliver packets via the eMAC) or
+preemptible (deliver packets via the pMAC), according to IEEE 802.1Q-2018
+clause 6.7.2 Frame preemption. Takes the form of an array (one element per
+traffic class) with values being
+.B 'E'
+(for express) or
+.B 'P'
+(for preemptible).
+
+Multiple priorities which map to the same traffic class, as well as multiple
+TXQs which map to the same traffic class, must have the same FP attributes.
+To interpret the FP as an attribute per priority, the
+.B 'map'
+argument can be used for translation. To interpret FP as an attribute per TXQ,
+the
+.B 'queues'
+argument can be used for translation.
+
+Traffic classes are express by default. The argument is supported only with
+.B 'hw'
+set to 1. Preemptible traffic classes are accepted only if the device has a MAC
+Merge layer configurable through
+.BR ethtool(8).
+
+.SH SEE ALSO
+.BR ethtool(8)
 
 .SH EXAMPLE
 
