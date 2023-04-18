@@ -284,6 +284,14 @@ unsigned int print_name_and_link(const char *fmt,
 	_min1 < _min2 ? _min1 : _min2; })
 #endif
 
+#ifndef max
+# define max(x, y) ({			\
+	typeof(x) _max1 = (x);		\
+	typeof(y) _max2 = (y);		\
+	(void) (&_max1 == &_max2);	\
+	_max1 < _max2 ? _max2 : _max1; })
+#endif
+
 #ifndef __check_format_string
 # define __check_format_string(pos_str, pos_args) \
 	__attribute__ ((format (printf, (pos_str), (pos_args))))
