@@ -32,6 +32,10 @@ clockid
 .ti +8
 .B sched-entry
 <command N> <gate mask N> <interval N>
+.ti +8
+[
+.B max-sdu
+<queueMaxSDU[TC 0]> <queueMaxSDU[TC 1]> <queueMaxSDU[TC N]> ]
 
 .SH DESCRIPTION
 The TAPRIO qdisc implements a simplified version of the scheduling
