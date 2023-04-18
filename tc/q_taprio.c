@@ -45,10 +45,10 @@ static void explain(void)
 {
 	fprintf(stderr,
 		"Usage: ... taprio clockid CLOCKID\n"
-		"		[num_tc NUMBER] [map P0 P1 ...] "
-		"		[queues COUNT@OFFSET COUNT@OFFSET COUNT@OFFSET ...] "
-		"		[ [sched-entry index cmd gate-mask interval] ... ] "
-		"		[base-time time] [txtime-delay delay]"
+		"		[num_tc NUMBER] [map P0 P1 ...]\n"
+		"		[queues COUNT@OFFSET COUNT@OFFSET COUNT@OFFSET ...]\n"
+		"		[ [sched-entry index cmd gate-mask interval] ... ]\n"
+		"		[base-time time] [txtime-delay delay]\n"
 		"\n"
 		"CLOCKID must be a valid SYS-V id (i.e. CLOCK_TAI)\n");
 }
