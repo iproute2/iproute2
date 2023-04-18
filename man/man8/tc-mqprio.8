@@ -19,13 +19,12 @@ count1@offset1 count2@offset2 ...
 .B ] [ mode
 dcb|channel
 .B ] [ shaper
-dcb|
-.B [ bw_rlimit
+dcb|bw_rlimit ] [
 .B min_rate
-min_rate1 min_rate2 ...
+min_rate1 min_rate2 ... ] [
 .B max_rate
 max_rate1 max_rate2 ...
-.B ]]
+.B ]
 
 
 .SH DESCRIPTION
@@ -142,11 +141,19 @@ for hardware QOS defaults. Supported with 'hw' set to 1 only.
 
 .TP
 min_rate
-Minimum value of bandwidth rate limit for a traffic class.
+Minimum value of bandwidth rate limit for a traffic class. Supported only when
+the
+.B 'shaper'
+argument is set to
+.B 'bw_rlimit'.
 
 .TP
 max_rate
-Maximum value of bandwidth rate limit for a traffic class.
+Maximum value of bandwidth rate limit for a traffic class. Supported only when
+the
+.B 'shaper'
+argument is set to
+.B 'bw_rlimit'.
 
 
 .SH EXAMPLE
