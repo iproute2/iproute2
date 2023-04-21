@@ -49,7 +49,7 @@ ip-link \- network device configuration
 .IR BYTES " ]"
 .br
 .RB "[ " netns " {"
-.IR PID " | " NETNSNAME " } ]"
+.IR PID " | " NETNSNAME " | " NETNSFILE " } ]"
 .br
 .BI type " TYPE"
 .RI "[ " ARGS " ]"
@@ -118,7 +118,7 @@ ip-link \- network device configuration
 .IR MTU " ]"
 .br
 .RB "[ " netns " {"
-.IR PID " | " NETNSNAME " } ]"
+.IR PID " | " NETNSNAME " | " NETNSFILE " } ]"
 .br
 .RB "[ " link-netnsid
 .IR ID " ]"
@@ -465,8 +465,15 @@ specifies the desired index of the new virtual device. The link
 creation fails, if the index is busy.
 
 .TP
-.BI netns " { PID | NETNSNAME } "
-specifies the desired network namespace to create interface in.
+.B netns
+.RI "{ " PID " | " NETNSNAME " | " NETNSFILE " }"
+.br
+create the device in the network namespace associated with process
+.IR "PID " or
+the name
+.IR "NETNSNAME " or
+the file
+.IR "NETNSFILE".
 
 .TP
 VLAN Type Support
@@ -2188,10 +2195,15 @@ the interface is
 .IR "POINTOPOINT" .
 
 .TP
-.BI netns " NETNSNAME " \fR| " PID"
-move the device to the network namespace associated with name
+.B netns
+.RI "{ " PID " | " NETNSNAME " | " NETNSFILE " }"
+.br
+move the device to the network namespace associated with process
+.IR "PID " or
+the name
 .IR "NETNSNAME " or
-.RI process " PID".
+the file
+.IR "NETNSFILE".
 
 Some devices are not allowed to change network namespace: loopback, bridge,
 wireless. These are network namespace local devices. In such case
