@@ -465,7 +465,7 @@ specifies the desired index of the new virtual device. The link
 creation fails, if the index is busy.
 
 .TP
-.BI netns " { PID | NAME } "
+.BI netns " { PID | NETNSNAME } "
 specifies the desired network namespace to create interface in.
 
 .TP
