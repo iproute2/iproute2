@@ -1629,7 +1629,7 @@ static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)
 		if (!if_printed) {
 			print_uint(PRINT_ANY, "ifindex",
 				   "%u:", ifindex);
-			print_color_string(PRINT_ANY, COLOR_IFNAME, 
+			print_color_string(PRINT_ANY, COLOR_IFNAME,
 					   "ifname", "%s",
 					   ll_index_to_name(ifindex));
 			print_nl();
