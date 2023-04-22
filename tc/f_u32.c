@@ -828,12 +828,12 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 			print_nl();
 			print_uint(PRINT_ANY, "ip_ihl", "  match IP ihl %u",
 				   ntohl(key->val) >> 24);
-			return;
+			break;
 		case 0x00ff0000:
 			print_nl();
 			print_0xhex(PRINT_ANY, "ip_dsfield", "  match IP dsfield %#x",
 				    ntohl(key->val) >> 16);
-			return;
+			break;
 		}
 		break;
 	case 8:
@@ -841,7 +841,6 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 			print_nl();
 			print_int(PRINT_ANY, "ip_protocol", "  match IP protocol %d",
 				  ntohl(key->val) >> 16);
-			return;
 		}
 		break;
 	case 12:
@@ -864,7 +863,6 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 				print_string(PRINT_ANY, "address", "%s", addr);
 				print_int(PRINT_ANY, "prefixlen", "/%d", bits);
 				close_json_object();
-				return;
 			}
 		}
 		break;
@@ -874,19 +872,19 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 		case 0x0000ffff:
 			print_uint(PRINT_ANY, "dport", "match dport %u",
 				   ntohl(key->val) & 0xffff);
-			return;
+			break;
 		case 0xffff0000:
 			print_nl();
 			print_uint(PRINT_ANY, "sport", "  match sport %u",
 				   ntohl(key->val) >> 16);
-			return;
+			break;
 		case 0xffffffff:
 			print_nl();
 			print_uint(PRINT_ANY, "dport", "  match dport %u, ",
 				   ntohl(key->val) & 0xffff);
 			print_uint(PRINT_ANY, "sport", "match sport %u",
 				   ntohl(key->val) >> 16);
-			return;
+			break;
 		}
 		/* XXX: Default print_raw */
 	}
@@ -905,12 +903,12 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 			print_nl();
 			print_uint(PRINT_ANY, "ip_ihl", "  match IP ihl %u",
 				   ntohl(key->val) >> 24);
-			return;
+			break;
 		case 0x00ff0000:
 			print_nl();
 			print_0xhex(PRINT_ANY, "ip_dsfield", "  match IP dsfield %#x",
 				    ntohl(key->val) >> 16);
-			return;
+			break;
 		}
 		break;
 	case 8:
@@ -918,7 +916,6 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 			print_nl();
 			print_int(PRINT_ANY, "ip_protocol", "  match IP protocol %d",
 				  ntohl(key->val) >> 16);
-			return;
 		}
 		break;
 	case 12:
@@ -941,7 +938,6 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 				print_string(PRINT_ANY, "address", "%s", addr);
 				print_int(PRINT_ANY, "prefixlen", "/%d", bits);
 				close_json_object();
-				return;
 			}
 		}
 		break;
@@ -952,11 +948,11 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 			print_nl();
 			print_uint(PRINT_ANY, "sport", "  match sport %u",
 				   ntohl(key->val) & 0xffff);
-			return;
+			break;
 		case 0xffff0000:
 			print_uint(PRINT_ANY, "dport", "match dport %u",
 				   ntohl(key->val) >> 16);
-			return;
+			break;
 		case 0xffffffff:
 			print_nl();
 			print_uint(PRINT_ANY, "sport", "  match sport %u, ",
@@ -964,7 +960,7 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 			print_uint(PRINT_ANY, "dport", "match dport %u",
 				   ntohl(key->val) >> 16);
 
-			return;
+			break;
 		}
 		/* XXX: Default print_raw */
 	}
@@ -1273,7 +1269,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 	if (tb[TCA_U32_CLASSID]) {
 		__u32 classid = rta_getattr_u32(tb[TCA_U32_CLASSID]);
 		SPRINT_BUF(b1);
-		if (sel && (sel->flags & TC_U32_TERMINAL))
+		if (!sel || !(sel->flags & TC_U32_TERMINAL))
 			print_string(PRINT_FP, NULL, "*", NULL);
 
 		print_string(PRINT_ANY, "flowid", "flowid %s ",

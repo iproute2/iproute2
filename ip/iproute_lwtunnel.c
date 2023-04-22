@@ -32,7 +32,7 @@
 #include <linux/ioam6.h>
 #include <linux/ioam6_iptunnel.h>
 
-static const char *format_encap_type(int type)
+static const char *format_encap_type(uint16_t type)
 {
 	switch (type) {
 	case LWTUNNEL_ENCAP_MPLS:
@@ -62,7 +62,7 @@ static const char *format_encap_type(int type)
 
 static void encap_type_usage(void)
 {
-	int i;
+	uint16_t i;
 
 	fprintf(stderr, "Usage: ip route ... encap TYPE [ OPTIONS ] [...]\n");
 
@@ -73,7 +73,7 @@ static void encap_type_usage(void)
 	exit(-1);
 }
 
-static int read_encap_type(const char *name)
+static uint16_t read_encap_type(const char *name)
 {
 	if (strcmp(name, "mpls") == 0)
 		return LWTUNNEL_ENCAP_MPLS;
@@ -834,14 +834,15 @@ static void print_encap_xfrm(FILE *fp, struct rtattr *encap)
 void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 			  struct rtattr *encap)
 {
-	int et;
+	uint16_t et;
 
 	if (!encap_type)
 		return;
 
 	et = rta_getattr_u16(encap_type);
-
-	print_string(PRINT_ANY, "encap", " encap %s ", format_encap_type(et));
+	open_json_object("encap");
+	print_string(PRINT_ANY, "encap_type", " encap %s ",
+		     format_encap_type(et));
 
 	switch (et) {
 	case LWTUNNEL_ENCAP_MPLS:
@@ -875,6 +876,7 @@ void lwt_print_encap(FILE *fp, struct rtattr *encap_type,
 		print_encap_xfrm(fp, encap);
 		break;
 	}
+	close_json_object();
 }
 
 static struct ipv6_sr_hdr *parse_srh(char *segbuf, int hmac, bool encap)
@@ -959,7 +961,7 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 				invarg("\"segs\" provided before \"mode\"\n",
 				       *argv);
 
-			strlcpy(segbuf, *argv, 1024);
+			strlcpy(segbuf, *argv, sizeof(segbuf));
 		} else if (strcmp(*argv, "hmac") == 0) {
 			NEXT_ARG();
 			if (hmac_ok++)
@@ -1045,7 +1047,7 @@ static int parse_encap_rpl(struct rtattr *rta, size_t len, int *argcp,
 			if (segs_ok++)
 				duparg2("segs", *argv);
 
-			strlcpy(segbuf, *argv, 1024);
+			strlcpy(segbuf, *argv, sizeof(segbuf));
 		} else {
 			break;
 		}
@@ -1466,8 +1468,7 @@ static int parse_encap_seg6local(struct rtattr *rta, size_t len, int *argcp,
 			NEXT_ARG();
 			if (segs_ok++)
 				duparg2("segs", *argv);
-			strncpy(segbuf, *argv, 1024);
-			segbuf[1023] = 0;
+			strlcpy(segbuf, *argv, sizeof(segbuf));
 			if (!NEXT_ARG_OK())
 				break;
 			NEXT_ARG();

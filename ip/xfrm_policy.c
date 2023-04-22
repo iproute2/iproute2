@@ -1141,7 +1141,8 @@ static int xfrm_str_to_policy(char *name, uint8_t *policy)
 	if (strcmp(name, "block") == 0) {
 		*policy = XFRM_USERPOLICY_BLOCK;
 		return 0;
-	} else if (strcmp(name, "accept") == 0) {
+	} else if (strcmp(name, "accept") == 0 ||
+		   strcmp(name, "allow") == 0) {
 		*policy = XFRM_USERPOLICY_ACCEPT;
 		return 0;
 	}

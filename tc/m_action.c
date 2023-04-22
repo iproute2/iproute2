@@ -586,7 +586,13 @@ int print_action(struct nlmsghdr *n, void *arg)
 
 	open_json_object(NULL);
 	tc_dump_action(fp, tb[TCA_ACT_TAB], tot_acts ? *tot_acts:0, false);
-	print_ext_msg(tb);
+
+	if (tb[TCA_ROOT_EXT_WARN_MSG]) {
+		print_string(PRINT_ANY, "warn", "%s",
+			     rta_getattr_str(tb[TCA_ROOT_EXT_WARN_MSG]));
+		print_nl();
+	}
+
 	close_json_object();
 
 	return 0;

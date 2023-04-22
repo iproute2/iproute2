@@ -471,7 +471,7 @@ static int parse_action_control_slash_spaces(int *argc_p, char ***argv_p,
 			result_p = &result2;
 			NEXT_ARG();
 			/* fall-through */
-		case 0: 
+		case 0:
 			ret = parse_action_control(&argc, &argv,
 						   result_p, allow_num);
 			if (ret)

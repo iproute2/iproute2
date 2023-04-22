@@ -356,7 +356,7 @@ int print_class(struct nlmsghdr *n, void *arg)
 		print_string(PRINT_ANY, "parent", "parent %s ", abuf);
 	}
 	if (t->tcm_info)
-		print_0xhex(PRINT_ANY, "leaf", "leaf %x", t->tcm_info>>16);
+		print_0xhex(PRINT_ANY, "leaf", "leaf %x: ", t->tcm_info>>16);
 
 	q = get_qdisc_kind(RTA_DATA(tb[TCA_KIND]));
 	if (tb[TCA_OPTIONS]) {
