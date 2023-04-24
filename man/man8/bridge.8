@@ -184,7 +184,8 @@ bridge \- show / manipulate bridge addresses and devices
 .B mcast_max_groups
 .IR MAX_GROUPS " ] [ "
 .B mcast_router
-.IR MULTICAST_ROUTER " ]"
+.IR MULTICAST_ROUTER " ] [ "
+.BR neigh_suppress " { " on " | " off " } ]"
 
 .ti -8
 .BR "bridge vlan" " [ " show " | " tunnelshow " ] [ "
@@ -1203,6 +1204,14 @@ may be either
 - to temporarily mark this vlan and port as having a multicast router, i.e.
 enable multicast traffic forwarding. This mode is available only for ports.
 .sp
+
+.TP
+.BR "neigh_suppress on " or " neigh_suppress off "
+Controls whether neigh discovery (arp and nd) proxy and suppression is enabled
+for a given VLAN on a given port. By default this flag is off.
+
+Note that this option only takes effect when \fBbridge link\fR option
+\fBneigh_vlan_suppress\fR is enabled for a given port.
 
 .SS bridge vlan show - list vlan configuration.
 
