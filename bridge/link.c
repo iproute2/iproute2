@@ -165,6 +165,14 @@ static void print_protinfo(FILE *fp, struct rtattr *attr)
 		if (prtb[IFLA_BRPORT_NEIGH_SUPPRESS])
 			print_on_off(PRINT_ANY, "neigh_suppress", "neigh_suppress %s ",
 				     rta_getattr_u8(prtb[IFLA_BRPORT_NEIGH_SUPPRESS]));
+		if (prtb[IFLA_BRPORT_NEIGH_VLAN_SUPPRESS]) {
+			struct rtattr *at;
+
+			at = prtb[IFLA_BRPORT_NEIGH_VLAN_SUPPRESS];
+			print_on_off(PRINT_ANY, "neigh_vlan_suppress",
+				     "neigh_vlan_suppress %s ",
+				     rta_getattr_u8(at));
+		}
 		if (prtb[IFLA_BRPORT_VLAN_TUNNEL])
 			print_on_off(PRINT_ANY, "vlan_tunnel", "vlan_tunnel %s ",
 				     rta_getattr_u8(prtb[IFLA_BRPORT_VLAN_TUNNEL]));
@@ -296,6 +304,7 @@ static void usage(void)
 		"                               [ mcast_to_unicast {on | off} ]\n"
 		"                               [ mcast_max_groups MAX_GROUPS ]\n"
 		"                               [ neigh_suppress {on | off} ]\n"
+		"                               [ neigh_vlan_suppress {on | off} ]\n"
 		"                               [ vlan_tunnel {on | off} ]\n"
 		"                               [ isolated {on | off} ]\n"
 		"                               [ locked {on | off} ]\n"
@@ -322,6 +331,7 @@ static int brlink_modify(int argc, char **argv)
 	char *d = NULL;
 	int backup_port_idx = -1;
 	__s8 neigh_suppress = -1;
+	__s8 neigh_vlan_suppress = -1;
 	__s8 learning = -1;
 	__s8 learning_sync = -1;
 	__s8 flood = -1;
@@ -447,6 +457,12 @@ static int brlink_modify(int argc, char **argv)
 			neigh_suppress = parse_on_off("neigh_suppress", *argv, &ret);
 			if (ret)
 				return ret;
+		} else if (strcmp(*argv, "neigh_vlan_suppress") == 0) {
+			NEXT_ARG();
+			neigh_vlan_suppress = parse_on_off("neigh_vlan_suppress",
+							   *argv, &ret);
+			if (ret)
+				return ret;
 		} else if (strcmp(*argv, "vlan_tunnel") == 0) {
 			NEXT_ARG();
 			vlan_tunnel = parse_on_off("vlan_tunnel", *argv, &ret);
@@ -544,6 +560,9 @@ static int brlink_modify(int argc, char **argv)
 	if (neigh_suppress != -1)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_NEIGH_SUPPRESS,
 			 neigh_suppress);
+	if (neigh_vlan_suppress != -1)
+		addattr8(&req.n, sizeof(req), IFLA_BRPORT_NEIGH_VLAN_SUPPRESS,
+			 neigh_vlan_suppress);
 	if (vlan_tunnel != -1)
 		addattr8(&req.n, sizeof(req), IFLA_BRPORT_VLAN_TUNNEL,
 			 vlan_tunnel);

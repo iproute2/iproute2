@@ -2517,6 +2517,8 @@ the following additional arguments are supported:
 ] [
 .BR neigh_suppress " { " on " | " off " }"
 ] [
+.BR neigh_vlan_suppress " { " on " | " off " }"
+] [
 .BR vlan_tunnel " { " on " | " off " }"
 ] [
 .BR isolated " { " on " | " off " }"
@@ -2621,6 +2623,12 @@ this port).
 .BR neigh_suppress " { " on " | " off " }"
 - controls whether neigh discovery (arp and nd) proxy and suppression
 is enabled on the port. By default this flag is off.
+
+.BR neigh_vlan_suppress " { " on " | " off " }"
+- controls whether per-VLAN neigh discovery (arp and nd) proxy and suppression
+is enabled on the port. When on, the \fBbridge link\fR option
+\fBneigh_suppress\fR has no effect and the per-VLAN state is set using the
+\fBbridge vlan\fR option \fBneigh_suppress\fR. By default this flag is off.
 
 .BR vlan_tunnel " { " on " | " off " }"
 - controls whether vlan to tunnel mapping is enabled on the port. By
