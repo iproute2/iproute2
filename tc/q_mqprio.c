@@ -23,10 +23,27 @@ static void explain(void)
 		"Usage: ... mqprio	[num_tc NUMBER] [map P0 P1 ...]\n"
 		"			[queues count1@offset1 count2@offset2 ...] "
 		"[hw 1|0]\n"
+		"			[fp FP0 FP1 FP2 ...]\n"
 		"			[mode dcb|channel]\n"
 		"			[shaper bw_rlimit SHAPER_PARAMS]\n"
 		"Where: SHAPER_PARAMS := { min_rate MIN_RATE1 MIN_RATE2 ...|\n"
 		"			  max_rate MAX_RATE1 MAX_RATE2 ... }\n");
+}
+
+static void add_tc_entries(struct nlmsghdr *n, __u32 fp[TC_QOPT_MAX_QUEUE],
+			   int num_fp_entries)
+{
+	struct rtattr *l;
+	__u32 tc;
+
+	for (tc = 0; tc < num_fp_entries; tc++) {
+		l = addattr_nest(n, 1024, TCA_MQPRIO_TC_ENTRY | NLA_F_NESTED);
+
+		addattr32(n, 1024, TCA_MQPRIO_TC_ENTRY_INDEX, tc);
+		addattr32(n, 1024, TCA_MQPRIO_TC_ENTRY_FP, fp[tc]);
+
+		addattr_nest_end(n, l);
+	}
 }
 
 static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
@@ -43,7 +60,10 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 	__u64 min_rate64[TC_QOPT_MAX_QUEUE] = {0};
 	__u64 max_rate64[TC_QOPT_MAX_QUEUE] = {0};
 	__u16 shaper = TC_MQPRIO_SHAPER_DCB;
+	__u32 fp[TC_QOPT_MAX_QUEUE] = { };
 	__u16 mode = TC_MQPRIO_MODE_DCB;
+	bool have_tc_entries = false;
+	int num_fp_entries = 0;
 	int cnt_off_pairs = 0;
 	struct rtattr *tail;
 	__u32 flags = 0;
@@ -93,6 +113,21 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 				idx++;
 				cnt_off_pairs++;
 			}
+		} else if (strcmp(*argv, "fp") == 0) {
+			while (idx < TC_QOPT_MAX_QUEUE && NEXT_ARG_OK()) {
+				NEXT_ARG();
+				if (strcmp(*argv, "E") == 0) {
+					fp[idx] = TC_FP_EXPRESS;
+				} else if (strcmp(*argv, "P") == 0) {
+					fp[idx] = TC_FP_PREEMPTIBLE;
+				} else {
+					PREV_ARG();
+					break;
+				}
+				num_fp_entries++;
+				idx++;
+			}
+			have_tc_entries = true;
 		} else if (strcmp(*argv, "hw") == 0) {
 			NEXT_ARG();
 			if (get_u8(&opt.hw, *argv, 10)) {
@@ -187,6 +222,9 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 		addattr_l(n, 1024, TCA_MQPRIO_SHAPER,
 			  &shaper, sizeof(shaper));
 
+	if (have_tc_entries)
+		add_tc_entries(n, fp, num_fp_entries);
+
 	if (flags & TC_MQPRIO_F_MIN_RATE) {
 		struct rtattr *start;
 
@@ -216,6 +254,64 @@ static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
 	tail->rta_len = (void *)NLMSG_TAIL(n) - (void *)tail;
 
 	return 0;
+}
+
+static void dump_tc_entry(struct rtattr *rta, __u32 fp[TC_QOPT_MAX_QUEUE],
+			  int *max_tc_fp)
+{
+	struct rtattr *tb[TCA_MQPRIO_TC_ENTRY_MAX + 1];
+	__u32 tc, val = 0;
+
+	parse_rtattr_nested(tb, TCA_MQPRIO_TC_ENTRY_MAX, rta);
+
+	if (!tb[TCA_MQPRIO_TC_ENTRY_INDEX]) {
+		fprintf(stderr, "Missing tc entry index\n");
+		return;
+	}
+
+	tc = rta_getattr_u32(tb[TCA_MQPRIO_TC_ENTRY_INDEX]);
+	/* Prevent array out of bounds access */
+	if (tc >= TC_QOPT_MAX_QUEUE) {
+		fprintf(stderr, "Unexpected tc entry index %d\n", tc);
+		return;
+	}
+
+	if (tb[TCA_MQPRIO_TC_ENTRY_FP]) {
+		val = rta_getattr_u32(tb[TCA_MQPRIO_TC_ENTRY_FP]);
+		fp[tc] = val;
+
+		if (*max_tc_fp < (int)tc)
+			*max_tc_fp = tc;
+	}
+}
+
+static void dump_tc_entries(FILE *f, struct rtattr *opt, int len)
+{
+	__u32 fp[TC_QOPT_MAX_QUEUE] = {};
+	int max_tc_fp = -1;
+	struct rtattr *rta;
+	int tc;
+
+	for (rta = opt; RTA_OK(rta, len); rta = RTA_NEXT(rta, len)) {
+		if (rta->rta_type != (TCA_MQPRIO_TC_ENTRY | NLA_F_NESTED))
+			continue;
+
+		dump_tc_entry(rta, fp, &max_tc_fp);
+	}
+
+	if (max_tc_fp >= 0) {
+		open_json_array(PRINT_ANY,
+				is_json_context() ? "fp" : "\n             fp:");
+		for (tc = 0; tc <= max_tc_fp; tc++) {
+			print_string(PRINT_ANY, NULL, " %s",
+				     fp[tc] == TC_FP_PREEMPTIBLE ? "P" :
+				     fp[tc] == TC_FP_EXPRESS ? "E" :
+				     "?");
+		}
+		close_json_array(PRINT_ANY, "");
+
+		print_nl();
+	}
 }
 
 static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
@@ -309,7 +405,10 @@ static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 				tc_print_rate(PRINT_ANY, NULL, "%s ", max_rate64[i]);
 			close_json_array(PRINT_ANY, "");
 		}
+
+		dump_tc_entries(f, RTA_DATA(opt) + RTA_ALIGN(sizeof(*qopt)), len);
 	}
+
 	return 0;
 }
 
