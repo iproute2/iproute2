@@ -931,6 +931,7 @@ static void ifname_map_init(struct dl *dl)
 
 static int ifname_map_load(struct dl *dl, const char *ifname)
 {
+	struct mnlu_gen_socket nlg_map;
 	struct nlmsghdr *nlh;
 	int err;
 
@@ -943,15 +944,20 @@ static int ifname_map_load(struct dl *dl, const char *ifname)
 		 */
 	}
 
-	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_PORT_GET,
+	err = mnlu_gen_socket_open(&nlg_map, DEVLINK_GENL_NAME,
+				   DEVLINK_GENL_VERSION);
+	if (err)
+		return err;
+
+	nlh = mnlu_gen_socket_cmd_prepare(&nlg_map, DEVLINK_CMD_PORT_GET,
 			       NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP);
 
-	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, ifname_map_cb, dl);
-	if (err) {
+	err = mnlu_gen_socket_sndrcv(&nlg_map, nlh, ifname_map_cb, dl);
+	if (err)
 		ifname_map_fini(dl);
-		return err;
-	}
-	return 0;
+
+	mnlu_gen_socket_close(&nlg_map);
+	return err;
 }
 
 static int ifname_map_check_load(struct dl *dl, const char *ifname)
