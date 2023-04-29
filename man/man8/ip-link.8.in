@@ -1486,6 +1486,7 @@ the following additional arguments are supported:
 .BR mode " { " private " | " vepa " | " bridge " | " passthru
 .RB " [ " nopromisc " ] | " source " [ " nodst " ] } "
 .RB " [ " bcqueuelen " { " LENGTH " } ] "
+.RB " [ " bclim " " LIMIT " ] "
 
 .in +8
 .sp
@@ -1544,6 +1545,13 @@ will be the maximum length that any macvlan interface has requested.
 When listing device parameters both the bcqueuelen parameter
 as well as the actual used bcqueuelen are listed to better help
 the user understand the setting.
+
+.BR bclim " " LIMIT
+- Set the threshold for broadcast queueing.
+.BR LIMIT " must be a 32-bit integer."
+Setting this to -1 disables broadcast queueing altogether.  Otherwise
+a multicast address will be queued as broadcast if the number of devices
+using it is greater than the given value.
 .in -8
 
 .TP
@@ -2509,6 +2517,8 @@ the following additional arguments are supported:
 ] [
 .BR neigh_suppress " { " on " | " off " }"
 ] [
+.BR neigh_vlan_suppress " { " on " | " off " }"
+] [
 .BR vlan_tunnel " { " on " | " off " }"
 ] [
 .BR isolated " { " on " | " off " }"
@@ -2614,6 +2624,12 @@ this port).
 - controls whether neigh discovery (arp and nd) proxy and suppression
 is enabled on the port. By default this flag is off.
 
+.BR neigh_vlan_suppress " { " on " | " off " }"
+- controls whether per-VLAN neigh discovery (arp and nd) proxy and suppression
+is enabled on the port. When on, the \fBbridge link\fR option
+\fBneigh_suppress\fR has no effect and the per-VLAN state is set using the
+\fBbridge vlan\fR option \fBneigh_suppress\fR. By default this flag is off.
+
 .BR vlan_tunnel " { " on " | " off " }"
 - controls whether vlan to tunnel mapping is enabled on the port. By
 default this flag is off.
@@ -2711,6 +2727,9 @@ Update the broadcast/multicast queue length.
 [
 .BI bcqueuelen "  LENGTH  "
 ]
+[
+.BI bclim " LIMIT "
+]
 
 .in +8
 .BI bcqueuelen " LENGTH "
@@ -2724,6 +2743,13 @@ will be the maximum length that any macvlan interface has requested.
 When listing device parameters both the bcqueuelen parameter
 as well as the actual used bcqueuelen are listed to better help
 the user understand the setting.
+
+.BI bclim " LIMIT "
+- Set the threshold for broadcast queueing.
+.IR LIMIT " must be a 32-bit integer."
+Setting this to -1 disables broadcast queueing altogether.  Otherwise
+a multicast address will be queued as broadcast if the number of devices
+using it is greater than the given value.
 .in -8
 
 .TP

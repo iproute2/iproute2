@@ -226,6 +226,68 @@ int rtnl_rtprot_a2n(__u32 *id, const char *arg)
 }
 
 
+static char *rtnl_addrprot_tab[256] = {
+	[IFAPROT_UNSPEC]    = "unspec",
+	[IFAPROT_KERNEL_LO] = "kernel_lo",
+	[IFAPROT_KERNEL_RA] = "kernel_ra",
+	[IFAPROT_KERNEL_LL] = "kernel_ll",
+};
+static bool rtnl_addrprot_tab_initialized;
+
+static void rtnl_addrprot_initialize(void)
+{
+	rtnl_tab_initialize(CONFDIR "/rt_addrprotos",
+			    rtnl_addrprot_tab,
+			    ARRAY_SIZE(rtnl_addrprot_tab));
+	rtnl_addrprot_tab_initialized = true;
+}
+
+const char *rtnl_addrprot_n2a(int id, char *buf, int len)
+{
+	if (id < 0 || id >= 256 || numeric)
+		goto numeric;
+	if (!rtnl_addrprot_tab_initialized)
+		rtnl_addrprot_initialize();
+	if (rtnl_addrprot_tab[id])
+		return rtnl_addrprot_tab[id];
+numeric:
+	snprintf(buf, len, "%#x", id);
+	return buf;
+}
+
+int rtnl_addrprot_a2n(__u32 *id, const char *arg)
+{
+	static char *cache;
+	static unsigned long res;
+	char *end;
+	int i;
+
+	if (cache && strcmp(cache, arg) == 0) {
+		*id = res;
+		return 0;
+	}
+
+	if (!rtnl_addrprot_tab_initialized)
+		rtnl_addrprot_initialize();
+
+	for (i = 0; i < 256; i++) {
+		if (rtnl_addrprot_tab[i] &&
+		    strcmp(rtnl_addrprot_tab[i], arg) == 0) {
+			cache = rtnl_addrprot_tab[i];
+			res = i;
+			*id = res;
+			return 0;
+		}
+	}
+
+	res = strtoul(arg, &end, 0);
+	if (!end || end == arg || *end || res > 255)
+		return -1;
+	*id = res;
+	return 0;
+}
+
+
 static char *rtnl_rtscope_tab[256] = {
 	[RT_SCOPE_UNIVERSE]	= "global",
 	[RT_SCOPE_NOWHERE]	= "nowhere",

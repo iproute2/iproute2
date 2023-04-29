@@ -14,6 +14,7 @@
 #include <linux/if_ether.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include "libnetlink.h"
 #include "utils.h"
@@ -32,7 +33,8 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
-		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ]\n"
+		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
+		"              [ dst_port DST_PORT ] [ vni VNI ] [ src_vni SRC_VNI ] [ via DEV ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
 	exit(-1);
 }
@@ -146,6 +148,21 @@ static void print_src_entry(struct rtattr *src_attr, int af, const char *sep)
 	close_json_object();
 }
 
+static void print_dst(const struct rtattr *dst_attr)
+{
+	SPRINT_BUF(abuf);
+	int af = AF_INET;
+	const void *dst;
+
+	if (RTA_PAYLOAD(dst_attr) == sizeof(struct in6_addr))
+		af = AF_INET6;
+
+	dst = (const void *)RTA_DATA(dst_attr);
+	print_color_string(PRINT_ANY, ifa_family_color(af),
+			   "dst", " dst %s",
+			   inet_ntop(af, dst, abuf, sizeof(abuf)));
+}
+
 static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 			    struct nlmsghdr *n, struct rtattr **tb)
 {
@@ -239,6 +256,29 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 
 	if (e->vid)
 		print_uint(PRINT_ANY, "vid", " vid %u", e->vid);
+
+	if (tb[MDBA_MDB_EATTR_DST])
+		print_dst(tb[MDBA_MDB_EATTR_DST]);
+
+	if (tb[MDBA_MDB_EATTR_DST_PORT])
+		print_uint(PRINT_ANY, "dst_port", " dst_port %u",
+			   rta_getattr_u16(tb[MDBA_MDB_EATTR_DST_PORT]));
+
+	if (tb[MDBA_MDB_EATTR_VNI])
+		print_uint(PRINT_ANY, "vni", " vni %u",
+			   rta_getattr_u32(tb[MDBA_MDB_EATTR_VNI]));
+
+	if (tb[MDBA_MDB_EATTR_SRC_VNI])
+		print_uint(PRINT_ANY, "src_vni", " src_vni %u",
+			   rta_getattr_u32(tb[MDBA_MDB_EATTR_SRC_VNI]));
+
+	if (tb[MDBA_MDB_EATTR_IFINDEX]) {
+		unsigned int ifindex;
+
+		ifindex = rta_getattr_u32(tb[MDBA_MDB_EATTR_IFINDEX]);
+		print_string(PRINT_ANY, "via", " via %s",
+			     ll_index_to_name(ifindex));
+	}
 
 	if (show_stats && tb && tb[MDBA_MDB_EATTR_TIMER]) {
 		__u32 timer = rta_getattr_u32(tb[MDBA_MDB_EATTR_TIMER]);
@@ -570,6 +610,76 @@ static int mdb_parse_proto(struct nlmsghdr *n, int maxlen, const char *proto)
 	return 0;
 }
 
+static int mdb_parse_dst(struct nlmsghdr *n, int maxlen, const char *dst)
+{
+	struct in6_addr dst_ip6;
+	__be32 dst_ip4;
+
+	if (inet_pton(AF_INET, dst, &dst_ip4)) {
+		addattr32(n, maxlen, MDBE_ATTR_DST, dst_ip4);
+		return 0;
+	}
+
+	if (inet_pton(AF_INET6, dst, &dst_ip6)) {
+		addattr_l(n, maxlen, MDBE_ATTR_DST, &dst_ip6,
+			  sizeof(dst_ip6));
+		return 0;
+	}
+
+	return -1;
+}
+
+static int mdb_parse_dst_port(struct nlmsghdr *n, int maxlen,
+			      const char *dst_port)
+{
+	unsigned long port;
+	char *endptr;
+
+	port = strtoul(dst_port, &endptr, 0);
+	if (endptr && *endptr) {
+		struct servent *pse;
+
+		pse = getservbyname(dst_port, "udp");
+		if (!pse)
+			return -1;
+		port = ntohs(pse->s_port);
+	} else if (port > USHRT_MAX) {
+		return -1;
+	}
+
+	addattr16(n, maxlen, MDBE_ATTR_DST_PORT, port);
+
+	return 0;
+}
+
+static int mdb_parse_vni(struct nlmsghdr *n, int maxlen, const char *vni,
+			 int attr_type)
+{
+	unsigned long vni_num;
+	char *endptr;
+
+	vni_num = strtoul(vni, &endptr, 0);
+	if ((endptr && *endptr) || vni_num == ULONG_MAX)
+		return -1;
+
+	addattr32(n, maxlen, attr_type, vni_num);
+
+	return 0;
+}
+
+static int mdb_parse_dev(struct nlmsghdr *n, int maxlen, const char *dev)
+{
+	unsigned int ifindex;
+
+	ifindex = ll_name_to_index(dev);
+	if (!ifindex)
+		return -1;
+
+	addattr32(n, maxlen, MDBE_ATTR_IFINDEX, ifindex);
+
+	return 0;
+}
+
 static int mdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -583,7 +693,8 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		.bpm.family = PF_BRIDGE,
 	};
 	char *d = NULL, *p = NULL, *grp = NULL, *src = NULL, *mode = NULL;
-	char *src_list = NULL, *proto = NULL;
+	char *dst_port = NULL, *vni = NULL, *src_vni = NULL, *via = NULL;
+	char *src_list = NULL, *proto = NULL, *dst = NULL;
 	struct br_mdb_entry entry = {};
 	bool set_attrs = false;
 	short vid = 0;
@@ -621,6 +732,26 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "proto") == 0) {
 			NEXT_ARG();
 			proto = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "dst") == 0) {
+			NEXT_ARG();
+			dst = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "dst_port") == 0) {
+			NEXT_ARG();
+			dst_port = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "vni") == 0) {
+			NEXT_ARG();
+			vni = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "src_vni") == 0) {
+			NEXT_ARG();
+			src_vni = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "via") == 0) {
+			NEXT_ARG();
+			via = *argv;
 			set_attrs = true;
 		} else {
 			if (matches(*argv, "help") == 0)
@@ -674,6 +805,34 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 				proto);
 			return -1;
 		}
+
+		if (dst && mdb_parse_dst(&req.n, sizeof(req), dst)) {
+			fprintf(stderr, "Invalid underlay destination address \"%s\"\n",
+				dst);
+			return -1;
+		}
+
+		if (dst_port && mdb_parse_dst_port(&req.n, sizeof(req),
+						   dst_port)) {
+			fprintf(stderr, "Invalid destination port \"%s\"\n", dst_port);
+			return -1;
+		}
+
+		if (vni && mdb_parse_vni(&req.n, sizeof(req), vni,
+					 MDBE_ATTR_VNI)) {
+			fprintf(stderr, "Invalid destination VNI \"%s\"\n",
+				vni);
+			return -1;
+		}
+
+		if (src_vni && mdb_parse_vni(&req.n, sizeof(req), src_vni,
+					     MDBE_ATTR_SRC_VNI)) {
+			fprintf(stderr, "Invalid source VNI \"%s\"\n", src_vni);
+			return -1;
+		}
+
+		if (via && mdb_parse_dev(&req.n, sizeof(req), via))
+			return nodev(via);
 
 		addattr_nest_end(&req.n, nest);
 	}

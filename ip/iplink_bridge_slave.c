@@ -37,6 +37,7 @@ static void print_explain(FILE *f)
 		"			[ mcast_to_unicast {on | off} ]\n"
 		"			[ group_fwd_mask MASK ]\n"
 		"			[ neigh_suppress {on | off} ]\n"
+		"			[ neigh_vlan_suppress {on | off} ]\n"
 		"			[ vlan_tunnel {on | off} ]\n"
 		"			[ isolated {on | off} ]\n"
 		"			[ locked {on | off} ]\n"
@@ -261,6 +262,11 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 		print_on_off(PRINT_ANY, "neigh_suppress", "neigh_suppress %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_NEIGH_SUPPRESS]));
 
+	if (tb[IFLA_BRPORT_NEIGH_VLAN_SUPPRESS])
+		print_on_off(PRINT_ANY, "neigh_vlan_suppress",
+			     "neigh_vlan_suppress %s ",
+			     rta_getattr_u8(tb[IFLA_BRPORT_NEIGH_VLAN_SUPPRESS]));
+
 	if (tb[IFLA_BRPORT_GROUP_FWD_MASK]) {
 		char convbuf[256];
 		__u16 fwd_mask;
@@ -393,6 +399,10 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("neigh_suppress", *argv, n,
 						  IFLA_BRPORT_NEIGH_SUPPRESS);
+		} else if (strcmp(*argv, "neigh_vlan_suppress") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("neigh_vlan_suppress", *argv,
+						  n, IFLA_BRPORT_NEIGH_VLAN_SUPPRESS);
 		} else if (matches(*argv, "group_fwd_mask") == 0) {
 			__u16 mask;
 

@@ -36,6 +36,10 @@ clockid
 [
 .B max-sdu
 <queueMaxSDU[TC 0]> <queueMaxSDU[TC 1]> <queueMaxSDU[TC N]> ]
+.ti +8
+[
+.B fp
+<adminStatus[TC 0]> <adminStatus[TC 1]> <adminStatus[TC N]> ]
 
 .SH DESCRIPTION
 The TAPRIO qdisc implements a simplified version of the scheduling
@@ -162,6 +166,13 @@ corresponds to the queueMaxSDU table from IEEE 802.1Q-2018. Each array element
 represents the maximum L2 payload size that can egress that traffic class.
 Elements that are not filled in default to 0. The value 0 means that the
 traffic class can send packets up to the port's maximum MTU in size.
+
+.TP
+fp
+.br
+Selects whether traffic classes are express or preemptible. See
+.BR tc-mqprio(8)
+for details.
 
 .SH EXAMPLES
 
