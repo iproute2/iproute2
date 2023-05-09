@@ -102,6 +102,8 @@ static void read_dev_mcast(struct ma_info **result_p)
 		if (len >= 0) {
 			struct ma_info *ma = malloc(sizeof(m));
 
+			if (ma == NULL)
+				break;
 			memcpy(ma, &m, sizeof(m));
 			ma->addr.bytelen = len;
 			ma->addr.bitlen = len<<3;
@@ -149,6 +151,9 @@ static void read_igmp(struct ma_info **result_p)
 		sscanf(buf, "%08x%d", (__u32 *)&m.addr.data, &m.users);
 
 		ma = malloc(sizeof(m));
+		if (ma == NULL)
+			break;
+			
 		memcpy(ma, &m, sizeof(m));
 		maddr_ins(result_p, ma);
 	}
@@ -178,8 +183,10 @@ static void read_igmp6(struct ma_info **result_p)
 		if (len >= 0) {
 			struct ma_info *ma = malloc(sizeof(m));
 
-			memcpy(ma, &m, sizeof(m));
+			if (ma == NULL)
+				break;
 
+			memcpy(ma, &m, sizeof(m));
 			ma->addr.bytelen = len;
 			ma->addr.bitlen = len<<3;
 			maddr_ins(result_p, ma);
