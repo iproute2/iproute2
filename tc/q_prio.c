@@ -101,6 +101,8 @@ int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (parse_rtattr_nested_compat(tb, TCA_PRIO_MAX, opt, qopt,
 					sizeof(*qopt)))
 		return -1;
+	if (qopt == NULL)
+		return -1;	/* missing data from kernel */
 
 	print_uint(PRINT_ANY, "bands", "bands %u ", qopt->bands);
 	open_json_array(PRINT_ANY, "priomap");
