@@ -219,9 +219,15 @@ static void load_ugly_table(FILE *fp)
 				exit(-1);
 			}
 			n->id = strdup(idbuf);
+			if (n->id == NULL) {
+				perror("nstat: strdup");
+				exit(-1);
+			}
 			n->rate = 0;
 			n->next = db;
 			db = n;
+			if (next == NULL)
+				break;
 			p = next;
 		}
 		n = db;
