@@ -458,7 +458,7 @@ static int parse_action_control_slash_spaces(int *argc_p, char ***argv_p,
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
-	int result1 = -1, result2;
+	int result1 = -1, result2 = -1;
 	int *result_p = &result1;
 	int ok = 0;
 	int ret;
