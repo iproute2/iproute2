@@ -352,8 +352,10 @@ int get_task_name(pid_t pid, char *name, size_t len)
 	if (!f)
 		return -1;
 
-	if (!fgets(name, len, f))
+	if (!fgets(name, len, f)) {
+		fclose(f);
 		return -1;
+	}
 
 	/* comm ends in \n, get rid of it */
 	name[strcspn(name, "\n")] = '\0';
