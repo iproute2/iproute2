@@ -75,6 +75,13 @@ static int get_port_from_argv(struct rd *rd, uint32_t *port,
 
 	slash = strchr(rd_argv(rd), '/');
 	/* if no port found, return 0 */
+	if (slash == NULL) {
+		if (strict_port)
+			return -EINVAL;
+		else
+			return 0;
+	}
+
 	if (slash++) {
 		if (*slash == '-') {
 			if (strict_port)
@@ -747,6 +754,9 @@ struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index)
 		return NULL;
 
 	dev_name = strdup(rd_argv(rd));
+	if (!dev_name)
+		return NULL;
+
 	if (allow_port_index) {
 		slash = strrchr(dev_name, '/');
 		if (slash)
