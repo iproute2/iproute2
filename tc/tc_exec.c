@@ -96,6 +96,10 @@ int do_exec(int argc, char **argv)
 	strncpy(kind, *argv, sizeof(kind) - 1);
 
 	eu = get_exec_kind(kind);
+	if (eu == NULL) {
+		fprintf(stderr, "Allocation failed finding exec\n");
+		return -1;
+	}
 
 	argc--;
 	argv++;
