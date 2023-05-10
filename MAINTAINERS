@@ -1,0 +1,52 @@
+Iproute2 Maintainers
+====================
+
+The file provides a set of names that are are able to help
+review patches and answer questions. This is in addition to
+the netdev@vger.kernel.org mailing list used for all iproute2
+and kernel networking.
+
+Descriptions of section entries:
+
+	M: Maintainer's Full Name <address@domain>
+	T: Git tree location.
+	F: Files and directories with wildcard patterns.
+	   A trailing slash includes all files and subdirectory files.
+	   A wildcard includes all files but not subdirectories.
+	   One pattern per line. Multiple F: lines acceptable.
+
+Main Branch
+M: Stephen Hemminger <stephen@networkplumber.org>
+T: git://git.kernel.org/pub/scm/network/iproute2/iproute2.git
+L: netdev@vger.kernel.org
+
+Next Tree
+M: David Ahern <dsahern@gmail.com>
+T: git://git.kernel.org/pub/scm/network/iproute2/iproute2-next.git
+L: netdev@vger.kernel.org
+
+Ethernet Bridging - bridge
+M: Roopa Prabhu <roopa@nvidia.com>
+M: Nikolay Aleksandrov <razor@blackwall.org>
+L: bridge@lists.linux-foundation.org (moderated for non-subscribers)
+F: bridge/*
+
+Data Center Bridging - dcb
+M: Petr Machata <me@pmachata.org>
+F: dcb/*
+
+devlink
+M: Jiri Pirko <jiri@resnulli.us>
+F: devlink/*
+
+Remote DMA - rdma
+M: Leon Romanovsky <leon@kernel.org>
+F: rdma/*
+
+Transparent Inter-Process Communication - tipc
+M: Jon Maloy <jmaloy@redhat.com>
+F: tipc/*
+
+virtual Datapath Acceleration - vdpa
+M: Parav Pandit <parav@nvidia.com>
+F: vdpa/*
