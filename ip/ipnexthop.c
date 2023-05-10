@@ -345,10 +345,8 @@ static void print_nh_res_bucket(FILE *fp, const struct rtattr *res_bucket_attr)
 
 static void ipnh_destroy_entry(struct nh_entry *nhe)
 {
-	if (nhe->nh_encap)
-		free(nhe->nh_encap);
-	if (nhe->nh_groups)
-		free(nhe->nh_groups);
+	free(nhe->nh_encap);
+	free(nhe->nh_groups);
 }
 
 /* parse nhmsg into nexthop entry struct which must be destroyed by
@@ -586,8 +584,7 @@ static struct nh_entry *ipnh_cache_add(__u32 nh_id)
 	ipnh_cache_link_entry(nhe);
 
 out:
-	if (answer)
-		free(answer);
+	free(answer);
 
 	return nhe;
 

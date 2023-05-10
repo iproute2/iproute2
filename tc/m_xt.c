@@ -299,8 +299,7 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 		m->tflags = 0;
 		m->used = 0;
 		/* Free allocated memory */
-		if (m->t)
-			free(m->t);
+		free(m->t);
 	}
 
 	return 0;

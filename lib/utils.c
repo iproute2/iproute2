@@ -1707,8 +1707,7 @@ int do_batch(const char *name, bool force,
 		}
 	}
 
-	if (line)
-		free(line);
+	free(line);
 
 	return ret;
 }

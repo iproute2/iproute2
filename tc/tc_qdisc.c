@@ -187,8 +187,7 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 			addattr_l(&req.n, sizeof(req), TCA_STAB_DATA, stab.data,
 				  stab.szopts.tsize * sizeof(__u16));
 		addattr_nest_end(&req.n, tail);
-		if (stab.data)
-			free(stab.data);
+		free(stab.data);
 	}
 
 	if (d[0])  {
