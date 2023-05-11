@@ -96,8 +96,8 @@ based only on the destination address of packets (and in theory,
 but not in practice, on the TOS field).
 
 .P
-In some circumstances we want to route packets differently depending not only
-on destination addresses, but also on other packet fields: source address,
+In some circumstances, we want to route packets differently depending not only
+on destination addresses but also on other packet fields: source address,
 IP protocol, transport protocol ports or even packet payload.
 This task is called 'policy routing'.
 
@@ -111,7 +111,7 @@ Each policy routing rule consists of a
 .B selector
 and an
 .B action predicate.
-The RPDB is scanned in order of decreasing priority (note that lower number
+The RPDB is scanned in order of decreasing priority (note that a lower number
 means higher priority, see the description of
 .I PREFERENCE
 below). The selector
@@ -179,21 +179,21 @@ The RPDB may contain rules of the following types:
 
 .RS
 .B unicast
-- the rule prescribes to return the route found
+- the rule returns the route found
 in the routing table referenced by the rule.
 
 .B blackhole
-- the rule prescribes to silently drop the packet.
+- the rule causes a silent drop the packet.
 
 .B unreachable
-- the rule prescribes to generate a 'Network is unreachable' error.
+- the rule generates a 'Network is unreachable' error.
 
 .B prohibit
-- the rule prescribes to generate 'Communication is administratively
+- the rule generates 'Communication is administratively
 prohibited' error.
 
 .B nat
-- the rule prescribes to translate the source address
+- the rule translates the source address
 of the IP packet into some other value.
 .RE
 
