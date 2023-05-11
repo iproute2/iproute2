@@ -714,6 +714,7 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, filter_fn, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return 1;
 	}
 	delete_json_obj();

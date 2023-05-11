@@ -205,6 +205,14 @@ struct ifname_map {
 	char *ifname;
 };
 
+static void ifname_map_free(struct ifname_map *ifname_map)
+{
+	free(ifname_map->ifname);
+	free(ifname_map->dev_name);
+	free(ifname_map->bus_name);
+	free(ifname_map);
+}
+
 static struct ifname_map *ifname_map_alloc(const char *bus_name,
 					   const char *dev_name,
 					   uint32_t port_index,
@@ -221,21 +229,10 @@ static struct ifname_map *ifname_map_alloc(const char *bus_name,
 	ifname_map->ifname = strdup(ifname);
 	if (!ifname_map->bus_name || !ifname_map->dev_name ||
 	    !ifname_map->ifname) {
-		free(ifname_map->ifname);
-		free(ifname_map->dev_name);
-		free(ifname_map->bus_name);
-		free(ifname_map);
+		ifname_map_free(ifname_map);
 		return NULL;
 	}
 	return ifname_map;
-}
-
-static void ifname_map_free(struct ifname_map *ifname_map)
-{
-	free(ifname_map->ifname);
-	free(ifname_map->dev_name);
-	free(ifname_map->bus_name);
-	free(ifname_map);
 }
 
 static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)

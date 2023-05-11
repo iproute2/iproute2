@@ -1018,6 +1018,7 @@ static int ipnh_get_id(__u32 id)
 	new_json_obj(json);
 
 	if (print_nexthop_nocache(answer, (void *)stdout) < 0) {
+		delete_json_obj();
 		free(answer);
 		return -1;
 	}
@@ -1103,6 +1104,7 @@ static int ipnh_list_flush(int argc, char **argv, int action)
 	new_json_obj(json);
 
 	if (rtnl_dump_filter(&rth, print_nexthop_nocache, stdout) < 0) {
+		delete_json_obj();
 		fprintf(stderr, "Dump terminated\n");
 		return -2;
 	}
@@ -1178,6 +1180,7 @@ static int ipnh_bucket_list(int argc, char **argv)
 	new_json_obj(json);
 
 	if (rtnl_dump_filter(&rth, print_nexthop_bucket, stdout) < 0) {
+		delete_json_obj();
 		fprintf(stderr, "Dump terminated\n");
 		return -2;
 	}
@@ -1218,6 +1221,7 @@ static int ipnh_bucket_get_id(__u32 id, __u16 bucket_index)
 	new_json_obj(json);
 
 	if (print_nexthop_bucket(answer, (void *)stdout) < 0) {
+		delete_json_obj();
 		free(answer);
 		return -1;
 	}

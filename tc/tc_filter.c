@@ -734,6 +734,7 @@ static int tc_filter_list(int cmd, int argc, char **argv)
 	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, print_filter, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return 1;
 	}
 	delete_json_obj();

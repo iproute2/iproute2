@@ -113,6 +113,7 @@ static int ipaddrlabel_list(int argc, char **argv)
 	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, print_addrlabel, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return 1;
 	}
 	delete_json_obj();
