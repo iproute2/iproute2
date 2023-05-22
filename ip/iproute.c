@@ -793,6 +793,8 @@ int print_route(struct nlmsghdr *n, void *arg)
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELROUTE)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
+	if (n->nlmsg_flags & NLM_F_REPLACE)
+		print_bool(PRINT_ANY, "replaced", "Replaced ", true);
 
 	if ((r->rtm_type != RTN_UNICAST || show_details > 0) &&
 	    (!filter.typemask || (filter.typemask & (1 << r->rtm_type))))
