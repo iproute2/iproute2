@@ -101,6 +101,15 @@ static inline int print_rate(bool use_iec, enum output_type t,
 	return print_color_rate(use_iec, t, COLOR_NONE, key, fmt, rate);
 }
 
+int print_color_bool_opt(enum output_type type, enum color_attr color,
+			 const char *key, bool value, bool show);
+
+static inline int print_bool_opt(enum output_type type,
+				 const char *key, bool value, bool show)
+{
+	return print_color_bool_opt(type, COLOR_NONE, key, value, show);
+}
+
 /* A backdoor to the size formatter. Please use print_size() instead. */
 char *sprint_size(__u32 sz, char *buf);
 

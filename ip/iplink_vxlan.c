@@ -19,6 +19,25 @@
 
 #define VXLAN_ATTRSET(attrs, type) (((attrs) & (1L << (type))) != 0)
 
+static const struct vxlan_bool_opt {
+	const char *key;
+	int type;
+	bool default_value;
+} vxlan_opts[] = {
+	{ "external",	IFLA_VXLAN_COLLECT_METADATA,	false },
+	{ "vnifilter",	IFLA_VXLAN_VNIFILTER,		false },
+	{ "learning", 	IFLA_VXLAN_LEARNING,		true },
+	{ "proxy",	IFLA_VXLAN_PROXY,		false },
+	{ "rsc",	IFLA_VXLAN_RSC,			false },
+	{ "l2miss",	IFLA_VXLAN_L2MISS,		false },
+	{ "l3miss",	IFLA_VXLAN_L3MISS,		false },
+	{ "udp_csum",	IFLA_VXLAN_UDP_CSUM,		true },
+	{ "udp_zero_csum6_tx", IFLA_VXLAN_UDP_ZERO_CSUM6_TX, false },
+	{ "udp_zero_csum6_rx", IFLA_VXLAN_UDP_ZERO_CSUM6_RX, false },
+	{ "remcsum_tx", IFLA_VXLAN_REMCSUM_TX,		false },
+	{ "remcsum_rx", IFLA_VXLAN_REMCSUM_RX,		false },
+};
+
 static void print_explain(FILE *f)
 {
 	fprintf(f,
@@ -420,22 +439,13 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 
 static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
+	unsigned int i;
 	__u8 ttl = 0;
 	__u8 tos = 0;
 	__u32 maxaddr;
 
 	if (!tb)
 		return;
-
-	if (tb[IFLA_VXLAN_COLLECT_METADATA] &&
-	    rta_getattr_u8(tb[IFLA_VXLAN_COLLECT_METADATA])) {
-		print_bool(PRINT_ANY, "external", "external ", true);
-	}
-
-	if (tb[IFLA_VXLAN_VNIFILTER] &&
-	    rta_getattr_u8(tb[IFLA_VXLAN_VNIFILTER])) {
-		print_bool(PRINT_ANY, "vnifilter", "vnifilter", true);
-	}
 
 	if (tb[IFLA_VXLAN_ID] &&
 	    RTA_PAYLOAD(tb[IFLA_VXLAN_ID]) >= sizeof(__u32)) {
@@ -529,26 +539,6 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "dstport %u ",
 			   rta_getattr_be16(tb[IFLA_VXLAN_PORT]));
 
-	if (tb[IFLA_VXLAN_LEARNING]) {
-		__u8 learning = rta_getattr_u8(tb[IFLA_VXLAN_LEARNING]);
-
-		print_bool(PRINT_JSON, "learning", NULL, learning);
-		if (!learning)
-			print_bool(PRINT_FP, NULL, "nolearning ", true);
-	}
-
-	if (tb[IFLA_VXLAN_PROXY] && rta_getattr_u8(tb[IFLA_VXLAN_PROXY]))
-		print_bool(PRINT_ANY, "proxy", "proxy ", true);
-
-	if (tb[IFLA_VXLAN_RSC] && rta_getattr_u8(tb[IFLA_VXLAN_RSC]))
-		print_bool(PRINT_ANY, "rsc", "rsc ", true);
-
-	if (tb[IFLA_VXLAN_L2MISS] && rta_getattr_u8(tb[IFLA_VXLAN_L2MISS]))
-		print_bool(PRINT_ANY, "l2miss", "l2miss ", true);
-
-	if (tb[IFLA_VXLAN_L3MISS] && rta_getattr_u8(tb[IFLA_VXLAN_L3MISS]))
-		print_bool(PRINT_ANY, "l3miss", "l3miss ", true);
-
 	if (tb[IFLA_VXLAN_TOS])
 		tos = rta_getattr_u8(tb[IFLA_VXLAN_TOS]);
 	if (tos) {
@@ -601,58 +591,22 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	    ((maxaddr = rta_getattr_u32(tb[IFLA_VXLAN_LIMIT])) != 0))
 		print_uint(PRINT_ANY, "limit", "maxaddr %u ", maxaddr);
 
-	if (tb[IFLA_VXLAN_UDP_CSUM]) {
-		__u8 udp_csum = rta_getattr_u8(tb[IFLA_VXLAN_UDP_CSUM]);
-
-		if (is_json_context()) {
-			print_bool(PRINT_ANY, "udp_csum", NULL, udp_csum);
-		} else {
-			if (!udp_csum)
-				fputs("no", f);
-			fputs("udpcsum ", f);
-		}
-	}
-
-	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX]) {
-		__u8 csum6 = rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_TX]);
-
-		if (is_json_context()) {
-			print_bool(PRINT_ANY,
-				   "udp_zero_csum6_tx", NULL, csum6);
-		} else {
-			if (!csum6)
-				fputs("no", f);
-			fputs("udp6zerocsumtx ", f);
-		}
-	}
-
-	if (tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]) {
-		__u8 csum6 = rta_getattr_u8(tb[IFLA_VXLAN_UDP_ZERO_CSUM6_RX]);
-
-		if (is_json_context()) {
-			print_bool(PRINT_ANY,
-				   "udp_zero_csum6_rx",
-				   NULL,
-				   csum6);
-		} else {
-			if (!csum6)
-				fputs("no", f);
-			fputs("udp6zerocsumrx ", f);
-		}
-	}
-
-	if (tb[IFLA_VXLAN_REMCSUM_TX] &&
-	    rta_getattr_u8(tb[IFLA_VXLAN_REMCSUM_TX]))
-		print_bool(PRINT_ANY, "remcsum_tx", "remcsumtx ", true);
-
-	if (tb[IFLA_VXLAN_REMCSUM_RX] &&
-	    rta_getattr_u8(tb[IFLA_VXLAN_REMCSUM_RX]))
-		print_bool(PRINT_ANY, "remcsum_rx", "remcsumrx ", true);
-
 	if (tb[IFLA_VXLAN_GBP])
 		print_null(PRINT_ANY, "gbp", "gbp ", NULL);
 	if (tb[IFLA_VXLAN_GPE])
 		print_null(PRINT_ANY, "gpe", "gpe ", NULL);
+
+	for (i = 0; i < ARRAY_SIZE(vxlan_opts); i++) {
+		const struct vxlan_bool_opt *opt = &vxlan_opts[i];
+		__u8 val;
+
+		if (!tb[opt->type])
+			continue;
+		val = rta_getattr_u8(tb[opt->type]);
+
+		print_bool_opt(PRINT_ANY, opt->key, val,
+			       val != opt->default_value || show_details > 1);
+	}
 }
 
 static void vxlan_print_help(struct link_util *lu, int argc, char **argv,
