@@ -650,9 +650,9 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_bool(PRINT_ANY, "remcsum_rx", "remcsumrx ", true);
 
 	if (tb[IFLA_VXLAN_GBP])
-		print_bool(PRINT_ANY, "gbp", "gbp ", true);
+		print_null(PRINT_ANY, "gbp", "gbp ", NULL);
 	if (tb[IFLA_VXLAN_GPE])
-		print_bool(PRINT_ANY, "gpe", "gpe ", true);
+		print_null(PRINT_ANY, "gpe", "gpe ", NULL);
 }
 
 static void vxlan_print_help(struct link_util *lu, int argc, char **argv,
