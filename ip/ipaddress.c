@@ -1207,7 +1207,7 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 		if (tb[IFLA_ALLMULTI])
 			print_uint(PRINT_ANY,
 				   "allmulti",
-				   " allmulti %u ",
+				   "allmulti %u ",
 				   rta_getattr_u32(tb[IFLA_ALLMULTI]));
 
 		if (tb[IFLA_MIN_MTU])
