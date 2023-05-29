@@ -140,7 +140,7 @@ static const char *seg6_mode_types[] = {
 
 static const char *format_seg6mode_type(int mode)
 {
-	if (mode < 0 || mode > ARRAY_SIZE(seg6_mode_types))
+	if (mode < 0 || mode >= ARRAY_SIZE(seg6_mode_types))
 		return "<unknown>";
 
 	return seg6_mode_types[mode];
