@@ -315,7 +315,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 
 		rtnl_dump_filter(&rth, print_ctrl2, stdout);
 
-        }
+	}
 
 	ret = 0;
 ctrl_done:

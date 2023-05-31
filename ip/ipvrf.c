@@ -252,7 +252,7 @@ static int prog_load(int idx)
 	};
 
 	return bpf_program_load(BPF_PROG_TYPE_CGROUP_SOCK, prog, sizeof(prog),
-			        "GPL", bpf_log_buf, sizeof(bpf_log_buf));
+				"GPL", bpf_log_buf, sizeof(bpf_log_buf));
 }
 
 static int vrf_configure_cgroup(const char *path, int ifindex)

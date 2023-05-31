@@ -1443,7 +1443,7 @@ static const struct ifa_flag_data_t* lookup_flag_data_by_name(const char* flag_n
 		if (strcmp(flag_name, ifa_flag_data[i].name) == 0)
 			return &ifa_flag_data[i];
 	}
-        return NULL;
+	return NULL;
 }
 
 static void print_ifa_flags(FILE *fp, const struct ifaddrmsg *ifa,

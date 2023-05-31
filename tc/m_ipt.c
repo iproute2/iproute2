@@ -409,8 +409,8 @@ static int parse_ipt(struct action_util *a, int *argc_p,
 	optind = 0;
 	free_opts(opts);
 	/* Clear flags if target will be used again */
-        m->tflags = 0;
-        m->used = 0;
+	m->tflags = 0;
+	m->used = 0;
 	/* Free allocated memory */
 	free(m->t);
 

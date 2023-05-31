@@ -33,7 +33,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: bridge vni { add | del } vni VNI\n"
 		"		[ { group | remote } IP_ADDRESS ]\n"
-	        "		[ dev DEV ]\n"
+		"		[ dev DEV ]\n"
 		"       bridge vni { show }\n"
 		"\n"
 		"Where:	VNI	:= 0-16777215\n"

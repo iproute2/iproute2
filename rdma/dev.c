@@ -191,13 +191,13 @@ static void dev_print_node_type(struct rd *rd, struct nlattr **tb)
 
 static void dev_print_dev_proto(struct rd *rd, struct nlattr **tb)
 {
-       const char *str;
+	const char *str;
 
-       if (!tb[RDMA_NLDEV_ATTR_DEV_PROTOCOL])
-               return;
+	if (!tb[RDMA_NLDEV_ATTR_DEV_PROTOCOL])
+		return;
 
-       str = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_PROTOCOL]);
-       print_color_string(PRINT_ANY, COLOR_NONE, "protocol", "protocol %s ", str);
+	str = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_PROTOCOL]);
+	print_color_string(PRINT_ANY, COLOR_NONE, "protocol", "protocol %s ", str);
 }
 
 static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
