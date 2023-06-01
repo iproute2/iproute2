@@ -475,7 +475,7 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_RES_RAW] = MNL_TYPE_BINARY,
 };
 
-int rd_attr_check(const struct nlattr *attr, int *typep)
+static int rd_attr_check(const struct nlattr *attr, int *typep)
 {
 	int type;
 
