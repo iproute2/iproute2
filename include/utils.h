@@ -139,7 +139,6 @@ int get_addr_rta(inet_prefix *dst, const struct rtattr *rta, int family);
 int get_addr_ila(__u64 *val, const char *arg);
 
 int read_prop(const char *dev, char *prop, long *value);
-int get_hex(char c);
 int get_integer(int *val, const char *arg, int base);
 int get_unsigned(unsigned *val, const char *arg, int base);
 int get_time_rtt(unsigned *val, const char *arg, int *raw);
@@ -304,8 +303,6 @@ unsigned int print_name_and_link(const char *fmt,
 #define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 
 extern int cmdlineno;
-ssize_t getcmdline(char **line, size_t *len, FILE *in);
-int makeargs(char *line, char *argv[], int maxargs);
 
 char *int_to_str(int val, char *buf);
 int get_guid(__u64 *guid, const char *arg);
