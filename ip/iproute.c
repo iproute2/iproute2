@@ -558,7 +558,7 @@ void __print_rta_gateway(FILE *fp, unsigned char family, const char *gateway)
 	}
 }
 
-void print_rta_gateway(FILE *fp, unsigned char family, const struct rtattr *rta)
+static void print_rta_gateway(FILE *fp, unsigned char family, const struct rtattr *rta)
 {
 	const char *gateway = format_host_rta(family, rta);
 
