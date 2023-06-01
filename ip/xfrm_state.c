@@ -1027,7 +1027,7 @@ int xfrm_state_print(struct nlmsghdr *n, void *arg)
 	return __do_xfrm_state_print(n, arg, false);
 }
 
-int xfrm_state_print_nokeys(struct nlmsghdr *n, void *arg)
+static int xfrm_state_print_nokeys(struct nlmsghdr *n, void *arg)
 {
 	return __do_xfrm_state_print(n, arg, true);
 }

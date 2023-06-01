@@ -90,7 +90,6 @@ struct xfrm_filter {
 extern struct xfrm_filter filter;
 
 int xfrm_state_print(struct nlmsghdr *n, void *arg);
-int xfrm_state_print_nokeys(struct nlmsghdr *n, void *arg);
 int xfrm_policy_print(struct nlmsghdr *n, void *arg);
 int do_xfrm_state(int argc, char **argv);
 int do_xfrm_policy(int argc, char **argv);
