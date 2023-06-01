@@ -18,6 +18,7 @@
 
 static unsigned int filter_index, filter_vlan;
 static int vlan_rtm_cur_ifidx = -1;
+static void print_vlan_info(struct rtattr *tb, int ifindex);
 
 enum vlan_show_subject {
 	VLAN_SHOW_VLAN,
@@ -1309,7 +1310,7 @@ static int vlan_global_show(int argc, char **argv)
 	return 0;
 }
 
-void print_vlan_info(struct rtattr *tb, int ifindex)
+static void print_vlan_info(struct rtattr *tb, int ifindex)
 {
 	struct rtattr *i, *list = tb;
 	int rem = RTA_PAYLOAD(list);
