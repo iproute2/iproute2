@@ -177,9 +177,6 @@ int rtnl_echo_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, int json,
 int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	      struct nlmsghdr **answer)
 	__attribute__((warn_unused_result));
-int rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iovec, size_t iovlen,
-		  struct nlmsghdr **answer)
-	__attribute__((warn_unused_result));
 int rtnl_talk_suppress_rtnl_errmsg(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 				   struct nlmsghdr **answer)
 	__attribute__((warn_unused_result));
