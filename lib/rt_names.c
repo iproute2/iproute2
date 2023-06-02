@@ -242,9 +242,9 @@ static void rtnl_addrprot_initialize(void)
 	rtnl_addrprot_tab_initialized = true;
 }
 
-const char *rtnl_addrprot_n2a(int id, char *buf, int len)
+const char *rtnl_addrprot_n2a(__u8 id, char *buf, int len)
 {
-	if (id < 0 || id >= 256 || numeric)
+	if (numeric)
 		goto numeric;
 	if (!rtnl_addrprot_tab_initialized)
 		rtnl_addrprot_initialize();
@@ -255,17 +255,11 @@ numeric:
 	return buf;
 }
 
-int rtnl_addrprot_a2n(__u32 *id, const char *arg)
+int rtnl_addrprot_a2n(__u8 *id, const char *arg)
 {
-	static char *cache;
-	static unsigned long res;
+	unsigned long res;
 	char *end;
 	int i;
-
-	if (cache && strcmp(cache, arg) == 0) {
-		*id = res;
-		return 0;
-	}
 
 	if (!rtnl_addrprot_tab_initialized)
 		rtnl_addrprot_initialize();
@@ -273,9 +267,7 @@ int rtnl_addrprot_a2n(__u32 *id, const char *arg)
 	for (i = 0; i < 256; i++) {
 		if (rtnl_addrprot_tab[i] &&
 		    strcmp(rtnl_addrprot_tab[i], arg) == 0) {
-			cache = rtnl_addrprot_tab[i];
-			res = i;
-			*id = res;
+			*id = i;
 			return 0;
 		}
 	}
