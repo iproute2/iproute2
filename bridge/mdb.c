@@ -466,12 +466,14 @@ static int mdb_show(int argc, char **argv)
 	/* get mdb entries */
 	if (rtnl_mdbdump_req(&rth, PF_BRIDGE) < 0) {
 		perror("Cannot send dump request");
+		delete_json_obj();
 		return -1;
 	}
 
 	open_json_array(PRINT_JSON, "mdb");
 	if (rtnl_dump_filter(&rth, print_mdbs, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return -1;
 	}
 	close_json_array(PRINT_JSON, NULL);
@@ -479,12 +481,14 @@ static int mdb_show(int argc, char **argv)
 	/* get router ports */
 	if (rtnl_mdbdump_req(&rth, PF_BRIDGE) < 0) {
 		perror("Cannot send dump request");
+		delete_json_obj();
 		return -1;
 	}
 
 	open_json_object("router");
 	if (rtnl_dump_filter(&rth, print_rtrs, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return -1;
 	}
 	close_json_object();

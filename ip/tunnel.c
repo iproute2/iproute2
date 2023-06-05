@@ -419,11 +419,13 @@ int do_tunnels_list(struct tnl_print_nlmsg_info *info)
 	new_json_obj(json);
 	if (rtnl_linkdump_req(&rth, preferred_family) < 0) {
 		perror("Cannot send dump request\n");
+		delete_json_obj();
 		return -1;
 	}
 
 	if (rtnl_dump_filter(&rth, print_nlmsg_tunnel, info) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return -1;
 	}
 	delete_json_obj();

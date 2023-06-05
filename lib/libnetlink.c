@@ -1168,12 +1168,6 @@ int rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	return __rtnl_talk(rtnl, n, answer, true, NULL);
 }
 
-int rtnl_talk_iov(struct rtnl_handle *rtnl, struct iovec *iovec, size_t iovlen,
-		  struct nlmsghdr **answer)
-{
-	return __rtnl_talk_iov(rtnl, iovec, iovlen, answer, true, NULL);
-}
-
 int rtnl_talk_suppress_rtnl_errmsg(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 				   struct nlmsghdr **answer)
 {

@@ -1,0 +1,30 @@
+	This is at least a partial credits file of people that have
+	contributed to iproute2 over its history.
+	It is sorted by name and formatted to allow easy grepping
+	and beautification by scripts. The fields are: name (N),
+	email (E), web-address (W)
+
+N: Werner Almesberger
+E: werner@almesberger.net
+W: https://www.almesberger.net/
+D: Wrote original classifiers, qdiscs, etc.
+
+N: Stephen Hemminger
+E: stephen@networkplumber.org
+D: Took over iproute2 starting with 2.6 kernel
+
+N: Alexey Kuznetsov
+E: kuznet@ms2.inr.ac.ru
+D: Original author of iproute2
+
+N: YOSHIFUJI Hideaki/ 吉藤英明
+E: yoshfuji@linux-ipv6.org
+D: USAGI project - Linux IPv6 Development
+
+N: David S. Miller
+E: davem@davemloft.net
+D: Developed the kernel networking and routing system
+
+N: Jamal Hadi Salam
+D: Original developer of TC classifier and action 
+E: hadi@cyberus.ca

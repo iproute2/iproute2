@@ -318,6 +318,7 @@ static int do_show(int argc, char **argv)
 	new_json_obj(json);
 	if (rtnl_dump_filter(&genl_rth, print_fou_mapping, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return 1;
 	}
 	delete_json_obj();

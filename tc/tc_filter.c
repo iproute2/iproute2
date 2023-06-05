@@ -70,7 +70,7 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 	__u32 protocol = 0;
 	int protocol_set = 0;
 	__u32 block_index = 0;
-	__u32 chain_index;
+	__u32 chain_index = 0;
 	int chain_index_set = 0;
 	char *fhandle = NULL;
 	char  d[IFNAMSIZ] = {};
@@ -594,7 +594,6 @@ static int tc_filter_list(int cmd, int argc, char **argv)
 	char d[IFNAMSIZ] = {};
 	__u32 prio = 0;
 	__u32 protocol = 0;
-	__u32 chain_index;
 	__u32 block_index = 0;
 	char *fhandle = NULL;
 
@@ -676,6 +675,8 @@ static int tc_filter_list(int cmd, int argc, char **argv)
 			protocol = res;
 			filter_protocol = protocol;
 		} else if (matches(*argv, "chain") == 0) {
+			__u32 chain_index;
+
 			NEXT_ARG();
 			if (filter_chain_index_set)
 				duparg("chain", *argv);
@@ -715,7 +716,7 @@ static int tc_filter_list(int cmd, int argc, char **argv)
 	}
 
 	if (filter_chain_index_set)
-		addattr32(&req.n, sizeof(req), TCA_CHAIN, chain_index);
+		addattr32(&req.n, sizeof(req), TCA_CHAIN, filter_chain_index);
 
 	if (brief) {
 		struct nla_bitfield32 flags = {
@@ -734,6 +735,7 @@ static int tc_filter_list(int cmd, int argc, char **argv)
 	new_json_obj(json);
 	if (rtnl_dump_filter(&rth, print_filter, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return 1;
 	}
 	delete_json_obj();

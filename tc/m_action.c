@@ -83,7 +83,7 @@ static int parse_noaopt(struct action_util *au, int *argc_p,
 	return -1;
 }
 
-static struct action_util *get_action_kind(char *str)
+static struct action_util *get_action_kind(const char *str)
 {
 	static void *aBODY;
 	void *dlh;
@@ -123,7 +123,7 @@ noexist:
 #ifdef CONFIG_GACT
 	if (!looked4gact) {
 		looked4gact = 1;
-		strcpy(str, "gact");
+		str = "gact";
 		goto restart_s;
 	}
 #endif

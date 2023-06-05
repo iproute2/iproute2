@@ -215,6 +215,25 @@ int print_color_bool(enum output_type type,
 				  value ? "true" : "false");
 }
 
+/* In JSON mode, acts like print_color_bool.
+ * Otherwise, will print key with prefix of "no" if false.
+ * The show flag is used to suppres printing in non-JSON mode
+ */
+int print_color_bool_opt(enum output_type type,
+			 enum color_attr color,
+			 const char *key,
+			 bool value, bool show)
+{
+	int ret = 0;
+
+	if (_IS_JSON_CONTEXT(type))
+		jsonw_bool_field(_jw, key, value);
+	else if (_IS_FP_CONTEXT(type) && show)
+		ret = color_fprintf(stdout, color, "%s%s ",
+				    value ? "" : "no", key);
+	return ret;
+}
+
 int print_color_on_off(enum output_type type,
 		       enum color_attr color,
 		       const char *key,

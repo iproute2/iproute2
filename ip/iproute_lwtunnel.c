@@ -140,7 +140,7 @@ static const char *seg6_mode_types[] = {
 
 static const char *format_seg6mode_type(int mode)
 {
-	if (mode < 0 || mode > ARRAY_SIZE(seg6_mode_types))
+	if (mode < 0 || mode >= ARRAY_SIZE(seg6_mode_types))
 		return "<unknown>";
 
 	return seg6_mode_types[mode];
@@ -900,6 +900,9 @@ static struct ipv6_sr_hdr *parse_srh(char *segbuf, int hmac, bool encap)
 		srhlen += 40;
 
 	srh = malloc(srhlen);
+	if (srh == NULL)
+		return NULL;
+
 	memset(srh, 0, srhlen);
 
 	srh->hdrlen = (srhlen >> 3) - 1;
@@ -935,14 +938,14 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 			    char ***argvp)
 {
 	int mode_ok = 0, segs_ok = 0, hmac_ok = 0;
-	struct seg6_iptunnel_encap *tuninfo;
+	struct seg6_iptunnel_encap *tuninfo = NULL;
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
 	char segbuf[1024] = "";
 	int argc = *argcp;
 	int encap = -1;
 	__u32 hmac = 0;
-	int ret = 0;
+	int ret = -1;
 	int srhlen;
 
 	while (argc > 0) {
@@ -974,9 +977,13 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	}
 
 	srh = parse_srh(segbuf, hmac, encap);
+	if (srh == NULL)
+		goto out;
 	srhlen = (srh->hdrlen + 1) << 3;
 
 	tuninfo = malloc(sizeof(*tuninfo) + srhlen);
+	if (tuninfo == NULL)
+		goto out;
 	memset(tuninfo, 0, sizeof(*tuninfo) + srhlen);
 
 	tuninfo->mode = encap;
@@ -984,13 +991,12 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	memcpy(tuninfo->srh, srh, srhlen);
 
 	if (rta_addattr_l(rta, len, SEG6_IPTUNNEL_SRH, tuninfo,
-			  sizeof(*tuninfo) + srhlen)) {
-		ret = -1;
+			  sizeof(*tuninfo) + srhlen))
 		goto out;
-	}
 
 	*argcp = argc + 1;
 	*argvp = argv - 1;
+	ret = 0;
 
 out:
 	free(tuninfo);
@@ -1014,6 +1020,8 @@ static struct ipv6_rpl_sr_hdr *parse_rpl_srh(char *segbuf)
 	srhlen = 8 + 16 * nsegs;
 
 	srh = calloc(1, srhlen);
+	if (srh == NULL)
+		return NULL;
 
 	srh->hdrlen = (srhlen >> 3) - 1;
 	srh->type = 3;

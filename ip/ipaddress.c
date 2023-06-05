@@ -1207,7 +1207,7 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 		if (tb[IFLA_ALLMULTI])
 			print_uint(PRINT_ANY,
 				   "allmulti",
-				   " allmulti %u ",
+				   "allmulti %u ",
 				   rta_getattr_u32(tb[IFLA_ALLMULTI]));
 
 		if (tb[IFLA_MIN_MTU])
@@ -2547,7 +2547,7 @@ static int ipaddr_modify(int cmd, int flags, int argc, char **argv)
 			__u8 proto;
 
 			NEXT_ARG();
-			if (get_u8(&proto, *argv, 0))
+			if (rtnl_addrprot_a2n(&proto, *argv))
 				invarg("\"proto\" value is invalid\n", *argv);
 			addattr8(&req.n, sizeof(req), IFA_PROTO, proto);
 		} else {

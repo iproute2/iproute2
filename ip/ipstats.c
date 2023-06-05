@@ -88,8 +88,11 @@ ipstats_stat_show_attrs_alloc_tb(struct ipstats_stat_show_attrs *attrs,
 		return 0;
 
 	attrs->tbs[group] = calloc(ifla_max + 1, sizeof(*attrs->tbs[group]));
-	if (attrs->tbs[group] == NULL)
-		return -ENOMEM;
+	if (attrs->tbs[group] == NULL) {
+		fprintf(stderr, "Error parsing netlink answer: %s\n",
+			strerror(errno));
+		return -errno;
+	}
 
 	if (group == 0)
 		err = parse_rtattr(attrs->tbs[group], ifla_max,
@@ -755,11 +758,8 @@ ipstats_process_ifsm(struct nlmsghdr *answer,
 	}
 
 	err = ipstats_stat_show_attrs_alloc_tb(&show_attrs, 0);
-	if (err != 0) {
-		fprintf(stderr, "Error parsing netlink answer: %s\n",
-			strerror(err));
+	if (err)
 		return err;
-	}
 
 	dev = ll_index_to_name(show_attrs.ifsm->ifindex);
 

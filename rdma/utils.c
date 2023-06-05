@@ -75,6 +75,13 @@ static int get_port_from_argv(struct rd *rd, uint32_t *port,
 
 	slash = strchr(rd_argv(rd), '/');
 	/* if no port found, return 0 */
+	if (slash == NULL) {
+		if (strict_port)
+			return -EINVAL;
+		else
+			return 0;
+	}
+
 	if (slash++) {
 		if (*slash == '-') {
 			if (strict_port)
@@ -468,7 +475,7 @@ static const enum mnl_attr_data_type nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
 	[RDMA_NLDEV_ATTR_RES_RAW] = MNL_TYPE_BINARY,
 };
 
-int rd_attr_check(const struct nlattr *attr, int *typep)
+static int rd_attr_check(const struct nlattr *attr, int *typep)
 {
 	int type;
 
@@ -747,6 +754,9 @@ struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index)
 		return NULL;
 
 	dev_name = strdup(rd_argv(rd));
+	if (!dev_name)
+		return NULL;
+
 	if (allow_port_index) {
 		slash = strrchr(dev_name, '/');
 		if (slash)

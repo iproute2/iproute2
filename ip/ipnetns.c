@@ -967,9 +967,8 @@ int set_netnsid_from_name(const char *name, int nsid)
 
 static int netns_set(int argc, char **argv)
 {
-	char netns_path[PATH_MAX];
 	const char *name;
-	int netns, nsid;
+	int nsid;
 
 	if (argc < 1) {
 		fprintf(stderr, "No netns name specified\n");
@@ -987,14 +986,6 @@ static int netns_set(int argc, char **argv)
 		invarg("Invalid \"netnsid\" value", argv[1]);
 	else if (nsid < 0)
 		invarg("\"netnsid\" value should be >= 0", argv[1]);
-
-	snprintf(netns_path, sizeof(netns_path), "%s/%s", NETNS_RUN_DIR, name);
-	netns = open(netns_path, O_RDONLY | O_CLOEXEC);
-	if (netns < 0) {
-		fprintf(stderr, "Cannot open network namespace \"%s\": %s\n",
-			name, strerror(errno));
-		return -1;
-	}
 
 	return set_netnsid_from_name(name, nsid);
 }
