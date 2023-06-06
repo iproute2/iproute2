@@ -153,8 +153,16 @@ static void dcb_app_table_remove_existing(struct dcb_app_table *a,
 	a->n_apps = ja;
 }
 
+static bool dcb_app_pid_eq(const struct dcb_app *aa, const struct dcb_app *ab)
+{
+	return aa->selector == ab->selector &&
+	       aa->protocol == ab->protocol;
+}
+
 static void dcb_app_table_remove_replaced(struct dcb_app_table *a,
-					  const struct dcb_app_table *b)
+				   const struct dcb_app_table *b,
+				   bool (*key_eq)(const struct dcb_app *aa,
+						  const struct dcb_app *ab))
 {
 	size_t ia, ja;
 	size_t ib;
@@ -167,13 +175,13 @@ static void dcb_app_table_remove_replaced(struct dcb_app_table *a,
 		for (ib = 0; ib < b->n_apps; ib++) {
 			const struct dcb_app *ab = &b->apps[ib];
 
-			if (aa->selector == ab->selector &&
-			    aa->protocol == ab->protocol)
+			if (key_eq(aa, ab))
 				present = true;
 			else
 				continue;
 
-			if (aa->priority == ab->priority) {
+			if (aa->protocol == ab->protocol &&
+			    aa->priority == ab->priority) {
 				found = true;
 				break;
 			}
@@ -892,7 +900,7 @@ static int dcb_cmd_app_replace(struct dcb *dcb, const char *dev, int argc, char 
 	}
 
 	/* Remove the obsolete entries. */
-	dcb_app_table_remove_replaced(&orig, &tab);
+	dcb_app_table_remove_replaced(&orig, &tab, dcb_app_pid_eq);
 	ret = dcb_app_add_del(dcb, dev, DCB_CMD_IEEE_DEL, &orig, NULL);
 	if (ret != 0) {
 		fprintf(stderr, "Could not remove replaced APP entries\n");
