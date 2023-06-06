@@ -49,7 +49,7 @@ int mpls_pton(int af, const char *src, void *addr, size_t alen)
 	unsigned int maxlabels = alen / sizeof(struct mpls_label);
 	int err;
 
-	switch(af) {
+	switch (af) {
 	case AF_MPLS:
 		errno = 0;
 		err = mpls_pton1(src, (struct mpls_label *)addr, maxlabels);

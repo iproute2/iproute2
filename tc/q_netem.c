@@ -419,7 +419,7 @@ random_loss_model:
 			dist_data = calloc(sizeof(dist_data[0]), MAX_DIST);
 			if (dist_data == NULL)
 				return -1;
-			
+
 			dist_size = get_distribution(*argv, dist_data, MAX_DIST);
 			if (dist_size <= 0) {
 				free(dist_data);

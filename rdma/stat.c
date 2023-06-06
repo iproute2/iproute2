@@ -443,7 +443,7 @@ static int stat_get_auto_mode_mask(struct rd *rd)
 		}
 
 		mode = strtok_r(NULL, delim, &saved_ptr);
-	} while(1);
+	} while (1);
 
 	if (mask)
 		rd_arg_inc(rd);

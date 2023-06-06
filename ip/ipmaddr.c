@@ -153,7 +153,7 @@ static void read_igmp(struct ma_info **result_p)
 		ma = malloc(sizeof(m));
 		if (ma == NULL)
 			break;
-			
+
 		memcpy(ma, &m, sizeof(m));
 		maddr_ins(result_p, ma);
 	}

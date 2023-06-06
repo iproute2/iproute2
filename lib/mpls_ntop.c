@@ -40,7 +40,7 @@ static const char *mpls_ntop1(const struct mpls_label *addr, char *buf, size_t b
 
 const char *mpls_ntop(int af, const void *addr, char *buf, size_t buflen)
 {
-	switch(af) {
+	switch (af) {
 	case AF_MPLS:
 		errno = 0;
 		return mpls_ntop1((struct mpls_label *)addr, buf, buflen);
