@@ -54,6 +54,10 @@ void dcb_print_array_on_off(const __u8 *array, size_t size);
 void dcb_print_array_kw(const __u8 *array, size_t array_size,
 			const char *const kw[], size_t kw_size);
 
+/* dcp_rewr.c */
+
+int dcb_cmd_rewr(struct dcb *dcb, int argc, char **argv);
+
 /* dcb_app.c */
 
 struct dcb_app_table {
