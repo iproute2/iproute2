@@ -405,7 +405,7 @@ static bool dcb_app_is_port(const struct dcb_app *app)
 
 static int dcb_app_print_key_dec(__u16 protocol)
 {
-	return print_uint(PRINT_ANY, NULL, "%d:", protocol);
+	return print_uint(PRINT_ANY, NULL, "%u:", protocol);
 }
 
 static int dcb_app_print_key_hex(__u16 protocol)
@@ -420,14 +420,14 @@ static int dcb_app_print_key_dscp(__u16 protocol)
 
 	if (!is_json_context() && name != NULL)
 		return print_string(PRINT_FP, NULL, "%s:", name);
-	return print_uint(PRINT_ANY, NULL, "%d:", protocol);
+	return print_uint(PRINT_ANY, NULL, "%u:", protocol);
 }
 
 static int dcb_app_print_key_pcp(__u16 protocol)
 {
 	/* Print in numerical form, if protocol value is out-of-range */
 	if (protocol > DCB_APP_PCP_MAX)
-		return print_uint(PRINT_ANY, NULL, "%d:", protocol);
+		return print_uint(PRINT_ANY, NULL, "%u:", protocol);
 
 	return print_string(PRINT_ANY, NULL, "%s:", pcp_names[protocol]);
 }
@@ -454,7 +454,7 @@ static void dcb_app_print_filtered(const struct dcb_app_table *tab,
 
 		open_json_array(PRINT_JSON, NULL);
 		print_key(app->protocol);
-		print_uint(PRINT_ANY, NULL, "%d ", app->priority);
+		print_uint(PRINT_ANY, NULL, "%u ", app->priority);
 		close_json_array(PRINT_JSON, NULL);
 	}
 
@@ -519,7 +519,7 @@ static void dcb_app_print_default_prio(const struct dcb_app_table *tab)
 			print_string(PRINT_FP, NULL, "default-prio ", NULL);
 			first = false;
 		}
-		print_uint(PRINT_ANY, NULL, "%d ", tab->apps[i].priority);
+		print_uint(PRINT_ANY, NULL, "%u ", tab->apps[i].priority);
 	}
 
 	if (!first) {
@@ -550,13 +550,13 @@ static int dcb_app_get_table_attr_cb(const struct nlattr *attr, void *data)
 
 	if (!dcb_app_attr_type_validate(type)) {
 		fprintf(stderr,
-			"Unknown attribute in DCB_ATTR_IEEE_APP_TABLE: %d\n",
+			"Unknown attribute in DCB_ATTR_IEEE_APP_TABLE: %u\n",
 			type);
 		return MNL_CB_OK;
 	}
 	if (mnl_attr_get_payload_len(attr) < sizeof(struct dcb_app)) {
 		fprintf(stderr,
-			"%s payload expected to have size %zd, not %d\n",
+			"%s payload expected to have size %zu, not %u\n",
 			ieee_attrs_app_names[type], sizeof(struct dcb_app),
 			mnl_attr_get_payload_len(attr));
 		return MNL_CB_OK;
