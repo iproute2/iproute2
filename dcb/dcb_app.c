@@ -434,7 +434,9 @@ static int dcb_app_print_pid_pcp(__u16 protocol)
 
 static void dcb_app_print_filtered(const struct dcb_app_table *tab,
 				   bool (*filter)(const struct dcb_app *),
-				   int (*print_key)(__u16 protocol),
+				   void (*print_pid_prio)(int (*print_pid)(__u16),
+							  const struct dcb_app *),
+				   int (*print_pid)(__u16 protocol),
 				   const char *json_name,
 				   const char *fp_name)
 {
@@ -453,8 +455,8 @@ static void dcb_app_print_filtered(const struct dcb_app_table *tab,
 		}
 
 		open_json_array(PRINT_JSON, NULL);
-		print_key(app->protocol);
-		print_uint(PRINT_ANY, NULL, ":%u ", app->priority);
+		print_pid_prio(print_pid, app);
+		print_string(PRINT_ANY, NULL, "%s", " ");
 		close_json_array(PRINT_JSON, NULL);
 	}
 
@@ -464,9 +466,17 @@ static void dcb_app_print_filtered(const struct dcb_app_table *tab,
 	}
 }
 
+static void dcb_app_print_pid_prio(int (*print_pid)(__u16 protocol),
+				   const struct dcb_app *app)
+{
+	print_pid(app->protocol);
+	print_uint(PRINT_ANY, NULL, ":%u", app->priority);
+}
+
 static void dcb_app_print_ethtype_prio(const struct dcb_app_table *tab)
 {
-	dcb_app_print_filtered(tab, dcb_app_is_ethtype,  dcb_app_print_pid_hex,
+	dcb_app_print_filtered(tab, dcb_app_is_ethtype,
+			       dcb_app_print_pid_prio, dcb_app_print_pid_hex,
 			       "ethtype_prio", "ethtype-prio");
 }
 
@@ -474,8 +484,9 @@ static void dcb_app_print_pcp_prio(const struct dcb *dcb,
 				   const struct dcb_app_table *tab)
 {
 	dcb_app_print_filtered(tab, dcb_app_is_pcp,
-			       dcb->numeric ? dcb_app_print_pid_dec
-					    : dcb_app_print_pid_pcp,
+			       dcb_app_print_pid_prio,
+			       dcb->numeric ? dcb_app_print_pid_dec :
+					      dcb_app_print_pid_pcp,
 			       "pcp_prio", "pcp-prio");
 }
 
@@ -483,26 +494,30 @@ static void dcb_app_print_dscp_prio(const struct dcb *dcb,
 				    const struct dcb_app_table *tab)
 {
 	dcb_app_print_filtered(tab, dcb_app_is_dscp,
-			       dcb->numeric ? dcb_app_print_pid_dec
-					    : dcb_app_print_pid_dscp,
+			       dcb_app_print_pid_prio,
+			       dcb->numeric ? dcb_app_print_pid_dec :
+					      dcb_app_print_pid_dscp,
 			       "dscp_prio", "dscp-prio");
 }
 
 static void dcb_app_print_stream_port_prio(const struct dcb_app_table *tab)
 {
-	dcb_app_print_filtered(tab, dcb_app_is_stream_port, dcb_app_print_pid_dec,
+	dcb_app_print_filtered(tab, dcb_app_is_stream_port,
+			       dcb_app_print_pid_prio, dcb_app_print_pid_dec,
 			       "stream_port_prio", "stream-port-prio");
 }
 
 static void dcb_app_print_dgram_port_prio(const struct dcb_app_table *tab)
 {
-	dcb_app_print_filtered(tab, dcb_app_is_dgram_port, dcb_app_print_pid_dec,
+	dcb_app_print_filtered(tab, dcb_app_is_dgram_port,
+			       dcb_app_print_pid_prio, dcb_app_print_pid_dec,
 			       "dgram_port_prio", "dgram-port-prio");
 }
 
 static void dcb_app_print_port_prio(const struct dcb_app_table *tab)
 {
-	dcb_app_print_filtered(tab, dcb_app_is_port, dcb_app_print_pid_dec,
+	dcb_app_print_filtered(tab, dcb_app_is_port,
+			       dcb_app_print_pid_prio, dcb_app_print_pid_dec,
 			       "port_prio", "port-prio");
 }
 
