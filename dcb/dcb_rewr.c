@@ -76,7 +76,7 @@ static int dcb_rewr_parse_mapping_prio_dscp(__u32 key, char *value, void *data)
 		return -EINVAL;
 
 	return dcb_parse_mapping("PRIO", key, IEEE_8021QAZ_MAX_TCS - 1,
-				 "DSCP", dscp, 63,
+				 "DSCP", dscp, DCB_APP_DSCP_MAX,
 				 dcb_rewr_parse_mapping_cb, data);
 }
 

@@ -73,6 +73,7 @@ struct dcb_app_parse_mapping {
 };
 
 #define DCB_APP_PCP_MAX 15
+#define DCB_APP_DSCP_MAX 63
 
 int dcb_cmd_app(struct dcb *dcb, int argc, char **argv);
 

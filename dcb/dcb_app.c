@@ -306,7 +306,7 @@ static int dcb_app_parse_mapping_dscp_prio(__u32 key, char *value, void *data)
 	if (get_u8(&prio, value, 0))
 		return -EINVAL;
 
-	return dcb_parse_mapping("DSCP", key, 63,
+	return dcb_parse_mapping("DSCP", key, DCB_APP_DSCP_MAX,
 				 "PRIO", prio, IEEE_8021QAZ_MAX_TCS - 1,
 				 dcb_app_parse_mapping_cb, data);
 }
