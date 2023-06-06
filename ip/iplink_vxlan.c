@@ -36,6 +36,7 @@ static const struct vxlan_bool_opt {
 	{ "udp_zero_csum6_rx", IFLA_VXLAN_UDP_ZERO_CSUM6_RX, false },
 	{ "remcsum_tx", IFLA_VXLAN_REMCSUM_TX,		false },
 	{ "remcsum_rx", IFLA_VXLAN_REMCSUM_RX,		false },
+	{ "localbypass", IFLA_VXLAN_LOCALBYPASS,	true },
 };
 
 static void print_explain(FILE *f)
@@ -62,6 +63,7 @@ static void print_explain(FILE *f)
 		"		[ [no]udp6zerocsumtx ]\n"
 		"		[ [no]udp6zerocsumrx ]\n"
 		"		[ [no]remcsumtx ] [ [no]remcsumrx ]\n"
+		"		[ [no]localbypass ]\n"
 		"		[ [no]external ] [ gbp ] [ gpe ]\n"
 		"		[ [no]vnifilter ]\n"
 		"\n"
@@ -327,6 +329,14 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			check_duparg(&attrs, IFLA_VXLAN_REMCSUM_RX,
 				     *argv, *argv);
 			addattr8(n, 1024, IFLA_VXLAN_REMCSUM_RX, 0);
+		} else if (strcmp(*argv, "localbypass") == 0) {
+			check_duparg(&attrs, IFLA_VXLAN_LOCALBYPASS,
+				     *argv, *argv);
+			addattr8(n, 1024, IFLA_VXLAN_LOCALBYPASS, 1);
+		} else if (strcmp(*argv, "nolocalbypass") == 0) {
+			check_duparg(&attrs, IFLA_VXLAN_LOCALBYPASS,
+				     *argv, *argv);
+			addattr8(n, 1024, IFLA_VXLAN_LOCALBYPASS, 0);
 		} else if (!matches(*argv, "external")) {
 			check_duparg(&attrs, IFLA_VXLAN_COLLECT_METADATA,
 				     *argv, *argv);
