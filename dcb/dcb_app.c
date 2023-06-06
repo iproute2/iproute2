@@ -405,12 +405,12 @@ static bool dcb_app_is_port(const struct dcb_app *app)
 
 static int dcb_app_print_key_dec(__u16 protocol)
 {
-	return print_uint(PRINT_ANY, NULL, "%u:", protocol);
+	return print_uint(PRINT_ANY, NULL, "%u", protocol);
 }
 
 static int dcb_app_print_key_hex(__u16 protocol)
 {
-	return print_uint(PRINT_ANY, NULL, "%x:", protocol);
+	return print_uint(PRINT_ANY, NULL, "%x", protocol);
 }
 
 static int dcb_app_print_key_dscp(__u16 protocol)
@@ -419,17 +419,17 @@ static int dcb_app_print_key_dscp(__u16 protocol)
 
 
 	if (!is_json_context() && name != NULL)
-		return print_string(PRINT_FP, NULL, "%s:", name);
-	return print_uint(PRINT_ANY, NULL, "%u:", protocol);
+		return print_string(PRINT_FP, NULL, "%s", name);
+	return print_uint(PRINT_ANY, NULL, "%u", protocol);
 }
 
 static int dcb_app_print_key_pcp(__u16 protocol)
 {
 	/* Print in numerical form, if protocol value is out-of-range */
 	if (protocol > DCB_APP_PCP_MAX)
-		return print_uint(PRINT_ANY, NULL, "%u:", protocol);
+		return print_uint(PRINT_ANY, NULL, "%u", protocol);
 
-	return print_string(PRINT_ANY, NULL, "%s:", pcp_names[protocol]);
+	return print_string(PRINT_ANY, NULL, "%s", pcp_names[protocol]);
 }
 
 static void dcb_app_print_filtered(const struct dcb_app_table *tab,
@@ -454,7 +454,7 @@ static void dcb_app_print_filtered(const struct dcb_app_table *tab,
 
 		open_json_array(PRINT_JSON, NULL);
 		print_key(app->protocol);
-		print_uint(PRINT_ANY, NULL, "%u ", app->priority);
+		print_uint(PRINT_ANY, NULL, ":%u ", app->priority);
 		close_json_array(PRINT_JSON, NULL);
 	}
 
