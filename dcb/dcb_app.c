@@ -71,6 +71,7 @@ static void dcb_app_help(void)
 struct dcb_app_table {
 	struct dcb_app *apps;
 	size_t n_apps;
+	int attr;
 };
 
 enum ieee_attrs_app dcb_app_attr_type_get(__u8 selector)
@@ -583,7 +584,7 @@ static int dcb_app_get(struct dcb *dcb, const char *dev, struct dcb_app_table *t
 	void *payload;
 	int ret;
 
-	ret = dcb_get_attribute_va(dcb, dev, DCB_ATTR_IEEE_APP_TABLE, &payload, &payload_len);
+	ret = dcb_get_attribute_va(dcb, dev, tab->attr, &payload, &payload_len);
 	if (ret != 0)
 		return ret;
 
@@ -606,7 +607,7 @@ static int dcb_app_add_del_cb(struct dcb *dcb, struct nlmsghdr *nlh, void *data)
 	struct nlattr *nest;
 	size_t i;
 
-	nest = mnl_attr_nest_start(nlh, DCB_ATTR_IEEE_APP_TABLE);
+	nest = mnl_attr_nest_start(nlh, add_del->tab->attr);
 
 	for (i = 0; i < add_del->tab->n_apps; i++) {
 		const struct dcb_app *app = &add_del->tab->apps[i];
@@ -715,7 +716,7 @@ static int dcb_cmd_app_parse_add_del(struct dcb *dcb, const char *dev,
 
 static int dcb_cmd_app_add(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table tab = {};
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_cmd_app_parse_add_del(dcb, dev, argc, argv, &tab);
@@ -729,7 +730,7 @@ static int dcb_cmd_app_add(struct dcb *dcb, const char *dev, int argc, char **ar
 
 static int dcb_cmd_app_del(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table tab = {};
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_cmd_app_parse_add_del(dcb, dev, argc, argv, &tab);
@@ -743,7 +744,7 @@ static int dcb_cmd_app_del(struct dcb *dcb, const char *dev, int argc, char **ar
 
 static int dcb_cmd_app_show(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table tab = {};
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_app_get(dcb, dev, &tab);
@@ -795,7 +796,7 @@ out:
 
 static int dcb_cmd_app_flush(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table tab = {};
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_app_get(dcb, dev, &tab);
@@ -848,9 +849,9 @@ out:
 
 static int dcb_cmd_app_replace(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table orig = {};
-	struct dcb_app_table tab = {};
-	struct dcb_app_table new = {};
+	struct dcb_app_table orig = { .attr = DCB_ATTR_IEEE_APP_TABLE };
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
+	struct dcb_app_table new = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_app_get(dcb, dev, &orig);
