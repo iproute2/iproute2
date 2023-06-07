@@ -100,7 +100,9 @@ flower \- flow based traffic control filter
 }
 .IR OPTIONS " | "
 .BR ip_flags
-.IR IP_FLAGS " }"
+.IR IP_FLAGS " | "
+.B l2_miss
+.IR L2_MISS " }"
 
 .ti -8
 .IR LSE_LIST " := [ " LSE_LIST " ] " LSE
@@ -493,6 +495,12 @@ respectively. firstfrag and nofirstfrag can be used to further distinguish
 fragmented packet. firstfrag can be used to indicate the first fragmented
 packet. nofirstfrag can be used to indicates subsequent fragmented packets
 or non-fragmented packets.
+.TP
+.BI l2_miss " L2_MISS"
+Match on layer 2 miss in the bridge driver's FDB / MDB. \fIL2_MISS\fR may be 0
+or 1. When 1, match on packets that encountered a layer 2 miss. When 0, match
+on packets that were forwarded using an FDB / MDB entry. Note that broadcast
+packets do not encounter a miss since a lookup is not performed for them.
 .SH NOTES
 As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches

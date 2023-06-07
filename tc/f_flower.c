@@ -91,6 +91,7 @@ static void explain(void)
 		"			erspan_opts MASKED-OPTIONS |\n"
 		"			gtp_opts MASKED-OPTIONS |\n"
 		"			ip_flags IP-FLAGS |\n"
+		"			l2_miss L2_MISS |\n"
 		"			enc_dst_port [ port_number ] |\n"
 		"			ct_state MASKED_CT_STATE |\n"
 		"			ct_label MASKED_CT_LABEL |\n"
@@ -1520,6 +1521,15 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "Illegal \"ip_flags\"\n");
 				return -1;
 			}
+		} else if (strcmp(*argv, "l2_miss") == 0) {
+			__u8 l2_miss;
+
+			NEXT_ARG();
+			if (get_u8(&l2_miss, *argv, 10)) {
+				fprintf(stderr, "Illegal \"l2_miss\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_L2_MISS, l2_miss);
 		} else if (matches(*argv, "verbose") == 0) {
 			flags |= TCA_CLS_FLAGS_VERBOSE;
 		} else if (matches(*argv, "skip_hw") == 0) {
@@ -2982,6 +2992,14 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 	flower_print_matching_flags("ip_flags", FLOWER_IP_FLAGS,
 				    tb[TCA_FLOWER_KEY_FLAGS],
 				    tb[TCA_FLOWER_KEY_FLAGS_MASK]);
+
+	if (tb[TCA_FLOWER_L2_MISS]) {
+		struct rtattr *attr = tb[TCA_FLOWER_L2_MISS];
+
+		print_nl();
+		print_uint(PRINT_ANY, "l2_miss", "  l2_miss %u",
+			   rta_getattr_u8(attr));
+	}
 
 	flower_print_ct_state(tb[TCA_FLOWER_KEY_CT_STATE],
 			      tb[TCA_FLOWER_KEY_CT_STATE_MASK]);
