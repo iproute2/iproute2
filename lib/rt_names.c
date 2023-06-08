@@ -81,6 +81,10 @@ rtnl_hash_initialize(const char *file, struct rtnl_hash_entry **hash, int size)
 			continue;
 
 		entry = malloc(sizeof(*entry));
+		if (entry == NULL) {
+			fprintf(stderr, "malloc error: for entry\n");
+			break;
+		}
 		entry->id   = id;
 		entry->name = strdup(namebuf);
 		entry->next = hash[id & (size - 1)];
