@@ -1,4 +1,4 @@
-.TH DCB-ETS 8 "6 December 2020" "iproute2" "Linux"
+.TH DCB-APP 8 "6 December 2020" "iproute2" "Linux"
 .SH NAME
 dcb-app \- show / manipulate application priority table of
 the DCB (Data Center Bridging) subsystem
@@ -26,7 +26,7 @@ the DCB (Data Center Bridging) subsystem
 .RB "[ " pcp-prio " ]"
 
 .ti -8
-.B dcb ets " { " add " | " del " | " replace " } " dev
+.B dcb app " { " add " | " del " | " replace " } " dev
 .RI DEV
 .RB "[ " default-prio " " \fIPRIO-LIST\fB " ]"
 .RB "[ " ethtype-prio " " \fIET-MAP\fB " ]"
@@ -106,7 +106,7 @@ individual APP 3-tuples through
 .B add
 and
 .B del
-commands. On the other other hand, the command
+commands. On the other hand, the command
 .B replace
 does what one would typically want in this situation--first adds the new
 configuration, and then removes the obsolete one, so that only one
@@ -184,7 +184,7 @@ for details. Keys are DSCP points, values are priorities assigned to
 traffic with matching DSCP. DSCP points can be written either directly as
 numeric values, or using symbolic names specified in
 .B /etc/iproute2/rt_dsfield
-(however note that that file specifies full 8-bit dsfield values, whereas
+(however note that the file specifies full 8-bit dsfield values, whereas
 .B dcb app
 will only use the higher six bits).
 .B dcb app show
@@ -230,7 +230,7 @@ priority 4:
 .P
 # dcb app replace dev eth0 dscp-prio 24:4
 .br
-# dcb app show dev eth0 dscp-prio
+# dcb app -N show dev eth0 dscp-prio
 .br
 dscp-prio 0:0 24:4 48:6
 
