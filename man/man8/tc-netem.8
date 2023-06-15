@@ -366,7 +366,7 @@ It is possible to selectively apply impairment using traffic classification.
    match ip dst 65.172.181.4/32 flowid 1:3
 .EE
 .RS 4
-This eample uses a priority queueing discipline;
+This example uses a priority queueing discipline;
 a TBF is added to do rate control; and a simple netem delay.
 A filter classifies all packets going to 65.172.181.4 as being priority 3.
 .PP
