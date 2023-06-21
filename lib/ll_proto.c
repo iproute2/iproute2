@@ -78,6 +78,7 @@ __PF(8021AD,802.1ad)
 __PF(MPLS_UC,mpls_uc)
 __PF(MPLS_MC,mpls_mc)
 __PF(TEB,teb)
+__PF(CFM,cfm)
 
 { 0x8100, "802.1Q" },
 { 0x88cc, "LLDP" },

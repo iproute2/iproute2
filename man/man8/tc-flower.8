@@ -102,7 +102,9 @@ flower \- flow based traffic control filter
 .BR ip_flags
 .IR IP_FLAGS " | "
 .B l2_miss
-.IR L2_MISS " }"
+.IR L2_MISS " | "
+.BR cfm
+.IR CFM_OPTIONS " }"
 
 .ti -8
 .IR LSE_LIST " := [ " LSE_LIST " ] " LSE
@@ -119,6 +121,13 @@ flower \- flow based traffic control filter
 .IR BOS " | "
 .B ttl
 .IR TTL " }"
+
+.ti -8
+.IR CFM " := "
+.B cfm mdl
+.IR LEVEL " | "
+.B op
+.IR OPCODE "
 
 .SH DESCRIPTION
 The
@@ -496,11 +505,29 @@ fragmented packet. firstfrag can be used to indicate the first fragmented
 packet. nofirstfrag can be used to indicates subsequent fragmented packets
 or non-fragmented packets.
 .TP
+
 .BI l2_miss " L2_MISS"
 Match on layer 2 miss in the bridge driver's FDB / MDB. \fIL2_MISS\fR may be 0
 or 1. When 1, match on packets that encountered a layer 2 miss. When 0, match
 on packets that were forwarded using an FDB / MDB entry. Note that broadcast
 packets do not encounter a miss since a lookup is not performed for them.
+.TP
+
+.BI cfm " CFM_OPTIONS"
+Match on Connectivity Fault Management (CFM) fields.
+.I CFM_OPTIONS
+is a list of options that describe the properties of the CFM information
+fields to match.
+.RS
+.TP
+.BI mdl " LEVEL "
+Match on the Maintenance Domain (MD) level field.
+\fILEVEL\fR is an unsigned 3 bit value in decimal format.
+.TP
+.BI op " OPCODE "
+Match on the CFM opcode field. \fIOPCODE\fR is an unsigned 8 bit value in
+decimal format.
+
 .SH NOTES
 As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches
