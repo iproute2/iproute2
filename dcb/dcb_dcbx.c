@@ -42,12 +42,12 @@ struct dcb_dcbx_flag {
 	const char *key_json;
 };
 
-static struct dcb_dcbx_flag dcb_dcbx_flags[] = {
-	{DCB_CAP_DCBX_HOST, "host"},
-	{DCB_CAP_DCBX_LLD_MANAGED, "lld-managed", "lld_managed"},
-	{DCB_CAP_DCBX_VER_CEE, "cee"},
-	{DCB_CAP_DCBX_VER_IEEE, "ieee"},
-	{DCB_CAP_DCBX_STATIC, "static"},
+static const struct dcb_dcbx_flag dcb_dcbx_flags[] = {
+	{DCB_CAP_DCBX_HOST, "host", NULL },
+	{DCB_CAP_DCBX_LLD_MANAGED, "lld-managed", "lld_managed" },
+	{DCB_CAP_DCBX_VER_CEE, "cee", NULL },
+	{DCB_CAP_DCBX_VER_IEEE, "ieee", NULL },
+	{DCB_CAP_DCBX_STATIC, "static", NULL },
 };
 
 static void dcb_dcbx_print(__u8 dcbx)
@@ -60,7 +60,7 @@ static void dcb_dcbx_print(__u8 dcbx)
 
 		bit--;
 		for (i = 0; i < ARRAY_SIZE(dcb_dcbx_flags); i++) {
-			struct dcb_dcbx_flag *flag = &dcb_dcbx_flags[i];
+			const struct dcb_dcbx_flag *flag = &dcb_dcbx_flags[i];
 
 			if (flag->value == 1 << bit) {
 				print_bool(PRINT_JSON, flag->key_json ?: flag->key_fp,
@@ -123,7 +123,7 @@ static int dcb_cmd_dcbx_set(struct dcb *dcb, const char *dev, int argc, char **a
 		}
 
 		for (i = 0; i < ARRAY_SIZE(dcb_dcbx_flags); i++) {
-			struct dcb_dcbx_flag *flag = &dcb_dcbx_flags[i];
+			const struct dcb_dcbx_flag *flag = &dcb_dcbx_flags[i];
 
 			if (matches(*argv, flag->key_fp) == 0) {
 				dcbx |= flag->value;
