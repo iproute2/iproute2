@@ -627,8 +627,9 @@ static void user_ent_hash_build_task(char *path, int pid, int tid)
 
 			fp = fopen(stat, "r");
 			if (fp) {
-				if (fscanf(fp, "%*d (%[^)])", task) < 1)
+				if (fscanf(fp, "%*d (%[^)])", task) < 1) {
 					; /* ignore */
+				}
 				fclose(fp);
 			}
 		}
