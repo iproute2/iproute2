@@ -608,7 +608,7 @@ static void update_db(int interval)
 				int i;
 
 				for (i = 0; i < MAXS; i++) {
-					if ((long)(h1->ival[i] - n->ival[i]) < 0) {
+					if (h1->ival[i] < n->ival[i]) {
 						memset(n->ival, 0, sizeof(n->ival));
 						break;
 					}
