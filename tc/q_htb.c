@@ -49,8 +49,8 @@ static void explain(void)
 
 static void explain1(char *arg)
 {
-    fprintf(stderr, "Illegal \"%s\"\n", arg);
-    explain();
+	fprintf(stderr, "Illegal \"%s\"\n", arg);
+	explain();
 }
 
 static int htb_parse_opt(struct qdisc_util *qu, int argc,

@@ -189,6 +189,17 @@ static void dev_print_node_type(struct rd *rd, struct nlattr **tb)
 			   node_str);
 }
 
+static void dev_print_dev_proto(struct rd *rd, struct nlattr **tb)
+{
+	const char *str;
+
+	if (!tb[RDMA_NLDEV_ATTR_DEV_PROTOCOL])
+		return;
+
+	str = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_PROTOCOL]);
+	print_color_string(PRINT_ANY, COLOR_NONE, "protocol", "protocol %s ", str);
+}
+
 static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
@@ -206,6 +217,7 @@ static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
 	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "%s: ", name);
 
 	dev_print_node_type(rd, tb);
+	dev_print_dev_proto(rd, tb);
 	dev_print_fw(rd, tb);
 	dev_print_node_guid(rd, tb);
 	dev_print_sys_image_guid(rd, tb);

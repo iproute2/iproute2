@@ -108,10 +108,10 @@ __PF(VOID, void)
 #undef __PF
 
 	unsigned int i;
-        for (i = 0; !numeric && i < ARRAY_SIZE(arphrd_names); i++) {
-                 if (arphrd_names[i].type == type)
+	for (i = 0; !numeric && i < ARRAY_SIZE(arphrd_names); i++) {
+		if (arphrd_names[i].type == type)
 			return arphrd_names[i].name;
 	}
-        snprintf(buf, len, "[%d]", type);
-        return buf;
+	snprintf(buf, len, "[%d]", type);
+	return buf;
 }

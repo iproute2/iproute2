@@ -634,6 +634,8 @@ the following additional arguments are supported:
 ] [
 .RB [ no ] udp6zerocsumrx
 ] [
+.RB [ no ] localbypass
+] [
 .BI ageing " SECONDS "
 ] [
 .BI maxaddress " NUMBER "
@@ -741,6 +743,14 @@ are entered into the VXLAN device forwarding database.
 .sp
 .RB [ no ] udp6zerocsumrx
 - allow incoming UDP packets over IPv6 with zero checksum field.
+
+.sp
+.RB [ no ] localbypass
+- if FDB destination is local, with nolocalbypass set, forward encapsulated
+packets to the userspace network stack. If there is a userspace process
+listening for these packets, it will have a chance to process them. If
+localbypass is active (default), bypass the kernel network stack and
+inject the packets into the target VXLAN device, assuming one exists.
 
 .sp
 .BI ageing " SECONDS"

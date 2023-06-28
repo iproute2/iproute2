@@ -54,12 +54,66 @@ void dcb_print_array_on_off(const __u8 *array, size_t size);
 void dcb_print_array_kw(const __u8 *array, size_t array_size,
 			const char *const kw[], size_t kw_size);
 
+/* dcp_rewr.c */
+
+int dcb_cmd_rewr(struct dcb *dcb, int argc, char **argv);
+
 /* dcb_app.c */
 
+struct dcb_app_table {
+	struct dcb_app *apps;
+	size_t n_apps;
+	int attr;
+};
+
+struct dcb_app_parse_mapping {
+	__u8 selector;
+	struct dcb_app_table *tab;
+	int err;
+};
+
+#define DCB_APP_PCP_MAX 15
+#define DCB_APP_DSCP_MAX 63
+
 int dcb_cmd_app(struct dcb *dcb, int argc, char **argv);
+
+int dcb_app_get(struct dcb *dcb, const char *dev, struct dcb_app_table *tab);
+int dcb_app_add_del(struct dcb *dcb, const char *dev, int command,
+		    const struct dcb_app_table *tab,
+		    bool (*filter)(const struct dcb_app *));
+
+bool dcb_app_is_dscp(const struct dcb_app *app);
+bool dcb_app_is_pcp(const struct dcb_app *app);
+
+int dcb_app_print_pid_dscp(__u16 protocol);
+int dcb_app_print_pid_pcp(__u16 protocol);
+int dcb_app_print_pid_dec(__u16 protocol);
+void dcb_app_print_filtered(const struct dcb_app_table *tab,
+			    bool (*filter)(const struct dcb_app *),
+			    void (*print_pid_prio)(int (*print_pid)(__u16),
+						   const struct dcb_app *),
+			    int (*print_pid)(__u16 protocol),
+			    const char *json_name,
+			    const char *fp_name);
+
 enum ieee_attrs_app dcb_app_attr_type_get(__u8 selector);
 bool dcb_app_attr_type_validate(enum ieee_attrs_app type);
 bool dcb_app_selector_validate(enum ieee_attrs_app type, __u8 selector);
+
+int dcb_app_table_push(struct dcb_app_table *tab, struct dcb_app *app);
+int dcb_app_table_copy(struct dcb_app_table *a,
+		       const struct dcb_app_table *b);
+void dcb_app_table_sort(struct dcb_app_table *tab);
+void dcb_app_table_fini(struct dcb_app_table *tab);
+void dcb_app_table_remove_existing(struct dcb_app_table *a,
+				   const struct dcb_app_table *b);
+void dcb_app_table_remove_replaced(struct dcb_app_table *a,
+				   const struct dcb_app_table *b,
+				   bool (*key_eq)(const struct dcb_app *aa,
+						  const struct dcb_app *ab));
+
+int dcb_app_parse_pcp(__u32 *key, const char *arg);
+int dcb_app_parse_dscp(__u32 *key, const char *arg);
 
 /* dcb_apptrust.c */
 

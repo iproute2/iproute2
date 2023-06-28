@@ -57,7 +57,7 @@ static void explain(void)
 		"			cvlan_prio PRIORITY |\n"
 		"			cvlan_ethtype [ ipv4 | ipv6 | ETH-TYPE ] |\n"
 		"			pppoe_sid PSID |\n"
-		"			ppp_proto [ ipv4 | ipv6 | mpls_uc | mpls_mc | PPP_PROTO ]"
+		"			ppp_proto [ ipv4 | ipv6 | mpls_uc | mpls_mc | PPP_PROTO ] |\n"
 		"			dst_mac MASKED-LLADDR |\n"
 		"			src_mac MASKED-LLADDR |\n"
 		"			ip_proto [tcp | udp | sctp | icmp | icmpv6 | l2tp | IP-PROTO ] |\n"
@@ -88,19 +88,22 @@ static void explain(void)
 		"			enc_ttl MASKED-IP_TTL |\n"
 		"			geneve_opts MASKED-OPTIONS |\n"
 		"			vxlan_opts MASKED-OPTIONS |\n"
-		"                       erspan_opts MASKED-OPTIONS |\n"
+		"			erspan_opts MASKED-OPTIONS |\n"
 		"			gtp_opts MASKED-OPTIONS |\n"
 		"			ip_flags IP-FLAGS |\n"
+		"			l2_miss L2_MISS |\n"
 		"			enc_dst_port [ port_number ] |\n"
 		"			ct_state MASKED_CT_STATE |\n"
 		"			ct_label MASKED_CT_LABEL |\n"
 		"			ct_mark MASKED_CT_MARK |\n"
-		"			ct_zone MASKED_CT_ZONE }\n"
+		"			ct_zone MASKED_CT_ZONE |\n"
+		"			cfm CFM }\n"
 		"	LSE-LIST := [ LSE-LIST ] LSE\n"
 		"	LSE := lse depth DEPTH { label LABEL | tc TC | bos BOS | ttl TTL }\n"
 		"	FILTERID := X:Y:Z\n"
 		"	MASKED_LLADDR := { LLADDR | LLADDR/MASK | LLADDR/BITS }\n"
 		"	MASKED_CT_STATE := combination of {+|-} and flags trk,est,new,rel,rpl,inv\n"
+		"	CFM := { mdl LEVEL | op OPCODE }\n"
 		"	ACTION-SPEC := ... look at individual actions\n"
 		"\n"
 		"NOTE:	CLASSID, IP-PROTO are parsed as hexadecimal input.\n"
@@ -1446,6 +1449,57 @@ static int flower_parse_mpls(int *argc_p, char ***argv_p, struct nlmsghdr *nlh)
 	return 0;
 }
 
+static int flower_parse_cfm(int *argc_p, char ***argv_p, __be16 eth_type,
+			    struct nlmsghdr *n)
+{
+	struct rtattr *cfm_attr;
+	char **argv = *argv_p;
+	int argc = *argc_p;
+	int ret;
+
+	if (eth_type != htons(ETH_P_CFM)) {
+		fprintf(stderr,
+			"Can't set attribute if ethertype isn't CFM\n");
+		return -1;
+	}
+
+	cfm_attr = addattr_nest(n, MAX_MSG, TCA_FLOWER_KEY_CFM | NLA_F_NESTED);
+
+	while (argc > 0) {
+		if (!strcmp(*argv, "mdl")) {
+			__u8 val;
+
+			NEXT_ARG();
+			ret = get_u8(&val, *argv, 10);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"cfm md level\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_KEY_CFM_MD_LEVEL, val);
+		} else if (!strcmp(*argv, "op")) {
+			__u8 val;
+
+			NEXT_ARG();
+			ret = get_u8(&val, *argv, 10);
+			if (ret < 0) {
+				fprintf(stderr, "Illegal \"cfm opcode\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_KEY_CFM_OPCODE, val);
+		} else {
+			break;
+		}
+		argc--; argv++;
+	}
+
+	addattr_nest_end(n, cfm_attr);
+
+	*argc_p = argc;
+	*argv_p = argv;
+
+	return 0;
+}
+
 static int flower_parse_opt(struct filter_util *qu, char *handle,
 			    int argc, char **argv, struct nlmsghdr *n)
 {
@@ -1520,6 +1574,15 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "Illegal \"ip_flags\"\n");
 				return -1;
 			}
+		} else if (strcmp(*argv, "l2_miss") == 0) {
+			__u8 l2_miss;
+
+			NEXT_ARG();
+			if (get_u8(&l2_miss, *argv, 10)) {
+				fprintf(stderr, "Illegal \"l2_miss\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_L2_MISS, l2_miss);
 		} else if (matches(*argv, "verbose") == 0) {
 			flags |= TCA_CLS_FLAGS_VERBOSE;
 		} else if (matches(*argv, "skip_hw") == 0) {
@@ -2054,6 +2117,12 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 				fprintf(stderr, "Illegal \"action\"\n");
 				return -1;
 			}
+			continue;
+		} else if (!strcmp(*argv, "cfm")) {
+			NEXT_ARG();
+			ret = flower_parse_cfm(&argc, &argv, eth_type, n);
+			if (ret < 0)
+				return -1;
 			continue;
 		} else {
 			if (strcmp(*argv, "help") != 0)
@@ -2744,6 +2813,39 @@ static void flower_print_arp_op(const char *name,
 			       flower_print_arp_op_to_name);
 }
 
+static void flower_print_cfm(struct rtattr *attr)
+{
+	struct rtattr *tb[TCA_FLOWER_KEY_CFM_OPT_MAX + 1];
+	struct rtattr *v;
+	SPRINT_BUF(out);
+	size_t sz = 0;
+
+	if (!attr || !(attr->rta_type & NLA_F_NESTED))
+		return;
+
+	parse_rtattr(tb, TCA_FLOWER_KEY_CFM_OPT_MAX, RTA_DATA(attr),
+		     RTA_PAYLOAD(attr));
+
+	print_nl();
+	print_string(PRINT_FP, NULL, "  cfm", NULL);
+	open_json_object("cfm");
+
+	v = tb[TCA_FLOWER_KEY_CFM_MD_LEVEL];
+	if (v) {
+		sz += sprintf(out, " mdl %u", rta_getattr_u8(v));
+		print_hhu(PRINT_JSON, "mdl", NULL, rta_getattr_u8(v));
+	}
+
+	v = tb[TCA_FLOWER_KEY_CFM_OPCODE];
+	if (v) {
+		sprintf(out + sz, " op %u", rta_getattr_u8(v));
+		print_hhu(PRINT_JSON, "op", NULL, rta_getattr_u8(v));
+	}
+
+	close_json_object();
+	print_string(PRINT_FP, "cfm", "%s", out);
+}
+
 static int flower_print_opt(struct filter_util *qu, FILE *f,
 			    struct rtattr *opt, __u32 handle)
 {
@@ -2983,6 +3085,14 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 				    tb[TCA_FLOWER_KEY_FLAGS],
 				    tb[TCA_FLOWER_KEY_FLAGS_MASK]);
 
+	if (tb[TCA_FLOWER_L2_MISS]) {
+		struct rtattr *attr = tb[TCA_FLOWER_L2_MISS];
+
+		print_nl();
+		print_uint(PRINT_ANY, "l2_miss", "  l2_miss %u",
+			   rta_getattr_u8(attr));
+	}
+
 	flower_print_ct_state(tb[TCA_FLOWER_KEY_CT_STATE],
 			      tb[TCA_FLOWER_KEY_CT_STATE_MASK]);
 	flower_print_ct_zone(tb[TCA_FLOWER_KEY_CT_ZONE],
@@ -2991,6 +3101,8 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 			     tb[TCA_FLOWER_KEY_CT_MARK_MASK]);
 	flower_print_ct_label(tb[TCA_FLOWER_KEY_CT_LABELS],
 			      tb[TCA_FLOWER_KEY_CT_LABELS_MASK]);
+
+	flower_print_cfm(tb[TCA_FLOWER_KEY_CFM]);
 
 	close_json_object();
 

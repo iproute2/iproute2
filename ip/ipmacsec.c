@@ -1379,10 +1379,10 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (strcmp(*argv, "default") == 0)
 				cipher.id = MACSEC_DEFAULT_CIPHER_ID;
 			else if (strcmp(*argv, "gcm-aes-128") == 0 ||
-			         strcmp(*argv, "GCM-AES-128") == 0)
+				 strcmp(*argv, "GCM-AES-128") == 0)
 				cipher.id = MACSEC_CIPHER_ID_GCM_AES_128;
 			else if (strcmp(*argv, "gcm-aes-256") == 0 ||
-			         strcmp(*argv, "GCM-AES-256") == 0)
+				 strcmp(*argv, "GCM-AES-256") == 0)
 				cipher.id = MACSEC_CIPHER_ID_GCM_AES_256;
 			else if (strcmp(*argv, "gcm-aes-xpn-128") == 0 ||
 				 strcmp(*argv, "GCM-AES-XPN-128") == 0)

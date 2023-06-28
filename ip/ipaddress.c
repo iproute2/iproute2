@@ -1443,7 +1443,7 @@ static const struct ifa_flag_data_t* lookup_flag_data_by_name(const char* flag_n
 		if (strcmp(flag_name, ifa_flag_data[i].name) == 0)
 			return &ifa_flag_data[i];
 	}
-        return NULL;
+	return NULL;
 }
 
 static void print_ifa_flags(FILE *fp, const struct ifaddrmsg *ifa,
@@ -2031,9 +2031,13 @@ static int ipaddr_flush(void)
 
 static int iplink_filter_req(struct nlmsghdr *nlh, int reqlen)
 {
+	__u32 filt_mask;
 	int err;
 
-	err = addattr32(nlh, reqlen, IFLA_EXT_MASK, RTEXT_FILTER_VF);
+	filt_mask = RTEXT_FILTER_VF;
+	if (!show_stats)
+		filt_mask |= RTEXT_FILTER_SKIP_STATS;
+	err = addattr32(nlh, reqlen, IFLA_EXT_MASK, filt_mask);
 	if (err)
 		return err;
 

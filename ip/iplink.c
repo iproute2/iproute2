@@ -1166,6 +1166,9 @@ int iplink_get(char *name, __u32 filt_mask)
 			  !check_ifname(name) ? IFLA_IFNAME : IFLA_ALT_IFNAME,
 			  name, strlen(name) + 1);
 	}
+
+	if (!show_stats)
+		filt_mask |= RTEXT_FILTER_SKIP_STATS;
 	addattr32(&req.n, sizeof(req), IFLA_EXT_MASK, filt_mask);
 
 	if (rtnl_talk(&rth, &req.n, &answer) < 0)

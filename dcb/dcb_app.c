@@ -10,8 +10,6 @@
 #include "utils.h"
 #include "rt_names.h"
 
-#define DCB_APP_PCP_MAX 15
-
 static const char *const pcp_names[DCB_APP_PCP_MAX + 1] = {
 	"0nd", "1nd", "2nd", "3nd", "4nd", "5nd", "6nd", "7nd",
 	"0de", "1de", "2de", "3de", "4de", "5de", "6de", "7de"
@@ -68,11 +66,6 @@ static void dcb_app_help(void)
 	dcb_app_help_add();
 }
 
-struct dcb_app_table {
-	struct dcb_app *apps;
-	size_t n_apps;
-};
-
 enum ieee_attrs_app dcb_app_attr_type_get(__u8 selector)
 {
 	switch (selector) {
@@ -105,12 +98,12 @@ bool dcb_app_selector_validate(enum ieee_attrs_app type, __u8 selector)
 	return dcb_app_attr_type_get(selector) == type;
 }
 
-static void dcb_app_table_fini(struct dcb_app_table *tab)
+void dcb_app_table_fini(struct dcb_app_table *tab)
 {
 	free(tab->apps);
 }
 
-static int dcb_app_table_push(struct dcb_app_table *tab, struct dcb_app *app)
+int dcb_app_table_push(struct dcb_app_table *tab, struct dcb_app *app)
 {
 	struct dcb_app *apps = realloc(tab->apps, (tab->n_apps + 1) * sizeof(*tab->apps));
 
@@ -124,8 +117,8 @@ static int dcb_app_table_push(struct dcb_app_table *tab, struct dcb_app *app)
 	return 0;
 }
 
-static void dcb_app_table_remove_existing(struct dcb_app_table *a,
-					  const struct dcb_app_table *b)
+void dcb_app_table_remove_existing(struct dcb_app_table *a,
+				   const struct dcb_app_table *b)
 {
 	size_t ia, ja;
 	size_t ib;
@@ -152,8 +145,16 @@ static void dcb_app_table_remove_existing(struct dcb_app_table *a,
 	a->n_apps = ja;
 }
 
-static void dcb_app_table_remove_replaced(struct dcb_app_table *a,
-					  const struct dcb_app_table *b)
+static bool dcb_app_pid_eq(const struct dcb_app *aa, const struct dcb_app *ab)
+{
+	return aa->selector == ab->selector &&
+	       aa->protocol == ab->protocol;
+}
+
+void dcb_app_table_remove_replaced(struct dcb_app_table *a,
+				   const struct dcb_app_table *b,
+				   bool (*key_eq)(const struct dcb_app *aa,
+						  const struct dcb_app *ab))
 {
 	size_t ia, ja;
 	size_t ib;
@@ -166,13 +167,13 @@ static void dcb_app_table_remove_replaced(struct dcb_app_table *a,
 		for (ib = 0; ib < b->n_apps; ib++) {
 			const struct dcb_app *ab = &b->apps[ib];
 
-			if (aa->selector == ab->selector &&
-			    aa->protocol == ab->protocol)
+			if (key_eq(aa, ab))
 				present = true;
 			else
 				continue;
 
-			if (aa->priority == ab->priority) {
+			if (aa->protocol == ab->protocol &&
+			    aa->priority == ab->priority) {
 				found = true;
 				break;
 			}
@@ -189,8 +190,8 @@ static void dcb_app_table_remove_replaced(struct dcb_app_table *a,
 	a->n_apps = ja;
 }
 
-static int dcb_app_table_copy(struct dcb_app_table *a,
-			      const struct dcb_app_table *b)
+int dcb_app_table_copy(struct dcb_app_table *a,
+		       const struct dcb_app_table *b)
 {
 	size_t i;
 	int ret;
@@ -217,16 +218,10 @@ static int dcb_app_cmp_cb(const void *a, const void *b)
 	return dcb_app_cmp(a, b);
 }
 
-static void dcb_app_table_sort(struct dcb_app_table *tab)
+void dcb_app_table_sort(struct dcb_app_table *tab)
 {
 	qsort(tab->apps, tab->n_apps, sizeof(*tab->apps), dcb_app_cmp_cb);
 }
-
-struct dcb_app_parse_mapping {
-	__u8 selector;
-	struct dcb_app_table *tab;
-	int err;
-};
 
 static void dcb_app_parse_mapping_cb(__u32 key, __u64 value, void *data)
 {
@@ -260,7 +255,7 @@ static int dcb_app_parse_mapping_ethtype_prio(__u32 key, char *value, void *data
 				 dcb_app_parse_mapping_cb, data);
 }
 
-static int dcb_app_parse_pcp(__u32 *key, const char *arg)
+int dcb_app_parse_pcp(__u32 *key, const char *arg)
 {
 	int i;
 
@@ -286,7 +281,7 @@ static int dcb_app_parse_mapping_pcp_prio(__u32 key, char *value, void *data)
 				 dcb_app_parse_mapping_cb, data);
 }
 
-static int dcb_app_parse_dscp(__u32 *key, const char *arg)
+int dcb_app_parse_dscp(__u32 *key, const char *arg)
 {
 	if (parse_mapping_num_all(key, arg) == 0)
 		return 0;
@@ -311,7 +306,7 @@ static int dcb_app_parse_mapping_dscp_prio(__u32 key, char *value, void *data)
 	if (get_u8(&prio, value, 0))
 		return -EINVAL;
 
-	return dcb_parse_mapping("DSCP", key, 63,
+	return dcb_parse_mapping("DSCP", key, DCB_APP_DSCP_MAX,
 				 "PRIO", prio, IEEE_8021QAZ_MAX_TCS - 1,
 				 dcb_app_parse_mapping_cb, data);
 }
@@ -377,12 +372,12 @@ static bool dcb_app_is_default(const struct dcb_app *app)
 	       app->protocol == 0;
 }
 
-static bool dcb_app_is_dscp(const struct dcb_app *app)
+bool dcb_app_is_dscp(const struct dcb_app *app)
 {
 	return app->selector == IEEE_8021QAZ_APP_SEL_DSCP;
 }
 
-static bool dcb_app_is_pcp(const struct dcb_app *app)
+bool dcb_app_is_pcp(const struct dcb_app *app)
 {
 	return app->selector == DCB_APP_SEL_PCP;
 }
@@ -402,40 +397,42 @@ static bool dcb_app_is_port(const struct dcb_app *app)
 	return app->selector == IEEE_8021QAZ_APP_SEL_ANY;
 }
 
-static int dcb_app_print_key_dec(__u16 protocol)
+int dcb_app_print_pid_dec(__u16 protocol)
 {
-	return print_uint(PRINT_ANY, NULL, "%d:", protocol);
+	return print_uint(PRINT_ANY, NULL, "%u", protocol);
 }
 
-static int dcb_app_print_key_hex(__u16 protocol)
+static int dcb_app_print_pid_hex(__u16 protocol)
 {
-	return print_uint(PRINT_ANY, NULL, "%x:", protocol);
+	return print_uint(PRINT_ANY, NULL, "%x", protocol);
 }
 
-static int dcb_app_print_key_dscp(__u16 protocol)
+int dcb_app_print_pid_dscp(__u16 protocol)
 {
 	const char *name = rtnl_dsfield_get_name(protocol << 2);
 
 
 	if (!is_json_context() && name != NULL)
-		return print_string(PRINT_FP, NULL, "%s:", name);
-	return print_uint(PRINT_ANY, NULL, "%d:", protocol);
+		return print_string(PRINT_FP, NULL, "%s", name);
+	return print_uint(PRINT_ANY, NULL, "%u", protocol);
 }
 
-static int dcb_app_print_key_pcp(__u16 protocol)
+int dcb_app_print_pid_pcp(__u16 protocol)
 {
 	/* Print in numerical form, if protocol value is out-of-range */
 	if (protocol > DCB_APP_PCP_MAX)
-		return print_uint(PRINT_ANY, NULL, "%d:", protocol);
+		return print_uint(PRINT_ANY, NULL, "%u", protocol);
 
-	return print_string(PRINT_ANY, NULL, "%s:", pcp_names[protocol]);
+	return print_string(PRINT_ANY, NULL, "%s", pcp_names[protocol]);
 }
 
-static void dcb_app_print_filtered(const struct dcb_app_table *tab,
-				   bool (*filter)(const struct dcb_app *),
-				   int (*print_key)(__u16 protocol),
-				   const char *json_name,
-				   const char *fp_name)
+void dcb_app_print_filtered(const struct dcb_app_table *tab,
+			    bool (*filter)(const struct dcb_app *),
+			    void (*print_pid_prio)(int (*print_pid)(__u16),
+						   const struct dcb_app *),
+			    int (*print_pid)(__u16 protocol),
+			    const char *json_name,
+			    const char *fp_name)
 {
 	bool first = true;
 	size_t i;
@@ -452,8 +449,8 @@ static void dcb_app_print_filtered(const struct dcb_app_table *tab,
 		}
 
 		open_json_array(PRINT_JSON, NULL);
-		print_key(app->protocol);
-		print_uint(PRINT_ANY, NULL, "%d ", app->priority);
+		print_pid_prio(print_pid, app);
+		print_string(PRINT_ANY, NULL, "%s", " ");
 		close_json_array(PRINT_JSON, NULL);
 	}
 
@@ -463,9 +460,17 @@ static void dcb_app_print_filtered(const struct dcb_app_table *tab,
 	}
 }
 
+static void dcb_app_print_pid_prio(int (*print_pid)(__u16 protocol),
+				   const struct dcb_app *app)
+{
+	print_pid(app->protocol);
+	print_uint(PRINT_ANY, NULL, ":%u", app->priority);
+}
+
 static void dcb_app_print_ethtype_prio(const struct dcb_app_table *tab)
 {
-	dcb_app_print_filtered(tab, dcb_app_is_ethtype,  dcb_app_print_key_hex,
+	dcb_app_print_filtered(tab, dcb_app_is_ethtype,
+			       dcb_app_print_pid_prio, dcb_app_print_pid_hex,
 			       "ethtype_prio", "ethtype-prio");
 }
 
@@ -473,8 +478,9 @@ static void dcb_app_print_pcp_prio(const struct dcb *dcb,
 				   const struct dcb_app_table *tab)
 {
 	dcb_app_print_filtered(tab, dcb_app_is_pcp,
-			       dcb->numeric ? dcb_app_print_key_dec
-					    : dcb_app_print_key_pcp,
+			       dcb_app_print_pid_prio,
+			       dcb->numeric ? dcb_app_print_pid_dec :
+					      dcb_app_print_pid_pcp,
 			       "pcp_prio", "pcp-prio");
 }
 
@@ -482,26 +488,30 @@ static void dcb_app_print_dscp_prio(const struct dcb *dcb,
 				    const struct dcb_app_table *tab)
 {
 	dcb_app_print_filtered(tab, dcb_app_is_dscp,
-			       dcb->numeric ? dcb_app_print_key_dec
-					    : dcb_app_print_key_dscp,
+			       dcb_app_print_pid_prio,
+			       dcb->numeric ? dcb_app_print_pid_dec :
+					      dcb_app_print_pid_dscp,
 			       "dscp_prio", "dscp-prio");
 }
 
 static void dcb_app_print_stream_port_prio(const struct dcb_app_table *tab)
 {
-	dcb_app_print_filtered(tab, dcb_app_is_stream_port, dcb_app_print_key_dec,
+	dcb_app_print_filtered(tab, dcb_app_is_stream_port,
+			       dcb_app_print_pid_prio, dcb_app_print_pid_dec,
 			       "stream_port_prio", "stream-port-prio");
 }
 
 static void dcb_app_print_dgram_port_prio(const struct dcb_app_table *tab)
 {
-	dcb_app_print_filtered(tab, dcb_app_is_dgram_port, dcb_app_print_key_dec,
+	dcb_app_print_filtered(tab, dcb_app_is_dgram_port,
+			       dcb_app_print_pid_prio, dcb_app_print_pid_dec,
 			       "dgram_port_prio", "dgram-port-prio");
 }
 
 static void dcb_app_print_port_prio(const struct dcb_app_table *tab)
 {
-	dcb_app_print_filtered(tab, dcb_app_is_port, dcb_app_print_key_dec,
+	dcb_app_print_filtered(tab, dcb_app_is_port,
+			       dcb_app_print_pid_prio, dcb_app_print_pid_dec,
 			       "port_prio", "port-prio");
 }
 
@@ -518,7 +528,7 @@ static void dcb_app_print_default_prio(const struct dcb_app_table *tab)
 			print_string(PRINT_FP, NULL, "default-prio ", NULL);
 			first = false;
 		}
-		print_uint(PRINT_ANY, NULL, "%d ", tab->apps[i].priority);
+		print_uint(PRINT_ANY, NULL, "%u ", tab->apps[i].priority);
 	}
 
 	if (!first) {
@@ -549,13 +559,13 @@ static int dcb_app_get_table_attr_cb(const struct nlattr *attr, void *data)
 
 	if (!dcb_app_attr_type_validate(type)) {
 		fprintf(stderr,
-			"Unknown attribute in DCB_ATTR_IEEE_APP_TABLE: %d\n",
+			"Unknown attribute in DCB_ATTR_IEEE_APP_TABLE: %u\n",
 			type);
 		return MNL_CB_OK;
 	}
 	if (mnl_attr_get_payload_len(attr) < sizeof(struct dcb_app)) {
 		fprintf(stderr,
-			"%s payload expected to have size %zd, not %d\n",
+			"%s payload expected to have size %zu, not %u\n",
 			ieee_attrs_app_names[type], sizeof(struct dcb_app),
 			mnl_attr_get_payload_len(attr));
 		return MNL_CB_OK;
@@ -577,13 +587,13 @@ static int dcb_app_get_table_attr_cb(const struct nlattr *attr, void *data)
 	return MNL_CB_OK;
 }
 
-static int dcb_app_get(struct dcb *dcb, const char *dev, struct dcb_app_table *tab)
+int dcb_app_get(struct dcb *dcb, const char *dev, struct dcb_app_table *tab)
 {
 	uint16_t payload_len;
 	void *payload;
 	int ret;
 
-	ret = dcb_get_attribute_va(dcb, dev, DCB_ATTR_IEEE_APP_TABLE, &payload, &payload_len);
+	ret = dcb_get_attribute_va(dcb, dev, tab->attr, &payload, &payload_len);
 	if (ret != 0)
 		return ret;
 
@@ -606,7 +616,7 @@ static int dcb_app_add_del_cb(struct dcb *dcb, struct nlmsghdr *nlh, void *data)
 	struct nlattr *nest;
 	size_t i;
 
-	nest = mnl_attr_nest_start(nlh, DCB_ATTR_IEEE_APP_TABLE);
+	nest = mnl_attr_nest_start(nlh, add_del->tab->attr);
 
 	for (i = 0; i < add_del->tab->n_apps; i++) {
 		const struct dcb_app *app = &add_del->tab->apps[i];
@@ -620,9 +630,9 @@ static int dcb_app_add_del_cb(struct dcb *dcb, struct nlmsghdr *nlh, void *data)
 	return 0;
 }
 
-static int dcb_app_add_del(struct dcb *dcb, const char *dev, int command,
-			   const struct dcb_app_table *tab,
-			   bool (*filter)(const struct dcb_app *))
+int dcb_app_add_del(struct dcb *dcb, const char *dev, int command,
+		    const struct dcb_app_table *tab,
+		    bool (*filter)(const struct dcb_app *))
 {
 	struct dcb_app_add_del add_del = {
 		.tab = tab,
@@ -715,7 +725,7 @@ static int dcb_cmd_app_parse_add_del(struct dcb *dcb, const char *dev,
 
 static int dcb_cmd_app_add(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table tab = {};
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_cmd_app_parse_add_del(dcb, dev, argc, argv, &tab);
@@ -729,7 +739,7 @@ static int dcb_cmd_app_add(struct dcb *dcb, const char *dev, int argc, char **ar
 
 static int dcb_cmd_app_del(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table tab = {};
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_cmd_app_parse_add_del(dcb, dev, argc, argv, &tab);
@@ -743,7 +753,7 @@ static int dcb_cmd_app_del(struct dcb *dcb, const char *dev, int argc, char **ar
 
 static int dcb_cmd_app_show(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table tab = {};
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_app_get(dcb, dev, &tab);
@@ -795,7 +805,7 @@ out:
 
 static int dcb_cmd_app_flush(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table tab = {};
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_app_get(dcb, dev, &tab);
@@ -848,9 +858,9 @@ out:
 
 static int dcb_cmd_app_replace(struct dcb *dcb, const char *dev, int argc, char **argv)
 {
-	struct dcb_app_table orig = {};
-	struct dcb_app_table tab = {};
-	struct dcb_app_table new = {};
+	struct dcb_app_table orig = { .attr = DCB_ATTR_IEEE_APP_TABLE };
+	struct dcb_app_table tab = { .attr = DCB_ATTR_IEEE_APP_TABLE };
+	struct dcb_app_table new = { .attr = DCB_ATTR_IEEE_APP_TABLE };
 	int ret;
 
 	ret = dcb_app_get(dcb, dev, &orig);
@@ -876,7 +886,7 @@ static int dcb_cmd_app_replace(struct dcb *dcb, const char *dev, int argc, char 
 	}
 
 	/* Remove the obsolete entries. */
-	dcb_app_table_remove_replaced(&orig, &tab);
+	dcb_app_table_remove_replaced(&orig, &tab, dcb_app_pid_eq);
 	ret = dcb_app_add_del(dcb, dev, DCB_CMD_IEEE_DEL, &orig, NULL);
 	if (ret != 0) {
 		fprintf(stderr, "Could not remove replaced APP entries\n");

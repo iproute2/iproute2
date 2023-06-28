@@ -60,7 +60,7 @@ int print_prefix(struct nlmsghdr *n, void *arg)
 
 	if (tb[PREFIX_ADDRESS]) {
 		fprintf(fp, "prefix %s/%u",
-		        rt_addr_n2a_rta(family, tb[PREFIX_ADDRESS]),
+			rt_addr_n2a_rta(family, tb[PREFIX_ADDRESS]),
 			prefix->prefix_len);
 	}
 	fprintf(fp, "dev %s ", ll_index_to_name(prefix->prefix_ifindex));

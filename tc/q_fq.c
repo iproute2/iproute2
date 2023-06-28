@@ -23,7 +23,7 @@ static void explain(void)
 	fprintf(stderr,
 		"Usage: ... fq	[ limit PACKETS ] [ flow_limit PACKETS ]\n"
 		"		[ quantum BYTES ] [ initial_quantum BYTES ]\n"
-		"		[ maxrate RATE  ] [ buckets NUMBER ]\n"
+		"		[ maxrate RATE ] [ buckets NUMBER ]\n"
 		"		[ [no]pacing ] [ refill_delay TIME ]\n"
 		"		[ low_rate_threshold RATE ]\n"
 		"		[ orphan_mask MASK]\n"
@@ -243,13 +243,13 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (set_ce_threshold)
 		addattr_l(n, 1024, TCA_FQ_CE_THRESHOLD,
 			  &ce_threshold, sizeof(ce_threshold));
-    if (set_timer_slack)
+	if (set_timer_slack)
 		addattr_l(n, 1024, TCA_FQ_TIMER_SLACK,
 			  &timer_slack, sizeof(timer_slack));
-    if (set_horizon)
+	if (set_horizon)
 		addattr_l(n, 1024, TCA_FQ_HORIZON,
 			  &horizon, sizeof(horizon));
-    if (horizon_drop != 255)
+	if (horizon_drop != 255)
 		addattr_l(n, 1024, TCA_FQ_HORIZON_DROP,
 			  &horizon_drop, sizeof(horizon_drop));
 	addattr_nest_end(n, tail);

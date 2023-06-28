@@ -176,6 +176,15 @@ endpoint. When the peer does announce addresses, each received ADD_ADDR
 sub-option will trigger creation of an additional subflow to generate a
 full mesh topology.
 
+.TP
+.BR implicit
+In some scenarios, an MPTCP
+.BR subflow
+can use a local address mapped by a implicit endpoint created by the
+in-kernel path manager. Once set, the implicit flag cannot be removed, but
+other flags can be added to the endpoint. Implicit endpoints cannot be
+created from user-space.
+
 .sp
 .PP
 The
