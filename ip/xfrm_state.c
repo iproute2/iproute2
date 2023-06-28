@@ -660,6 +660,7 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 		case XFRM_MODE_BEET:
 			if (req.xsinfo.id.proto == IPPROTO_ESP)
 				break;
+			/* fallthrough */
 		default:
 			fprintf(stderr, "MODE value is invalid with XFRM-PROTO value \"%s\"\n",
 				strxf_xfrmproto(req.xsinfo.id.proto));
