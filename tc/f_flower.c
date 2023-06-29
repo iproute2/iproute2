@@ -2816,9 +2816,6 @@ static void flower_print_arp_op(const char *name,
 static void flower_print_cfm(struct rtattr *attr)
 {
 	struct rtattr *tb[TCA_FLOWER_KEY_CFM_OPT_MAX + 1];
-	struct rtattr *v;
-	SPRINT_BUF(out);
-	size_t sz = 0;
 
 	if (!attr || !(attr->rta_type & NLA_F_NESTED))
 		return;
@@ -2830,20 +2827,15 @@ static void flower_print_cfm(struct rtattr *attr)
 	print_string(PRINT_FP, NULL, "  cfm", NULL);
 	open_json_object("cfm");
 
-	v = tb[TCA_FLOWER_KEY_CFM_MD_LEVEL];
-	if (v) {
-		sz += sprintf(out, " mdl %u", rta_getattr_u8(v));
-		print_hhu(PRINT_JSON, "mdl", NULL, rta_getattr_u8(v));
-	}
+	if (tb[TCA_FLOWER_KEY_CFM_MD_LEVEL])
+		print_hhu(PRINT_ANY, "mdl", " mdl %u",
+			  rta_getattr_u8(tb[TCA_FLOWER_KEY_CFM_MD_LEVEL]));
 
-	v = tb[TCA_FLOWER_KEY_CFM_OPCODE];
-	if (v) {
-		sprintf(out + sz, " op %u", rta_getattr_u8(v));
-		print_hhu(PRINT_JSON, "op", NULL, rta_getattr_u8(v));
-	}
+	if (tb[TCA_FLOWER_KEY_CFM_OPCODE])
+		print_hhu(PRINT_ANY, "op", " op %u",
+			  rta_getattr_u8(tb[TCA_FLOWER_KEY_CFM_OPCODE]));
 
 	close_json_object();
-	print_string(PRINT_FP, "cfm", "%s", out);
 }
 
 static int flower_print_opt(struct filter_util *qu, FILE *f,
