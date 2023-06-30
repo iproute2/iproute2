@@ -161,7 +161,8 @@ static int ct_parse_mark(char *str, struct nlmsghdr *n)
 static int ct_parse_helper(char *str, struct nlmsghdr *n)
 {
 	char f[32], p[32], name[32];
-	__u8 family, proto;
+	__u8 family;
+	int proto;
 
 	if (strlen(str) >= 32 ||
 	    sscanf(str, "%[^-]-%[^-]-%[^-]", f, p, name) != 3)
@@ -172,6 +173,7 @@ static int ct_parse_helper(char *str, struct nlmsghdr *n)
 		family = AF_INET6;
 	else
 		return -1;
+
 	proto = inet_proto_a2n(p);
 	if (proto < 0)
 		return -1;

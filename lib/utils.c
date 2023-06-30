@@ -985,9 +985,8 @@ const char *rt_addr_n2a_r(int af, int len,
 			return inet_ntop(AF_INET6, &sa->sin6.sin6_addr,
 					 buf, buflen);
 		}
-
-		/* fallthrough */
 	}
+		/* fallthrough */
 	default:
 		return "???";
 	}
