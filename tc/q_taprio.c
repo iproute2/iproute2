@@ -250,10 +250,8 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 				} else if (strcmp(*argv, "P") == 0) {
 					fp[idx] = TC_FP_PREEMPTIBLE;
 				} else {
-					fprintf(stderr,
-						"Illegal \"fp\" value \"%s\", expected \"E\" or \"P\"\n",
-						*argv);
-					return -1;
+					PREV_ARG();
+					break;
 				}
 				num_fp_entries++;
 				idx++;
