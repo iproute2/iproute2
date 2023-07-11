@@ -735,7 +735,7 @@ static int flower_port_range_attr_type(__u8 ip_proto, enum flower_endpoint type,
 }
 
 /* parse range args in format 10-20 */
-static int parse_range(char *str, __be16 *min, __be16 *max)
+static int parse_range(char *str, __be16 *min, __be16 *max, bool *p_is_range)
 {
 	char *sep;
 
@@ -748,6 +748,8 @@ static int parse_range(char *str, __be16 *min, __be16 *max)
 
 		if (get_be16(max, sep + 1, 10))
 			return -1;
+
+		*p_is_range = true;
 	} else {
 		if (get_be16(min, str, 10))
 			return -1;
@@ -759,19 +761,20 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 			     enum flower_endpoint endpoint,
 			     struct nlmsghdr *n)
 {
+	bool is_range = false;
 	char *slash = NULL;
 	__be16 min = 0;
 	__be16 max = 0;
 	int ret;
 
-	ret = parse_range(str, &min, &max);
+	ret = parse_range(str, &min, &max, &is_range);
 	if (ret) {
 		slash = strchr(str, '/');
 		if (!slash)
 			return -1;
 	}
 
-	if (min && max) {
+	if (is_range) {
 		__be16 min_port_type, max_port_type;
 
 		if (ntohs(max) <= ntohs(min)) {
@@ -784,7 +787,7 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 
 		addattr16(n, MAX_MSG, min_port_type, min);
 		addattr16(n, MAX_MSG, max_port_type, max);
-	} else if (slash || (min && !max)) {
+	} else {
 		int type;
 
 		type = flower_port_attr_type(ip_proto, endpoint);
@@ -802,8 +805,6 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 				return -1;
 			return flower_parse_u16(str, type, mask_type, n, true);
 		}
-	} else {
-		return -1;
 	}
 	return 0;
 }
