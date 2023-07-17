@@ -569,7 +569,7 @@ static void dump_incr_db(FILE *fp)
 			continue;
 
 		if (jw)
-			print_one_json(jw, n, n->val);
+			print_one_json(jw, n, vals);
 		else
 			print_one_if(fp, n, vals);
 	}
