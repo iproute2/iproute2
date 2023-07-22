@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __CG_MAP_H__
 #define __CG_MAP_H__
 
