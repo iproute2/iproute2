@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 or BSD-3-Clause */
 #ifndef __BPF_ELF__
 #define __BPF_ELF__
 
