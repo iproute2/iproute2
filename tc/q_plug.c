@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * q_log.c		plug scheduler
+ * q_plug.c		plug scheduler
  *
  * Copyright (C) 2019	Paolo Abeni <pabeni@redhat.com>
  */
