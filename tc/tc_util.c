@@ -28,7 +28,8 @@
 
 static struct db_names *cls_names;
 
-#define NAMES_DB "/etc/iproute2/tc_cls"
+#define NAMES_DB_USR CONF_USR_DIR "/tc_cls"
+#define NAMES_DB_ETC CONF_ETC_DIR "/tc_cls"
 
 int cls_names_init(char *path)
 {
@@ -38,11 +39,18 @@ int cls_names_init(char *path)
 	if (!cls_names)
 		return -1;
 
-	ret = db_names_load(cls_names, path ?: NAMES_DB);
-	if (ret == -ENOENT && path) {
-		fprintf(stderr, "Can't open class names file: %s\n", path);
-		return -1;
+	if (path) {
+		ret = db_names_load(cls_names, path);
+		if (ret == -ENOENT) {
+			fprintf(stderr, "Can't open class names file: %s\n", path);
+			return -1;
+		}
 	}
+
+	ret = db_names_load(cls_names, NAMES_DB_ETC);
+	if (ret == -ENOENT)
+		ret = db_names_load(cls_names, NAMES_DB_USR);
+
 	if (ret) {
 		db_names_free(cls_names);
 		cls_names = NULL;

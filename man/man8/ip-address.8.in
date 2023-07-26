@@ -208,8 +208,9 @@ The maximum allowed total length of label is 15 characters.
 .TP
 .BI scope " SCOPE_VALUE"
 the scope of the area where this address is valid.
-The available scopes are listed in file
-.BR "@SYSCONFDIR@/rt_scopes" .
+The available scopes are listed in
+.BR "@SYSCONF_USR_DIR@/rt_scopes" or
+.BR "@SYSCONF_ETC_DIR@/rt_scopes" (has precedence if exists).
 Predefined scope values are:
 
 .in +8
