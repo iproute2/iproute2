@@ -1112,13 +1112,12 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		argc -= ret;
 		argv += ret;
 
-		if (lu && argc) {
+		if (lu && lu->parse_opt && argc) {
 			struct rtattr *data;
 
 			data = addattr_nest(&req.n, sizeof(req), iflatype);
 
-			if (lu->parse_opt &&
-			    lu->parse_opt(lu, argc, argv, &req.n))
+			if (lu->parse_opt(lu, argc, argv, &req.n))
 				return -1;
 
 			addattr_nest_end(&req.n, data);
