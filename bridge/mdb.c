@@ -15,6 +15,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <limits.h>
 
 #include "libnetlink.h"
 #include "utils.h"

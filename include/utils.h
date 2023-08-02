@@ -38,8 +38,11 @@ extern int numeric;
 extern bool do_all;
 extern int echo_request;
 
-#ifndef CONFDIR
-#define CONFDIR		"/etc/iproute2"
+#ifndef CONF_USR_DIR
+#define CONF_USR_DIR "/usr/lib/iproute2"
+#endif
+#ifndef CONF_ETC_DIR
+#define CONF_ETC_DIR "/etc/iproute2"
 #endif
 
 #define SPRINT_BSIZE 64

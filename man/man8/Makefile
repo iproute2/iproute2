@@ -9,7 +9,8 @@ all: $(TARGETS)
 	sed \
 		-e "s|@NETNS_ETC_DIR@|$(NETNS_ETC_DIR)|g" \
 		-e "s|@NETNS_RUN_DIR@|$(NETNS_RUN_DIR)|g" \
-		-e "s|@SYSCONFDIR@|$(CONFDIR)|g" \
+		-e "s|@SYSCONF_ETC_DIR@|$(CONF_ETC_DIR)|g" \
+		-e "s|@SYSCONF_USR_DIR@|$(CONF_USR_DIR)|g" \
 		$< > $@
 
 distclean: clean

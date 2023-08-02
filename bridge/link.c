@@ -17,7 +17,8 @@
 #include "utils.h"
 #include "br_common.h"
 
-static unsigned int filter_index;
+static unsigned int filter_dev_index;
+static unsigned int filter_master_index;
 
 static const char *stp_states[] = {
 	[BR_STATE_DISABLED] = "disabled",
@@ -244,10 +245,14 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	if (!(ifi->ifi_family == AF_BRIDGE || ifi->ifi_family == AF_UNSPEC))
 		return 0;
 
-	if (filter_index && filter_index != ifi->ifi_index)
+	if (filter_dev_index && filter_dev_index != ifi->ifi_index)
 		return 0;
 
 	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
+
+	if (filter_master_index && tb[IFLA_MASTER] &&
+	    filter_master_index != rta_getattr_u32(tb[IFLA_MASTER]))
+		return 0;
 
 	name = get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
 	if (!name)
@@ -312,7 +317,7 @@ static void usage(void)
 		"                               [ hwmode {vepa | veb} ]\n"
 		"                               [ backup_port DEVICE ] [ nobackup_port ]\n"
 		"                               [ self ] [ master ]\n"
-		"       bridge link show [dev DEV]\n");
+		"       bridge link show [dev DEV] [master DEVICE]\n");
 	exit(-1);
 }
 
@@ -607,6 +612,7 @@ static int brlink_modify(int argc, char **argv)
 static int brlink_show(int argc, char **argv)
 {
 	char *filter_dev = NULL;
+	char *filter_master = NULL;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -615,13 +621,24 @@ static int brlink_show(int argc, char **argv)
 				duparg("dev", *argv);
 			filter_dev = *argv;
 		}
+		if (strcmp(*argv, "master") == 0) {
+			NEXT_ARG();
+			if (filter_master)
+				duparg("master", *argv);
+			filter_master = *argv;
+		}
 		argc--; argv++;
 	}
 
 	if (filter_dev) {
-		filter_index = ll_name_to_index(filter_dev);
-		if (!filter_index)
+		filter_dev_index = ll_name_to_index(filter_dev);
+		if (!filter_dev_index)
 			return nodev(filter_dev);
+	}
+	if (filter_master) {
+		filter_master_index = ll_name_to_index(filter_master);
+		if (!filter_master_index)
+			return nodev(filter_master);
 	}
 
 	if (rtnl_linkdump_req(&rth, PF_BRIDGE) < 0) {

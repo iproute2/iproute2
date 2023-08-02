@@ -12,8 +12,10 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <limits.h>
+#include <errno.h>
 
 #include <asm/types.h>
 #include <linux/rtnetlink.h>
@@ -56,7 +58,7 @@ static int fread_id_name(FILE *fp, int *id, char *namebuf)
 	return 0;
 }
 
-static void
+static int
 rtnl_hash_initialize(const char *file, struct rtnl_hash_entry **hash, int size)
 {
 	struct rtnl_hash_entry *entry;
@@ -67,14 +69,14 @@ rtnl_hash_initialize(const char *file, struct rtnl_hash_entry **hash, int size)
 
 	fp = fopen(file, "r");
 	if (!fp)
-		return;
+		return -errno;
 
 	while ((ret = fread_id_name(fp, &id, &namebuf[0]))) {
 		if (ret == -1) {
 			fprintf(stderr, "Database %s is corrupted at %s\n",
 					file, namebuf);
 			fclose(fp);
-			return;
+			return -EINVAL;
 		}
 
 		if (id < 0)
@@ -91,9 +93,11 @@ rtnl_hash_initialize(const char *file, struct rtnl_hash_entry **hash, int size)
 		hash[id & (size - 1)] = entry;
 	}
 	fclose(fp);
+
+	return 0;
 }
 
-static void rtnl_tab_initialize(const char *file, char **tab, int size)
+static int rtnl_tab_initialize(const char *file, char **tab, int size)
 {
 	FILE *fp;
 	int id;
@@ -102,14 +106,14 @@ static void rtnl_tab_initialize(const char *file, char **tab, int size)
 
 	fp = fopen(file, "r");
 	if (!fp)
-		return;
+		return -errno;
 
 	while ((ret = fread_id_name(fp, &id, &namebuf[0]))) {
 		if (ret == -1) {
 			fprintf(stderr, "Database %s is corrupted at %s\n",
 					file, namebuf);
 			fclose(fp);
-			return;
+			return -EINVAL;
 		}
 		if (id < 0 || id > size)
 			continue;
@@ -117,6 +121,8 @@ static void rtnl_tab_initialize(const char *file, char **tab, int size)
 		tab[id] = strdup(namebuf);
 	}
 	fclose(fp);
+
+	return 0;
 }
 
 static char *rtnl_rtprot_tab[256] = {
@@ -144,25 +150,26 @@ static char *rtnl_rtprot_tab[256] = {
 	[RTPROT_EIGRP]	    = "eigrp",
 };
 
+struct tabhash {
+	enum { TAB, HASH } type;
+	union tab_or_hash {
+		char **tab;
+		struct rtnl_hash_entry **hash;
+	} data;
+};
 
-static int rtnl_rtprot_init;
-
-static void rtnl_rtprot_initialize(void)
+static void
+rtnl_tabhash_readdir(const char *dirpath_base, const char *dirpath_overload,
+                     const struct tabhash tabhash, const int size)
 {
 	struct dirent *de;
 	DIR *d;
 
-	rtnl_rtprot_init = 1;
-	rtnl_tab_initialize(CONFDIR "/rt_protos",
-			    rtnl_rtprot_tab, 256);
-
-	d = opendir(CONFDIR "/rt_protos.d");
-	if (!d)
-		return;
-
-	while ((de = readdir(d)) != NULL) {
+	d = opendir(dirpath_base);
+	while (d && (de = readdir(d)) != NULL) {
 		char path[PATH_MAX];
 		size_t len;
+		struct stat sb;
 
 		if (*de->d_name == '.')
 			continue;
@@ -174,11 +181,67 @@ static void rtnl_rtprot_initialize(void)
 		if (strcmp(de->d_name + len - 5, ".conf"))
 			continue;
 
-		snprintf(path, sizeof(path), CONFDIR "/rt_protos.d/%s",
-			 de->d_name);
-		rtnl_tab_initialize(path, rtnl_rtprot_tab, 256);
+		if (dirpath_overload) {
+			/* only consider filenames not present in
+			   the overloading directory, e.g. /etc */
+			snprintf(path, sizeof(path), "%s/%s", dirpath_overload, de->d_name);
+			if (lstat(path, &sb) == 0)
+				continue;
+		}
+
+		/* load the conf file in the base directory, e.g., /usr */
+		snprintf(path, sizeof(path), "%s/%s", dirpath_base, de->d_name);
+		if (tabhash.type == TAB)
+			rtnl_tab_initialize(path, tabhash.data.tab, size);
+		else
+			rtnl_hash_initialize(path, tabhash.data.hash, size);
 	}
-	closedir(d);
+	if (d)
+		closedir(d);
+}
+
+static void
+rtnl_tabhash_initialize_dir(const char *ddir, const struct tabhash tabhash, const int size)
+{
+	char dirpath_usr[PATH_MAX], dirpath_etc[PATH_MAX];
+
+	snprintf(dirpath_usr, sizeof(dirpath_usr), "%s/%s", CONF_USR_DIR, ddir);
+	snprintf(dirpath_etc, sizeof(dirpath_etc), "%s/%s", CONF_ETC_DIR, ddir);
+
+	/* load /usr/lib/iproute2/foo.d/X conf files, unless /etc/iproute2/foo.d/X exists */
+	rtnl_tabhash_readdir(dirpath_usr, dirpath_etc, tabhash, size);
+
+	/* load /etc/iproute2/foo.d/X conf files */
+	rtnl_tabhash_readdir(dirpath_etc, NULL, tabhash, size);
+}
+
+static void
+rtnl_tab_initialize_dir(const char *ddir, char **tab, const int size) {
+	struct tabhash tab_data = {.type = TAB, .data.tab = tab};
+	rtnl_tabhash_initialize_dir(ddir, tab_data, size);
+}
+
+static void
+rtnl_hash_initialize_dir(const char *ddir, struct rtnl_hash_entry **hash,
+                         const int size) {
+	struct tabhash hash_data = {.type = HASH, .data.hash = hash};
+	rtnl_tabhash_initialize_dir(ddir, hash_data, size);
+}
+
+static int rtnl_rtprot_init;
+
+static void rtnl_rtprot_initialize(void)
+{
+	int ret;
+
+	rtnl_rtprot_init = 1;
+	ret = rtnl_tab_initialize(CONF_ETC_DIR "/rt_protos",
+	                          rtnl_rtprot_tab, 256);
+	if (ret == -ENOENT)
+		rtnl_tab_initialize(CONF_USR_DIR "/rt_protos",
+		                    rtnl_rtprot_tab, 256);
+
+	rtnl_tab_initialize_dir("rt_protos.d", rtnl_rtprot_tab, 256);
 }
 
 const char *rtnl_rtprot_n2a(int id, char *buf, int len)
@@ -240,10 +303,17 @@ static bool rtnl_addrprot_tab_initialized;
 
 static void rtnl_addrprot_initialize(void)
 {
-	rtnl_tab_initialize(CONFDIR "/rt_addrprotos",
-			    rtnl_addrprot_tab,
-			    ARRAY_SIZE(rtnl_addrprot_tab));
+	int ret;
+
 	rtnl_addrprot_tab_initialized = true;
+
+	ret = rtnl_tab_initialize(CONF_ETC_DIR "/rt_addrprotos",
+	                          rtnl_addrprot_tab,
+	                          ARRAY_SIZE(rtnl_addrprot_tab));
+	if (ret == -ENOENT)
+		ret = rtnl_tab_initialize(CONF_USR_DIR "/rt_addrprotos",
+		                          rtnl_addrprot_tab,
+		                          ARRAY_SIZE(rtnl_addrprot_tab));
 }
 
 const char *rtnl_addrprot_n2a(__u8 id, char *buf, int len)
@@ -296,9 +366,14 @@ static int rtnl_rtscope_init;
 
 static void rtnl_rtscope_initialize(void)
 {
+	int ret;
+
 	rtnl_rtscope_init = 1;
-	rtnl_tab_initialize(CONFDIR "/rt_scopes",
-			    rtnl_rtscope_tab, 256);
+	ret = rtnl_tab_initialize(CONF_ETC_DIR "/rt_scopes",
+			          rtnl_rtscope_tab, 256);
+	if (ret == -ENOENT)
+		rtnl_tab_initialize(CONF_USR_DIR "/rt_scopes",
+				    rtnl_rtscope_tab, 256);
 }
 
 const char *rtnl_rtscope_n2a(int id, char *buf, int len)
@@ -361,9 +436,14 @@ static int rtnl_rtrealm_init;
 
 static void rtnl_rtrealm_initialize(void)
 {
+	int ret;
+
 	rtnl_rtrealm_init = 1;
-	rtnl_tab_initialize(CONFDIR "/rt_realms",
-			    rtnl_rtrealm_tab, 256);
+	ret = rtnl_tab_initialize(CONF_ETC_DIR "/rt_realms",
+	                          rtnl_rtrealm_tab, 256);
+	if (ret == -ENOENT)
+		rtnl_tab_initialize(CONF_USR_DIR "/rt_realms",
+		                    rtnl_rtrealm_tab, 256);
 }
 
 const char *rtnl_rtrealm_n2a(int id, char *buf, int len)
@@ -430,41 +510,21 @@ static int rtnl_rttable_init;
 
 static void rtnl_rttable_initialize(void)
 {
-	struct dirent *de;
-	DIR *d;
 	int i;
+	int ret;
 
 	rtnl_rttable_init = 1;
 	for (i = 0; i < 256; i++) {
 		if (rtnl_rttable_hash[i])
 			rtnl_rttable_hash[i]->id = i;
 	}
-	rtnl_hash_initialize(CONFDIR "/rt_tables",
-			     rtnl_rttable_hash, 256);
+	ret = rtnl_hash_initialize(CONF_ETC_DIR "/rt_tables",
+	                           rtnl_rttable_hash, 256);
+	if (ret == -ENOENT)
+		rtnl_hash_initialize(CONF_USR_DIR "/rt_tables",
+		                     rtnl_rttable_hash, 256);
 
-	d = opendir(CONFDIR "/rt_tables.d");
-	if (!d)
-		return;
-
-	while ((de = readdir(d)) != NULL) {
-		char path[PATH_MAX];
-		size_t len;
-
-		if (*de->d_name == '.')
-			continue;
-
-		/* only consider filenames ending in '.conf' */
-		len = strlen(de->d_name);
-		if (len <= 5)
-			continue;
-		if (strcmp(de->d_name + len - 5, ".conf"))
-			continue;
-
-		snprintf(path, sizeof(path),
-			 CONFDIR "/rt_tables.d/%s", de->d_name);
-		rtnl_hash_initialize(path, rtnl_rttable_hash, 256);
-	}
-	closedir(d);
+	rtnl_hash_initialize_dir("rt_tables.d", rtnl_rttable_hash, 256);
 }
 
 const char *rtnl_rttable_n2a(__u32 id, char *buf, int len)
@@ -526,9 +586,14 @@ static int rtnl_rtdsfield_init;
 
 static void rtnl_rtdsfield_initialize(void)
 {
+	int ret;
+
 	rtnl_rtdsfield_init = 1;
-	rtnl_tab_initialize(CONFDIR "/rt_dsfield",
-			    rtnl_rtdsfield_tab, 256);
+	ret = rtnl_tab_initialize(CONF_ETC_DIR "/rt_dsfield",
+	                          rtnl_rtdsfield_tab, 256);
+	if (ret == -ENOENT)
+		rtnl_tab_initialize(CONF_USR_DIR "/rt_dsfield",
+		                    rtnl_rtdsfield_tab, 256);
 }
 
 const char *rtnl_dsfield_n2a(int id, char *buf, int len)
@@ -605,9 +670,14 @@ static int rtnl_group_init;
 
 static void rtnl_group_initialize(void)
 {
+	int ret;
+
 	rtnl_group_init = 1;
-	rtnl_hash_initialize(CONFDIR "/group",
-			     rtnl_group_hash, 256);
+	ret = rtnl_hash_initialize(CONF_ETC_DIR "/group",
+	                           rtnl_group_hash, 256);
+	if (ret == -ENOENT)
+		rtnl_hash_initialize(CONF_USR_DIR "/group",
+		                     rtnl_group_hash, 256);
 }
 
 int rtnl_group_a2n(int *id, const char *arg)
@@ -695,9 +765,14 @@ static int nl_proto_init;
 
 static void nl_proto_initialize(void)
 {
+	int ret;
+
 	nl_proto_init = 1;
-	rtnl_tab_initialize(CONFDIR "/nl_protos",
-			    nl_proto_tab, 256);
+	ret = rtnl_tab_initialize(CONF_ETC_DIR "/nl_protos",
+	                          nl_proto_tab, 256);
+	if (ret == -ENOENT)
+		rtnl_tab_initialize(CONF_USR_DIR "/nl_protos",
+		                    nl_proto_tab, 256);
 }
 
 const char *nl_proto_n2a(int id, char *buf, int len)
@@ -757,35 +832,10 @@ static int protodown_reason_init;
 
 static void protodown_reason_initialize(void)
 {
-	struct dirent *de;
-	DIR *d;
-
 	protodown_reason_init = 1;
 
-	d = opendir(CONFDIR "/protodown_reasons.d");
-	if (!d)
-		return;
-
-	while ((de = readdir(d)) != NULL) {
-		char path[PATH_MAX];
-		size_t len;
-
-		if (*de->d_name == '.')
-			continue;
-
-		/* only consider filenames ending in '.conf' */
-		len = strlen(de->d_name);
-		if (len <= 5)
-			continue;
-		if (strcmp(de->d_name + len - 5, ".conf"))
-			continue;
-
-		snprintf(path, sizeof(path), CONFDIR "/protodown_reasons.d/%s",
-			 de->d_name);
-		rtnl_tab_initialize(path, protodown_reason_tab,
-				    PROTODOWN_REASON_NUM_BITS);
-	}
-	closedir(d);
+	rtnl_tab_initialize_dir("protodown_reasons.d", protodown_reason_tab,
+                                PROTODOWN_REASON_NUM_BITS);
 }
 
 int protodown_reason_n2a(int id, char *buf, int len)

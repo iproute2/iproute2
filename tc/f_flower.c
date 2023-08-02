@@ -735,7 +735,7 @@ static int flower_port_range_attr_type(__u8 ip_proto, enum flower_endpoint type,
 }
 
 /* parse range args in format 10-20 */
-static int parse_range(char *str, __be16 *min, __be16 *max)
+static int parse_range(char *str, __be16 *min, __be16 *max, bool *p_is_range)
 {
 	char *sep;
 
@@ -748,6 +748,8 @@ static int parse_range(char *str, __be16 *min, __be16 *max)
 
 		if (get_be16(max, sep + 1, 10))
 			return -1;
+
+		*p_is_range = true;
 	} else {
 		if (get_be16(min, str, 10))
 			return -1;
@@ -759,19 +761,20 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 			     enum flower_endpoint endpoint,
 			     struct nlmsghdr *n)
 {
+	bool is_range = false;
 	char *slash = NULL;
 	__be16 min = 0;
 	__be16 max = 0;
 	int ret;
 
-	ret = parse_range(str, &min, &max);
+	ret = parse_range(str, &min, &max, &is_range);
 	if (ret) {
 		slash = strchr(str, '/');
 		if (!slash)
 			return -1;
 	}
 
-	if (min && max) {
+	if (is_range) {
 		__be16 min_port_type, max_port_type;
 
 		if (ntohs(max) <= ntohs(min)) {
@@ -784,7 +787,7 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 
 		addattr16(n, MAX_MSG, min_port_type, min);
 		addattr16(n, MAX_MSG, max_port_type, max);
-	} else if (slash || (min && !max)) {
+	} else {
 		int type;
 
 		type = flower_port_attr_type(ip_proto, endpoint);
@@ -802,8 +805,6 @@ static int flower_parse_port(char *str, __u8 ip_proto,
 				return -1;
 			return flower_parse_u16(str, type, mask_type, n, true);
 		}
-	} else {
-		return -1;
 	}
 	return 0;
 }
@@ -2816,9 +2817,6 @@ static void flower_print_arp_op(const char *name,
 static void flower_print_cfm(struct rtattr *attr)
 {
 	struct rtattr *tb[TCA_FLOWER_KEY_CFM_OPT_MAX + 1];
-	struct rtattr *v;
-	SPRINT_BUF(out);
-	size_t sz = 0;
 
 	if (!attr || !(attr->rta_type & NLA_F_NESTED))
 		return;
@@ -2830,20 +2828,15 @@ static void flower_print_cfm(struct rtattr *attr)
 	print_string(PRINT_FP, NULL, "  cfm", NULL);
 	open_json_object("cfm");
 
-	v = tb[TCA_FLOWER_KEY_CFM_MD_LEVEL];
-	if (v) {
-		sz += sprintf(out, " mdl %u", rta_getattr_u8(v));
-		print_hhu(PRINT_JSON, "mdl", NULL, rta_getattr_u8(v));
-	}
+	if (tb[TCA_FLOWER_KEY_CFM_MD_LEVEL])
+		print_hhu(PRINT_ANY, "mdl", " mdl %u",
+			  rta_getattr_u8(tb[TCA_FLOWER_KEY_CFM_MD_LEVEL]));
 
-	v = tb[TCA_FLOWER_KEY_CFM_OPCODE];
-	if (v) {
-		sprintf(out + sz, " op %u", rta_getattr_u8(v));
-		print_hhu(PRINT_JSON, "op", NULL, rta_getattr_u8(v));
-	}
+	if (tb[TCA_FLOWER_KEY_CFM_OPCODE])
+		print_hhu(PRINT_ANY, "op", " op %u",
+			  rta_getattr_u8(tb[TCA_FLOWER_KEY_CFM_OPCODE]));
 
 	close_json_object();
-	print_string(PRINT_FP, "cfm", "%s", out);
 }
 
 static int flower_print_opt(struct filter_util *qu, FILE *f,

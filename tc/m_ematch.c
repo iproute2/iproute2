@@ -21,7 +21,8 @@
 #include "tc_util.h"
 #include "m_ematch.h"
 
-#define EMATCH_MAP "/etc/iproute2/ematch_map"
+#define EMATCH_MAP_USR CONF_USR_DIR "/ematch_map"
+#define EMATCH_MAP_ETC CONF_ETC_DIR "/ematch_map"
 
 static struct ematch_util *ematch_list;
 
@@ -39,11 +40,11 @@ static void bstr_print(FILE *fd, const struct bstr *b, int ascii);
 static inline void map_warning(int num, char *kind)
 {
 	fprintf(stderr,
-	    "Error: Unable to find ematch \"%s\" in %s\n" \
+	    "Error: Unable to find ematch \"%s\" in %s or %s\n" \
 	    "Please assign a unique ID to the ematch kind the suggested " \
 	    "entry is:\n" \
 	    "\t%d\t%s\n",
-	    kind, EMATCH_MAP, num, kind);
+	    kind, EMATCH_MAP_ETC, EMATCH_MAP_USR, num, kind);
 }
 
 static int lookup_map(__u16 num, char *dst, int len, const char *file)
@@ -160,8 +161,12 @@ static struct ematch_util *get_ematch_kind(char *kind)
 static struct ematch_util *get_ematch_kind_num(__u16 kind)
 {
 	char name[513];
+	int ret;
 
-	if (lookup_map(kind, name, sizeof(name), EMATCH_MAP) < 0)
+	ret = lookup_map(kind, name, sizeof(name), EMATCH_MAP_ETC);
+	if (ret == -ENOENT)
+		ret = lookup_map(kind, name, sizeof(name), EMATCH_MAP_USR);
+	if (ret < 0)
 		return NULL;
 
 	return get_ematch_kind(name);
@@ -227,7 +232,9 @@ static int parse_tree(struct nlmsghdr *n, struct ematch *tree)
 				return -1;
 			}
 
-			err = lookup_map_id(buf, &num, EMATCH_MAP);
+			err = lookup_map_id(buf, &num, EMATCH_MAP_ETC);
+			if (err == -ENOENT)
+				err = lookup_map_id(buf, &num, EMATCH_MAP_USR);
 			if (err < 0) {
 				if (err == -ENOENT)
 					map_warning(e->kind_num, buf);
