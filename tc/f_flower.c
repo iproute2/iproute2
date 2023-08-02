@@ -60,7 +60,7 @@ static void explain(void)
 		"			ppp_proto [ ipv4 | ipv6 | mpls_uc | mpls_mc | PPP_PROTO ] |\n"
 		"			dst_mac MASKED-LLADDR |\n"
 		"			src_mac MASKED-LLADDR |\n"
-		"			ip_proto [tcp | udp | sctp | icmp | icmpv6 | l2tp | IP-PROTO ] |\n"
+		"			ip_proto [tcp | udp | sctp | icmp | icmpv6 | l2tp | esp | ah | IP-PROTO ] |\n"
 		"			ip_tos MASKED-IP_TOS |\n"
 		"			ip_ttl MASKED-IP_TTL |\n"
 		"			mpls LSE-LIST |\n"
@@ -68,6 +68,7 @@ static void explain(void)
 		"			mpls_tc TC |\n"
 		"			mpls_bos BOS |\n"
 		"			mpls_ttl TTL |\n"
+		"			spi SPI-INDEX  |\n"
 		"			l2tpv3_sid LSID |\n"
 		"			dst_ip PREFIX |\n"
 		"			src_ip PREFIX |\n"
@@ -437,6 +438,16 @@ static int flower_parse_ip_proto(char *str, __be16 eth_type, int type,
 		    eth_type != htons(ETH_P_IPV6))
 			goto err;
 		ip_proto = IPPROTO_L2TP;
+	} else if (!strcmp(str, "esp")) {
+		if (eth_type != htons(ETH_P_IP) &&
+		    eth_type != htons(ETH_P_IPV6))
+			goto err;
+		ip_proto = IPPROTO_ESP;
+	} else if (!strcmp(str, "ah")) {
+		if (eth_type != htons(ETH_P_IP) &&
+		    eth_type != htons(ETH_P_IPV6))
+			goto err;
+		ip_proto = IPPROTO_AH;
 	} else {
 		ret = get_u8(&ip_proto, str, 16);
 		if (ret)
@@ -653,6 +664,29 @@ static int flower_parse_icmp(char *str, __u16 eth_type, __u8 ip_proto,
 		return -1;
 
 	return flower_parse_u8(str, value_type, mask_type, NULL, NULL, n);
+}
+
+static int flower_parse_spi(char *str, __u8 ip_proto, struct nlmsghdr *n)
+{
+	__be32 spi;
+	int ret;
+
+	if (ip_proto != IPPROTO_UDP && ip_proto != IPPROTO_ESP && ip_proto != IPPROTO_AH) {
+		fprintf(stderr,
+			"Can't set \"spi\" if ip_proto isn't ESP/UDP/AH\n");
+		return -1;
+	}
+
+	ret = get_be32(&spi, str, 16);
+	if (ret < 0) {
+		fprintf(stderr, "Illegal \"spi index\"\n");
+		return -1;
+	}
+
+	addattr32(n, MAX_MSG, TCA_FLOWER_KEY_SPI, spi);
+	addattr32(n, MAX_MSG, TCA_FLOWER_KEY_SPI_MASK, UINT32_MAX);
+
+	return 0;
 }
 
 static int flower_parse_l2tpv3(char *str, __u8 ip_proto,
@@ -1936,6 +1970,11 @@ static int flower_parse_opt(struct filter_util *qu, char *handle,
 			ret = flower_parse_l2tpv3(*argv, ip_proto, n);
 			if (ret < 0)
 				return -1;
+		} else if (!strcmp(*argv, "spi")) {
+			NEXT_ARG();
+			ret = flower_parse_spi(*argv, ip_proto, n);
+			if (ret < 0)
+				return -1;
 		} else if (matches(*argv, "arp_tip") == 0) {
 			NEXT_ARG();
 			ret = flower_parse_arp_ip_addr(*argv, eth_type,
@@ -2257,8 +2296,12 @@ static void flower_print_ip_proto(__u8 *p_ip_proto,
 		sprintf(out, "icmpv6");
 	else if (ip_proto == IPPROTO_L2TP)
 		sprintf(out, "l2tp");
+	else if (ip_proto == IPPROTO_ESP)
+		sprintf(out, "esp");
+	else if (ip_proto == IPPROTO_AH)
+		sprintf(out, "ah");
 	else
-		sprintf(out, "%02x", ip_proto);
+		sprintf(out, "0x%02x", ip_proto);
 
 	print_nl();
 	print_string(PRINT_ANY, "ip_proto", "  ip_proto %s", out);
@@ -3014,6 +3057,14 @@ static int flower_print_opt(struct filter_util *qu, FILE *f,
 
 		print_nl();
 		print_uint(PRINT_ANY, "l2tpv3_sid", "  l2tpv3_sid %u",
+			   rta_getattr_be32(attr));
+	}
+
+	if (tb[TCA_FLOWER_KEY_SPI]) {
+		struct rtattr *attr = tb[TCA_FLOWER_KEY_SPI];
+
+		print_nl();
+		print_hex(PRINT_ANY, "spi", "  spi 0x%x",
 			   rta_getattr_be32(attr));
 	}
 
