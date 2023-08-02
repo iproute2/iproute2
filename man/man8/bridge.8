@@ -61,6 +61,8 @@ bridge \- show / manipulate bridge addresses and devices
 .B backup_port
 .IR  DEVICE " ] ["
 .BR nobackup_port " ] [ "
+.B backup_nhid
+.IR NHID " ] ["
 .BR self " ] [ " master " ]"
 
 .ti -8
@@ -646,6 +648,13 @@ configured backup port
 .TP
 .B nobackup_port
 Removes the currently configured backup port
+
+.TP
+.BI backup_nhid " NHID"
+The FDB nexthop object ID (see \fBip-nexthop\fR(8)) to attach to packets being
+redirected to a backup port that has VLAN tunnel mapping enabled (via the
+\fBvlan_tunnel\fR option). Setting a value of 0 (default) has the effect of not
+attaching any ID.
 
 .TP
 .B self

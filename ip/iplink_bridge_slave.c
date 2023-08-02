@@ -43,6 +43,7 @@ static void print_explain(FILE *f)
 		"			[ locked {on | off} ]\n"
 		"			[ mab {on | off} ]\n"
 		"			[ backup_port DEVICE ] [ nobackup_port ]\n"
+		"			[ backup_nhid NHID ]\n"
 	);
 }
 
@@ -301,6 +302,10 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 		print_string(PRINT_ANY, "backup_port", "backup_port %s ",
 			     ll_index_to_name(backup_p));
 	}
+
+	if (tb[IFLA_BRPORT_BACKUP_NHID])
+		print_uint(PRINT_ANY, "backup_nhid", "backup_nhid %u ",
+			   rta_getattr_u32(tb[IFLA_BRPORT_BACKUP_NHID]));
 }
 
 static void bridge_slave_parse_on_off(char *arg_name, char *arg_val,
@@ -436,6 +441,14 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			addattr32(n, 1024, IFLA_BRPORT_BACKUP_PORT, ifindex);
 		} else if (matches(*argv, "nobackup_port") == 0) {
 			addattr32(n, 1024, IFLA_BRPORT_BACKUP_PORT, 0);
+		} else if (strcmp(*argv, "backup_nhid") == 0) {
+			__u32 backup_nhid;
+
+			NEXT_ARG();
+			if (get_u32(&backup_nhid, *argv, 0))
+				invarg("backup_nhid is invalid", *argv);
+			addattr32(n, 1024, IFLA_BRPORT_BACKUP_NHID,
+				  backup_nhid);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;

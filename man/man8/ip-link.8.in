@@ -2540,7 +2540,10 @@ the following additional arguments are supported:
 ] [
 .BR backup_port " DEVICE"
 ] [
-.BR nobackup_port " ]"
+.BR nobackup_port
+] [
+.BR backup_nhid " NHID"
+]
 
 .in +8
 .sp
@@ -2678,6 +2681,12 @@ configured backup port
 
 .BR nobackup_port
 - removes the currently configured backup port
+
+.BI backup_nhid " NHID"
+- the FDB nexthop object ID (see \fBip-nexthop\fR(8)) to attach to packets
+being redirected to a backup port that has VLAN tunnel mapping enabled (via the
+\fBvlan_tunnel\fR option). Setting a value of 0 (default) has the effect of not
+attaching any ID.
 
 .in -8
 
