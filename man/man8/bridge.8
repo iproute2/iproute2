@@ -66,7 +66,9 @@ bridge \- show / manipulate bridge addresses and devices
 .ti -8
 .BR "bridge link" " [ " show " ] [ "
 .B dev
-.IR DEV " ]"
+.IR DEV " ] ["
+.B master
+.IR DEVICE " ]"
 
 .ti -8
 .BR "bridge fdb" " { " add " | " append " | " del " | " replace " } "
@@ -661,9 +663,15 @@ display current time when using monitor option.
 
 .SS bridge link show - list ports configuration for all bridges.
 
-This command displays port configuration and flags for all bridges.
+This command displays ports configuration and flags for all bridges by default.
 
-To display port configuration and flags for a specific bridge, use the
+.TP
+.BI dev " DEV"
+only display the specific bridge port named DEV.
+
+.TP
+.BI master " DEVICE"
+only display ports of the bridge named DEVICE. This is similar to
 "ip link show master <bridge_device>" command.
 
 .SH bridge fdb - forwarding database management
