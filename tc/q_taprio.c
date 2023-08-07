@@ -654,7 +654,7 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		parse_rtattr_nested(t, TCA_TAPRIO_ATTR_MAX,
 				    tb[TCA_TAPRIO_ATTR_ADMIN_SCHED]);
 
-		open_json_object(NULL);
+		open_json_object("admin");
 
 		print_schedule(f, t);
 
