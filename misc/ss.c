@@ -1733,7 +1733,7 @@ static void inet_addr_print(const inet_prefix *a, int port,
 
 struct aafilter {
 	inet_prefix	addr;
-	int		port;
+	long		port;
 	unsigned int	iface;
 	__u32		mark;
 	__u32		mask;
@@ -2256,7 +2256,7 @@ void *parse_hostcond(char *addr, bool is_port)
 		port = find_port(addr, is_port);
 		if (port) {
 			if (*port && strcmp(port, "*")) {
-				if (get_integer(&a.port, port, 0)) {
+				if (get_long(&a.port, port, 0)) {
 					if ((a.port = xll_name_to_index(port)) <= 0)
 						return NULL;
 				}
@@ -2279,7 +2279,7 @@ void *parse_hostcond(char *addr, bool is_port)
 		port = find_port(addr, is_port);
 		if (port) {
 			if (*port && strcmp(port, "*")) {
-				if (get_integer(&a.port, port, 0)) {
+				if (get_long(&a.port, port, 0)) {
 					if (strcmp(port, "kernel") == 0)
 						a.port = 0;
 					else
@@ -2335,7 +2335,7 @@ void *parse_hostcond(char *addr, bool is_port)
 			*port++ = 0;
 
 		if (*port && *port != '*') {
-			if (get_integer(&a.port, port, 0)) {
+			if (get_long(&a.port, port, 0)) {
 				struct servent *se1 = NULL;
 				struct servent *se2 = NULL;
 
