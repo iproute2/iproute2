@@ -309,6 +309,7 @@ unsigned int print_name_and_link(const char *fmt,
 extern int cmdlineno;
 
 char *int_to_str(int val, char *buf);
+char *uint_to_str(unsigned int val, char *buf);
 int get_guid(__u64 *guid, const char *arg);
 int get_real_family(int rtm_type, int rtm_family);
 

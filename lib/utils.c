@@ -1409,6 +1409,12 @@ char *int_to_str(int val, char *buf)
 	return buf;
 }
 
+char *uint_to_str(unsigned int val, char *buf)
+{
+	sprintf(buf, "%u", val);
+	return buf;
+}
+
 int get_guid(__u64 *guid, const char *arg)
 {
 	unsigned long tmp;
