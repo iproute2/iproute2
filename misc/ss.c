@@ -4073,9 +4073,9 @@ static void unix_stats_print(struct sockstat *s, struct filter *f)
 	sock_state_print(s);
 
 	sock_addr_print(s->name ?: "*", " ",
-			int_to_str(s->lport, port_name), NULL);
+			uint_to_str(s->lport, port_name), NULL);
 	sock_addr_print(s->peer_name ?: "*", " ",
-			int_to_str(s->rport, port_name), NULL);
+			uint_to_str(s->rport, port_name), NULL);
 
 	proc_ctx_print(s);
 }
