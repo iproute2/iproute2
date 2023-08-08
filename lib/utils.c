@@ -108,7 +108,7 @@ static int get_hex(char c)
 	return -1;
 }
 
-int get_integer(int *val, const char *arg, int base)
+int get_long(long *val, const char *arg, int base)
 {
 	long res;
 	char *ptr;
@@ -132,6 +132,17 @@ int get_integer(int *val, const char *arg, int base)
 	 */
 	if ((res == LONG_MAX || res == LONG_MIN) && errno == ERANGE)
 		return -1;
+
+	if (val)
+		*val = res;
+	return 0;
+}
+
+int get_integer(int *val, const char *arg, int base)
+{
+	long res;
+
+	res = get_long(NULL, arg, base);
 
 	/* Outside range of int */
 	if (res < INT_MIN || res > INT_MAX)

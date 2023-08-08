@@ -142,6 +142,7 @@ int get_addr_rta(inet_prefix *dst, const struct rtattr *rta, int family);
 int get_addr_ila(__u64 *val, const char *arg);
 
 int read_prop(const char *dev, char *prop, long *value);
+int get_long(long *val, const char *arg, int base);
 int get_integer(int *val, const char *arg, int base);
 int get_unsigned(unsigned *val, const char *arg, int base);
 int get_time_rtt(unsigned *val, const char *arg, int *raw);
