@@ -2018,14 +2018,16 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_HEALTH_REPORTER_AUTO_DUMP;
-		} else if (dl_argv_match(dl, "trap") &&
+		} else if ((dl_argv_match(dl, "trap") ||
+			    dl_argv_match(dl, "name")) &&
 			   (o_all & DL_OPT_TRAP_NAME)) {
 			dl_arg_inc(dl);
 			err = dl_argv_str(dl, &opts->trap_name);
 			if (err)
 				return err;
 			o_found |= DL_OPT_TRAP_NAME;
-		} else if (dl_argv_match(dl, "group") &&
+		} else if ((dl_argv_match(dl, "group") ||
+			    dl_argv_match(dl, "name")) &&
 			   (o_all & DL_OPT_TRAP_GROUP_NAME)) {
 			dl_arg_inc(dl);
 			err = dl_argv_str(dl, &opts->trap_group_name);
