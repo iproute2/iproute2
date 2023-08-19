@@ -142,7 +142,8 @@ int get_integer(int *val, const char *arg, int base)
 {
 	long res;
 
-	res = get_long(NULL, arg, base);
+	if (get_long(&res, arg, base) < 0)
+		return -1;
 
 	/* Outside range of int */
 	if (res < INT_MIN || res > INT_MAX)
