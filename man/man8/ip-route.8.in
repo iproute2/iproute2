@@ -866,10 +866,16 @@ See \fBFlavors parameters\fR section.
 
 .B End.X nh6
 .I NEXTHOP
+.RB [ " flavors "
+.IR FLAVORS " ] "
 - Regular SRv6 processing as intermediate segment endpoint.
 Additionally, forward processed packets to given next-hop.
 This action only accepts packets with a non-zero Segments Left
-value. Other matching packets are dropped.
+value. Other matching packets are dropped. The presence of flavors
+can change the regular processing of an End.X behavior according to
+the user-provided Flavor operations and information carried in the packet.
+See \fBFlavors parameters\fR section.
+
 
 .B End.DX6 nh6
 .I NEXTHOP
@@ -977,7 +983,7 @@ subset of the existing behaviors.
 removes (i.e. pops) the SRH from the IPv6 header.
 The PSP operation takes place only at a penultimate SR Segment Endpoint node
 (e.g., the Segment Left must be one) and does not happen at non-penultimate
-endpoint nodes.
+endpoint nodes. This flavor is currently only supported by End behavior.
 
 .B usp
 - Ultimate Segment Pop of the SRH (not yet supported in kernel)

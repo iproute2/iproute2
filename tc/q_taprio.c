@@ -416,13 +416,10 @@ static int taprio_parse_opt(struct qdisc_util *qu, int argc,
 	return 0;
 }
 
-static int print_sched_list(FILE *f, struct rtattr *list)
+static void print_sched_list(FILE *f, struct rtattr *list)
 {
-	struct rtattr *item;
+	struct rtattr *item, *nla;
 	int rem;
-
-	if (list == NULL)
-		return 0;
 
 	rem = RTA_PAYLOAD(list);
 
@@ -432,60 +429,82 @@ static int print_sched_list(FILE *f, struct rtattr *list)
 
 	for (item = RTA_DATA(list); RTA_OK(item, rem); item = RTA_NEXT(item, rem)) {
 		struct rtattr *tb[TCA_TAPRIO_SCHED_ENTRY_MAX + 1];
-		__u32 index = 0, gatemask = 0, interval = 0;
-		__u8 command = 0;
 
 		parse_rtattr_nested(tb, TCA_TAPRIO_SCHED_ENTRY_MAX, item);
 
-		if (tb[TCA_TAPRIO_SCHED_ENTRY_INDEX])
-			index = rta_getattr_u32(tb[TCA_TAPRIO_SCHED_ENTRY_INDEX]);
-
-		if (tb[TCA_TAPRIO_SCHED_ENTRY_CMD])
-			command = rta_getattr_u8(tb[TCA_TAPRIO_SCHED_ENTRY_CMD]);
-
-		if (tb[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK])
-			gatemask = rta_getattr_u32(tb[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK]);
-
-		if (tb[TCA_TAPRIO_SCHED_ENTRY_INTERVAL])
-			interval = rta_getattr_u32(tb[TCA_TAPRIO_SCHED_ENTRY_INTERVAL]);
-
 		open_json_object(NULL);
-		print_uint(PRINT_ANY, "index", "\tindex %u", index);
-		print_string(PRINT_ANY, "cmd", " cmd %s", entry_cmd_to_str(command));
-		print_0xhex(PRINT_ANY, "gatemask", " gatemask %#llx", gatemask);
-		print_uint(PRINT_ANY, "interval", " interval %u", interval);
+
+		nla = tb[TCA_TAPRIO_SCHED_ENTRY_INDEX];
+		if (nla) {
+			__u32 index = rta_getattr_u32(nla);
+
+			print_uint(PRINT_ANY, "index", "\tindex %u", index);
+		}
+
+		nla = tb[TCA_TAPRIO_SCHED_ENTRY_CMD];
+		if (nla) {
+			__u8 command = rta_getattr_u8(nla);
+
+			print_string(PRINT_ANY, "cmd", " cmd %s",
+				     entry_cmd_to_str(command));
+		}
+
+		nla = tb[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK];
+		if (nla) {
+			__u32 gatemask = rta_getattr_u32(nla);
+
+			print_0xhex(PRINT_ANY, "gatemask", " gatemask %#llx",
+				    gatemask);
+		}
+
+		nla = tb[TCA_TAPRIO_SCHED_ENTRY_INTERVAL];
+		if (nla) {
+			__u32 interval = rta_getattr_u32(nla);
+
+			print_uint(PRINT_ANY, "interval", " interval %u",
+				   interval);
+		}
+
 		close_json_object();
 
 		print_nl();
 	}
 
 	close_json_array(PRINT_ANY, "");
-
-	return 0;
 }
 
 static int print_schedule(FILE *f, struct rtattr **tb)
 {
-	int64_t base_time = 0, cycle_time = 0, cycle_time_extension = 0;
+	struct rtattr *nla;
 
-	if (tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME])
-		base_time = rta_getattr_s64(tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME]);
+	nla = tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME];
+	if (nla) {
+		int64_t base_time = rta_getattr_s64(nla);
 
-	if (tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME])
-		cycle_time = rta_getattr_s64(tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME]);
+		print_lluint(PRINT_ANY, "base_time", "\tbase-time %lld",
+			     base_time);
+	}
 
-	if (tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION])
-		cycle_time_extension = rta_getattr_s64(
-			tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION]);
+	nla = tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME];
+	if (nla) {
+		int64_t cycle_time = rta_getattr_s64(nla);
 
-	print_lluint(PRINT_ANY, "base_time", "\tbase-time %lld", base_time);
+		print_lluint(PRINT_ANY, "cycle_time", " cycle-time %lld",
+			     cycle_time);
+	}
 
-	print_lluint(PRINT_ANY, "cycle_time", " cycle-time %lld", cycle_time);
+	nla = tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION];
+	if (nla) {
+		int64_t cycle_time_extension = rta_getattr_s64(nla);
 
-	print_lluint(PRINT_ANY, "cycle_time_extension",
-		     " cycle-time-extension %lld", cycle_time_extension);
+		print_lluint(PRINT_ANY, "cycle_time_extension",
+			     " cycle-time-extension %lld",
+			     cycle_time_extension);
+	}
 
-	print_sched_list(f, tb[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST]);
+	nla = tb[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST];
+	if (nla)
+		print_sched_list(f, nla);
 
 	return 0;
 }
@@ -635,7 +654,7 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		parse_rtattr_nested(t, TCA_TAPRIO_ATTR_MAX,
 				    tb[TCA_TAPRIO_ATTR_ADMIN_SCHED]);
 
-		open_json_object(NULL);
+		open_json_object("admin");
 
 		print_schedule(f, t);
 
