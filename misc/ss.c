@@ -4535,9 +4535,9 @@ static int packet_show_line(char *buf, const struct filter *f, int fam)
 			&type, &prot, &iface, &state,
 			&rq, &uid, &ino);
 
-	if (stat.type == SOCK_RAW && !(f->dbs&(1<<PACKET_R_DB)))
+	if (type == SOCK_RAW && !(f->dbs & (1<<PACKET_R_DB)))
 		return 0;
-	if (stat.type == SOCK_DGRAM && !(f->dbs&(1<<PACKET_DG_DB)))
+	if (type == SOCK_DGRAM && !(f->dbs & (1<<PACKET_DG_DB)))
 		return 0;
 
 	stat.type  = type;
