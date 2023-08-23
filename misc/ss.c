@@ -86,13 +86,13 @@ static int getpidcon(pid_t pid, char **context)
 	return -1;
 }
 
-static int getfilecon(char *path, char **context)
+static int getfilecon(const char *path, char **context)
 {
 	*context = NULL;
 	return -1;
 }
 
-static int security_get_initial_context(char *name,  char **context)
+static int security_get_initial_context(const char *name,  char **context)
 {
 	*context = NULL;
 	return -1;
