@@ -30,3 +30,8 @@ int security_get_initial_context(const char *name,  char **context)
 	*context = NULL;
 	return -1;
 }
+
+int setexecfilecon(const char *filename, const char *fallback_type)
+{
+	return -1;
+}
