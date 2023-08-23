@@ -9,7 +9,7 @@ netem \- Network Emulator
 
 .IR OPTIONS " := [ " LIMIT " ] [ " DELAY " ] [ " LOSS \
 " ] [ " CORRUPT " ] [ " DUPLICATION " ] [ " REORDERING " ] [ " RATE \
-" ] [ " SLOT " ]"
+" ] [ " SLOT " ] [ " SEED " ]"
 
 .IR LIMIT " := "
 .B limit
@@ -63,6 +63,10 @@ netem \- Network Emulator
 .IR PACKETS " ] [ "
 .BR bytes
 .IR BYTES " ]"
+
+.IR SEED " := "
+.B seed
+.I VALUE
 
 .SH DESCRIPTION
 The
@@ -239,6 +243,11 @@ smeared by the timer resolution, and by the underlying native bandwidth also.
 It is possible to combine slotting with a rate, in which case complex behaviors
 where either the rate, or the slot limits on bytes or packets per slot, govern
 the actual delivered rate.
+
+.TP
+.BI seed " VALUE"
+Specifies a seed to guide and reproduce the randomly generated
+loss or corruption events.
 
 .SH LIMITATIONS
 Netem is limited by the timer granularity in the kernel.
