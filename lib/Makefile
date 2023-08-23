@@ -13,6 +13,10 @@ UTILOBJ += bpf_libbpf.o
 endif
 endif
 
+ifneq ($(HAVE_SELINUX),y)
+UTILOBJ += selinux.o
+endif
+
 NLOBJ=libgenl.o libnetlink.o
 ifeq ($(HAVE_MNL),y)
 NLOBJ += mnl_utils.o
