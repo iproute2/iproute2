@@ -31,6 +31,7 @@ static void explain(void)
 		"                 [ loss random PERCENT [CORRELATION]]\n"
 		"                 [ loss state P13 [P31 [P32 [P23 P14]]]\n"
 		"                 [ loss gemodel PERCENT [R [1-H [1-K]]]\n"
+		"                 [ seed SEED \n]"
 		"                 [ ecn ]\n"
 		"                 [ reorder PERCENT [CORRELATION] [ gap DISTANCE ]]\n"
 		"                 [ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n"
@@ -208,6 +209,7 @@ static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	__u16 loss_type = NETEM_LOSS_UNSPEC;
 	int present[__TCA_NETEM_MAX] = {};
 	__u64 rate64 = 0;
+	__u64 seed = 0;
 
 	for ( ; argc > 0; --argc, ++argv) {
 		if (matches(*argv, "limit") == 0) {
@@ -361,6 +363,13 @@ random_loss_model:
 			} else {
 				fprintf(stderr, "Unknown loss parameter: %s\n",
 					*argv);
+				return -1;
+			}
+		} else if (matches(*argv, "seed") == 0) {
+			NEXT_ARG();
+			present[TCA_NETEM_PRNG_SEED] = 1;
+			if (get_u64(&seed, *argv, 10)) {
+				explain1("seed");
 				return -1;
 			}
 		} else if (matches(*argv, "ecn") == 0) {
@@ -627,6 +636,12 @@ random_loss_model:
 			return -1;
 	}
 
+	if (present[TCA_NETEM_PRNG_SEED] &&
+	    addattr_l(n, 1024, TCA_NETEM_PRNG_SEED, &seed,
+		      sizeof(seed)) < 0)
+		return -1;
+
+
 	if (dist_data) {
 		if (addattr_l(n, MAX_DIST * sizeof(dist_data[0]),
 			      TCA_NETEM_DELAY_DIST,
@@ -657,6 +672,8 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	struct tc_netem_qopt qopt;
 	const struct tc_netem_rate *rate = NULL;
 	const struct tc_netem_slot *slot = NULL;
+	bool seed_present = false;
+	__u64 seed = 0;
 	int len;
 	__u64 rate64 = 0;
 
@@ -721,6 +738,12 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 			if (RTA_PAYLOAD(tb[TCA_NETEM_SLOT]) < sizeof(*slot))
 				return -1;
 			slot = RTA_DATA(tb[TCA_NETEM_SLOT]);
+		}
+		if (tb[TCA_NETEM_PRNG_SEED]) {
+			if (RTA_PAYLOAD(tb[TCA_NETEM_PRNG_SEED]) < sizeof(seed))
+				return -1;
+			seed_present = true;
+			seed = rta_getattr_u64(tb[TCA_NETEM_PRNG_SEED]);
 		}
 	}
 
@@ -822,6 +845,9 @@ static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		PRINT_INT_OPT("bytes", slot->max_bytes);
 		close_json_object();
 	}
+
+	if (seed_present)
+		print_u64(PRINT_ANY, "seed", " seed %llu", seed);
 
 	print_bool(PRINT_JSON, "ecn", NULL, ecn);
 	if (ecn)
