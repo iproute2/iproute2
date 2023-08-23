@@ -3255,6 +3255,22 @@ static void mptcp_stats_print(struct mptcp_info *s)
 		out(" snd_una:%llu", s->mptcpi_snd_una);
 	if (s->mptcpi_rcv_nxt)
 		out(" rcv_nxt:%llu", s->mptcpi_rcv_nxt);
+	if (s->mptcpi_local_addr_used)
+		out(" local_addr_used:%u", s->mptcpi_local_addr_used);
+	if (s->mptcpi_local_addr_max)
+		out(" local_addr_max:%u", s->mptcpi_local_addr_max);
+	if (s->mptcpi_csum_enabled)
+		out(" csum_enabled:%u", s->mptcpi_csum_enabled);
+	if (s->mptcpi_retransmits)
+		out(" retransmits:%u", s->mptcpi_retransmits);
+	if (s->mptcpi_bytes_retrans)
+		out(" bytes_retrans:%llu", s->mptcpi_bytes_retrans);
+	if (s->mptcpi_bytes_sent)
+		out(" bytes_sent:%llu", s->mptcpi_bytes_sent);
+	if (s->mptcpi_bytes_received)
+		out(" bytes_received:%llu", s->mptcpi_bytes_received);
+	if (s->mptcpi_bytes_acked)
+		out(" bytes_acked:%llu", s->mptcpi_bytes_acked);
 }
 
 static void mptcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
