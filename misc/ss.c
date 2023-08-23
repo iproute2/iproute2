@@ -77,7 +77,7 @@
 /* Stubs for SELinux functions */
 static int is_selinux_enabled(void)
 {
-	return -1;
+	return 0;
 }
 
 static int getpidcon(pid_t pid, char **context)
@@ -5682,7 +5682,7 @@ int main(int argc, char *argv[])
 			show_sock_ctx++;
 			/* fall through */
 		case 'Z':
-			if (is_selinux_enabled() <= 0) {
+			if (!is_selinux_enabled()) {
 				fprintf(stderr, "ss: SELinux is not enabled.\n");
 				exit(1);
 			}
