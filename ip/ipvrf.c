@@ -24,6 +24,7 @@
 #include "utils.h"
 #include "ip_common.h"
 #include "bpf_util.h"
+#include "selinux.h"
 
 #define CGRP_PROC_FILE  "/cgroup.procs"
 
@@ -452,6 +453,11 @@ static int ipvrf_exec(int argc, char **argv)
 	}
 	if (argc < 2) {
 		fprintf(stderr, "No command specified\n");
+		return -1;
+	}
+
+	if (is_selinux_enabled() && setexecfilecon(argv[1], "ifconfig_t")) {
+		fprintf(stderr, "setexecfilecon for \"%s\" failed\n", argv[1]);
 		return -1;
 	}
 

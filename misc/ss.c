@@ -33,6 +33,7 @@
 #include "version.h"
 #include "rt_names.h"
 #include "cg_map.h"
+#include "selinux.h"
 
 #include <linux/tcp.h>
 #include <linux/unix_diag.h>
@@ -70,39 +71,6 @@
 #define BUF_CHUNK (1024 * 1024)	/* Buffer chunk allocation size */
 #define BUF_CHUNKS_MAX 5	/* Maximum number of allocated buffer chunks */
 #define LEN_ALIGN(x) (((x) + 1) & ~1)
-
-#if HAVE_SELINUX
-#include <selinux/selinux.h>
-#else
-/* Stubs for SELinux functions */
-static int is_selinux_enabled(void)
-{
-	return -1;
-}
-
-static int getpidcon(pid_t pid, char **context)
-{
-	*context = NULL;
-	return -1;
-}
-
-static int getfilecon(char *path, char **context)
-{
-	*context = NULL;
-	return -1;
-}
-
-static int security_get_initial_context(char *name,  char **context)
-{
-	*context = NULL;
-	return -1;
-}
-
-static void freecon(char *context)
-{
-	free(context);
-}
-#endif
 
 int preferred_family = AF_UNSPEC;
 static int show_options;
@@ -5682,7 +5650,7 @@ int main(int argc, char *argv[])
 			show_sock_ctx++;
 			/* fall through */
 		case 'Z':
-			if (is_selinux_enabled() <= 0) {
+			if (!is_selinux_enabled()) {
 				fprintf(stderr, "ss: SELinux is not enabled.\n");
 				exit(1);
 			}
