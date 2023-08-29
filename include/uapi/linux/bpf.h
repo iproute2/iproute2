@@ -19,6 +19,7 @@
 
 /* ld/ldx fields */
 #define BPF_DW		0x18	/* double word (64-bit) */
+#define BPF_MEMSX	0x80	/* load with sign extension */
 #define BPF_ATOMIC	0xc0	/* atomic memory ops - op type in immediate */
 #define BPF_XADD	0xc0	/* exclusive add - legacy name */
 
@@ -1038,6 +1039,7 @@ enum bpf_attach_type {
 	BPF_NETFILTER,
 	BPF_TCX_INGRESS,
 	BPF_TCX_EGRESS,
+	BPF_TRACE_UPROBE_MULTI,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -1056,6 +1058,7 @@ enum bpf_link_type {
 	BPF_LINK_TYPE_STRUCT_OPS = 9,
 	BPF_LINK_TYPE_NETFILTER = 10,
 	BPF_LINK_TYPE_TCX = 11,
+	BPF_LINK_TYPE_UPROBE_MULTI = 12,
 	MAX_BPF_LINK_TYPE,
 };
 
@@ -1185,7 +1188,21 @@ enum bpf_perf_event_type {
 /* link_create.kprobe_multi.flags used in LINK_CREATE command for
  * BPF_TRACE_KPROBE_MULTI attach type to create return probe.
  */
-#define BPF_F_KPROBE_MULTI_RETURN	(1U << 0)
+enum {
+	BPF_F_KPROBE_MULTI_RETURN = (1U << 0)
+};
+
+/* link_create.uprobe_multi.flags used in LINK_CREATE command for
+ * BPF_TRACE_UPROBE_MULTI attach type to create return probe.
+ */
+enum {
+	BPF_F_UPROBE_MULTI_RETURN = (1U << 0)
+};
+
+/* link_create.netfilter.flags used in LINK_CREATE command for
+ * BPF_PROG_TYPE_NETFILTER to enable IP packet defragmentation.
+ */
+#define BPF_F_NETFILTER_IP_DEFRAG (1U << 0)
 
 /* When BPF ldimm64's insn[0].src_reg != 0 then this can have
  * the following extensions:
@@ -1618,6 +1635,15 @@ union bpf_attr {
 				};
 				__u64		expected_revision;
 			} tcx;
+			struct {
+				__aligned_u64	path;
+				__aligned_u64	offsets;
+				__aligned_u64	ref_ctr_offsets;
+				__aligned_u64	cookies;
+				__u32		cnt;
+				__u32		flags;
+				__u32		pid;
+			} uprobe_multi;
 		};
 	} link_create;
 
@@ -4198,9 +4224,6 @@ union bpf_attr {
  *		**-EOPNOTSUPP** if the operation is not supported, for example
  *		a call from outside of TC ingress.
  *
- *		**-ESOCKTNOSUPPORT** if the socket type is not supported
- *		(reuseport).
- *
  * long bpf_sk_assign(struct bpf_sk_lookup *ctx, struct bpf_sock *sk, u64 flags)
  *	Description
  *		Helper is overloaded depending on BPF program type. This
@@ -5083,9 +5106,14 @@ union bpf_attr {
  * u64 bpf_get_func_ip(void *ctx)
  * 	Description
  * 		Get address of the traced function (for tracing and kprobe programs).
+ *
+ * 		When called for kprobe program attached as uprobe it returns
+ * 		probe address for both entry and return uprobe.
+ *
  * 	Return
- * 		Address of the traced function.
+ * 		Address of the traced function for kprobe.
  * 		0 for kprobes placed within the function (not at the entry).
+ * 		Address of the probe for uprobe and return uprobe.
  *
  * u64 bpf_get_attach_cookie(void *ctx)
  * 	Description
