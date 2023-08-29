@@ -3200,17 +3200,17 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 static void mptcp_stats_print(struct mptcp_info *s)
 {
 	if (s->mptcpi_subflows)
-		out(" subflows:%d", s->mptcpi_subflows);
+		out(" subflows:%u", s->mptcpi_subflows);
 	if (s->mptcpi_add_addr_signal)
-		out(" add_addr_signal:%d", s->mptcpi_add_addr_signal);
+		out(" add_addr_signal:%u", s->mptcpi_add_addr_signal);
 	if (s->mptcpi_add_addr_accepted)
-		out(" add_addr_accepted:%d", s->mptcpi_add_addr_accepted);
+		out(" add_addr_accepted:%u", s->mptcpi_add_addr_accepted);
 	if (s->mptcpi_subflows_max)
-		out(" subflows_max:%d", s->mptcpi_subflows_max);
+		out(" subflows_max:%u", s->mptcpi_subflows_max);
 	if (s->mptcpi_add_addr_signal_max)
-		out(" add_addr_signal_max:%d", s->mptcpi_add_addr_signal_max);
+		out(" add_addr_signal_max:%u", s->mptcpi_add_addr_signal_max);
 	if (s->mptcpi_add_addr_accepted_max)
-		out(" add_addr_accepted_max:%d", s->mptcpi_add_addr_accepted_max);
+		out(" add_addr_accepted_max:%u", s->mptcpi_add_addr_accepted_max);
 	if (s->mptcpi_flags & MPTCP_INFO_FLAG_FALLBACK)
 		out(" fallback");
 	if (s->mptcpi_flags & MPTCP_INFO_FLAG_REMOTE_KEY_RECEIVED)
@@ -3218,11 +3218,27 @@ static void mptcp_stats_print(struct mptcp_info *s)
 	if (s->mptcpi_token)
 		out(" token:%x", s->mptcpi_token);
 	if (s->mptcpi_write_seq)
-		out(" write_seq:%llx", s->mptcpi_write_seq);
+		out(" write_seq:%llu", s->mptcpi_write_seq);
 	if (s->mptcpi_snd_una)
-		out(" snd_una:%llx", s->mptcpi_snd_una);
+		out(" snd_una:%llu", s->mptcpi_snd_una);
 	if (s->mptcpi_rcv_nxt)
-		out(" rcv_nxt:%llx", s->mptcpi_rcv_nxt);
+		out(" rcv_nxt:%llu", s->mptcpi_rcv_nxt);
+	if (s->mptcpi_local_addr_used)
+		out(" local_addr_used:%u", s->mptcpi_local_addr_used);
+	if (s->mptcpi_local_addr_max)
+		out(" local_addr_max:%u", s->mptcpi_local_addr_max);
+	if (s->mptcpi_csum_enabled)
+		out(" csum_enabled:%u", s->mptcpi_csum_enabled);
+	if (s->mptcpi_retransmits)
+		out(" retransmits:%u", s->mptcpi_retransmits);
+	if (s->mptcpi_bytes_retrans)
+		out(" bytes_retrans:%llu", s->mptcpi_bytes_retrans);
+	if (s->mptcpi_bytes_sent)
+		out(" bytes_sent:%llu", s->mptcpi_bytes_sent);
+	if (s->mptcpi_bytes_received)
+		out(" bytes_received:%llu", s->mptcpi_bytes_received);
+	if (s->mptcpi_bytes_acked)
+		out(" bytes_acked:%llu", s->mptcpi_bytes_acked);
 }
 
 static void mptcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
@@ -4503,9 +4519,9 @@ static int packet_show_line(char *buf, const struct filter *f, int fam)
 			&type, &prot, &iface, &state,
 			&rq, &uid, &ino);
 
-	if (stat.type == SOCK_RAW && !(f->dbs&(1<<PACKET_R_DB)))
+	if (type == SOCK_RAW && !(f->dbs & (1<<PACKET_R_DB)))
 		return 0;
-	if (stat.type == SOCK_DGRAM && !(f->dbs&(1<<PACKET_DG_DB)))
+	if (type == SOCK_DGRAM && !(f->dbs & (1<<PACKET_DG_DB)))
 		return 0;
 
 	stat.type  = type;
