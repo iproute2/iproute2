@@ -24,20 +24,20 @@ static void explain(void)
 {
 	fprintf(stderr,
 		"Usage: ... netem [ limit PACKETS ]\n"
-		"                 [ delay TIME [ JITTER [CORRELATION]]]\n"
+		"                 [ delay TIME [ JITTER [ CORRELATION ] ] ]\n"
 		"                 [ distribution {uniform|normal|pareto|paretonormal} ]\n"
-		"                 [ corrupt PERCENT [CORRELATION]]\n"
-		"                 [ duplicate PERCENT [CORRELATION]]\n"
-		"                 [ loss random PERCENT [CORRELATION]]\n"
-		"                 [ loss state P13 [P31 [P32 [P23 P14]]]\n"
-		"                 [ loss gemodel PERCENT [R [1-H [1-K]]]\n"
+		"                 [ corrupt PERCENT [ CORRELATION ] ]\n"
+		"                 [ duplicate PERCENT [ CORRELATION ] ]\n"
+		"                 [ loss random PERCENT [ CORRELATION ] ]\n"
+		"                 [ loss state P13 [ P31 [ P32 [ P23 [ P14 ] ] ] ] ]\n"
+		"                 [ loss gemodel PERCENT [ R [ 1-H [ 1-K ] ] ] ]\n"
 		"                 [ seed SEED ]\n"
 		"                 [ ecn ]\n"
-		"                 [ reorder PERCENT [CORRELATION] [ gap DISTANCE ]]\n"
-		"                 [ rate RATE [PACKETOVERHEAD] [CELLSIZE] [CELLOVERHEAD]]\n"
-		"                 [ slot MIN_DELAY [MAX_DELAY] [packets MAX_PACKETS] [bytes MAX_BYTES]]\n"
+		"                 [ reorder PERCENT [ CORRELATION ] [ gap DISTANCE ] ]\n"
+		"                 [ rate RATE [ PACKETOVERHEAD ] [ CELLSIZE ] [ CELLOVERHEAD ] ]\n"
+		"                 [ slot MIN_DELAY [ MAX_DELAY ] [ packets MAX_PACKETS ] [ bytes MAX_BYTES ] ]\n"
 		"                 [ slot distribution {uniform|normal|pareto|paretonormal|custom}\n"
-		"                   DELAY JITTER [packets MAX_PACKETS] [bytes MAX_BYTES]]\n");
+		"                   DELAY JITTER [ packets MAX_PACKETS ] [ bytes MAX_BYTES ] ]\n");
 }
 
 static void explain1(const char *arg)
