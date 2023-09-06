@@ -64,6 +64,7 @@
 static int g_new_line_count;
 static int g_indent_level;
 static bool g_indent_newline;
+static bool g_err_suspended;
 
 #define INDENT_STR_STEP 2
 #define INDENT_STR_MAXLEN 32
@@ -74,6 +75,8 @@ pr_err(const char *fmt, ...)
 {
 	va_list ap;
 
+	if (g_err_suspended)
+		return;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -2282,6 +2285,21 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 	opts->present = o_found;
 
 	return dl_args_finding_required_validate(o_required, o_found);
+}
+
+static int dl_argv_dry_parse(struct dl *dl, uint64_t o_required,
+			     uint64_t o_optional)
+{
+	char **argv = dl->argv;
+	int argc = dl->argc;
+	int err;
+
+	g_err_suspended = true;
+	err = dl_argv_parse(dl, o_required, o_optional);
+	g_err_suspended = false;
+	dl->argv = argv;
+	dl->argc = argc;
+	return err;
 }
 
 static void
