@@ -2269,12 +2269,12 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 		}
 	}
 
-	opts->present = o_found;
-
-	if ((o_optional & DL_OPT_SB) && !(o_found & DL_OPT_SB)) {
+	if ((o_required & DL_OPT_SB) && !(o_found & DL_OPT_SB)) {
 		opts->sb_index = 0;
-		opts->present |= DL_OPT_SB;
+		o_found |= DL_OPT_SB;
 	}
+
+	opts->present = o_found;
 
 	return dl_args_finding_required_validate(o_required, o_found);
 }
@@ -5721,7 +5721,7 @@ static int cmd_sb_show(struct dl *dl)
 		flags |= NLM_F_DUMP;
 	}
 	else {
-		err = dl_argv_parse(dl, DL_OPT_HANDLE, DL_OPT_SB);
+		err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_SB, 0);
 		if (err)
 			return err;
 	}
@@ -5800,8 +5800,8 @@ static int cmd_sb_pool_show(struct dl *dl)
 		flags |= NLM_F_DUMP;
 	}
 	else {
-		err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_SB_POOL,
-				    DL_OPT_SB);
+		err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_SB |
+				    DL_OPT_SB_POOL, 0);
 		if (err)
 			return err;
 	}
@@ -5821,8 +5821,8 @@ static int cmd_sb_pool_set(struct dl *dl)
 	struct nlmsghdr *nlh;
 	int err;
 
-	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_SB_POOL |
-			    DL_OPT_SB_SIZE | DL_OPT_SB_THTYPE, DL_OPT_SB);
+	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_SB | DL_OPT_SB_POOL |
+			    DL_OPT_SB_SIZE | DL_OPT_SB_THTYPE, 0);
 	if (err)
 		return err;
 
@@ -5889,8 +5889,8 @@ static int cmd_sb_port_pool_show(struct dl *dl)
 		flags |= NLM_F_DUMP;
 	}
 	else {
-		err = dl_argv_parse(dl, DL_OPT_HANDLEP | DL_OPT_SB_POOL,
-				    DL_OPT_SB);
+		err = dl_argv_parse(dl, DL_OPT_HANDLEP | DL_OPT_SB |
+				    DL_OPT_SB_POOL, 0);
 		if (err)
 			return err;
 	}
@@ -5910,8 +5910,8 @@ static int cmd_sb_port_pool_set(struct dl *dl)
 	struct nlmsghdr *nlh;
 	int err;
 
-	err = dl_argv_parse(dl, DL_OPT_HANDLEP | DL_OPT_SB_POOL | DL_OPT_SB_TH,
-			    DL_OPT_SB);
+	err = dl_argv_parse(dl, DL_OPT_HANDLEP | DL_OPT_SB | DL_OPT_SB_POOL |
+			    DL_OPT_SB_TH, 0);
 	if (err)
 		return err;
 
@@ -5996,8 +5996,8 @@ static int cmd_sb_tc_bind_show(struct dl *dl)
 		flags |= NLM_F_DUMP;
 	}
 	else {
-		err = dl_argv_parse(dl, DL_OPT_HANDLEP | DL_OPT_SB_TC |
-				    DL_OPT_SB_TYPE, DL_OPT_SB);
+		err = dl_argv_parse(dl, DL_OPT_HANDLEP | DL_OPT_SB | DL_OPT_SB_TC |
+				    DL_OPT_SB_TYPE, 0);
 		if (err)
 			return err;
 	}
@@ -6017,9 +6017,8 @@ static int cmd_sb_tc_bind_set(struct dl *dl)
 	struct nlmsghdr *nlh;
 	int err;
 
-	err = dl_argv_parse(dl, DL_OPT_HANDLEP | DL_OPT_SB_TC |
-			    DL_OPT_SB_TYPE | DL_OPT_SB_POOL | DL_OPT_SB_TH,
-			    DL_OPT_SB);
+	err = dl_argv_parse(dl, DL_OPT_HANDLEP | DL_OPT_SB | DL_OPT_SB_TC |
+			    DL_OPT_SB_TYPE | DL_OPT_SB_POOL | DL_OPT_SB_TH, 0);
 	if (err)
 		return err;
 
@@ -6338,7 +6337,7 @@ static int cmd_sb_occ_show(struct dl *dl)
 	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP;
 	int err;
 
-	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_HANDLEP, DL_OPT_SB);
+	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_HANDLEP | DL_OPT_SB, 0);
 	if (err)
 		return err;
 
@@ -6374,7 +6373,7 @@ static int cmd_sb_occ_snapshot(struct dl *dl)
 	struct nlmsghdr *nlh;
 	int err;
 
-	err = dl_argv_parse(dl, DL_OPT_HANDLE, DL_OPT_SB);
+	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_SB, 0);
 	if (err)
 		return err;
 
@@ -6391,7 +6390,7 @@ static int cmd_sb_occ_clearmax(struct dl *dl)
 	struct nlmsghdr *nlh;
 	int err;
 
-	err = dl_argv_parse(dl, DL_OPT_HANDLE, DL_OPT_SB);
+	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_SB, 0);
 	if (err)
 		return err;
 
