@@ -1048,7 +1048,7 @@ static int strtobool(const char *str, bool *p_val)
 static int ident_str_validate(char *str, unsigned int expected)
 {
 	if (!str)
-		return -EINVAL;
+		return -ENOENT;
 
 	if (get_str_char_count(str, '/') != expected) {
 		pr_err("Wrong identification string format.\n");
@@ -1131,7 +1131,7 @@ static int dl_argv_handle_port(struct dl *dl, char *str, char **p_bus_name,
 
 	if (!str) {
 		pr_err("Port identification (\"bus_name/dev_name/port_index\" or \"netdev ifname\") expected.\n");
-		return -EINVAL;
+		return -ENOENT;
 	}
 	slash_count = get_str_char_count(str, '/');
 	switch (slash_count) {
@@ -1159,7 +1159,7 @@ static int dl_argv_handle_both(struct dl *dl, char *str, char **p_bus_name,
 		pr_err("One of following identifications expected:\n"
 		       "Devlink identification (\"bus_name/dev_name\")\n"
 		       "Port identification (\"bus_name/dev_name/port_index\" or \"netdev ifname\")\n");
-		return -EINVAL;
+		return -ENOENT;
 	}
 	slash_count = get_str_char_count(str, '/');
 	if (slash_count == 1) {
@@ -1681,7 +1681,7 @@ static int dl_args_finding_required_validate(uint64_t o_required,
 		o_flag = dl_args_required[i].o_flag;
 		if ((o_required & o_flag) && !(o_found & o_flag)) {
 			pr_err("%s\n", dl_args_required[i].err_msg);
-			return -EINVAL;
+			return -ENOENT;
 		}
 	}
 	if (o_required & ~o_found) {
