@@ -378,6 +378,7 @@ struct dl {
 	struct list_head ifname_map_list;
 	int argc;
 	char **argv;
+	char *handle_argv;
 	bool no_nice_names;
 	struct dl_opts opts;
 	bool json_output;
@@ -1066,9 +1067,8 @@ static int __dl_argv_handle(char *str, char **p_bus_name, char **p_dev_name)
 	return 0;
 }
 
-static int dl_argv_handle(struct dl *dl, char **p_bus_name, char **p_dev_name)
+static int dl_argv_handle(char *str, char **p_bus_name, char **p_dev_name)
 {
-	char *str = dl_argv_next(dl);
 	int err;
 
 	err = ident_str_validate(str, 1);
@@ -1121,10 +1121,9 @@ static int __dl_argv_handle_port_ifname(struct dl *dl, char *str,
 	return 0;
 }
 
-static int dl_argv_handle_port(struct dl *dl, char **p_bus_name,
+static int dl_argv_handle_port(struct dl *dl, char *str, char **p_bus_name,
 			       char **p_dev_name, uint32_t *p_port_index)
 {
-	char *str = dl_argv_next(dl);
 	unsigned int slash_count;
 
 	if (!str) {
@@ -1146,11 +1145,10 @@ static int dl_argv_handle_port(struct dl *dl, char **p_bus_name,
 	}
 }
 
-static int dl_argv_handle_both(struct dl *dl, char **p_bus_name,
+static int dl_argv_handle_both(struct dl *dl, char *str, char **p_bus_name,
 			       char **p_dev_name, uint32_t *p_port_index,
 			       uint64_t *p_handle_bit)
 {
-	char *str = dl_argv_next(dl);
 	unsigned int slash_count;
 	int err;
 
@@ -1199,10 +1197,9 @@ static int __dl_argv_handle_name(char *str, char **p_bus_name,
 	return str_split_by_char(handlestr, p_bus_name, p_dev_name, '/');
 }
 
-static int dl_argv_handle_region(struct dl *dl, char **p_bus_name,
+static int dl_argv_handle_region(char *str, char **p_bus_name,
 				 char **p_dev_name, char **p_region)
 {
-	char *str = dl_argv_next(dl);
 	int err;
 
 	err = ident_str_validate(str, 2);
@@ -1218,10 +1215,9 @@ static int dl_argv_handle_region(struct dl *dl, char **p_bus_name,
 }
 
 
-static int dl_argv_handle_rate_node(struct dl *dl, char **p_bus_name,
+static int dl_argv_handle_rate_node(char *str, char **p_bus_name,
 				    char **p_dev_name, char **p_node)
 {
-	char *str = dl_argv_next(dl);
 	int err;
 
 	err = ident_str_validate(str, 2);
@@ -1244,11 +1240,10 @@ static int dl_argv_handle_rate_node(struct dl *dl, char **p_bus_name,
 	return err;
 }
 
-static int dl_argv_handle_rate(struct dl *dl, char **p_bus_name,
+static int dl_argv_handle_rate(char *str, char **p_bus_name,
 			       char **p_dev_name, uint32_t *p_port_index,
 			       char **p_node_name, uint64_t *p_handle_bit)
 {
-	char *str = dl_argv_next(dl);
 	char *identifier;
 	int err;
 
@@ -1698,14 +1693,24 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 {
 	struct dl_opts *opts = &dl->opts;
 	uint64_t o_all = o_required | o_optional;
+	char *str = dl_argv_next(dl);
 	uint64_t o_found = 0;
 	int err;
+
+	if (str) {
+		str = strdup(str);
+		if (!str)
+			return -ENOMEM;
+		free(dl->handle_argv);
+		dl->handle_argv = str;
+	}
 
 	if (o_required & DL_OPT_HANDLE && o_required & DL_OPT_HANDLEP) {
 		uint64_t handle_bit;
 
-		err = dl_argv_handle_both(dl, &opts->bus_name, &opts->dev_name,
-					  &opts->port_index, &handle_bit);
+		err = dl_argv_handle_both(dl, str, &opts->bus_name,
+					  &opts->dev_name, &opts->port_index,
+					  &handle_bit);
 		if (err)
 			return err;
 		o_required &= ~(DL_OPT_HANDLE | DL_OPT_HANDLEP) | handle_bit;
@@ -1714,7 +1719,7 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 		   o_required & DL_OPT_PORT_FN_RATE_NODE_NAME) {
 		uint64_t handle_bit;
 
-		err = dl_argv_handle_rate(dl, &opts->bus_name, &opts->dev_name,
+		err = dl_argv_handle_rate(str, &opts->bus_name, &opts->dev_name,
 					  &opts->port_index,
 					  &opts->rate_node_name,
 					  &handle_bit);
@@ -1724,25 +1729,25 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			handle_bit;
 		o_found |= handle_bit;
 	} else if (o_required & DL_OPT_HANDLE) {
-		err = dl_argv_handle(dl, &opts->bus_name, &opts->dev_name);
+		err = dl_argv_handle(str, &opts->bus_name, &opts->dev_name);
 		if (err)
 			return err;
 		o_found |= DL_OPT_HANDLE;
 	} else if (o_required & DL_OPT_HANDLEP) {
-		err = dl_argv_handle_port(dl, &opts->bus_name, &opts->dev_name,
-					  &opts->port_index);
+		err = dl_argv_handle_port(dl, str, &opts->bus_name,
+					  &opts->dev_name, &opts->port_index);
 		if (err)
 			return err;
 		o_found |= DL_OPT_HANDLEP;
 	} else if (o_required & DL_OPT_HANDLE_REGION) {
-		err = dl_argv_handle_region(dl, &opts->bus_name,
+		err = dl_argv_handle_region(str, &opts->bus_name,
 					    &opts->dev_name,
 					    &opts->region_name);
 		if (err)
 			return err;
 		o_found |= DL_OPT_HANDLE_REGION;
 	} else if (o_required & DL_OPT_PORT_FN_RATE_NODE_NAME) {
-		err = dl_argv_handle_rate_node(dl, &opts->bus_name,
+		err = dl_argv_handle_rate_node(str, &opts->bus_name,
 					       &opts->dev_name,
 					       &opts->rate_node_name);
 		if (err)
@@ -9902,6 +9907,7 @@ static struct dl *dl_alloc(void)
 
 static void dl_free(struct dl *dl)
 {
+	free(dl->handle_argv);
 	free(dl);
 }
 
