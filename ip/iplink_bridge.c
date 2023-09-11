@@ -499,7 +499,7 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_BR_ROOT_ID]) {
 		char root_id[32];
 
-		br_dump_bridge_id(RTA_DATA(tb[IFLA_BR_BRIDGE_ID]), root_id,
+		br_dump_bridge_id(RTA_DATA(tb[IFLA_BR_ROOT_ID]), root_id,
 				  sizeof(root_id));
 		print_string(PRINT_ANY,
 			     "root_id",
