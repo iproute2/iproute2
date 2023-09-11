@@ -110,7 +110,7 @@ int mnlu_socket_recv_run(struct mnl_socket *nl, unsigned int seq, void *buf, siz
 	return err;
 }
 
-static int get_family_attrs_cb(const struct nlattr *attr, void *data)
+static int ctrl_attrs_cb(const struct nlattr *attr, void *data)
 {
 	int type = mnl_attr_get_type(attr);
 	const struct nlattr **tb = data;
@@ -124,6 +124,12 @@ static int get_family_attrs_cb(const struct nlattr *attr, void *data)
 	if (type == CTRL_ATTR_MAXATTR &&
 	    mnl_attr_validate(attr, MNL_TYPE_U32) < 0)
 		return MNL_CB_ERROR;
+	if (type == CTRL_ATTR_POLICY &&
+	    mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0)
+		return MNL_CB_ERROR;
+	if (type == CTRL_ATTR_OP_POLICY &&
+	    mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0)
+		return MNL_CB_ERROR;
 	tb[type] = attr;
 	return MNL_CB_OK;
 }
@@ -134,7 +140,7 @@ static int get_family_cb(const struct nlmsghdr *nlh, void *data)
 	struct nlattr *tb[CTRL_ATTR_MAX + 1] = {};
 	struct mnlu_gen_socket *nlg = data;
 
-	mnl_attr_parse(nlh, sizeof(*genl), get_family_attrs_cb, tb);
+	mnl_attr_parse(nlh, sizeof(*genl), ctrl_attrs_cb, tb);
 	if (!tb[CTRL_ATTR_FAMILY_ID])
 		return MNL_CB_ERROR;
 	if (!tb[CTRL_ATTR_MAXATTR])
@@ -251,4 +257,115 @@ int mnlu_gen_socket_recv_run(struct mnlu_gen_socket *nlg, mnl_cb_t cb,
 	return mnlu_socket_recv_run(nlg->nl, nlg->seq, nlg->buf,
 				    MNL_SOCKET_BUFFER_SIZE,
 				    cb, data);
+}
+
+static int ctrl_policy_attrs_cb(const struct nlattr *attr, void *data)
+{
+	int type = mnl_attr_get_type(attr);
+	const struct nlattr **tb = data;
+
+	if (mnl_attr_type_valid(attr, CTRL_ATTR_POLICY_DUMP_MAX) < 0)
+		return MNL_CB_ERROR;
+
+	if (type == CTRL_ATTR_POLICY_DO &&
+	    mnl_attr_validate(attr, MNL_TYPE_U32) < 0)
+		return MNL_CB_ERROR;
+	if (type == CTRL_ATTR_POLICY_DUMP &&
+	    mnl_attr_validate(attr, MNL_TYPE_U32) < 0)
+		return MNL_CB_ERROR;
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+struct cmd_dump_policy_ctx {
+	uint8_t cmd;
+	uint8_t do_policy_idx_found:1,
+		dump_policy_idx_found:1;
+	uint32_t do_policy_idx;
+	uint32_t dump_policy_idx;
+	uint32_t dump_policy_attr_count;
+};
+
+static void process_dump_op_policy_nest(const struct nlattr *op_policy_nest,
+					struct cmd_dump_policy_ctx *ctx)
+{
+	struct nlattr *tb[CTRL_ATTR_POLICY_DUMP_MAX + 1] = {};
+	const struct nlattr *attr;
+	int err;
+
+	mnl_attr_for_each_nested(attr, op_policy_nest) {
+		if (ctx->cmd != (attr->nla_type & ~NLA_F_NESTED))
+			continue;
+		err = mnl_attr_parse_nested(attr, ctrl_policy_attrs_cb, tb);
+		if (err != MNL_CB_OK)
+			continue;
+		if (tb[CTRL_ATTR_POLICY_DO]) {
+			ctx->do_policy_idx = mnl_attr_get_u32(tb[CTRL_ATTR_POLICY_DO]);
+			ctx->do_policy_idx_found = true;
+		}
+		if (tb[CTRL_ATTR_POLICY_DUMP]) {
+			ctx->dump_policy_idx = mnl_attr_get_u32(tb[CTRL_ATTR_POLICY_DUMP]);
+			ctx->dump_policy_idx_found = true;
+		}
+		break;
+	}
+}
+
+static void process_dump_policy_nest(const struct nlattr *policy_nest,
+				     struct cmd_dump_policy_ctx *ctx)
+{
+	const struct nlattr *attr;
+
+	if (!ctx->dump_policy_idx_found)
+		return;
+
+	mnl_attr_for_each_nested(attr, policy_nest)
+		if (ctx->dump_policy_idx == (attr->nla_type & ~NLA_F_NESTED))
+			ctx->dump_policy_attr_count++;
+}
+
+static int cmd_dump_policy_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[CTRL_ATTR_MAX + 1] = {};
+	struct cmd_dump_policy_ctx *ctx = data;
+
+	mnl_attr_parse(nlh, sizeof(*genl), ctrl_attrs_cb, tb);
+	if (!tb[CTRL_ATTR_FAMILY_ID])
+		return MNL_CB_OK;
+
+	if (tb[CTRL_ATTR_OP_POLICY])
+		process_dump_op_policy_nest(tb[CTRL_ATTR_OP_POLICY], ctx);
+
+	if (tb[CTRL_ATTR_POLICY])
+		process_dump_policy_nest(tb[CTRL_ATTR_POLICY], ctx);
+
+	return MNL_CB_OK;
+}
+
+int mnlu_gen_cmd_dump_policy(struct mnlu_gen_socket *nlg, uint8_t cmd)
+{
+	struct cmd_dump_policy_ctx ctx = {
+		.cmd = cmd,
+	};
+	struct nlmsghdr *nlh;
+	int err;
+
+	nlh = _mnlu_gen_socket_cmd_prepare(nlg, CTRL_CMD_GETPOLICY,
+					   NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP,
+					   GENL_ID_CTRL, 1);
+
+	mnl_attr_put_u16(nlh, CTRL_ATTR_FAMILY_ID, nlg->family);
+
+	err = mnlu_gen_socket_sndrcv(nlg, nlh, cmd_dump_policy_cb, &ctx);
+	if (err)
+		return err;
+
+	if (!ctx.dump_policy_idx_found || !ctx.do_policy_idx_found ||
+	    ctx.do_policy_idx == ctx.dump_policy_idx ||
+	    !ctx.dump_policy_attr_count)
+		return -ENOTSUP;
+
+	return 0;
 }
