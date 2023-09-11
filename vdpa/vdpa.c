@@ -353,6 +353,8 @@ static int vdpa_argv_parse(struct vdpa *vdpa, int argc, char **argv,
 						&opts->device_features);
 			if (err)
 				return err;
+
+			NEXT_ARG_FWD();
 			o_found |= VDPA_OPT_VDEV_FEATURES;
 		} else {
 			fprintf(stderr, "Unknown option \"%s\"\n", *argv);
