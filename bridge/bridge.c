@@ -23,7 +23,6 @@ int preferred_family = AF_UNSPEC;
 int oneline;
 int show_stats;
 int show_details;
-static int color;
 int compress_vlans;
 int json;
 int timestamp;
@@ -103,6 +102,8 @@ static int batch(const char *name)
 int
 main(int argc, char **argv)
 {
+	int color = CONF_COLOR;
+
 	while (argc > 1) {
 		const char *opt = argv[1];
 
