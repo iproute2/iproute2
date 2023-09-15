@@ -197,11 +197,15 @@ precedence. This flag is ignored if
 .B \-json
 is also given.
 
-Used color palette can be influenced by
-.BR COLORFGBG
-environment variable
-(see
-.BR ENVIRONMENT ).
+The default color setting is
+.B never
+but can be overridden by the
+.B IP_COLOR
+environment variable.
+
+The color palette used can be adjusted with
+.B COLORFGBG
+environment variable.
 
 .TP
 .BR "\-t" , " \-timestamp"

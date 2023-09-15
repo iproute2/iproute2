@@ -35,7 +35,6 @@ int use_iec;
 int force;
 bool use_names;
 int json;
-int color;
 int oneline;
 int brief;
 
@@ -254,6 +253,7 @@ int main(int argc, char **argv)
 {
 	const char *libbpf_version;
 	char *batch_file = NULL;
+	int color = default_color("TC_COLOR");
 	int ret;
 
 	while (argc > 1) {

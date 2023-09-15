@@ -168,7 +168,7 @@ int main(int argc, char **argv)
 	const char *libbpf_version;
 	char *batch_file = NULL;
 	char *basename;
-	int color = 0;
+	int color = default_color("IP_COLOR");
 
 	/* to run vrf exec without root, capabilities might be set, drop them
 	 * if not needed as the first thing.
