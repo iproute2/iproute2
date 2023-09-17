@@ -627,7 +627,7 @@ static int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p,
 
 	int argc = *argc_p;
 	char **argv = *argv_p;
-	int ok = 0, iok = 0;
+	int ok = 0;
 	struct rtattr *tail;
 
 	while (argc > 0) {
@@ -689,7 +689,6 @@ static int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p,
 			}
 			argc--;
 			argv++;
-			iok++;
 		}
 	}
 
