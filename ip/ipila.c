@@ -60,6 +60,8 @@ static void print_addr64(__u64 addr, char *buff, size_t len)
 			sep = "";
 
 		ret = snprintf(&buff[written], len - written, "%x%s", v, sep);
+		if (ret < 0 || ret >= len - written)
+			break;
 		written += ret;
 	}
 }
