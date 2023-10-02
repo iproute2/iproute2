@@ -2271,6 +2271,18 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (mig)
 				opts->port_fn_caps.value |= DEVLINK_PORT_FN_CAP_MIGRATABLE;
 			o_found |= DL_OPT_PORT_FN_CAPS;
+		} else if (dl_argv_match(dl, "ipsec_crypto") &&
+			   (o_all & DL_OPT_PORT_FN_CAPS)) {
+			bool ipsec_crypto;
+
+			dl_arg_inc(dl);
+			err = dl_argv_bool(dl, &ipsec_crypto);
+			if (err)
+				return err;
+			opts->port_fn_caps.selector |= DEVLINK_PORT_FN_CAP_IPSEC_CRYPTO;
+			if (ipsec_crypto)
+				opts->port_fn_caps.value |= DEVLINK_PORT_FN_CAP_IPSEC_CRYPTO;
+			o_found |= DL_OPT_PORT_FN_CAPS;
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -4644,6 +4656,7 @@ static void cmd_port_help(void)
 	pr_err("       devlink port unsplit DEV/PORT_INDEX\n");
 	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state { active | inactive } ]\n");
 	pr_err("                      [ roce { enable | disable } ] [ migratable { enable | disable } ]\n");
+	pr_err("                      [ ipsec_crypto { enable | disable } ]\n");
 	pr_err("       devlink port function rate { help | show | add | del | set }\n");
 	pr_err("       devlink port param set DEV/PORT_INDEX name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink port param show [DEV/PORT_INDEX name PARAMETER]\n");
@@ -4768,6 +4781,10 @@ static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
 		if (port_fn_caps->selector & DEVLINK_PORT_FN_CAP_MIGRATABLE)
 			print_string(PRINT_ANY, "migratable", " migratable %s",
 				     port_fn_caps->value & DEVLINK_PORT_FN_CAP_MIGRATABLE ?
+				     "enable" : "disable");
+		if (port_fn_caps->selector & DEVLINK_PORT_FN_CAP_IPSEC_CRYPTO)
+			print_string(PRINT_ANY, "ipsec_crypto", " ipsec_crypto %s",
+				     port_fn_caps->value & DEVLINK_PORT_FN_CAP_IPSEC_CRYPTO ?
 				     "enable" : "disable");
 	}
 
@@ -4960,6 +4977,7 @@ static void cmd_port_function_help(void)
 {
 	pr_err("Usage: devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state { active | inactive } ]\n");
 	pr_err("                      [ roce { enable | disable } ] [ migratable { enable | disable } ]\n");
+	pr_err("                      [ ipsec_crypto { enable | disable } ]\n");
 	pr_err("       devlink port function rate { help | show | add | del | set }\n");
 }
 
