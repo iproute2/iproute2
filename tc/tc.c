@@ -312,7 +312,7 @@ int main(int argc, char **argv)
 			++json;
 		} else if (matches(argv[1], "-oneline") == 0) {
 			++oneline;
-		}else if (matches(argv[1], "-brief") == 0) {
+		} else if (matches(argv[1], "-brief") == 0) {
 			++brief;
 		} else {
 			fprintf(stderr,

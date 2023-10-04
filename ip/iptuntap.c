@@ -107,8 +107,6 @@ static int tap_del_ioctl(struct ifreq *ifr)
 static int parse_args(int argc, char **argv,
 		      struct ifreq *ifr, uid_t *uid, gid_t *gid)
 {
-	int count = 0;
-
 	memset(ifr, 0, sizeof(*ifr));
 
 	ifr->ifr_flags |= IFF_NO_PI;
@@ -187,7 +185,6 @@ static int parse_args(int argc, char **argv,
 			if (get_ifname(ifr->ifr_name, *argv))
 				invarg("\"name\" not a valid ifname", *argv);
 		}
-		count++;
 		argc--; argv++;
 	}
 

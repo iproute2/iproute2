@@ -100,13 +100,20 @@ static void _bitmask2str(__u16 bitmask, char *dst, size_t dst_size,
 	int len, i;
 
 	for (i = 0, len = 0; bitmask; i++, bitmask >>= 1) {
+		int n;
+
 		if (bitmask & 0x1) {
 			if (tbl[i])
-				len += snprintf(dst + len, dst_size - len, "%s,",
+				n = snprintf(dst + len, dst_size - len, "%s,",
 						tbl[i]);
 			else
-				len += snprintf(dst + len, dst_size - len, "0x%x,",
+				n = snprintf(dst + len, dst_size - len, "0x%x,",
 						(1 << i));
+
+			if (n < 0 || n >= dst_size - len)
+				break;
+
+			len += n;
 		}
 	}
 

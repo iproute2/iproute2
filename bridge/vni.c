@@ -49,13 +49,12 @@ static int parse_vni_filter(const char *argv, struct nlmsghdr *n, int reqsize,
 	int group_type = AF_UNSPEC;
 	struct rtattr *nlvlist_e;
 	char *v;
-	int i;
 
 	if (group && is_addrtype_inet(group))
 		group_type = (group->family == AF_INET) ?  VXLAN_VNIFILTER_ENTRY_GROUP :
 						     VXLAN_VNIFILTER_ENTRY_GROUP6;
 
-	for (i = 0; vni; i++) {
+	while (vni != NULL) {
 		__u32 vni_start = 0, vni_end = 0;
 
 		v = strchr(vni, '-');
