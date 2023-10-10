@@ -761,9 +761,13 @@ static int fdb_flush(int argc, char **argv)
 				duparg2("vlan", *argv);
 			NEXT_ARG();
 			vid = atoi(*argv);
+		} else if (strcmp(*argv, "help") == 0) {
+			NEXT_ARG();
 		} else {
-			if (strcmp(*argv, "help") == 0)
-				NEXT_ARG();
+			fprintf(stderr, "bridge fdb: unknown command \"%s\"?\n",
+				*argv);
+			usage();
+			return -1;
 		}
 		argc--; argv++;
 	}
