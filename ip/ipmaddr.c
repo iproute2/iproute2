@@ -79,6 +79,16 @@ static void maddr_ins(struct ma_info **lst, struct ma_info *m)
 	*lst = m;
 }
 
+static void maddr_clear(struct ma_info *lst)
+{
+	struct ma_info *mp;
+
+	while ((mp = lst) != NULL) {
+		lst = mp->next;
+		free(mp);
+	}
+}
+
 static void read_dev_mcast(struct ma_info **result_p)
 {
 	char buf[256];
@@ -286,6 +296,7 @@ static int multiaddr_list(int argc, char **argv)
 	if (!filter.family || filter.family == AF_INET6)
 		read_igmp6(&list);
 	print_mlist(stdout, list);
+	maddr_clear(list);
 	return 0;
 }
 
