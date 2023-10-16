@@ -47,14 +47,17 @@ static int genl_family = -1;
 
 static void print_addr64(__u64 addr, char *buff, size_t len)
 {
-	__u16 *words = (__u16 *)&addr;
+	union {
+		__u64 id64;
+		__u16 words[4];
+	} id = { .id64 = addr };
 	__u16 v;
 	int i, ret;
 	size_t written = 0;
 	char *sep = ":";
 
 	for (i = 0; i < 4; i++) {
-		v = ntohs(words[i]);
+		v = ntohs(id.words[i]);
 
 		if (i == 3)
 			sep = "";
