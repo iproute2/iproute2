@@ -943,6 +943,11 @@ command can also be used on the bridge device itself. The flag is set by default
 .B master
 if the specified network device is a port that belongs to a master device
 such as a bridge, the operation is fulfilled by the master device's driver.
+Flush with both 'master' and 'self' is not recommended with attributes that are
+not supported by all devices (e.g., vlan, vni). Such command will be handled by
+bridge or VXLAN driver, but will return an error from the driver that does not
+support the attribute. Instead, run flush twice - once with 'self' and once
+with 'master', and each one with the supported attributes.
 
 .TP
 .B [no]permanent
