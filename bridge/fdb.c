@@ -696,10 +696,10 @@ static int fdb_flush(int argc, char **argv)
 	};
 	unsigned short ndm_state_mask = 0;
 	unsigned short ndm_flags_mask = 0;
-	short vid = -1, port_ifidx = -1;
+	short vid = -1, brport_ifidx = -1;
+	char *d = NULL, *brport = NULL;
 	unsigned short ndm_flags = 0;
 	unsigned short ndm_state = 0;
-	char *d = NULL, *port = NULL;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -752,10 +752,10 @@ static int fdb_flush(int argc, char **argv)
 			ndm_flags &= ~NTF_OFFLOADED;
 			ndm_flags_mask |= NTF_OFFLOADED;
 		} else if (strcmp(*argv, "brport") == 0) {
-			if (port)
+			if (brport)
 				duparg2("brport", *argv);
 			NEXT_ARG();
-			port = *argv;
+			brport = *argv;
 		} else if (strcmp(*argv, "vlan") == 0) {
 			if (vid >= 0)
 				duparg2("vlan", *argv);
@@ -783,11 +783,11 @@ static int fdb_flush(int argc, char **argv)
 		return -1;
 	}
 
-	if (port) {
-		port_ifidx = ll_name_to_index(port);
-		if (port_ifidx == 0) {
+	if (brport) {
+		brport_ifidx = ll_name_to_index(brport);
+		if (brport_ifidx == 0) {
 			fprintf(stderr, "Cannot find bridge port device \"%s\"\n",
-				port);
+				brport);
 			return -1;
 		}
 	}
@@ -803,8 +803,8 @@ static int fdb_flush(int argc, char **argv)
 
 	req.ndm.ndm_flags = ndm_flags;
 	req.ndm.ndm_state = ndm_state;
-	if (port_ifidx > -1)
-		addattr32(&req.n, sizeof(req), NDA_IFINDEX, port_ifidx);
+	if (brport_ifidx > -1)
+		addattr32(&req.n, sizeof(req), NDA_IFINDEX, brport_ifidx);
 	if (vid > -1)
 		addattr16(&req.n, sizeof(req), NDA_VLAN, vid);
 	if (ndm_flags_mask)
