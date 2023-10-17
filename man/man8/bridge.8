@@ -128,6 +128,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ] [ "
 .B vlan
 .IR VID " ] [ "
+.B src_vni
+.IR VNI " ] [ "
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
 .BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
@@ -891,6 +893,12 @@ specified by this option will override the one specified by dev above.
 .BI vlan " VID"
 the target VLAN ID for the operation. Match forwarding table entries only with the
 specified VLAN ID.
+
+.TP
+.BI src_vni " VNI"
+the src VNI Network Identifier (or VXLAN Segment ID) for the operation. Match
+forwarding table entries only with the specified VNI. Valid if the referenced
+device is a VXLAN type device.
 
 .TP
 .B self
