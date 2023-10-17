@@ -134,6 +134,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR NHID " ] ["
 .B vni
 .IR VNI " ] [ "
+.B port
+.IR PORT " ] ["
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
 .BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
@@ -914,6 +916,12 @@ with the specified NHID. Valid if the referenced device is a VXLAN type device.
 the VXLAN VNI Network Identifier (or VXLAN Segment ID) for the operation. Match
 forwarding table entries only with the specified VNI. Valid if the referenced
 device is a VXLAN type device.
+
+.TP
+.BI port " PORT"
+the UDP destination PORT number for the operation. Match forwarding table
+entries only with the specified PORT. Valid if the referenced device is a VXLAN
+type device.
 
 .TP
 .B self
