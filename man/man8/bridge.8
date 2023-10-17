@@ -136,6 +136,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VNI " ] [ "
 .B port
 .IR PORT " ] ["
+.B dst
+.IR IPADDR " ] [ "
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
 .BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
@@ -922,6 +924,12 @@ device is a VXLAN type device.
 the UDP destination PORT number for the operation. Match forwarding table
 entries only with the specified PORT. Valid if the referenced device is a VXLAN
 type device.
+
+.TP
+.BI dst " IPADDR"
+the IP address of the destination VXLAN tunnel endpoint for the operation. Match
+forwarding table entries only with the specified IPADDR. Valid if the referenced
+device is a VXLAN type device.
 
 .TP
 .B self

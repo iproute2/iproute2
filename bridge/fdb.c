@@ -46,8 +46,8 @@ static void usage(void)
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
 		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
 		"       bridge fdb flush dev DEV [ brport DEV ] [ vlan VID ] [ src_vni VNI ]\n"
-		"              [ nhid NHID ] [ vni VNI ] [ port PORT ] [ self ] [ master ]\n"
-		"	       [ [no]permanent | [no]static | [no]dynamic ]\n"
+		"              [ nhid NHID ] [ vni VNI ] [ port PORT ] [ dst IPADDR ] [ self ]\n"
+		"	       [ master ] [ [no]permanent | [no]static | [no]dynamic ]\n"
 		"              [ [no]added_by_user ] [ [no]extern_learn ] [ [no]sticky ]\n"
 		"              [ [no]offloaded ]\n");
 	exit(-1);
@@ -704,6 +704,8 @@ static int fdb_flush(int argc, char **argv)
 	unsigned long src_vni = ~0;
 	unsigned long vni = ~0;
 	unsigned long port = 0;
+	inet_prefix dst;
+	int dst_ok = 0;
 	__u32 nhid = 0;
 	char *endptr;
 
@@ -795,6 +797,12 @@ static int fdb_flush(int argc, char **argv)
 				port = ntohs(pse->s_port);
 			} else if (port > 0xffff)
 				invarg("invalid port\n", *argv);
+		} else if (strcmp(*argv, "dst") == 0) {
+			NEXT_ARG();
+			if (dst_ok)
+				duparg2("dst", *argv);
+			get_addr(&dst, *argv, preferred_family);
+			dst_ok = 1;
 		} else if (strcmp(*argv, "help") == 0) {
 			NEXT_ARG();
 		} else {
@@ -853,6 +861,8 @@ static int fdb_flush(int argc, char **argv)
 		dport = htons((unsigned short)port);
 		addattr16(&req.n, sizeof(req), NDA_PORT, dport);
 	}
+	if (dst_ok)
+		addattr_l(&req.n, sizeof(req), NDA_DST, &dst.data, dst.bytelen);
 	if (ndm_flags_mask)
 		addattr8(&req.n, sizeof(req), NDA_NDM_FLAGS_MASK,
 			 ndm_flags_mask);
