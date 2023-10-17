@@ -130,6 +130,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VID " ] [ "
 .B src_vni
 .IR VNI " ] [ "
+.B nhid
+.IR NHID " ] ["
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
 .BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
@@ -899,6 +901,11 @@ specified VLAN ID.
 the src VNI Network Identifier (or VXLAN Segment ID) for the operation. Match
 forwarding table entries only with the specified VNI. Valid if the referenced
 device is a VXLAN type device.
+
+.TP
+.BI nhid " NHID"
+the ECMP nexthop group for the operation. Match forwarding table entries only
+with the specified NHID. Valid if the referenced device is a VXLAN type device.
 
 .TP
 .B self

@@ -46,7 +46,8 @@ static void usage(void)
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
 		"              [ vlan VID ] [ vni VNI ] [ self ] [ master ] [ dynamic ]\n"
 		"       bridge fdb flush dev DEV [ brport DEV ] [ vlan VID ] [ src_vni VNI ]\n"
-		"              [ self ] [ master ] [ [no]permanent | [no]static | [no]dynamic ]\n"
+		"              [ nhid NHID ] [ self ] [ master ]\n"
+		"	       [ [no]permanent | [no]static | [no]dynamic ]\n"
 		"              [ [no]added_by_user ] [ [no]extern_learn ] [ [no]sticky ]\n"
 		"              [ [no]offloaded ]\n");
 	exit(-1);
@@ -701,6 +702,7 @@ static int fdb_flush(int argc, char **argv)
 	unsigned short ndm_flags = 0;
 	unsigned short ndm_state = 0;
 	unsigned long src_vni = ~0;
+	__u32 nhid = 0;
 	char *endptr;
 
 	while (argc > 0) {
@@ -769,6 +771,10 @@ static int fdb_flush(int argc, char **argv)
 			if ((endptr && *endptr) ||
 			    (src_vni >> 24) || src_vni == ULONG_MAX)
 				invarg("invalid src VNI\n", *argv);
+		} else if (strcmp(*argv, "nhid") == 0) {
+			NEXT_ARG();
+			if (get_u32(&nhid, *argv, 0))
+				invarg("\"nid\" value is invalid\n", *argv);
 		} else if (strcmp(*argv, "help") == 0) {
 			NEXT_ARG();
 		} else {
@@ -817,6 +823,8 @@ static int fdb_flush(int argc, char **argv)
 		addattr16(&req.n, sizeof(req), NDA_VLAN, vid);
 	if (src_vni != ~0)
 		addattr32(&req.n, sizeof(req), NDA_SRC_VNI, src_vni);
+	if (nhid > 0)
+		addattr32(&req.n, sizeof(req), NDA_NH_ID, nhid);
 	if (ndm_flags_mask)
 		addattr8(&req.n, sizeof(req), NDA_NDM_FLAGS_MASK,
 			 ndm_flags_mask);
