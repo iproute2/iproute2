@@ -141,7 +141,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
 .BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
-.BR [no]sticky " ] [ " [no]offloaded " ]"
+.BR [no]sticky " ] [ " [no]offloaded " ] [ " [no]router " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " | " replace " } "
@@ -978,6 +978,13 @@ if "no" is prepended then only entries without sticky flag will be deleted.
 .B [no]offloaded
 if specified then only entries with offloaded flag will be deleted or respectively
 if "no" is prepended then only entries without offloaded flag will be deleted.
+.sp
+
+.TP
+.B [no]router
+if specified then only entries with router flag will be deleted or respectively
+if "no" is prepended then only entries without router flag will be deleted. Valid
+if the referenced device is a VXLAN type device.
 .sp
 
 .SH bridge mdb - multicast group database management

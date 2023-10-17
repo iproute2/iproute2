@@ -49,7 +49,7 @@ static void usage(void)
 		"              [ nhid NHID ] [ vni VNI ] [ port PORT ] [ dst IPADDR ] [ self ]\n"
 		"	       [ master ] [ [no]permanent | [no]static | [no]dynamic ]\n"
 		"              [ [no]added_by_user ] [ [no]extern_learn ] [ [no]sticky ]\n"
-		"              [ [no]offloaded ]\n");
+		"              [ [no]offloaded ] [ [no]router ]\n");
 	exit(-1);
 }
 
@@ -759,6 +759,12 @@ static int fdb_flush(int argc, char **argv)
 		} else if (strcmp(*argv, "nooffloaded") == 0) {
 			ndm_flags &= ~NTF_OFFLOADED;
 			ndm_flags_mask |= NTF_OFFLOADED;
+		} else if (strcmp(*argv, "router") == 0) {
+			ndm_flags |= NTF_ROUTER;
+			ndm_flags_mask |= NTF_ROUTER;
+		} else if (strcmp(*argv, "norouter") == 0) {
+			ndm_flags &= ~NTF_ROUTER;
+			ndm_flags_mask |= NTF_ROUTER;
 		} else if (strcmp(*argv, "brport") == 0) {
 			if (brport)
 				duparg2("brport", *argv);
