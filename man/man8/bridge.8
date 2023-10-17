@@ -132,6 +132,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VNI " ] [ "
 .B nhid
 .IR NHID " ] ["
+.B vni
+.IR VNI " ] [ "
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
 .BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
@@ -906,6 +908,12 @@ device is a VXLAN type device.
 .BI nhid " NHID"
 the ECMP nexthop group for the operation. Match forwarding table entries only
 with the specified NHID. Valid if the referenced device is a VXLAN type device.
+
+.TP
+.BI vni " VNI"
+the VXLAN VNI Network Identifier (or VXLAN Segment ID) for the operation. Match
+forwarding table entries only with the specified VNI. Valid if the referenced
+device is a VXLAN type device.
 
 .TP
 .B self
