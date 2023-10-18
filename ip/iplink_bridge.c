@@ -34,6 +34,7 @@ static void print_explain(FILE *f)
 		"		  [ group_fwd_mask MASK ]\n"
 		"		  [ group_address ADDRESS ]\n"
 		"		  [ no_linklocal_learn NO_LINKLOCAL_LEARN ]\n"
+		"		  [ fdb_max_learned FDB_MAX_LEARNED ]\n"
 		"		  [ vlan_filtering VLAN_FILTERING ]\n"
 		"		  [ vlan_protocol VLAN_PROTOCOL ]\n"
 		"		  [ vlan_default_pvid VLAN_DEFAULT_PVID ]\n"
@@ -168,6 +169,14 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				bm.optval |= no_ll_learn_bit;
 			else
 				bm.optval &= ~no_ll_learn_bit;
+		} else if (strcmp(*argv, "fdb_max_learned") == 0) {
+			__u32 fdb_max_learned;
+
+			NEXT_ARG();
+			if (get_u32(&fdb_max_learned, *argv, 0))
+				invarg("invalid fdb_max_learned", *argv);
+
+			addattr32(n, 1024, IFLA_BR_FDB_MAX_LEARNED, fdb_max_learned);
 		} else if (matches(*argv, "fdb_flush") == 0) {
 			addattr(n, 1024, IFLA_BR_FDB_FLUSH);
 		} else if (matches(*argv, "vlan_default_pvid") == 0) {
@@ -543,6 +552,18 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_BR_GC_TIMER])
 		_bridge_print_timer(f, "gc_timer", tb[IFLA_BR_GC_TIMER]);
+
+	if (tb[IFLA_BR_FDB_N_LEARNED])
+		print_uint(PRINT_ANY,
+			   "fdb_n_learned",
+			   "fdb_n_learned %u ",
+			   rta_getattr_u32(tb[IFLA_BR_FDB_N_LEARNED]));
+
+	if (tb[IFLA_BR_FDB_MAX_LEARNED])
+		print_uint(PRINT_ANY,
+			   "fdb_max_learned",
+			   "fdb_max_learned %u ",
+			   rta_getattr_u32(tb[IFLA_BR_FDB_MAX_LEARNED]));
 
 	if (tb[IFLA_BR_VLAN_DEFAULT_PVID])
 		print_uint(PRINT_ANY,
