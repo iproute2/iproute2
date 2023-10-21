@@ -678,6 +678,7 @@ static void user_ent_hash_build(void)
 				snprintf(name + nameoff, sizeof(name) - nameoff, "%d/", tid);
 				user_ent_hash_build_task(name, pid, tid);
 			}
+			closedir(task_dir);
 		}
 	}
 	closedir(dir);
