@@ -27,12 +27,19 @@ rdma-system \- RDMA subsystem configuration
 .BR NEWMODE
 
 .ti -8
+.B rdma system set
+.BR privileged-qkey
+.BR NEWSTATE
+
+.ti -8
 .B rdma system help
 
 .SH "DESCRIPTION"
-.SS rdma system set - set RDMA subsystem network namespace mode
+.SS rdma system set - set RDMA subsystem network namespace mode or
+privileged qkey mode
 
-.SS rdma system show - display RDMA subsystem network namespace mode
+.SS rdma system show - display RDMA subsystem network namespace mode and
+privileged qkey state
 
 .PP
 .I "NEWMODE"
@@ -49,12 +56,18 @@ network namespaces is not needed, shared mode can be used.
 
 It is preferred to not change the subsystem mode when there is active
 RDMA traffic running, even though it is supported.
+.PP
+.I "NEWSTATE"
+- Specifies the new state of the privileged-qkey parameter, either on or off.
+This parameter determines whether a non-privileged user is allowed to specify a
+controlled QKEY or not.
 
 .SH "EXAMPLES"
 .PP
 rdma system show
 .RS 4
-Shows the state of RDMA subsystem network namespace mode on the system.
+Shows the state of RDMA subsystem network namespace mode on the system and
+the state of privileged qkey parameter.
 .RE
 .PP
 rdma system set netns exclusive
@@ -67,6 +80,19 @@ rdma system set netns shared
 .RS 4
 Sets the RDMA subsystem in network namespace shared mode. In this mode RDMA devices
 are shared among network namespaces.
+.RE
+.PP
+.PP
+rdma system set privileged-qkey on
+.RS 4
+Sets the privileged-qkey parameter to on. In this state non-privileged user
+is allowed to specify a controlled QKEY.
+.RE
+.PP
+rdma system set privileged-qkey off
+.RS 4
+Sets the privileged-qkey parameter to off. In this state non-privileged user
+is *not* allowed to specify a controlled QKEY.
 .RE
 .PP
 
