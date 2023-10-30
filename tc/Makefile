@@ -26,7 +26,6 @@ TCMODULES += f_bpf.o
 TCMODULES += f_flow.o
 TCMODULES += f_cgroup.o
 TCMODULES += f_flower.o
-TCMODULES += q_dsmark.o
 TCMODULES += q_gred.o
 TCMODULES += q_ingress.o
 TCMODULES += q_hfsc.o

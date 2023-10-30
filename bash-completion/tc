@@ -4,7 +4,7 @@
 
 QDISC_KIND=' choke codel bfifo pfifo pfifo_head_drop fq fq_codel gred hhf \
             mqprio multiq netem pfifo_fast pie fq_pie red sfb sfq tbf atm \
-            cbq drr dsmark hfsc htb prio qfq '
+            cbq drr hfsc htb prio qfq '
 FILTER_KIND=' basic bpf cgroup flow flower fw route u32 matchall '
 ACTION_KIND=' gact mirred bpf sample '
 
@@ -360,10 +360,6 @@ _tc_qdisc_options()
             ;;
         cbq)
             _tc_once_attr 'bandwidth avpkt mpu cell ewma'
-            return 0
-            ;;
-        dsmark)
-            _tc_once_attr 'indices default_index set_tc_index'
             return 0
             ;;
         hfsc)
