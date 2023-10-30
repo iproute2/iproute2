@@ -28,7 +28,6 @@ TCMODULES += f_cgroup.o
 TCMODULES += f_flower.o
 TCMODULES += q_dsmark.o
 TCMODULES += q_gred.o
-TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
 TCMODULES += q_hfsc.o
 TCMODULES += q_htb.o
