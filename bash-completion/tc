@@ -5,7 +5,7 @@
 QDISC_KIND=' choke codel bfifo pfifo pfifo_head_drop fq fq_codel gred hhf \
             mqprio multiq netem pfifo_fast pie fq_pie red sfb sfq tbf atm \
             cbq drr dsmark hfsc htb prio qfq '
-FILTER_KIND=' basic bpf cgroup flow flower fw route rsvp tcindex u32 matchall '
+FILTER_KIND=' basic bpf cgroup flow flower fw route tcindex u32 matchall '
 ACTION_KIND=' gact mirred bpf sample '
 
 # Takes a list of words in argument; each one of them is added to COMPREPLY if
@@ -474,17 +474,6 @@ _tc_filter_options()
         route)
             _tc_one_of_list 'from fromif'
             _tc_once_attr 'to classid action'
-            return 0
-            ;;
-        rsvp)
-            _tc_once_attr 'ipproto session sender classid action tunnelid \
-                tunnel flowlabel spi/ah spi/esp u8 u16 u32'
-            [[ ${words[${#words[@]}-3]} == tunnel ]] && \
-                    COMPREPLY+=( $( compgen -W 'skip' -- "$cur" ) )
-            [[ ${words[${#words[@]}-3]} =~ u(8|16|32) ]] && \
-                    COMPREPLY+=( $( compgen -W 'mask' -- "$cur" ) )
-            [[ ${words[${#words[@]}-3]} == mask ]] && \
-                    COMPREPLY+=( $( compgen -W 'at' -- "$cur" ) )
             return 0
             ;;
         tcindex)

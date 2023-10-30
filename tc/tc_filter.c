@@ -35,7 +35,7 @@ static void usage(void)
 		"       tc filter show [ dev STRING ] [ root | ingress | egress | parent CLASSID ]\n"
 		"       tc filter show [ block BLOCK_INDEX ]\n"
 		"Where:\n"
-		"FILTER_TYPE := { rsvp | u32 | bpf | fw | route | etc. }\n"
+		"FILTER_TYPE := { u32 | bpf | fw | route | etc. }\n"
 		"FILTERID := ... format depends on classifier, see there\n"
 		"OPTIONS := ... try tc filter add <desired FILTER_KIND> help\n");
 }
