@@ -79,9 +79,6 @@ TCMODULES += q_plug.o
 TCMODULES += q_ets.o
 
 TCSO :=
-ifeq ($(TC_CONFIG_ATM),y)
-  TCSO += q_atm.so
-endif
 
 ifneq ($(TC_CONFIG_NO_XT),y)
   ifeq ($(TC_CONFIG_XT),y)
@@ -157,9 +154,6 @@ install: all
 clean:
 	rm -f $(TCOBJ) $(TCLIB) libtc.a tc *.so emp_ematch.tab.h; \
 	rm -f emp_ematch.tab.*
-
-q_atm.so: q_atm.c
-	$(QUIET_CC)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
 
 m_xt.so: m_xt.c
 	$(QUIET_CC)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared -fpic -o m_xt.so m_xt.c $$($(PKG_CONFIG) xtables --cflags --libs)

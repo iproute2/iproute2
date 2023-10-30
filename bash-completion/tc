@@ -3,8 +3,8 @@
 # Copyright 2016 Quentin Monnet <quentin.monnet@6wind.com>
 
 QDISC_KIND=' choke codel bfifo pfifo pfifo_head_drop fq fq_codel gred hhf \
-            mqprio multiq netem pfifo_fast pie fq_pie red sfb sfq tbf atm \
-            cbq drr hfsc htb prio qfq '
+            mqprio multiq netem pfifo_fast pie fq_pie red sfb sfq tbf \
+            drr hfsc htb prio qfq '
 FILTER_KIND=' basic bpf cgroup flow flower fw route u32 matchall '
 ACTION_KIND=' gact mirred bpf sample '
 
@@ -358,10 +358,6 @@ _tc_qdisc_options()
                 linklayer'
             return 0
             ;;
-        cbq)
-            _tc_once_attr 'bandwidth avpkt mpu cell ewma'
-            return 0
-            ;;
         hfsc)
             _tc_once_attr 'default'
             return 0
@@ -370,7 +366,7 @@ _tc_qdisc_options()
             _tc_once_attr 'default r2q direct_qlen debug'
             return 0
             ;;
-        multiq|pfifo_fast|atm|drr|qfq)
+        multiq|pfifo_fast|drr|qfq)
             return 0
             ;;
     esac
