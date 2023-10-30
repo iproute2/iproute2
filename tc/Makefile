@@ -14,7 +14,6 @@ TCMODULES += q_red.o
 TCMODULES += q_prio.o
 TCMODULES += q_skbprio.o
 TCMODULES += q_tbf.o
-TCMODULES += q_cbq.o
 TCMODULES += q_multiq.o
 TCMODULES += q_netem.o
 TCMODULES += q_choke.o
@@ -118,7 +117,6 @@ endif
 
 TCLIB := tc_core.o
 TCLIB += tc_red.o
-TCLIB += tc_cbq.o
 TCLIB += tc_estimator.o
 TCLIB += tc_stab.o
 TCLIB += tc_qevent.o

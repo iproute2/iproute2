@@ -402,12 +402,6 @@ ATM
 Map flows to virtual circuits of an underlying asynchronous transfer mode
 device.
 .TP
-CBQ
-Class Based Queueing implements a rich linksharing hierarchy of classes.
-It contains shaping elements as well as prioritizing capabilities. Shaping is
-performed using link idle time calculations based on average packet size and
-underlying link bandwidth. The latter may be ill-defined for some interfaces.
-.TP
 DRR
 The Deficit Round Robin Scheduler is a more flexible replacement for Stochastic
 Fairness Queuing. Unlike SFQ, there are no built-in queues \-\- you need to add
@@ -452,7 +446,7 @@ well to a hardware implementation.
 .SH THEORY OF OPERATION
 Classes form a tree, where each class has a single parent.
 A class may have multiple children. Some qdiscs allow for runtime addition
-of classes (CBQ, HTB) while others (PRIO) are created with a static number of
+of classes (HTB) while others (PRIO) are created with a static number of
 children.
 
 Qdiscs which allow dynamic addition of classes can have zero or more
@@ -876,7 +870,6 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR tc-bfifo (8),
 .BR tc-bpf (8),
 .BR tc-cake (8),
-.BR tc-cbq (8),
 .BR tc-cgroup (8),
 .BR tc-choke (8),
 .BR tc-codel (8),

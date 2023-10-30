@@ -35,15 +35,13 @@ bytes
 .B ]
 
 .SH DESCRIPTION
-HTB is meant as a more understandable and intuitive replacement for
-the CBQ qdisc in Linux. Both CBQ and HTB help you to control the use
-of the outbound bandwidth on a given link. Both allow you to use one
-physical link to simulate several slower links and to send different
+HTB allows  control of the outbound bandwidth on a given link.
+It allows simulating simulating several slower links and to send different
 kinds of traffic on different simulated links. In both cases, you have
 to specify how to divide the physical link into simulated links and
 how to decide which simulated link to use for a given packet to be sent.
 
-Unlike CBQ, HTB shapes traffic based on the Token Bucket Filter algorithm
+HTB shapes traffic based on the Token Bucket Filter algorithm
 which does not depend on interface characteristics and so does not need to
 know the underlying bandwidth of the outgoing interface.
 
