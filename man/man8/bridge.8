@@ -178,6 +178,16 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ]"
 
 .ti -8
+.B "bridge mdb get"
+.BI dev " DEV " grp " GROUP "
+.RB "[ " src
+.IR SOURCE " ]"
+.RB "[ " vid
+.IR VID " ]"
+.RB "[ " src_vni
+.IR SRC_VNI " ]"
+
+.ti -8
 .BR "bridge vlan" " { " add " | " del " } "
 .B dev
 .I DEV
@@ -1136,6 +1146,31 @@ a connected router.
 With the
 .B -statistics
 option, the command displays timer values for mdb and router port entries.
+
+.SS bridge mdb get - get multicast group database entry.
+
+This command retrieves a multicast group database entry based on its key.
+
+.TP
+.BI dev " DEV"
+the interface where this group address is associated.
+
+.TP
+.BI grp " GROUP"
+the multicast group address (IPv4, IPv6 or L2 multicast).
+
+.TP
+.BI src " SOURCE"
+the source IP address. Only relevant when retrieving an (S, G) entry.
+
+.TP
+.BI vid " VID"
+the VLAN ID. Only relevant when the bridge is VLAN-aware.
+
+.TP
+.BI src_vni " SRC_VNI"
+the source VNI Network Identifier. Only relevant when the VXLAN device is in
+external mode.
 
 .SH bridge vlan - VLAN filter list
 
