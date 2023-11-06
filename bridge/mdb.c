@@ -36,7 +36,8 @@ static void usage(void)
 		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
 		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
 		"              [ dst_port DST_PORT ] [ vni VNI ] [ src_vni SRC_VNI ] [ via DEV ]\n"
-		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n");
+		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n"
+		"       bridge mdb get dev DEV grp GROUP [ src SOURCE ] [ vid VID ] [ src_vni SRC_VNI ]\n");
 	exit(-1);
 }
 
@@ -848,6 +849,100 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	return 0;
 }
 
+static int mdb_get(int argc, char **argv)
+{
+	struct {
+		struct nlmsghdr	n;
+		struct br_port_msg	bpm;
+		char			buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_port_msg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_GETMDB,
+		.bpm.family = PF_BRIDGE,
+	};
+	char *d = NULL, *grp = NULL, *src = NULL, *src_vni = NULL;
+	struct br_mdb_entry entry = {};
+	struct nlmsghdr *answer;
+	bool get_attrs = false;
+	short vid = 0;
+	int ret = 0;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			d = *argv;
+		} else if (strcmp(*argv, "grp") == 0) {
+			NEXT_ARG();
+			grp = *argv;
+		} else if (strcmp(*argv, "vid") == 0) {
+			NEXT_ARG();
+			vid = atoi(*argv);
+		} else if (strcmp(*argv, "src") == 0) {
+			NEXT_ARG();
+			src = *argv;
+			get_attrs = true;
+		} else if (strcmp(*argv, "src_vni") == 0) {
+			NEXT_ARG();
+			src_vni = *argv;
+			get_attrs = true;
+		} else {
+			if (strcmp(*argv, "help") == 0)
+				usage();
+		}
+		argc--; argv++;
+	}
+
+	if (d == NULL || grp == NULL) {
+		fprintf(stderr, "Device and group address are required arguments.\n");
+		return -1;
+	}
+
+	req.bpm.ifindex = ll_name_to_index(d);
+	if (!req.bpm.ifindex)
+		return nodev(d);
+
+	if (mdb_parse_grp(grp, &entry)) {
+		fprintf(stderr, "Invalid address \"%s\"\n", grp);
+		return -1;
+	}
+
+	entry.vid = vid;
+	addattr_l(&req.n, sizeof(req), MDBA_GET_ENTRY, &entry, sizeof(entry));
+	if (get_attrs) {
+		struct rtattr *nest = addattr_nest(&req.n, sizeof(req),
+						   MDBA_GET_ENTRY_ATTRS);
+
+		nest->rta_type |= NLA_F_NESTED;
+
+		if (src && mdb_parse_src(&req.n, sizeof(req), src)) {
+			fprintf(stderr, "Invalid source address \"%s\"\n", src);
+			return -1;
+		}
+
+		if (src_vni && mdb_parse_vni(&req.n, sizeof(req), src_vni,
+					     MDBE_ATTR_SRC_VNI)) {
+			fprintf(stderr, "Invalid source VNI \"%s\"\n", src_vni);
+			return -1;
+		}
+
+		addattr_nest_end(&req.n, nest);
+	}
+
+	if (rtnl_talk(&rth, &req.n, &answer) < 0)
+		return -2;
+
+	new_json_obj(json);
+
+	if (print_mdbs(answer, stdout) < 0)
+		ret = -1;
+
+	delete_json_obj();
+	free(answer);
+
+	return ret;
+}
+
 int do_mdb(int argc, char **argv)
 {
 	ll_init_map(&rth);
@@ -865,6 +960,8 @@ int do_mdb(int argc, char **argv)
 		    matches(*argv, "lst") == 0 ||
 		    matches(*argv, "list") == 0)
 			return mdb_show(argc-1, argv+1);
+		if (strcmp(*argv, "get") == 0)
+			return mdb_get(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else

@@ -287,6 +287,12 @@ static int load_bpf_object(struct bpf_cfg_in *cfg)
 			.pin_root_path = root_path,
 	);
 
+#if (LIBBPF_MAJOR_VERSION > 0) || (LIBBPF_MINOR_VERSION >= 7)
+	open_opts.kernel_log_level = 1;
+	if (cfg->verbose)
+		open_opts.kernel_log_level |= 2;
+#endif
+
 	obj = bpf_object__open_file(cfg->object, &open_opts);
 	if (libbpf_get_error(obj)) {
 		fprintf(stderr, "ERROR: opening BPF object file failed\n");

@@ -40,6 +40,16 @@ static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 				   mode_str);
 	}
 
+	if (tb[RDMA_NLDEV_SYS_ATTR_PRIVILEGED_QKEY_MODE]) {
+		uint8_t mode;
+
+		mode = mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_PRIVILEGED_QKEY_MODE]);
+
+		print_color_on_off(PRINT_ANY, COLOR_NONE, "privileged-qkey",
+				   "privileged-qkey %s ", mode);
+
+	}
+
 	if (tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK])
 		cof = mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK]);
 
@@ -67,8 +77,9 @@ static int sys_show_no_args(struct rd *rd)
 static int sys_show(struct rd *rd)
 {
 	const struct rd_cmd cmds[] = {
-		{ NULL,		sys_show_no_args},
-		{ "netns",	sys_show_no_args},
+		{ NULL,			sys_show_no_args},
+		{ "netns",		sys_show_no_args},
+		{ "privileged-qkey",	sys_show_no_args},
 		{ 0 }
 	};
 
@@ -82,6 +93,17 @@ static int sys_set_netns_cmd(struct rd *rd, bool enable)
 	rd_prepare_msg(rd, RDMA_NLDEV_CMD_SYS_SET,
 		       &seq, (NLM_F_REQUEST | NLM_F_ACK));
 	mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_SYS_ATTR_NETNS_MODE, enable);
+
+	return rd_sendrecv_msg(rd, seq);
+}
+
+static int sys_set_privileged_qkey_cmd(struct rd *rd, bool enable)
+{
+	uint32_t seq;
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_SYS_SET,
+		       &seq, (NLM_F_REQUEST | NLM_F_ACK));
+	mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_SYS_ATTR_PRIVILEGED_QKEY_MODE, enable);
 
 	return rd_sendrecv_msg(rd, seq);
 }
@@ -111,10 +133,28 @@ static int sys_set_netns_args(struct rd *rd)
 	return sys_set_netns_cmd(rd, cmd);
 }
 
+static int sys_set_privileged_qkey_args(struct rd *rd)
+{
+	bool cmd;
+	int ret;
+
+	if (rd_no_arg(rd)) {
+		pr_err("valid options are: { on | off }\n");
+		return -EINVAL;
+	}
+
+	cmd = parse_on_off("privileged-qkey", rd_argv(rd), &ret);
+	if (ret)
+		return -EINVAL;
+
+	return sys_set_privileged_qkey_cmd(rd, cmd);
+}
+
 static int sys_set_help(struct rd *rd)
 {
 	pr_out("Usage: %s system set [PARAM] value\n", rd->filename);
 	pr_out("            system set netns { shared | exclusive }\n");
+	pr_out("            system set privileged-qkey { on | off }\n");
 	return 0;
 }
 
@@ -124,6 +164,7 @@ static int sys_set(struct rd *rd)
 		{ NULL,			sys_set_help },
 		{ "help",		sys_set_help },
 		{ "netns",		sys_set_netns_args},
+		{ "privileged-qkey",	sys_set_privileged_qkey_args},
 		{ 0 }
 	};
 

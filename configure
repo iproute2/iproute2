@@ -5,6 +5,7 @@
 INCLUDE="$PWD/include"
 PREFIX="/usr"
 LIBDIR="\${prefix}/lib"
+COLOR="never"
 
 # Output file which is input to Makefile
 CONFIG=config.mk
@@ -479,6 +480,24 @@ check_cap()
 	fi
 }
 
+check_color()
+{
+	case "$COLOR" in
+		never)
+			echo 'CONF_COLOR:=COLOR_OPT_NEVER' >> $CONFIG
+			echo 'never'
+			;;
+		auto)
+			echo 'CONF_COLOR:=COLOR_OPT_AUTO' >> $CONFIG
+			echo 'auto'
+			;;
+		always)
+			echo 'CONF_COLOR:=COLOR_OPT_ALWAYS' >> $CONFIG
+			echo 'always'
+			;;
+	esac
+}
+
 quiet_config()
 {
 	cat <<EOF
@@ -509,6 +528,10 @@ usage()
 {
 	cat <<EOF
 Usage: $0 [OPTIONS]
+	--color <never|auto|always>	Default color output configuration. Available options:
+					  never: color output is disabled (default)
+					  auto: color output is enabled if stdout is a terminal
+					  always: color output is enabled regardless of stdout state
 	--include_dir <dir>		Path to iproute2 include dir
 	--libdir <dir>			Path to iproute2 lib dir
 	--libbpf_dir <dir>		Path to libbpf DESTDIR
@@ -527,6 +550,11 @@ if [ $# -eq 1 ] && [ "$(echo $1 | cut -c 1)" != '-' ]; then
 else
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
+			--color)
+				shift
+				COLOR="$1" ;;
+			--color=*)
+				COLOR="${1#*=}" ;;
 			--include_dir)
 				shift
 				INCLUDE="$1" ;;
@@ -563,6 +591,12 @@ else
 	done
 fi
 
+case "$COLOR" in
+	never) ;;
+	auto) ;;
+	always) ;;
+	*) usage 1 ;;
+esac
 [ -d "$INCLUDE" ] || usage 1
 if [ "${LIBBPF_DIR-unused}" != "unused" ]; then
 	[ -d "$LIBBPF_DIR" ] || usage 1
@@ -633,6 +667,9 @@ check_strlcpy
 
 echo -n "libcap support: "
 check_cap
+
+echo -n "color output: "
+check_color
 
 echo >> $CONFIG
 echo "%.o: %.c" >> $CONFIG

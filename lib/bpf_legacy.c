@@ -1098,7 +1098,7 @@ int bpf_prog_detach_fd(int target_fd, enum bpf_attach_type type)
 
 int bpf_prog_load_dev(enum bpf_prog_type type, const struct bpf_insn *insns,
 		      size_t size_insns, const char *license, __u32 ifindex,
-		      char *log, size_t size_log)
+		      char *log, size_t size_log, bool verbose)
 {
 	union bpf_attr attr = {};
 
@@ -1112,6 +1112,8 @@ int bpf_prog_load_dev(enum bpf_prog_type type, const struct bpf_insn *insns,
 		attr.log_buf = bpf_ptr_to_u64(log);
 		attr.log_size = size_log;
 		attr.log_level = 1;
+		if (verbose)
+			attr.log_level |= 2;
 	}
 
 	return bpf(BPF_PROG_LOAD, &attr, sizeof(attr));
@@ -1119,9 +1121,9 @@ int bpf_prog_load_dev(enum bpf_prog_type type, const struct bpf_insn *insns,
 
 int bpf_program_load(enum bpf_prog_type type, const struct bpf_insn *insns,
 		     size_t size_insns, const char *license, char *log,
-		     size_t size_log)
+		     size_t size_log, bool verbose)
 {
-	return bpf_prog_load_dev(type, insns, size_insns, license, 0, log, size_log);
+	return bpf_prog_load_dev(type, insns, size_insns, license, 0, log, size_log, verbose);
 }
 
 #ifdef HAVE_ELF
@@ -1543,7 +1545,7 @@ retry:
 	errno = 0;
 	fd = bpf_prog_load_dev(prog->type, prog->insns, prog->size,
 			       prog->license, ctx->ifindex,
-			       ctx->log, ctx->log_size);
+			       ctx->log, ctx->log_size, ctx->verbose);
 	if (fd < 0 || ctx->verbose) {
 		/* The verifier log is pretty chatty, sometimes so chatty
 		 * on larger programs, that we could fail to dump everything

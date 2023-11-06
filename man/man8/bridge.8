@@ -128,10 +128,20 @@ bridge \- show / manipulate bridge addresses and devices
 .IR DEV " ] [ "
 .B vlan
 .IR VID " ] [ "
+.B src_vni
+.IR VNI " ] [ "
+.B nhid
+.IR NHID " ] ["
+.B vni
+.IR VNI " ] [ "
+.B port
+.IR PORT " ] ["
+.B dst
+.IR IPADDR " ] [ "
 .BR self " ] [ " master " ] [ "
 .BR [no]permanent " | " [no]static " | " [no]dynamic " ] [ "
 .BR [no]added_by_user " ] [ " [no]extern_learn " ] [ "
-.BR [no]sticky " ] [ " [no]offloaded " ]"
+.BR [no]sticky " ] [ " [no]offloaded " ] [ " [no]router " ]"
 
 .ti -8
 .BR "bridge mdb" " { " add " | " del " | " replace " } "
@@ -166,6 +176,16 @@ bridge \- show / manipulate bridge addresses and devices
 .BR "bridge mdb show" " [ "
 .B dev
 .IR DEV " ]"
+
+.ti -8
+.B "bridge mdb get"
+.BI dev " DEV " grp " GROUP "
+.RB "[ " src
+.IR SOURCE " ]"
+.RB "[ " vid
+.IR VID " ]"
+.RB "[ " src_vni
+.IR SRC_VNI " ]"
 
 .ti -8
 .BR "bridge vlan" " { " add " | " del " } "
@@ -893,6 +913,35 @@ the target VLAN ID for the operation. Match forwarding table entries only with t
 specified VLAN ID.
 
 .TP
+.BI src_vni " VNI"
+the src VNI Network Identifier (or VXLAN Segment ID) for the operation. Match
+forwarding table entries only with the specified VNI. Valid if the referenced
+device is a VXLAN type device.
+
+.TP
+.BI nhid " NHID"
+the ECMP nexthop group for the operation. Match forwarding table entries only
+with the specified NHID. Valid if the referenced device is a VXLAN type device.
+
+.TP
+.BI vni " VNI"
+the VXLAN VNI Network Identifier (or VXLAN Segment ID) for the operation. Match
+forwarding table entries only with the specified VNI. Valid if the referenced
+device is a VXLAN type device.
+
+.TP
+.BI port " PORT"
+the UDP destination PORT number for the operation. Match forwarding table
+entries only with the specified PORT. Valid if the referenced device is a VXLAN
+type device.
+
+.TP
+.BI dst " IPADDR"
+the IP address of the destination VXLAN tunnel endpoint for the operation. Match
+forwarding table entries only with the specified IPADDR. Valid if the referenced
+device is a VXLAN type device.
+
+.TP
 .B self
 the operation is fulfilled directly by the driver for the specified network
 device. If the network device belongs to a master like a bridge, then the
@@ -904,6 +953,11 @@ command can also be used on the bridge device itself. The flag is set by default
 .B master
 if the specified network device is a port that belongs to a master device
 such as a bridge, the operation is fulfilled by the master device's driver.
+Flush with both 'master' and 'self' is not recommended with attributes that are
+not supported by all devices (e.g., vlan, vni). Such command will be handled by
+bridge or VXLAN driver, but will return an error from the driver that does not
+support the attribute. Instead, run flush twice - once with 'self' and once
+with 'master', and each one with the supported attributes.
 
 .TP
 .B [no]permanent
@@ -939,6 +993,13 @@ if "no" is prepended then only entries without sticky flag will be deleted.
 .B [no]offloaded
 if specified then only entries with offloaded flag will be deleted or respectively
 if "no" is prepended then only entries without offloaded flag will be deleted.
+.sp
+
+.TP
+.B [no]router
+if specified then only entries with router flag will be deleted or respectively
+if "no" is prepended then only entries without router flag will be deleted. Valid
+if the referenced device is a VXLAN type device.
 .sp
 
 .SH bridge mdb - multicast group database management
@@ -1085,6 +1146,31 @@ a connected router.
 With the
 .B -statistics
 option, the command displays timer values for mdb and router port entries.
+
+.SS bridge mdb get - get multicast group database entry.
+
+This command retrieves a multicast group database entry based on its key.
+
+.TP
+.BI dev " DEV"
+the interface where this group address is associated.
+
+.TP
+.BI grp " GROUP"
+the multicast group address (IPv4, IPv6 or L2 multicast).
+
+.TP
+.BI src " SOURCE"
+the source IP address. Only relevant when retrieving an (S, G) entry.
+
+.TP
+.BI vid " VID"
+the VLAN ID. Only relevant when the bridge is VLAN-aware.
+
+.TP
+.BI src_vni " SRC_VNI"
+the source VNI Network Identifier. Only relevant when the VXLAN device is in
+external mode.
 
 .SH bridge vlan - VLAN filter list
 

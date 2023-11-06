@@ -41,7 +41,8 @@ endif
 DEFINES+=-DCONF_USR_DIR=\"$(CONF_USR_DIR)\" \
          -DCONF_ETC_DIR=\"$(CONF_ETC_DIR)\" \
          -DNETNS_RUN_DIR=\"$(NETNS_RUN_DIR)\" \
-         -DNETNS_ETC_DIR=\"$(NETNS_ETC_DIR)\"
+         -DNETNS_ETC_DIR=\"$(NETNS_ETC_DIR)\" \
+         -DCONF_COLOR=$(CONF_COLOR)
 
 #options for AX.25
 ADDLIB+=ax25_ntop.o

@@ -1630,6 +1630,8 @@ the following additional arguments are supported:
 ] [
 .BI no_linklocal_learn " NO_LINKLOCAL_LEARN "
 ] [
+.BI fdb_max_learned " FDB_MAX_LEARNED "
+] [
 .BI vlan_filtering " VLAN_FILTERING "
 ] [
 .BI vlan_protocol " VLAN_PROTOCOL "
@@ -1740,6 +1742,14 @@ or off
 .RI ( NO_LINKLOCAL_LEARN " > 0). "
 When disabled, the bridge will not learn from link-local frames (default:
 enabled).
+
+.BI fdb_max_learned " FDB_MAX_LEARNED "
+- set the maximum number of learned FDB entries. If
+.RI ( FDB_MAX_LEARNED " == 0) "
+the feature is disabled. Default is
+.BR 0 .
+.I FDB_MAX_LEARNED
+is a 32bit unsigned integer.
 
 .BI vlan_filtering " VLAN_FILTERING "
 - turn VLAN filtering on
