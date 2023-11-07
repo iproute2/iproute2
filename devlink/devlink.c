@@ -2747,26 +2747,6 @@ static bool should_arr_last_handle_end(struct dl *dl, const char *bus_name,
 	       !cmp_arr_last_handle(dl, bus_name, dev_name);
 }
 
-static void pr_out_nested_handle(struct nlattr *nla_nested_dl)
-{
-	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
-	char buf[64];
-	int err;
-
-	err = mnl_attr_parse_nested(nla_nested_dl, attr_cb, tb);
-	if (err != MNL_CB_OK)
-		return;
-
-	if (!tb[DEVLINK_ATTR_BUS_NAME] ||
-	    !tb[DEVLINK_ATTR_DEV_NAME])
-		return;
-
-	snprintf(buf, sizeof(buf), "%s/%s",
-		 mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
-		 mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
-	print_string(PRINT_ANY, "nested_devlink", " nested_devlink %s", buf);
-}
-
 static void __pr_out_handle_start(struct dl *dl, struct nlattr **tb,
 				  bool content, bool array)
 {
@@ -2860,6 +2840,39 @@ static void pr_out_selftests_handle_end(struct dl *dl)
 {
 	if (!dl->json_output)
 		__pr_out_newline();
+}
+
+static void __pr_out_nested_handle(struct dl *dl, struct nlattr *nla_nested_dl,
+				   bool is_object)
+{
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	int err;
+
+	err = mnl_attr_parse_nested(nla_nested_dl, attr_cb, tb);
+	if (err != MNL_CB_OK)
+		return;
+
+	if (!tb[DEVLINK_ATTR_BUS_NAME] ||
+	    !tb[DEVLINK_ATTR_DEV_NAME])
+		return;
+
+	if (!is_object) {
+		char buf[64];
+
+		snprintf(buf, sizeof(buf), "%s/%s",
+			 mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
+			 mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
+		print_string(PRINT_ANY, "nested_devlink", " nested_devlink %s", buf);
+		return;
+	}
+
+	__pr_out_handle_start(dl, tb, false, false);
+	pr_out_handle_end(dl);
+}
+
+static void pr_out_nested_handle(struct nlattr *nla_nested_dl)
+{
+	__pr_out_nested_handle(NULL, nla_nested_dl, false);
 }
 
 static bool cmp_arr_last_port_handle(struct dl *dl, const char *bus_name,
