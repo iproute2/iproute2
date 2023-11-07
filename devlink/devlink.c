@@ -2761,8 +2761,9 @@ static void pr_out_nested_handle(struct nlattr *nla_nested_dl)
 	    !tb[DEVLINK_ATTR_DEV_NAME])
 		return;
 
-	sprintf(buf, "%s/%s", mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
-		mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
+	snprintf(buf, sizeof(buf), "%s/%s",
+		 mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
+		 mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
 	print_string(PRINT_ANY, "nested_devlink", " nested_devlink %s", buf);
 }
 
@@ -2773,7 +2774,7 @@ static void __pr_out_handle_start(struct dl *dl, struct nlattr **tb,
 	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	char buf[64];
 
-	sprintf(buf, "%s/%s", bus_name, dev_name);
+	snprintf(buf, sizeof(buf), "%s/%s", bus_name, dev_name);
 
 	if (dl->json_output) {
 		if (array) {
@@ -2832,7 +2833,7 @@ static void pr_out_selftests_handle_start(struct dl *dl, struct nlattr **tb)
 	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	char buf[64];
 
-	sprintf(buf, "%s/%s", bus_name, dev_name);
+	snprintf(buf, sizeof(buf), "%s/%s", bus_name, dev_name);
 
 	if (dl->json_output) {
 		if (should_arr_last_handle_end(dl, bus_name, dev_name))
@@ -2902,9 +2903,10 @@ static void __pr_out_port_handle_start(struct dl *dl, const char *bus_name,
 	if (dl->no_nice_names || !try_nice ||
 	    ifname_map_rev_lookup(dl, bus_name, dev_name,
 				  port_index, &ifname) != 0)
-		sprintf(buf, "%s/%s/%d", bus_name, dev_name, port_index);
+		snprintf(buf, sizeof(buf), "%s/%s/%d",
+			 bus_name, dev_name, port_index);
 	else
-		sprintf(buf, "%s", ifname);
+		snprintf(buf, sizeof(buf), "%s", ifname);
 
 	if (dl->json_output) {
 		if (array) {
@@ -5230,7 +5232,7 @@ pr_out_port_rate_handle_start(struct dl *dl, struct nlattr **tb, bool try_nice)
 	bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
 	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	node_name = mnl_attr_get_str(tb[DEVLINK_ATTR_RATE_NODE_NAME]);
-	sprintf(buf, "%s/%s/%s", bus_name, dev_name, node_name);
+	snprintf(buf, sizeof(buf), "%s/%s/%s", bus_name, dev_name, node_name);
 	if (dl->json_output)
 		open_json_object(buf);
 	else
@@ -6305,7 +6307,7 @@ static void pr_out_json_occ_show_item_list(struct dl *dl, const char *label,
 
 	open_json_object(label);
 	list_for_each_entry(occ_item, list, list) {
-		sprintf(buf, "%u", occ_item->index);
+		snprintf(buf, sizeof(buf), "%u", occ_item->index);
 		open_json_object(buf);
 		if (bound_pool)
 			print_uint(PRINT_JSON, "bound_pool", NULL,
@@ -8674,7 +8676,7 @@ static void pr_out_region_handle_start(struct dl *dl, struct nlattr **tb)
 	const char *region_name = mnl_attr_get_str(tb[DEVLINK_ATTR_REGION_NAME]);
 	char buf[256];
 
-	sprintf(buf, "%s/%s/%s", bus_name, dev_name, region_name);
+	snprintf(buf, sizeof(buf), "%s/%s/%s", bus_name, dev_name, region_name);
 	if (dl->json_output)
 		open_json_object(buf);
 	else
