@@ -188,3 +188,37 @@ out:
 	free(answer);
 	return ret;
 }
+
+struct netns_name_from_id_ctx {
+	int32_t id;
+	char *name;
+	struct rtnl_handle *rth;
+};
+
+static int netns_name_from_id_func(char *nsname, void *arg)
+{
+	struct netns_name_from_id_ctx *ctx = arg;
+	int32_t ret;
+
+	ret = netns_id_from_name(ctx->rth, nsname);
+	if (ret < 0 || ret != ctx->id)
+		return 0;
+	ctx->name = strdup(nsname);
+	return 1;
+}
+
+char *netns_name_from_id(int32_t id)
+{
+	struct rtnl_handle rth;
+	struct netns_name_from_id_ctx ctx = {
+		.id = id,
+		.rth = &rth,
+	};
+
+	if (rtnl_open(&rth, 0) < 0)
+		return NULL;
+	netns_foreach(netns_name_from_id_func, &ctx);
+	rtnl_close(&rth);
+
+	return ctx.name;
+}
