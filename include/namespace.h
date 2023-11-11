@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <errno.h>
+#include <libnetlink.h>
 
 #ifndef NETNS_RUN_DIR
 #define NETNS_RUN_DIR "/var/run/netns"
@@ -57,5 +58,8 @@ struct netns_func {
 	int (*func)(char *nsname, void *arg);
 	void *arg;
 };
+
+int netns_id_from_name(struct rtnl_handle *rtnl, const char *name);
+char *netns_name_from_id(int32_t id);
 
 #endif /* __NAMESPACE_H__ */

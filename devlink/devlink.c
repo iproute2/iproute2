@@ -24,6 +24,7 @@
 #include <linux/genetlink.h>
 #include <linux/devlink.h>
 #include <linux/netlink.h>
+#include <linux/net_namespace.h>
 #include <libmnl/libmnl.h>
 #include <netinet/ether.h>
 #include <sys/select.h>
@@ -722,6 +723,7 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_LINECARD_SUPPORTED_TYPES] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_NESTED_DEVLINK] = MNL_TYPE_NESTED,
 	[DEVLINK_ATTR_SELFTESTS] = MNL_TYPE_NESTED,
+	[DEVLINK_ATTR_NETNS_ID] = MNL_TYPE_U32,
 };
 
 static const enum mnl_attr_data_type
@@ -770,6 +772,7 @@ static const enum mnl_attr_data_type
 devlink_function_policy[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {
 	[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR ] = MNL_TYPE_BINARY,
 	[DEVLINK_PORT_FN_ATTR_STATE] = MNL_TYPE_U8,
+	[DEVLINK_PORT_FN_ATTR_DEVLINK] = MNL_TYPE_NESTED,
 };
 
 static int function_attr_cb(const struct nlattr *attr, void *data)
@@ -2747,25 +2750,6 @@ static bool should_arr_last_handle_end(struct dl *dl, const char *bus_name,
 	       !cmp_arr_last_handle(dl, bus_name, dev_name);
 }
 
-static void pr_out_nested_handle(struct nlattr *nla_nested_dl)
-{
-	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
-	char buf[64];
-	int err;
-
-	err = mnl_attr_parse_nested(nla_nested_dl, attr_cb, tb);
-	if (err != MNL_CB_OK)
-		return;
-
-	if (!tb[DEVLINK_ATTR_BUS_NAME] ||
-	    !tb[DEVLINK_ATTR_DEV_NAME])
-		return;
-
-	sprintf(buf, "%s/%s", mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
-		mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
-	print_string(PRINT_ANY, "nested_devlink", " nested_devlink %s", buf);
-}
-
 static void __pr_out_handle_start(struct dl *dl, struct nlattr **tb,
 				  bool content, bool array)
 {
@@ -2773,7 +2757,7 @@ static void __pr_out_handle_start(struct dl *dl, struct nlattr **tb,
 	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	char buf[64];
 
-	sprintf(buf, "%s/%s", bus_name, dev_name);
+	snprintf(buf, sizeof(buf), "%s/%s", bus_name, dev_name);
 
 	if (dl->json_output) {
 		if (array) {
@@ -2832,7 +2816,7 @@ static void pr_out_selftests_handle_start(struct dl *dl, struct nlattr **tb)
 	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	char buf[64];
 
-	sprintf(buf, "%s/%s", bus_name, dev_name);
+	snprintf(buf, sizeof(buf), "%s/%s", bus_name, dev_name);
 
 	if (dl->json_output) {
 		if (should_arr_last_handle_end(dl, bus_name, dev_name))
@@ -2859,6 +2843,74 @@ static void pr_out_selftests_handle_end(struct dl *dl)
 {
 	if (!dl->json_output)
 		__pr_out_newline();
+}
+
+static void __pr_out_nested_handle(struct dl *dl, struct nlattr *nla_nested_dl,
+				   bool is_object)
+{
+	struct nlattr *tb[DEVLINK_ATTR_MAX + 1] = {};
+	int err;
+
+	err = mnl_attr_parse_nested(nla_nested_dl, attr_cb, tb);
+	if (err != MNL_CB_OK)
+		return;
+
+	if (!tb[DEVLINK_ATTR_BUS_NAME] ||
+	    !tb[DEVLINK_ATTR_DEV_NAME])
+		return;
+
+	if (!is_object) {
+		char buf[64];
+
+		snprintf(buf, sizeof(buf), "%s/%s",
+			 mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]),
+			 mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]));
+		print_string(PRINT_ANY, "nested_devlink", " nested_devlink %s", buf);
+		return;
+	}
+
+	__pr_out_handle_start(dl, tb, tb[DEVLINK_ATTR_NETNS_ID], false);
+	if (tb[DEVLINK_ATTR_NETNS_ID]) {
+		int32_t id = mnl_attr_get_u32(tb[DEVLINK_ATTR_NETNS_ID]);
+
+		if (id >= 0) {
+			char *name = netns_name_from_id(id);
+
+			if (name) {
+				print_string(PRINT_ANY, "netns",
+					     " netns %s", name);
+				free(name);
+			} else {
+				print_int(PRINT_ANY, "netnsid",
+					  " netnsid %d", id);
+			}
+		} else {
+			print_string(PRINT_FP, NULL, " netnsid %s", "unknown");
+			print_int(PRINT_JSON, "netnsid", NULL, id);
+		}
+	}
+	pr_out_handle_end(dl);
+}
+
+static void pr_out_nested_handle(struct nlattr *nla_nested_dl)
+{
+	__pr_out_nested_handle(NULL, nla_nested_dl, false);
+}
+
+static void pr_out_nested_handle_obj(struct dl *dl,
+				     struct nlattr *nla_nested_dl,
+				     bool obj_start, bool obj_end)
+{
+	if (obj_start) {
+		pr_out_object_start(dl, "nested_devlink");
+		check_indent_newline(dl);
+	}
+	__pr_out_nested_handle(dl, nla_nested_dl, true);
+	if (obj_end) {
+		if (!dl->json_output)
+			__pr_out_indent_dec();
+		pr_out_object_end(dl);
+	}
 }
 
 static bool cmp_arr_last_port_handle(struct dl *dl, const char *bus_name,
@@ -2902,9 +2954,10 @@ static void __pr_out_port_handle_start(struct dl *dl, const char *bus_name,
 	if (dl->no_nice_names || !try_nice ||
 	    ifname_map_rev_lookup(dl, bus_name, dev_name,
 				  port_index, &ifname) != 0)
-		sprintf(buf, "%s/%s/%d", bus_name, dev_name, port_index);
+		snprintf(buf, sizeof(buf), "%s/%s/%d",
+			 bus_name, dev_name, port_index);
 	else
-		sprintf(buf, "%s", ifname);
+		snprintf(buf, sizeof(buf), "%s", ifname);
 
 	if (dl->json_output) {
 		if (array) {
@@ -2974,7 +3027,7 @@ static void pr_out_port_handle_end(struct dl *dl)
 	if (dl->json_output)
 		close_json_object();
 	else
-		pr_out("\n");
+		__pr_out_newline();
 }
 
 static void pr_out_region_chunk_start(struct dl *dl, uint64_t addr)
@@ -3807,13 +3860,35 @@ static void pr_out_reload_data(struct dl *dl, struct nlattr **tb)
 	pr_out_object_end(dl);
 }
 
+static void pr_out_dev_nested(struct dl *dl, const struct nlmsghdr *nlh)
+{
+	int i = 0, count = 0;
+	struct nlattr *attr;
 
-static void pr_out_dev(struct dl *dl, struct nlattr **tb)
+	mnl_attr_for_each(attr, nlh, sizeof(struct genlmsghdr)) {
+		if (mnl_attr_get_type(attr) == DEVLINK_ATTR_NESTED_DEVLINK)
+			count++;
+	}
+	if (!count)
+		return;
+
+	mnl_attr_for_each(attr, nlh, sizeof(struct genlmsghdr)) {
+		if (mnl_attr_get_type(attr) != DEVLINK_ATTR_NESTED_DEVLINK)
+			continue;
+		pr_out_nested_handle_obj(dl, attr, i == 0, i == count - 1);
+		i++;
+	}
+}
+
+static void pr_out_dev(struct dl *dl, const struct nlmsghdr *nlh,
+		       struct nlattr **tb)
 {
 	if ((tb[DEVLINK_ATTR_RELOAD_FAILED] && mnl_attr_get_u8(tb[DEVLINK_ATTR_RELOAD_FAILED])) ||
-	    (tb[DEVLINK_ATTR_DEV_STATS] && dl->stats)) {
+	    (tb[DEVLINK_ATTR_DEV_STATS] && dl->stats) ||
+	     tb[DEVLINK_ATTR_NESTED_DEVLINK]) {
 		__pr_out_handle_start(dl, tb, true, false);
 		pr_out_reload_data(dl, tb);
+		pr_out_dev_nested(dl, nlh);
 		pr_out_handle_end(dl);
 	} else {
 		pr_out_handle(dl, tb);
@@ -3830,7 +3905,7 @@ static int cmd_dev_show_cb(const struct nlmsghdr *nlh, void *data)
 	if (!tb[DEVLINK_ATTR_BUS_NAME] || !tb[DEVLINK_ATTR_DEV_NAME])
 		return MNL_CB_ERROR;
 
-	pr_out_dev(dl, tb);
+	pr_out_dev(dl, nlh, tb);
 	return MNL_CB_OK;
 }
 
@@ -4803,6 +4878,9 @@ static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
 				     port_fn_caps->value & DEVLINK_PORT_FN_CAP_IPSEC_PACKET ?
 				     "enable" : "disable");
 	}
+	if (tb[DEVLINK_PORT_FN_ATTR_DEVLINK])
+		pr_out_nested_handle_obj(dl, tb[DEVLINK_PORT_FN_ATTR_DEVLINK],
+					 true, true);
 
 	if (!dl->json_output)
 		__pr_out_indent_dec();
@@ -5230,7 +5308,7 @@ pr_out_port_rate_handle_start(struct dl *dl, struct nlattr **tb, bool try_nice)
 	bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
 	dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
 	node_name = mnl_attr_get_str(tb[DEVLINK_ATTR_RATE_NODE_NAME]);
-	sprintf(buf, "%s/%s/%s", bus_name, dev_name, node_name);
+	snprintf(buf, sizeof(buf), "%s/%s/%s", bus_name, dev_name, node_name);
 	if (dl->json_output)
 		open_json_object(buf);
 	else
@@ -6305,7 +6383,7 @@ static void pr_out_json_occ_show_item_list(struct dl *dl, const char *label,
 
 	open_json_object(label);
 	list_for_each_entry(occ_item, list, list) {
-		sprintf(buf, "%u", occ_item->index);
+		snprintf(buf, sizeof(buf), "%u", occ_item->index);
 		open_json_object(buf);
 		if (bound_pool)
 			print_uint(PRINT_JSON, "bound_pool", NULL,
@@ -6754,7 +6832,7 @@ static int cmd_mon_show_cb(const struct nlmsghdr *nlh, void *data)
 			return MNL_CB_ERROR;
 		pr_out_mon_header(genl->cmd);
 		dl->stats = true;
-		pr_out_dev(dl, tb);
+		pr_out_dev(dl, nlh, tb);
 		pr_out_mon_footer();
 		break;
 	case DEVLINK_CMD_PORT_GET: /* fall through */
@@ -8674,7 +8752,7 @@ static void pr_out_region_handle_start(struct dl *dl, struct nlattr **tb)
 	const char *region_name = mnl_attr_get_str(tb[DEVLINK_ATTR_REGION_NAME]);
 	char buf[256];
 
-	sprintf(buf, "%s/%s/%s", bus_name, dev_name, region_name);
+	snprintf(buf, sizeof(buf), "%s/%s/%s", bus_name, dev_name, region_name);
 	if (dl->json_output)
 		open_json_object(buf);
 	else
