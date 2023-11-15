@@ -16,12 +16,12 @@ endif
 
 PREFIX?=/usr
 SBINDIR?=/sbin
-CONF_ETC_DIR?=/etc/iproute2
-CONF_USR_DIR?=$(PREFIX)/lib/iproute2
 NETNS_RUN_DIR?=/var/run/netns
 NETNS_ETC_DIR?=/etc/netns
 DATADIR?=$(PREFIX)/share
 HDRDIR?=$(PREFIX)/include/iproute2
+CONF_ETC_DIR?=/etc/iproute2
+CONF_USR_DIR?=$(DATADIR)/iproute2
 DOCDIR?=$(DATADIR)/doc/iproute2
 MANDIR?=$(DATADIR)/man
 ARPDDIR?=/var/lib/arpd
