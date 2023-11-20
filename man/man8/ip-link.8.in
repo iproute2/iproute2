@@ -247,6 +247,7 @@ ip-link \- network device configuration
 .BR macvlan  " | "
 .BR macvtap  " | "
 .BR netdevsim " |"
+.BR netkit " |"
 .BR nlmon " |"
 .BR rmnet " |"
 .BR sit " |"
@@ -383,6 +384,9 @@ Link types:
 .sp
 .BR netdevsim
 - Interface for netdev API tests
+.sp
+.BR netkit
+- BPF-programmable network device
 .sp
 .BR nlmon
 - Netlink monitoring device
@@ -845,6 +849,46 @@ the following additional arguments are supported:
 - specifies the virtual pair device name of the
 .I VETH/VXCAN
 tunnel.
+
+.in -8
+
+.TP
+netkit Type Support
+For a link of type
+.I netkit
+the following additional arguments are supported:
+
+.BI "ip link add " DEVICE
+.BR type " netkit "
+[
+.BI mode " MODE "
+] [
+.I "POLICY "
+] [
+.BR peer
+[
+.I "POLICY "
+] [
+.I "NAME "
+] ]
+
+.in +8
+
+.sp
+.BI mode " MODE"
+- specifies the operation mode of the netkit device with "l3" and "l2"
+as possible values. Default option is "l3".
+
+.sp
+.I "POLICY"
+- specifies the default device policy when no BPF programs are attached
+with "forward" and "blackhole" as possible values. Default option is
+"forward". Specifying policy before the peer option refers to the primary
+device, after the peer option refers to the peer device.
+
+.sp
+.I "NAME"
+- specifies the device name of the peer device.
 
 .in -8
 

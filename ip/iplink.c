@@ -46,8 +46,8 @@ void iplink_types_usage(void)
 		"          dsa | dummy | erspan | geneve | gre | gretap | gtp | ifb |\n"
 		"          ip6erspan | ip6gre | ip6gretap | ip6tnl |\n"
 		"          ipip | ipoib | ipvlan | ipvtap |\n"
-		"          macsec | macvlan | macvtap |\n"
-		"          netdevsim | nlmon | rmnet | sit | team | team_slave |\n"
+		"          macsec | macvlan | macvtap | netdevsim |\n"
+		"          netkit | nlmon | rmnet | sit | team | team_slave |\n"
 		"          vcan | veth | vlan | vrf | vti | vxcan | vxlan | wwan |\n"
 		"          xfrm | virt_wifi }\n");
 }

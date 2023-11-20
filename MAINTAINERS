@@ -39,6 +39,12 @@ devlink
 M: Jiri Pirko <jiri@resnulli.us>
 F: devlink/*
 
+netkit
+M: Daniel Borkmann <daniel@iogearbox.net>
+M: Nikolay Aleksandrov <razor@blackwall.org>
+L: bpf@vger.kernel.org
+F: ip/iplink_netkit.c
+
 Remote DMA - rdma
 M: Leon Romanovsky <leon@kernel.org>
 F: rdma/*

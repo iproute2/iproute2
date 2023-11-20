@@ -146,7 +146,8 @@ ip-address \- protocol address management
 .BR ipvlan " |"
 .BR lowpan " |"
 .BR geneve " |"
-.BR macsec " ]"
+.BR macsec " |"
+.BR netkit " ]"
 
 .SH "DESCRIPTION"
 The
