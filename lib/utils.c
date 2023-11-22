@@ -1763,7 +1763,7 @@ bool parse_on_off(const char *msg, const char *realval, int *p_err)
 	static const char * const values_on_off[] = { "off", "on" };
 
 	return __parse_one_of(msg, realval, values_on_off,
-			      ARRAY_SIZE(values_on_off), p_err, matches);
+			      ARRAY_SIZE(values_on_off), p_err, strcmp);
 }
 
 int parse_mapping_gen(int *argcp, char ***argvp,
