@@ -76,8 +76,8 @@ out:
 
 struct filter_check_t {
 	bool (*check)(void);
-	int checked:1,
-	    supported:1;
+	unsigned int checked:1,
+		supported:1;
 };
 
 static struct filter_check_t filter_checks[SSF__MAX] = {

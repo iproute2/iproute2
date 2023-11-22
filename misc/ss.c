@@ -678,6 +678,7 @@ static void user_ent_hash_build(void)
 				snprintf(name + nameoff, sizeof(name) - nameoff, "%d/", tid);
 				user_ent_hash_build_task(name, pid, tid);
 			}
+			closedir(task_dir);
 		}
 	}
 	closedir(dir);
@@ -864,6 +865,8 @@ struct tcpstat {
 	double		    min_rtt;
 	unsigned int 	    rcv_ooopack;
 	unsigned int	    snd_wnd;
+	unsigned int	    rcv_wnd;
+	unsigned int	    rehash;
 	int		    rcv_space;
 	unsigned int        rcv_ssthresh;
 	unsigned long long  busy_time;
@@ -2710,6 +2713,10 @@ static void tcp_stats_print(struct tcpstat *s)
 		out(" rcv_ooopack:%u", s->rcv_ooopack);
 	if (s->snd_wnd)
 		out(" snd_wnd:%u", s->snd_wnd);
+	if (s->rcv_wnd)
+		out(" rcv_wnd:%u", s->rcv_wnd);
+	if (s->rehash)
+		out(" rehash:%u", s->rehash);
 }
 
 static void tcp_timer_print(struct tcpstat *s)
@@ -3146,6 +3153,8 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 		s.bytes_retrans = info->tcpi_bytes_retrans;
 		s.rcv_ooopack = info->tcpi_rcv_ooopack;
 		s.snd_wnd = info->tcpi_snd_wnd;
+		s.rcv_wnd = info->tcpi_rcv_wnd;
+		s.rehash = info->tcpi_rehash;
 		tcp_stats_print(&s);
 		free(s.dctcp);
 		free(s.bbr_info);

@@ -3,7 +3,7 @@ INSTALL=install
 INSTALLDIR=install -m 0755 -d
 INSTALLMAN=install -m 0644
 # Pass the same parameters as Lintian uses on Debian.
-MAN_CHECK=LC_ALL=en_US.UTF-8 MANROFFSEQ='' MANWIDTH=80 man --warnings \
+MAN_CHECK=LC_ALL=en_US.UTF-8 MANROFFSEQ='' MANWIDTH=100 man --warnings \
 	--encoding=UTF-8 --local-file --troff-device=utf8 --ditroff
 # Hide man output, count and print errors.
 MAN_REDIRECT=2>&1 >/dev/null | tee /dev/fd/2 | wc -l

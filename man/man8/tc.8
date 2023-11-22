@@ -241,13 +241,6 @@ Filter packets based on routing table. See
 .BR tc-route (8)
 for details.
 .TP
-rsvp
-Match Resource Reservation Protocol (RSVP) packets.
-.TP
-tcindex
-Filter packets based on traffic control index. See
-.BR tc-tcindex (8).
-.TP
 u32
 Generic filtering on arbitrary packet data, assisted by syntax to abstract common operations. See
 .BR tc-u32 (8)
@@ -402,12 +395,6 @@ ATM
 Map flows to virtual circuits of an underlying asynchronous transfer mode
 device.
 .TP
-CBQ
-Class Based Queueing implements a rich linksharing hierarchy of classes.
-It contains shaping elements as well as prioritizing capabilities. Shaping is
-performed using link idle time calculations based on average packet size and
-underlying link bandwidth. The latter may be ill-defined for some interfaces.
-.TP
 DRR
 The Deficit Round Robin Scheduler is a more flexible replacement for Stochastic
 Fairness Queuing. Unlike SFQ, there are no built-in queues \-\- you need to add
@@ -415,10 +402,6 @@ classes and then set up filters to classify packets accordingly.  This can be
 useful e.g. for using RED qdiscs with different settings for particular
 traffic. There is no default class \-\- if a packet cannot be classified, it is
 dropped.
-.TP
-DSMARK
-Classify packets based on TOS field, change TOS field of packets based on
-classification.
 .TP
 ETS
 The ETS qdisc is a queuing discipline that merges functionality of PRIO and DRR
@@ -452,7 +435,7 @@ well to a hardware implementation.
 .SH THEORY OF OPERATION
 Classes form a tree, where each class has a single parent.
 A class may have multiple children. Some qdiscs allow for runtime addition
-of classes (CBQ, HTB) while others (PRIO) are created with a static number of
+of classes (HTB) while others (PRIO) are created with a static number of
 children.
 
 Qdiscs which allow dynamic addition of classes can have zero or more
@@ -876,7 +859,6 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR tc-bfifo (8),
 .BR tc-bpf (8),
 .BR tc-cake (8),
-.BR tc-cbq (8),
 .BR tc-cgroup (8),
 .BR tc-choke (8),
 .BR tc-codel (8),
@@ -902,8 +884,7 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .BR tc-sfq (8),
 .BR tc-stab (8),
 .BR tc-tbf (8),
-.BR tc-tcindex (8),
-.BR tc-u32 (8),
+.BR tc-u32 (8)
 .br
 .RB "User documentation at " http://lartc.org/ ", but please direct bugreports and patches to: " <netdev@vger.kernel.org>
 

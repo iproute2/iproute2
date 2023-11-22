@@ -14,12 +14,10 @@ TCMODULES += q_red.o
 TCMODULES += q_prio.o
 TCMODULES += q_skbprio.o
 TCMODULES += q_tbf.o
-TCMODULES += q_cbq.o
 TCMODULES += q_multiq.o
 TCMODULES += q_netem.o
 TCMODULES += q_choke.o
 TCMODULES += q_sfb.o
-TCMODULES += f_rsvp.o
 TCMODULES += f_u32.o
 TCMODULES += f_route.o
 TCMODULES += f_fw.o
@@ -28,9 +26,7 @@ TCMODULES += f_bpf.o
 TCMODULES += f_flow.o
 TCMODULES += f_cgroup.o
 TCMODULES += f_flower.o
-TCMODULES += q_dsmark.o
 TCMODULES += q_gred.o
-TCMODULES += f_tcindex.o
 TCMODULES += q_ingress.o
 TCMODULES += q_hfsc.o
 TCMODULES += q_htb.o
@@ -83,9 +79,6 @@ TCMODULES += q_plug.o
 TCMODULES += q_ets.o
 
 TCSO :=
-ifeq ($(TC_CONFIG_ATM),y)
-  TCSO += q_atm.so
-endif
 
 ifneq ($(TC_CONFIG_NO_XT),y)
   ifeq ($(TC_CONFIG_XT),y)
@@ -118,7 +111,6 @@ endif
 
 TCLIB := tc_core.o
 TCLIB += tc_red.o
-TCLIB += tc_cbq.o
 TCLIB += tc_estimator.o
 TCLIB += tc_stab.o
 TCLIB += tc_qevent.o
@@ -162,9 +154,6 @@ install: all
 clean:
 	rm -f $(TCOBJ) $(TCLIB) libtc.a tc *.so emp_ematch.tab.h; \
 	rm -f emp_ematch.tab.*
-
-q_atm.so: q_atm.c
-	$(QUIET_CC)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared -fpic -o q_atm.so q_atm.c -latm
 
 m_xt.so: m_xt.c
 	$(QUIET_CC)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared -fpic -o m_xt.so m_xt.c $$($(PKG_CONFIG) xtables --cflags --libs)

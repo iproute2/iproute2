@@ -45,7 +45,7 @@ static void usage(void)
 		"\n"
 		"       tc class show [ dev STRING ] [ root | parent CLASSID ]\n"
 		"Where:\n"
-		"QDISC_KIND := { prio | cbq | etc. }\n"
+		"QDISC_KIND := { prio | etc. }\n"
 		"OPTIONS := ... try tc class add <desired QDISC_KIND> help\n");
 }
 

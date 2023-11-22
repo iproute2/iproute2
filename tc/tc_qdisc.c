@@ -33,7 +33,7 @@ static int usage(void)
 		"\n"
 		"       tc qdisc { show | list } [ dev STRING ] [ QDISC_ID ] [ invisible ]\n"
 		"Where:\n"
-		"QDISC_KIND := { [p|b]fifo | tbf | prio | cbq | red | etc. }\n"
+		"QDISC_KIND := { [p|b]fifo | tbf | prio | red | etc. }\n"
 		"OPTIONS := ... try tc qdisc add <desired QDISC_KIND> help\n"
 		"STAB_OPTIONS := ... try tc qdisc add stab help\n"
 		"QDISC_ID := { root | ingress | handle QHANDLE | parent CLASSID }\n");
