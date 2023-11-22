@@ -1758,6 +1758,13 @@ int parse_one_of(const char *msg, const char *realval, const char * const *list,
 	return __parse_one_of(msg, realval, list, len, p_err, matches);
 }
 
+int parse_one_of_deprecated(const char *msg, const char *realval,
+			    const char * const *list,
+			    size_t len, int *p_err)
+{
+	return __parse_one_of(msg, realval, list, len, p_err, matches);
+}
+
 bool parse_on_off(const char *msg, const char *realval, int *p_err)
 {
 	static const char * const values_on_off[] = { "off", "on" };

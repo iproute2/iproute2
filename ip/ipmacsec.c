@@ -1457,8 +1457,10 @@ static int macsec_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("expected replay window size", *argv);
 		} else if (strcmp(*argv, "validate") == 0) {
 			NEXT_ARG();
-			validate = parse_one_of("validate", *argv, validate_str,
-						ARRAY_SIZE(validate_str), &ret);
+			validate = parse_one_of_deprecated("validate", *argv,
+							   validate_str,
+							   ARRAY_SIZE(validate_str),
+							   &ret);
 			if (ret != 0)
 				return ret;
 			addattr8(n, MACSEC_BUFLEN,
