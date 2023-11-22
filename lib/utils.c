@@ -1729,13 +1729,15 @@ int do_batch(const char *name, bool force,
 	return ret;
 }
 
-int parse_one_of(const char *msg, const char *realval, const char * const *list,
-		 size_t len, int *p_err)
+static int
+__parse_one_of(const char *msg, const char *realval,
+	       const char * const *list, size_t len, int *p_err,
+	       int (*matcher)(const char *, const char *))
 {
 	int i;
 
 	for (i = 0; i < len; i++) {
-		if (list[i] && matches(realval, list[i]) == 0) {
+		if (list[i] && matcher(realval, list[i]) == 0) {
 			*p_err = 0;
 			return i;
 		}
@@ -1750,11 +1752,18 @@ int parse_one_of(const char *msg, const char *realval, const char * const *list,
 	return 0;
 }
 
+int parse_one_of(const char *msg, const char *realval, const char * const *list,
+		 size_t len, int *p_err)
+{
+	return __parse_one_of(msg, realval, list, len, p_err, matches);
+}
+
 bool parse_on_off(const char *msg, const char *realval, int *p_err)
 {
 	static const char * const values_on_off[] = { "off", "on" };
 
-	return parse_one_of(msg, realval, values_on_off, ARRAY_SIZE(values_on_off), p_err);
+	return __parse_one_of(msg, realval, values_on_off,
+			      ARRAY_SIZE(values_on_off), p_err, matches);
 }
 
 int parse_mapping_gen(int *argcp, char ***argvp,
