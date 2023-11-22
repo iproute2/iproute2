@@ -198,7 +198,7 @@ int check_ifname(const char *);
 int check_altifname(const char *name);
 int get_ifname(char *, const char *);
 const char *get_ifname_rta(int ifindex, const struct rtattr *rta);
-bool matches(const char *prefix, const char *string);
+int matches(const char *prefix, const char *string);
 int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits);
 int inet_addr_match_rta(const inet_prefix *m, const struct rtattr *rta);
 
@@ -342,6 +342,9 @@ int do_batch(const char *name, bool force,
 
 int parse_one_of(const char *msg, const char *realval, const char * const *list,
 		 size_t len, int *p_err);
+int parse_one_of_deprecated(const char *msg, const char *realval,
+			    const char * const *list,
+			    size_t len, int *p_err);
 bool parse_on_off(const char *msg, const char *realval, int *p_err);
 
 int parse_mapping_num_all(__u32 *keyp, const char *key);
