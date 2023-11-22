@@ -873,18 +873,18 @@ const char *get_ifname_rta(int ifindex, const struct rtattr *rta)
 	return name;
 }
 
-/* Returns false if 'prefix' is a not empty prefix of 'string'.
+/* Returns 0 if 'prefix' is a not empty prefix of 'string', != 0 otherwise.
  */
-bool matches(const char *prefix, const char *string)
+int matches(const char *prefix, const char *string)
 {
 	if (!*prefix)
-		return true;
+		return 1;
 	while (*string && *prefix == *string) {
 		prefix++;
 		string++;
 	}
 
-	return !!*prefix;
+	return *prefix;
 }
 
 int inet_addr_match(const inet_prefix *a, const inet_prefix *b, int bits)
