@@ -3252,6 +3252,8 @@ static void mptcp_stats_print(struct mptcp_info *s)
 		out(" bytes_received:%llu", s->mptcpi_bytes_received);
 	if (s->mptcpi_bytes_acked)
 		out(" bytes_acked:%llu", s->mptcpi_bytes_acked);
+	if (s->mptcpi_subflows_total)
+		out(" subflows_total:%u", s->mptcpi_subflows_total);
 }
 
 static void mptcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
