@@ -445,6 +445,7 @@ EOF
 check_strlcpy()
 {
     cat >$TMPDIR/strtest.c <<EOF
+#define _GNU_SOURCE
 #include <string.h>
 int main(int argc, char **argv) {
 	char dst[10];
