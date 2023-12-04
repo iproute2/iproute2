@@ -26,6 +26,7 @@ static void explain(void)
 		"		[ maxrate RATE ] [ buckets NUMBER ]\n"
 		"		[ [no]pacing ] [ refill_delay TIME ]\n"
 		"		[ bands 3 priomap P0 P1 ... P14 P15 ]\n"
+		"		[ weights W1 W2 W3 ]\n"
 		"		[ low_rate_threshold RATE ]\n"
 		"		[ orphan_mask MASK]\n"
 		"		[ timer_slack TIME]\n"
@@ -77,6 +78,8 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	bool set_timer_slack = false;
 	bool set_horizon = false;
 	bool set_priomap = false;
+	bool set_weights = false;
+	int weights[FQ_BANDS];
 	int pacing = -1;
 	struct rtattr *tail;
 
@@ -238,6 +241,33 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 				prio2band.priomap[idx] = band;
 			}
 			set_priomap = true;
+		} else if (strcmp(*argv, "weights") == 0) {
+			int idx;
+
+			if (set_weights) {
+				fprintf(stderr, "Duplicate \"weights\"\n");
+				return -1;
+			}
+			NEXT_ARG();
+			for (idx = 0; idx < FQ_BANDS; ++idx) {
+				int val;
+
+				if (!NEXT_ARG_OK()) {
+					fprintf(stderr, "Not enough elements in weights\n");
+					return -1;
+				}
+				NEXT_ARG();
+				if (get_integer(&val, *argv, 10)) {
+					fprintf(stderr, "Illegal \"weights\" element, positive number expected\n");
+					return -1;
+				}
+				if (val < FQ_MIN_WEIGHT) {
+					fprintf(stderr, "\"weight\" element %d too small\n", val);
+					return -1;
+				}
+				weights[idx] = val;
+			}
+			set_weights = true;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -300,6 +330,9 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (set_priomap)
 		addattr_l(n, 1024, TCA_FQ_PRIOMAP,
 			  &prio2band, sizeof(prio2band));
+	if (set_weights)
+		addattr_l(n, 1024, TCA_FQ_WEIGHTS,
+			  weights, sizeof(weights));
 	addattr_nest_end(n, tail);
 	return 0;
 }
@@ -363,6 +396,16 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		open_json_array(PRINT_ANY, "priomap ");
 		for (i = 0; i <= TC_PRIO_MAX; i++)
 			print_uint(PRINT_ANY, NULL, "%d ", prio2band->priomap[i]);
+		close_json_array(PRINT_ANY, "");
+	}
+	if (tb[TCA_FQ_WEIGHTS] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_WEIGHTS]) >= FQ_BANDS * sizeof(int)) {
+		const int *weights = RTA_DATA(tb[TCA_FQ_WEIGHTS]);
+		int i;
+
+		open_json_array(PRINT_ANY, "weights ");
+		for (i = 0; i < FQ_BANDS; ++i)
+			print_uint(PRINT_ANY, NULL, "%d ", weights[i]);
 		close_json_array(PRINT_ANY, "");
 	}
 	if (tb[TCA_FQ_QUANTUM] &&
