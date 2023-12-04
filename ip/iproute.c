@@ -351,6 +351,11 @@ static void print_rtax_features(FILE *fp, unsigned int features)
 		features &= ~RTAX_FEATURE_ECN;
 	}
 
+	if (features & RTAX_FEATURE_TCP_USEC_TS) {
+		print_null(PRINT_ANY, "tcp_usec_ts", "tcp_usec_ts ", NULL);
+		features &= ~RTAX_FEATURE_TCP_USEC_TS;
+	}
+
 	if (features)
 		print_0xhex(PRINT_ANY,
 			    "features", "%#llx ", of);
@@ -1349,6 +1354,8 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 				if (strcmp(*argv, "ecn") == 0)
 					features |= RTAX_FEATURE_ECN;
+				else if (strcmp(*argv, "tcp_usec_ts") == 0)
+					features |= RTAX_FEATURE_TCP_USEC_TS;
 				else
 					invarg("\"features\" value not valid\n", *argv);
 				break;
