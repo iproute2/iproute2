@@ -510,6 +510,10 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 	print_uint(PRINT_ANY, "throttled", " throttled %u)",
 		   st->throttled_flows);
 
+	print_uint(PRINT_ANY, "band0_pkts", " band0_pkts %u", st->band_pkt_count[0]);
+	print_uint(PRINT_ANY, "band1_pkts", " band1_pkts %u", st->band_pkt_count[1]);
+	print_uint(PRINT_ANY, "band2_pkts", " band2_pkts %u", st->band_pkt_count[2]);
+
 	if (st->time_next_delayed_flow > 0) {
 		print_lluint(PRINT_JSON, "next_packet_delay", NULL,
 			     st->time_next_delayed_flow);
@@ -521,6 +525,10 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 	print_lluint(PRINT_ANY, "gc", "  gc %llu", st->gc_flows);
 	print_lluint(PRINT_ANY, "highprio", " highprio %llu",
 		     st->highprio_packets);
+
+	if (st->fastpath_packets)
+		print_lluint(PRINT_ANY, "fastpath", " fastpath %llu",
+			     st->fastpath_packets);
 
 	if (st->tcp_retrans)
 		print_lluint(PRINT_ANY, "retrans", " retrans %llu",
@@ -544,7 +552,10 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 			     st->flows_plimit);
 
 	if (st->pkts_too_long || st->allocation_errors ||
-	    st->horizon_drops || st->horizon_caps) {
+	    st->horizon_drops || st->horizon_caps ||
+	    st->band_drops[0] ||
+	    st->band_drops[1] ||
+	    st->band_drops[2]) {
 		print_nl();
 		if (st->pkts_too_long)
 			print_lluint(PRINT_ANY, "pkts_too_long",
@@ -562,6 +573,18 @@ static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
 			print_lluint(PRINT_ANY, "horizon_caps",
 				     "  horizon_caps %llu",
 				     st->horizon_caps);
+		if (st->band_drops[0])
+			print_lluint(PRINT_ANY, "band0_drops",
+				     " band0_drops %llu",
+				     st->band_drops[0]);
+		if (st->band_drops[1])
+			print_lluint(PRINT_ANY, "band1_drops",
+				     " band1_drops %llu",
+				     st->band_drops[1]);
+		if (st->band_drops[2])
+			print_lluint(PRINT_ANY, "band2_drops",
+				     " band2_drops %llu",
+				     st->band_drops[2]);
 	}
 
 	return 0;
