@@ -25,6 +25,7 @@ static void explain(void)
 		"		[ quantum BYTES ] [ initial_quantum BYTES ]\n"
 		"		[ maxrate RATE ] [ buckets NUMBER ]\n"
 		"		[ [no]pacing ] [ refill_delay TIME ]\n"
+		"		[ bands 3 priomap P0 P1 ... P14 P15 ]\n"
 		"		[ low_rate_threshold RATE ]\n"
 		"		[ orphan_mask MASK]\n"
 		"		[ timer_slack TIME]\n"
@@ -48,6 +49,7 @@ static unsigned int ilog2(unsigned int val)
 static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			struct nlmsghdr *n, const char *dev)
 {
+	struct tc_prio_qopt prio2band;
 	unsigned int plimit;
 	unsigned int flow_plimit;
 	unsigned int quantum;
@@ -74,6 +76,7 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	bool set_ce_threshold = false;
 	bool set_timer_slack = false;
 	bool set_horizon = false;
+	bool set_priomap = false;
 	int pacing = -1;
 	struct rtattr *tail;
 
@@ -193,6 +196,48 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			pacing = 1;
 		} else if (strcmp(*argv, "nopacing") == 0) {
 			pacing = 0;
+		} else if (strcmp(*argv, "bands") == 0) {
+			int idx;
+
+			if (set_priomap) {
+				fprintf(stderr, "Duplicate \"bands\"\n");
+				return -1;
+			}
+			memset(&prio2band, 0, sizeof(prio2band));
+			NEXT_ARG();
+			if (get_integer(&prio2band.bands, *argv, 10)) {
+				fprintf(stderr, "Illegal \"bands\"\n");
+				return -1;
+			}
+			if (prio2band.bands != 3) {
+				fprintf(stderr, "\"bands\" must be 3\n");
+				return -1;
+			}
+			NEXT_ARG();
+			if (strcmp(*argv, "priomap") != 0) {
+				fprintf(stderr, "\"priomap\" expected\n");
+				return -1;
+			}
+			for (idx = 0; idx <= TC_PRIO_MAX; ++idx) {
+				unsigned band;
+
+				if (!NEXT_ARG_OK()) {
+					fprintf(stderr, "Not enough elements in priomap\n");
+					return -1;
+				}
+				NEXT_ARG();
+				if (get_unsigned(&band, *argv, 10)) {
+					fprintf(stderr, "Illegal \"priomap\" element, number in [0..%u] expected\n",
+							prio2band.bands - 1);
+					return -1;
+				}
+				if (band >= prio2band.bands) {
+					fprintf(stderr, "\"priomap\" element %u too big\n", band);
+					return -1;
+				}
+				prio2band.priomap[idx] = band;
+			}
+			set_priomap = true;
 		} else if (strcmp(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -252,6 +297,9 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (horizon_drop != 255)
 		addattr_l(n, 1024, TCA_FQ_HORIZON_DROP,
 			  &horizon_drop, sizeof(horizon_drop));
+	if (set_priomap)
+		addattr_l(n, 1024, TCA_FQ_PRIOMAP,
+			  &prio2band, sizeof(prio2band));
 	addattr_nest_end(n, tail);
 	return 0;
 }
@@ -305,6 +353,17 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		pacing = rta_getattr_u32(tb[TCA_FQ_RATE_ENABLE]);
 		if (pacing == 0)
 			print_bool(PRINT_ANY, "pacing", "nopacing ", false);
+	}
+	if (tb[TCA_FQ_PRIOMAP] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_PRIOMAP]) >= sizeof(struct tc_prio_qopt)) {
+		struct tc_prio_qopt *prio2band = RTA_DATA(tb[TCA_FQ_PRIOMAP]);
+		int i;
+
+		print_uint(PRINT_ANY, "bands", "bands %u ", prio2band->bands);
+		open_json_array(PRINT_ANY, "priomap ");
+		for (i = 0; i <= TC_PRIO_MAX; i++)
+			print_uint(PRINT_ANY, NULL, "%d ", prio2band->priomap[i]);
+		close_json_array(PRINT_ANY, "");
 	}
 	if (tb[TCA_FQ_QUANTUM] &&
 	    RTA_PAYLOAD(tb[TCA_FQ_QUANTUM]) >= sizeof(__u32)) {
