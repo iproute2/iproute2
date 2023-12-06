@@ -875,6 +875,7 @@ struct tcpstat {
 	unsigned long long  bytes_sent;
 	unsigned long long  bytes_retrans;
 	bool		    has_ts_opt;
+	bool		    has_usec_ts_opt;
 	bool		    has_sack_opt;
 	bool		    has_ecn_opt;
 	bool		    has_ecnseen_opt;
@@ -2562,6 +2563,8 @@ static void tcp_stats_print(struct tcpstat *s)
 
 	if (s->has_ts_opt)
 		out(" ts");
+	if (s->has_usec_ts_opt)
+		out(" usec_ts");
 	if (s->has_sack_opt)
 		out(" sack");
 	if (s->has_ecn_opt)
@@ -3037,6 +3040,7 @@ static void tcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,
 
 		if (show_options) {
 			s.has_ts_opt	   = TCPI_HAS_OPT(info, TCPI_OPT_TIMESTAMPS);
+			s.has_usec_ts_opt  = TCPI_HAS_OPT(info, TCPI_OPT_USEC_TS);
 			s.has_sack_opt	   = TCPI_HAS_OPT(info, TCPI_OPT_SACK);
 			s.has_ecn_opt	   = TCPI_HAS_OPT(info, TCPI_OPT_ECN);
 			s.has_ecnseen_opt  = TCPI_HAS_OPT(info, TCPI_OPT_ECN_SEEN);
