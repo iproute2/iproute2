@@ -92,7 +92,7 @@ static int vni_modify(int cmd, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.tmsg.family = PF_BRIDGE,
 	};
-	bool group_present = false;
+	bool daddr_present = false;
 	inet_prefix daddr;
 	char *vni = NULL;
 	char *d = NULL;
@@ -107,19 +107,19 @@ static int vni_modify(int cmd, int argc, char **argv)
 				invarg("duplicate vni", *argv);
 			vni = *argv;
 		} else if (strcmp(*argv, "group") == 0) {
-			if (group_present)
-				invarg("duplicate group", *argv);
 			NEXT_ARG();
+			if (daddr_present)
+				duparg("destination", *argv);
 			get_addr(&daddr, *argv, AF_UNSPEC);
 			if (!is_addrtype_inet_multi(&daddr))
 				invarg("invalid group address", *argv);
-			group_present = true;
+			daddr_present = true;
 		} else if (strcmp(*argv, "remote") == 0) {
-			if (group_present)
-				invarg("duplicate group", *argv);
 			NEXT_ARG();
+			if (daddr_present)
+				duparg("destination", *argv);
 			get_addr(&daddr, *argv, AF_UNSPEC);
-			group_present = true;
+			daddr_present = true;
 		} else {
 			if (strcmp(*argv, "help") == 0)
 				usage();
@@ -133,7 +133,7 @@ static int vni_modify(int cmd, int argc, char **argv)
 	}
 
 	parse_vni_filter(vni, &req.n, sizeof(req),
-			 (group_present ? &daddr : NULL));
+			 (daddr_present ? &daddr : NULL));
 
 	req.tmsg.ifindex = ll_name_to_index(d);
 	if (req.tmsg.ifindex == 0) {
