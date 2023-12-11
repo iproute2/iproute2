@@ -661,13 +661,8 @@ static void print_vlan_tunnel_info(struct rtattr *tb, int ifindex)
 
 		open_json_object(NULL);
 		width = print_range("vlan", last_vid_start, tunnel_vid);
-		if (width <= VLAN_ID_LEN) {
-			if (!is_json_context())
-				printf("%-*s  ", VLAN_ID_LEN - width, "");
-		} else {
-			fprintf(stderr, "BUG: vlan range too wide, %u\n",
-				width);
-		}
+		if (!is_json_context())
+			printf("%-*s  ", VLAN_ID_LEN - width, "");
 		print_range("tunid", last_tunid_start, tunnel_id);
 		close_json_object();
 		print_nl();
