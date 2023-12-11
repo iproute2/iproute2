@@ -242,6 +242,7 @@ static void print_vni(struct rtattr *t, int ifindex)
 	if (ttb[VXLAN_VNIFILTER_ENTRY_END])
 		vni_end = rta_getattr_u32(ttb[VXLAN_VNIFILTER_ENTRY_END]);
 
+	open_json_object(NULL);
 	if (vni_end)
 		print_range("vni", vni_start, vni_end);
 	else
@@ -333,10 +334,8 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 			continue;
 		if (first) {
 			open_vni_port(tmsg->ifindex, "%s");
-			open_json_object(NULL);
 			first = false;
 		} else {
-			open_json_object(NULL);
 			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
 		}
 
