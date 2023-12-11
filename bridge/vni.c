@@ -147,7 +147,7 @@ static int vni_modify(int cmd, int argc, char **argv)
 	return 0;
 }
 
-static void open_vni_port(int ifi_index, const char *fmt)
+static void open_vni_port(int ifi_index)
 {
 	open_json_object(NULL);
 	print_color_string(PRINT_ANY, COLOR_IFNAME, "ifname",
@@ -334,7 +334,7 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 			continue;
 
 		if (!opened) {
-			open_vni_port(tmsg->ifindex, "%s");
+			open_vni_port(tmsg->ifindex);
 			opened = true;
 		} else {
 			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
