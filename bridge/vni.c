@@ -350,11 +350,6 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static int print_vnifilter_rtm_filter(struct nlmsghdr *n, void *arg)
-{
-	return print_vnifilter_rtm(n, arg);
-}
-
 static int vni_show(int argc, char **argv)
 {
 	char *filter_dev = NULL;
@@ -395,7 +390,7 @@ static int vni_show(int argc, char **argv)
 		printf("\n");
 	}
 
-	ret = rtnl_dump_filter(&rth, print_vnifilter_rtm_filter, NULL);
+	ret = rtnl_dump_filter(&rth, print_vnifilter_rtm, NULL);
 	if (ret < 0) {
 		fprintf(stderr, "Dump ternminated\n");
 		exit(1);
