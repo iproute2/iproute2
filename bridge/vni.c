@@ -419,7 +419,8 @@ int do_vni(int argc, char **argv)
 	if (argc > 0) {
 		if (strcmp(*argv, "add") == 0)
 			return vni_modify(RTM_NEWTUNNEL, argc-1, argv+1);
-		if (strcmp(*argv, "delete") == 0)
+		if (strcmp(*argv, "delete") == 0 ||
+		    strcmp(*argv, "del") == 0)
 			return vni_modify(RTM_DELTUNNEL, argc-1, argv+1);
 		if (strcmp(*argv, "show") == 0 ||
 		    strcmp(*argv, "lst") == 0 ||
