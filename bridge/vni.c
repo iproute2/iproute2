@@ -341,7 +341,9 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 
 		print_vni(t, tmsg->ifindex);
 	}
-	close_vni_port();
+
+	if (!first)
+		close_vni_port();
 
 	print_string(PRINT_FP, NULL, "%s", _SL_);
 
