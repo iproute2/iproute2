@@ -187,8 +187,8 @@ static void print_vnifilter_entry_stats(struct rtattr *stats_attr)
 			   RTA_PAYLOAD(stats_attr), NLA_F_NESTED);
 
 	print_nl();
-	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s   ", "");
-	print_string(PRINT_FP, NULL, "RX: ", "");
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    RX: ",
+		     "");
 
 	if (stb[VNIFILTER_ENTRY_STATS_RX_BYTES]) {
 		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_RX_BYTES]);
@@ -208,8 +208,8 @@ static void print_vnifilter_entry_stats(struct rtattr *stats_attr)
 	}
 
 	print_nl();
-	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s   ", "");
-	print_string(PRINT_FP, NULL, "TX: ", "");
+	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    TX: ",
+		     "");
 
 	if (stb[VNIFILTER_ENTRY_STATS_TX_BYTES]) {
 		stat = rta_getattr_u64(stb[VNIFILTER_ENTRY_STATS_TX_BYTES]);
