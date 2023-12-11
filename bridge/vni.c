@@ -109,11 +109,6 @@ static int vni_modify(int cmd, int argc, char **argv)
 		} else if (strcmp(*argv, "group") == 0) {
 			if (group_present)
 				invarg("duplicate group", *argv);
-			if (is_addrtype_inet_not_multi(&daddr)) {
-				fprintf(stderr, "vxlan: both group and remote");
-				fprintf(stderr, " cannot be specified\n");
-				return -1;
-			}
 			NEXT_ARG();
 			get_addr(&daddr, *argv, AF_UNSPEC);
 			if (!is_addrtype_inet_multi(&daddr))
