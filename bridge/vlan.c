@@ -851,7 +851,7 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 	struct rtattr *vtb[BRIDGE_VLANDB_GOPTS_MAX + 1], *vattr;
 	__u16 vid, vrange = 0;
 
-	if ((a->rta_type & NLA_TYPE_MASK) != BRIDGE_VLANDB_GLOBAL_OPTIONS)
+	if (rta_type(a) != BRIDGE_VLANDB_GLOBAL_OPTIONS)
 		return;
 
 	parse_rtattr_flags(vtb, BRIDGE_VLANDB_GOPTS_MAX, RTA_DATA(a),
@@ -960,7 +960,7 @@ static void print_vlan_opts(struct rtattr *a, int ifindex)
 	__u16 vrange = 0;
 	__u8 state = 0;
 
-	if ((a->rta_type & NLA_TYPE_MASK) != BRIDGE_VLANDB_ENTRY)
+	if (rta_type(a) != BRIDGE_VLANDB_ENTRY)
 		return;
 
 	parse_rtattr_flags(vtb, BRIDGE_VLANDB_ENTRY_MAX, RTA_DATA(a),
@@ -1086,14 +1086,14 @@ int print_vlan_rtm(struct nlmsghdr *n, void *arg, bool monitor, bool global_only
 
 	rem = len;
 	for (a = BRVLAN_RTA(bvm); RTA_OK(a, rem); a = RTA_NEXT(a, rem)) {
-		unsigned short rta_type = a->rta_type & NLA_TYPE_MASK;
+		unsigned short attr_type = rta_type(a);
 
 		/* skip unknown attributes */
-		if (rta_type > BRIDGE_VLANDB_MAX ||
-		    (global_only && rta_type != BRIDGE_VLANDB_GLOBAL_OPTIONS))
+		if (attr_type > BRIDGE_VLANDB_MAX ||
+		    (global_only && attr_type != BRIDGE_VLANDB_GLOBAL_OPTIONS))
 			continue;
 
-		switch (rta_type) {
+		switch (attr_type) {
 		case BRIDGE_VLANDB_ENTRY:
 			print_vlan_opts(a, bvm->ifindex);
 			break;

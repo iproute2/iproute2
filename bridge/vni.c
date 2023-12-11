@@ -319,9 +319,7 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 
 	rem = len;
 	for (t = TUNNEL_RTA(tmsg); RTA_OK(t, rem); t = RTA_NEXT(t, rem)) {
-		unsigned short rta_type = t->rta_type & NLA_TYPE_MASK;
-
-		if (rta_type != VXLAN_VNIFILTER_ENTRY)
+		if (rta_type(t) != VXLAN_VNIFILTER_ENTRY)
 			continue;
 
 		if (!opened) {
