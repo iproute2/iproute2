@@ -104,7 +104,7 @@ static int vni_modify(int cmd, int argc, char **argv)
 		} else if (strcmp(*argv, "vni") == 0) {
 			NEXT_ARG();
 			if (vni)
-				invarg("duplicate vni", *argv);
+				duparg("vni", *argv);
 			vni = *argv;
 		} else if (strcmp(*argv, "group") == 0) {
 			NEXT_ARG();
