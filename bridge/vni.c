@@ -163,20 +163,6 @@ static void close_vni_port(void)
 	close_json_object();
 }
 
-static unsigned int print_range(const char *name, __u32 start, __u32 id)
-{
-	char end[64];
-	int width;
-
-	snprintf(end, sizeof(end), "%sEnd", name);
-
-	width = print_uint(PRINT_ANY, name, "%u", start);
-	if (start != id)
-		width += print_uint(PRINT_ANY, end, "-%u", id);
-
-	return width;
-}
-
 static void print_vnifilter_entry_stats(struct rtattr *stats_attr)
 {
 	struct rtattr *stb[VNIFILTER_ENTRY_STATS_MAX+1];

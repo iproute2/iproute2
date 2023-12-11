@@ -590,20 +590,6 @@ static void close_vlan_port(void)
 	close_json_object();
 }
 
-static unsigned int print_range(const char *name, __u32 start, __u32 id)
-{
-	char end[64];
-	int width;
-
-	snprintf(end, sizeof(end), "%sEnd", name);
-
-	width = print_uint(PRINT_ANY, name, "%u", start);
-	if (start != id)
-		width += print_uint(PRINT_ANY, end, "-%u", id);
-
-	return width;
-}
-
 static void print_vlan_tunnel_info(struct rtattr *tb, int ifindex)
 {
 	struct rtattr *i, *list = tb;

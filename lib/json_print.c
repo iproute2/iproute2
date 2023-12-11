@@ -374,3 +374,18 @@ int print_color_rate(bool use_iec, enum output_type type, enum color_attr color,
 	free(buf);
 	return rc;
 }
+
+unsigned int print_range(const char *name, __u32 start, __u32 end)
+{
+	int width;
+
+	width = print_uint(PRINT_ANY, name, "%u", start);
+	if (start != end) {
+		char buf[64];
+
+		snprintf(buf, sizeof(buf), "%sEnd", name);
+		width += print_uint(PRINT_ANY, buf, "-%u", end);
+	}
+
+	return width;
+}
