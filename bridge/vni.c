@@ -296,7 +296,7 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 {
 	struct tunnel_msg *tmsg = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
-	bool first = true;
+	bool opened = false;
 	struct rtattr *t;
 	FILE *fp = arg;
 	int rem;
@@ -332,9 +332,10 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 
 		if (rta_type != VXLAN_VNIFILTER_ENTRY)
 			continue;
-		if (first) {
+
+		if (!opened) {
 			open_vni_port(tmsg->ifindex, "%s");
-			first = false;
+			opened = true;
 		} else {
 			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
 		}
@@ -342,7 +343,7 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 		print_vni(t, tmsg->ifindex);
 	}
 
-	if (!first)
+	if (opened)
 		close_vni_port();
 
 	print_string(PRINT_FP, NULL, "%s", _SL_);
