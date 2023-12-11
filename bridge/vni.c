@@ -289,7 +289,7 @@ static void print_vni(struct rtattr *t, int ifindex)
 		print_vnifilter_entry_stats(ttb[VXLAN_VNIFILTER_ENTRY_STATS]);
 
 	close_json_object();
-	print_string(PRINT_FP, NULL, "%s", _SL_);
+	print_nl();
 }
 
 int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
