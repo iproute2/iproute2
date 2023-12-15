@@ -652,7 +652,7 @@ routes.
 the routing protocol identifier of this route.
 .I RTPROTO
 may be a number or a string from
-.BR "@SYSCONF_ETC_DIR@/rt_protos" or
+.BR "@SYSCONF_USR_DIR@/rt_protos" or
 .BR "@SYSCONF_ETC_DIR@/rt_protos" (has precedence if exists).
 If the routing protocol ID is not given,
 .B ip assumes protocol
