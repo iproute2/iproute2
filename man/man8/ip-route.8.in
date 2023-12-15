@@ -357,8 +357,8 @@ normal routing tables.
 .B Route tables:
 Linux-2.x can pack routes into several routing tables identified
 by a number in the range from 1 to 2^32-1 or by name from
-.B @SYSCONF_USR_DIR@/rt_tables or
-.B @SYSCONF_ETC_DIR@/rt_tables (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_tables " or " @SYSCONF_ETC_DIR@/rt_tables
+(has precedence if exists).
 By default all normal routes are inserted into the
 .B main
 table (ID 254) and the kernel only uses this table when calculating routes.
@@ -421,8 +421,8 @@ may still match a route with a zero TOS.
 .I TOS
 is either an 8 bit hexadecimal number or an identifier
 from
-.BR "@SYSCONF_USR_DIR@/rt_dsfield" or
-.BR "@SYSCONF_ETC_DIR@/rt_dsfield" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_dsfield " or " @SYSCONF_ETC_DIR@/rt_dsfield
+(has precedence if exists).
 
 .TP
 .BI metric " NUMBER"
@@ -437,8 +437,8 @@ is an arbitrary 32bit number, where routes with lower values are preferred.
 the table to add this route to.
 .I TABLEID
 may be a number or a string from
-.BR "@SYSCONF_USR_DIR@/rt_tables" or
-.BR "@SYSCONF_ETC_DIR@/rt_tables" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_tables " or " @SYSCONF_ETC_DIR@/rt_tables
+(has precedence if exists).
 If this parameter is omitted,
 .B ip
 assumes the
@@ -479,8 +479,8 @@ covered by the route prefix.
 the realm to which this route is assigned.
 .I REALMID
 may be a number or a string from
-.BR "@SYSCONF_USR_DIR@/rt_realms" or
-.BR "@SYSCONF_ETC_DIR@/rt_realms" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_realms " or " @SYSCONF_ETC_DIR@/rt_realms
+(has precedence if exists).
 
 .TP
 .BI mtu " MTU"
@@ -631,8 +631,8 @@ command.
 the scope of the destinations covered by the route prefix.
 .I SCOPE_VAL
 may be a number or a string from
-.BR "@SYSCONF_USR_DIR@/rt_scopes" or
-.BR "@SYSCONF_ETC_DIR@/rt_scopes" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_scopes " or " @SYSCONF_ETC_DIR@/rt_scopes
+(has precedence if exists).
 If this parameter is omitted,
 .B ip
 assumes scope
@@ -652,8 +652,8 @@ routes.
 the routing protocol identifier of this route.
 .I RTPROTO
 may be a number or a string from
-.BR "@SYSCONF_USR_DIR@/rt_protos" or
-.BR "@SYSCONF_ETC_DIR@/rt_protos" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_protos " or " @SYSCONF_ETC_DIR@/rt_protos
+(has precedence if exists).
 If the routing protocol ID is not given,
 .B ip assumes protocol
 .B boot
@@ -892,8 +892,8 @@ matching packets are dropped.
 specified lookup table.
 .I TABLEID
 is either a number or a string from
-.BR "@SYSCONF_USR_DIR@/rt_tables" or
-.BR "@SYSCONF_ETC_DIR@/rt_tables" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_tables " or " @SYSCONF_ETC_DIR@/rt_tables
+(has precedence if exists).
 If
 .B vrftable
 is used, the argument must be a VRF device associated with
@@ -909,8 +909,8 @@ and an inner IPv6 packet. Other matching packets are dropped.
 specified lookup table.
 .I TABLEID
 is either a number or a string from
-.BR "@SYSCONF_USR_DIR@/rt_tables" or
-.BR "@SYSCONF_ETC_DIR@/rt_tables" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_tables " or " @SYSCONF_ETC_DIR@/rt_tables
+(has precedence if exists).
 The argument must be a VRF device associated with the table id.
 Moreover, the VRF table associated with the table id must be configured
 with the VRF strict mode turned on (net.vrf.strict_mode=1). This action
@@ -923,8 +923,8 @@ at all, and an inner IPv4 packet. Other matching packets are dropped.
 to the specified lookup table.
 .I TABLEID
 is either a number or a string from
-.BR "@SYSCONF_USR_DIR@/rt_tables" or
-.BR "@SYSCONF_ETC_DIR@/rt_tables" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/rt_tables " or " @SYSCONF_ETC_DIR@/rt_tables
+(has precedence if exists).
 The argument must be a VRF device associated with the table id.
 Moreover, the VRF table associated with the table id must be configured
 with the VRF strict mode turned on (net.vrf.strict_mode=1). This action
