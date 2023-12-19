@@ -210,6 +210,8 @@ enum {
 	SS_LAST_ACK,
 	SS_LISTEN,
 	SS_CLOSING,
+	SS_NEW_SYN_RECV, /* Kernel only value, not for use in user space */
+	SS_BOUND_INACTIVE,
 	SS_MAX
 };
 
@@ -1382,6 +1384,8 @@ static void sock_state_print(struct sockstat *s)
 		[SS_LAST_ACK] = "LAST-ACK",
 		[SS_LISTEN] =	"LISTEN",
 		[SS_CLOSING] = "CLOSING",
+		[SS_NEW_SYN_RECV] = "UNDEF", /* Never returned by kernel */
+		[SS_BOUND_INACTIVE] = "UNDEF", /* Never returned by kernel */
 	};
 
 	switch (s->local.family) {
@@ -5339,6 +5343,7 @@ static void _usage(FILE *dest)
 "   -r, --resolve       resolve host names\n"
 "   -a, --all           display all sockets\n"
 "   -l, --listening     display listening sockets\n"
+"   -B, --bound-inactive display TCP bound but inactive sockets\n"
 "   -o, --options       show timer information\n"
 "   -e, --extended      show detailed socket information\n"
 "   -m, --memory        show socket memory usage\n"
@@ -5421,8 +5426,16 @@ static int scan_state(const char *state)
 		[SS_LAST_ACK] = "last-ack",
 		[SS_LISTEN] =	"listening",
 		[SS_CLOSING] = "closing",
+		[SS_NEW_SYN_RECV] = "new-syn-recv",
+		[SS_BOUND_INACTIVE] = "bound-inactive",
 	};
 	int i;
+
+	/* NEW_SYN_RECV is a kernel implementation detail. It shouldn't be used
+	 * or even be visible by users.
+	 */
+	if (strcasecmp(state, "new-syn-recv") == 0)
+		goto wrong_state;
 
 	if (strcasecmp(state, "close") == 0 ||
 	    strcasecmp(state, "closed") == 0)
@@ -5446,6 +5459,7 @@ static int scan_state(const char *state)
 			return (1<<i);
 	}
 
+wrong_state:
 	fprintf(stderr, "ss: wrong state name: %s\n", state);
 	exit(-1);
 }
@@ -5487,6 +5501,7 @@ static const struct option long_opts[] = {
 	{ "vsock", 0, 0, OPT_VSOCK },
 	{ "all", 0, 0, 'a' },
 	{ "listening", 0, 0, 'l' },
+	{ "bound-inactive", 0, 0, 'B' },
 	{ "ipv4", 0, 0, '4' },
 	{ "ipv6", 0, 0, '6' },
 	{ "packet", 0, 0, '0' },
@@ -5525,7 +5540,7 @@ int main(int argc, char *argv[])
 	int state_filter = 0;
 
 	while ((ch = getopt_long(argc, argv,
-				 "dhaletuwxnro460spTbEf:mMiA:D:F:vVzZN:KHSO",
+				 "dhalBetuwxnro460spTbEf:mMiA:D:F:vVzZN:KHSO",
 				 long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'n':
@@ -5589,6 +5604,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'l':
 			state_filter = (1 << SS_LISTEN) | (1 << SS_CLOSE);
+			break;
+		case 'B':
+			state_filter = 1 << SS_BOUND_INACTIVE;
 			break;
 		case '4':
 			filter_af_set(&current_filter, AF_INET);

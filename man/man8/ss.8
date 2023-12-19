@@ -40,6 +40,10 @@ established connections) sockets.
 .B \-l, \-\-listening
 Display only listening sockets (these are omitted by default).
 .TP
+.B \-B, \-\-bound-inactive
+Display only TCP bound but inactive (not listening, connecting, etc.) sockets
+(these are omitted by default).
+.TP
 .B \-o, \-\-options
 Show timer information. For TCP protocol, the output format is:
 .RS
@@ -455,6 +459,9 @@ states except for
 .B big
 - opposite to
 .B bucket
+
+.B bound-inactive
+- bound but otherwise inactive sockets (not listening, connecting, etc.)
 
 .SH EXPRESSION
 
