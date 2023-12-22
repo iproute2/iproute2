@@ -26,26 +26,6 @@ check_toolchain()
     echo "YACC:=${YACC}" >>$CONFIG
 }
 
-check_atm()
-{
-    cat >$TMPDIR/atmtest.c <<EOF
-#include <atm.h>
-int main(int argc, char **argv) {
-	struct atm_qos qos;
-	(void) text2qos("aal5,ubr:sdu=9180,rx:none",&qos,0);
-	return 0;
-}
-EOF
-
-    if $CC -I$INCLUDE -o $TMPDIR/atmtest $TMPDIR/atmtest.c -latm >/dev/null 2>&1; then
-	echo "TC_CONFIG_ATM:=y" >>$CONFIG
-	echo yes
-    else
-	echo no
-    fi
-    rm -f $TMPDIR/atmtest.c $TMPDIR/atmtest
-}
-
 check_xtables()
 {
 	if ! ${PKG_CONFIG} xtables --exists; then
@@ -615,9 +595,6 @@ quiet_config >> $CONFIG
 check_toolchain
 
 echo "TC schedulers"
-
-echo -n " ATM	"
-check_atm
 
 check_xtables
 if ! grep -q TC_CONFIG_NO_XT $CONFIG; then
