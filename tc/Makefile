@@ -82,21 +82,9 @@ TCSO :=
 
 ifneq ($(TC_CONFIG_NO_XT),y)
   ifeq ($(TC_CONFIG_XT),y)
-    TCSO += m_xt.so
     TCMODULES += em_ipt.o
     ifeq ($(TC_CONFIG_IPSET),y)
       TCMODULES += em_ipset.o
-    endif
-  else
-    ifeq ($(TC_CONFIG_XT_OLD),y)
-      TCSO += m_xt_old.so
-    else
-      ifeq ($(TC_CONFIG_XT_OLD_H),y)
-        CFLAGS += -DTC_CONFIG_XT_H
-        TCSO += m_xt_old.so
-      else
-        TCMODULES += m_ipt.o
-      endif
     endif
   endif
 endif
