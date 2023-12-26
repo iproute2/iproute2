@@ -37,7 +37,9 @@ static void usage(void)
 		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
 		"              [ dst_port DST_PORT ] [ vni VNI ] [ src_vni SRC_VNI ] [ via DEV ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n"
-		"       bridge mdb get dev DEV grp GROUP [ src SOURCE ] [ vid VID ] [ src_vni SRC_VNI ]\n");
+		"       bridge mdb get dev DEV grp GROUP [ src SOURCE ] [ vid VID ] [ src_vni SRC_VNI ]\n"
+		"       bridge mdb flush dev DEV [ port PORT ] [ vid VID ] [ src_vni SRC_VNI ] [ proto PROTO ]\n"
+		"              [ [no]permanent ] [ dst IPADDR ] [ dst_port DST_PORT ] [ vni VNI ]\n");
 	exit(-1);
 }
 
@@ -943,6 +945,137 @@ static int mdb_get(int argc, char **argv)
 	return ret;
 }
 
+static int mdb_flush(int argc, char **argv)
+{
+	struct {
+		struct nlmsghdr	n;
+		struct br_port_msg	bpm;
+		char			buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct br_port_msg)),
+		.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_BULK,
+		.n.nlmsg_type = RTM_DELMDB,
+		.bpm.family = PF_BRIDGE,
+	};
+	char *d = NULL, *p = NULL, *src_vni = NULL, *proto = NULL, *dst = NULL;
+	char *dst_port = NULL, *vni = NULL;
+	struct br_mdb_entry entry = {};
+	unsigned short state_mask = 0;
+	bool set_attrs = false;
+	short vid = 0;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "dev") == 0) {
+			NEXT_ARG();
+			d = *argv;
+		} else if (strcmp(*argv, "port") == 0) {
+			NEXT_ARG();
+			p = *argv;
+		} else if (strcmp(*argv, "vid") == 0) {
+			NEXT_ARG();
+			vid = atoi(*argv);
+		} else if (strcmp(*argv, "src_vni") == 0) {
+			NEXT_ARG();
+			src_vni = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "proto") == 0) {
+			NEXT_ARG();
+			proto = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "permanent") == 0) {
+			entry.state |= MDB_PERMANENT;
+			state_mask |= MDB_PERMANENT;
+			set_attrs = true;
+		} else if (strcmp(*argv, "nopermanent") == 0) {
+			entry.state &= ~MDB_PERMANENT;
+			state_mask |= MDB_PERMANENT;
+			set_attrs = true;
+		} else if (strcmp(*argv, "dst") == 0) {
+			NEXT_ARG();
+			dst = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "dst_port") == 0) {
+			NEXT_ARG();
+			dst_port = *argv;
+			set_attrs = true;
+		} else if (strcmp(*argv, "vni") == 0) {
+			NEXT_ARG();
+			vni = *argv;
+			set_attrs = true;
+		} else {
+			if (strcmp(*argv, "help") == 0)
+				usage();
+		}
+		argc--; argv++;
+	}
+
+	if (d == NULL) {
+		fprintf(stderr, "Device is a required argument.\n");
+		return -1;
+	}
+
+	req.bpm.ifindex = ll_name_to_index(d);
+	if (!req.bpm.ifindex)
+		return nodev(d);
+
+	if (p) {
+		entry.ifindex = ll_name_to_index(p);
+		if (!entry.ifindex)
+			return nodev(p);
+	}
+
+	entry.vid = vid;
+	addattr_l(&req.n, sizeof(req), MDBA_SET_ENTRY, &entry, sizeof(entry));
+	if (set_attrs) {
+		struct rtattr *nest = addattr_nest(&req.n, sizeof(req),
+						   MDBA_SET_ENTRY_ATTRS);
+
+		nest->rta_type |= NLA_F_NESTED;
+
+		if (proto && mdb_parse_proto(&req.n, sizeof(req), proto)) {
+			fprintf(stderr, "Invalid protocol value \"%s\"\n",
+				proto);
+			return -1;
+		}
+
+		if (dst && mdb_parse_dst(&req.n, sizeof(req), dst)) {
+			fprintf(stderr, "Invalid underlay destination address \"%s\"\n",
+				dst);
+			return -1;
+		}
+
+		if (dst_port && mdb_parse_dst_port(&req.n, sizeof(req),
+						   dst_port)) {
+			fprintf(stderr, "Invalid destination port \"%s\"\n", dst_port);
+			return -1;
+		}
+
+		if (vni && mdb_parse_vni(&req.n, sizeof(req), vni,
+					 MDBE_ATTR_VNI)) {
+			fprintf(stderr, "Invalid destination VNI \"%s\"\n",
+				vni);
+			return -1;
+		}
+
+		if (src_vni && mdb_parse_vni(&req.n, sizeof(req), src_vni,
+					     MDBE_ATTR_SRC_VNI)) {
+			fprintf(stderr, "Invalid source VNI \"%s\"\n", src_vni);
+			return -1;
+		}
+
+		if (state_mask)
+			addattr8(&req.n, sizeof(req), MDBE_ATTR_STATE_MASK,
+				 state_mask);
+
+		addattr_nest_end(&req.n, nest);
+	}
+
+	if (rtnl_talk(&rth, &req.n, NULL) < 0)
+		return -1;
+
+	return 0;
+}
+
 int do_mdb(int argc, char **argv)
 {
 	ll_init_map(&rth);
@@ -962,6 +1095,8 @@ int do_mdb(int argc, char **argv)
 			return mdb_show(argc-1, argv+1);
 		if (strcmp(*argv, "get") == 0)
 			return mdb_get(argc-1, argv+1);
+		if (strcmp(*argv, "flush") == 0)
+			return mdb_flush(argc-1, argv+1);
 		if (matches(*argv, "help") == 0)
 			usage();
 	} else

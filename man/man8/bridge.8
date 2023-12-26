@@ -188,6 +188,25 @@ bridge \- show / manipulate bridge addresses and devices
 .IR SRC_VNI " ]"
 
 .ti -8
+.B "bridge mdb flush"
+.BI dev " DEV "
+.RB "[ " port
+.IR PORT " ]"
+.RB "[ " vid
+.IR VID " ]"
+.RB "[ " src_vni
+.IR SRC_VNI " ]"
+.RB "[ " proto
+.IR PROTO " ]"
+.RB "[ " [no]permanent " ]"
+.RB "[ " dst
+.IR IPADDR " ]"
+.RB "[ " dst_port
+.IR DST_PORT " ]"
+.RB "[ " vni
+.IR VNI " ]"
+
+.ti -8
 .BR "bridge vlan" " { " add " | " del " } "
 .B dev
 .I DEV
@@ -1171,6 +1190,54 @@ the VLAN ID. Only relevant when the bridge is VLAN-aware.
 .BI src_vni " SRC_VNI"
 the source VNI Network Identifier. Only relevant when the VXLAN device is in
 external mode.
+
+.SS bridge mdb flush - flush multicast group database entries.
+
+This command flushes the matching multicast group database entries.
+
+.TP
+.BI dev " DEV"
+the interface where this group address is associated.
+
+.TP
+.BI port " PORT"
+the target port for the operation. If the bridge device is specified then only
+entries pointing to the bridge itself will be deleted.
+
+.TP
+.BI vid " VID"
+the VLAN ID for the operation. Match entries only with the specified VLAN ID.
+
+.TP
+.BI src_vni " SRC_VNI"
+the source VNI Network Identifier for the operation. Match entries only with
+the specified source VNI.
+
+.TP
+.BI proto " PROTO"
+the routing protocol identifier for the operation. Match entries only with the
+specified routing protocol. Can be a number or a string from the file
+/etc/iproute2/rt_protos.
+
+.TP
+.B [no]permanent
+if specified then only permanent entries will be deleted or respectively if
+"no" is prepended then only non-permanent (temp) entries will be deleted.
+
+.TP
+.BI dst " IPADDR"
+the IP address of the destination VXLAN tunnel endpoint where the multicast
+receivers reside. Match entries only with the specified destination IP.
+
+.TP
+.BI dst_port " DST_PORT"
+the UDP destination port number to use to connect to the remote VXLAN tunnel
+endpoint. Match entries only with the specified destination port number.
+
+.TP
+.BI vni " VNI"
+the VXLAN VNI Network Identifier to use to connect to the remote VXLAN tunnel
+endpoint. Match entries only with the specified destination VNI.
 
 .SH bridge vlan - VLAN filter list
 
