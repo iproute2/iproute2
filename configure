@@ -250,8 +250,8 @@ check_elf()
 	echo "HAVE_ELF:=y" >>$CONFIG
 	echo "yes"
 
-	echo 'CFLAGS += -DHAVE_ELF' `${PKG_CONFIG} libelf --cflags` >> $CONFIG
-	echo 'LDLIBS += ' `${PKG_CONFIG} libelf --libs` >>$CONFIG
+	echo 'CFLAGS += -DHAVE_ELF' "$(${PKG_CONFIG} libelf --cflags)" >> $CONFIG
+	echo 'LDLIBS += ' "$(${PKG_CONFIG} libelf --libs)" >>$CONFIG
     else
 	echo "no"
     fi
@@ -369,8 +369,8 @@ check_selinux()
 		echo "HAVE_SELINUX:=y" >>$CONFIG
 		echo "yes"
 
-		echo 'LDLIBS +=' `${PKG_CONFIG} --libs libselinux` >>$CONFIG
-		echo 'CFLAGS += -DHAVE_SELINUX' `${PKG_CONFIG} --cflags libselinux` >>$CONFIG
+		echo 'LDLIBS +=' "$(${PKG_CONFIG} --libs libselinux)" >>$CONFIG
+		echo 'CFLAGS += -DHAVE_SELINUX' "$(${PKG_CONFIG} --cflags libselinux)" >>$CONFIG
 	else
 		echo "no"
 	fi
@@ -382,8 +382,8 @@ check_tirpc()
 		echo "HAVE_RPC:=y" >>$CONFIG
 		echo "yes"
 
-		echo 'LDLIBS +=' `${PKG_CONFIG} --libs libtirpc` >>$CONFIG
-		echo 'CFLAGS += -DHAVE_RPC' `${PKG_CONFIG} --cflags libtirpc` >>$CONFIG
+		echo 'LDLIBS +=' "$(${PKG_CONFIG} --libs libtirpc)" >>$CONFIG
+		echo 'CFLAGS += -DHAVE_RPC' "$(${PKG_CONFIG} --cflags libtirpc)" >>$CONFIG
 	else
 		echo "no"
 	fi
@@ -395,8 +395,8 @@ check_mnl()
 		echo "HAVE_MNL:=y" >>$CONFIG
 		echo "yes"
 
-		echo 'CFLAGS += -DHAVE_LIBMNL' `${PKG_CONFIG} libmnl --cflags` >>$CONFIG
-		echo 'LDLIBS +=' `${PKG_CONFIG} libmnl --libs` >> $CONFIG
+		echo 'CFLAGS += -DHAVE_LIBMNL' "$(${PKG_CONFIG} libmnl --cflags)" >>$CONFIG
+		echo 'LDLIBS +=' "$(${PKG_CONFIG} libmnl --libs)" >> $CONFIG
 	else
 		echo "no"
 	fi
@@ -436,8 +436,8 @@ EOF
 	echo "no"
     else
 	if ${PKG_CONFIG} libbsd --exists; then
-		echo 'CFLAGS += -DHAVE_LIBBSD' `${PKG_CONFIG} libbsd --cflags` >>$CONFIG
-		echo 'LDLIBS +=' `${PKG_CONFIG} libbsd --libs` >> $CONFIG
+		echo 'CFLAGS += -DHAVE_LIBBSD' "$(${PKG_CONFIG} libbsd --cflags)" >>$CONFIG
+		echo 'LDLIBS +=' "$(${PKG_CONFIG} libbsd --libs)" >> $CONFIG
 		echo "no"
 	else
 		echo 'CFLAGS += -DNEED_STRLCPY' >>$CONFIG
@@ -453,8 +453,8 @@ check_cap()
 		echo "HAVE_CAP:=y" >>$CONFIG
 		echo "yes"
 
-		echo 'CFLAGS += -DHAVE_LIBCAP' `${PKG_CONFIG} libcap --cflags` >>$CONFIG
-		echo 'LDLIBS +=' `${PKG_CONFIG} libcap --libs` >> $CONFIG
+		echo 'CFLAGS += -DHAVE_LIBCAP' "$(${PKG_CONFIG} libcap --cflags)" >>$CONFIG
+		echo 'LDLIBS +=' "$(${PKG_CONFIG} libcap --libs)" >> $CONFIG
 	else
 		echo "no"
 	fi
