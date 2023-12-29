@@ -99,6 +99,7 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 	uint32_t lqpn = 0, ps;
 	uint32_t cm_idn = 0;
 	char *comm = NULL;
+	SPRINT_BUF(b);
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_STATE] ||
 	    !nla_line[RDMA_NLDEV_ATTR_RES_PS])
@@ -156,8 +157,6 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
-		SPRINT_BUF(b);
-
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		if (!get_task_name(pid, b, sizeof(b)))
 			comm = b;

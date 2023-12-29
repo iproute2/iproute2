@@ -31,6 +31,7 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 	uint32_t pdn = 0;
 	uint32_t mrn = 0;
 	uint32_t pid = 0;
+	SPRINT_BUF(b);
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_MRLEN])
 		return MNL_CB_ERROR;
@@ -48,8 +49,6 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
-		SPRINT_BUF(b);
-
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		if (!get_task_name(pid, b, sizeof(b)))
 			comm = b;

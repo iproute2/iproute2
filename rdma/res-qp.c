@@ -84,6 +84,7 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 	uint32_t port = 0, pid = 0;
 	uint32_t pdn = 0;
 	char *comm = NULL;
+	SPRINT_BUF(b);
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_LQPN] ||
 	    !nla_line[RDMA_NLDEV_ATTR_RES_SQ_PSN] ||
@@ -144,8 +145,6 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
-		SPRINT_BUF(b);
-
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		if (!get_task_name(pid, b, sizeof(b)))
 			comm = b;

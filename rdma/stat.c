@@ -222,6 +222,7 @@ static int res_counter_line(struct rd *rd, const char *name, int index,
 	struct nlattr *hwc_table, *qp_table;
 	struct nlattr *nla_entry;
 	const char *comm = NULL;
+	SPRINT_BUF(b);
 	bool isfirst;
 	int err;
 
@@ -247,8 +248,6 @@ static int res_counter_line(struct rd *rd, const char *name, int index,
 		return MNL_CB_OK;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
-		SPRINT_BUF(b);
-
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		if (!get_task_name(pid, b, sizeof(b)))
 			comm = b;
