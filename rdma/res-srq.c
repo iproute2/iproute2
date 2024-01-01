@@ -22,7 +22,7 @@ static const char *srq_types_to_str(uint8_t idx)
 
 static void print_type(struct rd *rd, uint32_t val)
 {
-	print_color_string(PRINT_ANY, COLOR_NONE, "type", "type %s ",
+	print_string(PRINT_ANY, "type", "type %s ",
 			   srq_types_to_str(val));
 }
 
@@ -34,15 +34,15 @@ static void print_qps(char *qp_str)
 		return;
 
 	open_json_array(PRINT_ANY, "lqpn");
-	print_color_string(PRINT_FP, COLOR_NONE, NULL, " ", NULL);
+	print_string(PRINT_FP, NULL, " ", NULL);
 	qpn = strtok(qp_str, ",");
 	while (qpn) {
-		print_color_string(PRINT_ANY, COLOR_NONE, NULL, "%s", qpn);
+		print_string(PRINT_ANY, NULL, "%s", qpn);
 		qpn = strtok(NULL, ",");
 		if (qpn)
-			print_color_string(PRINT_FP, COLOR_NONE, NULL, ",", NULL);
+			print_string(PRINT_FP, NULL, ",", NULL);
 	}
-	print_color_string(PRINT_FP, COLOR_NONE, NULL, " ", NULL);
+	print_string(PRINT_FP, NULL, " ", NULL);
 	close_json_array(PRINT_JSON, NULL);
 }
 

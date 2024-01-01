@@ -32,18 +32,18 @@ static void print_rqpn(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 {
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_RQPN])
 		return;
-	print_color_uint(PRINT_ANY, COLOR_NONE, "rqpn", "rqpn %d ", val);
+	print_uint(PRINT_ANY, "rqpn", "rqpn %d ", val);
 }
 
 static void print_type(struct rd *rd, uint32_t val)
 {
-	print_color_string(PRINT_ANY, COLOR_NONE, "type", "type %s ",
+	print_string(PRINT_ANY, "type", "type %s ",
 			   qp_types_to_str(val));
 }
 
 static void print_state(struct rd *rd, uint32_t val)
 {
-	print_color_string(PRINT_ANY, COLOR_NONE, "state", "state %s ",
+	print_string(PRINT_ANY, "state", "state %s ",
 			   qp_states_to_str(val));
 }
 
@@ -52,7 +52,7 @@ static void print_rqpsn(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_RQ_PSN])
 		return;
 
-	print_color_uint(PRINT_ANY, COLOR_NONE, "rq-psn", "rq-psn %d ", val);
+	print_uint(PRINT_ANY, "rq-psn", "rq-psn %d ", val);
 }
 
 static void print_pathmig(struct rd *rd, uint32_t val, struct nlattr **nla_line)
@@ -60,7 +60,7 @@ static void print_pathmig(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE])
 		return;
 
-	print_color_string(PRINT_ANY, COLOR_NONE, "path-mig-state",
+	print_string(PRINT_ANY, "path-mig-state",
 			   "path-mig-state %s ", path_mig_to_str(val));
 }
 

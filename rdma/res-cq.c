@@ -21,7 +21,7 @@ static void print_poll_ctx(struct rd *rd, uint8_t poll_ctx, struct nlattr *attr)
 {
 	if (!attr)
 		return;
-	print_color_string(PRINT_ANY, COLOR_NONE, "poll-ctx", "poll-ctx %s ",
+	print_string(PRINT_ANY, "poll-ctx", "poll-ctx %s ",
 			   poll_ctx_to_str(poll_ctx));
 }
 

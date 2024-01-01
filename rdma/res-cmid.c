@@ -39,13 +39,13 @@ static const char *cm_id_ps_to_str(uint32_t ps)
 
 static void print_cm_id_state(struct rd *rd, uint8_t state)
 {
-	print_color_string(PRINT_ANY, COLOR_NONE, "state", "state %s ",
+	print_string(PRINT_ANY, "state", "state %s ",
 			   cm_id_state_to_str(state));
 }
 
 static void print_ps(struct rd *rd, uint32_t ps)
 {
-	print_color_string(PRINT_ANY, COLOR_NONE, "ps", "ps %s ",
+	print_string(PRINT_ANY, "ps", "ps %s ",
 			   cm_id_ps_to_str(ps));
 }
 
@@ -56,9 +56,9 @@ static void print_ipaddr(struct rd *rd, const char *key, char *addrstr,
 	char json_name[name_size];
 
 	snprintf(json_name, name_size, "%s:%u", addrstr, port);
-	print_color_string(PRINT_ANY, COLOR_NONE, key, key, json_name);
-	print_color_string(PRINT_FP, COLOR_NONE, NULL, " %s:", addrstr);
-	print_color_uint(PRINT_FP, COLOR_NONE, NULL, "%u ", port);
+	print_string(PRINT_ANY, key, key, json_name);
+	print_string(PRINT_FP, NULL, " %s:", addrstr);
+	print_uint(PRINT_FP, NULL, "%u ", port);
 }
 
 static int ss_ntop(struct nlattr *nla_line, char *addr_str, uint16_t *port)
