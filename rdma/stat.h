@@ -9,9 +9,7 @@
 
 #include "rdma.h"
 
-int res_get_hwcounters(struct rd *rd, struct nlattr *hwc_table,
-		       bool print);
-
+int res_get_hwcounters(struct nlattr *hwc_table, bool print);
 int stat_mr_parse_cb(const struct nlmsghdr *nlh, void *data);
 int stat_mr_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
 

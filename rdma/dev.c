@@ -84,7 +84,7 @@ static const char *dev_caps_to_str(uint32_t idx)
 	return "UNKNOWN";
 }
 
-static void dev_print_caps(struct rd *rd, struct nlattr **tb)
+static void dev_print_caps(struct nlattr **tb)
 {
 	uint64_t caps;
 	uint32_t idx;
@@ -106,9 +106,10 @@ static void dev_print_caps(struct rd *rd, struct nlattr **tb)
 	close_json_array(PRINT_ANY, ">");
 }
 
-static void dev_print_fw(struct rd *rd, struct nlattr **tb)
+static void dev_print_fw(struct nlattr **tb)
 {
 	const char *str;
+
 	if (!tb[RDMA_NLDEV_ATTR_FW_VERSION])
 		return;
 
@@ -116,7 +117,7 @@ static void dev_print_fw(struct rd *rd, struct nlattr **tb)
 	print_string(PRINT_ANY, "fw", "fw %s ", str);
 }
 
-static void dev_print_node_guid(struct rd *rd, struct nlattr **tb)
+static void dev_print_node_guid(struct nlattr **tb)
 {
 	uint64_t node_guid;
 	uint16_t vp[4];
@@ -132,7 +133,7 @@ static void dev_print_node_guid(struct rd *rd, struct nlattr **tb)
 			   str);
 }
 
-static void dev_print_sys_image_guid(struct rd *rd, struct nlattr **tb)
+static void dev_print_sys_image_guid(struct nlattr **tb)
 {
 	uint64_t sys_image_guid;
 	uint16_t vp[4];
@@ -147,7 +148,7 @@ static void dev_print_sys_image_guid(struct rd *rd, struct nlattr **tb)
 	print_string(PRINT_ANY, "sys_image_guid", "sys_image_guid %s ", str);
 }
 
-static void dev_print_dim_setting(struct rd *rd, struct nlattr **tb)
+static void dev_print_dim_setting(struct nlattr **tb)
 {
 	uint8_t dim_setting;
 
@@ -174,7 +175,7 @@ static const char *node_type_to_str(uint8_t node_type)
 	return "unknown";
 }
 
-static void dev_print_node_type(struct rd *rd, struct nlattr **tb)
+static void dev_print_node_type(struct nlattr **tb)
 {
 	const char *node_str;
 	uint8_t node_type;
@@ -187,7 +188,7 @@ static void dev_print_node_type(struct rd *rd, struct nlattr **tb)
 	print_string(PRINT_ANY, "node_type", "node_type %s ", node_str);
 }
 
-static void dev_print_dev_proto(struct rd *rd, struct nlattr **tb)
+static void dev_print_dev_proto(struct nlattr **tb)
 {
 	const char *str;
 
@@ -208,23 +209,26 @@ static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
 	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
 	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME])
 		return MNL_CB_ERROR;
+
 	open_json_object(NULL);
 	idx =  mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
 	print_uint(PRINT_ANY, "ifindex", "%u: ", idx);
 	print_string(PRINT_ANY, "ifname", "%s: ", name);
 
-	dev_print_node_type(rd, tb);
-	dev_print_dev_proto(rd, tb);
-	dev_print_fw(rd, tb);
-	dev_print_node_guid(rd, tb);
-	dev_print_sys_image_guid(rd, tb);
+	dev_print_node_type(tb);
+	dev_print_dev_proto(tb);
+	dev_print_fw(tb);
+	dev_print_node_guid(tb);
+	dev_print_sys_image_guid(tb);
 	if (rd->show_details) {
-		dev_print_dim_setting(rd, tb);
-		dev_print_caps(rd, tb);
+		dev_print_dim_setting(tb);
+		dev_print_caps(tb);
 	}
 
-	newline(rd);
+	close_json_object();
+	newline();
+
 	return MNL_CB_OK;
 }
 

@@ -29,7 +29,7 @@ static int res_help(struct rd *rd)
 	return 0;
 }
 
-static int res_print_summary(struct rd *rd, struct nlattr **tb)
+static int res_print_summary(struct nlattr **tb)
 {
 	struct nlattr *nla_table = tb[RDMA_NLDEV_ATTR_RES_SUMMARY];
 	struct nlattr *nla_entry;
@@ -51,8 +51,7 @@ static int res_print_summary(struct rd *rd, struct nlattr **tb)
 
 		name = mnl_attr_get_str(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_NAME]);
 		curr = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
-		res_print_u64(rd, name, curr,
-			      nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
+		res_print_u64(name, curr, nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
 	}
 	return 0;
 }
@@ -65,7 +64,6 @@ static int res_no_args_idx_parse_cb(const struct nlmsghdr *nlh, void *data)
 static int res_no_args_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
-	struct rd *rd = data;
 	const char *name;
 	uint32_t idx;
 
@@ -80,8 +78,10 @@ static int res_no_args_parse_cb(const struct nlmsghdr *nlh, void *data)
 	open_json_object(NULL);
 	print_uint(PRINT_ANY, "ifindex", "%u: ", idx);
 	print_string(PRINT_ANY, "ifname", "%s: ", name);
-	res_print_summary(rd, tb);
-	newline(rd);
+	res_print_summary(tb);
+	close_json_object();
+	newline();
+
 	return MNL_CB_OK;
 }
 
@@ -153,7 +153,7 @@ const char *qp_types_to_str(uint8_t idx)
 	return (idx == 0xFF) ? "DRIVER" : "UNKNOWN";
 }
 
-void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)
+void print_comm(const char *str, struct nlattr **nla_line)
 {
 	char tmp[18];
 
@@ -167,13 +167,13 @@ void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)
 	print_string(PRINT_ANY, "comm", "comm %s ", tmp);
 }
 
-void print_dev(struct rd *rd, uint32_t idx, const char *name)
+void print_dev(uint32_t idx, const char *name)
 {
 	print_int(PRINT_ANY, "ifindex", NULL, idx);
 	print_string(PRINT_ANY, "ifname", "dev %s ", name);
 }
 
-void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
+void print_link(uint32_t idx, const char *name, uint32_t port,
 		struct nlattr **nla_line)
 {
 	char tmp[64] = {};
@@ -190,13 +190,12 @@ void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 	print_string(PRINT_FP, NULL, "link %s ", tmp);
 }
 
-void print_qp_type(struct rd *rd, uint32_t val)
+void print_qp_type(uint32_t val)
 {
 	print_string(PRINT_ANY, "qp-type", "qp-type %s ", qp_types_to_str(val));
 }
 
-void print_key(struct rd *rd, const char *name, uint64_t val,
-	       struct nlattr *nlattr)
+void print_key(const char *name, uint64_t val, struct nlattr *nlattr)
 {
 	if (!nlattr)
 		return;
@@ -204,8 +203,7 @@ void print_key(struct rd *rd, const char *name, uint64_t val,
 	print_hex(PRINT_ANY, name, " 0x%" PRIx64 " ", val);
 }
 
-void res_print_u32(struct rd *rd, const char *name, uint32_t val,
-		    struct nlattr *nlattr)
+void res_print_u32(const char *name, uint32_t val, struct nlattr *nlattr)
 {
 	if (!nlattr)
 		return;
@@ -213,8 +211,7 @@ void res_print_u32(struct rd *rd, const char *name, uint32_t val,
 	print_uint(PRINT_FP, NULL, " %" PRIu32 " ", val);
 }
 
-void res_print_u64(struct rd *rd, const char *name, uint64_t val,
-		    struct nlattr *nlattr)
+void res_print_u64(const char *name, uint64_t val, struct nlattr *nlattr)
 {
 	if (!nlattr)
 		return;

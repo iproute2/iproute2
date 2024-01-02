@@ -86,7 +86,7 @@ static const char *caps_to_str(uint32_t idx)
 	return "UNKNOWN";
 }
 
-static void link_print_caps(struct rd *rd, struct nlattr **tb)
+static void link_print_caps(struct nlattr **tb)
 {
 	uint64_t caps;
 	uint32_t idx;
@@ -108,7 +108,7 @@ static void link_print_caps(struct rd *rd, struct nlattr **tb)
 	close_json_array(PRINT_ANY, ">");
 }
 
-static void link_print_subnet_prefix(struct rd *rd, struct nlattr **tb)
+static void link_print_subnet_prefix(struct nlattr **tb)
 {
 	uint64_t subnet_prefix;
 	uint16_t vp[4];
@@ -123,7 +123,7 @@ static void link_print_subnet_prefix(struct rd *rd, struct nlattr **tb)
 	print_string(PRINT_ANY, "subnet_prefix", "subnet_prefix %s ", str);
 }
 
-static void link_print_lid(struct rd *rd, struct nlattr **tb)
+static void link_print_lid(struct nlattr **tb)
 {
 	uint32_t lid;
 
@@ -134,7 +134,7 @@ static void link_print_lid(struct rd *rd, struct nlattr **tb)
 	print_uint(PRINT_ANY, "lid", "lid %u ", lid);
 }
 
-static void link_print_sm_lid(struct rd *rd, struct nlattr **tb)
+static void link_print_sm_lid(struct nlattr **tb)
 {
 	uint32_t sm_lid;
 
@@ -145,7 +145,7 @@ static void link_print_sm_lid(struct rd *rd, struct nlattr **tb)
 	print_uint(PRINT_ANY, "sm_lid", "sm_lid %u ", sm_lid);
 }
 
-static void link_print_lmc(struct rd *rd, struct nlattr **tb)
+static void link_print_lmc(struct nlattr **tb)
 {
 	uint8_t lmc;
 
@@ -167,7 +167,7 @@ static const char *link_state_to_str(uint8_t link_state)
 	return "UNKNOWN";
 }
 
-static void link_print_state(struct rd *rd, struct nlattr **tb)
+static void link_print_state(struct nlattr **tb)
 {
 	uint8_t state;
 
@@ -192,7 +192,7 @@ static const char *phys_state_to_str(uint8_t phys_state)
 	return "UNKNOWN";
 };
 
-static void link_print_phys_state(struct rd *rd, struct nlattr **tb)
+static void link_print_phys_state(struct nlattr **tb)
 {
 	uint8_t phys_state;
 
@@ -204,7 +204,7 @@ static void link_print_phys_state(struct rd *rd, struct nlattr **tb)
 		     phys_state_to_str(phys_state));
 }
 
-static void link_print_netdev(struct rd *rd, struct nlattr **tb)
+static void link_print_netdev(const struct rd * rd, struct nlattr **tb)
 {
 	const char *netdev_name;
 	uint32_t idx;
@@ -242,17 +242,19 @@ static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
 	print_uint(PRINT_JSON, "ifindex", NULL, idx);
 	print_string(PRINT_ANY, "ifname", "link %s/", name);
 	print_uint(PRINT_ANY, "port", "%u ", port);
-	link_print_subnet_prefix(rd, tb);
-	link_print_lid(rd, tb);
-	link_print_sm_lid(rd, tb);
-	link_print_lmc(rd, tb);
-	link_print_state(rd, tb);
-	link_print_phys_state(rd, tb);
+	link_print_subnet_prefix(tb);
+	link_print_lid(tb);
+	link_print_sm_lid(tb);
+	link_print_lmc(tb);
+	link_print_state(tb);
+	link_print_phys_state(tb);
 	link_print_netdev(rd, tb);
 	if (rd->show_details)
-		link_print_caps(rd, tb);
+		link_print_caps(tb);
 
-	newline(rd);
+	close_json_object();
+	newline();
+
 	return MNL_CB_OK;
 }
 

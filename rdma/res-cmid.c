@@ -37,20 +37,17 @@ static const char *cm_id_ps_to_str(uint32_t ps)
 	}
 }
 
-static void print_cm_id_state(struct rd *rd, uint8_t state)
+static void print_cm_id_state(uint8_t state)
 {
-	print_string(PRINT_ANY, "state", "state %s ",
-			   cm_id_state_to_str(state));
+	print_string(PRINT_ANY, "state", "state %s ", cm_id_state_to_str(state));
 }
 
-static void print_ps(struct rd *rd, uint32_t ps)
+static void print_ps(uint32_t ps)
 {
-	print_string(PRINT_ANY, "ps", "ps %s ",
-			   cm_id_ps_to_str(ps));
+	print_string(PRINT_ANY, "ps", "ps %s ", cm_id_ps_to_str(ps));
 }
 
-static void print_ipaddr(struct rd *rd, const char *key, char *addrstr,
-			 uint16_t port)
+static void print_ipaddr(const char *key, char *addrstr, uint16_t port)
 {
 	int name_size = INET6_ADDRSTRLEN + strlen(":65535");
 	char json_name[name_size];
@@ -181,24 +178,24 @@ static int res_cm_id_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	open_json_object(NULL);
-	print_link(rd, idx, name, port, nla_line);
-	res_print_u32(rd, "cm-idn", cm_idn,
-		       nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN]);
-	res_print_u32(rd, "lqpn", lqpn, nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
+	print_link(idx, name, port, nla_line);
+	res_print_u32("cm-idn", cm_idn, nla_line[RDMA_NLDEV_ATTR_RES_CM_IDN]);
+	res_print_u32("lqpn", lqpn, nla_line[RDMA_NLDEV_ATTR_RES_LQPN]);
 	if (nla_line[RDMA_NLDEV_ATTR_RES_TYPE])
-		print_qp_type(rd, type);
-	print_cm_id_state(rd, state);
-	print_ps(rd, ps);
-	res_print_u32(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
-	print_comm(rd, comm, nla_line);
+		print_qp_type(type);
+	print_cm_id_state(state);
+	print_ps(ps);
+	res_print_u32("pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
+	print_comm(comm, nla_line);
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_SRC_ADDR])
-		print_ipaddr(rd, "src-addr", src_addr_str, src_port);
+		print_ipaddr("src-addr", src_addr_str, src_port);
 	if (nla_line[RDMA_NLDEV_ATTR_RES_DST_ADDR])
-		print_ipaddr(rd, "dst-addr", dst_addr_str, dst_port);
+		print_ipaddr("dst-addr", dst_addr_str, dst_port);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
-	newline(rd);
+	close_json_object();
+	newline();
 
 out:
 	return MNL_CB_OK;
