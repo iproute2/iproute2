@@ -304,8 +304,7 @@ static int res_counter_line(struct rd *rd, const char *name, int index,
 
 		qpn = mnl_attr_get_u32(qp_line[RDMA_NLDEV_ATTR_RES_LQPN]);
 		if (!isfirst)
-			print_string(PRINT_FP, NULL, ",",
-					   NULL);
+			print_string(PRINT_FP, NULL, ",", NULL);
 		print_uint(PRINT_ANY, NULL, "%d", qpn);
 		isfirst = false;
 	}
@@ -790,28 +789,23 @@ static int do_stat_mode_parse_cb(const struct nlmsghdr *nlh, void *data,
 		if (supported || enabled) {
 			if (isfirst) {
 				open_json_object(NULL);
-				print_string(PRINT_ANY,
-						   "ifname", "link %s/", dev);
-				print_uint(PRINT_ANY, "port",
-						 "%u ", port);
+				print_string(PRINT_ANY, "ifname", "link %s/", dev);
+				print_uint(PRINT_ANY, "port", "%u ", port);
 				if (supported)
 					open_json_array(PRINT_ANY,
-						"supported optional-counters");
+							"supported optional-counters");
 				else
 					open_json_array(PRINT_ANY,
 							"optional-counters");
-				print_string(PRINT_FP, NULL,
-						   " ", NULL);
+				print_string(PRINT_FP, NULL, " ", NULL);
 				isfirst = false;
 			} else {
-				print_string(PRINT_FP, NULL,
-						   ",", NULL);
+				print_string(PRINT_FP, NULL, ",", NULL);
 			}
 			if (rd->pretty_output && !rd->json_output)
 				newline_indent(rd);
 
-			print_string(PRINT_ANY, NULL, "%s",
-					   name);
+			print_string(PRINT_ANY, NULL, "%s", name);
 		}
 	}
 

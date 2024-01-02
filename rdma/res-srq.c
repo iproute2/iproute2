@@ -22,8 +22,7 @@ static const char *srq_types_to_str(uint8_t idx)
 
 static void print_type(struct rd *rd, uint32_t val)
 {
-	print_string(PRINT_ANY, "type", "type %s ",
-			   srq_types_to_str(val));
+	print_string(PRINT_ANY, "type", "type %s ", srq_types_to_str(val));
 }
 
 static void print_qps(char *qp_str)

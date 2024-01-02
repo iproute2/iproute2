@@ -144,8 +144,7 @@ static void dev_print_sys_image_guid(struct rd *rd, struct nlattr **tb)
 	sys_image_guid = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_SYS_IMAGE_GUID]);
 	memcpy(vp, &sys_image_guid, sizeof(uint64_t));
 	snprintf(str, 32, "%04x:%04x:%04x:%04x", vp[3], vp[2], vp[1], vp[0]);
-	print_string(PRINT_ANY, "sys_image_guid",
-			   "sys_image_guid %s ", str);
+	print_string(PRINT_ANY, "sys_image_guid", "sys_image_guid %s ", str);
 }
 
 static void dev_print_dim_setting(struct rd *rd, struct nlattr **tb)
@@ -185,8 +184,7 @@ static void dev_print_node_type(struct rd *rd, struct nlattr **tb)
 
 	node_type = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_DEV_NODE_TYPE]);
 	node_str = node_type_to_str(node_type);
-	print_string(PRINT_ANY, "node_type", "node_type %s ",
-			   node_str);
+	print_string(PRINT_ANY, "node_type", "node_type %s ", node_str);
 }
 
 static void dev_print_dev_proto(struct rd *rd, struct nlattr **tb)

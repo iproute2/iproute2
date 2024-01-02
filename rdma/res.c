@@ -51,9 +51,8 @@ static int res_print_summary(struct rd *rd, struct nlattr **tb)
 
 		name = mnl_attr_get_str(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_NAME]);
 		curr = mnl_attr_get_u64(nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
-		res_print_u64(
-			rd, name, curr,
-			nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
+		res_print_u64(rd, name, curr,
+			      nla_line[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]);
 	}
 	return 0;
 }
@@ -189,14 +188,12 @@ void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 	}
 
 	if (!rd->json_output)
-		print_string(PRINT_ANY, NULL, "link %s ",
-				   tmp);
+		print_string(PRINT_ANY, NULL, "link %s ", tmp);
 }
 
 void print_qp_type(struct rd *rd, uint32_t val)
 {
-	print_string(PRINT_ANY, "qp-type", "qp-type %s ",
-			   qp_types_to_str(val));
+	print_string(PRINT_ANY, "qp-type", "qp-type %s ", qp_types_to_str(val));
 }
 
 void print_key(struct rd *rd, const char *name, uint64_t val,

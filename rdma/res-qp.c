@@ -37,14 +37,12 @@ static void print_rqpn(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 
 static void print_type(struct rd *rd, uint32_t val)
 {
-	print_string(PRINT_ANY, "type", "type %s ",
-			   qp_types_to_str(val));
+	print_string(PRINT_ANY, "type", "type %s ", qp_types_to_str(val));
 }
 
 static void print_state(struct rd *rd, uint32_t val)
 {
-	print_string(PRINT_ANY, "state", "state %s ",
-			   qp_states_to_str(val));
+	print_string(PRINT_ANY, "state", "state %s ", qp_states_to_str(val));
 }
 
 static void print_rqpsn(struct rd *rd, uint32_t val, struct nlattr **nla_line)
@@ -60,8 +58,7 @@ static void print_pathmig(struct rd *rd, uint32_t val, struct nlattr **nla_line)
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE])
 		return;
 
-	print_string(PRINT_ANY, "path-mig-state",
-			   "path-mig-state %s ", path_mig_to_str(val));
+	print_string(PRINT_ANY, "path-mig-state", "path-mig-state %s ", path_mig_to_str(val));
 }
 
 static int res_qp_line_raw(struct rd *rd, const char *name, int idx,

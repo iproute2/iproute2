@@ -120,8 +120,7 @@ static void link_print_subnet_prefix(struct rd *rd, struct nlattr **tb)
 	subnet_prefix = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_SUBNET_PREFIX]);
 	memcpy(vp, &subnet_prefix, sizeof(uint64_t));
 	snprintf(str, 32, "%04x:%04x:%04x:%04x", vp[3], vp[2], vp[1], vp[0]);
-	print_string(PRINT_ANY, "subnet_prefix",
-			   "subnet_prefix %s ", str);
+	print_string(PRINT_ANY, "subnet_prefix", "subnet_prefix %s ", str);
 }
 
 static void link_print_lid(struct rd *rd, struct nlattr **tb)
@@ -176,8 +175,7 @@ static void link_print_state(struct rd *rd, struct nlattr **tb)
 		return;
 
 	state = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_PORT_STATE]);
-	print_string(PRINT_ANY, "state", "state %s ",
-			   link_state_to_str(state));
+	print_string(PRINT_ANY, "state", "state %s ", link_state_to_str(state));
 }
 
 static const char *phys_state_to_str(uint8_t phys_state)
@@ -202,8 +200,8 @@ static void link_print_phys_state(struct rd *rd, struct nlattr **tb)
 		return;
 
 	phys_state = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_PORT_PHYS_STATE]);
-	print_string(PRINT_ANY, "physical_state",
-			   "physical_state %s ", phys_state_to_str(phys_state));
+	print_string(PRINT_ANY, "physical_state", "physical_state %s ",
+		     phys_state_to_str(phys_state));
 }
 
 static void link_print_netdev(struct rd *rd, struct nlattr **tb)
@@ -216,10 +214,8 @@ static void link_print_netdev(struct rd *rd, struct nlattr **tb)
 
 	netdev_name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_NDEV_NAME]);
 	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_NDEV_INDEX]);
-	print_string(PRINT_ANY, "netdev", "netdev %s ",
-			   netdev_name);
-	print_uint(PRINT_ANY, "netdev_index",
-			 rd->show_details ? "netdev_index %u " : "", idx);
+	print_string(PRINT_ANY, "netdev", "netdev %s ", netdev_name);
+	print_uint(PRINT_ANY, "netdev_index", rd->show_details ? "netdev_index %u " : "", idx);
 }
 
 static int link_parse_cb(const struct nlmsghdr *nlh, void *data)

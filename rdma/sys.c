@@ -36,8 +36,7 @@ static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 		else
 			mode_str = "unknown";
 
-		print_string(PRINT_ANY, "netns", "netns %s ",
-				   mode_str);
+		print_string(PRINT_ANY, "netns", "netns %s ", mode_str);
 	}
 
 	if (tb[RDMA_NLDEV_SYS_ATTR_PRIVILEGED_QKEY_MODE]) {
@@ -45,17 +44,14 @@ static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 
 		mode = mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_PRIVILEGED_QKEY_MODE]);
 
-		print_on_off(PRINT_ANY, "privileged-qkey",
-				   "privileged-qkey %s ", mode);
+		print_on_off(PRINT_ANY, "privileged-qkey", "privileged-qkey %s ", mode);
 
 	}
 
 	if (tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK])
 		cof = mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK]);
 
-	print_on_off(PRINT_ANY, "copy-on-fork",
-			   "copy-on-fork %s\n",
-			   cof);
+	print_on_off(PRINT_ANY, "copy-on-fork", "copy-on-fork %s\n", cof);
 
 	return MNL_CB_OK;
 }
