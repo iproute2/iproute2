@@ -68,7 +68,6 @@ struct rd {
 	struct nlmsghdr *nlh;
 	char *buff;
 	json_writer_t *jw;
-	int pretty_output;
 	bool suppress_errors;
 	struct list_head filter_list;
 	char *link_name;

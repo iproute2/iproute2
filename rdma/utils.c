@@ -920,8 +920,7 @@ void print_driver_table(struct rd *rd, struct nlattr *tb)
 	if (!rd->show_driver_details || !tb)
 		return;
 
-	if (rd->pretty_output)
-		newline_indent(rd);
+	newline_indent(rd);
 
 	/*
 	 * Driver attrs are tuples of {key, [print-type], value}.
@@ -933,8 +932,7 @@ void print_driver_table(struct rd *rd, struct nlattr *tb)
 	mnl_attr_for_each_nested(tb_entry, tb) {
 
 		if (cc > MAX_LINE_LENGTH) {
-			if (rd->pretty_output)
-				newline_indent(rd);
+			newline_indent(rd);
 			cc = 0;
 		}
 		if (rd_attr_check(tb_entry, &type) != MNL_CB_OK)

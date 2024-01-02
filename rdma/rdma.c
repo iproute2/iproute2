@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 			       filename, version);
 			return EXIT_SUCCESS;
 		case 'p':
-			pretty = 1;
+			++pretty;
 			break;
 		case 'd':
 			if (show_details)
@@ -153,7 +153,6 @@ int main(int argc, char **argv)
 
 	rd.show_details = show_details;
 	rd.show_driver_details = show_driver_details;
-	rd.pretty_output = pretty;
 	rd.show_raw = show_raw;
 
 	err = rd_init(&rd, filename);
