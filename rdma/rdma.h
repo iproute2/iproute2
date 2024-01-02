@@ -61,6 +61,7 @@ struct rd {
 	uint8_t show_details:1;
 	uint8_t show_driver_details:1;
 	uint8_t show_raw:1;
+	uint8_t suppress_errors:1;
 	struct list_head dev_map_list;
 	uint32_t dev_idx;
 	uint32_t port_idx;
@@ -68,7 +69,6 @@ struct rd {
 	struct nlmsghdr *nlh;
 	char *buff;
 	json_writer_t *jw;
-	bool suppress_errors;
 	struct list_head filter_list;
 	char *link_name;
 	char *link_type;
