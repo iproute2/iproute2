@@ -8,6 +8,9 @@
 #include "version.h"
 #include "color.h"
 
+/* Global utils flags */
+int json;
+
 static void help(char *name)
 {
 	pr_out("Usage: %s [ OPTIONS ] OBJECT { COMMAND | help }\n"
@@ -96,7 +99,6 @@ int main(int argc, char **argv)
 	bool show_driver_details = false;
 	const char *batch_file = NULL;
 	bool show_details = false;
-	bool json_output = false;
 	bool show_raw = false;
 	bool force = false;
 	struct rd rd = {};
@@ -125,7 +127,7 @@ int main(int argc, char **argv)
 			show_raw = true;
 			break;
 		case 'j':
-			json_output = 1;
+			++json;
 			break;
 		case 'f':
 			force = true;
@@ -151,7 +153,6 @@ int main(int argc, char **argv)
 
 	rd.show_details = show_details;
 	rd.show_driver_details = show_driver_details;
-	rd.json_output = json_output;
 	rd.pretty_output = pretty;
 	rd.show_raw = show_raw;
 

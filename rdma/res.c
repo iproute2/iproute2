@@ -160,7 +160,7 @@ void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line)
 	if (!str)
 		return;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_PID] || rd->json_output)
+	if (nla_line[RDMA_NLDEV_ATTR_RES_PID] || is_json_context())
 		snprintf(tmp, sizeof(tmp), "%s", str);
 	else
 		snprintf(tmp, sizeof(tmp), "[%s]", str);
@@ -187,8 +187,7 @@ void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
 		snprintf(tmp, sizeof(tmp), "%s/-", name);
 	}
 
-	if (!rd->json_output)
-		print_string(PRINT_ANY, NULL, "link %s ", tmp);
+	print_string(PRINT_FP, NULL, "link %s ", tmp);
 }
 
 void print_qp_type(struct rd *rd, uint32_t val)

@@ -572,7 +572,7 @@ int rd_exec_link(struct rd *rd, int (*cb)(struct rd *rd), bool strict_port)
 	uint32_t port;
 	int ret = 0;
 
-	new_json_obj(rd->json_output);
+	new_json_obj(json);
 	if (rd_no_arg(rd)) {
 		list_for_each_entry(dev_map, &rd->dev_map_list, list) {
 			rd->dev_idx = dev_map->idx;
@@ -621,7 +621,7 @@ int rd_exec_dev(struct rd *rd, int (*cb)(struct rd *rd))
 	struct dev_map *dev_map;
 	int ret = 0;
 
-	new_json_obj(rd->json_output);
+	new_json_obj(json);
 	if (rd_no_arg(rd)) {
 		list_for_each_entry(dev_map, &rd->dev_map_list, list) {
 			rd->dev_idx = dev_map->idx;
@@ -794,7 +794,7 @@ static int print_driver_string(struct rd *rd, const char *key_str,
 static int print_driver_s32(struct rd *rd, const char *key_str, int32_t val,
 			      enum rdma_nldev_print_type print_type)
 {
-	if (!rd->json_output) {
+	if (!is_json_context()) {
 		switch (print_type) {
 		case RDMA_NLDEV_PRINT_TYPE_UNSPEC:
 			return pr_out("%s %d ", key_str, val);
@@ -811,7 +811,7 @@ static int print_driver_s32(struct rd *rd, const char *key_str, int32_t val,
 static int print_driver_u32(struct rd *rd, const char *key_str, uint32_t val,
 			      enum rdma_nldev_print_type print_type)
 {
-	if (!rd->json_output) {
+	if (!is_json_context()) {
 		switch (print_type) {
 		case RDMA_NLDEV_PRINT_TYPE_UNSPEC:
 			return pr_out("%s %u ", key_str, val);
@@ -828,7 +828,7 @@ static int print_driver_u32(struct rd *rd, const char *key_str, uint32_t val,
 static int print_driver_s64(struct rd *rd, const char *key_str, int64_t val,
 			      enum rdma_nldev_print_type print_type)
 {
-	if (!rd->json_output) {
+	if (!is_json_context()) {
 		switch (print_type) {
 		case RDMA_NLDEV_PRINT_TYPE_UNSPEC:
 			return pr_out("%s %" PRId64 " ", key_str, val);
@@ -845,7 +845,7 @@ static int print_driver_s64(struct rd *rd, const char *key_str, int64_t val,
 static int print_driver_u64(struct rd *rd, const char *key_str, uint64_t val,
 			      enum rdma_nldev_print_type print_type)
 {
-	if (!rd->json_output) {
+	if (!is_json_context()) {
 		switch (print_type) {
 		case RDMA_NLDEV_PRINT_TYPE_UNSPEC:
 			return pr_out("%s %" PRIu64 " ", key_str, val);
