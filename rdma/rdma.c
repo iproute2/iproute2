@@ -16,7 +16,7 @@ static void help(char *name)
 	pr_out("Usage: %s [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "       %s [ -f[orce] ] -b[atch] filename\n"
 	       "where  OBJECT := { dev | link | resource | system | statistic | help }\n"
-	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty] -r[aw]}\n", name, name);
+	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty] | -r[aw]}\n", name, name);
 }
 
 static int cmd_help(struct rd *rd)
@@ -89,6 +89,7 @@ int main(int argc, char **argv)
 		{ "version",		no_argument,		NULL, 'V' },
 		{ "help",		no_argument,		NULL, 'h' },
 		{ "json",		no_argument,		NULL, 'j' },
+		{ "oneline",		no_argument,            NULL, 'o' },
 		{ "pretty",		no_argument,		NULL, 'p' },
 		{ "details",		no_argument,		NULL, 'd' },
 		{ "raw",		no_argument,		NULL, 'r' },
@@ -101,13 +102,14 @@ int main(int argc, char **argv)
 	bool show_details = false;
 	bool show_raw = false;
 	bool force = false;
+	bool oneline = false;
 	struct rd rd = {};
 	char *filename;
 	int opt;
 	int err;
 	filename = basename(argv[0]);
 
-	while ((opt = getopt_long(argc, argv, ":Vhdrpjfb:",
+	while ((opt = getopt_long(argc, argv, ":Vhdropjfb:",
 				  long_options, NULL)) >= 0) {
 		switch (opt) {
 		case 'V':
@@ -125,6 +127,9 @@ int main(int argc, char **argv)
 			break;
 		case 'r':
 			show_raw = true;
+			break;
+		case 'o':
+			oneline = true;
 			break;
 		case 'j':
 			++json;
@@ -150,6 +155,8 @@ int main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	_SL_ = oneline ? "\\" : "\n";
 
 	rd.show_details = show_details;
 	rd.show_driver_details = show_driver_details;

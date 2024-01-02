@@ -51,7 +51,8 @@ static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 	if (tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK])
 		cof = mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK]);
 
-	print_on_off(PRINT_ANY, "copy-on-fork", "copy-on-fork %s\n", cof);
+	print_on_off(PRINT_ANY, "copy-on-fork", "copy-on-fork %s", cof);
+	print_nl();
 
 	return MNL_CB_OK;
 }

@@ -94,7 +94,7 @@ static void dev_print_caps(struct rd *rd, struct nlattr **tb)
 
 	caps = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_CAP_FLAGS]);
 
-	print_string(PRINT_FP, NULL, "\n    caps: <", NULL);
+	print_string(PRINT_FP, NULL, "%s    caps: <", _SL_);
 	open_json_array(PRINT_JSON, "caps");
 	for (idx = 0; caps; idx++) {
 		if (caps & 0x1)

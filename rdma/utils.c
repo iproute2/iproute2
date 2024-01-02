@@ -774,7 +774,7 @@ struct dev_map *dev_map_lookup(struct rd *rd, bool allow_port_index)
 void newline(struct rd *rd)
 {
 	close_json_object();
-	print_string(PRINT_FP, NULL, "\n", NULL);
+	print_nl();
 }
 
 void newline_indent(struct rd *rd)
