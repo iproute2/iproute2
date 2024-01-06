@@ -112,6 +112,10 @@ static void print_json(FILE *of, const struct lnstat_file *lnstat_files,
 	json_writer_t *jw = jsonw_new(of);
 	int i;
 
+	if (jw == NULL) {
+		fprintf(stderr, "Failed to create JSON writer\n");
+		exit(1);
+	}
 	jsonw_start_object(jw);
 	for (i = 0; i < fp->num; i++) {
 		const struct lnstat_field *lf = fp->params[i].lf;
