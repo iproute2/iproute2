@@ -75,6 +75,7 @@
 int preferred_family = AF_UNSPEC;
 static int show_options;
 int show_details;
+static int show_queues = 1;
 static int show_processes;
 static int show_threads;
 static int show_mem;
@@ -1425,10 +1426,13 @@ static void sock_state_print(struct sockstat *s)
 		out("%s", sstate_name[s->state]);
 	}
 
-	field_set(COL_RECVQ);
-	out("%-6d", s->rq);
-	field_set(COL_SENDQ);
-	out("%-6d", s->wq);
+	if (show_queues) {
+		field_set(COL_RECVQ);
+		out("%-6d", s->rq);
+		field_set(COL_SENDQ);
+		out("%-6d", s->wq);
+	}
+
 	field_set(COL_ADDR);
 }
 
@@ -5380,6 +5384,7 @@ static void _usage(FILE *dest)
 "\n"
 "   -K, --kill          forcibly close sockets, display what was closed\n"
 "   -H, --no-header     Suppress header line\n"
+"   -Q, --no-queues     Suppress sending and receiving queue columns\n"
 "   -O, --oneline       socket's data printed on a single line\n"
 "       --inet-sockopt  show various inet socket options\n"
 "\n"
@@ -5523,6 +5528,7 @@ static const struct option long_opts[] = {
 	{ "cgroup", 0, 0, OPT_CGROUP },
 	{ "kill", 0, 0, 'K' },
 	{ "no-header", 0, 0, 'H' },
+	{ "no-queues", 0, 0, 'Q' },
 	{ "xdp", 0, 0, OPT_XDPSOCK},
 	{ "mptcp", 0, 0, 'M' },
 	{ "oneline", 0, 0, 'O' },
@@ -5542,7 +5548,7 @@ int main(int argc, char *argv[])
 	int state_filter = 0;
 
 	while ((ch = getopt_long(argc, argv,
-				 "dhalBetuwxnro460spTbEf:mMiA:D:F:vVzZN:KHSO",
+				 "dhalBetuwxnro460spTbEf:mMiA:D:F:vVzZN:KHQSO",
 				 long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'n':
@@ -5726,6 +5732,9 @@ int main(int argc, char *argv[])
 		case 'H':
 			show_header = 0;
 			break;
+		case 'Q':
+			show_queues = 0;
+			break;
 		case 'O':
 			oneline = 1;
 			break;
@@ -5823,6 +5832,11 @@ int main(int argc, char *argv[])
 
 	if (!show_processes)
 		columns[COL_PROC].disabled = 1;
+
+	if (!show_queues) {
+		columns[COL_SENDQ].disabled = 1;
+		columns[COL_RECVQ].disabled = 1;
+	}
 
 	if (!(current_filter.dbs & (current_filter.dbs - 1)))
 		columns[COL_NETID].disabled = 1;
