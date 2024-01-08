@@ -86,7 +86,7 @@ static const char *caps_to_str(uint32_t idx)
 	return "UNKNOWN";
 }
 
-static void link_print_caps(struct rd *rd, struct nlattr **tb)
+static void link_print_caps(struct nlattr **tb)
 {
 	uint64_t caps;
 	uint32_t idx;
@@ -96,11 +96,11 @@ static void link_print_caps(struct rd *rd, struct nlattr **tb)
 
 	caps = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_CAP_FLAGS]);
 
-	print_color_string(PRINT_FP, COLOR_NONE, NULL, "\n    caps: <", NULL);
+	print_string(PRINT_FP, NULL, "%s    caps: <", _SL_);
 	open_json_array(PRINT_JSON, "caps");
 	for (idx = 0; caps; idx++) {
 		if (caps & 0x1)
-			print_color_string(PRINT_ANY, COLOR_NONE, NULL,
+			print_string(PRINT_ANY, NULL,
 					   caps >> 0x1 ? "%s, " : "%s",
 					   caps_to_str(idx));
 		caps >>= 0x1;
@@ -108,7 +108,7 @@ static void link_print_caps(struct rd *rd, struct nlattr **tb)
 	close_json_array(PRINT_ANY, ">");
 }
 
-static void link_print_subnet_prefix(struct rd *rd, struct nlattr **tb)
+static void link_print_subnet_prefix(struct nlattr **tb)
 {
 	uint64_t subnet_prefix;
 	uint16_t vp[4];
@@ -120,11 +120,10 @@ static void link_print_subnet_prefix(struct rd *rd, struct nlattr **tb)
 	subnet_prefix = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_SUBNET_PREFIX]);
 	memcpy(vp, &subnet_prefix, sizeof(uint64_t));
 	snprintf(str, 32, "%04x:%04x:%04x:%04x", vp[3], vp[2], vp[1], vp[0]);
-	print_color_string(PRINT_ANY, COLOR_NONE, "subnet_prefix",
-			   "subnet_prefix %s ", str);
+	print_string(PRINT_ANY, "subnet_prefix", "subnet_prefix %s ", str);
 }
 
-static void link_print_lid(struct rd *rd, struct nlattr **tb)
+static void link_print_lid(struct nlattr **tb)
 {
 	uint32_t lid;
 
@@ -132,10 +131,10 @@ static void link_print_lid(struct rd *rd, struct nlattr **tb)
 		return;
 
 	lid = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_LID]);
-	print_color_uint(PRINT_ANY, COLOR_NONE, "lid", "lid %u ", lid);
+	print_uint(PRINT_ANY, "lid", "lid %u ", lid);
 }
 
-static void link_print_sm_lid(struct rd *rd, struct nlattr **tb)
+static void link_print_sm_lid(struct nlattr **tb)
 {
 	uint32_t sm_lid;
 
@@ -143,10 +142,10 @@ static void link_print_sm_lid(struct rd *rd, struct nlattr **tb)
 		return;
 
 	sm_lid = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_SM_LID]);
-	print_color_uint(PRINT_ANY, COLOR_NONE, "sm_lid", "sm_lid %u ", sm_lid);
+	print_uint(PRINT_ANY, "sm_lid", "sm_lid %u ", sm_lid);
 }
 
-static void link_print_lmc(struct rd *rd, struct nlattr **tb)
+static void link_print_lmc(struct nlattr **tb)
 {
 	uint8_t lmc;
 
@@ -154,7 +153,7 @@ static void link_print_lmc(struct rd *rd, struct nlattr **tb)
 		return;
 
 	lmc = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_LMC]);
-	print_color_uint(PRINT_ANY, COLOR_NONE, "lmc", "lmc %u ", lmc);
+	print_uint(PRINT_ANY, "lmc", "lmc %u ", lmc);
 }
 
 static const char *link_state_to_str(uint8_t link_state)
@@ -168,7 +167,7 @@ static const char *link_state_to_str(uint8_t link_state)
 	return "UNKNOWN";
 }
 
-static void link_print_state(struct rd *rd, struct nlattr **tb)
+static void link_print_state(struct nlattr **tb)
 {
 	uint8_t state;
 
@@ -176,8 +175,7 @@ static void link_print_state(struct rd *rd, struct nlattr **tb)
 		return;
 
 	state = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_PORT_STATE]);
-	print_color_string(PRINT_ANY, COLOR_NONE, "state", "state %s ",
-			   link_state_to_str(state));
+	print_string(PRINT_ANY, "state", "state %s ", link_state_to_str(state));
 }
 
 static const char *phys_state_to_str(uint8_t phys_state)
@@ -194,7 +192,7 @@ static const char *phys_state_to_str(uint8_t phys_state)
 	return "UNKNOWN";
 };
 
-static void link_print_phys_state(struct rd *rd, struct nlattr **tb)
+static void link_print_phys_state(struct nlattr **tb)
 {
 	uint8_t phys_state;
 
@@ -202,11 +200,11 @@ static void link_print_phys_state(struct rd *rd, struct nlattr **tb)
 		return;
 
 	phys_state = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_PORT_PHYS_STATE]);
-	print_color_string(PRINT_ANY, COLOR_NONE, "physical_state",
-			   "physical_state %s ", phys_state_to_str(phys_state));
+	print_string(PRINT_ANY, "physical_state", "physical_state %s ",
+		     phys_state_to_str(phys_state));
 }
 
-static void link_print_netdev(struct rd *rd, struct nlattr **tb)
+static void link_print_netdev(const struct rd * rd, struct nlattr **tb)
 {
 	const char *netdev_name;
 	uint32_t idx;
@@ -216,10 +214,8 @@ static void link_print_netdev(struct rd *rd, struct nlattr **tb)
 
 	netdev_name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_NDEV_NAME]);
 	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_NDEV_INDEX]);
-	print_color_string(PRINT_ANY, COLOR_NONE, "netdev", "netdev %s ",
-			   netdev_name);
-	print_color_uint(PRINT_ANY, COLOR_NONE, "netdev_index",
-			 rd->show_details ? "netdev_index %u " : "", idx);
+	print_string(PRINT_ANY, "netdev", "netdev %s ", netdev_name);
+	print_uint(PRINT_ANY, "netdev_index", rd->show_details ? "netdev_index %u " : "", idx);
 }
 
 static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
@@ -243,20 +239,22 @@ static int link_parse_cb(const struct nlmsghdr *nlh, void *data)
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
 
 	open_json_object(NULL);
-	print_color_uint(PRINT_JSON, COLOR_NONE, "ifindex", NULL, idx);
-	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "link %s/", name);
-	print_color_uint(PRINT_ANY, COLOR_NONE, "port", "%u ", port);
-	link_print_subnet_prefix(rd, tb);
-	link_print_lid(rd, tb);
-	link_print_sm_lid(rd, tb);
-	link_print_lmc(rd, tb);
-	link_print_state(rd, tb);
-	link_print_phys_state(rd, tb);
+	print_uint(PRINT_JSON, "ifindex", NULL, idx);
+	print_string(PRINT_ANY, "ifname", "link %s/", name);
+	print_uint(PRINT_ANY, "port", "%u ", port);
+	link_print_subnet_prefix(tb);
+	link_print_lid(tb);
+	link_print_sm_lid(tb);
+	link_print_lmc(tb);
+	link_print_state(tb);
+	link_print_phys_state(tb);
 	link_print_netdev(rd, tb);
 	if (rd->show_details)
-		link_print_caps(rd, tb);
+		link_print_caps(tb);
 
-	newline(rd);
+	close_json_object();
+	newline();
+
 	return MNL_CB_OK;
 }
 

@@ -2305,8 +2305,8 @@ give the device a symbolic name for easy reference.
 .BI group " GROUP"
 specify the group the device belongs to.
 The available groups are listed in
-.BR "@SYSCONF_USR_DIR@/group" or
-.BR "@SYSCONF_ETC_DIR@/group" (has precedence if exists).
+.BR @SYSCONF_USR_DIR@/group " or " @SYSCONF_ETC_DIR@/group
+(has precedence if exists).
 
 .TP
 .BI vf " NUM"
@@ -2843,7 +2843,7 @@ are supported:
 locally terminated traffic for the given DSA switch user port. For a
 description of which network interfaces are suitable for serving as conduit
 interfaces of this user port, please see
-https://www.kernel.org/doc/html/latest/networking/dsa/configuration.html#affinity-of-user-ports-to-cpu-ports
+https://docs.kernel.org/networking/dsa/configuration.html#affinity-of-user-ports-to-cpu-ports
 as well as what is supported by the driver in use.
 
 .sp
@@ -2916,8 +2916,7 @@ specifies which help of link type to display.
 .SS
 .I GROUP
 may be a number or a string from
-.B @SYSCONF_USR_DIR@/group or
-.B @SYSCONF_ETC_DIR@/group
+.BR @SYSCONF_USR_DIR@/group " or " @SYSCONF_ETC_DIR@/group
 which can be manually filled and has precedence if exists.
 
 .SH "EXAMPLES"

@@ -1311,12 +1311,14 @@ static int iplink_afstats(int argc, char **argv)
 
 	if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask,
 				      NULL, NULL) < 0) {
-		perror("Cannont send dump request");
+		perror("Cannot send dump request");
+		delete_json_obj();
 		return 1;
 	}
 
 	if (rtnl_dump_filter(&rth, print_af_stats, &ctx) < 0) {
 		fprintf(stderr, "Dump terminated\n");
+		delete_json_obj();
 		return 1;
 	}
 

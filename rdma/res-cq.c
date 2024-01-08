@@ -17,15 +17,14 @@ static const char *poll_ctx_to_str(uint8_t idx)
 	return "UNKNOWN";
 }
 
-static void print_poll_ctx(struct rd *rd, uint8_t poll_ctx, struct nlattr *attr)
+static void print_poll_ctx(uint8_t poll_ctx, struct nlattr *attr)
 {
 	if (!attr)
 		return;
-	print_color_string(PRINT_ANY, COLOR_NONE, "poll-ctx", "poll-ctx %s ",
-			   poll_ctx_to_str(poll_ctx));
+	print_string(PRINT_ANY, "poll-ctx", "poll-ctx %s ", poll_ctx_to_str(poll_ctx));
 }
 
-static void print_cq_dim_setting(struct rd *rd, struct nlattr *attr)
+static void print_cq_dim_setting(struct nlattr *attr)
 {
 	uint8_t dim_setting;
 
@@ -46,9 +45,10 @@ static int res_cq_line_raw(struct rd *rd, const char *name, int idx,
 		return MNL_CB_ERROR;
 
 	open_json_object(NULL);
-	print_dev(rd, idx, name);
+	print_dev(idx, name);
 	print_raw_data(rd, nla_line);
-	newline(rd);
+	close_json_object();
+	newline();
 
 	return MNL_CB_OK;
 }
@@ -63,6 +63,7 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 	uint32_t cqn = 0;
 	uint64_t users;
 	uint32_t cqe;
+	SPRINT_BUF(b);
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_CQE] ||
 	    !nla_line[RDMA_NLDEV_ATTR_RES_USECNT])
@@ -84,8 +85,6 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
-		SPRINT_BUF(b);
-
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		if (!get_task_name(pid, b, sizeof(b)))
 			comm = b;
@@ -111,19 +110,19 @@ static int res_cq_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	open_json_object(NULL);
-	print_dev(rd, idx, name);
-	res_print_u32(rd, "cqn", cqn, nla_line[RDMA_NLDEV_ATTR_RES_CQN]);
-	res_print_u32(rd, "cqe", cqe, nla_line[RDMA_NLDEV_ATTR_RES_CQE]);
-	res_print_u64(rd, "users", users,
-		       nla_line[RDMA_NLDEV_ATTR_RES_USECNT]);
-	print_poll_ctx(rd, poll_ctx, nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX]);
-	print_cq_dim_setting(rd, nla_line[RDMA_NLDEV_ATTR_DEV_DIM]);
-	res_print_u32(rd, "ctxn", ctxn, nla_line[RDMA_NLDEV_ATTR_RES_CTXN]);
-	res_print_u32(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
-	print_comm(rd, comm, nla_line);
+	print_dev(idx, name);
+	res_print_u32("cqn", cqn, nla_line[RDMA_NLDEV_ATTR_RES_CQN]);
+	res_print_u32("cqe", cqe, nla_line[RDMA_NLDEV_ATTR_RES_CQE]);
+	res_print_u64("users", users, nla_line[RDMA_NLDEV_ATTR_RES_USECNT]);
+	print_poll_ctx(poll_ctx, nla_line[RDMA_NLDEV_ATTR_RES_POLL_CTX]);
+	print_cq_dim_setting(nla_line[RDMA_NLDEV_ATTR_DEV_DIM]);
+	res_print_u32("ctxn", ctxn, nla_line[RDMA_NLDEV_ATTR_RES_CTXN]);
+	res_print_u32("pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
+	print_comm(comm, nla_line);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
-	newline(rd);
+	close_json_object();
+	newline();
 
 out:
 	return MNL_CB_OK;

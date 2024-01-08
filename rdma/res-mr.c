@@ -14,9 +14,10 @@ static int res_mr_line_raw(struct rd *rd, const char *name, int idx,
 		return MNL_CB_ERROR;
 
 	open_json_object(NULL);
-	print_dev(rd, idx, name);
+	print_dev(idx, name);
 	print_raw_data(rd, nla_line);
-	newline(rd);
+	close_json_object();
+	newline();
 
 	return MNL_CB_OK;
 }
@@ -30,6 +31,7 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 	uint32_t pdn = 0;
 	uint32_t mrn = 0;
 	uint32_t pid = 0;
+	SPRINT_BUF(b);
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_MRLEN])
 		return MNL_CB_ERROR;
@@ -47,8 +49,6 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
-		SPRINT_BUF(b);
-
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		if (!get_task_name(pid, b, sizeof(b)))
 			comm = b;
@@ -75,19 +75,20 @@ static int res_mr_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	open_json_object(NULL);
-	print_dev(rd, idx, name);
-	res_print_u32(rd, "mrn", mrn, nla_line[RDMA_NLDEV_ATTR_RES_MRN]);
-	print_key(rd, "rkey", rkey, nla_line[RDMA_NLDEV_ATTR_RES_RKEY]);
-	print_key(rd, "lkey", lkey, nla_line[RDMA_NLDEV_ATTR_RES_LKEY]);
-	print_key(rd, "iova", iova, nla_line[RDMA_NLDEV_ATTR_RES_IOVA]);
-	res_print_u64(rd, "mrlen", mrlen, nla_line[RDMA_NLDEV_ATTR_RES_MRLEN]);
-	res_print_u32(rd, "pdn", pdn, nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
-	res_print_u32(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
-	print_comm(rd, comm, nla_line);
+	print_dev(idx, name);
+	res_print_u32("mrn", mrn, nla_line[RDMA_NLDEV_ATTR_RES_MRN]);
+	print_key("rkey", rkey, nla_line[RDMA_NLDEV_ATTR_RES_RKEY]);
+	print_key("lkey", lkey, nla_line[RDMA_NLDEV_ATTR_RES_LKEY]);
+	print_key("iova", iova, nla_line[RDMA_NLDEV_ATTR_RES_IOVA]);
+	res_print_u64("mrlen", mrlen, nla_line[RDMA_NLDEV_ATTR_RES_MRLEN]);
+	res_print_u32("pdn", pdn, nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
+	res_print_u32("pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
+	print_comm(comm, nla_line);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
 	print_raw_data(rd, nla_line);
-	newline(rd);
+	close_json_object();
+	newline();
 
 out:
 	return MNL_CB_OK;

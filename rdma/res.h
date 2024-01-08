@@ -185,16 +185,12 @@ struct filters srq_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 RES_FUNC(res_srq, RDMA_NLDEV_CMD_RES_SRQ_GET, srq_valid_filters, true,
 	 RDMA_NLDEV_ATTR_RES_SRQN);
 
-void print_dev(struct rd *rd, uint32_t idx, const char *name);
-void print_link(struct rd *rd, uint32_t idx, const char *name, uint32_t port,
-		struct nlattr **nla_line);
-void print_key(struct rd *rd, const char *name, uint64_t val,
-	       struct nlattr *nlattr);
-void res_print_u32(struct rd *rd, const char *name, uint32_t val,
-		    struct nlattr *nlattr);
-void res_print_u64(struct rd *rd, const char *name, uint64_t val,
-		    struct nlattr *nlattr);
-void print_comm(struct rd *rd, const char *str, struct nlattr **nla_line);
+void print_dev(uint32_t idx, const char *name);
+void print_link(uint32_t idx, const char *name, uint32_t port, struct nlattr **nla_line);
+void print_key(const char *name, uint64_t val, struct nlattr *nlattr);
+void res_print_u32(const char *name, uint32_t val, struct nlattr *nlattr);
+void res_print_u64(const char *name, uint64_t val, struct nlattr *nlattr);
+void print_comm(const char *str, struct nlattr **nla_line);
 const char *qp_types_to_str(uint8_t idx);
-void print_qp_type(struct rd *rd, uint32_t val);
+void print_qp_type(uint32_t val);
 #endif /* _RDMA_TOOL_RES_H_ */

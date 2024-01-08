@@ -929,9 +929,7 @@ static int print_linkinfo_brief(FILE *fp, const char *name,
 						   ifi->ifi_type,
 						   b1, sizeof(b1)));
 		}
-	}
 
-	if (filter.family == AF_PACKET) {
 		print_link_flags(fp, ifi->ifi_flags, m_flag);
 		print_string(PRINT_FP, NULL, "%s", "\n");
 	}

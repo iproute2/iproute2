@@ -275,6 +275,10 @@ static inline const char *rta_getattr_str(const struct rtattr *rta)
 {
 	return (const char *)RTA_DATA(rta);
 }
+static inline int rta_type(const struct rtattr *rta)
+{
+	return rta->rta_type & NLA_TYPE_MASK;
+}
 
 int rtnl_listen_all_nsid(struct rtnl_handle *);
 int rtnl_listen(struct rtnl_handle *, rtnl_listen_filter_t handler,

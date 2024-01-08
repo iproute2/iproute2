@@ -100,8 +100,8 @@ enum col_id {
 	COL_SERV,
 	COL_RADDR,
 	COL_RSERV,
-	COL_EXT,
 	COL_PROC,
+	COL_EXT,
 	COL_MAX
 };
 
@@ -5818,6 +5818,9 @@ int main(int argc, char *argv[])
 
 	if (ssfilter_parse(&current_filter.f, argc, argv, filter_fp))
 		usage();
+
+	if (!show_processes)
+		columns[COL_PROC].disabled = 1;
 
 	if (!(current_filter.dbs & (current_filter.dbs - 1)))
 		columns[COL_NETID].disabled = 1;

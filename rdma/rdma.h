@@ -61,6 +61,7 @@ struct rd {
 	uint8_t show_details:1;
 	uint8_t show_driver_details:1;
 	uint8_t show_raw:1;
+	uint8_t suppress_errors:1;
 	struct list_head dev_map_list;
 	uint32_t dev_idx;
 	uint32_t port_idx;
@@ -68,9 +69,6 @@ struct rd {
 	struct nlmsghdr *nlh;
 	char *buff;
 	json_writer_t *jw;
-	int json_output;
-	int pretty_output;
-	bool suppress_errors;
 	struct list_head filter_list;
 	char *link_name;
 	char *link_type;
@@ -137,9 +135,10 @@ int rd_attr_cb(const struct nlattr *attr, void *data);
  */
 void print_driver_table(struct rd *rd, struct nlattr *tb);
 void print_raw_data(struct rd *rd, struct nlattr **nla_line);
-void newline(struct rd *rd);
-void newline_indent(struct rd *rd);
-void print_raw_data(struct rd *rd, struct nlattr **nla_line);
+void newline_indent(void);
+void newline(void);
+
 #define MAX_LINE_LENGTH 80
+
 
 #endif /* _RDMA_TOOL_H_ */

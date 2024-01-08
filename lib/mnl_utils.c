@@ -61,6 +61,8 @@ static int mnlu_cb_error(const struct nlmsghdr *nlh, void *data)
 {
 	const struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
 
+	if (mnl_nlmsg_get_payload_len(nlh) < sizeof(*err))
+		return MNL_CB_STOP;
 	/* Netlink subsystems returns the errno value with different signess */
 	if (err->error < 0)
 		errno = -err->error;
@@ -75,8 +77,11 @@ static int mnlu_cb_error(const struct nlmsghdr *nlh, void *data)
 
 static int mnlu_cb_stop(const struct nlmsghdr *nlh, void *data)
 {
-	int len = *(int *)NLMSG_DATA(nlh);
+	int len;
 
+	if (mnl_nlmsg_get_payload_len(nlh) < sizeof(len))
+		return MNL_CB_STOP;
+	len = *(int *)mnl_nlmsg_get_payload(nlh);
 	if (len < 0) {
 		errno = -len;
 		nl_dump_ext_ack_done(nlh, sizeof(int), len);

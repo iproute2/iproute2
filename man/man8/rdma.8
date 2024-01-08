@@ -25,8 +25,9 @@ rdma \- RDMA tool
 .ti -8
 .IR OPTIONS " := { "
 \fB\-V\fR[\fIersion\fR] |
-\fB\-d\fR[\fIetails\fR] }
-\fB\-j\fR[\fIson\fR] }
+\fB\-d\fR[\fIetails\fR] |
+\fB\-j\fR[\fIson\fR] |
+\fB\-o\fR[\fIneline\fR] |
 \fB\-p\fR[\fIretty\fR] }
 
 .SH OPTIONS
@@ -62,6 +63,13 @@ When combined with -j generate a pretty JSON output.
 .TP
 .BR "\-j" , " --json"
 Generate JSON output.
+
+.TP
+.BR "\-o" , " \-oneline"
+output each record on a single line, replacing line feeds
+with the
+.B '\e'
+character.
 
 .SS
 .I OBJECT

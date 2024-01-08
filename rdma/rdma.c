@@ -8,12 +8,15 @@
 #include "version.h"
 #include "color.h"
 
+/* Global utils flags */
+int json;
+
 static void help(char *name)
 {
 	pr_out("Usage: %s [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "       %s [ -f[orce] ] -b[atch] filename\n"
 	       "where  OBJECT := { dev | link | resource | system | statistic | help }\n"
-	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty] -r[aw]}\n", name, name);
+	       "       OPTIONS := { -V[ersion] | -d[etails] | -j[son] | -p[retty] | -r[aw]}\n", name, name);
 }
 
 static int cmd_help(struct rd *rd)
@@ -86,6 +89,7 @@ int main(int argc, char **argv)
 		{ "version",		no_argument,		NULL, 'V' },
 		{ "help",		no_argument,		NULL, 'h' },
 		{ "json",		no_argument,		NULL, 'j' },
+		{ "oneline",		no_argument,            NULL, 'o' },
 		{ "pretty",		no_argument,		NULL, 'p' },
 		{ "details",		no_argument,		NULL, 'd' },
 		{ "raw",		no_argument,		NULL, 'r' },
@@ -96,16 +100,16 @@ int main(int argc, char **argv)
 	bool show_driver_details = false;
 	const char *batch_file = NULL;
 	bool show_details = false;
-	bool json_output = false;
 	bool show_raw = false;
 	bool force = false;
+	bool oneline = false;
 	struct rd rd = {};
 	char *filename;
 	int opt;
 	int err;
 	filename = basename(argv[0]);
 
-	while ((opt = getopt_long(argc, argv, ":Vhdrpjfb:",
+	while ((opt = getopt_long(argc, argv, ":Vhdropjfb:",
 				  long_options, NULL)) >= 0) {
 		switch (opt) {
 		case 'V':
@@ -113,7 +117,7 @@ int main(int argc, char **argv)
 			       filename, version);
 			return EXIT_SUCCESS;
 		case 'p':
-			pretty = 1;
+			++pretty;
 			break;
 		case 'd':
 			if (show_details)
@@ -124,8 +128,11 @@ int main(int argc, char **argv)
 		case 'r':
 			show_raw = true;
 			break;
+		case 'o':
+			oneline = true;
+			break;
 		case 'j':
-			json_output = 1;
+			++json;
 			break;
 		case 'f':
 			force = true;
@@ -149,10 +156,10 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	_SL_ = oneline ? "\\" : "\n";
+
 	rd.show_details = show_details;
 	rd.show_driver_details = show_driver_details;
-	rd.json_output = json_output;
-	rd.pretty_output = pretty;
 	rd.show_raw = show_raw;
 
 	err = rd_init(&rd, filename);

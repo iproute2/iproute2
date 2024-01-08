@@ -20,10 +20,9 @@ static const char *srq_types_to_str(uint8_t idx)
 	return "UNKNOWN";
 }
 
-static void print_type(struct rd *rd, uint32_t val)
+static void print_type(uint32_t val)
 {
-	print_color_string(PRINT_ANY, COLOR_NONE, "type", "type %s ",
-			   srq_types_to_str(val));
+	print_string(PRINT_ANY, "type", "type %s ", srq_types_to_str(val));
 }
 
 static void print_qps(char *qp_str)
@@ -34,15 +33,15 @@ static void print_qps(char *qp_str)
 		return;
 
 	open_json_array(PRINT_ANY, "lqpn");
-	print_color_string(PRINT_FP, COLOR_NONE, NULL, " ", NULL);
+	print_string(PRINT_FP, NULL, " ", NULL);
 	qpn = strtok(qp_str, ",");
 	while (qpn) {
-		print_color_string(PRINT_ANY, COLOR_NONE, NULL, "%s", qpn);
+		print_string(PRINT_ANY, NULL, "%s", qpn);
 		qpn = strtok(NULL, ",");
 		if (qpn)
-			print_color_string(PRINT_FP, COLOR_NONE, NULL, ",", NULL);
+			print_string(PRINT_FP, NULL, ",", NULL);
 	}
-	print_color_string(PRINT_FP, COLOR_NONE, NULL, " ", NULL);
+	print_string(PRINT_FP, NULL, " ", NULL);
 	close_json_array(PRINT_JSON, NULL);
 }
 
@@ -169,9 +168,10 @@ static int res_srq_line_raw(struct rd *rd, const char *name, int idx,
 		return MNL_CB_ERROR;
 
 	open_json_object(NULL);
-	print_dev(rd, idx, name);
+	print_dev(idx, name);
 	print_raw_data(rd, nla_line);
-	newline(rd);
+	close_json_object();
+	newline();
 
 	return MNL_CB_OK;
 }
@@ -183,13 +183,12 @@ static int res_srq_line(struct rd *rd, const char *name, int idx,
 	char qp_str[MAX_QP_STR_LEN] = {};
 	char *comm = NULL;
 	uint8_t type = 0;
+	SPRINT_BUF(b);
 
 	if (!nla_line[RDMA_NLDEV_ATTR_RES_SRQN])
 		return MNL_CB_ERROR;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
-		SPRINT_BUF(b);
-
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
 		if (!get_task_name(pid, b, sizeof(b)))
 			comm = b;
@@ -232,17 +231,18 @@ static int res_srq_line(struct rd *rd, const char *name, int idx,
 		goto out;
 
 	open_json_object(NULL);
-	print_dev(rd, idx, name);
-	res_print_u32(rd, "srqn", srqn, nla_line[RDMA_NLDEV_ATTR_RES_SRQN]);
-	print_type(rd, type);
+	print_dev(idx, name);
+	res_print_u32("srqn", srqn, nla_line[RDMA_NLDEV_ATTR_RES_SRQN]);
+	print_type(type);
 	print_qps(qp_str);
-	res_print_u32(rd, "pdn", pdn, nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
-	res_print_u32(rd, "cqn", cqn, nla_line[RDMA_NLDEV_ATTR_RES_CQN]);
-	res_print_u32(rd, "pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
-	print_comm(rd, comm, nla_line);
+	res_print_u32("pdn", pdn, nla_line[RDMA_NLDEV_ATTR_RES_PDN]);
+	res_print_u32("cqn", cqn, nla_line[RDMA_NLDEV_ATTR_RES_CQN]);
+	res_print_u32("pid", pid, nla_line[RDMA_NLDEV_ATTR_RES_PID]);
+	print_comm(comm, nla_line);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
-	newline(rd);
+	close_json_object();
+	newline();
 
 out:
 	return MNL_CB_OK;

@@ -84,7 +84,7 @@ static const char *dev_caps_to_str(uint32_t idx)
 	return "UNKNOWN";
 }
 
-static void dev_print_caps(struct rd *rd, struct nlattr **tb)
+static void dev_print_caps(struct nlattr **tb)
 {
 	uint64_t caps;
 	uint32_t idx;
@@ -94,11 +94,11 @@ static void dev_print_caps(struct rd *rd, struct nlattr **tb)
 
 	caps = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_CAP_FLAGS]);
 
-	print_color_string(PRINT_FP, COLOR_NONE, NULL, "\n    caps: <", NULL);
+	print_string(PRINT_FP, NULL, "%s    caps: <", _SL_);
 	open_json_array(PRINT_JSON, "caps");
 	for (idx = 0; caps; idx++) {
 		if (caps & 0x1)
-			print_color_string(PRINT_ANY, COLOR_NONE, NULL,
+			print_string(PRINT_ANY, NULL,
 					   caps >> 0x1 ? "%s, " : "%s",
 					   dev_caps_to_str(idx));
 		caps >>= 0x1;
@@ -106,17 +106,18 @@ static void dev_print_caps(struct rd *rd, struct nlattr **tb)
 	close_json_array(PRINT_ANY, ">");
 }
 
-static void dev_print_fw(struct rd *rd, struct nlattr **tb)
+static void dev_print_fw(struct nlattr **tb)
 {
 	const char *str;
+
 	if (!tb[RDMA_NLDEV_ATTR_FW_VERSION])
 		return;
 
 	str = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_FW_VERSION]);
-	print_color_string(PRINT_ANY, COLOR_NONE, "fw", "fw %s ", str);
+	print_string(PRINT_ANY, "fw", "fw %s ", str);
 }
 
-static void dev_print_node_guid(struct rd *rd, struct nlattr **tb)
+static void dev_print_node_guid(struct nlattr **tb)
 {
 	uint64_t node_guid;
 	uint16_t vp[4];
@@ -128,11 +129,11 @@ static void dev_print_node_guid(struct rd *rd, struct nlattr **tb)
 	node_guid = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_NODE_GUID]);
 	memcpy(vp, &node_guid, sizeof(uint64_t));
 	snprintf(str, 32, "%04x:%04x:%04x:%04x", vp[3], vp[2], vp[1], vp[0]);
-	print_color_string(PRINT_ANY, COLOR_NONE, "node_guid", "node_guid %s ",
+	print_string(PRINT_ANY, "node_guid", "node_guid %s ",
 			   str);
 }
 
-static void dev_print_sys_image_guid(struct rd *rd, struct nlattr **tb)
+static void dev_print_sys_image_guid(struct nlattr **tb)
 {
 	uint64_t sys_image_guid;
 	uint16_t vp[4];
@@ -144,11 +145,10 @@ static void dev_print_sys_image_guid(struct rd *rd, struct nlattr **tb)
 	sys_image_guid = mnl_attr_get_u64(tb[RDMA_NLDEV_ATTR_SYS_IMAGE_GUID]);
 	memcpy(vp, &sys_image_guid, sizeof(uint64_t));
 	snprintf(str, 32, "%04x:%04x:%04x:%04x", vp[3], vp[2], vp[1], vp[0]);
-	print_color_string(PRINT_ANY, COLOR_NONE, "sys_image_guid",
-			   "sys_image_guid %s ", str);
+	print_string(PRINT_ANY, "sys_image_guid", "sys_image_guid %s ", str);
 }
 
-static void dev_print_dim_setting(struct rd *rd, struct nlattr **tb)
+static void dev_print_dim_setting(struct nlattr **tb)
 {
 	uint8_t dim_setting;
 
@@ -175,7 +175,7 @@ static const char *node_type_to_str(uint8_t node_type)
 	return "unknown";
 }
 
-static void dev_print_node_type(struct rd *rd, struct nlattr **tb)
+static void dev_print_node_type(struct nlattr **tb)
 {
 	const char *node_str;
 	uint8_t node_type;
@@ -185,11 +185,10 @@ static void dev_print_node_type(struct rd *rd, struct nlattr **tb)
 
 	node_type = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_DEV_NODE_TYPE]);
 	node_str = node_type_to_str(node_type);
-	print_color_string(PRINT_ANY, COLOR_NONE, "node_type", "node_type %s ",
-			   node_str);
+	print_string(PRINT_ANY, "node_type", "node_type %s ", node_str);
 }
 
-static void dev_print_dev_proto(struct rd *rd, struct nlattr **tb)
+static void dev_print_dev_proto(struct nlattr **tb)
 {
 	const char *str;
 
@@ -197,7 +196,7 @@ static void dev_print_dev_proto(struct rd *rd, struct nlattr **tb)
 		return;
 
 	str = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_PROTOCOL]);
-	print_color_string(PRINT_ANY, COLOR_NONE, "protocol", "protocol %s ", str);
+	print_string(PRINT_ANY, "protocol", "protocol %s ", str);
 }
 
 static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
@@ -210,23 +209,26 @@ static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
 	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
 	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME])
 		return MNL_CB_ERROR;
+
 	open_json_object(NULL);
 	idx =  mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
-	print_color_uint(PRINT_ANY, COLOR_NONE, "ifindex", "%u: ", idx);
-	print_color_string(PRINT_ANY, COLOR_NONE, "ifname", "%s: ", name);
+	print_uint(PRINT_ANY, "ifindex", "%u: ", idx);
+	print_string(PRINT_ANY, "ifname", "%s: ", name);
 
-	dev_print_node_type(rd, tb);
-	dev_print_dev_proto(rd, tb);
-	dev_print_fw(rd, tb);
-	dev_print_node_guid(rd, tb);
-	dev_print_sys_image_guid(rd, tb);
+	dev_print_node_type(tb);
+	dev_print_dev_proto(tb);
+	dev_print_fw(tb);
+	dev_print_node_guid(tb);
+	dev_print_sys_image_guid(tb);
 	if (rd->show_details) {
-		dev_print_dim_setting(rd, tb);
-		dev_print_caps(rd, tb);
+		dev_print_dim_setting(tb);
+		dev_print_caps(tb);
 	}
 
-	newline(rd);
+	close_json_object();
+	newline();
+
 	return MNL_CB_OK;
 }
 
