@@ -63,7 +63,7 @@ int iplink_ifla_xstats(int argc, char **argv)
 
 	if (rtnl_statsdump_req_filter(&rth, AF_UNSPEC, filt_mask,
 				      NULL, NULL) < 0) {
-		perror("Cannont send dump request");
+		perror("Cannot send dump request");
 		return -1;
 	}
 
