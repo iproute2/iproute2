@@ -1,0 +1,85 @@
+.TH "Generic actions in tc" 8 "11 Jan 2023" "iproute2" "Linux"
+
+.SH NAME
+gact - generic action
+.SH SYNOPSIS
+.in +8
+.ti -8
+.BR tc " ... " "action gact"
+.IR CONTROL " [ " RAND " ] [ " INDEX " ]"
+.ti -8
+.IR CONTROL " := { "
+.BR reclassify " | " drop " | " continue " | " pass " | " pipe " | "
+.br
+.BI "goto chain " "CHAIN_INDEX"
+|
+.br
+.BI "jump " "JUMP_COUNT"
+}
+
+.ti -8
+.IR RAND " := "
+.BI random " RANDTYPE CONTROL VAL"
+.ti -8
+.IR RANDTYPE " := { "
+.BR netrand " | " determ " }"
+.ti -8
+.IR VAL " := number not exceeding 10000"
+.ti -8
+.IR JUMP_COUNT " := absolute jump from start of action list"
+.ti -8
+.IR INDEX " := index value used"
+
+.SH DESCRIPTION
+The
+.B gact
+action allows reclassify, dropping, passing, or accepting packets.
+At the moment there are only two algorithms. One is deterministic
+and the other uses internal kernel netrand.
+
+.SH OPTIONS
+.TP
+.BI random " RANDTYPE CONTROL VAL"
+The probability of taking the action expressed in terms of 1 out of
+.I VAL
+packets.
+
+.TP
+.I CONTROL
+Indicate how
+.B tc
+should proceed if the packet matches.
+For a description of the possible
+.I CONTROL
+values, see
+.BR tc-actions (8).
+
+.SH EXAMPLES
+Apply a rule on ingress to drop packets from a given source address.
+.RS
+.EX
+# tc filter add dev eth0 parent ffff: protocol ip prio 6 u32 match ip src \
+10.0.0.9/32 flowid 1:16 action drop
+.EE
+.RE
+
+Allow 1 out 10 packets from source randomly using the netrand generator
+.RS
+.EX
+# tc filter add dev eth0 parent ffff: protocol ip prio 6 u32 match ip src \
+10.0.0.9/32 flowid 1:16 action drop random netrand ok 10
+.EE
+.RE
+
+Deterministically accept every second packet
+.RS
+.EX
+# tc filter add dev eth0 parent ffff: protocol ip prio 6 u32 match ip src \
+10.0.0.9/32 flowid 1:16 action drop random determ ok 2
+.EE
+.RE
+
+.SH SEE ALSO
+.BR tc (8),
+.BR tc-actions (8),
+.BR tc-u32 (8)
