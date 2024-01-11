@@ -27,8 +27,6 @@ have traffic, higher bands are never dequeued. This can be used to
 prioritize interactive traffic or penalize 'lowest cost' traffic.
 
 Each band can be txqueuelen packets long, as configured with
-.BR ifconfig (8)
-or
 .BR ip (8).
 Additional packets coming in are not enqueued but are instead dropped.
 
@@ -40,8 +38,6 @@ for complete details on how TOS bits are translated into bands.
 txqueuelen
 The length of the three bands depends on the interface txqueuelen, as
 specified with
-.BR ifconfig (8)
-or
 .BR ip (8).
 
 .SH BUGS
