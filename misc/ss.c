@@ -2427,6 +2427,8 @@ static void proc_ctx_print(struct sockstat *s)
 			free(buf);
 		}
 	}
+
+	field_next();
 }
 
 static void inet_stats_print(struct sockstat *s, bool v6only)
