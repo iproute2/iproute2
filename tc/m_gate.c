@@ -20,18 +20,6 @@ struct gate_entry {
 	int32_t maxoctets;
 };
 
-#define CLOCKID_INVALID (-1)
-static const struct clockid_table {
-	const char *name;
-	clockid_t clockid;
-} clockt_map[] = {
-	{ "REALTIME", CLOCK_REALTIME },
-	{ "TAI", CLOCK_TAI },
-	{ "BOOTTIME", CLOCK_BOOTTIME },
-	{ "MONOTONIC", CLOCK_MONOTONIC },
-	{ NULL }
-};
-
 static void explain(void)
 {
 	fprintf(stderr,
@@ -77,35 +65,6 @@ struct action_util gate_action_util = {
 	.parse_aopt = parse_gate,
 	.print_aopt = print_gate,
 };
-
-static int get_clockid(__s32 *val, const char *arg)
-{
-	const struct clockid_table *c;
-
-	if (strcasestr(arg, "CLOCK_") != NULL)
-		arg += sizeof("CLOCK_") - 1;
-
-	for (c = clockt_map; c->name; c++) {
-		if (strcasecmp(c->name, arg) == 0) {
-			*val = c->clockid;
-			return 0;
-		}
-	}
-
-	return -1;
-}
-
-static const char *get_clock_name(clockid_t clockid)
-{
-	const struct clockid_table *c;
-
-	for (c = clockt_map; c->name; c++) {
-		if (clockid == c->clockid)
-			return c->name;
-	}
-
-	return "invalid";
-}
 
 static int get_gate_state(__u8 *val, const char *arg)
 {
