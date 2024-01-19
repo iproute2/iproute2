@@ -35,8 +35,12 @@ static const struct static_clockid {
 	clockid_t clockid;
 } clockids_sysv[] = {
 	{ "REALTIME", CLOCK_REALTIME },
+#ifdef CLOCK_TAI
 	{ "TAI", CLOCK_TAI },
+#endif
+#ifdef CLOCK_BOOTTIME
 	{ "BOOTTIME", CLOCK_BOOTTIME },
+#endif
 	{ "MONOTONIC", CLOCK_MONOTONIC },
 	{ NULL }
 };
