@@ -596,14 +596,27 @@ char *sprint_linklayer(unsigned int linklayer, char *buf)
 	return buf;
 }
 
+/*
+ * Limited list of clockid's
+ * Since these are the ones the kernel qdisc can use
+ * because they are available via ktim_get
+ */
 static const struct clockid_table {
 	const char *name;
 	clockid_t clockid;
 } clockt_map[] = {
-	{ "REALTIME", CLOCK_REALTIME },
-	{ "TAI", CLOCK_TAI },
+#ifdef CLOCK_BOOTTIME
 	{ "BOOTTIME", CLOCK_BOOTTIME },
+#endif
+#ifdef CLOCK_MONOTONIC
 	{ "MONOTONIC", CLOCK_MONOTONIC },
+#endif
+#ifdef CLOCK_REALTIME
+	{ "REALTIME", CLOCK_REALTIME },
+#endif
+#ifdef CLOCK_TAI
+	{ "TAI", CLOCK_TAI },
+#endif
 	{ NULL }
 };
 
@@ -611,6 +624,7 @@ int get_clockid(__s32 *val, const char *arg)
 {
 	const struct clockid_table *c;
 
+	/* skip prefix if present */
 	if (strcasestr(arg, "CLOCK_") != NULL)
 		arg += sizeof("CLOCK_") - 1;
 
