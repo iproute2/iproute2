@@ -94,6 +94,14 @@ interface, it is possible to send ingress traffic through an instance of
 .EE
 .RE
 
+.SH LIMITIATIONS
+The kernel restricts nesting to four levels to avoid the chance
+of nesting loops.
+.PP
+Do not redirect for one IFB device to another.
+IFB is a very specialized case of packet redirecting device.
+Redirecting from ifbX->ifbY will cause all packets to be dropped.
+
 .SH SEE ALSO
 .BR tc (8),
 .BR tc-u32 (8)

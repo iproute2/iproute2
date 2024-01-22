@@ -121,6 +121,10 @@ int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 int cls_names_init(char *path);
 void cls_names_uninit(void);
 
+#define CLOCKID_INVALID (-1)
+int get_clockid(__s32 *val, const char *arg);
+const char *get_clock_name(clockid_t clockid);
+
 int action_a2n(char *arg, int *result, bool allow_num);
 
 bool tc_qdisc_block_exists(__u32 block_index);

@@ -329,7 +329,7 @@ static int ctrl_listen(int argc, char **argv)
 	struct rtnl_handle rth;
 
 	if (rtnl_open_byproto(&rth, nl_mgrp(GENL_ID_CTRL), NETLINK_GENERIC) < 0) {
-		fprintf(stderr, "Canot open generic netlink socket\n");
+		fprintf(stderr, "Cannot open generic netlink socket\n");
 		return -1;
 	}
 

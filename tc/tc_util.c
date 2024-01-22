@@ -596,6 +596,60 @@ char *sprint_linklayer(unsigned int linklayer, char *buf)
 	return buf;
 }
 
+/*
+ * Limited list of clockid's
+ * Since these are the ones the kernel qdisc can use
+ * because they are available via ktim_get
+ */
+static const struct clockid_table {
+	const char *name;
+	clockid_t clockid;
+} clockt_map[] = {
+#ifdef CLOCK_BOOTTIME
+	{ "BOOTTIME", CLOCK_BOOTTIME },
+#endif
+#ifdef CLOCK_MONOTONIC
+	{ "MONOTONIC", CLOCK_MONOTONIC },
+#endif
+#ifdef CLOCK_REALTIME
+	{ "REALTIME", CLOCK_REALTIME },
+#endif
+#ifdef CLOCK_TAI
+	{ "TAI", CLOCK_TAI },
+#endif
+	{ NULL }
+};
+
+int get_clockid(__s32 *val, const char *arg)
+{
+	const struct clockid_table *c;
+
+	/* skip prefix if present */
+	if (strcasestr(arg, "CLOCK_") != NULL)
+		arg += sizeof("CLOCK_") - 1;
+
+	for (c = clockt_map; c->name; c++) {
+		if (strcasecmp(c->name, arg) == 0) {
+			*val = c->clockid;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+const char *get_clock_name(clockid_t clockid)
+{
+	const struct clockid_table *c;
+
+	for (c = clockt_map; c->name; c++) {
+		if (clockid == c->clockid)
+			return c->name;
+	}
+
+	return "invalid";
+}
+
 void print_tm(FILE *f, const struct tcf_t *tm)
 {
 	int hz = get_user_hz();
