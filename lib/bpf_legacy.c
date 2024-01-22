@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <assert.h>
+#include <libgen.h>
 
 #ifdef HAVE_ELF
 #include <libelf.h>
