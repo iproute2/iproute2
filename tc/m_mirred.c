@@ -24,12 +24,16 @@ static void
 explain(void)
 {
 	fprintf(stderr,
-		"Usage: mirred <DIRECTION> <ACTION> [index INDEX] <dev DEVICENAME>\n"
+		"Usage: mirred <DIRECTION> <ACTION> [index INDEX] <TARGET>\n"
 		"where:\n"
 		"\tDIRECTION := <ingress | egress>\n"
 		"\tACTION := <mirror | redirect>\n"
 		"\tINDEX  is the specific policy instance id\n"
-		"\tDEVICENAME is the devicename\n");
+		"\tTARGET := <BLOCK | DEVICE>\n"
+		"\tDEVICE := dev DEVICENAME\n"
+		"\tDEVICENAME is the devicename\n"
+		"\tBLOCK := blockid BLOCKID\n"
+		"\tBLOCKID := 32-bit unsigned block ID\n");
 }
 
 static void
@@ -94,6 +98,7 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 	struct tc_mirred p = {};
 	struct rtattr *tail;
 	char d[IFNAMSIZ] = {};
+	__u32 blockid = 0;
 
 	while (argc > 0) {
 
@@ -162,15 +167,37 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 					TCA_INGRESS_REDIR;
 				p.action = TC_ACT_STOLEN;
 				ok++;
-			} else if ((redir || mirror) &&
-				   matches(*argv, "dev") == 0) {
-				NEXT_ARG();
-				if (strlen(d))
-					duparg("dev", *argv);
+			} else if ((redir || mirror)) {
+				if (strcmp(*argv, "blockid") == 0) {
+					if (strlen(d)) {
+						fprintf(stderr,
+							"blockid and device are mutually exclusive.\n");
+						return -1;
+					}
+					NEXT_ARG();
+					if (get_u32(&blockid, *argv, 0) ||
+					    !blockid) {
+						fprintf(stderr,
+							"invalid block ID");
+						return -1;
+					}
+					argc--;
+					argv++;
+				}
+				if (argc && matches(*argv, "dev") == 0) {
+					if (blockid) {
+						fprintf(stderr,
+							"blockid and device are mutually exclusive.\n");
+						return -1;
+					}
+					NEXT_ARG();
+					if (strlen(d))
+						duparg("dev", *argv);
 
-				strncpy(d, *argv, sizeof(d)-1);
-				argc--;
-				argv++;
+					strncpy(d, *argv, sizeof(d)-1);
+					argc--;
+					argv++;
+				}
 
 				break;
 
@@ -220,6 +247,8 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 
 	tail = addattr_nest(n, MAX_MSG, tca_id);
 	addattr_l(n, MAX_MSG, TCA_MIRRED_PARMS, &p, sizeof(p));
+	if (blockid)
+		addattr32(n, MAX_MSG, TCA_MIRRED_BLOCKID, blockid);
 	addattr_nest_end(n, tail);
 
 	*argc_p = argc;
@@ -299,7 +328,15 @@ print_mirred(struct action_util *au, FILE *f, struct rtattr *arg)
 		     mirred_action(p->eaction));
 	print_string(PRINT_JSON, "direction", NULL,
 		     mirred_direction(p->eaction));
-	print_string(PRINT_ANY, "to_dev", " to device %s)", dev);
+	if (tb[TCA_MIRRED_BLOCKID]) {
+		const __u32 *blockid = RTA_DATA(tb[TCA_MIRRED_BLOCKID]);
+
+		print_uint(PRINT_ANY, "to_blockid", " to blockid %u)",
+			   *blockid);
+	} else {
+		print_string(PRINT_ANY, "to_dev", " to device %s)", dev);
+	}
+
 	print_action_control(f, " ", p->action, "");
 
 	print_nl();
