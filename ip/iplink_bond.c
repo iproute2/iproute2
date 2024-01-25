@@ -148,6 +148,7 @@ static void print_explain(FILE *f)
 		"                [ tlb_dynamic_lb TLB_DYNAMIC_LB ]\n"
 		"                [ lacp_rate LACP_RATE ]\n"
 		"                [ lacp_active LACP_ACTIVE]\n"
+		"                [ coupled_control COUPLED_CONTROL ]\n"
 		"                [ ad_select AD_SELECT ]\n"
 		"                [ ad_user_port_key PORTKEY ]\n"
 		"                [ ad_actor_sys_prio SYSPRIO ]\n"
@@ -163,6 +164,7 @@ static void print_explain(FILE *f)
 		"LACP_ACTIVE := off|on\n"
 		"LACP_RATE := slow|fast\n"
 		"AD_SELECT := stable|bandwidth|count\n"
+		"COUPLED_CONTROL := off|on\n"
 	);
 }
 
@@ -176,13 +178,14 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 {
 	__u8 mode, use_carrier, primary_reselect, fail_over_mac;
 	__u8 xmit_hash_policy, num_peer_notif, all_slaves_active;
-	__u8 lacp_active, lacp_rate, ad_select, tlb_dynamic_lb;
+	__u8 lacp_active, lacp_rate, ad_select, tlb_dynamic_lb, coupled_control;
 	__u16 ad_user_port_key, ad_actor_sys_prio;
 	__u32 miimon, updelay, downdelay, peer_notify_delay, arp_interval, arp_validate;
 	__u32 arp_all_targets, resend_igmp, min_links, lp_interval;
 	__u32 packets_per_slave;
 	__u8 missed_max;
 	unsigned int ifindex;
+	int ret;
 
 	while (argc > 0) {
 		if (matches(*argv, "mode") == 0) {
@@ -367,6 +370,12 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			lacp_active = get_index(lacp_active_tbl, *argv);
 			addattr8(n, 1024, IFLA_BOND_AD_LACP_ACTIVE, lacp_active);
+		} else if (strcmp(*argv, "coupled_control") == 0) {
+			NEXT_ARG();
+			coupled_control = parse_on_off("coupled_control", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr8(n, 1024, IFLA_BOND_COUPLED_CONTROL, coupled_control);
 		} else if (matches(*argv, "ad_select") == 0) {
 			NEXT_ARG();
 			if (get_index(ad_select_tbl, *argv) < 0)
@@ -657,6 +666,13 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			     "ad_lacp_rate",
 			     "lacp_rate %s ",
 			     lacp_rate);
+	}
+
+	if (tb[IFLA_BOND_COUPLED_CONTROL]) {
+		print_on_off(PRINT_ANY,
+			     "coupled_control",
+			     "coupled_control %s ",
+			     rta_getattr_u8(tb[IFLA_BOND_COUPLED_CONTROL]));
 	}
 
 	if (tb[IFLA_BOND_AD_SELECT]) {
