@@ -15,4 +15,4 @@ with syntax and features:
 
 Note: Users should use new BTF way to defined the maps, the examples
 in legacy folder which is using struct bpf_elf_map defined maps is not
-recommanded.
+recommended.

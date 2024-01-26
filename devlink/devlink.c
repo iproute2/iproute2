@@ -2329,7 +2329,7 @@ static int dl_argv_dry_parse(struct dl *dl, uint64_t o_required,
 	return err;
 }
 
-/* List of extented handles with two slashes. */
+/* List of extended handles with two slashes. */
 static const uint64_t dl_opt_extended_handle[] = {
 	DL_OPT_HANDLEP,
 	DL_OPT_HANDLE_REGION,

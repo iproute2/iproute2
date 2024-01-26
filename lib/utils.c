@@ -1582,7 +1582,7 @@ size_t strlcat(char *dst, const char *src, size_t size)
 void drop_cap(void)
 {
 #ifdef HAVE_LIBCAP
-	/* don't harmstring root/sudo */
+	/* don't hamstring root/sudo */
 	if (getuid() != 0 && geteuid() != 0) {
 		cap_t capabilities;
 		cap_value_t net_admin = CAP_NET_ADMIN;

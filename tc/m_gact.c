@@ -18,7 +18,7 @@
 #include "tc_util.h"
 #include <linux/tc_act/tc_gact.h>
 
-/* define to turn on probablity stuff */
+/* define to turn on probability stuff */
 
 #ifdef CONFIG_GACT_PROB
 static const char *prob_n2a(int p)

@@ -26,7 +26,7 @@
 #include <inttypes.h>
 #include "m_ematch.h"
 
-#define EM_CANID_RULES_MAX 400 /* Main reason for this number is Nelink
+#define EM_CANID_RULES_MAX 400 /* Main reason for this number is Netlink
 	message size limit equal to Single memory page size. When dump()
 	is invoked, there are even some ematch related headers sent from
 	kernel to userspace together with em_canid configuration --
