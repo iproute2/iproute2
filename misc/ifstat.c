@@ -117,16 +117,20 @@ static int get_nlmsg_extended(struct nlmsghdr *m, void *arg)
 		return 0;
 
 	len -= NLMSG_LENGTH(sizeof(*ifsm));
-	if (len < 0)
+	if (len < 0) {
+		errno = EINVAL;
 		return -1;
+	}
 
 	parse_rtattr(tb, IFLA_STATS_MAX, IFLA_STATS_RTA(ifsm), len);
 	if (tb[filter_type] == NULL)
 		return 0;
 
 	n = malloc(sizeof(*n));
-	if (!n)
-		abort();
+	if (!n) {
+		errno = ENOMEM;
+		return -1;
+	}
 
 	n->ifindex = ifsm->ifindex;
 	n->name = strdup(ll_index_to_name(ifsm->ifindex));
@@ -161,8 +165,10 @@ static int get_nlmsg(struct nlmsghdr *m, void *arg)
 		return 0;
 
 	len -= NLMSG_LENGTH(sizeof(*ifi));
-	if (len < 0)
+	if (len < 0) {
+		errno = EINVAL;
 		return -1;
+	}
 
 	if (!(ifi->ifi_flags&IFF_UP))
 		return 0;
@@ -172,8 +178,10 @@ static int get_nlmsg(struct nlmsghdr *m, void *arg)
 		return 0;
 
 	n = malloc(sizeof(*n));
-	if (!n)
-		abort();
+	if (!n) {
+		errno = ENOMEM;
+		return -1;
+	}
 	n->ifindex = ifi->ifi_index;
 	n->name = strdup(RTA_DATA(tb[IFLA_IFNAME]));
 	memcpy(&n->ival, RTA_DATA(tb[IFLA_STATS]), sizeof(n->ival));
@@ -204,7 +212,7 @@ static void load_info(void)
 		}
 
 		if (rtnl_dump_filter(&rth, get_nlmsg_extended, NULL) < 0) {
-			fprintf(stderr, "Dump terminated\n");
+			perror("Dump terminated\n");
 			exit(1);
 		}
 	} else {
@@ -214,7 +222,7 @@ static void load_info(void)
 		}
 
 		if (rtnl_dump_filter(&rth, get_nlmsg, NULL) < 0) {
-			fprintf(stderr, "Dump terminated\n");
+			perror("Dump terminated\n");
 			exit(1);
 		}
 	}
