@@ -972,8 +972,8 @@ int bpf_load_common(struct bpf_cfg_in *cfg, const struct bpf_cfg_ops *ops,
 		ops->cbpf_cb(nl, cfg->opcodes, cfg->n_opcodes);
 	if (cfg->mode == EBPF_OBJECT || cfg->mode == EBPF_PINNED) {
 		snprintf(annotation, sizeof(annotation), "%s:[%s]",
-			 basename(cfg->object), cfg->mode == EBPF_PINNED ?
-			 "*fsobj" : cfg->section);
+			 basename(strdupa(cfg->object)),
+			 cfg->mode == EBPF_PINNED ? "*fsobj" : cfg->section);
 		ops->ebpf_cb(nl, cfg->prog_fd, annotation);
 	}
 
