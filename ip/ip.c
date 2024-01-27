@@ -61,8 +61,8 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }\n"
 		"       ip [ -force ] -batch filename\n"
-		"where  OBJECT := { address | addrlabel | amt | fou | help | ila | ioam | l2tp |\n"
-		"                   link | macsec | maddress | monitor | mptcp | mroute | mrule |\n"
+		"where  OBJECT := { address | addrlabel | fou | help | ila | ioam | l2tp | link |\n"
+		"                   macsec | maddress | monitor | mptcp | mroute | mrule |\n"
 		"                   neighbor | neighbour | netconf | netns | nexthop | ntable |\n"
 		"                   ntbl | route | rule | sr | tap | tcpmetrics |\n"
 		"                   token | tunnel | tuntap | vrf | xfrm }\n"
