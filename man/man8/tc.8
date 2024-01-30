@@ -127,7 +127,7 @@ tc \- show / manipulate traffic control settings
 \fB[ \fB-nm \fR| \fB-nam\fR[\fIes\fR] \fB] \fR|
 \fB[ \fR{ \fB-cf \fR| \fB-c\fR[\fIonf\fR] \fR} \fB[ filename ] \fB] \fR
 \fB[ -t\fR[imestamp\fR] \fB\] \fR| \fB[ -t\fR[short\fR] \fR| \fB[
--o\fR[neline\fR] \fB]\fR }
+-o\fR[neline\fR] \fB] \fR| \fB[ -echo ]\fR }
 
 .ti 8
 .IR FORMAT " := {"
@@ -742,6 +742,10 @@ When\fB\ tc monitor\fR\ runs, print timestamp before the event message in format
 .BR "\-ts", " \-tshort"
 When\fB\ tc monitor\fR\ runs, prints short timestamp before the event message in format:
    [<YYYY>-<MM>-<DD>T<hh:mm:ss>.<ms>]
+
+.TP
+.BR "\-echo"
+Request the kernel to send the applied configuration back.
 
 .SH FORMAT
 The show command has additional formatting options:

@@ -76,6 +76,7 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 	char  d[IFNAMSIZ] = {};
 	char  k[FILTER_NAMESZ] = {};
 	struct tc_estimator est = {};
+	int ret;
 
 	if (cmd == RTM_NEWTFILTER && flags & NLM_F_CREATE)
 		protocol = htons(ETH_P_ALL);
@@ -221,7 +222,12 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (est.ewma_log)
 		addattr_l(&req.n, sizeof(req), TCA_RATE, &est, sizeof(est));
 
-	if (rtnl_talk(&rth, &req.n, NULL) < 0) {
+	if (echo_request)
+		ret = rtnl_echo_talk(&rth, &req.n, json, print_filter);
+	else
+		ret = rtnl_talk(&rth, &req.n, NULL);
+
+	if (ret < 0) {
 		fprintf(stderr, "We have an error talking to the kernel\n");
 		return 2;
 	}
