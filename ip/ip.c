@@ -64,7 +64,7 @@ static void usage(void)
 		"where  OBJECT := { address | addrlabel | fou | help | ila | ioam | l2tp | link |\n"
 		"                   macsec | maddress | monitor | mptcp | mroute | mrule |\n"
 		"                   neighbor | neighbour | netconf | netns | nexthop | ntable |\n"
-		"                   ntbl | route | rule | sr | tap | tcpmetrics |\n"
+		"                   ntbl | route | rule | sr | stats | tap | tcpmetrics |\n"
 		"                   token | tunnel | tuntap | vrf | xfrm }\n"
 		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] |\n"
 		"                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
