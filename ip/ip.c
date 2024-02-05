@@ -70,7 +70,7 @@ static void usage(void)
 		"                    -h[uman-readable] | -iec | -j[son] | -p[retty] |\n"
 		"                    -f[amily] { inet | inet6 | mpls | bridge | link } |\n"
 		"                    -4 | -6 | -M | -B | -0 |\n"
-		"                    -l[oops] { maximum-addr-flush-attempts } | -br[ief] |\n"
+		"                    -l[oops] { maximum-addr-flush-attempts } | -echo | -br[ief] |\n"
 		"                    -o[neline] | -t[imestamp] | -ts[hort] | -b[atch] [filename] |\n"
 		"                    -rc[vbuf] [size] | -n[etns] name | -N[umeric] | -a[ll] |\n"
 		"                    -c[olor]}\n");
