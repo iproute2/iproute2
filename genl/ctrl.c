@@ -334,8 +334,9 @@ static int ctrl_listen(int argc, char **argv)
 	}
 
 	if (rtnl_listen(&rth, print_ctrl, (void *) stdout) < 0)
-		return -1;
-
+		exit(2);
+	
+	rtnl_close(&rth);	
 	return 0;
 }
 
