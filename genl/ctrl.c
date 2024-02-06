@@ -267,7 +267,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 
 		if (argc != 2) {
 			fprintf(stderr, "Wrong number of params\n");
-			return -1;
+			goto ctrl_done;
 		}
 
 		if (matches(*argv, "name") == 0) {
