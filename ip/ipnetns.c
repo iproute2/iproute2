@@ -96,7 +96,8 @@ static int ipnetns_have_nsid(void)
 			close(fd);
 			return 0;
 		}
-		rtnl_listen(&rth, ipnetns_accept_msg, NULL);
+		if (rtnl_listen(&rth, ipnetns_accept_msg, NULL) < 0)
+			exit(2);
 		close(fd);
 	}
 
