@@ -6,7 +6,7 @@
 #	define XT_LIB_DIR "/lib/xtables"
 #endif
 
-/* protocol family dependent informations */
+/* protocol family dependent information */
 struct afinfo {
 	/* protocol family */
 	int family;
