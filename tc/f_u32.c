@@ -1300,7 +1300,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 
 	if (tb[TCA_U32_PCNT]) {
 		if (RTA_PAYLOAD(tb[TCA_U32_PCNT])  < sizeof(*pf)) {
-			fprintf(f, "Broken perf counters\n");
+			fprintf(stderr, "Broken perf counters\n");
 			return -1;
 		}
 		pf = RTA_DATA(tb[TCA_U32_PCNT]);
@@ -1315,7 +1315,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 		struct tc_u32_mark *mark = RTA_DATA(tb[TCA_U32_MARK]);
 
 		if (RTA_PAYLOAD(tb[TCA_U32_MARK]) < sizeof(*mark)) {
-			fprintf(f, "\n  Invalid mark (kernel&iproute2 mismatch)\n");
+			fprintf(stderr, "Invalid mark (kernel&iproute2 mismatch)\n");
 		} else {
 			print_nl();
 			print_0xhex(PRINT_ANY, "fwmark_value", "  mark 0x%04x ", mark->val);
