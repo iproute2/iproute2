@@ -7,6 +7,7 @@
  *
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -87,6 +88,7 @@ static char *sprint_u32_handle(__u32 handle, char *buf)
 	if (htid) {
 		int l = snprintf(b, bsize, "%x:", htid>>20);
 
+		assert(l > 0 && l < bsize);
 		bsize -= l;
 		b += l;
 	}
@@ -94,12 +96,14 @@ static char *sprint_u32_handle(__u32 handle, char *buf)
 		if (hash) {
 			int l = snprintf(b, bsize, "%x", hash);
 
+			assert(l > 0 && l < bsize);
 			bsize -= l;
 			b += l;
 		}
 		if (nodeid) {
 			int l = snprintf(b, bsize, ":%x", nodeid);
 
+			assert(l > 0 && l < bsize);
 			bsize -= l;
 			b += l;
 		}
