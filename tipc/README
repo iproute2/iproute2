@@ -13,10 +13,10 @@ possible to create a vlan named "help" with the ip tool, but it's impossible
 to remove it, the command just shows help. This is an effect of treating
 bare words specially.
 
-Help texts are not dynamically generated. That is, we do not pass datastructures
+Help texts are not dynamically generated. That is, we do not pass data structures
 like command list or option lists and print them dynamically. This is
 intentional. There is always that exception and when it comes to help texts
-these exceptions are normally neglected at the expence of usability.
+these exceptions are normally neglected at the expense of usability.
 
 KEY-VALUE
 ~~~~~~~~~

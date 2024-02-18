@@ -117,7 +117,7 @@ static void print_corr(bool present, __u32 value)
 }
 
 /*
- * Simplistic file parser for distrbution data.
+ * Simplistic file parser for distribution data.
  * Format is:
  *	# comment line(s)
  *	data0 data1 ...

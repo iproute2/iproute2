@@ -124,18 +124,25 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 	if (handle || tb[TCA_FW_MASK]) {
 		__u32 mark = 0, mask = 0;
 
+		open_json_object("handle");
 		if (handle)
 			mark = handle;
 		if (tb[TCA_FW_MASK] &&
-		    (mask = rta_getattr_u32(tb[TCA_FW_MASK])) != 0xFFFFFFFF)
-			fprintf(f, "handle 0x%x/0x%x ", mark, mask);
-		else
-			fprintf(f, "handle 0x%x ", handle);
+		    (mask = rta_getattr_u32(tb[TCA_FW_MASK])) != 0xFFFFFFFF) {
+			print_hex(PRINT_ANY, "mark", "handle 0x%x", mark);
+			print_hex(PRINT_ANY, "mask", "/0x%x ", mask);
+		} else {
+			print_hex(PRINT_ANY, "mark", "handle 0x%x ", mark);
+			print_hex(PRINT_JSON, "mask", NULL, 0xFFFFFFFF);
+		}
+		close_json_object();
 	}
 
 	if (tb[TCA_FW_CLASSID]) {
 		SPRINT_BUF(b1);
-		fprintf(f, "classid %s ", sprint_tc_classid(rta_getattr_u32(tb[TCA_FW_CLASSID]), b1));
+		print_string(PRINT_ANY, "classid", "classid %s ",
+			     sprint_tc_classid(
+				     rta_getattr_u32(tb[TCA_FW_CLASSID]), b1));
 	}
 
 	if (tb[TCA_FW_POLICE])
@@ -143,11 +150,12 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 	if (tb[TCA_FW_INDEV]) {
 		struct rtattr *idev = tb[TCA_FW_INDEV];
 
-		fprintf(f, "input dev %s ", rta_getattr_str(idev));
+		print_string(PRINT_ANY, "indev", "input dev %s ",
+			     rta_getattr_str(idev));
 	}
 
 	if (tb[TCA_FW_ACT]) {
-		fprintf(f, "\n");
+		print_string(PRINT_FP, NULL, "\n", "");
 		tc_print_action(f, tb[TCA_FW_ACT], 0);
 	}
 	return 0;

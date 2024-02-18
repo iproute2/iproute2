@@ -140,6 +140,9 @@ int color_fprintf(FILE *fp, enum color_attr attr, const char *fmt, ...)
 	int ret = 0;
 	va_list args;
 
+	if (fmt == NULL)
+		return 0;
+
 	va_start(args, fmt);
 
 	if (!color_is_enabled || attr == COLOR_NONE) {

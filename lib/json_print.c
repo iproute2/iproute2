@@ -217,7 +217,7 @@ int print_color_bool(enum output_type type,
 
 /* In JSON mode, acts like print_color_bool.
  * Otherwise, will print key with prefix of "no" if false.
- * The show flag is used to suppres printing in non-JSON mode
+ * The show flag is used to suppress printing in non-JSON mode
  */
 int print_color_bool_opt(enum output_type type,
 			 enum color_attr color,

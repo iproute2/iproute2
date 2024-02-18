@@ -204,7 +204,7 @@ static int bpf_print_opt(struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 	}
 
-	fprintf(f, "\n ");
+	print_string(PRINT_FP, NULL, "%s", "\n ");
 	return 0;
 }
 

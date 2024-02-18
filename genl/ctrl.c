@@ -267,7 +267,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 
 		if (argc != 2) {
 			fprintf(stderr, "Wrong number of params\n");
-			return -1;
+			goto ctrl_done;
 		}
 
 		if (matches(*argv, "name") == 0) {
@@ -334,8 +334,9 @@ static int ctrl_listen(int argc, char **argv)
 	}
 
 	if (rtnl_listen(&rth, print_ctrl, (void *) stdout) < 0)
-		return -1;
-
+		exit(2);
+	
+	rtnl_close(&rth);	
 	return 0;
 }
 

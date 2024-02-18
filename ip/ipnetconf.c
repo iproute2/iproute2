@@ -193,7 +193,8 @@ static int do_show(int argc, char **argv)
 			perror("Can not send request");
 			exit(1);
 		}
-		rtnl_listen(&rth, print_netconf, stdout);
+		if (rtnl_listen(&rth, print_netconf, stdout) < 0)
+			exit(2);
 	} else {
 		rth.flags = RTNL_HANDLE_F_SUPPRESS_NLERR;
 dump:
