@@ -13,6 +13,7 @@
 #include <inttypes.h>
 
 #include <linux/genetlink.h>
+#include <linux/ioam6.h>
 #include <linux/ioam6_genl.h>
 
 #include "utils.h"
@@ -30,7 +31,8 @@ static void usage(void)
 		"	ip ioam schema show\n"
 		"	ip ioam schema add ID DATA\n"
 		"	ip ioam schema del ID\n"
-		"	ip ioam namespace set ID schema { ID | none }\n");
+		"	ip ioam namespace set ID schema { ID | none }\n"
+		"	ip ioam monitor\n");
 	exit(-1);
 }
 
@@ -42,6 +44,7 @@ static int genl_family = -1;
 				IOAM6_GENL_VERSION, _cmd, _flags)
 
 static struct {
+	bool monitor;
 	unsigned int cmd;
 	__u32 sc_id;
 	__u32 ns_data;
@@ -96,6 +99,37 @@ static void print_schema(struct rtattr *attrs[])
 	print_nl();
 }
 
+static void print_trace(struct rtattr *attrs[])
+{
+	__u8 data[IOAM6_TRACE_DATA_SIZE_MAX];
+	int len, i = 0;
+
+	printf("[TRACE] ");
+
+	if (attrs[IOAM6_EVENT_ATTR_TRACE_NAMESPACE])
+		printf("Namespace=%u ",
+		       rta_getattr_u16(attrs[IOAM6_EVENT_ATTR_TRACE_NAMESPACE]));
+
+	if (attrs[IOAM6_EVENT_ATTR_TRACE_NODELEN])
+		printf("NodeLen=%u ",
+		       rta_getattr_u8(attrs[IOAM6_EVENT_ATTR_TRACE_NODELEN]));
+
+	if (attrs[IOAM6_EVENT_ATTR_TRACE_TYPE])
+		printf("Type=%#08x ",
+		       rta_getattr_u32(attrs[IOAM6_EVENT_ATTR_TRACE_TYPE]));
+
+	len = RTA_PAYLOAD(attrs[IOAM6_EVENT_ATTR_TRACE_DATA]);
+	memcpy(data, RTA_DATA(attrs[IOAM6_EVENT_ATTR_TRACE_DATA]), len);
+
+	printf("Data=");
+	while (i < len) {
+		printf("%02x", data[i]);
+		i++;
+	}
+
+	printf("\n");
+}
+
 static int process_msg(struct nlmsghdr *n, void *arg)
 {
 	struct rtattr *attrs[IOAM6_ATTR_MAX + 1];
@@ -126,6 +160,32 @@ static int process_msg(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static int ioam6_monitor_msg(struct rtnl_ctrl_data *ctrl, struct nlmsghdr *n,
+			      void *arg)
+{
+	struct rtattr *attrs[IOAM6_EVENT_ATTR_MAX + 1];
+	const struct genlmsghdr *ghdr = NLMSG_DATA(n);
+	int len = n->nlmsg_len;
+
+	if (n->nlmsg_type != genl_family)
+		return -1;
+
+	len -= NLMSG_LENGTH(GENL_HDRLEN);
+	if (len < 0)
+		return -1;
+
+	parse_rtattr(attrs, IOAM6_EVENT_ATTR_MAX,
+		     (void *)ghdr + GENL_HDRLEN, len);
+
+	switch (ghdr->cmd) {
+	case IOAM6_EVENT_TRACE:
+		print_trace(attrs);
+		break;
+	}
+
+	return 0;
+}
+
 static int ioam6_do_cmd(void)
 {
 	IOAM6_REQUEST(req, 1056, opts.cmd, NLM_F_REQUEST);
@@ -133,6 +193,19 @@ static int ioam6_do_cmd(void)
 
 	if (genl_init_handle(&grth, IOAM6_GENL_NAME, &genl_family))
 		exit(1);
+
+	if (opts.monitor) {
+		if (genl_add_mcast_grp(&grth, genl_family,
+					IOAM6_GENL_EV_GRP_NAME) < 0) {
+			perror("can't subscribe to ioam6 events");
+			exit(1);
+		}
+
+		if (rtnl_listen(&grth, ioam6_monitor_msg, stdout) < 0)
+			exit(1);
+
+		return 0;
+	}
 
 	req.n.nlmsg_type = genl_family;
 
@@ -324,6 +397,9 @@ int do_ioam6(int argc, char **argv)
 		} else {
 			invarg("Unknown", *argv);
 		}
+
+	} else if (strcmp(*argv, "monitor") == 0) {
+		opts.monitor = true;
 
 	} else {
 		invarg("Unknown", *argv);
