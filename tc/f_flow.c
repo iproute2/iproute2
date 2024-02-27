@@ -258,6 +258,21 @@ static int flow_parse_opt(struct filter_util *fu, char *handle,
 	return 0;
 }
 
+static const char *flow_mode2str(__u32 mode)
+{
+	static char buf[128];
+
+	switch (mode) {
+	case FLOW_MODE_MAP:
+		return "map";
+	case FLOW_MODE_HASH:
+		return "hash";
+	default:
+		snprintf(buf, sizeof(buf), "%#x", mode);
+		return buf;
+	}
+}
+
 static int flow_print_opt(struct filter_util *fu, FILE *f, struct rtattr *opt,
 			  __u32 handle)
 {
@@ -272,33 +287,26 @@ static int flow_print_opt(struct filter_util *fu, FILE *f, struct rtattr *opt,
 
 	parse_rtattr_nested(tb, TCA_FLOW_MAX, opt);
 
-	fprintf(f, "handle 0x%x ", handle);
+	print_0xhex(PRINT_ANY, "handle", "handle %#llx ", handle);
 
 	if (tb[TCA_FLOW_MODE]) {
 		__u32 mode = rta_getattr_u32(tb[TCA_FLOW_MODE]);
-
-		switch (mode) {
-		case FLOW_MODE_MAP:
-			fprintf(f, "map ");
-			break;
-		case FLOW_MODE_HASH:
-			fprintf(f, "hash ");
-			break;
-		}
+		print_string(PRINT_ANY, "mode", "%s ", flow_mode2str(mode));
 	}
 
 	if (tb[TCA_FLOW_KEYS]) {
 		__u32 keymask = rta_getattr_u32(tb[TCA_FLOW_KEYS]);
-		char *sep = "";
+		char *sep = " ";
 
-		fprintf(f, "keys ");
+		open_json_array(PRINT_ANY, "keys");
 		for (i = 0; i <= FLOW_KEY_MAX; i++) {
 			if (keymask & (1 << i)) {
-				fprintf(f, "%s%s", sep, flow_keys[i]);
+				print_string(PRINT_FP, NULL, "%s", sep);
+				print_string(PRINT_ANY, NULL, "%s", flow_keys[i]);
 				sep = ",";
 			}
 		}
-		fprintf(f, " ");
+		close_json_array(PRINT_ANY, " ");
 	}
 
 	if (tb[TCA_FLOW_MASK])
@@ -311,37 +319,37 @@ static int flow_print_opt(struct filter_util *fu, FILE *f, struct rtattr *opt,
 		__u32 xor = mask & val;
 
 		if (mask != ~0)
-			fprintf(f, "and 0x%.8x ", mask);
+			print_0xhex(PRINT_ANY, "and", "and 0x%.8x ", mask);
 		if (xor != 0)
-			fprintf(f, "xor 0x%.8x ", xor);
+			print_0xhex(PRINT_ANY, "xor", "xor 0x%.8x ", xor);
 		if (or != 0)
-			fprintf(f, "or 0x%.8x ", or);
+			print_0xhex(PRINT_ANY, "or", "or 0x%.8x ", or);
 	}
 
 	if (tb[TCA_FLOW_RSHIFT])
-		fprintf(f, "rshift %u ",
-			rta_getattr_u32(tb[TCA_FLOW_RSHIFT]));
+		print_uint(PRINT_ANY, "rshift", "rshift %u ",
+			   rta_getattr_u32(tb[TCA_FLOW_RSHIFT]));
 	if (tb[TCA_FLOW_ADDEND])
-		fprintf(f, "addend 0x%x ",
-			rta_getattr_u32(tb[TCA_FLOW_ADDEND]));
+		print_0xhex(PRINT_ANY, "addend", "addend 0x%x ",
+			    rta_getattr_u32(tb[TCA_FLOW_ADDEND]));
 
 	if (tb[TCA_FLOW_DIVISOR])
-		fprintf(f, "divisor %u ",
-			rta_getattr_u32(tb[TCA_FLOW_DIVISOR]));
+		print_uint(PRINT_ANY, "divisor", "divisor %u ",
+			   rta_getattr_u32(tb[TCA_FLOW_DIVISOR]));
 	if (tb[TCA_FLOW_BASECLASS])
-		fprintf(f, "baseclass %s ",
-			sprint_tc_classid(rta_getattr_u32(tb[TCA_FLOW_BASECLASS]), b1));
+		print_string(PRINT_ANY, "baseclass", "baseclass %s ",
+			     sprint_tc_classid(rta_getattr_u32(tb[TCA_FLOW_BASECLASS]), b1));
 
 	if (tb[TCA_FLOW_PERTURB])
-		fprintf(f, "perturb %usec ",
-			rta_getattr_u32(tb[TCA_FLOW_PERTURB]));
+		print_uint(PRINT_ANY, "perturb", "perturb %usec ",
+			   rta_getattr_u32(tb[TCA_FLOW_PERTURB]));
 
 	if (tb[TCA_FLOW_EMATCHES])
 		print_ematch(f, tb[TCA_FLOW_EMATCHES]);
 	if (tb[TCA_FLOW_POLICE])
 		tc_print_police(f, tb[TCA_FLOW_POLICE]);
 	if (tb[TCA_FLOW_ACT]) {
-		fprintf(f, "\n");
+		print_nl();
 		tc_print_action(f, tb[TCA_FLOW_ACT], 0);
 	}
 	return 0;

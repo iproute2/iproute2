@@ -445,6 +445,11 @@ TCP for IPv6 on this device when the size is greater than 65536.
 specifies the recommended maximum size of a IPv4 Generic Segment Offload
 packet the new device should accept. This is especially used to enable
 BIG TCP for IPv4 on this device by setting to a size greater than 65536.
+Note that
+.B gso_max_size
+needs to be set to a size greater than or equal to
+.B gso_ipv4_max_size
+to really enable BIG TCP for IPv4.
 
 .TP
 .BI gso_max_segs " SEGMENTS "

@@ -124,16 +124,16 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 	if (handle || tb[TCA_FW_MASK]) {
 		__u32 mark = 0, mask = 0;
 
-		open_json_object("handle");
+		open_json_object("fw");
 		if (handle)
 			mark = handle;
 		if (tb[TCA_FW_MASK] &&
 		    (mask = rta_getattr_u32(tb[TCA_FW_MASK])) != 0xFFFFFFFF) {
-			print_hex(PRINT_ANY, "mark", "handle 0x%x", mark);
-			print_hex(PRINT_ANY, "mask", "/0x%x ", mask);
+			print_0xhex(PRINT_ANY, "mark", "handle 0x%x", mark);
+			print_0xhex(PRINT_ANY, "mask", "/0x%x ", mask);
 		} else {
-			print_hex(PRINT_ANY, "mark", "handle 0x%x ", mark);
-			print_hex(PRINT_JSON, "mask", NULL, 0xFFFFFFFF);
+			print_0xhex(PRINT_ANY, "mark", "handle 0x%x ", mark);
+			print_0xhex(PRINT_JSON, "mask", NULL, 0xFFFFFFFF);
 		}
 		close_json_object();
 	}
@@ -155,7 +155,7 @@ static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u
 	}
 
 	if (tb[TCA_FW_ACT]) {
-		print_string(PRINT_FP, NULL, "\n", "");
+		print_nl();
 		tc_print_action(f, tb[TCA_FW_ACT], 0);
 	}
 	return 0;
