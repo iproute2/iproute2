@@ -580,7 +580,7 @@ static const struct option longopts[] = {
 
 int main(int argc, char *argv[])
 {
-	char *hist_name;
+	char hist_name[128];
 	struct sockaddr_un sun;
 	FILE *hist_fp = NULL;
 	int ch;
@@ -668,10 +668,11 @@ int main(int argc, char *argv[])
 	patterns = argv;
 	npatterns = argc;
 
-	if ((hist_name = getenv("NSTAT_HISTORY")) == NULL) {
-		hist_name = malloc(128);
-		sprintf(hist_name, "/tmp/.nstat.u%d", getuid());
-	}
+	if (getenv("NSTAT_HISTORY"))
+		snprintf(hist_name, sizeof(hist_name),
+			 "%s", getenv("NSTAT_HISTORY"));
+	else
+		snprintf(hist_name, sizeof(hist_name), "/tmp/.nstat.u%d", getuid());
 
 	if (reset_history)
 		unlink(hist_name);
