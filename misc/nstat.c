@@ -43,7 +43,7 @@ int npatterns;
 char info_source[128];
 int source_mismatch;
 
-static int generic_proc_open(const char *env, char *name)
+static int generic_proc_open(const char *env, const char *name)
 {
 	char store[128];
 	char *p = getenv(env);
