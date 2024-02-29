@@ -937,8 +937,10 @@ int main(int argc, char *argv[])
 				 "%s/.%s_ifstat.u%d", P_tmpdir, stats_type,
 				 getuid());
 
-	if (reset_history)
-		unlink(hist_name);
+	if (reset_history && unlink(hist_name) < 0) {
+		perror("ifstat: unlink history file");
+		exit(-1);
+	}
 
 	if (!ignore_history || !no_update) {
 		struct stat stb;
