@@ -51,7 +51,7 @@ int sub_type;
 char info_source[128];
 int source_mismatch;
 
-#define MAXS (sizeof(struct rtnl_link_stats)/sizeof(__u32))
+#define MAXS (sizeof(struct rtnl_link_stats64)/sizeof(__u64))
 #define NO_SUB_TYPE 0xffff
 
 struct ifstat_ent {
@@ -60,7 +60,7 @@ struct ifstat_ent {
 	int			ifindex;
 	unsigned long long	val[MAXS];
 	double			rate[MAXS];
-	__u32			ival[MAXS];
+	__u64			ival[MAXS];
 };
 
 static const char *stats[MAXS] = {
@@ -74,19 +74,25 @@ static const char *stats[MAXS] = {
 	"tx_dropped",
 	"multicast",
 	"collisions",
+
 	"rx_length_errors",
 	"rx_over_errors",
 	"rx_crc_errors",
 	"rx_frame_errors",
 	"rx_fifo_errors",
 	"rx_missed_errors",
+
 	"tx_aborted_errors",
 	"tx_carrier_errors",
 	"tx_fifo_errors",
 	"tx_heartbeat_errors",
 	"tx_window_errors",
+
 	"rx_compressed",
-	"tx_compressed"
+	"tx_compressed",
+	"rx_nohandler",
+
+	"rx_otherhost_dropped",
 };
 
 struct ifstat_ent *kern_db;
@@ -174,7 +180,7 @@ static int get_nlmsg(struct nlmsghdr *m, void *arg)
 		return 0;
 
 	parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
-	if (tb[IFLA_IFNAME] == NULL || tb[IFLA_STATS] == NULL)
+	if (tb[IFLA_IFNAME] == NULL)
 		return 0;
 
 	n = malloc(sizeof(*n));
@@ -182,10 +188,31 @@ static int get_nlmsg(struct nlmsghdr *m, void *arg)
 		errno = ENOMEM;
 		return -1;
 	}
+
 	n->ifindex = ifi->ifi_index;
 	n->name = strdup(RTA_DATA(tb[IFLA_IFNAME]));
-	memcpy(&n->ival, RTA_DATA(tb[IFLA_STATS]), sizeof(n->ival));
+	if (!n->name) {
+		free(n);
+		errno = ENOMEM;
+		return -1;
+	}
+
 	memset(&n->rate, 0, sizeof(n->rate));
+
+	if (tb[IFLA_STATS64]) {
+		memcpy(&n->ival, RTA_DATA(tb[IFLA_STATS64]), sizeof(n->ival));
+	} else if (tb[IFLA_STATS]) {
+		__u32 *stats = RTA_DATA(tb[IFLA_STATS]);
+
+		/* expand 32 bit values to 64 bit */
+		for (i = 0; i < MAXS; i++)
+			n->ival[i] = stats[i];
+	} else {
+		/* missing stats? */
+		free(n);
+		return 0;
+	}
+
 	for (i = 0; i < MAXS; i++)
 		n->val[i] = n->ival[i];
 	n->next = kern_db;
