@@ -24,6 +24,7 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include "ss_util.h"
 #include "utils.h"
@@ -2891,6 +2892,20 @@ static void print_skmeminfo(struct rtattr *tb[], int attrtype)
 	out(")");
 }
 
+/* like lib/utils.c print_escape_buf(), but use out(), not printf()! */
+static void out_escape_buf(const __u8 *buf, size_t len, const char *escape)
+{
+	size_t i;
+
+	for (i = 0; i < len; ++i) {
+		if (isprint(buf[i]) && buf[i] != '\\' &&
+		    !strchr(escape, buf[i]))
+			out("%c", buf[i]);
+		else
+			out("\\%03o", buf[i]);
+	}
+}
+
 static void print_md5sig(struct tcp_diag_md5sig *sig)
 {
 	out("%s/%d=",
@@ -2898,7 +2913,7 @@ static void print_md5sig(struct tcp_diag_md5sig *sig)
 			sig->tcpm_family == AF_INET6 ? 16 : 4,
 			&sig->tcpm_addr),
 	    sig->tcpm_prefixlen);
-	print_escape_buf(sig->tcpm_key, sig->tcpm_keylen, " ,");
+	out_escape_buf(sig->tcpm_key, sig->tcpm_keylen, " ,");
 }
 
 static void tcp_tls_version(struct rtattr *attr)
