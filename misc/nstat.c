@@ -43,35 +43,22 @@ int npatterns;
 char info_source[128];
 int source_mismatch;
 
-static int generic_proc_open(const char *env, const char *name)
-{
-	char store[128];
-	char *p = getenv(env);
-
-	if (!p) {
-		p = getenv("PROC_ROOT") ? : "/proc";
-		snprintf(store, sizeof(store)-1, "%s/%s", p, name);
-		p = store;
-	}
-	return open(p, O_RDONLY);
-}
-
-static int net_netstat_open(void)
+static FILE *net_netstat_open(void)
 {
 	return generic_proc_open("PROC_NET_NETSTAT", "net/netstat");
 }
 
-static int net_snmp_open(void)
+static FILE *net_snmp_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP", "net/snmp");
 }
 
-static int net_snmp6_open(void)
+static FILE *net_snmp6_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP6", "net/snmp6");
 }
 
-static int net_sctp_snmp_open(void)
+static FILE *net_sctp_snmp_open(void)
 {
 	return generic_proc_open("PROC_NET_SCTP_SNMP", "net/sctp/snmp");
 }
@@ -277,7 +264,7 @@ static void load_ugly_table(FILE *fp)
 
 static void load_sctp_snmp(void)
 {
-	FILE *fp = fdopen(net_sctp_snmp_open(), "r");
+	FILE *fp = net_sctp_snmp_open();
 
 	if (fp) {
 		load_good_table(fp);
@@ -287,7 +274,7 @@ static void load_sctp_snmp(void)
 
 static void load_snmp(void)
 {
-	FILE *fp = fdopen(net_snmp_open(), "r");
+	FILE *fp = net_snmp_open();
 
 	if (fp) {
 		load_ugly_table(fp);
@@ -297,7 +284,7 @@ static void load_snmp(void)
 
 static void load_snmp6(void)
 {
-	FILE *fp = fdopen(net_snmp6_open(), "r");
+	FILE *fp = net_snmp6_open();
 
 	if (fp) {
 		load_good_table(fp);
@@ -307,7 +294,7 @@ static void load_snmp6(void)
 
 static void load_netstat(void)
 {
-	FILE *fp = fdopen(net_netstat_open(), "r");
+	FILE *fp = net_netstat_open();
 
 	if (fp) {
 		load_ugly_table(fp);

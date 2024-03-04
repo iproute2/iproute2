@@ -393,4 +393,6 @@ int proto_a2n(unsigned short *id, const char *buf,
 const char *proto_n2a(unsigned short id, char *buf, int len,
 		      const struct proto *proto_tb, size_t tb_len);
 
+FILE *generic_proc_open(const char *env, const char *name);
+
 #endif /* __UTILS_H__ */
