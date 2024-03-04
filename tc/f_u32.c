@@ -1342,7 +1342,7 @@ static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
 
 		if (sel->flags & (TC_U32_VAROFFSET | TC_U32_OFFSET)) {
 			print_nl();
-			print_string(PRINT_ANY, NULL, "%s", "    offset ");
+			print_string(PRINT_FP, NULL, "    offset ", NULL);
 			if (sel->flags & TC_U32_VAROFFSET) {
 				print_hex(PRINT_ANY, "offset_mask", "%04x", ntohs(sel->offmask));
 				print_int(PRINT_ANY, "offset_shift", ">>%d ", sel->offshift);
