@@ -12,6 +12,19 @@ Stable version repository:
 Development repository:
     git://git.kernel.org/pub/scm/network/iproute2/iproute2-next.git
 
+Compatibility
+-------------
+A new release of iproute2 is done with each kernel version, but
+there is a wide range of compatibility. Newer versions of iproute2
+will still work with older kernels, but there are some limitations.
+
+If an iproute2 command with a new feature is used with an older
+kernel, the kernel may report an error or silently ignore the new
+attribute. Likewise if older iproute2 is used with an newer kernel,
+it is not possible to use or see new features. The range of
+compatibility extends back as far as the oldest supported Long Term
+Support (LTS) kernel version.
+
 How to compile this.
 --------------------
 1. libdbm
