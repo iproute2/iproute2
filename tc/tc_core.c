@@ -23,23 +23,14 @@
 static double tick_in_usec = 1;
 static double clock_factor = 1;
 
-int tc_core_time2big(unsigned int time)
+static unsigned int tc_core_time2tick(unsigned int time)
 {
-	__u64 t = time;
-
-	t *= tick_in_usec;
-	return (t >> 32) != 0;
-}
-
-
-unsigned int tc_core_time2tick(unsigned int time)
-{
-	return time*tick_in_usec;
+	return time * tick_in_usec;
 }
 
 unsigned int tc_core_tick2time(unsigned int tick)
 {
-	return tick/tick_in_usec;
+	return tick / tick_in_usec;
 }
 
 unsigned int tc_core_time2ktime(unsigned int time)

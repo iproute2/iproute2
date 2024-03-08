@@ -257,11 +257,6 @@ tc_print_rate(enum output_type t, const char *key, const char *fmt,
 	print_rate(use_iec, t, key, fmt, rate);
 }
 
-char *sprint_ticks(__u32 ticks, char *buf)
-{
-	return sprint_time(tc_core_tick2time(ticks), buf);
-}
-
 int get_size_and_cell(unsigned int *size, int *cell_log, char *str)
 {
 	char *slash = strchr(str, '/');

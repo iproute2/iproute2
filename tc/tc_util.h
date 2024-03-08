@@ -87,7 +87,6 @@ void tc_print_rate(enum output_type t, const char *key, const char *fmt,
 void print_devname(enum output_type type, int ifindex);
 
 char *sprint_tc_classid(__u32 h, char *buf);
-char *sprint_ticks(__u32 ticks, char *buf);
 char *sprint_linklayer(unsigned int linklayer, char *buf);
 
 void print_tcstats_attr(FILE *fp, struct rtattr *tb[],
