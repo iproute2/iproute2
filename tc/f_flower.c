@@ -1535,7 +1535,7 @@ static int flower_parse_cfm(int *argc_p, char ***argv_p, __be16 eth_type,
 	return 0;
 }
 
-static int flower_parse_opt(struct filter_util *qu, char *handle,
+static int flower_parse_opt(const struct filter_util *qu, char *handle,
 			    int argc, char **argv, struct nlmsghdr *n)
 {
 	int ret;
@@ -2882,7 +2882,7 @@ static void flower_print_cfm(struct rtattr *attr)
 	close_json_object();
 }
 
-static int flower_print_opt(struct filter_util *qu, FILE *f,
+static int flower_print_opt(const struct filter_util *qu, FILE *f,
 			    struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_FLOWER_MAX + 1];

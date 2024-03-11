@@ -49,9 +49,9 @@ extern __u16 f_proto;
 struct filter_util {
 	struct filter_util *next;
 	char id[FILTER_NAMESZ];
-	int (*parse_fopt)(struct filter_util *qu, char *fhandle,
+	int (*parse_fopt)(const struct filter_util *qu, char *fhandle,
 			  int argc, char **argv, struct nlmsghdr *n);
-	int (*print_fopt)(struct filter_util *qu,
+	int (*print_fopt)(const struct filter_util *qu,
 			  FILE *f, struct rtattr *opt, __u32 fhandle);
 };
 
@@ -74,7 +74,7 @@ struct exec_util {
 const char *get_tc_lib(void);
 
 const struct qdisc_util *get_qdisc_kind(const char *str);
-struct filter_util *get_filter_kind(const char *str);
+const struct filter_util *get_filter_kind(const char *str);
 
 int get_qdisc_handle(__u32 *h, const char *str);
 int get_percent_rate(unsigned int *rate, const char *str, const char *dev);

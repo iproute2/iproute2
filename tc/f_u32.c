@@ -1018,7 +1018,7 @@ static __u32 u32_hash_fold(struct tc_u32_key *key)
 	return ntohl(key->val & key->mask) >> fshift;
 }
 
-static int u32_parse_opt(struct filter_util *qu, char *handle,
+static int u32_parse_opt(const struct filter_util *qu, char *handle,
 			 int argc, char **argv, struct nlmsghdr *n)
 {
 	struct {
@@ -1232,7 +1232,7 @@ static int u32_parse_opt(struct filter_util *qu, char *handle,
 	return 0;
 }
 
-static int u32_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt,
+static int u32_print_opt(const struct filter_util *qu, FILE *f, struct rtattr *opt,
 			 __u32 handle)
 {
 	struct rtattr *tb[TCA_U32_MAX + 1];

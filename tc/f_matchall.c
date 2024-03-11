@@ -31,7 +31,7 @@ static void explain(void)
 		"NOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
-static int matchall_parse_opt(struct filter_util *qu, char *handle,
+static int matchall_parse_opt(const struct filter_util *qu, char *handle,
 			   int argc, char **argv, struct nlmsghdr *n)
 {
 	struct tcmsg *t = NLMSG_DATA(n);
@@ -107,7 +107,7 @@ static int matchall_parse_opt(struct filter_util *qu, char *handle,
 	return 0;
 }
 
-static int matchall_print_opt(struct filter_util *qu, FILE *f,
+static int matchall_print_opt(const struct filter_util *qu, FILE *f,
 			   struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_MATCHALL_MAX+1];

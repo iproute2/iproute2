@@ -32,7 +32,7 @@ static void explain(void)
 		"NOTE: CLASSID is parsed as hexadecimal input.\n");
 }
 
-static int basic_parse_opt(struct filter_util *qu, char *handle,
+static int basic_parse_opt(const struct filter_util *qu, char *handle,
 			   int argc, char **argv, struct nlmsghdr *n)
 {
 	struct tcmsg *t = NLMSG_DATA(n);
@@ -103,7 +103,7 @@ static int basic_parse_opt(struct filter_util *qu, char *handle,
 	return 0;
 }
 
-static int basic_print_opt(struct filter_util *qu, FILE *f,
+static int basic_print_opt(const struct filter_util *qu, FILE *f,
 			   struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_BASIC_MAX+1];

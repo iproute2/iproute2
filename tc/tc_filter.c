@@ -65,7 +65,7 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.t.tcm_family = AF_UNSPEC,
 	};
-	struct filter_util *q = NULL;
+	const struct filter_util *q = NULL;
 	__u32 prio = 0;
 	__u32 protocol = 0;
 	int protocol_set = 0;
@@ -250,7 +250,7 @@ int print_filter(struct nlmsghdr *n, void *arg)
 	struct tcmsg *t = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[TCA_MAX+1];
-	struct filter_util *q;
+	const struct filter_util *q;
 	char abuf[256];
 
 	if (n->nlmsg_type != RTM_NEWTFILTER &&
@@ -398,7 +398,7 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 		.t.tcm_family = AF_UNSPEC,
 	};
 	struct nlmsghdr *answer;
-	struct filter_util *q = NULL;
+	const struct filter_util *q = NULL;
 	__u32 prio = 0;
 	__u32 protocol = 0;
 	int protocol_set = 0;
