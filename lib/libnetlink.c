@@ -111,6 +111,10 @@ int nl_dump_ext_ack(const struct nlmsghdr *nlh, nl_ext_ack_fn_t errfn)
 			err_nlh = &err->msg;
 	}
 
+	if (tb[NLMSGERR_ATTR_MISS_TYPE])
+		fprintf(stderr, "Missing required attribute type %u\n",
+			mnl_attr_get_u32(tb[NLMSGERR_ATTR_MISS_TYPE]));
+
 	if (errfn)
 		return errfn(msg, off, err_nlh);
 

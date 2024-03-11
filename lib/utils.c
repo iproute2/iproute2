@@ -2003,3 +2003,17 @@ int proto_a2n(unsigned short *id, const char *buf,
 
 	return 0;
 }
+
+FILE *generic_proc_open(const char *env, const char *name)
+{
+	const char *p = getenv(env);
+	char store[128];
+
+	if (!p) {
+		p = getenv("PROC_ROOT") ? : "/proc";
+		snprintf(store, sizeof(store) - 1, "%s/%s", p, name);
+		p = store;
+	}
+
+	return fopen(p, "r");
+}

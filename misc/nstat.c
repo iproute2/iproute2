@@ -43,35 +43,22 @@ int npatterns;
 char info_source[128];
 int source_mismatch;
 
-static int generic_proc_open(const char *env, char *name)
-{
-	char store[128];
-	char *p = getenv(env);
-
-	if (!p) {
-		p = getenv("PROC_ROOT") ? : "/proc";
-		snprintf(store, sizeof(store)-1, "%s/%s", p, name);
-		p = store;
-	}
-	return open(p, O_RDONLY);
-}
-
-static int net_netstat_open(void)
+static FILE *net_netstat_open(void)
 {
 	return generic_proc_open("PROC_NET_NETSTAT", "net/netstat");
 }
 
-static int net_snmp_open(void)
+static FILE *net_snmp_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP", "net/snmp");
 }
 
-static int net_snmp6_open(void)
+static FILE *net_snmp6_open(void)
 {
 	return generic_proc_open("PROC_NET_SNMP6", "net/snmp6");
 }
 
-static int net_sctp_snmp_open(void)
+static FILE *net_sctp_snmp_open(void)
 {
 	return generic_proc_open("PROC_NET_SCTP_SNMP", "net/sctp/snmp");
 }
@@ -277,7 +264,7 @@ static void load_ugly_table(FILE *fp)
 
 static void load_sctp_snmp(void)
 {
-	FILE *fp = fdopen(net_sctp_snmp_open(), "r");
+	FILE *fp = net_sctp_snmp_open();
 
 	if (fp) {
 		load_good_table(fp);
@@ -287,7 +274,7 @@ static void load_sctp_snmp(void)
 
 static void load_snmp(void)
 {
-	FILE *fp = fdopen(net_snmp_open(), "r");
+	FILE *fp = net_snmp_open();
 
 	if (fp) {
 		load_ugly_table(fp);
@@ -297,7 +284,7 @@ static void load_snmp(void)
 
 static void load_snmp6(void)
 {
-	FILE *fp = fdopen(net_snmp6_open(), "r");
+	FILE *fp = net_snmp6_open();
 
 	if (fp) {
 		load_good_table(fp);
@@ -307,7 +294,7 @@ static void load_snmp6(void)
 
 static void load_netstat(void)
 {
-	FILE *fp = fdopen(net_netstat_open(), "r");
+	FILE *fp = net_netstat_open();
 
 	if (fp) {
 		load_ugly_table(fp);
@@ -483,7 +470,7 @@ static void server_loop(int fd)
 	p.fd = fd;
 	p.events = p.revents = POLLIN;
 
-	sprintf(info_source, "%d.%lu sampling_interval=%d time_const=%d",
+	snprintf(info_source, sizeof(info_source), "%d.%lu sampling_interval=%d time_const=%d",
 		getpid(), (unsigned long)random(), scan_interval/1000, time_constant/1000);
 
 	load_netstat();
@@ -580,7 +567,7 @@ static const struct option longopts[] = {
 
 int main(int argc, char *argv[])
 {
-	char *hist_name;
+	char hist_name[128];
 	struct sockaddr_un sun;
 	FILE *hist_fp = NULL;
 	int ch;
@@ -636,7 +623,7 @@ int main(int argc, char *argv[])
 
 	sun.sun_family = AF_UNIX;
 	sun.sun_path[0] = 0;
-	sprintf(sun.sun_path+1, "nstat%d", getuid());
+	snprintf(sun.sun_path + 1, sizeof(sun.sun_path) - 1, "nstat%d", getuid());
 
 	if (scan_interval > 0) {
 		if (time_constant == 0)
@@ -668,10 +655,11 @@ int main(int argc, char *argv[])
 	patterns = argv;
 	npatterns = argc;
 
-	if ((hist_name = getenv("NSTAT_HISTORY")) == NULL) {
-		hist_name = malloc(128);
-		sprintf(hist_name, "/tmp/.nstat.u%d", getuid());
-	}
+	if (getenv("NSTAT_HISTORY"))
+		snprintf(hist_name, sizeof(hist_name),
+			 "%s", getenv("NSTAT_HISTORY"));
+	else
+		snprintf(hist_name, sizeof(hist_name), "/tmp/.nstat.u%d", getuid());
 
 	if (reset_history)
 		unlink(hist_name);

@@ -52,6 +52,26 @@
 #include <linux/tls.h>
 #include <linux/mptcp.h>
 
+#ifdef HAVE_LIBBPF
+/* If libbpf is new enough (0.5+), support for pretty-printing BPF socket-local
+ * storage is enabled, otherwise we emit a warning and disable it.
+ * ENABLE_BPF_SKSTORAGE_SUPPORT is only used to gate the socket-local storage
+ * feature, so this wouldn't prevent any feature relying on HAVE_LIBBPF to be
+ * usable.
+ */
+#define ENABLE_BPF_SKSTORAGE_SUPPORT
+
+#include <bpf/bpf.h>
+#include <bpf/btf.h>
+#include <bpf/libbpf.h>
+#include <linux/btf.h>
+
+#if (LIBBPF_MAJOR_VERSION == 0) && (LIBBPF_MINOR_VERSION < 5)
+#warning "libbpf version 0.5 or later is required, disabling BPF socket-local storage support"
+#undef ENABLE_BPF_SKSTORAGE_SUPPORT
+#endif
+#endif
+
 #if HAVE_RPC
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -76,6 +96,7 @@
 int preferred_family = AF_UNSPEC;
 static int show_options;
 int show_details;
+static int show_queues = 1;
 static int show_processes;
 static int show_threads;
 static int show_mem;
@@ -458,19 +479,6 @@ static void filter_merge_defaults(struct filter *f)
 	}
 }
 
-static FILE *generic_proc_open(const char *env, const char *name)
-{
-	const char *p = getenv(env);
-	char store[128];
-
-	if (!p) {
-		p = getenv("PROC_ROOT") ? : "/proc";
-		snprintf(store, sizeof(store)-1, "%s/%s", p, name);
-		p = store;
-	}
-
-	return fopen(p, "r");
-}
 #define net_tcp_open()		generic_proc_open("PROC_NET_TCP", "net/tcp")
 #define net_tcp6_open()		generic_proc_open("PROC_NET_TCP6", "net/tcp6")
 #define net_udp_open()		generic_proc_open("PROC_NET_UDP", "net/udp")
@@ -1035,11 +1043,10 @@ static int buf_update(int len)
 }
 
 /* Append content to buffer as part of the current field */
-__attribute__((format(printf, 1, 2)))
-static void out(const char *fmt, ...)
+static void vout(const char *fmt, va_list args)
 {
 	struct column *f = current_field;
-	va_list args;
+	va_list _args;
 	char *pos;
 	int len;
 
@@ -1050,16 +1057,25 @@ static void out(const char *fmt, ...)
 		buffer.head = buf_chunk_new();
 
 again:	/* Append to buffer: if we have a new chunk, print again */
+	va_copy(_args, args);
 
 	pos = buffer.cur->data + buffer.cur->len;
-	va_start(args, fmt);
 
 	/* Limit to tail room. If we hit the limit, buf_update() will tell us */
-	len = vsnprintf(pos, buf_chunk_avail(buffer.tail), fmt, args);
-	va_end(args);
+	len = vsnprintf(pos, buf_chunk_avail(buffer.tail), fmt, _args);
 
 	if (buf_update(len))
 		goto again;
+}
+
+__attribute__((format(printf, 1, 2)))
+static void out(const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	vout(fmt, args);
+	va_end(args);
 }
 
 static int print_left_spacing(struct column *f, int stored, int printed)
@@ -1426,10 +1442,13 @@ static void sock_state_print(struct sockstat *s)
 		out("%s", sstate_name[s->state]);
 	}
 
-	field_set(COL_RECVQ);
-	out("%-6d", s->rq);
-	field_set(COL_SENDQ);
-	out("%-6d", s->wq);
+	if (show_queues) {
+		field_set(COL_RECVQ);
+		out("%-6d", s->rq);
+		field_set(COL_SENDQ);
+		out("%-6d", s->wq);
+	}
+
 	field_set(COL_ADDR);
 }
 
@@ -3395,6 +3414,318 @@ static void parse_diag_msg(struct nlmsghdr *nlh, struct sockstat *s)
 	memcpy(s->remote.data, r->id.idiag_dst, s->local.bytelen);
 }
 
+#ifdef ENABLE_BPF_SKSTORAGE_SUPPORT
+
+#define MAX_NR_BPF_MAP_ID_OPTS 32
+
+struct btf;
+
+static struct bpf_map_opts {
+	unsigned int nr_maps;
+	struct bpf_sk_storage_map_info {
+		unsigned int id;
+		int fd;
+		struct bpf_map_info info;
+		struct btf *btf;
+		struct btf_dump *dump;
+	} maps[MAX_NR_BPF_MAP_ID_OPTS];
+	bool show_all;
+} bpf_map_opts;
+
+static void bpf_map_opts_mixed_error(void)
+{
+	fprintf(stderr,
+		"ss: --bpf-maps and --bpf-map-id cannot be used together\n");
+}
+
+static int bpf_maps_opts_load_btf(struct bpf_map_info *info, struct btf **btf)
+{
+	if (info->btf_value_type_id) {
+		*btf = btf__load_from_kernel_by_id(info->btf_id);
+		if (!*btf) {
+			fprintf(stderr, "ss: failed to load BTF for map ID %u\n",
+				info->id);
+			return -1;
+		}
+	} else {
+		*btf = NULL;
+	}
+
+	return 0;
+}
+
+static void out_bpf_sk_storage_print_fn(void *ctx, const char *fmt, va_list args)
+{
+	vout(fmt, args);
+}
+
+static int bpf_map_opts_load_info(unsigned int map_id)
+{
+	struct btf_dump_opts dopts = {
+		.sz = sizeof(struct btf_dump_opts)
+	};
+	struct bpf_map_info info = {};
+	uint32_t len = sizeof(info);
+	struct btf_dump *dump;
+	struct btf *btf;
+	int fd;
+	int r;
+
+	if (bpf_map_opts.nr_maps == MAX_NR_BPF_MAP_ID_OPTS) {
+		fprintf(stderr,
+			"ss: too many (> %u) BPF socket-local storage maps found, skipping map ID %u\n",
+			MAX_NR_BPF_MAP_ID_OPTS, map_id);
+		return 0;
+	}
+
+	fd = bpf_map_get_fd_by_id(map_id);
+	if (fd < 0) {
+		if (errno == -ENOENT)
+			return 0;
+
+		fprintf(stderr, "ss: cannot get fd for BPF map ID %u%s\n",
+			map_id, errno == EPERM ?
+			": missing root permissions, CAP_BPF, or CAP_SYS_ADMIN" : "");
+		return -1;
+	}
+
+	r = bpf_obj_get_info_by_fd(fd, &info, &len);
+	if (r) {
+		fprintf(stderr, "ss: failed to get info for BPF map ID %u\n",
+			map_id);
+		close(fd);
+		return -1;
+	}
+
+	if (info.type != BPF_MAP_TYPE_SK_STORAGE) {
+		fprintf(stderr,
+			"ss: BPF map with ID %s has type ID %d, expecting %d ('sk_storage')\n",
+			optarg, info.type, BPF_MAP_TYPE_SK_STORAGE);
+		close(fd);
+		return -1;
+	}
+
+	r = bpf_maps_opts_load_btf(&info, &btf);
+	if (r) {
+		close(fd);
+		return -1;
+	}
+
+	dump = btf_dump__new(btf, out_bpf_sk_storage_print_fn, NULL, &dopts);
+	if (!dump) {
+		btf__free(btf);
+		close(fd);
+		fprintf(stderr, "Failed to create btf_dump object\n");
+		return -1;
+	}
+
+	bpf_map_opts.maps[bpf_map_opts.nr_maps].id = map_id;
+	bpf_map_opts.maps[bpf_map_opts.nr_maps].fd = fd;
+	bpf_map_opts.maps[bpf_map_opts.nr_maps].info = info;
+	bpf_map_opts.maps[bpf_map_opts.nr_maps].btf = btf;
+	bpf_map_opts.maps[bpf_map_opts.nr_maps++].dump = dump;
+
+	return 0;
+}
+
+static struct bpf_sk_storage_map_info *bpf_map_opts_get_info(
+	unsigned int map_id)
+{
+	unsigned int i;
+	int r;
+
+	for (i = 0; i < bpf_map_opts.nr_maps; ++i) {
+		if (bpf_map_opts.maps[i].id == map_id)
+			return &bpf_map_opts.maps[i];
+	}
+
+	r = bpf_map_opts_load_info(map_id);
+	if (r)
+		return NULL;
+
+	return &bpf_map_opts.maps[bpf_map_opts.nr_maps - 1];
+}
+
+static int bpf_map_opts_add_id(const char *optarg)
+{
+	size_t optarg_len;
+	unsigned long id;
+	char *end;
+
+	if (bpf_map_opts.show_all) {
+		bpf_map_opts_mixed_error();
+		return -1;
+	}
+
+	optarg_len = strlen(optarg);
+	id = strtoul(optarg, &end, 0);
+	if (end != optarg + optarg_len || id == 0 || id >= UINT32_MAX) {
+		fprintf(stderr, "ss: invalid BPF map ID %s\n", optarg);
+		return -1;
+	}
+
+	/* Force lazy loading of the map's data. */
+	if (!bpf_map_opts_get_info(id))
+		return -1;
+
+	return 0;
+}
+
+static void bpf_map_opts_destroy(void)
+{
+	int i;
+
+	for (i = 0; i < bpf_map_opts.nr_maps; ++i) {
+		btf_dump__free(bpf_map_opts.maps[i].dump);
+		btf__free(bpf_map_opts.maps[i].btf);
+		close(bpf_map_opts.maps[i].fd);
+	}
+}
+
+static struct rtattr *bpf_map_opts_alloc_rta(void)
+{
+	struct rtattr *stgs_rta, *fd_rta;
+	size_t total_size;
+	unsigned int i;
+	void *buf;
+
+	/* If bpf_map_opts.show_all == true, we will send an empty message to
+	 * the kernel, which will return all the socket-local data attached to
+	 * a socket, no matter their map ID
+	 */
+	if (bpf_map_opts.show_all) {
+		total_size = RTA_LENGTH(0);
+	} else {
+		total_size = RTA_LENGTH(RTA_LENGTH(sizeof(int)) *
+					bpf_map_opts.nr_maps);
+	}
+
+	buf = malloc(total_size);
+	if (!buf)
+		return NULL;
+
+	stgs_rta = buf;
+	stgs_rta->rta_type = INET_DIAG_REQ_SK_BPF_STORAGES | NLA_F_NESTED;
+	stgs_rta->rta_len = total_size;
+
+	/* If inet_show_netlink() retries fetching socket data, nr_maps might
+	 * be different from 0, even with show_all == true, so we return early
+	 * to avoid inserting specific map IDs into the request.
+	 */
+	if (bpf_map_opts.show_all)
+		return stgs_rta;
+
+	buf = RTA_DATA(stgs_rta);
+	for (i = 0; i < bpf_map_opts.nr_maps; i++) {
+		int *fd;
+
+		fd_rta = buf;
+		fd_rta->rta_type = SK_DIAG_BPF_STORAGE_REQ_MAP_FD;
+		fd_rta->rta_len = RTA_LENGTH(sizeof(int));
+
+		fd = RTA_DATA(fd_rta);
+		*fd = bpf_map_opts.maps[i].fd;
+
+		buf += fd_rta->rta_len;
+	}
+
+	return stgs_rta;
+}
+
+static void out_bpf_sk_storage_oneline(struct bpf_sk_storage_map_info *info,
+	const void *data, size_t len)
+{
+	struct btf_dump_type_data_opts opts = {
+		.sz = sizeof(struct btf_dump_type_data_opts),
+		.emit_zeroes = 1,
+		.compact = 1
+	};
+	int r;
+
+	out(" map_id:%d", info->id);
+	r = btf_dump__dump_type_data(info->dump, info->info.btf_value_type_id,
+				     data, len, &opts);
+	if (r < 0)
+		out("failed to dump data: %d", r);
+}
+
+static void out_bpf_sk_storage_multiline(struct bpf_sk_storage_map_info *info,
+	const void *data, size_t len)
+{
+	struct btf_dump_type_data_opts opts = {
+		.sz = sizeof(struct btf_dump_type_data_opts),
+		.indent_level = 2,
+		.emit_zeroes = 1
+	};
+	int r;
+
+	out("\n\tmap_id:%d [\n", info->id);
+
+	r = btf_dump__dump_type_data(info->dump, info->info.btf_value_type_id,
+				     data, len, &opts);
+	if (r < 0)
+		out("\t\tfailed to dump data: %d", r);
+
+	out("\n\t]");
+}
+
+static void out_bpf_sk_storage(int map_id, const void *data, size_t len)
+{
+	struct bpf_sk_storage_map_info *map_info;
+
+	map_info = bpf_map_opts_get_info(map_id);
+	if (!map_info) {
+		/* The kernel might return a map we can't get info for, skip
+		 * it but print the other ones.
+		 */
+		out("\n\tmap_id: %d failed to fetch info, skipping\n", map_id);
+		return;
+	}
+
+	if (map_info->info.value_size != len) {
+		fprintf(stderr,
+			"map_id: %d: invalid value size, expecting %u, got %lu\n",
+			map_id, map_info->info.value_size, len);
+		return;
+	}
+
+	if (oneline)
+		out_bpf_sk_storage_oneline(map_info, data, len);
+	else
+		out_bpf_sk_storage_multiline(map_info, data, len);
+}
+
+static void show_sk_bpf_storages(struct rtattr *bpf_stgs)
+{
+	struct rtattr *tb[SK_DIAG_BPF_STORAGE_MAX + 1], *bpf_stg;
+	unsigned int rem, map_id;
+	struct rtattr *value;
+
+	for (bpf_stg = RTA_DATA(bpf_stgs), rem = RTA_PAYLOAD(bpf_stgs);
+		RTA_OK(bpf_stg, rem); bpf_stg = RTA_NEXT(bpf_stg, rem)) {
+
+		if ((bpf_stg->rta_type & NLA_TYPE_MASK) != SK_DIAG_BPF_STORAGE)
+			continue;
+
+		parse_rtattr_nested(tb, SK_DIAG_BPF_STORAGE_MAX,
+				    (struct rtattr *)bpf_stg);
+
+		if (tb[SK_DIAG_BPF_STORAGE_MAP_ID]) {
+			map_id = rta_getattr_u32(tb[SK_DIAG_BPF_STORAGE_MAP_ID]);
+			value = tb[SK_DIAG_BPF_STORAGE_MAP_VALUE];
+
+			out_bpf_sk_storage(map_id, RTA_DATA(value),
+					   RTA_PAYLOAD(value));
+		}
+	}
+}
+
+static bool bpf_map_opts_is_enabled(void)
+{
+	return bpf_map_opts.nr_maps || bpf_map_opts.show_all;
+}
+#endif
+
 static int inet_show_sock(struct nlmsghdr *nlh,
 			  struct sockstat *s)
 {
@@ -3402,8 +3733,9 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 	struct inet_diag_msg *r = NLMSG_DATA(nlh);
 	unsigned char v6only = 0;
 
-	parse_rtattr(tb, INET_DIAG_MAX, (struct rtattr *)(r+1),
-		     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
+	parse_rtattr_flags(tb, INET_DIAG_MAX, (struct rtattr *)(r+1),
+			   nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*r)),
+			   NLA_F_NESTED);
 
 	if (tb[INET_DIAG_PROTOCOL])
 		s->type = rta_getattr_u8(tb[INET_DIAG_PROTOCOL]);
@@ -3500,6 +3832,11 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 	}
 	sctp_ino = s->ino;
 
+#ifdef ENABLE_BPF_SKSTORAGE_SUPPORT
+	if (tb[INET_DIAG_SK_BPF_STORAGES])
+		show_sk_bpf_storages(tb[INET_DIAG_SK_BPF_STORAGES]);
+#endif
+
 	return 0;
 }
 
@@ -3581,13 +3918,14 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 {
 	struct sockaddr_nl nladdr = { .nl_family = AF_NETLINK };
 	DIAG_REQUEST(req, struct inet_diag_req_v2 r);
+	struct rtattr *bpf_rta = NULL;
 	char    *bc = NULL;
 	int	bclen;
 	__u32	proto;
 	struct msghdr msg;
 	struct rtattr rta_bc;
 	struct rtattr rta_proto;
-	struct iovec iov[5];
+	struct iovec iov[6];
 	int iovlen = 1;
 
 	if (family == PF_UNSPEC)
@@ -3640,6 +3978,20 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 		iovlen += 2;
 	}
 
+#ifdef ENABLE_BPF_SKSTORAGE_SUPPORT
+	if (bpf_map_opts_is_enabled()) {
+		bpf_rta = bpf_map_opts_alloc_rta();
+		if (!bpf_rta) {
+			fprintf(stderr,
+				"ss: cannot alloc request for --bpf-map\n");
+			return -1;
+		}
+
+		iov[iovlen++] = (struct iovec){ bpf_rta, bpf_rta->rta_len };
+		req.nlh.nlmsg_len += bpf_rta->rta_len;
+	}
+#endif
+
 	msg = (struct msghdr) {
 		.msg_name = (void *)&nladdr,
 		.msg_namelen = sizeof(nladdr),
@@ -3648,9 +4000,12 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 	};
 
 	if (sendmsg(fd, &msg, 0) < 0) {
+		free(bpf_rta);
 		close(fd);
 		return -1;
 	}
+
+	free(bpf_rta);
 
 	return 0;
 }
@@ -5372,6 +5727,10 @@ static void _usage(FILE *dest)
 "       --tos           show tos and priority information\n"
 "       --cgroup        show cgroup information\n"
 "   -b, --bpf           show bpf filter socket information\n"
+#ifdef ENABLE_BPF_SKSTORAGE_SUPPORT
+"       --bpf-maps      show all BPF socket-local storage maps\n"
+"       --bpf-map-id=MAP-ID    show a BPF socket-local storage map\n"
+#endif
 "   -E, --events        continually display sockets as they are destroyed\n"
 "   -Z, --context       display task SELinux security contexts\n"
 "   -z, --contexts      display task and socket SELinux security contexts\n"
@@ -5395,6 +5754,7 @@ static void _usage(FILE *dest)
 "\n"
 "   -K, --kill          forcibly close sockets, display what was closed\n"
 "   -H, --no-header     Suppress header line\n"
+"   -Q, --no-queues     Suppress sending and receiving queue columns\n"
 "   -O, --oneline       socket's data printed on a single line\n"
 "       --inet-sockopt  show various inet socket options\n"
 "\n"
@@ -5497,6 +5857,9 @@ wrong_state:
 
 #define OPT_INET_SOCKOPT 262
 
+#define OPT_BPF_MAPS 263
+#define OPT_BPF_MAP_ID 264
+
 static const struct option long_opts[] = {
 	{ "numeric", 0, 0, 'n' },
 	{ "resolve", 0, 0, 'r' },
@@ -5538,10 +5901,15 @@ static const struct option long_opts[] = {
 	{ "cgroup", 0, 0, OPT_CGROUP },
 	{ "kill", 0, 0, 'K' },
 	{ "no-header", 0, 0, 'H' },
+	{ "no-queues", 0, 0, 'Q' },
 	{ "xdp", 0, 0, OPT_XDPSOCK},
 	{ "mptcp", 0, 0, 'M' },
 	{ "oneline", 0, 0, 'O' },
 	{ "inet-sockopt", 0, 0, OPT_INET_SOCKOPT },
+#ifdef ENABLE_BPF_SKSTORAGE_SUPPORT
+	{ "bpf-maps", 0, 0, OPT_BPF_MAPS},
+	{ "bpf-map-id", 1, 0, OPT_BPF_MAP_ID},
+#endif
 	{ 0 }
 
 };
@@ -5557,7 +5925,7 @@ int main(int argc, char *argv[])
 	int state_filter = 0;
 
 	while ((ch = getopt_long(argc, argv,
-				 "dhalBetuwxnro460spTbEf:mMiA:D:F:vVzZN:KHSO",
+				 "dhalBetuwxnro460spTbEf:mMiA:D:F:vVzZN:KHQSO",
 				 long_opts, NULL)) != EOF) {
 		switch (ch) {
 		case 'n':
@@ -5741,12 +6109,28 @@ int main(int argc, char *argv[])
 		case 'H':
 			show_header = 0;
 			break;
+		case 'Q':
+			show_queues = 0;
+			break;
 		case 'O':
 			oneline = 1;
 			break;
 		case OPT_INET_SOCKOPT:
 			show_inet_sockopt = 1;
 			break;
+#ifdef ENABLE_BPF_SKSTORAGE_SUPPORT
+		case OPT_BPF_MAPS:
+			if (bpf_map_opts.nr_maps) {
+				bpf_map_opts_mixed_error();
+				return -1;
+			}
+			bpf_map_opts.show_all = true;
+			break;
+		case OPT_BPF_MAP_ID:
+			if (bpf_map_opts_add_id(optarg))
+				exit(1);
+			break;
+#endif
 		case 'h':
 			help();
 		case '?':
@@ -5839,6 +6223,11 @@ int main(int argc, char *argv[])
 	if (!show_processes)
 		columns[COL_PROC].disabled = 1;
 
+	if (!show_queues) {
+		columns[COL_SENDQ].disabled = 1;
+		columns[COL_RECVQ].disabled = 1;
+	}
+
 	if (!(current_filter.dbs & (current_filter.dbs - 1)))
 		columns[COL_NETID].disabled = 1;
 
@@ -5880,6 +6269,10 @@ int main(int argc, char *argv[])
 
 	if (show_processes || show_threads || show_proc_ctx || show_sock_ctx)
 		user_ent_destroy();
+
+#ifdef ENABLE_BPF_SKSTORAGE_SUPPORT
+	bpf_map_opts_destroy();
+#endif
 
 	render();
 

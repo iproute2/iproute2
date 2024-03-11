@@ -38,6 +38,8 @@ int json;
 int oneline;
 int brief;
 
+int echo_request;
+
 static char *conf_file;
 
 struct rtnl_handle rth;
@@ -196,7 +198,7 @@ static void usage(void)
 		"		    -o[neline] | -j[son] | -p[retty] | -c[olor]\n"
 		"		    -b[atch] [filename] | -n[etns] name | -N[umeric] |\n"
 		"		     -nm | -nam[es] | { -cf | -conf } path\n"
-		"		     -br[ief] }\n");
+		"		     -br[ief] | -echo }\n");
 }
 
 static int do_cmd(int argc, char **argv)
@@ -314,6 +316,8 @@ int main(int argc, char **argv)
 			++oneline;
 		} else if (matches(argv[1], "-brief") == 0) {
 			++brief;
+		} else if (strcmp(argv[1], "-echo") == 0) {
+			++echo_request;
 		} else {
 			fprintf(stderr,
 				"Option \"%s\" is unknown, try \"tc -help\".\n",
