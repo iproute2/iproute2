@@ -41,7 +41,7 @@ static void act_usage(void)
 	 */
 	fprintf(stderr,
 		"usage: tc actions <ACTSPECOP>*\n"
-		"Where: 	ACTSPECOP := ACR | GD | FL\n"
+		"Where:		ACTSPECOP := ACR | GD | FL\n"
 		"	ACR := add | change | replace <ACTSPEC>*\n"
 		"	GD := get | delete | <ACTISPEC>*\n"
 		"	FL := ls | list | flush | <ACTNAMESPEC>\n"
