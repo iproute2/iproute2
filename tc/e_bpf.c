@@ -49,7 +49,7 @@ static int bpf_num_env_entries(void)
 	return num;
 }
 
-static int parse_bpf(struct exec_util *eu, int argc, char **argv)
+static int parse_bpf(const struct exec_util *eu, int argc, char **argv)
 {
 	char **argv_run = argv_default, **envp_run, *tmp;
 	int ret, i, env_old, env_num, env_map;

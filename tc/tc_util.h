@@ -68,7 +68,7 @@ struct action_util {
 struct exec_util {
 	struct exec_util *next;
 	char id[FILTER_NAMESZ];
-	int (*parse_eopt)(struct exec_util *eu, int argc, char **argv);
+	int (*parse_eopt)(const struct exec_util *eu, int argc, char **argv);
 };
 
 const char *get_tc_lib(void);
