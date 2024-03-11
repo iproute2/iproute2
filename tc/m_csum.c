@@ -81,7 +81,7 @@ parse_csum_args(int *argc_p, char ***argv_p, struct tc_csum *sel)
 }
 
 static int
-parse_csum(struct action_util *a, int *argc_p,
+parse_csum(const struct action_util *a, int *argc_p,
 	   char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	struct tc_csum sel = {};
@@ -148,7 +148,7 @@ skip_args:
 }
 
 static int
-print_csum(struct action_util *au, FILE *f, struct rtattr *arg)
+print_csum(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_csum *sel;
 

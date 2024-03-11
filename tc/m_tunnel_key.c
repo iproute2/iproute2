@@ -311,7 +311,7 @@ static int tunnel_key_parse_tos_ttl(char *str, int type, struct nlmsghdr *n)
 	return 0;
 }
 
-static int parse_tunnel_key(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_tunnel_key(const struct action_util *a, int *argc_p, char ***argv_p,
 			    int tca_id, struct nlmsghdr *n)
 {
 	struct tc_tunnel_key parm = {};
@@ -688,7 +688,7 @@ static void tunnel_key_print_tos_ttl(FILE *f, char *name,
 	}
 }
 
-static int print_tunnel_key(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_tunnel_key(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_TUNNEL_KEY_MAX + 1];
 	struct tc_tunnel_key *parm;

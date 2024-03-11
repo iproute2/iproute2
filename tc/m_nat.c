@@ -76,7 +76,7 @@ bad_val:
 }
 
 static int
-parse_nat(struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
+parse_nat(const struct action_util *a, int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 {
 	struct tc_nat sel = {};
 
@@ -136,7 +136,7 @@ skip_args:
 }
 
 static int
-print_nat(struct action_util *au, FILE * f, struct rtattr *arg)
+print_nat(const struct action_util *au, FILE * f, struct rtattr *arg)
 {
 	struct tc_nat *sel;
 	struct rtattr *tb[TCA_NAT_MAX + 1];

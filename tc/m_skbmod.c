@@ -40,7 +40,7 @@ static void skbmod_usage(void)
 	exit(-1);
 }
 
-static int parse_skbmod(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_skbmod(const struct action_util *a, int *argc_p, char ***argv_p,
 			int tca_id, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
@@ -156,7 +156,7 @@ static int parse_skbmod(struct action_util *a, int *argc_p, char ***argv_p,
 	return 0;
 }
 
-static int print_skbmod(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_skbmod(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_skbmod *p;
 	struct rtattr *tb[TCA_SKBMOD_MAX + 1];

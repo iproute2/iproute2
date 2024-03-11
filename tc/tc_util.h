@@ -58,10 +58,10 @@ struct filter_util {
 struct action_util {
 	struct action_util *next;
 	char id[FILTER_NAMESZ];
-	int (*parse_aopt)(struct action_util *a, int *argc,
+	int (*parse_aopt)(const struct action_util *a, int *argc,
 			  char ***argv, int code, struct nlmsghdr *n);
-	int (*print_aopt)(struct action_util *au, FILE *f, struct rtattr *opt);
-	int (*print_xstats)(struct action_util *au,
+	int (*print_aopt)(const struct action_util *au, FILE *f, struct rtattr *opt);
+	int (*print_xstats)(const struct action_util *au,
 			    FILE *f, struct rtattr *xstats);
 };
 
@@ -112,7 +112,7 @@ int parse_action_control_slash(int *argc_p, char ***argv_p,
 			       int *result1_p, int *result2_p, bool allow_num);
 void print_action_control(FILE *f, const char *prefix,
 			  int action, const char *suffix);
-int police_print_xstats(struct action_util *a, FILE *f, struct rtattr *tb);
+int police_print_xstats(const struct action_util *a, FILE *f, struct rtattr *tb);
 int tc_print_action(FILE *f, const struct rtattr *tb, unsigned short tot_acts);
 int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
 void print_tm(FILE *f, const struct tcf_t *tm);

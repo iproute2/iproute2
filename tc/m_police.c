@@ -17,9 +17,9 @@
 #include "utils.h"
 #include "tc_util.h"
 
-static int act_parse_police(struct action_util *a, int *argc_p,
+static int act_parse_police(const struct action_util *a, int *argc_p,
 			    char ***argv_p, int tca_id, struct nlmsghdr *n);
-static int print_police(struct action_util *a, FILE *f, struct rtattr *tb);
+static int print_police(const struct action_util *a, FILE *f, struct rtattr *tb);
 
 struct action_util police_action_util = {
 	.id = "police",
@@ -42,7 +42,7 @@ static void usage(void)
 	exit(-1);
 }
 
-static int act_parse_police(struct action_util *a, int *argc_p, char ***argv_p,
+static int act_parse_police(const struct action_util *a, int *argc_p, char ***argv_p,
 			    int tca_id, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
@@ -260,7 +260,7 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	return act_parse_police(NULL, argc_p, argv_p, tca_id, n);
 }
 
-static int print_police(struct action_util *a, FILE *f, struct rtattr *arg)
+static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg)
 {
 	SPRINT_BUF(b2);
 	struct tc_police *p;

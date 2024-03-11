@@ -31,7 +31,7 @@ static void usage(void)
 	exit(-1);
 }
 
-static int parse_sample(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_sample(const struct action_util *a, int *argc_p, char ***argv_p,
 			int tca_id, struct nlmsghdr *n)
 {
 	struct tc_sample p = { 0 };
@@ -133,7 +133,7 @@ static int parse_sample(struct action_util *a, int *argc_p, char ***argv_p,
 	return 0;
 }
 
-static int print_sample(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_sample(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_SAMPLE_MAX + 1];
 	struct tc_sample *p;

@@ -41,7 +41,7 @@ usage(void)
 }
 
 static int
-parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
+parse_skbedit(const struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	      struct nlmsghdr *n)
 {
 	int argc = *argc_p;
@@ -177,7 +177,7 @@ parse_skbedit(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	return 0;
 }
 
-static int print_skbedit(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_skbedit(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_SKBEDIT_MAX + 1];
 

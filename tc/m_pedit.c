@@ -620,7 +620,7 @@ static int pedit_keys_ex_addattr(struct m_pedit_sel *sel, struct nlmsghdr *n)
 	return 0;
 }
 
-static int parse_pedit(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_pedit(const struct action_util *a, int *argc_p, char ***argv_p,
 		       int tca_id, struct nlmsghdr *n)
 {
 	struct m_pedit_sel sel = {};
@@ -745,7 +745,7 @@ static int print_pedit_location(FILE *f,
 	return 0;
 }
 
-static int print_pedit(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_pedit(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_pedit_sel *sel;
 	struct rtattr *tb[TCA_PEDIT_MAX + 1];

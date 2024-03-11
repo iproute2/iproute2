@@ -88,7 +88,7 @@ static const char *mirred_action(int action)
 }
 
 static int
-parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
+parse_direction(const struct action_util *a, int *argc_p, char ***argv_p,
 		int tca_id, struct nlmsghdr *n)
 {
 
@@ -258,7 +258,7 @@ parse_direction(struct action_util *a, int *argc_p, char ***argv_p,
 
 
 static int
-parse_mirred(struct action_util *a, int *argc_p, char ***argv_p,
+parse_mirred(const struct action_util *a, int *argc_p, char ***argv_p,
 	     int tca_id, struct nlmsghdr *n)
 {
 
@@ -299,7 +299,7 @@ parse_mirred(struct action_util *a, int *argc_p, char ***argv_p,
 }
 
 static int
-print_mirred(struct action_util *au, FILE *f, struct rtattr *arg)
+print_mirred(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_mirred *p;
 	struct rtattr *tb[TCA_MIRRED_MAX + 1];
