@@ -61,7 +61,7 @@ static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
 		.n.nlmsg_type = cmd,
 		.t.tcm_family = AF_UNSPEC,
 	};
-	struct qdisc_util *q = NULL;
+	const struct qdisc_util *q = NULL;
 	struct tc_estimator est = {};
 	char  d[IFNAMSIZ] = {};
 	char  k[FILTER_NAMESZ] = {};
@@ -213,7 +213,7 @@ static void graph_cls_show(FILE *fp, char *buf, struct hlist_head *root_list,
 	struct hlist_node *n, *tmp_cls;
 	char cls_id_str[256] = {};
 	struct rtattr *tb[TCA_MAX + 1];
-	struct qdisc_util *q;
+	const struct qdisc_util *q;
 	char str[300] = {};
 
 	hlist_for_each_safe(n, tmp_cls, root_list) {
@@ -298,7 +298,7 @@ int print_class(struct nlmsghdr *n, void *arg)
 	struct tcmsg *t = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[TCA_MAX + 1];
-	struct qdisc_util *q;
+	const struct qdisc_util *q;
 	char abuf[256];
 
 	if (n->nlmsg_type != RTM_NEWTCLASS && n->nlmsg_type != RTM_DELTCLASS) {

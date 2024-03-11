@@ -46,7 +46,7 @@ static void add_tc_entries(struct nlmsghdr *n, __u32 fp[TC_QOPT_MAX_QUEUE],
 	}
 }
 
-static int mqprio_parse_opt(struct qdisc_util *qu, int argc,
+static int mqprio_parse_opt(const struct qdisc_util *qu, int argc,
 			    char **argv, struct nlmsghdr *n, const char *dev)
 {
 	int idx;
@@ -314,7 +314,7 @@ static void dump_tc_entries(FILE *f, struct rtattr *opt, int len)
 	}
 }
 
-static int mqprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int mqprio_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	int i;
 	struct tc_mqprio_qopt *qopt;

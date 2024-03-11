@@ -29,19 +29,20 @@ enum
 #define FILTER_NAMESZ	16
 
 struct qdisc_util {
-	struct  qdisc_util *next;
+	struct qdisc_util *next;
 	const char *id;
-	int (*parse_qopt)(struct qdisc_util *qu, int argc,
+	int (*parse_qopt)(const struct qdisc_util *qu, int argc,
 			  char **argv, struct nlmsghdr *n, const char *dev);
-	int (*print_qopt)(struct qdisc_util *qu,
+	int (*print_qopt)(const struct qdisc_util *qu,
 			  FILE *f, struct rtattr *opt);
-	int (*print_xstats)(struct qdisc_util *qu,
+	int (*print_xstats)(const struct qdisc_util *qu,
 			    FILE *f, struct rtattr *xstats);
 
-	int (*parse_copt)(struct qdisc_util *qu, int argc,
+	int (*parse_copt)(const struct qdisc_util *qu, int argc,
 			  char **argv, struct nlmsghdr *n, const char *dev);
-	int (*print_copt)(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
-	int (*has_block)(struct qdisc_util *qu, struct rtattr *opt, __u32 block_idx, bool *p_has);
+	int (*print_copt)(const struct qdisc_util *qu, FILE *f, struct rtattr *opt);
+	int (*has_block)(const struct qdisc_util *qu, struct rtattr *opt,
+			 __u32 block_idx, bool *p_has);
 };
 
 extern __u16 f_proto;
@@ -72,7 +73,7 @@ struct exec_util {
 
 const char *get_tc_lib(void);
 
-struct qdisc_util *get_qdisc_kind(const char *str);
+const struct qdisc_util *get_qdisc_kind(const char *str);
 struct filter_util *get_filter_kind(const char *str);
 
 int get_qdisc_handle(__u32 *h, const char *str);
@@ -115,7 +116,7 @@ int police_print_xstats(struct action_util *a, FILE *f, struct rtattr *tb);
 int tc_print_action(FILE *f, const struct rtattr *tb, unsigned short tot_acts);
 int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
 void print_tm(FILE *f, const struct tcf_t *tm);
-int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
+int prio_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 
 int cls_names_init(char *path);
 void cls_names_uninit(void);

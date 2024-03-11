@@ -88,7 +88,7 @@ static void explain(void)
 		"                (* marks defaults)\n");
 }
 
-static int cake_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int cake_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			  struct nlmsghdr *n, const char *dev)
 {
 	struct cake_preset *preset, *preset_set = NULL;
@@ -415,7 +415,7 @@ static void cake_print_mode(unsigned int value, unsigned int max,
 	}
 }
 
-static int cake_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int cake_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_CAKE_MAX + 1];
 	unsigned int interval = 0;
@@ -614,7 +614,7 @@ static void cake_print_json_tin(struct rtattr **tstat)
 #undef PRINT_TSTAT_JSON
 }
 
-static int cake_print_xstats(struct qdisc_util *qu, FILE *f,
+static int cake_print_xstats(const struct qdisc_util *qu, FILE *f,
 			     struct rtattr *xstats)
 {
 	struct rtattr *st[TCA_CAKE_STATS_MAX + 1];

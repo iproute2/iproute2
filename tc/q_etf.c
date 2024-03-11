@@ -39,7 +39,7 @@ static void explain_clockid(const char *val)
 		val);
 }
 
-static int etf_parse_opt(struct qdisc_util *qu, int argc,
+static int etf_parse_opt(const struct qdisc_util *qu, int argc,
 			 char **argv, struct nlmsghdr *n, const char *dev)
 {
 	struct tc_etf_qopt opt = {
@@ -107,7 +107,7 @@ static int etf_parse_opt(struct qdisc_util *qu, int argc,
 	return 0;
 }
 
-static int etf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int etf_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_ETF_MAX+1];
 	struct tc_etf_qopt *qopt;

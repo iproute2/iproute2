@@ -190,7 +190,7 @@ static int get_ticks(__u32 *ticks, const char *str)
 	return 0;
 }
 
-static int netem_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int netem_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n, const char *dev)
 {
 	int dist_size = 0;
@@ -661,7 +661,7 @@ random_loss_model:
 	return 0;
 }
 
-static int netem_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int netem_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	const struct tc_netem_corr *cor = NULL;
 	const struct tc_netem_reorder *reorder = NULL;

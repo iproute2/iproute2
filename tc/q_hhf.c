@@ -26,7 +26,7 @@ static void explain(void)
 		"		[ non_hh_weight NUMBER ]\n");
 }
 
-static int hhf_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int hhf_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n, const char *dev)
 {
 	unsigned int limit = 0;
@@ -117,7 +117,7 @@ static int hhf_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int hhf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int hhf_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_HHF_MAX + 1];
 	unsigned int limit;
@@ -179,7 +179,7 @@ static int hhf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int hhf_print_xstats(struct qdisc_util *qu, FILE *f,
+static int hhf_print_xstats(const struct qdisc_util *qu, FILE *f,
 			    struct rtattr *xstats)
 {
 	struct tc_hhf_xstats *st;

@@ -48,7 +48,7 @@ static void *BODY;	/* cached handle dlopen(NULL) */
 static struct qdisc_util *qdisc_list;
 static struct filter_util *filter_list;
 
-static int print_noqopt(struct qdisc_util *qu, FILE *f,
+static int print_noqopt(const struct qdisc_util *qu, FILE *f,
 			struct rtattr *opt)
 {
 	if (opt && RTA_PAYLOAD(opt))
@@ -57,7 +57,7 @@ static int print_noqopt(struct qdisc_util *qu, FILE *f,
 	return 0;
 }
 
-static int parse_noqopt(struct qdisc_util *qu, int argc, char **argv,
+static int parse_noqopt(const struct qdisc_util *qu, int argc, char **argv,
 			struct nlmsghdr *n, const char *dev)
 {
 	if (argc) {
@@ -102,7 +102,7 @@ static int parse_nofopt(struct filter_util *qu, char *fhandle,
 	return 0;
 }
 
-struct qdisc_util *get_qdisc_kind(const char *str)
+const struct qdisc_util *get_qdisc_kind(const char *str)
 {
 	void *dlh;
 	char buf[256];

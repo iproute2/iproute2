@@ -40,7 +40,7 @@ static struct qevent_util qevents[] = {
 	{},
 };
 
-static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int red_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n, const char *dev)
 {
 	struct nla_bitfield32 flags_bf = {
@@ -180,7 +180,7 @@ static int red_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int red_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_RED_MAX + 1];
 	struct nla_bitfield32 *flags_bf;
@@ -232,7 +232,7 @@ static int red_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int red_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
+static int red_print_xstats(const struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
 {
 #ifdef TC_RED_ECN
 	struct tc_red_xstats *st;
@@ -252,7 +252,7 @@ static int red_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstat
 	return 0;
 }
 
-static int red_has_block(struct qdisc_util *qu, struct rtattr *opt, __u32 block_idx, bool *p_has)
+static int red_has_block(const struct qdisc_util *qu, struct rtattr *opt, __u32 block_idx, bool *p_has)
 {
 	struct rtattr *tb[TCA_RED_MAX + 1];
 

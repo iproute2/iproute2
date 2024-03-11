@@ -10,7 +10,7 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... clsact\n");
 }
 
-static int clsact_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int clsact_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			    struct nlmsghdr *n, const char *dev)
 {
 	if (argc > 0) {
@@ -22,7 +22,7 @@ static int clsact_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int clsact_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int clsact_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	return 0;
 }

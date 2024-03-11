@@ -134,7 +134,7 @@ static void add_tc_entries(struct nlmsghdr *n, __u32 max_sdu[TC_QOPT_MAX_QUEUE],
 	}
 }
 
-static int taprio_parse_opt(struct qdisc_util *qu, int argc,
+static int taprio_parse_opt(const struct qdisc_util *qu, int argc,
 			    char **argv, struct nlmsghdr *n, const char *dev)
 {
 	__u32 max_sdu[TC_QOPT_MAX_QUEUE] = { };
@@ -545,7 +545,7 @@ static void dump_tc_entries(FILE *f, struct rtattr *opt)
 	}
 }
 
-static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int taprio_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_TAPRIO_ATTR_MAX + 1];
 	struct tc_mqprio_qopt *qopt = 0;
@@ -623,7 +623,7 @@ static int taprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int taprio_print_xstats(struct qdisc_util *qu, FILE *f,
+static int taprio_print_xstats(const struct qdisc_util *qu, FILE *f,
 			       struct rtattr *xstats)
 {
 	struct rtattr *tb[TCA_TAPRIO_OFFLOAD_STATS_MAX + 1], *nla;

@@ -23,7 +23,7 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... <skbprio> [ limit NUMBER ]\n");
 }
 
-static int skbprio_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int skbprio_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			     struct nlmsghdr *n, const char *dev)
 {
 	int ok = 0;
@@ -58,7 +58,7 @@ static int skbprio_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int skbprio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int skbprio_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct tc_skbprio_qopt *qopt;
 

@@ -30,7 +30,7 @@ static void explain(void)
 		"		[ ecn ] [ harddrop ]\n");
 }
 
-static int sfq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
+static int sfq_parse_opt(const struct qdisc_util *qu, int argc, char **argv, struct nlmsghdr *n, const char *dev)
 {
 	int ok = 0, red = 0;
 	struct tc_sfq_qopt_v1 opt = {};
@@ -196,7 +196,7 @@ static int sfq_parse_opt(struct qdisc_util *qu, int argc, char **argv, struct nl
 	return 0;
 }
 
-static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int sfq_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct tc_sfq_qopt *qopt;
 	struct tc_sfq_qopt_v1 *qopt_ext = NULL;
@@ -255,7 +255,7 @@ static int sfq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int sfq_print_xstats(struct qdisc_util *qu, FILE *f,
+static int sfq_print_xstats(const struct qdisc_util *qu, FILE *f,
 			    struct rtattr *xstats)
 {
 	struct tc_sfq_xstats *st;

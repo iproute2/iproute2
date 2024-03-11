@@ -65,7 +65,7 @@ explain1(char *arg)
 }
 
 static int
-hfsc_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+hfsc_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 	       struct nlmsghdr *n, const char *dev)
 {
 	struct tc_hfsc_qopt qopt = {};
@@ -97,7 +97,7 @@ hfsc_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 }
 
 static int
-hfsc_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+hfsc_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct tc_hfsc_qopt *qopt;
 
@@ -114,7 +114,7 @@ hfsc_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 }
 
 static int
-hfsc_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
+hfsc_print_xstats(const struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
 {
 	struct tc_hfsc_stats *st;
 
@@ -136,7 +136,7 @@ hfsc_print_xstats(struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
 }
 
 static int
-hfsc_parse_class_opt(struct qdisc_util *qu, int argc, char **argv,
+hfsc_parse_class_opt(const struct qdisc_util *qu, int argc, char **argv,
 		     struct nlmsghdr *n, const char *dev)
 {
 	struct tc_service_curve rsc = {}, fsc = {}, usc = {};
@@ -220,7 +220,7 @@ hfsc_print_sc(FILE *f, char *name, struct tc_service_curve *sc)
 }
 
 static int
-hfsc_print_class_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+hfsc_print_class_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_HFSC_MAX+1];
 	struct tc_service_curve *rsc = NULL, *fsc = NULL, *usc = NULL;

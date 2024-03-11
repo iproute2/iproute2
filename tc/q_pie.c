@@ -30,7 +30,7 @@ static void explain(void)
 #define ALPHA_MAX 32
 #define BETA_MAX 32
 
-static int pie_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int pie_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n, const char *dev)
 {
 	unsigned int limit   = 0;
@@ -124,7 +124,7 @@ static int pie_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int pie_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int pie_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_PIE_MAX + 1];
 	unsigned int limit;
@@ -198,7 +198,7 @@ static int pie_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int pie_print_xstats(struct qdisc_util *qu, FILE *f,
+static int pie_print_xstats(const struct qdisc_util *qu, FILE *f,
 			    struct rtattr *xstats)
 {
 	struct tc_pie_xstats *st;
