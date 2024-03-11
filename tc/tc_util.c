@@ -799,28 +799,30 @@ void print_tcstats_attr(FILE *fp, struct rtattr *tb[], const char *prefix,
 		memcpy(&st, RTA_DATA(tb[TCA_STATS]),
 		       MIN(RTA_PAYLOAD(tb[TCA_STATS]), sizeof(st)));
 
-		fprintf(fp,
-			"%sSent %llu bytes %u pkts (dropped %u, overlimits %u) ",
-			prefix, (unsigned long long)st.bytes,
-			st.packets, st.drops, st.overlimits);
+		print_string(PRINT_FP, NULL, "%s", prefix);
+		print_lluint(PRINT_ANY, "bytes", "Sent %llu bytes",
+			     (unsigned long long)st.bytes);
+		print_uint(PRINT_ANY, "packets", " %u pkts", st.packets);
+		print_uint(PRINT_ANY, "dropped", " (dropped %u,", st.drops);
+		print_uint(PRINT_ANY, "overlimits", " overlimits %u) ", st.overlimits);
 
 		if (st.bps || st.pps || st.qlen || st.backlog) {
-			fprintf(fp, "\n%s", prefix);
+			print_nl();
+			print_string(PRINT_FP, NULL, "%s", prefix);
+
 			if (st.bps || st.pps) {
-				fprintf(fp, "rate ");
+				print_string(PRINT_FP, NULL, "rate ", NULL);
 				if (st.bps)
-					tc_print_rate(PRINT_FP, NULL, "%s ",
-						      st.bps);
+					tc_print_rate(PRINT_ANY, "rate", "%s ", st.bps);
 				if (st.pps)
-					fprintf(fp, "%upps ", st.pps);
+					print_uint(PRINT_ANY, "pps", "%upps ", st.pps);
 			}
 			if (st.qlen || st.backlog) {
-				fprintf(fp, "backlog ");
+				print_string(PRINT_FP, NULL, "backlog ", NULL);
 				if (st.backlog)
-					print_size(PRINT_FP, NULL, "%s ",
-						   st.backlog);
+					print_size(PRINT_ANY, "backlog", "%s ", st.backlog);
 				if (st.qlen)
-					fprintf(fp, "%up ", st.qlen);
+					print_uint(PRINT_ANY, "qlen", "%up ", st.qlen);
 			}
 		}
 	}
