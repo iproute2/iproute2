@@ -771,20 +771,20 @@ static int print_pedit(const struct action_util *au, FILE *f, struct rtattr *arg
 		sel = RTA_DATA(tb[TCA_PEDIT_PARMS_EX]);
 
 		if (!tb[TCA_PEDIT_KEYS_EX]) {
-			fprintf(f, "Netlink error\n");
+			fprintf(stderr, "Netlink error\n");
 			return -1;
 		}
 
 		keys_ex = calloc(sel->nkeys, sizeof(*keys_ex));
 		if (!keys_ex) {
-			fprintf(f, "Out of memory\n");
+			fprintf(stderr, "Out of memory\n");
 			return -1;
 		}
 
 		err = pedit_keys_ex_getattr(tb[TCA_PEDIT_KEYS_EX], keys_ex,
 					    sel->nkeys);
 		if (err) {
-			fprintf(f, "Netlink error\n");
+			fprintf(stderr, "Netlink error\n");
 
 			free(keys_ex);
 			return -1;
