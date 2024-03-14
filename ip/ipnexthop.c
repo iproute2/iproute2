@@ -56,6 +56,7 @@ static void usage(void)
 		"        [ encap ENCAPTYPE ENCAPHDR ] |\n"
 		"        group GROUP [ fdb ] [ type TYPE [ TYPE_ARGS ] ] }\n"
 		"GROUP := [ <id[,weight]>/<id[,weight]>/... ]\n"
+		"         [ hw_stats {off|on} ]\n"
 		"TYPE := { mpath | resilient }\n"
 		"TYPE_ARGS := [ RESILIENT_ARGS ]\n"
 		"RESILIENT_ARGS := [ buckets BUCKETS ] [ idle_timer IDLE ]\n"
@@ -1102,6 +1103,17 @@ static int ipnh_modify(int cmd, unsigned int flags, int argc, char **argv)
 			if (rtnl_rtprot_a2n(&prot, *argv))
 				invarg("\"protocol\" value is invalid\n", *argv);
 			req.nhm.nh_protocol = prot;
+		} else if (!strcmp(*argv, "hw_stats")) {
+			bool hw_stats;
+			int ret;
+
+			NEXT_ARG();
+			hw_stats = parse_on_off("hw_stats", *argv, &ret);
+			if (ret)
+				return ret;
+
+			addattr32(&req.n, sizeof(req), NHA_HW_STATS_ENABLE,
+				  hw_stats);
 		} else if (strcmp(*argv, "help") == 0) {
 			usage();
 		} else {
