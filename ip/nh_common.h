@@ -16,6 +16,7 @@ struct nha_res_grp {
 struct nh_grp_stats {
 	__u32			nh_id;
 	__u64			packets;
+	__u64			packets_hw;
 };
 
 struct nh_entry {
@@ -31,6 +32,10 @@ struct nh_entry {
 
 	bool			nh_blackhole;
 	bool			nh_fdb;
+
+	bool			nh_hw_stats_supported;
+	bool			nh_hw_stats_enabled;
+	bool			nh_hw_stats_used;
 
 	int			nh_gateway_len;
 	union {

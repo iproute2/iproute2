@@ -327,6 +327,11 @@ static void parse_nh_group_stats_rta(const struct rtattr *grp_stats_attr,
 			rta = tb[NHA_GROUP_STATS_ENTRY_PACKETS];
 			nh_grp_stats->packets = rta_getattr_uint(rta);
 		}
+
+		if (tb[NHA_GROUP_STATS_ENTRY_PACKETS_HW]) {
+			rta = tb[NHA_GROUP_STATS_ENTRY_PACKETS_HW];
+			nh_grp_stats->packets_hw = rta_getattr_uint(rta);
+		}
 	}
 }
 
@@ -395,6 +400,9 @@ static void print_nh_grp_stats(const struct nh_entry *nhe)
 			   nhe->nh_grp_stats[i].nh_id);
 		print_u64(PRINT_ANY, "packets", " packets %llu",
 			  nhe->nh_grp_stats[i].packets);
+		if (show_stats > 1)
+			print_u64(PRINT_ANY, "packets_hw", " packets_hw %llu",
+				  nhe->nh_grp_stats[i].packets_hw);
 
 		if (i != nhe->nh_groups_cnt - 1)
 			print_nl();
@@ -479,6 +487,15 @@ static int ipnh_parse_nhmsg(FILE *fp, const struct nhmsg *nhm, int len,
 		nhe->nh_has_res_grp = true;
 	}
 
+	if (tb[NHA_HW_STATS_ENABLE]) {
+		nhe->nh_hw_stats_supported = true;
+		nhe->nh_hw_stats_enabled =
+			!!rta_getattr_u32(tb[NHA_HW_STATS_ENABLE]);
+	}
+
+	if (tb[NHA_HW_STATS_USED])
+		nhe->nh_hw_stats_used = !!rta_getattr_u32(tb[NHA_HW_STATS_USED]);
+
 	if (tb[NHA_GROUP_STATS]) {
 		nhe->nh_grp_stats = calloc(nhe->nh_groups_cnt,
 					   sizeof(*nhe->nh_grp_stats));
@@ -555,6 +572,15 @@ static void __print_nexthop_entry(FILE *fp, const char *jsobj,
 	if (nhe->nh_fdb)
 		print_null(PRINT_ANY, "fdb", "fdb", NULL);
 
+	if ((show_details > 0 || show_stats) && nhe->nh_hw_stats_supported) {
+		open_json_object("hw_stats");
+		print_on_off(PRINT_ANY, "enabled", "hw_stats %s ",
+			     nhe->nh_hw_stats_enabled);
+		print_on_off(PRINT_ANY, "used", "used %s ",
+			     nhe->nh_hw_stats_used);
+		close_json_object();
+	}
+
 	if (nhe->nh_grp_stats)
 		print_nh_grp_stats(nhe);
 
@@ -567,6 +593,8 @@ static __u32 ipnh_get_op_flags(void)
 
 	if (show_stats) {
 		op_flags |= NHA_OP_FLAG_DUMP_STATS;
+		if (show_stats > 1)
+			op_flags |= NHA_OP_FLAG_DUMP_HW_STATS;
 	}
 
 	return op_flags;
