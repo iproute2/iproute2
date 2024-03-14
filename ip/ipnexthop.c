@@ -25,6 +25,7 @@ static struct {
 	unsigned int fdb;
 	unsigned int id;
 	unsigned int nhid;
+	unsigned int op_flags;
 } filter;
 
 enum {
@@ -88,6 +89,14 @@ static int nh_dump_filter(struct nlmsghdr *nlh, int reqlen)
 
 	if (filter.fdb) {
 		err = addattr_l(nlh, reqlen, NHA_FDB, NULL, 0);
+		if (err)
+			return err;
+	}
+
+	if (filter.op_flags) {
+		__u32 op_flags = filter.op_flags;
+
+		err = addattr32(nlh, reqlen, NHA_OP_FLAGS, op_flags);
 		if (err)
 			return err;
 	}
@@ -296,6 +305,31 @@ static void parse_nh_res_group_rta(const struct rtattr *res_grp_attr,
 	}
 }
 
+static void parse_nh_group_stats_rta(const struct rtattr *grp_stats_attr,
+				     struct nh_entry *nhe)
+{
+	const struct rtattr *pos;
+	int i = 0;
+
+	rtattr_for_each_nested(pos, grp_stats_attr) {
+		struct nh_grp_stats *nh_grp_stats = &nhe->nh_grp_stats[i++];
+		struct rtattr *tb[NHA_GROUP_STATS_ENTRY_MAX + 1];
+		struct rtattr *rta;
+
+		parse_rtattr_nested(tb, NHA_GROUP_STATS_ENTRY_MAX, pos);
+
+		if (tb[NHA_GROUP_STATS_ENTRY_ID]) {
+			rta = tb[NHA_GROUP_STATS_ENTRY_ID];
+			nh_grp_stats->nh_id = rta_getattr_u32(rta);
+		}
+
+		if (tb[NHA_GROUP_STATS_ENTRY_PACKETS]) {
+			rta = tb[NHA_GROUP_STATS_ENTRY_PACKETS];
+			nh_grp_stats->packets = rta_getattr_uint(rta);
+		}
+	}
+}
+
 static void print_nh_res_group(const struct nha_res_grp *res_grp)
 {
 	struct timeval tv;
@@ -343,8 +377,35 @@ static void print_nh_res_bucket(FILE *fp, const struct rtattr *res_bucket_attr)
 	close_json_object();
 }
 
+static void print_nh_grp_stats(const struct nh_entry *nhe)
+{
+	int i;
+
+	if (!show_stats)
+		return;
+
+	open_json_array(PRINT_JSON, "group_stats");
+	print_nl();
+	print_string(PRINT_FP, NULL, "  stats:", NULL);
+	print_nl();
+	for (i = 0; i < nhe->nh_groups_cnt; i++) {
+		open_json_object(NULL);
+
+		print_uint(PRINT_ANY, "id", "    id %u",
+			   nhe->nh_grp_stats[i].nh_id);
+		print_u64(PRINT_ANY, "packets", " packets %llu",
+			  nhe->nh_grp_stats[i].packets);
+
+		if (i != nhe->nh_groups_cnt - 1)
+			print_nl();
+		close_json_object();
+	}
+	close_json_array(PRINT_JSON, NULL);
+}
+
 static void ipnh_destroy_entry(struct nh_entry *nhe)
 {
+	free(nhe->nh_grp_stats);
 	free(nhe->nh_encap);
 	free(nhe->nh_groups);
 }
@@ -418,6 +479,16 @@ static int ipnh_parse_nhmsg(FILE *fp, const struct nhmsg *nhm, int len,
 		nhe->nh_has_res_grp = true;
 	}
 
+	if (tb[NHA_GROUP_STATS]) {
+		nhe->nh_grp_stats = calloc(nhe->nh_groups_cnt,
+					   sizeof(*nhe->nh_grp_stats));
+		if (!nhe->nh_grp_stats) {
+			err = -ENOMEM;
+			goto out_err;
+		}
+		parse_nh_group_stats_rta(tb[NHA_GROUP_STATS], nhe);
+	}
+
 	nhe->nh_blackhole = !!tb[NHA_BLACKHOLE];
 	nhe->nh_fdb = !!tb[NHA_FDB];
 
@@ -484,7 +555,21 @@ static void __print_nexthop_entry(FILE *fp, const char *jsobj,
 	if (nhe->nh_fdb)
 		print_null(PRINT_ANY, "fdb", "fdb", NULL);
 
+	if (nhe->nh_grp_stats)
+		print_nh_grp_stats(nhe);
+
 	close_json_object();
+}
+
+static __u32 ipnh_get_op_flags(void)
+{
+	__u32 op_flags = 0;
+
+	if (show_stats) {
+		op_flags |= NHA_OP_FLAG_DUMP_STATS;
+	}
+
+	return op_flags;
 }
 
 static int  __ipnh_get_id(struct rtnl_handle *rthp, __u32 nh_id,
@@ -500,8 +585,10 @@ static int  __ipnh_get_id(struct rtnl_handle *rthp, __u32 nh_id,
 		.n.nlmsg_type	= RTM_GETNEXTHOP,
 		.nhm.nh_family	= preferred_family,
 	};
+	__u32 op_flags = ipnh_get_op_flags();
 
 	addattr32(&req.n, sizeof(req), NHA_ID, nh_id);
+	addattr32(&req.n, sizeof(req), NHA_OP_FLAGS, op_flags);
 
 	return rtnl_talk(rthp, &req.n, answer);
 }
@@ -1092,6 +1179,8 @@ static int ipnh_list_flush(int argc, char **argv, int action)
 		}
 		argc--; argv++;
 	}
+
+	filter.op_flags = ipnh_get_op_flags();
 
 	if (action == IPNH_FLUSH)
 		return ipnh_flush(all);
