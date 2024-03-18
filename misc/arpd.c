@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
@@ -35,7 +36,8 @@
 #include "rt_names.h"
 
 DB	*dbase;
-char	*dbname = "/var/lib/arpd/arpd.db";
+char const	default_dbname[] = ARPDDIR "/arpd.db";
+char const	*dbname = default_dbname;
 
 int	ifnum;
 int	*ifvec;
@@ -665,6 +667,13 @@ int main(int argc, char **argv)
 				exit(-1);
 			}
 			ifvec[i] = ifr.ifr_ifindex;
+		}
+	}
+
+	if (strcmp(default_dbname, dbname) == 0) {
+		if (mkdir(ARPDDIR, 0755) != 0 && errno != EEXIST) {
+			perror("create_db_dir");
+			exit(-1);
 		}
 	}
 
