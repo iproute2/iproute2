@@ -140,6 +140,10 @@ static int get_nlmsg_extended(struct nlmsghdr *m, void *arg)
 
 	n->ifindex = ifsm->ifindex;
 	n->name = strdup(ll_index_to_name(ifsm->ifindex));
+	if (!n->name) {
+		free(n);
+		return -1;
+	}
 
 	if (sub_type == NO_SUB_TYPE) {
 		memcpy(&n->val, RTA_DATA(tb[filter_type]), sizeof(n->val));
