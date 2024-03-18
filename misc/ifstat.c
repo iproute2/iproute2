@@ -197,7 +197,6 @@ static int get_nlmsg(struct nlmsghdr *m, void *arg)
 	n->name = strdup(RTA_DATA(tb[IFLA_IFNAME]));
 	if (!n->name) {
 		free(n);
-		errno = ENOMEM;
 		return -1;
 	}
 
