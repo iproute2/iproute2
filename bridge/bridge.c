@@ -39,7 +39,7 @@ static void usage(void)
 "where  OBJECT := { link | fdb | mdb | vlan | vni | monitor }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] |\n"
 "                    -o[neline] | -t[imestamp] | -n[etns] name |\n"
-"                    -c[ompressvlans] -color -p[retty] -j[son] }\n");
+"                    -com[pressvlans] -c[olor] -p[retty] -j[son] }\n");
 	exit(-1);
 }
 
