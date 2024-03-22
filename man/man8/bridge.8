@@ -22,6 +22,7 @@ bridge \- show / manipulate bridge addresses and devices
 \fB\-s\fR[\fItatistics\fR] |
 \fB\-n\fR[\fIetns\fR] name |
 \fB\-b\fR[\fIatch\fR] filename |
+\fB\-com\fR[\fIpressvlans\fR] |
 \fB\-c\fR[\fIolor\fR] |
 \fB\-p\fR[\fIretty\fR] |
 \fB\-j\fR[\fIson\fR] |
@@ -344,6 +345,11 @@ First failure will cause termination of bridge command.
 Don't terminate bridge command on errors in batch mode.
 If there were any errors during execution of the commands, the application
 return code will be non zero.
+
+.TP
+.BR "\-com", " \-compressvlans"
+Show compressed VLAN list. It will show continuous VLANs with the range instead
+of separated VLANs. Default is off.
 
 .TP
 .BR \-c [ color ][ = { always | auto | never }
