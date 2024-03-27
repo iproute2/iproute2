@@ -301,7 +301,9 @@ int do_ipila(int argc, char **argv)
 		return do_add(argc-1, argv+1);
 	if (matches(*argv, "delete") == 0)
 		return do_del(argc-1, argv+1);
-	if (matches(*argv, "list") == 0)
+	if (matches(*argv, "show") == 0 ||
+	    matches(*argv, "lst") == 0 ||
+	    matches(*argv, "list") == 0)
 		return do_list(argc-1, argv+1);
 
 	fprintf(stderr, "Command \"%s\" is unknown, try \"ip ila help\".\n",
