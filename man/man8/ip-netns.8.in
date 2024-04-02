@@ -98,7 +98,7 @@ If NAME is available in @NETNS_RUN_DIR@ this command creates a new
 network namespace and assigns NAME.
 
 .TP
-.B ip netns attach NAME PID - create a new named network namespace
+.B ip netns attach NAME PID - assign a name to the network namespace of the process
 .sp
 If NAME is available in @NETNS_RUN_DIR@ this command attaches the network
 namespace of the process PID to NAME as if it were created with ip netns.
