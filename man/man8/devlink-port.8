@@ -83,6 +83,9 @@ devlink-port \- devlink port configuration
 .RI "[ "
 .BR ipsec_packet " { " enable " | " disable " }"
 .RI "]"
+.RI "[ "
+.BR max_io_eqs " EQS"
+.RI "]"
 
 .ti -8
 .BR "devlink port function rate "
@@ -238,6 +241,10 @@ crypto operation (Encrypt/Decrypt) offload.
 Set the IPsec packet offload capability of the function. Controls XFRM state
 and policy offload (Encrypt/Decrypt operation and IPsec encapsulation).
 
+.TP
+.BR max_io_eqs " EQS"
+Set the maximum number of IO event queues of the function.
+
 .ti -8
 .SS devlink port del - delete a devlink port
 .PP
@@ -375,6 +382,11 @@ This will enable the IPsec crypto offload functionality of the function.
 devlink port function set pci/0000:01:00.0/1 ipsec_packet enable
 .RS 4
 This will enable the IPsec packet offload functionality of the function.
+.RE
+.PP
+devlink port function set pci/0000:01:00.0/1 max_io_eqs 4
+.RS 4
+This will set the maximum number of IO event queues of the function to 4.
 .RE
 .PP
 devlink port function set pci/0000:01:00.0/1 hw_addr 00:00:00:11:22:33 state active
