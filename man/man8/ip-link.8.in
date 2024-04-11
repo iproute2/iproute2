@@ -202,7 +202,8 @@ ip-link \- network device configuration
 .IR ETYPE " ] ["
 .B vrf
 .IR NAME " ] ["
-.BR nomaster " ]"
+.BR nomaster " ] ["
+.BR novf " ]"
 
 .ti -8
 .B ip link xstats
@@ -2897,6 +2898,10 @@ output.
 .TP
 .B nomaster
 only show devices with no master
+
+.TP
+.B novf
+only show devices with no VF info
 
 .SS  ip link xstats - display extended statistics
 

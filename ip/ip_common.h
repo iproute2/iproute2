@@ -30,6 +30,7 @@ struct link_filter {
 	int target_nsid;
 	bool have_proto;
 	int proto;
+	int vfinfo;
 };
 
 const char *get_ip_lib_dir(void);
