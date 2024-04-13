@@ -645,7 +645,7 @@ const char *get_clock_name(clockid_t clockid)
 	return "invalid";
 }
 
-void print_tm(FILE *f, const struct tcf_t *tm)
+void print_tm(const struct tcf_t *tm)
 {
 	int hz = get_user_hz();
 

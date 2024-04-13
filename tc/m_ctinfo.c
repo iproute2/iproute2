@@ -166,7 +166,7 @@ static void print_ctinfo_stats(FILE *f, struct rtattr *tb[TCA_CTINFO_MAX + 1])
 	if (tb[TCA_CTINFO_TM]) {
 		tm = RTA_DATA(tb[TCA_CTINFO_TM]);
 
-		print_tm(f, tm);
+		print_tm(tm);
 	}
 
 	if (tb[TCA_CTINFO_STATS_DSCP_SET])

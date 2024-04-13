@@ -534,7 +534,7 @@ static int print_ct(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_CT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_CT_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();

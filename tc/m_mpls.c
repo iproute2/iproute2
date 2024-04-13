@@ -283,7 +283,7 @@ static int print_mpls(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_MPLS_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_MPLS_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

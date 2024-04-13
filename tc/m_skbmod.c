@@ -223,7 +223,7 @@ static int print_skbmod(const struct action_util *au, FILE *f, struct rtattr *ar
 		if (tb[TCA_SKBMOD_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_SKBMOD_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

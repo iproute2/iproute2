@@ -347,7 +347,7 @@ static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg
 		if (tb[TCA_POLICE_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_POLICE_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();

@@ -200,7 +200,7 @@ static int bpf_print_opt(const struct action_util *au, FILE *f, struct rtattr *a
 		if (tb[TCA_ACT_BPF_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_ACT_BPF_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

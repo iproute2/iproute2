@@ -801,7 +801,7 @@ static int print_pedit(const struct action_util *au, FILE *f, struct rtattr *arg
 		if (tb[TCA_PEDIT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_PEDIT_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	open_json_array(PRINT_JSON, "keys");

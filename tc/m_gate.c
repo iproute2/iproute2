@@ -527,7 +527,7 @@ static int print_gate(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_GATE_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_GATE_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

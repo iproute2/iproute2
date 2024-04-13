@@ -213,7 +213,7 @@ print_csum(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_CSUM_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_CSUM_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();

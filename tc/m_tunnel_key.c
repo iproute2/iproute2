@@ -742,7 +742,7 @@ static int print_tunnel_key(const struct action_util *au, FILE *f, struct rtattr
 		if (tb[TCA_TUNNEL_KEY_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_TUNNEL_KEY_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

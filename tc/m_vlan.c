@@ -293,7 +293,7 @@ static int print_vlan(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_VLAN_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_VLAN_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 
