@@ -703,8 +703,7 @@ static void print_tcstats_basic_hw(struct rtattr **tbs, const char *prefix)
 	print_uint(PRINT_ANY, "hw_packets", " %u pkt", bs_hw.packets);
 }
 
-void print_tcstats2_attr(FILE *fp, struct rtattr *rta,
-			 const char *prefix, struct rtattr **xstats)
+void print_tcstats2_attr(struct rtattr *rta, const char *prefix, struct rtattr **xstats)
 {
 	struct rtattr *tbs[TCA_STATS_MAX + 1];
 
@@ -785,7 +784,7 @@ void print_tcstats_attr(FILE *fp, struct rtattr *tb[], const char *prefix,
 			struct rtattr **xstats)
 {
 	if (tb[TCA_STATS2]) {
-		print_tcstats2_attr(fp, tb[TCA_STATS2], prefix, xstats);
+		print_tcstats2_attr(tb[TCA_STATS2], prefix, xstats);
 		if (xstats && !*xstats)
 			goto compat_xstats;
 		return;
