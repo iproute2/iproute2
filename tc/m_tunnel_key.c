@@ -731,7 +731,7 @@ static int print_tunnel_key(const struct action_util *au, FILE *f, struct rtattr
 					  tb[TCA_TUNNEL_KEY_ENC_TTL]);
 		break;
 	}
-	print_action_control(f, " ", parm->action, "");
+	print_action_control(" ", parm->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", parm->index);

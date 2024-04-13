@@ -791,7 +791,7 @@ static int print_pedit(const struct action_util *au, FILE *f, struct rtattr *arg
 		}
 	}
 
-	print_action_control(f, "action ", sel->action, " ");
+	print_action_control("action ", sel->action, " ");
 	print_uint(PRINT_ANY, "nkeys", "keys %d\n", sel->nkeys);
 	print_uint(PRINT_ANY, "index", " \t index %u", sel->index);
 	print_int(PRINT_ANY, "ref", " ref %d", sel->refcnt);

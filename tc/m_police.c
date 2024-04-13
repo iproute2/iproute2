@@ -325,12 +325,12 @@ static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg
 		print_u64(PRINT_ANY, "pkts_burst", "pkts_burst %llu ", ppsburst64);
 	}
 
-	print_action_control(f, "action ", p->action, "");
+	print_action_control("action ", p->action, "");
 
 	if (tb[TCA_POLICE_RESULT]) {
 		__u32 action = rta_getattr_u32(tb[TCA_POLICE_RESULT]);
 
-		print_action_control(f, "/", action, " ");
+		print_action_control("/", action, " ");
 	} else {
 		print_string(PRINT_FP, NULL, " ", NULL);
 	}

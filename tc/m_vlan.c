@@ -282,7 +282,7 @@ static int print_vlan(const struct action_util *au, FILE *f, struct rtattr *arg)
 			print_string(PRINT_ANY, "src_mac", " src_mac %s", b1);
 		}
 	}
-	print_action_control(f, " ", parm->action, "");
+	print_action_control(" ", parm->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", parm->index);

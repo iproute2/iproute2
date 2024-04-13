@@ -517,7 +517,7 @@ static int print_gate(const struct action_util *au, FILE *f, struct rtattr *arg)
 	if (tb[TCA_GATE_ENTRY_LIST])
 		print_gate_list(tb[TCA_GATE_ENTRY_LIST]);
 
-	print_action_control(f, "\t", parm->action, "");
+	print_action_control("\t", parm->action, "");
 
 	print_uint(PRINT_ANY, "index", "\n\t index %u", parm->index);
 	print_int(PRINT_ANY, "ref", " ref %d", parm->refcnt);

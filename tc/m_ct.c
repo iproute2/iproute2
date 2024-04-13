@@ -523,7 +523,7 @@ static int print_ct(const struct action_util *au, FILE *f, struct rtattr *arg)
 	ct_print_helper(tb[TCA_CT_HELPER_FAMILY], tb[TCA_CT_HELPER_PROTO], tb[TCA_CT_HELPER_NAME]);
 	ct_print_nat(ct_action, tb);
 
-	print_action_control(f, " ", p->action, "");
+	print_action_control(" ", p->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", p->index);

@@ -236,7 +236,7 @@ static int print_ctinfo(const struct action_util *au, FILE *f, struct rtattr *ar
 		zone = rta_getattr_u16(tb[TCA_CTINFO_ZONE]);
 
 	print_hu(PRINT_ANY, "zone", "zone %u", zone);
-	print_action_control(f, " ", ci->action, "");
+	print_action_control(" ", ci->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", ci->index);

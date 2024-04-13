@@ -272,7 +272,7 @@ static int print_mpls(const struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 		break;
 	}
-	print_action_control(f, " ", parm->action, "");
+	print_action_control(" ", parm->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", parm->index);

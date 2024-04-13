@@ -109,8 +109,7 @@ void parse_action_control_dflt(int *argc_p, char ***argv_p,
 			       int default_result);
 int parse_action_control_slash(int *argc_p, char ***argv_p,
 			       int *result1_p, int *result2_p, bool allow_num);
-void print_action_control(FILE *f, const char *prefix,
-			  int action, const char *suffix);
+void print_action_control(const char *prefix, int action, const char *suffix);
 int police_print_xstats(const struct action_util *a, FILE *f, struct rtattr *tb);
 int tc_print_action(FILE *f, const struct rtattr *tb, unsigned short tot_acts);
 int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);

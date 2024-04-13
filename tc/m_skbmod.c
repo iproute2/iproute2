@@ -178,7 +178,7 @@ static int print_skbmod(const struct action_util *au, FILE *f, struct rtattr *ar
 	p = RTA_DATA(tb[TCA_SKBMOD_PARMS]);
 
 	print_string(PRINT_FP, NULL, "skbmod ", NULL);
-	print_action_control(f, "", p->action, " ");
+	print_action_control("", p->action, " ");
 
 	if (tb[TCA_SKBMOD_ETYPE]) {
 		skbmod_etype = rta_getattr_u16(tb[TCA_SKBMOD_ETYPE]);

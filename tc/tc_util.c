@@ -534,8 +534,7 @@ int parse_action_control_slash(int *argc_p, char ***argv_p,
 	return 0;
 }
 
-void print_action_control(FILE *f, const char *prefix,
-			  int action, const char *suffix)
+void print_action_control(const char *prefix, int action, const char *suffix)
 {
 	print_string(PRINT_FP, NULL, "%s", prefix);
 	open_json_object("control_action");
