@@ -1365,7 +1365,7 @@ static int u32_print_opt(const struct filter_util *qu, FILE *f, struct rtattr *o
 
 	if (tb[TCA_U32_POLICE]) {
 		print_nl();
-		tc_print_police(f, tb[TCA_U32_POLICE]);
+		tc_print_police(tb[TCA_U32_POLICE]);
 	}
 
 	if (tb[TCA_U32_INDEV]) {

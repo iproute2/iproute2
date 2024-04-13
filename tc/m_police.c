@@ -260,7 +260,7 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	return act_parse_police(NULL, argc_p, argv_p, tca_id, n);
 }
 
-static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg)
+static int print_police(const struct action_util *a, FILE *funused, struct rtattr *arg)
 {
 	SPRINT_BUF(b2);
 	struct tc_police *p;
@@ -356,7 +356,7 @@ static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg
 	return 0;
 }
 
-int tc_print_police(FILE *f, struct rtattr *arg)
+int tc_print_police(struct rtattr *arg)
 {
-	return print_police(&police_action_util, f, arg);
+	return print_police(&police_action_util, NULL, arg);
 }

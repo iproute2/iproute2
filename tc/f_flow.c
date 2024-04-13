@@ -347,7 +347,7 @@ static int flow_print_opt(const struct filter_util *fu, FILE *f, struct rtattr *
 	if (tb[TCA_FLOW_EMATCHES])
 		print_ematch(f, tb[TCA_FLOW_EMATCHES]);
 	if (tb[TCA_FLOW_POLICE])
-		tc_print_police(f, tb[TCA_FLOW_POLICE]);
+		tc_print_police(tb[TCA_FLOW_POLICE]);
 	if (tb[TCA_FLOW_ACT]) {
 		print_nl();
 		tc_print_action(f, tb[TCA_FLOW_ACT], 0);

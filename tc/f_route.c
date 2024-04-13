@@ -165,7 +165,7 @@ static int route_print_opt(const struct filter_util *qu, FILE *f, struct rtattr 
 		print_color_string(PRINT_ANY, COLOR_IFNAME, "fromif", "fromif %s",
 			ll_index_to_name(rta_getattr_u32(tb[TCA_ROUTE4_IIF])));
 	if (tb[TCA_ROUTE4_POLICE])
-		tc_print_police(f, tb[TCA_ROUTE4_POLICE]);
+		tc_print_police(tb[TCA_ROUTE4_POLICE]);
 	if (tb[TCA_ROUTE4_ACT])
 		tc_print_action(f, tb[TCA_ROUTE4_ACT], 0);
 	return 0;
