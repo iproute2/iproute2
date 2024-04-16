@@ -63,7 +63,7 @@ ip-link \- network device configuration
 .RI "[ " ARGS " ]"
 
 .ti -8
-.BR "ip link set " {
+.BR "ip link" " { " set " | " change " } " {
 .IR DEVICE " | "
 .BI "group " GROUP
 }
