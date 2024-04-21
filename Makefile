@@ -42,6 +42,7 @@ DEFINES+=-DCONF_USR_DIR=\"$(CONF_USR_DIR)\" \
          -DCONF_ETC_DIR=\"$(CONF_ETC_DIR)\" \
          -DNETNS_RUN_DIR=\"$(NETNS_RUN_DIR)\" \
          -DNETNS_ETC_DIR=\"$(NETNS_ETC_DIR)\" \
+         -DARPDDIR=\"$(ARPDDIR)\" \
          -DCONF_COLOR=$(CONF_COLOR)
 
 #options for AX.25
@@ -104,7 +105,6 @@ config.mk:
 install: all
 	install -m 0755 -d $(DESTDIR)$(SBINDIR)
 	install -m 0755 -d $(DESTDIR)$(CONF_USR_DIR)
-	install -m 0755 -d $(DESTDIR)$(ARPDDIR)
 	install -m 0755 -d $(DESTDIR)$(HDRDIR)
 	@for i in $(SUBDIRS);  do $(MAKE) -C $$i install; done
 	install -m 0644 $(shell find etc/iproute2 -maxdepth 1 -type f) $(DESTDIR)$(CONF_USR_DIR)

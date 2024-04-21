@@ -41,7 +41,7 @@ static void act_usage(void)
 	 */
 	fprintf(stderr,
 		"usage: tc actions <ACTSPECOP>*\n"
-		"Where: 	ACTSPECOP := ACR | GD | FL\n"
+		"Where:		ACTSPECOP := ACR | GD | FL\n"
 		"	ACR := add | change | replace <ACTSPEC>*\n"
 		"	GD := get | delete | <ACTISPEC>*\n"
 		"	FL := ls | list | flush | <ACTNAMESPEC>\n"
@@ -59,7 +59,7 @@ static void act_usage(void)
 	exit(-1);
 }
 
-static int print_noaopt(struct action_util *au, FILE *f, struct rtattr *opt)
+static int print_noaopt(const struct action_util *au, FILE *f, struct rtattr *opt)
 {
 	if (opt && RTA_PAYLOAD(opt))
 		fprintf(stderr, "[Unknown action, optlen=%u] ",
@@ -67,7 +67,7 @@ static int print_noaopt(struct action_util *au, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int parse_noaopt(struct action_util *au, int *argc_p,
+static int parse_noaopt(const struct action_util *au, int *argc_p,
 			char ***argv_p, int code, struct nlmsghdr *n)
 {
 	int argc = *argc_p;

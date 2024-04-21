@@ -35,7 +35,7 @@ usage(void)
 }
 
 static int
-parse_ctinfo(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
+parse_ctinfo(const struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	     struct nlmsghdr *n)
 {
 	unsigned int cpmarkmask = 0, dscpmask = 0, dscpstatemask = 0;
@@ -181,7 +181,7 @@ static void print_ctinfo_stats(FILE *f, struct rtattr *tb[TCA_CTINFO_MAX + 1])
 			     rta_getattr_u64(tb[TCA_CTINFO_STATS_CPMARK_SET]));
 }
 
-static int print_ctinfo(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_ctinfo(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	unsigned int cpmarkmask = ~0, dscpmask = 0, dscpstatemask = 0;
 	struct rtattr *tb[TCA_CTINFO_MAX + 1];

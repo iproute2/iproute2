@@ -29,7 +29,7 @@ static void explain(void)
 					"[ drop_batch SIZE ]\n");
 }
 
-static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int fq_codel_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			      struct nlmsghdr *n, const char *dev)
 {
 	unsigned int drop_batch = 0;
@@ -157,7 +157,7 @@ static int fq_codel_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int fq_codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int fq_codel_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_FQ_CODEL_MAX + 1];
 	unsigned int limit;
@@ -250,7 +250,7 @@ static int fq_codel_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt
 	return 0;
 }
 
-static int fq_codel_print_xstats(struct qdisc_util *qu, FILE *f,
+static int fq_codel_print_xstats(const struct qdisc_util *qu, FILE *f,
 				 struct rtattr *xstats)
 {
 	struct tc_fq_codel_xstats _st = {}, *st;

@@ -225,7 +225,7 @@ static int ct_parse_labels(char *str, struct nlmsghdr *n)
 }
 
 static int
-parse_ct(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
+parse_ct(const struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 		struct nlmsghdr *n)
 {
 	struct tc_ct sel = {};
@@ -488,7 +488,7 @@ static void ct_print_helper(struct rtattr *family, struct rtattr *proto, struct 
 	print_string(PRINT_ANY, "helper", " helper %s", helper);
 }
 
-static int print_ct(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_ct(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_CT_MAX + 1];
 	const char *commit;

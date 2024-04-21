@@ -32,7 +32,7 @@ usage(void)
 }
 
 static int
-parse_connmark(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
+parse_connmark(const struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	      struct nlmsghdr *n)
 {
 	struct tc_connmark sel = {};
@@ -94,7 +94,7 @@ parse_connmark(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	return 0;
 }
 
-static int print_connmark(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_connmark(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_CONNMARK_MAX + 1];
 	struct tc_connmark *ci;

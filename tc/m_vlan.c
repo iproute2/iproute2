@@ -56,7 +56,7 @@ static void unexpected(const char *arg)
 	explain();
 }
 
-static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_vlan(const struct action_util *a, int *argc_p, char ***argv_p,
 		      int tca_id, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
@@ -227,7 +227,7 @@ static int parse_vlan(struct action_util *a, int *argc_p, char ***argv_p,
 	return 0;
 }
 
-static int print_vlan(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_vlan(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	SPRINT_BUF(b1);
 	struct rtattr *tb[TCA_VLAN_MAX + 1];

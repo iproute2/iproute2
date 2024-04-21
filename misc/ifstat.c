@@ -140,6 +140,10 @@ static int get_nlmsg_extended(struct nlmsghdr *m, void *arg)
 
 	n->ifindex = ifsm->ifindex;
 	n->name = strdup(ll_index_to_name(ifsm->ifindex));
+	if (!n->name) {
+		free(n);
+		return -1;
+	}
 
 	if (sub_type == NO_SUB_TYPE) {
 		memcpy(&n->val, RTA_DATA(tb[filter_type]), sizeof(n->val));
@@ -193,7 +197,6 @@ static int get_nlmsg(struct nlmsghdr *m, void *arg)
 	n->name = strdup(RTA_DATA(tb[IFLA_IFNAME]));
 	if (!n->name) {
 		free(n);
-		errno = ENOMEM;
 		return -1;
 	}
 
@@ -964,8 +967,10 @@ int main(int argc, char *argv[])
 				 "%s/.%s_ifstat.u%d", P_tmpdir, stats_type,
 				 getuid());
 
-	if (reset_history)
-		unlink(hist_name);
+	if (reset_history && unlink(hist_name) < 0) {
+		perror("ifstat: unlink history file");
+		exit(-1);
+	}
 
 	if (!ignore_history || !no_update) {
 		struct stat stb;

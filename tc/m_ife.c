@@ -44,7 +44,7 @@ static void ife_usage(void)
 	exit(-1);
 }
 
-static int parse_ife(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_ife(const struct action_util *a, int *argc_p, char ***argv_p,
 		     int tca_id, struct nlmsghdr *n)
 {
 	int argc = *argc_p;
@@ -211,7 +211,7 @@ skip_encode:
 	return 0;
 }
 
-static int print_ife(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_ife(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_ife *p;
 	struct rtattr *tb[TCA_IFE_MAX + 1];

@@ -57,7 +57,7 @@ static int parse_nbands(const char *arg, __u8 *pnbands, const char *what)
 	return 0;
 }
 
-static int ets_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int ets_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n, const char *dev)
 {
 	__u8 nbands = 0;
@@ -182,7 +182,7 @@ parse_priomap:
 	return 0;
 }
 
-static int ets_parse_copt(struct qdisc_util *qu, int argc, char **argv,
+static int ets_parse_copt(const struct qdisc_util *qu, int argc, char **argv,
 			  struct nlmsghdr *n, const char *dev)
 {
 	unsigned int quantum = 0;
@@ -276,7 +276,7 @@ static int ets_print_opt_priomap(struct rtattr *opt)
 	return 0;
 }
 
-static int ets_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int ets_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_ETS_MAX + 1];
 	__u8 nbands;
@@ -310,7 +310,7 @@ static int ets_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return ets_print_opt_priomap(tb[TCA_ETS_PRIOMAP]);
 }
 
-static int ets_print_copt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int ets_print_copt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_ETS_MAX + 1];
 	__u32 quantum;

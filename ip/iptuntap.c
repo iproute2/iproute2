@@ -271,8 +271,7 @@ static void show_processes(const char *name)
 
 	fd_path = globbuf.gl_pathv;
 	while (*fd_path) {
-		const char *dev_net_tun = "/dev/net/tun";
-		const size_t linkbuf_len = strlen(dev_net_tun) + 2;
+		const size_t linkbuf_len = strlen(TUNDEV) + 2;
 		char linkbuf[linkbuf_len], *fdinfo;
 		int pid, fd;
 		FILE *f;
@@ -289,7 +288,7 @@ static void show_processes(const char *name)
 			goto next;
 		}
 		linkbuf[err] = '\0';
-		if (strcmp(dev_net_tun, linkbuf))
+		if (strcmp(TUNDEV, linkbuf))
 			goto next;
 
 		if (asprintf(&fdinfo, "/proc/%d/fdinfo/%d", pid, fd) < 0)

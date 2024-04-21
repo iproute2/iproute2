@@ -28,7 +28,7 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... multiq [help]\n");
 }
 
-static int multiq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int multiq_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			    struct nlmsghdr *n, const char *dev)
 {
 	struct tc_multiq_qopt opt = {};
@@ -48,7 +48,7 @@ static int multiq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int multiq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int multiq_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct tc_multiq_qopt *qopt;
 

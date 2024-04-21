@@ -12,8 +12,6 @@ enum link_layer {
 };
 
 
-int  tc_core_time2big(unsigned time);
-unsigned tc_core_time2tick(unsigned time);
 unsigned tc_core_tick2time(unsigned tick);
 unsigned tc_core_time2ktime(unsigned time);
 unsigned tc_core_ktime2time(unsigned ktime);

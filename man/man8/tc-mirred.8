@@ -75,8 +75,8 @@ debugging purposes:
 
 .RS
 .EX
-# tc qdisc add dev eth0 handle ffff: ingress
-# tc filter add dev eth0 parent ffff: u32 \\
+# tc qdisc add dev eth0 handle ffff: clsact
+# tc filter add dev eth0 ingress u32 \\
 	match u32 0 0 \\
 	action police rate 1mbit burst 100k conform-exceed pipe \\
 	action mirred egress redirect dev lo
@@ -90,8 +90,8 @@ with e.g. tcpdump:
 .EX
 # ip link add dummy0 type dummy
 # ip link set dummy0 up
-# tc qdisc add dev eth0 handle ffff: ingress
-# tc filter add dev eth0 parent ffff: protocol ip \\
+# tc qdisc add dev eth0 handle ffff: clsact
+# tc filter add dev eth0 ingress protocol ip \\
 	u32 match ip protocol 1 0xff \\
 	action mirred egress mirror dev dummy0
 .EE
@@ -107,14 +107,14 @@ interface, it is possible to send ingress traffic through an instance of
 # modprobe ifb
 # ip link set ifb0 up
 # tc qdisc add dev ifb0 root sfq
-# tc qdisc add dev eth0 handle ffff: ingress
-# tc filter add dev eth0 parent ffff: u32 \\
+# tc qdisc add dev eth0 handle ffff: clsact
+# tc filter add dev eth0 ingress u32 \\
 	match u32 0 0 \\
 	action mirred egress redirect dev ifb0
 .EE
 .RE
 
-.SH LIMITIATIONS
+.SH LIMITATIONS
 The kernel restricts nesting to four levels to avoid the chance
 of nesting loops.
 .PP

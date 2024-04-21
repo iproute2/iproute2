@@ -26,7 +26,7 @@ static void usage(void)
 		"OPTIONS := ... try tc exec <desired EXEC_KIND> help\n");
 }
 
-static int parse_noeopt(struct exec_util *eu, int argc, char **argv)
+static int parse_noeopt(const struct exec_util *eu, int argc, char **argv)
 {
 	if (argc) {
 		fprintf(stderr, "Unknown exec \"%s\", hence option \"%s\" is unparsable\n",

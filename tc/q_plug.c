@@ -22,7 +22,7 @@ static void explain(void)
 	fprintf(stderr, "Usage: ... plug [block | release | release_indefinite | limit NUMBER]\n");
 }
 
-static int plug_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int plug_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			  struct nlmsghdr *n, const char *dev)
 {
 	struct tc_plug_qopt opt = {};
@@ -62,7 +62,7 @@ static int plug_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int plug_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int plug_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	/* dummy implementation as sch_plug does not implement a dump op */
 	return 0;

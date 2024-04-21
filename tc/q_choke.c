@@ -27,7 +27,7 @@ static void explain(void)
 		"		 [ min PACKETS ] [ max PACKETS ] [ burst PACKETS ]\n");
 }
 
-static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int choke_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			   struct nlmsghdr *n, const char *dev)
 {
 	struct tc_red_qopt opt = {};
@@ -162,7 +162,7 @@ static int choke_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int choke_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int choke_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_CHOKE_MAX+1];
 	const struct tc_red_qopt *qopt;
@@ -203,7 +203,7 @@ static int choke_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int choke_print_xstats(struct qdisc_util *qu, FILE *f,
+static int choke_print_xstats(const struct qdisc_util *qu, FILE *f,
 			      struct rtattr *xstats)
 {
 	struct tc_choke_xstats *st;

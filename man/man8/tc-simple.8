@@ -55,11 +55,11 @@ grep the logs to see the logged message
 display stats again and observe increment by 1
 
 .EX
-  hadi@noma1:$ tc qdisc add dev eth0 ingress
-  hadi@noma1:$tc filter add dev eth0 parent ffff: protocol ip prio 5 \\
+  $ tc qdisc add dev eth0 ingress
+  $ tc filter add dev eth0 parent ffff: protocol ip prio 5 \\
 	 u32 match ip protocol 1 0xff flowid 1:1 action simple sdata "Incoming ICMP"
 
-  hadi@noma1:$ sudo tc -s filter ls  dev eth0 parent ffff:
+  $ sudo tc -s filter ls dev eth0 parent ffff:
    filter protocol ip pref 5 u32
    filter protocol ip pref 5 u32 fh 800: ht divisor 1
    filter protocol ip pref 5 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:1
@@ -71,7 +71,7 @@ display stats again and observe increment by 1
 		backlog 0b 0p requeues 0
 
 
-  hadi@noma1$ ping -c 1 www.google.ca
+  $ ping -c 1 www.google.ca
   PING www.google.ca (74.125.225.120) 56(84) bytes of data.
   64 bytes from ord08s08-in-f24.1e100.net (74.125.225.120): icmp_req=1 ttl=53 time=31.3 ms
 
@@ -79,10 +79,10 @@ display stats again and observe increment by 1
   1 packets transmitted, 1 received, 0% packet loss, time 0ms
   rtt min/avg/max/mdev = 31.316/31.316/31.316/0.000 ms
 
-  hadi@noma1$ dmesg | grep simple
+  $ dmesg | grep simple
   [135354.473951] simple: Incoming ICMP_1
 
-  hadi@noma1$ sudo tc/tc -s filter ls  dev eth0 parent ffff:
+  $ sudo tc/tc -s filter ls dev eth0 parent ffff:
   filter protocol ip pref 5 u32
   filter protocol ip pref 5 u32 fh 800: ht divisor 1
   filter protocol ip pref 5 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:1

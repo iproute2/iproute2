@@ -257,6 +257,14 @@ Request the kernel to send the applied configuration back.
 - label configuration for protocol address selection.
 
 .TP
+.B fou
+- Foo-over-UDP receive port configuration.
+
+.TP
+.B ila
+- manage identifier locator addresses (ILA).
+
+.TP
 .B ioam
 - manage IOAM namespaces and IOAM schemas.
 
@@ -267,6 +275,10 @@ Request the kernel to send the applied configuration back.
 .TP
 .B link
 - network device.
+
+.TP
+.B macsec
+- MACsec device configuration.
 
 .TP
 .B maddress
@@ -293,8 +305,16 @@ Request the kernel to send the applied configuration back.
 - manage ARP or NDISC cache entries.
 
 .TP
+.B netconf
+- network configuration monitoring.
+
+.TP
 .B netns
 - manage network namespaces.
+
+.TP
+.B nexthop
+- manage nexthop objects.
 
 .TP
 .B ntable
@@ -309,12 +329,16 @@ Request the kernel to send the applied configuration back.
 - rule in routing policy database.
 
 .TP
+.B sr
+- manage IPv6 segment routing.
+
+.TP
 .B stats
 - manage and show interface statistics.
 
 .TP
 .B tcp_metrics/tcpmetrics
-- manage TCP Metrics
+- manage TCP Metrics.
 
 .TP
 .B token
@@ -417,19 +441,24 @@ was written by Alexey N. Kuznetsov and added in Linux 2.2.
 .SH SEE ALSO
 .BR ip-address (8),
 .BR ip-addrlabel (8),
+.BR ip-fou (8),
 .BR ip-ioam (8),
 .BR ip-l2tp (8),
 .BR ip-link (8),
+.BR ip-macsec (8),
 .BR ip-maddress (8),
 .BR ip-monitor (8),
 .BR ip-mptcp (8),
 .BR ip-mroute (8),
 .BR ip-neighbour (8),
+.BR ip-netconf (8),
 .BR ip-netns (8),
+.BR ip-nexthop (8),
 .BR ip-ntable (8),
 .BR ip-route (8),
 .BR ip-rule (8),
-.BR ip-stats (8)
+.BR ip-sr (8),
+.BR ip-stats (8),
 .BR ip-tcp_metrics (8),
 .BR ip-token (8),
 .BR ip-tunnel (8),

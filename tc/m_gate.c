@@ -56,9 +56,9 @@ static void explain_entry_format(void)
 	fprintf(stderr, "Usage: sched-entry <open | close> <interval> [ <interval ipv> <octets max bytes> ]\n");
 }
 
-static int parse_gate(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_gate(const struct action_util *a, int *argc_p, char ***argv_p,
 		      int tca_id, struct nlmsghdr *n);
-static int print_gate(struct action_util *au, FILE *f, struct rtattr *arg);
+static int print_gate(const struct action_util *au, FILE *f, struct rtattr *arg);
 
 struct action_util gate_action_util = {
 	.id = "gate",
@@ -135,7 +135,7 @@ static void free_entries(struct list_head *gate_entries)
 	}
 }
 
-static int parse_gate(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_gate(const struct action_util *a, int *argc_p, char ***argv_p,
 		      int tca_id, struct nlmsghdr *n)
 {
 	struct tc_gate parm = {.action = TC_ACT_PIPE};
@@ -441,7 +441,7 @@ static int print_gate_list(struct rtattr *list)
 	return 0;
 }
 
-static int print_gate(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_gate(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_gate *parm;
 	struct rtattr *tb[TCA_GATE_MAX + 1];

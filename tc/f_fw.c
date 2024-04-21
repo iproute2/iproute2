@@ -29,7 +29,7 @@ static void explain(void)
 		"		FWMASK is 0xffffffff by default.\n");
 }
 
-static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **argv, struct nlmsghdr *n)
+static int fw_parse_opt(const struct filter_util *qu, char *handle, int argc, char **argv, struct nlmsghdr *n)
 {
 	struct tcmsg *t = NLMSG_DATA(n);
 	struct rtattr *tail;
@@ -112,7 +112,7 @@ static int fw_parse_opt(struct filter_util *qu, char *handle, int argc, char **a
 	return 0;
 }
 
-static int fw_print_opt(struct filter_util *qu, FILE *f, struct rtattr *opt, __u32 handle)
+static int fw_print_opt(const struct filter_util *qu, FILE *f, struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_FW_MAX+1];
 

@@ -29,7 +29,7 @@ static void explain1(const char *arg, const char *val)
 	fprintf(stderr, "cbs: illegal value for \"%s\": \"%s\"\n", arg, val);
 }
 
-static int cbs_parse_opt(struct qdisc_util *qu, int argc,
+static int cbs_parse_opt(const struct qdisc_util *qu, int argc,
 			 char **argv, struct nlmsghdr *n, const char *dev)
 {
 	struct tc_cbs_qopt opt = {};
@@ -103,7 +103,7 @@ static int cbs_parse_opt(struct qdisc_util *qu, int argc,
 	return 0;
 }
 
-static int cbs_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int cbs_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_CBS_MAX+1];
 	struct tc_cbs_qopt *qopt;

@@ -47,7 +47,7 @@ static unsigned int ilog2(unsigned int val)
 	return res;
 }
 
-static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int fq_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			struct nlmsghdr *n, const char *dev)
 {
 	struct tc_prio_qopt prio2band;
@@ -337,7 +337,7 @@ static int fq_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int fq_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_FQ_MAX + 1];
 	unsigned int plimit, flow_plimit;
@@ -490,7 +490,7 @@ static int fq_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int fq_print_xstats(struct qdisc_util *qu, FILE *f,
+static int fq_print_xstats(const struct qdisc_util *qu, FILE *f,
 			   struct rtattr *xstats)
 {
 	struct tc_fq_qd_stats *st, _st;

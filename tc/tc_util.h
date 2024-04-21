@@ -29,51 +29,52 @@ enum
 #define FILTER_NAMESZ	16
 
 struct qdisc_util {
-	struct  qdisc_util *next;
+	struct qdisc_util *next;
 	const char *id;
-	int (*parse_qopt)(struct qdisc_util *qu, int argc,
+	int (*parse_qopt)(const struct qdisc_util *qu, int argc,
 			  char **argv, struct nlmsghdr *n, const char *dev);
-	int (*print_qopt)(struct qdisc_util *qu,
+	int (*print_qopt)(const struct qdisc_util *qu,
 			  FILE *f, struct rtattr *opt);
-	int (*print_xstats)(struct qdisc_util *qu,
+	int (*print_xstats)(const struct qdisc_util *qu,
 			    FILE *f, struct rtattr *xstats);
 
-	int (*parse_copt)(struct qdisc_util *qu, int argc,
+	int (*parse_copt)(const struct qdisc_util *qu, int argc,
 			  char **argv, struct nlmsghdr *n, const char *dev);
-	int (*print_copt)(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
-	int (*has_block)(struct qdisc_util *qu, struct rtattr *opt, __u32 block_idx, bool *p_has);
+	int (*print_copt)(const struct qdisc_util *qu, FILE *f, struct rtattr *opt);
+	int (*has_block)(const struct qdisc_util *qu, struct rtattr *opt,
+			 __u32 block_idx, bool *p_has);
 };
 
 extern __u16 f_proto;
 struct filter_util {
 	struct filter_util *next;
 	char id[FILTER_NAMESZ];
-	int (*parse_fopt)(struct filter_util *qu, char *fhandle,
+	int (*parse_fopt)(const struct filter_util *qu, char *fhandle,
 			  int argc, char **argv, struct nlmsghdr *n);
-	int (*print_fopt)(struct filter_util *qu,
+	int (*print_fopt)(const struct filter_util *qu,
 			  FILE *f, struct rtattr *opt, __u32 fhandle);
 };
 
 struct action_util {
 	struct action_util *next;
 	char id[FILTER_NAMESZ];
-	int (*parse_aopt)(struct action_util *a, int *argc,
+	int (*parse_aopt)(const struct action_util *a, int *argc,
 			  char ***argv, int code, struct nlmsghdr *n);
-	int (*print_aopt)(struct action_util *au, FILE *f, struct rtattr *opt);
-	int (*print_xstats)(struct action_util *au,
+	int (*print_aopt)(const struct action_util *au, FILE *f, struct rtattr *opt);
+	int (*print_xstats)(const struct action_util *au,
 			    FILE *f, struct rtattr *xstats);
 };
 
 struct exec_util {
 	struct exec_util *next;
 	char id[FILTER_NAMESZ];
-	int (*parse_eopt)(struct exec_util *eu, int argc, char **argv);
+	int (*parse_eopt)(const struct exec_util *eu, int argc, char **argv);
 };
 
 const char *get_tc_lib(void);
 
-struct qdisc_util *get_qdisc_kind(const char *str);
-struct filter_util *get_filter_kind(const char *str);
+const struct qdisc_util *get_qdisc_kind(const char *str);
+const struct filter_util *get_filter_kind(const char *str);
 
 int get_qdisc_handle(__u32 *h, const char *str);
 int get_percent_rate(unsigned int *rate, const char *str, const char *dev);
@@ -86,7 +87,6 @@ void tc_print_rate(enum output_type t, const char *key, const char *fmt,
 void print_devname(enum output_type type, int ifindex);
 
 char *sprint_tc_classid(__u32 h, char *buf);
-char *sprint_ticks(__u32 ticks, char *buf);
 char *sprint_linklayer(unsigned int linklayer, char *buf);
 
 void print_tcstats_attr(FILE *fp, struct rtattr *tb[],
@@ -111,11 +111,11 @@ int parse_action_control_slash(int *argc_p, char ***argv_p,
 			       int *result1_p, int *result2_p, bool allow_num);
 void print_action_control(FILE *f, const char *prefix,
 			  int action, const char *suffix);
-int police_print_xstats(struct action_util *a, FILE *f, struct rtattr *tb);
+int police_print_xstats(const struct action_util *a, FILE *f, struct rtattr *tb);
 int tc_print_action(FILE *f, const struct rtattr *tb, unsigned short tot_acts);
 int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
 void print_tm(FILE *f, const struct tcf_t *tm);
-int prio_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt);
+int prio_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 
 int cls_names_init(char *path);
 void cls_names_uninit(void);

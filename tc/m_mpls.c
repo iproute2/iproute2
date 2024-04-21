@@ -72,7 +72,7 @@ static bool check_double_action(unsigned int action, const char *arg)
 	return true;
 }
 
-static int parse_mpls(struct action_util *a, int *argc_p, char ***argv_p,
+static int parse_mpls(const struct action_util *a, int *argc_p, char ***argv_p,
 		      int tca_id, struct nlmsghdr *n)
 {
 	struct tc_mpls parm = {};
@@ -211,7 +211,7 @@ skip_args:
 	return 0;
 }
 
-static int print_mpls(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_mpls(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct rtattr *tb[TCA_MPLS_MAX + 1];
 	struct tc_mpls *parm;

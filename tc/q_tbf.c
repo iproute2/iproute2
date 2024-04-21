@@ -31,7 +31,7 @@ static void explain1(const char *arg, const char *val)
 }
 
 
-static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int tbf_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			 struct nlmsghdr *n, const char *dev)
 {
 	struct tc_tbf_qopt opt = {};
@@ -245,7 +245,7 @@ static int tbf_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	return 0;
 }
 
-static int tbf_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int tbf_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct rtattr *tb[TCA_TBF_MAX+1];
 	struct tc_tbf_qopt *qopt;

@@ -126,7 +126,7 @@ out:
 	return 0;
 }
 
-static int flow_parse_opt(struct filter_util *fu, char *handle,
+static int flow_parse_opt(const struct filter_util *fu, char *handle,
 			  int argc, char **argv, struct nlmsghdr *n)
 {
 	struct tcmsg *t = NLMSG_DATA(n);
@@ -273,7 +273,7 @@ static const char *flow_mode2str(__u32 mode)
 	}
 }
 
-static int flow_print_opt(struct filter_util *fu, FILE *f, struct rtattr *opt,
+static int flow_print_opt(const struct filter_util *fu, FILE *f, struct rtattr *opt,
 			  __u32 handle)
 {
 	struct rtattr *tb[TCA_FLOW_MAX+1];

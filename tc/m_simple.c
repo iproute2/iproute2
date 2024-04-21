@@ -90,7 +90,7 @@ static void usage(void)
 }
 
 static int
-parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
+parse_simple(const struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	     struct nlmsghdr *n)
 {
 	struct tc_defact sel = {};
@@ -155,7 +155,7 @@ parse_simple(struct action_util *a, int *argc_p, char ***argv_p, int tca_id,
 	return 0;
 }
 
-static int print_simple(struct action_util *au, FILE *f, struct rtattr *arg)
+static int print_simple(const struct action_util *au, FILE *f, struct rtattr *arg)
 {
 	struct tc_defact *sel;
 	struct rtattr *tb[TCA_DEF_MAX + 1];
@@ -179,9 +179,11 @@ static int print_simple(struct action_util *au, FILE *f, struct rtattr *arg)
 
 	simpdata = RTA_DATA(tb[TCA_DEF_DATA]);
 
-	fprintf(f, "Simple <%s>\n", simpdata);
-	fprintf(f, "\t index %u ref %d bind %d", sel->index,
-		sel->refcnt, sel->bindcnt);
+	print_string(PRINT_ANY, "simple", "Simple <%s>", simpdata);
+	print_nl();
+	print_uint(PRINT_ANY, "index", "\t index %u ", sel->index);
+	print_int(PRINT_ANY, "ref", "ref %d ", sel->refcnt);
+	print_int(PRINT_ANY, "bind","bind %d", sel->bindcnt);
 
 	if (show_stats) {
 		if (tb[TCA_DEF_TM]) {

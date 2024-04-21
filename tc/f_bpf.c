@@ -71,7 +71,7 @@ static const struct bpf_cfg_ops bpf_cb_ops = {
 	.ebpf_cb = bpf_ebpf_cb,
 };
 
-static int bpf_parse_opt(struct filter_util *qu, char *handle,
+static int bpf_parse_opt(const struct filter_util *qu, char *handle,
 			 int argc, char **argv, struct nlmsghdr *n)
 {
 	const char *bpf_obj = NULL, *bpf_uds_name = NULL;
@@ -187,7 +187,7 @@ opt_bpf:
 	return ret;
 }
 
-static int bpf_print_opt(struct filter_util *qu, FILE *f,
+static int bpf_print_opt(const struct filter_util *qu, FILE *f,
 			 struct rtattr *opt, __u32 handle)
 {
 	struct rtattr *tb[TCA_BPF_MAX + 1];
