@@ -274,6 +274,12 @@ static inline __u64 rta_getattr_uint(const struct rtattr *rta)
 	}
 	return -1ULL;
 }
+
+static inline __be64 rta_getattr_be64(const struct rtattr *rta)
+{
+	return htobe64(rta_getattr_u64(rta));
+}
+
 static inline __s32 rta_getattr_s32(const struct rtattr *rta)
 {
 	return *(__s32 *)RTA_DATA(rta);
