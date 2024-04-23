@@ -2228,11 +2228,8 @@ int lwt_parse_encap(struct rtattr *rta, size_t len, int *argcp, char ***argvp,
 		invarg("\"encap type\" value is invalid\n", *argv);
 
 	NEXT_ARG();
-	if (argc <= 1) {
-		fprintf(stderr,
-			"Error: unexpected end of line after \"encap\"\n");
-		exit(-1);
-	}
+	if (argc <= 1)
+		missarg("encap type");
 
 	nest = rta_nest(rta, len, encap_attr);
 	switch (type) {

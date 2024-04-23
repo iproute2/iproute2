@@ -45,11 +45,8 @@ static int parse_sample(const struct action_util *a, int *argc_p, char ***argv_p
 	__u32 group;
 	__u32 rate;
 
-	if (argc <= 1) {
-		fprintf(stderr, "sample bad argument count %d\n", argc);
-		usage();
-		return -1;
-	}
+	if (argc <= 1)
+		missarg("sample count");
 
 	if (matches(*argv, "sample") == 0) {
 		NEXT_ARG();
