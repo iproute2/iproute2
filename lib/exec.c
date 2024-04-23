@@ -36,8 +36,13 @@ int cmd_exec(const char *cmd, char **argv, bool do_fork,
 		}
 	}
 
-	if (setup && setup(arg))
+	if (setup && setup(arg)) {
+		if (do_fork) {
+			/* In child, nothing to do */
+			_exit(1);
+		}
 		return -1;
+	}
 
 	if (execvp(cmd, argv)  < 0)
 		fprintf(stderr, "exec of \"%s\" failed: %s\n",
