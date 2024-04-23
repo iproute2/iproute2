@@ -250,6 +250,7 @@ ip-link \- network device configuration
 .BR netdevsim " |"
 .BR netkit " |"
 .BR nlmon " |"
+.BR pfcp " |"
 .BR rmnet " |"
 .BR sit " |"
 .BR vcan " | "
@@ -391,6 +392,9 @@ Link types:
 .sp
 .BR nlmon
 - Netlink monitoring device
+.sp
+.BR pfcp
+- Packet Forwarding Control Protocol device
 .sp
 .BR rmnet
 - Qualcomm rmnet device
@@ -2124,6 +2128,12 @@ the following additional arguments are supported:
 .sp
 .BI restart_count " RESTART_COUNT "
 - GTP instance restart counter
+
+.TP
+PFCP Type Support
+For a link of type
+.I PFCP
+no additional arguments are supported
 
 .in -8
 
