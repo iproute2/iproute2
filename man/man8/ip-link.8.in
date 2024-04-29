@@ -1626,6 +1626,8 @@ the following additional arguments are supported:
 
 .BI "ip link add link " DEVICE " name " NAME " type hsr"
 .BI slave1 " SLAVE1-IF " slave2 " SLAVE2-IF "
+.RB [ " interlink"
+.IR INTERLINK-IF " ] "
 .RB [ " supervision"
 .IR ADDR-BYTE " ] ["
 .BR version " { " 0 " | " 1 " } ["
@@ -1641,6 +1643,9 @@ the following additional arguments are supported:
 
 .BI slave2 " SLAVE2-IF "
 - Specifies the physical device used for the second of the two ring ports.
+
+.BI interlink " INTERLINK-IF"
+- The interlink device bound to the HSR network to connect SAN device(s).
 
 .BI supervision " ADDR-BYTE"
 - The last byte of the multicast address used for HSR supervision frames.
