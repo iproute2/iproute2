@@ -64,7 +64,7 @@ void iplink_usage(void)
 		"\n"
 		"	ip link delete { DEVICE | dev DEVICE | group DEVGROUP } type TYPE [ ARGS ]\n"
 		"\n"
-		"	ip link set { DEVICE | dev DEVICE | group DEVGROUP }\n"
+		"	ip link { set | change } { DEVICE | dev DEVICE | group DEVGROUP }\n"
 		"			[ { up | down } ]\n"
 		"			[ type TYPE ARGS ]\n");
 

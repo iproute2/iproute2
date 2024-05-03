@@ -82,7 +82,7 @@ main(int argc, char **argv)
 			argc--;
 			argv++;
 			if (argc <= 1)
-				usage();
+				missarg("family type");
 			if (strcmp(argv[1], "inet") == 0)
 				family = AF_INET;
 			else if (strcmp(argv[1], "inet6") == 0)
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 			argc--;
 			argv++;
 			if (argc <= 1)
-				usage();
+				missarg("file");
 			file = argv[1];
 		} else if (matches(argv[1], "link") == 0) {
 			llink = 1;

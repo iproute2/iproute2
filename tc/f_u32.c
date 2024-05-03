@@ -663,7 +663,7 @@ static int parse_mark(int *argc_p, char ***argv_p, struct nlmsghdr *n)
 	struct tc_u32_mark mark;
 
 	if (argc <= 1)
-		return -1;
+		missarg("mark");
 
 	if (get_u32(&mark.val, *argv, 0)) {
 		fprintf(stderr, "Illegal \"mark\" value\n");

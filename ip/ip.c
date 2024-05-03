@@ -203,15 +203,15 @@ int main(int argc, char **argv)
 			argc--;
 			argv++;
 			if (argc <= 1)
-				usage();
+				missarg("loop count");
 			max_flush_loops = atoi(argv[1]);
 		} else if (matches(opt, "-family") == 0) {
 			argc--;
 			argv++;
 			if (argc <= 1)
-				usage();
+				missarg("family type");
 			if (strcmp(argv[1], "help") == 0)
-				usage();
+				do_help(argc, argv);
 			else
 				preferred_family = read_family(argv[1]);
 			if (preferred_family == AF_UNSPEC)
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
 			argc--;
 			argv++;
 			if (argc <= 1)
-				usage();
+				missarg("batch file");
 			batch_file = argv[1];
 		} else if (matches(opt, "-brief") == 0) {
 			++brief;
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
 			argc--;
 			argv++;
 			if (argc <= 1)
-				usage();
+				missarg("rcvbuf size");
 			if (get_unsigned(&size, argv[1], 0)) {
 				fprintf(stderr, "Invalid rcvbuf size '%s'\n",
 					argv[1]);

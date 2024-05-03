@@ -289,7 +289,7 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-batch") == 0) {
 			argc--;	argv++;
 			if (argc <= 1)
-				usage();
+				missarg("batch file");
 			batch_file = argv[1];
 		} else if (matches(argv[1], "-netns") == 0) {
 			NEXT_ARG();
