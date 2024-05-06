@@ -29,6 +29,7 @@ ip-route \- routing table management
 .ti -8
 .B  ip route get
 .I ROUTE_GET_FLAGS
+.B  [ to ]
 .IR ADDRESS " [ "
 .BI from " ADDRESS " iif " STRING"
 .RB " ] [ " oif
@@ -44,7 +45,9 @@ ip-route \- routing table management
 .B  sport
 .IR NUMBER " ] [ "
 .B  dport
-.IR NUMBER " ] "
+.IR NUMBER " ] ["
+.B  as
+.IR ADDRESS " ]"
 
 .ti -8
 .BR "ip route" " { " add " | " del " | " change " | " append " | "\
@@ -263,9 +266,14 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 
 .ti -8
 .IR ROUTE_GET_FLAGS " := "
-.BR " [ "
-.BR fibmatch
-.BR " ] "
+.IR ROUTE_GET_FLAG " [ "
+.IR ROUTE_GET_FLAGS " ] "
+
+.ti -8
+.IR ROUTE_GET_FLAG " := "
+.BR "[ "
+.BR connected " | " fibmatch " | " notify
+.BR "]"
 
 .SH DESCRIPTION
 .B ip route
