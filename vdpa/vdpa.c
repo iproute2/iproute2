@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <errno.h>
+#include <sys/time.h>
 #include <linux/genetlink.h>
 #include <linux/if_ether.h>
 #include <linux/vdpa.h>
