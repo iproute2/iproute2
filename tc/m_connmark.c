@@ -112,7 +112,7 @@ static int print_connmark(const struct action_util *au, FILE *f, struct rtattr *
 	ci = RTA_DATA(tb[TCA_CONNMARK_PARMS]);
 
 	print_uint(PRINT_ANY, "zone", "zone %u", ci->zone);
-	print_action_control(f, " ", ci->action, "");
+	print_action_control(" ", ci->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", ci->index);
@@ -123,7 +123,7 @@ static int print_connmark(const struct action_util *au, FILE *f, struct rtattr *
 		if (tb[TCA_CONNMARK_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_CONNMARK_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();

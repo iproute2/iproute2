@@ -236,7 +236,7 @@ static int print_ife(const struct action_util *au, FILE *f, struct rtattr *arg)
 
 	print_string(PRINT_ANY, "mode", "%s ",
 		     p->flags & IFE_ENCODE ? "encode" : "decode");
-	print_action_control(f, "action ", p->action, " ");
+	print_action_control("action ", p->action, " ");
 
 	if (tb[TCA_IFE_TYPE]) {
 		ife_type = rta_getattr_u16(tb[TCA_IFE_TYPE]);
@@ -315,7 +315,7 @@ static int print_ife(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_IFE_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_IFE_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

@@ -166,7 +166,7 @@ static void print_ctinfo_stats(FILE *f, struct rtattr *tb[TCA_CTINFO_MAX + 1])
 	if (tb[TCA_CTINFO_TM]) {
 		tm = RTA_DATA(tb[TCA_CTINFO_TM]);
 
-		print_tm(f, tm);
+		print_tm(tm);
 	}
 
 	if (tb[TCA_CTINFO_STATS_DSCP_SET])
@@ -236,7 +236,7 @@ static int print_ctinfo(const struct action_util *au, FILE *f, struct rtattr *ar
 		zone = rta_getattr_u16(tb[TCA_CTINFO_ZONE]);
 
 	print_hu(PRINT_ANY, "zone", "zone %u", zone);
-	print_action_control(f, " ", ci->action, "");
+	print_action_control(" ", ci->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", ci->index);

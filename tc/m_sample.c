@@ -157,7 +157,7 @@ static int print_sample(const struct action_util *au, FILE *f, struct rtattr *ar
 		print_uint(PRINT_ANY, "trunc_size", " trunc_size %u",
 			   rta_getattr_u32(tb[TCA_SAMPLE_TRUNC_SIZE]));
 
-	print_action_control(f, " ", p->action, "");
+	print_action_control(" ", p->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", p->index);
@@ -168,7 +168,7 @@ static int print_sample(const struct action_util *au, FILE *f, struct rtattr *ar
 		if (tb[TCA_SAMPLE_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_SAMPLE_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();

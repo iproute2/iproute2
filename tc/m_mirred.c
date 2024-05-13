@@ -337,7 +337,7 @@ print_mirred(const struct action_util *au, FILE *f, struct rtattr *arg)
 		print_string(PRINT_ANY, "to_dev", " to device %s)", dev);
 	}
 
-	print_action_control(f, " ", p->action, "");
+	print_action_control(" ", p->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\tindex %u", p->index);
@@ -348,7 +348,7 @@ print_mirred(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_MIRRED_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_MIRRED_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();

@@ -239,7 +239,7 @@ static int print_skbedit(const struct action_util *au, FILE *f, struct rtattr *a
 				     "inheritdsfield");
 	}
 
-	print_action_control(f, " ", p->action, "");
+	print_action_control(" ", p->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", p->index);
@@ -250,7 +250,7 @@ static int print_skbedit(const struct action_util *au, FILE *f, struct rtattr *a
 		if (tb[TCA_SKBEDIT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_SKBEDIT_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

@@ -40,6 +40,15 @@ static void print_type(uint32_t val)
 	print_string(PRINT_ANY, "type", "type %s ", qp_types_to_str(val));
 }
 
+/*
+ * print the subtype only if the QPT is IB_QPT_DRIVER
+ */
+static void print_subtype(uint8_t type, const char *sub_type)
+{
+	if (type == 0xFF && sub_type)
+		print_string(PRINT_ANY, "subtype", "subtype %s ", sub_type);
+}
+
 static void print_state(uint32_t val)
 {
 	print_string(PRINT_ANY, "state", "state %s ", qp_states_to_str(val));
@@ -81,6 +90,7 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 {
 	uint32_t lqpn, rqpn = 0, rq_psn = 0, sq_psn;
 	uint8_t type, state, path_mig_state = 0;
+	const char* sub_type = NULL;
 	uint32_t port = 0, pid = 0;
 	uint32_t pdn = 0;
 	char *comm = NULL;
@@ -134,6 +144,10 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 		    nla_line[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE]))
 		goto out;
 
+	if (nla_line[RDMA_NLDEV_ATTR_RES_SUBTYPE])
+		sub_type =
+			mnl_attr_get_str(nla_line[RDMA_NLDEV_ATTR_RES_SUBTYPE]);
+
 	type = mnl_attr_get_u8(nla_line[RDMA_NLDEV_ATTR_RES_TYPE]);
 	if (rd_is_string_filtered_attr(rd, "type", qp_types_to_str(type),
 				       nla_line[RDMA_NLDEV_ATTR_RES_TYPE]))
@@ -164,6 +178,7 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 	print_rqpn(rqpn, nla_line);
 
 	print_type(type);
+	print_subtype(type, sub_type);
 	print_state(state);
 
 	print_rqpsn(rq_psn, nla_line);

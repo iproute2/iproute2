@@ -178,7 +178,7 @@ print_gact(const struct action_util *au, FILE *f, struct rtattr *arg)
 	}
 	p = RTA_DATA(tb[TCA_GACT_PARMS]);
 
-	print_action_control(f, "action ", p->action, "");
+	print_action_control("action ", p->action, "");
 #ifdef CONFIG_GACT_PROB
 	if (tb[TCA_GACT_PROB] != NULL) {
 		pp = RTA_DATA(tb[TCA_GACT_PROB]);
@@ -191,7 +191,7 @@ print_gact(const struct action_util *au, FILE *f, struct rtattr *arg)
 	print_nl();
 	print_string(PRINT_ANY, "random_type", "\t random type %s",
 		     prob_n2a(pp->ptype));
-	print_action_control(f, " ", pp->paction, " ");
+	print_action_control(" ", pp->paction, " ");
 	print_int(PRINT_ANY, "val", "val %d", pp->pval);
 	close_json_object();
 #endif
@@ -203,7 +203,7 @@ print_gact(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_GACT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_GACT_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();

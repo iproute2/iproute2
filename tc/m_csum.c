@@ -204,7 +204,7 @@ print_csum(const struct action_util *au, FILE *f, struct rtattr *arg)
 		 uflag_4, uflag_5, uflag_6, uflag_7);
 	print_string(PRINT_ANY, "csum", "(%s) ", buf);
 
-	print_action_control(f, "action ", sel->action, _SL_);
+	print_action_control("action ", sel->action, _SL_);
 	print_uint(PRINT_ANY, "index", "\tindex %u", sel->index);
 	print_int(PRINT_ANY, "ref", " ref %d", sel->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", sel->bindcnt);
@@ -213,7 +213,7 @@ print_csum(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_CSUM_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_CSUM_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();

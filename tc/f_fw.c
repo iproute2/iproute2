@@ -146,7 +146,7 @@ static int fw_print_opt(const struct filter_util *qu, FILE *f, struct rtattr *op
 	}
 
 	if (tb[TCA_FW_POLICE])
-		tc_print_police(f, tb[TCA_FW_POLICE]);
+		tc_print_police(tb[TCA_FW_POLICE]);
 	if (tb[TCA_FW_INDEV]) {
 		struct rtattr *idev = tb[TCA_FW_INDEV];
 

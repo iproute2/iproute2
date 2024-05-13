@@ -202,7 +202,8 @@ ip-link \- network device configuration
 .IR ETYPE " ] ["
 .B vrf
 .IR NAME " ] ["
-.BR nomaster " ]"
+.BR nomaster " ] ["
+.BR novf " ]"
 
 .ti -8
 .B ip link xstats
@@ -249,6 +250,7 @@ ip-link \- network device configuration
 .BR netdevsim " |"
 .BR netkit " |"
 .BR nlmon " |"
+.BR pfcp " |"
 .BR rmnet " |"
 .BR sit " |"
 .BR vcan " | "
@@ -390,6 +392,9 @@ Link types:
 .sp
 .BR nlmon
 - Netlink monitoring device
+.sp
+.BR pfcp
+- Packet Forwarding Control Protocol device
 .sp
 .BR rmnet
 - Qualcomm rmnet device
@@ -1621,6 +1626,8 @@ the following additional arguments are supported:
 
 .BI "ip link add link " DEVICE " name " NAME " type hsr"
 .BI slave1 " SLAVE1-IF " slave2 " SLAVE2-IF "
+.RB [ " interlink"
+.IR INTERLINK-IF " ] "
 .RB [ " supervision"
 .IR ADDR-BYTE " ] ["
 .BR version " { " 0 " | " 1 " } ["
@@ -1636,6 +1643,9 @@ the following additional arguments are supported:
 
 .BI slave2 " SLAVE2-IF "
 - Specifies the physical device used for the second of the two ring ports.
+
+.BI interlink " INTERLINK-IF"
+- The interlink device bound to the HSR network to connect SAN device(s).
 
 .BI supervision " ADDR-BYTE"
 - The last byte of the multicast address used for HSR supervision frames.
@@ -2123,6 +2133,12 @@ the following additional arguments are supported:
 .sp
 .BI restart_count " RESTART_COUNT "
 - GTP instance restart counter
+
+.TP
+PFCP Type Support
+For a link of type
+.I PFCP
+no additional arguments are supported
 
 .in -8
 
@@ -2897,6 +2913,10 @@ output.
 .TP
 .B nomaster
 only show devices with no master
+
+.TP
+.B novf
+only show devices with no VF info
 
 .SS  ip link xstats - display extended statistics
 

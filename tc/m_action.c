@@ -396,7 +396,7 @@ static int tc_print_one_action(FILE *f, struct rtattr *arg, bool bind)
 		print_string(PRINT_FP, NULL, "\tAction statistics:", NULL);
 		print_nl();
 		open_json_object("stats");
-		print_tcstats2_attr(f, tb[TCA_ACT_STATS], "\t", NULL);
+		print_tcstats2_attr(tb[TCA_ACT_STATS], "\t", NULL);
 		close_json_object();
 		print_nl();
 	}

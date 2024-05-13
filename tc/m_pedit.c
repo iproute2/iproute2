@@ -791,7 +791,7 @@ static int print_pedit(const struct action_util *au, FILE *f, struct rtattr *arg
 		}
 	}
 
-	print_action_control(f, "action ", sel->action, " ");
+	print_action_control("action ", sel->action, " ");
 	print_uint(PRINT_ANY, "nkeys", "keys %d\n", sel->nkeys);
 	print_uint(PRINT_ANY, "index", " \t index %u", sel->index);
 	print_int(PRINT_ANY, "ref", " ref %d", sel->refcnt);
@@ -801,7 +801,7 @@ static int print_pedit(const struct action_util *au, FILE *f, struct rtattr *arg
 		if (tb[TCA_PEDIT_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_PEDIT_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	open_json_array(PRINT_JSON, "keys");

@@ -93,7 +93,7 @@ static int cgroup_print_opt(const struct filter_util *qu, FILE *f,
 
 	if (tb[TCA_CGROUP_POLICE]) {
 		print_nl();
-		tc_print_police(f, tb[TCA_CGROUP_POLICE]);
+		tc_print_police(tb[TCA_CGROUP_POLICE]);
 	}
 
 	if (tb[TCA_CGROUP_ACT])

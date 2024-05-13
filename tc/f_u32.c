@@ -820,7 +820,7 @@ static int parse_hashkey(int *argc_p, char ***argv_p, struct tc_u32_sel *sel)
 	return 0;
 }
 
-static void print_ipv4(FILE *f, const struct tc_u32_key *key)
+static void print_ipv4(const struct tc_u32_key *key)
 {
 	char abuf[256];
 
@@ -895,7 +895,7 @@ static void print_ipv4(FILE *f, const struct tc_u32_key *key)
 	close_json_object();
 }
 
-static void print_ipv6(FILE *f, const struct tc_u32_key *key)
+static void print_ipv6(const struct tc_u32_key *key)
 {
 	char abuf[256];
 
@@ -971,7 +971,7 @@ static void print_ipv6(FILE *f, const struct tc_u32_key *key)
 	close_json_object();
 }
 
-static void print_raw(FILE *f, const struct tc_u32_key *key)
+static void print_raw(const struct tc_u32_key *key)
 {
 	open_json_object("match");
 	print_nl();
@@ -985,14 +985,14 @@ static void print_raw(FILE *f, const struct tc_u32_key *key)
 static const struct {
 	__u16 proto;
 	__u16 pad;
-	void (*pprinter)(FILE *f, const struct tc_u32_key *key);
+	void (*pprinter)(const struct tc_u32_key *key);
 } u32_pprinters[] = {
 	{0,	   0, print_raw},
 	{ETH_P_IP, 0, print_ipv4},
 	{ETH_P_IPV6, 0, print_ipv6},
 };
 
-static void show_keys(FILE *f, const struct tc_u32_key *key)
+static void show_keys(const struct tc_u32_key *key)
 {
 	int i = 0;
 
@@ -1002,7 +1002,7 @@ static void show_keys(FILE *f, const struct tc_u32_key *key)
 	for (i = 0; i < ARRAY_SIZE(u32_pprinters); i++) {
 		if (u32_pprinters[i].proto == ntohs(f_proto)) {
 show_k:
-			u32_pprinters[i].pprinter(f, key);
+			u32_pprinters[i].pprinter(key);
 			return;
 		}
 	}
@@ -1333,7 +1333,7 @@ static int u32_print_opt(const struct filter_util *qu, FILE *f, struct rtattr *o
 			int i;
 
 			for (i = 0; i < sel->nkeys; i++) {
-				show_keys(f, sel->keys + i);
+				show_keys(sel->keys + i);
 				if (show_stats && NULL != pf)
 					print_u64(PRINT_ANY, "success", " (success %llu ) ",
 						  pf->kcnts[i]);
@@ -1365,7 +1365,7 @@ static int u32_print_opt(const struct filter_util *qu, FILE *f, struct rtattr *o
 
 	if (tb[TCA_U32_POLICE]) {
 		print_nl();
-		tc_print_police(f, tb[TCA_U32_POLICE]);
+		tc_print_police(tb[TCA_U32_POLICE]);
 	}
 
 	if (tb[TCA_U32_INDEV]) {

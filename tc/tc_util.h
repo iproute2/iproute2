@@ -91,14 +91,13 @@ char *sprint_linklayer(unsigned int linklayer, char *buf);
 
 void print_tcstats_attr(FILE *fp, struct rtattr *tb[],
 			const char *prefix, struct rtattr **xstats);
-void print_tcstats2_attr(FILE *fp, struct rtattr *rta,
-			 const char *prefix, struct rtattr **xstats);
+void print_tcstats2_attr(struct rtattr *rta, const char *prefix, struct rtattr **xstats);
 
 int get_tc_classid(__u32 *h, const char *str);
 int print_tc_classid(char *buf, int len, __u32 h);
 char *sprint_tc_classid(__u32 h, char *buf);
 
-int tc_print_police(FILE *f, struct rtattr *tb);
+int tc_print_police(struct rtattr *tb);
 int parse_percent(double *val, const char *str);
 int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
 
@@ -109,12 +108,11 @@ void parse_action_control_dflt(int *argc_p, char ***argv_p,
 			       int default_result);
 int parse_action_control_slash(int *argc_p, char ***argv_p,
 			       int *result1_p, int *result2_p, bool allow_num);
-void print_action_control(FILE *f, const char *prefix,
-			  int action, const char *suffix);
+void print_action_control(const char *prefix, int action, const char *suffix);
 int police_print_xstats(const struct action_util *a, FILE *f, struct rtattr *tb);
 int tc_print_action(FILE *f, const struct rtattr *tb, unsigned short tot_acts);
 int parse_action(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n);
-void print_tm(FILE *f, const struct tcf_t *tm);
+void print_tm(const struct tcf_t *tm);
 int prio_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt);
 
 int cls_names_init(char *path);

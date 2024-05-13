@@ -21,12 +21,15 @@ static void print_usage(FILE *f)
 {
 	fprintf(f,
 		"Usage:\tip link add name NAME type hsr slave1 SLAVE1-IF slave2 SLAVE2-IF\n"
-		"\t[ supervision ADDR-BYTE ] [version VERSION] [proto PROTOCOL]\n"
+		"\t[ interlink INTERLINK-IF ] [ supervision ADDR-BYTE ] [ version VERSION ]\n"
+		"\t[ proto PROTOCOL ]\n"
 		"\n"
 		"NAME\n"
 		"	name of new hsr device (e.g. hsr0)\n"
 		"SLAVE1-IF, SLAVE2-IF\n"
 		"	the two slave devices bound to the HSR device\n"
+		"INTERLINK-IF\n"
+		"	the interlink device bound to the HSR network to connect SAN device(s)\n"
 		"ADDR-BYTE\n"
 		"	0-255; the last byte of the multicast address used for HSR supervision\n"
 		"	frames (default = 0)\n"
@@ -82,6 +85,12 @@ static int hsr_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (ifindex == 0)
 				invarg("No such interface", *argv);
 			addattr_l(n, 1024, IFLA_HSR_SLAVE2, &ifindex, 4);
+		} else if (strcmp(*argv, "interlink") == 0) {
+			NEXT_ARG();
+			ifindex = ll_name_to_index(*argv);
+			if (ifindex == 0)
+				invarg("No such interface", *argv);
+			addattr_l(n, 1024, IFLA_HSR_INTERLINK, &ifindex, 4);
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 			return -1;
@@ -109,6 +118,9 @@ static void hsr_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_HSR_SLAVE2] &&
 	    RTA_PAYLOAD(tb[IFLA_HSR_SLAVE2]) < sizeof(__u32))
 		return;
+	if (tb[IFLA_HSR_INTERLINK] &&
+	    RTA_PAYLOAD(tb[IFLA_HSR_INTERLINK]) < sizeof(__u32))
+		return;
 	if (tb[IFLA_HSR_SEQ_NR] &&
 	    RTA_PAYLOAD(tb[IFLA_HSR_SEQ_NR]) < sizeof(__u16))
 		return;
@@ -131,6 +143,10 @@ static void hsr_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			     ll_index_to_name(rta_getattr_u32(tb[IFLA_HSR_SLAVE2])));
 	else
 		print_null(PRINT_ANY, "slave2", "slave2 %s ", "<none>");
+
+	if (tb[IFLA_HSR_INTERLINK])
+		print_color_string(PRINT_ANY, COLOR_IFNAME, "interlink", "interlink %s ",
+				   ll_index_to_name(rta_getattr_u32(tb[IFLA_HSR_INTERLINK])));
 
 	if (tb[IFLA_HSR_SEQ_NR])
 		print_int(PRINT_ANY,

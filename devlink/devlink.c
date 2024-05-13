@@ -309,6 +309,7 @@ static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)
 #define DL_OPT_PORT_FN_RATE_TX_PRIORITY	BIT(55)
 #define DL_OPT_PORT_FN_RATE_TX_WEIGHT	BIT(56)
 #define DL_OPT_PORT_FN_CAPS	BIT(57)
+#define DL_OPT_PORT_FN_MAX_IO_EQS	BIT(58)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -375,6 +376,7 @@ struct dl_opts {
 	const char *linecard_type;
 	bool selftests_opt[DEVLINK_ATTR_SELFTEST_ID_MAX + 1];
 	struct nla_bitfield32 port_fn_caps;
+	uint32_t port_fn_max_io_eqs;
 };
 
 struct dl {
@@ -773,6 +775,7 @@ devlink_function_policy[DEVLINK_PORT_FUNCTION_ATTR_MAX + 1] = {
 	[DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR ] = MNL_TYPE_BINARY,
 	[DEVLINK_PORT_FN_ATTR_STATE] = MNL_TYPE_U8,
 	[DEVLINK_PORT_FN_ATTR_DEVLINK] = MNL_TYPE_NESTED,
+	[DEVLINK_PORT_FN_ATTR_MAX_IO_EQS] = MNL_TYPE_U32,
 };
 
 static int function_attr_cb(const struct nlattr *attr, void *data)
@@ -2298,6 +2301,17 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (ipsec_packet)
 				opts->port_fn_caps.value |= DEVLINK_PORT_FN_CAP_IPSEC_PACKET;
 			o_found |= DL_OPT_PORT_FN_CAPS;
+		} else if (dl_argv_match(dl, "max_io_eqs") &&
+			   (o_all & DL_OPT_PORT_FN_MAX_IO_EQS)) {
+			uint32_t max_io_eqs;
+
+			dl_arg_inc(dl);
+			err = dl_argv_uint32_t(dl, &max_io_eqs);
+			if (err)
+				return err;
+			opts->port_fn_max_io_eqs = max_io_eqs;
+			o_found |= DL_OPT_PORT_FN_MAX_IO_EQS;
+
 		} else {
 			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
 			return -EINVAL;
@@ -2428,6 +2442,9 @@ dl_function_attr_put(struct nlmsghdr *nlh, const struct dl_opts *opts)
 	if (opts->present & DL_OPT_PORT_FN_CAPS)
 		mnl_attr_put(nlh, DEVLINK_PORT_FN_ATTR_CAPS,
 			     sizeof(opts->port_fn_caps), &opts->port_fn_caps);
+	if (opts->present & DL_OPT_PORT_FN_MAX_IO_EQS)
+		mnl_attr_put_u32(nlh, DEVLINK_PORT_FN_ATTR_MAX_IO_EQS,
+				opts->port_fn_max_io_eqs);
 
 	mnl_attr_nest_end(nlh, nest);
 }
@@ -4744,6 +4761,7 @@ static void cmd_port_help(void)
 	pr_err("       devlink port function set DEV/PORT_INDEX [ hw_addr ADDR ] [ state { active | inactive } ]\n");
 	pr_err("                      [ roce { enable | disable } ] [ migratable { enable | disable } ]\n");
 	pr_err("                      [ ipsec_crypto { enable | disable } ] [ ipsec_packet { enable | disable } ]\n");
+	pr_err("                      [ max_io_eqs EQS\n");
 	pr_err("       devlink port function rate { help | show | add | del | set }\n");
 	pr_err("       devlink port param set DEV/PORT_INDEX name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink port param show [DEV/PORT_INDEX name PARAMETER]\n");
@@ -4878,6 +4896,15 @@ static void pr_out_port_function(struct dl *dl, struct nlattr **tb_port)
 				     port_fn_caps->value & DEVLINK_PORT_FN_CAP_IPSEC_PACKET ?
 				     "enable" : "disable");
 	}
+	if (tb[DEVLINK_PORT_FN_ATTR_MAX_IO_EQS]) {
+		uint32_t max_io_eqs;
+
+		max_io_eqs = mnl_attr_get_u32(tb[DEVLINK_PORT_FN_ATTR_MAX_IO_EQS]);
+
+		print_uint(PRINT_ANY, "max_io_eqs", " max_io_eqs %u",
+			   max_io_eqs);
+	}
+
 	if (tb[DEVLINK_PORT_FN_ATTR_DEVLINK])
 		pr_out_nested_handle_obj(dl, tb[DEVLINK_PORT_FN_ATTR_DEVLINK],
 					 true, true);
@@ -5086,7 +5113,7 @@ static int cmd_port_function_set(struct dl *dl)
 	}
 	err = dl_argv_parse(dl, DL_OPT_HANDLEP,
 			    DL_OPT_PORT_FUNCTION_HW_ADDR | DL_OPT_PORT_FUNCTION_STATE |
-			    DL_OPT_PORT_FN_CAPS);
+			    DL_OPT_PORT_FN_CAPS | DL_OPT_PORT_FN_MAX_IO_EQS);
 	if (err)
 		return err;
 

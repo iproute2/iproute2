@@ -272,7 +272,7 @@ static int print_mpls(const struct action_util *au, FILE *f, struct rtattr *arg)
 		}
 		break;
 	}
-	print_action_control(f, " ", parm->action, "");
+	print_action_control(" ", parm->action, "");
 
 	print_nl();
 	print_uint(PRINT_ANY, "index", "\t index %u", parm->index);
@@ -283,7 +283,7 @@ static int print_mpls(const struct action_util *au, FILE *f, struct rtattr *arg)
 		if (tb[TCA_MPLS_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_MPLS_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

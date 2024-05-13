@@ -191,7 +191,7 @@ static int bpf_print_opt(const struct action_util *au, FILE *f, struct rtattr *a
 			     b, sizeof(b)));
 	}
 
-	print_action_control(f, "default-action ", parm->action, _SL_);
+	print_action_control("default-action ", parm->action, _SL_);
 	print_uint(PRINT_ANY, "index", "\t index %u", parm->index);
 	print_int(PRINT_ANY, "ref", " ref %d", parm->refcnt);
 	print_int(PRINT_ANY, "bind", " bind %d", parm->bindcnt);
@@ -200,7 +200,7 @@ static int bpf_print_opt(const struct action_util *au, FILE *f, struct rtattr *a
 		if (tb[TCA_ACT_BPF_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_ACT_BPF_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 

@@ -3294,6 +3294,12 @@ static void mptcp_stats_print(struct mptcp_info *s)
 		out(" bytes_acked:%llu", s->mptcpi_bytes_acked);
 	if (s->mptcpi_subflows_total)
 		out(" subflows_total:%u", s->mptcpi_subflows_total);
+	if (s->mptcpi_last_data_sent)
+		out(" last_data_sent:%u", s->mptcpi_last_data_sent);
+	if (s->mptcpi_last_data_recv)
+		out(" last_data_recv:%u", s->mptcpi_last_data_recv);
+	if (s->mptcpi_last_ack_recv)
+		out(" last_ack_recv:%u", s->mptcpi_last_ack_recv);
 }
 
 static void mptcp_show_info(const struct nlmsghdr *nlh, struct inet_diag_msg *r,

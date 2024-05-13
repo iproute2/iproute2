@@ -99,6 +99,8 @@ int _res_send_idx_msg(struct rd *rd, uint32_t command, mnl_cb_t callback,
 				 RDMA_NLDEV_ATTR_PORT_INDEX, rd->port_idx);
 
 	mnl_attr_put_u32(rd->nlh, id, idx);
+	mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_ATTR_DRIVER_DETAILS,
+			rd->show_driver_details);
 
 	if (command == RDMA_NLDEV_CMD_STAT_GET)
 		mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_STAT_RES,
@@ -121,6 +123,9 @@ int _res_send_msg(struct rd *rd, uint32_t command, mnl_cb_t callback)
 		flags |= NLM_F_DUMP;
 
 	rd_prepare_msg(rd, command, &seq, flags);
+
+	mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_ATTR_DRIVER_DETAILS,
+			rd->show_driver_details);
 	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
 	if (rd->port_idx)
 		mnl_attr_put_u32(rd->nlh,

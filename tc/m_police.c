@@ -260,7 +260,7 @@ int parse_police(int *argc_p, char ***argv_p, int tca_id, struct nlmsghdr *n)
 	return act_parse_police(NULL, argc_p, argv_p, tca_id, n);
 }
 
-static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg)
+static int print_police(const struct action_util *a, FILE *funused, struct rtattr *arg)
 {
 	SPRINT_BUF(b2);
 	struct tc_police *p;
@@ -325,12 +325,12 @@ static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg
 		print_u64(PRINT_ANY, "pkts_burst", "pkts_burst %llu ", ppsburst64);
 	}
 
-	print_action_control(f, "action ", p->action, "");
+	print_action_control("action ", p->action, "");
 
 	if (tb[TCA_POLICE_RESULT]) {
 		__u32 action = rta_getattr_u32(tb[TCA_POLICE_RESULT]);
 
-		print_action_control(f, "/", action, " ");
+		print_action_control("/", action, " ");
 	} else {
 		print_string(PRINT_FP, NULL, " ", NULL);
 	}
@@ -347,7 +347,7 @@ static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg
 		if (tb[TCA_POLICE_TM]) {
 			struct tcf_t *tm = RTA_DATA(tb[TCA_POLICE_TM]);
 
-			print_tm(f, tm);
+			print_tm(tm);
 		}
 	}
 	print_nl();
@@ -356,7 +356,7 @@ static int print_police(const struct action_util *a, FILE *f, struct rtattr *arg
 	return 0;
 }
 
-int tc_print_police(FILE *f, struct rtattr *arg)
+int tc_print_police(struct rtattr *arg)
 {
-	return print_police(&police_action_util, f, arg);
+	return print_police(&police_action_util, NULL, arg);
 }
