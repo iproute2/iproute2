@@ -1,9 +1,27 @@
 .TH RTMON 8
-.SH NAME
+.SH "NAME"
 rtmon \- listens to and monitors RTnetlink
-.SH SYNOPSIS
-.B rtmon
-.RI "[ options ] file FILE [ all | LISTofOBJECTS ]"
+.SH "SYNOPSIS"
+.sp
+.ad l
+.in +8
+.ti -8
+.B "rtmon"
+.RI "[ " OPTIONS " ] "
+.BI "file " FILE
+.BR "[ " all
+.RI "| " OBJECTS
+.RB "]"
+
+.ti -8
+.IR OPTIONS
+.RI ":= { f[amily] { inet | inet6 | link | help } |"
+.RI "-4 | -6 | -0 | -V[ersion] }"
+
+.ti -8
+.I OBJECTS
+.B ":= [" link "]" "[" address "]" "[" route "]"
+
 .SH DESCRIPTION
 This manual page documents briefly the
 .B rtmon
@@ -32,8 +50,8 @@ Print version and exit.
 .B help
 Show summary of options.
 .TP
-.B file FILE [ all | LISTofOBJECTS ]
-Log output to FILE. LISTofOBJECTS is the list of object types that we
+.B file FILE [ all | OBJECTS ]
+Log output to FILE. OBJECTS is the list of object types that we
 want to monitor. It may contain 'link', 'address', 'route'
 and 'all'. 'link' specifies the network device, 'address' the protocol
 (IP or IPv6) address on a device, 'route' the routing table entry
@@ -60,6 +78,7 @@ Log to file /var/log/rtmon.log, then run:
 to display logged output from file.
 .SH SEE ALSO
 .BR ip (8)
+.BR ip-monitor (8)
 .SH AUTHOR
 .B rtmon
 was written by Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>.

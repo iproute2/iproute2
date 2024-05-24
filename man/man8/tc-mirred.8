@@ -37,7 +37,7 @@ receives. Mirroring is what is sometimes referred to as Switch Port Analyzer
 (SPAN) and is commonly used to analyze and/or debug flows.
 When mirroring to a tc block, the packet will be mirrored to all the ports in
 the block with exception of the port where the packet ingressed, if that port is
-part of the tc block. Redirecting is simillar to mirroring except that the
+part of the tc block. Redirecting is similar to mirroring except that the
 behaviour is to mirror to the first N - 1 ports in the block and redirect to the
 last one (note that the port in which the packet arrived is not going to be
 mirrored or redirected to).

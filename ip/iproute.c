@@ -61,12 +61,13 @@ static void usage(void)
 		"       ip route save SELECTOR\n"
 		"       ip route restore\n"
 		"       ip route showdump\n"
-		"       ip route get [ ROUTE_GET_FLAGS ] ADDRESS\n"
+		"       ip route get [ ROUTE_GET_FLAGS ] [ to ] ADDRESS\n"
 		"                            [ from ADDRESS iif STRING ]\n"
 		"                            [ oif STRING ] [ tos TOS ]\n"
 		"                            [ mark NUMBER ] [ vrf NAME ]\n"
 		"                            [ uid NUMBER ] [ ipproto PROTOCOL ]\n"
 		"                            [ sport NUMBER ] [ dport NUMBER ]\n"
+		"                            [ as ADDRESS ]\n"
 		"       ip route { add | del | change | append | replace } ROUTE\n"
 		"SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n"
 		"            [ table TABLE_ID ] [ vrf NAME ] [ proto RTPROTO ]\n"
@@ -112,7 +113,8 @@ static void usage(void)
 		"FLAVOR := { psp | usp | usd | next-csid }\n"
 		"IOAM6HDR := trace prealloc type IOAM6_TRACE_TYPE ns IOAM6_NAMESPACE size IOAM6_TRACE_SIZE\n"
 		"XFRMINFO := if_id IF_ID [ link_dev LINK ]\n"
-		"ROUTE_GET_FLAGS := [ fibmatch ]\n");
+		"ROUTE_GET_FLAGS := ROUTE_GET_FLAG [ ROUTE_GET_FLAGS ]\n"
+		"ROUTE_GET_FLAG := [ connected | fibmatch | notify ]\n");
 	exit(-1);
 }
 

@@ -14,7 +14,7 @@
 #include <netdb.h>
 #include <db_185.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/uio.h>
