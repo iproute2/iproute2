@@ -36,7 +36,7 @@ static void usage(void)
 	fprintf(stderr,
 "Usage: bridge [ OPTIONS ] OBJECT { COMMAND | help }\n"
 "       bridge [ -force ] -batch filename\n"
-"where  OBJECT := { link | fdb | mdb | vlan | vni | monitor }\n"
+"where  OBJECT := { link | fdb | mdb | mst | vlan | vni | monitor }\n"
 "       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] |\n"
 "                    -o[neline] | -t[imestamp] | -n[etns] name |\n"
 "                    -com[pressvlans] -c[olor] -p[retty] -j[son] }\n");
@@ -56,6 +56,7 @@ static const struct cmd {
 	{ "link",	do_link },
 	{ "fdb",	do_fdb },
 	{ "mdb",	do_mdb },
+	{ "mst",	do_mst },
 	{ "vlan",	do_vlan },
 	{ "vni",	do_vni },
 	{ "monitor",	do_monitor },

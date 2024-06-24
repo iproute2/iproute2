@@ -20,6 +20,7 @@ void print_headers(FILE *fp, const char *label);
 int do_fdb(int argc, char **argv);
 int do_mdb(int argc, char **argv);
 int do_monitor(int argc, char **argv);
+int do_mst(int argc, char **argv);
 int do_vlan(int argc, char **argv);
 int do_link(int argc, char **argv);
 int do_vni(int argc, char **argv);
