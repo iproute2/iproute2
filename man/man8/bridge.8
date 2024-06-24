@@ -266,7 +266,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B mcast_query_interval
 .IR QUERY_INTERVAL " ] [ "
 .B mcast_query_response_interval
-.IR QUERY_RESPONSE_INTERVAL " ]"
+.IR QUERY_RESPONSE_INTERVAL " ] [ "
+.B msti
+.IR MSTI " ]"
 
 .ti -8
 .BR "bridge vlan global" " [ " show " ] [ "
@@ -1492,6 +1494,11 @@ startup phase.
 .BI mcast_query_response_interval " QUERY_RESPONSE_INTERVAL "
 set the Max Response Time/Maximum Response Delay for IGMP/MLD
 queries sent by the bridge.
+
+.TP
+.BI msti " MSTI "
+associate the VLAN with the specified multiple spanning tree instance
+(MSTI).
 
 .SS bridge vlan global show - list global vlan options.
 
