@@ -1043,6 +1043,7 @@ static int buf_update(int len)
 }
 
 /* Append content to buffer as part of the current field */
+__attribute__((format(printf, 1, 0)))
 static void vout(const char *fmt, va_list args)
 {
 	struct column *f = current_field;
@@ -3460,6 +3461,7 @@ static int bpf_maps_opts_load_btf(struct bpf_map_info *info, struct btf **btf)
 	return 0;
 }
 
+__attribute__((format(printf, 2, 0)))
 static void out_bpf_sk_storage_print_fn(void *ctx, const char *fmt, va_list args)
 {
 	vout(fmt, args);
