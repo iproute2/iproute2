@@ -1680,26 +1680,28 @@ static const struct dl_args_metadata dl_args_required[] = {
 static int dl_args_finding_required_validate(uint64_t o_required,
 					     uint64_t o_found)
 {
-	uint64_t o_flag;
-	int i;
+	uint64_t o_flag, o_missing = 0;
+	int i, err = 0;
 
 	for (i = 0; i < ARRAY_SIZE(dl_args_required); i++) {
 		o_flag = dl_args_required[i].o_flag;
 		if ((o_required & o_flag) && !(o_found & o_flag)) {
+			o_missing |= o_flag;
 			pr_err("%s\n", dl_args_required[i].err_msg);
-			return -ENOENT;
+			err = -ENOENT;
 		}
 	}
-	if (o_required & ~o_found) {
+	if (o_required & ~(o_found | o_missing)) {
 		pr_err("BUG: unknown argument required but not found\n");
 		return -EINVAL;
 	}
-	return 0;
+	return err;
 }
 
 static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			 uint64_t o_optional)
 {
+	const char *unknown_option = NULL;
 	struct dl_opts *opts = &dl->opts;
 	uint64_t o_all = o_required | o_optional;
 	char *str = dl_argv_next(dl);
@@ -2313,8 +2315,9 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			o_found |= DL_OPT_PORT_FN_MAX_IO_EQS;
 
 		} else {
-			pr_err("Unknown option \"%s\"\n", dl_argv(dl));
-			return -EINVAL;
+			if (!unknown_option)
+				unknown_option = dl_argv(dl);
+			dl_arg_inc(dl);
 		}
 	}
 
@@ -2325,7 +2328,15 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 
 	opts->present = o_found;
 
-	return dl_args_finding_required_validate(o_required, o_found);
+	err = dl_args_finding_required_validate(o_required, o_found);
+
+	if (unknown_option) {
+		pr_err("Unknown option \"%s\"\n", unknown_option);
+		if (!err)
+			return -EINVAL;
+	}
+
+	return err;
 }
 
 static int dl_argv_dry_parse(struct dl *dl, uint64_t o_required,
