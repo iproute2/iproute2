@@ -72,6 +72,8 @@ struct rd {
 	struct list_head filter_list;
 	char *link_name;
 	char *link_type;
+	char *dev_name;
+	int dev_type;
 };
 
 struct rd_cmd {
