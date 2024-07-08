@@ -154,6 +154,24 @@ static int flush_update(void)
 	return 0;
 }
 
+static bool filter_multipath(const struct rtattr *rta)
+{
+	const struct rtnexthop *nh = RTA_DATA(rta);
+	int len = RTA_PAYLOAD(rta);
+
+	while (len >= sizeof(*nh)) {
+		if (nh->rtnh_len > len)
+			break;
+
+		if (!((nh->rtnh_ifindex ^ filter.oif) & filter.oifmask))
+			return true;
+
+		len -= NLMSG_ALIGN(nh->rtnh_len);
+		nh = RTNH_NEXT(nh);
+	}
+	return false;
+}
+
 static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 {
 	struct rtmsg *r = NLMSG_DATA(n);
@@ -310,12 +328,15 @@ static int filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 			return 0;
 	}
 	if (filter.oifmask) {
-		int oif = 0;
+		if (tb[RTA_OIF]) {
+			int oif = rta_getattr_u32(tb[RTA_OIF]);
 
-		if (tb[RTA_OIF])
-			oif = rta_getattr_u32(tb[RTA_OIF]);
-		if ((oif^filter.oif)&filter.oifmask)
-			return 0;
+			if ((oif ^ filter.oif) & filter.oifmask)
+				return 0;
+		} else if (tb[RTA_MULTIPATH]) {
+			if (!filter_multipath(tb[RTA_MULTIPATH]))
+				return 0;
+		}
 	}
 	if (filter.markmask) {
 		int mark = 0;
