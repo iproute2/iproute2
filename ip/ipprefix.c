@@ -58,6 +58,8 @@ int print_prefix(struct nlmsghdr *n, void *arg)
 
 	parse_rtattr(tb, RTA_MAX, RTM_RTA(prefix), len);
 
+	print_headers(fp, "[PREFIX]");
+
 	if (tb[PREFIX_ADDRESS]) {
 		fprintf(fp, "prefix %s/%u",
 			rt_addr_n2a_rta(family, tb[PREFIX_ADDRESS]),

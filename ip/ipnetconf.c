@@ -78,6 +78,8 @@ int print_netconf(struct rtnl_ctrl_data *ctrl, struct nlmsghdr *n, void *arg)
 	if (filter.ifindex && filter.ifindex != ifindex)
 		return 0;
 
+	print_headers(fp, "[NETCONF]");
+
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELNETCONF)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);

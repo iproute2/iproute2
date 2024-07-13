@@ -46,6 +46,7 @@ int print_addrlabel(struct nlmsghdr *n, void *arg)
 	struct ifaddrlblmsg *ifal = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[IFAL_MAX+1];
+	FILE *fp = (FILE *)arg;
 
 	if (n->nlmsg_type != RTM_NEWADDRLABEL && n->nlmsg_type != RTM_DELADDRLABEL)
 		return 0;
@@ -55,6 +56,8 @@ int print_addrlabel(struct nlmsghdr *n, void *arg)
 		return -1;
 
 	parse_rtattr(tb, IFAL_MAX, IFAL_RTA(ifal), len);
+
+	print_headers(fp, "[ADDRLABEL]");
 
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELADDRLABEL)

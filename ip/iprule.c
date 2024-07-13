@@ -250,6 +250,8 @@ int print_rule(struct nlmsghdr *n, void *arg)
 	if (!filter_nlmsg(n, tb, host_len))
 		return 0;
 
+	print_headers(fp, "[RULE]");
+
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELRULE)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
