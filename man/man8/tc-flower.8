@@ -106,7 +106,9 @@ flower \- flow based traffic control filter
 .B l2_miss
 .IR L2_MISS " | "
 .BR cfm
-.IR CFM_OPTIONS " }"
+.IR CFM_OPTIONS " | "
+.BR enc_flags
+.IR ENCFLAG-LIST " }"
 
 .ti -8
 .IR LSE_LIST " := [ " LSE_LIST " ] " LSE
@@ -130,6 +132,16 @@ flower \- flow based traffic control filter
 .IR LEVEL " | "
 .B op
 .IR OPCODE "
+
+.ti -8
+.IR ENCFLAG-LIST " := [ " ENCFLAG-LIST "/ ] " ENCFLAG
+
+.ti -8
+.IR ENCFLAG " := { "
+.BR [no]tuncsum " | "
+.BR [no]tundf " | "
+.BR [no]tunoam " | "
+.BR [no]tuncrit " } "
 
 .SH DESCRIPTION
 The
@@ -538,11 +550,23 @@ Match on the Maintenance Domain (MD) level field.
 .BI op " OPCODE "
 Match on the CFM opcode field. \fIOPCODE\fR is an unsigned 8 bit value in
 decimal format.
+.RE
+.TP
+.BI enc_flags " ENCFLAG-LIST "
+Match on tunnel control flags.
+.I ENCFLAG-LIST
+is a list of the following tunnel control flags:
+.BR [no]tuncsum ", "
+.BR [no]tundf ", "
+.BR [no]tunoam ", "
+.BR [no]tuncrit ", "
+each separated by '/'.
+.TP
 
 .SH NOTES
 As stated above where applicable, matches of a certain layer implicitly depend
 on the matches of the next lower layer. Precisely, layer one and two matches
-(\fBindev\fR,  \fBdst_mac\fR and \fBsrc_mac\fR)
+(\fBindev\fR,  \fBdst_mac\fR, \fBsrc_mac\fR and \fBenc_flags\fR)
 have no dependency,
 MPLS and layer three matches
 (\fBmpls\fR, \fBmpls_label\fR, \fBmpls_tc\fR, \fBmpls_bos\fR, \fBmpls_ttl\fR,
