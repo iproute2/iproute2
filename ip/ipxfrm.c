@@ -904,6 +904,18 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family, FILE *fp,
 		fprintf(fp, "tfcpad %u", tfcpad);
 		fprintf(fp, "%s", _SL_);
 	}
+	if (tb[XFRMA_SA_DIR]) {
+		__u8 dir = rta_getattr_u8(tb[XFRMA_SA_DIR]);
+
+		fprintf(fp, "\tdir ");
+		if (dir == XFRM_SA_DIR_IN)
+			fprintf(fp, "in");
+		else if (dir == XFRM_SA_DIR_OUT)
+			fprintf(fp, "out");
+		else
+			fprintf(fp, "other (%d)", dir);
+		fprintf(fp, "%s", _SL_);
+	}
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)

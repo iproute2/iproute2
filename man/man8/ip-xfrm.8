@@ -36,6 +36,8 @@ ip-xfrm \- transform configuration
 .IR MASK " ] ]"
 .RB "[ " reqid
 .IR REQID " ]"
+.RB "[ " dir
+.IR SA-DIR " ]"
 .RB "[ " seq
 .IR SEQ " ]"
 .RB "[ " replay-window
@@ -164,6 +166,10 @@ ip-xfrm \- transform configuration
 .ti -8
 .IR MODE " := "
 .BR transport " | " tunnel " | " beet " | " ro " | " in_trigger
+
+.ti -8
+.IR SA-DIR " := "
+.BR in " | " out
 
 .ti -8
 .IR FLAG-LIST " := [ " FLAG-LIST " ] " FLAG

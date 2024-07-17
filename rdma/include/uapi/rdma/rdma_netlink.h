@@ -301,6 +301,10 @@ enum rdma_nldev_command {
 
 	RDMA_NLDEV_CMD_RES_SRQ_GET_RAW,
 
+	RDMA_NLDEV_CMD_NEWDEV,
+
+	RDMA_NLDEV_CMD_DELDEV,
+
 	RDMA_NLDEV_NUM_OPS
 };
 
@@ -564,6 +568,10 @@ enum rdma_nldev_attr {
 	 */
 	RDMA_NLDEV_ATTR_RES_SUBTYPE,		/* string */
 
+	RDMA_NLDEV_ATTR_DEV_TYPE,		/* u8 */
+
+	RDMA_NLDEV_ATTR_PARENT_NAME,		/* string */
+
 	/*
 	 * Always the end
 	 */
@@ -601,5 +609,10 @@ enum rdma_nl_counter_mode {
 enum rdma_nl_counter_mask {
 	RDMA_COUNTER_MASK_QP_TYPE = 1,
 	RDMA_COUNTER_MASK_PID = 1 << 1,
+};
+
+/* Supported rdma device types. */
+enum rdma_nl_dev_type {
+	RDMA_DEVICE_TYPE_SMI = 1,
 };
 #endif /* _RDMA_NETLINK_H */

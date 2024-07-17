@@ -10,6 +10,8 @@
 static int dev_help(struct rd *rd)
 {
 	pr_out("Usage: %s dev show [DEV]\n", rd->filename);
+	pr_out("       %s dev add DEVNAME type TYPE parent PARENT_DEVNAME\n", rd->filename);
+	pr_out("       %s dev delete DEVNAME\n", rd->filename);
 	pr_out("       %s dev set [DEV] name DEVNAME\n", rd->filename);
 	pr_out("       %s dev set [DEV] netns NSNAME\n", rd->filename);
 	pr_out("       %s dev set [DEV] adaptive-moderation [on|off]\n", rd->filename);
@@ -148,6 +150,36 @@ static void dev_print_sys_image_guid(struct nlattr **tb)
 	print_string(PRINT_ANY, "sys_image_guid", "sys_image_guid %s ", str);
 }
 
+static const char *dev_type2str(uint32_t type)
+{
+	if (type == RDMA_DEVICE_TYPE_SMI)
+		return "smi";
+
+	return "unknown";
+}
+
+static void dev_print_type(struct nlattr **tb)
+{
+	uint32_t type;
+
+	if (!tb[RDMA_NLDEV_ATTR_DEV_TYPE])
+		return;
+
+	type = mnl_attr_get_u8(tb[RDMA_NLDEV_ATTR_DEV_TYPE]);
+	print_string(PRINT_ANY, "type", "type %s ", dev_type2str(type));
+}
+
+static void dev_print_parent(struct nlattr **tb)
+{
+	const char *parent;
+
+	if (!tb[RDMA_NLDEV_ATTR_PARENT_NAME])
+		return;
+
+	parent = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_PARENT_NAME]);
+	print_string(PRINT_ANY, "parent", "parent %s ", parent);
+}
+
 static void dev_print_dim_setting(struct nlattr **tb)
 {
 	uint8_t dim_setting;
@@ -221,6 +253,8 @@ static int dev_parse_cb(const struct nlmsghdr *nlh, void *data)
 	dev_print_fw(tb);
 	dev_print_node_guid(tb);
 	dev_print_sys_image_guid(tb);
+	dev_print_type(tb);
+	dev_print_parent(tb);
 	if (rd->show_details) {
 		dev_print_dim_setting(tb);
 		dev_print_caps(tb);
@@ -366,10 +400,96 @@ static int dev_set(struct rd *rd)
 	return rd_exec_require_dev(rd, dev_one_set);
 }
 
+static int _dev_add_type_parent(struct rd *rd)
+{
+	uint32_t seq;
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_NEWDEV, &seq,
+		       (NLM_F_REQUEST | NLM_F_ACK));
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
+	mnl_attr_put_strz(rd->nlh, RDMA_NLDEV_ATTR_DEV_NAME, rd->dev_name);
+	mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_ATTR_DEV_TYPE, rd->dev_type);
+
+	return rd_sendrecv_msg(rd, seq);
+}
+
+static int dev_add_type_parent(struct rd *rd)
+{
+	return rd_exec_require_dev(rd, _dev_add_type_parent);
+}
+
+static int dev_get_type(const char *stype)
+{
+	if (strcasecmp(stype, "smi") == 0)
+		return RDMA_DEVICE_TYPE_SMI;
+
+	return -1;
+}
+
+static int dev_add_type(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL,		dev_help },
+		{ "parent",	dev_add_type_parent },
+		{ 0 }
+	};
+
+	if (rd_no_arg(rd)) {
+		pr_err("Please provide a device type name.\n");
+		return -EINVAL;
+	}
+	rd->dev_type = dev_get_type(rd_argv(rd));
+	if (rd->dev_type <= 0) {
+		pr_err("Invalid device type %s\n", rd_argv(rd));
+		return -EINVAL;
+	}
+	rd_arg_inc(rd);
+	return rd_exec_cmd(rd, cmds, "parameter");
+}
+
+static int dev_add(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL,		dev_help },
+		{ "type",	dev_add_type },
+		{ 0 }
+	};
+
+	if (rd_no_arg(rd)) {
+		pr_err("Please provide a device name to add.\n");
+		return -EINVAL;
+	}
+	rd->dev_name = rd_argv(rd);
+	rd_arg_inc(rd);
+
+	return rd_exec_cmd(rd, cmds, "parameter");
+}
+
+static int _dev_del(struct rd *rd)
+{
+	uint32_t seq;
+
+	if (!rd_no_arg(rd)) {
+		pr_err("Unknown parameter %s\n", rd_argv(rd));
+		return -EINVAL;
+	}
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_DELDEV, &seq,
+		       (NLM_F_REQUEST | NLM_F_ACK));
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
+	return rd_sendrecv_msg(rd, seq);
+}
+
+static int dev_del(struct rd *rd)
+{
+	return rd_exec_require_dev(rd, _dev_del);
+}
+
 int cmd_dev(struct rd *rd)
 {
 	const struct rd_cmd cmds[] = {
 		{ NULL,		dev_show },
+		{ "add",	dev_add },
+		{ "delete",	dev_del },
 		{ "show",	dev_show },
 		{ "list",	dev_show },
 		{ "set",	dev_set },

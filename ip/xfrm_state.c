@@ -40,7 +40,7 @@ static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: ip xfrm state { add | update } ID [ ALGO-LIST ] [ mode MODE ]\n"
-		"        [ mark MARK [ mask MASK ] ] [ reqid REQID ] [ seq SEQ ]\n"
+		"        [ mark MARK [ mask MASK ] ] [ reqid REQID ] [ dir DIR ] [ seq SEQ ]\n"
 		"        [ replay-window SIZE ] [ replay-seq SEQ ] [ replay-oseq SEQ ]\n"
 		"        [ replay-seq-hi SEQ ] [ replay-oseq-hi SEQ ]\n"
 		"        [ flag FLAG-LIST ] [ sel SELECTOR ] [ LIMIT-LIST ] [ encap ENCAP ]\n"
@@ -49,7 +49,7 @@ static void usage(void)
 		"        [ output-mark OUTPUT-MARK [ mask MASK ] ]\n"
 		"        [ if_id IF_ID ] [ tfcpad LENGTH ]\n"
 		"Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n"
-		"        [ reqid REQID ] [ seq SEQ ] [ min SPI max SPI ]\n"
+		"        [ reqid REQID ] [ dir DIR ] [ seq SEQ ] [ min SPI max SPI ]\n"
 		"Usage: ip xfrm state { delete | get } ID [ mark MARK [ mask MASK ] ]\n"
 		"Usage: ip xfrm state deleteall [ ID ] [ mode MODE ] [ reqid REQID ]\n"
 		"        [ flag FLAG-LIST ]\n"
@@ -251,22 +251,20 @@ static int xfrm_state_extra_flag_parse(__u32 *extra_flags, int *argcp, char ***a
 	return 0;
 }
 
-static bool xfrm_offload_dir_parse(__u8 *dir, int *argcp, char ***argvp)
+static void xfrm_dir_parse(__u8 *dir, int *argcp, char ***argvp)
 {
 	int argc = *argcp;
 	char **argv = *argvp;
 
 	if (strcmp(*argv, "in") == 0)
-		*dir = XFRM_OFFLOAD_INBOUND;
+		*dir = XFRM_SA_DIR_IN;
 	else if (strcmp(*argv, "out") == 0)
-		*dir = 0;
+		*dir = XFRM_SA_DIR_OUT;
 	else
-		return false;
+		invarg("DIR value is not \"in\" or \"out\"", *argv);
 
 	*argcp = argc;
 	*argvp = argv;
-
-	return true;
 }
 
 static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
@@ -429,13 +427,8 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 			NEXT_ARG();
 			if (strcmp(*argv, "dir") == 0) {
-				bool is_dir;
-
 				NEXT_ARG();
-				is_dir = xfrm_offload_dir_parse(&dir, &argc,
-								&argv);
-				if (!is_dir)
-					invarg("DIR value is invalid", *argv);
+				xfrm_dir_parse(&dir, &argc, &argv);
 			} else
 				invarg("Missing DIR keyword", *argv);
 			is_offload = true;
@@ -462,6 +455,9 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 			NEXT_ARG();
 			if (get_u32(&tfcpad, *argv, 0))
 				invarg("value after \"tfcpad\" is invalid", *argv);
+		} else if (strcmp(*argv, "dir") == 0) {
+			NEXT_ARG();
+			xfrm_dir_parse(&dir, &argc, &argv);
 		} else {
 			/* try to assume ALGO */
 			int type = xfrm_algotype_getbyname(*argv);
@@ -587,7 +583,7 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 	}
 
 	if (req.xsinfo.flags & XFRM_STATE_ESN &&
-	    replay_window == 0) {
+	    replay_window == 0 && dir != XFRM_SA_DIR_OUT ) {
 		fprintf(stderr, "Error: esn flag set without replay-window.\n");
 		exit(-1);
 	}
@@ -601,7 +597,7 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 	if (is_offload) {
 		xuo.ifindex = ifindex;
-		xuo.flags = dir;
+		xuo.flags = dir == XFRM_SA_DIR_IN ? XFRM_OFFLOAD_INBOUND : 0;
 		if (is_packet_offload)
 			xuo.flags |= XFRM_OFFLOAD_PACKET;
 		addattr_l(&req.n, sizeof(req.buf), XFRMA_OFFLOAD_DEV, &xuo,
@@ -763,6 +759,14 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);
 
+	if (dir) {
+		int r = addattr8(&req.n, sizeof(req.buf), XFRMA_SA_DIR, dir);
+		if (r < 0) {
+			fprintf(stderr, "XFRMA_SA_DIR failed\n");
+			exit(1);
+		}
+	}
+
 	if (req.xsinfo.family == AF_UNSPEC)
 		req.xsinfo.family = AF_INET;
 
@@ -792,6 +796,7 @@ static int xfrm_state_allocspi(int argc, char **argv)
 	char *maxp = NULL;
 	struct xfrm_mark mark = {0, 0};
 	struct nlmsghdr *answer;
+	__u8 dir = 0;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "mode") == 0) {
@@ -823,6 +828,9 @@ static int xfrm_state_allocspi(int argc, char **argv)
 
 			if (get_u32(&req.xspi.max, *argv, 0))
 				invarg("value after \"max\" is invalid", *argv);
+		} else if (strcmp(*argv, "dir") == 0) {
+			NEXT_ARG();
+			xfrm_dir_parse(&dir, &argc, &argv);
 		} else {
 			/* try to assume ID */
 			if (idp)
@@ -873,6 +881,15 @@ static int xfrm_state_allocspi(int argc, char **argv)
 		 */
 		if (req.xspi.info.id.proto == IPPROTO_COMP)
 			req.xspi.max = 0xffff;
+	}
+
+	if (dir) {
+		int r = addattr8(&req.n, sizeof(req.buf), XFRMA_SA_DIR, dir);
+
+		if (r < 0) {
+			fprintf(stderr, "XFRMA_SA_DIR failed\n");
+			exit(1);
+		}
 	}
 
 	if (mark.m & mark.v) {

@@ -56,6 +56,7 @@ static void usage(void)
 		"                      [ mcast_querier_interval QUERIER_INTERVAL ]\n"
 		"                      [ mcast_query_interval QUERY_INTERVAL ]\n"
 		"                      [ mcast_query_response_interval QUERY_RESPONSE_INTERVAL ]\n"
+		"                      [ msti MSTI ]\n"
 		"       bridge vlan global { show } [ dev DEV ] [ vid VLAN_ID ]\n");
 	exit(-1);
 }
@@ -406,6 +407,7 @@ static int vlan_global_option_set(int argc, char **argv)
 	short vid = -1;
 	__u64 val64;
 	__u32 val32;
+	__u16 val16;
 	__u8 val8;
 
 	afspec = addattr_nest(&req.n, sizeof(req),
@@ -536,6 +538,12 @@ static int vlan_global_option_set(int argc, char **argv)
 			addattr64(&req.n, 1024,
 				  BRIDGE_VLANDB_GOPTS_MCAST_STARTUP_QUERY_INTVL,
 				  val64);
+		} else if (strcmp(*argv, "msti") == 0) {
+			NEXT_ARG();
+			if (get_u16(&val16, *argv, 0))
+				invarg("invalid msti", *argv);
+			addattr16(&req.n, 1024,
+				 BRIDGE_VLANDB_GOPTS_MSTI, val16);
 		} else {
 			if (strcmp(*argv, "help") == 0)
 				NEXT_ARG();
@@ -944,6 +952,11 @@ static void print_vlan_global_opts(struct rtattr *a, int ifindex)
 		print_lluint(PRINT_ANY, "mcast_query_response_interval",
 			     "mcast_query_response_interval %llu ",
 			     rta_getattr_u64(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_GOPTS_MSTI]) {
+		vattr = vtb[BRIDGE_VLANDB_GOPTS_MSTI];
+		print_uint(PRINT_ANY, "msti", "msti %u ",
+			   rta_getattr_u16(vattr));
 	}
 	print_nl();
 	if (vtb[BRIDGE_VLANDB_GOPTS_MCAST_ROUTER_PORTS]) {

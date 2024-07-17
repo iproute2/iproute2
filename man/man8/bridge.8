@@ -208,6 +208,15 @@ bridge \- show / manipulate bridge addresses and devices
 .IR VNI " ]"
 
 .ti -8
+.B "bridge mst set"
+.IR dev " DEV " msti " MSTI " state " STP_STATE "
+
+.ti -8
+.BR "bridge mst" " [ [ " show " ] [ "
+.B dev
+.IR DEV " ] ]"
+
+.ti -8
 .BR "bridge vlan" " { " add " | " del " } "
 .B dev
 .I DEV
@@ -266,7 +275,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B mcast_query_interval
 .IR QUERY_INTERVAL " ] [ "
 .B mcast_query_response_interval
-.IR QUERY_RESPONSE_INTERVAL " ]"
+.IR QUERY_RESPONSE_INTERVAL " ] [ "
+.B msti
+.IR MSTI " ]"
 
 .ti -8
 .BR "bridge vlan global" " [ " show " ] [ "
@@ -1245,6 +1256,54 @@ endpoint. Match entries only with the specified destination port number.
 the VXLAN VNI Network Identifier to use to connect to the remote VXLAN tunnel
 endpoint. Match entries only with the specified destination VNI.
 
+.SH bridge mst - multiple spanning tree port states
+
+In the multiple spanning tree (MST) model, the active paths through a
+network can be different for different VLANs.  In other words, a
+bridge port can simultaneously forward one subset of VLANs, while
+blocking another.
+
+Provided that the
+.B mst_enable
+bridge option is enabled, a group of VLANs can be forwarded along the
+same spanning tree by associating them with the same instance (MSTI)
+using
+.BR "bridge vlan global set" .
+
+.SS bridge mst set - set multiple spanning tree state
+
+Set the spanning tree state for
+.IR DEV ,
+in the multiple spanning tree instance
+.IR MSTI ,
+to
+.IR STP_STATE .
+
+.TP
+.BI dev " DEV"
+Interface name of the bridge port.
+
+.TP
+.BI msti " MSTI"
+The multiple spanning tree instance.
+
+.TP
+.BI state " STP_STATE"
+The spanning tree state, see the
+.B state
+option of
+.B "bridge link set"
+for supported states.
+
+.SS bridge mst show - list MST states
+
+List current MST port states in every MSTI.
+
+.TP
+.BI dev " DEV"
+If specified, only display states of the bridge port with this
+interface name.
+
 .SH bridge vlan - VLAN filter list
 
 .B vlan
@@ -1492,6 +1551,11 @@ startup phase.
 .BI mcast_query_response_interval " QUERY_RESPONSE_INTERVAL "
 set the Max Response Time/Maximum Response Delay for IGMP/MLD
 queries sent by the bridge.
+
+.TP
+.BI msti " MSTI "
+associate the VLAN with the specified multiple spanning tree instance
+(MSTI).
 
 .SS bridge vlan global show - list global vlan options.
 
