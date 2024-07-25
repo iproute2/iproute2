@@ -19,7 +19,7 @@ ip-address \- protocol address management
 .RI "[ " LIFETIME " ] [ " CONFFLAG-LIST " ]"
 
 .ti -8
-.BR "ip address del"
+.BR "ip address delete"
 .IB IFADDR " dev " IFNAME " [ " mngtmpaddr " ]"
 
 .ti -8
@@ -331,9 +331,9 @@ to assign (or not to assign) protocol tags.
 .SS ip address delete - delete protocol address
 .B Arguments:
 coincide with the arguments of
-.B ip addr add.
-The device name is a required argument. The rest are optional.
-If no arguments are given, the first address is deleted.
+.B ip address add.
+.sp
+The device name is a required argument.
 
 .SS ip address show - look at protocol addresses
 
@@ -444,7 +444,7 @@ This is an alias for
 .BI proto " ADDRPROTO"
 Only show addresses with a given protocol, or those for which the kernel
 response did not include protocol. See the corresponding argument to
-.B ip addr add
+.B ip address add
 for details about address protocols.
 
 .SS ip address flush - flush protocol addresses
