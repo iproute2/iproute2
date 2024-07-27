@@ -174,6 +174,8 @@ static int mptcp_parse_opt(int argc, char **argv, struct nlmsghdr *n, int cmd)
 			invarg("invalid for non-zero id address\n", "ADDRESS");
 		else if (!id && !addr_set)
 			invarg("address is needed for deleting id 0 address\n", "ID");
+	} else if (id_set && !deling && !id) {
+		invarg("cannot be 0\n", "ID");
 	}
 
 	if (adding && port && !(flags & MPTCP_PM_ADDR_FLAG_SIGNAL))
