@@ -148,7 +148,11 @@ expected behavior.
 
 .TP
 .IR ID
-is a unique numeric identifier for the given endpoint
+is a unique numeric identifier, between 0 and 255, for the given endpoint. It is
+not possible to add endpoints with ID 0, because this special ID is reserved for
+the initial subflow. For rules linked to the initial subflow, the path-manager
+will look at endpoints matching the same address, and port if set, ignoring the
+ID.
 
 .TP
 .BR signal
