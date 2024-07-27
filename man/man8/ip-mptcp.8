@@ -133,7 +133,10 @@ is 0.
 When a port number is specified, incoming MPTCP subflows for already
 established MPTCP sockets will be accepted on the specified port, regardless
 the original listener port accepting the first MPTCP subflow and/or
-this peer being actually on the client side.
+this peer being actually on the client side. This option has to be used in
+combination with the
+.BR signal
+flag.
 
 .TP
 .IR IFNAME
