@@ -190,7 +190,14 @@ this will behave the same as a plain
 .BR subflow
 endpoint. When the peer does announce addresses, each received ADD_ADDR
 sub-option will trigger creation of an additional subflow to generate a
-full mesh topology.
+full mesh topology. This
+.BR fullmesh
+flag should always be used in combination with the
+.BR subflow
+one to be useful, except for the address used by the initial subflow,
+where
+.BR subflow
+is then optional.
 
 .TP
 .BR implicit
