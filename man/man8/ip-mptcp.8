@@ -170,10 +170,12 @@ typically do this.
 If this is a
 .BR subflow
 endpoint, the subflows created using this endpoint will have the backup
-flag set during the connection process. This flag instructs the peer to
-only send data on a given subflow when all non-backup subflows are
-unavailable. This does not affect outgoing data, where subflow priority
-is determined by the backup/non-backup flag received from the peer
+flag set during the connection process. This flag instructs the remote
+peer to only send data on a given subflow when all non-backup subflows
+are unavailable. When using the default packet scheduler with a 'backup'
+endpoint, outgoing data from the local peer is also affected: packets
+will only be sent from this endpoint when all non-backup subflows are
+unavailable.
 
 .TP
 .BR fullmesh
