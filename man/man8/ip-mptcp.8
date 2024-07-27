@@ -136,6 +136,14 @@ the original listener port accepting the first MPTCP subflow and/or
 this peer being actually on the client side.
 
 .TP
+.IR IFNAME
+is the network interface name attached to the endpoint. It is important to
+specify this device name linked to the address to make sure the system knows how
+to route packets from the specified IP address to the correct network interface.
+Without this, it might be required to add IP rules and routes to have the
+expected behavior.
+
+.TP
 .IR ID
 is a unique numeric identifier for the given endpoint
 
