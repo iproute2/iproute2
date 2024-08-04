@@ -1516,7 +1516,7 @@ static const char *print_ms_timer(unsigned int timeout)
 		sprintf(buf+strlen(buf), "%d%s", secs, msecs ? "." : "sec");
 	}
 	if (msecs)
-		sprintf(buf+strlen(buf), "%03dms", msecs);
+		sprintf(buf+strlen(buf), "%03d%s", msecs, secs ? "sec" : "ms");
 	return buf;
 }
 

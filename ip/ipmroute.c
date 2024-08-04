@@ -97,6 +97,8 @@ int print_mroute(struct nlmsghdr *n, void *arg)
 	if (inet_addr_match_rta(&filter.msrc, tb[RTA_SRC]))
 		return 0;
 
+	print_headers(fp, "[MROUTE]");
+
 	family = get_real_family(r->rtm_type, r->rtm_family);
 
 	open_json_object(NULL);

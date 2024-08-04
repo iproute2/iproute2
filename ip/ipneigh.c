@@ -383,6 +383,8 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 			return 0;
 	}
 
+	print_headers(fp, "[NEIGH]");
+
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELNEIGH)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);

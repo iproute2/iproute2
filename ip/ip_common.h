@@ -232,4 +232,5 @@ void print_stats64(FILE *fp, struct rtnl_link_stats64 *s,
 		   const struct rtattr *carrier_changes, const char *what);
 void print_mpls_link_stats(FILE *fp, const struct mpls_link_stats *stats,
 			   const char *indent);
+void print_headers(FILE *fp, const char *label);
 #endif /* _IP_COMMON_H_ */

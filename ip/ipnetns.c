@@ -289,6 +289,8 @@ int print_nsid(struct nlmsghdr *n, void *arg)
 		return -1;
 	}
 
+	print_headers(fp, "[NSID]");
+
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELNSID)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);

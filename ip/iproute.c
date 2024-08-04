@@ -818,6 +818,8 @@ int print_route(struct nlmsghdr *n, void *arg)
 			return 0;
 	}
 
+	print_headers(fp, "[ROUTE]");
+
 	open_json_object(NULL);
 	if (n->nlmsg_type == RTM_DELROUTE)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);

@@ -741,7 +741,7 @@ static void ipstats_show_group(const struct ipstats_sel *sel)
 }
 
 static int
-ipstats_process_ifsm(struct nlmsghdr *answer,
+ipstats_process_ifsm(FILE *fp, struct nlmsghdr *answer,
 		     struct ipstats_stat_enabled *enabled)
 {
 	struct ipstats_stat_show_attrs show_attrs = {};
@@ -762,6 +762,8 @@ ipstats_process_ifsm(struct nlmsghdr *answer,
 		return err;
 
 	dev = ll_index_to_name(show_attrs.ifsm->ifindex);
+
+	print_headers(fp, "[STATS]");
 
 	for (i = 0; i < enabled->nenabled; i++) {
 		const struct ipstats_stat_desc *desc = enabled->enabled[i].desc;
@@ -845,7 +847,7 @@ ipstats_show_one(int ifindex, struct ipstats_stat_enabled *enabled)
 	ipstats_req_add_filters(&req, enabled);
 	if (rtnl_talk(&rth, &req.nlh, &answer) < 0)
 		return -2;
-	err = ipstats_process_ifsm(answer, enabled);
+	err = ipstats_process_ifsm(stdout, answer, enabled);
 	free(answer);
 
 	return err;
@@ -856,7 +858,7 @@ static int ipstats_dump_one(struct nlmsghdr *n, void *arg)
 	struct ipstats_stat_enabled *enabled = arg;
 	int rc;
 
-	rc = ipstats_process_ifsm(n, enabled);
+	rc = ipstats_process_ifsm(stdout, n, enabled);
 	if (rc)
 		return rc;
 
@@ -1352,7 +1354,7 @@ int ipstats_print(struct nlmsghdr *n, void *arg)
 	FILE *fp = arg;
 	int rc;
 
-	rc = ipstats_process_ifsm(n, &enabled);
+	rc = ipstats_process_ifsm(fp, n, &enabled);
 	if (rc)
 		return rc;
 

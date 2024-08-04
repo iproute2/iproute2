@@ -799,6 +799,9 @@ int print_cache_nexthop(struct nlmsghdr *n, void *arg, bool process_cache)
 		fprintf(stderr, "Error parsing nexthop: %s\n", strerror(-err));
 		return -1;
 	}
+
+	print_headers(fp, "[NEXTHOP]");
+
 	__print_nexthop_entry(fp, NULL, &nhe, n->nlmsg_type == RTM_DELNEXTHOP);
 	print_string(PRINT_FP, NULL, "%s", "\n");
 	fflush(fp);
@@ -838,6 +841,8 @@ int print_nexthop_bucket(struct nlmsghdr *n, void *arg)
 	}
 
 	parse_rtattr_flags(tb, NHA_MAX, RTM_NHA(nhm), len, NLA_F_NESTED);
+
+	print_headers(fp, "[NEXTHOPBUCKET]");
 
 	open_json_object(NULL);
 

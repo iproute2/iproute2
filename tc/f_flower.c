@@ -1523,7 +1523,7 @@ static int flower_parse_mpls_lse(int *argc_p, char ***argv_p,
 
 			NEXT_ARG();
 			ret = get_u8(&ttl, *argv, 10);
-			if (ret < 0 || ttl & ~(MPLS_LS_TTL_MASK >> MPLS_LS_TTL_SHIFT)) {
+			if (ret < 0) {
 				fprintf(stderr, "Illegal \"ttl\"\n");
 				return -1;
 			}
@@ -1936,7 +1936,7 @@ static int flower_parse_opt(const struct filter_util *qu, char *handle,
 			}
 			mpls_format_old = true;
 			ret = get_u8(&ttl, *argv, 10);
-			if (ret < 0 || ttl & ~(MPLS_LS_TTL_MASK >> MPLS_LS_TTL_SHIFT)) {
+			if (ret < 0) {
 				fprintf(stderr, "Illegal \"mpls_ttl\"\n");
 				return -1;
 			}

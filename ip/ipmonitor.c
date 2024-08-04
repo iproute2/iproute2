@@ -22,6 +22,8 @@
 static void usage(void) __attribute__((noreturn));
 static int prefix_banner;
 int listen_all_nsid;
+struct rtnl_ctrl_data *ctrl_data;
+int do_monitor;
 
 static void usage(void)
 {
@@ -34,16 +36,19 @@ static void usage(void)
 	exit(-1);
 }
 
-static void print_headers(FILE *fp, char *label, struct rtnl_ctrl_data *ctrl)
+void print_headers(FILE *fp, const char *label)
 {
+	if (!do_monitor)
+		return;
+
 	if (timestamp)
 		print_timestamp(fp);
 
 	if (listen_all_nsid) {
-		if (ctrl == NULL || ctrl->nsid < 0)
+		if (ctrl_data == NULL || ctrl_data->nsid < 0)
 			fprintf(fp, "[nsid current]");
 		else
-			fprintf(fp, "[nsid %d]", ctrl->nsid);
+			fprintf(fp, "[nsid %d]", ctrl_data->nsid);
 	}
 
 	if (prefix_banner)
@@ -54,6 +59,8 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		      struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
+
+	ctrl_data = ctrl;
 
 	switch (n->nlmsg_type) {
 	case RTM_NEWROUTE:
@@ -71,11 +78,9 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 
 		if (r->rtm_family == RTNL_FAMILY_IPMR ||
 		    r->rtm_family == RTNL_FAMILY_IP6MR) {
-			print_headers(fp, "[MROUTE]", ctrl);
 			print_mroute(n, arg);
 			return 0;
 		} else {
-			print_headers(fp, "[ROUTE]", ctrl);
 			print_route(n, arg);
 			return 0;
 		}
@@ -83,32 +88,27 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 
 	case RTM_NEWNEXTHOP:
 	case RTM_DELNEXTHOP:
-		print_headers(fp, "[NEXTHOP]", ctrl);
 		print_cache_nexthop(n, arg, true);
 		return 0;
 
 	case RTM_NEWNEXTHOPBUCKET:
 	case RTM_DELNEXTHOPBUCKET:
-		print_headers(fp, "[NEXTHOPBUCKET]", ctrl);
 		print_nexthop_bucket(n, arg);
 		return 0;
 
 	case RTM_NEWLINK:
 	case RTM_DELLINK:
 		ll_remember_index(n, NULL);
-		print_headers(fp, "[LINK]", ctrl);
 		print_linkinfo(n, arg);
 		return 0;
 
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
-		print_headers(fp, "[ADDR]", ctrl);
 		print_addrinfo(n, arg);
 		return 0;
 
 	case RTM_NEWADDRLABEL:
 	case RTM_DELADDRLABEL:
-		print_headers(fp, "[ADDRLABEL]", ctrl);
 		print_addrlabel(n, arg);
 		return 0;
 
@@ -122,18 +122,15 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 				return 0;
 		}
 
-		print_headers(fp, "[NEIGH]", ctrl);
 		print_neigh(n, arg);
 		return 0;
 
 	case RTM_NEWPREFIX:
-		print_headers(fp, "[PREFIX]", ctrl);
 		print_prefix(n, arg);
 		return 0;
 
 	case RTM_NEWRULE:
 	case RTM_DELRULE:
-		print_headers(fp, "[RULE]", ctrl);
 		print_rule(n, arg);
 		return 0;
 
@@ -143,18 +140,15 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 
 	case RTM_NEWNETCONF:
 	case RTM_DELNETCONF:
-		print_headers(fp, "[NETCONF]", ctrl);
 		print_netconf(ctrl, n, arg);
 		return 0;
 
 	case RTM_DELNSID:
 	case RTM_NEWNSID:
-		print_headers(fp, "[NSID]", ctrl);
 		print_nsid(n, arg);
 		return 0;
 
 	case RTM_NEWSTATS:
-		print_headers(fp, "[STATS]", ctrl);
 		ipstats_print(n, arg);
 		return 0;
 
@@ -196,6 +190,7 @@ int do_ipmonitor(int argc, char **argv)
 	int ifindex = 0;
 
 	rtnl_close(&rth);
+	do_monitor = 1;
 
 	while (argc > 0) {
 		if (matches(*argv, "file") == 0) {

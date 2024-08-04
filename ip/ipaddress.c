@@ -1052,6 +1052,8 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	if (filter.slave_kind && match_link_kind(tb, filter.slave_kind, 1))
 		return -1;
 
+	print_headers(fp, "[LINK]");
+
 	if (n->nlmsg_type == RTM_DELLINK)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
@@ -1597,6 +1599,8 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 		if (show_stats < 2)
 			return 0;
 	}
+
+	print_headers(fp, "[ADDR]");
 
 	if (n->nlmsg_type == RTM_DELADDR)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);

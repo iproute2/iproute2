@@ -133,16 +133,32 @@ is 0.
 When a port number is specified, incoming MPTCP subflows for already
 established MPTCP sockets will be accepted on the specified port, regardless
 the original listener port accepting the first MPTCP subflow and/or
-this peer being actually on the client side.
+this peer being actually on the client side. This option has to be used in
+combination with the
+.BR signal
+flag.
+
+.TP
+.IR IFNAME
+is the network interface name attached to the endpoint. It is important to
+specify this device name linked to the address to make sure the system knows how
+to route packets from the specified IP address to the correct network interface.
+Without this, it might be required to add IP rules and routes to have the
+expected behavior.
 
 .TP
 .IR ID
-is a unique numeric identifier for the given endpoint
+is a unique numeric identifier, between 0 and 255, for the given endpoint. It is
+not possible to add endpoints with ID 0, because this special ID is reserved for
+the initial subflow. For rules linked to the initial subflow, the path-manager
+will look at endpoints matching the same address, and port if set, ignoring the
+ID.
 
 .TP
 .BR signal
 The endpoint will be announced/signaled to each peer via an MPTCP ADD_ADDR
-sub-option. Upon reception of an ADD_ADDR sub-option, the peer can try to
+sub-option. Typically, a server would be responsible for this. Upon reception of
+an ADD_ADDR sub-option, the other peer, typically the client side, can try to
 create additional subflows, see
 .BR ADD_ADDR_ACCEPTED_NR.
 
@@ -150,17 +166,20 @@ create additional subflows, see
 .BR subflow
 If additional subflow creation is allowed by the MPTCP limits, the MPTCP
 path manager will try to create an additional subflow using this endpoint
-as the source address after the MPTCP connection is established.
+as the source address after the MPTCP connection is established. A client would
+typically do this.
 
 .TP
 .BR backup
 If this is a
 .BR subflow
 endpoint, the subflows created using this endpoint will have the backup
-flag set during the connection process. This flag instructs the peer to
-only send data on a given subflow when all non-backup subflows are
-unavailable. This does not affect outgoing data, where subflow priority
-is determined by the backup/non-backup flag received from the peer
+flag set during the connection process. This flag instructs the remote
+peer to only send data on a given subflow when all non-backup subflows
+are unavailable. When using the default packet scheduler with a 'backup'
+endpoint, outgoing data from the local peer is also affected: packets
+will only be sent from this endpoint when all non-backup subflows are
+unavailable.
 
 .TP
 .BR fullmesh
@@ -175,7 +194,14 @@ this will behave the same as a plain
 .BR subflow
 endpoint. When the peer does announce addresses, each received ADD_ADDR
 sub-option will trigger creation of an additional subflow to generate a
-full mesh topology.
+full mesh topology. This
+.BR fullmesh
+flag should always be used in combination with the
+.BR subflow
+one to be useful, except for the address used by the initial subflow,
+where
+.BR subflow
+is then optional.
 
 .TP
 .BR implicit
