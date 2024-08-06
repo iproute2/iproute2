@@ -166,6 +166,12 @@ static void netkit_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_string(PRINT_ANY, "policy", "policy %s ",
 			     netkit_print_policy(policy));
 	}
+	if (tb[IFLA_NETKIT_PEER_POLICY]) {
+		__u32 policy = rta_getattr_u32(tb[IFLA_NETKIT_PEER_POLICY]);
+
+		print_string(PRINT_ANY, "peer_policy", "peer policy %s ",
+			     netkit_print_policy(policy));
+	}
 }
 
 static void netkit_print_help(struct link_util *lu,
