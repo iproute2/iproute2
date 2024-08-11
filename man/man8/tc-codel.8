@@ -22,12 +22,17 @@ CoDel (pronounced "coddle") is an adaptive "no-knobs" active queue management
 algorithm (AQM) scheme that was developed to address the shortcomings of
 RED and its variants. It was developed with the following goals
 in mind:
- o It should be parameterless.
- o It should keep delays low while permitting bursts of traffic.
- o It should control delay.
- o It should adapt dynamically to changing link rates with no impact on
+.IP * 4
+It should be parameterless.
+.IP *
+It should keep delays low while permitting bursts of traffic.
+.IP *
+It should control delay.
+.IP *
+It should adapt dynamically to changing link rates with no impact on
 utilization.
- o It should be simple and efficient and should scale from simple to
+.IP *
+It should be simple and efficient and should scale from simple to
 complex routers.
 
 .SH ALGORITHM
@@ -57,7 +62,7 @@ Additional details can be found in the paper cited below.
 
 .SH PARAMETERS
 .SS limit
-hard limit on the real queue size. When this limit is reached, incoming packets
+is the hard limit on the real queue size. When this limit is reached, incoming packets
 are dropped. If the value is lowered, packets are dropped so that the new limit is
 met. Default is 1000 packets.
 
@@ -113,7 +118,7 @@ interval 30.0ms ecn
 .BR tc-red (8)
 
 .SH SOURCES
-o   Kathleen Nichols and Van Jacobson, "Controlling Queue Delay", ACM Queue,
+Kathleen Nichols and Van Jacobson, "Controlling Queue Delay", ACM Queue,
 http://queue.acm.org/detail.cfm?id=2209336
 
 .SH AUTHORS
