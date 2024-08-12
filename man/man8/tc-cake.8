@@ -541,6 +541,21 @@ This can be used to set policies in a firewall script that will override CAKE's
 built-in tin selection.
 
 .SH OTHER PARAMETERS
+.B ingress
+.br
+	Indicates that CAKE is running in ingress mode (i.e. running on the downlink
+of a connection). This changes the shaper to also count dropped packets as data
+transferred, as these will have already traversed the link before CAKE can
+choose what to do with them.
+
+	In addition, the AQM will be tuned to always keep at least two packets
+queued per flow. The reason for this is that retransmits are more expensive in
+ingress mode, since dropped packets have to traverse the link again; thus,
+keeping a minimum number of packets queued will improve throughput in cases
+where the number of active flows are so large that they saturate the link even
+at their minimum window size.
+
+.PP
 .B memlimit
 LIMIT
 .br
