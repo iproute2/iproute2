@@ -234,6 +234,24 @@ static bool __valid_nh_group_attr(const struct rtattr *g_attr)
 	return num && num * sizeof(struct nexthop_grp) == RTA_PAYLOAD(g_attr);
 }
 
+static __u16 nhgrp_weight(__u32 resp_op_flags,
+			  const struct nexthop_grp *nhgrp)
+{
+	__u16 weight = nhgrp->weight_high;
+
+	if (!(resp_op_flags & NHA_OP_FLAG_RESP_GRP_RESVD_0))
+		weight = 0;
+
+	return ((weight << 8) | nhgrp->weight) + 1;
+}
+
+static void nhgrp_set_weight(struct nexthop_grp *nhgrp, __u16 weight)
+{
+	weight--;
+	nhgrp->weight_high = weight >> 8;
+	nhgrp->weight = weight & 0xff;
+}
+
 static void print_nh_group(const struct nh_entry *nhe)
 {
 	int i;
@@ -247,9 +265,10 @@ static void print_nh_group(const struct nh_entry *nhe)
 			print_string(PRINT_FP, NULL, "%s", "/");
 
 		print_uint(PRINT_ANY, "id", "%u", nhe->nh_groups[i].id);
-		if (nhe->nh_groups[i].weight)
-			print_uint(PRINT_ANY, "weight", ",%u",
-				   nhe->nh_groups[i].weight + 1);
+		__u16 weight = nhgrp_weight(nhe->nh_resp_op_flags,
+					    &nhe->nh_groups[i]);
+		if (weight > 1)
+			print_uint(PRINT_ANY, "weight", ",%u", weight);
 
 		close_json_object();
 	}
@@ -506,6 +525,9 @@ static int ipnh_parse_nhmsg(FILE *fp, const struct nhmsg *nhm, int len,
 		}
 		parse_nh_group_stats_rta(tb[NHA_GROUP_STATS], nhe);
 	}
+
+	nhe->nh_resp_op_flags =
+		tb[NHA_OP_FLAGS] ? rta_getattr_u32(tb[NHA_OP_FLAGS]) : 0;
 
 	nhe->nh_blackhole = !!tb[NHA_BLACKHOLE];
 	nhe->nh_fdb = !!tb[NHA_FDB];
@@ -904,9 +926,9 @@ static int add_nh_group_attr(struct nlmsghdr *n, int maxlen, char *argv)
 			unsigned int w;
 
 			wsep++;
-			if (get_unsigned(&w, wsep, 0) || w == 0 || w > 256)
+			if (get_unsigned(&w, wsep, 0) || w == 0 || w > 65536)
 				invarg("\"weight\" is invalid\n", wsep);
-			grps[i].weight = w - 1;
+			nhgrp_set_weight(&grps[i], w);
 		}
 
 		if (!sep)

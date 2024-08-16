@@ -25,6 +25,7 @@ struct nh_entry {
 	__u32			nh_id;
 	__u32			nh_oif;
 	__u32			nh_flags;
+	__u32			nh_resp_op_flags;
 	__u16			nh_grp_type;
 	__u8			nh_family;
 	__u8			nh_scope;
