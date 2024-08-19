@@ -315,6 +315,12 @@ check_libbpf()
         echo "HAVE_LIBBPF:=y" >> $CONFIG
         echo 'CFLAGS += -DHAVE_LIBBPF ' $LIBBPF_CFLAGS >> $CONFIG
         echo "CFLAGS += -DLIBBPF_VERSION=\\\"$LIBBPF_VERSION\\\"" >> $CONFIG
+	LIBBPF_MAJOR=$(IFS="."; set $LIBBPF_VERSION; echo $1)
+	LIBBPF_MINOR=$(IFS="."; set $LIBBPF_VERSION; echo $2)
+	if [ "$LIBBPF_MAJOR" -eq 0 -a "$LIBBPF_MINOR" -lt 7 ]; then
+	    # Newer libbpf versions provide these defines in the bpf/libbpf_version.h header.
+            echo "CFLAGS += -DLIBBPF_MAJOR_VERSION=$LIBBPF_MAJOR -DLIBBPF_MINOR_VERSION=$LIBBPF_MINOR" >> $CONFIG
+	fi
         echo 'LDLIBS += ' $LIBBPF_LDLIBS >> $CONFIG
 
         if [ -z "$LIBBPF_DIR" ]; then

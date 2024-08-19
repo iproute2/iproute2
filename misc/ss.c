@@ -53,7 +53,7 @@
 #include <linux/mptcp.h>
 
 #ifdef HAVE_LIBBPF
-/* If libbpf is new enough (0.5+), support for pretty-printing BPF socket-local
+/* If libbpf is new enough (0.6+), support for pretty-printing BPF socket-local
  * storage is enabled, otherwise we emit a warning and disable it.
  * ENABLE_BPF_SKSTORAGE_SUPPORT is only used to gate the socket-local storage
  * feature, so this wouldn't prevent any feature relying on HAVE_LIBBPF to be
@@ -66,8 +66,8 @@
 #include <bpf/libbpf.h>
 #include <linux/btf.h>
 
-#if (LIBBPF_MAJOR_VERSION == 0) && (LIBBPF_MINOR_VERSION < 5)
-#warning "libbpf version 0.5 or later is required, disabling BPF socket-local storage support"
+#if ((LIBBPF_MAJOR_VERSION == 0) && (LIBBPF_MINOR_VERSION < 6))
+#warning "libbpf version 0.6 or later is required, disabling BPF socket-local storage support"
 #undef ENABLE_BPF_SKSTORAGE_SUPPORT
 #endif
 #endif
