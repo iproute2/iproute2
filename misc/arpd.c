@@ -494,8 +494,7 @@ static void get_arp_pkt(void)
 	if (ifnum && !handle_if(sll.sll_ifindex))
 		return;
 
-	/* Sanity checks */
-
+	/* Validate packet */
 	if (n < sizeof(*a) ||
 	    (a->ar_op != htons(ARPOP_REQUEST) &&
 	     a->ar_op != htons(ARPOP_REPLY)) ||
