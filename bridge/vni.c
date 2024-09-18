@@ -27,9 +27,6 @@ static unsigned int filter_index;
 /* max len of "<start>-<end>" */
 #define VXLAN_ID_LEN 17
 
-#define __stringify_1(x...) #x
-#define __stringify(x...) __stringify_1(x)
-
 static void usage(void)
 {
 	fprintf(stderr,
@@ -153,7 +150,7 @@ static void open_vni_port(int ifi_index)
 {
 	open_json_object(NULL);
 	print_color_string(PRINT_ANY, COLOR_IFNAME, "ifname",
-			   "%-" __stringify(IFNAMSIZ) "s  ",
+			   "%-" textify(IFNAMSIZ) "s  ",
 			   ll_index_to_name(ifi_index));
 	open_json_array(PRINT_JSON, "vnis");
 }
@@ -174,7 +171,7 @@ static void print_vnifilter_entry_stats(struct rtattr *stats_attr)
 			   RTA_PAYLOAD(stats_attr), NLA_F_NESTED);
 
 	print_nl();
-	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    RX: ",
+	print_string(PRINT_FP, NULL, "%-" textify(IFNAMSIZ) "s    RX: ",
 		     "");
 
 	if (stb[VNIFILTER_ENTRY_STATS_RX_BYTES]) {
@@ -195,7 +192,7 @@ static void print_vnifilter_entry_stats(struct rtattr *stats_attr)
 	}
 
 	print_nl();
-	print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s    TX: ",
+	print_string(PRINT_FP, NULL, "%-" textify(IFNAMSIZ) "s    TX: ",
 		     "");
 
 	if (stb[VNIFILTER_ENTRY_STATS_TX_BYTES]) {
@@ -327,7 +324,7 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 			open_vni_port(tmsg->ifindex);
 			opened = true;
 		} else {
-			print_string(PRINT_FP, NULL, "%-" __stringify(IFNAMSIZ) "s  ", "");
+			print_string(PRINT_FP, NULL, "%-" textify(IFNAMSIZ) "s  ", "");
 		}
 
 		print_vni(t, tmsg->ifindex);
@@ -373,8 +370,8 @@ static int vni_show(int argc, char **argv)
 	}
 
 	if (!is_json_context())
-		printf("%-" __stringify(IFNAMSIZ) "s  %-"
-		       __stringify(VXLAN_ID_LEN) "s  group/remote\n", "dev",
+		printf("%-" textify(IFNAMSIZ) "s  %-"
+		       textify(VXLAN_ID_LEN) "s  group/remote\n", "dev",
 		       "vni");
 
 	ret = rtnl_dump_filter(&rth, print_vnifilter_rtm, NULL);

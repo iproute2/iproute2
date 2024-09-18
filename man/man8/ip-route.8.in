@@ -253,6 +253,8 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR K "/" N " ] "
 .BR mode " [ "
 .BR inline " | " encap " | " auto " ] ["
+.B tunsrc
+.IR ADDRESS " ] ["
 .B tundst
 .IR ADDRESS " ] "
 .B trace
@@ -1036,6 +1038,12 @@ divisible by 8. This attribute can be used only with NEXT-C-SID flavor.
 - Automatically use inline mode for local packets and encap mode for in-transit
 packets.
 .sp
+
+.B tunsrc
+.I ADDRESS
+- IPv6 address of the tunnel source (outer header), not used with inline mode.
+It is optional: if not provided, the tunnel source address is chosen
+automatically.
 
 .B tundst
 .I ADDRESS

@@ -352,14 +352,25 @@ static void print_encap_ioam6(FILE *fp, struct rtattr *encap)
 	print_uint(PRINT_ANY, "freqn", "/%u ", freq_n);
 
 	mode = rta_getattr_u8(tb[IOAM6_IPTUNNEL_MODE]);
-	if (!tb[IOAM6_IPTUNNEL_DST] && mode != IOAM6_IPTUNNEL_MODE_INLINE)
+	if ((tb[IOAM6_IPTUNNEL_SRC] && mode == IOAM6_IPTUNNEL_MODE_INLINE) ||
+	    (!tb[IOAM6_IPTUNNEL_DST] && mode != IOAM6_IPTUNNEL_MODE_INLINE))
 		return;
 
 	print_string(PRINT_ANY, "mode", "mode %s ", format_ioam6mode_type(mode));
 
-	if (mode != IOAM6_IPTUNNEL_MODE_INLINE)
-		print_string(PRINT_ANY, "tundst", "tundst %s ",
-			     rt_addr_n2a_rta(AF_INET6, tb[IOAM6_IPTUNNEL_DST]));
+	if (mode != IOAM6_IPTUNNEL_MODE_INLINE) {
+		if (tb[IOAM6_IPTUNNEL_SRC]) {
+			print_color_string(PRINT_ANY, COLOR_INET6,
+					   "tunsrc", "tunsrc %s ",
+					   rt_addr_n2a_rta(AF_INET6,
+							   tb[IOAM6_IPTUNNEL_SRC]));
+		}
+
+		print_color_string(PRINT_ANY, COLOR_INET6,
+				   "tundst", "tundst %s ",
+				   rt_addr_n2a_rta(AF_INET6,
+						   tb[IOAM6_IPTUNNEL_DST]));
+	}
 
 	trace = RTA_DATA(tb[IOAM6_IPTUNNEL_TRACE]);
 
@@ -1111,11 +1122,12 @@ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
 	int ns_found = 0, argc = *argcp;
 	__u16 trace_ns, trace_size = 0;
 	struct ioam6_trace_hdr *trace;
+	inet_prefix saddr, daddr;
 	char **argv = *argvp;
 	__u32 trace_type = 0;
 	__u32 freq_k, freq_n;
 	char buf[16] = {0};
-	inet_prefix addr;
+	bool has_src;
 	__u8 mode;
 
 	if (strcmp(*argv, "freq") != 0) {
@@ -1158,6 +1170,23 @@ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
 		NEXT_ARG();
 	}
 
+	if (strcmp(*argv, "tunsrc") != 0) {
+		has_src = false;
+	} else {
+		has_src = true;
+
+		if (mode == IOAM6_IPTUNNEL_MODE_INLINE)
+			invarg("Inline mode does not need tunsrc", *argv);
+
+		NEXT_ARG();
+
+		get_addr(&saddr, *argv, AF_INET6);
+		if (saddr.family != AF_INET6 || saddr.bytelen != 16)
+			invarg("Invalid IPv6 address for tunsrc", *argv);
+
+		NEXT_ARG();
+	}
+
 	if (strcmp(*argv, "tundst") != 0) {
 		if (mode != IOAM6_IPTUNNEL_MODE_INLINE)
 			missarg("tundst");
@@ -1167,8 +1196,8 @@ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
 
 		NEXT_ARG();
 
-		get_addr(&addr, *argv, AF_INET6);
-		if (addr.family != AF_INET6 || addr.bytelen != 16)
+		get_addr(&daddr, *argv, AF_INET6);
+		if (daddr.family != AF_INET6 || daddr.bytelen != 16)
 			invarg("Invalid IPv6 address for tundst", *argv);
 
 		NEXT_ARG();
@@ -1239,8 +1268,10 @@ static int parse_encap_ioam6(struct rtattr *rta, size_t len, int *argcp,
 	if (rta_addattr32(rta, len, IOAM6_IPTUNNEL_FREQ_K, freq_k) ||
 	    rta_addattr32(rta, len, IOAM6_IPTUNNEL_FREQ_N, freq_n) ||
 	    rta_addattr8(rta, len, IOAM6_IPTUNNEL_MODE, mode) ||
+	    (mode != IOAM6_IPTUNNEL_MODE_INLINE && has_src &&
+	     rta_addattr_l(rta, len, IOAM6_IPTUNNEL_SRC, &saddr.data, saddr.bytelen)) ||
 	    (mode != IOAM6_IPTUNNEL_MODE_INLINE &&
-	     rta_addattr_l(rta, len, IOAM6_IPTUNNEL_DST, &addr.data, addr.bytelen)) ||
+	     rta_addattr_l(rta, len, IOAM6_IPTUNNEL_DST, &daddr.data, daddr.bytelen)) ||
 	    rta_addattr_l(rta, len, IOAM6_IPTUNNEL_TRACE, trace, sizeof(*trace))) {
 		free(trace);
 		return -1;
