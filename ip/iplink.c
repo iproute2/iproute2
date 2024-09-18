@@ -622,9 +622,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			if (netns != -1)
 				duparg("netns", *argv);
 			netns = netns_get_fd(*argv);
-			if (netns >= 0)
+			if (netns >= 0) {
+				open_fds_add(netns);
 				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_FD,
 					  &netns, 4);
+			}
 			else if (get_integer(&netns, *argv, 0) == 0)
 				addattr_l(&req->n, sizeof(*req),
 					  IFLA_NET_NS_PID, &netns, 4);
@@ -1087,6 +1089,8 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 		ret = rtnl_echo_talk(&rth, &req.n, json, print_linkinfo);
 	else
 		ret = rtnl_talk(&rth, &req.n, NULL);
+
+	open_fds_close();
 
 	if (ret)
 		return -2;

@@ -395,4 +395,7 @@ const char *proto_n2a(unsigned short id, char *buf, int len,
 
 FILE *generic_proc_open(const char *env, const char *name);
 
+int open_fds_add(int fd);
+void open_fds_close(void);
+
 #endif /* __UTILS_H__ */

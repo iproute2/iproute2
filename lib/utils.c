@@ -40,6 +40,9 @@ int timestamp_short;
 int pretty;
 const char *_SL_ = "\n";
 
+static int open_fds[5];
+static int open_fds_cnt;
+
 static int af_byte_len(int af);
 static void print_time(char *buf, int len, __u32 time);
 static void print_time64(char *buf, int len, __s64 time);
@@ -2016,4 +2019,24 @@ FILE *generic_proc_open(const char *env, const char *name)
 	}
 
 	return fopen(p, "r");
+}
+
+int open_fds_add(int fd)
+{
+	if (open_fds_cnt >= ARRAY_SIZE(open_fds))
+		return -1;
+
+	open_fds[open_fds_cnt++] = fd;
+	return 0;
+}
+
+
+void open_fds_close(void)
+{
+	int i;
+
+	for (i = 0; i < open_fds_cnt; i++)
+		close(open_fds[i]);
+
+	open_fds_cnt = 0;
 }
