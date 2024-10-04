@@ -7,8 +7,6 @@
 
 #include "json_print.h"
 
-extern int use_iec;
-
 struct link_filter {
 	int ifindex;
 	int family;
@@ -223,7 +221,6 @@ int ipstats_stat_desc_show_xstats(struct ipstats_stat_show_attrs *attrs,
 #define     LABEL_MAX_MASK          0xFFFFFU
 #endif
 
-void print_num(FILE *fp, unsigned int width, uint64_t count);
 void print_rt_flags(FILE *fp, unsigned int flags);
 void print_rta_ifidx(FILE *fp, __u32 ifidx, const char *prefix);
 void __print_rta_gateway(FILE *fp, unsigned char family, const char *gateway);

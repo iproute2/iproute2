@@ -31,7 +31,6 @@ int show_graph;
 int timestamp;
 
 int batch_mode;
-int use_iec;
 int force;
 bool use_names;
 int json;

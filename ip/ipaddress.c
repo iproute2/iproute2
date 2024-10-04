@@ -568,46 +568,6 @@ void size_columns(unsigned int cols[], unsigned int n, ...)
 	va_end(args);
 }
 
-void print_num(FILE *fp, unsigned int width, uint64_t count)
-{
-	const char *prefix = "kMGTPE";
-	const unsigned int base = use_iec ? 1024 : 1000;
-	uint64_t powi = 1;
-	uint16_t powj = 1;
-	uint8_t precision = 2;
-	char buf[64];
-
-	if (!human_readable || count < base) {
-		fprintf(fp, "%*"PRIu64" ", width, count);
-		return;
-	}
-
-	/* increase value by a factor of 1000/1024 and print
-	 * if result is something a human can read
-	 */
-	for (;;) {
-		powi *= base;
-		if (count / base < powi)
-			break;
-
-		if (!prefix[1])
-			break;
-		++prefix;
-	}
-
-	/* try to guess a good number of digits for precision */
-	for (; precision > 0; precision--) {
-		powj *= 10;
-		if (count / powi < powj)
-			break;
-	}
-
-	snprintf(buf, sizeof(buf), "%.*f%c%s", precision,
-		 (double) count / powi, *prefix, use_iec ? "i" : "");
-
-	fprintf(fp, "%*s ", width, buf);
-}
-
 static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 {
 	struct rtattr *vf[IFLA_VF_STATS_MAX + 1];
