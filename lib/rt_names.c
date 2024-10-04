@@ -315,6 +315,9 @@ static void rtnl_addrprot_initialize(void)
 		ret = rtnl_tab_initialize(CONF_USR_DIR "/rt_addrprotos",
 					  rtnl_addrprot_tab,
 					  ARRAY_SIZE(rtnl_addrprot_tab));
+
+	rtnl_tab_initialize_dir("rt_addrprotos.d", rtnl_addrprot_tab,
+				ARRAY_SIZE(rtnl_addrprot_tab));
 }
 
 const char *rtnl_addrprot_n2a(__u8 id, char *buf, int len)
