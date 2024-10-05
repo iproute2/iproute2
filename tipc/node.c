@@ -252,7 +252,7 @@ get_ops:
 	/* Get master key indication */
 	opt_master = get_opt(opts, "master");
 
-	/* Sanity check if wrong option */
+	/* Validate node key */
 	if (opt_nodeid && opt_master) {
 		fprintf(stderr, "error, per-node key cannot be master\n");
 		return -EINVAL;

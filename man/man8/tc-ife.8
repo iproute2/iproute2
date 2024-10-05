@@ -120,8 +120,8 @@ Match with skb mark of 17:
 
 Configure the sending side to encode for the filters above. Use a destination
 IP address of 192.168.122.237/24, then tag with skb mark of decimal 17. Encode
-the packaet with ethertype 0xdead, add skb->mark to whitelist of metadatum to
-send, and rewrite the destination MAC address to 02:15:15:15:15:15.
+the packet with ethertype 0xdead, add skb->mark to allowed list of meta
+datum to send, and rewrite the destination MAC address to 02:15:15:15:15:15.
 
 .RS
 .EX

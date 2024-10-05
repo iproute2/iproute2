@@ -437,10 +437,10 @@ static void get_kern_msg(void)
 	struct iovec iov;
 	char   buf[8192];
 	struct msghdr msg = {
-		(void *)&nladdr, sizeof(nladdr),
-		&iov,	1,
-		NULL,	0,
-		0
+		.msg_name = &nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
 	};
 
 	iov.iov_base = buf;
@@ -494,8 +494,7 @@ static void get_arp_pkt(void)
 	if (ifnum && !handle_if(sll.sll_ifindex))
 		return;
 
-	/* Sanity checks */
-
+	/* Validate packet */
 	if (n < sizeof(*a) ||
 	    (a->ar_op != htons(ARPOP_REQUEST) &&
 	     a->ar_op != htons(ARPOP_REPLY)) ||
