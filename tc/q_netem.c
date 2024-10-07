@@ -414,7 +414,7 @@ random_loss_model:
 			}
 		} else if (matches(*argv, "distribution") == 0) {
 			NEXT_ARG();
-			dist_data = calloc(sizeof(dist_data[0]), MAX_DIST);
+			dist_data = calloc(MAX_DIST, sizeof(dist_data[0]));
 			if (dist_data == NULL)
 				return -1;
 
@@ -479,7 +479,7 @@ random_loss_model:
 				if (strcmp(*argv, "distribution") == 0) {
 					present[TCA_NETEM_SLOT] = 1;
 					NEXT_ARG();
-					slot_dist_data = calloc(sizeof(slot_dist_data[0]), MAX_DIST);
+					slot_dist_data = calloc(MAX_DIST, sizeof(slot_dist_data[0]));
 					if (!slot_dist_data)
 						return -1;
 					slot_dist_size = get_distribution(*argv, slot_dist_data, MAX_DIST);
