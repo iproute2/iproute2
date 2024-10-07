@@ -176,7 +176,7 @@ static int mst_set(int argc, char **argv)
 	char *d = NULL, *m = NULL, *s = NULL, *endptr;
 	struct rtattr *af_spec, *mst, *entry;
 	__u16 msti;
-	__u8 state;
+	int state;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
@@ -212,13 +212,12 @@ static int mst_set(int argc, char **argv)
 	}
 
 	state = strtol(s, &endptr, 10);
-	if (!(*s != '\0' && *endptr == '\0')) {
+	if (!(*s != '\0' && *endptr == '\0'))
 		state = parse_stp_state(s);
-		if (state == -1) {
-			fprintf(stderr,
-				"Error: invalid STP port state\n");
-			return -1;
-		}
+	
+	if (state < 0 || state > UINT8_MAX) {
+		fprintf(stderr, "Error: invalid STP port state\n");
+		return -1;
 	}
 
 	af_spec = addattr_nest(&req.n, sizeof(req), IFLA_AF_SPEC);
