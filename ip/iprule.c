@@ -46,6 +46,7 @@ static void usage(void)
 		"            [ ipproto PROTOCOL ]\n"
 		"            [ sport [ NUMBER | NUMBER-NUMBER ]\n"
 		"            [ dport [ NUMBER | NUMBER-NUMBER ] ]\n"
+		"            [ dscp DSCP ]\n"
 		"ACTION := [ table TABLE_ID ]\n"
 		"          [ protocol PROTO ]\n"
 		"          [ nat ADDRESS ]\n"
@@ -67,6 +68,7 @@ static struct
 	unsigned int tos, tosmask;
 	unsigned int pref, prefmask;
 	unsigned int fwmark, fwmask;
+	unsigned int dscp, dscpmask;
 	uint64_t tun_id;
 	char iif[IFNAMSIZ];
 	char oif[IFNAMSIZ];
@@ -213,6 +215,17 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		if (tb[FRA_TUN_ID]) {
 			tun_id = ntohll(rta_getattr_u64(tb[FRA_TUN_ID]));
 			if (filter.tun_id != tun_id)
+				return false;
+		} else {
+			return false;
+		}
+	}
+
+	if (filter.dscpmask) {
+		if (tb[FRA_DSCP]) {
+			__u8 dscp = rta_getattr_u8(tb[FRA_DSCP]);
+
+			if (filter.dscp != dscp)
 				return false;
 		} else {
 			return false;
@@ -468,6 +481,14 @@ int print_rule(struct nlmsghdr *n, void *arg)
 				     rtnl_rtprot_n2a(protocol, b1, sizeof(b1)));
 		}
 	}
+
+	if (tb[FRA_DSCP]) {
+		__u8 dscp = rta_getattr_u8(tb[FRA_DSCP]);
+
+		print_string(PRINT_ANY, "dscp", " dscp %s",
+			     rtnl_dscp_n2a(dscp, b1, sizeof(b1)));
+	}
+
 	print_string(PRINT_FP, NULL, "\n", "");
 	close_json_object();
 	fflush(fp);
@@ -697,6 +718,14 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 			else if (ret != 2)
 				invarg("invalid dport range\n", *argv);
 			filter.dport = r;
+		} else if (strcmp(*argv, "dscp") == 0) {
+			__u32 dscp;
+
+			NEXT_ARG();
+			if (rtnl_dscp_a2n(&dscp, *argv))
+				invarg("invalid dscp\n", *argv);
+			filter.dscp = dscp;
+			filter.dscpmask = 1;
 		} else {
 			if (matches(*argv, "dst") == 0 ||
 			    matches(*argv, "to") == 0) {
@@ -975,6 +1004,13 @@ static int iprule_modify(int cmd, int argc, char **argv)
 				invarg("invalid dport range\n", *argv);
 			addattr_l(&req.n, sizeof(req), FRA_DPORT_RANGE, &r,
 				  sizeof(r));
+		} else if (strcmp(*argv, "dscp") == 0) {
+			__u32 dscp;
+
+			NEXT_ARG();
+			if (rtnl_dscp_a2n(&dscp, *argv))
+				invarg("invalid dscp\n", *argv);
+			addattr8(&req.n, sizeof(req), FRA_DSCP, dscp);
 		} else {
 			int type;
 

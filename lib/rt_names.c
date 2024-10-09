@@ -625,6 +625,17 @@ const char *rtnl_dsfield_get_name(int id)
 	return rtnl_rtdsfield_tab[id];
 }
 
+const char *rtnl_dscp_n2a(int id, char *buf, int len)
+{
+	if (!numeric) {
+		const char *name = rtnl_dsfield_get_name(id << 2);
+
+		if (name != NULL)
+			return name;
+	}
+	snprintf(buf, len, "%u", id);
+	return buf;
+}
 
 int rtnl_dsfield_a2n(__u32 *id, const char *arg)
 {
@@ -658,6 +669,18 @@ int rtnl_dsfield_a2n(__u32 *id, const char *arg)
 	return 0;
 }
 
+int rtnl_dscp_a2n(__u32 *id, const char *arg)
+{
+	if (get_u32(id, arg, 0) == 0)
+		return 0;
+
+	if (rtnl_dsfield_a2n(id, arg) != 0)
+		return -1;
+	/* Convert from DS field to DSCP */
+	*id >>= 2;
+
+	return 0;
+}
 
 static struct rtnl_hash_entry dflt_group_entry = {
 	.id = 0, .name = "default"
