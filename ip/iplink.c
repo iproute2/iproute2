@@ -240,6 +240,38 @@ static int nl_get_ll_addr_len(const char *ifname)
 	return len;
 }
 
+static int get_ifindex_in_netns(struct rtnl_handle *rtnl, int netnsid,
+				const char *ifname)
+{
+	struct {
+		struct nlmsghdr		n;
+		struct ifinfomsg	ifm;
+		char			buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_GETLINK,
+	};
+	struct nlmsghdr *answer;
+	int ifindex;
+
+	addattr32(&req.n, sizeof(req), IFLA_TARGET_NETNSID, netnsid);
+	addattr_l(&req.n, sizeof(req),
+		  !check_ifname(ifname) ? IFLA_IFNAME : IFLA_ALT_IFNAME,
+		  ifname, strlen(ifname) + 1);
+
+	if (rtnl_talk(rtnl, &req.n, &answer) < 0)
+		return 0;
+
+	if (answer->nlmsg_len < NLMSG_LENGTH(sizeof(struct ifinfomsg))) {
+		free(answer);
+		return 0;
+	}
+	ifindex = ((struct ifinfomsg *)NLMSG_DATA(answer))->ifi_index;
+	free(answer);
+	return ifindex;
+}
+
 static void iplink_parse_vf_vlan_info(int vf, int *argcp, char ***argvp,
 				      struct ifla_vf_vlan_info *ivvip)
 {
@@ -536,7 +568,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 	int vf = -1;
 	int numtxqueues = -1;
 	int numrxqueues = -1;
+	char *link_netns = NULL;
 	int link_netnsid = -1;
+	struct rtnl_handle netns_rtnl;
+	struct rtnl_handle *rtnl = &rth;
 	int index = 0;
 	int group = -1;
 	int addr_len = 0;
@@ -618,20 +653,25 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			if (offload && name == dev)
 				dev = NULL;
 		} else if (strcmp(*argv, "netns") == 0) {
+			int pid;
+
 			NEXT_ARG();
 			if (netns != -1)
 				duparg("netns", *argv);
 			netns = netns_get_fd(*argv);
-			if (netns >= 0) {
-				open_fds_add(netns);
-				addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_FD,
-					  &netns, 4);
+			if (netns < 0 && get_integer(&pid, *argv, 0) == 0) {
+				char path[PATH_MAX];
+
+				snprintf(path, sizeof(path), "/proc/%d/ns/net",
+					 pid);
+				netns = open(path, O_RDONLY);
 			}
-			else if (get_integer(&netns, *argv, 0) == 0)
-				addattr_l(&req->n, sizeof(*req),
-					  IFLA_NET_NS_PID, &netns, 4);
-			else
+			if (netns < 0)
 				invarg("Invalid \"netns\" value\n", *argv);
+
+			open_fds_add(netns);
+			addattr_l(&req->n, sizeof(*req), IFLA_NET_NS_FD,
+				  &netns, 4);
 			move_netns = true;
 		} else if (strcmp(*argv, "multicast") == 0) {
 			NEXT_ARG();
@@ -817,21 +857,12 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			addattr_nest_end(&req->n, afs);
 		} else if (matches(*argv, "link-netns") == 0) {
 			NEXT_ARG();
-			if (link_netnsid != -1)
+			if (link_netnsid != -1 || link_netns)
 				duparg("link-netns/link-netnsid", *argv);
-			link_netnsid = netns_id_from_name(&rth, *argv);
-			/* No nsid? Try to assign one. */
-			if (link_netnsid < 0)
-				set_netns_id_from_name(&rth, *argv, -1);
-			link_netnsid = netns_id_from_name(&rth, *argv);
-			if (link_netnsid < 0)
-				invarg("Invalid \"link-netns\" value\n",
-				       *argv);
-			addattr32(&req->n, sizeof(*req), IFLA_LINK_NETNSID,
-				  link_netnsid);
+			link_netns = *argv;
 		} else if (matches(*argv, "link-netnsid") == 0) {
 			NEXT_ARG();
-			if (link_netnsid != -1)
+			if (link_netnsid != -1 || link_netns)
 				duparg("link-netns/link-netnsid", *argv);
 			if (get_integer(&link_netnsid, *argv, 0))
 				invarg("Invalid \"link-netnsid\" value\n",
@@ -983,6 +1014,53 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 		}
 	}
 
+	if (netns != -1 && (link_netnsid != -1 || link_netns)) {
+		int orig_netns;
+
+		/*
+		 * When both link-netns and netns are set, open an RTNL in
+		 * target netns, to
+		 *   1) get link-netns id from the view of target netns, and
+		 *   2) get link ifindex from link-netns.
+		 */
+		orig_netns = open("/proc/self/ns/net", O_RDONLY);
+		if (orig_netns == -1) {
+			fprintf(stderr, "Cannot open namespace: %s\n",
+				strerror(errno));
+			exit(-1);
+		}
+		if (setns(netns, CLONE_NEWNET) < 0) {
+			fprintf(stderr, "Cannot set namespace: %s\n",
+				strerror(errno));
+			exit(-1);
+		}
+		if (rtnl_open(&netns_rtnl, 0) < 0) {
+			fprintf(stderr, "Cannot open rtnetlink\n");
+			exit(-1);
+		}
+		if (setns(orig_netns, CLONE_NEWNET) < 0) {
+			fprintf(stderr, "Cannot set namespace: %s\n",
+				strerror(errno));
+			exit(-1);
+		}
+		close(orig_netns);
+		rtnl = &netns_rtnl;
+	}
+
+	if (link_netns) {
+		link_netnsid = netns_id_from_name(rtnl, link_netns);
+		/* No nsid? Try to assign one. */
+		if (link_netnsid < 0) {
+			set_netns_id_from_name(rtnl, link_netns, -1);
+			link_netnsid = netns_id_from_name(rtnl, link_netns);
+		}
+		if (link_netnsid < 0)
+			invarg("Invalid \"link-netns\" value\n",
+			       *argv);
+		addattr32(&req->n, sizeof(*req), IFLA_LINK_NETNSID,
+			  link_netnsid);
+	}
+
 	if (!(req->n.nlmsg_flags & NLM_F_CREATE)) {
 		if (!dev) {
 			fprintf(stderr,
@@ -991,8 +1069,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 		}
 
 		req->i.ifi_index = ll_name_to_index(dev);
-		if (!req->i.ifi_index)
-			return nodev(dev);
+		if (!req->i.ifi_index) {
+			ret = nodev(dev);
+			goto out;
+		}
 
 		/* Not renaming to the same name */
 		if (name == dev)
@@ -1010,9 +1090,17 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 		if (link) {
 			int ifindex;
 
-			ifindex = ll_name_to_index(link);
-			if (!ifindex)
-				return nodev(link);
+			if (link_netnsid == -1)
+				ifindex = ll_name_to_index(link);
+			else
+				ifindex = get_ifindex_in_netns(rtnl,
+							       link_netnsid,
+							       link);
+
+			if (!ifindex) {
+				ret = nodev(link);
+				goto out;
+			}
 			addattr32(&req->n, sizeof(*req), IFLA_LINK, ifindex);
 		}
 
@@ -1023,6 +1111,10 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 		addattr_l(&req->n, sizeof(*req),
 			  IFLA_IFNAME, name, strlen(name) + 1);
 	}
+
+out:
+	if (rtnl == &netns_rtnl)
+		rtnl_close(rtnl);
 
 	return ret;
 }
