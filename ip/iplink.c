@@ -819,11 +819,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			NEXT_ARG();
 			if (link_netnsid != -1)
 				duparg("link-netns/link-netnsid", *argv);
-			link_netnsid = get_netnsid_from_name(*argv);
+			link_netnsid = netns_id_from_name(&rth, *argv);
 			/* No nsid? Try to assign one. */
 			if (link_netnsid < 0)
-				set_netnsid_from_name(*argv, -1);
-			link_netnsid = get_netnsid_from_name(*argv);
+				set_netns_id_from_name(&rth, *argv, -1);
+			link_netnsid = netns_id_from_name(&rth, *argv);
 			if (link_netnsid < 0)
 				invarg("Invalid \"link-netns\" value\n",
 				       *argv);

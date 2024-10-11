@@ -189,6 +189,33 @@ out:
 	return ret;
 }
 
+int set_netns_id_from_name(struct rtnl_handle *rtnl, const char *name, int nsid)
+{
+	struct {
+		struct nlmsghdr n;
+		struct rtgenmsg g;
+		char            buf[1024];
+	} req = {
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtgenmsg)),
+		.n.nlmsg_flags = NLM_F_REQUEST,
+		.n.nlmsg_type = RTM_NEWNSID,
+		.g.rtgen_family = AF_UNSPEC,
+	};
+	int fd, err = 0;
+
+	fd = netns_get_fd(name);
+	if (fd < 0)
+		return fd;
+
+	addattr32(&req.n, 1024, NETNSA_FD, fd);
+	addattr32(&req.n, 1024, NETNSA_NSID, nsid);
+	if (rtnl_talk(rtnl, &req.n, NULL) < 0)
+		err = -2;
+
+	close(fd);
+	return err;
+}
+
 struct netns_name_from_id_ctx {
 	int32_t id;
 	char *name;

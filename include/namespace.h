@@ -60,6 +60,8 @@ struct netns_func {
 };
 
 int netns_id_from_name(struct rtnl_handle *rtnl, const char *name);
+int set_netns_id_from_name(struct rtnl_handle *rtnl, const char *name,
+			   int nsid);
 char *netns_name_from_id(int32_t id);
 
 #endif /* __NAMESPACE_H__ */
