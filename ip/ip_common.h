@@ -16,6 +16,7 @@ struct link_filter {
 	int scope, scopemask;
 	int flags, flagmask;
 	int up;
+	int down;
 	char *label;
 	int flushed;
 	char *flushb;

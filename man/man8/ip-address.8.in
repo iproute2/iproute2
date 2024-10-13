@@ -32,7 +32,7 @@ ip-address \- protocol address management
 .B  to
 .IR PREFIX " ] [ " FLAG-LIST " ] [ "
 .B  label
-.IR PATTERN " ] [ " up " ]"
+.IR PATTERN " ] [ { " up " | " down " } ]"
 
 .ti -8
 .BR "ip address" " [ " show  " [ " dev
@@ -48,8 +48,8 @@ ip-address \- protocol address management
 .B  type
 .IR TYPE " ] [ "
 .B vrf
-.IR NAME " ] [ "
-.BR up " ] ["
+.IR NAME " ] [ { "
+.BR up " | " down " } ] ["
 .BR nomaster " ]"
 .B proto
 .IR ADDRPROTO " ] ]"
@@ -380,6 +380,10 @@ output.
 .TP
 .B up
 only list running interfaces.
+
+.TP
+.B down
+only list not running interfaces.
 
 .TP
 .B nomaster

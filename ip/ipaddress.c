@@ -52,12 +52,12 @@ static void usage(void)
 		"Usage: ip address {add|change|replace} IFADDR dev IFNAME [ LIFETIME ]\n"
 		"                                                      [ CONFFLAG-LIST ]\n"
 		"       ip address del IFADDR dev IFNAME [mngtmpaddr]\n"
-		"       ip address {save|flush} [ dev IFNAME ] [ scope SCOPE-ID ]\n"
-		"                            [ to PREFIX ] [ FLAG-LIST ] [ label LABEL ] [up]\n"
+		"       ip address {save|flush} [ dev IFNAME ] [ scope SCOPE-ID ] [ to PREFIX ]\n"
+		"                            [ FLAG-LIST ] [ label LABEL ] [ { up | down } ]\n"
 		"       ip address [ show [ dev IFNAME ] [ scope SCOPE-ID ] [ master DEVICE ]\n"
 		"                         [ nomaster ]\n"
 		"                         [ type TYPE ] [ to PREFIX ] [ FLAG-LIST ]\n"
-		"                         [ label LABEL ] [up] [ vrf NAME ]\n"
+		"                         [ label LABEL ] [ { up | down } ] [ vrf NAME ]\n"
 		"                         [ proto ADDRPROTO ] ]\n"
 		"       ip address {showdump|restore}\n"
 		"IFADDR := PREFIX | ADDR peer PREFIX\n"
@@ -981,6 +981,8 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 		return -1;
 	if (filter.up && !(ifi->ifi_flags&IFF_UP))
 		return -1;
+	if (filter.down && ifi->ifi_flags&IFF_UP)
+		return -1;
 
 	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
 
@@ -1720,6 +1722,9 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 		if (filter.up && !(ifi->ifi_flags&IFF_UP))
 			continue;
 
+		if (filter.down && ifi->ifi_flags&IFF_UP)
+			continue;
+
 		open_json_object(NULL);
 		print_addrinfo(n, fp);
 		close_json_object();
@@ -2140,6 +2145,8 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			filter.scope = scope;
 		} else if (strcmp(*argv, "up") == 0) {
 			filter.up = 1;
+		} else if (strcmp(*argv, "down") == 0) {
+			filter.down = 1;
 		} else if (get_filter(*argv) == 0) {
 
 		} else if (strcmp(*argv, "label") == 0) {
