@@ -16,8 +16,8 @@ static int res_help(struct rd *rd)
 	pr_out("          resource show qp link [DEV/PORT] [FILTER-NAME FILTER-VALUE]\n");
 	pr_out("          resource show cm_id link [DEV/PORT]\n");
 	pr_out("          resource show cm_id link [DEV/PORT] [FILTER-NAME FILTER-VALUE]\n");
-	pr_out("          resource show cq link [DEV/PORT]\n");
-	pr_out("          resource show cq link [DEV/PORT] [FILTER-NAME FILTER-VALUE]\n");
+	pr_out("          resource show cq dev [DEV]\n");
+	pr_out("          resource show cq dev [DEV] [FILTER-NAME FILTER-VALUE]\n");
 	pr_out("          resource show pd dev [DEV]\n");
 	pr_out("          resource show pd dev [DEV] [FILTER-NAME FILTER-VALUE]\n");
 	pr_out("          resource show mr dev [DEV]\n");

@@ -271,7 +271,7 @@ static int mroute_list(int argc, char **argv)
 			id = *argv;
 		} else if (matches(*argv, "from") == 0) {
 			NEXT_ARG();
-			if (get_prefix(&filter.msrc, *argv, family))
+			if (get_prefix(&filter.msrc, *argv, preferred_family))
 				invarg("from value is invalid\n", *argv);
 		} else {
 			if (strcmp(*argv, "to") == 0) {
@@ -279,7 +279,7 @@ static int mroute_list(int argc, char **argv)
 			}
 			if (matches(*argv, "help") == 0)
 				usage();
-			if (get_prefix(&filter.mdst, *argv, family))
+			if (get_prefix(&filter.mdst, *argv, preferred_family))
 				invarg("to value is invalid\n", *argv);
 		}
 		argc--; argv++;

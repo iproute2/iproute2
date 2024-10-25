@@ -187,16 +187,16 @@ static int do_show(int argc, char **argv)
 	ll_init_map(&rth);
 
 	if (filter.ifindex && filter.family != AF_UNSPEC) {
+		struct nlmsghdr *answer;
+
 		req.ncm.ncm_family = filter.family;
 		addattr_l(&req.n, sizeof(req), NETCONFA_IFINDEX,
 			  &filter.ifindex, sizeof(filter.ifindex));
 
-		if (rtnl_send(&rth, &req.n, req.n.nlmsg_len) < 0) {
-			perror("Can not send request");
-			exit(1);
-		}
-		if (rtnl_listen(&rth, print_netconf, stdout) < 0)
+		if (rtnl_talk(&rth, &req.n, &answer) < 0)
 			exit(2);
+
+		print_netconf2(answer, stdout);
 	} else {
 		rth.flags = RTNL_HANDLE_F_SUPPRESS_NLERR;
 dump:
