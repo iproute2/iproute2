@@ -30,6 +30,7 @@ M: Roopa Prabhu <roopa@nvidia.com>
 M: Nikolay Aleksandrov <razor@blackwall.org>
 L: bridge@lists.linux-foundation.org (moderated for non-subscribers)
 F: bridge/*
+F: ip/iplink_bridge*
 
 Data Center Bridging - dcb
 M: Petr Machata <me@pmachata.org>
