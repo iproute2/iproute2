@@ -1,0 +1,51 @@
+.TH RDMA\-MONITOR 8 "22 Jul 2024" "iproute2" "Linux"
+.SH NAME
+rdma-monitor \- RDMA events monitoring
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B rdma
+.RI "[ " OPTIONS " ]"
+.B monitor
+.RI " { " help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] }
+
+.ti -8
+.B rdma monitor
+
+.ti -8
+.B rdma monitor help
+
+.SH "DESCRIPTION"
+.SS rdma monitor - utility can monitor RDMA device events on all RDMA devices.
+.PP
+.B rdma
+opens an RDMA Netlink socket, listens on it and dumps the event info.
+
+The event types supported are RDMA device registration/unregistration
+and net device attachment/detachment.
+
+.SH "EXAMPLES"
+.PP
+rdma monitor
+.RS 4
+Listen for events of all RDMA devices
+.RE
+.PP
+
+.SH SEE ALSO
+.BR rdma (8),
+.BR rdma-link (8),
+.BR rdma-resource (8),
+.BR rdma-system (8),
+.BR rdma-statistic (8),
+.br
+
+.SH AUTHOR
+Chiara Meiohas <cmeiohas@nvidia.com>

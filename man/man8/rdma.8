@@ -19,7 +19,7 @@ rdma \- RDMA tool
 
 .ti -8
 .IR OBJECT " := { "
-.BR dev " | " link " | " resource " | " system " | " statistic " }"
+.BR dev " | " link " | " resource " | " system " | " statistic " | " monitor " }"
 .sp
 
 .ti -8
@@ -94,6 +94,10 @@ character.
 .B statistic
 - RDMA counter statistic related.
 
+.TP
+.B monitor
+- RDMA events monitor
+
 .PP
 The names of all objects may be written in full or
 abbreviated form, for example
@@ -133,6 +137,7 @@ Exit status is 0 if command was successful or a positive integer upon failure.
 .BR rdma-resource (8),
 .BR rdma-system (8),
 .BR rdma-statistic (8),
+.BR rdma-monitor (8),
 .br
 
 .SH REPORTING BUGS
