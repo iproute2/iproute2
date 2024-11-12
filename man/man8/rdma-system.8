@@ -38,8 +38,8 @@ rdma-system \- RDMA subsystem configuration
 .SS rdma system set - set RDMA subsystem network namespace mode or
 privileged qkey mode
 
-.SS rdma system show - display RDMA subsystem network namespace mode and
-privileged qkey state
+.SS rdma system show - display RDMA subsystem network namespace mode,
+privileged qkey state and whether RDMA monitoring is supported.
 
 .PP
 .I "NEWMODE"
@@ -66,8 +66,8 @@ controlled QKEY or not.
 .PP
 rdma system show
 .RS 4
-Shows the state of RDMA subsystem network namespace mode on the system and
-the state of privileged qkey parameter.
+Shows the state of RDMA subsystem network namespace mode on the system,
+the state of privileged qkey parameter and whether RDMA monitor is supported.
 .RE
 .PP
 rdma system set netns exclusive
@@ -100,6 +100,7 @@ is *not* allowed to specify a controlled QKEY.
 .BR rdma (8),
 .BR rdma-link (8),
 .BR rdma-resource (8),
+.BR rdma-monitor (8),
 .BR network_namespaces (7),
 .BR namespaces (7),
 .br
