@@ -254,10 +254,8 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 				cm.mask |= CAN_CTRLMODE_TDC_AUTO |
 					   CAN_CTRLMODE_TDC_MANUAL;
 			} else {
-				fprintf(stderr,
-					"Error: argument of \"tdc-mode\" must be \"auto\", \"manual\" or \"off\", not \"%s\"\n",
+				invarg("\"tdc-mode\" must be either of \"auto\", \"manual\" or \"off\"",
 					*argv);
-				exit (-1);
 			}
 		} else if (matches(*argv, "restart") == 0) {
 			__u32 val = 1;
