@@ -337,7 +337,7 @@ can_print_timing_min_max(const char *json_attr, const char *fp_attr,
 	close_json_object();
 }
 
-static void can_print_tdc_opt(FILE *f, struct rtattr *tdc_attr)
+static void can_print_tdc_opt(struct rtattr *tdc_attr)
 {
 	struct rtattr *tb[IFLA_CAN_TDC_MAX + 1];
 
@@ -365,7 +365,7 @@ static void can_print_tdc_opt(FILE *f, struct rtattr *tdc_attr)
 	}
 }
 
-static void can_print_tdc_const_opt(FILE *f, struct rtattr *tdc_attr)
+static void can_print_tdc_const_opt(struct rtattr *tdc_attr)
 {
 	struct rtattr *tb[IFLA_CAN_TDC_MAX + 1];
 
@@ -393,7 +393,7 @@ static void can_print_tdc_const_opt(FILE *f, struct rtattr *tdc_attr)
 	close_json_object();
 }
 
-static void can_print_ctrlmode_ext(FILE *f, struct rtattr *ctrlmode_ext_attr,
+static void can_print_ctrlmode_ext(struct rtattr *ctrlmode_ext_attr,
 				   __u32 cm_flags)
 {
 	struct rtattr *tb[IFLA_CAN_CTRLMODE_MAX + 1];
@@ -417,7 +417,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		print_ctrlmode(PRINT_ANY, cm->flags, "ctrlmode");
 		if (tb[IFLA_CAN_CTRLMODE_EXT])
-			can_print_ctrlmode_ext(f, tb[IFLA_CAN_CTRLMODE_EXT],
+			can_print_ctrlmode_ext(tb[IFLA_CAN_CTRLMODE_EXT],
 					       cm->flags);
 	}
 
@@ -542,7 +542,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_uint(PRINT_ANY, "brp", " dbrp %u", dbt->brp);
 
 		if (tb[IFLA_CAN_TDC])
-			can_print_tdc_opt(f, tb[IFLA_CAN_TDC]);
+			can_print_tdc_opt(tb[IFLA_CAN_TDC]);
 
 		close_json_object();
 	}
@@ -566,7 +566,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_uint(PRINT_ANY, "brp_inc", " dbrp_inc %u", dbtc->brp_inc);
 
 		if (tb[IFLA_CAN_TDC])
-			can_print_tdc_const_opt(f, tb[IFLA_CAN_TDC]);
+			can_print_tdc_const_opt(tb[IFLA_CAN_TDC]);
 
 		close_json_object();
 	}
