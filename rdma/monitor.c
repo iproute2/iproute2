@@ -41,6 +41,8 @@ static void mon_print_event_type(struct nlattr **tb)
 		[RDMA_UNREGISTER_EVENT] = "[UNREGISTER]",
 		[RDMA_NETDEV_ATTACH_EVENT] = "[NETDEV_ATTACH]",
 		[RDMA_NETDEV_DETACH_EVENT] = "[NETDEV_DETACH]",
+		[RDMA_RENAME_EVENT] = "[RENAME]",
+		[RDMA_NETDEV_RENAME_EVENT] = "[NETDEV_RENAME]",
 	};
 	enum rdma_nl_notify_event_type etype;
 	char unknown_type[32];
