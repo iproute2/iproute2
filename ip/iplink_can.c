@@ -128,7 +128,6 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 {
 	struct can_bittiming bt = {}, dbt = {};
 	struct can_ctrlmode cm = { 0 };
-	struct rtattr *tdc;
 	__u32 tdcv = -1, tdco = -1, tdcf = -1;
 
 	while (argc > 0) {
@@ -298,7 +297,9 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr_l(n, 1024, IFLA_CAN_CTRLMODE, &cm, sizeof(cm));
 
 	if (tdcv != -1 || tdco != -1 || tdcf != -1) {
-		tdc = addattr_nest(n, 1024, IFLA_CAN_TDC | NLA_F_NESTED);
+		struct rtattr *tdc = addattr_nest(n, 1024,
+						  IFLA_CAN_TDC | NLA_F_NESTED);
+
 		if (tdcv != -1)
 			addattr32(n, 1024, IFLA_CAN_TDC_TDCV, tdcv);
 		if (tdco != -1)
