@@ -115,14 +115,28 @@ parameters in a single schedule. Each one has the
 
 sched-entry <command> <gatemask> <interval>
 
-format. The only supported <command> is "S", which
-means "SetGateStates", following the IEEE 802.1Q-2018 definition
-(Table 8-7). <gate mask> is a bitmask where each bit is a associated
-with a traffic class, so bit 0 (the least significant bit) being "on"
-means that traffic class 0 is "active" for that schedule entry.
-<interval> is a time duration, in nanoseconds, that specifies for how
-long that state defined by <command> and <gate mask> should be held
-before moving to the next entry.
+format.
+
+<command> support the following values:
+.br
+.I "S"
+for SetGateStates
+.br
+.I "H"
+for Set-And-Hold-MAC
+.br
+.I "R"
+for Set-And-Release-MAC
+.br
+These commands follow the IEEE 802.1Q-2018 definition (Table 8-7).
+
+<gate mask> is a bitmask where each bit is associated with a traffic class, so
+bit 0 (the least significant bit) being "on" means that traffic class 0 is
+"active" for that schedule entry.
+
+<interval> is a time duration, in nanoseconds, that specifies for how long that
+state defined by <command> and <gate mask> should be held before moving to
+the next entry.
 
 .TP
 flags
