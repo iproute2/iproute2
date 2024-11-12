@@ -132,7 +132,7 @@ static void print_ctrlmode(enum output_type t, __u32 flags, const char* key)
 static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			 struct nlmsghdr *n)
 {
-	struct can_bittiming bt = {}, dbt = {};
+	struct can_bittiming bt = {}, fd_dbt = {};
 	struct can_ctrlmode cm = { 0 };
 	struct can_tdc fd = { .tdcv = -1, .tdco = -1, .tdcf = -1 };
 
@@ -171,7 +171,7 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid \"sjw\" value", *argv);
 		} else if (matches(*argv, "dbitrate") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.bitrate, *argv, 0))
+			if (get_u32(&fd_dbt.bitrate, *argv, 0))
 				invarg("invalid \"dbitrate\" value", *argv);
 		} else if (matches(*argv, "dsample-point") == 0) {
 			float sp;
@@ -179,26 +179,26 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			if (get_float(&sp, *argv))
 				invarg("invalid \"dsample-point\" value", *argv);
-			dbt.sample_point = (__u32)(sp * 1000);
+			fd_dbt.sample_point = (__u32)(sp * 1000);
 		} else if (matches(*argv, "dtq") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.tq, *argv, 0))
+			if (get_u32(&fd_dbt.tq, *argv, 0))
 				invarg("invalid \"dtq\" value", *argv);
 		} else if (matches(*argv, "dprop-seg") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.prop_seg, *argv, 0))
+			if (get_u32(&fd_dbt.prop_seg, *argv, 0))
 				invarg("invalid \"dprop-seg\" value", *argv);
 		} else if (matches(*argv, "dphase-seg1") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.phase_seg1, *argv, 0))
+			if (get_u32(&fd_dbt.phase_seg1, *argv, 0))
 				invarg("invalid \"dphase-seg1\" value", *argv);
 		} else if (matches(*argv, "dphase-seg2") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.phase_seg2, *argv, 0))
+			if (get_u32(&fd_dbt.phase_seg2, *argv, 0))
 				invarg("invalid \"dphase-seg2\" value", *argv);
 		} else if (matches(*argv, "dsjw") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.sjw, *argv, 0))
+			if (get_u32(&fd_dbt.sjw, *argv, 0))
 				invarg("invalid \"dsjw\" value", *argv);
 		} else if (matches(*argv, "tdcv") == 0) {
 			NEXT_ARG();
@@ -295,8 +295,8 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 
 	if (bt.bitrate || bt.tq)
 		addattr_l(n, 1024, IFLA_CAN_BITTIMING, &bt, sizeof(bt));
-	if (dbt.bitrate || dbt.tq)
-		addattr_l(n, 1024, IFLA_CAN_DATA_BITTIMING, &dbt, sizeof(dbt));
+	if (fd_dbt.bitrate || fd_dbt.tq)
+		addattr_l(n, 1024, IFLA_CAN_DATA_BITTIMING, &fd_dbt, sizeof(fd_dbt));
 	if (cm.mask)
 		addattr_l(n, 1024, IFLA_CAN_CTRLMODE, &cm, sizeof(cm));
 
