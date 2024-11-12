@@ -15,6 +15,12 @@
 #include "utils.h"
 #include "ip_common.h"
 
+struct can_tdc {
+	__u32 tdcv;
+	__u32 tdco;
+	__u32 tdcf;
+};
+
 static void print_usage(FILE *f)
 {
 	fprintf(f,
@@ -128,7 +134,7 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 {
 	struct can_bittiming bt = {}, dbt = {};
 	struct can_ctrlmode cm = { 0 };
-	__u32 tdcv = -1, tdco = -1, tdcf = -1;
+	struct can_tdc fd = { .tdcv = -1, .tdco = -1, .tdcf = -1 };
 
 	while (argc > 0) {
 		if (matches(*argv, "bitrate") == 0) {
@@ -196,15 +202,15 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid \"dsjw\" value", *argv);
 		} else if (matches(*argv, "tdcv") == 0) {
 			NEXT_ARG();
-			if (get_u32(&tdcv, *argv, 0))
+			if (get_u32(&fd.tdcv, *argv, 0))
 				invarg("invalid \"tdcv\" value", *argv);
 		} else if (matches(*argv, "tdco") == 0) {
 			NEXT_ARG();
-			if (get_u32(&tdco, *argv, 0))
+			if (get_u32(&fd.tdco, *argv, 0))
 				invarg("invalid \"tdco\" value", *argv);
 		} else if (matches(*argv, "tdcf") == 0) {
 			NEXT_ARG();
-			if (get_u32(&tdcf, *argv, 0))
+			if (get_u32(&fd.tdcf, *argv, 0))
 				invarg("invalid \"tdcf\" value", *argv);
 		} else if (matches(*argv, "loopback") == 0) {
 			NEXT_ARG();
@@ -294,16 +300,16 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 	if (cm.mask)
 		addattr_l(n, 1024, IFLA_CAN_CTRLMODE, &cm, sizeof(cm));
 
-	if (tdcv != -1 || tdco != -1 || tdcf != -1) {
+	if (fd.tdcv != -1 || fd.tdco != -1 || fd.tdcf != -1) {
 		struct rtattr *tdc = addattr_nest(n, 1024,
 						  IFLA_CAN_TDC | NLA_F_NESTED);
 
-		if (tdcv != -1)
-			addattr32(n, 1024, IFLA_CAN_TDC_TDCV, tdcv);
-		if (tdco != -1)
-			addattr32(n, 1024, IFLA_CAN_TDC_TDCO, tdco);
-		if (tdcf != -1)
-			addattr32(n, 1024, IFLA_CAN_TDC_TDCF, tdcf);
+		if (fd.tdcv != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCV, fd.tdcv);
+		if (fd.tdco != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCO, fd.tdco);
+		if (fd.tdcf != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCF, fd.tdcf);
 		addattr_nest_end(n, tdc);
 	}
 
