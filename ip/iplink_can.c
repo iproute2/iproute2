@@ -134,78 +134,78 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 		if (matches(*argv, "bitrate") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.bitrate, *argv, 0))
-				invarg("invalid \"bitrate\" value\n", *argv);
+				invarg("invalid \"bitrate\" value", *argv);
 		} else if (matches(*argv, "sample-point") == 0) {
 			float sp;
 
 			NEXT_ARG();
 			if (get_float(&sp, *argv))
-				invarg("invalid \"sample-point\" value\n",
+				invarg("invalid \"sample-point\" value",
 				       *argv);
 			bt.sample_point = (__u32)(sp * 1000);
 		} else if (matches(*argv, "tq") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.tq, *argv, 0))
-				invarg("invalid \"tq\" value\n", *argv);
+				invarg("invalid \"tq\" value", *argv);
 		} else if (matches(*argv, "prop-seg") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.prop_seg, *argv, 0))
-				invarg("invalid \"prop-seg\" value\n", *argv);
+				invarg("invalid \"prop-seg\" value", *argv);
 		} else if (matches(*argv, "phase-seg1") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.phase_seg1, *argv, 0))
-				invarg("invalid \"phase-seg1\" value\n", *argv);
+				invarg("invalid \"phase-seg1\" value", *argv);
 		} else if (matches(*argv, "phase-seg2") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.phase_seg2, *argv, 0))
-				invarg("invalid \"phase-seg2\" value\n", *argv);
+				invarg("invalid \"phase-seg2\" value", *argv);
 		} else if (matches(*argv, "sjw") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.sjw, *argv, 0))
-				invarg("invalid \"sjw\" value\n", *argv);
+				invarg("invalid \"sjw\" value", *argv);
 		} else if (matches(*argv, "dbitrate") == 0) {
 			NEXT_ARG();
 			if (get_u32(&dbt.bitrate, *argv, 0))
-				invarg("invalid \"dbitrate\" value\n", *argv);
+				invarg("invalid \"dbitrate\" value", *argv);
 		} else if (matches(*argv, "dsample-point") == 0) {
 			float sp;
 
 			NEXT_ARG();
 			if (get_float(&sp, *argv))
-				invarg("invalid \"dsample-point\" value\n", *argv);
+				invarg("invalid \"dsample-point\" value", *argv);
 			dbt.sample_point = (__u32)(sp * 1000);
 		} else if (matches(*argv, "dtq") == 0) {
 			NEXT_ARG();
 			if (get_u32(&dbt.tq, *argv, 0))
-				invarg("invalid \"dtq\" value\n", *argv);
+				invarg("invalid \"dtq\" value", *argv);
 		} else if (matches(*argv, "dprop-seg") == 0) {
 			NEXT_ARG();
 			if (get_u32(&dbt.prop_seg, *argv, 0))
-				invarg("invalid \"dprop-seg\" value\n", *argv);
+				invarg("invalid \"dprop-seg\" value", *argv);
 		} else if (matches(*argv, "dphase-seg1") == 0) {
 			NEXT_ARG();
 			if (get_u32(&dbt.phase_seg1, *argv, 0))
-				invarg("invalid \"dphase-seg1\" value\n", *argv);
+				invarg("invalid \"dphase-seg1\" value", *argv);
 		} else if (matches(*argv, "dphase-seg2") == 0) {
 			NEXT_ARG();
 			if (get_u32(&dbt.phase_seg2, *argv, 0))
-				invarg("invalid \"dphase-seg2\" value\n", *argv);
+				invarg("invalid \"dphase-seg2\" value", *argv);
 		} else if (matches(*argv, "dsjw") == 0) {
 			NEXT_ARG();
 			if (get_u32(&dbt.sjw, *argv, 0))
-				invarg("invalid \"dsjw\" value\n", *argv);
+				invarg("invalid \"dsjw\" value", *argv);
 		} else if (matches(*argv, "tdcv") == 0) {
 			NEXT_ARG();
 			if (get_u32(&tdcv, *argv, 0))
-				invarg("invalid \"tdcv\" value\n", *argv);
+				invarg("invalid \"tdcv\" value", *argv);
 		} else if (matches(*argv, "tdco") == 0) {
 			NEXT_ARG();
 			if (get_u32(&tdco, *argv, 0))
-				invarg("invalid \"tdco\" value\n", *argv);
+				invarg("invalid \"tdco\" value", *argv);
 		} else if (matches(*argv, "tdcf") == 0) {
 			NEXT_ARG();
 			if (get_u32(&tdcf, *argv, 0))
-				invarg("invalid \"tdcf\" value\n", *argv);
+				invarg("invalid \"tdcf\" value", *argv);
 		} else if (matches(*argv, "loopback") == 0) {
 			NEXT_ARG();
 			set_ctrlmode("loopback", *argv, &cm,
@@ -268,14 +268,14 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			NEXT_ARG();
 			if (get_u32(&val, *argv, 0))
-				invarg("invalid \"restart-ms\" value\n", *argv);
+				invarg("invalid \"restart-ms\" value", *argv);
 			addattr32(n, 1024, IFLA_CAN_RESTART_MS, val);
 		} else if (matches(*argv, "termination") == 0) {
 			__u16 val;
 
 			NEXT_ARG();
 			if (get_u16(&val, *argv, 0))
-				invarg("invalid \"termination\" value\n",
+				invarg("invalid \"termination\" value",
 				       *argv);
 			addattr16(n, 1024, IFLA_CAN_TERMINATION, val);
 		} else if (matches(*argv, "help") == 0) {
