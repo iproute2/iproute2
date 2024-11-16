@@ -35,6 +35,11 @@ err_bind:
 	return NULL;
 }
 
+int mnl_add_nl_group(struct mnl_socket *nl, unsigned int group)
+{
+	return mnl_socket_bind(nl, group, MNL_SOCKET_AUTOPID);
+}
+
 struct nlmsghdr *mnlu_msg_prepare(void *buf, uint32_t nlmsg_type, uint16_t flags,
 				  void *extra_header, size_t extra_header_size)
 {

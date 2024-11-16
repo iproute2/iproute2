@@ -20,6 +20,7 @@ static const char *netns_modes_str[] = {
 static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
+	uint8_t mon_mode = 0;
 	bool cof = false;
 
 	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
@@ -47,6 +48,10 @@ static int sys_show_parse_cb(const struct nlmsghdr *nlh, void *data)
 		print_on_off(PRINT_ANY, "privileged-qkey", "privileged-qkey %s ", mode);
 
 	}
+
+	if (tb[RDMA_NLDEV_SYS_ATTR_MONITOR_MODE])
+		mon_mode = mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_MONITOR_MODE]);
+	print_on_off(PRINT_ANY, "monitor", "monitor %s ", mon_mode);
 
 	if (tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK])
 		cof = mnl_attr_get_u8(tb[RDMA_NLDEV_SYS_ATTR_COPY_ON_FORK]);
@@ -77,6 +82,7 @@ static int sys_show(struct rd *rd)
 		{ NULL,			sys_show_no_args},
 		{ "netns",		sys_show_no_args},
 		{ "privileged-qkey",	sys_show_no_args},
+		{ "monitor",		sys_show_no_args},
 		{ 0 }
 	};
 
