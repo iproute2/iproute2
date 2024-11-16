@@ -73,7 +73,6 @@ int read_prop(const char *dev, char *prop, long *value)
 
 	if (!fgets(buf, sizeof(buf), fp)) {
 		fprintf(stderr, "property \"%s\" in file %s is currently unknown\n", prop, fname);
-		fclose(fp);
 		goto out;
 	}
 
@@ -98,6 +97,7 @@ int read_prop(const char *dev, char *prop, long *value)
 	*value = result;
 	return 0;
 out:
+	fclose(fp);
 	fprintf(stderr, "Failed to parse %s\n", fname);
 	return -1;
 }
