@@ -15,6 +15,12 @@
 #include "utils.h"
 #include "ip_common.h"
 
+struct can_tdc {
+	__u32 tdcv;
+	__u32 tdco;
+	__u32 tdcf;
+};
+
 static void print_usage(FILE *f)
 {
 	fprintf(f,
@@ -126,87 +132,86 @@ static void print_ctrlmode(enum output_type t, __u32 flags, const char* key)
 static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			 struct nlmsghdr *n)
 {
-	struct can_bittiming bt = {}, dbt = {};
+	struct can_bittiming bt = {}, fd_dbt = {};
 	struct can_ctrlmode cm = { 0 };
-	struct rtattr *tdc;
-	__u32 tdcv = -1, tdco = -1, tdcf = -1;
+	struct can_tdc fd = { .tdcv = -1, .tdco = -1, .tdcf = -1 };
 
 	while (argc > 0) {
 		if (matches(*argv, "bitrate") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.bitrate, *argv, 0))
-				invarg("invalid \"bitrate\" value\n", *argv);
+				invarg("invalid \"bitrate\" value", *argv);
 		} else if (matches(*argv, "sample-point") == 0) {
 			float sp;
 
 			NEXT_ARG();
 			if (get_float(&sp, *argv))
-				invarg("invalid \"sample-point\" value\n",
+				invarg("invalid \"sample-point\" value",
 				       *argv);
 			bt.sample_point = (__u32)(sp * 1000);
 		} else if (matches(*argv, "tq") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.tq, *argv, 0))
-				invarg("invalid \"tq\" value\n", *argv);
+				invarg("invalid \"tq\" value", *argv);
 		} else if (matches(*argv, "prop-seg") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.prop_seg, *argv, 0))
-				invarg("invalid \"prop-seg\" value\n", *argv);
+				invarg("invalid \"prop-seg\" value", *argv);
 		} else if (matches(*argv, "phase-seg1") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.phase_seg1, *argv, 0))
-				invarg("invalid \"phase-seg1\" value\n", *argv);
+				invarg("invalid \"phase-seg1\" value", *argv);
 		} else if (matches(*argv, "phase-seg2") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.phase_seg2, *argv, 0))
-				invarg("invalid \"phase-seg2\" value\n", *argv);
+				invarg("invalid \"phase-seg2\" value", *argv);
 		} else if (matches(*argv, "sjw") == 0) {
 			NEXT_ARG();
 			if (get_u32(&bt.sjw, *argv, 0))
-				invarg("invalid \"sjw\" value\n", *argv);
+				invarg("invalid \"sjw\" value", *argv);
 		} else if (matches(*argv, "dbitrate") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.bitrate, *argv, 0))
-				invarg("invalid \"dbitrate\" value\n", *argv);
+			if (get_u32(&fd_dbt.bitrate, *argv, 0))
+				invarg("invalid \"dbitrate\" value", *argv);
 		} else if (matches(*argv, "dsample-point") == 0) {
 			float sp;
 
 			NEXT_ARG();
 			if (get_float(&sp, *argv))
-				invarg("invalid \"dsample-point\" value\n", *argv);
-			dbt.sample_point = (__u32)(sp * 1000);
+				invarg("invalid \"dsample-point\" value", *argv);
+			fd_dbt.sample_point = (__u32)(sp * 1000);
 		} else if (matches(*argv, "dtq") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.tq, *argv, 0))
-				invarg("invalid \"dtq\" value\n", *argv);
+			if (get_u32(&fd_dbt.tq, *argv, 0))
+				invarg("invalid \"dtq\" value", *argv);
 		} else if (matches(*argv, "dprop-seg") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.prop_seg, *argv, 0))
-				invarg("invalid \"dprop-seg\" value\n", *argv);
+			if (get_u32(&fd_dbt.prop_seg, *argv, 0))
+				invarg("invalid \"dprop-seg\" value", *argv);
 		} else if (matches(*argv, "dphase-seg1") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.phase_seg1, *argv, 0))
-				invarg("invalid \"dphase-seg1\" value\n", *argv);
+			if (get_u32(&fd_dbt.phase_seg1, *argv, 0))
+				invarg("invalid \"dphase-seg1\" value", *argv);
 		} else if (matches(*argv, "dphase-seg2") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.phase_seg2, *argv, 0))
-				invarg("invalid \"dphase-seg2\" value\n", *argv);
+			if (get_u32(&fd_dbt.phase_seg2, *argv, 0))
+				invarg("invalid \"dphase-seg2\" value", *argv);
 		} else if (matches(*argv, "dsjw") == 0) {
 			NEXT_ARG();
-			if (get_u32(&dbt.sjw, *argv, 0))
-				invarg("invalid \"dsjw\" value\n", *argv);
+			if (get_u32(&fd_dbt.sjw, *argv, 0))
+				invarg("invalid \"dsjw\" value", *argv);
 		} else if (matches(*argv, "tdcv") == 0) {
 			NEXT_ARG();
-			if (get_u32(&tdcv, *argv, 0))
-				invarg("invalid \"tdcv\" value\n", *argv);
+			if (get_u32(&fd.tdcv, *argv, 0))
+				invarg("invalid \"tdcv\" value", *argv);
 		} else if (matches(*argv, "tdco") == 0) {
 			NEXT_ARG();
-			if (get_u32(&tdco, *argv, 0))
-				invarg("invalid \"tdco\" value\n", *argv);
+			if (get_u32(&fd.tdco, *argv, 0))
+				invarg("invalid \"tdco\" value", *argv);
 		} else if (matches(*argv, "tdcf") == 0) {
 			NEXT_ARG();
-			if (get_u32(&tdcf, *argv, 0))
-				invarg("invalid \"tdcf\" value\n", *argv);
+			if (get_u32(&fd.tdcf, *argv, 0))
+				invarg("invalid \"tdcf\" value", *argv);
 		} else if (matches(*argv, "loopback") == 0) {
 			NEXT_ARG();
 			set_ctrlmode("loopback", *argv, &cm,
@@ -255,10 +260,8 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 				cm.mask |= CAN_CTRLMODE_TDC_AUTO |
 					   CAN_CTRLMODE_TDC_MANUAL;
 			} else {
-				fprintf(stderr,
-					"Error: argument of \"tdc-mode\" must be \"auto\", \"manual\" or \"off\", not \"%s\"\n",
+				invarg("\"tdc-mode\" must be either of \"auto\", \"manual\" or \"off\"",
 					*argv);
-				exit (-1);
 			}
 		} else if (matches(*argv, "restart") == 0) {
 			__u32 val = 1;
@@ -269,14 +272,14 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			NEXT_ARG();
 			if (get_u32(&val, *argv, 0))
-				invarg("invalid \"restart-ms\" value\n", *argv);
+				invarg("invalid \"restart-ms\" value", *argv);
 			addattr32(n, 1024, IFLA_CAN_RESTART_MS, val);
 		} else if (matches(*argv, "termination") == 0) {
 			__u16 val;
 
 			NEXT_ARG();
 			if (get_u16(&val, *argv, 0))
-				invarg("invalid \"termination\" value\n",
+				invarg("invalid \"termination\" value",
 				       *argv);
 			addattr16(n, 1024, IFLA_CAN_TERMINATION, val);
 		} else if (matches(*argv, "help") == 0) {
@@ -292,19 +295,21 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 
 	if (bt.bitrate || bt.tq)
 		addattr_l(n, 1024, IFLA_CAN_BITTIMING, &bt, sizeof(bt));
-	if (dbt.bitrate || dbt.tq)
-		addattr_l(n, 1024, IFLA_CAN_DATA_BITTIMING, &dbt, sizeof(dbt));
+	if (fd_dbt.bitrate || fd_dbt.tq)
+		addattr_l(n, 1024, IFLA_CAN_DATA_BITTIMING, &fd_dbt, sizeof(fd_dbt));
 	if (cm.mask)
 		addattr_l(n, 1024, IFLA_CAN_CTRLMODE, &cm, sizeof(cm));
 
-	if (tdcv != -1 || tdco != -1 || tdcf != -1) {
-		tdc = addattr_nest(n, 1024, IFLA_CAN_TDC | NLA_F_NESTED);
-		if (tdcv != -1)
-			addattr32(n, 1024, IFLA_CAN_TDC_TDCV, tdcv);
-		if (tdco != -1)
-			addattr32(n, 1024, IFLA_CAN_TDC_TDCO, tdco);
-		if (tdcf != -1)
-			addattr32(n, 1024, IFLA_CAN_TDC_TDCF, tdcf);
+	if (fd.tdcv != -1 || fd.tdco != -1 || fd.tdcf != -1) {
+		struct rtattr *tdc = addattr_nest(n, 1024,
+						  IFLA_CAN_TDC | NLA_F_NESTED);
+
+		if (fd.tdcv != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCV, fd.tdcv);
+		if (fd.tdco != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCO, fd.tdco);
+		if (fd.tdcf != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCF, fd.tdcf);
 		addattr_nest_end(n, tdc);
 	}
 
@@ -337,7 +342,7 @@ can_print_timing_min_max(const char *json_attr, const char *fp_attr,
 	close_json_object();
 }
 
-static void can_print_tdc_opt(FILE *f, struct rtattr *tdc_attr)
+static void can_print_tdc_opt(struct rtattr *tdc_attr)
 {
 	struct rtattr *tb[IFLA_CAN_TDC_MAX + 1];
 
@@ -365,7 +370,7 @@ static void can_print_tdc_opt(FILE *f, struct rtattr *tdc_attr)
 	}
 }
 
-static void can_print_tdc_const_opt(FILE *f, struct rtattr *tdc_attr)
+static void can_print_tdc_const_opt(struct rtattr *tdc_attr)
 {
 	struct rtattr *tb[IFLA_CAN_TDC_MAX + 1];
 
@@ -393,7 +398,7 @@ static void can_print_tdc_const_opt(FILE *f, struct rtattr *tdc_attr)
 	close_json_object();
 }
 
-static void can_print_ctrlmode_ext(FILE *f, struct rtattr *ctrlmode_ext_attr,
+static void can_print_ctrlmode_ext(struct rtattr *ctrlmode_ext_attr,
 				   __u32 cm_flags)
 {
 	struct rtattr *tb[IFLA_CAN_CTRLMODE_MAX + 1];
@@ -417,7 +422,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		print_ctrlmode(PRINT_ANY, cm->flags, "ctrlmode");
 		if (tb[IFLA_CAN_CTRLMODE_EXT])
-			can_print_ctrlmode_ext(f, tb[IFLA_CAN_CTRLMODE_EXT],
+			can_print_ctrlmode_ext(tb[IFLA_CAN_CTRLMODE_EXT],
 					       cm->flags);
 	}
 
@@ -542,7 +547,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_uint(PRINT_ANY, "brp", " dbrp %u", dbt->brp);
 
 		if (tb[IFLA_CAN_TDC])
-			can_print_tdc_opt(f, tb[IFLA_CAN_TDC]);
+			can_print_tdc_opt(tb[IFLA_CAN_TDC]);
 
 		close_json_object();
 	}
@@ -566,7 +571,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_uint(PRINT_ANY, "brp_inc", " dbrp_inc %u", dbtc->brp_inc);
 
 		if (tb[IFLA_CAN_TDC])
-			can_print_tdc_const_opt(f, tb[IFLA_CAN_TDC]);
+			can_print_tdc_const_opt(tb[IFLA_CAN_TDC]);
 
 		close_json_object();
 	}
