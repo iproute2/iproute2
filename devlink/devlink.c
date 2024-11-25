@@ -846,7 +846,7 @@ static int ifname_map_rtnl_init(struct dl *dl, const char *ifname)
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtnl_handle rth;
 	struct ifinfomsg *ifi;
-	struct nlmsghdr *n;
+	struct nlmsghdr *n = NULL;
 	int len;
 	int err;
 
@@ -887,6 +887,7 @@ static int ifname_map_rtnl_init(struct dl *dl, const char *ifname)
 	err = ifname_map_rtnl_port_parse(dl, ifname, tb[IFLA_DEVLINK_PORT]);
 
 out:
+	free(n);
 	rtnl_close(&rth);
 	return err;
 }
