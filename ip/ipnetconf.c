@@ -197,6 +197,7 @@ static int do_show(int argc, char **argv)
 			exit(2);
 
 		print_netconf2(answer, stdout);
+		free(answer);
 	} else {
 		rth.flags = RTNL_HANDLE_F_SUPPRESS_NLERR;
 dump:
