@@ -5089,7 +5089,7 @@ static int cmd_port_param_show(struct dl *dl)
 
 	err = dl_argv_parse_with_selector(dl, &flags,
 					  DEVLINK_CMD_PORT_PARAM_GET,
-					  DL_OPT_HANDLE | DL_OPT_PARAM_NAME, 0,
+					  DL_OPT_HANDLEP | DL_OPT_PARAM_NAME, 0,
 					  DL_OPT_HANDLE | DL_OPT_HANDLEP, 0);
 	if (err)
 		return err;
