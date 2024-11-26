@@ -2410,7 +2410,7 @@ static int dl_argv_parse_with_selector(struct dl *dl, uint16_t *flags,
 						o_optional);
 			if (err == -ENOENT || !err)
 				goto dump_parse;
-			goto do_parse;
+			break;
 		}
 	}
 
