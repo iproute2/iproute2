@@ -194,8 +194,8 @@ ip-link \- network device configuration
 .B ip link show
 .RI "[ " DEVICE " | "
 .B group
-.IR GROUP " ] ["
-.BR up " ] ["
+.IR GROUP " ] [ { "
+.BR up " | " down " } ] ["
 .B master
 .IR DEVICE " ] ["
 .B type
@@ -2902,6 +2902,10 @@ specifies what group of devices to show.
 .TP
 .B up
 only display running interfaces.
+
+.TP
+.B down
+only display not running interfaces.
 
 .TP
 .BI master " DEVICE "

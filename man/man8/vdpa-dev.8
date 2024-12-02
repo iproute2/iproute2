@@ -50,6 +50,12 @@ vdpa-dev \- vdpa device configuration
 .B qidx
 .I QUEUE_INDEX
 
+.ti -8
+.B vdpa dev set
+.B name
+.I NAME
+.B mac
+.RI "[ " MACADDR " ]"
 
 .SH "DESCRIPTION"
 .SS vdpa dev show - display vdpa device attributes
@@ -120,6 +126,15 @@ VDPA_DEVICE_NAME
 .BI qidx " QUEUE_INDEX"
 - specifies the virtqueue index to query
 
+.SS vdpa dev set - set the configuration to the vdpa device.
+
+.BI name " NAME"
+-Name of the vdpa device to configure.
+
+.BI mac " MACADDR"
+- specifies the mac address for the vdpa device.
+This is applicable only for the network type of vdpa device.
+
 .SH "EXAMPLES"
 .PP
 vdpa dev show
@@ -170,6 +185,11 @@ Shows the vdpa device configuration of device named foo.
 vdpa dev vstats show vdpa0 qidx 1
 .RS 4
 Shows vendor specific statistics information for vdpa device vdpa0 and virtqueue index 1
+.RE
+.PP
+vdpa dev set name vdpa0 mac 00:11:22:33:44:55
+.RS 4
+Set a specific MAC address to vdpa device vdpa0
 .RE
 
 .SH SEE ALSO

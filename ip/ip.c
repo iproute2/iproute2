@@ -27,8 +27,6 @@
 #endif
 
 int preferred_family = AF_UNSPEC;
-int human_readable;
-int use_iec;
 int show_stats;
 int show_details;
 int oneline;

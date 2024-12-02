@@ -36,6 +36,8 @@ ip-rule \- routing policy database management
 .IR PREFIX " ] [ "
 .B  tos
 .IR TOS " ] [ "
+.B  dscp
+.IR DSCP " ] [ "
 .B  fwmark
 .IR FWMARK\fR[\fB/\fIMASK "] ] [ "
 .B  iif
@@ -233,6 +235,21 @@ a device.
 .TP
 .BI dsfield " TOS"
 select the TOS value to match.
+
+.TP
+.BI dscp " DSCP"
+select the DSCP value to match. DSCP values can be written either directly as
+numeric values (valid values are 0-63), or using symbolic names specified in
+.BR @SYSCONF_USR_DIR@/rt_dsfield " or " @SYSCONF_ETC_DIR@/rt_dsfield
+(has precedence if exists).
+However, note that the file specifies full 8-bit dsfield values, whereas
+.B ip rule
+will only use the higher six bits.
+.B ip rule show
+will similarly format DSCP values as symbolic names if possible. The
+command line option
+.B -N
+turns the show translation off.
 
 .TP
 .BI fwmark " MARK"

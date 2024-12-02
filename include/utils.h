@@ -37,6 +37,7 @@ extern int batch_mode;
 extern int numeric;
 extern bool do_all;
 extern int echo_request;
+extern int use_iec;
 
 #ifndef CONF_USR_DIR
 #define CONF_USR_DIR "/usr/lib/iproute2"
@@ -336,6 +337,7 @@ int get_time(unsigned int *time, const char *str);
 int get_time64(__s64 *time, const char *str);
 char *sprint_time(__u32 time, char *buf);
 char *sprint_time64(__s64 time, char *buf);
+void print_num(FILE *fp, unsigned int width, uint64_t count);
 
 int do_batch(const char *name, bool force,
 	     int (*cmd)(int argc, char *argv[], void *user), void *user);

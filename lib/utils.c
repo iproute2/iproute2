@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <math.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -38,6 +39,8 @@
 int resolve_hosts;
 int timestamp_short;
 int pretty;
+int use_iec;
+int human_readable;
 const char *_SL_ = "\n";
 
 static int open_fds[5];
@@ -2021,6 +2024,46 @@ FILE *generic_proc_open(const char *env, const char *name)
 	return fopen(p, "r");
 }
 
+void print_num(FILE *fp, unsigned int width, uint64_t count)
+{
+	const char *prefix = "kMGTPE";
+	const unsigned int base = use_iec ? 1024 : 1000;
+	uint64_t powi = 1;
+	uint16_t powj = 1;
+	uint8_t precision = 2;
+	char buf[64];
+
+	if (!human_readable || count < base) {
+		fprintf(fp, "%*"PRIu64" ", width, count);
+		return;
+	}
+
+	/* increase value by a factor of 1000/1024 and print
+	 * if result is something a human can read
+	 */
+	for (;;) {
+		powi *= base;
+		if (count / base < powi)
+			break;
+
+		if (!prefix[1])
+			break;
+		++prefix;
+	}
+
+	/* try to guess a good number of digits for precision */
+	for (; precision > 0; precision--) {
+		powj *= 10;
+		if (count / powi < powj)
+			break;
+	}
+
+	snprintf(buf, sizeof(buf), "%.*f%c%s", precision,
+		 (double) count / powi, *prefix, use_iec ? "i" : "");
+
+	fprintf(fp, "%*s ", width, buf);
+}
+
 int open_fds_add(int fd)
 {
 	if (open_fds_cnt >= ARRAY_SIZE(open_fds))
@@ -2029,7 +2072,6 @@ int open_fds_add(int fd)
 	open_fds[open_fds_cnt++] = fd;
 	return 0;
 }
-
 
 void open_fds_close(void)
 {

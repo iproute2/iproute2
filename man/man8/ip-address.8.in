@@ -32,7 +32,7 @@ ip-address \- protocol address management
 .B  to
 .IR PREFIX " ] [ " FLAG-LIST " ] [ "
 .B  label
-.IR PATTERN " ] [ " up " ]"
+.IR PATTERN " ] [ { " up " | " down " } ]"
 
 .ti -8
 .BR "ip address" " [ " show  " [ " dev
@@ -48,8 +48,8 @@ ip-address \- protocol address management
 .B  type
 .IR TYPE " ] [ "
 .B vrf
-.IR NAME " ] [ "
-.BR up " ] ["
+.IR NAME " ] [ { "
+.BR up " | " down " } ] ["
 .BR nomaster " ]"
 .B proto
 .IR ADDRPROTO " ] ]"
@@ -303,7 +303,10 @@ receive multicast traffic.
 the protocol identifier of this route.
 .I ADDRPROTO
 may be a number or a string from the file
-.BR "/etc/iproute2/rt_addrprotos" .
+.BR @SYSCONF_USR_DIR@/rt_addrprotos " or " @SYSCONF_ETC_DIR@/rt_addrprotos
+(has precedence if exists).  A directory named
+.BR rt_addrprotos.d
+is also scanned in either location.
 If the protocol ID is not given,
 
 .B ip assumes protocol 0. Several protocol
@@ -377,6 +380,10 @@ output.
 .TP
 .B up
 only list running interfaces.
+
+.TP
+.B down
+only list not running interfaces.
 
 .TP
 .B nomaster

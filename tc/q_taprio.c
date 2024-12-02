@@ -53,6 +53,10 @@ static const char *entry_cmd_to_str(__u8 cmd)
 	switch (cmd) {
 	case TC_TAPRIO_CMD_SET_GATES:
 		return "S";
+	case TC_TAPRIO_CMD_SET_AND_HOLD:
+		return "H";
+	case TC_TAPRIO_CMD_SET_AND_RELEASE:
+		return "R";
 	default:
 		return "Invalid";
 	}
@@ -62,6 +66,10 @@ static int str_to_entry_cmd(const char *str)
 {
 	if (strcmp(str, "S") == 0)
 		return TC_TAPRIO_CMD_SET_GATES;
+	else if (strcmp(str, "H") == 0)
+		return TC_TAPRIO_CMD_SET_AND_HOLD;
+	else if (strcmp(str, "R") == 0)
+		return TC_TAPRIO_CMD_SET_AND_RELEASE;
 
 	return -1;
 }

@@ -52,12 +52,12 @@ static void usage(void)
 		"Usage: ip address {add|change|replace} IFADDR dev IFNAME [ LIFETIME ]\n"
 		"                                                      [ CONFFLAG-LIST ]\n"
 		"       ip address del IFADDR dev IFNAME [mngtmpaddr]\n"
-		"       ip address {save|flush} [ dev IFNAME ] [ scope SCOPE-ID ]\n"
-		"                            [ to PREFIX ] [ FLAG-LIST ] [ label LABEL ] [up]\n"
+		"       ip address {save|flush} [ dev IFNAME ] [ scope SCOPE-ID ] [ to PREFIX ]\n"
+		"                            [ FLAG-LIST ] [ label LABEL ] [ { up | down } ]\n"
 		"       ip address [ show [ dev IFNAME ] [ scope SCOPE-ID ] [ master DEVICE ]\n"
 		"                         [ nomaster ]\n"
 		"                         [ type TYPE ] [ to PREFIX ] [ FLAG-LIST ]\n"
-		"                         [ label LABEL ] [up] [ vrf NAME ]\n"
+		"                         [ label LABEL ] [ { up | down } ] [ vrf NAME ]\n"
 		"                         [ proto ADDRPROTO ] ]\n"
 		"       ip address {showdump|restore}\n"
 		"IFADDR := PREFIX | ADDR peer PREFIX\n"
@@ -568,46 +568,6 @@ void size_columns(unsigned int cols[], unsigned int n, ...)
 	va_end(args);
 }
 
-void print_num(FILE *fp, unsigned int width, uint64_t count)
-{
-	const char *prefix = "kMGTPE";
-	const unsigned int base = use_iec ? 1024 : 1000;
-	uint64_t powi = 1;
-	uint16_t powj = 1;
-	uint8_t precision = 2;
-	char buf[64];
-
-	if (!human_readable || count < base) {
-		fprintf(fp, "%*"PRIu64" ", width, count);
-		return;
-	}
-
-	/* increase value by a factor of 1000/1024 and print
-	 * if result is something a human can read
-	 */
-	for (;;) {
-		powi *= base;
-		if (count / base < powi)
-			break;
-
-		if (!prefix[1])
-			break;
-		++prefix;
-	}
-
-	/* try to guess a good number of digits for precision */
-	for (; precision > 0; precision--) {
-		powj *= 10;
-		if (count / powi < powj)
-			break;
-	}
-
-	snprintf(buf, sizeof(buf), "%.*f%c%s", precision,
-		 (double) count / powi, *prefix, use_iec ? "i" : "");
-
-	fprintf(fp, "%*s ", width, buf);
-}
-
 static void print_vf_stats64(FILE *fp, struct rtattr *vfstats)
 {
 	struct rtattr *vf[IFLA_VF_STATS_MAX + 1];
@@ -1020,6 +980,8 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
 		return -1;
 	if (filter.up && !(ifi->ifi_flags&IFF_UP))
+		return -1;
+	if (filter.down && ifi->ifi_flags&IFF_UP)
 		return -1;
 
 	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
@@ -1760,6 +1722,9 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 		if (filter.up && !(ifi->ifi_flags&IFF_UP))
 			continue;
 
+		if (filter.down && ifi->ifi_flags&IFF_UP)
+			continue;
+
 		open_json_object(NULL);
 		print_addrinfo(n, fp);
 		close_json_object();
@@ -2180,6 +2145,8 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			filter.scope = scope;
 		} else if (strcmp(*argv, "up") == 0) {
 			filter.up = 1;
+		} else if (strcmp(*argv, "down") == 0) {
+			filter.down = 1;
 		} else if (get_filter(*argv) == 0) {
 
 		} else if (strcmp(*argv, "label") == 0) {
