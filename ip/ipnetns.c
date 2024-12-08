@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <limits.h>
 #include <linux/limits.h>
 
 #include <linux/net_namespace.h>

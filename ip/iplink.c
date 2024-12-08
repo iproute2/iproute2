@@ -21,6 +21,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <stdbool.h>
+#include <limits.h>
 #include <linux/mpls.h>
 
 #include "rt_names.h"
