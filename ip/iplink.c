@@ -11,17 +11,14 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <errno.h>
-#include <sys/socket.h>
-#include <linux/if.h>
-#include <linux/if_packet.h>
-#include <linux/if_ether.h>
-#include <linux/sockios.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <stdbool.h>
-#include <linux/mpls.h>
+#include <strings.h>
+#include <limits.h>
+
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <linux/if.h>
+#include <linux/if_ether.h>
 
 #include "rt_names.h"
 #include "utils.h"
