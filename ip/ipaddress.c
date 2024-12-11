@@ -1504,7 +1504,10 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 
 	SPRINT_BUF(b1);
 
-	if (n->nlmsg_type != RTM_NEWADDR && n->nlmsg_type != RTM_DELADDR)
+	if (n->nlmsg_type != RTM_NEWADDR &&
+	    n->nlmsg_type != RTM_DELADDR &&
+	    n->nlmsg_type != RTM_NEWMULTICAST &&
+	    n->nlmsg_type != RTM_DELMULTICAST)
 		return 0;
 	len -= NLMSG_LENGTH(sizeof(*ifa));
 	if (len < 0) {
@@ -1564,7 +1567,7 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 
 	print_headers(fp, "[ADDR]");
 
-	if (n->nlmsg_type == RTM_DELADDR)
+	if (n->nlmsg_type == RTM_DELADDR || n->nlmsg_type == RTM_DELMULTICAST)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (!brief) {
@@ -1637,6 +1640,16 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 				   "%s ",
 				   format_host_rta(ifa->ifa_family,
 						   rta_tb[IFA_ANYCAST]));
+	}
+
+	if (rta_tb[IFA_MULTICAST]) {
+		print_string(PRINT_FP, NULL, "%s ", "mcast");
+		print_color_string(PRINT_ANY,
+				   ifa_family_color(ifa->ifa_family),
+				   "multicast",
+				   "%s ",
+				   format_host_rta(ifa->ifa_family,
+						   rta_tb[IFA_MULTICAST]));
 	}
 
 	print_string(PRINT_ANY,
