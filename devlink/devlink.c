@@ -846,7 +846,7 @@ static int ifname_map_rtnl_init(struct dl *dl, const char *ifname)
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct rtnl_handle rth;
 	struct ifinfomsg *ifi;
-	struct nlmsghdr *n;
+	struct nlmsghdr *n = NULL;
 	int len;
 	int err;
 
@@ -887,6 +887,7 @@ static int ifname_map_rtnl_init(struct dl *dl, const char *ifname)
 	err = ifname_map_rtnl_port_parse(dl, ifname, tb[IFLA_DEVLINK_PORT]);
 
 out:
+	free(n);
 	rtnl_close(&rth);
 	return err;
 }
@@ -2409,7 +2410,7 @@ static int dl_argv_parse_with_selector(struct dl *dl, uint16_t *flags,
 						o_optional);
 			if (err == -ENOENT || !err)
 				goto dump_parse;
-			goto do_parse;
+			break;
 		}
 	}
 
@@ -5088,7 +5089,7 @@ static int cmd_port_param_show(struct dl *dl)
 
 	err = dl_argv_parse_with_selector(dl, &flags,
 					  DEVLINK_CMD_PORT_PARAM_GET,
-					  DL_OPT_HANDLE | DL_OPT_PARAM_NAME, 0,
+					  DL_OPT_HANDLEP | DL_OPT_PARAM_NAME, 0,
 					  DL_OPT_HANDLE | DL_OPT_HANDLEP, 0);
 	if (err)
 		return err;

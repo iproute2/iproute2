@@ -55,6 +55,10 @@ struct db_names *db_names_alloc(void)
 
 	db->size = MAX_ENTRIES;
 	db->hash = calloc(db->size, sizeof(struct db_entry *));
+	if (!db->hash) {
+		free(db);
+		return NULL;
+	}
 
 	return db;
 }
