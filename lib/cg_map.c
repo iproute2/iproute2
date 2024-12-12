@@ -9,8 +9,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <limits.h>
+
 #include <linux/types.h>
-#include <linux/limits.h>
 #include <ftw.h>
 
 #include "cg_map.h"
