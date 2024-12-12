@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <endian.h>
 #include <asm/types.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
