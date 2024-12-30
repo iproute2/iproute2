@@ -47,7 +47,9 @@ ip-route \- routing table management
 .B  dport
 .IR NUMBER " ] ["
 .B  as
-.IR ADDRESS " ]"
+.IR ADDRESS " ] ["
+.B  flowlabel
+.IR FLOWLABEL " ]
 
 .ti -8
 .BR "ip route" " { " add " | " del " | " change " | " append " | "\
@@ -1315,6 +1317,10 @@ if no source address
 was given, relookup the route with the source set to the preferred
 address received from the first lookup.
 If policy routing is used, it may be a different route.
+
+.TP
+.BI flowlabel " FLOWLABEL"
+ipv6 flow label as seen by the route lookup
 
 .P
 Note that this operation is not equivalent to
