@@ -1507,7 +1507,9 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type != RTM_NEWADDR &&
 	    n->nlmsg_type != RTM_DELADDR &&
 	    n->nlmsg_type != RTM_NEWMULTICAST &&
-	    n->nlmsg_type != RTM_DELMULTICAST)
+	    n->nlmsg_type != RTM_DELMULTICAST &&
+	    n->nlmsg_type != RTM_NEWANYCAST &&
+	    n->nlmsg_type != RTM_DELANYCAST)
 		return 0;
 	len -= NLMSG_LENGTH(sizeof(*ifa));
 	if (len < 0) {
@@ -1567,7 +1569,9 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 
 	print_headers(fp, "[ADDR]");
 
-	if (n->nlmsg_type == RTM_DELADDR || n->nlmsg_type == RTM_DELMULTICAST)
+	if (n->nlmsg_type == RTM_DELADDR ||
+	    n->nlmsg_type == RTM_DELMULTICAST ||
+	    n->nlmsg_type == RTM_DELANYCAST)
 		print_bool(PRINT_ANY, "deleted", "Deleted ", true);
 
 	if (!brief) {
