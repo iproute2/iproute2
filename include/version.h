@@ -1,1 +1,1 @@
-static const char version[] = "6.12.0";
+static const char version[] = "6.13.0";
