@@ -52,6 +52,7 @@ static void print_explain(FILE *f)
 		"		[ dev PHYS_DEV ]\n"
 		"		[ dstport PORT ]\n"
 		"		[ srcport MIN MAX ]\n"
+		"		[ reserved_bits VALUE ]\n"
 		"		[ [no]learning ]\n"
 		"		[ [no]proxy ]\n"
 		"		[ [no]rsc ]\n"
@@ -337,6 +338,17 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			check_duparg(&attrs, IFLA_VXLAN_LOCALBYPASS,
 				     *argv, *argv);
 			addattr8(n, 1024, IFLA_VXLAN_LOCALBYPASS, 0);
+		} else if (strcmp(*argv, "reserved_bits") == 0) {
+			NEXT_ARG();
+			__be64 bits;
+
+			check_duparg(&attrs, IFLA_VXLAN_RESERVED_BITS,
+				     *argv, *argv);
+			if (get_be64(&bits, *argv, 0))
+				invarg("reserved_bits", *argv);
+			addattr_l(n, 1024, IFLA_VXLAN_RESERVED_BITS,
+				  &bits, sizeof(bits));
+
 		} else if (!matches(*argv, "external")) {
 			check_duparg(&attrs, IFLA_VXLAN_COLLECT_METADATA,
 				     *argv, *argv);
@@ -600,6 +612,14 @@ static void vxlan_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_VXLAN_LIMIT] &&
 	    ((maxaddr = rta_getattr_u32(tb[IFLA_VXLAN_LIMIT])) != 0))
 		print_uint(PRINT_ANY, "limit", "maxaddr %u ", maxaddr);
+
+	if (tb[IFLA_VXLAN_RESERVED_BITS]) {
+		__be64 reserved_bits =
+			rta_getattr_u64(tb[IFLA_VXLAN_RESERVED_BITS]);
+
+		print_0xhex(PRINT_ANY, "reserved_bits",
+			    "reserved_bits %#llx ", ntohll(reserved_bits));
+	}
 
 	if (tb[IFLA_VXLAN_GBP])
 		print_null(PRINT_ANY, "gbp", "gbp ", NULL);

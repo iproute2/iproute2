@@ -632,6 +632,8 @@ the following additional arguments are supported:
 ] [
 .BI srcport " MIN MAX "
 ] [
+.BI reserved_bits " VALUE "
+] [
 .RB [ no ] learning
 ] [
 .RB [ no ] proxy
@@ -724,6 +726,13 @@ bit is not set.
 .BI srcport " MIN MAX"
 - specifies the range of port numbers to use as UDP
 source ports to communicate to the remote VXLAN tunnel endpoint.
+
+.sp
+.BI reserved_bits " VALUE "
+- by default the kernel rejects packets that have bits set outside of the fields
+required by the features enabled on the VXLAN netdevice. \fBreserved_bits\fR is
+a 64-bit quantity specifying which bits it should be possible to set in a VXLAN
+header. Each bit set in the value is a tolerated bit set in a packet.
 
 .sp
 .RB [ no ] learning
