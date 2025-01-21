@@ -58,7 +58,9 @@ ip-rule \- routing policy database management
 .IR NUMBER " | "
 .IR NUMBER "-" NUMBER " ] ] [ "
 .B  tun_id
-.IR TUN_ID " ]"
+.IR TUN_ID " ] [ "
+.B  flowlabel
+.IR FLOWLABEL\fR[\fB/\fIMASK "] ]"
 .BR
 
 
@@ -321,6 +323,10 @@ routes) or a local host address (or even zero).
 In the last case the router does not translate the packets, but
 masquerades them to this address.
 Using map-to instead of nat means the same thing.
+
+.TP
+.BI flowlabel " FLOWLABEL\fR[\fB/\fIMASK\fR]"
+select the IPv6 flow label to match with an optional mask.
 
 .B Warning:
 Changes to the RPDB made with these commands do not become active

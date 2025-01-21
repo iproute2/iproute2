@@ -32,7 +32,8 @@ static void explain(void)
 		"		[ timer_slack TIME]\n"
 		"		[ ce_threshold TIME ]\n"
 		"		[ horizon TIME ]\n"
-		"		[ horizon_{cap|drop} ]\n");
+		"		[ horizon_{cap|drop} ]\n"
+		"		[ offload_horizon TIME ]\n");
 }
 
 static unsigned int ilog2(unsigned int val)
@@ -64,6 +65,7 @@ static int fq_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 	unsigned int ce_threshold;
 	unsigned int timer_slack;
 	unsigned int horizon;
+	unsigned int offload_horizon;
 	__u8 horizon_drop = 255;
 	bool set_plimit = false;
 	bool set_flow_plimit = false;
@@ -79,6 +81,7 @@ static int fq_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 	bool set_horizon = false;
 	bool set_priomap = false;
 	bool set_weights = false;
+	bool set_offload_horizon = false;
 	int weights[FQ_BANDS];
 	int pacing = -1;
 	struct rtattr *tail;
@@ -155,6 +158,13 @@ static int fq_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 				return -1;
 			}
 			set_horizon = true;
+		} else if (strcmp(*argv, "offload_horizon") == 0) {
+			NEXT_ARG();
+			if (get_time(&offload_horizon, *argv)) {
+				fprintf(stderr, "Illegal \"offload_horizon\"\n");
+				return -1;
+			}
+			set_offload_horizon = true;
 		} else if (strcmp(*argv, "defrate") == 0) {
 			NEXT_ARG();
 			if (strchr(*argv, '%')) {
@@ -333,6 +343,9 @@ static int fq_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 	if (set_weights)
 		addattr_l(n, 1024, TCA_FQ_WEIGHTS,
 			  weights, sizeof(weights));
+	if (set_offload_horizon)
+		addattr_l(n, 1024, TCA_FQ_OFFLOAD_HORIZON,
+			  &offload_horizon, sizeof(offload_horizon));
 	addattr_nest_end(n, tail);
 	return 0;
 }
@@ -348,6 +361,7 @@ static int fq_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt
 	unsigned int orphan_mask;
 	unsigned int ce_threshold;
 	unsigned int timer_slack;
+	__u32 offload_horizon;
 	unsigned int horizon;
 	__u8 horizon_drop;
 
@@ -485,6 +499,14 @@ static int fq_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt
 			print_null(PRINT_ANY, "horizon_cap", "horizon_cap ", NULL);
 		else
 			print_null(PRINT_ANY, "horizon_drop", "horizon_drop ", NULL);
+	}
+
+	if (tb[TCA_FQ_OFFLOAD_HORIZON] &&
+	    RTA_PAYLOAD(tb[TCA_FQ_OFFLOAD_HORIZON]) >= sizeof(__u32)) {
+		offload_horizon = rta_getattr_u32(tb[TCA_FQ_OFFLOAD_HORIZON]);
+		print_uint(PRINT_JSON, "offload_horizon", NULL, offload_horizon);
+		print_string(PRINT_FP, NULL, "offload_horizon %s ",
+			     sprint_time(offload_horizon, b1));
 	}
 
 	return 0;

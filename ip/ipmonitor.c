@@ -30,8 +30,8 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: ip monitor [ all | OBJECTS ] [ FILE ] [ label ] [ all-nsid ]\n"
 		"                  [ dev DEVICE ]\n"
-		"OBJECTS :=  address | link | mroute | neigh | netconf |\n"
-		"            nexthop | nsid | prefix | route | rule | stats\n"
+		"OBJECTS :=  address | link | mroute | maddress | acaddress | neigh |\n"
+		"            netconf | nexthop | nsid | prefix | route | rule | stats\n"
 		"FILE := file FILENAME\n");
 	exit(-1);
 }
@@ -152,6 +152,13 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 		ipstats_print(n, arg);
 		return 0;
 
+	case RTM_DELMULTICAST:
+	case RTM_NEWMULTICAST:
+	case RTM_DELANYCAST:
+	case RTM_NEWANYCAST:
+		print_addrinfo(n, arg);
+		return 0;
+
 	case NLMSG_ERROR:
 	case NLMSG_NOOP:
 	case NLMSG_DONE:
@@ -178,6 +185,8 @@ static int accept_msg(struct rtnl_ctrl_data *ctrl,
 #define IPMON_LRULE		BIT(8)
 #define IPMON_LNSID		BIT(9)
 #define IPMON_LNEXTHOP		BIT(10)
+#define IPMON_LMADDR		BIT(11)
+#define IPMON_LACADDR		BIT(12)
 
 #define IPMON_L_ALL		(~0)
 
@@ -202,6 +211,10 @@ int do_ipmonitor(int argc, char **argv)
 			lmask |= IPMON_LLINK;
 		} else if (matches(*argv, "address") == 0) {
 			lmask |= IPMON_LADDR;
+		} else if (matches(*argv, "maddress") == 0) {
+			lmask |= IPMON_LMADDR;
+		} else if (strcmp(*argv, "acaddress") == 0) {
+			lmask |= IPMON_LACADDR;
 		} else if (matches(*argv, "route") == 0) {
 			lmask |= IPMON_LROUTE;
 		} else if (matches(*argv, "mroute") == 0) {
@@ -324,6 +337,30 @@ int do_ipmonitor(int argc, char **argv)
 	    nmask & IPMON_LSTATS) {
 		fprintf(stderr, "Failed to add stats group to list\n");
 		exit(1);
+	}
+
+	if (lmask & IPMON_LMADDR) {
+		if ((!preferred_family || preferred_family == AF_INET) &&
+		    rtnl_add_nl_group(&rth, RTNLGRP_IPV4_MCADDR) < 0) {
+			fprintf(stderr,
+				"Failed to add ipv4 mcaddr group to list\n");
+			exit(1);
+		}
+		if ((!preferred_family || preferred_family == AF_INET6) &&
+		    rtnl_add_nl_group(&rth, RTNLGRP_IPV6_MCADDR) < 0) {
+			fprintf(stderr,
+				"Failed to add ipv6 mcaddr group to list\n");
+			exit(1);
+		}
+	}
+
+	if (lmask & IPMON_LACADDR) {
+		if ((!preferred_family || preferred_family == AF_INET6) &&
+		    rtnl_add_nl_group(&rth, RTNLGRP_IPV6_ACADDR) < 0) {
+			fprintf(stderr,
+				"Failed to add ipv6 acaddr group to list\n");
+			exit(1);
+		}
 	}
 
 	if (listen_all_nsid && rtnl_listen_all_nsid(&rth) < 0)

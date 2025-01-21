@@ -67,7 +67,7 @@ static void usage(void)
 		"                            [ mark NUMBER ] [ vrf NAME ]\n"
 		"                            [ uid NUMBER ] [ ipproto PROTOCOL ]\n"
 		"                            [ sport NUMBER ] [ dport NUMBER ]\n"
-		"                            [ as ADDRESS ]\n"
+		"                            [ as ADDRESS ] [ flowlabel FLOWLABEL ]\n"
 		"       ip route { add | del | change | append | replace } ROUTE\n"
 		"SELECTOR := [ root PREFIX ] [ match PREFIX ] [ exact PREFIX ]\n"
 		"            [ table TABLE_ID ] [ vrf NAME ] [ proto RTPROTO ]\n"
@@ -2129,6 +2129,14 @@ static int iproute_get(int argc, char **argv)
 				invarg("Invalid \"ipproto\" value\n",
 				       *argv);
 			addattr8(&req.n, sizeof(req), RTA_IP_PROTO, ipproto);
+		} else if (strcmp(*argv, "flowlabel") == 0) {
+			__be32 flowlabel;
+
+			NEXT_ARG();
+			if (get_be32(&flowlabel, *argv, 0))
+				invarg("invalid flowlabel", *argv);
+			addattr32(&req.n, sizeof(req), RTA_FLOWLABEL,
+				  flowlabel);
 		} else {
 			inet_prefix addr;
 
