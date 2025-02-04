@@ -665,7 +665,8 @@ void print_tm(const struct tcf_t *tm)
 			   tm->expires / hz);
 }
 
-static void print_tcstats_basic_hw(struct rtattr **tbs, const char *prefix)
+static void print_tcstats_basic_hw(struct rtattr **tbs, const char *prefix,
+				   __u64 packets64, __u64 packets64_hw)
 {
 	struct gnet_stats_basic bs_hw;
 
@@ -674,8 +675,9 @@ static void print_tcstats_basic_hw(struct rtattr **tbs, const char *prefix)
 
 	memcpy(&bs_hw, RTA_DATA(tbs[TCA_STATS_BASIC_HW]),
 	       MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC_HW]), sizeof(bs_hw)));
+	packets64_hw = packets64_hw ? : bs_hw.packets;
 
-	if (bs_hw.bytes == 0 && bs_hw.packets == 0)
+	if (bs_hw.bytes == 0 && packets64_hw == 0)
 		return;
 
 	if (tbs[TCA_STATS_BASIC]) {
@@ -684,15 +686,16 @@ static void print_tcstats_basic_hw(struct rtattr **tbs, const char *prefix)
 		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]),
 		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]),
 			   sizeof(bs)));
+		packets64 = packets64 ? : bs.packets;
 
-		if (bs.bytes >= bs_hw.bytes && bs.packets >= bs_hw.packets) {
+		if (bs.bytes >= bs_hw.bytes && packets64 >= packets64_hw) {
 			print_nl();
 			print_string(PRINT_FP, NULL, "%s", prefix);
 			print_lluint(PRINT_ANY, "sw_bytes",
 				     "Sent software %llu bytes",
 				     bs.bytes - bs_hw.bytes);
-			print_uint(PRINT_ANY, "sw_packets", " %u pkt",
-				   bs.packets - bs_hw.packets);
+			print_lluint(PRINT_ANY, "sw_packets", " %llu pkt",
+				     packets64 - packets64_hw);
 		}
 	}
 
@@ -700,21 +703,40 @@ static void print_tcstats_basic_hw(struct rtattr **tbs, const char *prefix)
 	print_string(PRINT_FP, NULL, "%s", prefix);
 	print_lluint(PRINT_ANY, "hw_bytes", "Sent hardware %llu bytes",
 		     bs_hw.bytes);
-	print_uint(PRINT_ANY, "hw_packets", " %u pkt", bs_hw.packets);
+	print_lluint(PRINT_ANY, "hw_packets", " %llu pkt", packets64_hw);
+}
+
+static void parse_packets64(const struct rtattr *nest, __u64 *p_packets64,
+			    __u64 *p_packets64_hw)
+{
+	unsigned short prev_type = __TCA_STATS_MAX;
+	const struct rtattr *pos;
+
+	/* 'TCA_STATS_PKT64' can appear twice in the 'TCA_ACT_STATS' nest.
+	 * Whether the attribute carries the combined or hardware only
+	 * statistics depends on the attribute that precedes it in the nest.
+	 */
+	rtattr_for_each_nested(pos, nest) {
+		if (pos->rta_type == TCA_STATS_PKT64 &&
+		    prev_type == TCA_STATS_BASIC)
+			*p_packets64 = rta_getattr_u64(pos);
+		else if (pos->rta_type == TCA_STATS_PKT64 &&
+			 prev_type == TCA_STATS_BASIC_HW)
+			*p_packets64_hw = rta_getattr_u64(pos);
+		prev_type = pos->rta_type;
+	}
 }
 
 void print_tcstats2_attr(struct rtattr *rta, const char *prefix, struct rtattr **xstats)
 {
 	struct rtattr *tbs[TCA_STATS_MAX + 1];
+	__u64 packets64 = 0, packets64_hw = 0;
 
 	parse_rtattr_nested(tbs, TCA_STATS_MAX, rta);
+	parse_packets64(rta, &packets64, &packets64_hw);
 
 	if (tbs[TCA_STATS_BASIC]) {
 		struct gnet_stats_basic bs = {0};
-		__u64 packets64 = 0;
-
-		if (tbs[TCA_STATS_PKT64])
-			packets64 = rta_getattr_u64(tbs[TCA_STATS_PKT64]);
 
 		memcpy(&bs, RTA_DATA(tbs[TCA_STATS_BASIC]),
 		       MIN(RTA_PAYLOAD(tbs[TCA_STATS_BASIC]), sizeof(bs)));
@@ -740,7 +762,7 @@ void print_tcstats2_attr(struct rtattr *rta, const char *prefix, struct rtattr *
 	}
 
 	if (tbs[TCA_STATS_BASIC_HW])
-		print_tcstats_basic_hw(tbs, prefix);
+		print_tcstats_basic_hw(tbs, prefix, packets64, packets64_hw);
 
 	if (tbs[TCA_STATS_RATE_EST64]) {
 		struct gnet_stats_rate_est64 re = {0};
