@@ -812,7 +812,7 @@ void duparg(const char *key, const char *arg)
 void duparg2(const char *key, const char *arg)
 {
 	fprintf(stderr,
-		"Error: either \"%s\" is duplicate, or \"%s\" is a garbage.\n",
+		"Error: either \"%s\" is duplicate, or \"%s\" is garbage.\n",
 		key, arg);
 	exit(-1);
 }

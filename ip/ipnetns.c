@@ -1,21 +1,21 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #define _ATFILE_SOURCE
-#include <sys/file.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <sys/inotify.h>
-#include <sys/mount.h>
-#include <sys/syscall.h>
+
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
-#include <sched.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <linux/limits.h>
+#include <limits.h>
+
+#include <sys/file.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/inotify.h>
+#include <sys/mount.h>
 
 #include <linux/net_namespace.h>
 
@@ -23,7 +23,6 @@
 #include "list.h"
 #include "ip_common.h"
 #include "namespace.h"
-#include "json_print.h"
 
 static int usage(void)
 {

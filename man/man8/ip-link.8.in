@@ -2476,7 +2476,7 @@ loaded under
 .B xdpgeneric object "|" pinned
 then the kernel will use the generic XDP variant instead of the native one.
 .B xdpdrv
-has the opposite effect of requestsing that the automatic fallback to the
+has the opposite effect of requesting that the automatic fallback to the
 generic XDP variant be disabled and in case driver is not XDP-capable error
 should be returned.
 .B xdpdrv
@@ -2485,7 +2485,7 @@ also disables hardware offloads.
 in ip link output indicates that the program has been offloaded to hardware
 and can also be used to request the "offload" mode, much like
 .B xdpgeneric
-it forces program to be installed specifically in HW/FW of the apater.
+it forces program to be installed specifically in HW/FW of the adapter.
 
 .B off
 (or
