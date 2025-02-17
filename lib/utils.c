@@ -304,10 +304,6 @@ int get_u64(__u64 *val, const char *arg, int base)
 	if (res == ULLONG_MAX && errno == ERANGE)
 		return -1;
 
-	/* in case ULL is 128 bits */
-	if (res > 0xFFFFFFFFFFFFFFFFULL)
-		return -1;
-
 	*val = res;
 	return 0;
 }
@@ -398,8 +394,6 @@ int get_s64(__s64 *val, const char *arg, int base)
 	if (!ptr || ptr == arg || *ptr)
 		return -1;
 	if ((res == LLONG_MIN || res == LLONG_MAX) && errno == ERANGE)
-		return -1;
-	if (res > INT64_MAX || res < INT64_MIN)
 		return -1;
 
 	*val = res;
