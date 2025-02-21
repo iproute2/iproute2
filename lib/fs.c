@@ -223,7 +223,8 @@ char *get_cgroup2_path(__u64 id, bool full)
 
 	fd = open_by_handle_at(mnt_fd, fhp, 0);
 	if (fd < 0) {
-		fprintf(stderr, "Failed to open cgroup2 by ID\n");
+		if (errno != ESTALE)
+			fprintf(stderr, "Failed to open cgroup2 by ID\n");
 		goto out;
 	}
 
