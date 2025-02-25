@@ -24,6 +24,7 @@
 #include "json_print.h"
 
 #define PORT_MAX_MASK 0xFFFF
+#define DSCP_MAX_MASK 0x3F
 
 enum list_action {
 	IPRULE_LIST,
@@ -48,7 +49,7 @@ static void usage(void)
 		"            [ ipproto PROTOCOL ]\n"
 		"            [ sport [ NUMBER[/MASK] | NUMBER-NUMBER ]\n"
 		"            [ dport [ NUMBER[/MASK] | NUMBER-NUMBER ] ]\n"
-		"            [ dscp DSCP ] [ flowlabel FLOWLABEL[/MASK] ]\n"
+		"            [ dscp DSCP[/MASK] ] [ flowlabel FLOWLABEL[/MASK] ]\n"
 		"ACTION := [ table TABLE_ID ]\n"
 		"          [ protocol PROTO ]\n"
 		"          [ nat ADDRESS ]\n"
@@ -238,14 +239,21 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 	}
 
 	if (filter.dscpmask) {
-		if (tb[FRA_DSCP]) {
-			__u8 dscp = rta_getattr_u8(tb[FRA_DSCP]);
+		__u8 dscp_mask = DSCP_MAX_MASK;
+		__u8 dscp;
 
-			if (filter.dscp != dscp)
-				return false;
-		} else {
+		if (!tb[FRA_DSCP])
 			return false;
-		}
+
+		dscp = rta_getattr_u8(tb[FRA_DSCP]);
+		if (filter.dscp != dscp)
+			return false;
+
+		if (tb[FRA_DSCP_MASK])
+			dscp_mask = rta_getattr_u8(tb[FRA_DSCP_MASK]);
+
+		if (filter.dscpmask != dscp_mask)
+			return false;
 	}
 
 	if (filter.flowlabel_mask) {
@@ -552,8 +560,24 @@ int print_rule(struct nlmsghdr *n, void *arg)
 	if (tb[FRA_DSCP]) {
 		__u8 dscp = rta_getattr_u8(tb[FRA_DSCP]);
 
-		print_string(PRINT_ANY, "dscp", " dscp %s",
-			     rtnl_dscp_n2a(dscp, b1, sizeof(b1)));
+		if (tb[FRA_DSCP_MASK]) {
+			__u8 mask = rta_getattr_u8(tb[FRA_DSCP_MASK]);
+
+			print_string(PRINT_JSON, "dscp", NULL,
+				     rtnl_dscp_n2a(dscp, b1, sizeof(b1)));
+			print_0xhex(PRINT_JSON, "dscp_mask", NULL, mask);
+			if (mask == DSCP_MAX_MASK) {
+				print_string(PRINT_FP, NULL, " dscp %s",
+					     rtnl_dscp_n2a(dscp, b1,
+							   sizeof(b1)));
+			} else {
+				print_0xhex(PRINT_FP, NULL, " dscp %#x", dscp);
+				print_0xhex(PRINT_FP, NULL, "/%#x", mask);
+			}
+		} else {
+			print_string(PRINT_ANY, "dscp", " dscp %s",
+				     rtnl_dscp_n2a(dscp, b1, sizeof(b1)));
+		}
 	}
 
 	/* The kernel will either provide both attributes, or none */
@@ -685,6 +709,21 @@ static void iprule_port_parse(char *arg, struct fib_rule_port_range *r,
 		invarg("invalid port", arg);
 
 	r->end = r->start;
+}
+
+static void iprule_dscp_parse(char *arg, __u32 *dscp, __u32 *mask)
+{
+	char *slash;
+
+	*mask = DSCP_MAX_MASK;
+
+	slash = strchr(arg, '/');
+	if (slash != NULL)
+		*slash = '\0';
+	if (rtnl_dscp_a2n(dscp, arg))
+		invarg("invalid dscp", arg);
+	if (slash && get_u32(mask, slash + 1, 0))
+		invarg("invalid dscp mask", slash + 1);
 }
 
 static void iprule_flowlabel_parse(char *arg, __u32 *flowlabel,
@@ -841,13 +880,9 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 			iprule_port_parse(*argv, &filter.dport,
 					  &filter.dport_mask);
 		} else if (strcmp(*argv, "dscp") == 0) {
-			__u32 dscp;
-
 			NEXT_ARG();
-			if (rtnl_dscp_a2n(&dscp, *argv))
-				invarg("invalid dscp\n", *argv);
-			filter.dscp = dscp;
-			filter.dscpmask = 1;
+			iprule_dscp_parse(*argv, &filter.dscp,
+					  &filter.dscpmask);
 		} else if (strcmp(*argv, "flowlabel") == 0) {
 			NEXT_ARG();
 
@@ -1130,12 +1165,14 @@ static int iprule_modify(int cmd, int argc, char **argv)
 				addattr16(&req.n, sizeof(req), FRA_DPORT_MASK,
 					  dport_mask);
 		} else if (strcmp(*argv, "dscp") == 0) {
-			__u32 dscp;
+			__u32 dscp, dscp_mask;
 
 			NEXT_ARG();
-			if (rtnl_dscp_a2n(&dscp, *argv))
-				invarg("invalid dscp\n", *argv);
+			iprule_dscp_parse(*argv, &dscp, &dscp_mask);
 			addattr8(&req.n, sizeof(req), FRA_DSCP, dscp);
+			if (dscp_mask != DSCP_MAX_MASK)
+				addattr8(&req.n, sizeof(req), FRA_DSCP_MASK,
+					 dscp_mask);
 		} else if (strcmp(*argv, "flowlabel") == 0) {
 			__u32 flowlabel, flowlabel_mask;
 
