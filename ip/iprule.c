@@ -23,6 +23,8 @@
 #include "ip_common.h"
 #include "json_print.h"
 
+#define PORT_MAX_MASK 0xFFFF
+
 enum list_action {
 	IPRULE_LIST,
 	IPRULE_FLUSH,
@@ -44,8 +46,8 @@ static void usage(void)
 		"            [ iif STRING ] [ oif STRING ] [ pref NUMBER ] [ l3mdev ]\n"
 		"            [ uidrange NUMBER-NUMBER ]\n"
 		"            [ ipproto PROTOCOL ]\n"
-		"            [ sport [ NUMBER | NUMBER-NUMBER ]\n"
-		"            [ dport [ NUMBER | NUMBER-NUMBER ] ]\n"
+		"            [ sport [ NUMBER[/MASK] | NUMBER-NUMBER ]\n"
+		"            [ dport [ NUMBER[/MASK] | NUMBER-NUMBER ] ]\n"
 		"            [ dscp DSCP ] [ flowlabel FLOWLABEL[/MASK] ]\n"
 		"ACTION := [ table TABLE_ID ]\n"
 		"          [ protocol PROTO ]\n"
@@ -80,6 +82,7 @@ static struct
 	int protocolmask;
 	struct fib_rule_port_range sport;
 	struct fib_rule_port_range dport;
+	__u16 sport_mask, dport_mask;
 	__u8 ipproto;
 } filter;
 
@@ -186,8 +189,9 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 			return false;
 	}
 
-	if (filter.sport.start) {
+	if (filter.sport_mask) {
 		const struct fib_rule_port_range *r;
+		__u16 sport_mask = PORT_MAX_MASK;
 
 		if (!tb[FRA_SPORT_RANGE])
 			return false;
@@ -196,10 +200,16 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		if (r->start != filter.sport.start ||
 		    r->end != filter.sport.end)
 			return false;
+
+		if (tb[FRA_SPORT_MASK])
+			sport_mask = rta_getattr_u16(tb[FRA_SPORT_MASK]);
+		if (filter.sport_mask != sport_mask)
+			return false;
 	}
 
-	if (filter.dport.start) {
+	if (filter.dport_mask) {
 		const struct fib_rule_port_range *r;
+		__u16 dport_mask = PORT_MAX_MASK;
 
 		if (!tb[FRA_DPORT_RANGE])
 			return false;
@@ -207,6 +217,11 @@ static bool filter_nlmsg(struct nlmsghdr *n, struct rtattr **tb, int host_len)
 		r = RTA_DATA(tb[FRA_DPORT_RANGE]);
 		if (r->start != filter.dport.start ||
 		    r->end != filter.dport.end)
+			return false;
+
+		if (tb[FRA_DPORT_MASK])
+			dport_mask = rta_getattr_u16(tb[FRA_DPORT_MASK]);
+		if (filter.dport_mask != dport_mask)
 			return false;
 	}
 
@@ -390,7 +405,26 @@ int print_rule(struct nlmsghdr *n, void *arg)
 		struct fib_rule_port_range *r = RTA_DATA(tb[FRA_SPORT_RANGE]);
 
 		if (r->start == r->end) {
-			print_uint(PRINT_ANY, "sport", " sport %u", r->start);
+			if (tb[FRA_SPORT_MASK]) {
+				__u16 mask;
+
+				mask = rta_getattr_u16(tb[FRA_SPORT_MASK]);
+				print_uint(PRINT_JSON, "sport", NULL, r->start);
+				print_0xhex(PRINT_JSON, "sport_mask", NULL,
+					    mask);
+				if (mask == PORT_MAX_MASK) {
+					print_uint(PRINT_FP, NULL, " sport %u",
+						   r->start);
+				} else {
+					print_0xhex(PRINT_FP, NULL,
+						    " sport %#x", r->start);
+					print_0xhex(PRINT_FP, NULL, "/%#x",
+						    mask);
+				}
+			} else {
+				print_uint(PRINT_ANY, "sport", " sport %u",
+					   r->start);
+			}
 		} else {
 			print_uint(PRINT_ANY, "sport_start", " sport %u",
 				   r->start);
@@ -402,7 +436,26 @@ int print_rule(struct nlmsghdr *n, void *arg)
 		struct fib_rule_port_range *r = RTA_DATA(tb[FRA_DPORT_RANGE]);
 
 		if (r->start == r->end) {
-			print_uint(PRINT_ANY, "dport", " dport %u", r->start);
+			if (tb[FRA_DPORT_MASK]) {
+				__u16 mask;
+
+				mask = rta_getattr_u16(tb[FRA_DPORT_MASK]);
+				print_uint(PRINT_JSON, "dport", NULL, r->start);
+				print_0xhex(PRINT_JSON, "dport_mask", NULL,
+					    mask);
+				if (mask == 0xFFFF) {
+					print_uint(PRINT_FP, NULL, " dport %u",
+						   r->start);
+				} else {
+					print_0xhex(PRINT_FP, NULL,
+						    " dport %#x", r->start);
+					print_0xhex(PRINT_FP, NULL, "/%#x",
+						    mask);
+				}
+			} else {
+				print_uint(PRINT_ANY, "dport", " dport %u",
+					   r->start);
+			}
 		} else {
 			print_uint(PRINT_ANY, "dport_start", " dport %u",
 				   r->start);
@@ -600,9 +653,12 @@ static int flush_rule(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static void iprule_port_parse(char *arg, struct fib_rule_port_range *r)
+static void iprule_port_parse(char *arg, struct fib_rule_port_range *r,
+			      __u16 *mask)
 {
 	char *sep;
+
+	*mask = PORT_MAX_MASK;
 
 	sep = strchr(arg, '-');
 	if (sep) {
@@ -615,6 +671,14 @@ static void iprule_port_parse(char *arg, struct fib_rule_port_range *r)
 			invarg("invalid port range end", sep + 1);
 
 		return;
+	}
+
+	sep = strchr(arg, '/');
+	if (sep) {
+		*sep = '\0';
+
+		if (get_u16(mask, sep + 1, 0))
+			invarg("invalid mask", sep + 1);
 	}
 
 	if (get_u16(&r->start, arg, 0))
@@ -770,10 +834,12 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 			filter.ipproto = ipproto;
 		} else if (strcmp(*argv, "sport") == 0) {
 			NEXT_ARG();
-			iprule_port_parse(*argv, &filter.sport);
+			iprule_port_parse(*argv, &filter.sport,
+					  &filter.sport_mask);
 		} else if (strcmp(*argv, "dport") == 0) {
 			NEXT_ARG();
-			iprule_port_parse(*argv, &filter.dport);
+			iprule_port_parse(*argv, &filter.dport,
+					  &filter.dport_mask);
 		} else if (strcmp(*argv, "dscp") == 0) {
 			__u32 dscp;
 
@@ -1043,18 +1109,26 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			addattr8(&req.n, sizeof(req), FRA_IP_PROTO, ipproto);
 		} else if (strcmp(*argv, "sport") == 0) {
 			struct fib_rule_port_range r;
+			__u16 sport_mask;
 
 			NEXT_ARG();
-			iprule_port_parse(*argv, &r);
+			iprule_port_parse(*argv, &r, &sport_mask);
 			addattr_l(&req.n, sizeof(req), FRA_SPORT_RANGE, &r,
 				  sizeof(r));
+			if (sport_mask != PORT_MAX_MASK)
+				addattr16(&req.n, sizeof(req), FRA_SPORT_MASK,
+					  sport_mask);
 		} else if (strcmp(*argv, "dport") == 0) {
 			struct fib_rule_port_range r;
+			__u16 dport_mask;
 
 			NEXT_ARG();
-			iprule_port_parse(*argv, &r);
+			iprule_port_parse(*argv, &r, &dport_mask);
 			addattr_l(&req.n, sizeof(req), FRA_DPORT_RANGE, &r,
 				  sizeof(r));
+			if (dport_mask != PORT_MAX_MASK)
+				addattr16(&req.n, sizeof(req), FRA_DPORT_MASK,
+					  dport_mask);
 		} else if (strcmp(*argv, "dscp") == 0) {
 			__u32 dscp;
 

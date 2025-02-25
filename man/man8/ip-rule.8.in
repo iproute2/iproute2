@@ -52,10 +52,10 @@ ip-rule \- routing policy database management
 .B ipproto
 .IR PROTOCOL " ] [ "
 .BR sport " [ "
-.IR NUMBER " | "
+.IR NUMBER\fR[\fB/\fIMASK "] | "
 .IR NUMBER "-" NUMBER " ] ] [ "
 .BR dport " [ "
-.IR NUMBER " | "
+.IR NUMBER\fR[\fB/\fIMASK "] | "
 .IR NUMBER "-" NUMBER " ] ] [ "
 .B  tun_id
 .IR TUN_ID " ] [ "
@@ -270,12 +270,14 @@ value to match.
 select the ip protocol value to match.
 
 .TP
-.BI sport " NUMBER | NUMBER-NUMBER"
-select the source port value to match. supports port range.
+.BI sport " NUMBER\fR[\fB/\fIMASK\fR] | NUMBER-NUMBER"
+select the source port value to match with an optional mask. Supports port
+range.
 
 .TP
-.BI dport " NUMBER | NUMBER-NUMBER"
-select the destination port value to match. supports port range.
+.BI dport " NUMBER\fR[\fB/\fIMASK\fR] | NUMBER-NUMBER"
+select the destination port value to match with an optional mask. Supports port
+range.
 
 .TP
 .BI priority " PREFERENCE"
