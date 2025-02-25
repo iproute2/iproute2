@@ -608,16 +608,16 @@ static void iprule_port_parse(char *arg, struct fib_rule_port_range *r)
 	if (sep) {
 		*sep = '\0';
 
-		if (get_u16(&r->start, arg, 10))
+		if (get_u16(&r->start, arg, 0))
 			invarg("invalid port range start", arg);
 
-		if (get_u16(&r->end, sep + 1, 10))
+		if (get_u16(&r->end, sep + 1, 0))
 			invarg("invalid port range end", sep + 1);
 
 		return;
 	}
 
-	if (get_u16(&r->start, arg, 10))
+	if (get_u16(&r->start, arg, 0))
 		invarg("invalid port", arg);
 
 	r->end = r->start;
