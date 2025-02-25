@@ -600,6 +600,29 @@ static int flush_rule(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
+static void iprule_port_parse(char *arg, struct fib_rule_port_range *r)
+{
+	char *sep;
+
+	sep = strchr(arg, '-');
+	if (sep) {
+		*sep = '\0';
+
+		if (get_u16(&r->start, arg, 10))
+			invarg("invalid port range start", arg);
+
+		if (get_u16(&r->end, sep + 1, 10))
+			invarg("invalid port range end", sep + 1);
+
+		return;
+	}
+
+	if (get_u16(&r->start, arg, 10))
+		invarg("invalid port", arg);
+
+	r->end = r->start;
+}
+
 static void iprule_flowlabel_parse(char *arg, __u32 *flowlabel,
 				   __u32 *flowlabel_mask)
 {
@@ -746,27 +769,11 @@ static int iprule_list_flush_or_save(int argc, char **argv, int action)
 				invarg("Invalid \"ipproto\" value\n", *argv);
 			filter.ipproto = ipproto;
 		} else if (strcmp(*argv, "sport") == 0) {
-			struct fib_rule_port_range r;
-			int ret;
-
 			NEXT_ARG();
-			ret = sscanf(*argv, "%hu-%hu", &r.start, &r.end);
-			if (ret == 1)
-				r.end = r.start;
-			else if (ret != 2)
-				invarg("invalid port range\n", *argv);
-			filter.sport = r;
+			iprule_port_parse(*argv, &filter.sport);
 		} else if (strcmp(*argv, "dport") == 0) {
-			struct fib_rule_port_range r;
-			int ret;
-
 			NEXT_ARG();
-			ret = sscanf(*argv, "%hu-%hu", &r.start, &r.end);
-			if (ret == 1)
-				r.end = r.start;
-			else if (ret != 2)
-				invarg("invalid dport range\n", *argv);
-			filter.dport = r;
+			iprule_port_parse(*argv, &filter.dport);
 		} else if (strcmp(*argv, "dscp") == 0) {
 			__u32 dscp;
 
@@ -1036,26 +1043,16 @@ static int iprule_modify(int cmd, int argc, char **argv)
 			addattr8(&req.n, sizeof(req), FRA_IP_PROTO, ipproto);
 		} else if (strcmp(*argv, "sport") == 0) {
 			struct fib_rule_port_range r;
-			int ret = 0;
 
 			NEXT_ARG();
-			ret = sscanf(*argv, "%hu-%hu", &r.start, &r.end);
-			if (ret == 1)
-				r.end = r.start;
-			else if (ret != 2)
-				invarg("invalid port range\n", *argv);
+			iprule_port_parse(*argv, &r);
 			addattr_l(&req.n, sizeof(req), FRA_SPORT_RANGE, &r,
 				  sizeof(r));
 		} else if (strcmp(*argv, "dport") == 0) {
 			struct fib_rule_port_range r;
-			int ret = 0;
 
 			NEXT_ARG();
-			ret = sscanf(*argv, "%hu-%hu", &r.start, &r.end);
-			if (ret == 1)
-				r.end = r.start;
-			else if (ret != 2)
-				invarg("invalid dport range\n", *argv);
+			iprule_port_parse(*argv, &r);
 			addattr_l(&req.n, sizeof(req), FRA_DPORT_RANGE, &r,
 				  sizeof(r));
 		} else if (strcmp(*argv, "dscp") == 0) {
