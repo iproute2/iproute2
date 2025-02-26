@@ -882,10 +882,14 @@ the following additional arguments are supported:
 [
 .BI mode " MODE "
 ] [
+.BI scrub " SCRUB "
+] [
 .I "POLICY "
 ] [
 .BR peer
 [
+.BI scrub " SCRUB "
+] [
 .I "POLICY "
 ] [
 .I "NAME "
@@ -897,6 +901,17 @@ the following additional arguments are supported:
 .BI mode " MODE"
 - specifies the operation mode of the netkit device with "l3" and "l2"
 as possible values. Default option is "l3".
+
+.sp
+.BI scrub " SCRUB"
+- specifies the scrub behavior of the netkit device with "default" and
+"none" as possible values. With "default" the device zeroes the
+skb->{mark,priority} fields before invoking the attached BPF program
+when its peer device resides in a different network namespace. With
+"none" the device leaves clearing skb->{mark,priority} up to the BPF
+program. Default option is "default". Specifying scrub before the peer
+option refers to the primary device, after the peer option refers to
+the peer device.
 
 .sp
 .I "POLICY"
