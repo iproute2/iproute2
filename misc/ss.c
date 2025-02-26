@@ -3055,16 +3055,16 @@ static void mptcp_subflow_info(struct rtattr *tb[])
 		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_TOKEN_LOC]),
 		    rta_getattr_u8(tb[MPTCP_SUBFLOW_ATTR_ID_LOC]));
 	if (tb[MPTCP_SUBFLOW_ATTR_MAP_SEQ])
-		out(" seq:%llx",
+		out(" seq:%llu",
 		    rta_getattr_u64(tb[MPTCP_SUBFLOW_ATTR_MAP_SEQ]));
 	if (tb[MPTCP_SUBFLOW_ATTR_MAP_SFSEQ])
-		out(" sfseq:%x",
+		out(" sfseq:%u",
 		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_MAP_SFSEQ]));
 	if (tb[MPTCP_SUBFLOW_ATTR_SSN_OFFSET])
-		out(" ssnoff:%x",
+		out(" ssnoff:%u",
 		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_SSN_OFFSET]));
 	if (tb[MPTCP_SUBFLOW_ATTR_MAP_DATALEN])
-		out(" maplen:%x",
+		out(" maplen:%u",
 		    rta_getattr_u32(tb[MPTCP_SUBFLOW_ATTR_MAP_DATALEN]));
 }
 
