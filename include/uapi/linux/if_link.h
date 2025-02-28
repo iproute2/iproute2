@@ -1436,6 +1436,7 @@ enum {
 	IFLA_GENEVE_TTL_INHERIT,
 	IFLA_GENEVE_DF,
 	IFLA_GENEVE_INNER_PROTO_INHERIT,
+	IFLA_GENEVE_PORT_RANGE,
 	__IFLA_GENEVE_MAX
 };
 #define IFLA_GENEVE_MAX	(__IFLA_GENEVE_MAX - 1)
@@ -1446,6 +1447,11 @@ enum ifla_geneve_df {
 	GENEVE_DF_INHERIT,
 	__GENEVE_DF_END,
 	GENEVE_DF_MAX = __GENEVE_DF_END - 1,
+};
+
+struct ifla_geneve_port_range {
+	__be16 low;
+	__be16 high;
 };
 
 /* Bareudp section  */
