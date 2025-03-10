@@ -216,7 +216,13 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .B tos
 .IR TOS " ] ["
 .B  ttl
-.IR TTL " ]"
+.IR TTL " ] ["
+.BR key " ] ["
+.BR csum " ] ["
+.BR seq " ] ["
+.IR GENEVE_OPTS " | "
+.IR VXLAN_OPTS " | "
+.IR ERSPAN_OPTS " ]"
 
 .ti -8
 .IR ENCAP_BPF " := "
@@ -783,15 +789,58 @@ is a set of encapsulation attributes specific to the
 .in +2
 .B id
 .I TUNNEL_ID
+- Tunnel ID (for example VNI in VXLAN tunnel)
+.sp
+
 .B  dst
-.IR REMOTE_IP " [ "
+.I REMOTE_IP
+- Outer header destination IP address (IPv4 or IPv6)
+.sp
+
 .B src
-.IR SRC " ] ["
+.I SRC
+- Outer header source IP address (IPv4 or IPv6)
+.sp
+
 .B tos
-.IR TOS " ] ["
-.B  ttl
-.IR TTL " ] [ "
-.BR key " ] [ " csum " ] [ " seq " ] "
+.I TOS
+- Outer header TOS
+.sp
+
+.B ttl
+.I TTL
+- Outer header TTL
+.sp
+
+.B key
+- Outer header flags with key in GRE tunnel
+.sp
+
+.B csum
+- Outer header flags with csum in GRE tunnel
+.sp
+
+.B seq
+- Outer header flags with seq in GRE tunnel
+.sp
+
+.I GENEVE_OPTS
+- Specified in the form CLASS:TYPE:DATA, where CLASS is represented as a
+16bit hexadecimal value, TYPE as an 8bit hexadecimal value and DATA as a
+variable length hexadecimal value. Additionally multiple options may be
+listed using a comma delimiter.
+.sp
+
+.I VXLAN_OPTS
+- Specified in the form GBP, as a 32bit number. Multiple options is not
+supported.
+.sp
+
+.I ERSPAN_OPTS
+- Specified in the form VERSION:INDEX:DIR:HWID, where VERSION is represented
+as a 8bit number, INDEX as an 32bit number, DIR and HWID as a 8bit number.
+Multiple options is not supported. Note INDEX is used when VERSION is 1,
+and DIR and HWID are used when VERSION is 2.
 .in -2
 .sp
 
