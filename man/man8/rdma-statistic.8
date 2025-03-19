@@ -39,6 +39,7 @@ rdma-statistic \- RDMA statistic counter configuration
 .B auto
 .RI "{ " CRITERIA " | "
 .BR off " }"
+.B [ optional-counters | on/off ]
 
 .ti -8
 .B rdma statistic
@@ -178,6 +179,11 @@ List current counter mode of device mlx5_2 port 1
 rdma statistic qp set link mlx5_2/1 auto type on
 .RS 4
 On device mlx5_2 port 1, for each new user QP bind it with a counter automatically. Per counter for QPs with same qp type.
+.RE
+.PP
+rdma statistic qp set link mlx5_2/1 auto type on optional-counters on
+.RS 4
+On device mlx5_2 port 1, for each new user QP bind it with a counter automatically. Per counter for QPs with same qp type. Whilst also binding the currently enabled optional-counters.
 .RE
 .PP
 rdma statistic qp set link mlx5_2/1 auto pid on

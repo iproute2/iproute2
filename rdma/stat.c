@@ -7,6 +7,7 @@
 #include "rdma.h"
 #include "res.h"
 #include "stat.h"
+#include "utils.h"
 #include <inttypes.h>
 
 static int stat_help(struct rd *rd)
@@ -62,7 +63,8 @@ static struct counter_param auto_params[] = {
 	{ NULL },
 };
 
-static int prepare_auto_mode_str(uint32_t mask, char *output, int len)
+static int prepare_auto_mode_str(uint32_t mask, bool opcnt, char *output,
+				 int len)
 {
 	char s[] = "qp auto";
 	int i, outlen = strlen(s);
@@ -90,6 +92,10 @@ static int prepare_auto_mode_str(uint32_t mask, char *output, int len)
 		if (outlen + strlen(" on") >= len)
 			return -EINVAL;
 		strcat(output, " on");
+
+		strcat(output, " optional-counters ");
+		strcat(output, (opcnt) ? "on" : "off");
+
 	} else {
 		if (outlen + strlen(" off") >= len)
 			return -EINVAL;
@@ -104,6 +110,7 @@ static int qp_link_get_mode_parse_cb(const struct nlmsghdr *nlh, void *data)
 	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX] = {};
 	uint32_t mode = 0, mask = 0;
 	char output[128] = {};
+	bool opcnt = false;
 	uint32_t idx, port;
 	const char *name;
 
@@ -126,7 +133,10 @@ static int qp_link_get_mode_parse_cb(const struct nlmsghdr *nlh, void *data)
 		if (!tb[RDMA_NLDEV_ATTR_STAT_AUTO_MODE_MASK])
 			return MNL_CB_ERROR;
 		mask = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_STAT_AUTO_MODE_MASK]);
-		prepare_auto_mode_str(mask, output, sizeof(output));
+		if (tb[RDMA_NLDEV_ATTR_STAT_OPCOUNTER_ENABLED])
+			opcnt = mnl_attr_get_u8(
+				tb[RDMA_NLDEV_ATTR_STAT_OPCOUNTER_ENABLED]);
+		prepare_auto_mode_str(mask, opcnt, output, sizeof(output));
 	} else {
 		snprintf(output, sizeof(output), "qp auto off");
 	}
@@ -351,6 +361,7 @@ static const struct filters stat_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "lqpn", .is_number = true },
 	{ .name = "pid", .is_number = true },
 	{ .name = "qp-type", .is_number = false },
+	{ .name = "optional-counters", .is_number = false },
 };
 
 static int stat_qp_show_one_link(struct rd *rd)
@@ -395,9 +406,37 @@ static int stat_qp_show(struct rd *rd)
 	return rd_exec_cmd(rd, cmds, "parameter");
 }
 
+static bool stat_get_on_off(struct rd *rd, const char *arg, int *ret)
+{
+	bool value = false;
+
+	if (strcmpx(rd_argv(rd), arg) != 0) {
+		*ret = -EINVAL;
+		return false;
+	}
+
+	rd_arg_inc(rd);
+
+	if (rd_is_multiarg(rd)) {
+		pr_err("The parameter %s shouldn't include range\n", arg);
+		*ret = EINVAL;
+		return false;
+	}
+
+	value = parse_on_off(arg, rd_argv(rd), ret);
+	if (*ret)
+		return false;
+
+	rd_arg_inc(rd);
+
+	return value;
+}
+
 static int stat_qp_set_link_auto_sendmsg(struct rd *rd, uint32_t mask)
 {
 	uint32_t seq;
+	bool opcnt;
+	int ret;
 
 	rd_prepare_msg(rd, RDMA_NLDEV_CMD_STAT_SET,
 		       &seq, (NLM_F_REQUEST | NLM_F_ACK));
@@ -408,6 +447,13 @@ static int stat_qp_set_link_auto_sendmsg(struct rd *rd, uint32_t mask)
 	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_STAT_MODE,
 			 RDMA_COUNTER_MODE_AUTO);
 	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_STAT_AUTO_MODE_MASK, mask);
+	if (rd_argc(rd)) {
+		opcnt = stat_get_on_off(rd, "optional-counters", &ret);
+		if (ret)
+			return ret;
+		mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_ATTR_STAT_OPCOUNTER_ENABLED,
+				opcnt);
+	}
 
 	return rd_sendrecv_msg(rd, seq);
 }
