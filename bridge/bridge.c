@@ -103,7 +103,7 @@ static int batch(const char *name)
 int
 main(int argc, char **argv)
 {
-	int color = CONF_COLOR;
+	int color = default_color_opt();
 
 	while (argc > 1) {
 		const char *opt = argv[1];

@@ -81,6 +81,11 @@ static void enable_color(void)
 	set_color_palette();
 }
 
+int default_color_opt(void)
+{
+	return CONF_COLOR;
+}
+
 bool check_enable_color(int color, int json)
 {
 	if (json || color == COLOR_OPT_NEVER)
