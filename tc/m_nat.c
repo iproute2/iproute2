@@ -55,7 +55,7 @@ parse_nat_args(int *argc_p, char ***argv_p, struct tc_nat *sel)
 		goto bad_val;
 
 	sel->old_addr = addr.data[0];
-	sel->mask = htonl(~0u << (32 - addr.bitlen));
+	sel->mask = htonl(~(uint64_t)0 << (32 - addr.bitlen));
 
 	NEXT_ARG();
 
@@ -156,7 +156,7 @@ print_nat(const struct action_util *au, FILE * f, struct rtattr *arg)
 	}
 	sel = RTA_DATA(tb[TCA_NAT_PARMS]);
 
-	len = ffs(sel->mask);
+	len = ffs(ntohl(sel->mask));
 	len = len ? 33 - len : 0;
 
 	print_string(PRINT_ANY, "direction", "%s",
