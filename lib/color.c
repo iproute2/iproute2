@@ -72,7 +72,11 @@ static enum color attr_colors_dark[] = {
 	C_CLEAR
 };
 
-static int is_dark_bg;
+/*
+ * Assume dark background until we know otherwise. The dark-background
+ * colours work better on a light background than vice versa.
+ */
+static int is_dark_bg = 1;
 static int color_is_enabled;
 
 static void enable_color(void)
@@ -138,12 +142,12 @@ static void set_color_palette(void)
 	/*
 	 * COLORFGBG environment variable usually contains either two or three
 	 * values separated by semicolons; we want the last value in either case.
-	 * If this value is 0-6 or 8, background is dark.
+	 * If this value is 0-6 or 8, background is dark; otherwise it's light.
 	 */
 	if (p && (p = strrchr(p, ';')) != NULL
-		&& ((p[1] >= '0' && p[1] <= '6') || p[1] == '8')
-		&& p[2] == '\0')
-		is_dark_bg = 1;
+		&& !(((p[1] >= '0' && p[1] <= '6') || p[1] == '8')
+		     && p[2] == '\0'))
+		is_dark_bg = 0;
 }
 
 __attribute__((format(printf, 3, 4)))
