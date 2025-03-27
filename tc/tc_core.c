@@ -23,12 +23,12 @@
 static double tick_in_usec = 1;
 static double clock_factor = 1;
 
-static unsigned int tc_core_time2tick(unsigned int time)
+static double tc_core_time2tick(double time)
 {
 	return time * tick_in_usec;
 }
 
-unsigned int tc_core_tick2time(unsigned int tick)
+double tc_core_tick2time(double tick)
 {
 	return tick / tick_in_usec;
 }
@@ -45,7 +45,7 @@ unsigned int tc_core_ktime2time(unsigned int ktime)
 
 unsigned int tc_calc_xmittime(__u64 rate, unsigned int size)
 {
-	return tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/(double)rate));
+	return ceil(tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/(double)rate)));
 }
 
 unsigned int tc_calc_xmitsize(__u64 rate, unsigned int ticks)

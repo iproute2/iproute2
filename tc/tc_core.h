@@ -12,7 +12,7 @@ enum link_layer {
 };
 
 
-unsigned tc_core_tick2time(unsigned tick);
+double tc_core_tick2time(double tick);
 unsigned tc_core_time2ktime(unsigned time);
 unsigned tc_core_ktime2time(unsigned ktime);
 unsigned tc_calc_xmittime(__u64 rate, unsigned size);

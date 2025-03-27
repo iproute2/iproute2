@@ -37,7 +37,7 @@ ip-rule \- routing policy database management
 .B  tos
 .IR TOS " ] [ "
 .B  dscp
-.IR DSCP " ] [ "
+.IR DSCP\fR[\fB/\fIMASK "] ] [ "
 .B  fwmark
 .IR FWMARK\fR[\fB/\fIMASK "] ] [ "
 .B  iif
@@ -52,10 +52,10 @@ ip-rule \- routing policy database management
 .B ipproto
 .IR PROTOCOL " ] [ "
 .BR sport " [ "
-.IR NUMBER " | "
+.IR NUMBER\fR[\fB/\fIMASK "] | "
 .IR NUMBER "-" NUMBER " ] ] [ "
 .BR dport " [ "
-.IR NUMBER " | "
+.IR NUMBER\fR[\fB/\fIMASK "] | "
 .IR NUMBER "-" NUMBER " ] ] [ "
 .B  tun_id
 .IR TUN_ID " ] [ "
@@ -239,9 +239,10 @@ a device.
 select the TOS value to match.
 
 .TP
-.BI dscp " DSCP"
-select the DSCP value to match. DSCP values can be written either directly as
-numeric values (valid values are 0-63), or using symbolic names specified in
+.BI dscp " DSCP\fR[\fB/\fIMASK\fR]"
+select the DSCP value to match with an optional mask. DSCP values can be
+written either directly as numeric values (valid values are 0-63), or using
+symbolic names specified in
 .BR @SYSCONF_USR_DIR@/rt_dsfield " or " @SYSCONF_ETC_DIR@/rt_dsfield
 (has precedence if exists).
 However, note that the file specifies full 8-bit dsfield values, whereas
@@ -270,12 +271,14 @@ value to match.
 select the ip protocol value to match.
 
 .TP
-.BI sport " NUMBER | NUMBER-NUMBER"
-select the source port value to match. supports port range.
+.BI sport " NUMBER\fR[\fB/\fIMASK\fR] | NUMBER-NUMBER"
+select the source port value to match with an optional mask. Supports port
+range.
 
 .TP
-.BI dport " NUMBER | NUMBER-NUMBER"
-select the destination port value to match. supports port range.
+.BI dport " NUMBER\fR[\fB/\fIMASK\fR] | NUMBER-NUMBER"
+select the destination port value to match with an optional mask. Supports port
+range.
 
 .TP
 .BI priority " PREFERENCE"

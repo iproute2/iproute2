@@ -351,7 +351,10 @@ static const char *strxf_time(__u64 time)
 		t = (long)time;
 		tp = localtime(&t);
 
-		strftime(str, sizeof(str), "%Y-%m-%d %T", tp);
+		if (!tp)
+			strcpy(str, "invalid-time");
+		else
+			strftime(str, sizeof(str), "%Y-%m-%d %T", tp);
 	}
 
 	return str;

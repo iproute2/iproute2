@@ -31,8 +31,6 @@ static inline int ila_csum_name2mode(char *name)
 		return ILA_CSUM_NEUTRAL_MAP_AUTO;
 	else if (strcmp(name, "no-action") == 0)
 		return ILA_CSUM_NO_ACTION;
-	else if (strcmp(name, "neutral-map-auto") == 0)
-		return ILA_CSUM_NEUTRAL_MAP_AUTO;
 	else
 		return -1;
 }

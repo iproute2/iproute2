@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 {
 	const char *libbpf_version;
 	char *batch_file = NULL;
-	int color = CONF_COLOR;
+	int color = default_color_opt();
 	int ret;
 
 	while (argc > 1) {

@@ -1729,7 +1729,10 @@ static int iproute_flush(int family, rtnl_filter_t filter_fn)
 
 	if (filter.cloned) {
 		if (family != AF_INET6) {
-			iproute_flush_cache();
+			ret = iproute_flush_cache();
+			if (ret < 0)
+				return ret;
+
 			if (show_stats)
 				printf("*** IPv4 routing cache is flushed.\n");
 		}

@@ -81,6 +81,18 @@ static void enable_color(void)
 	set_color_palette();
 }
 
+int default_color_opt(void)
+{
+	const char *no_color;
+
+	/* If NO_COLOR has a non-empty value, coloured output is never wanted */
+	no_color = getenv("NO_COLOR");
+	if (no_color && *no_color)
+		return COLOR_OPT_NEVER;
+
+	return CONF_COLOR;
+}
+
 bool check_enable_color(int color, int json)
 {
 	if (json || color == COLOR_OPT_NEVER)
