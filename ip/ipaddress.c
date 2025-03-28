@@ -1182,6 +1182,11 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 				   "max_mtu", "maxmtu %u ",
 				   rta_getattr_u32(tb[IFLA_MAX_MTU]));
 
+		if (tb[IFLA_NETNS_IMMUTABLE] &&
+		    rta_getattr_u8(tb[IFLA_NETNS_IMMUTABLE]))
+			print_bool(PRINT_ANY, "netns-immutable", "netns-immutable ",
+				   true);
+
 		if (tb[IFLA_LINKINFO])
 			print_linktype(fp, tb[IFLA_LINKINFO]);
 
