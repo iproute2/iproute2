@@ -26,7 +26,7 @@ T: git://git.kernel.org/pub/scm/network/iproute2/iproute2-next.git
 L: netdev@vger.kernel.org
 
 Ethernet Bridging - bridge
-M: Roopa Prabhu <roopa@nvidia.com>
+M: Ido Schimmel <idosch@nvidia.com>
 M: Nikolay Aleksandrov <razor@blackwall.org>
 L: bridge@lists.linux-foundation.org (moderated for non-subscribers)
 F: bridge/*
