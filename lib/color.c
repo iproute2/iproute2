@@ -24,7 +24,7 @@ enum color {
 	C_BOLD_RED,
 	C_BOLD_GREEN,
 	C_BOLD_YELLOW,
-	C_BOLD_BLUE,
+	C_BOLD_LIGHT_BLUE,
 	C_BOLD_MAGENTA,
 	C_BOLD_CYAN,
 	C_BOLD_WHITE,
@@ -42,7 +42,7 @@ static const char * const color_codes[] = {
 	"\e[1;31m",
 	"\e[1;32m",
 	"\e[1;33m",
-	"\e[1;34m",
+	"\e[1;94m",
 	"\e[1;35m",
 	"\e[1;36m",
 	"\e[1;37m",
@@ -66,13 +66,17 @@ static enum color attr_colors_dark[] = {
 	C_BOLD_CYAN,
 	C_BOLD_YELLOW,
 	C_BOLD_MAGENTA,
-	C_BOLD_BLUE,
+	C_BOLD_LIGHT_BLUE,
 	C_BOLD_GREEN,
 	C_BOLD_RED,
 	C_CLEAR
 };
 
-static int is_dark_bg;
+/*
+ * Assume dark background until we know otherwise. The dark-background
+ * colours work better on a light background than vice versa.
+ */
+static int is_dark_bg = 1;
 static int color_is_enabled;
 
 static void enable_color(void)
@@ -138,12 +142,12 @@ static void set_color_palette(void)
 	/*
 	 * COLORFGBG environment variable usually contains either two or three
 	 * values separated by semicolons; we want the last value in either case.
-	 * If this value is 0-6 or 8, background is dark.
+	 * If this value is 0-6 or 8, background is dark; otherwise it's light.
 	 */
 	if (p && (p = strrchr(p, ';')) != NULL
-		&& ((p[1] >= '0' && p[1] <= '6') || p[1] == '8')
-		&& p[2] == '\0')
-		is_dark_bg = 1;
+		&& !(((p[1] >= '0' && p[1] <= '6') || p[1] == '8')
+		     && p[2] == '\0'))
+		is_dark_bg = 0;
 }
 
 __attribute__((format(printf, 3, 4)))
