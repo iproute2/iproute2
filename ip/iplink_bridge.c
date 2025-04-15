@@ -62,6 +62,7 @@ static void print_explain(FILE *f)
 		"		  [ nf_call_iptables NF_CALL_IPTABLES ]\n"
 		"		  [ nf_call_ip6tables NF_CALL_IP6TABLES ]\n"
 		"		  [ nf_call_arptables NF_CALL_ARPTABLES ]\n"
+		"		  [ mdb_offload_fail_notification MDB_OFFLOAD_FAIL_NOTIFICATION ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
 	);
@@ -413,6 +414,18 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 
 			addattr8(n, 1024, IFLA_BR_NF_CALL_ARPTABLES,
 				 nf_call_arpt);
+		} else if (strcmp(*argv, "mdb_offload_fail_notification") == 0) {
+			__u32 mofn_bit = 1 << BR_BOOLOPT_MDB_OFFLOAD_FAIL_NOTIFICATION;
+			__u8 mofn;
+
+			NEXT_ARG();
+			if (get_u8(&mofn, *argv, 0))
+				invarg("invalid mdb_offload_fail_notification", *argv);
+			bm.optmask |= 1 << BR_BOOLOPT_MDB_OFFLOAD_FAIL_NOTIFICATION;
+			if (mofn)
+				bm.optval |= mofn_bit;
+			else
+				bm.optval &= ~mofn_bit;
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -620,6 +633,7 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   rta_getattr_u8(tb[IFLA_BR_MCAST_SNOOPING]));
 
 	if (tb[IFLA_BR_MULTI_BOOLOPT]) {
+		__u32 mofn_bit = 1 << BR_BOOLOPT_MDB_OFFLOAD_FAIL_NOTIFICATION;
 		__u32 mcvl_bit = 1 << BR_BOOLOPT_MCAST_VLAN_SNOOPING;
 		__u32 no_ll_learn_bit = 1 << BR_BOOLOPT_NO_LL_LEARN;
 		__u32 mst_bit = 1 << BR_BOOLOPT_MST_ENABLE;
@@ -641,6 +655,11 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				   "mst_enabled",
 				   "mst_enabled %u ",
 				   !!(bm->optval & mst_bit));
+		if (bm->optmask & mofn_bit)
+			print_uint(PRINT_ANY,
+				   "mdb_offload_fail_notification",
+				   "mdb_offload_fail_notification %u ",
+				   !!(bm->optval & mofn_bit));
 	}
 
 	if (tb[IFLA_BR_MCAST_ROUTER])

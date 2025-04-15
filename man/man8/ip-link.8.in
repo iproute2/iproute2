@@ -1768,6 +1768,8 @@ the following additional arguments are supported:
 .BI nf_call_ip6tables " NF_CALL_IP6TABLES "
 ] [
 .BI nf_call_arptables " NF_CALL_ARPTABLES "
+] [
+.BI mdb_offload_fail_notification " MDB_OFFLOAD_FAIL_NOTIFICATION "
 ]
 
 .in +8
@@ -1992,6 +1994,13 @@ or disable
 .RI ( NF_CALL_ARPTABLES " == 0) "
 arptables hooks on the bridge.
 
+.BI mdb_offload_fail_notification " MDB_OFFLOAD_FAIL_NOTIFICATION "
+- turn mdb offload fail notification on
+.RI ( MDB_OFFLOAD_FAIL_NOTIFICATION " > 0) "
+or off
+.RI ( MDB_OFFLOAD_FAIL_NOTIFICATION " == 0). "
+Default is
+.BR 0 .
 
 .in -8
 
