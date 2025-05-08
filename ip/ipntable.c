@@ -40,7 +40,8 @@ static void usage(void)
 		"PARMS := [ base_reachable MSEC ] [ retrans MSEC ] [ gc_stale MSEC ]\n"
 		"         [ delay_probe MSEC ] [ queue LEN ]\n"
 		"         [ app_probes VAL ] [ ucast_probes VAL ] [ mcast_probes VAL ]\n"
-		"         [ anycast_delay MSEC ] [ proxy_delay MSEC ] [ proxy_queue LEN ]\n"
+		"         [ mcast_reprobes VAL ] [ anycast_delay MSEC ]\n"
+		"         [ proxy_delay MSEC ] [ proxy_queue LEN ]\n"
 		"         [ locktime MSEC ]\n"
 		);
 
@@ -222,6 +223,17 @@ static int ipntable_modify(int cmd, int flags, int argc, char **argv)
 
 			rta_addattr32(parms_rta, sizeof(parms_buf),
 				      NDTPA_MCAST_PROBES, mprobe);
+			parms_change = 1;
+		} else if (strcmp(*argv, "mcast_reprobes") == 0) {
+			__u32 mreprobe;
+
+			NEXT_ARG();
+
+			if (get_u32(&mreprobe, *argv, 0))
+				invarg("\"mcast_reprobes\" value is invalid", *argv);
+
+			rta_addattr32(parms_rta, sizeof(parms_buf),
+				      NDTPA_MCAST_REPROBES, mreprobe);
 			parms_change = 1;
 		} else if (strcmp(*argv, "anycast_delay") == 0) {
 			__u64 anycast_delay;
@@ -438,6 +450,13 @@ static void print_ndtparams(struct rtattr *tpb[])
 
 		print_uint(PRINT_ANY, "mcast_probes",
 			   "mcast_probes %u ", mprobe);
+	}
+
+	if (tpb[NDTPA_MCAST_REPROBES]) {
+		__u32 mreprobe = rta_getattr_u32(tpb[NDTPA_MCAST_REPROBES]);
+
+		print_uint(PRINT_ANY, "mcast_reprobes",
+			   "mcast_reprobes %u ", mreprobe);
 	}
 
 	print_string(PRINT_FP, NULL, "%s    ", _SL_);
