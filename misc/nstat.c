@@ -218,6 +218,10 @@ static void load_ugly_table(FILE *fp)
 			p = next;
 		}
 		n = db;
+		if (n == NULL) {
+			fprintf(stderr, "Error: Invalid input – line has ':' but no entries. Add values after ':'.\n");
+			exit(-2);
+		}
 		nread = getline(&buf, &buflen, fp);
 		if (nread == -1) {
 			fprintf(stderr, "%s:%d: error parsing history file\n",
