@@ -959,12 +959,25 @@ static void print_proto_down(FILE *f, struct rtattr *tb[])
 	}
 }
 
+static int get_rtattr(struct nlmsghdr *n, struct rtattr **tb)
+{
+	int len = n->nlmsg_len;
+	struct ifinfomsg *ifi = NLMSG_DATA(n);
+
+	len -= NLMSG_LENGTH(sizeof(*ifi));
+	if (len < 0)
+		return -1;
+
+	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
+
+	return 0;
+}
+
 int print_linkinfo(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = (FILE *)arg;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_MAX+1];
-	int len = n->nlmsg_len;
 	const char *name;
 	unsigned int m_flag = 0;
 	SPRINT_BUF(b1);
@@ -973,8 +986,7 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	if (n->nlmsg_type != RTM_NEWLINK && n->nlmsg_type != RTM_DELLINK)
 		return 0;
 
-	len -= NLMSG_LENGTH(sizeof(*ifi));
-	if (len < 0)
+	if (get_rtattr(n, tb) < 0)
 		return -1;
 
 	if (filter.ifindex && ifi->ifi_index != filter.ifindex)
@@ -983,8 +995,6 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 		return -1;
 	if (filter.down && ifi->ifi_flags&IFF_UP)
 		return -1;
-
-	parse_rtattr_flags(tb, IFLA_MAX, IFLA_RTA(ifi), len, NLA_F_NESTED);
 
 	name = get_ifname_rta(ifi->ifi_index, tb[IFLA_IFNAME]);
 	if (!name)
@@ -2121,6 +2131,28 @@ static int ip_addr_list(struct nlmsg_chain *ainfo)
 	return 0;
 }
 
+static void group_filter(struct nlmsg_chain *linfo)
+{
+	struct nlmsg_list *l, **lp;
+
+	lp = &linfo->head;
+	while ((l = *lp) != NULL) {
+		struct nlmsghdr *n = &l->h;
+		struct rtattr *tb[IFLA_MAX+1];
+
+		if (get_rtattr(n, tb) < 0)
+			return;
+
+		if (tb[IFLA_GROUP]) {
+			if (rta_getattr_u32(tb[IFLA_GROUP]) != filter.group) {
+				*lp = l->next;
+				free(l);
+			} else
+				lp = &l->next;
+		}
+	}
+}
+
 static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 {
 	struct nlmsg_chain linfo = { NULL, NULL};
@@ -2298,6 +2330,9 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 
 		ipaddr_filter(&linfo, ainfo);
 	}
+
+	if (filter.group != -1)
+		group_filter(&linfo);
 
 	for (l = linfo.head; l; l = l->next) {
 		struct nlmsghdr *n = &l->h;
