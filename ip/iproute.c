@@ -1134,6 +1134,27 @@ static int parse_nexthops(struct nlmsghdr *n, struct rtmsg *r,
 	return 0;
 }
 
+static unsigned int parse_features(int *argcp, char ***argvp)
+{
+	unsigned int features = 0;
+	char **argv = *argvp;
+	int argc = *argcp;
+
+	while (++argv, --argc > 0) {
+		if (strcmp(*argv, "ecn") == 0) {
+			features |= RTAX_FEATURE_ECN;
+		} else if (strcmp(*argv, "tcp_usec_ts") == 0) {
+			features |= RTAX_FEATURE_TCP_USEC_TS;
+		} else {
+			break;
+		}
+	}
+
+	*argcp = argc;
+	*argvp = argv;
+	return features;
+}
+
 static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 {
 	struct {
@@ -1374,17 +1395,14 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 		} else if (matches(*argv, "features") == 0) {
 			unsigned int features = 0;
 
-			while (argc > 0) {
-				NEXT_ARG();
+			features = parse_features(&argc, &argv);
+			if (!features)
+				invarg("\"features\" value not valid\n", *argv);
 
-				if (strcmp(*argv, "ecn") == 0)
-					features |= RTAX_FEATURE_ECN;
-				else if (strcmp(*argv, "tcp_usec_ts") == 0)
-					features |= RTAX_FEATURE_TCP_USEC_TS;
-				else
-					invarg("\"features\" value not valid\n", *argv);
-				break;
-			}
+			/* parse_features stops at the first feature it can't
+			 * parse, rewind one argument back.
+			 */
+			PREV_ARG();
 
 			rta_addattr32(mxrta, sizeof(mxbuf),
 				      RTAX_FEATURES, features);
