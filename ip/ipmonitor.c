@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -328,38 +329,46 @@ int do_ipmonitor(int argc, char **argv)
 
 	if (lmask & IPMON_LNEXTHOP &&
 	    rtnl_add_nl_group(&rth, RTNLGRP_NEXTHOP) < 0) {
-		fprintf(stderr, "Failed to add nexthop group to list\n");
-		exit(1);
+		if (errno != EINVAL) {
+			fprintf(stderr, "Failed to add nexthop group to list\n");
+			exit(1);
+		}
 	}
 
 	if (lmask & IPMON_LSTATS &&
 	    rtnl_add_nl_group(&rth, RTNLGRP_STATS) < 0 &&
 	    nmask & IPMON_LSTATS) {
-		fprintf(stderr, "Failed to add stats group to list\n");
-		exit(1);
+		if (errno != EINVAL) {
+			fprintf(stderr, "Failed to add stats group to list\n");
+			exit(1);
+		}
 	}
 
 	if (lmask & IPMON_LMADDR) {
 		if ((!preferred_family || preferred_family == AF_INET) &&
 		    rtnl_add_nl_group(&rth, RTNLGRP_IPV4_MCADDR) < 0) {
-			fprintf(stderr,
-				"Failed to add ipv4 mcaddr group to list\n");
-			exit(1);
+			if (errno != EINVAL) {
+				fprintf(stderr, "Failed to add ipv4 mcaddr group to list\n");
+				exit(1);
+			}
 		}
 		if ((!preferred_family || preferred_family == AF_INET6) &&
 		    rtnl_add_nl_group(&rth, RTNLGRP_IPV6_MCADDR) < 0) {
-			fprintf(stderr,
-				"Failed to add ipv6 mcaddr group to list\n");
-			exit(1);
+			if (errno != EINVAL) {
+				fprintf(stderr,
+					"Failed to add ipv6 mcaddr group to list\n");
+				exit(1);
+			}
 		}
 	}
 
 	if (lmask & IPMON_LACADDR) {
 		if ((!preferred_family || preferred_family == AF_INET6) &&
 		    rtnl_add_nl_group(&rth, RTNLGRP_IPV6_ACADDR) < 0) {
-			fprintf(stderr,
-				"Failed to add ipv6 acaddr group to list\n");
-			exit(1);
+			if (errno != EINVAL) {
+				fprintf(stderr, "Failed to add ipv6 acaddr group to list\n");
+				exit(1);
+			}
 		}
 	}
 
