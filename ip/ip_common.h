@@ -195,7 +195,6 @@ struct ipstats_stat_desc_xstats {
 	const struct ipstats_stat_desc desc;
 	int xstats_at;
 	int link_type_at;
-	int inner_max;
 	int inner_at;
 	void (*show_cb)(const struct rtattr *at);
 };

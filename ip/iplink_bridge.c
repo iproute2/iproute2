@@ -1075,7 +1075,6 @@ ipstats_stat_desc_xstats_bridge_stp = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("stp"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
-	.inner_max = BRIDGE_XSTATS_MAX,
 	.inner_at = BRIDGE_XSTATS_STP,
 	.show_cb = &bridge_print_stats_stp,
 };
@@ -1085,7 +1084,6 @@ ipstats_stat_desc_xstats_bridge_mcast = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("mcast"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
-	.inner_max = BRIDGE_XSTATS_MAX,
 	.inner_at = BRIDGE_XSTATS_MCAST,
 	.show_cb = &bridge_print_stats_mcast,
 };
@@ -1108,7 +1106,6 @@ ipstats_stat_desc_xstats_slave_bridge_stp = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("stp"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
-	.inner_max = BRIDGE_XSTATS_MAX,
 	.inner_at = BRIDGE_XSTATS_STP,
 	.show_cb = &bridge_print_stats_stp,
 };
@@ -1118,7 +1115,6 @@ ipstats_stat_desc_xstats_slave_bridge_mcast = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("mcast"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
-	.inner_max = BRIDGE_XSTATS_MAX,
 	.inner_at = BRIDGE_XSTATS_MCAST,
 	.show_cb = &bridge_print_stats_mcast,
 };
