@@ -152,9 +152,15 @@ Note how the l3_stats_info for the selected group is also part of the dump.
 .in 21
 
 .ti 14
-.B subgroup bridge \fR[\fB suite stp \fR] [\fB suite mcast \fR]
-- Statistics for STP and, respectively, IGMP / MLD (under the keyword
-\fBmcast\fR) traffic on bridges and their slaves.
+.B subgroup bridge\fR - Various statistics on bridges and their slaves.
+
+.ti 21
+.BR "suite stp " "- STP statistics"
+.br
+.BR "suite mcast " "- IGMP / MLD statistics"
+.br
+.BR "suite vlan " "- per-VLAN traffic statistics"
+.br
 
 .ti 14
 .B subgroup bond \fR[\fB suite 802.3ad \fR]
