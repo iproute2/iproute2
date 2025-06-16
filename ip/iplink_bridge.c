@@ -14,6 +14,7 @@
 #include <linux/if_bridge.h>
 #include <net/if.h>
 
+#include "bridge.h"
 #include "rt_names.h"
 #include "utils.h"
 #include "ip_common.h"
@@ -978,6 +979,26 @@ static void bridge_print_stats_stp(const struct rtattr *attr)
 	close_json_object();
 }
 
+static void bridge_print_stats_vlan(const struct rtattr *attr)
+{
+	const struct bridge_vlan_xstats *vstats = RTA_DATA(attr);
+
+	print_string(PRINT_FP, NULL, "%-" textify(IFNAMSIZ) "s  ", "");
+	bridge_print_vlan_stats(vstats);
+}
+
+static int bridge_stat_desc_show_xstats(struct ipstats_stat_show_attrs *attrs,
+					const struct ipstats_stat_desc *desc)
+{
+	int ret;
+
+	open_json_array(PRINT_JSON, "vlans");
+	ret = ipstats_stat_desc_show_xstats(attrs, desc);
+	close_json_array(PRINT_JSON, "vlans");
+
+	return ret;
+}
+
 static void bridge_print_stats_attr(struct rtattr *attr, int ifindex)
 {
 	struct rtattr *brtb[LINK_XSTATS_TYPE_MAX+1];
@@ -1075,7 +1096,6 @@ ipstats_stat_desc_xstats_bridge_stp = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("stp"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
-	.inner_max = BRIDGE_XSTATS_MAX,
 	.inner_at = BRIDGE_XSTATS_STP,
 	.show_cb = &bridge_print_stats_stp,
 };
@@ -1085,15 +1105,31 @@ ipstats_stat_desc_xstats_bridge_mcast = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("mcast"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
-	.inner_max = BRIDGE_XSTATS_MAX,
 	.inner_at = BRIDGE_XSTATS_MCAST,
 	.show_cb = &bridge_print_stats_mcast,
+};
+
+#define IPSTATS_STAT_DESC_BRIDGE_VLAN {			\
+		.name = "vlan",				\
+		.kind = IPSTATS_STAT_DESC_KIND_LEAF,	\
+		.show = &bridge_stat_desc_show_xstats,	\
+		.pack = &ipstats_stat_desc_pack_xstats,	\
+	}
+
+static const struct ipstats_stat_desc_xstats
+ipstats_stat_desc_xstats_bridge_vlan = {
+	.desc = IPSTATS_STAT_DESC_BRIDGE_VLAN,
+	.xstats_at = IFLA_STATS_LINK_XSTATS,
+	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
+	.inner_at = BRIDGE_XSTATS_VLAN,
+	.show_cb = &bridge_print_stats_vlan,
 };
 
 static const struct ipstats_stat_desc *
 ipstats_stat_desc_xstats_bridge_subs[] = {
 	&ipstats_stat_desc_xstats_bridge_stp.desc,
 	&ipstats_stat_desc_xstats_bridge_mcast.desc,
+	&ipstats_stat_desc_xstats_bridge_vlan.desc,
 };
 
 const struct ipstats_stat_desc ipstats_stat_desc_xstats_bridge_group = {
@@ -1108,7 +1144,6 @@ ipstats_stat_desc_xstats_slave_bridge_stp = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("stp"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
-	.inner_max = BRIDGE_XSTATS_MAX,
 	.inner_at = BRIDGE_XSTATS_STP,
 	.show_cb = &bridge_print_stats_stp,
 };
@@ -1118,15 +1153,24 @@ ipstats_stat_desc_xstats_slave_bridge_mcast = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("mcast"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
 	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
-	.inner_max = BRIDGE_XSTATS_MAX,
 	.inner_at = BRIDGE_XSTATS_MCAST,
 	.show_cb = &bridge_print_stats_mcast,
+};
+
+static const struct ipstats_stat_desc_xstats
+ipstats_stat_desc_xstats_slave_bridge_vlan = {
+	.desc = IPSTATS_STAT_DESC_BRIDGE_VLAN,
+	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
+	.link_type_at = LINK_XSTATS_TYPE_BRIDGE,
+	.inner_at = BRIDGE_XSTATS_VLAN,
+	.show_cb = &bridge_print_stats_vlan,
 };
 
 static const struct ipstats_stat_desc *
 ipstats_stat_desc_xstats_slave_bridge_subs[] = {
 	&ipstats_stat_desc_xstats_slave_bridge_stp.desc,
 	&ipstats_stat_desc_xstats_slave_bridge_mcast.desc,
+	&ipstats_stat_desc_xstats_slave_bridge_vlan.desc,
 };
 
 const struct ipstats_stat_desc ipstats_stat_desc_xstats_slave_bridge_group = {

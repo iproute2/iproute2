@@ -15,6 +15,7 @@
 #include "json_print.h"
 #include "libnetlink.h"
 #include "br_common.h"
+#include "bridge.h"
 #include "utils.h"
 
 static unsigned int filter_index, filter_vlan;
@@ -705,47 +706,6 @@ static int print_vlan(struct nlmsghdr *n, void *arg)
 	return 0;
 }
 
-static void print_vlan_flags(__u16 flags)
-{
-	if (flags == 0)
-		return;
-
-	open_json_array(PRINT_JSON, "flags");
-	if (flags & BRIDGE_VLAN_INFO_PVID)
-		print_string(PRINT_ANY, NULL, " %s", "PVID");
-
-	if (flags & BRIDGE_VLAN_INFO_UNTAGGED)
-		print_string(PRINT_ANY, NULL, " %s", "Egress Untagged");
-	close_json_array(PRINT_JSON, NULL);
-}
-
-static void __print_one_vlan_stats(const struct bridge_vlan_xstats *vstats)
-{
-	print_string(PRINT_FP, NULL, "%-" textify(IFNAMSIZ) "s    ", "");
-	print_lluint(PRINT_ANY, "rx_bytes", "RX: %llu bytes",
-		     vstats->rx_bytes);
-	print_lluint(PRINT_ANY, "rx_packets", " %llu packets\n",
-		     vstats->rx_packets);
-
-	print_string(PRINT_FP, NULL, "%-" textify(IFNAMSIZ) "s    ", "");
-	print_lluint(PRINT_ANY, "tx_bytes", "TX: %llu bytes",
-		     vstats->tx_bytes);
-	print_lluint(PRINT_ANY, "tx_packets", " %llu packets\n",
-		     vstats->tx_packets);
-}
-
-static void print_one_vlan_stats(const struct bridge_vlan_xstats *vstats)
-{
-	open_json_object(NULL);
-
-	print_hu(PRINT_ANY, "vid", "%hu", vstats->vid);
-	print_vlan_flags(vstats->flags);
-	print_nl();
-	__print_one_vlan_stats(vstats);
-
-	close_json_object();
-}
-
 static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 {
 	struct rtattr *brtb[LINK_XSTATS_TYPE_MAX+1];
@@ -783,7 +743,7 @@ static void print_vlan_stats_attr(struct rtattr *attr, int ifindex)
 			print_string(PRINT_FP, NULL,
 				     "%-" textify(IFNAMSIZ) "s  ", "");
 		}
-		print_one_vlan_stats(vstats);
+		bridge_print_vlan_stats(vstats);
 	}
 
 	/* vlan_port is opened only if there are any vlan stats */
@@ -1025,7 +985,7 @@ static void print_vlan_opts(struct rtattr *a, int ifindex)
 		print_string(PRINT_FP, NULL, "%-" textify(IFNAMSIZ) "s  ", "");
 	}
 	print_range("vlan", vinfo->vid, vrange);
-	print_vlan_flags(vinfo->flags);
+	bridge_print_vlan_flags(vinfo->flags);
 	print_nl();
 	print_string(PRINT_FP, NULL, "%-" textify(IFNAMSIZ) "s    ", "");
 	print_stp_state(state);
@@ -1051,7 +1011,7 @@ static void print_vlan_opts(struct rtattr *a, int ifindex)
 	}
 	print_nl();
 	if (show_stats)
-		__print_one_vlan_stats(&vstats);
+		bridge_print_vlan_stats_only(&vstats);
 	close_json_object();
 }
 
@@ -1334,7 +1294,7 @@ static void print_vlan_info(struct rtattr *tb, int ifindex)
 		open_json_object(NULL);
 		print_range("vlan", last_vid_start, vinfo->vid);
 
-		print_vlan_flags(vinfo->flags);
+		bridge_print_vlan_flags(vinfo->flags);
 		close_json_object();
 		print_nl();
 	}

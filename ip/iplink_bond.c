@@ -940,7 +940,6 @@ ipstats_stat_desc_xstats_bond_lacp = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("802.3ad"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS,
 	.link_type_at = LINK_XSTATS_TYPE_BOND,
-	.inner_max = BOND_XSTATS_MAX,
 	.inner_at = BOND_XSTATS_3AD,
 	.show_cb = &bond_print_3ad_stats,
 };
@@ -962,7 +961,6 @@ ipstats_stat_desc_xstats_slave_bond_lacp = {
 	.desc = IPSTATS_STAT_DESC_XSTATS_LEAF("802.3ad"),
 	.xstats_at = IFLA_STATS_LINK_XSTATS_SLAVE,
 	.link_type_at = LINK_XSTATS_TYPE_BOND,
-	.inner_max = BOND_XSTATS_MAX,
 	.inner_at = BOND_XSTATS_3AD,
 	.show_cb = &bond_print_3ad_stats,
 };
