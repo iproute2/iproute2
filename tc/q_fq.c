@@ -258,7 +258,6 @@ static int fq_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 				fprintf(stderr, "Duplicate \"weights\"\n");
 				return -1;
 			}
-			NEXT_ARG();
 			for (idx = 0; idx < FQ_BANDS; ++idx) {
 				int val;
 
