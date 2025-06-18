@@ -663,6 +663,8 @@ the following additional arguments are supported:
 .B gpe
 ] [
 .RB [ no ] vnifilter
+] [
+.RB [ no ] mcroute
 ]
 
 .in +8
@@ -795,6 +797,14 @@ or the internal FDB should be used.
 device with external flag set. once enabled, bridge vni command is used to manage the
 vni filtering table on the device. The device can only receive packets with vni's configured
 in the vni filtering table.
+
+.sp
+.RB [ no ] mcroute
+- when the VXLAN tunnel has a multicast remote, whether the underlay packets
+should be sent directly to the physical device (the default), or whether they
+should be multicast-routed. In the latter case, for purposes of matching a
+multicast route, (S,G) are, respectively, local and remote address of the
+tunnel, and iif is the tunnel physical device.
 
 .sp
 .B gbp

@@ -37,6 +37,7 @@ static const struct vxlan_bool_opt {
 	{ "remcsum_tx", IFLA_VXLAN_REMCSUM_TX,		false },
 	{ "remcsum_rx", IFLA_VXLAN_REMCSUM_RX,		false },
 	{ "localbypass", IFLA_VXLAN_LOCALBYPASS,	true },
+	{ "mcroute",	IFLA_VXLAN_MC_ROUTE,		false },
 };
 
 static void print_explain(FILE *f)
@@ -67,6 +68,7 @@ static void print_explain(FILE *f)
 		"		[ [no]localbypass ]\n"
 		"		[ [no]external ] [ gbp ] [ gpe ]\n"
 		"		[ [no]vnifilter ]\n"
+		"		[ [no]mcroute ]\n"
 		"\n"
 		"Where:	VNI	:= 0-16777215\n"
 		"	ADDR	:= { IP_ADDRESS | any }\n"
@@ -378,6 +380,14 @@ static int vxlan_parse_opt(struct link_util *lu, int argc, char **argv,
 			check_duparg(&attrs, IFLA_VXLAN_VNIFILTER,
 				     *argv, *argv);
 			addattr8(n, 1024, IFLA_VXLAN_VNIFILTER, 0);
+		} else if (!strcmp(*argv, "mcroute")) {
+			check_duparg(&attrs, IFLA_VXLAN_MC_ROUTE,
+				     *argv, *argv);
+			addattr8(n, 1024, IFLA_VXLAN_MC_ROUTE, 1);
+		} else if (!strcmp(*argv, "nomcroute")) {
+			check_duparg(&attrs, IFLA_VXLAN_MC_ROUTE,
+				     *argv, *argv);
+			addattr8(n, 1024, IFLA_VXLAN_MC_ROUTE, 0);
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
