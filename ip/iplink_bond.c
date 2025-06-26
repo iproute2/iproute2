@@ -852,7 +852,7 @@ static void bond_print_stats_attr(struct rtattr *attr, int ifindex)
 	const char *ifname = "";
 	int rem;
 
-	parse_rtattr(bondtb, LINK_XSTATS_TYPE_MAX+1, RTA_DATA(attr),
+	parse_rtattr(bondtb, LINK_XSTATS_TYPE_MAX, RTA_DATA(attr),
 	RTA_PAYLOAD(attr));
 	if (!bondtb[LINK_XSTATS_TYPE_BOND])
 		return;
