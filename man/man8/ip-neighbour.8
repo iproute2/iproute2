@@ -27,7 +27,8 @@ ip-neighbour \- neighbour/arp tables management.
 .BR router " ] [ "
 .BR use " ] [ "
 .BR managed " ] [ "
-.BR extern_learn " ]"
+.BR extern_learn " ] [ "
+.BR extern_valid " ]"
 
 .ti -8
 .BR "ip neigh" " { " show " | " flush " } [ " proxy " ] [ " to
@@ -114,6 +115,13 @@ remains in resolved state when possible.
 this neigh entry was learned externally. This option can be used to
 indicate to the kernel that this is a controller learnt dynamic entry.
 Kernel will not gc such an entry.
+
+.TP
+.BI extern_valid
+this neigh entry was learned and determined to be valid externally. The kernel
+will not remove or invalidate the entry, but it can probe the entry and notify
+user space when the entry becomes reachable. The kernel will return the entry
+to stale state if it did not receive a confirmation after probing the entry.
 
 .TP
 .BI lladdr " LLADDRESS"

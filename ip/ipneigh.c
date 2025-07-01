@@ -47,7 +47,7 @@ static void usage(void)
 		"Usage: ip neigh { add | del | change | replace }\n"
 		"                { ADDR [ lladdr LLADDR ] [ nud STATE ] proxy ADDR }\n"
 		"                [ dev DEV ] [ router ] [ use ] [ managed ] [ extern_learn ]\n"
-		"                [ protocol PROTO ]\n"
+		"                [ extern_valid ] [ protocol PROTO ]\n"
 		"\n"
 		"	ip neigh { show | flush } [ proxy ] [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n"
 		"				  [ vrf NAME ] [ nomaster ]\n"
@@ -152,6 +152,8 @@ static int ipneigh_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_state = NUD_NONE;
 		} else if (matches(*argv, "extern_learn") == 0) {
 			req.ndm.ndm_flags |= NTF_EXT_LEARNED;
+		} else if (strcmp(*argv, "extern_valid") == 0) {
+			ext_flags |= NTF_EXT_EXT_VALIDATED;
 		} else if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			dev = *argv;
@@ -446,6 +448,8 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 		print_null(PRINT_ANY, "extern_learn", "%s ", "extern_learn");
 	if (r->ndm_flags & NTF_OFFLOADED)
 		print_null(PRINT_ANY, "offload", "%s ", "offload");
+	if (ext_flags & NTF_EXT_EXT_VALIDATED)
+		print_null(PRINT_ANY, "extern_valid", "%s ", "extern_valid");
 
 	if (show_stats) {
 		if (tb[NDA_CACHEINFO])
