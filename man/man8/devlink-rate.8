@@ -28,6 +28,7 @@ devlink-rate \- devlink rate management
 .RB [ " tx_max \fIVALUE " ]
 .RB [ " tx_priority \fIN " ]
 .RB [ " tx_weight \fIN " ]
+.RB [ " tc-bw \fIINDEX:N " ]
 .RB "[ {" " parent \fINODE_NAME " | " noparent " "} ]"
 
 .ti -8
@@ -36,6 +37,7 @@ devlink-rate \- devlink rate management
 .RB [ " tx_max \fIVALUE " ]
 .RB [ " tx_priority \fIN " ]
 .RB [ " tx_weight \fIN " ]
+.RB [ " tc-bw \fIINDEX:N " ]
 .RB "[ {" " parent \fINODE_NAME " | " noparent " "} ]"
 
 .ti -8
@@ -101,6 +103,12 @@ As a node is configured with a higher rate it gets more BW relative to it's
 siblings. Values are relative like a percentage points, they basically tell
 how much BW should node take relative to it's siblings.
 .PP
+.BI tc-bw " INDEX:N"
+- allows the user to assign relative bandwidth shares to specific traffic
+classes using the IEEE 802.1Qaz standard. The values determine how bandwidth
+is distributed between traffic classes in proportion to one another.
+If not specified, the default bandwidth allocation is applied.
+.PP
 .TP 8
 .I VALUE
 These parameter accept a floating point number, possibly followed by either a
@@ -140,6 +148,12 @@ Terabytes per second
 To specify in IEC units, replace the SI prefix (k-, m-, g-, t-) with IEC prefix
 (ki-, mi-, gi- and ti-) respectively. Input is case-insensitive.
 .RE
+.PP
+.TP 8
+.I INDEX
+These parameters represent the traffic class index in the \fItc-bw\fR option.
+The traffic class is specified as an integer value, ranging from 0 to 7, which
+maps to the defined traffic classes under the IEEE 802.1Qaz standard.
 .PP
 .TP 8
 .I N

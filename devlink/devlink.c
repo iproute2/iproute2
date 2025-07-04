@@ -310,6 +310,7 @@ static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)
 #define DL_OPT_PORT_FN_RATE_TX_WEIGHT	BIT(56)
 #define DL_OPT_PORT_FN_CAPS	BIT(57)
 #define DL_OPT_PORT_FN_MAX_IO_EQS	BIT(58)
+#define DL_OPT_PORT_FN_RATE_TC_BWS	BIT(59)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -372,6 +373,7 @@ struct dl_opts {
 	uint32_t rate_tx_weight;
 	char *rate_node_name;
 	const char *rate_parent_node;
+	uint32_t rate_tc_bw[DEVLINK_RATE_TCS_MAX];
 	uint32_t linecard_index;
 	const char *linecard_type;
 	bool selftests_opt[DEVLINK_ATTR_SELFTEST_ID_MAX + 1];
@@ -1699,6 +1701,84 @@ static int dl_args_finding_required_validate(uint64_t o_required,
 	return err;
 }
 
+static int
+parse_tc_bw_arg(const char *tc_bw_str, int *tc_index, uint32_t *tc_bw)
+{
+	char *index, *value, *endptr;
+	char *input = NULL;
+	int err;
+
+	input = strdup(tc_bw_str);
+	if (!input)
+		return -ENOMEM;
+
+	err = str_split_by_char(input, &index, &value, ':');
+	if (err) {
+		pr_err("Invalid format in token: %s\n", input);
+		goto out;
+	}
+
+	*tc_index = strtoul(index, &endptr, 10);
+	if (endptr && *endptr) {
+		pr_err("Invalid traffic class index: %s\n", index);
+		err = -EINVAL;
+		goto out;
+	}
+
+	*tc_bw = strtoul(value, &endptr, 10);
+	if (endptr && *endptr) {
+		pr_err("Invalid bandwidth value: %s\n", value);
+		err = -EINVAL;
+		goto out;
+	}
+
+out:
+	free(input);
+	return err;
+}
+
+static int parse_tc_bw_args(struct dl *dl, uint32_t *tc_bw)
+{
+	bool parsed_indices[DEVLINK_RATE_TCS_MAX] = {};
+	const char *tc_bw_str;
+	int index, err, i;
+	uint32_t bw;
+
+	memset(tc_bw, 0, sizeof(uint32_t) * DEVLINK_RATE_TCS_MAX);
+
+	for (i = 0; i < DEVLINK_RATE_TCS_MAX; i++) {
+		err = dl_argv_str(dl, &tc_bw_str);
+		if (err) {
+			fprintf(stderr,
+				"Error parsing tc-bw: example usage: tc-bw 0:60 1:10 2:0 3:0 4:30 5:0 6:0 7:0\n");
+			return err;
+		}
+
+		err = parse_tc_bw_arg(tc_bw_str, &index, &bw);
+		if (err)
+			return err;
+
+		if (index < 0 || index >= DEVLINK_RATE_TCS_MAX) {
+			fprintf(stderr,
+				"Error parsing tc-bw: invalid index: %d, use values between 0 and %d\n",
+				index, DEVLINK_RATE_TC_INDEX_MAX);
+			return -EINVAL;
+		}
+
+		if (parsed_indices[index]) {
+			fprintf(stderr,
+				"Error parsing tc-bw: duplicate index : %d\n",
+				index);
+			return -EINVAL;
+		}
+
+		tc_bw[index] = bw;
+		parsed_indices[index] = true;
+	}
+
+	return 0;
+}
+
 static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			 uint64_t o_optional)
 {
@@ -2237,6 +2317,13 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			dl_arg_inc(dl);
 			opts->rate_parent_node = "";
 			o_found |= DL_OPT_PORT_FN_RATE_PARENT;
+		} else if (dl_argv_match(dl, "tc-bw") &&
+			   (o_all & DL_OPT_PORT_FN_RATE_TC_BWS)) {
+			dl_arg_inc(dl);
+			err = parse_tc_bw_args(dl, opts->rate_tc_bw);
+			if (err)
+				return err;
+			o_found |= DL_OPT_PORT_FN_RATE_TC_BWS;
 		} else if (dl_argv_match(dl, "lc") &&
 			   (o_all & DL_OPT_LINECARD)) {
 			dl_arg_inc(dl);
@@ -2678,6 +2765,20 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_PORT_FN_RATE_PARENT)
 		mnl_attr_put_strz(nlh, DEVLINK_ATTR_RATE_PARENT_NODE_NAME,
 				  opts->rate_parent_node);
+	if (opts->present & DL_OPT_PORT_FN_RATE_TC_BWS) {
+		struct nlattr *nla_tc_bw_entry;
+		int i;
+
+		for (i = 0; i < DEVLINK_RATE_TCS_MAX; i++) {
+			nla_tc_bw_entry =
+				mnl_attr_nest_start(nlh,
+						    DEVLINK_ATTR_RATE_TC_BWS);
+			mnl_attr_put_u8(nlh, DEVLINK_ATTR_RATE_TC_INDEX, i);
+			mnl_attr_put_u32(nlh, DEVLINK_ATTR_RATE_TC_BW,
+					 opts->rate_tc_bw[i]);
+			mnl_attr_nest_end(nlh, nla_tc_bw_entry);
+		}
+	}
 	if (opts->present & DL_OPT_LINECARD)
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_LINECARD_INDEX,
 				 opts->linecard_index);
@@ -5366,7 +5467,55 @@ static char *port_rate_type_name(uint16_t type)
 	}
 }
 
-static void pr_out_port_fn_rate(struct dl *dl, struct nlattr **tb)
+static int
+parse_rate_tc_bw(struct nlattr *nla_tc_bw, uint8_t *tc_index, uint32_t *tc_bw)
+{
+	struct nlattr *tb_tc_bw[DEVLINK_ATTR_MAX + 1] = {};
+
+	if (mnl_attr_parse_nested(nla_tc_bw, attr_cb, tb_tc_bw) != MNL_CB_OK)
+		return MNL_CB_ERROR;
+
+	if (!tb_tc_bw[DEVLINK_ATTR_RATE_TC_INDEX] ||
+	    !tb_tc_bw[DEVLINK_ATTR_RATE_TC_BW])
+		return MNL_CB_ERROR;
+
+	*tc_index = mnl_attr_get_u8(tb_tc_bw[DEVLINK_ATTR_RATE_TC_INDEX]);
+	*tc_bw = mnl_attr_get_u32(tb_tc_bw[DEVLINK_ATTR_RATE_TC_BW]);
+
+	return MNL_CB_OK;
+}
+
+static void pr_out_port_fn_rate_tc_bw(struct dl *dl, const struct nlmsghdr *nlh)
+{
+	struct nlattr *nla_tc_bw;
+
+	mnl_attr_for_each(nla_tc_bw, nlh, sizeof(struct genlmsghdr)) {
+		uint8_t tc_index;
+		uint32_t tc_bw;
+
+		if (mnl_attr_get_type(nla_tc_bw) != DEVLINK_ATTR_RATE_TC_BWS)
+			continue;
+
+		if (parse_rate_tc_bw(nla_tc_bw, &tc_index, &tc_bw) != MNL_CB_OK)
+			continue;
+
+		if (tc_bw) {
+			char buf[32];
+
+			if (dl->json_output) {
+				snprintf(buf, sizeof(buf), "tc_%u", tc_index);
+				print_uint(PRINT_JSON, buf, "%u", tc_bw);
+			} else {
+				snprintf(buf, sizeof(buf), " tc_%u bw %u",
+					 tc_index, tc_bw);
+				print_string(PRINT_ANY, NULL, "%s", buf);
+			}
+		}
+	}
+}
+
+static void pr_out_port_fn_rate(struct dl *dl, const struct nlmsghdr *nlh,
+				struct nlattr **tb)
 {
 
 	if (!tb[DEVLINK_ATTR_RATE_NODE_NAME])
@@ -5412,12 +5561,16 @@ static void pr_out_port_fn_rate(struct dl *dl, struct nlattr **tb)
 			print_uint(PRINT_ANY, "tx_weight",
 				   " tx_weight %u", weight);
 	}
+
 	if (tb[DEVLINK_ATTR_RATE_PARENT_NODE_NAME]) {
 		const char *parent =
 			mnl_attr_get_str(tb[DEVLINK_ATTR_RATE_PARENT_NODE_NAME]);
 
 		print_string(PRINT_ANY, "parent", " parent %s", parent);
 	}
+
+	if (tb[DEVLINK_ATTR_RATE_TC_BWS])
+		pr_out_port_fn_rate_tc_bw(dl, nlh);
 
 	pr_out_port_handle_end(dl);
 }
@@ -5434,7 +5587,7 @@ static int cmd_port_fn_rate_show_cb(const struct nlmsghdr *nlh, void *data)
 	    !tb[DEVLINK_ATTR_RATE_NODE_NAME]) {
 		return MNL_CB_ERROR;
 	}
-	pr_out_port_fn_rate(dl, tb);
+	pr_out_port_fn_rate(dl, nlh, tb);
 	return MNL_CB_OK;
 }
 
@@ -5443,12 +5596,13 @@ static void cmd_port_fn_rate_help(void)
 	pr_err("Usage: devlink port function rate help\n");
 	pr_err("       devlink port function rate show [ DEV/{ PORT_INDEX | NODE_NAME } ]\n");
 	pr_err("       devlink port function rate add DEV/NODE_NAME\n");
-	pr_err("               [ tx_share VAL ][ tx_max VAL ][ tx_priority N ][ tx_weight N ][ { parent NODE_NAME | noparent } ]\n");
+	pr_err("               [ tx_share VAL ][ tx_max VAL ][ tx_priority N ][ tx_weight N ][ tc-bw INDEX:N ... INDEX:N ][ { parent NODE_NAME | noparent } ]\n");
 	pr_err("       devlink port function rate del DEV/NODE_NAME\n");
 	pr_err("       devlink port function rate set DEV/{ PORT_INDEX | NODE_NAME }\n");
-	pr_err("               [ tx_share VAL ][ tx_max VAL ][ tx_priority N ][ tx_weight N ][ { parent NODE_NAME | noparent } ]\n\n");
+	pr_err("               [ tx_share VAL ][ tx_max VAL ][ tx_priority N ][ tx_weight N ][ tc-bw INDEX:N ... INDEX:N ][ { parent NODE_NAME | noparent } ]\n\n");
 	pr_err("       VAL - float or integer value in units of bits or bytes per second (bit|bps)\n");
 	pr_err("       N - integer representing priority/weight of the node among siblings\n");
+	pr_err("       INDEX - integer representing traffic class index in the tc-bw option, ranging from 0 to 7\n");
 	pr_err("       and SI (k-, m-, g-, t-) or IEC (ki-, mi-, gi-, ti-) case-insensitive prefix.\n");
 	pr_err("       Bare number, means bits per second, is possible.\n\n");
 	pr_err("       For details refer to devlink-rate(8) man page.\n");
@@ -5503,7 +5657,8 @@ static int cmd_port_fn_rate_add(struct dl *dl)
 			    DL_OPT_PORT_FN_RATE_TX_SHARE | DL_OPT_PORT_FN_RATE_TX_MAX |
 			    DL_OPT_PORT_FN_RATE_TX_PRIORITY |
 			    DL_OPT_PORT_FN_RATE_TX_WEIGHT |
-			    DL_OPT_PORT_FN_RATE_PARENT);
+			    DL_OPT_PORT_FN_RATE_PARENT |
+			    DL_OPT_PORT_FN_RATE_TC_BWS);
 	if (err)
 		return err;
 
@@ -5538,6 +5693,25 @@ static int cmd_port_fn_rate_del(struct dl *dl)
 	return mnlu_gen_socket_sndrcv(&dl->nlg, nlh, NULL, NULL);
 }
 
+static void parse_tc_bw_entries(const struct nlmsghdr *nlh,
+				struct dl_opts *opts)
+{
+	struct nlattr *nla_tc_bw;
+
+	mnl_attr_for_each(nla_tc_bw, nlh, sizeof(struct genlmsghdr)) {
+		uint8_t tc_index;
+		uint32_t tc_bw;
+
+		if (mnl_attr_get_type(nla_tc_bw) != DEVLINK_ATTR_RATE_TC_BWS)
+			continue;
+
+		if (parse_rate_tc_bw(nla_tc_bw, &tc_index, &tc_bw) != MNL_CB_OK)
+			continue;
+
+		opts->rate_tc_bw[tc_index] = tc_bw;
+	}
+}
+
 static int port_fn_get_rates_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct dl_opts *opts = data;
@@ -5563,6 +5737,10 @@ static int port_fn_get_rates_cb(const struct nlmsghdr *nlh, void *data)
 	if (tb[DEVLINK_ATTR_RATE_TX_WEIGHT])
 		opts->rate_tx_weight =
 			mnl_attr_get_u32(tb[DEVLINK_ATTR_RATE_TX_WEIGHT]);
+
+	if (tb[DEVLINK_ATTR_RATE_TC_BWS])
+		parse_tc_bw_entries(nlh, opts);
+
 	return MNL_CB_OK;
 }
 
@@ -5578,7 +5756,8 @@ static int cmd_port_fn_rate_set(struct dl *dl)
 				DL_OPT_PORT_FN_RATE_TX_MAX |
 				DL_OPT_PORT_FN_RATE_TX_PRIORITY |
 				DL_OPT_PORT_FN_RATE_TX_WEIGHT |
-				DL_OPT_PORT_FN_RATE_PARENT);
+				DL_OPT_PORT_FN_RATE_PARENT |
+				DL_OPT_PORT_FN_RATE_TC_BWS);
 	if (err)
 		return err;
 
