@@ -40,7 +40,8 @@ static void usage(void)
 		"              [ self ] [ master ] [ use ] [ router ] [ extern_learn ]\n"
 		"              [ sticky ] [ local | static | dynamic ] [ vlan VID ]\n"
 		"              { [ dst IPADDR ] [ port PORT] [ vni VNI ] | [ nhid NHID ] }\n"
-		"	       [ via DEV ] [ src_vni VNI ]\n"
+		"	       [ via DEV ] [ src_vni VNI ] [ activity_notify ]\n"
+		"	       [ inactive ] [ norefresh ]\n"
 		"       bridge fdb [ show [ br BRDEV ] [ brport DEV ] [ vlan VID ]\n"
 		"              [ state STATE ] [ dynamic ] ]\n"
 		"       bridge fdb get [ to ] LLADDR [ br BRDEV ] { brport | dev } DEV\n"
@@ -142,6 +143,24 @@ static void fdb_print_stats(FILE *fp, const struct nda_cacheinfo *ci)
 	}
 }
 
+static void fdb_print_ext_attrs(struct rtattr *nfea)
+{
+	struct rtattr *tb[NFEA_MAX + 1];
+
+	parse_rtattr_nested(tb, NFEA_MAX, nfea);
+
+	if (tb[NFEA_ACTIVITY_NOTIFY]) {
+		__u8 notify;
+
+		notify = rta_getattr_u8(tb[NFEA_ACTIVITY_NOTIFY]);
+		if (notify & FDB_NOTIFY_BIT)
+			print_bool(PRINT_ANY, "activity_notify",
+				   "activity_notify ", true);
+		if (notify & FDB_NOTIFY_INACTIVE_BIT)
+			print_bool(PRINT_ANY, "inactive", "inactive ", true);
+	}
+}
+
 int print_fdb(struct nlmsghdr *n, void *arg)
 {
 	FILE *fp = arg;
@@ -172,8 +191,9 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 	if (filter_state && !(r->ndm_state & filter_state))
 		return 0;
 
-	parse_rtattr(tb, NDA_MAX, NDA_RTA(r),
-		     n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)));
+	parse_rtattr_flags(tb, NDA_MAX, NDA_RTA(r),
+			   n->nlmsg_len - NLMSG_LENGTH(sizeof(*r)),
+			   NLA_F_NESTED);
 
 	if (tb[NDA_FLAGS_EXT])
 		ext_flags = rta_getattr_u32(tb[NDA_FLAGS_EXT]);
@@ -272,6 +292,9 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 		print_uint(PRINT_ANY,
 				 "linkNetNsId", "link-netnsid %d ",
 				 rta_getattr_u32(tb[NDA_LINK_NETNSID]));
+
+	if (show_details && tb[NDA_FDB_EXT_ATTRS])
+		fdb_print_ext_attrs(tb[NDA_FDB_EXT_ATTRS]);
 
 	if (show_stats && tb[NDA_CACHEINFO])
 		fdb_print_stats(fp, RTA_DATA(tb[NDA_CACHEINFO]));
@@ -399,6 +422,34 @@ static int fdb_show(int argc, char **argv)
 	return 0;
 }
 
+static void fdb_add_ext_attrs(struct nlmsghdr *n, int maxlen,
+			      bool activity_notify, bool inactive,
+			      bool norefresh)
+{
+	struct rtattr *nest;
+
+	if (!activity_notify && !inactive && !norefresh)
+		return;
+
+	nest = addattr_nest(n, maxlen, NDA_FDB_EXT_ATTRS | NLA_F_NESTED);
+
+	if (activity_notify || inactive) {
+		__u8 notify = 0;
+
+		if (activity_notify)
+			notify |= FDB_NOTIFY_BIT;
+		if (inactive)
+			notify |= FDB_NOTIFY_INACTIVE_BIT;
+
+		addattr8(n, maxlen, NFEA_ACTIVITY_NOTIFY, notify);
+	}
+
+	if (norefresh)
+		addattr_l(n, maxlen, NFEA_DONT_REFRESH, NULL, 0);
+
+	addattr_nest_end(n, nest);
+}
+
 static int fdb_modify(int cmd, int flags, int argc, char **argv)
 {
 	struct {
@@ -412,6 +463,9 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 		.ndm.ndm_family = PF_BRIDGE,
 		.ndm.ndm_state = NUD_NOARP,
 	};
+	bool activity_notify = false;
+	bool norefresh = false;
+	bool inactive = false;
 	char *addr = NULL;
 	char *d = NULL;
 	char abuf[ETH_ALEN];
@@ -495,6 +549,12 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 			req.ndm.ndm_flags |= NTF_EXT_LEARNED;
 		} else if (matches(*argv, "sticky") == 0) {
 			req.ndm.ndm_flags |= NTF_STICKY;
+		} else if (strcmp(*argv, "activity_notify") == 0) {
+			activity_notify = true;
+		} else if (strcmp(*argv, "inactive") == 0) {
+			inactive = true;
+		} else if (strcmp(*argv, "norefresh") == 0) {
+			norefresh = true;
 		} else {
 			if (strcmp(*argv, "to") == 0)
 				NEXT_ARG();
@@ -558,6 +618,9 @@ static int fdb_modify(int cmd, int flags, int argc, char **argv)
 	req.ndm.ndm_ifindex = ll_name_to_index(d);
 	if (!req.ndm.ndm_ifindex)
 		return nodev(d);
+
+	fdb_add_ext_attrs(&req.n, sizeof(req), activity_notify, inactive,
+			  norefresh);
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
 		return -1;

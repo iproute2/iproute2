@@ -91,7 +91,8 @@ bridge \- show / manipulate bridge addresses and devices
 .B via
 .IR DEVICE " ] | "
 .B nhid
-.IR NHID " } "
+.IR NHID " } [ "
+.BR activity_notify " ] [ " inactive " ] [ " norefresh " ]
 
 .ti -8
 .BR "bridge fdb" " [ [ " show " ] [ "
@@ -859,6 +860,25 @@ remote VXLAN tunnel endpoint.
 .BI nhid " NHID "
 ecmp nexthop group for the VXLAN device driver
 to reach remote VXLAN tunnel endpoints.
+
+.TP
+.B activity_notify
+enable activity notifications on an existing or a new FDB entry. This keyword
+only makes sense for non-dynamic entries as dynamic entries are deleted upon
+inactivity. An entry is assumed to be active unless the \fBinactive\fR keyword
+is specified.
+
+.TP
+.B inactive
+mark an FDB entry as inactive. This keyword only makes sense in conjunction
+with the \fBactivity_notify\fR keyword and usually only when adding a new FDB
+entry as opposed to replacing an existing one.
+
+.TP
+.B norefresh
+avoid resetting an FDB entry's activity (i.e., its last updated time). This can
+be useful, for example, when one wants to enable activity notifications on an
+existing entry without modifying its last updated time.
 
 .SS bridge fdb append - append a forwarding database entry
 This command adds a new fdb entry with an already known
