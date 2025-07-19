@@ -152,6 +152,7 @@ static int get_nlmsg_extended(struct nlmsghdr *m, void *arg)
 
 		attr = parse_rtattr_one_nested(sub_type, tb[filter_type]);
 		if (attr == NULL) {
+			free(n->name);
 			free(n);
 			return 0;
 		}
