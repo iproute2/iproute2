@@ -150,6 +150,8 @@ static void read_igmp(struct ma_info **result_p)
 
 			sscanf(buf, "%d%s", &m.index, m.name);
 			len = strlen(m.name);
+			if (len == 0)
+				continue;
 			if (m.name[len - 1] == ':')
 				m.name[len - 1] = '\0';
 			continue;
