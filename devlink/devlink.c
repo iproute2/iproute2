@@ -2773,8 +2773,8 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 			nla_tc_bw_entry =
 				mnl_attr_nest_start(nlh,
 						    DEVLINK_ATTR_RATE_TC_BWS);
-			mnl_attr_put_u8(nlh, DEVLINK_ATTR_RATE_TC_INDEX, i);
-			mnl_attr_put_u32(nlh, DEVLINK_ATTR_RATE_TC_BW,
+			mnl_attr_put_u8(nlh, DEVLINK_RATE_TC_ATTR_INDEX, i);
+			mnl_attr_put_u32(nlh, DEVLINK_RATE_TC_ATTR_BW,
 					 opts->rate_tc_bw[i]);
 			mnl_attr_nest_end(nlh, nla_tc_bw_entry);
 		}
@@ -5467,20 +5467,43 @@ static char *port_rate_type_name(uint16_t type)
 	}
 }
 
+static const enum mnl_attr_data_type
+rate_tc_bws_policy[DEVLINK_RATE_TC_ATTR_BW + 1] = {
+	[DEVLINK_RATE_TC_ATTR_INDEX] = MNL_TYPE_U8,
+	[DEVLINK_RATE_TC_ATTR_BW] = MNL_TYPE_U32,
+};
+
+static int rate_tc_bw_attr_cb(const struct nlattr *attr, void *data)
+{
+	const struct nlattr **tb = data;
+	int type;
+
+	if (mnl_attr_type_valid(attr, DEVLINK_RATE_TC_ATTR_MAX) < 0)
+		return MNL_CB_OK;
+
+	type = mnl_attr_get_type(attr);
+
+	if (mnl_attr_validate(attr, rate_tc_bws_policy[type]) < 0)
+		return MNL_CB_ERROR;
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
 static int
 parse_rate_tc_bw(struct nlattr *nla_tc_bw, uint8_t *tc_index, uint32_t *tc_bw)
 {
-	struct nlattr *tb_tc_bw[DEVLINK_ATTR_MAX + 1] = {};
+	struct nlattr *tb_tc_bw[DEVLINK_RATE_TC_ATTR_MAX + 1] = {};
 
-	if (mnl_attr_parse_nested(nla_tc_bw, attr_cb, tb_tc_bw) != MNL_CB_OK)
+	if (mnl_attr_parse_nested(nla_tc_bw, rate_tc_bw_attr_cb, tb_tc_bw) != MNL_CB_OK)
 		return MNL_CB_ERROR;
 
-	if (!tb_tc_bw[DEVLINK_ATTR_RATE_TC_INDEX] ||
-	    !tb_tc_bw[DEVLINK_ATTR_RATE_TC_BW])
+	if (!tb_tc_bw[DEVLINK_RATE_TC_ATTR_INDEX] ||
+	    !tb_tc_bw[DEVLINK_RATE_TC_ATTR_BW])
 		return MNL_CB_ERROR;
 
-	*tc_index = mnl_attr_get_u8(tb_tc_bw[DEVLINK_ATTR_RATE_TC_INDEX]);
-	*tc_bw = mnl_attr_get_u32(tb_tc_bw[DEVLINK_ATTR_RATE_TC_BW]);
+	*tc_index = mnl_attr_get_u8(tb_tc_bw[DEVLINK_RATE_TC_ATTR_INDEX]);
+	*tc_bw = mnl_attr_get_u32(tb_tc_bw[DEVLINK_RATE_TC_ATTR_BW]);
 
 	return MNL_CB_OK;
 }
