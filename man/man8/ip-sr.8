@@ -34,9 +34,17 @@ Those parameters include the mapping between an HMAC key ID and its associated
 hashing algorithm and secret, and the IPv6 address to use as source for encapsulated
 packets.
 .PP
-The \fBip sr hmac set\fR command prompts for a passphrase that will be used as the
-HMAC secret for the corresponding key ID. A blank passphrase removes the mapping.
-The currently supported algorithms for \fIALGO\fR are \fBsha1\fR and \fBsha256\fR.
+The \fBip sr hmac set\fR command prompts for a newline-terminated "passphrase"
+that will be used as the HMAC secret for the corresponding key ID. This
+"passphrase" is \fInot\fR stretched, and it is used directly as the HMAC key.
+Therefore it \fImust\fR have enough entropy to be used as a key. For example, a
+correct use would be to use a passphrase that was generated using
+\fBhead\~-c\~32\~/dev/random\~|\~base64\~-w\~0\fR.
+.PP
+A blank "passphrase" removes the mapping.
+.PP
+The currently supported algorithms for \fIALGO\fR are \fBsha1\fR and
+\fBsha256\fR.
 .PP
 If the tunnel source is set to the address :: (which is the default), then an address
 of the egress interface will be selected. As this operation may hinder performances,
@@ -54,5 +62,9 @@ it is recommended to set a non-default address.
 .SH SEE ALSO
 .br
 .BR ip-route (8)
+
+.SH BUGS
+\fBip sr hmac set\fR does not stretch the passphrase.
+
 .SH AUTHOR
 David Lebrun <david.lebrun@uclouvain.be>
