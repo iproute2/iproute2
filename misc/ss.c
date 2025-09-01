@@ -4926,10 +4926,11 @@ static int packet_show_line(char *buf, const struct filter *f, int fam)
 	struct sockstat stat = {};
 	int type, prot, iface, state, rq, uid, ino;
 
-	sscanf(buf, "%llx %*d %d %x %d %d %u %u %u",
+	if(sscanf(buf, "%llx %*d %d %x %d %d %u %u %u",
 			&sk,
 			&type, &prot, &iface, &state,
-			&rq, &uid, &ino);
+			&rq, &uid, &ino) != 8)
+		return 0;
 
 	if (type == SOCK_RAW && !(f->dbs & (1<<PACKET_R_DB)))
 		return 0;
