@@ -50,7 +50,7 @@ static int init_gred(const struct qdisc_util *qu, int argc, char **argv,
 	opt.def_DP = MAX_DPs;
 
 	while (argc > 0) {
-		DPRINTF(stderr, "init_gred: invoked with %s\n", *argv);
+		DPRINTF("init_gred: invoked with %s\n", *argv);
 		if (strcmp(*argv, "vqs") == 0 ||
 		    strcmp(*argv, "DPs") == 0) {
 			NEXT_ARG();
