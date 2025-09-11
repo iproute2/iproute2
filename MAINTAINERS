@@ -21,7 +21,7 @@ T: git://git.kernel.org/pub/scm/network/iproute2/iproute2.git
 L: netdev@vger.kernel.org
 
 Next Tree
-M: David Ahern <dsahern@gmail.com>
+M: David Ahern <dsahern@kernel.org>
 T: git://git.kernel.org/pub/scm/network/iproute2/iproute2-next.git
 L: netdev@vger.kernel.org
 
