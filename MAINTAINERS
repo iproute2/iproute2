@@ -52,6 +52,10 @@ Remote DMA - rdma
 M: Leon Romanovsky <leon@kernel.org>
 F: rdma/*
 
+Traffic Control - tc
+M: Jamal Hadi Salim <jhs@mojatatu.com>
+F: tc/*
+
 Transparent Inter-Process Communication - tipc
 M: Jon Maloy <jmaloy@redhat.com>
 F: tipc/*
