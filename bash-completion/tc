@@ -4,7 +4,7 @@
 
 QDISC_KIND=' choke codel bfifo pfifo pfifo_head_drop fq fq_codel gred hhf \
             mqprio multiq netem pfifo_fast pie fq_pie red sfb sfq tbf \
-            drr hfsc htb prio qfq '
+            drr hfsc htb prio qfq dualpi2'
 FILTER_KIND=' basic bpf cgroup flow flower fw route u32 matchall '
 ACTION_KIND=' gact mirred bpf sample '
 
@@ -365,6 +365,15 @@ _tc_qdisc_options()
         htb)
             _tc_once_attr 'default r2q direct_qlen debug'
             return 0
+            ;;
+        dualpi2)
+            _tc_once_attr 'limit memlimit coupling_factor step_thresh \
+                min_qlen_step classic_protection max_rtt typical_rtt \
+                target tupdate alpha beta'
+            _tc_one_of_list 'drop_on_overload overflow'
+            _tc_one_of_list 'drop_enqueue drop_dequeue'
+            _tc_one_of_list 'l4s_ect any_ect'
+            _tc_one_of_list 'split_gso no_split_gso'
             ;;
         multiq|pfifo_fast|drr|qfq)
             return 0
