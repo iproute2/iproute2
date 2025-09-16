@@ -87,7 +87,7 @@ int get_rate64(__u64 *rate, const char *str)
 	return 0;
 }
 
-int get_size(unsigned int *size, const char *str)
+int get_size64(__u64 *size, const char *str)
 {
 	double sz;
 	char *p;
@@ -117,6 +117,23 @@ int get_size(unsigned int *size, const char *str)
 
 	/* detect if an overflow happened */
 	if (*size != floor(sz))
+		return -1;
+
+	return 0;
+}
+
+int get_size(unsigned int *size, const char *str)
+{
+	__u64 sz64;
+	int rv;
+
+	rv = get_size64(&sz64, str);
+	*size = sz64;
+
+	if (rv)
+		return rv;
+
+	if (sz64 > UINT_MAX)
 		return -1;
 
 	return 0;

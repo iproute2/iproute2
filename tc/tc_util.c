@@ -257,14 +257,14 @@ tc_print_rate(enum output_type t, const char *key, const char *fmt,
 	print_rate(use_iec, t, key, fmt, rate);
 }
 
-int get_size_and_cell(unsigned int *size, int *cell_log, char *str)
+int get_size64_and_cell(__u64 *size, int *cell_log, char *str)
 {
 	char *slash = strchr(str, '/');
 
 	if (slash)
 		*slash = 0;
 
-	if (get_size(size, str))
+	if (get_size64(size, str))
 		return -1;
 
 	if (slash) {
@@ -283,6 +283,23 @@ int get_size_and_cell(unsigned int *size, int *cell_log, char *str)
 		}
 		return -1;
 	}
+	return 0;
+}
+
+int get_size_and_cell(unsigned int *size, int *cell_log, char *str)
+{
+	__u64 size64;
+	int rv;
+
+	rv = get_size64_and_cell(&size64, cell_log, str);
+	if (rv)
+		return rv;
+
+	if (size64 > UINT32_MAX)
+		return -1;
+
+	*size = size64;
+
 	return 0;
 }
 
