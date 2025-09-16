@@ -7,25 +7,28 @@
 #include "utils.h"
 #include "json_print.h"
 
-char *sprint_size(__u32 sz, char *buf)
+char *sprint_size(__u64 sz, char *buf)
 {
 	long kilo = 1024;
 	long mega = kilo * kilo;
+	long giga = mega * kilo;
 	size_t len = SPRINT_BSIZE - 1;
 	double tmp = sz;
 
-	if (sz >= mega && fabs(mega * rint(tmp / mega) - sz) < 1024)
+	if (sz >= giga && fabs(giga * rint(tmp / giga) - sz) < 1024)
+		snprintf(buf, len, "%gGb", rint(tmp / giga));
+	else if (sz >= mega && fabs(mega * rint(tmp / mega) - sz) < 1024)
 		snprintf(buf, len, "%gMb", rint(tmp / mega));
 	else if (sz >= kilo && fabs(kilo * rint(tmp / kilo) - sz) < 16)
 		snprintf(buf, len, "%gKb", rint(tmp / kilo));
 	else
-		snprintf(buf, len, "%ub", sz);
+		snprintf(buf, len, "%llub", sz);
 
 	return buf;
 }
 
 int print_color_size(enum output_type type, enum color_attr color,
-		     const char *key, const char *fmt, __u32 sz)
+		     const char *key, const char *fmt, __u64 sz)
 {
 	SPRINT_BUF(buf);
 
