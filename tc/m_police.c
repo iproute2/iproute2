@@ -54,12 +54,12 @@ static int act_parse_police(const struct action_util *a, int *argc_p, char ***ar
 	__u32 ptab[256];
 	__u32 avrate = 0;
 	int presult = 0;
-	unsigned buffer = 0, mtu = 0, mpu = 0;
+	unsigned mtu = 0, mpu = 0;
 	unsigned short overhead = 0;
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	int Rcell_log =  -1, Pcell_log = -1;
 	struct rtattr *tail;
-	__u64 rate64 = 0, prate64 = 0;
+	__u64 rate64 = 0, prate64 = 0, buffer64 = 0;
 	__u64 pps64 = 0, ppsburst64 = 0;
 
 	if (a) /* new way of doing things */
@@ -78,9 +78,10 @@ static int act_parse_police(const struct action_util *a, int *argc_p, char ***ar
 			strcmp(*argv, "buffer") == 0 ||
 			strcmp(*argv, "maxburst") == 0) {
 			NEXT_ARG();
-			if (buffer)
+			if (buffer64)
 				duparg("buffer/burst", *argv);
-			if (get_size_and_cell(&buffer, &Rcell_log, *argv) < 0)
+			if (get_size64_and_cell(&buffer64, &Rcell_log,
+						*argv) < 0)
 				invarg("buffer", *argv);
 		} else if (strcmp(*argv, "mtu") == 0 ||
 			   strcmp(*argv, "minburst") == 0) {
@@ -173,7 +174,7 @@ action_ctrl_ok:
 	}
 
 	/* When the TB policer is used, burst is required */
-	if (rate64 && !buffer && !avrate) {
+	if (rate64 && !buffer64 && !avrate) {
 		fprintf(stderr, "'burst' requires 'rate'.\n");
 		return -1;
 	}
@@ -210,7 +211,11 @@ action_ctrl_ok:
 			fprintf(stderr, "POLICE: failed to calculate rate table.\n");
 			return -1;
 		}
-		p.burst = tc_calc_xmittime(rate64, buffer);
+		p.burst = tc_calc_xmittime(rate64, buffer64);
+		if (p.burst == UINT_MAX) {
+			fprintf(stderr, "POLICE: burst out of range\n");
+			return -1;
+		}
 	}
 	p.mtu = mtu;
 	if (prate64) {
@@ -265,9 +270,8 @@ static int print_police(const struct action_util *a, FILE *funused, struct rtatt
 	SPRINT_BUF(b2);
 	struct tc_police *p;
 	struct rtattr *tb[TCA_POLICE_MAX+1];
-	unsigned int buffer;
 	unsigned int linklayer;
-	__u64 rate64, prate64;
+	__u64 rate64, prate64, buffer64;
 	__u64 pps64, ppsburst64;
 
 	print_string(PRINT_JSON, "kind", "%s", "police");
@@ -296,8 +300,8 @@ static int print_police(const struct action_util *a, FILE *funused, struct rtatt
 	print_hex(PRINT_FP, NULL, " police 0x%x ", p->index);
 	print_uint(PRINT_JSON, "index", NULL, p->index);
 	tc_print_rate(PRINT_FP, NULL, "rate %s ", rate64);
-	buffer = tc_calc_xmitsize(rate64, p->burst);
-	print_size(PRINT_FP, NULL, "burst %s ", buffer);
+	buffer64 = tc_calc_xmitsize(rate64, p->burst);
+	print_size(PRINT_FP, NULL, "burst %s ", buffer64);
 	print_size(PRINT_FP, NULL, "mtu %s ", p->mtu);
 	if (show_raw)
 		print_hex(PRINT_FP, NULL, "[%08x] ", p->burst);
