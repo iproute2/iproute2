@@ -36,6 +36,7 @@ static void print_explain(FILE *f)
 		"		  [ group_fwd_mask MASK ]\n"
 		"		  [ group_address ADDRESS ]\n"
 		"		  [ no_linklocal_learn NO_LINKLOCAL_LEARN ]\n"
+		"		  [ fdb_local_vlan_0 FDB_LOCAL_VLAN_0 ]\n"
 		"		  [ fdb_max_learned FDB_MAX_LEARNED ]\n"
 		"		  [ vlan_filtering VLAN_FILTERING ]\n"
 		"		  [ vlan_protocol VLAN_PROTOCOL ]\n"
@@ -427,6 +428,18 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				bm.optval |= mofn_bit;
 			else
 				bm.optval &= ~mofn_bit;
+		} else if (strcmp(*argv, "fdb_local_vlan_0") == 0) {
+			__u32 bit = 1 << BR_BOOLOPT_FDB_LOCAL_VLAN_0;
+			__u8 value;
+
+			NEXT_ARG();
+			if (get_u8(&value, *argv, 0))
+				invarg("invalid fdb_local_vlan_0", *argv);
+			bm.optmask |= bit;
+			if (value)
+				bm.optval |= bit;
+			else
+				bm.optval &= ~bit;
 		} else if (matches(*argv, "help") == 0) {
 			explain();
 			return -1;
@@ -635,6 +648,7 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 	if (tb[IFLA_BR_MULTI_BOOLOPT]) {
 		__u32 mofn_bit = 1 << BR_BOOLOPT_MDB_OFFLOAD_FAIL_NOTIFICATION;
+		__u32 fdb_vlan_0_bit = 1 << BR_BOOLOPT_FDB_LOCAL_VLAN_0;
 		__u32 mcvl_bit = 1 << BR_BOOLOPT_MCAST_VLAN_SNOOPING;
 		__u32 no_ll_learn_bit = 1 << BR_BOOLOPT_NO_LL_LEARN;
 		__u32 mst_bit = 1 << BR_BOOLOPT_MST_ENABLE;
@@ -661,6 +675,11 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 				   "mdb_offload_fail_notification",
 				   "mdb_offload_fail_notification %u ",
 				   !!(bm->optval & mofn_bit));
+		if (bm->optmask & fdb_vlan_0_bit)
+			print_uint(PRINT_ANY,
+				   "fdb_local_vlan_0",
+				   "fdb_local_vlan_0 %u ",
+				   !!(bm->optval & fdb_vlan_0_bit));
 	}
 
 	if (tb[IFLA_BR_MCAST_ROUTER])
