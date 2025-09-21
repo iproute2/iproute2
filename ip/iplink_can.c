@@ -82,7 +82,7 @@ static void set_ctrlmode(char *name, char *arg,
 }
 
 static void print_flag(enum output_type t, __u32 *flags, __u32 flag,
-		       const char* name)
+		       const char *name)
 {
 	if (*flags & flag) {
 		*flags &= ~flag;
@@ -90,7 +90,7 @@ static void print_flag(enum output_type t, __u32 *flags, __u32 flag,
 	}
 }
 
-static void print_ctrlmode(enum output_type t, __u32 flags, const char* key)
+static void print_ctrlmode(enum output_type t, __u32 flags, const char *key)
 {
 	if (!flags)
 		return;
