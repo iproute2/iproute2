@@ -90,7 +90,7 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 {
 	uint32_t lqpn, rqpn = 0, rq_psn = 0, sq_psn;
 	uint8_t type, state, path_mig_state = 0;
-	const char* sub_type = NULL;
+	const char *sub_type = NULL;
 	uint32_t port = 0, pid = 0;
 	uint32_t pdn = 0;
 	char *comm = NULL;
