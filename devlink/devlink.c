@@ -311,6 +311,7 @@ static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)
 #define DL_OPT_PORT_FN_CAPS	BIT(57)
 #define DL_OPT_PORT_FN_MAX_IO_EQS	BIT(58)
 #define DL_OPT_PORT_FN_RATE_TC_BWS	BIT(59)
+#define DL_OPT_HEALTH_REPORTER_BURST_PERIOD	BIT(60)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -346,6 +347,7 @@ struct dl_opts {
 	const char *flash_component;
 	const char *reporter_name;
 	__u64 reporter_graceful_period;
+	__u64 reporter_burst_period;
 	bool reporter_auto_recover;
 	bool reporter_auto_dump;
 	const char *trap_name;
@@ -697,6 +699,7 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_FLASH_UPDATE_COMPONENT] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_FLASH_UPDATE_STATUS_MSG] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_FLASH_UPDATE_STATUS_DONE] = MNL_TYPE_U64,
@@ -2101,6 +2104,13 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD;
+		} else if (dl_argv_match(dl, "burst_period") &&
+			   (o_all & DL_OPT_HEALTH_REPORTER_BURST_PERIOD)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint64_t(dl, &opts->reporter_burst_period);
+			if (err)
+				return err;
+			o_found |= DL_OPT_HEALTH_REPORTER_BURST_PERIOD;
 		} else if (dl_argv_match(dl, "auto_recover") &&
 			(o_all & DL_OPT_HEALTH_REPORTER_AUTO_RECOVER)) {
 			dl_arg_inc(dl);
@@ -2701,6 +2711,10 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 		mnl_attr_put_u64(nlh,
 				 DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD,
 				 opts->reporter_graceful_period);
+	if (opts->present & DL_OPT_HEALTH_REPORTER_BURST_PERIOD)
+		mnl_attr_put_u64(nlh,
+				 DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD,
+				 opts->reporter_burst_period);
 	if (opts->present & DL_OPT_HEALTH_REPORTER_AUTO_RECOVER)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER,
 				opts->reporter_auto_recover);
@@ -9309,6 +9323,7 @@ static int cmd_health_set_params(struct dl *dl)
 			       NLM_F_REQUEST | NLM_F_ACK);
 	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_HANDLEP | DL_OPT_HEALTH_REPORTER_NAME,
 			    DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD |
+			    DL_OPT_HEALTH_REPORTER_BURST_PERIOD |
 			    DL_OPT_HEALTH_REPORTER_AUTO_RECOVER |
 			    DL_OPT_HEALTH_REPORTER_AUTO_DUMP);
 	if (err)
@@ -9753,6 +9768,9 @@ static void pr_out_health(struct dl *dl, struct nlattr **tb_health,
 	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD])
 		pr_out_u64(dl, "grace_period",
 			   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD]));
+	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD])
+		pr_out_u64(dl, "burst_period",
+			   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD]));
 	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER])
 		print_bool(PRINT_ANY, "auto_recover", " auto_recover %s",
 			   mnl_attr_get_u8(tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER]));
@@ -9827,6 +9845,7 @@ static void cmd_health_help(void)
 	pr_err("       devlink health dump clear { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
 	pr_err("       devlink health set { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
 	pr_err("                          [ grace_period MSEC ]\n");
+	pr_err("                          [ burst_period MSEC ]\n");
 	pr_err("                          [ auto_recover { true | false } ]\n");
 	pr_err("                          [ auto_dump    { true | false } ]\n");
 }
