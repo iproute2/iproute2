@@ -42,13 +42,20 @@ static void dcb_maxrate_help(void)
 
 static int dcb_maxrate_parse_mapping_tc_maxrate(__u32 key, char *value, void *data)
 {
-	__u64 rate;
+	__u64 rate_bytes_per_sec;
+	__u64 rate_kbits_per_sec;
 
-	if (get_rate64(&rate, value))
+	if (get_rate64(&rate_bytes_per_sec, value))
 		return -EINVAL;
 
+	/* get_rate64() returns Bps.
+	 * ieee_maxrate UAPI expects kbps.
+	 * convert Bps to kbps by dividing 125.
+	 */
+	rate_kbits_per_sec = rate_bytes_per_sec / 125;
+
 	return dcb_parse_mapping("TC", key, IEEE_8021QAZ_MAX_TCS - 1,
-				 "RATE", rate, -1,
+				 "RATE", rate_kbits_per_sec, -1,
 				 dcb_set_u64, data);
 }
 
@@ -62,8 +69,14 @@ static void dcb_maxrate_print_tc_maxrate(struct dcb *dcb, const struct ieee_maxr
 	print_string(PRINT_FP, NULL, "tc-maxrate ", NULL);
 
 	for (i = 0; i < size; i++) {
+		/* ieee_maxrate UAPI returns kbps.
+		 * print_rate() expects Bps for display.
+		 * convert kbps to Bps by multiplying 125.
+		 */
+		__u64 rate_bytes_per_sec  = maxrate->tc_maxrate[i] * 125;
+
 		snprintf(b, sizeof(b), "%zd:%%s ", i);
-		print_rate(dcb->use_iec, PRINT_ANY, NULL, b, maxrate->tc_maxrate[i]);
+		print_rate(dcb->use_iec, PRINT_ANY, NULL, b, rate_bytes_per_sec);
 	}
 
 	close_json_array(PRINT_JSON, "tc_maxrate");
