@@ -2,8 +2,8 @@
 
 #include <net/if.h>
 
-#include "bridge.h"
 #include "utils.h"
+#include "bridge.h"
 
 void bridge_print_vlan_flags(__u16 flags)
 {
