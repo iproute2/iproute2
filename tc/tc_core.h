@@ -15,8 +15,8 @@ enum link_layer {
 double tc_core_tick2time(double tick);
 unsigned tc_core_time2ktime(unsigned time);
 unsigned tc_core_ktime2time(unsigned ktime);
-unsigned tc_calc_xmittime(__u64 rate, unsigned size);
-unsigned tc_calc_xmitsize(__u64 rate, unsigned ticks);
+unsigned tc_calc_xmittime(__u64 rate, __u64 size);
+__u64 tc_calc_xmitsize(__u64 rate, unsigned ticks);
 int tc_calc_rtable(struct tc_ratespec *r, __u32 *rtab,
 		   int cell_log, unsigned mtu, enum link_layer link_layer);
 int tc_calc_rtable_64(struct tc_ratespec *r, __u32 *rtab,

@@ -91,6 +91,7 @@ static const char *ad_select_tbl[] = {
 	"stable",
 	"bandwidth",
 	"count",
+	"actor_port_prio",
 	NULL,
 };
 
@@ -149,6 +150,7 @@ static void print_explain(FILE *f)
 		"                [ lacp_rate LACP_RATE ]\n"
 		"                [ lacp_active LACP_ACTIVE]\n"
 		"                [ coupled_control COUPLED_CONTROL ]\n"
+		"                [ broadcast_neighbor BROADCAST_NEIGHBOR ]\n"
 		"                [ ad_select AD_SELECT ]\n"
 		"                [ ad_user_port_key PORTKEY ]\n"
 		"                [ ad_actor_sys_prio SYSPRIO ]\n"
@@ -165,6 +167,7 @@ static void print_explain(FILE *f)
 		"LACP_RATE := slow|fast\n"
 		"AD_SELECT := stable|bandwidth|count\n"
 		"COUPLED_CONTROL := off|on\n"
+		"BROADCAST_NEIGHBOR := off|on\n"
 	);
 }
 
@@ -184,6 +187,7 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 	__u32 arp_all_targets, resend_igmp, min_links, lp_interval;
 	__u32 packets_per_slave;
 	__u8 missed_max;
+	__u8 broadcast_neighbor;
 	unsigned int ifindex;
 	int ret;
 
@@ -376,6 +380,12 @@ static int bond_parse_opt(struct link_util *lu, int argc, char **argv,
 			if (ret)
 				return ret;
 			addattr8(n, 1024, IFLA_BOND_COUPLED_CONTROL, coupled_control);
+		} else if (strcmp(*argv, "broadcast_neighbor") == 0) {
+			NEXT_ARG();
+			broadcast_neighbor = parse_on_off("broadcast_neighbor", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr8(n, 1024, IFLA_BOND_BROADCAST_NEIGH, broadcast_neighbor);
 		} else if (matches(*argv, "ad_select") == 0) {
 			NEXT_ARG();
 			if (get_index(ad_select_tbl, *argv) < 0)
@@ -673,6 +683,13 @@ static void bond_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			     "coupled_control",
 			     "coupled_control %s ",
 			     rta_getattr_u8(tb[IFLA_BOND_COUPLED_CONTROL]));
+	}
+
+	if (tb[IFLA_BOND_BROADCAST_NEIGH]) {
+		print_on_off(PRINT_ANY,
+			     "broadcast_neighbor",
+			     "broadcast_neighbor %s ",
+			     rta_getattr_u8(tb[IFLA_BOND_BROADCAST_NEIGH]));
 	}
 
 	if (tb[IFLA_BOND_AD_SELECT]) {

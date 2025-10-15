@@ -43,12 +43,15 @@ unsigned int tc_core_ktime2time(unsigned int ktime)
 	return ktime / clock_factor;
 }
 
-unsigned int tc_calc_xmittime(__u64 rate, unsigned int size)
+unsigned int tc_calc_xmittime(__u64 rate, __u64 size)
 {
-	return ceil(tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/(double)rate)));
+	double val;
+
+	val = ceil(tc_core_time2tick(TIME_UNITS_PER_SEC*((double)size/(double)rate)));
+	return val > UINT_MAX ? UINT_MAX : val;
 }
 
-unsigned int tc_calc_xmitsize(__u64 rate, unsigned int ticks)
+__u64 tc_calc_xmitsize(__u64 rate, unsigned int ticks)
 {
 	return ((double)rate*tc_core_tick2time(ticks))/TIME_UNITS_PER_SEC;
 }

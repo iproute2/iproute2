@@ -1725,6 +1725,8 @@ the following additional arguments are supported:
 ] [
 .BI no_linklocal_learn " NO_LINKLOCAL_LEARN "
 ] [
+.BI fdb_local_vlan_0 " FDB_LOCAL_VLAN_0 "
+] [
 .BI fdb_max_learned " FDB_MAX_LEARNED "
 ] [
 .BI vlan_filtering " VLAN_FILTERING "
@@ -1851,6 +1853,19 @@ or off
 .RI ( NO_LINKLOCAL_LEARN " > 0). "
 When disabled, the bridge will not learn from link-local frames (default:
 enabled).
+
+.BI fdb_local_vlan_0 " FDB_LOCAL_VLAN_0 "
+When disabled, local FDB entries (i.e. those for member port addresses and
+address of the bridge itself) are kept at VLAN 0 as well as any member VLANs.
+When the option is enabled, they are only kept at VLAN 0. By default the
+option is disabled.
+
+When this option is enabled, when making a forwarding decision, the bridge looks
+at VLAN 0 for a matching entry that is permanent, but not added by user. However
+in all other ways the entry only exists on VLAN 0. This affects dumping, where
+the entries are not shown on non-0 VLANs, and FDB get and flush do not find the
+entry on non-0 VLANs. When the entry is deleted, it affects forwarding on all
+VLANs.
 
 .BI fdb_max_learned " FDB_MAX_LEARNED "
 - set the maximum number of learned FDB entries. If
@@ -2845,6 +2860,12 @@ the following additional arguments are supported:
 - set the slave's priority for active slave re-selection during failover
 (a 32bit signed value). This option only valid for active-backup(1),
 balance-tlb (5) and balance-alb (6) mode.
+
+.sp
+.BI actor_port_prio " PRIORITY"
+- set the slave's ad actor port priority for 802.3ad aggregation selection
+logic during failover (a 16bit unsigned value). This option only valid for
+802.3ad (4) mode.
 
 .in -8
 
