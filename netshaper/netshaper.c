@@ -6,12 +6,19 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
 #include <linux/genetlink.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <linux/net_shaper.h>
+
 #include "version.h"
 #include "utils.h"
+#include "ll_map.h"
+#include "color.h"
+#include "json_print.h"
 #include "libgenl.h"
 #include "libnetlink.h"
 
