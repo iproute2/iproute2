@@ -1412,8 +1412,11 @@ static const struct ifa_flag_data_t {
 	{ .name = "stable-privacy",	.mask = IFA_F_STABLE_PRIVACY, 	.readonly = true,	.v6only = true},
 };
 
-/* Returns a pointer to the data structure for a particular interface flag, or null if no flag could be found */
-static const struct ifa_flag_data_t* lookup_flag_data_by_name(const char* flag_name) {
+/*
+ * Returns a pointer to the data structure for a particular interface flag
+ * or null if no flag could be found
+ */
+static const struct ifa_flag_data_t* lookup_flag_data_by_name(const char *flag_name) {
 	unsigned int i;
 
 	for (i = 0; i < ARRAY_SIZE(ifa_flag_data); ++i) {

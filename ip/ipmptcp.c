@@ -522,9 +522,9 @@ static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 	if (tb[MPTCP_ATTR_DPORT])
 		printf(" dport=%u", rta_getattr_be16(tb[MPTCP_ATTR_DPORT]));
 	if (tb[MPTCP_ATTR_BACKUP])
-		printf(" backup=%d", rta_getattr_u8(tb[MPTCP_ATTR_BACKUP]));
+		printf(" backup=%u", rta_getattr_u8(tb[MPTCP_ATTR_BACKUP]));
 	if (tb[MPTCP_ATTR_ERROR])
-		printf(" error=%d", rta_getattr_u8(tb[MPTCP_ATTR_ERROR]));
+		printf(" error=%u", rta_getattr_u8(tb[MPTCP_ATTR_ERROR]));
 	if (tb[MPTCP_ATTR_FLAGS])
 		printf(" flags=%x", rta_getattr_u16(tb[MPTCP_ATTR_FLAGS]));
 	if (tb[MPTCP_ATTR_TIMEOUT])
