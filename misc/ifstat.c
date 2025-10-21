@@ -28,7 +28,7 @@
 #include <linux/if_link.h>
 
 #include "libnetlink.h"
-#include "json_writer.h"
+#include "json_print.h"
 #include "version.h"
 #include "utils.h"
 
@@ -337,15 +337,13 @@ static void load_raw_table(FILE *fp)
 
 static void dump_raw_db(FILE *fp, int to_hist)
 {
-	json_writer_t *jw = json_output ? jsonw_new(fp) : NULL;
 	struct ifstat_ent *n, *h;
 
 	h = hist_db;
-	if (jw) {
-		jsonw_start_object(jw);
-		jsonw_pretty(jw, pretty);
-		jsonw_name(jw, info_source);
-		jsonw_start_object(jw);
+	new_json_obj_plain(json_output);
+	if (is_json_context()) {
+		open_json_object(NULL);
+		open_json_object(info_source);
 	} else
 		fprintf(fp, "#%s\n", info_source);
 
@@ -369,13 +367,12 @@ static void dump_raw_db(FILE *fp, int to_hist)
 			}
 		}
 
-		if (jw) {
-			jsonw_name(jw, n->name);
-			jsonw_start_object(jw);
+		if (is_json_context()) {
+			open_json_object(n->name);
 
 			for (i = 0; i < MAXS && stats[i]; i++)
-				jsonw_uint_field(jw, stats[i], vals[i]);
-			jsonw_end_object(jw);
+				print_lluint(PRINT_JSON, stats[i], NULL, vals[i]);
+			close_json_object();
 		} else {
 			fprintf(fp, "%d %s ", n->ifindex, n->name);
 			for (i = 0; i < MAXS; i++)
@@ -384,12 +381,11 @@ static void dump_raw_db(FILE *fp, int to_hist)
 			fprintf(fp, "\n");
 		}
 	}
-	if (jw) {
-		jsonw_end_object(jw);
-
-		jsonw_end_object(jw);
-		jsonw_destroy(&jw);
+	if (is_json_context()) {
+		close_json_object();
+		close_json_object();
 	}
+	delete_json_obj_plain();
 }
 
 /* use communication definitions of meg/kilo etc */
@@ -483,18 +479,17 @@ static void print_head(FILE *fp)
 	}
 }
 
-static void print_one_json(json_writer_t *jw, const struct ifstat_ent *n,
+static void print_one_json(const struct ifstat_ent *n,
 			   const unsigned long long *vals)
 {
 	int i, m = show_errors ? 20 : 10;
 
-	jsonw_name(jw, n->name);
-	jsonw_start_object(jw);
+	open_json_object(n->name);
 
 	for (i = 0; i < m && stats[i]; i++)
-		jsonw_uint_field(jw, stats[i], vals[i]);
+		print_lluint(PRINT_JSON, stats[i], NULL, vals[i]);
 
-	jsonw_end_object(jw);
+	close_json_object();
 }
 
 static void print_one_if(FILE *fp, const struct ifstat_ent *n,
@@ -547,14 +542,12 @@ static void print_one_if(FILE *fp, const struct ifstat_ent *n,
 
 static void dump_kern_db(FILE *fp)
 {
-	json_writer_t *jw = json_output ? jsonw_new(fp) : NULL;
 	struct ifstat_ent *n;
 
-	if (jw) {
-		jsonw_start_object(jw);
-		jsonw_pretty(jw, pretty);
-		jsonw_name(jw, info_source);
-		jsonw_start_object(jw);
+	new_json_obj_plain(json_output);
+	if (is_json_context()) {
+		open_json_object(NULL);
+		open_json_object(info_source);
 	} else
 		print_head(fp);
 
@@ -562,30 +555,27 @@ static void dump_kern_db(FILE *fp)
 		if (!match(n->name))
 			continue;
 
-		if (jw)
-			print_one_json(jw, n, n->val);
+		if (is_json_context())
+			print_one_json(n, n->val);
 		else
 			print_one_if(fp, n, n->val);
 	}
-	if (jw) {
-		jsonw_end_object(jw);
-
-		jsonw_end_object(jw);
-		jsonw_destroy(&jw);
+	if (is_json_context()) {
+		close_json_object();
+		close_json_object();
 	}
+	delete_json_obj_plain();
 }
 
 static void dump_incr_db(FILE *fp)
 {
 	struct ifstat_ent *n, *h;
-	json_writer_t *jw = json_output ? jsonw_new(fp) : NULL;
 
 	h = hist_db;
-	if (jw) {
-		jsonw_start_object(jw);
-		jsonw_pretty(jw, pretty);
-		jsonw_name(jw, info_source);
-		jsonw_start_object(jw);
+	new_json_obj_plain(json_output);
+	if (is_json_context()) {
+		open_json_object(NULL);
+		open_json_object(info_source);
 	} else
 		print_head(fp);
 
@@ -607,18 +597,17 @@ static void dump_incr_db(FILE *fp)
 		if (!match(n->name))
 			continue;
 
-		if (jw)
-			print_one_json(jw, n, n->val);
+		if (is_json_context())
+			print_one_json(n, n->val);
 		else
 			print_one_if(fp, n, vals);
 	}
 
-	if (jw) {
-		jsonw_end_object(jw);
-
-		jsonw_end_object(jw);
-		jsonw_destroy(&jw);
+	if (is_json_context()) {
+		close_json_object();
+		close_json_object();
 	}
+	delete_json_obj_plain();
 }
 
 static int children;
