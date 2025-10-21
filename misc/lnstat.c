@@ -30,8 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <linux/types.h>
 
-#include <json_writer.h>
+#include "json_print.h"
 #include "lnstat.h"
 #include "version.h"
 
@@ -109,21 +110,17 @@ static void print_line(FILE *of, const struct lnstat_file *lnstat_files,
 static void print_json(FILE *of, const struct lnstat_file *lnstat_files,
 		       const struct field_params *fp)
 {
-	json_writer_t *jw = jsonw_new(of);
 	int i;
 
-	if (jw == NULL) {
-		fprintf(stderr, "Failed to create JSON writer\n");
-		exit(1);
-	}
-	jsonw_start_object(jw);
+	new_json_obj_plain(1);
+	open_json_object(NULL);
 	for (i = 0; i < fp->num; i++) {
 		const struct lnstat_field *lf = fp->params[i].lf;
 
-		jsonw_uint_field(jw, lf->name, lf->result);
+		print_luint(PRINT_JSON, lf->name, NULL, lf->result);
 	}
-	jsonw_end_object(jw);
-	jsonw_destroy(&jw);
+	close_json_object();
+	delete_json_obj_plain();
 }
 
 /* find lnstat_field according to user specification */
