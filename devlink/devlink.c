@@ -4594,6 +4594,8 @@ static int cmd_dev_flash(struct dl *dl)
 	} while (!ctx.flash_done || (ctx.not_first && !ctx.received_end));
 
 	err = mnlu_gen_socket_recv_run(&dl->nlg, NULL, NULL);
+	if (err < 0)
+		pr_err("devlink answers: %s\n", strerror(errno));
 
 out:
 	close(pipe_r);
