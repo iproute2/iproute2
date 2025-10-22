@@ -32,7 +32,7 @@ static void usage(void)
 		"	ip mptcp limits show\n"
 		"	ip mptcp monitor\n"
 		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
-		"FLAG  := [ signal | subflow | backup | fullmesh | implicit ]\n"
+		"FLAG  := [ signal | subflow | backup | fullmesh ]\n"
 		"CHANGE-OPT := [ backup | nobackup | fullmesh | nofullmesh ]\n");
 
 	exit(-1);
