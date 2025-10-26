@@ -1,0 +1,215 @@
+.TH NETSHAPER 8 "7 Oct 2025" "iproute2" "Linux"
+.SH NAME
+netshaper \- show / manipulate network device hardware shaping configuration
+.SH SYNOPSIS
+
+.ad l
+.in +8
+.ti -8
+.B netshaper
+.RI "[ " OPTIONS " ] { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+\fB\-c\fR[\fIolor\fR] |
+\fB\-help\fR }
+
+.ti -8
+.B "netshaper set"
+.B dev
+.IR DEV
+.B handle scope
+.IR HANDLE_SCOPE
+.RI "[ " id
+.IR HANDLE_ID " ]"
+.B bw-max
+.IR BW_MAX
+
+.ti -8
+.B "netshaper" " { " show " | " delete " }"
+.B dev
+.IR DEV
+.B handle scope
+.IR HANDLE_SCOPE
+.RI "[ " id
+.IR HANDLE_ID " ]"
+
+.SH DESCRIPTION
+.B netshaper
+allows configuration and management of hardware rate limiting (shaping) capabilities
+available on network devices. The API provides control over shapers at different levels
+including network devices, queues, and scheduling nodes, enabling manipulation of the
+device's scheduling tree.
+
+Each shaper is uniquely identified within a device by a
+.IR handle ,
+which consists of a
+.I scope
+and an optional
+.IR id .
+Depending on the scope value, shapers are attached to specific hardware objects:
+
+.TP
+.B netdev
+Shapers attached to the entire network device. The
+.I id
+parameter is optional for this scope (defaults to 0 if not specified).
+
+.TP
+.B queue
+Shapers attached to specific device queues. The
+.I id
+parameter is required and specifies the queue number.
+
+.TP
+.B node
+Shapers representing scheduling groups that can be placed at arbitrary
+locations in the scheduling tree. The
+.I id
+parameter is required.
+
+.SH COMMANDS
+
+.SS
+.B netshaper set
+- Create or update a shaper configuration
+
+Creates or updates a shaper with the specified parameters. All parameters except
+.I id
+(for netdev scope) are required.
+
+.SS
+.B netshaper show
+- Display shaper information
+
+Shows the current configuration of the specified shaper, including bandwidth
+limits and device information.
+
+.SS
+.B netshaper delete
+- Remove a shaper configuration
+
+Removes the specified shaper configuration from the device.
+
+.SH PARAMETERS
+
+.TP
+.BI dev " DEV"
+Specifies the network device name on which to operate.
+
+.TP
+.B handle
+Defines the shaper handle consisting of:
+
+.RS
+.TP
+.BI scope " HANDLE_SCOPE"
+The shaper scope, which can be:
+.BR netdev " (device-level shaper), "
+.BR queue " (queue-level shaper), or "
+.BR node " (scheduling node shaper)."
+
+.TP
+.BI id " HANDLE_ID"
+Numeric identifier for the shaper. Optional for
+.B netdev
+scope (defaults to 0), required for
+.B queue
+and
+.B node
+scopes.
+.RE
+
+.TP
+.BI bw-max " BW_MAX"
+Maximum bandwidth limit for the shaper. Accepts values with suffixes:
+.BR kbit ", " mbit ", " gbit
+for kilobits, megabits, and gigabits per second respectively.
+
+.SH OPTIONS
+
+.TP
+.BR \-V ", " \-Version
+Print the version of the
+.B netshaper
+utility and exit.
+
+.TP
+.BR \-c [ color "] = {" always " | " auto " | " never }
+Configure color output. If parameter is omitted or
+.BR always ,
+color output is enabled regardless of stdout state. If parameter is
+.BR auto ,
+stdout is checked to be a terminal before enabling color output. If parameter is
+.BR never ,
+color output is disabled. If specified multiple times, the last one takes
+precedence.
+
+.TP
+.B \-help
+Display usage information and exit.
+
+.SH EXAMPLES
+
+.TP
+.B Example 1: Create a device-level shaper (id optional)
+.nf
+# netshaper set dev foo handle scope netdev bw-max 10gbit
+.fi
+.RS
+Creates a netdev-scoped shaper with default id 0 and sets the maximum
+bandwidth to 10 gigabits per second.
+.RE
+
+.TP
+.B Example 2: Show shaper configuration
+.nf
+# netshaper show dev foo handle scope netdev
+.fi
+.RS
+Display the current shaper configuration for the specified device and handle.
+.RE
+
+.TP
+.B Example 3: Delete shaper configuration
+.nf
+# netshaper delete dev eth0 handle scope netdev
+.fi
+.RS
+Remove the specified shaper configuration.
+.RE
+
+.SH NOTES
+.IP \(bu
+For
+.B netdev
+scope, the
+.I id
+parameter is optional and defaults to 0 if not specified.
+.IP \(bu
+For
+.B queue
+and
+.B node
+scopes, the
+.I id
+parameter is required.
+.IP \(bu
+Bandwidth values support standard suffixes:
+.BR kbit " (kilobits per second), "
+.BR mbit " (megabits per second), "
+.BR gbit " (gigabits per second)."
+.IP \(bu
+This command currently supports basic shaper operations. Additional
+functionality will be added as requirements are identified.
+
+.SH SEE ALSO
+.BR ip (8),
+.BR ip-link (8),
+.BR tc (8)
+
+.SH AUTHOR
+Erni Sri Satya Vennela <ernis@linux.microsoft.com>

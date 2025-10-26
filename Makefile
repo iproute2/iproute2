@@ -71,7 +71,7 @@ YACCFLAGS = -d -t -v
 
 SUBDIRS=lib ip tc bridge misc netem genl man
 ifeq ($(HAVE_MNL),y)
-SUBDIRS += tipc devlink rdma dcb vdpa
+SUBDIRS += tipc devlink rdma dcb vdpa netshaper
 endif
 
 LIBNETLINK=../lib/libutil.a ../lib/libnetlink.a
