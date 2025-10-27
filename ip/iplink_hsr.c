@@ -165,6 +165,9 @@ static void hsr_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 	if (tb[IFLA_HSR_PROTOCOL])
 		print_hhu(PRINT_ANY, "proto", "proto %hhu ",
 			  rta_getattr_u8(tb[IFLA_HSR_PROTOCOL]));
+	if (tb[IFLA_HSR_VERSION])
+		print_hhu(PRINT_ANY, "version", "version %hhu ",
+			  rta_getattr_u8(tb[IFLA_HSR_VERSION]));
 }
 
 static void hsr_print_help(struct link_util *lu, int argc, char **argv,
