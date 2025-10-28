@@ -3,6 +3,7 @@ include ../config.mk
 
 NSOBJ = netshaper.o
 TARGETS += netshaper
+LDLIBS += -lm
 
 all: $(TARGETS) $(LIBS)
 
