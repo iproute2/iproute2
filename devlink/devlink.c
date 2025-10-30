@@ -3419,7 +3419,7 @@ static int cmd_dev_eswitch(struct dl *dl)
 struct param_val_conv {
 	const char *name;
 	const char *vstr;
-	uint32_t vuint;
+	uint64_t vuint;
 };
 
 static bool param_val_conv_exists(const struct param_val_conv *param_val_conv,
@@ -3437,7 +3437,7 @@ static bool param_val_conv_exists(const struct param_val_conv *param_val_conv,
 static int
 param_val_conv_uint_get(const struct param_val_conv *param_val_conv,
 			uint32_t len, const char *name, const char *vstr,
-			uint32_t *vuint)
+			uint64_t *vuint)
 {
 	uint32_t i;
 
@@ -3453,7 +3453,7 @@ param_val_conv_uint_get(const struct param_val_conv *param_val_conv,
 
 static int
 param_val_conv_str_get(const struct param_val_conv *param_val_conv,
-		       uint32_t len, const char *name, uint32_t vuint,
+		       uint32_t len, const char *name, uint64_t vuint,
 		       const char **vstr)
 {
 	uint32_t i;
@@ -3670,6 +3670,7 @@ struct param_ctx {
 		uint8_t vu8;
 		uint16_t vu16;
 		uint32_t vu32;
+		uint64_t vu64;
 		const char *vstr;
 		bool vbool;
 	} value;
@@ -3730,6 +3731,9 @@ static int cmd_dev_param_set_cb(const struct nlmsghdr *nlh, void *data)
 			case MNL_TYPE_U32:
 				ctx->value.vu32 = mnl_attr_get_u32(val_attr);
 				break;
+			case MNL_TYPE_U64:
+				ctx->value.vu64 = mnl_attr_get_u64(val_attr);
+				break;
 			case MNL_TYPE_STRING:
 				ctx->value.vstr = mnl_attr_get_str(val_attr);
 				break;
@@ -3749,7 +3753,8 @@ static int cmd_dev_param_set(struct dl *dl)
 	struct param_ctx ctx = {};
 	struct nlmsghdr *nlh;
 	bool conv_exists;
-	uint32_t val_u32 = 0;
+	uint64_t val_u64 = 0;
+	uint32_t val_u32;
 	uint16_t val_u16;
 	uint8_t val_u8;
 	bool val_bool;
@@ -3791,8 +3796,8 @@ static int cmd_dev_param_set(struct dl *dl)
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-			val_u8 = val_u32;
+						      &val_u64);
+			val_u8 = val_u64;
 		} else {
 			err = get_u8(&val_u8, dl->opts.param_value, 10);
 		}
@@ -3808,8 +3813,8 @@ static int cmd_dev_param_set(struct dl *dl)
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-			val_u16 = val_u32;
+						      &val_u64);
+			val_u16 = val_u64;
 		} else {
 			err = get_u16(&val_u16, dl->opts.param_value, 10);
 		}
@@ -3820,19 +3825,36 @@ static int cmd_dev_param_set(struct dl *dl)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u16);
 		break;
 	case MNL_TYPE_U32:
-		if (conv_exists)
+		if (conv_exists) {
 			err = param_val_conv_uint_get(param_val_conv,
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-		else
+						      &val_u64);
+			val_u32 = val_u64;
+		} else {
 			err = get_u32(&val_u32, dl->opts.param_value, 10);
+		}
 		if (err)
 			goto err_param_value_parse;
 		if (val_u32 == ctx.value.vu32)
 			return 0;
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u32);
+		break;
+	case MNL_TYPE_U64:
+		if (conv_exists)
+			err = param_val_conv_uint_get(param_val_conv,
+						      PARAM_VAL_CONV_LEN,
+						      dl->opts.param_name,
+						      dl->opts.param_value,
+						      &val_u64);
+		else
+			err = get_u64((__u64 *)&val_u64, dl->opts.param_value, 10);
+		if (err)
+			goto err_param_value_parse;
+		if (val_u64 == ctx.value.vu64)
+			return 0;
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u64);
 		break;
 	case MNL_TYPE_FLAG:
 		err = strtobool(dl->opts.param_value, &val_bool);
@@ -5327,7 +5349,8 @@ static int cmd_port_param_set(struct dl *dl)
 	struct param_ctx ctx = {};
 	struct nlmsghdr *nlh;
 	bool conv_exists;
-	uint32_t val_u32 = 0;
+	uint64_t val_u64 = 0;
+	uint32_t val_u32;
 	uint16_t val_u16;
 	uint8_t val_u8;
 	bool val_bool;
@@ -5365,8 +5388,8 @@ static int cmd_port_param_set(struct dl *dl)
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-			val_u8 = val_u32;
+						      &val_u64);
+			val_u8 = val_u64;
 		} else {
 			err = get_u8(&val_u8, dl->opts.param_value, 10);
 		}
@@ -5382,8 +5405,8 @@ static int cmd_port_param_set(struct dl *dl)
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-			val_u16 = val_u32;
+						      &val_u64);
+			val_u16 = val_u64;
 		} else {
 			err = get_u16(&val_u16, dl->opts.param_value, 10);
 		}
@@ -5394,19 +5417,36 @@ static int cmd_port_param_set(struct dl *dl)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u16);
 		break;
 	case MNL_TYPE_U32:
-		if (conv_exists)
+		if (conv_exists) {
 			err = param_val_conv_uint_get(param_val_conv,
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-		else
+						      &val_u64);
+			val_u32 = val_u64;
+		} else {
 			err = get_u32(&val_u32, dl->opts.param_value, 10);
+		}
 		if (err)
 			goto err_param_value_parse;
 		if (val_u32 == ctx.value.vu32)
 			return 0;
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u32);
+		break;
+	case MNL_TYPE_U64:
+		if (conv_exists)
+			err = param_val_conv_uint_get(param_val_conv,
+						      PARAM_VAL_CONV_LEN,
+						      dl->opts.param_name,
+						      dl->opts.param_value,
+						      &val_u64);
+		else
+			err = get_u64((__u64 *)&val_u64, dl->opts.param_value, 10);
+		if (err)
+			goto err_param_value_parse;
+		if (val_u64 == ctx.value.vu64)
+			return 0;
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u64);
 		break;
 	case MNL_TYPE_FLAG:
 		err = strtobool(dl->opts.param_value, &val_bool);
