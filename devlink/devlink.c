@@ -45,6 +45,7 @@
 
 #define ESWITCH_MODE_LEGACY "legacy"
 #define ESWITCH_MODE_SWITCHDEV "switchdev"
+#define ESWITCH_MODE_SWITCHDEV_INACTIVE "switchdev_inactive"
 #define ESWITCH_INLINE_MODE_NONE "none"
 #define ESWITCH_INLINE_MODE_LINK "link"
 #define ESWITCH_INLINE_MODE_NETWORK "network"
@@ -1428,6 +1429,8 @@ static int eswitch_mode_get(const char *typestr,
 		*p_mode = DEVLINK_ESWITCH_MODE_LEGACY;
 	} else if (strcmp(typestr, ESWITCH_MODE_SWITCHDEV) == 0) {
 		*p_mode = DEVLINK_ESWITCH_MODE_SWITCHDEV;
+	} else if (strcmp(typestr, ESWITCH_MODE_SWITCHDEV_INACTIVE) == 0) {
+		*p_mode = DEVLINK_ESWITCH_MODE_SWITCHDEV_INACTIVE;
 	} else {
 		pr_err("Unknown eswitch mode \"%s\"\n", typestr);
 		return -EINVAL;
@@ -2848,7 +2851,7 @@ static bool dl_dump_filter(struct dl *dl, struct nlattr **tb)
 static void cmd_dev_help(void)
 {
 	pr_err("Usage: devlink dev show [ DEV ]\n");
-	pr_err("       devlink dev eswitch set DEV [ mode { legacy | switchdev } ]\n");
+	pr_err("       devlink dev eswitch set DEV [ mode { legacy | switchdev | switchdev_inactive } ]\n");
 	pr_err("                               [ inline-mode { none | link | network | transport } ]\n");
 	pr_err("                               [ encap-mode { none | basic } ]\n");
 	pr_err("       devlink dev eswitch show DEV\n");
@@ -3284,6 +3287,8 @@ static const char *eswitch_mode_name(uint32_t mode)
 	switch (mode) {
 	case DEVLINK_ESWITCH_MODE_LEGACY: return ESWITCH_MODE_LEGACY;
 	case DEVLINK_ESWITCH_MODE_SWITCHDEV: return ESWITCH_MODE_SWITCHDEV;
+	case DEVLINK_ESWITCH_MODE_SWITCHDEV_INACTIVE:
+		return ESWITCH_MODE_SWITCHDEV_INACTIVE;
 	default: return "<unknown mode>";
 	}
 }
