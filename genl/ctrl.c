@@ -175,6 +175,96 @@ static void print_ctrl_mcast(const struct rtattr *attr)
 	print_string(PRINT_FP, NULL, "\n", NULL);
 }
 
+static const char *get_nla_type_str(unsigned int attr)
+{
+	switch (attr) {
+#define C(x) case NL_ATTR_TYPE_ ## x: return #x
+	C(U8);
+	C(U16);
+	C(U32);
+	C(U64);
+	C(STRING);
+	C(FLAG);
+	C(NESTED);
+	C(NESTED_ARRAY);
+	C(NUL_STRING);
+	C(BINARY);
+	C(S8);
+	C(S16);
+	C(S32);
+	C(S64);
+	C(BITFIELD32);
+	default:
+		return "unknown";
+	}
+}
+
+static void print_policy_attr(const struct rtattr *attr)
+{
+	struct rtattr *tp[NL_POLICY_TYPE_ATTR_MAX + 1];
+
+	parse_rtattr_nested(tp, ARRAY_SIZE(tp) - 1, attr);
+
+	if (tp[NL_POLICY_TYPE_ATTR_TYPE]) {
+		print_uint(PRINT_ANY, "attr", "attr[%u]:",
+			   attr->rta_type & ~NLA_F_NESTED);
+		print_string(PRINT_ANY, "type", " type=%s",
+			get_nla_type_str(rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_TYPE])));
+	}
+
+	if (tp[NL_POLICY_TYPE_ATTR_POLICY_IDX])
+		print_uint(PRINT_ANY, "policy", " policy:%u",
+			rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_POLICY_IDX]));
+
+	if (tp[NL_POLICY_TYPE_ATTR_POLICY_MAXTYPE])
+		print_uint(PRINT_ANY, "maxattr", " maxattr:%u",
+			rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_POLICY_MAXTYPE]));
+
+	if (tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_S] && tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_S]) {
+		print_s64(PRINT_ANY, "min_value", " range:[%lld",
+			  rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_S]));
+		print_s64(PRINT_ANY, "max_value", "%lld]",
+			  rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_S]));
+	}
+
+	if (tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_U] && tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_U]) {
+		print_u64(PRINT_ANY, "min_value", " range:[%llu",
+			  rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_U]));
+		print_u64(PRINT_ANY, "max_value", "%llu]",
+			  rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_U]));
+	}
+
+	if (tp[NL_POLICY_TYPE_ATTR_MIN_LENGTH])
+		print_uint(PRINT_ANY, "min_length", " min len:%u",
+			rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_MIN_LENGTH]));
+
+	if (tp[NL_POLICY_TYPE_ATTR_MAX_LENGTH])
+		print_uint(PRINT_ANY, "max_length", " max len:%u",
+			rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_MAX_LENGTH]));
+}
+
+static void print_policy(const struct rtattr *attr)
+{
+	const struct rtattr *pos;
+
+	open_json_array(PRINT_JSON, NULL);
+	rtattr_for_each_nested(pos, attr) {
+		const struct rtattr *a;
+
+		open_json_array(PRINT_JSON, NULL);
+
+		print_uint(PRINT_ANY, "policy", " policy[%u]:", pos->rta_type & ~NLA_F_NESTED);
+
+		rtattr_for_each_nested(a, pos) {
+			open_json_object(NULL);
+			print_policy_attr(a);
+			close_json_object();
+		}
+		close_json_array(PRINT_JSON, NULL);
+	}
+	close_json_array(PRINT_JSON, NULL);
+}
+
 /*
  * The controller sends one nlmsg per family
 */
@@ -238,7 +328,7 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 		print_ops(tb[CTRL_ATTR_OP_POLICY]);
 
 	if (tb[CTRL_ATTR_POLICY])
-		nl_print_policy(tb[CTRL_ATTR_POLICY]);
+		print_policy(tb[CTRL_ATTR_POLICY]);
 
 	/* end of family definitions .. */
 	print_string(PRINT_FP, NULL,  "\n", NULL);
