@@ -1820,6 +1820,23 @@ bool parse_on_off(const char *msg, const char *realval, int *p_err)
 			      ARRAY_SIZE(values_on_off), p_err, strcmp);
 }
 
+int str_to_bool(const char *str, bool *p_val)
+{
+	static const char * const values[] = {
+		"false", "true",
+		"0", "1",
+		"disable", "enable"
+	};
+	int err, index;
+
+	index = parse_one_of(NULL, str, values, ARRAY_SIZE(values), &err);
+	if (err)
+		return err;
+
+	*p_val = index & 1;
+	return 0;
+}
+
 int parse_mapping_gen(int *argcp, char ***argvp,
 		      int (*key_cb)(__u32 *keyp, const char *key),
 		      int (*mapping_cb)(__u32 key, char *value, void *data),
