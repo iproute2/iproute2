@@ -351,6 +351,7 @@ int parse_one_of_deprecated(const char *msg, const char *realval,
 			    const char * const *list,
 			    size_t len, int *p_err);
 bool parse_on_off(const char *msg, const char *realval, int *p_err);
+int str_to_bool(const char *str, bool *p_val);
 
 int parse_mapping_num_all(__u32 *keyp, const char *key);
 int parse_mapping_gen(int *argcp, char ***argvp,

@@ -42,6 +42,11 @@ devlink
 M: Jiri Pirko <jiri@resnulli.us>
 F: devlink/*
 
+dpll
+M: Petr Oros <poros@redhat.com>
+M: Ivan Vecera <ivecera@redhat.com>
+F: dpll/*
+
 netkit
 M: Daniel Borkmann <daniel@iogearbox.net>
 M: Nikolay Aleksandrov <razor@blackwall.org>
