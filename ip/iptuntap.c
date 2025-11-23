@@ -314,6 +314,7 @@ static void show_processes(const char *name)
 				   !strcmp(name, value)) {
 				SPRINT_BUF(pname);
 
+				open_json_object(NULL);
 				if (get_task_name(pid, pname, sizeof(pname)))
 					print_string(PRINT_ANY, "name",
 						     "%s", "<NULL>");
@@ -322,6 +323,7 @@ static void show_processes(const char *name)
 						     "%s", pname);
 
 				print_uint(PRINT_ANY, "pid", "(%d)", pid);
+				close_json_object();
 			}
 
 			free(key);
