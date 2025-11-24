@@ -156,7 +156,7 @@ ID.
 
 .TP
 .BR signal
-The endpoint will be announced/signaled to each peer via an MPTCP ADD_ADDR
+The endpoint will be announced/signalled to each peer via an MPTCP ADD_ADDR
 sub-option. Typically, a server would be responsible for this. Upon reception of
 an ADD_ADDR sub-option, the other peer, typically the client side, can try to
 create additional subflows, see
@@ -207,7 +207,7 @@ is then optional.
 .BR implicit
 In some scenarios, an MPTCP
 .BR subflow
-can use a local address mapped by a implicit endpoint created by the
+can use a local address mapped by an implicit endpoint created by the
 in-kernel path manager. Once set, the implicit flag cannot be removed, but
 other flags can be added to the endpoint. Implicit endpoints cannot be
 created from user-space.
