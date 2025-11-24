@@ -66,6 +66,8 @@ ip-mptcp \- MPTCP path manager configuration
 .RB "|"
 .B subflow
 .RB "|"
+.B laminar
+.RB "|"
 .B backup
 .RB "|"
 .B fullmesh
@@ -168,6 +170,20 @@ If additional subflow creation is allowed by the MPTCP limits, the MPTCP
 path manager will try to create an additional subflow using this endpoint
 as the source address after the MPTCP connection is established. A client would
 typically do this.
+
+.TP
+.BR laminar
+The endpoint will be used to create new subflows from the associated address to
+additional addresses announced by the other peer. This will be done if allowed
+by the MPTCP limits, and if the associated address is not already being used by
+another subflow from the same MPTCP connection. Note that the
+.BR fullmesh
+flag takes precedence over the
+.BR laminar
+one. Without any of these two flags, the path-manager will create new subflows
+to additional addresses announced by the other peer by selecting the source
+address from the routing tables, which is harder to configure if the announced
+address is not known in advance.
 
 .TP
 .BR backup
