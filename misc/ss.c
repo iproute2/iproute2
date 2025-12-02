@@ -3308,6 +3308,8 @@ static void mptcp_stats_print(struct mptcp_info *s)
 		out(" bytes_acked:%llu", s->mptcpi_bytes_acked);
 	if (s->mptcpi_subflows_total)
 		out(" subflows_total:%u", s->mptcpi_subflows_total);
+	if (s->mptcpi_endp_laminar_max)
+		out(" endp_laminar_max:%u", s->mptcpi_endp_laminar_max);
 	if (s->mptcpi_last_data_sent)
 		out(" last_data_sent:%u", s->mptcpi_last_data_sent);
 	if (s->mptcpi_last_data_recv)

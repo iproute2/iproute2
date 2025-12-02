@@ -47,6 +47,13 @@ M: Petr Oros <poros@redhat.com>
 M: Ivan Vecera <ivecera@redhat.com>
 F: dpll/*
 
+Multipath TCP - mptcp
+M: Matthieu Baerts <matttbe@kernel.org>
+L: mptcp@lists.linux.dev
+F: ip/ipmptcp.c
+F: man/man8/ip-mptcp.8
+K: mptcp
+
 netkit
 M: Daniel Borkmann <daniel@iogearbox.net>
 M: Nikolay Aleksandrov <razor@blackwall.org>

@@ -32,7 +32,7 @@ static void usage(void)
 		"	ip mptcp limits show\n"
 		"	ip mptcp monitor\n"
 		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
-		"FLAG  := [ signal | subflow | backup | fullmesh ]\n"
+		"FLAG  := [ signal | subflow | laminar | backup | fullmesh ]\n"
 		"CHANGE-OPT := [ backup | nobackup | fullmesh | nofullmesh ]\n");
 
 	exit(-1);
@@ -59,6 +59,7 @@ static const struct {
 	{ "backup",		MPTCP_PM_ADDR_FLAG_BACKUP },
 	{ "fullmesh",		MPTCP_PM_ADDR_FLAG_FULLMESH },
 	{ "implicit",		MPTCP_PM_ADDR_FLAG_IMPLICIT },
+	{ "laminar",		MPTCP_PM_ADDR_FLAG_LAMINAR },
 	{ "nobackup",		MPTCP_PM_ADDR_FLAG_NONE },
 	{ "nofullmesh",		MPTCP_PM_ADDR_FLAG_NONE }
 };
@@ -476,6 +477,7 @@ static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 	const struct genlmsghdr *ghdr = NLMSG_DATA(n);
 	struct rtattr *tb[MPTCP_ATTR_MAX + 1];
 	int len = n->nlmsg_len;
+	__u16 flags = 0;
 
 	len -= NLMSG_LENGTH(GENL_HDRLEN);
 	if (len < 0)
@@ -525,8 +527,6 @@ static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 		printf(" backup=%u", rta_getattr_u8(tb[MPTCP_ATTR_BACKUP]));
 	if (tb[MPTCP_ATTR_ERROR])
 		printf(" error=%u", rta_getattr_u8(tb[MPTCP_ATTR_ERROR]));
-	if (tb[MPTCP_ATTR_FLAGS])
-		printf(" flags=%x", rta_getattr_u16(tb[MPTCP_ATTR_FLAGS]));
 	if (tb[MPTCP_ATTR_TIMEOUT])
 		printf(" timeout=%u", rta_getattr_u32(tb[MPTCP_ATTR_TIMEOUT]));
 	if (tb[MPTCP_ATTR_IF_IDX])
@@ -535,6 +535,20 @@ static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 		printf(" reset_reason=%u", rta_getattr_u32(tb[MPTCP_ATTR_RESET_REASON]));
 	if (tb[MPTCP_ATTR_RESET_FLAGS])
 		printf(" reset_flags=0x%x", rta_getattr_u32(tb[MPTCP_ATTR_RESET_FLAGS]));
+
+	if (tb[MPTCP_ATTR_FLAGS])
+		flags = rta_getattr_u16(tb[MPTCP_ATTR_FLAGS]);
+	if ((flags & MPTCP_PM_EV_FLAG_SERVER_SIDE) ||
+	    (tb[MPTCP_ATTR_SERVER_SIDE] && rta_getattr_u8(tb[MPTCP_ATTR_SERVER_SIDE]))) {
+		flags &= ~MPTCP_PM_EV_FLAG_SERVER_SIDE;
+		printf(" server_side");
+	}
+	if (flags & MPTCP_PM_EV_FLAG_DENY_JOIN_ID0) {
+		flags &= ~MPTCP_PM_EV_FLAG_DENY_JOIN_ID0;
+		printf(" deny_join_id0");
+	}
+	if (flags) /* remaining bits */
+		printf(" flags=0x%x", flags);
 
 	puts("");
 out:
