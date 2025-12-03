@@ -56,9 +56,9 @@ static void print_usage(FILE *f)
 		"\t	PHASE-SEG1	:= { NUMBER in tq }\n"
 		"\t	PHASE-SEG2	:= { NUMBER in tq }\n"
 		"\t	SJW		:= { NUMBER in tq }\n"
-		"\t	TDCV		:= { NUMBER in tc }\n"
-		"\t	TDCO		:= { NUMBER in tc }\n"
-		"\t	TDCF		:= { NUMBER in tc }\n"
+		"\t	TDCV		:= { NUMBER in mtq }\n"
+		"\t	TDCO		:= { NUMBER in mtq }\n"
+		"\t	TDCF		:= { NUMBER in mtq }\n"
 		"\t	RESTART-MS	:= { 0 | NUMBER in ms }\n"
 		);
 }
