@@ -60,6 +60,13 @@ static void print_usage(FILE *f)
 		"\t	TDCO		:= { NUMBER in mtq }\n"
 		"\t	TDCF		:= { NUMBER in mtq }\n"
 		"\t	RESTART-MS	:= { 0 | NUMBER in ms }\n"
+		"\n"
+		"\tUnits:\n"
+		"\t	bps	:= bit per second\n"
+		"\t	ms	:= millisecond\n"
+		"\t	mtq	:= minimum time quanta\n"
+		"\t	ns	:= nanosecond\n"
+		"\t	tq	:= time quanta\n"
 		);
 }
 
