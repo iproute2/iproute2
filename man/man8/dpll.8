@@ -1,0 +1,428 @@
+.TH DPLL 8 "23 October 2025" "iproute2" "Linux"
+.SH NAME
+dpll \- Digital Phase Locked Loop (DPLL) subsystem management
+.SH SYNOPSIS
+.ad l
+.in +8
+.ti -8
+.B dpll
+.RI "[ " OPTIONS " ]"
+.B device
+.RI "{ " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.B dpll
+.RI "[ " OPTIONS " ]"
+.B pin
+.RI "{ " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.B dpll
+.RI "[ " OPTIONS " ]"
+.B monitor
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-V\fR[\fIersion\fR] |
+\fB\-j\fR[\fIson\fR] |
+\fB\-p\fR[\fIretty\fR] }
+
+.SH DESCRIPTION
+The
+.B dpll
+utility is used to configure and monitor Digital Phase Locked Loop (DPLL)
+devices and pins. DPLLs are used for clock synchronization in various
+hardware, particularly in telecommunications and networking equipment.
+
+A DPLL device can lock to one or more input pins and provide synchronized
+output. Pins can be physical external signals (like GNSS 1PPS, SyncE), or
+internal oscillators.
+
+.SH OPTIONS
+.TP
+.BR "\-V" , " \-Version"
+Print the version of the
+.B dpll
+utility and exit.
+
+.TP
+.BR "\-j" , " \-json"
+Output results in JavaScript Object Notation (JSON).
+
+.TP
+.BR "\-p" , " \-pretty"
+When combined with \-j, generates a pretty JSON output with indentation
+and newlines for better human readability.
+
+.SH DEVICE COMMANDS
+
+.SS dpll device show [ id ID ]
+
+Display information about DPLL devices. If no arguments are specified,
+shows all devices in the system.
+
+.TP
+.BI id " ID"
+Show only the device with the specified numeric identifier.
+
+.PP
+Output includes:
+.RS
+.IP \[bu] 2
+Device ID
+.IP \[bu]
+Module name providing the device
+.IP \[bu]
+Clock ID (unique identifier)
+.IP \[bu]
+Operating mode (manual, automatic, holdover, freerun)
+.IP \[bu]
+Lock status (locked-ho-ack, locked, unlocked, holdover)
+.IP \[bu]
+Temperature (if supported)
+.IP \[bu]
+Type (PPS or EEC)
+.RE
+
+.SS dpll device set id ID [ phase-offset-monitor { enable | disable } ] [ phase-offset-avg-factor FACTOR ]
+
+Configure DPLL device parameters.
+
+.TP
+.BI id " ID"
+Specifies which device to configure (required).
+
+.TP
+.BI phase-offset-monitor " { enable | disable | true | false | 0 | 1 }"
+Enable or disable phase offset monitoring between the device and its pins.
+When enabled, the kernel continuously measures and reports phase differences.
+
+.TP
+.BI phase-offset-avg-factor " FACTOR"
+Set the averaging factor (1-255) applied to phase offset calculations.
+Higher values provide smoother but slower-responding measurements.
+
+.SS dpll device id-get [ module-name NAME ] [ clock-id ID ] [ type TYPE ]
+
+Retrieve the device ID based on identifying attributes. Useful for scripting
+when you need to find a device's numeric ID. At least one attribute should
+be specified to identify the device.
+
+.TP
+.BI module-name " NAME"
+Kernel module name.
+
+.TP
+.BI clock-id " ID"
+64-bit clock identifier in decimal or hex (0x prefix).
+
+.TP
+.BI type " TYPE"
+Device type:
+.BR pps " or " eec .
+
+.SH PIN COMMANDS
+
+.SS dpll pin show [ id ID ] [ device ID ]
+
+Display information about DPLL pins. If no arguments are specified,
+shows all pins in the system.
+
+.TP
+.BI id " ID"
+Show only the pin with the specified numeric identifier.
+
+.TP
+.BI device " ID"
+Show only pins associated with the specified device ID.
+
+.PP
+Output includes:
+.RS
+.IP \[bu] 2
+Pin ID
+.IP \[bu]
+Module name
+.IP \[bu]
+Clock ID
+.IP \[bu]
+Board label (hardware label from device tree or ACPI)
+.IP \[bu]
+Pin type (mux, ext, synce-eth-port, int-oscillator, gnss)
+.IP \[bu]
+Frequency and supported frequency ranges
+.IP \[bu]
+Capabilities (state-can-change, priority-can-change, direction-can-change)
+.IP \[bu]
+Phase adjustment range, granularity, and current value
+.IP \[bu]
+Parent device relationships (direction, priority, state, phase offset)
+.IP \[bu]
+Parent pin relationships
+.IP \[bu]
+Reference sync information
+.IP \[bu]
+Esync frequency support (if applicable)
+.RE
+
+.SS dpll pin set id ID [ PARAMETER VALUE ] ...
+
+Configure DPLL pin parameters. Multiple parameters can be specified
+in a single command.
+
+.TP
+.BI id " ID"
+Specifies which pin to configure (required).
+
+.TP
+.BI frequency " FREQ"
+Set pin frequency in Hz. The pin must support the specified frequency
+(check frequency-supported ranges in pin show output).
+
+.TP
+.BI phase-adjust " ADJUSTMENT"
+Set phase adjustment in picoseconds. This value fine-tunes the phase
+of the output signal. Negative values shift the phase backwards,
+positive values shift it forwards. The value must be within the
+phase-adjust-min and phase-adjust-max range.
+
+.TP
+.BI esync-frequency " FREQUENCY"
+Set enhanced SyncE (Synchronous Ethernet) frequency in Hz for capable pins.
+
+.TP
+.BI parent-device " DEVICE_ID " "[ " "direction DIR" " ] [ " "prio PRIO" " ] [ " "state STATE" " ]"
+Configure the relationship between this pin and a parent DPLL device.
+.RS
+.TP
+.BI direction " { input | output }"
+Set the pin's direction relative to the parent device.
+.TP
+.BI prio " PRIORITY"
+Set priority (0-255) for this pin on the parent device.
+.TP
+.BI state " { connected | disconnected | selectable }"
+Set the pin's state on the parent device.
+.RE
+
+.TP
+.BI parent-pin " PIN_ID " "[ " "state STATE" " ]"
+Configure the relationship to a parent pin.
+
+.TP
+.BI reference-sync " PIN_ID " "[ " "state STATE" " ]"
+Configure reference sync relationship with another pin.
+
+.SS dpll pin id-get [ SELECTOR ] ...
+
+Retrieve a pin ID based on identifying attributes.
+
+.TP
+.BI module-name " NAME"
+Filter by kernel module name.
+
+.TP
+.BI clock-id " ID"
+Filter by 64-bit clock identifier.
+
+.TP
+.BI board-label " LABEL"
+Filter by board label (hardware identifier).
+
+.TP
+.BI panel-label " LABEL"
+Filter by panel label.
+
+.TP
+.BI package-label " LABEL"
+Filter by package label.
+
+.TP
+.BI type " TYPE"
+Filter by pin type:
+.BR mux ", " ext ", " synce-eth-port ", " int-oscillator ", " gnss .
+
+.SH MONITOR COMMAND
+
+.SS dpll monitor
+
+Monitor DPLL subsystem events in real-time. Displays notifications about:
+.RS
+.IP \[bu] 2
+Device creation, deletion, and configuration changes
+.IP \[bu]
+Pin creation, deletion, and configuration changes
+.IP \[bu]
+Lock status changes
+.IP \[bu]
+Phase offset updates
+.IP \[bu]
+Frequency changes
+.RE
+
+.PP
+Events are prefixed with their type: [DEVICE_CREATE], [DEVICE_CHANGE],
+[DEVICE_DELETE], [PIN_CREATE], [PIN_CHANGE], [PIN_DELETE].
+
+.PP
+Press Ctrl+C to stop monitoring.
+
+.SH EXAMPLES
+
+.SS Show all DPLL devices
+.nf
+.B dpll device show
+.fi
+
+.SS Show specific device in JSON format
+.nf
+.B dpll -j device show id 0
+.fi
+
+.SS Enable phase offset monitoring on device 0
+.nf
+.B dpll device set id 0 phase-offset-monitor enable
+.fi
+
+.SS Show all pins
+.nf
+.B dpll pin show
+.fi
+
+.SS Show pin with pretty JSON output
+.nf
+.B dpll -jp pin show id 5
+.fi
+
+.SS Set pin frequency to 10 MHz
+.nf
+.B dpll pin set id 0 frequency 10000000
+.fi
+
+.SS Configure pin relationship to parent device
+.nf
+.B dpll pin set id 1 parent-device 0 prio 10 direction input state connected
+.fi
+
+.SS Adjust phase by -1000 picoseconds
+.nf
+.B dpll pin set id 2 phase-adjust -1000
+.fi
+
+.SS Set multiple pin parameters at once
+.nf
+.B dpll pin set id 3 frequency 10000000 phase-adjust -1000
+.fi
+
+.SS Monitor DPLL events
+.nf
+.B dpll monitor
+.fi
+
+.SS Monitor events in JSON format
+.nf
+.B dpll -jp monitor
+.fi
+
+.SS Get device ID by module name
+.nf
+.B dpll device id-get module-name ice
+.fi
+
+.SS Get pin ID by board label
+.nf
+.B dpll pin id-get board-label "GNSS-1PPS"
+.fi
+
+.SH PHASE ADJUSTMENT
+Phase adjustment is specified in picoseconds (1e-12 seconds) and allows
+fine-tuning of signal phase. This is crucial for precise time synchronization
+applications like 5G networks and high-frequency trading.
+
+.PP
+Important considerations:
+.RS
+.IP \[bu] 2
+Check phase-adjust-min and phase-adjust-max before setting values
+.IP \[bu]
+Some hardware requires values to be multiples of phase-adjust-gran
+.IP \[bu]
+Negative values shift phase backwards (earlier in time)
+.IP \[bu]
+Positive values shift phase forwards (later in time)
+.IP \[bu]
+The kernel validates all phase adjustment requests
+.RE
+
+.SH CAPABILITIES
+Pins may have various capabilities that determine which operations are allowed:
+
+.TP
+.B state-can-change
+The pin's state (connected/disconnected/selectable) can be modified.
+
+.TP
+.B priority-can-change
+The pin's priority can be modified. This may apply to top-level priority
+or priority within parent-device relationships.
+
+.TP
+.B direction-can-change
+The pin's direction (input/output) can be modified.
+
+.PP
+Use
+.B dpll pin show
+to check which capabilities a pin supports before attempting configuration
+changes.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success
+.TP
+.B 1
+General failure
+.TP
+.B 2
+Invalid arguments or usage
+.TP
+.B 255
+Netlink communication error
+
+.SH NOTES
+.IP \[bu] 2
+The DPLL subsystem requires kernel support (CONFIG_DPLL=y or m)
+.IP \[bu]
+Hardware support varies by device and driver
+.IP \[bu]
+Some operations require specific hardware capabilities
+.IP \[bu]
+Phase offset values are measured by hardware and cannot be set directly
+.IP \[bu]
+Changes to device/pin configuration may affect system clock synchronization
+
+.SH SEE ALSO
+.BR ip (8),
+.BR devlink (8),
+.BR ethtool (8)
+
+.PP
+Linux kernel documentation:
+.I Documentation/driver-api/dpll.rst
+
+.PP
+Netlink specification:
+.I Documentation/netlink/specs/dpll.yaml
+
+.SH AUTHOR
+dpll was written by Arkadiusz Kubalewski, Vadim Fedorenko, and others.
+
+This manual page was written by Petr Oros.
+
+.SH REPORTING BUGS
+Report bugs to <netdev@vger.kernel.org>

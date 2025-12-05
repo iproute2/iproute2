@@ -4,10 +4,16 @@ genl \- generic netlink utility frontend
 .SH SYNOPSIS
 .in +8
 .ti -8
-.BR genl " [ " -s [ tatistics "] ] [ " -d [ etails "] ] [ " -r [ aw "] ] " OBJECT
-
+.BR genl "[ " OPTIONS " ] "  OBJECT
 .ti -8
 .BR genl " { " -V [ ersion "] | " -h [ elp "] }"
+
+.ti -8
+.IR OPTIONS " := { "
+\fB\-s\fR[\fItatistics\fR] |
+\fB\-d\fR[\fIetails\fR] |
+\fB\-j\fR[son\fR] |
+\fB\-p\fR[retty\fR] }
 
 .ti -8
 .IR OBJECT " := { "
@@ -65,6 +71,12 @@ Show object statistics.
 .TP
 .B \-d, \-details
 Show object details.
+.TP
+.B -j, \-json
+Output results in JavaScript Object Notation (JSON).
+.TP
+.B -p, \-pretty
+Add indentation for readability.
 .TP
 .B \-r, \-raw
 Dump raw output only.

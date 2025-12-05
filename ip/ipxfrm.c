@@ -919,6 +919,12 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family, FILE *fp,
 			fprintf(fp, "other (%d)", dir);
 		fprintf(fp, "%s", _SL_);
 	}
+	if (tb[XFRMA_SA_PCPU]) {
+		__u32 pcpu_num = rta_getattr_u32(tb[XFRMA_SA_PCPU]);
+
+		fprintf(fp, "\tpcpu-num %u", pcpu_num);
+		fprintf(fp, "%s", _SL_);
+	}
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)

@@ -45,6 +45,7 @@
 
 #define ESWITCH_MODE_LEGACY "legacy"
 #define ESWITCH_MODE_SWITCHDEV "switchdev"
+#define ESWITCH_MODE_SWITCHDEV_INACTIVE "switchdev_inactive"
 #define ESWITCH_INLINE_MODE_NONE "none"
 #define ESWITCH_INLINE_MODE_LINK "link"
 #define ESWITCH_INLINE_MODE_NETWORK "network"
@@ -311,6 +312,7 @@ static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)
 #define DL_OPT_PORT_FN_CAPS	BIT(57)
 #define DL_OPT_PORT_FN_MAX_IO_EQS	BIT(58)
 #define DL_OPT_PORT_FN_RATE_TC_BWS	BIT(59)
+#define DL_OPT_HEALTH_REPORTER_BURST_PERIOD	BIT(60)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -346,6 +348,7 @@ struct dl_opts {
 	const char *flash_component;
 	const char *reporter_name;
 	__u64 reporter_graceful_period;
+	__u64 reporter_burst_period;
 	bool reporter_auto_recover;
 	bool reporter_auto_dump;
 	const char *trap_name;
@@ -697,6 +700,7 @@ static const enum mnl_attr_data_type devlink_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_HEALTH_REPORTER_RECOVER_COUNT] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_HEALTH_REPORTER_DUMP_TS] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD] = MNL_TYPE_U64,
+	[DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD] = MNL_TYPE_U64,
 	[DEVLINK_ATTR_FLASH_UPDATE_COMPONENT] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_FLASH_UPDATE_STATUS_MSG] = MNL_TYPE_STRING,
 	[DEVLINK_ATTR_FLASH_UPDATE_STATUS_DONE] = MNL_TYPE_U64,
@@ -1038,22 +1042,6 @@ static int ifname_map_rev_lookup(struct dl *dl, const char *bus_name,
 	return -ENOENT;
 }
 
-static int strtobool(const char *str, bool *p_val)
-{
-	bool val;
-
-	if (!strcmp(str, "true") || !strcmp(str, "1") ||
-	    !strcmp(str, "enable"))
-		val = true;
-	else if (!strcmp(str, "false") || !strcmp(str, "0") ||
-		 !strcmp(str, "disable"))
-		val = false;
-	else
-		return -EINVAL;
-	*p_val = val;
-	return 0;
-}
-
 static int ident_str_validate(char *str, unsigned int expected)
 {
 	if (!str)
@@ -1356,7 +1344,7 @@ static int dl_argv_bool(struct dl *dl, bool *p_val)
 		return -EINVAL;
 	}
 
-	err = strtobool(str, p_val);
+	err = str_to_bool(str, p_val);
 	if (err) {
 		pr_err("\"%s\" is not a valid boolean value\n", str);
 		return err;
@@ -1425,6 +1413,8 @@ static int eswitch_mode_get(const char *typestr,
 		*p_mode = DEVLINK_ESWITCH_MODE_LEGACY;
 	} else if (strcmp(typestr, ESWITCH_MODE_SWITCHDEV) == 0) {
 		*p_mode = DEVLINK_ESWITCH_MODE_SWITCHDEV;
+	} else if (strcmp(typestr, ESWITCH_MODE_SWITCHDEV_INACTIVE) == 0) {
+		*p_mode = DEVLINK_ESWITCH_MODE_SWITCHDEV_INACTIVE;
 	} else {
 		pr_err("Unknown eswitch mode \"%s\"\n", typestr);
 		return -EINVAL;
@@ -2101,6 +2091,13 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD;
+		} else if (dl_argv_match(dl, "burst_period") &&
+			   (o_all & DL_OPT_HEALTH_REPORTER_BURST_PERIOD)) {
+			dl_arg_inc(dl);
+			err = dl_argv_uint64_t(dl, &opts->reporter_burst_period);
+			if (err)
+				return err;
+			o_found |= DL_OPT_HEALTH_REPORTER_BURST_PERIOD;
 		} else if (dl_argv_match(dl, "auto_recover") &&
 			(o_all & DL_OPT_HEALTH_REPORTER_AUTO_RECOVER)) {
 			dl_arg_inc(dl);
@@ -2701,6 +2698,10 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 		mnl_attr_put_u64(nlh,
 				 DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD,
 				 opts->reporter_graceful_period);
+	if (opts->present & DL_OPT_HEALTH_REPORTER_BURST_PERIOD)
+		mnl_attr_put_u64(nlh,
+				 DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD,
+				 opts->reporter_burst_period);
 	if (opts->present & DL_OPT_HEALTH_REPORTER_AUTO_RECOVER)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER,
 				opts->reporter_auto_recover);
@@ -2834,7 +2835,7 @@ static bool dl_dump_filter(struct dl *dl, struct nlattr **tb)
 static void cmd_dev_help(void)
 {
 	pr_err("Usage: devlink dev show [ DEV ]\n");
-	pr_err("       devlink dev eswitch set DEV [ mode { legacy | switchdev } ]\n");
+	pr_err("       devlink dev eswitch set DEV [ mode { legacy | switchdev | switchdev_inactive } ]\n");
 	pr_err("                               [ inline-mode { none | link | network | transport } ]\n");
 	pr_err("                               [ encap-mode { none | basic } ]\n");
 	pr_err("       devlink dev eswitch show DEV\n");
@@ -3270,6 +3271,8 @@ static const char *eswitch_mode_name(uint32_t mode)
 	switch (mode) {
 	case DEVLINK_ESWITCH_MODE_LEGACY: return ESWITCH_MODE_LEGACY;
 	case DEVLINK_ESWITCH_MODE_SWITCHDEV: return ESWITCH_MODE_SWITCHDEV;
+	case DEVLINK_ESWITCH_MODE_SWITCHDEV_INACTIVE:
+		return ESWITCH_MODE_SWITCHDEV_INACTIVE;
 	default: return "<unknown mode>";
 	}
 }
@@ -3405,7 +3408,7 @@ static int cmd_dev_eswitch(struct dl *dl)
 struct param_val_conv {
 	const char *name;
 	const char *vstr;
-	uint32_t vuint;
+	uint64_t vuint;
 };
 
 static bool param_val_conv_exists(const struct param_val_conv *param_val_conv,
@@ -3423,7 +3426,7 @@ static bool param_val_conv_exists(const struct param_val_conv *param_val_conv,
 static int
 param_val_conv_uint_get(const struct param_val_conv *param_val_conv,
 			uint32_t len, const char *name, const char *vstr,
-			uint32_t *vuint)
+			uint64_t *vuint)
 {
 	uint32_t i;
 
@@ -3439,7 +3442,7 @@ param_val_conv_uint_get(const struct param_val_conv *param_val_conv,
 
 static int
 param_val_conv_str_get(const struct param_val_conv *param_val_conv,
-		       uint32_t len, const char *name, uint32_t vuint,
+		       uint32_t len, const char *name, uint64_t vuint,
 		       const char **vstr)
 {
 	uint32_t i;
@@ -3656,6 +3659,7 @@ struct param_ctx {
 		uint8_t vu8;
 		uint16_t vu16;
 		uint32_t vu32;
+		uint64_t vu64;
 		const char *vstr;
 		bool vbool;
 	} value;
@@ -3716,6 +3720,9 @@ static int cmd_dev_param_set_cb(const struct nlmsghdr *nlh, void *data)
 			case MNL_TYPE_U32:
 				ctx->value.vu32 = mnl_attr_get_u32(val_attr);
 				break;
+			case MNL_TYPE_U64:
+				ctx->value.vu64 = mnl_attr_get_u64(val_attr);
+				break;
 			case MNL_TYPE_STRING:
 				ctx->value.vstr = mnl_attr_get_str(val_attr);
 				break;
@@ -3735,7 +3742,8 @@ static int cmd_dev_param_set(struct dl *dl)
 	struct param_ctx ctx = {};
 	struct nlmsghdr *nlh;
 	bool conv_exists;
-	uint32_t val_u32 = 0;
+	uint64_t val_u64 = 0;
+	uint32_t val_u32;
 	uint16_t val_u16;
 	uint8_t val_u8;
 	bool val_bool;
@@ -3777,8 +3785,8 @@ static int cmd_dev_param_set(struct dl *dl)
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-			val_u8 = val_u32;
+						      &val_u64);
+			val_u8 = val_u64;
 		} else {
 			err = get_u8(&val_u8, dl->opts.param_value, 10);
 		}
@@ -3794,8 +3802,8 @@ static int cmd_dev_param_set(struct dl *dl)
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-			val_u16 = val_u32;
+						      &val_u64);
+			val_u16 = val_u64;
 		} else {
 			err = get_u16(&val_u16, dl->opts.param_value, 10);
 		}
@@ -3806,22 +3814,39 @@ static int cmd_dev_param_set(struct dl *dl)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u16);
 		break;
 	case MNL_TYPE_U32:
-		if (conv_exists)
+		if (conv_exists) {
 			err = param_val_conv_uint_get(param_val_conv,
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-		else
+						      &val_u64);
+			val_u32 = val_u64;
+		} else {
 			err = get_u32(&val_u32, dl->opts.param_value, 10);
+		}
 		if (err)
 			goto err_param_value_parse;
 		if (val_u32 == ctx.value.vu32)
 			return 0;
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u32);
 		break;
+	case MNL_TYPE_U64:
+		if (conv_exists)
+			err = param_val_conv_uint_get(param_val_conv,
+						      PARAM_VAL_CONV_LEN,
+						      dl->opts.param_name,
+						      dl->opts.param_value,
+						      &val_u64);
+		else
+			err = get_u64((__u64 *)&val_u64, dl->opts.param_value, 10);
+		if (err)
+			goto err_param_value_parse;
+		if (val_u64 == ctx.value.vu64)
+			return 0;
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u64);
+		break;
 	case MNL_TYPE_FLAG:
-		err = strtobool(dl->opts.param_value, &val_bool);
+		err = str_to_bool(dl->opts.param_value, &val_bool);
 		if (err)
 			goto err_param_value_parse;
 		if (val_bool == ctx.value.vbool)
@@ -5313,7 +5338,8 @@ static int cmd_port_param_set(struct dl *dl)
 	struct param_ctx ctx = {};
 	struct nlmsghdr *nlh;
 	bool conv_exists;
-	uint32_t val_u32 = 0;
+	uint64_t val_u64 = 0;
+	uint32_t val_u32;
 	uint16_t val_u16;
 	uint8_t val_u8;
 	bool val_bool;
@@ -5351,8 +5377,8 @@ static int cmd_port_param_set(struct dl *dl)
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-			val_u8 = val_u32;
+						      &val_u64);
+			val_u8 = val_u64;
 		} else {
 			err = get_u8(&val_u8, dl->opts.param_value, 10);
 		}
@@ -5368,8 +5394,8 @@ static int cmd_port_param_set(struct dl *dl)
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-			val_u16 = val_u32;
+						      &val_u64);
+			val_u16 = val_u64;
 		} else {
 			err = get_u16(&val_u16, dl->opts.param_value, 10);
 		}
@@ -5380,22 +5406,39 @@ static int cmd_port_param_set(struct dl *dl)
 		mnl_attr_put_u16(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u16);
 		break;
 	case MNL_TYPE_U32:
-		if (conv_exists)
+		if (conv_exists) {
 			err = param_val_conv_uint_get(param_val_conv,
 						      PARAM_VAL_CONV_LEN,
 						      dl->opts.param_name,
 						      dl->opts.param_value,
-						      &val_u32);
-		else
+						      &val_u64);
+			val_u32 = val_u64;
+		} else {
 			err = get_u32(&val_u32, dl->opts.param_value, 10);
+		}
 		if (err)
 			goto err_param_value_parse;
 		if (val_u32 == ctx.value.vu32)
 			return 0;
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u32);
 		break;
+	case MNL_TYPE_U64:
+		if (conv_exists)
+			err = param_val_conv_uint_get(param_val_conv,
+						      PARAM_VAL_CONV_LEN,
+						      dl->opts.param_name,
+						      dl->opts.param_value,
+						      &val_u64);
+		else
+			err = get_u64((__u64 *)&val_u64, dl->opts.param_value, 10);
+		if (err)
+			goto err_param_value_parse;
+		if (val_u64 == ctx.value.vu64)
+			return 0;
+		mnl_attr_put_u64(nlh, DEVLINK_ATTR_PARAM_VALUE_DATA, val_u64);
+		break;
 	case MNL_TYPE_FLAG:
-		err = strtobool(dl->opts.param_value, &val_bool);
+		err = str_to_bool(dl->opts.param_value, &val_bool);
 		if (err)
 			goto err_param_value_parse;
 		if (val_bool == ctx.value.vbool)
@@ -9311,6 +9354,7 @@ static int cmd_health_set_params(struct dl *dl)
 			       NLM_F_REQUEST | NLM_F_ACK);
 	err = dl_argv_parse(dl, DL_OPT_HANDLE | DL_OPT_HANDLEP | DL_OPT_HEALTH_REPORTER_NAME,
 			    DL_OPT_HEALTH_REPORTER_GRACEFUL_PERIOD |
+			    DL_OPT_HEALTH_REPORTER_BURST_PERIOD |
 			    DL_OPT_HEALTH_REPORTER_AUTO_RECOVER |
 			    DL_OPT_HEALTH_REPORTER_AUTO_DUMP);
 	if (err)
@@ -9755,6 +9799,9 @@ static void pr_out_health(struct dl *dl, struct nlattr **tb_health,
 	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD])
 		pr_out_u64(dl, "grace_period",
 			   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD]));
+	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD])
+		pr_out_u64(dl, "burst_period",
+			   mnl_attr_get_u64(tb[DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD]));
 	if (tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER])
 		print_bool(PRINT_ANY, "auto_recover", " auto_recover %s",
 			   mnl_attr_get_u8(tb[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER]));
@@ -9829,6 +9876,7 @@ static void cmd_health_help(void)
 	pr_err("       devlink health dump clear { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
 	pr_err("       devlink health set { DEV | DEV/PORT_INDEX } reporter REPORTER_NAME\n");
 	pr_err("                          [ grace_period MSEC ]\n");
+	pr_err("                          [ burst_period MSEC ]\n");
 	pr_err("                          [ auto_recover { true | false } ]\n");
 	pr_err("                          [ auto_dump    { true | false } ]\n");
 }

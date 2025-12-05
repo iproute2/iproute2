@@ -61,6 +61,8 @@ devlink-health \- devlink health reporting and recovery
 [
 .BI "grace_period " MSEC "
 ] [
+.BI "burst_period " MSEC "
+] [
 .BR auto_recover " { " true " | " false " } "
 ] [
 .BR auto_dump " { " true " | " false " } "
@@ -183,6 +185,11 @@ doesn't support a recovery or dump method.
 Time interval between consecutive auto recoveries.
 
 .TP
+.BI burst_period " MSEC "
+Time window for error recoveries before starting the grace period.
+Configuring burst_period is invalid when the grace period is disabled.
+
+.TP
 .BR auto_recover " { " true " | " false " } "
 Indicates whether the devlink should execute automatic recover on error.
 
@@ -242,6 +249,19 @@ the specified port and reporter.
 devlink health set pci/0000:00:09.0 reporter fw_fatal auto_recover false
 .RS 4
 Turn off auto recovery on the specified device and reporter.
+.RE
+.PP
+devlink health set pci/0000:00:09.0 reporter tx burst_period 5000
+.RS 4
+Set the burst period to 5000 milliseconds on the specified
+device and reporter, prior to initiating the grace period.
+.RE
+.PP
+devlink health set pci/0000:00:09.0 reporter tx grace_period 0
+.RS 4
+Disable grace period on the specified device and reporter. Disabling the grace
+period also deactivates the burst period.
+.RE
 
 .RE
 .SH SEE ALSO

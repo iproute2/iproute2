@@ -792,12 +792,12 @@ _devlink_health()
             if [[ $command == "set" ]]; then
                 case $cword in
                     6)
-                        COMPREPLY=( $( compgen -W "grace_period auto_recover" \
+                        COMPREPLY=( $( compgen -W "grace_period burst_period auto_recover" \
                                    -- "$cur" ) )
                         ;;
                     7)
                         case $prev in
-                            grace_period)
+                            grace_period|burst_period)
                                 # Integer argument- msec
                                 ;;
                             auto_recover)

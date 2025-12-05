@@ -71,7 +71,7 @@ YACCFLAGS = -d -t -v
 
 SUBDIRS=lib ip tc bridge misc netem genl man
 ifeq ($(HAVE_MNL),y)
-SUBDIRS += tipc devlink rdma dcb vdpa netshaper
+SUBDIRS += tipc devlink rdma dcb vdpa netshaper dpll
 endif
 
 LIBNETLINK=../lib/libutil.a ../lib/libnetlink.a
@@ -111,6 +111,7 @@ install: all
 	install -m 0755 -d $(DESTDIR)$(BASH_COMPDIR)
 	install -m 0644 bash-completion/tc $(DESTDIR)$(BASH_COMPDIR)
 	install -m 0644 bash-completion/devlink $(DESTDIR)$(BASH_COMPDIR)
+	install -m 0644 bash-completion/dpll $(DESTDIR)$(BASH_COMPDIR)
 	install -m 0644 include/bpf_elf.h $(DESTDIR)$(HDRDIR)
 
 version:

@@ -1,0 +1,316 @@
+# bash completion for dpll(8)                             -*- shell-script -*-
+
+# Get all the optional commands for dpll
+_dpll_get_optional_commands()
+{
+    local object=$1; shift
+
+    local filter_options=""
+    local options="$(dpll $object help 2>&1 \
+        | command sed -n -e "s/^.*dpll $object //p" \
+        | cut -d " " -f 1)"
+
+    # Remove duplicate options from "dpll $OBJECT help" command
+    local opt
+    for opt in $options; do
+        if [[ $filter_options =~ $opt ]]; then
+            continue
+        else
+            filter_options="$filter_options $opt"
+        fi
+    done
+
+    echo $filter_options
+}
+
+# Complete based on given word
+_dpll_direct_complete()
+{
+    local device_id pin_id value
+
+    case $1 in
+        device_id)
+            value=$(dpll -j device show 2>/dev/null \
+                    | jq '.device[].id' 2>/dev/null)
+            ;;
+        pin_id)
+            value=$(dpll -j pin show 2>/dev/null \
+                    | jq '.pin[].id' 2>/dev/null)
+            ;;
+        module_name)
+            value=$(dpll -j device show 2>/dev/null \
+                    | jq -r '.device[]."module-name"' 2>/dev/null \
+                    | sort -u)
+            ;;
+    esac
+
+    echo $value
+}
+
+# Handle device subcommands
+_dpll_device()
+{
+    local command=$1
+
+    case $command in
+        show)
+            case $prev in
+                id)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete device_id)" -- "$cur" ) )
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=( $( compgen -W "id" -- "$cur" ) )
+                    return 0
+                    ;;
+            esac
+            ;;
+        set)
+            case $prev in
+                id)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete device_id)" -- "$cur" ) )
+                    return 0
+                    ;;
+                phase-offset-monitor)
+                    COMPREPLY=( $( compgen -W "enable disable true false 0 1" -- "$cur" ) )
+                    return 0
+                    ;;
+                phase-offset-avg-factor)
+                    # numeric value, no completion
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=( $( compgen -W "id phase-offset-monitor \
+                        phase-offset-avg-factor" -- "$cur" ) )
+                    return 0
+                    ;;
+            esac
+            ;;
+        id-get)
+            case $prev in
+                module-name)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete module_name)" -- "$cur" ) )
+                    return 0
+                    ;;
+                clock-id)
+                    # numeric value, no completion
+                    return 0
+                    ;;
+                type)
+                    COMPREPLY=( $( compgen -W "pps eec" -- "$cur" ) )
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=( $( compgen -W "module-name clock-id type" \
+                        -- "$cur" ) )
+                    return 0
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+# Handle pin subcommands
+_dpll_pin()
+{
+    local command=$1
+
+    case $command in
+        show)
+            case $prev in
+                id)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete pin_id)" -- "$cur" ) )
+                    return 0
+                    ;;
+                device)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete device_id)" -- "$cur" ) )
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=( $( compgen -W "id device" -- "$cur" ) )
+                    return 0
+                    ;;
+            esac
+            ;;
+        set)
+            case $prev in
+                id|parent-device)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete device_id)" -- "$cur" ) )
+                    return 0
+                    ;;
+                parent-pin|reference-sync)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete pin_id)" -- "$cur" ) )
+                    return 0
+                    ;;
+                frequency|phase-adjust|esync-frequency|prio)
+                    # numeric value, no completion
+                    return 0
+                    ;;
+                direction)
+                    COMPREPLY=( $( compgen -W "input output" -- "$cur" ) )
+                    return 0
+                    ;;
+                state)
+                    COMPREPLY=( $( compgen -W \
+                        "connected disconnected selectable" -- "$cur" ) )
+                    return 0
+                    ;;
+                *)
+                    # Check if we are in nested context (after parent-device/parent-pin/reference-sync)
+                    local i nested_keyword=""
+                    for (( i=cword-1; i>0; i-- )); do
+                        case "${words[i]}" in
+                            parent-device)
+                                nested_keyword="parent-device"
+                                break
+                                ;;
+                            parent-pin|reference-sync)
+                                nested_keyword="parent-pin"
+                                break
+                                ;;
+                            id|frequency|phase-adjust|esync-frequency)
+                                # Hit a top-level keyword, not in nested context
+                                break
+                                ;;
+                        esac
+                    done
+
+                    if [[ "$nested_keyword" == "parent-device" ]]; then
+                        COMPREPLY=( $( compgen -W "direction prio state" -- "$cur" ) )
+                    elif [[ "$nested_keyword" == "parent-pin" ]]; then
+                        COMPREPLY=( $( compgen -W "state" -- "$cur" ) )
+                    else
+                        COMPREPLY=( $( compgen -W "id frequency phase-adjust \
+                            esync-frequency parent-device parent-pin reference-sync" \
+                            -- "$cur" ) )
+                    fi
+                    return 0
+                    ;;
+            esac
+            ;;
+        id-get)
+            case $prev in
+                module-name)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete module_name)" -- "$cur" ) )
+                    return 0
+                    ;;
+                clock-id)
+                    # numeric value, no completion
+                    return 0
+                    ;;
+                board-label|panel-label|package-label)
+                    # string value, no completion
+                    return 0
+                    ;;
+                type)
+                    COMPREPLY=( $( compgen -W "mux ext synce-eth-port \
+                        int-oscillator gnss" -- "$cur" ) )
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=( $( compgen -W "module-name clock-id \
+                        board-label panel-label package-label type" \
+                        -- "$cur" ) )
+                    return 0
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+# Handle monitor subcommand
+_dpll_monitor()
+{
+    # monitor has no additional arguments
+    return 0
+}
+
+# Complete any dpll command
+_dpll()
+{
+    local cur prev words cword
+    local opt='--Version --json --pretty'
+    local objects="device pin monitor"
+
+    _init_completion || return
+    # Gets the word-to-complete without considering the colon as word breaks
+    _get_comp_words_by_ref -n : cur prev words cword
+
+    if [[ $cword -eq 1 ]]; then
+        case $cur in
+            -*)
+                COMPREPLY=( $( compgen -W "$opt" -- "$cur" ) )
+                return 0
+                ;;
+            *)
+                COMPREPLY=( $( compgen -W "$objects help" -- "$cur" ) )
+                return 0
+                ;;
+        esac
+    fi
+
+    # Deal with options
+    if [[ $prev == -* ]]; then
+        case $prev in
+            -V|--Version)
+                return 0
+                ;;
+            -j|--json)
+                COMPREPLY=( $( compgen -W "--pretty $objects" -- "$cur" ) )
+                return 0
+                ;;
+            *)
+                COMPREPLY=( $( compgen -W "$objects" -- "$cur" ) )
+                return 0
+                ;;
+        esac
+    fi
+
+    # Remove all options so completions don't have to deal with them.
+    local i
+    for (( i=1; i < ${#words[@]}; )); do
+        if [[ ${words[i]::1} == - ]]; then
+            words=( "${words[@]:0:i}" "${words[@]:i+1}" )
+            [[ $i -le $cword ]] && cword=$(( cword - 1 ))
+        else
+            i=$(( ++i ))
+        fi
+    done
+
+    local object=${words[1]}
+    local command=${words[2]}
+    local pprev=${words[cword - 2]}
+    local prev=${words[cword - 1]}
+
+    case $object in
+        device|pin|monitor)
+            if [[ $cword -eq 2 ]]; then
+                COMPREPLY=( $( compgen -W "help" -- "$cur") )
+                if [[ $object != "monitor" ]]; then
+                    COMPREPLY+=( $( compgen -W \
+                        "$(_dpll_get_optional_commands $object)" -- "$cur" ) )
+                fi
+            else
+                "_dpll_$object" $command
+            fi
+            ;;
+        help)
+            return 0
+            ;;
+        *)
+            COMPREPLY=( $( compgen -W "$objects help" -- "$cur" ) )
+            ;;
+    esac
+
+} &&
+complete -F _dpll dpll
+
+# ex: ts=4 sw=4 et filetype=sh

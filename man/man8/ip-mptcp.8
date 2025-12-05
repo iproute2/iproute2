@@ -66,6 +66,8 @@ ip-mptcp \- MPTCP path manager configuration
 .RB "|"
 .B subflow
 .RB "|"
+.B laminar
+.RB "|"
 .B backup
 .RB "|"
 .B fullmesh
@@ -156,7 +158,7 @@ ID.
 
 .TP
 .BR signal
-The endpoint will be announced/signaled to each peer via an MPTCP ADD_ADDR
+The endpoint will be announced/signalled to each peer via an MPTCP ADD_ADDR
 sub-option. Typically, a server would be responsible for this. Upon reception of
 an ADD_ADDR sub-option, the other peer, typically the client side, can try to
 create additional subflows, see
@@ -168,6 +170,20 @@ If additional subflow creation is allowed by the MPTCP limits, the MPTCP
 path manager will try to create an additional subflow using this endpoint
 as the source address after the MPTCP connection is established. A client would
 typically do this.
+
+.TP
+.BR laminar
+The endpoint will be used to create new subflows from the associated address to
+additional addresses announced by the other peer. This will be done if allowed
+by the MPTCP limits, and if the associated address is not already being used by
+another subflow from the same MPTCP connection. Note that the
+.BR fullmesh
+flag takes precedence over the
+.BR laminar
+one. Without any of these two flags, the path-manager will create new subflows
+to additional addresses announced by the other peer by selecting the source
+address from the routing tables, which is harder to configure if the announced
+address is not known in advance.
 
 .TP
 .BR backup
@@ -207,7 +223,7 @@ is then optional.
 .BR implicit
 In some scenarios, an MPTCP
 .BR subflow
-can use a local address mapped by a implicit endpoint created by the
+can use a local address mapped by an implicit endpoint created by the
 in-kernel path manager. Once set, the implicit flag cannot be removed, but
 other flags can be added to the endpoint. Implicit endpoints cannot be
 created from user-space.

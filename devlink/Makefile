@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 include ../config.mk
 
-DEVLINKOBJ = devlink.o mnlg.o
+DEVLINKOBJ = devlink.o
 TARGETS += devlink
 LDLIBS += -lm
 

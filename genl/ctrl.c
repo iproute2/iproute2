@@ -36,66 +36,233 @@ static int usage(void)
 	return -1;
 }
 
-static void print_ctrl_cmd_flags(FILE *fp, __u32 fl)
+static void
+print_ctrl_flag(const char *json_str, const char *fp_str)
 {
-	fprintf(fp, "\n\t\tCapabilities (0x%x):\n ", fl);
-	if (!fl) {
-		fprintf(fp, "\n");
-		return;
-	}
-	fprintf(fp, "\t\t ");
-
-	if (fl & GENL_ADMIN_PERM)
-		fprintf(fp, " requires admin permission;");
-	if (fl & GENL_CMD_CAP_DO)
-		fprintf(fp, " can doit;");
-	if (fl & GENL_CMD_CAP_DUMP)
-		fprintf(fp, " can dumpit;");
-	if (fl & GENL_CMD_CAP_HASPOL)
-		fprintf(fp, " has policy");
-
-	fprintf(fp, "\n");
+	print_string(PRINT_JSON, NULL, NULL, json_str);
+	print_string(PRINT_FP, NULL, " %s", fp_str);
 }
 
-static int print_ctrl_cmds(FILE *fp, struct rtattr *arg)
+static void print_ctrl_cmd_flags(__u32 fl)
+{
+	print_0xhex(PRINT_FP, "flags", "\n\t\tCapabilities (0x%x):\n ", fl);
+	open_json_array(PRINT_JSON, "capabilities");
+
+	if (fl != 0)
+		print_string(PRINT_FP, NULL, "\t\t ", NULL);
+
+	if (fl & GENL_ADMIN_PERM)
+		print_ctrl_flag("admin", "requires admin permission;");
+	if (fl & GENL_CMD_CAP_DO)
+		print_ctrl_flag("do", "can doit;");
+	if (fl & GENL_CMD_CAP_DUMP)
+		print_ctrl_flag("dump", "can dumpit;");
+	if (fl & GENL_CMD_CAP_HASPOL)
+		print_ctrl_flag("policy", "has policy");
+	close_json_array(PRINT_ANY, "\n");
+}
+
+static void
+print_ctrl_cmd(const struct rtattr *arg)
 {
 	struct rtattr *tb[CTRL_ATTR_OP_MAX + 1];
 
-	if (arg == NULL)
-		return -1;
-
 	parse_rtattr_nested(tb, CTRL_ATTR_OP_MAX, arg);
-	if (tb[CTRL_ATTR_OP_ID]) {
-		__u32 *id = RTA_DATA(tb[CTRL_ATTR_OP_ID]);
-		fprintf(fp, " ID-0x%x ",*id);
-	}
-	/* we are only gonna do this for newer version of the controller */
-	if (tb[CTRL_ATTR_OP_FLAGS]) {
-		__u32 *fl = RTA_DATA(tb[CTRL_ATTR_OP_FLAGS]);
-		print_ctrl_cmd_flags(fp, *fl);
-	}
-	return 0;
+	if (tb[CTRL_ATTR_OP_ID])
+		print_0xhex(PRINT_ANY, "id", " ID-0x%x ",
+			    rta_getattr_u32(tb[CTRL_ATTR_OP_ID]));
 
+	/* we are only gonna do this for newer version of the controller */
+	if (tb[CTRL_ATTR_OP_FLAGS])
+		print_ctrl_cmd_flags(rta_getattr_u32(tb[CTRL_ATTR_OP_FLAGS]));
 }
 
-static int print_ctrl_grp(FILE *fp, struct rtattr *arg)
+static void
+print_ctrl_ops(const struct rtattr *attr)
+{
+	struct rtattr *tb2[GENL_MAX_FAM_OPS];
+	unsigned int i;
+
+	parse_rtattr_nested(tb2, GENL_MAX_FAM_OPS, attr);
+
+	open_json_array(PRINT_JSON, "operations");
+	print_string(PRINT_FP, NULL, "\tcommands supported: \n", NULL);
+
+	for (i = 0; i < GENL_MAX_FAM_OPS; i++) {
+		if (!tb2[i])
+			continue;
+
+		open_json_object(NULL);
+		print_uint(PRINT_FP, NULL, "\t\t#%u: ", i);
+		print_ctrl_cmd(tb2[i]);
+		print_string(PRINT_FP, NULL, "\n", NULL);
+		close_json_object();
+	}
+
+	/* end of family::cmds definitions .. */
+	close_json_array(PRINT_JSON, NULL);
+	print_string(PRINT_FP, NULL, "\n", NULL);
+}
+
+static void print_ctrl_grp(const struct rtattr *arg)
 {
 	struct rtattr *tb[CTRL_ATTR_MCAST_GRP_MAX + 1];
 
-	if (arg == NULL)
-		return -1;
+	open_json_object(NULL);
 
 	parse_rtattr_nested(tb, CTRL_ATTR_MCAST_GRP_MAX, arg);
-	if (tb[2]) {
-		__u32 *id = RTA_DATA(tb[CTRL_ATTR_MCAST_GRP_ID]);
-		fprintf(fp, " ID-0x%x ",*id);
+	if (tb[CTRL_ATTR_MCAST_GRP_ID])
+		print_0xhex(PRINT_ANY, "id", " ID-0x%x ",
+			    rta_getattr_u32(tb[CTRL_ATTR_MCAST_GRP_ID]));
+	if (tb[CTRL_ATTR_MCAST_GRP_NAME]) {
+		const char *name = RTA_DATA(tb[CTRL_ATTR_MCAST_GRP_NAME]);
+		print_string(PRINT_ANY, "name", " name: %s ", name);
 	}
-	if (tb[1]) {
-		char *name = RTA_DATA(tb[CTRL_ATTR_MCAST_GRP_NAME]);
-		fprintf(fp, " name: %s ", name);
-	}
-	return 0;
+	close_json_object();
+}
 
+static void print_ops(const struct rtattr *attr)
+{
+	const struct rtattr *pos;
+
+	open_json_array(PRINT_JSON, "op");
+
+	rtattr_for_each_nested(pos, attr) {
+		struct rtattr *ptb[CTRL_ATTR_POLICY_DUMP_MAX + 1];
+		struct rtattr *pattrs = RTA_DATA(pos);
+		int plen = RTA_PAYLOAD(pos);
+
+		parse_rtattr_flags(ptb, CTRL_ATTR_POLICY_DUMP_MAX, pattrs, plen, NLA_F_NESTED);
+
+		print_uint(PRINT_ANY, "bits", " op %d policies:",
+			   pos->rta_type & ~NLA_F_NESTED);
+
+		if (ptb[CTRL_ATTR_POLICY_DO])
+			print_uint(PRINT_ANY, "do", " do=%u",
+				   rta_getattr_u32(ptb[CTRL_ATTR_POLICY_DO]));
+
+		if (ptb[CTRL_ATTR_POLICY_DUMP])
+			print_uint(PRINT_ANY, "dump", " dump=%d",
+				   rta_getattr_u32(ptb[CTRL_ATTR_POLICY_DUMP]));
+
+	}
+	close_json_array(PRINT_JSON, NULL);
+}
+
+static void print_ctrl_mcast(const struct rtattr *attr)
+{
+	struct rtattr *tb2[GENL_MAX_FAM_GRPS + 1];
+	unsigned int i;
+
+	parse_rtattr_nested(tb2, GENL_MAX_FAM_GRPS, attr);
+
+	open_json_array(PRINT_JSON, "mcast");
+	print_string(PRINT_FP, NULL, "\tmulticast groups:\n", NULL);
+
+	for (i = 0; i < GENL_MAX_FAM_GRPS; i++) {
+		if (!tb2[i])
+			continue;
+
+		print_uint(PRINT_FP, NULL, "\t\t#%d: ", i);
+		print_ctrl_grp(tb2[i]);
+
+		/* for next group */
+		print_string(PRINT_FP, NULL, "\n", NULL);
+	}
+
+	/* end of family::groups definitions .. */
+	close_json_array(PRINT_JSON, NULL);
+	print_string(PRINT_FP, NULL, "\n", NULL);
+}
+
+static const char *get_nla_type_str(unsigned int attr)
+{
+	switch (attr) {
+#define C(x) case NL_ATTR_TYPE_ ## x: return #x
+	C(U8);
+	C(U16);
+	C(U32);
+	C(U64);
+	C(STRING);
+	C(FLAG);
+	C(NESTED);
+	C(NESTED_ARRAY);
+	C(NUL_STRING);
+	C(BINARY);
+	C(S8);
+	C(S16);
+	C(S32);
+	C(S64);
+	C(BITFIELD32);
+	default:
+		return "unknown";
+	}
+}
+
+static void print_policy_attr(const struct rtattr *attr)
+{
+	struct rtattr *tp[NL_POLICY_TYPE_ATTR_MAX + 1];
+
+	parse_rtattr_nested(tp, ARRAY_SIZE(tp) - 1, attr);
+
+	if (tp[NL_POLICY_TYPE_ATTR_TYPE]) {
+		print_uint(PRINT_ANY, "attr", "attr[%u]:",
+			   attr->rta_type & ~NLA_F_NESTED);
+		print_string(PRINT_ANY, "type", " type=%s",
+			get_nla_type_str(rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_TYPE])));
+	}
+
+	if (tp[NL_POLICY_TYPE_ATTR_POLICY_IDX])
+		print_uint(PRINT_ANY, "policy", " policy:%u",
+			rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_POLICY_IDX]));
+
+	if (tp[NL_POLICY_TYPE_ATTR_POLICY_MAXTYPE])
+		print_uint(PRINT_ANY, "maxattr", " maxattr:%u",
+			rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_POLICY_MAXTYPE]));
+
+	if (tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_S] && tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_S]) {
+		print_s64(PRINT_ANY, "min_value", " range:[%lld",
+			  rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_S]));
+		print_s64(PRINT_ANY, "max_value", "%lld]",
+			  rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_S]));
+	}
+
+	if (tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_U] && tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_U]) {
+		print_u64(PRINT_ANY, "min_value", " range:[%llu",
+			  rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_U]));
+		print_u64(PRINT_ANY, "max_value", "%llu]",
+			  rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_U]));
+	}
+
+	if (tp[NL_POLICY_TYPE_ATTR_MIN_LENGTH])
+		print_uint(PRINT_ANY, "min_length", " min len:%u",
+			rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_MIN_LENGTH]));
+
+	if (tp[NL_POLICY_TYPE_ATTR_MAX_LENGTH])
+		print_uint(PRINT_ANY, "max_length", " max len:%u",
+			rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_MAX_LENGTH]));
+}
+
+static void print_policy(const struct rtattr *attr)
+{
+	const struct rtattr *pos;
+
+	open_json_array(PRINT_JSON, NULL);
+	rtattr_for_each_nested(pos, attr) {
+		const struct rtattr *a;
+
+		open_json_array(PRINT_JSON, NULL);
+
+		print_uint(PRINT_ANY, "policy", " policy[%u]:", pos->rta_type & ~NLA_F_NESTED);
+
+		rtattr_for_each_nested(a, pos) {
+			open_json_object(NULL);
+			print_policy_attr(a);
+			close_json_object();
+		}
+		close_json_array(PRINT_JSON, NULL);
+	}
+	close_json_array(PRINT_JSON, NULL);
 }
 
 /*
@@ -137,98 +304,40 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 	parse_rtattr_flags(tb, CTRL_ATTR_MAX, attrs, len, NLA_F_NESTED);
 
 	if (tb[CTRL_ATTR_FAMILY_NAME]) {
-		char *name = RTA_DATA(tb[CTRL_ATTR_FAMILY_NAME]);
-		fprintf(fp, "\nName: %s\n",name);
+		const char *name = RTA_DATA(tb[CTRL_ATTR_FAMILY_NAME]);
+		print_string(PRINT_ANY, "family", "\nName: %s\n", name);
 	}
-	if (tb[CTRL_ATTR_FAMILY_ID]) {
-		__u16 *id = RTA_DATA(tb[CTRL_ATTR_FAMILY_ID]);
-		fprintf(fp, "\tID: 0x%x ",*id);
-	}
-	if (tb[CTRL_ATTR_VERSION]) {
-		__u32 *v = RTA_DATA(tb[CTRL_ATTR_VERSION]);
-		fprintf(fp, " Version: 0x%x ",*v);
-	}
-	if (tb[CTRL_ATTR_HDRSIZE]) {
-		__u32 *h = RTA_DATA(tb[CTRL_ATTR_HDRSIZE]);
-		fprintf(fp, " header size: %d ",*h);
-	}
-	if (tb[CTRL_ATTR_MAXATTR]) {
-		__u32 *ma = RTA_DATA(tb[CTRL_ATTR_MAXATTR]);
-		fprintf(fp, " max attribs: %d ",*ma);
-	}
-	if (tb[CTRL_ATTR_OP_POLICY]) {
-		const struct rtattr *pos;
 
-		rtattr_for_each_nested(pos, tb[CTRL_ATTR_OP_POLICY]) {
-			struct rtattr *ptb[CTRL_ATTR_POLICY_DUMP_MAX + 1];
-			struct rtattr *pattrs = RTA_DATA(pos);
-			int plen = RTA_PAYLOAD(pos);
+	if (tb[CTRL_ATTR_FAMILY_ID])
+		print_0xhex(PRINT_ANY, "id", "\tID: 0x%x ",
+			    rta_getattr_u16(tb[CTRL_ATTR_FAMILY_ID]));
 
-			parse_rtattr_flags(ptb, CTRL_ATTR_POLICY_DUMP_MAX,
-					   pattrs, plen, NLA_F_NESTED);
+	if (tb[CTRL_ATTR_VERSION])
+		print_0xhex(PRINT_ANY, "version", " Version: 0x%x ",
+			    rta_getattr_u32(tb[CTRL_ATTR_VERSION]));
 
-			fprintf(fp, " op %d policies:",
-				pos->rta_type & ~NLA_F_NESTED);
+	if (tb[CTRL_ATTR_HDRSIZE])
+		print_uint(PRINT_ANY, "header_size", " header size: %u ",
+			   rta_getattr_u32(tb[CTRL_ATTR_HDRSIZE]));
 
-			if (ptb[CTRL_ATTR_POLICY_DO]) {
-				__u32 *v = RTA_DATA(ptb[CTRL_ATTR_POLICY_DO]);
+	if (tb[CTRL_ATTR_MAXATTR])
+		print_uint(PRINT_ANY, "max_attr", " max attribs: %u ",
+			   rta_getattr_u32(tb[CTRL_ATTR_MAXATTR]));
 
-				fprintf(fp, " do=%d", *v);
-			}
+	if (tb[CTRL_ATTR_OP_POLICY])
+		print_ops(tb[CTRL_ATTR_OP_POLICY]);
 
-			if (ptb[CTRL_ATTR_POLICY_DUMP]) {
-				__u32 *v = RTA_DATA(ptb[CTRL_ATTR_POLICY_DUMP]);
-
-				fprintf(fp, " dump=%d", *v);
-			}
-		}
-	}
 	if (tb[CTRL_ATTR_POLICY])
-		nl_print_policy(tb[CTRL_ATTR_POLICY], fp);
+		print_policy(tb[CTRL_ATTR_POLICY]);
 
 	/* end of family definitions .. */
-	fprintf(fp,"\n");
-	if (tb[CTRL_ATTR_OPS]) {
-		struct rtattr *tb2[GENL_MAX_FAM_OPS];
-		int i=0;
-		parse_rtattr_nested(tb2, GENL_MAX_FAM_OPS, tb[CTRL_ATTR_OPS]);
-		fprintf(fp, "\tcommands supported: \n");
-		for (i = 0; i < GENL_MAX_FAM_OPS; i++) {
-			if (tb2[i]) {
-				fprintf(fp, "\t\t#%d: ", i);
-				if (0 > print_ctrl_cmds(fp, tb2[i])) {
-					fprintf(fp, "Error printing command\n");
-				}
-				/* for next command */
-				fprintf(fp,"\n");
-			}
-		}
+	print_string(PRINT_FP, NULL,  "\n", NULL);
 
-		/* end of family::cmds definitions .. */
-		fprintf(fp,"\n");
-	}
+	if (tb[CTRL_ATTR_OPS])
+		print_ctrl_ops(tb[CTRL_ATTR_OPS]);
 
-	if (tb[CTRL_ATTR_MCAST_GROUPS]) {
-		struct rtattr *tb2[GENL_MAX_FAM_GRPS + 1];
-		int i;
-
-		parse_rtattr_nested(tb2, GENL_MAX_FAM_GRPS,
-				    tb[CTRL_ATTR_MCAST_GROUPS]);
-		fprintf(fp, "\tmulticast groups:\n");
-
-		for (i = 0; i < GENL_MAX_FAM_GRPS; i++) {
-			if (tb2[i]) {
-				fprintf(fp, "\t\t#%d: ", i);
-				if (0 > print_ctrl_grp(fp, tb2[i]))
-					fprintf(fp, "Error printing group\n");
-				/* for next group */
-				fprintf(fp,"\n");
-			}
-		}
-
-		/* end of family::groups definitions .. */
-		fprintf(fp,"\n");
-	}
+	if (tb[CTRL_ATTR_MCAST_GROUPS])
+		print_ctrl_mcast(tb[CTRL_ATTR_MCAST_GROUPS]);
 
 	fflush(fp);
 	return 0;
@@ -236,7 +345,10 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 
 static int print_ctrl2(struct nlmsghdr *n, void *arg)
 {
-	return print_ctrl(NULL, n, arg);
+	open_json_object(NULL);
+	print_ctrl(NULL, n, arg);
+	close_json_object();
+	return 0;
 }
 
 static int ctrl_list(int cmd, int argc, char **argv)
@@ -291,6 +403,8 @@ static int ctrl_list(int cmd, int argc, char **argv)
 		}
 	}
 
+	new_json_obj(json);
+
 	if (cmd == CTRL_CMD_GETFAMILY) {
 		if (rtnl_talk(&rth, nlh, &answer) < 0) {
 			fprintf(stderr, "Error talking to the kernel\n");
@@ -319,6 +433,7 @@ static int ctrl_list(int cmd, int argc, char **argv)
 
 	ret = 0;
 ctrl_done:
+	delete_json_obj();
 	free(answer);
 	rtnl_close(&rth);
 	return ret;
@@ -335,8 +450,8 @@ static int ctrl_listen(int argc, char **argv)
 
 	if (rtnl_listen(&rth, print_ctrl, (void *) stdout) < 0)
 		exit(2);
-	
-	rtnl_close(&rth);	
+
+	rtnl_close(&rth);
 	return 0;
 }
 

@@ -47,9 +47,9 @@ static void usage(void)
 		"        [ coa ADDR[/PLEN] ] [ ctx CTX ] [ extra-flag EXTRA-FLAG-LIST ]\n"
 		"        [ offload [ crypto | packet ] dev DEV dir DIR ]\n"
 		"        [ output-mark OUTPUT-MARK [ mask MASK ] ]\n"
-		"        [ if_id IF_ID ] [ tfcpad LENGTH ]\n"
+		"        [ if_id IF_ID ] [ tfcpad LENGTH ] [ pcpu-num CPUNUM ]\n"
 		"Usage: ip xfrm state allocspi ID [ mode MODE ] [ mark MARK [ mask MASK ] ]\n"
-		"        [ reqid REQID ] [ dir DIR ] [ seq SEQ ] [ min SPI max SPI ]\n"
+		"        [ reqid REQID ] [ dir DIR ] [ seq SEQ ] [ min SPI max SPI ] [ pcpu-num CPUNUM ]\n"
 		"Usage: ip xfrm state { delete | get } ID [ mark MARK [ mask MASK ] ]\n"
 		"Usage: ip xfrm state deleteall [ ID ] [ mode MODE ] [ reqid REQID ]\n"
 		"        [ flag FLAG-LIST ]\n"
@@ -307,6 +307,7 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 	} ctx = {};
 	struct xfrm_mark output_mark = {0, 0};
 	bool is_if_id_set = false;
+	__u32 pcpu_num = -1;
 	__u32 if_id = 0;
 	__u32 tfcpad = 0;
 
@@ -458,6 +459,10 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 		} else if (strcmp(*argv, "dir") == 0) {
 			NEXT_ARG();
 			xfrm_dir_parse(&dir, &argc, &argv);
+		} else if (strcmp(*argv, "pcpu-num") == 0) {
+			NEXT_ARG();
+			if (get_u32(&pcpu_num, *argv, 0))
+				invarg("value after \"pcpu-num\" is invalid", *argv);
 		} else {
 			/* try to assume ALGO */
 			int type = xfrm_algotype_getbyname(*argv);
@@ -767,6 +772,9 @@ static int xfrm_state_modify(int cmd, unsigned int flags, int argc, char **argv)
 		}
 	}
 
+	if (pcpu_num != -1)
+		addattr32(&req.n, sizeof(req.buf), XFRMA_SA_PCPU, pcpu_num);
+
 	if (req.xsinfo.family == AF_UNSPEC)
 		req.xsinfo.family = AF_INET;
 
@@ -796,6 +804,7 @@ static int xfrm_state_allocspi(int argc, char **argv)
 	char *maxp = NULL;
 	struct xfrm_mark mark = {0, 0};
 	struct nlmsghdr *answer;
+	__u32 pcpu_num = -1;
 	__u8 dir = 0;
 
 	while (argc > 0) {
@@ -831,6 +840,10 @@ static int xfrm_state_allocspi(int argc, char **argv)
 		} else if (strcmp(*argv, "dir") == 0) {
 			NEXT_ARG();
 			xfrm_dir_parse(&dir, &argc, &argv);
+		} else if (strcmp(*argv, "pcpu-num") == 0) {
+			NEXT_ARG();
+			if (get_u32(&pcpu_num, *argv, 0))
+				invarg("value after \"pcpu-num\" is invalid", *argv);
 		} else {
 			/* try to assume ID */
 			if (idp)
@@ -900,6 +913,9 @@ static int xfrm_state_allocspi(int argc, char **argv)
 			exit(1);
 		}
 	}
+
+	if (pcpu_num != -1)
+		addattr32(&req.n, sizeof(req.buf), XFRMA_SA_PCPU, pcpu_num);
 
 	if (rtnl_open_byproto(&rth, 0, NETLINK_XFRM) < 0)
 		exit(1);

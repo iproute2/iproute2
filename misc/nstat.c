@@ -24,7 +24,7 @@
 #include <math.h>
 #include <getopt.h>
 
-#include <json_writer.h>
+#include "json_print.h"
 #include "version.h"
 #include "utils.h"
 
@@ -309,15 +309,13 @@ static void load_netstat(void)
 
 static void dump_kern_db(FILE *fp, int to_hist)
 {
-	json_writer_t *jw = json_output ? jsonw_new(fp) : NULL;
 	struct nstat_ent *n, *h;
 
 	h = hist_db;
-	if (jw) {
-		jsonw_start_object(jw);
-		jsonw_pretty(jw, pretty);
-		jsonw_name(jw, info_source);
-		jsonw_start_object(jw);
+	new_json_obj_plain(json_output);
+	if (is_json_context()) {
+		open_json_object(NULL);
+		open_json_object(info_source);
 	} else
 		fprintf(fp, "#%s\n", info_source);
 
@@ -340,31 +338,28 @@ static void dump_kern_db(FILE *fp, int to_hist)
 			}
 		}
 
-		if (jw)
-			jsonw_uint_field(jw, n->id, val);
+		if (is_json_context())
+			print_lluint(PRINT_JSON, n->id, NULL, val);
 		else
 			fprintf(fp, "%-32s%-16llu%6.1f\n", n->id, val, n->rate);
 	}
 
-	if (jw) {
-		jsonw_end_object(jw);
-
-		jsonw_end_object(jw);
-		jsonw_destroy(&jw);
+	if (is_json_context()) {
+		close_json_object();
+		close_json_object();
 	}
+	delete_json_obj_plain();
 }
 
 static void dump_incr_db(FILE *fp)
 {
-	json_writer_t *jw = json_output ? jsonw_new(fp) : NULL;
 	struct nstat_ent *n, *h;
 
 	h = hist_db;
-	if (jw) {
-		jsonw_start_object(jw);
-		jsonw_pretty(jw, pretty);
-		jsonw_name(jw, info_source);
-		jsonw_start_object(jw);
+	new_json_obj_plain(json_output);
+	if (is_json_context()) {
+		open_json_object(NULL);
+		open_json_object(info_source);
 	} else
 		fprintf(fp, "#%s\n", info_source);
 
@@ -389,19 +384,18 @@ static void dump_incr_db(FILE *fp)
 		if (!match(n->id))
 			continue;
 
-		if (jw)
-			jsonw_uint_field(jw, n->id, val);
+		if (is_json_context())
+			print_lluint(PRINT_JSON, n->id, NULL, val);
 		else
 			fprintf(fp, "%-32s%-16llu%6.1f%s\n", n->id, val,
 				n->rate, ovfl?" (overflow)":"");
 	}
 
-	if (jw) {
-		jsonw_end_object(jw);
-
-		jsonw_end_object(jw);
-		jsonw_destroy(&jw);
+	if (is_json_context()) {
+		close_json_object();
+		close_json_object();
 	}
+	delete_json_obj_plain();
 }
 
 static int children;

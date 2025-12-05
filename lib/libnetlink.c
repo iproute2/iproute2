@@ -23,6 +23,7 @@
 #include <linux/nexthop.h>
 
 #include "libnetlink.h"
+#include "json_print.h"
 #include "utils.h"
 
 #ifndef __aligned
@@ -1146,7 +1147,7 @@ static int __rtnl_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n,
 	return __rtnl_talk_iov(rtnl, &iov, 1, answer, show_rtnl_err, errfn);
 }
 
-int rtnl_echo_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, int json,
+int rtnl_echo_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, int use_json,
 		   int (*print_info)(struct nlmsghdr *n, void *arg))
 {
 	struct nlmsghdr *answer;
@@ -1158,7 +1159,7 @@ int rtnl_echo_talk(struct rtnl_handle *rtnl, struct nlmsghdr *n, int json,
 	if (ret)
 		return ret;
 
-	new_json_obj(json);
+	new_json_obj(use_json);
 	open_json_object(NULL);
 	print_info(answer, stdout);
 	close_json_object();
@@ -1559,78 +1560,6 @@ int __parse_rtattr_nested_compat(struct rtattr *tb[], int max,
 	}
 	memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
 	return 0;
-}
-
-static const char *get_nla_type_str(unsigned int attr)
-{
-	switch (attr) {
-#define C(x) case NL_ATTR_TYPE_ ## x: return #x
-	C(U8);
-	C(U16);
-	C(U32);
-	C(U64);
-	C(STRING);
-	C(FLAG);
-	C(NESTED);
-	C(NESTED_ARRAY);
-	C(NUL_STRING);
-	C(BINARY);
-	C(S8);
-	C(S16);
-	C(S32);
-	C(S64);
-	C(BITFIELD32);
-	default:
-		return "unknown";
-	}
-}
-
-void nl_print_policy(const struct rtattr *attr, FILE *fp)
-{
-	const struct rtattr *pos;
-
-	rtattr_for_each_nested(pos, attr) {
-		const struct rtattr *attr;
-
-		fprintf(fp, " policy[%u]:", pos->rta_type & ~NLA_F_NESTED);
-
-		rtattr_for_each_nested(attr, pos) {
-			struct rtattr *tp[NL_POLICY_TYPE_ATTR_MAX + 1];
-
-			parse_rtattr_nested(tp, ARRAY_SIZE(tp) - 1, attr);
-
-			if (tp[NL_POLICY_TYPE_ATTR_TYPE])
-				fprintf(fp, "attr[%u]: type=%s",
-					attr->rta_type & ~NLA_F_NESTED,
-					get_nla_type_str(rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_TYPE])));
-
-			if (tp[NL_POLICY_TYPE_ATTR_POLICY_IDX])
-				fprintf(fp, " policy:%u",
-					rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_POLICY_IDX]));
-
-			if (tp[NL_POLICY_TYPE_ATTR_POLICY_MAXTYPE])
-				fprintf(fp, " maxattr:%u",
-					rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_POLICY_MAXTYPE]));
-
-			if (tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_S] && tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_S])
-				fprintf(fp, " range:[%lld,%lld]",
-					(signed long long)rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_S]),
-					(signed long long)rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_S]));
-
-			if (tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_U] && tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_U])
-				fprintf(fp, " range:[%llu,%llu]",
-					(unsigned long long)rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MIN_VALUE_U]),
-					(unsigned long long)rta_getattr_u64(tp[NL_POLICY_TYPE_ATTR_MAX_VALUE_U]));
-
-			if (tp[NL_POLICY_TYPE_ATTR_MIN_LENGTH])
-				fprintf(fp, " min len:%u",
-					rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_MIN_LENGTH]));
-
-			if (tp[NL_POLICY_TYPE_ATTR_MAX_LENGTH])
-				fprintf(fp, " max len:%u",
-					rta_getattr_u32(tp[NL_POLICY_TYPE_ATTR_MAX_LENGTH]));
-		}
-	}
 }
 
 int rtnl_tunneldump_req(struct rtnl_handle *rth, int family, int ifindex,

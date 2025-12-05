@@ -20,7 +20,7 @@ endif
 
 NLOBJ=libgenl.o libnetlink.o
 ifeq ($(HAVE_MNL),y)
-NLOBJ += mnl_utils.o
+NLOBJ += mnl_utils.o mnlg.o
 endif
 
 all: libnetlink.a libutil.a

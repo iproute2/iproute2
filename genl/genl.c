@@ -24,6 +24,7 @@
 int show_stats;
 int show_details;
 int show_raw;
+int json;
 
 static void *BODY;
 static struct genl_util *genl_list;
@@ -96,7 +97,8 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: genl [ OPTIONS ] OBJECT [help] }\n"
 		"where  OBJECT := { ctrl etc }\n"
-		"       OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -V[ersion] | -h[elp] }\n");
+		"       OPTIONS := { -V[ersion] | -s[tatistics] | -d[etails] | -r[aw] |\n"
+		"                    -j[son] | -p[retty] }\n");
 	exit(-1);
 }
 
@@ -115,6 +117,10 @@ int main(int argc, char **argv)
 		} else if (matches(argv[1], "-Version") == 0) {
 			printf("genl utility, iproute2-%s\n", version);
 			exit(0);
+		} else if (matches(argv[1], "-json") == 0) {
+			++json;
+		} else if (matches(argv[1], "-pretty") == 0) {
+			++pretty;
 		} else if (matches(argv[1], "-help") == 0) {
 			usage();
 		} else {
