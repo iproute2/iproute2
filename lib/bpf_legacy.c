@@ -29,14 +29,15 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/vfs.h>
+#include <sys/mman.h>
 #include <sys/mount.h>
-#include <sys/sendfile.h>
 #include <sys/resource.h>
 
 #include <arpa/inet.h>
 
 #include "utils.h"
 #include "json_print.h"
+#include "sha1.h"
 
 #include "bpf_util.h"
 #include "bpf_elf.h"
@@ -1180,7 +1181,6 @@ struct bpf_elf_ctx {
 	enum bpf_prog_type	type;
 	__u32			ifindex;
 	bool			verbose;
-	bool			noafalg;
 	struct bpf_elf_st	stat;
 	struct bpf_hash_entry	*ht[256];
 	char			*log;
@@ -1308,72 +1308,28 @@ static int bpf_obj_pin(int fd, const char *pathname)
 	return bpf(BPF_OBJ_PIN, &attr, sizeof(attr));
 }
 
-static int bpf_obj_hash(const char *object, uint8_t *out, size_t len)
+static int bpf_obj_hash(int fd, const char *object, __u8 out[SHA1_DIGEST_SIZE])
 {
-	struct sockaddr_alg alg = {
-		.salg_family	= AF_ALG,
-		.salg_type	= "hash",
-		.salg_name	= "sha1",
-	};
-	int ret, cfd, ofd, ffd;
 	struct stat stbuff;
-	ssize_t size;
+	void *data;
 
-	if (!object || len != 20)
-		return -EINVAL;
-
-	cfd = socket(AF_ALG, SOCK_SEQPACKET, 0);
-	if (cfd < 0)
-		return cfd;
-
-	ret = bind(cfd, (struct sockaddr *)&alg, sizeof(alg));
-	if (ret < 0)
-		goto out_cfd;
-
-	ofd = accept(cfd, NULL, 0);
-	if (ofd < 0) {
-		ret = ofd;
-		goto out_cfd;
+	if (fstat(fd, &stbuff) < 0) {
+		fprintf(stderr, "Error doing fstat: %s\n", strerror(errno));
+		return -1;
 	}
-
-	ffd = open(object, O_RDONLY);
-	if (ffd < 0) {
-		fprintf(stderr, "Error opening object %s: %s\n",
-			object, strerror(errno));
-		ret = ffd;
-		goto out_ofd;
+	if ((size_t)stbuff.st_size != stbuff.st_size) {
+		fprintf(stderr, "Object %s is too big\n", object);
+		return -EFBIG;
 	}
-
-	ret = fstat(ffd, &stbuff);
-	if (ret < 0) {
-		fprintf(stderr, "Error doing fstat: %s\n",
+	data = mmap(NULL, stbuff.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	if (data == MAP_FAILED) {
+		fprintf(stderr, "Error mapping object %s: %s\n", object,
 			strerror(errno));
-		goto out_ffd;
+		return -1;
 	}
-
-	size = sendfile(ofd, ffd, NULL, stbuff.st_size);
-	if (size != stbuff.st_size) {
-		fprintf(stderr, "Error from sendfile (%zd vs %zu bytes): %s\n",
-			size, stbuff.st_size, strerror(errno));
-		ret = -1;
-		goto out_ffd;
-	}
-
-	size = read(ofd, out, len);
-	if (size != len) {
-		fprintf(stderr, "Error from read (%zd vs %zu bytes): %s\n",
-			size, len, strerror(errno));
-		ret = -1;
-	} else {
-		ret = 0;
-	}
-out_ffd:
-	close(ffd);
-out_ofd:
-	close(ofd);
-out_cfd:
-	close(cfd);
-	return ret;
+	sha1(data, stbuff.st_size, out);
+	munmap(data, stbuff.st_size);
+	return 0;
 }
 
 static void bpf_init_env(void)
@@ -1814,12 +1770,6 @@ static int bpf_maps_attach_all(struct bpf_elf_ctx *ctx)
 	const char *map_name;
 
 	for (i = 0; i < ctx->map_num; i++) {
-		if (ctx->maps[i].pinning == PIN_OBJECT_NS &&
-		    ctx->noafalg) {
-			fprintf(stderr, "Missing kernel AF_ALG support for PIN_OBJECT_NS!\n");
-			return -ENOTSUP;
-		}
-
 		map_name = bpf_map_fetch_name(ctx, i);
 		if (!map_name)
 			return -EIO;
@@ -2869,7 +2819,7 @@ static int bpf_elf_ctx_init(struct bpf_elf_ctx *ctx, const char *pathname,
 			    enum bpf_prog_type type, __u32 ifindex,
 			    bool verbose)
 {
-	uint8_t tmp[20];
+	__u8 tmp[SHA1_DIGEST_SIZE];
 	int ret;
 
 	if (elf_version(EV_CURRENT) == EV_NONE)
@@ -2880,20 +2830,21 @@ static int bpf_elf_ctx_init(struct bpf_elf_ctx *ctx, const char *pathname,
 	memset(ctx, 0, sizeof(*ctx));
 	bpf_get_cfg(ctx);
 
-	ret = bpf_obj_hash(pathname, tmp, sizeof(tmp));
-	if (ret)
-		ctx->noafalg = true;
-	else
-		hexstring_n2a(tmp, sizeof(tmp), ctx->obj_uid,
-			      sizeof(ctx->obj_uid));
-
 	ctx->verbose = verbose;
 	ctx->type    = type;
 	ctx->ifindex = ifindex;
 
 	ctx->obj_fd = open(pathname, O_RDONLY);
-	if (ctx->obj_fd < 0)
+	if (ctx->obj_fd < 0) {
+		fprintf(stderr, "Error opening object %s: %s\n", pathname,
+			strerror(errno));
 		return ctx->obj_fd;
+	}
+
+	ret = bpf_obj_hash(ctx->obj_fd, pathname, tmp);
+	if (ret)
+		goto out_fd;
+	hexstring_n2a(tmp, sizeof(tmp), ctx->obj_uid, sizeof(ctx->obj_uid));
 
 	ctx->elf_fd = elf_begin(ctx->obj_fd, ELF_C_READ, NULL);
 	if (!ctx->elf_fd) {
@@ -3259,12 +3210,6 @@ bool iproute2_is_pin_map(const char *libbpf_map_name, char *pathname)
 	int i, ret = 0;
 
 	for (i = 0; i < ctx->map_num; i++) {
-		if (ctx->maps[i].pinning == PIN_OBJECT_NS &&
-		    ctx->noafalg) {
-			fprintf(stderr, "Missing kernel AF_ALG support for PIN_OBJECT_NS!\n");
-			return false;
-		}
-
 		map_name = bpf_map_fetch_name(ctx, i);
 		if (!map_name) {
 			return false;

@@ -14,7 +14,6 @@
 #include <linux/filter.h>
 #include <linux/magic.h>
 #include <linux/elf-em.h>
-#include <linux/if_alg.h>
 
 #include "utils.h"
 #include "bpf_scm.h"
@@ -39,10 +38,6 @@
 #endif
 
 #define TRACE_DIR_MNT	"/sys/kernel/tracing"
-
-#ifndef AF_ALG
-# define AF_ALG		38
-#endif
 
 #ifndef EM_BPF
 # define EM_BPF		247
