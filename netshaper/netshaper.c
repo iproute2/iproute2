@@ -98,7 +98,7 @@ static void print_netshaper_attrs(struct nlmsghdr *answer)
 	}
 }
 
-static int do_cmd(int argc, char **argv, struct nlmsghdr *n, int cmd)
+static int do_cmd(int argc, char **argv, int cmd)
 {
 	GENL_REQUEST(req, 1024, genl_family, 0, NET_SHAPER_FAMILY_VERSION, cmd,
 		     NLM_F_REQUEST | NLM_F_ACK);
@@ -220,7 +220,6 @@ static int do_cmd(int argc, char **argv, struct nlmsghdr *n, int cmd)
 
 int main(int argc, char **argv)
 {
-	struct nlmsghdr *n;
 	int color = default_color_opt();
 
 	while (argc > 1) {
@@ -258,11 +257,11 @@ int main(int argc, char **argv)
 		argv++;
 
 		if (strcmp(*argv, "set") == 0)
-			return do_cmd(argc - 1, argv + 1, n, NET_SHAPER_CMD_SET);
+			return do_cmd(argc - 1, argv + 1, NET_SHAPER_CMD_SET);
 		if (strcmp(*argv, "delete") == 0)
-			return do_cmd(argc - 1, argv + 1, n, NET_SHAPER_CMD_DELETE);
+			return do_cmd(argc - 1, argv + 1, NET_SHAPER_CMD_DELETE);
 		if (strcmp(*argv, "show") == 0)
-			return do_cmd(argc - 1, argv + 1, n, NET_SHAPER_CMD_GET);
+			return do_cmd(argc - 1, argv + 1, NET_SHAPER_CMD_GET);
 		if (strcmp(*argv, "help") == 0) {
 			usage();
 			return 0;

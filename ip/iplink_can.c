@@ -32,6 +32,10 @@ static void print_usage(FILE *f)
 		"\t[ dtq TQ dprop-seg PROP_SEG dphase-seg1 PHASE-SEG1\n \t  dphase-seg2 PHASE-SEG2 [ dsjw SJW ] ]\n"
 		"\t[ tdcv TDCV tdco TDCO tdcf TDCF ]\n"
 		"\n"
+		"\t[ xbitrate BITRATE [ xsample-point SAMPLE-POINT] ] |\n"
+		"\t[ xtq TQ xprop-seg PROP_SEG xphase-seg1 PHASE-SEG1\n \t  xphase-seg2 PHASE-SEG2 [ xsjw SJW ] ]\n"
+		"\t[ xtdcv TDCV xtdco TDCO xtdcf TDCF pwms PWMS pwml PWML pwmo PWMO]\n"
+		"\n"
 		"\t[ loopback { on | off } ]\n"
 		"\t[ listen-only { on | off } ]\n"
 		"\t[ triple-sampling { on | off } ]\n"
@@ -42,23 +46,38 @@ static void print_usage(FILE *f)
 		"\t[ presume-ack { on | off } ]\n"
 		"\t[ cc-len8-dlc { on | off } ]\n"
 		"\t[ tdc-mode { auto | manual | off } ]\n"
+		"\t[ restricted { on | off } ]\n"
+		"\t[ xl { on | off } ]\n"
+		"\t[ xtdc-mode { auto | manual | off } ]\n"
+		"\t[ tms { on | off } ]\n"
 		"\n"
 		"\t[ restart-ms TIME-MS ]\n"
 		"\t[ restart ]\n"
 		"\n"
 		"\t[ termination { 0..65535 } ]\n"
 		"\n"
-		"\tWhere: BITRATE	:= { NUMBER in bps }\n"
-		"\t	  SAMPLE-POINT	:= { 0.000..0.999 }\n"
-		"\t	  TQ		:= { NUMBER in ns }\n"
-		"\t	  PROP-SEG	:= { NUMBER in tq }\n"
-		"\t	  PHASE-SEG1	:= { NUMBER in tq }\n"
-		"\t	  PHASE-SEG2	:= { NUMBER in tq }\n"
-		"\t	  SJW		:= { NUMBER in tq }\n"
-		"\t	  TDCV		:= { NUMBER in tc }\n"
-		"\t	  TDCO		:= { NUMBER in tc }\n"
-		"\t	  TDCF		:= { NUMBER in tc }\n"
-		"\t	  RESTART-MS	:= { 0 | NUMBER in ms }\n"
+		"\tWhere:\n"
+		"\t	BITRATE		:= { NUMBER in bps }\n"
+		"\t	SAMPLE-POINT	:= { 0.000..0.999 }\n"
+		"\t	TQ		:= { NUMBER in ns }\n"
+		"\t	PROP-SEG	:= { NUMBER in tq }\n"
+		"\t	PHASE-SEG1	:= { NUMBER in tq }\n"
+		"\t	PHASE-SEG2	:= { NUMBER in tq }\n"
+		"\t	SJW		:= { NUMBER in tq }\n"
+		"\t	TDCV		:= { NUMBER in mtq }\n"
+		"\t	TDCO		:= { NUMBER in mtq }\n"
+		"\t	TDCF		:= { NUMBER in mtq }\n"
+		"\t	PWMS		:= { NUMBER in mtq }\n"
+		"\t	PWML		:= { NUMBER in mtq }\n"
+		"\t	PWMO		:= { NUMBER in mtq }\n"
+		"\t	RESTART-MS	:= { 0 | NUMBER in ms }\n"
+		"\n"
+		"\tUnits:\n"
+		"\t	bps	:= bit per second\n"
+		"\t	ms	:= millisecond\n"
+		"\t	mtq	:= minimum time quanta\n"
+		"\t	ns	:= nanosecond\n"
+		"\t	tq	:= time quanta\n"
 		);
 }
 
@@ -108,6 +127,11 @@ static void print_ctrlmode(enum output_type t, __u32 flags, const char *key)
 	print_flag(t, &flags, CAN_CTRLMODE_CC_LEN8_DLC, "CC-LEN8-DLC");
 	print_flag(t, &flags, CAN_CTRLMODE_TDC_AUTO, "TDC-AUTO");
 	print_flag(t, &flags, CAN_CTRLMODE_TDC_MANUAL, "TDC-MANUAL");
+	print_flag(t, &flags, CAN_CTRLMODE_RESTRICTED, "RESTRICTED");
+	print_flag(t, &flags, CAN_CTRLMODE_XL, "XL");
+	print_flag(t, &flags, CAN_CTRLMODE_XL_TDC_AUTO, "XL-TDC-AUTO");
+	print_flag(t, &flags, CAN_CTRLMODE_XL_TDC_MANUAL, "XL-TDC-MANUAL");
+	print_flag(t, &flags, CAN_CTRLMODE_XL_TMS, "TMS");
 
 	if (flags)
 		print_hex(t, NULL, "%x", flags);
@@ -118,9 +142,11 @@ static void print_ctrlmode(enum output_type t, __u32 flags, const char *key)
 static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			 struct nlmsghdr *n)
 {
-	struct can_bittiming bt = {}, fd_dbt = {};
+	struct can_bittiming bt = {}, fd_dbt = {}, xl_dbt = {};
 	struct can_ctrlmode cm = { 0 };
 	struct can_tdc fd = { .tdcv = -1, .tdco = -1, .tdcf = -1 };
+	struct can_tdc xl = { .tdcv = -1, .tdco = -1, .tdcf = -1 };
+	__u32 pwms = -1, pwml = -1, pwmo = -1;
 
 	while (argc > 0) {
 		if (matches(*argv, "bitrate") == 0) {
@@ -198,6 +224,64 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			if (get_u32(&fd.tdcf, *argv, 0))
 				invarg("invalid \"tdcf\" value", *argv);
+		} else if (strcmp(*argv, "xl") == 0) {
+			NEXT_ARG();
+			set_ctrlmode("xl", *argv, &cm, CAN_CTRLMODE_XL);
+		} else if (strcmp(*argv, "xbitrate") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl_dbt.bitrate, *argv, 0))
+				invarg("invalid \"xbitrate\" value", *argv);
+		} else if (strcmp(*argv, "xsample-point") == 0) {
+			float sp;
+
+			NEXT_ARG();
+			if (get_float(&sp, *argv))
+				invarg("invalid \"xsample-point\" value", *argv);
+			xl_dbt.sample_point = (__u32)(sp * 1000);
+		} else if (strcmp(*argv, "xtq") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl_dbt.tq, *argv, 0))
+				invarg("invalid \"xtq\" value", *argv);
+		} else if (strcmp(*argv, "xprop-seg") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl_dbt.prop_seg, *argv, 0))
+				invarg("invalid \"xprop-seg\" value", *argv);
+		} else if (strcmp(*argv, "xphase-seg1") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl_dbt.phase_seg1, *argv, 0))
+				invarg("invalid \"xphase-seg1\" value", *argv);
+		} else if (strcmp(*argv, "xphase-seg2") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl_dbt.phase_seg2, *argv, 0))
+				invarg("invalid \"xphase-seg2\" value", *argv);
+		} else if (strcmp(*argv, "xsjw") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl_dbt.sjw, *argv, 0))
+				invarg("invalid \"xsjw\" value", *argv);
+		} else if (strcmp(*argv, "xtdcv") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl.tdcv, *argv, 0))
+				invarg("invalid \"xtdcv\" value", *argv);
+		} else if (strcmp(*argv, "xtdco") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl.tdco, *argv, 0))
+				invarg("invalid \"xtdco\" value", *argv);
+		} else if (strcmp(*argv, "xtdcf") == 0) {
+			NEXT_ARG();
+			if (get_u32(&xl.tdcf, *argv, 0))
+				invarg("invalid \"xtdcf\" value", *argv);
+		} else if (strcmp(*argv, "pwms") == 0) {
+			NEXT_ARG();
+			if (get_u32(&pwms, *argv, 0))
+				invarg("invalid \"pwms\" value", *argv);
+		} else if (strcmp(*argv, "pwml") == 0) {
+			NEXT_ARG();
+			if (get_u32(&pwml, *argv, 0))
+				invarg("invalid \"pwml\" value", *argv);
+		} else if (strcmp(*argv, "pwmo") == 0) {
+			NEXT_ARG();
+			if (get_u32(&pwmo, *argv, 0))
+				invarg("invalid \"pwmo\" value", *argv);
 		} else if (matches(*argv, "loopback") == 0) {
 			NEXT_ARG();
 			set_ctrlmode("loopback", *argv, &cm,
@@ -249,6 +333,27 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("\"tdc-mode\" must be either of \"auto\", \"manual\" or \"off\"",
 					*argv);
 			}
+		} else if (strcmp(*argv, "restricted") == 0) {
+			NEXT_ARG();
+			set_ctrlmode("restricted", *argv, &cm, CAN_CTRLMODE_RESTRICTED);
+		} else if (strcmp(*argv, "xtdc-mode") == 0) {
+			NEXT_ARG();
+			if (strcmp(*argv, "auto") == 0) {
+				cm.flags |= CAN_CTRLMODE_XL_TDC_AUTO;
+				cm.mask |= CAN_CTRLMODE_XL_TDC_AUTO;
+			} else if (strcmp(*argv, "manual") == 0) {
+				cm.flags |= CAN_CTRLMODE_XL_TDC_MANUAL;
+				cm.mask |= CAN_CTRLMODE_XL_TDC_MANUAL;
+			} else if (strcmp(*argv, "off") == 0) {
+				cm.mask |= CAN_CTRLMODE_XL_TDC_AUTO |
+					   CAN_CTRLMODE_XL_TDC_MANUAL;
+			} else {
+				invarg("\"xtdc-mode\" must be either of \"auto\", \"manual\" or \"off\"",
+					*argv);
+			}
+		} else if (strcmp(*argv, "tms") == 0) {
+			NEXT_ARG();
+			set_ctrlmode("tms", *argv, &cm, CAN_CTRLMODE_XL_TMS);
 		} else if (matches(*argv, "restart") == 0) {
 			__u32 val = 1;
 
@@ -283,6 +388,8 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 		addattr_l(n, 1024, IFLA_CAN_BITTIMING, &bt, sizeof(bt));
 	if (fd_dbt.bitrate || fd_dbt.tq)
 		addattr_l(n, 1024, IFLA_CAN_DATA_BITTIMING, &fd_dbt, sizeof(fd_dbt));
+	if (xl_dbt.bitrate || xl_dbt.tq)
+		addattr_l(n, 1024, IFLA_CAN_XL_DATA_BITTIMING, &xl_dbt, sizeof(xl_dbt));
 	if (cm.mask)
 		addattr_l(n, 1024, IFLA_CAN_CTRLMODE, &cm, sizeof(cm));
 
@@ -297,6 +404,30 @@ static int can_parse_opt(struct link_util *lu, int argc, char **argv,
 		if (fd.tdcf != -1)
 			addattr32(n, 1024, IFLA_CAN_TDC_TDCF, fd.tdcf);
 		addattr_nest_end(n, tdc);
+	}
+	if (xl.tdcv != -1 || xl.tdco != -1 || xl.tdcf != -1) {
+		struct rtattr *tdc = addattr_nest(n, 1024,
+						  IFLA_CAN_XL_TDC | NLA_F_NESTED);
+
+		if (xl.tdcv != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCV, xl.tdcv);
+		if (xl.tdco != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCO, xl.tdco);
+		if (xl.tdcf != -1)
+			addattr32(n, 1024, IFLA_CAN_TDC_TDCF, xl.tdcf);
+		addattr_nest_end(n, tdc);
+	}
+	if (pwms != -1 || pwml != -1 || pwmo != -1) {
+		struct rtattr *pwm = addattr_nest(n, 1024,
+						  IFLA_CAN_XL_PWM | NLA_F_NESTED);
+
+		if (pwms != -1)
+			addattr32(n, 1024, IFLA_CAN_PWM_PWMS, pwms);
+		if (pwml != -1)
+			addattr32(n, 1024, IFLA_CAN_PWM_PWML, pwml);
+		if (pwmo != -1)
+			addattr32(n, 1024, IFLA_CAN_PWM_PWMO, pwmo);
+		addattr_nest_end(n, pwm);
 	}
 
 	return 0;
@@ -356,30 +487,118 @@ static void can_print_tdc_opt(struct rtattr *tdc_attr)
 	}
 }
 
-static void can_print_tdc_const_opt(struct rtattr *tdc_attr)
+static void can_print_xtdc_opt(struct rtattr *tdc_attr)
 {
 	struct rtattr *tb[IFLA_CAN_TDC_MAX + 1];
 
 	parse_rtattr_nested(tb, IFLA_CAN_TDC_MAX, tdc_attr);
-	open_json_object("tdc");
+	if (tb[IFLA_CAN_TDC_TDCV] || tb[IFLA_CAN_TDC_TDCO] ||
+	    tb[IFLA_CAN_TDC_TDCF]) {
+		open_json_object("xtdc");
+		can_print_nl_indent();
+		if (tb[IFLA_CAN_TDC_TDCV]) {
+			__u32 *tdcv = RTA_DATA(tb[IFLA_CAN_TDC_TDCV]);
+
+			print_uint(PRINT_ANY, "tdcv", " xtdcv %u", *tdcv);
+		}
+		if (tb[IFLA_CAN_TDC_TDCO]) {
+			__u32 *tdco = RTA_DATA(tb[IFLA_CAN_TDC_TDCO]);
+
+			print_uint(PRINT_ANY, "tdco", " xtdco %u", *tdco);
+		}
+		if (tb[IFLA_CAN_TDC_TDCF]) {
+			__u32 *tdcf = RTA_DATA(tb[IFLA_CAN_TDC_TDCF]);
+
+			print_uint(PRINT_ANY, "tdcf", " xtdcf %u", *tdcf);
+		}
+		close_json_object();
+	}
+}
+
+static void can_print_tdc_const_opt(struct rtattr *tdc_attr, bool is_xl)
+{
+	const char *tdc = is_xl ? "xtdc" : "tdc";
+	struct rtattr *tb[IFLA_CAN_TDC_MAX + 1];
+
+	parse_rtattr_nested(tb, IFLA_CAN_TDC_MAX, tdc_attr);
+	open_json_object(tdc);
 	can_print_nl_indent();
 	if (tb[IFLA_CAN_TDC_TDCV_MIN] && tb[IFLA_CAN_TDC_TDCV_MAX]) {
 		__u32 *tdcv_min = RTA_DATA(tb[IFLA_CAN_TDC_TDCV_MIN]);
 		__u32 *tdcv_max = RTA_DATA(tb[IFLA_CAN_TDC_TDCV_MAX]);
+		const char *tdcv = is_xl ? " xtdcv" : " tdcv";
 
-		can_print_timing_min_max("tdcv", " tdcv", *tdcv_min, *tdcv_max);
+		can_print_timing_min_max("tdcv", tdcv, *tdcv_min, *tdcv_max);
 	}
 	if (tb[IFLA_CAN_TDC_TDCO_MIN] && tb[IFLA_CAN_TDC_TDCO_MAX]) {
 		__u32 *tdco_min = RTA_DATA(tb[IFLA_CAN_TDC_TDCO_MIN]);
 		__u32 *tdco_max = RTA_DATA(tb[IFLA_CAN_TDC_TDCO_MAX]);
+		const char *tdco = is_xl ? " xtdco" : " tdco";
 
-		can_print_timing_min_max("tdco", " tdco", *tdco_min, *tdco_max);
+		can_print_timing_min_max("tdco", tdco, *tdco_min, *tdco_max);
 	}
 	if (tb[IFLA_CAN_TDC_TDCF_MIN] && tb[IFLA_CAN_TDC_TDCF_MAX]) {
 		__u32 *tdcf_min = RTA_DATA(tb[IFLA_CAN_TDC_TDCF_MIN]);
 		__u32 *tdcf_max = RTA_DATA(tb[IFLA_CAN_TDC_TDCF_MAX]);
+		const char *tdcf = is_xl ? " xtdcf" : " tdcf";
 
-		can_print_timing_min_max("tdcf", " tdcf", *tdcf_min, *tdcf_max);
+		can_print_timing_min_max("tdcf", tdcf, *tdcf_min, *tdcf_max);
+	}
+	close_json_object();
+}
+
+static void can_print_pwm_opt(struct rtattr *pwm_attr)
+{
+	struct rtattr *tb[IFLA_CAN_PWM_MAX + 1];
+
+	parse_rtattr_nested(tb, IFLA_CAN_PWM_MAX, pwm_attr);
+	if (tb[IFLA_CAN_PWM_PWMS] || tb[IFLA_CAN_PWM_PWML] ||
+	    tb[IFLA_CAN_PWM_PWMO]) {
+		open_json_object("pwm");
+		can_print_nl_indent();
+		if (tb[IFLA_CAN_PWM_PWMS]) {
+			__u32 *pwms = RTA_DATA(tb[IFLA_CAN_PWM_PWMS]);
+
+			print_uint(PRINT_ANY, " pwms", " pwms %u", *pwms);
+		}
+		if (tb[IFLA_CAN_PWM_PWML]) {
+			__u32 *pwml = RTA_DATA(tb[IFLA_CAN_PWM_PWML]);
+
+			print_uint(PRINT_ANY, " pwml", " pwml %u", *pwml);
+		}
+		if (tb[IFLA_CAN_PWM_PWMO]) {
+			__u32 *pwmo = RTA_DATA(tb[IFLA_CAN_PWM_PWMO]);
+
+			print_uint(PRINT_ANY, " pwmo", " pwmo %u", *pwmo);
+		}
+		close_json_object();
+	}
+}
+
+static void can_print_pwm_const_opt(struct rtattr *pwm_attr)
+{
+	struct rtattr *tb[IFLA_CAN_PWM_MAX + 1];
+
+	parse_rtattr_nested(tb, IFLA_CAN_PWM_MAX, pwm_attr);
+	open_json_object("pwm");
+	can_print_nl_indent();
+	if (tb[IFLA_CAN_PWM_PWMS_MAX]) {
+		__u32 *pwms_min = RTA_DATA(tb[IFLA_CAN_PWM_PWMS_MIN]);
+		__u32 *pwms_max = RTA_DATA(tb[IFLA_CAN_PWM_PWMS_MAX]);
+
+		can_print_timing_min_max("pwms", " pwms", *pwms_min, *pwms_max);
+	}
+	if (tb[IFLA_CAN_PWM_PWML_MAX]) {
+		__u32 *pwml_min = RTA_DATA(tb[IFLA_CAN_PWM_PWML_MIN]);
+		__u32 *pwml_max = RTA_DATA(tb[IFLA_CAN_PWM_PWML_MAX]);
+
+		can_print_timing_min_max("pwml", " pwml", *pwml_min, *pwml_max);
+	}
+	if (tb[IFLA_CAN_PWM_PWMO_MAX]) {
+		__u32 *pwmo_min = RTA_DATA(tb[IFLA_CAN_PWM_PWMO_MIN]);
+		__u32 *pwmo_max = RTA_DATA(tb[IFLA_CAN_PWM_PWMO_MAX]);
+
+		can_print_timing_min_max("pwmo", " pwmo", *pwmo_min, *pwmo_max);
 	}
 	close_json_object();
 }
@@ -557,7 +776,7 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 		print_uint(PRINT_ANY, "brp_inc", " dbrp_inc %u", dbtc->brp_inc);
 
 		if (tb[IFLA_CAN_TDC])
-			can_print_tdc_const_opt(tb[IFLA_CAN_TDC]);
+			can_print_tdc_const_opt(tb[IFLA_CAN_TDC], false);
 
 		close_json_object();
 	}
@@ -579,6 +798,100 @@ static void can_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 
 		can_print_nl_indent();
 		print_uint(PRINT_ANY, "data_bittiming_bitrate", " dbitrate %u",
+			   dbitrate);
+		can_print_nl_indent();
+		open_json_array(PRINT_ANY, is_json_context() ?
+				"data_bitrate_const" : "    [");
+		for (i = 0; i < dbitrate_cnt; ++i) {
+			/* This will keep lines below 80 signs */
+			if (!(i % 6) && i) {
+				can_print_nl_indent();
+				print_string(PRINT_FP, NULL, "%s", "     ");
+			}
+			print_uint(PRINT_ANY, NULL,
+				   i < dbitrate_cnt - 1 ? "%8u, " : "%8u",
+				   dbitrate_const[i]);
+		}
+		close_json_array(PRINT_ANY, " ]");
+	}
+
+	/* data bittiming is irrelevant if fixed bitrate is defined */
+	if (tb[IFLA_CAN_XL_DATA_BITTIMING] &&
+	    !tb[IFLA_CAN_XL_DATA_BITRATE_CONST]) {
+		struct can_bittiming *dbt =
+			RTA_DATA(tb[IFLA_CAN_XL_DATA_BITTIMING]);
+		char dsp[6];
+
+		open_json_object("xl_data_bittiming");
+		can_print_nl_indent();
+		print_uint(PRINT_ANY, "bitrate", " xbitrate %u", dbt->bitrate);
+		snprintf(dsp, sizeof(dsp), "%.3f", dbt->sample_point / 1000.);
+		print_string(PRINT_ANY, "sample_point", " xsample-point %s",
+			     dsp);
+		can_print_nl_indent();
+		print_uint(PRINT_ANY, "tq", " xtq %u", dbt->tq);
+		print_uint(PRINT_ANY, "prop_seg", " xprop-seg %u",
+			   dbt->prop_seg);
+		print_uint(PRINT_ANY, "phase_seg1", " xphase-seg1 %u",
+			   dbt->phase_seg1);
+		print_uint(PRINT_ANY, "phase_seg2", " xphase-seg2 %u",
+			   dbt->phase_seg2);
+		print_uint(PRINT_ANY, "sjw", " xsjw %u", dbt->sjw);
+		print_uint(PRINT_ANY, "brp", " xbrp %u", dbt->brp);
+
+		if (tb[IFLA_CAN_XL_TDC])
+			can_print_xtdc_opt(tb[IFLA_CAN_XL_TDC]);
+
+		if (tb[IFLA_CAN_XL_PWM])
+			can_print_pwm_opt(tb[IFLA_CAN_XL_PWM]);
+
+		close_json_object();
+	}
+
+	/* data bittiming const is irrelevant if fixed bitrate is defined */
+	if (tb[IFLA_CAN_XL_DATA_BITTIMING_CONST] &&
+	    !tb[IFLA_CAN_XL_DATA_BITRATE_CONST]) {
+		struct can_bittiming_const *dbtc =
+			RTA_DATA(tb[IFLA_CAN_XL_DATA_BITTIMING_CONST]);
+
+		open_json_object("xl_data_bittiming_const");
+		can_print_nl_indent();
+		print_string(PRINT_ANY, "name", " %s:", dbtc->name);
+		can_print_timing_min_max("tseg1", " xtseg1",
+					 dbtc->tseg1_min, dbtc->tseg1_max);
+		can_print_timing_min_max("tseg2", " xtseg2",
+					 dbtc->tseg2_min, dbtc->tseg2_max);
+		can_print_timing_min_max("sjw", " xsjw", 1, dbtc->sjw_max);
+		can_print_timing_min_max("brp", " xbrp",
+					 dbtc->brp_min, dbtc->brp_max);
+		print_uint(PRINT_ANY, "brp_inc", " xbrp_inc %u", dbtc->brp_inc);
+
+		if (tb[IFLA_CAN_XL_TDC])
+			can_print_tdc_const_opt(tb[IFLA_CAN_XL_TDC], true);
+
+		if (tb[IFLA_CAN_XL_PWM])
+			can_print_pwm_const_opt(tb[IFLA_CAN_XL_PWM]);
+
+		close_json_object();
+	}
+
+	if (tb[IFLA_CAN_XL_DATA_BITRATE_CONST]) {
+		__u32 *dbitrate_const =
+			RTA_DATA(tb[IFLA_CAN_XL_DATA_BITRATE_CONST]);
+		int dbitrate_cnt =
+			RTA_PAYLOAD(tb[IFLA_CAN_XL_DATA_BITRATE_CONST]) /
+			sizeof(*dbitrate_const);
+		int i;
+		__u32 dbitrate = 0;
+
+		if (tb[IFLA_CAN_XL_DATA_BITTIMING]) {
+			struct can_bittiming *dbt =
+				RTA_DATA(tb[IFLA_CAN_XL_DATA_BITTIMING]);
+			dbitrate = dbt->bitrate;
+		}
+
+		can_print_nl_indent();
+		print_uint(PRINT_ANY, "xl_data_bittiming_bitrate", " xbitrate %u",
 			   dbitrate);
 		can_print_nl_indent();
 		open_json_array(PRINT_ANY, is_json_context() ?
