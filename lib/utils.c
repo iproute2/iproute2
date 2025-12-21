@@ -847,10 +847,15 @@ int nodev(const char *dev)
 	return -1;
 }
 
-static int __check_ifname(const char *name)
+/* These checks mimic kernel checks in dev_valid_name */
+int check_ifname(const char *name)
 {
-	if (*name == '\0')
+	if (*name == '\0' || strnlen(name, IFNAMSIZ) == IFNAMSIZ)
 		return -1;
+
+	if (!strcmp(name, ".") || !strcmp(name, ".."))
+		return -1;
+
 	while (*name) {
 		if (*name == '/' || isspace(*name))
 			return -1;
@@ -859,17 +864,13 @@ static int __check_ifname(const char *name)
 	return 0;
 }
 
-int check_ifname(const char *name)
-{
-	/* These checks mimic kernel checks in dev_valid_name */
-	if (strlen(name) >= IFNAMSIZ)
-		return -1;
-	return __check_ifname(name);
-}
-
+/* Many less restrictions on altername names */
 int check_altifname(const char *name)
 {
-	return __check_ifname(name);
+	if (*name == '\0' || strnlen(name, ALTIFNAMSIZ) == ALTIFNAMSIZ)
+		return -1;
+
+	return 0;
 }
 
 /* buf is assumed to be IFNAMSIZ */
