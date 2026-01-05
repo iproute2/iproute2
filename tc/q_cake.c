@@ -667,6 +667,11 @@ static int cake_print_xstats(const struct qdisc_util *qu, FILE *f,
 			   " /%8u\n", GET_STAT_U32(MAX_ADJLEN));
 	}
 
+	if (st[TCA_CAKE_STATS_ACTIVE_QUEUES])
+		print_uint(PRINT_ANY, "active_queues",
+			   " active queues: %25u\n",
+			   GET_STAT_U32(ACTIVE_QUEUES));
+
 	if (st[TCA_CAKE_STATS_AVG_NETOFF])
 		print_uint(PRINT_ANY, "avg_hdr_offset",
 			   " average network hdr offset: %12u\n\n",
@@ -823,6 +828,13 @@ static int cake_print_xstats(const struct qdisc_util *qu, FILE *f,
 
 struct qdisc_util cake_qdisc_util = {
 	.id		= "cake",
+	.parse_qopt	= cake_parse_opt,
+	.print_qopt	= cake_print_opt,
+	.print_xstats	= cake_print_xstats,
+};
+
+struct qdisc_util cake_mq_qdisc_util = {
+	.id		= "cake_mq",
 	.parse_qopt	= cake_parse_opt,
 	.print_qopt	= cake_print_opt,
 	.print_xstats	= cake_print_xstats,
