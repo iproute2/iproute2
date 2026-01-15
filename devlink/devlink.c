@@ -8088,8 +8088,7 @@ static int dpipe_table_show(struct dpipe_ctx *ctx, struct nlattr *nl)
 	size = mnl_attr_get_u32(nla_table[DEVLINK_ATTR_DPIPE_TABLE_SIZE]);
 	counters_enabled = !!mnl_attr_get_u8(nla_table[DEVLINK_ATTR_DPIPE_TABLE_COUNTERS_ENABLED]);
 
-	resource_valid = nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID] &&
-			 ctx->resources;
+	resource_valid = !!nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID];
 	if (resource_valid) {
 		table->resource_id = mnl_attr_get_u64(nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_ID]);
 		table->resource_valid = true;
@@ -8104,7 +8103,7 @@ static int dpipe_table_show(struct dpipe_ctx *ctx, struct nlattr *nl)
 	print_uint(PRINT_ANY, "size", " size %u", size);
 	print_bool(PRINT_ANY, "counters_enabled", " counters_enabled %s", counters_enabled);
 
-	if (resource_valid) {
+	if (resource_valid && ctx->resources) {
 		resource_units = mnl_attr_get_u32(nla_table[DEVLINK_ATTR_DPIPE_TABLE_RESOURCE_UNITS]);
 		resource_path_print(ctx->dl, ctx->resources,
 				    table->resource_id);
