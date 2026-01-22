@@ -2,7 +2,7 @@
 .SH NAME
 CAKE \- Common Applications Kept Enhanced (CAKE)
 .SH SYNOPSIS
-.B tc qdisc ... cake
+.B tc qdisc ... { cake | cake_mq }
 .br
 [
 .BR bandwidth
@@ -132,6 +132,13 @@ eliminate hash collisions.  Priority queuing is available through a simplified
 diffserv implementation.  Overhead compensation for various encapsulation
 schemes is tightly integrated.
 
+A multi-queue aware version of CAKE is available as a separate qdisc called
+\fBcake_mq\fR. This variant allows the CAKE shaper to scale across multiple CPUs
+on hardware that has multiple transmit queues. It is mostly a drop-in
+replacement for CAKE (and takes the same parameters), but has a few differences
+in how it treats traffic. See the section below for more details on these
+differences.
+
 All settings are optional; the default settings are chosen to be sensible in
 most common deployments.  Most people will only need to set the
 .B bandwidth
@@ -169,6 +176,8 @@ quality randomly.  A
 parameter can be used in conjunction to specify an initial estimate.  The shaper
 will periodically be set to a bandwidth slightly below the estimated rate.  This
 estimator cannot estimate the bandwidth of links downstream of itself.
+
+This parameter cannot be used with the \fBcake_mq\fR variant.
 
 .SH OVERHEAD COMPENSATION PARAMETERS
 The size of each packet on the wire may differ from that seen by Linux.  The
@@ -698,6 +707,48 @@ override mechanism; if a host ID is assigned, it will be used as both source and
 destination host.
 
 
+.SH DIFFERENCES BETWEEN SINGLE-QUEUE CAKE AND THE CAKE_MQ MULTI-QUEUE VARIANT
+
+The regular CAKE qdisc is, like most other qdiscs, subject to the global qdisc
+lock, which means that it does not scale across multiple CPUs. This limits the
+maximum bandwidth the shaper can handle to that achievable on a single CPU.
+
+To avoid this central locking, the \fBcake_mq\fR qdisc can be used as a drop-in
+replacement for \fBcake\fR on devices that have more than one TX queue, as
+follows:
+
+.RS
+.EX
+# tc qdisc replace dev eth0 handle 1: root cake_mq bandwidth 1Gbit
+# tc qdisc show dev eth0
+qdisc cake_mq 8001: root bandwidth 1Gbit diffserv3 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0
+qdisc cake 0: parent 8001:2 bandwidth 1Gbit diffserv3 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0
+qdisc cake 0: parent 8001:1 bandwidth 1Gbit diffserv3 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0
+.EE
+.RE
+
+As the example output shows, this will install separate \fBcake\fR instances on
+each hardware queue. These instances will share configuration, and can only be
+configured through the root \fBcake_mq\fR instance. They will also share the
+bandwidth shaper state, but will otherwise run independently of one another,
+allowing the CAKE shaper to scale across multiple CPUs.
+
+While the \fBcake_mq\fR qdisc is designed to serve as a drop-in replacement for
+single-queue CAKE, it does have some differences in how it treats traffic,
+caused by the independent execution of each sub-qdisc. In particular, the flow
+classification and fairness enforcement between flows (including the
+prioritisation between tins) only happens within each qdisc instance. This means
+that global flow and host fairness cannot be enforced by \fBcake_mq\fR.
+Approximate fairness should still be achievable assuming flows are evenly
+distributed between queues, but this is ultimately outside the control of CAKE
+itself. Users requiring exact fairness between flows are encouraged to stick to
+the regular \fBcake\fR qdisc.
+
+For details on how the shaper state sharing algorithm works, and its scaling
+properties, see the publication: Köppeler et al, 2025: "Have your CAKE and eat
+it too: Scaling software rate limiting across CPU cores", published in the IEEE
+LANMAN 2025 conference proceedings, and also available at
+https://schmiste.github.io/lanman25.pdf.
 
 .SH EXAMPLES
 .EX
@@ -781,6 +832,7 @@ qdisc cake 1: root refcnt 2 bandwidth 100Mbit diffserv3 triple-isolate rtt 100.0
 Cake's principal author is Jonathan Morton, with contributions from
 Tony Ambardar, Kevin Darbyshire-Bryant, Toke Høiland-Jørgensen,
 Sebastian Moeller, Ryan Mounce, Dean Scarff, Nils Andreas Svee, and Dave Täht.
+The cake_mq shared shaper state algorithm was implemented by Jonas Köppeler.
 
 This manual page was written by Loganaden Velvindron. Please report corrections
 to the Linux Networking mailing list <netdev@vger.kernel.org>.
