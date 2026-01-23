@@ -1139,7 +1139,7 @@ static int iplink_modify(int cmd, unsigned int flags, int argc, char **argv)
 
 		linkinfo = addattr_nest(&req.n, sizeof(req), IFLA_LINKINFO);
 		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, type,
-			 strlen(type));
+			 strlen(type) + 1);
 
 		lu = get_link_kind(type);
 		if (ulinep && !strcmp(ulinep, "_slave"))
