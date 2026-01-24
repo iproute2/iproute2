@@ -13,7 +13,7 @@ It can display more TCP and state information than other tools.
 
 .SH OPTIONS
 When no option is used ss displays a list of open non-listening
-sockets (e.g. TCP/UNIX/UDP) that have established connection.
+sockets (e.g. TCP/UNIX/UDP) that have established connections.
 .TP
 .B \-h, \-\-help
 Show summary of options.
@@ -31,7 +31,7 @@ Suppress sending and receiving queue columns.
 Print each socket's data on a single line.
 .TP
 .B \-n, \-\-numeric
-Do not try to resolve service names. Show exact bandwidth values, instead of human-readable.
+Do not try to resolve service names. Show exact bandwidth values, instead of human-readable values.
 .TP
 .B \-r, \-\-resolve
 Try to resolve numeric address/ports.
@@ -55,7 +55,7 @@ timer:(<timer_name>,<expire_time>,<retrans>)
 .P
 .TP
 .B <timer_name>
-the name of the timer, there are five kind of timer names:
+the name of the timer, there are five kinds of timer names:
 .RS
 .P
 .B on
@@ -72,11 +72,11 @@ timer and tail loss probe timer
 .RE
 .TP
 .B <expire_time>
-how long time the timer will expire
+how long until the timer will expire
 .P
 .TP
 .B <retrans>
-how many times the retransmission occurred
+how many times retransmissions have occurred
 .RE
 .TP
 .B \-e, \-\-extended
@@ -95,7 +95,7 @@ the socket's inode number in VFS
 .P
 .TP
 .B <cookie>
-an uuid of the socket
+a uuid of the socket
 .RE
 .TP
 .B \-m, \-\-memory
@@ -118,41 +118,41 @@ bl<back_log>,d<sock_drop>)
 .P
 .TP
 .B <rmem_alloc>
-the memory allocated for receiving packet
+the memory allocated for receiving packets
 .P
 .TP
 .B <rcv_buf>
-the total memory can be allocated for receiving packet
+the total memory that can be allocated for receiving packets
 .P
 .TP
 .B <wmem_alloc>
-the memory used for sending packet (which has been sent to layer 3)
+the memory used for sending packets (which has been sent to layer 3)
 .P
 .TP
 .B <snd_buf>
-the total memory can be allocated for sending packet
+the total memory that can be allocated for sending packets
 .P
 .TP
 .B <fwd_alloc>
 the memory allocated by the socket as cache, but not used for
-receiving/sending packet yet. If need memory to send/receive packet,
-the memory in this cache will be used before allocate additional
+receiving/sending packets yet. If memory is needed to send/receive packets,
+the memory in this cache will be used before allocating additional
 memory.
 .P
 .TP
 .B <wmem_queued>
-The memory allocated for sending packet (which has not been sent to layer 3)
+The memory allocated for sending packets (which has not been sent to layer 3)
 .P
 .TP
 .B <opt_mem>
-The memory used for storing socket option, e.g., the key for TCP MD5 signature
+The memory used for storing socket options, e.g., the key for TCP MD5 signature
 .P
 .TP
 .B <back_log>
 The memory used for the sk backlog queue. On a process context, if the
-process is receiving packet, and a new packet is received, it will be
+process is receiving packets, and a new packet is received, it will be
 put into the sk backlog queue, so it can be received by the process
-immediately
+immediately.
 .P
 .TP
 .B <sock_drop>
@@ -160,10 +160,10 @@ the number of packets dropped before they are de-multiplexed into the socket
 .RE
 .TP
 .B \-p, \-\-processes
-Show process using socket.
+Show processes using sockets.
 .TP
 .B \-T, \-\-threads
-Show thread using socket. Implies
+Show threads using sockets. Implies
 .BR \-p .
 .TP
 .B \-i, \-\-info
@@ -255,15 +255,15 @@ egress bps
 .P
 .TP
 .B lastsnd:<lastsnd>
-how long time since the last packet sent, the unit is millisecond
+how long it has been since the last packet sent, the unit is millisecond
 .P
 .TP
 .B lastrcv:<lastrcv>
-how long time since the last packet received, the unit is millisecond
+how long it has been since the last packet received, the unit is millisecond
 .P
 .TP
 .B lastack:<lastack>
-how long time since the last ack received, the unit is millisecond
+how long it has been since the last ack received, the unit is millisecond
 .P
 .TP
 .B pacing_rate <pacing_rate>bps/<max_pacing_rate>bps
@@ -359,7 +359,7 @@ and is therefore a useful reference.
 Switch to the specified network namespace name.
 .TP
 .B \-b, \-\-bpf
-Show socket classic BPF filters (only administrators are allowed to get these
+Show socket classic BPF filters (only administrators are allowed to get this
 information).
 .TP
 .B \-4, \-\-ipv4
@@ -391,7 +391,6 @@ Display SCTP sockets.
 .TP
 .B \-\-tipc
 Display tipc sockets (alias for -f tipc).
-.TP
 .TP
 .B \-\-vsock
 Display vsock sockets (alias for -f vsock).
@@ -438,7 +437,7 @@ Please take a look at the official documentation for details regarding filters.
 .SH STATE-FILTER
 
 .B STATE-FILTER
-allows one to construct arbitrary set of states to match. Its syntax is
+allows one to construct an arbitrary set of states to match. Its syntax is
 sequence of keywords state and exclude followed by identifier of
 state.
 .TP
@@ -496,7 +495,7 @@ Test if the destination or source matches HOST. See HOST SYNTAX for details.
 .TP
 .B {dport|sport} [OP] [FAMILY:]:PORT
 Compare the destination or source port to PORT. OP can be any of "<", "<=", "=", "!=",
-">=" and ">". Following normal arithmetic rules. FAMILY and PORT are as described in
+">=" and ">", following normal arithmetic rules. FAMILY and PORT are as described in
 HOST SYNTAX below.
 .TP
 .B dev [=|!=] DEVICE
