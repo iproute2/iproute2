@@ -18,6 +18,11 @@ tipc-nametable \- show TIPC nametable
 Options (flags) that can be passed anywhere in the command chain.
 .TP
 .BR "\-h" , " --help"
+Show help about last valid command. For example
+.B tipc nametable --help
+will show nametable help and
+.B tipc --help
+will show general help. The position of the option in the string is irrelevant.
 
 .TP
 .BR "\-j", " \-json"
@@ -27,12 +32,6 @@ Output results in JavaScript Object Notation (JSON).
 .BR "\-p", " \-pretty"
 The default JSON format is compact and more efficient to parse but hard for most users to read.
 This flag adds indentation for readability.
-
-Show help about last valid command. For example
-.B tipc nametable --help
-will show nametable help and
-.B tipc --help
-will show general help. The position of the option in the string is irrelevant.
 
 .SH DESCRIPTION
 The nametable shows TIPC publication information.

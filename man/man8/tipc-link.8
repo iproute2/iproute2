@@ -158,7 +158,7 @@ Subsequently the
 .B fragments
 are the total amount of packets that the
 .B fragmented
-messages has been broken into.
+messages have been broken into.
 
 .TP
 .B Bundles
@@ -262,7 +262,7 @@ activated.
 .br
 The threshold specifies the cluster size exceeding which the link monitoring
 algorithm will switch from "full-mesh" to "overlapping-ring".
-If set of 0 the overlapping-ring monitoring is always on and if set to a
+If set to 0 the overlapping-ring monitoring is always on and if set to a
 value larger than anticipated cluster size the overlapping-ring is disabled.
 The default value is 32.
 
@@ -290,7 +290,7 @@ Possible values are full-mesh or overlapping-ring.
 .B status
 .br
 The node status derived by the local node.
-Possible status are up or down.
+Possible statuses are up or down.
 
 .TP
 .B monitored
@@ -313,7 +313,7 @@ of a domain record to know if it should ignore or process the record.
 The node status reported by the peer node for the succeeding peers in
 the node list. The Node list is a circular list of ascending addresses
 starting with the local node.
-Possible status are: U or D. The status U implies up and D down.
+Possible statuses are: U or D. The status U implies up and D down.
 
 .TP
 .B [non_applied_node:status]
@@ -322,7 +322,7 @@ Represents the nodes and their status as reported by the peer node.
 These nodes were not applied to the monitoring list for this peer node.
 They are usually transient and occur during the cluster startup phase
 or network reconfiguration.
-Possible status are: U or D. The status U implies up and D down.
+Possible statuses are: U or D. The status U implies up and D down.
 
 .SS Broadcast properties
 .TP
