@@ -52,7 +52,7 @@ the DCB (Data Center Bridging) subsystem
 
 .B dcb buffer
 is used to configure assignment of traffic to port buffers based on traffic
-priority, and sizes of those buffers. It can be also used to inspect the current
+priority, and sizes of those buffers. It can also be used to inspect the current
 configuration, as well as total device memory that the port buffers take.
 
 .SH PARAMETERS
@@ -73,7 +73,7 @@ there are any hidden or internal buffers.
 .B prio-buffer \fIPRIO-MAP
 \fIPRIO-MAP\fR uses the array parameter syntax, see
 .BR dcb (8)
-for details. Keys are priorities, values are buffer indices. For each priority
+for details. Keys are priorities, values are buffer indices. For each priority,
 sets a buffer where traffic with that priority is directed to.
 
 .TP
