@@ -1,6 +1,6 @@
 .TH LNSTAT 8
 .SH NAME
-lnstat \- unified linux network statistics
+lnstat \- unified Linux network statistics
 .SH SYNOPSIS
 .B lnstat
 .RI [ options ]
@@ -13,7 +13,7 @@ command.
 rtstat program. It is commonly used to periodically print a selection of
 statistical values exported by the kernel.
 In addition to routing cache statistics, it supports any kind of statistics the
-linux kernel exports via a file in /proc/net/stat/.
+Linux kernel exports via a file in /proc/net/stat/.
 .PP
 Each file in /proc/net/stat/ contains a header line listing the column names.
 These names are used by \fBlnstat\fP as keys for selecting which statistics to
@@ -46,12 +46,12 @@ Statistics file to use, may be specified multiple times. By default all files in
 Set interval to 'intv' seconds.
 .TP
 .B \-j, \-\-json
-Display results in JSON format
+Display results in JSON format.
 .TP
 .B \-k, \-\-keys k,k,k,...
 Display only keys specified. Each key \fBk\fP is of the form \fB[file:]key\fP. If \fB<file>\fP
 is given, the search for the given key is limited to that file. Otherwise the first file containing
-the searched key is being used.
+the searched key is used.
 .TP
 .B \-s, \-\-subject [0-2]
 Specify display of subject/header. '0' means no header at all, '1' prints a header only at start of the program and '2' prints a header every 20 lines.
@@ -145,7 +145,7 @@ Number of \fBsearched\fP entries which were successful.
 Number of conntrack entries added which were not expected before.
 .sp
 .B invalid
-Number of packets seen which can not be tracked.
+Number of packets seen which cannot be tracked.
 .sp
 .B ignore
 Number of packets seen which are already connected to a conntrack entry.
