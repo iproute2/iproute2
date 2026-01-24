@@ -51,7 +51,7 @@ one or more RDMA devices exist, changing mode from shared to
 exclusive returns error code EBUSY.
 
 When RDMA subsystem is in shared mode, RDMA device is accessible in
-all network namespace. When RDMA device isolation among multiple
+all network namespaces. When RDMA device isolation among multiple
 network namespaces is not needed, shared mode can be used.
 
 It is preferred to not change the subsystem mode when there is active
@@ -81,7 +81,6 @@ rdma system set netns shared
 Sets the RDMA subsystem in network namespace shared mode. In this mode RDMA devices
 are shared among network namespaces.
 .RE
-.PP
 .PP
 rdma system set privileged-qkey on
 .RS 4

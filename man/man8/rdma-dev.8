@@ -65,17 +65,22 @@ rdma-dev \- RDMA device configuration
 - specifies the RDMA device to show.
 If this argument is omitted all devices are listed.
 
-.SS rdma dev add - Add a RDMA device with a specific type and parent IB device; This new device provides subset of functionalities defined in IBTA spec.
-.SS rdma dev delete - Delete a RDMA device which is created with the "add" command.
+.SS rdma dev add - add a RDMA device
+
+Add a RDMA device with a specific type and parent IB device. This new device provides a subset of functionalities defined in the IBTA spec.
+
+.SS rdma dev delete - delete a RDMA device
+
+Delete a RDMA device which was created with the "add" command.
 .I NAME
 - The name of the device being added/deleted.
 
 .I TYPE
-- The type of the device being added; It specifies which functionalities it provides. Supported device type:
+- The type of the device being added. It specifies which functionalities it provides. Supported device type:
 .sp
 .in +8
 .B SMI
-- A device with this type provides SMI (QP0) interface. This device and it's parent associates with the same HCA port and shares the physical link, so when the parent doesn't support SMI, then this type of device can be created to allow the subnet manager to configure the link.
+- A device with this type provides SMI (QP0) interface. This device and its parent associates with the same HCA port and shares the physical link, so when the parent doesn't support SMI, then this type of device can be created to allow the subnet manager to configure the link.
 .in -8
 
 .I PARENT_DEV
@@ -90,7 +95,7 @@ Shows the state of all RDMA devices on the system.
 .PP
 rdma dev show mlx5_3
 .RS 4
-Shows the state of specified RDMA device.
+Shows the state of the specified RDMA device.
 .RE
 .PP
 rdma dev set mlx5_3 name rdma_0
@@ -100,8 +105,8 @@ Renames the mlx5_3 device to rdma_0.
 .PP
 rdma dev set mlx5_3 netns foo
 .RS 4
-Changes the network namespace of RDMA device to foo where foo is
-previously created using iproute2 ip command.
+Changes the network namespace of RDMA device to foo where foo was
+previously created using the iproute2 ip command.
 .RE
 .PP
 rdma dev set mlx5_3 adaptive-moderation [on/off]
@@ -114,12 +119,12 @@ This is a global setting for the RDMA device but the value is printed for each C
 .PP
 rdma dev add smi1 type SMI parent ibp8s0f1
 .RS 4
-Add a new IB device with name "smi1", type "SMI", and "ibp8s0f1" as its parent device.
+Adds a new IB device with name "smi1", type "SMI", and "ibp8s0f1" as its parent device.
 .RE
 .PP
 rdma dev delete smi1
 .RS 4
-Delete the IB device "smi1".
+Deletes the IB device "smi1".
 .RE
 .PP
 
