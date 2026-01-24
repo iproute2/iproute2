@@ -7,7 +7,7 @@ devlink \- Devlink tool
 .in +8
 .ti -8
 .B devlink
-.RI "[ " OPTIONS " ] { " dev | port | monitor | sb | resource | region | health | trap " } { " COMMAND " | "
+.RI "[ " OPTIONS " ] { " dev | port | monitor | sb | resource | region | health | trap | rate | lc | dpipe " } { " COMMAND " | "
 .BR help " }"
 .sp
 
@@ -28,7 +28,7 @@ utility and exit.
 .TP
 .BR "\-b", " \-batch " <FILENAME>
 Read commands from provided file or standard input and invoke them.
-First failure will cause termination of devlink.
+The first failure will cause termination of devlink.
 
 .TP
 .B \-force
@@ -92,15 +92,27 @@ Print dump numbers in hexadecimal format.
 
 .TP
 .B region
-- devlink address region access
+- devlink address region access.
 
 .TP
 .B health
-- devlink reporting and recovery
+- devlink reporting and recovery.
 
 .TP
 .B trap
-- devlink trap configuration
+- devlink trap configuration.
+
+.TP
+.B rate
+- devlink rate object configuration.
+
+.TP
+.B lc
+- devlink line card configuration.
+
+.TP
+.B dpipe
+- devlink datapath pipeline visualization.
 
 .SS
 .I COMMAND
@@ -135,6 +147,9 @@ Exit status is 0 if command was successful or a positive integer upon failure.
 .BR devlink-region (8),
 .BR devlink-health (8),
 .BR devlink-trap (8),
+.BR devlink-rate (8),
+.BR devlink-lc (8),
+.BR devlink-dpipe (8)
 .br
 
 .SH REPORTING BUGS

@@ -127,7 +127,7 @@ Set eswitch mode
 
 .TP
 .BR inline-mode " { " none " | " link " | " network " | " transport " } "
-Some HWs need the VF driver to put part of the packet headers on the TX descriptor so the e-switch can do proper matching and steering.
+Some hardware devices need the VF driver to put part of the packet headers on the TX descriptor so the e-switch can do proper matching and steering.
 
 .I none
 - None
@@ -169,7 +169,7 @@ Configuration mode in which the new value is set.
 - Set new value while driver is running. This configuration mode doesn't require any reset to apply the new value.
 
 .I driverinit
-- Set new value which will be applied during driver initialization. This configuration mode requires restart driver by devlink reload command to apply the new value.
+- Set new value which will be applied during driver initialization. This configuration mode requires restarting the driver by devlink reload command to apply the new value.
 
 .I permanent
 - New value is written to device's non-volatile memory. This configuration mode requires hard reset to apply the new value.
@@ -198,9 +198,9 @@ If this argument is omitted
 action will be used.
 Note that even though user asks for a specific action, the driver implementation
 might require to perform another action alongside with it. For example, some
-driver do not support driver reinitialization being performed without fw
+drivers do not support driver reinitialization being performed without fw
 activation. Therefore, the devlink reload command returns the list of actions
-which were actrually performed.
+which were actually performed.
 
 .I driver_reinit
 - Driver entities re-initialization, applying devlink-param and

@@ -125,7 +125,7 @@ BUS_NAME/BUS_ADDRESS/PORT_INDEX
 
 .TP
 .BR type " { " eth " | " ib " | " auto " } "
-set port type
+Set port type.
 
 .I eth
 - Ethernet
@@ -144,7 +144,7 @@ set port type
 
 .TP
 .BI count " COUNT"
-number of ports to split to.
+Number of ports to split into.
 
 .SS devlink port unsplit - unsplit previously split devlink port
 Could be performed on any split port of the same split group.
@@ -168,7 +168,7 @@ Is an alias for
 .SS devlink port add - add a devlink port
 .PP
 .I "DEV"
-- specifies the devlink device to operate on. or
+- specifies the devlink device to operate on, or
 
 .PP
 .I "DEV/PORT_INDEX"
@@ -187,12 +187,12 @@ set port flavour
 
 .TP
 .BI pfnum " PFNUMBER "
-Specifies PCI pfnumber to use on which a SF device to create
+Specifies the PCI PF number on which to create an SF device.
 
 .TP
 .BI sfnum " SFNUMBER "
 Specifies sfnumber to assign to the device of the SF.
-This field is optional for those devices which supports auto assignment of the
+This field is optional for those devices which support auto assignment of the
 SF number.
 
 .TP
@@ -210,7 +210,7 @@ external controller.
 
 .TP
 .BI hw_addr " ADDR"
-Hardware address of the function to set. This is a Ethernet MAC address when
+Hardware address of the function to set. This is an Ethernet MAC address when
 port type is Ethernet.
 
 .TP
@@ -273,7 +273,7 @@ Configuration mode in which the new value is set.
 - Set new value while driver is running. This configuration mode doesn't require any reset to apply the new value.
 
 .I driverinit
-- Set new value which will be applied during driver initialization. This configuration mode requires restart driver by devlink reload command to apply the new value.
+- Set new value which will be applied during driver initialization. This configuration mode requires restarting the driver by devlink reload command to apply the new value.
 
 .I permanent
 - New value is written to device's non-volatile memory. This configuration mode requires hard reset to apply the new value.
@@ -317,7 +317,7 @@ Split the specified devlink port into four ports.
 .PP
 devlink port unsplit pci/0000:01:00.0/1
 .RS 4
-Unplit the specified previously split devlink port.
+Unsplit the specified previously split devlink port.
 .RE
 .PP
 devlink port health show
@@ -391,7 +391,7 @@ This will set the maximum number of IO event queues of the function to 4.
 .PP
 devlink port function set pci/0000:01:00.0/1 hw_addr 00:00:00:11:22:33 state active
 .RS 4
-Configure hardware address and also active the function. When a function is
+Configure hardware address and also activate the function. When a function is
 activated together with other configuration in a single command, all the
 configuration is applied first before changing the state to active.
 .RE
