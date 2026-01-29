@@ -42,6 +42,14 @@ static const char *str_enable_disable(bool v)
 	return v ? "enable" : "disable";
 }
 
+static struct str_num_map dpll_mode_map[] = {
+	{ .str = "automatic", .num = DPLL_MODE_AUTOMATIC },
+	{ .str = "manual", .num = DPLL_MODE_MANUAL },
+	{
+		.str = NULL,
+	},
+};
+
 static struct str_num_map pin_state_map[] = {
 	{ .str = "connected", .num = DPLL_PIN_STATE_CONNECTED },
 	{ .str = "disconnected", .num = DPLL_PIN_STATE_DISCONNECTED },
@@ -132,6 +140,17 @@ static bool dpll_no_arg(struct dpll *dpll)
 	return dpll_argc(dpll) == 0;
 }
 
+static int str_to_dpll_mode(const char *mode_str, __u32 *mode)
+{
+	int num;
+
+	num = str_map_lookup_str(dpll_mode_map, mode_str);
+	if (num < 0)
+		return num;
+	*mode = num;
+	return 0;
+}
+
 static int str_to_dpll_pin_state(const char *state_str, __u32 *state)
 {
 	int num;
@@ -151,6 +170,18 @@ static int str_to_dpll_pin_type(const char *type_str, __u32 *type)
 	if (num < 0)
 		return num;
 	*type = num;
+	return 0;
+}
+
+static int dpll_parse_mode(struct dpll *dpll, __u32 *mode)
+{
+	const char *str = dpll_argv(dpll);
+
+	if (str_to_dpll_mode(str, mode)) {
+		pr_err("invalid state: %s (use automatic/manual)\n", str);
+		return -EINVAL;
+	}
+	dpll_arg_inc(dpll);
 	return 0;
 }
 
@@ -585,21 +616,18 @@ dpll_free:
 static void cmd_device_help(void)
 {
 	pr_err("Usage: dpll device show [ id DEVICE_ID ]\n");
-	pr_err("       dpll device set id DEVICE_ID [ phase-offset-monitor { enable | disable } ]\n");
-	pr_err("                                      [ phase-offset-avg-factor NUM ]\n");
+	pr_err("       dpll device set id DEVICE_ID [ mode { automatic | manual } ]\n");
+	pr_err("                                    [ phase-offset-monitor { enable | disable } ]\n");
+	pr_err("                                    [ phase-offset-avg-factor NUM ]\n");
 	pr_err("       dpll device id-get [ module-name NAME ] [ clock-id ID ] [ type TYPE ]\n");
 }
 
 static const char *dpll_mode_name(__u32 mode)
 {
-	switch (mode) {
-	case DPLL_MODE_MANUAL:
-		return "manual";
-	case DPLL_MODE_AUTOMATIC:
-		return "automatic";
-	default:
-		return "unknown";
-	}
+	const char *str;
+
+	str = str_map_lookup_uint(dpll_mode_map, mode);
+	return str ? str : "unknown";
 }
 
 static const char *dpll_lock_status_name(__u32 status)
@@ -839,6 +867,10 @@ static int cmd_device_set(struct dpll *dpll)
 				return -EINVAL;
 			mnl_attr_put_u32(nlh, DPLL_A_ID, id);
 			has_id = true;
+		} else if (dpll_argv_match_inc(dpll, "mode")) {
+			if (dpll_parse_attr_enum(dpll, nlh, "mode", DPLL_A_MODE,
+						 dpll_parse_mode))
+				return -EINVAL;
 		} else if (dpll_argv_match(dpll, "phase-offset-monitor")) {
 			const char *str = dpll_argv_next(dpll);
 			bool val;

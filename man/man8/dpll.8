@@ -88,13 +88,24 @@ Temperature (if supported)
 Type (PPS or EEC)
 .RE
 
-.SS dpll device set id ID [ phase-offset-monitor { enable | disable } ] [ phase-offset-avg-factor FACTOR ]
+.SS dpll device set id ID [ mode { automatic | manual } ] [ phase-offset-monitor { enable | disable } ] [ phase-offset-avg-factor FACTOR ]
 
 Configure DPLL device parameters.
 
 .TP
 .BI id " ID"
 Specifies which device to configure (required).
+
+.TP
+.BI mode " { automatic | manual }"
+Set the operating mode of the DPLL device.
+In
+.B automatic
+mode, the DPLL autonomously selects the best available input source
+based on priority and quality. In
+.B manual
+mode, the input source must be explicitly configured and the DPLL
+will not automatically switch sources.
 
 .TP
 .BI phase-offset-monitor " { enable | disable | true | false | 0 | 1 }"
@@ -281,6 +292,11 @@ Press Ctrl+C to stop monitoring.
 .SS Show specific device in JSON format
 .nf
 .B dpll -j device show id 0
+.fi
+
+.SS Set device 0 to manual mode
+.nf
+.B dpll device set id 0 mode manual
 .fi
 
 .SS Enable phase offset monitoring on device 0

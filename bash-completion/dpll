@@ -73,6 +73,10 @@ _dpll_device()
                         "$(_dpll_direct_complete device_id)" -- "$cur" ) )
                     return 0
                     ;;
+                mode)
+                    COMPREPLY=( $( compgen -W "automatic manual" -- "$cur" ) )
+                    return 0
+                    ;;
                 phase-offset-monitor)
                     COMPREPLY=( $( compgen -W "enable disable true false 0 1" -- "$cur" ) )
                     return 0
@@ -82,7 +86,7 @@ _dpll_device()
                     return 0
                     ;;
                 *)
-                    COMPREPLY=( $( compgen -W "id phase-offset-monitor \
+                    COMPREPLY=( $( compgen -W "id mode phase-offset-monitor \
                         phase-offset-avg-factor" -- "$cur" ) )
                     return 0
                     ;;
