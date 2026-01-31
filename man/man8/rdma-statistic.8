@@ -98,7 +98,9 @@ rdma-statistic \- RDMA statistic counter configuration
 .RB "{ " cntn " | " lqpn " | " pid " | " qp-type " }"
 
 .SH "DESCRIPTION"
-.SS rdma statistic [object] show - Queries the specified RDMA device for RDMA and driver-specific statistics. Show the default hw counters if object is not specified
+.SS rdma statistic [object] show - display RDMA statistics
+
+Queries the specified RDMA device for RDMA and driver-specific statistics. Shows the default hw counters if object is not specified.
 
 .PP
 .I "DEV"
@@ -111,7 +113,7 @@ rdma-statistic \- RDMA statistic counter configuration
 - specifies a filter to show only the results matching it.
 
 .SS rdma statistic <object> set - configure counter statistic auto-mode for a specific device/port
-In auto mode all objects belong to one category are bind automatically to a single counter set. The "off" is global for all auto modes together. Not applicable for MR's.
+In auto mode all objects belong to one category are bound automatically to a single counter set. The "off" is global for all auto modes together. Not applicable for MR's.
 
 .SS rdma statistic <object> bind - manually bind an object (e.g., a qp) with a counter
 When bound the statistics of this object are available in this counter. Not applicable for MR's.
@@ -143,7 +145,7 @@ Shows the state of the default counter of all RDMA devices on the system.
 .PP
 rdma statistic show link mlx5_2/1
 .RS 4
-Shows the state of the default counter of specified RDMA port
+Shows the state of the default counter of specified RDMA port.
 .RE
 .PP
 rdma statistic qp show
@@ -158,22 +160,22 @@ Shows the state of all qp counters of specified RDMA port.
 .PP
 rdma statistic qp show link mlx5_2 pid 30489
 .RS 4
-Shows the state of all qp counters of specified RDMA port and belonging to pid 30489
+Shows the state of all qp counters of specified RDMA port and belonging to pid 30489.
 .RE
 .PP
 rdma statistic qp show link mlx5_2 qp-type UD
 .RS 4
-Shows the state of all qp counters of specified RDMA port and with QP type UD
+Shows the state of all qp counters of specified RDMA port and with QP type UD.
 .RE
 .PP
 rdma statistic qp mode
 .RS 4
-List current counter mode on all devices
+List current counter mode on all devices.
 .RE
 .PP
 rdma statistic qp mode link mlx5_2/1
 .RS 4
-List current counter mode of device mlx5_2 port 1
+List current counter mode of device mlx5_2 port 1.
 .RE
 .PP
 rdma statistic qp set link mlx5_2/1 auto type on
@@ -203,12 +205,12 @@ Turn-off auto mode on device mlx5_2 port 1. The allocated counters can be manual
 .PP
 rdma statistic qp bind link mlx5_2/1 lqpn 178
 .RS 4
-On device mlx5_2 port 1, allocate a counter and bind the specified qp on it
+On device mlx5_2 port 1, allocate a counter and bind the specified qp on it.
 .RE
 .PP
 rdma statistic qp unbind link mlx5_2/1 cntn 4 lqpn 178
 .RS 4
-On device mlx5_2 port 1, bind the specified qp on the specified counter
+On device mlx5_2 port 1, bind the specified qp on the specified counter.
 .RE
 .PP
 rdma statistic qp unbind link mlx5_2/1 cntn 4
@@ -223,12 +225,12 @@ List all currently allocated MR's and their counters.
 .PP
 rdma statistic show mr mrn 6
 .RS 4
-Dump a specific MR statistics with mrn 6. Dumps nothing if does not exists.
+Dump a specific MR statistics with mrn 6. Dumps nothing if it does not exist.
 .RE
 .PP
 rdma statistic mode link mlx5_2/1
 .RS 4
-Display the optional counters that was enabled on mlx5_2/1.
+Display the optional counters that were enabled on mlx5_2/1.
 .RE
 .PP
 rdma statistic mode supported link mlx5_2/1

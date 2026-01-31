@@ -45,7 +45,9 @@ rdma-link \- rdma link configuration
 - specifies the RDMA link to show.
 If this argument is omitted all links are listed.
 
-.SS rdma link add NAME type TYPE netdev NETDEV - add an rdma link for the specified type to the network device
+.SS rdma link add - add an rdma link
+
+Add an rdma link for the specified type to the network device.
 .sp
 .BR NAME
 - specifies the new name of the rdma link to add
@@ -79,17 +81,17 @@ Shows the state of all rdma links on the system.
 .PP
 rdma link show mlx5_2/1
 .RS 4
-Shows the state of specified rdma link.
+Shows the state of the specified rdma link.
 .RE
 .PP
 rdma link add rxe_eth0 type rxe netdev eth0
 .RS 4
-Adds a RXE link named rxe_eth0 to network device eth0
+Adds a RXE link named rxe_eth0 to network device eth0.
 .RE
 .PP
 rdma link del rxe_eth0
 .RS 4
-Removes RXE link rxe_eth0
+Removes RXE link rxe_eth0.
 .RE
 .PP
 

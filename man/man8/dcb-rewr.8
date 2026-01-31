@@ -1,4 +1,4 @@
-.TH DCB-REWR 8 "15 may 2023" "iproute2" "Linux"
+.TH DCB-REWR 8 "15 May 2023" "iproute2" "Linux"
 .SH NAME
 dcb-rewr \- show / manipulate the rewrite table of
 the DCB (Data Center Bridging) subsystem
@@ -59,11 +59,11 @@ ID, and priority. Selector is an enumeration that picks one of the
 prioritization namespaces. Currently, only the DSCP and PCP selector namespaces
 are supported by dcb rewr.
 
-The rewrite table is a list of DCB rewrite rules, that applies to packets
-with matching priority.  Notably, it is valid to have conflicting rewrite
-assignment for the same selector and priority. For example, the set of two
+The rewrite table is a list of DCB rewrite rules that applies to packets
+with matching priority. Notably, it is valid to have conflicting rewrite
+assignments for the same selector and priority. For example, the set of two
 rewrite entries (DSCP, 10, 1) and (DSCP, 11, 1), where packets with priority 1
-should have its DSCP value rewritten to both 10 and 11, form a well-defined
+should have their DSCP values rewritten to both 10 and 11, form a well-defined
 rewrite table.
 .B dcb rewr
 tool allows low-level management of the rewrite table by adding and deleting
@@ -81,12 +81,12 @@ rewrite rule is in effect for a given selector and priority.
 
 .TP
 .B show
-Display all entries with a given selector. When no selector is given, shows all
+Displays all entries with a given selector. When no selector is given, shows all
 rewrite table entries categorized per selector.
 
 .TP
 .B flush
-Remove all entries with a given selector. When no selector is given, removes all
+Removes all entries with a given selector. When no selector is given, removes all
 rewrite table entries.
 
 .TP
@@ -98,11 +98,11 @@ rewrite table.
 
 .TP
 .B replace
-Take the list of entries mentioned as parameter, and add those that are not
-present in the rewrite table yet. Then remove those entries, whose selector and
+Takes the list of entries mentioned as parameter, and adds those that are not
+present in the rewrite table yet. Then removes those entries, whose selector and
 priority have been mentioned as parameter, but not with the exact same
 protocol ID. This has the effect of, for the given selector and priority,
-causing that the table only contains the protocol ID (or ID's) given as
+ensuring that the table only contains the protocol ID (or IDs) given as
 parameter.
 
 .SH PARAMETERS
@@ -134,10 +134,10 @@ turns the show translation off.
 \fIPCP-MAP\fR uses the array parameter syntax, see
 .BR dcb (8)
 for details. Keys are priorities. Values are PCP/DEI for traffic with
-matching priority. PCP/DEI values are written as a combination of numeric- and
-symbolic values, to accommodate for both. PCP always in numeric form e.g 0 ..
-7 and DEI in symbolic form e.g 'de' (drop-eligible), indicating that the DEI
-bit is 1 or 'nd' (not-drop-eligible), indicating that the DEI bit is 0.  In
+matching priority. PCP/DEI values are written as a combination of numeric and
+symbolic values, to accommodate both. PCP is always in numeric form, e.g., 0 ..
+7 and DEI in symbolic form, e.g., 'de' (drop-eligible), indicating that the DEI
+bit is 1 or 'nd' (not-drop-eligible), indicating that the DEI bit is 0. In
 combination 1:2de translates to a mapping of priority 1 to PCP=2 and DEI=1.
 
 .SH EXAMPLE & USAGE
@@ -192,14 +192,14 @@ prio-pcp 1:1nd 2:2de
 Exit status is 0 if command was successful or a positive integer upon failure.
 
 .SH SEE ALSO
-.BR dcb (8)
-.BR dcb-app (8)
+.BR dcb (8),
+.BR dcb-app (8),
 .BR dcb-apptrust (8)
 
 .SH REPORTING BUGS
 Report any bugs to the Network Developers mailing list
 .B <netdev@vger.kernel.org>
-where the development and maintenance is primarily done.  You do not have to be
+where the development and maintenance is primarily done. You do not have to be
 subscribed to the list to send a message there.
 
 .SH AUTHOR

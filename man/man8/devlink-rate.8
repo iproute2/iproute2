@@ -54,9 +54,9 @@ object can be presented by one of the two types:
 .TP 8
 .B leaf
 Represents a single devlink port; created/destroyed by the driver and bound to
-the devlink port. As example, some driver may create leaf rate object for every
-devlink port associated with VF. Since leaf have 1to1 mapping to it's devlink
-port, in user space it is referred as corresponding devlink port
+the devlink port. As an example, some drivers may create a leaf rate object for every
+devlink port associated with VF. Since leaves have a 1-to-1 mapping to their devlink
+port, in user space they are referred to as corresponding devlink port
 \fIDEV/PORT_INDEX\fR;
 .TP 8
 .B node
@@ -65,7 +65,7 @@ below) and bound to the devlink device rather then to the devlink port. In
 userspace it is referred as \fIDEV/NODE_NAME\fR, where node name can be any,
 except decimal number, to avoid collisions with leafs.
 .PP
-Command output show rate object identifier, it's type and rate values along with
+Command output show rate object identifier, its type and rate values along with
 parent node name. Rate values printed in SI units which are more suitable to
 represent specific value. To print values in IEC units \fB-i\fR switch is
 used. JSON (\fB-j\fR) output always print rate values in bytes per second. Zero
@@ -101,7 +101,7 @@ probability that the node will get selected for scheduling.
 This arbitration scheme can be used simultaneously with the strict priority.
 As a node is configured with a higher rate it gets more BW relative to it's
 siblings. Values are relative like a percentage points, they basically tell
-how much BW should node take relative to it's siblings.
+how much BW should node take relative to its siblings.
 .PP
 .BI tc-bw " INDEX:N"
 - allows the user to assign relative bandwidth shares to specific traffic
@@ -157,13 +157,13 @@ maps to the defined traffic classes under the IEEE 802.1Qaz standard.
 .PP
 .TP 8
 .I N
-These parameter accept integer meaning weight or priority of a node.
+These parameters accept an integer meaning weight or priority of a node.
 .PP
 .BI parent " NODE_NAME \fR| " noparent
 - set rate object parent to existing node with name \fINODE_NAME\fR or unset
-parent. Rate limits of the parent node applied to all it's children. Actual
-behaviour is details of driver's implementation. Setting parent to empty ("")
-name due to the kernel logic treated as parent unset.
+parent. Rate limits of the parent node are applied to all its children. Actual
+behavior is a detail of the driver's implementation. Setting parent to empty ("")
+name due to the kernel logic is treated as unsetting the parent.
 
 .SS devlink port function rate add - create node rate object with specified parameters.
 Creates rate object of type node and sets parameters. Parameters same as for the

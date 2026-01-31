@@ -29,7 +29,7 @@ dcb \- show / manipulate DCB (Data Center Bridging) settings
 
 .TP
 .BR "\-n" , " \--netns " <NETNS>
-switches
+Switches
 .B dcb
 to the specified network namespace
 .IR NETNS .
@@ -42,7 +42,7 @@ utility and exit.
 
 .TP
 .BR "\-b", " --batch " <FILENAME>
-Read commands from provided file or standard input and invoke them. First
+Read commands from provided file or standard input and invoke them. The first
 failure will cause termination of dcb.
 
 .TP
@@ -70,7 +70,7 @@ When combined with -j generate a pretty JSON output.
 
 .TP
 .BR "\-s" , " --statistics"
-If the object in question contains any statistical counters, shown them as
+If the object in question contains any statistical counters, show them as
 part of the "show" output.
 
 .SH OBJECTS
@@ -142,6 +142,7 @@ Exit status is 0 if command was successful or a positive integer upon failure.
 .BR dcb-app (8),
 .BR dcb-apptrust (8),
 .BR dcb-buffer (8),
+.BR dcb-dcbx (8),
 .BR dcb-ets (8),
 .BR dcb-maxrate (8),
 .BR dcb-pfc (8),

@@ -101,7 +101,7 @@ Whether local host should accept configuration from peer TLVs.
 .B reco-prio-tc \fIPRIO-MAP
 \fIPRIO-MAP\fR uses the array parameter syntax, see
 .BR dcb (8)
-for details. Keys are priorities, values are traffic classes. For each priority
+for details. Keys are priorities, values are traffic classes. For each priority,
 sets a TC where traffic with that priority is directed to.
 
 .TP
@@ -111,7 +111,7 @@ sets a TC where traffic with that priority is directed to.
 \fITSA-MAP\fR uses the array parameter syntax, see
 .BR dcb (8)
 for details. Keys are TCs, values are Transmission Selection Algorithm (TSA)
-keywords described below. For each TC sets an algorithm used for deciding how
+keywords described below. For each TC, sets an algorithm used for deciding how
 traffic queued up at this TC is scheduled for transmission. Supported TSAs are:
 
 .B strict

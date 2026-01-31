@@ -81,9 +81,9 @@ the DCB (Data Center Bridging) subsystem
 .SH DESCRIPTION
 
 .B dcb app
-is used to configure APP table, or application priority table in the DCB (Data
+is used to configure the APP table, or application priority table in the DCB (Data
 Center Bridging) subsystem. The APP table is used to assign priority to traffic
-based on value in one of several headers: EtherType, L4 destination port, or
+based on values in one of several headers: EtherType, L4 destination port, or
 DSCP. It also allows configuration of port-default priority that is chosen if no
 other prioritization rule applies.
 
@@ -99,7 +99,7 @@ The APP table is a set of DCB APP entries. The only requirement is that
 duplicate entries are not added. Notably, it is valid to have conflicting
 priority assignment for the same selector and protocol ID. For example, the set
 of two APP entries (DSCP, 10, 1) and (DSCP, 10, 2), where packets with DSCP of
-10 should get priority of both 1 and 2, form a well-defined APP table. The
+10 should get priorities 1 and 2, form a well-defined APP table. The
 .B dcb app
 tool allows low-level management of the app table by adding and deleting
 individual APP 3-tuples through
@@ -116,12 +116,12 @@ prioritization is in effect for a given selector and protocol ID.
 
 .TP
 .B show
-Display all entries with a given selector. When no selector is given, shows all
+Displays all entries with a given selector. When no selector is given, shows all
 APP table entries categorized per selector.
 
 .TP
 .B flush
-Remove all entries with a given selector. When no selector is given, removes all
+Removes all entries with a given selector. When no selector is given, removes all
 APP table entries.
 
 .TP
@@ -133,11 +133,11 @@ table.
 
 .TP
 .B replace
-Take the list of entries mentioned as parameter, and add those that are not
-present in the APP table yet. Then remove those entries, whose selector and
+Takes the list of entries mentioned as parameter, and adds those that are not
+present in the APP table yet. Then removes those entries, whose selector and
 protocol ID have been mentioned as parameter, but not with the exact same
 priority. This has the effect of, for the given selector and protocol ID,
-causing that the table only contains the priority (or priorities) given as
+ensuring that the table only contains the priority (or priorities) given as
 parameter.
 
 .SH PARAMETERS
@@ -148,7 +148,7 @@ the parameter name is to be used as a simple keyword without further arguments.
 
 .TP
 .B default-prio \fIPRIO-LIST
-The priority to be used for traffic the priority of which is otherwise
+The priority to be used for traffic whose priority is otherwise
 unspecified. The argument is a list of individual priorities. Note that
 .B default-prio
 rules are configured as triplets (\fBEtherType\fR, \fB0\fR, \fIPRIO\fR).
@@ -198,9 +198,9 @@ turns the show translation off.
 \fIPCP-MAP\fR uses the array parameter syntax, see
 .BR dcb (8)
 for details. Keys are PCP/DEI. Values are priorities assigned to traffic with
-matching PCP/DEI. PCP/DEI values are written as a combination of numeric- and
-symbolic values, to accommodate for both. PCP always in numerical form e.g
-0 .. 7 and DEI in symbolic form e.g 'de' (drop-eligible), indicating that the
+matching PCP/DEI. PCP/DEI values are written as a combination of numeric and
+symbolic values, to accommodate both. PCP is always in numerical form, e.g.,
+0 .. 7 and DEI in symbolic form, e.g., 'de' (drop-eligible), indicating that the
 DEI bit is 1 or 'nd' (not-drop-eligible), indicating that the DEI bit is 0.
 In combination 2de:1 translates to a mapping of PCP=2 and DEI=1 to priority 1.
 

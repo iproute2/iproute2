@@ -1,4 +1,4 @@
-.TH DEVLINK\-DEV 8 "5 Jan 2021" "iproute2" "Linux"
+.TH VDPA\-DEV 8 "5 Jan 2021" "iproute2" "Linux"
 .SH NAME
 vdpa-dev \- vdpa device configuration
 .SH SYNOPSIS
@@ -84,9 +84,9 @@ Name of the management device to use for device addition.
 .BI device_features " DEVICE_FEATURES"
 Specifies the virtio device features bit-mask that is provisioned for the new vdpa device.
 
-The bits can be found under include/uapi/linux/virtio*h.
+The bits can be found under include/uapi/linux/virtio*.h.
 
-see macros such as VIRTIO_F_ and VIRTIO_XXX(e.g NET)_F_ for specific bit values.
+See macros such as VIRTIO_F_ and VIRTIO_XXX (e.g., NET)_F_ for specific bit values.
 
 This is optional.
 
@@ -116,7 +116,9 @@ Format is:
 .in +2
 VDPA_DEVICE_NAME
 
-.SS vdpa dev vstats show - shows vendor specific statistics for the given device and virtqueue index. The information is presented as name-value pairs where name is the name of the field and value is a numeric value for it.
+.SS vdpa dev vstats show - show vendor specific statistics
+
+Shows vendor specific statistics for the given device and virtqueue index. The information is presented as name-value pairs where name is the name of the field and value is a numeric value for it.
 
 .TP
 .BI "DEV"
@@ -129,7 +131,7 @@ VDPA_DEVICE_NAME
 .SS vdpa dev set - set the configuration to the vdpa device.
 
 .BI name " NAME"
--Name of the vdpa device to configure.
+- Name of the vdpa device to configure.
 
 .BI mac " MACADDR"
 - specifies the mac address for the vdpa device.
@@ -139,7 +141,7 @@ This is applicable only for the network type of vdpa device.
 .PP
 vdpa dev show
 .RS 4
-Shows the all vdpa devices on the system.
+Shows all vdpa devices on the system.
 .RE
 .PP
 vdpa dev show foo
@@ -154,7 +156,7 @@ Add the vdpa device named foo on the management device vdpa_sim_net.
 .PP
 vdpa dev add name foo mgmtdev vdpa_sim_net device_features 0x300020000
 .RS 4
-Add the vdpa device named foo on the management device vdpa_sim_net with device_features of 0x300020000
+Add the vdpa device named foo on the management device vdpa_sim_net with device_features of 0x300020000.
 .RE
 .PP
 vdpa dev add name foo mgmtdev vdpa_sim_net mac 00:11:22:33:44:55
@@ -169,7 +171,7 @@ Add the vdpa device named foo on the management device vdpa_sim_net with mac add
 .PP
 vdpa dev add name foo mgmtdev auxiliary/mlx5_core.sf.1 mac 00:11:22:33:44:55 max_vqp 8
 .RS 4
-Add the vdpa device named foo on the management device auxiliary/mlx5_core.sf.1 with mac address of 00:11:22:33:44:55 and max 8 virtqueue pairs
+Add the vdpa device named foo on the management device auxiliary/mlx5_core.sf.1 with mac address of 00:11:22:33:44:55 and max 8 virtqueue pairs.
 .RE
 .PP
 vdpa dev del foo

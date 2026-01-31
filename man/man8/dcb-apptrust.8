@@ -1,7 +1,7 @@
 .TH DCB-APPTRUST 8 "22 November 2022" "iproute2" "Linux"
 .SH NAME
 dcb-apptrust \- show / configure per-selector trust and trust order of the
-application priority table of the DCB (Data Center Bridging) subsystem.
+application priority table of the DCB (Data Center Bridging) subsystem
 .SH SYNOPSIS
 .sp
 .ad l
@@ -39,21 +39,21 @@ Application Priority Table, see
 .BR dcb-app (8)
 for details on how to configure app table entries.
 
-Selector trust can be used by the
-software stack, or drivers (most likely the latter), when querying the APP
-table, to determine if an APP entry should take effect, or not. Additionally, the
-order of the trusted selectors will dictate which selector should take
-precedence, in the case of multiple different APP table selectors being present.
+Selector trust can be used by the software stack or drivers (most likely the
+latter) when querying the APP table, to determine whether an APP entry should
+take effect. Additionally, the order of the trusted selectors dictates which
+selector should take precedence, in the case of multiple different APP table
+selectors being present.
 
 .SH COMMANDS
 
 .TP
 .B show
-Display all trusted selectors.
+Displays all trusted selectors.
 
 .TP
 .B set
-Set new list of trusted selectors. Empty list is effectively the same as
+Sets a new list of trusted selectors. An empty list is effectively the same as
 removing trust entirely.
 
 .SH PARAMETERS
