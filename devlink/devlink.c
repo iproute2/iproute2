@@ -3502,12 +3502,78 @@ static const struct param_val_conv param_val_conv[] = {
 
 #define PARAM_VAL_CONV_LEN ARRAY_SIZE(param_val_conv)
 
+static int pr_out_param_value_print(const char *nla_name, int nla_type,
+				     struct nlattr *val_attr, bool conv_exists,
+				     const char *label)
+{
+	const char *vstr;
+	int err;
+
+	print_string(PRINT_FP, NULL, " %s ", label);
+
+	switch (nla_type) {
+	case MNL_TYPE_U8:
+		if (conv_exists) {
+			err = param_val_conv_str_get(param_val_conv,
+						     PARAM_VAL_CONV_LEN,
+						     nla_name,
+						     mnl_attr_get_u8(val_attr),
+						     &vstr);
+			if (err)
+				return err;
+			print_string(PRINT_ANY, label, "%s", vstr);
+		} else {
+			print_uint(PRINT_ANY, label, "%u",
+				   mnl_attr_get_u8(val_attr));
+		}
+		break;
+	case MNL_TYPE_U16:
+		if (conv_exists) {
+			err = param_val_conv_str_get(param_val_conv,
+						     PARAM_VAL_CONV_LEN,
+						     nla_name,
+						     mnl_attr_get_u16(val_attr),
+						     &vstr);
+			if (err)
+				return err;
+			print_string(PRINT_ANY, label, "%s", vstr);
+		} else {
+			print_uint(PRINT_ANY, label, "%u",
+				   mnl_attr_get_u16(val_attr));
+		}
+		break;
+	case MNL_TYPE_U32:
+		if (conv_exists) {
+			err = param_val_conv_str_get(param_val_conv,
+						     PARAM_VAL_CONV_LEN,
+						     nla_name,
+						     mnl_attr_get_u32(val_attr),
+						     &vstr);
+			if (err)
+				return err;
+			print_string(PRINT_ANY, label, "%s", vstr);
+		} else {
+			print_uint(PRINT_ANY, label, "%u",
+				   mnl_attr_get_u32(val_attr));
+		}
+		break;
+	case MNL_TYPE_STRING:
+		print_string(PRINT_ANY, label, "%s",
+			     mnl_attr_get_str(val_attr));
+		break;
+	case MNL_TYPE_FLAG:
+		print_bool(PRINT_ANY, label, "%s", val_attr);
+		break;
+	}
+
+	return 0;
+}
+
 static void pr_out_param_value(struct dl *dl, const char *nla_name,
 			       int nla_type, struct nlattr *nl)
 {
 	struct nlattr *nla_value[DEVLINK_ATTR_MAX + 1] = {};
 	struct nlattr *val_attr;
-	const char *vstr;
 	bool conv_exists;
 	int err;
 
@@ -3529,60 +3595,7 @@ static void pr_out_param_value(struct dl *dl, const char *nla_name,
 	conv_exists = param_val_conv_exists(param_val_conv, PARAM_VAL_CONV_LEN,
 					    nla_name);
 
-	switch (nla_type) {
-	case MNL_TYPE_U8:
-		if (conv_exists) {
-			err = param_val_conv_str_get(param_val_conv,
-						     PARAM_VAL_CONV_LEN,
-						     nla_name,
-						     mnl_attr_get_u8(val_attr),
-						     &vstr);
-			if (err)
-				return;
-			print_string(PRINT_ANY, "value", " value %s", vstr);
-		} else {
-			print_uint(PRINT_ANY, "value", " value %u",
-				   mnl_attr_get_u8(val_attr));
-		}
-		break;
-	case MNL_TYPE_U16:
-		if (conv_exists) {
-			err = param_val_conv_str_get(param_val_conv,
-						     PARAM_VAL_CONV_LEN,
-						     nla_name,
-						     mnl_attr_get_u16(val_attr),
-						     &vstr);
-			if (err)
-				return;
-			print_string(PRINT_ANY, "value", " value %s", vstr);
-		} else {
-			print_uint(PRINT_ANY, "value", " value %u",
-				   mnl_attr_get_u16(val_attr));
-		}
-		break;
-	case MNL_TYPE_U32:
-		if (conv_exists) {
-			err = param_val_conv_str_get(param_val_conv,
-						     PARAM_VAL_CONV_LEN,
-						     nla_name,
-						     mnl_attr_get_u32(val_attr),
-						     &vstr);
-			if (err)
-				return;
-			print_string(PRINT_ANY, "value", " value %s", vstr);
-		} else {
-			print_uint(PRINT_ANY, "value", " value %u",
-				   mnl_attr_get_u32(val_attr));
-		}
-		break;
-	case MNL_TYPE_STRING:
-		print_string(PRINT_ANY, "value", " value %s",
-			     mnl_attr_get_str(val_attr));
-		break;
-	case MNL_TYPE_FLAG:
-		print_bool(PRINT_ANY, "value", " value %s", val_attr);
-		break;
-	}
+	pr_out_param_value_print(nla_name, nla_type, val_attr, conv_exists, "value");
 }
 
 static void pr_out_param(struct dl *dl, struct nlattr **tb, bool array,
