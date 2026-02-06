@@ -45,8 +45,12 @@ devlink-dev \- devlink device configuration
 .I DEV
 .B name
 .I PARAMETER
+[
 .B value
 .I VALUE
+|
+.B default
+]
 .BR cmode " { " runtime " | " driverinit " | " permanent " } "
 
 .ti -8
@@ -159,7 +163,13 @@ Specify parameter name to set.
 
 .TP
 .BI value " VALUE"
-New value to set.
+New value to set. Mutually exclusive with
+.BR default .
+
+.TP
+.B default
+Restore parameter to its default value. Mutually exclusive with
+.BR value .
 
 .TP
 .BR cmode " { " runtime " | " driverinit " | " permanent " } "
@@ -176,10 +186,13 @@ Configuration mode in which the new value is set.
 
 .SS devlink dev param show - display devlink device supported configuration parameters attributes
 
+.TP
 .B name
 .I PARAMETER
 Specify parameter name to show.
 If this argument is omitted all parameters supported by devlink devices are listed.
+When the kernel provides a default value for a parameter, it will be automatically displayed
+in the output alongside the current value.
 
 .SS devlink dev reload - perform hot reload of the driver.
 
@@ -309,12 +322,17 @@ Sets the eswitch mode of specified devlink device to switchdev.
 .PP
 devlink dev param show pci/0000:01:00.0 name max_macs
 .RS 4
-Shows the parameter max_macs attributes.
+Shows the parameter max_macs attributes. If a default value exists, it will be displayed alongside the current value.
 .RE
 .PP
 devlink dev param set pci/0000:01:00.0 name internal_error_reset value true cmode runtime
 .RS 4
 Sets the parameter internal_error_reset of specified devlink device to true.
+.RE
+.PP
+devlink dev param set pci/0000:01:00.0 name internal_error_reset default cmode runtime
+.RS 4
+Restores the parameter internal_error_reset of specified devlink device to its default value.
 .RE
 .PP
 devlink dev reload pci/0000:01:00.0

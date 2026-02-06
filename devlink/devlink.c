@@ -313,6 +313,7 @@ static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)
 #define DL_OPT_PORT_FN_MAX_IO_EQS	BIT(58)
 #define DL_OPT_PORT_FN_RATE_TC_BWS	BIT(59)
 #define DL_OPT_HEALTH_REPORTER_BURST_PERIOD	BIT(60)
+#define DL_OPT_PARAM_SET_DEFAULT	BIT(61)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -2011,6 +2012,10 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			if (err)
 				return err;
 			o_found |= DL_OPT_PARAM_CMODE;
+		} else if (dl_argv_match(dl, "default") &&
+			   (o_all & DL_OPT_PARAM_SET_DEFAULT)) {
+			dl_arg_inc(dl);
+			o_found |= DL_OPT_PARAM_SET_DEFAULT;
 		} else if (dl_argv_match(dl, "snapshot") &&
 			   (o_all & DL_OPT_REGION_SNAPSHOT_ID)) {
 			dl_arg_inc(dl);
@@ -2672,6 +2677,8 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_PARAM_CMODE)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_PARAM_VALUE_CMODE,
 				opts->cmode);
+	if (opts->present & DL_OPT_PARAM_SET_DEFAULT)
+		mnl_attr_put(nlh, DEVLINK_ATTR_PARAM_RESET_DEFAULT, 0, NULL);
 	if (opts->present & DL_OPT_REGION_SNAPSHOT_ID)
 		mnl_attr_put_u32(nlh, DEVLINK_ATTR_REGION_SNAPSHOT_ID,
 				 opts->region_snapshot_id);
@@ -2839,7 +2846,7 @@ static void cmd_dev_help(void)
 	pr_err("                               [ inline-mode { none | link | network | transport } ]\n");
 	pr_err("                               [ encap-mode { none | basic } ]\n");
 	pr_err("       devlink dev eswitch show DEV\n");
-	pr_err("       devlink dev param set DEV name PARAMETER value VALUE cmode { permanent | driverinit | runtime }\n");
+	pr_err("       devlink dev param set DEV name PARAMETER [ value VALUE | default ] cmode { permanent | driverinit | runtime }\n");
 	pr_err("       devlink dev param show [DEV name PARAMETER]\n");
 	pr_err("       devlink dev reload DEV [ netns { PID | NAME | ID } ]\n");
 	pr_err("                              [ action { driver_reinit | fw_activate } ] [ limit no_reset ]\n");
@@ -3504,7 +3511,7 @@ static const struct param_val_conv param_val_conv[] = {
 
 static int pr_out_param_value_print(const char *nla_name, int nla_type,
 				     struct nlattr *val_attr, bool conv_exists,
-				     const char *label)
+				     const char *label, bool flag_as_u8)
 {
 	const char *vstr;
 	int err;
@@ -3562,7 +3569,11 @@ static int pr_out_param_value_print(const char *nla_name, int nla_type,
 			     mnl_attr_get_str(val_attr));
 		break;
 	case MNL_TYPE_FLAG:
-		print_bool(PRINT_ANY, label, "%s", val_attr);
+		if (flag_as_u8)
+			print_bool(PRINT_ANY, label, "%s",
+				   mnl_attr_get_u8(val_attr));
+		else
+			print_bool(PRINT_ANY, label, "%s", val_attr);
 		break;
 	}
 
@@ -3595,7 +3606,18 @@ static void pr_out_param_value(struct dl *dl, const char *nla_name,
 	conv_exists = param_val_conv_exists(param_val_conv, PARAM_VAL_CONV_LEN,
 					    nla_name);
 
-	pr_out_param_value_print(nla_name, nla_type, val_attr, conv_exists, "value");
+	err = pr_out_param_value_print(nla_name, nla_type, val_attr,
+				       conv_exists, "value", false);
+	if (err)
+		return;
+
+	val_attr = nla_value[DEVLINK_ATTR_PARAM_VALUE_DEFAULT];
+	if (val_attr) {
+		err = pr_out_param_value_print(nla_name, nla_type, val_attr,
+					       conv_exists, "default", true);
+		if (err)
+			return;
+	}
 }
 
 static void pr_out_param(struct dl *dl, struct nlattr **tb, bool array,
@@ -3764,10 +3786,22 @@ static int cmd_dev_param_set(struct dl *dl)
 
 	err = dl_argv_parse(dl, DL_OPT_HANDLE |
 			    DL_OPT_PARAM_NAME |
-			    DL_OPT_PARAM_VALUE |
-			    DL_OPT_PARAM_CMODE, 0);
+			    DL_OPT_PARAM_CMODE,
+			    DL_OPT_PARAM_VALUE | DL_OPT_PARAM_SET_DEFAULT);
 	if (err)
 		return err;
+
+	if ((dl->opts.present & DL_OPT_PARAM_VALUE) &&
+	    (dl->opts.present & DL_OPT_PARAM_SET_DEFAULT)) {
+		pr_err("Cannot specify both value and default\n");
+		return -EINVAL;
+	}
+
+	if (!(dl->opts.present & DL_OPT_PARAM_VALUE) &&
+	    !(dl->opts.present & DL_OPT_PARAM_SET_DEFAULT)) {
+		pr_err("Either value or default must be specified\n");
+		return -EINVAL;
+	}
 
 	/* Get value type */
 	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_PARAM_GET,
@@ -3781,6 +3815,14 @@ static int cmd_dev_param_set(struct dl *dl)
 	if (!ctx.cmode_found) {
 		pr_err("Configuration mode not supported\n");
 		return -ENOTSUP;
+	}
+
+	if (dl->opts.present & DL_OPT_PARAM_SET_DEFAULT) {
+		nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_PARAM_SET,
+				       NLM_F_REQUEST | NLM_F_ACK);
+		dl_opts_put(nlh, dl);
+		mnl_attr_put_u8(nlh, DEVLINK_ATTR_PARAM_TYPE, ctx.nla_type);
+		return mnlu_gen_socket_sndrcv(&dl->nlg, nlh, NULL, NULL);
 	}
 
 	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_PARAM_SET,
