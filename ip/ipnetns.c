@@ -846,6 +846,20 @@ static int netns_add(int argc, char **argv, bool create)
 			}
 			return -1;
 		}
+
+		/* Reconfigure NETNS_RUN_DIR to MS_PRIVATE recursively and later
+		 * MS_SAHRED again to make sure it is placed in a new peer group
+		 */
+		if (mount(NETNS_RUN_DIR, NETNS_RUN_DIR, "none", MS_PRIVATE | MS_REC, NULL)) {
+			fprintf(stderr, "mount --make-private %s failed: %s\n",
+				NETNS_RUN_DIR, strerror(errno));
+			if (lock != -1) {
+				flock(lock, LOCK_UN);
+				close(lock);
+			}
+			return -1;
+		}
+
 		made_netns_run_dir_mount = 1;
 	}
 	if (lock != -1) {
