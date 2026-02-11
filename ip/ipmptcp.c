@@ -243,8 +243,11 @@ static int print_mptcp_addrinfo(struct rtattr *addrinfo)
 	addr_attr_type = family == AF_INET ? MPTCP_PM_ADDR_ATTR_ADDR4 :
 					     MPTCP_PM_ADDR_ATTR_ADDR6;
 	if (tb[addr_attr_type]) {
-		print_string(PRINT_ANY, "address", "%s ",
-			     format_host_rta(family, tb[addr_attr_type]));
+		print_color_string(PRINT_ANY,
+				   ifa_family_color(family),
+				   "address",
+				   "%s ",
+				   format_host_rta(family, tb[addr_attr_type]));
 	}
 	if (tb[MPTCP_PM_ADDR_ATTR_PORT]) {
 		port = rta_getattr_u16(tb[MPTCP_PM_ADDR_ATTR_PORT]);
@@ -263,8 +266,11 @@ static int print_mptcp_addrinfo(struct rtattr *addrinfo)
 		index = rta_getattr_s32(tb[MPTCP_PM_ADDR_ATTR_IF_IDX]);
 		ifname = index ? ll_index_to_name(index) : NULL;
 
-		if (ifname)
-			print_string(PRINT_ANY, "dev", "dev %s ", ifname);
+		if (ifname) {
+			print_string(PRINT_FP, NULL, "dev ", NULL);
+			print_color_string(PRINT_ANY, COLOR_IFNAME, "dev",
+					   "%s ", ifname);
+		}
 	}
 
 	close_json_object();
@@ -467,8 +473,10 @@ static void print_addr(const char *key, int af, struct rtattr *value)
 	void *data = RTA_DATA(value);
 	char str[INET6_ADDRSTRLEN];
 
-	if (inet_ntop(af, data, str, sizeof(str)))
-		printf(" %s=%s", key, str);
+	if (inet_ntop(af, data, str, sizeof(str))) {
+		printf(" %s=", key);
+		color_fprintf(stdout, ifa_family_color(af), "%s", str);
+	}
 }
 
 static void print_iface(int index)
@@ -478,8 +486,10 @@ static void print_iface(int index)
 	printf(" ifindex=%d", index);
 
 	ifname = index ? ll_index_to_name(index) : NULL;
-	if (ifname)
-		printf(" dev=%s", ifname);
+	if (ifname) {
+		printf(" dev=");
+		color_fprintf(stdout, COLOR_IFNAME, "%s", ifname);
+	}
 }
 
 static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
