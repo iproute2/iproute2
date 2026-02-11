@@ -471,6 +471,17 @@ static void print_addr(const char *key, int af, struct rtattr *value)
 		printf(" %s=%s", key, str);
 }
 
+static void print_iface(int index)
+{
+	const char *ifname;
+
+	printf(" ifindex=%d", index);
+
+	ifname = index ? ll_index_to_name(index) : NULL;
+	if (ifname)
+		printf(" dev=%s", ifname);
+}
+
 static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 			     struct nlmsghdr *n, void *arg)
 {
@@ -530,7 +541,7 @@ static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 	if (tb[MPTCP_ATTR_TIMEOUT])
 		printf(" timeout=%u", rta_getattr_u32(tb[MPTCP_ATTR_TIMEOUT]));
 	if (tb[MPTCP_ATTR_IF_IDX])
-		printf(" ifindex=%d", rta_getattr_s32(tb[MPTCP_ATTR_IF_IDX]));
+		print_iface(rta_getattr_s32(tb[MPTCP_ATTR_IF_IDX]));
 	if (tb[MPTCP_ATTR_RESET_REASON])
 		printf(" reset_reason=%u", rta_getattr_u32(tb[MPTCP_ATTR_RESET_REASON]));
 	if (tb[MPTCP_ATTR_RESET_FLAGS])
