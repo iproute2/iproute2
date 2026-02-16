@@ -10,10 +10,9 @@
 
 
 #include <linux/netfilter.h>
+#include <linux/typelimits.h>
 
 /* only for userspace compatibility */
-
-#include <limits.h> /* for INT_MIN, INT_MAX */
 
 /* IP6 Hooks */
 /* After promisc drops, checksum checks. */
@@ -30,7 +29,7 @@
 
 
 enum nf_ip6_hook_priorities {
-	NF_IP6_PRI_FIRST = INT_MIN,
+	NF_IP6_PRI_FIRST = __KERNEL_INT_MIN,
 	NF_IP6_PRI_RAW_BEFORE_DEFRAG = -450,
 	NF_IP6_PRI_CONNTRACK_DEFRAG = -400,
 	NF_IP6_PRI_RAW = -300,
@@ -43,7 +42,7 @@ enum nf_ip6_hook_priorities {
 	NF_IP6_PRI_NAT_SRC = 100,
 	NF_IP6_PRI_SELINUX_LAST = 225,
 	NF_IP6_PRI_CONNTRACK_HELPER = 300,
-	NF_IP6_PRI_LAST = INT_MAX,
+	NF_IP6_PRI_LAST = __KERNEL_INT_MAX,
 };
 
 
