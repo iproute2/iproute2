@@ -59,7 +59,7 @@ popd
 rm -rf "$kobj"
 
 git add include/uapi
-git commit -s -F - <<EOT
+git commit -n -s -F - <<EOT
 Update kernel headers
 
 Update kernel headers to commit:
