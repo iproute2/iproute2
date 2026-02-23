@@ -8,6 +8,10 @@
 #ifndef _JSON_PRINT_H_
 #define _JSON_PRINT_H_
 
+#include <sys/time.h> /* struct timeval typedef */
+
+#include <asm/types.h> /* __u32 typedef */
+
 #include "json_writer.h"
 #include "color.h"
 
