@@ -273,8 +273,8 @@ static int print_mptcp_addrinfo(struct rtattr *addrinfo)
 		}
 	}
 
+	print_nl();
 	close_json_object();
-	print_string(PRINT_FP, NULL, "\n", NULL);
 	fflush(stdout);
 
 	return 0;
@@ -426,9 +426,11 @@ static int print_mptcp_limit(struct nlmsghdr *n, void *arg)
 
 		print_uint(PRINT_ANY, "subflows", "subflows %d ", val);
 	}
-	print_string(PRINT_FP, NULL, "%s", "\n");
-	fflush(stdout);
+
+	print_nl();
 	close_json_object();
+	fflush(stdout);
+
 	return 0;
 }
 
