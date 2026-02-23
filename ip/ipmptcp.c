@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -476,8 +477,9 @@ static void print_addr(const char *key, int af, struct rtattr *value)
 	char str[INET6_ADDRSTRLEN];
 
 	if (inet_ntop(af, data, str, sizeof(str))) {
-		printf(" %s=", key);
-		color_fprintf(stdout, ifa_family_color(af), "%s", str);
+		print_string(PRINT_FP, NULL, " %s=", key);
+		print_color_string(PRINT_ANY, ifa_family_color(af), key, "%s",
+				   str);
 	}
 }
 
@@ -485,12 +487,13 @@ static void print_iface(int index)
 {
 	const char *ifname;
 
-	printf(" ifindex=%d", index);
+	print_int(PRINT_ANY, "ifindex", " ifindex=%d", index);
 
 	ifname = index ? ll_index_to_name(index) : NULL;
 	if (ifname) {
-		printf(" dev=");
-		color_fprintf(stdout, COLOR_IFNAME, "%s", ifname);
+		print_string(PRINT_FP, NULL, " dev=", NULL);
+		print_color_string(PRINT_ANY, COLOR_IFNAME, "dev", "%s",
+				   ifname);
 	}
 }
 
@@ -509,30 +512,34 @@ static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 	if (n->nlmsg_type != genl_family)
 		return 0;
 
+	open_json_object(NULL);
+
 	if (timestamp)
 		print_timestamp(stdout);
 
-	if (ghdr->cmd >= ARRAY_SIZE(event_to_str)) {
-		printf("[UNKNOWN %u]\n", ghdr->cmd);
+	if (ghdr->cmd >= ARRAY_SIZE(event_to_str) ||
+	    event_to_str[ghdr->cmd] == NULL) {
+		char event[40];
+
+		snprintf(event, sizeof(event), "UNKNOWN %u", ghdr->cmd);
+		print_string(PRINT_ANY, "event", "[%s]", event);
 		goto out;
 	}
 
-	if (event_to_str[ghdr->cmd] == NULL) {
-		printf("[UNKNOWN %u]\n", ghdr->cmd);
-		goto out;
-	}
-
-	printf("[%16s]", event_to_str[ghdr->cmd]);
+	print_string(PRINT_ANY, "event", "[%16s]", event_to_str[ghdr->cmd]);
 
 	parse_rtattr(tb, MPTCP_ATTR_MAX, (void *) ghdr + GENL_HDRLEN, len);
 
 	if (tb[MPTCP_ATTR_TOKEN])
-		printf(" token=%08x", rta_getattr_u32(tb[MPTCP_ATTR_TOKEN]));
+		print_0xhex(PRINT_ANY, "token", " token=%08x",
+			    rta_getattr_u32(tb[MPTCP_ATTR_TOKEN]));
 
 	if (tb[MPTCP_ATTR_REM_ID])
-		printf(" remid=%u", rta_getattr_u8(tb[MPTCP_ATTR_REM_ID]));
+		print_uint(PRINT_ANY, "remid", " remid=%u",
+			   rta_getattr_u8(tb[MPTCP_ATTR_REM_ID]));
 	if (tb[MPTCP_ATTR_LOC_ID])
-		printf(" locid=%u", rta_getattr_u8(tb[MPTCP_ATTR_LOC_ID]));
+		print_uint(PRINT_ANY, "locid", " locid=%u",
+			   rta_getattr_u8(tb[MPTCP_ATTR_LOC_ID]));
 
 	if (tb[MPTCP_ATTR_SADDR4])
 		print_addr("saddr4", AF_INET, tb[MPTCP_ATTR_SADDR4]);
@@ -543,48 +550,73 @@ static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 	if (tb[MPTCP_ATTR_DADDR6])
 		print_addr("daddr6", AF_INET6, tb[MPTCP_ATTR_DADDR6]);
 	if (tb[MPTCP_ATTR_SPORT])
-		printf(" sport=%u", rta_getattr_be16(tb[MPTCP_ATTR_SPORT]));
+		print_uint(PRINT_ANY, "sport", " sport=%u",
+			   rta_getattr_be16(tb[MPTCP_ATTR_SPORT]));
 	if (tb[MPTCP_ATTR_DPORT])
-		printf(" dport=%u", rta_getattr_be16(tb[MPTCP_ATTR_DPORT]));
+		print_uint(PRINT_ANY, "dport", " dport=%u",
+			   rta_getattr_be16(tb[MPTCP_ATTR_DPORT]));
 	if (tb[MPTCP_ATTR_BACKUP])
-		printf(" backup=%u", rta_getattr_u8(tb[MPTCP_ATTR_BACKUP]));
+		print_uint(PRINT_ANY, "backup", " backup=%u",
+			   rta_getattr_u8(tb[MPTCP_ATTR_BACKUP]));
 	if (tb[MPTCP_ATTR_ERROR])
-		printf(" error=%u", rta_getattr_u8(tb[MPTCP_ATTR_ERROR]));
+		print_uint(PRINT_ANY, "error", " error=%u",
+			   rta_getattr_u8(tb[MPTCP_ATTR_ERROR]));
 	if (tb[MPTCP_ATTR_TIMEOUT])
-		printf(" timeout=%u", rta_getattr_u32(tb[MPTCP_ATTR_TIMEOUT]));
+		print_uint(PRINT_ANY, "timeout", " timeout=%u",
+			   rta_getattr_u32(tb[MPTCP_ATTR_TIMEOUT]));
 	if (tb[MPTCP_ATTR_IF_IDX])
 		print_iface(rta_getattr_s32(tb[MPTCP_ATTR_IF_IDX]));
 	if (tb[MPTCP_ATTR_RESET_REASON])
-		printf(" reset_reason=%u", rta_getattr_u32(tb[MPTCP_ATTR_RESET_REASON]));
+		print_uint(PRINT_ANY, "reset_reason", " reset_reason=%u",
+			   rta_getattr_u32(tb[MPTCP_ATTR_RESET_REASON]));
 	if (tb[MPTCP_ATTR_RESET_FLAGS])
-		printf(" reset_flags=0x%x", rta_getattr_u32(tb[MPTCP_ATTR_RESET_FLAGS]));
+		print_0xhex(PRINT_ANY, "reset_flags", " reset_flags=%#x",
+			    rta_getattr_u32(tb[MPTCP_ATTR_RESET_FLAGS]));
 
 	if (tb[MPTCP_ATTR_FLAGS])
 		flags = rta_getattr_u16(tb[MPTCP_ATTR_FLAGS]);
 	if ((flags & MPTCP_PM_EV_FLAG_SERVER_SIDE) ||
 	    (tb[MPTCP_ATTR_SERVER_SIDE] && rta_getattr_u8(tb[MPTCP_ATTR_SERVER_SIDE]))) {
 		flags &= ~MPTCP_PM_EV_FLAG_SERVER_SIDE;
-		printf(" server_side");
+		print_string(PRINT_FP, NULL, " server_side", NULL);
+		print_bool(PRINT_JSON, "server_side", NULL, true);
 	}
 	if (flags & MPTCP_PM_EV_FLAG_DENY_JOIN_ID0) {
 		flags &= ~MPTCP_PM_EV_FLAG_DENY_JOIN_ID0;
-		printf(" deny_join_id0");
+		print_string(PRINT_FP, NULL, " deny_join_id0", NULL);
+		print_bool(PRINT_JSON, "deny_join_id0", NULL, true);
 	}
 	if (flags) /* remaining bits */
-		printf(" flags=0x%x", flags);
+		print_0xhex(PRINT_ANY, "flags", " flags=%#x", flags);
 
-	puts("");
 out:
+	print_nl();
+	close_json_object();
 	fflush(stdout);
+
 	return 0;
+}
+
+static void sig_exit(int signo)
+{
+	exit(0);
 }
 
 static int mptcp_monitor(void)
 {
+	struct sigaction sa = { .sa_handler = sig_exit,
+				.sa_flags = SA_RESTART };
+
 	if (genl_add_mcast_grp(&genl_rth, genl_family, MPTCP_PM_EV_GRP_NAME) < 0) {
 		perror("can't subscribe to mptcp events");
 		return 1;
 	}
+
+	new_json_obj(json);
+	atexit(delete_json_obj);
+
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
 
 	if (rtnl_listen(&genl_rth, mptcp_monitor_msg, stdout) < 0)
 		return 2;
