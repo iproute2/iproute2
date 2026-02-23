@@ -1277,21 +1277,23 @@ int print_timestamp(FILE *fp)
 {
 	struct timeval tv;
 	struct tm *tm;
+	char ts[40];
 
 	gettimeofday(&tv, NULL);
 	tm = localtime(&tv.tv_sec);
 
 	if (timestamp_short) {
-		char tshort[40];
+		size_t len;
 
-		strftime(tshort, sizeof(tshort), "%Y-%m-%dT%H:%M:%S", tm);
-		fprintf(fp, "[%s.%06ld] ", tshort, tv.tv_usec);
+		len = strftime(ts, sizeof(ts), "%Y-%m-%dT%H:%M:%S", tm);
+		snprintf(ts + len, sizeof(ts) - len, ".%06ld", tv.tv_usec);
+		print_string(PRINT_ANY, "timestamp_short", "[%s] ", ts);
 	} else {
 		char *tstr = asctime(tm);
 
 		tstr[strlen(tstr)-1] = 0;
-		fprintf(fp, "Timestamp: %s %ld usec\n",
-			tstr, tv.tv_usec);
+		snprintf(ts, sizeof(ts), "%s %ld usec", tstr, tv.tv_usec);
+		print_string(PRINT_ANY, "timestamp", "Timestamp: %s\n", ts);
 	}
 
 	return 0;
