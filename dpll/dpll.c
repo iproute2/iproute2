@@ -616,6 +616,9 @@ dpll_free:
 static void cmd_device_help(void)
 {
 	pr_err("Usage: dpll device show [ id DEVICE_ID ]\n");
+	pr_err("                        [ module-name NAME ] [ clock-id ID ]\n");
+	pr_err("                        [ type TYPE ] [ mode MODE ]\n");
+	pr_err("                        [ lock-status STATUS ]\n");
 	pr_err("       dpll device set id DEVICE_ID [ mode { automatic | manual } ]\n");
 	pr_err("                                    [ phase-offset-monitor { enable | disable } ]\n");
 	pr_err("                                    [ phase-offset-avg-factor NUM ]\n");
@@ -664,6 +667,21 @@ static int str_to_dpll_type(const char *s, __u32 *type)
 		*type = DPLL_TYPE_PPS;
 	else if (!strcmp(s, "eec"))
 		*type = DPLL_TYPE_EEC;
+	else
+		return -EINVAL;
+	return 0;
+}
+
+static int str_to_dpll_lock_status(const char *s, __u32 *status)
+{
+	if (!strcmp(s, "unlocked"))
+		*status = DPLL_LOCK_STATUS_UNLOCKED;
+	else if (!strcmp(s, "locked"))
+		*status = DPLL_LOCK_STATUS_LOCKED;
+	else if (!strcmp(s, "locked-ho-acq"))
+		*status = DPLL_LOCK_STATUS_LOCKED_HO_ACQ;
+	else if (!strcmp(s, "holdover"))
+		*status = DPLL_LOCK_STATUS_HOLDOVER;
 	else
 		return -EINVAL;
 	return 0;
@@ -735,6 +753,118 @@ static int attr_pin_cb(const struct nlattr *attr, void *data)
 	return MNL_CB_OK;
 }
 
+/*
+ * Dump filter helpers - client-side filtering of dump results.
+ * AND semantics: all specified filters must match.
+ */
+
+static inline bool filter_match_str(struct nlattr *attr, const char *expected)
+{
+	return attr && strcmp(mnl_attr_get_str(attr), expected) == 0;
+}
+
+static inline bool filter_match_u32(struct nlattr *attr, __u32 expected)
+{
+	return attr && mnl_attr_get_u32(attr) == expected;
+}
+
+static inline bool filter_match_u64(struct nlattr *attr, __u64 expected)
+{
+	return attr && mnl_attr_get_u64(attr) == expected;
+}
+
+static int dpll_filter_parse_str(struct dpll *dpll, const char *name,
+				 const char **dst, uint64_t *present,
+				 uint64_t flag)
+{
+	const char *str = dpll_argv_next(dpll);
+
+	if (!str) {
+		pr_err("%s requires an argument\n", name);
+		return -EINVAL;
+	}
+	*dst = str;
+	*present |= flag;
+	return 0;
+}
+
+static int dpll_filter_parse_u64(struct dpll *dpll, const char *name,
+				 __u64 *dst, uint64_t *present,
+				 uint64_t flag)
+{
+	const char *str = dpll_argv_next(dpll);
+
+	if (!str) {
+		pr_err("%s requires an argument\n", name);
+		return -EINVAL;
+	}
+	if (get_u64(dst, str, 0)) {
+		pr_err("invalid %s: %s\n", name, str);
+		return -EINVAL;
+	}
+	*present |= flag;
+	return 0;
+}
+
+static int dpll_filter_parse_enum(struct dpll *dpll, const char *name,
+				  __u32 *dst, uint64_t *present,
+				  uint64_t flag,
+				  int (*convert)(const char *, __u32 *),
+				  const char *valid_values)
+{
+	const char *str = dpll_argv_next(dpll);
+
+	if (!str) {
+		pr_err("%s requires an argument\n", name);
+		return -EINVAL;
+	}
+	if (convert(str, dst)) {
+		pr_err("invalid %s: %s (use %s)\n", name, str, valid_values);
+		return -EINVAL;
+	}
+	*present |= flag;
+	return 0;
+}
+
+#define DPLL_FILTER_DEV_MODULE_NAME	BIT(0)
+#define DPLL_FILTER_DEV_CLOCK_ID	BIT(1)
+#define DPLL_FILTER_DEV_TYPE		BIT(2)
+#define DPLL_FILTER_DEV_MODE		BIT(3)
+#define DPLL_FILTER_DEV_LOCK_STATUS	BIT(4)
+
+struct dpll_device_filter {
+	uint64_t present;
+	const char *module_name;
+	__u64 clock_id;
+	__u32 type;
+	__u32 mode;
+	__u32 lock_status;
+};
+
+static bool dpll_device_dump_filter(struct dpll_device_filter *filter,
+				    struct nlattr **tb)
+{
+	if (!filter || !filter->present)
+		return true;
+
+	if ((filter->present & DPLL_FILTER_DEV_MODULE_NAME) &&
+	    !filter_match_str(tb[DPLL_A_MODULE_NAME], filter->module_name))
+		return false;
+	if ((filter->present & DPLL_FILTER_DEV_CLOCK_ID) &&
+	    !filter_match_u64(tb[DPLL_A_CLOCK_ID], filter->clock_id))
+		return false;
+	if ((filter->present & DPLL_FILTER_DEV_TYPE) &&
+	    !filter_match_u32(tb[DPLL_A_TYPE], filter->type))
+		return false;
+	if ((filter->present & DPLL_FILTER_DEV_MODE) &&
+	    !filter_match_u32(tb[DPLL_A_MODE], filter->mode))
+		return false;
+	if ((filter->present & DPLL_FILTER_DEV_LOCK_STATUS) &&
+	    !filter_match_u32(tb[DPLL_A_LOCK_STATUS], filter->lock_status))
+		return false;
+	return true;
+}
+
 /* Print device attributes */
 static void dpll_device_print_attrs(const struct nlmsghdr *nlh,
 				    struct nlattr **tb)
@@ -765,9 +895,14 @@ static void dpll_device_print_attrs(const struct nlmsghdr *nlh,
 /* Netlink callback - device get (single device) */
 static int cmd_device_show_cb(const struct nlmsghdr *nlh, void *data)
 {
+	struct dpll_device_filter *filter = data;
 	struct nlattr *tb[DPLL_A_MAX + 1] = {};
 
 	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), attr_cb, tb);
+
+	if (!dpll_device_dump_filter(filter, tb))
+		return MNL_CB_OK;
+
 	dpll_device_print_attrs(nlh, tb);
 
 	return MNL_CB_OK;
@@ -776,9 +911,13 @@ static int cmd_device_show_cb(const struct nlmsghdr *nlh, void *data)
 /* Netlink callback - device dump (multiple devices) */
 static int cmd_device_show_dump_cb(const struct nlmsghdr *nlh, void *data)
 {
+	struct dpll_device_filter *filter = data;
 	struct nlattr *tb[DPLL_A_MAX + 1] = {};
 
 	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), attr_cb, tb);
+
+	if (!dpll_device_dump_filter(filter, tb))
+		return MNL_CB_OK;
 
 	open_json_object(NULL);
 	dpll_device_print_attrs(nlh, tb);
@@ -787,7 +926,8 @@ static int cmd_device_show_dump_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_OK;
 }
 
-static int cmd_device_show_id(struct dpll *dpll, __u32 id)
+static int cmd_device_show_id(struct dpll *dpll, __u32 id,
+			      struct dpll_device_filter *filter)
 {
 	struct nlmsghdr *nlh;
 	int err;
@@ -796,7 +936,8 @@ static int cmd_device_show_id(struct dpll *dpll, __u32 id)
 					  NLM_F_REQUEST | NLM_F_ACK);
 	mnl_attr_put_u32(nlh, DPLL_A_ID, id);
 
-	err = mnlu_gen_socket_sndrcv(&dpll->nlg, nlh, cmd_device_show_cb, NULL);
+	err = mnlu_gen_socket_sndrcv(&dpll->nlg, nlh, cmd_device_show_cb,
+				     filter);
 	if (err < 0) {
 		pr_err("Failed to get device %u\n", id);
 		return -1;
@@ -805,7 +946,8 @@ static int cmd_device_show_id(struct dpll *dpll, __u32 id)
 	return 0;
 }
 
-static int cmd_device_show_dump(struct dpll *dpll)
+static int cmd_device_show_dump(struct dpll *dpll,
+				struct dpll_device_filter *filter)
 {
 	struct nlmsghdr *nlh;
 	int err;
@@ -817,7 +959,7 @@ static int cmd_device_show_dump(struct dpll *dpll)
 	open_json_array(PRINT_JSON, "device");
 
 	err = mnlu_gen_socket_sndrcv(&dpll->nlg, nlh, cmd_device_show_dump_cb,
-				     NULL);
+				     filter);
 	if (err < 0) {
 		pr_err("Failed to dump devices\n");
 		close_json_array(PRINT_JSON, NULL);
@@ -831,6 +973,7 @@ static int cmd_device_show_dump(struct dpll *dpll)
 
 static int cmd_device_show(struct dpll *dpll)
 {
+	struct dpll_device_filter filter = {};
 	bool has_id = false;
 	__u32 id = 0;
 
@@ -839,6 +982,42 @@ static int cmd_device_show(struct dpll *dpll)
 			if (dpll_parse_u32(dpll, "id", &id))
 				return -EINVAL;
 			has_id = true;
+		} else if (dpll_argv_match(dpll, "module-name")) {
+			if (dpll_filter_parse_str(dpll, "module-name",
+						  &filter.module_name,
+						  &filter.present,
+						  DPLL_FILTER_DEV_MODULE_NAME))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "clock-id")) {
+			if (dpll_filter_parse_u64(dpll, "clock-id",
+						  &filter.clock_id,
+						  &filter.present,
+						  DPLL_FILTER_DEV_CLOCK_ID))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "type")) {
+			if (dpll_filter_parse_enum(dpll, "type",
+						   &filter.type,
+						   &filter.present,
+						   DPLL_FILTER_DEV_TYPE,
+						   str_to_dpll_type,
+						   "pps/eec"))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "mode")) {
+			if (dpll_filter_parse_enum(dpll, "mode",
+						   &filter.mode,
+						   &filter.present,
+						   DPLL_FILTER_DEV_MODE,
+						   str_to_dpll_mode,
+						   "manual/automatic"))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "lock-status")) {
+			if (dpll_filter_parse_enum(dpll, "lock-status",
+						   &filter.lock_status,
+						   &filter.present,
+						   DPLL_FILTER_DEV_LOCK_STATUS,
+						   str_to_dpll_lock_status,
+						   "unlocked/locked/locked-ho-acq/holdover"))
+				return -EINVAL;
 		} else {
 			pr_err("unknown option: %s\n", dpll_argv(dpll));
 			return -EINVAL;
@@ -846,9 +1025,9 @@ static int cmd_device_show(struct dpll *dpll)
 	}
 
 	if (has_id)
-		return cmd_device_show_id(dpll, id);
+		return cmd_device_show_id(dpll, id, &filter);
 
-	return cmd_device_show_dump(dpll);
+	return cmd_device_show_dump(dpll, &filter);
 }
 
 static int cmd_device_set(struct dpll *dpll)

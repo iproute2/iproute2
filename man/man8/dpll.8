@@ -60,7 +60,7 @@ and newlines for better human readability.
 
 .SH DEVICE COMMANDS
 
-.SS dpll device show [ id ID ]
+.SS dpll device show [ id ID ] [ module-name NAME ] [ clock-id ID ] [ type TYPE ] [ mode MODE ] [ lock-status STATUS ]
 
 Display information about DPLL devices. If no arguments are specified,
 shows all devices in the system.
@@ -68,6 +68,29 @@ shows all devices in the system.
 .TP
 .BI id " ID"
 Show only the device with the specified numeric identifier.
+
+.TP
+.BI module-name " NAME"
+Show only devices provided by the specified kernel module.
+
+.TP
+.BI clock-id " ID"
+Show only devices with the specified 64-bit clock identifier.
+
+.TP
+.BI type " TYPE"
+Show only devices of the specified type:
+.BR pps " or " eec .
+
+.TP
+.BI mode " MODE"
+Show only devices in the specified operating mode:
+.BR manual " or " automatic .
+
+.TP
+.BI lock-status " STATUS"
+Show only devices with the specified lock status:
+.BR unlocked ", " locked ", " locked-ho-acq ", " holdover .
 
 .PP
 Output includes:
@@ -302,6 +325,16 @@ Press Ctrl+C to stop monitoring.
 .SS Enable phase offset monitoring on device 0
 .nf
 .B dpll device set id 0 phase-offset-monitor enable
+.fi
+
+.SS Show all EEC devices
+.nf
+.B dpll device show type eec
+.fi
+
+.SS Show devices from specific module in JSON
+.nf
+.B dpll -jp device show module-name ice
 .fi
 
 .SS Show all pins

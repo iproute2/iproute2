@@ -60,8 +60,31 @@ _dpll_device()
                         "$(_dpll_direct_complete device_id)" -- "$cur" ) )
                     return 0
                     ;;
+                module-name)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete module_name)" -- "$cur" ) )
+                    return 0
+                    ;;
+                clock-id)
+                    # numeric value, no completion
+                    return 0
+                    ;;
+                type)
+                    COMPREPLY=( $( compgen -W "pps eec" -- "$cur" ) )
+                    return 0
+                    ;;
+                mode)
+                    COMPREPLY=( $( compgen -W "manual automatic" -- "$cur" ) )
+                    return 0
+                    ;;
+                lock-status)
+                    COMPREPLY=( $( compgen -W \
+                        "unlocked locked locked-ho-acq holdover" -- "$cur" ) )
+                    return 0
+                    ;;
                 *)
-                    COMPREPLY=( $( compgen -W "id" -- "$cur" ) )
+                    COMPREPLY=( $( compgen -W "id module-name clock-id \
+                        type mode lock-status" -- "$cur" ) )
                     return 0
                     ;;
             esac
