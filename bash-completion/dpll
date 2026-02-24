@@ -153,9 +153,14 @@ _dpll_pin()
                         "$(_dpll_direct_complete pin_id)" -- "$cur" ) )
                     return 0
                     ;;
-                device)
+                parent-device)
                     COMPREPLY=( $( compgen -W \
                         "$(_dpll_direct_complete device_id)" -- "$cur" ) )
+                    return 0
+                    ;;
+                parent-pin)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete pin_id)" -- "$cur" ) )
                     return 0
                     ;;
                 module-name)
@@ -177,8 +182,9 @@ _dpll_pin()
                     return 0
                     ;;
                 *)
-                    COMPREPLY=( $( compgen -W "id device module-name clock-id \
-                        board-label panel-label package-label type" \
+                    COMPREPLY=( $( compgen -W "id parent-device parent-pin \
+                        module-name clock-id board-label panel-label \
+                        package-label type" \
                         -- "$cur" ) )
                     return 0
                     ;;

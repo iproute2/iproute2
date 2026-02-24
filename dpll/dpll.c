@@ -788,6 +788,24 @@ static int dpll_filter_parse_str(struct dpll *dpll, const char *name,
 	return 0;
 }
 
+static int dpll_filter_parse_u32(struct dpll *dpll, const char *name,
+				 __u32 *dst, uint64_t *present,
+				 uint64_t flag)
+{
+	const char *str = dpll_argv_next(dpll);
+
+	if (!str) {
+		pr_err("%s requires an argument\n", name);
+		return -EINVAL;
+	}
+	if (get_u32(dst, str, 0)) {
+		pr_err("invalid %s: %s\n", name, str);
+		return -EINVAL;
+	}
+	*present |= flag;
+	return 0;
+}
+
 static int dpll_filter_parse_u64(struct dpll *dpll, const char *name,
 				 __u64 *dst, uint64_t *present,
 				 uint64_t flag)
@@ -871,6 +889,8 @@ static bool dpll_device_dump_filter(struct dpll_device_filter *filter,
 #define DPLL_FILTER_PIN_PANEL_LABEL	BIT(3)
 #define DPLL_FILTER_PIN_PACKAGE_LABEL	BIT(4)
 #define DPLL_FILTER_PIN_TYPE		BIT(5)
+#define DPLL_FILTER_PIN_PARENT_DEVICE	BIT(6)
+#define DPLL_FILTER_PIN_PARENT_PIN	BIT(7)
 
 struct dpll_pin_filter {
 	uint64_t present;
@@ -880,9 +900,31 @@ struct dpll_pin_filter {
 	const char *panel_label;
 	const char *package_label;
 	__u32 type;
+	__u32 parent_device_id;
+	__u32 parent_pin_id;
 };
 
+static bool filter_match_nested_id(const struct nlmsghdr *nlh,
+				   uint16_t nest_type, __u32 expected_id)
+{
+	const struct nlattr *attr;
+
+	mnl_attr_for_each(attr, nlh, sizeof(struct genlmsghdr)) {
+		struct nlattr *tb_nest[DPLL_A_PIN_MAX + 1] = {};
+
+		if (mnl_attr_get_type(attr) != nest_type)
+			continue;
+
+		mnl_attr_parse_nested(attr, attr_pin_cb, tb_nest);
+		if (filter_match_u32(tb_nest[DPLL_A_PIN_PARENT_ID],
+				     expected_id))
+			return true;
+	}
+	return false;
+}
+
 static bool dpll_pin_dump_filter(struct dpll_pin_filter *filter,
+				 const struct nlmsghdr *nlh,
 				 struct nlattr **tb)
 {
 	if (!filter || !filter->present)
@@ -906,6 +948,14 @@ static bool dpll_pin_dump_filter(struct dpll_pin_filter *filter,
 		return false;
 	if ((filter->present & DPLL_FILTER_PIN_TYPE) &&
 	    !filter_match_u32(tb[DPLL_A_PIN_TYPE], filter->type))
+		return false;
+	if ((filter->present & DPLL_FILTER_PIN_PARENT_DEVICE) &&
+	    !filter_match_nested_id(nlh, DPLL_A_PIN_PARENT_DEVICE,
+				    filter->parent_device_id))
+		return false;
+	if ((filter->present & DPLL_FILTER_PIN_PARENT_PIN) &&
+	    !filter_match_nested_id(nlh, DPLL_A_PIN_PARENT_PIN,
+				    filter->parent_pin_id))
 		return false;
 	return true;
 }
@@ -1230,7 +1280,8 @@ static int cmd_device(struct dpll *dpll)
 
 static void cmd_pin_help(void)
 {
-	pr_err("Usage: dpll pin show [ id PIN_ID ] [ device DEVICE_ID ]\n");
+	pr_err("Usage: dpll pin show [ id PIN_ID ]\n");
+	pr_err("                     [ parent-device DEVICE_ID ] [ parent-pin PIN_ID ]\n");
 	pr_err("                     [ module-name NAME ] [ clock-id ID ]\n");
 	pr_err("                     [ board-label LABEL ] [ panel-label LABEL ]\n");
 	pr_err("                     [ package-label LABEL ] [ type TYPE ]\n");
@@ -1607,7 +1658,7 @@ static int cmd_pin_show_cb(const struct nlmsghdr *nlh, void *data)
 	/* First parse to get main attributes */
 	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), attr_pin_cb, tb);
 
-	if (!dpll_pin_dump_filter(filter, tb))
+	if (!dpll_pin_dump_filter(filter, nlh, tb))
 		return MNL_CB_OK;
 
 	/* Pass 1: Count multi-attr occurrences and allocate */
@@ -1691,12 +1742,9 @@ static int cmd_pin_show_dump_cb(const struct nlmsghdr *nlh, void *data)
 	struct nlattr *tb[DPLL_A_PIN_MAX + 1] = {};
 	int ret;
 
-	/* Lightweight pre-parse for filter check before expensive
-	 * multi-attr processing in cmd_pin_show_cb.
-	 */
 	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), attr_pin_cb, tb);
 
-	if (!dpll_pin_dump_filter(filter, tb))
+	if (!dpll_pin_dump_filter(filter, nlh, tb))
 		return MNL_CB_OK;
 
 	open_json_object(NULL);
@@ -1726,8 +1774,7 @@ static int cmd_pin_show_id(struct dpll *dpll, __u32 id,
 	return 0;
 }
 
-static int cmd_pin_show_dump(struct dpll *dpll, bool has_device_id,
-			     __u32 device_id,
+static int cmd_pin_show_dump(struct dpll *dpll,
 			     struct dpll_pin_filter *filter)
 {
 	struct nlmsghdr *nlh;
@@ -1737,11 +1784,6 @@ static int cmd_pin_show_dump(struct dpll *dpll, bool has_device_id,
 					  NLM_F_REQUEST | NLM_F_ACK |
 						  NLM_F_DUMP);
 
-	/* If device_id specified, filter pins by device */
-	if (has_device_id)
-		mnl_attr_put_u32(nlh, DPLL_A_ID, device_id);
-
-	/* Open JSON array for multiple pins */
 	open_json_array(PRINT_JSON, "pin");
 
 	err = mnlu_gen_socket_sndrcv(&dpll->nlg, nlh, cmd_pin_show_dump_cb,
@@ -1760,19 +1802,27 @@ static int cmd_pin_show_dump(struct dpll *dpll, bool has_device_id,
 
 static int cmd_pin_show(struct dpll *dpll)
 {
-	bool has_pin_id = false, has_device_id = false;
 	struct dpll_pin_filter filter = {};
-	__u32 pin_id = 0, device_id = 0;
+	bool has_pin_id = false;
+	__u32 pin_id = 0;
 
 	while (dpll_argc(dpll) > 0) {
 		if (dpll_argv_match(dpll, "id")) {
 			if (dpll_parse_u32(dpll, "id", &pin_id))
 				return -EINVAL;
 			has_pin_id = true;
-		} else if (dpll_argv_match(dpll, "device")) {
-			if (dpll_parse_u32(dpll, "device", &device_id))
+		} else if (dpll_argv_match(dpll, "parent-device")) {
+			if (dpll_filter_parse_u32(dpll, "parent-device",
+						  &filter.parent_device_id,
+						  &filter.present,
+						  DPLL_FILTER_PIN_PARENT_DEVICE))
 				return -EINVAL;
-			has_device_id = true;
+		} else if (dpll_argv_match(dpll, "parent-pin")) {
+			if (dpll_filter_parse_u32(dpll, "parent-pin",
+						  &filter.parent_pin_id,
+						  &filter.present,
+						  DPLL_FILTER_PIN_PARENT_PIN))
+				return -EINVAL;
 		} else if (dpll_argv_match(dpll, "module-name")) {
 			if (dpll_filter_parse_str(dpll, "module-name",
 						  &filter.module_name,
@@ -1820,7 +1870,7 @@ static int cmd_pin_show(struct dpll *dpll)
 	if (has_pin_id)
 		return cmd_pin_show_id(dpll, pin_id, &filter);
 
-	return cmd_pin_show_dump(dpll, has_device_id, device_id, &filter);
+	return cmd_pin_show_dump(dpll, &filter);
 }
 
 static int cmd_pin_parse_parent_device(struct dpll *dpll, struct nlmsghdr *nlh)

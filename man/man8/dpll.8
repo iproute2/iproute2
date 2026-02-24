@@ -161,7 +161,7 @@ Device type:
 
 .SH PIN COMMANDS
 
-.SS dpll pin show [ id ID ] [ device ID ] [ module-name NAME ] [ clock-id ID ] [ board-label LABEL ] [ panel-label LABEL ] [ package-label LABEL ] [ type TYPE ]
+.SS dpll pin show [ id ID ] [ parent-device DEVICE_ID ] [ parent-pin PIN_ID ] [ module-name NAME ] [ clock-id ID ] [ board-label LABEL ] [ panel-label LABEL ] [ package-label LABEL ] [ type TYPE ]
 
 Display information about DPLL pins. If no arguments are specified,
 shows all pins in the system.
@@ -171,8 +171,12 @@ shows all pins in the system.
 Show only the pin with the specified numeric identifier.
 
 .TP
-.BI device " ID"
-Show only pins associated with the specified device ID.
+.BI parent-device " DEVICE_ID"
+Show only pins that have the specified DPLL device as a parent.
+
+.TP
+.BI parent-pin " PIN_ID"
+Show only pins that have the specified pin as a parent (mux pins).
 
 .TP
 .BI module-name " NAME"
