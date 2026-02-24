@@ -161,7 +161,7 @@ Device type:
 
 .SH PIN COMMANDS
 
-.SS dpll pin show [ id ID ] [ device ID ]
+.SS dpll pin show [ id ID ] [ device ID ] [ module-name NAME ] [ clock-id ID ] [ board-label LABEL ] [ panel-label LABEL ] [ package-label LABEL ] [ type TYPE ]
 
 Display information about DPLL pins. If no arguments are specified,
 shows all pins in the system.
@@ -173,6 +173,31 @@ Show only the pin with the specified numeric identifier.
 .TP
 .BI device " ID"
 Show only pins associated with the specified device ID.
+
+.TP
+.BI module-name " NAME"
+Show only pins provided by the specified kernel module.
+
+.TP
+.BI clock-id " ID"
+Show only pins with the specified 64-bit clock identifier.
+
+.TP
+.BI board-label " LABEL"
+Show only pins with the specified board label.
+
+.TP
+.BI panel-label " LABEL"
+Show only pins with the specified panel label.
+
+.TP
+.BI package-label " LABEL"
+Show only pins with the specified package label.
+
+.TP
+.BI type " TYPE"
+Show only pins of the specified type:
+.BR mux ", " ext ", " synce-eth-port ", " int-oscillator ", " gnss .
 
 .PP
 Output includes:
@@ -340,6 +365,16 @@ Press Ctrl+C to stop monitoring.
 .SS Show all pins
 .nf
 .B dpll pin show
+.fi
+
+.SS Show all GNSS pins
+.nf
+.B dpll pin show type gnss
+.fi
+
+.SS Show GNSS pins from specific module
+.nf
+.B dpll pin show type gnss module-name ice
 .fi
 
 .SS Show pin with pretty JSON output

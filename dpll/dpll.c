@@ -865,6 +865,51 @@ static bool dpll_device_dump_filter(struct dpll_device_filter *filter,
 	return true;
 }
 
+#define DPLL_FILTER_PIN_MODULE_NAME	BIT(0)
+#define DPLL_FILTER_PIN_CLOCK_ID	BIT(1)
+#define DPLL_FILTER_PIN_BOARD_LABEL	BIT(2)
+#define DPLL_FILTER_PIN_PANEL_LABEL	BIT(3)
+#define DPLL_FILTER_PIN_PACKAGE_LABEL	BIT(4)
+#define DPLL_FILTER_PIN_TYPE		BIT(5)
+
+struct dpll_pin_filter {
+	uint64_t present;
+	const char *module_name;
+	__u64 clock_id;
+	const char *board_label;
+	const char *panel_label;
+	const char *package_label;
+	__u32 type;
+};
+
+static bool dpll_pin_dump_filter(struct dpll_pin_filter *filter,
+				 struct nlattr **tb)
+{
+	if (!filter || !filter->present)
+		return true;
+
+	if ((filter->present & DPLL_FILTER_PIN_MODULE_NAME) &&
+	    !filter_match_str(tb[DPLL_A_PIN_MODULE_NAME], filter->module_name))
+		return false;
+	if ((filter->present & DPLL_FILTER_PIN_CLOCK_ID) &&
+	    !filter_match_u64(tb[DPLL_A_PIN_CLOCK_ID], filter->clock_id))
+		return false;
+	if ((filter->present & DPLL_FILTER_PIN_BOARD_LABEL) &&
+	    !filter_match_str(tb[DPLL_A_PIN_BOARD_LABEL], filter->board_label))
+		return false;
+	if ((filter->present & DPLL_FILTER_PIN_PANEL_LABEL) &&
+	    !filter_match_str(tb[DPLL_A_PIN_PANEL_LABEL], filter->panel_label))
+		return false;
+	if ((filter->present & DPLL_FILTER_PIN_PACKAGE_LABEL) &&
+	    !filter_match_str(tb[DPLL_A_PIN_PACKAGE_LABEL],
+			      filter->package_label))
+		return false;
+	if ((filter->present & DPLL_FILTER_PIN_TYPE) &&
+	    !filter_match_u32(tb[DPLL_A_PIN_TYPE], filter->type))
+		return false;
+	return true;
+}
+
 /* Print device attributes */
 static void dpll_device_print_attrs(const struct nlmsghdr *nlh,
 				    struct nlattr **tb)
@@ -1186,6 +1231,9 @@ static int cmd_device(struct dpll *dpll)
 static void cmd_pin_help(void)
 {
 	pr_err("Usage: dpll pin show [ id PIN_ID ] [ device DEVICE_ID ]\n");
+	pr_err("                     [ module-name NAME ] [ clock-id ID ]\n");
+	pr_err("                     [ board-label LABEL ] [ panel-label LABEL ]\n");
+	pr_err("                     [ package-label LABEL ] [ type TYPE ]\n");
 	pr_err("       dpll pin set id PIN_ID [ frequency FREQ ]\n");
 	pr_err("                              [ phase-adjust ADJUST ]\n");
 	pr_err("                              [ esync-frequency FREQ ]\n");
@@ -1546,6 +1594,7 @@ static void dpll_multi_attr_parse(const struct nlmsghdr *nlh, int attr_type,
 /* Callback for pin get (single) */
 static int cmd_pin_show_cb(const struct nlmsghdr *nlh, void *data)
 {
+	struct dpll_pin_filter *filter = data;
 	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
 	struct multi_attr_ctx parent_dev_ctx = { 0 }, parent_pin_ctx = { 0 },
 			      ref_sync_ctx = { 0 };
@@ -1557,6 +1606,9 @@ static int cmd_pin_show_cb(const struct nlmsghdr *nlh, void *data)
 
 	/* First parse to get main attributes */
 	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), attr_pin_cb, tb);
+
+	if (!dpll_pin_dump_filter(filter, tb))
+		return MNL_CB_OK;
 
 	/* Pass 1: Count multi-attr occurrences and allocate */
 	count = multi_attr_count_get(nlh, genl, DPLL_A_PIN_PARENT_DEVICE);
@@ -1635,16 +1687,27 @@ cleanup:
 /* Callback for pin dump (multiple) - wraps each pin in object */
 static int cmd_pin_show_dump_cb(const struct nlmsghdr *nlh, void *data)
 {
+	struct dpll_pin_filter *filter = data;
+	struct nlattr *tb[DPLL_A_PIN_MAX + 1] = {};
 	int ret;
 
+	/* Lightweight pre-parse for filter check before expensive
+	 * multi-attr processing in cmd_pin_show_cb.
+	 */
+	mnl_attr_parse(nlh, sizeof(struct genlmsghdr), attr_pin_cb, tb);
+
+	if (!dpll_pin_dump_filter(filter, tb))
+		return MNL_CB_OK;
+
 	open_json_object(NULL);
-	ret = cmd_pin_show_cb(nlh, data);
+	ret = cmd_pin_show_cb(nlh, NULL);
 	close_json_object();
 
 	return ret;
 }
 
-static int cmd_pin_show_id(struct dpll *dpll, __u32 id)
+static int cmd_pin_show_id(struct dpll *dpll, __u32 id,
+			   struct dpll_pin_filter *filter)
 {
 	struct nlmsghdr *nlh;
 	int err;
@@ -1653,7 +1716,8 @@ static int cmd_pin_show_id(struct dpll *dpll, __u32 id)
 					  NLM_F_REQUEST | NLM_F_ACK);
 	mnl_attr_put_u32(nlh, DPLL_A_PIN_ID, id);
 
-	err = mnlu_gen_socket_sndrcv(&dpll->nlg, nlh, cmd_pin_show_cb, NULL);
+	err = mnlu_gen_socket_sndrcv(&dpll->nlg, nlh, cmd_pin_show_cb,
+				     filter);
 	if (err < 0) {
 		pr_err("Failed to get pin %u\n", id);
 		return -1;
@@ -1663,7 +1727,8 @@ static int cmd_pin_show_id(struct dpll *dpll, __u32 id)
 }
 
 static int cmd_pin_show_dump(struct dpll *dpll, bool has_device_id,
-			     __u32 device_id)
+			     __u32 device_id,
+			     struct dpll_pin_filter *filter)
 {
 	struct nlmsghdr *nlh;
 	int err;
@@ -1680,7 +1745,7 @@ static int cmd_pin_show_dump(struct dpll *dpll, bool has_device_id,
 	open_json_array(PRINT_JSON, "pin");
 
 	err = mnlu_gen_socket_sndrcv(&dpll->nlg, nlh, cmd_pin_show_dump_cb,
-				     NULL);
+				     filter);
 	if (err < 0) {
 		pr_err("Failed to dump pins\n");
 		close_json_array(PRINT_JSON, NULL);
@@ -1696,6 +1761,7 @@ static int cmd_pin_show_dump(struct dpll *dpll, bool has_device_id,
 static int cmd_pin_show(struct dpll *dpll)
 {
 	bool has_pin_id = false, has_device_id = false;
+	struct dpll_pin_filter filter = {};
 	__u32 pin_id = 0, device_id = 0;
 
 	while (dpll_argc(dpll) > 0) {
@@ -1707,6 +1773,44 @@ static int cmd_pin_show(struct dpll *dpll)
 			if (dpll_parse_u32(dpll, "device", &device_id))
 				return -EINVAL;
 			has_device_id = true;
+		} else if (dpll_argv_match(dpll, "module-name")) {
+			if (dpll_filter_parse_str(dpll, "module-name",
+						  &filter.module_name,
+						  &filter.present,
+						  DPLL_FILTER_PIN_MODULE_NAME))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "clock-id")) {
+			if (dpll_filter_parse_u64(dpll, "clock-id",
+						  &filter.clock_id,
+						  &filter.present,
+						  DPLL_FILTER_PIN_CLOCK_ID))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "board-label")) {
+			if (dpll_filter_parse_str(dpll, "board-label",
+						  &filter.board_label,
+						  &filter.present,
+						  DPLL_FILTER_PIN_BOARD_LABEL))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "panel-label")) {
+			if (dpll_filter_parse_str(dpll, "panel-label",
+						  &filter.panel_label,
+						  &filter.present,
+						  DPLL_FILTER_PIN_PANEL_LABEL))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "package-label")) {
+			if (dpll_filter_parse_str(dpll, "package-label",
+						  &filter.package_label,
+						  &filter.present,
+						  DPLL_FILTER_PIN_PACKAGE_LABEL))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "type")) {
+			if (dpll_filter_parse_enum(dpll, "type",
+						   &filter.type,
+						   &filter.present,
+						   DPLL_FILTER_PIN_TYPE,
+						   str_to_dpll_pin_type,
+						   "mux/ext/synce-eth-port/int-oscillator/gnss"))
+				return -EINVAL;
 		} else {
 			pr_err("unknown option: %s\n", dpll_argv(dpll));
 			return -EINVAL;
@@ -1714,9 +1818,9 @@ static int cmd_pin_show(struct dpll *dpll)
 	}
 
 	if (has_pin_id)
-		return cmd_pin_show_id(dpll, pin_id);
-	else
-		return cmd_pin_show_dump(dpll, has_device_id, device_id);
+		return cmd_pin_show_id(dpll, pin_id, &filter);
+
+	return cmd_pin_show_dump(dpll, has_device_id, device_id, &filter);
 }
 
 static int cmd_pin_parse_parent_device(struct dpll *dpll, struct nlmsghdr *nlh)

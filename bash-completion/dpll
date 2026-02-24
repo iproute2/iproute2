@@ -158,8 +158,28 @@ _dpll_pin()
                         "$(_dpll_direct_complete device_id)" -- "$cur" ) )
                     return 0
                     ;;
+                module-name)
+                    COMPREPLY=( $( compgen -W \
+                        "$(_dpll_direct_complete module_name)" -- "$cur" ) )
+                    return 0
+                    ;;
+                clock-id)
+                    # numeric value, no completion
+                    return 0
+                    ;;
+                board-label|panel-label|package-label)
+                    # string value, no completion
+                    return 0
+                    ;;
+                type)
+                    COMPREPLY=( $( compgen -W "mux ext synce-eth-port \
+                        int-oscillator gnss" -- "$cur" ) )
+                    return 0
+                    ;;
                 *)
-                    COMPREPLY=( $( compgen -W "id device" -- "$cur" ) )
+                    COMPREPLY=( $( compgen -W "id device module-name clock-id \
+                        board-label panel-label package-label type" \
+                        -- "$cur" ) )
                     return 0
                     ;;
             esac
