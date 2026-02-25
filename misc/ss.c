@@ -1211,7 +1211,7 @@ static int render_screen_width(void)
  * aligned across lines. Available screen space is equally spread between fields
  * as additional spacing.
  */
-static void render_calc_width(void)
+static bool render_calc_width(void)
 {
 	int screen_width, first, len = 0, linecols = 0;
 	struct column *c, *eol = columns - 1;
@@ -1245,7 +1245,7 @@ static void render_calc_width(void)
 
 	if (compact_output) {
 		/* Compact output, skip extending columns. */
-		return;
+		return compact_output;
 	}
 
 	/* Second pass: find out newlines and distribute available spacing */
@@ -1304,6 +1304,7 @@ newline:
 		len = 0;
 		linecols = 0;
 	}
+	return compact_output;
 }
 
 /* Render buffered output with spacing and delimiters, then free up buffers */
@@ -1311,7 +1312,8 @@ static void render(void)
 {
 	struct buf_token *token;
 	int printed, line_started = 0;
-	struct column *f;
+	struct column *f, *last_visible_column = 0;
+	bool compact_output = false;
 
 	if (!buffer.head)
 		return;
@@ -1321,10 +1323,17 @@ static void render(void)
 	/* Ensure end alignment of last token, it wasn't necessarily flushed */
 	buffer.tail->end += buffer.cur->len % 2;
 
-	render_calc_width();
+	compact_output = render_calc_width();
 
 	/* Rewind and replay */
 	buffer.tail = buffer.head;
+
+	f = columns;
+	while (!field_is_last(f)) {
+		if (!f->disabled)
+			last_visible_column = f;
+		f++;
+	}
 
 	f = columns;
 	while (!f->width)
@@ -1340,7 +1349,8 @@ static void render(void)
 		/* Print field content from token data with spacing */
 		printed += print_left_spacing(f, token->len, printed);
 		printed += fwrite(token->data, 1, token->len, stdout);
-		print_right_spacing(f, printed);
+		if (!compact_output || f != last_visible_column)
+			print_right_spacing(f, printed);
 
 		/* Go to next non-empty field, deal with end-of-line */
 		do {
