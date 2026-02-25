@@ -4120,13 +4120,13 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
 	if (preferred_family == PF_INET6)
 		family = PF_INET6;
 
-	/* extended protocol will use INET_DIAG_REQ_PROTOCOL,
-	 * not supported by older kernels. On such kernel
-	 * rtnl_dump will bail with rtnl_dump_error().
-	 * Suppress the error to avoid confusing the user
+	/* Suppress netlink errors. Older kernels do not support extended
+	 * protocol requests using INET_DIAG_REQ_PROTOCOL, and some protocols
+	 * may not be available in the running kernel (e.g. SCTP, DCCP).
+	 * In both cases the kernel returns EINVAL which would cause
+	 * rtnl_dump_error() to print a confusing "RTNETLINK answers" error.
 	 */
-	if (protocol > 255)
-		rth.flags |= RTNL_HANDLE_F_SUPPRESS_NLERR;
+	rth.flags |= RTNL_HANDLE_F_SUPPRESS_NLERR;
 
 again:
 	if ((err = sockdiag_send(family, rth.fd, protocol, f)))
