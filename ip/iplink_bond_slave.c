@@ -86,6 +86,12 @@ static void print_slave_oper_state(FILE *fp, const char *name, __u16 state)
 	close_json_array(PRINT_ANY, "> ");
 }
 
+static const char *port_churn_state[] = {
+	"MONITOR",
+	"CHURN",
+	"NO_CHURN",
+};
+
 static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 {
 	SPRINT_BUF(b1);
@@ -146,6 +152,26 @@ static void bond_slave_print_opt(struct link_util *lu, FILE *f, struct rtattr *t
 			  "ad_partner_oper_port_state %d ",
 			  state);
 		print_slave_oper_state(f, "ad_partner_oper_port_state_str", state);
+	}
+
+	if (tb[IFLA_BOND_SLAVE_AD_CHURN_ACTOR_STATE]) {
+		__u8 state = rta_getattr_u8(tb[IFLA_BOND_SLAVE_AD_CHURN_ACTOR_STATE]);
+
+		if (state >= ARRAY_SIZE(port_churn_state))
+			print_uint(PRINT_ANY, "churn_actor_state", "churn_actor_state %u ", state);
+		else
+			print_string(PRINT_ANY, "churn_actor_state", "churn_actor_state %s ",
+				     port_churn_state[state]);
+	}
+
+	if (tb[IFLA_BOND_SLAVE_AD_CHURN_PARTNER_STATE]) {
+		__u8 state = rta_getattr_u8(tb[IFLA_BOND_SLAVE_AD_CHURN_PARTNER_STATE]);
+
+		if (state >= ARRAY_SIZE(port_churn_state))
+			print_uint(PRINT_ANY, "churn_partner_state", "churn_partner_state %u ", state);
+		else
+			print_string(PRINT_ANY, "churn_partner_state", "churn_partner_state %s ",
+				     port_churn_state[state]);
 	}
 
 	if (tb[IFLA_BOND_SLAVE_ACTOR_PORT_PRIO])
