@@ -208,7 +208,10 @@ rtnl_tabhash_initialize_dir(const char *ddir, const struct tabhash tabhash, cons
 	snprintf(dirpath_usr, sizeof(dirpath_usr), "%s/%s", CONF_USR_DIR, ddir);
 	snprintf(dirpath_etc, sizeof(dirpath_etc), "%s/%s", CONF_ETC_DIR, ddir);
 
-	/* load /usr/lib/iproute2/foo.d/X conf files, unless /etc/iproute2/foo.d/X exists */
+	/*
+	 * load CONF_USR_DIR/iproute2/foo.d/X conf files
+	 * unless CONF_ETC_DIR/iproute2/foo.d/X exists
+	 */
 	rtnl_tabhash_readdir(dirpath_usr, dirpath_etc, tabhash, size);
 
 	/* load /etc/iproute2/foo.d/X conf files */

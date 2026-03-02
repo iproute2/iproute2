@@ -39,13 +39,6 @@ extern bool do_all;
 extern int echo_request;
 extern int use_iec;
 
-#ifndef CONF_USR_DIR
-#define CONF_USR_DIR "/usr/lib/iproute2"
-#endif
-#ifndef CONF_ETC_DIR
-#define CONF_ETC_DIR "/etc/iproute2"
-#endif
-
 #define SPRINT_BSIZE 64
 #define SPRINT_BUF(x)	char x[SPRINT_BSIZE]
 
