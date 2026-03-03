@@ -108,7 +108,8 @@ hfsc_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	qopt = RTA_DATA(opt);
 
 	if (qopt->defcls != 0)
-		fprintf(f, "default %x ", qopt->defcls);
+		print_0xhex(PRINT_ANY, "default", " default %#llx ",
+			    qopt->defcls);
 
 	return 0;
 }
@@ -124,13 +125,15 @@ hfsc_print_xstats(const struct qdisc_util *qu, FILE *f, struct rtattr *xstats)
 		return -1;
 	st = RTA_DATA(xstats);
 
-	fprintf(f, " period %u ", st->period);
+	print_uint(PRINT_ANY, "period", " period %u ", st->period);
 	if (st->work != 0)
-		fprintf(f, "work %llu bytes ", (unsigned long long) st->work);
+		print_lluint(PRINT_ANY, "work", "work %llu bytes ",
+			     (unsigned long long)st->work);
 	if (st->rtwork != 0)
-		fprintf(f, "rtwork %llu bytes ", (unsigned long long) st->rtwork);
-	fprintf(f, "level %u ", st->level);
-	fprintf(f, "\n");
+		print_lluint(PRINT_ANY, "rtwork", "rtwork %llu bytes ",
+			     (unsigned long long)st->rtwork);
+	print_uint(PRINT_ANY, "level", " level %u ", st->level);
+	print_string(PRINT_FP, NULL, "%s", _SL_);
 
 	return 0;
 }
@@ -211,12 +214,16 @@ hfsc_parse_class_opt(const struct qdisc_util *qu, int argc, char **argv,
 static void
 hfsc_print_sc(FILE *f, char *name, struct tc_service_curve *sc)
 {
+	unsigned int d_time = tc_core_ktime2time(sc->d);
 	SPRINT_BUF(b1);
 
-	fprintf(f, "%s ", name);
-	tc_print_rate(PRINT_FP, NULL, "m1 %s ", sc->m1);
-	fprintf(f, "d %s ", sprint_time(tc_core_ktime2time(sc->d), b1));
-	tc_print_rate(PRINT_FP, NULL, "m2 %s ", sc->m2);
+	open_json_object(name);
+	print_string(PRINT_FP, NULL, "%s ", name);
+	tc_print_rate(PRINT_ANY, "m1", "m1 %s ", sc->m1);
+	print_string(PRINT_FP, NULL, "d %s ", sprint_time(d_time, b1));
+	print_uint(PRINT_JSON, "d", NULL, d_time);
+	tc_print_rate(PRINT_ANY, "m2", "m2 %s ", sc->m2);
+	close_json_object();
 }
 
 static int
