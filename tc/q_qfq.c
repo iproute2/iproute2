@@ -90,13 +90,13 @@ static int qfq_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *op
 	parse_rtattr_nested(tb, TCA_QFQ_MAX, opt);
 
 	if (tb[TCA_QFQ_WEIGHT]) {
-		fprintf(f, "weight %u ",
-			rta_getattr_u32(tb[TCA_QFQ_WEIGHT]));
+		print_uint(PRINT_ANY, "weight", "weight %u ",
+			   rta_getattr_u32(tb[TCA_QFQ_WEIGHT]));
 	}
 
 	if (tb[TCA_QFQ_LMAX]) {
-		fprintf(f, "maxpkt %u ",
-			rta_getattr_u32(tb[TCA_QFQ_LMAX]));
+		print_uint(PRINT_ANY, "maxpkt", "maxpkt %u ",
+			   rta_getattr_u32(tb[TCA_QFQ_LMAX]));
 	}
 
 	return 0;
