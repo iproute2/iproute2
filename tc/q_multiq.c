@@ -51,6 +51,7 @@ static int multiq_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 static int multiq_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
 	struct tc_multiq_qopt *qopt;
+	SPRINT_BUF(b1);
 
 	if (opt == NULL)
 		return 0;
@@ -59,7 +60,10 @@ static int multiq_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr 
 
 	qopt = RTA_DATA(opt);
 
-	fprintf(f, "bands %u/%u ", qopt->bands, qopt->max_bands);
+	snprintf(b1, SPRINT_BSIZE, "%u/%u", qopt->bands, qopt->max_bands);
+	print_string(PRINT_FP, NULL, "bands %s ", b1);
+	print_uint(PRINT_JSON, "bands", NULL, qopt->bands);
+	print_uint(PRINT_JSON, "max_bands", NULL, qopt->max_bands);
 
 	return 0;
 }
