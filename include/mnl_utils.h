@@ -33,4 +33,8 @@ int mnlu_gen_socket_recv_run(struct mnlu_gen_socket *nlg, mnl_cb_t cb,
 			     void *data);
 int mnlu_gen_cmd_dump_policy(struct mnlu_gen_socket *nlg, uint8_t cmd);
 
+#ifndef HAVE_MNL_ATTR_GET_UINT
+uint64_t mnl_attr_get_uint(const struct nlattr *attr);
+#endif
+
 #endif /* __MNL_UTILS_H__ */

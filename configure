@@ -366,6 +366,24 @@ check_tirpc()
 	fi
 }
 
+have_mnl_attr_get_uint()
+{
+    cat >$TMPDIR/mnl_attr_get_uint_test.c <<EOF
+#include <libmnl/libmnl.h>
+int main(int argc, char **argv)
+{
+	return !!mnl_attr_get_uint(NULL);
+}
+EOF
+
+    $CC -I$INCLUDE $(${PKG_CONFIG} libmnl --cflags --libs 2>/dev/null) \
+	    -o $TMPDIR/mnl_attr_get_uint_test $TMPDIR/mnl_attr_get_uint_test.c >/dev/null 2>&1
+    local ret=$?
+
+    rm -f $TMPDIR/mnl_attr_get_uint_test.c $TMPDIR/mnl_attr_get_uint_test
+    return $ret
+}
+
 check_mnl()
 {
 	if ${PKG_CONFIG} libmnl --exists; then
@@ -374,6 +392,10 @@ check_mnl()
 
 		echo 'CFLAGS += -DHAVE_LIBMNL' "$(${PKG_CONFIG} libmnl --cflags)" >>$CONFIG
 		echo 'LDLIBS +=' "$(${PKG_CONFIG} libmnl --libs)" >> $CONFIG
+
+		if have_mnl_attr_get_uint; then
+			echo "CFLAGS += -DHAVE_MNL_ATTR_GET_UINT" >>$CONFIG
+		fi
 	else
 		echo "no"
 	fi
