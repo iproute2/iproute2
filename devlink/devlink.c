@@ -4095,8 +4095,12 @@ static void pr_out_dev(struct dl *dl, const struct nlmsghdr *nlh,
 {
 	if ((tb[DEVLINK_ATTR_RELOAD_FAILED] && mnl_attr_get_u8(tb[DEVLINK_ATTR_RELOAD_FAILED])) ||
 	    (tb[DEVLINK_ATTR_DEV_STATS] && dl->stats) ||
-	     tb[DEVLINK_ATTR_NESTED_DEVLINK]) {
+	     tb[DEVLINK_ATTR_NESTED_DEVLINK] ||
+	     tb[DEVLINK_ATTR_INDEX]) {
 		__pr_out_handle_start(dl, tb, true, false);
+		if (tb[DEVLINK_ATTR_INDEX])
+			print_uint(PRINT_ANY, "index", " index %u",
+				   mnl_attr_get_uint(tb[DEVLINK_ATTR_INDEX]));
 		pr_out_reload_data(dl, tb);
 		pr_out_dev_nested(dl, nlh);
 		pr_out_handle_end(dl);
