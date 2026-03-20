@@ -266,6 +266,13 @@ static void print_encap_seg6(FILE *fp, struct rtattr *encap)
 	print_string(PRINT_ANY, "mode",
 		     "mode %s ", format_seg6mode_type(tuninfo->mode));
 
+	if (tb[SEG6_IPTUNNEL_SRC]) {
+		print_color_string(PRINT_ANY, COLOR_INET6,
+				   "tunsrc", "tunsrc %s ",
+				   rt_addr_n2a_rta(AF_INET6,
+						   tb[SEG6_IPTUNNEL_SRC]));
+	}
+
 	print_srh(fp, tuninfo->srh);
 }
 
@@ -953,6 +960,8 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	struct ipv6_sr_hdr *srh;
 	char **argv = *argvp;
 	char segbuf[1024] = "";
+	bool tunsrc = false;
+	inet_prefix saddr;
 	int argc = *argcp;
 	int encap = -1;
 	__u32 hmac = 0;
@@ -967,6 +976,22 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 			encap = read_seg6mode_type(*argv);
 			if (encap < 0)
 				invarg("\"mode\" value is invalid\n", *argv);
+		} else if (strcmp(*argv, "tunsrc") == 0) {
+			NEXT_ARG();
+			if (encap == -1)
+				invarg("\"tunsrc\" provided before \"mode\"\n",
+				       *argv);
+			if (encap == SEG6_IPTUN_MODE_INLINE)
+				invarg("\"tunsrc\" invalid with inline mode\n",
+				       *argv);
+			if (tunsrc)
+				duparg2("tunsrc", *argv);
+
+			get_addr(&saddr, *argv, AF_INET6);
+			if (saddr.family != AF_INET6 || saddr.bytelen != 16)
+				invarg("\"tunsrc\" value is invalid\n", *argv);
+
+			tunsrc = true;
 		} else if (strcmp(*argv, "segs") == 0) {
 			NEXT_ARG();
 			if (segs_ok++)
@@ -1004,6 +1029,12 @@ static int parse_encap_seg6(struct rtattr *rta, size_t len, int *argcp,
 	if (rta_addattr_l(rta, len, SEG6_IPTUNNEL_SRH, tuninfo,
 			  sizeof(*tuninfo) + srhlen))
 		goto out;
+
+	if (tunsrc) {
+		if (rta_addattr_l(rta, len, SEG6_IPTUNNEL_SRC,
+				  &saddr.data, saddr.bytelen))
+			goto out;
+	}
 
 	*argcp = argc + 1;
 	*argvp = argv - 1;
