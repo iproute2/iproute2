@@ -240,7 +240,9 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 .IR ENCAP_SEG6 " := "
 .B seg6
 .BR mode " [ "
-.BR encap " | " encap.red " | " inline " | " l2encap " | " l2encap.red " ] "
+.BR encap " | " encap.red " | " inline " | " l2encap " | " l2encap.red " ] ["
+.B tunsrc
+.IR ADDRESS " ]"
 .B segs
 .IR SEGMENTS " [ "
 .B hmac
@@ -891,6 +893,15 @@ not present, the SRH is omitted.
 - Encapsulate ingress L2 frame within an outer IPv6 header and SRH
 applying the reduced segment list. When there is only one segment
 and the HMAC is not present, the SRH is omitted.
+.sp
+
+.B tunsrc
+.I ADDRESS
+- IPv6 address of the tunnel source (outer header), not used with inline mode.
+It is optional: if not provided, the tunnel source address is chosen based on
+the per-netns configuration ("ip sr tunsrc set ADDRESS") or, if not configured,
+it is dynamically resolved. If provided, it takes priority over the per-netns
+configuration and dynamic resolution.
 .sp
 
 .I SEGMENTS
