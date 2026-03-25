@@ -369,6 +369,8 @@ const char *str_map_lookup_u8(const struct str_num_map *map, uint8_t val);
 unsigned int get_str_char_count(const char *str, int match);
 int str_split_by_char(char *str, char **before, char **after, int match);
 
+int escape_str(char *dst, const char *src, int bufsize);
+
 #define INDENT_STR_MAXLEN 32
 
 struct indent_mem {

@@ -550,8 +550,7 @@ static void user_ent_add(unsigned int ino, char *task,
 static void user_ent_hash_build_task(char *path, int pid, int tid)
 {
 	const char *no_ctx = "unavailable";
-	char task[16] = {'\0', };
-	char stat[MAX_PATH_LEN];
+	char task[20] = { };
 	int pos_id, pos_fd;
 	char *task_context;
 	struct dirent *d;
@@ -599,6 +598,8 @@ static void user_ent_hash_build_task(char *path, int pid, int tid)
 			sock_context = strdup(no_ctx);
 
 		if (task[0] == '\0') {
+			char stat[MAX_PATH_LEN];
+			char name[16];
 			FILE *fp;
 
 			strlcpy(stat, path, pos_id + 1);
@@ -606,9 +607,8 @@ static void user_ent_hash_build_task(char *path, int pid, int tid)
 
 			fp = fopen(stat, "r");
 			if (fp) {
-				if (fscanf(fp, "%*d (%[^)])", task) < 1) {
-					; /* ignore */
-				}
+				if (fscanf(fp, "%*d (%[^)])", name) == 1)
+					escape_str(task, name, sizeof(task));
 				fclose(fp);
 			}
 		}
