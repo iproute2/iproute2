@@ -582,8 +582,15 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	new_json_obj_plain(json);
-	open_json_object(NULL);
+	/* Monitor emits one JSON object per event for streaming;
+	 * other commands use a single JSON wrapper object.
+	 */
+	bool is_monitor = argc > 0 && strcmp(argv[0], "monitor") == 0;
+
+	if (!is_monitor) {
+		new_json_obj_plain(json);
+		open_json_object(NULL);
+	}
 
 	/* Skip netlink init for help commands */
 	bool need_nl = true;
@@ -613,8 +620,10 @@ dpll_fini:
 	if (need_nl)
 		dpll_fini(dpll);
 json_cleanup:
-	close_json_object();
-	delete_json_obj_plain();
+	if (!is_monitor) {
+		close_json_object();
+		delete_json_obj_plain();
+	}
 dpll_free:
 	dpll_free(dpll);
 	return ret;
@@ -2238,6 +2247,7 @@ static int cmd_monitor_cb(const struct nlmsghdr *nlh, void *data)
 
 		mnl_attr_parse(nlh, sizeof(struct genlmsghdr), attr_cb, tb);
 
+		new_json_obj_plain(json);
 		open_json_object(NULL);
 		print_string(PRINT_JSON, "name", NULL, json_name);
 		open_json_object("msg");
@@ -2247,6 +2257,7 @@ static int cmd_monitor_cb(const struct nlmsghdr *nlh, void *data)
 
 		close_json_object();
 		close_json_object();
+		delete_json_obj_plain();
 		break;
 	}
 	case DPLL_CMD_PIN_CREATE_NTF:
@@ -2265,6 +2276,7 @@ static int cmd_monitor_cb(const struct nlmsghdr *nlh, void *data)
 			json_name = "pin-delete-ntf";
 		}
 
+		new_json_obj_plain(json);
 		open_json_object(NULL);
 		print_string(PRINT_JSON, "name", NULL, json_name);
 		open_json_object("msg");
@@ -2274,6 +2286,7 @@ static int cmd_monitor_cb(const struct nlmsghdr *nlh, void *data)
 
 		close_json_object();
 		close_json_object();
+		delete_json_obj_plain();
 		break;
 	}
 	default:
@@ -2338,8 +2351,6 @@ static int cmd_monitor(struct dpll *dpll)
 		goto err_signalfd;
 	}
 
-	open_json_array(PRINT_JSON, "monitor");
-
 	pfds[0].fd = signal_fd;
 	pfds[0].events = POLLIN;
 	pfds[1].fd = netlink_fd;
@@ -2371,8 +2382,6 @@ static int cmd_monitor(struct dpll *dpll)
 			}
 		}
 	}
-
-	close_json_array(PRINT_JSON, NULL);
 
 err_signalfd:
 	if (signal_fd >= 0)
