@@ -17,14 +17,68 @@ struct frmr_pool_key {
 /* vendor_key(16) + ':' + num_dma_blocks(16) + ':' + access_flags(8) + ':' + ats(1) + '\0' */
 #define FRMR_POOL_KEY_MAX_LEN 45
 
+static int decode_pool_key(const char *str, struct frmr_pool_key *key)
+{
+	const char *p = str;
+	char *end;
+	int i = 0;
+
+	while (*p) {
+		uint64_t val;
+
+		errno = 0;
+		val = strtoull(p, &end, 16);
+		if (errno == ERANGE || end == p || (*end != ':' && *end != '\0')) {
+			pr_err("Invalid pool key: %s\n", str);
+			return -EINVAL;
+		}
+
+		switch (i) {
+		case 0:
+			key->vendor_key = val;
+			break;
+		case 1:
+			key->num_dma_blocks = val;
+			break;
+		case 2:
+			if (val > UINT32_MAX)
+				goto out_of_range;
+			key->access_flags = val;
+			break;
+		case 3:
+			if (val != 0 && val != 1)
+				goto out_of_range;
+			key->ats = val;
+			break;
+		default:
+			if (val) {
+				pr_err("Unsupported pool attributes passed in pool key\n");
+				return -EINVAL;
+			}
+		}
+		i++;
+		p = *end ? end + 1 : end;
+	}
+
+	if (i < 4) {
+		pr_err("Invalid pool key: %s, expected 4 fields\n", str);
+		return -EINVAL;
+	}
+	return 0;
+
+out_of_range:
+	pr_err("Pool key field at index %d value out of range\n", i);
+	return -EINVAL;
+}
+
 static int res_frmr_pools_line(struct rd *rd, const char *name, int idx,
 			       struct nlattr **nla_line)
 {
 	uint64_t in_use = 0, max_in_use = 0, kernel_vendor_key = 0;
 	struct nlattr *key_tb[RDMA_NLDEV_ATTR_MAX] = {};
+	uint32_t queue_handles = 0, pinned_handles = 0;
 	char key_str[FRMR_POOL_KEY_MAX_LEN];
 	struct frmr_pool_key key = { 0 };
-	uint32_t queue_handles = 0;
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY]) {
 		if (mnl_attr_parse_nested(
@@ -92,6 +146,13 @@ static int res_frmr_pools_line(struct rd *rd, const char *name, int idx,
 		    nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_MAX_IN_USE]))
 		goto out;
 
+	if (nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED])
+		pinned_handles = mnl_attr_get_u32(
+			nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED]);
+	if (rd_is_filtered_attr(rd, "pinned", pinned_handles,
+				nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED]))
+		goto out;
+
 	open_json_object(NULL);
 	print_dev(idx, name);
 
@@ -127,6 +188,8 @@ static int res_frmr_pools_line(struct rd *rd, const char *name, int idx,
 		      nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_IN_USE]);
 	res_print_u64("max_in_use", max_in_use,
 		      nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_MAX_IN_USE]);
+	res_print_u32("pinned", pinned_handles,
+		      nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED]);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
 	close_json_object();
@@ -202,9 +265,64 @@ static int res_frmr_pools_one_set_aging(struct rd *rd)
 	return rd_sendrecv_msg(rd, seq);
 }
 
+static int res_frmr_pools_one_set_pinned(struct rd *rd)
+{
+	struct frmr_pool_key pool_key = { 0 };
+	struct nlattr *key_attr;
+	uint32_t pinned_value;
+	const char *key_str;
+	uint32_t seq;
+
+	if (rd_no_arg(rd)) {
+		pr_err("Please provide pool key and pinned value.\n");
+		return -EINVAL;
+	}
+
+	key_str = rd_argv(rd);
+	rd_arg_inc(rd);
+
+	if (decode_pool_key(key_str, &pool_key))
+		return -EINVAL;
+
+	if (rd_no_arg(rd)) {
+		pr_err("Please provide pinned value.\n");
+		return -EINVAL;
+	}
+
+	if (get_u32(&pinned_value, rd_argv(rd), 10)) {
+		pr_err("Invalid pinned value: %s\n", rd_argv(rd));
+		return -EINVAL;
+	}
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_RES_FRMR_POOLS_SET, &seq,
+		       (NLM_F_REQUEST | NLM_F_ACK));
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
+
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED,
+			 pinned_value);
+
+	key_attr =
+		mnl_attr_nest_start(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY);
+	mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ATS,
+			pool_key.ats);
+	mnl_attr_put_u32(rd->nlh,
+			 RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ACCESS_FLAGS,
+			 pool_key.access_flags);
+	mnl_attr_put_u64(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_VENDOR_KEY,
+			 pool_key.vendor_key);
+	mnl_attr_put_u64(rd->nlh,
+			 RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_NUM_DMA_BLOCKS,
+			 pool_key.num_dma_blocks);
+	mnl_attr_nest_end(rd->nlh, key_attr);
+
+	return rd_sendrecv_msg(rd, seq);
+}
+
 static int res_frmr_pools_one_set_help(struct rd *rd)
 {
 	pr_out("Usage: %s set frmr_pools dev DEV aging AGING_PERIOD\n",
+	       rd->filename);
+	pr_out("Usage: %s set frmr_pools dev DEV pinned POOL_KEY PINNED_VALUE\n",
 	       rd->filename);
 	return 0;
 }
@@ -215,6 +333,7 @@ static int res_frmr_pools_one_set(struct rd *rd)
 		{ NULL, res_frmr_pools_one_set_help },
 		{ "help", res_frmr_pools_one_set_help },
 		{ "aging", res_frmr_pools_one_set_aging },
+		{ "pinned", res_frmr_pools_one_set_pinned },
 		{ 0 }
 	};
 

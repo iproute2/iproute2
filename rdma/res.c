@@ -29,6 +29,7 @@ static int res_help(struct rd *rd)
 	pr_out("          resource show frmr_pools dev [DEV]\n");
 	pr_out("          resource show frmr_pools dev [DEV] [FILTER-NAME FILTER-VALUE]\n");
 	pr_out("          resource set frmr_pools dev DEV aging AGING_PERIOD\n");
+	pr_out("          resource set frmr_pools dev DEV pinned POOL_KEY PINNED_VALUE\n");
 	return 0;
 }
 

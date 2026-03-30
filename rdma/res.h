@@ -197,6 +197,7 @@ struct filters frmr_pools_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "queue", .is_number = true },
 	{ .name = "in_use", .is_number = true },
 	{ .name = "max_in_use", .is_number = true },
+	{ .name = "pinned", .is_number = true },
 };
 
 RES_FUNC(res_frmr_pools, RDMA_NLDEV_CMD_RES_FRMR_POOLS_GET,
