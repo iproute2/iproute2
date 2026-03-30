@@ -13,7 +13,8 @@ rdma-resource \- rdma resource configuration
 
 .ti -8
 .IR RESOURCE " := { "
-.BR cm_id " | " cq " | " mr " | " pd " | " qp " | " ctx " | " srq " }"
+.BR cm_id " | " cq " | " mr " | " pd " | " qp " | " ctx " | " srq " | "
+.BR frmr_pools " }"
 .sp
 
 .ti -8
@@ -111,6 +112,11 @@ Show contexts that have index equal to 1.
 rdma resource show srq lqpn 5-7
 .RS 4
 Show SRQs that the QPs with lqpn 5-7 are associated with.
+.RE
+.PP
+rdma resource show frmr_pools ats 1
+.RS 4
+Show FRMR pools that have ats attribute set.
 .RE
 .PP
 
