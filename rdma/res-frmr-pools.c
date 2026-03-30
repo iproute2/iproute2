@@ -172,3 +172,62 @@ int res_frmr_pools_parse_cb(const struct nlmsghdr *nlh, void *data)
 	}
 	return ret;
 }
+
+static int res_frmr_pools_one_set_aging(struct rd *rd)
+{
+	uint32_t aging_period;
+	uint32_t seq;
+
+	if (rd_no_arg(rd)) {
+		pr_err("Please provide aging period value.\n");
+		return -EINVAL;
+	}
+
+	if (get_u32(&aging_period, rd_argv(rd), 10)) {
+		pr_err("Invalid aging period value: %s\n", rd_argv(rd));
+		return -EINVAL;
+	}
+
+	if (aging_period == 0) {
+		pr_err("Setting the aging period to zero is not supported.\n");
+		return -EINVAL;
+	}
+
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_RES_FRMR_POOLS_SET, &seq,
+		       (NLM_F_REQUEST | NLM_F_ACK));
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_AGING_PERIOD,
+			 aging_period);
+
+	return rd_sendrecv_msg(rd, seq);
+}
+
+static int res_frmr_pools_one_set_help(struct rd *rd)
+{
+	pr_out("Usage: %s set frmr_pools dev DEV aging AGING_PERIOD\n",
+	       rd->filename);
+	return 0;
+}
+
+static int res_frmr_pools_one_set(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL, res_frmr_pools_one_set_help },
+		{ "help", res_frmr_pools_one_set_help },
+		{ "aging", res_frmr_pools_one_set_aging },
+		{ 0 }
+	};
+
+	return rd_exec_cmd(rd, cmds, "resource set frmr_pools command");
+}
+
+int res_frmr_pools_set(struct rd *rd)
+{
+	int ret;
+
+	ret = rd_set_arg_to_devname(rd);
+	if (ret)
+		return ret;
+
+	return rd_exec_require_dev(rd, res_frmr_pools_one_set);
+}

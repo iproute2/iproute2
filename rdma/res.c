@@ -28,6 +28,7 @@ static int res_help(struct rd *rd)
 	pr_out("          resource show srq dev [DEV] [FILTER-NAME FILTER-VALUE]\n");
 	pr_out("          resource show frmr_pools dev [DEV]\n");
 	pr_out("          resource show frmr_pools dev [DEV] [FILTER-NAME FILTER-VALUE]\n");
+	pr_out("          resource set frmr_pools dev DEV aging AGING_PERIOD\n");
 	return 0;
 }
 
@@ -252,11 +253,23 @@ static int res_show(struct rd *rd)
 	return rd_exec_cmd(rd, cmds, "parameter");
 }
 
+static int res_set(struct rd *rd)
+{
+	const struct rd_cmd cmds[] = {
+		{ NULL,		res_help },
+		{ "frmr_pools",	res_frmr_pools_set },
+		{ 0 }
+	};
+
+	return rd_exec_cmd(rd, cmds, "resource set command");
+}
+
 int cmd_res(struct rd *rd)
 {
 	const struct rd_cmd cmds[] = {
 		{ NULL,		res_show },
 		{ "show",	res_show },
+		{ "set",	res_set },
 		{ "list",	res_show },
 		{ "help",	res_help },
 		{ 0 }
