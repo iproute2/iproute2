@@ -162,6 +162,17 @@ static int str_to_dpll_pin_state(const char *state_str, __u32 *state)
 	return 0;
 }
 
+static int str_to_dpll_pin_direction(const char *dir_str, __u32 *direction)
+{
+	int num;
+
+	num = str_map_lookup_str(pin_direction_map, dir_str);
+	if (num < 0)
+		return num;
+	*direction = num;
+	return 0;
+}
+
 static int str_to_dpll_pin_type(const char *type_str, __u32 *type)
 {
 	int num;
@@ -891,6 +902,8 @@ static bool dpll_device_dump_filter(struct dpll_device_filter *filter,
 #define DPLL_FILTER_PIN_TYPE		BIT(5)
 #define DPLL_FILTER_PIN_PARENT_DEVICE	BIT(6)
 #define DPLL_FILTER_PIN_PARENT_PIN	BIT(7)
+#define DPLL_FILTER_PIN_DIRECTION	BIT(8)
+#define DPLL_FILTER_PIN_STATE		BIT(9)
 
 struct dpll_pin_filter {
 	uint64_t present;
@@ -902,6 +915,8 @@ struct dpll_pin_filter {
 	__u32 type;
 	__u32 parent_device_id;
 	__u32 parent_pin_id;
+	__u32 direction;
+	__u32 state;
 };
 
 static bool filter_match_nested_id(const struct nlmsghdr *nlh,
@@ -919,6 +934,39 @@ static bool filter_match_nested_id(const struct nlmsghdr *nlh,
 		if (filter_match_u32(tb_nest[DPLL_A_PIN_PARENT_ID],
 				     expected_id))
 			return true;
+	}
+	return false;
+}
+
+static bool filter_match_nested_parent_device(const struct nlmsghdr *nlh,
+					      struct dpll_pin_filter *filter)
+{
+	const struct nlattr *attr;
+
+	mnl_attr_for_each(attr, nlh, sizeof(struct genlmsghdr)) {
+		struct nlattr *tb_nest[DPLL_A_PIN_MAX + 1] = {};
+
+		if (mnl_attr_get_type(attr) != DPLL_A_PIN_PARENT_DEVICE)
+			continue;
+
+		mnl_attr_parse_nested(attr, attr_pin_cb, tb_nest);
+
+		if ((filter->present & DPLL_FILTER_PIN_PARENT_DEVICE) &&
+		    !filter_match_u32(tb_nest[DPLL_A_PIN_PARENT_ID],
+				      filter->parent_device_id))
+			continue;
+
+		if ((filter->present & DPLL_FILTER_PIN_DIRECTION) &&
+		    !filter_match_u32(tb_nest[DPLL_A_PIN_DIRECTION],
+				      filter->direction))
+			continue;
+
+		if ((filter->present & DPLL_FILTER_PIN_STATE) &&
+		    !filter_match_u32(tb_nest[DPLL_A_PIN_STATE],
+				      filter->state))
+			continue;
+
+		return true;
 	}
 	return false;
 }
@@ -949,9 +997,10 @@ static bool dpll_pin_dump_filter(struct dpll_pin_filter *filter,
 	if ((filter->present & DPLL_FILTER_PIN_TYPE) &&
 	    !filter_match_u32(tb[DPLL_A_PIN_TYPE], filter->type))
 		return false;
-	if ((filter->present & DPLL_FILTER_PIN_PARENT_DEVICE) &&
-	    !filter_match_nested_id(nlh, DPLL_A_PIN_PARENT_DEVICE,
-				    filter->parent_device_id))
+	if ((filter->present & (DPLL_FILTER_PIN_PARENT_DEVICE |
+				DPLL_FILTER_PIN_DIRECTION |
+				DPLL_FILTER_PIN_STATE)) &&
+	    !filter_match_nested_parent_device(nlh, filter))
 		return false;
 	if ((filter->present & DPLL_FILTER_PIN_PARENT_PIN) &&
 	    !filter_match_nested_id(nlh, DPLL_A_PIN_PARENT_PIN,
@@ -1860,6 +1909,22 @@ static int cmd_pin_show(struct dpll *dpll)
 						   DPLL_FILTER_PIN_TYPE,
 						   str_to_dpll_pin_type,
 						   "mux/ext/synce-eth-port/int-oscillator/gnss"))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "direction")) {
+			if (dpll_filter_parse_enum(dpll, "direction",
+						   &filter.direction,
+						   &filter.present,
+						   DPLL_FILTER_PIN_DIRECTION,
+						   str_to_dpll_pin_direction,
+						   "input/output"))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "state")) {
+			if (dpll_filter_parse_enum(dpll, "state",
+						   &filter.state,
+						   &filter.present,
+						   DPLL_FILTER_PIN_STATE,
+						   str_to_dpll_pin_state,
+						   "connected/disconnected/selectable"))
 				return -EINVAL;
 		} else {
 			pr_err("unknown option: %s\n", dpll_argv(dpll));

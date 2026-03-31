@@ -161,7 +161,7 @@ Device type:
 
 .SH PIN COMMANDS
 
-.SS dpll pin show [ id ID ] [ parent-device DEVICE_ID ] [ parent-pin PIN_ID ] [ module-name NAME ] [ clock-id ID ] [ board-label LABEL ] [ panel-label LABEL ] [ package-label LABEL ] [ type TYPE ]
+.SS dpll pin show [ id ID ] [ parent-device DEVICE_ID ] [ parent-pin PIN_ID ] [ module-name NAME ] [ clock-id ID ] [ board-label LABEL ] [ panel-label LABEL ] [ package-label LABEL ] [ type TYPE ] [ direction DIR ] [ state STATE ]
 
 Display information about DPLL pins. If no arguments are specified,
 shows all pins in the system.
@@ -202,6 +202,22 @@ Show only pins with the specified package label.
 .BI type " TYPE"
 Show only pins of the specified type:
 .BR mux ", " ext ", " synce-eth-port ", " int-oscillator ", " gnss .
+
+.TP
+.BI direction " DIR"
+Show only pins that have a parent-device relationship with the specified direction:
+.BR input ", " output .
+When combined with
+.BR parent-device ,
+only the specified parent-device relationship is checked.
+
+.TP
+.BI state " STATE"
+Show only pins that have a parent-device relationship with the specified state:
+.BR connected ", " disconnected ", " selectable .
+When combined with
+.BR parent-device ,
+only the specified parent-device relationship is checked.
 
 .PP
 Output includes:
@@ -384,6 +400,11 @@ Press Ctrl+C to stop monitoring.
 .SS Show pin with pretty JSON output
 .nf
 .B dpll -jp pin show id 5
+.fi
+
+.SS Show connected input pins on device 0
+.nf
+.B dpll pin show parent-device 0 direction input state connected
 .fi
 
 .SS Set pin frequency to 10 MHz

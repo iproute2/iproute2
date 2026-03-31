@@ -181,10 +181,19 @@ _dpll_pin()
                         int-oscillator gnss" -- "$cur" ) )
                     return 0
                     ;;
+                direction)
+                    COMPREPLY=( $( compgen -W "input output" -- "$cur" ) )
+                    return 0
+                    ;;
+                state)
+                    COMPREPLY=( $( compgen -W \
+                        "connected disconnected selectable" -- "$cur" ) )
+                    return 0
+                    ;;
                 *)
                     COMPREPLY=( $( compgen -W "id parent-device parent-pin \
                         module-name clock-id board-label panel-label \
-                        package-label type" \
+                        package-label type direction state" \
                         -- "$cur" ) )
                     return 0
                     ;;
