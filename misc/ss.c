@@ -2765,21 +2765,23 @@ static void tcp_stats_print(struct tcpstat *s)
 static void tcp_timer_print(struct tcpstat *s)
 {
 	static const char * const tmr_name[] = {
-		"off",
-		"on",
-		"keepalive",
-		"timewait",
-		"persist",
-		"unknown"
+		[IDIAG_TIMER_OFF]	= "off",
+		[IDIAG_TIMER_ON]	= "on",
+		[IDIAG_TIMER_KEEPALIVE]	= "keepalive",
+		[IDIAG_TIMER_TIMEWAIT]	= "timewait",
+		[IDIAG_TIMER_PROBE0]	= "persist",
+		[IDIAG_TIMER_DELACK]	= "delack",
 	};
 
 	if (s->timer) {
-		if (s->timer > 4)
-			s->timer = 5;
-		out(" timer:(%s,%s,%d)",
-			     tmr_name[s->timer],
-			     print_ms_timer(s->timeout),
-			     s->retrans);
+		const char *name;
+
+		if (s->timer >= ARRAY_SIZE(tmr_name))
+			name = "unknown";
+		else
+			name = tmr_name[s->timer];
+		out(" timer:(%s,%s,%d)", name,
+		    print_ms_timer(s->timeout), s->retrans);
 	}
 }
 
