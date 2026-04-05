@@ -37,12 +37,12 @@ static int tbf_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 	struct tc_tbf_qopt opt = {};
 	__u32 rtab[256];
 	__u32 ptab[256];
-	unsigned buffer = 0, mtu = 0, mpu = 0, latency = 0;
+	unsigned mtu = 0, mpu = 0, latency = 0;
 	int Rcell_log =  -1, Pcell_log = -1;
 	unsigned short overhead = 0;
 	unsigned int linklayer = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
-	__u64 rate64 = 0, prate64 = 0;
+	__u64 rate64 = 0, prate64 = 0, buffer64 = 0;
 
 	while (argc > 0) {
 		if (matches(*argv, "limit") == 0) {
@@ -79,11 +79,11 @@ static int tbf_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 			const char *parm_name = *argv;
 
 			NEXT_ARG();
-			if (buffer) {
+			if (buffer64) {
 				fprintf(stderr, "tbf: duplicate \"buffer/burst/maxburst\" specification\n");
 				return -1;
 			}
-			if (get_size_and_cell(&buffer, &Rcell_log, *argv) < 0) {
+			if (get_size64_and_cell(&buffer64, &Rcell_log, *argv) < 0) {
 				explain1(parm_name, *argv);
 				return -1;
 			}
@@ -175,7 +175,7 @@ static int tbf_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 		fprintf(stderr, "tbf: the \"rate\" parameter is mandatory.\n");
 		verdict = -1;
 	}
-	if (!buffer) {
+	if (!buffer64) {
 		fprintf(stderr, "tbf: the \"burst\" parameter is mandatory.\n");
 		verdict = -1;
 	}
@@ -200,7 +200,7 @@ static int tbf_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 	opt.peakrate.rate = (prate64 >= (1ULL << 32)) ? ~0U : prate64;
 
 	if (opt.limit == 0) {
-		double lim = rate64*(double)latency/TIME_UNITS_PER_SEC + buffer;
+		double lim = rate64*(double)latency/TIME_UNITS_PER_SEC + buffer64;
 
 		if (prate64) {
 			double lim2 = prate64*(double)latency/TIME_UNITS_PER_SEC + mtu;
@@ -217,7 +217,11 @@ static int tbf_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 		fprintf(stderr, "tbf: failed to calculate rate table.\n");
 		return -1;
 	}
-	opt.buffer = tc_calc_xmittime(opt.rate.rate, buffer);
+	opt.buffer = tc_calc_xmittime(opt.rate.rate, buffer64);
+	if (opt.buffer == UINT_MAX) {
+		fprintf(stderr, "tbf: burst out of range\n");
+		return -1;
+	}
 
 	if (opt.peakrate.rate) {
 		opt.peakrate.mpu      = mpu;
@@ -231,7 +235,11 @@ static int tbf_parse_opt(const struct qdisc_util *qu, int argc, char **argv,
 
 	tail = addattr_nest(n, 1024, TCA_OPTIONS);
 	addattr_l(n, 2024, TCA_TBF_PARMS, &opt, sizeof(opt));
-	addattr_l(n, 2124, TCA_TBF_BURST, &buffer, sizeof(buffer));
+	if (buffer64 < (1ULL << 32)) {
+		__u32 buffer32 = (__u32)buffer64;
+
+		addattr_l(n, 2124, TCA_TBF_BURST, &buffer32, sizeof(buffer32));
+	}
 	if (rate64 >= (1ULL << 32))
 		addattr_l(n, 2124, TCA_TBF_RATE64, &rate64, sizeof(rate64));
 	addattr_l(n, 3024, TCA_TBF_RTAB, rtab, 1024);

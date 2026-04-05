@@ -112,14 +112,14 @@ static int htb_parse_class_opt(const struct qdisc_util *qu, int argc, char **arg
 {
 	struct tc_htb_opt opt = {};
 	__u32 rtab[256], ctab[256];
-	unsigned buffer = 0, cbuffer = 0;
+	unsigned cbuffer = 0;
 	int cell_log =  -1, ccell_log = -1;
 	unsigned int mtu = 1600; /* eth packet len */
 	unsigned short mpu = 0;
 	unsigned short overhead = 0;
 	unsigned int linklayer  = LINKLAYER_ETHERNET; /* Assume ethernet */
 	struct rtattr *tail;
-	__u64 ceil64 = 0, rate64 = 0;
+	__u64 ceil64 = 0, rate64 = 0, buffer64 = 0;
 	char *param;
 
 	while (argc > 0) {
@@ -158,7 +158,7 @@ static int htb_parse_class_opt(const struct qdisc_util *qu, int argc, char **arg
 			   strcmp(*argv, "maxburst") == 0) {
 			param = *argv;
 			NEXT_ARG();
-			if (get_size_and_cell(&buffer, &cell_log, *argv) < 0) {
+			if (get_size64_and_cell(&buffer64, &cell_log, *argv) < 0) {
 				explain1(param);
 				return -1;
 			}
@@ -225,8 +225,8 @@ static int htb_parse_class_opt(const struct qdisc_util *qu, int argc, char **arg
 
 	/* compute minimal allowed burst from rate; mtu is added here to make
 	   sure that buffer is larger than mtu and to have some safeguard space */
-	if (!buffer)
-		buffer = rate64 / get_hz() + mtu;
+	if (!buffer64)
+		buffer64 = rate64 / get_hz() + mtu;
 	if (!cbuffer)
 		cbuffer = ceil64 / get_hz() + mtu;
 
@@ -240,7 +240,11 @@ static int htb_parse_class_opt(const struct qdisc_util *qu, int argc, char **arg
 		fprintf(stderr, "htb: failed to calculate rate table.\n");
 		return -1;
 	}
-	opt.buffer = tc_calc_xmittime(rate64, buffer);
+	opt.buffer = tc_calc_xmittime(rate64, buffer64);
+	if (opt.buffer == UINT_MAX) {
+		fprintf(stderr, "htb: burst out of range\n");
+		return -1;
+	}
 
 	if (tc_calc_rtable(&opt.ceil, ctab, ccell_log, mtu, linklayer) < 0) {
 		fprintf(stderr, "htb: failed to calculate ceil rate table.\n");
