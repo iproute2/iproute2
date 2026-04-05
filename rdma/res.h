@@ -26,6 +26,8 @@ int res_ctx_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_ctx_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_srq_parse_cb(const struct nlmsghdr *nlh, void *data);
 int res_srq_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_frmr_pools_parse_cb(const struct nlmsghdr *nlh, void *data);
+int res_frmr_pools_idx_parse_cb(const struct nlmsghdr *nlh, void *data);
 
 static inline uint32_t res_get_command(uint32_t command, struct rd *rd)
 {
@@ -185,6 +187,23 @@ struct filters srq_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 RES_FUNC(res_srq, RDMA_NLDEV_CMD_RES_SRQ_GET, srq_valid_filters, true,
 	 RDMA_NLDEV_ATTR_RES_SRQN);
 
+static const
+struct filters frmr_pools_valid_filters[MAX_NUMBER_OF_FILTERS] = {
+	{ .name = "dev", .is_number = false },
+	{ .name = "ats", .is_number = true },
+	{ .name = "access_flags", .is_number = true },
+	{ .name = "vendor_key", .is_number = true },
+	{ .name = "num_dma_blocks", .is_number = true },
+	{ .name = "queue", .is_number = true },
+	{ .name = "in_use", .is_number = true },
+	{ .name = "max_in_use", .is_number = true },
+	{ .name = "pinned", .is_number = true },
+};
+
+RES_FUNC(res_frmr_pools, RDMA_NLDEV_CMD_RES_FRMR_POOLS_GET,
+	 frmr_pools_valid_filters, true, 0);
+
+int res_frmr_pools_set(struct rd *rd);
 void print_dev(uint32_t idx, const char *name);
 void print_link(uint32_t idx, const char *name, uint32_t port, struct nlattr **nla_line);
 void print_key(const char *name, uint64_t val, struct nlattr *nlattr);

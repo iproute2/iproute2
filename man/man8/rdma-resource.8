@@ -13,7 +13,8 @@ rdma-resource \- rdma resource configuration
 
 .ti -8
 .IR RESOURCE " := { "
-.BR cm_id " | " cq " | " mr " | " pd " | " qp " | " ctx " | " srq " }"
+.BR cm_id " | " cq " | " mr " | " pd " | " qp " | " ctx " | " srq " | "
+.BR frmr_pools " }"
 .sp
 
 .ti -8
@@ -26,6 +27,21 @@ rdma-resource \- rdma resource configuration
 .RI "[ " DEV/PORT_INDEX " ]"
 
 .ti -8
+.B rdma resource set frmr_pools
+.BR dev
+.IR DEV
+.BR aging
+.IR AGING_PERIOD
+
+.ti -8
+.B rdma resource set frmr_pools
+.BR dev
+.IR DEV
+.BR pinned
+.IR POOL_KEY
+.IR PINNED_VALUE
+
+.ti -8
 .B rdma resource help
 
 .SH "DESCRIPTION"
@@ -35,6 +51,24 @@ rdma-resource \- rdma resource configuration
 .I "DEV/PORT_INDEX"
 - specifies the RDMA link to show.
 If this argument is omitted all links are listed.
+
+.SS rdma resource set - configure resource related parameters
+
+.PP
+.I "DEV"
+- specifies the RDMA device to configure.
+
+.PP
+.I "AGING_PERIOD"
+- specifies the aging period in seconds for unused FRMR handles. Handles unused for this period will be freed.
+
+.PP
+.I "POOL_KEY"
+- specifies the pool key that identifies a specific FRMR pool. The key is a colon-separated list of hexadecimal fields in the format vendor_key:num_dma_blocks:access_flags:ats.
+
+.PP
+.I "PINNED_VALUE"
+- specifies the pinned value for the FRMR pool. A non-zero value pins handles to the pool, preventing them from being freed by the aging mechanism.
 
 .SH "EXAMPLES"
 .PP
@@ -113,6 +147,20 @@ rdma resource show srq lqpn 5-7
 Show SRQs that the QPs with lqpn 5-7 are associated with.
 .RE
 .PP
+rdma resource show frmr_pools ats 1
+.RS 4
+Show FRMR pools that have ats attribute set.
+.RE
+.PP
+rdma resource set frmr_pools dev rocep8s0f0 aging 120
+.RS 4
+Set the aging period for FRMR pools on device rocep8s0f0 to 120 seconds.
+.RE
+.PP
+rdma resource set frmr_pools dev rocep8s0f0 pinned 0:1000:0:0 25000
+.RS 4
+Pin 25000 handles to the FRMR pool identified by key 0:1000:0:0 on device rocep8s0f0 to prevent them from being freed.
+.RE
 
 .SH SEE ALSO
 .BR rdma (8),
