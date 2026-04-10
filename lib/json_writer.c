@@ -53,7 +53,7 @@ static void jsonw_eor(json_writer_t *self)
 
 
 /* Output JSON encoded string */
-/* Handles C escapes, does not do Unicode */
+/* Handles C escapes and control characters per RFC 8259 */
 static void jsonw_puts(json_writer_t *self, const char *str)
 {
 	putc('"', self->out);
@@ -81,7 +81,10 @@ static void jsonw_puts(json_writer_t *self, const char *str)
 			fputs("\\\"", self->out);
 			break;
 		default:
-			putc(*str, self->out);
+			if ((unsigned char)*str < 0x20 || *str == 0x7f)
+				fprintf(self->out, "\\u%04x", *str);
+			else
+				putc(*str, self->out);
 		}
 	putc('"', self->out);
 }
