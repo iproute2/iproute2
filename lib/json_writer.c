@@ -369,7 +369,7 @@ int main(int argc, char **argv)
 	jsonw_null_field(wr, "my_null");
 
 	jsonw_name(wr, "special chars");
-	jsonw_start_array(wr);
+	jsonw_start_object(wr);
 	jsonw_string_field(wr, "slash", "/");
 	jsonw_string_field(wr, "newline", "\n");
 	jsonw_string_field(wr, "tab", "\t");
@@ -377,7 +377,14 @@ int main(int argc, char **argv)
 	jsonw_string_field(wr, "quote", "\"");
 	jsonw_string_field(wr, "tick", "\'");
 	jsonw_string_field(wr, "backslash", "\\");
-	jsonw_end_array(wr);
+	jsonw_end_object(wr);
+
+	jsonw_name(wr, "control chars");
+	jsonw_start_object(wr);
+	jsonw_string_field(wr, "bell", "\a");
+	jsonw_string_field(wr, "esc", "\033");
+	jsonw_string_field(wr, "del", "\177");
+	jsonw_end_object(wr);
 
 	jsonw_end_object(wr);
 
