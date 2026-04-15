@@ -5542,6 +5542,7 @@ static int generic_show_sock(struct nlmsghdr *nlh, void *arg)
 
 	render();
 
+	fflush(stdout);
 	return ret;
 }
 
