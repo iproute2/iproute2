@@ -53,7 +53,7 @@ static void jsonw_eor(json_writer_t *self)
 
 
 /* Output JSON encoded string */
-/* Handles C escapes, does not do Unicode */
+/* Handles C escapes and control characters per RFC 8259 */
 static void jsonw_puts(json_writer_t *self, const char *str)
 {
 	putc('"', self->out);
@@ -81,7 +81,10 @@ static void jsonw_puts(json_writer_t *self, const char *str)
 			fputs("\\\"", self->out);
 			break;
 		default:
-			putc(*str, self->out);
+			if ((unsigned char)*str < 0x20 || *str == 0x7f)
+				fprintf(self->out, "\\u%04x", *str);
+			else
+				putc(*str, self->out);
 		}
 	putc('"', self->out);
 }
@@ -366,7 +369,7 @@ int main(int argc, char **argv)
 	jsonw_null_field(wr, "my_null");
 
 	jsonw_name(wr, "special chars");
-	jsonw_start_array(wr);
+	jsonw_start_object(wr);
 	jsonw_string_field(wr, "slash", "/");
 	jsonw_string_field(wr, "newline", "\n");
 	jsonw_string_field(wr, "tab", "\t");
@@ -374,7 +377,14 @@ int main(int argc, char **argv)
 	jsonw_string_field(wr, "quote", "\"");
 	jsonw_string_field(wr, "tick", "\'");
 	jsonw_string_field(wr, "backslash", "\\");
-	jsonw_end_array(wr);
+	jsonw_end_object(wr);
+
+	jsonw_name(wr, "control chars");
+	jsonw_start_object(wr);
+	jsonw_string_field(wr, "bell", "\a");
+	jsonw_string_field(wr, "esc", "\033");
+	jsonw_string_field(wr, "del", "\177");
+	jsonw_end_object(wr);
 
 	jsonw_end_object(wr);
 

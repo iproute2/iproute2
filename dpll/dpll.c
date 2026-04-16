@@ -2175,7 +2175,7 @@ static int cmd_pin_id_get(struct dpll *dpll)
 			if (dpll_parse_attr_str(dpll, nlh, "package-label",
 						DPLL_A_PIN_PACKAGE_LABEL))
 				return -EINVAL;
-		} else if (dpll_argv_match(dpll, "type")) {
+		} else if (dpll_argv_match_inc(dpll, "type")) {
 			if (dpll_parse_attr_enum(dpll, nlh, "type",
 						 DPLL_A_PIN_TYPE,
 						 dpll_parse_pin_type))
@@ -2294,6 +2294,7 @@ static int cmd_monitor_cb(const struct nlmsghdr *nlh, void *data)
 		break;
 	}
 
+	fflush(stdout);
 	return ret;
 }
 
