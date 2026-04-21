@@ -1647,7 +1647,13 @@ int get_time(unsigned int *time, const char *str)
 
 	t = strtod(str, &p);
 	if (p == str)
-		return -1;
+		return -1;	/* empty string */
+
+	if (t < 0)
+		return -1;	/* negative value */
+
+	if (t == HUGE_VAL && errno == ERANGE)
+		return -1;	/* out of range */
 
 	if (*p) {
 		if (strcasecmp(p, "s") == 0 || strcasecmp(p, "sec") == 0 ||
@@ -1693,7 +1699,13 @@ int get_time64(__s64 *time, const char *str)
 
 	nsec = strtod(str, &p);
 	if (p == str)
-		return -1;
+		return -1;	/* empty string */
+
+	if (nsec < 0)
+		return -1;	/* negative value */
+
+	if (nsec == HUGE_VAL && errno == ERANGE)
+		return -1;	/* out of range */
 
 	if (*p) {
 		if (strcasecmp(p, "s") == 0 ||

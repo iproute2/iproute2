@@ -5,6 +5,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <errno.h>
 #include <asm/types.h>
 
 #include "utils.h"
@@ -42,7 +43,13 @@ int get_rate(unsigned int *rate, const char *str)
 	const struct rate_suffix *s;
 
 	if (p == str)
-		return -1;
+		return -1;	/* empty string */
+
+	if (bps < 0)
+		return -1;	/* negative */
+
+	if (bps == HUGE_VAL && errno == ERANGE)
+		return -1;	/* out of range */
 
 	for (s = suffixes; s->name; ++s) {
 		if (strcasecmp(s->name, p) == 0) {
@@ -70,7 +77,13 @@ int get_rate64(__u64 *rate, const char *str)
 	const struct rate_suffix *s;
 
 	if (p == str)
-		return -1;
+		return -1;	/* empty string */
+
+	if (bps < 0)
+		return -1;	/* negative */
+
+	if (bps == HUGE_VAL && errno == ERANGE)
+		return -1;	/* out of range */
 
 	for (s = suffixes; s->name; ++s) {
 		if (strcasecmp(s->name, p) == 0) {
@@ -95,7 +108,13 @@ int get_size64(__u64 *size, const char *str)
 
 	sz = strtod(str, &p);
 	if (p == str)
-		return -1;
+		return -1;	/* empty string */
+
+	if (sz < 0)
+		return -1;	/* negative */
+
+	if (sz == HUGE_VAL && errno == ERANGE)
+		return -1;	/* out of range */
 
 	if (*p) {
 		if (strcasecmp(p, "kb") == 0 || strcasecmp(p, "k") == 0)
