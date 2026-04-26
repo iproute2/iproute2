@@ -31,7 +31,8 @@ _devlink_direct_complete()
 
     case $1 in
         dev)
-            value=$(devlink dev show 2>/dev/null)
+            value=$(devlink -j dev show 2>/dev/null \
+                    | jq -r '.dev | keys[]')
             ;;
         selftests_id)
             dev=${words[4]}
