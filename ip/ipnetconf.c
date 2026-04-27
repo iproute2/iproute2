@@ -140,7 +140,6 @@ int print_netconf(struct rtnl_ctrl_data *ctrl, struct nlmsghdr *n, void *arg)
 
 	close_json_object();
 	print_string(PRINT_FP, NULL, "\n", NULL);
-	fflush(fp);
 	return 0;
 }
 

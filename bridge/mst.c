@@ -158,7 +158,6 @@ static int mst_show(int argc, char **argv)
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 	return 0;
 }
 

@@ -159,7 +159,6 @@ static int do_list(int argc, char **argv)
 		return 1;
 	}
 	delete_json_obj();
-	fflush(stdout);
 
 	return 0;
 }

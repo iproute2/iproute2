@@ -380,7 +380,6 @@ int print_class(struct nlmsghdr *n, void *arg)
 		close_json_object();
 	}
 	close_json_object();
-	fflush(fp);
 	return 0;
 }
 

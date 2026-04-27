@@ -826,7 +826,6 @@ int print_cache_nexthop(struct nlmsghdr *n, void *arg, bool process_cache)
 
 	__print_nexthop_entry(fp, NULL, &nhe, n->nlmsg_type == RTM_DELNEXTHOP);
 	print_string(PRINT_FP, NULL, "%s", "\n");
-	fflush(fp);
 
 	if (process_cache)
 		ipnh_cache_process_nlmsg(n, &nhe);
@@ -882,7 +881,6 @@ int print_nexthop_bucket(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "%s", "\n");
 	close_json_object();
-	fflush(fp);
 
 	return 0;
 }
@@ -1178,7 +1176,6 @@ static int ipnh_get_id(__u32 id)
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 
 	free(answer);
 
@@ -1266,7 +1263,6 @@ static int ipnh_list_flush(int argc, char **argv, int action)
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 
 	return 0;
 }
@@ -1342,7 +1338,6 @@ static int ipnh_bucket_list(int argc, char **argv)
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 
 	return 0;
 }
@@ -1383,7 +1378,6 @@ static int ipnh_bucket_get_id(__u32 id, __u16 bucket_index)
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 
 	free(answer);
 

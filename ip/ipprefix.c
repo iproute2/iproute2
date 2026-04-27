@@ -81,7 +81,6 @@ int print_prefix(struct nlmsghdr *n, void *arg)
 	}
 
 	fprintf(fp, "\n");
-	fflush(fp);
 
 	return 0;
 }

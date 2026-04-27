@@ -565,7 +565,6 @@ int xfrm_policy_print(struct nlmsghdr *n, void *arg)
 
 	if (oneline)
 		fprintf(fp, "\n");
-	fflush(fp);
 
 	return 0;
 }
@@ -1232,7 +1231,6 @@ int xfrm_policy_default_print(struct nlmsghdr *n, FILE *fp)
 	fprintf(fp, " in:  %s\n", xfrm_policy_to_str(up->in));
 	fprintf(fp, " fwd: %s\n", xfrm_policy_to_str(up->fwd));
 	fprintf(fp, " out: %s\n", xfrm_policy_to_str(up->out));
-	fflush(fp);
 
 	return 0;
 }

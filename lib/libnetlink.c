@@ -1275,6 +1275,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 			}
 
 			err = handler(&ctrl, h, jarg);
+			fflush(stdout);
 			if (err < 0)
 				return err;
 

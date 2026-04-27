@@ -309,7 +309,6 @@ int print_fdb(struct nlmsghdr *n, void *arg)
 	print_string(PRINT_ANY, "state", "%s\n",
 			   state_n2a(r->ndm_state));
 	close_json_object();
-	fflush(fp);
 	return 0;
 }
 
@@ -417,7 +416,6 @@ static int fdb_show(int argc, char **argv)
 		exit(1);
 	}
 	delete_json_obj();
-	fflush(stdout);
 
 	return 0;
 }

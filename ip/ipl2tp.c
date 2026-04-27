@@ -467,7 +467,6 @@ static int get_session(struct l2tp_data *p)
 		exit(1);
 	}
 	delete_json_obj();
-	fflush(stdout);
 
 	return 0;
 }
@@ -502,7 +501,6 @@ static int get_tunnel(struct l2tp_data *p)
 		exit(1);
 	}
 	delete_json_obj();
-	fflush(stdout);
 
 	return 0;
 }

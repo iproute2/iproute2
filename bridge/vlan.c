@@ -756,7 +756,6 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 	struct if_stats_msg *ifsm = NLMSG_DATA(n);
 	struct rtattr *tb[IFLA_STATS_MAX+1];
 	int len = n->nlmsg_len;
-	FILE *fp = arg;
 
 	len -= NLMSG_LENGTH(sizeof(*ifsm));
 	if (len < 0) {
@@ -778,7 +777,6 @@ static int print_vlan_stats(struct nlmsghdr *n, void *arg)
 		print_vlan_stats_attr(tb[IFLA_STATS_LINK_XSTATS_SLAVE],
 				      ifsm->ifindex);
 
-	fflush(fp);
 	return 0;
 }
 
@@ -1205,7 +1203,6 @@ static int vlan_show(int argc, char **argv, int subject)
 
 out:
 	delete_json_obj();
-	fflush(stdout);
 	return 0;
 }
 
@@ -1260,7 +1257,6 @@ static int vlan_global_show(int argc, char **argv)
 		close_vlan_port();
 
 	delete_json_obj();
-	fflush(stdout);
 	return 0;
 }
 

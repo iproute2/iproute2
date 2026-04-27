@@ -85,7 +85,6 @@ static int xfrm_acquire_print(struct nlmsghdr *n, void *arg)
 
 	if (oneline)
 		fprintf(fp, "\n");
-	fflush(fp);
 
 	return 0;
 }
@@ -114,7 +113,6 @@ static int xfrm_state_flush_print(struct nlmsghdr *n, void *arg)
 
 	if (oneline)
 		fprintf(fp, "\n");
-	fflush(fp);
 
 	return 0;
 }
@@ -151,7 +149,6 @@ static int xfrm_policy_flush_print(struct nlmsghdr *n, void *arg)
 
 	if (oneline)
 		fprintf(fp, "\n");
-	fflush(fp);
 
 	return 0;
 }
@@ -232,7 +229,6 @@ static int xfrm_ae_print(struct nlmsghdr *n, void *arg)
 	xfrm_usersa_print(&id->sa_id, id->reqid, fp);
 
 	fprintf(fp, "\n");
-	fflush(fp);
 
 	return 0;
 }
@@ -257,7 +253,6 @@ static int xfrm_mapping_print(struct nlmsghdr *n, void *arg)
 	xfrm_usersa_print(&map->id, map->reqid, fp);
 
 	fprintf(fp, "\n");
-	fflush(fp);
 	return 0;
 }
 

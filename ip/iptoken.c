@@ -41,7 +41,6 @@ static void usage(void)
 static int print_token(struct nlmsghdr *n, void *arg)
 {
 	struct rtnl_dump_args *args = arg;
-	FILE *fp = args->fp;
 	int ifindex = args->ifindex;
 	struct ifinfomsg *ifi = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
@@ -85,7 +84,6 @@ static int print_token(struct nlmsghdr *n, void *arg)
 			   "ifname", "%s\n",
 			   ll_index_to_name(ifi->ifi_index));
 	close_json_object();
-	fflush(fp);
 
 	return 0;
 }

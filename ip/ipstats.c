@@ -879,7 +879,6 @@ static int ipstats_dump(struct ipstats_stat_enabled *enabled)
 		rc = -2;
 	}
 
-	fflush(stdout);
 	return rc;
 }
 
@@ -1355,6 +1354,5 @@ int ipstats_print(struct nlmsghdr *n, void *arg)
 	if (rc)
 		return rc;
 
-	fflush(fp);
 	return 0;
 }

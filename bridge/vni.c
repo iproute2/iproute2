@@ -333,7 +333,6 @@ int print_vnifilter_rtm(struct nlmsghdr *n, void *arg)
 	if (opened)
 		close_vni_port();
 
-	fflush(stdout);
 	return 0;
 }
 
@@ -381,7 +380,6 @@ static int vni_show(int argc, char **argv)
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 	return 0;
 }
 
