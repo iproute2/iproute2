@@ -8,7 +8,7 @@ MAN_CHECK=LC_ALL=en_US.UTF-8 MANROFFSEQ='' MANWIDTH=100 man --warnings \
 # Hide man output, count and print errors.
 MAN_REDIRECT=2>&1 >/dev/null | tee /dev/fd/2 | wc -l
 
-SUBDIRS = man3 man7 man8
+SUBDIRS = man7 man8
 
 all clean install check:
 	@for subdir in $(SUBDIRS); do $(MAKE) -C $$subdir $@ || exit $$?; done
