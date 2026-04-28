@@ -188,16 +188,17 @@ static int tc_filter_modify(int cmd, unsigned int flags, int argc, char **argv)
 		addattr_l(&req.n, sizeof(req), TCA_KIND, k, strlen(k)+1);
 
 	if (d[0])  {
-		ll_init_map(&rth);
-
 		req.t.tcm_ifindex = ll_name_to_index(d);
 		if (req.t.tcm_ifindex == 0) {
 			fprintf(stderr, "Cannot find device \"%s\"\n", d);
 			return 1;
 		}
-	} else if (block_index) {
-		req.t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
-		req.t.tcm_block_index = block_index;
+	} else {
+		ll_init_map(&rth);
+		if (block_index) {
+			req.t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
+			req.t.tcm_block_index = block_index;
+		}
 	}
 
 	if (q) {
@@ -538,8 +539,6 @@ static int tc_filter_get(int cmd, unsigned int flags, int argc, char **argv)
 	}
 
 	if (d[0])  {
-		ll_init_map(&rth);
-
 		req.t.tcm_ifindex = ll_name_to_index(d);
 		if (!req.t.tcm_ifindex)
 			return -nodev(d);
@@ -703,21 +702,23 @@ static int tc_filter_list(int cmd, int argc, char **argv)
 
 	req.t.tcm_info = TC_H_MAKE(prio<<16, protocol);
 
-	ll_init_map(&rth);
-
 	if (d[0]) {
 		req.t.tcm_ifindex = ll_name_to_index(d);
 		if (!req.t.tcm_ifindex)
 			return -nodev(d);
 		filter_ifindex = req.t.tcm_ifindex;
-	} else if (block_index) {
-		if (!tc_qdisc_block_exists(block_index)) {
-			fprintf(stderr, "Cannot find block \"%u\"\n", block_index);
-			return 1;
+	} else {
+		ll_init_map(&rth);
+		if (block_index) {
+			if (!tc_qdisc_block_exists(block_index)) {
+				fprintf(stderr, "Cannot find block \"%u\"\n",
+					block_index);
+				return 1;
+			}
+			req.t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
+			req.t.tcm_block_index = block_index;
+			filter_block_index = block_index;
 		}
-		req.t.tcm_ifindex = TCM_IFINDEX_MAGIC_BLOCK;
-		req.t.tcm_block_index = block_index;
-		filter_block_index = block_index;
 	}
 
 	if (filter_chain_index_set)

@@ -193,8 +193,6 @@ static int tc_qdisc_modify(int cmd, unsigned int flags, int argc, char **argv)
 	if (d[0])  {
 		int idx;
 
-		ll_init_map(&rth);
-
 		idx = ll_name_to_index(d);
 		if (!idx)
 			return -nodev(d);
@@ -410,13 +408,14 @@ static int tc_qdisc_list(int argc, char **argv)
 		argc--; argv++;
 	}
 
-	ll_init_map(&rth);
 
 	if (d[0]) {
 		req.t.tcm_ifindex = ll_name_to_index(d);
 		if (!req.t.tcm_ifindex)
 			return -nodev(d);
 		filter_ifindex = req.t.tcm_ifindex;
+	} else {
+		ll_init_map(&rth);
 	}
 
 	if (dump_invisible) {

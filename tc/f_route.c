@@ -76,7 +76,6 @@ static int route_parse_opt(const struct filter_util *qu, char *handle, int argc,
 			__u32 id;
 
 			NEXT_ARG();
-			ll_init_map(&rth);
 			if ((id = ll_name_to_index(*argv)) <= 0) {
 				fprintf(stderr, "Illegal \"fromif\"\n");
 				return -1;

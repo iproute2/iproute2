@@ -136,11 +136,11 @@ static int tc_class_modify(int cmd, unsigned int flags, int argc, char **argv)
 	}
 
 	if (d[0])  {
-		ll_init_map(&rth);
-
 		req.t.tcm_ifindex = ll_name_to_index(d);
 		if (!req.t.tcm_ifindex)
 			return -nodev(d);
+	} else {
+		ll_init_map(&rth);
 	}
 
 	if (rtnl_talk(&rth, &req.n, NULL) < 0)
@@ -435,8 +435,6 @@ static int tc_class_list(int argc, char **argv)
 
 		argc--; argv++;
 	}
-
-	ll_init_map(&rth);
 
 	if (d[0]) {
 		t.tcm_ifindex = ll_name_to_index(d);

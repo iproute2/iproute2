@@ -243,6 +243,7 @@ static int batch(const char *name)
 		return -1;
 	}
 
+	ll_init_map(&rth);
 	ret = do_batch(name, force, tc_batch_cmd, NULL);
 
 	rtnl_close(&rth);

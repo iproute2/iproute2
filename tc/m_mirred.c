@@ -213,8 +213,6 @@ parse_direction(const struct action_util *a, int *argc_p, char ***argv_p,
 	if (d[0])  {
 		int idx;
 
-		ll_init_map(&rth);
-
 		idx = ll_name_to_index(d);
 		if (!idx)
 			return nodev(d);
