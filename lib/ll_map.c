@@ -391,7 +391,9 @@ void ll_init_map(struct rtnl_handle *rth)
 	if (initialized)
 		return;
 
-	if (rtnl_linkdump_req(rth, AF_UNSPEC) < 0) {
+	if (rtnl_linkdump_req_filter(rth, AF_UNSPEC,
+				     RTEXT_FILTER_VF |
+				     RTEXT_FILTER_SKIP_STATS) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
