@@ -1296,7 +1296,6 @@ static void print_mpls_stats(FILE *fp, struct rtattr *attr)
 	print_nl();
 	print_mpls_link_stats(fp, stats, "        ");
 	print_string(PRINT_FP, NULL, "%s", "\n");
-	fflush(fp);
 }
 
 static void print_af_stats_attr(FILE *fp, int ifindex, struct rtattr *attr)
@@ -1359,7 +1358,6 @@ static int print_af_stats(struct nlmsghdr *n, void *arg)
 	if (tb[IFLA_STATS_AF_SPEC])
 		print_af_stats_attr(fp, ifsm->ifindex, tb[IFLA_STATS_AF_SPEC]);
 
-	fflush(fp);
 	return 0;
 }
 

@@ -275,7 +275,6 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 	struct genlmsghdr *ghdr = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *attrs;
-	FILE *fp = (FILE *) arg;
 
 	if (n->nlmsg_type !=  GENL_ID_CTRL) {
 		fprintf(stderr, "Not a controller message, nlmsg_len=%d "
@@ -339,7 +338,6 @@ static int print_ctrl(struct rtnl_ctrl_data *ctrl,
 	if (tb[CTRL_ATTR_MCAST_GROUPS])
 		print_ctrl_mcast(tb[CTRL_ATTR_MCAST_GROUPS]);
 
-	fflush(fp);
 	return 0;
 }
 

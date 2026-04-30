@@ -261,7 +261,6 @@ static int ioam6_do_cmd(void)
 			exit(1);
 		}
 		delete_json_obj();
-		fflush(stdout);
 	}
 
 	return 0;

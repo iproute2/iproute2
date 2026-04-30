@@ -45,17 +45,8 @@ DEFINES+=-DCONF_USR_DIR=\"$(CONF_USR_DIR)\" \
          -DARPDDIR=\"$(ARPDDIR)\" \
          -DCONF_COLOR=$(CONF_COLOR)
 
-#options for AX.25
-ADDLIB+=ax25_ntop.o
-
-#options for AX.25
-ADDLIB+=rose_ntop.o
-
 #options for mpls
 ADDLIB+=mpls_ntop.o mpls_pton.o
-
-#options for NETROM
-ADDLIB+=netrom_ntop.o
 
 CC := gcc
 HOSTCC ?= $(CC)

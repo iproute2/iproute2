@@ -501,7 +501,6 @@ static int mdb_show(int argc, char **argv)
 
 	close_json_object();
 	delete_json_obj();
-	fflush(stdout);
 
 	return 0;
 }

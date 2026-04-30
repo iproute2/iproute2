@@ -532,7 +532,6 @@ static void print_ndtstats(const struct ndt_stats *ndts)
 
 static int print_ntable(struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE *)arg;
 	struct ndtmsg *ndtm = NLMSG_DATA(n);
 	int len = n->nlmsg_len;
 	struct rtattr *tb[NDTA_MAX+1];
@@ -633,7 +632,6 @@ static int print_ntable(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "\n", "");
 	close_json_object();
-	fflush(fp);
 
 	return 0;
 }

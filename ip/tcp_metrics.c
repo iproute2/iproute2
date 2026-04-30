@@ -156,7 +156,6 @@ static void print_tcp_metrics(struct rtattr *a)
 
 static int process_msg(struct nlmsghdr *n, void *arg)
 {
-	FILE *fp = (FILE *) arg;
 	struct genlmsghdr *ghdr;
 	struct rtattr *attrs[TCP_METRICS_ATTR_MAX + 1], *a;
 	const char *h;
@@ -334,7 +333,6 @@ static int process_msg(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "\n", "");
 	close_json_object();
-	fflush(fp);
 	return 0;
 }
 

@@ -599,7 +599,6 @@ int print_rule(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "\n", "");
 	close_json_object();
-	fflush(fp);
 	return 0;
 }
 

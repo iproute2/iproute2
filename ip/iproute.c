@@ -1012,7 +1012,6 @@ int print_route(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "\n", NULL);
 	close_json_object();
-	fflush(fp);
 	return 0;
 }
 
@@ -1792,6 +1791,7 @@ static int iproute_flush(int family, rtnl_filter_t filter_fn)
 		if (time(0) - start > 30) {
 			printf("\n*** Flush not completed after %ld seconds, %d entries remain ***\n",
 			       (long)(time(0) - start), filter.flushed);
+			fflush(stdout);
 			return -1;
 		}
 
@@ -2035,7 +2035,6 @@ static int iproute_list_flush_or_save(int argc, char **argv, int action)
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 	return 0;
 }
 

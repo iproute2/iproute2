@@ -1051,7 +1051,6 @@ static int __do_xfrm_state_print(struct nlmsghdr *n, void *arg, bool nokeys)
 
 	if (oneline)
 		fprintf(fp, "\n");
-	fflush(fp);
 
 	return 0;
 }

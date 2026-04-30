@@ -276,7 +276,6 @@ static int print_mptcp_addrinfo(struct rtattr *addrinfo)
 
 	print_nl();
 	close_json_object();
-	fflush(stdout);
 
 	return 0;
 }
@@ -320,12 +319,10 @@ static int mptcp_addr_dump(void)
 	if (rtnl_dump_filter(&genl_rth, print_mptcp_addr, stdout) < 0) {
 		fprintf(stderr, "Dump terminated\n");
 		delete_json_obj();
-		fflush(stdout);
 		return -2;
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 	return 0;
 }
 
@@ -349,7 +346,6 @@ static int mptcp_addr_show(int argc, char **argv)
 	ret = print_mptcp_addr(answer, stdout);
 	delete_json_obj();
 	free(answer);
-	fflush(stdout);
 	return ret;
 }
 
@@ -430,7 +426,6 @@ static int print_mptcp_limit(struct nlmsghdr *n, void *arg)
 
 	print_nl();
 	close_json_object();
-	fflush(stdout);
 
 	return 0;
 }
@@ -592,7 +587,6 @@ static int mptcp_monitor_msg(struct rtnl_ctrl_data *ctrl,
 out:
 	print_nl();
 	close_json_object();
-	fflush(stdout);
 
 	return 0;
 }

@@ -327,7 +327,6 @@ int print_nsid(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "\n", NULL);
 	close_json_object();
-	fflush(fp);
 	return 0;
 }
 

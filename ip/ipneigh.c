@@ -298,7 +298,6 @@ static int print_neigh_brief(FILE *fp, struct ndmsg *r, struct rtattr *tb[])
 
 	print_string(PRINT_FP, NULL, "%s", "\n");
 	close_json_object();
-	fflush(fp);
 
 	return 0;
 }
@@ -472,7 +471,6 @@ int print_neigh(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "\n", "");
 	close_json_object();
-	fflush(fp);
 
 	return 0;
 }

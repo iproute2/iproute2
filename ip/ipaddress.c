@@ -894,7 +894,6 @@ static int print_linkinfo_brief(FILE *fp, const char *name,
 		print_string(PRINT_FP, NULL, "%s", "\n");
 	}
 
-	fflush(fp);
 	return 0;
 }
 
@@ -1346,7 +1345,6 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 	}
 
 	print_string(PRINT_FP, NULL, "%s", "\n");
-	fflush(fp);
 	/* prettier here if stderr and stdout go to the same place */
 	if (truncated_vfs)
 		fprintf(stderr, "Truncated VF list: %s\n", name);
@@ -1732,7 +1730,6 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 	}
 	print_string(PRINT_FP, NULL, "%s", "\n");
 brief_exit:
-	fflush(fp);
 	return 0;
 }
 
@@ -1768,7 +1765,6 @@ static int print_selected_addrinfo(struct ifinfomsg *ifi,
 
 	if (brief) {
 		print_string(PRINT_FP, NULL, "%s", "\n");
-		fflush(fp);
 	}
 	return 0;
 }
@@ -2351,7 +2347,6 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 			print_link_stats(stdout, n);
 		close_json_object();
 	}
-	fflush(stdout);
 
 out:
 	free_nlmsg_chain(ainfo);

@@ -292,7 +292,6 @@ int print_linkinfo(struct nlmsghdr *n, void *arg)
 
 	print_string(PRINT_FP, NULL, "%s", "\n");
 	close_json_object();
-	fflush(fp);
 	return 0;
 }
 
@@ -669,7 +668,6 @@ static int brlink_show(int argc, char **argv)
 	}
 
 	delete_json_obj();
-	fflush(stdout);
 	return 0;
 }
 
