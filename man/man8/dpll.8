@@ -102,13 +102,23 @@ Module name providing the device
 .IP \[bu]
 Clock ID (unique identifier)
 .IP \[bu]
-Operating mode (manual, automatic, holdover, freerun)
+Operating mode (manual, automatic)
 .IP \[bu]
-Lock status (locked-ho-ack, locked, unlocked, holdover)
+Lock status (unlocked, locked, locked-ho-acq, holdover)
+.IP \[bu]
+Lock status error (if present)
+.IP \[bu]
+Clock quality level (if supported)
 .IP \[bu]
 Temperature (if supported)
 .IP \[bu]
 Type (PPS or EEC)
+.IP \[bu]
+Supported modes
+.IP \[bu]
+Phase offset monitor status (enable/disable)
+.IP \[bu]
+Phase offset averaging factor
 .RE
 
 .SS dpll device set id ID [ mode { automatic | manual } ] [ phase-offset-monitor { enable | disable } ] [ phase-offset-avg-factor FACTOR ]
@@ -131,7 +141,7 @@ mode, the input source must be explicitly configured and the DPLL
 will not automatically switch sources.
 
 .TP
-.BI phase-offset-monitor " { enable | disable | true | false | 0 | 1 }"
+.BI phase-offset-monitor " { enable | disable }"
 Enable or disable phase offset monitoring between the device and its pins.
 When enabled, the kernel continuously measures and reports phase differences.
 
@@ -231,6 +241,10 @@ Clock ID
 .IP \[bu]
 Board label (hardware label from device tree or ACPI)
 .IP \[bu]
+Panel label
+.IP \[bu]
+Package label
+.IP \[bu]
 Pin type (mux, ext, synce-eth-port, int-oscillator, gnss)
 .IP \[bu]
 Frequency and supported frequency ranges
@@ -239,13 +253,15 @@ Capabilities (state-can-change, priority-can-change, direction-can-change)
 .IP \[bu]
 Phase adjustment range, granularity, and current value
 .IP \[bu]
+Fractional frequency offset
+.IP \[bu]
 Parent device relationships (direction, priority, state, phase offset)
 .IP \[bu]
 Parent pin relationships
 .IP \[bu]
 Reference sync information
 .IP \[bu]
-Esync frequency support (if applicable)
+Esync frequency and pulse support (if applicable)
 .RE
 
 .SS dpll pin set id ID [ PARAMETER VALUE ] ...
@@ -495,13 +511,7 @@ changes.
 Success
 .TP
 .B 1
-General failure
-.TP
-.B 2
-Invalid arguments or usage
-.TP
-.B 255
-Netlink communication error
+Failure
 
 .SH NOTES
 .IP \[bu] 2
