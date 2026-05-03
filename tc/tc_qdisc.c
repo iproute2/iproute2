@@ -408,6 +408,9 @@ static int tc_qdisc_list(int argc, char **argv)
 		argc--; argv++;
 	}
 
+	/* Recent kernels (7.2+) can filter on tcm_parent/tcm_handle */
+	req.t.tcm_parent = filter_parent;
+	req.t.tcm_handle = filter_handle;
 
 	if (d[0]) {
 		req.t.tcm_ifindex = ll_name_to_index(d);
