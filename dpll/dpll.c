@@ -455,6 +455,24 @@ static void dpll_pr_multi_enum_str(const struct nlmsghdr *nlh, int attr_id,
 	print_nl();
 }
 
+/* Phase offset - JSON prints raw sub-ps value, FP prints fractional ps */
+static void dpll_pr_phase_offset(struct nlattr *attr)
+{
+	__s64 val;
+	lldiv_t d;
+
+	if (!attr)
+		return;
+
+	val = mnl_attr_get_sint(attr);
+	d = lldiv(llabs(val), DPLL_PHASE_OFFSET_DIVIDER);
+	print_s64(PRINT_JSON, "phase-offset", NULL, val);
+	print_string(PRINT_FP, NULL, " phase-offset %s",
+		     val < 0 ? "-" : "");
+	print_s64(PRINT_FP, NULL, "%lld.", d.quot);
+	print_s64(PRINT_FP, NULL, "%03lld ps", d.rem);
+}
+
 /* Print frequency range (or single value if min==max) */
 static void dpll_pr_freq_range(__u64 freq_min, __u64 freq_max)
 {
@@ -1507,8 +1525,7 @@ static void dpll_pin_print_parent_devices(struct nlattr *attr)
 				 " prio %u");
 		DPLL_PR_ENUM_STR_FMT(tb_parent, DPLL_A_PIN_STATE, "state",
 				     " state %s", dpll_pin_state_name);
-		DPLL_PR_SINT_FMT(tb_parent, DPLL_A_PIN_PHASE_OFFSET,
-				 "phase-offset", " phase-offset %" PRId64);
+		dpll_pr_phase_offset(tb_parent[DPLL_A_PIN_PHASE_OFFSET]);
 
 		print_nl();
 		close_json_object();
@@ -1592,10 +1609,13 @@ static void dpll_pin_print_attrs(struct nlattr **tb)
 
 	dpll_pin_print_capabilities(tb[DPLL_A_PIN_CAPABILITIES]);
 
-	DPLL_PR_INT(tb, DPLL_A_PIN_PHASE_ADJUST_MIN, "phase-adjust-min");
-	DPLL_PR_INT(tb, DPLL_A_PIN_PHASE_ADJUST_MAX, "phase-adjust-max");
+	DPLL_PR_INT_FMT(tb, DPLL_A_PIN_PHASE_ADJUST_MIN, "phase-adjust-min",
+			"  phase-adjust-min: %d ps\n");
+	DPLL_PR_INT_FMT(tb, DPLL_A_PIN_PHASE_ADJUST_MAX, "phase-adjust-max",
+			"  phase-adjust-max: %d ps\n");
 	DPLL_PR_UINT(tb, DPLL_A_PIN_PHASE_ADJUST_GRAN, "phase-adjust-gran");
-	DPLL_PR_INT(tb, DPLL_A_PIN_PHASE_ADJUST, "phase-adjust");
+	DPLL_PR_INT_FMT(tb, DPLL_A_PIN_PHASE_ADJUST, "phase-adjust",
+			"  phase-adjust: %d ps\n");
 
 	if (json || !tb[DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET_PPT])
 		DPLL_PR_SINT(tb, DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET,
