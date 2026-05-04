@@ -109,9 +109,11 @@ Lock status (locked-ho-ack, locked, unlocked, holdover)
 Temperature (if supported)
 .IP \[bu]
 Type (PPS or EEC)
+.IP \[bu]
+Frequency monitor status (enable/disable)
 .RE
 
-.SS dpll device set id ID [ mode { automatic | manual } ] [ phase-offset-monitor { enable | disable } ] [ phase-offset-avg-factor FACTOR ]
+.SS dpll device set id ID [ PARAMETER VALUE ] ...
 
 Configure DPLL device parameters.
 
@@ -139,6 +141,14 @@ When enabled, the kernel continuously measures and reports phase differences.
 .BI phase-offset-avg-factor " FACTOR"
 Set the averaging factor (1-255) applied to phase offset calculations.
 Higher values provide smoother but slower-responding measurements.
+
+.TP
+.BI frequency-monitor " { enable | disable }"
+Enable or disable frequency monitoring on the device. When enabled, the
+kernel continuously measures and reports actual pin frequencies, which can
+be read via the
+.B measured-frequency
+field in pin show output.
 
 .SS dpll device id-get [ module-name NAME ] [ clock-id ID ] [ type TYPE ]
 
@@ -233,7 +243,9 @@ Board label (hardware label from device tree or ACPI)
 .IP \[bu]
 Pin type (mux, ext, synce-eth-port, int-oscillator, gnss)
 .IP \[bu]
-Frequency and supported frequency ranges
+Configured frequency and supported frequency ranges
+.IP \[bu]
+Measured frequency in Hz (when frequency monitoring is enabled)
 .IP \[bu]
 Capabilities (state-can-change, priority-can-change, direction-can-change)
 .IP \[bu]
@@ -370,6 +382,11 @@ Press Ctrl+C to stop monitoring.
 .SS Enable phase offset monitoring on device 0
 .nf
 .B dpll device set id 0 phase-offset-monitor enable
+.fi
+
+.SS Enable frequency monitoring on device 0
+.nf
+.B dpll device set id 0 frequency-monitor enable
 .fi
 
 .SS Show all EEC devices

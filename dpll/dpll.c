@@ -313,6 +313,26 @@ static int dpll_parse_attr_str(struct dpll *dpll, struct nlmsghdr *nlh,
 	return 0;
 }
 
+static int dpll_parse_attr_feature_state(struct dpll *dpll,
+					struct nlmsghdr *nlh,
+					const char *arg_name, int attr_id)
+{
+	const char *str = dpll_argv_next(dpll);
+	bool val;
+
+	if (!str) {
+		pr_err("%s requires an argument\n", arg_name);
+		return -EINVAL;
+	}
+	if (str_to_bool(str, &val)) {
+		pr_err("invalid %s value: %s (use enable/disable)\n",
+		       arg_name, str);
+		return -EINVAL;
+	}
+	mnl_attr_put_u32(nlh, attr_id, val ? 1 : 0);
+	return 0;
+}
+
 static int dpll_parse_attr_enum(struct dpll *dpll, struct nlmsghdr *nlh,
 				const char *arg_name, int attr_id,
 				int (*parse_func)(struct dpll *, __u32 *))
@@ -471,6 +491,22 @@ static void dpll_pr_phase_offset(struct nlattr *attr)
 		     val < 0 ? "-" : "");
 	print_s64(PRINT_FP, NULL, "%lld.", d.quot);
 	print_s64(PRINT_FP, NULL, "%03lld ps", d.rem);
+}
+
+/* Measured frequency - JSON prints raw mHz value, FP prints fractional Hz */
+static void dpll_pr_measured_frequency(struct nlattr *attr)
+{
+	__u64 val;
+	lldiv_t d;
+
+	if (!attr)
+		return;
+
+	val = mnl_attr_get_u64(attr);
+	d = lldiv(val, DPLL_PIN_MEASURED_FREQUENCY_DIVIDER);
+	print_lluint(PRINT_JSON, "measured-frequency", NULL, val);
+	print_s64(PRINT_FP, NULL, "  measured-frequency: %lld.", d.quot);
+	print_s64(PRINT_FP, NULL, "%03lld Hz\n", d.rem);
 }
 
 /* Print frequency range (or single value if min==max) */
@@ -660,6 +696,7 @@ static void cmd_device_help(void)
 	pr_err("       dpll device set id DEVICE_ID [ mode { automatic | manual } ]\n");
 	pr_err("                                    [ phase-offset-monitor { enable | disable } ]\n");
 	pr_err("                                    [ phase-offset-avg-factor NUM ]\n");
+	pr_err("                                    [ frequency-monitor { enable | disable } ]\n");
 	pr_err("       dpll device id-get [ module-name NAME ] [ clock-id ID ] [ type TYPE ]\n");
 }
 
@@ -1061,6 +1098,10 @@ static void dpll_device_print_attrs(const struct nlmsghdr *nlh,
 			     str_enable_disable);
 	DPLL_PR_UINT(tb, DPLL_A_PHASE_OFFSET_AVG_FACTOR,
 		     "phase-offset-avg-factor");
+	DPLL_PR_ENUM_STR_FMT(tb, DPLL_A_FREQUENCY_MONITOR,
+			     "frequency-monitor",
+			     "  frequency-monitor: %s\n",
+			     str_enable_disable);
 }
 
 /* Netlink callback - device get (single device) */
@@ -1222,24 +1263,19 @@ static int cmd_device_set(struct dpll *dpll)
 						 dpll_parse_mode))
 				return -EINVAL;
 		} else if (dpll_argv_match(dpll, "phase-offset-monitor")) {
-			const char *str = dpll_argv_next(dpll);
-			bool val;
-
-			if (!str) {
-				pr_err("phase-offset-monitor requires an argument\n");
+			if (dpll_parse_attr_feature_state(dpll, nlh,
+							  "phase-offset-monitor",
+							  DPLL_A_PHASE_OFFSET_MONITOR))
 				return -EINVAL;
-			}
-			if (str_to_bool(str, &val)) {
-				pr_err("invalid phase-offset-monitor value: %s (use enable/disable)\n",
-				       str);
-				return -EINVAL;
-			}
-			mnl_attr_put_u32(nlh, DPLL_A_PHASE_OFFSET_MONITOR,
-					 val ? 1 : 0);
 		} else if (dpll_argv_match(dpll, "phase-offset-avg-factor")) {
 			if (dpll_parse_attr_u32(dpll, nlh,
 						"phase-offset-avg-factor",
 						DPLL_A_PHASE_OFFSET_AVG_FACTOR))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "frequency-monitor")) {
+			if (dpll_parse_attr_feature_state(dpll, nlh,
+							  "frequency-monitor",
+							  DPLL_A_FREQUENCY_MONITOR))
 				return -EINVAL;
 		} else {
 			pr_err("unknown option: %s\n", dpll_argv(dpll));
@@ -1604,6 +1640,7 @@ static void dpll_pin_print_attrs(struct nlattr **tb)
 	DPLL_PR_ENUM_STR(tb, DPLL_A_PIN_TYPE, "type", dpll_pin_type_name);
 	DPLL_PR_U64_FMT(tb, DPLL_A_PIN_FREQUENCY, "frequency",
 			"  frequency: %" PRIu64 " Hz\n");
+	dpll_pr_measured_frequency(tb[DPLL_A_PIN_MEASURED_FREQUENCY]);
 
 	dpll_pin_print_freq_supported(tb[DPLL_A_PIN_FREQUENCY_SUPPORTED]);
 

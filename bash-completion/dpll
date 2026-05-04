@@ -100,7 +100,7 @@ _dpll_device()
                     COMPREPLY=( $( compgen -W "automatic manual" -- "$cur" ) )
                     return 0
                     ;;
-                phase-offset-monitor)
+                phase-offset-monitor|frequency-monitor)
                     COMPREPLY=( $( compgen -W "enable disable true false 0 1" -- "$cur" ) )
                     return 0
                     ;;
@@ -110,7 +110,7 @@ _dpll_device()
                     ;;
                 *)
                     COMPREPLY=( $( compgen -W "id mode phase-offset-monitor \
-                        phase-offset-avg-factor" -- "$cur" ) )
+                        phase-offset-avg-factor frequency-monitor" -- "$cur" ) )
                     return 0
                     ;;
             esac
