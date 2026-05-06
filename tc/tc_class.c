@@ -386,7 +386,14 @@ int print_class(struct nlmsghdr *n, void *arg)
 
 static int tc_class_list(int argc, char **argv)
 {
-	struct tcmsg t = { .tcm_family = AF_UNSPEC };
+	struct {
+		struct nlmsghdr n;
+		struct tcmsg t;
+	} req = {
+		.n.nlmsg_type = RTM_GETTCLASS,
+		.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
+		.t.tcm_family = AF_UNSPEC,
+	};
 	char d[IFNAMSIZ] = {};
 	char buf[1024] = {0};
 
@@ -412,20 +419,20 @@ static int tc_class_list(int argc, char **argv)
 			if (get_tc_classid(&filter_classid, *argv))
 				invarg("invalid class ID", *argv);
 		} else if (strcmp(*argv, "root") == 0) {
-			if (t.tcm_parent) {
+			if (req.t.tcm_parent) {
 				fprintf(stderr, "Error: \"root\" is duplicate parent ID\n");
 				return -1;
 			}
-			t.tcm_parent = TC_H_ROOT;
+			req.t.tcm_parent = TC_H_ROOT;
 		} else if (strcmp(*argv, "parent") == 0) {
 			__u32 handle;
 
-			if (t.tcm_parent)
+			if (req.t.tcm_parent)
 				duparg("parent", *argv);
 			NEXT_ARG();
 			if (get_tc_classid(&handle, *argv))
 				invarg("invalid parent ID", *argv);
-			t.tcm_parent = handle;
+			req.t.tcm_parent = handle;
 		} else if (matches(*argv, "help") == 0) {
 			usage();
 		} else {
@@ -437,13 +444,13 @@ static int tc_class_list(int argc, char **argv)
 	}
 
 	if (d[0]) {
-		t.tcm_ifindex = ll_name_to_index(d);
-		if (!t.tcm_ifindex)
+		req.t.tcm_ifindex = ll_name_to_index(d);
+		if (!req.t.tcm_ifindex)
 			return -nodev(d);
-		filter_ifindex = t.tcm_ifindex;
+		filter_ifindex = req.t.tcm_ifindex;
 	}
 
-	if (rtnl_dump_request(&rth, RTM_GETTCLASS, &t, sizeof(t)) < 0) {
+	if (rtnl_dump_request_n(&rth, &req.n) < 0) {
 		perror("Cannot send dump request");
 		return 1;
 	}
