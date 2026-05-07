@@ -200,7 +200,7 @@ struct filters frmr_pools_valid_filters[MAX_NUMBER_OF_FILTERS] = {
 	{ .name = "pinned", .is_number = true },
 };
 
-RES_FUNC(res_frmr_pools, RDMA_NLDEV_CMD_RES_FRMR_POOLS_GET,
+RES_FUNC(res_frmr_pools, RDMA_NLDEV_CMD_FRMR_POOLS_GET,
 	 frmr_pools_valid_filters, true, 0);
 
 int res_frmr_pools_set(struct rd *rd);
