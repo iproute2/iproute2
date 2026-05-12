@@ -650,19 +650,11 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			if (offload && name == dev)
 				dev = NULL;
 		} else if (strcmp(*argv, "netns") == 0) {
-			int pid;
-
 			NEXT_ARG();
 			if (netns != -1)
 				duparg("netns", *argv);
+			/* try by name then by pid */
 			netns = netns_get_fd(*argv);
-			if (netns < 0 && get_integer(&pid, *argv, 0) == 0) {
-				char path[PATH_MAX];
-
-				snprintf(path, sizeof(path), "/proc/%d/ns/net",
-					 pid);
-				netns = open(path, O_RDONLY);
-			}
 			if (netns < 0)
 				invarg("Invalid \"netns\" value\n", *argv);
 
