@@ -32,7 +32,7 @@ rdma-dev \- RDMA device configuration
 .B rdma dev set
 .RI "[ " DEV " ]"
 .BR netns
-.BR NSNAME
+.BR { NSNAME | PID }
 
 .ti -8
 .B rdma dev set
@@ -104,6 +104,7 @@ Renames the mlx5_3 device to rdma_0.
 .RE
 .PP
 rdma dev set mlx5_3 netns foo
+rdma dev set mlx5_3 netns 1234
 .RS 4
 Changes the network namespace of RDMA device to foo where foo was
 previously created using the iproute2 ip command.

@@ -6,6 +6,7 @@
 
 #include <fcntl.h>
 #include "rdma.h"
+#include "namespace.h"
 
 static int dev_help(struct rd *rd)
 {
@@ -13,7 +14,7 @@ static int dev_help(struct rd *rd)
 	pr_out("       %s dev add DEVNAME type TYPE parent PARENT_DEVNAME\n", rd->filename);
 	pr_out("       %s dev delete DEVNAME\n", rd->filename);
 	pr_out("       %s dev set [DEV] name DEVNAME\n", rd->filename);
-	pr_out("       %s dev set [DEV] netns NSNAME\n", rd->filename);
+	pr_out("       %s dev set [DEV] netns { NSNAME | PID }\n", rd->filename);
 	pr_out("       %s dev set [DEV] adaptive-moderation [on|off]\n", rd->filename);
 	return 0;
 }
@@ -311,7 +312,7 @@ static int dev_set_name(struct rd *rd)
 
 static int dev_set_netns(struct rd *rd)
 {
-	char *netns_path;
+	char *arg = rd_argv(rd);
 	uint32_t seq;
 	int netns;
 	int ret;
@@ -321,10 +322,7 @@ static int dev_set_netns(struct rd *rd)
 		return -EINVAL;
 	}
 
-	if (asprintf(&netns_path, "%s/%s", NETNS_RUN_DIR, rd_argv(rd)) < 0)
-		return -ENOMEM;
-
-	netns = open(netns_path, O_RDONLY | O_CLOEXEC);
+	netns = netns_get_fd(arg);
 	if (netns < 0) {
 		fprintf(stderr, "Cannot open network namespace \"%s\": %s\n",
 			rd_argv(rd), strerror(errno));
@@ -339,7 +337,6 @@ static int dev_set_netns(struct rd *rd)
 	ret = rd_sendrecv_msg(rd, seq);
 	close(netns);
 done:
-	free(netns_path);
 	return ret;
 }
 
