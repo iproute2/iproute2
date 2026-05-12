@@ -355,7 +355,6 @@ struct dl_opts {
 	const char *trap_name;
 	const char *trap_group_name;
 	enum devlink_trap_action trap_action;
-	bool netns_is_pid;
 	uint32_t netns;
 	uint32_t trap_policer_id;
 	__u64 trap_policer_rate;
@@ -426,12 +425,6 @@ static void dl_arg_inc(struct dl *dl)
 		return;
 	dl->argc--;
 	dl->argv++;
-}
-
-static void dl_arg_dec(struct dl *dl)
-{
-	dl->argc++;
-	dl->argv--;
 }
 
 static char *dl_argv_next(struct dl *dl)
@@ -2153,14 +2146,12 @@ static int dl_argv_parse(struct dl *dl, uint64_t o_required,
 			err = dl_argv_str(dl, &netns_str);
 			if (err)
 				return err;
-			opts->netns = netns_get_fd(netns_str);
-			if ((int)opts->netns < 0) {
-				dl_arg_dec(dl);
-				err = dl_argv_uint32_t(dl, &opts->netns);
-				if (err)
-					return err;
-				opts->netns_is_pid = true;
-			}
+
+			err = netns_get_fd(netns_str);
+			if (err < 0)
+				return err;
+
+			opts->netns = err;
 			o_found |= DL_OPT_NETNS;
 		} else if (dl_argv_match(dl, "action") &&
 			   (o_all & DL_OPT_RELOAD_ACTION)) {
@@ -2725,10 +2716,7 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_TRAP_ACTION,
 				opts->trap_action);
 	if (opts->present & DL_OPT_NETNS)
-		mnl_attr_put_u32(nlh,
-				 opts->netns_is_pid ? DEVLINK_ATTR_NETNS_PID :
-						      DEVLINK_ATTR_NETNS_FD,
-				 opts->netns);
+		mnl_attr_put_u32(nlh, DEVLINK_ATTR_NETNS_FD, opts->netns);
 	if (opts->present & DL_OPT_RELOAD_ACTION)
 		mnl_attr_put_u8(nlh, DEVLINK_ATTR_RELOAD_ACTION,
 				opts->reload_action);
