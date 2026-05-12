@@ -99,19 +99,33 @@ int netns_switch(char *name)
 	return 0;
 }
 
-int netns_get_fd(const char *name)
+/* try str as the name of the namespace first, then
+ * fallback to pid
+ */
+int netns_get_fd(const char *str)
 {
 	char pathbuf[PATH_MAX];
-	const char *path, *ptr;
+	const char *path;
+	int pid;
+	int fd;
 
-	path = name;
-	ptr = strchr(name, '/');
-	if (!ptr) {
+	path = str;
+	if (!strchr(str, '/')) {
 		snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
-			NETNS_RUN_DIR, name );
+			NETNS_RUN_DIR, str);
 		path = pathbuf;
 	}
-	return open(path, O_RDONLY);
+
+	fd = open(path, O_RDONLY);
+	if (fd >= 0)
+		return fd;
+
+	/* make sure string is an integer */
+	if (get_integer(&pid, str, 0) < 0)
+		return -1;
+
+	snprintf(pathbuf, sizeof(pathbuf), "/proc/%s/ns/net", str);
+	return open(pathbuf, O_RDONLY);
 }
 
 int netns_foreach(int (*func)(char *nsname, void *arg), void *arg)
