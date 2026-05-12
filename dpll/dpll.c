@@ -480,9 +480,8 @@ static void dpll_pr_freq_range(__u64 freq_min, __u64 freq_max)
 static void help(void)
 {
 	pr_err("Usage: dpll [ OPTIONS ] OBJECT { COMMAND | help }\n"
-	       "       dpll [ -j[son] ] [ -p[retty] ]\n"
 	       "where  OBJECT := { device | pin | monitor }\n"
-	       "       OPTIONS := { -V[ersion] | -j[son] | -p[retty] }\n");
+	       "       OPTIONS := { -V | --Version | -j | --json | -p | --pretty }\n");
 }
 
 static int cmd_device(struct dpll *dpll);

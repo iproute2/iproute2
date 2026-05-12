@@ -27,9 +27,9 @@ dpll \- Digital Phase Locked Loop (DPLL) subsystem management
 
 .ti -8
 .IR OPTIONS " := { "
-\fB\-V\fR[\fIersion\fR] |
-\fB\-j\fR[\fIson\fR] |
-\fB\-p\fR[\fIretty\fR] }
+\fB\-V\fR | \fB\-\-Version\fR |
+\fB\-j\fR | \fB\-\-json\fR |
+\fB\-p\fR | \fB\-\-pretty\fR }
 
 .SH DESCRIPTION
 The
@@ -44,17 +44,17 @@ internal oscillators.
 
 .SH OPTIONS
 .TP
-.BR "\-V" , " \-Version"
+.BR "\-V" , " \-\-Version"
 Print the version of the
 .B dpll
 utility and exit.
 
 .TP
-.BR "\-j" , " \-json"
+.BR "\-j" , " \-\-json"
 Output results in JavaScript Object Notation (JSON).
 
 .TP
-.BR "\-p" , " \-pretty"
+.BR "\-p" , " \-\-pretty"
 When combined with \-j, generates a pretty JSON output with indentation
 and newlines for better human readability.
 
