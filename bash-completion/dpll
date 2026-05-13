@@ -190,10 +190,15 @@ _dpll_pin()
                         "connected disconnected selectable" -- "$cur" ) )
                     return 0
                     ;;
+                operstate)
+                    COMPREPLY=( $( compgen -W \
+                        "active standby no-signal qual-failed" -- "$cur" ) )
+                    return 0
+                    ;;
                 *)
                     COMPREPLY=( $( compgen -W "id parent-device parent-pin \
                         module-name clock-id board-label panel-label \
-                        package-label type direction state" \
+                        package-label type direction state operstate" \
                         -- "$cur" ) )
                     return 0
                     ;;

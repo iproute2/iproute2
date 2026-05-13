@@ -171,7 +171,10 @@ Device type:
 
 .SH PIN COMMANDS
 
-.SS dpll pin show [ id ID ] [ parent-device DEVICE_ID ] [ parent-pin PIN_ID ] [ module-name NAME ] [ clock-id ID ] [ board-label LABEL ] [ panel-label LABEL ] [ package-label LABEL ] [ type TYPE ] [ direction DIR ] [ state STATE ]
+.SS dpll pin show [ id ID ] [ parent-device DEVICE_ID ] \
+[ parent-pin PIN_ID ] [ module-name NAME ] [ clock-id ID ] \
+[ board-label LABEL ] [ panel-label LABEL ] [ package-label LABEL ] \
+[ type TYPE ] [ direction DIR ] [ state STATE ] [ operstate OPERSTATE ]
 
 Display information about DPLL pins. If no arguments are specified,
 shows all pins in the system.
@@ -229,6 +232,15 @@ When combined with
 .BR parent-device ,
 only the specified parent-device relationship is checked.
 
+.TP
+.BI operstate " OPERSTATE"
+Show only pins that have a parent-device relationship with the specified
+operational state:
+.BR active ", " standby ", " no-signal ", " qual-failed .
+When combined with
+.BR parent-device ,
+only the specified parent-device relationship is checked.
+
 .PP
 Output includes:
 .RS
@@ -251,7 +263,7 @@ Capabilities (state-can-change, priority-can-change, direction-can-change)
 .IP \[bu]
 Phase adjustment range, granularity, and current value
 .IP \[bu]
-Parent device relationships (direction, priority, state, phase offset)
+Parent device relationships (direction, priority, state, operstate, phase offset)
 .IP \[bu]
 Parent pin relationships
 .IP \[bu]

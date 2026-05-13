@@ -59,6 +59,16 @@ static struct str_num_map pin_state_map[] = {
 	},
 };
 
+static struct str_num_map pin_operstate_map[] = {
+	{ .str = "active", .num = DPLL_PIN_OPERSTATE_ACTIVE },
+	{ .str = "standby", .num = DPLL_PIN_OPERSTATE_STANDBY },
+	{ .str = "no-signal", .num = DPLL_PIN_OPERSTATE_NO_SIGNAL },
+	{ .str = "qual-failed", .num = DPLL_PIN_OPERSTATE_QUAL_FAILED },
+	{
+		.str = NULL,
+	},
+};
+
 static struct str_num_map pin_type_map[] = {
 	{ .str = "mux", .num = DPLL_PIN_TYPE_MUX },
 	{ .str = "ext", .num = DPLL_PIN_TYPE_EXT },
@@ -159,6 +169,17 @@ static int str_to_dpll_pin_state(const char *state_str, __u32 *state)
 	if (num < 0)
 		return num;
 	*state = num;
+	return 0;
+}
+
+static int str_to_dpll_pin_operstate(const char *str, __u32 *operstate)
+{
+	int num;
+
+	num = str_map_lookup_str(pin_operstate_map, str);
+	if (num < 0)
+		return num;
+	*operstate = num;
 	return 0;
 }
 
@@ -968,6 +989,7 @@ static bool dpll_device_dump_filter(struct dpll_device_filter *filter,
 #define DPLL_FILTER_PIN_PARENT_PIN	BIT(7)
 #define DPLL_FILTER_PIN_DIRECTION	BIT(8)
 #define DPLL_FILTER_PIN_STATE		BIT(9)
+#define DPLL_FILTER_PIN_OPERSTATE	BIT(10)
 
 struct dpll_pin_filter {
 	uint64_t present;
@@ -981,6 +1003,7 @@ struct dpll_pin_filter {
 	__u32 parent_pin_id;
 	__u32 direction;
 	__u32 state;
+	__u32 operstate;
 };
 
 static bool filter_match_nested_id(const struct nlmsghdr *nlh,
@@ -1030,6 +1053,11 @@ static bool filter_match_nested_parent_device(const struct nlmsghdr *nlh,
 				      filter->state))
 			continue;
 
+		if ((filter->present & DPLL_FILTER_PIN_OPERSTATE) &&
+		    !filter_match_u32(tb_nest[DPLL_A_PIN_OPERSTATE],
+				      filter->operstate))
+			continue;
+
 		return true;
 	}
 	return false;
@@ -1063,7 +1091,8 @@ static bool dpll_pin_dump_filter(struct dpll_pin_filter *filter,
 		return false;
 	if ((filter->present & (DPLL_FILTER_PIN_PARENT_DEVICE |
 				DPLL_FILTER_PIN_DIRECTION |
-				DPLL_FILTER_PIN_STATE)) &&
+				DPLL_FILTER_PIN_STATE |
+				DPLL_FILTER_PIN_OPERSTATE)) &&
 	    !filter_match_nested_parent_device(nlh, filter))
 		return false;
 	if ((filter->present & DPLL_FILTER_PIN_PARENT_PIN) &&
@@ -1426,6 +1455,14 @@ static const char *dpll_pin_state_name(__u32 state)
 	return str ? str : "unknown";
 }
 
+static const char *dpll_pin_operstate_name(__u32 operstate)
+{
+	const char *str;
+
+	str = str_map_lookup_uint(pin_operstate_map, operstate);
+	return str ? str : "unknown";
+}
+
 static const char *dpll_pin_direction_name(__u32 direction)
 {
 	const char *str;
@@ -1561,6 +1598,9 @@ static void dpll_pin_print_parent_devices(struct nlattr *attr)
 				 " prio %u");
 		DPLL_PR_ENUM_STR_FMT(tb_parent, DPLL_A_PIN_STATE, "state",
 				     " state %s", dpll_pin_state_name);
+		DPLL_PR_ENUM_STR_FMT(tb_parent, DPLL_A_PIN_OPERSTATE,
+				     "operstate", " operstate %s",
+				     dpll_pin_operstate_name);
 		dpll_pr_phase_offset(tb_parent[DPLL_A_PIN_PHASE_OFFSET]);
 
 		print_nl();
@@ -1991,6 +2031,14 @@ static int cmd_pin_show(struct dpll *dpll)
 						   DPLL_FILTER_PIN_STATE,
 						   str_to_dpll_pin_state,
 						   "connected/disconnected/selectable"))
+				return -EINVAL;
+		} else if (dpll_argv_match(dpll, "operstate")) {
+			if (dpll_filter_parse_enum(dpll, "operstate",
+						   &filter.operstate,
+						   &filter.present,
+						   DPLL_FILTER_PIN_OPERSTATE,
+						   str_to_dpll_pin_operstate,
+						   "active/standby/no-signal/qual-failed"))
 				return -EINVAL;
 		} else {
 			pr_err("unknown option: %s\n", dpll_argv(dpll));
