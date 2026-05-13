@@ -514,6 +514,26 @@ static void dpll_pr_phase_offset(struct nlattr *attr)
 	print_s64(PRINT_FP, NULL, "%03lld ps", d.rem);
 }
 
+static void dpll_pr_ffo(struct nlattr **tb, bool top_level)
+{
+	const char *fmt;
+
+	if (json || !tb[DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET_PPT]) {
+		if (top_level)
+			fmt = "  fractional-frequency-offset: %" PRId64 " ppm\n";
+		else
+			fmt = " fractional-frequency-offset %" PRId64 " ppm";
+		DPLL_PR_SINT_FMT(tb, DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET,
+				 "fractional-frequency-offset", fmt);
+	}
+	if (top_level)
+		fmt = "  fractional-frequency-offset: %" PRId64 " ppt\n";
+	else
+		fmt = " fractional-frequency-offset %" PRId64 " ppt";
+	DPLL_PR_SINT_FMT(tb, DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET_PPT,
+			 "fractional-frequency-offset-ppt", fmt);
+}
+
 /* Measured frequency - JSON prints raw mHz value, FP prints fractional Hz */
 static void dpll_pr_measured_frequency(struct nlattr *attr)
 {
@@ -1602,6 +1622,7 @@ static void dpll_pin_print_parent_devices(struct nlattr *attr)
 				     "operstate", " operstate %s",
 				     dpll_pin_operstate_name);
 		dpll_pr_phase_offset(tb_parent[DPLL_A_PIN_PHASE_OFFSET]);
+		dpll_pr_ffo(tb_parent, false);
 
 		print_nl();
 		close_json_object();
@@ -1694,11 +1715,7 @@ static void dpll_pin_print_attrs(struct nlattr **tb)
 	DPLL_PR_INT_FMT(tb, DPLL_A_PIN_PHASE_ADJUST, "phase-adjust",
 			"  phase-adjust: %d ps\n");
 
-	if (json || !tb[DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET_PPT])
-		DPLL_PR_SINT(tb, DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET,
-			     "fractional-frequency-offset");
-	DPLL_PR_SINT(tb, DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET_PPT,
-		     "fractional-frequency-offset-ppt");
+	dpll_pr_ffo(tb, true);
 
 	DPLL_PR_U64_FMT(tb, DPLL_A_PIN_ESYNC_FREQUENCY, "esync-frequency",
 			"  esync-frequency: %" PRIu64 " Hz\n");
