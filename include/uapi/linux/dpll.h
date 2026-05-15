@@ -179,6 +179,28 @@ enum dpll_pin_state {
 };
 
 /**
+ * enum dpll_pin_operstate - defines possible operational states of a pin with
+ *   respect to its parent DPLL device, valid values for DPLL_A_PIN_OPERSTATE
+ *   attribute
+ * @DPLL_PIN_OPERSTATE_ACTIVE: pin is qualified and actively used by the DPLL
+ * @DPLL_PIN_OPERSTATE_STANDBY: pin is qualified but not actively used by the
+ *   DPLL
+ * @DPLL_PIN_OPERSTATE_NO_SIGNAL: pin does not have a valid signal
+ * @DPLL_PIN_OPERSTATE_QUAL_FAILED: pin signal failed qualification (e.g.
+ *   frequency or phase monitor)
+ */
+enum dpll_pin_operstate {
+	DPLL_PIN_OPERSTATE_ACTIVE = 1,
+	DPLL_PIN_OPERSTATE_STANDBY,
+	DPLL_PIN_OPERSTATE_NO_SIGNAL,
+	DPLL_PIN_OPERSTATE_QUAL_FAILED,
+
+	/* private: */
+	__DPLL_PIN_OPERSTATE_MAX,
+	DPLL_PIN_OPERSTATE_MAX = (__DPLL_PIN_OPERSTATE_MAX - 1)
+};
+
+/**
  * enum dpll_pin_capabilities - defines possible capabilities of a pin, valid
  *   flags on DPLL_A_PIN_CAPABILITIES attribute
  * @DPLL_PIN_CAPABILITIES_DIRECTION_CAN_CHANGE: pin direction can be changed
@@ -257,6 +279,7 @@ enum dpll_a_pin {
 	DPLL_A_PIN_PHASE_ADJUST_GRAN,
 	DPLL_A_PIN_FRACTIONAL_FREQUENCY_OFFSET_PPT,
 	DPLL_A_PIN_MEASURED_FREQUENCY,
+	DPLL_A_PIN_OPERSTATE,
 
 	__DPLL_A_PIN_MAX,
 	DPLL_A_PIN_MAX = (__DPLL_A_PIN_MAX - 1)
