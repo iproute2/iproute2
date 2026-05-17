@@ -55,6 +55,7 @@ bridge \- show / manipulate bridge addresses and devices
 .BR mcast_to_unicast " { " on " | " off " } ] [ "
 .BR neigh_suppress " { " on " | " off " } ] [ "
 .BR neigh_vlan_suppress " { " on " | " off " } ] [ "
+.BR neigh_forward_grat " { " on " | " off " } ] [ "
 .BR vlan_tunnel " { " on " | " off " } ] [ "
 .BR isolated " { " on " | " off " } ] [ "
 .BR locked " { " on " | " off " } ] [ "
@@ -658,6 +659,15 @@ Controls whether per-VLAN neigh discovery (arp and nd) proxy and suppression is
 enabled on the port. When on, the \fBbridge link\fR option \fBneigh_suppress\fR
 has no effect and the per-VLAN state is set using the \fBbridge vlan\fR option
 \fBneigh_suppress\fR. By default this flag is off.
+
+.TP
+.BR "neigh_forward_grat on " or " neigh_forward_grat off "
+Controls whether gratuitous ARP packets and unsolicited Neighbor Advertisement
+packets are forwarded when neighbor suppression is enabled on the port.
+By default this flag is off, meaning gratuitous ARP and unsolicited NA packets
+will be suppressed when neighbor suppression is enabled. Setting this flag to
+on allows these packets to be forwarded even when neighbor suppression is
+enabled.
 
 .TP
 .BR "vlan_tunnel on " or " vlan_tunnel off "
