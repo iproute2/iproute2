@@ -241,7 +241,8 @@ bridge \- show / manipulate bridge addresses and devices
 .IR MAX_GROUPS " ] [ "
 .B mcast_router
 .IR MULTICAST_ROUTER " ] [ "
-.BR neigh_suppress " { " on " | " off " } ]"
+.BR neigh_suppress " { " on " | " off " } ] [ "
+.BR neigh_forward_grat " { " on " | " off " } ]"
 
 .ti -8
 .BR "bridge vlan" " [ " show " | " tunnelshow " ] [ "
@@ -1482,6 +1483,18 @@ enable multicast traffic forwarding. This mode is available only for ports.
 .BR "neigh_suppress on " or " neigh_suppress off "
 Controls whether neigh discovery (arp and nd) proxy and suppression is enabled
 for a given VLAN on a given port. By default this flag is off.
+
+Note that this option only takes effect when \fBbridge link\fR option
+\fBneigh_vlan_suppress\fR is enabled for a given port.
+
+.TP
+.BR "neigh_forward_grat on " or " neigh_forward_grat off "
+Controls whether gratuitous ARP packets and unsolicited Neighbor Advertisement
+packets are forwarded when neighbor suppression is enabled for a given VLAN
+on a given port. By default this flag is off, meaning gratuitous ARP and
+unsolicited NA packets will be suppressed when neighbor suppression is enabled.
+Setting this flag to on allows these packets to be forwarded even when
+neighbor suppression is enabled.
 
 Note that this option only takes effect when \fBbridge link\fR option
 \fBneigh_vlan_suppress\fR is enabled for a given port.
