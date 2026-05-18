@@ -25,8 +25,12 @@ netshaper \- show / manipulate network device hardware shaping configuration
 .IR HANDLE_SCOPE
 .RI "[ " id
 .IR HANDLE_ID " ]"
-.B bw-max
-.IR BW_MAX
+.RI "[ " bw-min
+.IR BW_MIN " ]"
+.RI "[ " bw-max
+.IR BW_MAX " ]"
+.RI "[ " weight
+.IR WEIGHT " ]"
 
 .ti -8
 .B "netshaper" " { " show " | " delete " }"
@@ -36,6 +40,28 @@ netshaper \- show / manipulate network device hardware shaping configuration
 .IR HANDLE_SCOPE
 .RI "[ " id
 .IR HANDLE_ID " ]"
+
+.ti -8
+.B "netshaper group"
+.B dev
+.IR DEV
+.B handle scope
+.IR HANDLE_SCOPE
+.RI "[ " id
+.IR HANDLE_ID " ]"
+.RI "[ " "parent scope"
+.IR PARENT_SCOPE
+.RI "[ " id
+.IR PARENT_ID " ] ]"
+.RI "[ " bw-min
+.IR BW_MIN " ]"
+.RI "[ " bw-max
+.IR BW_MAX " ]"
+.RI "[ " weight
+.IR WEIGHT " ]"
+.B leaves
+.BI "{ scope queue id " ID
+.RI "[ " weight " WEIGHT ] [ " priority " PRIO ] } [ ... ]"
 
 .SH DESCRIPTION
 .B netshaper
@@ -69,7 +95,11 @@ parameter is required and specifies the queue number.
 Shapers representing scheduling groups that can be placed at arbitrary
 locations in the scheduling tree. The
 .I id
-parameter is required.
+parameter is required for
+.BR set ", " show ", and " delete
+commands. For the
+.B group
+command it is optional; if omitted, the kernel auto-assigns one.
 
 .SH COMMANDS
 
@@ -77,22 +107,33 @@ parameter is required.
 .B netshaper set
 - Create or update a shaper configuration
 
-Creates or updates a shaper with the specified parameters. The
+Creates or updates a shaper with the specified parameters. At least one of
+.BR bw-min ", " bw-max ", or " weight
+must be provided. The
 .I id
-parameter is optional for netdev scope but required for all other scopes.
+parameter is required for queue and node scopes and optional for netdev scope.
 
 .SS
 .B netshaper show
 - Display shaper information
 
 Shows the current configuration of the specified shaper, including bandwidth
-limits and device information.
+limits, weight, and parent information.
 
 .SS
 .B netshaper delete
 - Remove a shaper configuration
 
 Removes the specified shaper configuration from the device.
+
+.SS
+.B netshaper group
+- Create a scheduling hierarchy
+
+Creates a scheduling group by binding one or more leaf shapers to a parent
+node in a single operation. The command specifies the group node's handle,
+its parent, optional bandwidth and weight parameters, and the set of leaf
+shapers to attach.
 
 .SH PARAMETERS
 
@@ -115,20 +156,57 @@ or
 
 .TP
 .BI id " HANDLE_ID"
-Numeric identifier for the shaper. Optional for
-.B netdev
-scope (defaults to 0), required for
+Numeric identifier for the shaper. Required for
 .B queue
 and
 .B node
-scopes.
+scopes. Optional for
+.B netdev
+scope (defaults to 0). For the
+.B group
+command, node
+.I id
+may be omitted to let the kernel auto-assign one.
 .RE
 
 .TP
-.BI bw-max " BW_MAX"
-Maximum bandwidth limit for the shaper. Accepts values with suffixes:
+.BI bw-min " BW_MIN"
+Minimum guaranteed bandwidth for the shaper. Accepts values with suffixes:
 .BR kbit ", " mbit ", " gbit
 for kilobits, megabits, and gigabits per second respectively.
+
+.TP
+.BI bw-max " BW_MAX"
+Maximum bandwidth limit for the shaper. Accepts the same suffixes as
+.BR bw-min .
+
+.TP
+.BI weight " WEIGHT"
+Scheduling weight for the shaper, used for weighted fair sharing among
+siblings under the same parent node. Value is an unsigned integer.
+
+.TP
+.B parent
+Defines the parent node for the
+.B group
+command. Uses the same
+.BI scope " / " id
+syntax as
+.BR handle .
+When omitted, the parent is inherited from the leaves' current
+parent, which requires all leaves to share the same parent.
+
+.TP
+.B leaves
+Specifies one or more leaf shapers to attach to the group. Each leaf
+is given as
+.BI "scope queue id " ID\fR,
+with optional
+.B weight
+and
+.B priority
+parameters for per-queue scheduling within the group.
+Multiple leaves can be specified in sequence.
 
 .SH OPTIONS
 
@@ -156,17 +234,27 @@ Display usage information and exit.
 .SH EXAMPLES
 
 .TP
-.B Example 1: Create a device-level shaper (ID optional)
+.B Example 1: Create a device-level shaper
 .nf
 # netshaper set dev foo handle scope netdev bw-max 10gbit
 .fi
 .RS
-Creates a netdev-scoped shaper with default id 0 and sets the maximum
-bandwidth to 10 gigabits per second.
+Creates a netdev-scoped shaper with maximum bandwidth of 10 Gbit/s.
 .RE
 
 .TP
-.B Example 2: Show shaper configuration
+.B Example 2: Set bandwidth and weight on a queue shaper
+.nf
+# netshaper set dev foo handle scope queue id 0 \e
+    bw-min 1gbit bw-max 5gbit weight 10
+.fi
+.RS
+Creates a queue-scoped shaper on queue 0 with minimum/maximum bandwidth
+limits and a scheduling weight.
+.RE
+
+.TP
+.B Example 3: Show shaper configuration
 .nf
 # netshaper show dev foo handle scope netdev
 .fi
@@ -175,9 +263,22 @@ Displays the current shaper configuration for the specified device and handle.
 .RE
 
 .TP
-.B Example 3: Delete shaper configuration
+.B Example 4: Create a scheduling hierarchy with group
 .nf
-# netshaper delete dev eth0 handle scope netdev
+# netshaper group dev foo handle scope node \e
+    parent scope netdev bw-max 10gbit \e
+    leaves scope queue id 0 weight 3 \e
+    scope queue id 1 weight 2
+.fi
+.RS
+Creates a node shaper under the netdev parent with a 10 Gbit/s cap,
+grouping queues 0 and 1 as leaves.
+.RE
+
+.TP
+.B Example 5: Delete shaper configuration
+.nf
+# netshaper delete dev foo handle scope netdev
 .fi
 .RS
 Removes the specified shaper configuration.
@@ -197,15 +298,20 @@ and
 .B node
 scopes, the
 .I id
-parameter is required.
+parameter is required. For the
+.B group
+command, node
+.I id
+may be omitted to let the kernel auto-assign one.
 .IP \(bu
 Bandwidth values support standard suffixes:
 .BR kbit " (kilobits per second), "
 .BR mbit " (megabits per second), "
 .BR gbit " (gigabits per second)."
 .IP \(bu
-This command currently supports basic shaper operations. Additional
-functionality will be added as requirements are identified.
+The
+.B group
+command creates a node and attaches leaves in a single atomic operation.
 
 .SH SEE ALSO
 .BR ip (8),
@@ -214,3 +320,5 @@ functionality will be added as requirements are identified.
 
 .SH AUTHOR
 Erni Sri Satya Vennela <ernis@linux.microsoft.com>
+.br
+Mohsin Bashir <hmohsin@meta.com>
