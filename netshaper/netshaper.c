@@ -33,11 +33,13 @@ static void usage(void)
 		"OPTIONS := { -V[ersion] | -c[olor] | -help }\n"
 		"COMMAND := { set | get | delete } dev DEVNAME\n"
 		"	    handle scope HANDLE_SCOPE [id HANDLE_ID]\n"
-		"	    [bw-max BW_MAX]\n"
+		"	    [bw-min BW_MIN] [bw-max BW_MAX] [weight WEIGHT]\n"
+		"\n"
 		"Where: DEVNAME         := STRING\n"
 		"       HANDLE_SCOPE    := { netdev | queue | node }\n"
 		"       HANDLE_ID       := UINT (required for queue/node, optional for netdev)\n"
-		"       BW_MAX          := UINT{ kbit | mbit | gbit }\n");
+		"       BW_MIN/BW_MAX   := UINT{ kbit | mbit | gbit }\n"
+		"       WEIGHT          := UINT\n");
 }
 
 static const char *net_shaper_scope_names[NET_SHAPER_SCOPE_MAX + 1] = {
@@ -123,22 +125,40 @@ static int do_cmd(int argc, char **argv, int cmd)
 	GENL_REQUEST(req, 1024, genl_family, 0, NET_SHAPER_FAMILY_VERSION, cmd,
 		     NLM_F_REQUEST | NLM_F_ACK);
 
-	struct nlmsghdr *answer;
-	__u64 bw_max_bps = 0;
-	int ifindex = -1;
+	bool has_bw_min = false, has_bw_max = false, has_weight = false;
 	int handle_scope = NET_SHAPER_SCOPE_UNSPEC;
-	__u32 handle_id = 0;
+	__u64 bw_min_bps = 0, bw_max_bps = 0;
+	__u32 handle_id = 0, weight = 0;
 	bool handle_present = false;
-	int err;
+	bool has_handle_id = false;
+	struct nlmsghdr *answer;
+	int err, ifindex = -1;
 
 	while (argc > 0) {
 		if (strcmp(*argv, "dev") == 0) {
 			NEXT_ARG();
 			ifindex = ll_name_to_index(*argv);
+			if (ifindex == 0) {
+				fprintf(stderr, "Device \"%s\" not found\n", *argv);
+				return -1;
+			}
+		} else if (strcmp(*argv, "bw-min") == 0) {
+			NEXT_ARG();
+			if (parse_rate(*argv, &bw_min_bps))
+				return -1;
+			has_bw_min = true;
 		} else if (strcmp(*argv, "bw-max") == 0) {
 			NEXT_ARG();
 			if (parse_rate(*argv, &bw_max_bps))
 				return -1;
+			has_bw_max = true;
+		} else if (strcmp(*argv, "weight") == 0) {
+			NEXT_ARG();
+			if (get_unsigned(&weight, *argv, 10)) {
+				fprintf(stderr, "Invalid weight value\n");
+				return -1;
+			}
+			has_weight = true;
 		} else if (strcmp(*argv, "handle") == 0) {
 			handle_present = true;
 			NEXT_ARG();
@@ -165,6 +185,7 @@ static int do_cmd(int argc, char **argv, int cmd)
 						fprintf(stderr, "Invalid handle id\n");
 						return -1;
 					}
+					has_handle_id = true;
 				}
 			} else {
 				/* For queue/node scope, id is required */
@@ -179,6 +200,7 @@ static int do_cmd(int argc, char **argv, int cmd)
 					fprintf(stderr, "Invalid handle id\n");
 					return -1;
 				}
+				has_handle_id = true;
 			}
 		} else {
 			fprintf(stderr, "What is \"%s\"\n", *argv);
@@ -195,19 +217,32 @@ static int do_cmd(int argc, char **argv, int cmd)
 	if (!handle_present)
 		missarg("handle");
 
-	if (cmd == NET_SHAPER_CMD_SET && bw_max_bps == 0)
-		missarg("bw-max");
+	if (cmd == NET_SHAPER_CMD_SET && !has_bw_min && !has_bw_max && !has_weight)
+		missarg("bw-min, bw-max, or weight");
 
 	addattr32(&req.n, sizeof(req), NET_SHAPER_A_IFINDEX, ifindex);
 
 	struct rtattr *handle = addattr_nest(&req.n, sizeof(req),
 					     NET_SHAPER_A_HANDLE | NLA_F_NESTED);
 	addattr32(&req.n, sizeof(req), NET_SHAPER_A_HANDLE_SCOPE, handle_scope);
-	addattr32(&req.n, sizeof(req), NET_SHAPER_A_HANDLE_ID, handle_id);
+	if (has_handle_id)
+		addattr32(&req.n, sizeof(req), NET_SHAPER_A_HANDLE_ID, handle_id);
 	addattr_nest_end(&req.n, handle);
 
-	if (cmd == NET_SHAPER_CMD_SET)
-		addattr64(&req.n, sizeof(req), NET_SHAPER_A_BW_MAX, bw_max_bps);
+	if (cmd == NET_SHAPER_CMD_SET) {
+		if (has_bw_min)
+			addattr64(&req.n, sizeof(req), NET_SHAPER_A_BW_MIN,
+				  bw_min_bps);
+		if (has_bw_max)
+			addattr64(&req.n, sizeof(req), NET_SHAPER_A_BW_MAX,
+				  bw_max_bps);
+		if (has_weight)
+			addattr32(&req.n, sizeof(req), NET_SHAPER_A_WEIGHT,
+				  weight);
+		if (has_bw_min || has_bw_max)
+			addattr32(&req.n, sizeof(req), NET_SHAPER_A_METRIC,
+				  NET_SHAPER_METRIC_BPS);
+	}
 
 	err = rtnl_talk(&gen_rth, &req.n, &answer);
 	if (err < 0) {
