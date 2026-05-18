@@ -69,6 +69,54 @@ static int parse_rate(const char *str, __u64 *rate_bps)
 	return 0;
 }
 
+struct shaper_args {
+	__u64 bw_min_bps, bw_max_bps;
+	__u32 weight;
+	bool has_bw_min, has_bw_max, has_weight;
+	int ifindex;
+};
+
+#define SHAPER_ARGS_INIT { .ifindex = -1 }
+
+static int parse_shaper_arg(const char *key, int *argcp, char ***argvp,
+			    struct shaper_args *args)
+{
+	int argc = *argcp;
+	char **argv = *argvp;
+
+	if (strcmp(key, "dev") == 0) {
+		NEXT_ARG();
+		args->ifindex = ll_name_to_index(*argv);
+		if (args->ifindex == 0) {
+			fprintf(stderr, "Device \"%s\" not found\n", *argv);
+			return -1;
+		}
+	} else if (strcmp(key, "bw-min") == 0) {
+		NEXT_ARG();
+		if (parse_rate(*argv, &args->bw_min_bps))
+			return -1;
+		args->has_bw_min = true;
+	} else if (strcmp(key, "bw-max") == 0) {
+		NEXT_ARG();
+		if (parse_rate(*argv, &args->bw_max_bps))
+			return -1;
+		args->has_bw_max = true;
+	} else if (strcmp(key, "weight") == 0) {
+		NEXT_ARG();
+		if (get_unsigned(&args->weight, *argv, 10)) {
+			fprintf(stderr, "Invalid weight value\n");
+			return -1;
+		}
+		args->has_weight = true;
+	} else {
+		return 0;
+	}
+
+	*argcp = argc;
+	*argvp = argv;
+	return 1;
+}
+
 static void print_netshaper_attrs(struct nlmsghdr *answer)
 {
 	struct rtattr *handle_tb[NET_SHAPER_A_HANDLE_MAX + 1] = {};
@@ -155,41 +203,25 @@ static int do_cmd(int argc, char **argv, int cmd)
 	GENL_REQUEST(req, 1024, genl_family, 0, NET_SHAPER_FAMILY_VERSION, cmd,
 		     NLM_F_REQUEST | NLM_F_ACK);
 
-	bool has_bw_min = false, has_bw_max = false, has_weight = false;
+	struct shaper_args args = SHAPER_ARGS_INIT;
 	int handle_scope = NET_SHAPER_SCOPE_UNSPEC;
-	__u64 bw_min_bps = 0, bw_max_bps = 0;
-	__u32 handle_id = 0, weight = 0;
 	bool handle_present = false;
 	bool has_handle_id = false;
 	struct nlmsghdr *answer;
-	int err, ifindex = -1;
+	__u32 handle_id = 0;
+	int err, ret;
 
 	while (argc > 0) {
-		if (strcmp(*argv, "dev") == 0) {
-			NEXT_ARG();
-			ifindex = ll_name_to_index(*argv);
-			if (ifindex == 0) {
-				fprintf(stderr, "Device \"%s\" not found\n", *argv);
-				return -1;
-			}
-		} else if (strcmp(*argv, "bw-min") == 0) {
-			NEXT_ARG();
-			if (parse_rate(*argv, &bw_min_bps))
-				return -1;
-			has_bw_min = true;
-		} else if (strcmp(*argv, "bw-max") == 0) {
-			NEXT_ARG();
-			if (parse_rate(*argv, &bw_max_bps))
-				return -1;
-			has_bw_max = true;
-		} else if (strcmp(*argv, "weight") == 0) {
-			NEXT_ARG();
-			if (get_unsigned(&weight, *argv, 10)) {
-				fprintf(stderr, "Invalid weight value\n");
-				return -1;
-			}
-			has_weight = true;
-		} else if (strcmp(*argv, "handle") == 0) {
+		ret = parse_shaper_arg(*argv, &argc, &argv, &args);
+		if (ret < 0)
+			return -1;
+		if (ret > 0) {
+			argc--;
+			argv++;
+			continue;
+		}
+
+		if (strcmp(*argv, "handle") == 0) {
 			handle_present = true;
 			NEXT_ARG();
 
@@ -241,16 +273,17 @@ static int do_cmd(int argc, char **argv, int cmd)
 		argv++;
 	}
 
-	if (ifindex == -1)
+	if (args.ifindex == -1)
 		missarg("dev");
 
 	if (!handle_present)
 		missarg("handle");
 
-	if (cmd == NET_SHAPER_CMD_SET && !has_bw_min && !has_bw_max && !has_weight)
+	if (cmd == NET_SHAPER_CMD_SET &&
+	    !args.has_bw_min && !args.has_bw_max && !args.has_weight)
 		missarg("bw-min, bw-max, or weight");
 
-	addattr32(&req.n, sizeof(req), NET_SHAPER_A_IFINDEX, ifindex);
+	addattr32(&req.n, sizeof(req), NET_SHAPER_A_IFINDEX, args.ifindex);
 
 	struct rtattr *handle = addattr_nest(&req.n, sizeof(req),
 					     NET_SHAPER_A_HANDLE | NLA_F_NESTED);
@@ -260,16 +293,16 @@ static int do_cmd(int argc, char **argv, int cmd)
 	addattr_nest_end(&req.n, handle);
 
 	if (cmd == NET_SHAPER_CMD_SET) {
-		if (has_bw_min)
+		if (args.has_bw_min)
 			addattr64(&req.n, sizeof(req), NET_SHAPER_A_BW_MIN,
-				  bw_min_bps);
-		if (has_bw_max)
+				  args.bw_min_bps);
+		if (args.has_bw_max)
 			addattr64(&req.n, sizeof(req), NET_SHAPER_A_BW_MAX,
-				  bw_max_bps);
-		if (has_weight)
+				  args.bw_max_bps);
+		if (args.has_weight)
 			addattr32(&req.n, sizeof(req), NET_SHAPER_A_WEIGHT,
-				  weight);
-		if (has_bw_min || has_bw_max)
+				  args.weight);
+		if (args.has_bw_min || args.has_bw_max)
 			addattr32(&req.n, sizeof(req), NET_SHAPER_A_METRIC,
 				  NET_SHAPER_METRIC_BPS);
 	}
