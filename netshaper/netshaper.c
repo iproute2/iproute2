@@ -47,6 +47,26 @@ static const char *net_shaper_scope_names[NET_SHAPER_SCOPE_MAX + 1] = {
 	"node"
 };
 
+static int parse_scope(const char *str)
+{
+	for (int i = 1; i <= NET_SHAPER_SCOPE_MAX; i++) {
+		if (strcmp(str, net_shaper_scope_names[i]) == 0)
+			return i;
+	}
+	return -1;
+}
+
+static int parse_rate(const char *str, __u64 *rate_bps)
+{
+	if (get_rate64(rate_bps, str)) {
+		fprintf(stderr, "Invalid rate value \"%s\"\n", str);
+		return -1;
+	}
+	/* get_rate64 returns bytes/sec, convert to bits/sec */
+	*rate_bps *= BITS_PER_BYTE;
+	return 0;
+}
+
 static void print_netshaper_attrs(struct nlmsghdr *answer)
 {
 	struct genlmsghdr *ghdr = NLMSG_DATA(answer);
@@ -117,12 +137,8 @@ static int do_cmd(int argc, char **argv, int cmd)
 			ifindex = ll_name_to_index(*argv);
 		} else if (strcmp(*argv, "bw-max") == 0) {
 			NEXT_ARG();
-			if (get_rate64(&bw_max_bps, *argv)) {
-				fprintf(stderr, "Invalid bw-max value\n");
+			if (parse_rate(*argv, &bw_max_bps))
 				return -1;
-			}
-			/* Convert Bps to bps */
-			bw_max_bps *= 8;
 		} else if (strcmp(*argv, "handle") == 0) {
 			handle_present = true;
 			NEXT_ARG();
@@ -134,48 +150,35 @@ static int do_cmd(int argc, char **argv, int cmd)
 			}
 			NEXT_ARG();
 
-			if (strcmp(*argv, "netdev") == 0) {
-				handle_scope = NET_SHAPER_SCOPE_NETDEV;
-				/* For netdev scope, id is optional - check if next arg is "id" */
+			handle_scope = parse_scope(*argv);
+			if (handle_scope < 0) {
+				fprintf(stderr, "Invalid scope \"%s\"\n", *argv);
+				return -1;
+			}
+
+			if (handle_scope == NET_SHAPER_SCOPE_NETDEV) {
+				/* For netdev scope, id is optional */
 				if (argc > 1 && strcmp(argv[1], "id") == 0) {
-					NEXT_ARG(); /* move to "id" */
-					NEXT_ARG(); /* move to id value */
+					NEXT_ARG();
+					NEXT_ARG();
 					if (get_unsigned(&handle_id, *argv, 10)) {
 						fprintf(stderr, "Invalid handle id\n");
 						return -1;
 					}
 				}
-			} else if (strcmp(*argv, "queue") == 0) {
-				handle_scope = NET_SHAPER_SCOPE_QUEUE;
-				/* For queue scope, id is required */
-				NEXT_ARG();
-				if (strcmp(*argv, "id") != 0) {
-					fprintf(stderr, "What is \"%s\"\n", *argv);
-					usage();
-					return -1;
-				}
-				NEXT_ARG();
-				if (get_unsigned(&handle_id, *argv, 10)) {
-					fprintf(stderr, "Invalid handle id\n");
-					return -1;
-				}
-			} else if (strcmp(*argv, "node") == 0) {
-				handle_scope = NET_SHAPER_SCOPE_NODE;
-				/* For node scope, id is required */
-				NEXT_ARG();
-				if (strcmp(*argv, "id") != 0) {
-					fprintf(stderr, "What is \"%s\"\n", *argv);
-					usage();
-					return -1;
-				}
-				NEXT_ARG();
-				if (get_unsigned(&handle_id, *argv, 10)) {
-					fprintf(stderr, "Invalid handle id\n");
-					return -1;
-				}
 			} else {
-				fprintf(stderr, "Invalid scope\n");
-				return -1;
+				/* For queue/node scope, id is required */
+				NEXT_ARG();
+				if (strcmp(*argv, "id") != 0) {
+					fprintf(stderr, "What is \"%s\"\n", *argv);
+					usage();
+					return -1;
+				}
+				NEXT_ARG();
+				if (get_unsigned(&handle_id, *argv, 10)) {
+					fprintf(stderr, "Invalid handle id\n");
+					return -1;
+				}
 			}
 		} else {
 			fprintf(stderr, "What is \"%s\"\n", *argv);

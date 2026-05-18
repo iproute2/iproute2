@@ -260,6 +260,7 @@ unsigned int print_name_and_link(const char *fmt,
 	__attribute__((format(printf, 1, 0)));
 
 
+#define BITS_PER_BYTE           8
 #define BIT(nr)                 (UINT64_C(1) << (nr))
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
