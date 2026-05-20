@@ -870,8 +870,35 @@ static int netem_print_opt(const struct qdisc_util *qu, FILE *f, struct rtattr *
 	return 0;
 }
 
+static int netem_print_xstats(const struct qdisc_util *qu, FILE *f,
+			      struct rtattr *xstats)
+{
+	struct tc_netem_xstats *st, _st;
+
+	if (xstats == NULL)
+		return 0;
+
+	/* future proof for addition of more stats */
+	memset(&_st, 0, sizeof(_st));
+	memcpy(&_st, RTA_DATA(xstats), min(RTA_PAYLOAD(xstats), sizeof(*st)));
+	st = &_st;
+
+	print_u64(PRINT_ANY, "delayed",    "  delayed %llu",   st->delayed);
+	print_u64(PRINT_ANY, "dropped",    " dropped %llu",    st->dropped);
+	print_u64(PRINT_ANY, "corrupted",  " corrupted %llu",  st->corrupted);
+	print_u64(PRINT_ANY, "duplicated", " duplicated %llu", st->duplicated);
+	print_u64(PRINT_ANY, "reordered",  " reordered %llu",  st->reordered);
+	print_u64(PRINT_ANY, "ecn_marked", " ecn_marked %llu", st->ecn_marked);
+	if (st->allocation_errors)
+		print_u64(PRINT_ANY, "alloc_errors", " alloc_errors %llu",
+			  st->allocation_errors);
+
+	return 0;
+}
+
 struct qdisc_util netem_qdisc_util = {
 	.id		= "netem",
 	.parse_qopt	= netem_parse_opt,
 	.print_qopt	= netem_print_opt,
+	.print_xstats	= netem_print_xstats,
 };
