@@ -39,6 +39,7 @@ static void usage(void)
 		"                                               [ mcast_router MULTICAST_ROUTER ]\n"
 		"                                               [ mcast_max_groups MAX_GROUPS ]\n"
 		"                                               [ neigh_suppress {on | off} ]\n"
+		"                                               [ neigh_forward_grat {on | off} ]\n"
 		"       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]\n"
 		"       bridge vlan global { set } vid VLAN_ID dev DEV\n"
@@ -368,6 +369,18 @@ static int vlan_option_set(int argc, char **argv)
 			addattr8(&req.n, sizeof(req),
 				 BRIDGE_VLANDB_ENTRY_NEIGH_SUPPRESS,
 				 neigh_suppress);
+		} else if (strcmp(*argv, "neigh_forward_grat") == 0) {
+			bool neigh_forward_grat;
+			int ret;
+
+			NEXT_ARG();
+			neigh_forward_grat = parse_on_off("neigh_forward_grat",
+							  *argv, &ret);
+			if (ret)
+				return ret;
+			addattr8(&req.n, sizeof(req),
+				 BRIDGE_VLANDB_ENTRY_NEIGH_FORWARD_GRAT,
+				 neigh_forward_grat);
 		} else {
 			if (matches(*argv, "help") == 0)
 				NEXT_ARG();
@@ -1011,6 +1024,11 @@ static void print_vlan_opts(struct rtattr *a, int ifindex)
 		vattr = vtb[BRIDGE_VLANDB_ENTRY_NEIGH_SUPPRESS];
 		print_on_off(PRINT_ANY, "neigh_suppress", "neigh_suppress %s ",
 			     rta_getattr_u8(vattr));
+	}
+	if (vtb[BRIDGE_VLANDB_ENTRY_NEIGH_FORWARD_GRAT]) {
+		vattr = vtb[BRIDGE_VLANDB_ENTRY_NEIGH_FORWARD_GRAT];
+		print_on_off(PRINT_ANY, "neigh_forward_grat",
+			     "neigh_forward_grat %s ", rta_getattr_u8(vattr));
 	}
 	print_nl();
 	if (show_stats)

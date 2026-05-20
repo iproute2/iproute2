@@ -38,6 +38,7 @@ static void print_explain(FILE *f)
 		"			[ group_fwd_mask MASK ]\n"
 		"			[ neigh_suppress {on | off} ]\n"
 		"			[ neigh_vlan_suppress {on | off} ]\n"
+		"			[ neigh_forward_grat {on | off} ]\n"
 		"			[ vlan_tunnel {on | off} ]\n"
 		"			[ isolated {on | off} ]\n"
 		"			[ locked {on | off} ]\n"
@@ -275,6 +276,11 @@ static void bridge_slave_print_opt(struct link_util *lu, FILE *f,
 			     "neigh_vlan_suppress %s ",
 			     rta_getattr_u8(tb[IFLA_BRPORT_NEIGH_VLAN_SUPPRESS]));
 
+	if (tb[IFLA_BRPORT_NEIGH_FORWARD_GRAT])
+		print_on_off(PRINT_ANY, "neigh_forward_grat",
+			     "neigh_forward_grat %s ",
+			     rta_getattr_u8(tb[IFLA_BRPORT_NEIGH_FORWARD_GRAT]));
+
 	if (tb[IFLA_BRPORT_GROUP_FWD_MASK]) {
 		char convbuf[256];
 		__u16 fwd_mask;
@@ -415,6 +421,10 @@ static int bridge_slave_parse_opt(struct link_util *lu, int argc, char **argv,
 			NEXT_ARG();
 			bridge_slave_parse_on_off("neigh_vlan_suppress", *argv,
 						  n, IFLA_BRPORT_NEIGH_VLAN_SUPPRESS);
+		} else if (strcmp(*argv, "neigh_forward_grat") == 0) {
+			NEXT_ARG();
+			bridge_slave_parse_on_off("neigh_forward_grat", *argv,
+						  n, IFLA_BRPORT_NEIGH_FORWARD_GRAT);
 		} else if (matches(*argv, "group_fwd_mask") == 0) {
 			__u16 mask;
 

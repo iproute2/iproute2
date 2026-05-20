@@ -2677,6 +2677,8 @@ the following additional arguments are supported:
 ] [
 .BR neigh_vlan_suppress " { " on " | " off " }"
 ] [
+.BR neigh_forward_grat " { " on " | " off " }"
+] [
 .BR vlan_tunnel " { " on " | " off " }"
 ] [
 .BR isolated " { " on " | " off " }"
@@ -2790,6 +2792,14 @@ is enabled on the port. By default this flag is off.
 is enabled on the port. When on, the \fBbridge link\fR option
 \fBneigh_suppress\fR has no effect and the per-VLAN state is set using the
 \fBbridge vlan\fR option \fBneigh_suppress\fR. By default this flag is off.
+
+.BR neigh_forward_grat " { " on " | " off " }"
+- controls whether gratuitous ARP packets and unsolicited Neighbor
+Advertisement packets are forwarded when neighbor suppression is enabled
+on the port. By default this flag is off, meaning gratuitous ARP and
+unsolicited NA packets will be suppressed when neighbor suppression is
+enabled. Setting this flag to on allows these packets to be forwarded even
+when neighbor suppression is enabled.
 
 .BR vlan_tunnel " { " on " | " off " }"
 - controls whether vlan to tunnel mapping is enabled on the port. By
