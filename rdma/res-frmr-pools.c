@@ -80,83 +80,83 @@ static int res_frmr_pools_line(struct rd *rd, const char *name, int idx,
 	char key_str[FRMR_POOL_KEY_MAX_LEN];
 	struct frmr_pool_key key = { 0 };
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY]) {
+	if (nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_KEY]) {
 		if (mnl_attr_parse_nested(
-			    nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY],
+			    nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_KEY],
 			    rd_attr_cb, key_tb) != MNL_CB_OK)
 			return MNL_CB_ERROR;
 
-		if (key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ATS])
+		if (key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ATS])
 			key.ats = mnl_attr_get_u8(
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ATS]);
-		if (key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ACCESS_FLAGS])
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ATS]);
+		if (key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ACCESS_FLAGS])
 			key.access_flags = mnl_attr_get_u32(
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ACCESS_FLAGS]);
-		if (key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_VENDOR_KEY])
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ACCESS_FLAGS]);
+		if (key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_VENDOR_KEY])
 			key.vendor_key = mnl_attr_get_u64(
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_VENDOR_KEY]);
-		if (key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_NUM_DMA_BLOCKS])
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_VENDOR_KEY]);
+		if (key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_NUM_DMA_BLOCKS])
 			key.num_dma_blocks = mnl_attr_get_u64(
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_NUM_DMA_BLOCKS]);
-		if (key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_KERNEL_VENDOR_KEY])
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_NUM_DMA_BLOCKS]);
+		if (key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_KERNEL_VENDOR_KEY])
 			kernel_vendor_key = mnl_attr_get_u64(
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_KERNEL_VENDOR_KEY]);
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_KERNEL_VENDOR_KEY]);
 
 		if (rd_is_filtered_attr(
 			    rd, "ats", key.ats,
-			    key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ATS]))
+			    key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ATS]))
 			goto out;
 
 		if (rd_is_filtered_attr(
 			    rd, "access_flags", key.access_flags,
-			    key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ACCESS_FLAGS]))
+			    key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ACCESS_FLAGS]))
 			goto out;
 
 		if (rd_is_filtered_attr(
 			    rd, "vendor_key", key.vendor_key,
-			    key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_VENDOR_KEY]))
+			    key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_VENDOR_KEY]))
 			goto out;
 
 		if (rd_is_filtered_attr(
 			    rd, "num_dma_blocks", key.num_dma_blocks,
-			    key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_NUM_DMA_BLOCKS]))
+			    key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_NUM_DMA_BLOCKS]))
 			goto out;
 	}
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_QUEUE_HANDLES])
+	if (nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_QUEUE_HANDLES])
 		queue_handles = mnl_attr_get_u32(
-			nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_QUEUE_HANDLES]);
+			nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_QUEUE_HANDLES]);
 	if (rd_is_filtered_attr(
 		    rd, "queue", queue_handles,
-		    nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_QUEUE_HANDLES]))
+		    nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_QUEUE_HANDLES]))
 		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_IN_USE])
+	if (nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_IN_USE])
 		in_use = mnl_attr_get_u64(
-			nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_IN_USE]);
+			nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_IN_USE]);
 	if (rd_is_filtered_attr(rd, "in_use", in_use,
-				nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_IN_USE]))
+				nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_IN_USE]))
 		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_MAX_IN_USE])
+	if (nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_MAX_IN_USE])
 		max_in_use = mnl_attr_get_u64(
-			nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_MAX_IN_USE]);
+			nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_MAX_IN_USE]);
 	if (rd_is_filtered_attr(
 		    rd, "max_in_use", max_in_use,
-		    nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_MAX_IN_USE]))
+		    nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_MAX_IN_USE]))
 		goto out;
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED])
+	if (nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_PINNED_HANDLES])
 		pinned_handles = mnl_attr_get_u32(
-			nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED]);
+			nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_PINNED_HANDLES]);
 	if (rd_is_filtered_attr(rd, "pinned", pinned_handles,
-				nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED]))
+				nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_PINNED_HANDLES]))
 		goto out;
 
 	open_json_object(NULL);
 	print_dev(idx, name);
 
-	if (nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY]) {
+	if (nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_KEY]) {
 		snprintf(key_str, sizeof(key_str),
 			 "%" PRIx64 ":%" PRIx64 ":%x:%s",
 			 key.vendor_key, key.num_dma_blocks,
@@ -166,30 +166,30 @@ static int res_frmr_pools_line(struct rd *rd, const char *name, int idx,
 		if (rd->show_details) {
 			res_print_u32(
 				"ats", key.ats,
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ATS]);
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ATS]);
 			res_print_u32(
 				"access_flags", key.access_flags,
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ACCESS_FLAGS]);
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ACCESS_FLAGS]);
 			res_print_u64(
 				"vendor_key", key.vendor_key,
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_VENDOR_KEY]);
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_VENDOR_KEY]);
 			res_print_u64(
 				"num_dma_blocks", key.num_dma_blocks,
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_NUM_DMA_BLOCKS]);
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_NUM_DMA_BLOCKS]);
 			res_print_u64(
 				"kernel_vendor_key", kernel_vendor_key,
-				key_tb[RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_KERNEL_VENDOR_KEY]);
+				key_tb[RDMA_NLDEV_ATTR_FRMR_POOL_KEY_KERNEL_VENDOR_KEY]);
 		}
 	}
 
 	res_print_u32("queue", queue_handles,
-		      nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_QUEUE_HANDLES]);
+		      nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_QUEUE_HANDLES]);
 	res_print_u64("in_use", in_use,
-		      nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_IN_USE]);
+		      nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_IN_USE]);
 	res_print_u64("max_in_use", max_in_use,
-		      nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_MAX_IN_USE]);
+		      nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_MAX_IN_USE]);
 	res_print_u32("pinned", pinned_handles,
-		      nla_line[RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED]);
+		      nla_line[RDMA_NLDEV_ATTR_FRMR_POOL_PINNED_HANDLES]);
 
 	print_driver_table(rd, nla_line[RDMA_NLDEV_ATTR_DRIVER]);
 	close_json_object();
@@ -215,12 +215,12 @@ int res_frmr_pools_parse_cb(const struct nlmsghdr *nlh, void *data)
 
 	mnl_attr_parse(nlh, 0, rd_attr_cb, tb);
 	if (!tb[RDMA_NLDEV_ATTR_DEV_INDEX] || !tb[RDMA_NLDEV_ATTR_DEV_NAME] ||
-	    !tb[RDMA_NLDEV_ATTR_RES_FRMR_POOLS])
+	    !tb[RDMA_NLDEV_ATTR_FRMR_POOLS])
 		return MNL_CB_ERROR;
 
 	name = mnl_attr_get_str(tb[RDMA_NLDEV_ATTR_DEV_NAME]);
 	idx = mnl_attr_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
-	nla_table = tb[RDMA_NLDEV_ATTR_RES_FRMR_POOLS];
+	nla_table = tb[RDMA_NLDEV_ATTR_FRMR_POOLS];
 
 	mnl_attr_for_each_nested(nla_entry, nla_table) {
 		struct nlattr *nla_line[RDMA_NLDEV_ATTR_MAX] = {};
@@ -256,10 +256,10 @@ static int res_frmr_pools_one_set_aging(struct rd *rd)
 		return -EINVAL;
 	}
 
-	rd_prepare_msg(rd, RDMA_NLDEV_CMD_RES_FRMR_POOLS_SET, &seq,
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_FRMR_POOLS_SET, &seq,
 		       (NLM_F_REQUEST | NLM_F_ACK));
 	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
-	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_AGING_PERIOD,
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_FRMR_POOLS_AGING_PERIOD,
 			 aging_period);
 
 	return rd_sendrecv_msg(rd, seq);
@@ -294,24 +294,24 @@ static int res_frmr_pools_one_set_pinned(struct rd *rd)
 		return -EINVAL;
 	}
 
-	rd_prepare_msg(rd, RDMA_NLDEV_CMD_RES_FRMR_POOLS_SET, &seq,
+	rd_prepare_msg(rd, RDMA_NLDEV_CMD_FRMR_POOLS_SET, &seq,
 		       (NLM_F_REQUEST | NLM_F_ACK));
 	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_DEV_INDEX, rd->dev_idx);
 
-	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_PINNED,
+	mnl_attr_put_u32(rd->nlh, RDMA_NLDEV_ATTR_FRMR_POOL_PINNED_HANDLES,
 			 pinned_value);
 
 	key_attr =
-		mnl_attr_nest_start(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY);
-	mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ATS,
+		mnl_attr_nest_start(rd->nlh, RDMA_NLDEV_ATTR_FRMR_POOL_KEY);
+	mnl_attr_put_u8(rd->nlh, RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ATS,
 			pool_key.ats);
 	mnl_attr_put_u32(rd->nlh,
-			 RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_ACCESS_FLAGS,
+			 RDMA_NLDEV_ATTR_FRMR_POOL_KEY_ACCESS_FLAGS,
 			 pool_key.access_flags);
-	mnl_attr_put_u64(rd->nlh, RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_VENDOR_KEY,
+	mnl_attr_put_u64(rd->nlh, RDMA_NLDEV_ATTR_FRMR_POOL_KEY_VENDOR_KEY,
 			 pool_key.vendor_key);
 	mnl_attr_put_u64(rd->nlh,
-			 RDMA_NLDEV_ATTR_RES_FRMR_POOL_KEY_NUM_DMA_BLOCKS,
+			 RDMA_NLDEV_ATTR_FRMR_POOL_KEY_NUM_DMA_BLOCKS,
 			 pool_key.num_dma_blocks);
 	mnl_attr_nest_end(rd->nlh, key_attr);
 
