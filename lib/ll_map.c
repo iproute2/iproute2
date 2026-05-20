@@ -273,7 +273,8 @@ static int ll_link_get(const char *name, int index)
 		.n.nlmsg_type = RTM_GETLINK,
 		.ifm.ifi_index = index,
 	};
-	__u32 filt_mask = RTEXT_FILTER_VF | RTEXT_FILTER_SKIP_STATS;
+	__u32 filt_mask = RTEXT_FILTER_VF | RTEXT_FILTER_SKIP_STATS |
+			  RTEXT_FILTER_NAME_ONLY;
 	struct rtnl_handle rth = {};
 	struct nlmsghdr *answer;
 	int rc = 0;
@@ -393,7 +394,8 @@ void ll_init_map(struct rtnl_handle *rth)
 
 	if (rtnl_linkdump_req_filter(rth, AF_UNSPEC,
 				     RTEXT_FILTER_VF |
-				     RTEXT_FILTER_SKIP_STATS) < 0) {
+				     RTEXT_FILTER_SKIP_STATS |
+				     RTEXT_FILTER_NAME_ONLY) < 0) {
 		perror("Cannot send dump request");
 		exit(1);
 	}
