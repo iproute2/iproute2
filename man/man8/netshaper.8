@@ -1,4 +1,4 @@
-.TH NETSHAPER 8 "7 Oct 2025" "iproute2" "Linux"
+.TH NETSHAPER 8 "19 May 2026" "iproute2" "Linux"
 .SH NAME
 netshaper \- show / manipulate network device hardware shaping configuration
 .SH SYNOPSIS
@@ -20,48 +20,57 @@ netshaper \- show / manipulate network device hardware shaping configuration
 .ti -8
 .B "netshaper set"
 .B dev
-.IR DEV
+.I DEV
 .B handle scope
-.IR HANDLE_SCOPE
-.RI "[ " id
+.I HANDLE_SCOPE
+.RB "[ " id
 .IR HANDLE_ID " ]"
-.RI "[ " bw-min
+.RB "[ " bw-min
 .IR BW_MIN " ]"
-.RI "[ " bw-max
+.RB "[ " bw-max
 .IR BW_MAX " ]"
-.RI "[ " weight
+.RB "[ " weight
 .IR WEIGHT " ]"
 
 .ti -8
 .B "netshaper" " { " show " | " delete " }"
 .B dev
-.IR DEV
+.I DEV
 .B handle scope
-.IR HANDLE_SCOPE
-.RI "[ " id
+.I HANDLE_SCOPE
+.RB "[ " id
 .IR HANDLE_ID " ]"
 
 .ti -8
 .B "netshaper group"
 .B dev
-.IR DEV
+.I DEV
 .B handle scope
-.IR HANDLE_SCOPE
-.RI "[ " id
+.RB "{ " node " | " netdev " }"
+.RB "[ " id
 .IR HANDLE_ID " ]"
-.RI "[ " "parent scope"
-.IR PARENT_SCOPE
-.RI "[ " id
-.IR PARENT_ID " ] ]"
-.RI "[ " bw-min
+.RB "[ " "parent scope" " { " "netdev" " [ " id
+.IR PARENT_ID " ] | "
+.BR node " " id
+.IR PARENT_ID " } ]"
+.RB "[ " bw-min
 .IR BW_MIN " ]"
-.RI "[ " bw-max
+.RB "[ " bw-max
 .IR BW_MAX " ]"
-.RI "[ " weight
+.RB "[ " weight
 .IR WEIGHT " ]"
 .B leaves
-.BI "{ scope queue id " ID
-.RI "[ " weight " WEIGHT ] [ " priority " PRIO ] } [ ... ]"
+.IR LEAF_SPEC " [ " LEAF_SPEC " ... ]"
+.sp
+.in +4
+.IR LEAF_SPEC " := "
+.B "scope queue id"
+.I ID
+.RB "[ " weight
+.IR WEIGHT " ]"
+.RB "[ " priority
+.IR PRIO " ]"
+.in -4
 
 .SH DESCRIPTION
 .B netshaper
@@ -92,7 +101,7 @@ parameter is required and specifies the queue number.
 
 .TP
 .B node
-Shapers representing scheduling groups that can be placed at arbitrary
+Intermediate scheduling nodes that can be placed at arbitrary
 locations in the scheduling tree. The
 .I id
 parameter is required for
@@ -130,10 +139,10 @@ Removes the specified shaper configuration from the device.
 .B netshaper group
 - Create a scheduling hierarchy
 
-Creates a scheduling group by binding one or more leaf shapers to a parent
-node in a single operation. The command specifies the group node's handle,
-its parent, optional bandwidth and weight parameters, and the set of leaf
-shapers to attach.
+Creates a scheduling group by binding one or more queue leaf shapers to a
+netdev or node handle in a single operation. The command specifies the
+target handle, its parent, optional bandwidth and weight parameters, and
+the set of queue leaves to attach.
 
 .SH PARAMETERS
 
@@ -187,19 +196,31 @@ siblings under the same parent node. Value is an unsigned integer.
 
 .TP
 .B parent
-Defines the parent node for the
+Defines the parent for the
 .B group
-command. Uses the same
-.BI scope " / " id
-syntax as
-.BR handle .
+command. The parent scope must be
+.B node
+or
+.BR netdev ;
+.B queue
+is not valid as a parent scope.
+For parent scope
+.BR node ,
+.I id
+is required. For parent scope
+.BR netdev ,
+.I id
+is optional.
 When omitted, the parent is inherited from the leaves' current
 parent, which requires all leaves to share the same parent.
 
 .TP
 .B leaves
 Specifies one or more leaf shapers to attach to the group. Each leaf
-is given as
+must use scope
+.BR queue ;
+no other scope is accepted for leaves.
+Each leaf is given as
 .BI "scope queue id " ID\fR,
 with optional
 .B weight
@@ -271,8 +292,8 @@ Displays the current shaper configuration for the specified device and handle.
     scope queue id 1 weight 2
 .fi
 .RS
-Creates a node shaper under the netdev parent with a 10 Gbit/s cap,
-grouping queues 0 and 1 as leaves.
+Creates a node shaper under the netdev parent, grouping queues 0 and 1
+as leaves. The 10 Gbit/s cap applies to the node itself.
 .RE
 
 .TP
@@ -311,7 +332,8 @@ Bandwidth values support standard suffixes:
 .IP \(bu
 The
 .B group
-command creates a node and attaches leaves in a single atomic operation.
+command attaches queue leaves to a netdev or node handle in a single
+atomic operation.
 
 .SH SEE ALSO
 .BR ip (8),
