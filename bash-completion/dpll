@@ -304,7 +304,7 @@ _dpll_monitor()
 _dpll()
 {
     local cur prev words cword
-    local opt='--Version --json --pretty'
+    local opt='--Version --json --pretty --timestamp --tshort'
     local objects="device pin monitor"
 
     _init_completion || return
@@ -331,7 +331,11 @@ _dpll()
                 return 0
                 ;;
             -j|--json)
-                COMPREPLY=( $( compgen -W "--pretty $objects" -- "$cur" ) )
+                COMPREPLY=( $( compgen -W "--pretty --timestamp --tshort $objects" -- "$cur" ) )
+                return 0
+                ;;
+            -t|--timestamp|--tshort)
+                COMPREPLY=( $( compgen -W "monitor" -- "$cur" ) )
                 return 0
                 ;;
             *)

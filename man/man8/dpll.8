@@ -29,7 +29,9 @@ dpll \- Digital Phase Locked Loop (DPLL) subsystem management
 .IR OPTIONS " := { "
 \fB\-V\fR | \fB\-\-Version\fR |
 \fB\-j\fR | \fB\-\-json\fR |
-\fB\-p\fR | \fB\-\-pretty\fR }
+\fB\-p\fR | \fB\-\-pretty\fR |
+\fB\-t\fR | \fB\-\-timestamp\fR |
+\fB\-\-tshort\fR }
 
 .SH DESCRIPTION
 The
@@ -57,6 +59,25 @@ Output results in JavaScript Object Notation (JSON).
 .BR "\-p" , " \-\-pretty"
 When combined with \-j, generates a pretty JSON output with indentation
 and newlines for better human readability.
+
+.TP
+.BR "\-t" , " \-\-timestamp"
+When used with the
+.B monitor
+object, print a
+.B Timestamp:
+line before each received notification, in the same format used by
+.BR "ip monitor" .
+
+.TP
+.B "\-\-tshort"
+Like
+.BR \-t ,
+but emits a more compact, ISO 8601 inline prefix
+.RB \(lq [ YYYY-MM-DD T HH:MM:SS . uuuuuu ] \(rq
+in front of each notification instead of a separate
+.B Timestamp:
+line.
 
 .SH DEVICE COMMANDS
 

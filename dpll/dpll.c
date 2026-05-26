@@ -29,7 +29,10 @@
 
 #define pr_err(args...) fprintf(stderr, ##args)
 
+#define OPT_TSHORT 256
+
 int json;
+int timestamp;
 
 struct dpll {
 	struct mnlu_gen_socket nlg;
@@ -576,7 +579,8 @@ static void help(void)
 {
 	pr_err("Usage: dpll [ OPTIONS ] OBJECT { COMMAND | help }\n"
 	       "where  OBJECT := { device | pin | monitor }\n"
-	       "       OPTIONS := { -V | --Version | -j | --json | -p | --pretty }\n");
+	       "       OPTIONS := { -V | --Version | -j | --json | -p | --pretty |\n"
+	       "                    -t | --timestamp | --tshort }\n");
 }
 
 static int cmd_device(struct dpll *dpll);
@@ -640,9 +644,11 @@ int main(int argc, char **argv)
 		{ "Version", no_argument, NULL, 'V' },
 		{ "json", no_argument, NULL, 'j' },
 		{ "pretty", no_argument, NULL, 'p' },
+		{ "timestamp", no_argument, NULL, 't' },
+		{ "tshort", no_argument, NULL, OPT_TSHORT },
 		{ NULL, 0, NULL, 0 }
 	};
-	const char *opt_short = "Vjp";
+	const char *opt_short = "Vjpt";
 	struct dpll *dpll;
 	int err, opt, ret;
 
@@ -664,6 +670,13 @@ int main(int argc, char **argv)
 			break;
 		case 'p':
 			pretty = true;
+			break;
+		case 't':
+			timestamp = 1;
+			break;
+		case OPT_TSHORT:
+			timestamp = 1;
+			timestamp_short = 1;
 			break;
 		default:
 			pr_err("Unknown option.\n");
@@ -2370,6 +2383,8 @@ static int cmd_monitor_cb(const struct nlmsghdr *nlh, void *data)
 
 		new_json_obj_plain(json);
 		open_json_object(NULL);
+		if (timestamp)
+			print_timestamp(stdout);
 		print_string(PRINT_JSON, "name", NULL, json_name);
 		open_json_object("msg");
 		print_string(PRINT_FP, NULL, "[%s] ", cmd_name);
@@ -2399,6 +2414,8 @@ static int cmd_monitor_cb(const struct nlmsghdr *nlh, void *data)
 
 		new_json_obj_plain(json);
 		open_json_object(NULL);
+		if (timestamp)
+			print_timestamp(stdout);
 		print_string(PRINT_JSON, "name", NULL, json_name);
 		open_json_object("msg");
 		print_string(PRINT_FP, NULL, "[%s] ", cmd_name);
