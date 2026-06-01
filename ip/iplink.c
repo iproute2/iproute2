@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <linux/if.h>
 #include <linux/if_ether.h>
+#include <linux/ip.h>
 
 #include "rt_names.h"
 #include "utils.h"
@@ -102,6 +103,23 @@ void iplink_usage(void)
 		"		[ master DEVICE ][ vrf NAME ]\n"
 		"		[ nomaster ]\n"
 		"		[ addrgenmode { eui64 | none | stable_secret | random } ]\n"
+		"		[ inet [ { forwarding | proxy_arp | accept_redirects |\n"
+		"			   secure_redirects | send_redirects | shared_media |\n"
+		"			   accept_source_route | bootp_relay | log_martians |\n"
+		"			   arp_filter | disable_xfrm | disable_policy |\n"
+		"			   promote_secondaries | arp_notify | accept_local |\n"
+		"			   src_vmark | proxy_arp_pvlan | route_localnet |\n"
+		"			   bc_forwarding | ignore_routes_with_linkdown |\n"
+		"			   drop_unicast_in_l2_multicast |\n"
+		"			   drop_gratuitous_arp | arp_evict_nocarrier } { on | off } ]\n"
+		"		       [ rp_filter { 0 | 1 | 2 } ]\n"
+		"		       [ arp_announce { 0 | 1 | 2 } ]\n"
+		"		       [ arp_ignore { 0 | 1 | ... | 8 } ]\n"
+		"		       [ arp_accept { 0 | 1 | 2 } ]\n"
+		"		       [ force_igmp_version { 0 | 1 | 2 | 3 } ]\n"
+		"		       [ tag TAG ] [ medium_id ID ]\n"
+		"		       [ igmpv2_unsolicited_report_interval INTERVAL ]\n"
+		"		       [ igmpv3_unsolicited_report_interval INTERVAL ] ]\n"
 		"		[ protodown { on | off } ]\n"
 		"		[ protodown_reason PREASON { on | off } ]\n"
 		"		[ gso_max_size BYTES ] [ gso_ipv4_max_size BYTES ] [ gso_max_segs PACKETS ]\n"
@@ -551,6 +569,296 @@ static int iplink_parse_vf(int vf, int *argcp, char ***argvp,
 	return 0;
 }
 
+static int iplink_parse_inet(int *argcp, char ***argvp, struct iplink_req *req)
+{
+	struct rtattr *afs, *afinet, *inet_devconf;
+	char **argv = *argvp;
+	int argc = *argcp;
+	bool val;
+	int ret;
+
+	afs = addattr_nest(&req->n, sizeof(*req), IFLA_AF_SPEC);
+	afinet = addattr_nest(&req->n, sizeof(*req), AF_INET);
+	inet_devconf = addattr_nest(&req->n, sizeof(*req), IFLA_INET_CONF);
+
+	while (NEXT_ARG_OK()) {
+		NEXT_ARG();
+		if (strcmp(*argv, "forwarding") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("forwarding", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_FORWARDING, val);
+		} else if (strcmp(*argv, "proxy_arp") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("proxy_arp", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_PROXY_ARP, val);
+		} else if (strcmp(*argv, "accept_redirects") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("accept_redirects", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ACCEPT_REDIRECTS, val);
+		} else if (strcmp(*argv, "secure_redirects") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("secure_redirects", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_SECURE_REDIRECTS, val);
+		} else if (strcmp(*argv, "send_redirects") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("send_redirects", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_SEND_REDIRECTS, val);
+		} else if (strcmp(*argv, "shared_media") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("shared_media", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_SHARED_MEDIA, val);
+		} else if (strcmp(*argv, "rp_filter") == 0) {
+			int rp_filter;
+
+			NEXT_ARG();
+			if (get_integer(&rp_filter, *argv, 0)) {
+				invarg("Invalid \"rp_filter\" value\n", *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_RP_FILTER, rp_filter);
+		} else if (strcmp(*argv, "accept_source_route") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("accept_source_route", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ACCEPT_SOURCE_ROUTE, val);
+		} else if (strcmp(*argv, "bootp_relay") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("bootp_relay", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_BOOTP_RELAY, val);
+		} else if (strcmp(*argv, "log_martians") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("log_martians", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_LOG_MARTIANS, val);
+		} else if (strcmp(*argv, "tag") == 0) {
+			int tag;
+
+			NEXT_ARG();
+			if (get_integer(&tag, *argv, 0)) {
+				invarg("Invalid \"tag\" value\n", *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req), IPV4_DEVCONF_TAG, tag);
+		} else if (strcmp(*argv, "arp_filter") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("arp_filter", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ARPFILTER, val);
+		} else if (strcmp(*argv, "medium_id") == 0) {
+			int medium_id;
+
+			NEXT_ARG();
+			if (get_integer(&medium_id, *argv, 0)) {
+				invarg("Invalid \"medium_id\" value\n", *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_MEDIUM_ID, medium_id);
+		} else if (strcmp(*argv, "disable_xfrm") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("disable_xfrm", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_NOXFRM, val);
+		} else if (strcmp(*argv, "disable_policy") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("disable_policy", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_NOPOLICY, val);
+		} else if (strcmp(*argv, "force_igmp_version") == 0) {
+			int force_igmp_ver;
+
+			NEXT_ARG();
+			if (get_integer(&force_igmp_ver, *argv, 0)) {
+				invarg("Invalid \"force_igmp_version\" value\n",
+				       *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_FORCE_IGMP_VERSION, force_igmp_ver);
+		} else if (strcmp(*argv, "arp_announce") == 0) {
+			int arp_announce;
+
+			NEXT_ARG();
+			if (get_integer(&arp_announce, *argv, 0)) {
+				invarg("Invalid \"arp_announce\" value\n", *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ARP_ANNOUNCE, arp_announce);
+		} else if (strcmp(*argv, "arp_ignore") == 0) {
+			int arp_ignore;
+
+			NEXT_ARG();
+			if (get_integer(&arp_ignore, *argv, 0)) {
+				invarg("Invalid \"arp_ignore\" value\n", *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ARP_IGNORE, arp_ignore);
+		} else if (strcmp(*argv, "promote_secondaries") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("promote_secondaries", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_PROMOTE_SECONDARIES, val);
+		} else if (strcmp(*argv, "arp_accept") == 0) {
+			int arp_accept;
+
+			NEXT_ARG();
+			if (get_integer(&arp_accept, *argv, 0)) {
+				invarg("Invalid \"arp_accept\" value\n", *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ARP_ACCEPT, arp_accept);
+		} else if (strcmp(*argv, "arp_notify") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("arp_notify", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ARP_NOTIFY, val);
+		} else if (strcmp(*argv, "accept_local") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("accept_local", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ACCEPT_LOCAL, val);
+		} else if (strcmp(*argv, "src_vmark") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("src_vmark", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_SRC_VMARK, val);
+		} else if (strcmp(*argv, "proxy_arp_pvlan") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("proxy_arp_pvlan", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_PROXY_ARP_PVLAN, val);
+		} else if (strcmp(*argv, "route_localnet") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("route_localnet", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ROUTE_LOCALNET, val);
+		} else if (strcmp(*argv, "bc_forwarding") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("bc_forwarding", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_BC_FORWARDING, val);
+		} else if (!strcmp(*argv, "igmpv2_unsolicited_report_interval")) {
+			int igmpv2_interval;
+
+			NEXT_ARG();
+			if (get_integer(&igmpv2_interval, *argv, 0)) {
+				invarg("Invalid \"igmpv2_unsolicited_report_interval\" value\n",
+				       *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_IGMPV2_UNSOLICITED_REPORT_INTERVAL,
+				  igmpv2_interval);
+		} else if (!strcmp(*argv, "igmpv3_unsolicited_report_interval")) {
+			int igmpv3_interval;
+
+			NEXT_ARG();
+			if (get_integer(&igmpv3_interval, *argv, 0)) {
+				invarg("Invalid \"igmpv3_unsolicited_report_interval\" value\n",
+				       *argv);
+				return -1;
+			}
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_IGMPV3_UNSOLICITED_REPORT_INTERVAL,
+				  igmpv3_interval);
+		} else if (strcmp(*argv, "ignore_routes_with_linkdown") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("ignore_routes_with_linkdown",
+					   *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_IGNORE_ROUTES_WITH_LINKDOWN, val);
+		} else if (strcmp(*argv, "drop_unicast_in_l2_multicast") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("drop_unicast_in_l2_multicast",
+					   *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_DROP_UNICAST_IN_L2_MULTICAST, val);
+		} else if (strcmp(*argv, "drop_gratuitous_arp") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("drop_gratuitous_arp", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_DROP_GRATUITOUS_ARP, val);
+		} else if (strcmp(*argv, "arp_evict_nocarrier") == 0) {
+			NEXT_ARG();
+			val = parse_on_off("arp_evict_nocarrier", *argv, &ret);
+			if (ret)
+				return ret;
+			addattr32(&req->n, sizeof(*req),
+				  IPV4_DEVCONF_ARP_EVICT_NOCARRIER, val);
+		} else {
+			/* rewind arg */
+			PREV_ARG();
+			break;
+		}
+	}
+
+	if (argc == *argcp)
+		incomplete_command();
+
+	addattr_nest_end(&req->n, inet_devconf);
+	addattr_nest_end(&req->n, afinet);
+	addattr_nest_end(&req->n, afs);
+
+	*argcp = argc;
+	*argvp = argv;
+	return 0;
+}
+
 int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 {
 	bool move_netns = false;
@@ -634,6 +942,9 @@ int iplink_parse(int argc, char **argv, struct iplink_req *req, char **type)
 			if (get_integer(&mtu, *argv, 0))
 				invarg("Invalid \"mtu\" value\n", *argv);
 			addattr_l(&req->n, sizeof(*req), IFLA_MTU, &mtu, 4);
+		} else if (strcmp(*argv, "inet") == 0) {
+			if (iplink_parse_inet(&argc, &argv, req) < 0)
+				return -1;
 		} else if (strcmp(*argv, "xdpgeneric") == 0 ||
 			   strcmp(*argv, "xdpdrv") == 0 ||
 			   strcmp(*argv, "xdpoffload") == 0 ||

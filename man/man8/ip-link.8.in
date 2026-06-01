@@ -179,6 +179,43 @@ ip-link \- network device configuration
 .br
 .RB "[ " addrgenmode " { " eui64 " | " none " | " stable_secret " | " random " } ]"
 .br
+.RB "[ " inet " [ { " forwarding " | " proxy_arp " | " accept_redirects " |"
+.br
+.in +8
+.BR secure_redirects " | " send_redirects " | " shared_media " |"
+.br
+.BR accept_source_route " | " bootp_relay " | " log_martians " |"
+.br
+.BR arp_filter " | " disable_xfrm " | " disable_policy " |"
+.br
+.BR promote_secondaries " | " arp_notify " | " accept_local " |"
+.br
+.BR src_vmark " | " proxy_arp_pvlan " | " route_localnet " |"
+.br
+.BR bc_forwarding " | " ignore_routes_with_linkdown " |"
+.br
+.BR drop_unicast_in_l2_multicast " |"
+.br
+.BR drop_gratuitous_arp " | " arp_evict_nocarrier " } { " on " | " off " } ]"
+.br
+.RB "[ " rp_filter " { " 0 " | " 1 " | " 2 " } ]"
+.br
+.RB "[ " arp_announce " { " 0 " | " 1 " | " 2 " } ]"
+.br
+.RB "[ " arp_ignore " { " 0 " | " 1 " | " ... " | " 8 " } ]"
+.br
+.RB "[ " arp_accept " { " 0 " | " 1 " | " 2 " } ]"
+.br
+.RB "[ " force_igmp_version " { " 0 " | " 1 " | " 2 " | " 3 " } ]"
+.br
+.RB "[ " tag " " TAG " ] [ " medium_id " " ID " ]"
+.br
+.RB "[ " igmpv2_unsolicited_report_interval " " INTERVAL " ]"
+.br
+.RB "[ " igmpv3_unsolicited_report_interval " " INTERVAL " ] ]"
+.br
+.in -10
+.br
 .RB "[ " macaddr
 .RI "[ " MACADDR " ]"
 .br
@@ -2616,6 +2653,50 @@ set the IPv6 address generation mode
 
 .I random
 - like stable_secret, but auto-generate a new random secret if none is set
+
+.TP
+.B inet
+set the IPv4 devconf network parameters for the specific device. These parameters map directly to the kernel's IPv4 interface sysctls.
+
+.in +8
+.BR forwarding " { " on " | " off " }"
+- enable or disable IPv4 forwarding on the device.
+
+.BR proxy_arp ", " accept_redirects ", " secure_redirects ", " send_redirects ", "
+.BR shared_media ", " accept_source_route ", " bootp_relay ", " log_martians ", "
+.BR arp_filter ", " disable_xfrm ", " disable_policy ", " promote_secondaries ", "
+.BR arp_notify ", " accept_local ", " src_vmark ", " proxy_arp_pvlan ", "
+.BR route_localnet ", " bc_forwarding ", " ignore_routes_with_linkdown ", "
+.BR drop_unicast_in_l2_multicast ", " drop_gratuitous_arp ", " arp_evict_nocarrier ", "
+.BR "{ " on " | " off " }"
+- toggle the corresponding boolean network parameter.
+
+.BR rp_filter " { " 0 " | " 1 " | " 2 " }"
+- set reverse path filtering.
+
+.BR arp_announce " { " 0 " | " 1 " | " 2 " }"
+- define different restriction levels for announcing the local source IP address from IP packets in ARP requests.
+
+.BR arp_ignore " { " 0 " | " 1 " | " ... " | " 8 " }"
+- define different modes for replying to ARP requests that resolve local target IP addresses.
+
+.BR arp_accept " { " 0 " | " 1 " | " 2 " }"
+- define behavior for gratuitous ARP frames.
+
+.BR force_igmp_version " { " 0 " | " 1 " | " 2 " | " 3 " }"
+- force IGMP version.
+
+.BI tag " TAG "
+- set the interface tag.
+
+.BI medium_id " ID "
+- set the interface medium ID.
+
+.BI igmpv2_unsolicited_report_interval " INTERVAL "
+.br
+.BI igmpv3_unsolicited_report_interval " INTERVAL "
+- set the IGMP unsolicited report interval in milliseconds.
+.in -8
 
 .TP
 .BR "link-netnsid "
