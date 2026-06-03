@@ -1756,6 +1756,8 @@ the following additional arguments are supported:
 ] [
 .BI stp_state " STP_STATE "
 ] [
+.BI stp_mode " STP_MODE "
+] [
 .BI mst_enabled " MST_ENABLED "
 ] [
 .BI priority " PRIORITY "
@@ -1864,6 +1866,36 @@ are between 6 and 40.
 or off
 .RI ( STP_STATE " == 0). "
 for this bridge.
+
+.BI stp_mode " STP_MODE "
+- set the STP mode for this bridge. This controls how the bridge
+selects between userspace and kernel STP when STP is enabled via
+.BR stp_state .
+.I STP_MODE
+can be one of:
+.in +8
+.sp
+.B auto
+(default) - invoke the
+.B /sbin/bridge-stp
+helper to hand the bridge to a userspace STP daemon. Only attempted in
+the initial network namespace; in other namespaces this falls back to
+kernel STP.
+
+.B user
+- directly enable userspace STP without invoking the helper. Works in
+any network namespace. The caller is responsible for registering the
+bridge with the userspace STP daemon.
+
+.B kernel
+- directly enable kernel STP without invoking the helper.
+.in -8
+
+Can only be changed while STP is disabled. Both
+.B stp_mode
+and
+.B stp_state
+can be set in a single command.
 
 .BI mst_enabled " MST_ENABLED "
 - turn multiple spanning tree (MST) support on

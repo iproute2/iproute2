@@ -19,6 +19,20 @@
 #include "utils.h"
 #include "ip_common.h"
 
+static const char * const stp_modes[] = {
+	[BR_STP_MODE_AUTO]	= "auto",
+	[BR_STP_MODE_USER]	= "user",
+	[BR_STP_MODE_KERNEL]	= "kernel",
+};
+
+static const char *stp_mode_to_str(__u32 mode)
+{
+	if (mode >= ARRAY_SIZE(stp_modes) || !stp_modes[mode])
+		return "(unknown)";
+
+	return stp_modes[mode];
+}
+
 static unsigned int xstats_print_attr;
 static int filter_index;
 
@@ -31,6 +45,7 @@ static void print_explain(FILE *f)
 		"		  [ max_age MAX_AGE ]\n"
 		"		  [ ageing_time AGEING_TIME ]\n"
 		"		  [ stp_state STP_STATE ]\n"
+		"		  [ stp_mode STP_MODE ]\n"
 		"		  [ mst_enabled MST_ENABLED ]\n"
 		"		  [ priority PRIORITY ]\n"
 		"		  [ group_fwd_mask MASK ]\n"
@@ -67,6 +82,7 @@ static void print_explain(FILE *f)
 		"		  [ mdb_offload_fail_notification MDB_OFFLOAD_FAIL_NOTIFICATION ]\n"
 		"\n"
 		"Where: VLAN_PROTOCOL := { 802.1Q | 802.1ad }\n"
+		"       STP_MODE := { auto | user | kernel }\n"
 	);
 }
 
@@ -120,6 +136,16 @@ static int bridge_parse_opt(struct link_util *lu, int argc, char **argv,
 				invarg("invalid stp_state", *argv);
 
 			addattr32(n, 1024, IFLA_BR_STP_STATE, val);
+		} else if (strcmp(*argv, "stp_mode") == 0) {
+			__u32 stp_mode;
+			int err;
+
+			NEXT_ARG();
+			stp_mode = parse_one_of("stp_mode", *argv, stp_modes,
+						ARRAY_SIZE(stp_modes), &err);
+			if (err)
+				return err;
+			addattr32(n, 1024, IFLA_BR_STP_MODE, stp_mode);
 		} else if (matches(*argv, "priority") == 0) {
 			__u16 prio;
 
@@ -511,6 +537,13 @@ static void bridge_print_opt(struct link_util *lu, FILE *f, struct rtattr *tb[])
 			   "stp_state",
 			   "stp_state %u ",
 			   rta_getattr_u32(tb[IFLA_BR_STP_STATE]));
+
+	if (tb[IFLA_BR_STP_MODE]) {
+		__u32 mode = rta_getattr_u32(tb[IFLA_BR_STP_MODE]);
+
+		print_string(PRINT_ANY, "stp_mode", "stp_mode %s ",
+			     stp_mode_to_str(mode));
+	}
 
 	if (tb[IFLA_BR_PRIORITY])
 		print_uint(PRINT_ANY,
