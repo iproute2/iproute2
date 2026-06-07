@@ -214,7 +214,7 @@ ip-link \- network device configuration
 .br
 .RB "[ " igmpv3_unsolicited_report_interval " " INTERVAL " ] ]"
 .br
-.in -10
+.in -8
 .br
 .RB "[ " macaddr
 .RI "[ " MACADDR " ]"
