@@ -579,7 +579,8 @@ static int iplink_parse_inet(int *argcp, char ***argvp, struct iplink_req *req)
 
 	afs = addattr_nest(&req->n, sizeof(*req), IFLA_AF_SPEC);
 	afinet = addattr_nest(&req->n, sizeof(*req), AF_INET);
-	inet_devconf = addattr_nest(&req->n, sizeof(*req), IFLA_INET_CONF);
+	inet_devconf = addattr_nest(&req->n, sizeof(*req),
+				    IFLA_INET_CONF | NLA_F_NESTED);
 
 	while (NEXT_ARG_OK()) {
 		NEXT_ARG();
