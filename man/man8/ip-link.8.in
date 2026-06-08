@@ -1435,6 +1435,8 @@ the following additional arguments are supported:
 .BI "ip link add " DEVICE
 .BI type " geneve " id " VNI " remote " IPADDR"
 [
+.BI local " IPADDR "
+] [
 .BI ttl " TTL "
 ] [
 .BI tos " TOS "
@@ -1464,6 +1466,10 @@ the following additional arguments are supported:
 .sp
 .BI remote " IPADDR"
 - specifies the unicast destination IP address to use in outgoing packets.
+
+.sp
+.BI local " IPADDR"
+- specifies the source IP address to listen on.
 
 .sp
 .BI ttl " TTL"
