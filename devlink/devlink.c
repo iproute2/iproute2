@@ -7429,6 +7429,12 @@ static void resources_free(struct resources *resources)
 		resource_free(resource);
 }
 
+static void resources_reset(struct resources *resources)
+{
+	resources_free(resources);
+	INIT_LIST_HEAD(&resources->resource_list);
+}
+
 static int resource_ctx_init(struct resource_ctx *ctx, struct dl *dl)
 {
 	ctx->resources = resources_alloc();
@@ -8986,19 +8992,23 @@ static int cmd_resource_dump_cb(const struct nlmsghdr *nlh, void *data)
 		return MNL_CB_ERROR;
 	}
 
-	if (ctx->print_resources)
+	if (ctx->print_resources) {
 		resources_show(ctx, tb);
+		resources_reset(ctx->resources);
+	}
 
 	return MNL_CB_OK;
 }
 
 static int cmd_resource_show(struct dl *dl)
 {
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
 	struct nlmsghdr *nlh;
 	struct resource_ctx resource_ctx = {};
 	int err;
 
-	err = dl_argv_parse(dl, DL_OPT_HANDLE, 0);
+	err = dl_argv_parse_with_selector(dl, &flags, DEVLINK_CMD_RESOURCE_DUMP,
+					  DL_OPT_HANDLE, 0, 0, 0);
 	if (err)
 		return err;
 
@@ -9008,7 +9018,7 @@ static int cmd_resource_show(struct dl *dl)
 
 	resource_ctx.print_resources = true;
 	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_RESOURCE_DUMP,
-			       NLM_F_REQUEST | NLM_F_ACK);
+					  flags);
 	dl_opts_put(nlh, dl);
 	pr_out_section_start(dl, "resources");
 	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, cmd_resource_dump_cb,
@@ -9020,7 +9030,7 @@ static int cmd_resource_show(struct dl *dl)
 
 static void cmd_resource_help(void)
 {
-	pr_err("Usage: devlink resource show DEV\n"
+	pr_err("Usage: devlink resource show [ DEV ]\n"
 	       "       devlink resource set DEV path PATH size SIZE\n");
 }
 

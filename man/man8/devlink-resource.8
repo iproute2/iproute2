@@ -19,7 +19,7 @@ devlink-resource \- devlink device resource configuration
 
 .ti -8
 .B devlink resource show
-.IR DEV
+.RI "[ " DEV " ]"
 
 .ti -8
 .B devlink resource help
@@ -31,11 +31,12 @@ devlink-resource \- devlink device resource configuration
 .BI size " RESOURCE_SIZE"
 
 .SH "DESCRIPTION"
-.SS devlink resource show - display devlink device's resosources
+.SS devlink resource show - display devlink device resources
 
 .PP
 .I "DEV"
 - specifies the devlink device to show.
+If omitted, all devices are listed.
 
 .in +4
 Format is:
@@ -57,6 +58,11 @@ Resource's path.
 The new resource's size.
 
 .SH "EXAMPLES"
+.PP
+devlink resource show
+.RS 4
+Shows resources for all devlink devices.
+.RE
 .PP
 devlink resource show pci/0000:01:00.0
 .RS 4
