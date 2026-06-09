@@ -8818,6 +8818,9 @@ static void resource_dpipe_tables_show(const struct resource *resource,
 	struct dl *dl = ctx->dl;
 	bool array = false;
 
+	if (!ctx->tables)
+		return;
+
 	list_for_each_entry(table, &ctx->tables->table_list, list)
 		if (table->resource_id == resource->id &&
 		    table->resource_valid)
@@ -8888,17 +8891,75 @@ static void resource_show(struct resource *resource,
 	pr_out_array_end(dl);
 }
 
+static void resources_dpipe_tables_init(struct dpipe_ctx *dpipe_ctx,
+					struct resource_ctx *resource_ctx,
+					struct nlattr **tb)
+{
+	const char *bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
+	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
+	struct mnlu_gen_socket nlg_dpipe;
+	struct dl *dl = resource_ctx->dl;
+	struct nlmsghdr *nlh;
+	int err;
+
+	err = dpipe_ctx_init(dpipe_ctx, dl);
+	if (err)
+		return;
+
+	err = mnlu_gen_socket_open(&nlg_dpipe, DEVLINK_GENL_NAME,
+				   DEVLINK_GENL_VERSION);
+	if (err)
+		goto ctx_fini;
+
+	nlh = mnlu_gen_socket_cmd_prepare(&nlg_dpipe,
+					  DEVLINK_CMD_DPIPE_TABLE_GET,
+					  NLM_F_REQUEST);
+
+	mnl_attr_put_strz(nlh, DEVLINK_ATTR_BUS_NAME, bus_name);
+	mnl_attr_put_strz(nlh, DEVLINK_ATTR_DEV_NAME, dev_name);
+
+	err = mnlu_gen_socket_sndrcv(&nlg_dpipe, nlh, cmd_dpipe_table_show_cb,
+				     dpipe_ctx);
+	if (err)
+		goto socket_close;
+
+	resource_ctx->tables = dpipe_ctx->tables;
+	mnlu_gen_socket_close(&nlg_dpipe);
+
+	return;
+
+socket_close:
+	mnlu_gen_socket_close(&nlg_dpipe);
+ctx_fini:
+	dpipe_ctx_fini(dpipe_ctx);
+}
+
+static void resources_dpipe_tables_fini(struct dpipe_ctx *dpipe_ctx,
+					struct resource_ctx *resource_ctx)
+{
+	if (!resource_ctx->tables)
+		return;
+
+	resource_ctx->tables = NULL;
+	dpipe_ctx_fini(dpipe_ctx);
+}
+
 static void
 resources_show(struct resource_ctx *ctx, struct nlattr **tb)
 {
 	struct resources *resources = ctx->resources;
+	struct dpipe_ctx dpipe_ctx = {};
 	struct resource *resource;
+
+	resources_dpipe_tables_init(&dpipe_ctx, ctx, tb);
 
 	list_for_each_entry(resource, &resources->resource_list, list) {
 		pr_out_handle_start_arr(ctx->dl, tb);
 		resource_show(resource, ctx);
 		pr_out_handle_end(ctx->dl);
 	}
+
+	resources_dpipe_tables_fini(&dpipe_ctx, ctx);
 }
 
 static int resources_get(struct resource_ctx *ctx, struct nlattr **tb)
@@ -8933,7 +8994,6 @@ static int cmd_resource_dump_cb(const struct nlmsghdr *nlh, void *data)
 static int cmd_resource_show(struct dl *dl)
 {
 	struct nlmsghdr *nlh;
-	struct dpipe_ctx dpipe_ctx = {};
 	struct resource_ctx resource_ctx = {};
 	int err;
 
@@ -8941,27 +9001,11 @@ static int cmd_resource_show(struct dl *dl)
 	if (err)
 		return err;
 
-	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_DPIPE_TABLE_GET,
-			       NLM_F_REQUEST);
-	dl_opts_put(nlh, dl);
-
-	err = dpipe_ctx_init(&dpipe_ctx, dl);
+	err = resource_ctx_init(&resource_ctx, dl);
 	if (err)
 		return err;
 
-	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, cmd_dpipe_table_show_cb,
-				  &dpipe_ctx);
-	if (err) {
-		pr_err("error get tables %s\n", strerror(dpipe_ctx.err));
-		goto out;
-	}
-
-	err = resource_ctx_init(&resource_ctx, dl);
-	if (err)
-		goto out;
-
 	resource_ctx.print_resources = true;
-	resource_ctx.tables = dpipe_ctx.tables;
 	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_RESOURCE_DUMP,
 			       NLM_F_REQUEST | NLM_F_ACK);
 	dl_opts_put(nlh, dl);
@@ -8970,8 +9014,6 @@ static int cmd_resource_show(struct dl *dl)
 				  &resource_ctx);
 	pr_out_section_end(dl);
 	resource_ctx_fini(&resource_ctx);
-out:
-	dpipe_ctx_fini(&dpipe_ctx);
 	return err;
 }
 
