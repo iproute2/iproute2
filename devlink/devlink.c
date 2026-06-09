@@ -8954,18 +8954,23 @@ static void resources_dpipe_tables_fini(struct dpipe_ctx *dpipe_ctx,
 static void
 resources_show(struct resource_ctx *ctx, struct nlattr **tb)
 {
-	struct resources *resources = ctx->resources;
+	bool is_port = !!tb[DEVLINK_ATTR_PORT_INDEX];
 	struct dpipe_ctx dpipe_ctx = {};
 	struct resource *resource;
+	struct dl *dl = ctx->dl;
 
 	resources_dpipe_tables_init(&dpipe_ctx, ctx, tb);
-
-	list_for_each_entry(resource, &resources->resource_list, list) {
-		pr_out_handle_start_arr(ctx->dl, tb);
+	list_for_each_entry(resource, &ctx->resources->resource_list, list) {
+		if (is_port)
+			pr_out_port_handle_start_arr(dl, tb, false);
+		else
+			pr_out_handle_start_arr(dl, tb);
 		resource_show(resource, ctx);
-		pr_out_handle_end(ctx->dl);
+		if (is_port)
+			pr_out_port_handle_end(dl);
+		else
+			pr_out_handle_end(dl);
 	}
-
 	resources_dpipe_tables_fini(&dpipe_ctx, ctx);
 }
 
