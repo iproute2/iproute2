@@ -7441,6 +7441,7 @@ static int resource_ctx_init(struct resource_ctx *ctx, struct dl *dl)
 static void resource_ctx_fini(struct resource_ctx *ctx)
 {
 	resources_free(ctx->resources);
+	free(ctx->resources);
 }
 
 struct dpipe_ctx {
