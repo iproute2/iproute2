@@ -8811,33 +8811,12 @@ static const char *resource_unit_str_get(enum devlink_resource_unit unit)
 	}
 }
 
-static void resource_show(struct resource *resource,
-			  struct resource_ctx *ctx)
+static void resource_dpipe_tables_show(const struct resource *resource,
+				       const struct resource_ctx *ctx)
 {
-	struct resource *child_resource;
 	struct dpipe_table *table;
 	struct dl *dl = ctx->dl;
 	bool array = false;
-
-	check_indent_newline(dl);
-	print_string(PRINT_ANY, "name", "name %s", resource->name);
-	if (dl->verbose)
-		resource_path_print(dl, ctx->resources, resource->id);
-	pr_out_u64(dl, "size", resource->size);
-	if (resource->size != resource->size_new)
-		pr_out_u64(dl, "size_new", resource->size_new);
-	if (resource->occ_valid)
-		print_uint(PRINT_ANY, "occ", " occ %u",  resource->size_occ);
-	print_string(PRINT_ANY, "unit", " unit %s",
-		     resource_unit_str_get(resource->unit));
-
-	if (resource->size_min != resource->size_max) {
-		print_uint(PRINT_ANY, "size_min", " size_min %u",
-			   resource->size_min);
-		pr_out_u64(dl, "size_max", resource->size_max);
-		print_uint(PRINT_ANY, "size_gran", " size_gran %u",
-			   resource->size_gran);
-	}
 
 	list_for_each_entry(table, &ctx->tables->table_list, list)
 		if (table->resource_id == resource->id &&
@@ -8862,6 +8841,35 @@ static void resource_show(struct resource *resource,
 	}
 	if (array)
 		pr_out_array_end(dl);
+}
+
+static void resource_show(struct resource *resource,
+			  struct resource_ctx *ctx)
+{
+	struct resource *child_resource;
+	struct dl *dl = ctx->dl;
+
+	check_indent_newline(dl);
+	print_string(PRINT_ANY, "name", "name %s", resource->name);
+	if (dl->verbose)
+		resource_path_print(dl, ctx->resources, resource->id);
+	pr_out_u64(dl, "size", resource->size);
+	if (resource->size != resource->size_new)
+		pr_out_u64(dl, "size_new", resource->size_new);
+	if (resource->occ_valid)
+		print_uint(PRINT_ANY, "occ", " occ %u",  resource->size_occ);
+	print_string(PRINT_ANY, "unit", " unit %s",
+		     resource_unit_str_get(resource->unit));
+
+	if (resource->size_min != resource->size_max) {
+		print_uint(PRINT_ANY, "size_min", " size_min %u",
+			   resource->size_min);
+		pr_out_u64(dl, "size_max", resource->size_max);
+		print_uint(PRINT_ANY, "size_gran", " size_gran %u",
+			   resource->size_gran);
+	}
+
+	resource_dpipe_tables_show(resource, ctx);
 
 	if (list_empty(&resource->resource_list))
 		return;
