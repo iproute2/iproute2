@@ -702,9 +702,16 @@ _devlink_resource()
 {
     case $command in
         show)
+            case $prev in
+                scope)
+                    COMPREPLY=( $( compgen -W "dev port" -- "$cur" ) )
+                    return
+                    ;;
+            esac
             if [[ $cword -eq 3 ]]; then
                 _devlink_direct_complete "dev"
                 _devlink_direct_complete "port"
+                COMPREPLY+=( $( compgen -W "scope" -- "$cur" ) )
             fi
             return
             ;;

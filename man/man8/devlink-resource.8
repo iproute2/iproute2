@@ -19,7 +19,7 @@ devlink-resource \- devlink device resource configuration
 
 .ti -8
 .B devlink resource show
-.RI "[ " DEV "[/" PORT_INDEX "] ]"
+.RI "[ " DEV "[/" PORT_INDEX "] | " scope " { " dev " | " port " } ]"
 
 .ti -8
 .B devlink resource help
@@ -52,6 +52,15 @@ When given, only port-level resources for that port are shown.
 Format is:
 .in +2
 BUS_NAME/BUS_ADDRESS/PORT_INDEX
+
+.TP
+.BI scope " { dev | port }"
+Filter resources by scope.
+.B dev
+shows only device-level resources.
+.B port
+shows only port-level resources.
+When omitted, resources of both scopes are shown.
 
 .SS devlink resource set - sets resource size of specific resource
 
