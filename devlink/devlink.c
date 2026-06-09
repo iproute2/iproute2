@@ -9013,7 +9013,8 @@ static int cmd_resource_show(struct dl *dl)
 	int err;
 
 	err = dl_argv_parse_with_selector(dl, &flags, DEVLINK_CMD_RESOURCE_DUMP,
-					  DL_OPT_HANDLE, 0, 0, 0);
+					  DL_OPT_HANDLE | DL_OPT_HANDLEP,
+					  0, 0, 0);
 	if (err)
 		return err;
 
@@ -9035,7 +9036,7 @@ static int cmd_resource_show(struct dl *dl)
 
 static void cmd_resource_help(void)
 {
-	pr_err("Usage: devlink resource show [ DEV ]\n"
+	pr_err("Usage: devlink resource show [ DEV[/PORT_INDEX] ]\n"
 	       "       devlink resource set DEV path PATH size SIZE\n");
 }
 

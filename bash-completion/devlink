@@ -704,6 +704,7 @@ _devlink_resource()
         show)
             if [[ $cword -eq 3 ]]; then
                 _devlink_direct_complete "dev"
+                _devlink_direct_complete "port"
             fi
             return
             ;;

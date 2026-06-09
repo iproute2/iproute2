@@ -19,7 +19,7 @@ devlink-resource \- devlink device resource configuration
 
 .ti -8
 .B devlink resource show
-.RI "[ " DEV " ]"
+.RI "[ " DEV "[/" PORT_INDEX "] ]"
 
 .ti -8
 .B devlink resource help
@@ -42,6 +42,16 @@ If omitted, all devices are listed.
 Format is:
 .in +2
 BUS_NAME/BUS_ADDRESS
+
+.PP
+.I "PORT_INDEX"
+- specifies the port to show resources for.
+When given, only port-level resources for that port are shown.
+
+.in +4
+Format is:
+.in +2
+BUS_NAME/BUS_ADDRESS/PORT_INDEX
 
 .SS devlink resource set - sets resource size of specific resource
 
@@ -67,6 +77,11 @@ Shows resources for all devlink devices.
 devlink resource show pci/0000:01:00.0
 .RS 4
 Shows the resources of the specified devlink device.
+.RE
+.PP
+devlink resource show pci/0000:01:00.0/1
+.RS 4
+Shows port-level resources for port 1 of the specified devlink device.
 .RE
 .PP
 devlink resource set pci/0000:01:00.0 path /kvd/linear size 98304
