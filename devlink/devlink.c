@@ -314,6 +314,7 @@ static int ifname_map_update(struct ifname_map *ifname_map, const char *ifname)
 #define DL_OPT_PORT_FN_RATE_TC_BWS	BIT(59)
 #define DL_OPT_HEALTH_REPORTER_BURST_PERIOD	BIT(60)
 #define DL_OPT_PARAM_SET_DEFAULT	BIT(61)
+#define DL_OPT_RESOURCE_SCOPE		BIT(62)
 
 struct dl_opts {
 	uint64_t present; /* flags of present items */
@@ -382,6 +383,7 @@ struct dl_opts {
 	bool selftests_opt[DEVLINK_ATTR_SELFTEST_ID_MAX + 1];
 	struct nla_bitfield32 port_fn_caps;
 	uint32_t port_fn_max_io_eqs;
+	uint32_t resource_scope_mask;
 };
 
 struct dl {
@@ -1467,6 +1469,19 @@ static int flash_overwrite_section_get(const char *sectionstr, uint32_t *mask)
 	return 0;
 }
 
+static int resource_scope_get(const char *scopestr, uint32_t *scope)
+{
+	if (strcmp(scopestr, "dev") == 0) {
+		*scope = DEVLINK_RESOURCE_SCOPE_DEV;
+	} else if (strcmp(scopestr, "port") == 0) {
+		*scope = DEVLINK_RESOURCE_SCOPE_PORT;
+	} else {
+		pr_err("Unknown resource scope \"%s\"\n", scopestr);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 static int param_cmode_get(const char *cmodestr,
 			   enum devlink_param_cmode *cmode)
 {
@@ -1647,6 +1662,7 @@ static const struct dl_args_metadata dl_args_required[] = {
 	{DL_OPT_ESWITCH_ENCAP_MODE,   "E-Switch encapsulation option expected."},
 	{DL_OPT_RESOURCE_PATH,	      "Resource path expected."},
 	{DL_OPT_RESOURCE_SIZE,	      "Resource size expected."},
+	{DL_OPT_RESOURCE_SCOPE,	      "Resource scope expected."},
 	{DL_OPT_PARAM_NAME,	      "Parameter name expected."},
 	{DL_OPT_PARAM_VALUE,	      "Value to set expected."},
 	{DL_OPT_PARAM_CMODE,	      "Configuration mode expected."},
@@ -2662,6 +2678,9 @@ static void dl_opts_put(struct nlmsghdr *nlh, struct dl *dl)
 	if (opts->present & DL_OPT_RESOURCE_SIZE)
 		mnl_attr_put_u64(nlh, DEVLINK_ATTR_RESOURCE_SIZE,
 				 opts->resource_size);
+	if (opts->present & DL_OPT_RESOURCE_SCOPE)
+		mnl_attr_put_u32(nlh, DEVLINK_ATTR_RESOURCE_SCOPE_MASK,
+				 opts->resource_scope_mask);
 	if (opts->present & DL_OPT_PARAM_NAME)
 		mnl_attr_put_strz(nlh, DEVLINK_ATTR_PARAM_NAME,
 				  opts->param_name);
@@ -7429,6 +7448,12 @@ static void resources_free(struct resources *resources)
 		resource_free(resource);
 }
 
+static void resources_reset(struct resources *resources)
+{
+	resources_free(resources);
+	INIT_LIST_HEAD(&resources->resource_list);
+}
+
 static int resource_ctx_init(struct resource_ctx *ctx, struct dl *dl)
 {
 	ctx->resources = resources_alloc();
@@ -7441,6 +7466,7 @@ static int resource_ctx_init(struct resource_ctx *ctx, struct dl *dl)
 static void resource_ctx_fini(struct resource_ctx *ctx)
 {
 	resources_free(ctx->resources);
+	free(ctx->resources);
 }
 
 struct dpipe_ctx {
@@ -8811,33 +8837,15 @@ static const char *resource_unit_str_get(enum devlink_resource_unit unit)
 	}
 }
 
-static void resource_show(struct resource *resource,
-			  struct resource_ctx *ctx)
+static void resource_dpipe_tables_show(const struct resource *resource,
+				       const struct resource_ctx *ctx)
 {
-	struct resource *child_resource;
 	struct dpipe_table *table;
 	struct dl *dl = ctx->dl;
 	bool array = false;
 
-	check_indent_newline(dl);
-	print_string(PRINT_ANY, "name", "name %s", resource->name);
-	if (dl->verbose)
-		resource_path_print(dl, ctx->resources, resource->id);
-	pr_out_u64(dl, "size", resource->size);
-	if (resource->size != resource->size_new)
-		pr_out_u64(dl, "size_new", resource->size_new);
-	if (resource->occ_valid)
-		print_uint(PRINT_ANY, "occ", " occ %u",  resource->size_occ);
-	print_string(PRINT_ANY, "unit", " unit %s",
-		     resource_unit_str_get(resource->unit));
-
-	if (resource->size_min != resource->size_max) {
-		print_uint(PRINT_ANY, "size_min", " size_min %u",
-			   resource->size_min);
-		pr_out_u64(dl, "size_max", resource->size_max);
-		print_uint(PRINT_ANY, "size_gran", " size_gran %u",
-			   resource->size_gran);
-	}
+	if (!ctx->tables)
+		return;
 
 	list_for_each_entry(table, &ctx->tables->table_list, list)
 		if (table->resource_id == resource->id &&
@@ -8862,6 +8870,35 @@ static void resource_show(struct resource *resource,
 	}
 	if (array)
 		pr_out_array_end(dl);
+}
+
+static void resource_show(struct resource *resource,
+			  struct resource_ctx *ctx)
+{
+	struct resource *child_resource;
+	struct dl *dl = ctx->dl;
+
+	check_indent_newline(dl);
+	print_string(PRINT_ANY, "name", "name %s", resource->name);
+	if (dl->verbose)
+		resource_path_print(dl, ctx->resources, resource->id);
+	pr_out_u64(dl, "size", resource->size);
+	if (resource->size != resource->size_new)
+		pr_out_u64(dl, "size_new", resource->size_new);
+	if (resource->occ_valid)
+		print_uint(PRINT_ANY, "occ", " occ %u",  resource->size_occ);
+	print_string(PRINT_ANY, "unit", " unit %s",
+		     resource_unit_str_get(resource->unit));
+
+	if (resource->size_min != resource->size_max) {
+		print_uint(PRINT_ANY, "size_min", " size_min %u",
+			   resource->size_min);
+		pr_out_u64(dl, "size_max", resource->size_max);
+		print_uint(PRINT_ANY, "size_gran", " size_gran %u",
+			   resource->size_gran);
+	}
+
+	resource_dpipe_tables_show(resource, ctx);
 
 	if (list_empty(&resource->resource_list))
 		return;
@@ -8880,17 +8917,80 @@ static void resource_show(struct resource *resource,
 	pr_out_array_end(dl);
 }
 
+static void resources_dpipe_tables_init(struct dpipe_ctx *dpipe_ctx,
+					struct resource_ctx *resource_ctx,
+					struct nlattr **tb)
+{
+	const char *bus_name = mnl_attr_get_str(tb[DEVLINK_ATTR_BUS_NAME]);
+	const char *dev_name = mnl_attr_get_str(tb[DEVLINK_ATTR_DEV_NAME]);
+	struct mnlu_gen_socket nlg_dpipe;
+	struct dl *dl = resource_ctx->dl;
+	struct nlmsghdr *nlh;
+	int err;
+
+	err = dpipe_ctx_init(dpipe_ctx, dl);
+	if (err)
+		return;
+
+	err = mnlu_gen_socket_open(&nlg_dpipe, DEVLINK_GENL_NAME,
+				   DEVLINK_GENL_VERSION);
+	if (err)
+		goto ctx_fini;
+
+	nlh = mnlu_gen_socket_cmd_prepare(&nlg_dpipe,
+					  DEVLINK_CMD_DPIPE_TABLE_GET,
+					  NLM_F_REQUEST);
+
+	mnl_attr_put_strz(nlh, DEVLINK_ATTR_BUS_NAME, bus_name);
+	mnl_attr_put_strz(nlh, DEVLINK_ATTR_DEV_NAME, dev_name);
+
+	err = mnlu_gen_socket_sndrcv(&nlg_dpipe, nlh, cmd_dpipe_table_show_cb,
+				     dpipe_ctx);
+	if (err)
+		goto socket_close;
+
+	resource_ctx->tables = dpipe_ctx->tables;
+	mnlu_gen_socket_close(&nlg_dpipe);
+
+	return;
+
+socket_close:
+	mnlu_gen_socket_close(&nlg_dpipe);
+ctx_fini:
+	dpipe_ctx_fini(dpipe_ctx);
+}
+
+static void resources_dpipe_tables_fini(struct dpipe_ctx *dpipe_ctx,
+					struct resource_ctx *resource_ctx)
+{
+	if (!resource_ctx->tables)
+		return;
+
+	resource_ctx->tables = NULL;
+	dpipe_ctx_fini(dpipe_ctx);
+}
+
 static void
 resources_show(struct resource_ctx *ctx, struct nlattr **tb)
 {
-	struct resources *resources = ctx->resources;
+	bool is_port = !!tb[DEVLINK_ATTR_PORT_INDEX];
+	struct dpipe_ctx dpipe_ctx = {};
 	struct resource *resource;
+	struct dl *dl = ctx->dl;
 
-	list_for_each_entry(resource, &resources->resource_list, list) {
-		pr_out_handle_start_arr(ctx->dl, tb);
+	resources_dpipe_tables_init(&dpipe_ctx, ctx, tb);
+	list_for_each_entry(resource, &ctx->resources->resource_list, list) {
+		if (is_port)
+			pr_out_port_handle_start_arr(dl, tb, false);
+		else
+			pr_out_handle_start_arr(dl, tb);
 		resource_show(resource, ctx);
-		pr_out_handle_end(ctx->dl);
+		if (is_port)
+			pr_out_port_handle_end(dl);
+		else
+			pr_out_handle_end(dl);
 	}
+	resources_dpipe_tables_fini(&dpipe_ctx, ctx);
 }
 
 static int resources_get(struct resource_ctx *ctx, struct nlattr **tb)
@@ -8916,60 +9016,62 @@ static int cmd_resource_dump_cb(const struct nlmsghdr *nlh, void *data)
 		return MNL_CB_ERROR;
 	}
 
-	if (ctx->print_resources)
+	if (ctx->print_resources) {
 		resources_show(ctx, tb);
+		resources_reset(ctx->resources);
+	}
 
 	return MNL_CB_OK;
 }
 
 static int cmd_resource_show(struct dl *dl)
 {
+	uint16_t flags = NLM_F_REQUEST | NLM_F_ACK;
 	struct nlmsghdr *nlh;
-	struct dpipe_ctx dpipe_ctx = {};
 	struct resource_ctx resource_ctx = {};
+	struct dl_opts *opts = &dl->opts;
 	int err;
 
-	err = dl_argv_parse(dl, DL_OPT_HANDLE, 0);
-	if (err)
-		return err;
+	if (dl_argv_match(dl, "scope")) {
+		const char *scopestr;
 
-	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_DPIPE_TABLE_GET,
-			       NLM_F_REQUEST);
-	dl_opts_put(nlh, dl);
-
-	err = dpipe_ctx_init(&dpipe_ctx, dl);
-	if (err)
-		return err;
-
-	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, cmd_dpipe_table_show_cb,
-				  &dpipe_ctx);
-	if (err) {
-		pr_err("error get tables %s\n", strerror(dpipe_ctx.err));
-		goto out;
+		dl_arg_inc(dl);
+		err = dl_argv_str(dl, &scopestr);
+		if (err)
+			return err;
+		err = resource_scope_get(scopestr, &opts->resource_scope_mask);
+		if (err)
+			return err;
+		opts->present = DL_OPT_RESOURCE_SCOPE;
+		flags |= NLM_F_DUMP;
+	} else {
+		err = dl_argv_parse_with_selector(dl, &flags,
+						  DEVLINK_CMD_RESOURCE_DUMP,
+						  DL_OPT_HANDLE | DL_OPT_HANDLEP,
+						  0, 0, 0);
+		if (err)
+			return err;
 	}
 
 	err = resource_ctx_init(&resource_ctx, dl);
 	if (err)
-		goto out;
+		return err;
 
 	resource_ctx.print_resources = true;
-	resource_ctx.tables = dpipe_ctx.tables;
 	nlh = mnlu_gen_socket_cmd_prepare(&dl->nlg, DEVLINK_CMD_RESOURCE_DUMP,
-			       NLM_F_REQUEST | NLM_F_ACK);
+					  flags);
 	dl_opts_put(nlh, dl);
 	pr_out_section_start(dl, "resources");
 	err = mnlu_gen_socket_sndrcv(&dl->nlg, nlh, cmd_resource_dump_cb,
 				  &resource_ctx);
 	pr_out_section_end(dl);
 	resource_ctx_fini(&resource_ctx);
-out:
-	dpipe_ctx_fini(&dpipe_ctx);
 	return err;
 }
 
 static void cmd_resource_help(void)
 {
-	pr_err("Usage: devlink resource show DEV\n"
+	pr_err("Usage: devlink resource show [ DEV[/PORT_INDEX] | scope { dev | port } ]\n"
 	       "       devlink resource set DEV path PATH size SIZE\n");
 }
 
