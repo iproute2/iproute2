@@ -82,6 +82,7 @@
 #define ETH_P_PPP_DISC	0x8863		/* PPPoE discovery messages     */
 #define ETH_P_PPP_SES	0x8864		/* PPPoE session messages	*/
 #define ETH_P_LINK_CTL	0x886c		/* HPNA, wlan link local tunnel */
+#define ETH_P_8021AC	0x8870		/* 802.1AC LLC > 1500 bytes     */
 #define ETH_P_ATMFATE	0x8884		/* Frame-based ATM Transport
 					 * over Ethernet
 					 */
@@ -163,6 +164,10 @@
 					 */
 #define ETH_P_MCTP	0x00FA		/* Management component transport
 					 * protocol packets
+					 */
+#define ETH_P_GRE_OSI	0x00FE		/* GRE tunnels: LLC "fe fe 03" analog,
+					 * used primarily for IS-IS over GRE
+					 * WARNING: not internal, used on wire!
 					 */
 
 /*
