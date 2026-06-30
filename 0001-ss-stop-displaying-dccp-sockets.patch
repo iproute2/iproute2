@@ -1,0 +1,186 @@
+From c7711e96894f80266f15f7dbebddd87e8a5a451f Mon Sep 17 00:00:00 2001
+From: Yafang Shao <laoar.shao@gmail.com>
+Date: Tue, 30 Jun 2026 03:24:51 +0000
+Subject: [PATCH] ss: stop displaying dccp sockets
+
+DCCP support was retired in kernel commit 2a63dd0edf38 ("net: Retire
+DCCP socket."). However, ss still attempts to query DCCP sockets via
+netlink, which triggers repeated SELinux warnings in dmesg:
+
+  SELinux: unrecognized netlink message: protocol=4 nlmsg_type=19 \
+    sclass=netlink_tcpdiag_socket pid=188945 comm=ss
+
+Stop sending DCCPDIAG_GETSOCK netlink messages to suppress these
+warnings and align ss with the kernel change.
+
+Signed-off-by: Yafang Shao <laoar.shao@gmail.com>
+---
+ man/man8/ss.8 |  5 +++--
+ misc/ss.c     | 40 ++++++++--------------------------------
+ 2 files changed, 11 insertions(+), 34 deletions(-)
+
+diff --git a/man/man8/ss.8 b/man/man8/ss.8
+index 70e0a566..37dd75a0 100644
+--- a/man/man8/ss.8
++++ b/man/man8/ss.8
+@@ -378,7 +378,8 @@ Display TCP sockets.
+ Display UDP sockets.
+ .TP
+ .B \-d, \-\-dccp
+-Display DCCP sockets.
++[Deprecated] DCCP is no longer supported since kernel 6.16.
++This option is ignored.
+ .TP
+ .B \-w, \-\-raw
+ Display RAW sockets.
+@@ -411,7 +412,7 @@ supported: unix, inet, inet6, link, netlink, vsock, tipc, xdp.
+ .B \-A QUERY, \-\-query=QUERY, \-\-socket=QUERY
+ List of socket tables to dump, separated by commas. The following identifiers
+ are understood: all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram,
+-unix_stream, unix_seqpacket, packet_raw, packet_dgram, dccp, sctp, tipc,
++unix_stream, unix_seqpacket, packet_raw, packet_dgram, sctp, tipc,
+ vsock_stream, vsock_dgram, xdp, mptcp. Any item in the list may optionally be
+ prefixed by an exclamation mark
+ .RB ( ! )
+diff --git a/misc/ss.c b/misc/ss.c
+index 14e9f27a..dae5f282 100644
+--- a/misc/ss.c
++++ b/misc/ss.c
+@@ -195,7 +195,6 @@ static const char *dg_proto;
+ enum {
+ 	TCP_DB,
+ 	MPTCP_DB,
+-	DCCP_DB,
+ 	UDP_DB,
+ 	RAW_DB,
+ 	UNIX_DG_DB,
+@@ -215,7 +214,7 @@ enum {
+ #define PACKET_DBM ((1<<PACKET_DG_DB)|(1<<PACKET_R_DB))
+ #define UNIX_DBM ((1<<UNIX_DG_DB)|(1<<UNIX_ST_DB)|(1<<UNIX_SQ_DB))
+ #define ALL_DB ((1<<MAX_DB)-1)
+-#define INET_L4_DBM ((1<<TCP_DB)|(1<<MPTCP_DB)|(1<<UDP_DB)|(1<<DCCP_DB)|(1<<SCTP_DB))
++#define INET_L4_DBM ((1<<TCP_DB)|(1<<MPTCP_DB)|(1<<UDP_DB)|(1<<SCTP_DB))
+ #define INET_DBM (INET_L4_DBM | (1<<RAW_DB))
+ #define VSOCK_DBM ((1<<VSOCK_ST_DB)|(1<<VSOCK_DG_DB))
+ 
+@@ -274,10 +273,6 @@ static const struct filter default_dbs[MAX_DB] = {
+ 		.states   = SS_CONN,
+ 		.families = FAMILY_MASK(AF_INET) | FAMILY_MASK(AF_INET6),
+ 	},
+-	[DCCP_DB] = {
+-		.states   = SS_CONN,
+-		.families = FAMILY_MASK(AF_INET) | FAMILY_MASK(AF_INET6),
+-	},
+ 	[UDP_DB] = {
+ 		.states   = (1 << SS_ESTABLISHED),
+ 		.families = FAMILY_MASK(AF_INET) | FAMILY_MASK(AF_INET6),
+@@ -388,13 +383,12 @@ static int filter_db_parse(struct filter *f, const char *s)
+ 		int dbs[MAX_DB + 1];
+ 	} db_name_tbl[] = {
+ #define ENTRY(name, ...) { #name, { __VA_ARGS__, MAX_DB } }
+-		ENTRY(all, UDP_DB, DCCP_DB, TCP_DB, MPTCP_DB, RAW_DB,
++		ENTRY(all, UDP_DB, TCP_DB, MPTCP_DB, RAW_DB,
+ 			   UNIX_ST_DB, UNIX_DG_DB, UNIX_SQ_DB,
+ 			   PACKET_R_DB, PACKET_DG_DB, NETLINK_DB,
+ 			   SCTP_DB, VSOCK_ST_DB, VSOCK_DG_DB, XDP_DB),
+-		ENTRY(inet, UDP_DB, DCCP_DB, TCP_DB, MPTCP_DB, SCTP_DB, RAW_DB),
++		ENTRY(inet, UDP_DB, TCP_DB, MPTCP_DB, SCTP_DB, RAW_DB),
+ 		ENTRY(udp, UDP_DB),
+-		ENTRY(dccp, DCCP_DB),
+ 		ENTRY(tcp, TCP_DB),
+ 		ENTRY(mptcp, MPTCP_DB),
+ 		ENTRY(sctp, SCTP_DB),
+@@ -935,8 +929,6 @@ static const char *proto_name(int protocol)
+ 		return "mptcp";
+ 	case IPPROTO_SCTP:
+ 		return "sctp";
+-	case IPPROTO_DCCP:
+-		return "dccp";
+ 	case IPPROTO_ICMPV6:
+ 		return "icmp6";
+ 	}
+@@ -3897,8 +3889,6 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
+ 
+ 	if (protocol == IPPROTO_TCP)
+ 		req.nlh.nlmsg_type = TCPDIAG_GETSOCK;
+-	else if (protocol == IPPROTO_DCCP)
+-		req.nlh.nlmsg_type = DCCPDIAG_GETSOCK;
+ 	else
+ 		return -1;
+ 
+@@ -4134,7 +4124,7 @@ static int inet_show_netlink(struct filter *f, FILE *dump_fp, int protocol)
+ 
+ 	/* Suppress netlink errors. Older kernels do not support extended
+ 	 * protocol requests using INET_DIAG_REQ_PROTOCOL, and some protocols
+-	 * may not be available in the running kernel (e.g. SCTP, DCCP).
++	 * may not be available in the running kernel (e.g. SCTP).
+ 	 * In both cases the kernel returns EINVAL which would cause
+ 	 * rtnl_dump_error() to print a confusing "RTNETLINK answers" error.
+ 	 */
+@@ -4309,18 +4299,6 @@ static int mptcp_show(struct filter *f)
+ 	return 0;
+ }
+ 
+-static int dccp_show(struct filter *f)
+-{
+-	if (!filter_af_get(f, AF_INET) && !filter_af_get(f, AF_INET6))
+-		return 0;
+-
+-	if (!getenv("PROC_NET_DCCP") && !getenv("PROC_ROOT")
+-	    && inet_show_netlink(f, NULL, IPPROTO_DCCP) == 0)
+-		return 0;
+-
+-	return 0;
+-}
+-
+ static int sctp_show(struct filter *f)
+ {
+ 	if (!filter_af_get(f, AF_INET) && !filter_af_get(f, AF_INET6))
+@@ -5779,7 +5757,7 @@ static void _usage(FILE *dest)
+ "   -M, --mptcp         display only MPTCP sockets\n"
+ "   -S, --sctp          display only SCTP sockets\n"
+ "   -u, --udp           display only UDP sockets\n"
+-"   -d, --dccp          display only DCCP sockets\n"
++"   -d, --dccp          DCCP is no longer supported, option ignored\n"
+ "   -w, --raw           display only RAW sockets\n"
+ "   -x, --unix          display only Unix domain sockets\n"
+ "       --tipc          display only TIPC sockets\n"
+@@ -5795,7 +5773,7 @@ static void _usage(FILE *dest)
+ "       --inet-sockopt  show various inet socket options\n"
+ "\n"
+ "   -A, --query=QUERY, --socket=QUERY\n"
+-"       QUERY := {all|inet|tcp|mptcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|packet_raw|packet_dgram|netlink|dccp|sctp|vsock_stream|vsock_dgram|tipc|xdp}[,QUERY]\n"
++"       QUERY := {all|inet|tcp|mptcp|udp|raw|unix|unix_dgram|unix_stream|unix_seqpacket|packet|packet_raw|packet_dgram|netlink|sctp|vsock_stream|vsock_dgram|tipc|xdp}[,QUERY]\n"
+ "\n"
+ "   -D, --diag=FILE     Dump raw information about TCP sockets to FILE\n"
+ "   -F, --filter=FILE   read filter information from FILE\n"
+@@ -5907,7 +5885,7 @@ static const struct option long_opts[] = {
+ 	{ "threads", 0, 0, 'T' },
+ 	{ "bpf", 0, 0, 'b' },
+ 	{ "events", 0, 0, 'E' },
+-	{ "dccp", 0, 0, 'd' },
++	{ "dccp", 0, 0, 'd' }, /* DCCP retired, kept for compatibility */
+ 	{ "tcp", 0, 0, 't' },
+ 	{ "sctp", 0, 0, 'S' },
+ 	{ "udp", 0, 0, 'u' },
+@@ -5997,7 +5975,7 @@ int main(int argc, char *argv[])
+ 			follow_events = 1;
+ 			break;
+ 		case 'd':
+-			filter_db_set(&current_filter, DCCP_DB, true);
++			/* DCCP retired in kernel 6.16, kept for compatibility */
+ 			break;
+ 		case 't':
+ 			filter_db_set(&current_filter, TCP_DB, true);
+@@ -6290,8 +6268,6 @@ int main(int argc, char *argv[])
+ 		udp_show(&current_filter);
+ 	if (current_filter.dbs & (1<<TCP_DB))
+ 		tcp_show(&current_filter);
+-	if (current_filter.dbs & (1<<DCCP_DB))
+-		dccp_show(&current_filter);
+ 	if (current_filter.dbs & (1<<SCTP_DB))
+ 		sctp_show(&current_filter);
+ 	if (current_filter.dbs & VSOCK_DBM)
+-- 
+2.50.1 (Apple Git-155)
+
