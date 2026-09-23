@@ -89,7 +89,19 @@ their traditional location in /etc.
 .TP
 .B ip netns list - show all of the named network namespaces
 .sp
-This command displays all of the network namespaces in @NETNS_RUN_DIR@
+This command displays all of the network namespaces in @NETNS_RUN_DIR@.
+If the
+.B -details
+option is specified, the cookie of each network namespace is also
+displayed. The cookie is a 64-bit identifier that the kernel assigns to
+a network namespace when it is created and that never changes. Unlike
+the nsid, it is not relative to a peer network namespace. It is the same
+value that is reported by the
+.B SO_NETNS_COOKIE
+socket option and by trace events that identify a network namespace.
+The cookie is only displayed on kernels that support the
+.B NS_GET_ID
+ioctl (Linux 6.18 and later).
 
 .TP
 .B ip netns add NAME - create a new named network namespace

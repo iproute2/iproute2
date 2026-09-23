@@ -16,8 +16,10 @@
 #include <sys/stat.h>
 #include <sys/inotify.h>
 #include <sys/mount.h>
+#include <sys/ioctl.h>
 
 #include <linux/net_namespace.h>
+#include <linux/nsfs.h>
 
 #include "utils.h"
 #include "list.h"
@@ -444,9 +446,26 @@ static int netns_list_id(int argc, char **argv)
 	return 0;
 }
 
+static int netns_get_cookie(const char *name, __u64 *cookie)
+{
+	char net_path[PATH_MAX];
+	int fd, ret;
+
+	snprintf(net_path, sizeof(net_path), "%s/%s", NETNS_RUN_DIR, name);
+	fd = open(net_path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+
+	ret = ioctl(fd, NS_GET_ID, cookie);
+	close(fd);
+
+	return ret;
+}
+
 static int netns_list(int argc, char **argv)
 {
 	struct dirent *entry;
+	__u64 cookie;
 	DIR *dir;
 	int id;
 
@@ -468,6 +487,12 @@ static int netns_list(int argc, char **argv)
 			id = get_netnsid_from_name(entry->d_name);
 			if (id >= 0)
 				print_int(PRINT_ANY, "id", " (id: %d)", id);
+		}
+		if (netns_get_cookie(entry->d_name, &cookie) == 0) {
+			print_u64(PRINT_JSON, "cookie", NULL, cookie);
+			if (show_details)
+				print_u64(PRINT_FP, NULL, " (cookie: %llu)",
+					  cookie);
 		}
 		print_string(PRINT_FP, NULL, "\n", NULL);
 		close_json_object();
