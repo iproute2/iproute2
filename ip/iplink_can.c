@@ -448,11 +448,11 @@ static void can_print_nl_indent(void)
 	print_string(PRINT_FP, NULL, "%s", "\t ");
 }
 
-static void __attribute__((format(printf, 2, 0)))
+static void
 can_print_timing_min_max(const char *json_attr, const char *fp_attr,
 			 int min, int max)
 {
-	print_null(PRINT_FP, NULL, fp_attr, NULL);
+	print_string(PRINT_FP, NULL, "%s", fp_attr);
 	open_json_object(json_attr);
 	print_uint(PRINT_ANY, "min", " %d", min);
 	print_uint(PRINT_ANY, "max", "..%d", max);

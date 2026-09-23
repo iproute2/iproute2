@@ -40,6 +40,8 @@ ip-route \- routing table management
 .IR TOS " ] [ "
 .B  vrf
 .IR NAME " ] [ "
+.B  uid
+.IR NUMBER " ] [ "
 .B  ipproto
 .IR PROTOCOL " ] [ "
 .B  sport
@@ -186,7 +188,7 @@ throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
 
 .ti -8
 .IR FEATURES " := [ "
-.BR ecn " | ]"
+.BR ecn " | " tcp_usec_ts " ]"
 
 .ti -8
 .IR PREF " := [ "
@@ -569,16 +571,26 @@ Actual window size is this value multiplied by the MSS of the connection.
 The default value is zero, meaning to use Slow Start value.
 
 .TP
-.BI features " FEATURES " (Linux 3.18+ only)
-Enable or disable per-route features. Only available feature at this
-time is
+.BI features " FEATURES "
+Enable or disable per-route features. Available features are
 .B ecn
-to enable explicit congestion notification when initiating connections to the
+and
+.BR tcp_usec_ts .
+.in +8
+.B ecn
+.RI ( "Linux 3.18+ only" )
+Enables explicit congestion notification when initiating connections to the
 given destination network.
 When responding to a connection request from the given network, ecn will
 also be used even if the
 .B net.ipv4.tcp_ecn
 sysctl is set to 0.
+.sp
+.B tcp_usec_ts
+.RI ( "Linux 6.7+ only" )
+Enables microsecond-resolution TCP timestamps for connections to/from the
+given destination network, instead of the default millisecond resolution.
+.in -8
 
 .TP
 .BI quickack " BOOL " "(Linux 3.11+ only)"
@@ -1371,6 +1383,10 @@ the firewall mark
 .TP
 .BI vrf " NAME"
 force the vrf device on which this packet will be routed.
+
+.TP
+.BI uid " NUMBER"
+the user ID as seen by the route lookup
 
 .TP
 .BI ipproto " PROTOCOL"

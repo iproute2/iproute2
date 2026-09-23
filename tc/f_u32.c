@@ -41,13 +41,15 @@ static void explain(void)
 static int get_u32_handle(__u32 *handle, const char *str)
 {
 	__u32 htid = 0, hash = 0, nodeid = 0;
-	char *tmp = strchr(str, ':');
+	const char *colon = strchr(str, ':');
+	char *tmp;
 
-	if (tmp == NULL) {
+	if (colon == NULL) {
 		if (memcmp("0x", str, 2) == 0)
 			return get_u32(handle, str, 16);
 		return -1;
 	}
+
 	htid = strtoul(str, &tmp, 16);
 	if (tmp == str && *str != ':' && *str != 0)
 		return -1;
@@ -946,24 +948,24 @@ static void print_ipv6(const struct tc_u32_key *key)
 		}
 		break;
 
-	case 20:
+	case 40:
 		switch (ntohl(key->mask)) {
 		case 0x0000ffff:
 			print_nl();
-			print_uint(PRINT_ANY, "sport", "  match sport %u",
+			print_uint(PRINT_ANY, "dport", "  match dport %u",
 				   ntohl(key->val) & 0xffff);
 			break;
 		case 0xffff0000:
-			print_uint(PRINT_ANY, "dport", "match dport %u",
+			print_nl();
+			print_uint(PRINT_ANY, "sport", "  match sport %u",
 				   ntohl(key->val) >> 16);
 			break;
 		case 0xffffffff:
 			print_nl();
-			print_uint(PRINT_ANY, "sport", "  match sport %u, ",
+			print_uint(PRINT_ANY, "dport", "  match dport %u, ",
 				   ntohl(key->val) & 0xffff);
-			print_uint(PRINT_ANY, "dport", "match dport %u",
+			print_uint(PRINT_ANY, "sport", "match sport %u",
 				   ntohl(key->val) >> 16);
-
 			break;
 		}
 		/* XXX: Default print_raw */

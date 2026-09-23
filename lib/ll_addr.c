@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -45,8 +46,12 @@ const char *ll_addr_n2a(const unsigned char *addr, int alen, int type,
 /*NB: lladdr is char * (rather than u8 *) because sa_data is char * (1003.1g) */
 int ll_addr_a2n(char *lladdr, int len, const char *arg)
 {
+	const char *cp;
+	int i;
+
 	if (strchr(arg, '.')) {
 		inet_prefix pfx;
+
 		if (get_addr_1(&pfx, arg, AF_INET)) {
 			fprintf(stderr, "\"%s\" is invalid lladdr.\n", arg);
 			return -1;
@@ -55,31 +60,28 @@ int ll_addr_a2n(char *lladdr, int len, const char *arg)
 			return -1;
 		memcpy(lladdr, pfx.data, 4);
 		return 4;
-	} else {
-		int i;
-
-		for (i = 0; i < len; i++) {
-			int temp;
-			char *cp = strchr(arg, ':');
-			if (cp) {
-				*cp = 0;
-				cp++;
-			}
-			if (sscanf(arg, "%x", &temp) != 1) {
-				fprintf(stderr, "\"%s\" is invalid lladdr.\n",
-					arg);
-				return -1;
-			}
-			if (temp < 0 || temp > 255) {
-				fprintf(stderr, "\"%s\" is invalid lladdr.\n",
-					arg);
-				return -1;
-			}
-			lladdr[i] = temp;
-			if (!cp)
-				break;
-			arg = cp;
-		}
-		return i + 1;
 	}
+
+	for (i = 0, cp = arg; i < len; i++) {
+		unsigned long val;
+		char *endp;
+
+		if (!isxdigit(*cp))
+			goto invalid;
+
+		val = strtoul(cp, &endp, 16);
+		if (val > 255)
+			goto invalid;
+
+		lladdr[i] = val;
+
+		if (*endp == '\0')
+			return i + 1;
+		if (*endp != ':')
+			goto invalid;
+		cp = endp + 1;
+	}
+invalid:
+	fprintf(stderr, "\"%s\" is invalid lladdr.\n", arg);
+	return -1;
 }

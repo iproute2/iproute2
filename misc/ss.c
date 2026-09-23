@@ -803,8 +803,8 @@ struct sockstat {
 	uint16_t	    raw_prot;
 	inet_prefix	    local;
 	inet_prefix	    remote;
-	int		    lport;
-	int		    rport;
+	long		    lport;
+	long		    rport;
 	int		    state;
 	int		    rq, wq;
 	unsigned int ino;
@@ -2314,9 +2314,13 @@ void *parse_hostcond(char *addr, bool is_port)
 
 		port = find_port(addr, is_port);
 
-		if (port && strcmp(port, "*") &&
-		    get_u32((__u32 *)&a.port, port, 0))
-			return NULL;
+		if (port && strcmp(port, "*")) {
+			__u32 vport;
+
+			if (get_u32(&vport, port, 0))
+				return NULL;
+			a.port = vport;
+		}
 
 		if (!is_port && addr[0] && strcmp(addr, "*")) {
 			a.addr.bitlen = 32;
@@ -2482,23 +2486,23 @@ static int proc_parse_inet_addr(char *loc, char *rem, int family, struct
 {
 	s->local.family = s->remote.family = family;
 	if (family == AF_INET) {
-		sscanf(loc, "%x:%x", s->local.data, (unsigned *)&s->lport);
-		sscanf(rem, "%x:%x", s->remote.data, (unsigned *)&s->rport);
+		sscanf(loc, "%x:%lx", s->local.data, (unsigned long *)&s->lport);
+		sscanf(rem, "%x:%lx", s->remote.data, (unsigned long *)&s->rport);
 		s->local.bytelen = s->remote.bytelen = 4;
 		return 0;
 	} else {
-		sscanf(loc, "%08x%08x%08x%08x:%x",
+		sscanf(loc, "%08x%08x%08x%08x:%lx",
 		       s->local.data,
 		       s->local.data + 1,
 		       s->local.data + 2,
 		       s->local.data + 3,
-		       &s->lport);
-		sscanf(rem, "%08x%08x%08x%08x:%x",
+		       (unsigned long *)&s->lport);
+		sscanf(rem, "%08x%08x%08x%08x:%lx",
 		       s->remote.data,
 		       s->remote.data + 1,
 		       s->remote.data + 2,
 		       s->remote.data + 3,
-		       &s->rport);
+		       (unsigned long *)&s->rport);
 		s->local.bytelen = s->remote.bytelen = 16;
 		return 0;
 	}
@@ -4616,8 +4620,8 @@ static int unix_show(struct filter *f)
 		if (!(u = calloc(1, sizeof(*u))))
 			break;
 
-		if (sscanf(buf, "%x: %x %x %x %x %x %d %s",
-			   &u->rport, &u->rq, &u->wq, &flags, &u->type,
+		if (sscanf(buf, "%lx: %x %x %x %x %x %d %s",
+			   (unsigned long *)&u->rport, &u->rq, &u->wq, &flags, &u->type,
 			   &u->state, &u->ino, name) < 8)
 			name[0] = 0;
 
@@ -4980,7 +4984,7 @@ static int xdp_stats_print(struct sockstat *s, const struct filter *f)
 
 	if (s->iface) {
 		addr = xll_index_to_name(s->iface);
-		snprintf(q_str, sizeof(q_str), "q%d", s->lport);
+		snprintf(q_str, sizeof(q_str), "q%ld", s->lport);
 		port = q_str;
 		sock_addr_print(addr, ":", port, NULL);
 	} else {
