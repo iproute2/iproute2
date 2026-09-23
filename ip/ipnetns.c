@@ -36,6 +36,7 @@ static int usage(void)
 		"	ip [-all] netns delete [NAME]\n"
 		"	ip netns identify [PID]\n"
 		"	ip netns pids NAME\n"
+		"	ip netns cookie [NAME | PID]\n"
 		"	ip [-all] netns exec [NAME] cmd ...\n"
 		"	ip netns monitor\n"
 		"	ip netns list-id [target-nsid POSITIVE-INT] [nsid POSITIVE-INT]\n"
@@ -710,6 +711,48 @@ static int netns_identify(int argc, char **argv)
 	return rc;
 }
 
+static int netns_cookie(int argc, char **argv)
+{
+	const char *str;
+	__u64 cookie;
+	int fd;
+
+	if (argc > 1) {
+		fprintf(stderr, "extra arguments specified\n");
+		return -1;
+	}
+
+	if (argc == 1) {
+		str = argv[0];
+		fd = netns_get_fd(str);
+	} else {
+		str = "/proc/self/ns/net";
+		fd = open(str, O_RDONLY);
+	}
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open network namespace \"%s\": %s\n",
+			str, strerror(errno));
+		return -1;
+	}
+
+	if (ioctl(fd, NS_GET_ID, &cookie) < 0) {
+		fprintf(stderr,
+			"Cannot get cookie of network namespace \"%s\": %s\n",
+			str, strerror(errno));
+		close(fd);
+		return -1;
+	}
+	close(fd);
+
+	new_json_obj(json);
+	open_json_object(NULL);
+	print_u64(PRINT_ANY, "cookie", "%llu\n", cookie);
+	close_json_object();
+	delete_json_obj();
+
+	return 0;
+}
+
 static int on_netns_del(char *nsname, void *arg)
 {
 	char netns_path[PATH_MAX];
@@ -1054,6 +1097,9 @@ int do_netns(int argc, char **argv)
 
 	if (matches(*argv, "pids") == 0)
 		return netns_pids(argc-1, argv+1);
+
+	if (strcmp(*argv, "cookie") == 0)
+		return netns_cookie(argc-1, argv+1);
 
 	if (matches(*argv, "exec") == 0)
 		return netns_exec(argc-1, argv+1);
