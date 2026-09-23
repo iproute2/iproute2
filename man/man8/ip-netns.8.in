@@ -43,6 +43,10 @@ ip-netns \- process network namespace management
 .I NETNSNAME
 
 .ti -8
+.BR "ip netns cookie"
+.RI "[ " NETNSNAME " | " PID " ]"
+
+.ti -8
 .BR "ip [-all] netns exec "
 .RI "[ " NETNSNAME " ] " command ...
 
@@ -89,7 +93,19 @@ their traditional location in /etc.
 .TP
 .B ip netns list - show all of the named network namespaces
 .sp
-This command displays all of the network namespaces in @NETNS_RUN_DIR@
+This command displays all of the network namespaces in @NETNS_RUN_DIR@.
+If the
+.B -details
+option is specified, the cookie of each network namespace is also
+displayed. The cookie is a 64-bit identifier that the kernel assigns to
+a network namespace when it is created and that never changes. Unlike
+the nsid, it is not relative to a peer network namespace. It is the same
+value that is reported by the
+.B SO_NETNS_COOKIE
+socket option and by trace events that identify a network namespace.
+The cookie is only displayed on kernels that support the
+.B NS_GET_ID
+ioctl (Linux 6.18 and later).
 
 .TP
 .B ip netns add NAME - create a new named network namespace
@@ -169,6 +185,18 @@ not specified then the current process will be used.
 .sp
 This command walks through proc and finds all of the process who have
 the named network namespace as their primary network namespace.
+
+.TP
+.B ip netns cookie [ NETNSNAME | PID ] - Report the cookie of a network namespace
+.sp
+This command displays the cookie of the named network namespace or of
+the network namespace of the process PID. If neither is specified, the
+cookie of the current network namespace is displayed. See
+.B ip netns list
+for a description of the cookie. Unlike
+.BR "ip netns list" ,
+this command can also be used with network namespaces that are not
+named, such as those created by container runtimes.
 
 .TP
 .B ip [-all] netns exec [ NAME ] cmd ... - Run cmd in the named network namespace
