@@ -224,8 +224,7 @@ int main(int argc, char **argv)
 			preferred_family = AF_MPLS;
 		} else if (strcmp(opt, "-B") == 0) {
 			preferred_family = AF_BRIDGE;
-		} else if (matches(opt, "-human") == 0 ||
-			   matches(opt, "-human-readable") == 0) {
+		} else if (matches(opt, "-human-readable") == 0) {
 			++human_readable;
 		} else if (matches(opt, "-iec") == 0) {
 			++use_iec;
