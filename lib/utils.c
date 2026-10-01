@@ -1368,6 +1368,8 @@ static ssize_t getcmdline(char **linep, size_t *lenp, FILE *in)
 		char *line1 = NULL;
 		size_t len1 = 0;
 		ssize_t cc1;
+		char *line2;
+		size_t len2;
 
 		cc1 = getline(&line1, &len1, in);
 		if (cc1 < 0) {
@@ -1383,13 +1385,16 @@ static ssize_t getcmdline(char **linep, size_t *lenp, FILE *in)
 		if (cp)
 			*cp = '\0';
 
-		*lenp = strlen(*linep) + strlen(line1) + 1;
-		*linep = realloc(*linep, *lenp);
-		if (!*linep) {
+		len2 = strlen(*linep) + strlen(line1) + 1;
+		line2 = realloc(*linep, len2);
+		if (line2 == NULL) {
 			fprintf(stderr, "Out of memory\n");
-			*lenp = 0;
+			free(line1);
 			return -1;
 		}
+		*linep = line2;
+		*lenp = len2;
+
 		cc += cc1 - 2;
 		strcat(*linep, line1);
 		free(line1);
