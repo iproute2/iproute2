@@ -1372,6 +1372,7 @@ static ssize_t getcmdline(char **linep, size_t *lenp, FILE *in)
 		cc1 = getline(&line1, &len1, in);
 		if (cc1 < 0) {
 			fprintf(stderr, "Missing continuation line\n");
+			free(line1);
 			return cc1;
 		}
 
