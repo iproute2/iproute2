@@ -47,7 +47,7 @@ testclean:
 
 clean: testclean
 	@rm -f iproute2/iproute2-this
-	@rm -f tests/ip/link/dev_wo_vf_rate.nl
+	@rm -f tests/ip/link/*.nl
 	$(MAKE) -C tools clean
 
 distclean: clean

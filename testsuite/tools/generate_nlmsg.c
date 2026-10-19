@@ -11,6 +11,9 @@
 #include <linux/if.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
+#include <linux/if_link.h>
+#include "utils.h"
 
 int fill_vf_rate_test(void *buf, size_t buflen)
 {
@@ -40,6 +43,7 @@ int fill_vf_rate_test(void *buf, size_t buflen)
 #define ASSERT(x) if (x < 0) return -1
 #define ATTR_L(t, v, l)	ASSERT(addattr_l(h, buflen, t, v, l))
 #define ATTR_8(t, v)	ASSERT(addattr8(h, buflen, t, v))
+#define ATTR_16(t, v)	ASSERT(addattr16(h, buflen, t, v))
 #define ATTR_32(t, v)	ASSERT(addattr32(h, buflen, t, v))
 #define ATTR_STRZ(t, v)	ASSERT(addattrstrz(h, buflen, t, v))
 
@@ -87,26 +91,107 @@ int fill_vf_rate_test(void *buf, size_t buflen)
 	return h->nlmsg_len;
 }
 
+/* 0x0100 catches a u8 reader on either endianness */
+struct bond_slave_case {
+	const char *file;
+	__u16 partner_state;
+	bool has_partner;
+};
+
+static const struct bond_slave_case bond_slave_cases[] = {
+	{ "tests/ip/link/bond_slave_partner_fast.nl",	0x003f, true },
+	{ "tests/ip/link/bond_slave_partner_zero.nl",	0x0000, true },
+	{ "tests/ip/link/bond_slave_partner_hionly.nl",	0x0100, true },
+	{ "tests/ip/link/bond_slave_partner_absent.nl",	0x0000, false },
+};
+
+static int fill_bond_slave_test(void *buf, size_t buflen,
+				const struct bond_slave_case *c)
+{
+	__u8 mac[ETH_ALEN] = { 0x02, 0x00, 0x00, 0x00, 0x00, 0x01 };
+	struct rtattr *linkinfo, *slave_data;
+	struct nlmsghdr *h = buf;
+	struct ifinfomsg *ifi;
+
+	memset(buf, 0, buflen);
+	h->nlmsg_type = RTM_NEWLINK;
+	h->nlmsg_len = NLMSG_LENGTH(sizeof(*ifi));
+
+	ifi = NLMSG_DATA(h);
+	ifi->ifi_type = ARPHRD_ETHER;
+	ifi->ifi_index = 2;
+	ifi->ifi_flags = IFF_RUNNING | IFF_BROADCAST | IFF_MULTICAST |
+			 IFF_UP | IFF_LOWER_UP | IFF_SLAVE;
+
+	ATTR_STRZ(IFLA_IFNAME, "eth1");
+	ATTR_32(IFLA_MTU, 1500);
+	ATTR_L(IFLA_ADDRESS, mac, sizeof(mac));
+
+	linkinfo = NEST(IFLA_LINKINFO);
+	ATTR_STRZ(IFLA_INFO_SLAVE_KIND, "bond");
+	slave_data = NEST(IFLA_INFO_SLAVE_DATA);
+	ATTR_8(IFLA_BOND_SLAVE_STATE, 0);
+	ATTR_8(IFLA_BOND_SLAVE_MII_STATUS, 0);
+	ATTR_32(IFLA_BOND_SLAVE_LINK_FAILURE_COUNT, 0);
+	ATTR_L(IFLA_BOND_SLAVE_PERM_HWADDR, mac, sizeof(mac));
+	ATTR_16(IFLA_BOND_SLAVE_QUEUE_ID, 0);
+	ATTR_16(IFLA_BOND_SLAVE_AD_AGGREGATOR_ID, 1);
+	ATTR_8(IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE, 0x3f);
+	if (c->has_partner)
+		ATTR_16(IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE,
+			c->partner_state);
+	NEST_END(slave_data);
+	NEST_END(linkinfo);
+
+	return h->nlmsg_len;
+}
+
+static int write_nlmsg(const char *file, const void *buf, int msglen)
+{
+	FILE *fp;
+
+	fp = fopen(file, "wb");
+	if (!fp) {
+		perror("fopen()");
+		return -1;
+	}
+	if (fwrite(buf, msglen, 1, fp) != 1) {
+		perror("fwrite()");
+		fclose(fp);
+		return -1;
+	}
+	if (fclose(fp)) {
+		perror("fclose()");
+		return -1;
+	}
+	return 0;
+}
+
 int main(void)
 {
 	char buf[16384] = { 0 };
+	unsigned int i;
 	int msglen;
-	FILE *fp;
 
 	msglen = fill_vf_rate_test(buf, sizeof(buf));
 	if (msglen < 0) {
 		fprintf(stderr, "fill_vf_rate_test() failed!\n");
 		return 1;
 	}
-	fp = fopen("tests/ip/link/dev_wo_vf_rate.nl", "w");
-	if (!fp) {
-		perror("fopen()");
+	if (write_nlmsg("tests/ip/link/dev_wo_vf_rate.nl", buf, msglen))
 		return 1;
+
+	for (i = 0; i < ARRAY_SIZE(bond_slave_cases); i++) {
+		const struct bond_slave_case *c = &bond_slave_cases[i];
+
+		msglen = fill_bond_slave_test(buf, sizeof(buf), c);
+		if (msglen < 0) {
+			fprintf(stderr, "fill_bond_slave_test(%s) failed!\n",
+				c->file);
+			return 1;
+		}
+		if (write_nlmsg(c->file, buf, msglen))
+			return 1;
 	}
-	if (fwrite(buf, msglen, 1, fp) != 1) {
-		perror("fwrite()");
-		return 1;
-	}
-	fclose(fp);
 	return 0;
 }
