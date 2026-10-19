@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <getopt.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -890,10 +891,6 @@ static int cmd_dev_config(struct vdpa *vdpa, int argc, char **argv)
 	return -ENOENT;
 }
 
-#define MAX_KEY_LEN 200
-/* 5 bytes for format */
-#define MAX_FMT_LEN (MAX_KEY_LEN + 5 + 1)
-
 static void print_queue_type(struct nlattr *attr, uint16_t max_vqp, uint64_t features)
 {
 	bool is_ctrl = false;
@@ -918,7 +915,6 @@ static void pr_out_dev_net_vstats(const struct nlmsghdr *nlh)
 {
 	const char *name = NULL;
 	uint64_t features = 0;
-	char fmt[MAX_FMT_LEN];
 	uint16_t max_vqp = 0;
 	struct nlattr *attr;
 	uint64_t v64;
@@ -936,15 +932,11 @@ static void pr_out_dev_net_vstats(const struct nlmsghdr *nlh)
 			break;
 		case VDPA_ATTR_DEV_VENDOR_ATTR_NAME:
 			name = mnl_attr_get_str(attr);
-			if (strlen(name) > MAX_KEY_LEN)
-				return;
-
-			strcpy(fmt, name);
-			strcat(fmt, " %lu ");
 			break;
 		case VDPA_ATTR_DEV_VENDOR_ATTR_VALUE:
 			v64 = mnl_attr_get_u64(attr);
-			print_u64(PRINT_ANY, name, fmt, v64);
+			print_string(PRINT_FP, NULL, "%s ", name);
+			print_u64(PRINT_ANY, name, "%" PRIu64 " ", v64);
 			break;
 		}
 	}
