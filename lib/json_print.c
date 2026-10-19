@@ -147,11 +147,8 @@ _PRINT_FUNC(float, double);
 #define _PRINT_NAME_VALUE_FUNC(type_name, type, format_char)		 \
 	void print_##type_name##_name_value(const char *name, type value)\
 	{								 \
-		SPRINT_BUF(format);					 \
-									 \
-		snprintf(format, SPRINT_BSIZE,				 \
-			 "%s %%"#format_char, name);			 \
-		print_##type_name(PRINT_ANY, name, format, value);	 \
+		print_string(PRINT_FP, NULL, "%s ", name);		 \
+		print_##type_name(PRINT_ANY, name, "%"#format_char, value); \
 	}
 _PRINT_NAME_VALUE_FUNC(uint, unsigned int, u);
 _PRINT_NAME_VALUE_FUNC(string, const char*, s);
