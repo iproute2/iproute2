@@ -113,8 +113,9 @@ test_on()
 
 test_on_not()
 {
-	echo -n "test on: \"$1\""
-	if cat "$STD_OUT" | grep -vqE "$1"
+	echo -n "test on absence: \"$1\""
+	grep -qE -- "$1" "$STD_OUT"
+	if [ "$?" -eq 1 ]
 	then
 		pr_success
 	else
