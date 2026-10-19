@@ -795,8 +795,8 @@ void newline_indent(void)
 
 static int print_driver_string(const char *key_str, const char *val_str)
 {
-	print_string(PRINT_ANY, key_str, key_str, val_str);
-	print_string(PRINT_FP, NULL, " %s ", val_str);
+	print_string(PRINT_FP, NULL, "%s", key_str);
+	print_string(PRINT_ANY, key_str, " %s ", val_str);
 	return 0;
 }
 
