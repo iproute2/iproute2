@@ -222,7 +222,7 @@ void print_key(const char *name, uint64_t val, struct nlattr *nlattr)
 {
 	if (!nlattr)
 		return;
-	print_string(PRINT_FP, NULL, name, NULL);
+	print_string(PRINT_FP, NULL, "%s", name);
 	print_hex(PRINT_ANY, name, " 0x%" PRIx64 " ", val);
 }
 
@@ -230,16 +230,16 @@ void res_print_u32(const char *name, uint32_t val, struct nlattr *nlattr)
 {
 	if (!nlattr)
 		return;
-	print_uint(PRINT_ANY, name, name, val);
-	print_uint(PRINT_FP, NULL, " %" PRIu32 " ", val);
+	print_string(PRINT_FP, NULL, "%s", name);
+	print_uint(PRINT_ANY, name, " %" PRIu32 " ", val);
 }
 
 void res_print_u64(const char *name, uint64_t val, struct nlattr *nlattr)
 {
 	if (!nlattr)
 		return;
-	print_u64(PRINT_ANY, name, name, val);
-	print_u64(PRINT_FP, NULL, " %" PRIu64 " ", val);
+	print_string(PRINT_FP, NULL, "%s", name);
+	print_u64(PRINT_ANY, name, " %" PRIu64 " ", val);
 }
 
 RES_FUNC(res_no_args,	RDMA_NLDEV_CMD_RES_GET,	NULL, true, 0);

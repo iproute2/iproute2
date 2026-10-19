@@ -53,7 +53,8 @@ static void print_ipaddr(const char *key, char *addrstr, uint16_t port)
 	char json_name[name_size];
 
 	snprintf(json_name, name_size, "%s:%u", addrstr, port);
-	print_string(PRINT_ANY, key, key, json_name);
+	print_string(PRINT_JSON, key, NULL, json_name);
+	print_string(PRINT_FP, NULL, "%s", key);
 	print_string(PRINT_FP, NULL, " %s:", addrstr);
 	print_uint(PRINT_FP, NULL, "%u ", port);
 }
