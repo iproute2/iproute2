@@ -238,10 +238,18 @@ char *get_cgroup2_path(__u64 id, bool full)
 	}
 	link_buf[link_len] = '\0';
 
-	if (full)
+	if (full) {
 		path = strdup(link_buf);
-	else
-		path = strdup(link_buf + strlen(mnt));
+	} else {
+		size_t mnt_len = strlen(mnt);
+
+		/* A cgroup outside our cgroup namespace is not under the
+		 * mount and the link reads as just "/".
+		 */
+		if (strncmp(link_buf, mnt, mnt_len) != 0)
+			goto out;
+		path = strdup(link_buf + mnt_len);
+	}
 	if (!path)
 		fprintf(stderr,
 			"Failed to allocate memory for cgroup2 path\n");
