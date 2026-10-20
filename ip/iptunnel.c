@@ -24,6 +24,11 @@
 #include "ip_common.h"
 #include "tunnel.h"
 
+union ip_tnl_parm {
+	struct ip_tunnel_parm ip_tnl;
+	struct ip6_tnl_parm2 ip6_tnl;
+};
+
 static void usage(void) __attribute__((noreturn));
 
 static void usage(void)
@@ -173,10 +178,7 @@ static int parse_args(int argc, char **argv, int cmd, struct ip_tunnel_parm *p)
 			if (get_ifname(p->name, *argv))
 				invarg("\"name\" not a valid ifname", *argv);
 			if (cmd == SIOCCHGTUNNEL && count == 0) {
-				union {
-					struct ip_tunnel_parm ip_tnl;
-					struct ip6_tnl_parm2 ip6_tnl;
-				} old_p = {};
+				union ip_tnl_parm old_p = {};
 
 				if (tnl_get_ioctl(*argv, &old_p))
 					return -1;
@@ -260,35 +262,37 @@ static const char *tnl_defname(const struct ip_tunnel_parm *p)
 
 static int do_add(int cmd, int argc, char **argv)
 {
-	struct ip_tunnel_parm p;
+	union ip_tnl_parm u = {};
+	struct ip_tunnel_parm *p = &u.ip_tnl;
 	const char *basedev;
 
-	if (parse_args(argc, argv, cmd, &p) < 0)
+	if (parse_args(argc, argv, cmd, p) < 0)
 		return -1;
 
-	if (p.iph.ttl && p.iph.frag_off == 0) {
+	if (p->iph.ttl && p->iph.frag_off == 0) {
 		fprintf(stderr, "ttl != 0 and nopmtudisc are incompatible\n");
 		return -1;
 	}
 
-	basedev = tnl_defname(&p);
+	basedev = tnl_defname(p);
 	if (!basedev) {
 		fprintf(stderr,
 			"cannot determine tunnel mode (ipip, gre, vti or sit)\n");
 		return -1;
 	}
 
-	return tnl_add_ioctl(cmd, basedev, p.name, &p);
+	return tnl_add_ioctl(cmd, basedev, p->name, &u);
 }
 
 static int do_del(int argc, char **argv)
 {
-	struct ip_tunnel_parm p;
+	union ip_tnl_parm u = {};
+	struct ip_tunnel_parm *p = &u.ip_tnl;
 
-	if (parse_args(argc, argv, SIOCDELTUNNEL, &p) < 0)
+	if (parse_args(argc, argv, SIOCDELTUNNEL, p) < 0)
 		return -1;
 
-	return tnl_del_ioctl(tnl_defname(&p) ? : p.name, p.name, &p);
+	return tnl_del_ioctl(tnl_defname(p) ? : p->name, p->name, &u);
 }
 
 static void print_tunnel(const void *t)
@@ -391,9 +395,7 @@ static void print_tunnel(const void *t)
 
 static void ip_tunnel_parm_initialize(const struct tnl_print_nlmsg_info *info)
 {
-	struct ip_tunnel_parm *p2 = info->p2;
-
-	memset(p2, 0, sizeof(*p2));
+	memset(info->p2, 0, sizeof(union ip_tnl_parm));
 }
 
 static bool ip_tunnel_parm_match(const struct tnl_print_nlmsg_info *info)
@@ -410,17 +412,18 @@ static bool ip_tunnel_parm_match(const struct tnl_print_nlmsg_info *info)
 
 static int do_show(int argc, char **argv)
 {
-	struct ip_tunnel_parm p, p1;
+	union ip_tnl_parm u = {}, u1 = {};
+	struct ip_tunnel_parm *p = &u.ip_tnl;
 	const char *basedev;
 
-	if (parse_args(argc, argv, SIOCGETTUNNEL, &p) < 0)
+	if (parse_args(argc, argv, SIOCGETTUNNEL, p) < 0)
 		return -1;
 
-	basedev = tnl_defname(&p);
+	basedev = tnl_defname(p);
 	if (!basedev) {
 		struct tnl_print_nlmsg_info info = {
-			.p1    = &p,
-			.p2    = &p1,
+			.p1    = p,
+			.p2    = &u1,
 			.init  = ip_tunnel_parm_initialize,
 			.match = ip_tunnel_parm_match,
 			.print = print_tunnel,
@@ -429,10 +432,10 @@ static int do_show(int argc, char **argv)
 		return do_tunnels_list(&info);
 	}
 
-	if (tnl_get_ioctl(p.name[0] ? p.name : basedev, &p))
+	if (tnl_get_ioctl(p->name[0] ? p->name : basedev, &u))
 		return -1;
 
-	print_tunnel(&p);
+	print_tunnel(p);
 	fputc('\n', stdout);
 	return 0;
 }
