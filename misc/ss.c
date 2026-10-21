@@ -592,19 +592,15 @@ static void user_ent_hash_build_task(char *path, int pid, int tid)
 			sock_context = strdup(no_ctx);
 
 		if (task[0] == '\0') {
-			char stat[MAX_PATH_LEN];
+			char task_root[MAX_PATH_LEN];
 			char name[16];
-			FILE *fp;
 
-			strlcpy(stat, path, pos_id + 1);
-			snprintf(stat + pos_id, sizeof(stat) - pos_id, "stat");
+			/* $PROC_ROOT/$PID/task/$TID/comm */
+			snprintf(task_root, sizeof(task_root), "%s/%d/task",
+				 getenv("PROC_ROOT") ? : "/proc", pid);
 
-			fp = fopen(stat, "r");
-			if (fp) {
-				if (fscanf(fp, "%*d (%[^)])", name) == 1)
-					escape_str(task, name, sizeof(task));
-				fclose(fp);
-			}
+			if (get_task_name(task_root, tid, name, sizeof(name)) == 0)
+				escape_str(task, name, sizeof(task));
 		}
 
 		user_ent_add(ino, task, pid, tid, fd, task_context, sock_context);
@@ -5169,18 +5165,12 @@ static int netlink_show_one(struct filter *f,
 			done = 1;
 			strncpy(procname, "kernel", 7);
 		} else if (pid > 0) {
-			FILE *fp;
-
-			snprintf(procname, sizeof(procname), "%s/%d/stat",
-				getenv("PROC_ROOT") ? : "/proc", pid);
-			if ((fp = fopen(procname, "r")) != NULL) {
-				if (fscanf(fp, "%*d (%[^)])", procname) == 1) {
-					snprintf(procname+strlen(procname),
-						sizeof(procname)-strlen(procname),
-						"/%d", pid);
-					done = 1;
-				}
-				fclose(fp);
+			if (get_task_name(getenv("PROC_ROOT"), pid,
+					  procname, sizeof(procname)) == 0) {
+				snprintf(procname + strlen(procname),
+					 sizeof(procname) - strlen(procname),
+					 "/%d", pid);
+				done = 1;
 			}
 		}
 		if (!done)
