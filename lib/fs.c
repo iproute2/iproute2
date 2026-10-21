@@ -187,7 +187,7 @@ out:
 #define FILEID_INO32_GEN 1
 
 /* caller needs to free string returned */
-char *get_cgroup2_path(__u64 id, bool full)
+char *get_cgroup2_path(__u64 id)
 {
 	char fh_buf[sizeof(struct file_handle) + sizeof(__u64)] = { 0 };
 	struct file_handle *fhp = (struct file_handle *)fh_buf;
@@ -201,6 +201,7 @@ char *get_cgroup2_path(__u64 id, bool full)
 	char fd_path[64];
 	int link_len;
 	char *mnt = NULL;
+	size_t mnt_len;
 
 	if (!id) {
 		fprintf(stderr, "Invalid cgroup2 ID\n");
@@ -238,18 +239,14 @@ char *get_cgroup2_path(__u64 id, bool full)
 	}
 	link_buf[link_len] = '\0';
 
-	if (full) {
-		path = strdup(link_buf);
-	} else {
-		size_t mnt_len = strlen(mnt);
+	/* A cgroup outside our cgroup namespace is not under the
+	 * mount and the link reads as just "/".
+	 */
+	mnt_len = strlen(mnt);
+	if (strncmp(link_buf, mnt, mnt_len) != 0)
+		goto out;
 
-		/* A cgroup outside our cgroup namespace is not under the
-		 * mount and the link reads as just "/".
-		 */
-		if (strncmp(link_buf, mnt, mnt_len) != 0)
-			goto out;
-		path = strdup(link_buf + mnt_len);
-	}
+	path = strdup(link_buf + mnt_len);
 	if (!path)
 		fprintf(stderr,
 			"Failed to allocate memory for cgroup2 path\n");
