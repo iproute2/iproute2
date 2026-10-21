@@ -343,7 +343,11 @@ int get_command_name(const char *pid, char *comm, size_t len)
 	return 0;
 }
 
-int get_task_name(pid_t pid, char *name, size_t len)
+/*
+ * Read task name from <root>/<pid>/comm.
+ * If root is NULL, use /proc.
+ */
+int get_task_name(const char *root, pid_t pid, char *name, size_t len)
 {
 	char path[PATH_MAX];
 	FILE *f;
@@ -351,7 +355,8 @@ int get_task_name(pid_t pid, char *name, size_t len)
 	if (!pid)
 		return -1;
 
-	if (snprintf(path, sizeof(path), "/proc/%d/comm", pid) >= sizeof(path))
+	if (snprintf(path, sizeof(path), "%s/%d/comm",
+		     root ? : "/proc", pid) >= sizeof(path))
 		return -1;
 
 	f = fopen(path, "r");
