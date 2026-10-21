@@ -55,7 +55,7 @@ timer:(<timer_name>,<expire_time>,<retrans>)
 .P
 .TP
 .B <timer_name>
-the name of the timer, there are five kinds of timer names:
+the name of the timer, there are six kinds of timer names:
 .RS
 .P
 .B on
@@ -67,6 +67,8 @@ timer and tail loss probe timer
 .BR timewait ": timewait stage timer"
 .P
 .BR persist ": zero window probe timer"
+.P
+.BR delack ": delayed ACK timer"
 .P
 .BR unknown ": none of the above timers"
 .RE
