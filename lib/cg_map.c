@@ -118,7 +118,7 @@ const char *cg_id_to_path(__u64 id)
 	if (cg)
 		return cg->path;
 
-	path = get_cgroup2_path(id, false);
+	path = get_cgroup2_path(id);
 	if (path) {
 		cg = cg_entry_create(id, path);
 		free(path);

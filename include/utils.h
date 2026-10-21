@@ -310,7 +310,7 @@ int cmd_exec(const char *cmd, char **argv, bool do_fork,
 int make_path(const char *path, mode_t mode);
 char *find_cgroup2_mount(bool do_mount);
 __u64 get_cgroup2_id(const char *path);
-char *get_cgroup2_path(__u64 id, bool full);
+char *get_cgroup2_path(__u64 id);
 int get_command_name(const char *pid, char *comm, size_t len);
 int get_task_name(pid_t pid, char *name, size_t len);
 
