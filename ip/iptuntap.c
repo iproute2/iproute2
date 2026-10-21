@@ -315,7 +315,7 @@ static void show_processes(const char *name)
 				SPRINT_BUF(pname);
 
 				open_json_object(NULL);
-				if (get_task_name(pid, pname, sizeof(pname)))
+				if (get_task_name(NULL, pid, pname, sizeof(pname)))
 					print_string(PRINT_ANY, "name",
 						     "%s", "<NULL>");
 				else

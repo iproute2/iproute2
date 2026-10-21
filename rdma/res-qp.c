@@ -160,7 +160,7 @@ static int res_qp_line(struct rd *rd, const char *name, int idx,
 
 	if (nla_line[RDMA_NLDEV_ATTR_RES_PID]) {
 		pid = mnl_attr_get_u32(nla_line[RDMA_NLDEV_ATTR_RES_PID]);
-		if (!get_task_name(pid, b, sizeof(b)))
+		if (!get_task_name(NULL, pid, b, sizeof(b)))
 			comm = b;
 	} else if (nla_line[RDMA_NLDEV_ATTR_RES_KERN_NAME]) {
 		/* discard const from mnl_attr_get_str */

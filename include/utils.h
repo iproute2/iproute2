@@ -312,7 +312,7 @@ char *find_cgroup2_mount(bool do_mount);
 __u64 get_cgroup2_id(const char *path);
 char *get_cgroup2_path(__u64 id);
 int get_command_name(const char *pid, char *comm, size_t len);
-int get_task_name(pid_t pid, char *name, size_t len);
+int get_task_name(const char *root, pid_t pid, char *name, size_t len);
 
 int get_rtnl_link_stats_rta(struct rtnl_link_stats64 *stats64,
 			    struct rtattr *tb[]);
