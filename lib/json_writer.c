@@ -22,7 +22,7 @@ struct json_writer {
 	FILE		*out;	/* output file */
 	unsigned	depth;  /* nesting */
 	bool		pretty; /* optional whitepace */
-	char		sep;	/* either nul or comma */
+	char		sep;	/* nul, comma, or colon after name */
 };
 
 /* indentation for pretty print */
@@ -46,8 +46,20 @@ static void jsonw_eol(json_writer_t *self)
 /* If current object is not empty print a comma */
 static void jsonw_eor(json_writer_t *self)
 {
-	if (self->sep != '\0')
-		putc(self->sep, self->out);
+	switch (self->sep) {
+	case ',':
+		putc(',', self->out);
+		jsonw_eol(self);
+		break;
+	case ':':
+		/* after property name, don't output comma or newline */
+		break;
+	case '\0':
+		/* first element of a container, not start of document */
+		if (self->depth)
+			jsonw_eol(self);
+		break;
+	}
 	self->sep = ',';
 }
 
@@ -144,8 +156,7 @@ static void jsonw_end(json_writer_t *self, int c)
 void jsonw_name(json_writer_t *self, const char *name)
 {
 	jsonw_eor(self);
-	jsonw_eol(self);
-	self->sep = '\0';
+	self->sep = ':';
 	jsonw_puts(self, name);
 	putc(':', self->out);
 	if (self->pretty)
@@ -177,15 +188,10 @@ void jsonw_end_object(json_writer_t *self)
 void jsonw_start_array(json_writer_t *self)
 {
 	jsonw_begin(self, '[');
-	if (self->pretty)
-		putc(' ', self->out);
 }
 
 void jsonw_end_array(json_writer_t *self)
 {
-	if (self->pretty && self->sep)
-		putc(' ', self->out);
-	self->sep = '\0';
 	jsonw_end(self, ']');
 }
 
