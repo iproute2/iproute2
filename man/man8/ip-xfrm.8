@@ -376,7 +376,7 @@ ip-xfrm \- transform configuration
 
 .ti -8
 .IR FLAG " :="
-.BR localok " | " icmp
+.BR localok " | " icmp " | " cpu-acquire
 
 .ti -8
 .IR LIMIT-LIST " := [ " LIMIT-LIST " ]"
@@ -674,8 +674,12 @@ is a number that defaults to zero.
 
 .TP
 .I FLAG-LIST
-contains one or both of the following optional flags:
-.BR local " or " icmp "."
+contains one or more of the following optional flags:
+.BR localok ", " icmp ", or " cpu-acquire "."
+.B cpu-acquire
+enables per-CPU SAs (RFC 9611): the acquire messages generated for this
+policy carry the number of the CPU that processed the packet, see
+.BR pcpu-num "."
 
 .TP
 .I LIMIT-LIST

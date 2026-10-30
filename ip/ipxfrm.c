@@ -1094,6 +1094,7 @@ void xfrm_policy_info_print(struct xfrm_userpolicy_info *xpinfo,
 		fprintf(fp, "flag ");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_POLICY_LOCALOK, "localok");
 		XFRM_FLAG_PRINT(fp, flags, XFRM_POLICY_ICMP, "icmp");
+		XFRM_FLAG_PRINT(fp, flags, XFRM_POLICY_CPU_ACQUIRE, "cpu-acquire");
 		if (flags)
 			fprintf(fp, "%x", flags);
 	}

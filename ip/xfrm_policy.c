@@ -61,7 +61,7 @@ static void usage(void)
 		"PTYPE := main | sub\n"
 		"ACTION := allow | block\n"
 		"FLAG-LIST := [ FLAG-LIST ] FLAG\n"
-		"FLAG := localok | icmp\n"
+		"FLAG := localok | icmp | cpu-acquire\n"
 		"LIMIT-LIST := [ LIMIT-LIST ] limit LIMIT\n"
 		"LIMIT := { time-soft | time-hard | time-use-soft | time-use-hard } SECONDS |\n"
 		"         { byte-soft | byte-hard } SIZE | { packet-soft | packet-hard } COUNT\n"
@@ -139,6 +139,8 @@ static int xfrm_policy_flag_parse(__u8 *flags, int *argcp, char ***argvp)
 				*flags |= XFRM_POLICY_LOCALOK;
 			else if (strcmp(*argv, "icmp") == 0)
 				*flags |= XFRM_POLICY_ICMP;
+			else if (strcmp(*argv, "cpu-acquire") == 0)
+				*flags |= XFRM_POLICY_CPU_ACQUIRE;
 			else {
 				PREV_ARG(); /* back track */
 				break;
