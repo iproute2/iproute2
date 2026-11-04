@@ -28,7 +28,9 @@ ip-neighbour \- neighbour/arp tables management.
 .BR use " ] [ "
 .BR managed " ] [ "
 .BR extern_learn " ] [ "
-.BR extern_valid " ]"
+.BR extern_valid " ] [ "
+.B  protocol
+.IR PROTO " ]"
 
 .ti -8
 .BR "ip neigh" " { " show " | " flush " } [ " proxy " ] [ " to
@@ -39,7 +41,9 @@ ip-neighbour \- neighbour/arp tables management.
 .IR STATE " ] [ "
 .B  vrf
 .IR NAME " ] ["
-.BR nomaster " ]"
+.BR nomaster " ] [ "
+.B  protocol
+.IR PROTO " ]"
 
 .ti -8
 .B ip neigh get
@@ -122,6 +126,14 @@ this neigh entry was learned and determined to be valid externally. The kernel
 will not remove or invalidate the entry, but it can probe the entry and notify
 user space when the entry becomes reachable. The kernel will return the entry
 to stale state if it did not receive a confirmation after probing the entry.
+
+.TP
+.BI protocol " PROTO"
+the origin of this neighbour entry. The value can be a number or a
+string from
+.IR /etc/iproute2/rt_protos ,
+e.g.
+.BR static ", " boot ", or " dhcp.
 
 .TP
 .BI lladdr " LLADDRESS"
@@ -228,6 +240,14 @@ list neighbour proxies.
 .TP
 .B unused
 only list neighbours which are not currently in use.
+
+.TP
+.BI protocol " PROTO"
+only list neighbour entries with the given origin protocol. The special
+value
+.B all
+matches entries with any protocol, including those with no protocol
+attribute set.
 
 .TP
 .BI nud " STATE"
