@@ -5,7 +5,6 @@
 
 #include <errno.h>
 #include <string.h>
-#include <time.h>
 #include <libmnl/libmnl.h>
 #include <linux/genetlink.h>
 
@@ -40,6 +39,16 @@ int mnl_add_nl_group(struct mnl_socket *nl, unsigned int group)
 	return mnl_socket_bind(nl, group, MNL_SOCKET_AUTOPID);
 }
 
+/* Sequence number for next request, zero is reserved for kernel events */
+uint32_t mnlu_next_seq(void)
+{
+	static uint32_t seq;
+
+	if (++seq == 0)
+		seq = 1;
+	return seq;
+}
+
 struct nlmsghdr *mnlu_msg_prepare(void *buf, uint32_t nlmsg_type, uint16_t flags,
 				  void *extra_header, size_t extra_header_size)
 {
@@ -49,7 +58,7 @@ struct nlmsghdr *mnlu_msg_prepare(void *buf, uint32_t nlmsg_type, uint16_t flags
 	nlh = mnl_nlmsg_put_header(buf);
 	nlh->nlmsg_type = nlmsg_type;
 	nlh->nlmsg_flags = flags;
-	nlh->nlmsg_seq = time(NULL);
+	nlh->nlmsg_seq = mnlu_next_seq();
 
 	eh = mnl_nlmsg_put_extra_header(nlh, extra_header_size);
 	memcpy(eh, extra_header, extra_header_size);
