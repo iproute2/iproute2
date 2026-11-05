@@ -25,6 +25,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <locale.h>
 
 #include "ss_util.h"
 #include "utils.h"
@@ -4075,10 +4076,13 @@ static bool unix_type_skip(struct sockstat *s, struct filter *f)
 static void unix_stats_print(struct sockstat *s, struct filter *f)
 {
 	char port_name[30] = {};
+	char name[128];
 
 	sock_state_print(s);
 
-	sock_addr_print(s->name ?: "*", " ",
+	/* name is chosen by whoever bound the socket, may contain newlines */
+	escape_str(name, s->name ?: "*", sizeof(name));
+	sock_addr_print(name, " ",
 			uint_to_str(s->lport, port_name), NULL);
 	sock_addr_print(s->peer_name ?: "*", " ",
 			uint_to_str(s->rport, port_name), NULL);
@@ -4611,6 +4615,7 @@ static int netlink_show_one(struct filter *f,
 	if (pid == -1) {
 		procname[0] = '*';
 	} else if (!numeric) {
+		char task[16];
 		int done = 0;
 
 		if (!pid) {
@@ -4618,7 +4623,8 @@ static int netlink_show_one(struct filter *f,
 			strncpy(procname, "kernel", 7);
 		} else if (pid > 0) {
 			if (get_task_name(getenv("PROC_ROOT"), pid,
-					  procname, sizeof(procname)) == 0) {
+					  task, sizeof(task)) == 0) {
+				escape_str(procname, task, sizeof(procname));
 				snprintf(procname + strlen(procname),
 					 sizeof(procname) - strlen(procname),
 					 "/%d", pid);
@@ -5356,6 +5362,9 @@ int main(int argc, char *argv[])
 	FILE *filter_fp = NULL;
 	int ch;
 	int state_filter = 0;
+
+	/* needed by escape_str() to pass through UTF-8 names */
+	setlocale(LC_CTYPE, "");
 
 	while ((ch = getopt_long(argc, argv,
 				 "halBetuwxnro460spTbEf:mMiA:D:F:vVzZN:KHQSO",

@@ -50,7 +50,7 @@ static const char UTF_tab[] = {
 
 static const unsigned char ESC_tab[] = {
 	"@..............................." // 0x00 - 0x1F
-	"||||||||||||||||||||||||||||||||" // 0x20 - 0x3F
+	"||?|||||||||||||||||||||||||||||" // 0x20 - 0x3F
 	"||||||||||||||||||||||||||||||||" // 0x40 - 0x5f
 	"|||||||||||||||||||||||||||||||." // 0x60 - 0x7F
 	"????????????????????????????????" // 0x80 - 0x9F
@@ -83,8 +83,9 @@ static void esc_ctl(unsigned char *str, int len)
 			esc_all(str);
 			return;
 		}
-		// and eliminate those non-printing control characters
-		if (*str < 0x20 || *str == 0x7f)
+		// and eliminate those non-printing control characters,
+		// plus double quote which callers use as a delimiter
+		if (*str < 0x20 || *str == 0x7f || *str == '"')
 			*str = '?';
 		str += n;
 		i += n;
