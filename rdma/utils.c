@@ -685,7 +685,7 @@ int rd_exec_cmd(struct rd *rd, const struct rd_cmd *cmds, const char *str)
 
 void rd_prepare_msg(struct rd *rd, uint32_t cmd, uint32_t *seq, uint16_t flags)
 {
-	*seq = time(NULL);
+	*seq = mnlu_next_seq();
 
 	rd->nlh = mnl_nlmsg_put_header(rd->buff);
 	rd->nlh->nlmsg_type = RDMA_NL_GET_TYPE(RDMA_NL_NLDEV, cmd);

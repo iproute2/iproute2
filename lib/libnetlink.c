@@ -15,7 +15,6 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <errno.h>
-#include <time.h>
 #include <sys/uio.h>
 #include <linux/fib_rules.h>
 #include <linux/if_addrlabel.h>
@@ -246,7 +245,6 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 			rth->local.nl_family);
 		goto err;
 	}
-	rth->seq = time(NULL);
 	return 0;
 err:
 	rtnl_close(rth);
@@ -1092,7 +1090,7 @@ next:
 
 			if (nladdr.nl_pid != 0 ||
 			    h->nlmsg_pid != rtnl->local.nl_pid ||
-			    h->nlmsg_seq > seq || h->nlmsg_seq < seq - iovlen) {
+			    (unsigned int)(seq - h->nlmsg_seq) >= iovlen) {
 				/* Don't forget to skip that message. */
 				status -= NLMSG_ALIGN(len);
 				h = (struct nlmsghdr *)((char *)h + NLMSG_ALIGN(len));
