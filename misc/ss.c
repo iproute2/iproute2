@@ -3931,10 +3931,8 @@ static int tcpdiag_send(int fd, int protocol, struct filter *f)
 		.msg_iovlen = iovlen,
 	};
 
-	if (sendmsg(fd, &msg, 0) < 0) {
-		close(fd);
+	if (sendmsg(fd, &msg, 0) < 0)
 		return -1;
-	}
 
 	return 0;
 }
@@ -4026,7 +4024,6 @@ static int sockdiag_send(int family, int fd, int protocol, struct filter *f)
 
 	if (sendmsg(fd, &msg, 0) < 0) {
 		free(bpf_rta);
-		close(fd);
 		return -1;
 	}
 
