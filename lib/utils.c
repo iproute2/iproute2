@@ -1092,57 +1092,104 @@ const char *family_name(int family)
 }
 
 #ifdef RESOLVE_HOSTNAMES
+/*
+ * Small fixed size cache of reverse lookups (including failures).
+ * Open addressing, the oldest entry in the probe window is replaced,
+ * so memory stays bounded for long running ip monitor.
+ */
+#define NHASH_BITS	5
+#define NHASH		(1u << NHASH_BITS)
+#define NPROBE		4
+
 struct namerec {
-	struct namerec *next;
-	const char *name;
-	inet_prefix addr;
+	unsigned int	stamp;
+	__u8		family;		/* 0 = unused */
+	__u8		len;
+	__u8		addr[16];
+	char		name[256];	/* "" = lookup failed */
 };
 
-#define NHASH 257
-static struct namerec *nht[NHASH];
+static struct namerec nht[NHASH];
+static unsigned int nstamp;
 
-static const char *resolve_address(const void *addr, int len, int af)
+static unsigned int name_hash(const void *addr, int len)
 {
-	struct namerec *n;
-	struct hostent *h_ent;
-	unsigned int hash;
-	static int notfirst;
+	__u32 h = 0, w;
+	int i;
 
+	for (i = 0; i < len; i += 4) {
+		memcpy(&w, addr + i, 4);
+		h ^= w;
+	}
+	return (h * 0x9e3779b1u) >> (32 - NHASH_BITS);
+}
 
-	if (af == AF_INET6 && ((__u32 *)addr)[0] == 0 &&
-	    ((__u32 *)addr)[1] == 0 && ((__u32 *)addr)[2] == htonl(0xffff)) {
+static void name_lookup(struct namerec *n)
+{
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
+	} u = { };
+	socklen_t salen;
+
+	if (n->family == AF_INET) {
+		u.sin.sin_family = AF_INET;
+		memcpy(&u.sin.sin_addr, n->addr, 4);
+		salen = sizeof(u.sin);
+	} else {
+		u.sin6.sin6_family = AF_INET6;
+		memcpy(&u.sin6.sin6_addr, n->addr, 16);
+		salen = sizeof(u.sin6);
+	}
+
+	fflush(stdout);
+	if (getnameinfo(&u.sa, salen, n->name, sizeof(n->name),
+			NULL, 0, NI_NAMEREQD))
+		n->name[0] = '\0';
+}
+
+static const char *resolve_address(int af, int len, const void *addr,
+				   char *buf, int buflen)
+{
+	struct namerec *n, *victim = NULL;
+	unsigned int hash, i;
+
+	if (af == AF_INET6 && len == 16 &&
+	    IN6_IS_ADDR_V4MAPPED((const struct in6_addr *)addr)) {
 		af = AF_INET;
 		addr += 12;
 		len = 4;
 	}
 
-	hash = *(__u32 *)(addr + len - 4) % NHASH;
-
-	for (n = nht[hash]; n; n = n->next) {
-		if (n->addr.family == af &&
-		    n->addr.bytelen == len &&
-		    memcmp(n->addr.data, addr, len) == 0)
-			return n->name;
-	}
-	n = malloc(sizeof(*n));
-	if (n == NULL)
+	if (!((af == AF_INET && len == 4) || (af == AF_INET6 && len == 16)))
 		return NULL;
-	n->addr.family = af;
-	n->addr.bytelen = len;
-	n->name = NULL;
-	memcpy(n->addr.data, addr, len);
-	n->next = nht[hash];
-	nht[hash] = n;
-	if (++notfirst == 1)
-		sethostent(1);
-	fflush(stdout);
 
-	h_ent = gethostbyaddr(addr, len, af);
-	if (h_ent != NULL)
-		n->name = strdup(h_ent->h_name);
+	hash = name_hash(addr, len);
+	for (i = 0; i < NPROBE; i++) {
+		n = &nht[(hash + i) % NHASH];
 
-	/* Even if we fail, "negative" entry is remembered. */
-	return n->name;
+		if (n->family == af && n->len == len &&
+		    memcmp(n->addr, addr, len) == 0)
+			goto found;
+
+		if (!victim || (victim->family &&
+				(!n->family || n->stamp < victim->stamp)))
+			victim = n;
+	}
+
+	n = victim;
+	n->family = af;
+	n->len = len;
+	memcpy(n->addr, addr, len);
+	name_lookup(n);
+found:
+	n->stamp = ++nstamp;
+	if (n->name[0] == '\0' ||
+	    strlcpy(buf, n->name, buflen) >= (size_t)buflen)
+		return NULL;
+
+	return buf;
 }
 #endif
 
@@ -1156,7 +1203,7 @@ const char *format_host_r(int af, int len, const void *addr,
 		len = len <= 0 ? af_byte_len(af) : len;
 
 		if (len > 0 &&
-		    (n = resolve_address(addr, len, af)) != NULL)
+		    (n = resolve_address(af, len, addr, buf, buflen)) != NULL)
 			return n;
 	}
 #endif
