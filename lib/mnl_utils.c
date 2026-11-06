@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <libmnl/libmnl.h>
 #include <linux/genetlink.h>
 
@@ -111,6 +112,38 @@ static mnl_cb_t mnlu_cb_array[NLMSG_MIN_TYPE] = {
 	[NLMSG_OVERRUN]	= mnlu_cb_noop,
 };
 
+/*
+ * Like mnl_socket_recvfrom(), but discards datagrams that were
+ * not sent by the kernel.
+ */
+ssize_t mnlu_socket_recvfrom(const struct mnl_socket *nl, void *buf, size_t buf_size)
+{
+	struct sockaddr_nl addr;
+	struct iovec iov = {
+		.iov_base = buf,
+		.iov_len = buf_size,
+	};
+	struct msghdr msg = {
+		.msg_name = &addr,
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+	};
+	ssize_t ret;
+
+	do {
+		msg.msg_namelen = sizeof(addr);
+		ret = recvmsg(mnl_socket_get_fd(nl), &msg, 0);
+		if (ret < 0)
+			return ret;
+	} while (msg.msg_namelen != sizeof(addr) || addr.nl_pid != 0);
+
+	if (msg.msg_flags & MSG_TRUNC) {
+		errno = ENOSPC;
+		return -1;
+	}
+	return ret;
+}
+
 int mnlu_socket_recv_run(struct mnl_socket *nl, unsigned int seq, void *buf, size_t buf_size,
 			 mnl_cb_t cb, void *data)
 {
@@ -118,7 +151,7 @@ int mnlu_socket_recv_run(struct mnl_socket *nl, unsigned int seq, void *buf, siz
 	int err;
 
 	do {
-		err = mnl_socket_recvfrom(nl, buf, buf_size);
+		err = mnlu_socket_recvfrom(nl, buf, buf_size);
 		if (err <= 0)
 			break;
 		err = mnl_cb_run2(buf, err, seq, portid,

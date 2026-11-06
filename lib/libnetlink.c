@@ -843,12 +843,22 @@ static int __rtnl_recvmsg(int fd, struct msghdr *msg, int flags)
 	return len;
 }
 
+/* Netlink datagrams from other processes are discarded */
+static bool rtnl_from_kernel(const struct msghdr *msg)
+{
+	const struct sockaddr_nl *nladdr = msg->msg_name;
+
+	return msg->msg_namelen == sizeof(*nladdr) && nladdr->nl_pid == 0;
+}
+
 static int rtnl_recvmsg(int fd, struct msghdr *msg, char **answer)
 {
 	struct iovec *iov = msg->msg_iov;
 	char *buf;
 	int len;
 
+again:
+	msg->msg_namelen = sizeof(struct sockaddr_nl);
 	iov->iov_base = NULL;
 	iov->iov_len = 0;
 
@@ -871,6 +881,11 @@ static int rtnl_recvmsg(int fd, struct msghdr *msg, char **answer)
 	if (len < 0) {
 		free(buf);
 		return len;
+	}
+
+	if (!rtnl_from_kernel(msg)) {
+		free(buf);
+		goto again;
 	}
 
 	if (answer)
@@ -918,8 +933,7 @@ static int rtnl_dump_filter_l(struct rtnl_handle *rth,
 
 				h->nlmsg_flags &= ~a->nc_flags;
 
-				if (nladdr.nl_pid != 0 ||
-				    h->nlmsg_pid != rth->local.nl_pid ||
+				if (h->nlmsg_pid != rth->local.nl_pid ||
 				    h->nlmsg_seq != rth->dump)
 					goto skip_it;
 
@@ -1066,12 +1080,6 @@ next:
 		if (status < 0)
 			return status;
 
-		if (msg.msg_namelen != sizeof(nladdr)) {
-			fprintf(stderr,
-				"sender address length == %d\n",
-				msg.msg_namelen);
-			exit(1);
-		}
 		for (h = (struct nlmsghdr *)buf; status >= sizeof(*h); ) {
 			int len = h->nlmsg_len;
 			int l = len - sizeof(*h);
@@ -1088,8 +1096,7 @@ next:
 				exit(1);
 			}
 
-			if (nladdr.nl_pid != 0 ||
-			    h->nlmsg_pid != rtnl->local.nl_pid ||
+			if (h->nlmsg_pid != rtnl->local.nl_pid ||
 			    (unsigned int)(seq - h->nlmsg_seq) >= iovlen) {
 				/* Don't forget to skip that message. */
 				status -= NLMSG_ALIGN(len);
@@ -1246,6 +1253,7 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 		}
 
 		iov.iov_len = sizeof(buf);
+		msg.msg_namelen = sizeof(nladdr);
 		status = recvmsg(rtnl->fd, &msg, 0);
 
 		if (status < 0) {
@@ -1261,12 +1269,8 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 			fprintf(stderr, "EOF on netlink\n");
 			return -1;
 		}
-		if (msg.msg_namelen != sizeof(nladdr)) {
-			fprintf(stderr,
-				"Sender address length == %d\n",
-				msg.msg_namelen);
-			exit(1);
-		}
+		if (!rtnl_from_kernel(&msg))
+			continue;
 
 		if (rtnl->flags & RTNL_HANDLE_F_LISTEN_ALL_NSID) {
 			memset(&ctrl, 0, sizeof(ctrl));
