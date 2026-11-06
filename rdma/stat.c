@@ -735,7 +735,7 @@ static int stat_one_qp_unbind(struct rd *rd)
 	 * then rd_recv_msg() always return -1 here
 	 */
 	portid = mnl_socket_get_portid(rd->nl);
-	ret = mnl_socket_recvfrom(rd->nl, buf, sizeof(buf));
+	ret = mnlu_socket_recvfrom(rd->nl, buf, sizeof(buf));
 	if (ret <= 0)
 		return ret;
 
