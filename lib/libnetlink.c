@@ -994,7 +994,8 @@ skip_it:
 			fprintf(stderr, "Message truncated\n");
 			continue;
 		}
-		if (msglen) {
+		/* negative if the last message had no padding */
+		if (msglen > 0) {
 			fprintf(stderr, "!!!Remnant of size %d\n", msglen);
 			exit(1);
 		}
@@ -1088,29 +1089,13 @@ next:
 		if (status < 0)
 			return status;
 
-		for (h = (struct nlmsghdr *)buf; status >= sizeof(*h); ) {
-			int len = h->nlmsg_len;
-			int l = len - sizeof(*h);
-
-			if (l < 0 || len > status) {
-				if (msg.msg_flags & MSG_TRUNC) {
-					fprintf(stderr, "Truncated message\n");
-					free(buf);
-					return -1;
-				}
-				fprintf(stderr,
-					"!!!malformed message: len=%d\n",
-					len);
-				exit(1);
-			}
+		for (h = (struct nlmsghdr *)buf; NLMSG_OK(h, status);
+		     h = NLMSG_NEXT(h, status)) {
+			int l = h->nlmsg_len - sizeof(*h);
 
 			if (h->nlmsg_pid != rtnl->local.nl_pid ||
-			    (unsigned int)(seq - h->nlmsg_seq) >= iovlen) {
-				/* Don't forget to skip that message. */
-				status -= NLMSG_ALIGN(len);
-				h = (struct nlmsghdr *)((char *)h + NLMSG_ALIGN(len));
+			    (unsigned int)(seq - h->nlmsg_seq) >= iovlen)
 				continue;
-			}
 
 			if (h->nlmsg_type == NLMSG_ERROR) {
 				struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(h);
@@ -1156,20 +1141,22 @@ next:
 			}
 
 			fprintf(stderr, "Unexpected reply!!!\n");
-
-			status -= NLMSG_ALIGN(len);
-			h = (struct nlmsghdr *)((char *)h + NLMSG_ALIGN(len));
 		}
 		free(buf);
+
+		/* negative if the last message had no padding */
+		if (status > 0) {
+			if (msg.msg_flags & MSG_TRUNC) {
+				fprintf(stderr, "Truncated message\n");
+				return -1;
+			}
+			fprintf(stderr, "!!!Remnant of size %d\n", status);
+			exit(1);
+		}
 
 		if (msg.msg_flags & MSG_TRUNC) {
 			fprintf(stderr, "Message truncated\n");
 			continue;
-		}
-
-		if (status) {
-			fprintf(stderr, "!!!Remnant of size %d\n", status);
-			exit(1);
 		}
 	}
 }
@@ -1294,37 +1281,28 @@ int rtnl_listen(struct rtnl_handle *rtnl,
 				}
 		}
 
-		for (h = (struct nlmsghdr *)buf; status >= sizeof(*h); ) {
+		for (h = (struct nlmsghdr *)buf; NLMSG_OK(h, status);
+		     h = NLMSG_NEXT(h, status)) {
 			int err;
-			int len = h->nlmsg_len;
-			int l = len - sizeof(*h);
-
-			if (l < 0 || len > status) {
-				if (msg.msg_flags & MSG_TRUNC) {
-					fprintf(stderr, "Truncated message\n");
-					return -1;
-				}
-				fprintf(stderr,
-					"!!!malformed message: len=%d\n",
-					len);
-				exit(1);
-			}
 
 			err = handler(&ctrl, h, jarg);
 			fflush(stdout);
 			if (err < 0)
 				return err;
+		}
 
-			status -= NLMSG_ALIGN(len);
-			h = (struct nlmsghdr *)((char *)h + NLMSG_ALIGN(len));
+		/* negative if the last message had no padding */
+		if (status > 0) {
+			if (msg.msg_flags & MSG_TRUNC) {
+				fprintf(stderr, "Truncated message\n");
+				return -1;
+			}
+			fprintf(stderr, "!!!Remnant of size %d\n", status);
+			exit(1);
 		}
 		if (msg.msg_flags & MSG_TRUNC) {
 			fprintf(stderr, "Message truncated\n");
 			continue;
-		}
-		if (status) {
-			fprintf(stderr, "!!!Remnant of size %d\n", status);
-			exit(1);
 		}
 	}
 }
