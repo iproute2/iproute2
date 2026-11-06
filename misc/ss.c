@@ -444,6 +444,9 @@ static void filter_af_set(struct filter *f, int af)
 
 static int filter_af_get(struct filter *f, int af)
 {
+	if (af < 0 || af >= 64)
+		return 0;
+
 	return !!(f->families & FAMILY_MASK(af));
 }
 
@@ -3943,8 +3946,8 @@ static int tcp_show_netlink_file(struct filter *f)
 		if (status != sizeof(hdr)) {
 			if (ferror(fp))
 				perror("Reading header from $TCPDIAG_FILE");
-			if (feof(fp))
-				fprintf(stderr, "Unexpected EOF reading $TCPDIAG_FILE");
+			else if (status || err)
+				fprintf(stderr, "Unexpected EOF reading $TCPDIAG_FILE\n");
 			break;
 		}
 
@@ -3977,15 +3980,17 @@ static int tcp_show_netlink_file(struct filter *f)
 			if (ferror(fp))
 				perror("Reading $TCPDIAG_FILE");
 			if (feof(fp))
-				fprintf(stderr, "Unexpected EOF reading $TCPDIAG_FILE");
+				fprintf(stderr, "Unexpected EOF reading $TCPDIAG_FILE\n");
+			err = -1;
 			break;
 		}
 
-		/* The only legal exit point */
+		/* One dump per address family; the file ends after a DONE */
 		if (h->nlmsg_type == NLMSG_DONE) {
 			err = 0;
-			break;
+			continue;
 		}
+		err = -1;
 
 		if (h->nlmsg_type == NLMSG_ERROR) {
 			struct nlmsgerr *err = (struct nlmsgerr *)NLMSG_DATA(h);
@@ -4007,6 +4012,9 @@ static int tcp_show_netlink_file(struct filter *f)
 
 		parse_diag_msg(h, &s);
 		s.type = IPPROTO_TCP;
+
+		if (f && !filter_af_get(f, s.local.family))
+			continue;
 
 		if (f && f->f && run_ssfilter(f->f, &s) == 0)
 			continue;
