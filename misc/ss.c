@@ -1559,37 +1559,45 @@ static void init_service_resolver(void)
 		return;
 
 	for (; rhead; rhead = rhead->rpcb_next) {
-		char prog[128] = "rpc.";
+		const char *proto;
+		char prog[128];
 		struct scache *c;
-		int hport, lport, ok;
+		int hport, lport;
+
+		if (sscanf(rhead->rpcb_map.r_addr, "::.%d.%d",
+			   &hport, &lport) != 2 &&
+		    sscanf(rhead->rpcb_map.r_addr, "0.0.0.0.%d.%d",
+			   &hport, &lport) != 2)
+			continue;
+
+		if (strcmp(rhead->rpcb_map.r_netid, TCP_PROTO) == 0 ||
+		    strcmp(rhead->rpcb_map.r_netid, TCP6_PROTO) == 0)
+			proto = TCP_PROTO;
+		else if (strcmp(rhead->rpcb_map.r_netid, UDP_PROTO) == 0 ||
+			 strcmp(rhead->rpcb_map.r_netid, UDP6_PROTO) == 0)
+			proto = UDP_PROTO;
+		else if (strcmp(rhead->rpcb_map.r_netid, SCTP_PROTO) == 0)
+			proto = SCTP_PROTO;
+		else
+			continue;
+
+		rpc = getrpcbynumber(rhead->rpcb_map.r_prog);
+		if (rpc)
+			snprintf(prog, sizeof(prog), "rpc.%s", rpc->r_name);
+		else
+			snprintf(prog, sizeof(prog), "rpc.%lu",
+				 (unsigned long)rhead->rpcb_map.r_prog);
 
 		c = malloc(sizeof(*c));
 		if (!c)
 			continue;
 
-		ok = sscanf(rhead->rpcb_map.r_addr, "::.%d.%d", &hport, &lport);
-		if (!ok)
-			ok = sscanf(rhead->rpcb_map.r_addr, "0.0.0.0.%d.%d",
-				    &hport, &lport);
-		if (!ok)
-			continue;
 		c->port = hport << 8 | lport;
-
-		if (strcmp(rhead->rpcb_map.r_netid, TCP_PROTO) == 0 ||
-		    strcmp(rhead->rpcb_map.r_netid, TCP6_PROTO) == 0)
-			c->proto = TCP_PROTO;
-		else if (strcmp(rhead->rpcb_map.r_netid, UDP_PROTO) == 0 ||
-			 strcmp(rhead->rpcb_map.r_netid, UDP6_PROTO) == 0)
-			c->proto = UDP_PROTO;
-		else if (strcmp(rhead->rpcb_map.r_netid, SCTP_PROTO) == 0)
-			c->proto = SCTP_PROTO;
-		else
+		c->proto = proto;
+		c->name = strdup(prog);
+		if (!c->name) {
+			free(c);
 			continue;
-
-		rpc = getrpcbynumber(rhead->rpcb_map.r_prog);
-		if (rpc) {
-			strncat(prog, rpc->r_name, 128 - strlen(prog));
-			c->name = strdup(prog);
 		}
 
 		c->next = rlist;
