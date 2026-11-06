@@ -533,6 +533,38 @@ static void user_ent_add(unsigned int ino, char *task,
 
 #define MAX_PATH_LEN	1024
 
+/* The owner of a descriptor can point $PROC_ROOT/$ID/fd/$FD elsewhere
+ * (e.g. at a file on a FUSE mount it serves) after readlink() saw a socket.
+ * Pin the object and check it is still that socket before reading its label.
+ * The check uses readlink(), which does not call into the filesystem of
+ * the pinned object.
+ */
+static int user_ent_sock_context(const char *path, unsigned int ino,
+				 char **context)
+{
+	unsigned int pinned;
+	char self[64];
+	char lnk[64];
+	ssize_t len;
+	int ret = -1;
+	int fd;
+
+	fd = open(path, O_PATH | O_CLOEXEC);
+	if (fd < 0)
+		return -1;
+
+	snprintf(self, sizeof(self), "/proc/self/fd/%d", fd);
+	len = readlink(self, lnk, sizeof(lnk) - 1);
+	if (len > 0) {
+		lnk[len] = '\0';
+		if (sscanf(lnk, "socket:[%u]", &pinned) == 1 && pinned == ino)
+			ret = getfilecon(self, context);
+	}
+
+	close(fd);
+	return ret;
+}
+
 static void user_ent_hash_build_task(char *path, int pid, int tid)
 {
 	const char *no_ctx = "unavailable";
@@ -580,7 +612,8 @@ static void user_ent_hash_build_task(char *path, int pid, int tid)
 		if (sscanf(lnk, "socket:[%u]", &ino) != 1)
 			continue;
 
-		if (getfilecon(path, &sock_context) <= 0)
+		if (!show_sock_ctx ||
+		    user_ent_sock_context(path, ino, &sock_context) <= 0)
 			sock_context = strdup(no_ctx);
 
 		if (task[0] == '\0') {
