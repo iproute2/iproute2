@@ -15,6 +15,7 @@
 
 struct mnl_socket *mnlu_socket_open(int bus)
 {
+	const struct sockaddr_nl kernel_addr = { .nl_family = AF_NETLINK };
 	struct mnl_socket *nl;
 	int one = 1;
 
@@ -26,6 +27,11 @@ struct mnl_socket *mnlu_socket_open(int bus)
 	mnl_socket_setsockopt(nl, NETLINK_EXT_ACK, &one, sizeof(one));
 
 	if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0)
+		goto err_bind;
+
+	/* Refuse unicast from other processes, only the kernel may send */
+	if (connect(mnl_socket_get_fd(nl), (struct sockaddr *)&kernel_addr,
+		    sizeof(kernel_addr)) < 0)
 		goto err_bind;
 
 	return nl;

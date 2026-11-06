@@ -192,6 +192,7 @@ void rtnl_close(struct rtnl_handle *rth)
 int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 		      int protocol)
 {
+	const struct sockaddr_nl kernel_addr = { .nl_family = AF_NETLINK };
 	socklen_t addr_len;
 	int sndbuf = 32768;
 	int one = 1;
@@ -228,6 +229,13 @@ int rtnl_open_byproto(struct rtnl_handle *rth, unsigned int subscriptions,
 	if (bind(rth->fd, (struct sockaddr *)&rth->local,
 		 sizeof(rth->local)) < 0) {
 		perror("Cannot bind netlink socket");
+		goto err;
+	}
+
+	/* Refuse unicast from other processes, only the kernel may send */
+	if (connect(rth->fd, (struct sockaddr *)&kernel_addr,
+		    sizeof(kernel_addr)) < 0) {
+		perror("Cannot connect netlink socket");
 		goto err;
 	}
 	addr_len = sizeof(rth->local);
