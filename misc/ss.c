@@ -5099,14 +5099,19 @@ static int handle_follow_request(struct filter *f)
 	rth.local.nl_pid = 0;
 
 	if (f->kill) {
-		if (rtnl_open_byproto(&rth2, groups, NETLINK_SOCK_DIAG)) {
+		/* Only used to send SOCK_DESTROY, must not get the events */
+		if (rtnl_open_byproto(&rth2, 0, NETLINK_SOCK_DIAG)) {
 			rtnl_close(&rth);
 			return -1;
 		}
 		f->rth_for_killing = &rth2;
 	}
 
-	if (rtnl_dump_filter(&rth, generic_show_sock, f))
+	/* ENOBUFS means events were lost, keep listening */
+	do {
+		ret = rtnl_dump_filter(&rth, generic_show_sock, f);
+	} while (ret == -ENOBUFS);
+	if (ret)
 		ret = -1;
 
 	rtnl_close(&rth);
