@@ -107,7 +107,6 @@ static int show_proc_ctx;
 static int show_sock_ctx;
 static int show_header = 1;
 static int follow_events;
-static int sctp_ino;
 static int show_tipcinfo;
 static int show_tos;
 static int show_cgroup;
@@ -766,7 +765,15 @@ static unsigned long long cookie_sk_get(const uint32_t *cookie)
 	return (((unsigned long long)cookie[1] << 31) << 1) | cookie[0];
 }
 
-static const char *sctp_sstate_name[] = {
+/* Names indexed by a value from the kernel, which may be out of range */
+static const char *table_name(const char * const *names, size_t n,
+			      unsigned int i)
+{
+	return i < n && names[i] ? names[i] : "UNKNOWN";
+}
+#define TABLE_NAME(names, i)	table_name(names, ARRAY_SIZE(names), i)
+
+static const char * const sctp_sstate_name[] = {
 	[SCTP_STATE_CLOSED] = "CLOSED",
 	[SCTP_STATE_COOKIE_WAIT] = "COOKIE_WAIT",
 	[SCTP_STATE_COOKIE_ECHOED] = "COOKIE_ECHOED",
@@ -805,6 +812,7 @@ struct sockstat {
 	char *peer_name;
 	__u32		    mark;
 	__u64		    cgroup_id;
+	bool		    sctp_assoc;
 };
 
 struct dctcpstat {
@@ -879,18 +887,6 @@ struct tcpstat {
 	struct dctcpstat    *dctcp;
 	struct tcp_bbr_info *bbr_info;
 };
-
-/* SCTP assocs share the same inode number with their parent endpoint. So if we
- * have seen the inode number before, it must be an assoc instead of the next
- * endpoint. */
-static bool is_sctp_assoc(struct sockstat *s, const char *sock_name)
-{
-	if (strcmp(sock_name, "sctp"))
-		return false;
-	if (!sctp_ino || sctp_ino != s->ino)
-		return false;
-	return true;
-}
 
 static const char *unix_netid_name(int type)
 {
@@ -1437,14 +1433,14 @@ static void sock_state_print(struct sockstat *s)
 		sock_name = "unknown";
 	}
 
-	if (is_sctp_assoc(s, sock_name)) {
+	if (s->sctp_assoc) {
 		field_set(COL_STATE);		/* Empty Netid field */
-		out("`- %s", sctp_sstate_name[s->state]);
+		out("`- %s", TABLE_NAME(sctp_sstate_name, s->state));
 	} else {
 		field_set(COL_NETID);
 		out("%s", sock_name);
 		field_set(COL_STATE);
-		out("%s", sstate_name[s->state]);
+		out("%s", TABLE_NAME(sstate_name, s->state));
 	}
 
 	if (show_queues) {
@@ -2498,7 +2494,7 @@ static void sctp_stats_print(struct sctp_info *s)
 	if (s->sctpi_tag)
 		out(" tag:%x", s->sctpi_tag);
 	if (s->sctpi_state)
-		out(" state:%s", sctp_sstate_name[s->sctpi_state]);
+		out(" state:%s", TABLE_NAME(sctp_sstate_name, s->sctpi_state));
 	if (s->sctpi_rwnd)
 		out(" rwnd:%d", s->sctpi_rwnd);
 	if (s->sctpi_unackdata)
@@ -3622,6 +3618,12 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 	if (s->local.family == AF_INET6 && tb[INET_DIAG_SKV6ONLY])
 		v6only = rta_getattr_u8(tb[INET_DIAG_SKV6ONLY]);
 
+	/* SCTP assocs share the inode number of their endpoint; only
+	 * assocs carry INET_DIAG_PEERS, and only for those is the state
+	 * an SCTP_STATE_* value.
+	 */
+	s->sctp_assoc = s->type == IPPROTO_SCTP && tb[INET_DIAG_PEERS];
+
 	inet_stats_print(s, v6only);
 
 	if (show_options) {
@@ -3709,7 +3711,6 @@ static int inet_show_sock(struct nlmsghdr *nlh,
 		else
 			tcp_show_info(nlh, r, tb);
 	}
-	sctp_ino = s->ino;
 
 #ifdef ENABLE_BPF_SKSTORAGE_SUPPORT
 	if (tb[INET_DIAG_SK_BPF_STORAGES])
@@ -4918,9 +4919,9 @@ static int tipc_show_sock(struct nlmsghdr *nlh, void *arg)
 
 	if (show_tipcinfo) {
 		if (oneline)
-			out(" type:%s", stype_nameg[ss.type]);
+			out(" type:%s", TABLE_NAME(stype_nameg, ss.type));
 		else
-			out("\n type:%s", stype_nameg[ss.type]);
+			out("\n type:%s", TABLE_NAME(stype_nameg, ss.type));
 		out(" cong:%s ",
 		       stat[TIPC_NLA_SOCK_STAT_LINK_CONG] ? "link" :
 		       stat[TIPC_NLA_SOCK_STAT_CONN_CONG] ? "conn" : "none");
