@@ -4662,10 +4662,47 @@ static int xdp_show(struct filter *f)
 	return handle_netlink_request(f, &req.nlh, sizeof(req), xdp_show_sock);
 }
 
+/* A netlink port id is chosen by whoever binds the socket; it is the
+ * pid of the owner only by convention. Check that the process holds it.
+ */
+static bool netlink_pid_holds_sock(int pid, unsigned int ino)
+{
+	char path[MAX_PATH_LEN];
+	struct dirent *d;
+	bool ret = false;
+	DIR *dir;
+
+	if (pid <= 0 || !ino)
+		return false;
+
+	snprintf(path, sizeof(path), "%s/%d/fd",
+		 getenv("PROC_ROOT") ? : "/proc", pid);
+	dir = opendir(path);
+	if (!dir)
+		return false;
+
+	while (!ret && (d = readdir(dir)) != NULL) {
+		unsigned int fd_ino;
+		ssize_t link_len;
+		char lnk[64];
+
+		link_len = readlinkat(dirfd(dir), d->d_name, lnk, sizeof(lnk) - 1);
+		if (link_len == -1)
+			continue;
+		lnk[link_len] = '\0';
+
+		if (sscanf(lnk, "socket:[%u]", &fd_ino) == 1)
+			ret = fd_ino == ino;
+	}
+	closedir(dir);
+
+	return ret;
+}
+
 static int netlink_show_one(struct filter *f,
 				int prot, int pid, unsigned int groups,
 				int state, int dst_pid, unsigned int dst_group,
-				int rq, int wq,
+				int rq, int wq, unsigned int ino,
 				unsigned long long sk, unsigned long long cb)
 {
 	struct sockstat st = {
@@ -4679,6 +4716,7 @@ static int netlink_show_one(struct filter *f,
 	SPRINT_BUF(prot_buf) = {};
 	const char *prot_name;
 	char procname[64] = {};
+	bool is_owner = false;
 
 	if (f->f) {
 		st.rport = -1;
@@ -4692,6 +4730,9 @@ static int netlink_show_one(struct filter *f,
 
 	prot_name = nl_proto_n2a(prot, prot_buf, sizeof(prot_buf));
 
+	if (pid > 0 && (!numeric || show_proc_ctx))
+		is_owner = netlink_pid_holds_sock(pid, ino);
+
 	if (pid == -1) {
 		procname[0] = '*';
 	} else if (!numeric) {
@@ -4701,7 +4742,7 @@ static int netlink_show_one(struct filter *f,
 		if (!pid) {
 			done = 1;
 			strncpy(procname, "kernel", 7);
-		} else if (pid > 0) {
+		} else if (is_owner) {
 			if (get_task_name(getenv("PROC_ROOT"), pid,
 					  task, sizeof(task)) == 0) {
 				escape_str(procname, task, sizeof(procname));
@@ -4734,13 +4775,13 @@ static int netlink_show_one(struct filter *f,
 	if (show_proc_ctx) {
 		/* The pid value will either be:
 		 *   0 if destination kernel - show kernel initial context.
-		 *   A valid process pid - use getpidcon.
+		 *   The pid of a process holding the socket - use getpidcon.
 		 *   A unique value allocated by the kernel or netlink user
 		 *   to the process - show context as "not available".
 		 */
 		if (!pid)
 			security_get_initial_context("kernel", &pid_context);
-		else if (pid > 0)
+		else if (is_owner)
 			getpidcon(pid, &pid_context);
 
 		out(" proc_ctx=%s", pid_context ? : "unavailable");
@@ -4779,7 +4820,7 @@ static int netlink_show_sock(struct nlmsghdr *nlh, void *arg)
 
 	if (netlink_show_one(f, r->ndiag_protocol, r->ndiag_portid, groups,
 			 r->ndiag_state, r->ndiag_dst_portid, r->ndiag_dst_group,
-			 rq, wq, 0, 0)) {
+			 rq, wq, r->ndiag_ino, 0, 0)) {
 		return 0;
 	}
 
