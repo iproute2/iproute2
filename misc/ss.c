@@ -3923,8 +3923,9 @@ Exit:
 
 static int tcp_show_netlink_file(struct filter *f)
 {
+	struct nlmsghdr *h = NULL;
+	size_t buflen = 0;
 	FILE	*fp;
-	char	buf[16384];
 	int	err = -1;
 
 	if ((fp = fopen(getenv("TCPDIAG_FILE"), "r")) == NULL) {
@@ -3935,11 +3936,11 @@ static int tcp_show_netlink_file(struct filter *f)
 	while (1) {
 		int err2;
 		size_t status, nitems;
-		struct nlmsghdr *h = (struct nlmsghdr *)buf;
+		struct nlmsghdr hdr;
 		struct sockstat s = {};
 
-		status = fread(buf, 1, sizeof(*h), fp);
-		if (status != sizeof(*h)) {
+		status = fread(&hdr, 1, sizeof(hdr), fp);
+		if (status != sizeof(hdr)) {
 			if (ferror(fp))
 				perror("Reading header from $TCPDIAG_FILE");
 			if (feof(fp))
@@ -3947,7 +3948,29 @@ static int tcp_show_netlink_file(struct filter *f)
 			break;
 		}
 
-		nitems = NLMSG_ALIGN(h->nlmsg_len - sizeof(*h));
+		/* NLMSG_ALIGN() is u32 arithmetic and wraps near UINT_MAX,
+		 * which would size the buffer below the record.
+		 */
+		if (hdr.nlmsg_len < sizeof(hdr) ||
+		    hdr.nlmsg_len > UINT32_MAX - NLMSG_ALIGNTO + 1) {
+			fprintf(stderr, "Malformed message in $TCPDIAG_FILE: len=%u\n",
+				hdr.nlmsg_len);
+			break;
+		}
+
+		if (NLMSG_ALIGN(hdr.nlmsg_len) > buflen) {
+			void *nbuf = realloc(h, NLMSG_ALIGN(hdr.nlmsg_len));
+
+			if (!nbuf) {
+				perror("Reading $TCPDIAG_FILE");
+				break;
+			}
+			h = nbuf;
+			buflen = NLMSG_ALIGN(hdr.nlmsg_len);
+		}
+		*h = hdr;
+
+		nitems = NLMSG_ALIGN(h->nlmsg_len) - sizeof(*h);
 		status = fread(h+1, 1, nitems, fp);
 
 		if (status != nitems) {
@@ -3976,6 +3999,12 @@ static int tcp_show_netlink_file(struct filter *f)
 			break;
 		}
 
+		if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct inet_diag_msg))) {
+			fprintf(stderr, "Malformed message in $TCPDIAG_FILE: len=%u\n",
+				h->nlmsg_len);
+			break;
+		}
+
 		parse_diag_msg(h, &s);
 		s.type = IPPROTO_TCP;
 
@@ -3989,6 +4018,7 @@ static int tcp_show_netlink_file(struct filter *f)
 		}
 	}
 
+	free(h);
 	fclose(fp);
 	return err;
 }
