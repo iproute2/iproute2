@@ -928,8 +928,13 @@ static int rtnl_dump_filter_l(struct rtnl_handle *rth,
 		if (status < 0)
 			return status;
 
-		if (rth->dump_fp)
-			fwrite(buf, 1, NLMSG_ALIGN(status), rth->dump_fp);
+		if (rth->dump_fp) {
+			static const char pad[NLMSG_ALIGNTO];
+
+			/* rtnl_from_file() expects padded messages */
+			fwrite(buf, 1, status, rth->dump_fp);
+			fwrite(pad, 1, NLMSG_ALIGN(status) - status, rth->dump_fp);
+		}
 
 		for (a = arg; a->filter; a++) {
 			struct nlmsghdr *h = (struct nlmsghdr *)buf;
