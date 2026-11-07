@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 
 #include <stdarg.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -33,7 +34,7 @@ int print_color_size(enum output_type type, enum color_attr color,
 	SPRINT_BUF(buf);
 
 	if (_IS_JSON_CONTEXT(type))
-		return print_color_uint(type, color, key, "%u", sz);
+		return print_color_u64(type, color, key, "%"PRIu64, sz);
 
 	sprint_size(sz, buf);
 	return print_color_string(type, color, key, fmt, buf);
