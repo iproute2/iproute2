@@ -1525,9 +1525,10 @@ static int iproute_modify(int cmd, unsigned int flags, int argc, char **argv)
 			lwt_parse_encap(rta, sizeof(buf), &argc, &argv,
 					RTA_ENCAP, RTA_ENCAP_TYPE);
 
-			if (rta->rta_len > RTA_LENGTH(0))
-				addraw_l(&req.n, 1024
-					 , RTA_DATA(rta), RTA_PAYLOAD(rta));
+			if (rta->rta_len > RTA_LENGTH(0) &&
+			    addraw_l(&req.n, sizeof(req), RTA_DATA(rta),
+				     RTA_PAYLOAD(rta)) < 0)
+				return -1;
 		} else if (strcmp(*argv, "ttl-propagate") == 0) {
 			__u8 ttl_prop;
 
