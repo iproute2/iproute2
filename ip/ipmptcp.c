@@ -446,7 +446,14 @@ static int mptcp_limit_get_set(int argc, char **argv, int cmd)
 
 	ret = 0;
 	if (do_get) {
+		/* This object is different from what is usually seen in IP
+		 * commands: it doesn't list multiple items with different
+		 * attributes, but only a bunch of attributes. Use _plain()
+		 * because an array is not needed and doesn't make sense here.
+		 */
+		new_json_obj_plain(json);
 		ret = print_mptcp_limit(answer, stdout);
+		delete_json_obj_plain();
 		free(answer);
 	}
 
