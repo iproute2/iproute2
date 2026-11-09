@@ -1502,6 +1502,7 @@ int rta_addattr_l(struct rtattr *rta, int maxlen, int type,
 	subrta->rta_len = len;
 	if (alen)
 		memcpy(RTA_DATA(subrta), data, alen);
+	memset((void *)subrta + len, 0, RTA_ALIGN(len) - len);
 	rta->rta_len = NLMSG_ALIGN(rta->rta_len) + RTA_ALIGN(len);
 	return 0;
 }
