@@ -4105,7 +4105,8 @@ static int mptcp_show(struct filter *f)
 	if (!filter_af_get(f, AF_INET) && !filter_af_get(f, AF_INET6))
 		return 0;
 
-	inet_show_netlink(f, NULL, IPPROTO_MPTCP);
+	if (inet_show_netlink(f, NULL, IPPROTO_MPTCP))
+		return sock_diag_error("MPTCP");
 	return 0;
 }
 
@@ -4114,7 +4115,8 @@ static int sctp_show(struct filter *f)
 	if (!filter_af_get(f, AF_INET) && !filter_af_get(f, AF_INET6))
 		return 0;
 
-	inet_show_netlink(f, NULL, IPPROTO_SCTP);
+	if (inet_show_netlink(f, NULL, IPPROTO_SCTP))
+		return sock_diag_error("SCTP");
 	return 0;
 }
 
