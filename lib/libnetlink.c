@@ -1407,6 +1407,7 @@ int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data,
 	rta->rta_len = len;
 	if (alen)
 		memcpy(RTA_DATA(rta), data, alen);
+	memset((void *)rta + len, 0, RTA_ALIGN(len) - len);
 	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
 	return 0;
 }
