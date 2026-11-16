@@ -449,8 +449,9 @@ This is an alias for
 
 .TP
 .BI proto " ADDRPROTO"
-Only show addresses with a given protocol, or those for which the kernel
-response did not include protocol. See the corresponding argument to
+Only show addresses with a given protocol. Addresses for which the kernel
+response did not include protocol are considered to have protocol 0. See the
+corresponding argument to
 .B ip address add
 for details about address protocols.
 

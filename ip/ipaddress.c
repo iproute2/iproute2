@@ -1542,9 +1542,13 @@ int print_addrinfo(struct nlmsghdr *n, void *arg)
 
 	if (filter.family && filter.family != ifa->ifa_family)
 		return 0;
-	if (filter.have_proto && rta_tb[IFA_PROTO] &&
-	    filter.proto != rta_getattr_u8(rta_tb[IFA_PROTO]))
-		return 0;
+	if (filter.have_proto) {
+		__u8 proto = rta_tb[IFA_PROTO] ?
+			rta_getattr_u8(rta_tb[IFA_PROTO]) : IFAPROT_UNSPEC;
+
+		if (filter.proto != proto)
+			return 0;
+	}
 
 	if (ifa_label_match_rta(ifa->ifa_index, rta_tb[IFA_LABEL]))
 		return 0;
@@ -1928,6 +1932,15 @@ static void ipaddr_filter(struct nlmsg_chain *linfo, struct nlmsg_chain *ainfo)
 
 			if ((filter.flags ^ ifa_flags) & filter.flagmask)
 				continue;
+
+			if (filter.have_proto) {
+				__u8 proto = tb[IFA_PROTO] ?
+					rta_getattr_u8(tb[IFA_PROTO]) :
+					IFAPROT_UNSPEC;
+
+				if (filter.proto != proto)
+					continue;
+			}
 
 			if (ifa_label_match_rta(ifa->ifa_index, tb[IFA_LABEL]))
 				continue;
