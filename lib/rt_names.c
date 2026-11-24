@@ -115,7 +115,7 @@ static int rtnl_tab_initialize(const char *file, char **tab, int size)
 			fclose(fp);
 			return -EINVAL;
 		}
-		if (id < 0 || id > size)
+		if (id < 0 || id >= size)
 			continue;
 
 		tab[id] = strdup(namebuf);
