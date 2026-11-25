@@ -142,7 +142,7 @@ char *id_to_name(struct db_names *db, int id, char *name)
 		entry = entry->next;
 
 	if (entry) {
-		strncpy(name, entry->name, IDNAME_MAX);
+		strlcpy(name, entry->name, IDNAME_MAX);
 		return name;
 	}
 
